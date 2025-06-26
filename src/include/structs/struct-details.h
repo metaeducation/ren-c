@@ -149,9 +149,9 @@ typedef enum {
 
 //=//// DETAILS STUB SLOT USAGE ///////////////////////////////////////////=//
 
-#define FLEX_MASK_DETAILS \
+#define STUB_MASK_DETAILS \
     (BASE_FLAG_BASE \
-        | FLAG_FLAVOR(DETAILS) \
+        | FLAG_FLAVOR(FLAVOR_DETAILS) \
         | STUB_FLAG_DYNAMIC \
         | not STUB_FLAG_LINK_NEEDS_MARK  /* don't mark dispatcher */ \
         | 0 /* STUB_FLAG_MISC_NEEDS_MARK */  /* Adjunct, maybe null */ \
@@ -200,7 +200,7 @@ typedef struct {
 // are nearing full convergence).  And on the details array, it got in the
 // way of HIJACK, which may perform expansion.  So that was removed.
 //
-#define FLEX_MASK_PARAMLIST FLEX_MASK_VARLIST
+#define STUB_MASK_PARAMLIST STUB_MASK_VARLIST
 
 //=//// PARAMETER CLASSES ////////////////////////////////////////////////=//
 //

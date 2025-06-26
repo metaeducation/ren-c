@@ -170,7 +170,7 @@ unsigned char* API_rebAllocBytes(size_t size)
     ENTER_API;
 
     Binary* b = Make_Flex(
-        FLAG_FLAVOR(BINARY)  // rebRepossess() only creates BLOB! ATM
+        FLAG_FLAVOR(FLAVOR_BINARY)  // rebRepossess() only creates BLOB! ATM
             | BASE_FLAG_ROOT  // indicate this originated from the API
             | STUB_FLAG_DYNAMIC  // rebRepossess() needs bias field
             | FLEX_FLAG_DONT_RELOCATE,  // direct data pointer handed back
@@ -2599,7 +2599,7 @@ RebolBaseInternal* API_rebINLINE(const RebolValue* v)
 {
     ENTER_API;
 
-    Stub* s = Make_Untracked_Stub(FLAG_FLAVOR(INSTRUCTION_SPLICE));
+    Stub* s = Make_Untracked_Stub(FLAG_FLAVOR(FLAVOR_INSTRUCTION_SPLICE));
 
     if (not (Is_Block(v) or Is_Quoted(v) or Is_Space(v)))
         panic ("rebINLINE() requires argument to be a BLOCK!/QUOTED?/SPACE");

@@ -104,20 +104,20 @@
 // 1. One synonym need not keep another alive, because the process of freeing
 //    string nodes unlinks them from the list.  (Hence the canon can change!)
 //
-#define FLEX_MASK_SYMBOL \
+#define STUB_MASK_SYMBOL \
     (BASE_FLAG_BASE \
-        | FLAG_FLAVOR(SYMBOL) \
+        | FLAG_FLAVOR(FLAVOR_SYMBOL) \
         | FLEX_FLAG_FIXED_SIZE \
         | BASE_FLAG_MANAGED \
         | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  /* kill interning in table */ \
         | not STUB_FLAG_MISC_NEEDS_MARK  /* hitches not marked */ \
         | not STUB_FLAG_LINK_NEEDS_MARK  /* synonym not marked [1] */)
 
-#define FLEX_MASK_STRING \
-    (FLAG_FLAVOR(NONSYMBOL) \
+#define STUB_MASK_STRING \
+    (FLAG_FLAVOR(FLAVOR_NONSYMBOL) \
         | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  /* needs to kill bookmarks */)
 
-#define FLEX_MASK_SYMBOL_STRING_COMMON \
+#define STUB_MASK_SYMBOL_STRING_COMMON \
     (BASE_FLAG_BASE \
         | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY)
 

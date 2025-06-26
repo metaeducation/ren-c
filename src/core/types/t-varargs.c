@@ -387,7 +387,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
         // By protocol, if the array is exhausted then the shared element
         // should be an END marker (not an array at its end)
         //
-        Array* array1 = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
+        Array* array1 = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
         if (Cell_Series_Len_At(arg) == 0)
             Poison_Cell(Stub_Cell(array1));
         else

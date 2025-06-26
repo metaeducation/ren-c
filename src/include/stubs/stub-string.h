@@ -314,7 +314,7 @@ INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
 
 INLINE BookmarkList* Alloc_BookmarkList(void) {
     BookmarkList* books = Make_Flex(
-        FLAG_FLAVOR(BOOKMARKLIST)
+        FLAG_FLAVOR(FLAVOR_BOOKMARKLIST)
             | BASE_FLAG_MANAGED,  // lie to be untracked
         BookmarkList,
         1
@@ -479,7 +479,7 @@ INLINE REBLEN Num_Codepoints_For_Bytes(
 // data they are given is not UTF-8.
 
 #define Make_String(encoded_capacity) \
-    Make_String_Core(FLEX_MASK_STRING, (encoded_capacity))
+    Make_String_Core(STUB_MASK_STRING, (encoded_capacity))
 
 INLINE String* Make_String_UTF8(const char *utf8) {
     return Append_UTF8_May_Panic(nullptr, utf8, strsize(utf8), STRMODE_NO_CR);
@@ -518,7 +518,7 @@ INLINE Binary* Copy_Binary_At_Len(
     REBLEN len
 ){
     return cast(Binary*, Copy_Flex_At_Len_Extra(
-        FLAG_FLAVOR(BINARY) | FLEX_FLAGS_NONE,
+        FLAG_FLAVOR(FLAVOR_BINARY) | FLEX_FLAGS_NONE,
         b,
         index,
         len,

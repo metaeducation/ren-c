@@ -68,7 +68,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
     Phase* phase = Cell_Frame_Phase(action);
 
     REBLEN num_slots = Phase_Num_Params(phase) + 1;  // +1 for rootvar
-    Array* a = Make_Array_Core(FLEX_MASK_VARLIST, num_slots);
+    Array* a = Make_Array_Core(STUB_MASK_VARLIST, num_slots);
     Set_Flex_Len(a, num_slots);
 
     Tweak_Bonus_Keylist_Shared(a, Phase_Keylist(phase));

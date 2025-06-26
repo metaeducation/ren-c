@@ -357,7 +357,7 @@ INLINE void Flip_Stub_To_White(const Stub* f) {
 //
 // (Try to put those definitions in the %struct-xxx.h files.  Those come
 // before these definitions are final, but if you just use macros it should
-// work...and keep the definitions alongside STUB_MASK_XXX and FLEX_MASK_XXX
+// work...and keep the definitions alongside STUB_MASK_XXX and STUB_MASK_XXX
 // so a cohesive picture of how the Stub uses slots can be edited together.)
 //
 

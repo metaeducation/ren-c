@@ -53,8 +53,8 @@
 #endif
 
 
-#define FLEX_MASK_PAIRLIST \
-    (FLAG_FLAVOR(PAIRLIST) \
+#define STUB_MASK_PAIRLIST \
+    (FLAG_FLAVOR(FLAVOR_PAIRLIST) \
         | STUB_FLAG_LINK_NEEDS_MARK  /* hashlist */)
 
 #define LINK_PAIRLIST_HASHLIST_NODE(pairlist)  STUB_LINK(pairlist)

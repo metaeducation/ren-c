@@ -87,7 +87,7 @@ INLINE bool Is_Stub_Diminished(const Stub* s) {
     (not Is_Stub_Diminished(s))
 
 #define STUB_MASK_NON_CANON_UNREADABLE \
-    BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | FLAG_TASTE_BYTE(255)
+    (BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | STUB_MASK_TASTE)
 
 INLINE Stub* Set_Stub_Unreadable(Stub* s) {
     assert(Is_Base_Readable(s));

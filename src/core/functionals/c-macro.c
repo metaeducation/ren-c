@@ -68,7 +68,7 @@ void Splice_Block_Into_Feed(Feed* feed, const Element* splice) {
 
     if (FEED_IS_VARIADIC(feed) or Not_End(feed->p)) {
         Stub* saved = Make_Untracked_Stub(  // save old feed stub [2]
-            FLAG_FLAVOR(FEED)
+            FLAG_FLAVOR(FLAVOR_FEED)
         );
         Mem_Copy(saved, Feed_Singular(feed), sizeof(Stub));
         assert(Not_Base_Managed(saved));
@@ -253,7 +253,7 @@ DECLARE_NATIVE(INLINE)
         // This could probably be done more efficiently, but for now just
         // turn it into a block.
         //
-        Source* a = Alloc_Singular(FLEX_MASK_UNMANAGED_SOURCE);
+        Source* a = Alloc_Singular(STUB_MASK_UNMANAGED_SOURCE);
         Unquotify(Copy_Cell(Stub_Cell(a), code));
         Init_Block(code, a);
         Splice_Block_Into_Feed(level_->feed, code);

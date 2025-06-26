@@ -320,11 +320,11 @@ void Extra_Init_Context_Cell_Checks_Debug(Heart heart, VarList* v) {
 
     if (heart == TYPE_FRAME)  // may not have Misc_Varlist_Adjunct()
         assert(
-            (v->leader.bits & FLEX_MASK_LEVEL_VARLIST)
-            == FLEX_MASK_LEVEL_VARLIST
+            (v->leader.bits & STUB_MASK_LEVEL_VARLIST)
+            == STUB_MASK_LEVEL_VARLIST
         );
     else
-        assert((v->leader.bits & FLEX_MASK_VARLIST) == FLEX_MASK_VARLIST);
+        assert((v->leader.bits & STUB_MASK_VARLIST) == STUB_MASK_VARLIST);
 
     const Value* archetype = Varlist_Archetype(v);
     assert(Cell_Varlist(archetype) == v);
@@ -358,8 +358,8 @@ void Extra_Init_Frame_Checks_Debug(Phase* phase) {
 
     KeyList* keylist = Phase_Keylist(phase);
     assert(
-        (keylist->leader.bits & FLEX_MASK_KEYLIST)
-        == FLEX_MASK_KEYLIST
+        (keylist->leader.bits & STUB_MASK_KEYLIST)
+        == STUB_MASK_KEYLIST
     );
 
     if (Get_Stub_Flag(phase, MISC_NEEDS_MARK)) {

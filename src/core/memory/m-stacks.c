@@ -36,7 +36,7 @@
 //
 void Startup_Data_Stack(Length capacity)
 {
-    ensure_nullptr(g_ds.array) = Make_Array_Core(FLAG_FLAVOR(DATASTACK), 1);
+    ensure_nullptr(g_ds.array) = Make_Array_Core(FLAG_FLAVOR(FLAVOR_DATASTACK), 1);
     Set_Flex_Len(g_ds.array, 1);  // one element, helps test expansion [1]
     assert(Not_Stub_Flag(g_ds.array, DYNAMIC));
 

@@ -323,7 +323,7 @@ static void Init_Root_Vars(void)
 
     Length len = 0;
     Array* a = Make_Array_Core(
-        FLEX_MASK_VARLIST
+        STUB_MASK_VARLIST
             | BASE_FLAG_MANAGED, // Note: Rebind below requires managed context
         1 + len  // needs room for rootvar
     );
@@ -332,7 +332,7 @@ static void Init_Root_Vars(void)
     Tweak_Link_Inherit_Bind(a, nullptr);
 
     KeyList* keylist = Make_Flex(
-        FLEX_MASK_KEYLIST | BASE_FLAG_MANAGED,
+        STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
         KeyList,
         len  // no terminator, 0-based
     );
@@ -356,7 +356,7 @@ static void Init_Root_Vars(void)
 
   // keep array alive via stable API handle (META PACK, not PACK)
 
-    Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
+    Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
     Init_Quasi_Null(Stub_Cell(a));
     Freeze_Source_Deep(a);
     ensure_nullptr(g_1_quasi_null_array) = a;
@@ -394,7 +394,7 @@ static void Init_Root_Vars(void)
     Protect_Cell(g_tripwire);
 
     ensure_nullptr(g_dispatcher_table) = Make_Flex(
-        FLAG_FLAVOR(DISPATCHERTABLE) | STUB_FLAG_DYNAMIC,
+        FLAG_FLAVOR(FLAVOR_DISPATCHERTABLE) | STUB_FLAG_DYNAMIC,
         Flex,
         15
     );

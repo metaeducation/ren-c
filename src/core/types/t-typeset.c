@@ -171,7 +171,7 @@ void Set_Parameter_Spec(
     Length len = tail - item;
 
     copy = cast(Source*, Make_Array_For_Copy(
-        FLEX_MASK_MANAGED_SOURCE,
+        STUB_MASK_MANAGED_SOURCE,
         Cell_Array(spec),
         len
     ));
@@ -406,7 +406,7 @@ Element* Decorate_According_To_Parameter(
         break;
 
       case PARAMCLASS_SOFT: {
-        Source *a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
+        Source *a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
         Move_Cell(Stub_Cell(a), e);
         Pinify(Init_Group(e, a));
         break; }

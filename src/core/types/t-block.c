@@ -920,7 +920,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
     const Array* arr = Cell_Array(list);
     REBLEN index = VAL_INDEX(list);
 
-    Flags flags = FLEX_MASK_MANAGED_SOURCE;
+    Flags flags = STUB_MASK_MANAGED_SOURCE;
 
     flags |= (list->header.bits & ARRAY_FLAG_CONST_SHALLOW);  // retain [1]
 

@@ -304,7 +304,7 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 #define CELL_MASK_UNREADABLE \
     (BASE_FLAG_BASE | BASE_FLAG_CELL | BASE_FLAG_UNREADABLE \
         | CELL_FLAG_DONT_MARK_PAYLOAD_1 | CELL_FLAG_DONT_MARK_PAYLOAD_2 \
-        | FLAG_KIND_BYTE_255 | FLAG_LIFT_BYTE(255))
+        | FLAG_KIND_BYTE(255) | FLAG_LIFT_BYTE(255))
 
 #if CORRUPT_CELL_HEADERS_ONLY
     #define Init_Unreadable_Untracked_Evil_Macro(out) do { \
@@ -761,7 +761,7 @@ INLINE Option(Type) Type_Of_Unquoted(const Element* elem) {
 
 INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
 {
-    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(DUAL_0));
+    assert((flags & CELL_MASK_LIFT) == FLAG_LIFT_BYTE(DUAL_0));
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
         BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_2)
@@ -770,7 +770,7 @@ INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
 
 INLINE void Reset_Cell_Header(Cell* c, LiftByte lift_byte, uintptr_t flags)
 {
-    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(DUAL_0));
+    assert((flags & CELL_MASK_LIFT) == FLAG_LIFT_BYTE(DUAL_0));
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
         BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(lift_byte)
@@ -782,8 +782,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     const ExtraHeart* extra_heart,
     uintptr_t flags
 ){
-    assert((flags & FLAG_KIND_BYTE_255) == 0);
-    assert((flags & FLAG_LIFT_BYTE(255)) == FLAG_LIFT_BYTE(DUAL_0));
+    assert((flags & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) == 0);
 
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set

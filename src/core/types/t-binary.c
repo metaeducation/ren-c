@@ -660,7 +660,7 @@ Option(Error*) Trap_Alias_Blob_As(
                 ++num_codepoints;
             }
             TASTE_BYTE(m_cast(Binary*, bin)) = FLAVOR_0;  // next step sets
-            m_cast(Binary*, bin)->leader.bits |= FLEX_MASK_STRING;
+            m_cast(Binary*, bin)->leader.bits |= STUB_MASK_STRING;
 
             str = c_cast(String*, bin);
 

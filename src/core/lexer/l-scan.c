@@ -3075,14 +3075,14 @@ Bounce Scanner_Executor(Level* const L) {
   #endif
 
     sigil_and_lift_mask = head->header.bits &  // don't include quasi bit
-        (CELL_MASK_SIGIL_BITS | FLAG_LIFT_BYTE(255 - QUASI_BIT));
+        (CELL_MASK_SIGIL | FLAG_LIFT_BYTE(255 - QUASI_BIT));
 
     if (LIFT_BYTE_RAW(head) & QUASI_BIT)
         LIFT_BYTE_RAW(head) = QUASIFORM_3;
     else
         LIFT_BYTE_RAW(head) = NOQUOTE_2;
 
-    head->header.bits &= (~ CELL_MASK_SIGIL_BITS);
+    head->header.bits &= (~ CELL_MASK_SIGIL);
 
 } trap_pop: {
 

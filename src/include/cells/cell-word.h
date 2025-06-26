@@ -83,7 +83,7 @@ INLINE Element* Init_Word_Untracked(
     Freshen_Cell_Header(out);
     out->header.bits |= (
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART_ENUM(TYPE_WORD) | FLAG_LIFT_BYTE(lift_byte)
+            | FLAG_HEART(TYPE_WORD) | FLAG_LIFT_BYTE(lift_byte)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );
@@ -107,7 +107,7 @@ INLINE Element* Init_Word_Bound_Untracked(
 ){
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_ENUM(TYPE_WORD)
+        FLAG_HEART(TYPE_WORD)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );

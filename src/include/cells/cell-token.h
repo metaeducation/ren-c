@@ -148,7 +148,7 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
         return false;
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART_ENUM(heart) | CELL_MASK_NO_MARKING
+        FLAG_HEART(heart) | CELL_MASK_NO_MARKING
     );
     memcpy(
         &out->payload.at_least_8,
@@ -197,7 +197,7 @@ INLINE Element* Init_Utf8_Non_String(
 INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(RUNE) | CELL_MASK_NO_MARKING
+        FLAG_HEART(TYPE_RUNE) | CELL_MASK_NO_MARKING
     );
 
     if (c == 0) {  // NUL is #{00}, a BLOB! not an RUNE! (see Is_NUL())

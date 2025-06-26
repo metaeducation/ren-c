@@ -110,7 +110,7 @@ REBLEN Modify_Array(
         // Are we modifying ourselves? If so, copy src_val block first:
         if (dst_arr == Cell_Array(src_val)) {
             Array* copy = Copy_Array_At_Extra_Shallow(
-                FLEX_MASK_MANAGED_SOURCE,  // !!! or, don't manage and free?
+                STUB_MASK_MANAGED_SOURCE,  // !!! or, don't manage and free?
                 Cell_Array(src_val),
                 VAL_INDEX(src_val),
                 0 // extra

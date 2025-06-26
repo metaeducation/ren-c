@@ -151,7 +151,7 @@ static void Expand_Word_Table(void)
     assert(Flex_Wide(g_symbols.by_hash) == sizeof(Symbol*));
 
     Flex* table = Make_Flex(
-        FLAG_FLAVOR(CANONTABLE) | FLEX_FLAG_POWER_OF_2,
+        FLAG_FLAVOR(FLAVOR_CANONTABLE) | FLEX_FLAG_POWER_OF_2,
         Flex,
         num_slots
     );
@@ -279,7 +279,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
 } new_interning: { ///////////////////////////////////////////////////////////
 
     Binary* b = cast(Binary*, Make_Flex_Into(
-        FLEX_MASK_SYMBOL
+        STUB_MASK_SYMBOL
             | SYMBOL_FLAG_ALL_ASCII,  // removed below if non-ascii found
         preallocated ? unwrap preallocated : Alloc_Stub(),
         utf8_size + 1  // small sizes fit in a Stub (no dynamic allocation)
@@ -492,7 +492,7 @@ void Startup_Interning(void)
   #endif
 
     ensure_nullptr(g_symbols.by_hash) = Make_Flex(
-        FLAG_FLAVOR(CANONTABLE) | FLEX_FLAG_POWER_OF_2,
+        FLAG_FLAVOR(FLAVOR_CANONTABLE) | FLEX_FLAG_POWER_OF_2,
         Flex,
         n
     );

@@ -219,8 +219,8 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     //
     if (SPORADICALLY(2)) {
         Binary* b = Cell_Binary_Ensure_Mutable(script);
-        TASTE_BYTE(b) = FLAVOR_0;  // set to FLAVOR_NONSYMBOL by FLEX_MASK
-        b->leader.bits |= FLEX_MASK_STRING;
+        TASTE_BYTE(b) = FLAVOR_0;  // set to FLAVOR_NONSYMBOL by STUB_MASK
+        b->leader.bits |= STUB_MASK_STRING;
         Term_String_Len_Size(
             cast(String*, b),  // legal for tweaking cached data
             script_num_codepoints,

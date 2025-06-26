@@ -344,7 +344,7 @@ uint32_t Hash_Value(const Value* cell)
 HashList* Make_Hashlist(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime_May_Panic(len * 2);  // best when 2X # of keys
-    Flex* f = Make_Flex(FLAG_FLAVOR(HASHLIST), Flex, n + 1);
+    Flex* f = Make_Flex(FLAG_FLAVOR(FLAVOR_HASHLIST), Flex, n + 1);
     Clear_Flex(f);
     Set_Flex_Len(f, n);
 

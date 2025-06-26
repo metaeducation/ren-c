@@ -102,10 +102,10 @@ INLINE Element* Init_Varargs_Untyped_Infix(
     if (not left)
         feed = g_empty_array;
     else {
-        Source* singular = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
+        Source* singular = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
         Copy_Cell(Stub_Cell(singular), unwrap left);
 
-        feed = Make_Untracked_Stub(FLAG_FLAVOR(FEED) | BASE_FLAG_MANAGED);
+        feed = Make_Untracked_Stub(FLAG_FLAVOR(FLAVOR_FEED) | BASE_FLAG_MANAGED);
         Init_Block(Stub_Cell(feed), singular);  // index 0
     }
 

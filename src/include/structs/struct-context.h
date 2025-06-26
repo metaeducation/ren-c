@@ -51,7 +51,7 @@ typedef Stub Context;
 typedef Context Let;
 
 #define STUB_MASK_LET ( \
-    FLAG_FLAVOR(LET) \
+    FLAG_FLAVOR(FLAVOR_LET) \
         | BASE_FLAG_MANAGED \
         | STUB_FLAG_LINK_NEEDS_MARK  /* Inherit_Bind() */ \
         | STUB_FLAG_INFO_NEEDS_MARK  /* Let symbol */ \
@@ -77,7 +77,7 @@ typedef Context Let;
 typedef Context Use;
 
 #define STUB_MASK_USE ( \
-    FLAG_FLAVOR(USE) \
+    FLAG_FLAVOR(FLAVOR_USE) \
         | BASE_FLAG_MANAGED \
         | STUB_FLAG_LINK_NEEDS_MARK  /* Inherit_Bind() */ \
         | not STUB_FLAG_INFO_NEEDS_MARK  /* not yet used */ \

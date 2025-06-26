@@ -300,7 +300,7 @@ bool Func_Details_Querier(
         REBLEN real_body_index = 6;
 
         Source* fake = cast(Source*, Copy_Array_Shallow_Flags(
-            FLEX_MASK_MANAGED_SOURCE,
+            STUB_MASK_MANAGED_SOURCE,
             Cell_Array(example)
         ));
 

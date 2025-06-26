@@ -181,16 +181,13 @@ typedef Byte KindByte;  // help document when Byte is Heart + Sigil [1]
 #define FLAG_KIND_BYTE(byte) \
     FLAG_SECOND_BYTE(byte)
 
-#define FLAG_HEART_ENUM(heart) \
-    FLAG_KIND_BYTE(cast(KindByte, ensure(HeartEnum, (heart))))
-
-#define FLAG_HEART(name) \
-    FLAG_KIND_BYTE(u_cast(KindByte, u_cast(HeartEnum, TYPE_##name)))
+#define FLAG_HEART(heart) \
+    FLAG_KIND_BYTE(u_cast(KindByte, ensure(HeartEnum, (heart))))
 
 #define MOD_HEART_64  64  /* 64 fundamental types, 2 bit crumb for Sigil */
-#define FLAG_KIND_BYTE_63  FLAG_SECOND_BYTE(MOD_HEART_64 - 1)
+#define CELL_MASK_HEART_NO_SIGIL  FLAG_SECOND_BYTE(MOD_HEART_64 - 1)
 
-#define FLAG_KIND_BYTE_255  FLAG_SECOND_BYTE(63)  // for masking only
+#define CELL_MASK_HEART_AND_SIGIL  FLAG_KIND_BYTE(255)
 
 #define KIND_SIGIL_SHIFT  6
 
@@ -213,13 +210,10 @@ typedef enum SigilEnum Sigil;
 #define FLAG_SIGIL_CRUMB(crumb) \
     FLAG_KIND_BYTE((crumb) << KIND_SIGIL_SHIFT)
 
-#define FLAG_SIGIL_ENUM(sigil) \
-    FLAG_SIGIL_CRUMB(u_cast(Byte, ensure(Sigil, sigil)))
+#define FLAG_SIGIL(sigil) \
+    FLAG_SIGIL_CRUMB(u_cast(Byte, ensure(Sigil, (sigil))))
 
-#define FLAG_SIGIL(name) \
-    FLAG_SIGIL_ENUM(SIGIL_##name)
-
-#define CELL_MASK_SIGIL_BITS  FLAG_SIGIL_CRUMB(3)  // 0b11 << KIND_SIGIL_SHIFT
+#define CELL_MASK_SIGIL  FLAG_SIGIL_CRUMB(3)  // 0b11 << KIND_SIGIL_SHIFT
 
 
 //=//// BITS 16-23: QUOTED/QUASIFORM/ANTIFORM BYTE ("LIFT") ///////////////=//
@@ -280,8 +274,10 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 
 #define FLAG_LIFT_BYTE(byte)         FLAG_THIRD_BYTE(byte)
 
-#define CELL_HEART_LIFT_MASK /* mask in both heart and lift bytes */ \
-    (FLAG_KIND_BYTE(255) | FLAG_LIFT_BYTE(255))
+#define CELL_MASK_LIFT  FLAG_LIFT_BYTE(255)
+
+#define CELL_MASK_HEART_AND_SIGIL_AND_LIFT \
+    (CELL_MASK_HEART_AND_SIGIL | CELL_MASK_LIFT)
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//

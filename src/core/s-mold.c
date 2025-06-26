@@ -705,10 +705,10 @@ void Drop_Mold_Core(
 //
 void Startup_Mold(Size encoded_capacity)
 {
-    g_mold.stack = Make_Flex(FLAG_FLAVOR(MOLDSTACK), Flex, 10);
+    g_mold.stack = Make_Flex(FLAG_FLAVOR(FLAVOR_MOLDSTACK), Flex, 10);
 
     ensure_nullptr(g_mold.buffer) = Make_String_Core(
-        FLEX_MASK_STRING
+        STUB_MASK_STRING
             | (not BASE_FLAG_MANAGED)
             | STUB_FLAG_DYNAMIC,
         encoded_capacity

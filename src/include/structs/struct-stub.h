@@ -150,11 +150,17 @@
 //    To help avoid accidentally passing Cell, the HeaderUnion in a Stub
 //    is named "leader" instead of "header".
 
+typedef Byte TasteByte;
+
 #define TASTE_BYTE(stub) \
     SECOND_BYTE(&(stub)->leader.bits)  // assume has ->leader means Stub [1]
 
-#define FLAG_TASTE_BYTE(flavor)         FLAG_SECOND_BYTE(flavor)
-#define FLAG_FLAVOR(name)               FLAG_TASTE_BYTE(FLAVOR_##name)
+#define FLAG_TASTE_BYTE(byte)  FLAG_SECOND_BYTE(byte)
+
+#define FLAG_FLAVOR(flavor) \
+    FLAG_TASTE_BYTE(u_cast(Byte, ensure(Flavor, (flavor))))
+
+#define STUB_MASK_TASTE  FLAG_TASTE_BYTE(255)
 
 
 //=////////////////////////////////////////////////////////////////////////=//

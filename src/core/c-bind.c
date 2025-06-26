@@ -1023,7 +1023,7 @@ void Clonify_And_Bind_Relative(
         }
         else if (Listlike_Cell(v)) {  // ruled out pairlike sequences above...
             Source* copy = cast(Source*, Copy_Array_At_Extra_Shallow(
-                FLEX_MASK_MANAGED_SOURCE,
+                STUB_MASK_MANAGED_SOURCE,
                 Cell_Array(v),
                 0,  // !!! what if VAL_INDEX() is nonzero?
                 0
@@ -1115,7 +1115,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
     if (index > tail)  // !!! should this be asserted?
         index = tail;
 
-    Flags flags = FLEX_MASK_MANAGED_SOURCE;
+    Flags flags = STUB_MASK_MANAGED_SOURCE;
     bool deeply = true;
 
     REBLEN len = tail - index;

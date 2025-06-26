@@ -810,7 +810,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         assert(size + 1 <= Size_Of(v->payload.at_least_8));
 
         String* str = Make_String_Core(
-            FLEX_MASK_STRING | BASE_FLAG_MANAGED,
+            STUB_MASK_STRING | BASE_FLAG_MANAGED,
             size
         );
         memcpy(

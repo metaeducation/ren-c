@@ -1458,7 +1458,7 @@ void Startup_GC(void)
     // managed, then sneak the flag off.
     //
     ensure_nullptr(g_gc.manuals) = Make_Flex(
-        FLAG_FLAVOR(FLEXLIST) | BASE_FLAG_MANAGED,  // lie!
+        FLAG_FLAVOR(FLAVOR_FLEXLIST) | BASE_FLAG_MANAGED,  // lie!
         Flex,
         15
     );
@@ -1467,7 +1467,7 @@ void Startup_GC(void)
     // Flexes and Cells protected from GC.  Holds base pointers.
     //
     ensure_nullptr(g_gc.guarded) = Make_Flex(
-        FLAG_FLAVOR(NODELIST),
+        FLAG_FLAVOR(FLAVOR_NODELIST),
         Flex,
         15
     );
@@ -1476,7 +1476,7 @@ void Startup_GC(void)
     // nested structures don't cause the C stack to overflow.
     //
     ensure_nullptr(g_gc.mark_stack) = Make_Flex(
-        FLAG_FLAVOR(NODELIST),
+        FLAG_FLAVOR(FLAVOR_NODELIST),
         Flex,
         100
     );
@@ -1513,7 +1513,7 @@ void Startup_GC(void)
     // inaccessible references canonized to this one global Stub.
     //
     Stub* s = Prep_Stub(
-        FLAG_FLAVOR(THE_GLOBAL_INACCESSIBLE)
+        FLAG_FLAVOR(FLAVOR_THE_GLOBAL_INACCESSIBLE)
             | BASE_FLAG_UNREADABLE
             | BASE_FLAG_MARKED,
         &PG_Inaccessible_Stub

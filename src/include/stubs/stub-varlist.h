@@ -175,7 +175,7 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
     Sink(Element) rootvar = Array_Head(varlist);
     Reset_Cell_Header_Noquote(
         rootvar,
-        FLAG_HEART_ENUM(heart)
+        FLAG_HEART(heart)
             | CELL_MASK_ANY_CONTEXT
             | CELL_FLAG_PROTECTED  // should not be modified
     );
@@ -234,7 +234,7 @@ INLINE void Tweak_Bonus_Keylist_Unique(Flex* f, KeyList *keylist) {
 //     Value* y = Varlist_Keys_Head(Cell_Varlist(context), n);  // no phase
 //
 // Context's "length" does not count the [0] cell of either the varlist or
-// the keylist arrays.  Hence it must subtract 1.  FLEX_MASK_VARLIST
+// the keylist arrays.  Hence it must subtract 1.  STUB_MASK_VARLIST
 // includes STUB_FLAG_DYNAMIC, so a dyamic Array can be assumed so long
 // as it is valid.
 //

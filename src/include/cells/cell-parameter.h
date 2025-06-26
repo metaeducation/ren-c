@@ -432,7 +432,7 @@ INLINE Cell* Blit_Anti_Word_Typechecked_Untracked(
   #endif
     out->header.bits = (
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART(WORD)
+            | FLAG_HEART(TYPE_WORD)
             | FLAG_LIFT_BYTE(ANTIFORM_1)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
@@ -470,7 +470,7 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     Reset_Cell_Header_Noquote(
         param,
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART_ENUM(TYPE_PARAMETER)
+            | FLAG_HEART(TYPE_PARAMETER)
             | CELL_FLAG_DONT_MARK_PAYLOAD_1  // spec (starting off null here)
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // flags, never marked
     );

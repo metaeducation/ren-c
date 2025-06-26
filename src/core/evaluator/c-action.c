@@ -1085,7 +1085,7 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
     Set_Action_Level_Label(L, Cell_Frame_Label_Deep(frame));
 
     Flex* s = cast(Flex*, Prep_Stub(
-        FLEX_MASK_LEVEL_VARLIST
+        STUB_MASK_LEVEL_VARLIST
             | FLEX_FLAG_FIXED_SIZE,  // FRAME!s don't expand ATM
             // not managed by default, see Force_Level_Varlist_Managed()
         Alloc_Stub()
@@ -1111,7 +1111,7 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
     possibly(LIFT_BYTE(frame) != NOQUOTE_2);  // can be ACTION!, quasi, etc.
 
     TRACK(L->rootvar)->header.bits
-        = (frame->header.bits & ~FLAG_LIFT_BYTE(255))
+        = (frame->header.bits & (~ CELL_MASK_LIFT))
             | FLAG_LIFT_BYTE(NOQUOTE_2)  // canonize as FRAME!
             | CELL_FLAG_PROTECTED;  // rootvars protected from modification
     L->rootvar->extra = frame->extra;

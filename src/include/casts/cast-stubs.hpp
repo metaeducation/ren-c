@@ -168,16 +168,16 @@ const String* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
 
     const Stub* stub = u_cast(const Stub*, p);
 
-    Byte taste = TASTE_BYTE(stub);
-    if (taste != FLAVOR_NONSYMBOL and taste != FLAVOR_SYMBOL)
+    TasteByte taste_byte = TASTE_BYTE(stub);
+    if (taste_byte != FLAVOR_NONSYMBOL and taste_byte != FLAVOR_SYMBOL)
         crash (p);
 
     if ((stub->leader.bits & (
-        FLEX_MASK_SYMBOL_STRING_COMMON
+        STUB_MASK_SYMBOL_STRING_COMMON
             | BASE_FLAG_UNREADABLE
             | BASE_FLAG_CELL
     )) !=
-        FLEX_MASK_SYMBOL_STRING_COMMON
+        STUB_MASK_SYMBOL_STRING_COMMON
     ){
         assert(stub->leader.bits & STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY);
         crash (p);
@@ -211,11 +211,11 @@ struct CastHook<const F*, const Symbol*> {
 
         const Stub* stub = u_cast(const Stub*, p);
         if ((stub->leader.bits & (
-            (FLEX_MASK_SYMBOL | FLAG_TASTE_BYTE(255))
+            (STUB_MASK_SYMBOL | STUB_MASK_TASTE)
                 | BASE_FLAG_UNREADABLE
                 | BASE_FLAG_CELL
         )) !=
-            FLEX_MASK_SYMBOL
+            STUB_MASK_SYMBOL
         ){
             crash (p);
         }
@@ -281,14 +281,14 @@ const VarList* varlist_cast_impl(const F* p, DowncastTag) {  // validate [C]
         return nullptr;
 
     if ((u_cast(const Stub*, p)->leader.bits & (
-        (FLEX_MASK_LEVEL_VARLIST
+        (STUB_MASK_LEVEL_VARLIST
             & (~ STUB_FLAG_LINK_NEEDS_MARK)  // next virtual, maybe null
             & (~ STUB_FLAG_MISC_NEEDS_MARK)  // adjunct, maybe null
         )   | BASE_FLAG_UNREADABLE
             | BASE_FLAG_CELL
-            | FLAG_TASTE_BYTE(255)
+            | STUB_MASK_TASTE
     )) !=
-        FLEX_MASK_LEVEL_VARLIST
+        STUB_MASK_LEVEL_VARLIST
     ){
         crash (p);
     }
@@ -321,23 +321,23 @@ struct CastHook<const F*, const Phase*> {  // both must be const [B]
 
         if (TASTE_BYTE(stub) == FLAVOR_DETAILS) {
             if ((stub->leader.bits & (
-                (FLEX_MASK_DETAILS | FLAG_TASTE_BYTE(255))
+                (STUB_MASK_DETAILS | STUB_MASK_TASTE)
                     | BASE_FLAG_UNREADABLE
                     | BASE_FLAG_CELL
             )) !=
-                FLEX_MASK_DETAILS
+                STUB_MASK_DETAILS
             ){
                 crash (p);
             }
         }
         else {
             if ((stub->leader.bits & ((
-                (FLEX_MASK_LEVEL_VARLIST | FLAG_TASTE_BYTE(255))
+                (STUB_MASK_LEVEL_VARLIST | STUB_MASK_TASTE)
                     | BASE_FLAG_UNREADABLE
                     | BASE_FLAG_CELL
                 )
             )) !=
-                FLEX_MASK_LEVEL_VARLIST  // maybe no MISC_NEEDS_MARK
+                STUB_MASK_LEVEL_VARLIST  // maybe no MISC_NEEDS_MARK
             ){
                 crash (p);
             }

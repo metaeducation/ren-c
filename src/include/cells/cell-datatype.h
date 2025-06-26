@@ -112,7 +112,7 @@ INLINE RebolValue* Register_Datatype(const char* name)  // return "holder" [1]
         return rebUnmanage(result);  // "forward" registrations [2]
     }
 
-    Source* a = Alloc_Singular(FLEX_MASK_MANAGED_SOURCE);
+    Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
     Init_Word(Stub_Cell(a), symbol);
     Freeze_Source_Deep(a);
 

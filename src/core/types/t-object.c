@@ -724,7 +724,7 @@ VarList* Copy_Varlist_Extra_Managed(
     REBLEN len = Varlist_Len(original);
 
     Array* varlist = Make_Array_For_Copy(
-        FLEX_MASK_VARLIST | BASE_FLAG_MANAGED,
+        STUB_MASK_VARLIST | BASE_FLAG_MANAGED,
         nullptr,  // original_array, N/A because link/misc used otherwise
         len + extra + 1
     );
@@ -761,7 +761,7 @@ VarList* Copy_Varlist_Extra_Managed(
         }
     }
 
-    varlist->leader.bits |= FLEX_MASK_VARLIST;
+    varlist->leader.bits |= STUB_MASK_VARLIST;
 
     VarList* copy = cast(VarList*, varlist); // now a well-formed context
 
@@ -774,7 +774,7 @@ VarList* Copy_Varlist_Extra_Managed(
         assert(CTX_TYPE(original) != TYPE_FRAME);  // can't expand FRAME!s
 
         KeyList* keylist = cast(KeyList*, Copy_Flex_At_Len_Extra(
-            FLEX_MASK_KEYLIST | BASE_FLAG_MANAGED,
+            STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
             Bonus_Keylist(original),
             0,
             Varlist_Len(original),

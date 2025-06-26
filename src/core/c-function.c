@@ -524,7 +524,7 @@ Option(Error*) Trap_Pop_Paramlist(
     Count num_params = (TOP_INDEX - base) / 2;
 
     KeyList* keylist = Make_Flex(
-        FLEX_MASK_KEYLIST | BASE_FLAG_MANAGED,
+        STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
         KeyList,
         num_params
     );
@@ -532,7 +532,7 @@ Option(Error*) Trap_Pop_Paramlist(
     Tweak_Link_Keylist_Ancestor(keylist, keylist);  // chain
 
     Array* paramlist = Make_Array_Core(
-        FLEX_MASK_PARAMLIST,
+        STUB_MASK_PARAMLIST,
         num_params + 1
     );
     Set_Flex_Len(paramlist, num_params + 1);
@@ -762,7 +762,7 @@ Details* Make_Dispatch_Details(
     // the dispatcher understands it to be, by contract.
     //
     Array* a = Make_Array_Core(
-        FLEX_MASK_DETAILS | flags,  // don't add BASE_FLAG_MANAGED
+        STUB_MASK_DETAILS | flags,  // don't add BASE_FLAG_MANAGED
         (maybe details_max) + 1  // if max is 0, then only Phase_Archetype()
     );
     Set_Flex_Len(a, (maybe details_max) + 1);

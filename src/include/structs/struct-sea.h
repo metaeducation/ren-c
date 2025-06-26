@@ -64,9 +64,9 @@
 #endif
 
 
-#define FLEX_MASK_SEA_NO_MARKING \
+#define STUB_MASK_SEA_NO_MARKING \
     (BASE_FLAG_BASE \
-        | FLAG_FLAVOR(SEA) \
+        | FLAG_FLAVOR(FLAVOR_SEA) \
         | 0 /* STUB_FLAG_LINK_NEEDS_MARK */  /* NextVirtual, maybe null */ \
         | 0 /* STUB_FLAG_MISC_NEEDS_MARK */  /* Adjunct, maybe null */ \
     )
@@ -96,7 +96,7 @@
 #endif
 
 #define STUB_MASK_PATCH ( \
-    FLAG_FLAVOR(PATCH) \
+    FLAG_FLAVOR(FLAVOR_PATCH) \
         | BASE_FLAG_BASE \
         | BASE_FLAG_MANAGED \
         | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  /* remove from hitches [1] */ \
@@ -127,7 +127,7 @@
 #endif
 
 #define STUB_MASK_STUMP ( \
-    FLAG_FLAVOR(STUMP) \
+    FLAG_FLAVOR(FLAVOR_STUMP) \
         | BASE_FLAG_BASE \
         | not STUB_FLAG_LINK_NEEDS_MARK  /* next stump (not managed) */ \
         | STUB_FLAG_INFO_NEEDS_MARK  /* symbol (but no GC runs!) [1] */ \

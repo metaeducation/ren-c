@@ -79,7 +79,7 @@ INLINE Binary* Make_Binary_Core(Flags flags, Size capacity)
     assert(Flavor_From_Flags(flags) == 0);  // shouldn't pass in a flavor
 
     Binary* b = Make_Flex(
-        FLAG_FLAVOR(BINARY) | flags,
+        FLAG_FLAVOR(FLAVOR_BINARY) | flags,
         Binary,
         capacity + 1
     );

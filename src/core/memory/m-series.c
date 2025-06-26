@@ -149,7 +149,7 @@ void Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
 Flex* Copy_Flex_Core(Flags flags, const Flex* f)
 {
     if (Flavor_From_Flags(flags) == FLAVOR_0)
-        flags |= FLAG_TASTE_BYTE(Stub_Flavor(f));  // use source's type
+        flags |= FLAG_FLAVOR(Stub_Flavor(f));  // use source's type
     else
         assert(Flavor_From_Flags(flags) == Stub_Flavor(f));
 

@@ -90,9 +90,9 @@
     STUB_SUBCLASS_FLAG_24
 
 
-#define FLEX_MASK_KEYLIST \
+#define STUB_MASK_KEYLIST \
     (BASE_FLAG_BASE  /* NOT always dynamic */ \
-        | FLAG_FLAVOR(KEYLIST) \
+        | FLAG_FLAVOR(FLAVOR_KEYLIST) \
         | STUB_FLAG_LINK_NEEDS_MARK  /* ancestor */ )
 
 #define LINK_KEYLIST_ANCESTOR(keylist)  STUB_LINK(keylist)
@@ -185,16 +185,16 @@
 // to reclaim the dynamic memory to make a singular cell...but that flag
 // can't be FLEX_FLAG_FIXED_SIZE, because most varlists can expand.
 //
-#define FLEX_MASK_LEVEL_VARLIST ( \
+#define STUB_MASK_LEVEL_VARLIST ( \
     BASE_FLAG_BASE \
-        | FLAG_FLAVOR(VARLIST) \
+        | FLAG_FLAVOR(FLAVOR_VARLIST) \
         | STUB_FLAG_DYNAMIC \
         | 0 /* STUB_FLAG_LINK_NEEDS_MARK */  /* NextVirtual, maybe null */ \
         | (not STUB_FLAG_MISC_NEEDS_MARK)  /* Runlevel, not Adjunct */ \
 )
 
-#define FLEX_MASK_VARLIST ( \
-    FLEX_MASK_LEVEL_VARLIST \
+#define STUB_MASK_VARLIST ( \
+    STUB_MASK_LEVEL_VARLIST \
         | 0 /* STUB_FLAG_MISC_NEEDS_MARK */  /* Adjunct, maybe null */ \
 )
 

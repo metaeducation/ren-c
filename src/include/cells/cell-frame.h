@@ -185,7 +185,7 @@ INLINE Element* Init_Frame_Unchecked_Untracked(
     Reset_Cell_Header_Noquote(
         out,
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART_ENUM(TYPE_FRAME)
+            | FLAG_HEART(TYPE_FRAME)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // first is phase
             | (coupling ? 0 : CELL_FLAG_DONT_MARK_PAYLOAD_2)
     );

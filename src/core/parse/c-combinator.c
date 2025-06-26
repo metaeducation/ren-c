@@ -674,7 +674,7 @@ static bool Combinator_Param_Hook(
     }
     else if (symid == SYM_RULE_END) {
         s->rule_end = var;  // can't set until rules consumed, let caller do it
-        USED(ARG(RULE_END));
+        UNUSED(LOCAL(RULE_END));  // only exists in spec to make SYM_RULE_END
     }
     else if (Get_Parameter_Flag(param, REFINEMENT)) {
         //
@@ -772,7 +772,7 @@ static bool Combinator_Param_Hook(
 //      state "Parse State" [frame!]
 //      :value "Initiating value (if datatype)" [element?]
 //      :path "Invoking Path" [path!]
-//      <local> rule-start rule-end
+//      <local> rule-start rule-end  ; RULE-END needed to make SYM_RULE_END
 //  ]
 //
 DECLARE_NATIVE(COMBINATORIZE)
@@ -801,10 +801,11 @@ DECLARE_NATIVE(COMBINATORIZE)
     Option(const Symbol*) label = Cell_Frame_Label_Deep(ARG(COMBINATOR));
     Option(VarList*) coupling = Cell_Frame_Coupling(ARG(COMBINATOR));
 
-    Value* rule_start = ARG(RULE_START);
-    Copy_Cell(rule_start, ARG(RULES));
+    Value* rule_start = Copy_Cell(LOCAL(RULE_START), ARG(RULES));
     if (VAL_INDEX(rule_start) > 0)
         VAL_INDEX_RAW(rule_start) -= 1;
+
+    UNUSED(LOCAL(RULE_END));  // only exists in spec to make SYM_RULE_END
 
     // !!! The hack for PATH! handling was added to make /ONLY work; it only
     // works for refinements with no arguments by looking at what's in the path
@@ -844,7 +845,6 @@ DECLARE_NATIVE(COMBINATORIZE)
     // For debug and tracing, combinators are told where their rule end is
     //
     Copy_Cell(s.rule_end, ARG(RULES));
-    USED(ARG(RULE_END));
 
     Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);

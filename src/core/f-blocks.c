@@ -69,7 +69,7 @@ Source* Copy_Source_At_Max_Shallow(
     REBLEN index,
     REBLEN max
 ){
-    const Flags flags = FLEX_MASK_UNMANAGED_SOURCE;
+    const Flags flags = STUB_MASK_UNMANAGED_SOURCE;
 
     if (index > Array_Len(original))
         return cast(Source*, Make_Array_For_Copy(flags, original, 0));

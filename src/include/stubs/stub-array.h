@@ -230,7 +230,7 @@ enum {
 
 #define Copy_Values_Len_Shallow(head,len) \
     cast(Source*, Copy_Values_Len_Extra_Shallow_Core( \
-        FLEX_MASK_UNMANAGED_SOURCE, (head), (len), 0))
+        STUB_MASK_UNMANAGED_SOURCE, (head), (len), 0))
 
 #define Copy_Values_Len_Shallow_Core(flags,head,len) \
     Copy_Values_Len_Extra_Shallow_Core((flags), (head), (len), 0)
@@ -244,11 +244,11 @@ enum {
 
 #define Copy_Array_At_Shallow(a,i) \
     cast(Source*, Copy_Array_At_Extra_Shallow( \
-        FLEX_MASK_UNMANAGED_SOURCE, (a), (i), 0))
+        STUB_MASK_UNMANAGED_SOURCE, (a), (i), 0))
 
 #define Copy_Array_Extra_Shallow(a,e) \
     cast(Source*, Copy_Array_At_Extra_Shallow( \
-        FLEX_MASK_UNMANAGED_SOURCE, (a), 0, (e)))
+        STUB_MASK_UNMANAGED_SOURCE, (a), 0, (e)))
 
 
 #if NO_RUNTIME_CHECKS

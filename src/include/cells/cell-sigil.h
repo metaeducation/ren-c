@@ -51,7 +51,7 @@
 INLINE bool Any_Plain(const Element* e) {
     if (LIFT_BYTE(e) != NOQUOTE_2)
         return false;
-    return not (e->header.bits & CELL_MASK_SIGIL_BITS);
+    return not (e->header.bits & CELL_MASK_SIGIL);
 }
 
 #define Is_Metaform(v)  (Type_Of(v) == TYPE_METAFORM)
@@ -59,9 +59,9 @@ INLINE bool Any_Plain(const Element* e) {
 #define Is_Tied(v)    (Type_Of(v) == TYPE_TIED)
 
 #define Is_Sigiled(heart,sigil,v) \
-    ((Ensure_Readable(v)->header.bits & CELL_HEART_LIFT_MASK) == \
+    ((Ensure_Readable(v)->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) == \
         (FLAG_LIFT_BYTE(NOQUOTE_2) | \
-            (FLAG_HEART_ENUM(heart) | FLAG_SIGIL_ENUM(sigil))))
+            (FLAG_HEART(heart) | FLAG_SIGIL(sigil))))
 
 #define Is_Pinned_Form_Of(heartname, v) \
     Is_Sigiled(TYPE_##heartname, SIGIL_PIN, (v))
@@ -90,14 +90,14 @@ INLINE Option(Sigil) Sigil_Of(const Element* e)
 
 INLINE Element* Sigilize(Element* elem, Sigil sigil) {
     assert(LIFT_BYTE(elem) == NOQUOTE_2);  // no quotes, no quasiforms
-    assert(not (elem->header.bits & CELL_MASK_SIGIL_BITS));  // clearest [1]
-    elem->header.bits |= FLAG_SIGIL_ENUM(sigil);
+    assert(not (elem->header.bits & CELL_MASK_SIGIL));  // clearest [1]
+    elem->header.bits |= FLAG_SIGIL(sigil);
     return elem;
 }
 
 INLINE Element* Plainify(Element* elem) {
     assert(LIFT_BYTE(elem) == NOQUOTE_2);  // no quotes, no quasiforms
-    elem->header.bits &= ~(CELL_MASK_SIGIL_BITS);
+    elem->header.bits &= (~ CELL_MASK_SIGIL);
     return elem;
 }
 

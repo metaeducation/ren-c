@@ -301,10 +301,10 @@ INLINE void Drop_Data_Stack_To(StackIndex i) {
 }
 
 #define Pop_Source_From_Stack(base) \
-    cast(Source*, Pop_Stack_Values_Core(FLEX_MASK_UNMANAGED_SOURCE, (base)))
+    cast(Source*, Pop_Stack_Values_Core(STUB_MASK_UNMANAGED_SOURCE, (base)))
 
 #define Pop_Managed_Source_From_Stack(base) \
-    cast(Source*, Pop_Stack_Values_Core(FLEX_MASK_MANAGED_SOURCE, (base)))
+    cast(Source*, Pop_Stack_Values_Core(STUB_MASK_MANAGED_SOURCE, (base)))
 
 
 // Since stack overflows are memory-related errors, don't try to do any

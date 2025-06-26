@@ -630,7 +630,7 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
     Force_Erase_Cell(&feed->fetched);
 
     Stub* s = Prep_Stub(
-        BASE_FLAG_BASE | FLAG_FLAVOR(FEED),
+        BASE_FLAG_BASE | FLAG_FLAVOR(FLAVOR_FEED),
         &feed->singular  // preallocated
     );
     Force_Erase_Cell(Stub_Cell(s));

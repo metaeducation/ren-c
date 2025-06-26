@@ -293,7 +293,7 @@ void Unplug_Stack(
     }
     else {
         Array* a = Pop_Stack_Values_Core(
-            flags | FLAG_FLAVOR(DATASTACK) | BASE_FLAG_MANAGED,
+            flags | FLAG_FLAVOR(FLAVOR_DATASTACK) | BASE_FLAG_MANAGED,
             base->baseline.stack_base
         );
         Tweak_Plug_Suspended_Level(a, L);

@@ -1161,10 +1161,7 @@ DECLARE_NATIVE(ANY_VALUE_Q)
 
     const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
-    if (not Is_Antiform(atom))
-        return LOGIC(true);  // all ELEMENT? are ANY-VALUE?
-
-    return LOGIC(Is_Stable_Antiform_Kind_Byte(KIND_BYTE_RAW(atom)));
+    return LOGIC(Is_Cell_Stable(atom));
 }
 
 

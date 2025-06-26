@@ -39,7 +39,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
     assert(heart != TYPE_MODULE);
 
     Array* a = Make_Array_Core(
-        FLEX_MASK_VARLIST  // includes assurance of dynamic allocation
+        STUB_MASK_VARLIST  // includes assurance of dynamic allocation
             | flags,  // e.g. BASE_FLAG_MANAGED
         capacity + 1  // size + room for rootvar (array terminator implicit)
     );
@@ -50,7 +50,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);
 
     KeyList* keylist = Make_Flex(
-        FLEX_MASK_KEYLIST | BASE_FLAG_MANAGED,  // always shareable
+        STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,  // always shareable
         KeyList,
         capacity  // no terminator
     );
@@ -69,7 +69,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 SeaOfVars* Alloc_Sea_Core(Flags flags) {
     assert(Flavor_From_Flags(flags) == FLAVOR_0);  // always make sea
 
-    Stub* s = Prep_Stub(flags | FLEX_MASK_SEA_NO_MARKING, Alloc_Stub());
+    Stub* s = Prep_Stub(flags | STUB_MASK_SEA_NO_MARKING, Alloc_Stub());
     Force_Erase_Cell(&s->content.fixed.cell);
     Init_Space(Stub_Cell(s));
     LINK_CONTEXT_INHERIT_BIND(s) = nullptr;  // no LINK_NEEDS_MARK flag
@@ -123,7 +123,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 
     if (Get_Flavor_Flag(KEYLIST, k, SHARED)) {  // need new keylist [1]
         KeyList* k_copy = cast(KeyList*, Copy_Flex_At_Len_Extra(
-            FLEX_MASK_KEYLIST,
+            STUB_MASK_KEYLIST,
             k,
             0,
             Flex_Used(k),
@@ -768,7 +768,7 @@ VarList* Make_Varlist_Detect_Managed(
   //=//// CREATE NEW VARLIST AND CREATE (OR REUSE) KEYLIST ////////////////=//
 
     Array* a = Make_Array_Core(
-        FLEX_MASK_VARLIST
+        STUB_MASK_VARLIST
             | BASE_FLAG_MANAGED, // Note: Rebind below requires managed context
         1 + len  // needs room for rootvar
     );
@@ -787,7 +787,7 @@ VarList* Make_Varlist_Detect_Managed(
     }
     else {  // new keys, need new keylist
         KeyList* keylist = Make_Flex(
-            FLEX_MASK_KEYLIST | BASE_FLAG_MANAGED,
+            STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
             KeyList,
             len  // no terminator, 0-based
         );
@@ -1039,7 +1039,7 @@ void Assert_Varlist_Core(VarList* varlist)
 {
     Array* a = Varlist_Array(varlist);
 
-    if ((a->leader.bits & FLEX_MASK_VARLIST) != FLEX_MASK_VARLIST)
+    if ((a->leader.bits & STUB_MASK_VARLIST) != STUB_MASK_VARLIST)
         crash (varlist);
 
     Value* rootvar = Rootvar_Of_Varlist(varlist);

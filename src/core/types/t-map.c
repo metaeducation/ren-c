@@ -78,7 +78,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Map)
 //
 Map* Make_Map(REBLEN capacity)
 {
-    Array* pairlist = Make_Array_Core(FLEX_MASK_PAIRLIST, capacity * 2);
+    Array* pairlist = Make_Array_Core(STUB_MASK_PAIRLIST, capacity * 2);
     Tweak_Link_Hashlist(pairlist, Make_Hashlist(capacity));
 
     return cast(Map*, pairlist);
@@ -474,7 +474,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 } finished: { ////////////////////////////////////////////////////////////////
 
     Array* pairlist = Pop_Stack_Values_Core(
-        FLEX_MASK_PAIRLIST | BASE_FLAG_MANAGED,
+        STUB_MASK_PAIRLIST | BASE_FLAG_MANAGED,
         STACK_BASE
     );
     assert(Array_Len(pairlist) % 2 == 0);  // is [key value key value...]
@@ -493,7 +493,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
 INLINE Map* Copy_Map(const Map* map, bool deeply) {
     Array* copy = Copy_Array_Shallow_Flags(
-        FLEX_MASK_PAIRLIST,
+        STUB_MASK_PAIRLIST,
         MAP_PAIRLIST(map)
     );
 
@@ -502,7 +502,7 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
     // its own copy so new map's hashes will reflect its own mutations)
     //
     HashList* hashlist = cast(HashList*, Copy_Flex_Core(
-        FLEX_FLAGS_NONE | FLAG_FLAVOR(HASHLIST),  // !!! No BASE_FLAG_MANAGED?
+        FLEX_FLAGS_NONE | FLAG_FLAVOR(FLAVOR_HASHLIST),  // !!! No BASE_FLAG_MANAGED?
         MAP_HASHLIST(map)
     ));
     Tweak_Link_Hashlist(copy, hashlist);
