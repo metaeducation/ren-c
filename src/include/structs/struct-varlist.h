@@ -236,7 +236,7 @@
     typedef VarList Error;
 #endif
 
-#if (! CHECK_OPTIONAL_TYPEMACRO)
+#if (! NEEDFUL_OPTION_USES_WRAPPER)
     #define SUCCESS  nullptr
 #else
     struct SuccessSentinel {};

@@ -840,7 +840,7 @@ Error* Error_Bad_Func_Def(const Element* spec, const Element* body)
 //
 Error* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 {
-    return Error_No_Arg_Raw(maybe label, symbol);
+    return Error_No_Arg_Raw(label, symbol);
 }
 
 
@@ -853,7 +853,7 @@ Error* Error_Unspecified_Arg(Level* L) {
     const Symbol* param_symbol = Key_Symbol(L->u.action.key);
 
     Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
-    return Error_Unspecified_Arg_Raw(maybe label, param_symbol);
+    return Error_Unspecified_Arg_Raw(label, param_symbol);
 }
 
 
@@ -919,7 +919,7 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 
     Atom* atom_arg = Level_Arg(L, index);
     Value *arg = Decay_If_Unstable(atom_arg);
-    return Error_Invalid_Arg_Raw(maybe label, param_symbol, arg);
+    return Error_Invalid_Arg_Raw(label, param_symbol, arg);
 }
 
 
@@ -945,7 +945,7 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
     const Symbol* param_symbol = Key_Symbol(Phase_Key(details, 1));
 
     Value* arg = Decay_If_Unstable(atom_arg);
-    return Error_Invalid_Arg_Raw(maybe label, param_symbol, arg);
+    return Error_Invalid_Arg_Raw(label, param_symbol, arg);
 }
 
 
@@ -1143,7 +1143,7 @@ Error* Error_Phase_Arg_Type(
 //
 Error* Error_No_Logic_Typecheck(Option(const Symbol*) label)
 {
-    return Error_No_Logic_Typecheck_Raw(maybe label);
+    return Error_No_Logic_Typecheck_Raw(label);
 }
 
 
@@ -1152,7 +1152,7 @@ Error* Error_No_Logic_Typecheck(Option(const Symbol*) label)
 //
 Error* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 {
-    return Error_No_Arg_Typecheck_Raw(maybe label);
+    return Error_No_Arg_Typecheck_Raw(label);
 }
 
 //
@@ -1180,7 +1180,7 @@ Error* Error_Bad_Return_Type(Level* L, Atom* atom, const Element* param) {
     assert(array);  // if you return all types, no type should be bad!
     DECLARE_ELEMENT (spec);
     Init_Block(spec, unwrap array);
-    return Error_Bad_Return_Type_Raw(maybe label, Datatype_Of(atom), spec);
+    return Error_Bad_Return_Type_Raw(label, Datatype_Of(atom), spec);
 }
 
 

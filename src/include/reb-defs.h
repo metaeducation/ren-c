@@ -148,10 +148,10 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 // The Index type is not allowed to be 0 unless it is an Optional(Index).
 //
 // 1. Due to the fact that Optional(Index) is just `Index` when not using the
-//    CHECK_OPTIONAL_TYPEMACRO switch, we cannot enforce Index's "never 0"
+//    NEEDFUL_OPTION_USES_WRAPPER switch, we cannot enforce Index's "never 0"
 //    property without that switch.
 
-#if (! CHECK_OPTIONAL_TYPEMACRO)
+#if (! NEEDFUL_OPTION_USES_WRAPPER)
     typedef intptr_t Index;
     #define Index_To_Offset(i) ((i) - 1)
     #define Offset_To_Index(i) ((i) + 1)
@@ -159,7 +159,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
     struct Index {
         intptr_t value;
         Index(intptr_t i) : value {i}  // explicit would be too painful
-          { assert(i != 0); }  // can't do unless CHECK_OPTIONAL_TYPEMACRO [1]
+          { assert(i != 0); }  // can't unless NEEDFUL_OPTION_USES_WRAPPER [1]
 
         operator intptr_t() const
           { return value; }
@@ -180,7 +180,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
     INLINE Index Offset_To_Index(Offset o)
      { return Index {o + 1}; }
 
-  #if CHECK_OPTIONAL_TYPEMACRO
+  #if NEEDFUL_OPTION_USES_WRAPPER
     template<>
     struct OptionWrapper<Index> {  // bypass the 0 assert
         intptr_t p;

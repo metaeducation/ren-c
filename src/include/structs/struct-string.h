@@ -180,7 +180,7 @@ typedef struct BookmarkStruct Bookmark;
         SymbolOrValueHolder(const Symbol* s) : p (s) {}
         SymbolOrValueHolder(const Value* v) : p (v) {}
 
-      #if CHECK_OPTIONAL_TYPEMACRO  // Option(const Symbol*) <> const Symbol*
+      #if NEEDFUL_OPTION_USES_WRAPPER  // Option(const Symbol*) <> const Symbol*
         SymbolOrValueHolder(Option(const Symbol*)& s) : p (maybe s) {}
       #endif
 

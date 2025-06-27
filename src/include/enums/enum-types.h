@@ -305,7 +305,7 @@
 #define TYPE_0 /* add safety of the Option() [1] */ \
     u_cast(Option(Heart), TYPE_0_constexpr)
 
-#if CHECK_OPTIONAL_TYPEMACRO  // make safe for extension types [2]
+#if NEEDFUL_OPTION_USES_WRAPPER  // make safe for extension types [2]
     bool operator==(Option(Type)& a, Option(Type)& b) = delete;
     void operator!=(Option(Type)& a, Option(Type)& b) = delete;
 

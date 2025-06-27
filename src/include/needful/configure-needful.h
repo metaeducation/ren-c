@@ -160,10 +160,10 @@
 #endif
 
 
-//=//// CHECK_OPTIONAL_TYPEMACRO //////////////////////////////////////////=//
+//=//// NEEDFUL_OPTION_USES_WRAPPER //////////////////////////////////////////=//
 
-#if !defined(CHECK_OPTIONAL_TYPEMACRO)
-    #define CHECK_OPTIONAL_TYPEMACRO  0
+#if !defined(NEEDFUL_OPTION_USES_WRAPPER)
+    #define NEEDFUL_OPTION_USES_WRAPPER  0
 #endif
 
 
@@ -232,4 +232,16 @@
 
 #if !defined(ASSERT_IMPOSSIBLE_THINGS)
     #define ASSERT_IMPOSSIBLE_THINGS  0  // don't bother with impossible()
+#endif
+
+
+//=//// USE DEFAULT SHORTHANDS ////////////////////////////////////////////=//
+//
+// By default, we define things like `Option()` and `maybe` and `unwrap`.
+// But these may be defined by clients, so allow disablement of these short
+// forms, so that they can define them via other names.
+//
+
+#if !defined(NEEDFUL_USE_DEFAULT_SHORTHANDS)
+    #define NEEDFUL_USE_DEFAULT_SHORTHANDS  1
 #endif
