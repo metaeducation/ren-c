@@ -863,7 +863,7 @@ DECLARE_NATIVE(ENHEX)
         Byte encoded[UNI_ENCODED_MAX];
         REBLEN encoded_size;
 
-        if (c >= 0x80) {  // all non-ASCII characters *must* be percent encoded
+        if (Is_Utf8_Lead_Byte(c)) {  // non-ASCII chars MUST be percent-encoded
             encoded_size = Encoded_Size_For_Codepoint(c);
             Encode_UTF8_Char(encoded, c, encoded_size);
         }

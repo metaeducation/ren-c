@@ -45,7 +45,7 @@ uint32_t Hash_Scan_UTF8_Caseless_May_Panic(const Byte* utf8, Size size)
     for (; size != 0; ++utf8, --size) {
         Codepoint c = *utf8;
 
-        if (c >= 0x80) {
+        if (Is_Utf8_Lead_Byte(c)) {
             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &utf8, &size);
             if (e)
                 panic (unwrap e);

@@ -306,7 +306,7 @@ String* Append_UTF8_May_Panic(
     Size bytes_left = size;  // see remarks on Back_Scan_Utf8_Char's 3rd arg
     for (; bytes_left > 0; --bytes_left, ++bp) {
         Codepoint c = *bp;
-        if (c >= 0x80) {
+        if (Is_Utf8_Lead_Byte(c)) {
             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &bytes_left);
             if (e)
                 panic (unwrap e);

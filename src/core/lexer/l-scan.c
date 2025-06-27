@@ -490,14 +490,14 @@ static Error* Error_Missing(ScanState* S, Byte wanted) {
 // test: to-integer load to-blob mold to-char 1234
 //
 static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
-    Codepoint *out,
+    Init(Codepoint) out,
     const Byte* bp
 ){
     Byte c = *bp;
     if (c == '\0')
         return nullptr;  // signal error if end of string
 
-    if (c >= 0x80) {  // multibyte sequence
+    if (Is_Utf8_Lead_Byte(c)) {  // multibyte sequence
         Option(Error*) e = Trap_Back_Scan_Utf8_Char(out, &bp, nullptr);
         if (e) {
             UNUSED(e);  // !!! This should be Trap_Scan_Utf8_Char_Escapable()
@@ -726,7 +726,7 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
             break;
 
           default:
-            if (c >= 0x80) {
+            if (Is_Utf8_Lead_Byte(c)) {
                 Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &cp, nullptr);
                 if (e)
                     return e;
@@ -872,7 +872,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
             if (not (cp = maybe Try_Scan_Hex2(&decoded, cp + 1)))
                 return Error_User("Bad Hex Encoded Character");
             c = decoded;
-            if (c >= 0x80)
+            if (Is_Utf8_Lead_Byte(c))
                 return Error_User(  // [1]
                     "Hex encoding for UTF-8 in Filenames not supported yet"
                 );
@@ -891,7 +891,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
 
     } handle_multibyte_utf8_chars: { /////////////////////////////////////////
 
-        if (c >= 0x80) {
+        if (Is_Utf8_Lead_Byte(c)) {
             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &cp, nullptr);
             if (e)
                 return e;

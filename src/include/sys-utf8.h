@@ -72,6 +72,8 @@
 //
 #define UNI_ENCODED_MAX 4
 
+#define Is_Utf8_Lead_Byte(b) \
+    ((b) >= 0x80)
 
 #define Is_Continuation_Byte(b) \
     (((b) & 0xC0) == 0x80)  // only certain if UTF-8 validity is already known
@@ -260,7 +262,7 @@ INLINE bool Is_Legal_UTF8(const Byte* source, int length) {
 // would try to read continuation bytes past a `\0` string terminator.  :-/
 //
 INLINE const Byte* Back_Scan_Utf8_Char_Unchecked(
-    Codepoint *out,
+    Init(Codepoint) out,
     const Byte* bp
 ){
     *out = *bp;  // wait to increment...

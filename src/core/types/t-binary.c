@@ -1066,7 +1066,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
     // The process of byte production of a positive number shouldn't give us
     // something with the high bit set in a signed representation.
     //
-    if (not no_sign and not negative and *(bp - delta) >= 0x80)
+    if (not no_sign and not negative and Is_Utf8_Lead_Byte(*(bp - delta)))
         return rebDelegate(
             "panic [",
                 ARG(NUM), "-[aliases a negative value with signed]-",

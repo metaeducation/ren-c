@@ -378,7 +378,7 @@ REBLEN Modify_String_Or_Binary(
         // otherwise `append #{123456} 10` is #{1234560A}, just the byte
 
         src_byte = VAL_UINT8(src);  // panics if out of range
-        if (Is_Stub_String(dst_flex) and src_byte >= 0x80)
+        if (Is_Stub_String(dst_flex) and Is_Utf8_Lead_Byte(src_byte))
             panic (Error_Bad_Utf8_Bin_Edit_Raw());
 
         src_ptr = &src_byte;
