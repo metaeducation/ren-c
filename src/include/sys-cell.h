@@ -522,6 +522,31 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 }
 
 
+//=//// FAST JOINT HEART AND LIFT CHECK ///////////////////////////////////=//
+//
+// This macro is used to check if a cell has a particular heart and lift
+// combination, and does so by testing the header bits against a mask which
+// can be calculated at compile-time.
+//
+// Note that Ensure_Readable() is a no-op in the release build.
+//
+
+#define Unchecked_Cell_Has_Lift_Sigil_Heart(lift,sigil,heart,cell) \
+    (((cell)->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) \
+        == (FLAG_SIGIL(sigil) | FLAG_HEART(heart) | FLAG_LIFT_BYTE(lift)))
+
+#define Cell_Has_Lift_Sigil_Heart(lift,sigil,heart,cell) \
+    Unchecked_Cell_Has_Lift_Sigil_Heart((lift), (sigil), (heart), \
+        Ensure_Readable(cell))
+
+#define Unchecked_Cell_Has_Lift_Heart_No_Sigil(lift,heart,cell) \
+    Unchecked_Cell_Has_Lift_Sigil_Heart((lift), SIGIL_0, (heart), (cell))
+
+#define Cell_Has_Lift_Heart_No_Sigil(lift,heart,cell) \
+    Unchecked_Cell_Has_Lift_Heart_No_Sigil((lift), (heart), \
+        Ensure_Readable(cell))
+
+
 //=//// HOOKABLE KIND_BYTE() ACCESSOR ////////////////////////////////////=//
 //
 // This has to be defined after `Cell` is fully defined.

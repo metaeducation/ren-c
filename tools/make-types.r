@@ -92,9 +92,9 @@ for-each-datatype: func [
         ][
             ahead group! into [
                 ['CELL_MASK_NO_MARKING <end>]
-                    (cellmask*: the (CELL_MASK_NO_MARKING))
+                    (cellmask*: 'CELL_MASK_NO_MARKING)
                 | ['payload1 <end>]
-                    (cellmask*: the (CELL_FLAG_DONT_MARK_PAYLOAD_2))
+                    (cellmask*: 'CELL_FLAG_DONT_MARK_PAYLOAD_2)
                 | [the :payload1 <end>]
                     (cellmask*: null)  ; don't define a CELL_MASK_XXX
                 | [the :payload1 the :payload2]
@@ -104,7 +104,7 @@ for-each-datatype: func [
                 | ['payload1 the :payload2]
                     (cellmask*: null)  ; don't define a CELL_MASK_XXX
                 | ['payload2 <end>]
-                    (cellmask*: the (CELL_FLAG_DONT_MARK_PAYLOAD_1))
+                    (cellmask*: 'CELL_FLAG_DONT_MARK_PAYLOAD_1)
             ]
             | pos: <here> (
                 panic ["Bad payload1/payload2 spec for" name* "in %types.r"]
@@ -244,12 +244,9 @@ e-types/emit [--[
      * the specific heart byte:
      *
      *     #define Is_Text(cell) \
-     *         ((Ensure_Readable(cell)->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) \
-     *           == (FLAG_HEART(TYPE_TEXT) | FLAG_LIFT_BYTE(NOQUOTE_2)))
+     *         Cell_Has_Lift_Heart_No_Sigil(NOQUOTE_2, TYPE_TEXT, (cell))
      *
      * This avoids the branching in Type_Of(), so it's a slight bit faster.
-     *
-     * Note that Ensure_Readable() is a no-op in the release build.
      */
 ]--]
 
@@ -262,12 +259,9 @@ for-each-datatype 't [
     ]
 
     e-types/emit [propercase-of t --[
-        #define Unchecked_Is_${propercase-of T.name}(atom) \
-            ((ensure(const Atom*, atom)->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) \
-                == (FLAG_LIFT_BYTE(NOQUOTE_2) | FLAG_HEART(TYPE_$<T.NAME>)))
-
-        #define Is_${propercase-of T.name}(cell)  /* $<T.HEART> */ \
-            Unchecked_Is_${propercase-of T.name}(Ensure_Readable(cell))
+        #define Is_${propercase-of T.name}(value) \
+            Cell_Has_Lift_Heart_No_Sigil(NOQUOTE_2, TYPE_$<T.NAME>, \
+                ensure(const Value*, (value)))
     ]--]
 ]
 
@@ -278,7 +272,7 @@ for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
 
     e-types/emit [tr --[
         INLINE bool Any_${Proper-Name}_Type(Option(Type) t)
-          { return u_cast(Byte, maybe t) >= $<TR.START> and u_cast(Byte, maybe t) <= $<TR.END>; }
+          { return u_cast(Byte, (t)) >= $<TR.START> and u_cast(Byte, (t)) <= $<TR.END>; }
 
         #define Any_${Proper-Name}(cell) \
             Any_${Proper-Name}_Type(Type_Of(cell))
@@ -336,7 +330,7 @@ e-types/emit newline
 for-each [ts-name types] sparse-typesets [
     e-types/emit [propercase-of ts-name --[
         INLINE bool Any_${propercase-of Ts-Name}_Type(Option(Type) t) {
-            return did (g_sparse_memberships[u_cast(Byte, maybe t)] & TYPESET_FLAG_${TS-NAME});
+            return did (g_sparse_memberships[u_cast(Byte, (t))] & TYPESET_FLAG_${TS-NAME});
         }
 
         #define Any_${propercase-of Ts-Name}(cell) \
@@ -355,17 +349,14 @@ for-each-datatype 't [
     ; a macro vs. an inline function.  Revisit.
     ;
     e-types/emit [t proper-name --[
-        #define Unchecked_Is_$<Proper-Name>(cell) \
-            ((ensure(const $<Need>*, (cell))->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) \
-                == (FLAG_LIFT_BYTE(ANTIFORM_1) | FLAG_HEART(TYPE_$<T.NAME>)))
-
-
         #define Is_$<Proper-Name>(cell) \
-            Unchecked_Is_$<Proper-Name>(Ensure_Readable(cell))
+            Cell_Has_Lift_Heart_No_Sigil(ANTIFORM_1, TYPE_$<T.NAME>, \
+                ensure(const $<Need>*, (cell)))
+
 
         #define Is_Lifted_$<Proper-Name>(cell) \
-            ((Ensure_Readable(cell)->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) \
-            == (FLAG_LIFT_BYTE(QUASIFORM_3) | FLAG_HEART(TYPE_$<T.NAME>)))
+            Cell_Has_Lift_Heart_No_Sigil(QUASIFORM_3, TYPE_$<T.NAME>, \
+                ensure(const Value*, (cell)))
 
         #define Is_Quasi_$<Propercase-Of T.Name>(cell) \
             Is_Lifted_$<Proper-Name>(cell)  /* alternative */
@@ -382,12 +373,9 @@ for-each-datatype 't [
     ; provoke some thought from testing casually.
     ;
     e-types/emit [t proper-name --[
-        #define Unchecked_Is_Possibly_Unstable_Atom_$<Proper-Name>(atom) \
-            ((ensure(const Atom*, (atom))->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) \
-                == (FLAG_LIFT_BYTE(ANTIFORM_1) | FLAG_HEART(TYPE_$<T.NAME>)))
-
-        #define Is_Possibly_Unstable_Atom_$<Proper-Name>(cell) \
-            Unchecked_Is_Possibly_Unstable_Atom_$<Proper-Name>(Ensure_Readable(cell))
+        #define Is_Possibly_Unstable_Atom_$<Proper-Name>(atom) \
+            Cell_Has_Lift_Heart_No_Sigil(ANTIFORM_1, TYPE_$<T.NAME>, \
+                ensure(const Atom*, (atom)))
     ]--]
 ]
 

@@ -52,7 +52,7 @@ INLINE Element* Init_Lifted_Void_Untracked(Sink(Element) out) {
 #define Init_Lifted_Void(out) \
     TRACK(Init_Lifted_Void_Untracked((out)))
 
-INLINE bool Is_Lifted_Void(const Atom* v) {
+INLINE bool Is_Lifted_Void(const Value* v) {
     if (not Is_Lifted_Pack(v))
         return false;
     const Element* tail;

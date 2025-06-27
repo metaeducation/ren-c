@@ -129,24 +129,3 @@ INLINE Option(Slot*) Sea_Slot(SeaOfVars* sea, const Symbol* sym, bool strict) {
         return nullptr;
     return u_cast(Slot*, Stub_Cell(patch));
 }
-
-INLINE Value* Mutable_Lib_Var(SymId id) {
-    assert(id <= MAX_SYM_LIB_PREMADE);
-    Value* slot = cast(Value*, Stub_Cell(&g_lib_patches[id]));
-    assert(Not_Cell_Flag(slot, PROTECTED));
-    return slot;
-}
-
-INLINE const Value* Lib_Var(SymId id) {
-    assert(id <= MAX_SYM_LIB_PREMADE);
-    Value* slot = cast(Value*, Stub_Cell(&g_lib_patches[id]));
-    assert(not Is_Trash(slot));
-    return slot;
-}
-
-INLINE Sink(Value) Sink_Lib_Var(SymId id) {
-    assert(id <= MAX_SYM_LIB_PREMADE);
-    return cast(Value*, Stub_Cell(&g_lib_patches[id]));
-}
-
-#define LIB(name)  Lib_Var(SYM_##name)

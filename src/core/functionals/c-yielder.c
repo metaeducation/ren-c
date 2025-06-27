@@ -398,7 +398,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         and Cell_Frame_Coupling(label) == Level_Varlist(L)
     ){
         CATCH_THROWN(OUT, L);
-        if (not Is_Lifted_Error(OUT)) {  // THROW:FINAL value
+        if (not Is_Error(OUT)) {  // THROW:FINAL value
             Init_Space(original_frame);
             return Unliftify_Undecayed(OUT);  // done, this is last value
         }

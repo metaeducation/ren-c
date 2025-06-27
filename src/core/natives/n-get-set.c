@@ -83,7 +83,7 @@ Context* Adjust_Context_For_Coupling(Context* c) {
                 continue;
         }
         else if (Is_Stub_Use(c)) {  // e.g. LAMBDA or DOES uses this
-            if (not Is_Frame(Stub_Cell(c)))
+            if (not Is_Frame(Known_Stable(Stub_Cell(c))))
                 continue;
             frame_varlist = Cell_Varlist(Stub_Cell(c));
         }
@@ -799,7 +799,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         Decay_If_Unstable(value_arg);
         Liftify(value_arg);
 
-        if (Is_Lifted_Action(value_arg)) {
+        if (Is_Lifted_Action(Known_Stable(value_arg))) {
             if (Not_Cell_Flag(TOP, OUT_HINT_UNSURPRISING))
                 return Error_Surprising_Action_Raw(picker_arg);
 

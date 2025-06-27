@@ -665,6 +665,8 @@ enum {
 
 //=//// EVALUATOR SERVICES ////////////////////////////////////////////////=//
 
+#include "sys-lib.h"
+
 #include "sys-bounce.h"
 #include "sys-throw.h"
 #include "sys-feed.h"

@@ -195,23 +195,19 @@ INLINE Element* Init_Utf8_Non_String(
 // this routine can be used.
 //
 INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
+    assert(c != '\0');  // NUL is #{00}, a BLOB! not an RUNE! (see Is_NUL())
+
     Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART(TYPE_RUNE) | CELL_MASK_NO_MARKING
     );
 
-    if (c == 0) {  // NUL is #{00}, a BLOB! not an RUNE! (see Is_NUL())
-        Copy_Cell(out, cast(const Element*, LIB(NUL)));
-    }
-    else {
-        Size encoded_size = Encoded_Size_For_Codepoint(c);
-        Encode_UTF8_Char(out->payload.at_least_8, c, encoded_size);
-        out->payload.at_least_8[encoded_size] = '\0';  // terminate
+    Size encoded_size = Encoded_Size_For_Codepoint(c);
+    Encode_UTF8_Char(out->payload.at_least_8, c, encoded_size);
+    out->payload.at_least_8[encoded_size] = '\0';  // terminate
 
-        out->extra.at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
-        out->extra.at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
-        KIND_BYTE(out) = TYPE_RUNE;  // heart is TEXT, presents as issue
-    }
+    out->extra.at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
+    out->extra.at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
 
     assert(Cell_Codepoint(out) == c);
     return out;

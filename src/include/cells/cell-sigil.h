@@ -48,29 +48,35 @@
 //   not why: the design had already converged on 3.
 //
 
-INLINE bool Any_Plain(const Element* e) {
-    if (LIFT_BYTE(e) != NOQUOTE_2)
-        return false;
-    return not (e->header.bits & CELL_MASK_SIGIL);
-}
 
-#define Is_Metaform(v)  (Type_Of(v) == TYPE_METAFORM)
-#define Is_Pinned(v)  (Type_Of(v) == TYPE_PINNED)
-#define Is_Tied(v)    (Type_Of(v) == TYPE_TIED)
+#define Unchecked_Unlifted_Cell_Has_Sigil(sigil,cell) \
+    (((cell)->header.bits & (CELL_MASK_LIFT | CELL_MASK_SIGIL)) == \
+        (FLAG_LIFT_BYTE(NOQUOTE_2) | FLAG_SIGIL(sigil)))
 
-#define Is_Sigiled(heart,sigil,v) \
-    ((Ensure_Readable(v)->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) == \
-        (FLAG_LIFT_BYTE(NOQUOTE_2) | \
-            (FLAG_HEART(heart) | FLAG_SIGIL(sigil))))
+#define Unlifted_Cell_Has_Sigil(sigil,cell) \
+    Unchecked_Unlifted_Cell_Has_Sigil((sigil), Ensure_Readable(cell))
+
+#define Any_Plain(v) \
+    Unlifted_Cell_Has_Sigil(SIGIL_0, ensure(const Value*, (v)))
+
+#define Is_Metaform(v) \
+    Unlifted_Cell_Has_Sigil(SIGIL_META, ensure(const Value*, (v)))
+
+#define Is_Pinned(v) \
+    Unlifted_Cell_Has_Sigil(SIGIL_PIN, ensure(const Value*, (v)))
+
+#define Is_Tied(v) \
+    Unlifted_Cell_Has_Sigil(SIGIL_TIE, ensure(const Value*, (v)))
+
 
 #define Is_Pinned_Form_Of(heartname, v) \
-    Is_Sigiled(TYPE_##heartname, SIGIL_PIN, (v))
+    Cell_Has_Lift_Sigil_Heart(NOQUOTE_2, SIGIL_PIN, TYPE_##heartname, (v))
 
 #define Is_Meta_Form_Of(heartname, v) \
-    Is_Sigiled(TYPE_##heartname, SIGIL_META, (v))
+    Cell_Has_Lift_Sigil_Heart(NOQUOTE_2, SIGIL_META, TYPE_##heartname, (v))
 
 #define Is_Tied_Form_Of(heartname, v) \
-    Is_Sigiled(TYPE_##heartname, SIGIL_TIE, (v))
+    Cell_Has_Lift_Sigil_Heart(NOQUOTE_2, SIGIL_TIE, TYPE_##heartname, (v))
 
 
 INLINE Option(Sigil) Sigil_Of(const Element* e)

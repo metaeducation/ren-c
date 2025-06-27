@@ -145,7 +145,7 @@ INLINE bool Is_Heavy_Null(const Atom* v) {
     return (tail == at + 1) and Is_Lifted_Null(at);
 }
 
-INLINE bool Is_Lifted_Heavy_Null(const Atom* v) {
+INLINE bool Is_Lifted_Heavy_Null(const Value* v) {
     if (not Is_Lifted_Pack(v))
         return false;
     const Element* tail;
