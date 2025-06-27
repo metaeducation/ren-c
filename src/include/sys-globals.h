@@ -48,9 +48,9 @@ PVAR CFunction* const* g_native_cfunc_pos;
 PVAR SeaOfVars* g_currently_loading_module;
 
 //-- Various char tables:
-PVAR Byte* White_Chars;
-PVAR Codepoint *Upper_Cases;
-PVAR Codepoint *Lower_Cases;
+PVAR Byte* g_white_chars;
+PVAR Codepoint* g_upper_cases;
+PVAR Codepoint* g_lower_cases;
 
 #if DEBUG_HAS_PROBE
     PVAR bool g_probe_panics;  // helpful especially for boot crashes

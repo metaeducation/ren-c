@@ -108,7 +108,7 @@ void Change_Case(
 
             Codepoint c;
             up = Utf8_Next(&c, up);
-            if (c < UNICODE_CASES) {
+            if (c < NUM_UNICODE_CASES) {
                 dp = Write_Codepoint(dp, UP_CASE(c));
                 assert(dp == up); // !!! not all case changes same byte size?
             }
@@ -121,7 +121,7 @@ void Change_Case(
 
             Codepoint c;
             up = Utf8_Next(&c, up);
-            if (c < UNICODE_CASES) {
+            if (c < NUM_UNICODE_CASES) {
                 dp = Write_Codepoint(dp, LO_CASE(c));
                 assert(dp == up); // !!! not all case changes same byte size?
             }

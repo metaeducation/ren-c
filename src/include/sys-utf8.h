@@ -173,7 +173,7 @@ enum {
     DEL = 127
 };
 
-#define UNICODE_CASES 0x2E00  // size of unicode folding table
+#define NUM_UNICODE_CASES  0x2E00  // size of unicode folding table
 
 // !!! Cases present a lot of problems.  Technically speaking the upper and
 // lowercase sizes of a character may not be the same:
@@ -183,16 +183,16 @@ enum {
 // Unicode "case folding" is more complex than this table used by R3-Alpha.
 
 INLINE Codepoint UP_CASE(Codepoint c)
-  { assert(c != '\0'); return c < UNICODE_CASES ? Upper_Cases[c] : c; }
+  { assert(c != '\0'); return c < NUM_UNICODE_CASES ? g_upper_cases[c] : c; }
 
 INLINE Codepoint LO_CASE(Codepoint c)
-  { assert(c != '\0'); return c < UNICODE_CASES ? Lower_Cases[c] : c; }
+  { assert(c != '\0'); return c < NUM_UNICODE_CASES ? g_lower_cases[c] : c; }
 
 INLINE bool Is_Codepoint_Whitespace(Codepoint c)
-  { assert(c != '\0'); return c <= 32 and ((White_Chars[c] & 1) != 0); }
+  { assert(c != '\0'); return c <= 32 and ((g_white_chars[c] & 1) != 0); }
 
 INLINE bool Is_Codepoint_Space(Codepoint c)
-  { assert(c != '\0'); return c <= 32 and ((White_Chars[c] & 2) != 0); }
+  { assert(c != '\0'); return c <= 32 and ((g_white_chars[c] & 2) != 0); }
 
 
 // Utility routine to tell whether a sequence of bytes is legal UTF-8.

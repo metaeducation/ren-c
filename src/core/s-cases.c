@@ -25,7 +25,7 @@
 #include "sys-core.h"
 
 // Unicode 5.0 case folding table:
-static const Codepoint Char_Cases[] = {
+static const Codepoint g_codepoint_cases[] = {
     0x0041, 0x0061, // LATIN CAPITAL LETTER A
     0x0042, 0x0062, // LATIN CAPITAL LETTER B
     0x0043, 0x0063, // LATIN CAPITAL LETTER C
@@ -906,34 +906,40 @@ static const Codepoint Char_Cases[] = {
 //
 void Init_Char_Cases(void)
 {
-    // Init whitespace table:
-    White_Chars = Try_Alloc_Memory_N(Byte, 34);
-    memset(White_Chars, 1, 33); // All white chars: NL, CR, BS, etc...
-    White_Chars[cast(Byte, ' ')] = 3; // space
-    White_Chars[cast(Byte, '\t')] = 3; // tab
-    White_Chars[0] = 0; // special
+  init_whitespace_table: {
 
-    // Casing tables:
-    Upper_Cases = Try_Alloc_Memory_N(Codepoint, UNICODE_CASES);
-    Lower_Cases = Try_Alloc_Memory_N(Codepoint, UNICODE_CASES);
+    ensure_nullptr(g_white_chars) = Try_Alloc_Memory_N(Byte, 34);
+    memset(g_white_chars, 1, 33); // All white chars: NL, CR, BS, etc...
+    g_white_chars[cast(Byte, ' ')] = 3; // space
+    g_white_chars[cast(Byte, '\t')] = 3; // tab
+    g_white_chars[0] = 0; // special
+
+} init_casing_tables: {
+
+    ensure_nullptr(g_upper_cases) = Try_Alloc_Memory_N(
+        Codepoint, NUM_UNICODE_CASES
+    );
+    ensure_nullptr(g_lower_cases) = Try_Alloc_Memory_N(
+        Codepoint, NUM_UNICODE_CASES
+    );
 
     int n;
-    for (n = 0; n < UNICODE_CASES; n++) {
-        Upper_Cases[n] = n;
-        Lower_Cases[n] = n;
+    for (n = 0; n < NUM_UNICODE_CASES; n++) {
+        g_upper_cases[n] = n;
+        g_lower_cases[n] = n;
     }
 
-    const Codepoint *up;
-    for (up = &Char_Cases[0]; *up; up += 2) {
+    const Codepoint* up;
+    for (up = &g_codepoint_cases[0]; *up; up += 2) {
         //
         // Only map if not already set (multiple mappings exist):
         //
-        if (Upper_Cases[up[1]] == up[1])
-            Upper_Cases[up[1]] = up[0];
-        if (Lower_Cases[up[1]] == up[1])
-            Lower_Cases[up[0]] = up[1];
+        if (g_upper_cases[up[1]] == up[1])
+            g_upper_cases[up[1]] = up[0];
+        if (g_lower_cases[up[1]] == up[1])
+            g_lower_cases[up[0]] = up[1];
     }
-}
+}}
 
 
 //
@@ -941,7 +947,11 @@ void Init_Char_Cases(void)
 //
 void Shutdown_Char_Cases(void)
 {
-    Free_Memory_N(Codepoint, UNICODE_CASES, Upper_Cases);
-    Free_Memory_N(Codepoint, UNICODE_CASES, Lower_Cases);
-    Free_Memory_N(Byte, 34, White_Chars);
+    Free_Memory_N(Codepoint, NUM_UNICODE_CASES, g_upper_cases);
+    g_upper_cases = nullptr;
+    Free_Memory_N(Codepoint, NUM_UNICODE_CASES, g_lower_cases);
+    g_lower_cases = nullptr;
+
+    Free_Memory_N(Byte, 34, g_white_chars);
+    g_white_chars = nullptr;
 }

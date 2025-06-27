@@ -218,7 +218,7 @@ bool Check_Bit(const Binary* bset, REBLEN c, bool uncased)
     bool flag = false;
 
     if (uncased) {
-        if (n >= UNICODE_CASES)
+        if (n >= NUM_UNICODE_CASES)
             uncased = false; // no need to check
         else
             n = LO_CASE(c);
