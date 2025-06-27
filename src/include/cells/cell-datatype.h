@@ -182,18 +182,15 @@ INLINE Option(Type) Cell_Datatype_Type(const Value* v) {
 #endif
 
 INLINE Option(Heart) Cell_Datatype_Heart(const Value* v) {
-    Option(SymId) id = Cell_Datatype_Id(v);
-    if (not id or not Is_Symbol_Id_Of_Builtin_Type(unwrap id))
-        return TYPE_0;
-
-    Byte type_byte = cast(Byte, Type_From_Symbol_Id(unwrap id));
-    assert(type_byte <= u_cast(Byte, MAX_HEART));  // not QUOTED/QUASI/ANTI
-    return u_cast(HeartEnum, type_byte);
+    Byte type_byte_or_0 = u_cast(Byte, Cell_Datatype_Type(v));
+    assert(type_byte_or_0 <= u_cast(Byte, MAX_HEART));  // no QUOTE/QUASI/ANTI
+    return u_cast(Option(Heart), type_byte_or_0);
 }
 
 INLINE Heart Cell_Datatype_Builtin_Heart(const Value* v) {
-    Option(SymId) id = Cell_Datatype_Id(v);
-    Byte type_byte = cast(Byte, Type_From_Symbol_Id(unwrap id));
+    Option(Type) type = Cell_Datatype_Type(v);
+    assert(type);
+    Byte type_byte = u_cast(Byte, type);
     assert(type_byte <= u_cast(Byte, MAX_HEART));  // not QUOTED/QUASI/ANTI
     return u_cast(HeartEnum, type_byte);
 }
