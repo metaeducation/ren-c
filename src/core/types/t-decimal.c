@@ -348,10 +348,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
         GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
         mo->digits
     );
-    Append_Ascii_Len(mo->string, s_cast(buf), len);
+    Append_Ascii_Len(mo->strand, s_cast(buf), len);
 
     if (heart == TYPE_PERCENT)
-        Append_Ascii(mo->string, "%");
+        Append_Ascii(mo->strand, "%");
 
     return TRIPWIRE;
 }
@@ -554,27 +554,27 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
         Mold_Element(mo, val);
 
         if (Is_Percent(val)) { // leverage (buggy) rendering 1% vs 1.0% [2]
-            Term_String_Len_Size(
-                mo->string,
-                String_Len(mo->string) - 1,
-                String_Size(mo->string) - 1
+            Term_Strand_Len_Size(
+                mo->strand,
+                Strand_Len(mo->strand) - 1,
+                Strand_Size(mo->strand) - 1
             );
         }
 
         if (Any_String_Type(to))
-            return Init_Any_String(OUT, to, Pop_Molded_String(mo));
+            return Init_Any_String(OUT, to, Pop_Molded_Strand(mo));
 
         if (Try_Init_Small_Utf8(
             OUT,
             to,
-            cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
-            String_Len(mo->string) - mo->base.index,
-            String_Size(mo->string) - mo->base.size
+            cast(Utf8(const*), Binary_At(mo->strand, mo->base.size)),
+            Strand_Len(mo->strand) - mo->base.index,
+            Strand_Size(mo->strand) - mo->base.size
         )){
             Drop_Mold(mo);
             return OUT;
         }
-        const String* s = Pop_Molded_String(mo);
+        const Strand* s = Pop_Molded_Strand(mo);
         Freeze_Flex(s);
         return Init_Any_String(OUT, to, s);
     }

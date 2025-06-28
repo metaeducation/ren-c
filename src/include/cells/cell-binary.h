@@ -96,9 +96,9 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     assert(Heart_Of(c) == TYPE_WORD);
     assert(limit == Cell_Series_Len_At(c));
 
-    const String* spelling = Cell_Word_Symbol(c);
-    *size_out = String_Size(spelling);
-    return String_Head(spelling);
+    const Strand* spelling = Cell_Word_Symbol(c);
+    *size_out = Strand_Size(spelling);
+    return Strand_Head(spelling);
 }
 
 #define Cell_Bytes_At(size_out,v) \

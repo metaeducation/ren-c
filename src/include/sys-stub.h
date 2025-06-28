@@ -152,7 +152,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 
 #define Is_Stub_Source(f)           (Stub_Flavor(f) == FLAVOR_SOURCE)
 
-#define Is_Stub_String(f)           (Stub_Flavor(f) >= MIN_FLAVOR_STRING)
+#define Is_Stub_Strand(f)           (Stub_Flavor(f) >= MIN_FLAVOR_STRAND)
 #define Is_Stub_Symbol(f)           (Stub_Flavor(f) == FLAVOR_SYMBOL)
 #define Is_Stub_Non_Symbol(f)       (Stub_Flavor(f) == FLAVOR_NONSYMBOL)
 #define Is_Stub_Stump(f)            (Stub_Flavor(f) == FLAVOR_STUMP)

@@ -83,13 +83,13 @@ enum {
 };
 
 INLINE bool Last_In_Mold_Is_Slash(Molder* mo) {
-    if (mo->base.size == Flex_Used(mo->string))
+    if (mo->base.size == Flex_Used(mo->strand))
         return false;  // nothing added yet
 
     // It's UTF-8 data, so we can just check the last byte; if it's a
     // continuation code it will not match an ASCII character.
     //
-    return *Flex_Last(Byte, mo->string) == '/';
+    return *Flex_Last(Byte, mo->strand) == '/';
 }
 
 
@@ -112,7 +112,7 @@ INLINE bool Last_In_Mold_Is_Slash(Molder* mo) {
 // volume when no root slash was provided.  It was an odd case to support
 // the MSDOS convention of `c:file`.  That is not done here.
 //
-String* To_REBOL_Path(const Value* string, Flags flags)
+Strand* To_REBOL_Path(const Value* string, Flags flags)
 {
     assert(Is_Text(string));
 
@@ -146,15 +146,15 @@ String* To_REBOL_Path(const Value* string, Flags flags)
                 //
                 // Drop mold so far, and change C:/ to /C/ (and C:X to /C/X)
                 //
-                Term_String_Len_Size(mo->string, mo->base.index, mo->base.size);
-                Append_Codepoint(mo->string, '/');
+                Term_Strand_Len_Size(mo->strand, mo->base.index, mo->base.size);
+                Append_Codepoint(mo->strand, '/');
                 lead_slash = true; // don't do this the second time around
                 goto restart;
             }
 
             saw_colon = true;
 
-            Append_Codepoint(mo->string, '/');  // replace : with a /
+            Append_Codepoint(mo->strand, '/');  // replace : with a /
 
             if (n < len) {
                 utf8 = Utf8_Next(&c, utf8);
@@ -176,7 +176,7 @@ String* To_REBOL_Path(const Value* string, Flags flags)
             saw_slash = true;
         }
 
-        Append_Codepoint(mo->string, c);
+        Append_Codepoint(mo->strand, c);
     }
 
     // If this is supposed to be a directory and the last character is not a
@@ -184,9 +184,9 @@ String* To_REBOL_Path(const Value* string, Flags flags)
     //
     if (flags & PATH_OPT_SRC_IS_DIR)
         if (not Last_In_Mold_Is_Slash(mo))
-            Append_Codepoint(mo->string, '/');
+            Append_Codepoint(mo->strand, '/');
 
-    return Pop_Molded_String(mo);
+    return Pop_Molded_Strand(mo);
 }
 
 
@@ -248,20 +248,20 @@ void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
 
             if (c_peek == '/') {  // %/c/ => "c:/"
                 ++ n;
-                Append_Codepoint(mo->string, c);
-                Append_Codepoint(mo->string, ':');
+                Append_Codepoint(mo->strand, c);
+                Append_Codepoint(mo->strand, ':');
                 utf8 = Utf8_Next(&c, utf8_peek);
                 ++ n;
             }
             else {
                 // %/cc %//cc => "//cc"
                 //
-                Append_Codepoint(mo->string, OS_DIR_SEP);
+                Append_Codepoint(mo->strand, OS_DIR_SEP);
             }
         }
       #endif
 
-        Append_Codepoint(mo->string, OS_DIR_SEP);
+        Append_Codepoint(mo->strand, OS_DIR_SEP);
     }
     else if (flags & REB_FILETOLOCAL_FULL) {
         //
@@ -308,7 +308,7 @@ void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
                     // . character we'd found before the peek ahead and break
                     // to the next loop that copies without further `.` search
                     //
-                    Append_Codepoint(mo->string, '.');
+                    Append_Codepoint(mo->strand, '.');
                     goto segment_loop;
                 }
 
@@ -323,10 +323,10 @@ void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
                     // Seek back to the previous slash in the mold buffer and
                     // truncate it there, to trim off one path segment.
                     //
-                    Count n_seek = String_Len(mo->string);
+                    Count n_seek = Strand_Len(mo->strand);
                     Codepoint c_seek;  // character in mold buffer
                     if (n_seek > mo->base.index) {
-                        Utf8(*) utf8_seek = String_Tail(mo->string);
+                        Utf8(*) utf8_seek = Strand_Tail(mo->strand);
 
                         -- n_seek;
                         utf8_seek = Utf8_Back(&c_seek, utf8_seek);
@@ -349,16 +349,16 @@ void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
 
                         // Terminate, loses '/' (or '\'), but added back below
                         //
-                        Term_String_Len_Size(
-                            mo->string,
+                        Term_Strand_Len_Size(
+                            mo->strand,
                             n_seek,
-                            utf8_seek - String_Head(mo->string) + 1
+                            utf8_seek - Strand_Head(mo->strand) + 1
                         );
                     }
 
                     // Add separator and keep looking (%../../ can happen)
                     //
-                    Append_Codepoint(mo->string, OS_DIR_SEP);
+                    Append_Codepoint(mo->strand, OS_DIR_SEP);
 
                     if (n == len) {
                         assert(c == '\0');  // don't run Utf8_Next() again!
@@ -371,8 +371,8 @@ void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
                 // pending `..` and fall through to the loop that doesn't look
                 // further at .
                 //
-                Append_Codepoint(mo->string, '.');
-                Append_Codepoint(mo->string, '.');
+                Append_Codepoint(mo->strand, '.');
+                Append_Codepoint(mo->strand, '.');
             }
         }
 
@@ -384,14 +384,14 @@ void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
             // a slash or hit the end of the input path string.
             //
             if (c != '/') {
-                Append_Codepoint(mo->string, c);
+                Append_Codepoint(mo->strand, c);
                 continue;
             }
 
-            Size mo_size = String_Size(mo->string);
+            Size mo_size = Strand_Size(mo->strand);
             if (
                 mo_size > mo->base.size
-                and *Binary_At(mo->string, mo_size - 1) == OS_DIR_SEP
+                and *Binary_At(mo->strand, mo_size - 1) == OS_DIR_SEP
             ){
                 // Collapse multiple sequential slashes into just one, by
                 // skipping to the next character without adding to mold.
@@ -408,7 +408,7 @@ void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
 
             // Accept the slash, but translate to backslash on Windows.
             //
-            Append_Codepoint(mo->string, OS_DIR_SEP);
+            Append_Codepoint(mo->strand, OS_DIR_SEP);
             break;
         }
 
@@ -426,14 +426,14 @@ void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
     // is included in the filename (move, delete), so it might not be wanted.
     //
     if (flags & REB_FILETOLOCAL_NO_TAIL_SLASH) {
-        Size mo_size = String_Size(mo->string);
+        Size mo_size = Strand_Size(mo->strand);
         if (
             mo_size > mo->base.size
-            and *Binary_At(mo->string, mo_size - 1) == OS_DIR_SEP
+            and *Binary_At(mo->strand, mo_size - 1) == OS_DIR_SEP
         ){
-            Term_String_Len_Size(
-                mo->string,
-                String_Len(mo->string) - 1,
+            Term_Strand_Len_Size(
+                mo->strand,
+                Strand_Len(mo->strand) - 1,
                 mo_size - 1
             );
         }
@@ -447,12 +447,12 @@ void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
 // Convert Rebol-format filename to a local-format filename.  This is the
 // opposite operation of To_REBOL_Path.
 //
-String* To_Local_Path(const Value* file, Flags flags) {
+Strand* To_Local_Path(const Value* file, Flags flags) {
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
     Mold_File_To_Local(mo, file, flags);
-    return Pop_Molded_String(mo);
+    return Pop_Molded_Strand(mo);
 }
 
 

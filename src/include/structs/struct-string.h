@@ -1,6 +1,6 @@
 //
-//  file: %struct-string.h
-//  summary: "String structure definitions preceding %tmp-internals.h"
+//  file: %struct-strand.h
+//  summary: "Utf8-holding Stub struct definitions preceding %tmp-internals.h"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
@@ -22,12 +22,12 @@
 //
 
 #if CPLUSPLUS_11
-    struct String : public Binary {};  // UTF8-constrained Binary
-    struct Symbol : public String {};  // WORD!-constrained immutable String
+    struct Strand : public Binary {};  // UTF8-constrained Binary
+    struct Symbol : public Strand {};  // WORD!-constrained immutable Strand
 
     struct BookmarkList : public Flex {};
 #else
-    typedef Flex String;
+    typedef Flex Strand;
     typedef Flex Symbol;
 
     typedef Flex BookmarkList;
@@ -36,7 +36,7 @@
 
 //=//// SYMBOL_FLAG_ALL_ASCII /////////////////////////////////////////////=//
 //
-// Symbols don't store a MISC_STRING_NUM_CODEPOINTS (need space in the Stub
+// Symbols don't store a MISC_STRAND_NUM_CODEPOINTS (need space in the Stub
 // for other properties).  They're assumed to be short, so counting their
 // codepoints isn't that slow.  But since they're immutable, we can save
 // whether they're all ASCII at creation time, tells us their num_codepoints
@@ -113,7 +113,7 @@
         | not STUB_FLAG_MISC_NEEDS_MARK  /* hitches not marked */ \
         | not STUB_FLAG_LINK_NEEDS_MARK  /* synonym not marked [1] */)
 
-#define STUB_MASK_STRING \
+#define STUB_MASK_STRAND \
     (FLAG_FLAVOR(FLAVOR_NONSYMBOL) \
         | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  /* needs to kill bookmarks */)
 
@@ -126,7 +126,7 @@
     STUB_MISC_UNMANAGED(symbol_or_patch_or_stump)
 
 
-//=//// SYMBOL STRING STUB SLOT USAGE /////////////////////////////////////=//
+//=//// SYMBOL STRAND STUB SLOT USAGE /////////////////////////////////////=//
 
 #define LINK_SYMBOL_SYNONYM(symbol)  STUB_LINK_UNMANAGED(symbol)
 // MISC for Symbol is MISC_HITCH()
@@ -134,10 +134,17 @@
 // BONUS is not currently used...
 
 
-//=//// NON-SYMBOL STRING STUB SLOT USAGE /////////////////////////////////=//
+//=//// NON-SYMBOL STRAND STUB SLOT USAGE /////////////////////////////////=//
+//
+// The BookmarkList of a Strand is always mutable, because reading moves the
+// last read location around and updating the bookmark is of likely benefit
+// for the next read.
 
-#define LINK_STRING_BOOKMARKS(s)        STUB_LINK_UNMANAGED(s)
-#define MISC_STRING_NUM_CODEPOINTS(s)   (s)->misc.length
+#define LINK_STRAND_BOOKMARKS(s) \
+    *m_cast(Base**, &STUB_LINK_UNMANAGED(s))  // always mutable [1]
+
+#define MISC_STRAND_NUM_CODEPOINTS(s)   (s)->misc.length
+
 // INFO is currently used for info flags regarding locking, etc.
 // BONUS is used for biasing from head of allocation
 

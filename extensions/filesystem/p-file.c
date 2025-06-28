@@ -447,14 +447,14 @@ DECLARE_NATIVE(FILE_ACTOR)
             for (; remain != 0; --remain, ++item) {
                 Form_Element(mo, item);
                 if (Bool_ARG(LINES))
-                    Append_Codepoint(mo->string, LF);
+                    Append_Codepoint(mo->strand, LF);
             }
 
             // !!! This makes a string all at once; could be more efficient if
             // it were written out progressively.  Also, could use the "new
             // REPEND" mechanic of GET-BLOCK! and reduce as it went.
             //
-            Init_Text(data, Pop_Molded_String(mo));
+            Init_Text(data, Pop_Molded_Strand(mo));
             len = Cell_Series_Len_Head(data);
         }
 

@@ -1339,7 +1339,7 @@ DECLARE_NATIVE(COMPOSE2)
         Offset end_offset = VAL_INT32(Data_Stack_At(Element, triples + 2));
 
         Append_UTF8_May_Panic(
-            mo->string,
+            mo->strand,
             cast(const char*, head) + at_offset,
             start_offset - at_offset,
             STRMODE_NO_CR
@@ -1357,7 +1357,7 @@ DECLARE_NATIVE(COMPOSE2)
             const Byte* at = c_cast(Byte*, head) + at_offset;
             bool eval_slash_tail = (
                 Cell_Series_Len_At(eval) != 0
-                and Codepoint_Back_Is_Ascii_Value(Cell_String_Tail(eval), '/')
+                and Codepoint_Back_Is_Ascii_Value(Cell_Strand_Tail(eval), '/')
             );
             bool slash_after_splice = (at[0] == '/');
 
@@ -1381,7 +1381,7 @@ DECLARE_NATIVE(COMPOSE2)
         Form_Element(mo, cast(Element*, eval));
     }
     Append_UTF8_May_Panic(
-        mo->string,
+        mo->strand,
         cast(const char*, head) + at_offset,
         size - at_offset,
         STRMODE_NO_CR
@@ -1389,7 +1389,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     Drop_Data_Stack_To(STACK_BASE);
 
-    String* str = Pop_Molded_String(mo);
+    Strand* str = Pop_Molded_Strand(mo);
     if (not Any_String(input))
         Freeze_Flex(str);
 

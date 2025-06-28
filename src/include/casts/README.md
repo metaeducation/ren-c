@@ -5,7 +5,7 @@ casts, e.g. `(Type)(expression)`.  But if you build the codebase as C++, then
 these casts can do powerful checking, at both compile-time and runtime...
 
 * You can put in rules that prohibit nonsensical casts at compile-time.  This
-  means you can catch things like casting from a Cell* to a String*, or
+  means you can catch things like casting from a Cell* to a Strand*, or
   from an int* to a Base*.
 
 * For casts that are allowed to compile, you can add runtime instrumentation

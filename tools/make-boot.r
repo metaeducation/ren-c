@@ -815,9 +815,9 @@ e-bootblock/emit [compressed --[
      * Size is a constant with storage vs. using a #define, so that relinking
      * is enough to sync up the referencing sites.
      */
-    const Size Symbol_Strings_Compressed_Size = $<length of compressed>;
+    const Size Symbol_Names_Compressed_Size = $<length of compressed>;
 
-    const Byte Symbol_Strings_Compressed[$<length of compressed>] = {
+    const Byte Symbol_Names_Compressed[$<length of compressed>] = {
     $<Binary-To-C:Indent Compressed 4>
     };
 ]--]
@@ -908,8 +908,8 @@ e-boot/emit [fields --[
     /*
      * Symbols in SYM_XXX order, separated by newline characters, compressed.
      */
-    EXTERN_C const Size Symbol_Strings_Compressed_Size;
-    EXTERN_C const Byte Symbol_Strings_Compressed[];
+    EXTERN_C const Size Symbol_Names_Compressed_Size;
+    EXTERN_C const Byte Symbol_Names_Compressed[];
 
     /*
      * Compressed data of the native specifications, uncompressed during boot.

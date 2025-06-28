@@ -128,7 +128,7 @@ DECLARE_NATIVE(MOLD)
     Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
 
-    String* popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
+    Strand* popped = Pop_Molded_Strand(mo);  // sets MOLD_FLAG_TRUNCATED
     Liftify(Init_Text(Array_At(pack, 0), popped));
 
     if (mo->opts & MOLD_FLAG_WAS_TRUNCATED) {
@@ -170,7 +170,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
     );
   #else
     if (Is_Text(v)) {
-        printf("WRITE-STDOUT: %s\n", String_UTF8(Cell_String(v)));
+        printf("WRITE-STDOUT: %s\n", Strand_Utf8(Cell_Strand(v)));
         fflush(stdout);
     }
     else if (Is_Rune_And_Is_Char(v)) {
@@ -379,8 +379,8 @@ DECLARE_NATIVE(BASIC_READ)
     UNUSED(ARG(FILE));
     return PANIC("BASIC-READ is a simple demo used in WASI only");
   #else
-    const String* filename = Cell_String(ARG(FILE));
-    FILE* f = fopen(String_UTF8(filename), "rb");
+    const Strand* filename = Cell_Strand(ARG(FILE));
+    FILE* f = fopen(Strand_Utf8(filename), "rb");
     if (f == nullptr)
         return PANIC(rebError_OS(errno));
     fseek(f, 0, SEEK_END);
@@ -418,8 +418,8 @@ DECLARE_NATIVE(BASIC_WRITE)
     UNUSED(ARG(DATA));
     return PANIC("BASIC-WRITE is a simple demo used in WASI only");
   #else
-    const String* filename = Cell_String(ARG(FILE));
-    FILE* f = fopen(String_UTF8(filename), "wb");
+    const Strand* filename = Cell_Strand(ARG(FILE));
+    FILE* f = fopen(Strand_Utf8(filename), "wb");
     if (f == nullptr)
         return PANIC(rebError_OS(errno));
 

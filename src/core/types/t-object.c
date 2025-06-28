@@ -813,7 +813,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
-    String* s = mo->string;
+    Strand* s = mo->strand;
 
     Context* c = Cell_Context(v);
 
@@ -843,8 +843,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         //
         bool had_output = false;
         while (Try_Advance_Evars(&evars)) {
-            Append_Spelling(mo->string, Key_Symbol(evars.key));
-            Append_Ascii(mo->string, ": ");
+            Append_Spelling(mo->strand, Key_Symbol(evars.key));
+            Append_Ascii(mo->strand, ": ");
 
             DECLARE_ATOM (var);
             Option(Error*) e = Trap_Read_Slot_Meta(var, evars.slot);
@@ -857,7 +857,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             else
                 Mold_Element(mo, Known_Element(var));
 
-            Append_Codepoint(mo->string, LF);
+            Append_Codepoint(mo->strand, LF);
             had_output = true;
         }
         Shutdown_Evars(&evars);
@@ -888,10 +888,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         Init_Set_Word(set_word, spelling);  // want escaping, e.g `|::|: 10`
 
         Mold_Element(mo, set_word);
-        Append_Codepoint(mo->string, ' ');
+        Append_Codepoint(mo->strand, ' ');
 
         if (Is_Dual_Unset(evars.slot)) {
-            Append_Ascii(mo->string, "\\~\\  ; unset");  // !!! review
+            Append_Ascii(mo->strand, "\\~\\  ; unset");  // !!! review
             continue;
         }
 
@@ -933,7 +933,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
-    String* s = mo->string;
+    Strand* s = mo->strand;
 
     Let* let = Cell_Let(v);
 
@@ -958,8 +958,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
     const Value* var = Slot_Hack(Let_Slot(let));
 
     if (form) {
-        Append_Spelling(mo->string, spelling);
-        Append_Ascii(mo->string, ": ");
+        Append_Spelling(mo->strand, spelling);
+        Append_Ascii(mo->strand, ": ");
 
         if (Is_Antiform(var))
             return PANIC(Error_Bad_Antiform(var));  // can't FORM antiforms
@@ -983,7 +983,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
     Init_Set_Word(set_word, spelling);  // want escaping, e.g `|::|: 10`
 
     Mold_Element(mo, set_word);
-    Append_Codepoint(mo->string, ' ');
+    Append_Codepoint(mo->strand, ' ');
 
     if (Is_Antiform(var)) {
         DECLARE_ELEMENT (reified);
@@ -1651,13 +1651,13 @@ IMPLEMENT_GENERIC(FILE_OF, Is_Frame)
     File_Line_Frame_Heuristic(&L, &a, frame);
 
     if (a) {
-        Option(const String*) filename = Link_Filename(a);
+        Option(const Strand*) filename = Link_Filename(a);
         if (filename)
             return Init_File(OUT, unwrap filename);  // !!! URL! vs. FILE! ?
     }
 
     if (L) {
-        Option(const String*) file = File_Of_Level(L);
+        Option(const Strand*) file = File_Of_Level(L);
         if (file)
             return Init_File(OUT, unwrap file);
     }
@@ -1816,10 +1816,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
 
     Option(const Symbol*) label = Cell_Frame_Label_Deep(v);
     if (label) {
-        Append_Codepoint(mo->string, '"');
-        Append_Spelling(mo->string, unwrap label);
-        Append_Codepoint(mo->string, '"');
-        Append_Codepoint(mo->string, ' ');
+        Append_Codepoint(mo->strand, '"');
+        Append_Spelling(mo->strand, unwrap label);
+        Append_Codepoint(mo->strand, '"');
+        Append_Codepoint(mo->strand, ' ');
     }
 
     Array* parameters = Context_To_Array(v, 1);
@@ -1832,7 +1832,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
     // some base64 encoding of a UUID (?)  In the meantime, having the label
     // of the last word used is actually a lot more useful than most things.
 
-    Append_Codepoint(mo->string, ']');
+    Append_Codepoint(mo->strand, ']');
     End_Non_Lexical_Mold(mo);
 
     return TRIPWIRE;

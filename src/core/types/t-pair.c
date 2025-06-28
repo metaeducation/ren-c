@@ -143,7 +143,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Pair)
 
     Mold_Or_Form_Element(mo, Cell_Pair_First(v), form);
 
-    Append_Codepoint(mo->string, 'x');
+    Append_Codepoint(mo->strand, 'x');
 
     Mold_Or_Form_Element(mo, Cell_Pair_Second(v), form);
 
@@ -268,21 +268,21 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
         Mold_Element(mo, Cell_Pair_First(v));
-        Append_Codepoint(mo->string, ' ');
+        Append_Codepoint(mo->strand, ' ');
         Mold_Element(mo, Cell_Pair_Second(v));
         if (Any_String_Type(to))
-            return Init_Any_String(OUT, to, Pop_Molded_String(mo));
+            return Init_Any_String(OUT, to, Pop_Molded_Strand(mo));
 
         if (Try_Init_Small_Utf8_Untracked(
             OUT,
             to,
-            cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
-            String_Len(mo->string) - mo->base.index,
-            String_Size(mo->string) - mo->base.size
+            cast(Utf8(const*), Binary_At(mo->strand, mo->base.size)),
+            Strand_Len(mo->strand) - mo->base.index,
+            Strand_Size(mo->strand) - mo->base.size
         )){
             return OUT;
         }
-        String* s = Pop_Molded_String(mo);
+        Strand* s = Pop_Molded_Strand(mo);
         Freeze_Flex(s);
         return Init_Any_String(OUT, to, s);
     }

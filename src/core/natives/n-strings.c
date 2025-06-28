@@ -207,7 +207,7 @@ DECLARE_NATIVE(JOIN)
     if (Bool_ARG(TAIL) and delimiter)
         Form_Element(mo, unwrap delimiter);
 
-    return Init_Text(OUT, Pop_Molded_String(mo));
+    return Init_Text(OUT, Pop_Molded_Strand(mo));
 
 } not_initial_entry: { ///////////////////////////////////////////////////////
 
@@ -585,17 +585,17 @@ DECLARE_NATIVE(JOIN)
     Drop_Data_Stack_To(STACK_BASE);  // can't be while OnStack() is in scope
 
     Utf8(const*) utf8 = cast(
-        Utf8(const*), Binary_At(mo->string, mo->base.size)
+        Utf8(const*), Binary_At(mo->strand, mo->base.size)
     );
-    Size size = String_Size(mo->string) - mo->base.size;
-    Length len = String_Len(mo->string) - mo->base.index;
+    Size size = Strand_Size(mo->strand) - mo->base.size;
+    Length len = Strand_Len(mo->strand) - mo->base.index;
 
     if (heart == TYPE_WORD) {
         const Symbol* s = Intern_UTF8_Managed(utf8, size);
         Init_Word(OUT, s);
     }
     else if (Any_String_Type(heart)) {
-        Init_Any_String(OUT, heart, Pop_Molded_String(mo));
+        Init_Any_String(OUT, heart, Pop_Molded_Strand(mo));
     }
     else if (heart == TYPE_RUNE) {
         Init_Utf8_Non_String(OUT, heart, utf8, size, len);
@@ -623,7 +623,7 @@ DECLARE_NATIVE(JOIN)
     else
         return PANIC(PARAM(BASE));
 
-    if (mo->string)
+    if (mo->strand)
         Drop_Mold(mo);
 
     return OUT;
@@ -649,9 +649,9 @@ DECLARE_NATIVE(JOIN)
             Mold_Or_Form_Cell_Ignore_Quotes(mo, at, false);
 
             Utf8(const*) utf8 = cast(
-                Utf8(const*), Binary_At(mo->string, mo->base.size)
+                Utf8(const*), Binary_At(mo->strand, mo->base.size)
             );
-            Size size = String_Size(mo->string) - mo->base.size;
+            Size size = Strand_Size(mo->strand) - mo->base.size;
 
             Expand_Flex_Tail(buf, size);
             memcpy(Binary_At(buf, used), c_cast(Byte*, utf8), size);
@@ -814,7 +814,7 @@ DECLARE_NATIVE(ENBASE)
         return PANIC(PARAM(BASE));
     }
 
-    return Init_Text(OUT, Pop_Molded_String(mo));
+    return Init_Text(OUT, Pop_Molded_Strand(mo));
 }
 
 
@@ -869,7 +869,7 @@ DECLARE_NATIVE(ENHEX)
         }
         else {
             if (not Ascii_Char_Needs_Percent_Encoding(cast(Byte, c))) {
-                Append_Codepoint(mo->string, c);
+                Append_Codepoint(mo->strand, c);
                 continue;
             }
             encoded[0] = cast(Byte, c);
@@ -878,16 +878,16 @@ DECLARE_NATIVE(ENHEX)
 
         REBLEN n;
         for (n = 0; n != encoded_size; ++n) {  // use uppercase hex digits [2]
-            Append_Codepoint(mo->string, '%');
-            Append_Codepoint(mo->string, g_hex_digits[(encoded[n] & 0xf0) >> 4]);
-            Append_Codepoint(mo->string, g_hex_digits[encoded[n] & 0xf]);
+            Append_Codepoint(mo->strand, '%');
+            Append_Codepoint(mo->strand, g_hex_digits[(encoded[n] & 0xf0) >> 4]);
+            Append_Codepoint(mo->strand, g_hex_digits[encoded[n] & 0xf]);
         }
     }
 
     return Init_Any_String(
         OUT,
         Heart_Of_Builtin_Fundamental(string),
-        Pop_Molded_String(mo)
+        Pop_Molded_Strand(mo)
     );
 }
 
@@ -929,7 +929,7 @@ DECLARE_NATIVE(DEHEX)
 
     while (c != '\0') {
         if (c != '%') {
-            Append_Codepoint(mo->string, c);
+            Append_Codepoint(mo->strand, c);
             cp = Utf8_Next(&c, cp); // c may be '\0', guaranteed if `i == len`
             continue;
         }
@@ -996,13 +996,13 @@ DECLARE_NATIVE(DEHEX)
         if (scan_size != 0)
             return FAIL("Extra continuation characters in %XX of dehex");
 
-        Append_Codepoint(mo->string, decoded);
+        Append_Codepoint(mo->strand, decoded);
     }
 
     return Init_Any_String(
         OUT,
         Heart_Of_Builtin_Fundamental(string),
-        Pop_Molded_String(mo)
+        Pop_Molded_Strand(mo)
     );
 }
 
@@ -1033,8 +1033,8 @@ DECLARE_NATIVE(DELINE)
         return OUT;
     }
 
-    String* s = Cell_String_Ensure_Mutable(input);
-    REBLEN len_head = String_Len(s);
+    Strand* s = Cell_Strand_Ensure_Mutable(input);
+    REBLEN len_head = Strand_Len(s);
 
     REBLEN len_at = Cell_Series_Len_At(input);
 
@@ -1074,13 +1074,13 @@ DECLARE_NATIVE(DELINE)
                 continue;
             }
             return PANIC(  // DELINE requires any CR to be followed by an LF
-                Error_Illegal_Cr(Step_Back_Codepoint(src), String_Head(s))
+                Error_Illegal_Cr(Step_Back_Codepoint(src), Strand_Head(s))
             );
         }
         dest = Write_Codepoint(dest, c);
     }
 
-    Term_String_Len_Size(s, len_head, dest - Cell_String_At(input));
+    Term_Strand_Len_Size(s, len_head, dest - Cell_String_At(input));
 
     return input;
 }
@@ -1101,7 +1101,7 @@ DECLARE_NATIVE(ENLINE)
 
     Element* string = Element_ARG(STRING);
 
-    String* s = Cell_String_Ensure_Mutable(string);
+    Strand* s = Cell_Strand_Ensure_Mutable(string);
     REBLEN idx = VAL_INDEX(string);
 
     Length len;
@@ -1117,7 +1117,7 @@ DECLARE_NATIVE(ENLINE)
     // but this would not work if someone added, say, an ENLINE:PART...since
     // the byte ending position of interest might not be end of the string.
 
-    Utf8(*) cp = String_At(s, idx);
+    Utf8(*) cp = Strand_At(s, idx);
 
     bool relax = false;  // !!! in case we wanted to tolerate CR LF already?
     Codepoint c_prev = '\0';
@@ -1130,7 +1130,7 @@ DECLARE_NATIVE(ENLINE)
             ++delta;
         if (c == CR and not relax)  // !!! Note: `relax` fixed at false, ATM
             return PANIC(
-                Error_Illegal_Cr(Step_Back_Codepoint(cp), String_Head(s))
+                Error_Illegal_Cr(Step_Back_Codepoint(cp), Strand_Head(s))
             );
         c_prev = c;
     }
@@ -1149,8 +1149,8 @@ DECLARE_NATIVE(ENLINE)
 
     Free_Bookmarks_Maybe_Null(s);  // !!! Could this be avoided sometimes?
 
-    Byte* bp = String_Head(s); // expand may change the pointer
-    Size tail = String_Size(s); // size in bytes after expansion
+    Byte* bp = Strand_Head(s); // expand may change the pointer
+    Size tail = Strand_Size(s); // size in bytes after expansion
 
     // Add missing CRs
 
@@ -1216,7 +1216,7 @@ DECLARE_NATIVE(ENTAB)
         // Count leading spaces, insert TAB for each tabsize:
         if (c == ' ') {
             if (++n >= tabsize) {
-                Append_Codepoint(mo->string, '\t');
+                Append_Codepoint(mo->strand, '\t');
                 n = 0;
             }
             continue;
@@ -1224,13 +1224,13 @@ DECLARE_NATIVE(ENTAB)
 
         // Hitting a leading TAB resets space counter:
         if (c == '\t') {
-            Append_Codepoint(mo->string, '\t');
+            Append_Codepoint(mo->strand, '\t');
             n = 0;
         }
         else {
             // Incomplete tab space, pad with spaces:
             for (; n > 0; n--)
-                Append_Codepoint(mo->string, ' ');
+                Append_Codepoint(mo->strand, ' ');
 
             // Copy chars thru end-of-line (or end of buffer):
             for (; index < len; ++index) {
@@ -1240,17 +1240,17 @@ DECLARE_NATIVE(ENTAB)
                     // append pointer, it just changed the last character to
                     // a newline.  Was this the intent?
                     //
-                    Append_Codepoint(mo->string, '\n');
+                    Append_Codepoint(mo->strand, '\n');
                     break;
                 }
-                Append_Codepoint(mo->string, c);
+                Append_Codepoint(mo->strand, c);
                 up = Utf8_Next(&c, up);
             }
         }
     }
 
     Heart heart = Heart_Of_Builtin_Fundamental(string);
-    return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
+    return Init_Any_String(OUT, heart, Pop_Molded_Strand(mo));
 }
 
 
@@ -1295,10 +1295,10 @@ DECLARE_NATIVE(DETAB)
         cp = Utf8_Next(&c, cp);
 
         if (c == '\t') {
-            Append_Codepoint(mo->string, ' ');
+            Append_Codepoint(mo->strand, ' ');
             n++;
             for (; n % tabsize != 0; n++)
-                Append_Codepoint(mo->string, ' ');
+                Append_Codepoint(mo->strand, ' ');
             continue;
         }
 
@@ -1307,11 +1307,11 @@ DECLARE_NATIVE(DETAB)
         else
             ++n;
 
-        Append_Codepoint(mo->string, c);
+        Append_Codepoint(mo->strand, c);
     }
 
     Heart heart = Heart_Of_Builtin_Fundamental(string);
-    return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
+    return Init_Any_String(OUT, heart, Pop_Molded_Strand(mo));
 }
 
 
@@ -1409,8 +1409,8 @@ DECLARE_NATIVE(TO_HEX)
     // !!! Issue should be able to use string from mold buffer directly when
     // UTF-8 Everywhere unification of ANY-WORD? and ANY-STRING? is done.
     //
-    assert(len == String_Size(mo->string) - mo->base.size);
-    if (not Try_Scan_Rune_To_Stack(Binary_At(mo->string, mo->base.size), len))
+    assert(len == Strand_Size(mo->strand) - mo->base.size);
+    if (not Try_Scan_Rune_To_Stack(Binary_At(mo->strand, mo->base.size), len))
         return PANIC(PARAM(VALUE));
 
     Move_Cell(OUT, TOP_ELEMENT);

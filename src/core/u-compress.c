@@ -115,7 +115,7 @@ static Error* Error_Compression(const z_stream *strm, int ret)
 
     DECLARE_ELEMENT (arg);
     if (strm->msg)
-        Init_Text(arg, Make_String_UTF8(strm->msg));
+        Init_Text(arg, Make_Strand_UTF8(strm->msg));
     else
         Init_Integer(arg, ret);
 

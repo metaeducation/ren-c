@@ -87,13 +87,13 @@ REBINT Detect_UTF(const Byte* bp, Size size)
 //
 // 3. All-ASCII optimization flag on strings is a work-in-progress.
 //
-static String* Decode_UCS2(  // [1]
+static Strand* Decode_UCS2(  // [1]
     const Byte* src,
     Size size,  // byte length of source (not number of codepoints)
     bool little_endian,
     bool crlf_to_lf
 ){
-    String* s = Make_String(size * 2);  // conservative over-alloc [2]
+    Strand* s = Make_Strand(size * 2);  // conservative over-alloc [2]
 
     bool expect_lf = false;
     bool ascii = true;
@@ -101,7 +101,7 @@ static String* Decode_UCS2(  // [1]
 
     Length num_chars = 0;
 
-    Utf8(*) dest = String_Head(s);
+    Utf8(*) dest = Strand_Head(s);
 
     for (; size > 0; --size, ++src) {
         c = *src;
@@ -137,7 +137,7 @@ static String* Decode_UCS2(  // [1]
 
     UNUSED(ascii);  // [3]
 
-    Term_String_Len_Size(s, num_chars, dest - String_Head(s));
+    Term_Strand_Len_Size(s, num_chars, dest - Strand_Head(s));
     return s;
 }
 

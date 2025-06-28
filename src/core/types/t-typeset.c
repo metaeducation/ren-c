@@ -48,11 +48,11 @@ REBINT CT_Parameter(const Element* a, const Element* b, bool strict)
     }
 
     if (
-        Cell_Parameter_String(a) != Cell_Parameter_String(b)
+        Cell_Parameter_Strand(a) != Cell_Parameter_Strand(b)
     ){
         if (
-            maybe Cell_Parameter_String(a)
-            > maybe Cell_Parameter_String(b)
+            maybe Cell_Parameter_Strand(a)
+            > maybe Cell_Parameter_Strand(b)
         ){
             return 1;
         }
@@ -472,7 +472,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
     switch (Cell_Word_Id(picker)) {
       case SYM_TEXT: {
-        Option(const String*) string = Cell_Parameter_String(param);
+        Option(const Strand*) string = Cell_Parameter_Strand(param);
         if (not string)
             return DUAL_LIFTED(nullptr);
         return DUAL_LIFTED(Init_Text(OUT, unwrap string)); }
@@ -530,10 +530,10 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
       case SYM_TEXT: {
         if (not Is_Text(poke))
             return PANIC(poke);
-        String* string = Copy_String_At(poke);
-        Manage_Flex(string);
-        Freeze_Flex(string);
-        Set_Parameter_String(param, string);
+        Strand* strand = Copy_String_At(poke);
+        Manage_Flex(strand);
+        Freeze_Flex(strand);
+        Set_Parameter_Strand(param, strand);
         return WRITEBACK(Copy_Cell(OUT, param)); }  // need Cell pointer update
 
       default:

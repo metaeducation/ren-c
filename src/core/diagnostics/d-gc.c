@@ -121,7 +121,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_URL:
       case TYPE_RUNE: {
         if (Stringlike_Has_Stub(v)) {
-            const Flex* f = Cell_String(v);
+            const Flex* f = Cell_Strand(v);
             assert(Is_Flex_Frozen(f));
 
             assert(Flex_Used(f) + 1 > Size_Of(v->payload.at_least_8));
@@ -143,8 +143,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_PARAMETER: {
         if (Cell_Parameter_Spec(v))
             assert(Is_Base_Marked(unwrap Cell_Parameter_Spec(v)));
-        if (Cell_Parameter_String(v))
-            assert(Is_Base_Marked(unwrap Cell_Parameter_String(v)));
+        if (Cell_Parameter_Strand(v))
+            assert(Is_Base_Marked(unwrap Cell_Parameter_Strand(v)));
         break; }
 
       case TYPE_BITSET: {
@@ -210,13 +210,13 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Not_Base_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
             break;
 
-        const String* s = c_cast(String*, CELL_SERIESLIKE_NODE(v));
+        const Strand* s = c_cast(Strand*, CELL_SERIESLIKE_NODE(v));
         Assert_Flex_Term_If_Needed(s);
 
         assert(Flex_Wide(s) == sizeof(Byte));
         assert(Is_Base_Marked(s));
 
-        if (not Is_String_Symbol(s)) {
+        if (not Is_Strand_Symbol(s)) {
             BookmarkList* book = maybe Link_Bookmarks(s);
             if (book) {
                 assert(Flex_Used(book) == 1);  // just one for now
@@ -353,14 +353,14 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_WORD: {
         assert(Cell_Payload_1_Needs_Mark(v));
 
-        const String *spelling = Cell_Word_Symbol(v);
-        assert(Is_Flex_Frozen(spelling));
+        const Symbol *sym = Cell_Word_Symbol(v);
+        assert(Is_Flex_Frozen(sym));
 
-        assert(Is_Base_Marked(spelling));
+        assert(Is_Base_Marked(sym));
 
         // GC can't run during bind
         //
-        assert(Not_Flavor_Flag(SYMBOL, spelling, HITCH_IS_BIND_STUMP));
+        assert(Not_Flavor_Flag(SYMBOL, sym, HITCH_IS_BIND_STUMP));
 
         if (Cell_Payload_2_Needs_Mark(v)) {
             Stub* stub = u_cast(Stub*, CELL_PAYLOAD_2(v));

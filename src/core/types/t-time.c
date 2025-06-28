@@ -189,30 +189,30 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Time)
     UNUSED(form);  // no difference between MOLD and FORM at this time
 
     if (VAL_NANO(v) < cast(REBI64, 0))  // account for the sign if present
-        Append_Codepoint(mo->string, '-');
+        Append_Codepoint(mo->strand, '-');
 
     REB_TIMEF tf;
     Split_Time(VAL_NANO(v), &tf);  // loses sign
 
     // "H:MM" (pad minutes to two digits, but not the hour)
     //
-    Append_Int(mo->string, tf.h);
-    Append_Codepoint(mo->string, ':');
-    Append_Int_Pad(mo->string, tf.m, 2);
+    Append_Int(mo->strand, tf.h);
+    Append_Codepoint(mo->strand, ':');
+    Append_Int_Pad(mo->strand, tf.m, 2);
 
     // If seconds or nanoseconds nonzero, pad seconds to ":SS", else omit
     //
     if (tf.s != 0 or tf.n != 0) {
-        Append_Codepoint(mo->string, ':');
-        Append_Int_Pad(mo->string, tf.s, 2);
+        Append_Codepoint(mo->strand, ':');
+        Append_Int_Pad(mo->strand, tf.s, 2);
     }
 
     // If nanosecond component is present, present as a fractional amount...
     // trimming any trailing zeros.
     //
     if (tf.n > 0) {
-        Append_Codepoint(mo->string, '.');
-        Append_Int_Pad(mo->string, tf.n, -9);
+        Append_Codepoint(mo->strand, '.');
+        Append_Int_Pad(mo->strand, tf.n, -9);
         Trim_Tail(mo, '0');
     }
 

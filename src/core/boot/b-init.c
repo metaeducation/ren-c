@@ -371,13 +371,13 @@ static void Init_Root_Vars(void)
 
     // Note: rebText() can't run yet, review.
     //
-    String* nulled_uni = Make_String(1);
+    Strand* nulled_uni = Make_Strand(1);
 
   #if RUNTIME_CHECKS
     Codepoint test_nul;
-    Utf8_Next(&test_nul, String_At(nulled_uni, 0));
+    Utf8_Next(&test_nul, Strand_At(nulled_uni, 0));
     assert(test_nul == '\0');
-    assert(String_Len(nulled_uni) == 0);
+    assert(Strand_Len(nulled_uni) == 0);
   #endif
 
     ensure_nullptr(g_empty_text) = Init_Text(Alloc_Value(), nulled_uni);
@@ -621,8 +621,8 @@ void Startup_Core(void)
     Startup_Interning();
 
     Startup_Builtin_Symbols(  // requires API for allocations in decompress
-        Symbol_Strings_Compressed,
-        Symbol_Strings_Compressed_Size
+        Symbol_Names_Compressed,
+        Symbol_Names_Compressed_Size
     );
 
 } startup_datatypes: {
@@ -699,7 +699,7 @@ void Startup_Core(void)
         SYM_GZIP
     );
 
-    const String* tmp_boot = Intern_Unsized_Managed("tmp-boot.r");  // const
+    const Strand* tmp_boot = Intern_Unsized_Managed("tmp-boot.r");  // const
     Push_Lifeguard(tmp_boot);  // recycle torture frees on scanner first push!
     Array* boot_array = Scan_UTF8_Managed(
         tmp_boot,

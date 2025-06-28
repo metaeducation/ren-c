@@ -58,7 +58,7 @@ INLINE void Probe_Molded_Value(Molder* mo, const Value* v)
         Copy_Cell(temp, v);
         Element* elem = Quasify_Antiform(temp);
         Mold_Element(mo, elem);
-        Append_Ascii(mo->string, "  ; anti");
+        Append_Ascii(mo->strand, "  ; anti");
     }
     else {
         Mold_Element(mo, c_cast(Element*, v));
@@ -77,12 +77,12 @@ void Probe_Cell_Print_Helper(
     const Atom* atom = c_cast(Atom*, p);
 
     if (Is_Cell_Poisoned(atom)) {
-        Append_Ascii(mo->string, "\\\\poisoned\\\\");
+        Append_Ascii(mo->strand, "\\\\poisoned\\\\");
         return;
     }
 
     if (Not_Cell_Readable(atom)) {
-        Append_Ascii(mo->string, "\\\\unreadable\\\\");
+        Append_Ascii(mo->strand, "\\\\unreadable\\\\");
         return;
     }
 
@@ -90,7 +90,7 @@ void Probe_Cell_Print_Helper(
         DECLARE_ELEMENT (reified);
         Copy_Lifted_Cell(reified, atom);
         Mold_Element(mo, reified);
-        Append_Ascii(mo->string, "  ; anti");
+        Append_Ascii(mo->strand, "  ; anti");
     }
     else
         Mold_Element(mo, cast(const Element*, atom));
@@ -244,7 +244,7 @@ void* Probe_Core_Debug(
 
       case FLAVOR_LET: {
         Probe_Print_Helper(p, expr, "LET single variable", file, line);
-        Append_Spelling(mo->string, Let_Symbol(c_cast(Let*, f)));
+        Append_Spelling(mo->strand, Let_Symbol(c_cast(Let*, f)));
         break; }
 
       case FLAVOR_USE: {
@@ -286,12 +286,12 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "KeyList Flex", file, line);
         const Key* tail = Flex_Tail(Key, f);
         const Key* key = Flex_Head(Key, f);
-        Append_Ascii(mo->string, "<< ");
+        Append_Ascii(mo->strand, "<< ");
         for (; key != tail; ++key) {
             Mold_Text_Flex_At(mo, Key_Symbol(key), 0);
-            Append_Codepoint(mo->string, ' ');
+            Append_Codepoint(mo->strand, ' ');
         }
-        Append_Ascii(mo->string, ">>");
+        Append_Ascii(mo->strand, ">>");
         break; }
 
       case FLAVOR_POINTERS:
@@ -333,16 +333,16 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Byte-Size Flex", file, line);
 
         const bool brk = (Binary_Len(b) > 32);  // !!! duplicates MF_Blob code
-        Append_Ascii(mo->string, "#{");
+        Append_Ascii(mo->strand, "#{");
         Form_Base16(mo, Binary_Head(b), Binary_Len(b), brk);
-        Append_Ascii(mo->string, "}");
+        Append_Ascii(mo->strand, "}");
         break; }
 
     //=//// FLEXES WITH ELEMENTS WIDTH 1 INTERPRETED AS UTF-8 /////////////=//
 
       case FLAVOR_NONSYMBOL: {
         Probe_Print_Helper(p, expr, "Non-Symbol String Flex", file, line);
-        Mold_Text_Flex_At(mo, c_cast(String*, f), 0);  // could be TAG!, etc.
+        Mold_Text_Flex_At(mo, c_cast(Strand*, f), 0);  // could be TAG!, etc.
         break; }
 
       case FLAVOR_SYMBOL: {
@@ -361,8 +361,8 @@ void* Probe_Core_Debug(
 
 } cleanup: {
 
-    if (mo->base.size != String_Size(mo->string))
-        printf("%s\n", c_cast(char*, Binary_At(mo->string, mo->base.size)));
+    if (mo->base.size != Strand_Size(mo->strand))
+        printf("%s\n", c_cast(char*, Binary_At(mo->strand, mo->base.size)));
 
     if (mo->opts & MOLD_FLAG_WAS_TRUNCATED)
         printf("...\\\\truncated\\\\...\n");

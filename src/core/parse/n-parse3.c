@@ -118,7 +118,7 @@
 #define P_HEART             Heart_Of_Builtin_Fundamental(Element_ARG(INPUT))
 #define P_INPUT             Cell_Flex(ARG(INPUT))
 #define P_INPUT_BINARY      Cell_Binary(ARG(INPUT))
-#define P_INPUT_STRING      Cell_String(ARG(INPUT))
+#define P_INPUT_STRING      Cell_Strand(ARG(INPUT))
 #define P_INPUT_ARRAY       Cell_Array(ARG(INPUT))
 #define P_INPUT_SPECIFIER   Cell_List_Binding(Element_ARG(INPUT))
 #define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(Element_ARG(INPUT))
@@ -716,7 +716,7 @@ static REBIXO Parse_One_Rule(
                 uncased = false;
             }
             else {
-                uni = Get_Char_At(c_cast(String*, P_INPUT), P_POS);
+                uni = Get_Strand_Char_At(c_cast(Strand*, P_INPUT), P_POS);
                 uncased = not (P_FLAGS & AM_FIND_CASE);
             }
 
@@ -916,7 +916,7 @@ static REBIXO To_Thru_Block_Rule(
             else {
                 assert(Any_String_Type(P_HEART));
 
-                Codepoint unadjusted = Get_Char_At(
+                Codepoint unadjusted = Get_Strand_Char_At(
                     P_INPUT_STRING,
                     VAL_INDEX(iter)
                 );
@@ -2273,7 +2273,7 @@ DECLARE_NATIVE(SUBPARSE)
                     else
                         Init_Char_Unchecked(
                             OUT,
-                            Get_Char_At(P_INPUT_STRING, begin)
+                            Get_Strand_Char_At(P_INPUT_STRING, begin)
                         );
                 }
 
@@ -2355,7 +2355,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
 
-                    P_POS = Modify_String_Or_Binary(  // checks read-only
+                    P_POS = Modify_String_Or_Blob(  // checks read-only
                         ARG(POSITION),
                         (P_FLAGS & PF_CHANGE)
                             ? SYM_CHANGE

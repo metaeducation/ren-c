@@ -43,7 +43,7 @@ REBINT Compare_Spellings(const Symbol* a, const Symbol* b, bool strict)
         //
         // https://en.wikipedia.org/wiki/Unicode_equivalence#Normalization
         //
-        REBINT diff = strcmp(String_UTF8(a), String_UTF8(b));  // byte match check
+        REBINT diff = strcmp(Strand_Utf8(a), Strand_Utf8(b));  // byte match check
         if (diff == 0)
             return 0;
         return diff > 0 ? 1 : -1;  // strcmp result not strictly in [-1 0 1]
@@ -57,7 +57,7 @@ REBINT Compare_Spellings(const Symbol* a, const Symbol* b, bool strict)
         // !!! "They must differ by case...."  This needs to account for
         // unicode "case folding", as well as "normalization".
         //
-        REBINT diff = Compare_UTF8(String_Head(a), String_Head(b), String_Size(b));
+        REBINT diff = Compare_UTF8(Strand_Head(a), Strand_Head(b), Strand_Size(b));
         if (diff >= 0) {
             assert(diff == 0 or diff == 1 or diff == 3);
             return 0;  // non-case match
@@ -138,7 +138,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Word)
 
     UNUSED(form);
 
-    Append_Spelling(mo->string, Cell_Word_Symbol(v));
+    Append_Spelling(mo->strand, Cell_Word_Symbol(v));
 
     return TRIPWIRE;
 }
@@ -193,9 +193,9 @@ Option(Error*) Trap_Alias_Any_Word_As(
         if (Try_Init_Small_Utf8(  // invariant: fit in cell if it can
             out,
             as,
-            String_Head(s),
-            String_Len(s),
-            String_Size(s)
+            Strand_Head(s),
+            Strand_Len(s),
+            Strand_Size(s)
         )){
             return SUCCESS;
         }

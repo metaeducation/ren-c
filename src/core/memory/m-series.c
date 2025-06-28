@@ -162,16 +162,16 @@ Flex* Copy_Flex_Core(Flags flags, const Flex* f)
     // propagated.  This includes locks, etc.  But the string flag needs
     // to be copied, for sure.
     //
-    if (Is_Stub_String(f)) {
+    if (Is_Stub_Strand(f)) {
         //
         // Note: If the string was a symbol (aliased via AS) it will lose
         // that information.
         //
-        copy = Make_String_Core(flags, used);
+        copy = Make_Strand_Core(flags, used);
         Set_Flex_Used(copy, used);
         *Flex_Tail(Byte, copy) = '\0';
-        Tweak_Link_Bookmarks(cast(String*, copy), nullptr);  // !!! copy these?
-        MISC_STRING_NUM_CODEPOINTS(copy) = MISC_STRING_NUM_CODEPOINTS(f);
+        Tweak_Link_Bookmarks(cast(Strand*, copy), nullptr);  // !!! copy these?
+        MISC_STRAND_NUM_CODEPOINTS(copy) = MISC_STRAND_NUM_CODEPOINTS(f);
     }
     else if (Flex_Wide(f) == 1) {  // non-string BLOB!
         copy = Make_Flex_Core(flags, used + 1);  // term space
@@ -327,7 +327,7 @@ void Remove_Any_Series_Len(Element* v, REBLEN index, REBINT len)
 {
     if (Any_String(v) or Is_Blob(v)) {
         //
-        // The complicated logic in Modify_String_Or_Binary() handles many
+        // The complicated logic in Modify_String_Or_Blob() handles many
         // aspects of the removal; e.g. updating "bookmarks" that help find
         // indexes in UTF-8 strings, as well as checking to make sure that
         // modifications of binaries that are aliases of strings do not make
@@ -340,7 +340,7 @@ void Remove_Any_Series_Len(Element* v, REBLEN index, REBINT len)
             Cell_Flex(v),
             index
         );
-        Modify_String_Or_Binary(
+        Modify_String_Or_Blob(
             temp,
             SYM_CHANGE,
             nullptr,  // e.g. void
@@ -457,7 +457,7 @@ void Assert_Flex_Term_Core(const Flex* f)
     }
     else if (Flex_Wide(f) == 1) {
         const Byte* tail = Binary_Tail(c_cast(Binary*, f));
-        if (Is_Stub_String(f)) {
+        if (Is_Stub_Strand(f)) {
             if (*tail != '\0')
                 crash (f);
         }

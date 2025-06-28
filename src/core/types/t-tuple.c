@@ -56,9 +56,9 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         Byte buf[MAX_TUPLE];
         Byte* vp = buf;
 
-        const String* spelling = Cell_String(arg);
-        const Byte* ap = String_Head(spelling);
-        Size size = String_Size(spelling);  // UTF-8 len
+        const Strand* spelling = Cell_Strand(arg);
+        const Byte* ap = Strand_Head(spelling);
+        Size size = Strand_Size(spelling);  // UTF-8 len
         if (size & 1)
             return PANIC(arg);  // must have even # of chars
         size /= 2;
@@ -283,7 +283,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
         Push_Mold(mo);
         Plainify(seq);  // to text! @a.b.c -> "a.b.c"
         Form_Element(mo, seq);
-        const String* s = Pop_Molded_String(mo);
+        const Strand* s = Pop_Molded_Strand(mo);
         if (not Any_String_Type(to))
             Freeze_Flex(s);
         return Init_Any_String(OUT, to, s);
@@ -681,7 +681,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
         if (i == 0) {
             // don't print `.` or `/` before first element
         } else {
-            Append_Codepoint(mo->string, interstitial);
+            Append_Codepoint(mo->strand, interstitial);
         }
 
         if (Is_Space(element)) {  // space molds invisibly

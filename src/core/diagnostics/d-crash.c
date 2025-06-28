@@ -126,7 +126,7 @@ ATTRIBUTE_NO_RETURN void Crash_With_Cell_Debug(const Cell* c) {
 
     Option(Heart) heart = Heart_Of(c);
     Option(SymId) id = heart ? Symbol_Id_From_Type(unwrap heart) : SYM_0;
-    const char *name = id ? String_UTF8(Canon_Symbol(unwrap id)) : "custom-0";
+    const char *name = id ? Strand_Utf8(Canon_Symbol(unwrap id)) : "custom-0";
     Printf_Stderr("Cell.kind_byte=%d\n", u_cast(int, KIND_BYTE(c)));
     Printf_Stderr("cell heart name=%s\n", name);
     Printf_Stderr("Cell.lift_byte=%d\n", u_cast(int, LIFT_BYTE(c)));

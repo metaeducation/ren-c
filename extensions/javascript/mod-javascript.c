@@ -945,7 +945,7 @@ DECLARE_NATIVE(JS_NATIVE)
 
     heapaddr_t native_id = Native_Id_For_Details(details);
 
-    if (Is_Flex_Frozen(Cell_String(source)))  // don't have to copy if frozen
+    if (Is_Flex_Frozen(Cell_Strand(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_JS_NATIVE_SOURCE), source);
     else {
         Init_Text(
@@ -996,29 +996,29 @@ DECLARE_NATIVE(JS_NATIVE)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    Append_Ascii(mo->string, "let f = ");  // variable we store function in
+    Append_Ascii(mo->strand, "let f = ");  // variable we store function in
 
     if (Bool_ARG(AWAITER))
-        Append_Ascii(mo->string, "async ");  // run inside rebPromise() [1]
+        Append_Ascii(mo->strand, "async ");  // run inside rebPromise() [1]
 
-    Append_Ascii(mo->string, "function (reb) {");  // just one arg [2]
-    Append_Any_Utf8(mo->string, source);
-    Append_Ascii(mo->string, "};\n");  // end `function() {`
+    Append_Ascii(mo->strand, "function (reb) {");  // just one arg [2]
+    Append_Any_Utf8(mo->strand, source);
+    Append_Ascii(mo->strand, "};\n");  // end `function() {`
 
     if (Bool_ARG(AWAITER))
-        Append_Ascii(mo->string, "f.is_awaiter = true;\n");
+        Append_Ascii(mo->strand, "f.is_awaiter = true;\n");
     else
-        Append_Ascii(mo->string, "f.is_awaiter = false;\n");
+        Append_Ascii(mo->strand, "f.is_awaiter = false;\n");
 
     Byte id_buf[60];  // !!! Why 60?  Copied from MF_Integer()
     REBINT len = Emit_Integer(id_buf, native_id);
 
-    Append_Ascii(mo->string, "reb.RegisterId_internal(");  // put in table [3]
-    Append_Ascii_Len(mo->string, s_cast(id_buf), len);
-    Append_Ascii(mo->string, ", f);\n");
+    Append_Ascii(mo->strand, "reb.RegisterId_internal(");  // put in table [3]
+    Append_Ascii_Len(mo->strand, s_cast(id_buf), len);
+    Append_Ascii(mo->strand, ", f);\n");
 
-    Term_Binary(mo->string);  // !!! is this necessary?
-    const char *js = cs_cast(Binary_At(mo->string, mo->base.size));
+    Term_Binary(mo->strand);  // !!! is this necessary?
+    const char *js = cs_cast(Binary_At(mo->strand, mo->base.size));
 
     TRACE("Registering native_id %ld", cast(long, native_id));
 

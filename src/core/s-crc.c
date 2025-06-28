@@ -270,7 +270,7 @@ uint32_t Hash_Value(const Value* cell)
         // !!! Should this hash be cached on the words somehow, e.g. in the
         // data payload before the actual string?
         //
-        hash = Hash_String(Cell_Word_Symbol(cell));
+        hash = Hash_Strand(Cell_Word_Symbol(cell));
         break; }
 
       case TYPE_FRAME:

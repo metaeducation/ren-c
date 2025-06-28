@@ -45,7 +45,7 @@ void Snap_State(struct Reb_State *s)
     s->guarded_len = Flex_Dynamic_Used(g_gc.guarded);
 
     s->manuals_len = Flex_Dynamic_Used(g_gc.manuals);
-    s->mold_buf_len = String_Len(g_mold.buffer);
+    s->mold_buf_len = Strand_Len(g_mold.buffer);
     s->mold_buf_size = String_Dynamic_Size(g_mold.buffer);
     s->mold_loop_tail = Flex_Dynamic_Used(g_mold.stack);
 
@@ -84,7 +84,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 
     Set_Flex_Len(g_gc.guarded, s->guarded_len);
 
-    Term_String_Len_Size(g_mold.buffer, s->mold_buf_len, s->mold_buf_size);
+    Term_Strand_Len_Size(g_mold.buffer, s->mold_buf_len, s->mold_buf_size);
 
   #if RUNTIME_CHECKS
     //
@@ -273,7 +273,7 @@ void Unplug_Stack(
         flags |= DATASTACK_FLAG_HAS_SCRATCH;
     }
 
-    if (String_Size(g_mold.buffer) > base->baseline.mold_buf_size) {
+    if (Strand_Size(g_mold.buffer) > base->baseline.mold_buf_size) {
         flags |= DATASTACK_FLAG_HAS_MOLD;
         Init_Text(
             PUSH(),
@@ -474,8 +474,8 @@ void Assert_State_Balanced_Debug(
         crash_at (manual, file, line);
     }
 
-    assert(s->mold_buf_len == String_Len(g_mold.buffer));
-    assert(s->mold_buf_size == String_Size(g_mold.buffer));
+    assert(s->mold_buf_len == Strand_Len(g_mold.buffer));
+    assert(s->mold_buf_size == Strand_Size(g_mold.buffer));
     assert(s->mold_loop_tail == Flex_Used(g_mold.stack));
 
   #if RUNTIME_CHECKS

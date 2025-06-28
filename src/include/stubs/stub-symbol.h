@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// In Ren-C, words hold a Symbol Flex (String Flex subtype).  They may be GC'd
+// In Ren-C, words hold a Symbol Flex (Strand Flex subtype).  They may be GC'd
 // (unless they are in the %words.r list, in which case their canon forms are
 // protected in order to do SYM_XXX switch statements in the C source, etc.)
 //
@@ -46,7 +46,7 @@
 #define ANONYMOUS  u_cast(Option(const Symbol*), nullptr)
 
 
-INLINE bool Is_String_Symbol(const String* s) {
+INLINE bool Is_Strand_Symbol(const Strand* s) {
     if (Stub_Flavor(s) == FLAVOR_SYMBOL)
         return true;
     assert(Stub_Flavor(s) == FLAVOR_NONSYMBOL);
@@ -54,7 +54,7 @@ INLINE bool Is_String_Symbol(const String* s) {
 }
 
 #if CPLUSPLUS_11  // disable superfluous check that Symbol has FLAVOR_SYMBOL
-    INLINE bool Is_String_Symbol(const Symbol* s) = delete;
+    INLINE bool Is_Strand_Symbol(const Symbol* s) = delete;
 #endif
 
 

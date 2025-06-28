@@ -144,7 +144,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, arg);
 
-        Option(const String*) file = ANONYMOUS;
+        Option(const Strand*) file = ANONYMOUS;
         Init_Any_List(
             OUT,
             heart,
@@ -795,14 +795,14 @@ IMPLEMENT_GENERIC(TO, Any_List)
 
         Mold_Or_Form_Element(mo, list, false);
         if (Any_String_Type(to))
-            return Init_Any_String(OUT, to, Pop_Molded_String(mo));
+            return Init_Any_String(OUT, to, Pop_Molded_Strand(mo));
 
         Init_Utf8_Non_String(
             OUT,
             to,
-            cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
-            String_Len(mo->string) - mo->base.index,
-            String_Size(mo->string) - mo->base.size
+            cast(Utf8(const*), Binary_At(mo->strand, mo->base.size)),
+            Strand_Len(mo->strand) - mo->base.index,
+            Strand_Size(mo->strand) - mo->base.size
         );
         Drop_Mold(mo);
         return OUT;
@@ -983,7 +983,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
     }
 
     if (Any_String(series)) {
-        Codepoint c = Get_Char_At(Cell_String(series), n);
+        Codepoint c = Get_Strand_Char_At(Cell_Strand(series), n);
         return DUAL_LIFTED(Init_Char_Unchecked(OUT, c));
     }
 
@@ -1015,11 +1015,11 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
     }
     else if (Any_String(series)) {
         VAL_INDEX_RAW(series) = n;
-        Modify_String_Or_Binary(series, SYM_CHANGE, poke, AM_PART, part, dups);
+        Modify_String_Or_Blob(series, SYM_CHANGE, poke, AM_PART, part, dups);
     }
     else {
         VAL_INDEX_RAW(series) = n;
-        Modify_String_Or_Binary(series, SYM_CHANGE, poke, AM_PART, part, dups);
+        Modify_String_Or_Blob(series, SYM_CHANGE, poke, AM_PART, part, dups);
     }
 
     return NO_WRITEBACK_NEEDED;  // Array* in Cell stays the same
@@ -1246,7 +1246,7 @@ IMPLEMENT_GENERIC(FILE_OF, Any_List)
     Element* list = Element_ARG(ELEMENT);
     const Source* s = Cell_Array(list);
 
-    Option(const String*) file = Link_Filename(s);
+    Option(const Strand*) file = Link_Filename(s);
     if (not file)
         return FAIL("No file available for list");
     return Init_File(OUT, unwrap file);  // !!! or URL! (track with bit...)

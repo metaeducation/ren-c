@@ -149,15 +149,15 @@ struct CastHook<const F*, const Binary*> {  // both must be const [B]
 };
 
 
-//=//// cast(String*, ...) ////////////////////////////////////////////////=//
+//=//// cast(Strand*, ...) ////////////////////////////////////////////////=//
 
 template<typename F>
-const String* string_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
-    return u_cast(const String*, p);
+const Strand* string_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
+    return u_cast(const Strand*, p);
 }
 
 template<typename F>
-const String* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
+const Strand* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
     DECLARE_C_TYPE_LIST(type_list,
         void, Byte, Base, Stub, Flex, Binary
     );
@@ -185,13 +185,13 @@ const String* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
 
     impossible(Flex_Wide(stub) != 1);  // we *could* check this here
 
-    return u_cast(const String*, p);
+    return u_cast(const Strand*, p);
 };
 
 template<typename F>  // [A]
-struct CastHook<const F*, const String*> {  // both must be const [B]
-    static const String* convert(const F* p) {
-        return string_cast_impl(p, WhichCastDirection<F, String>{});
+struct CastHook<const F*, const Strand*> {  // both must be const [B]
+    static const Strand* convert(const F* p) {
+        return string_cast_impl(p, WhichCastDirection<F, Strand>{});
     }
 };
 
@@ -202,7 +202,7 @@ template<typename F>  // [A]
 struct CastHook<const F*, const Symbol*> {
     static const Symbol* convert(const F* p) {
         DECLARE_C_TYPE_LIST(type_list,
-            void, Byte, Base, Stub, Flex, Binary, String
+            void, Byte, Base, Stub, Flex, Binary, Strand
         );
         STATIC_ASSERT(In_C_Type_List(type_list, F));
 

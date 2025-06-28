@@ -83,7 +83,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
   #if (! INCLUDE_TEST_LIBREBOL_NATIVE)
     return Init_Text(  // text! vs. failing to distinguish from test failure
         OUT,
-        Make_String_UTF8(
+        Make_Strand_UTF8(
             "TEST-LIBREBOL only if #define INCLUDE_TEST_LIBREBOL_NATIVE"
         )
     );

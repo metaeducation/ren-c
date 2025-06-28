@@ -626,7 +626,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 
     // Prevent endless mold loop:
     if (Find_Pointer_In_Flex(g_mold.stack, m) != NOT_FOUND) {
-        Append_Ascii(mo->string, "...]");
+        Append_Ascii(mo->strand, "...]");
         return TRIPWIRE;
     }
 
@@ -634,7 +634,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 
     if (not form) {
         Begin_Non_Lexical_Mold(mo, v);
-        Append_Codepoint(mo->string, '[');
+        Append_Codepoint(mo->strand, '[');
     }
 
     // Mold all entries that are set.  As with contexts, void values are not
@@ -656,20 +656,20 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
         Copy_Lifted_Cell(lifted_key, key);
         Mold_Element(mo, lifted_key);
 
-        Append_Codepoint(mo->string, ' ');
+        Append_Codepoint(mo->strand, ' ');
 
         DECLARE_ELEMENT (lifted_value);
         Copy_Lifted_Cell(lifted_value, key + 1);
         Mold_Element(mo, lifted_value);
 
         if (form)
-            Append_Codepoint(mo->string, '\n');
+            Append_Codepoint(mo->strand, '\n');
     }
     mo->indent--;
 
     if (not form) {
         New_Indented_Line(mo);
-        Append_Codepoint(mo->string, ']');
+        Append_Codepoint(mo->strand, ']');
     }
 
     End_Non_Lexical_Mold(mo);

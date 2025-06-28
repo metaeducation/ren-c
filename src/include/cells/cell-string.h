@@ -5,17 +5,17 @@ INLINE bool Stringlike_Cell(const Cell* v) {
     return Any_Utf8_Type(Heart_Of(v)) and Stringlike_Has_Stub(v);
 }
 
-INLINE const String* Cell_String(const Cell* v) {
+INLINE const Strand* Cell_Strand(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
     if (heart == TYPE_WORD)
         return Cell_Word_Symbol(v);
 
     assert(Stringlike_Cell(v));
-    return c_cast(String*, Cell_Flex(v));
+    return c_cast(Strand*, Cell_Flex(v));
 }
 
-#define Cell_String_Ensure_Mutable(v) \
-    m_cast(String*, Cell_String(Ensure_Mutable(v)))
+#define Cell_Strand_Ensure_Mutable(v) \
+    m_cast(Strand*, Cell_Strand(Ensure_Mutable(v)))
 
 
 // This routine works with the notion of "length" that corresponds to the
@@ -26,8 +26,8 @@ INLINE const String* Cell_String(const Cell* v) {
 //
 INLINE Length Cell_Series_Len_Head(const Cell* v) {
     const Flex* f = Cell_Flex(v);
-    if (Is_Stub_String(f) and Heart_Of(v) != TYPE_BLOB)
-        return String_Len(c_cast(String*, f));
+    if (Is_Stub_Strand(f) and Heart_Of(v) != TYPE_BLOB)
+        return Strand_Len(c_cast(Strand*, f));
     return Flex_Used(f);
 }
 
@@ -58,8 +58,8 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
     if (not Cell_Payload_1_Needs_Mark(c))  // must store bytes in cell direct
         return cast(Utf8(const*), c->payload.at_least_8);
 
-    const String* str = c_cast(String*, CELL_SERIESLIKE_NODE(c));
-    return String_Head(str);  // symbols are strings
+    const Strand* str = c_cast(Strand*, CELL_SERIESLIKE_NODE(c));
+    return Strand_Head(str);  // symbols are strings
 }
 
 INLINE Utf8(const*) Cell_String_At(const Cell* v) {
@@ -68,16 +68,16 @@ INLINE Utf8(const*) Cell_String_At(const Cell* v) {
     if (not Any_String_Type(heart))  // non-positional: URL, RUNE, WORD...
         return Cell_Utf8_Head(v);  // might store utf8 directly in cell
 
-    const String* str = c_cast(String*, Cell_Flex(v));
+    const Strand* str = c_cast(Strand*, Cell_Flex(v));
     REBIDX i = VAL_INDEX_RAW(v);
-    if (i < 0 or i > String_Len(str))
+    if (i < 0 or i > Strand_Len(str))
         panic (Error_Index_Out_Of_Range_Raw());
 
-    return i == 0 ? String_Head(str) : String_At(str, i);
+    return i == 0 ? Strand_Head(str) : Strand_At(str, i);
 }
 
 
-INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
+INLINE Utf8(const*) Cell_Strand_Tail(const Cell* c) {
     assert(Any_Utf8_Type(Heart_Of(c)));
 
     if (not Stringlike_Has_Stub(c)) {  // content in cell direct
@@ -85,8 +85,8 @@ INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
         return cast(Utf8(const*), c->payload.at_least_8 + size);
     }
 
-    const String* str = c_cast(String*, CELL_SERIESLIKE_NODE(c));
-    return String_Tail(str);
+    const Strand* str = c_cast(Strand*, CELL_SERIESLIKE_NODE(c));
+    return Strand_Tail(str);
 }
 
 
@@ -105,8 +105,8 @@ INLINE REBLEN Cell_String_Len_At(const Cell* c) {
     if (not Stringlike_Has_Stub(c))  // content directly in cell
         return c->extra.at_least_4[IDX_EXTRA_LEN];
 
-    const String* str = c_cast(String*, CELL_SERIESLIKE_NODE(c));
-    return String_Len(str);
+    const Strand* str = c_cast(Strand*, CELL_SERIESLIKE_NODE(c));
+    return Strand_Len(str);
 }
 
 INLINE Size Cell_String_Size_Limit_At(
@@ -124,7 +124,7 @@ INLINE Size Cell_String_Size_Limit_At(
     if (not limit or *(unwrap limit) >= len_at) {
         if (length_out)
             *(unwrap length_out) = len_at;
-        tail = Cell_String_Tail(v);  // byte count known (fast)
+        tail = Cell_Strand_Tail(v);  // byte count known (fast)
     }
     else {
         tail = at;
@@ -142,7 +142,7 @@ INLINE Size Cell_String_Size_Limit_At(
     Cell_String_Size_Limit_At(nullptr, v, UNLIMITED)
 
 INLINE Size VAL_BYTEOFFSET(const Cell* v) {
-    return Cell_String_At(v) - String_Head(Cell_String(v));
+    return Cell_String_At(v) - Strand_Head(Cell_Strand(v));
 }
 
 INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
@@ -156,27 +156,27 @@ INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
     if (index == VAL_INDEX(v))
         at = Cell_String_At(v); // !!! update cache if needed
     else if (index == Cell_Series_Len_Head(v))
-        at = String_Tail(Cell_String(v));
+        at = Strand_Tail(Cell_Strand(v));
     else {
         // !!! arbitrary seeking...this technique needs to be tuned, e.g.
         // to look from the head or the tail depending on what's closer
         //
-        at = String_At(Cell_String(v), index);
+        at = Strand_At(Cell_Strand(v), index);
     }
 
-    return at - String_Head(Cell_String(v));
+    return at - Strand_Head(Cell_Strand(v));
 }
 
 
 //=//// ANY-STRING? CONVENIENCE MACROS ////////////////////////////////////=//
 //
-// Declaring as inline with type signature ensures you use a String* to
+// Declaring as inline with type signature ensures you use a Strand* to
 // initialize.
 
 INLINE Element* Init_Any_String_At(
     Init(Element) out,
     Heart heart,
-    const String* s,
+    const Strand* s,
     REBLEN index
 ){
     return Init_Series_At_Core(out, heart, s, index, UNBOUND);

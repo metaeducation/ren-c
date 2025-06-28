@@ -51,31 +51,31 @@ enum {
 //
 //  String_At: C
 //
-// Note that we only ever create caches for strings that have had String_At()
-// run on them.  So the more operations that avoid String_At(), the better!
-// Using String_Head() and String_Tail() will give a Utf8(*) that can be used
+// Note that we only ever create caches for strings that have had Strand_At()
+// run on them.  So the more operations that avoid Strand_At(), the better!
+// Using Strand_Head() and Strand_Tail() will give a Utf8(*) that can be used
 // to iterate much faster, and most of the strings in the system might be able
 // to get away with not having any bookmarks at all.
 //
-Utf8(*) String_At(const_if_c String* s, REBLEN at)
+Utf8(*) Strand_At(const_if_c Strand* s, REBLEN at)
 {
-    assert(s != g_mold.buffer);  // String_At() makes bookmarks, don't want!
+    assert(s != g_mold.buffer);  // Strand_At() makes bookmarks, don't want!
 
-    assert(at <= String_Len(s));
+    assert(at <= Strand_Len(s));
 
     if (
-        Is_String_All_Ascii(s)
+        Is_Strand_All_Ascii(s)
         and not SPORADICALLY(20)  // test non-ASCII codepath for ASCII
     ){
         possibly(Link_Bookmarks(s));  // mutations maintain for long strings
-        return cast(Utf8(*), cast(Byte*, String_Head(s)) + at);
+        return cast(Utf8(*), cast(Byte*, Strand_Head(s)) + at);
     }
 
-    Utf8(*) cp;  // can be used to calculate offset (relative to String_Head())
+    Utf8(*) cp;  // can be used to calculate offset (relative to Strand_Head())
     REBLEN index;
 
     Option(BookmarkList*) book = nullptr;  // updated at end if not nulled out
-    if (not Is_String_Symbol(s))
+    if (not Is_Strand_Symbol(s))
         book = Link_Bookmarks(s);
 
   #if DEBUG_SPORADICALLY_DROP_BOOKMARKS
@@ -85,7 +85,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at)
     }
   #endif
 
-    REBLEN len = String_Len(s);
+    REBLEN len = Strand_Len(s);
 
   #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("len %ld @ %ld ", len, at);
@@ -94,31 +94,31 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at)
 
     if (at < len / 2) {
         if (len < Size_Of(Cell)) {
-            if (not Is_String_Symbol(s))
+            if (not Is_Strand_Symbol(s))
                 assert(
                     Get_Stub_Flag(s, DYNAMIC)  // e.g. mold buffer
                     or not book  // mutations must ensure this
                 );
             goto scan_from_head;  // good locality, avoid bookmark logic
         }
-        if (not book and not Is_String_Symbol(s)) {
+        if (not book and not Is_Strand_Symbol(s)) {
             book = Alloc_BookmarkList();
-            Tweak_Link_Bookmarks(m_cast(String*, s), book);
+            Tweak_Link_Bookmarks(m_cast(Strand*, s), book);
             goto scan_from_head;  // will fill in bookmark
         }
     }
     else {
         if (len < Size_Of(Cell)) {
-            if (not Is_String_Symbol(s))
+            if (not Is_Strand_Symbol(s))
                 assert(
                     not book  // mutations must ensure this usually but...
                     or Get_Stub_Flag(s, DYNAMIC)  // !!! mold buffer?
                 );
             goto scan_from_tail;  // good locality, avoid bookmark logic
         }
-        if (not book and not Is_String_Symbol(s)) {
+        if (not book and not Is_Strand_Symbol(s)) {
             book = Alloc_BookmarkList();
-            Tweak_Link_Bookmarks(m_cast(String*, s), book);
+            Tweak_Link_Bookmarks(m_cast(Strand*, s), book);
             goto scan_from_tail;  // will fill in bookmark
         }
     }
@@ -180,7 +180,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at)
   #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("scan from head");
   #endif
-    cp = String_Head(s);
+    cp = Strand_Head(s);
     index = 0;
 
 } scan_forward: { ////////////////////////////////////////////////////////////
@@ -199,7 +199,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at)
   #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("scan from tail");
   #endif
-    cp = String_Tail(s);
+    cp = Strand_Tail(s);
     index = len;
 
 } scan_backward: { //////////////////////////////////////////////////////////
@@ -221,10 +221,10 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at)
     BOOKMARK_TRACE("caching %ld\n", index);
   #endif
     BOOKMARK_INDEX(unwrap book) = index;
-    BOOKMARK_OFFSET(unwrap book) = cp - String_Head(s);
+    BOOKMARK_OFFSET(unwrap book) = cp - Strand_Head(s);
 
   #if DEBUG_VERIFY_STR_AT
-    Utf8(*) check_cp = String_Head(s);
+    Utf8(*) check_cp = Strand_Head(s);
     REBLEN check_index = 0;
     for (; check_index != at; ++check_index)
         check_cp = Skip_Codepoint(check_cp);
@@ -246,16 +246,16 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at)
 //
 //      https://stackoverflow.com/q/199260/
 //
-static void Reverse_String(String* str, REBLEN index, Length len)
+static void Reverse_Strand(Strand* str, REBLEN index, Length len)
 {
     if (len <= 1)
         return;  // zero or one characters means reverse is a noop
 
     if (
-        Is_String_All_Ascii(str)
+        Is_Strand_All_Ascii(str)
         and not SPORADICALLY(3)  // test non-ASCII code path on ASCII
     ){
-        Byte* bp = String_At(str, index);
+        Byte* bp = Strand_At(str, index);
 
         REBLEN n = 0;
         REBLEN m = len - 1;
@@ -269,22 +269,22 @@ static void Reverse_String(String* str, REBLEN index, Length len)
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
 
-        Length len_head = String_Len(str);  // should be same after we're done
+        Length len_head = Strand_Len(str);  // should be same after we're done
 
-        Utf8(const*) utf8 = String_Tail(str);  // last exists due to len != 0
+        Utf8(const*) utf8 = Strand_Tail(str);  // last exists due to len != 0
         Count n;
         for (n = 0; n < len; ++n) {
             Codepoint c;
             utf8 = Utf8_Back(&c, utf8);
-            Append_Codepoint(mo->string, c);
+            Append_Codepoint(mo->strand, c);
         }
 
         DECLARE_VALUE (temp);
-        Init_Text(temp, Pop_Molded_String(mo));
+        Init_Text(temp, Pop_Molded_Strand(mo));
 
         DECLARE_VALUE (string);  // !!! Temp value, string type is irrelevant
         Init_Any_String_At(string, TYPE_TEXT, str, index);
-        Modify_String_Or_Binary(  // CHANGE:PART to overwrite reversed portion
+        Modify_String_Or_Blob(  // CHANGE:PART to overwrite reversed portion
             string,
             SYM_CHANGE,
             temp,
@@ -317,7 +317,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
     Element* def = Element_ARG(DEF);
 
     if (Is_Integer(def))  // new string with given integer capacity [2]
-        return Init_Any_String(OUT, heart, Make_String(Int32s(def, 0)));
+        return Init_Any_String(OUT, heart, Make_Strand(Int32s(def, 0)));
 
     return FAIL(Error_Bad_Make(heart, def));
 }
@@ -391,7 +391,7 @@ Byte* Form_Uni_Hex(Byte* out, REBLEN n)
 //
 void Mold_Codepoint(Molder* mo, Codepoint c, bool non_ascii_parened)
 {
-    String* buf = mo->string;
+    Strand* buf = mo->strand;
 
     // !!! The UTF-8 "Byte Order Mark" is an insidious thing which is not
     // necessary for UTF-8, not recommended by the Unicode standard, and
@@ -419,14 +419,14 @@ void Mold_Codepoint(Molder* mo, Codepoint c, bool non_ascii_parened)
         if (non_ascii_parened or c == 0x1E or c == 0xFEFF) {
             Append_Ascii(buf, "^(");
 
-            Length len_old = String_Len(buf);
-            Size size_old = String_Size(buf);
+            Length len_old = Strand_Len(buf);
+            Size size_old = Strand_Size(buf);
             Expand_Flex_Tail(buf, 5);  // worst case: ^(1234), ^( is done
-            Term_String_Len_Size(buf, len_old, size_old);
+            Term_Strand_Len_Size(buf, len_old, size_old);
 
             Byte* bp = Binary_Tail(buf);
             Byte* ep = Form_Uni_Hex(bp, c); // !!! Make a mold...
-            Term_String_Len_Size(
+            Term_Strand_Len_Size(
                 buf,
                 len_old + (ep - bp),
                 size_old + (ep - bp)
@@ -451,15 +451,15 @@ void Mold_Codepoint(Molder* mo, Codepoint c, bool non_ascii_parened)
 //
 //  Mold_Text_Flex_At: C
 //
-void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
-    String* buf = mo->string;
+void Mold_Text_Flex_At(Molder* mo, const Strand* s, REBLEN index) {
+    Strand* buf = mo->strand;
 
-    if (index >= String_Len(s)) {
+    if (index >= Strand_Len(s)) {
         Append_Ascii(buf, "\"\"");
         return;
     }
 
-    Length len = String_Len(s) - index;
+    Length len = Strand_Len(s) - index;
 
     bool non_ascii_parened = true;  // !!! used to be set to MOLD's :ALL flag
 
@@ -474,7 +474,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
     REBLEN chr1e = 0;
     REBLEN malign = 0;
 
-    Utf8(const*) up = String_At(s, index);
+    Utf8(const*) up = Strand_At(s, index);
 
     REBLEN x;
     for (x = index; x < len; x++) {
@@ -520,7 +520,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
     if (not non_ascii_parened)
         paren = 0;
 
-    up = String_At(s, index);
+    up = Strand_At(s, index);
 
     // If it is a short quoted string, emit it as "string"
     //
@@ -528,7 +528,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
         Append_Codepoint(buf, '"');
 
         REBLEN n;
-        for (n = index; n < String_Len(s); n++) {
+        for (n = index; n < Strand_Len(s); n++) {
             Codepoint c;
             up = Utf8_Next(&c, up);
             Mold_Codepoint(mo, c, non_ascii_parened);
@@ -546,7 +546,7 @@ void Mold_Text_Flex_At(Molder* mo, const String* s, REBLEN index) {
     Append_Codepoint(buf, '[');
 
     REBLEN n;
-    for (n = index; n < String_Len(s); n++) {
+    for (n = index; n < Strand_Len(s); n++) {
         Codepoint c;
         up = Utf8_Next(&c, up);
 
@@ -599,7 +599,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Url)
     bool form = Bool_ARG(FORM);
 
     UNUSED(form);
-    Append_Any_Utf8(mo->string, v);
+    Append_Any_Utf8(mo->strand, v);
 
     return TRIPWIRE;
 }
@@ -614,7 +614,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Email)
     bool form = Bool_ARG(FORM);
 
     UNUSED(form);
-    Append_Any_Utf8(mo->string, v);
+    Append_Any_Utf8(mo->strand, v);
 
     return TRIPWIRE;
 }
@@ -629,8 +629,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Money)
     bool form = Bool_ARG(FORM);
 
     UNUSED(form);
-    Append_Codepoint(mo->string, '$');
-    Append_Any_Utf8(mo->string, v);
+    Append_Codepoint(mo->strand, '$');
+    Append_Any_Utf8(mo->strand, v);
 
     return TRIPWIRE;
 }
@@ -638,7 +638,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Money)
 
 static void Mold_File(Molder* mo, const Cell* v)
 {
-    Append_Codepoint(mo->string, '%');
+    Append_Codepoint(mo->strand, '%');
 
     REBLEN len;
     Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, v);
@@ -654,19 +654,19 @@ static void Mold_File(Molder* mo, const Cell* v)
         if (IS_FILE_ESC(c))
             Form_Hex_Esc(mo, c); // c => %xx
         else
-            Append_Codepoint(mo->string, c);
+            Append_Codepoint(mo->strand, c);
         */
 
-        Append_Codepoint(mo->string, c);
+        Append_Codepoint(mo->strand, c);
     }
 }
 
 
 static void Mold_Tag(Molder* mo, const Cell* v)
 {
-    Append_Codepoint(mo->string, '<');
-    Append_Any_Utf8(mo->string, v);
-    Append_Codepoint(mo->string, '>');
+    Append_Codepoint(mo->strand, '<');
+    Append_Any_Utf8(mo->strand, v);
+    Append_Codepoint(mo->strand, '>');
 }
 
 
@@ -690,7 +690,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
-    String* buf = mo->string;
+    Strand* buf = mo->strand;
 
     Heart heart = Heart_Of_Builtin_Fundamental(v);
     assert(Any_Utf8_Type(heart));
@@ -702,7 +702,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 
     switch (heart) {
       case TYPE_TEXT:
-        Mold_Text_Flex_At(mo, Cell_String(v), VAL_INDEX(v));
+        Mold_Text_Flex_At(mo, Cell_Strand(v), VAL_INDEX(v));
         break;
 
       case TYPE_FILE:
@@ -775,7 +775,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
 
         UNUSED(PARAM(SERIES)); // already accounted for
 
-        String* s = Cell_String_Ensure_Mutable(v);
+        Strand* s = Cell_Strand_Ensure_Mutable(v);
 
         REBINT limit;
         if (Bool_ARG(PART))
@@ -793,11 +793,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         Size size = Cell_String_Size_Limit_At(&len, v, &limit);
 
         Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
-        Size size_old = String_Size(s);
+        Size size_old = Strand_Size(s);
 
         Remove_Flex_Units(s, offset, size);  // !!! at one time, kept term
         Free_Bookmarks_Maybe_Null(s);
-        Term_String_Len_Size(s, tail - len, size_old - size);
+        Term_Strand_Len_Size(s, tail - len, size_old - size);
 
         return COPY(v); }
 
@@ -853,7 +853,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         else
             assert(not Is_Antiform(unwrap arg));
 
-        VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check
+        VAL_INDEX_RAW(v) = Modify_String_Or_Blob(  // does read-only check
             v,
             unwrap id,
             arg,
@@ -921,11 +921,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
 
         return Init_Char_Unchecked(
             OUT,
-            Codepoint_At(String_At(Cell_String(v), ret))
+            Codepoint_At(Strand_At(Cell_Strand(v), ret))
         ); }
 
       case SYM_CLEAR: {
-        String* s = Cell_String_Ensure_Mutable(v);
+        Strand* s = Cell_Strand_Ensure_Mutable(v);
 
         REBLEN index = VAL_INDEX(v);
         REBLEN tail = Cell_Series_Len_Head(v);
@@ -944,7 +944,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
         Free_Bookmarks_Maybe_Null(s);
 
-        Term_String_Len_Size(s, index, offset);
+        Term_Strand_Len_Size(s, index, offset);
         return COPY(v); }
 
     //-- Special actions:
@@ -955,15 +955,15 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         if (Type_Of(v) != Type_Of(arg))
             return PANIC(Error_Not_Same_Type_Raw());
 
-        String* v_str = Cell_String_Ensure_Mutable(v);
-        String* arg_str = Cell_String_Ensure_Mutable(arg);
+        Strand* v_str = Cell_Strand_Ensure_Mutable(v);
+        Strand* arg_str = Cell_Strand_Ensure_Mutable(arg);
 
         REBLEN index = VAL_INDEX(v);
         REBLEN tail = Cell_Series_Len_Head(v);
 
         if (index < tail and VAL_INDEX(arg) < Cell_Series_Len_Head(arg)) {
-            Codepoint v_c = Get_Char_At(v_str, VAL_INDEX(v));
-            Codepoint arg_c = Get_Char_At(arg_str, VAL_INDEX(arg));
+            Codepoint v_c = Get_Strand_Char_At(v_str, VAL_INDEX(v));
+            Codepoint arg_c = Get_Strand_Char_At(arg_str, VAL_INDEX(arg));
 
             Set_Char_At(v_str, VAL_INDEX(v), arg_c);
             Set_Char_At(arg_str, VAL_INDEX(arg), v_c);
@@ -1016,17 +1016,17 @@ IMPLEMENT_GENERIC(TO, Any_String)
 //
 Option(Error*) Trap_Any_String_As(
     Sink(Element) out,
-    const Element* any_string,
+    const Element* string,
     Heart as
 ){
     if (Any_String_Type(as)) {  // special handling not in Utf8 generic [1]
-        Copy_Cell(out, any_string);
+        Copy_Cell(out, string);
         KIND_BYTE(out) = as;
-        Inherit_Const(out, any_string);
+        Inherit_Const(out, string);
         return SUCCESS;
     }
 
-    return Trap_Alias_Any_Utf8_As(out, any_string, as);
+    return Trap_Alias_Any_Utf8_As(out, string, as);
 }
 
 
@@ -1034,10 +1034,10 @@ IMPLEMENT_GENERIC(AS, Any_String)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* any_string = Element_ARG(ELEMENT);
+    Element* string = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    Option(Error*) e = Trap_Any_String_As(OUT, any_string, as);
+    Option(Error*) e = Trap_Any_String_As(OUT, string, as);
     if (e)
         return PANIC(unwrap e);
 
@@ -1049,16 +1049,16 @@ IMPLEMENT_GENERIC(COPY, Any_String)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* any_string = Element_ARG(VALUE);
+    Element* string = Element_ARG(VALUE);
 
     UNUSED(Bool_ARG(DEEP));  // :DEEP is historically ignored on ANY-STRING?
 
-    REBINT len = Part_Len_May_Modify_Index(any_string, ARG(PART));
+    REBINT len = Part_Len_May_Modify_Index(string, ARG(PART));
 
     return Init_Any_String(
         OUT,
-        Heart_Of_Builtin_Fundamental(any_string),
-        Copy_String_At_Limit(any_string, &len)
+        Heart_Of_Builtin_Fundamental(string),
+        Copy_String_At_Limit(string, &len)
     );
 }
 
@@ -1078,7 +1078,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
         len = Part_Len_May_Modify_Index(v, ARG(PART));
         if (len == 0) {
             Heart heart = Heart_Of_Builtin_Fundamental(v);
-            return Init_Any_String(OUT, heart, Make_String(0));
+            return Init_Any_String(OUT, heart, Make_Strand(0));
         }
     } else
         len = 1;
@@ -1100,7 +1100,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
         if (not Bool_ARG(PART))
             return FAIL(Error_Nothing_To_Take_Raw());
         Heart heart = Heart_Of_Builtin_Fundamental(v);
-        return Init_Any_String(OUT, heart, Make_String(0));
+        return Init_Any_String(OUT, heart, Make_Strand(0));
     }
 
     // if no :PART, just return value, else return string
@@ -1121,13 +1121,13 @@ IMPLEMENT_GENERIC(REVERSE, Any_String)
 {
     INCLUDE_PARAMS_OF_REVERSE;
 
-    Element* any_string = Element_ARG(SERIES);
+    Element* string = Element_ARG(SERIES);
 
-    String* s = Cell_String_Ensure_Mutable(any_string);
+    Strand* s = Cell_Strand_Ensure_Mutable(string);
 
-    Copy_Cell(OUT, any_string);  // save before index adjustment
-    REBINT len = Part_Len_May_Modify_Index(any_string, ARG(PART));
-    Reverse_String(s, VAL_INDEX(any_string), len);
+    Copy_Cell(OUT, string);  // save before index adjustment
+    REBINT len = Part_Len_May_Modify_Index(string, ARG(PART));
+    Reverse_Strand(s, VAL_INDEX(string), len);
     return OUT;
 }
 
@@ -1148,7 +1148,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
 
     return Init_Char_Unchecked(
         OUT,
-        Get_Char_At(Cell_String(v), index)
+        Get_Strand_Char_At(Cell_Strand(v), index)
     );
 }
 
@@ -1163,31 +1163,31 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_String)
 {
     INCLUDE_PARAMS_OF_SHUFFLE;
 
-    Element* any_string = Element_ARG(SERIES);
+    Element* string = Element_ARG(SERIES);
 
-    REBLEN index = VAL_INDEX(any_string);
+    REBLEN index = VAL_INDEX(string);
 
-    String* str = Cell_String_Ensure_Mutable(any_string);
+    Strand* s = Cell_Strand_Ensure_Mutable(string);
 
-    if (not Is_String_All_Ascii(str))  // slow is better than not at all [1]
+    if (not Is_Strand_All_Ascii(s))  // slow is better than not at all [1]
         return rebDelegate(
-            "let shuffled: unspaced shuffle map-each 'c", any_string, "[c]"
-            "take:part", any_string, "tail of", any_string,  // drop tail
-            "append", any_string, "shuffled",  // add shuffled bit
-            any_string  // return string at original position
+            "let shuffled: unspaced shuffle map-each 'c", string, "[c]"
+            "take:part", string, "tail of", string,  // drop tail
+            "append", string, "shuffled",  // add shuffled bit
+            string  // return string at original position
         );
 
     bool secure = Bool_ARG(SECURE);
 
     REBLEN n;
-    for (n = String_Len(str) - index; n > 1;) {
+    for (n = Strand_Len(s) - index; n > 1;) {
         REBLEN k = index + (Random_Int(secure) % n);
         n--;
-        Codepoint swap = Get_Char_At(str, k);
-        Set_Char_At(str, k, Get_Char_At(str, n + index));
-        Set_Char_At(str, n + index, swap);
+        Codepoint swap = Get_Strand_Char_At(s, k);
+        Set_Char_At(s, k, Get_Strand_Char_At(s, n + index));
+        Set_Char_At(s, n + index, swap);
     }
-    return COPY(any_string);
+    return COPY(string);
 }
 
 
@@ -1255,7 +1255,7 @@ IMPLEMENT_GENERIC(SORT, Any_String)
     INCLUDE_PARAMS_OF_SORT;
 
     Element* v = Element_ARG(SERIES);
-    String* str = Cell_String_Ensure_Mutable(v);  // just ensure mutability
+    Strand* str = Cell_Strand_Ensure_Mutable(v);  // just ensure mutability
     UNUSED(str);  // we use the Cell_Utf8_At() accessor, which is const
 
     if (Bool_ARG(ALL))

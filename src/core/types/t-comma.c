@@ -37,16 +37,16 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Comma)
     UNUSED(form);
     UNUSED(v);
 
-    Size size = String_Size(mo->string);
+    Size size = Strand_Size(mo->strand);
     if (
         size > mo->base.size + 1
-        and *Binary_At(mo->string, size - 1) == ' '  // not multibyte char
-        and *Binary_At(mo->string, size - 2) != ','  // also safe compare
+        and *Binary_At(mo->strand, size - 1) == ' '  // not multibyte char
+        and *Binary_At(mo->strand, size - 2) != ','  // also safe compare
     ){
-        *Binary_At(mo->string, size - 1) = ',';
+        *Binary_At(mo->strand, size - 1) = ',';
     }
     else
-        Append_Codepoint(mo->string, ',');
+        Append_Codepoint(mo->strand, ',');
 
     return TRIPWIRE;
 }

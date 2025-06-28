@@ -132,7 +132,7 @@ void Where_Core_Debug(Level* L) {
         Mold_Array_At(mo, Feed_Array(L->feed), before_index, "[]");
         Throttle_Mold(mo);
         printf("Where(Before):\n");
-        printf("%s\n\n", Binary_At(mo->string, mo->base.size));
+        printf("%s\n\n", Binary_At(mo->strand, mo->base.size));
         Drop_Mold(mo);
     }
 
@@ -143,7 +143,7 @@ void Where_Core_Debug(Level* L) {
     Mold_Array_At(mo, Feed_Array(L->feed), index, "[]");
     Throttle_Mold(mo);
     printf("Where(At):\n");
-    printf("%s\n\n", Binary_At(mo->string, mo->base.size));
+    printf("%s\n\n", Binary_At(mo->strand, mo->base.size));
     Drop_Mold(mo);
 }
 

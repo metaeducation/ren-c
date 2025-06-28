@@ -358,7 +358,7 @@ typedef struct {
     // `used` is the count of *physical* units.  If a Flex is byte-sized
     // and holding a UTF-8 String, then this may be a size in bytes distinct
     // than the count of "logical" units, e.g. codepoints.  The actual
-    // logical length in such cases is in MISC_STRING_NUM_CODEPOINTS
+    // logical length in such cases is in MISC_STRAND_NUM_CODEPOINTS
     //
     Length used;
 

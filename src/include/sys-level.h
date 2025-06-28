@@ -190,7 +190,7 @@ INLINE REBLEN Level_Expression_Index(Level* L) {  // !!! Not called?
     return L->u.eval.expr_index - 1;
 }
 
-INLINE Option(const String*) File_Of_Level(Level* L) {
+INLINE Option(const Strand*) File_Of_Level(Level* L) {
     if (Level_Is_Variadic(L))
         return nullptr;
     return Link_Filename(Level_Array(L));
@@ -200,8 +200,8 @@ INLINE const char* File_UTF8_Of_Level(Level* L) {
     //
     // !!! Note: Too early in boot at the moment to use CANON(ANONYMOUS).
     //
-    Option(const String*) str = File_Of_Level(L);
-    return str ? String_UTF8(unwrap str) : "~anonymous~";
+    Option(const Strand*) str = File_Of_Level(L);
+    return str ? Strand_Utf8(unwrap str) : "~anonymous~";
 }
 
 INLINE Option(LineNumber) Line_Number_Of_Level(Level* L) {
@@ -396,7 +396,7 @@ INLINE Option(const Symbol*) Try_Get_Action_Level_Label(Level* L) {
 INLINE const char* Level_Label_Or_Anonymous_UTF8(Level* L) {
     assert(Is_Action_Level(L));
     if (L->u.action.label)
-        return String_UTF8(unwrap L->u.action.label);
+        return Strand_Utf8(unwrap L->u.action.label);
     return "~anonymous~";
 }
 

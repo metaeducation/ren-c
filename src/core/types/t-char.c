@@ -118,7 +118,7 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 //    input validated, and get garbage characters out.  The Ren-C philosophy
 //    is that since this check only applies to non-ASCII, it is worth it to
 //    do the validation.  And it only applies when scanning strings...once
-//    they are loaded into String* we use Back_Scan_Utf8_Char_Unchecked().
+//    they are loaded into Strand* we use Back_Scan_Utf8_Char_Unchecked().
 //
 // 3. We want the erroring cases to be inexpensive, because UTF-8 characters
 //    are scanned for instance in FIND of a TEXT! in a binary BLOB! which may
@@ -463,7 +463,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
     bool form = Bool_ARG(FORM);
 
     if (form) {
-        Append_Any_Utf8_Limit(mo->string, v, UNLIMITED);
+        Append_Any_Utf8_Limit(mo->strand, v, UNLIMITED);
         return TRIPWIRE;
     }
 
@@ -487,17 +487,17 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
 
     Codepoint c = Rune_Known_Single_Codepoint(v);
     if (c == ' ') {
-        Append_Codepoint(mo->string, '_');  // literal can't be `# ` [1]
+        Append_Codepoint(mo->strand, '_');  // literal can't be `# ` [1]
         goto finished;
     }
     if (c == '#') {  // might '\n' be rendered as `#`? [2]
-        Append_Codepoint(mo->string, '#');  // vs. `##`
+        Append_Codepoint(mo->strand, '#');  // vs. `##`
         goto finished;
     }
 
 } handle_ordinary_runes: { ///////////////////////////////////////////////////
 
-    Append_Codepoint(mo->string, '#');
+    Append_Codepoint(mo->strand, '#');
 
     bool no_dittos = true;
     Codepoint c = Codepoint_At(cp);
@@ -530,15 +530,15 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
         if (len == 1 and not no_dittos) {  // use historical CHAR! molding
             bool parened = true;  // !!! used to depend on MOLD's :ALL flag
 
-            Append_Codepoint(mo->string, '"');
+            Append_Codepoint(mo->strand, '"');
             Mold_Codepoint(mo, Rune_Known_Single_Codepoint(v), parened);
-            Append_Codepoint(mo->string, '"');
+            Append_Codepoint(mo->strand, '"');
         }
         else
-            Append_Any_Utf8_Limit(mo->string, v, &len);
+            Append_Any_Utf8_Limit(mo->strand, v, &len);
     }
     else {
-        const String* s = Cell_String(v);  // !!! needs node
+        const Strand* s = Cell_Strand(v);  // !!! needs node
         Mold_Text_Flex_At(mo, s, 0);
     }
 
@@ -647,15 +647,15 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         Length len;
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
-        String* s = Make_String(size);
-        memcpy(cast(Byte*, String_Head(s)), c_cast(Byte*, utf8), size);
-        Term_String_Len_Size(s, len, size);
+        Strand* s = Make_Strand(size);
+        memcpy(cast(Byte*, Strand_Head(s)), c_cast(Byte*, utf8), size);
+        Term_Strand_Len_Size(s, len, size);
         return Init_Any_String(OUT, to, s);
     }
 
     if (to == TYPE_WORD) {
         assert(not Any_Word(v));  // does not delegate this case
-        if (not Any_String(v) or Is_Flex_Frozen(Cell_String(v)))
+        if (not Any_String(v) or Is_Flex_Frozen(Cell_Strand(v)))
             return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
 
         Size size;  // TO conversion of mutable data, can't reuse stub
@@ -665,7 +665,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
     }
 
     if (to == TYPE_RUNE or to == TYPE_MONEY) {  // may make node if mutable
-        if (not Any_String(v) or Is_Flex_Frozen(Cell_String(v))) {
+        if (not Any_String(v) or Is_Flex_Frozen(Cell_Strand(v))) {
             possibly(Any_Word(v));
             return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
         }
@@ -729,7 +729,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 
     if (Any_List_Type(to)) {  // limited TRANSCODE (how limited?...) [1]
         if (Stringlike_Has_Stub(v)) {
-            if (Stub_Flavor(Cell_String(v)) == FLAVOR_SYMBOL)  // [2]
+            if (Stub_Flavor(Cell_Strand(v)) == FLAVOR_SYMBOL)  // [2]
                 return rebValue(CANON(ENVELOP), rebQ(ARG(TYPE)), rebQ(v));
         }
         return rebValue(CANON(AS), rebQ(ARG(TYPE)), CANON(TRANSCODE), rebQ(v));
@@ -763,8 +763,8 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
     if (Any_String_Type(as)) {  // have to create a Flex if not stub [1]
         assert(not Any_String(v));  // not delegated by string generic
         if (Stringlike_Has_Stub(v)) {
-            possibly(Is_Flex_Frozen(Cell_String(v)));
-            possibly(Is_Stub_Symbol(Cell_String(v)));
+            possibly(Is_Flex_Frozen(Cell_Strand(v)));
+            possibly(Is_Stub_Symbol(Cell_Strand(v)));
             Copy_Cell(out, v);
             KIND_BYTE(out) = as;
             return SUCCESS;
@@ -777,8 +777,8 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
         assert(size + 1 <= Size_Of(v->payload.at_least_8));
 
-        String* str = Make_String_Core(
-            STUB_MASK_STRING | BASE_FLAG_MANAGED,
+        Strand* str = Make_Strand_Core(
+            STUB_MASK_STRAND | BASE_FLAG_MANAGED,
             size
         );
         memcpy(
@@ -786,7 +786,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
             c_cast(Byte*, utf8),
             size + 1  // +1 to include '\0'
         );
-        Term_String_Len_Size(str, len, size);
+        Term_Strand_Len_Size(str, len, size);
         Freeze_Flex(str);
         possibly(as == TYPE_BLOB);  // index 0 so byte transform not needed
         Init_Series(out, as, str);
@@ -795,11 +795,11 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
 
     if (as == TYPE_WORD) {  // aliasing as WORD! freezes data
         if (Stringlike_Has_Stub(v)) {
-            const String* str = Cell_String(v);
+            const Strand* str = Cell_Strand(v);
             if (VAL_INDEX(v) != 0)
                 return Error_User("Can't alias string as WORD! unless at head");
 
-            if (Is_String_Symbol(str)) {  // already frozen and checked!
+            if (Is_Strand_Symbol(str)) {  // already frozen and checked!
                 Init_Word(out, cast(const Symbol*, str));
                 return SUCCESS;
             }
@@ -824,7 +824,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         if (Stringlike_Has_Stub(v)) {
             Init_Blob_At(
                 out,
-                Cell_String(v),
+                Cell_Strand(v),
                 VAL_BYTEOFFSET(v)  // index has to be in terms of bytes
             );
             KIND_BYTE(out) = TYPE_BLOB;
@@ -848,7 +848,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         assert(as != TYPE_WORD and not (Any_String_Type(as)));
 
         if (Stringlike_Has_Stub(v)) {
-            const String *s = Cell_String(v);
+            const Strand *s = Cell_Strand(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
                     return Error_Alias_Constrains_Raw();
@@ -869,7 +869,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
 
     if (as == TYPE_EMAIL or as == TYPE_URL) {
         if (Stringlike_Has_Stub(v)) {
-            const String *s = Cell_String(v);
+            const Strand *s = Cell_Strand(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
                     return Error_Alias_Constrains_Raw();

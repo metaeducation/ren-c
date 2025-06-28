@@ -382,7 +382,7 @@ Option(Error*) Trap_Make_Interpreted_Action(
         LENS_MODE_ALL_UNSEALED // we created exemplar, see all!
     );
 
-    Option(const String*) filename;
+    Option(const Strand*) filename;
     if ((filename = Link_Filename(Cell_Array(spec)))) {  // favor spec
         Tweak_Link_Filename(copy, filename);
         MISC_SOURCE_LINE(copy) = MISC_SOURCE_LINE(Cell_Array(spec));

@@ -214,7 +214,7 @@ DECLARE_NATIVE(DNS_ACTOR)
             Get_Tuple_Bytes(buf, host, 4);
             HOSTENT *he = gethostbyaddr(buf, 4, AF_INET);
             if (he != nullptr)
-                return Init_Text(OUT, Make_String_UTF8(he->h_name));
+                return Init_Text(OUT, Make_Strand_UTF8(he->h_name));
 
             // ...else fall through to error handling...
         }

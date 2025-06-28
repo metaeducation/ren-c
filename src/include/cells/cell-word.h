@@ -133,7 +133,7 @@ INLINE bool Any_Word(const Value* v)
 // Helper calls strsize() so you can more easily use literals at callsite.
 // (Better to call Intern_UTF8_Managed() with the size if you know it.)
 //
-INLINE const String* Intern_Unsized_Managed(const char *utf8)
+INLINE const Strand* Intern_Unsized_Managed(const char *utf8)
   { return Intern_UTF8_Managed(cb_cast(utf8), strsize(utf8)); }
 
 

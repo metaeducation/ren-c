@@ -332,7 +332,7 @@ DECLARE_NATIVE(MAKE_NATIVE)
     //
     Copy_Cell(Details_At(details, IDX_TCC_NATIVE_CONTEXT), g_user_module);
 
-    if (Is_Flex_Frozen(Cell_String(source)))  // don't have to copy if frozen
+    if (Is_Flex_Frozen(Cell_Strand(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_TCC_NATIVE_SOURCE), source);
     else {
         Init_Text(
@@ -344,7 +344,7 @@ DECLARE_NATIVE(MAKE_NATIVE)
     if (Bool_ARG(LINKNAME)) {
         Value* linkname = ARG(LINKNAME);
 
-        if (Is_Flex_Frozen(Cell_String(linkname)))
+        if (Is_Flex_Frozen(Cell_Strand(linkname)))
             Copy_Cell(Details_At(details, IDX_TCC_NATIVE_LINKNAME), linkname);
         else {
             Init_Text(
@@ -537,16 +537,16 @@ DECLARE_NATIVE(COMPILE_P)
                 // !!! Review: how to choose LIBREBOL_BINDING_NAME when doing
                 // TCC natives?  It includes "rebol.h".
 
-                Append_Ascii(mo->string, "RebolBounce ");
-                Append_Any_Utf8(mo->string, linkname);
+                Append_Ascii(mo->strand, "RebolBounce ");
+                Append_Any_Utf8(mo->strand, linkname);
                 Append_Ascii(
-                    mo->string,
+                    mo->strand,
                     "(RebolContext* LIBREBOL_BINDING_NAME())\n{"
                 );
 
-                Append_Any_Utf8(mo->string, source);
+                Append_Any_Utf8(mo->strand, source);
 
-                Append_Ascii(mo->string, "}\n\n");
+                Append_Ascii(mo->strand, "}\n\n");
             }
             else if (Is_Text(item)) {
                 //
@@ -557,8 +557,8 @@ DECLARE_NATIVE(COMPILE_P)
                 // macros or constants.  The string will appear at the point
                 // in the compile where it is given in the list.
                 //
-                Append_Any_Utf8(mo->string, item);
-                Append_Ascii(mo->string, "\n");
+                Append_Any_Utf8(mo->strand, item);
+                Append_Ascii(mo->strand, "\n");
             }
             else {
                 // COMPILE should've vetted the list to only TEXT! and ACTION!
@@ -577,13 +577,13 @@ DECLARE_NATIVE(COMPILE_P)
         if (Bool_ARG(INSPECT)) {
             Drop_Lifeguard(handle);
             Drop_Data_Stack_To(STACK_BASE);  // don't modify collected natives
-            return Init_Text(OUT, Pop_Molded_String(mo));
+            return Init_Text(OUT, Pop_Molded_Strand(mo));
         }
 
         if (
             tcc_compile_string(
                 state,
-                cs_cast(Binary_At(mo->string, mo->base.size))
+                cs_cast(Binary_At(mo->strand, mo->base.size))
             ) < 0
         ){
             return rebDelegate("panic [",

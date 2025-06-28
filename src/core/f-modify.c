@@ -220,7 +220,7 @@ static Error* Error_Bad_Utf8_Bin_Edit(Error* cause) {
 
 
 //
-//  Modify_String_Or_Binary: C
+//  Modify_String_Or_Blob: C
 //
 // This returns the index of the tail of the insertion.  The reason it does
 // so is because the caller would have a hard time calculating that if the
@@ -236,7 +236,7 @@ static Error* Error_Bad_Utf8_Bin_Edit(Error* cause) {
 // of VAL_INDEX() is different.  So in addition to the detection of the
 // FLEX_FLAG_IS_STRING on the Flex, we must know if dst is a BLOB!.
 //
-REBLEN Modify_String_Or_Binary(
+REBLEN Modify_String_Or_Blob(
     Value* dst,  // ANY-STRING? or BLOB! value to modify
     SymId op,  // SYM_APPEND @ tail, SYM_INSERT or SYM_CHANGE @ index
     Option(const Value*) opt_src,  // argument with content to inject
@@ -260,11 +260,11 @@ REBLEN Modify_String_Or_Binary(
     REBLEN dst_len_old = 0xDECAFBAD;  // only if IS_SER_STRING(dst_ser)
     Size dst_off;
     if (Is_Blob(dst)) {  // check invariants up front even if NULL / no-op
-        if (Is_Stub_String(dst_flex)) {
+        if (Is_Stub_Strand(dst_flex)) {
             Byte at = *Binary_At(dst_flex, dst_idx);
             if (Is_Continuation_Byte(at))
                 panic (Error_Bad_Utf8_Bin_Edit_Raw());
-            dst_len_old = String_Len(cast(String*, dst_flex));
+            dst_len_old = Strand_Len(cast(Strand*, dst_flex));
         }
         dst_off = dst_idx;
     }
@@ -272,7 +272,7 @@ REBLEN Modify_String_Or_Binary(
         assert(Any_String(dst));
 
         dst_off = VAL_BYTEOFFSET_FOR_INDEX(dst, dst_idx);  // !!! review speed
-        dst_len_old = String_Len(cast(String*, dst_flex));
+        dst_len_old = Strand_Len(cast(Strand*, dst_flex));
     }
 
     const Value* src;
@@ -306,14 +306,14 @@ REBLEN Modify_String_Or_Binary(
         dst_off = Flex_Used(dst_flex);
         dst_idx = dst_len_old;
     }
-    else if (Is_Blob(dst) and Is_Stub_String(dst_flex)) {
-        dst_idx = String_Index_At(cast(String*, dst_flex), dst_off);
+    else if (Is_Blob(dst) and Is_Stub_Strand(dst_flex)) {
+        dst_idx = Strand_Index_At(cast(Strand*, dst_flex), dst_off);
     }
 
     // If the src is not an ANY-STRING?, then we need to create string data
     // from the value to use its content.
     //
-    DECLARE_MOLDER (mo);  // mo->string will be non-null if Push_Mold() run
+    DECLARE_MOLDER (mo);  // mo->strand will be non-null if Push_Mold() run
 
     const Byte* src_ptr;  // start of utf-8 encoded data to insert
     REBLEN src_len_raw;  // length in codepoints (if dest is string)
@@ -335,7 +335,7 @@ REBLEN Modify_String_Or_Binary(
             UNLIMITED
         );
 
-        if (Is_Stub_String(dst_flex)) {
+        if (Is_Stub_Strand(dst_flex)) {
             if (src_len_raw == 0)
                 panic (Error_Illegal_Zero_Byte_Raw());  // no '\0' in strings
         }
@@ -368,7 +368,7 @@ REBLEN Modify_String_Or_Binary(
         // be cropping the :PART of the input via passing a parameter here.
         //
         src_size_raw = Cell_String_Size_Limit_At(&src_len_raw, src, UNLIMITED);
-        if (not Is_Stub_String(dst_flex))
+        if (not Is_Stub_Strand(dst_flex))
             src_len_raw = src_size_raw;
     }
     else if (Is_Integer(src)) {
@@ -378,7 +378,7 @@ REBLEN Modify_String_Or_Binary(
         // otherwise `append #{123456} 10` is #{1234560A}, just the byte
 
         src_byte = VAL_UINT8(src);  // panics if out of range
-        if (Is_Stub_String(dst_flex) and Is_Utf8_Lead_Byte(src_byte))
+        if (Is_Stub_Strand(dst_flex) and Is_Utf8_Lead_Byte(src_byte))
             panic (Error_Bad_Utf8_Bin_Edit_Raw());
 
         src_ptr = &src_byte;
@@ -391,21 +391,21 @@ REBLEN Modify_String_Or_Binary(
         src_ptr = Binary_At(b, offset);
         src_size_raw = Binary_Len(b) - offset;
 
-        if (not Is_Stub_String(dst_flex)) {
+        if (not Is_Stub_Strand(dst_flex)) {
             if (limit and *(unwrap limit) < src_size_raw)
                 src_size_raw = *(unwrap limit);  // byte count for blob! dest
             src_len_raw = src_size_raw;
         }
         else {
-            if (Is_Stub_String(b)) {  // guaranteed valid UTF-8
-                const String* str = c_cast(String*, b);
+            if (Is_Stub_Strand(b)) {  // guaranteed valid UTF-8
+                const Strand* str = c_cast(Strand*, b);
                 if (Is_Continuation_Byte(*src_ptr))
                     panic (Error_Bad_Utf8_Bin_Edit_Raw());
 
                 // !!! We could be more optimal here since we know it's valid
                 // UTF-8 than walking characters up to the limit, like:
                 //
-                // `src_len_raw = String_Len(str) - String_Index_At(str, offset);`
+                // `src_len_raw = Strand_Len(str) - Strand_Index_At(str, offset);`
                 //
                 // But for simplicity just use the same branch that unverified
                 // binaries do for now.  This code can be optimized when the
@@ -507,10 +507,10 @@ REBLEN Modify_String_Or_Binary(
 
       use_mold_buffer:
 
-        src_ptr = Binary_At(mo->string, mo->base.size);
-        src_size_raw = String_Size(mo->string) - mo->base.size;
-        if (Is_Stub_String(dst_flex))
-            src_len_raw = String_Len(mo->string) - mo->base.index;
+        src_ptr = Binary_At(mo->strand, mo->base.size);
+        src_size_raw = Strand_Size(mo->strand) - mo->base.size;
+        if (Is_Stub_Strand(dst_flex))
+            src_len_raw = Strand_Len(mo->strand) - mo->base.index;
         else
             src_len_raw = src_size_raw;
     }
@@ -521,7 +521,7 @@ REBLEN Modify_String_Or_Binary(
     //
     // !!! Bad first implementation; improve.
     //
-    if (Is_Stub_String(dst_flex)) {
+    if (Is_Stub_Strand(dst_flex)) {
         Utf8(const*) t = cast(Utf8(const*), src_ptr + src_size_raw);
         if (limit)
             while (src_len_raw > *(unwrap limit)) {
@@ -567,15 +567,15 @@ REBLEN Modify_String_Or_Binary(
         Expand_Flex(dst_flex, dst_off, src_size_total);
         Set_Flex_Used(dst_flex, dst_used + src_size_total);
 
-        if (Is_Stub_String(dst_flex)) {
-            book = maybe Link_Bookmarks(cast(String*, dst_flex));
+        if (Is_Stub_Strand(dst_flex)) {
+            book = maybe Link_Bookmarks(cast(Strand*, dst_flex));
 
             if (book and BOOKMARK_INDEX(book) > dst_idx) {  // only INSERT
                 BOOKMARK_INDEX(book) += src_len_total;
                 BOOKMARK_OFFSET(book) += src_size_total;
             }
             Tweak_Misc_Num_Codepoints(
-                cast(String*, dst_flex), dst_len_old + src_len_total
+                cast(Strand*, dst_flex), dst_len_old + src_len_total
             );
         }
     }
@@ -589,11 +589,11 @@ REBLEN Modify_String_Or_Binary(
 
         REBLEN dst_len_at;
         Size dst_size_at;
-        if (Is_Stub_String(dst_flex)) {
-            String* dst_str = cast(String*, dst_flex);
+        if (Is_Stub_Strand(dst_flex)) {
+            Strand* dst_str = cast(Strand*, dst_flex);
             if (Is_Blob(dst)) {
                 dst_size_at = Cell_Series_Len_At(dst);  // byte count
-                dst_len_at = String_Index_At(dst_str, dst_size_at);
+                dst_len_at = Strand_Index_At(dst_str, dst_size_at);
             }
             else
                 dst_size_at = Cell_String_Size_Limit_At(
@@ -626,7 +626,7 @@ REBLEN Modify_String_Or_Binary(
         // have to be moved safely out of the way before being overwritten.
 
         Size part_size;
-        if (Is_Stub_String(dst_flex)) {
+        if (Is_Stub_Strand(dst_flex)) {
             if (Is_Blob(dst)) {
                 //
                 // The calculations on the new length depend on `part` being
@@ -634,7 +634,7 @@ REBLEN Modify_String_Or_Binary(
                 // and also be sure it's a legitimate codepoint boundary and
                 // not splitting a codepoint's bytes.
                 //
-                if (part > dst_size_at) {  // can use String_Len() from above
+                if (part > dst_size_at) {  // can use Strand_Len() from above
                     part = dst_len_at;
                     part_size = dst_size_at;
                 }
@@ -653,7 +653,7 @@ REBLEN Modify_String_Or_Binary(
                 }
             }
             else {
-                if (part > dst_len_at) {  // can use String_Len() from above
+                if (part > dst_len_at) {  // can use Strand_Len() from above
                     part = dst_len_at;
                     part_size = dst_size_at;
                 }
@@ -705,15 +705,15 @@ REBLEN Modify_String_Or_Binary(
         // complicated--but just assume that the start of the change is as
         // good a cache as any to be relevant for the next operation.
         //
-        if (Is_Stub_String(dst_flex)) {
-            book = maybe Link_Bookmarks(cast(String*, dst_flex));
+        if (Is_Stub_Strand(dst_flex)) {
+            book = maybe Link_Bookmarks(cast(Strand*, dst_flex));
 
             if (book and BOOKMARK_INDEX(book) > dst_idx) {
                 BOOKMARK_INDEX(book) = dst_idx;
                 BOOKMARK_OFFSET(book) = dst_off;
             }
             Tweak_Misc_Num_Codepoints(
-                cast(String*, dst_flex), dst_len_old + src_len_total - part
+                cast(Strand*, dst_flex), dst_len_old + src_len_total - part
             );
         }
     }
@@ -734,15 +734,15 @@ REBLEN Modify_String_Or_Binary(
         }
     }
 
-    if (mo->string != nullptr)  // ...a Push_Mold() happened
+    if (mo->strand != nullptr)  // ...a Push_Mold() happened
         Drop_Mold(mo);
 
     // !!! Should BYTE_BUF's memory be reclaimed also (or should it be
     // unified with the mold buffer?)
 
     if (book) {
-        String* dst_str = cast(String*, dst_flex);
-        if (BOOKMARK_INDEX(book) > String_Len(dst_str)) {  // past active
+        Strand* dst_str = cast(Strand*, dst_flex);
+        if (BOOKMARK_INDEX(book) > Strand_Len(dst_str)) {  // past active
             assert(op == SYM_CHANGE);  // only change removes material
             Free_Bookmarks_Maybe_Null(dst_str);
         }
@@ -751,7 +751,7 @@ REBLEN Modify_String_Or_Binary(
             Check_Bookmarks_Debug(dst_str);
           #endif
 
-            if (String_Len(dst_str) < Size_Of(Cell))  // not kept if small
+            if (Strand_Len(dst_str) < Size_Of(Cell))  // not kept if small
                 Free_Bookmarks_Maybe_Null(dst_str);
         }
     }

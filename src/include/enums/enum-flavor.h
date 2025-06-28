@@ -162,9 +162,9 @@ typedef enum {
     //
     FLAVOR_BYTES,
 
-    MIN_FLAVOR_STRING,  //=////////////// BELOW THIS LINE IS UTF-8 (OR CORRUPT)
+    MIN_FLAVOR_STRAND,  //=////////////// BELOW THIS LINE IS UTF-8 (OR CORRUPT)
 
-    FLAVOR_NONSYMBOL = MIN_FLAVOR_STRING,
+    FLAVOR_NONSYMBOL = MIN_FLAVOR_STRAND,
 
     // While the content format is UTF-8 for both ANY-STRING? and ANY-WORD?,
     // String.misc and String.link are used differently.  Non-symbols cache

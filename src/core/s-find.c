@@ -257,7 +257,7 @@ REBINT Find_Binstr_In_Binstr(
         //
         // Note: `find:skip tail "abcdef" "def" -3` is "def", so first search
         // position should be at the `d`.  We can reduce the amount of work
-        // we do in the later loop checking against String_Len(str1) `len` by
+        // we do in the later loop checking against Strand_Len(str1) `len` by
         // up-front finding the earliest point we can look modulo `skip`,
         // e.g. `find:skip tail "abcdef" "cdef" -2` should start at `c`.
         //
@@ -384,7 +384,7 @@ REBINT Find_Binstr_In_Binstr(
                 return NOT_FOUND;
 
             if (is_1_str)
-                assert(cp1 >= String_At(Cell_String(binstr1), - skip1));
+                assert(cp1 >= Strand_At(Cell_Strand(binstr1), - skip1));
             else
                 assert(cp1 >= Binary_At(Cell_Binary(binstr1), - skip1));
         } else {
@@ -392,7 +392,7 @@ REBINT Find_Binstr_In_Binstr(
                 return NOT_FOUND;
 
             if (is_1_str)
-                assert(cp1 <= String_At(Cell_String(binstr1), len_head1 - skip1));
+                assert(cp1 <= Strand_At(Cell_Strand(binstr1), len_head1 - skip1));
             else
                 assert(cp1 <= Binary_At(Cell_Binary(binstr1), len_head1 - skip1));
         }
@@ -545,7 +545,7 @@ REBLEN Find_Value_In_Binstr(
         //   >> find "ab<c>d" quote <c>
         //   == "<c>d"
 
-        String* molded = nullptr;
+        Strand* molded = nullptr;
         if (pattern_quotes == 1 or Heart_Of(pattern) == TYPE_INTEGER)
             molded = Copy_Mold_Cell_Ignore_Quotes(pattern, 0);
 

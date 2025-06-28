@@ -319,9 +319,9 @@ DECLARE_NATIVE(OF)
 
     SymId id = unwrap opt_id;
 
-    const Byte* utf8 = String_Head(Canon_Symbol(id));
+    const Byte* utf8 = Strand_Head(Canon_Symbol(id));
     SymId next_id = cast(SymId, cast(int, id) + 1);
-    const Byte* maybe_utf8_of = String_Head(Canon_Symbol(next_id));
+    const Byte* maybe_utf8_of = Strand_Head(Canon_Symbol(next_id));
     while (true) {
         if (*maybe_utf8_of == '\0')  // hit end of what would be "longer"
             goto no_optimization;
@@ -345,8 +345,8 @@ DECLARE_NATIVE(OF)
 } no_optimization: { /////////////////////////////////////////////////////////
 
     Byte buffer[256];
-    Size size = String_Size(sym);
-    Mem_Copy(buffer, String_UTF8(sym), size);
+    Size size = Strand_Size(sym);
+    Mem_Copy(buffer, Strand_Utf8(sym), size);
     buffer[size] = '-';
     ++size;
     buffer[size] = 'o';
@@ -861,8 +861,8 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
 //
 Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 {
-    String* s = Make_String(len * 2);  // !!! guess...use mold buffer instead?
-    Utf8(*) up = String_Head(s);
+    Strand* s = Make_Strand(len * 2);  // !!! guess...use mold buffer instead?
+    Utf8(*) up = Strand_Head(s);
 
     REBLEN num_chars = 0;
 
@@ -895,14 +895,14 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
     if (not found_at)
         return nullptr;
 
-    Term_String_Len_Size(s, num_chars, up - String_Head(s));
+    Term_Strand_Len_Size(s, num_chars, up - Strand_Head(s));
 
     if (Try_Init_Small_Utf8(
         PUSH(),
         TYPE_EMAIL,
-        String_Head(s),
-        String_Len(s),
-        String_Size(s)
+        Strand_Head(s),
+        Strand_Len(s),
+        Strand_Size(s)
     )){
         Free_Unmanaged_Flex(s);
         return cp;
@@ -934,8 +934,8 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 //
 Option(const Byte*) Try_Scan_Money_To_Stack(const Byte* cp, REBLEN len)
 {
-    String* s = Make_String(len);  // only ASCII allowed, "1"-"9" and "."
-    Utf8(*) up = String_Head(s);
+    Strand* s = Make_Strand(len);  // only ASCII allowed, "1"-"9" and "."
+    Utf8(*) up = Strand_Head(s);
 
     assert(*cp == '$');
     ++cp;
@@ -970,14 +970,14 @@ Option(const Byte*) Try_Scan_Money_To_Stack(const Byte* cp, REBLEN len)
     if (dot_and_digits_len != 0 and dot_and_digits_len != 3)
         return nullptr;  // Only allow 2 digits after the dot, if present [1]
 
-    Term_String_Len_Size(s, len, up - String_Head(s));
+    Term_Strand_Len_Size(s, len, up - Strand_Head(s));
 
     if (Try_Init_Small_Utf8(
         PUSH(),
         TYPE_MONEY,
-        String_Head(s),
-        String_Len(s),
-        String_Size(s)
+        Strand_Head(s),
+        Strand_Len(s),
+        Strand_Size(s)
     )){
         Free_Unmanaged_Flex(s);
         return cp;
@@ -1045,7 +1045,7 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
         break;  // found ://
     }
 
-    String* s = Append_UTF8_May_Panic(
+    Strand* s = Append_UTF8_May_Panic(
         nullptr,
         cs_cast(cp),
         len,
@@ -1055,9 +1055,9 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
     if (Try_Init_Small_Utf8(
         PUSH(),
         TYPE_URL,
-        String_Head(s),
-        String_Len(s),
-        String_Size(s)
+        Strand_Head(s),
+        Strand_Len(s),
+        Strand_Size(s)
     )){
         Free_Unmanaged_Flex(s);  // !!! direct mold buffer use would be better
         return cp + len;
@@ -1265,14 +1265,14 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
         // correctly, it would need to use Utf8_Next to count the characters
         // in the loop above.  Better to convert to usermode.
 
-        String* string = Make_String(len * 2);
-        Utf8(*) str = String_Head(string);
+        Strand* strand = Make_Strand(len * 2);
+        Utf8(*) at = Strand_Head(strand);
         cp = start;
 
         // "Code below *MUST* mirror that above:"
 
         while (!ANY_CR_LF_END(*cp))
-            str = Write_Codepoint(str, *cp++);
+            at = Write_Codepoint(at, *cp++);
         while (*cp != '\0') {
             if (*cp == CR)
                 ++cp;
@@ -1283,10 +1283,10 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
             while (Is_Lex_Space(*cp))
                 ++cp;
             while (!ANY_CR_LF_END(*cp))
-                str = Write_Codepoint(str, *cp++);
+                at = Write_Codepoint(at, *cp++);
         }
-        Term_String_Len_Size(string, len, str - String_Head(string));
-        Init_Text(val, string);
+        Term_Strand_Len_Size(strand, len, at - Strand_Head(strand));
+        Init_Text(val, strand);
     }
 
     return Init_Block(OUT, result);

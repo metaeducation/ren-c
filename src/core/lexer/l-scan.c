@@ -418,13 +418,13 @@ static void Update_Error_Near_For_Line(
 
     DECLARE_MOLDER (mo);  // put line count and line's text into string [3]
     Push_Mold(mo);
-    Append_Ascii(mo->string, "(line ");
-    Append_Int(mo->string, line);  // (maybe) different from line below
-    Append_Ascii(mo->string, ") ");
-    Append_UTF8_May_Panic(mo->string, cs_cast(bp), size, STRMODE_NO_CR);
+    Append_Ascii(mo->strand, "(line ");
+    Append_Int(mo->strand, line);  // (maybe) different from line below
+    Append_Ascii(mo->strand, ") ");
+    Append_UTF8_May_Panic(mo->strand, cs_cast(bp), size, STRMODE_NO_CR);
 
     ERROR_VARS *vars = ERR_VARS(error);
-    Init_Text(Slot_Init_Hack(&vars->nearest), Pop_Molded_String(mo));
+    Init_Text(Slot_Init_Hack(&vars->nearest), Pop_Molded_Strand(mo));
 
     if (transcode->file)
         Init_File(Slot_Init_Hack(&vars->file), unwrap transcode->file);
@@ -587,7 +587,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 // (Calling the bootstrap exe's mold buffer a "string" would be potentially
 // confusing since "String" doesn't use UTF-8 internally in that codebase.)
 //
-#define Mold_Buffer(mo) mo->string
+#define Mold_Buffer(mo) mo->strand
 
 
 // Scan a quoted or braced string, handling all the escape characters.  e.g.
@@ -799,7 +799,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
         invalids = nullptr;
     }
 
-    String* buf = Mold_Buffer(mo);
+    Strand* buf = Mold_Buffer(mo);
 
     const Byte* cp = begin;
 
@@ -846,7 +846,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
 
             Size size = transcode.at - cp;
             Size original_used = Binary_Len(buf);
-            Size original_len = String_Len(buf);
+            Size original_len = Strand_Len(buf);
             Expand_Flex_Tail(buf, size);  // updates used size
             Byte* dest = Binary_At(buf, original_used);
             Length len = 0;
@@ -855,7 +855,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
                     ++len;
                 *dest = *cp;
             }
-            Term_String_Len_Size(
+            Term_Strand_Len_Size(
                 buf, original_len + len, original_used + size
             );
             continue;
@@ -1007,12 +1007,12 @@ static Error* Error_Syntax(ScanState* S, Token token) {
     assert(S->end >= S->begin);  // can get out of sync [1]
 
     DECLARE_ELEMENT (token_name);
-    Init_Text(token_name, Make_String_UTF8(g_token_names[token]));
+    Init_Text(token_name, Make_Strand_UTF8(g_token_names[token]));
 
     DECLARE_ELEMENT (token_text);
     Init_Text(
         token_text,
-        Make_Sized_String_UTF8(cs_cast(S->begin), S->end - S->begin)
+        Make_Sized_Strand_UTF8(cs_cast(S->begin), S->end - S->begin)
     );
 
     return Error_Scan_Invalid_Raw(token_name, token_text);
@@ -1026,7 +1026,7 @@ static Error* Error_Syntax(ScanState* S, Token token) {
 //
 static Error* Error_Extra(Byte seen) {
     DECLARE_ELEMENT (unexpected);
-    Init_Text(unexpected, Make_Codepoint_String(seen));
+    Init_Text(unexpected, Make_Codepoint_Strand(seen));
     return Error_Scan_Extra_Raw(unexpected);
 }
 
@@ -2066,7 +2066,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 //
 void Init_Transcode(
     Init(TranscodeState) transcode,
-    Option(const String*) file,
+    Option(const Strand*) file,
     LineNumber line,
     Option(const Byte*) bp
 ){
@@ -2293,7 +2293,7 @@ Bounce Scanner_Executor(Level* const L) {
 
   locate_token: {
 
-    assert(mo->string == nullptr);  // pushed mold should have been handled
+    assert(mo->strand == nullptr);  // pushed mold should have been handled
     Option(Error*) e = Trap_Locate_Token_May_Push_Mold(&token, mo, L);
     if (e)
         return FAIL(unwrap e);
@@ -2631,9 +2631,9 @@ Bounce Scanner_Executor(Level* const L) {
 
 } case TOKEN_RUNE: { /////////////////////////////////////////////////////////
 
-    Size mold_size = String_Size(mo->string) - mo->base.size;
-    Length mold_len = String_Len(mo->string) - mo->base.index;
-    Utf8(const*) utf8 = c_cast(Utf8(*), Binary_At(mo->string, mo->base.size));
+    Size mold_size = Strand_Size(mo->strand) - mo->base.size;
+    Length mold_len = Strand_Len(mo->strand) - mo->base.index;
+    Utf8(const*) utf8 = c_cast(Utf8(*), Binary_At(mo->strand, mo->base.size));
 
     if (mold_size == 0) {
         assert(mold_len == 0);
@@ -2651,9 +2651,9 @@ Bounce Scanner_Executor(Level* const L) {
 
     Init_Rune(
         PUSH(),
-        cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
-        String_Size(mo->string) - mo->base.size,
-        String_Len(mo->string) - mo->base.index
+        cast(Utf8(const*), Binary_At(mo->strand, mo->base.size)),
+        Strand_Size(mo->strand) - mo->base.size,
+        Strand_Len(mo->strand) - mo->base.index
     );
     Drop_Mold(mo);
     goto lookahead;
@@ -2663,7 +2663,7 @@ Bounce Scanner_Executor(Level* const L) {
   // The escape sequences in the string have already been processed, and the
   // decoded data is in the mold buffer.
 
-    String* s = Pop_Molded_String(mo);
+    Strand* s = Pop_Molded_Strand(mo);
     Init_Text(PUSH(), s);
     goto lookahead;
 
@@ -2681,12 +2681,12 @@ Bounce Scanner_Executor(Level* const L) {
 
 } case TOKEN_FILE: { /////////////////////////////////////////////////////////
 
-    if (mo->base.size == String_Size(mo->string)) {  // % is WORD!
+    if (mo->base.size == Strand_Size(mo->strand)) {  // % is WORD!
         Init_Word(PUSH(), Intern_UTF8_Managed(cb_cast("%"), 1));
         Drop_Mold(mo);
     }
     else {
-        String* s = Pop_Molded_String(mo);
+        Strand* s = Pop_Molded_Strand(mo);
         Init_File(PUSH(), s);
     }
     goto lookahead;
@@ -2711,7 +2711,7 @@ Bounce Scanner_Executor(Level* const L) {
     );
 
     Size size = len - 2;  // !!! doesn't know where tag actually ends (?)
-    String* s = Append_UTF8_May_Panic(
+    Strand* s = Append_UTF8_May_Panic(
         nullptr,
         cs_cast(S->begin + 1),
         size,
@@ -3204,7 +3204,7 @@ Bounce Scanner_Executor(Level* const L) {
   //    ARRAY_NEWLINE_AT_TAIL on an array that pops the scanned items.  They
   //    can test for the flag before dropping this scanner level.
 
-    assert(mo->string == nullptr);  // mold should have been handled
+    assert(mo->strand == nullptr);  // mold should have been handled
 
     assert(S->num_quotes_pending == 0);
     assert(not S->sigil_pending);
@@ -3246,7 +3246,7 @@ Bounce Scanner_Executor(Level* const L) {
 //    the `p` pointer is this packed array, vs. the first item of a va_list.)
 //
 Source* Scan_UTF8_Managed(
-    Option(const String*) file,
+    Option(const Strand*) file,
     const Byte* utf8,
     Size size
 ){
@@ -3414,9 +3414,9 @@ DECLARE_NATIVE(TRANSCODE)
     if (Is_Blob(source))  // scanner needs data to end in '\0' [1]
         Term_Binary(m_cast(Binary*, Cell_Binary(source)));
 
-    Option(const String*) file;
+    Option(const Strand*) file;
     if (Bool_ARG(FILE)) {
-        file = Cell_String(ARG(FILE));
+        file = Cell_Strand(ARG(FILE));
         Freeze_Flex(unwrap file);  // freezes vs. interning [2]
     }
     else
@@ -3621,7 +3621,7 @@ DECLARE_NATIVE(TRANSCODE)
                 bp, transcode->at
             );
         else
-            VAL_INDEX_RAW(spare_rest) += Binary_Tail(Cell_String(source)) - bp;
+            VAL_INDEX_RAW(spare_rest) += Binary_Tail(Cell_Strand(source)) - bp;
     }
 
     Source* pack = Make_Source_Managed(2);

@@ -291,7 +291,7 @@ DECLARE_NATIVE(READ_LINE)
             return rebDelegate("panic", Make_Non_Halt_Error("READ-LINE"));
         }
         if (eof) {
-            if (mo->base.size == String_Size(mo->string)) {
+            if (mo->base.size == Strand_Size(mo->strand)) {
                 Drop_Mold(mo);
                 return nullptr;  // eof before any data, ok to say we're done
             }
@@ -330,14 +330,14 @@ DECLARE_NATIVE(READ_LINE)
 
         if (c == '\n') {  // found a newline
             if (raw)
-                Append_Codepoint(mo->string, c);
+                Append_Codepoint(mo->strand, c);
             break;
         }
 
-        Append_Codepoint(mo->string, c);
+        Append_Codepoint(mo->strand, c);
     }
 
-    line = Init_Text(Alloc_Value(), Pop_Molded_String(mo));
+    line = Init_Text(Alloc_Value(), Pop_Molded_Strand(mo));
 
 } got_line: { /////////////////////////////////////////////////////////////=//
 

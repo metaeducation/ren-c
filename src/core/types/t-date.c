@@ -153,7 +153,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
         or VAL_DAY(v) == 0
         or VAL_DAY(v) > 31
     ) {
-        Append_Ascii(mo->string, "?date?");
+        Append_Ascii(mo->strand, "?date?");
         return TRIPWIRE;
     }
 
@@ -177,10 +177,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
     bp = Form_Int_Pad(bp, VAL_YEAR(v), 6, -4, '0');
     *bp = '\0';
 
-    Append_Ascii(mo->string, s_cast(buf));
+    Append_Ascii(mo->strand, s_cast(buf));
 
     if (Does_Date_Have_Time(v)) {
-        Append_Codepoint(mo->string, '/');
+        Append_Codepoint(mo->strand, '/');
         Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // Bool_ARG(FORM)?
         assert(bounce == TRIPWIRE);  // !!! generically might BOUNCE_CONTINUE
         UNUSED(bounce);
@@ -200,7 +200,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
             bp = Form_Int_Pad(bp, (zone & 3) * 15, 2, 2, '0');
             *bp = 0;
 
-            Append_Ascii(mo->string, s_cast(buf));
+            Append_Ascii(mo->strand, s_cast(buf));
         }
     }
 

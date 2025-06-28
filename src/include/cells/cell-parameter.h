@@ -62,7 +62,7 @@
 //
 
 #define CELL_PARAMETER_PAYLOAD_1_SPEC(c)    CELL_PAYLOAD_1(c)
-#define CELL_PARAMETER_EXTRA_STRING(c)  CELL_EXTRA(c)
+#define CELL_PARAMETER_EXTRA_STRAND(c)  CELL_EXTRA(c)
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define CELL_PARAMETER_PAYLOAD_2_FLAGS(c)  (c)->payload.split.two.flags
@@ -312,14 +312,14 @@ INLINE ParamClass Cell_Parameter_Class(const Cell* param) {
     return pclass;
 }
 
-INLINE Option(const String*) Cell_Parameter_String(const Cell* param) {
+INLINE Option(const Strand*) Cell_Parameter_Strand(const Cell* param) {
     assert(Heart_Of(param) == TYPE_PARAMETER);
-    return cast(const String*, CELL_PARAMETER_EXTRA_STRING(param));
+    return cast(const Strand*, CELL_PARAMETER_EXTRA_STRAND(param));
 }
 
-INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
+INLINE void Set_Parameter_Strand(Cell* param, Option(const Strand*) string) {
     assert(Heart_Of(param) == TYPE_PARAMETER);
-    CELL_PARAMETER_EXTRA_STRING(param) = m_cast(String*, maybe string);
+    CELL_PARAMETER_EXTRA_STRAND(param) = m_cast(Strand*, maybe string);
 }
 
 
@@ -476,7 +476,7 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     );
     CELL_PARAMETER_PAYLOAD_1_SPEC(param) = nullptr;
     CELL_PARAMETER_PAYLOAD_2_FLAGS(param) = flags;
-    CELL_PARAMETER_EXTRA_STRING(param) = nullptr;
+    CELL_PARAMETER_EXTRA_STRAND(param) = nullptr;
 
     return param;
 }

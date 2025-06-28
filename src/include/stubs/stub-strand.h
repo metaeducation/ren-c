@@ -1,6 +1,6 @@
 //
-//  file: %stub-string.h
-//  summary: "Definitions for String (and the Symbol subclass of String)"
+//  file: %stub-strand.h
+//  summary: "Definitions for Strand (and the Symbol subclass of Strand)"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
@@ -19,6 +19,11 @@
 // https://www.gnu.org/licenses/lgpl-3.0.html
 //
 //=////////////////////////////////////////////////////////////////////////=//
+//
+// In order to avoid conflict with the user-exposed notion of a "String" as
+// being ANY-STRING? (e.g. a TEXT! or a TAG!, etc.) the Flex subclass for
+// strings is called a "Strand".  This is more punchy than "StringBuffer"
+// yet it still can have variables abbreviated as "str" or "s" in code.
 //
 // The ANY-STRING? and ANY-WORD? data types follow "UTF-8 everywhere", and
 // store their content as UTF-8 at all times.  Then it only converts to other
@@ -46,31 +51,28 @@
 //   information about their length in codepoints in their Stubs (the main
 //   "number of bytes used" in the Flex conveys bytes, not codepoints).
 //
-//   See the distinction between Flex_Used() and String_Len().
+//   See the distinction between Flex_Used() and Strand_Len().
 //
 
 
-INLINE Length Misc_Num_Codepoints(const String* s) {
+INLINE Length Misc_Num_Codepoints(const Strand* s) {
     assert(Is_Stub_Non_Symbol(s));
-    return MISC_STRING_NUM_CODEPOINTS(s);
+    return MISC_STRAND_NUM_CODEPOINTS(s);
 }
 
-INLINE void Tweak_Misc_Num_Codepoints(String* s, Length num_codepoints) {
+INLINE void Tweak_Misc_Num_Codepoints(Strand* s, Length num_codepoints) {
     assert(Is_Stub_Non_Symbol(s));
-    MISC_STRING_NUM_CODEPOINTS(s) = num_codepoints;
+    MISC_STRAND_NUM_CODEPOINTS(s) = num_codepoints;
 }
 
-INLINE Option(BookmarkList*) Link_Bookmarks(const String* string) {
-    assert(Is_Stub_Non_Symbol(string));
-    return cast(BookmarkList*, string->link.base);
+INLINE Option(BookmarkList*) Link_Bookmarks(const Strand* s) {
+    assert(Is_Stub_Non_Symbol(s));
+    return cast(BookmarkList*, s->link.base);
 }
 
-INLINE void Tweak_Link_Bookmarks(
-    const String* string,
-    Option(BookmarkList*) book
-){
-    assert(Is_Stub_Non_Symbol(string));
-    m_cast(String*, string)->link.base = maybe book;
+INLINE void Tweak_Link_Bookmarks(const Strand* s, Option(BookmarkList*) book) {
+    assert(Is_Stub_Non_Symbol(s));
+    LINK_STRAND_BOOKMARKS(s) = maybe book;
 }
 
 
@@ -209,34 +211,34 @@ INLINE Utf8(*) Write_Codepoint(Utf8(*) utf8, Codepoint c) {
 //   then the string is all ASCII.
 //
 
-INLINE bool Is_String_All_Ascii(const String* str) {
+INLINE bool Is_Strand_All_Ascii(const Strand* str) {
     if (Is_Stub_Symbol(str))
         return Get_Flavor_Flag(SYMBOL, str, ALL_ASCII);
-    return Flex_Used(str) == MISC_STRING_NUM_CODEPOINTS(str);
+    return Flex_Used(str) == MISC_STRAND_NUM_CODEPOINTS(str);
 }
 
-#define String_UTF8(s)      Flex_Head(char, ensure(const String*, s))
-#define String_Head(s)      c_cast(Utf8(*), Flex_Head(Byte, s))
-#define String_Tail(s)      c_cast(Utf8(*), Flex_Tail(Byte, s))
+#define Strand_Utf8(s)      Flex_Head(char, ensure(const Strand*, s))
+#define Strand_Head(s)      c_cast(Utf8(*), Flex_Head(Byte, s))
+#define Strand_Tail(s)      c_cast(Utf8(*), Flex_Tail(Byte, s))
 
-#define String_Size(s) \
-    Flex_Used(ensure(const String*, s))  // encoded byte size, not codepoints
+#define Strand_Size(s) \
+    Flex_Used(ensure(const Strand*, s))  // encoded byte size, not codepoints
 
 #define String_Dynamic_Size(s) \
-    Flex_Dynamic_Used(ensure(const String*, s))
+    Flex_Dynamic_Used(ensure(const Strand*, s))
 
-INLINE Length String_Len(const String* s) {
-    if (not Is_String_Symbol(s)) {
+INLINE Length Strand_Len(const Strand* s) {
+    if (not Is_Strand_Symbol(s)) {
       #if DEBUG_UTF8_EVERYWHERE
-        if (MISC_STRING_NUM_CODEPOINTS(s) > Flex_Used(s))  // 0xDECAFBAD counts
+        if (MISC_STRAND_NUM_CODEPOINTS(s) > Flex_Used(s))  // 0xDECAFBAD counts
             crash (s);
       #endif
-        return MISC_STRING_NUM_CODEPOINTS(s);  // cache for non-ANY-WORD?
+        return MISC_STRAND_NUM_CODEPOINTS(s);  // cache for non-ANY-WORD?
     }
 
     Length len = 0;  // no length cache; hope symbol is short!
-    Utf8(const*) ep = String_Tail(s);
-    Utf8(const*) cp = String_Head(s);
+    Utf8(const*) ep = Strand_Tail(s);
+    Utf8(const*) cp = Strand_Head(s);
     while (cp != ep) {
         cp = Skip_Codepoint(cp);
         ++len;
@@ -244,22 +246,22 @@ INLINE Length String_Len(const String* s) {
     return len;
 }
 
-INLINE REBLEN String_Index_At(
-    const String* s,
+INLINE REBLEN Strand_Index_At(
+    const Strand* s,
     Size byteoffset  // offset must be at an encoded codepoint start
 ){
-    if (Is_String_All_Ascii(s))
+    if (Is_Strand_All_Ascii(s))
         return byteoffset;
 
     assert(not Is_Continuation_Byte(*Binary_At(s, byteoffset)));
 
     if (Is_Stub_Non_Symbol(s)) {  // length is cached for non-ANY-WORD?
       #if DEBUG_UTF8_EVERYWHERE
-        if (MISC_STRING_NUM_CODEPOINTS(s) > Flex_Used(s))  // also 0xDECAFBAD
+        if (MISC_STRAND_NUM_CODEPOINTS(s) > Flex_Used(s))  // also 0xDECAFBAD
             crash (s);
       #endif
 
-        // We have length and bookmarks.  We should build String_At() based on
+        // We have length and bookmarks.  We should build Strand_At() based on
         // this routine.  For now, fall through and do it slowly.
     }
 
@@ -268,7 +270,7 @@ INLINE REBLEN String_Index_At(
     //
     REBLEN index = 0;
     Utf8(const*) ep = cast(Utf8(const*), Binary_At(s, byteoffset));
-    Utf8(const*) cp = String_Head(s);
+    Utf8(const*) cp = Strand_Head(s);
     while (cp != ep) {
         cp = Skip_Codepoint(cp);
         ++index;
@@ -276,20 +278,20 @@ INLINE REBLEN String_Index_At(
     return index;
 }
 
-INLINE void Set_String_Len_Size(String* s, Length len, Size used) {
-    assert(not Is_String_Symbol(s));
+INLINE void Set_Strand_Len_Size(Strand* s, Length len, Size used) {
+    assert(not Is_Strand_Symbol(s));
     assert(len <= used);
     assert(used == Flex_Used(s));
-    MISC_STRING_NUM_CODEPOINTS(s) = len;
+    MISC_STRAND_NUM_CODEPOINTS(s) = len;
     assert(*Binary_At(s, used) == '\0');
     UNUSED(used);
 }
 
-INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
-    assert(not Is_String_Symbol(s));
+INLINE void Term_Strand_Len_Size(Strand* s, Length len, Size used) {
+    assert(not Is_Strand_Symbol(s));
     assert(len <= used);
     Set_Flex_Used(s, used);
-    MISC_STRING_NUM_CODEPOINTS(s) = len;
+    MISC_STRAND_NUM_CODEPOINTS(s) = len;
     *Binary_At(s, used) = '\0';
 }
 
@@ -324,8 +326,8 @@ INLINE BookmarkList* Alloc_BookmarkList(void) {
     return books;
 }
 
-INLINE void Free_Bookmarks_Maybe_Null(String* str) {
-    assert(not Is_String_Symbol(str));
+INLINE void Free_Bookmarks_Maybe_Null(Strand* str) {
+    assert(not Is_Strand_Symbol(str));
     BookmarkList* book = maybe Link_Bookmarks(str);
     if (book) {
         GC_Kill_Flex(book);
@@ -334,7 +336,7 @@ INLINE void Free_Bookmarks_Maybe_Null(String* str) {
 }
 
 #if RUNTIME_CHECKS
-    INLINE void Check_Bookmarks_Debug(String* s) {
+    INLINE void Check_Bookmarks_Debug(Strand* s) {
         BookmarkList* book = maybe Link_Bookmarks(s);
         if (not book)
             return;
@@ -342,7 +344,7 @@ INLINE void Free_Bookmarks_Maybe_Null(String* str) {
         REBLEN index = BOOKMARK_INDEX(book);
         Size offset = BOOKMARK_OFFSET(book);
 
-        Utf8(*) cp = String_Head(s);
+        Utf8(*) cp = Strand_Head(s);
         REBLEN i;
         for (i = 0; i != index; ++i)
             cp = Skip_Codepoint(cp);
@@ -365,8 +367,8 @@ INLINE void Free_Bookmarks_Maybe_Null(String* str) {
 #endif
 
 #if CPLUSPLUS_11
-    INLINE Utf8(const*) String_At(const String* s, REBLEN at)
-      { return String_At(m_cast(String*, s), at); }
+    INLINE Utf8(const*) Strand_At(const Strand* s, REBLEN at)
+      { return Strand_At(m_cast(Strand*, s), at); }
 #endif
 
 
@@ -380,8 +382,8 @@ INLINE void Free_Bookmarks_Maybe_Null(String* str) {
 // should probably lock the input series against modification...or at least
 // hold a cache that it throws away whenever it runs a GROUP!.
 
-INLINE Codepoint Get_Char_At(const String* s, REBLEN n) {
-    Utf8(const*) up = String_At(s, n);
+INLINE Codepoint Get_Strand_Char_At(const Strand* s, REBLEN n) {
+    Utf8(const*) up = Strand_At(s, n);
     Codepoint c;
     Utf8_Next(&c, up);
     return c;
@@ -392,20 +394,20 @@ INLINE Codepoint Get_Char_At(const String* s, REBLEN n) {
 // it is an optimization that may-or-may-not be worth the added complexity of
 // having more than one way of doing a CHANGE to a character.  Review.
 //
-INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
+INLINE void Set_Char_At(Strand* s, REBLEN n, Codepoint c) {
     //
     // We are maintaining the same length, but DEBUG_UTF8_EVERYWHERE will
     // corrupt the length every time the Flex_Used() changes.  Workaround that
     // by saving the length and restoring at the end.
     //
   #if DEBUG_UTF8_EVERYWHERE
-    REBLEN len = String_Len(s);
+    REBLEN len = Strand_Len(s);
   #endif
 
-    assert(not Is_String_Symbol(s));  // symbols are immutable
-    assert(n < String_Len(s));
+    assert(not Is_Strand_Symbol(s));  // symbols are immutable
+    assert(n < Strand_Len(s));
 
-    Utf8(*) cp = String_At(s, n);
+    Utf8(*) cp = Strand_At(s, n);
     Utf8(*) old_next_cp = Skip_Codepoint(cp);  // scans fast (for leading bytes)
 
     Size size = Encoded_Size_For_Codepoint(c);
@@ -415,14 +417,14 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
         // to be updated.
     }
     else {
-        Size cp_offset = cp - String_Head(s);  // for updating bookmark, expand
+        Size cp_offset = cp - Strand_Head(s);  // for updating bookmark, expand
 
         int delta = size - old_size;
         if (delta < 0) {  // shuffle forward, memmove() vs memcpy(), overlaps!
             memmove(
                 cast(Byte*, cp) + size,
                 cast(Byte*, old_next_cp),
-                String_Tail(s) - old_next_cp
+                Strand_Tail(s) - old_next_cp
             );
 
             Set_Flex_Used(s, Flex_Used(s) + delta);
@@ -430,17 +432,17 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
         else {
             Expand_Flex_Tail(s, delta);  // this adds to SERIES_USED
             cp = cast(Utf8(*),  // refresh `cp` (may've reallocated!)
-                cast(Byte*, String_Head(s)) + cp_offset
+                cast(Byte*, Strand_Head(s)) + cp_offset
             );
             Byte* later = cast(Byte*, cp) + delta;
             memmove(
                 later,
                 cast(Byte*, cp),
-                cast(Byte*, String_Tail(s)) - later
+                cast(Byte*, Strand_Tail(s)) - later
             );  // Note: may not be terminated
         }
 
-        *cast(Byte*, String_Tail(s)) = '\0';  // add terminator
+        *cast(Byte*, Strand_Tail(s)) = '\0';  // add terminator
 
         // `cp` still is the start of the character for the index we were
         // dealing with.  Only update bookmark if it's an offset *after*
@@ -452,7 +454,7 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
     }
 
   #if DEBUG_UTF8_EVERYWHERE  // see note on `len` at start of function
-    MISC_STRING_NUM_CODEPOINTS(s) = len;
+    MISC_STRAND_NUM_CODEPOINTS(s) = len;
   #endif
 
     Encode_UTF8_Char(cp, c, size);
@@ -472,28 +474,28 @@ INLINE REBLEN Num_Codepoints_For_Bytes(
 }
 
 
-//=//// REBSTR CREATION HELPERS ///////////////////////////////////////////=//
+//=//// STRAND CREATION HELPERS ///////////////////////////////////////////=//
 //
 // Note that most clients should be using the rebStringXXX() APIs for this
 // and generate Value*.  Note also that these routines may panic() if the
 // data they are given is not UTF-8.
 
-#define Make_String(encoded_capacity) \
-    Make_String_Core(STUB_MASK_STRING, (encoded_capacity))
+#define Make_Strand(encoded_capacity) \
+    Make_Strand_Core(STUB_MASK_STRAND, (encoded_capacity))
 
-INLINE String* Make_String_UTF8(const char *utf8) {
+INLINE Strand* Make_Strand_UTF8(const char *utf8) {
     return Append_UTF8_May_Panic(nullptr, utf8, strsize(utf8), STRMODE_NO_CR);
 }
 
-INLINE String* Make_Sized_String_UTF8(const char *utf8, size_t size) {
+INLINE Strand* Make_Sized_Strand_UTF8(const char *utf8, size_t size) {
     return Append_UTF8_May_Panic(nullptr, utf8, size, STRMODE_NO_CR);
 }
 
 
-//=//// REBSTR HASHING ////////////////////////////////////////////////////=//
+//=//// STRAND HASHING ////////////////////////////////////////////////////=//
 
-INLINE uint32_t Hash_String(const String* str)
-    { return Hash_UTF8_Len_Caseless(String_Head(str), String_Len(str)); }
+INLINE uint32_t Hash_Strand(const Strand* str)
+    { return Hash_UTF8_Len_Caseless(Strand_Head(str), Strand_Len(str)); }
 
 INLINE Offset First_Hash_Candidate_Slot(
     Length *skip_out,
@@ -507,7 +509,7 @@ INLINE Offset First_Hash_Candidate_Slot(
 }
 
 
-//=//// STRING COPY HELPERS ///////////////////////////////////////////////=//
+//=//// STRAND COPY HELPERS ///////////////////////////////////////////////=//
 
 #define Copy_String_At(v) \
     Copy_String_At_Limit((v), UNLIMITED)

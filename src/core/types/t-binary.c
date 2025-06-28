@@ -247,7 +247,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
     const Byte* data = Cell_Blob_Size_At(&size, v);
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT)) {  // truncation is imprecise...
-        Length mold_len = String_Len(mo->string) - mo->base.index;
+        Length mold_len = Strand_Len(mo->strand) - mo->base.index;
         if (mold_len + (2 * size) > mo->limit) {  //
             size = (mo->limit - mold_len) / 2;
             SET_MOLD_FLAG(mo, MOLD_FLAG_WAS_TRUNCATED);
@@ -260,21 +260,21 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
     switch (binary_base) {
       default:
       case 16: {
-        Append_Ascii(mo->string, "#{"); // default, so #{...} not #16{...}
+        Append_Ascii(mo->strand, "#{"); // default, so #{...} not #16{...}
 
         const bool brk = (size > 32);
         Form_Base16(mo, data, size, brk);
         break; }
 
       case 64: {
-        Append_Ascii(mo->string, "64#{");
+        Append_Ascii(mo->strand, "64#{");
 
         const bool brk = (size > 64);
         Form_Base64(mo, data, size, brk);
         break; }
 
       case 2: {
-        Append_Ascii(mo->string, "2#{");
+        Append_Ascii(mo->strand, "2#{");
 
         const bool brk = (size > 8);
         Form_Base2(mo, data, size, brk);
@@ -282,7 +282,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
     }
 
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_WAS_TRUNCATED))
-        Append_Codepoint(mo->string, '}');
+        Append_Codepoint(mo->strand, '}');
 
     return TRIPWIRE;
 }
@@ -365,7 +365,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         else
             return PANIC(PARAM(VALUE));
 
-        VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
+        VAL_INDEX_RAW(v) = Modify_String_Or_Blob(
             v,
             unwrap id,
             arg,
@@ -626,10 +626,10 @@ Option(Error*) Trap_Alias_Blob_As(
 
         enum Reb_Strmode strmode = STRMODE_ALL_CODEPOINTS;  // allow CR [2]
 
-        const String* str;
+        const Strand* str;
         REBLEN index;
         if (
-            not Is_Stub_String(bin)
+            not Is_Stub_Strand(bin)
             or strmode != STRMODE_ALL_CODEPOINTS
         ){
             if (not Is_Flex_Frozen(bin))
@@ -660,12 +660,12 @@ Option(Error*) Trap_Alias_Blob_As(
                 ++num_codepoints;
             }
             TASTE_BYTE(m_cast(Binary*, bin)) = FLAVOR_0;  // next step sets
-            m_cast(Binary*, bin)->leader.bits |= STUB_MASK_STRING;
+            m_cast(Binary*, bin)->leader.bits |= STUB_MASK_STRAND;
 
-            str = c_cast(String*, bin);
+            str = c_cast(Strand*, bin);
 
-            Term_String_Len_Size(
-                m_cast(String*, str),  // legal for tweaking cached data
+            Term_Strand_Len_Size(
+                m_cast(Strand*, str),  // legal for tweaking cached data
                 num_codepoints,
                 Binary_Len(bin)
             );
@@ -674,11 +674,11 @@ Option(Error*) Trap_Alias_Blob_As(
             // !!! TBD: cache index/offset
         }
         else {  // it's a string, but doesn't accelerate offset -> index
-            str = c_cast(String*, bin);
+            str = c_cast(Strand*, bin);
             index = 0;  // we'll count up to find the codepoint index
 
-            Utf8(const*) cp = String_Head(str);
-            REBLEN len = String_Len(str);
+            Utf8(const*) cp = Strand_Head(str);
+            REBLEN len = Strand_Len(str);
             while (index < len and cp != at_ptr) {  // slow walk...
                 ++index;
                 cp = Skip_Codepoint(cp);
@@ -690,10 +690,10 @@ Option(Error*) Trap_Alias_Blob_As(
             return SUCCESS;
         }
 
-        DECLARE_ELEMENT (any_string);
-        Init_Any_String_At(any_string, TYPE_TEXT, str, index);
+        DECLARE_ELEMENT (string);
+        Init_Any_String_At(string, TYPE_TEXT, str, index);
 
-        return Trap_Any_String_As(out, any_string, as);
+        return Trap_Any_String_As(out, string, as);
     }
 
     return Error_Invalid_Type(as);
@@ -806,7 +806,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Blob)
     INCLUDE_PARAMS_OF_RANDOMIZE;
 
     Element* blob = Element_ARG(SEED);
-    possibly(Is_Stub_String(Cell_Binary(blob)));  // may be aliased UTF-8 [1]
+    possibly(Is_Stub_Strand(Cell_Binary(blob)));  // may be aliased UTF-8 [1]
 
     Size size;
     const Byte* data = Cell_Blob_Size_At(&size, blob);

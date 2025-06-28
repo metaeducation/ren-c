@@ -55,14 +55,14 @@
 //
 // https://forum.rebol.info/t/997
 //
-INLINE void Output_Apostrophe_If_Not_Inert(String* s, const Element* cell) {
+INLINE void Output_Apostrophe_If_Not_Inert(Strand* s, const Element* cell) {
     if (not Any_Inert(cell))
         Append_Codepoint(s, '\'');
 }
 
 
 INLINE void Construct_Molder(Molder* mo) {
-    mo->string = nullptr;  // used to tell if pushed or not
+    mo->strand = nullptr;  // used to tell if pushed or not
     mo->opts = 0;
     mo->indent = 0;
 }

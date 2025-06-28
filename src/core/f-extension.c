@@ -220,16 +220,16 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     if (SPORADICALLY(2)) {
         Binary* b = Cell_Binary_Ensure_Mutable(script);
         TASTE_BYTE(b) = FLAVOR_0;  // set to FLAVOR_NONSYMBOL by STUB_MASK
-        b->leader.bits |= STUB_MASK_STRING;
-        Term_String_Len_Size(
-            cast(String*, b),  // legal for tweaking cached data
+        b->leader.bits |= STUB_MASK_STRAND;
+        Term_Strand_Len_Size(
+            cast(Strand*, b),  // legal for tweaking cached data
             script_num_codepoints,
             Binary_Len(b)
         );
-        Tweak_Link_Bookmarks(cast(String*, b), nullptr);
+        Tweak_Link_Bookmarks(cast(Strand*, b), nullptr);
 
         if (SPORADICALLY(2))
-            Init_Text(script, cast(String*, b));
+            Init_Text(script, cast(Strand*, b));
     }
 
     // !!! We currently are pushing all extensions into the lib context so

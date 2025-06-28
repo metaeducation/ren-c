@@ -111,10 +111,10 @@ INLINE void Prep_Array(
 }
 
 
-INLINE Option(const String*) Link_Filename(const Source* source) {
+INLINE Option(const Strand*) Link_Filename(const Source* source) {
     assert(Stub_Flavor(source) == FLAVOR_SOURCE);
     if (Get_Stub_Flag(source, LINK_NEEDS_MARK)) {
-        const String* filename = cast(const String*,
+        const Strand* filename = cast(const Strand*,
             LINK_SOURCE_FILENAME_NODE(source)
         );
         assert(Stub_Flavor(filename) == FLAVOR_NONSYMBOL);
@@ -126,12 +126,12 @@ INLINE Option(const String*) Link_Filename(const Source* source) {
     return nullptr;
 }
 
-INLINE void Tweak_Link_Filename(Source* source, Option(const String*) filename)
+INLINE void Tweak_Link_Filename(Source* source, Option(const Strand*) filename)
 {
     assert(Stub_Flavor(source) == FLAVOR_SOURCE);
     if (filename) {
         Set_Stub_Flag(source, LINK_NEEDS_MARK);
-        LINK_SOURCE_FILENAME_NODE(source) = m_cast(String*, unwrap filename);
+        LINK_SOURCE_FILENAME_NODE(source) = m_cast(Strand*, unwrap filename);
     }
     else {
         Clear_Stub_Flag(source, LINK_NEEDS_MARK);
@@ -173,7 +173,7 @@ INLINE Array* Make_Array_Core_Into(
     }
 
     if (Flavor_From_Flags(flags) == FLAVOR_SOURCE) {  // add file/line [1]
-        Option(const String*) filename;
+        Option(const Strand*) filename;
         if (
             not Level_Is_Variadic(TOP_LEVEL) and
             (filename = Link_Filename(Level_Array(TOP_LEVEL)))

@@ -50,16 +50,16 @@ void Trim_Tail(Molder* mo, Byte ascii)
 {
     assert(ascii < 0x80);  // more work needed for multi-byte characters
 
-    Length len = String_Len(mo->string);
-    Size size = String_Size(mo->string);
+    Length len = Strand_Len(mo->strand);
+    Size size = Strand_Size(mo->strand);
 
     for (; size > 0; --size, --len) {
-        Byte b = *Binary_At(mo->string, size - 1);
+        Byte b = *Binary_At(mo->strand, size - 1);
         if (b != ascii)
             break;
     }
 
-    Term_String_Len_Size(mo->string, len, size);
+    Term_Strand_Len_Size(mo->strand, len, size);
 }
 
 
@@ -165,11 +165,11 @@ Source* Split_Lines(const Element* str)
 
     for (; i < len; ++i, cp = Utf8_Next(&c, cp)) {
         if (c != LF && c != CR) {
-            Append_Codepoint(mo->string, c);
+            Append_Codepoint(mo->strand, c);
             continue;
         }
 
-        Init_Text(PUSH(), Pop_Molded_String(mo));
+        Init_Text(PUSH(), Pop_Molded_Strand(mo));
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
 
         Push_Mold(mo);
@@ -186,10 +186,10 @@ Source* Split_Lines(const Element* str)
     // If there's any remainder we pushed in the buffer, consider the end of
     // string to be an implicit line-break
 
-    if (String_Size(mo->string) == mo->base.size)
+    if (Strand_Size(mo->strand) == mo->base.size)
         Drop_Mold(mo);
     else {
-        Init_Text(PUSH(), Pop_Molded_String(mo));
+        Init_Text(PUSH(), Pop_Molded_Strand(mo));
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     }
 

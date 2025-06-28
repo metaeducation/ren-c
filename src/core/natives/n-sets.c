@@ -198,7 +198,7 @@ Flex* Make_Set_Operation_Flex(
     else if (Any_String(val1)) {
         DECLARE_MOLDER (mo);
 
-        // ask mo->string to have at least `i` capacity beyond mo->base.size
+        // ask mo->strand to have at least `i` capacity beyond mo->base.size
         //
         SET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE);
         mo->reserve = i;
@@ -207,7 +207,7 @@ Flex* Make_Set_Operation_Flex(
         do {
             // Note: val1 and val2 swapped 2nd pass!
             //
-            const String* str = Cell_String(val1);
+            const Strand* str = Cell_Strand(val1);
 
             DECLARE_VALUE (iter);
             Copy_Cell(iter, val1);
@@ -216,7 +216,7 @@ Flex* Make_Set_Operation_Flex(
             //
             for (
                 ;
-                VAL_INDEX_RAW(iter) < String_Len(str);
+                VAL_INDEX_RAW(iter) < Strand_Len(str);
                 VAL_INDEX_RAW(iter) += skip
             ){
                 REBLEN len_match;
@@ -241,21 +241,21 @@ Flex* Make_Set_Operation_Flex(
 
                 DECLARE_ELEMENT (mo_value);
                 Reset_Cell_Header_Noquote(TRACK(mo_value), CELL_MASK_TEXT);
-                CELL_PAYLOAD_1(mo_value) = mo->string;
+                CELL_PAYLOAD_1(mo_value) = mo->strand;
                 VAL_INDEX_RAW(mo_value) = mo->base.index;
 
                 if (
                     NOT_FOUND == Find_Binstr_In_Binstr(
                         &len_match,
                         mo_value,
-                        String_Len(mo->string),  // tail
+                        Strand_Len(mo->strand),  // tail
                         iter,
                         &single_codepoint_len,  // "part" as one codepoint
                         cased ? AM_FIND_CASE : 0,  // flags
                         skip  // skip
                     )
                 ){
-                    Append_Any_Utf8_Limit(mo->string, iter, &skip);
+                    Append_Any_Utf8_Limit(mo->strand, iter, &skip);
                 }
             }
 
@@ -271,7 +271,7 @@ Flex* Make_Set_Operation_Flex(
             val2 = temp;
         } while (true);
 
-        out_flex = Pop_Molded_String(mo);
+        out_flex = Pop_Molded_Strand(mo);
     }
     else {
         assert(Is_Blob(val1) and Is_Blob(val2));

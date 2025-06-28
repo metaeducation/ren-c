@@ -444,7 +444,7 @@ typedef struct {
 typedef struct {
     Flex* stack;  // tracked to prevent infinite loop in cyclical molds
 
-    String* buffer;  // temporary UTF8 buffer
+    Strand* buffer;  // temporary UTF8 buffer
 
   #if RUNTIME_CHECKS
     bool currently_pushing;  // Push_Mold() should not directly recurse
@@ -597,7 +597,7 @@ enum {
 #include "stubs/stub-binary.h"  // Binary_At(), etc. used by strings
 #include "sys-utf8.h"
 
-#include "stubs/stub-string.h"  // SymId needed for typesets
+#include "stubs/stub-strand.h"  // SymId needed for typesets
 
 #include "stubs/stub-context.h"  // needs actions for FRAME! contexts
 #include "stubs/stub-sea.h"

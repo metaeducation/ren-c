@@ -33,8 +33,8 @@
 // simply a single-length RUNE!, which is translated to a codepoint using the
 // `CODEPOINT OF` operation, or by using FIRST on the rune.
 //
-// TYPE_RUNE has two forms: one with a String* allocation, and one that stores
-// content data where a String* and index would be.  Stringlike_Has_Stub()
+// TYPE_RUNE has two forms: one with a Strand* allocation, and one that stores
+// content data where a Strand* and index would be.  Stringlike_Has_Stub()
 // is what discerns the two categories, and can only be treated as a string
 // when it has that flag.  Hence generically speaking, RUNE! is not considered
 // an ANY-SERIES? or ANY-STRING? type.
@@ -167,8 +167,8 @@ INLINE Element* Init_Utf8_Non_String(
     if (Try_Init_Small_Utf8_Untracked(out, heart, utf8, len, size))
         return out;
 
-    String* str = Make_Sized_String_UTF8(cs_cast(utf8), size);
-    assert(String_Len(str) == len);  // ^-- revalidates :-/ should match
+    Strand* str = Make_Sized_Strand_UTF8(cs_cast(utf8), size);
+    assert(Strand_Len(str) == len);  // ^-- revalidates :-/ should match
     Freeze_Flex(str);
     Init_Any_String(out, heart, str);
     return out;

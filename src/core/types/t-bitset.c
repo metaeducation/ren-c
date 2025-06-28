@@ -100,7 +100,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
     const Binary* bset = VAL_BITSET(v);
 
     if (BITS_NOT(bset))
-        Append_Ascii(mo->string, "[not bits ");
+        Append_Ascii(mo->strand, "[not bits ");
 
     Init_Blob(v, bset);
     Init_Nulled(ARG(FORM));  // form = false
@@ -109,7 +109,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
     UNUSED(bounce);
 
     if (BITS_NOT(bset))
-        Append_Codepoint(mo->string, ']');
+        Append_Codepoint(mo->strand, ']');
 
     End_Non_Lexical_Mold(mo);
 

@@ -1063,7 +1063,7 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
         if (Any_String_Type(heart)) {
             Element* spare_rune = Init_Char_Unchecked(
                 SPARE,
-                Get_Char_At(c_cast(String*, les->flex), les->u.eser.index)
+                Get_Strand_Char_At(c_cast(Strand*, les->flex), les->u.eser.index)
             );
 
             e = Trap_Write_Loop_Slot_May_Bind(slot, spare_rune, les->data);
@@ -1473,7 +1473,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     Set_Flex_Info(flex, HOLD);  // disallow mutations until finalize
 
     REBLEN len = Any_String(data)
-        ? String_Len(cast(String*, flex))
+        ? Strand_Len(cast(Strand*, flex))
         : Flex_Used(flex);  // temp read-only, this won't change
 
     bool threw = false;
@@ -1506,7 +1506,7 @@ DECLARE_NATIVE(REMOVE_EACH)
                 assert(Any_String(data));
                 Init_Char_Unchecked(
                     var,
-                    Get_Char_At(cast(String*, flex), index)
+                    Get_Strand_Char_At(cast(Strand*, flex), index)
                 );
             }
             ++index;
@@ -1596,15 +1596,15 @@ DECLARE_NATIVE(REMOVE_EACH)
                 if (Is_Blob(data)) {
                     Binary* b = cast(Binary*, flex);
                     Append_Ascii_Len(
-                        mo->string,
+                        mo->strand,
                         cs_cast(Binary_At(b, start)),
                         1
                     );
                 }
                 else {
                     Append_Codepoint(
-                        mo->string,
-                        Get_Char_At(cast(String*, flex), start)
+                        mo->strand,
+                        Get_Strand_Char_At(cast(Strand*, flex), start)
                     );
                 }
                 ++start;
@@ -1683,7 +1683,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         REBLEN orig_len = Cell_Series_Len_Head(data);
         assert(start <= orig_len);
         Append_Ascii_Len(
-            mo->string,
+            mo->strand,
             cs_cast(Binary_At(b, start)),
             orig_len - start
         );
@@ -1710,15 +1710,15 @@ DECLARE_NATIVE(REMOVE_EACH)
         REBLEN orig_len = Cell_Series_Len_Head(data);
         assert(start <= orig_len);
 
-        String* s = cast(String*, flex);
+        Strand* s = cast(Strand*, flex);
 
         for (; start != orig_len; ++start)
-            Append_Codepoint(mo->string, Get_Char_At(s, start));
+            Append_Codepoint(mo->strand, Get_Strand_Char_At(s, start));
 
-        String* popped = Pop_Molded_String(mo);
+        Strand* popped = Pop_Molded_Strand(mo);
 
-        assert(String_Len(popped) <= Cell_Series_Len_Head(data));
-        removals = Cell_Series_Len_Head(data) - String_Len(popped);
+        assert(Strand_Len(popped) <= Cell_Series_Len_Head(data));
+        removals = Cell_Series_Len_Head(data) - Strand_Len(popped);
 
         Swap_Flex_Content(popped, s);  // swap Flex identity [3]
 

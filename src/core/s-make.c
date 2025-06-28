@@ -27,19 +27,19 @@
 
 
 //
-//  Make_String_Core: C
+//  Make_Strand_Core: C
 //
 // Makes a Flex to hold a String with enough capacity for a certain amount
 // of encoded data.  Note that this is not a guarantee of being able to hold
 // more than `encoded_capacity / UNI_ENCODED_MAX` unencoded codepoints...
 //
-String* Make_String_Core(Flags flags, Size encoded_capacity)
+Strand* Make_Strand_Core(Flags flags, Size encoded_capacity)
 {
     assert(Flavor_From_Flags(flags) == FLAVOR_NONSYMBOL);
 
-    String* str = Make_Flex(
-        STUB_MASK_STRING | flags,
-        String,
+    Strand* str = Make_Flex(
+        STUB_MASK_STRAND | flags,
+        Strand,
         encoded_capacity + 1  // + 1 makes room for '\0' terminator
     );
     Tweak_Misc_Num_Codepoints(str, 0);
@@ -66,10 +66,10 @@ Binary* Make_Binary_From_Sized_Bytes(const Byte* src, Size len)
 //
 //  Copy_String_At_Limit: C
 //
-// Copying a String is distinct from copying a Binary due to the length being
+// Copying a Strand is distinct from copying a Binary due to the length being
 // counted in characters, and not units of the Flex width (1).
 //
-String* Copy_String_At_Limit(const Cell* src, Option(const Length*) limit)
+Strand* Copy_String_At_Limit(const Cell* src, Option(const Length*) limit)
 {
     Size limited_size;
     Length limited_length;
@@ -80,9 +80,9 @@ String* Copy_String_At_Limit(const Cell* src, Option(const Length*) limit)
         limit
     );
 
-    String* dst = Make_String(limited_size);
-    memcpy(cast(Byte*, String_Head(dst)), c_cast(Byte*, utf8), limited_size);
-    Term_String_Len_Size(dst, limited_length, limited_size);
+    Strand* dst = Make_Strand(limited_size);
+    memcpy(cast(Byte*, Strand_Head(dst)), c_cast(Byte*, utf8), limited_size);
+    Term_Strand_Len_Size(dst, limited_length, limited_size);
 
     return dst;
 }
@@ -98,7 +98,7 @@ String* Copy_String_At_Limit(const Cell* src, Option(const Length*) limit)
 // resizing checks if an invalid UTF-8 byte were used to mark the end of the
 // capacity (the way END markers are used on the data stack?)
 //
-String* Append_Codepoint(String* dst, Codepoint c)
+Strand* Append_Codepoint(Strand* dst, Codepoint c)
 {
     if (c == '\0') {
         assert(!"Zero byte being added to string.");  // caller should handle
@@ -106,40 +106,40 @@ String* Append_Codepoint(String* dst, Codepoint c)
     }
 
     assert(c <= MAX_UNI);
-    assert(not Is_String_Symbol(dst));
+    assert(not Is_Strand_Symbol(dst));
 
-    Length old_len = String_Len(dst);
+    Length old_len = Strand_Len(dst);
 
-    Size tail = String_Size(dst);
+    Size tail = Strand_Size(dst);
     Size encoded_size = Encoded_Size_For_Codepoint(c);
     Expand_Flex_Tail(dst, encoded_size);
     Encode_UTF8_Char(Binary_At(dst, tail), c, encoded_size);
 
     // "length" grew by 1 codepoint, but "size" grew by 1 to UNI_MAX_ENCODED
     //
-    Term_String_Len_Size(dst, old_len + 1, tail + encoded_size);
+    Term_Strand_Len_Size(dst, old_len + 1, tail + encoded_size);
 
     return dst;
 }
 
 
 //
-//  Make_Codepoint_String: C
+//  Make_Codepoint_Strand: C
 //
 // Create a string that holds a single codepoint.
 //
 // !!! This could be more optimal if a CHAR! is passed in, because it caches
 // the UTF-8 encoding in the cell.  Review callsites if that is actionable.
 //
-String* Make_Codepoint_String(Codepoint c)
+Strand* Make_Codepoint_Strand(Codepoint c)
 {
     if (c == '\0')
         panic (Error_Illegal_Zero_Byte_Raw());
 
     Size size = Encoded_Size_For_Codepoint(c);
-    String* s = Make_String(size);
-    Encode_UTF8_Char(String_Head(s), c, size);
-    Term_String_Len_Size(s, 1, size);
+    Strand* s = Make_Strand(size);
+    Encode_UTF8_Char(Strand_Head(s), c, size);
+    Term_Strand_Len_Size(s, 1, size);
     return s;
 }
 
@@ -153,25 +153,25 @@ String* Make_Codepoint_String(Codepoint c)
 // !!! Should checked build assert it's ASCII?  Most of these are coming from
 // C literals in the source.
 //
-String* Append_Ascii_Len(String* dst, const char *ascii, REBLEN len)
+Strand* Append_Ascii_Len(Strand* dst, const char *ascii, REBLEN len)
 {
     REBLEN old_size;
     REBLEN old_len;
 
     if (dst == nullptr) {
-        dst = Make_String(len);
+        dst = Make_Strand(len);
         old_size = 0;
         old_len = 0;
     }
     else {
-        old_size = String_Size(dst);
-        old_len = String_Len(dst);
+        old_size = Strand_Size(dst);
+        old_len = Strand_Len(dst);
         Expand_Flex_Tail(dst, len);
     }
 
     memcpy(Binary_At(dst, old_size), ascii, len);
 
-    Term_String_Len_Size(dst, old_len + len, old_size + len);
+    Term_Strand_Len_Size(dst, old_len + len, old_size + len);
     return dst;
 }
 
@@ -184,7 +184,7 @@ String* Append_Ascii_Len(String* dst, const char *ascii, REBLEN len)
 //
 // !!! Should be in a header file so it can be inlined.
 //
-String* Append_Ascii(String* dst, const char *src)
+Strand* Append_Ascii(Strand* dst, const char *src)
 {
     return Append_Ascii_Len(dst, src, strsize(src));
 }
@@ -195,16 +195,16 @@ String* Append_Ascii(String* dst, const char *src)
 //
 // Append validated UTF-8 bytes to a String Flex.  Terminates.
 //
-void Append_Utf8(String* dst, Utf8(const*) utf8, Length len, Size size)
+void Append_Utf8(Strand* dst, Utf8(const*) utf8, Length len, Size size)
 {
-    Length old_len = String_Len(dst);
-    Size old_used = String_Size(dst);
+    Length old_len = Strand_Len(dst);
+    Size old_used = Strand_Size(dst);
 
-    REBLEN tail = String_Size(dst);
+    REBLEN tail = Strand_Size(dst);
     Expand_Flex(dst, tail, size);  // Flex_Used() changes too
 
     memcpy(Binary_At(dst, tail), c_cast(Byte*, utf8), size);
-    Term_String_Len_Size(dst, old_len + len, old_used + size);
+    Term_Strand_Len_Size(dst, old_len + len, old_used + size);
 }
 
 
@@ -213,11 +213,11 @@ void Append_Utf8(String* dst, Utf8(const*) utf8, Length len, Size size)
 //
 // Append the spelling of a REBSTR to a UTF8 binary.  Terminates.
 //
-void Append_Spelling(String* dst, const Symbol* s)
+void Append_Spelling(Strand* dst, const Symbol* s)
 {
-    Utf8(const*) utf8 = String_Head(s);
-    Length len = String_Len(s);
-    Size size = String_Size(s);
+    Utf8(const*) utf8 = Strand_Head(s);
+    Length len = Strand_Len(s);
+    Size size = Strand_Size(s);
     Append_Utf8(dst, utf8, len, size);
 }
 
@@ -225,10 +225,10 @@ void Append_Spelling(String* dst, const Symbol* s)
 //
 //  Append_Any_Utf8_Limit: C
 //
-// Append a partial string to a String*.
+// Append a partial string to a Strand*.
 //
 void Append_Any_Utf8_Limit(
-    String* dst,
+    Strand* dst,
     const Cell* src,
     Option(const Length*) limit
 ){
@@ -247,7 +247,7 @@ void Append_Any_Utf8_Limit(
 //
 // Append an integer string.
 //
-void Append_Int(String* dst, REBINT num)
+void Append_Int(Strand* dst, REBINT num)
 {
     Byte buf[32];
     Form_Int(buf, num);
@@ -261,7 +261,7 @@ void Append_Int(String* dst, REBINT num)
 //
 // Append an integer string.
 //
-void Append_Int_Pad(String* dst, REBINT num, REBINT digs)
+void Append_Int_Pad(Strand* dst, REBINT num, REBINT digs)
 {
     Byte buf[32];
     if (digs > 0)
@@ -290,8 +290,8 @@ void Append_Int_Pad(String* dst, REBINT num, REBINT digs)
 //   just how many bytes.  The higher level concept of "length" gets stored
 //   in String.misc.num_codepoints
 //
-String* Append_UTF8_May_Panic(
-    String* dst,  // if nullptr, that means make a new string
+Strand* Append_UTF8_May_Panic(
+    Strand* dst,  // if nullptr, that means make a new string
     const char *utf8,
     Size size,
     enum Reb_Strmode strmode
@@ -320,7 +320,7 @@ String* Append_UTF8_May_Panic(
         }
 
         ++num_codepoints;
-        Append_Codepoint(mo->string, c);
+        Append_Codepoint(mo->strand, c);
     }
 
     // !!! The implicit nature of this is probably not the best way of
@@ -328,26 +328,26 @@ String* Append_UTF8_May_Panic(
     // to was the mold buffer, that's what we just did.  Consider making this
     // a specific call for Mold_Utf8() or similar.
     //
-    if (dst == mo->string)
+    if (dst == mo->strand)
         return dst;
 
     if (not dst)
-        return Pop_Molded_String(mo);
+        return Pop_Molded_Strand(mo);
 
-    Length old_len = String_Len(dst);
-    Size old_size = String_Size(dst);
+    Length old_len = Strand_Len(dst);
+    Size old_size = Strand_Size(dst);
 
     Expand_Flex_Tail(dst, size);
     memcpy(
         Binary_At(dst, old_size),
-        Binary_At(mo->string, mo->base.size),
-        String_Size(mo->string) - mo->base.size
+        Binary_At(mo->strand, mo->base.size),
+        Strand_Size(mo->strand) - mo->base.size
     );
 
-    Term_String_Len_Size(
+    Term_Strand_Len_Size(
         dst,
         old_len + num_codepoints,
-        old_size + String_Size(mo->string) - mo->base.size
+        old_size + Strand_Size(mo->strand) - mo->base.size
     );
 
     Drop_Mold(mo);

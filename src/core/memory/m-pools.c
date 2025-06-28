@@ -1071,7 +1071,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 
   #if DEBUG_UTF8_EVERYWHERE
     if (Is_Stub_Non_Symbol(f))
-        Corrupt_If_Debug(MISC_STRING_NUM_CODEPOINTS(f));
+        Corrupt_If_Debug(MISC_STRAND_NUM_CODEPOINTS(f));
   #endif
 
     if (was_dynamic)
@@ -1112,7 +1112,7 @@ Stub* Diminish_Stub(Stub* s)
 
     switch (Stub_Flavor(s)) {  // flavors that clean, but can't spare misc [1]
       case FLAVOR_NONSYMBOL:
-        Free_Bookmarks_Maybe_Null(cast(String*, s));
+        Free_Bookmarks_Maybe_Null(cast(Strand*, s));
         break;
 
       case FLAVOR_SYMBOL:

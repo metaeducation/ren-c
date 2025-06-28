@@ -179,7 +179,7 @@ static void Expand_Word_Table(void)
         Length skip;
         Offset slot = First_Hash_Candidate_Slot(
             &skip,
-            Hash_String(symbol),
+            Hash_Strand(symbol),
             num_slots
         );
 
@@ -259,7 +259,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
         }
 
         REBINT cmp;  // initialization would be crossed by goto
-        cmp = Compare_UTF8(String_Head(symbol), utf8, utf8_size);
+        cmp = Compare_UTF8(Strand_Head(symbol), utf8, utf8_size);
         if (cmp == 0) {
             assert(not preallocated);
             return symbol;  // was a case-sensitive match
@@ -434,7 +434,7 @@ void GC_Kill_Interning(const Symbol* symbol)
     Length skip;
     Offset slot = First_Hash_Candidate_Slot(
         &skip,
-        Hash_String(symbol),
+        Hash_Strand(symbol),
         num_slots
     );
 
@@ -554,16 +554,16 @@ void Startup_Builtin_Symbols(
 
     rebFree(bytes);
 
-    if (0 != strcmp("integer!", String_UTF8(CANON(INTEGER_X))))
+    if (0 != strcmp("integer!", Strand_Utf8(CANON(INTEGER_X))))
         crash (CANON(INTEGER_X));
 
-    if (0 != strcmp("true", String_UTF8(CANON(TRUE))))
+    if (0 != strcmp("true", Strand_Utf8(CANON(TRUE))))
         crash (CANON(TRUE));
 
-    if (0 != strcmp("open", String_UTF8(CANON(OPEN))))
+    if (0 != strcmp("open", Strand_Utf8(CANON(OPEN))))
         crash (CANON(OPEN));
 
-    if (0 != strcmp("parse-reject", String_UTF8(CANON(PARSE_REJECT))))
+    if (0 != strcmp("parse-reject", Strand_Utf8(CANON(PARSE_REJECT))))
         crash (CANON(PARSE_REJECT));
 }
 

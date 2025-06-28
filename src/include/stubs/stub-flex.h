@@ -285,7 +285,7 @@ INLINE Length Flex_Dynamic_Used(const Flex* f) {
 
 //=//// FLEX DATA ACCESSORS ///////////////////////////////////////////////=//
 //
-// 1. Callers like Cell_String() or Cell_Array() are expected to test for
+// 1. Callers like Cell_Strand() or Cell_Array() are expected to test for
 //    BASE_FLAG_UNREADABLE and panic before ever calling these routines.
 //
 // 2. Because these inline functions are called so often, Flex_Data_At()
@@ -400,7 +400,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
 // https://forum.rebol.info/t/1445
 //
 // Under this strategy, most of the termination is handled by the functions
-// that deal with their specific subclass (e.g. Make_String()).  But some
+// that deal with their specific subclass (e.g. Make_Strand()).  But some
 // generic routines that memcpy() data behind the scenes needs to be sure it
 // maintains the invariant that the higher level routines want.
 //
@@ -461,7 +461,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
 INLINE void Term_Flex_If_Necessary(Flex* f)
 {
     if (Flex_Wide(f) == 1) {
-        if (Is_Stub_String(f))
+        if (Is_Stub_Strand(f))
             *Flex_Tail(Byte, f) = '\0';
         else {
           #if DEBUG_POISON_FLEX_TAILS
@@ -496,7 +496,7 @@ INLINE void Term_Flex_If_Necessary(Flex* f)
 //
 // 2. UTF-8 Strings maintain a length in codepoints (in misc.num_codpoints),
 //    plus the size in bytes (as "used").  It's expected that both will be
-//    updated together--see Term_String_Len_Size().  But sometimes the used
+//    updated together--see Term_Strand_Len_Size().  But sometimes the used
 //    field is updated solo by a Binary-based routine in an intermediate step.
 //    That's okay so long as the length is not consulted before the String
 //    handling code finalizes it.  DEBUG_UTF8_EVERYWHERE makes violations
@@ -526,7 +526,7 @@ INLINE void Set_Flex_Used_Internal(Flex* f, Count used) {
 
   #if DEBUG_UTF8_EVERYWHERE
     if (Is_Stub_Non_Symbol(f)) {
-        Corrupt_If_Debug(MISC_STRING_NUM_CODEPOINTS(f));  // catch violators [2]
+        Corrupt_If_Debug(MISC_STRAND_NUM_CODEPOINTS(f));  // catch violators [2]
         Touch_Stub_If_Debug(f);
     }
   #endif
@@ -539,12 +539,12 @@ INLINE void Set_Flex_Used(Flex* f, Count used) {
 }
 
 INLINE void Set_Flex_Len(Flex* f, Length len) {
-    assert(not Is_Stub_String(f));  // use _Len_Size() instead [2]
+    assert(not Is_Stub_Strand(f));  // use _Len_Size() instead [2]
     Set_Flex_Used(f, len);
 }
 
-#if CPLUSPLUS_11  // catch cases when calling on String* directly
-    INLINE void Set_Flex_Len(String* s, Length len) = delete;
+#if CPLUSPLUS_11  // catch cases when calling on Strand* directly
+    INLINE void Set_Flex_Len(Strand* s, Length len) = delete;
 #endif
 
 // Optimized expand when at tail (but, does not reterminate)

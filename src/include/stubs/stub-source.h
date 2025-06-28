@@ -160,7 +160,7 @@ INLINE Array* Make_Array_For_Copy(
         flags |= SOURCE_FLAG_NEWLINE_AT_TAIL;
     }
 
-    Option(const String*) filename;
+    Option(const Strand*) filename;
     if (
         Flavor_From_Flags(flags) == FLAVOR_SOURCE
         and original

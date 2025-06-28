@@ -177,7 +177,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Integer)
 
     Byte buf[60];
     REBINT len = Emit_Integer(buf, VAL_INT64(v));
-    Append_Ascii_Len(mo->string, s_cast(buf), len);
+    Append_Ascii_Len(mo->strand, s_cast(buf), len);
 
     return TRIPWIRE;
 }
@@ -341,21 +341,21 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
         Push_Mold(mo);
         Mold_Element(mo, val);
 
-        const String* s;
+        const Strand* s;
         if (Any_String_Type(to))
-            s = Pop_Molded_String(mo);
+            s = Pop_Molded_Strand(mo);
         else {
             if (Try_Init_Small_Utf8(
                 OUT,
                 to,
-                cast(Utf8(const*), Binary_At(mo->string, mo->base.size)),
-                String_Len(mo->string) - mo->base.index,
-                String_Size(mo->string) - mo->base.size
+                cast(Utf8(const*), Binary_At(mo->strand, mo->base.size)),
+                Strand_Len(mo->strand) - mo->base.index,
+                Strand_Size(mo->strand) - mo->base.size
             )){
                 Drop_Mold(mo);
                 return OUT;
             }
-            s = Pop_Molded_String(mo);
+            s = Pop_Molded_Strand(mo);
             Freeze_Flex(s);
         }
         return Init_Any_String(OUT, to, s);

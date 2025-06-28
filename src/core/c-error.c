@@ -393,7 +393,7 @@ void Set_Location_Of_Error(
     }
 
     if (L != BOTTOM_LEVEL) {  // found a level with file and line information
-        Option(const String*) file = Link_Filename(Level_Array(L));
+        Option(const Strand*) file = Link_Filename(Level_Array(L));
         LineNumber line = MISC_SOURCE_LINE(Level_Array(L));
 
         if (file)
@@ -777,7 +777,7 @@ Error* Make_Error_Managed(
 //
 Error* Error_User(const char *utf8) {
     DECLARE_ATOM (message);
-    Init_Text(message, Make_String_UTF8(utf8));
+    Init_Text(message, Make_Strand_UTF8(utf8));
     return Make_Error_Managed(SYM_0, SYM_0, message, rebEND);
 }
 
@@ -1380,24 +1380,24 @@ void Shutdown_Utf8_Errors(void)
 //
 static void Mold_Element_Limit(Molder* mo, Element* v, REBLEN limit)
 {
-    String* str = mo->string;
+    Strand* str = mo->strand;
 
-    REBLEN start_len = String_Len(str);
-    Size start_size = String_Size(str);
+    REBLEN start_len = Strand_Len(str);
+    Size start_size = Strand_Size(str);
 
     Mold_Element(mo, v);  // Note: can't cache pointer into `str` across this
 
-    REBLEN end_len = String_Len(str);
+    REBLEN end_len = Strand_Len(str);
 
     if (end_len - start_len > limit) {
         Utf8(const*) at = cast(Utf8(const*),
-            c_cast(Byte*, String_Head(str)) + start_size
+            c_cast(Byte*, Strand_Head(str)) + start_size
         );
         REBLEN n = 0;
         for (; n < limit; ++n)
             at = Skip_Codepoint(at);
 
-        Term_String_Len_Size(str, start_len + limit, at - String_Head(str));
+        Term_Strand_Len_Size(str, start_len + limit, at - Strand_Head(str));
         Free_Bookmarks_Maybe_Null(str);
 
         Append_Ascii(str, "...");
@@ -1457,14 +1457,14 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
 
     // Form: ** <type> Error:
     //
-    Append_Ascii(mo->string, "** ");
+    Append_Ascii(mo->strand, "** ");
     if (Is_Word(type)) {  // has a <type>
-        Append_Spelling(mo->string, Cell_Word_Symbol(type));
-        Append_Codepoint(mo->string, ' ');
+        Append_Spelling(mo->strand, Cell_Word_Symbol(type));
+        Append_Codepoint(mo->strand, ' ');
     }
     else
         assert(Is_Nulled(type));  // no <type>
-    Append_Ascii(mo->string, RM_ERROR_LABEL);  // "Error:"
+    Append_Ascii(mo->strand, RM_ERROR_LABEL);  // "Error:"
 
     // Append: error message ARG1, ARG2, etc.
     if (Is_Block(message)) {
@@ -1474,7 +1474,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     else if (Is_Text(message))
         Form_Element(mo, cast(Element*, message));
     else
-        Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
+        Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT);
 
     // Form: ** Where: function
     if (
@@ -1482,18 +1482,18 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
         and not (Is_Block(where) and Cell_Series_Len_At(where) == 0)
     ){
         if (Is_Block(where)) {
-            Append_Codepoint(mo->string, '\n');
-            Append_Ascii(mo->string, RM_ERROR_WHERE);
+            Append_Codepoint(mo->strand, '\n');
+            Append_Ascii(mo->strand, RM_ERROR_WHERE);
             Mold_Element(mo, cast(Element*, where));  // want {fence} shown
         }
         else
-            Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
+            Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT);
     }
 
     // Form: ** Near: location
     if (not Is_Nulled(nearest)) {
-        Append_Codepoint(mo->string, '\n');
-        Append_Ascii(mo->string, RM_ERROR_NEAR);
+        Append_Codepoint(mo->strand, '\n');
+        Append_Ascii(mo->strand, RM_ERROR_NEAR);
 
         if (Is_Text(nearest)) {
             //
@@ -1503,12 +1503,12 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
             // error, because otherwise it obscures the LOAD call where the
             // scanner was invoked.  Review.
             //
-            Append_Any_Utf8(mo->string, nearest);
+            Append_Any_Utf8(mo->strand, nearest);
         }
         else if (Any_List(nearest) or Is_Path(nearest))
             Mold_Element_Limit(mo, cast(Element*, nearest), 60);
         else
-            Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
+            Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT);
     }
 
     // Form: ** File: filename
@@ -1519,22 +1519,22 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     // not a FILE!.
     //
     if (not Is_Nulled(file)) {
-        Append_Codepoint(mo->string, '\n');
-        Append_Ascii(mo->string, RM_ERROR_FILE);
+        Append_Codepoint(mo->strand, '\n');
+        Append_Ascii(mo->strand, RM_ERROR_FILE);
         if (Is_File(file))
             Form_Element(mo, cast(Element*, file));
         else
-            Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
+            Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT);
     }
 
     // Form: ** Line: line-number
     if (not Is_Nulled(line)) {
-        Append_Codepoint(mo->string, '\n');
-        Append_Ascii(mo->string, RM_ERROR_LINE);
+        Append_Codepoint(mo->strand, '\n');
+        Append_Ascii(mo->strand, RM_ERROR_LINE);
         if (Is_Integer(line))
             Form_Element(mo, cast(Element*, line));
         else
-            Append_Ascii(mo->string, RM_BAD_ERROR_FORMAT);
+            Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT);
     }
 
     return TRIPWIRE;

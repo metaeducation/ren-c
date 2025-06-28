@@ -819,9 +819,9 @@ RebolValue* API_rebLengthedTextWide(
     Push_Mold(mo);
 
     for (; num_chars != 0; --num_chars, ++wstr)
-        Append_Codepoint(mo->string, *wstr);
+        Append_Codepoint(mo->strand, *wstr);
 
-    return Init_Text(Alloc_Value(), Pop_Molded_String(mo));
+    return Init_Text(Alloc_Value(), Pop_Molded_Strand(mo));
 }
 
 
@@ -845,15 +845,15 @@ RebolValue* API_rebTextWide(const REBWCHAR* wstr)
             )){
                 panic ("Invalid UTF-16 surrogate pair passed to rebTextWide()");
             }
-            Append_Codepoint(mo->string, Decode_UTF16_Pair(wstr));
+            Append_Codepoint(mo->strand, Decode_UTF16_Pair(wstr));
             wstr += 2;
         }
         else {
-            Append_Codepoint(mo->string, *wstr);
+            Append_Codepoint(mo->strand, *wstr);
             ++wstr;
         }
     }
-    return Init_Text(Alloc_Value(), Pop_Molded_String(mo));
+    return Init_Text(Alloc_Value(), Pop_Molded_Strand(mo));
 }
 
 

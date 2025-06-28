@@ -579,14 +579,14 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
 
     Begin_Non_Lexical_Mold(mo, v);  // &[varargs!
 
-    Append_Codepoint(mo->string, '[');
+    Append_Codepoint(mo->strand, '[');
 
     ParamClass pclass;
     const Key* key;
     const Param* param = Param_For_Varargs_Maybe_Null(&key, v);
     if (param == NULL) {
         pclass = PARAMCLASS_JUST;
-        Append_Ascii(mo->string, "???"); // never bound to an argument
+        Append_Ascii(mo->strand, "???"); // never bound to an argument
     }
     else {
         DECLARE_ELEMENT (param_word);
@@ -613,36 +613,36 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
         Mold_Element(mo, param_word);
     }
 
-    Append_Ascii(mo->string, " => ");
+    Append_Ascii(mo->strand, " => ");
 
     Level* L;
     Element* shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (Is_Cell_Poisoned(shared))
-            Append_Ascii(mo->string, "[]");
+            Append_Ascii(mo->strand, "[]");
         else if (pclass == PARAMCLASS_JUST or pclass == PARAMCLASS_THE)
             Mold_Element(mo, shared); // full feed can be shown if hard quoted
         else
-            Append_Ascii(mo->string, "[...]"); // can't look ahead
+            Append_Ascii(mo->strand, "[...]"); // can't look ahead
     }
     else if (Is_Level_Style_Varargs_Maybe_Null(&L, v)) {
         if (L == NULL)
-            Append_Ascii(mo->string, "!!!");
+            Append_Ascii(mo->strand, "!!!");
         else if (Is_Feed_At_End(L->feed)) {
-            Append_Ascii(mo->string, "[]");
+            Append_Ascii(mo->strand, "[]");
         }
         else if (pclass == PARAMCLASS_JUST or pclass == PARAMCLASS_THE) {
-            Append_Ascii(mo->string, "[");
+            Append_Ascii(mo->strand, "[");
             Mold_Element(mo, At_Feed(L->feed));  // 1 value shown if hard quote
-            Append_Ascii(mo->string, " ...]");
+            Append_Ascii(mo->strand, " ...]");
         }
         else
-            Append_Ascii(mo->string, "[...]");
+            Append_Ascii(mo->strand, "[...]");
     }
     else
         assert(false);
 
-    Append_Codepoint(mo->string, ']');
+    Append_Codepoint(mo->strand, ']');
 
     End_Non_Lexical_Mold(mo);
 
