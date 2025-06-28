@@ -34,7 +34,7 @@
 bool All_Bytes_ASCII(Byte* bp, Size size)
 {
     for (; size > 0; --size, ++bp)
-        if (*bp >= 0x80)
+        if (not Is_Byte_Ascii(*bp))
             return false;
 
     return true;
@@ -48,7 +48,7 @@ bool All_Bytes_ASCII(Byte* bp, Size size)
 //
 void Trim_Tail(Molder* mo, Byte ascii)
 {
-    assert(ascii < 0x80);  // more work needed for multi-byte characters
+    assert(Is_Byte_Ascii(ascii));  // !!! work needed for multi-byte characters
 
     Length len = Strand_Len(mo->strand);
     Size size = Strand_Size(mo->strand);

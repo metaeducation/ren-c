@@ -72,6 +72,9 @@
 //
 #define UNI_ENCODED_MAX 4
 
+#define Is_Byte_Ascii(b) \
+    ((b) < 0x80)  // ASCII is 0-127, so any byte < 128 is ASCII
+
 #define Is_Utf8_Lead_Byte(b) \
     ((b) >= 0x80)
 

@@ -99,7 +99,7 @@ INLINE Utf8(*) Utf8_Next(
     Utf8(const_if_c*) utf8
 ){
     Byte* bp = m_cast(Byte*, utf8);
-    if (*bp < 0x80)
+    if (Is_Byte_Ascii(*bp))
         *codepoint_out = *bp;
     else
         bp = m_cast(Byte*, Back_Scan_Utf8_Char_Unchecked(codepoint_out, bp));

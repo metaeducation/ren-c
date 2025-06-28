@@ -41,7 +41,7 @@ REBINT Compare_Ascii_Uncased(
     REBLEN len
 ){
     for (; len > 0; len--, b1++, b2++) {
-        assert(*b1 < 0x80 and *b2 < 0x80);
+        assert(Is_Byte_Ascii(*b1) and Is_Byte_Ascii(*b2));
 
         REBINT diff = LO_CASE(*b1) - LO_CASE(*b2);
         if (diff != 0)
@@ -238,7 +238,7 @@ REBINT Find_Binstr_In_Binstr(
     // Binary-compatible to: [next2 = Utf8_Next(&c2_canon, head2)]
     Codepoint c2_canon;  // calculate first char lowercase once, vs. each step
     const Byte* next2;
-    if (not is_2_str or *head2 < 0x80) {
+    if (not is_2_str or Is_Byte_Ascii(*head2)) {
         c2_canon = *head2;
         next2 = head2;
     } else

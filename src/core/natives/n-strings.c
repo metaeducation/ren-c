@@ -978,7 +978,7 @@ DECLARE_NATIVE(DEHEX)
 
             cp = Utf8_Next(&c, cp);
 
-            if (b < 0x80)
+            if (Is_Byte_Ascii(b))
                 break;
         } while (c == '%');
 

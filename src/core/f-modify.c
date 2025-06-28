@@ -427,7 +427,7 @@ REBLEN Modify_String_Or_Blob(
                 const Byte* bp = src_ptr;
                 for (; bytes_left > 0; --bytes_left, ++bp) {
                     Codepoint c = *bp;
-                    if (c < 0x80) {  // ASCII, just check for 0 bytes
+                    if (Is_Byte_Ascii(c)) {  // just check for 0 bytes
                         if (c == '\0')
                             panic (Error_Bad_Utf8_Bin_Edit(
                                 Error_Illegal_Zero_Byte_Raw()

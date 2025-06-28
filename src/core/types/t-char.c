@@ -82,7 +82,7 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 // of `Scan_Ascii()`:
 //
 //     for (; size > 0; ++bp, --size) {
-//         if (*bp < 0x80) {
+//         if (Is_Byte_Ascii(*bp)) {
 //             // do ASCII stuff...
 //         }
 //         else {
@@ -279,7 +279,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
             goto bad_make;
 
         Codepoint c;
-        if (*bp <= 0x80) {
+        if (Is_Byte_Ascii(*bp)) {
             if (size != 1) {
                 Copy_Cell(ARG(TYPE), Datatype_From_Type(TYPE_RUNE));
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);

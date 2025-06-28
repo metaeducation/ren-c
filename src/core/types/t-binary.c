@@ -646,10 +646,10 @@ Option(Error*) Trap_Alias_Blob_As(
                 if (bp < at_ptr)
                     ++index;
 
-                Codepoint c = *bp;
-                if (c < 0x80)
+                if (Is_Byte_Ascii(*bp))
                     Validate_Ascii_Byte(bp, strmode, Binary_Head(bin));
                 else {
+                    Codepoint c;
                     Option(Error*) e = Trap_Back_Scan_Utf8_Char(
                         &c, &bp, &bytes_left
                     );
