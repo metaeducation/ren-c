@@ -165,14 +165,17 @@ DECLARE_NATIVE(WRITE_STDOUT)
 
   #if (! DEBUG_HAS_PROBE)
     UNUSED(v);
-    return PANIC("Boot WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module");
+    return PANIC(
+        "Bootstrap WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module"
+    );
   #else
     if (Is_Text(v)) {
         printf("WRITE-STDOUT: %s\n", String_UTF8(Cell_String(v)));
         fflush(stdout);
     }
-    else if (IS_CHAR(v)) {
-        printf("WRITE-STDOUT: codepoint %d\n", cast(int, Cell_Codepoint(v)));
+    else if (Is_Rune_And_Is_Char(v)) {
+        Codepoint c = Rune_Known_Single_Codepoint(v);
+        printf("WRITE-STDOUT: codepoint %d\n", cast(int, c));
     }
     else {
         assert(Is_Blob(v));

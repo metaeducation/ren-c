@@ -626,7 +626,7 @@ RebolValue* API_rebChar(uint32_t codepoint)
     ENTER_API;
 
     Value* v = Alloc_Value();
-    Option(Error*) error = Trap_Init_Char(v, codepoint);
+    Option(Error*) error = Trap_Init_Single_Codepoint_Rune(v, codepoint);
     if (error) {
         rebRelease(v);
         panic (unwrap error);
@@ -1687,8 +1687,12 @@ intptr_t API_rebUnbox(
       case TYPE_INTEGER:
         return VAL_INT64(v);
 
-      case TYPE_RUNE:
-        return Cell_Codepoint(v);
+      case TYPE_RUNE: {
+        Codepoint c;
+        Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, v);
+        if (e)
+            panic (unwrap e);
+        return c; }
 
       default:
         panic ("C-based rebUnbox() only supports INTEGER!, CHAR!, and LOGIC!");
@@ -1859,6 +1863,11 @@ double API_rebUnboxDecimal(
 //
 //  rebUnboxChar: API
 //
+// 1. We could use Trap_Get_Rune_Single_Codepoint() here, but it would give
+//    an error message that didn't mention rebUnboxChar() explicitly.  This
+//    should be reviewed as a general situation of how errors cross the API
+//    and being able to get the API name in the stack.
+//
 uint32_t API_rebUnboxChar(
     RebolContext* binding,
     const void* p, void* vaptr
@@ -1870,10 +1879,10 @@ uint32_t API_rebUnboxChar(
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
-    if (not IS_CHAR(v))
-        panic ("rebUnboxChar() called on non-CHAR");
+    if (not Is_Rune_And_Is_Char(v))
+        panic ("rebUnboxChar() called on non-CHAR");  // API-specific error [1]
 
-    return Cell_Codepoint(v);
+    return Rune_Known_Single_Codepoint(v);
 }
 
 
@@ -2155,76 +2164,6 @@ REBWCHAR* API_rebSpellWide(
 }
 
 
-// Helper function for `rebBytesInto()` and `rebBytes()`
-//
-// CHAR!, ANY-STRING?, and ANY-WORD? are allowed without an AS BLOB!.
-//
-// !!! How many types should be allowed to convert automatically?
-//
-static size_t Bytes_Into(
-    unsigned char* buf,
-    size_t buf_size,
-    const Value* v
-){
-    Size bsize = buf_size;  // see `Size`: we use signed sizes internally
-
-    if (Is_Blob(v)) {
-        Size size;
-        const Byte* data = Cell_Blob_Size_At(&size, v);
-        if (buf == nullptr) {
-            assert(bsize == 0);
-            return size;
-        }
-
-        Size limit = MIN(bsize, size);
-        memcpy(buf, data, limit);
-        return size;
-    }
-
-    if (IS_CHAR(v)) {  // Note: CHAR! caches its UTF-8 encoding in the cell
-        Size size = Encoded_Size_For_Codepoint(Cell_Codepoint(v));
-        if (buf == nullptr) {
-            assert(bsize == 0);
-            return size;
-        }
-
-        Size limit = MIN(bsize, size);
-        if (limit == 0)
-            return size;
-
-        if (Is_Blob(v)) {
-            assert(Is_NUL(v));
-            assert(limit > 0);
-            buf[0] = '\0';
-            return size;
-        }
-
-        assert(Is_Rune(v));
-        assert(not Stringlike_Has_Stub(v));
-        assert(v->extra.at_least_4[IDX_EXTRA_LEN] == 1);
-
-        memcpy(buf, v->payload.at_least_8, limit);  // !!! '\0' term?
-        return size;
-    }
-
-    if (Any_Word(v) or Any_String(v)) {
-        Size size = Spell_Into(nullptr, 0, v);
-        if (buf == nullptr) {
-            assert(buf_size == 0);
-            return size;
-        }
-
-        Size check = Spell_Into(s_cast(buf), bsize, v);
-        assert(check == size);
-        UNUSED(check);
-
-        return size;
-    }
-
-    panic ("rebBytes() only works with ANY-STRING?/ANY-WORD?/BLOB!/CHAR!");
-}
-
-
 //
 //  rebBytesInto: API
 //
@@ -2247,7 +2186,22 @@ size_t API_rebBytesInto(
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
-    return Bytes_Into(buf, buf_size, v);
+    Size bsize = buf_size;  // see `Size`: we use signed sizes internally
+
+    if (not Any_Bytes_Type(Type_Of(v)))
+        panic ("rebBytes() APIs need BLOB! or ANY-UTF8? datatypes");
+
+    Size size;
+    const Byte* data = Cell_Bytes_At(&size, v);
+
+    if (buf == nullptr) {
+        assert(bsize == 0);
+        return size;  // no +1 needed (rebAlloc() adds the +1 if used)
+    }
+
+    Size limit = MIN(bsize, size);
+    memcpy(buf, data, limit);
+    return size;
 }
 
 
@@ -2258,7 +2212,7 @@ size_t API_rebBytesInto(
 // encoding of an ANY-STRING? or ANY-WORD? and that size in bytes.  (Hence,
 // for strings it is like rebSpell() except telling you how many bytes.)
 //
-unsigned char* API_rebBytesMaybe(
+unsigned char* API_rebBytesMaybe(  // unsigned char, no Byte required by API
     RebolContext* binding,
     size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
     const void* p, void* vaptr
@@ -2275,14 +2229,18 @@ unsigned char* API_rebBytesMaybe(
         return nullptr;  // opt on input makes void, means null out
     }
 
-    Size size = Bytes_Into(nullptr, 0, v);
+    if (not Any_Bytes_Type(Type_Of(v)))
+        panic ("rebBytes() APIs need BLOB! or ANY-UTF8? datatypes");
 
-    unsigned char* result = rebAllocN(unsigned char, size);  // no +1 needed...
+    Size size;
+    const Byte* data = Cell_Bytes_At(&size, v);
+
+    Byte* result = rebAllocN(Byte, size);  // no +1 needed...
     assert(result[size] == '\0');  // ...see rebRepossess() for why
-    Bytes_Into(result, size, v);
+    memcpy(result, data, size);
 
     *size_out = size;
-    return cast(unsigned char*, result);
+    return result;
 }
 
 
@@ -2326,7 +2284,7 @@ const unsigned char* API_rebLockBytes(
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
-    if (not Any_Fundamental(v) or not Any_Bytes_Type(Heart_Of(v)))
+    if (not Any_Bytes_Type(Type_Of(v)))
         panic ("rebLockBytes() only works with types with byte storage");
 
     // !!! lock code here [1]
@@ -2362,7 +2320,7 @@ unsigned char* API_rebLockMutableBytes(
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
-    if (not Any_Fundamental(v) or not Any_Bytes_Type(Heart_Of(v)))
+    if (not Any_Bytes_Type(Type_Of(v)))
         panic ("rebLockBytes() only works with types with byte storage");
 
     if (Is_Flex_Read_Only(Cell_Flex(v)))

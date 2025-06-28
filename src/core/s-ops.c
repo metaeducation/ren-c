@@ -74,8 +74,8 @@ void Change_Case(
     const Value* part,
     bool upper
 ){
-    if (IS_CHAR(val)) {
-        Codepoint c = Cell_Codepoint(val);
+    if (Is_Rune_And_Is_Char(val)) {
+        Codepoint c = Rune_Known_Single_Codepoint(val);
         Init_Char_Unchecked(out, upper ? UP_CASE(c) : LO_CASE(c));
         return;
     }

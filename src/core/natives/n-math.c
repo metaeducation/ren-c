@@ -71,37 +71,37 @@ DECLARE_NATIVE(NEGATE)
 //
 DECLARE_NATIVE(ADD)
 //
-// 1. See comments on Is_NUL() about #{00} as a NUL? state for the CHAR? type
-//    constraint.  We preserve (NUL + 65) -> #A and (#A - NUL) -> 0 partially
-//    because they were in the tests, but also because it may find use in
-//    generalized code.  But we don't dispatch to BLOB! or RUNE! to handle
-//    SYM_ADD for this case, instead localizing it here so it's easier to
-//    reason about or delete.
+// 1. See comments on Is_Blob_And_Is_Zero() about #{00} as a NUL? state for
+//    the CHAR? type constraint.  We preserve (NUL + 65) -> #A and
+//    (#A - NUL) -> 0 partially because they were in the tests, but also
+//    because it may find use in generalized code.  But we don't dispatch to
+//    BLOB! or RUNE! to handle SYM_ADD for this case, instead localizing it
+//    here so it's easier to reason about or delete.
 {
     INCLUDE_PARAMS_OF_ADD;
 
     Element* e1 = Element_ARG(VALUE1);
     Element* e2 = Element_ARG(VALUE2);
 
-    if (Is_NUL(e1)) {  // localize NUL handling to SUBTRACT native [1]
+    if (Is_Blob_And_Is_Zero(e1)) {  // localize NUL to ADD native [1]
         if (not Is_Integer(e2))
             return PANIC("Can only add INTEGER! to NUL #{00} state");
         REBINT i = VAL_INT32(e2);
         if (i < 0)
             return PANIC(Error_Codepoint_Negative_Raw());
-        Option(Error*) error = Trap_Init_Char(OUT, i);
+        Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, i);
         if (error)
             return FAIL(unwrap error);
         return OUT;
     }
 
-    if (Is_NUL(e2)) {  // localize NUL handling to SUBTRACT native [1]
+    if (Is_Blob_And_Is_Zero(e2)) {  // localize NUL to ADD native [1]
         if (not Is_Integer(e1))
             return PANIC("Can only add INTEGER! to NUL #{00} state");
         REBINT i = VAL_INT32(e1);
         if (i < 0)
             return PANIC(Error_Codepoint_Negative_Raw());
-        Option(Error*) error = Trap_Init_Char(OUT, i);
+        Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, i);
         if (error)
             return FAIL(unwrap error);
         return OUT;
@@ -131,17 +131,21 @@ DECLARE_NATIVE(SUBTRACT)
     Element* e1 = Element_ARG(VALUE1);
     Element* e2 = Element_ARG(VALUE2);
 
-    if (Is_NUL(e1)) {  // localize NUL handling to SUBTRACT native [1]
-        if (Is_NUL(e2))
+    if (Is_Blob_And_Is_Zero(e1)) {  // localize NUL to SUBTRACT native [1]
+        if (Is_Blob_And_Is_Zero(e2))
             return Init_Integer(OUT, 0);
-        if (IS_CHAR(e2))
-            return Init_Integer(OUT, cast(REBINT, 0) - Cell_Codepoint(e2));
+        if (Is_Rune_And_Is_Char(e2)) {
+            Codepoint c2 = Rune_Known_Single_Codepoint(e2);
+            return Init_Integer(OUT, cast(REBINT, 0) - c2);
+        }
         return FAIL(Error_Codepoint_Negative_Raw());
     }
 
-    if (Is_NUL(e2)) {  // localize NUL handling to SUBTRACT native [1]
-        if (IS_CHAR(e1))
-            return Init_Integer(OUT, Cell_Codepoint(e1));
+    if (Is_Blob_And_Is_Zero(e2)) {  // localize NUL to SUBTRACT native [1]
+        if (Is_Rune_And_Is_Char(e1)) {
+            Codepoint c1 = Rune_Known_Single_Codepoint(e1);
+            return Init_Integer(OUT, c1);
+        }
         return PANIC("Only CHAR? can have NUL? #{00} state subtracted");
     }
 

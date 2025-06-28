@@ -75,5 +75,8 @@
 INLINE bool Any_Sequence_Or_List_Type(Option(Heart) h)  // !!! optimize?
   { return Any_Sequence_Type(h) or Any_List_Type(h); }
 
-INLINE bool Any_Bytes_Type(Option(Heart) h)
+INLINE bool Any_Bytes_Heart(Option(Heart) h)
+  { return Any_Utf8_Type(h) or h == TYPE_BLOB; }
+
+INLINE bool Any_Bytes_Type(Option(Type) h)
   { return Any_Utf8_Type(h) or h == TYPE_BLOB; }

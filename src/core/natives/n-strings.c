@@ -27,8 +27,8 @@
 
 static bool Check_Char_Range(const Value* val, Codepoint limit)
 {
-    if (IS_CHAR(val))
-        return Cell_Codepoint(val) <= limit;
+    if (Is_Rune_And_Is_Char(val))
+        return Rune_Known_Single_Codepoint(val) <= limit;
 
     if (Is_Integer(val))
         return VAL_INT64(val) <= cast(REBI64, limit);

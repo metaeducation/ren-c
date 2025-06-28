@@ -595,7 +595,7 @@ Bounce Stepper_Executor(Level* L)
     // and not have a degree of freedom that it can't distinguish from being
     // called as (import 'xml) or (import 'json/1.1.2)
 
-    if (Is_Sigil(CURRENT, SIGIL_PIN))
+    if (Is_Sigiled_Space(SIGIL_PIN, CURRENT))
         goto handle_pin_sigil;  // special handling for lone @
 
     Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
@@ -673,7 +673,7 @@ Bounce Stepper_Executor(Level* L)
     //     >> get 'var
     //     ** Error: var is unbound
 
-    if (Is_Sigil(CURRENT, SIGIL_TIE))
+    if (Is_Sigiled_Space(SIGIL_TIE, CURRENT))
         goto handle_tie_sigil;  // special handling for lone $
 
     Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
@@ -809,7 +809,7 @@ Bounce Stepper_Executor(Level* L)
 
 } case TYPE_RUNE: { //// META RUNE! /////////////////////////////////////////
 
-    if (Is_Sigil(CURRENT, SIGIL_META))
+    if (Is_Sigiled_Space(SIGIL_META, CURRENT))
         goto handle_action_approval_sigil;  // special handling for lone ^
 
     return PANIC("Don't know what ^RUNE! is going to do yet (besides ^)");
@@ -1662,7 +1662,7 @@ Bounce Stepper_Executor(Level* L)
     if (circle_this)
         circled = TOP_INDEX;
 
-    if (Is_Meta_Sigil(TOP) or Is_Meta_Form_Of(WORD, TOP))  // meta-assign result
+    if (Is_Metaform_Space(TOP) or Is_Meta_Form_Of(WORD, TOP))  // meta-assign result
         continue;
 
     if (Is_Word(TOP) or Is_Tuple(TOP))
@@ -1770,7 +1770,7 @@ Bounce Stepper_Executor(Level* L)
         Unliftify_Undecayed(OUT);  // unlift for output...
     }
 
-    if (Is_Meta_Sigil(var))
+    if (Is_Metaform_Space(var))
         goto circled_check;
 
     if (Is_Meta_Form_Of(WORD, var)) {

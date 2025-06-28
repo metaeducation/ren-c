@@ -1,12 +1,12 @@
 //
-//  file: %cell-token.h
-//  summary: "Definitions for an Immutable Sequence of 0 to N Codepoints"
+//  file: %cell-rune.h
+//  summary: "Definitions for an Immutable Sequence of 1 to N Codepoints"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -28,25 +28,21 @@
 //
 // As with ISSUE!, multiple codepoint runes are legal.
 //
-// If possible, runes store encoded UTF-8 data entirely in a cell...saving
+// If possible, runes store encoded UTF-8 data entirely in a Cell...saving
 // on allocations and improving locality.  In this system, a "character" is
-// simply a sigle-length token, which is translated to a codepoint using the
-// `CODEPOINT OF` operation, or by using FIRST on the token.
+// simply a single-length RUNE!, which is translated to a codepoint using the
+// `CODEPOINT OF` operation, or by using FIRST on the rune.
 //
-// TYPE_RUNE has two forms: one with a String* allocation and one that stores
+// TYPE_RUNE has two forms: one with a String* allocation, and one that stores
 // content data where a String* and index would be.  Stringlike_Has_Stub()
 // is what discerns the two categories, and can only be treated as a string
 // when it has that flag.  Hence generically speaking, RUNE! is not considered
 // an ANY-SERIES? or ANY-STRING? type.
 //
-// However, there are UTF-8-based accessors VAL_UTF8_XXX which can be used to
+// However, there are UTF-8-based accessors like Cell_Utf8_At() which can
 // polymorphically access const data across ANY-STRING?, ANY-WORD?, and RUNE!
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
-//
-// * In addition to the encoded bytes of the UTF-8, a single-codepoint RUNE!
-//   will also cache that codepoint.  Hence a CHAR? cell has both the UTF-8
-//   representation and the codepoint on hand locally in the cell.
 //
 // * Historical Redbol supported a ^(NULL) codepoint, e.g. '\0', but Ren-C
 //   deemed it to be not worth the trouble.  Only BLOB! can have embedded
@@ -57,80 +53,77 @@
 //   string-like tasks where internal 0 bytes are ok.
 //
 
-
-//=//// CELL REPRESENTATION OF NUL CODEPOINT (USES #{00} BLOB!) ///////////=//
+//=//// SINGLE CODEPOINT RUNE! ///////////////////////////////////////////=//
 //
-// Ren-C's unification of chars and "RUNE!" to a single immutable stringlike
-// type meant they could not physically contain a zero codepoint.
-//
-// It would be possible to declare the empty rune of #"" representing the
-// NUL codepoint state.  But that would be odd, since inserting empty strings
-// into other strings is considered to be legal and not change the string.
-// saying that (insert "abc" #"") would generate an illegal-zero-byte error
-// doesn't seem right.
-//
-// So to square this circle, the NUL state is chosen to be represented simply
-// as the #{00} binary BLOB!.  That gives it the desired properties of an
-// error if you try to insert it into a string, but still allowing you to
-// insert it into blobs.
-//
-// To help make bring some uniformity to this, the CODEPOINT OF function
-// will give back codepoints for binaries that represent UTF-8, including
-// giving back 0 for #{00}.  CODEPOINT OF thus works on all strings, e.g.
-// (codepoint of <A>) -> 65.  But the only way you can get 0 back is if you
-// call it on #{00}
+// !!! When CHAR! was a separate datatype, it stored the codepoint in the
+// payload and the encoding in the Cell->extra.  When RUNE! generalized, it
+// stored the encoded form in the Cell->payload.at_least_8, and stuck the
+// length in Byte of Cell->extra.at_least_4.  It could be done that the
+// single codepoint could be stored in the extra, with a Cell flag used to
+// track whether the extra held the single codepoint or the length?
 //
 
-INLINE bool Is_Cell_NUL(const Value* c) {
-    if (Heart_Of(c) != TYPE_BLOB)
-        return false;
+INLINE bool Rune_Is_Single_Codepoint(const Cell* cell) {
+    assert(Unchecked_Heart_Of(cell) == TYPE_RUNE);
 
-    Size size;
-    const Byte* at = Cell_Blob_Size_At(&size, c);
-    if (size != 1)
-        return false;
-
-    return *at == 0;
-}
-
-INLINE bool Is_NUL(const Value* v) {
-    if (LIFT_BYTE(v) != NOQUOTE_2)
-        return false;
-    return Is_Cell_NUL(v);
-}
-
-INLINE bool IS_CHAR_CELL(const Value* c) {
-    if (Is_Cell_NUL(c))
-        return true;
-
-    if (Heart_Of(c) != TYPE_RUNE)
-        return false;
-
-    if (Stringlike_Has_Stub(c))
+    if (Stringlike_Has_Stub(cell))
         return false;  // allocated form, too long to be a character
 
-    return c->extra.at_least_4[IDX_EXTRA_LEN] == 1;  // codepoint
+    return cell->extra.at_least_4[IDX_EXTRA_LEN] == 1;  // just one codepoint
 }
 
-INLINE bool IS_CHAR(const Value* v) {
-    if (LIFT_BYTE(v) != NOQUOTE_2)
+INLINE bool Is_Rune_And_Is_Char(const Value* v) {
+    if (not Is_Rune(v))
         return false;
-    return not Sigil_Of(c_cast(Element*, v)) and IS_CHAR_CELL(v);
+    return Rune_Is_Single_Codepoint(v);
 }
 
-INLINE Codepoint Cell_Codepoint(const Value* c) {  // must pass IS_CHAR_CELL()
-    if (Is_Cell_NUL(c))
-        return 0;
-
-    assert(Heart_Of(c) == TYPE_RUNE);
-    assert(not Stringlike_Has_Stub(c));
-
-    assert(c->extra.at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. char
-
-    Codepoint codepoint;
-    Back_Scan_Utf8_Char_Unchecked(&codepoint, c->payload.at_least_8);
-    return codepoint;
+INLINE Codepoint Rune_Known_Single_Codepoint(const Cell* cell) {
+    assert(
+        Unchecked_Heart_Of(cell) == TYPE_RUNE
+        and not Stringlike_Has_Stub(cell)
+        and cell->extra.at_least_4[IDX_EXTRA_LEN] == 1
+    );
+    Codepoint c;
+    Back_Scan_Utf8_Char_Unchecked(&c, cell->payload.at_least_8);
+    assert(c != '\0');
+    return c;
 }
+
+INLINE Option(Byte) First_Byte_Of_Rune_If_Single_Char(const Cell* cell) {
+    if (not Rune_Is_Single_Codepoint(cell))
+        return '\0';
+
+    possibly(Is_Utf8_Lead_Byte(cell->payload.at_least_8[0]));
+    return cell->payload.at_least_8[0];
+}
+
+INLINE Option(Codepoint) Codepoint_Of_Rune_If_Single_Char(const Cell* cell)
+{
+    if (not Rune_Is_Single_Codepoint(cell))
+        return '\0';
+    return Rune_Known_Single_Codepoint(cell);
+}
+
+INLINE Option(Error*) Trap_Get_Rune_Single_Codepoint(
+    Sink(Codepoint) out,
+    const Value* cell
+){
+    if (not Rune_Is_Single_Codepoint(cell)) {
+      #if APPEASE_WEAK_STATIC_ANALYSIS
+        *out = 0xDECAFBAD;
+      #endif
+        return Error_User(
+            "Can't get Codepoint if RUNE! has more than one character"
+        );
+    }
+
+    *out = Rune_Known_Single_Codepoint(cell);
+    return SUCCESS;
+}
+
+
+//=//// INITIALIZATION ////////////////////////////////////////////////////=//
 
 INLINE bool Try_Init_Small_Utf8_Untracked(
     Init(Element) out,
@@ -195,7 +188,7 @@ INLINE Element* Init_Utf8_Non_String(
 // this routine can be used.
 //
 INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
-    assert(c != '\0');  // NUL is #{00}, a BLOB! not an RUNE! (see Is_NUL())
+    assert(c != '\0');  // NUL is #{00} (see Is_Blob_And_Is_Zero())
 
     Reset_Cell_Header_Noquote(
         out,
@@ -209,7 +202,7 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     out->extra.at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
     out->extra.at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
 
-    assert(Cell_Codepoint(out) == c);
+    assert(Rune_Known_Single_Codepoint(out) == c);
     return out;
 }
 
@@ -219,7 +212,10 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
 // 1. The "codepoint too high" error was once parameterized with the large
 //    value, but see Startup_Utf8_Errors() for why these need to be cheap
 //
-INLINE Option(Error*) Trap_Init_Char_Untracked(Cell* out, uint32_t c) {
+INLINE Option(Error*) Trap_Init_Single_Codepoint_Rune_Untracked(
+    Init(Element) out,
+    uint32_t c
+){
     if (c > MAX_UNI)
         return Cell_Error(g_error_codepoint_too_high);  // no parameter [1]
 
@@ -231,18 +227,122 @@ INLINE Option(Error*) Trap_Init_Char_Untracked(Cell* out, uint32_t c) {
     return SUCCESS;
 }
 
-#define Trap_Init_Char(out,c) \
-    Trap_Init_Char_Untracked(TRACK(out), (c))
+#define Trap_Init_Single_Codepoint_Rune(out,c) \
+    Trap_Init_Single_Codepoint_Rune_Untracked(TRACK(out), (c))
+
+
+//=//// SPACE RUNES ///////////////////////////////////////////////////////=//
+//
+// Space runes are inert in the evaluator, and represented by an underscore.
+// They are used as agnostic placeholders.
+//
+//    >> append [a b c] _
+//    == [a b c _]
+//
+// Space takes on some placeholder responsibilities of Rebol2's NONE!
+// value, while the "soft failure" aspects are covered by NULL (which unlike
+// blanks, can't be stored in blocks).  Consequently spaces are not "falsey"
+// which means all "reified" values that can be stored in blocks are
+// conditionally true.
+//
+//     >> if fourth [a b c _] [print "Spaces are truthy"]
+//     Spaces are truthy
+//
+// 1. Instead of rendering as `@_` and `^_` and `$_`, a Sigil'd space will
+//    render as `@`, `^`, and `$`.
+
+INLINE bool Is_Space(const Value* v) {
+    if (not Is_Rune(v))
+        return false;
+    return First_Byte_Of_Rune_If_Single_Char(v) == ' ';
+}
 
 #define Init_Space(out) \
     Init_Char_Unchecked((out), ' ')
 
-INLINE bool Is_Space(const Value* v) {
-    if (not IS_CHAR(v))
-        return false;
+#define Init_Sigiled_Space(out,sigil) \
+    Sigilize(Init_Space(out), sigil)
 
-    return Cell_Codepoint(v) == ' ';
+INLINE bool Any_Sigiled_Space(const Element* elem) {
+    if (LIFT_BYTE(elem) != NOQUOTE_2 or not Sigil_Of(elem))
+        return false;
+    return First_Byte_Of_Rune_If_Single_Char(elem) == ' ';
 }
+
+INLINE bool Is_Sigiled_Space(Option(Sigil) sigil, const Value* v) {
+    if (not Cell_Has_Lift_Sigil_Heart(NOQUOTE_2, sigil, TYPE_RUNE, v))
+        return false;
+    return First_Byte_Of_Rune_If_Single_Char(v) == ' ';
+}
+
+#define Is_Pinned_Space(v) \
+    Is_Sigiled_Space(SIGIL_PIN, (v))  // renders as `@` [1]
+
+#define Is_Metaform_Space(v) \
+    Is_Sigiled_Space(SIGIL_META, (v))  // renders as `^` [1]
+
+#define Is_Tied_Space(v) \
+    Is_Sigiled_Space(SIGIL_TIE, (v))  // renders as `$` [1]
+
+
+//=//// '~' QUASIFORM (a.k.a. QUASAR) /////////////////////////////////////=//
+//
+// The quasiform of space is a tilde (instead of ~_~), and called QUASAR
+//
+//    >> lift print "Quasiform of SPACE is QUASAR"
+//    Quasiform of SPACE is QUASAR
+//    == ~
+//
+// !!! At one point it was very fast to initialize a QUASAR, as it could be
+// done with only the header.  Consider the idea of making character literals
+// able to be initialized with just the header for space-like cases.
+//
+
+INLINE bool Is_Quasar(const Value* v) {
+    if (not Cell_Has_Lift_Heart_No_Sigil(QUASIFORM_3, TYPE_RUNE, v))
+        return false;
+    return First_Byte_Of_Rune_If_Single_Char(v) == ' ';
+}
+
+INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
+    Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
+    Quasify_Isotopic_Fundamental(out);
+    assert(Is_Quasar(out));
+    return out;
+}
+
+#define Init_Quasar(out) \
+    TRACK(Init_Quasar_Untracked(out))
+
+
+//=//// '~' ANTIFORM (a.k.a. TRIPWIRE) ////////////////////////////////////=//
+//
+// All RUNE! values have antiforms, that are considered to be TRASH!.
+//
+// The antiform of SPACE is a particularly succinct trash state, called
+// TRIPWIRE.  It's a quick way to make a variable
+//  * Quick way to unset variables, simply `(var: ~)`
+//
+
+INLINE bool Is_Tripwire(Need(const Value*) v) {
+    if (not Cell_Has_Lift_Heart_No_Sigil(ANTIFORM_1, TYPE_RUNE, v))
+        return false;
+    return First_Byte_Of_Rune_If_Single_Char(v) == ' ';
+}
+
+INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
+    Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
+    Stably_Antiformize_Unbound_Fundamental(out);
+    assert(Is_Tripwire(out));
+    return out;
+}
+
+#define Init_Tripwire(out) \
+    TRACK(Init_Tripwire_Untracked(out))
+
+#define Init_Lifted_Tripwire(out) \
+    Init_Quasar(out)
+
 
 
 //=//// GENERIC UTF-8 ACCESSORS //////////////////////////////////////////=//

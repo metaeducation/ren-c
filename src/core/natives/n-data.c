@@ -692,7 +692,7 @@ DECLARE_NATIVE(CHAR_Q)
     if (b)
         return unwrap b;
 
-    return LOGIC(IS_CHAR(e));
+    return LOGIC(Is_Rune_And_Is_Char(e));
 }
 
 

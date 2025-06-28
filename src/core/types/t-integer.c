@@ -213,8 +213,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
 
         if (Is_Integer(val2))
             arg = VAL_INT64(val2);
-        else if (IS_CHAR(val2))
-            arg = Cell_Codepoint(val2);
+        else if (Is_Rune_And_Is_Char(val2))
+            arg = Rune_Known_Single_Codepoint(val2);
         else {
             // Decimal or other numeric second argument:
             REBLEN n = 0; // use to flag special case

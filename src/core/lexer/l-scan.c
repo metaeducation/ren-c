@@ -1947,19 +1947,19 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
               case ']':
               case ')':
-              case '}':
+              case '}': {
                 if (base == TOP_INDEX) {  // closing the code
                     S->end = cp;
                     return LOCATED(TOKEN_URL);
                 }
 
-                if (*cp != Cell_Codepoint(TOP)) {
-                    Byte want = cast(Byte, Cell_Codepoint(TOP));
+                Byte want = unwrap First_Byte_Of_Rune_If_Single_Char(TOP);
+                if (*cp != want) {
                     Drop_Data_Stack_To(base);
                     return Error_Mismatch(want, *cp);
                 }
                 DROP();
-                continue;  // loop will increment
+                continue; }  // loop will increment
 
               default:
                 break;
@@ -1972,7 +1972,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         }
 
         if (base != TOP_INDEX) {
-            Byte want = cast(Byte, Cell_Codepoint(TOP));
+            Byte want = unwrap First_Byte_Of_Rune_If_Single_Char(TOP);
             Drop_Data_Stack_To(base);
             return Error_Mismatch(want, *cp);
         }
@@ -2144,7 +2144,7 @@ static Option(Error*) Trap_Flush_Pending_On_End(ScanState* S) {
     attempt {
         if (S->sigil_pending) {  // e.g. "$]" or "''$]"
             assert(not S->quasi_pending);
-            Init_Sigil(PUSH(), unwrap S->sigil_pending);
+            Init_Sigiled_Space(PUSH(), unwrap S->sigil_pending);
             S->sigil_pending = SIGIL_0;
         }
         else if (S->quasi_pending) {  // "~]" or "''~]"
@@ -2396,7 +2396,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (S->quasi_pending) {
         if (S->sigil_pending) {  // ~$~ or ~@~ or ~^~
-            Init_Sigil(PUSH(), unwrap S->sigil_pending);
+            Init_Sigiled_Space(PUSH(), unwrap S->sigil_pending);
             S->sigil_pending = SIGIL_0;
             --transcode->at;  // let lookahead see the `~`
             goto lookahead;

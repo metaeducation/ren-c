@@ -868,11 +868,11 @@ static REBIXO To_Thru_Block_Rule(
                     if (Is_Blob(rule) and Cell_Series_Len_At(rule) == 0)
                         return VAL_INDEX(iter);
                 }
-                else if (IS_CHAR(rule)) {
-                    if (Cell_Codepoint(rule) > 0xff)
+                else if (Is_Rune_And_Is_Char(rule)) {
+                    if (Rune_Known_Single_Codepoint(rule) > 0xff)
                         panic (Error_Parse3_Rule());
 
-                    if (ch1 == Cell_Codepoint(rule)) {
+                    if (ch1 == Rune_Known_Single_Codepoint(rule)) {
                         if (is_thru)
                             return VAL_INDEX(iter) + 1;
                         return VAL_INDEX(iter);
@@ -935,8 +935,8 @@ static REBIXO To_Thru_Block_Rule(
                 else
                     ch = UP_CASE(unadjusted);
 
-                if (IS_CHAR(rule)) {
-                    Codepoint ch2 = Cell_Codepoint(rule);
+                if (Is_Rune_And_Is_Char(rule)) {
+                    Codepoint ch2 = Rune_Known_Single_Codepoint(rule);
                     if (ch2 == 0)
                         goto next_alternate_rule;  // no 0 char in ANY-STRING?
 

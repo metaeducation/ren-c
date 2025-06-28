@@ -109,7 +109,7 @@ void Write_IO(const Value* data, REBLEN len)
 
   #if defined(REBOL_SMART_CONSOLE)
     if (Term_IO) {
-        if (IS_CHAR(data)) {
+        if (Is_Rune_And_Is_Char(data)) {
             assert(len == 1);
             Term_Insert(Term_IO, data);
         }

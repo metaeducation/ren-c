@@ -128,6 +128,7 @@ leaders: [
     any-atom?
     null?
     space?
+    NUL?
     tripwire?
 
     tweak*  ; REAL tweak* (overwrites bootstrap) uses NULL?, SPACE?

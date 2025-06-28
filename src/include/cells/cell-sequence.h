@@ -141,7 +141,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
         if (Is_Quasar(e))  // Legal, e.g. `~/home/Projects/ren-c/README.md`
             return SUCCESS;
 
-        if (Any_Sigil(e))
+        if (Any_Sigiled_Space(e))
             return SUCCESS;  // single-char forms legal for now
 
         if (Is_Space(e)) {

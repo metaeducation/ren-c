@@ -109,7 +109,7 @@ DECLARE_NATIVE(SIGIL_OF)
     Option(Sigil) sigil = Sigil_Of(elem);
     if (not sigil)
         return nullptr;
-    return Init_Sigil(OUT, unwrap sigil);
+    return Init_Sigiled_Space(OUT, unwrap sigil);
 }
 
 
@@ -131,7 +131,7 @@ DECLARE_NATIVE(SIGIL_Q)
     if (b)
         return unwrap b;
 
-    return LOGIC(Any_Sigil(e));
+    return LOGIC(Any_Sigiled_Space(e));
 }
 
 

@@ -264,7 +264,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
             panic ("Only RUNE! can MAKE a UTF-8 immutable type with INTEGER!");
 
         REBINT n = Int32(arg);
-        Option(Error*) error = Trap_Init_Char(OUT, n);
+        Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, n);
         if (error)
             return FAIL(unwrap error);
         return OUT; }
@@ -298,7 +298,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
         }
-        Option(Error*) error = Trap_Init_Char(OUT, c);
+        Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, c);
         if (error)
             return FAIL(unwrap error);
         return OUT; }
@@ -319,7 +319,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 //  "Codepoint from integer, e.g. make-char 65 -> #A (see also TO-CHAR)"
 //
 //      return: "Can also be NUL as binary BLOB!, make char! 0 -> #{00}"
-//          [char?]
+//          [char? NUL?]
 //      codepoint [integer!]
 //  ]
 //
@@ -336,7 +336,11 @@ DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
     INCLUDE_PARAMS_OF_MAKE_CHAR;
 
     uint32_t c = VAL_UINT32(ARG(CODEPOINT));
-    Option(Error*) error = Trap_Init_Char(OUT, c);
+
+    if (c == 0)
+        return COPY(LIB(NUL));
+
+    Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, c);
     if (error)
         return FAIL(unwrap error);
     return OUT;
@@ -372,12 +376,12 @@ DECLARE_NATIVE(TO_CHAR)
     Element* e = Element_ARG(ELEMENT);
     if (Is_Integer(e)) {
         uint32_t c = VAL_UINT32(e);
-        Option(Error*) error = Trap_Init_Char(OUT, c);
+        Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, c);
         if (error)
             return FAIL(unwrap error);
         return OUT;
     }
-    if (IS_CHAR(e))
+    if (Is_Rune_And_Is_Char(e))
         return COPY(e);
 
     Size size;
@@ -420,25 +424,33 @@ DECLARE_NATIVE(NUL_Q)
     INCLUDE_PARAMS_OF_NUL_Q;
 
     Element* e = Element_ARG(ELEMENT);
-    return LOGIC(Is_NUL(e));
+    return LOGIC(Is_Blob_And_Is_Zero(e));
 }
 
 
-static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
-{
+// !!! At one time, it was allowed to do things like add #"A" to #"A".  Ren-C
+// limits math operations on character to only work with numeric types (and
+// will probably limit it to INTEGER! only).
+//
+static Option(Error*) Trap_Get_Math_Arg_For_Char(
+    Sink(REBI64) out,
+    Value* arg,
+    const Symbol* verb
+){
     switch (Type_Of(arg)) {
-      case TYPE_RUNE:
-        return Cell_Codepoint(arg);
-
       case TYPE_INTEGER:
-        return VAL_INT32(arg);
+        *out = VAL_INT32(arg);
+        break;
 
       case TYPE_DECIMAL:
-        return cast(REBINT, VAL_DECIMAL(arg));
+        *out = cast(REBINT, VAL_DECIMAL(arg));
+        break;
 
       default:
-        panic (Error_Math_Args(TYPE_RUNE, verb));
+        return Error_Math_Args(TYPE_RUNE, verb);
     }
+
+    return SUCCESS;
 }
 
 
@@ -451,9 +463,6 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
     bool form = Bool_ARG(FORM);
 
     if (form) {
-        if (IS_CHAR_CELL(v) and Cell_Codepoint(v) == 0)
-            panic (Error_Illegal_Zero_Byte_Raw());  // don't form #, only mold
-
         Append_Any_Utf8_Limit(mo->string, v, UNLIMITED);
         return TRIPWIRE;
     }
@@ -463,21 +472,26 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
 
   handle_single_char_representations: { //////////////////////////////////////
 
-    // Much reflection led to conclude that _ is the best representation for
-    // the space rune, and # is the best representation for the hash rune.
+    // 1. Much reflection led to conclude that _ is the best representation
+    //    for the space rune:
     //
-    // https://rebol.metaeducation.com/t/2287
+    //      https://rebol.metaeducation.com/t/2287
+    //
+    // 2. There's an open question if the same issues that drive the choice
+    //    of `_` to represent a literal space rune! should also apply to
+    //    using `#` to represent a literal newline rune!.  In that case, the
+    //    literal for a hash mark would be `##` instead of `#`.
 
-    if (not IS_CHAR(v))
+    if (not Is_Rune_And_Is_Char(v))
         goto handle_ordinary_runes;
 
-    Codepoint c = Cell_Codepoint(v);
+    Codepoint c = Rune_Known_Single_Codepoint(v);
     if (c == ' ') {
-        Append_Codepoint(mo->string, '_');
+        Append_Codepoint(mo->string, '_');  // literal can't be `# ` [1]
         goto finished;
     }
-    if (c == '#') {
-        Append_Codepoint(mo->string, '#');
+    if (c == '#') {  // might '\n' be rendered as `#`? [2]
+        Append_Codepoint(mo->string, '#');  // vs. `##`
         goto finished;
     }
 
@@ -485,7 +499,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
 
     Append_Codepoint(mo->string, '#');
 
-    bool no_quotes = true;
+    bool no_dittos = true;
     Codepoint c = Codepoint_At(cp);
 
     // !!! This should be smarter and share code with FILE! on whether
@@ -503,21 +517,21 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
                 and c <= 160  // 160 is non-breaking space, 161 starts Latin1
             )
         ){
-            no_quotes = false;
+            no_dittos = false;
             break;
         }
         if (Is_Lex_Delimit(cast(Byte, c))) {
-            no_quotes = false;  // comma, bracket, parentheses, quotes...
+            no_dittos = false;  // comma, bracket, parentheses, dittos...
             break;
         }
     }
 
-    if (no_quotes or not Stringlike_Has_Stub(v)) {  // !!! hack
-        if (len == 1 and not no_quotes) {  // use historical CHAR! molding
+    if (no_dittos or not Stringlike_Has_Stub(v)) {  // !!! hack
+        if (len == 1 and not no_dittos) {  // use historical CHAR! molding
             bool parened = true;  // !!! used to depend on MOLD's :ALL flag
 
             Append_Codepoint(mo->string, '"');
-            Mold_Codepoint(mo, Cell_Codepoint(v), parened);
+            Mold_Codepoint(mo, Rune_Known_Single_Codepoint(v), parened);
             Append_Codepoint(mo->string, '"');
         }
         else
@@ -544,89 +558,43 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     possibly(Any_String(rune));  // gets priority, but may delegate
 
     if (Stringlike_Has_Stub(rune)) {
-        assert(not IS_CHAR(rune));  // no string math
+        assert(not Is_Rune_And_Is_Char(rune));  // no string math
         return GENERIC_CFUNC(OLDGENERIC, Any_String)(level_);
     }
 
     // !!! All the math operations below are inherited from the CHAR!
     // implementation, and will not work if the RUNE! length is > 1.
     //
-    if (not IS_CHAR(rune))
+    if (not Is_Rune_And_Is_Char(rune))
         return PANIC("Math operations only usable on single-character RUNE!");
+
+    Codepoint c;
+    Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, rune);
+    if (e)
+        return PANIC(unwrap e);
 
     // Don't use a Codepoint for chr, because it does signed math and then will
     // detect overflow.
     //
-    REBI64 chr = cast(REBI64, Cell_Codepoint(rune));
+    REBI64 chr = cast(REBI64, c);
     REBI64 arg;
 
     switch (id) {
       case SYM_ADD: {
-        arg = Math_Arg_For_Char(ARG_N(2), verb);
+        e = Trap_Get_Math_Arg_For_Char(&arg, ARG_N(2), verb);
+        if (e)
+            return PANIC(unwrap e);
+
         chr += arg;
         break; }
 
       case SYM_SUBTRACT: {
-        arg = Math_Arg_For_Char(ARG_N(2), verb);
-
-        // Rebol2 and Red return CHAR! values for subtraction from another
-        // CHAR! (though Red checks for overflow and errors on something like
-        // `subtract #"^(00)" #"^(01)"`, vs returning #"^(FF)").
-        //
-        // R3-Alpha chose to return INTEGER! and gave a signed difference, so
-        // the above would give -1.
-        //
-        if (IS_CHAR(ARG_N(2))) {
-            Init_Integer(OUT, chr - arg);
-            return OUT;
-        }
+        e = Trap_Get_Math_Arg_For_Char(&arg, ARG_N(2), verb);
+        if (e)
+            return PANIC(unwrap e);
 
         chr -= arg;
         break; }
-
-      case SYM_DIVIDE:
-        arg = Math_Arg_For_Char(ARG_N(2), verb);
-        if (arg == 0)
-            return PANIC(Error_Zero_Divide_Raw());
-        chr /= arg;
-        break;
-
-      case SYM_REMAINDER:
-        arg = Math_Arg_For_Char(ARG_N(2), verb);
-        if (arg == 0)
-            return PANIC(Error_Zero_Divide_Raw());
-        chr %= arg;
-        break;
-
-      case SYM_BITWISE_NOT:
-        chr = cast(Codepoint, ~chr);
-        break;
-
-      case SYM_BITWISE_AND:
-        arg = Math_Arg_For_Char(ARG_N(2), verb);
-        chr &= cast(Codepoint, arg);
-        break;
-
-      case SYM_BITWISE_OR:
-        arg = Math_Arg_For_Char(ARG_N(2), verb);
-        chr |= cast(Codepoint, arg);
-        break;
-
-      case SYM_BITWISE_XOR:
-        arg = Math_Arg_For_Char(ARG_N(2), verb);
-        chr ^= cast(Codepoint, arg);
-        break;
-
-      case SYM_BITWISE_AND_NOT:
-        arg = Math_Arg_For_Char(ARG_N(2), verb);
-        chr &= cast(Codepoint, ~arg);
-        break;
-
-      case SYM_EVEN_Q:
-        return LOGIC(did (cast(Codepoint, ~chr) & 1));
-
-      case SYM_ODD_Q:
-        return LOGIC(did (chr & 1));
 
       default:
         return UNHANDLED;
@@ -635,7 +603,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     if (chr < 0)
         return FAIL(Error_Codepoint_Negative_Raw());
 
-    Option(Error*) error = Trap_Init_Char(OUT, cast(Codepoint, chr));
+    Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, cast(Codepoint, chr));
     if (error)
         return FAIL(unwrap error);
     return OUT;
@@ -867,11 +835,12 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
     }
 
     if (as == TYPE_INTEGER) {
-        if (not IS_CHAR(v))
-            return Error_User(
-                "AS INTEGER! only supports what-were-CHAR! runes ATM"
-            );
-        Init_Integer(out, Cell_Codepoint(v));
+        Codepoint c;
+        Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, v);
+        if (e)
+            return e;
+
+        Init_Integer(out, c);
         return SUCCESS;
     }
 
@@ -1022,24 +991,33 @@ IMPLEMENT_GENERIC(RANDOM, Is_Rune)
 
     Element* rune = Element_ARG(MAX);
 
-    if (not IS_CHAR(rune))
-        return PANIC("RANDOM only for single-character RUNE!");
+    Codepoint c;
 
-    Codepoint c = Cell_Codepoint(rune);
-    if (c == 0)
-        return UNHANDLED;
+  get_single_codepoint: {  // only works on single codepoint RUNE!
+
+    Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, rune);
+    if (e)
+        return PANIC(unwrap e);
+
+} keep_generating_until_valid_char_found: {
+
+  // RUNE! doesn't allow you to create unicode codepoints with surrogate
+  // values or other illegal states, including 0.  All bad states should give
+  // back an error.
 
     while (true) {
-        Codepoint rand = cast(Codepoint, 1 + (Random_Int(Bool_ARG(SECURE)) % c));
+        Codepoint rand = cast(Codepoint,
+            1 + (Random_Int(Bool_ARG(SECURE)) % c)
+        );
 
-        Option(Error*) e = Trap_Init_Char(OUT, rand);
+        Option(Error*) e = Trap_Init_Single_Codepoint_Rune(OUT, rand);
         if (not e)
             break;
-        unnecessary(Free_Unmanaged_Flex(unwrap e));  // errors are prealloc'd
+        dont(Free_Unmanaged_Flex(unwrap e));  // errors are prealloc'd
     }
 
     return OUT;
-}
+}}
 
 
 IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
@@ -1083,15 +1061,13 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Rune)
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
     Element* rune = Element_ARG(ELEMENT);
-    assert(Is_Rune(rune));
 
-    if (
-        Stringlike_Has_Stub(rune)
-        or rune->extra.at_least_4[IDX_EXTRA_LEN] != 1
-    ){
+    Option(Codepoint) c = Codepoint_Of_Rune_If_Single_Char(rune);
+
+    if (not c)
         return FAIL(Error_Not_One_Codepoint_Raw());
-    }
-    return Init_Integer(OUT, Cell_Codepoint(rune));
+
+    return Init_Integer(OUT, unwrap c);
 }
 
 

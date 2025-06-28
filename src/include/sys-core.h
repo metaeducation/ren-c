@@ -648,8 +648,7 @@ enum {
 #include "cells/cell-error.h"
 
 #include "cells/cell-sigil.h"
-#include "cells/cell-token.h"
-#include "cells/cell-blank.h"
+#include "cells/cell-rune.h"
 
 #include "cells/cell-map.h"
 #include "cells/cell-varargs.h"

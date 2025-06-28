@@ -95,23 +95,34 @@ INLINE Option(Sigil) Sigil_Of(const Element* e)
 //
 
 INLINE Element* Sigilize(Element* elem, Sigil sigil) {
-    assert(LIFT_BYTE(elem) == NOQUOTE_2);  // no quotes, no quasiforms
-    assert(not (elem->header.bits & CELL_MASK_SIGIL));  // clearest [1]
+    assert(Unlifted_Cell_Has_Sigil(SIGIL_0, elem));  // no quotes/quasiforms
     elem->header.bits |= FLAG_SIGIL(sigil);
     return elem;
 }
 
 INLINE Element* Plainify(Element* elem) {
-    assert(LIFT_BYTE(elem) == NOQUOTE_2);  // no quotes, no quasiforms
+    assert(LIFT_BYTE(elem) == NOQUOTE_2);  // no quotes/quasiforms
     elem->header.bits &= (~ CELL_MASK_SIGIL);
     return elem;
 }
 
 #define Metafy(elem)  Sigilize((elem), SIGIL_META)
-#define Pinify(elem)   Sigilize((elem), SIGIL_PIN)
-#define Tieify(elem)   Sigilize((elem), SIGIL_TIE)
+#define Pinify(elem)  Sigilize((elem), SIGIL_PIN)
+#define Tieify(elem)  Sigilize((elem), SIGIL_TIE)
 
 INLINE Element* Copy_Kind_Byte(Element* out, const Element* in) {
     KIND_BYTE(out) = KIND_BYTE(in);
     return out;
+}
+
+
+//=//// SIGIL-TO-CHARACTER CONVERSION /////////////////////////////////////=//
+
+INLINE Option(char) Char_For_Sigil(Option(Sigil) sigil) {
+    switch (sigil) {
+      case SIGIL_META:  return '^';
+      case SIGIL_PIN:   return '@';
+      case SIGIL_TIE:   return '$';
+      default:          return '\0';
+    }
 }

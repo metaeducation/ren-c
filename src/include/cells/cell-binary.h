@@ -67,7 +67,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     Option(const Length*) limit_in
 ){
     Option(Heart) heart = Heart_Of(c);
-    assert(Any_Bytes_Type(heart));
+    assert(Any_Bytes_Heart(heart));
 
     Length len_at;
     if (heart == TYPE_BLOB)
@@ -103,3 +103,40 @@ INLINE const Byte* Cell_Bytes_Limit_At(
 
 #define Cell_Bytes_At(size_out,v) \
     Cell_Bytes_Limit_At((size_out), (v), UNLIMITED)
+
+
+
+//=//// CELL REPRESENTATION OF NUL CODEPOINT (USES #{00} BLOB!) ///////////=//
+//
+// Ren-C's unification of chars and "RUNE!" to a single immutable stringlike
+// type meant they could not physically contain a zero codepoint.
+//
+// It would be possible to declare the empty rune of #"" representing the
+// NUL codepoint state.  But that would be odd, since inserting empty strings
+// into other strings is considered to be legal and not change the string.
+// saying that (insert "abc" #"") would generate an illegal-zero-byte error
+// doesn't seem right.
+//
+// So to square this circle, the NUL state is chosen to be represented simply
+// as the #{00} binary BLOB!.  That gives it the desired properties of an
+// error if you try to insert it into a string, but still allowing you to
+// insert it into blobs.
+//
+// To help make bring some uniformity to this, the CODEPOINT OF function
+// will give back codepoints for binaries that represent UTF-8, including
+// giving back 0 for #{00}.  CODEPOINT OF thus works on all strings, e.g.
+// (codepoint of <A>) -> 65.  But the only way you can get 0 back is if you
+// call it on #{00}
+//
+
+INLINE bool Is_Blob_And_Is_Zero(const Value* v) {
+    if (Heart_Of(v) != TYPE_BLOB)
+        return false;
+
+    Size size;
+    const Byte* at = Cell_Blob_Size_At(&size, v);
+    if (size != 1)
+        return false;
+
+    return *at == 0;
+}

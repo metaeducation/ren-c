@@ -326,16 +326,16 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
     // Loop through block of bit specs:
 
     for (; item != tail; item++) {
-        if (IS_CHAR(item)) {  // may be #{00} for NUL
-            Codepoint c = Cell_Codepoint(item);
+        if (Is_Rune_And_Is_Char(item)) {  // may be #{00} for NUL
+            Codepoint c = Rune_Known_Single_Codepoint(item);
             if (
                 item + 1 != tail
                 && Is_Word(item + 1)
                 && Cell_Word_Symbol(item + 1) == CANON(HYPHEN_1)
             ){
                 item += 2;
-                if (IS_CHAR(item)) {
-                    Codepoint c2 = Cell_Codepoint(item);
+                if (Is_Rune_And_Is_Char(item)) {
+                    Codepoint c2 = Rune_Known_Single_Codepoint(item);
                     if (c2 < c)
                         panic (Error_Index_Out_Of_Range_Raw());
                     do {
@@ -350,7 +350,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
         }
         else switch (Type_Of(item)) {
         case TYPE_RUNE: {
-            if (not IS_CHAR(item)) {  // no special handling for hyphen
+            if (not Is_Rune_And_Is_Char(item)) {  // no special handling for hyphen
                 Set_Bits(bset, item, set);
                 break;
             }
@@ -426,8 +426,8 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
 //
 bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
 {
-    if (IS_CHAR(val))
-        return Check_Bit(bset, Cell_Codepoint(val), uncased);
+    if (Is_Rune_And_Is_Char(val))
+        return Check_Bit(bset, Rune_Known_Single_Codepoint(val), uncased);
 
     if (Is_Integer(val))
         return Check_Bit(bset, Int32s(val, 0), uncased);
@@ -466,18 +466,18 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
         switch (Type_Of(item)) {
 
         case TYPE_RUNE: {
-            if (not IS_CHAR(item)) {
+            if (not Is_Rune_And_Is_Char(item)) {
                 if (Check_Bits(bset, item, uncased))
                     return true;
             }
-            Codepoint c = Cell_Codepoint(item);
+            Codepoint c = Rune_Known_Single_Codepoint(item);
             if (
                 Is_Word(item + 1)
                 && Cell_Word_Symbol(item + 1) == CANON(HYPHEN_1)
             ){
                 item += 2;
-                if (IS_CHAR(item)) {
-                    Codepoint c2 = Cell_Codepoint(item);
+                if (Is_Rune_And_Is_Char(item)) {
+                    Codepoint c2 = Rune_Known_Single_Codepoint(item);
                     if (c2 < c)
                         panic (Error_Index_Out_Of_Range_Raw());
                     for (; c <= c2; c++)

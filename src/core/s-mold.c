@@ -393,32 +393,28 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     Init_Logic(formval, form);
     Liftify(formval);
 
-    if (
-        GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
-        or not (LIFT_BYTE(cell) & QUASI_BIT)
-    ){
-        if (sigil)
-            Append_Codepoint(mo->string, Char_For_Sigil(unwrap sigil));
+    bool tildes = NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
+        and (LIFT_BYTE(cell) & QUASI_BIT);
 
-        rebElide(CANON(MOLDIFY), element, molder, formval);
-    }
-    else {
+    if (tildes)
         Append_Codepoint(mo->string, '~');
 
-        if (sigil)
-            Append_Codepoint(mo->string, Char_For_Sigil(unwrap sigil));
+    if (sigil)
+        Append_Codepoint(mo->string, unwrap Char_For_Sigil(sigil));
 
-        if (IS_CHAR_CELL(element) and Cell_Codepoint(element) == ' ') {
-            // don't mold the _ on quasiforms
-
-            if (sigil)  // e.g. don't mold (quasi _) as "~~"
-                Append_Codepoint(mo->string, '~');
-        }
-        else {
-            rebElide(CANON(MOLDIFY), element, molder, formval);
-
+    if (
+        (tildes or sigil)
+        and Heart_Of(element) == TYPE_RUNE
+        and First_Byte_Of_Rune_If_Single_Char(element) == ' '
+    ){
+        if (tildes and sigil)
             Append_Codepoint(mo->string, '~');
-        }
+    }
+    else {
+        rebElide(CANON(MOLDIFY), element, molder, formval);
+
+        if (tildes)
+            Append_Codepoint(mo->string, '~');
     }
 
     Assert_Flex_Term_If_Needed(s);

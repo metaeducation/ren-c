@@ -532,11 +532,8 @@ REBLEN Find_Value_In_Binstr(
             or TYPE_BLOB == pattern_heart  // binstr_heart checked for TYPE_BLOB
         ))
     ){
-        if (binstr_heart != TYPE_BLOB and (
-            IS_CHAR_CELL(pattern) and Cell_Codepoint(pattern) == 0
-        )){
+        if (binstr_heart != TYPE_BLOB and Is_Blob_And_Is_Zero(pattern))
             return NOT_FOUND;  // can't find NUL # in strings, only BLOB!
-        }
 
         // FIND provides the basis for matching things literally in strings
         // via quoted items, while the baseline behavior for finding things
