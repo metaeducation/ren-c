@@ -53,29 +53,46 @@
 //   string-like tasks where internal 0 bytes are ok.
 //
 
-//=//// SINGLE CODEPOINT RUNE! ///////////////////////////////////////////=//
+//=//// SINGLE CODEPOINT RUNE FLAG ////////////////////////////////////////=//
+//
+// This allows the CHAR? type-constraint of single-character RUNE! to be
+// a test of the header bits only, without checking the payload or extra.
+// It's a minor speedup, but everything helps.
 //
 // !!! When CHAR! was a separate datatype, it stored the codepoint in the
 // payload and the encoding in the Cell->extra.  When RUNE! generalized, it
 // stored the encoded form in the Cell->payload.at_least_8, and stuck the
-// length in Byte of Cell->extra.at_least_4.  It could be done that the
-// single codepoint could be stored in the extra, with a Cell flag used to
-// track whether the extra held the single codepoint or the length?
+// length in Byte of Cell->extra.at_least_4.  There are strategies which
+// could still store the codepoint and get the size and length information
+// other ways.  Review if getting the codepoint without decoding is worth it.
 //
+#define CELL_FLAG_RUNE_ONE_CODEPOINT  CELL_FLAG_TYPE_SPECIFIC_A
+
+
+//=//// CELL_FLAG_RUNE_IS_SPACE ////////////////////////////////////////////=//
+//
+// The space variations of [_ ~ @ $ ^] are common, as is the antiform of
+// TRIPWIRE.  Being able to test for these just by looking at the header has
+// advantages, similar to the CELL_FLAG_RUNE_ONE_CODEPOINT.
+//
+#define CELL_FLAG_RUNE_IS_SPACE  CELL_FLAG_TYPE_SPECIFIC_B
+
 
 INLINE bool Rune_Is_Single_Codepoint(const Cell* cell) {
     assert(Unchecked_Heart_Of(cell) == TYPE_RUNE);
-
-    if (Stringlike_Has_Stub(cell))
-        return false;  // allocated form, too long to be a character
-
-    return cell->extra.at_least_4[IDX_EXTRA_LEN] == 1;  // just one codepoint
+    return Get_Cell_Flag(cell, RUNE_ONE_CODEPOINT);
 }
 
 INLINE bool Is_Rune_And_Is_Char(const Value* v) {
-    if (not Is_Rune(v))
-        return false;
-    return Rune_Is_Single_Codepoint(v);
+    return (
+        (Ensure_Readable(v)->header.bits & (
+            CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_RUNE_ONE_CODEPOINT
+        )) == (
+            FLAG_HEART(TYPE_RUNE)
+                | FLAG_LIFT_BYTE(NOQUOTE_2)
+                | CELL_FLAG_RUNE_ONE_CODEPOINT
+        )
+    );
 }
 
 INLINE Codepoint Rune_Known_Single_Codepoint(const Cell* cell) {
@@ -139,18 +156,25 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
     assert(len <= size);
     if (size + 1 > Size_Of(out->payload.at_least_8))
         return false;
-    Reset_Cell_Header_Noquote(
+
+    const Byte* bp = utf8;
+
+    Reset_Cell_Header_Noquote(  // include fast flags for space/char checks
         out,
         FLAG_HEART(heart) | CELL_MASK_NO_MARKING
+            | ((len == 1) ? CELL_FLAG_RUNE_ONE_CODEPOINT : 0)
+            | ((size == 1) and (bp[0] == ' ') ? CELL_FLAG_RUNE_IS_SPACE : 0)
     );
+
     memcpy(
         &out->payload.at_least_8,
-        c_cast(Byte*, utf8),
+        bp,
         size + 1  // copy '\0' term
     );
     out->payload.at_least_8[size] = '\0';
     out->extra.at_least_4[IDX_EXTRA_USED] = size;
     out->extra.at_least_4[IDX_EXTRA_LEN] = len;
+
     return true;
 }
 
@@ -193,6 +217,8 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     Reset_Cell_Header_Noquote(
         out,
         FLAG_HEART(TYPE_RUNE) | CELL_MASK_NO_MARKING
+            | CELL_FLAG_RUNE_ONE_CODEPOINT
+            | ((c == ' ') ? CELL_FLAG_RUNE_IS_SPACE : 0)
     );
 
     Size encoded_size = Encoded_Size_For_Codepoint(c);
@@ -251,12 +277,6 @@ INLINE Option(Error*) Trap_Init_Single_Codepoint_Rune_Untracked(
 // 1. Instead of rendering as `@_` and `^_` and `$_`, a Sigil'd space will
 //    render as `@`, `^`, and `$`.
 
-INLINE bool Is_Space(const Value* v) {
-    if (not Is_Rune(v))
-        return false;
-    return First_Byte_Of_Rune_If_Single_Char(v) == ' ';
-}
-
 #define Init_Space(out) \
     Init_Char_Unchecked((out), ' ')
 
@@ -269,20 +289,34 @@ INLINE bool Any_Sigiled_Space(const Element* elem) {
     return First_Byte_Of_Rune_If_Single_Char(elem) == ' ';
 }
 
-INLINE bool Is_Sigiled_Space(Option(Sigil) sigil, const Value* v) {
-    if (not Cell_Has_Lift_Sigil_Heart(NOQUOTE_2, sigil, TYPE_RUNE, v))
-        return false;
-    return First_Byte_Of_Rune_If_Single_Char(v) == ' ';
+INLINE bool Is_Space_With_Lift_Sigil(
+    LiftByte lift,
+    Option(Sigil) sigil,
+    const Value* v
+){
+    return (
+        (Ensure_Readable(v)->header.bits & (
+            CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_RUNE_IS_SPACE
+        )) == (
+            FLAG_HEART(TYPE_RUNE)
+                | FLAG_LIFT_BYTE(lift)
+                | FLAG_SIGIL(sigil)
+                | CELL_FLAG_RUNE_IS_SPACE
+        )
+    );
 }
 
+#define Is_Space(v) \
+    Is_Space_With_Lift_Sigil(NOQUOTE_2, SIGIL_0, (v))  // renders as `_` [1]
+
 #define Is_Pinned_Space(v) \
-    Is_Sigiled_Space(SIGIL_PIN, (v))  // renders as `@` [1]
+    Is_Space_With_Lift_Sigil(NOQUOTE_2, SIGIL_PIN, (v))  // renders as `@` [1]
 
 #define Is_Metaform_Space(v) \
-    Is_Sigiled_Space(SIGIL_META, (v))  // renders as `^` [1]
+    Is_Space_With_Lift_Sigil(NOQUOTE_2, SIGIL_META, (v))  // renders as `^` [1]
 
 #define Is_Tied_Space(v) \
-    Is_Sigiled_Space(SIGIL_TIE, (v))  // renders as `$` [1]
+    Is_Space_With_Lift_Sigil(NOQUOTE_2, SIGIL_TIE, (v))  // renders as `$` [1]
 
 
 //=//// '~' QUASIFORM (a.k.a. QUASAR) /////////////////////////////////////=//
@@ -298,11 +332,8 @@ INLINE bool Is_Sigiled_Space(Option(Sigil) sigil, const Value* v) {
 // able to be initialized with just the header for space-like cases.
 //
 
-INLINE bool Is_Quasar(const Value* v) {
-    if (not Cell_Has_Lift_Heart_No_Sigil(QUASIFORM_3, TYPE_RUNE, v))
-        return false;
-    return First_Byte_Of_Rune_If_Single_Char(v) == ' ';
-}
+#define Is_Quasar(v) \
+    Is_Space_With_Lift_Sigil(QUASIFORM_3, SIGIL_0, (v))
 
 INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
     Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
@@ -324,11 +355,8 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
 //  * Quick way to unset variables, simply `(var: ~)`
 //
 
-INLINE bool Is_Tripwire(Need(const Value*) v) {
-    if (not Cell_Has_Lift_Heart_No_Sigil(ANTIFORM_1, TYPE_RUNE, v))
-        return false;
-    return First_Byte_Of_Rune_If_Single_Char(v) == ' ';
-}
+INLINE bool Is_Tripwire(Need(const Value*) v)  // don't allow Element*
+ { return Is_Space_With_Lift_Sigil(ANTIFORM_1, SIGIL_0, v); }
 
 INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
     Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
@@ -344,14 +372,12 @@ INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
     Init_Quasar(out)
 
 
-
 //=//// GENERIC UTF-8 ACCESSORS //////////////////////////////////////////=//
-
-
-// Analogous to VAL_BYTES_AT, some routines were willing to accept either an
-// ANY-WORD? or an ANY-STRING? to get UTF-8 data.  This is a convenience
-// routine for handling that.
 //
+// Analogous to Cell_Bytes_At(), this allows you to get read-only UTF-8 data
+// out of ANY-WORD?, ANY-STRING?, or a RUNE!
+//
+
 INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
     Option(Sink(Length)) length_out,
     Option(Sink(Size)) size_out,

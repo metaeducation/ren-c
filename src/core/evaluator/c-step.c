@@ -595,7 +595,7 @@ Bounce Stepper_Executor(Level* L)
     // and not have a degree of freedom that it can't distinguish from being
     // called as (import 'xml) or (import 'json/1.1.2)
 
-    if (Is_Sigiled_Space(SIGIL_PIN, CURRENT))
+    if (Is_Pinned_Space(CURRENT))
         goto handle_pin_sigil;  // special handling for lone @
 
     Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
@@ -673,7 +673,7 @@ Bounce Stepper_Executor(Level* L)
     //     >> get 'var
     //     ** Error: var is unbound
 
-    if (Is_Sigiled_Space(SIGIL_TIE, CURRENT))
+    if (Is_Tied_Space(CURRENT))
         goto handle_tie_sigil;  // special handling for lone $
 
     Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
@@ -809,7 +809,7 @@ Bounce Stepper_Executor(Level* L)
 
 } case TYPE_RUNE: { //// META RUNE! /////////////////////////////////////////
 
-    if (Is_Sigiled_Space(SIGIL_META, CURRENT))
+    if (Is_Metaform_Space(CURRENT))
         goto handle_action_approval_sigil;  // special handling for lone ^
 
     return PANIC("Don't know what ^RUNE! is going to do yet (besides ^)");
