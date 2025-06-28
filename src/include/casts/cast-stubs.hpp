@@ -136,7 +136,7 @@ const Binary* binary_cast_impl(const F* p, DowncastTag) {  // validate [C]
         crash (p);
     }
 
-    impossible(Flex_Wide(stub) != 1);  // we *could* check this here
+    impossible(not Stub_Holds_Bytes(stub));  // we *could* check this here
 
     return u_cast(const Binary*, p);
 };
@@ -183,7 +183,7 @@ const Strand* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
         crash (p);
     }
 
-    impossible(Flex_Wide(stub) != 1);  // we *could* check this here
+    impossible(not Stub_Holds_Bytes(stub));  // we *could* check this here
 
     return u_cast(const Strand*, p);
 };
@@ -220,7 +220,7 @@ struct CastHook<const F*, const Symbol*> {
             crash (p);
         }
 
-        impossible(Flex_Wide(stub) != 1);  // we *could* check this here
+        impossible(not Stub_Holds_Bytes(stub));  // we *could* check this here
 
         return u_cast(const Symbol*, p);
     }

@@ -55,16 +55,13 @@
 #define Binary_Tail(b)        Flex_Tail(Byte, (b))
 #define Binary_Last(b)        Flex_Last(Byte, (b))
 
-INLINE Length Binary_Len(const Binary* b) {
-    assert(Flex_Wide(b) == 1);
-    return Flex_Used(b);
-}
+#define Binary_Len(b) \
+    Flex_Used(ensure(const Binary*, (b)))
 
 #define Term_Binary(b) \
-    *Binary_Tail(b) = '\0'
+    (*Binary_Tail(b) = '\0')
 
 INLINE void Term_Binary_Len(Binary* b, Length len) {
-    assert(Flex_Wide(b) == 1);
     Set_Flex_Used(b, len);
     Term_Binary(b);
 }

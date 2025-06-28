@@ -425,14 +425,14 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
     #define BINARY_BAD_UTF8_TAIL_BYTE 0xFE  // Blobs reserve tail byte [1]
 
     INLINE void Poison_Or_Unpoison_Tail_Debug(Flex* f, bool poison) {
-        if (Flex_Wide(f) == 1) {  // presume BLOB! or ANY-STRING? (?)
+        if (Stub_Holds_Bytes(f)) {  // presume BLOB! or ANY-STRING? (?)
             Byte* tail = Flex_Tail(Byte, f);
             if (poison)
                 *tail = BINARY_BAD_UTF8_TAIL_BYTE;
             else {
-                /* assert(  // doesn't have an invariant [2]
+                dont(assert(  // doesn't have an invariant [2]
                     *tail == BINARY_BAD_UTF8_TAIL_BYTE or *tail == '\0'
-                ); */
+                ));
             }
         }
         else if (Stub_Holds_Cells(f) and Get_Stub_Flag(f, DYNAMIC)) {
@@ -460,7 +460,7 @@ INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
 
 INLINE void Term_Flex_If_Necessary(Flex* f)
 {
-    if (Flex_Wide(f) == 1) {
+    if (Stub_Holds_Bytes(f)) {
         if (Is_Stub_Strand(f))
             *Flex_Tail(Byte, f) = '\0';
         else {

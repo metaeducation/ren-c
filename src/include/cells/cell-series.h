@@ -120,7 +120,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
         assert(Is_Flex_Frozen(f));
     }
     else if (heart == TYPE_BLOB) {
-        assert(Flex_Wide(f) == 1);  // Note: Binary is allowed to alias String
+        assert(Stub_Holds_Bytes(f));  // Note: Binary allowed to alias Strand
     }
     else {
         assert(Any_Sequence_Type(heart));

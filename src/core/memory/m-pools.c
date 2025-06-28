@@ -1603,12 +1603,12 @@ REBU64 Inspect_Flex(bool show)
                 if (Get_Stub_Flag(f, DYNAMIC))
                     blk_size += Flex_Total(f);
             }
-            else if (Flex_Wide(f) == 1) {
+            else if (Stub_Holds_Bytes(f)) {
                 strs++;
                 if (Get_Stub_Flag(f, DYNAMIC))
                     str_size += Flex_Total(f);
             }
-            else if (Flex_Wide(f) != 0) {
+            else {
                 odds++;
                 if (Get_Stub_Flag(f, DYNAMIC))
                     odd_size += Flex_Total(f);

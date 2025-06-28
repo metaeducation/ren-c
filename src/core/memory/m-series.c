@@ -213,8 +213,8 @@ Flex* Copy_Flex_At_Len_Extra(
     assert(not Stub_Holds_Cells(f));
 
     REBLEN capacity = len + extra;
-    if (Flex_Wide(f) == 1)
-        ++capacity;
+    if (Stub_Holds_Bytes(f))
+        ++capacity;  // for '\0' terminator, always allow to alias as Strand
     Flex* copy = Make_Flex_Core(flags, capacity);
     assert(Flex_Wide(f) == Flex_Wide(copy));
     memcpy(
@@ -455,7 +455,7 @@ void Assert_Flex_Term_Core(const Flex* f)
         }
       #endif
     }
-    else if (Flex_Wide(f) == 1) {
+    else if (Stub_Holds_Bytes(f)) {
         const Byte* tail = Binary_Tail(c_cast(Binary*, f));
         if (Is_Stub_Strand(f)) {
             if (*tail != '\0')

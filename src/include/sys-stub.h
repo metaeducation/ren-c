@@ -150,6 +150,8 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 
 #define Stub_Holds_Cells(f)         (Stub_Flavor(f) <= MAX_FLAVOR_HOLDS_CELLS)
 
+#define Stub_Holds_Bytes(f)         (Stub_Flavor(f) >= MIN_FLAVOR_BYTESIZE)
+
 #define Is_Stub_Source(f)           (Stub_Flavor(f) == FLAVOR_SOURCE)
 
 #define Is_Stub_Strand(f)           (Stub_Flavor(f) >= MIN_FLAVOR_STRAND)

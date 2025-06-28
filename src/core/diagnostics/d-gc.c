@@ -199,7 +199,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             break;
 
         const Binary* b = c_cast(Binary*, CELL_SERIESLIKE_NODE(v));
-        assert(Flex_Wide(b) == sizeof(Byte));
+        assert(Stub_Holds_Bytes(b));
         Assert_Flex_Term_If_Needed(b);
         assert(Is_Base_Marked(b));
         break; }
@@ -213,7 +213,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         const Strand* s = c_cast(Strand*, CELL_SERIESLIKE_NODE(v));
         Assert_Flex_Term_If_Needed(s);
 
-        assert(Flex_Wide(s) == sizeof(Byte));
+        assert(Stub_Holds_Bytes(s));
         assert(Is_Base_Marked(s));
 
         if (not Is_Strand_Symbol(s)) {

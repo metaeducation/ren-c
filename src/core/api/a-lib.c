@@ -302,7 +302,7 @@ void API_rebFreeOpt(void *ptr)
         );
     }
 
-    assert(Flex_Wide(b) == 1);
+    assert(Stub_Holds_Bytes(b));
 
     if (g_gc.recycling and Is_Base_Marked(b)) {
         assert(Is_Base_Managed(b));
