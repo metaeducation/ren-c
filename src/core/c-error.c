@@ -433,7 +433,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
 
     if (Is_Block(arg)) {  // reuse MAKE OBJECT! logic for block
         const Element* tail;
-        const Element* head = Cell_List_At(&tail, arg);
+        const Element* head = List_At(&tail, arg);
 
         varlist = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
@@ -443,7 +443,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
             root_error // parent
         );
 
-        Use* use = Alloc_Use_Inherits(Cell_List_Binding(arg));
+        Use* use = Alloc_Use_Inherits(List_Binding(arg));
         Init_Warning(Stub_Cell(use), varlist);
 
         Tweak_Cell_Binding(arg, use);  // arg is GC protected, so Use is too
@@ -512,7 +512,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
         // Find correct category for TYPE: (if any)
         Slot* category = maybe Select_Symbol_In_Context(
             Varlist_Archetype(categories),
-            Cell_Word_Symbol(type)
+            Word_Symbol(type)
         );
         if (category) {
             assert(Is_Object(Slot_Hack(category)));
@@ -521,7 +521,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
 
             Slot* correct_message = maybe Select_Symbol_In_Context(
                 Known_Element(Slot_Hack(category)),
-                Cell_Word_Symbol(&vars->id)
+                Word_Symbol(&vars->id)
             );
             if (correct_message) {
                 assert(
@@ -644,7 +644,7 @@ Error* Make_Error_Managed_Vaptr(
     REBLEN expected_args = 0;
     if (Is_Block(message)) { // GET-WORD!s in template should match va_list
         const Element* tail;
-        const Element* temp = Cell_List_At(&tail, message);
+        const Element* temp = List_At(&tail, message);
         for (; temp != tail; ++temp) {
             if (Is_Get_Word(temp))
                 ++expected_args;
@@ -672,13 +672,13 @@ Error* Make_Error_Managed_Vaptr(
     //
     if (not Is_Text(message)) {
         const Element* msg_tail;
-        const Element* msg_item = Cell_List_At(&msg_tail, message);
+        const Element* msg_item = List_At(&msg_tail, message);
 
         for (; msg_item != msg_tail; ++msg_item) {
             if (not Is_Get_Word(msg_item))
                 continue;
 
-            const Symbol* symbol = Cell_Word_Symbol(msg_item);
+            const Symbol* symbol = Word_Symbol(msg_item);
             Init(Slot) slot = Append_Context(varlist, symbol);
 
             const void *p = va_arg(*vaptr, const void*);
@@ -1077,13 +1077,13 @@ Error* Error_Arg_Type(
     const Param* param,
     const Value* arg
 ){
-    if (Cell_Parameter_Class(param) == PARAMCLASS_META and Is_Lifted_Error(arg))
+    if (Parameter_Class(param) == PARAMCLASS_META and Is_Lifted_Error(arg))
         return Cell_Error(arg);
 
     const Symbol* param_symbol = Key_Symbol(key);
 
     DECLARE_ELEMENT (spec);
-    Option(const Source*) param_array = Cell_Parameter_Spec(param);
+    Option(const Source*) param_array = Parameter_Spec(param);
     if (param_array)
         Init_Block(spec, unwrap param_array);
     else
@@ -1115,7 +1115,7 @@ Error* Error_Phase_Arg_Type(
     if (Level_Phase(L) == L->u.action.original)  // not an internal phase
         return Error_Arg_Type(Level_Label(L), key, param, arg);
 
-    if (Cell_Parameter_Class(param) == PARAMCLASS_META and Is_Lifted_Error(arg))
+    if (Parameter_Class(param) == PARAMCLASS_META and Is_Lifted_Error(arg))
         return Cell_Error(arg);
 
     Error* error = Error_Arg_Type(Level_Label(L), key, param, arg);
@@ -1128,7 +1128,7 @@ Error* Error_Phase_Arg_Type(
         return unwrap e;
 
     assert(Is_Word(id));
-    assert(Cell_Word_Id(id) == SYM_EXPECT_ARG);
+    assert(Word_Id(id) == SYM_EXPECT_ARG);
 
     Init_Word(Slot_Init_Hack(&vars->id), CANON(PHASE_EXPECT_ARG));
     return error;
@@ -1173,7 +1173,7 @@ Error* Error_Bad_Argless_Refine(const Key* key)
 Error* Error_Bad_Return_Type(Level* L, Atom* atom, const Element* param) {
     Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
 
-    Option(const Source*) array = Cell_Parameter_Spec(param);
+    Option(const Source*) array = Parameter_Spec(param);
     assert(array);  // if you return all types, no type should be bad!
     DECLARE_ELEMENT (spec);
     Init_Block(spec, unwrap array);
@@ -1459,7 +1459,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     //
     Append_Ascii(mo->strand, "** ");
     if (Is_Word(type)) {  // has a <type>
-        Append_Spelling(mo->strand, Cell_Word_Symbol(type));
+        Append_Spelling(mo->strand, Word_Symbol(type));
         Append_Codepoint(mo->strand, ' ');
     }
     else
@@ -1479,7 +1479,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     // Form: ** Where: function
     if (
         not Is_Nulled(where)
-        and not (Is_Block(where) and Cell_Series_Len_At(where) == 0)
+        and not (Is_Block(where) and Series_Len_At(where) == 0)
     ){
         if (Is_Block(where)) {
             Append_Codepoint(mo->strand, '\n');

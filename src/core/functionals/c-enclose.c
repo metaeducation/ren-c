@@ -145,7 +145,7 @@ Bounce Encloser_Dispatcher(Level* const L)
     possibly(Is_Base_Managed(varlist));
     Set_Base_Managed_Bit(varlist);  // can't use Force_Flex_Managed [4]
 
-    ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(inner));
+    ParamList* lens = Phase_Paramlist(Frame_Phase(inner));
     Element* arg = Init_Lensed_Frame(  // the FRAME! passed as an arg [5]
         SPARE,
         cast(ParamList*, varlist),
@@ -193,7 +193,7 @@ bool Encloser_Details_Querier(
         Element* outer = cast(Element*, Details_At(details, IDX_ENCLOSER_OUTER));
         assert(Is_Frame(outer));  // takes 1 arg (a FRAME!)
 
-        Details* outer_details = Phase_Details(Cell_Frame_Phase(outer));
+        Details* outer_details = Phase_Details(Frame_Phase(outer));
         DetailsQuerier* querier = Details_Querier(outer_details);
         return (*querier)(out, outer_details, SYM_RETURN); }
 

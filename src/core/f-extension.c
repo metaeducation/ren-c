@@ -93,7 +93,7 @@ DECLARE_NATIVE(BUILTIN_EXTENSIONS)
 
         Value* details = (*collator)(nullptr);  // don't pass g_librebol [1]
         assert(Is_Block(details));
-        assert(Cell_Series_Len_At(details) == MAX_COLLATOR + 1);
+        assert(Series_Len_At(details) == MAX_COLLATOR + 1);
 
         Copy_Cell(Alloc_Tail_Array(list), Ensure_Element(details));
         rebRelease(details);

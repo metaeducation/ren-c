@@ -794,7 +794,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
       case SYM_LENGTH_OF: {
         return Init_Integer(
             OUT,
-            Is_Blob(port_data) ? Cell_Series_Len_Head(port_data) : 0
+            Is_Blob(port_data) ? Series_Len_Head(port_data) : 0
         ); }
 
       case SYM_OPEN_Q:
@@ -913,8 +913,8 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         rebUnmanage(rebreq->binary);  // otherwise would be seen as a leak
 
         uv_buf_t buf;
-        buf.base = s_cast(Cell_Blob_At_Ensure_Mutable(rebreq->binary));
-        buf.len = Cell_Series_Len_At(rebreq->binary);
+        buf.base = s_cast(Blob_At_Ensure_Mutable(rebreq->binary));
+        buf.len = Series_Len_At(rebreq->binary);
         int r = uv_write(&rebreq->req, sock->stream, &buf, 1, on_write_finished);
         if (r < 0)
             return FAIL(rebError_UV(r));  // e.g. "broken pipe" ?
@@ -1158,7 +1158,7 @@ DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
 
         REBLEN num_pending = 0;
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, ports);
+        const Element* at = List_At(&tail, ports);
         for (; at != tail; ++at) {  // find timeout
             if (Is_Port(at))
                 ++num_pending;

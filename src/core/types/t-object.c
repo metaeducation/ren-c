@@ -97,7 +97,7 @@ void Init_Evars(EVARS *e, const Element* v) {
             if (patch_found) {
                 Init_Word(PUSH(), *psym);
                 Tweak_Cell_Binding(TOP_ELEMENT, e->ctx);
-                Tweak_Cell_Word_Stub(TOP_ELEMENT, patch_found);
+                Tweak_Word_Stub(TOP_ELEMENT, patch_found);
             }
         }
 
@@ -138,7 +138,7 @@ void Init_Evars(EVARS *e, const Element* v) {
             Phase* lens = maybe Cell_Frame_Lens(v);
             if (not lens) {  // unlensed, only inputs visible [1]
                 e->lens_mode = LENS_MODE_INPUTS;
-                lens = Cell_Frame_Phase(v);
+                lens = Frame_Phase(v);
             }
             else if (Is_Stub_Varlist(lens)) {
                 e->lens_mode = LENS_MODE_PARTIALS;
@@ -193,11 +193,11 @@ bool Try_Advance_Evars(EVARS *e) {
     if (e->word) {
         while (++e->word != e->word_tail) {
             e->slot = unwrap Sea_Slot(
-                cast(SeaOfVars*, e->ctx), Cell_Word_Symbol(e->word), true
+                cast(SeaOfVars*, e->ctx), Word_Symbol(e->word), true
             );
             if (Get_Cell_Flag(e->slot, VAR_MARKED_HIDDEN))
                 continue;
-            e->keybuf = Cell_Word_Symbol(e->word);
+            e->keybuf = Word_Symbol(e->word);
             e->key = &e->keybuf;
             return true;
         }
@@ -462,7 +462,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
         g_tripwire  // use COPY UNRUN FRAME! for parameters vs. nothing
     );
 
-    ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(arg));
+    ParamList* lens = Phase_Paramlist(Frame_Phase(arg));
     Init_Lensed_Frame(OUT, exemplar, lens, coupling);
 
     return OUT;
@@ -501,7 +501,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
         VarList* varlist = cast(VarList*, Cell_Context(type));
         if (Is_Block(arg)) {
             const Element* tail;
-            const Element* at = Cell_List_At(&tail, arg);
+            const Element* at = List_At(&tail, arg);
 
             VarList* derived = Make_Varlist_Detect_Managed(
                 COLLECT_ONLY_SET_WORDS,
@@ -511,7 +511,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
                 varlist
             );
 
-            Use* use = Alloc_Use_Inherits(Cell_List_Binding(arg));
+            Use* use = Alloc_Use_Inherits(List_Binding(arg));
             Copy_Cell(Stub_Cell(use), Varlist_Archetype(derived));
 
             Tweak_Cell_Binding(arg, use);  // def is GC-safe, use will be too
@@ -531,7 +531,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 
     if (Is_Block(arg)) {
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, arg);
+        const Element* at = List_At(&tail, arg);
 
         VarList* ctx = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
@@ -541,7 +541,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             nullptr  // no parent (MAKE SOME-OBJ ... calls any_context generic)
         );
 
-        Use* use = Alloc_Use_Inherits(Cell_List_Binding(arg));
+        Use* use = Alloc_Use_Inherits(List_Binding(arg));
         Copy_Cell(Stub_Cell(use), Varlist_Archetype(ctx));
 
         Tweak_Cell_Binding(arg, use);  // arg is GC-safe, so use will be too
@@ -597,7 +597,7 @@ DECLARE_NATIVE(ADJUNCT_OF)
 
     Option(VarList*) adjunct;
     if (Is_Frame(v)) {
-        adjunct = Misc_Phase_Adjunct(Cell_Frame_Phase(v));
+        adjunct = Misc_Phase_Adjunct(Frame_Phase(v));
     }
     else {
         assert(Any_Context(v));
@@ -647,7 +647,7 @@ DECLARE_NATIVE(SET_ADJUNCT)
     Value* v = ARG(VALUE);
 
     if (Is_Frame(v)) {
-        Tweak_Misc_Phase_Adjunct(Cell_Frame_Phase(v), ctx);
+        Tweak_Misc_Phase_Adjunct(Frame_Phase(v), ctx);
     }
     else if (Is_Module(v)) {
         Tweak_Misc_Sea_Adjunct(Cell_Module_Sea(v), ctx);
@@ -1015,7 +1015,7 @@ const Symbol* Symbol_From_Picker(const Element* context, const Value* picker)
     if (not Is_Word(picker))
         panic (picker);
 
-    return Cell_Word_Symbol(picker);
+    return Word_Symbol(picker);
 }
 
 
@@ -1082,7 +1082,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         if (Is_Word(def)) {
             bool strict = true;
             Option(Index) i = Find_Symbol_In_Context(
-                context, Cell_Word_Symbol(def), strict
+                context, Word_Symbol(def), strict
             );
             if (i) {
                 if (Is_Module(context))
@@ -1132,7 +1132,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
         Option(Index) index = Find_Symbol_In_Context(
             context,
-            Cell_Word_Symbol(pattern),
+            Word_Symbol(pattern),
             Bool_ARG(CASE)
         );
         if (not index)
@@ -1271,7 +1271,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         and Cell_Frame_Coupling(u_cast(Value*, OUT)) == UNCOUPLED
     ){
         Context* c = Cell_Context(context);
-        Tweak_Cell_Frame_Coupling(u_cast(Value*, OUT), cast(VarList*, c));
+        Tweak_Frame_Coupling(u_cast(Value*, OUT), cast(VarList*, c));
     }
 
     Liftify(OUT);  // lift the cell to indicate "normal" state
@@ -1297,7 +1297,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
 } handle_named_signal: { /////////////////////////////////////////////////////
 
-    switch (Cell_Word_Id(dual)) {
+    switch (Word_Id(dual)) {
       case SYM_PROTECT:
         Set_Cell_Flag(slot, PROTECTED);
         break;
@@ -1439,7 +1439,7 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
         nullptr  // no placeholder, use parameters
     );
 
-    ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(frame));
+    ParamList* lens = Phase_Paramlist(Frame_Phase(frame));
     return Init_Lensed_Frame(
         OUT,
         copy,
@@ -1467,7 +1467,7 @@ DECLARE_NATIVE(PARAMETERS_OF)
 
     return Init_Frame(
         OUT,
-        Cell_Frame_Phase(frame),
+        Frame_Phase(frame),
         ANONYMOUS,
         Cell_Frame_Coupling(frame)
     );
@@ -1494,7 +1494,7 @@ DECLARE_NATIVE(RETURN_OF)
     INCLUDE_PARAMS_OF_RETURN_OF;
 
     Element* frame = Element_ARG(FRAME);
-    Phase* phase = Cell_Frame_Phase(frame);
+    Phase* phase = Frame_Phase(frame);
 
     Details* details = Phase_Details(phase);
     DetailsQuerier* querier = Details_Querier(details);
@@ -1524,7 +1524,7 @@ DECLARE_NATIVE(BODY_OF)  // !!! should this be SOURCE-OF ?
     INCLUDE_PARAMS_OF_BODY_OF;
 
     Element* frame = Element_ARG(FRAME);
-    Phase* phase = Cell_Frame_Phase(frame);
+    Phase* phase = Frame_Phase(frame);
 
     Details* details = Phase_Details(phase);
     DetailsQuerier* querier = Details_Querier(details);
@@ -1588,7 +1588,7 @@ DECLARE_NATIVE(LABEL_OF)
     if (Is_Frame_Details(frame))
         return nullptr;  // not handled by Level lookup
 
-    Phase* phase = Cell_Frame_Phase(frame);
+    Phase* phase = Frame_Phase(frame);
     if (Is_Stub_Details(phase))
         return PANIC("Phase not details error... should this return NULL?");
 
@@ -1611,7 +1611,7 @@ static void File_Line_Frame_Heuristic(
     Sink(const Source*) source,
     Element* frame
 ){
-    Phase* phase = Cell_Frame_Phase(frame);
+    Phase* phase = Frame_Phase(frame);
 
     if (Is_Stub_Details(phase)) {
         Details* details = cast(Details*, phase);
@@ -1704,7 +1704,7 @@ DECLARE_NATIVE(NEAR_OF)
     INCLUDE_PARAMS_OF_NEAR_OF;
 
     Element* frame = Element_ARG(FRAME);
-    Phase* phase = Cell_Frame_Phase(frame);
+    Phase* phase = Frame_Phase(frame);
 
     if (Is_Stub_Details(phase))
         return PANIC("Phase is details, can't get NEAR-OF");
@@ -1728,7 +1728,7 @@ DECLARE_NATIVE(PARENT_OF)
     INCLUDE_PARAMS_OF_PARENT_OF;
 
     Element* frame = Element_ARG(FRAME);
-    Phase* phase = Cell_Frame_Phase(frame);
+    Phase* phase = Frame_Phase(frame);
 
     if (Is_Stub_Details(phase))
         return PANIC("Phase is details, can't get PARENT-OF");
@@ -1756,8 +1756,8 @@ REBINT CT_Frame(const Element* a, const Element* b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
-    Phase* a_phase = Cell_Frame_Phase(a);
-    Phase* b_phase = Cell_Frame_Phase(b);
+    Phase* a_phase = Frame_Phase(a);
+    Phase* b_phase = Frame_Phase(b);
 
     Details* a_details = Phase_Details(a_phase);
     Details* b_details = Phase_Details(b_phase);
@@ -1895,7 +1895,7 @@ DECLARE_NATIVE(CONSTRUCT)
         : nullptr;
 
     const Element* tail;
-    const Element* at = Cell_List_At(&tail, spec);
+    const Element* at = List_At(&tail, spec);
 
     Heart heart;  // using ?: operator breaks in DEBUG_EXTRA_HEART_CHECKS
     if (parent)
@@ -1952,7 +1952,7 @@ DECLARE_NATIVE(CONSTRUCT)
 
         Copy_Cell(PUSH(), at);
         Tweak_Cell_Binding(TOP_ELEMENT, varlist);
-        Tweak_Cell_Word_Index(TOP_ELEMENT, unwrap index);
+        Tweak_Word_Index(TOP_ELEMENT, unwrap index);
 
         Fetch_Next_In_Feed(SUBLEVEL->feed);
 

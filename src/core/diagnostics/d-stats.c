@@ -123,7 +123,7 @@ DECLARE_NATIVE(CALLGRIND)
     INCLUDE_PARAMS_OF_CALLGRIND;
 
   #if defined(INCLUDE_CALLGRIND_NATIVE)
-    switch (Cell_Word_Id(ARG(INSTRUCTION))) {
+    switch (Word_Id(ARG(INSTRUCTION))) {
       case SYM_ON:
         PG_Callgrind_On = true;
         CALLGRIND_START_INSTRUMENTATION;

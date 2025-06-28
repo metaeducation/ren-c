@@ -155,16 +155,16 @@ Bounce Cascader_Executor(Level* const L)
     Level* sub = Push_Downshifted_Level(OUT, L);  // steals varlist [1]
     L->executor = &Cascader_Executor;  // so trampoline calls us [2]
 
-    const Element* first = Cell_List_Item_At(pipeline);
+    const Element* first = List_Item_At(pipeline);
     ++VAL_INDEX_RAW(pipeline);  // point series index to next FRAME! to call
 
     Tweak_Level_Phase(
         sub,
-        Phase_Details(Cell_Frame_Phase(first))  // has varlist already [3]
+        Phase_Details(Frame_Phase(first))  // has varlist already [3]
     );
     Tweak_Level_Coupling(sub, Cell_Frame_Coupling(first));
 
-    sub->u.action.original = Cell_Frame_Phase(first);
+    sub->u.action.original = Frame_Phase(first);
     Set_Action_Level_Label(sub, Cell_Frame_Label_Deep(first));
 
     STATE = ST_CASCADER_RUNNING_SUBFUNCTION;
@@ -189,7 +189,7 @@ Bounce Cascader_Executor(Level* const L)
     Element* pipeline = Known_Element(SPARE);
     assert(Is_Block(pipeline));  // series indexes frame to call
     const Element* pipeline_tail;
-    const Element* pipeline_at = Cell_List_At(&pipeline_tail, pipeline);
+    const Element* pipeline_at = List_At(&pipeline_tail, pipeline);
 
     if (pipeline_at == pipeline_tail)
         goto finished;
@@ -242,7 +242,7 @@ bool Cascader_Details_Querier(
 
         const Element* last = Array_Last(Cell_Array(pipeline));
 
-        Details* last_details = Phase_Details(Cell_Frame_Phase(last));
+        Details* last_details = Phase_Details(Frame_Phase(last));
         DetailsQuerier* querier = Details_Querier(last_details);
         return (*querier)(out, last_details, SYM_RETURN_OF); }
 
@@ -277,13 +277,13 @@ DECLARE_NATIVE(CASCADE_P)  // see extended CASCADE in %base-defs.r
 
     Element* pipeline = Element_ARG(PIPELINE);
     const Element* tail;
-    const Element* first = Cell_List_At(&tail, pipeline);
+    const Element* first = List_At(&tail, pipeline);
 
     const Element* check = first;
     for (; check != tail; ++check) {  // validate pipeline is all FRAME! [1]
         if (not Is_Frame(check)) {
             DECLARE_ATOM (specific);
-            Derelativize(specific, check, Cell_List_Binding(pipeline));
+            Derelativize(specific, check, List_Binding(pipeline));
             return PANIC(specific);
         }
     }

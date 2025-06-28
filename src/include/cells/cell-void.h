@@ -37,7 +37,7 @@ INLINE bool Is_Void(Need(const Atom*) v) {
     if (not Is_Pack(v))
         return false;
     const Element* tail;
-    const Element* at = Cell_List_At(&tail, v);
+    const Element* at = List_At(&tail, v);
     return tail == at;
 }
 
@@ -56,7 +56,7 @@ INLINE bool Is_Lifted_Void(const Value* v) {
     if (not Is_Lifted_Pack(v))
         return false;
     const Element* tail;
-    const Element* at = Cell_List_At(&tail, v);
+    const Element* at = List_At(&tail, v);
     return tail == at;
 }
 

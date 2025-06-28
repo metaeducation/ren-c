@@ -53,7 +53,7 @@ IMPLEMENT_GENERIC(SKIP, Any_Series)
     }
 
     if (not Bool_ARG(UNBOUNDED)) {
-        if (i < 0 or i > cast(REBI64, Cell_Series_Len_Head(v)))
+        if (i < 0 or i > cast(REBI64, Series_Len_Head(v)))
             return nullptr;
     }
 
@@ -97,7 +97,7 @@ IMPLEMENT_GENERIC(AT, Any_Series)
         i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset);
 
     if (Bool_ARG(BOUNDED)) {
-        if (i < 0 or i > cast(REBI64, Cell_Series_Len_Head(v)))
+        if (i < 0 or i > cast(REBI64, Series_Len_Head(v)))
             return nullptr;
     }
 
@@ -121,7 +121,7 @@ IMPLEMENT_GENERIC(REMOVE, Any_Series)
         len = 1;
 
     REBIDX index = VAL_INDEX_RAW(v);
-    if (index < Cell_Series_Len_Head(v) and len != 0)
+    if (index < Series_Len_Head(v) and len != 0)
         Remove_Any_Series_Len(v, index, len);
 
     return COPY(v);
@@ -133,7 +133,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Series)
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
     Element* ser = Element_ARG(ELEMENT);
-    return Init_Integer(OUT, Cell_Series_Len_At(ser));
+    return Init_Integer(OUT, Series_Len_At(ser));
 }
 
 
@@ -268,7 +268,7 @@ IMPLEMENT_GENERIC(TAIL_OF, Any_Series)
     Element* ser = Element_ARG(ELEMENT);
 
     Copy_Cell(OUT, ser);
-    VAL_INDEX_RAW(OUT) = Cell_Series_Len_Head(ser);
+    VAL_INDEX_RAW(OUT) = Series_Len_Head(ser);
     return Trust_Const(OUT);
 }
 
@@ -291,7 +291,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Any_Series)
 
     return Init_Logic(
         OUT,
-        VAL_INDEX_RAW(ser) == Cell_Series_Len_Head(ser)
+        VAL_INDEX_RAW(ser) == Series_Len_Head(ser)
     );
 }
 
@@ -304,7 +304,7 @@ IMPLEMENT_GENERIC(PAST_Q, Any_Series)
 
     return Init_Logic(
         OUT,
-        VAL_INDEX_RAW(ser) > Cell_Series_Len_Head(ser)
+        VAL_INDEX_RAW(ser) > Series_Len_Head(ser)
     );
 }
 

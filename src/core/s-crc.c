@@ -180,7 +180,7 @@ uint32_t Hash_Value(const Value* cell)
 
       case TYPE_BLOB: {
         Size size;
-        const Byte* data = Cell_Blob_Size_At(&size, cell);
+        const Byte* data = Blob_Size_At(&size, cell);
         hash = Hash_Bytes(data, size);
         break; }
 
@@ -270,7 +270,7 @@ uint32_t Hash_Value(const Value* cell)
         // !!! Should this hash be cached on the words somehow, e.g. in the
         // data payload before the actual string?
         //
-        hash = Hash_Strand(Cell_Word_Symbol(cell));
+        hash = Hash_Strand(Word_Symbol(cell));
         break; }
 
       case TYPE_FRAME:
@@ -280,7 +280,7 @@ uint32_t Hash_Value(const Value* cell)
         //
         if (Is_Frame_Exemplar(cell))
             goto hash_object;
-        hash = i_cast(uintptr_t, Cell_Frame_Phase(cell)) >> 4;
+        hash = i_cast(uintptr_t, Frame_Phase(cell)) >> 4;
         break;
 
       hash_object:
@@ -362,10 +362,10 @@ HashList* Make_Hashlist(REBLEN len)
 //
 HashList* Hash_Block(const Value* block, REBLEN skip, bool cased)
 {
-    HashList* hashlist = Make_Hashlist(Cell_Series_Len_At(block));  // integers
+    HashList* hashlist = Make_Hashlist(Series_Len_At(block));  // integers
 
     const Element* tail;
-    const Element* value = Cell_List_At(&tail, block);
+    const Element* value = List_At(&tail, block);
     if (value == tail)
         return hashlist;
 

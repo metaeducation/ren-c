@@ -100,7 +100,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
     }
 
     REBLEN remaining;
-    while ((remaining = Cell_Series_Len_At(v)) > 0) {  // chunk for halts [2]
+    while ((remaining = Series_Len_At(v)) > 0) {  // chunk for halts [2]
         //
         // Yield to signals processing for cancellation requests.
         //

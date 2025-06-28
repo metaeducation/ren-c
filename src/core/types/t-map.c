@@ -464,7 +464,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
         and (Is_Action(val) or Is_Frame(val))
         and not Cell_Frame_Label_Deep(val)
     ){
-        Update_Frame_Cell_Label(val, Cell_Word_Symbol(TOP));
+        Update_Frame_Cell_Label(val, Word_Symbol(TOP));
     }
 
     Copy_Cell(PUSH(), val);
@@ -605,7 +605,7 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Zombie(mval + 1)) {
-            Init(Slot) slot = Append_Context(c, Cell_Word_Symbol(mval));
+            Init(Slot) slot = Append_Context(c, Word_Symbol(mval));
             Copy_Cell(slot, mval + 1);
         }
     }
@@ -740,7 +740,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         REBLEN len = Part_Len_May_Modify_Index(arg, ARG(PART));
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, arg);  // w/modified index
+        const Element* at = List_At(&tail, arg);  // w/modified index
 
         Append_Map(m, at, tail, len);
 

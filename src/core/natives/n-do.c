@@ -187,11 +187,11 @@ DECLARE_NATIVE(SHOVE)
   //    abstraction, so any binding should
 
     const Param* param = First_Unspecialized_Param(
-        nullptr, Cell_Frame_Phase(shovee)
+        nullptr, Frame_Phase(shovee)
     );
-    ParamClass pclass = Cell_Parameter_Class(param);
+    ParamClass pclass = Parameter_Class(param);
 
-    switch (Cell_Parameter_Class(param)) {
+    switch (Parameter_Class(param)) {
       case PARAMCLASS_NORMAL:  // we can't *quite* match evaluative infix [1]
       case PARAMCLASS_META: {
         Flags flags = LEVEL_MASK_NONE;
@@ -500,7 +500,7 @@ DECLARE_NATIVE(EVAL_FREE)
     if (Not_Base_Readable(CELL_FRAME_PAYLOAD_1_PHASE(frame)))
         return PANIC(Error_Series_Data_Freed_Raw());
 
-    if (Is_Stub_Details(Cell_Frame_Phase(frame)))
+    if (Is_Stub_Details(Frame_Phase(frame)))
         panic ("Can't currently EVAL-FREE a Details-based Stub");
 
     VarList* varlist = Cell_Varlist(frame);
@@ -523,7 +523,7 @@ DECLARE_NATIVE(EVAL_FREE)
     Tweak_Misc_Runlevel(varlist, L);  // wipes out any adjunct
 
     Phase* phase = Level_Phase(L);
-    assert(phase == Cell_Frame_Phase(
+    assert(phase == Frame_Phase(
         Phase_Archetype(cast(ParamList*, varlist)))
     );
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(frame));
@@ -543,7 +543,7 @@ DECLARE_NATIVE(EVAL_FREE)
 
 } result_in_out: { ///////////////////////////////////////////////////////////
 
-    /*Diminish_Stub(Cell_Frame_Phase(frame));  // the "FREE" of EVAL-FREE*/
+    /*Diminish_Stub(Frame_Phase(frame));  // the "FREE" of EVAL-FREE*/
     // fix
 
     return OUT;
@@ -602,7 +602,7 @@ DECLARE_NATIVE(APPLIQUE)
     Init_Lensed_Frame(
         LOCAL(FRAME),
         exemplar,
-        Cell_Frame_Phase(op),
+        Frame_Phase(op),
         Cell_Frame_Coupling(op)
     );
 
@@ -610,7 +610,7 @@ DECLARE_NATIVE(APPLIQUE)
 
     Use* use = Alloc_Use_Inherits_Core(
         USE_FLAG_SET_WORDS_ONLY,
-        Cell_List_Binding(def)
+        List_Binding(def)
     );
     Copy_Cell(Stub_Cell(use), Element_LOCAL(FRAME));
 
@@ -768,7 +768,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     STATE = ST_FRAME_FILLER_LABELED_EVAL_STEP;
 
-    const Symbol* symbol = Cell_Word_Symbol(At_Level(L));
+    const Symbol* symbol = Word_Symbol(At_Level(L));
 
     Option(Index) index = Find_Symbol_In_Context(frame, symbol, false);
     if (not index)
@@ -777,7 +777,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     var = u_cast(Atom*,
         u_cast(Cell*, Varlist_Slot(Cell_Varlist(frame), unwrap index))
     );
-    param = Phase_Param(Cell_Frame_Phase(op), unwrap index);
+    param = Phase_Param(Frame_Phase(op), unwrap index);
 
     if (not Is_Parameter(u_cast(Value*, var)))
         return PANIC(Error_Bad_Parameter_Raw(at));
@@ -857,7 +857,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     var = u_cast(Atom*,
         u_cast(Cell*, Varlist_Slot(Cell_Varlist(frame), index))
     );
-    param = Phase_Param(Cell_Frame_Phase(op), index);
+    param = Phase_Param(Frame_Phase(op), index);
 
     goto copy_dual_spare_to_var_in_frame;
 
@@ -874,7 +874,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     possibly(param == var);  // don't overwrite until meta test done
 
-    if (/* param and */ Cell_Parameter_Class(param) != PARAMCLASS_META)
+    if (/* param and */ Parameter_Class(param) != PARAMCLASS_META)
         Move_Atom(var, SPARE);
     else {
         Move_Atom(var, SPARE);

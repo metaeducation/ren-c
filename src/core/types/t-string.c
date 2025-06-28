@@ -293,7 +293,7 @@ static void Reverse_Strand(Strand* str, REBLEN index, Length len)
             1 // dup count
         );
 
-        assert(Cell_Series_Len_Head(string) == len_head);  // shouldn't change
+        assert(Series_Len_Head(string) == len_head);  // shouldn't change
         UNUSED(len_head);
     }
 }
@@ -339,7 +339,7 @@ DECLARE_NATIVE(TO_TEXT)
 
     if (Is_Blob(ARG(VALUE)) and Bool_ARG(RELAX)) {
         Size size;
-        const Byte* at = Cell_Blob_Size_At(&size, ARG(VALUE));
+        const Byte* at = Blob_Size_At(&size, ARG(VALUE));
         return Init_Any_String(
             OUT,
             TYPE_TEXT,
@@ -706,7 +706,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
         break;
 
       case TYPE_FILE:
-        if (Cell_String_Len_At(v) == 0) {
+        if (String_Len_At(v) == 0) {
             Append_Ascii(buf, "%\"\"");
             break;
         }
@@ -748,7 +748,7 @@ bool Try_Get_Series_Index_From_Picker(
 
     n += VAL_INDEX_STRINGLIKE_OK(v) - 1;
 
-    if (n < 0 or n >= Cell_Series_Len_Head(v))
+    if (n < 0 or n >= Series_Len_Head(v))
         return false;  // out of range, null unless POKE or more PICK-ing
 
     *out = n;
@@ -784,13 +784,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             limit = 1;
 
         REBLEN index = VAL_INDEX(v);  // Part calculation may have changed!
-        REBLEN tail = Cell_Series_Len_Head(v);
+        REBLEN tail = Series_Len_Head(v);
 
         if (index >= tail or limit == 0)
             return COPY(v);
 
         Length len;
-        Size size = Cell_String_Size_Limit_At(&len, v, &limit);
+        Size size = String_Size_Limit_At(&len, v, &limit);
 
         Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
         Size size_old = Strand_Size(s);
@@ -928,7 +928,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         Strand* s = Cell_Strand_Ensure_Mutable(v);
 
         REBLEN index = VAL_INDEX(v);
-        REBLEN tail = Cell_Series_Len_Head(v);
+        REBLEN tail = Series_Len_Head(v);
 
         if (index >= tail)
             return COPY(v);  // clearing after available data has no effect
@@ -959,9 +959,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         Strand* arg_str = Cell_Strand_Ensure_Mutable(arg);
 
         REBLEN index = VAL_INDEX(v);
-        REBLEN tail = Cell_Series_Len_Head(v);
+        REBLEN tail = Series_Len_Head(v);
 
-        if (index < tail and VAL_INDEX(arg) < Cell_Series_Len_Head(arg)) {
+        if (index < tail and VAL_INDEX(arg) < Series_Len_Head(arg)) {
             Codepoint v_c = Get_Strand_Char_At(v_str, VAL_INDEX(v));
             Codepoint arg_c = Get_Strand_Char_At(arg_str, VAL_INDEX(arg));
 
@@ -1085,7 +1085,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
 
     // Note that :PART can change index
 
-    REBLEN tail = Cell_Series_Len_Head(v);
+    REBLEN tail = Series_Len_Head(v);
 
     if (Bool_ARG(LAST)) {
         if (len > tail) {
@@ -1110,7 +1110,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
         Init_Any_String(OUT, heart, Copy_String_At_Limit(v, &len));
     }
     else
-        Init_Char_Unchecked(OUT, Codepoint_At(Cell_String_At(v)));
+        Init_Char_Unchecked(OUT, Codepoint_At(String_At(v)));
 
     Remove_Any_Series_Len(v, VAL_INDEX(v), len);
     return OUT;
@@ -1139,7 +1139,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
     Element* v = Element_ARG(COLLECTION);
 
     REBLEN index = VAL_INDEX(v);
-    REBLEN tail = Cell_Series_Len_Head(v);
+    REBLEN tail = Series_Len_Head(v);
 
     if (index >= tail)
         return FAIL(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
@@ -1196,7 +1196,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Any_String)
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
     Element* str = Element_ARG(ELEMENT);
-    const Byte* bp = Cell_String_At(str);  // downgrade validated Utf8(*)
+    const Byte* bp = String_At(str);  // downgrade validated Utf8(*)
 
     Codepoint c;
     if (
@@ -1327,7 +1327,7 @@ DECLARE_NATIVE(ENCODE_UTF_8) {
 
     Value* arg = ARG(ARG);
 
-    if (Cell_Series_Len_At(ARG(OPTIONS)))
+    if (Series_Len_At(ARG(OPTIONS)))
         return PANIC("UTF-8 Encoder Options not Designed Yet");
 
     Size utf8_size;
@@ -1361,13 +1361,13 @@ DECLARE_NATIVE(DECODE_UTF_8)
 
     Element* blob = Element_ARG(BLOB);
 
-    if (Cell_Series_Len_At(ARG(OPTIONS)))
+    if (Series_Len_At(ARG(OPTIONS)))
         return PANIC("UTF-8 Decoder Options not Designed Yet");
 
     Heart heart = TYPE_TEXT;  // should options let you specify? [1]
 
     Size size;
-    const Byte* at = Cell_Blob_Size_At(&size, blob);
+    const Byte* at = Blob_Size_At(&size, blob);
     return Init_Any_String(
         OUT,
         heart,

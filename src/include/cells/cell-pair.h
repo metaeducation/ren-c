@@ -50,7 +50,7 @@
     (Pairing_Head(p) + 1)
 
 
-INLINE bool Pairlike_Cell(const Cell* v) {
+INLINE bool Is_Cell_Pairlike(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
     if (Unchecked_Heart_Of(v) == TYPE_PAIR)
         return true;
@@ -62,7 +62,7 @@ INLINE bool Pairlike_Cell(const Cell* v) {
 }
 
 INLINE Pairing* Cell_Pairing(const Cell* v) {
-    assert(Pairlike_Cell(v));
+    assert(Is_Cell_Pairlike(v));
     return cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(v));
 }
 

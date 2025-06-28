@@ -144,7 +144,7 @@ INLINE bool Is_Error_Veto_Signal(Error* error) {
 
     if (not Is_Word(id))
         return false;
-    return Cell_Word_Id(id) == SYM_VETO;
+    return Word_Id(id) == SYM_VETO;
 }
 
 
@@ -179,5 +179,5 @@ INLINE bool Is_Error_Done_Signal(Error* error) {
 
     if (not Is_Word(id))
         return false;
-    return Cell_Word_Id(id) == SYM_DONE;
+    return Word_Id(id) == SYM_DONE;
 }

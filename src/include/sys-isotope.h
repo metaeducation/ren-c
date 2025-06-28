@@ -69,7 +69,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
 
     if (Is_Bindable_Heart(heart)) {  // strip off any binding [2]
         if (heart == TYPE_WORD) {
-            switch (Cell_Word_Id(elem)) {
+            switch (Word_Id(elem)) {
               case SYM_NULL:
                 assert(not Is_Api_Value(elem));  // API uses nullptr [3]
                 break;
@@ -89,11 +89,11 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
         else if (heart == TYPE_FENCE) {  // canonize datatypes
             Option(Patch*) patch;
             if (
-                Cell_Series_Len_At(elem) != 1
-                or not Is_Word(Cell_List_Item_At(elem))
+                Series_Len_At(elem) != 1
+                or not Is_Word(List_Item_At(elem))
                 or not (patch = Sea_Patch(
                     g_datatypes_context,
-                    Cell_Word_Symbol(Cell_List_Item_At(elem)),
+                    Word_Symbol(List_Item_At(elem)),
                     true
                 ))
             ){
@@ -110,7 +110,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
     }
     else if (heart == TYPE_FRAME) {
         if (Cell_Frame_Lens(elem))  // no lens on antiforms...show only inputs
-            Tweak_Cell_Frame_Lens_Or_Label(elem, ANONYMOUS);
+            Tweak_Frame_Lens_Or_Label(elem, ANONYMOUS);
     }
 
     LIFT_BYTE_RAW(atom) = ANTIFORM_1;  // few places should use LIFT_BYTE_RAW!
@@ -157,7 +157,7 @@ INLINE bool Is_Pack_Undecayable(Atom* pack)
     assert(Is_Pack(pack));
 
     const Element* tail;
-    const Element* at = Cell_List_At(&tail, pack);
+    const Element* at = List_At(&tail, pack);
 
     if (at == tail)  // Is_Void() empty pack... not decayable
         return true;
@@ -204,7 +204,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
         if (Is_Pack_Undecayable(v))
             panic ("Undecayable pack in Decay_If_Unstable()");
 
-        const Element* pack_at = Cell_List_At(nullptr, v);
+        const Element* pack_at = List_At(nullptr, v);
         Sink(Element) sink = v;
         Copy_Cell(sink, pack_at);  // Note: no antiform binding (PACK!)
         Unliftify_Undecayed(v);

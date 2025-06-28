@@ -139,7 +139,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
 
     if (
         Environment_Conflates_Empty_Strings_As_Absent(env)
-        and Cell_Series_Len_At(unwrap value) == 0
+        and Series_Len_At(unwrap value) == 0
     ){
         return DUAL_SIGNAL_NULL_ABSENT;
     }
@@ -161,7 +161,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
 
     if (
         Environment_Conflates_Empty_Strings_As_Absent(env)
-        and Cell_Series_Len_At(unwrap poke) == 0
+        and Series_Len_At(unwrap poke) == 0
     ){
         return PANIC(
             "ENVIRONMENT! not configured to accept empty strings"  // [1]

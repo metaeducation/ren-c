@@ -761,7 +761,7 @@ unsigned char* API_rebBinaryAt_internal(const RebolValue* binary)
 {
     ENTER_API;
 
-    return Cell_Blob_At_Known_Mutable(binary);
+    return Blob_At_Known_Mutable(binary);
 }
 
 
@@ -772,7 +772,7 @@ unsigned int API_rebBinarySizeAt_internal(const RebolValue* binary)
 {
     ENTER_API;
 
-    return Cell_Series_Len_At(binary);
+    return Series_Len_At(binary);
 }
 
 
@@ -890,7 +890,7 @@ void API_rebModifyHandleCData(
 
     assert(Cell_Payload_1_Needs_Mark(v));  // api only sees managed handles
 
-    Tweak_Cell_Handle_Cdata(v, data);
+    Tweak_Handle_Cdata(v, data);
 }
 
 
@@ -905,7 +905,7 @@ void API_rebModifyHandleLength(RebolValue* v, size_t length) {
 
     assert(Cell_Payload_1_Needs_Mark(v));  // api only sees managed handles
 
-    Tweak_Cell_Handle_Len(v, length);
+    Tweak_Handle_Len(v, length);
 }
 
 
@@ -3038,7 +3038,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
 
     Element* holder = Details_Element_At(details, IDX_API_ACTION_BINDING_BLOCK);
 
-    Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(holder));  // [1]
+    Add_Link_Inherit_Bind(L->varlist, List_Binding(holder));  // [1]
 
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
 

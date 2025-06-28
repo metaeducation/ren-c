@@ -306,7 +306,7 @@ DECLARE_NATIVE(JOIN)
         }
         else {
             const Element* tail;
-            const Element* at = Cell_List_At(&tail, unwrap base);
+            const Element* at = List_At(&tail, unwrap base);
 
             for (; at != tail; ++at)
                 Copy_Cell(PUSH(), at);
@@ -419,7 +419,7 @@ DECLARE_NATIVE(JOIN)
 
     if (Is_Splice(spare)) {  // only allow splice for mold, for now
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, spare);
+        const Element* at = List_At(&tail, spare);
         if (at == tail)
             goto next_mold_step;  // vaporize
 
@@ -477,7 +477,7 @@ DECLARE_NATIVE(JOIN)
 
     if (Is_Splice(spare)) {
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, spare);
+        const Element* at = List_At(&tail, spare);
 
         if (at == tail)
             goto next_stack_step;  // don't mark produced something
@@ -666,7 +666,7 @@ DECLARE_NATIVE(JOIN)
 
           case TYPE_BLOB: {
             Size size;
-            const Byte* data = Cell_Blob_Size_At(&size, at);
+            const Byte* data = Blob_Size_At(&size, at);
             Expand_Flex_Tail(buf, size);
             memcpy(Binary_At(buf, used), data, size);
             break; }
@@ -1036,9 +1036,9 @@ DECLARE_NATIVE(DELINE)
     Strand* s = Cell_Strand_Ensure_Mutable(input);
     REBLEN len_head = Strand_Len(s);
 
-    REBLEN len_at = Cell_Series_Len_At(input);
+    REBLEN len_at = Series_Len_At(input);
 
-    Utf8(*) dest = Cell_String_At_Known_Mutable(input);
+    Utf8(*) dest = String_At_Known_Mutable(input);
     Utf8(const*) src = dest;
 
     // DELINE tolerates either LF or CR LF, in order to avoid disincentivizing
@@ -1080,7 +1080,7 @@ DECLARE_NATIVE(DELINE)
         dest = Write_Codepoint(dest, c);
     }
 
-    Term_Strand_Len_Size(s, len_head, dest - Cell_String_At(input));
+    Term_Strand_Len_Size(s, len_head, dest - String_At(input));
 
     return input;
 }
@@ -1105,7 +1105,7 @@ DECLARE_NATIVE(ENLINE)
     REBLEN idx = VAL_INDEX(string);
 
     Length len;
-    Size size = Cell_String_Size_Limit_At(&len, string, UNLIMITED);
+    Size size = String_Size_Limit_At(&len, string, UNLIMITED);
 
     REBLEN delta = 0;
 
@@ -1203,9 +1203,9 @@ DECLARE_NATIVE(ENTAB)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    REBLEN len = Cell_Series_Len_At(string);
+    REBLEN len = Series_Len_At(string);
 
-    Utf8(const*) up = Cell_String_At(string);
+    Utf8(const*) up = String_At(string);
     REBLEN index = VAL_INDEX(string);
 
     REBINT n = 0;
@@ -1272,7 +1272,7 @@ DECLARE_NATIVE(DETAB)
 
     Element* string = Element_ARG(STRING);
 
-    REBLEN len = Cell_Series_Len_At(string);
+    REBLEN len = Series_Len_At(string);
 
     REBINT tabsize;
     if (Bool_ARG(SIZE))
@@ -1285,7 +1285,7 @@ DECLARE_NATIVE(DETAB)
 
     // Estimate new length based on tab expansion:
 
-    Utf8(const*) cp = Cell_String_At(ARG(STRING));
+    Utf8(const*) cp = String_At(ARG(STRING));
     REBLEN index = VAL_INDEX(ARG(STRING));
 
     REBLEN n = 0;
@@ -1448,7 +1448,7 @@ DECLARE_NATIVE(INVALID_UTF8_Q)
     Value* arg = ARG(DATA);
 
     Size size;
-    const Byte* utf8 = Cell_Blob_Size_At(&size, arg);
+    const Byte* utf8 = Blob_Size_At(&size, arg);
 
     const Byte* end = utf8 + size;
 

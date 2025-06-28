@@ -138,7 +138,7 @@ REBINT Compare_UTF8(const Byte* s1, const Byte* s2, Size l2)
 // byte, and there'd be no way to return that match measured as a codepoint
 // position in the searched string (which is what FIND and PARSE require).
 //
-// 1. `limit2` is typically Cell_Series_Len_At(binstr2))
+// 1. `limit2` is typically Series_Len_At(binstr2))
 //
 REBINT Find_Binstr_In_Binstr(
     Sink(REBLEN) len_out,  // length in output units of match
@@ -164,7 +164,7 @@ REBINT Find_Binstr_In_Binstr(
         );
     }
     else {
-        head2 = Cell_Blob_Size_At(&size2, binstr2);
+        head2 = Blob_Size_At(&size2, binstr2);
         if (limit2 and *(unwrap limit2) < size2)
             size2 = *(unwrap limit2);
         len2 = size2;
@@ -216,11 +216,11 @@ REBINT Find_Binstr_In_Binstr(
     Length len_head1;
     Size size_at1;
     if (Heart_Of(binstr1) == TYPE_BLOB) {
-        cp1 = Cell_Blob_Size_At(&size_at1, binstr1);
-        len_head1 = Cell_Series_Len_Head(binstr1);
+        cp1 = Blob_Size_At(&size_at1, binstr1);
+        len_head1 = Series_Len_Head(binstr1);
     }
     else {
-        len_head1 = Cell_Series_Len_Head(binstr1);
+        len_head1 = Series_Len_Head(binstr1);
         cp1 = Cell_Utf8_Size_At(&size_at1, binstr1);
     }
 
@@ -453,7 +453,7 @@ REBINT Find_Bitset_In_Binstr(
 
     bool is_str = (Heart_Of(binstr) != TYPE_BLOB);
 
-    const Byte* cp1 = is_str ? Cell_String_At(binstr) : Cell_Blob_At(binstr);
+    const Byte* cp1 = is_str ? String_At(binstr) : Blob_At(binstr);
     Codepoint c1;
     if (skip > 0) {  // skip 1 will pass over cp1, so leave as is
         if (is_str)

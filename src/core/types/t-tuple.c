@@ -76,7 +76,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
 
     if (Is_Blob(arg)) {
         Size size;
-        const Byte* at = Cell_Blob_Size_At(&size, arg);
+        const Byte* at = Blob_Size_At(&size, arg);
         if (size > MAX_TUPLE)
             size = MAX_TUPLE;
         Init_Tuple_Bytes(OUT, at, size);
@@ -360,7 +360,7 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
         const Base* payload1 = CELL_PAYLOAD_1(seq);
         if (Is_Base_A_Cell(payload1)) {  // Pairings hold two items [2]
             const Pairing* p = c_cast(Pairing*, payload1);
-            Context *binding = Cell_List_Binding(seq);
+            Context *binding = List_Binding(seq);
             Source* a = Make_Source_Managed(2);
             Set_Flex_Len(a, 2);
             Derelativize(Array_At(a, 0), Pairing_First(p), binding);
@@ -454,7 +454,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     bool deep = Bool_ARG(DEEP);
     Value* part = ARG(PART);
 
-    if (not deep or Wordlike_Cell(seq)) {  // wordlike is /A or :B etc
+    if (not deep or Is_Cell_Wordlike(seq)) {  // wordlike is /A or :B etc
         if (part)
             return PANIC(part);
         return COPY(seq);
@@ -560,7 +560,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 
     Element* seq = Element_ARG(COLLECTION);
 
-    if (Wordlike_Cell(seq)) {  // e.g. FOO: or :FOO [1]
+    if (Is_Cell_Wordlike(seq)) {  // e.g. FOO: or :FOO [1]
         REBI64 one_or_two = Random_Range(2, Bool_ARG(SECURE));
         if (one_or_two == 1)
             return Init_Space(OUT);
@@ -569,16 +569,16 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
         return OUT;
     }
 
-    if (Pairlike_Cell(seq)) {  // e.g. A/B
-        assert(Listlike_Cell(seq));  // all pairlikes are also listlike
+    if (Is_Cell_Pairlike(seq)) {  // e.g. A/B
+        assert(Is_Cell_Listlike(seq));  // all pairlikes are also listlike
         REBI64 one_or_two = Random_Range(2, Bool_ARG(SECURE));
         if (one_or_two == 1)
             return COPY(Cell_Pair_First(seq));
         return COPY(Cell_Pair_Second(seq));
     }
 
-    if (Listlike_Cell(seq)) {  // alias as BLOCK! and dispatch to list pick
-        possibly(Pairlike_Cell(seq));  // why we tested pairlike first
+    if (Is_Cell_Listlike(seq)) {  // alias as BLOCK! and dispatch to list pick
+        possibly(Is_Cell_Pairlike(seq));  // why we tested pairlike first
         KIND_BYTE(seq) = TYPE_BLOCK;
         return GENERIC_CFUNC(RANDOM_PICK, Any_List)(LEVEL);
     }
@@ -689,7 +689,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
         }
         else {
             if (Is_Word(element)) {  // double-check word legality in debug
-                const Symbol* s = Cell_Word_Symbol(element);
+                const Symbol* s = Word_Symbol(element);
                 if (Get_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE))
                     assert(
                         heart == TYPE_CHAIN

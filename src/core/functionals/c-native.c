@@ -558,14 +558,14 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
     if (id == SYM_TWEAK_P_BOOTSTRAP) {
         id = SYM_TWEAK_P;  // update the ID we write to
         assert(Is_Word(At_Level(L)));  // native [...]
-        assert(Cell_Word_Id(At_Level(L)) == SYM_NATIVE);  // native [...]
+        assert(Word_Id(At_Level(L)) == SYM_NATIVE);  // native [...]
         native_type = NATIVE_NORMAL;  // genericness only in prep for TWEAK*
     }
     else {
         assert(id == SYM_NATIVE_BOOTSTRAP);
         id = SYM_NATIVE;  // update the ID we write to
         assert(Is_Word(At_Level(L)));
-        assert(Cell_Word_Id(At_Level(L)) == SYM_NATIVE);  // native [...]
+        assert(Word_Id(At_Level(L)) == SYM_NATIVE);  // native [...]
         native_type = NATIVE_NORMAL;
     }
 
@@ -595,7 +595,7 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
         NONMETHOD  // coupling
     );
 
-    assert(Cell_Frame_Phase(Lib_Var(id)) == details);  // sanity check
+    assert(Frame_Phase(Lib_Var(id)) == details);  // sanity check
 }
 
 
@@ -709,12 +709,12 @@ void Startup_Natives(const Element* boot_natives)
     if (not Is_Action(LIB(PARSE_REJECT)))
         crash (LIB(PARSE_REJECT));
 
-    Count num_append_args = Phase_Num_Params(Cell_Frame_Phase(LIB(APPEND)));
-    assert(num_append_args == Phase_Num_Params(Cell_Frame_Phase(LIB(INSERT))));
-    assert(num_append_args == Phase_Num_Params(Cell_Frame_Phase(LIB(CHANGE))));
+    Count num_append_args = Phase_Num_Params(Frame_Phase(LIB(APPEND)));
+    assert(num_append_args == Phase_Num_Params(Frame_Phase(LIB(INSERT))));
+    assert(num_append_args == Phase_Num_Params(Frame_Phase(LIB(CHANGE))));
 
-    Count num_find_args = Phase_Num_Params(Cell_Frame_Phase(LIB(FIND)));
-    assert(num_find_args == Phase_Num_Params(Cell_Frame_Phase(LIB(SELECT))));
+    Count num_find_args = Phase_Num_Params(Frame_Phase(LIB(FIND)));
+    assert(num_find_args == Phase_Num_Params(Frame_Phase(LIB(SELECT))));
   #endif
 }}
 

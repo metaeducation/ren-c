@@ -8,7 +8,7 @@ INLINE bool Stringlike_Cell(const Cell* v) {
 INLINE const Strand* Cell_Strand(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
     if (heart == TYPE_WORD)
-        return Cell_Word_Symbol(v);
+        return Word_Symbol(v);
 
     assert(Stringlike_Cell(v));
     return c_cast(Strand*, Cell_Flex(v));
@@ -24,7 +24,7 @@ INLINE const Strand* Cell_Strand(const Cell* v) {
 // that type.  So if the series is a STRING! and not a BLOB!, the special
 // cache of the length in the String Stub must be used.
 //
-INLINE Length Cell_Series_Len_Head(const Cell* v) {
+INLINE Length Series_Len_Head(const Cell* v) {
     const Flex* f = Cell_Flex(v);
     if (Is_Stub_Strand(f) and Heart_Of(v) != TYPE_BLOB)
         return Strand_Len(c_cast(Strand*, f));
@@ -32,9 +32,9 @@ INLINE Length Cell_Series_Len_Head(const Cell* v) {
 }
 
 INLINE bool VAL_PAST_END(const Cell* v)
-   { return VAL_INDEX(v) > Cell_Series_Len_Head(v); }
+   { return VAL_INDEX(v) > Series_Len_Head(v); }
 
-INLINE Length Cell_Series_Len_At(const Cell* v) {
+INLINE Length Series_Len_At(const Cell* v) {
     //
     // !!! At present, it is considered "less of a lie" to tell people the
     // length of a series is 0 if its index is actually past the end, than
@@ -44,12 +44,12 @@ INLINE Length Cell_Series_Len_At(const Cell* v) {
     // This is a longstanding historical Rebol issue that needs review.
     //
     REBIDX i = VAL_INDEX(v);
-    if (i > Cell_Series_Len_Head(v))
+    if (i > Series_Len_Head(v))
         panic ("Index past end of series");
     if (i < 0)
         panic ("Index before beginning of series");
 
-    return Cell_Series_Len_Head(v) - i;  // take current index into account
+    return Series_Len_Head(v) - i;  // take current index into account
 }
 
 INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
@@ -62,7 +62,7 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
     return Strand_Head(str);  // symbols are strings
 }
 
-INLINE Utf8(const*) Cell_String_At(const Cell* v) {
+INLINE Utf8(const*) String_At(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
 
     if (not Any_String_Type(heart))  // non-positional: URL, RUNE, WORD...
@@ -90,17 +90,17 @@ INLINE Utf8(const*) Cell_Strand_Tail(const Cell* c) {
 }
 
 
-#define Cell_String_At_Ensure_Mutable(v) \
-    u_cast(Utf8(*), m_cast(Byte*, Cell_String_At(Ensure_Mutable(v))))
+#define String_At_Ensure_Mutable(v) \
+    u_cast(Utf8(*), m_cast(Byte*, String_At(Ensure_Mutable(v))))
 
-#define Cell_String_At_Known_Mutable(v) \
-    u_cast(Utf8(*), m_cast(Byte*, Cell_String_At(Known_Mutable(v))))
+#define String_At_Known_Mutable(v) \
+    u_cast(Utf8(*), m_cast(Byte*, String_At(Known_Mutable(v))))
 
 
-INLINE REBLEN Cell_String_Len_At(const Cell* c) {
+INLINE REBLEN String_Len_At(const Cell* c) {
     Option(Heart) heart = Heart_Of(c);
     if (Any_String_Type(heart))  // can have an index position
-        return Cell_Series_Len_At(c);
+        return Series_Len_At(c);
 
     if (not Stringlike_Has_Stub(c))  // content directly in cell
         return c->extra.at_least_4[IDX_EXTRA_LEN];
@@ -109,7 +109,7 @@ INLINE REBLEN Cell_String_Len_At(const Cell* c) {
     return Strand_Len(str);
 }
 
-INLINE Size Cell_String_Size_Limit_At(
+INLINE Size String_Size_Limit_At(
     Option(Sink(Length)) length_out,  // length in chars to end or limit
     const Cell* v,
     Option(const Length*) limit
@@ -117,10 +117,10 @@ INLINE Size Cell_String_Size_Limit_At(
     if (limit)
         assert(*(unwrap limit) >= 0);
 
-    Utf8(const*) at = Cell_String_At(v);  // !!! update cache if needed
+    Utf8(const*) at = String_At(v);  // !!! update cache if needed
     Utf8(const*) tail;
 
-    REBLEN len_at = Cell_String_Len_At(v);
+    REBLEN len_at = String_Len_At(v);
     if (not limit or *(unwrap limit) >= len_at) {
         if (length_out)
             *(unwrap length_out) = len_at;
@@ -138,11 +138,11 @@ INLINE Size Cell_String_Size_Limit_At(
     return tail - at;
 }
 
-#define Cell_String_Size_At(v) \
-    Cell_String_Size_Limit_At(nullptr, v, UNLIMITED)
+#define String_Size_At(v) \
+    String_Size_Limit_At(nullptr, v, UNLIMITED)
 
 INLINE Size VAL_BYTEOFFSET(const Cell* v) {
-    return Cell_String_At(v) - Strand_Head(Cell_Strand(v));
+    return String_At(v) - Strand_Head(Cell_Strand(v));
 }
 
 INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
@@ -154,8 +154,8 @@ INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
     Utf8(const*) at;
 
     if (index == VAL_INDEX(v))
-        at = Cell_String_At(v); // !!! update cache if needed
-    else if (index == Cell_Series_Len_Head(v))
+        at = String_At(v); // !!! update cache if needed
+    else if (index == Series_Len_Head(v))
         at = Strand_Tail(Cell_Strand(v));
     else {
         // !!! arbitrary seeking...this technique needs to be tuned, e.g.

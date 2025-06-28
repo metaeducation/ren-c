@@ -393,7 +393,7 @@ REBLEN Part_Len_May_Modify_Index(
 
     if (Is_Nulled(part)) {  // indicates :PART refinement unused
         if (not Is_Rune(series))
-            return Cell_Series_Len_At(series);  // use plain length
+            return Series_Len_At(series);  // use plain length
 
         Size size;
         Cell_Utf8_Size_At(&size, series);
@@ -422,7 +422,7 @@ REBLEN Part_Len_May_Modify_Index(
     // Restrict length to the size available
     //
     if (len >= 0) {
-        REBINT maxlen = Cell_Series_Len_At(series);
+        REBINT maxlen = Series_Len_At(series);
         if (len > maxlen)
             len = maxlen;
     }
@@ -447,7 +447,7 @@ REBLEN Part_Len_May_Modify_Index(
 
     assert(len >= 0);
     if (not Is_Rune(series))
-        assert(Cell_Series_Len_Head(series) >= len);
+        assert(Series_Len_Head(series) >= len);
     return len;
 }
 

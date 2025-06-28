@@ -72,7 +72,7 @@ INLINE bool Is_Logic(Need(const Value*) v) {
     Assert_Cell_Readable(v);
     if (LIFT_BYTE(v) != ANTIFORM_1 or Heart_Of(v) != TYPE_WORD)
         return false;
-    Option(SymId) id = Cell_Word_Id(v);
+    Option(SymId) id = Word_Id(v);
     return id == SYM_NULL or id == SYM_OKAY;
 }
 
@@ -82,7 +82,7 @@ INLINE bool Is_Logic(Need(const Value*) v) {
 INLINE bool Is_Possibly_Unstable_Atom_Okay(Atom* atom) {  // typecheck only!
     if (not Is_Possibly_Unstable_Atom_Keyword(atom))
         return false;
-    return Cell_Word_Id(atom) == SYM_OKAY;
+    return Word_Id(atom) == SYM_OKAY;
 }
 
 #define Init_Okay(out) \
@@ -105,7 +105,7 @@ INLINE Value* Init_Logic_Untracked(Init(Value) out, bool flag) {
 INLINE bool Cell_Logic(Need(const Value*) v) {
     assert(Is_Antiform(v));
     assert(Heart_Of(v) == TYPE_WORD);
-    SymId id = unwrap Cell_Word_Id(v);
+    SymId id = unwrap Word_Id(v);
     assert(id == SYM_NULL or id == SYM_OKAY);
     return id == SYM_OKAY;
 }
@@ -170,7 +170,7 @@ INLINE bool Is_Boolean(const Value* v) {
     if (LIFT_BYTE(v) != NOQUOTE_2 or Heart_Of(v) != TYPE_WORD)
         return false;
 
-    Option(SymId) id = Cell_Word_Id(v);
+    Option(SymId) id = Word_Id(v);
     return id == SYM_TRUE or id == SYM_FALSE;
 }
 
@@ -179,7 +179,7 @@ INLINE bool Is_Boolean(const Value* v) {
 
 INLINE bool Cell_True(Need(const Value*) v) {  // corresponds to TRUE?
     assert(Is_Word(v));
-    Option(SymId) id = Cell_Word_Id(v);
+    Option(SymId) id = Word_Id(v);
     if (id == SYM_TRUE)
         return true;
     if (id != SYM_FALSE)
@@ -196,7 +196,7 @@ INLINE bool Is_OnOff(const Value* v) {
     Assert_Cell_Readable(v);
     if (LIFT_BYTE(v) != NOQUOTE_2 or Heart_Of(v) != TYPE_WORD)
         return false;
-    Option(SymId) id = Cell_Word_Id(v);
+    Option(SymId) id = Word_Id(v);
     return id == SYM_ON or id == SYM_OFF;
 }
 
@@ -205,7 +205,7 @@ INLINE bool Is_OnOff(const Value* v) {
 
 INLINE bool Cell_On(const Value* v) {  // corresponds to ON?
     assert(Is_Word(v));
-    Option(SymId) id = Cell_Word_Id(v);
+    Option(SymId) id = Word_Id(v);
     if (id == SYM_ON)
         return true;
     if (id != SYM_OFF)
@@ -222,7 +222,7 @@ INLINE bool Is_YesNo(const Value* v) {
     Assert_Cell_Readable(v);
     if (LIFT_BYTE(v) != NOQUOTE_2 or Heart_Of(v) != TYPE_WORD)
         return false;
-    Option(SymId) id = Cell_Word_Id(v);
+    Option(SymId) id = Word_Id(v);
     return id == SYM_YES or id == SYM_NO;
 }
 
@@ -231,7 +231,7 @@ INLINE bool Is_YesNo(const Value* v) {
 
 INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
     assert(Is_Word(v));
-    Option(SymId) id = Cell_Word_Id(v);
+    Option(SymId) id = Word_Id(v);
     if (id == SYM_YES)
         return true;
     if (id != SYM_NO)
@@ -301,7 +301,7 @@ INLINE Option(Error*) Trap_Test_Conditional(
         return SUCCESS;
     }
 
-    Option(SymId) id = Cell_Word_Id(v);
+    Option(SymId) id = Word_Id(v);
     if (id == SYM_NULL) {
         *cond = false;  // ~null~ antiform is the only falsey value
         return SUCCESS;

@@ -389,9 +389,9 @@ DECLARE_NATIVE(STDIO_ACTOR)
             // be able to go byte level, however.  Those wishing to interpret
             // Windows data as text with lines will thus have to deline it (!)
             //
-            Size size = readbuf_size - Cell_Series_Len_At(data);
+            Size size = readbuf_size - Series_Len_At(data);
             Binary* bin = Cell_Binary_Ensure_Mutable(data);
-            REBLEN orig_len = Cell_Series_Len_At(data);
+            REBLEN orig_len = Series_Len_At(data);
 
             assert(Flex_Available_Space(bin) >= size);
 

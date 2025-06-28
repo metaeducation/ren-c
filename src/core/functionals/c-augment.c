@@ -79,7 +79,7 @@ DECLARE_NATIVE(AUGMENT)
     Option(const Symbol*) label = Cell_Frame_Label_Deep(original);
     Option(VarList*) coupling = Cell_Frame_Coupling(original);
 
-    Phase* augmentee = Cell_Frame_Phase(original);
+    Phase* augmentee = Frame_Phase(original);
 
     VarList* adjunct = nullptr;
 
@@ -122,7 +122,7 @@ DECLARE_NATIVE(AUGMENT)
     // Hence we don't need a new Details, and can get away with patching the
     // augmentee's action information (phase and coupling) into the paramlist.
 
-    Phase* prior = Cell_Frame_Phase(ARG(ORIGINAL));
+    Phase* prior = Frame_Phase(ARG(ORIGINAL));
     Option(VarList*) prior_coupling = Cell_Frame_Coupling(ARG(ORIGINAL));
 
     ParamList* paramlist;

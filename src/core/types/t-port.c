@@ -223,7 +223,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
                 );
 
             Size size;
-            const Byte* data = Cell_Blob_Size_At(&size, out);
+            const Byte* data = Blob_Size_At(&size, out);
             Strand* decoded = Make_Sized_Strand_UTF8(cs_cast(data), size);
             Init_Text(OUT, decoded);
         }

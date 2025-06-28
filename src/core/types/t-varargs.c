@@ -146,7 +146,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     const Key* key;
     const Param* param = Param_For_Varargs_Maybe_Null(&key, vararg);
     if (pclass == PARAMCLASS_0)
-        pclass = Cell_Parameter_Class(param);
+        pclass = Parameter_Class(param);
 
     Option(Level*) vararg_level;
 
@@ -164,8 +164,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            Is_Cell_Poisoned(shared) ? nullptr : Cell_List_Item_At(shared),
-            Is_Cell_Poisoned(shared) ? SPECIFIED : Cell_List_Binding(shared),
+            Is_Cell_Poisoned(shared) ? nullptr : List_Item_At(shared),
+            Is_Cell_Poisoned(shared) ? SPECIFIED : List_Binding(shared),
             pclass
         )){
             goto type_check_and_return;
@@ -219,21 +219,21 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         case PARAMCLASS_THE:
             Derelativize(
                 out,
-                Cell_List_Item_At(shared),
-                Cell_List_Binding(shared)
+                List_Item_At(shared),
+                List_Binding(shared)
             );
             VAL_INDEX_UNBOUNDED(shared) += 1;
             break;
 
         case PARAMCLASS_JUST:
-            Copy_Cell(out, Cell_List_Item_At(shared));
+            Copy_Cell(out, List_Item_At(shared));
             VAL_INDEX_UNBOUNDED(shared) += 1;
             break;
 
         case PARAMCLASS_SOFT:
-            if (Is_Soft_Escapable_Group(Cell_List_Item_At(shared))) {
+            if (Is_Soft_Escapable_Group(List_Item_At(shared))) {
                 if (Eval_Any_List_At_Throws(
-                    out, Cell_List_Item_At(shared), Cell_List_Binding(shared)
+                    out, List_Item_At(shared), List_Binding(shared)
                 )){
                     return true;
                 }
@@ -241,8 +241,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             else { // not a soft-"exception" case, quote ordinarily
                 Derelativize(
                     out,
-                    Cell_List_Item_At(shared),
-                    Cell_List_Binding(shared)
+                    List_Item_At(shared),
+                    List_Binding(shared)
                 );
             }
             VAL_INDEX_UNBOUNDED(shared) += 1;
@@ -254,7 +254,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
         if (
             not Is_Cell_Poisoned(shared)
-            and VAL_INDEX(shared) >= Cell_Series_Len_Head(shared)
+            and VAL_INDEX(shared) >= Series_Len_Head(shared)
         ){
             Poison_Cell(shared);  // signal end to all varargs sharing value
         }
@@ -388,7 +388,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
         // should be an END marker (not an array at its end)
         //
         Array* array1 = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
-        if (Cell_Series_Len_At(arg) == 0)
+        if (Series_Len_At(arg) == 0)
             Poison_Cell(Stub_Cell(array1));
         else
             Copy_Cell(Stub_Cell(array1), arg);
@@ -590,7 +590,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
     }
     else {
         DECLARE_ELEMENT (param_word);
-        switch ((pclass = Cell_Parameter_Class(param))) {
+        switch ((pclass = Parameter_Class(param))) {
           case PARAMCLASS_NORMAL:
             Init_Word(param_word, Key_Symbol(key));
             break;
@@ -663,7 +663,7 @@ DECLARE_NATIVE(VARIADIC_Q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 
-    Phase* phase = Cell_Frame_Phase(ARG(FRAME));
+    Phase* phase = Frame_Phase(ARG(FRAME));
 
     const Key* key_tail;
     const Key* key = Phase_Keys(&key_tail, phase);

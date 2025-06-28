@@ -116,5 +116,5 @@ INLINE Option(FileReq*) Filereq_Of_Port(const Value* port)
     if (not Is_Blob(state))
         panic ("Expected filereq to be a BLOB! or NULL");
 
-    return cast(FileReq*, Cell_Blob_At_Ensure_Mutable(state));
+    return cast(FileReq*, Blob_At_Ensure_Mutable(state));
 }

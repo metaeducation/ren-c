@@ -507,7 +507,7 @@ void Startup_Interning(void)
 // Initializes a table for mapping from SYM_XXX => Symbol Flex.  This is used
 // by Canon_Symbol(id) and CANON(XXX) to get the Symbol from SymId.
 //
-// 1. All words that do not have a SYM_XXX get back Cell_Word_Id(w) == SYM_0.
+// 1. All words that do not have a SYM_XXX get back Word_Id(w) == SYM_0.
 //    Hence CANON(0) is illegal, to avoid `CANON(X) == CANON(Y)` being true
 //    when X and Y are different symbols with no SYM_XXX id.
 //
@@ -622,7 +622,7 @@ void Unregister_Symbol(RebolValue* word, SymId16 id16)
     assert(id16 != 0);
 
     assert(Is_Word(word));
-    assert(Cell_Word_Id(word) == u_cast(SymIdEnum, id16));  // unnecessary?
+    assert(Word_Id(word) == u_cast(SymIdEnum, id16));  // unnecessary?
     UNUSED(id16);
 
     rebRelease(word);

@@ -165,7 +165,7 @@ DECLARE_NATIVE(LIMIT_USAGE)
 {
     INCLUDE_PARAMS_OF_LIMIT_USAGE;
 
-    Option(SymId) sym = Cell_Word_Id(ARG(FIELD));
+    Option(SymId) sym = Word_Id(ARG(FIELD));
 
     // !!! comment said "Only gets set once"...why?
     //
@@ -213,8 +213,8 @@ DECLARE_NATIVE(CHECK)  // !!! Review the necessity of this (hasn't been used)
         Assert_Flex(Cell_Flex(value));
     }
     else if (Is_Frame(value)) {
-        Assert_Flex(Phase_Keylist(Cell_Frame_Phase(value)));
-        Assert_Array(Details_Array(Phase_Details(Cell_Frame_Phase(value))));
+        Assert_Flex(Phase_Keylist(Frame_Phase(value)));
+        Assert_Array(Details_Array(Phase_Details(Frame_Phase(value))));
     }
     else if (Any_Context(value)) {
         Assert_Varlist(Cell_Varlist(value));

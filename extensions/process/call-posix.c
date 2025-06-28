@@ -294,11 +294,11 @@ Bounce Call_Core(Level* level_) {
             return PANIC(PARAM(COMMAND));
 
         const Value* block = ARG(COMMAND);
-        argc = Cell_Series_Len_At(block);
+        argc = Series_Len_At(block);
         assert(argc != 0);  // usermode layer checks this
         argv = rebAllocN(char*, (argc + 1));
 
-        const Element* param = Cell_List_Item_At(block);
+        const Element* param = List_Item_At(block);
         int i;
         for (i = 0; i < argc; ++param, ++i) {
             if (not Is_Text(param))  // usermode layer ensures FILE! converted

@@ -156,7 +156,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
         goto bad_sequence_item;
 
     if (h == TYPE_WORD) {
-        const Symbol* symbol = Cell_Word_Symbol(e);
+        const Symbol* symbol = Word_Symbol(e);
         if (symbol == CANON(DOT_1) and sequence_heart != TYPE_TUPLE)
             return SUCCESS;
         if (
@@ -871,7 +871,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
     if (Is_Set_Word_Cell(e)) {
         if (bound)
             *(unwrap bound) = IS_WORD_BOUND(e);
-        return Cell_Word_Symbol(e);
+        return Word_Symbol(e);
     }
     if (Heart_Of(e) != TYPE_PATH)
         return nullptr;
@@ -887,7 +887,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
 
     if (bound)
         *(unwrap bound) = IS_WORD_BOUND(temp);
-    return Cell_Word_Symbol(temp);
+    return Word_Symbol(temp);
 }
 
 
@@ -993,7 +993,7 @@ INLINE Element* Refinify(Element* e) {
 
 INLINE const Symbol* Cell_Refinement_Symbol(const Cell* v) {
     assert(Is_Get_Word_Cell(v));
-    return Cell_Word_Symbol(v);
+    return Word_Symbol(v);
 }
 
 

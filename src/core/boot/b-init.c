@@ -442,8 +442,7 @@ static void Init_System_Object(
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
     const Element* spec_tail;
-    Element* spec_head
-        = Cell_List_At_Known_Mutable(&spec_tail, boot_sysobj_spec);
+    Element* spec_head = List_At_Known_Mutable(&spec_tail, boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
@@ -468,7 +467,7 @@ static void Init_System_Object(
     Init_Object(Sink_Lib_Var(SYM_SYSTEM), system);
     Init_Object(Sink_Lib_Var(SYM_SYS), system);
 
-    Use* use = Alloc_Use_Inherits(Cell_List_Binding(boot_sysobj_spec));
+    Use* use = Alloc_Use_Inherits(List_Binding(boot_sysobj_spec));
     Copy_Cell(Stub_Cell(use), Varlist_Archetype(system));
 
     DECLARE_ELEMENT (sysobj_spec_virtual);
@@ -719,7 +718,7 @@ void Startup_Core(void)
     assert(Array_Len(typespecs) == MAX_TYPE_BYTE);  // exclude TYPE_0 (custom)
     UNUSED(typespecs);  // not used at this time
 
-    // Symbol_Id(), Cell_Word_Id() and CANON(XXX) now available
+    // Symbol_Id(), Word_Id() and CANON(XXX) now available
 
     PG_Boot_Phase = BOOT_LOADED;
 

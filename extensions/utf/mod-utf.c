@@ -175,7 +175,7 @@ DECLARE_NATIVE(DECODE_TEXT)
 {
     INCLUDE_PARAMS_OF_DECODE_TEXT;
 
-    if (Cell_Series_Len_At(ARG(OPTIONS)))
+    if (Series_Len_At(ARG(OPTIONS)))
         return PANIC(ARG(OPTIONS));
 
     // !!! The original code for R3-Alpha would simply alias the incoming
@@ -189,7 +189,7 @@ DECLARE_NATIVE(DECODE_TEXT)
     // having wider format support might be a good thing.
 
     Size size;
-    const Byte* data = Cell_Blob_Size_At(&size, ARG(DATA));
+    const Byte* data = Blob_Size_At(&size, ARG(DATA));
     return rebSizedText(cs_cast(data), size);
 }
 
@@ -208,7 +208,7 @@ DECLARE_NATIVE(ENCODE_TEXT)
 {
     INCLUDE_PARAMS_OF_ENCODE_TEXT;
 
-    if (Cell_Series_Len_At(ARG(OPTIONS)))
+    if (Series_Len_At(ARG(OPTIONS)))
         return PANIC(ARG(OPTIONS));
 
     UNUSED(PARAM(STRING));
@@ -293,11 +293,11 @@ DECLARE_NATIVE(DECODE_UTF16LE)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
-    if (Cell_Series_Len_At(ARG(OPTIONS)))
+    if (Series_Len_At(ARG(OPTIONS)))
         return PANIC(ARG(OPTIONS));
 
     Size size;
-    const Byte* data = Cell_Blob_Size_At(&size, ARG(DATA));
+    const Byte* data = Blob_Size_At(&size, ARG(DATA));
 
     const bool little_endian = true;
     Init_Text(OUT, Decode_UCS2(data, size, little_endian, false));
@@ -326,7 +326,7 @@ DECLARE_NATIVE(ENCODE_UTF16LE)
 {
     INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
 
-    if (Cell_Series_Len_At(ARG(OPTIONS)))
+    if (Series_Len_At(ARG(OPTIONS)))
         return PANIC(ARG(OPTIONS));
 
     Length len;
@@ -380,11 +380,11 @@ DECLARE_NATIVE(DECODE_UTF16BE)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
-    if (Cell_Series_Len_At(ARG(OPTIONS)))
+    if (Series_Len_At(ARG(OPTIONS)))
         return PANIC(ARG(OPTIONS));
 
     Size size;
-    const Byte* data = Cell_Blob_Size_At(&size, ARG(DATA));
+    const Byte* data = Blob_Size_At(&size, ARG(DATA));
 
     const bool little_endian = false;
     Init_Text(OUT, Decode_UCS2(data, size, little_endian, false));
@@ -413,7 +413,7 @@ DECLARE_NATIVE(ENCODE_UTF16BE)
 {
     INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
 
-    if (Cell_Series_Len_At(ARG(OPTIONS)))
+    if (Series_Len_At(ARG(OPTIONS)))
         return PANIC(ARG(OPTIONS));
 
     Length len;

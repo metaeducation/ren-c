@@ -76,11 +76,7 @@ REBINT Compare_Spellings(const Symbol* a, const Symbol* b, bool strict)
 //
 REBINT CT_Word(const Element* a, const Element* b, bool strict)
 {
-    return Compare_Spellings(
-        Cell_Word_Symbol(a),
-        Cell_Word_Symbol(b),
-        strict
-    );
+    return Compare_Spellings(Word_Symbol(a), Word_Symbol(b), strict);
 }
 
 
@@ -138,7 +134,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Word)
 
     UNUSED(form);
 
-    Append_Spelling(mo->strand, Cell_Word_Symbol(v));
+    Append_Spelling(mo->strand, Word_Symbol(v));
 
     return TRIPWIRE;
 }
@@ -184,12 +180,12 @@ Option(Error*) Trap_Alias_Any_Word_As(
     }
 
     if (Any_String_Type(as)) {  // will be an immutable string
-        Init_Any_String(out, as, Cell_Word_Symbol(word));
+        Init_Any_String(out, as, Word_Symbol(word));
         return SUCCESS;
     }
 
     if (as == TYPE_RUNE) {  // immutable (note no EMAIL! or URL! possible)
-        const Symbol* s = Cell_Word_Symbol(word);
+        const Symbol* s = Word_Symbol(word);
         if (Try_Init_Small_Utf8(  // invariant: fit in cell if it can
             out,
             as,
@@ -204,7 +200,7 @@ Option(Error*) Trap_Alias_Any_Word_As(
     }
 
     if (as == TYPE_BLOB) {  // will be an immutable blob
-        Init_Blob(out, Cell_Word_Symbol(word));
+        Init_Blob(out, Word_Symbol(word));
         return SUCCESS;
     }
 

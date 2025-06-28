@@ -35,32 +35,20 @@ REBINT CT_Parameter(const Element* a, const Element* b, bool strict)
     assert(Heart_Of(a) == TYPE_PARAMETER);
     assert(Heart_Of(b) == TYPE_PARAMETER);
 
-    if (
-        Cell_Parameter_Spec(a) != Cell_Parameter_Spec(b)
-    ){
-        if (
-            maybe Cell_Parameter_Spec(a)
-            > maybe Cell_Parameter_Spec(b)
-        ){
+    if (Parameter_Spec(a) != Parameter_Spec(b)) {
+        if (maybe Parameter_Spec(a) > maybe Parameter_Spec(b))
             return 1;
-        }
         return -1;
     }
 
-    if (
-        Cell_Parameter_Strand(a) != Cell_Parameter_Strand(b)
-    ){
-        if (
-            maybe Cell_Parameter_Strand(a)
-            > maybe Cell_Parameter_Strand(b)
-        ){
+    if (Parameter_Strand(a) != Parameter_Strand(b)) {
+        if (maybe Parameter_Strand(a) > maybe Parameter_Strand(b))
             return 1;
-        }
         return -1;
     }
 
-    if (Cell_Parameter_Class(a) != Cell_Parameter_Class(b))
-        return Cell_Parameter_Class(a) > Cell_Parameter_Class(b) ? 1 : -1;
+    if (Parameter_Class(a) != Parameter_Class(b))
+        return Parameter_Class(a) > Parameter_Class(b) ? 1 : -1;
 
     return 0;
 }
@@ -143,7 +131,7 @@ void Set_Parameter_Spec(
     const Element* spec,
     Context* spec_binding
 ){
-    ParamClass pclass = Cell_Parameter_Class(param);
+    ParamClass pclass = Parameter_Class(param);
     assert(pclass != PARAMCLASS_0);  // must have class
 
     uintptr_t* flags = &CELL_PARAMETER_PAYLOAD_2_FLAGS(param);
@@ -166,7 +154,7 @@ void Set_Parameter_Spec(
   // getting GC'd in the middle of a first walk for now.)
 
     const Element* tail;
-    const Element* item = Cell_List_At(&tail, spec);
+    const Element* item = List_At(&tail, spec);
 
     Length len = tail - item;
 
@@ -189,7 +177,7 @@ void Set_Parameter_Spec(
     Clear_Cell_Flag(param, DONT_MARK_PAYLOAD_1);  // sync flag
 
     const Element* tail;
-    const Element* item = Cell_List_At(&tail, spec);
+    const Element* item = List_At(&tail, spec);
 
     Element* dest = Array_Head(copy);
 
@@ -361,7 +349,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
     }
 
     DECLARE_ELEMENT(temp);
-    Option(const Source*) param_array = Cell_Parameter_Spec(v);
+    Option(const Source*) param_array = Parameter_Spec(v);
     if (param_array)
         Init_Block(temp, unwrap param_array);
     else
@@ -397,7 +385,7 @@ Element* Decorate_According_To_Parameter(
     if (Get_Parameter_Flag(param, REFINEMENT))
         Refinify(e);
 
-    switch (Cell_Parameter_Class(param)) {
+    switch (Parameter_Class(param)) {
       case PARAMCLASS_NORMAL:
         break;
 
@@ -470,15 +458,15 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
   handle_pick: { /////////////////////////////////////////////////////////////
 
-    switch (Cell_Word_Id(picker)) {
+    switch (Word_Id(picker)) {
       case SYM_TEXT: {
-        Option(const Strand*) string = Cell_Parameter_Strand(param);
+        Option(const Strand*) string = Parameter_Strand(param);
         if (not string)
             return DUAL_LIFTED(nullptr);
         return DUAL_LIFTED(Init_Text(OUT, unwrap string)); }
 
       case SYM_SPEC: {
-        Option(const Source*) spec = Cell_Parameter_Spec(param);
+        Option(const Source*) spec = Parameter_Spec(param);
         if (not spec)
             return DUAL_LIFTED(nullptr);
         return DUAL_LIFTED(Init_Block(OUT, unwrap spec)); }
@@ -487,7 +475,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
         return DUAL_LIFTED(Init_Logic(OUT, Get_Parameter_Flag(param, REFINEMENT)));
 
       case SYM_CLASS:
-        switch (Cell_Parameter_Class(param)) {
+        switch (Parameter_Class(param)) {
           case PARAMCLASS_NORMAL:
             return DUAL_LIFTED(Init_Word(OUT, CANON(NORMAL)));
 
@@ -506,7 +494,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
         crash (nullptr);
 
       case SYM_ESCAPABLE:
-        Init_Logic(OUT, Cell_Parameter_Class(param) == PARAMCLASS_SOFT);
+        Init_Logic(OUT, Parameter_Class(param) == PARAMCLASS_SOFT);
         return DUAL_LIFTED(OUT);
 
       /* case SYM_DECORATED: */  // No symbol! Use DECORATE-PARAMETER...
@@ -526,7 +514,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
     Element* poke = Known_Element(dual);
 
-    switch (Cell_Word_Id(picker)) {
+    switch (Word_Id(picker)) {
       case SYM_TEXT: {
         if (not Is_Text(poke))
             return PANIC(poke);

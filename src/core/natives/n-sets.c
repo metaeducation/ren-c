@@ -99,9 +99,9 @@ Flex* Make_Set_Operation_Flex(
     // will be allocated at this size, but copied out at the exact size of
     // the actual result.
     //
-    REBLEN i = Cell_Series_Len_At(val1);
+    REBLEN i = Series_Len_At(val1);
     if (flags & SOP_FLAG_BOTH)
-        i += Cell_Series_Len_At(val2);
+        i += Series_Len_At(val2);
 
     REBINT h = 1; // used for both logic true/false and hash check
     bool first_pass = true; // are we in the first pass over the series?
@@ -227,7 +227,7 @@ Flex* Make_Set_Operation_Flex(
                     h = (NOT_FOUND != Find_Binstr_In_Binstr(
                         &len_match,
                         val2,
-                        Cell_Series_Len_Head(val2),
+                        Series_Len_Head(val2),
                         iter,
                         &single_codepoint_len,  // "part as 1 codepoint
                         cased ? AM_FIND_CASE : 0,
@@ -304,7 +304,7 @@ Flex* Make_Set_Operation_Flex(
                     h = (NOT_FOUND != Find_Binstr_In_Binstr(
                         &len_match,
                         val2,  // searched
-                        Cell_Series_Len_Head(val2),  // limit (highest index)
+                        Series_Len_Head(val2),  // limit (highest index)
                         iter,  // pattern
                         &single_byte_len,  // "part" as one byte
                         cased ? AM_FIND_CASE : 0,
@@ -328,7 +328,7 @@ Flex* Make_Set_Operation_Flex(
                     NOT_FOUND == Find_Binstr_In_Binstr(
                         &len_match,
                         buf_value,  // searched
-                        Cell_Series_Len_Head(buf_value),  // limit (highest index)
+                        Series_Len_Head(buf_value),  // limit (highest index)
                         iter,  // pattern
                         &single_byte_len,  // "part" as one byte
                         cased ? AM_FIND_CASE : 0,  // flags
@@ -337,7 +337,7 @@ Flex* Make_Set_Operation_Flex(
                 ){
                     Expand_Flex_Tail(buf, skip);
                     Size size_at;
-                    const Byte* iter_at = Cell_Blob_Size_At(&size_at, iter);
+                    const Byte* iter_at = Blob_Size_At(&size_at, iter);
                     REBLEN min = MIN(size_at, skip);
                     memcpy(Binary_At(buf, buf_at), iter_at, min);
                     buf_at += min;

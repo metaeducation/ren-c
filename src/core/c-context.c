@@ -214,7 +214,7 @@ Init(Slot) Append_To_Sea_Core(
 
     if (any_word) {  // bind word while we're at it
         Tweak_Cell_Binding(unwrap any_word, sea);
-        Tweak_Cell_Word_Stub(unwrap any_word, patch);
+        Tweak_Word_Stub(unwrap any_word, patch);
     }
 
 } assert_if_duplicate_patch: {
@@ -264,7 +264,7 @@ static Init(Slot) Append_To_Varlist_Core(
     if (any_word) {
         Length len = Varlist_Len(varlist);  // length we just bumped
         Tweak_Cell_Binding(unwrap any_word, varlist);
-        Tweak_Cell_Word_Index(unwrap any_word, len);
+        Tweak_Word_Index(unwrap any_word, len);
     }
 
     return u_cast(Init(Slot), slot);  // location we just added (void cell)
@@ -297,7 +297,7 @@ Init(Slot) Append_Context_Bind_Word(
     Context* context,
     Element* any_word  // binding modified (Note: quoted words allowed)
 ){
-    return Append_Context_Core(context, Cell_Word_Symbol(any_word), any_word);
+    return Append_Context_Core(context, Word_Symbol(any_word), any_word);
 }
 
 //
@@ -432,8 +432,8 @@ static Option(Error*) Trap_Collect_Inner_Loop(
         if (
             symbol or (
                 (flags & COLLECT_ANY_WORD)
-                and Wordlike_Cell(e)
-                and (bound = IS_WORD_BOUND(e), symbol = Cell_Word_Symbol(e))
+                and Is_Cell_Wordlike(e)
+                and (bound = IS_WORD_BOUND(e), symbol = Word_Symbol(e))
             )
         ){
             if (bound) {
@@ -470,7 +470,7 @@ static Option(Error*) Trap_Collect_Inner_Loop(
 
         if (Is_Set_Block(e)) {  // `[[a b] ^c :d (e)]:` collects all but E
             const Element* sub_tail;
-            const Element* sub_at = Cell_List_At(&sub_tail, e);
+            const Element* sub_at = List_At(&sub_tail, e);
             Option(Error*) error = Trap_Collect_Inner_Loop(
                 cl,
                 COLLECT_ANY_WORD | COLLECT_DEEP_BLOCKS | COLLECT_DEEP_FENCES,
@@ -492,7 +492,7 @@ static Option(Error*) Trap_Collect_Inner_Loop(
         }
 
         const Element* sub_tail;
-        const Element* sub_at = Cell_List_At(&sub_tail, e);
+        const Element* sub_at = List_At(&sub_tail, e);
         Option(Error*) error = Trap_Collect_Inner_Loop(
             cl, flags, sub_at, sub_tail
         );
@@ -519,7 +519,7 @@ Option(Error*) Trap_Wrap_Extend_Core(
     Construct_Collector(cl, flags, context);  // no-op preload if SeaOfVars
 
     const Element* tail;
-    const Element* at = Cell_List_At(&tail, list);
+    const Element* at = List_At(&tail, list);
 
     Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, at, tail);
     if (e) {
@@ -594,7 +594,7 @@ DECLARE_NATIVE(WRAP)
     Element* list = cast(Element*, ARG(LIST));
 
     const Element* tail;
-    const Element* at = Cell_List_At(&tail, list);
+    const Element* at = List_At(&tail, list);
     VarList* parent = nullptr;
 
     CollectFlags flags = COLLECT_ONLY_SET_WORDS;
@@ -669,7 +669,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
 
     if (Is_Block(ignore)) {  // avoid panic in mid-collect [1]
         const Element* check_tail;
-        const Element* check = Cell_List_At(&check_tail, ignore);
+        const Element* check = List_At(&check_tail, ignore);
         for (; check != check_tail; ++check) {
             if (not Any_Word(check))
                 return PANIC(Error_Bad_Value(check));
@@ -682,9 +682,9 @@ DECLARE_NATIVE(COLLECT_WORDS)
 
     if (Is_Block(ignore)) {  // ignore via dummy bindings [2]
         const Element* ignore_tail;
-        const Element* ignore_at = Cell_List_At(&ignore_tail, ignore);
+        const Element* ignore_at = List_At(&ignore_tail, ignore);
         for (; ignore_at != ignore_tail; ++ignore_at) {
-            const Symbol* symbol = Cell_Word_Symbol(ignore_at);
+            const Symbol* symbol = Word_Symbol(ignore_at);
 
             if (not Try_Add_Binder_Index(&cl->binder, symbol, -1)) {
               #if RUNTIME_CHECKS  // count dups, overkill [3]
@@ -707,7 +707,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
   //=//// RUN COMMON COLLECTION CODE //////////////////////////////////////=//
 
     const Element* block_tail;
-    const Element* block_at = Cell_List_At(&block_tail, ARG(BLOCK));
+    const Element* block_at = List_At(&block_tail, ARG(BLOCK));
 
     Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, block_at, block_tail);
     if (e)
@@ -897,7 +897,7 @@ Source* Context_To_Array(const Element* context, REBINT mode)
             }
             else {
                 Tweak_Cell_Binding(TOP_ELEMENT, e.ctx);
-                Tweak_Cell_Word_Index(TOP_ELEMENT, e.index);
+                Tweak_Word_Index(TOP_ELEMENT, e.index);
             }
 
             if (mode & 2)

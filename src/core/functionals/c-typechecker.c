@@ -290,10 +290,10 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
     assert(Is_Pack(pack));  // could relax this also to any list
 
     const Element* pack_tail;
-    const Element* pack_at = Cell_List_At(&pack_tail, pack);
+    const Element* pack_at = List_At(&pack_tail, pack);
 
     const Element* types_tail;
-    const Element* types_at = Cell_List_At(&types_tail, types);
+    const Element* types_at = List_At(&types_tail, types);
 
     if ((pack_tail - pack_at) != (types_tail - types_at))  // not same length
         return false;
@@ -308,7 +308,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
     ++L->baseline.stack_base;  // typecheck functions should not see that push
     assert(TOP_INDEX == L->baseline.stack_base);
 
-    Context* types_binding = Cell_List_Binding(types);
+    Context* types_binding = List_Binding(types);
 
     for (; types_at != types_tail; ++types_at, ++pack_at) {
         Copy_Cell(SPARE, pack_at);
@@ -523,7 +523,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     bool match_all;
 
     if (Heart_Of(tests) == TYPE_PARAMETER) {  // usually antiform
-        const Array* array = maybe Cell_Parameter_Spec(tests);
+        const Array* array = maybe Parameter_Spec(tests);
         if (array == nullptr)
             return true;  // implicitly all is permitted
         item = Array_Head(array);
@@ -536,13 +536,13 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         return Is_Cell_Stable(v) and (Type_Of(v) == Cell_Datatype_Type(tests));
 
       case TYPE_BLOCK:
-        item = Cell_List_At(&tail, tests);
+        item = List_At(&tail, tests);
         derived = Derive_Binding(tests_binding, Known_Element(tests));
         match_all = false;
         break;
 
       case TYPE_GROUP:
-        item = Cell_List_At(&tail, tests);
+        item = List_At(&tail, tests);
         derived = Derive_Binding(tests_binding, Known_Element(tests));
         match_all = true;
         break;
@@ -653,7 +653,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
             goto test_failed;  // can't match against antiforms
 
         const Element* splice_tail;
-        const Element* splice_at = Cell_List_At(&splice_tail, item);
+        const Element* splice_at = List_At(&splice_tail, item);
 
         for (; splice_at != splice_tail; ++splice_at) {
             bool strict = true;  // system now case-sensitive by default
@@ -702,7 +702,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         Plainify(Known_Element(SPARE));  // make plain, will re-sigilize
     }
 
-    Option(const Symbol*) label = Cell_Word_Symbol(item);
+    Option(const Symbol*) label = Word_Symbol(item);
 
     DECLARE_ELEMENT (temp_item_word);
     Copy_Cell(temp_item_word, item);
@@ -841,7 +841,7 @@ bool Typecheck_Coerce(
 
     bool coerced = false;
 
-    if (Cell_Parameter_Class(param) == PARAMCLASS_META) {
+    if (Parameter_Class(param) == PARAMCLASS_META) {
         //
         // check as-is, try coercing if it doesn't work
     }
@@ -897,7 +897,7 @@ bool Typecheck_Coerce(
 
 } do_optimized_checks_signaled_by_bytes: {
 
-    const Array* spec = maybe Cell_Parameter_Spec(param);
+    const Array* spec = maybe Parameter_Spec(param);
     const TypesetByte* optimized = spec->misc.at_least_4;
     const TypesetByte* optimized_tail
         = optimized + sizeof(spec->misc.at_least_4);
@@ -960,7 +960,7 @@ bool Typecheck_Coerce(
 } return_result: { ///////////////////////////////////////////////////////////
 
     if ((result == true) and Not_Cell_Stable(atom))
-        assert(is_return or Cell_Parameter_Class(param) == PARAMCLASS_META);
+        assert(is_return or Parameter_Class(param) == PARAMCLASS_META);
 
   #if RUNTIME_CHECKS  // always corrupt to emphasize that we *could* have [1]
     Init_Unreadable(SPARE);

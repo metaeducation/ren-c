@@ -582,7 +582,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
   make_from_array: {  ////////////////////////////////////////////////////////
 
     const Element* tail;
-    const Element* item = Cell_List_At(&tail, arg);
+    const Element* item = List_At(&tail, arg);
 
     if (item == tail or not Is_Integer(item))
         goto bad_make;
@@ -787,7 +787,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
 
     Option(SymId) sym;
     if (Is_Word(picker)) {
-        sym = Cell_Word_Id(picker); // error later if SYM_0 or not a match
+        sym = Word_Id(picker); // error later if SYM_0 or not a match
     }
     else if (Is_Integer(picker)) {
         switch (Int32(picker)) {

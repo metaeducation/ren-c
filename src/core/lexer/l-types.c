@@ -260,7 +260,7 @@ IMPLEMENT_GENERIC(ADDRESS_OF, Is_Frame)
 
     Element* frame = Element_ARG(ELEMENT);
 
-    Phase* phase = Cell_Frame_Phase(frame);
+    Phase* phase = Frame_Phase(frame);
     if (not Is_Stub_Details(phase))
         return PANIC("Phase isn't details, can't get ADDRESS-OF");
 
@@ -291,7 +291,7 @@ DECLARE_NATIVE(OF)
 
     Element* prop = Element_ARG(PROPERTY);
     assert(Is_Word(prop));
-    const Symbol* sym = Cell_Word_Symbol(prop);
+    const Symbol* sym = Word_Symbol(prop);
     const Symbol* sym_of;
 
     Option(SymId) opt_id = Symbol_Id(sym);
@@ -1209,7 +1209,7 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
 
         for (; item != item_tail; item += 2) {
             assert(Is_Text(item + 1) || Is_Block(item + 1));
-            if (Are_Synonyms(Cell_Word_Symbol(item), name)) {
+            if (Are_Synonyms(Word_Symbol(item), name)) {
                 // Does it already use a block?
                 if (Is_Block(item + 1)) {
                     // Block of values already exists:

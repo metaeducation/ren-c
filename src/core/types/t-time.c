@@ -297,7 +297,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 
       case TYPE_BLOCK: { // [hh mm ss]
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, arg);
+        const Element* item = List_At(&tail, arg);
 
         if (item == tail)
             goto bad_make;  // must have at least hours
@@ -543,7 +543,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Time)
 
     REBINT i;
     if (Is_Word(picker)) {
-        switch (Cell_Word_Id(picker)) {
+        switch (Word_Id(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;

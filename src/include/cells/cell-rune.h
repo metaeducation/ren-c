@@ -394,10 +394,10 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         return cast(Utf8(const*), v->payload.at_least_8);
     }
 
-    Utf8(const*) utf8 = Cell_String_At(v);
+    Utf8(const*) utf8 = String_At(v);
 
     if (size_out or length_out) {
-        Size utf8_size = Cell_String_Size_Limit_At(length_out, v, limit);
+        Size utf8_size = String_Size_Limit_At(length_out, v, limit);
         if (size_out)
             *(unwrap size_out) = utf8_size;
     }

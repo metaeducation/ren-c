@@ -53,7 +53,7 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
 #endif
 
 
-INLINE REBLEN Cell_Series_Len_Head(const Cell* v);  // forward decl
+INLINE REBLEN Series_Len_Head(const Cell* v);  // forward decl
 INLINE bool Stringlike_Cell(const Cell* v);  // forward decl
 
 // Unlike VAL_INDEX_UNBOUNDED() that may give a negative number or past the
@@ -66,7 +66,7 @@ INLINE REBLEN VAL_INDEX_STRINGLIKE_OK(const Cell* v) {
     UNUSED(heart);
     assert(Cell_Payload_1_Needs_Mark(v));
     REBIDX i = VAL_INDEX_RAW(v);
-    if (i < 0 or i > Cell_Series_Len_Head(v))
+    if (i < 0 or i > Series_Len_Head(v))
         panic (Error_Index_Out_Of_Range_Raw());
     return i;
 }
@@ -81,7 +81,7 @@ INLINE REBLEN VAL_INDEX(const Cell* v) {
 }
 
 
-INLINE Size Cell_String_Size_Limit_At(
+INLINE Size String_Size_Limit_At(
     Option(Sink(Length)) length_out,  // length in chars to end or limit
     const Cell* v,
     Option(const Length*) limit
@@ -151,7 +151,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
 
   #if RUNTIME_CHECKS  // if non-string UTF-8 fits in cell, should be in cell
     if (Any_Utf8_Type(heart) and not Any_String_Type(heart)) {
-        Size utf8_size = Cell_String_Size_Limit_At(nullptr, out, UNLIMITED);
+        Size utf8_size = String_Size_Limit_At(nullptr, out, UNLIMITED);
 
         assert(utf8_size + 1 > Size_Of(out->payload.at_least_8));
     }

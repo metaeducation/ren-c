@@ -1,23 +1,21 @@
 // %cell-binary.h
 
-INLINE const Binary* Cell_Binary(const Value* v) {
-    assert(Heart_Of(v) == TYPE_BLOB);
-    return c_cast(Binary*, Cell_Flex(v));
+INLINE const Binary* Cell_Binary(const Cell* cell) {
+    assert(Unchecked_Heart_Of(cell) == TYPE_BLOB);
+    return c_cast(Binary*, Cell_Flex(cell));
 }
 
-#define Cell_Binary_Ensure_Mutable(v) \
-    m_cast(Binary*, Cell_Binary(Ensure_Mutable(v)))
+#define Cell_Binary_Ensure_Mutable(cell) \
+    m_cast(Binary*, Cell_Binary(Ensure_Mutable(cell)))
 
-#define Cell_Binary_Known_Mutable(v) \
-    m_cast(Binary*, Cell_Binary(Known_Mutable(v)))
+#define Cell_Binary_Known_Mutable(cell) \
+    m_cast(Binary*, Cell_Binary(Known_Mutable(cell)))
 
 
-INLINE const Byte* Cell_Blob_Size_At(
-    Option(Sink(Size)) size_at,
-    const Value* v
-){
-    const Binary* b = Cell_Binary(v);
-    REBIDX i = VAL_INDEX_RAW(v);
+INLINE const Byte* Blob_Size_At(Option(Sink(Size)) size_at, const Cell* cell)
+{
+    const Binary* b = Cell_Binary(cell);
+    REBIDX i = VAL_INDEX_RAW(cell);
     Size size = Binary_Len(b);
     if (i < 0 or i > size)
         panic (Error_Index_Out_Of_Range_Raw());
@@ -26,17 +24,17 @@ INLINE const Byte* Cell_Blob_Size_At(
     return Binary_At(b, i);
 }
 
-#define Cell_Blob_Size_At_Ensure_Mutable(size_out,v) \
-    m_cast(Byte*, Cell_Blob_Size_At((size_out), Ensure_Mutable(v)))
+#define Blob_Size_At_Ensure_Mutable(size_out,v) \
+    m_cast(Byte*, Blob_Size_At((size_out), Ensure_Mutable(v)))
 
-#define Cell_Blob_At(v) \
-    Cell_Blob_Size_At(nullptr, (v))
+#define Blob_At(v) \
+    Blob_Size_At(nullptr, (v))
 
-#define Cell_Blob_At_Ensure_Mutable(v) \
-    m_cast(Byte*, Cell_Blob_At(Ensure_Mutable(v)))
+#define Blob_At_Ensure_Mutable(v) \
+    m_cast(Byte*, Blob_At(Ensure_Mutable(v)))
 
-#define Cell_Blob_At_Known_Mutable(v) \
-    m_cast(Byte*, Cell_Blob_At(Known_Mutable(v)))
+#define Blob_At_Known_Mutable(v) \
+    m_cast(Byte*, Blob_At(Known_Mutable(v)))
 
 #define Init_Blob(out,blob) \
     Init_Series((out), TYPE_BLOB, (blob))
@@ -63,17 +61,17 @@ INLINE const Byte* Cell_Blob_Size_At(
 //
 INLINE const Byte* Cell_Bytes_Limit_At(
     Size* size_out,
-    const Value* c,
+    const Value* cell,
     Option(const Length*) limit_in
 ){
-    Option(Heart) heart = Heart_Of(c);
+    Option(Heart) heart = Heart_Of(cell);
     assert(Any_Bytes_Heart(heart));
 
     Length len_at;
     if (heart == TYPE_BLOB)
-        Cell_Blob_Size_At(&len_at, c);
+        Blob_Size_At(&len_at, cell);
     else
-        len_at = Cell_String_Len_At(c);
+        len_at = String_Len_At(cell);
 
     Length limit;
     if (limit_in == UNLIMITED or *(unwrap limit_in) > len_at)
@@ -85,20 +83,20 @@ INLINE const Byte* Cell_Bytes_Limit_At(
 
     if (heart == TYPE_BLOB) {
         *size_out = limit;
-        return Cell_Blob_At(c);
+        return Blob_At(cell);
     }
 
     if (Any_Utf8_Type(heart)) {
-        *size_out = Cell_String_Size_Limit_At(nullptr, c, &limit);
-        return Cell_String_At(c);
+        *size_out = String_Size_Limit_At(nullptr, cell, &limit);
+        return String_At(cell);
     }
 
-    assert(Heart_Of(c) == TYPE_WORD);
-    assert(limit == Cell_Series_Len_At(c));
+    assert(Heart_Of(cell) == TYPE_WORD);
+    assert(limit == Series_Len_At(cell));
 
-    const Strand* spelling = Cell_Word_Symbol(c);
-    *size_out = Strand_Size(spelling);
-    return Strand_Head(spelling);
+    const Symbol* symbol = Word_Symbol(cell);
+    *size_out = Strand_Size(symbol);
+    return Strand_Head(symbol);
 }
 
 #define Cell_Bytes_At(size_out,v) \
@@ -134,7 +132,7 @@ INLINE bool Is_Blob_And_Is_Zero(const Value* v) {
         return false;
 
     Size size;
-    const Byte* at = Cell_Blob_Size_At(&size, v);
+    const Byte* at = Blob_Size_At(&size, v);
     if (size != 1)
         return false;
 

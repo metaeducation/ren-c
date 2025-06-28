@@ -120,9 +120,9 @@
 #define P_INPUT_BINARY      Cell_Binary(ARG(INPUT))
 #define P_INPUT_STRING      Cell_Strand(ARG(INPUT))
 #define P_INPUT_ARRAY       Cell_Array(ARG(INPUT))
-#define P_INPUT_SPECIFIER   Cell_List_Binding(Element_ARG(INPUT))
+#define P_INPUT_SPECIFIER   List_Binding(Element_ARG(INPUT))
 #define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(Element_ARG(INPUT))
-#define P_INPUT_LEN         Cell_Series_Len_Head(Element_ARG(INPUT))
+#define P_INPUT_LEN         Series_Len_Head(Element_ARG(INPUT))
 
 #define P_FLAGS             mutable_VAL_INT64(ARG(FLAGS))
 
@@ -151,7 +151,7 @@
 #define FETCH_TO_BAR_OR_END(L) \
     while (not P_AT_END and not ( \
         Type_Of_Unchecked(P_RULE) == TYPE_WORD \
-        and Cell_Word_Symbol(P_RULE) == CANON(BAR_1) \
+        and Word_Symbol(P_RULE) == CANON(BAR_1) \
     )){ \
         FETCH_NEXT_RULE(L); \
     }
@@ -210,7 +210,7 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 // see if they're really the best option.
 //
 INLINE Option(SymId) VAL_CMD(const Cell* v) {
-    Option(SymId) sym = Cell_Word_Id(v);
+    Option(SymId) sym = Word_Id(v);
     if (sym >= MIN_SYM_PARSE3 and sym <= MAX_SYM_PARSE3)
         return sym;
     return SYM_0;
@@ -295,13 +295,13 @@ static bool Subparse_Throws(
         //
         const Value* label = VAL_THROWN_LABEL(LEVEL);
         if (Is_Frame(label)) {
-            if (Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(PARSE_REJECT))) {
+            if (Frame_Phase(label) == Frame_Phase(LIB(PARSE_REJECT))) {
                 CATCH_THROWN(out, LEVEL);
                 *interrupted_out = true;
                 return false;
             }
 
-            if (Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(PARSE_BREAK))) {
+            if (Frame_Phase(label) == Frame_Phase(LIB(PARSE_BREAK))) {
                 CATCH_THROWN(out, LEVEL);
                 assert(Is_Integer(Known_Element(out)));
                 *interrupted_out = true;
@@ -524,7 +524,7 @@ static REBIXO Parse_One_Rule(
         }
         else if (
             (Is_Text(rule) or Is_Blob(rule))
-            and (Cell_Series_Len_At(rule) == 0)
+            and (Series_Len_At(rule) == 0)
             and (Any_String_Type(P_HEART) or P_HEART == TYPE_BLOB)
         ){
             // !!! The way this old R3-Alpha code was structured is now very
@@ -694,7 +694,7 @@ static REBIXO Parse_One_Rule(
             REBINT index = Find_Value_In_Binstr(
                 &len,
                 Element_ARG(POSITION),
-                Cell_Series_Len_Head(ARG(POSITION)),
+                Series_Len_Head(ARG(POSITION)),
                 rule,
                 (P_FLAGS & PF_FIND_MASK) | AM_FIND_MATCH
                     | (Is_Rune(rule) ? AM_FIND_CASE : 0),
@@ -855,7 +855,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
             }
             else if (P_HEART == TYPE_BLOB) {
-                Byte ch1 = *Cell_Blob_At(iter);
+                Byte ch1 = *Blob_At(iter);
 
                 if (VAL_INDEX(iter) == P_INPUT_LEN) {
                     //
@@ -865,7 +865,7 @@ static REBIXO To_Thru_Block_Rule(
                     // terminator is implementation detail.
                     //
                     assert(ch1 == '\0');  // internal BLOB! terminator
-                    if (Is_Blob(rule) and Cell_Series_Len_At(rule) == 0)
+                    if (Is_Blob(rule) and Series_Len_At(rule) == 0)
                         return VAL_INDEX(iter);
                 }
                 else if (Is_Rune_And_Is_Char(rule)) {
@@ -880,13 +880,13 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else if (Is_Blob(rule)) {
                     Size rule_size;
-                    const Byte* rule_data = Cell_Blob_Size_At(
+                    const Byte* rule_data = Blob_Size_At(
                         &rule_size,
                         rule
                     );
 
                     Size iter_size;
-                    const Byte* iter_data = Cell_Blob_Size_At(
+                    const Byte* iter_data = Blob_Size_At(
                         &iter_size,
                         iter
                     );
@@ -923,7 +923,7 @@ static REBIXO To_Thru_Block_Rule(
                 if (unadjusted == '\0') {  // cannot be passed to UP_CASE()
                     assert(VAL_INDEX(iter) == P_INPUT_LEN);
 
-                    if (Is_Text(rule) and Cell_Series_Len_At(rule) == 0)
+                    if (Is_Text(rule) and Series_Len_At(rule) == 0)
                         return VAL_INDEX(iter);  // empty string can match end
 
                     goto next_alternate_rule;  // other match is END (above)
@@ -957,11 +957,11 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else if (Any_String(rule)) {
-                    REBLEN len = Cell_Series_Len_At(rule);
+                    REBLEN len = Series_Len_At(rule);
                     REBINT i = Find_Value_In_Binstr(
                         &len,
                         iter,
-                        Cell_Series_Len_Head(iter),
+                        Series_Len_Head(iter),
                         rule,
                         (P_FLAGS & PF_FIND_MASK) | AM_FIND_MATCH,
                         1  // skip
@@ -1026,7 +1026,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     Option(Type) t = Type_Of(rule);
     assert(t != TYPE_BLOCK);
 
-    if (t == TYPE_WORD and Cell_Word_Id(rule) == SYM_END)
+    if (t == TYPE_WORD and Word_Id(rule) == SYM_END)
         panic ("Use <end> instead of END in PARSE3");
 
     if (t == TYPE_TAG) {
@@ -1112,7 +1112,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     REBINT i = Find_Value_In_Binstr(
         &len,
         Element_ARG(POSITION),
-        Cell_Series_Len_Head(ARG(POSITION)),
+        Series_Len_Head(ARG(POSITION)),
         rule,
         (P_FLAGS & PF_FIND_MASK),
         1  // skip
@@ -1277,8 +1277,8 @@ DECLARE_NATIVE(SUBPARSE)
     Dequotify(Element_ARG(INPUT));
 
     // Make sure index position is not past END
-    if (VAL_INDEX_UNBOUNDED(ARG(INPUT)) > Cell_Series_Len_Head(ARG(INPUT)))
-        VAL_INDEX_RAW(ARG(INPUT)) = Cell_Series_Len_Head(ARG(INPUT));
+    if (VAL_INDEX_UNBOUNDED(ARG(INPUT)) > Series_Len_Head(ARG(INPUT)))
+        VAL_INDEX_RAW(ARG(INPUT)) = Series_Len_Head(ARG(INPUT));
 
     assert(Is_Trash(ARG(POSITION)));
     Copy_Cell(ARG(POSITION), ARG(INPUT));
@@ -1491,16 +1491,16 @@ DECLARE_NATIVE(SUBPARSE)
                     if (
                         not Is_Block(out)
                         or not (
-                            Cell_Series_Len_At(out) == 2
-                            and Is_Integer(Cell_List_Item_At(out))
-                            and Is_Integer(Cell_List_Item_At(out) + 1)
+                            Series_Len_At(out) == 2
+                            and Is_Integer(List_Item_At(out))
+                            and Is_Integer(List_Item_At(out) + 1)
                         )
                     ){
                         panic ("REPEAT takes INTEGER! or length 2 BLOCK! range");
                     }
 
-                    mincount = Int32s(Cell_List_Item_At(out), 0);
-                    maxcount = Int32s(Cell_List_Item_At(out) + 1, 0);
+                    mincount = Int32s(List_Item_At(out), 0);
+                    maxcount = Int32s(List_Item_At(out) + 1, 0);
 
                     if (maxcount < mincount)
                         panic ("REPEAT range can't have lower max than minimum");
@@ -1530,7 +1530,7 @@ DECLARE_NATIVE(SUBPARSE)
                 //
                 if (cmd == SYM_LET) {
                     Tweak_Cell_Binding(Feed_Data(L->feed), Make_Let_Variable(
-                        Cell_Word_Symbol(P_RULE),
+                        Word_Symbol(P_RULE),
                         P_RULE_BINDING
                     ));
                     if (Is_Word(P_RULE)) {  // no further action
@@ -1554,7 +1554,7 @@ DECLARE_NATIVE(SUBPARSE)
                 bool strict = false;
                 if (not (
                     Is_Word(P_RULE)
-                    and Cell_Word_Id(P_RULE) == SYM_AHEAD
+                    and Word_Id(P_RULE) == SYM_AHEAD
                 ) and not (
                     Is_Tag(P_RULE)
                     and 0 == CT_Utf8(
@@ -1824,7 +1824,7 @@ DECLARE_NATIVE(SUBPARSE)
         );
         FETCH_NEXT_RULE(L);
 
-        if (Is_Word(P_RULE) and Cell_Word_Id(P_RULE) == SYM_ACROSS) {
+        if (Is_Word(P_RULE) and Word_Id(P_RULE) == SYM_ACROSS) {
             FETCH_NEXT_RULE(L);
             P_FLAGS |= PF_ACROSS;
             goto pre_rule;
@@ -2043,7 +2043,7 @@ DECLARE_NATIVE(SUBPARSE)
                 }
                 else {
                     Element* out = Known_Element(OUT);
-                    if (VAL_INT32(out) != Cell_Series_Len_Head(into))
+                    if (VAL_INT32(out) != Series_Len_Head(into))
                         i = END_FLAG;
                     else
                         i = P_POS + 1;
@@ -2478,7 +2478,7 @@ DECLARE_NATIVE(PARSE3)
 
         const Value* label = VAL_THROWN_LABEL(LEVEL);
         if (Is_Frame(label)) {
-            if (Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(PARSE_ACCEPT))) {
+            if (Frame_Phase(label) == Frame_Phase(LIB(PARSE_ACCEPT))) {
                 CATCH_THROWN(OUT, LEVEL);
                 return OUT;
             }
@@ -2494,9 +2494,9 @@ DECLARE_NATIVE(PARSE3)
     }
 
     REBLEN index = VAL_UINT32(Known_Element(OUT));
-    assert(index <= Cell_Series_Len_Head(input));
+    assert(index <= Series_Len_Head(input));
 
-    if (index != Cell_Series_Len_Head(input)) {  // didn't reach end of input
+    if (index != Series_Len_Head(input)) {  // didn't reach end of input
         if (Bool_ARG(MATCH))
             return nullptr;
         if (not Bool_ARG(RELAX))

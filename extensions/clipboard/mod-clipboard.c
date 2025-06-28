@@ -121,7 +121,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
 
         // Handle :PART refinement:
         //
-        REBINT len = Cell_Series_Len_At(data);
+        REBINT len = Series_Len_At(data);
         if (Bool_ARG(PART) and VAL_INT32(ARG(PART)) < len)
             len = VAL_INT32(ARG(PART));
 

@@ -120,8 +120,8 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     assert(Get_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Flavor_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);  // [2]
 
-    L->u.action.original = Cell_Frame_Phase(action);
-    Tweak_Level_Phase(L, Cell_Frame_Phase(action));  // Drop_Action() cleared
+    L->u.action.original = Frame_Phase(action);
+    Tweak_Level_Phase(L, Frame_Phase(action));  // Drop_Action() cleared
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(action));
 
     return L;  // may not be at end or thrown, e.g. (/x: does+ just y x = 'y)
@@ -215,7 +215,7 @@ Option(Error*) Trap_Init_Invokable_From_Feed(
 
     Set_Base_Managed_Bit(varlist);  // can't use Manage_Flex
 
-    ParamList* lens = Phase_Paramlist(Cell_Frame_Phase(action));
+    ParamList* lens = Phase_Paramlist(Frame_Phase(action));
     Init_Lensed_Frame(out, varlist, lens, coupling);
 
     return SUCCESS;
@@ -316,7 +316,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     Atom* arg = Level_Arg(L, VAL_INT32(param_index));
     Move_Cell(arg, spare);
 
-    Tweak_Level_Phase(L, Cell_Frame_Phase(shim));
+    Tweak_Level_Phase(L, Frame_Phase(shim));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(shim));
 
     return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
@@ -339,7 +339,7 @@ bool Reframer_Details_Querier(
         Element* shim = cast(Element*, Details_At(details, IDX_REFRAMER_SHIM));
         assert(Is_Frame(shim));
 
-        Details* shim_details = Phase_Details(Cell_Frame_Phase(shim));
+        Details* shim_details = Phase_Details(Frame_Phase(shim));
         DetailsQuerier* querier = Details_Querier(shim_details);
         return (*querier)(out, shim_details, SYM_RETURN_OF); }
 
@@ -362,7 +362,7 @@ Details* Alloc_Action_From_Exemplar(
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
-    Phase* unspecialized = Cell_Frame_Phase(Phase_Archetype(paramlist));
+    Phase* unspecialized = Frame_Phase(Phase_Archetype(paramlist));
 
     const Key* tail;
     const Key* key = Phase_Keys(&tail, unspecialized);
@@ -441,7 +441,7 @@ DECLARE_NATIVE(REFRAMER)
 {
     INCLUDE_PARAMS_OF_REFRAMER;
 
-    Phase* shim = Cell_Frame_Phase(ARG(SHIM));
+    Phase* shim = Frame_Phase(ARG(SHIM));
     Option(const Symbol*) label = Cell_Frame_Label_Deep(ARG(SHIM));
 
     DECLARE_BINDER (binder);
@@ -464,7 +464,7 @@ DECLARE_NATIVE(REFRAMER)
     const Param* param;
 
     if (Bool_ARG(PARAMETER)) {
-        const Symbol* symbol = Cell_Word_Symbol(ARG(PARAMETER));
+        const Symbol* symbol = Word_Symbol(ARG(PARAMETER));
         param_index = maybe Try_Get_Binder_Index(binder, symbol);
         if (param_index == 0) {
             Destruct_Binder(binder);

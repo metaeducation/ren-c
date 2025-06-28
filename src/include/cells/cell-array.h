@@ -1,7 +1,7 @@
 // %cell-array.h
 
 
-INLINE bool Listlike_Cell(const Atom* v) {  // PACK!s are allowed
+INLINE bool Is_Cell_Listlike(const Atom* v) {  // PACK!s are allowed
     // called by core code, sacrifice Ensure_Readable() checks
     if (Any_List_Type(Unchecked_Heart_Of(v)))
         return true;
@@ -11,12 +11,12 @@ INLINE bool Listlike_Cell(const Atom* v) {  // PACK!s are allowed
         return false;
     const Base* payload1 = CELL_SERIESLIKE_NODE(v);
     if (Is_Base_A_Cell(payload1))
-        return true;  // Cell_List_At() works, but Cell_Array() won't work!
+        return true;  // List_At() works, but Cell_Array() won't work!
     return Stub_Flavor(u_cast(const Flex*, payload1)) == FLAVOR_SOURCE;
 }
 
 INLINE const Source* Cell_Array(const Atom* c) {  // PACK!s are allowed
-    assert(Listlike_Cell(c));
+    assert(Is_Cell_Listlike(c));
 
     const Base* series = CELL_SERIESLIKE_NODE(c);
     assert(Is_Base_A_Stub(series));  // not a pairing arraylike!
@@ -41,7 +41,7 @@ INLINE const Source* Cell_Array(const Atom* c) {  // PACK!s are allowed
 // of bounds of the data.  If a function can deal with such out of bounds
 // arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
 //
-INLINE const Element* Cell_List_Len_At(
+INLINE const Element* List_Len_At(
     Option(Sink(Length)) len_at_out,
     const Atom* v  // want to be able to pass PACK!s, SPLICE!, etc.
 ){
@@ -58,25 +58,25 @@ INLINE const Element* Cell_List_Len_At(
     Length len = Array_Len(arr);
     if (i < 0 or i > len)
         panic (Error_Index_Out_Of_Range_Raw());
-    if (len_at_out)  // inlining should remove this if() for Cell_List_At()
+    if (len_at_out)  // inlining should remove this if() for List_At()
         *(unwrap len_at_out) = len - i;
     return Array_At(arr, i);
 }
 
-INLINE const Element* Cell_List_At(
+INLINE const Element* List_At(
     Option(const Element**) tail_out,
-    const Atom* v  // want to be able to pass PACK!s, SPLICE!, etc.
+    const Cell* cell  // want to be able to pass PACK!s, SPLICE!, etc.
 ){
-    const Base* base = CELL_SERIESLIKE_NODE(v);
+    const Base* base = CELL_SERIESLIKE_NODE(cell);
     if (Is_Base_A_Cell(base)) {
-        assert(Any_Sequence_Type(Heart_Of(v)));
+        assert(Any_Sequence_Type(Heart_Of(cell)));
         const Pairing* p = c_cast(Pairing*, base);
         if (tail_out)
             *(unwrap tail_out) = Pairing_Tail(p);
         return Pairing_Head(p);
     }
     const Array* arr = c_cast(Array*, base);
-    REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's arraylike
+    REBIDX i = VAL_INDEX_RAW(cell);
     Length len = Array_Len(arr);
     if (i < 0 or i > len)
         panic (Error_Index_Out_Of_Range_Raw());
@@ -86,19 +86,19 @@ INLINE const Element* Cell_List_At(
     return at;
 }
 
-INLINE const Element* Cell_List_Item_At(const Value* v) {
+INLINE const Element* List_Item_At(const Value* v) {
     const Element* tail;
-    const Element* item = Cell_List_At(&tail, v);
+    const Element* item = List_At(&tail, v);
     assert(item != tail);  // should be a valid value
     return item;
 }
 
 
-#define Cell_List_At_Ensure_Mutable(tail_out,v) \
-    m_cast(Element*, Cell_List_At((tail_out), Ensure_Mutable(v)))
+#define List_At_Ensure_Mutable(tail_out,v) \
+    m_cast(Element*, List_At((tail_out), Ensure_Mutable(v)))
 
-#define Cell_List_At_Known_Mutable(tail_out,v) \
-    m_cast(Element*, Cell_List_At((tail_out), Known_Mutable(v)))
+#define List_At_Known_Mutable(tail_out,v) \
+    m_cast(Element*, List_At((tail_out), Known_Mutable(v)))
 
 
 // !!! R3-Alpha introduced concepts of immutable series with PROTECT, but
@@ -108,8 +108,8 @@ INLINE const Element* Cell_List_Item_At(const Value* v) {
 // "immutable" data was mechanically required by R3-Alpha for efficiency...so
 // new answers will be needed. :-/
 //
-#define Cell_List_At_Mutable_Hack(tail_out,v) \
-    m_cast(Element*, Cell_List_At((tail_out), (v)))
+#define List_At_Mutable_Hack(tail_out,v) \
+    m_cast(Element*, List_At((tail_out), (v)))
 
 
 //=//// ANY-LIST? INITIALIZER HELPERS ////////////////////////////////////=//
@@ -161,11 +161,11 @@ INLINE Element* Init_Relative_Block_At(
 
 
 #if NO_RUNTIME_CHECKS
-    #define Cell_List_Binding(v) \
+    #define List_Binding(v) \
         Cell_Binding(v)
 #else
-    INLINE Context* Cell_List_Binding(const Element* v) {
-        assert(Listlike_Cell(v));
+    INLINE Context* List_Binding(const Element* v) {
+        assert(Is_Cell_Listlike(v));
         Context* c = Cell_Binding(v);
         if (not c)
             return SPECIFIED;
@@ -260,7 +260,7 @@ INLINE bool Is_Blank(const Value* v) {
     if (not Is_Splice(v))
         return false;
     const Element* tail;
-    const Element* at = Cell_List_At(&tail, v);
+    const Element* at = List_At(&tail, v);
     return tail == at;
 }
 

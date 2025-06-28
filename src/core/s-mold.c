@@ -125,8 +125,8 @@ void Begin_Non_Lexical_Mold(Molder* mo, const Element* v)
     Append_Ascii(mo->strand, "&[");
 
     const Value* datatype = Datatype_Of(v);
-    const Element* word = Cell_List_Item_At(datatype);
-    const Symbol* type_name = Cell_Word_Symbol(word);;
+    const Element* word = List_Item_At(datatype);
+    const Symbol* type_name = Word_Symbol(word);;
     Append_Spelling(mo->strand, type_name);  // includes the "!"
 
     Append_Codepoint(mo->strand, ' ');
@@ -327,7 +327,7 @@ void Form_Array_At(
         if (context and (Is_Word(item) or Is_Get_Word(item))) {
             Slot *wslot = maybe Select_Symbol_In_Context(
                 Varlist_Archetype(unwrap context),
-                Cell_Word_Symbol(item)
+                Word_Symbol(item)
             );
             if (wslot) {
                 wval = Slot_Hack(wslot);

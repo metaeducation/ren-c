@@ -159,9 +159,9 @@ REBINT Index_From_Picker_For_Pair(
 
     REBINT n;
     if (Is_Word(picker)) {
-        if (Cell_Word_Id(picker) == SYM_X)
+        if (Word_Id(picker) == SYM_X)
             n = 1;
-        else if (Cell_Word_Id(picker) == SYM_Y)
+        else if (Word_Id(picker) == SYM_Y)
             n = 2;
         else
             panic (picker);

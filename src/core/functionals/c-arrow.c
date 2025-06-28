@@ -99,7 +99,7 @@ Bounce Arrow_Dispatcher(Level* const L)
     assert(Is_Block(block));
 
     assert(Link_Inherit_Bind(L->varlist) == nullptr);
-    Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(block));
+    Add_Link_Inherit_Bind(L->varlist, List_Binding(block));
     Force_Level_Varlist_Managed(L);
 
     Element* spare_rebound = Copy_Cell(SPARE, block);
@@ -172,7 +172,7 @@ DECLARE_NATIVE(ARROW)
     const Element* item_tail;
     const Element* item;
     if (Is_Block(spec)) {
-        item = Cell_List_At(&item_tail, spec);
+        item = List_At(&item_tail, spec);
     }
     else if (
         Is_Word(spec)
@@ -196,11 +196,11 @@ DECLARE_NATIVE(ARROW)
         const Symbol* symbol;
         if (Is_Word(item)) {
             pclass = PARAMCLASS_NORMAL;
-            symbol = Cell_Word_Symbol(item);
+            symbol = Word_Symbol(item);
         }
         else if (Is_Meta_Form_Of(WORD, item)) {
             pclass = PARAMCLASS_META;
-            symbol = Cell_Word_Symbol(item);
+            symbol = Word_Symbol(item);
         }
         else if (Is_Quoted(item)) {
             if (Quotes_Of(item) != 1)
@@ -209,11 +209,11 @@ DECLARE_NATIVE(ARROW)
                 pclass = PARAMCLASS_JUST;
             else
                 return PANIC(item);
-            symbol = Cell_Word_Symbol(item);
+            symbol = Word_Symbol(item);
         }
         else if (Is_Pinned_Form_Of(WORD, item)) {
             pclass = PARAMCLASS_THE;
-            symbol = Cell_Word_Symbol(item);
+            symbol = Word_Symbol(item);
         }
         else if (Is_Refinement(item)) {
             pclass = PARAMCLASS_NORMAL;
@@ -221,7 +221,7 @@ DECLARE_NATIVE(ARROW)
             param_flags |= PARAMETER_FLAG_REFINEMENT;
             param_flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
         }
-        else if (Is_Set_Word(item) and Cell_Word_Id(item) == SYM_RETURN) {
+        else if (Is_Set_Word(item) and Word_Id(item) == SYM_RETURN) {
             return PANIC(
                 "ARROW (->) does not offer RETURN facilities, use FUNCTION"
             );

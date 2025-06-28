@@ -375,11 +375,11 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
     REBLEN tail = 0;
 
     if (limit < 0)
-        limit = Cell_Series_Len_At(blk);
+        limit = Series_Len_At(blk);
 
     Set_Flex_Len(buf, 0);
 
-    const Element* val = Cell_List_Item_At(blk);
+    const Element* val = List_Item_At(blk);
     for (; limit > 0; val++, limit--) {
         switch (Type_Of(val)) {
           case TYPE_QUASIFORM:
@@ -392,7 +392,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
 
           case TYPE_BLOB: {
             Size size;
-            const Byte* data = Cell_Blob_Size_At(&size, val);
+            const Byte* data = Blob_Size_At(&size, val);
             Expand_Flex_Tail(buf, size);
             memcpy(Binary_At(buf, tail), data, size);
             break; }

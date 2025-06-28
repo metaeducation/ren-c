@@ -52,9 +52,9 @@ DECLARE_NATIVE(BIND)
 
     if (Is_Block(spec)) {
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, spec);
+        const Element* at = List_At(&tail, spec);
 
-        if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
+        if (not Is_Cell_Listlike(v))  // QUOTED? could have wrapped any type
             return PANIC(Error_Invalid_Arg(level_, PARAM(VALUE)));
 
         for (; at != tail; ++at) {
@@ -88,7 +88,7 @@ DECLARE_NATIVE(BIND)
         if (not IS_WORD_BOUND(spec))
             return PANIC(Error_Not_Bound_Raw(spec));
 
-        if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
+        if (not Is_Cell_Listlike(v))  // QUOTED? could have wrapped any type
             return PANIC(Error_Invalid_Arg(level_, PARAM(VALUE)));
 
         Use* use = Alloc_Use_Inherits(Cell_Binding(v));
@@ -100,7 +100,7 @@ DECLARE_NATIVE(BIND)
         return COPY(v);
     }
 
-    if (Wordlike_Cell(v)) {
+    if (Is_Cell_Wordlike(v)) {
         //
         // Bind a single word (also works on refinements, `/a` ...or `a.`, etc.
 
@@ -110,7 +110,7 @@ DECLARE_NATIVE(BIND)
         return PANIC(Error_Not_In_Context_Raw(v));
     }
 
-    if (not Listlike_Cell(v))  // QUOTED? could have wrapped any type
+    if (not Is_Cell_Listlike(v))  // QUOTED? could have wrapped any type
         return PANIC(Error_Invalid_Arg(level_, PARAM(VALUE)));
 
     Use* use = Alloc_Use_Inherits(Cell_Binding(v));
@@ -218,7 +218,7 @@ DECLARE_NATIVE(OVERBIND)
     else
         assert(Any_Context(defs));
 
-    Use* use = Alloc_Use_Inherits(Cell_List_Binding(v));
+    Use* use = Alloc_Use_Inherits(List_Binding(v));
     Copy_Cell(Stub_Cell(use), defs);
 
     Tweak_Cell_Binding(v, use);
@@ -247,7 +247,7 @@ DECLARE_NATIVE(HAS)
 
     Element* context = Element_ARG(CONTEXT);
 
-    const Symbol* symbol = Cell_Word_Symbol(v);
+    const Symbol* symbol = Word_Symbol(v);
     const bool strict = true;
     Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
     if (not index)
@@ -256,7 +256,7 @@ DECLARE_NATIVE(HAS)
     if (not Is_Module(context)) {
         VarList* varlist = Cell_Varlist(context);
         Element* out = Init_Word_Bound(OUT, symbol, varlist);
-        Tweak_Cell_Word_Index(out, unwrap index);
+        Tweak_Word_Index(out, unwrap index);
         Copy_Kind_Byte(out, v);
         return OUT;
     }
@@ -293,7 +293,7 @@ DECLARE_NATIVE(WITHOUT)
     // here in IN, but BIND's behavior on words may need revisiting.
     //
     if (Any_Word(v)) {
-        const Symbol* symbol = Cell_Word_Symbol(v);
+        const Symbol* symbol = Word_Symbol(v);
         const bool strict = true;
         Option(Index) index = Find_Symbol_In_Context(
             Element_ARG(CONTEXT), symbol, strict
@@ -305,12 +305,12 @@ DECLARE_NATIVE(WITHOUT)
             symbol,  // !!! incoming case...consider impact of strict if false?
             ctx
         );
-        Tweak_Cell_Word_Index(OUT, unwrap index);
+        Tweak_Word_Index(OUT, unwrap index);
         Copy_Kind_Byte(Known_Element(OUT), v);
         return OUT;
     }
 
-    Use* use = Alloc_Use_Inherits(Cell_List_Binding(v));
+    Use* use = Alloc_Use_Inherits(List_Binding(v));
     Copy_Cell(Stub_Cell(use), Varlist_Archetype(ctx));
 
     Tweak_Cell_Binding(v, use);
@@ -790,7 +790,7 @@ DECLARE_NATIVE(UNBIND)
         assert(Is_Block(word));
 
         const Element* tail;
-        Element* at = Cell_List_At_Ensure_Mutable(&tail, word);
+        Element* at = List_At_Ensure_Mutable(&tail, word);
         Option(VarList*) context = nullptr;
         Unbind_Values_Core(at, tail, context, Bool_ARG(DEEP));
     }
@@ -936,12 +936,12 @@ DECLARE_NATIVE(PROXY_EXPORTS)
     SeaOfVars* source = Cell_Module_Sea(ARG(SOURCE));
 
     const Element* tail;
-    const Element* v = Cell_List_At(&tail, ARG(EXPORTS));
+    const Element* v = List_At(&tail, ARG(EXPORTS));
     for (; v != tail; ++v) {
         if (not Is_Word(v))
             return PANIC(ARG(EXPORTS));
 
-        const Symbol* symbol = Cell_Word_Symbol(v);
+        const Symbol* symbol = Word_Symbol(v);
 
         bool strict = true;
 
@@ -1013,18 +1013,18 @@ DECLARE_NATIVE(INFIX)
     if (Bool_ARG(OFF)) {
         if (Bool_ARG(DEFER) or Bool_ARG(POSTPONE))
             return PANIC(Error_Bad_Refines_Raw());
-        Tweak_Cell_Frame_Infix_Mode(out, PREFIX_0);
+        Tweak_Frame_Infix_Mode(out, PREFIX_0);
     }
     else if (Bool_ARG(DEFER)) {  // not OFF, already checked
         if (Bool_ARG(POSTPONE))
             return PANIC(Error_Bad_Refines_Raw());
-        Tweak_Cell_Frame_Infix_Mode(out, INFIX_DEFER);
+        Tweak_Frame_Infix_Mode(out, INFIX_DEFER);
     }
     else if (Bool_ARG(POSTPONE)) {  // not OFF or DEFER, we checked
-        Tweak_Cell_Frame_Infix_Mode(out, INFIX_POSTPONE);
+        Tweak_Frame_Infix_Mode(out, INFIX_POSTPONE);
     }
     else
-        Tweak_Cell_Frame_Infix_Mode(out, INFIX_TIGHT);
+        Tweak_Frame_Infix_Mode(out, INFIX_TIGHT);
 
     return UNSURPRISING(OUT);
 }
@@ -1377,7 +1377,7 @@ DECLARE_NATIVE(LIGHT)
         return COPY(atom);
 
     Length len;
-    const Element* first = Cell_List_Len_At(&len, atom);
+    const Element* first = List_Len_At(&len, atom);
 
     if (len != 1)
         return COPY(atom);

@@ -170,7 +170,7 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
 // For performance, we always get the binding from the same location, even
 // if we're not using an array.  So for the moment, that means using a
 // COMMA! (which for technical reasons has a nullptr binding and is thus
-// always SPECIFIED).  However, Cell_List_Binding() only runs on arrays, so
+// always SPECIFIED).  However, List_Binding() only runs on arrays, so
 // we sneak past that by accessing the base directly.
 //
 #define Feed_Binding(feed) \

@@ -260,7 +260,7 @@ INLINE ParamList* Level_Varlist(Level* L) {
 // execution of an action unfolds through each phase.
 //
 #define Level_Phase(L) \
-    Cell_Frame_Phase((L)->rootvar)
+    Frame_Phase((L)->rootvar)
 
 // !!! This is just hacked in for compatibility with oldgeneric.  The old
 // generic dispatcher will override whatever the actual label was used
@@ -283,7 +283,7 @@ INLINE void Tweak_Level_Phase(Level* L, Phase* phase) {
 }
 
 INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
-  { Tweak_Cell_Frame_Coupling(L->rootvar, coupling); }  // also fast
+  { Tweak_Frame_Coupling(L->rootvar, coupling); }  // also fast
 
 // Each ACTION! cell for things like RETURN/BREAK/CONTINUE has a piece of
 // information in it that can can be unique (the "coupling").  When invoked,
@@ -1052,7 +1052,7 @@ INLINE void Inject_Definitional_Returner(
     );
     Init_Action(
         cell,
-        Cell_Frame_Phase(definitional),  // DEFINITIONAL-RETURN or YIELD
+        Frame_Phase(definitional),  // DEFINITIONAL-RETURN or YIELD
         Canon_Symbol(returner),  // relabel as plain RETURN or YIELD
         cast(VarList*, L->varlist)  // so knows where to RETURN/YIELD from
     );

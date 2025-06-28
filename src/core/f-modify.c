@@ -81,7 +81,7 @@ REBLEN Modify_Array(
 
     // Check :PART, compute LEN:
     if (Is_Splice(src_val)) {
-        REBLEN len_at = Cell_Series_Len_At(src_val);
+        REBLEN len_at = Series_Len_At(src_val);
         ilen = len_at;
 
         // Adjust length of insertion if changing :PART
@@ -101,8 +101,7 @@ REBLEN Modify_Array(
             else if (ilen == 0)
                 tail_newline = false;
             else {
-                const Cell* tail_cell
-                    = Cell_List_Item_At(src_val) + ilen;
+                const Cell* tail_cell = List_Item_At(src_val) + ilen;
                 tail_newline = Get_Cell_Flag(tail_cell, NEWLINE_BEFORE);
             }
         }
@@ -118,7 +117,7 @@ REBLEN Modify_Array(
             src_rel = Array_Head(copy);
         }
         else {
-            src_rel = Cell_List_At(nullptr, src_val);  // may be tail
+            src_rel = List_At(nullptr, src_val);  // may be tail
         }
     }
     else {
@@ -360,14 +359,14 @@ REBLEN Modify_String_Or_Blob(
         if (Cell_Flex(dst) == Cell_Flex(src))
             goto form;
 
-        src_ptr = Cell_String_At(src);
+        src_ptr = String_At(src);
 
         // !!! We pass in UNLIMITED for the limit of how long the input is
         // because currently :PART speaks in terms of the destination series.
         // However, if that were changed to :LIMIT then we would want to
         // be cropping the :PART of the input via passing a parameter here.
         //
-        src_size_raw = Cell_String_Size_Limit_At(&src_len_raw, src, UNLIMITED);
+        src_size_raw = String_Size_Limit_At(&src_len_raw, src, UNLIMITED);
         if (not Is_Stub_Strand(dst_flex))
             src_len_raw = src_size_raw;
     }
@@ -492,7 +491,7 @@ REBLEN Modify_String_Or_Blob(
             // for operations like TO TEXT! of a BLOCK! are unclear...
             //
             const Element* item_tail;
-            const Element* item = Cell_List_At(&item_tail, src);
+            const Element* item = List_At(&item_tail, src);
             for (; item != item_tail; ++item)
                 Form_Element(mo, item);
             goto use_mold_buffer;
@@ -592,11 +591,11 @@ REBLEN Modify_String_Or_Blob(
         if (Is_Stub_Strand(dst_flex)) {
             Strand* dst_str = cast(Strand*, dst_flex);
             if (Is_Blob(dst)) {
-                dst_size_at = Cell_Series_Len_At(dst);  // byte count
+                dst_size_at = Series_Len_At(dst);  // byte count
                 dst_len_at = Strand_Index_At(dst_str, dst_size_at);
             }
             else
-                dst_size_at = Cell_String_Size_Limit_At(
+                dst_size_at = String_Size_Limit_At(
                     &dst_len_at,
                     dst,
                     UNLIMITED
@@ -607,7 +606,7 @@ REBLEN Modify_String_Or_Blob(
             book = maybe Link_Bookmarks(dst_str);
         }
         else {
-            dst_len_at = Cell_Series_Len_At(dst);
+            dst_len_at = Series_Len_At(dst);
             dst_size_at = dst_len_at;
         }
 
@@ -659,7 +658,7 @@ REBLEN Modify_String_Or_Blob(
                 }
                 else {
                     REBLEN check;  // v-- !!! This call uses bookmark, review
-                    part_size = Cell_String_Size_Limit_At(&check, dst, &part);
+                    part_size = String_Size_Limit_At(&check, dst, &part);
                     assert(check == part);
                     UNUSED(check);
                 }

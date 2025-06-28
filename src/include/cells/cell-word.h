@@ -32,7 +32,7 @@
 
 #define CELL_WORDLIKE_SYMBOL_NODE  CELL_SERIESLIKE_NODE
 
-INLINE bool Wordlike_Cell(const Cell* v) {
+INLINE bool Is_Cell_Wordlike(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
     if (Unchecked_Heart_Of(v) == TYPE_WORD)
         return true;
@@ -46,13 +46,13 @@ INLINE bool Wordlike_Cell(const Cell* v) {
     return Stub_Flavor(u_cast(const Flex*, payload1)) == FLAVOR_SYMBOL;
 }
 
-INLINE const Symbol* Cell_Word_Symbol(const Cell* c) {
-    assert(Wordlike_Cell(c));
+INLINE const Symbol* Word_Symbol(const Cell* c) {
+    assert(Is_Cell_Wordlike(c));
     return c_cast(Symbol*, CELL_WORDLIKE_SYMBOL_NODE(c));
 }
 
-#define Cell_Word_Id(v) \
-    Symbol_Id(Cell_Word_Symbol(v))
+#define Word_Id(v) \
+    Symbol_Id(Word_Symbol(v))
 
 // Use large indices to avoid confusion with 0 (reserved for unbound) and
 // to avoid confusing with actual indices into objects.
@@ -61,15 +61,15 @@ INLINE const Symbol* Cell_Word_Symbol(const Cell* c) {
 
 #define CELL_WORD_INDEX_I32(c)         (c)->payload.split.two.i32
 
-INLINE void Tweak_Cell_Word_Index(const Cell* v, Index i) {
-    assert(Wordlike_Cell(v));
+INLINE void Tweak_Word_Index(const Cell* v, Index i) {
+    assert(Is_Cell_Wordlike(v));
     assert(i != 0);
     CELL_WORD_INDEX_I32(m_cast(Cell*, v)) = i;
     Set_Cell_Flag(v, DONT_MARK_PAYLOAD_2);
 }
 
-INLINE void Tweak_Cell_Word_Stub(const Cell* v, Stub* stub) {
-    assert(Wordlike_Cell(v));
+INLINE void Tweak_Word_Stub(const Cell* v, Stub* stub) {
+    assert(Is_Cell_Wordlike(v));
     assert(Is_Stub_Let(stub) or Is_Stub_Patch(stub));
     m_cast(Cell*, v)->payload.split.two.base = stub;
     Clear_Cell_Flag(v, DONT_MARK_PAYLOAD_2);
@@ -138,7 +138,7 @@ INLINE const Strand* Intern_Unsized_Managed(const char *utf8)
 
 
 // It's fundamental to PARSE to recognize `|` and skip ahead to it to the end.
-// The checked build has enough checks on things like Cell_Word_Symbol() that
+// The checked build has enough checks on things like Word_Symbol() that
 // it adds up when you already tested someting Is_Word().  This reaches a
 // bit lower level to try and still have protections but speed up some--and
 // since there's no inlining in the checked build, FETCH_TO_BAR_OR_END=>macro
@@ -150,7 +150,7 @@ INLINE bool Is_Bar(const Value* v) {
     return (
         Heart_Of(v) == TYPE_WORD
         and LIFT_BYTE(v) == NOQUOTE_2
-        and Cell_Word_Symbol(v) == CANON(BAR_1)  // caseless | always canon
+        and Word_Symbol(v) == CANON(BAR_1)  // caseless | always canon
     );
 }
 
@@ -158,7 +158,7 @@ INLINE bool Is_Bar_Bar(const Atom* v) {
     return (
         Heart_Of(v) == TYPE_WORD
         and LIFT_BYTE(v) == NOQUOTE_2
-        and Cell_Word_Symbol(v) == CANON(_B_B)  // caseless || always canon
+        and Word_Symbol(v) == CANON(_B_B)  // caseless || always canon
     );
 }
 
@@ -166,21 +166,21 @@ INLINE bool Is_Anti_Word_With_Id(const Value* v, SymId id) {
     assert(id != SYM_0_constexpr);
     if (not Is_Keyword(v))
         return false;
-    return id == Cell_Word_Id(v);
+    return id == Word_Id(v);
 }
 
 INLINE bool Is_Quasi_Word_With_Id(const Value* v, SymId id) {
     assert(id != SYM_0_constexpr);
     if (not Is_Quasi_Word(v))
         return false;
-    return id == Cell_Word_Id(v);
+    return id == Word_Id(v);
 }
 
 INLINE bool Is_Word_With_Id(const Value* v, SymId id) {
     assert(id != SYM_0_constexpr);
     if (not Is_Word(v))
         return false;
-    return id == Cell_Word_Id(v);
+    return id == Word_Id(v);
 }
 
 
@@ -208,7 +208,7 @@ INLINE Slot* Init_Dual_Unset(Cell* slot) {
 INLINE bool Is_Dual_Unset(const Cell* cell) {
     if (LIFT_BYTE(cell) != DUAL_0)
         return false;
-    return Cell_Word_Id(cell) == SYM__PUNSET_P;
+    return Word_Id(cell) == SYM__PUNSET_P;
 }
 
 INLINE Atom* Init_Unset_Due_To_End(Init(Atom) out) {
@@ -239,7 +239,7 @@ INLINE bool Is_Blackhole_Slot(const Slot* slot) {
         return false;
     if (KIND_BYTE(slot) != TYPE_WORD)
         return false;
-    return Cell_Word_Id(slot) == SYM__PBLACKHOLE_P;
+    return Word_Id(slot) == SYM__PBLACKHOLE_P;
 }
 
 INLINE Slot* Init_Blackhole_Slot(Init(Slot) out) {

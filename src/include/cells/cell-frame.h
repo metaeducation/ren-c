@@ -73,7 +73,7 @@
 //
 
 
-INLINE Phase* Cell_Frame_Phase(const Value* c) {
+INLINE Phase* Frame_Phase(const Value* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
 
     Base* base = CELL_FRAME_PAYLOAD_1_PHASE(c);  // const irrelevant
@@ -86,13 +86,13 @@ INLINE Phase* Cell_Frame_Phase(const Value* c) {
 }
 
 INLINE Details* Ensure_Cell_Frame_Details(const Value* c) {
-    Phase* phase = Cell_Frame_Phase(c);
+    Phase* phase = Frame_Phase(c);
     assert(Is_Stub_Details(phase));
     return cast(Details*, phase);
 }
 
 INLINE Option(Details*) Try_Cell_Frame_Details(const Value* c) {
-    Phase* phase = Cell_Frame_Phase(c);
+    Phase* phase = Frame_Phase(c);
     if (not Is_Stub_Details(phase))
         return nullptr;
     return cast(Details*, phase);
@@ -123,10 +123,10 @@ INLINE Option(Details*) Try_Cell_Frame_Details(const Value* c) {
 // you'd be storing something that wouldn't be stored otherwise, so it would
 // stop being "cheap".
 
-INLINE void Tweak_Cell_Frame_Lens(Value* v, Phase* lens) {
+INLINE void Tweak_Frame_Lens(Value* v, Phase* lens) {
     assert(Heart_Of(v) == TYPE_FRAME);  // may be protected (e.g. archetype)
     assert(Is_Stub_Varlist(lens) or Is_Stub_Details(lens));
-    Tweak_Cell_Frame_Lens_Or_Label(v, lens);
+    Tweak_Frame_Lens_Or_Label(v, lens);
 }
 
 INLINE Option(Phase*) Cell_Frame_Lens(const Value* c) {
@@ -154,13 +154,13 @@ INLINE Option(const Symbol*) Cell_Frame_Label_Deep(const Value* c) {
     Option(const Symbol*) label = Cell_Frame_Label(c);
     if (label)
         return label;
-    return Cell_Frame_Label(Phase_Archetype(Cell_Frame_Phase(c)));
+    return Cell_Frame_Label(Phase_Archetype(Frame_Phase(c)));
 }
 
 INLINE void Update_Frame_Cell_Label(Value* c, Option(const Symbol*) label) {
     assert(Heart_Of(c) == TYPE_FRAME);
     Assert_Cell_Writable(c);  // archetype R/O
-    Tweak_Cell_Frame_Lens_Or_Label(c, label);
+    Tweak_Frame_Lens_Or_Label(c, label);
 }
 
 
@@ -301,7 +301,7 @@ INLINE Option(InfixMode) Cell_Frame_Infix_Mode(const Value* c) {
     return u_cast(InfixMode, Get_Cell_Crumb(c));
 }
 
-INLINE void Tweak_Cell_Frame_Infix_Mode(Value* c, Option(InfixMode) mode) {
+INLINE void Tweak_Frame_Infix_Mode(Value* c, Option(InfixMode) mode) {
     assert(Heart_Of(c) == TYPE_FRAME);
     Set_Cell_Crumb(c, maybe mode);
 }

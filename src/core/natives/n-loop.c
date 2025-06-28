@@ -50,7 +50,7 @@ bool Try_Catch_Break_Or_Continue(
         return false;
 
     if (
-        Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(DEFINITIONAL_BREAK))
+        Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_BREAK))
         and Cell_Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
@@ -60,7 +60,7 @@ bool Try_Catch_Break_Or_Continue(
     }
 
     if (
-        Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(DEFINITIONAL_CONTINUE))
+        Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_CONTINUE))
         and Cell_Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
@@ -100,7 +100,7 @@ DECLARE_NATIVE(DEFINITIONAL_BREAK)
 
     Element* label = Init_Frame(
         SPARE,
-        Cell_Frame_Phase(LIB(DEFINITIONAL_BREAK)),
+        Frame_Phase(LIB(DEFINITIONAL_BREAK)),
         CANON(BREAK),
         cast(VarList*, loop_level->varlist)
     );
@@ -147,7 +147,7 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 
     Element* label = Init_Frame(
         SPARE,
-        Cell_Frame_Phase(LIB(DEFINITIONAL_CONTINUE)),
+        Frame_Phase(LIB(DEFINITIONAL_CONTINUE)),
         CANON(CONTINUE),
         Varlist_Of_Level_Force_Managed(loop_level)
     );
@@ -163,12 +163,12 @@ void Add_Definitional_Break_Continue(
     Element* body,
     Level* loop_level
 ){
-    Context* parent = Cell_List_Binding(body);
+    Context* parent = List_Binding(body);
     Let* let_continue = Make_Let_Variable(CANON(CONTINUE), parent);
 
     Init_Action(
         Stub_Cell(let_continue),
-        Cell_Frame_Phase(LIB(DEFINITIONAL_CONTINUE)),
+        Frame_Phase(LIB(DEFINITIONAL_CONTINUE)),
         CANON(CONTINUE),  // relabel (the CONTINUE in lib is a dummy action)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to continue
     );
@@ -176,7 +176,7 @@ void Add_Definitional_Break_Continue(
     Let* let_break = Make_Let_Variable(CANON(BREAK), let_continue);
     Init_Action(
         Stub_Cell(let_break),
-        Cell_Frame_Phase(LIB(DEFINITIONAL_BREAK)),
+        Frame_Phase(LIB(DEFINITIONAL_BREAK)),
         CANON(BREAK),  // relabel (the BREAK in lib is a dummy action)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to break
     );
@@ -198,8 +198,8 @@ static Bounce Loop_Series_Common(
 ){
     // !!! This limits incoming `end` to the array bounds.  Should it assert?
     //
-    if (end >= Cell_Series_Len_Head(start))
-        end = Cell_Series_Len_Head(start);
+    if (end >= Series_Len_Head(start))
+        end = Series_Len_Head(start);
     if (end < 0)
         end = 0;
 
@@ -258,8 +258,8 @@ static Bounce Loop_Series_Common(
         // can be mutated during the loop body, so the end has to be refreshed
         // on each iteration.  Review ramifications of HOLD-ing it.
         //
-        if (end >= Cell_Series_Len_Head(start))
-            end = Cell_Series_Len_Head(start);
+        if (end >= Series_Len_Head(start))
+            end = Series_Len_Head(start);
 
         *state += bump;
     }
@@ -556,13 +556,13 @@ DECLARE_NATIVE(FOR_SKIP)
     //
     if (
         skip < 0
-        and VAL_INDEX_UNBOUNDED(spare) >= Cell_Series_Len_Head(spare)
+        and VAL_INDEX_UNBOUNDED(spare) >= Series_Len_Head(spare)
     ){
-        VAL_INDEX_UNBOUNDED(spare) = Cell_Series_Len_Head(spare) + skip;
+        VAL_INDEX_UNBOUNDED(spare) = Series_Len_Head(spare) + skip;
     }
 
     while (true) {
-        REBINT len = Cell_Series_Len_Head(spare);  // always >= 0
+        REBINT len = Series_Len_Head(spare);  // always >= 0
         REBINT index = VAL_INDEX_RAW(spare);  // may have been set to < 0 below
 
         if (index < 0)
@@ -643,7 +643,7 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
 
     Element* label = Init_Frame(
         SPARE,
-        Cell_Frame_Phase(LIB(DEFINITIONAL_STOP)),
+        Frame_Phase(LIB(DEFINITIONAL_STOP)),
         CANON(STOP),
         cast(VarList*, loop_level->varlist)
     );
@@ -659,14 +659,14 @@ void Add_Definitional_Stop(
     Element* body,
     Level* loop_level
 ){
-    Context* parent = Cell_List_Binding(body);
+    Context* parent = List_Binding(body);
 
     Force_Level_Varlist_Managed(loop_level);
 
     Let* let_stop = Make_Let_Variable(CANON(STOP), parent);
     Init_Action(
         Stub_Cell(let_stop),
-        Cell_Frame_Phase(LIB(DEFINITIONAL_STOP)),
+        Frame_Phase(LIB(DEFINITIONAL_STOP)),
         CANON(STOP),  // relabel (the STOP in lib is a dummy action)
         cast(VarList*, loop_level->varlist)  // what to stop
     );
@@ -748,7 +748,7 @@ DECLARE_NATIVE(CYCLE)
     const Value* label = VAL_THROWN_LABEL(LEVEL);
     if (
         Is_Frame(label)
-        and Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(DEFINITIONAL_STOP))
+        and Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_STOP))
         and Cell_Frame_Coupling(label) == Level_Varlist(LEVEL)
     ){
         CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
@@ -822,7 +822,7 @@ Element* Init_Loop_Each_May_Alias_Data(Sink(Element) iterator, Value* data)
         if (Any_Series(data)) {
             les->flex = Cell_Flex(data);
             les->u.eser.index = VAL_INDEX(data);
-            les->u.eser.len = Cell_Series_Len_Head(data);  // has HOLD, won't change
+            les->u.eser.len = Series_Len_Head(data);  // has HOLD, won't change
         }
         else if (Is_Module(data)) {
             les->flex = g_empty_array;  // !!! workaround, not a Flex
@@ -965,12 +965,12 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
             );
 
             if (heart == TYPE_MODULE) {
-                Tweak_Cell_Word_Index(spare_key, INDEX_PATCHED);
+                Tweak_Word_Index(spare_key, INDEX_PATCHED);
                 Tweak_Cell_Binding(spare_key, Cell_Module_Sea(les->data));
             }
             else {
                 Tweak_Cell_Binding(spare_key, Cell_Varlist(les->data));
-                Tweak_Cell_Word_Index(spare_key, les->u.evars.index);
+                Tweak_Word_Index(spare_key, les->u.evars.index);
             }
             e = Trap_Write_Loop_Slot_May_Bind(slot, spare_key, les->data);
             if (e)
@@ -1445,7 +1445,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     Flex* flex = Cell_Flex_Ensure_Mutable(data);  // check even if empty
 
-    if (VAL_INDEX(data) >= Cell_Series_Len_At(data))  // past series end
+    if (VAL_INDEX(data) >= Series_Len_At(data))  // past series end
         return nullptr;
 
     VarList* varlist;
@@ -1496,7 +1496,7 @@ DECLARE_NATIVE(REMOVE_EACH)
                 Derelativize(
                     var,
                     Array_At(Cell_Array(data), index),
-                    Cell_List_Binding(data)
+                    List_Binding(data)
                 );
             else if (Is_Blob(data)) {
                 Binary* b = cast(Binary*, flex);
@@ -1630,7 +1630,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     if (Any_List(data)) {
         if (not threw and breaking) {  // clean marks, don't remove
             const Element* tail;
-            Element* temp = Cell_List_At_Known_Mutable(&tail, data);
+            Element* temp = List_At_Known_Mutable(&tail, data);
             for (; temp != tail; ++temp) {
                 if (Get_Cell_Flag(temp, NOTE_REMOVE))
                     Clear_Cell_Flag(temp, NOTE_REMOVE);
@@ -1641,7 +1641,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         Copy_Cell(OUT, data);  // going to be the same series
 
         const Element* tail;
-        Element* dest = Cell_List_At_Known_Mutable(&tail, data);
+        Element* dest = List_At_Known_Mutable(&tail, data);
         Element* src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
@@ -1680,7 +1680,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
         // If there was a THROW, or panic() we need the remaining data
         //
-        REBLEN orig_len = Cell_Series_Len_Head(data);
+        REBLEN orig_len = Series_Len_Head(data);
         assert(start <= orig_len);
         Append_Ascii_Len(
             mo->strand,
@@ -1690,8 +1690,8 @@ DECLARE_NATIVE(REMOVE_EACH)
 
         Binary* popped = Pop_Molded_Binary(mo);  // not UTF-8 if binary [7]
 
-        assert(Binary_Len(popped) <= Cell_Series_Len_Head(data));
-        removals = Cell_Series_Len_Head(data) - Binary_Len(popped);
+        assert(Binary_Len(popped) <= Series_Len_Head(data));
+        removals = Series_Len_Head(data) - Binary_Len(popped);
 
         Swap_Flex_Content(popped, b);  // swap identity, process_non_blank:[1]
 
@@ -1707,7 +1707,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
         // If there was a THROW, or panic() we need the remaining data
         //
-        REBLEN orig_len = Cell_Series_Len_Head(data);
+        REBLEN orig_len = Series_Len_Head(data);
         assert(start <= orig_len);
 
         Strand* s = cast(Strand*, flex);
@@ -1717,8 +1717,8 @@ DECLARE_NATIVE(REMOVE_EACH)
 
         Strand* popped = Pop_Molded_Strand(mo);
 
-        assert(Strand_Len(popped) <= Cell_Series_Len_Head(data));
-        removals = Cell_Series_Len_Head(data) - Strand_Len(popped);
+        assert(Strand_Len(popped) <= Series_Len_Head(data));
+        removals = Series_Len_Head(data) - Strand_Len(popped);
 
         Swap_Flex_Content(popped, s);  // swap Flex identity [3]
 
@@ -1937,7 +1937,7 @@ DECLARE_NATIVE(MAP)
 
     if (Is_Splice(spare)) {
         const Element* tail;
-        const Element* v = Cell_List_At(&tail, spare);
+        const Element* v = List_At(&tail, spare);
         for (; v != tail; ++v)
             Copy_Cell(PUSH(), v);  // Note: no binding on antiform SPLICE!
     }

@@ -699,7 +699,7 @@ e-symids/emit [syms-cscape --[
      * assigned 16-bit integer "SYM" compile-time-constants, to be used in
      * switch() for efficiency in the core.
      *
-     *     switch (Cell_Word_Id(color)) {
+     *     switch (Word_Id(color)) {
      *       case SYM_BLUE: ...
      *       case SYM_RED: ...
      *     }
@@ -730,7 +730,7 @@ e-symids/emit [syms-cscape --[
      *
      * Note: Any interning that *does not have* a compile-time constant
      * assigned to it will have a symbol ID of 0.  See Option(SymId) for how
-     * potential bugs like `Cell_Word_Id(a) == Cell_Word_Id(b)` are mitigated
+     * potential bugs like `Word_Id(a) == Word_Id(b)` are mitigated
      * by preventing such comparisons.
      */
     enum SymIdEnum {

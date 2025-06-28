@@ -414,7 +414,7 @@ Bounce Stepper_Executor(Level* L)
         ){
             goto give_up_backward_quote_priority;
         }
-        infixed = Cell_Frame_Phase(L_next_gotten_raw);
+        infixed = Frame_Phase(L_next_gotten_raw);
         break; }
 
       case TYPE_CHAIN:
@@ -1013,7 +1013,7 @@ Bounce Stepper_Executor(Level* L)
         Param* param = Phase_Param(details, 1);
         Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
-        switch (Cell_Parameter_Class(param)) {
+        switch (Parameter_Class(param)) {
           case PARAMCLASS_NORMAL:
             break;
 
@@ -1514,11 +1514,11 @@ Bounce Stepper_Executor(Level* L)
 
     assert(STATE == ST_STEPPER_SET_BLOCK and Is_Block(CURRENT));
 
-    if (Cell_Series_Len_At(CURRENT) == 0)  // not supported [1]
+    if (Series_Len_At(CURRENT) == 0)  // not supported [1]
         return PANIC("SET-BLOCK! must not be empty for now.");
 
     const Element* tail;
-    const Element* check = Cell_List_At(&tail, CURRENT);
+    const Element* check = List_At(&tail, CURRENT);
     Context* check_binding = Derive_Binding(L_binding, CURRENT);
 
     // we've extracted the array at and tail, can reuse current now
@@ -1561,11 +1561,11 @@ Bounce Stepper_Executor(Level* L)
     if (circled)
         return PANIC("Can only {Circle} one multi-return result");
 
-    Length len_at = Cell_Series_Len_At(check);
+    Length len_at = Series_Len_At(check);
     if (len_at == 1) {
         Derelativize(
             CURRENT,
-            Cell_List_Item_At(check),
+            List_Item_At(check),
             check_binding
         );
     }
@@ -1715,7 +1715,7 @@ Bounce Stepper_Executor(Level* L)
     const Element* pack_tail;
 
     if (Is_Pack(OUT)) {  // antiform block
-        pack_at_lifted = Cell_List_At(&pack_tail, OUT);
+        pack_at_lifted = List_At(&pack_tail, OUT);
 
         pack_array = Cell_Array(OUT);
         Push_Lifeguard(pack_array);
@@ -2011,7 +2011,7 @@ Bounce Stepper_Executor(Level* L)
     //    function might be okay with seeing nothing on the left.  Start a
     //    new expression and let it error if that's not ok.
 
-    Phase* infixed = Cell_Frame_Phase(L_next_gotten_raw);
+    Phase* infixed = Frame_Phase(L_next_gotten_raw);
     ParamList* paramlist = Phase_Paramlist(infixed);
 
     if (Get_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST)) {  // [1]
@@ -2020,7 +2020,7 @@ Bounce Stepper_Executor(Level* L)
             return PANIC(Error_Literal_Left_Path_Raw());
 
         const Param* first = First_Unspecialized_Param(nullptr, infixed);
-        if (Cell_Parameter_Class(first) == PARAMCLASS_SOFT) {
+        if (Parameter_Class(first) == PARAMCLASS_SOFT) {
             if (Get_Feed_Flag(L->feed, NO_LOOKAHEAD)) {
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
                 Clear_Eval_Executor_Flag(L, INERT_OPTIMIZATION);

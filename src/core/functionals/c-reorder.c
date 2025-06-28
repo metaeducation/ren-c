@@ -79,7 +79,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
 
     Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
-    Tweak_Level_Phase(L, Cell_Frame_Phase(reorderee));
+    Tweak_Level_Phase(L, Frame_Phase(reorderee));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(reorderee));
 
     return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
@@ -101,7 +101,7 @@ bool Reorderer_Details_Querier(
 
     Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
-    Details* reorderee_details = Phase_Details(Cell_Frame_Phase(reorderee));
+    Details* reorderee_details = Phase_Details(Frame_Phase(reorderee));
     DetailsQuerier* querier = Details_Querier(reorderee_details);
     return (*querier)(out, reorderee_details, property);
 }
@@ -129,7 +129,7 @@ DECLARE_NATIVE(REORDER)
     Option(Error*) error = SUCCESS;
 
     Element* original = Element_ARG(ORIGINAL);
-    Phase* reorderee = Cell_Frame_Phase(ARG(ORIGINAL));
+    Phase* reorderee = Frame_Phase(ARG(ORIGINAL));
     Option(const Symbol*) label  = Cell_Frame_Label_Deep(ARG(ORIGINAL));
 
     // Working with just the exemplar means we will lose the partials ordering
@@ -167,7 +167,7 @@ DECLARE_NATIVE(REORDER)
     // be pushed.
     //
     const Element* item;  // starts as tail
-    const Element* at = Cell_List_At(&item, ARG(ORDERING));
+    const Element* at = List_At(&item, ARG(ORDERING));
     for (; at != item--; ) {
         const Symbol* symbol;
 
@@ -177,7 +177,7 @@ DECLARE_NATIVE(REORDER)
         //
         bool ignore = false;
         if (Any_Word(item)) {  // on the record, we only just allow WORD!...
-            symbol = Cell_Word_Symbol(item);
+            symbol = Word_Symbol(item);
         }
         else if (Is_Refinement(item)) {
             symbol = Cell_Refinement_Symbol(item);
@@ -191,7 +191,7 @@ DECLARE_NATIVE(REORDER)
                 error = Error_User("REORDER allows single quoted ANY-WORD?");
                 goto cleanup_binder;
             }
-            symbol = Cell_Word_Symbol(item);
+            symbol = Word_Symbol(item);
         }
         else {
             error = Error_User("Unknown REORDER element");
@@ -216,7 +216,7 @@ DECLARE_NATIVE(REORDER)
         }
 
         Init_Word_Bound(PUSH(), symbol, paramlist);
-        Tweak_Cell_Word_Index(TOP_ELEMENT, index);
+        Tweak_Word_Index(TOP_ELEMENT, index);
     }
 
     // Make sure that all parameters that were mandatory got a place in the

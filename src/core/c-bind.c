@@ -45,8 +45,8 @@ void Bind_Values_Inner_Loop(
 ){
     Element* v = head;
     for (; v != tail; ++v) {
-        if (Wordlike_Cell(v)) {
-          const Symbol* symbol = Cell_Word_Symbol(v);
+        if (Is_Cell_Wordlike(v)) {
+          const Symbol* symbol = Word_Symbol(v);
 
           if (Is_Stub_Sea(context)) {
             SeaOfVars* sea = cast(SeaOfVars*, context);
@@ -54,7 +54,7 @@ void Bind_Values_Inner_Loop(
             Patch* patch = maybe Sea_Patch(sea, symbol, strict);
             if (patch) {
                 Tweak_Cell_Binding(v, sea);
-                Tweak_Cell_Word_Stub(v, patch);
+                Tweak_Word_Stub(v, patch);
             }
             else if (
                 add_midstream_types == SYM_ANY
@@ -84,7 +84,7 @@ void Bind_Values_Inner_Loop(
                 // been relative.
 
                 Tweak_Cell_Binding(v, varlist);
-                Tweak_Cell_Word_Index(v, n);
+                Tweak_Word_Index(v, n);
             }
             else if (
                 add_midstream_types == SYM_ANY
@@ -102,9 +102,9 @@ void Bind_Values_Inner_Loop(
           }
         }
         else if (flags & BIND_DEEP) {
-            if (Listlike_Cell(v)) {
+            if (Is_Cell_Listlike(v)) {
                 const Element* sub_tail;
-                Element* sub_at = Cell_List_At_Mutable_Hack(&sub_tail, v);
+                Element* sub_at = List_At_Mutable_Hack(&sub_tail, v);
                 Bind_Values_Inner_Loop(
                     binder,
                     sub_at,
@@ -181,14 +181,14 @@ void Unbind_Values_Core(
     Element* v = head;
     for (; v != tail; ++v) {
         if (
-            Wordlike_Cell(v)
+            Is_Cell_Wordlike(v)
             and (not context or Cell_Binding(v) == unwrap context)
         ){
             Unbind_Any_Word(v);
         }
-        else if (Listlike_Cell(v) and deep) {
+        else if (Is_Cell_Listlike(v) and deep) {
             const Element* sub_tail;
-            Element* sub_at = Cell_List_At_Mutable_Hack(&sub_tail, v);
+            Element* sub_at = List_At_Mutable_Hack(&sub_tail, v);
             Unbind_Values_Core(sub_at, sub_tail, context, true);
         }
     }
@@ -207,26 +207,26 @@ bool Try_Bind_Word(const Element* context, Element* word)
     if (Is_Module(context)) {
         Option(Patch*) patch = Sea_Patch(
             Cell_Module_Sea(context),
-            Cell_Word_Symbol(word),
+            Word_Symbol(word),
             strict
         );
         if (not patch)
             return false;
         Tweak_Cell_Binding(word, Cell_Module_Sea(context));
-        Tweak_Cell_Word_Stub(word, unwrap patch);
+        Tweak_Word_Stub(word, unwrap patch);
         return true;
     }
 
     Option(Index) index = Find_Symbol_In_Context(
         context,
-        Cell_Word_Symbol(word),
+        Word_Symbol(word),
         strict
     );
     if (not index)
         return false;
 
     Tweak_Cell_Binding(word, Cell_Varlist(context));
-    Tweak_Cell_Word_Index(word, unwrap index);
+    Tweak_Word_Index(word, unwrap index);
     return true;
 }
 
@@ -270,7 +270,7 @@ Let* Make_Let_Variable(
 bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
 {
     Context* binding = Cell_Binding(wordlike);
-    const Symbol* symbol = Cell_Word_Symbol(wordlike);
+    const Symbol* symbol = Word_Symbol(wordlike);
 
     Context* c = binding;
     Context* next;
@@ -323,7 +323,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
         Element* overbind = Known_Element(Stub_Cell(c));
 
         if (Is_Word(overbind)) {  // OVERBIND use of single WORD!
-            if (Cell_Word_Symbol(overbind) != symbol)
+            if (Word_Symbol(overbind) != symbol)
                 goto next_context;
 
             c = Cell_Binding(overbind);  // use its context, I guess?
@@ -334,7 +334,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
         if (Is_Frame(overbind)) {
             lens = Cell_Frame_Lens(overbind);
             if (not lens)  // need lens to not default to full visibility [1]
-                lens = Phase_Paramlist(Cell_Frame_Phase(overbind));
+                lens = Phase_Paramlist(Frame_Phase(overbind));
         }
 
         c = Cell_Context(overbind);  // do search on other contexts
@@ -354,7 +354,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
         Patch* patch = maybe Sea_Patch(sea, symbol, strict);
         if (patch) {
             Init_Module(out, sea);
-            Tweak_Cell_Word_Stub(wordlike, patch);
+            Tweak_Word_Stub(wordlike, patch);
             return true;
         }
         goto next_context;
@@ -372,7 +372,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
     if (flavor == FLAVOR_LET) {
         if (Let_Symbol(c) == symbol) {
             Init_Let(out, c);
-            Tweak_Cell_Word_Stub(wordlike, c);
+            Tweak_Word_Stub(wordlike, c);
             return true;
         }
         goto next_context;
@@ -417,7 +417,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
     );
 
     if (index) {
-        Tweak_Cell_Word_Index(wordlike, unwrap index);
+        Tweak_Word_Index(wordlike, unwrap index);
         return true;
     }
 
@@ -610,7 +610,7 @@ DECLARE_NATIVE(LET)
     const Symbol* symbol;
 
     if (Is_Word(vars) or Is_Meta_Form_Of(WORD, vars)) {
-        symbol = Cell_Word_Symbol(vars);
+        symbol = Word_Symbol(vars);
         goto handle_word_or_set_word;
     }
 
@@ -679,8 +679,8 @@ DECLARE_NATIVE(LET)
     }
 
     const Element* tail;
-    const Element* item = Cell_List_At(&tail, vars);
-    Context* item_binding = Cell_List_Binding(vars);
+    const Element* item = List_At(&tail, vars);
+    Context* item_binding = List_Binding(vars);
 
     assert(TOP_INDEX == STACK_BASE);
 
@@ -740,10 +740,10 @@ DECLARE_NATIVE(LET)
           wordlike:
           case TYPE_WORD: {
             Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
-            const Symbol* symbol = Cell_Word_Symbol(temp);
+            const Symbol* symbol = Word_Symbol(temp);
             bindings = Make_Let_Variable(symbol, bindings);
             Tweak_Cell_Binding(TOP_ELEMENT, bindings);
-            Tweak_Cell_Word_Stub(TOP_ELEMENT, bindings);
+            Tweak_Word_Stub(TOP_ELEMENT, bindings);
             break; }
 
           default:
@@ -854,7 +854,7 @@ DECLARE_NATIVE(LET)
     // that this can create the problem of applying the binding twice; this
     // needs systemic review.
 
-    Context* bindings = Cell_List_Binding(Element_LOCAL(BINDINGS_HOLDER));
+    Context* bindings = List_Binding(Element_LOCAL(BINDINGS_HOLDER));
     Tweak_Cell_Binding(Feed_Data(L->feed), bindings);
 
     return OUT;
@@ -896,10 +896,10 @@ DECLARE_NATIVE(ADD_LET_BINDING)
             Set_Base_Managed_Bit(parent);
     } else {
         assert(Any_List(env));
-        parent = Cell_List_Binding(env);
+        parent = List_Binding(env);
     }
 
-    Let* let = Make_Let_Variable(Cell_Word_Symbol(ARG(WORD)), parent);
+    Let* let = Make_Let_Variable(Word_Symbol(ARG(WORD)), parent);
 
     Atom* atom = Atom_ARG(VALUE);
     if (Is_Meta_Form_Of(WORD, word)) {
@@ -999,7 +999,7 @@ void Clonify_And_Bind_Relative(
 
     if (
         relative
-        and Wordlike_Cell(v)
+        and Is_Cell_Wordlike(v)
         and IS_WORD_UNBOUND(v)  // use unbound words as "in frame" cache [1]
     ){
         // [2] is not active at this time
@@ -1011,7 +1011,7 @@ void Clonify_And_Bind_Relative(
         Element* deep = nullptr;
         Element* deep_tail = nullptr;
 
-        if (Pairlike_Cell(v)) {
+        if (Is_Cell_Pairlike(v)) {
             Pairing* copy = Copy_Pairing(
                 Cell_Pairing(v),
                 BASE_FLAG_MANAGED
@@ -1021,7 +1021,7 @@ void Clonify_And_Bind_Relative(
             deep = Pairing_Head(copy);
             deep_tail = Pairing_Tail(copy);
         }
-        else if (Listlike_Cell(v)) {  // ruled out pairlike sequences above...
+        else if (Is_Cell_Listlike(v)) {  // ruled out pairlike sequences above...
             Source* copy = cast(Source*, Copy_Array_At_Extra_Shallow(
                 STUB_MASK_MANAGED_SOURCE,
                 Cell_Array(v),
@@ -1108,8 +1108,8 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 
     const Source* original = Cell_Array(body);
     REBLEN index = VAL_INDEX(body);
-   /* Context* binding = Cell_List_Binding(body); */
-    REBLEN tail = Cell_Series_Len_At(body);
+   /* Context* binding = List_Binding(body); */
+    REBLEN tail = Series_Len_At(body);
     assert(tail <= Array_Len(original));
 
     if (index > tail)  // !!! should this be asserted?
@@ -1192,7 +1192,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
         Move_Cell(spec, cast(Element*, temp));
     }
 
-    REBLEN num_vars = Is_Block(spec) ? Cell_Series_Len_At(spec) : 1;
+    REBLEN num_vars = Is_Block(spec) ? Series_Len_At(spec) : 1;
     if (num_vars == 0)
         return Error_Bad_Value(spec);
 
@@ -1202,8 +1202,8 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
     Context* binding;  // needed if looking up @var to write to
     bool rebinding;
     if (Is_Block(spec)) {  // walk the block for errors BEFORE making binder
-        binding = Cell_List_Binding(spec);
-        item = Cell_List_At(&tail, spec);
+        binding = List_Binding(spec);
+        item = List_At(&tail, spec);
 
         const Element* check = item;
 
@@ -1281,7 +1281,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
         ){
             assert(rebinding); // shouldn't get here unless we're rebinding
 
-            symbol = Cell_Word_Symbol(item);
+            symbol = Word_Symbol(item);
 
             if (Try_Add_Binder_Index(binder, symbol, index)) {
                 Value* var = Init_Tripwire(Append_Context(varlist, symbol));
@@ -1364,7 +1364,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
     // Virtual version of `Bind_Values_Deep(Array_Head(body_out), context)`
     //
     if (rebinding) {
-        Use* use = Alloc_Use_Inherits(Cell_List_Binding(body));
+        Use* use = Alloc_Use_Inherits(List_Binding(body));
         Copy_Cell(Stub_Cell(use), Varlist_Archetype(varlist));
         Tweak_Cell_Binding(body, use);
     }
@@ -1520,7 +1520,7 @@ Option(Error*) Trap_Write_Loop_Slot_May_Bind_Or_Decay(
     Derelativize(
         temp,
         cast(const Element*, unwrap write),
-        Cell_List_Binding(cast(const Element*, container))
+        List_Binding(cast(const Element*, container))
     );
     Copy_Cell(unwrap write, temp);
     return Trap_Write_Slot(slot, temp);
@@ -1575,12 +1575,12 @@ void Assert_Cell_Binding_Valid_Core(const Value* cell)
     }
 
     if (Is_Stub_Use(binding)) {
-        /*assert(Listlike_Cell(cell));  // can't bind words to use */
+        /*assert(Is_Cell_Listlike(cell));  // can't bind words to use */
         return;
     }
 
     if (Is_Stub_Details(binding)) {  // relative binding
-        /* assert(Listlike_Cell(cell)); */  // weird word cache trick uses
+        /* assert(Is_Cell_Listlike(cell)); */  // weird word cache trick uses
         return;
     }
 

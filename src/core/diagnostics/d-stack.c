@@ -44,7 +44,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
     const Element* tail = Array_Tail(array);
     Element* item = Array_Head(array);
     for (; item != tail; ++item) {
-        if (Any_List(item) and Cell_Series_Len_At(item) > limit) {
+        if (Any_List(item) and Series_Len_At(item) > limit) {
             Source* copy = Copy_Source_At_Max_Shallow(
                 Cell_Array(item),
                 VAL_INDEX(item),

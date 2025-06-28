@@ -99,7 +99,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     assert(Is_Block(block));
 
     assert(Link_Inherit_Bind(L->varlist) == nullptr);
-    Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(block));
+    Add_Link_Inherit_Bind(L->varlist, List_Binding(block));
     Force_Level_Varlist_Managed(L);
 
     Element* spare_rebound = Copy_Cell(SPARE, block);

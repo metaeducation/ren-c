@@ -332,14 +332,14 @@ Bounce Action_Executor(Level* L)
             for (; ordered != lowest; --ordered) {
                 assert(Is_Pushed_Refinement(ordered));
 
-                if (Cell_Word_Symbol(ordered) != param_symbol)
+                if (Word_Symbol(ordered) != param_symbol)
                     continue;
 
                 possibly(  // need to use u_cast() due to this possibility
                     ARG == Level_Args_Head(L) and Is_Cell_Poisoned(ARG)
                 );
                 REBLEN offset = ARG - u_cast(Atom*, Level_Args_Head(L));
-                Tweak_Cell_Word_Index(ordered, offset + 1);
+                Tweak_Word_Index(ordered, offset + 1);
                 Tweak_Cell_Binding(ordered, L->u.action.original);
 
                 if (Is_Parameter_Unconstrained(PARAM)) {
@@ -371,7 +371,7 @@ Bounce Action_Executor(Level* L)
 
       fulfill_arg: ;  // semicolon needed--next statement is declaration
 
-        ParamClass pclass = Cell_Parameter_Class(PARAM);
+        ParamClass pclass = Parameter_Class(PARAM);
 
   //=//// HANDLE IF NEXT ARG IS IN OUT SLOT (e.g. INFIX, CHAIN) ///////////=//
 
@@ -644,7 +644,7 @@ Bounce Action_Executor(Level* L)
                 Lookahead_To_Sync_Infix_Defer_Flag(L->feed) and  // ensure got
                 (Get_Flavor_Flag(
                     VARLIST,
-                    Phase_Paramlist(Cell_Frame_Phase(&L->feed->gotten)),
+                    Phase_Paramlist(Frame_Phase(&L->feed->gotten)),
                     PARAMLIST_LITERAL_FIRST
                 ))
             ){
@@ -733,7 +733,7 @@ Bounce Action_Executor(Level* L)
         ARG += offset;
         PARAM += offset;
 
-        assert(Cell_Word_Symbol(TOP) == Key_Symbol(KEY));
+        assert(Word_Symbol(TOP) == Key_Symbol(KEY));
         DROP();
 
         if (Is_Parameter_Unconstrained(PARAM)) {  // no callsite arg, just drop
@@ -819,7 +819,7 @@ Bounce Action_Executor(Level* L)
         const Param* param = PARAM;
         while (Is_Specialized(param)) {
             Element* archetype = Flex_Head(Element, phase);
-            phase = Cell_Frame_Phase(archetype);
+            phase = Frame_Phase(archetype);
             param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
         }
 
@@ -1078,7 +1078,7 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
     assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
     assert(not Is_Level_Infix(L));  // Begin_Action() sets mode
 
-    Phase* phase = Cell_Frame_Phase(frame);
+    Phase* phase = Frame_Phase(frame);
 
     Length num_args = Phase_Num_Params(phase);  // includes specialized, locals
 

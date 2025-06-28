@@ -108,9 +108,8 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
     StackIndex base = TOP_INDEX;  // we push refinements as we find them
 
     ParamList* varlist = Varlist_Of_Level_Force_Managed(L1);
-    ParamList* lens = Phase_Paramlist(
-        Cell_Frame_Phase(Phase_Archetype(varlist))
-    );
+    ParamList* lens = Phase_Paramlist(Frame_Phase(Phase_Archetype(varlist)));
+
     DECLARE_ELEMENT (frame1);
     Init_Lensed_Frame(
         frame1,
@@ -208,7 +207,7 @@ Bounce Hijacker_Dispatcher(Level* const L)
 
     Value* hijacker_frame = Details_At(details, IDX_HIJACKER_FRAME);
 
-    Phase* hijacker = Cell_Frame_Phase(hijacker_frame);
+    Phase* hijacker = Frame_Phase(hijacker_frame);
     Option(VarList*) hijacker_coupling = Cell_Frame_Coupling(hijacker_frame);
 
     // If the hijacked function was called directly -or- by an adaptation or
@@ -254,7 +253,7 @@ bool Hijacker_Details_Querier(
 
     Value* hijacker = Details_At(details, IDX_HIJACKER_FRAME);
 
-    Details* hijacker_details = Phase_Details(Cell_Frame_Phase(hijacker));
+    Details* hijacker_details = Phase_Details(Frame_Phase(hijacker));
     DetailsQuerier* querier = Details_Querier(hijacker_details);
     return (*querier)(out, hijacker_details, property);
 }
@@ -312,7 +311,7 @@ DECLARE_NATIVE(HIJACK)
 {
     INCLUDE_PARAMS_OF_HIJACK;
 
-    Phase* victim = Cell_Frame_Phase(ARG(VICTIM));
+    Phase* victim = Frame_Phase(ARG(VICTIM));
 
     Option(const Element*) opt_hijacker = Is_Nulled(ARG(HIJACKER))
         ? nullptr
@@ -323,7 +322,7 @@ DECLARE_NATIVE(HIJACK)
         Details_Dispatcher(cast(Details*, victim)) == &Unimplemented_Dispatcher;
 
     if (opt_hijacker) {
-        Phase* hijacker = Cell_Frame_Phase(unwrap opt_hijacker);
+        Phase* hijacker = Frame_Phase(unwrap opt_hijacker);
         if (victim == hijacker)
             return PANIC("Cannot HIJACK function with itself");  // right?
     }

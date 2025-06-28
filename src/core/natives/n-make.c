@@ -137,11 +137,11 @@ DECLARE_NATIVE(COPY)
     assert(Not_Level_Flag(sub, TRAMPOLINE_KEEPALIVE));
     assert(Get_Executor_Flag(ACTION, sub, IN_DISPATCH));
 
-    Phase* phase = Cell_Frame_Phase(LIB(COPY));
+    Phase* phase = Frame_Phase(LIB(COPY));
     Tweak_Level_Phase(sub, phase);
     Tweak_Level_Coupling(sub, coupling);
 
-    sub->u.action.original = Cell_Frame_Phase(LIB(COPY));
+    sub->u.action.original = Frame_Phase(LIB(COPY));
     Set_Action_Level_Label(sub, label);
 
     if (lift_byte == ANTIFORM_1)
@@ -281,7 +281,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 
     SymId id = Get_Level_Flag(level_, CHECKING_TO) ? SYM_TO : SYM_AS;
 
-    sub->u.action.original = Cell_Frame_Phase(Lib_Var(id));
+    sub->u.action.original = Frame_Phase(Lib_Var(id));
     Set_Action_Level_Label(sub, label);
 
     return BOUNCE_DOWNSHIFTED;  // avoids trampoline, action executor updates L

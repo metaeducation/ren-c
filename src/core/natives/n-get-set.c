@@ -274,7 +274,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
     assert(not Try_Get_Sequence_Singleheart(chain));  // don't use w/these
 
     const Element* tail;
-    const Element* head = Cell_List_At(&tail, chain);
+    const Element* head = List_At(&tail, chain);
 
     Context* derived = Derive_Binding(context, chain);
 
@@ -342,7 +342,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
         }
 
         if (Is_Word(item)) {
-            Init_Pushed_Refinement(PUSH(), Cell_Word_Symbol(item));
+            Init_Pushed_Refinement(PUSH(), Word_Symbol(item));
         }
         else
             panic (item);
@@ -388,7 +388,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
 
     const Base* payload1 = CELL_PAYLOAD_1(path);
     if (Is_Base_A_Cell(payload1)) {
-        // pairing, but "Listlike", so Cell_List_At() will work on it
+        // pairing, but "Listlike", so List_At() will work on it
     }
     else switch (Stub_Flavor(c_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {  // `/a` or `a/`
@@ -410,7 +410,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
 } handle_listlike_path: {
 
     const Element* tail;
-    const Element* at = Cell_List_At(&tail, path);
+    const Element* at = List_At(&tail, path);
 
     Context* binding = Cell_Sequence_Binding(path);
 
@@ -805,7 +805,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
             if (Is_Word(picker_arg)) {
                 Update_Frame_Cell_Label(  // !!! is this a good idea?
-                    Known_Stable(value_arg), Cell_Word_Symbol(picker_arg)
+                    Known_Stable(value_arg), Word_Symbol(picker_arg)
                 );
             }
         }
@@ -916,7 +916,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     const Base* payload1 = CELL_PAYLOAD_1(scratch_var);
     if (Is_Base_A_Cell(payload1)) {  // pair optimization
-        // pairings considered "Listlike", handled by Cell_List_At()
+        // pairings considered "Listlike", handled by List_At()
     }
     else switch (Stub_Flavor(c_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {
@@ -945,7 +945,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     }
 
     const Element* tail;
-    const Element* head = Cell_List_At(&tail, scratch_var);
+    const Element* head = List_At(&tail, scratch_var);
     const Element* at;
     Context* at_binding = Cell_Binding(scratch_var);
 
@@ -990,7 +990,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 } handle_scratch_var_as_pinned_steps_block: {
 
     const Element* tail;
-    const Element* head = Cell_List_At(&tail, scratch_var);
+    const Element* head = List_At(&tail, scratch_var);
     const Element* at;
     Context* at_binding = Cell_Binding(scratch_var);
     for (at = head; at != tail; ++at)

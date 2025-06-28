@@ -77,7 +77,7 @@ void Splice_Block_Into_Feed(Feed* feed, const Element* splice) {
         Tweak_Misc_Feedstub_Pending(saved, At_Feed(feed));  // save feed->p [3]
     }
 
-    feed->p = Cell_List_Item_At(splice);
+    feed->p = List_Item_At(splice);
     Copy_Cell(Feed_Data(feed), splice);
     ++VAL_INDEX_UNBOUNDED(Feed_Data(feed));
 
@@ -106,7 +106,7 @@ Bounce Macro_Dispatcher(Level* const L)
 
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
 
-    Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(body));
+    Add_Link_Inherit_Bind(L->varlist, List_Binding(body));
     Force_Level_Varlist_Managed(L);
 
     // !!! Using this form of RETURN is based on UNWIND, which means we must
@@ -127,7 +127,7 @@ Bounce Macro_Dispatcher(Level* const L)
         const Value* label = VAL_THROWN_LABEL(L);
         if (
             Is_Frame(label)  // catch UNWIND here [2]
-            and Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(UNWIND))
+            and Frame_Phase(label) == Frame_Phase(LIB(UNWIND))
             and g_ts.unwind_level == L
         ){
             CATCH_THROWN(OUT, L);

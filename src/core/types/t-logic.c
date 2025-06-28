@@ -188,7 +188,7 @@ DECLARE_NATIVE(TRUE_Q)
 {
     INCLUDE_PARAMS_OF_TRUE_Q;
 
-    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_TRUE);
+    return LOGIC(Word_Id(ARG(WORD)) == SYM_TRUE);
 }
 
 
@@ -205,7 +205,7 @@ DECLARE_NATIVE(FALSE_Q)
 {
     INCLUDE_PARAMS_OF_FALSE_Q;
 
-    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_FALSE);
+    return LOGIC(Word_Id(ARG(WORD)) == SYM_FALSE);
 }
 
 
@@ -244,7 +244,7 @@ DECLARE_NATIVE(YES_Q)
 {
     INCLUDE_PARAMS_OF_YES_Q;
 
-    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_YES);
+    return LOGIC(Word_Id(ARG(WORD)) == SYM_YES);
 }
 
 
@@ -261,7 +261,7 @@ DECLARE_NATIVE(NO_Q)
 {
     INCLUDE_PARAMS_OF_NO_Q;
 
-    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_NO);
+    return LOGIC(Word_Id(ARG(WORD)) == SYM_NO);
 }
 
 
@@ -300,7 +300,7 @@ DECLARE_NATIVE(ON_Q)
 {
     INCLUDE_PARAMS_OF_ON_Q;
 
-    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_ON);
+    return LOGIC(Word_Id(ARG(WORD)) == SYM_ON);
 }
 
 
@@ -317,7 +317,7 @@ DECLARE_NATIVE(OFF_Q)
 {
     INCLUDE_PARAMS_OF_NO_Q;
 
-    return LOGIC(Cell_Word_Id(ARG(WORD)) == SYM_OFF);
+    return LOGIC(Word_Id(ARG(WORD)) == SYM_OFF);
 }
 
 

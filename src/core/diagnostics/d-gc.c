@@ -141,10 +141,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break;
 
       case TYPE_PARAMETER: {
-        if (Cell_Parameter_Spec(v))
-            assert(Is_Base_Marked(unwrap Cell_Parameter_Spec(v)));
-        if (Cell_Parameter_Strand(v))
-            assert(Is_Base_Marked(unwrap Cell_Parameter_Strand(v)));
+        if (Parameter_Spec(v))
+            assert(Is_Base_Marked(unwrap Parameter_Spec(v)));
+        if (Parameter_Strand(v))
+            assert(Is_Base_Marked(unwrap Parameter_Strand(v)));
         break; }
 
       case TYPE_BITSET: {
@@ -353,7 +353,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_WORD: {
         assert(Cell_Payload_1_Needs_Mark(v));
 
-        const Symbol *sym = Cell_Word_Symbol(v);
+        const Symbol *sym = Word_Symbol(v);
         assert(Is_Flex_Frozen(sym));
 
         assert(Is_Base_Marked(sym));
@@ -406,7 +406,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Function_Deep.
 
-        Phase* arch_phase = Cell_Frame_Phase(archetype);
+        Phase* arch_phase = Frame_Phase(archetype);
         assert(Is_Base_Marked(arch_phase));
         assert(Is_Stub_Varlist(arch_phase) or Is_Stub_Details(arch_phase));
     }

@@ -43,10 +43,10 @@ REBINT CT_Blob(const Element* a, const Element* b, bool strict)
     UNUSED(strict);  // no lax form of comparison
 
     Size size1;
-    const Byte* data1 = Cell_Blob_Size_At(&size1, a);
+    const Byte* data1 = Blob_Size_At(&size1, a);
 
     Size size2;
-    const Byte* data2 = Cell_Blob_Size_At(&size2, b);
+    const Byte* data2 = Blob_Size_At(&size2, b);
 
     Size size = MIN(size1, size2);
 
@@ -110,7 +110,7 @@ DECLARE_NATIVE(ENCODE_IEEE_754) {
 
     Value* arg = ARG(ARG);
 
-    if (Cell_Series_Len_At(ARG(OPTIONS)))
+    if (Series_Len_At(ARG(OPTIONS)))
         return PANIC("IEEE-754 single precision not currently supported");
 
     assert(sizeof(REBDEC) == 8);
@@ -154,11 +154,11 @@ DECLARE_NATIVE(DECODE_IEEE_754)
 
     Element* blob = Element_ARG(BLOB);
 
-    if (Cell_Series_Len_At(ARG(OPTIONS)))
+    if (Series_Len_At(ARG(OPTIONS)))
         return PANIC("IEEE-754 single precision not currently supported");
 
     Size size;
-    const Byte* at = Cell_Blob_Size_At(&size, blob);
+    const Byte* at = Blob_Size_At(&size, blob);
     if (size < 8)
         return FAIL(blob);
 
@@ -215,7 +215,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
             OUT,
             Make_Binary_From_Sized_Bytes(
                 Binary_Head(Cell_Binary(arg)),
-                Cell_Series_Len_Head(arg)
+                Series_Len_Head(arg)
             )
         );
 
@@ -244,7 +244,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
     UNUSED(form);
 
     Size size;
-    const Byte* data = Cell_Blob_Size_At(&size, v);
+    const Byte* data = Blob_Size_At(&size, v);
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT)) {  // truncation is imprecise...
         Length mold_len = Strand_Len(mo->strand) - mo->base.index;
@@ -431,7 +431,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_CLEAR: {
         Binary* b = Cell_Binary_Ensure_Mutable(v);
 
-        REBINT tail = Cell_Series_Len_Head(v);
+        REBINT tail = Series_Len_Head(v);
         REBINT index = VAL_INDEX(v);
 
         if (index >= tail)
@@ -458,10 +458,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             return PANIC(Error_Not_Related_Raw(verb, Datatype_Of(arg)));
 
         Size t0;
-        const Byte* p0 = Cell_Blob_Size_At(&t0, v);
+        const Byte* p0 = Blob_Size_At(&t0, v);
 
         Size t1;
-        const Byte* p1 = Cell_Blob_Size_At(&t1, arg);
+        const Byte* p1 = Blob_Size_At(&t1, arg);
 
         Size smaller = MIN(t0, t1);  // smaller array size
         Size larger = MAX(t0, t1);
@@ -509,7 +509,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
 
       case SYM_BITWISE_NOT: {
         Size size;
-        const Byte* bp = Cell_Blob_Size_At(&size, v);
+        const Byte* bp = Blob_Size_At(&size, v);
 
         Binary* bin = Make_Binary(size);
         Term_Binary_Len(bin, size);  // !!! size is decremented, must set now
@@ -528,13 +528,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         if (Type_Of(v) != Type_Of(arg))
             return PANIC(Error_Not_Same_Type_Raw());
 
-        Byte* v_at = Cell_Blob_At_Ensure_Mutable(v);
-        Byte* arg_at = Cell_Blob_At_Ensure_Mutable(arg);
+        Byte* v_at = Blob_At_Ensure_Mutable(v);
+        Byte* arg_at = Blob_At_Ensure_Mutable(arg);
 
-        REBINT tail = Cell_Series_Len_Head(v);
+        REBINT tail = Series_Len_Head(v);
         REBINT index = VAL_INDEX(v);
 
-        if (index < tail and VAL_INDEX(arg) < Cell_Series_Len_Head(arg)) {
+        if (index < tail and VAL_INDEX(arg) < Series_Len_Head(arg)) {
             Byte temp = *v_at;
             *v_at = *arg_at;
             *arg_at = temp;
@@ -564,7 +564,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
 
     if (Any_String_Type(to)) {  // (to text! binary) questionable [1]
         Size size;
-        const Byte* at = Cell_Blob_Size_At(&size, v);
+        const Byte* at = Blob_Size_At(&size, v);
         return Init_Any_String(
             OUT,
             to,
@@ -744,7 +744,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     } else
         len = 1;
 
-    REBINT tail = Cell_Series_Len_Head(blob);  // Note :PART can change index
+    REBINT tail = Series_Len_Head(blob);  // Note :PART can change index
 
     if (Bool_ARG(LAST)) {
         if (tail - len < 0) {
@@ -765,7 +765,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     }
 
     if (not Bool_ARG(PART))  // just return byte value
-        Init_Integer(OUT, *Cell_Blob_At(blob));
+        Init_Integer(OUT, *Blob_At(blob));
     else  // return binary series
         Init_Blob(OUT, Copy_Binary_At_Len(bin, index, len));
 
@@ -781,7 +781,7 @@ IMPLEMENT_GENERIC(REVERSE, Is_Blob)
     Element* blob = Element_ARG(SERIES);
 
     REBLEN len = Part_Len_May_Modify_Index(blob, ARG(PART));
-    Byte* bp = Cell_Blob_At_Ensure_Mutable(blob);  // index may've changed
+    Byte* bp = Blob_At_Ensure_Mutable(blob);  // index may've changed
 
     if (len > 0) {
         REBLEN n = 0;
@@ -809,7 +809,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Blob)
     possibly(Is_Stub_Strand(Cell_Binary(blob)));  // may be aliased UTF-8 [1]
 
     Size size;
-    const Byte* data = Cell_Blob_Size_At(&size, blob);
+    const Byte* data = Blob_Size_At(&size, blob);
     Set_Random(crc32_z(0L, data, size));
     return TRIPWIRE;
 }
@@ -823,7 +823,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
 
     Element* blob = Element_ARG(COLLECTION);
 
-    REBINT tail = Cell_Series_Len_Head(blob);
+    REBINT tail = Series_Len_Head(blob);
     REBINT index = VAL_INDEX(blob);
 
     if (index >= tail)
@@ -865,7 +865,7 @@ IMPLEMENT_GENERIC(SIZE_OF, Is_Blob)
     Element* blob = Element_ARG(ELEMENT);
 
     Size size;
-    Cell_Blob_Size_At(&size, blob);
+    Blob_Size_At(&size, blob);
     return Init_Integer(OUT, size);
 }
 
@@ -886,7 +886,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Blob)
     Element* blob = Element_ARG(ELEMENT);
 
     Size size;
-    const Byte* bp = Cell_Blob_Size_At(&size, blob);
+    const Byte* bp = Blob_Size_At(&size, blob);
     if (size == 1 and *bp == 0)
         return Init_Integer(OUT, 0);  // codepoint of #{00} -> 0 [2]
 
@@ -949,7 +949,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
     Copy_Cell(OUT, blob);  // copy to output before index adjustment
 
     REBLEN len = Part_Len_May_Modify_Index(blob, ARG(PART));
-    Byte* data_at = Cell_Blob_At_Ensure_Mutable(blob);  // ^ index changes
+    Byte* data_at = Blob_At_Ensure_Mutable(blob);  // ^ index changes
 
     if (len <= 1)
         return OUT;
@@ -1002,7 +1002,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
     bool little = Bool_ARG(LE);
 
     Value* options = ARG(OPTIONS);
-    if (Cell_Series_Len_At(options) != 2)
+    if (Series_Len_At(options) != 2)
         return PANIC("ENCODE-INTEER needs length 2 options for now");
 
     bool no_sign = rebUnboxBoolean(
@@ -1103,11 +1103,11 @@ DECLARE_NATIVE(DECODE_INTEGER)
     bool little = Bool_ARG(LE);
 
     Size bin_size;
-    const Byte* bin_data = Cell_Blob_Size_At(&bin_size, ARG(BINARY));
+    const Byte* bin_data = Blob_Size_At(&bin_size, ARG(BINARY));
 
     Value* options = ARG(OPTIONS);
 
-    REBLEN arity = Cell_Series_Len_At(options);
+    REBLEN arity = Series_Len_At(options);
     if (arity != 1 and arity != 2)
         return "panic -[DECODE-INTEGER needs length 1 or 2 options for now]-";
     bool no_sign = rebUnboxBoolean(  // signed is C keyword
@@ -1258,11 +1258,11 @@ DECLARE_NATIVE(ADD_TO_BINARY)
     if (delta == 0)  // adding or subtracting 0 works, even #{} + 0
         return COPY(blob);
 
-    if (Cell_Series_Len_At(blob) == 0) // add/subtract to #{} otherwise
+    if (Series_Len_At(blob) == 0) // add/subtract to #{} otherwise
         return FAIL(Error_Overflow_Raw());
 
     while (delta != 0) {
-        REBLEN wheel = Cell_Series_Len_Head(blob) - 1;
+        REBLEN wheel = Series_Len_Head(blob) - 1;
         while (true) {
             Byte* b = Binary_At(bin, wheel);
             if (delta > 0) {

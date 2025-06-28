@@ -138,7 +138,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Bitset)
         return OUT; // allocated at a size, no contents.
 
     if (Is_Blob(arg)) {  // size accounted for by Find_Max_Bit()
-        const Byte* at = Cell_Blob_Size_At(nullptr, arg);
+        const Byte* at = Blob_Size_At(nullptr, arg);
         memcpy(Binary_Head(bset), at, (len / 8) + 1);
         return OUT;
     }
@@ -182,13 +182,13 @@ REBINT Find_Max_Bit(const Value* val)
         break; }
 
     case TYPE_BLOB:
-        if (Cell_Series_Len_At(val) != 0)
-            maxi = Cell_Series_Len_At(val) * 8 - 1;
+        if (Series_Len_At(val) != 0)
+            maxi = Series_Len_At(val) * 8 - 1;
         break;
 
     case TYPE_BLOCK: {
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, val);
+        const Element* item = List_At(&tail, val);
         for (; item != tail; ++item) {
             REBINT n = Find_Max_Bit(item);
             if (n != NOT_FOUND and n > maxi)
@@ -290,7 +290,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
         REBLEN i = VAL_INDEX(val);
 
         const Byte* bp = Binary_Head(Cell_Binary(val));
-        for (; i != Cell_Series_Len_Head(val); i++)
+        for (; i != Series_Len_Head(val); i++)
             Set_Bit(bset, bp[i], set);
 
         return true;
@@ -312,12 +312,12 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
         panic (Error_Invalid_Type_Raw(Datatype_Of(val)));
 
     const Element* tail;
-    const Element* item = Cell_List_At(&tail, val);
+    const Element* item = List_At(&tail, val);
 
     if (
         item != tail
         && Is_Word(item)
-        && Cell_Word_Id(item) == SYM_NOT_1  // see TO-C-NAME
+        && Word_Id(item) == SYM_NOT_1  // see TO-C-NAME
     ){
         INIT_BITS_NOT(bset, true);
         item++;
@@ -331,7 +331,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
             if (
                 item + 1 != tail
                 && Is_Word(item + 1)
-                && Cell_Word_Symbol(item + 1) == CANON(HYPHEN_1)
+                && Word_Symbol(item + 1) == CANON(HYPHEN_1)
             ){
                 item += 2;
                 if (Is_Rune_And_Is_Char(item)) {
@@ -363,7 +363,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
             if (
                 item + 1 != tail
                 && Is_Word(item + 1)
-                && Cell_Word_Symbol(item + 1) == CANON(HYPHEN_1)
+                && Word_Symbol(item + 1) == CANON(HYPHEN_1)
             ){
                 REBINT c = n;
                 item += 2;
@@ -392,14 +392,14 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
 
         case TYPE_WORD: {
             // Special: BITS #{000...}
-            if (not Is_Word(item) or Cell_Word_Id(item) != SYM_BITS)
+            if (not Is_Word(item) or Word_Id(item) != SYM_BITS)
                 return false;
             item++;
             if (not Is_Blob(item))
                 return false;
 
             Size n;
-            const Byte* at = Cell_Blob_Size_At(&n, item);
+            const Byte* at = Blob_Size_At(&n, item);
 
             Codepoint c = Binary_Len(bset);
             if (n >= Cast_Signed(c)) {
@@ -435,7 +435,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
     if (Is_Blob(val)) {
         REBLEN i = VAL_INDEX(val);
         const Byte* bp = Binary_Head(Cell_Binary(val));
-        for (; i != Cell_Series_Len_Head(val); ++i)
+        for (; i != Series_Len_Head(val); ++i)
             if (Check_Bit(bset, bp[i], uncased))
                 return true;
         return false;
@@ -460,7 +460,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
     // Loop through block of bit specs
 
     const Element* tail;
-    const Element* item = Cell_List_At(&tail, val);
+    const Element* item = List_At(&tail, val);
     for (; item != tail; item++) {
 
         switch (Type_Of(item)) {
@@ -473,7 +473,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
             Codepoint c = Rune_Known_Single_Codepoint(item);
             if (
                 Is_Word(item + 1)
-                && Cell_Word_Symbol(item + 1) == CANON(HYPHEN_1)
+                && Word_Symbol(item + 1) == CANON(HYPHEN_1)
             ){
                 item += 2;
                 if (Is_Rune_And_Is_Char(item)) {
@@ -498,7 +498,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                 return false;
             if (
                 Is_Word(item + 1)
-                && Cell_Word_Symbol(item + 1) == CANON(HYPHEN_1)
+                && Word_Symbol(item + 1) == CANON(HYPHEN_1)
             ){
                 REBINT c = n;
                 item += 2;

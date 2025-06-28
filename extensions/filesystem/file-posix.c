@@ -435,7 +435,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
         if (not Is_Blob(value))
             return rebValue("make warning! {RUNE!, TEXT!, BLOB! for WRITE}");
 
-        data = Cell_Blob_At(value);
+        data = Blob_At(value);
         size = limit;
     }
 

@@ -133,16 +133,16 @@ INLINE Option(HandleCleaner*) Cell_Handle_Cleaner(const Value* v) {
     return Handle_Cleaner(stub);
 }
 
-INLINE void Tweak_Cell_Handle_Len(Value* v, uintptr_t length)
+INLINE void Tweak_Handle_Len(Value* v, uintptr_t length)
   { CELL_HANDLE_LENGTH_U(Extract_Cell_Handle_Canon(v)) = length; }
 
-INLINE void Tweak_Cell_Handle_Cdata(Value* v, void *cdata) {
+INLINE void Tweak_Handle_Cdata(Value* v, void *cdata) {
     Value* canon = Extract_Cell_Handle_Canon(v);
     assert(CELL_HANDLE_LENGTH_U(canon) != 0);
     CELL_HANDLE_CDATA_P(canon) = cdata;
 }
 
-INLINE void Tweak_Cell_Handle_Cfunc(Value* v, CFunction* cfunc) {
+INLINE void Tweak_Handle_Cfunc(Value* v, CFunction* cfunc) {
     assert(Is_Handle_Cfunc(v));
     Value* canon = Extract_Cell_Handle_Canon(v);
     assert(CELL_HANDLE_LENGTH_U(canon) == 0);

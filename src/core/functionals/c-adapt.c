@@ -128,7 +128,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     Value* adaptee = Phase_Archetype(details);
 
-    Tweak_Level_Phase(L, Cell_Frame_Phase(adaptee));
+    Tweak_Level_Phase(L, Frame_Phase(adaptee));
     Tweak_Level_Coupling(L, Cell_Frame_Coupling(adaptee));
 
     return BOUNCE_REDO_CHECKED;  // redo uses updated phase & coupling [1]
@@ -149,7 +149,7 @@ bool Adapter_Details_Querier(
     switch (property) {
       case SYM_RETURN_OF: {
         Value* adaptee = Phase_Archetype(details);
-        Details* adaptee_details = Phase_Details(Cell_Frame_Phase(adaptee));
+        Details* adaptee_details = Phase_Details(Frame_Phase(adaptee));
         DetailsQuerier* querier = Details_Querier(adaptee_details);
         return (*querier)(out, adaptee_details, SYM_RETURN_OF); }
 
@@ -207,7 +207,7 @@ DECLARE_NATIVE(ADAPT)
         Array_At(details, IDX_ADAPTER_PRELUDE),
         prelude_copy
     );
-    Tweak_Cell_Binding(rebound, Cell_List_Binding(prelude));
+    Tweak_Cell_Binding(rebound, List_Binding(prelude));
 
     Init_Action(OUT, details, Cell_Frame_Label_Deep(adaptee), NONMETHOD);
     return UNSURPRISING(OUT);

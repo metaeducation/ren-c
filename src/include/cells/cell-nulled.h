@@ -71,14 +71,14 @@ INLINE bool Is_Light_Null(Need(const Atom*) a) {
     Assert_Cell_Readable(a);
     return LIFT_BYTE(a) == ANTIFORM_1
         and Heart_Of(a) == TYPE_WORD
-        and Cell_Word_Id(a) == SYM_NULL;
+        and Word_Id(a) == SYM_NULL;
 }
 
 INLINE bool Is_Nulled(const Value* v) {
     Assert_Cell_Readable(v);
     return LIFT_BYTE(v) == ANTIFORM_1
         and Heart_Of(v) == TYPE_WORD
-        and Cell_Word_Id(v) == SYM_NULL;
+        and Word_Id(v) == SYM_NULL;
 }
 
 #define Init_Nulled(out) \
@@ -95,7 +95,7 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
         return false;
     if (Heart_Of(v) != TYPE_WORD)
         return false;
-    return Cell_Word_Id(v) == SYM_NULL;
+    return Word_Id(v) == SYM_NULL;
 }
 
 #define Init_Lifted_Null(out) \
@@ -141,7 +141,7 @@ INLINE bool Is_Heavy_Null(const Atom* v) {
     if (not Is_Pack(v))
         return false;
     const Element* tail;
-    const Element* at = Cell_List_At(&tail, v);
+    const Element* at = List_At(&tail, v);
     return (tail == at + 1) and Is_Lifted_Null(at);
 }
 
@@ -149,6 +149,6 @@ INLINE bool Is_Lifted_Heavy_Null(const Value* v) {
     if (not Is_Lifted_Pack(v))
         return false;
     const Element* tail;
-    const Element* at = Cell_List_At(&tail, v);
+    const Element* at = List_At(&tail, v);
     return (tail == at + 1) and Is_Lifted_Null(at);
 }

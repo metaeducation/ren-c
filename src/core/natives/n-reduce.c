@@ -192,7 +192,7 @@ DECLARE_NATIVE(REDUCE)
     if (Is_Ghost_Or_Void(SPARE)) {  // vaporize unless accepted by predicate
         const Param* param = First_Unspecialized_Param(
             nullptr,
-            Cell_Frame_Phase(predicate)
+            Frame_Phase(predicate)
         );
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
             goto next_reduce_step;  // not accepted, so skip it
@@ -221,7 +221,7 @@ DECLARE_NATIVE(REDUCE)
 
     if (Is_Splice(spare)) {
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, spare);
+        const Element* at = List_At(&tail, spare);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
             Copy_Cell(PUSH(), at);  // Note: no binding on antiform SPLICE!
@@ -432,15 +432,15 @@ bool Try_Match_For_Compose(
 
     Copy_Cell(match, at);
 
-    while (Cell_Series_Len_At(pattern) != 0) {
-        if (Cell_Series_Len_At(pattern) != 1)
+    while (Series_Len_At(pattern) != 0) {
+        if (Series_Len_At(pattern) != 1)
             panic ("COMPOSE patterns only nested length 1 or 0 right now");
 
-        if (Cell_Series_Len_At(match) == 0)
+        if (Series_Len_At(match) == 0)
             return false;  // no nested list or item to match
 
-        const Element* match_1 = Cell_List_Item_At(match);
-        const Element* pattern_1 = Cell_List_Item_At(pattern);
+        const Element* match_1 = List_Item_At(match);
+        const Element* pattern_1 = List_Item_At(pattern);
 
         if (Any_List(pattern_1)) {
             if (Type_Of(match_1) != Type_Of(pattern_1))
@@ -848,7 +848,7 @@ Bounce Composer_Executor(Level* const L)
         return FAIL("Quoted COMPOSE slots are not distributed over splices");
 
     const Element* push_tail;
-    const Element* push = Cell_List_At(&push_tail, out);
+    const Element* push = List_At(&push_tail, out);
     if (push != push_tail) {
         Copy_Cell(PUSH(), push);
 
@@ -1015,7 +1015,7 @@ DECLARE_NATIVE(COMPOSE2)
 
 } list_initial_entry: { //////////////////////////////////////////////////////
 
-    Push_Composer_Level(OUT, level_, input, Cell_List_Binding(input));
+    Push_Composer_Level(OUT, level_, input, List_Binding(input));
 
     STATE = ST_COMPOSE2_COMPOSING_LIST;
     return CONTINUE_SUBLEVEL(SUBLEVEL);
@@ -1095,19 +1095,19 @@ DECLARE_NATIVE(COMPOSE2)
         at = next;
 
         if (c == begin_delimiter) {
-            if (Cell_Series_Len_At(TOP) == 0)  // no more nests in pattern
+            if (Series_Len_At(TOP) == 0)  // no more nests in pattern
                 break;
 
             end_delimiter = End_Delimit_For_List(
                 Heart_Of_Builtin_Fundamental(TOP_ELEMENT)
             );
 
-            const Element* pattern_at = Cell_List_Item_At(TOP);
+            const Element* pattern_at = List_Item_At(TOP);
             Copy_Cell(PUSH(), pattern_at);  // step into pattern
 
             if (not Any_List(TOP))
                 return PANIC("COMPOSE2 pattern must be composed of lists");
-            if (Cell_Series_Len_At(TOP) > 1)
+            if (Series_Len_At(TOP) > 1)
                 return PANIC("COMPOSE2 pattern layers must be length 1 or 0");
 
             begin_delimiter = Begin_Delimit_For_List(
@@ -1356,7 +1356,7 @@ DECLARE_NATIVE(COMPOSE2)
         if (Is_File(eval) and Is_File(input)) {  // "File calculus" [1]
             const Byte* at = c_cast(Byte*, head) + at_offset;
             bool eval_slash_tail = (
-                Cell_Series_Len_At(eval) != 0
+                Series_Len_At(eval) != 0
                 and Codepoint_Back_Is_Ascii_Value(Cell_Strand_Tail(eval), '/')
             );
             bool slash_after_splice = (at[0] == '/');
@@ -1417,7 +1417,7 @@ static void Flatten_Core(
             Context* derived = Derive_Binding(binding, item);
 
             const Element* sub_tail;
-            Element* sub = Cell_List_At_Ensure_Mutable(&sub_tail, item);
+            Element* sub = List_At_Ensure_Mutable(&sub_tail, item);
             Flatten_Core(
                 sub,
                 sub_tail,
@@ -1448,11 +1448,11 @@ DECLARE_NATIVE(FLATTEN)
     Element* block = Element_ARG(BLOCK);
 
     const Element* tail;
-    Element* at = Cell_List_At_Ensure_Mutable(&tail, block);
+    Element* at = List_At_Ensure_Mutable(&tail, block);
     Flatten_Core(
         at,
         tail,
-        Cell_List_Binding(block),
+        List_Binding(block),
         Bool_ARG(DEEP) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 

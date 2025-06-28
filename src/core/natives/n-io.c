@@ -209,7 +209,7 @@ DECLARE_NATIVE(NEW_LINE)
 
     Value* pos = ARG(POSITION);
     const Element* tail;
-    Element* item = Cell_List_At_Ensure_Mutable(&tail, pos);
+    Element* item = List_At_Ensure_Mutable(&tail, pos);
     Source* a = Cell_Array_Known_Mutable(pos);  // need if setting flag at tail
 
     REBINT skip;
@@ -298,7 +298,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
         }
         else if (Is_Block_Style_Varargs(&shared, pos)) {
             arr = Cell_Array(shared);
-            item = Cell_List_At(&tail, shared);
+            item = List_At(&tail, shared);
         }
         else
             crash ("Bad VARARGS!");
@@ -306,7 +306,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
     else {
         assert(Is_Group(pos) or Is_Block(pos));
         arr = Cell_Array(pos);
-        item = Cell_List_At(&tail, pos);
+        item = List_At(&tail, pos);
     }
 
     if (item != tail)

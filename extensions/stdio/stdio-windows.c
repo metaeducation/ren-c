@@ -276,7 +276,7 @@ void Write_IO(const Value* data, REBLEN len)
             // digits and sending them to WriteConsole().
             //
             const Byte* tail = Binary_Tail(Cell_Binary(data));
-            const Byte* bp = Cell_Blob_At(data);
+            const Byte* bp = Blob_At(data);
             for (; bp != tail; ++bp) {
                 WCHAR digits[2];
                 digits[0] = g_hex_digits[*bp / 16];
@@ -333,7 +333,7 @@ void Write_IO(const Value* data, REBLEN len)
         const Byte* bp;
         Size size;
         if (Is_Blob(data)) {
-            bp = Cell_Blob_At(data);
+            bp = Blob_At(data);
             size = len;
         }
         else {

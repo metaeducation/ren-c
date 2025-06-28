@@ -99,7 +99,7 @@ void Change_Case(
     // be possible, only contractions (is that true?)  Review when UTF-8
     // Everywhere is more mature to the point this is worth worrying about.
     //
-    Utf8(*) up = Cell_String_At_Ensure_Mutable(val);
+    Utf8(*) up = String_At_Ensure_Mutable(val);
     Utf8(*) dp;
     if (upper) {
         REBLEN n;
@@ -150,7 +150,7 @@ Source* Split_Lines(const Element* str)
 {
     StackIndex base = TOP_INDEX;
 
-    Length len = Cell_Series_Len_At(str);
+    Length len = Series_Len_At(str);
     REBLEN i = VAL_INDEX(str);
     if (i == len)
         return Make_Source(0);
@@ -158,7 +158,7 @@ Source* Split_Lines(const Element* str)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    Utf8(const*) cp = Cell_String_At(str);
+    Utf8(const*) cp = String_At(str);
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);

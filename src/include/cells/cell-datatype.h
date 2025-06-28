@@ -155,12 +155,12 @@ INLINE SymId Symbol_Id_From_Type(Type type) {
 
 INLINE Option(SymId) Cell_Datatype_Id(const Value* v) {
     assert(Is_Datatype(v));
-    if (Cell_Series_Len_At(v) != 1)
+    if (Series_Len_At(v) != 1)
         panic ("Type blocks only allowed one element for now");
-    const Element* item = Cell_List_At(nullptr, v);
+    const Element* item = List_At(nullptr, v);
     if (not Is_Word(item))
         panic ("Type blocks only allowed WORD! items for now");
-    return Cell_Word_Id(item);
+    return Word_Id(item);
 }
 
 // 1. When a user writes (type: anti '{integer!}) then converting to an
@@ -198,7 +198,7 @@ INLINE Heart Cell_Datatype_Builtin_Heart(const Value* v) {
 INLINE const ExtraHeart* Cell_Datatype_Extra_Heart(const Value* v) {
     assert(Is_Datatype(v));
 
-    const Symbol* s = Cell_Word_Symbol(Cell_List_Item_At(v));
+    const Symbol* s = Word_Symbol(List_Item_At(v));
     Option(Patch*) patch = Sea_Patch(g_datatypes_context, s, true);
     assert(patch);
     return unwrap patch;

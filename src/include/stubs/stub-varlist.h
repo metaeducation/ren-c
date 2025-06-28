@@ -157,7 +157,7 @@ INLINE Option(VarList*) Cell_Frame_Coupling(const Value* c) {
     return cast(VarList*, CELL_FRAME_PAYLOAD_2_COUPLING(c));
 }
 
-INLINE void Tweak_Cell_Frame_Coupling(Value* c, Option(VarList*) coupling) {
+INLINE void Tweak_Frame_Coupling(Value* c, Option(VarList*) coupling) {
     assert(Heart_Of(c) == TYPE_FRAME);
     CELL_FRAME_PAYLOAD_2_COUPLING(c) = maybe coupling;
     if (coupling)

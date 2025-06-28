@@ -494,7 +494,7 @@ INLINE bool Pack_Native_Core_Throws(
 ){
     if (Is_Pinned_Form_Of(BLOCK, block)) {  // pack @[1 + 2] -> ~['1 '+ '2']~
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, block);
+        const Element* at = List_At(&tail, block);
 
         Length len = tail - at;
         Source* a = Make_Source_Managed(len);  // same size array

@@ -65,7 +65,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 ){
     StackIndex highest_stackindex = TOP_INDEX;
 
-    Phase* phase = Cell_Frame_Phase(action);
+    Phase* phase = Frame_Phase(action);
 
     REBLEN num_slots = Phase_Num_Params(phase) + 1;  // +1 for rootvar
     Array* a = Make_Array_Core(STUB_MASK_VARLIST, num_slots);
@@ -132,11 +132,11 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
         StackIndex stackindex = highest_stackindex;
         for (; stackindex != lowest_stackindex; --stackindex) {
             OnStack(Element*) ordered = Data_Stack_At(Element, stackindex);
-            if (Cell_Word_Symbol(ordered) != symbol)
+            if (Word_Symbol(ordered) != symbol)
                 continue;  // just continuing this loop
 
             assert(Cell_Binding(ordered) == UNBOUND);  // we bind only one
-            Tweak_Cell_Word_Index(ordered, index);
+            Tweak_Word_Index(ordered, index);
             Tweak_Cell_Binding(ordered, phase);  // !!! Review
 
             if (not Is_Parameter_Unconstrained(param))  // needs argument
@@ -221,7 +221,7 @@ bool Specialize_Action_Throws(
     if (def)
         Construct_Binder_Core(binder);  // conditional, must use _Core()
 
-    Phase* unspecialized = Cell_Frame_Phase(specializee);
+    Phase* unspecialized = Frame_Phase(specializee);
 
     // This produces a context where partially specialized refinement slots
     // will be on the stack (including any we are adding "virtually", from
@@ -245,7 +245,7 @@ bool Specialize_Action_Throws(
         //
         Use* use = Alloc_Use_Inherits_Core(
             USE_FLAG_SET_WORDS_ONLY,
-            Cell_List_Binding(unwrap def)
+            List_Binding(unwrap def)
         );
         Init_Frame(Stub_Cell(use), exemplar, label, coupling);
 
@@ -383,7 +383,7 @@ bool Specialize_Action_Throws(
     Init_Frame(out, exemplar, label, coupling);
     Actionify(out);
 
-    Tweak_Cell_Frame_Infix_Mode(out, infix_mode);
+    Tweak_Frame_Infix_Mode(out, infix_mode);
 
     return false;  // code block did not throw
 }
@@ -448,7 +448,7 @@ DECLARE_NATIVE(SPECIALIZE)
     Value* out = Copy_Cell(OUT, Element_LOCAL(FRAME));
     Actionify(out);
 
-    Tweak_Cell_Frame_Infix_Mode(out, infix_mode);
+    Tweak_Frame_Infix_Mode(out, infix_mode);
 
     return UNSURPRISING(OUT);
 }}
@@ -493,7 +493,7 @@ Option(ParamClass) Get_First_Param_Literal_Class(Phase* phase) {
     if (Not_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST))
         return PARAMCLASS_0;
 
-    ParamClass pclass = Cell_Parameter_Class(
+    ParamClass pclass = Parameter_Class(
         First_Unspecialized_Param(nullptr, phase)
     );
     assert(  // !!! said it quoted its first parameter!

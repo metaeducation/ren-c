@@ -186,7 +186,7 @@ static void Process_Block_Helper(
     );
 
     const Element* tail;
-    const Element* text = Cell_List_At(&tail, block);
+    const Element* text = List_At(&tail, block);
     for (; text != tail; ++text)
         Process_Text_Helper_Core(some_tcc_api, state, text, label);
 
@@ -480,7 +480,7 @@ DECLARE_NATIVE(COMPILE_P)
 
     if (Bool_ARG(FILES)) {
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, compilables);
+        const Element* item = List_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (not Is_Text(item))
                 return PANIC(
@@ -510,10 +510,10 @@ DECLARE_NATIVE(COMPILE_P)
         Push_Mold(mo);
 
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, compilables);
+        const Element* item = List_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (Is_Frame(item)) {
-                Phase* phase = Cell_Frame_Phase(item);
+                Phase* phase = Frame_Phase(item);
                 if (
                     not Is_Stub_Details(phase)
                     or (

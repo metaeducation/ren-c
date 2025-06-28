@@ -371,7 +371,7 @@ if not empty? symbol-forward-decls [
          * See %specs/ext-words.r in core, and the Register_Symbol() function.
          */
 
-        #define EXT_CANON(name)  Cell_Word_Symbol(g_symbol_holder_##name)
+        #define EXT_CANON(name)  Word_Symbol(g_symbol_holder_##name)
 
         $[Symbol-Forward-Decls]
     ]--]

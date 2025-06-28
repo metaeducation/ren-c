@@ -227,7 +227,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_YIELD), SYM_YIELD);
 
     assert(Is_Block(body));  // can mutate (only one call)
-    Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(body));
+    Add_Link_Inherit_Bind(L->varlist, List_Binding(body));
     Tweak_Cell_Binding(body, L->varlist);
 
     STATE = ST_YIELDER_RUNNING_BODY;
@@ -394,7 +394,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     const Value* label = VAL_THROWN_LABEL(L);
     if (
         Is_Frame(label)
-        and Cell_Frame_Phase(label) == Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD))
+        and Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_YIELD))
         and Cell_Frame_Coupling(label) == Level_Varlist(L)
     ){
         CATCH_THROWN(OUT, L);
@@ -628,7 +628,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     if (Is_Error(atom) or Bool_ARG(FINAL)) {  // not resumable, throw
         Value* spare = Init_Action(
             SPARE,  // use as label for throw
-            Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)),
+            Frame_Phase(LIB(DEFINITIONAL_YIELD)),
             CANON(YIELD),
             Level_Varlist(yielder_level)
         );

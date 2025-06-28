@@ -84,9 +84,9 @@ Bounce Combinator_Dispatcher(Level* L)
     Bounce b;
     if (Is_Frame(body)) {  // NATIVE-COMBINATOR
         Set_Flex_Info(L->varlist, HOLD);  // mandatory for natives.
-        assert(Is_Stub_Details(Cell_Frame_Phase(body)));
+        assert(Is_Stub_Details(Frame_Phase(body)));
         Dispatcher* dispatcher = Details_Dispatcher(
-            cast(Details*, Cell_Frame_Phase(body))
+            cast(Details*, Frame_Phase(body))
         );
         b = Apply_Cfunc(dispatcher, L);
     }
@@ -126,7 +126,7 @@ bool Combinator_Details_Querier(
         Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
         assert(Is_Frame(body));  // takes 1 arg (a FRAME!)
 
-        Details* body_details = Phase_Details(Cell_Frame_Phase(body));
+        Details* body_details = Phase_Details(Frame_Phase(body));
         DetailsQuerier* querier = Details_Querier(body_details);
         return (*querier)(out, body_details, SYM_RETURN_OF); }
 
@@ -182,8 +182,8 @@ Source* Expanded_Combinator_Spec(const Element* original)
     StackIndex base = TOP_INDEX;
 
     const Element* tail;
-    const Element* item = Cell_List_At(&tail, original);
-    Context* binding = Cell_List_Binding(original);
+    const Element* item = List_At(&tail, original);
+    Context* binding = List_Binding(original);
 
     if (Is_Text(item)) {
         Derelativize(PUSH(), item, binding);  // {combinator description}
@@ -439,7 +439,7 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
 
     if (Any_List(input)) {
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, input);
+        const Element* at = List_At(&tail, input);
         if (at == tail)  // no item to match against
             return nullptr;
         if (not Equal_Values(at, v, true))  // not case-insensitive equal
@@ -448,7 +448,7 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
         ++VAL_INDEX_UNBOUNDED(input);
         Copy_Cell(ARG(REMAINDER), input);
 
-        Derelativize(OUT, at, Cell_List_Binding(input));
+        Derelativize(OUT, at, List_Binding(input));
         return OUT;  // Note: returns item in array, not rule, when an array!
     }
 
@@ -458,7 +458,7 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
     REBINT index = Find_Value_In_Binstr(
         &len,
         input,
-        Cell_Series_Len_Head(input),
+        Series_Len_Head(input),
         v,
         AM_FIND_MATCH | (cased ? AM_FIND_CASE : 0),
         1  // skip
@@ -654,7 +654,7 @@ static bool Combinator_Param_Hook(
     // done based on the offset of the param from the head.
 
     REBLEN offset = param - Phase_Params_Head(
-        Cell_Frame_Phase(ARG(COMBINATOR))
+        Frame_Phase(ARG(COMBINATOR))
     );
     Value* var = Slot_Hack(Varlist_Slots_Head(s->ctx) + offset);
 
@@ -687,14 +687,14 @@ static bool Combinator_Param_Hook(
         //
         return true;  // just leave unspecialized for now
     }
-    else switch (Cell_Parameter_Class(param)) {
+    else switch (Parameter_Class(param)) {
       case PARAMCLASS_JUST:
       case PARAMCLASS_THE: {
         //
         // Quoted parameters represent a literal element captured from rules.
         //
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, rules);
+        const Element* item = List_At(&tail, rules);
 
         if (
             item == tail
@@ -705,10 +705,10 @@ static bool Combinator_Param_Hook(
             Init_Unset_Due_To_End(u_cast(Atom*, var));
         }
         else {
-            if (Cell_Parameter_Class(param) == PARAMCLASS_THE)
-                Derelativize(var, item, Cell_List_Binding(rules));
+            if (Parameter_Class(param) == PARAMCLASS_THE)
+                Derelativize(var, item, List_Binding(rules));
             else {
-                assert(Cell_Parameter_Class(param) == PARAMCLASS_JUST);
+                assert(Parameter_Class(param) == PARAMCLASS_JUST);
                 Copy_Cell(var, item);
             }
             ++VAL_INDEX_UNBOUNDED(rules);
@@ -720,7 +720,7 @@ static bool Combinator_Param_Hook(
         // Need to make PARSIFY a native!  Work around it for now...
         //
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, rules);
+        const Element* item = List_At(&tail, rules);
         if (
             item == tail
             or (Is_Comma(item) or Is_Bar(item) or Is_Bar_Bar(item))
@@ -797,7 +797,7 @@ DECLARE_NATIVE(COMBINATORIZE)
 {
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
-    Phase* phase = Cell_Frame_Phase(ARG(COMBINATOR));
+    Phase* phase = Frame_Phase(ARG(COMBINATOR));
     Option(const Symbol*) label = Cell_Frame_Label_Deep(ARG(COMBINATOR));
     Option(VarList*) coupling = Cell_Frame_Coupling(ARG(COMBINATOR));
 

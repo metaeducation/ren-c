@@ -228,7 +228,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
         if (Bool_ARG(VALUES)) {
             const Value* slot;
             const Element* tail;
-            const Element* item = Cell_List_At(&tail, block);
+            const Element* item = List_At(&tail, block);
 
             DECLARE_VALUE (safe);
 

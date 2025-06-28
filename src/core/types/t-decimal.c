@@ -194,7 +194,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
 
       case TYPE_BLOCK: {  // !!! what the heck is this for? [2]
         REBLEN len;
-        const Element* item = Cell_List_Len_At(&len, arg);
+        const Element* item = List_Len_At(&len, arg);
 
         if (len != 2)
             return FAIL(Error_Bad_Make(TYPE_DECIMAL, arg));

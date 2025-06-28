@@ -443,7 +443,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             Push_Mold(mo);
 
             REBLEN remain = len;  // only want as many items as in the :PART
-            const Element* item = Cell_List_Item_At(data);
+            const Element* item = List_Item_At(data);
             for (; remain != 0; --remain, ++item) {
                 Form_Element(mo, item);
                 if (Bool_ARG(LINES))
@@ -455,7 +455,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             // REPEND" mechanic of GET-BLOCK! and reduce as it went.
             //
             Init_Text(data, Pop_Molded_Strand(mo));
-            len = Cell_Series_Len_Head(data);
+            len = Series_Len_Head(data);
         }
 
         result = Write_File(port, data, len);

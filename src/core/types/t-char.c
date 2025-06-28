@@ -274,7 +274,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
             panic ("Only RUNE! can MAKE a UTF-8 immutable type with BLOB!");
 
         Size size;
-        const Byte* bp = Cell_Blob_Size_At(&size, arg);
+        const Byte* bp = Blob_Size_At(&size, arg);
         if (size == 0)
             goto bad_make;
 
@@ -857,9 +857,9 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         }
 
         Length len;
-        Size size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
+        Size size = String_Size_Limit_At(&len, v, UNLIMITED);
 
-        if (Try_Init_Small_Utf8(out, as, Cell_String_At(v), len, size))
+        if (Try_Init_Small_Utf8(out, as, String_At(v), len, size))
             return SUCCESS;
 
         Copy_Cell(out, v);  // index heeded internally, not exposed

@@ -145,7 +145,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         bool meta = false;
         Option(SingleHeart) singleheart;
         if (Is_Word(item) or (meta = Is_Meta_Form_Of(WORD, item))) {
-            symbol = Cell_Word_Symbol(item);
+            symbol = Word_Symbol(item);
             must_be_action = false;
         }
         else if (
@@ -156,7 +156,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 /* or (meta = (singleheart == LEADING_SPACE_AND(META_WORD))) */
             )
         ){
-            symbol = Cell_Word_Symbol(item);
+            symbol = Word_Symbol(item);
             must_be_action = true;
         }
         else
@@ -223,7 +223,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 // act as description for current parameter
                 assert(mode == SPEC_MODE_PUSHED);
 
-                if (Cell_Parameter_Strand(TOP_ELEMENT))
+                if (Parameter_Strand(TOP_ELEMENT))
                     return Error_Bad_Func_Def_Raw(item);
 
                 Strand* strand = Copy_String_At(item);
@@ -256,7 +256,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             DECLARE_ELEMENT (param);  // we'll call GET, which uses the stack
             Copy_Cell(param, TOP_ELEMENT);
 
-            if (Cell_Parameter_Spec(param))  // `func [x [integer!] [integer!]]`
+            if (Parameter_Spec(param))  // `func [x [integer!] [integer!]]`
                 panic (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
 
             Context* derived = Derive_Binding(Level_Binding(L), item);
@@ -320,8 +320,8 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                     return Error_User(
                         "SET-WORD in spec but no RETURN or YIELD in effect"
                     );
-                if (not quoted and Cell_Word_Id(item) == unwrap returner) {
-                    symbol = Cell_Word_Symbol(item);
+                if (not quoted and Word_Id(item) == unwrap returner) {
+                    symbol = Word_Symbol(item);
                     pclass = PARAMCLASS_NORMAL;
                     is_returner = true;
                 }
@@ -332,16 +332,16 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             }
         }
         else if (Is_Pinned_Form_Of(GROUP, item)) {  // @(...) PARAMCLASS_SOFT
-            if (Cell_Series_Len_At(item) == 1) {
-                const Element* word = Cell_List_Item_At(item);
+            if (Series_Len_At(item) == 1) {
+                const Element* word = List_Item_At(item);
                 if (Is_Word(word)) {
                     pclass = PARAMCLASS_SOFT;
-                    symbol = Cell_Word_Symbol(word);
+                    symbol = Word_Symbol(word);
                 }
             }
         }
         else if (Heart_Of(item) == TYPE_WORD) {
-            symbol = Cell_Word_Symbol(item);
+            symbol = Word_Symbol(item);
 
             if (Is_Pinned_Form_Of(WORD, item)) {  // output
                 if (quoted)
@@ -407,7 +407,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             and Symbol_Id(symbol) == unwrap returner
         ){
             assert(
-                Cell_Word_Id(Data_Stack_At(Element, base + 1))
+                Word_Id(Data_Stack_At(Element, base + 1))
                 == unwrap returner
             );
             param = Data_Stack_At(Value, base + 2);
@@ -453,7 +453,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
     if (returner) {  // default RETURN: or YIELD: to unconstrained if not seen
         assert(
-            Cell_Word_Id(Data_Stack_At(Element, base + 1))
+            Word_Id(Data_Stack_At(Element, base + 1))
             == unwrap returner
         );
         OnStack(Value*) param_1 = Data_Stack_At(Value, base + 2);
@@ -559,7 +559,7 @@ Option(Error*) Trap_Pop_Paramlist(
 
     StackIndex stackindex = base + 1;  // empty stack base would be 0, bad cell
     for (; stackindex <= TOP_INDEX; stackindex += 2) {
-        const Symbol* symbol = Cell_Word_Symbol(Data_Stack_Cell_At(stackindex));
+        const Symbol* symbol = Word_Symbol(Data_Stack_Cell_At(stackindex));
         OnStack(Element*) slot = Data_Stack_At(Element, stackindex + 1);
 
         assert(Not_Cell_Flag(slot, VAR_MARKED_HIDDEN));  // use NOTE_SEALED
@@ -716,7 +716,7 @@ void Pop_Unpopped_Return(Sink(Element) out, StackIndex base)
     LIFT_BYTE(TOP) = NOQUOTE_2;
     Copy_Cell(out, TOP_ELEMENT);
     DROP();
-    assert(Cell_Word_Id(TOP) == SYM_RETURN);
+    assert(Word_Id(TOP) == SYM_RETURN);
     DROP();
 
     UNUSED(base);
@@ -793,7 +793,7 @@ Details* Make_Dispatch_Details(
     ParamList* paramlist = Phase_Paramlist(details);
     const Param* first = First_Unspecialized_Param(nullptr, details);
     if (first) {
-        ParamClass pclass = Cell_Parameter_Class(first);
+        ParamClass pclass = Parameter_Class(first);
         switch (pclass) {
           case PARAMCLASS_NORMAL:
           case PARAMCLASS_META:
@@ -899,10 +899,10 @@ DECLARE_NATIVE(COUPLE)
     assert(Heart_Of(action_or_frame) == TYPE_FRAME);
 
     if (Is_Nulled(coupling))
-        Tweak_Cell_Frame_Coupling(action_or_frame, nullptr);
+        Tweak_Frame_Coupling(action_or_frame, nullptr);
     else {
         assert(Is_Object(coupling) or Is_Frame(coupling));
-        Tweak_Cell_Frame_Coupling(action_or_frame, Cell_Varlist(coupling));
+        Tweak_Frame_Coupling(action_or_frame, Cell_Varlist(coupling));
     }
 
     return COPY(action_or_frame);
@@ -926,7 +926,7 @@ DECLARE_NATIVE(UNCOUPLE)
 
     assert(Heart_Of(action_or_frame) == TYPE_FRAME);
 
-    Tweak_Cell_Frame_Coupling(action_or_frame, UNCOUPLED);
+    Tweak_Frame_Coupling(action_or_frame, UNCOUPLED);
 
     Actionify(Copy_Cell(OUT, action_or_frame));
     return UNSURPRISING(OUT);

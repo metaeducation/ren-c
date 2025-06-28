@@ -106,10 +106,7 @@ Bounce Func_Dispatcher(Level* const L)
         const Value* label = VAL_THROWN_LABEL(L);
         if (
             not Is_Frame(label)
-            or (
-                Cell_Frame_Phase(label)
-                != Cell_Frame_Phase(LIB(DEFINITIONAL_REDO))  // see definition
-            )
+            or Frame_Phase(label) != Frame_Phase(LIB(DEFINITIONAL_REDO))
             or Cell_Frame_Coupling(label) != cast(VarList*, L->varlist)
         ){
             return BOUNCE_THROWN;  // wasn't a REDO thrown to this level
@@ -148,7 +145,7 @@ Bounce Func_Dispatcher(Level* const L)
     Element* body = Details_Element_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
-    Add_Link_Inherit_Bind(L->varlist, Cell_List_Binding(body));
+    Add_Link_Inherit_Bind(L->varlist, List_Binding(body));
     Force_Level_Varlist_Managed(L);
 
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
@@ -399,7 +396,7 @@ Option(Error*) Trap_Make_Interpreted_Action(
         Details_At(details, IDX_INTERPRETED_BODY),
         copy
     );
-    Tweak_Cell_Binding(rebound, Cell_List_Binding(body));
+    Tweak_Cell_Binding(rebound, List_Binding(body));
 
     if (Get_Cell_Flag(body, CONST))  // capture mutability flag [2]
         Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need Value*
@@ -478,7 +475,7 @@ Bounce Init_Thrown_Unwind_Value(
             if (Is_Level_Fulfilling_Or_Typechecking(L))
                 continue; // not ready to exit
 
-            if (Cell_Frame_Phase(seek) == L->u.action.original) {
+            if (Frame_Phase(seek) == L->u.action.original) {
                 g_ts.unwind_level = L;
                 break;
             }
@@ -598,7 +595,7 @@ bool Typecheck_Coerce_Return(
     // But it's actually faster to just determine if any type is surprising.
     // The information might come in handy somewhere.
 
-    const Array* spec = maybe Cell_Parameter_Spec(param);
+    const Array* spec = maybe Parameter_Spec(param);
     if (not spec)
         return true;
 
@@ -616,10 +613,10 @@ bool Typecheck_Coerce_Return(
             Get_Details_Flag(details, RAW_NATIVE)
             and Not_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
             and (Is_Possibly_Unstable_Atom_Action(atom) or Is_Ghost(atom))
-            and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)))
-            and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)))
-            and (details != Cell_Frame_Phase(LIB(LET)))  // review
-            and (details != Cell_Frame_Phase(LIB(SET)))  // review
+            and (details != Frame_Phase(LIB(DEFINITIONAL_RETURN)))
+            and (details != Frame_Phase(LIB(DEFINITIONAL_YIELD)))
+            and (details != Frame_Phase(LIB(LET)))  // review
+            and (details != Frame_Phase(LIB(SET)))  // review
         ){
             assert(!"NATIVE relies on typechecking for UNSURPRISING flag");
         }
@@ -634,10 +631,10 @@ bool Typecheck_Coerce_Return(
             Get_Details_Flag(details, RAW_NATIVE)
             and Get_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
             and (Is_Possibly_Unstable_Atom_Action(atom) or Is_Ghost(atom))
-            and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_RETURN)))
-            and (details != Cell_Frame_Phase(LIB(DEFINITIONAL_YIELD)))
-            and (details != Cell_Frame_Phase(LIB(LET)))  // review
-            and (details != Cell_Frame_Phase(LIB(SET)))  // review
+            and (details != Frame_Phase(LIB(DEFINITIONAL_RETURN)))
+            and (details != Frame_Phase(LIB(DEFINITIONAL_YIELD)))
+            and (details != Frame_Phase(LIB(LET)))  // review
+            and (details != Frame_Phase(LIB(SET)))  // review
         ){
             assert(!"NATIVE relies on typechecking for SURPRISING flag");
         }
@@ -751,7 +748,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     // will identify for that behavior.
     //
     Value* spare = Copy_Cell(SPARE, LIB(DEFINITIONAL_REDO));
-    Tweak_Cell_Frame_Coupling(  // comment said "may have changed"?
+    Tweak_Frame_Coupling(  // comment said "may have changed"?
         spare,
         Varlist_Of_Level_Force_Managed(target_level)
     );

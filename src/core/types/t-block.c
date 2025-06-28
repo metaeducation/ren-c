@@ -266,7 +266,7 @@ REBINT Find_In_Array(
     // match a block against a block
 
     if (Is_Splice(pattern)) {
-        *len = Cell_Series_Len_At(pattern);
+        *len = Series_Len_At(pattern);
         if (*len == 0)  // empty block matches any position [1]
             return index_unsigned;
 
@@ -276,7 +276,7 @@ REBINT Find_In_Array(
 
             REBLEN count = 0;
             const Element* other_tail;
-            const Element* other = Cell_List_At(&other_tail, pattern);
+            const Element* other = List_At(&other_tail, pattern);
             for (; other != other_tail; ++other, ++item) {
                 if (
                     item == item_tail or
@@ -329,18 +329,18 @@ REBINT Find_In_Array(
     if (Any_Word(pattern)) {
         for (; index >= start and index < end; index += skip) {
             const Element* item = Array_At(array, index);
-            const Symbol* pattern_symbol = Cell_Word_Symbol(pattern);
+            const Symbol* pattern_symbol = Word_Symbol(pattern);
             if (Any_Word(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
-                        Cell_Word_Symbol(item) == pattern_symbol
+                        Word_Symbol(item) == pattern_symbol
                         and Type_Of(item) == Type_Of(pattern)
                     ){
                         return index;
                     }
                 }
                 else { // Can be different type or differently cased spelling
-                    if (Are_Synonyms(Cell_Word_Symbol(item), pattern_symbol))
+                    if (Are_Synonyms(Word_Symbol(item), pattern_symbol))
                         return index;
                 }
             }
@@ -423,12 +423,12 @@ static REBINT Try_Get_Array_Index_From_Picker(
         //
         n = -1;
 
-        const Symbol* symbol = Cell_Word_Symbol(picker);
+        const Symbol* symbol = Word_Symbol(picker);
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, v);
+        const Element* item = List_At(&tail, v);
         REBLEN index = VAL_INDEX(v);
         for (; item != tail; ++item, ++index) {
-            if (Any_Word(item) and Are_Synonyms(symbol, Cell_Word_Symbol(item))) {
+            if (Any_Word(item) and Are_Synonyms(symbol, Word_Symbol(item))) {
                 n = index + 1;
                 break;
             }
@@ -462,7 +462,7 @@ bool Try_Pick_Block(
 ){
     REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;
-    if (n < 0 or n >= Cell_Series_Len_Head(block))
+    if (n < 0 or n >= Series_Len_Head(block))
         return false;
 
     const Element* slot = Array_At(Cell_Array(block), n);
@@ -479,7 +479,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
-    assert(VAL_INDEX(v) <= Cell_Series_Len_Head(v));
+    assert(VAL_INDEX(v) <= Series_Len_Head(v));
 
     Heart heart = Heart_Of_Builtin_Fundamental(v);
 
@@ -517,7 +517,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
     Option(SymId) id = Symbol_Id(verb);
 
     Element* list = cast(Element*, ARG_N(1));
-    Context* binding = Cell_List_Binding(list);
+    Context* binding = List_Binding(list);
 
     switch (id) {
 
@@ -655,7 +655,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         Array* arr = Cell_Array_Ensure_Mutable(list);
         REBLEN index = VAL_INDEX(list);
 
-        if (index < Cell_Series_Len_Head(list)) {
+        if (index < Series_Len_Head(list)) {
             if (index == 0)
                 Reset_Array(arr);
             else
@@ -677,13 +677,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         REBLEN index = VAL_INDEX(list);
 
         if (
-            index < Cell_Series_Len_Head(list)
-            and VAL_INDEX(arg) < Cell_Series_Len_Head(arg)
+            index < Series_Len_Head(list)
+            and VAL_INDEX(arg) < Series_Len_Head(arg)
         ){
             // Cell bits can be copied within the same array
             //
-            Element* a = Cell_List_At_Ensure_Mutable(nullptr, list);
-            Element* b = Cell_List_At_Ensure_Mutable(nullptr, arg);
+            Element* a = List_At_Ensure_Mutable(nullptr, list);
+            Element* b = List_At_Ensure_Mutable(nullptr, arg);
             Element temp;
             temp.header = a->header;
             temp.payload = a->payload;
@@ -750,7 +750,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
 
     if (Any_List_Type(to)) {
         Length len;
-        const Element* at = Cell_List_Len_At(&len, list);
+        const Element* at = List_Len_At(&len, list);
         return Init_Any_List(
             OUT, to, Copy_Values_Len_Shallow(at, len)  // !!! binding? [1]
         );
@@ -758,8 +758,8 @@ IMPLEMENT_GENERIC(TO, Any_List)
 
     if (Any_Sequence_Type(to)) {  // (to path! [a/b/c]) -> a/b/c
         Length len;
-        const Element* item = Cell_List_Len_At(&len, list);
-        if (Cell_Series_Len_At(list) != 1)
+        const Element* item = List_Len_At(&len, list);
+        if (Series_Len_At(list) != 1)
             return FAIL("Can't TO ANY-SEQUENCE? on list with length > 1");
 
         if (
@@ -776,8 +776,8 @@ IMPLEMENT_GENERIC(TO, Any_List)
 
     if (to == TYPE_WORD) {  // to word! '{a} -> a, see [3]
         Length len;
-        const Element* item = Cell_List_Len_At(&len, list);
-        if (Cell_Series_Len_At(list) != 1)
+        const Element* item = List_Len_At(&len, list);
+        if (Series_Len_At(list) != 1)
             return FAIL("Can't TO ANY-WORD? on list with length > 1");
         if (not Is_Word(item))
             return FAIL("TO ANY-WORD? needs list with one word in it");
@@ -810,19 +810,19 @@ IMPLEMENT_GENERIC(TO, Any_List)
 
     if (to == TYPE_INTEGER) {
         Length len;
-        const Element* at = Cell_List_Len_At(&len, list);
+        const Element* at = List_Len_At(&len, list);
         if (len != 1 or not Is_Integer(at))
             return FAIL("TO INTEGER! works on 1-element integer lists");
         return COPY(at);
     }
 
     if (to == TYPE_MAP) {  // to map! [key1 val1 key2 val2 key3 val3]
-        Length len = Cell_Series_Len_At(list);
+        Length len = Series_Len_At(list);
         if (len % 2 != 0)
             return FAIL("TO MAP! of list must have even number of items");
 
         const Element* tail;
-        const Element* at = Cell_List_At(&tail, list);
+        const Element* at = List_At(&tail, list);
 
         Map* map = Make_Map(len / 2);  // map size is half block length
         Append_Map(map, at, tail, len);
@@ -832,7 +832,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
 
     if (to == TYPE_PAIR) {
         const Element* tail;
-        const Element* item = Cell_List_At(&tail, list);
+        const Element* item = List_At(&tail, list);
 
         if (
             Is_Integer(item) and Is_Integer(item + 1)
@@ -934,7 +934,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
     ));
 
     Element* out = Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(list), copy);
-    Tweak_Cell_Binding(out, Cell_List_Binding(list));
+    Tweak_Cell_Binding(out, List_Binding(list));
     return OUT;
 }
 
@@ -954,7 +954,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
             return DUAL_SIGNAL_NULL_ABSENT;
     }
 
-    if (n < 0 or n >= Cell_Series_Len_Head(series))
+    if (n < 0 or n >= Series_Len_Head(series))
         return DUAL_SIGNAL_NULL_ABSENT;
 
     Value* poke;
@@ -1050,9 +1050,9 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
     REBLEN index = VAL_INDEX(list); // Partial() can change index
 
     if (Bool_ARG(LAST))
-        index = Cell_Series_Len_Head(list) - len;
+        index = Series_Len_Head(list) - len;
 
-    if (index >= Cell_Series_Len_Head(list)) {
+    if (index >= Series_Len_Head(list)) {
         if (not Bool_ARG(PART))
             return FAIL(Error_Nothing_To_Take_Raw());
 
@@ -1064,7 +1064,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
         Init_Any_List(OUT, heart, copy);
     }
     else
-        Derelativize(OUT, Array_At(arr, index), Cell_List_Binding(list));
+        Derelativize(OUT, Array_At(arr, index), List_Binding(list));
 
     Remove_Flex_Units(arr, index, len);
     return OUT;
@@ -1160,13 +1160,13 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
     Element* list = Element_ARG(COLLECTION);
 
     REBLEN index = VAL_INDEX(list);
-    if (index >= Cell_Series_Len_Head(list))
+    if (index >= Series_Len_Head(list))
         return FAIL(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
     Element* spare = Init_Integer(
         SPARE,
         1 + (Random_Int(Bool_ARG(SECURE))
-            % (Cell_Series_Len_Head(list) - index))
+            % (Series_Len_Head(list) - index))
     );
 
     if (not Try_Pick_Block(OUT, list, spare))
@@ -1465,7 +1465,7 @@ DECLARE_NATIVE(ENVELOP)
     if (
         not content or (
             Is_Splice(content)
-            and (Cell_List_Len_At(&len, content), len == 0)
+            and (List_Len_At(&len, content), len == 0)
         )
     ){
         return copy;
@@ -1474,7 +1474,7 @@ DECLARE_NATIVE(ENVELOP)
     Element* temp = copy;
     while (true) {
         const Element* tail;
-        Element* at = Cell_List_At_Known_Mutable(&tail, temp);
+        Element* at = List_At_Known_Mutable(&tail, temp);
         if (at == tail) {  // empty list, just append
             rebElide(CANON(APPEND), rebQ(temp), rebQ(content));
             return copy;

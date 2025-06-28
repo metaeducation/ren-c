@@ -162,7 +162,7 @@ DECLARE_NATIVE(WRITE)
     Element* data = Element_ARG(DATA);
 
     if (Is_Pinned_Form_Of(WORD, port)) {
-        if (Cell_Word_Id(port) != SYM_STDOUT)
+        if (Word_Id(port) != SYM_STDOUT)
             return PANIC("only @stdout support on WRITE for @ right now");
 
         if (Bool_ARG(PART) or Bool_ARG(SEEK) or Bool_ARG(APPEND))

@@ -81,7 +81,7 @@
 #define PARAMCLASS_BYTE(c)  FIRST_BYTE(&CELL_PARAMETER_PAYLOAD_2_FLAGS(c))
 #define FLAG_PARAMCLASS_BYTE(b)     FLAG_FIRST_BYTE(b)
 
-INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
+INLINE Option(const Source*) Parameter_Spec(const Cell* c) {
     assert(Heart_Of(c) == TYPE_PARAMETER);
 
     const Base* base = CELL_PARAMETER_PAYLOAD_1_SPEC(c);
@@ -97,7 +97,7 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 // Indicates that the parameter is optional, and if needed specified in the
 // path that is used to call a function.
 //
-// The interpretation of a null Cell_Parameter_Spec() for a refinement is that
+// The interpretation of a null Parameter_Spec() for a refinement is that
 // it does not take an argument at a callsite--not that it takes ANY-VALUE!
 //
 #define PARAMETER_FLAG_REFINEMENT \
@@ -306,13 +306,13 @@ INLINE Option(const Source*) Cell_Parameter_Spec(const Cell* c) {
 
 
 
-INLINE ParamClass Cell_Parameter_Class(const Cell* param) {
+INLINE ParamClass Parameter_Class(const Cell* param) {
     assert(Heart_Of(param) == TYPE_PARAMETER);
     ParamClass pclass = u_cast(ParamClass, PARAMCLASS_BYTE(param));
     return pclass;
 }
 
-INLINE Option(const Strand*) Cell_Parameter_Strand(const Cell* param) {
+INLINE Option(const Strand*) Parameter_Strand(const Cell* param) {
     assert(Heart_Of(param) == TYPE_PARAMETER);
     return cast(const Strand*, CELL_PARAMETER_EXTRA_STRAND(param));
 }
@@ -486,7 +486,7 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
 
 
 INLINE bool Is_Parameter_Unconstrained(const Cell* param) {
-    return Cell_Parameter_Spec(param) == nullptr;  // e.g. `[/refine]`
+    return Parameter_Spec(param) == nullptr;  // e.g. `[/refine]`
 }
 
 
