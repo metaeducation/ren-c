@@ -88,14 +88,14 @@ INLINE bool Is_Possibly_Unstable_Atom_Okay(Atom* atom) {  // typecheck only!
 #define Init_Okay(out) \
     TRACK(Init_Word_Untracked( \
         (out), \
-        ANTIFORM_1,  /* OKAY is valid keyword symbol */ \
-        CANON(OKAY)))
+        FLAG_LIFT_BYTE(ANTIFORM_1), \
+        CANON(OKAY)))  // okay is valid KEYWORD! symbol
 
-INLINE Value* Init_Logic_Untracked(Init(Value) out, bool flag) {
+INLINE Value* Init_Logic_Untracked(Init(Value) out, bool logic) {
     return Init_Word_Untracked(
         out,
-        ANTIFORM_1,  // OKAY and NULL are valid keyword symbols
-        flag ? CANON(OKAY) : CANON(NULL)
+        FLAG_LIFT_BYTE(ANTIFORM_1) | (logic ? 0 : CELL_FLAG_KEYWORD_IS_NULL),
+        logic ? CANON(OKAY) : CANON(NULL)
     );
 }
 
@@ -284,6 +284,12 @@ INLINE Option(Error*) Trap_Test_Conditional(
 ){
     Assert_Cell_Readable(v);
 
+    if (Is_Keyword(v)) {  // make conditional test of ~null~/~okay~ fastest
+        *cond = Not_Cell_Flag(v, KEYWORD_IS_NULL);
+        // !!! should ~NaN~ be falsey?  Give an error?  How to accelerate? [2]
+        return SUCCESS;
+    }
+
     if (LIFT_BYTE(v) != ANTIFORM_1) {
         *cond = true;  // all non-antiforms (including quasi/quoted) are truthy
         return SUCCESS;
@@ -296,23 +302,6 @@ INLINE Option(Error*) Trap_Test_Conditional(
         return Error_Trash_Condition_Raw(v);
     }
 
-    if (Heart_Of(v) != TYPE_WORD) {
-        *cond = true;  // !!! all stable non-word antiforms are truthy
-        return SUCCESS;
-    }
-
-    Option(SymId) id = Word_Id(v);
-    if (id == SYM_NULL) {
-        *cond = false;  // ~null~ antiform is the only falsey value
-        return SUCCESS;
-    }
-    if (id == SYM_OKAY) {
-        *cond = true;  // ~okay~ antiform is the only truthy keyword
-        return SUCCESS;
-    }
-
-  #if APPEASE_WEAK_STATIC_ANALYSIS
-    *cond = false;
-  #endif
-    return Error_Keyword_Condition_Raw(v);  // none exist yet, review [2]
+    *cond = true;  // !!! are all non-word/non-trash stable antiforms truthy?
+    return SUCCESS;
 }

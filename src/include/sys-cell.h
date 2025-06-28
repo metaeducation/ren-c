@@ -797,12 +797,11 @@ INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
     );
 }
 
-INLINE void Reset_Cell_Header(Cell* c, LiftByte lift_byte, uintptr_t flags)
+INLINE void Reset_Cell_Header(Cell* c, uintptr_t flags)
 {
-    assert((flags & CELL_MASK_LIFT) == FLAG_LIFT_BYTE(DUAL_0));
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(lift_byte)
+        BASE_FLAG_BASE | BASE_FLAG_CELL | flags
     );
 }
 

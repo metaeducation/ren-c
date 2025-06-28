@@ -67,24 +67,41 @@
 //   frame output.
 //
 
+//=//// CELL_FLAG_KEYWORD_IS_NULL ////////////////////////////////////////=//
+//
+// Being able to do a fast test for NULL via only header bits offers some
+// slight amount of improvement.
+//
+#define CELL_FLAG_KEYWORD_IS_NULL  CELL_FLAG_TYPE_SPECIFIC_A
+
 INLINE bool Is_Light_Null(Need(const Atom*) a) {
-    Assert_Cell_Readable(a);
-    return LIFT_BYTE(a) == ANTIFORM_1
-        and Heart_Of(a) == TYPE_WORD
-        and Word_Id(a) == SYM_NULL;
+    return (
+        (Ensure_Readable(a)->header.bits & (
+            CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_KEYWORD_IS_NULL
+        )) == (
+            FLAG_LIFT_BYTE(ANTIFORM_1)
+               | FLAG_HEART(TYPE_WORD)
+               | CELL_FLAG_KEYWORD_IS_NULL
+        )
+    );
 }
 
-INLINE bool Is_Nulled(const Value* v) {
-    Assert_Cell_Readable(v);
-    return LIFT_BYTE(v) == ANTIFORM_1
-        and Heart_Of(v) == TYPE_WORD
-        and Word_Id(v) == SYM_NULL;
+INLINE bool Is_Nulled(Need(const Value*) v) {
+    return (
+        (Ensure_Readable(v)->header.bits & (
+            CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_KEYWORD_IS_NULL
+        )) == (
+            FLAG_LIFT_BYTE(ANTIFORM_1)
+               | FLAG_HEART(TYPE_WORD)
+               | CELL_FLAG_KEYWORD_IS_NULL
+        )
+    );
 }
 
 #define Init_Nulled(out) \
     TRACK(Init_Word_Untracked( \
         (out), \
-        ANTIFORM_1,  /* NULL is valid keyword symbol */ \
+        FLAG_LIFT_BYTE(ANTIFORM_1) | CELL_FLAG_KEYWORD_IS_NULL,  \
         CANON(NULL)))
 
 #define Init_Quasi_Null(out) \

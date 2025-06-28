@@ -75,30 +75,51 @@ INLINE void Tweak_Word_Stub(const Cell* v, Stub* stub) {
     Clear_Cell_Flag(v, DONT_MARK_PAYLOAD_2);
 }
 
-INLINE Element* Init_Word_Untracked(
-    Init(Element) out,
-    LiftByte lift_byte,
+INLINE Cell* Blit_Word_Untracked(
+    Cell* out,
+    Flags flags,
     const Symbol* sym
 ){
-    Freshen_Cell_Header(out);
-    out->header.bits |= (
-        BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART(TYPE_WORD) | FLAG_LIFT_BYTE(lift_byte)
+  #if DEBUG_POISON_UNINITIALIZED_CELLS
+    assert(Is_Cell_Poisoned(out) or Is_Cell_Erased(out));
+  #endif
+    out->header.bits = (  // NOTE: `=` and not `|=` ... full overwrite
+        BASE_FLAG_BASE | BASE_FLAG_CELL  // must include base flags
+            | FLAG_HEART(TYPE_WORD)
+            | (( flags ))
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );
     CELL_WORD_INDEX_I32(out) = 0;  // !!! hint used in special cases
     CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, sym);
-    unnecessary(Tweak_Cell_Binding(out, UNBOUND));  // don't need checks...
+    UNNECESSARY(Tweak_Cell_Binding(out, UNBOUND));  // don't need checks...
+    out->extra.base = UNBOUND;  // ...just assign directly, always valid
+    return out;
+}
+
+INLINE Element* Init_Word_Untracked(
+    Init(Element) out,
+    Flags flags,
+    const Symbol* symbol
+){
+    Reset_Cell_Header(out,
+        FLAG_HEART(TYPE_WORD)
+            | (( flags ))
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
+    );
+    CELL_WORD_INDEX_I32(out) = 0;  // !!! hint used in special cases
+    CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, symbol);
+    UNNECESSARY(Tweak_Cell_Binding(out, UNBOUND));  // don't need checks...
     out->extra.base = UNBOUND;  // ...just assign directly, always valid
     return out;
 }
 
 #define Init_Word(out,str) \
-    TRACK(Init_Word_Untracked((out), NOQUOTE_2, (str)))
+    TRACK(Init_Word_Untracked((out), FLAG_LIFT_BYTE(NOQUOTE_2), (str)))
 
 #define Init_Quasi_Word(out,symbol) \
-    TRACK(Init_Word_Untracked((out), QUASIFORM_3, (symbol)))
+    TRACK(Init_Word_Untracked((out), FLAG_LIFT_BYTE(QUASIFORM_3), (symbol)))
 
 INLINE Element* Init_Word_Bound_Untracked(
     Sink(Element) out,

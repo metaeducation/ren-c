@@ -495,8 +495,12 @@ INLINE Option(Error*) Trap_Eval_Logic_Operation_Right_Side(
 
     Value* synthesized;
     if (Is_Group(right)) {
-        if (Eval_Any_List_At_Throws(SPARE, right, SPECIFIED))
+        if (Eval_Any_List_At_Throws(SPARE, right, SPECIFIED)) {
+          #if APPEASE_WEAK_STATIC_ANALYSIS
+            *cond = false;
+          #endif
             return Error_No_Catch_For_Throw(level_);
+        }
         synthesized = Decay_If_Unstable(SPARE);
     }
     else {
