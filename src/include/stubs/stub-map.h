@@ -46,13 +46,10 @@
 #define Init_Zombie Init_Unreadable
 
 
-INLINE PairList* MAP_PAIRLIST(const_if_c Map* map)
-  { return cast(PairList*, map); }
-
-#if CPLUSPLUS_11
-    INLINE const PairList* MAP_PAIRLIST(const Map* map)
-      { return cast(const PairList*, map); }
-#endif
+INLINE_MUTABLE_IF_C(PairList*) MAP_PAIRLIST(CONST_IF_C(Map*) map) {
+    CONSTABLE(Map*) m = m_cast(Map*, map);
+    return cast(PairList*, m);
+}
 
 INLINE HashList* Link_Hashlist(const Array* pairlist) {
     assert(Is_Stub_Pairlist(pairlist));

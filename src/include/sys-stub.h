@@ -220,22 +220,18 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 // Certain flavors of Compact stubs indicate to the GC that Compact their data
 // contains a Cell that needs to be marked.
 //
+// 1. Stub_Cell() is a critical function, and asserts can slow down the
+//    debug build significantly here.  Only do what's essential.
 
-INLINE Atom* Stub_Cell(const_if_c Stub* s) {
-    assert(Not_Stub_Flag(s, DYNAMIC));
-    assert(Stub_Holds_Cells(s));
-    assert(Is_Base_Readable(s));
+INLINE_MUTABLE_IF_C(Atom*) Stub_Cell(CONST_IF_C(Stub*) stub)
+{
+    CONSTABLE(Stub*) s = m_cast(Stub*, stub);
+
+    assert(Is_Base_Readable(s) and Not_Stub_Flag(s, DYNAMIC));
+    dont(assert(Stub_Holds_Cells(s)));  // not worth the cost [1]
+
     return u_cast(Atom*, &s->content.fixed.cell);
 }
-
-#if CPLUSPLUS_11
-    INLINE const Atom* Stub_Cell(const Stub* s) {
-        assert(Not_Stub_Flag(s, DYNAMIC));
-        assert(Stub_Holds_Cells(s));
-        assert(Is_Base_Readable(s));
-        return u_cast(const Atom*, &s->content.fixed.cell);
-    }
-#endif
 
 INLINE Stub* Compact_Stub_From_Cell(const Cell* v) {
     Stub* s = u_cast(Stub*,  // DEBUG_CHECK_CASTS checks Array
@@ -369,31 +365,37 @@ INLINE void Flip_Stub_To_White(const Stub* f) {
     #define Ensure_Stub_Info_Managed(s)  (s)
     #define Ensure_Stub_Bonus_Managed(s)  (s)
 #else
-    INLINE Stub* Ensure_Stub_Link_Managed(const_if_c Stub* s)
-      { assert(Get_Stub_Flag(s, LINK_NEEDS_MARK)); return s; }
+    INLINE_MUTABLE_IF_C(Stub*) Ensure_Stub_Link_Managed(
+        CONST_IF_C(Stub*) stub
+    ){
+        CONSTABLE(Stub*) s = m_cast(Stub*, stub);
+        assert(Get_Stub_Flag(s, LINK_NEEDS_MARK));
+        return s;
+    }
 
-    INLINE Stub* Ensure_Stub_Misc_Managed(const_if_c Stub* s)
-      { assert(Get_Stub_Flag(s, MISC_NEEDS_MARK)); return s; }
+    INLINE_MUTABLE_IF_C(Stub*) Ensure_Stub_Misc_Managed(
+        CONST_IF_C(Stub*) stub
+    ){
+        CONSTABLE(Stub*) s = m_cast(Stub*, stub);
+        assert(Get_Stub_Flag(s, MISC_NEEDS_MARK));
+        return s;
+    }
 
-    INLINE Stub* Ensure_Stub_Info_Managed(const_if_c Stub* s)
-      { assert(Get_Stub_Flag(s, INFO_NEEDS_MARK)); return s; }
+    INLINE_MUTABLE_IF_C(Stub*) Ensure_Stub_Info_Managed(
+        CONST_IF_C(Stub*) stub
+    ){
+        CONSTABLE(Stub*) s = m_cast(Stub*, stub);
+        assert(Get_Stub_Flag(s, INFO_NEEDS_MARK));
+        return s;
+    }
 
-    INLINE Stub* Ensure_Stub_Bonus_Managed(const_if_c Stub* s)
-      { return s; }  // review: needs check
-
-  #if CPLUSPLUS_11
-    INLINE const Stub* Ensure_Stub_Link_Managed(const Stub* s)
-      { assert(Get_Stub_Flag(s, LINK_NEEDS_MARK)); return s; }
-
-    INLINE const Stub* Ensure_Stub_Misc_Managed(const Stub* s)
-      { assert(Get_Stub_Flag(s, MISC_NEEDS_MARK)); return s; }
-
-    INLINE const Stub* Ensure_Stub_Info_Managed(const Stub* s)
-      { assert(Get_Stub_Flag(s, INFO_NEEDS_MARK)); return s; }
-
-    INLINE const Stub* Ensure_Stub_Bonus_Managed(const Stub* s)
-      { return s; }  // review: needs check
-  #endif
+    INLINE_MUTABLE_IF_C(Stub*) Ensure_Stub_Bonus_Managed(
+        CONST_IF_C(Stub*) stub
+    ){
+        CONSTABLE(Stub*) s = m_cast(Stub*, stub);
+        assert(Get_Stub_Flag(s, BONUS_NEEDS_MARK));
+        return s;
+    }
 #endif
 
 #define STUB_LINK(s)  Ensure_Stub_Link_Managed(s)->link.base

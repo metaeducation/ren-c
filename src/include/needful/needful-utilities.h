@@ -1,4 +1,70 @@
-//=//// C-ONLY CONSTNESS //////////////////////////////////////////////////=//
+
+//=//// TYPE_TRAITS IN C++11 AND ABOVE ///////////////////////////////////=//
+//
+// One of the most powerful tools you can get from allowing a C codebase to
+// compile as C++ comes from type_traits:
+//
+// http://en.cppreference.com/w/cpp/header/type_traits
+//
+// This is essentially an embedded query language for types, allowing one to
+// create compile-time errors for any C construction that isn't being used
+// in the way one might want.
+//
+// 1. The type trait is_explicitly_convertible() is useful, but it was taken
+//    out of GCC.  This uses a simple implementation that was considered to
+//    be buggy for esoteric reasons, but is good enough for our purposes.
+//
+//    https://stackoverflow.com/a/16944130
+//
+//    Note this is not defined in the `std::` namespace since it is a shim.
+//
+// 2. always_false<T> is a template that always yields false, but is dependent
+//    on T.  This works around the problem of static_assert()s inside of
+//    SFINAE'd functions, which would fail even if the SFINAE conditions
+//    were not met:
+//
+//        static_assert(false, "Always fails, even if not SFINAE'd");
+//        static_assert(always_false<T>::value, "Only fails if SFINAE'd");
+//
+#if CPLUSPLUS_11
+    #include <type_traits>
+    #include <utility>  // for std::forward()
+
+  namespace shim {  // [1]
+    template<typename _From, typename _To>
+    struct is_explicitly_convertible : public std::is_constructible<_To, _From>
+      { };
+  }
+
+    template<typename>
+    struct always_false : std::false_type {};  // for SFINAE static_assert [2]
+#endif
+
+
+//=//// CONSTIFY: ADD CONST TO POINTED-TO TYPE ////////////////////////////=//
+//
+// There is no standardized way to request constness be added to a wrapped
+// pointer in C++.  All implemenations of this are equally ad-hoc.
+//
+#if NO_CPLUSPLUS_11
+    #define constify(T)  const T
+#else
+    template<typename T>
+    struct ConstifyHelper {  // default: non-pointer types, add const
+        using type = const T;
+    };
+
+    template<typename T>
+    struct ConstifyHelper<T*> {  // raw pointer specialization: inject const
+        using type = const T*;
+    };
+
+    #define constify(T) \
+        typename ConstifyHelper<typename std::remove_reference<T>::type>::type
+#endif
+
+
+//=//// CONST PROPAGATION TOOLS ///////////////////////////////////////////=//
 //
 // C lacks overloading, which means that having one version of code for const
 // input and another for non-const input requires two entirely different names
@@ -20,10 +86,54 @@
 //
 //    #define Get_Member_As_Foo(ptr)  c_cast(Foo*, Get_Member(ptr))
 //
-#if CPLUSPLUS_11
-    #define const_if_c
-#else
+// HOWEVER, Needful provides an even more powerful way to do this without
+// code duplication.  It's a little tricky, but you write:
+//
+//     INLINE_MUTABLE_IF_C(Member*) Get_Member(CONST_IF_C(Object*) ptr) {
+//         CONSTABLE(Object*) o = m_cast(Object*, ptr);
+//         ...
+//     }
+//
+// This uses what can basically be considered "magic" to let you write just
+// one version of the function.  C++ is not able to simulate the behaviors of
+// overloaded functions using template mechanisms--the way substitution works
+// the argument has to be passed "as-is".  So if you try to instantiate a
+// template with a Derived class, it will be Derived--you can't use traits
+// to make it coerce as if the parameter had been defined as Base.  So instead
+// what we do is have the C++ build take the CONST_IF_C(Object*) as a
+// "universal reference" (T&&), and then the local variable instantiations
+// via CONSTABLE(Object*) will make that variable either const or mutable
+// based on the constness of the input argument.  It's a little tricky, but
+// worth it to avoid code duplication.
+//
+#if NO_CPLUSPLUS_11
     #define const_if_c const
+
+    #define INLINE_MUTABLE_IF_C(return_type) \
+        INLINE return_type
+
+    #define CONST_IF_C(param_type)  const param_type
+
+    #define CONSTABLE(param_type)  param_type  // use m_cast() on assignment
+#else
+    #define INLINE_MUTABLE_IF_C(return_type) \
+        template<typename T> \
+        INLINE typename std::conditional< \
+            std::is_same<T, constify(T)>::value, \
+            constify(return_type), \
+            return_type \
+        >::type
+
+    #define CONST_IF_C(param_type)  T&&  // universal reference to arg
+
+    #define CONSTABLE(param_type) \
+        typename std::conditional< \
+            std::is_same<T, constify(T)>::value, \
+            constify(param_type), \
+            param_type \
+        >::type
+
+    #define const_if_c
 #endif
 
 
@@ -117,48 +227,6 @@
 //
 #ifndef NOOP
     #define NOOP ((void)0)
-#endif
-
-
-//=//// TYPE_TRAITS IN C++11 AND ABOVE ///////////////////////////////////=//
-//
-// One of the most powerful tools you can get from allowing a C codebase to
-// compile as C++ comes from type_traits:
-//
-// http://en.cppreference.com/w/cpp/header/type_traits
-//
-// This is essentially an embedded query language for types, allowing one to
-// create compile-time errors for any C construction that isn't being used
-// in the way one might want.
-//
-// 1. The type trait is_explicitly_convertible() is useful, but it was taken
-//    out of GCC.  This uses a simple implementation that was considered to
-//    be buggy for esoteric reasons, but is good enough for our purposes.
-//
-//    https://stackoverflow.com/a/16944130
-//
-//    Note this is not defined in the `std::` namespace since it is a shim.
-//
-// 2. always_false<T> is a template that always yields false, but is dependent
-//    on T.  This works around the problem of static_assert()s inside of
-//    SFINAE'd functions, which would fail even if the SFINAE conditions
-//    were not met:
-//
-//        static_assert(false, "Always fails, even if not SFINAE'd");
-//        static_assert(always_false<T>::value, "Only fails if SFINAE'd");
-//
-#if CPLUSPLUS_11
-    #include <type_traits>
-    #include <utility>  // for std::forward()
-
-  namespace shim {  // [1]
-    template<typename _From, typename _To>
-    struct is_explicitly_convertible : public std::is_constructible<_To, _From>
-      { };
-  }
-
-    template<typename>
-    struct always_false : std::false_type {};  // for SFINAE static_assert [2]
 #endif
 
 

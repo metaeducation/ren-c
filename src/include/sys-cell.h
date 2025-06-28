@@ -860,29 +860,29 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     #define Ensure_Cell_Payload_1_Needs_Mark(c)  (c)
     #define Ensure_Cell_Payload_2_Needs_Mark(c)  (c)
 #else
-    INLINE Cell* Ensure_Cell_Extra_Needs_Mark(const_if_c Cell* c) {
+    INLINE_MUTABLE_IF_C(Cell*) Ensure_Cell_Extra_Needs_Mark(
+        CONST_IF_C(Cell*) cell
+    ){
+        CONSTABLE(Cell*) c = m_cast(Cell*, cell);
         assert(Heart_Implies_Extra_Needs_Mark(Unchecked_Heart_Of(c)));
         return c;
     }
 
-    INLINE Cell* Ensure_Cell_Payload_1_Needs_Mark(const_if_c Cell* c)
-      { assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_1)); return c; }
-
-    INLINE Cell* Ensure_Cell_Payload_2_Needs_Mark(const_if_c Cell* c)
-      { assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_2)); return c; }
-
-  #if CPLUSPLUS_11
-    INLINE const Cell* Ensure_Cell_Extra_Needs_Mark(const Cell* c) {
-        assert(Heart_Implies_Extra_Needs_Mark(Unchecked_Heart_Of(c)));
+    INLINE_MUTABLE_IF_C(Cell*) Ensure_Cell_Payload_1_Needs_Mark(
+        CONST_IF_C(Cell*) cell
+    ){
+        CONSTABLE(Cell*) c = m_cast(Cell*, cell);
+        assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_1));
         return c;
     }
 
-    INLINE const Cell* Ensure_Cell_Payload_1_Needs_Mark(const Cell* c)
-      { assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_1)); return c; }
-
-    INLINE const Cell* Ensure_Cell_Payload_2_Needs_Mark(const Cell* c)
-     { assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_2)); return c; }
-  #endif
+    INLINE_MUTABLE_IF_C(Cell*) Ensure_Cell_Payload_2_Needs_Mark(
+        CONST_IF_C(Cell*) cell
+    ){
+        CONSTABLE(Cell*) c = m_cast(Cell*, cell);
+        assert(Not_Cell_Flag(c, DONT_MARK_PAYLOAD_2));
+        return c;
+    }
 #endif
 
 #define CELL_EXTRA(c) \

@@ -270,18 +270,11 @@ INLINE Init(Slot) Slot_Init_Hack(Slot* slot) {
     return u_cast(Init(Slot), slot);
 }
 
-INLINE Value* Slot_Hack(const_if_c Slot* slot) {
-    assert(LIFT_BYTE(slot) != DUAL_0);
-    return u_cast(Value*, slot);
+INLINE_MUTABLE_IF_C(Value*) Slot_Hack(CONST_IF_C(Slot*) slot) {
+    CONSTABLE(Slot*) s = m_cast(Slot*, slot);
+    assert(LIFT_BYTE(s) != DUAL_0);
+    return u_cast(Value*, s);
 }
-
-#if CPLUSPLUS_11
-    INLINE const Value* Slot_Hack(const Slot* slot) {
-        assert(LIFT_BYTE(slot) != DUAL_0);
-        return u_c_cast(Value*, slot);
-    }
-#endif
-
 
 
 // Varlist_Slots_Head() and Varlist_Keys_Head() allow Varlist_Len() to be 0,

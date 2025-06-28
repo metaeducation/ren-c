@@ -228,16 +228,18 @@ INLINE Option(Element*) As_Element(const_if_c Value* v) {
     #define Known_Element(cell) \
         c_cast(Element*, (cell))
 #else
-    INLINE Element* Known_Element(const_if_c Atom* cell) {
-        assert(LIFT_BYTE(cell) != ANTIFORM_1);
-        return u_cast(Element*, cell);
+    INLINE_MUTABLE_IF_C(Element*) Known_Element(CONST_IF_C(Atom*) cell) {
+        CONSTABLE(Atom*) a = m_cast(Atom*, cell);
+        assert(LIFT_BYTE(a) != ANTIFORM_1);
+        return c_cast(Element*, a);
     }
 #endif
 
-INLINE Element* Ensure_Element(const_if_c Atom* cell) {
-    if (LIFT_BYTE(cell) == ANTIFORM_1)
-        panic (Error_Bad_Antiform(cell));
-    return u_cast(Element*, cell);
+INLINE_MUTABLE_IF_C(Element*) Ensure_Element(CONST_IF_C(Atom*) cell) {
+    CONSTABLE(Atom*) a = m_cast(Atom*, cell);
+    if (LIFT_BYTE(a) == ANTIFORM_1)
+        panic (Error_Bad_Antiform(a));
+    return c_cast(Element*, a);
 }
 
 #if CPLUSPLUS_11
@@ -246,16 +248,6 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
             return nullptr;
         return c_cast(Element*, v);
     }
-
-    INLINE const Element* Ensure_Element(const Atom* cell)
-      { return Ensure_Element(m_cast(Atom*, cell)); }
-
-  #if RUNTIME_CHECKS
-    INLINE const Element* Known_Element(const Atom* cell) {
-        assert(LIFT_BYTE(cell) != ANTIFORM_1);
-        return c_cast(Element*, cell);
-    }
-  #endif
 
   #if CHECK_CELL_SUBCLASSES
     void Ensure_Element(const Element*) = delete;

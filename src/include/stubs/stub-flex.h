@@ -292,28 +292,27 @@ INLINE Length Flex_Dynamic_Used(const Flex* f) {
 //    duplicates the code in Flex_Data() rather than call it.  Be sure
 //    to change both routines if changing one of them.
 //
-// 3. The C++ build uses `const` pointers to enforce the notion of immutable
-//    Flexes at compile time.  So a const Flex pointer should give a const
-//    data pointer back.  Plain C would need two differently-named functions
-//    to do this, which is deemed too ugly at callsites...so it's only done
-//    with overloading in C++.  See %sys-protect.h for more information.
-//
-// 4. Note that Flex indexing in C is zero based.  So as far as Flex is
+// 3. Note that Flex indexing in C is zero based.  So as far as Flex is
 //    concerned, `Flex_Head(T, s)` is the same as `Flex_At(T, s, 0)`
 //
-// 5. The clever c_cast() macro is used here to avoid writing overloads just
-//    to get a const vs. non-const response.  But it only works to avoid the
-//    overload if you can write it as a macro, and asserting on the Flex
-//    would repeat the argument twice in a macro body (bad mojo!)
-//
 
-INLINE Byte* Flex_Data(const_if_c Flex* f) {  // assume valid [1]
+INLINE_MUTABLE_IF_C(Byte*) Flex_Data(CONST_IF_C(Flex*) flex)
+{
+    CONSTABLE(Flex*) f = m_cast(Flex*, flex);
+
+    dont(assert(Is_Base_Readable(flex)));  // assert is slow, assume valid [1]
     return Get_Stub_Flag(f, DYNAMIC)  // inlined in Flex_Data_At() [2]
         ? u_cast(Byte*, f->content.dynamic.data)
         : u_cast(Byte*, &f->content);
 }
 
-INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
+INLINE_MUTABLE_IF_C(Byte*) Flex_Data_At(
+    Byte w,
+    CONST_IF_C(Flex*) flex,
+    REBLEN i
+){
+    CONSTABLE(Flex*) f = m_cast(Flex*, flex);
+
   #if RUNTIME_CHECKS
     if (w != Flex_Wide(f)) {
         if (BASE_BYTE(f) == FREE_POOLUNIT_BYTE)
@@ -334,26 +333,13 @@ INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
 
     return ((w) * (i)) + (  // v-- inlining of Flex_Data() [2]
         Get_Stub_Flag(f, DYNAMIC)
-            ? u_cast(Byte*, f->content.dynamic.data)
-            : u_cast(Byte*, &f->content)
+            ? u_c_cast(Byte*, f->content.dynamic.data)
+            : u_c_cast(Byte*, &f->content)
         );
 }
 
-#if CPLUSPLUS_11  // give back const pointer on const Flex input [3]
-    INLINE const Byte* Flex_Data(const Flex* s)
-      { return Flex_Data(m_cast(Flex*, s)); }
-
-    INLINE const Byte* Flex_Data_At(
-        Byte w,
-        const Flex* s,
-        REBLEN i
-    ){
-        return Flex_Data_At(w, m_cast(Flex*, s), i);
-    }
-#endif
-
 #define Flex_At(T,f,i) \
-    u_c_cast(T*, Flex_Data_At(sizeof(T), (f), (i)))  // zero-based [4]
+    u_c_cast(T*, Flex_Data_At(sizeof(T), (f), (i)))  // zero-based [3]
 
 #if RUNTIME_CHECKS
     #define Flex_Head(T,f) \
@@ -372,17 +358,12 @@ INLINE Byte* Flex_Data_At(Byte w, const_if_c Flex* f, REBLEN i) {
 #define Flex_Tail(T,f) \
     u_c_cast(T*, Flex_Data_Tail(sizeof(T), (f)))
 
-INLINE Byte* Flex_Data_Last(size_t wide, const_if_c Flex* f) {
+INLINE_MUTABLE_IF_C(Byte*) Flex_Data_Last(size_t wide, CONST_IF_C(Flex*) flex)
+{
+    CONSTABLE(Flex*) f = m_cast(Flex*, flex);
     assert(Flex_Used(f) != 0);
     return Flex_Data_At(wide, f, Flex_Used(f) - 1);
 }
-
-#if CPLUSPLUS_11  // can't use c_cast() to inherit const, must overload [5]
-    INLINE const Byte* Flex_Data_Last(size_t wide, const Flex* f) {
-        assert(Flex_Used(f) != 0);
-        return Flex_Data_At(wide, f, Flex_Used(f) - 1);
-    }
-#endif
 
 #define Flex_Last(T,f) \
     u_c_cast(T*, Flex_Data_Last(sizeof(T), (f)))

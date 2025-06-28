@@ -189,6 +189,13 @@
     constexpr inline Utf8(*) WritableWrapperCastHelper(Utf8(*) utf8)  // [5]
       { return utf8; }
 
+  //=//// CONSTIFY HELPER /////////////////////////////////////////////////=//
+
+    template<>
+    struct ConstifyHelper<Utf8(*)> {
+        using type = Utf8(const*);
+    };
+
   //=//// CONST-PRESERVING CAST HELPERS ///////////////////////////////////=//
 
   // These helpers assist in c_cast() and u_c_cast(), and picks the right

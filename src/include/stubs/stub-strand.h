@@ -78,39 +78,39 @@ INLINE void Tweak_Link_Bookmarks(const Strand* s, Option(BookmarkList*) book) {
 
 //=//// STRING NAVIGATION /////////////////////////////////////////////////=//
 
-INLINE Utf8(*) Skip_Codepoint(Utf8(const_if_c*) utf8) {
-    Byte* bp = m_cast(Byte*, utf8);
+INLINE_MUTABLE_IF_C(Utf8(*)) Skip_Codepoint(CONST_IF_C(Utf8(*)) utf8) {
+    CONSTABLE(Byte*) bp = m_cast(Byte*, utf8);
     do {
         ++bp;
     } while (Is_Continuation_Byte(*bp));
-    return cast(Utf8(*), bp);
+    return c_cast(Utf8(*), bp);
 }
 
-INLINE Utf8(*) Step_Back_Codepoint(Utf8(const_if_c*) utf8) {
-    Byte* bp = m_cast(Byte*, utf8);
+INLINE_MUTABLE_IF_C(Utf8(*)) Step_Back_Codepoint(CONST_IF_C(Utf8(*)) utf8) {
+    CONSTABLE(Byte*) bp = m_cast(Byte*, utf8);
     do {
         --bp;
     } while (Is_Continuation_Byte(*bp));
-    return cast(Utf8(*), bp);
+    return c_cast(Utf8(*), bp);
 }
 
-INLINE Utf8(*) Utf8_Next(
+INLINE_MUTABLE_IF_C(Utf8(*)) Utf8_Next(
     Codepoint* codepoint_out,
-    Utf8(const_if_c*) utf8
+    CONST_IF_C(Utf8(*)) utf8
 ){
-    Byte* bp = m_cast(Byte*, utf8);
+    CONSTABLE(Byte*) bp = m_cast(Byte*, utf8);
     if (Is_Byte_Ascii(*bp))
         *codepoint_out = *bp;
     else
         bp = m_cast(Byte*, Back_Scan_Utf8_Char_Unchecked(codepoint_out, bp));
-    return cast(Utf8(*), bp + 1);  // see definition of Back_Scan() for why +1
+    return c_cast(Utf8(*), bp + 1);  // see Back_Scan() for why +1
 }
 
-INLINE Utf8(*) Utf8_Back(
+INLINE_MUTABLE_IF_C(Utf8(*)) Utf8_Back(
     Codepoint* codepoint_out,
-    Utf8(const_if_c*) utf8
+    CONST_IF_C(Utf8(*)) utf8
 ){
-    Byte* bp = m_cast(Byte*, utf8);
+    CONSTABLE(Byte*) bp = m_cast(Byte*, utf8);
     --bp;
     while (Is_Continuation_Byte(*bp))
         --bp;
@@ -118,9 +118,9 @@ INLINE Utf8(*) Utf8_Back(
     return cast(Utf8(*), bp);
 }
 
-INLINE Utf8(*) Utf8_Skip(
+INLINE_MUTABLE_IF_C(Utf8(*)) Utf8_Skip(
     Codepoint* codepoint_out,
-    Utf8(const_if_c*) utf8,
+    CONST_IF_C(Utf8(*)) utf8,
     REBINT delta
 ){
     if (delta > 0) {
@@ -136,41 +136,8 @@ INLINE Utf8(*) Utf8_Skip(
         }
     }
     Utf8_Next(codepoint_out, utf8);
-    return w_cast(Utf8(*), utf8);
+    return w_cast(Utf8(*), utf8);  // return type is const if input is const
 }
-
-#if CPLUSPLUS_11
-    // See the definition of `const_if_c` for the explanation of why this
-    // overloading technique is needed to make output constness match input.
-
-    INLINE Utf8(const*) Skip_Codepoint(Utf8(const*) utf8)
-      { return Skip_Codepoint(w_cast(Utf8(*), utf8)); }
-
-    INLINE Utf8(const*) Step_Back_Codepoint(Utf8(const*) utf8)
-      { return Step_Back_Codepoint(w_cast(Utf8(*), utf8)); }
-
-    INLINE Utf8(const*) Utf8_Next(
-        Codepoint* codepoint_out,
-        Utf8(const*) utf8
-    ){
-        return Utf8_Next(codepoint_out, w_cast(Utf8(*), utf8));
-    }
-
-    INLINE Utf8(const*) Utf8_Back(
-        Codepoint* codepoint_out,
-        Utf8(const*) utf8
-    ){
-        return Utf8_Back(codepoint_out, w_cast(Utf8(*), utf8));
-    }
-
-    INLINE Utf8(const*) Utf8_Skip(
-        Codepoint* codepoint_out,
-        Utf8(const*) utf8,
-        REBINT delta
-    ){
-        return Utf8_Skip(codepoint_out, w_cast(Utf8(*), utf8), delta);
-    }
-#endif
 
 INLINE bool Codepoint_At_Is_NUL_0(Utf8(const*) utf8) {
     Byte b = u_c_cast(Byte*, utf8)[0];

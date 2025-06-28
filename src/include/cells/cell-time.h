@@ -37,17 +37,11 @@
 #if NO_RUNTIME_CHECKS
     #define Ensure_Date(v)  (v)
 #else
-    INLINE Cell* Ensure_Date(const_if_c Cell* v) {
-        assert(Heart_Of(v) == TYPE_DATE);
-        return v;
+    INLINE_MUTABLE_IF_C(Cell*) Ensure_Date(CONST_IF_C(Cell*) cell) {
+        CONSTABLE(Cell*) c = m_cast(Cell*, cell);
+        assert(Heart_Of(c) == TYPE_DATE);
+        return c;
     }
-
-  #if CPLUSPLUS_11
-    INLINE const Cell* Ensure_Date(const Cell* v) {
-        assert(Heart_Of(v) == TYPE_DATE);
-        return v;
-    }
-  #endif
 #endif
 
 #define MAX_YEAR 0x3fff
