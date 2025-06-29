@@ -153,6 +153,7 @@ core: [
 
     natives/ -> [
         n-bitwise.c
+        n-compose.c
         n-control.c
         n-data.c
         n-do.c

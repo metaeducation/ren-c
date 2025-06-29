@@ -128,6 +128,7 @@ leaders: [
     any-atom?
     null?
     space?
+    quasar?
     NUL?
     tripwire?
 
