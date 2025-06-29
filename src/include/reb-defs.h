@@ -143,6 +143,55 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 #define MAX_D64 ((double) 9.2233720368547758e18)
 
 
+//=//// RESULT TYPE ///////////////////////////////////////////////////////=//
+
+#if NO_CPLUSPLUS_11
+    #define Result(T)   T
+    #define Extract_Result(result)  result
+    #define Then_Extract_Result
+#else
+    template<typename T>
+    struct ResultWrapper {
+        T t;
+
+        template <typename U>
+        ResultWrapper(U other) : t {other} {}
+
+        ResultWrapper(const PermissiveZero&) : t (u_cast(T, 0)) {}
+
+        ResultWrapper(const ResultWrapper<T>& other) = delete;
+
+        ResultWrapper(ResultWrapper<T>&& other)
+            : t {std::move(other.t)}
+          {}
+
+        T& extract() {
+            return t;
+        }
+    };
+
+    #define Result(T) \
+        ResultWrapper<T>  // C++11 version of Result, which is a wrapper
+
+    #define Extract_Result(result)  result.extract()
+
+    struct ResultExtractor {};
+
+    template<typename T>
+    T& operator>>(
+        ResultWrapper<T>&& result,
+        const ResultExtractor& right
+    ){
+        UNUSED(right);
+        return result.extract();
+    }
+
+    constexpr ResultExtractor g_result_extractor = {};
+
+    #define Then_Extract_Result  >> g_result_extractor
+#endif
+
+
 //=//// 1-BASED INDEX TYPE ////////////////////////////////////////////////=//
 //
 // The Index type is not allowed to be 0 unless it is an Optional(Index).

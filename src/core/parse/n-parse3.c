@@ -1646,11 +1646,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                 Value* condition = Decay_If_Unstable(eval);
 
-                bool cond;
-                Option(Error*) e = Trap_Test_Conditional(&cond, condition);
-                if (e)
-                    panic (unwrap e);
-
+                bool cond = require (Test_Conditional(condition));
                 if (cond)
                     goto pre_rule;
 

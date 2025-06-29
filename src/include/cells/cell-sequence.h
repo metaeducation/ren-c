@@ -997,38 +997,6 @@ INLINE const Symbol* Cell_Refinement_Symbol(const Cell* v) {
 }
 
 
-// Degrade in place, simple singular chains like [a b]: -> [a b], or :a -> a
-//
-INLINE Element* Unchain(Element* out) {
-    assert(Is_Chain(out));
-    Option(Error*) error = Trap_Unsingleheart(out);
-    assert(not error);
-    UNUSED(error);
-    return out;
-}
-
-
-// Degrade in-place, simple singular paths like [a b]/ -> [a b], or /a -> a
-//
-INLINE Element* Unpath(Element* out) {
-    assert(Is_Path(out));
-    Option(Error*) error = Trap_Unsingleheart(out);
-    assert(not error);
-    UNUSED(error);
-    return out;
-}
-
-// Degrade in-place, simple singular tuples like [a b]. -> [a b], or .a -> a
-//
-INLINE Element* Untuple(Element* out) {
-    assert(Is_Tuple(out));
-    Option(Error*) error = Trap_Unsingleheart(out);
-    assert(not error);
-    UNUSED(error);
-    return out;
-}
-
-
 INLINE Element* Blockify_Any_Sequence(Element* seq) {  // always works
     DECLARE_ELEMENT (temp);
     Option(Error*) e = Trap_Alias_Any_Sequence_As(temp, seq, TYPE_BLOCK);

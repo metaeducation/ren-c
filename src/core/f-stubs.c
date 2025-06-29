@@ -540,53 +540,56 @@ Element* Setify(Element* out) {  // called on stack values; can't call eval
 
 
 //
-//  Trap_Unsingleheart: C
+//  Unsingleheart_Sequence: C
 //
 // Evolve a cell containing a sequence that's just an element and a SPACE into
 // the element alone, e.g. `a:` -> `a` or `:[a b]` -> `[a b]`
 //
-Option(Error*) Trap_Unsingleheart(Element* out) {
+Result(Element*) Unsingleheart_Sequence(Element* out)
+{
     assert(Any_Sequence_Type(Heart_Of(out)));
-    if (not Sequence_Has_Pointer(out)) {
-        goto unchain_error;  // compressed bytes don't encode blanks
-    }
+    if (not Sequence_Has_Pointer(out))
+        goto report_error;  // compressed bytes don't encode blanks
 
-  { //////////////////////////////////////////////////////////////////////////
+  extract_payload_1: {
 
     const Base* payload1 = CELL_PAYLOAD_1(out);
+
+  test_for_pairing_sequence: {
+
     if (Is_Base_A_Cell(payload1)) {  // compressed 2-elements, sizeof(Stub)
         const Pairing* pairing = c_cast(Pairing*, payload1);
         if (Is_Space(Pairing_First(pairing))) {
             assert(not Is_Space(Pairing_Second(pairing)));
             Derelativize(out, Pairing_Second(pairing), Cell_Binding(out));
-            return SUCCESS;
+            return out;
         }
         if (Is_Space(Pairing_Second(pairing))) {
             Derelativize(out, Pairing_First(pairing), Cell_Binding(out));
-            return SUCCESS;
+            return out;
         }
-        goto unchain_error;
+        goto report_error;
     }
 
-  { //////////////////////////////////////////////////////////////////////////
+} test_for_flex_sequence: {
 
     const Flex* f = c_cast(Flex*, payload1);
     if (Is_Stub_Symbol(f)) {
         KIND_BYTE(out) = TYPE_WORD;
         Clear_Cell_Flag(out, LEADING_SPACE);  // !!! necessary?
-        return SUCCESS;
+        return out;
     }
 
     Option(Heart) mirror = Mirror_Of(c_cast(Source*, f));
     if (mirror) {  // no length 2 sequence arrays unless mirror
         KIND_BYTE(out) = unwrap mirror;
         Clear_Cell_Flag(out, LEADING_SPACE);  // !!! necessary
-        return SUCCESS;
+        return out;
     }
 
-}} unchain_error: {
+}} report_error: { ///////////////////////////////////////////////////////////
 
-    return Error_User(
+    return fail (
         "UNCHAIN/UNPATH/UNTUPLE only on length 2 chains (when 1 item is SPACE)"
     );
 }}
@@ -831,13 +834,11 @@ DECLARE_NATIVE(UNCHAIN)
 {
     INCLUDE_PARAMS_OF_UNCHAIN;
 
-    Element* e = Element_ARG(CHAIN);
+    Element* elem = Element_ARG(CHAIN);
 
-    Option(Error*) error = Trap_Unsingleheart(e);
-    if (error)
-        return FAIL(unwrap error);
+    trap (Unsingleheart_Sequence(elem));
 
-    return COPY(e);
+    return COPY(elem);
 }
 
 
@@ -847,20 +848,18 @@ DECLARE_NATIVE(UNCHAIN)
 //  "Remove PATH!, e.g. leading slash or trailing slash from an element"
 //
 //      return: [null? element?]
-//      chain [<opt-out> path!]
+//      path [<opt-out> path!]
 //  ]
 //
 DECLARE_NATIVE(UNPATH)
 {
     INCLUDE_PARAMS_OF_UNPATH;
 
-    Element* e = Element_ARG(CHAIN);
+    Element* elem = Element_ARG(PATH);
 
-    Option(Error*) error = Trap_Unsingleheart(e);
-    if (error)
-        return FAIL(unwrap error);
+    trap (Unsingleheart_Sequence(elem));
 
-    return COPY(e);
+    return COPY(elem);
 }
 
 
@@ -870,18 +869,16 @@ DECLARE_NATIVE(UNPATH)
 //  "Remove TUPLE!, e.g. leading dot or trailing dot from a tuple"
 //
 //      return: [null? element?]
-//      chain [<opt-out> tuple!]
+//      tuple [<opt-out> tuple!]
 //  ]
 //
 DECLARE_NATIVE(UNTUPLE)
 {
     INCLUDE_PARAMS_OF_UNTUPLE;
 
-    Element* e = Element_ARG(CHAIN);
+    Element* elem = Element_ARG(TUPLE);
 
-    Option(Error*) error = Trap_Unsingleheart(e);
-    if (error)
-        return FAIL(unwrap error);
+    trap (Unsingleheart_Sequence(elem));
 
-    return COPY(e);
+    return COPY(elem);
 }

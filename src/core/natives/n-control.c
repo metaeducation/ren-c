@@ -206,11 +206,7 @@ DECLARE_NATIVE(IF)
     Value* condition = ARG(CONDITION);
     Value* branch = ARG(BRANCH);
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, condition);
-    if (e)
-        panic (unwrap e);
-
+    bool cond = require (Test_Conditional(condition));
     if (not cond)
         return nullptr;  // "light" null (not in a pack) if condition is false
 
@@ -237,13 +233,9 @@ DECLARE_NATIVE(WHEN)
     Value* condition = ARG(CONDITION);
     Value* branch = ARG(BRANCH);
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, condition);
-    if (e)
-        panic (unwrap e);
-
+    bool cond = require (Test_Conditional(condition));
     if (not cond)
-        return VOID;  // deviation from IF (!)
+        return VOID;  // deviation from IF (!) ...VOID not NULL
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
 }
@@ -269,10 +261,7 @@ DECLARE_NATIVE(EITHER)
 
     Value* condition = ARG(CONDITION);
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, condition);
-    if (e)
-        panic (unwrap e);
+    bool cond = require (Test_Conditional(condition));
 
     Value* branch = cond ? ARG(OKAY_BRANCH) : ARG(NULL_BRANCH);
 
@@ -526,10 +515,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
 } process_condition: {
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, condition);
-    if (e)
-        panic (unwrap e);
+    bool cond = require (Test_Conditional(condition));
 
     switch (which) {
       case NATIVE_IS_ANY:
@@ -805,10 +791,7 @@ DECLARE_NATIVE(CASE)
 
     Value* spare = Decay_If_Unstable(SPARE);
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, spare);
-    if (e)
-        panic (unwrap e);
+    bool cond = require (Test_Conditional(spare));
 
     if (not cond) {
         if (not Any_Branch(branch))  // like IF [1]
@@ -1031,10 +1014,7 @@ DECLARE_NATIVE(SWITCH)
             return BOUNCE_THROWN;  // aborts sublevel
         }
 
-        bool cond;
-        Option(Error*) e = Trap_Test_Conditional(&cond, scratch);
-        if (e)
-            panic (unwrap e);
+        bool cond = require (Test_Conditional(scratch));
 
         if (not cond)
             goto next_switch_step;
@@ -1149,7 +1129,7 @@ DECLARE_NATIVE(DEFAULT)
     Element* steps = u_cast(Element*, SCRATCH);  // avoid double-eval [1]
     STATE = ST_DEFAULT_GETTING_TARGET;  // can't leave at STATE_0
 
-    Unchain(target);
+    wont_fail (Unsingleheart_Sequence(target));
     heeded(Copy_Cell(SCRATCH, target));
     heeded(Corrupt_Cell_If_Needful(SPARE));
 

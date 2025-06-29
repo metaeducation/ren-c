@@ -232,6 +232,8 @@ export proto-parser: context [
             | "(const *)" (panic "use (const*) not (const *)")
             | "(const Cell*)"
             | "(const Cell* )" (panic "use (const Cell*) not (const Cell* )")
+            | "Result(" opt [identifier "(" thru ")"] thru ")"
+            | "Result(Option(" opt [identifier "(" thru ")"] thru "))"
         ]
 
         proto: ~

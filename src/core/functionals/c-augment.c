@@ -83,16 +83,16 @@ DECLARE_NATIVE(AUGMENT)
 
     VarList* adjunct = nullptr;
 
-  copy_augmentee_parameters: { ////////////////////////////////////////////=//
+  copy_augmentee_parameters: {
 
-    // We reuse the process from Trap_Make_Paramlist_Managed(), which pushes
-    // WORD! and PARAMETER! pairs for each argument.
-    //
-    // 1. For any specialized (including local) parameters in the paramlist
-    //    we are copying, we want to "seal" them from view.  We wouldn't have
-    //    access to them if we were an ADAPT and not making a copy (since the
-    //    action in the exemplar would not match the phase).  So making a copy
-    //    should not suddenly subvert the access.
+  // We reuse the process from Make_Paramlist_Managed(), which pushes WORD!
+  // and PARAMETER! pairs for each argument.
+  //
+  // 1. For any specialized (including local) parameters in the paramlist we
+  //    are copying, we want to "seal" them from view.  We wouldn't have
+  //    access to them if we were an ADAPT and not making a copy (since the
+  //    action in the exemplar would not match the phase).  So making a copy
+  //    should not suddenly subvert the access.
 
     const Key* key_tail;
     const Key* key = Phase_Keys(&key_tail, augmentee);
@@ -105,32 +105,27 @@ DECLARE_NATIVE(AUGMENT)
             Set_Cell_Flag(TOP, STACK_NOTE_SEALED);  // seal parameters [1]
     }
 
-} add_parameters_from_spec: { /////////////////////////////////////////////=//
+} add_parameters_from_spec: {
 
-    Option(Error*) e = Trap_Push_Keys_And_Params(
+    require (Push_Keys_And_Params(
         &adjunct,
         spec,
         MKF_PARAMETER_SEEN,  // don't assume description string
         SYM_0  // if original had no return, we don't add
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
-} pop_paramlist_and_init_action: { /////////////////////////////////////////=//
+} pop_paramlist_and_init_action: {
 
-    // The augmented action adds parameters but doesn't add any new behavior.
-    // Hence we don't need a new Details, and can get away with patching the
-    // augmentee's action information (phase and coupling) into the paramlist.
+  // The augmented action adds parameters but doesn't add any new behavior.
+  // Hence we don't need a new Details, and can get away with patching the
+  // augmentee's action information (phase and coupling) into the paramlist.
 
     Phase* prior = Frame_Phase(ARG(ORIGINAL));
     Option(VarList*) prior_coupling = Cell_Frame_Coupling(ARG(ORIGINAL));
 
-    ParamList* paramlist;
-    Option(Error*) e = Trap_Pop_Paramlist(  // checks for duplicates
-        &paramlist, STACK_BASE, prior, prior_coupling
+    ParamList* paramlist = require (  // checks for duplicates
+        Pop_Paramlist(STACK_BASE, prior, prior_coupling)
     );
-    if (e)
-        panic (unwrap e);
 
     assert(Misc_Phase_Adjunct(paramlist) == nullptr);
     Tweak_Misc_Phase_Adjunct(paramlist, adjunct);

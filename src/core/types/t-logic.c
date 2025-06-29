@@ -212,7 +212,7 @@ DECLARE_NATIVE(FALSE_Q)
 //
 //  boolean: native [
 //
-//  "The word TRUE if the supplied value is a branch trigger, otherwise FALSE"
+//  "The word TRUE if the condition is a branch trigger, otherwise FALSE"
 //
 //      return: [~(true false)~]
 //      value [any-value?]
@@ -222,10 +222,7 @@ DECLARE_NATIVE(BOOLEAN)
 {
     INCLUDE_PARAMS_OF_BOOLEAN;
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, ARG(VALUE));
-    if (e)
-        panic (unwrap e);
+    bool cond = require (Test_Conditional(ARG(VALUE)));
 
     return Init_Word(OUT, cond ? CANON(TRUE) : CANON(FALSE));
 }
@@ -268,20 +265,17 @@ DECLARE_NATIVE(NO_Q)
 //
 //  to-yesno: native [
 //
-//  "The word YES if the supplied value is a branch trigger, otherwise NO"
+//  "The word YES if the condition is a branch trigger, otherwise NO"
 //
 //      return: [~(yes no)~]
-//      value [any-value?]
+//      condition [any-value?]
 //  ]
 //
 DECLARE_NATIVE(TO_YESNO)
 {
     INCLUDE_PARAMS_OF_TO_YESNO;
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, ARG(VALUE));
-    if (e)
-        panic (unwrap e);
+    bool cond = require (Test_Conditional(ARG(CONDITION)));
 
     return Init_Word(OUT, cond ? CANON(YES) : CANON(NO));
 }
@@ -324,20 +318,17 @@ DECLARE_NATIVE(OFF_Q)
 //
 //  to-onoff: native [
 //
-//  "The word ON if the supplied value is a branch trigger, otherwise OFF"
+//  "The word ON if the condition is a branch trigger, otherwise OFF"
 //
 //      return: [~(on off)~]
-//      value [any-value?]
+//      condition [any-value?]
 //  ]
 //
 DECLARE_NATIVE(TO_ONOFF)
 {
     INCLUDE_PARAMS_OF_TO_ONOFF;
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, ARG(VALUE));
-    if (e)
-        panic (unwrap e);
+    bool cond = require (Test_Conditional(ARG(CONDITION)));
 
     return Init_Word(OUT, cond ? CANON(ON) : CANON(OFF));
 }
@@ -357,15 +348,8 @@ DECLARE_NATIVE(AND_Q)
 {
     INCLUDE_PARAMS_OF_AND_Q;
 
-    bool cond1;
-    Option(Error*) e = Trap_Test_Conditional(&cond1, ARG(VALUE1));
-    if (e)
-        panic (unwrap e);
-
-    bool cond2;
-    e = Trap_Test_Conditional(&cond2, ARG(VALUE2));
-    if (e)
-        panic (unwrap e);
+    bool cond1 = require (Test_Conditional(ARG(VALUE1)));
+    bool cond2 = require (Test_Conditional(ARG(VALUE2)));
 
     if (cond1 and cond2)
         return LOGIC(true);
@@ -388,15 +372,8 @@ DECLARE_NATIVE(OR_Q)
 {
     INCLUDE_PARAMS_OF_OR_Q;
 
-    bool cond1;
-    Option(Error*) e = Trap_Test_Conditional(&cond1, ARG(VALUE1));
-    if (e)
-        panic (unwrap e);
-
-    bool cond2;
-    e = Trap_Test_Conditional(&cond2, ARG(VALUE2));
-    if (e)
-        panic (unwrap e);
+    bool cond1 = require (Test_Conditional(ARG(VALUE1)));
+    bool cond2 = require (Test_Conditional(ARG(VALUE2)));
 
     if (cond1 or cond2)
         return LOGIC(true);
@@ -440,10 +417,7 @@ DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
     if (bounce)
         return unwrap bounce;
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, v);
-    if (e)
-        panic (unwrap e);
+    bool cond = require (Test_Conditional(v));
 
     return LOGIC(not cond);
 }
@@ -467,10 +441,7 @@ DECLARE_NATIVE(TO_LOGIC)
     if (bounce)
         return unwrap bounce;
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, v);
-    if (e)
-        panic (unwrap e);
+    bool cond = require (Test_Conditional(v));
 
     return LOGIC(cond);
 }
@@ -523,8 +494,7 @@ INLINE Option(Error*) Trap_Eval_Logic_Operation_Right_Side(
         synthesized = spare;
     }
 
-    Option(Error*) e = Trap_Test_Conditional(cond, synthesized);
-    if (e) {
+    *cond = Test_Conditional(synthesized) except (Error* e) {
       #if APPEASE_WEAK_STATIC_ANALYSIS
         *cond = false;
       #endif
@@ -550,16 +520,12 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_AND_1;
 
-    bool left;
-    Option(Error*) e = Trap_Test_Conditional(&left, ARG(LEFT));
-    if (e)
-        panic (unwrap e);
-
+    bool left = require (Test_Conditional(ARG(LEFT)));
     if (not left)
         return LOGIC(false);  // if left is false, don't run right hand side
 
     bool right;
-    e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
+    Option(Error*) e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
     USED(ARG(RIGHT));
     if (e)
         panic (unwrap e);
@@ -583,16 +549,12 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_OR_1;
 
-    bool left;
-    Option(Error*) e = Trap_Test_Conditional(&left, ARG(LEFT));
-    if (e)
-        panic (unwrap e);
-
+    bool left = require (Test_Conditional(ARG(LEFT)));
     if (left)
         return LOGIC(true);  // if left is true, don't run right hand side
 
     bool right;
-    e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
+    Option(Error*) e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
     USED(ARG(RIGHT));
     if (e)
         panic (unwrap e);
@@ -622,11 +584,7 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
     if (e)
         panic (unwrap e);
 
-    bool left;
-    e = Trap_Test_Conditional(&left, ARG(LEFT));
-    if (e)
-        panic (unwrap e);
-
+    bool left = require (Test_Conditional(ARG(LEFT)));
     if (not left)
         return LOGIC(right);
 

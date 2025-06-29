@@ -278,30 +278,19 @@ INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
 //    it looks like ~null~ and ~okay~ the only things to consider, and if
 //    anything else is tested it errors.
 
-INLINE Option(Error*) Trap_Test_Conditional(
-    Sink(bool) cond,
+INLINE Result(bool) Test_Conditional(
     const Value* v  // Not Atom*, has to be stable... no VOID [1]
 ){
     Assert_Cell_Readable(v);
 
-    if (Is_Keyword(v)) {  // make conditional test of ~null~/~okay~ fastest
-        *cond = Not_Cell_Flag(v, KEYWORD_IS_NULL);
-        // !!! should ~NaN~ be falsey?  Give an error?  How to accelerate? [2]
-        return SUCCESS;
-    }
+    if (Is_Keyword(v))  // make conditional test of ~null~/~okay~ fastest
+        return Not_Cell_Flag(v, KEYWORD_IS_NULL);  // ~NaN~ falsey?  [2]
 
-    if (LIFT_BYTE(v) != ANTIFORM_1) {
-        *cond = true;  // all non-antiforms (including quasi/quoted) are truthy
-        return SUCCESS;
-    }
+    if (LIFT_BYTE(v) != ANTIFORM_1)
+        return true;  // all non-antiforms (including quasi/quoted) are truthy
 
-    if (Heart_Of(v) == TYPE_RUNE) {  // trash--not legal to test conditionally
-      #if APPEASE_WEAK_STATIC_ANALYSIS
-        *cond = false;
-      #endif
-        return Error_Trash_Condition_Raw(v);
-    }
+    if (Heart_Of(v) == TYPE_RUNE)  // trash--not legal to test conditionally
+        return fail (Error_Trash_Condition_Raw(v));
 
-    *cond = true;  // !!! are all non-word/non-trash stable antiforms truthy?
-    return SUCCESS;
+    return true;  // !!! are all non-word/non-trash stable antiforms truthy?
 }

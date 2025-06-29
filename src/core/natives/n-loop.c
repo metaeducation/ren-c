@@ -1365,11 +1365,7 @@ DECLARE_NATIVE(EVERY)
 
     Value* spare = Decay_If_Unstable(SPARE);
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, spare);
-    if (e)
-        panic (unwrap e);
-
+    bool cond = require (Test_Conditional(spare));
     if (not cond) {
         Init_Nulled(OUT);
     }
@@ -2271,11 +2267,7 @@ DECLARE_NATIVE(INSIST)
 
     Value* out = Decay_If_Unstable(OUT);  // decay for truth test [4]
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, out);
-    if (e)
-        panic (unwrap e);
-
+    bool cond = require (Test_Conditional(out));
     if (cond)
         return LOOPED(OUT);
 
@@ -2340,10 +2332,7 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
 
     Value* spare = Decay_If_Unstable(SPARE);
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, spare);
-    if (e)
-        panic (unwrap e);
+    bool cond = require (Test_Conditional(spare));
 
     if (is_while) {
         if (not cond)

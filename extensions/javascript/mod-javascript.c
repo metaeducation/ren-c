@@ -917,16 +917,12 @@ DECLARE_NATIVE(JS_NATIVE)
     Element* source = Element_ARG(SOURCE);
 
     VarList* adjunct;
-    ParamList* paramlist;
-    Option(Error*) e = Trap_Make_Paramlist_Managed(
-        &paramlist,
+    ParamList* paramlist = require (Make_Paramlist_Managed(
         &adjunct,
         spec,
         MKF_MASK_NONE,
         SYM_RETURN  // want return
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
     Details* details = Make_Dispatch_Details(
         BASE_FLAG_MANAGED

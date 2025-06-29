@@ -320,7 +320,7 @@ bool Func_Details_Querier(
 
 
 //
-//  Trap_Make_Interpreted_Action: C
+//  Make_Interpreted_Action: C
 //
 // This digests the spec block into a `paramlist` for parameter descriptions,
 // along with an associated `keylist` of the names of the parameters and
@@ -340,8 +340,7 @@ bool Func_Details_Querier(
 //        >> f
 //        == []
 //
-Option(Error*) Trap_Make_Interpreted_Action(
-    Sink(Details*) out,
+Result(Details*) Make_Interpreted_Action(
     const Element* spec,
     const Element* body,
     Option(SymId) returner,  // SYM_RETURN, SYM_YIELD, SYM_0 ...
@@ -352,16 +351,14 @@ Option(Error*) Trap_Make_Interpreted_Action(
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
     VarList* adjunct;
-    ParamList* paramlist;
-    Option(Error*) e = Trap_Make_Paramlist_Managed(
-        &paramlist,
+    ParamList* paramlist = Make_Paramlist_Managed(
         &adjunct,
         spec,
         MKF_MASK_NONE,
         returner
-    );
-    if (e)
-        return e;
+    ) except (Error* e) {
+        abrupt_panic (e);
+    }
 
     Details* details = Make_Dispatch_Details(
         BASE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,
@@ -401,8 +398,7 @@ Option(Error*) Trap_Make_Interpreted_Action(
     if (Get_Cell_Flag(body, CONST))  // capture mutability flag [2]
         Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need Value*
 
-    *out = details;
-    return SUCCESS;
+    return details;
 }
 
 
@@ -425,17 +421,13 @@ DECLARE_NATIVE(FUNCTION)
     Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
 
-    Details* details;
-    Option(Error*) e = Trap_Make_Interpreted_Action(
-        &details,
+    Details* details = require (Make_Interpreted_Action(
         spec,
         body,
         SYM_RETURN,  // has a RETURN: in the paramlist
         &Func_Dispatcher,
         MAX_IDX_FUNC  // archetype and one array slot (will be filled)
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
     Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);

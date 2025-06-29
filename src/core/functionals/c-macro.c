@@ -195,17 +195,13 @@ DECLARE_NATIVE(MACRO)
     Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
 
-    Details* details;
-    Option(Error*) e = Trap_Make_Interpreted_Action(
-        &details,
+    Details* details = require (Make_Interpreted_Action(
         spec,
         body,
         SYM_RETURN,
         &Macro_Dispatcher,
         MAX_IDX_MACRO  // details capacity, just body slot (and archetype)
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
     Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);

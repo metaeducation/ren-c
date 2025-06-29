@@ -169,17 +169,13 @@ DECLARE_NATIVE(LAMBDA)
     Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
 
-    Details* details;
-    Option(Error*) e = Trap_Make_Interpreted_Action(
-        &details,
+    Details* details = require (Make_Interpreted_Action(
         spec,
         body,
         SYM_0,  // no RETURN: in the paramlist
         &Lambda_Dispatcher,
         MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
     Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);

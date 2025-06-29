@@ -1622,10 +1622,9 @@ bool API_rebDid(
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End_May_Panic(eval, flags, binding, p, vaptr);
 
-    bool cond;
-    Option(Error*) e = Trap_Test_Conditional(&cond, eval);
-    if (e)
-        abrupt_panic (unwrap e);
+    bool cond = Test_Conditional(eval) except (Error* e) {
+        abrupt_panic (e);
+    }
 
     return cond;
 }
@@ -3184,16 +3183,15 @@ RebolValue* API_rebFunctionFlipped(
         Tweak_Cell_Binding(spec, g_lib_context);  // !!! needs module isolation
 
     VarList* adjunct;
-    ParamList* paramlist;
-    Option(Error*) e = Trap_Make_Paramlist_Managed(
-        &paramlist,
+    ParamList* paramlist = Make_Paramlist_Managed(
         &adjunct,
         spec,
         MKF_MASK_NONE,
         SYM_RETURN  // has return for type checking and continuation use
-    );
-    if (e)
-        abrupt_panic (unwrap e);
+    )
+    except (Error* e) {
+        abrupt_panic (e);
+    }
 
     Details* details = Make_Dispatch_Details(
         BASE_FLAG_MANAGED

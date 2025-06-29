@@ -250,23 +250,19 @@ DECLARE_NATIVE(COMBINATOR)
     Element* body = Element_ARG(BODY);
 
     // This creates the expanded spec and puts it in a block which manages it.
-    // That might not be needed if the Trap_Make_Paramlist_Managed() could take
-    // an array and an index.
+    // That might not be needed if Make_Paramlist_Managed() could take an
+    // array and an index.
     //
     Sink(Element) expanded_spec = SCRATCH;
     Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
     VarList* adjunct;
-    ParamList* paramlist;
-    Option(Error*) e = Trap_Make_Paramlist_Managed(
-        &paramlist,
+    ParamList* paramlist = require (Make_Paramlist_Managed(
         &adjunct,
         expanded_spec,
         MKF_MASK_NONE,
         SYM_RETURN  // want RETURN:
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
     Details* details = Make_Dispatch_Details(
         BASE_FLAG_MANAGED,
@@ -426,13 +422,9 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
 
     VarList* state = Cell_Varlist(ARG(STATE));
 
-    bool cased;
-    Option(Error*) e = Trap_Test_Conditional(  // or trust it's a LOGIC ?
-        &cased,
+    bool cased = require (Test_Conditional(  // or trust it's a LOGIC ?
         Slot_Hack(Varlist_Slot(state, IDX_UPARSE_PARAM_CASE))
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
     Element* v = Element_ARG(VALUE);
     Element* input = Element_ARG(INPUT);

@@ -44,9 +44,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         );
 
     if (Is_Text(arg)) {
-        Option(Error*) error = Trap_Transcode_One(OUT, heart, arg);
-        if (error)
-            return FAIL(unwrap error);
+        trap (Transcode_One(OUT, heart, arg));
         return OUT;
     }
 

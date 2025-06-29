@@ -111,16 +111,15 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
 
     if (Any_Utf8(arg)) {  // !!! odd historical behavior [1]
         Sink(Element) out = OUT;
-        Option(Error*) error = Trap_Transcode_One(out, TYPE_0, arg);
-        if (not error) {
-            if (Is_Integer(out))
-                return OUT;
-            if (Is_Decimal(out))
-                return rebDelegate(CANON(ROUND), out);  // out is legal ATM [2]
-            return FAIL(Error_User("Trap_Transcode_One() gave unwanted type"));
-        }
 
-        panic (Error_Bad_Make(TYPE_INTEGER, arg));
+        require (Transcode_One(out, TYPE_0, arg));  // not bad make (?)
+
+        if (Is_Integer(out))
+            return OUT;
+        if (Is_Decimal(out))
+            return rebDelegate(CANON(ROUND), out);  // out is legal ATM [2]
+
+        return FAIL("Transcode_One() gave unwanted type");
     }
 
     dont(Is_Blob(arg));  // [3]

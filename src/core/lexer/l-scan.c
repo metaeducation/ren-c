@@ -3315,14 +3315,14 @@ void Shutdown_Scanner(void)
 
 
 //
-//  Trap_Transcode_One: C
+//  Transcode_One: C
 //
 // This is a generic helper that powers things like (to integer! "1020").
 //
 // For now we implement it inefficiently, but it should be done without
 // needing to call a native.
 //
-Option(Error*) Trap_Transcode_One(
+Result(Element*) Transcode_One(
     Sink(Element) out,
     Option(Heart) heart,
     const Element* any_utf8
@@ -3332,16 +3332,16 @@ Option(Error*) Trap_Transcode_One(
     if (Is_Warning(trapped)) {
         Error* error = Cell_Error(trapped);
         rebRelease(trapped);
-        return error;
+        return fail (error);
     }
     Unliftify_Known_Stable(trapped);
     if (heart and Heart_Of(trapped) != heart) {
         rebRelease(trapped);
-        return Error_User("Trap_Transcode_One() gave unwanted type");
+        return fail ("Transcode_One() gave unwanted type");
     }
     Copy_Cell(out, cast(Element*, trapped));
     rebRelease(trapped);
-    return SUCCESS;
+    return out;
 }
 
 

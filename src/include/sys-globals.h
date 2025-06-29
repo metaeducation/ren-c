@@ -156,6 +156,8 @@ TVAR Binary* TG_Byte_Buf;  // byte buffer used in various spots (as BYTE_BUF)
 **
 ***********************************************************************/
 
+TVAR Error* g_failure;  // used by natives and Result(T) functions
+
 TVAR MemoryState g_mem;
 
 TVAR SymbolState g_symbols;

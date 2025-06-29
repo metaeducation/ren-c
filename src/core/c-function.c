@@ -43,7 +43,8 @@ static void Force_Adjunct(VarList* *adjunct_out) {
 }
 
 
-// This is an implementation routine for Trap_Make_Paramlist_Managed().
+// This is an implementation helper for Make_Paramlist_Managed().
+//
 // It was broken out into its own separate routine so that the AUGMENT
 // function could reuse the logic for function spec analysis.  It may not
 // be broken out in a particularly elegant way, but it's a start.
@@ -58,7 +59,7 @@ static void Force_Adjunct(VarList* *adjunct_out) {
 //    first slot of the paramlist.  Initially it was the last slot...but this
 //    enables adding more arguments/refinements/locals in derived functions.
 //
-static Option(Error*) Trap_Push_Keys_And_Params_Core(
+static Result(bool) Push_Keys_And_Params_Core(
     VarList* *adjunct,
     Level* L,
     Flags flags,
@@ -104,7 +105,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 continue;
             }
             else
-                return Error_Bad_Func_Def_Raw(item);
+                return fail (item);
         }
 
   //=//// CHECK BINDING FOR <with> WORD!s /////////////////////////////////=//
@@ -119,7 +120,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
     if (mode == SPEC_MODE_WITH) {
         if (not Is_Word(item))
-            return Error_User(
+            return fail (
                 "<with> must be followed by WORD!s in FUNCTION spec"
             );
 
@@ -128,7 +129,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             dummy, item, Level_Binding(L)
         );
         if (e)
-            return e;
+            return fail (unwrap e);
 
         continue;
     }
@@ -160,7 +161,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             must_be_action = true;
         }
         else
-            return Error_Bad_Func_Def_Raw(item);
+            return fail (item);
 
         Init_Word(PUSH(), symbol);
 
@@ -177,13 +178,13 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         }
 
         if (Trampoline_With_Top_As_Root_Throws())  // run the group
-            return Error_No_Catch_For_Throw(L);
+            return fail (Error_No_Catch_For_Throw(L));
 
         if (not meta) {
             Value* decayed = Decay_If_Unstable(eval);
 
             if (must_be_action and not Is_Action(decayed))
-                return Error_User("Assignment using /FOO must be an action");
+                return fail ("Assignment using /FOO must be an action");
         }
 
         Move_Cell(PUSH(), cast(Value*, eval));
@@ -224,7 +225,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                 assert(mode == SPEC_MODE_PUSHED);
 
                 if (Parameter_Strand(TOP_ELEMENT))
-                    return Error_Bad_Func_Def_Raw(item);
+                    return fail (Error_Bad_Func_Def_Raw(item));
 
                 Strand* strand = Copy_String_At(item);
                 Manage_Flex(strand);
@@ -251,13 +252,13 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
         if (Is_Block(item)) {
             if (mode != SPEC_MODE_PUSHED)  // must come after parameter [1]
-                abrupt_panic (Error_Bad_Func_Def_Raw(item));
+                return fail (Error_Bad_Func_Def_Raw(item));
 
             DECLARE_ELEMENT (param);  // we'll call GET, which uses the stack
             Copy_Cell(param, TOP_ELEMENT);
 
             if (Parameter_Spec(param))  // `func [x [integer!] [integer!]]`
-                abrupt_panic (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
+                return fail (Error_Bad_Func_Def_Raw(item));  // too many blocks
 
             Context* derived = Derive_Binding(Level_Binding(L), item);
             Push_Lifeguard(param);
@@ -276,13 +277,13 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
         bool quoted = false;  // single quoting level used as signal in spec
         if (Quotes_Of(item) > 0) {
             if (Quotes_Of(item) > 1)
-                return Error_Bad_Func_Def_Raw(item);
+                return fail (Error_Bad_Func_Def_Raw(item));
             quoted = true;
         }
 
         Option(Type) type = Type_Of_Unquoted(item);
         if (not type)
-            return Error_User(
+            return fail (
                 "Extension types not supported in function spec"
             );
 
@@ -317,7 +318,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
               case TRAILING_SPACE_AND(WORD):
                 if (not returner)
-                    return Error_User(
+                    return fail (
                         "SET-WORD in spec but no RETURN or YIELD in effect"
                     );
                 if (not quoted and Word_Id(item) == unwrap returner) {
@@ -345,7 +346,7 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
             if (Is_Pinned_Form_Of(WORD, item)) {  // output
                 if (quoted)
-                    return Error_User("Can't quote @WORD! parameters");
+                    return fail ("Can't quote @WORD! parameters");
                 pclass = PARAMCLASS_THE;
             }
             else if (Is_Meta_Form_Of(WORD, item)) {
@@ -360,14 +361,14 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             }
         }
         else
-            return Error_Bad_Func_Def_Raw(item);
+            return fail (Error_Bad_Func_Def_Raw(item));
 
         if (pclass == PARAMCLASS_0)  // didn't match
-            return Error_Bad_Func_Def_Raw(item);
+            return fail (Error_Bad_Func_Def_Raw(item));
 
         if (mode == SPEC_MODE_LOCAL or mode == SPEC_MODE_WITH) {
             if (pclass != PARAMCLASS_NORMAL)
-                return Error_Bad_Func_Def_Raw(item);
+                return fail (Error_Bad_Func_Def_Raw(item));
 
             if (mode == SPEC_MODE_LOCAL)
                 local = true;
@@ -379,11 +380,11 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             and not is_returner
         ){
             if (SYM_RETURN == unwrap returner)
-                return Error_User(
+                return fail (
                     "Generator provides RETURN:, use LAMBDA if not desired"
                 );
             assert(SYM_YIELD == unwrap returner);
-            return Error_User(
+            return fail (
                 "Generator provides YIELD:, can't have YIELD parameter"
             );
         }
@@ -417,9 +418,9 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
                     and Heart_Of(param) == TYPE_PARAMETER
                 );
                 if (SYM_RETURN == unwrap returner)
-                    return Error_User("Duplicate RETURN: in function spec");
+                    return fail ("Duplicate RETURN: in function spec");
                 assert(SYM_YIELD == unwrap returner);
-                return Error_User("Duplicate YIELD: in function spec");
+                return fail ("Duplicate YIELD: in function spec");
             }
         }
         else {  // Pushing description values for a new named element...
@@ -471,17 +472,17 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
     if (*adjunct)
         Drop_Lifeguard(*adjunct);
 
-    return SUCCESS;
+    return true;  // arbitrary return result
 }
 
 
 //
-//  Trap_Push_Keys_And_Params: C
+//  Push_Keys_And_Params: C
 //
-// Wrapper allowing `return Error_Xxx()` from Trap_Push_Keys_And_Params_Core()
-// to properly balance the stack.
+// Wrapper allowing `return fail` from Push_Keys_And_Params_Core() to properly
+// balance the stack.
 //
-Option(Error*) Trap_Push_Keys_And_Params(
+Result(bool) Push_Keys_And_Params(
     VarList* *adjunct,
     const Element* spec,
     Flags flags,
@@ -492,21 +493,20 @@ Option(Error*) Trap_Push_Keys_And_Params(
         spec,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
-    Option(Error*) e = Trap_Push_Keys_And_Params_Core(
-        adjunct, L, flags, returner
-    );
-    if (e) {
+
+    Push_Keys_And_Params_Core(adjunct, L, flags, returner) except (Error* e) {
         Drop_Data_Stack_To(L->baseline.stack_base);
         Drop_Level(L);
-        return e;
+        return fail (e);
     }
+
     Drop_Level_Unbalanced(L);  // pushed values on stack meant to be there
-    return SUCCESS;
+    return true;  // arbitrary return result
 }
 
 
 //
-//  Trap_Pop_Paramlist: C
+//  Pop_Paramlist: C
 //
 // Assuming the stack is formed in pairs of symbol WORD! for key and a
 // parameter (possibly an antiform PARAMETER!, or specialized local), this
@@ -515,8 +515,7 @@ Option(Error*) Trap_Push_Keys_And_Params(
 // It may not succeed because there could be duplicate parameters on the stack,
 // and the checking via a binder is done as part of this popping process.
 //
-Option(Error*) Trap_Pop_Paramlist(
-    Sink(ParamList*) out,
+Result(ParamList*) Pop_Paramlist(
     StackIndex base,
     Option(Phase*) prior,
     Option(VarList*) prior_coupling
@@ -625,16 +624,15 @@ Option(Error*) Trap_Pop_Paramlist(
     Destruct_Binder(binder);
 
     if (duplicate)
-        return Error_Dup_Vars_Raw(duplicate);
+        return fail (Error_Dup_Vars_Raw(duplicate));
 
     Assert_Flex_Term_If_Needed(paramlist);
-    *out = cast(ParamList*, paramlist);
-    return SUCCESS;
+    return cast(ParamList*, paramlist);
 }
 
 
 //
-//  Trap_Make_Paramlist_Managed: C
+//  Make_Paramlist_Managed: C
 //
 // Check function spec of the form:
 //
@@ -665,8 +663,7 @@ Option(Error*) Trap_Pop_Paramlist(
 // You don't have to use it if you don't want to...and may overwrite the
 // variable.
 //
-Option(Error*) Trap_Make_Paramlist_Managed(
-    Sink(ParamList*) out,
+Result(ParamList*) Make_Paramlist_Managed(
     Sink(VarList*) adjunct,
     const Element* spec,
     Flags flags,  // flags may be modified to carry additional information
@@ -678,14 +675,10 @@ Option(Error*) Trap_Make_Paramlist_Managed(
     // can be reused in AUGMENT.
     //
     *adjunct = nullptr;
-    Option(Error*) e = Trap_Push_Keys_And_Params(
-        adjunct,
-        spec,
-        flags,
-        returner
-    );
-    if (e)
-        return e;
+
+    Push_Keys_And_Params(adjunct, spec, flags, returner) except (Error* e) {
+        return fail (e);
+    }
 
     Option(Phase*) prior = nullptr;
     Option(VarList*) prior_coupling = nullptr;
@@ -696,7 +689,7 @@ Option(Error*) Trap_Make_Paramlist_Managed(
         base += 2;
     }
 
-    return Trap_Pop_Paramlist(out, base, prior, prior_coupling);
+    return Pop_Paramlist(base, prior, prior_coupling);
 }
 
 

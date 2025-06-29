@@ -247,14 +247,12 @@ DECLARE_NATIVE(ARROW)
   //=//// IF NOT OPTIMIZABLE, USE THE FULL PARAMLIST PROCESS //////////////=//
 
     if (not optimizable) {
-        Option(Error*) e = Trap_Push_Keys_And_Params(
+        require (Push_Keys_And_Params(
             &adjunct,
             spec,
             MKF_MASK_NONE,
             SYM_0  // no returner
-        );
-        if (e)
-            panic (unwrap e);
+        ));
     }
 
   //=//// POP THE PARAMLIST AND MAKE THE DETAILS PHASE ////////////////////=//
@@ -262,12 +260,9 @@ DECLARE_NATIVE(ARROW)
     Option(Phase*) prior = nullptr;
     Option(VarList*) prior_coupling = nullptr;
 
-    ParamList* paramlist;
-    Option(Error*) e =  Trap_Pop_Paramlist(
-        &paramlist, STACK_BASE, prior, prior_coupling
+    ParamList* paramlist = require (
+        Pop_Paramlist(STACK_BASE, prior, prior_coupling)
     );
-    if (e)
-        panic (unwrap e);
 
     Details* details = Make_Dispatch_Details(
         BASE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,

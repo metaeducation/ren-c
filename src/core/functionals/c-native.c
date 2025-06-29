@@ -91,7 +91,7 @@ Option(Error*) Trap_Make_Native_Dispatch_Details(
     // COMBINATOR.  The native needs the full spec.
     //
     // !!! Note: Will manage the combinator's array.  Changing this would need
-    // a version of Trap_Make_Paramlist_Managed() which took an array + index
+    // a version of Make_Paramlist_Managed() which took an array + index
     //
     DECLARE_ELEMENT (expanded_spec);
     if (native_type == NATIVE_COMBINATOR) {
@@ -107,16 +107,15 @@ Option(Error*) Trap_Make_Native_Dispatch_Details(
     StackIndex base = TOP_INDEX;
 
     VarList* adjunct;
-    ParamList* paramlist;
-    Option(Error*) e = Trap_Make_Paramlist_Managed(
-        &paramlist,
+    ParamList* paramlist = Make_Paramlist_Managed(
         &adjunct,
         spec,
         MKF_DONT_POP_RETURN,  // we put it in Details, not ParamList
         SYM_RETURN  // native RETURN: types checked only if RUNTIME_CHECKS
-    );
-    if (e)
+    )
+    except (Error* e) {
         return e;
+    }
 
     Assert_Flex_Term_If_Needed(paramlist);
 
@@ -511,10 +510,10 @@ Bounce Run_Generic_Dispatch(
 //
 //  Startup_Action_Adjunct_Shim: C
 //
-// Trap_Make_Paramlist_Managed() needs the object archetype ACTION-ADJUNCT
-// from %sysobj.r, to have the keylist to use in generating the info used
-// by HELP for the natives.  However, natives themselves are used in order
-// to run the object construction in %sysobj.r
+// Make_Paramlist_Managed() needs the object archetype ACTION-ADJUNCT from
+// %sysobj.r, to have the keylist to use in generating the info used by HELP
+// for the natives.  However, natives themselves are used in order to run the
+// object construction in %sysobj.r
 //
 // To break this Catch-22, this code builds a field-compatible version of
 // ACTION-ADJUNCT.  After %sysobj.r is loaded, an assert checks to make sure

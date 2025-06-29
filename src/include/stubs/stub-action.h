@@ -175,10 +175,10 @@ enum {
     MAX_IDX_COMBINATOR = IDX_COMBINATOR_BODY
 };
 
-// If you use Trap_Make_Interpreted_Action_May_Panic(), it will automatically
-// put the relativized body into slot 1 of the details.  Referring to this
-// IDX value in the IDX enums of things like LAMBDA and FUNC helps to make
-// it clearer that the index position is reserved.
+// If you use Make_Interpreted_Action(), it will automatically put the
+// relativized body into slot 1 of the details.  Referring to this IDX value
+// in the IDX enums of things like LAMBDA and FUNC helps to make it clearer
+// that the index position is reserved.
 //
 #define IDX_INTERPRETED_BODY  1
 

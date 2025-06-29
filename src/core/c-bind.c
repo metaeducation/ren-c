@@ -502,7 +502,7 @@ DECLARE_NATIVE(LET)
 
     if (Is_Set_Group(vars)) {
         Set_Level_Flag(L, LET_IS_SETTING);
-        Unchain(vars);  // turn into a normal GROUP!
+        wont_fail (Unsingleheart_Sequence(vars));  // turn into a normal GROUP!
         goto escape_groups;
     }
 

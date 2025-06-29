@@ -714,16 +714,12 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         or to == TYPE_TIME
         or to == TYPE_PAIR
     ){
-        Option(Error*) error = Trap_Transcode_One(OUT, to, v);
-        if (error)
-            return FAIL(unwrap error);
+        trap (Transcode_One(OUT, to, v));
         return OUT;
     }
 
     if (Any_Sequence_Type(to)) {  // to tuple! "a.b.c" -> a.b.c
-        Option(Error*) error = Trap_Transcode_One(OUT, to, v);
-        if (error)
-            return FAIL(unwrap error);
+        trap (Transcode_One(OUT, to, v));
         return OUT;
     }
 

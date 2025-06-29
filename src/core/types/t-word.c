@@ -102,26 +102,34 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
 
     Element* arg = Element_ARG(DEF);
 
-    if (Any_Sequence(arg)) {  // (make word! '/a) or (make word! 'a:) etc.
-        do {
-            Option(Error*) error = Trap_Unsingleheart(arg);
-            if (error)
-                goto sequence_didnt_devolve_to_word;
-        } while (Any_Sequence(arg));
+    if (not Any_Sequence(arg))
+        return FAIL(Error_Bad_Make(heart, arg));
 
-        if (Any_Word(arg)) {
-            KIND_BYTE(arg) = heart;
-            return COPY(arg);
+  make_word_from_sequence: {
+
+    // (make word! '/a) or (make word! 'a:) etc.
+
+    attempt {
+        Unsingleheart_Sequence(arg) except (Error* e) {
+            UNUSED(e);
+            break;
         }
 
-      sequence_didnt_devolve_to_word:
-        return FAIL(
-            "Can't MAKE ANY-WORD? from sequence unless it wraps one WORD!"
-        );
+        if (Any_Sequence(arg))
+            again;
+
+        if (not Any_Word(arg))
+            break;
+    }
+    then {
+        KIND_BYTE(arg) = heart;
+        return COPY(arg);
     }
 
-    return FAIL(Error_Bad_Make(heart, arg));
-}
+    return FAIL(
+        "Can't MAKE ANY-WORD? from sequence unless it wraps one WORD!"
+    );
+}}
 
 
 IMPLEMENT_GENERIC(MOLDIFY, Is_Word)
