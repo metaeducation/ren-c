@@ -364,7 +364,7 @@ void Replug_Stack(Level* base, Value* plug) {
     if (Get_Flavor_Flag(DATASTACK, array, HAS_MOLD)) {  // restore mold
         --item;
         assert(Is_Text(item));
-        assert(VAL_INDEX(item) == 0);
+        assert(Series_Index(item) == 0);
         Append_Any_Utf8(g_mold.buffer, item);
     }
 

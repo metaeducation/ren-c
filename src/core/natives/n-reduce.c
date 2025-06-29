@@ -458,7 +458,7 @@ bool Try_Match_For_Compose(
         if (CT_Utf8(match_1, pattern_1, 1) != 0)
             return false;
 
-        VAL_INDEX_RAW(match) += 1;
+        SERIES_INDEX_UNBOUNDED(match) += 1;
         break;
     }
 

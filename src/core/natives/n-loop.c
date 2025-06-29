@@ -208,11 +208,11 @@ static Bounce Loop_Series_Common(
     // it must be checked for changing to another series, or non-series.
     //
     Copy_Cell(var, start);
-    REBIDX* state = &VAL_INDEX_UNBOUNDED(var);
+    REBIDX* state = &SERIES_INDEX_UNBOUNDED(var);
 
     // Run only once if start is equal to end...edge case.
     //
-    REBINT s = VAL_INDEX(start);
+    REBINT s = Series_Index(start);
     if (s == end) {
         if (Eval_Branch_Throws(OUT, body)) {
             bool breaking;
@@ -482,7 +482,7 @@ DECLARE_NATIVE(CFOR)
                 var,
                 ARG(BODY),
                 ARG(START),
-                VAL_INDEX(ARG(END)),
+                Series_Index(ARG(END)),
                 Int32(ARG(BUMP))
             );
         }
@@ -556,14 +556,14 @@ DECLARE_NATIVE(FOR_SKIP)
     //
     if (
         skip < 0
-        and VAL_INDEX_UNBOUNDED(spare) >= Series_Len_Head(spare)
+        and SERIES_INDEX_UNBOUNDED(spare) >= Series_Len_Head(spare)
     ){
-        VAL_INDEX_UNBOUNDED(spare) = Series_Len_Head(spare) + skip;
+        SERIES_INDEX_UNBOUNDED(spare) = Series_Len_Head(spare) + skip;
     }
 
     while (true) {
         REBINT len = Series_Len_Head(spare);  // always >= 0
-        REBINT index = VAL_INDEX_RAW(spare);  // may have been set to < 0 below
+        REBINT index = SERIES_INDEX_UNBOUNDED(spare);  // may have been set to < 0 below
 
         if (index < 0)
             break;
@@ -573,7 +573,7 @@ DECLARE_NATIVE(FOR_SKIP)
             index = len + skip;  // negative
             if (index < 0)
                 break;
-            VAL_INDEX_UNBOUNDED(spare) = index;
+            SERIES_INDEX_UNBOUNDED(spare) = index;
         }
 
         e = Trap_Write_Loop_Slot_May_Bind(slot, spare, body);
@@ -603,7 +603,7 @@ DECLARE_NATIVE(FOR_SKIP)
         //
         // !!! Should also check for overflows of REBIDX range.
         //
-        VAL_INDEX_UNBOUNDED(spare) += skip;
+        SERIES_INDEX_UNBOUNDED(spare) += skip;
     }
 
     if (Is_Cell_Erased(OUT))
@@ -821,7 +821,7 @@ Element* Init_Loop_Each_May_Alias_Data(Sink(Element) iterator, Value* data)
     else {
         if (Any_Series(data)) {
             les->flex = Cell_Flex(data);
-            les->u.eser.index = VAL_INDEX(data);
+            les->u.eser.index = Series_Index(data);
             les->u.eser.len = Series_Len_Head(data);  // has HOLD, won't change
         }
         else if (Is_Module(data)) {
@@ -1445,7 +1445,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     Flex* flex = Cell_Flex_Ensure_Mutable(data);  // check even if empty
 
-    if (VAL_INDEX(data) >= Series_Len_At(data))  // past series end
+    if (Series_Index(data) >= Series_Len_At(data))  // past series end
         return nullptr;
 
     VarList* varlist;
@@ -1460,7 +1460,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    REBLEN start = VAL_INDEX(data);
+    REBLEN start = Series_Index(data);
 
     DECLARE_MOLDER (mo);
     if (Any_List(data)) {  // use BASE_FLAG_MARKED to mark for removal [1]

@@ -445,7 +445,7 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
         if (not Equal_Values(at, v, true))  // not case-insensitive equal
             return nullptr;
 
-        ++VAL_INDEX_UNBOUNDED(input);
+        ++SERIES_INDEX_UNBOUNDED(input);
         Copy_Cell(ARG(REMAINDER), input);
 
         Derelativize(OUT, at, List_Binding(input));
@@ -466,8 +466,8 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
     if (index == NOT_FOUND)
         return nullptr;
 
-    assert(index == VAL_INDEX(input));  // asked for AM_FIND_MATCH
-    VAL_INDEX_UNBOUNDED(input) += len;
+    assert(index == Series_Index(input));  // asked for AM_FIND_MATCH
+    SERIES_INDEX_UNBOUNDED(input) += len;
     Copy_Cell(ARG(REMAINDER), input);
 
     // If not a list, we have return the rule on match since there's
@@ -612,7 +612,7 @@ DECLARE_NATIVE(FURTHER_COMBINATOR)
 
     Copy_Cell(SPARE, remainder);
 
-    if (VAL_INDEX(SPARE) <= VAL_INDEX(input))
+    if (Series_Index(SPARE) <= Series_Index(input))
         return nullptr;  // the rule matched but did not advance the input
 
     return OUT;
@@ -711,7 +711,7 @@ static bool Combinator_Param_Hook(
                 assert(Parameter_Class(param) == PARAMCLASS_JUST);
                 Copy_Cell(var, item);
             }
-            ++VAL_INDEX_UNBOUNDED(rules);
+            ++SERIES_INDEX_UNBOUNDED(rules);
         }
         break; }
 
@@ -802,8 +802,8 @@ DECLARE_NATIVE(COMBINATORIZE)
     Option(VarList*) coupling = Cell_Frame_Coupling(ARG(COMBINATOR));
 
     Value* rule_start = Copy_Cell(LOCAL(RULE_START), ARG(RULES));
-    if (VAL_INDEX(rule_start) > 0)
-        VAL_INDEX_RAW(rule_start) -= 1;
+    if (Series_Index(rule_start) > 0)
+        SERIES_INDEX_UNBOUNDED(rule_start) -= 1;
 
     UNUSED(LOCAL(RULE_END));  // only exists in spec to make SYM_RULE_END
 

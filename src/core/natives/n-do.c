@@ -451,7 +451,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     Forget_Cell_Was_Lifeguard(source);  // unprotect so we can edit for return
 
     Context* binding = Level_Binding(SUBLEVEL);
-    VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
+    SERIES_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
     Drop_Level(SUBLEVEL);
 
     Tweak_Cell_Binding(source, binding);  // integrate LETs [1]

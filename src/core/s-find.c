@@ -178,7 +178,7 @@ REBINT Find_Binstr_In_Binstr(
     if (len2 == 0) {
         assert(size2 == 0); // Note: c2 at end of '\0' means LO_CASE illegal
         *len_out = 0;
-        return VAL_INDEX(binstr1);
+        return Series_Index(binstr1);
     }
 
     bool is_1_str = (Heart_Of(binstr1) != TYPE_BLOB);
@@ -193,7 +193,7 @@ REBINT Find_Binstr_In_Binstr(
     // Signed quantities allow stepping outside of bounds (e.g. large /SKIP)
     // and still comparing...but incoming parameters should not be negative.
     //
-    REBINT index1 = VAL_INDEX(binstr1);
+    REBINT index1 = Series_Index(binstr1);
 
     // "`index` and `end` integrate the :PART.  If the :PART was negative,
     // then index would have been swapped to be the lower value...making what
@@ -440,7 +440,7 @@ REBINT Find_Bitset_In_Binstr(
     const Binary* bset,
     Flags flags
 ){
-    REBINT index = VAL_INDEX(binstr);
+    REBINT index = Series_Index(binstr);
     REBINT end = end_unsigned;
 
     REBINT start;
@@ -553,7 +553,7 @@ REBLEN Find_Value_In_Binstr(
         if (molded) {
             Reset_Cell_Header_Noquote(temp, CELL_MASK_TEXT);
             CELL_PAYLOAD_1(temp) = molded;
-            VAL_INDEX_RAW(temp) = 0;
+            SERIES_INDEX_UNBOUNDED(temp) = 0;
         }
 
         REBLEN result = Find_Binstr_In_Binstr(

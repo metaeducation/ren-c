@@ -118,7 +118,7 @@ void Protect_Value(const Value* v, Flags flags)
         return;
 
     if (Any_Series(v))
-        Protect_Flex(Cell_Flex(v), VAL_INDEX(v), flags);
+        Protect_Flex(Cell_Flex(v), Series_Index(v), flags);
     else if (Is_Map(v))
         Protect_Flex(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
     else if (Any_Context(v))

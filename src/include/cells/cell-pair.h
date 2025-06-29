@@ -31,17 +31,17 @@
 //   two cells.
 //
 
-#define PAIRING_LEN 2
+#define PAIRING_LEN_2  2
 
-#define CELL_SERIESLIKE_NODE(c)  CELL_PAYLOAD_1(c)
+#define SERIESLIKE_PAYLOAD_1_BASE(c)  CELL_PAYLOAD_1(c)
 
-#define CELL_PAIRLIKE_PAIRING_NODE(c)  CELL_SERIESLIKE_NODE(c)
+#define PAIRLIKE_PAYLOAD_1_PAIRING_BASE(c)  SERIESLIKE_PAYLOAD_1_BASE(c)
 
 #define Pairing_Head(p) \
     u_c_cast(Element*, ensure(const Pairing*, (p)))
 
 #define Pairing_Tail(p) \
-    (Pairing_Head(p) + 2)
+    (Pairing_Head(p) + PAIRING_LEN_2)
 
 #define Pairing_First(p) \
     Pairing_Head(p)
@@ -58,12 +58,12 @@ INLINE bool Is_Cell_Pairlike(const Cell* v) {
         return false;
     if (not Sequence_Has_Pointer(v))  // compressed bytes
         return false;
-    return Is_Base_A_Cell(CELL_PAIRLIKE_PAIRING_NODE(v));
+    return Is_Base_A_Cell(SERIESLIKE_PAYLOAD_1_BASE(v));
 }
 
 INLINE Pairing* Cell_Pairing(const Cell* v) {
     assert(Is_Cell_Pairlike(v));
-    return cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(v));
+    return cast(Pairing*, PAIRLIKE_PAYLOAD_1_PAIRING_BASE(v));
 }
 
 #define Cell_Pair_First(v) \
@@ -85,7 +85,7 @@ INLINE Value* Init_Pair_Untracked(Init(Element) out, REBI64 x, REBI64 y) {
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_PAIR);
     Corrupt_Unused_Field(out->extra.corrupt);
-    CELL_PAIRLIKE_PAIRING_NODE(out) = p;
+    PAIRLIKE_PAYLOAD_1_PAIRING_BASE(out) = p;
     Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
     return out;

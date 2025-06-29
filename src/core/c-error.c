@@ -1260,7 +1260,7 @@ VarList* Startup_Errors(const Element* boot_errors)
     }
   #endif
 
-    assert(VAL_INDEX(boot_errors) == 0);
+    assert(Series_Index(boot_errors) == 0);
 
     Value* catalog_val = rebValue(CANON(CONSTRUCT), CANON(PIN), boot_errors);
     VarList* catalog = Cell_Varlist(catalog_val);

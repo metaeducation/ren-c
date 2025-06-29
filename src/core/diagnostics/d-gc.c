@@ -132,7 +132,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case TYPE_PAIR: {
-        Pairing* pairing = cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(v));
+        Pairing* pairing = cast(Pairing*, PAIRLIKE_PAYLOAD_1_PAIRING_BASE(v));
         assert(Is_Base_Marked(pairing));
         break; }
 
@@ -195,10 +195,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case TYPE_BLOB: {
         assert(Cell_Payload_1_Needs_Mark(v));
-        if (Not_Base_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
+        if (Not_Base_Accessible_Canon(SERIESLIKE_PAYLOAD_1_BASE(v)))
             break;
 
-        const Binary* b = c_cast(Binary*, CELL_SERIESLIKE_NODE(v));
+        const Binary* b = c_cast(Binary*, SERIESLIKE_PAYLOAD_1_BASE(v));
         assert(Stub_Holds_Bytes(b));
         Assert_Flex_Term_If_Needed(b);
         assert(Is_Base_Marked(b));
@@ -207,10 +207,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_TEXT:
       case TYPE_FILE:
       case TYPE_TAG: {
-        if (Not_Base_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
+        if (Not_Base_Accessible_Canon(SERIESLIKE_PAYLOAD_1_BASE(v)))
             break;
 
-        const Strand* s = c_cast(Strand*, CELL_SERIESLIKE_NODE(v));
+        const Strand* s = c_cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(v));
         Assert_Flex_Term_If_Needed(s);
 
         assert(Stub_Holds_Bytes(s));
@@ -319,10 +319,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_BLOCK:
       case TYPE_FENCE:
       case TYPE_GROUP: {
-        if (Not_Base_Accessible_Canon(CELL_SERIESLIKE_NODE(v)))
+        if (Not_Base_Accessible_Canon(SERIESLIKE_PAYLOAD_1_BASE(v)))
             break;
 
-        const Array* a = c_cast(Array*, CELL_SERIESLIKE_NODE(v));
+        const Array* a = c_cast(Array*, SERIESLIKE_PAYLOAD_1_BASE(v));
         Assert_Flex_Term_If_Needed(a);
         assert(Is_Base_Marked(a));
 

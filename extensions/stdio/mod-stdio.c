@@ -115,7 +115,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
 
         Write_IO(v, part);
 
-        VAL_INDEX_RAW(v) += part;
+        SERIES_INDEX_UNBOUNDED(v) += part;
     }
 
     return "~";

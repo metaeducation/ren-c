@@ -210,7 +210,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 // effectively "undo the prefetch" by taking it down by 1.
                 //
                 assert(Level_Array_Index(L_temp) > 0);
-                VAL_INDEX_UNBOUNDED(shared) = Level_Array_Index(L_temp) - 1;
+                SERIES_INDEX_UNBOUNDED(shared) = Level_Array_Index(L_temp) - 1;
             }
 
             Drop_Level(L_temp);
@@ -222,12 +222,12 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 List_Item_At(shared),
                 List_Binding(shared)
             );
-            VAL_INDEX_UNBOUNDED(shared) += 1;
+            SERIES_INDEX_UNBOUNDED(shared) += 1;
             break;
 
         case PARAMCLASS_JUST:
             Copy_Cell(out, List_Item_At(shared));
-            VAL_INDEX_UNBOUNDED(shared) += 1;
+            SERIES_INDEX_UNBOUNDED(shared) += 1;
             break;
 
         case PARAMCLASS_SOFT:
@@ -245,7 +245,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                     List_Binding(shared)
                 );
             }
-            VAL_INDEX_UNBOUNDED(shared) += 1;
+            SERIES_INDEX_UNBOUNDED(shared) += 1;
             break;
 
         default:
@@ -254,7 +254,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
         if (
             not Is_Cell_Poisoned(shared)
-            and VAL_INDEX(shared) >= Series_Len_Head(shared)
+            and Series_Index(shared) >= Series_Len_Head(shared)
         ){
             Poison_Cell(shared);  // signal end to all varargs sharing value
         }

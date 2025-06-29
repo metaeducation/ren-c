@@ -15,7 +15,7 @@ INLINE const Binary* Cell_Binary(const Cell* cell) {
 INLINE const Byte* Blob_Size_At(Option(Sink(Size)) size_at, const Cell* cell)
 {
     const Binary* b = Cell_Binary(cell);
-    REBIDX i = VAL_INDEX_RAW(cell);
+    REBIDX i = SERIES_INDEX_UNBOUNDED(cell);
     Size size = Binary_Len(b);
     if (i < 0 or i > size)
         panic (Error_Index_Out_Of_Range_Raw());

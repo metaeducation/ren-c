@@ -143,7 +143,7 @@ Bounce Func_Dispatcher(Level* const L)
     //    of whether to :RUN or not into the thrown value.
 
     Element* body = Details_Element_At(details, IDX_DETAILS_1);  // code to run
-    assert(Is_Block(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and Series_Index(body) == 0);
 
     Add_Link_Inherit_Bind(L->varlist, List_Binding(body));
     Force_Level_Varlist_Managed(L);
@@ -304,7 +304,7 @@ bool Func_Details_Querier(
         Element* slot = Array_At(fake, real_body_index);
         assert(Is_Rune(slot));  // should be #BODY [2]
 
-        assert(VAL_INDEX(body) == 0);
+        assert(Series_Index(body) == 0);
         Init_Group(slot, Cell_Array(body));
         Set_Cell_Flag(slot, NEWLINE_BEFORE);
 

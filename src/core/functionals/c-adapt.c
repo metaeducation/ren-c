@@ -94,7 +94,7 @@ Bounce Adapter_Dispatcher(Level* const L)
     //    if it's a final phase, e.g. an ADAPT on a phaseless ParamList?)
 
     Element* prelude = Details_Element_At(details, IDX_ADAPTER_PRELUDE);
-    assert(Is_Block(prelude) and VAL_INDEX(prelude) == 0);
+    assert(Is_Block(prelude) and Series_Index(prelude) == 0);
 
     STATE = ST_ADAPTER_RUNNING_PRELUDE;
 

@@ -134,7 +134,7 @@ Flex* Make_Set_Operation_Flex(
 
             // Iterate over first series
             //
-            i = VAL_INDEX(val1);
+            i = Series_Index(val1);
             for (; i < Array_Len(array1); i += skip) {
                 const Element* item = Array_At(array1, i);
                 if (flags & SOP_FLAG_CHECK) {
@@ -216,8 +216,8 @@ Flex* Make_Set_Operation_Flex(
             //
             for (
                 ;
-                VAL_INDEX_RAW(iter) < Strand_Len(str);
-                VAL_INDEX_RAW(iter) += skip
+                SERIES_INDEX_UNBOUNDED(iter) < Strand_Len(str);
+                SERIES_INDEX_UNBOUNDED(iter) += skip
             ){
                 REBLEN len_match;
 
@@ -242,7 +242,7 @@ Flex* Make_Set_Operation_Flex(
                 DECLARE_ELEMENT (mo_value);
                 Reset_Cell_Header_Noquote(TRACK(mo_value), CELL_MASK_TEXT);
                 CELL_PAYLOAD_1(mo_value) = mo->strand;
-                VAL_INDEX_RAW(mo_value) = mo->base.index;
+                SERIES_INDEX_UNBOUNDED(mo_value) = mo->base.index;
 
                 if (
                     NOT_FOUND == Find_Binstr_In_Binstr(
@@ -293,8 +293,8 @@ Flex* Make_Set_Operation_Flex(
 
             for (
                 ;
-                VAL_INDEX_RAW(iter) < Binary_Len(b);
-                VAL_INDEX_RAW(iter) += skip
+                SERIES_INDEX_UNBOUNDED(iter) < Binary_Len(b);
+                SERIES_INDEX_UNBOUNDED(iter) += skip
             ){
                 REBLEN len_match;
 
@@ -321,8 +321,8 @@ Flex* Make_Set_Operation_Flex(
                     TRACK(buf_value),
                     CELL_MASK_BLOB
                 );
-                CELL_PAYLOAD_1(buf_value) = buf;
-                VAL_INDEX_RAW(buf_value) = buf_start_len;
+                SERIESLIKE_PAYLOAD_1_BASE(buf_value) = buf;
+                SERIESLIKE_PAYLOAD_2_INDEX(buf_value) = buf_start_len;
 
                 if (
                     NOT_FOUND == Find_Binstr_In_Binstr(

@@ -47,7 +47,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
         if (Any_List(item) and Series_Len_At(item) > limit) {
             Source* copy = Copy_Source_At_Max_Shallow(
                 Cell_Array(item),
-                VAL_INDEX(item),
+                Series_Index(item),
                 limit + 1
             );
 

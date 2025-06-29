@@ -79,7 +79,7 @@ void Splice_Block_Into_Feed(Feed* feed, const Element* splice) {
 
     feed->p = List_Item_At(splice);
     Copy_Cell(Feed_Data(feed), splice);
-    ++VAL_INDEX_UNBOUNDED(Feed_Data(feed));
+    ++SERIES_INDEX_UNBOUNDED(Feed_Data(feed));
 
     Tweak_Misc_Feedstub_Pending(&feed->singular, nullptr);
 
@@ -102,7 +102,7 @@ Bounce Macro_Dispatcher(Level* const L)
 
     Details* details = Ensure_Level_Details(L);
     Element* body = cast(Element*, Details_At(details, IDX_DETAILS_1));
-    assert(Is_Block(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and Series_Index(body) == 0);
 
     assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
 

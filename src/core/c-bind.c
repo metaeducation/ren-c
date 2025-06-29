@@ -1016,7 +1016,7 @@ void Clonify_And_Bind_Relative(
                 Cell_Pairing(v),
                 BASE_FLAG_MANAGED
             );
-            CELL_PAIRLIKE_PAIRING_NODE(v) = copy;
+            PAIRLIKE_PAYLOAD_1_PAIRING_BASE(v) = copy;
 
             deep = Pairing_Head(copy);
             deep_tail = Pairing_Tail(copy);
@@ -1025,13 +1025,13 @@ void Clonify_And_Bind_Relative(
             Source* copy = cast(Source*, Copy_Array_At_Extra_Shallow(
                 STUB_MASK_MANAGED_SOURCE,
                 Cell_Array(v),
-                0,  // !!! what if VAL_INDEX() is nonzero?
+                0,  // !!! what if Series_Index() is nonzero?
                 0
             ));
             /* if (Any_Sequence(v)) */  // copy regardless? [3]
                 MIRROR_BYTE(copy) = MIRROR_BYTE(Cell_Array(v));
 
-            CELL_PAIRLIKE_PAIRING_NODE(v) = copy;
+            PAIRLIKE_PAYLOAD_1_PAIRING_BASE(v) = copy;
 
             // See notes in Clonify()...need to copy immutable paths so that
             // binding pointers can be changed in the "immutable" copy.
@@ -1048,7 +1048,7 @@ void Clonify_And_Bind_Relative(
         }
         else if (Any_Series_Type(heart)) {
             Flex* copy = Copy_Flex_Core(BASE_FLAG_MANAGED, Cell_Flex(v));
-            CELL_PAIRLIKE_PAIRING_NODE(v) = copy;
+            PAIRLIKE_PAYLOAD_1_PAIRING_BASE(v) = copy;
         }
 
         // If we're going to copy deeply, we go back over the shallow
@@ -1107,7 +1107,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 } shallow_copy_then_adjust: {
 
     const Source* original = Cell_Array(body);
-    REBLEN index = VAL_INDEX(body);
+    REBLEN index = Series_Index(body);
    /* Context* binding = List_Binding(body); */
     REBLEN tail = Series_Len_At(body);
     assert(tail <= Array_Len(original));

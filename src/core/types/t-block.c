@@ -38,8 +38,8 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
 
     const Source* a_array = Cell_Array(a);
     const Source* b_array = Cell_Array(b);
-    REBLEN a_index = VAL_INDEX(a);  // checks for out of bounds indices
-    REBLEN b_index = VAL_INDEX(b);
+    REBLEN a_index = Series_Index(a);  // checks for out of bounds indices
+    REBLEN b_index = Series_Index(b);
 
     if (a_array == b_array)
         return LOGIC(a_index == b_index);
@@ -86,8 +86,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_List)
 
     const Source* a_array = Cell_Array(a);
     const Source* b_array = Cell_Array(b);
-    REBLEN a_index = VAL_INDEX(a);  // checks for out of bounds indices
-    REBLEN b_index = VAL_INDEX(b);
+    REBLEN a_index = Series_Index(a);  // checks for out of bounds indices
+    REBLEN b_index = Series_Index(b);
 
     if (a_array == b_array)
         return FAIL("Temporarily disallow compare unequal length lists");
@@ -414,7 +414,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
             return -1;  // Rebol2/Red convention: 0 is not a pick
         if (n < 0)
             ++n; // Rebol2/Red convention: (pick tail [a b c] -1) is `c`
-        n += VAL_INDEX(v) - 1;
+        n += Series_Index(v) - 1;
     }
     else if (Is_Word(picker)) {
         //
@@ -426,7 +426,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
         const Symbol* symbol = Word_Symbol(picker);
         const Element* tail;
         const Element* item = List_At(&tail, v);
-        REBLEN index = VAL_INDEX(v);
+        REBLEN index = Series_Index(v);
         for (; item != tail; ++item, ++index) {
             if (Any_Word(item) and Are_Synonyms(symbol, Word_Symbol(item))) {
                 n = index + 1;
@@ -441,7 +441,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
 
         n = 1 + Find_In_Array_Simple(
             Cell_Array(v),
-            VAL_INDEX(v),
+            Series_Index(v),
             c_cast(Element*, picker)
         );
     }
@@ -461,7 +461,7 @@ bool Try_Pick_Block(
     const Value* picker
 ){
     REBINT n = Get_Num_From_Arg(picker);
-    n += VAL_INDEX(block) - 1;
+    n += Series_Index(block) - 1;
     if (n < 0 or n >= Series_Len_Head(block))
         return false;
 
@@ -479,14 +479,14 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
-    assert(VAL_INDEX(v) <= Series_Len_Head(v));
+    assert(Series_Index(v) <= Series_Len_Head(v));
 
     Heart heart = Heart_Of_Builtin_Fundamental(v);
 
     if (form) {
         Option(VarList*) context = nullptr;
         bool relax = false;
-        Form_Array_At(mo, Cell_Array(v), VAL_INDEX(v), context, relax);
+        Form_Array_At(mo, Cell_Array(v), Series_Index(v), context, relax);
         return TRIPWIRE;
     }
 
@@ -505,7 +505,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
     else
         crash (v);
 
-    Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
+    Mold_Array_At(mo, Cell_Array(v), Series_Index(v), sep);
 
     return TRIPWIRE;
 }
@@ -551,7 +551,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         REBLEN limit = Part_Tail_May_Modify_Index(list, ARG(PART));
 
         const Array* arr = Cell_Array(list);
-        REBLEN index = VAL_INDEX(list);
+        REBLEN index = Series_Index(list);
 
         REBINT skip;
         if (Bool_ARG(SKIP)) {
@@ -585,10 +585,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             Set_Flex_Len(pack, 2);
 
             Copy_Lifted_Cell(Array_At(pack, 0), list);
-            VAL_INDEX_RAW(Array_At(pack, 0)) = ret;
+            SERIES_INDEX_UNBOUNDED(Array_At(pack, 0)) = ret;
 
             Copy_Lifted_Cell(Array_At(pack, 1), list);
-            VAL_INDEX_RAW(Array_At(pack, 1)) = ret + len;
+            SERIES_INDEX_UNBOUNDED(Array_At(pack, 1)) = ret + len;
 
             return Init_Pack(OUT, pack);
         }
@@ -624,12 +624,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         //
         if (not arg and len == 0) {
             if (id == SYM_APPEND)  // append always returns head
-                VAL_INDEX_RAW(list) = 0;
+                SERIES_INDEX_UNBOUNDED(list) = 0;
             return COPY(list);  // don't panic on read only if would be a no-op
         }
 
         Source* arr = Cell_Array_Ensure_Mutable(list);
-        REBLEN index = VAL_INDEX(list);
+        REBLEN index = Series_Index(list);
 
         Flags flags = 0;
 
@@ -640,7 +640,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         if (Bool_ARG(LINE))
             flags |= AM_LINE;
 
-        VAL_INDEX_RAW(OUT) = Modify_Array(
+        SERIES_INDEX_UNBOUNDED(OUT) = Modify_Array(
             arr,
             index,
             unwrap id,
@@ -653,7 +653,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 
       case SYM_CLEAR: {
         Array* arr = Cell_Array_Ensure_Mutable(list);
-        REBLEN index = VAL_INDEX(list);
+        REBLEN index = Series_Index(list);
 
         if (index < Series_Len_Head(list)) {
             if (index == 0)
@@ -674,11 +674,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         if (not Any_List(arg))
             return PANIC(PARAM(SERIES2));
 
-        REBLEN index = VAL_INDEX(list);
+        REBLEN index = Series_Index(list);
 
         if (
             index < Series_Len_Head(list)
-            and VAL_INDEX(arg) < Series_Len_Head(arg)
+            and Series_Index(arg) < Series_Len_Head(arg)
         ){
             // Cell bits can be copied within the same array
             //
@@ -875,7 +875,7 @@ Option(Error*) Trap_Alias_Any_List_As(
             temp,
             as,
             Cell_Array(list),
-            VAL_INDEX(list)
+            Series_Index(list)
         );
         if (e)
             return e;
@@ -918,7 +918,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
     REBLEN tail = Part_Tail_May_Modify_Index(list, ARG(PART));
 
     const Array* arr = Cell_Array(list);
-    REBLEN index = VAL_INDEX(list);
+    REBLEN index = Series_Index(list);
 
     Flags flags = STUB_MASK_MANAGED_SOURCE;
 
@@ -1014,11 +1014,11 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
         Modify_Array(arr, n, SYM_CHANGE, poke, AM_PART, part, dups);
     }
     else if (Any_String(series)) {
-        VAL_INDEX_RAW(series) = n;
+        SERIES_INDEX_UNBOUNDED(series) = n;
         Modify_String_Or_Blob(series, SYM_CHANGE, poke, AM_PART, part, dups);
     }
     else {
-        VAL_INDEX_RAW(series) = n;
+        SERIES_INDEX_UNBOUNDED(series) = n;
         Modify_String_Or_Blob(series, SYM_CHANGE, poke, AM_PART, part, dups);
     }
 
@@ -1047,7 +1047,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
     else
         len = 1;
 
-    REBLEN index = VAL_INDEX(list); // Partial() can change index
+    REBLEN index = Series_Index(list); // Partial() can change index
 
     if (Bool_ARG(LAST))
         index = Series_Len_Head(list) - len;
@@ -1089,7 +1089,7 @@ IMPLEMENT_GENERIC(REVERSE, Any_List)
     Element* list = Element_ARG(SERIES);
 
     Source* arr = Cell_Array_Ensure_Mutable(list);
-    REBLEN index = VAL_INDEX(list);
+    REBLEN index = Series_Index(list);
 
     REBLEN len = Part_Len_May_Modify_Index(list, ARG(PART));
     if (len == 0)
@@ -1159,7 +1159,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
 
     Element* list = Element_ARG(COLLECTION);
 
-    REBLEN index = VAL_INDEX(list);
+    REBLEN index = Series_Index(list);
     if (index >= Series_Len_Head(list))
         return FAIL(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
@@ -1182,7 +1182,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_List)
     Element* list = Element_ARG(SERIES);
 
     Array* arr = Cell_Array_Ensure_Mutable(list);
-    Shuffle_Array(arr, VAL_INDEX(list), Bool_ARG(SECURE));
+    Shuffle_Array(arr, Series_Index(list), Bool_ARG(SECURE));
     return COPY(list);
 }
 
@@ -1343,7 +1343,7 @@ IMPLEMENT_GENERIC(SORT, Any_List)
     REBLEN len = Part_Len_May_Modify_Index(list, ARG(PART));
     if (len <= 1)
         return OUT;
-    REBLEN index = VAL_INDEX(list);  // ^-- may have been modified
+    REBLEN index = Series_Index(list);  // ^-- may have been modified
 
     // Skip factor:
     REBLEN skip;
@@ -1483,9 +1483,9 @@ DECLARE_NATIVE(ENVELOP)
             temp = at;
             continue;
         }
-        VAL_INDEX_UNBOUNDED(temp) += 1;  // just skip first item
+        SERIES_INDEX_UNBOUNDED(temp) += 1;  // just skip first item
         rebElide(CANON(INSERT), rebQ(temp), rebQ(content));
-        VAL_INDEX_UNBOUNDED(temp) -= 1;  // put back if copy = temp for head
+        SERIES_INDEX_UNBOUNDED(temp) -= 1;  // put back if copy = temp for head
         return copy;
     }
 }
@@ -1513,7 +1513,7 @@ DECLARE_NATIVE(GLOM)
 // !!! This logic is repeated in APPEND etc.  It should be factored out.
 //
 // 1. If the accumulator or result are blocks, there's no guarantee they are
-//    at the head.  VAL_INDEX() might be nonzero.  GLOM could prohibit that or
+//    at the head.  Series_Index() might be nonzero.  GLOM could prohibit that or
 //    just take advantage of it if it's expedient (e.g. avoid a resize by
 //    moving the data within an array and returning a 0 index).
 {
@@ -1555,7 +1555,7 @@ DECLARE_NATIVE(GLOM)
   append_one_item: { /////////////////////////////////////////////////////////
 
     // Here we are just appending one item.  We don't do anything special
-    // at this time, but we should be willing to return VAL_INDEX()=0 and
+    // at this time, but we should be willing to return Series_Index()=0 and
     // reclaim any bias or space at the head vs. doing an expansion.  In
     // practice all GLOM that exist for the moment will be working on
     // series that are at their head, so this won't help.

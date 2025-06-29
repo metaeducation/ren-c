@@ -121,14 +121,14 @@
 #define P_INPUT_STRING      Cell_Strand(ARG(INPUT))
 #define P_INPUT_ARRAY       Cell_Array(ARG(INPUT))
 #define P_INPUT_SPECIFIER   List_Binding(Element_ARG(INPUT))
-#define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(Element_ARG(INPUT))
+#define P_INPUT_IDX         SERIES_INDEX_UNBOUNDED(Element_ARG(INPUT))
 #define P_INPUT_LEN         Series_Len_Head(Element_ARG(INPUT))
 
 #define P_FLAGS             mutable_VAL_INT64(ARG(FLAGS))
 
 #define P_NUM_QUOTES        VAL_INT32(ARG(NUM_QUOTES))
 
-#define P_POS               VAL_INDEX_UNBOUNDED(ARG(POSITION))
+#define P_POS               SERIES_INDEX_UNBOUNDED(ARG(POSITION))
 
 // !!! The way that PARSE works, it will sometimes run the thing it finds
 // in the list...but if it's a WORD! or PATH! it will look it up and run
@@ -760,8 +760,8 @@ static REBIXO To_Thru_Block_Rule(
     Copy_Cell(iter, Element_ARG(POSITION));  // need to slide pos
     for (
         ;
-        VAL_INDEX_RAW(iter) <= P_INPUT_LEN;
-        ++VAL_INDEX_RAW(iter)
+        SERIES_INDEX_UNBOUNDED(iter) <= P_INPUT_LEN;
+        ++SERIES_INDEX_UNBOUNDED(iter)
     ){  // see note
         const Element* blk_tail = Array_Tail(Cell_Array(rule_block));
         const Element* blk = Array_Head(Cell_Array(rule_block));
@@ -812,7 +812,7 @@ static REBIXO To_Thru_Block_Rule(
             else if (Is_Tag(rule)) {
                 bool strict = true;
                 if (0 == CT_Utf8(rule, g_tag_end, strict)) {
-                    if (VAL_INDEX(iter) >= P_INPUT_LEN)
+                    if (Series_Index(iter) >= P_INPUT_LEN)
                         return P_INPUT_LEN;
                     goto next_alternate_rule;
                 }
@@ -840,7 +840,7 @@ static REBIXO To_Thru_Block_Rule(
                 if (Any_List(rule))
                     panic (Error_Parse3_Rule());
 
-                REBIXO ixo = Parse_One_Rule(level_, VAL_INDEX(iter), rule);
+                REBIXO ixo = Parse_One_Rule(level_, Series_Index(iter), rule);
                 if (ixo == THROWN_FLAG)
                     return THROWN_FLAG;
 
@@ -848,16 +848,16 @@ static REBIXO To_Thru_Block_Rule(
                     // fall through, keep looking
                 }
                 else {  // ixo is pos we matched past, so back up if only TO
-                    VAL_INDEX_RAW(iter) = ixo;
+                    SERIES_INDEX_UNBOUNDED(iter) = ixo;
                     if (is_thru)
-                        return VAL_INDEX(iter);  // don't back up
-                    return VAL_INDEX(iter) - 1;  // back up
+                        return Series_Index(iter);  // don't back up
+                    return Series_Index(iter) - 1;  // back up
                 }
             }
             else if (P_HEART == TYPE_BLOB) {
                 Byte ch1 = *Blob_At(iter);
 
-                if (VAL_INDEX(iter) == P_INPUT_LEN) {
+                if (Series_Index(iter) == P_INPUT_LEN) {
                     //
                     // If we weren't matching END, then the only other thing
                     // we'll match at the BLOB! end is an empty BLOB!.
@@ -866,7 +866,7 @@ static REBIXO To_Thru_Block_Rule(
                     //
                     assert(ch1 == '\0');  // internal BLOB! terminator
                     if (Is_Blob(rule) and Series_Len_At(rule) == 0)
-                        return VAL_INDEX(iter);
+                        return Series_Index(iter);
                 }
                 else if (Is_Rune_And_Is_Char(rule)) {
                     if (Rune_Known_Single_Codepoint(rule) > 0xff)
@@ -874,8 +874,8 @@ static REBIXO To_Thru_Block_Rule(
 
                     if (ch1 == Rune_Known_Single_Codepoint(rule)) {
                         if (is_thru)
-                            return VAL_INDEX(iter) + 1;
-                        return VAL_INDEX(iter);
+                            return Series_Index(iter) + 1;
+                        return Series_Index(iter);
                     }
                 }
                 else if (Is_Blob(rule)) {
@@ -895,9 +895,9 @@ static REBIXO To_Thru_Block_Rule(
                         iter_size == rule_size
                         and (0 == memcmp(iter_data, rule_data, iter_size))
                     ){
-                        if (is_thru)  // ^-- VAL_XXX_AT checked VAL_INDEX()
-                            return VAL_INDEX_RAW(iter) + 1;
-                        return VAL_INDEX_RAW(iter);
+                        if (is_thru)  // ^-- VAL_XXX_AT checked Series_Index()
+                            return SERIES_INDEX_UNBOUNDED(iter) + 1;
+                        return SERIES_INDEX_UNBOUNDED(iter);
                     }
                 }
                 else if (Is_Integer(rule)) {
@@ -906,8 +906,8 @@ static REBIXO To_Thru_Block_Rule(
 
                     if (ch1 == VAL_INT32(rule)) {
                         if (is_thru)
-                            return VAL_INDEX(iter) + 1;
-                        return VAL_INDEX(iter);
+                            return Series_Index(iter) + 1;
+                        return Series_Index(iter);
                     }
                 }
                 else
@@ -918,13 +918,13 @@ static REBIXO To_Thru_Block_Rule(
 
                 Codepoint unadjusted = Get_Strand_Char_At(
                     P_INPUT_STRING,
-                    VAL_INDEX(iter)
+                    Series_Index(iter)
                 );
                 if (unadjusted == '\0') {  // cannot be passed to UP_CASE()
-                    assert(VAL_INDEX(iter) == P_INPUT_LEN);
+                    assert(Series_Index(iter) == P_INPUT_LEN);
 
                     if (Is_Text(rule) and Series_Len_At(rule) == 0)
-                        return VAL_INDEX(iter);  // empty string can match end
+                        return Series_Index(iter);  // empty string can match end
 
                     goto next_alternate_rule;  // other match is END (above)
                 }
@@ -944,16 +944,16 @@ static REBIXO To_Thru_Block_Rule(
                         ch2 = UP_CASE(ch2);
                     if (ch == ch2) {
                         if (is_thru)
-                            return VAL_INDEX(iter) + 1;
-                        return VAL_INDEX(iter);
+                            return Series_Index(iter) + 1;
+                        return Series_Index(iter);
                     }
                 }
                 else if (Is_Bitset(rule)) {
                     bool uncased = not (P_FLAGS & AM_FIND_CASE);
                     if (Check_Bit(VAL_BITSET(rule), ch, uncased)) {
                         if (is_thru)
-                            return VAL_INDEX(iter) + 1;
-                        return VAL_INDEX(iter);
+                            return Series_Index(iter) + 1;
+                        return Series_Index(iter);
                     }
                 }
                 else if (Any_String(rule)) {
@@ -976,8 +976,8 @@ static REBIXO To_Thru_Block_Rule(
                 else if (Is_Integer(rule)) {
                     if (unadjusted == cast(Codepoint, VAL_INT32(rule))) {
                         if (is_thru)
-                            return VAL_INDEX(iter) + 1;
-                        return VAL_INDEX(iter);
+                            return Series_Index(iter) + 1;
+                        return Series_Index(iter);
                     }
                 }
                 else
@@ -1191,7 +1191,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
     else if (Any_Series_Type(t)) {
         if (Cell_Flex(rule) != P_INPUT)
             panic ("Switching PARSE series is not allowed");
-        index = VAL_INDEX(rule);
+        index = Series_Index(rule);
     }
     else  // #1263
         panic (Error_Parse3_Series_Raw(rule));
@@ -1277,8 +1277,8 @@ DECLARE_NATIVE(SUBPARSE)
     Dequotify(Element_ARG(INPUT));
 
     // Make sure index position is not past END
-    if (VAL_INDEX_UNBOUNDED(ARG(INPUT)) > Series_Len_Head(ARG(INPUT)))
-        VAL_INDEX_RAW(ARG(INPUT)) = Series_Len_Head(ARG(INPUT));
+    if (SERIES_INDEX_UNBOUNDED(ARG(INPUT)) > Series_Len_Head(ARG(INPUT)))
+        SERIES_INDEX_UNBOUNDED(ARG(INPUT)) = Series_Len_Head(ARG(INPUT));
 
     assert(Is_Trash(ARG(POSITION)));
     Copy_Cell(ARG(POSITION), ARG(INPUT));

@@ -43,13 +43,13 @@ IMPLEMENT_GENERIC(SKIP, Any_Series)
     REBI64 i;
     if (Is_Logic(ARG(OFFSET))) {  // preserve a behavior for SKIP of LOGIC [1]
         if (Cell_Logic(ARG(OFFSET)))
-            i = cast(REBI64, VAL_INDEX_RAW(v)) + 1;
+            i = cast(REBI64, SERIES_INDEX_UNBOUNDED(v)) + 1;
         else
-            i = cast(REBI64, VAL_INDEX_RAW(v));
+            i = cast(REBI64, SERIES_INDEX_UNBOUNDED(v));
     }
     else {  // `skip series 1` means second element, add offset as-is
         REBINT offset = Get_Num_From_Arg(ARG(OFFSET));
-        i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset);
+        i = cast(REBI64, SERIES_INDEX_UNBOUNDED(v)) + cast(REBI64, offset);
     }
 
     if (not Bool_ARG(UNBOUNDED)) {
@@ -57,7 +57,7 @@ IMPLEMENT_GENERIC(SKIP, Any_Series)
             return nullptr;
     }
 
-    VAL_INDEX_RAW(v) = i;
+    SERIES_INDEX_UNBOUNDED(v) = i;
     return COPY(Trust_Const(v));
 }
 
@@ -92,16 +92,16 @@ IMPLEMENT_GENERIC(AT, Any_Series)
     REBI64 i;
 
     if (offset > 0)
-        i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset) - 1;
+        i = cast(REBI64, SERIES_INDEX_UNBOUNDED(v)) + cast(REBI64, offset) - 1;
     else
-        i = cast(REBI64, VAL_INDEX_RAW(v)) + cast(REBI64, offset);
+        i = cast(REBI64, SERIES_INDEX_UNBOUNDED(v)) + cast(REBI64, offset);
 
     if (Bool_ARG(BOUNDED)) {
         if (i < 0 or i > cast(REBI64, Series_Len_Head(v)))
             return nullptr;
     }
 
-    VAL_INDEX_RAW(v) = i;
+    SERIES_INDEX_UNBOUNDED(v) = i;
     return COPY(Trust_Const(v));
 }
 
@@ -120,7 +120,7 @@ IMPLEMENT_GENERIC(REMOVE, Any_Series)
     else
         len = 1;
 
-    REBIDX index = VAL_INDEX_RAW(v);
+    REBIDX index = SERIES_INDEX_UNBOUNDED(v);
     if (index < Series_Len_Head(v) and len != 0)
         Remove_Any_Series_Len(v, index, len);
 
@@ -142,7 +142,7 @@ IMPLEMENT_GENERIC(INDEX_OF, Any_Series)  // 1-based
     INCLUDE_PARAMS_OF_INDEX_OF;
 
     Element* ser = Element_ARG(ELEMENT);
-    return Init_Integer(OUT, VAL_INDEX_RAW(ser) + 1);
+    return Init_Integer(OUT, SERIES_INDEX_UNBOUNDED(ser) + 1);
 }
 
 
@@ -151,7 +151,7 @@ IMPLEMENT_GENERIC(OFFSET_OF, Any_Series)  // 0-based
     INCLUDE_PARAMS_OF_OFFSET_OF;
 
     Element* ser = Element_ARG(ELEMENT);
-    return Init_Integer(OUT, VAL_INDEX_RAW(ser));
+    return Init_Integer(OUT, SERIES_INDEX_UNBOUNDED(ser));
 }
 
 
@@ -256,7 +256,7 @@ IMPLEMENT_GENERIC(HEAD_OF, Any_Series)
     Element* ser = Element_ARG(ELEMENT);
 
     Copy_Cell(OUT, ser);
-    VAL_INDEX_RAW(OUT) = 0;
+    SERIES_INDEX_UNBOUNDED(OUT) = 0;
     return Trust_Const(OUT);
 }
 
@@ -268,7 +268,7 @@ IMPLEMENT_GENERIC(TAIL_OF, Any_Series)
     Element* ser = Element_ARG(ELEMENT);
 
     Copy_Cell(OUT, ser);
-    VAL_INDEX_RAW(OUT) = Series_Len_Head(ser);
+    SERIES_INDEX_UNBOUNDED(OUT) = Series_Len_Head(ser);
     return Trust_Const(OUT);
 }
 
@@ -279,7 +279,7 @@ IMPLEMENT_GENERIC(HEAD_Q, Any_Series)
 
     Element* ser = Element_ARG(ELEMENT);
 
-    return LOGIC(VAL_INDEX_RAW(ser) == 0);
+    return LOGIC(SERIES_INDEX_UNBOUNDED(ser) == 0);
 }
 
 
@@ -291,7 +291,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Any_Series)
 
     return Init_Logic(
         OUT,
-        VAL_INDEX_RAW(ser) == Series_Len_Head(ser)
+        SERIES_INDEX_UNBOUNDED(ser) == Series_Len_Head(ser)
     );
 }
 
@@ -304,7 +304,7 @@ IMPLEMENT_GENERIC(PAST_Q, Any_Series)
 
     return Init_Logic(
         OUT,
-        VAL_INDEX_RAW(ser) > Series_Len_Head(ser)
+        SERIES_INDEX_UNBOUNDED(ser) > Series_Len_Head(ser)
     );
 }
 

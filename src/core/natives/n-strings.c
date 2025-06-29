@@ -1102,7 +1102,7 @@ DECLARE_NATIVE(ENLINE)
     Element* string = Element_ARG(STRING);
 
     Strand* s = Cell_Strand_Ensure_Mutable(string);
-    REBLEN idx = VAL_INDEX(string);
+    REBLEN idx = Series_Index(string);
 
     Length len;
     Size size = String_Size_Limit_At(&len, string, UNLIMITED);
@@ -1206,7 +1206,7 @@ DECLARE_NATIVE(ENTAB)
     REBLEN len = Series_Len_At(string);
 
     Utf8(const*) up = String_At(string);
-    REBLEN index = VAL_INDEX(string);
+    REBLEN index = Series_Index(string);
 
     REBINT n = 0;
     for (; index < len; index++) {
@@ -1286,7 +1286,7 @@ DECLARE_NATIVE(DETAB)
     // Estimate new length based on tab expansion:
 
     Utf8(const*) cp = String_At(ARG(STRING));
-    REBLEN index = VAL_INDEX(ARG(STRING));
+    REBLEN index = Series_Index(ARG(STRING));
 
     REBLEN n = 0;
 
@@ -1457,7 +1457,7 @@ DECLARE_NATIVE(INVALID_UTF8_Q)
         trail = g_trailing_bytes_for_utf8[*utf8] + 1;
         if (utf8 + trail > end or not Is_Legal_UTF8(utf8, trail)) {
             Copy_Cell(OUT, arg);
-            VAL_INDEX_RAW(OUT) = utf8 - Binary_Head(Cell_Binary(arg));
+            SERIES_INDEX_UNBOUNDED(OUT) = utf8 - Binary_Head(Cell_Binary(arg));
             return OUT;
         }
     }

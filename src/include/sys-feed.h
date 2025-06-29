@@ -183,7 +183,7 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
     Cell_Array(Feed_Data(feed))
 
 #define FEED_INDEX(feed) \
-    VAL_INDEX_UNBOUNDED(Feed_Data(feed))
+    SERIES_INDEX_UNBOUNDED(Feed_Data(feed))
 
 
 // 1. The va_end() is taken care of here; all code--regardless of throw or
@@ -788,7 +788,7 @@ INLINE Feed* Prep_At_Feed(
         preallocated,
         nullptr,  // `first` = nullptr, don't inject arbitrary 1st element
         Cell_Array(list),
-        VAL_INDEX(list),
+        Series_Index(list),
         Derive_Binding(binding, list),
         flags
     );

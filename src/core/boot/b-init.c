@@ -440,7 +440,7 @@ static void Init_System_Object(
     const Element* boot_sysobj_spec,
     VarList* errors_catalog
 ) {
-    assert(VAL_INDEX(boot_sysobj_spec) == 0);
+    assert(Series_Index(boot_sysobj_spec) == 0);
     const Element* spec_tail;
     Element* spec_head = List_At_Known_Mutable(&spec_tail, boot_sysobj_spec);
 

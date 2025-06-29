@@ -372,7 +372,7 @@ HashList* Hash_Block(const Value* block, REBLEN skip, bool cased)
     REBLEN *hashes = Flex_Head(REBLEN, hashlist);
 
     const Array* array = Cell_Array(block);
-    REBLEN n = VAL_INDEX(block);
+    REBLEN n = Series_Index(block);
 
     while (true) {
         REBLEN skip_index = skip;

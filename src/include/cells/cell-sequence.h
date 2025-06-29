@@ -262,7 +262,7 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // payload second not used
     );
     Tweak_Cell_Binding(e, UNBOUND);  // "arraylike", needs binding
-    CELL_SERIESLIKE_NODE(e) = p;
+    SERIESLIKE_PAYLOAD_1_BASE(e) = p;
     Corrupt_Unused_Field(e->payload.split.two.corrupt);
 
     return SUCCESS;
@@ -450,7 +450,7 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // payload second not used
     );
     Tweak_Cell_Binding(out, UNBOUND);  // "arraylike", needs binding
-    CELL_PAIRLIKE_PAIRING_NODE(out) = pairing;
+    PAIRLIKE_PAYLOAD_1_PAIRING_BASE(out) = pairing;
     Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
     return SUCCESS;
@@ -664,7 +664,7 @@ INLINE Element* Derelativize_Sequence_At(
         return out; }
 
       case FLAVOR_SOURCE : {  // uncompressed sequence, or compressed "mirror"
-        const Source* a = c_cast(Source*, CELL_SERIESLIKE_NODE(sequence));
+        const Source* a = c_cast(Source*, SERIESLIKE_PAYLOAD_1_BASE(sequence));
         if (Mirror_Of(a)) {  // [4]
             assert(n < 2);
             if (Get_Cell_Flag(sequence, LEADING_SPACE) ? n == 0 : n != 0)
@@ -803,8 +803,8 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
     if (not Sequence_Has_Pointer(c))  // compressed bytes
         return NOT_SINGLEHEART_0;
 
-    if (Is_Base_A_Cell(CELL_SERIESLIKE_NODE(c))) {
-        const Pairing* p = cast(Pairing*, CELL_PAIRLIKE_PAIRING_NODE(c));
+    if (Is_Base_A_Cell(SERIESLIKE_PAYLOAD_1_BASE(c))) {
+        const Pairing* p = cast(Pairing*, PAIRLIKE_PAYLOAD_1_PAIRING_BASE(c));
 
         if (Is_Space(Pairing_First(p)))
             return Leading_Space_And(Heart_Of_Builtin(Pairing_Second(p)));
@@ -815,7 +815,7 @@ INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
         return NOT_SINGLEHEART_0;
     }
 
-    const Flex* f = cast(Flex*, CELL_PAYLOAD_1(c));
+    const Flex* f = cast(Flex*, SERIESLIKE_PAYLOAD_1_BASE(c));
     if (Stub_Flavor(f) == FLAVOR_SYMBOL) {
         if (c->header.bits & CELL_FLAG_LEADING_SPACE)
             return Leading_Space_And(TYPE_WORD);

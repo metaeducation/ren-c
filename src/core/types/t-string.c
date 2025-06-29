@@ -702,7 +702,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 
     switch (heart) {
       case TYPE_TEXT:
-        Mold_Text_Flex_At(mo, Cell_Strand(v), VAL_INDEX(v));
+        Mold_Text_Flex_At(mo, Cell_Strand(v), Series_Index(v));
         break;
 
       case TYPE_FILE:
@@ -746,7 +746,7 @@ bool Try_Get_Series_Index_From_Picker(
     if (n < 0)
         ++n;
 
-    n += VAL_INDEX_STRINGLIKE_OK(v) - 1;
+    n += Series_Index_Stringlike_Ok(v) - 1;
 
     if (n < 0 or n >= Series_Len_Head(v))
         return false;  // out of range, null unless POKE or more PICK-ing
@@ -783,7 +783,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         else
             limit = 1;
 
-        REBLEN index = VAL_INDEX(v);  // Part calculation may have changed!
+        REBLEN index = Series_Index(v);  // Part calculation may have changed!
         REBLEN tail = Series_Len_Head(v);
 
         if (index >= tail or limit == 0)
@@ -792,7 +792,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         Length len;
         Size size = String_Size_Limit_At(&len, v, &limit);
 
-        Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
+        Size offset = String_Byte_Offset_For_Index(v, index);
         Size size_old = Strand_Size(s);
 
         Remove_Flex_Units(s, offset, size);  // !!! at one time, kept term
@@ -823,7 +823,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         //
         if (not arg and len == 0) {
             if (id == SYM_APPEND) // append always returns head
-                VAL_INDEX_RAW(v) = 0;
+                SERIES_INDEX_UNBOUNDED(v) = 0;
             return COPY(v);  // don't panic on read only if would be a no-op
         }
 
@@ -853,7 +853,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         else
             assert(not Is_Antiform(unwrap arg));
 
-        VAL_INDEX_RAW(v) = Modify_String_Or_Blob(  // does read-only check
+        SERIES_INDEX_UNBOUNDED(v) = Modify_String_Or_Blob(  // does read-only check
             v,
             unwrap id,
             arg,
@@ -905,10 +905,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             Set_Flex_Len(pack, 2);
 
             Copy_Lifted_Cell(Array_At(pack, 0), v);
-            VAL_INDEX_RAW(Array_At(pack, 0)) = ret;
+            SERIES_INDEX_UNBOUNDED(Array_At(pack, 0)) = ret;
 
             Copy_Lifted_Cell(Array_At(pack, 1), v);
-            VAL_INDEX_RAW(Array_At(pack, 1)) = ret + len;
+            SERIES_INDEX_UNBOUNDED(Array_At(pack, 1)) = ret + len;
 
             return Init_Pack(OUT, pack);
         }
@@ -927,7 +927,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_CLEAR: {
         Strand* s = Cell_Strand_Ensure_Mutable(v);
 
-        REBLEN index = VAL_INDEX(v);
+        REBLEN index = Series_Index(v);
         REBLEN tail = Series_Len_Head(v);
 
         if (index >= tail)
@@ -941,7 +941,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             Unbias_Flex(s, false);
 
         Free_Bookmarks_Maybe_Null(s);  // review!
-        Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
+        Size offset = String_Byte_Offset_For_Index(v, index);
         Free_Bookmarks_Maybe_Null(s);
 
         Term_Strand_Len_Size(s, index, offset);
@@ -958,15 +958,15 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         Strand* v_str = Cell_Strand_Ensure_Mutable(v);
         Strand* arg_str = Cell_Strand_Ensure_Mutable(arg);
 
-        REBLEN index = VAL_INDEX(v);
+        REBLEN index = Series_Index(v);
         REBLEN tail = Series_Len_Head(v);
 
-        if (index < tail and VAL_INDEX(arg) < Series_Len_Head(arg)) {
-            Codepoint v_c = Get_Strand_Char_At(v_str, VAL_INDEX(v));
-            Codepoint arg_c = Get_Strand_Char_At(arg_str, VAL_INDEX(arg));
+        if (index < tail and Series_Index(arg) < Series_Len_Head(arg)) {
+            Codepoint v_c = Get_Strand_Char_At(v_str, Series_Index(v));
+            Codepoint arg_c = Get_Strand_Char_At(arg_str, Series_Index(arg));
 
-            Set_Char_At(v_str, VAL_INDEX(v), arg_c);
-            Set_Char_At(arg_str, VAL_INDEX(arg), v_c);
+            Set_Char_At(v_str, Series_Index(v), arg_c);
+            Set_Char_At(arg_str, Series_Index(arg), v_c);
         }
         return COPY(v); }
 
@@ -1089,14 +1089,14 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
 
     if (Bool_ARG(LAST)) {
         if (len > tail) {
-            VAL_INDEX_RAW(v) = 0;
+            SERIES_INDEX_UNBOUNDED(v) = 0;
             len = tail;
         }
         else
-            VAL_INDEX_RAW(v) = tail - len;
+            SERIES_INDEX_UNBOUNDED(v) = tail - len;
     }
 
-    if (VAL_INDEX(v) >= tail) {
+    if (Series_Index(v) >= tail) {
         if (not Bool_ARG(PART))
             return FAIL(Error_Nothing_To_Take_Raw());
         Heart heart = Heart_Of_Builtin_Fundamental(v);
@@ -1112,7 +1112,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
     else
         Init_Char_Unchecked(OUT, Codepoint_At(String_At(v)));
 
-    Remove_Any_Series_Len(v, VAL_INDEX(v), len);
+    Remove_Any_Series_Len(v, Series_Index(v), len);
     return OUT;
 }
 
@@ -1127,7 +1127,7 @@ IMPLEMENT_GENERIC(REVERSE, Any_String)
 
     Copy_Cell(OUT, string);  // save before index adjustment
     REBINT len = Part_Len_May_Modify_Index(string, ARG(PART));
-    Reverse_Strand(s, VAL_INDEX(string), len);
+    Reverse_Strand(s, Series_Index(string), len);
     return OUT;
 }
 
@@ -1138,7 +1138,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
 
     Element* v = Element_ARG(COLLECTION);
 
-    REBLEN index = VAL_INDEX(v);
+    REBLEN index = Series_Index(v);
     REBLEN tail = Series_Len_Head(v);
 
     if (index >= tail)
@@ -1165,7 +1165,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_String)
 
     Element* string = Element_ARG(SERIES);
 
-    REBLEN index = VAL_INDEX(string);
+    REBLEN index = Series_Index(string);
 
     Strand* s = Cell_Strand_Ensure_Mutable(string);
 

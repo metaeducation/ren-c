@@ -9,7 +9,7 @@ INLINE bool Is_Cell_Listlike(const Atom* v) {  // PACK!s are allowed
         return false;
     if (not Cell_Payload_1_Needs_Mark(v))
         return false;
-    const Base* payload1 = CELL_SERIESLIKE_NODE(v);
+    const Base* payload1 = SERIESLIKE_PAYLOAD_1_BASE(v);
     if (Is_Base_A_Cell(payload1))
         return true;  // List_At() works, but Cell_Array() won't work!
     return Stub_Flavor(u_cast(const Flex*, payload1)) == FLAVOR_SOURCE;
@@ -18,7 +18,7 @@ INLINE bool Is_Cell_Listlike(const Atom* v) {  // PACK!s are allowed
 INLINE const Source* Cell_Array(const Atom* c) {  // PACK!s are allowed
     assert(Is_Cell_Listlike(c));
 
-    const Base* series = CELL_SERIESLIKE_NODE(c);
+    const Base* series = SERIESLIKE_PAYLOAD_1_BASE(c);
     assert(Is_Base_A_Stub(series));  // not a pairing arraylike!
     if (Not_Base_Readable(series))
         panic (Error_Series_Data_Freed_Raw());
@@ -35,39 +35,39 @@ INLINE const Source* Cell_Array(const Atom* c) {  // PACK!s are allowed
 
 // These array operations take the index position into account.  The use
 // of the word AT with a missing index is a hint that the index is coming
-// from the VAL_INDEX() of the value itself.
+// from the Series_Index() of the value itself.
 //
 // IMPORTANT: This routine will trigger a panic if the array index is out
 // of bounds of the data.  If a function can deal with such out of bounds
-// arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
+// arrays meaningfully, it should work with SERIES_INDEX_UNBOUNDED().
 //
 INLINE const Element* List_Len_At(
     Option(Sink(Length)) len_at_out,
-    const Atom* v  // want to be able to pass PACK!s, SPLICE!, etc.
+    const Cell* cell  // want to be able to pass PACK!s, SPLICE!, etc.
 ){
-    const Base* base = CELL_SERIESLIKE_NODE(v);
+    const Base* base = SERIESLIKE_PAYLOAD_1_BASE(cell);
     if (Is_Base_A_Cell(base)) {
-        assert(Any_Sequence_Type(Heart_Of(v)));
-        assert(VAL_INDEX_RAW(v) == 0);
+        assert(Any_Sequence_Type(Unchecked_Heart_Of(cell)));
+        assert(SERIESLIKE_PAYLOAD_2_INDEX(cell) == 0);
         if (len_at_out)
-            *(unwrap len_at_out) = PAIRING_LEN;
+            *(unwrap len_at_out) = PAIRING_LEN_2;
         return c_cast(Element*, base);
     }
-    const Array* arr = c_cast(Array*, base);
-    REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's a series
-    Length len = Array_Len(arr);
+    const Source* array = c_cast(Source*, base);
+    REBIDX i = SERIESLIKE_PAYLOAD_2_INDEX(cell);
+    Length len = Array_Len(array);
     if (i < 0 or i > len)
         panic (Error_Index_Out_Of_Range_Raw());
     if (len_at_out)  // inlining should remove this if() for List_At()
         *(unwrap len_at_out) = len - i;
-    return Array_At(arr, i);
+    return Array_At(array, i);
 }
 
 INLINE const Element* List_At(
     Option(const Element**) tail_out,
     const Cell* cell  // want to be able to pass PACK!s, SPLICE!, etc.
 ){
-    const Base* base = CELL_SERIESLIKE_NODE(cell);
+    const Base* base = SERIESLIKE_PAYLOAD_1_BASE(cell);
     if (Is_Base_A_Cell(base)) {
         assert(Any_Sequence_Type(Heart_Of(cell)));
         const Pairing* p = c_cast(Pairing*, base);
@@ -75,12 +75,12 @@ INLINE const Element* List_At(
             *(unwrap tail_out) = Pairing_Tail(p);
         return Pairing_Head(p);
     }
-    const Array* arr = c_cast(Array*, base);
-    REBIDX i = VAL_INDEX_RAW(cell);
-    Length len = Array_Len(arr);
+    const Source* array = c_cast(Source*, base);
+    REBIDX i = SERIESLIKE_PAYLOAD_2_INDEX(cell);
+    Length len = Array_Len(array);
     if (i < 0 or i > len)
         panic (Error_Index_Out_Of_Range_Raw());
-    const Element* at = Array_At(arr, i);
+    const Element* at = Array_At(array, i);
     if (tail_out)  // inlining should remove this if() for no tail
         *(unwrap tail_out) = at + (len - i);
     return at;
@@ -150,8 +150,8 @@ INLINE Element* Init_Relative_Block_At(
     REBLEN index
 ){
     Reset_Cell_Header_Noquote(out, CELL_MASK_BLOCK);
-    CELL_SERIESLIKE_NODE(out) = array;
-    VAL_INDEX_RAW(out) = index;
+    SERIESLIKE_PAYLOAD_1_BASE(out) = array;
+    SERIES_INDEX_UNBOUNDED(out) = index;
     Tweak_Cell_Relative_Binding(out, details);
     return out;
 }

@@ -151,7 +151,7 @@ Source* Split_Lines(const Element* str)
     StackIndex base = TOP_INDEX;
 
     Length len = Series_Len_At(str);
-    REBLEN i = VAL_INDEX(str);
+    REBLEN i = Series_Index(str);
     if (i == len)
         return Make_Source(0);
 

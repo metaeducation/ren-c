@@ -111,7 +111,7 @@ REBLEN Modify_Array(
             Array* copy = Copy_Array_At_Extra_Shallow(
                 STUB_MASK_MANAGED_SOURCE,  // !!! or, don't manage and free?
                 Cell_Array(src_val),
-                VAL_INDEX(src_val),
+                Series_Index(src_val),
                 0 // extra
             );
             src_rel = Array_Head(copy);
@@ -232,7 +232,7 @@ static Error* Error_Bad_Utf8_Bin_Edit(Error* cause) {
 // That aliasing ability is why this routine is for both string and binary.
 //
 // While a BLOB! and an ANY-STRING? can alias the same Flex, the meaning
-// of VAL_INDEX() is different.  So in addition to the detection of the
+// of Series_Index() is different.  So in addition to the detection of the
 // FLEX_FLAG_IS_STRING on the Flex, we must know if dst is a BLOB!.
 //
 REBLEN Modify_String_Or_Blob(
@@ -250,7 +250,7 @@ REBLEN Modify_String_Or_Blob(
     Binary* dst_flex = cast(Binary*, Cell_Flex_Ensure_Mutable(dst));
     assert(not Is_Stub_Symbol(dst_flex));  // would be immutable
 
-    REBLEN dst_idx = VAL_INDEX(dst);
+    REBLEN dst_idx = Series_Index(dst);
     Size dst_used = Flex_Used(dst_flex);
 
     if (dups <= 0)
@@ -270,7 +270,7 @@ REBLEN Modify_String_Or_Blob(
     else {
         assert(Any_String(dst));
 
-        dst_off = VAL_BYTEOFFSET_FOR_INDEX(dst, dst_idx);  // !!! review speed
+        dst_off = String_Byte_Offset_For_Index(dst, dst_idx);  // !!! review speed
         dst_len_old = Strand_Len(cast(Strand*, dst_flex));
     }
 
@@ -385,7 +385,7 @@ REBLEN Modify_String_Or_Blob(
     }
     else if (Is_Blob(src)) {
         const Binary* b = Cell_Binary(src);
-        REBLEN offset = VAL_INDEX(src);
+        REBLEN offset = Series_Index(src);
 
         src_ptr = Binary_At(b, offset);
         src_size_raw = Binary_Len(b) - offset;

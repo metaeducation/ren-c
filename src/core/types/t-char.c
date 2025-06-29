@@ -796,7 +796,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
     if (as == TYPE_WORD) {  // aliasing as WORD! freezes data
         if (Stringlike_Has_Stub(v)) {
             const Strand* str = Cell_Strand(v);
-            if (VAL_INDEX(v) != 0)
+            if (Series_Index(v) != 0)
                 return Error_User("Can't alias string as WORD! unless at head");
 
             if (Is_Strand_Symbol(str)) {  // already frozen and checked!
@@ -825,7 +825,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
             Init_Blob_At(
                 out,
                 Cell_Strand(v),
-                VAL_BYTEOFFSET(v)  // index has to be in terms of bytes
+                String_Byte_Offset_At(v)  // index has to be in terms of bytes
             );
             KIND_BYTE(out) = TYPE_BLOB;
             return SUCCESS;

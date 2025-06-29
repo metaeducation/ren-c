@@ -7,10 +7,10 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
         or (Any_Utf8_Type(heart) and Stringlike_Has_Stub(v))
     );
     UNUSED(heart);
-    if (Not_Base_Readable(CELL_SERIESLIKE_NODE(v)))
+    if (Not_Base_Readable(SERIESLIKE_PAYLOAD_1_BASE(v)))
         panic (Error_Series_Data_Freed_Raw());
 
-    return cast(Flex*, CELL_SERIESLIKE_NODE(v));
+    return cast(Flex*, SERIESLIKE_PAYLOAD_1_BASE(v));
 }
 
 #define Cell_Flex_Ensure_Mutable(v) \
@@ -22,33 +22,33 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
 
 // It is possible that the index could be to a point beyond the range of the
 // Flex.  This is intrinsic, because the Flex data can be modified through
-// one cell and not update the other cells referring to it.  Hence VAL_INDEX()
+// one cell and not update the other cells referring to it.  Series_Index()
 // must be checked, or the routine called with it must.
 
-#define VAL_INDEX_RAW(c) \
+#define SERIESLIKE_PAYLOAD_2_INDEX(c) \
     (c)->payload.split.two.i
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
-    #define VAL_INDEX_UNBOUNDED(v) \
-        VAL_INDEX_RAW(v)
+    #define SERIES_INDEX_UNBOUNDED(v) \
+        SERIESLIKE_PAYLOAD_2_INDEX(v)
 #else
-    // allows an assert, but uses C++ reference for lvalue:
+    // Allows an assert, but uses C++ reference for lvalue:
     //
-    //     VAL_INDEX_UNBOUNDED(v) = xxx;  // ensures v is ANY-SERIES?
+    //     SERIES_INDEX_UNBOUNDED(v) = xxx;  // ensures v is ANY-SERIES?
     //
     // Avoids Ensure_Readable(), because it's assumed that it was done in the
-    // type checking to ensure VAL_INDEX() applied.  (This is called often.)
+    // type checking to ensure Series_Index() applied.  (This is called often.)
     //
-    INLINE REBIDX VAL_INDEX_UNBOUNDED(const Cell* c) {
+    INLINE REBIDX SERIES_INDEX_UNBOUNDED(const Cell* c) {
         assert(Any_Series_Type(Unchecked_Heart_Of(c)));
         assert(Cell_Payload_1_Needs_Mark(c));
-        return VAL_INDEX_RAW(c);
+        return SERIESLIKE_PAYLOAD_2_INDEX(c);
     }
-    INLINE REBIDX & VAL_INDEX_UNBOUNDED(Cell* c) {
+    INLINE REBIDX & SERIES_INDEX_UNBOUNDED(Cell* c) {
         Assert_Cell_Writable(c);
         assert(Any_Series_Type(Unchecked_Heart_Of(c)));
         assert(Cell_Payload_1_Needs_Mark(c));
-        return VAL_INDEX_RAW(c);  // returns a C++ reference
+        return SERIESLIKE_PAYLOAD_2_INDEX(c);  // returns a C++ reference
     }
 #endif
 
@@ -56,28 +56,28 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
 INLINE REBLEN Series_Len_Head(const Cell* v);  // forward decl
 INLINE bool Stringlike_Cell(const Cell* v);  // forward decl
 
-// Unlike VAL_INDEX_UNBOUNDED() that may give a negative number or past the
-// end of series, VAL_INDEX() does bounds checking and always returns an
+// Unlike SERIES_INDEX_UNBOUNDED() that may give a negative number or past the
+// end of series, Series_Index() does bounds checking and always returns an
 // unsigned REBLEN.
 //
-INLINE REBLEN VAL_INDEX_STRINGLIKE_OK(const Cell* v) {
+INLINE REBLEN Series_Index_Stringlike_Ok(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
     assert(Any_Series_Type(heart) or Stringlike_Cell(v));
     UNUSED(heart);
     assert(Cell_Payload_1_Needs_Mark(v));
-    REBIDX i = VAL_INDEX_RAW(v);
+    REBIDX i = SERIESLIKE_PAYLOAD_2_INDEX(v);
     if (i < 0 or i > Series_Len_Head(v))
         panic (Error_Index_Out_Of_Range_Raw());
     return i;
 }
 
-// Unlike VAL_INDEX_UNBOUNDED() that may give a negative number or past the
-// end of series, VAL_INDEX() does bounds checking and always returns an
+// Unlike SERIES_INDEX_UNBOUNDED() that may give a negative number or past the
+// end of series, Series_Index() does bounds checking and always returns an
 // unsigned REBLEN.
 //
-INLINE REBLEN VAL_INDEX(const Cell* v) {
+INLINE REBLEN Series_Index(const Cell* v) {
     assert(Any_Series_Type(Heart_Of(v)));
-    return VAL_INDEX_STRINGLIKE_OK(v);
+    return Series_Index_Stringlike_Ok(v);
 }
 
 
@@ -137,8 +137,8 @@ INLINE Element* Init_Series_At_Core_Untracked(
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // series stub needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );
-    CELL_SERIESLIKE_NODE(out) = m_cast(Flex*, f);  // const bit guides extract
-    VAL_INDEX_RAW(out) = index;
+    SERIESLIKE_PAYLOAD_1_BASE(out) = m_cast(Flex*, f);  // const bit guides extract
+    SERIESLIKE_PAYLOAD_2_INDEX(out) = index;
 
     out->extra.base = binding;  // checked below if DEBUG_CHECK_BINDING
 

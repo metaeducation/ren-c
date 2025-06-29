@@ -400,9 +400,9 @@ REBLEN Part_Len_May_Modify_Index(
         return size;
     }
 
-    // VAL_INDEX() checks to make sure it's for in-bounds
+    // Series_Index() checks to make sure it's for in-bounds
     //
-    REBLEN iseries = Is_Rune(series) ? 0 : VAL_INDEX(series);
+    REBLEN iseries = Is_Rune(series) ? 0 : Series_Index(series);
 
     REBI64 len;
     if (Is_Integer(part) or Is_Decimal(part))
@@ -416,7 +416,7 @@ REBLEN Part_Len_May_Modify_Index(
             panic (Error_Invalid_Part_Raw(part));
         }
 
-        len = VAL_INDEX(part) - iseries;
+        len = Series_Index(part) - iseries;
     }
 
     // Restrict length to the size available
@@ -433,7 +433,7 @@ REBLEN Part_Len_May_Modify_Index(
         len = -len;
         if (len > cast(REBI64, iseries))
             len = iseries;
-        VAL_INDEX_RAW(series) -= len;
+        SERIES_INDEX_UNBOUNDED(series) -= len;
     }
 
     if (len > UINT32_MAX) {
@@ -461,7 +461,7 @@ REBLEN Part_Len_May_Modify_Index(
 REBLEN Part_Tail_May_Modify_Index(Value* series, const Value* limit)
 {
     REBLEN len = Part_Len_May_Modify_Index(series, limit);
-    return len + VAL_INDEX(series); // uses the possibly-updated index
+    return len + Series_Index(series); // uses the possibly-updated index
 }
 
 

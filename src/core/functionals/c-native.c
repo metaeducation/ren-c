@@ -620,7 +620,7 @@ void Startup_Natives(const Element* boot_natives)
 {
     Context* lib = g_lib_context;  // native variables already exist [1]
 
-    assert(VAL_INDEX(boot_natives) == 0);  // should be at head, sanity check
+    assert(Series_Index(boot_natives) == 0);  // should be head, sanity check
     assert(Cell_Binding(boot_natives) == UNBOUND);
 
     DECLARE_ATOM (dual_step);

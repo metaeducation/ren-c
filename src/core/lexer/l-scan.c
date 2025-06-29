@@ -3141,7 +3141,7 @@ Bounce Scanner_Executor(Level* const L) {
         and not Is_Base_A_Cell(CELL_PAYLOAD_1(TOP))
         and Is_Stub_Source(cast(Stub*, CELL_PAYLOAD_1(TOP)))
     ){
-        Source* a = cast(Source*, CELL_SERIESLIKE_NODE(TOP));
+        Source* a = cast(Source*, SERIESLIKE_PAYLOAD_1_BASE(TOP));
         MISC_SOURCE_LINE(a) = transcode->line;
         Tweak_Link_Filename(a, maybe transcode->file);
     }
@@ -3604,19 +3604,19 @@ DECLARE_NATIVE(TRANSCODE)
     if (Is_Blob(source)) {
         const Binary* b = Cell_Binary(source);
         if (transcode->at)
-            VAL_INDEX_UNBOUNDED(spare_rest) = transcode->at - Binary_Head(b);
+            SERIES_INDEX_UNBOUNDED(spare_rest) = transcode->at - Binary_Head(b);
         else
-            VAL_INDEX_UNBOUNDED(spare_rest) = Binary_Len(b);
+            SERIES_INDEX_UNBOUNDED(spare_rest) = Binary_Len(b);
     }
     else {  // must count codepoints [1]
         assert(Is_Text(source));
 
         if (transcode->at)
-            VAL_INDEX_RAW(spare_rest) += Num_Codepoints_For_Bytes(
+            SERIES_INDEX_UNBOUNDED(spare_rest) += Num_Codepoints_For_Bytes(
                 bp, transcode->at
             );
         else
-            VAL_INDEX_RAW(spare_rest) += Binary_Tail(Cell_Strand(source)) - bp;
+            SERIES_INDEX_UNBOUNDED(spare_rest) += Binary_Tail(Cell_Strand(source)) - bp;
     }
 
     Source* pack = Make_Source_Managed(2);

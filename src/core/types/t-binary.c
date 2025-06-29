@@ -298,7 +298,7 @@ static Element* Copy_Blob_Part_At_May_Modify_Index(
     return Init_Series(
         out,
         TYPE_BLOB,
-        Copy_Binary_At_Len(Cell_Binary(blob), VAL_INDEX(blob), len)
+        Copy_Binary_At_Len(Cell_Binary(blob), Series_Index(blob), len)
     );
 }
 
@@ -334,7 +334,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         //
         if (not arg and len == 0) {
             if (id == SYM_APPEND) // append always returns head
-                VAL_INDEX_RAW(v) = 0;
+                SERIES_INDEX_UNBOUNDED(v) = 0;
             return COPY(v);  // don't panic on read only if would be a no-op
         }
 
@@ -365,7 +365,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         else
             return PANIC(PARAM(VALUE));
 
-        VAL_INDEX_RAW(v) = Modify_String_Or_Blob(
+        SERIES_INDEX_UNBOUNDED(v) = Modify_String_Or_Blob(
             v,
             unwrap id,
             arg,
@@ -412,10 +412,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             Set_Flex_Len(pack, 2);
 
             Copy_Lifted_Cell(Array_At(pack, 0), v);
-            VAL_INDEX_RAW(Array_At(pack, 0)) = ret;
+            SERIES_INDEX_UNBOUNDED(Array_At(pack, 0)) = ret;
 
             Copy_Lifted_Cell(Array_At(pack, 1), v);
-            VAL_INDEX_RAW(Array_At(pack, 1)) = ret + size;
+            SERIES_INDEX_UNBOUNDED(Array_At(pack, 1)) = ret + size;
 
             return Init_Pack(OUT, pack);
         }
@@ -432,7 +432,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         Binary* b = Cell_Binary_Ensure_Mutable(v);
 
         REBINT tail = Series_Len_Head(v);
-        REBINT index = VAL_INDEX(v);
+        REBINT index = Series_Index(v);
 
         if (index >= tail)
             return COPY(v); // clearing after available data has no effect
@@ -532,9 +532,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         Byte* arg_at = Blob_At_Ensure_Mutable(arg);
 
         REBINT tail = Series_Len_Head(v);
-        REBINT index = VAL_INDEX(v);
+        REBINT index = Series_Index(v);
 
-        if (index < tail and VAL_INDEX(arg) < Series_Len_Head(arg)) {
+        if (index < tail and Series_Index(arg) < Series_Len_Head(arg)) {
             Byte temp = *v_at;
             *v_at = *arg_at;
             *arg_at = temp;
@@ -612,11 +612,11 @@ Option(Error*) Trap_Alias_Blob_As(
 
     if (Any_Utf8_Type(as)) {  // convert to a string as first step [1]
         if (as == TYPE_WORD) {  // early fail on this, to save time
-            if (VAL_INDEX(blob) != 0)  // (vs. failing on AS WORD! of string)
+            if (Series_Index(blob) != 0)  // (vs. failing on AS WORD! of string)
                 return Error_User("Can't alias BLOB! as WORD! unless at head");
         }
 
-        Size byteoffset = VAL_INDEX(blob);
+        Size byteoffset = Series_Index(blob);
 
         const Byte* at_ptr = Binary_At(bin, byteoffset);
         if (Is_Continuation_Byte(*at_ptr))  // must be on codepoint start
@@ -748,14 +748,14 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
 
     if (Bool_ARG(LAST)) {
         if (tail - len < 0) {
-            VAL_INDEX_RAW(blob) = 0;
+            SERIES_INDEX_UNBOUNDED(blob) = 0;
             len = tail;
         }
         else
-            VAL_INDEX_RAW(blob) = tail - len;
+            SERIES_INDEX_UNBOUNDED(blob) = tail - len;
     }
 
-    REBLEN index = VAL_INDEX(blob);
+    REBLEN index = Series_Index(blob);
 
     if (index >= tail) {
         if (not Bool_ARG(PART))
@@ -824,7 +824,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
     Element* blob = Element_ARG(COLLECTION);
 
     REBINT tail = Series_Len_Head(blob);
-    REBINT index = VAL_INDEX(blob);
+    REBINT index = Series_Index(blob);
 
     if (index >= tail)
         return FAIL(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
@@ -841,7 +841,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Is_Blob)
 
     Element* blob = Element_ARG(SERIES);
 
-    REBINT index = VAL_INDEX(blob);
+    REBINT index = Series_Index(blob);
 
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
 
@@ -1267,7 +1267,7 @@ DECLARE_NATIVE(ADD_TO_BINARY)
             Byte* b = Binary_At(bin, wheel);
             if (delta > 0) {
                 if (*b == 255) {
-                    if (wheel == VAL_INDEX(blob))
+                    if (wheel == Series_Index(blob))
                         return FAIL(Error_Overflow_Raw());
 
                     *b = 0;
@@ -1280,7 +1280,7 @@ DECLARE_NATIVE(ADD_TO_BINARY)
             }
             else {
                 if (*b == 0) {
-                    if (wheel == VAL_INDEX(blob))
+                    if (wheel == Series_Index(blob))
                         return FAIL(Error_Overflow_Raw());
 
                     *b = 255;

@@ -1018,8 +1018,8 @@ DECLARE_NATIVE(SAME_Q)
 
     if (Any_Series(v1))  // pointers -and- indices must match
         return LOGIC(
-            Cell_Flex(v1) == Cell_Flex(v2)
-            and VAL_INDEX_RAW(v1) == VAL_INDEX_RAW(v2)  // permissive
+            Cell_Flex(v1) == Cell_Flex(v2)  // v-- permissive w.r.t. index
+            and SERIES_INDEX_UNBOUNDED(v1) == SERIES_INDEX_UNBOUNDED(v2)
         );
 
     if (Any_Context(v1))  // same if varlists match

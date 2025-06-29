@@ -30,7 +30,7 @@
 // For routines that manage binding, see %sys-bind.h.
 //
 
-#define CELL_WORDLIKE_SYMBOL_NODE  CELL_SERIESLIKE_NODE
+#define WORDLIKE_PAYLOAD_1_SYMBOL_BASE  SERIESLIKE_PAYLOAD_1_BASE
 
 INLINE bool Is_Cell_Wordlike(const Cell* v) {
     // called by core code, sacrifice Ensure_Readable() checks
@@ -40,7 +40,7 @@ INLINE bool Is_Cell_Wordlike(const Cell* v) {
         return false;
     if (not Cell_Payload_1_Needs_Mark(v))
         return false;
-    const Base* payload1 = CELL_SERIESLIKE_NODE(v);
+    const Base* payload1 = SERIESLIKE_PAYLOAD_1_BASE(v);
     if (Is_Base_A_Cell(payload1))
         return false;
     return Stub_Flavor(u_cast(const Flex*, payload1)) == FLAVOR_SYMBOL;
@@ -48,7 +48,7 @@ INLINE bool Is_Cell_Wordlike(const Cell* v) {
 
 INLINE const Symbol* Word_Symbol(const Cell* c) {
     assert(Is_Cell_Wordlike(c));
-    return c_cast(Symbol*, CELL_WORDLIKE_SYMBOL_NODE(c));
+    return c_cast(Symbol*, WORDLIKE_PAYLOAD_1_SYMBOL_BASE(c));
 }
 
 #define Word_Id(v) \
@@ -91,7 +91,7 @@ INLINE Cell* Blit_Word_Untracked(
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );
     CELL_WORD_INDEX_I32(out) = 0;  // !!! hint used in special cases
-    CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, sym);
+    WORDLIKE_PAYLOAD_1_SYMBOL_BASE(out) = m_cast(Symbol*, sym);
     UNNECESSARY(Tweak_Cell_Binding(out, UNBOUND));  // don't need checks...
     out->extra.base = UNBOUND;  // ...just assign directly, always valid
     return out;
@@ -109,7 +109,7 @@ INLINE Element* Init_Word_Untracked(
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );
     CELL_WORD_INDEX_I32(out) = 0;  // !!! hint used in special cases
-    CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, symbol);
+    WORDLIKE_PAYLOAD_1_SYMBOL_BASE(out) = m_cast(Symbol*, symbol);
     UNNECESSARY(Tweak_Cell_Binding(out, UNBOUND));  // don't need checks...
     out->extra.base = UNBOUND;  // ...just assign directly, always valid
     return out;
@@ -132,7 +132,7 @@ INLINE Element* Init_Word_Bound_Untracked(
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );
-    CELL_WORDLIKE_SYMBOL_NODE(out) = m_cast(Symbol*, symbol);
+    WORDLIKE_PAYLOAD_1_SYMBOL_BASE(out) = m_cast(Symbol*, symbol);
     CELL_WORD_INDEX_I32(out) = 0;  // !!! hint used in special cases
     Tweak_Cell_Binding(out, binding);  // validates if DEBUG_CHECK_BINDING
 

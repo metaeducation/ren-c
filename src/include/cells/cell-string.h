@@ -32,7 +32,7 @@ INLINE Length Series_Len_Head(const Cell* v) {
 }
 
 INLINE bool VAL_PAST_END(const Cell* v)
-   { return VAL_INDEX(v) > Series_Len_Head(v); }
+   { return Series_Index(v) > Series_Len_Head(v); }
 
 INLINE Length Series_Len_At(const Cell* v) {
     //
@@ -43,7 +43,7 @@ INLINE Length Series_Len_At(const Cell* v) {
     // and low level length themselves, they'll find it doesn't add up.
     // This is a longstanding historical Rebol issue that needs review.
     //
-    REBIDX i = VAL_INDEX(v);
+    REBIDX i = Series_Index(v);
     if (i > Series_Len_Head(v))
         panic ("Index past end of series");
     if (i < 0)
@@ -58,7 +58,7 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
     if (not Cell_Payload_1_Needs_Mark(c))  // must store bytes in cell direct
         return cast(Utf8(const*), c->payload.at_least_8);
 
-    const Strand* str = c_cast(Strand*, CELL_SERIESLIKE_NODE(c));
+    const Strand* str = c_cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(c));
     return Strand_Head(str);  // symbols are strings
 }
 
@@ -69,7 +69,7 @@ INLINE Utf8(const*) String_At(const Cell* v) {
         return Cell_Utf8_Head(v);  // might store utf8 directly in cell
 
     const Strand* str = c_cast(Strand*, Cell_Flex(v));
-    REBIDX i = VAL_INDEX_RAW(v);
+    REBIDX i = SERIES_INDEX_UNBOUNDED(v);
     if (i < 0 or i > Strand_Len(str))
         panic (Error_Index_Out_Of_Range_Raw());
 
@@ -85,7 +85,7 @@ INLINE Utf8(const*) Cell_Strand_Tail(const Cell* c) {
         return cast(Utf8(const*), c->payload.at_least_8 + size);
     }
 
-    const Strand* str = c_cast(Strand*, CELL_SERIESLIKE_NODE(c));
+    const Strand* str = c_cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(c));
     return Strand_Tail(str);
 }
 
@@ -105,26 +105,26 @@ INLINE REBLEN String_Len_At(const Cell* c) {
     if (not Stringlike_Has_Stub(c))  // content directly in cell
         return c->extra.at_least_4[IDX_EXTRA_LEN];
 
-    const Strand* str = c_cast(Strand*, CELL_SERIESLIKE_NODE(c));
+    const Strand* str = c_cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(c));
     return Strand_Len(str);
 }
 
 INLINE Size String_Size_Limit_At(
     Option(Sink(Length)) length_out,  // length in chars to end or limit
-    const Cell* v,
+    const Cell* cell,
     Option(const Length*) limit
 ){
     if (limit)
         assert(*(unwrap limit) >= 0);
 
-    Utf8(const*) at = String_At(v);  // !!! update cache if needed
+    Utf8(const*) at = String_At(cell);  // !!! update cache if needed
     Utf8(const*) tail;
 
-    REBLEN len_at = String_Len_At(v);
+    REBLEN len_at = String_Len_At(cell);
     if (not limit or *(unwrap limit) >= len_at) {
         if (length_out)
             *(unwrap length_out) = len_at;
-        tail = Cell_Strand_Tail(v);  // byte count known (fast)
+        tail = Cell_Strand_Tail(cell);  // byte count known (fast)
     }
     else {
         tail = at;
@@ -138,33 +138,31 @@ INLINE Size String_Size_Limit_At(
     return tail - at;
 }
 
-#define String_Size_At(v) \
-    String_Size_Limit_At(nullptr, v, UNLIMITED)
+#define String_Size_At(cell) \
+    String_Size_Limit_At(nullptr, (cell), UNLIMITED)
 
-INLINE Size VAL_BYTEOFFSET(const Cell* v) {
-    return String_At(v) - Strand_Head(Cell_Strand(v));
+INLINE Size String_Byte_Offset_At(const Cell* cell) {
+    return String_At(cell) - Strand_Head(Cell_Strand(cell));
 }
 
-INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
-    const Cell* v,
-    REBLEN index
-){
-    assert(Any_String_Type(Heart_Of(v)));
+// 1. Arbitrary seeking...this technique needs to be tuned, e.g. to look from
+//    the head or the tail depending on what's closer
+//
+INLINE Size String_Byte_Offset_For_Index(const Cell* cell, REBLEN index)
+{
+    assert(Any_String_Type(Unchecked_Heart_Of(cell)));
 
+    const Strand* strand = Cell_Strand(cell);
     Utf8(const*) at;
 
-    if (index == VAL_INDEX(v))
-        at = String_At(v); // !!! update cache if needed
-    else if (index == Series_Len_Head(v))
-        at = Strand_Tail(Cell_Strand(v));
-    else {
-        // !!! arbitrary seeking...this technique needs to be tuned, e.g.
-        // to look from the head or the tail depending on what's closer
-        //
-        at = Strand_At(Cell_Strand(v), index);
-    }
+    if (index == Series_Index(cell))
+        at = String_At(cell);  // !!! update cache if needed
+    else if (index == Series_Len_Head(cell))
+        at = Strand_Tail(strand);
+    else
+        at = Strand_At(strand, index);  // !!! needs tuning [1]
 
-    return at - Strand_Head(Cell_Strand(v));
+    return at - Strand_Head(strand);
 }
 
 

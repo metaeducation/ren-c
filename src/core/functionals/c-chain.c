@@ -156,7 +156,7 @@ Bounce Cascader_Executor(Level* const L)
     L->executor = &Cascader_Executor;  // so trampoline calls us [2]
 
     const Element* first = List_Item_At(pipeline);
-    ++VAL_INDEX_RAW(pipeline);  // point series index to next FRAME! to call
+    ++SERIES_INDEX_UNBOUNDED(pipeline);  // point series index to next FRAME! to call
 
     Tweak_Level_Phase(
         sub,
@@ -194,7 +194,7 @@ Bounce Cascader_Executor(Level* const L)
     if (pipeline_at == pipeline_tail)
         goto finished;
 
-    ++VAL_INDEX_RAW(pipeline);  // update series index to next FRAME! to call
+    ++SERIES_INDEX_UNBOUNDED(pipeline);  // update series index to next FRAME! to call
 
     Restart_Action_Level(sub);  // see notes
     Push_Action(sub, pipeline_at, PREFIX_0);
