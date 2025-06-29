@@ -48,7 +48,7 @@ uint32_t Hash_Scan_UTF8_Caseless_May_Panic(const Byte* utf8, Size size)
         if (Is_Utf8_Lead_Byte(c)) {
             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &utf8, &size);
             if (e)
-                panic (unwrap e);
+                abrupt_panic (unwrap e);
         }
 
         c = LO_CASE(c);
@@ -119,7 +119,7 @@ uint32_t Hash_Value(const Value* cell)
 
     switch (heart) {
       case TYPE_0_constexpr:
-          panic ("Cannot hash 0-custom datatype");
+          abrupt_panic ("Cannot hash 0-custom datatype");
 
       case TYPE_COMMA:
         hash = 0;
@@ -256,7 +256,7 @@ uint32_t Hash_Value(const Value* cell)
         //
         // !!! Why not?
         //
-        panic (Error_Invalid_Type(TYPE_PARAMETER));
+        abrupt_panic (Error_Invalid_Type(TYPE_PARAMETER));
 
       hash_any_word:
         //
@@ -320,7 +320,7 @@ uint32_t Hash_Value(const Value* cell)
         //
         // !!! Review hashing behavior or needs of these types if necessary.
         //
-        panic (Error_Invalid_Type(TYPE_HANDLE));
+        abrupt_panic (Error_Invalid_Type(TYPE_HANDLE));
 
       default:
         crash (nullptr); // List should be comprehensive
@@ -407,7 +407,7 @@ HashList* Hash_Block(const Value* block, REBLEN skip, bool cased)
                     // than not, this will catch bugs in callers vs. be
                     // a roadblock to them.
                     //
-                    panic (Error_Block_Skip_Wrong_Raw());
+                    abrupt_panic (Error_Block_Skip_Wrong_Raw());
                 }
 
                 return hashlist;

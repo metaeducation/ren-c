@@ -269,7 +269,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     //     >> g: generator [g]  ; not legal!
 
     if (Not_Cell_Readable(plug))
-        return PANIC(Error_Yielder_Reentered_Raw());
+        panic (Error_Yielder_Reentered_Raw());
 
   //=//// RECLAIM ORIGINAL YIELDER'S VARLIST IDENTITY /////////////////////=//
 
@@ -439,7 +439,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     assert(Is_Quasar(original_frame));
 
-    return PANIC(Error_Yielder_Panicked_Raw());
+    panic (Error_Yielder_Panicked_Raw());
 }}
 
 
@@ -509,7 +509,7 @@ DECLARE_NATIVE(YIELDER)
         MAX_IDX_YIELDER  // details array capacity
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     assert(Is_Block(Details_At(details, IDX_YIELDER_BODY)));
     Init_Unreadable(Details_At(details, IDX_YIELDER_ORIGINAL_FRAME));
@@ -597,14 +597,14 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
 
     VarList* yielder_context = maybe Level_Coupling(yield_level);
     if (not yielder_context)
-        return PANIC("Must have yielder to jump to");
+        panic ("Must have yielder to jump to");
 
     Level* yielder_level = Level_Of_Varlist_May_Panic(yielder_context);
     if (not yielder_level)
-        return PANIC("Cannot yield to generator that completed or errored");
+        panic ("Cannot yield to generator that completed or errored");
 
     if (LEVEL_STATE_BYTE(yielder_level) != ST_YIELDER_RUNNING_BODY)
-        return PANIC("YIELD called when body of bound yielder is not running");
+        panic ("YIELD called when body of bound yielder is not running");
 
     Details* yielder_details = Ensure_Level_Details(yielder_level);
     assert(Details_Dispatcher(yielder_details) == &Yielder_Dispatcher);

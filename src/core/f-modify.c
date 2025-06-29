@@ -262,7 +262,7 @@ REBLEN Modify_String_Or_Blob(
         if (Is_Stub_Strand(dst_flex)) {
             Byte at = *Binary_At(dst_flex, dst_idx);
             if (Is_Continuation_Byte(at))
-                panic (Error_Bad_Utf8_Bin_Edit_Raw());
+                abrupt_panic (Error_Bad_Utf8_Bin_Edit_Raw());
             dst_len_old = Strand_Len(cast(Strand*, dst_flex));
         }
         dst_off = dst_idx;
@@ -336,7 +336,7 @@ REBLEN Modify_String_Or_Blob(
 
         if (Is_Stub_Strand(dst_flex)) {
             if (src_len_raw == 0)
-                panic (Error_Illegal_Zero_Byte_Raw());  // no '\0' in strings
+                abrupt_panic (Error_Illegal_Zero_Byte_Raw());  // no '\0' in strings
         }
         else {
             if (src_len_raw == 0)
@@ -378,7 +378,7 @@ REBLEN Modify_String_Or_Blob(
 
         src_byte = VAL_UINT8(src);  // panics if out of range
         if (Is_Stub_Strand(dst_flex) and Is_Utf8_Lead_Byte(src_byte))
-            panic (Error_Bad_Utf8_Bin_Edit_Raw());
+            abrupt_panic (Error_Bad_Utf8_Bin_Edit_Raw());
 
         src_ptr = &src_byte;
         src_len_raw = src_size_raw = 1;
@@ -399,7 +399,7 @@ REBLEN Modify_String_Or_Blob(
             if (Is_Stub_Strand(b)) {  // guaranteed valid UTF-8
                 const Strand* str = c_cast(Strand*, b);
                 if (Is_Continuation_Byte(*src_ptr))
-                    panic (Error_Bad_Utf8_Bin_Edit_Raw());
+                    abrupt_panic (Error_Bad_Utf8_Bin_Edit_Raw());
 
                 // !!! We could be more optimal here since we know it's valid
                 // UTF-8 than walking characters up to the limit, like:
@@ -429,7 +429,7 @@ REBLEN Modify_String_Or_Blob(
                     Codepoint c = *bp;
                     if (Is_Byte_Ascii(c)) {  // just check for 0 bytes
                         if (c == '\0')
-                            panic (Error_Bad_Utf8_Bin_Edit(
+                            abrupt_panic (Error_Bad_Utf8_Bin_Edit(
                                 Error_Illegal_Zero_Byte_Raw()
                             ));
                     }
@@ -438,7 +438,7 @@ REBLEN Modify_String_Or_Blob(
                             &c, &bp, &bytes_left
                         );
                         if (e)
-                            panic (Error_Bad_Utf8_Bin_Edit(unwrap e));
+                            abrupt_panic (Error_Bad_Utf8_Bin_Edit(unwrap e));
                     }
                     ++src_len_raw;
 
@@ -644,7 +644,7 @@ REBLEN Modify_String_Or_Blob(
                         Binary_At(dst_flex, dst_off + part_size)
                     );
                     if (Is_Continuation_Byte(*cast(Byte*, pp)))
-                        panic (Error_Bad_Utf8_Bin_Edit_Raw());
+                        abrupt_panic (Error_Bad_Utf8_Bin_Edit_Raw());
 
                     part = 0;
                     for (; cp != pp; cp = Skip_Codepoint(cp))

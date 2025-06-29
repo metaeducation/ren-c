@@ -239,7 +239,7 @@ void Set_Parameter_Spec(
                 // concept is.
             }
             else {
-                panic (item);
+                abrupt_panic (item);
             }
             Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
             continue;
@@ -256,7 +256,7 @@ void Set_Parameter_Spec(
         if (Is_Word(item)) {  // allow abstraction [3]
             Option(Error*) e = Trap_Get_Word(lookup, item, spec_binding);
             if (e)  // couldn't get the word (or got, and it was trash)
-                panic (unwrap e);
+                abrupt_panic (unwrap e);
         }
         else
             Copy_Cell(lookup, item);
@@ -317,7 +317,7 @@ void Set_Parameter_Spec(
             // By pre-checking we can avoid needing to double check in the
             // actual type-checking phase.
 
-            panic (item);
+            abrupt_panic (item);
         }
     }
 
@@ -444,14 +444,14 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
     const Value* picker = ARG(PICKER);
     if (not Is_Word(picker))
-        return PANIC(picker);
+        panic (picker);
 
     Value* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+        panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
     goto handle_poke;
@@ -510,14 +510,14 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
     Unliftify_Known_Stable(dual);
 
     if (Is_Antiform(dual))
-        return PANIC(Error_Bad_Antiform(dual));
+        panic (Error_Bad_Antiform(dual));
 
     Element* poke = Known_Element(dual);
 
     switch (Word_Id(picker)) {
       case SYM_TEXT: {
         if (not Is_Text(poke))
-            return PANIC(poke);
+            panic (poke);
         Strand* strand = Copy_String_At(poke);
         Manage_Flex(strand);
         Freeze_Flex(strand);
@@ -528,5 +528,5 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
         break;
     }
 
-    return PANIC(Error_Bad_Pick_Raw(picker));
+    panic (Error_Bad_Pick_Raw(picker));
 }}

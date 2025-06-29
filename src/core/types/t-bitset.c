@@ -309,7 +309,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
     }
 
     if (not Is_Block(val))
-        panic (Error_Invalid_Type_Raw(Datatype_Of(val)));
+        abrupt_panic (Error_Invalid_Type_Raw(Datatype_Of(val)));
 
     const Element* tail;
     const Element* item = List_At(&tail, val);
@@ -337,13 +337,13 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
                 if (Is_Rune_And_Is_Char(item)) {
                     Codepoint c2 = Rune_Known_Single_Codepoint(item);
                     if (c2 < c)
-                        panic (Error_Index_Out_Of_Range_Raw());
+                        abrupt_panic (Error_Index_Out_Of_Range_Raw());
                     do {
                         Set_Bit(bset, c, set);
                     } while (c++ < c2);  // post-increment test BEFORE overflow
                 }
                 else
-                    panic (Error_Bad_Value(item));
+                    abrupt_panic (Error_Bad_Value(item));
             }
             else
                 Set_Bit(bset, c, set);
@@ -370,12 +370,12 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
                 if (Is_Integer(item)) {
                     n = Int32s(item, 0);
                     if (n < c)
-                        panic (Error_Index_Out_Of_Range_Raw());
+                        abrupt_panic (Error_Index_Out_Of_Range_Raw());
                     for (; c <= n; c++)
                         Set_Bit(bset, c, set);
                 }
                 else
-                    panic (Error_Bad_Value(item));
+                    abrupt_panic (Error_Bad_Value(item));
             }
             else
                 Set_Bit(bset, n, set);
@@ -455,7 +455,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
     }
 
     if (!Any_List(val))
-        panic (Error_Invalid_Type_Raw(Datatype_Of(val)));
+        abrupt_panic (Error_Invalid_Type_Raw(Datatype_Of(val)));
 
     // Loop through block of bit specs
 
@@ -479,13 +479,13 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                 if (Is_Rune_And_Is_Char(item)) {
                     Codepoint c2 = Rune_Known_Single_Codepoint(item);
                     if (c2 < c)
-                        panic (Error_Index_Out_Of_Range_Raw());
+                        abrupt_panic (Error_Index_Out_Of_Range_Raw());
                     for (; c <= c2; c++)
                         if (Check_Bit(bset, c, uncased))
                             return true;
                 }
                 else
-                    panic (Error_Bad_Value(item));
+                    abrupt_panic (Error_Bad_Value(item));
             }
             else
                 if (Check_Bit(bset, c, uncased))
@@ -505,13 +505,13 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                 if (Is_Integer(item)) {
                     n = Int32s(item, 0);
                     if (n < c)
-                        panic (Error_Index_Out_Of_Range_Raw());
+                        abrupt_panic (Error_Index_Out_Of_Range_Raw());
                     for (; c <= n; c++)
                         if (Check_Bit(bset, c, uncased))
                             return true;
                 }
                 else
-                    panic (Error_Bad_Value(item));
+                    abrupt_panic (Error_Bad_Value(item));
             }
             else
                 if (Check_Bit(bset, n, uncased))
@@ -530,7 +530,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
             break;
 
         default:
-            panic (Error_Invalid_Type_Raw(Datatype_Of(item)));
+            abrupt_panic (Error_Invalid_Type_Raw(Datatype_Of(item)));
         }
     }
     return false;
@@ -572,12 +572,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
         if (Is_Antiform(ARG(VALUE)))
-            return PANIC(ARG(VALUE));
+            panic (ARG(VALUE));
 
         UNUSED(PARAM(SERIES));  // covered by `v`
 
         if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (not Check_Bits(VAL_BITSET(v), ARG(VALUE), Bool_ARG(CASE)))
             return nullptr;
@@ -591,11 +591,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
         if (Is_Undone_Opt_Nulled(ARG(VALUE)))
             return COPY(v);  // don't panic on read only if it would be a no-op
         if (Is_Antiform(ARG(VALUE)))
-            return PANIC(PARAM(VALUE));
+            panic (PARAM(VALUE));
         const Element* arg = Element_ARG(VALUE);
 
         if (Bool_ARG(PART) or Bool_ARG(DUP) or Bool_ARG(LINE))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
@@ -606,7 +606,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
             diff = true;
 
         if (not Set_Bits(bset, arg, diff))
-            return PANIC(arg);
+            panic (arg);
         return COPY(v); }
 
       case SYM_REMOVE: {
@@ -616,10 +616,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
         if (not Bool_ARG(PART))
-            return PANIC(Error_Missing_Arg_Raw());
+            panic (Error_Missing_Arg_Raw());
 
         if (not Set_Bits(bset, Element_ARG(PART), false))
-            return PANIC(PARAM(PART));
+            panic (PARAM(PART));
 
         return COPY(v); }
 
@@ -644,7 +644,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Bitset)
     Element* bset = Element_ARG(LOCATION);
 
     if (Is_Antiform(ARG(PICKER)))
-        return PANIC(PARAM(PICKER));
+        panic (PARAM(PICKER));
 
     const Element* picker = Element_ARG(PICKER);
 
@@ -653,7 +653,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Bitset)
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+        panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
     goto handle_poke;
@@ -669,7 +669,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Bitset)
     Value* poke = Unliftify_Known_Stable(dual);  // ~null~/~okay~ antiforms
 
     if (not Is_Logic(poke))
-        return PANIC(Error_Bad_Value_Raw(poke));
+        panic (Error_Bad_Value_Raw(poke));
 
     bool cond = Cell_Logic(poke);
 
@@ -679,7 +679,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Bitset)
         picker,
         BITS_NOT(bits) ? not cond : cond
     )){
-        return PANIC(PARAM(PICKER));
+        panic (PARAM(PICKER));
     }
     return NO_WRITEBACK_NEEDED;
 }}
@@ -693,7 +693,7 @@ IMPLEMENT_GENERIC(COPY, Is_Bitset)
     Binary* bits = VAL_BITSET(bset);
 
     if (Bool_ARG(PART) or Bool_ARG(DEEP))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     Binary* copy = cast(Binary*, Copy_Flex_Core(BASE_FLAG_MANAGED, bits));
     INIT_BITS_NOT(copy, BITS_NOT(bits));

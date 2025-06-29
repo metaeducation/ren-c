@@ -8,7 +8,7 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
     );
     UNUSED(heart);
     if (Not_Base_Readable(SERIESLIKE_PAYLOAD_1_BASE(v)))
-        panic (Error_Series_Data_Freed_Raw());
+        abrupt_panic (Error_Series_Data_Freed_Raw());
 
     return cast(Flex*, SERIESLIKE_PAYLOAD_1_BASE(v));
 }
@@ -67,7 +67,7 @@ INLINE REBLEN Series_Index_Stringlike_Ok(const Cell* v) {
     assert(Cell_Payload_1_Needs_Mark(v));
     REBIDX i = SERIESLIKE_PAYLOAD_2_INDEX(v);
     if (i < 0 or i > Series_Len_Head(v))
-        panic (Error_Index_Out_Of_Range_Raw());
+        abrupt_panic (Error_Index_Out_Of_Range_Raw());
     return i;
 }
 

@@ -99,7 +99,7 @@ INLINE uint64_t File_Size_Cacheable_May_Panic(const Value* port)
     uint64_t size;
     Value* error = Get_File_Size_Cacheable(&size, port);
     if (error)
-        panic (error);
+        abrupt_panic (error);
     return size;
 }
 
@@ -148,7 +148,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             file_path, port
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         UNUSED(file_path);  // we just tested to make sure would work later
 
@@ -221,7 +221,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             file_path, port
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         bool opened_temporarily;
         if (file->id != FILEHANDLE_NONE)
@@ -230,7 +230,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             Value* open_error = Open_File(port, UV_FS_O_RDONLY);
 
             if (open_error != nullptr)
-                return PANIC(Error_Cannot_Open_Raw(file_path, open_error));
+                panic (Error_Cannot_Open_Raw(file_path, open_error));
 
             opened_temporarily = true;
         }
@@ -249,7 +249,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (Bool_ARG(SEEK)) {
             int64_t seek = VAL_INT64(ARG(SEEK));
             if (seek <= 0)
-                return PANIC(PARAM(SEEK));
+                panic (PARAM(SEEK));
             file->offset = seek;
         }
 
@@ -300,9 +300,9 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (opened_temporarily) {
             Value* close_error = Close_File(port);
             if (result and Is_Warning(result))
-                return PANIC(result);
+                panic (result);
             if (close_error)
-                return PANIC(close_error);
+                panic (close_error);
         }
 
         if (result and Is_Warning(result))
@@ -324,12 +324,12 @@ DECLARE_NATIVE(FILE_ACTOR)
         INCLUDE_PARAMS_OF_APPEND;
 
         if (Is_Antiform(ARG(VALUE)))
-            return PANIC(PARAM(VALUE));
+            panic (PARAM(VALUE));
 
         Element* v = Element_ARG(VALUE);
 
         if (Bool_ARG(PART) or Bool_ARG(DUP) or Bool_ARG(LINE))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         assert(Is_Port(ARG(SERIES)));  // !!! poorly named
         return rebValue("write:append @", ARG(SERIES), "@", v); }
@@ -342,7 +342,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         UNUSED(PARAM(DESTINATION));
 
         if (Bool_ARG(SEEK) and Bool_ARG(APPEND))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         Value* data = ARG(DATA);  // binary, string, or block
 
@@ -354,7 +354,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             file_path, port
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         bool opened_temporarily;
         if (file->id != FILEHANDLE_NONE) {  // already open
@@ -365,7 +365,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             if (not (
                 (file->flags & UV_FS_O_WRONLY) or (file->flags & UV_FS_O_RDWR)
             )){
-                return PANIC(Error_Read_Only_Raw(file_path));
+                panic (Error_Read_Only_Raw(file_path));
             }
 
             opened_temporarily = false;
@@ -384,7 +384,7 @@ DECLARE_NATIVE(FILE_ACTOR)
 
             Value* open_error = Open_File(port, flags);
             if (open_error != nullptr)
-                return PANIC(Error_Cannot_Open_Raw(file_path, open_error));
+                panic (Error_Cannot_Open_Raw(file_path, open_error));
 
             opened_temporarily = true;
         }
@@ -465,13 +465,13 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (opened_temporarily) {
             Value* close_error = Close_File(port);
             if (result)
-                return PANIC(result);
+                panic (result);
             if (close_error)
-                return PANIC(close_error);
+                panic (close_error);
         }
 
         if (result)
-            return PANIC(result);
+            panic (result);
 
         return COPY(port);
     }}
@@ -499,7 +499,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             file_path, port
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         Flags flags = 0;
 
@@ -525,7 +525,7 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         Value* error = Open_File(port, flags);
         if (error != nullptr)
-            return PANIC(Error_Cannot_Open_Raw(file_path, error));
+            panic (Error_Cannot_Open_Raw(file_path, error));
 
         return COPY(port); }
 
@@ -540,7 +540,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         UNUSED(PARAM(VALUE));
 
         if (Bool_ARG(DEEP))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         return rebValue(CANON(APPLIQUE), CANON(READ), "[",
             "source:", port,
@@ -562,7 +562,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             Value* error = Close_File(port);
             assert(file->id == FILEHANDLE_NONE);
             if (error)
-                return PANIC(error);
+                panic (error);
         }
         return COPY(port); }
 
@@ -578,12 +578,12 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (file->id != FILEHANDLE_NONE) {
             Value* error = Close_File(port);
             if (error)
-                return PANIC(error);
+                panic (error);
         }
 
         Value* error = Delete_File_Or_Directory(port);
         if (error)
-            return PANIC(error);
+            panic (error);
 
         return COPY(port); }
 
@@ -606,7 +606,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             file_path, port
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         int flags = -1;
         size_t index = -1;
@@ -618,7 +618,7 @@ DECLARE_NATIVE(FILE_ACTOR)
 
             Value* close_error = Close_File(port);
             if (close_error)
-                return PANIC(close_error);
+                panic (close_error);
 
             closed_temporarily = true;
         }
@@ -629,17 +629,17 @@ DECLARE_NATIVE(FILE_ACTOR)
             Value* open_error = Open_File(port, flags);
             if (rename_error) {
                 rebRelease(rename_error);  // Note: FAIL would cleanup
-                return PANIC(Error_No_Rename_Raw(file_path));
+                panic (Error_No_Rename_Raw(file_path));
             }
             if (open_error)
-                return PANIC(open_error);
+                panic (open_error);
 
             file->offset = index;
         }
 
         if (rename_error) {
             rebRelease(rename_error);  // Note: FAIL would cleanup
-            return PANIC(Error_No_Rename_Raw(file_path));
+            panic (Error_No_Rename_Raw(file_path));
         }
 
         Copy_Cell(file_path, ARG(TO));  // !!! this needs to mutate the spec!
@@ -658,7 +658,7 @@ DECLARE_NATIVE(FILE_ACTOR)
     // intent for directories.
 
       case SYM_CREATE:
-        return PANIC(
+        panic (
             "CREATE on file PORT! was ill-defined, use OPEN:NEW for now"
         );
 
@@ -728,7 +728,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (file->id == FILEHANDLE_NONE) {
             Value* open_error = Open_File(port, UV_FS_O_WRONLY);
             if (open_error)
-                return PANIC(open_error);
+                panic (open_error);
 
             opened_temporarily = true;
         }
@@ -738,11 +738,11 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (opened_temporarily) {
             Value* close_error = Close_File(port);
             if (close_error)
-                return PANIC(close_error);
+                panic (close_error);
         }
 
         if (truncate_error)
-            return PANIC(truncate_error);
+            panic (truncate_error);
 
         return COPY(port); }
 

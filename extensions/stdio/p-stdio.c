@@ -318,10 +318,10 @@ DECLARE_NATIVE(STDIO_ACTOR)
         UNUSED(PARAM(SOURCE));
 
         if (Bool_ARG(PART))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (Bool_ARG(SEEK))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(STRING)); // handled in dispatcher
         UNUSED(PARAM(LINES)); // handled in dispatcher

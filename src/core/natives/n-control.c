@@ -180,7 +180,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
     Decay_If_Unstable(branch);
 
     if (Is_Pinned_Form_Of(WORD, branch))
-        return PANIC(Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
+        panic (Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
 
     STATE = ST_GROUP_BRANCH_RUNNING_BRANCH;
     return CONTINUE(OUT, cast(Value*, branch), with);
@@ -209,7 +209,7 @@ DECLARE_NATIVE(IF)
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, condition);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (not cond)
         return nullptr;  // "light" null (not in a pack) if condition is false
@@ -240,7 +240,7 @@ DECLARE_NATIVE(WHEN)
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, condition);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (not cond)
         return VOID;  // deviation from IF (!)
@@ -272,7 +272,7 @@ DECLARE_NATIVE(EITHER)
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, condition);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Value* branch = cond ? ARG(OKAY_BRANCH) : ARG(NULL_BRANCH);
 
@@ -514,7 +514,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     //    it heavy...but this way `(all:predicate [null] not?/) then [<runs>]`
 
     if (Is_Void(SCRATCH))  // !!! should void predicate results opt-out?
-        return PANIC(Error_Bad_Void());
+        panic (Error_Bad_Void());
 
     if (Is_Light_Null(SCRATCH))  // predicates can approve null [1]
         Init_Heavy_Null(SCRATCH);
@@ -529,7 +529,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, condition);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     switch (which) {
       case NATIVE_IS_ANY:
@@ -754,7 +754,7 @@ DECLARE_NATIVE(CASE)
     //        == <hmm>
 
     if (Is_Void(SPARE))  // error on void predicate results (not same as [1])
-        return PANIC(Error_Bad_Void());
+        panic (Error_Bad_Void());
 
     goto processed_result_in_spare;
 
@@ -808,11 +808,11 @@ DECLARE_NATIVE(CASE)
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, spare);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (not cond) {
         if (not Any_Branch(branch))  // like IF [1]
-            return PANIC(Error_Bad_Value_Raw(branch));  // stable
+            panic (Error_Bad_Value_Raw(branch));  // stable
 
         goto handle_next_clause;
     }
@@ -927,7 +927,7 @@ DECLARE_NATIVE(SWITCH)
     assert(Is_Cell_Erased(OUT));  // if no writes to out performed, we act void
 
     if (Bool_ARG(TYPE) and Bool_ARG(PREDICATE))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     if (not Bool_ARG(TYPE) and not Bool_ARG(PREDICATE)) {
         Copy_Cell(predicate, LIB(EQUAL_Q));  // no more builtin comparison [1]
@@ -1000,7 +1000,7 @@ DECLARE_NATIVE(SWITCH)
         goto next_switch_step;
 
     if (Is_Void(SPARE))
-        return PANIC(Error_Bad_Void());
+        panic (Error_Bad_Void());
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // nothing left, so drop frame and return
@@ -1009,7 +1009,7 @@ DECLARE_NATIVE(SWITCH)
 
     if (Bool_ARG(TYPE)) {
         if (not Is_Datatype(spare) and not Is_Action(spare))
-            return PANIC("switch:type conditions must be DATATYPE! or ACTION!");
+            panic ("switch:type conditions must be DATATYPE! or ACTION!");
 
         Copy_Cell(Level_Spare(SUBLEVEL), left);  // spare of the *sublevel!*
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(  // *sublevel*'s SPARE!
@@ -1034,7 +1034,7 @@ DECLARE_NATIVE(SWITCH)
         bool cond;
         Option(Error*) e = Trap_Test_Conditional(&cond, scratch);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         if (not cond)
             goto next_switch_step;
@@ -1157,10 +1157,10 @@ DECLARE_NATIVE(DEFAULT)
 
     Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(level_, steps);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (Is_Error(OUT))
-        return PANIC(Cell_Error(OUT));
+        panic (Cell_Error(OUT));
 
     if (not Is_Dual_Word_Unset_Signal(Known_Stable(OUT))) {
         Unliftify_Undecayed(OUT);
@@ -1182,7 +1182,7 @@ DECLARE_NATIVE(DEFAULT)
     Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
     if (e) {
         assert(false);  // shouldn't be able to happen (steps is pinned)
-        return PANIC(unwrap e);
+        panic (unwrap e);
     }
 
     return OUT;
@@ -1319,7 +1319,7 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
 
     Option(VarList*) coupling = Level_Coupling(throw_level);
     if (not coupling)
-        return PANIC(Error_Archetype_Invoked_Raw());
+        panic (Error_Archetype_Invoked_Raw());
 
     Element* label = Init_Frame(
         SCRATCH, cast(ParamList*, unwrap coupling), ANONYMOUS, NONMETHOD

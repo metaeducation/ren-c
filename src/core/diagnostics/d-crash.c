@@ -416,7 +416,7 @@ DECLARE_NATIVE(FAIL_P)
 //
 //  panic: native [
 //
-//  "Early-boot version of PANIC (overridden by more complex usermode version)"
+//  "Early-boot version of panic (overridden by more complex usermode version)"
 //
 //      return: [<divergent>]
 //      reason [any-value?]  ; permissive to avoid callsite error

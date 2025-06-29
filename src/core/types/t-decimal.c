@@ -156,7 +156,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
 
       case TYPE_PATH: {  // fractions as 1/2 are experimental use for PATH! [1]
         if (Cell_Sequence_Len(arg) != 2)
-            return PANIC("Fraction experiment requires PATH! of length 2");
+            panic ("Fraction experiment requires PATH! of length 2");
 
         DECLARE_ELEMENT (numerator);
         DECLARE_ELEMENT (denominator);
@@ -187,7 +187,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
             d = VAL_DECIMAL(quotient);
         else {
             rebRelease(quotient);
-            return PANIC("Fraction PATH! didn't maket DECIMAL! or PERCENT!");
+            panic ("Fraction PATH! didn't maket DECIMAL! or PERCENT!");
         }
         rebRelease(quotient);
         return Init_Decimal(OUT, d); }
@@ -255,7 +255,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Percent)
     UNUSED(ARG(TYPE));
     UNUSED(ARG(DEF));
 
-    return PANIC("MAKE of PERCENT! not supported at this time");  // [1]
+    panic ("MAKE of PERCENT! not supported at this time");  // [1]
 }
 
 
@@ -385,7 +385,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         USED(ARG(VALUE1));  // is val
         arg = Element_ARG(VALUE2);
         if (LIFT_BYTE(arg) != NOQUOTE_2)
-            return PANIC(Error_Not_Related_Raw(verb, Datatype_Of(arg)));
+            panic (Error_Not_Related_Raw(verb, Datatype_Of(arg)));
 
         heart = Heart_Of_Builtin_Fundamental(arg);
         if ((
@@ -423,7 +423,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                 Codepoint c;
                 Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, arg);
                 if (e)
-                    return PANIC(unwrap e);
+                    panic (unwrap e);
 
                 d2 = cast(REBDEC, c);
                 heart = TYPE_DECIMAL;
@@ -446,7 +446,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
             case SYM_DIVIDE:
             case SYM_REMAINDER:
                 if (d2 == 0.0)
-                    return PANIC(Error_Zero_Divide_Raw());
+                    panic (Error_Zero_Divide_Raw());
                 if (id == SYM_DIVIDE)
                     d1 /= d2;
                 else
@@ -470,10 +470,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                 return Init_Decimal_Or_Percent(OUT, heart, d1);
 
             default:
-                return PANIC(Error_Not_Related_Raw(verb, Datatype_Of(val)));
+                panic (Error_Not_Related_Raw(verb, Datatype_Of(val)));
             }
         }
-        return PANIC(Error_Not_Related_Raw(verb, Datatype_Of(val)));
+        panic (Error_Not_Related_Raw(verb, Datatype_Of(val)));
     }
 
     heart = Heart_Of_Builtin_Fundamental(val);
@@ -586,7 +586,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
     if (to == TYPE_INTEGER) {
         REBDEC leftover = d - cast(REBDEC, cast(REBI64, d));
         if (leftover != 0.0)
-            return PANIC(
+            panic (
                 "Can't TO INTEGER! a DECIMAL! w/digits after decimal point"
             );
         return Init_Integer(OUT, cast(REBI64, d));
@@ -664,7 +664,7 @@ IMPLEMENT_GENERIC(ROUND, Any_Float)
     }
 
     if (Is_Time(ARG(TO)))
-        return PANIC(PARAM(TO));
+        panic (PARAM(TO));
 
     d1 = Round_Dec(d1, level_, Dec64(ARG(TO)));
     if (Is_Percent(ARG(TO))) {

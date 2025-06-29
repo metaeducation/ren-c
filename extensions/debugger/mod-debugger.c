@@ -129,7 +129,7 @@ DECLARE_NATIVE(BREAKPOINT_P)
     // could splice in a value in place of what comes after it.
     //
     if (not Is_Quasi_Word(u_cast(Value*, SPARE)))
-        return PANIC("BREAKPOINT invisible, can't RESUME:WITH code (use PAUSE)");
+        panic ("BREAKPOINT invisible, can't RESUME:WITH code (use PAUSE)");
 
     return TRIPWIRE;
 }
@@ -233,5 +233,5 @@ DECLARE_NATIVE(STEP)
 {
     INCLUDE_PARAMS_OF_STEP;
     UNUSED(ARG(AMOUNT));
-    panic ("STEP's methodology was deprecated, it is being re-implemented");
+    abrupt_panic ("STEP's methodology was deprecated, it is being re-implemented");
 }

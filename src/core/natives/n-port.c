@@ -163,10 +163,10 @@ DECLARE_NATIVE(WRITE)
 
     if (Is_Pinned_Form_Of(WORD, port)) {
         if (Word_Id(port) != SYM_STDOUT)
-            return PANIC("only @stdout support on WRITE for @ right now");
+            panic ("only @stdout support on WRITE for @ right now");
 
         if (Bool_ARG(PART) or Bool_ARG(SEEK) or Bool_ARG(APPEND))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (Bool_ARG(LINES)) {
             if (Is_Block(data))

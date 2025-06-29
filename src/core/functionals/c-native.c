@@ -196,14 +196,14 @@ static Bounce Native_Native_Core(Level* level_)
     UNUSED(ARG(GENERIC));  // only heeded by %make-natives.r to make tables
 
     if (not g_native_cfunc_pos)
-        return PANIC(
+        panic (
             "NATIVE is for internal use during boot and extension loading"
         );
 
     Element* spec = Element_ARG(SPEC);
 
     if (Bool_ARG(COMBINATOR) and Bool_ARG(INTRINSIC))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     NativeType native_type = Bool_ARG(COMBINATOR) ? NATIVE_COMBINATOR
         : Bool_ARG(INTRINSIC) ? NATIVE_INTRINSIC
@@ -231,7 +231,7 @@ static Bounce Native_Native_Core(Level* level_)
             f_cast(Dispatcher*, cfunc)
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     }
@@ -321,7 +321,7 @@ void Unregister_Generics(const ExtraGenericTable* generics)
         ExtraGenericInfo* seek = entry->table->ext_info;
         if (seek == nullptr) {
             assert(false);
-            panic ("Unregister_Generics: no ext_info in table");
+            abrupt_panic ("Unregister_Generics: no ext_info in table");
         }
         if (seek == entry->ext_info)  // have to update list head
             entry->table->ext_info = seek->next;
@@ -334,7 +334,7 @@ void Unregister_Generics(const ExtraGenericTable* generics)
                 seek = seek->next;
                 if (seek == nullptr) {
                     assert(false);
-                    panic ("Unregister_Generics: ext_info not found");
+                    abrupt_panic ("Unregister_Generics: ext_info not found");
                 }
             }
         entry->ext_info->next = nullptr;  // null out list link [1]
@@ -488,7 +488,7 @@ DECLARE_NATIVE(OLDGENERIC)
 {
     INCLUDE_PARAMS_OF_OLDGENERIC;
 
-    return PANIC("This should never be called");
+    panic ("This should never be called");
 }
 
 

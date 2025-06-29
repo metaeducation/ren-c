@@ -225,7 +225,7 @@ DECLARE_NATIVE(BOOLEAN)
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, ARG(VALUE));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return Init_Word(OUT, cond ? CANON(TRUE) : CANON(FALSE));
 }
@@ -281,7 +281,7 @@ DECLARE_NATIVE(TO_YESNO)
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, ARG(VALUE));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return Init_Word(OUT, cond ? CANON(YES) : CANON(NO));
 }
@@ -337,7 +337,7 @@ DECLARE_NATIVE(TO_ONOFF)
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, ARG(VALUE));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return Init_Word(OUT, cond ? CANON(ON) : CANON(OFF));
 }
@@ -360,12 +360,12 @@ DECLARE_NATIVE(AND_Q)
     bool cond1;
     Option(Error*) e = Trap_Test_Conditional(&cond1, ARG(VALUE1));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     bool cond2;
     e = Trap_Test_Conditional(&cond2, ARG(VALUE2));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (cond1 and cond2)
         return LOGIC(true);
@@ -391,12 +391,12 @@ DECLARE_NATIVE(OR_Q)
     bool cond1;
     Option(Error*) e = Trap_Test_Conditional(&cond1, ARG(VALUE1));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     bool cond2;
     e = Trap_Test_Conditional(&cond2, ARG(VALUE2));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (cond1 or cond2)
         return LOGIC(true);
@@ -443,7 +443,7 @@ DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, v);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return LOGIC(not cond);
 }
@@ -470,7 +470,7 @@ DECLARE_NATIVE(TO_LOGIC)
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, v);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return LOGIC(cond);
 }
@@ -518,7 +518,7 @@ INLINE Option(Error*) Trap_Eval_Logic_Operation_Right_Side(
         }
 
         if (Is_Action(spare))
-            panic ("words/tuples can't be action as right side of OR AND XOR");
+            abrupt_panic ("words/tuples can't be action as right side of OR AND XOR");
 
         synthesized = spare;
     }
@@ -553,7 +553,7 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
     bool left;
     Option(Error*) e = Trap_Test_Conditional(&left, ARG(LEFT));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (not left)
         return LOGIC(false);  // if left is false, don't run right hand side
@@ -562,7 +562,7 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
     e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
     USED(ARG(RIGHT));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return LOGIC(right);
 }
@@ -586,7 +586,7 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
     bool left;
     Option(Error*) e = Trap_Test_Conditional(&left, ARG(LEFT));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (left)
         return LOGIC(true);  // if left is true, don't run right hand side
@@ -595,7 +595,7 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
     e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
     USED(ARG(RIGHT));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return LOGIC(right);
 }
@@ -620,12 +620,12 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
     Option(Error*) e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
     USED(ARG(RIGHT));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     bool left;
     e = Trap_Test_Conditional(&left, ARG(LEFT));
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (not left)
         return LOGIC(right);
@@ -658,7 +658,7 @@ DECLARE_NATIVE(UNLESS)
     Atom* right = Atom_ARG(RIGHT);
 
     if (Is_Ghost(right))
-        return PANIC("UNLESS can't be used with GHOST! antiform");
+        panic ("UNLESS can't be used with GHOST! antiform");
 
     if (Is_Light_Null(right) or Is_Heavy_Null(right))
         return COPY(left);

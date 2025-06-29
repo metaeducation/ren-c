@@ -152,7 +152,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
 
         if (not collated_block or not Is_Block(collated_block)) {
             rebElide("close", library);
-            return PANIC(Error_Bad_Extension_Raw(ARG(WHERE)));
+            panic (Error_Bad_Extension_Raw(ARG(WHERE)));
         }
 
         collated = Cell_Array_Ensure_Mutable(collated_block);
@@ -276,7 +276,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
 static Bounce Unloaded_Dispatcher(Level* level_)
 {
     Details* details = Ensure_Level_Details(level_);
-    return PANIC(Error_Native_Unloaded_Raw(Phase_Archetype(details)));
+    panic (Error_Native_Unloaded_Raw(Phase_Archetype(details)));
 }
 
 
@@ -305,7 +305,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
     Value* pos = rebValue(CANON(FIND), "system.extensions", extension);
 
     if (not pos)
-        return PANIC("Could not find extension in loaded extensions list");
+        panic ("Could not find extension in loaded extensions list");
     rebElide(CANON(TAKE), rebR(pos));
 
 } disconnect_natives: {
@@ -343,7 +343,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
         Sink(Value) spare_shutdown = SPARE;
         Option(Error*) e = Trap_Read_Slot(spare_shutdown, shutdown_slot);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
         rebElide(rebRUN(spare_shutdown));
    }
 
@@ -362,7 +362,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
         Sink(Value) spare_unregister = SPARE;
         Option(Error*) e = Trap_Read_Slot(spare_unregister, unregister_slot);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
         rebElide(rebRUN(spare_unregister));
    }
 
@@ -372,10 +372,10 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
 
     /*
         if (not IS_LIBRARY(lib))
-            return PANIC(PARAM(EXT));
+            panic (PARAM(EXT));
 
         if (Is_Library_Closed(Cell_Library(lib)))
-            return PANIC(Error_Bad_Library_Raw());
+            panic (Error_Bad_Library_Raw());
 
         OS_CLOSE_LIBRARY(Cell_Library_Fd(lib));
     */

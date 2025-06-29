@@ -114,7 +114,7 @@ DECLARE_NATIVE(AUGMENT)
         SYM_0  // if original had no return, we don't add
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
 } pop_paramlist_and_init_action: { /////////////////////////////////////////=//
 
@@ -130,7 +130,7 @@ DECLARE_NATIVE(AUGMENT)
         &paramlist, STACK_BASE, prior, prior_coupling
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     assert(Misc_Phase_Adjunct(paramlist) == nullptr);
     Tweak_Misc_Phase_Adjunct(paramlist, adjunct);

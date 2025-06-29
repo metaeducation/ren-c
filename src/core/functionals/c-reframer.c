@@ -155,7 +155,7 @@ Option(Error*) Trap_Init_Invokable_From_Feed(
         return SUCCESS;
 
     if (Is_Group(v))  // `requote (append [a b c] #d, <can't-work>)`
-        panic ("Actions made with REFRAMER cannot work with GROUP!s");
+        abrupt_panic ("Actions made with REFRAMER cannot work with GROUP!s");
 
     StackIndex base = TOP_INDEX;
 
@@ -311,7 +311,7 @@ Bounce Reframer_Dispatcher(Level* const L)
         error_on_deferred
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Atom* arg = Level_Arg(L, VAL_INT32(param_index));
     Move_Cell(arg, spare);
@@ -389,7 +389,7 @@ Details* Alloc_Action_From_Exemplar(
         heeded(Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
 
         if (not Typecheck_Coerce(TOP_LEVEL, param, arg, false))
-            panic (Error_Arg_Type(label, key, param, arg));
+            abrupt_panic (Error_Arg_Type(label, key, param, arg));
     }
 
     DECLARE_ELEMENT (elem);
@@ -457,7 +457,7 @@ DECLARE_NATIVE(REFRAMER)
 
     if (TOP_INDEX != STACK_BASE) {
         Destruct_Binder(binder);
-        return PANIC("REFRAMER can't use partial specializions ATM");
+        panic ("REFRAMER can't use partial specializions ATM");
     }
 
     const Key* key;
@@ -468,7 +468,7 @@ DECLARE_NATIVE(REFRAMER)
         param_index = maybe Try_Get_Binder_Index(binder, symbol);
         if (param_index == 0) {
             Destruct_Binder(binder);
-            return PANIC(Error_No_Arg(label, symbol));
+            panic (Error_No_Arg(label, symbol));
         }
         key = Varlist_Key(exemplar, param_index);
         param = cast(Param*, Varlist_Slot(exemplar, param_index));

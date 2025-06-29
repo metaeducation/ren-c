@@ -567,7 +567,7 @@ void Startup_Core(void)
   #if defined(TEST_EARLY_BOOT_CRASH)
     crash ("early crash test");  // should crash
   #elif defined(TEST_EARLY_BOOT_PANIC)
-    panic ("early panic test");  // same as crash (crash)
+    abrupt_panic ("early panic test");  // same as crash (crash)
   #endif
 
   #if DEBUG_HAS_PROBE
@@ -818,7 +818,7 @@ void Startup_Core(void)
   #if defined(TEST_MID_BOOT_PANIC)
     crash (g_empty_array);  // crashes should be able to give details by now
   #elif defined(TEST_MID_BOOT_PANIC)
-    panic ("mid boot panic");  // if RUNTIME_CHECKS assert, else crash
+    abrupt_panic ("mid boot panic");  // if RUNTIME_CHECKS assert, else crash
   #endif
 
     // Pre-make the stack overflow error (so it doesn't need to be made

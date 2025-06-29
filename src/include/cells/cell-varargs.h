@@ -176,7 +176,7 @@ INLINE bool Is_Level_Style_Varargs_May_Panic(
         return false;
 
     if (not *L_out)
-        panic (Error_Frame_Not_On_Stack_Raw());
+        abrupt_panic (Error_Frame_Not_On_Stack_Raw());
 
     return true;
 }

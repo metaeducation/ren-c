@@ -223,7 +223,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
         Element* block = Known_Element(value);
 
         if (Bool_ARG(WORDS))
-            return PANIC("WORDS not currently implemented in PROTECT");
+            panic ("WORDS not currently implemented in PROTECT");
 
         if (Bool_ARG(VALUES)) {
             const Value* slot;
@@ -234,10 +234,10 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 
             for (; item != tail; ++item) {
                 if (Is_Word(item)) {
-                    return PANIC("WORDS! in VALUES needs work in PROTECT");
+                    panic ("WORDS! in VALUES needs work in PROTECT");
                 }
                 else if (Is_Path(item)) {
-                    panic ("PATH! handling no longer in Protect_Unprotect");
+                    abrupt_panic ("PATH! handling no longer in Protect_Unprotect");
                 }
                 else {
                     Copy_Cell(safe, item);
@@ -253,7 +253,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     }
 
     if (flags & PROT_HIDE)
-        panic (Error_Bad_Refines_Raw());
+        abrupt_panic (Error_Bad_Refines_Raw());
 
     Protect_Value(value, flags);
 
@@ -308,7 +308,7 @@ DECLARE_NATIVE(PROTECT)
             LEVEL, NO_STEPS
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         return COPY(v);
     }
@@ -360,7 +360,7 @@ DECLARE_NATIVE(UNPROTECT)
     USED(PARAM(VALUES));
 
     if (Bool_ARG(HIDE))
-        panic ("Cannot un-hide an object field once hidden");
+        abrupt_panic ("Cannot un-hide an object field once hidden");
 
     Element* v = Element_ARG(VALUE);
 
@@ -377,7 +377,7 @@ DECLARE_NATIVE(UNPROTECT)
             LEVEL, NO_STEPS
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         return COPY(v);
     }
@@ -481,7 +481,7 @@ void Force_Value_Frozen_Core(
             /*}*/
         }
         else
-            panic ("What does a shallow freeze of a context mean?");
+            abrupt_panic ("What does a shallow freeze of a context mean?");
     }
     else if (Any_Series_Type(heart)) {
         UNUSED(deep);
@@ -497,7 +497,7 @@ void Force_Value_Frozen_Core(
         // No freezing needed
     }
     else
-        panic (Error_Invalid_Type(heart));  // not yet implemented
+        abrupt_panic (Error_Invalid_Type(heart));  // not yet implemented
 }
 
 

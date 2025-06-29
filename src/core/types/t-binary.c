@@ -111,7 +111,7 @@ DECLARE_NATIVE(ENCODE_IEEE_754) {
     Value* arg = ARG(ARG);
 
     if (Series_Len_At(ARG(OPTIONS)))
-        return PANIC("IEEE-754 single precision not currently supported");
+        panic ("IEEE-754 single precision not currently supported");
 
     assert(sizeof(REBDEC) == 8);
 
@@ -155,7 +155,7 @@ DECLARE_NATIVE(DECODE_IEEE_754)
     Element* blob = Element_ARG(BLOB);
 
     if (Series_Len_At(ARG(OPTIONS)))
-        return PANIC("IEEE-754 single precision not currently supported");
+        panic ("IEEE-754 single precision not currently supported");
 
     Size size;
     const Byte* at = Blob_Size_At(&size, blob);
@@ -206,7 +206,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
             Term_Binary_Len(b, len);
             return Init_Blob(OUT, b);
         }
-        return PANIC(
+        panic (
             "TUPLE! did not consist entirely of INTEGER! values 0-255"
         ); }
 
@@ -363,7 +363,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             // tolerate splices
         }
         else
-            return PANIC(PARAM(VALUE));
+            panic (PARAM(VALUE));
 
         SERIES_INDEX_UNBOUNDED(v) = Modify_String_Or_Blob(
             v,
@@ -382,7 +382,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         UNUSED(PARAM(SERIES));  // covered by `v`
 
         if (Is_Antiform(ARG(PATTERN)))
-            return PANIC(ARG(PATTERN));
+            panic (ARG(PATTERN));
 
         const Element* pattern = Element_ARG(PATTERN);
 
@@ -455,7 +455,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_BITWISE_AND_NOT: {
         Value* arg = ARG_N(2);
         if (not Is_Blob(arg))
-            return PANIC(Error_Not_Related_Raw(verb, Datatype_Of(arg)));
+            panic (Error_Not_Related_Raw(verb, Datatype_Of(arg)));
 
         Size t0;
         const Byte* p0 = Blob_Size_At(&t0, v);
@@ -526,7 +526,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         Value* arg = ARG_N(2);
 
         if (Type_Of(v) != Type_Of(arg))
-            return PANIC(Error_Not_Same_Type_Raw());
+            panic (Error_Not_Same_Type_Raw());
 
         Byte* v_at = Blob_At_Ensure_Mutable(v);
         Byte* arg_at = Blob_At_Ensure_Mutable(arg);
@@ -654,7 +654,7 @@ Option(Error*) Trap_Alias_Blob_As(
                         &c, &bp, &bytes_left
                     );
                     if (e)
-                        panic (unwrap e);
+                        abrupt_panic (unwrap e);
                 }
 
                 ++num_codepoints;
@@ -709,7 +709,7 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
 
     Option(Error*) e = Trap_Alias_Blob_As(OUT, blob, as);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return OUT;
 }
@@ -734,7 +734,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
 
     if (Bool_ARG(DEEP))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     REBINT len;
     if (Bool_ARG(PART)) {
@@ -935,14 +935,14 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
     Element* blob = Element_ARG(SERIES);
 
     if (Bool_ARG(ALL))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     if (Bool_ARG(CASE)) {
         // Ignored...all BLOB! sorts are case-sensitive.
     }
 
     if (Bool_ARG(COMPARE))
-        return PANIC(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
+        panic (Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
     Flags flags = 0;
 
@@ -960,7 +960,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
     else {
         skip = Get_Num_From_Arg(ARG(SKIP));
         if (skip <= 0 or (len % skip != 0) or skip > len)
-            return PANIC(PARAM(SKIP));
+            panic (PARAM(SKIP));
     }
 
     Size size = 1;
@@ -1003,7 +1003,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
 
     Value* options = ARG(OPTIONS);
     if (Series_Len_At(options) != 2)
-        return PANIC("ENCODE-INTEER needs length 2 options for now");
+        panic ("ENCODE-INTEER needs length 2 options for now");
 
     bool no_sign = rebUnboxBoolean(
         "switch first", options, "[",
@@ -1017,7 +1017,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
         "]"
     );
     if (num_bytes <= 0)
-        return PANIC("Size for ENCODE-INTEGER encoding must be at least 1");
+        panic ("Size for ENCODE-INTEGER encoding must be at least 1");
 
     // !!! Implementation is somewhat inefficient, but trying to not violate
     // the C standard and write code that is general (and may help generalize
@@ -1033,7 +1033,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
 
     REBI64 i = VAL_INT64(ARG(NUM));
     if (no_sign and i < 0)
-        return PANIC("Unsigned ENCODE-INTEGER received signed input value");
+        panic ("Unsigned ENCODE-INTEGER received signed input value");
 
     // Negative numbers are encoded with two's complement: process we use here
     // is simple: take the absolute value, inverting each byte, add one.
@@ -1126,7 +1126,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
             "]"
         );
         if (bin_size != num_bytes)
-            return PANIC("Input length mistmatches DECODE-INTEGER size option");
+            panic ("Input length mistmatches DECODE-INTEGER size option");
     }
     if (num_bytes <= 0) {
         //
@@ -1186,7 +1186,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
     // leading 0x00 or 0xFF stripped away
     //
     if (n > 8)
-        return PANIC(Error_Out_Of_Range(ARG(BINARY)));
+        panic (Error_Out_Of_Range(ARG(BINARY)));
 
     REBI64 i = 0;
 
@@ -1207,7 +1207,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
     }
 
     if (no_sign and i < 0)  // may become signed via shift due to 63-bit limit
-        return PANIC(Error_Out_Of_Range(ARG(BINARY)));
+        panic (Error_Out_Of_Range(ARG(BINARY)));
 
     return Init_Integer(OUT, i);
 }

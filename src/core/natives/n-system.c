@@ -128,7 +128,7 @@ DECLARE_NATIVE(RECYCLE)
         REBLEN recount = Recycle_Core(nullptr);
         assert(recount == count);
       #else
-        return PANIC(Error_Checked_Build_Only_Raw());
+        panic (Error_Checked_Build_Only_Raw());
       #endif
     }
     else {
@@ -143,7 +143,7 @@ DECLARE_NATIVE(RECYCLE)
         g_gc.watch_recycle = not g_gc.watch_recycle;
         g_mem.watch_expand = not g_mem.watch_expand;
       #else
-        return PANIC(Error_Checked_Build_Only_Raw());
+        panic (Error_Checked_Build_Only_Raw());
       #endif
     }
 
@@ -178,7 +178,7 @@ DECLARE_NATIVE(LIMIT_USAGE)
             g_mem.usage_limit = Int64(ARG(LIMIT));
     }
     else
-        return PANIC(PARAM(FIELD));
+        panic (PARAM(FIELD));
 
     return TRIPWIRE;
 }
@@ -223,7 +223,7 @@ DECLARE_NATIVE(CHECK)  // !!! Review the necessity of this (hasn't been used)
     return COPY(value);
   #else
     UNUSED(ARG(VALUE));
-    return PANIC(Error_Checked_Build_Only_Raw());
+    panic (Error_Checked_Build_Only_Raw());
   #endif
 }
 
@@ -312,6 +312,6 @@ DECLARE_NATIVE(C_DEBUG_BREAK)
         return Init_Unsurprising_Ghost(OUT);
       #endif
   #else
-      return PANIC(Error_Checked_Build_Only_Raw());
+      panic (Error_Checked_Build_Only_Raw());
   #endif
 }

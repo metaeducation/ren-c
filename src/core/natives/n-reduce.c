@@ -314,12 +314,12 @@ DECLARE_NATIVE(REDUCE_EACH)
         &varlist, body, vars
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
     if (Varlist_Len(varlist) != 1)  // current limitation [1]
-        return PANIC("REDUCE-EACH only supports one variable for now");
+        panic ("REDUCE-EACH only supports one variable for now");
 
     assert(Is_Block(body));
     Add_Definitional_Break_Continue(body, level_);
@@ -363,7 +363,7 @@ DECLARE_NATIVE(REDUCE_EACH)
         slot, SPARE, block
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
 } next_reduce_each: { ////////////////////////////////////////////////////////
 
@@ -434,7 +434,7 @@ bool Try_Match_For_Compose(
 
     while (Series_Len_At(pattern) != 0) {
         if (Series_Len_At(pattern) != 1)
-            panic ("COMPOSE patterns only nested length 1 or 0 right now");
+            abrupt_panic ("COMPOSE patterns only nested length 1 or 0 right now");
 
         if (Series_Len_At(match) == 0)
             return false;  // no nested list or item to match
@@ -450,7 +450,7 @@ bool Try_Match_For_Compose(
             continue;
         }
         if (not (Is_Tag(pattern_1) or Is_File(pattern_1)))
-            panic ("COMPOSE non-list patterns just TAG! and FILE! atm");
+            abrupt_panic ("COMPOSE non-list patterns just TAG! and FILE! atm");
 
         if (Type_Of(match_1) != Type_Of(pattern_1))
             return false;
@@ -737,7 +737,7 @@ Bounce Composer_Executor(Level* const L)
       push_antiform_incorporating_lift_byte: {
 
         if (list_lift_byte & QUASI_BIT)
-            return PANIC("Can't COMPOSE antiforms into ~(...)~ slots");
+            panic ("Can't COMPOSE antiforms into ~(...)~ slots");
 
         Copy_Lifted_Cell(PUSH(), OUT);
         LIFT_BYTE(OUT) = list_lift_byte;
@@ -761,7 +761,7 @@ Bounce Composer_Executor(Level* const L)
         if (Is_Splice(out))
             goto push_out_spliced;
 
-        return PANIC(Error_Bad_Antiform(out));
+        panic (Error_Bad_Antiform(out));
     }
 
   push_single_element_in_out: {
@@ -785,14 +785,14 @@ Bounce Composer_Executor(Level* const L)
 
     if (sigil) {
         if (Sigil_Of(TOP_ELEMENT))
-            return PANIC("COMPOSE cannot sigilize items already sigilized");
+            panic ("COMPOSE cannot sigilize items already sigilized");
 
         Sigilize(TOP_ELEMENT, unwrap sigil);  // ^ or @ or $
     }
 
     if (list_lift_byte & QUASI_BIT) {
         if (LIFT_BYTE(TOP) != NOQUOTE_2)
-            return PANIC(
+            panic (
                 "COMPOSE cannot quasify items not at quote level 0"
             );
         LIFT_BYTE(TOP) = list_lift_byte;
@@ -896,7 +896,7 @@ Bounce Composer_Executor(Level* const L)
     Drop_Level(SUBLEVEL);
 
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (Is_Nulled(out)) {
         // compose:deep [a (void)/(void) b] => path makes null, vaporize it
@@ -994,13 +994,13 @@ DECLARE_NATIVE(COMPOSE2)
     if (Is_Pinned(pattern)) {  // @() means use pattern's binding
         Plainify(pattern);  // drop the @ from the pattern for processing
         if (Cell_Binding(pattern) == nullptr)
-            return PANIC("@... patterns must have bindings");
+            panic ("@... patterns must have bindings");
     }
     else if (not Sigil_Of(pattern)) {
         Tweak_Cell_Binding(pattern, Level_Binding(level_));
     }
     else
-        return PANIC("COMPOSE2 takes plain and @... list patterns only");
+        panic ("COMPOSE2 takes plain and @... list patterns only");
 
     assert(Any_List(pattern));
 
@@ -1028,7 +1028,7 @@ DECLARE_NATIVE(COMPOSE2)
         cast(Value*, OUT), SUBLEVEL, input, Bool_ARG(CONFLATE)
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Drop_Level(SUBLEVEL);
     return OUT;
@@ -1106,9 +1106,9 @@ DECLARE_NATIVE(COMPOSE2)
             Copy_Cell(PUSH(), pattern_at);  // step into pattern
 
             if (not Any_List(TOP))
-                return PANIC("COMPOSE2 pattern must be composed of lists");
+                panic ("COMPOSE2 pattern must be composed of lists");
             if (Series_Len_At(TOP) > 1)
-                return PANIC("COMPOSE2 pattern layers must be length 1 or 0");
+                panic ("COMPOSE2 pattern layers must be length 1 or 0");
 
             begin_delimiter = Begin_Delimit_For_List(
                 Heart_Of_Builtin_Fundamental(TOP_ELEMENT)
@@ -1215,7 +1215,7 @@ DECLARE_NATIVE(COMPOSE2)
   //    * the offset right after the end character where the pattern matched
 
     if (Is_Error(OUT))  // transcode had a problem
-        return PANIC(Cell_Error(OUT));
+        panic (Cell_Error(OUT));
 
     Element* handle = Known_Element(SCRATCH);
     TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, handle);
@@ -1298,7 +1298,7 @@ DECLARE_NATIVE(COMPOSE2)
         if (Is_Error_Veto_Signal(Cell_Error(OUT)))
             return VETOING_NULL;
 
-        return PANIC(Cell_Error(OUT));
+        panic (Cell_Error(OUT));
     }
 
     const Value* result;
@@ -1351,7 +1351,7 @@ DECLARE_NATIVE(COMPOSE2)
             continue;
 
         if (LIFT_BYTE(eval) != NOQUOTE_2)
-            return PANIC("For the moment, COMPOSE string only does NOQUOTE_2");
+            panic ("For the moment, COMPOSE string only does NOQUOTE_2");
 
         if (Is_File(eval) and Is_File(input)) {  // "File calculus" [1]
             const Byte* at = c_cast(Byte*, head) + at_offset;
@@ -1363,7 +1363,7 @@ DECLARE_NATIVE(COMPOSE2)
 
             if (eval_slash_tail) {
                 if (not slash_after_splice)
-                    return PANIC(
+                    panic (
                         "FILE! spliced into FILE! must end in slash"
                         " if splice slot is followed by slash"
                     );
@@ -1371,7 +1371,7 @@ DECLARE_NATIVE(COMPOSE2)
             }
             else {
                 if (slash_after_splice)
-                    return PANIC(
+                    panic (
                         "FILE! spliced into FILE! can't end in slash"
                         " unless splice slot followed by slash"
                     );

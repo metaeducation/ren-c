@@ -198,7 +198,7 @@ void Unplug_Stack(
             // avoid confusion on this case by asserting for now.
             //
             assert(!"Can't yield across non-continuation-level");
-            panic ("Cannot yield across level that's not a continuation");
+            abrupt_panic ("Cannot yield across level that's not a continuation");
         }
 
         assert(temp->out != base->out);  // can't guarantee restoration!
@@ -242,7 +242,7 @@ void Unplug_Stack(
         temp = temp->prior;
 
         if (temp == TOP_LEVEL)  // "alive", but couldn't find in the stack walk
-            panic ("Cannot yield to a generator that is suspended");
+            abrupt_panic ("Cannot yield to a generator that is suspended");
 
         assert(LEVEL_STATE_BYTE(temp) != 0);  // must be a continuation
     }

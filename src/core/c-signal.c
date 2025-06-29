@@ -153,7 +153,7 @@ bool Do_Signals_Throws(Level* L)
         // with a keypress.  This needs to be thought out a bit more,
         // but may not involve much more than running `BREAKPOINT`.
         //
-        panic ("BREAKPOINT from TRAMPOLINE_FLAG_DEBUG_BREAK unimplemented");
+        abrupt_panic ("BREAKPOINT from TRAMPOLINE_FLAG_DEBUG_BREAK unimplemented");
     }
 
     g_ts.signal_mask = saved_sigmask;

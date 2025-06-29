@@ -335,7 +335,7 @@ Value* Request_Connect_Socket(const Value* port)
     } while (rebreq->result == nullptr);
 
     if (not Is_Space(rebreq->result))
-        panic (rebreq->result);
+        abrupt_panic (rebreq->result);
     rebRelease(rebreq->result);
 
     rebFree(rebreq);
@@ -358,7 +358,7 @@ void on_new_connection(uv_stream_t *server, int status) {
     // WRITE calls.  How should such errors be delivered?
     //
     if (status < 0)
-        panic (rebError_UV(status));
+        abrupt_panic (rebError_UV(status));
 
     VarList* client = Copy_Varlist_Shallow_Managed(listener_port_ctx);
     Push_Lifeguard(client);
@@ -384,7 +384,7 @@ void on_new_connection(uv_stream_t *server, int status) {
 
     int r = uv_accept(server, sock_new->stream);
     if (r < 0)
-        panic (rebError_UV(r));  // !!! See note on FAIL above about errors here
+        abrupt_panic (rebError_UV(r));  // !!! See note on FAIL above about errors here
 
     // NOTE: REBOL stays in network byte order, no htonl(ip) needed
     //
@@ -665,7 +665,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
     const Symbol* verb = Level_Verb(LEVEL);
 
     if (transport == TRANSPORT_UDP)  // disabled for now
-        return PANIC(
+        panic (
             "https://forum.rebol.info/t/fringe-udp-support-archiving/1730"
         );
 
@@ -732,7 +732,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
             else if (Is_Integer(local_id))
                 sock->local_port_number = VAL_INT32(local_id);
             else
-                return PANIC(
+                panic (
                     "local-id field of PORT! spec must be NULL or INTEGER!"
                 );
 
@@ -751,7 +751,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
                 //
                 Value* lookup_error = Lookup_Socket_Synchronously(port, arg);
                 if (lookup_error)
-                    return PANIC(lookup_error);
+                    panic (lookup_error);
             }
             else if (Is_Tuple(arg)) {  // Host IP specified:
                 listen = false;
@@ -766,16 +766,16 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
                     Is_Integer(port_id) ? VAL_INT32(port_id) : 8000;
             }
             else
-                return PANIC(Error_On_Port(SYM_INVALID_SPEC, port, -10));
+                panic (Error_On_Port(SYM_INVALID_SPEC, port, -10));
 
             Value* open_error = Open_Socket(port);
             if (open_error)
-                return PANIC(open_error);
+                panic (open_error);
 
             if (listen) {
                 Value* listen_error = Start_Listening_On_Socket(port);
                 if (listen_error)
-                    return PANIC(listen_error);
+                    panic (listen_error);
             }
 
             return COPY(port); }
@@ -784,7 +784,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
             return COPY(port);
 
           default:
-            return PANIC(Error_On_Port(SYM_NOT_OPEN, port, -12));
+            panic (Error_On_Port(SYM_NOT_OPEN, port, -12));
         }
     }
 
@@ -812,13 +812,13 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         UNUSED(PARAM(SOURCE));
 
         if (Bool_ARG(SEEK))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(STRING)); // handled in dispatcher
         UNUSED(PARAM(LINES)); // handled in dispatcher
 
         if (sock->stream == nullptr and sock->transport != TRANSPORT_UDP)
-            return PANIC(Error_On_Port(SYM_NOT_CONNECTED, port, -15));
+            panic (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
 
         Reb_Read_Request *rebreq = rebAlloc(Reb_Read_Request);
         rebreq->port_ctx = Cell_Varlist(port);
@@ -827,7 +827,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 
         if (Bool_ARG(PART)) {
             if (not Is_Integer(ARG(PART)))
-                return PANIC(PARAM(PART));
+                panic (PARAM(PART));
 
             rebreq->length_store = VAL_INT32(ARG(PART));
             rebreq->length = &rebreq->length_store;
@@ -868,10 +868,10 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         UNUSED(PARAM(DESTINATION));
 
         if (Bool_ARG(SEEK) or Bool_ARG(APPEND) or Bool_ARG(LINES))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (sock->stream == nullptr and sock->transport != TRANSPORT_UDP)
-            return PANIC(Error_On_Port(SYM_NOT_CONNECTED, port, -15));
+            panic (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
 
         // !!! R3-Alpha did not lay out the invariants of the port model,
         // or what datatypes it would accept at what levels.  TEXT! could be
@@ -968,7 +968,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         if (sock->stream) {  // allows close of closed socket (?)
             Value* errval = Close_Socket(port);
             if (errval)
-                return PANIC(errval);
+                panic (errval);
         }
         return COPY(port); }
 
@@ -981,7 +981,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         //
         Value* errval = Request_Connect_Socket(port);
         if (errval != nullptr)
-            return PANIC(errval);
+            panic (errval);
 
         return COPY(port); }
 
@@ -1123,7 +1123,7 @@ DECLARE_NATIVE(SHUTDOWN_P)
 
     int result = uv_loop_close(uv_default_loop());  // else valgrind leak [2]
     if (result != 0)
-        return PANIC(rebError_UV(result));
+        panic (rebError_UV(result));
 
     return "~";
 }
@@ -1196,7 +1196,7 @@ DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
         break; }
 
       default:
-        return PANIC(Error_Bad_Value(unwrap val));
+        panic (Error_Bad_Value(unwrap val));
     }
 
     const uint64_t repeat_ms = 0;  // do not repeat the timer
@@ -1241,7 +1241,7 @@ DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
         // with a keypress.  This needs to be thought out a bit more,
         // but may not involve much more than running `BREAKPOINT`.
         //
-        return PANIC(
+        panic (
             "BREAKPOINT from TRAMPOLINE_FLAG_DEBUG_BREAK unimplemented"
         );
     }

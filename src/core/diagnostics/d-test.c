@@ -238,6 +238,6 @@ DECLARE_NATIVE(FUZZ)
     return TRIPWIRE;
   #else
     UNUSED(ARG(FACTOR));
-    return PANIC("FUZZ is only availble in RUNTIME_CHECKS builds");
+    panic ("FUZZ is only availble in RUNTIME_CHECKS builds");
   #endif
 }

@@ -74,7 +74,7 @@ INLINE void Force_Location_Of_Error(Error* error, Level* L) {
     DECLARE_VALUE (where);
     Option(Error*) e = Trap_Read_Slot(where, &vars->where);
     if (e)
-        panic (unwrap e);
+        abrupt_panic (unwrap e);
 
     if (Is_Nulled(where))
         Set_Location_Of_Error(error, L);
@@ -140,7 +140,7 @@ INLINE bool Is_Error_Veto_Signal(Error* error) {
     DECLARE_VALUE (id);
     Option(Error*) e = Trap_Read_Slot(id, &vars->id);
     if (e)
-        panic (unwrap e);
+        abrupt_panic (unwrap e);
 
     if (not Is_Word(id))
         return false;
@@ -175,7 +175,7 @@ INLINE bool Is_Error_Done_Signal(Error* error) {
     DECLARE_VALUE (id);
     Option(Error*) e = Trap_Read_Slot(id, &vars->id);
     if (e)
-        panic (unwrap e);
+        abrupt_panic (unwrap e);
 
     if (not Is_Word(id))
         return false;

@@ -564,7 +564,7 @@ DECLARE_NATIVE(WRAP_P)
 
     Option(Error*) e = Trap_Wrap_Extend_Core(context, list, flags);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     /*
         Tweak_Cell_Binding(list, use);  // what should do what here?
@@ -672,7 +672,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
         const Element* check = List_At(&check_tail, ignore);
         for (; check != check_tail; ++check) {
             if (not Any_Word(check))
-                return PANIC(Error_Bad_Value(check));
+                panic (Error_Bad_Value(check));
         }
     }
 
@@ -711,7 +711,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
 
     Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, block_at, block_tail);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     StackIndex base = TOP_INDEX;  // could be more efficient to calc/add
 
@@ -761,7 +761,7 @@ VarList* Make_Varlist_Detect_Managed(
 
     Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, head, tail);
     if (e)
-        panic (unwrap e);
+        abrupt_panic (unwrap e);
 
     Length len = cl->next_index - 1;  // is next index, so subtract 1
 
@@ -844,7 +844,7 @@ VarList* Make_Varlist_Detect_Managed(
             //
             e = Trap_Read_Slot_Meta(dest, src);
             if (e)
-                panic (unwrap e);  // !!! review if panic should be possible
+                abrupt_panic (unwrap e);  // !!! review if panic should be possible
 
             bool deeply = true;  // !!! Copies series deeply, why? [1]
             if (not Is_Antiform(dest)) {  // !!! whole model needs review
@@ -910,7 +910,7 @@ Source* Context_To_Array(const Element* context, REBINT mode)
             // This whole idea needs review.
             //
             if (Is_Antiform(Slot_Hack(e.slot)))
-                panic (Error_Anti_Object_Block_Raw());
+                abrupt_panic (Error_Anti_Object_Block_Raw());
 
             Copy_Cell(PUSH(), Slot_Hack(e.slot));
         }
@@ -1002,7 +1002,7 @@ Slot* Obj_Slot(Value* value, Index index)
     VarList* context = Cell_Varlist(value);
 
     if (index > Varlist_Len(context))
-        panic ("Could not pick index out of object");  // !!! Review [1]
+        abrupt_panic ("Could not pick index out of object");  // !!! Review [1]
 
     return Varlist_Slot(context, index);
 }

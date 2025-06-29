@@ -65,7 +65,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Map)
     UNUSED(v1);
     UNUSED(v2);
 
-    return PANIC("https://github.com/rebol/rebol-issues/issues/2340");
+    panic ("https://github.com/rebol/rebol-issues/issues/2340");
 }
 
 
@@ -151,7 +151,7 @@ REBINT Find_Key_Hashed(
               found_synonym:;
 
                 if (synonym_slot != -1) // another equivalent already matched
-                    panic (Error_Conflicting_Key_Raw(key));
+                    abrupt_panic (Error_Conflicting_Key_Raw(key));
                 synonym_slot = slot; // save and continue checking
             }
         }
@@ -353,7 +353,7 @@ void Append_Map(
             //
             // Keys with no value not allowed, e.g. `to map! [1 "foo" 2]`
             //
-            panic (Error_Index_Out_Of_Range_Raw());
+            abrupt_panic (Error_Index_Out_Of_Range_Raw());
         }
 
         bool strict = true;
@@ -406,7 +406,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
         executor = &Inert_Stepper_Executor;
     else {
         if (not Is_Block(arg))
-            return PANIC(Error_Bad_Make(TYPE_MAP, arg));
+            panic (Error_Bad_Make(TYPE_MAP, arg));
 
         executor = &Stepper_Executor;
     }
@@ -435,7 +435,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
     Value* key = Decay_If_Unstable(SPARE);
     if (Is_Nulled(key) or Is_Trash(key))
-        return PANIC("Null or trash can't be used as key in MAP!");
+        panic ("Null or trash can't be used as key in MAP!");
 
     Copy_Cell(PUSH(), key);
 
@@ -450,14 +450,14 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 } value_step_dual_in_out: { //////////////////////////////////////////////////
 
     if (Is_Endlike_Unset(SPARE))  // no value for key, that's an error
-        return PANIC("Key without value terminating MAKE MAP!");
+        panic ("Key without value terminating MAKE MAP!");
 
     if (Is_Ghost(SPARE))
         goto reduce_value;  // try again...
 
     Value* val = Decay_If_Unstable(SPARE);
     if (Is_Nulled(val) or Is_Trash(val))
-        return PANIC("Null or trash can't be used as value in MAP!");
+        panic ("Null or trash can't be used as value in MAP!");
 
     if (  // give label to action/frame if it's a word and doesn't have one
         Is_Word(TOP)
@@ -694,7 +694,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         UNUSED(PARAM(SERIES));  // covered by `v`
 
         if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         const Map* m = VAL_MAP(map);
 
@@ -726,7 +726,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
             return COPY(map);  // don't panic on read only if it would be no-op
 
         if (not Is_Splice(ARG(VALUE)))
-            return PANIC(
+            panic (
                 "Appending to MAP! only accepts a splice block of key/value"
             );
 
@@ -736,7 +736,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         Map* m = VAL_MAP_Ensure_Mutable(map);
 
         if (Bool_ARG(LINE) or Bool_ARG(DUP))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         REBLEN len = Part_Len_May_Modify_Index(arg, ARG(PART));
         const Element* tail;
@@ -795,7 +795,7 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
     const Element* map = Element_ARG(VALUE);
 
     if (Bool_ARG(PART))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     return Init_Map(OUT, Copy_Map(VAL_MAP(map), Bool_ARG(DEEP)));
 }
@@ -831,13 +831,13 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
             goto handle_poke;
         }
 
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+        panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
     Unliftify_Known_Stable(dual);
 
     if (Is_Nulled(dual) or Is_Trash(dual))
-        return PANIC(Error_Bad_Antiform(dual));
+        panic (Error_Bad_Antiform(dual));
 
     poke = dual;
 

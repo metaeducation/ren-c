@@ -331,10 +331,10 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
         DECLARE_VALUE (v2);
         Option(Error*) e = Trap_Read_Slot(v1, e1.slot);
         if (e)
-            panic (unwrap e);
+            abrupt_panic (unwrap e);
         e = Trap_Read_Slot(v2, e2.slot);
         if (e)
-            panic (unwrap e);
+            abrupt_panic (unwrap e);
 
         if (Try_Lesser_Value(&lesser, v1, v2)) {  // works w/LESSER?
             if (lesser) {
@@ -355,7 +355,7 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
         Shutdown_Evars(&e1);
         Shutdown_Evars(&e2);
 
-        panic ("Illegal comparison");
+        abrupt_panic ("Illegal comparison");
     }
 
   finished:
@@ -419,7 +419,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
             Element* shared;
             if (not Is_Block_Style_Varargs(&shared, arg)) {
                 assert(false);  // shouldn't happen
-                return PANIC("Expected BLOCK!-style varargs");
+                panic ("Expected BLOCK!-style varargs");
             }
 
             feed = Prep_At_Feed(
@@ -438,7 +438,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
             error_on_deferred
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         Release_Feed(feed);
 
@@ -632,7 +632,7 @@ DECLARE_NATIVE(SET_ADJUNCT)
     Option(VarList*) ctx;
     if (Any_Context(adjunct)) {
         if (Is_Frame(adjunct))
-            return PANIC("SET-ADJUNCT can't store bindings, FRAME! disallowed");
+            panic ("SET-ADJUNCT can't store bindings, FRAME! disallowed");
 
         ctx = Cell_Varlist(adjunct);
     }
@@ -846,10 +846,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             DECLARE_ATOM (var);
             Option(Error*) e = Trap_Read_Slot_Meta(var, evars.slot);
             if (e)
-                return PANIC(unwrap e);  // !! rethink accessor error here
+                panic (unwrap e);  // !! rethink accessor error here
 
             if (Is_Antiform(var)) {
-                return PANIC(Error_Bad_Antiform(var));  // can't FORM antiforms
+                panic (Error_Bad_Antiform(var));  // can't FORM antiforms
             }
             else
                 Mold_Element(mo, Known_Element(var));
@@ -895,7 +895,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         DECLARE_ATOM (var);
         Option(Error*) e = Trap_Read_Slot_Meta(var, evars.slot);
         if (e)
-            return PANIC(unwrap e);  // !! rethink accessor error here
+            panic (unwrap e);  // !! rethink accessor error here
 
         if (Is_Antiform(var)) {
             Liftify(var);  // will become quasi...
@@ -959,7 +959,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
         Append_Ascii(mo->strand, ": ");
 
         if (Is_Antiform(var))
-            return PANIC(Error_Bad_Antiform(var));  // can't FORM antiforms
+            panic (Error_Bad_Antiform(var));  // can't FORM antiforms
 
         Mold_Element(mo, Known_Element(var));
 
@@ -1010,7 +1010,7 @@ const Symbol* Symbol_From_Picker(const Element* context, const Value* picker)
     UNUSED(context);  // Might the picker be context-sensitive?
 
     if (not Is_Word(picker))
-        panic (picker);
+        abrupt_panic (picker);
 
     return Word_Symbol(picker);
 }
@@ -1069,7 +1069,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
     //=//// PROTECT* ///////////////////////////////////////////////////////=//
 
       case SYM_APPEND:
-        panic ("APPEND on OBJECT!, MODULE!, etc. replaced with EXTEND");
+        abrupt_panic ("APPEND on OBJECT!, MODULE!, etc. replaced with EXTEND");
 
       case SYM_EXTEND: {
         INCLUDE_PARAMS_OF_EXTEND;
@@ -1100,7 +1100,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
         Option(Error*) e = Trap_Wrap_Extend_Core(c, def, flags);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         Use* use = Alloc_Use_Inherits(Cell_Binding(def));
         Copy_Cell(Stub_Cell(use), context);
@@ -1118,11 +1118,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         UNUSED(ARG(SERIES));  // extracted as `c`
 
         if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         Value* pattern = ARG(VALUE);
         if (Is_Antiform(pattern))
-            return PANIC(pattern);
+            panic (pattern);
 
         if (not Is_Word(pattern))
             return nullptr;
@@ -1136,13 +1136,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
             return nullptr;
 
         if (Is_Stub_Sea(c))
-            return PANIC("SeaOfVars SELECT not implemented yet");
+            panic ("SeaOfVars SELECT not implemented yet");
 
         Slot* slot = Varlist_Slot(cast(VarList*, c), unwrap index);
 
         Option(Error*) e = Trap_Read_Slot(OUT, slot);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         return OUT; }
 
@@ -1171,7 +1171,7 @@ IMPLEMENT_GENERIC(TO, Any_Context)
 
     if (to == TYPE_PORT) {
         if (heart != TYPE_OBJECT)
-            return PANIC(
+            panic (
                 "Only TO convert OBJECT! -> PORT! (weird internal code)"
             );
 
@@ -1200,7 +1200,7 @@ IMPLEMENT_GENERIC(COPY, Any_Context)
     const Element* context = Element_ARG(VALUE);
 
     if (Bool_ARG(PART))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     bool deep = Bool_ARG(DEEP);
     return Copy_Any_Context(OUT, context, deep);
@@ -1247,7 +1247,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         if (Is_Dual_Word_Named_Signal(dual))
             goto handle_named_signal;
 
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));  // smart error RE:remove?
+        panic (Error_Bad_Poke_Dual_Raw(dual));  // smart error RE:remove?
     }
 
     goto handle_poke;
@@ -1279,7 +1279,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     assert(Any_Lifted(dual) or Is_Dual_Word_Unset_Signal(dual));  // more!
 
     if (Get_Cell_Flag(slot, PROTECTED))  // POKE, must check PROTECT status
-        return PANIC(Error_Protected_Key(symbol));
+        panic (Error_Protected_Key(symbol));
 
     Copy_Cell(m_cast(Value*, u_cast(Value*, slot)), dual);
 
@@ -1308,7 +1308,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         break;
 
       default:
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+        panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
     return NO_WRITEBACK_NEEDED;  // VarList* in context not changed
@@ -1326,7 +1326,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
     possibly(Is_Port(context));
 
     if (Is_Stub_Sea(c))
-        return PANIC("SeaOfVars length counting code not done yet");
+        panic ("SeaOfVars length counting code not done yet");
     return Init_Integer(OUT, Varlist_Len(cast(VarList*, c)));
 }
 
@@ -1409,7 +1409,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Any_Context)
     Context* c = Cell_Context(context);
 
     if (Is_Stub_Sea(c))
-        return PANIC("SeaOfVars TAIL? not implemented");
+        panic ("SeaOfVars TAIL? not implemented");
     return LOGIC(Varlist_Len(cast(VarList*, c)) == 0);
 }
 
@@ -1424,10 +1424,10 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
     const Element* frame = Element_ARG(VALUE);
 
     if (Bool_ARG(DEEP))
-        return PANIC("COPY/DEEP on FRAME! not implemented");
+        panic ("COPY/DEEP on FRAME! not implemented");
 
     if (Bool_ARG(PART))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     ParamList* copy = Make_Varlist_For_Action(
         frame,
@@ -1496,7 +1496,7 @@ DECLARE_NATIVE(RETURN_OF)
     Details* details = Phase_Details(phase);
     DetailsQuerier* querier = Details_Querier(details);
     if (not (*querier)(OUT, details, SYM_RETURN_OF))
-        return PANIC("Frame Details does not offer RETURN (shouldn't happen)");
+        panic ("Frame Details does not offer RETURN (shouldn't happen)");
 
     return OUT;
 }
@@ -1587,7 +1587,7 @@ DECLARE_NATIVE(LABEL_OF)
 
     Phase* phase = Frame_Phase(frame);
     if (Is_Stub_Details(phase))
-        return PANIC("Phase not details error... should this return NULL?");
+        panic ("Phase not details error... should this return NULL?");
 
     Level* L = Level_Of_Varlist_May_Panic(cast(ParamList*, phase));
 
@@ -1704,7 +1704,7 @@ DECLARE_NATIVE(NEAR_OF)
     Phase* phase = Frame_Phase(frame);
 
     if (Is_Stub_Details(phase))
-        return PANIC("Phase is details, can't get NEAR-OF");
+        panic ("Phase is details, can't get NEAR-OF");
 
     Level* L = Level_Of_Varlist_May_Panic(cast(ParamList*, phase));
     return Init_Near_For_Level(OUT, L);
@@ -1728,7 +1728,7 @@ DECLARE_NATIVE(PARENT_OF)
     Phase* phase = Frame_Phase(frame);
 
     if (Is_Stub_Details(phase))
-        return PANIC("Phase is details, can't get PARENT-OF");
+        panic ("Phase is details, can't get PARENT-OF");
 
     Level* L = Level_Of_Varlist_May_Panic(cast(ParamList*, phase));
     Level* parent = L;
@@ -1954,11 +1954,11 @@ DECLARE_NATIVE(CONSTRUCT)
         Fetch_Next_In_Feed(SUBLEVEL->feed);
 
         if (Is_Level_At_End(SUBLEVEL))
-            return PANIC("Unexpected end after SET-WORD! in CONTEXT");
+            panic ("Unexpected end after SET-WORD! in CONTEXT");
 
         at = At_Level(SUBLEVEL);
         if (Is_Comma(at))
-            return PANIC("Unexpected COMMA! after SET-WORD! in CONTEXT");
+            panic ("Unexpected COMMA! after SET-WORD! in CONTEXT");
 
     } while ((symbol = Try_Get_Settable_Word_Symbol(nullptr, at)));
 

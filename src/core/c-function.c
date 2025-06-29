@@ -251,13 +251,13 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
 
         if (Is_Block(item)) {
             if (mode != SPEC_MODE_PUSHED)  // must come after parameter [1]
-                panic (Error_Bad_Func_Def_Raw(item));
+                abrupt_panic (Error_Bad_Func_Def_Raw(item));
 
             DECLARE_ELEMENT (param);  // we'll call GET, which uses the stack
             Copy_Cell(param, TOP_ELEMENT);
 
             if (Parameter_Spec(param))  // `func [x [integer!] [integer!]]`
-                panic (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
+                abrupt_panic (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
 
             Context* derived = Derive_Binding(Level_Binding(L), item);
             Push_Lifeguard(param);

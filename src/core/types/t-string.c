@@ -737,7 +737,7 @@ bool Try_Get_Series_Index_From_Picker(
     const Value* picker
 ){
     if (not (Is_Integer(picker) or Is_Decimal(picker)))  // !!! why DECIMAL! ?
-        panic (Error_Bad_Pick_Raw(picker));
+        abrupt_panic (Error_Bad_Pick_Raw(picker));
 
     REBINT n = Int32(picker);
     if (n == 0)
@@ -849,7 +849,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             // tolerated
         }
         else if (Any_List(unwrap arg))
-            return PANIC(PARAM(VALUE));  // no `append "abc" [d e]` w/o SPREAD
+            panic (PARAM(VALUE));  // no `append "abc" [d e]` w/o SPREAD
         else
             assert(not Is_Antiform(unwrap arg));
 
@@ -868,7 +868,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
         if (Is_Antiform(ARG(PATTERN)))
-            return PANIC(PARAM(PATTERN));
+            panic (PARAM(PATTERN));
 
         UNUSED(PARAM(SERIES));
 
@@ -883,7 +883,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         if (Bool_ARG(SKIP)) {
             skip = VAL_INT32(ARG(SKIP));
             if (skip == 0)
-                return PANIC(PARAM(SKIP));
+                panic (PARAM(SKIP));
         }
         else
             skip = 1;
@@ -953,7 +953,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         Value* arg = ARG_N(2);
 
         if (Type_Of(v) != Type_Of(arg))
-            return PANIC(Error_Not_Same_Type_Raw());
+            panic (Error_Not_Same_Type_Raw());
 
         Strand* v_str = Cell_Strand_Ensure_Mutable(v);
         Strand* arg_str = Cell_Strand_Ensure_Mutable(arg);
@@ -1039,7 +1039,7 @@ IMPLEMENT_GENERIC(AS, Any_String)
 
     Option(Error*) e = Trap_Any_String_As(OUT, string, as);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return OUT;
 }
@@ -1071,7 +1071,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
     Ensure_Mutable(v);
 
     if (Bool_ARG(DEEP))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     REBLEN len;
     if (Bool_ARG(PART)) {
@@ -1259,10 +1259,10 @@ IMPLEMENT_GENERIC(SORT, Any_String)
     UNUSED(str);  // we use the Cell_Utf8_At() accessor, which is const
 
     if (Bool_ARG(ALL))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     if (Bool_ARG(COMPARE))
-        return PANIC(Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
+        panic (Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
     Copy_Cell(OUT, v);  // before index modification
     REBLEN limit = Part_Len_May_Modify_Index(v, ARG(PART));
@@ -1277,7 +1277,7 @@ IMPLEMENT_GENERIC(SORT, Any_String)
     // that means every codepoint is one byte.
     //
     if (len != size)
-        return PANIC("Non-ASCII string sorting temporarily unavailable");
+        panic ("Non-ASCII string sorting temporarily unavailable");
 
     REBLEN skip;
     if (not Bool_ARG(SKIP))
@@ -1285,7 +1285,7 @@ IMPLEMENT_GENERIC(SORT, Any_String)
     else {
         skip = Get_Num_From_Arg(ARG(SKIP));
         if (skip <= 0 or len % skip != 0 or skip > len)
-            return PANIC(PARAM(SKIP));
+            panic (PARAM(SKIP));
     }
 
     // Use fast quicksort library function:
@@ -1328,7 +1328,7 @@ DECLARE_NATIVE(ENCODE_UTF_8) {
     Value* arg = ARG(ARG);
 
     if (Series_Len_At(ARG(OPTIONS)))
-        return PANIC("UTF-8 Encoder Options not Designed Yet");
+        panic ("UTF-8 Encoder Options not Designed Yet");
 
     Size utf8_size;
     Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
@@ -1362,7 +1362,7 @@ DECLARE_NATIVE(DECODE_UTF_8)
     Element* blob = Element_ARG(BLOB);
 
     if (Series_Len_At(ARG(OPTIONS)))
-        return PANIC("UTF-8 Decoder Options not Designed Yet");
+        panic ("UTF-8 Decoder Options not Designed Yet");
 
     Heart heart = TYPE_TEXT;  // should options let you specify? [1]
 

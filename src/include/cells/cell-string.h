@@ -45,9 +45,9 @@ INLINE Length Series_Len_At(const Cell* v) {
     //
     REBIDX i = Series_Index(v);
     if (i > Series_Len_Head(v))
-        panic ("Index past end of series");
+        abrupt_panic ("Index past end of series");
     if (i < 0)
-        panic ("Index before beginning of series");
+        abrupt_panic ("Index before beginning of series");
 
     return Series_Len_Head(v) - i;  // take current index into account
 }
@@ -71,7 +71,7 @@ INLINE Utf8(const*) String_At(const Cell* v) {
     const Strand* str = c_cast(Strand*, Cell_Flex(v));
     REBIDX i = SERIES_INDEX_UNBOUNDED(v);
     if (i < 0 or i > Strand_Len(str))
-        panic (Error_Index_Out_Of_Range_Raw());
+        abrupt_panic (Error_Index_Out_Of_Range_Raw());
 
     return i == 0 ? Strand_Head(str) : Strand_At(str, i);
 }

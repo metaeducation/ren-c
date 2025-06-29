@@ -104,7 +104,7 @@ DECLARE_NATIVE(SHOVE)
 
     Level* L;
     if (not Is_Level_Style_Varargs_May_Panic(&L, ARG(RIGHT)))
-        return PANIC("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
+        panic ("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
 
     Element* left = Element_ARG(LEFT);
 
@@ -137,7 +137,7 @@ DECLARE_NATIVE(SHOVE)
             Level_Binding(L)
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         Move_Cell(shovee, out);  // variable contents always stable
     }
@@ -159,7 +159,7 @@ DECLARE_NATIVE(SHOVE)
         infix_mode = Cell_Frame_Infix_Mode(shovee);
     }
     else {
-        return PANIC(  // used to allow shoving into set-words, but... [1]
+        panic (  // used to allow shoving into set-words, but... [1]
             "SHOVE's immediate right must be FRAME! at this time"
         );
     }
@@ -313,7 +313,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
             goto initial_entry_varargs;
 
         assert(Is_Warning(source));
-        return PANIC(Cell_Error(source)); }  // would panic anyway [2]
+        panic (Cell_Error(source)); }  // would panic anyway [2]
 
       case ST_EVALUATE_SINGLE_STEPPING:
         if (Is_Endlike_Unset(OUT)) {
@@ -374,10 +374,10 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    evolve that EVAL:STEP on a BLOCK! actually produces a FRAME!...
 
     if (Bool_ARG(STEP))  // !!! may be legal (or mandatory) in the future [1]
-        return PANIC(":STEP not implemented for FRAME! in EVALUATE");
+        panic (":STEP not implemented for FRAME! in EVALUATE");
 
     if (Not_Base_Readable(CELL_FRAME_PAYLOAD_1_PHASE(source)))
-        return PANIC(Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
 
     Option(const Atom*) with = nullptr;
     Push_Frame_Continuation(
@@ -405,7 +405,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    to disrupt its state.  Use a sublevel.
 
     if (Bool_ARG(STEP))
-        return PANIC(":STEP not implemented for VARARGS! in EVALUATE");
+        panic (":STEP not implemented for VARARGS! in EVALUATE");
 
     Element* position;
     if (Is_Block_Style_Varargs(&position, source)) {  // must consume [1]
@@ -498,15 +498,15 @@ DECLARE_NATIVE(EVAL_FREE)
   initial_entry: { ///////////////////////////////////////////////////////////
 
     if (Not_Base_Readable(CELL_FRAME_PAYLOAD_1_PHASE(frame)))
-        return PANIC(Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
 
     if (Is_Stub_Details(Frame_Phase(frame)))
-        panic ("Can't currently EVAL-FREE a Details-based Stub");
+        abrupt_panic ("Can't currently EVAL-FREE a Details-based Stub");
 
     VarList* varlist = Cell_Varlist(frame);
 
     if (Level_Of_Varlist_If_Running(varlist))
-        panic ("Use REDO to restart a running FRAME! (not EVAL-FREE)");
+        abrupt_panic ("Use REDO to restart a running FRAME! (not EVAL-FREE)");
 
     Level* L = Make_End_Level(
         &Action_Executor,
@@ -764,7 +764,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
   //    could be treated as an <end> case?)
 
     if (single != TRAILING_SPACE_AND(WORD))  // more possibilities later [1]
-        return PANIC("Only WORD!: labels handled in APPLY at this time");
+        panic ("Only WORD!: labels handled in APPLY at this time");
 
     STATE = ST_FRAME_FILLER_LABELED_EVAL_STEP;
 
@@ -772,7 +772,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     Option(Index) index = Find_Symbol_In_Context(frame, symbol, false);
     if (not index)
-        return PANIC(Error_Bad_Parameter_Raw(at));
+        panic (Error_Bad_Parameter_Raw(at));
 
     var = u_cast(Atom*,
         u_cast(Cell*, Varlist_Slot(Cell_Varlist(frame), unwrap index))
@@ -780,7 +780,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     param = Phase_Param(Frame_Phase(op), unwrap index);
 
     if (not Is_Parameter(u_cast(Value*, var)))
-        return PANIC(Error_Bad_Parameter_Raw(at));
+        panic (Error_Bad_Parameter_Raw(at));
 
     Sink(Value) lookback = SCRATCH;  // for error
     Copy_Cell(lookback, At_Level(L));
@@ -788,14 +788,14 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     at = Try_At_Level(L);
 
     if (at == nullptr or Is_Comma(at))
-        return PANIC(Error_Need_Non_End_Raw(lookback));
+        panic (Error_Need_Non_End_Raw(lookback));
 
     if (  // catch e.g. DUP: LINE: [2]
         Is_Chain(at)
         and (single = Try_Get_Sequence_Singleheart(at))
         and Singleheart_Has_Trailing_Space(unwrap single)
     ){
-        return PANIC(Error_Need_Non_End_Raw(lookback));
+        panic (Error_Need_Non_End_Raw(lookback));
     }
 
     Init_Integer(Atom_ARG(INDEX), unwrap index);
@@ -810,7 +810,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     while (true) {
         if (not Try_Advance_Evars(e)) {
             if (not Bool_ARG(RELAX))
-                return PANIC(Error_Apply_Too_Many_Raw());
+                panic (Error_Apply_Too_Many_Raw());
 
             Shutdown_Evars(e);
             Free_Memory(EVARS, e);
@@ -991,10 +991,10 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
         gotten, GROUPS_OK, operation, SPECIFIED
     );
     if (error)
-        return PANIC(unwrap error);
+        panic (unwrap error);
 
     if (not Is_Action(gotten) and not Is_Frame(gotten))
-        return PANIC(gotten);
+        panic (gotten);
 
     Deactivate_If_Action(gotten);  // APPLY has <unrun> on ARG(OPERATION)
 

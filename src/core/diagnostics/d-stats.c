@@ -65,7 +65,7 @@ DECLARE_NATIVE(STATS)
             "recycles:", rebI(g_gc.recycle_counter),
         "]");
       #else
-        return PANIC(Error_Checked_Build_Only_Raw());
+        panic (Error_Checked_Build_Only_Raw());
       #endif
     }
 
@@ -84,7 +84,7 @@ DECLARE_NATIVE(STATS)
     UNUSED(Bool_ARG(SHOW));
     UNUSED(ARG(POOL));
 
-    return PANIC(Error_Checked_Build_Only_Raw());
+    panic (Error_Checked_Build_Only_Raw());
   #endif
 }
 
@@ -137,11 +137,11 @@ DECLARE_NATIVE(CALLGRIND)
         break;
 
       default:
-        return PANIC("Currently CALLGRIND only supports ON and OFF");
+        panic ("Currently CALLGRIND only supports ON and OFF");
     }
     return TRIPWIRE;
   #else
     UNUSED(ARG(INSTRUCTION));
-    return PANIC("Executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");
+    panic ("Executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");
   #endif
 }

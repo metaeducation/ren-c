@@ -146,7 +146,7 @@ DECLARE_NATIVE(PICK)
     Init_Dual_Nulled_Pick_Signal(LOCAL(DUAL));  // PICK, not POKE
 
     if (Is_Keyword(picker) or Is_Trash(picker))
-        return PANIC("PICK with keyword or trash picker never allowed");
+        panic ("PICK with keyword or trash picker never allowed");
 
 } dispatch_generic: { ////////////////////////////////////////////////////////
 
@@ -171,12 +171,12 @@ DECLARE_NATIVE(PICK)
     Value* dual = Known_Stable(OUT);
 
     if (Is_Action(dual))
-        return PANIC("TWEAK* delegation machinery not done yet");
+        panic ("TWEAK* delegation machinery not done yet");
 
     if (Is_Dual_Nulled_Absent_Signal(dual))  // lifted is "NULL-but-present"
         return FAIL(Error_Bad_Pick_Raw(ARG(PICKER)));
 
-    return PANIC("Non-ACTION! antiform returned by TWEAK* dual protocol");
+    panic ("Non-ACTION! antiform returned by TWEAK* dual protocol");
 
 } pick_succeeded_out_is_lifted: {
 
@@ -184,7 +184,7 @@ DECLARE_NATIVE(PICK)
 
     if (Not_Cell_Stable(OUT)) {
         assert(false);  // Note: once usermode TWEAK* exists, it may screw up
-        return PANIC("TWEAK* returned a lifted unstable antiform");
+        panic ("TWEAK* returned a lifted unstable antiform");
     }
 
     return OUT;
@@ -327,7 +327,7 @@ DECLARE_NATIVE(POKE)
     //    Should there be a POKE:DUAL, or just a SET:DUAL?
 
     if (Is_Keyword(picker) or Is_Trash(picker))
-        return PANIC("PICK with keyword or trash picker never allowed");
+        panic ("PICK with keyword or trash picker never allowed");
 
     if (Is_Error(atom))
         return COPY(atom);  // bypass and don't do the poke
@@ -363,7 +363,7 @@ DECLARE_NATIVE(POKE)
     Value* writeback = Known_Stable(OUT);
 
     if (not Is_Nulled(writeback))  // see TWEAK* for meaning of non-null
-        return PANIC(
+        panic (
             "Can't writeback to immediate in POKE (use TWEAK* if intentional)"
         );
 
@@ -461,7 +461,7 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
     REBLEN n;
     for (n = 0; n < len; ++n) {
         if (not Is_Integer(Copy_Sequence_At(SPARE, sequence, n)))
-            return PANIC("Can only zeroify sequences of integers at this time");
+            panic ("Can only zeroify sequences of integers at this time");
         Init_Integer(PUSH(), 0);
     }
     Option(Error*) error = Trap_Pop_Sequence(OUT, heart, STACK_BASE);

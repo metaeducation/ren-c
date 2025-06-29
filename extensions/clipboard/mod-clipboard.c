@@ -63,7 +63,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         UNUSED(ARG(SOURCE));  // implied by `port`
 
         if (Bool_ARG(PART) or Bool_ARG(SEEK))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         UNUSED(Bool_ARG(STRING));  // handled in dispatcher
         UNUSED(Bool_ARG(LINES));  // handled in dispatcher
@@ -108,7 +108,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         UNUSED(ARG(DESTINATION));  // implied by `port`
 
         if (Bool_ARG(APPEND) or Bool_ARG(LINES))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         Value* data = ARG(DATA);
 
@@ -117,7 +117,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         // the length only made sense if it was a string.  Review.
         //
         if (rebNot("text?", data))
-            return PANIC(Error_Invalid_Port_Arg_Raw(data));
+            panic (Error_Invalid_Port_Arg_Raw(data));
 
         // Handle :PART refinement:
         //
@@ -169,7 +169,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         UNUSED(PARAM(SPEC));
 
         if (Bool_ARG(NEW) or Bool_ARG(READ) or Bool_ARG(WRITE))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         // !!! Currently just ignore (it didn't do anything)
 

@@ -47,9 +47,9 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * In Rebol terminology, abrupt panics triggered by panic() are mechanically
-//   distinct from cooperative panics, e.g. `return PANIC()`...which does
+//   distinct from cooperative panics, e.g. `panic ()`...which does
 //   *not* use exceptions or longjmp().  Instead a native implementation
-//   must go all the way to the `return` statement to say `return PANIC()`.
+//   must go all the way to the `return` statement to say `panic ()`.
 //
 // * To help Rebol clean up after itself for some kinds of "dangling" state,
 //   it will automatically free manually memory managed Flexes made with
@@ -259,7 +259,7 @@ struct JumpStruct {
 //=//// *NON-COOPERATIVE* ABRUPT panic() MECHANISM /////////////////////////=//
 //
 // "Abrupt Failures" come in "cooperative" and "uncooperative" forms.  The
-// cooperative form happens when a native's C code does `return PANIC(...)`,
+// cooperative form happens when a native's C code does `panic (...)`,
 // and should be used when possible, as it is more efficient and also will
 // work on platforms that don't have exception handling or longjmp().
 //
@@ -267,7 +267,7 @@ struct JumpStruct {
 // and is what the RESCUE_SCOPE() abstraction is designed to catch:
 //
 //     if (Foo_Type(foo) == BAD_FOO) {
-//         panic (Error_Bad_Foo_Operation(...));
+//         abrupt_panic (Error_Bad_Foo_Operation(...));
 //
 //         /* this line will never be reached, because it longjmp'd or
 //            C++ throw'd up the stack where execution continues */
@@ -327,14 +327,14 @@ struct JumpStruct {
 
 #if PANIC_JUST_ABORTS
 
-    #define panic(p) do { \
+    #define abrupt_panic(p) do { \
         Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
         crash (Panic_Abruptly_Helper(Derive_Error_From_Pointer(p))); \
     } while (0)
 
 #elif PANIC_USES_TRY_CATCH
 
-    #define panic(p) do { \
+    #define abrupt_panic(p) do { \
         Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
         throw Panic_Abruptly_Helper(Derive_Error_From_Pointer(p)); \
     } while (0)
@@ -348,7 +348,7 @@ struct JumpStruct {
     //
     //  http://en.cppreference.com/w/c/program/longjmp
 
-    #define panic(p) do { \
+    #define abrupt_panic(p) do { \
         Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
         g_ts.jump_list->error = Panic_Abruptly_Helper( \
             Derive_Error_From_Pointer(p)  /* longjmp() arg too small */ \

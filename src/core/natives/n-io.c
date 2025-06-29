@@ -165,7 +165,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
 
   #if (! DEBUG_HAS_PROBE)
     UNUSED(v);
-    return PANIC(
+    panic (
         "Bootstrap WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module"
     );
   #else
@@ -342,7 +342,7 @@ REBLEN Milliseconds_From_Value(const Value* v) {
     }
 
     if (msec < 0)
-        panic (Error_Out_Of_Range(v));
+        abrupt_panic (Error_Out_Of_Range(v));
 
     return msec;
 }
@@ -377,12 +377,12 @@ DECLARE_NATIVE(BASIC_READ)
 
   #if (! TO_WASI)
     UNUSED(ARG(FILE));
-    return PANIC("BASIC-READ is a simple demo used in WASI only");
+    panic ("BASIC-READ is a simple demo used in WASI only");
   #else
     const Strand* filename = Cell_Strand(ARG(FILE));
     FILE* f = fopen(Strand_Utf8(filename), "rb");
     if (f == nullptr)
-        return PANIC(rebError_OS(errno));
+        panic (rebError_OS(errno));
     fseek(f, 0, SEEK_END);
     Size size = ftell(f);
     fseek(f, 0, SEEK_SET);
@@ -416,12 +416,12 @@ DECLARE_NATIVE(BASIC_WRITE)
   #if (! TO_WASI)
     UNUSED(ARG(FILE));
     UNUSED(ARG(DATA));
-    return PANIC("BASIC-WRITE is a simple demo used in WASI only");
+    panic ("BASIC-WRITE is a simple demo used in WASI only");
   #else
     const Strand* filename = Cell_Strand(ARG(FILE));
     FILE* f = fopen(Strand_Utf8(filename), "wb");
     if (f == nullptr)
-        return PANIC(rebError_OS(errno));
+        panic (rebError_OS(errno));
 
     Size size;
     const Byte* data = Cell_Bytes_At(&size, ARG(DATA));

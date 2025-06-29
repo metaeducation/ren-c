@@ -140,7 +140,7 @@ Strand* To_REBOL_Path(const Value* string, Flags flags)
             // Handle the vol:dir/file format:
             //
             if (saw_colon or saw_slash)
-                panic ("no prior : or / allowed for vol:dir/file format");
+                abrupt_panic ("no prior : or / allowed for vol:dir/file format");
 
             if (not lead_slash) {
                 //
@@ -543,7 +543,7 @@ DECLARE_NATIVE(WHAT_DIR)
         Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH)
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (Is_File(spare_current_path) or Is_Nulled(spare_current_path)) {
         //
@@ -562,7 +562,7 @@ DECLARE_NATIVE(WHAT_DIR)
             refresh
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
         rebRelease(refresh);
     }
     else if (not Is_Url(spare_current_path)) {
@@ -570,7 +570,7 @@ DECLARE_NATIVE(WHAT_DIR)
         // Lousy error, but ATM the user can directly edit system.options.
         // They shouldn't be able to (or if they can, it should be validated)
         //
-        return PANIC(spare_current_path);
+        panic (spare_current_path);
     }
 
     return rebValue(
@@ -610,7 +610,7 @@ DECLARE_NATIVE(CHANGE_DIR)
         bool success = Set_Current_Dir_Value(arg);
 
         if (not success)
-            return PANIC(PARAM(PATH));
+            panic (PARAM(PATH));
     }
 
     Copy_Cell(current_path, arg);

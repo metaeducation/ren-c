@@ -263,7 +263,7 @@ void Remove_Flex_Units(Flex* f, Size byteoffset, REBLEN quantity)
             // Add bias to head:
             unsigned int bias;
             if (Add_U32_Overflows(&bias, Flex_Bias(f), quantity))
-                panic (Error_Overflow_Raw());
+                abrupt_panic (Error_Overflow_Raw());
 
             if (bias > 0xffff) { // 16-bit, simple Add_Flex_Bias could overflow
                 char *data = f->content.dynamic.data;

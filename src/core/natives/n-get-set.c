@@ -92,7 +92,7 @@ Context* Adjust_Context_For_Coupling(Context* c) {
 
         Level* level = Level_Of_Varlist_If_Running(frame_varlist);
         if (not level)
-            panic (".field access only in running functions");  // nullptr?
+            abrupt_panic (".field access only in running functions");  // nullptr?
         VarList* coupling = maybe Level_Coupling(level);
         if (not coupling)
             continue;  // skip NULL couplings (default for FUNC, DOES, etc.)
@@ -290,17 +290,17 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
             out, steps, head, derived
         );
         if (error)
-            panic (unwrap error);  // must be abrupt
+            abrupt_panic (unwrap error);  // must be abrupt
         if (Is_Trash(out))
-            panic (Error_Bad_Word_Get(head, out));
+            abrupt_panic (Error_Bad_Word_Get(head, out));
     }
     else if (Is_Word(head)) {
         Option(Error*) error = Trap_Get_Word(out, head, derived);
         if (error)
-            panic (unwrap error);  // must be abrupt
+            abrupt_panic (unwrap error);  // must be abrupt
     }
     else
-        panic (head);  // what else could it have been?
+        abrupt_panic (head);  // what else could it have been?
 
     ++head;
 
@@ -345,7 +345,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
             Init_Pushed_Refinement(PUSH(), Word_Symbol(item));
         }
         else
-            panic (item);
+            abrupt_panic (item);
     }
 
     return SUCCESS;
@@ -921,7 +921,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     else switch (Stub_Flavor(c_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {
         if (Get_Cell_Flag(scratch_var, LEADING_SPACE)) {  // `/a` or `.a`
-            panic ("Leading dot selection is being redesigned.");
+            abrupt_panic ("Leading dot selection is being redesigned.");
             /*if (Heart_Of(scratch_var) == TYPE_TUPLE) {
                 Context* context = Cell_Binding(scratch_var);
                 context = Adjust_Context_For_Coupling(context);
@@ -1326,10 +1326,10 @@ DECLARE_NATIVE(TWEAK)
    // are nested under TUPLE! and such.  Review.
 
     if (not Bool_ARG(GROUPS))
-        return PANIC(Error_Bad_Get_Group_Raw(target));
+        panic (Error_Bad_Get_Group_Raw(target));
 
     if (Eval_Any_List_At_Throws(SPARE, target, SPECIFIED))
-        return PANIC(Error_No_Catch_For_Throw(LEVEL));
+        panic (Error_No_Catch_For_Throw(LEVEL));
 
     if (Is_Void(SPARE))
         return OUT;
@@ -1341,7 +1341,7 @@ DECLARE_NATIVE(TWEAK)
         or Any_Sequence(spare)
         or Is_Pinned_Form_Of(BLOCK, spare)
     )){
-        return PANIC(spare);
+        panic (spare);
     }
 
     Copy_Cell(target, Known_Element(spare));  // update ARG(TARGET)
@@ -1366,7 +1366,7 @@ DECLARE_NATIVE(TWEAK)
 
     Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(LEVEL, steps);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
 } return_value_even_if_we_dont_assign: {
 
@@ -1475,7 +1475,7 @@ DECLARE_NATIVE(GET)
         return OUT;  // weird can't pick case, see [A]
 
     if (not Any_Lifted(OUT))
-        return PANIC("GET of UNSET or other weird state (see TWEAK)");
+        panic ("GET of UNSET or other weird state (see TWEAK)");
 
     return Unliftify_Undecayed(OUT);
 }

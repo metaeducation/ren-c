@@ -321,7 +321,7 @@ DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
             not Try_Get_Binding_Of(spare_context, location)
             or not Is_Frame(spare_context)
         ){
-            return PANIC("SET-LOCATION-OF-ERROR requires FRAME!-bound WORD!");
+            panic ("SET-LOCATION-OF-ERROR requires FRAME!-bound WORD!");
         }
         varlist = Cell_Varlist(spare_context);
     }

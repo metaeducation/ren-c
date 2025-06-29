@@ -21,7 +21,7 @@ INLINE const Source* Cell_Array(const Atom* c) {  // PACK!s are allowed
     const Base* series = SERIESLIKE_PAYLOAD_1_BASE(c);
     assert(Is_Base_A_Stub(series));  // not a pairing arraylike!
     if (Not_Base_Readable(series))
-        panic (Error_Series_Data_Freed_Raw());
+        abrupt_panic (Error_Series_Data_Freed_Raw());
 
     return c_cast(Source*, series);
 }
@@ -57,7 +57,7 @@ INLINE const Element* List_Len_At(
     REBIDX i = SERIESLIKE_PAYLOAD_2_INDEX(cell);
     Length len = Array_Len(array);
     if (i < 0 or i > len)
-        panic (Error_Index_Out_Of_Range_Raw());
+        abrupt_panic (Error_Index_Out_Of_Range_Raw());
     if (len_at_out)  // inlining should remove this if() for List_At()
         *(unwrap len_at_out) = len - i;
     return Array_At(array, i);
@@ -79,7 +79,7 @@ INLINE const Element* List_At(
     REBIDX i = SERIESLIKE_PAYLOAD_2_INDEX(cell);
     Length len = Array_Len(array);
     if (i < 0 or i > len)
-        panic (Error_Index_Out_Of_Range_Raw());
+        abrupt_panic (Error_Index_Out_Of_Range_Raw());
     const Element* at = Array_At(array, i);
     if (tail_out)  // inlining should remove this if() for no tail
         *(unwrap tail_out) = at + (len - i);

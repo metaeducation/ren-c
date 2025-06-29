@@ -264,7 +264,7 @@ INLINE void *Alloc_Pooled(PoolId pool_id) {
         return node;
 
     Pool* pool = &g_mem.pools[pool_id];
-    panic (Error_No_Memory(pool->wide * pool->num_units_per_segment));
+    abrupt_panic (Error_No_Memory(pool->wide * pool->num_units_per_segment));
 }
 
 #define Alloc_Stub() ( \

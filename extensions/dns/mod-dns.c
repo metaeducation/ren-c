@@ -143,7 +143,7 @@ static void Get_Local_Ip_Via_Google_DNS_May_Panic(Sink(Value) out)
     if (info)
         freeaddrinfo(info);
     if (error)
-        panic (error);
+        abrupt_panic (error);
 }}
 #endif
 
@@ -174,7 +174,7 @@ DECLARE_NATIVE(DNS_ACTOR)
         UNUSED(PARAM(SOURCE));  // covered by `port`
 
         if (Bool_ARG(PART) or Bool_ARG(SEEK))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(STRING)); // handled in dispatcher
         UNUSED(PARAM(LINES)); // handled in dispatcher
@@ -243,7 +243,7 @@ DECLARE_NATIVE(DNS_ACTOR)
             // ...else fall through to error handling...
         }
         else
-            return PANIC(Error_On_Port(SYM_INVALID_SPEC, port, -10));
+            panic (Error_On_Port(SYM_INVALID_SPEC, port, -10));
 
         switch (h_errno) {
           case HOST_NOT_FOUND:  // The specified host is unknown
@@ -266,7 +266,7 @@ DECLARE_NATIVE(DNS_ACTOR)
         UNUSED(PARAM(SPEC));
 
         if (Bool_ARG(NEW) or Bool_ARG(READ) or Bool_ARG(WRITE))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         // !!! All the information the DNS needs is at the moment in the
         // port spec, so there's nothing that has to be done in the OPEN.

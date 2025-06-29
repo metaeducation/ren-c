@@ -94,7 +94,7 @@ DECLARE_NATIVE(DEFINITIONAL_BREAK)
 
     Option(VarList*) coupling = Level_Coupling(break_level);
     if (not coupling)
-        return PANIC(Error_Archetype_Invoked_Raw());
+        panic (Error_Archetype_Invoked_Raw());
 
     Level* loop_level = Level_Of_Varlist_May_Panic(unwrap coupling);
 
@@ -141,7 +141,7 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 
     Option(VarList*) coupling = Level_Coupling(continue_level);
     if (not coupling)
-        return PANIC(Error_Archetype_Invoked_Raw());
+        panic (Error_Archetype_Invoked_Raw());
 
     Level* loop_level = Level_Of_Varlist_May_Panic(unwrap coupling);
 
@@ -251,7 +251,7 @@ static Bounce Loop_Series_Common(
             Type_Of(var) != Type_Of(start)
             or Cell_Flex(var) != Cell_Flex(start)
         ){
-            return PANIC("Can only change series index, not series to iterate");
+            panic ("Can only change series index, not series to iterate");
         }
 
         // Note that since the array is not locked with FLEX_INFO_HOLD, it
@@ -323,10 +323,10 @@ static Bounce Loop_Integer_Common(
         }
 
         if (not Is_Integer(var))
-            return PANIC(Error_Invalid_Type_Raw(Datatype_Of(var)));
+            panic (Error_Invalid_Type_Raw(Datatype_Of(var)));
 
         if (Add_I64_Overflows(state, *state, bump))
-            return PANIC(Error_Overflow_Raw());
+            panic (Error_Overflow_Raw());
     }
 
     return LOOPED(OUT);
@@ -350,7 +350,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(start) or Is_Percent(start))
         s = VAL_DECIMAL(start);
     else
-        return PANIC(start);
+        panic (start);
 
     REBDEC e;
     if (Is_Integer(end))
@@ -358,7 +358,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(end) or Is_Percent(end))
         e = VAL_DECIMAL(end);
     else
-        return PANIC(end);
+        panic (end);
 
     REBDEC b;
     if (Is_Integer(bump))
@@ -366,7 +366,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(bump) or Is_Percent(bump))
         b = VAL_DECIMAL(bump);
     else
-        return PANIC(bump);
+        panic (bump);
 
     // As in Loop_Integer_Common(), the state is actually in a cell; so each
     // loop iteration it must be checked to ensure it's still a decimal...
@@ -406,7 +406,7 @@ static Bounce Loop_Number_Common(
         }
 
         if (not Is_Decimal(var))
-            return PANIC(Error_Invalid_Type_Raw(Datatype_Of(var)));
+            panic (Error_Invalid_Type_Raw(Datatype_Of(var)));
 
         *state += b;
     }
@@ -448,7 +448,7 @@ DECLARE_NATIVE(CFOR)
         &varlist, body, word
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
@@ -541,7 +541,7 @@ DECLARE_NATIVE(FOR_SKIP)
         &varlist, body, word
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
@@ -578,7 +578,7 @@ DECLARE_NATIVE(FOR_SKIP)
 
         e = Trap_Write_Loop_Slot_May_Bind(slot, spare, body);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         if (Eval_Branch_Throws(OUT, ARG(BODY))) {
             bool breaking;
@@ -593,10 +593,10 @@ DECLARE_NATIVE(FOR_SKIP)
         //
         e = Trap_Read_Slot(spare, slot);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         if (not Any_Series(spare))
-            return PANIC(spare);
+            panic (spare);
 
         // Increment via skip, which may go before 0 or after the tail of
         // the series.
@@ -637,7 +637,7 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
 
     Option(VarList*) coupling = Level_Coupling(stop_level);
     if (not coupling)
-        return PANIC(Error_Archetype_Invoked_Raw());
+        panic (Error_Archetype_Invoked_Raw());
 
     Level* loop_level = Level_Of_Varlist_May_Panic(unwrap coupling);
 
@@ -1004,7 +1004,7 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
                 }
             }
             else
-                panic ("Loop enumeration of contexts must be 1 or 2 vars");
+                abrupt_panic ("Loop enumeration of contexts must be 1 or 2 vars");
 
             les->more_data = Try_Advance_Evars(&les->u.evars);
 
@@ -1055,7 +1055,7 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
                     return e;
             }
             else
-                panic ("Loop enumeration of contexts must be 1 or 2 vars");
+                abrupt_panic ("Loop enumeration of contexts must be 1 or 2 vars");
 
             goto maybe_lift_and_continue;
         }
@@ -1175,7 +1175,7 @@ DECLARE_NATIVE(FOR_EACH)
         &varlist, body, vars
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Remember_Cell_Is_Lifeguard(Init_Object(vars, varlist));
 
@@ -1211,7 +1211,7 @@ DECLARE_NATIVE(FOR_EACH)
     bool done;
     Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);
     if (e)
-        panic (unwrap e);  // !!! review shutdown mechanic
+        abrupt_panic (unwrap e);  // !!! review shutdown mechanic
     if (done)
         goto finalize_for_each;
 
@@ -1292,7 +1292,7 @@ DECLARE_NATIVE(EVERY)
         &varlist, body, vars
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
@@ -1328,7 +1328,7 @@ DECLARE_NATIVE(EVERY)
     bool done;
     Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);
     if (e)
-        panic (unwrap e);  // !!! review shutdown mechanic
+        abrupt_panic (unwrap e);  // !!! review shutdown mechanic
     if (done)
         goto finalize_every;
 
@@ -1368,7 +1368,7 @@ DECLARE_NATIVE(EVERY)
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, spare);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (not cond) {
         Init_Nulled(OUT);
@@ -1453,7 +1453,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         &varlist, body, vars
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
@@ -1855,7 +1855,7 @@ DECLARE_NATIVE(MAP)
             or Any_Sequence(data)
         )
     ){
-        return PANIC(
+        panic (
             "MAP only supports one-level QUOTED? series/path/context ATM"
         );
     }
@@ -1865,7 +1865,7 @@ DECLARE_NATIVE(MAP)
         &varlist, body, vars
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
@@ -1898,7 +1898,7 @@ DECLARE_NATIVE(MAP)
     bool done;
     Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);
     if (e)
-        panic (unwrap e);  // !!! review shutdown mechanic
+        abrupt_panic (unwrap e);  // !!! review shutdown mechanic
     if (done)
         goto finalize_map;
 
@@ -2104,7 +2104,7 @@ DECLARE_NATIVE(FOR)
         Unquotify(value);
 
         if (not (Any_Series(value) or Any_Sequence(value)))
-            return PANIC(PARAM(VALUE));
+            panic (PARAM(VALUE));
 
         // Delegate to FOR-EACH (note: in the future this will be the other
         // way around, with FOR-EACH delegating to FOR).
@@ -2132,7 +2132,7 @@ DECLARE_NATIVE(FOR)
         &varlist, body, vars
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     assert(Varlist_Len(varlist) == 1);
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
@@ -2142,7 +2142,7 @@ DECLARE_NATIVE(FOR)
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
     e = Trap_Write_Loop_Slot_May_Bind(slot, spare_one, body);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     STATE = ST_FOR_RUNNING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
@@ -2164,20 +2164,20 @@ DECLARE_NATIVE(FOR)
     Sink(Value) spare = SPARE;
     Option(Error*) e = Trap_Read_Slot(spare, slot);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (not Is_Integer(spare))
-        return PANIC(Error_Invalid_Type_Raw(Datatype_Of(spare)));
+        panic (Error_Invalid_Type_Raw(Datatype_Of(spare)));
 
     if (VAL_INT64(spare) == VAL_INT64(value))
         return LOOPED(OUT);
 
     if (Add_I64_Overflows(&mutable_VAL_INT64(spare), VAL_INT64(spare), 1))
-        return PANIC(Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     e = Trap_Write_Loop_Slot_May_Bind(slot, spare, body);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     assert(STATE == ST_FOR_RUNNING_BODY);
     assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
@@ -2267,14 +2267,14 @@ DECLARE_NATIVE(INSIST)
         goto loop_again;  // skip voids [2]
 
     if (Is_Ghost(OUT))
-        return PANIC("Body of INSIST must not return GHOST");  // tolerate? [3]
+        panic ("Body of INSIST must not return GHOST");  // tolerate? [3]
 
     Value* out = Decay_If_Unstable(OUT);  // decay for truth test [4]
 
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, out);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (cond)
         return LOOPED(OUT);
@@ -2343,7 +2343,7 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
     bool cond;
     Option(Error*) e = Trap_Test_Conditional(&cond, spare);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (is_while) {
         if (not cond)

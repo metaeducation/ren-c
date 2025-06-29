@@ -109,12 +109,12 @@ INLINE Option(FileReq*) Filereq_Of_Port(const Value* port)
     DECLARE_VALUE (state);
     Option(Error*) e = Trap_Read_Slot(state, state_slot);
     if (e)
-        panic (unwrap e);
+        abrupt_panic (unwrap e);
 
     if (Is_Nulled(state))
         return nullptr;  // no filereq, port not open
     if (not Is_Blob(state))
-        panic ("Expected filereq to be a BLOB! or NULL");
+        abrupt_panic ("Expected filereq to be a BLOB! or NULL");
 
     return cast(FileReq*, Blob_At_Ensure_Mutable(state));
 }

@@ -351,7 +351,7 @@ IMPLEMENT_GENERIC(INTERSECT, Any_Series)
         &heart, Element_ARG(VALUE1), Element_ARG(VALUE2)
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Flex* flex = Make_Set_Operation_Flex(
         ARG(VALUE1),
@@ -374,7 +374,7 @@ IMPLEMENT_GENERIC(UNION, Any_Series)
         &heart, Element_ARG(VALUE1), Element_ARG(VALUE2)
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Flex* flex = Make_Set_Operation_Flex(
         ARG(VALUE1),
@@ -397,7 +397,7 @@ IMPLEMENT_GENERIC(DIFFERENCE, Any_Series)
         &heart, Element_ARG(VALUE1), Element_ARG(VALUE2)
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Flex* flex = Make_Set_Operation_Flex(
         ARG(VALUE1),
@@ -420,7 +420,7 @@ IMPLEMENT_GENERIC(EXCLUDE, Any_Series)
         &heart, Element_ARG(DATA), Element_ARG(EXCLUSIONS)
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Flex* flex = Make_Set_Operation_Flex(
         ARG(DATA),
@@ -449,7 +449,7 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
     Option(Heart) t_heart = Heart_Of(t);
 
     if (not s_heart and not t_heart)
-        panic ("Custom type Equal_Values not implemented yet");
+        abrupt_panic ("Custom type Equal_Values not implemented yet");
 
     if (not s_heart or not t_heart)
         return false;  // one is a custom type, the other is not, so not equal
@@ -485,7 +485,7 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
 
     bool threw = Trampoline_Throws(atom_out, L);
     if (threw)
-        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+        abrupt_panic (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     if (Is_Error(atom_out))
         return false;
@@ -513,7 +513,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     Option(Heart) t_heart = Heart_Of(t);
 
     if (not s_heart and not t_heart)
-        panic ("Custom type Try_Lesser_Value not implemented yet");
+        abrupt_panic ("Custom type Try_Lesser_Value not implemented yet");
 
     if (not s_heart or not t_heart)
         return false;  // one is a custom type, the other is not, so not equal
@@ -546,7 +546,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
 
     bool threw = Trampoline_Throws(atom_out, L);
     if (threw)
-        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+        abrupt_panic (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     if (Is_Error(atom_out))
         return false;

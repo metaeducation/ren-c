@@ -243,7 +243,7 @@ Bounce Func_Dispatcher(Level* const L)
     heeded(Corrupt_Cell_If_Needful(SCRATCH));
 
     if (not Typecheck_Coerce_Return(L, param, OUT))
-        return PANIC(
+        panic (
             "End of function without a RETURN, but ~ not in RETURN: spec"
         );
 
@@ -292,7 +292,7 @@ bool Func_Details_Querier(
         DECLARE_VALUE (example);
         Option(Error*) e = Trap_Read_Slot(example, std_func_body_slot);
         if (e)
-            panic (unwrap e);
+            abrupt_panic (unwrap e);
 
         REBLEN real_body_index = 6;
 
@@ -435,7 +435,7 @@ DECLARE_NATIVE(FUNCTION)
         MAX_IDX_FUNC  // archetype and one array slot (will be filled)
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);
@@ -467,7 +467,7 @@ Bounce Init_Thrown_Unwind_Value(
         Level* L = target->prior;
         for (; true; L = L->prior) {
             if (L == BOTTOM_LEVEL)
-                return PANIC(Error_Invalid_Exit_Raw());
+                panic (Error_Invalid_Exit_Raw());
 
             if (not Is_Action_Level(L))
                 continue; // only exit functions
@@ -486,12 +486,12 @@ Bounce Init_Thrown_Unwind_Value(
 
         REBLEN count = VAL_INT32(seek);
         if (count <= 0)
-            return PANIC(Error_Invalid_Exit_Raw());
+            panic (Error_Invalid_Exit_Raw());
 
         Level* L = target->prior;
         for (; true; L = L->prior) {
             if (L == BOTTOM_LEVEL)
-                return PANIC(Error_Invalid_Exit_Raw());
+                panic (Error_Invalid_Exit_Raw());
 
             if (not Is_Action_Level(L))
                 continue; // only exit functions
@@ -690,7 +690,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 
     Option(VarList*) coupling = Level_Coupling(return_level);
     if (not coupling)
-        return PANIC(Error_Archetype_Invoked_Raw());
+        panic (Error_Archetype_Invoked_Raw());
 
     possibly(Level_Label(LEVEL) == CANON(RETURN));  // common renaming [1]
 
@@ -706,7 +706,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
         heeded(Corrupt_Cell_If_Needful(SCRATCH));
 
         if (not Typecheck_Coerce_Return(LEVEL, param, atom))  // do it now [2]
-            return PANIC(Error_Bad_Return_Type(target_level, atom, param));
+            panic (Error_Bad_Return_Type(target_level, atom, param));
 
         DECLARE_VALUE (label);
         Copy_Cell(label, LIB(UNWIND)); // see Make_Thrown_Unwind_Value
@@ -741,7 +741,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
         Add_Feed_Reference(return_level->feed);
     }
     else
-        return PANIC("RETURN:RUN requires action, frame, or <redo> as argument");
+        panic ("RETURN:RUN requires action, frame, or <redo> as argument");
 
     // We need to cooperatively throw a restart instruction up to the level
     // of the frame.  Use DEFINITIONAL-REDO as the throw label that Eval_Core()
@@ -786,5 +786,5 @@ DECLARE_NATIVE(DEFINITIONAL_REDO)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_REDO;
 
-    return PANIC("DEFINITIONAL-REDO should not be called directly");
+    panic ("DEFINITIONAL-REDO should not be called directly");
 }

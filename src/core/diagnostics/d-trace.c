@@ -77,5 +77,5 @@ DECLARE_NATIVE(TRACE)
     UNUSED(ARG(MODE));
     UNUSED(ARG(FUNCTION));
 
-    return PANIC("TRACE is being redesigned in light of Trampolines/Stackless");
+    panic ("TRACE is being redesigned in light of Trampolines/Stackless");
 }

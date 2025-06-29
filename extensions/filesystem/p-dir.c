@@ -92,7 +92,7 @@ DECLARE_NATIVE(DIR_ACTOR)
             dir_path, port
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         UNUSED(dir_path);  // we just tested to make sure would work later
 
@@ -146,14 +146,14 @@ DECLARE_NATIVE(DIR_ACTOR)
         UNUSED(PARAM(SOURCE));
 
         if (Bool_ARG(PART) or Bool_ARG(SEEK) or Bool_ARG(STRING) or Bool_ARG(LINES))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         DECLARE_VALUE (dir_path);
         Option(Error*) e = Trap_Get_Port_Path_From_Spec(
             dir_path, port
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         assert(TOP_INDEX == STACK_BASE);
         while (true) {
@@ -165,7 +165,7 @@ DECLARE_NATIVE(DIR_ACTOR)
             // find the file specified" message that doesn't say the name)
             //
             if (Is_Warning(result))
-                return PANIC(Error_Cannot_Open_Raw(dir_path, result));
+                panic (Error_Cannot_Open_Raw(dir_path, result));
 
             assert(Is_File(result));
             Copy_Cell(PUSH(), result);
@@ -183,15 +183,15 @@ DECLARE_NATIVE(DIR_ACTOR)
             dir_path, port
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         /*if (Is_Block(state))  // !!! what?
-            return PANIC(Error_Already_Open_Raw(dir_path));*/
+            panic (Error_Already_Open_Raw(dir_path));*/
 
         Value* error = Create_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
-            return PANIC(Error_No_Create_Raw(dir_path));  // higher level error
+            panic (Error_No_Create_Raw(dir_path));  // higher level error
         }
 
         return COPY(port); }
@@ -207,12 +207,12 @@ DECLARE_NATIVE(DIR_ACTOR)
             dir_path, port
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         Value* error = Rename_File_Or_Directory(port, ARG(TO));
         if (error) {
             rebRelease(error);  // !!! throws away details
-            return PANIC(Error_No_Rename_Raw(dir_path));  // higher level error
+            panic (Error_No_Rename_Raw(dir_path));  // higher level error
         }
 
         Copy_Cell(dir_path, ARG(TO));  // !!! this needs to mutate the spec!
@@ -227,12 +227,12 @@ DECLARE_NATIVE(DIR_ACTOR)
             dir_path, port
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         Value* error = Delete_File_Or_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
-            return PANIC(Error_No_Delete_Raw(dir_path));  // higher level error
+            panic (Error_No_Delete_Raw(dir_path));  // higher level error
         }
         return COPY(port); }
 
@@ -255,18 +255,18 @@ DECLARE_NATIVE(DIR_ACTOR)
             dir_path, port
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         UNUSED(PARAM(SPEC));
 
         if (Bool_ARG(READ) or Bool_ARG(WRITE))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
 
         if (Bool_ARG(NEW)) {
             Value* error = Create_Directory(port);
             if (error) {
                 rebRelease(error);  // !!! throws away details
-                return PANIC(Error_No_Create_Raw(dir_path));  // hi-level error
+                panic (Error_No_Create_Raw(dir_path));  // hi-level error
             }
         }
 

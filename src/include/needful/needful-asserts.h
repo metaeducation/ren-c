@@ -24,7 +24,7 @@
 //     int foo(int x) {
 //         if (x < 1020)
 //             return x + 304;
-//         panic ("x is too big"); // compiler may warn about no return value
+//         abrupt_panic ("x is too big"); // compiler may warn about no return value
 //     }
 //
 // One way of annotating to say this is okay is on the caller, with DEAD_END:
@@ -32,7 +32,7 @@
 //     int foo(int x) {
 //         if (x < 1020)
 //             return x + 304;
-//         panic ("x is too big");
+//         abrupt_panic ("x is too big");
 //         DEAD_END; // our warning-suppression macro for applicable compilers
 //     }
 //

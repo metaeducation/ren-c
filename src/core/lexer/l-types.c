@@ -70,7 +70,7 @@ DECLARE_NATIVE(HEART_OF)
     if (heart)
         return COPY(Datatype_From_Type(unwrap heart));
 
-    return PANIC("HEART OF not supported for extension types...yet!");
+    panic ("HEART OF not supported for extension types...yet!");
 }
 
 
@@ -262,7 +262,7 @@ IMPLEMENT_GENERIC(ADDRESS_OF, Is_Frame)
 
     Phase* phase = Frame_Phase(frame);
     if (not Is_Stub_Details(phase))
-        return PANIC("Phase isn't details, can't get ADDRESS-OF");
+        panic ("Phase isn't details, can't get ADDRESS-OF");
 
     Details* details = cast(Details*, phase);
     DetailsQuerier* querier = Details_Querier(details);
@@ -366,10 +366,10 @@ DECLARE_NATIVE(OF)
         Feed_Binding(LEVEL->feed)
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (not Is_Action(spare_action))
-        return PANIC("OF looked up to a value that wasn't an ACTION!");
+        panic ("OF looked up to a value that wasn't an ACTION!");
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
@@ -523,7 +523,7 @@ Option(const Byte*) Try_Scan_Decimal_To_Stack(
     char *se;
     double d = strtod(s_cast(buf), &se);
     if (fabs(d) == HUGE_VAL)  // !!! TBD: need check for NaN, and INF
-        panic (Error_Overflow_Raw());
+        abrupt_panic (Error_Overflow_Raw());
 
     Init_Decimal(PUSH(), d);
     return cp;

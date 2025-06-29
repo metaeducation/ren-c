@@ -423,7 +423,7 @@ Bounce Action_Executor(Level* L)
                     L->prior->executor == &Action_Executor
                     and Get_Executor_Flag(EVAL, L->prior, DIDNT_LEFT_QUOTE_PATH)
                 ){
-                    return PANIC(Error_Literal_Left_Path_Raw());  // [2]
+                    panic (Error_Literal_Left_Path_Raw());  // [2]
                 }
 
                 if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // empty is ok [3]
@@ -432,7 +432,7 @@ Bounce Action_Executor(Level* L)
                 }
 
                 if (Not_Parameter_Flag(PARAM, ENDABLE))
-                    return PANIC(Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
+                    panic (Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
 
                 Init_Unset_Due_To_End(ARG);
                 goto continue_fulfilling;
@@ -466,7 +466,7 @@ Bounce Action_Executor(Level* L)
               case PARAMCLASS_SOFT:
                 /*assert(Not_Antiform(OUT));*/
                 if (Is_Antiform(OUT))  // !!! Fix this
-                    return PANIC("Unexpected antiform on left of soft escape");
+                    panic ("Unexpected antiform on left of soft escape");
 
                 if (Is_Soft_Escapable_Group(cast(Element*, OUT))) {
                     if (Eval_Any_List_At_Throws(
@@ -562,7 +562,7 @@ Bounce Action_Executor(Level* L)
         //     1 arity-3-op (2 + 3) <unambiguous>
         //
         if (Get_Feed_Flag(L->feed, DEFERRING_INFIX))
-            return PANIC(Error_Ambiguous_Infix_Raw());
+            panic (Error_Ambiguous_Infix_Raw());
 
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
@@ -721,7 +721,7 @@ Bounce Action_Executor(Level* L)
         if (not Cell_Binding(TOP)) {  // duplicate or junk, loop didn't index
             Refinify_Pushed_Refinement(TOP_ELEMENT);
             Element* spare = Copy_Cell(SPARE, TOP_ELEMENT);  // [1]
-            return PANIC(Error_Bad_Parameter_Raw(spare));
+            panic (Error_Bad_Parameter_Raw(spare));
         }
 
         // Level_Args_Head offsets are 0-based, while index is 1-based.
@@ -826,7 +826,7 @@ Bounce Action_Executor(Level* L)
         if (Is_Endlike_Unset(ARG)) {  // special state, DUAL_0
             if (Get_Parameter_Flag(param, ENDABLE))  // !!! "<unset>?
                 continue;
-            return PANIC(Error_Unspecified_Arg(L));
+            panic (Error_Unspecified_Arg(L));
         }
 
         assert(LIFT_BYTE(ARG) != DUAL_0);  // not a tripwire
@@ -852,7 +852,7 @@ Bounce Action_Executor(Level* L)
                 or not Is_Varargs(Known_Stable(ARG))
             ){
                 Value* arg = Decay_If_Unstable(ARG);
-                return PANIC(Error_Not_Varargs(L, KEY, param, arg));
+                panic (Error_Not_Varargs(L, KEY, param, arg));
             }
 
             Tweak_Cell_Varargs_Phase(ARG, phase);
@@ -872,7 +872,7 @@ Bounce Action_Executor(Level* L)
 
         if (not Typecheck_Coerce(L, param, ARG, false)) {
             Value* arg = Decay_If_Unstable(ARG);
-            return PANIC(Error_Phase_Arg_Type(L, KEY, param, arg));
+            panic (Error_Phase_Arg_Type(L, KEY, param, arg));
         }
 
         Mark_Typechecked(ARG);
@@ -925,7 +925,7 @@ Bounce Action_Executor(Level* L)
             L->prior->executor == &Stepper_Executor
             and Get_Executor_Flag(EVAL, L->prior, DIDNT_LEFT_QUOTE_PATH)
         ){  // see notes
-            return PANIC(Error_Literal_Left_Path_Raw());
+            panic (Error_Literal_Left_Path_Raw());
         }
 
         assert(Is_Level_Infix(L));
@@ -1043,7 +1043,7 @@ Bounce Action_Executor(Level* L)
   //      o.f left-the  ; want error suggesting -> here, need flag for that
 
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT)  // [1]
-        return PANIC("Left lookback toward thing that took no args");
+        panic ("Left lookback toward thing that took no args");
 
     if (L->prior->executor == &Stepper_Executor)
         Clear_Executor_Flag(EVAL, L->prior, DIDNT_LEFT_QUOTE_PATH);  // [2]
@@ -1102,7 +1102,7 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
     )){
         Set_Stub_Unreadable(s);
         GC_Kill_Stub(s);  // ^-- needs non-null data unless free
-        panic (Error_No_Memory(
+        abrupt_panic (Error_No_Memory(
             sizeof(Cell) * (num_args + 1 + ONE_IF_POISON_TAILS))
         );
     }

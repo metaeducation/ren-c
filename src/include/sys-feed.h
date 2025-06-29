@@ -147,7 +147,7 @@ INLINE const Element* At_Feed(Feed* feed) {
         DECLARE_VALUE (temp);
         Copy_Cell(temp, elem);
         Unliftify_Known_Stable(temp);
-        panic (Error_Bad_Antiform(temp));
+        abrupt_panic (Error_Bad_Antiform(temp));
     }
     return elem;
 }

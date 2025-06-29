@@ -188,7 +188,7 @@ Bounce Evaluator_Executor(Level* const L)
     if (Is_Error(PRIMED)) {  // panic if error seen before last step [2]
         dont(Try_Is_Level_At_End_Optimization(L));  // (fail x,) must error
         if (not Is_Feed_At_End(L->feed))
-            return PANIC(Cell_Error(PRIMED));
+            panic (Cell_Error(PRIMED));
         goto finished;
     }
 

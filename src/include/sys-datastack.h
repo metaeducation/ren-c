@@ -311,4 +311,4 @@ INLINE void Drop_Data_Stack_To(StackIndex i) {
 // error allocations...just use an already made error.
 //
 #define Panic_Stack_Overflow() \
-    panic (Cell_Error(g_error_stack_overflow));
+    abrupt_panic (Cell_Error(g_error_stack_overflow));

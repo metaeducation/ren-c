@@ -334,12 +334,12 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         return BOUNCE_SUSPEND;
     }
 
-  //=//// HANDLE `return PANIC()` CASE /////////////////////////////////////=//
+  //=//// HANDLE `panic ()` CASE /////////////////////////////////////=//
 
-    // When you do `return PANIC(...)` in an executor or dispatcher, that is
+    // When you do `panic (...)` in an executor or dispatcher, that is
     // a "cooperative panic".  These are preferred to calling `panic (...)`
     // (which is based on longjmp() or C++ exceptions).  In addition to being
-    // more efficient, the `return PANIC(...)` mechanics work on platforms
+    // more efficient, the `panic (...)` mechanics work on platforms
     // without longjmp() or C++ exceptions.  Otherwise, all they can do in
     // response to a panic() is crash.
     //
@@ -349,7 +349,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     //
     // 1. STATE_BYTE() won't allow reads if you are DISPATCHING_INTRINSIC,
     //    since the intrinsic does not own the state byte.  But the flag has
-    //    to be set for (return PANIC(...)) in order to blame the right call
+    //    to be set for (panic (...)) in order to blame the right call
     //    (e.g. Native_Panic_Result() is DISPATCHING_INTRINSIC-aware).  It
     //    would be a burden for the Executor to have to clear the flag between
     //    generating the error blame and returning, so just clear flag here.
@@ -429,7 +429,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
     ){
         printf("Trampoline_With_Top_As_Root_Throws() got BOUNCE_%s\n", name);
         Dump_Stack(root);
-        panic ("Cannot interpret Trampoline result");
+        abrupt_panic ("Cannot interpret Trampoline result");
     }
   #endif
 
@@ -568,7 +568,7 @@ void Shutdown_Trampoline(void)
 //
 // 1. On normal completion with a return result, we do not allow API handles
 //    attached to a level to leak--you are expected to release everything.
-//    But return PANIC() or return FAIL() cases are exempt.
+//    But panic () or return FAIL() cases are exempt.
 //
 //    !!! This may be reviewed in light of wanting to make API programming
 //    easier, especially for JavaScript.

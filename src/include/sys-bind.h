@@ -340,7 +340,7 @@ INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
         binding = patch_context;
     }
     else if (Is_Stub_Let(binding))
-        panic ("LET variables have no context at this time");
+        abrupt_panic ("LET variables have no context at this time");
 
     return binding;
 }

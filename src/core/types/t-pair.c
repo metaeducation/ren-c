@@ -164,15 +164,15 @@ REBINT Index_From_Picker_For_Pair(
         else if (Word_Id(picker) == SYM_Y)
             n = 2;
         else
-            panic (picker);
+            abrupt_panic (picker);
     }
     else if (Is_Integer(picker)) {
         n = Int32(picker);
         if (n != 1 and n != 2)
-            panic (picker);
+            abrupt_panic (picker);
     }
     else
-        panic (picker);
+        abrupt_panic (picker);
 
     return n;
 }
@@ -305,7 +305,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Pair)
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+        panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
     goto handle_poke;
@@ -323,12 +323,12 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Pair)
     Unliftify_Known_Stable(dual);
 
     if (Is_Antiform(dual))
-        return PANIC(Error_Bad_Antiform(dual));
+        panic (Error_Bad_Antiform(dual));
 
     Element* poke = Known_Element(dual);
 
     if (not Is_Integer(poke))
-        return PANIC(PARAM(DUAL));
+        panic (PARAM(DUAL));
 
     Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
     Copy_Cell(which, poke);
@@ -342,7 +342,7 @@ IMPLEMENT_GENERIC(REVERSE, Is_Pair)
     INCLUDE_PARAMS_OF_REVERSE;
 
     if (Bool_ARG(PART))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     const Element* pair = Element_ARG(SERIES);
 
@@ -361,7 +361,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Pair)
     Value* v2 = ARG(VALUE2);
 
     if (not Is_Integer(v2))
-        return PANIC(PARAM(VALUE2));
+        panic (PARAM(VALUE2));
 
     return rebDelegate(CANON(MAKE), CANON(PAIR_X), "[",
         CANON(MULTIPLY), v2, cast(Value*, Cell_Pair_First(pair1)),  // !!! [1]

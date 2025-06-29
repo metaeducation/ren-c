@@ -105,7 +105,7 @@ static bool Try_Init_Startupinfo_Sink(
             }
             *hsink = *hwrite;*/
 
-           panic ("Unimplemented branch for INHERIT in Startupinfo_Sink()");
+           abrupt_panic ("Unimplemented branch for INHERIT in Startupinfo_Sink()");
         }
         else {
             // Not documented, but this is how to make a /dev/null on Windows

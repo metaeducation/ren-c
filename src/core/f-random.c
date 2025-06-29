@@ -124,7 +124,7 @@ REBI64 Random_Int(bool secure)
     REBI64 tmp = ran_arr_next();
 
     if (secure) {
-        panic (
+        abrupt_panic (
             "/SECURE relied on SHA1, which is now in the Crypt extension"
             " and not the core build.  Speak up if you need a workaround."
         );
@@ -151,7 +151,7 @@ REBI64 Random_Range(REBI64 r, bool secure)
 
     REBU64 s = (r < 0) ? -r : r;
     if (not secure and s > MM)
-        panic (Error_Overflow_Raw());
+        abrupt_panic (Error_Overflow_Raw());
 
     REBU64 m; // rejection limit
     if (secure)

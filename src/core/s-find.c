@@ -521,7 +521,7 @@ REBLEN Find_Value_In_Binstr(
         // codepoint").  Solution is to alias input as UTF-8 binary.
         //
         if (binstr_heart != TYPE_BLOB)
-            panic (Error_Find_String_Binary_Raw());
+            abrupt_panic (Error_Find_String_Binary_Raw());
     }
 
     if (
@@ -585,5 +585,5 @@ REBLEN Find_Value_In_Binstr(
         );
     }
     else
-        panic ("Find_Value_In_Binstr() received unknown pattern datatype");
+        abrupt_panic ("Find_Value_In_Binstr() received unknown pattern datatype");
 }

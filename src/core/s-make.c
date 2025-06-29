@@ -102,7 +102,7 @@ Strand* Append_Codepoint(Strand* dst, Codepoint c)
 {
     if (c == '\0') {
         assert(!"Zero byte being added to string.");  // caller should handle
-        panic (Error_Illegal_Zero_Byte_Raw());  // don't crash release build
+        abrupt_panic (Error_Illegal_Zero_Byte_Raw());  // don't crash release build
     }
 
     assert(c <= MAX_UNI);
@@ -134,7 +134,7 @@ Strand* Append_Codepoint(Strand* dst, Codepoint c)
 Strand* Make_Codepoint_Strand(Codepoint c)
 {
     if (c == '\0')
-        panic (Error_Illegal_Zero_Byte_Raw());
+        abrupt_panic (Error_Illegal_Zero_Byte_Raw());
 
     Size size = Encoded_Size_For_Codepoint(c);
     Strand* s = Make_Strand(size);
@@ -309,7 +309,7 @@ Strand* Append_UTF8_May_Panic(
         if (Is_Utf8_Lead_Byte(c)) {
             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &bytes_left);
             if (e)
-                panic (unwrap e);
+                abrupt_panic (unwrap e);
         }
         else if (Should_Skip_Ascii_Byte_May_Panic(
             bp,
@@ -383,7 +383,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
     for (; limit > 0; val++, limit--) {
         switch (Type_Of(val)) {
           case TYPE_QUASIFORM:
-            panic (Error_Bad_Value(val));
+            abrupt_panic (Error_Bad_Value(val));
 
           case TYPE_INTEGER:
             Expand_Flex_Tail(buf, 1);
@@ -412,7 +412,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             break; }
 
           default:
-            panic (Error_Bad_Value(val));
+            abrupt_panic (Error_Bad_Value(val));
         }
 
         tail = Flex_Used(buf);

@@ -107,7 +107,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         else if (pclass == PARAMCLASS_THE)
             Derelativize(out, look, binding);
         else
-            panic (Error_Varargs_No_Look_Raw()); // hard quote only
+            abrupt_panic (Error_Varargs_No_Look_Raw()); // hard quote only
 
         return true; // only a lookahead, no need to advance
     }
@@ -181,7 +181,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
         switch (pclass) {
         case PARAMCLASS_META:
-            panic ("Variadic literal parameters not yet implemented");
+            abrupt_panic ("Variadic literal parameters not yet implemented");
 
         case PARAMCLASS_NORMAL: {
             Level* L_temp = Make_Level_At(
@@ -249,7 +249,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             break;
 
         default:
-            panic ("Invalid variadic parameter class");
+            abrupt_panic ("Invalid variadic parameter class");
         }
 
         if (
@@ -322,7 +322,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             break;
 
         default:
-            panic ("Invalid variadic parameter class");
+            abrupt_panic ("Invalid variadic parameter class");
         }
     }
     else
@@ -352,9 +352,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             // vararg.  Revisit the question of how to give better errors.
             //
             if (not vararg_level)
-                panic (out);
+                abrupt_panic (out);
 
-            panic (Error_Phase_Arg_Type(
+            abrupt_panic (Error_Phase_Arg_Type(
                 unwrap vararg_level, key, param, cast(const Value*, out))
             );
         }
@@ -403,7 +403,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
 
     // !!! Permit FRAME! ?
 
-    return PANIC(Error_Bad_Make(TYPE_VARARGS, arg));
+    panic (Error_Bad_Make(TYPE_VARARGS, arg));
 }
 
 
@@ -421,9 +421,9 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
     Element* varargs = cast(Element*, ARG(SERIES));
 
     if (Bool_ARG(DEEP))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
     if (Bool_ARG(LAST))
-        return PANIC(Error_Varargs_Take_Last_Raw());
+        panic (Error_Varargs_Take_Last_Raw());
 
     if (not Bool_ARG(PART)) {
         if (Do_Vararg_Op_Maybe_End_Throws(
@@ -442,7 +442,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
     assert(TOP_INDEX == STACK_BASE);
 
     if (not Is_Integer(ARG(PART)))
-        return PANIC(PARAM(PART));
+        panic (PARAM(PART));
 
     REBINT limit = VAL_INT32(ARG(PART));
     if (limit < 0)
@@ -473,14 +473,14 @@ IMPLEMENT_GENERIC(TWEAK_P, Varargs)
     const Value* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
-        return PANIC(picker);
+        panic (picker);
 
     Value* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+        panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
     goto handle_poke;
@@ -488,7 +488,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Varargs)
   handle_pick: {
 
     if (VAL_INT32(picker) != 1)
-        return PANIC(Error_Varargs_No_Look_Raw());
+        panic (Error_Varargs_No_Look_Raw());
 
     if (Do_Vararg_Op_Maybe_End_Throws(
         OUT,
@@ -505,7 +505,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Varargs)
 
 } handle_poke: {
 
-    return PANIC("VARARGS! does not support modification at this time");
+    panic ("VARARGS! does not support modification at this time");
 }}
 
 

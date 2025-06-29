@@ -31,7 +31,7 @@
 //
 // This is the polymorphic code behind panic(), FAIL(), and FAIL():
 //
-//    panic ("UTF-8 string");  // delivers error with that text
+//    abrupt_panic ("UTF-8 string");  // delivers error with that text
 //    panic (api_value);       // ensure it's an ERROR!, release and use as-is
 //    panic (error_context);   // use the Error* as-is
 //    panic (PARAM(NAME));     // impliciate parameter as having a bad value
@@ -129,7 +129,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 // or to identify systemically with some kind of "error code".  However,
 // it's a realistic quick-and-dirty way of delivering a more meaningful
 // error than just using a RE_MISC error code, and can be found just as easily
-// to clean up later with a textual search for `panic ("`
+// to clean up later with a textual search for `abrupt_panic ("`
 //
 Error* Panic_Abruptly_Helper(Error* error)
 {
@@ -377,7 +377,7 @@ void Set_Location_Of_Error(
     DECLARE_VALUE (nearest);
     Option(Error*) e = Trap_Read_Slot(nearest, &vars->nearest);
     if (e)
-        panic (unwrap e);
+        abrupt_panic (unwrap e);
 
     if (Is_Nulled(nearest))  // don't override scanner data [4]
         Init_Near_For_Level(Slot_Init_Hack(&vars->nearest), where);
@@ -481,17 +481,17 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
     DECLARE_VALUE (id);
     e = Trap_Read_Slot(id, &vars->id);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     DECLARE_VALUE (type);
     e = Trap_Read_Slot(type, &vars->type);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     DECLARE_VALUE (message);
     e = Trap_Read_Slot(message, &vars->message);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     // Validate the error contents, and reconcile message template and ID
     // information with any data in the object.  Do this for the IS_STRING
@@ -576,7 +576,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
                 or Is_Nulled(message)
             )
         )){
-            return PANIC(Error_Invalid_Error_Raw(Varlist_Archetype(varlist)));
+            panic (Error_Invalid_Error_Raw(Varlist_Archetype(varlist)));
         }
     }
 
@@ -703,7 +703,7 @@ Error* Make_Error_Managed_Vaptr(
 
               default:
                 assert(false);
-                panic ("Bad pointer passed to Make_Error_Managed()");
+                abrupt_panic ("Bad pointer passed to Make_Error_Managed()");
             }
         }
     }
@@ -743,7 +743,7 @@ Error* Make_Error_Managed_Vaptr(
 // fixed number of arguments specific to each error...and the wrappers can
 // also do additional argument processing:
 //
-//     panic (Error_Something(arg1, thing_processed_to_make_arg2));
+//     abrupt_panic (Error_Something(arg1, thing_processed_to_make_arg2));
 //
 Error* Make_Error_Managed(
     int cat_id,
@@ -1428,32 +1428,32 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     DECLARE_VALUE (type);
     e = Trap_Read_Slot(type, &vars->type);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     DECLARE_VALUE (message);
     e = Trap_Read_Slot(message, &vars->message);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     DECLARE_VALUE (where);
     e = Trap_Read_Slot(where, &vars->where);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     DECLARE_VALUE (nearest);
     e = Trap_Read_Slot(nearest, &vars->nearest);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     DECLARE_VALUE (file);
     e = Trap_Read_Slot(file, &vars->file);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     DECLARE_VALUE (line);
     e = Trap_Read_Slot(line, &vars->line);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     // Form: ** <type> Error:
     //

@@ -105,7 +105,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
     Value* picker = ARG(PICKER);
 
     if (not Is_Word(picker) and not Is_Text(picker))
-        return PANIC("ENVIRONMENT! picker must be WORD! or TEXT!");
+        panic ("ENVIRONMENT! picker must be WORD! or TEXT!");
 
     Value* dual = ARG(DUAL);
 
@@ -120,7 +120,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
             goto update_environment;
         }
 
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+        panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
     poke = Unliftify_Known_Stable(dual);
@@ -157,13 +157,13 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
   //    a void in this mode).
 
     if (not Is_Text(unwrap poke))
-        return PANIC("ENVIRONMENT! can only be poked with VOID or TEXT!");
+        panic ("ENVIRONMENT! can only be poked with VOID or TEXT!");
 
     if (
         Environment_Conflates_Empty_Strings_As_Absent(env)
         and Series_Len_At(unwrap poke) == 0
     ){
-        return PANIC(
+        panic (
             "ENVIRONMENT! not configured to accept empty strings"  // [1]
         );
     }

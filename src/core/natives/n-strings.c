@@ -128,7 +128,7 @@ DECLARE_NATIVE(JOIN)
         base = nullptr;
         Option(Heart) datatype_heart = Cell_Datatype_Heart(ARG(BASE));
         if (not datatype_heart)
-            return PANIC(PARAM(BASE));
+            panic (PARAM(BASE));
         heart = unwrap datatype_heart;
     }
     else {
@@ -175,7 +175,7 @@ DECLARE_NATIVE(JOIN)
                 and not Is_Pinned_Form_Of(BLOCK,unwrap rest)
             )
         ){
-            return PANIC("JOIN of list or sequence must join with BLOCK!");
+            panic ("JOIN of list or sequence must join with BLOCK!");
         }
     }
 
@@ -368,7 +368,7 @@ DECLARE_NATIVE(JOIN)
                 SPARE, NO_STEPS, item, Level_Binding(sub)
             );
             if (e)
-                return PANIC(unwrap e);
+                panic (unwrap e);
 
             Fetch_Next_In_Feed(sub->feed);
             goto mold_step_result_in_spare;
@@ -385,7 +385,7 @@ DECLARE_NATIVE(JOIN)
             return CONTINUE(SPARE, cast(Element*, SCRATCH));
         }
 
-        return PANIC(item);
+        panic (item);
     }
 
     if (Is_Quoted(item)) {  // just mold it
@@ -569,13 +569,13 @@ DECLARE_NATIVE(JOIN)
         assert(not Is_Antiform(v));  // non-molded splices push items
 
         if (Any_List(v))  // guessing a behavior is bad [4]
-            return PANIC("JOIN requires @var to mold lists");
+            panic ("JOIN requires @var to mold lists");
 
         if (Any_Sequence(v))  // can have lists in them, dicey [4]
-            return PANIC("JOIN requires @var to mold sequences");
+            panic ("JOIN requires @var to mold sequences");
 
         if (Any_Lifted(cast(Element*, v)) or Sigil_Of(cast(Element*, v)))
-            return PANIC("JOIN requires @var for elements with sigils");
+            panic ("JOIN requires @var for elements with sigils");
 
         Form_Element(mo, cast(Element*, v));
     }
@@ -621,7 +621,7 @@ DECLARE_NATIVE(JOIN)
         DROP();
     }
     else
-        return PANIC(PARAM(BASE));
+        panic (PARAM(BASE));
 
     if (mo->strand)
         Drop_Mold(mo);
@@ -686,7 +686,7 @@ DECLARE_NATIVE(JOIN)
             break; }
 
           default:
-            return PANIC(Error_Bad_Value(at));
+            panic (Error_Bad_Value(at));
         }
 
         used = Flex_Used(buf);
@@ -762,7 +762,7 @@ DECLARE_NATIVE(DEBASE)
 
     Binary* decoded = maybe Decode_Enbased_Utf8_As_Binary(&bp, size, base, 0);
     if (not decoded)
-        return PANIC(Error_Invalid_Data_Raw(ARG(VALUE)));
+        panic (Error_Invalid_Data_Raw(ARG(VALUE)));
 
     return Init_Blob(OUT, decoded);
 }
@@ -811,7 +811,7 @@ DECLARE_NATIVE(ENBASE)
         break;
 
       default:
-        return PANIC(PARAM(BASE));
+        panic (PARAM(BASE));
     }
 
     return Init_Text(OUT, Pop_Molded_Strand(mo));
@@ -917,7 +917,7 @@ DECLARE_NATIVE(DEHEX)
     Element* string = Element_ARG(STRING);
 
     if (Bool_ARG(BLOB))
-        return PANIC("DEHEX:BLOB not yet implemented, but will permit %00");
+        panic ("DEHEX:BLOB not yet implemented, but will permit %00");
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
@@ -1057,13 +1057,13 @@ DECLARE_NATIVE(DELINE)
         ++n;
         if (c == LF) {
             if (seen_a_cr_lf)
-                return PANIC(Error_Mixed_Cr_Lf_Found_Raw());
+                panic (Error_Mixed_Cr_Lf_Found_Raw());
             seen_a_lone_lf = true;
         }
 
         if (c == CR) {
             if (seen_a_lone_lf)
-                return PANIC(Error_Mixed_Cr_Lf_Found_Raw());
+                panic (Error_Mixed_Cr_Lf_Found_Raw());
 
             dest = Write_Codepoint(dest, LF);
             src = Utf8_Next(&c, src);
@@ -1073,7 +1073,7 @@ DECLARE_NATIVE(DELINE)
                 seen_a_cr_lf = true;
                 continue;
             }
-            return PANIC(  // DELINE requires any CR to be followed by an LF
+            panic (  // DELINE requires any CR to be followed by an LF
                 Error_Illegal_Cr(Step_Back_Codepoint(src), Strand_Head(s))
             );
         }
@@ -1129,7 +1129,7 @@ DECLARE_NATIVE(ENLINE)
         if (c == LF and (not relax or c_prev != CR))
             ++delta;
         if (c == CR and not relax)  // !!! Note: `relax` fixed at false, ATM
-            return PANIC(
+            panic (
                 Error_Illegal_Cr(Step_Back_Codepoint(cp), Strand_Head(s))
             );
         c_prev = c;
@@ -1404,14 +1404,14 @@ DECLARE_NATIVE(TO_HEX)
             Form_Hex2(mo, 0);
     }
     else
-        return PANIC(PARAM(VALUE));
+        panic (PARAM(VALUE));
 
     // !!! Issue should be able to use string from mold buffer directly when
     // UTF-8 Everywhere unification of ANY-WORD? and ANY-STRING? is done.
     //
     assert(len == Strand_Size(mo->strand) - mo->base.size);
     if (not Try_Scan_Rune_To_Stack(Binary_At(mo->strand, mo->base.size), len))
-        return PANIC(PARAM(VALUE));
+        panic (PARAM(VALUE));
 
     Move_Cell(OUT, TOP_ELEMENT);
     DROP();

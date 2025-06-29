@@ -173,7 +173,7 @@
 INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 {
     if (Is_Feed_At_End(L->feed))  // `eval [x:]`, `eval [o.x:]`, etc. illegal
-        panic (Error_Need_Non_End(CURRENT));
+        abrupt_panic (Error_Need_Non_End(CURRENT));
 
     Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // always >= 2 elements [2]
 
@@ -288,7 +288,7 @@ Bounce Stepper_Executor(Level* L)
             Init_Okay(OUT);
         else if (bounce == L->out) {
             if (Is_Error(OUT))
-                return PANIC(Cell_Error(OUT));
+                panic (Cell_Error(OUT));
         }
         else if (bounce == BOUNCE_BAD_INTRINSIC_ARG)
             return Native_Panic_Result(L, Error_Bad_Intrinsic_Arg_1(L));
@@ -555,7 +555,7 @@ Bounce Stepper_Executor(Level* L)
 
     Option(Error*) e = Trap_Coerce_To_Antiform(OUT);  // may be illegal [1]
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // !!! hack [2]
 
@@ -637,7 +637,7 @@ Bounce Stepper_Executor(Level* L)
     //    antiforms from being seen by any other part of the code.
 
     if (Is_Feed_At_End(L->feed))  // no literal to take as argument
-        return PANIC(Error_Need_Non_End(CURRENT));
+        panic (Error_Need_Non_End(CURRENT));
 
     assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
     const Element* elem = c_cast(Element*, L->feed->p);
@@ -695,7 +695,7 @@ Bounce Stepper_Executor(Level* L)
 } tie_rightside_dual_in_out: {
 
     if (Is_Antiform(OUT))
-        return PANIC("$ operator cannot bind antiforms");
+        panic ("$ operator cannot bind antiforms");
 
     Bind_If_Unbound(Known_Element(OUT), Level_Binding(L));
     goto lookahead;
@@ -716,7 +716,7 @@ Bounce Stepper_Executor(Level* L)
         OUT, CURRENT, L_binding
     );
     if (error)
-        return PANIC(unwrap error);
+        panic (unwrap error);
 
     possibly(Not_Cell_Stable(OUT) or Is_Trash(Known_Stable(OUT)));
 
@@ -750,7 +750,7 @@ Bounce Stepper_Executor(Level* L)
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     possibly(Is_Error(OUT));  // last step may be missing, or meta-error [1]
     goto lookahead;  // even ERROR! wants lookahead (e.g. for EXCEPT)
@@ -804,7 +804,7 @@ Bounce Stepper_Executor(Level* L)
 
 } case TYPE_FENCE: { //// META FENCE! ^{...} /////////////////////////////////
 
-    return PANIC("Don't know what ^FENCE! is going to do yet");
+    panic ("Don't know what ^FENCE! is going to do yet");
 
 
 } case TYPE_RUNE: { //// META RUNE! /////////////////////////////////////////
@@ -812,7 +812,7 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Metaform_Space(CURRENT))
         goto handle_action_approval_sigil;  // special handling for lone ^
 
-    return PANIC("Don't know what ^RUNE! is going to do yet (besides ^)");
+    panic ("Don't know what ^RUNE! is going to do yet (besides ^)");
 
 } handle_action_approval_sigil: {  //// "APPROVE" Meta Space Sigil (^) ///////
 
@@ -846,7 +846,7 @@ Bounce Stepper_Executor(Level* L)
 
 } default: { /////////////////////////////////////////////////////////////////
 
-    return PANIC(
+    panic (
         "Only ^WORD!, ^GROUP, ^BLOCK! eval at this time for METAFORM!"
     );
 
@@ -879,7 +879,7 @@ Bounce Stepper_Executor(Level* L)
     //   https://forum.rebol.info/t/1387/6
 
     if (Get_Eval_Executor_Flag(L, FULFILLING_ARG))
-        return PANIC(Error_Expression_Barrier_Raw());
+        panic (Error_Expression_Barrier_Raw());
 
     goto start_new_expression;
 
@@ -897,7 +897,7 @@ Bounce Stepper_Executor(Level* L)
     //    hand side argument.
 
     if (Cell_Frame_Lens(CURRENT))  // running frame if lensed
-        return PANIC("Use REDO to restart a running FRAME! (can't EVAL)");
+        panic ("Use REDO to restart a running FRAME! (can't EVAL)");
 
     Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(CURRENT);
 
@@ -951,10 +951,10 @@ Bounce Stepper_Executor(Level* L)
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (Is_Error(OUT))  // e.g. couldn't pick word as field from binding
-        return PANIC(Cell_Error(OUT));  // don't conflate with action result
+        panic (Cell_Error(OUT));  // don't conflate with action result
 
     assert(Is_Cell_Stable(OUT));  // plain WORD! pick, ERROR! is only antiform
     Value* out = cast(Value*, OUT);
@@ -965,11 +965,11 @@ Bounce Stepper_Executor(Level* L)
     if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD)) {
         if (Is_Frame(out))
             goto run_action_in_out;
-        return PANIC("Leading slash means execute FRAME! or ACTION! only");
+        panic ("Leading slash means execute FRAME! or ACTION! only");
     }
 
     if (Is_Trash(out))  // checked second [1]
-        return PANIC(Error_Bad_Word_Get(CURRENT, out));
+        panic (Error_Bad_Word_Get(CURRENT, out));
 
     goto lookahead;
 
@@ -1029,7 +1029,7 @@ Bounce Stepper_Executor(Level* L)
             goto intrinsic_dual_arg_in_spare;
 
           default:
-            return PANIC("Unsupported Intrinsic parameter convention");
+            panic ("Unsupported Intrinsic parameter convention");
         }
 
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
@@ -1102,12 +1102,12 @@ Bounce Stepper_Executor(Level* L)
       case LEADING_SPACE_AND(WORD):  // :FOO, refinement, error on eval?
         Unchain(CURRENT);
         STATE = ST_STEPPER_GET_WORD;
-        return PANIC(":WORD! meaning is likely to become TRY WORD!");
+        panic (":WORD! meaning is likely to become TRY WORD!");
 
       case LEADING_SPACE_AND(TUPLE):  // :a.b.c -- what will this do?
         Unchain(CURRENT);
         STATE = ST_STEPPER_GET_TUPLE;
-        return PANIC(":TUPLE! meaning is likely to become TRY TUPLE!");
+        panic (":TUPLE! meaning is likely to become TRY TUPLE!");
 
       case LEADING_SPACE_AND(BLOCK):  // !!! :[a b] reduces, not great...
         Unchain(CURRENT);
@@ -1122,10 +1122,10 @@ Bounce Stepper_Executor(Level* L)
 
       case LEADING_SPACE_AND(GROUP):
         Unchain(CURRENT);
-        return PANIC("GET-GROUP! has no evaluator meaning at this time");
+        panic ("GET-GROUP! has no evaluator meaning at this time");
 
       default:  // it's just something like :1 or <tag>:
-        return PANIC("No current evaluation for things like :1 or <tag>:");
+        panic ("No current evaluation for things like :1 or <tag>:");
     }
 
     Sink(Value) out = OUT;
@@ -1136,13 +1136,13 @@ Bounce Stepper_Executor(Level* L)
         L_binding
     );
     if (error)  // lookup failed, a GROUP! in path threw, etc.
-        return PANIC(unwrap error);  // don't definitional error for now
+        panic (unwrap error);  // don't definitional error for now
 
     assert(Is_Action(out));
 
     if (Is_Cell_Frame_Infix(out)) {  // too late, left already evaluated
         Drop_Data_Stack_To(STACK_BASE);
-        return PANIC("Use `->-` to shove left infix operands into CHAIN!s");
+        panic ("Use `->-` to shove left infix operands into CHAIN!s");
     }
 
 } handle_action_in_out_with_refinements_pushed: {
@@ -1204,7 +1204,7 @@ Bounce Stepper_Executor(Level* L)
     assert(Is_Meta_Form_Of(GROUP, CURRENT));
 
     if (not Any_Lifted(OUT))
-        return PANIC("^GROUP! can only UNLIFT quoted/quasiforms");
+        panic ("^GROUP! can only UNLIFT quoted/quasiforms");
 
     Unliftify_Undecayed(OUT);  // GHOST! legal, ACTION! legal...
     Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // just lifted approve [1]
@@ -1244,7 +1244,7 @@ Bounce Stepper_Executor(Level* L)
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     possibly(Not_Cell_Stable(OUT));  // last step or unmeta'd item [1]
 
@@ -1316,7 +1316,7 @@ Bounce Stepper_Executor(Level* L)
             goto handle_generic_set;
 
           default:
-            return PANIC("/a:b:c will guarantee a function call, in time");
+            panic ("/a:b:c will guarantee a function call, in time");
         }
         break; }
 
@@ -1358,7 +1358,7 @@ Bounce Stepper_Executor(Level* L)
     Option(Error*) e = Trap_Get_Path_Push_Refinements(LEVEL);
     if (e) {  // don't FAIL, PANIC [1]
         possibly(slash_at_tail);  // ...or, exception for arity-0? [2]
-        return PANIC(unwrap e);
+        panic (unwrap e);
     }
 
     Value* out = Known_Stable(OUT);
@@ -1379,7 +1379,7 @@ Bounce Stepper_Executor(Level* L)
 
     if (Is_Cell_Frame_Infix(out)) {  // too late, left already evaluated [4]
         Drop_Data_Stack_To(STACK_BASE);
-        return PANIC("Use `->-` to shove left infix operands into PATH!s");
+        panic ("Use `->-` to shove left infix operands into PATH!s");
     }
 
     UNUSED(slash_at_head);  // !!! should e.g. enforce /1.2.3 as warning?
@@ -1430,7 +1430,7 @@ Bounce Stepper_Executor(Level* L)
 } generic_set_rightside_dual_in_out: {
 
     if (Is_Endlike_Unset(OUT))
-        return PANIC(Error_Need_Non_End_Raw(CURRENT));
+        panic (Error_Need_Non_End_Raw(CURRENT));
 
     if (Is_Lifted_Void(CURRENT))  // e.g. `(void): ...`  !!! use space var!
         goto lookahead;  // pass through everything
@@ -1440,7 +1440,7 @@ Bounce Stepper_Executor(Level* L)
 
     Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Invalidate_Gotten(L_next_gotten_raw);  // cache tampers with lookahead [1]
 
@@ -1469,7 +1469,7 @@ Bounce Stepper_Executor(Level* L)
         goto handle_generic_set;
 
       default:
-        return PANIC("Unknown type for use in SET-GROUP!");
+        panic ("Unknown type for use in SET-GROUP!");
     }
     goto lookahead;
 
@@ -1515,7 +1515,7 @@ Bounce Stepper_Executor(Level* L)
     assert(STATE == ST_STEPPER_SET_BLOCK and Is_Block(CURRENT));
 
     if (Series_Len_At(CURRENT) == 0)  // not supported [1]
-        return PANIC("SET-BLOCK! must not be empty for now.");
+        panic ("SET-BLOCK! must not be empty for now.");
 
     const Element* tail;
     const Element* check = List_At(&tail, CURRENT);
@@ -1536,7 +1536,7 @@ Bounce Stepper_Executor(Level* L)
     // on the right...but it might reduce confusion.
 
     if (Is_Quoted(check))
-        return PANIC("QUOTED? not currently permitted in SET-BLOCK!s");
+        panic ("QUOTED? not currently permitted in SET-BLOCK!s");
 
     bool circle_this;
 
@@ -1559,7 +1559,7 @@ Bounce Stepper_Executor(Level* L)
     //     == 2
 
     if (circled)
-        return PANIC("Can only {Circle} one multi-return result");
+        panic ("Can only {Circle} one multi-return result");
 
     Length len_at = Series_Len_At(check);
     if (len_at == 1) {
@@ -1570,7 +1570,7 @@ Bounce Stepper_Executor(Level* L)
         );
     }
     else  // !!! should {} be a synonym for {_}?
-        return PANIC("{Circle} only one element in multi-return");
+        panic ("{Circle} only one element in multi-return");
 
     circle_this = true;
 
@@ -1591,7 +1591,7 @@ Bounce Stepper_Executor(Level* L)
         not (single = Try_Get_Sequence_Singleheart(CURRENT))
         or not Singleheart_Has_Leading_Space(unwrap single)
     ){
-        return PANIC(
+        panic (
             "Only leading SPACE CHAIN! in SET BLOCK! dialect"
         );
     }
@@ -1610,7 +1610,7 @@ Bounce Stepper_Executor(Level* L)
         not (single = Try_Get_Sequence_Singleheart(CURRENT))
         or not Singleheart_Has_Leading_Space(unwrap single)
     ){
-        return PANIC(
+        panic (
             "Only leading SPACE PATH! in SET BLOCK! dialect"
         );
     }
@@ -1634,7 +1634,7 @@ Bounce Stepper_Executor(Level* L)
         else {
             Value* spare = Decay_If_Unstable(SPARE);
             if (Is_Antiform(spare))
-                return PANIC(Error_Bad_Antiform(spare));
+                panic (Error_Bad_Antiform(spare));
 
             if (Is_Pinned_Form_Of(GROUP, CURRENT)) {
                 Pinify(Known_Element(spare));  // add @ decoration
@@ -1671,7 +1671,7 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Space(TOP))
         continue;
 
-    return PANIC(
+    panic (
         "SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or _ or ^]"
     );
 
@@ -1757,7 +1757,7 @@ Bounce Stepper_Executor(Level* L)
 
     if (pack_at_lifted == pack_tail) {
         if (not is_optional)
-            return PANIC("Not enough values for required multi-return");
+            panic ("Not enough values for required multi-return");
 
         // match typical input of lift which will be Unliftify'd
         // (special handling ^WORD! below will actually use plain null to
@@ -1777,13 +1777,13 @@ Bounce Stepper_Executor(Level* L)
         heeded(Corrupt_Cell_If_Needful(SPARE));
         Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         goto circled_check;  // ...because we may have circled this
     }
 
     if (Is_Error(OUT))  // don't pass thru errors if not ^ sigil
-        return PANIC(Cell_Error(OUT));
+        panic (Cell_Error(OUT));
 
     Decay_If_Unstable(OUT);
 
@@ -1794,7 +1794,7 @@ Bounce Stepper_Executor(Level* L)
         heeded(Corrupt_Cell_If_Needful(SPARE));
         Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
     }
     else
         assert(false);
@@ -1939,7 +1939,7 @@ Bounce Stepper_Executor(Level* L)
     //    a word is used to do it, like `>>` in `x: >> lib/default [...]`.
 
     if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
-        return PANIC(Error_Literal_Left_Path_Raw());  // [1]
+        panic (Error_Literal_Left_Path_Raw());  // [1]
 
     if (Is_Feed_At_End(L->feed)) {
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
@@ -2017,7 +2017,7 @@ Bounce Stepper_Executor(Level* L)
     if (Get_Flavor_Flag(VARLIST, paramlist, PARAMLIST_LITERAL_FIRST)) {  // [1]
         assert(Not_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH));
         if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH))
-            return PANIC(Error_Literal_Left_Path_Raw());
+            panic (Error_Literal_Left_Path_Raw());
 
         const Param* first = First_Unspecialized_Param(nullptr, infixed);
         if (Parameter_Class(first) == PARAMCLASS_SOFT) {
@@ -2081,7 +2081,7 @@ Bounce Stepper_Executor(Level* L)
             // running a deferred operation in the same step is not an option.
             // The expression to the left must be in a GROUP!.
             //
-            return PANIC(Error_Ambiguous_Infix_Raw());
+            panic (Error_Ambiguous_Infix_Raw());
         }
 
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);

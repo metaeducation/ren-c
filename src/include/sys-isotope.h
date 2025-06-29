@@ -207,7 +207,7 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
 
     if (Is_Pack(v)) {  // iterate until result is not multi-return [1]
         if (Is_Pack_Undecayable(v))
-            panic ("Undecayable pack in Decay_If_Unstable()");
+            abrupt_panic ("Undecayable pack in Decay_If_Unstable()");
 
         const Element* pack_at = List_At(nullptr, v);
         Sink(Element) sink = v;
@@ -217,10 +217,10 @@ INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
     }
 
     if (Is_Ghost(v))
-        panic (Error_No_Value_Raw());  // distinct error from void?
+        abrupt_panic (Error_No_Value_Raw());  // distinct error from void?
 
     if (Is_Error(v))
-        panic (Cell_Error(v));
+        abrupt_panic (Cell_Error(v));
 
     return u_cast(Value*, u_cast(Atom*, v));
 }

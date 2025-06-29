@@ -96,7 +96,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
         out,  // <-- output cell
         "sys.util/make-port*", rebQ(arg)
     )){
-        return PANIC(Error_No_Catch_For_Throw(TOP_LEVEL));
+        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
     if (not Is_Port(out))  // should always create a port
@@ -143,7 +143,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         Varlist_Slot(ctx, STD_PORT_ACTOR)
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     // If actor is an ACTION!, it should be an OLDGENERIC Dispatcher for PORT!
     //
@@ -166,7 +166,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     }
 
     if (not Is_Object(spare_actor))
-        return PANIC(Error_Invalid_Actor_Raw());
+        panic (Error_Invalid_Actor_Raw());
 
     // Dispatch object function:
 
@@ -184,11 +184,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
             Varlist_Slot(Cell_Varlist(spare_actor), unwrap index)
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
     }
 
     if (not Is_Action(scratch_action))
-        return PANIC(Error_No_Port_Action_Raw(verb));
+        panic (Error_No_Port_Action_Raw(verb));
 
     Push_Redo_Action_Level(OUT, level_, scratch_action);
 
@@ -218,7 +218,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 
         if ((Bool_ARG(STRING) or Bool_ARG(LINES)) and not Is_Text(out)) {
             if (not Is_Blob(out))
-                return PANIC(
+                panic (
                     "READ :STRING or :LINES used on a non-BLOB!/STRING! read"
                 );
 
@@ -270,7 +270,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Url)
         break;
 
       default:
-        return PANIC("URL! must be used with IO annotation if intentional");
+        panic ("URL! must be used with IO annotation if intentional");
     }
 
     Value* port = rebValue("make port!", url);

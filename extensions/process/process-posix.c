@@ -110,13 +110,13 @@ DECLARE_NATIVE(SET_UID)
 
     switch (errno) {
       case EINVAL:
-        return PANIC(PARAM(UID));
+        panic (PARAM(UID));
 
       case EPERM:
         return Delegate_Panic_Permission_Denied();
 
       default:
-        return PANIC(rebError_OS(errno));
+        panic (rebError_OS(errno));
     }
 }
 
@@ -141,13 +141,13 @@ DECLARE_NATIVE(SET_EUID)
 
     switch (errno) {
       case EINVAL:
-        return PANIC(PARAM(EUID));
+        panic (PARAM(EUID));
 
       case EPERM:
         return Delegate_Panic_Permission_Denied();
 
       default:
-        return PANIC(rebError_OS(errno));
+        panic (rebError_OS(errno));
     }
 }
 
@@ -172,13 +172,13 @@ DECLARE_NATIVE(SET_GID)
 
     switch (errno) {
       case EINVAL:
-        return PANIC(PARAM(GID));
+        panic (PARAM(GID));
 
       case EPERM:
         return Delegate_Panic_Permission_Denied();
 
       default:
-        return PANIC(rebError_OS(errno));
+        panic (rebError_OS(errno));
     }
 }
 
@@ -203,13 +203,13 @@ DECLARE_NATIVE(SET_EGID)
 
     switch (errno) {
       case EINVAL:
-        return PANIC(PARAM(EGID));
+        panic (PARAM(EGID));
 
       case EPERM:
         return Delegate_Panic_Permission_Denied();
 
       default:
-        return PANIC(rebError_OS(errno));
+        panic (rebError_OS(errno));
     }
 }
 

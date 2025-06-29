@@ -261,7 +261,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
     switch(Type_Of(arg)) {
       case TYPE_INTEGER: {
         if (heart != TYPE_RUNE)
-            panic ("Only RUNE! can MAKE a UTF-8 immutable type with INTEGER!");
+            abrupt_panic ("Only RUNE! can MAKE a UTF-8 immutable type with INTEGER!");
 
         REBINT n = Int32(arg);
         Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, n);
@@ -271,7 +271,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
       case TYPE_BLOB: {
         if (heart != TYPE_RUNE)
-            panic ("Only RUNE! can MAKE a UTF-8 immutable type with BLOB!");
+            abrupt_panic ("Only RUNE! can MAKE a UTF-8 immutable type with BLOB!");
 
         Size size;
         const Byte* bp = Blob_Size_At(&size, arg);
@@ -566,12 +566,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     // implementation, and will not work if the RUNE! length is > 1.
     //
     if (not Is_Rune_And_Is_Char(rune))
-        return PANIC("Math operations only usable on single-character RUNE!");
+        panic ("Math operations only usable on single-character RUNE!");
 
     Codepoint c;
     Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, rune);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     // Don't use a Codepoint for chr, because it does signed math and then will
     // detect overflow.
@@ -583,7 +583,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
       case SYM_ADD: {
         e = Trap_Get_Math_Arg_For_Char(&arg, ARG_N(2), verb);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         chr += arg;
         break; }
@@ -591,7 +591,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
       case SYM_SUBTRACT: {
         e = Trap_Get_Math_Arg_For_Char(&arg, ARG_N(2), verb);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         chr -= arg;
         break; }
@@ -899,7 +899,7 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
 
     Option(Error*) e = Trap_Alias_Any_Utf8_As(OUT, any_utf8, as);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return OUT;
 }
@@ -917,7 +917,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Rune)
     const Value* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
-        return PANIC(PARAM(PICKER));
+        panic (PARAM(PICKER));
 
     REBI64 n = VAL_INT64(picker);
 
@@ -926,7 +926,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Rune)
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+        panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
     goto handle_poke;
@@ -950,7 +950,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Rune)
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
-    return PANIC("RUNE! is immutable, cannot be modified");
+    panic ("RUNE! is immutable, cannot be modified");
 }}
 
 
@@ -997,7 +997,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Rune)
 
     Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, rune);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
 } keep_generating_until_valid_char_found: {
 
@@ -1028,7 +1028,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
     Value* part = ARG(PART);
 
     if (Bool_ARG(SECURE))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
 
@@ -1117,12 +1117,12 @@ DECLARE_NATIVE(TRAILING_BYTES_FOR_UTF8)
 
     REBINT byte = VAL_INT32(ARG(FIRST_BYTE));
     if (byte < 0 or byte > 255)
-        return PANIC(Error_Out_Of_Range(ARG(FIRST_BYTE)));
+        panic (Error_Out_Of_Range(ARG(FIRST_BYTE)));
 
     uint_fast8_t trail = g_trailing_bytes_for_utf8[cast(Byte, byte)];
     if (trail > 3 and not Bool_ARG(EXTENDED)) {
         assert(trail == 4 or trail == 5);
-        return PANIC(
+        panic (
             "Use :EXTENDED with TRAILING-BYTES-FOR-UTF-8 for 4 or 5 bytes"
         );
     }

@@ -32,8 +32,9 @@
 
 #include "sys-core.h"
 
-#undef panic
-#define panic  STATIC_FAIL(dont_use_panic_in_this_file_use_crash_or_assert)
+#undef abrupt_panic
+#define abrupt_panic \
+    STATIC_FAIL(dont_use_panic_in_this_file_use_crash_or_assert)
 
 #if RUNTIME_CHECKS
 

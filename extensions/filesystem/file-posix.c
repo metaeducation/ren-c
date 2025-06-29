@@ -291,7 +291,7 @@ Value* Open_File(const Value* port, int flags)
         file_path, port
     );
     if (e)
-        panic (unwrap e);
+        abrupt_panic (unwrap e);
 
     char *path_utf8 = rebSpell("file-to-local:full", file_path);
 
@@ -427,7 +427,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
         const Byte* pos = utf8;
         for (; pos != tail; ++pos)
             if (*pos == CR)
-                panic (Error_Illegal_Cr(pos, utf8));
+                abrupt_panic (Error_Illegal_Cr(pos, utf8));
 
         data = utf8;
     }
@@ -509,7 +509,7 @@ Value* Create_Directory(const Value* port)
         dir_path, port
     );
     if (e)
-        panic (unwrap e);
+        abrupt_panic (unwrap e);
 
     // !!! We use /NO-TAIL-SLASH here because there was some historical issue
     // about leaving the tail slash on calling mkdir() on some implementation.
@@ -544,7 +544,7 @@ Value* Delete_File_Or_Directory(const Value* port)
         file_path, port
     );
     if (e)
-        panic (unwrap e);
+        abrupt_panic (unwrap e);
 
     // !!! There is a /NO-TAIL-SLASH refinement, but the tail slash was left on
     // for directory removal, because it seemed to be supported.  Review if
@@ -581,7 +581,7 @@ Value* Rename_File_Or_Directory(const Value* port, const Value* to)
         file_path, port
     );
     if (e)
-        panic (unwrap e);
+        abrupt_panic (unwrap e);
 
     char *from_utf8 = rebSpell(
         "file-to-local:full:no-tail-slash", file_path
@@ -771,7 +771,7 @@ Value* Query_File_Or_Directory(const Value* port)
         file_path, port
     );
     if (e)
-        panic (unwrap e);
+        abrupt_panic (unwrap e);
 
     // The original implementation here used /no-trailing-slash for the
     // FILE-TO-LOCAL, which meant that %/ would turn into an empty string.

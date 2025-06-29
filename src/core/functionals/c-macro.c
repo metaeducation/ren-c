@@ -141,7 +141,7 @@ Bounce Macro_Dispatcher(Level* const L)
 
     Value* out = Decay_If_Unstable(OUT);
     if (not Is_Block(out))
-        return PANIC("MACRO must return VOID or BLOCK! for the moment");
+        panic ("MACRO must return VOID or BLOCK! for the moment");
 
     Splice_Block_Into_Feed(L->feed, Known_Element(out));
 
@@ -205,7 +205,7 @@ DECLARE_NATIVE(MACRO)
         MAX_IDX_MACRO  // details capacity, just body slot (and archetype)
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);

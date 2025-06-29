@@ -144,7 +144,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
             &key
         ) != ERROR_SUCCESS
     ){
-        panic ("Could not open registry key for http\\shell\\open\\command");
+        abrupt_panic ("Could not open registry key for http\\shell\\open\\command");
     }
 
     DWORD num_bytes = 0; // pass NULL and use 0 for initial length, to query
@@ -159,7 +159,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
         or num_bytes % 2 != 0 // byte count should be even for unicode
     ){
         RegCloseKey(key);
-        return PANIC(
+        panic (
             "Could not read registry key for http\\shell\\open\\command"
         );
     }
@@ -174,7 +174,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
     RegCloseKey(key);
 
     if (flag != ERROR_SUCCESS)
-        return PANIC(
+        panic (
             "Could not read registry key for http\\shell\\open\\command"
         );
 
@@ -332,7 +332,7 @@ DECLARE_NATIVE(TERMINATE)
   #elif TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
 
     if (getpid() == VAL_INT32(ARG(PID))) {  // signal not reliable for this
-        return PANIC(
+        panic (
             "QUIT or SYS.UTIL/EXIT to terminate current process, instead"
         );
     }

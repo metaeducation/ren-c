@@ -317,7 +317,7 @@ DECLARE_NATIVE(MAKE_NATIVE)
         SYM_RETURN  // want return
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Details* details = Make_Dispatch_Details(
         BASE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,
@@ -404,7 +404,7 @@ DECLARE_NATIVE(COMPILE_P)
     //
     TCCState *state = tcc_new();
     if (not state)
-        return PANIC("TCC failed to create a TCC context");
+        panic ("TCC failed to create a TCC context");
 
     // We go ahead and put the state into a managed HANDLE!, so that the GC
     // can clean up the memory in the case of a panic().
@@ -483,7 +483,7 @@ DECLARE_NATIVE(COMPILE_P)
         const Element* item = List_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (not Is_Text(item))
-                return PANIC(
+                panic (
                     "If COMPILE*/FILES, compilables must be TEXT! paths"
                 );
 
@@ -521,7 +521,7 @@ DECLARE_NATIVE(COMPILE_P)
                         != &Pending_Native_Dispatcher
                     )
                 ){
-                    panic ("Only user natives can be in COMPILABLES list");
+                    abrupt_panic ("Only user natives can be in COMPILABLES list");
                 }
 
                 // Remember this function, because we're going to need to come
@@ -563,7 +563,7 @@ DECLARE_NATIVE(COMPILE_P)
             else {
                 // COMPILE should've vetted the list to only TEXT! and ACTION!
                 //
-                return PANIC(
+                panic (
                     "COMPILE input list must contain TEXT! and ACTION!s"
                 );
             }
@@ -652,7 +652,7 @@ DECLARE_NATIVE(COMPILE_P)
 
     if (output_type == TCC_OUTPUT_MEMORY) {
         if (tcc_relocate_auto(state) < 0)
-            return PANIC("TCC failed to relocate the code");
+            panic ("TCC failed to relocate the code");
     }
     else {
         assert(TOP_INDEX == STACK_BASE);  // no user natives if outputting file
@@ -662,7 +662,7 @@ DECLARE_NATIVE(COMPILE_P)
         );
 
         if (tcc_output_file(state, output_file_utf8) < 0)
-            return PANIC("TCC failed to output the file");
+            panic ("TCC failed to output the file");
 
         rebFree(output_file_utf8);
     }

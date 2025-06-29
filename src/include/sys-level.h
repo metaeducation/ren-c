@@ -583,7 +583,7 @@ INLINE Level* Prep_Level_Core(
     Flags flags
 ){
     if (L == nullptr)  // e.g. a failed allocation
-       panic (Error_No_Memory(sizeof(Level)));
+       abrupt_panic (Error_No_Memory(sizeof(Level)));
 
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;
 
@@ -808,7 +808,7 @@ INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
     return Failify(L->out);
 }
 
-// Doing `return PANIC()` from a native does all the same automatic cleanup
+// Doing `panic ()` from a native does all the same automatic cleanup
 // as if you triggered an abrupt panic, but doesn't go through the longjmp()
 // or C++ throw machinery.  This means it works even on systems that use
 // PANIC_JUST_ABORTS.  It should be preferred wherever possible.
@@ -966,8 +966,8 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     #define FAIL(p) \
         Native_Fail_Result(level_, Derive_Error_From_Pointer(p))
 
-    #define PANIC(p) \
-        (Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+    #define panic(p) \
+        return (Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
             Native_Panic_Result(level_, Derive_Error_From_Pointer(p)))
 
     // `return UNHANDLED;` is a shorthand for something that's written often
@@ -979,7 +979,9 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     // dispatch mechanism understands, and slipstream verb into the generic
     // somehow?)
     //
-    #define UNHANDLED   PANIC(Error_Unhandled(level_))
+    #define UNHANDLED \
+        (Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+            Native_Panic_Result(level_, Error_Unhandled(level_)))
 
     #define BASELINE   (&level_->baseline)
     #define STACK_BASE (level_->baseline.stack_base)

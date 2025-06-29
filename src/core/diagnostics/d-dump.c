@@ -171,6 +171,6 @@ DECLARE_NATIVE(DUMP)
     return TRIPWIRE;
   #else
     UNUSED(ARG(VALUE));
-    return PANIC(Error_Checked_Build_Only_Raw());
+    panic (Error_Checked_Build_Only_Raw());
   #endif
 }

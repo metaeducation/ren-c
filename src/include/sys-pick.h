@@ -44,7 +44,7 @@
 // alternative action if no handler is registered... e.g. REVERSE-OF will
 // fall back on COPY and REVERSE.)
 //
-// 1. return PANIC() can't be used in %sys-core.h because not everything that
+// 1. panic () can't be used in %sys-core.h because not everything that
 //    includes %sys-core.h defines the helper macros.  We want this to be
 //    fast and get inlined, so expand the macro manually.
 //
@@ -98,7 +98,7 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 ){
     Option(Heart) heart = Cell_Datatype_Builtin_Heart(datatype);
     if (not heart)
-        panic ("Generic dispatch not supported for extension types yet");
+        abrupt_panic ("Generic dispatch not supported for extension types yet");
 
     return Get_Builtin_Generic_Dispatcher(table, unwrap heart);
 }

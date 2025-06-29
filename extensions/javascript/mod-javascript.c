@@ -610,13 +610,13 @@ EXTERN_C void API_rebResolveNative_internal(
     Bounce bounce = Bounce_From_Bounce_Id(bounce_id);
 
     if (bounce == BOUNCE_DELEGATE)
-        panic ("reb.Delegate() not yet supported in JavaScript Natives");
+        abrupt_panic ("reb.Delegate() not yet supported in JavaScript Natives");
 
     if (bounce == BOUNCE_CONTINUE)
-        panic ("reb.Continue() not yet supported in JavaScript Natives");
+        abrupt_panic ("reb.Continue() not yet supported in JavaScript Natives");
 
     if (not Is_Bounce_An_Atom(bounce))
-        panic ("non-Value Bounce returned from JavaScript Native");
+        abrupt_panic ("non-Value Bounce returned from JavaScript Native");
 
     Value* result = cast(Value*, Atom_From_Bounce(bounce));
     Assert_Cell_Stable(result);
@@ -738,12 +738,12 @@ Bounce JavaScript_Dispatcher(Level* const L)
         goto initial_entry;
 
       case ST_JS_NATIVE_RUNNING :
-        return PANIC(
+        panic (
             "JavaScript_Dispatcher reentry while running, shouldn't happen"
         );
 
       case ST_JS_NATIVE_SUSPENDED :
-        return PANIC(
+        panic (
             "JavaScript_Dispatcher when suspended, needed resolve/reject"
         );
 
@@ -764,11 +764,11 @@ Bounce JavaScript_Dispatcher(Level* const L)
     struct Reb_Promise_Info *info = PG_Promises;
     if (is_awaiter) {
         if (info == nullptr)
-            return PANIC(
+            panic (
                 "JavaScript :AWAITER can only be called from rebPromise()"
             );
         if (info->state != PROMISE_STATE_RUNNING)
-            return PANIC(
+            panic (
                 "Cannot call JavaScript :AWAITER during another await"
             );
     }
@@ -821,7 +821,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     if (STATE == ST_JS_NATIVE_REJECTED)
         goto handle_rejected;
 
-    return PANIC("Unknown frame STATE value after reb.RunNative_internal()");
+    panic ("Unknown frame STATE value after reb.RunNative_internal()");
 
 } handle_resolved: {  ////////////////////////////////////////////////////////
 
@@ -835,7 +835,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     heeded(Corrupt_Cell_If_Needful(SCRATCH));
 
     if (not Typecheck_Coerce(L, param, OUT))
-        return PANIC(Error_Bad_Return_Type(L, OUT, param));
+        panic (Error_Bad_Return_Type(L, OUT, param));
 
     return OUT;
 
@@ -865,7 +865,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     TRACE("Calling panic() with error context");
 
     Error* e = Cell_Error(OUT);
-    return PANIC(e);
+    panic (e);
 }}
 
 
@@ -926,7 +926,7 @@ DECLARE_NATIVE(JS_NATIVE)
         SYM_RETURN  // want return
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     Details* details = Make_Dispatch_Details(
         BASE_FLAG_MANAGED
@@ -1058,7 +1058,7 @@ DECLARE_NATIVE(JS_NATIVE)
         unnecessary(rebRelease(errval));  // panic releases
 
         TRACE("JS-NATIVE had malformed JS, calling panic() w/error context");
-        return PANIC(e);
+        panic (e);
     }
 
     Drop_Mold(mo);
@@ -1177,7 +1177,7 @@ DECLARE_NATIVE(JS_EVAL_P)
     Value* errval = Value_From_Value_Id(addr);
     Error* e = Cell_Error(errval);
     rebRelease(errval);
-    return PANIC(e);
+    panic (e);
 }}
 
 
@@ -1232,7 +1232,7 @@ DECLARE_NATIVE(JS_TRACE)
     g_probe_panics = PG_JS_Trace = Cell_Logic(ARG(ENABLE));
     return TRIPWIRE;
   #else
-    return PANIC(
+    panic (
         "JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r"
     );
   #endif

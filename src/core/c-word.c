@@ -105,7 +105,7 @@ uint32_t Get_Hash_Prime_May_Panic(uint32_t minimum)
     if (not prime) {  // larger than hash prime table
         DECLARE_ELEMENT (temp);
         Init_Integer(temp, minimum);
-        panic (Error_Size_Limit_Raw(temp));
+        abrupt_panic (Error_Size_Limit_Raw(temp));
     }
     return unwrap prime;
 }
@@ -302,7 +302,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
             Clear_Flavor_Flag(SYMBOL, b, ALL_ASCII);
 
         if (utf8[i] == 0xC2 and utf8[i + 1] == 0xA0)
-            panic ("Non-breaking space illegal in WORD!");
+            abrupt_panic ("Non-breaking space illegal in WORD!");
 
         assert(
             utf8[i] != '$'
@@ -591,7 +591,7 @@ RebolValue* Register_Symbol(const char* utf8, SymId16 id16)
     Option(SymId) id = Symbol_Id(symbol);
     if (id) {
         if (not (id16 == u_cast(SymId16, id)))
-            panic ("Extensions using conflicting Register_Symbol() IDs");
+            abrupt_panic ("Extensions using conflicting Register_Symbol() IDs");
     }
 
     const Symbol* synonym = symbol;

@@ -65,7 +65,7 @@ INLINE bool Math_Arg_For_Logic(Value* arg)
     if (Is_Space(arg))
         return false;
 
-    panic (Error_Unexpected_Type(TYPE_INTEGER, Datatype_Of(arg)));
+    abrupt_panic (Error_Unexpected_Type(TYPE_INTEGER, Datatype_Of(arg)));
 }
 
 
@@ -215,7 +215,7 @@ DECLARE_NATIVE(SHIFT)
             if (Bool_ARG(LOGICAL))
                 mutable_VAL_INT64(a) = 0;
             else if (VAL_INT64(a) != 0)
-                panic (Error_Overflow_Raw());
+                abrupt_panic (Error_Overflow_Raw());
         }
         else {
             if (Bool_ARG(LOGICAL))
@@ -227,7 +227,7 @@ DECLARE_NATIVE(SHIFT)
                     : cast(REBU64, VAL_INT64(a));
                 if (c <= d) {
                     if ((c < d) || (VAL_INT64(a) >= 0))
-                        panic (Error_Overflow_Raw());
+                        abrupt_panic (Error_Overflow_Raw());
 
                     mutable_VAL_INT64(a) = INT64_MIN;
                 }

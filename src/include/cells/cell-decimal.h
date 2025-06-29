@@ -56,7 +56,7 @@ INLINE Element* Init_Decimal_Or_Percent_Untracked(
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     if (not FINITE(dec))
-        panic (Error_Overflow_Raw());
+        abrupt_panic (Error_Overflow_Raw());
 
     Reset_Cell_Header_Noquote(
         out,

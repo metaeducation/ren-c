@@ -118,7 +118,7 @@ DECLARE_NATIVE(QUOTE)
     REBINT depth = Bool_ARG(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1;
 
     if (depth < 0)
-        return PANIC(PARAM(DEPTH));
+        panic (PARAM(DEPTH));
 
     Quotify_Depth(e, depth);
     return COPY(e);
@@ -145,10 +145,10 @@ DECLARE_NATIVE(UNQUOTE)
     Count depth = (Bool_ARG(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1);
 
     if (depth < 0)
-        return PANIC(PARAM(DEPTH));
+        panic (PARAM(DEPTH));
 
     if (depth > Quotes_Of(v))
-        return PANIC("Value not quoted enough for unquote depth requested");
+        panic ("Value not quoted enough for unquote depth requested");
 
     return Unquotify_Depth(Copy_Cell(OUT, v), depth);
 }
@@ -180,7 +180,7 @@ DECLARE_NATIVE(QUASI)
     if (Is_Quasiform(elem)) {
         if (Bool_ARG(PASS))
             return COPY(elem);
-        return PANIC("Use QUASI:PASS if QUASI argument is already a quasiform");
+        panic ("Use QUASI:PASS if QUASI argument is already a quasiform");
     }
 
     Element* out = Copy_Cell(OUT, elem);
@@ -239,7 +239,7 @@ DECLARE_NATIVE(LIFT)
 
     if (Is_Error(atom)) {
         if (not Bool_ARG(EXCEPT))
-            return PANIC(Cell_Error(atom));
+            panic (Cell_Error(atom));
 
         LIFT_BYTE(atom) = NOQUOTE_2;
         return COPY(atom);  // plain WARNING!
@@ -298,32 +298,32 @@ DECLARE_NATIVE(UNLIFT)
 
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {  // intrinsic shortcut
         if (not Any_Lifted(atom))
-            return PANIC("Plain UNLIFT only accepts quasiforms and quoteds");
+            panic ("Plain UNLIFT only accepts quasiforms and quoteds");
         return COPY(Unliftify_Undecayed(atom));
     }
 
     if (Is_Antiform(atom)) {
         assert(Is_Void(atom) or Is_Light_Null(atom));
         if (not Bool_ARG(LITE))
-            return PANIC("UNLIFT only accepts NULL or VOID if :LITE");
+            panic ("UNLIFT only accepts NULL or VOID if :LITE");
         return COPY(atom);  // pass through as-is
     }
 
     if (LIFT_BYTE(atom) == NOQUOTE_2) {
         if (not Bool_ARG(LITE))
-            return PANIC("UNLIFT only takes non quoted/quasi things if :LITE");
+            panic ("UNLIFT only takes non quoted/quasi things if :LITE");
 
         Copy_Cell(OUT, atom);
 
         Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         return OUT;
     }
 
     if (LIFT_BYTE(atom) == QUASIFORM_3 and Bool_ARG(LITE))
-        return PANIC(
+        panic (
             "UNLIFT:LITE does not accept quasiforms (plain forms are meta)"
         );
 
@@ -382,7 +382,7 @@ DECLARE_NATIVE(ANTIFORM_Q)
     Value* datatype = Decay_If_Unstable(m_cast(Atom*, atom));  // mutable [1]
 
     if (not Is_Datatype(datatype))
-        return PANIC("ANTIFORM?:TYPE only accepts DATATYPE!");
+        panic ("ANTIFORM?:TYPE only accepts DATATYPE!");
 
     Option(Type) type = Cell_Datatype_Type(datatype);
 
@@ -412,7 +412,7 @@ DECLARE_NATIVE(ANTI)
     Copy_Cell(OUT, elem);
     Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return OUT;
 }
@@ -475,7 +475,7 @@ DECLARE_NATIVE(SPREAD)
     if (Is_Nulled(v) or Is_Quasi_Null(v))  // quasi ok [2]
         return Init_Nulled(OUT);  // pass through [1]
 
-    return PANIC(PARAM(VALUE));
+    panic (PARAM(VALUE));
 }
 
 
@@ -660,7 +660,7 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
         goto opting_out;  // void => void in OPT, or void => veto in OPT:VETO
 
     if (Is_Ghost(atom))
-        return PANIC("Cannot OPT a GHOST!");  // !!! Should we opt out ghosts?
+        panic ("Cannot OPT a GHOST!");  // !!! Should we opt out ghosts?
 
   decay_if_unstable: {
 

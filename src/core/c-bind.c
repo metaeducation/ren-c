@@ -548,12 +548,12 @@ DECLARE_NATIVE(LET)
 
     Decay_If_Unstable(SPARE);
     if (Is_Antiform(SPARE))
-        return PANIC(Error_Bad_Antiform(SPARE));
+        panic (Error_Bad_Antiform(SPARE));
 
     Element* spare = Known_Element(SPARE);
 
     if (Is_Quoted(spare))  // should (let 'x: <whatever>) be legal? [1]
-        return PANIC("QUOTED? escapes not supported at top level of LET");
+        panic ("QUOTED? escapes not supported at top level of LET");
 
     if (Try_Get_Settable_Word_Symbol(nullptr, spare) or Is_Set_Block(spare)) {
         if (Get_Level_Flag(L, LET_IS_SETTING)) {
@@ -561,7 +561,7 @@ DECLARE_NATIVE(LET)
             Clear_Level_Flag(L, LET_IS_SETTING);  // let block/word signal it
         }
         else {
-            return PANIC(
+            panic (
                 "[let (expr)] can't have expr be SET-XXX!, use [let (expr):]"
             );
         }
@@ -573,7 +573,7 @@ DECLARE_NATIVE(LET)
         }
     }
     else
-        return PANIC("LET GROUP! limited to WORD! and BLOCK!");  // [3]
+        panic ("LET GROUP! limited to WORD! and BLOCK!");  // [3]
 
     vars = spare;
 
@@ -620,7 +620,7 @@ DECLARE_NATIVE(LET)
         goto handle_word_or_set_word;
     }
 
-    return PANIC("Malformed LET.");
+    panic ("Malformed LET.");
 
   handle_word_or_set_word: {
 
@@ -707,7 +707,7 @@ DECLARE_NATIVE(LET)
             else {
                 Decay_If_Unstable(OUT);
                 if (Is_Antiform(OUT))
-                    return PANIC(Error_Bad_Antiform(OUT));
+                    panic (Error_Bad_Antiform(OUT));
             }
 
             temp = cast(Element*, OUT);
@@ -729,7 +729,7 @@ DECLARE_NATIVE(LET)
               default:
                 break;
             }
-            return PANIC("LET only supports /WORD for paths for now...");
+            panic ("LET only supports /WORD for paths for now...");
         }
 
         switch (Heart_Of(temp)) {  // permit quasi
@@ -747,7 +747,7 @@ DECLARE_NATIVE(LET)
             break; }
 
           default:
-            return PANIC(temp);  // default to passthru [2]
+            panic (temp);  // default to passthru [2]
         }
     }
 

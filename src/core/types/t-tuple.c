@@ -60,14 +60,14 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         const Byte* ap = Strand_Head(spelling);
         Size size = Strand_Size(spelling);  // UTF-8 len
         if (size & 1)
-            return PANIC(arg);  // must have even # of chars
+            panic (arg);  // must have even # of chars
         size /= 2;
         if (size > MAX_TUPLE)
-            return PANIC(arg);  // valid even for UTF-8
+            panic (arg);  // valid even for UTF-8
         for (alen = 0; alen < size; alen++) {
             Byte decoded;
             if (not (ap = maybe Try_Scan_Hex2(&decoded, ap)))
-                return PANIC(arg);
+                panic (arg);
             *vp++ = decoded;
         }
         Init_Tuple_Bytes(OUT, buf, size);
@@ -123,7 +123,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
     Byte buf[MAX_TUPLE];
 
     if (len > MAX_TUPLE or not Try_Get_Sequence_Bytes(buf, sequence, len))
-        return PANIC("Legacy TUPLE! math: only short all-integer sequences");
+        panic ("Legacy TUPLE! math: only short all-integer sequences");
 
     Byte* vp = buf;
 
@@ -160,7 +160,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
             alen > MAX_TUPLE
             or not Try_Get_Sequence_Bytes(abuf, arg, alen)
         ){
-            return PANIC("Legacy TUPLE! math: only short all-integer sequences");
+            panic ("Legacy TUPLE! math: only short all-integer sequences");
         }
 
         // Historical behavior: 1.1.1 + 2.2.2.2 => 3.3.3.2
@@ -174,7 +174,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         ap = abuf;
     }
     else
-        return PANIC(Error_Math_Args(TYPE_TUPLE, verb));
+        panic (Error_Math_Args(TYPE_TUPLE, verb));
 
     REBLEN temp = len;
     for (; temp > 0; --temp, ++vp) {
@@ -190,7 +190,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
           case SYM_DIVIDE:
             if (Is_Decimal(arg) || Is_Percent(arg)) {
                 if (dec == 0.0)
-                    return PANIC(Error_Zero_Divide_Raw());
+                    panic (Error_Zero_Divide_Raw());
 
                 // !!! After moving all the ROUND service routines to
                 // talk directly to ROUND frames, cases like this that
@@ -210,14 +210,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
             }
             else {
                 if (a == 0)
-                    return PANIC(Error_Zero_Divide_Raw());
+                    panic (Error_Zero_Divide_Raw());
                 v /= a;
             }
             break;
 
           case SYM_REMAINDER:
             if (a == 0)
-                return PANIC(Error_Zero_Divide_Raw());
+                panic (Error_Zero_Divide_Raw());
             v %= a;
             break;
 
@@ -431,7 +431,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
 
     Option(Error*) e = Trap_Alias_Any_Sequence_As(OUT, seq, as);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return OUT;
 }
@@ -456,7 +456,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
 
     if (not deep or Is_Cell_Wordlike(seq)) {  // wordlike is /A or :B etc
         if (part)
-            return PANIC(part);
+            panic (part);
         return COPY(seq);
     }
 
@@ -501,14 +501,14 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Sequence)
         n = Int32(picker) - 1;
     }
     else
-        return PANIC(picker);
+        panic (picker);
 
     Value* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        return PANIC(Error_Bad_Poke_Dual_Raw(dual));
+        panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
     goto handle_poke;
@@ -523,7 +523,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Sequence)
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
-    return PANIC("Cannot modify a TUPLE!, PATH!, or CHAIN! (immutable)");
+    panic ("Cannot modify a TUPLE!, PATH!, or CHAIN! (immutable)");
 
 }}
 
@@ -600,7 +600,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Sequence)
     Value* part = ARG(PART);
 
     if (Bool_ARG(SECURE) or Bool_ARG(PART))
-        return PANIC(Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 
@@ -630,7 +630,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Sequence)
 
     Value* arg2 = ARG(VALUE2);
     if (not Is_Integer(arg2))
-        return PANIC(PARAM(VALUE2));  // formerly supported decimal/percent
+        panic (PARAM(VALUE2));  // formerly supported decimal/percent
 
     return rebDelegate(
         "join type of", seq1, "map-each 'i", seq1, "[",

@@ -55,11 +55,11 @@ DECLARE_NATIVE(BIND)
         const Element* at = List_At(&tail, spec);
 
         if (not Is_Cell_Listlike(v))  // QUOTED? could have wrapped any type
-            return PANIC(Error_Invalid_Arg(level_, PARAM(VALUE)));
+            panic (Error_Invalid_Arg(level_, PARAM(VALUE)));
 
         for (; at != tail; ++at) {
             if (not Is_Pinned_Form_Of(WORD, at))
-                return PANIC("BLOCK! binds all @word for the moment");
+                panic ("BLOCK! binds all @word for the moment");
 
             Use* use = Alloc_Use_Inherits(Cell_Binding(v));
             Derelativize(Stub_Cell(use), at, Cell_Binding(spec));
@@ -67,7 +67,7 @@ DECLARE_NATIVE(BIND)
 
             Element* overbind = Known_Element(Stub_Cell(use));
             if (not IS_WORD_BOUND(overbind))
-                return PANIC(Error_Not_Bound_Raw(overbind));
+                panic (Error_Not_Bound_Raw(overbind));
 
             Tweak_Cell_Binding(v, use);
         }
@@ -86,10 +86,10 @@ DECLARE_NATIVE(BIND)
     else {
         assert(Is_Pinned_Form_Of(WORD, spec));
         if (not IS_WORD_BOUND(spec))
-            return PANIC(Error_Not_Bound_Raw(spec));
+            panic (Error_Not_Bound_Raw(spec));
 
         if (not Is_Cell_Listlike(v))  // QUOTED? could have wrapped any type
-            return PANIC(Error_Invalid_Arg(level_, PARAM(VALUE)));
+            panic (Error_Invalid_Arg(level_, PARAM(VALUE)));
 
         Use* use = Alloc_Use_Inherits(Cell_Binding(v));
         Copy_Cell(Stub_Cell(use), spec);
@@ -107,11 +107,11 @@ DECLARE_NATIVE(BIND)
         if (Try_Bind_Word(context, v))
             return COPY(v);
 
-        return PANIC(Error_Not_In_Context_Raw(v));
+        panic (Error_Not_In_Context_Raw(v));
     }
 
     if (not Is_Cell_Listlike(v))  // QUOTED? could have wrapped any type
-        return PANIC(Error_Invalid_Arg(level_, PARAM(VALUE)));
+        panic (Error_Invalid_Arg(level_, PARAM(VALUE)));
 
     Use* use = Alloc_Use_Inherits(Cell_Binding(v));
     Copy_Cell(Stub_Cell(use), context);
@@ -213,7 +213,7 @@ DECLARE_NATIVE(OVERBIND)
 
     if (Is_Word(defs)) {
         if (IS_WORD_UNBOUND(defs))
-            return PANIC(Error_Not_Bound_Raw(defs));
+            panic (Error_Not_Bound_Raw(defs));
     }
     else
         assert(Any_Context(defs));
@@ -351,7 +351,7 @@ DECLARE_NATIVE(USE)
         &varlist, body, vars
     );
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     UNUSED(varlist);  // managed, but [1]
 
@@ -854,7 +854,7 @@ DECLARE_NATIVE(RESOLVE)
     if (Is_Path(source)) {  // !!! For now: (resolve '/a:) -> a
         SingleHeart single;
         if (not (single = maybe Try_Get_Sequence_Singleheart(source)))
-            return PANIC(source);
+            panic (source);
 
         if (
             single == LEADING_SPACE_AND(WORD)  // /a
@@ -872,7 +872,7 @@ DECLARE_NATIVE(RESOLVE)
             // fall through to chain decoding.
         }
         else
-            return PANIC(source);
+            panic (source);
     }
 
     SingleHeart single = maybe Try_Get_Sequence_Singleheart(source);
@@ -888,7 +888,7 @@ DECLARE_NATIVE(RESOLVE)
         return COPY(Unchain(source));
     }
 
-    return PANIC(source);
+    panic (source);
 }
 
 
@@ -939,7 +939,7 @@ DECLARE_NATIVE(PROXY_EXPORTS)
     const Element* v = List_At(&tail, ARG(EXPORTS));
     for (; v != tail; ++v) {
         if (not Is_Word(v))
-            return PANIC(ARG(EXPORTS));
+            panic (ARG(EXPORTS));
 
         const Symbol* symbol = Word_Symbol(v);
 
@@ -947,7 +947,7 @@ DECLARE_NATIVE(PROXY_EXPORTS)
 
         const Slot* src = maybe Sea_Slot(source, symbol, strict);
         if (not src)
-            return PANIC(v);  // panic if unset value, also?
+            panic (v);  // panic if unset value, also?
 
         Slot* dest = maybe Sea_Slot(where, symbol, strict);
         if (dest) {
@@ -957,7 +957,7 @@ DECLARE_NATIVE(PROXY_EXPORTS)
                 src
             );
             if (e)
-                return PANIC(unwrap e);
+                panic (unwrap e);
         }
         else {
             Option(Error*) e = Trap_Read_Slot(
@@ -965,7 +965,7 @@ DECLARE_NATIVE(PROXY_EXPORTS)
                 src
             );
             if (e)
-                return PANIC(unwrap e);
+                panic (unwrap e);
         }
     }
 
@@ -1012,12 +1012,12 @@ DECLARE_NATIVE(INFIX)
 
     if (Bool_ARG(OFF)) {
         if (Bool_ARG(DEFER) or Bool_ARG(POSTPONE))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         Tweak_Frame_Infix_Mode(out, PREFIX_0);
     }
     else if (Bool_ARG(DEFER)) {  // not OFF, already checked
         if (Bool_ARG(POSTPONE))
-            return PANIC(Error_Bad_Refines_Raw());
+            panic (Error_Bad_Refines_Raw());
         Tweak_Frame_Infix_Mode(out, INFIX_DEFER);
     }
     else if (Bool_ARG(POSTPONE)) {  // not OFF or DEFER, we checked
@@ -1071,10 +1071,10 @@ DECLARE_NATIVE(FREE)
     Value* v = ARG(MEMORY);
 
     if (Any_Context(v) or Is_Handle(v))
-        return PANIC("FREE only implemented for ANY-SERIES? at the moment");
+        panic ("FREE only implemented for ANY-SERIES? at the moment");
 
     if (Not_Base_Readable(CELL_PAYLOAD_1(v)))
-        return PANIC("Cannot FREE already freed series");
+        panic ("Cannot FREE already freed series");
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
     Diminish_Stub(f);
@@ -1486,7 +1486,7 @@ DECLARE_NATIVE(DEGRADE)
 
     Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     return OUT;
 }

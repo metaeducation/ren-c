@@ -736,7 +736,7 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
         ++cp;
 
         if (c == '\0')  // e.g. ^(00) or ^@
-            panic (Error_Illegal_Zero_Byte_Raw());  // illegal in strings [2]
+            abrupt_panic (Error_Illegal_Zero_Byte_Raw());  // illegal in strings [2]
 
         Append_Codepoint(Mold_Buffer(mo), c);
     }
@@ -2183,7 +2183,7 @@ INLINE Bounce Scanner_Fail_Helper(
     DECLARE_VALUE (nearest);
     Option(Error*) e = Trap_Read_Slot(nearest, &vars->nearest);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (Is_Nulled(nearest))  // only update if it doesn't have it [1]
         Update_Error_Near_For_Line(
@@ -2208,7 +2208,7 @@ INLINE Bounce Scanner_Panic_Helper(
     DECLARE_VALUE (nearest);
     Option(Error*) e = Trap_Read_Slot(nearest, &vars->nearest);
     if (e)
-        return PANIC(unwrap e);
+        panic (unwrap e);
 
     if (Is_Nulled(nearest))  // only update if it doesn't have it [1]
         Update_Error_Near_For_Line(
@@ -2218,9 +2218,9 @@ INLINE Bounce Scanner_Panic_Helper(
     return Native_Fail_Result(level_, error);
 }
 
-#undef PANIC
-#define PANIC(p) \
-    Scanner_Panic_Helper(transcode, level_, Derive_Error_From_Pointer(p))
+#undef panic
+#define panic(p) \
+    return Scanner_Panic_Helper(transcode, level_, Derive_Error_From_Pointer(p))
 
 
 //
@@ -2339,7 +2339,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (*S->end == '~') {
         if (not S->quasi_pending)
-            return PANIC(
+            panic (
                 "Comma only followed by ~ for ~,~ quasiform (meta-GHOST!)"
             );
         Quasify_Isotopic_Fundamental(Init_Comma(PUSH()));
@@ -2735,7 +2735,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (threw) {
         Drop_Level(sub);  // should not have accured stack if threw
-        return PANIC(Error_No_Catch_For_Throw(L));
+        panic (Error_No_Catch_For_Throw(L));
     }
 
     if (Is_Error(OUT)) {
@@ -2897,7 +2897,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (Get_Scan_Executor_Flag(L, SAVE_LEVEL_DONT_POP_ARRAY)) {  // see flag
         if (*transcode->at != STATE)
-            return PANIC("Delimiters malformed in interpolation");
+            panic ("Delimiters malformed in interpolation");
         ++transcode->at;
 
         assert(sub->prior == L);  // sanity check
@@ -2987,7 +2987,7 @@ Bounce Scanner_Executor(Level* const L) {
     Drop_Level_Unbalanced(sub);  // allow stack accrual
 
     if (threw)  // automatically drops failing stack before throwing
-        return PANIC(Error_No_Catch_For_Throw(L));
+        panic (Error_No_Catch_For_Throw(L));
 
     if (Is_Error(OUT)) {  // no auto-drop without `return FAIL()`
         Drop_Data_Stack_To(STACK_BASE);
@@ -3217,9 +3217,9 @@ Bounce Scanner_Executor(Level* const L) {
 #define FAIL(p) \
     Native_Fail_Result(level_, Derive_Error_From_Pointer(p))
 
-#undef PANIC
-#define PANIC(p) \
-    (Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
+#undef panic
+#define panic(p) \
+    return (Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
         Native_Panic_Result(level_, Derive_Error_From_Pointer(p)))
 
 
@@ -3426,7 +3426,7 @@ DECLARE_NATIVE(TRANSCODE)
             SPECIFIED
         );
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
     }
     else {
         assert(Is_Nulled(ARG(LINE)) or Is_Integer(ARG(LINE)));
@@ -3440,10 +3440,10 @@ DECLARE_NATIVE(TRANSCODE)
     else if (Is_Integer(line_number)) {
         start_line = VAL_INT32(line_number);
         if (start_line <= 0)
-            return PANIC(PARAM(LINE));  // definitional?
+            panic (PARAM(LINE));  // definitional?
     }
     else
-        return PANIC(":LINE must be INTEGER! or an ANY-WORD? integer variable");
+        panic (":LINE must be INTEGER! or an ANY-WORD? integer variable");
 
     // Because we're building a frame, we can't make a {bp, END} packed array
     // and start up a variadic feed...because the stack variable would go
@@ -3540,7 +3540,7 @@ DECLARE_NATIVE(TRANSCODE)
 
         Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(SUBLEVEL, NO_STEPS);
         if (e)
-            return PANIC(unwrap e);
+            panic (unwrap e);
 
         UNUSED(*OUT);
     }
@@ -3720,7 +3720,7 @@ Option(Source*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
     DECLARE_ATOM (temp);
     Push_Level_Erase_Out_If_State_0(temp, L);
     if (Trampoline_With_Top_As_Root_Throws())
-        panic (Error_No_Catch_For_Throw(L));
+        abrupt_panic (Error_No_Catch_For_Throw(L));
 
     if (TOP_INDEX == L->baseline.stack_base) {
         Drop_Level(L);

@@ -252,7 +252,7 @@ DECLARE_NATIVE(REORDER)
     Destruct_Binder(binder);
 
     if (error)  // *now* it's safe to panic...
-        return PANIC(unwrap error);
+        panic (unwrap error);
 
     Details* details = Make_Dispatch_Details(
         BASE_FLAG_MANAGED,
