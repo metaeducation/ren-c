@@ -739,15 +739,6 @@ INLINE Bounce Native_Thrown_Result(Level* L) {
     return BOUNCE_THROWN;
 }
 
-INLINE Bounce Native_Void_Result_Untracked(
-    Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
-    Level* level_
-){
-    assert(out == level_->out);
-    UNUSED(out);
-    assert(not THROWING);
-    return Init_Void_Untracked(level_->out);
-}
 
 // 1. Typically the function typechecking machinery will notice when a function
 //    returns a GHOST! and always returns a GHOST!...setting the flag for
@@ -770,16 +761,6 @@ INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
     assert(not THROWING);
     Copy_Cell(level_->out, v);
     return Unliftify_Undecayed(level_->out);
-}
-
-INLINE Bounce Native_Tripwire_Result_Untracked(
-    Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
-    Level* level_
-){
-    assert(out == level_->out);
-    UNUSED(out);
-    assert(not THROWING);
-    return Init_Tripwire(level_->out);
 }
 
 INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
@@ -942,9 +923,10 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
 
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
-    #define VOID        Native_Void_Result_Untracked(TRACK(OUT), level_)
+    #define VOID        u_cast(Bounce, Init_Void(OUT))
+    #define TRIPWIRE    u_cast(Bounce, Init_Tripwire(OUT))
+
     #undef GHOST        // must specify whether it's "surprising" or not
-    #define TRIPWIRE    Native_Tripwire_Result_Untracked(TRACK(OUT), level_)
     #define THROWN      Native_Thrown_Result(level_)
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
     #define UNLIFT(v)   Native_Unlift_Result(level_, (v))
