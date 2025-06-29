@@ -90,6 +90,28 @@
 #endif
 
 
+//=//// PERMISSIVE_ZERO, More Lax Coercing Zero in C++ ////////////////////=//
+//
+// If you have code which wants to polymorphically be able to convert to an
+// Option(SomeEnum) or SomePointer* or bool, etc. then this introduces a
+// permissive notion of zero.  It lets you bring back some of the flexibility
+// that C originally had with permissive 0 conversions, but more tightly
+// controlled through a special type.
+//
+
+#if NO_CPLUSPLUS_11
+    #define PERMISSIVE_ZERO  0
+#else
+    struct PermissiveZero {
+        template<typename T>
+        operator T() const {
+            return u_cast(T, 0);
+        }
+    };
+    #define PERMISSIVE_ZERO  PermissiveZero{}
+#endif
+
+
 //=//// OPTION WRAPPER C++ TEMPLATED CLASS ////////////////////////////////=//
 //
 // 1. Because we want this to work in plain C, we can't take advantage of a
@@ -120,6 +142,10 @@
     );
 
     OptionWrapper () = default;  // garbage, or 0 if global [1]
+
+    OptionWrapper(const PermissiveZero&)  // see definition of PERMISSIVE_ZERO
+        : p (u_cast(T, 0))
+      {}
 
     template <typename U>
     OptionWrapper (const U& something)
@@ -171,6 +197,10 @@
     uintptr_t p;
 
     OptionWrapper () = default;
+
+    OptionWrapper(const PermissiveZero&)
+        : p (u_cast(uintptr_t, 0))
+      {}
 
     template <typename U>
     OptionWrapper (const U& something)

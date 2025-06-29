@@ -294,3 +294,21 @@
     #define rr_decltype(v) \
         typename RemoveReferenceDecltypeHelper<decltype(v)>::type
 #endif
+
+
+//=//// [[nodiscard]] SHIM FOR C++11 AND ABOVE ////////////////////////////=//
+
+#if defined(__has_cpp_attribute)
+  #if __has_cpp_attribute(nodiscard)
+    #define NEEDFUL_NODISCARD [[nodiscard]]
+  #endif
+#endif
+  #ifndef NEEDFUL_NODISCARD
+    #if defined(__GNUC__) || defined(__clang__)
+      #define NEEDFUL_NODISCARD __attribute__((warn_unused_result))
+    #elif defined(_MSC_VER)
+      #define NEEDFUL_NODISCARD _Check_return_
+    #else
+      #define NEEDFUL_NODISCARD
+  #endif
+#endif
