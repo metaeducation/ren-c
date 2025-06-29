@@ -17,7 +17,7 @@
 
 //=//// CORRUPTION HELPER /////////////////////////////////////////////////=//
 //
-// Helper stuct for Corrupt_If_Debug() with generalized memset() fallback.
+// Helper stuct for Corrupt_If_Needful() with generalized memset() fallback.
 //
 // Function templates can't be partially specialized, class templates can.
 // Using a struct allows us to provide custom behavior for type families
@@ -25,148 +25,157 @@
 // have a generic fallback.  (A function template would see a generic
 // fallback as ambiguous with SFINAE trying to "carve up" the space.)
 //
-// 1. We do not do Corrupt_If_Debug() with static analysis, because that would
-//    make variables look like they had been assigned to the static analyzer.
-//    It should use its own notion of when things are "garbage" (e.g. this
-//    allows reporting of use of unassigned values from inline functions.)
-//
-// 2. It's unsafe to memory fill an arbitrary C++ class by value with
+// 1. It's unsafe to memory fill an arbitrary C++ class by value with
 //    garbage bytes, because they can have extra vtables and such--you
 //    can overwrite private compiler data.  But this is a C codebase
 //    which uses just a few C++ features.  If you don't have virtual
 //    methods then is_standard_layout<> should be true, and the memset()
 //    shouldn't be a problem...
 //
-// 3. See definition of Cell and Mem_Fill() for why casting to void* is
+// 2. See definition of Cell and Mem_Fill() for why casting to void* is
 //    needed.  (Mem_Fill() macro is not defined in the Needful library)
+//
+// 3. Having tried a lot of variations of this code...including using masking
+//    to avoid branching...it seems that using uint_fast8_t and decrement
+//    with a test against 0 is about the fastest way to get good perodicity
+//    of zeroing and non-zeroing.
 //
 // 4. Use macro for efficiency, avoid another function call overhead
 //
 //    decltype(ref) deduces the type of ref (incl. reference/cv qualifiers)
 //
 //    std::remove_reference strips the reference, so the template matches
-//    the Corrupter<T> specializations
+//    the CorruptHelper<T> specializations
 //
-#if (! PERFORM_CORRUPTIONS)
+#if (! NEEDFUL_DOES_CORRUPTIONS)
+    #define Corrupt_If_Needful(x)  NOOP
 
-    #define Corrupt_If_Debug(x)  NOOP
+    #define NEEDFUL_USES_CORRUPT_HELPER  0
 
-    #define USE_CORRUPTER_HELPERS  0
+#elif (! CPLUSPLUS_11)
+    #define Corrupt_If_Needful(x) \
+        memset(&(x), 0xBD, sizeof(x))  // C99 fallback mechanism
 
-#elif NO_CPLUSPLUS_11
-    STATIC_ASSERT(! DEBUG_STATIC_ANALYZING);  // [1]
-
-    #include <string.h>
-
-    #define Corrupt_If_Debug(x) \
-        memset(u_cast(void*, &(x)), 0xBD, sizeof(x));
-
-    #define USE_CORRUPTER_HELPERS  0
+    #define NEEDFUL_USES_CORRUPT_HELPER  0
 #else
-    STATIC_ASSERT(! DEBUG_STATIC_ANALYZING);  // [1]
-
     #include <cstring>  // for memset
 
     template<typename T, typename Enable = void>
-    struct Corrupter {
+    struct CorruptHelper {
+      static_assert(
+        std::is_standard_layout<T>::value,  // would break C++ [1]
+        "Cannot memset() a C++ struct or class that's not standard layout"
+      );
+
+      static_assert(  // see common specializations later in this file
+        not std::is_pointer<T>::value
+            and not std::is_fundamental<T>::value
+            and not std::is_enum<T>::value,
+        "Fallback CorruptHelper<T> should be overridden by specialization"
+      );
+
       static void corrupt(T& ref) {  // fallback if no other specialization
-        static_assert(
-            std::is_standard_layout<T>::value,  // would break C++ [2]
-            "Cannot memset() a C++ struct or class that's not standard layout"
+      #if NEEDFUL_PSEUDO_RANDOM_CORRUPTIONS
+        static uint_fast8_t countdown = NEEDFUL_CORRUPTION_SEED;
+        memset(
+            u_cast(void*, &ref),  // void* cast needed [2]
+            countdown,  // countdown does double-duty as the fill byte
+            sizeof(T)
         );
-        static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
-        if (countdown == 0) {
-            memset(u_cast(void*, &ref), 0, sizeof(T));  // cast needed [3]
-            countdown = CORRUPT_IF_DEBUG_DOSE;
-        }
-        else {
-            memset(u_cast(void*, &ref), 189, sizeof(T));  // cast needed [3]
-            --countdown;
-        }
+        if (countdown == 0)
+            countdown = NEEDFUL_CORRUPTION_DOSE;
+        --countdown;  // `else` to avoid decrementing would slow it down [3]
+      #else
+        memset(u_cast(void*, &ref), 0xBD, sizeof(T));
+      #endif
       }
     };
 
-    #define Corrupt_If_Debug(ref) /* macro for efficiency [4] */ \
-        Corrupter< \
-            typename std::remove_reference<decltype(ref)>::type \
-        >::corrupt(ref)
+    #define Corrupt_If_Needful(ref) /* macro for efficiency [4] */ \
+        CorruptHelper<rr_decltype(ref)>::corrupt(ref)
 
-    #define USE_CORRUPTER_HELPERS  1
+    #define NEEDFUL_USES_CORRUPT_HELPER  1
 #endif
 
 
 //=//// POINTER CORRUPTION ////////////////////////////////////////////////=//
 //
+// 1. Unlike the standard memset() fallback which doesn't know what it's
+//    corrupting, this pointer corrupter knows...and there's not a lot of
+//    good reason to pay additional cost to try and randomize states vs.
+//    "bad pointer" and "null pointer".
 
-#if NO_RUNTIME_CHECKS
-    #define Corrupt_Pointer_If_Debug(p)                 NOOP
-    #define Corrupt_Function_Pointer_If_Debug(p)        NOOP
-#elif NO_CPLUSPLUS_11
-    #define Corrupt_Pointer_If_Debug(p) \
-        ((p) = p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
-
-    #define Corrupt_Function_Pointer_If_Debug(p) \
-        ((p) = 0)  // is there any way to do this generically in C?
-
-    #define FreeCorrupt_Pointer_Debug(p) \
-        ((p) = p_cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
-
-    #define Is_Pointer_Corrupt_Debug(p) \
-        ((p) == p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
-#else
-    template<class T>
-    INLINE void Corrupt_Pointer_If_Debug(T* &p)
-      { p = p_cast(T*, u_cast(uintptr_t, 0xDECAFBAD)); }
-
-    #define Corrupt_Function_Pointer_If_Debug Corrupt_Pointer_If_Debug
-
-    template<class T>
-    INLINE void FreeCorrupt_Pointer_Debug(T* &p)
-      { p = p_cast(T*, u_cast(uintptr_t, 0xF4EEF4EEE)); }
-
-    template<class T>
-    INLINE bool Is_Pointer_Corrupt_Debug(T* p)
-      { return (p == p_cast(T*, u_cast(uintptr_t, 0xDECAFBAD))); }
-#endif
-
-#if USE_CORRUPTER_HELPERS
+#if NEEDFUL_USES_CORRUPT_HELPER
     template<typename T>
-    struct Corrupter<T*> {  // Pointer (faster than memset() generic fallback)
+    struct CorruptHelper<T*> {  // Pointer (faster than memset() fallback)
       static void corrupt(T*& ref) {
-        static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
+      #if NEEDFUL_PSEUDO_RANDOM_CORRUPTIONS
+        static uint_fast8_t countdown = NEEDFUL_CORRUPTION_SEED;
         if (countdown == 0) {
             ref = nullptr;  // nullptr occasionally, deterministic
-            countdown = CORRUPT_IF_DEBUG_DOSE;
+            countdown = NEEDFUL_CORRUPTION_DOSE;
         }
         else {
-            Corrupt_Pointer_If_Debug(ref); // corrupt other half of the time
+            ref = p_cast(T*, u_cast(intptr_t, 0xDECAFBAD));  // fixed value [1]
             --countdown;
         }
+      #else
+        ref = p_cast(T*, u_cast(intptr_t, 0xDECAFBAD));  // fixed value [1]
+      #endif
       }
     };
 #endif
 
 
-//=//// ARITHMETIC NON-POINTER CORRUPTION ////////////////////////////////=//
+//=//// BOOLEAN CORRUPTION (MUST FLUCTUATE TRUE + FALSE) //////////////////=//
 //
-#if USE_CORRUPTER_HELPERS
+// 1. Booleans are special in the sense that writing a fixed garbage value
+//    into them is not attention-getting, since they're only interpreted as
+//    true and false.  Always use pseudorandom values to corrupt them, even
+//    if the build requests not to use NEEDFUL_PSEUDO_RANDOM_CORRUPTIONS.
+//
+#if NEEDFUL_USES_CORRUPT_HELPER
+    template<>
+    struct CorruptHelper<bool> {
+      static void corrupt(bool& ref) {
+        possibly(NEEDFUL_PSEUDO_RANDOM_CORRUPTIONS);  // ignore it [1]
+        static uint_fast8_t countdown = NEEDFUL_CORRUPTION_SEED;
+        ref = (countdown & 0x1);
+        if (countdown == 0)
+            countdown = NEEDFUL_CORRUPTION_DOSE;
+        --countdown;
+      }
+    };
+#endif
+
+
+//=//// NON-POINTER CORRUPTION FOR FUNDAMENTALS/ENUMS /////////////////////=//
+//
+#if NEEDFUL_USES_CORRUPT_HELPER
     template<typename T>
-    struct Corrupter<
-        T,  // Integer/bool/float (faster than memset() generic fallback)
+    struct CorruptHelper<
+        T,  // Integer/bool/float/enum/etc. (faster than memset() fallback)
         typename std::enable_if<
-            not std::is_pointer<T>::value and std::is_arithmetic<T>::value
+            not std::is_same<T, bool>::value and (
+                std::is_fundamental<T>::value
+                or std::is_enum<T>::value
+            )
         >::type
     >{
       static void corrupt(T& ref) {
-        static uint_fast8_t countdown = CORRUPT_IF_DEBUG_SEED;
+      #if NEEDFUL_PSEUDO_RANDOM_CORRUPTIONS
+        static uint_fast8_t countdown = NEEDFUL_CORRUPTION_SEED;
         if (countdown == 0) {
             ref = static_cast<T>(0);  // false/0 occasionally, deterministic
-            countdown = CORRUPT_IF_DEBUG_DOSE;
+            countdown = NEEDFUL_CORRUPTION_DOSE;
         }
         else {
             ref = static_cast<T>(12345678);  // garbage the rest of the time
             --countdown;
         }
+      #else
+        ref = u_cast(T, 12345678);
+      #endif
       }
     };
 #endif
@@ -190,7 +199,7 @@
 #define USED(x) \
     ((void)(x))
 
-#if NO_CPLUSPLUS_11 || (! PERFORM_CORRUPTIONS)
+#if NO_CPLUSPLUS_11 || (! NEEDFUL_DOES_CORRUPTIONS)
     #define UNUSED(x) \
         ((void)(x))
 #else
@@ -200,7 +209,7 @@
 
     template<typename T>
     void Unused_Helper(T& ref)  // mutable references... we can corrupt
-      { Corrupt_If_Debug(ref); }
+      { Corrupt_If_Needful(ref); }
 
     #define UNUSED Unused_Helper
 #endif
@@ -233,9 +242,9 @@
 // fast value to assign as an immediate.  In checked builds, they're assigned
 // a corrupt value because it's more likely to cause trouble if accessed.)
 //
-#if ASSIGN_UNUSED_FIELDS
+#if NEEDFUL_ASSIGNS_UNUSED_FIELDS
   #if RUNTIME_CHECKS
-    #define Corrupt_Unused_Field(ref)  Corrupt_If_Debug(ref)
+    #define Corrupt_Unused_Field(ref)  Corrupt_If_Needful(ref)
   #else
     #define Corrupt_Unused_Field(ref)  ((ref) = 0)
   #endif

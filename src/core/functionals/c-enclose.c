@@ -128,7 +128,7 @@ Bounce Encloser_Dispatcher(Level* const L)
     VarList* varlist = Varlist_Of_Level_Maybe_Unmanaged(L);
 
     L->varlist = nullptr;  // we're going to push new action in this level
-    Corrupt_Pointer_If_Debug(L->rootvar);
+    Corrupt_If_Needful(L->rootvar);
 
     assert(Misc_Runlevel(varlist) == L);  // need to change runlevel [1]
     Tweak_Misc_Runlevel(varlist, nullptr);
@@ -158,13 +158,13 @@ Bounce Encloser_Dispatcher(Level* const L)
     Set_Level_Infix_Mode(L, PREFIX_0);  // clear out for reuse...?
 
     Option(const Symbol*) original_label = L->u.action.label;
-    Corrupt_Pointer_If_Debug(L->u.action.label);
+    Corrupt_If_Needful(L->u.action.label);
   #if DEBUG_LEVEL_LABELS
     L->label_utf8 = nullptr;  // Begin_Action() requires
   #endif
     Prep_Action_Level(L, outer, arg);
     if (original_label) {
-        Corrupt_Pointer_If_Debug(L->u.action.label);
+        Corrupt_If_Needful(L->u.action.label);
       #if DEBUG_LEVEL_LABELS
         L->label_utf8 = nullptr;
       #endif

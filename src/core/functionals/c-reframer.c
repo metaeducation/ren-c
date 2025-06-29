@@ -385,8 +385,8 @@ Details* Alloc_Action_From_Exemplar(
             continue;
         }
 
-        heeded(Corrupt_Cell_If_Debug(Level_Spare(TOP_LEVEL)));
-        heeded(Corrupt_Cell_If_Debug(Level_Scratch(TOP_LEVEL)));
+        heeded(Corrupt_Cell_If_Needful(Level_Spare(TOP_LEVEL)));
+        heeded(Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
 
         if (not Typecheck_Coerce(TOP_LEVEL, param, arg, false))
             panic (Error_Arg_Type(label, key, param, arg));

@@ -746,7 +746,7 @@ Bounce Stepper_Executor(Level* L)
     Plainify(CURRENT);  // remove the ^ sigil
 
     heeded(Bind_If_Unbound(CURRENT, L_binding));
-    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
     if (e)
@@ -947,7 +947,7 @@ Bounce Stepper_Executor(Level* L)
     assert(not Sigil_Of(CURRENT));
 
     heeded(Bind_If_Unbound(CURRENT, L_binding));
-    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
     if (e)
@@ -1240,7 +1240,7 @@ Bounce Stepper_Executor(Level* L)
     }
 
     heeded(Bind_If_Unbound(CURRENT, L_binding));
-    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
     if (e)
@@ -1353,7 +1353,7 @@ Bounce Stepper_Executor(Level* L)
   //    WORD! to mediate the interaction.
 
     heeded(Bind_If_Unbound(CURRENT, L_binding));
-    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) e = Trap_Get_Path_Push_Refinements(LEVEL);
     if (e) {  // don't FAIL, PANIC [1]
@@ -1436,7 +1436,7 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead;  // pass through everything
 
     heeded(Bind_If_Unbound(CURRENT, L_binding));
-    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK);
     if (e)
@@ -1774,7 +1774,7 @@ Bounce Stepper_Executor(Level* L)
         goto circled_check;
 
     if (Is_Meta_Form_Of(WORD, var)) {
-        heeded(Corrupt_Cell_If_Debug(SPARE));
+        heeded(Corrupt_Cell_If_Needful(SPARE));
         Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
         if (e)
             return PANIC(unwrap e);
@@ -1791,7 +1791,7 @@ Bounce Stepper_Executor(Level* L)
         goto circled_check;
 
     if (Is_Word(var) or Is_Tuple(var) or Is_Pinned_Form_Of(WORD, var)) {
-        heeded(Corrupt_Cell_If_Debug(SPARE));
+        heeded(Corrupt_Cell_If_Needful(SPARE));
         Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK);
         if (e)
             return PANIC(unwrap e);

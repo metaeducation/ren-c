@@ -1353,7 +1353,7 @@ void API_rebPushContinuation_internal(
 
     DECLARE_ELEMENT (block);
     RebolContext* dummy_binding = nullptr;  // transcode ignores
-    Corrupt_Pointer_If_Debug(dummy_binding);
+    Corrupt_If_Needful(dummy_binding);
     API_rebTranscodeInto(dummy_binding, block, p, vaptr);  // use "API_" [1]
 
     // ...valist has been processed, out/spare/scratch are now mutable
@@ -1448,7 +1448,7 @@ RebolValue* API_rebRescue(
     if (e) {
         Init_Warning(v, unwrap e);
         Set_Base_Root_Bit(v);
-        Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
+        Corrupt_If_Needful(*value);  // !!! should introduce POISON API values
         return v;
     }
     Decay_If_Unstable(cast(Atom*, v));
@@ -1482,7 +1482,7 @@ RebolValue* API_rebRescueInterruptible(
     if (e) {
         Init_Warning(v, unwrap e);
         Set_Base_Root_Bit(v);
-        Corrupt_If_Debug(*value);  // !!! should introduce POISON API values
+        Corrupt_If_Needful(*value);  // !!! should introduce POISON API values
         return v;
     }
     Decay_If_Unstable(cast(Atom*, v));
@@ -3090,8 +3090,8 @@ Bounce Api_Function_Dispatcher(Level* const L)
         Phase_Paramlist(details), SYM_RETURN
     );
 
-    heeded(Corrupt_Cell_If_Debug(Level_Spare(L)));
-    heeded(Corrupt_Cell_If_Debug(Level_Scratch(L)));
+    heeded(Corrupt_Cell_If_Needful(Level_Spare(L)));
+    heeded(Corrupt_Cell_If_Needful(Level_Scratch(L)));
 
     if (not Typecheck_Coerce_Return(L, param, L->out))
         panic (Error_Bad_Return_Type(L, L->out, param));

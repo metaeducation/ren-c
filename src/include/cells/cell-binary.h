@@ -79,7 +79,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     else
         limit = *(unwrap limit_in);
 
-    Corrupt_Pointer_If_Debug(limit_in);
+    Corrupt_If_Needful(limit_in);
 
     if (heart == TYPE_BLOB) {
         *size_out = limit;

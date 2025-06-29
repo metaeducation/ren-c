@@ -90,7 +90,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
                 }
             }
         }
-        Corrupt_Cell_If_Debug(out);
+        Corrupt_Cell_If_Needful(out);
     }
 
     // The odd circumstances which make things simulate END--as well as an
@@ -341,8 +341,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     }
 
     if (param and not Is_Trash(out_value)) {
-        heeded(Corrupt_Cell_If_Debug(Level_Spare(TOP_LEVEL)));
-        heeded(Corrupt_Cell_If_Debug(Level_Scratch(TOP_LEVEL)));
+        heeded(Corrupt_Cell_If_Needful(Level_Spare(TOP_LEVEL)));
+        heeded(Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
 
         if (not Typecheck_Coerce(TOP_LEVEL, param, out, false)) {
             // !!! Array-based varargs only store the parameter list they are

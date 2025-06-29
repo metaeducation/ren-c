@@ -831,8 +831,8 @@ Bounce JavaScript_Dispatcher(Level* const L)
         Phase_Paramlist(details), SYM_RETURN
     );
 
-    heeded(Corrupt_Cell_If_Debug(SPARE));
-    heeded(Corrupt_Cell_If_Debug(SCRATCH));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SCRATCH));
 
     if (not Typecheck_Coerce(L, param, OUT))
         return PANIC(Error_Bad_Return_Type(L, OUT, param));

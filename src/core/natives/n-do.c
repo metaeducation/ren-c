@@ -738,7 +738,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     }
 
   #if RUNTIME_CHECKS
-    Corrupt_Pointer_If_Debug(param);
+    Corrupt_If_Needful(param);
   #endif
 
     Option(SingleHeart) single;
@@ -843,8 +843,8 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         or STATE == ST_FRAME_FILLER_UNLABELED_EVAL_STEP
     );
 
-  #if PERFORM_CORRUPTIONS
-    assert(not Is_Pointer_Corrupt_Debug(param));  // nullptr means toss result
+  #if NEEDFUL_DOES_CORRUPTIONS
+    assert(not param or Ensure_Readable(param));  // nullptr means toss result
   #endif
 
     Reset_Evaluator_Erase_Out(SUBLEVEL);

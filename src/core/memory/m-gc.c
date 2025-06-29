@@ -421,7 +421,7 @@ static void Propagate_All_GC_Marks(void)
         // Termination is not required in the release build (the length is
         // enough to know where it ends).  But corrupt in debug.
         //
-        Corrupt_Pointer_If_Debug(
+        Corrupt_If_Needful(
             *Flex_At(
                 Array*,
                 g_gc.mark_stack,

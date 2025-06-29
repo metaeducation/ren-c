@@ -120,9 +120,7 @@ INLINE Option(const Strand*) Link_Filename(const Source* source) {
         assert(Stub_Flavor(filename) == FLAVOR_NONSYMBOL);
         return filename;
     }
-  #if PERFORM_CORRUPTIONS
-    assert(Is_Pointer_Corrupt_Debug(source->link.base));
-  #endif
+    // source->link.base is corrupt/random... make it something known?
     return nullptr;
 }
 
@@ -135,7 +133,7 @@ INLINE void Tweak_Link_Filename(Source* source, Option(const Strand*) filename)
     }
     else {
         Clear_Stub_Flag(source, LINK_NEEDS_MARK);
-        Corrupt_Pointer_If_Debug(source->link.base);
+        Corrupt_If_Needful(source->link.base);
     }
 }
 

@@ -148,7 +148,7 @@
         = typename IfOutputConvertible2<U, T>::enable::type;
 
     SinkWrapper() : corruption_pending {false} {  // compiler MIGHT need [E]
-        Corrupt_Pointer_If_Debug(p);  // pointer itself, not contents!
+        Corrupt_If_Needful(p);  // pointer itself, not contents!
     }
 
     SinkWrapper(nullptr_t) : p {nullptr}, corruption_pending {false} {}
@@ -224,7 +224,7 @@
 
     operator T*() const {  // corrupt before yielding pointer
         if (corruption_pending) {
-            Corrupt_If_Debug(*p);  // corrupt pointed-to item
+            Corrupt_If_Needful(*p);  // corrupt pointed-to item
             corruption_pending = false;
         }
         return p;
@@ -233,7 +233,7 @@
     template<typename U>
     explicit operator U*() const {  // corrupt before yielding pointer
         if (corruption_pending) {
-            Corrupt_If_Debug(*p);  // corrupt pointed-to item
+            Corrupt_If_Needful(*p);  // corrupt pointed-to item
             corruption_pending = false;
         }
         return const_cast<U*>(reinterpret_cast<const U*>(p));
@@ -241,7 +241,7 @@
 
     T* operator->() const {  // handle corruption before dereference
         if (corruption_pending) {
-            Corrupt_If_Debug(*p);  // corrupt pointed-to item
+            Corrupt_If_Needful(*p);  // corrupt pointed-to item
             corruption_pending = false;
         }
         return p;
@@ -249,7 +249,7 @@
 
     ~SinkWrapper() {  // make sure we don't leave scope without corrupting
         if (corruption_pending)
-            Corrupt_If_Debug(*p);  // corrupt pointed-to item
+            Corrupt_If_Needful(*p);  // corrupt pointed-to item
     }
   };
 #endif
@@ -262,7 +262,7 @@
 //
 //     void Perform_Assignment_Maybe(Sink(int) out, bool assign) {
 //         if (not assign)
-//             Corrupt_If_Debug(out);  /* corrupt the pointer itself */
+//             Corrupt_If_Needful(out);  /* corrupt the pointer itself */
 //
 //         *out = 42;  /* we want unguarded write to crash if not assign */
 //     }
@@ -279,11 +279,11 @@
 // So we do just a pointer corruption, and clear the corruption_pending flag
 // so it doesn't try to corrupt the pointed-to data at the bad pointer.
 //
-#if DEBUG_USE_SINKS && USE_CORRUPTER_HELPERS
+#if DEBUG_USE_SINKS && NEEDFUL_USES_CORRUPT_HELPER
     template<typename T>
-    struct Corrupter<SinkWrapper<T>&> {  // C pointer corrupt fails
+    struct CorruptHelper<SinkWrapper<T>&> {  // C pointer corrupt fails
       static void corrupt(SinkWrapper<T>& wrapper) {
-        Corrupt_Pointer_If_Debug(wrapper.p);  // pointer itself (not contents)
+        Corrupt_If_Needful(wrapper.p);  // pointer itself (not contents)
         wrapper.corruption_pending = false;
       }
     };
@@ -328,7 +328,7 @@
     struct CastHook<SinkWrapper<V>,T*> {  // don't use SinkWrapper<V>& [D]
       static T* convert(const SinkWrapper<V>& sink) {  // must be ref here
         if (sink.corruption_pending) {
-            Corrupt_If_Debug(*sink.p);  // flush corruption
+            Corrupt_If_Needful(*sink.p);  // flush corruption
             sink.corruption_pending = false;
         }
         return h_cast(T*, sink.p);  // run validating cast if applicable [1]
@@ -375,7 +375,7 @@
         = typename IfOutputConvertible2<U, T>::enable::type;
 
     InitWrapper() {  // compiler might need [E]
-        dont(Corrupt_Pointer_If_Debug(p));  // lightweight behavior vs. Sink()
+        dont(Corrupt_If_Needful(p));  // lightweight behavior vs. Sink()
     }
 
     InitWrapper(nullptr_t) : p {nullptr}
@@ -499,7 +499,7 @@
         = typename IfReverseInheritable2<U, T>::enable::type;
 
     NeedWrapper()  // compiler MIGHT need [E]
-        { dont(Corrupt_If_Debug(p)); }  // may be zero in global scope
+        { dont(Corrupt_If_Needful(p)); }  // may be zero in global scope
 
     NeedWrapper(nullptr_t) : p {nullptr}
         {}

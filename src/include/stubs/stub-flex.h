@@ -94,10 +94,10 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
     s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
     assert(BASE_BYTE(s) == DIMINISHED_NON_CANON_BYTE);
 
-    Corrupt_Pointer_If_Debug(s->link.corrupt);
-    Corrupt_Pointer_If_Debug(s->misc.corrupt);
-    Corrupt_If_Debug(s->content);
-    Corrupt_Pointer_If_Debug(s->info.corrupt);
+    Corrupt_If_Needful(s->link.corrupt);
+    Corrupt_If_Needful(s->misc.corrupt);
+    Corrupt_If_Needful(s->content);
+    Corrupt_If_Needful(s->info.corrupt);
 
     return s;
 }
@@ -507,7 +507,7 @@ INLINE void Set_Flex_Used_Internal(Flex* f, Count used) {
 
   #if DEBUG_UTF8_EVERYWHERE
     if (Is_Stub_Non_Symbol(f)) {
-        Corrupt_If_Debug(MISC_STRAND_NUM_CODEPOINTS(f));  // catch violators [2]
+        Corrupt_If_Needful(MISC_STRAND_NUM_CODEPOINTS(f));  // catch violators [2]
         Touch_Stub_If_Debug(f);
     }
   #endif

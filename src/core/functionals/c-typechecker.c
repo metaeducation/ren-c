@@ -450,8 +450,8 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
     Copy_Cell(arg, v);  // do not decay [4]
 
-    heeded(Corrupt_Cell_If_Debug(Level_Spare(sub)));
-    heeded(Corrupt_Cell_If_Debug(Level_Scratch(sub)));
+    heeded(Corrupt_Cell_If_Needful(Level_Spare(sub)));
+    heeded(Corrupt_Cell_If_Needful(Level_Scratch(sub)));
 
     if (not Typecheck_Coerce(sub, param, arg, false)) {
         Drop_Action(sub);
@@ -821,7 +821,7 @@ bool Typecheck_Coerce(
 ){
     USE_LEVEL_SHORTHANDS (L);
 
-  #if PERFORM_CORRUPTIONS  // we use SCRATCH and SPARE as workspaces [1]
+  #if NEEDFUL_DOES_CORRUPTIONS  // we use SCRATCH and SPARE as workspaces [1]
     assert(Not_Cell_Readable(SCRATCH));
     assert(Not_Cell_Readable(SPARE));
   #endif

@@ -73,15 +73,15 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     sub->rootvar = Array_Head(sub->varlist);
 
     L->varlist = nullptr;  // Note: may be TRAMPOLINE_KEEPALIVE! [1]
-    Corrupt_Pointer_If_Debug(L->rootvar);
+    Corrupt_If_Needful(L->rootvar);
 
-    Corrupt_Function_Pointer_If_Debug(L->executor);  // caller must set
-    Corrupt_Pointer_If_Debug(L->u.action.label);
+    Corrupt_If_Needful(L->executor);  // caller must set
+    Corrupt_If_Needful(L->u.action.label);
   #if DEBUG_LEVEL_LABELS
     L->label_utf8 = nullptr;
   #endif
 
-    Corrupt_If_Debug(L->u);  // no longer action; corrupt after get stack base
+    Corrupt_If_Needful(L->u);  // no longer action; corrupt after get stack base
 
     return sub;
 }
@@ -214,9 +214,7 @@ Bounce Cascader_Executor(Level* const L)
     Drop_Level(SUBLEVEL);
 
     assert(L->varlist == nullptr);
-  #if PERFORM_CORRUPTIONS
-    assert(Is_Pointer_Corrupt_Debug(L->rootvar));
-  #endif
+    unnecessary(Corrupt_If_Needful(L->rootvar));  // already corrupt
 
     return OUT;
 }}

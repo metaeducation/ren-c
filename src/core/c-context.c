@@ -367,7 +367,7 @@ void Construct_Collector_Core(
 void Destruct_Collector_Core(Collector *cl)
 {
     Destruct_Binder_Core(&cl->binder);
-    Corrupt_If_Debug(cl->base_stump);
+    Corrupt_If_Needful(cl->base_stump);
 }
 
 

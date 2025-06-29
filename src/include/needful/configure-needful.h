@@ -99,6 +99,19 @@
 #endif
 
 
+//=//// NEEDFUL ASSERTS //////////////////////////////////////////////////=//
+//
+// In the configuration process, we use the needful asserts.  Include them
+// once the CPLUSPLUS_11 macro is defined.
+//
+
+#if !defined(ASSERT_IMPOSSIBLE_THINGS)
+    #define ASSERT_IMPOSSIBLE_THINGS  0  // don't bother with impossible()
+#endif
+
+#include "needful/needful-asserts.h"
+
+
 //=//// FEATURE TESTING AND ATTRIBUTE MACROS //////////////////////////////=//
 //
 // Feature testing macros __has_builtin() and __has_feature() were originally
@@ -185,29 +198,45 @@
 #endif
 
 
-//=//// ASSIGN_UNUSED_FIELDS //////////////////////////////////////////////=//
+//=//// NEEDFUL_ASSIGNS_UNUSED_FIELDS /////////////////////////////////////=//
 //
 // See Corrupt_Unused_Field()
 //
-#if !defined(ASSIGN_UNUSED_FIELDS)
-    #define ASSIGN_UNUSED_FIELDS 1
+#if !defined(NEEDFUL_ASSIGNS_UNUSED_FIELDS)
+    #define NEEDFUL_ASSIGNS_UNUSED_FIELDS  1
 #endif
 
 
-//=//// PERFORM_CORRUPTIONS + CORRUPTION SEED/DOSE ////////////////////////=//
+//=//// NEEDFUL_DOES_CORRUPTIONS + CORRUPTION SEED/DOSE ///////////////////=//
+//
+// See Corrupt_If_Needful() for more information.
+//
+// 1. We do not do Corrupt_If_Needful() with static analysis, because tha
+//    makes variables look like they've been assigned to the static analyzer.
+//    It should use its own notion of when things are "garbage" (e.g. this
+//    allows reporting of use of unassigned values from inline functions.)
+//
+// 2. Generate some variability, but still deterministic.
+//
 
-#if !defined(PERFORM_CORRUPTIONS)  // 1. See Corrupt_If_Debug()
-    #define PERFORM_CORRUPTIONS \
+#if !defined(NEEDFUL_DOES_CORRUPTIONS)
+   #define NEEDFUL_DOES_CORRUPTIONS \
         (RUNTIME_CHECKS && (! DEBUG_STATIC_ANALYZING))  // [1]
 #endif
 
-#if PERFORM_CORRUPTIONS  // generate some variability, but still deterministic
+#if NEEDFUL_DOES_CORRUPTIONS
+  #if !defined(NEEDFUL_PSEUDO_RANDOM_CORRUPTIONS)
+    #define NEEDFUL_PSEUDO_RANDOM_CORRUPTIONS  1  // more expensive
+  #endif
+
+    STATIC_ASSERT(! DEBUG_STATIC_ANALYZING);  // [1]
+
   #if defined(__clang__)
-    #define CORRUPT_IF_DEBUG_SEED 5  // e.g. fifth corrupt pointer is zero
-    #define CORRUPT_IF_DEBUG_DOSE 11
+    #define NEEDFUL_CORRUPTION_SEED 5  // e.g. 5th corrupt pointer is zero [2]
+    #define NEEDFUL_CORRUPTION_DOSE 11
   #else
-    #define CORRUPT_IF_DEBUG_SEED 0  // e.g. first corrupt pointer is zero
-    #define CORRUPT_IF_DEBUG_DOSE 7
+    #define NEEDFUL_CORRUPTION_SEED 0  // e.g. 1st corrupt pointer is zero [2]
+    #define NEEDFUL_CORRUPTION_DOSE 7
   #endif
 #endif
 
@@ -225,13 +254,6 @@
 
 #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)
     #include <stdarg.h>  // va_list disallowed in cast() and used in h_cast()
-#endif
-
-
-//=//// ASSERT_IMPOSSIBLE_THINGS //////////////////////////////////////////=//
-
-#if !defined(ASSERT_IMPOSSIBLE_THINGS)
-    #define ASSERT_IMPOSSIBLE_THINGS  0  // don't bother with impossible()
 #endif
 
 

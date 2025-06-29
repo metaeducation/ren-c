@@ -493,7 +493,7 @@ typedef union {
 
     Byte at_least_4[sizeof(uintptr_t)];  // 8 bytes on 64-bit systems...
 
-    void *corrupt;  // see ASSIGN_UNUSED_FIELDS
+    void *corrupt;  // see NEEDFUL_ASSIGNS_UNUSED_FIELDS
 
     LineNumber line;  // see ARRAY_FLAG_FILE_LINE
 

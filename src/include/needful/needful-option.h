@@ -229,23 +229,15 @@
     bool operator!=(L left, const OptionWrapper<R>& right)
       { return left != right.p; }
 
-  //=//// CORRUPTION HELPERS //////////////////////////////////////////////=//
+  //=//// CORRUPTION HELPER ///////////////////////////////////////////////=//
 
   // See %needful-corruption.h for motivation and explanation.
 
-  #if PERFORM_CORRUPTIONS
-    template<class P>
-    INLINE void Corrupt_Pointer_If_Debug(OptionWrapper<P>& option)
-      { Corrupt_Pointer_If_Debug(option.p); }
-
-    template<class P>
-    INLINE bool Is_Pointer_Corrupt_Debug(OptionWrapper<P>& option)
-      { return Is_Pointer_Corrupt_Debug(option.p); }
-
+  #if NEEDFUL_USES_CORRUPT_HELPER
     template<typename P>
-    struct Corrupter<OptionWrapper<P>> {
+    struct CorruptHelper<OptionWrapper<P>> {
       static void corrupt(OptionWrapper<P>& option) {
-        Corrupt_If_Debug(option.p);
+        Corrupt_If_Needful(option.p);
       }
     };
   #endif

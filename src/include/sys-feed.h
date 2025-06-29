@@ -208,8 +208,8 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
     else
         assert(FEED_PACKED(feed));
 
-    Corrupt_Pointer_If_Debug(FEED_VAPTR_POINTER(feed));
-    Corrupt_Pointer_If_Debug(FEED_PACKED(feed));
+    Corrupt_If_Needful(FEED_VAPTR_POINTER(feed));
+    Corrupt_If_Needful(FEED_PACKED(feed));
 }
 
 
@@ -447,7 +447,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
   #endif
 
     assert(Not_End(feed->p));  // should test for end before fetching again
-    Corrupt_Pointer_If_Debug(feed->p);
+    Corrupt_If_Needful(feed->p);
 
     // We are changing "Feed_At()", and thus by definition any ->gotten value
     // will be invalid.  It might be "wasteful" to always set this to null,
@@ -638,7 +638,7 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
     Tweak_Misc_Feedstub_Pending(s, nullptr);
 
     feed->flags.bits = flags;
-    Corrupt_Pointer_If_Debug(feed->p);
+    Corrupt_If_Needful(feed->p);
     Force_Invalidate_Gotten(&feed->gotten);
 
     feed->refcount = 0;  // putting in levels should add references

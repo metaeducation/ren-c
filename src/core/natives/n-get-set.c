@@ -125,7 +125,7 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
     Push_Level_Erase_Out_If_State_0(atom_out, level_);
 
     heeded(Derelativize(SCRATCH, tuple, context));
-    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(level_, steps_out);
 
@@ -181,7 +181,7 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
             Push_Level_Erase_Out_If_State_0(out, level_);
 
             heeded(Derelativize(SCRATCH, var, context));
-            heeded(Corrupt_Cell_If_Debug(SPARE));
+            heeded(Corrupt_Cell_If_Needful(SPARE));
 
             error = Trap_Get_Path_Push_Refinements(level_);
 
@@ -221,7 +221,7 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
     Push_Level_Erase_Out_If_State_0(out, level_);  // flushes corruption
 
     heeded(Derelativize(SCRATCH, var, context));
-    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(level_, steps_out);
 
@@ -364,7 +364,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
 //
 Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
 {
-  #if PERFORM_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
+  #if NEEDFUL_DOES_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
     assert(Not_Cell_Readable(SPARE));
   #endif
 
@@ -548,7 +548,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
 
     assert(LEVEL == TOP_LEVEL);
 
-    Corrupt_Cell_If_Debug(SPARE);
+    Corrupt_Cell_If_Needful(SPARE);
 
   #if RUNTIME_CHECKS
     Unprotect_Cell(SCRATCH);
@@ -814,7 +814,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         Plainify(Known_Element(picker_arg));  // drop any sigils
     }
 
-    Corrupt_Cell_If_Debug(TOP);  // shouldn't use past this point
+    Corrupt_Cell_If_Needful(TOP);  // shouldn't use past this point
 
 } call_updater: {
 
@@ -838,7 +838,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 // but they must do so carefully, because that would skip things like
 // accessors (which implement type checking, etc.)
 //
-// 1. The calling function should do `heeded(Corrupt_Cell_If_Debug(SPARE))`.
+// 1. The calling function should do `heeded(Corrupt_Cell_If_Needful(SPARE))`.
 //    This helps be sure they're not expecting SPARE to be untouched.  (It's
 //    better than trying to work "Corrupts_Spare()" into the already quite-long
 //    name of the function.)
@@ -852,7 +852,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     assert(LEVEL == TOP_LEVEL);
     possibly(Get_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION));
 
-  #if PERFORM_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
+  #if NEEDFUL_DOES_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
     assert(Not_Cell_Readable(SPARE));
   #endif
 
@@ -1183,7 +1183,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     assert(LEVEL == TOP_LEVEL);
 
-    Corrupt_Cell_If_Debug(SPARE);
+    Corrupt_Cell_If_Needful(SPARE);
 
   #if RUNTIME_CHECKS
     Unprotect_Cell(SCRATCH);
@@ -1362,7 +1362,7 @@ DECLARE_NATIVE(TWEAK)
     STATE = ST_TWEAK_TWEAKING;  // we'll be setting out to something not erased
 
     heeded(Copy_Cell(SCRATCH, target));
-    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(LEVEL, steps);
     if (e)

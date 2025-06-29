@@ -126,8 +126,8 @@ INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
         }
     }
 
-    Corrupt_Pointer_If_Debug(stub->link.corrupt);
-    Corrupt_Pointer_If_Debug(stub->misc.corrupt);
+    Corrupt_If_Needful(stub->link.corrupt);
+    Corrupt_If_Needful(stub->misc.corrupt);
 }
 
 

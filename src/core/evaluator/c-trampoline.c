@@ -212,7 +212,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         // needs to know if it is an Action_Executor to drop a stack cell.
         //
         /*assert(not Is_Pointer_Corrupt_Debug(L->executor));
-        Corrupt_Pointer_If_Debug(L->executor);*/
+        Corrupt_If_Needful(L->executor);*/
 
         const Value* label = VAL_THROWN_LABEL(L);  // unwind [1]
         if (
@@ -513,7 +513,7 @@ void Startup_Trampoline(void)
         L
     );
 
-    Corrupt_Pointer_If_Debug(L->prior);  // catches enumeration past bottom_level
+    Corrupt_If_Needful(L->prior);  // catches enumeration past bottom_level
     g_ts.bottom_level = L;
 
     assert(TOP_LEVEL == L and BOTTOM_LEVEL == L);
@@ -545,9 +545,7 @@ void Startup_Trampoline(void)
 void Shutdown_Trampoline(void)
 {
     assert(TOP_LEVEL == BOTTOM_LEVEL);
-  #if PERFORM_CORRUPTIONS
-    assert(Is_Pointer_Corrupt_Debug(BOTTOM_LEVEL->prior));  // corrupt [1]
-  #endif
+    unnecessary(Corrupt_If_Needful(TOP_LEVEL->prior));  // corrupt from start [1]
 
     Drop_Level_Unbalanced(TOP_LEVEL);  // can't do balance check [2]
 

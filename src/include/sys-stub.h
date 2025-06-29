@@ -258,13 +258,13 @@ INLINE Stub* Prep_Stub(Flags flags, void *preallocated) {
   #if (NO_RUNTIME_CHECKS)
     s->info.flags = FLEX_INFO_MASK_NONE;  // #7
   #else
-    Corrupt_Pointer_If_Debug(s->link.corrupt);  // #2
+    Corrupt_If_Needful(s->link.corrupt);  // #2
     Mem_Fill(&s->content.fixed, 0xBD, sizeof(s->content));  // #3 - #6
     if (flags & STUB_FLAG_INFO_NEEDS_MARK)
-        Corrupt_Pointer_If_Debug(s->info.base);  // #7
+        Corrupt_If_Needful(s->info.base);  // #7
     else
         s->info.flags = FLEX_INFO_MASK_NONE;  // #7
-    Corrupt_Pointer_If_Debug(s->misc.corrupt);  // #8
+    Corrupt_If_Needful(s->misc.corrupt);  // #8
 
   #if DEBUG_STUB_ORIGINS
     s->guard = nullptr;  // so Touch_Stub() can tell data is invalid

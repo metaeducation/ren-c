@@ -1151,7 +1151,7 @@ DECLARE_NATIVE(DEFAULT)
 
     Unchain(target);
     heeded(Copy_Cell(SCRATCH, target));
-    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
 
     heeded(Init_Dual_Nulled_Pick_Signal(OUT));
 
@@ -1177,7 +1177,7 @@ DECLARE_NATIVE(DEFAULT)
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
     assert(Is_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
-    heeded(Corrupt_Cell_If_Debug(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
     if (e) {

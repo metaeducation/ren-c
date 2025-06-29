@@ -35,10 +35,8 @@
 // would prefer to intercept accesses as if they were freed.)
 //
 // Also, in order to overwrite a pointer with garbage, the historical method
-// of using 0xBADF00D or 0xDECAFBAD is formalized in Corrupt_Pointer_If_Debug.
+// of using 0xBADF00D or 0xDECAFBAD is formalized in Corrupt_If_Needful().
 // This makes the instances easier to find and standardizes how it is done.
-// Special choices are made for 0xF4EEF4EE to indicate a freed thing, and
-// 0x5AFE5AFE to indicate an allocated thing.
 //
 // 1. <IMPORTANT>: Address sanitizer's memory poisoning must not have two
 //    threads both poisoning/unpoisoning the same addresses at the same time.

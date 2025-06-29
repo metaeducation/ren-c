@@ -997,11 +997,8 @@ static const Byte* Seek_To_End_Of_Tag(const Byte* cp)
 // e.g. where the end point of the token is seen.
 //
 static Error* Error_Syntax(ScanState* S, Token token) {
-  #if PERFORM_CORRUPTIONS
-    assert(
-        not Is_Pointer_Corrupt_Debug(S->begin)
-        and not Is_Pointer_Corrupt_Debug(S->end)
-    );
+  #if NEEDFUL_DOES_CORRUPTIONS
+    assert(*S->begin == *S->begin and *S->end == *S->end);  // shouldn't crash
   #endif
     assert(S->begin and S->end);
     assert(S->end >= S->begin);  // can get out of sync [1]
@@ -1077,9 +1074,7 @@ static Error* Error_Mismatch(Byte wanted, Byte seen) {
 //
 static LexFlags Prescan_Fingerprint(ScanState* S)
 {
-  #if PERFORM_CORRUPTIONS
-    assert(Is_Pointer_Corrupt_Debug(S->end));  // prescan only uses ->begin
-  #endif
+    unnecessary(Corrupt_If_Needful(S->end));  //  prescan only uses ->begin
 
     const Byte* cp = S->transcode->at;
     LexFlags flags = 0;  // flags for all LEX_SPECIALs seen after S->begin[0]
@@ -1246,8 +1241,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     ScanState* S = &L->u.scan;
     TranscodeState* transcode = S->transcode;
 
-    Corrupt_Pointer_If_Debug(S->begin);  // S->begin skips ->at's whitespace
-    Corrupt_Pointer_If_Debug(S->end);  // this routine should set S->end
+    Corrupt_If_Needful(S->begin);  // S->begin skips ->at's whitespace
+    Corrupt_If_Needful(S->end);  // this routine should set S->end
 
   acquisition_loop: //////////////////////////////////////////////////////////
 
@@ -1558,8 +1553,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             // there's more content yet to come.
             //
             transcode->at = nullptr;
-            Corrupt_Pointer_If_Debug(S->begin);
-            Corrupt_Pointer_If_Debug(S->end);
+            Corrupt_If_Needful(S->begin);
+            Corrupt_If_Needful(S->end);
             goto acquisition_loop;
 
           case LEX_DELIMIT_COMMA:
@@ -2106,8 +2101,8 @@ Level* Make_Scan_Level(
     S->sigil_pending = SIGIL_0;
     S->quasi_pending = false;
 
-    Corrupt_Pointer_If_Debug(S->begin);
-    Corrupt_Pointer_If_Debug(S->end);
+    Corrupt_If_Needful(S->begin);
+    Corrupt_If_Needful(S->end);
 
     return L;
 }
@@ -3541,7 +3536,7 @@ DECLARE_NATIVE(TRANSCODE)
     if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // want line number updated
         Init_Integer(OUT, transcode->line);
         Copy_Cell(Level_Scratch(SUBLEVEL), Element_ARG(LINE));  // variable
-        heeded(Corrupt_Cell_If_Debug(Level_Spare(SUBLEVEL)));
+        heeded(Corrupt_Cell_If_Needful(Level_Spare(SUBLEVEL)));
 
         Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(SUBLEVEL, NO_STEPS);
         if (e)

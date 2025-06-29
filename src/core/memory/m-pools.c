@@ -1071,7 +1071,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 
   #if DEBUG_UTF8_EVERYWHERE
     if (Is_Stub_Non_Symbol(f))
-        Corrupt_If_Debug(MISC_STRAND_NUM_CODEPOINTS(f));
+        Corrupt_If_Needful(MISC_STRAND_NUM_CODEPOINTS(f));
   #endif
 
     if (was_dynamic)
@@ -1215,11 +1215,9 @@ void GC_Kill_Stub(Stub* s)
     //
     Touch_Stub_If_Debug(s);
 
-  #if RUNTIME_CHECKS
-    FreeCorrupt_Pointer_Debug(s->info.base);
+    Corrupt_If_Needful(s->info.corrupt);
     // The spot LINK occupies will be used by Free_Pooled() to link the freelist
-    FreeCorrupt_Pointer_Debug(s->misc.corrupt);
-  #endif
+    Corrupt_If_Needful(s->misc.corrupt);
 
     Free_Pooled(STUB_POOL, s);
 

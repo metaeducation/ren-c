@@ -301,7 +301,11 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 //    or BASE_FLAG_MARKED, so it's "safe" to use them with cells that need
 //    these persistent bits preserved.
 //
-// 2. If you're going to set uninitialized memory to an unreadable cell,
+// 2. Strange as it may seem, the memset()-based corruption of the payload
+//    is faster than two pointer-optimized corruptions of split.one and
+//    split.two...at least in Callgrind's accounting.
+//
+// 3. If you're going to set uninitialized memory to an unreadable cell,
 //    then the unchecked Force_Unreadable_Cell() has to be used, because
 //    you can't Assert_Cell_Initable() on random bits.
 
@@ -321,8 +325,8 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
         /* don't STATIC_ASSERT_LVALUE(out), it's evil on purpose */ \
         Assert_Cell_Initable_Evil_Macro(out); \
         (out)->header.bits |= CELL_MASK_UNREADABLE;  /* bitwise OR [1] */ \
-        Corrupt_If_Debug((out)->extra); \
-        Corrupt_If_Debug((out)->payload); \
+        Corrupt_If_Needful((out)->extra.corrupt); \
+        Corrupt_If_Needful((out)->payload); /* split.one/two slower [2] */ \
     } while (0)
 #endif
 
@@ -344,7 +348,7 @@ INLINE Cell* Force_Unreadable_Cell_Untracked_Inline(Cell* out) {
     return out;
 }
 
-#define Force_Unreadable_Cell(out)  /* unchecked, use sparingly! [2] */ \
+#define Force_Unreadable_Cell(out)  /* unchecked, use sparingly! [3] */ \
     Force_Unreadable_Cell_Untracked_Inline(TRACK(out))
 
 INLINE bool Is_Cell_Readable(const Cell* c) {
@@ -361,39 +365,39 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 #define Init_Unreadable(out) \
     TRACK(Init_Unreadable_Untracked_Inline((out)))
 
-#if PERFORM_CORRUPTIONS
-    #define Corrupt_Cell_If_Debug(c)  USED(Init_Unreadable(c))
+#if NEEDFUL_DOES_CORRUPTIONS
+    #define Corrupt_Cell_If_Needful(c)  USED(Init_Unreadable(c))
 #else
-    #define Corrupt_Cell_If_Debug(c)  NOOP
+    #define Corrupt_Cell_If_Needful(c)  NOOP
 #endif
 
-#if PERFORM_CORRUPTIONS && CPLUSPLUS_11
-    //
-    // We don't actually want things like Sink(Value) to set a cell's bits to
-    // a corrupt pattern, as we need to be able to call Init_Xxx() routines
-    // and can't do that on garbage.  But we don't want to Erase_Cell() either
-    // because that would lose header bits like whether the cell is an API
-    // value.  We use the Init_Unreadable_Untracked().
-    //
-    // 1. This only runs in checked builds, but it is performance sensitive.
-    //    So we want to avoid making a temporary, which would be needed to
-    //    subvert the usual STATIC_ASSERT_LVALUE() check:
-    //
-    //        Cell* cell = &ref;
-    //        Init_Unreadable_Untracked(cell);
-    //
-    //    In the C++ model there's no way to tell the difference between &ref
-    //    and an expression with side effects that synthsized a reference.
-    //    There would be ways to make a macro that "approved" a reference:
-    //
-    //       Init_Unredable_Untracked(NO_SIDE_EFFECTS(&ref));
-    //
-    //    However, even a constexpr which did this would add cost in the
-    //    checked build (functions aren't inlined).  So for this case, we
-    //    just use a macro variant with no STATIC_ASSERT_LVALUE() check.
-    //
+#if NEEDFUL_USES_CORRUPT_HELPER
+  //
+  // We don't actually want things like Sink(Value) to set a cell's bits to
+  // a corrupt pattern, as we need to be able to call Init_Xxx() routines
+  // and can't do that on garbage.  But we don't want to Erase_Cell() either
+  // because that would lose header bits like whether the cell is an API
+  // value.  We use the Init_Unreadable_Untracked().
+  //
+  // 1. This only runs in checked builds, but it is performance sensitive.
+  //    So we want to avoid making a temporary, which would be needed to
+  //    subvert the usual STATIC_ASSERT_LVALUE() check:
+  //
+  //        Cell* cell = &ref;
+  //        Init_Unreadable_Untracked(cell);
+  //
+  //    In the C++ model there's no way to tell the difference between &ref
+  //    and an expression with side effects that synthsized a reference.
+  //    There would be ways to make a macro that "approved" a reference:
+  //
+  //       Init_Unredable_Untracked(NO_SIDE_EFFECTS(&ref));
+  //
+  //    However, even a constexpr which did this would add cost in the
+  //    checked build (functions aren't inlined).  So for this case, we
+  //    just use a macro variant with no STATIC_ASSERT_LVALUE() check.
+
     template<typename T>
-    struct Corrupter<
+    struct CorruptHelper<
         T,
         typename std::enable_if<std::is_base_of<Cell, T>::value>::type
     >{
@@ -1176,9 +1180,9 @@ INLINE Atom* Move_Atom_Untracked(
 
     a->header.bits = CELL_MASK_ERASED_0;  // legal state for atoms
 
-    Corrupt_Pointer_If_Debug(a->extra.corrupt);
-    Corrupt_Pointer_If_Debug(a->payload.split.one.corrupt);
-    Corrupt_Pointer_If_Debug(a->payload.split.two.corrupt);
+    Corrupt_If_Needful(a->extra.corrupt);
+    Corrupt_If_Needful(a->payload.split.one.corrupt);
+    Corrupt_If_Needful(a->payload.split.two.corrupt);
 
   #if DEBUG_TRACK_COPY_PRESERVES
     out->file = v->file;

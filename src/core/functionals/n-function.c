@@ -239,8 +239,8 @@ Bounce Func_Dispatcher(Level* const L)
         Phase_Paramlist(details), SYM_RETURN
     );
 
-    heeded(Corrupt_Cell_If_Debug(SPARE));
-    heeded(Corrupt_Cell_If_Debug(SCRATCH));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SCRATCH));
 
     if (not Typecheck_Coerce_Return(L, param, OUT))
         return PANIC(
@@ -555,7 +555,7 @@ bool Typecheck_Coerce_Return(
     const Element* param,  // parameter for the RETURN (may be quoted)
     Atom* atom  // coercion needs mutability
 ){
-  #if PERFORM_CORRUPTIONS
+  #if NEEDFUL_DOES_CORRUPTIONS
     assert(Not_Cell_Readable(Level_Scratch(L)));
     assert(Not_Cell_Readable(Level_Spare(L)));
   #endif
@@ -702,8 +702,8 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     );
 
     if (not Bool_ARG(RUN)) {  // plain simple RETURN (not weird tail-call)
-        heeded(Corrupt_Cell_If_Debug(SPARE));
-        heeded(Corrupt_Cell_If_Debug(SCRATCH));
+        heeded(Corrupt_Cell_If_Needful(SPARE));
+        heeded(Corrupt_Cell_If_Needful(SCRATCH));
 
         if (not Typecheck_Coerce_Return(LEVEL, param, atom))  // do it now [2]
             return PANIC(Error_Bad_Return_Type(target_level, atom, param));

@@ -46,19 +46,11 @@
     #define NeverNull(type) \
         NeverNullEnforcer<type>
 
-    template<class P>
-    INLINE void Corrupt_Pointer_If_Debug(NeverNull(P) &nn)
-        { Corrupt_Pointer_If_Debug(nn.p); }
-
-    template<class P>
-    INLINE bool Is_Pointer_Corrupt_Debug(NeverNull(P) &nn)
-        { return Is_Pointer_Corrupt_Debug(nn.p); }
-
-  #if (! DEBUG_STATIC_ANALYZING)
+  #if NEEDFUL_USES_CORRUPT_HELPER
     template<typename T>
-    struct Corrupter<NeverNullEnforcer<T>> {
+    struct CorruptHelper<NeverNullEnforcer<T>> {
       static void corrupt(NeverNullEnforcer<T>& nn) {
-        Corrupt_If_Debug(nn.p);
+        Corrupt_If_Needful(nn.p);
      }
     };
   #endif

@@ -564,7 +564,7 @@ SQLRETURN ODBC_BindParameter(
 
     p->length = 0;  // ignored for most types
     p->column_size = 0;  // also ignored for most types
-    Corrupt_Pointer_If_Debug(p->buffer);  // required to be set by switch()
+    Corrupt_If_Needful(p->buffer);  // required to be set by switch()
 
     // We don't expose integer mappings for Rebol data types in libRebol to
     // use in a switch() statement, so no:

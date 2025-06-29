@@ -248,8 +248,8 @@ Bounce Action_Executor(Level* L)
 
   fulfill: {  ////////////////////////////////////////////////////////////////
 
-  #if PERFORM_CORRUPTIONS
-    assert(not Is_Pointer_Corrupt_Debug(ORIGINAL));  // set by Begin_Action()
+  #if NEEDFUL_DOES_CORRUPTIONS
+    assert(Stub_Flavor(ORIGINAL));  // set by Begin_Action(), shouldn't crash
   #endif
 
     assert(TOP_INDEX >= L->baseline.stack_base);  // paths push refinements
@@ -867,8 +867,8 @@ Bounce Action_Executor(Level* L)
             continue;
         }
 
-        heeded(Corrupt_Cell_If_Debug(SPARE));
-        heeded(Corrupt_Cell_If_Debug(SCRATCH));
+        heeded(Corrupt_Cell_If_Needful(SPARE));
+        heeded(Corrupt_Cell_If_Needful(SCRATCH));
 
         if (not Typecheck_Coerce(L, param, ARG, false)) {
             Value* arg = Decay_If_Unstable(ARG);
@@ -915,10 +915,10 @@ Bounce Action_Executor(Level* L)
     assert(Not_Action_Executor_Flag(L, IN_DISPATCH));
     Set_Action_Executor_Flag(L, IN_DISPATCH);
 
-    Corrupt_If_Debug(L->u.action.key);  // freed param enum for dispatcher [1]
-    Corrupt_If_Debug(L->u.action.key_tail);
-    Corrupt_If_Debug(L->u.action.arg);
-    Corrupt_If_Debug(L->u.action.param);
+    Corrupt_If_Needful(L->u.action.key);  // freed param enum for dispatcher [1]
+    Corrupt_If_Needful(L->u.action.key_tail);
+    Corrupt_If_Needful(L->u.action.arg);
+    Corrupt_If_Needful(L->u.action.param);
 
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT) {  // can happen [2]
         if (
@@ -1212,7 +1212,7 @@ void Begin_Action(Level* L, Option(InfixMode) infix_mode)
 //    reuse varlists, but it was a premature optimization with no benefit.)
 //
 void Drop_Action(Level* L) {
-    Corrupt_Pointer_If_Debug(L->u.action.label);  // first (data breakpoint)
+    Corrupt_If_Needful(L->u.action.label);  // first (data breakpoint)
 
     assert(Misc_Runlevel(L->varlist) == L);
 
@@ -1234,7 +1234,7 @@ void Drop_Action(Level* L) {
             | ACTION_EXECUTOR_FLAG_INFIX_B
     );
 
-    Corrupt_Pointer_If_Debug(ORIGINAL); // action is no longer running
+    Corrupt_If_Needful(ORIGINAL); // action is no longer running
     L->executor = nullptr;  // so GC won't think level needs Action marking
 
   #if DEBUG_LEVEL_LABELS

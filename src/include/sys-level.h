@@ -433,7 +433,6 @@ INLINE void Free_Level_Internal(Level* L) {
         printf("API handle was allocated but not freed, crashing on leak\n");
         crash (stub);
     }
-    Corrupt_Pointer_If_Debug(L->alloc_value_list);
   #endif
 
     Release_Feed(L->feed);  // frees if refcount goes to 0
@@ -444,11 +443,8 @@ INLINE void Free_Level_Internal(Level* L) {
             GC_Kill_Flex(L->varlist);
     }
 
-    Corrupt_Pointer_If_Debug(L->varlist);
-
-  #if PERFORM_CORRUPTIONS
-    assert(Is_Pointer_Corrupt_Debug(L->alloc_value_list));
-  #endif
+    Corrupt_If_Needful(L->varlist);
+    Corrupt_If_Needful(L->alloc_value_list);
 
   #if TRAMPOLINE_COUNTS_TICKS
     L->tick = TICK;
@@ -594,14 +590,14 @@ INLINE Level* Prep_Level_Core(
     L->feed = feed;
     Force_Erase_Cell(&L->spare);
     Force_Erase_Cell(&L->scratch);
-    Corrupt_Pointer_If_Debug(L->out);
+    Corrupt_If_Needful(L->out);
 
     L->varlist = nullptr;
     L->executor = executor;
 
     L->alloc_value_list = L;  // doubly link list, terminates in `L`
 
-    Corrupt_If_Debug(L->u);
+    Corrupt_If_Needful(L->u);
 
   #if DEBUG_LEVEL_LABELS  // only applicable to L->u.action.label levels...
     L->label_utf8 = nullptr;  // ...but in Level for easy C watchlisting

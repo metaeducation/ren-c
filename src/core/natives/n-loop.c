@@ -876,7 +876,7 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;  // must be frame-compatible
 
-  #if PERFORM_CORRUPTIONS
+  #if NEEDFUL_DOES_CORRUPTIONS
     assert(Not_Cell_Readable(SPARE));
     assert(Not_Cell_Readable(SCRATCH));
   #endif
@@ -1205,8 +1205,8 @@ DECLARE_NATIVE(FOR_EACH)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    heeded(Corrupt_Cell_If_Debug(SPARE));
-    heeded(Corrupt_Cell_If_Debug(SCRATCH));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SCRATCH));
 
     bool done;
     Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);
@@ -1322,8 +1322,8 @@ DECLARE_NATIVE(EVERY)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    heeded(Corrupt_Cell_If_Debug(SPARE));
-    heeded(Corrupt_Cell_If_Debug(SCRATCH));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SCRATCH));
 
     bool done;
     Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);
@@ -1464,7 +1464,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     DECLARE_MOLDER (mo);
     if (Any_List(data)) {  // use BASE_FLAG_MARKED to mark for removal [1]
-        Corrupt_Pointer_If_Debug(mo);
+        Corrupt_If_Needful(mo);
     }
     else {  // generate new data allocation and swap content in the Flex [2]
         Push_Mold(mo);
@@ -1892,8 +1892,8 @@ DECLARE_NATIVE(MAP)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    heeded(Corrupt_Cell_If_Debug(SPARE));
-    heeded(Corrupt_Cell_If_Debug(SCRATCH));
+    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded(Corrupt_Cell_If_Needful(SCRATCH));
 
     bool done;
     Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);

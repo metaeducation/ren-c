@@ -327,7 +327,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
                 goto next_context;
 
             c = Cell_Binding(overbind);  // use its context, I guess?
-            Corrupt_If_Debug(next);  // don't need it
+            Corrupt_If_Needful(next);  // don't need it
             goto loop_body;  // skips assignment via next
         }
 
@@ -646,7 +646,7 @@ DECLARE_NATIVE(LET)
     if (Is_Metaform(vars))
         Metafy(where);
 
-    Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
+    Corrupt_If_Needful(vars);  // if in spare, we may have overwritten
 
     goto finished_making_let_bindings;
 
@@ -771,7 +771,7 @@ DECLARE_NATIVE(LET)
     }
     Tweak_Cell_Binding(where, bindings);
 
-    Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
+    Corrupt_If_Needful(vars);  // if in spare, we may have overwritten
 
 } finished_making_let_bindings: {
 

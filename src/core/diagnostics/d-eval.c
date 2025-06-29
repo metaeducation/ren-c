@@ -257,9 +257,9 @@ void Evaluator_Expression_Checks_Debug(Level* L)
 
     // Corrupt fields that GC won't be seeing unless Is_Action_Level()
     //
-    Corrupt_Pointer_If_Debug(L->u.action.key);
-    Corrupt_Pointer_If_Debug(L->u.action.arg);
-    Corrupt_Pointer_If_Debug(L->u.action.param);
+    Corrupt_If_Needful(L->u.action.key);
+    Corrupt_If_Needful(L->u.action.arg);
+    Corrupt_If_Needful(L->u.action.param);
 
     // Mutate va_list sources into arrays at fairly random moments in the
     // checked build.  It should be able to handle it at any time.
@@ -290,8 +290,8 @@ void Do_After_Action_Checks_Debug(Level* level_) {
         );
         assert(Is_Parameter(param));
 
-        heeded(Corrupt_Cell_If_Debug(SPARE));
-        heeded(Corrupt_Cell_If_Debug(SCRATCH));
+        heeded(Corrupt_Cell_If_Needful(SPARE));
+        heeded(Corrupt_Cell_If_Needful(SCRATCH));
 
         if (not Typecheck_Coerce_Return(LEVEL, param, OUT)) {
             assert(!"'Raw' native code violated return type contract!\n");

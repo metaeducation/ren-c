@@ -107,7 +107,7 @@ void Init_Evars(EVARS *e, const Element* v) {
         e->word = Array_Head(e->wordlist) - 1;
         e->word_tail = Array_Tail(e->wordlist);
 
-        Corrupt_Pointer_If_Debug(e->key_tail);
+        Corrupt_If_Needful(e->key_tail);
         e->slot = nullptr;
         e->param = nullptr;
     }
@@ -156,7 +156,7 @@ void Init_Evars(EVARS *e, const Element* v) {
             assert(Flex_Used(Phase_Keylist(lens)) <= Phase_Num_Params(lens));
         }
 
-        Corrupt_Pointer_If_Debug(e->wordlist);
+        Corrupt_If_Needful(e->wordlist);
         e->word = nullptr;
         UNUSED(e->word_tail);
     }
@@ -262,11 +262,8 @@ void Shutdown_Evars(EVARS *e)
 {
     if (e->word)
         GC_Kill_Flex(e->wordlist);
-    else {
-      #if RUNTIME_CHECKS
-        assert(Is_Pointer_Corrupt_Debug(e->wordlist));
-      #endif
-    }
+    else
+        unnecessary(Corrupt_If_Needful(e->wordlist));  // corrupt already
 
   #if RUNTIME_CHECKS
     --g_num_evars_outstanding;

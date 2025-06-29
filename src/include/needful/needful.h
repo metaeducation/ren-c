@@ -52,8 +52,6 @@
 
 #include "needful/needful-utilities.h"
 
-#include "needful/needful-asserts.h"
-
 #include "needful/needful-casts.h"
 
 #include "needful/needful-ensure.h"
