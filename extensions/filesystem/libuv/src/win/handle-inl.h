@@ -75,7 +75,7 @@
 
 #define uv__handle_close(handle)                                        \
   do {                                                                  \
-    QUEUE_REMOVE(&(handle)->handle_queue);                              \
+    uv__queue_remove(&(handle)->handle_queue);                          \
     uv__active_handle_rm((uv_handle_t*) (handle));                      \
                                                                         \
     (handle)->flags |= UV_HANDLE_CLOSED;                                \
@@ -85,7 +85,7 @@
   } while (0)
 
 
-inline static void uv__want_endgame(uv_loop_t* loop, uv_handle_t* handle) {
+INLINE static void uv__want_endgame(uv_loop_t* loop, uv_handle_t* handle) {
   if (!(handle->flags & UV_HANDLE_ENDGAME_QUEUED)) {
     handle->flags |= UV_HANDLE_ENDGAME_QUEUED;
 
@@ -95,7 +95,7 @@ inline static void uv__want_endgame(uv_loop_t* loop, uv_handle_t* handle) {
 }
 
 
-inline static void uv__process_endgames(uv_loop_t* loop) {
+INLINE static void uv__process_endgames(uv_loop_t* loop) {
   uv_handle_t* handle;
 
   while (loop->endgame_handles) {
@@ -163,9 +163,9 @@ inline static void uv__process_endgames(uv_loop_t* loop) {
   }
 }
 
-inline static HANDLE uv__get_osfhandle(int fd)
+INLINE static HANDLE uv__get_osfhandle(int fd)
 {
-  /* _get_osfhandle() raises an assert in checked builds if the FD is invalid.
+  /* _get_osfhandle() raises an assert in debug builds if the FD is invalid.
    * But it also correctly checks the FD and returns INVALID_HANDLE_VALUE for
    * invalid FDs in release builds (or if you let the assert continue). So this
    * wrapper function disables asserts when calling _get_osfhandle. */

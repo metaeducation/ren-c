@@ -1,6 +1,23 @@
 Rebol [
     name: Filesystem
-    notes: "See %extensions/README.md for the format and fields of this file"
+
+    description: --[
+        This is a rough translation of libuv's build file CMakeLists.txt
+        into the Rebmake format.
+
+        Because it's not exactly the same--and building libuv with Ren-C's
+        settings by default--it requires additional warning disablements
+        and tweaks.
+    ]--
+
+    notes: --[
+        See %extensions/README.md for the format and fields of this file
+
+        Libuv supports paths on Windows longer than 260-characters if you
+        supply this file to the linker:
+
+            %libuv/uv_win_longpath.manifest
+    ]--
 ]
 
 use-librebol: 'no
@@ -55,7 +72,10 @@ if os = 'Windows [
         handle.c
         loop-watcher.c
         pipe.c
-        thread.c
+        thread.c [
+            <msc:/wd4152>  ; nonstandard function/data pointer conversion
+            <msc:/wd4334>  ; 32-bit shift result implicitly converted to 64-bit
+        ]
         poll.c
         process.c
         process-stdio.c
@@ -65,21 +85,23 @@ if os = 'Windows [
         tcp.c
         tty.c
         udp.c
-        util.c
+        util.c [
+            <msc:/wd4388>  ; signed/unsigned mismatch
+        ]
         winapi.c
         winsock.c
     ]
     append uv-libraries spread [
         ;
+        ; GetProcessMemoryInfo()
+        ;
+        %psapi
+
         ; These include bases like GetMessage(), and are already included by
         ; the Event extension, but needed if you don't build with that.
         ;
         %user32
         %advapi32
-
-        ; GetProcessMemoryInfo()
-        ;
-        %psapi
 
         ; ConvertInterfaceLuidToNameW()
         ; ConvertInterfaceIndexToLuid()
@@ -108,6 +130,21 @@ if os = 'Windows [
         ; GetAdaptersAddresses()
         ;
         %ws2_32
+
+        ; SymSetOptions(), SymGetOptions(), MiniDumpWriteDump() in uv__kill()
+        ;
+        ; This debugging feature is not conditional under debug builds, so
+        ; the dependency is pulled in regardless.  This may be worth patching
+        ; to be "a la carte".  (Or also, just using as a basis for adding
+        ; a dumping feature to the interpreter, if this is actually useful.)
+        ;
+        %dbghelp
+
+        ; These are listed in libuv's makefile, but it seems like you can
+        ; build without mentioning them.  Leave them out for now.
+        ;
+        ; %ole32
+        ; %shell32
     ]
 
     ; 1. Without disabling this, you likely get:
@@ -217,16 +254,11 @@ if os = 'Android [
         _GNU_SOURCE
     ]
     append uv-sources spread [
-       ; Note: android-ifaddrs.c was removed
-       linux-core.c
-       linux-inotify.c
-       linux-syscalls.c
+       linux.c
        procfs-exepath.c
-       pthread-fixes.c
        random-getentropy.c
        random-getrandom.c
        random-sysctl-linux.c
-       epoll.c
     ]
     append uv-libraries spread [
         %dl
@@ -289,13 +321,13 @@ if os = 'Linux [
         _POSIX_C_SOURCE=200112
     ]
     append uv-sources spread [
-        linux-core.c
-        linux-inotify.c
-        linux-syscalls.c
+        linux.c [
+            <gnu:-Wno-discarded-qualifiers>
+            <clang:-Wno-incompatible-pointer-types-discards-qualifiers>
+        ]
         procfs-exepath.c
         random-getrandom.c
         random-sysctl-linux.c
-        epoll.c
     ]
     append uv-libraries spread [
         %dl
@@ -395,6 +427,7 @@ reeval func [:name :options] [
         random.c
         strscpy.c
         strtok.c  ; Note: seems only used in unix build (?)
+        thread-common.c
         threadpool.c
         timer.c
         uv-common.c
