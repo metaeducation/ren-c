@@ -3250,7 +3250,7 @@ RebolValue* API_rebFunction(
 }
 
 
-static void Panic_If_Top_Level_Not_Continuable() {
+static void Panic_If_Top_Level_Not_Continuable(void) {
     if (
         TOP_LEVEL->executor != &Action_Executor
         or not Is_Stub_Details(Level_Phase(TOP_LEVEL))

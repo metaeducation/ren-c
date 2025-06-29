@@ -3303,6 +3303,9 @@ void Startup_Scanner(void)
         assert(needs_encoding == Ascii_Char_Needs_Percent_Encoding(b));
     }
   #endif
+
+    UNUSED(Is_Lex_Sigil);
+    UNUSED(Interstitial_Match);
 }
 
 

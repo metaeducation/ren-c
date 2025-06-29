@@ -220,6 +220,7 @@ core: [
         <gcc:-Wno-unused-const-variable>  ; e.g. z_deflate_copyright
 
         <clang:-Wno-tautological-type-limit-compare>
+        <clang:-Wno-strict-prototypes>
 
         <msc:/wd5045>  ; https://stackoverflow.com/q/50399940
 
