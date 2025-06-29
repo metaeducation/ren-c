@@ -425,8 +425,10 @@
     template<typename To, typename From>
     typename std::enable_if<  // For ints/enums: use & as && can't bind const
         not std::is_array<typename std::remove_reference<From>::type>::value
-            and std::is_fundamental<To>::value
-            or std::is_enum<To>::value,
+            and (
+                std::is_fundamental<To>::value
+                or std::is_enum<To>::value
+            ),
         To
     >::type
     Hookable_Cast_Decay_Prelude(const From& v) {

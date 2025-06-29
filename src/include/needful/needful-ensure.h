@@ -44,7 +44,8 @@
         );
     };
 
-    #define ensure(T,v)  (EnsureHelper<decltype(v),T>{}, (v))
+    #define ensure(T,v) \
+        (UNUSED(EnsureHelper<decltype(v),T>{}), (v))  // clang needs UNUSED
 #endif
 
 

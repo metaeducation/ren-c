@@ -36,13 +36,13 @@ REBINT CT_Parameter(const Element* a, const Element* b, bool strict)
     assert(Heart_Of(b) == TYPE_PARAMETER);
 
     if (Parameter_Spec(a) != Parameter_Spec(b)) {
-        if (maybe Parameter_Spec(a) > maybe Parameter_Spec(b))
+        if ((maybe Parameter_Spec(a)) > (maybe Parameter_Spec(b)))
             return 1;
         return -1;
     }
 
     if (Parameter_Strand(a) != Parameter_Strand(b)) {
-        if (maybe Parameter_Strand(a) > maybe Parameter_Strand(b))
+        if ((maybe Parameter_Strand(a)) > (maybe Parameter_Strand(b)))
             return 1;
         return -1;
     }

@@ -1555,7 +1555,7 @@ DECLARE_NATIVE(COUPLING_OF)
     if (not coupling)  // NONMETHOD
         return nullptr;
 
-    if (unwrap coupling == UNCOUPLED)
+    if (UNCOUPLED == unwrap coupling)
         return TRIPWIRE;
 
     return COPY(Varlist_Archetype(unwrap coupling));

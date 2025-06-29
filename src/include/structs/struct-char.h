@@ -110,14 +110,15 @@
         explicit ValidatedUtf8 (const char *cstr)  // [1]
             : p (u_c_cast(Byte*, cstr)) {}
 
-        operator const void*() = delete;  // don't add, GCC ambiguity [2]
+        operator const void*() const = delete;  // don't add, GCC ambiguity [2]
 
-        constexpr operator const Byte*() { return p; }  // [3]
+        constexpr operator const Byte*() const { return p; }  // [3]
 
-        /*constexpr [4]*/ operator const char*()  // [3]
+        /*constexpr [4]*/ operator const char*() const  // [3]
           { return u_c_cast(char*, p); }
 
-        explicit operator bool() { return p != nullptr; }  // if() uses
+        explicit operator bool() const
+          { return p != nullptr; }  // if() uses
 
         Size operator-(const Byte* rhs)
           { return p - rhs; }
@@ -161,16 +162,16 @@
         explicit ValidatedUtf8 (char *cstr)  // [1]
             : ValidatedUtf8<const Byte*> (cast(Byte*, cstr)) {}
 
-        operator const void*() = delete;  // don't add, GCC ambiguity [2]
+        operator const void*() const = delete;  // don't add, GCC ambiguity [2]
 
-        explicit constexpr operator const Byte*()  // [3]
+        explicit constexpr operator const Byte*() const  // [3]
           { return const_cast<Byte*>(p); }
-        constexpr operator Byte*()  // [3]
+        constexpr operator Byte*() const  // [3]
           { return const_cast<Byte*>(p); }
 
-        explicit /*constexpr [4]*/ operator const char*()  // [3]
+        explicit /*constexpr [4]*/ operator const char*() const  // [3]
           { return u_cast(char*, p); }
-        /*constexpr [4]*/ operator char*()  // [3]
+        /*constexpr [4]*/ operator char*() const  // [3]
           { return u_cast(char*, const_cast<Byte*>(p)); }
     };
 

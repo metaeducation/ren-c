@@ -308,7 +308,7 @@ DECLARE_NATIVE(TO)
     Option(Type) to = Cell_Datatype_Type(ARG(TYPE));
     if (not to)
         return PANIC("TO doesn't work with extension types");
-    if (unwrap to > MAX_HEART)
+    if (MAX_HEART < unwrap to)
         return PANIC("TO can't produce quoted/quasiform/antiform");
 
     if (Is_Datatype(ARG(ELEMENT))) {  // do same coercions as WORD!

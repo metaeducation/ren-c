@@ -378,11 +378,11 @@ static Option(Error*) Trap_Push_Keys_And_Params_Core(
             and Symbol_Id(symbol) == unwrap returner
             and not is_returner
         ){
-            if (unwrap returner == SYM_RETURN)
+            if (SYM_RETURN == unwrap returner)
                 return Error_User(
                     "Generator provides RETURN:, use LAMBDA if not desired"
                 );
-            assert(unwrap returner == SYM_YIELD);
+            assert(SYM_YIELD == unwrap returner);
             return Error_User(
                 "Generator provides YIELD:, can't have YIELD parameter"
             );
