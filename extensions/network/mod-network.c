@@ -848,14 +848,14 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 
         int r = uv_read_start(sock->stream, on_read_alloc, on_read);
         if (r < 0)
-            return FAIL(rebError_UV(r));  // e.g. "broken pipe" ?
+            return fail (rebError_UV(r));  // e.g. "broken pipe" ?
 
         do {
             uv_run(uv_default_loop(), UV_RUN_ONCE);
         } while (rebreq->result == nullptr);
 
         if (not Is_Space(rebreq->result))
-            return FAIL(rebreq->result);  // e.g. "broken pipe" ?
+            return fail (rebreq->result);  // e.g. "broken pipe" ?
         rebRelease(rebreq->result);
 
         rebFree(rebreq);
@@ -917,14 +917,14 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         buf.len = Series_Len_At(rebreq->binary);
         int r = uv_write(&rebreq->req, sock->stream, &buf, 1, on_write_finished);
         if (r < 0)
-            return FAIL(rebError_UV(r));  // e.g. "broken pipe" ?
+            return fail (rebError_UV(r));  // e.g. "broken pipe" ?
 
         do {
             uv_run(uv_default_loop(), UV_RUN_ONCE);
         } while (rebreq->result == nullptr);
 
         if (not Is_Space(rebreq->result))
-            return FAIL(rebreq->result);  // e.g. "broken pipe" ?
+            return fail (rebreq->result);  // e.g. "broken pipe" ?
         rebRelease(rebreq->result);
 
         rebFree(rebreq);

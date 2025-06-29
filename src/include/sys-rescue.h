@@ -374,7 +374,7 @@ INLINE Error* Test_And_Clear_Failure(void) {  // Option(Error*) optimized [1]
 
 #define trap(expr) \
     (assert(not g_failure), Extract_Result(expr)); \
-    if (g_failure) { return FAIL(Test_And_Clear_Failure()); } \
+    if (g_failure) { return fail (Test_And_Clear_Failure()); } \
     NOOP
 
 #define wont_fail(expr) \

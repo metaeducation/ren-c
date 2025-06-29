@@ -306,7 +306,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         }
 
         if (result and Is_Warning(result))
-            return FAIL(result);
+            return fail (result);
 
         assert(result == nullptr or Is_Blob(result));
         return result;
@@ -707,7 +707,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             // range unless you use :UNBOUNDED, no similar solution exists
             // for ports since they all share the index.
             //
-            return FAIL(
+            return fail (
                 Error_Out_Of_Range(rebValue(rebI(offset + file->offset)))
             );
         }

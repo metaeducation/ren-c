@@ -96,7 +96,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
         bool check_datatype = Bool_ARG(TYPE);
         if (check_datatype) {
             if (not Is_Datatype(v))
-                return FAIL(
+                return fail (
                     "Datatype check on non-datatype (use TRY for NULL)"
                 );
 
@@ -104,7 +104,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
                 Bool_ARG(QUOTED)
                 or Bool_ARG(TIED) or Bool_ARG(PINNED) or Bool_ARG(METAFORM)
             ){
-                return FAIL(Error_Bad_Refines_Raw());
+                return fail (Error_Bad_Refines_Raw());
             }
 
             type = Cell_Datatype_Type(v);
@@ -120,7 +120,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
 
             if (Bool_ARG(TIED)) {
                 if (Bool_ARG(PINNED) or Bool_ARG(METAFORM))
-                    return FAIL(Error_Bad_Refines_Raw());
+                    return fail (Error_Bad_Refines_Raw());
 
                 if (type != TYPE_TIED)
                     return LOGIC(false);
@@ -129,7 +129,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
             }
             else if (Bool_ARG(PINNED)) {
                 if (Bool_ARG(METAFORM))
-                    return FAIL(Error_Bad_Refines_Raw());
+                    return fail (Error_Bad_Refines_Raw());
 
                 if (type != TYPE_PINNED)
                     return LOGIC(false);
@@ -1091,7 +1091,7 @@ DECLARE_NATIVE(MATCH)
 
     if (not Bool_ARG(LIFT)) {
         if (Is_Nulled(spare))
-            return FAIL(Error_Type_Of_Null_Raw());  // for TRY TYPE OF [1]
+            return fail (Error_Type_Of_Null_Raw());  // for TRY TYPE OF [1]
     }
 
     switch (Type_Of(test)) {

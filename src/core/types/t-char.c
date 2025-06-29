@@ -266,7 +266,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         REBINT n = Int32(arg);
         Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, n);
         if (error)
-            return FAIL(unwrap error);
+            return fail (unwrap error);
         return OUT; }
 
       case TYPE_BLOB: {
@@ -290,7 +290,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         else {
             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &size);
             if (e)
-                return FAIL(unwrap e);  // must be valid UTF8
+                return fail (unwrap e);  // must be valid UTF8
 
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0) {
@@ -300,7 +300,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         }
         Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, c);
         if (error)
-            return FAIL(unwrap error);
+            return fail (unwrap error);
         return OUT; }
 
       default:
@@ -309,7 +309,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(heart, arg));
+    return fail (Error_Bad_Make(heart, arg));
 }
 
 
@@ -342,7 +342,7 @@ DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
 
     Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, c);
     if (error)
-        return FAIL(unwrap error);
+        return fail (unwrap error);
     return OUT;
 }
 
@@ -378,7 +378,7 @@ DECLARE_NATIVE(TO_CHAR)
         uint32_t c = VAL_UINT32(e);
         Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, c);
         if (error)
-            return FAIL(unwrap error);
+            return fail (unwrap error);
         return OUT;
     }
     if (Is_Rune_And_Is_Char(e))
@@ -395,17 +395,17 @@ DECLARE_NATIVE(TO_CHAR)
     Codepoint c;
     const Byte* bp = at;
     if (size == 0)
-        return FAIL(Error_Not_One_Codepoint_Raw());
+        return fail (Error_Not_One_Codepoint_Raw());
     if (Is_Blob(e)) {
         Option(Error*) error = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
         if (error)
-            return FAIL(unwrap error);
+            return fail (unwrap error);
     } else {
         bp = Back_Scan_Utf8_Char_Unchecked(&c, bp);
     }
     ++bp;
     if (bp != at + size)
-        return FAIL(Error_Not_One_Codepoint_Raw());
+        return fail (Error_Not_One_Codepoint_Raw());
     return Init_Char_Unchecked(OUT, c);  // scan checked it
 }
 
@@ -601,11 +601,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     }
 
     if (chr < 0)
-        return FAIL(Error_Codepoint_Negative_Raw());
+        return fail (Error_Codepoint_Negative_Raw());
 
     Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, cast(Codepoint, chr));
     if (error)
-        return FAIL(unwrap error);
+        return fail (unwrap error);
     return OUT;
 }
 
@@ -688,7 +688,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
                 cast(const Byte*, utf8) + size
                 != Try_Scan_Email_To_Stack(utf8, size)
             ){
-                return FAIL(Error_Scan_Invalid_Raw(ARG(TYPE), v));
+                return fail (Error_Scan_Invalid_Raw(ARG(TYPE), v));
             }
             Move_Cell(OUT, TOP_ELEMENT);
             DROP();
@@ -699,7 +699,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
             cast(const Byte*, utf8) + size
             != Try_Scan_URL_To_Stack(utf8, size)
         ){
-            return FAIL(Error_Scan_Invalid_Raw(ARG(TYPE), v));
+            return fail (Error_Scan_Invalid_Raw(ARG(TYPE), v));
         }
         Move_Cell(OUT, TOP_ELEMENT);
         DROP();
@@ -1061,7 +1061,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Rune)
     Option(Codepoint) c = Codepoint_Of_Rune_If_Single_Char(rune);
 
     if (not c)
-        return FAIL(Error_Not_One_Codepoint_Raw());
+        return fail (Error_Not_One_Codepoint_Raw());
 
     return Init_Integer(OUT, unwrap c);
 }

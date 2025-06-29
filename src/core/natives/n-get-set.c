@@ -1495,7 +1495,7 @@ DECLARE_NATIVE(DOT_1)
 
     Context* coupling = Adjust_Context_For_Coupling(Level_Binding(LEVEL));
     if (not coupling)
-        return FAIL("No current coupling in effect");
+        return fail ("No current coupling in effect");
 
     return Init_Object(OUT, cast(VarList*, coupling));
 }

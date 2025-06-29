@@ -2486,7 +2486,7 @@ DECLARE_NATIVE(PARSE3)
     if (Is_Light_Null(OUT)) {  // a match failed (but may be at end of input)
         if (Bool_ARG(MATCH))
             return nullptr;
-        return FAIL(Error_Parse3_Incomplete_Raw());
+        return fail (Error_Parse3_Incomplete_Raw());
     }
 
     REBLEN index = VAL_UINT32(Known_Element(OUT));
@@ -2496,7 +2496,7 @@ DECLARE_NATIVE(PARSE3)
         if (Bool_ARG(MATCH))
             return nullptr;
         if (not Bool_ARG(RELAX))
-            return FAIL(Error_Parse3_Incomplete_Raw());
+            return fail (Error_Parse3_Incomplete_Raw());
     }
 
     if (Bool_ARG(MATCH))
@@ -2519,7 +2519,9 @@ DECLARE_NATIVE(PARSE_ACCEPT)
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "accept".
 {
-    return FAIL("PARSE-ACCEPT is for internal PARSE use only");
+    INCLUDE_PARAMS_OF_PARSE_ACCEPT;
+
+    panic ("PARSE-ACCEPT is for internal PARSE use only");
 }
 
 
@@ -2536,7 +2538,9 @@ DECLARE_NATIVE(PARSE_BREAK)
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "break".
 {
-    return FAIL("PARSE-BREAK is for internal PARSE use only");
+    INCLUDE_PARAMS_OF_PARSE_BREAK;
+
+    panic ("PARSE-BREAK is for internal PARSE use only");
 }
 
 
@@ -2553,5 +2557,7 @@ DECLARE_NATIVE(PARSE_REJECT)
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "reject".
 {
-    return FAIL("PARSE-REJECT is for internal PARSE use only");
+    INCLUDE_PARAMS_OF_PARSE_REJECT;
+
+    panic ("PARSE-REJECT is for internal PARSE use only");
 }

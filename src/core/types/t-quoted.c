@@ -187,7 +187,7 @@ DECLARE_NATIVE(QUASI)
 
     Option(Error*) e = Trap_Coerce_To_Quasiform(out);
     if (e)
-        return FAIL(unwrap e);  // RAISE so (try quasi ':foo:) gives null
+        return fail (unwrap e);  // RAISE so (try quasi ':foo:) gives null
 
     return OUT;
 }
@@ -674,7 +674,10 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
 
 } opting_out: { //////////////////////////////////////////////////////////////
 
-    return veto ? FAIL(Cell_Error(g_error_veto)) : VOID;
+    if (veto)
+        return fail (Cell_Error(g_error_veto));  // OPT:VETO
+
+    return VOID;
 }}
 
 

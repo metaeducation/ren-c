@@ -94,7 +94,39 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
     }
 
     if (b == nullptr) {  // API and internal code can both return `nullptr`
-        Init_Nulled(OUT);
+        if (not g_failure) {
+            Init_Nulled(OUT);
+            return nullptr;
+        }
+
+        // if g_failure is set, nullptr came from `return fail()` not a
+        // `return nullptr` indicating null.  See PERMISSIVE_ZERO.
+
+        assert(not Is_Throwing(L));
+
+        while (TOP_LEVEL != L) {  // convenience
+            Rollback_Level(TOP_LEVEL);
+            Drop_Level(TOP_LEVEL);
+            Erase_Cell(TOP_LEVEL->out);
+        }
+        Rollback_Level(L);  // not throwing, no trampoline rollback TOP_LEVEL
+
+      #if DEBUG_EXTANT_STACK_POINTERS  // want to use stack in location setting
+        Count save_extant = g_ds.num_refs_extant;
+        g_ds.num_refs_extant = 0;
+      #endif
+
+        Force_Location_Of_Error(g_failure, L);
+
+      #if DEBUG_EXTANT_STACK_POINTERS
+        assert(g_ds.num_refs_extant == 0);
+        g_ds.num_refs_extant = save_extant;
+      #endif
+
+        Init_Warning(L->out, g_failure);
+        g_failure = nullptr;
+
+        Failify(L->out);
         return nullptr;
     }
 
@@ -1007,7 +1039,7 @@ Bounce Action_Executor(Level* L)
 } check_output: {  ///////////////////////////////////////////////////////////
 
   // Here we know the function finished and nothing threw past it or had an
-  // abrupt panic().  (It may have done a `return FAIL(...)`, however.)
+  // abrupt panic().  (It may have done a `return fail (...)`, however.)
 
   #if RUNTIME_CHECKS
     Do_After_Action_Checks_Debug(L);

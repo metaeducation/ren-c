@@ -174,7 +174,7 @@ DECLARE_NATIVE(PICK)
         panic ("TWEAK* delegation machinery not done yet");
 
     if (Is_Dual_Nulled_Absent_Signal(dual))  // lifted is "NULL-but-present"
-        return FAIL(Error_Bad_Pick_Raw(ARG(PICKER)));
+        return fail (Error_Bad_Pick_Raw(ARG(PICKER)));
 
     panic ("Non-ACTION! antiform returned by TWEAK* dual protocol");
 
@@ -416,7 +416,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Sequence)
     Length b_len = Cell_Sequence_Len(b);
 
     if (a_len != b_len)
-        return FAIL("Temporarily disallow compare unequal length sequences");
+        return fail ("Temporarily disallow compare unequal length sequences");
 
     Sink(Element) a_item = SCRATCH;
     Sink(Element) b_item = SPARE;
@@ -434,7 +434,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Sequence)
         if (Equal_Values(a_item, b_item, strict))
             continue;  // don't fret they couldn't compare with LESSER?
 
-        return FAIL("Couldn't compare values");  // fret
+        return fail ("Couldn't compare values");  // fret
     }
 
     return LOGIC(true);

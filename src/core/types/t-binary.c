@@ -160,7 +160,7 @@ DECLARE_NATIVE(DECODE_IEEE_754)
     Size size;
     const Byte* at = Blob_Size_At(&size, blob);
     if (size < 8)
-        return FAIL(blob);
+        return fail (blob);
 
     Init(Element) out = OUT;
     Reset_Cell_Header_Noquote(TRACK(out), CELL_MASK_DECIMAL);
@@ -223,7 +223,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
         break;
     }
 
-    return FAIL(Error_Bad_Make(TYPE_BLOB, arg));
+    return fail (Error_Bad_Make(TYPE_BLOB, arg));
 }
 
 
@@ -759,7 +759,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
 
     if (index >= tail) {
         if (not Bool_ARG(PART))
-            return FAIL(Error_Nothing_To_Take_Raw());
+            return fail (Error_Nothing_To_Take_Raw());
 
         return Init_Blob(OUT, Make_Binary(0));
     }
@@ -827,7 +827,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
     REBINT index = Series_Index(blob);
 
     if (index >= tail)
-        return FAIL(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
+        return fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
     index += Random_Int(Bool_ARG(SECURE)) % (tail - index);
     const Binary* bin = Cell_Binary(blob);
@@ -893,11 +893,11 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Blob)
     Codepoint c;
     Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
     if (e)
-        return FAIL(unwrap e);
+        return fail (unwrap e);
     ++bp;  // Back_Scan() requires increment
 
     if (bp != Binary_Tail(Cell_Binary(blob)))
-        return FAIL(Error_Not_One_Codepoint_Raw());
+        return fail (Error_Not_One_Codepoint_Raw());
 
     return Init_Integer(OUT, c);
 }
@@ -1259,7 +1259,7 @@ DECLARE_NATIVE(ADD_TO_BINARY)
         return COPY(blob);
 
     if (Series_Len_At(blob) == 0) // add/subtract to #{} otherwise
-        return FAIL(Error_Overflow_Raw());
+        return fail (Error_Overflow_Raw());
 
     while (delta != 0) {
         REBLEN wheel = Series_Len_Head(blob) - 1;
@@ -1268,7 +1268,7 @@ DECLARE_NATIVE(ADD_TO_BINARY)
             if (delta > 0) {
                 if (*b == 255) {
                     if (wheel == Series_Index(blob))
-                        return FAIL(Error_Overflow_Raw());
+                        return fail (Error_Overflow_Raw());
 
                     *b = 0;
                     --wheel;
@@ -1281,7 +1281,7 @@ DECLARE_NATIVE(ADD_TO_BINARY)
             else {
                 if (*b == 0) {
                     if (wheel == Series_Index(blob))
-                        return FAIL(Error_Overflow_Raw());
+                        return fail (Error_Overflow_Raw());
 
                     *b = 255;
                     --wheel;

@@ -319,7 +319,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
     if (Is_Integer(def))  // new string with given integer capacity [2]
         return Init_Any_String(OUT, heart, Make_Strand(Int32s(def, 0)));
 
-    return FAIL(Error_Bad_Make(heart, def));
+    return fail (Error_Bad_Make(heart, def));
 }
 
 
@@ -1098,7 +1098,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
 
     if (Series_Index(v) >= tail) {
         if (not Bool_ARG(PART))
-            return FAIL(Error_Nothing_To_Take_Raw());
+            return fail (Error_Nothing_To_Take_Raw());
         Heart heart = Heart_Of_Builtin_Fundamental(v);
         return Init_Any_String(OUT, heart, Make_Strand(0));
     }
@@ -1142,7 +1142,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
     REBLEN tail = Series_Len_Head(v);
 
     if (index >= tail)
-        return FAIL(Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
+        return fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
     index += Random_Int(Bool_ARG(SECURE)) % (tail - index);
 
@@ -1209,7 +1209,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Any_String)
     ){
         return Init_Integer(OUT, c);
     }
-    return FAIL(Error_Not_One_Codepoint_Raw());
+    return fail (Error_Not_One_Codepoint_Raw());
 }
 
 

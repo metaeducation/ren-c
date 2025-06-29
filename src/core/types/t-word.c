@@ -103,7 +103,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
     Element* arg = Element_ARG(DEF);
 
     if (not Any_Sequence(arg))
-        return FAIL(Error_Bad_Make(heart, arg));
+        return fail (Error_Bad_Make(heart, arg));
 
   make_word_from_sequence: {
 
@@ -126,7 +126,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
         return COPY(arg);
     }
 
-    return FAIL(
+    return fail (
         "Can't MAKE ANY-WORD? from sequence unless it wraps one WORD!"
     );
 }}

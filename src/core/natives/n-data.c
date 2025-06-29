@@ -136,7 +136,7 @@ DECLARE_NATIVE(BINDABLE_Q)
 
     Value* v = ARG(VALUE);
     if (Is_Antiform(v))
-        return FAIL("ANTIFORM! values are not bindable");  // caller can TRY
+        return fail ("ANTIFORM! values are not bindable");  // caller can TRY
 
     return LOGIC(Is_Cell_Bindable(Known_Element(v)));
 }

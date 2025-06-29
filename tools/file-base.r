@@ -170,6 +170,7 @@ core: [
         n-sets.c
         n-strings.c
         n-system.c
+        n-transcode.c
     ]
 
     parse/ -> [

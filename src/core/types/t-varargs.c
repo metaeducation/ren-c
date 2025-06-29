@@ -434,7 +434,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
             return THROWN;
         }
         if (Is_Ghost(OUT))
-            return FAIL(Error_Nothing_To_Take_Raw());
+            return fail (Error_Nothing_To_Take_Raw());
         Clear_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);
         return OUT;
     }

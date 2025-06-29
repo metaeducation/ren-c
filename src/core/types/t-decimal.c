@@ -145,7 +145,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         Codepoint c;
         Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, arg);
         if (e)
-            return FAIL(unwrap e);
+            return fail (unwrap e);
         return Init_Decimal(OUT, cast(REBDEC, c)); }
 
       case TYPE_TIME: {
@@ -195,7 +195,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         const Element* item = List_Len_At(&len, arg);
 
         if (len != 2)
-            return FAIL(Error_Bad_Make(TYPE_DECIMAL, arg));
+            return fail (Error_Bad_Make(TYPE_DECIMAL, arg));
 
         REBDEC d;
         if (Is_Integer(item))
@@ -203,7 +203,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         else if (Is_Decimal(item) || Is_Percent(item))
             d = VAL_DECIMAL(item);
         else
-            return FAIL(Error_Bad_Value(item));
+            return fail (Error_Bad_Value(item));
 
         ++item;
 
@@ -213,13 +213,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         else if (Is_Decimal(item) || Is_Percent(item))
             exp = VAL_DECIMAL(item);
         else
-            return FAIL(Error_Bad_Value(item));
+            return fail (Error_Bad_Value(item));
 
         while (exp >= 1) {
             --exp;
             d *= 10.0;
             if (!FINITE(d))
-                return FAIL(Error_Overflow_Raw());
+                return fail (Error_Overflow_Raw());
         }
 
         while (exp <= -1) {
@@ -232,7 +232,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         break;
     }
 
-    return FAIL(Error_Bad_Make(TYPE_DECIMAL, arg));
+    return fail (Error_Bad_Make(TYPE_DECIMAL, arg));
 }
 
 
@@ -542,7 +542,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
 
     if (Any_Utf8_Type(to)) {
         if (to == TYPE_MONEY)
-            return FAIL(  // (to money! 10.20) acts as (to money! 10.2) [1]
+            return fail (  // (to money! 10.20) acts as (to money! 10.2) [1]
                 "TO MONEY! of DECIMAL! can't conserve precision"
             );
 

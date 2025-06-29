@@ -100,7 +100,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
     }
 
     if (not Is_Port(out))  // should always create a port
-        return FAIL(out);
+        return fail (out);
 
     return OUT;
 }

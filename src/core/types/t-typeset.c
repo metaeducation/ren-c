@@ -503,7 +503,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
         break;
     }
 
-    return FAIL(Error_Bad_Pick_Raw(picker));
+    return fail (Error_Bad_Pick_Raw(picker));
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 

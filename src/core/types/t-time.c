@@ -376,7 +376,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 
   bad_make:
 
-    return FAIL(Error_Bad_Make(TYPE_TIME, arg));
+    return fail (Error_Bad_Make(TYPE_TIME, arg));
 }
 
 

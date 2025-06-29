@@ -476,7 +476,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
         Init_Text(Slot_Init_Hack(&vars->message), Copy_String_At(arg));
     }
     else
-        return FAIL(arg);
+        return fail (arg);
 
     DECLARE_VALUE (id);
     e = Trap_Read_Slot(id, &vars->id);
@@ -529,7 +529,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
                     or Is_Block(Slot_Hack(correct_message))
                 );
                 if (not Is_Nulled(message))
-                    return FAIL(Error_Invalid_Error_Raw(arg));
+                    return fail (Error_Invalid_Error_Raw(arg));
 
                 Copy_Cell(
                     Slot_Init_Hack(&vars->message), Slot_Hack(correct_message)
@@ -548,7 +548,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
                 //
                 //     make warning! [type: 'script id: 'set-self]
 
-                return FAIL(
+                return fail (
                     Error_Invalid_Error_Raw(Varlist_Archetype(varlist))
                 );
             }

@@ -119,7 +119,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
         if (Is_Decimal(out))
             return rebDelegate(CANON(ROUND), out);  // out is legal ATM [2]
 
-        return FAIL("Transcode_One() gave unwanted type");
+        return fail ("Transcode_One() gave unwanted type");
     }
 
     dont(Is_Blob(arg));  // [3]
@@ -259,20 +259,20 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
       case SYM_ADD: {
         REBI64 anum;
         if (Add_I64_Overflows(&anum, num, arg))
-            return FAIL(Error_Overflow_Raw());
+            return fail (Error_Overflow_Raw());
         return Init_Integer(OUT, anum); }
 
       case SYM_SUBTRACT: {
         REBI64 anum;
         if (Subtract_I64_Overflows(&anum, num, arg))
-            return FAIL(Error_Overflow_Raw());
+            return fail (Error_Overflow_Raw());
         return Init_Integer(OUT, anum); }
 
       case SYM_DIVIDE:
         if (arg == 0)
-            return FAIL(Error_Zero_Divide_Raw());
+            return fail (Error_Zero_Divide_Raw());
         if (num == INT64_MIN && arg == -1)
-            return FAIL(Error_Overflow_Raw());
+            return fail (Error_Overflow_Raw());
         if (num % arg == 0)
             return Init_Integer(OUT, num / arg);
         // Fall thru
@@ -283,7 +283,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
 
       case SYM_REMAINDER:
         if (arg == 0)
-            return FAIL(Error_Zero_Divide_Raw());
+            return fail (Error_Zero_Divide_Raw());
         return Init_Integer(OUT, (arg != -1) ? (num % arg) : 0);
 
       case SYM_BITWISE_AND:
@@ -300,7 +300,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
 
       case SYM_NEGATE:
         if (num == INT64_MIN)
-            return FAIL(Error_Overflow_Raw());
+            return fail (Error_Overflow_Raw());
         return Init_Integer(OUT, -num);
 
       case SYM_BITWISE_NOT:
@@ -308,7 +308,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
 
       case SYM_ABSOLUTE:
         if (num == INT64_MIN)
-            return FAIL(Error_Overflow_Raw());
+            return fail (Error_Overflow_Raw());
         return Init_Integer(OUT, num < 0 ? -num : num);
 
       case SYM_EVEN_Q:
@@ -428,7 +428,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Integer)
 
     REBI64 result;
     if (Multipy_I64_Overflows(&result, num1, num2))
-        return FAIL(Error_Overflow_Raw());
+        return fail (Error_Overflow_Raw());
     return Init_Integer(OUT, result);
 }
 

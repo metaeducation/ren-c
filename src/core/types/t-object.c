@@ -448,7 +448,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
     StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
 
     if (not Is_Frame(arg))
-        return FAIL(Error_Bad_Make(TYPE_FRAME, arg));
+        return fail (Error_Bad_Make(TYPE_FRAME, arg));
 
     Option(VarList*) coupling = Cell_Frame_Coupling(arg);
 
@@ -476,7 +476,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
     Element* arg = Element_ARG(DEF);
 
     if (not Any_List(arg))
-        return FAIL("Currently only (MAKE MODULE! LIST) is allowed");
+        return fail ("Currently only (MAKE MODULE! LIST) is allowed");
 
     SeaOfVars* sea = Alloc_Sea_Core(BASE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(sea, Cell_Binding(arg));
@@ -521,7 +521,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             return Init_Context_Cell(OUT, TYPE_OBJECT, derived);
         }
 
-        return FAIL(Error_Bad_Make(TYPE_OBJECT, arg));
+        return fail (Error_Bad_Make(TYPE_OBJECT, arg));
     }
 
     assert(Cell_Datatype_Builtin_Heart(type) == TYPE_OBJECT);
@@ -573,7 +573,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
         return Init_Object(OUT, c);
     }
 
-    return FAIL(Error_Bad_Make(TYPE_OBJECT, arg));
+    return fail (Error_Bad_Make(TYPE_OBJECT, arg));
 }
 
 
@@ -1526,7 +1526,7 @@ DECLARE_NATIVE(BODY_OF)  // !!! should this be SOURCE-OF ?
     Details* details = Phase_Details(phase);
     DetailsQuerier* querier = Details_Querier(details);
     if (not (*querier)(OUT, details, SYM_BODY_OF))
-        return FAIL("Frame Details does not offer BODY, use TRY for NULL");
+        return fail ("Frame Details does not offer BODY, use TRY for NULL");
 
     return OUT;
 }
@@ -1659,7 +1659,7 @@ IMPLEMENT_GENERIC(FILE_OF, Is_Frame)
             return Init_File(OUT, unwrap file);
     }
 
-    return FAIL("File not available for frame");
+    return fail ("File not available for frame");
 }
 
 
@@ -1683,7 +1683,7 @@ IMPLEMENT_GENERIC(LINE_OF, Is_Frame)
             return Init_Integer(OUT, unwrap line);
     }
 
-    return FAIL("Line not available for frame");
+    return fail ("Line not available for frame");
 }
 
 

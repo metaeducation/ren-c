@@ -233,7 +233,7 @@ DECLARE_NATIVE(REDUCE)
         }
     }
     else if (Is_Antiform(spare))
-        return FAIL(Error_Bad_Antiform(spare));
+        return fail (Error_Bad_Antiform(spare));
     else {
         Move_Cell(PUSH(), Known_Element(spare));  // not void, not antiform
         SUBLEVEL->baseline.stack_base += 1;  // [3]
@@ -845,7 +845,7 @@ Bounce Composer_Executor(Level* const L)
     assert(Is_Splice(out));
 
     if (list_lift_byte != NOQUOTE_2 or sigil)  // [1]
-        return FAIL("Quoted COMPOSE slots are not distributed over splices");
+        return fail ("Quoted COMPOSE slots are not distributed over splices");
 
     const Element* push_tail;
     const Element* push = List_At(&push_tail, out);

@@ -102,7 +102,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
     if (Is_Block(arg))
         return rebValue(CANON(TO), CANON(PAIR_X), CANON(REDUCE), arg);
 
-    return FAIL(Error_Bad_Make(TYPE_PAIR, arg));
+    return fail (Error_Bad_Make(TYPE_PAIR, arg));
 }
 
 

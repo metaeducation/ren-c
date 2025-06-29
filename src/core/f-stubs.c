@@ -671,7 +671,7 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
                 continue;
             }
 
-        return FAIL(
+        return fail (
             "Trying to add Sigil to already metaform/tied/pinned value"
         );
     }
@@ -745,7 +745,7 @@ static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
         return unwrap b;
 
     if (Sigil_Of(e) != sigil)
-        return FAIL("Trying to remove Sigil from value without that Sigil");
+        return fail ("Trying to remove Sigil from value without that Sigil");
 
     return COPY(Plainify(e));
 }

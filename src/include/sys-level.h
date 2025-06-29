@@ -763,31 +763,6 @@ INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
     return Unliftify_Undecayed(level_->out);
 }
 
-INLINE Bounce Native_Fail_Result(Level* L, Error* error) {
-    assert(not Is_Throwing(L));
-
-    while (TOP_LEVEL != L) {  // convenience
-        Rollback_Level(TOP_LEVEL);
-        Drop_Level(TOP_LEVEL);
-        Erase_Cell(TOP_LEVEL->out);
-    }
-    Rollback_Level(L);  // trampoline won't rollback TOP_LEVEL (not throwing)
-
-  #if DEBUG_EXTANT_STACK_POINTERS  // want to use stack in error location set
-    Count save_extant = g_ds.num_refs_extant;
-    g_ds.num_refs_extant = 0;
-  #endif
-
-    Force_Location_Of_Error(error, L);
-
-  #if DEBUG_EXTANT_STACK_POINTERS
-    assert(g_ds.num_refs_extant == 0);
-    g_ds.num_refs_extant = save_extant;
-  #endif
-
-    Init_Warning(L->out, error);
-    return Failify(L->out);
-}
 
 // Doing `panic ()` from a native does all the same automatic cleanup
 // as if you triggered an abrupt panic, but doesn't go through the longjmp()
@@ -944,9 +919,6 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     //
     #define OKAY        BOUNCE_OKAY
     #define LOGIC(b)    ((b) == true ? BOUNCE_OKAY : nullptr)
-
-    #define FAIL(p) \
-        Native_Fail_Result(level_, Derive_Error_From_Pointer(p))
 
     #define panic(p) \
         return (Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \

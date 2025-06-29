@@ -81,7 +81,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         return OUT;
     }
 
-    return FAIL(Error_Bad_Make(TYPE_TUPLE, arg));
+    return fail (Error_Bad_Make(TYPE_TUPLE, arg));
 }
 
 

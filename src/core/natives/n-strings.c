@@ -433,7 +433,7 @@ DECLARE_NATIVE(JOIN)
         }
     }
     else if (Is_Antiform(spare))
-        return FAIL(Error_Bad_Antiform(spare));
+        return fail (Error_Bad_Antiform(spare));
 
     if (Is_Rune(spare)) {  // do not delimit (unified w/char) [5]
         if (delimiter)
@@ -491,7 +491,7 @@ DECLARE_NATIVE(JOIN)
         goto next_stack_step;
     }
     else if (Is_Antiform(spare))
-        return FAIL(Error_Bad_Antiform(spare));
+        return fail (Error_Bad_Antiform(spare));
 
     Push_Join_Delimiter_If_Pending();
     Copy_Cell(PUSH(), spare);
@@ -605,7 +605,7 @@ DECLARE_NATIVE(JOIN)
             cast(const Byte*, utf8) + size
             != Try_Scan_Email_To_Stack(utf8, size)
         ){
-            return FAIL("Invalid EMAIL!");
+            return fail ("Invalid EMAIL!");
         }
         Move_Cell(OUT, TOP_ELEMENT);
         DROP();
@@ -615,7 +615,7 @@ DECLARE_NATIVE(JOIN)
             cast(const Byte*, utf8) + size
             != Try_Scan_URL_To_Stack(utf8, size)
         ){
-            return FAIL("Invalid URL!");
+            return fail ("Invalid URL!");
         }
         Move_Cell(OUT, TOP_ELEMENT);
         DROP();
@@ -715,7 +715,7 @@ DECLARE_NATIVE(JOIN)
     if (Any_Sequence_Type(heart)) {
         Option(Error*) error = Trap_Pop_Sequence(out, heart, STACK_BASE);
         if (error)
-            return FAIL(unwrap error);
+            return fail (unwrap error);
     }
     else {
         Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);
@@ -939,7 +939,7 @@ DECLARE_NATIVE(DEHEX)
 
         do {
             if (scan_size > 4)
-                return FAIL("Percent sequence over 4 bytes long (bad UTF-8)");
+                return fail ("Percent sequence over 4 bytes long (bad UTF-8)");
 
             Codepoint hex1;
             Codepoint hex2;
@@ -957,13 +957,13 @@ DECLARE_NATIVE(DEHEX)
                 or hex2 > UINT8_MAX
                 or not Try_Get_Lex_Hexdigit(&nibble2, cast(Byte, hex2))
             ){
-                return FAIL("2 hex digits must follow percent, e.g. %XX");
+                return fail ("2 hex digits must follow percent, e.g. %XX");
             }
 
             Byte b = (nibble1 << 4) + nibble2;
 
             if (scan_size == 0 and Is_Continuation_Byte(b))
-                return FAIL("UTF-8 can't start with continuation byte");
+                return fail ("UTF-8 can't start with continuation byte");
 
             if (scan_size > 0 and not Is_Continuation_Byte(b)) {  // next char
                 cp = Step_Back_Codepoint(cp);
@@ -990,11 +990,11 @@ DECLARE_NATIVE(DEHEX)
             &decoded, &next, &scan_size
         );
         if (e)
-            return FAIL(unwrap e);
+            return fail (unwrap e);
 
         --scan_size;  // see definition of Back_Scan for why it's off by one
         if (scan_size != 0)
-            return FAIL("Extra continuation characters in %XX of dehex");
+            return fail ("Extra continuation characters in %XX of dehex");
 
         Append_Codepoint(mo->strand, decoded);
     }
