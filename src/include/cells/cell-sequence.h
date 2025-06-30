@@ -108,7 +108,7 @@
 //
 //    (Note that exceptions like [~/~ ~//~ ~...~] are quasi-words.)
 //
-INLINE Result(const Element*) Check_Sequence_Element(  // !!! Result(None) ?
+INLINE Result(Nothing) Check_Sequence_Element(
     Heart sequence_heart,
     const Element* e,
     bool is_head
@@ -127,22 +127,22 @@ INLINE Result(const Element*) Check_Sequence_Element(  // !!! Result(None) ?
 
     if (h == TYPE_CHAIN) {  // inserting a chain
         if (sequence_heart == TYPE_PATH)
-            return e;  // chains can only be put in paths
+            return nothing;  // chains can only be put in paths
         goto bad_sequence_item;
     }
 
     if (h == TYPE_TUPLE) {  // inserting a tuple
         if (sequence_heart != TYPE_TUPLE)
-            return e;  // legal in non-tuple sequences (path, chain)
+            return nothing;  // legal in non-tuple sequences (path, chain)
         goto bad_sequence_item;
     }
 
     if (h == TYPE_RUNE) {
         if (Is_Quasar(e))  // Legal, e.g. `~/home/Projects/ren-c/README.md`
-            return e;
+            return nothing;
 
         if (Any_Sigiled_Space(e))
-            return e;  // single-char forms legal for now
+            return nothing;  // single-char forms legal for now
 
         if (Is_Space(e)) {
             assert(not is_head);  // callers check spaces at head or tail
@@ -160,7 +160,7 @@ INLINE Result(const Element*) Check_Sequence_Element(  // !!! Result(None) ?
     if (h == TYPE_WORD) {
         const Symbol* symbol = Word_Symbol(e);
         if (symbol == CANON(DOT_1) and sequence_heart != TYPE_TUPLE)
-            return e;
+            return nothing;
         if (
             sequence_heart != TYPE_CHAIN  // !!! temporary for //: -- review
             and Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_SEQUENCE)
@@ -168,12 +168,12 @@ INLINE Result(const Element*) Check_Sequence_Element(  // !!! Result(None) ?
             goto bad_sequence_item;  //  [<| |>] => <|/|>  ; tag
         }
         if (sequence_heart == TYPE_PATH)
-            return e;
+            return nothing;
         if (Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_TUPLE))
             goto bad_sequence_item;  // e.g. contains a slash
     }
 
-    return e;  // all other words should be okay
+    return nothing;  // all other words should be okay
 
   bad_sequence_item:
 
