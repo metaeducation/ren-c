@@ -380,8 +380,8 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_Sequence)
     Element* b = Element_ARG(VALUE2);
     bool strict = not Bool_ARG(RELAX);
 
-    Length a_len = Cell_Sequence_Len(a);
-    Length b_len = Cell_Sequence_Len(b);
+    Length a_len = Sequence_Len(a);
+    Length b_len = Sequence_Len(b);
 
     if (a_len != b_len)  // different lengths not considered EQUAL? [1]
         return LOGIC(false);
@@ -409,8 +409,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Sequence)
     Element* a = Element_ARG(VALUE1);
     Element* b = Element_ARG(VALUE2);
 
-    Length a_len = Cell_Sequence_Len(a);
-    Length b_len = Cell_Sequence_Len(b);
+    Length a_len = Sequence_Len(a);
+    Length b_len = Sequence_Len(b);
 
     if (a_len != b_len)
         return fail ("Temporarily disallow compare unequal length sequences");
@@ -454,7 +454,7 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
     Heart heart = Heart_Of_Builtin(sequence);
     assert(Any_Sequence_Type(heart));
 
-    REBLEN len = Cell_Sequence_Len(sequence);
+    REBLEN len = Sequence_Len(sequence);
     REBLEN n;
     for (n = 0; n < len; ++n) {
         if (not Is_Integer(Copy_Sequence_At(SPARE, sequence, n)))

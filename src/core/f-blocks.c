@@ -230,7 +230,7 @@ void Uncolor(const Value* v)
     if (Any_List(v))
         Uncolor_Array(Cell_Array(v));
     else if (Is_Path(v)) {
-        REBLEN len = Cell_Sequence_Len(v);
+        REBLEN len = Sequence_Len(v);
         REBLEN i;
         DECLARE_ELEMENT (temp);
         for (i = 0; i < len; ++i) {

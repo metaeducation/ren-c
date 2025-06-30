@@ -199,7 +199,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
         return Init_Blob(OUT, Make_Binary(Int32s(arg, 0)));
 
       case TYPE_TUPLE: {
-        REBLEN len = Cell_Sequence_Len(arg);
+        REBLEN len = Sequence_Len(arg);
         Binary* b = Make_Binary(len);
         Byte* head = Binary_Head(b);
         if (Try_Get_Sequence_Bytes(head, c_cast(Element*, arg), len)) {

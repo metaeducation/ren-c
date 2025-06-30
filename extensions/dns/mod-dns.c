@@ -206,7 +206,7 @@ DECLARE_NATIVE(DNS_ACTOR)
             // that scans to a tuple, at this time (currently uses a string)
             //
           reverse_lookup:
-            if (Cell_Sequence_Len(host) != 4)
+            if (Sequence_Len(host) != 4)
                 return "panic -[Reverse DNS lookup requires length 4 TUPLE!]-";
 
             // 93.184.216.34 => example.com

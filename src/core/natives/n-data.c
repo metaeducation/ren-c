@@ -186,7 +186,7 @@ DECLARE_NATIVE(INSIDE)
         context = Cell_Binding(where);
     else {
         assert(Any_Sequence(where));
-        context = Cell_Sequence_Binding(where);
+        context = Sequence_Binding(where);
     }
 
     Derelativize(OUT, element, context);

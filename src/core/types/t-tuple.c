@@ -91,7 +91,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
     Option(SymId) id = Symbol_Id(verb);
 
     Element* sequence = cast(Element*, ARG_N(1));
-    Length len = Cell_Sequence_Len(sequence);
+    Length len = Sequence_Len(sequence);
 
     switch (id) {
       case SYM_ADD:
@@ -153,7 +153,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         dec = -251.8517;  // unused but avoid maybe uninitialized warning
         a = 646699;  // unused but avoid maybe uninitialized warning
 
-        REBLEN alen = Cell_Sequence_Len(arg);
+        REBLEN alen = Sequence_Len(arg);
         if (
             alen > MAX_TUPLE
             or not Try_Get_Sequence_Bytes(abuf, arg, alen)
@@ -315,7 +315,7 @@ Result(Element*) Alias_Any_Sequence_As(
     const Element* seq,
     Heart as
 ){
-    Length len = Cell_Sequence_Len(seq);
+    Length len = Sequence_Len(seq);
 
     if (Any_Sequence_Type(as)) {  // not all aliasings are legal [1]
         REBINT i;
@@ -457,7 +457,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
 
     bool trivial_copy = true;
 
-    Length len = Cell_Sequence_Len(seq);
+    Length len = Sequence_Len(seq);
     Offset n;
     for (n = 0; n < len; ++len) {  // first let's see if it's a trivial copy
         Element* spare = Copy_Sequence_At(SPARE, seq, n);
@@ -510,7 +510,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Sequence)
 
   handle_pick: { /////////////////////////////////////////////////////////////
 
-    if (n < 0 or n >= Cell_Sequence_Len(seq))
+    if (n < 0 or n >= Sequence_Len(seq))
         return DUAL_SIGNAL_NULL_ABSENT;
 
     Copy_Sequence_At(OUT, seq, n);
@@ -612,7 +612,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Sequence)
 
     Element* seq = Element_ARG(ELEMENT);
 
-    return Init_Integer(OUT, Cell_Sequence_Len(seq));
+    return Init_Integer(OUT, Sequence_Len(seq));
 }
 
 
@@ -668,7 +668,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
     }
 
     DECLARE_ELEMENT (element);
-    Length len = Cell_Sequence_Len(c);
+    Length len = Sequence_Len(c);
     Offset i;
     for (i = 0; i < len; ++i) {
         Copy_Sequence_At(element, c, i);  // !!! cast
@@ -688,7 +688,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
                 if (Get_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE))
                     assert(
                         heart == TYPE_CHAIN
-                        and Cell_Sequence_Len(c) == 2
+                        and Sequence_Len(c) == 2
                     );
                 if (heart == TYPE_TUPLE)
                     assert(Not_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_TUPLE));

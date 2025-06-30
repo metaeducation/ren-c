@@ -297,7 +297,7 @@ DECLARE_NATIVE(JOIN)
 
     if (not joining_datatype) {
         if (Any_Sequence_Type(heart)) {
-            Length len = Cell_Sequence_Len(unwrap base);
+            Length len = Sequence_Len(unwrap base);
             REBINT i;
             for (i = 0; i < len; ++i)
                 Copy_Sequence_At(PUSH(), unwrap base, i);
@@ -1387,12 +1387,12 @@ DECLARE_NATIVE(TO_HEX)
         if (
             not Bool_ARG(SIZE)
             or len > 2 * MAX_TUPLE
-            or len > 2 * Cell_Sequence_Len(arg)
+            or len > 2 * Sequence_Len(arg)
         ){
-            len = 2 * Cell_Sequence_Len(arg);
+            len = 2 * Sequence_Len(arg);
         }
-        for (n = 0; n != Cell_Sequence_Len(arg); n++)
-            Form_Hex2(mo, Cell_Sequence_Byte_At(arg, n));
+        for (n = 0; n != Sequence_Len(arg); n++)
+            Form_Hex2(mo, Sequence_Byte_At(arg, n));
         for (; n < 3; n++)
             Form_Hex2(mo, 0);
     }

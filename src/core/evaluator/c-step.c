@@ -1291,7 +1291,7 @@ Bounce Stepper_Executor(Level* L)
         else
             slash_at_head = false;
 
-        Length len = Cell_Sequence_Len(CURRENT);
+        Length len = Sequence_Len(CURRENT);
         spare = Copy_Sequence_At(SPARE, CURRENT, len - 1);
         slash_at_tail = Is_Space(spare);
     }

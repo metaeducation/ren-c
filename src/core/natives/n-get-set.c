@@ -412,7 +412,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
     const Element* tail;
     const Element* at = List_At(&tail, path);
 
-    Context* binding = Cell_Sequence_Binding(path);
+    Context* binding = Sequence_Binding(path);
 
     if (Is_Space(at)) {  // leading slash means execute (but we're GET-ing)
         ++at;

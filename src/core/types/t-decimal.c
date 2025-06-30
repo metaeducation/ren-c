@@ -150,23 +150,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         return Init_Decimal(OUT, d); }
 
       case TYPE_PATH: {  // fractions as 1/2 are experimental use for PATH! [1]
-        if (Cell_Sequence_Len(arg) != 2)
+        if (Sequence_Len(arg) != 2)
             panic ("Fraction experiment requires PATH! of length 2");
 
         DECLARE_ELEMENT (numerator);
         DECLARE_ELEMENT (denominator);
-        Derelativize_Sequence_At(
-            numerator,
-            c_cast(Element*, arg),
-            Cell_Sequence_Binding(arg),
-            0
-        );
-        Derelativize_Sequence_At(
-            denominator,
-            c_cast(Element*, arg),
-            Cell_Sequence_Binding(arg),
-            1
-        );
+        Derelativize_Sequence_At(numerator, arg, 0, Sequence_Binding(arg));
+        Derelativize_Sequence_At(denominator, arg, 1, Sequence_Binding(arg));
         Push_Lifeguard(numerator);  // might be GROUP!, so (1.2)/4
         Push_Lifeguard(denominator);
 

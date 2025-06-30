@@ -578,7 +578,7 @@ INLINE Result(Value*) Pop_Sequence_Or_Element_Or_Nulled(
 // take as immutable...or you can create a `/foo`-style path in a more
 // optimized fashion using Refinify()
 
-INLINE Length Cell_Sequence_Len(const Cell* c) {
+INLINE Length Sequence_Len(const Cell* c) {
     assert(Any_Sequence_Type(Heart_Of(c)));
 
     if (not Sequence_Has_Pointer(c)) {  // compressed bytes
@@ -626,14 +626,13 @@ INLINE Length Cell_Sequence_Len(const Cell* c) {
 //    Stub has a place where size is written for non-array types when using
 //    the small series optimization.
 //
-INLINE Element* Derelativize_Sequence_At(
+INLINE Element* Copy_Sequence_At(
     Sink(Element) out,
-    const Element* sequence,
-    Context* context,
+    const Cell* sequence,
     REBLEN n
 ){
     assert(out != sequence);
-    assert(Any_Sequence_Type(Heart_Of(sequence)));  // !!! should not be cell
+    assert(Any_Sequence_Type(Unchecked_Heart_Of(sequence)));
 
     if (not Sequence_Has_Pointer(sequence)) {  // compressed bytes
         assert(n < sequence->payload.at_least_8[IDX_SEQUENCE_USED]);
@@ -644,9 +643,9 @@ INLINE Element* Derelativize_Sequence_At(
     if (Is_Base_A_Cell(payload1)) {  // test if it's a pairing
         const Pairing* p = c_cast(Pairing*, payload1);  // compressed pair
         if (n == 0)
-            return Derelativize(out, Pairing_First(p), context);
+            return Copy_Cell(out, Pairing_First(p));
         assert(n == 1);
-        return Derelativize(out, Pairing_Second(p), context);
+        return Copy_Cell(out, Pairing_Second(p));
     }
 
     switch (Stub_Flavor(u_c_cast(Flex*, payload1))) {
@@ -655,7 +654,7 @@ INLINE Element* Derelativize_Sequence_At(
         if (Get_Cell_Flag(sequence, LEADING_SPACE) ? n == 0 : n != 0)
             return Init_Space(out);
 
-        Derelativize(out, sequence, context);  // [2]
+        Copy_Cell_Core(out, sequence, CELL_MASK_COPY);  // [2]
         KIND_BYTE(out) = TYPE_WORD;
         LIFT_BYTE(out) = NOQUOTE_2;  // [3]
         return out; }
@@ -667,14 +666,14 @@ INLINE Element* Derelativize_Sequence_At(
             if (Get_Cell_Flag(sequence, LEADING_SPACE) ? n == 0 : n != 0)
                 return Init_Space(out);
 
-            Derelativize(out, sequence, context);
+            Copy_Cell_Core(out, sequence, CELL_MASK_COPY);
             KIND_BYTE(out) = MIRROR_BYTE(a);
             LIFT_BYTE(out) = NOQUOTE_2;  // [3]
             return out;
         }
         assert(Array_Len(a) >= 2);
         assert(Is_Source_Frozen_Shallow(a));
-        return Derelativize(out, Array_At(a, n), context); }
+        return Copy_Cell(out, Array_At(a, n)); }
 
       default :
         assert(false);
@@ -682,23 +681,19 @@ INLINE Element* Derelativize_Sequence_At(
     }
 }
 
-// !!! Cell-based routines ignore quotes, and want to be able to see the
-// items in a sequence.  We hackily cast the cell to an element, and the
-// Derelativize routine checks only the cell heart.  This is backwards:
-// derelativizing should be on top of a cell routine.
-//
-#define Copy_Sequence_At(out,sequence,n) \
-    Derelativize_Sequence_At((out), c_cast(Element*, sequence), SPECIFIED, (n))
+#define Derelativize_Sequence_At(out,sequence,n,context) \
+    Bind_If_Unbound(Copy_Sequence_At( \
+        (out), ensure(const Element*, (sequence)), (n)), (context))
 
-INLINE Byte Cell_Sequence_Byte_At(const Element* sequence, REBLEN n) {
+INLINE Byte Sequence_Byte_At(const Cell* sequence, REBLEN n) {
     DECLARE_ELEMENT (at);
     Copy_Sequence_At(at, sequence, n);
     if (not Is_Integer(at))
-        abrupt_panic ("Cell_Sequence_Byte_At() used on non-byte ANY-SEQUENCE?");
+        abrupt_panic ("Sequence_Byte_At() used on non-byte ANY-SEQUENCE?");
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 
-INLINE Context* Cell_Sequence_Binding(const Element* sequence) {
+INLINE Context* Sequence_Binding(const Element* sequence) {
     assert(Any_Sequence_Type(Heart_Of(sequence)));
 
     // Getting the binding for any of the optimized types means getting
@@ -740,7 +735,7 @@ INLINE bool Try_Get_Sequence_Bytes(
     const Cell* sequence,
     Size buf_size
 ){
-    Length len = Cell_Sequence_Len(sequence);
+    Length len = Sequence_Len(sequence);
 
     Byte* dp = cast(Byte*, buf);
     Size i;
@@ -876,7 +871,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
         return nullptr;  // e is not /?:?:? style path
 
     DECLARE_ELEMENT (temp);  // !!! should be able to optimize and not need this
-    Derelativize_Sequence_At(temp, e, Cell_Sequence_Binding(e), 1);
+    Derelativize_Sequence_At(temp, e, 1, Sequence_Binding(e));
     assert(Is_Chain(temp));
 
     if (TRAILING_SPACE_AND(WORD) != Try_Get_Sequence_Singleheart(temp))
