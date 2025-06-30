@@ -101,22 +101,23 @@ uint32_t Hash_UTF8_Len_Caseless(Utf8(const*) cp, Length len) {
 
 
 //
-//  Hash_Value: C
+//  Hash_Cell: C
 //
 // Return a case insensitive hash value for any value.
 //
-// Fails if datatype cannot be hashed.  Note that the binding is not used
-// in hashing, because it is not used in comparisons either.
+// !!! This can currently abruptly panic if it encounters a type that can't
+// be hashed.  It should be the case that anything can hash.
 //
-uint32_t Hash_Value(const Value* cell)
+uint32_t Hash_Cell(const Cell* cell)
 {
     Option(Heart) heart = Heart_Of(cell);
 
     uint32_t hash;
 
     switch (heart) {
-      case TYPE_0_constexpr:
-          abrupt_panic ("Cannot hash 0-custom datatype");
+      case TYPE_0_constexpr:  // custom datatype
+        hash = 0;  // improve
+        break;
 
       case TYPE_COMMA:
         hash = 0;
@@ -128,13 +129,13 @@ uint32_t Hash_Value(const Value* cell)
         // bits collapses -1 with 0 etc.  (If your key k is |k| < 2^32 high
         // bits are 0-informative." -Giulio
         //
-        hash = cast(uint32_t, VAL_INT64(cell));
+        hash = cast(uint32_t, INTEGER_PAYLOAD_I64(cell));
         break;
 
       case TYPE_DECIMAL:
       case TYPE_PERCENT:
         // depends on INT64 sharing the DEC64 bits
-        hash = (VAL_INT64(cell) >> 32) ^ (VAL_INT64(cell));
+        hash = (INTEGER_PAYLOAD_I64(cell) >> 32) ^ (INTEGER_PAYLOAD_I64(cell));
         break;
 
       case TYPE_MONEY: {
@@ -151,8 +152,8 @@ uint32_t Hash_Value(const Value* cell)
       hash_pair:
         //
       case TYPE_PAIR:
-        hash = Hash_Value(Cell_Pair_First(cell));
-        hash ^= Hash_Value(Cell_Pair_Second(cell));
+        hash = Hash_Cell(Cell_Pair_First(cell));
+        hash ^= Hash_Cell(Cell_Pair_Second(cell));
         break;
 
       case TYPE_TIME:
@@ -318,6 +319,9 @@ uint32_t Hash_Value(const Value* cell)
         // !!! Review hashing behavior or needs of these types if necessary.
         //
         abrupt_panic (Error_Invalid_Type(TYPE_HANDLE));
+
+      case TYPE_OPAQUE:
+        abrupt_panic (Error_Invalid_Type(TYPE_OPAQUE));
 
       default:
         crash (nullptr); // List should be comprehensive

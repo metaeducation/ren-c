@@ -1,7 +1,7 @@
 // %cell-array.h
 
 
-INLINE bool Is_Cell_Listlike(const Atom* v) {  // PACK!s are allowed
+INLINE bool Is_Cell_Listlike(const Cell* v) {  // PACK!s are allowed
     // called by core code, sacrifice Ensure_Readable() checks
     if (Any_List_Type(Unchecked_Heart_Of(v)))
         return true;
@@ -15,7 +15,7 @@ INLINE bool Is_Cell_Listlike(const Atom* v) {  // PACK!s are allowed
     return Stub_Flavor(u_cast(const Flex*, payload1)) == FLAVOR_SOURCE;
 }
 
-INLINE const Source* Cell_Array(const Atom* c) {  // PACK!s are allowed
+INLINE const Source* Cell_Array(const Cell* c) {  // PACK!s are allowed
     assert(Is_Cell_Listlike(c));
 
     const Base* series = SERIESLIKE_PAYLOAD_1_BASE(c);

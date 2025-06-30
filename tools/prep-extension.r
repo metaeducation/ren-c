@@ -339,17 +339,17 @@ for-each 'symbol opt ext-header.extended-words [
 
     append symbol-forward-decls cscape [symbol id --[
         #define $<EXT-SYM>  EXT_SYM_$<id>
-        extern RebolValue* g_symbol_holder_${SYMBOL};
+        extern RebolValue* g_${MOD}_symbol_holder_${SYMBOL};
     ]--]
 
     append symbol-globals cscape [symbol
-        --[RebolValue* g_symbol_holder_${SYMBOL} = nullptr;]--
+        --[RebolValue* g_${MOD}_symbol_holder_${SYMBOL} = nullptr;]--
     ]
     append startup-hooks cscape [symbol
-        --[g_symbol_holder_${SYMBOL} = Register_Symbol("$<symbol>", $<EXT-SYM>);]--
+        --[g_${MOD}_symbol_holder_${SYMBOL} = Register_Symbol("$<symbol>", $<EXT-SYM>);]--
     ]
     insert shutdown-hooks cscape [symbol
-        --[Unregister_Symbol(g_symbol_holder_${SYMBOL}, $<EXT-SYM>);]--
+        --[Unregister_Symbol(g_${MOD}_symbol_holder_${SYMBOL}, $<EXT-SYM>);]--
     ]
 ]
 
@@ -371,7 +371,7 @@ if not empty? symbol-forward-decls [
          * See %specs/ext-words.r in core, and the Register_Symbol() function.
          */
 
-        #define EXT_CANON(name)  Word_Symbol(g_symbol_holder_##name)
+        #define EXT_CANON(name)  Word_Symbol(g_${MOD}_symbol_holder_##name)
 
         $[Symbol-Forward-Decls]
     ]--]

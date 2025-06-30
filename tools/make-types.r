@@ -81,10 +81,21 @@ for-each-datatype: func [
         [
             ; quasiform is word in boot
             antiname*: quasiform!, antidescription*: text!
-            (unstable*: 'no)
+            (
+                unstable*: 'no
+                antiname*: to text! unquasi antiname*
+                assert [#"!" = take:last antiname*]
+            )
             |
-            ; unstable is conveyed by ~antiform~:U (path in bootstrap)
-            ahead chain! into [antiname*: quasiform!, ['U | (panic "need U!")]],
+            ; unstable is conveyed by ~antiform!~:U (path in bootstrap)
+            ahead chain! into [
+                antiname*: quasiform!
+                ['U | (panic "need U!")]
+                (
+                    antiname*: to text! unquasi antiname*
+                    assert [#"!" = take:last antiname*]
+                )
+            ]
             antidescription*: text!
             (unstable*: 'yes)
             |
@@ -113,6 +124,7 @@ for-each-datatype: func [
         [typesets*: block!]
         (
             name*: to text! name*
+            assert [#"!" = take:last name*]
             set var make object! [
                 name: name*
                 cellmask: cellmask*
@@ -124,7 +136,7 @@ for-each-datatype: func [
                     assert ["any-" = take:part decorated 4]
                     decorated  ; has now been undecorated
                 ]
-                antiname: either antiname* [to text! unquasi antiname*] [null]
+                antiname: antiname*
                 antidescription: antidescription*
                 unstable: unstable*
             ]

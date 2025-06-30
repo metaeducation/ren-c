@@ -716,6 +716,9 @@ INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 #define ARG_N(n) \
     Known_Stable(Level_Arg(level_, (n)))
 
+#define Element_ARG_N(n) \
+    Known_Element(Level_Arg(level_, (n)))
+
 #define PARAM_N(n) \
     Phase_Param(Level_Phase(level_), (n))
 

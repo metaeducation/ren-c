@@ -120,7 +120,7 @@ REBINT Find_Key_Hashed(
     Count num_slots = Hashlist_Num_Slots(hashlist);
     REBLEN *indexes = Flex_Head(REBLEN, hashlist);
 
-    uint32_t hash = Hash_Value(key);
+    uint32_t hash = Hash_Cell(key);
     Offset slot = hash % num_slots;  // first slot to try for this hash
     Count skip = hash % (num_slots - 1) + 1;  // skip by this each collision
 

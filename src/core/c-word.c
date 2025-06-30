@@ -596,15 +596,16 @@ RebolValue* Register_Symbol(const char* utf8, SymId16 id16)
         if (not (id16 == u_cast(SymId16, id)))
             return fail ("Extensions using conflicting Register_Symbol() IDs");
     }
+    else {
+        const Symbol* synonym = symbol;
+        do {
+            assert(SECOND_UINT16(&synonym->info) == 0);
+            SET_SECOND_UINT16(&m_cast(Symbol*, synonym)->info, id16);
+            assert(u_cast(SymId, id16) == unwrap Symbol_Id(synonym));
 
-    const Symbol* synonym = symbol;
-    do {
-        assert(SECOND_UINT16(&synonym->info) == 0);
-        SET_SECOND_UINT16(&m_cast(Symbol*, synonym)->info, id16);
-        assert(u_cast(SymId, id16) == unwrap Symbol_Id(synonym));
-
-        synonym = Link_Next_Synonym(synonym);
-    } while (synonym != symbol);
+            synonym = Link_Next_Synonym(synonym);
+        } while (synonym != symbol);
+    }
 
     RebolValue* word = Alloc_Value();
     Init_Word(word, symbol);

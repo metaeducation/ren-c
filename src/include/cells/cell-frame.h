@@ -73,8 +73,8 @@
 //
 
 
-INLINE Phase* Frame_Phase(const Value* c) {
-    assert(Heart_Of(c) == TYPE_FRAME);
+INLINE Phase* Frame_Phase(const Cell* c) {
+    assert(Unchecked_Heart_Of(c) == TYPE_FRAME);
 
     Base* base = CELL_FRAME_PAYLOAD_1_PHASE(c);  // const irrelevant
     if (Not_Base_Readable(base))
@@ -85,13 +85,13 @@ INLINE Phase* Frame_Phase(const Value* c) {
     return cast(Phase*, f);
 }
 
-INLINE Details* Ensure_Cell_Frame_Details(const Value* c) {
+INLINE Details* Ensure_Cell_Frame_Details(const Cell* c) {
     Phase* phase = Frame_Phase(c);
     assert(Is_Stub_Details(phase));
     return cast(Details*, phase);
 }
 
-INLINE Option(Details*) Try_Cell_Frame_Details(const Value* c) {
+INLINE Option(Details*) Try_Cell_Frame_Details(const Cell* c) {
     Phase* phase = Frame_Phase(c);
     if (not Is_Stub_Details(phase))
         return nullptr;

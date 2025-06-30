@@ -34,23 +34,22 @@
 // for these cases.
 //
 
-#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
-    #define VAL_INT64(c) \
-        (c)->payload.i64
+#define INTEGER_PAYLOAD_I64(cell)  (cell)->payload.i64
 
-    #define mutable_VAL_INT64(c) \
-        (c)->payload.i64
+#if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
+    #define VAL_INT64(c)  INTEGER_PAYLOAD_I64(c)
+    #define mutable_VAL_INT64(c)  INTEGER_PAYLOAD_I64(c)
 #else
     // allows an assert, but also lvalue: `VAL_INT64(v) = xxx`
     //
     INLINE REBI64 VAL_INT64(const Value* c) {
         assert(Heart_Of(c) == TYPE_INTEGER);
-        return c->payload.i64;
+        return INTEGER_PAYLOAD_I64(c);
     }
     INLINE REBI64 & mutable_VAL_INT64(Value* c) {
         assert(Heart_Of(c) == TYPE_INTEGER);
         Assert_Cell_Writable(c);
-        return c->payload.i64;
+        return INTEGER_PAYLOAD_I64(c);
     }
 #endif
 

@@ -32,8 +32,8 @@ Rebol [
     usage: --[
       Entries look like:
 
-            name            "description"
-            ~antiform~      "antinotes"    ; ~antiform~:U means unstable
+            name!           "description"
+            ~antiform!~     "antinotes"    ; ~antiform!~:U means unstable
                             (node flags)
                             [constraints]  ; makes `g_sparse_memberships`
 
@@ -64,80 +64,84 @@ Rebol [
 ]
 
 
-integer     "64 bit integer"
+integer!    "64 bit integer"
             (CELL_MASK_NO_MARKING)  ; would change with bignum ints
             [any-number? any-scalar? any-inert? any-sequencable?]
 
 <ANY-FLOAT?>
 
-    decimal     "64bit floating point number (IEEE standard)"
+    decimal!    "64bit floating point number (IEEE standard)"
                 (CELL_MASK_NO_MARKING)
                 [any-number? any-scalar? any-inert?]
 
-    percent     "special form of decimals (used mainly for layout)"
+    percent!    "special form of decimals (used mainly for layout)"
                 (CELL_MASK_NO_MARKING)
                 [any-number? any-scalar? any-inert?]
 
 </ANY-FLOAT?>
 
-pair        "two dimensional point or size"
+pair!       "two dimensional point or size"
             (payload1)
             [any-scalar? any-inert?]
 
-time        "time of day or duration"
+time!       "time of day or duration"
             (CELL_MASK_NO_MARKING)
             [any-scalar? any-inert?]
 
-date        "day, month, year, time of day, and timezone"
+date!       "day, month, year, time of day, and timezone"
             (CELL_MASK_NO_MARKING)
             [any-inert?]
 
-bitset      "set of bit flags"
+bitset!     "set of bit flags"
             (payload1)
             [any-inert?]
 
-map         "name-value pairs (hash associative)"
+map!        "name-value pairs (hash associative)"
             (payload1)
             [any-inert?]
 
-handle      "arbitrary internal object or value"
+handle!     "arbitrary internal object or value"
             (:payload1)  ; managed handles use a Stub to get a shared instance
             [any-inert?]
 
-blob        "series of bytes"
+opaque!     "extension cell which uses its type information slot for data"
+            (:payload1 :payload2)
+            [any-inert?]
+
+blob!       "series of bytes"
             (payload1)
             [any-series? any-inert?]  ; note: not an ANY-STRING?
 
 <ANY-STRING?>  ; (order does not currently matter)
 
-    text        "text string series of characters"
+    text!       "text string series of characters"
                 (payload1)
                 [any-series? any-utf8? any-inert? any-sequencable?]
 
-    file        "file name or path"
+    file!       "file name or path"
                 (payload1)
                 [any-series? any-utf8? any-inert?]
 
-    tag         "markup string (HTML or XML)"
+    tag!        "markup string (HTML or XML)"
                 (payload1)
                 [any-series? any-utf8? any-inert? any-sequencable?]
 
 </ANY-STRING?>
 
-url         "uniform resource locator or identifier"
+url!        "uniform resource locator or identifier"
             (:payload1)  ; may or may not embed data in url vs. use node
             [any-utf8? any-inert?]
 
-email       "email address"
+email!      "email address"
             (:payload1)  ; may or may not embed data in email vs. use node
             [any-utf8? any-inert?]
 
-rune        "immutable codepoint or codepoint sequence"
-~trash~     "state held by unset variables, can't be passed as normal argument"
+rune!       "immutable codepoint or codepoint sequence"
+~trash!~    "state held by unset variables, can't be passed as normal argument"
             (:payload1)  ; may or may not embed data in rune vs. use node
             [any-utf8? any-inert? any-sequencable?]
 
-money       "digits and decimal points as a string, preserved precisely"
+money!      "digits and decimal points as a string, preserved precisely"
             (CELL_MASK_NO_MARKING)
             [any-utf8? any-inert? any-sequencable?]
 
@@ -157,40 +161,40 @@ money       "digits and decimal points as a string, preserved precisely"
 ; ============================================================================
 
 
-varargs     "evaluator position for variable numbers of arguments"
+varargs!    "evaluator position for variable numbers of arguments"
             (payload2)
             [any-inert?]
 
-parameter   "function parameter description"
+parameter!  "function parameter description"
             (payload1 :payload2)
             [any-inert?]
 
 
 <ANY-CONTEXT?>
 
-    object      "context of names with values"
+    object!     "context of names with values"
                 (payload1 payload2)
                 [any-inert?]
 
-    module      "loadable context of code and data"
+    module!     "loadable context of code and data"
                 (payload1)
                 [any-inert?]
 
-    warning     "context with id, arguments, and stack origin"
-    ~error~:U   "error state that is escalated to a panic if not triaged"
+    warning!    "context with id, arguments, and stack origin"
+    ~error!~:U  "error state that is escalated to a panic if not triaged"
                 (payload1 payload2)
                 [any-inert?]
 
-    port        "external series, an I/O channel"
+    port!       "external series, an I/O channel"
                 (payload1 payload2)
                 [any-inert?]
 
-    frame       "arguments and locals of a function state"
-    ~action~    "will trigger function execution from words"
+    frame!      "arguments and locals of a function state"
+    ~action!~   "will trigger function execution from words"
                 (:payload1)
                 [any-branch?]
 
-    let         "context containing a single variable"
+    let!        "context containing a single variable"
                 (payload1)
                 [any-inert?]
 
@@ -206,23 +210,23 @@ parameter   "function parameter description"
 ; It's an implementation detail which would require inventing another
 ; datatype that was FEED-specific.  Better ideas welcome.
 
-comma         "separator between full evaluations"
-~ghost~:U     "elision state that is discarded by the evaluator"
+comma!        "separator between full evaluations"
+~ghost!~:U    "elision state that is discarded by the evaluator"
               (CELL_MASK_NO_MARKING)
               [any-unit?]  ; NOT inert
 
 
 <ANY-SEQUENCE?>
 
-    tuple       "member selection with inert bias"
+    tuple!      "member selection with inert bias"
                 (:payload1)
                 [any-scalar?]  ; !!! 1.2.3 maybe, but not all are scalars...
 
-    chain       "refinement and function call dialect"
+    chain!      "refinement and function call dialect"
                 (:payload1)
                 []
 
-    path        "member or refinement selection with execution bias"
+    path!       "member or refinement selection with execution bias"
                 (:payload1)
                 []
 
@@ -231,26 +235,26 @@ comma         "separator between full evaluations"
 
 <ANY-LIST?>
 
-    block       "list of elements that blocks evaluation unless EVAL is used"
-    ~pack~:U    "multi-return that can be unpacked or decays to first item"
+    block!      "list of elements that blocks evaluation unless EVAL is used"
+    ~pack!~:U   "multi-return that can be unpacked or decays to first item"
                 (payload1)
                 [any-series? any-branch? any-sequencable?]
 
-    fence       "list of elements that are used in construction via MAKE"
-    ~datatype~  "the type of a value expressed as an antiform"
+    fence!      "list of elements that are used in construction via MAKE"
+    ~datatype!~ "the type of a value expressed as an antiform"
                 (payload1)
                 [any-series? any-branch? any-sequencable?]
 
-    group       "list that evaluates expressions as an isolated group"
-    ~splice~    "fragment of multiple values without a surrounding block"
+    group!      "list that evaluates expressions as an isolated group"
+    ~splice!~   "fragment of multiple values without a surrounding block"
                 (payload1)
                 [any-series? any-sequencable?]
 
 </ANY-LIST?>
 
 
-word        "evaluates a variable or action"
-~keyword~   "special constant values (e.g. ~null~, ~okay~)"
+word!       "evaluates a variable or action"
+~keyword!~  "special constant values (e.g. ~null~, ~okay~)"
             (payload1)
             [any-utf8? any-sequencable?]
 

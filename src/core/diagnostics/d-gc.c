@@ -194,6 +194,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         }
         break; }
 
+      case TYPE_OPAQUE:  // nothing to check
+        break;
+
       case TYPE_BLOB: {
         assert(Cell_Payload_1_Needs_Mark(v));
         if (Not_Base_Accessible_Canon(SERIESLIKE_PAYLOAD_1_BASE(v)))
