@@ -292,7 +292,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
 
 
 //
-//  Trap_Alias_Any_Sequence_As: C
+//  Alias_Any_Sequence_As: C
 //
 // 1. If you have a PATH! like "a.b/c.d" and you change the heart byte
 //    to a TUPLE!, you'd get "a.b.c.d" which would be an invalidly
@@ -310,7 +310,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
 //    make a new array, since the symbol absolutely can't be mutated into
 //    an array node).  Review.
 //
-Option(Error*) Trap_Alias_Any_Sequence_As(
+Result(Element*) Alias_Any_Sequence_As(
     Sink(Element) out,
     const Element* seq,
     Heart as
@@ -327,13 +327,13 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
 
             assert(not Is_Path(temp));  // impossible!
             if (Is_Chain(temp) and (as == TYPE_TUPLE or as == TYPE_CHAIN))
-                return Error_User(
+                return fail (
                     "Can't AS alias CHAIN!-containing sequence"
                     "as TUPLE! or CHAIN!"
                 );
 
             if (Is_Tuple(temp) and as == TYPE_TUPLE)
-                return Error_User(
+                return fail (
                     "Can't AS alias TUPLE!-containing sequence as TUPLE!"
                 );
         }
@@ -341,7 +341,7 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
         Trust_Const(Copy_Cell(out, seq));
         KIND_BYTE(out) = as;
         possibly(Get_Cell_Flag(out, LEADING_SPACE));
-        return SUCCESS;
+        return out;
     }
 
     if (Any_List_Type(as)) {  // give immutable form, try to share memory
@@ -351,8 +351,7 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
             Offset i;
             for (i = 0; i < len; ++i)
                 Copy_Sequence_At(Array_At(a, i), seq, i);
-            Init_Any_List(out, as, a);
-            return SUCCESS;
+            return Init_Any_List(out, as, a);
         }
 
         const Base* payload1 = CELL_PAYLOAD_1(seq);
@@ -413,10 +412,10 @@ Option(Error*) Trap_Alias_Any_Sequence_As(
           default:
             assert(false);
         }
-        return SUCCESS;
+        return out;
     }
 
-    return Error_Invalid_Type(as);;
+    return fail (Error_Invalid_Type(as));
 }
 
 
@@ -427,9 +426,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
     Element* seq = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    Option(Error*) e = Trap_Alias_Any_Sequence_As(OUT, seq, as);
-    if (e)
-        panic (unwrap e);
+    require (Alias_Any_Sequence_As(OUT, seq, as));
 
     return OUT;
 }

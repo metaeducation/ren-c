@@ -197,7 +197,7 @@ static void Expand_Word_Table(void)
 
 
 //
-//  Intern_UTF8_Managed_Core: C
+//  Intern_Utf8_Managed_Core: C
 //
 // Makes only one copy of each distinct character string.
 //
@@ -222,7 +222,7 @@ static void Expand_Word_Table(void)
 //    actually kept larger than that, but to be on the right side of theory,
 //    the table is always checked for expansion needs *before* the search.)
 //
-const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
+Result(const Symbol*) Intern_Utf8_Managed_Core(  // implicitly managed [1]
     Option(void*) preallocated,  // most calls don't know if allocation needed
     const Byte* utf8,  // case-sensitive [2]
     Size utf8_size
@@ -235,12 +235,10 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
 
     Symbol** symbols_by_hash = Flex_Head(Symbol*, g_symbols.by_hash);
 
+    uint32_t hash = trap (Hash_Scan_UTF8_Caseless(utf8, utf8_size));
+
     Length skip;  // how many slots to skip when occupied candidates found
-    Offset slot = First_Hash_Candidate_Slot(
-        &skip,
-        Hash_Scan_UTF8_Caseless_May_Panic(utf8, utf8_size),
-        num_slots
-    );
+    Offset slot = First_Hash_Candidate_Slot(&skip, hash, num_slots);
 
     Symbol* synonym = nullptr;
     Symbol* symbol;
@@ -302,7 +300,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
             Clear_Flavor_Flag(SYMBOL, b, ALL_ASCII);
 
         if (utf8[i] == 0xC2 and utf8[i + 1] == 0xA0)
-            abrupt_panic ("Non-breaking space illegal in WORD!");
+            return fail ("Non-breaking space illegal in WORD!");
 
         assert(
             utf8[i] != '$'
@@ -463,7 +461,7 @@ void GC_Kill_Interning(const Symbol* symbol)
 //
 //  Startup_Interning: C
 //
-// Get the engine ready to do Intern_UTF8_Managed().  We start the hash table
+// Get the engine ready to do Intern_Utf8_Managed().  We start the hash table
 // out at a fixed size.  When collisions occur, it causes a skipping pattern
 // that continues until it finds the desired slot.  The method is known as
 // linear probing:
@@ -540,7 +538,7 @@ void Startup_Builtin_Symbols(
         ++at;
 
         Symbol* canon = &g_symbols.builtin_canons[id];  // not a Symbol*...yet
-        Intern_UTF8_Managed_Core(canon, at, size);  // now it is!
+        wont_fail (Intern_Utf8_Managed_Core(canon, at, size));  // now it is!
 
         at += size;
 
@@ -587,11 +585,16 @@ RebolValue* Register_Symbol(const char* utf8, SymId16 id16)
 {
     assert(id16 > MAX_SYM_BUILTIN);
 
-    const Symbol* symbol = Intern_UTF8_Managed(cb_cast(utf8), strlen(utf8));
+    const Symbol* symbol = Intern_Utf8_Managed(
+        cb_cast(utf8), strlen(utf8)
+    ) except (Error* e) {
+        abrupt_panic (e);
+    }
+
     Option(SymId) id = Symbol_Id(symbol);
     if (id) {
         if (not (id16 == u_cast(SymId16, id)))
-            abrupt_panic ("Extensions using conflicting Register_Symbol() IDs");
+            return fail ("Extensions using conflicting Register_Symbol() IDs");
     }
 
     const Symbol* synonym = symbol;

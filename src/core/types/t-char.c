@@ -69,7 +69,7 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 
 
 //
-//  Trap_Back_Scan_Utf8_Char: C
+//  Back_Scan_Utf8_Char: C
 //
 // Decodes a single encoded UTF-8 codepoint and updates the position *at the
 // the last byte of the character's data*.  (This differs from the usual
@@ -86,9 +86,7 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 //             // do ASCII stuff...
 //         }
 //         else {
-//             Codepoint uni;
-//             Option(Error*) e = Trap_Back_Scan_Utf8_Char(&uni, &bp, &size);
-//             if (e) { /* handle error */ }
+//             Codepoint c = require (Back_Scan_Utf8_Char(&bp, &size));
 //             // do UNICODE stuff...
 //         }
 //     }
@@ -126,8 +124,7 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 //    pre-allocated.  But those allocations only happen once the error
 //    machinery is ready.
 //
-Option(Error*) Trap_Back_Scan_Utf8_Char(
-    Sink(Codepoint) out,  // valid codepoint, no NUL or substitution chars [1]
+Result(Codepoint) Back_Scan_Utf8_Char(  // no NUL or substitution chars [1]
     const Byte** bp,  // left alone if error result, "back updated" if not
     Option(Need(Size*)) size  // decremented in non-error case
 ){
@@ -138,19 +135,19 @@ Option(Error*) Trap_Back_Scan_Utf8_Char(
 
     if (size) {  // Check that we have enough valid source bytes
         if (cast(Size, trail + 1) > *(unwrap size))
-            return Cell_Error(g_error_utf8_too_short);  // cached [3]
+            return fail (Cell_Error(g_error_utf8_too_short));  // cached [3]
     }
     else if (trail != 0) {
         do {
             if (source[trail] < 0x80)
-                return Cell_Error(g_error_utf8_trail_bad_bit);  // cached [3]
+                return fail (Cell_Error(g_error_utf8_trail_bad_bit));  // [3]
         } while (--trail != 0);
 
         trail = g_trailing_bytes_for_utf8[*source];
     }
 
     if (not Is_Legal_UTF8(source, trail + 1))  // was omitted in R3-Alpha [2]
-        return Cell_Error(g_error_overlong_utf8);  // cached [3]
+        return fail (Cell_Error(g_error_overlong_utf8));  // cached [3]
 
     switch (trail) {
         case 5: c += *source++; c <<= 6;  // falls through
@@ -163,19 +160,18 @@ Option(Error*) Trap_Back_Scan_Utf8_Char(
     c -= g_offsets_from_utf8[trail];
 
     if (c > UNI_MAX_LEGAL_UTF32)
-        return Cell_Error(g_error_codepoint_too_high);  // cached [3]
+        return fail (Cell_Error(g_error_codepoint_too_high));  // cached [3]
     if (c >= UNI_SUR_HIGH_START and c <= UNI_SUR_LOW_END)
-        return Cell_Error(g_error_no_utf8_surrogates);  // cached [3]
+        return fail (Cell_Error(g_error_no_utf8_surrogates));  // cached [3]
 
     if (c == 0)  // string types disallow internal 0 bytes in Ren-C [1]
-        return Cell_Error(g_error_illegal_zero_byte);  // cached [3]
+        return fail (Cell_Error(g_error_illegal_zero_byte));  // cached [3]
 
     if (size)
         *(unwrap size) -= trail;
 
-    *out = c;
     *bp += trail;
-    return SUCCESS;
+    return c;
 }
 
 
@@ -264,9 +260,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
             abrupt_panic ("Only RUNE! can MAKE a UTF-8 immutable type with INTEGER!");
 
         REBINT n = Int32(arg);
-        Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, n);
-        if (error)
-            return fail (unwrap error);
+        trap (Init_Single_Codepoint_Rune(OUT, n));
         return OUT; }
 
       case TYPE_BLOB: {
@@ -288,9 +282,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
             c = *bp;
         }
         else {
-            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &size);
-            if (e)
-                return fail (unwrap e);  // must be valid UTF8
+            c = trap (Back_Scan_Utf8_Char(&bp, &size));
 
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0) {
@@ -298,9 +290,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
         }
-        Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, c);
-        if (error)
-            return fail (unwrap error);
+        trap (Init_Single_Codepoint_Rune(OUT, c));
         return OUT; }
 
       default:
@@ -340,9 +330,7 @@ DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
     if (c == 0)
         return COPY(LIB(NUL));
 
-    Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, c);
-    if (error)
-        return fail (unwrap error);
+    trap (Init_Single_Codepoint_Rune(OUT, c));
     return OUT;
 }
 
@@ -376,9 +364,7 @@ DECLARE_NATIVE(TO_CHAR)
     Element* e = Element_ARG(ELEMENT);
     if (Is_Integer(e)) {
         uint32_t c = VAL_UINT32(e);
-        Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, c);
-        if (error)
-            return fail (unwrap error);
+        trap (Init_Single_Codepoint_Rune(OUT, c));
         return OUT;
     }
     if (Is_Rune_And_Is_Char(e))
@@ -392,20 +378,21 @@ DECLARE_NATIVE(TO_CHAR)
             return COPY(LIB(NUL));
         }
     }
-    Codepoint c;
-    const Byte* bp = at;
+
     if (size == 0)
         return fail (Error_Not_One_Codepoint_Raw());
+
+    Codepoint c;
+    const Byte* bp = at;
     if (Is_Blob(e)) {
-        Option(Error*) error = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
-        if (error)
-            return fail (unwrap error);
+        c = trap (Back_Scan_Utf8_Char(&bp, nullptr));
     } else {
         bp = Back_Scan_Utf8_Char_Unchecked(&c, bp);
     }
     ++bp;
     if (bp != at + size)
         return fail (Error_Not_One_Codepoint_Raw());
+
     return Init_Char_Unchecked(OUT, c);  // scan checked it
 }
 
@@ -432,25 +419,20 @@ DECLARE_NATIVE(NUL_Q)
 // limits math operations on character to only work with numeric types (and
 // will probably limit it to INTEGER! only).
 //
-static Option(Error*) Trap_Get_Math_Arg_For_Char(
-    Sink(REBI64) out,
+static Result(REBI64) Get_Math_Arg_For_Char(
     Value* arg,
     const Symbol* verb
 ){
     switch (Type_Of(arg)) {
       case TYPE_INTEGER:
-        *out = VAL_INT32(arg);
-        break;
+        return VAL_INT32(arg);
 
       case TYPE_DECIMAL:
-        *out = cast(REBINT, VAL_DECIMAL(arg));
-        break;
+        return cast(REBINT, VAL_DECIMAL(arg));
 
       default:
-        return Error_Math_Args(TYPE_RUNE, verb);
+        return fail (Error_Math_Args(TYPE_RUNE, verb));
     }
-
-    return SUCCESS;
 }
 
 
@@ -568,10 +550,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     if (not Is_Rune_And_Is_Char(rune))
         panic ("Math operations only usable on single-character RUNE!");
 
-    Codepoint c;
-    Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, rune);
-    if (e)
-        panic (unwrap e);
+    Codepoint c = require (Get_Rune_Single_Codepoint(rune));
 
     // Don't use a Codepoint for chr, because it does signed math and then will
     // detect overflow.
@@ -581,18 +560,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
 
     switch (id) {
       case SYM_ADD: {
-        e = Trap_Get_Math_Arg_For_Char(&arg, ARG_N(2), verb);
-        if (e)
-            panic (unwrap e);
-
+        arg = require (Get_Math_Arg_For_Char(ARG_N(2), verb));
         chr += arg;
         break; }
 
       case SYM_SUBTRACT: {
-        e = Trap_Get_Math_Arg_For_Char(&arg, ARG_N(2), verb);
-        if (e)
-            panic (unwrap e);
-
+        arg = require (Get_Math_Arg_For_Char(ARG_N(2), verb));
         chr -= arg;
         break; }
 
@@ -603,9 +576,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     if (chr < 0)
         return fail (Error_Codepoint_Negative_Raw());
 
-    Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, cast(Codepoint, chr));
-    if (error)
-        return fail (unwrap error);
+    trap (Init_Single_Codepoint_Rune(OUT, cast(Codepoint, chr)));
     return OUT;
 }
 
@@ -660,7 +631,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 
         Size size;  // TO conversion of mutable data, can't reuse stub
         Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
-        const Symbol* sym = Intern_UTF8_Managed(at, size);
+        const Symbol* sym = require(Intern_Utf8_Managed(at, size));
         return Init_Word(OUT, sym);
     }
 
@@ -736,7 +707,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 
 
 //
-//  Trap_Alias_Any_Utf8_As: C
+//  Alias_Any_Utf8_As: C
 //
 // 1. If the payload of non-string UTF-8 value lives in the Cell itself,
 //    a read-only Flex must be created for the data...because otherwise
@@ -749,7 +720,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 //    if we create a node we have to give it the same constraints that
 //    would apply if we had reused one.
 //
-Option(Error*) Trap_Alias_Any_Utf8_As(
+Result(Element*) Alias_Any_Utf8_As(
     Sink(Element) out,
     const Element* v,
     Heart as
@@ -763,7 +734,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
             possibly(Is_Stub_Symbol(Cell_Strand(v)));
             Copy_Cell(out, v);
             KIND_BYTE(out) = as;
-            return SUCCESS;
+            return out;
         }
 
     make_small_utf8_at_index_0: { //////////////////////////////////////
@@ -785,24 +756,21 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Term_Strand_Len_Size(str, len, size);
         Freeze_Flex(str);
         possibly(as == TYPE_BLOB);  // index 0 so byte transform not needed
-        Init_Series(out, as, str);
-        return SUCCESS;
+        return Init_Series(out, as, str);
     }}
 
     if (as == TYPE_WORD) {  // aliasing as WORD! freezes data
         if (Stringlike_Has_Stub(v)) {
             const Strand* str = Cell_Strand(v);
             if (Series_Index(v) != 0)
-                return Error_User("Can't alias string as WORD! unless at head");
+                return fail ("Can't alias string as WORD! unless at head");
 
-            if (Is_Strand_Symbol(str)) {  // already frozen and checked!
-                Init_Word(out, cast(const Symbol*, str));
-                return SUCCESS;
-            }
+            if (Is_Strand_Symbol(str))  // already frozen and checked!
+                return Init_Word(out, cast(const Symbol*, str));
 
             if (not Is_Flex_Frozen(str)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
-                    return Error_Alias_Constrains_Raw();
+                    return fail (Error_Alias_Constrains_Raw());
                 Freeze_Flex(str);
             }
         }
@@ -811,33 +779,24 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
 
         Size size;
         Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
-        const Symbol* sym = Intern_UTF8_Managed(at, size);
-        Init_Word(out, sym);
-        return SUCCESS;
+        const Symbol* sym = trap (Intern_Utf8_Managed(at, size));
+        return Init_Word(out, sym);
     }
 
     if (as == TYPE_BLOB) {  // resulting binary is UTF-8 constrained [2]
-        if (Stringlike_Has_Stub(v)) {
-            Init_Blob_At(
+        if (Stringlike_Has_Stub(v))
+            return Init_Blob_At(
                 out,
                 Cell_Strand(v),
                 String_Byte_Offset_At(v)  // index has to be in terms of bytes
             );
-            KIND_BYTE(out) = TYPE_BLOB;
-            return SUCCESS;
-        }
 
         goto make_small_utf8_at_index_0;
     }
 
     if (as == TYPE_INTEGER) {
-        Codepoint c;
-        Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, v);
-        if (e)
-            return e;
-
-        Init_Integer(out, c);
-        return SUCCESS;
+        Codepoint c = trap (Get_Rune_Single_Codepoint(v));
+        return Init_Integer(out, c);
     }
 
     if (as == TYPE_RUNE or as == TYPE_MONEY) {  // fits cell or freeze string
@@ -847,7 +806,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
             const Strand *s = Cell_Strand(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
-                    return Error_Alias_Constrains_Raw();
+                    return fail (Error_Alias_Constrains_Raw());
                 Freeze_Flex(s);
             }
         }
@@ -856,11 +815,11 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Size size = String_Size_Limit_At(&len, v, UNLIMITED);
 
         if (Try_Init_Small_Utf8(out, as, String_At(v), len, size))
-            return SUCCESS;
+            return out;
 
         Copy_Cell(out, v);  // index heeded internally, not exposed
         KIND_BYTE(out) = as;
-        return SUCCESS;
+        return out;
     }
 
     if (as == TYPE_EMAIL or as == TYPE_URL) {
@@ -868,7 +827,7 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
             const Strand *s = Cell_Strand(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen
                 if (Get_Cell_Flag(v, CONST))
-                    return Error_Alias_Constrains_Raw();
+                    return fail (Error_Alias_Constrains_Raw());
                 Freeze_Flex(s);
             }
         }
@@ -879,10 +838,10 @@ Option(Error*) Trap_Alias_Any_Utf8_As(
         Value* result = rebValue(CANON(TO), rebQ(datatype_as), rebQ(v));
         Copy_Cell(out, Known_Element(result));
         rebRelease(result);
-        return SUCCESS;
+        return out;
     }
 
-    return Error_Invalid_Type(as);
+    return fail (Error_Invalid_Type(as));
 }
 
 
@@ -893,9 +852,7 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
     Element* any_utf8 = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    Option(Error*) e = Trap_Alias_Any_Utf8_As(OUT, any_utf8, as);
-    if (e)
-        panic (unwrap e);
+    require (Alias_Any_Utf8_As(OUT, any_utf8, as));
 
     return OUT;
 }
@@ -987,29 +944,24 @@ IMPLEMENT_GENERIC(RANDOM, Is_Rune)
 
     Element* rune = Element_ARG(MAX);
 
-    Codepoint c;
+    Codepoint limit = require (Get_Rune_Single_Codepoint(rune));
 
-  get_single_codepoint: {  // only works on single codepoint RUNE!
-
-    Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, rune);
-    if (e)
-        panic (unwrap e);
-
-} keep_generating_until_valid_char_found: {
+  keep_generating_until_valid_char_found: {
 
   // RUNE! doesn't allow you to create unicode codepoints with surrogate
   // values or other illegal states, including 0.  All bad states should give
   // back an error.
 
-    while (true) {
-        Codepoint rand = cast(Codepoint,
-            1 + (Random_Int(Bool_ARG(SECURE)) % c)
+    attempt {
+        Codepoint c = cast(Codepoint,
+            1 + (Random_Int(Bool_ARG(SECURE)) % limit)
         );
 
-        Option(Error*) e = Trap_Init_Single_Codepoint_Rune(OUT, rand);
-        if (not e)
-            break;
-        dont(Free_Unmanaged_Flex(unwrap e));  // errors are prealloc'd
+        Init_Single_Codepoint_Rune(OUT, c) except (Error* e) {
+            dont(Free_Unmanaged_Flex(e));  // errors are prealloc'd
+            UNUSED(e);
+            again;
+        }
     }
 
     return OUT;

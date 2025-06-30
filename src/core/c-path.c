@@ -28,11 +28,11 @@
 
 
 //
-//  Trap_Init_Any_Sequence_At_Listlike: C
+//  Init_Any_Sequence_At_Listlike: C
 //
 // REVIEW: This tries to do optimizations on the array you give it.
 //
-Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
+Result(Element*) Init_Any_Sequence_At_Listlike(
     Sink(Element) out,
     Heart heart,
     const Source* a,
@@ -47,10 +47,10 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
     Length len_at = Array_Len(a) - offset;
 
     if (len_at < 2)
-        return Error_Sequence_Too_Short_Raw();
+        return fail (Error_Sequence_Too_Short_Raw());
 
     if (len_at == 2) {  // use optimization
-        return Trap_Init_Any_Sequence_Pairlike(
+        return Init_Any_Sequence_Pairlike(
             out,
             heart,
             Array_At(a, offset),
@@ -64,7 +64,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
         Array_At(a, offset),
         len_at
     )){
-        return SUCCESS;
+        return out;
     }
 
     const Element* tail = Array_Tail(a);
@@ -76,13 +76,11 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
         if (at == tail - 1 and Is_Space(at))
             continue;  // (_) valid at tail
 
-        Option(Error*) error = Trap_Check_Sequence_Element(
+        trap (Check_Sequence_Element(
             heart,
             at,
             at == head  // sigils and quotes not legal at head
-        );
-        if (error)
-            return error;
+        ));
     }
 
     // Since sequences are always at their head, it might seem the index
@@ -95,8 +93,7 @@ Option(Error*) Trap_Init_Any_Sequence_At_Listlike(
     // do it is that leaving it as an index allows for aliasing BLOCK! as
     // PATH! from non-head positions.
 
-    Init_Series_At_Core(out, heart, a, offset, SPECIFIED);
-    return SUCCESS;
+    return Init_Series_At_Core(out, heart, a, offset, SPECIFIED);
 }
 
 
@@ -464,9 +461,8 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
             panic ("Can only zeroify sequences of integers at this time");
         Init_Integer(PUSH(), 0);
     }
-    Option(Error*) error = Trap_Pop_Sequence(OUT, heart, STACK_BASE);
-    assert(not error);
-    UNUSED(error);
+
+    wont_fail (Pop_Sequence(OUT, heart, STACK_BASE));
 
     return OUT;
 }

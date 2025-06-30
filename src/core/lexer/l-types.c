@@ -353,7 +353,7 @@ DECLARE_NATIVE(OF)
     ++size;
     buffer[size] = 'f';
     ++size;
-    sym_of = Intern_UTF8_Managed(buffer, size);
+    sym_of = wont_fail (Intern_Utf8_Managed(buffer, size));
 
 } have_sym_of: { /////////////////////////////////////////////////////////////
 
@@ -1199,7 +1199,7 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
 
         Cell* val = nullptr;  // suppress maybe uninitialized warning
 
-        const Symbol* name = Intern_UTF8_Managed(start, cp - start);
+        const Symbol* name = require (Intern_Utf8_Managed(start, cp - start));
 
         cp++;
         // Search if word already present:

@@ -122,21 +122,13 @@ INLINE Option(Codepoint) Codepoint_Of_Rune_If_Single_Char(const Cell* cell)
     return Rune_Known_Single_Codepoint(cell);
 }
 
-INLINE Option(Error*) Trap_Get_Rune_Single_Codepoint(
-    Sink(Codepoint) out,
-    const Value* cell
-){
-    if (not Rune_Is_Single_Codepoint(cell)) {
-      #if APPEASE_WEAK_STATIC_ANALYSIS
-        *out = 0xDECAFBAD;
-      #endif
-        return Error_User(
+INLINE Result(Codepoint) Get_Rune_Single_Codepoint(const Cell* cell){
+    if (not Rune_Is_Single_Codepoint(cell))
+        return fail (
             "Can't get Codepoint if RUNE! has more than one character"
         );
-    }
 
-    *out = Rune_Known_Single_Codepoint(cell);
-    return SUCCESS;
+    return Rune_Known_Single_Codepoint(cell);
 }
 
 
@@ -238,23 +230,22 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
 // 1. The "codepoint too high" error was once parameterized with the large
 //    value, but see Startup_Utf8_Errors() for why these need to be cheap
 //
-INLINE Option(Error*) Trap_Init_Single_Codepoint_Rune_Untracked(
+INLINE Result(Element*) Init_Single_Codepoint_Rune_Untracked(
     Init(Element) out,
     uint32_t c
 ){
     if (c > MAX_UNI)
-        return Cell_Error(g_error_codepoint_too_high);  // no parameter [1]
+        return fail (Cell_Error(g_error_codepoint_too_high));  // no param [1]
 
     // !!! Should other values that can't be read be forbidden?  Byte order
     // mark?  UTF-16 surrogate stuff?  If something is not legitimate in a
     // UTF-8 codepoint stream, it shouldn't be used.
 
-    Init_Char_Unchecked_Untracked(out, c);
-    return SUCCESS;
+    return Init_Char_Unchecked_Untracked(out, c);
 }
 
-#define Trap_Init_Single_Codepoint_Rune(out,c) \
-    Trap_Init_Single_Codepoint_Rune_Untracked(TRACK(out), (c))
+#define Init_Single_Codepoint_Rune(out,c) \
+    Init_Single_Codepoint_Rune_Untracked(TRACK(out), (c))
 
 
 //=//// SPACE RUNES ///////////////////////////////////////////////////////=//

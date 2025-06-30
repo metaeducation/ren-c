@@ -251,7 +251,7 @@
         OptionWrapper(SuccessSentinel) : p {nullptr} {}
 
         OptionWrapper(Error* ptr) : p {ptr} {
-            assert(ptr != nullptr && "Use SUCCESS for success, not nullptr");
+            dont(assert(p != nullptr));  // except() macro uses null assign
         }
 
         OptionWrapper(std::nullptr_t) = delete;  // explicitly disallow

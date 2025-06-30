@@ -698,7 +698,9 @@ void Startup_Core(void)
         SYM_GZIP
     );
 
-    const Strand* tmp_boot = Intern_Unsized_Managed("tmp-boot.r");  // const
+    const Symbol* tmp_boot = wont_fail (
+        Intern_Unsized_Managed("tmp-boot-r")  // !!! should be Strand for .
+    );
     Push_Lifeguard(tmp_boot);  // recycle torture frees on scanner first push!
     Array* boot_array = Scan_UTF8_Managed(
         tmp_boot,

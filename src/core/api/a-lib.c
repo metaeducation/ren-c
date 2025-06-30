@@ -626,10 +626,9 @@ RebolValue* API_rebChar(uint32_t codepoint)
     ENTER_API;
 
     Value* v = Alloc_Value();
-    Option(Error*) error = Trap_Init_Single_Codepoint_Rune(v, codepoint);
-    if (error) {
+    Init_Single_Codepoint_Rune(v, codepoint) except (Error* e) {
         rebRelease(v);
-        abrupt_panic (unwrap error);
+        abrupt_panic (e);
     }
     return v;
 }
@@ -980,7 +979,11 @@ const RebolBaseInternal* API_rebArgR(
     if (Detect_Rebol_Pointer(p2) != DETECTED_AS_END)
         abrupt_panic ("rebArg() isn't actually variadic, it's arity-1");
 
-    const Symbol* symbol = Intern_UTF8_Managed(cb_cast(name), strsize(name));
+    const Symbol* symbol = Intern_Utf8_Managed(
+        cb_cast(name), strsize(name)
+    ) except (Error* e) {
+        abrupt_panic (e);
+    };
 
     const Key* tail;
     const Key* key = Phase_Keys(&tail, phase);
@@ -1687,10 +1690,9 @@ intptr_t API_rebUnbox(
         return VAL_INT64(v);
 
       case TYPE_RUNE: {
-        Codepoint c;
-        Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, v);
-        if (e)
-            abrupt_panic (unwrap e);
+        Codepoint c = Get_Rune_Single_Codepoint(v) except (Error* e) {
+            abrupt_panic (e);
+        }
         return c; }
 
       default:
@@ -1862,7 +1864,7 @@ double API_rebUnboxDecimal(
 //
 //  rebUnboxChar: API
 //
-// 1. We could use Trap_Get_Rune_Single_Codepoint() here, but it would give
+// 1. We could use Get_Rune_Single_Codepoint() here, but it would give
 //    an error message that didn't mention rebUnboxChar() explicitly.  This
 //    should be reviewed as a general situation of how errors cross the API
 //    and being able to get the API name in the stack.
@@ -1879,7 +1881,7 @@ uint32_t API_rebUnboxChar(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (not Is_Rune_And_Is_Char(v))
-        abrupt_panic ("rebUnboxChar() called on non-CHAR");  // API-specific error [1]
+        abrupt_panic ("rebUnboxChar() called on non-CHAR");  // API error [1]
 
     return Rune_Known_Single_Codepoint(v);
 }

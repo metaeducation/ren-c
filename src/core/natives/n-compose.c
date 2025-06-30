@@ -146,11 +146,9 @@ static void Push_Composer_Level(
         Copy_Cell(fundamental, list_or_seq);
         LIFT_BYTE(fundamental) = NOQUOTE_2;
 
-        Option(Error*) e = Trap_Alias_Any_Sequence_As(
-            adjusted, list_or_seq, TYPE_BLOCK
+        wont_fail (  // all sequences alias as block
+            Alias_Any_Sequence_As(adjusted, list_or_seq, TYPE_BLOCK)
         );
-        assert(not e);  // all sequences can alias as block
-        UNUSED(e);
 
         LIFT_BYTE(adjusted) = lift_byte;  // restore
     }
@@ -194,15 +192,16 @@ static void Push_Composer_Level(
 //        >> compose:deep [a ''~[(1 + 2)]~ b]
 //        == [a ''~[3]~ b]
 //
-static Option(Error*) Trap_Finalize_Composer_Level(
-    Need(Value*) out,
+static Result(Value*) Finalize_Composer_Level(
     Level* L,
     const Element* composee,  // special handling if the output is a sequence
     bool conflate
 ){
+    Value* out = Known_Stable(L->out);
+
     if (Is_Nulled(out)) {  // a composed slot evaluated to VETO error antiform
         Drop_Data_Stack_To(L->baseline.stack_base);
-        return SUCCESS;
+        return out;
     }
 
     assert(Is_Okay(out));  // finished normally
@@ -211,19 +210,17 @@ static Option(Error*) Trap_Finalize_Composer_Level(
     Heart heart = Heart_Of_Builtin(composee);
 
     if (Any_Sequence_Type(heart)) {
-        Option(Error*) error = Trap_Pop_Sequence_Or_Element_Or_Nulled(
+        trap (Pop_Sequence_Or_Element_Or_Nulled(
             out,
             Heart_Of_Builtin_Fundamental(composee),
             L->baseline.stack_base
-        );
-        if (error)
-            return error;
+        ));
 
         if (
             not Any_Sequence(out)  // so instead, things like [~/~ . ///]
             and not conflate  // don't rewrite as "sequence-looking" words
         ){
-            return Error_Conflated_Sequence_Raw(Datatype_Of(out), out);
+            return fail (Error_Conflated_Sequence_Raw(Datatype_Of(out), out));
         }
 
         assert(not(LIFT_BYTE(composee) & QUASI_BIT));  // no anti/quasi forms
@@ -231,7 +228,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 
         if (not Is_Nulled(out))  // don't add quoting levels (?)
             Quotify_Depth(Known_Element(out), num_quotes);
-        return SUCCESS;
+        return out;
     }
 
     Source* a = Pop_Source_From_Stack(L->baseline.stack_base);
@@ -242,7 +239,7 @@ static Option(Error*) Trap_Finalize_Composer_Level(
 
     Tweak_Cell_Binding(list, Cell_Binding(composee));  // preserve binding
     LIFT_BYTE(list) = LIFT_BYTE(composee);  // apply lift byte [4]
-    return SUCCESS;
+    return out;
 }
 
 
@@ -531,10 +528,13 @@ Bounce Composer_Executor(Level* const L)
         goto handle_next_item;
     }
 
-    Value* out = Known_Stable(OUT);
-    Option(Error*) e = Trap_Finalize_Composer_Level(
-        out, SUBLEVEL, At_Level(L), conflate
-    );
+    Option(Error*) e;
+    Value* out = Finalize_Composer_Level(
+        SUBLEVEL, At_Level(L), conflate
+    ) except (e) {
+        // need to drop level before panic
+    }
+
     Drop_Level(SUBLEVEL);
 
     if (e)
@@ -666,11 +666,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     assert(Is_Logic(Known_Stable(OUT)));
 
-    Option(Error*) e = Trap_Finalize_Composer_Level(
-        cast(Value*, OUT), SUBLEVEL, input, Bool_ARG(CONFLATE)
-    );
-    if (e)
-        panic (unwrap e);
+    trap (Finalize_Composer_Level(SUBLEVEL, input, Bool_ARG(CONFLATE)));
 
     Drop_Level(SUBLEVEL);
     return OUT;

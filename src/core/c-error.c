@@ -1322,7 +1322,7 @@ void Shutdown_Stackoverflow(void)
 //
 //  Startup_Utf8_Errors: C
 //
-// Certain scenarios of using Trap_Back_Scan_Utf8_Char() would become slow and
+// Certain scenarios of using Back_Scan_Utf8_Char() would become slow and
 // leak lots of error allocations if we didn't preallocate these errors (for
 // instance, FIND of a TEXT! in a non-UTF-8 binary BLOB! could allocate
 // thousands of errors in a single search).

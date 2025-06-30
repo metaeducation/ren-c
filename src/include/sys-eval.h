@@ -121,7 +121,7 @@ INLINE Element* Init_Pushable_Refinement_Bound(
 
 #define Is_Pushed_Refinement(v)  Is_Pinned_Form_Of(WORD, (v))
 
-INLINE Element* Refinify_Pushed_Refinement(Element* e) {
+INLINE Result(Element*) Refinify_Pushed_Refinement(Element* e) {
     assert(Is_Pushed_Refinement(e));
     return Refinify(Plainify(e));
 }

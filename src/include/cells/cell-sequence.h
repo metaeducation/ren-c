@@ -108,7 +108,7 @@
 //
 //    (Note that exceptions like [~/~ ~//~ ~...~] are quasi-words.)
 //
-INLINE Option(Error*) Trap_Check_Sequence_Element(
+INLINE Result(const Element*) Check_Sequence_Element(  // !!! Result(None) ?
     Heart sequence_heart,
     const Element* e,
     bool is_head
@@ -119,7 +119,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 
     if (is_head) {  // note quasiforms legal, even at head [1]
         if (Is_Quoted(e) or Sigil_Of(e))  // $a.b => $[a b], not [$a b]
-            return Error_Bad_Sequence_Head_Raw(e);
+            return fail (Error_Bad_Sequence_Head_Raw(e));
     }
 
     if (h == TYPE_PATH)  // path can't put be put in path, tuple, or chain
@@ -127,26 +127,28 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 
     if (h == TYPE_CHAIN) {  // inserting a chain
         if (sequence_heart == TYPE_PATH)
-            return SUCCESS;  // chains can only be put in paths
+            return e;  // chains can only be put in paths
         goto bad_sequence_item;
     }
 
     if (h == TYPE_TUPLE) {  // inserting a tuple
         if (sequence_heart != TYPE_TUPLE)
-            return SUCCESS;  // legal in non-tuple sequences (path, chain)
+            return e;  // legal in non-tuple sequences (path, chain)
         goto bad_sequence_item;
     }
 
     if (h == TYPE_RUNE) {
         if (Is_Quasar(e))  // Legal, e.g. `~/home/Projects/ren-c/README.md`
-            return SUCCESS;
+            return e;
 
         if (Any_Sigiled_Space(e))
-            return SUCCESS;  // single-char forms legal for now
+            return e;  // single-char forms legal for now
 
         if (Is_Space(e)) {
-            assert(not is_head); // callers should check space at head or tail
-            return Error_Bad_Sequence_Space_Raw();  // space only legal at head
+            assert(not is_head);  // callers check spaces at head or tail
+            return fail (
+                Error_Bad_Sequence_Space_Raw()  // space only legal at head
+            );
         }
 
         goto bad_sequence_item;
@@ -158,7 +160,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
     if (h == TYPE_WORD) {
         const Symbol* symbol = Word_Symbol(e);
         if (symbol == CANON(DOT_1) and sequence_heart != TYPE_TUPLE)
-            return SUCCESS;
+            return e;
         if (
             sequence_heart != TYPE_CHAIN  // !!! temporary for //: -- review
             and Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_SEQUENCE)
@@ -166,23 +168,25 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
             goto bad_sequence_item;  //  [<| |>] => <|/|>  ; tag
         }
         if (sequence_heart == TYPE_PATH)
-            return SUCCESS;
+            return e;
         if (Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_TUPLE))
             goto bad_sequence_item;  // e.g. contains a slash
     }
 
-    return SUCCESS;  // all other words should be okay
+    return e;  // all other words should be okay
 
   bad_sequence_item:
 
-    return Error_Bad_Sequence_Item_Raw(Datatype_From_Type(sequence_heart), e);
+    return fail (
+        Error_Bad_Sequence_Item_Raw(Datatype_From_Type(sequence_heart), e)
+    );
 }
 
 
 //=//// UNCOMPRESSED ARRAY SEQUENCE FORM //////////////////////////////////=//
 
-#define Trap_Init_Any_Sequence_Listlike(out,heart,a) \
-    Trap_Init_Any_Sequence_At_Listlike((out), (heart), (a), 0)
+#define Init_Any_Sequence_Listlike(out,heart,a) \
+    Init_Any_Sequence_At_Listlike((out), (heart), (a), 0)
 
 
 //=//// Leading-SPACE SEQUENCE OPTIMIZATION ///////////////////////////////=//
@@ -200,7 +204,7 @@ INLINE Option(Error*) Trap_Check_Sequence_Element(
 //    including the zero.  This doesn't put any decision in stone, but
 //    reserves the right to make a decision at a later time.
 //
-INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
+INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
     Element* e,
     Heart heart,
     Flags flag
@@ -208,19 +212,17 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     assert(flag == CELL_MASK_ERASED_0 or flag == CELL_FLAG_LEADING_SPACE);
     assert(Any_Sequence_Type(heart));
 
-    Option(Error*) error = Trap_Check_Sequence_Element(
+    trap (Check_Sequence_Element(
         heart,
         e,
         flag == CELL_MASK_ERASED_0  // 0 means no leading space, item is "head"
-    );
-    if (error)
-        return error;
+    ));
 
     if (Is_Word(e)) {  // see notes at top of file on `/a` cell optimization
         e->header.bits &= (~ CELL_FLAG_LEADING_SPACE);
         e->header.bits |= flag;
         KIND_BYTE(e) = heart;  // e.g. TYPE_WORD => TYPE_PATH
-        return SUCCESS;
+        return e;
     }
 
     if (Any_List(e)) {  // try mirror optimization
@@ -232,15 +234,15 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
             MIRROR_BYTE(a) = unwrap Heart_Of(e);  // remember what kind it is
             KIND_BYTE(e) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
             e->header.bits |= flag;
-            return SUCCESS;
+            return e;
         }
     }
 
     if (Is_Integer(e)) {
         if (heart == TYPE_TUPLE) {
-            return Error_User(  // reserve notation for future use [1]
+            return fail (Error_User(  // reserve notation for future use [1]
                 "5. and .5 currently reserved, please use 5.0 and 0.5"
-            );
+            ));
         }
         // fallthrough (should be able to single cell optimize any INTEGER!)
     }
@@ -265,8 +267,16 @@ INLINE Option(Error*) Trap_Blank_Head_Or_Tail_Sequencify(
     SERIESLIKE_PAYLOAD_1_BASE(e) = p;
     Corrupt_Unused_Field(e->payload.split.two.corrupt);
 
-    return SUCCESS;
+    return e;
 }
+
+#define Setify(elem) \
+    Blank_Head_Or_Tail_Sequencify((elem), TYPE_CHAIN, CELL_MASK_ERASED_0)
+
+#define Refinify(elem) \
+    Blank_Head_Or_Tail_Sequencify((elem), TYPE_CHAIN, CELL_FLAG_LEADING_SPACE)
+
+#define Getify(elem)  Refinify(elem)  // !!! Update!
 
 
 //=//// BYTE-SIZED INTEGER! SEQUENCE OPTIMIZATION /////////////////////////=//
@@ -359,7 +369,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
 
 //=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
 
-INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
+INLINE Result(Element*) Init_Any_Sequence_Or_Conflation_Pairlike(
     Init(Element) out,
     Heart heart,
     const Element* first,
@@ -381,18 +391,18 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
         }
         if (Is_Quasar(first))
             Quasify_Isotopic_Fundamental(out);
-        return SUCCESS;
+        return out;
     }
 
     if (Is_Space(first)) {  // try optimize e.g. `/a` or `.a` or `:a` etc.
         Copy_Cell(out, second);
-        return Trap_Blank_Head_Or_Tail_Sequencify(
+        return Blank_Head_Or_Tail_Sequencify(
             out, heart, CELL_FLAG_LEADING_SPACE
         );
     }
     else if (Is_Space(second)) {
         Copy_Cell(out, first);
-        return Trap_Blank_Head_Or_Tail_Sequencify(  // optimize `a/` or `a:`
+        return Blank_Head_Or_Tail_Sequencify(  // optimize `a/` or `a:`
             out, heart, CELL_MASK_ERASED_0
         );
     }
@@ -410,34 +420,26 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
             } while (r != 0);
 
             REBDEC d = cast(REBDEC, i1) + cast(REBDEC, i2) / magnitude;
-            Init_Decimal(out, d);
-            return SUCCESS;
+            return Init_Decimal(out, d);
         }
 
         if (heart == TYPE_CHAIN) {  // conflates with time, e.g. 10:20
             REBI64 nano = ((i1 * 60 * 60) + (i2 * 60)) * SEC_SEC;
-            Init_Time_Nanoseconds(out, nano);
-            return SUCCESS;
+            return Init_Time_Nanoseconds(out, nano);
         }
 
         Byte buf[2];
         if (i1 >= 0 and i2 >= 0 and i1 <= 255 and i2 <= 255) {
             buf[0] = cast(Byte, i1);
             buf[1] = cast(Byte, i2);
-            Init_Any_Sequence_Bytes(out, heart, buf, 2);
-            return SUCCESS;
+            return Init_Any_Sequence_Bytes(out, heart, buf, 2);
         }
 
         // fall through
     }
 
-    Option(Error*) err1 = Trap_Check_Sequence_Element(heart, first, true);
-    if (err1)
-        return err1;
-
-    Option(Error*) err2 = Trap_Check_Sequence_Element(heart, second, false);
-    if (err2)
-        return err2;
+    trap (Check_Sequence_Element(heart, first, true));
+    trap (Check_Sequence_Element(heart, second, false));
 
     Pairing* pairing = Alloc_Pairing(BASE_FLAG_MANAGED);
     Copy_Cell(Pairing_First(pairing), first);
@@ -453,47 +455,48 @@ INLINE Option(Error*) Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
     PAIRLIKE_PAYLOAD_1_PAIRING_BASE(out) = pairing;
     Corrupt_Unused_Field(out->payload.split.two.corrupt);
 
-    return SUCCESS;
+    return out;
 }
 
 
-INLINE Option(Error*) Trap_Init_Any_Sequence_Pairlike(
+INLINE Result(Element*) Init_Any_Sequence_Pairlike(
     Init(Element) out,
     Heart heart,
     const Element* first,
     const Element* second
 ){
-    Option(Error*) error = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
-        out, heart, first, second
-    );
-    if (error)
-        return error;
+    trap (Init_Any_Sequence_Or_Conflation_Pairlike(out, heart, first, second));
 
     if (not Any_Sequence(out))
-        return Error_Conflated_Sequence_Raw(Datatype_Of(out), out);
+        return fail (Error_Conflated_Sequence_Raw(Datatype_Of(out), out));
 
-    return SUCCESS;
+    return out;
 }
 
-INLINE Option(Error*) Trap_Pop_Sequence_Or_Conflation(
+INLINE Result(Element*) Pop_Sequence_Or_Conflation(
     Init(Element) out,
     Heart heart,
     StackIndex base
 ){
     if (TOP_INDEX - base < 2) {
         Drop_Data_Stack_To(base);
-        return Error_Sequence_Too_Short_Raw();
+        return fail (Error_Sequence_Too_Short_Raw());
     }
 
     if (TOP_INDEX - base == 2) {  // two-element path optimization
-        Option(Error*) trap = Trap_Init_Any_Sequence_Or_Conflation_Pairlike(
+        Option(Error*) e;
+        Init_Any_Sequence_Or_Conflation_Pairlike(
             out,
             heart,
             TOP_ELEMENT - 1,
             TOP_ELEMENT
-        );
+        ) except (e) {
+            // drop stack before returning error
+        }
         Drop_Data_Stack_To(base);
-        return trap;
+        if (e)
+            return fail (unwrap e);
+        return out;
     }
 
     if (Try_Init_Any_Sequence_All_Integers(  // optimize e.g. 192.0.0.1
@@ -503,28 +506,26 @@ INLINE Option(Error*) Trap_Pop_Sequence_Or_Conflation(
         TOP_INDEX - base
     )){
         Drop_Data_Stack_To(base);  // optimization worked! drop stack...
-        return SUCCESS;
+        return out;
     }
 
     assert(TOP_INDEX - base > 2);  // guaranteed from above
     Source* a = Pop_Managed_Source_From_Stack(base);
     Freeze_Source_Shallow(a);
-    return Trap_Init_Any_Sequence_Listlike(out, heart, a);
+    return Init_Any_Sequence_Listlike(out, heart, a);
 }
 
-INLINE Option(Error*) Trap_Pop_Sequence(
+INLINE Result(Element*) Pop_Sequence(
     Init(Element) out,
     Heart heart,
     StackIndex base
 ){
-    Option(Error*) error = Trap_Pop_Sequence_Or_Conflation(out, heart, base);
-    if (error)
-        return error;
+    trap (Pop_Sequence_Or_Conflation(out, heart, base));
 
     if (not Any_Sequence(out))
-        return Error_Conflated_Sequence_Raw(Datatype_Of(out), out);
+        return fail (Error_Conflated_Sequence_Raw(Datatype_Of(out), out));
 
-    return SUCCESS;
+    return out;
 }
 
 
@@ -546,34 +547,30 @@ INLINE Option(Error*) Trap_Pop_Sequence(
 // to the WORD! '.' -- this could be extended to allow more blanks to get words
 // like `///` if that were deemed interesting.
 //
-INLINE Option(Error*) Trap_Pop_Sequence_Or_Element_Or_Nulled(
+INLINE Result(Value*) Pop_Sequence_Or_Element_Or_Nulled(
     Init(Value) out,
     Heart sequence_heart,
     StackIndex base
 ){
-    if (TOP_INDEX == base) {  // nothing to pop
-        Init_Nulled(out);
-        return SUCCESS;
-    }
+    if (TOP_INDEX == base)  // nothing to pop
+        return Init_Nulled(out);
 
     if (TOP_INDEX - 1 == base) {  // only one item, use as-is if possible
         Move_Cell(out, TOP_ELEMENT);  // ensures element
         DROP();  // balances stack
 
         if (not Is_Space(out)) {  // allow _.(void) to be _ if COMPOSE'd
-            Option(Error*) error = Trap_Check_Sequence_Element(
+            trap (Check_Sequence_Element(
                 sequence_heart,
                 cast(Element*, out),
                 false  // don't think of it as head, or do?
-            );
-            if (error)
-                return error;
+            ));
         }
 
-        return SUCCESS;  // let the item just decay to itself as-is
+        return out;  // let the item just decay to itself as-is
     }
 
-    return Trap_Pop_Sequence_Or_Conflation(out, sequence_heart, base);
+    return Pop_Sequence_Or_Conflation(out, sequence_heart, base);
 }
 
 
@@ -980,14 +977,6 @@ INLINE bool Any_Get_Value(const Value* v) {  // !!! optimize?
     );
 }
 
-INLINE Element* Refinify(Element* e) {
-    Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        e, TYPE_CHAIN, CELL_FLAG_LEADING_SPACE
-    );
-    if (error)
-        abrupt_panic (unwrap error);
-    return e;
-}
 
 #define Is_Refinement Is_Get_Word
 
@@ -999,9 +988,7 @@ INLINE const Symbol* Cell_Refinement_Symbol(const Cell* v) {
 
 INLINE Element* Blockify_Any_Sequence(Element* seq) {  // always works
     DECLARE_ELEMENT (temp);
-    Option(Error*) e = Trap_Alias_Any_Sequence_As(temp, seq, TYPE_BLOCK);
-    assert(not e);
-    UNUSED(e);
+    wont_fail (Alias_Any_Sequence_As(temp, seq, TYPE_BLOCK));
     Copy_Cell(seq, temp);
     return seq;
 }

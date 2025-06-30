@@ -591,7 +591,7 @@ DECLARE_NATIVE(JOIN)
     Length len = Strand_Len(mo->strand) - mo->base.index;
 
     if (heart == TYPE_WORD) {
-        const Symbol* s = Intern_UTF8_Managed(utf8, size);
+        const Symbol* s = require (Intern_Utf8_Managed(utf8, size));
         Init_Word(OUT, s);
     }
     else if (Any_String_Type(heart)) {
@@ -713,9 +713,7 @@ DECLARE_NATIVE(JOIN)
 
     Sink(Element) out = OUT;
     if (Any_Sequence_Type(heart)) {
-        Option(Error*) error = Trap_Pop_Sequence(out, heart, STACK_BASE);
-        if (error)
-            return fail (unwrap error);
+        trap (Pop_Sequence(out, heart, STACK_BASE));
     }
     else {
         Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);
@@ -985,12 +983,7 @@ DECLARE_NATIVE(DEHEX)
         scan[scan_size] = '\0';
 
         const Byte* next = scan;
-        Codepoint decoded;
-        Option(Error*) e = Trap_Back_Scan_Utf8_Char(
-            &decoded, &next, &scan_size
-        );
-        if (e)
-            return fail (unwrap e);
+        Codepoint decoded = trap (Back_Scan_Utf8_Char(&next, &scan_size));
 
         --scan_size;  // see definition of Back_Scan for why it's off by one
         if (scan_size != 0)

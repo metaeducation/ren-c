@@ -146,27 +146,43 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 //=//// RESULT TYPE ///////////////////////////////////////////////////////=//
 
 #if NO_CPLUSPLUS_11
+    typedef enum {
+        NONE = 0  // this is the "no result" value
+    } None;
+
     #define Result(T)   T
     #define Extract_Result(result)  result
     #define Then_Extract_Result
 #else
+    struct None {
+        None () {}  // handle `return NONE;` case
+        None (int) {}  // handle ResultWrapper's u_cast(T, 0) case
+    };
+    #define NONE  None{}  // construct a None instance
+
     template<typename T>
     struct ResultWrapper {
-        T t;
+        T p;  // not always pointer, but use common convention with Sink/Need
+
+        ResultWrapper() = delete;
+
+        ResultWrapper(const PermissiveZero&) : p (u_cast(T, 0)) {}
 
         template <typename U>
-        ResultWrapper(U other) : t {other} {}
+        ResultWrapper(const U& other) : p {other} {}
 
-        ResultWrapper(const PermissiveZero&) : t (u_cast(T, 0)) {}
+        template <typename X>
+        ResultWrapper (const ResultWrapper<X>& other)
+            : p (other.p)
+        {}
 
-        ResultWrapper(const ResultWrapper<T>& other) = delete;
-
-        ResultWrapper(ResultWrapper<T>&& other)
-            : t {std::move(other.t)}
-          {}
+        template <typename U>
+        explicit ResultWrapper(U&& something)  // see OptionWrapper
+            : p (u_cast(T, std::forward<U>(something)))
+        {}
 
         T& extract() {
-            return t;
+            return p;
         }
     };
 

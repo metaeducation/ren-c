@@ -434,11 +434,11 @@ REBLEN Modify_String_Or_Blob(
                             ));
                     }
                     else {
-                        Option(Error*) e = Trap_Back_Scan_Utf8_Char(
-                            &c, &bp, &bytes_left
-                        );
-                        if (e)
-                            abrupt_panic (Error_Bad_Utf8_Bin_Edit(unwrap e));
+                        c = Back_Scan_Utf8_Char(
+                            &bp, &bytes_left
+                        ) except (Error* e) {
+                            abrupt_panic (Error_Bad_Utf8_Bin_Edit(e));
+                        }
                     }
                     ++src_len_raw;
 

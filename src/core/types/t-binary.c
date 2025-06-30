@@ -598,29 +598,27 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
 //    can have those options, but it copies the data instead of aliasing it.
 //    This suggests a need for some factoring of validation out from decoding.
 //
-Option(Error*) Trap_Alias_Blob_As(
+Result(Element*) Alias_Blob_As(
     Sink(Element) out,
     const Element* blob,
     Heart as
 ){
     const Binary* bin = Cell_Binary(blob);
 
-    if (as == TYPE_BLOB) {  // (as blob! data) when data may be text or blob
-        Copy_Cell(out, blob);
-        return SUCCESS;
-    }
+    if (as == TYPE_BLOB)  // (as blob! data) when data may be text or blob
+        return Copy_Cell(out, blob);
 
     if (Any_Utf8_Type(as)) {  // convert to a string as first step [1]
         if (as == TYPE_WORD) {  // early fail on this, to save time
             if (Series_Index(blob) != 0)  // (vs. failing on AS WORD! of string)
-                return Error_User("Can't alias BLOB! as WORD! unless at head");
+                return fail ("Can't alias BLOB! as WORD! unless at head");
         }
 
         Size byteoffset = Series_Index(blob);
 
         const Byte* at_ptr = Binary_At(bin, byteoffset);
         if (Is_Continuation_Byte(*at_ptr))  // must be on codepoint start
-            return Error_User(
+            return fail (
                 "Index must be at codepoint to convert BLOB! to ANY-STRING?"
             );
 
@@ -634,7 +632,7 @@ Option(Error*) Trap_Alias_Blob_As(
         ){
             if (not Is_Flex_Frozen(bin))
                 if (Get_Cell_Flag(blob, CONST))
-                    return Error_Alias_Constrains_Raw();
+                    return fail (Error_Alias_Constrains_Raw());
 
             Length num_codepoints = 0;
 
@@ -649,12 +647,8 @@ Option(Error*) Trap_Alias_Blob_As(
                 if (Is_Byte_Ascii(*bp))
                     Validate_Ascii_Byte(bp, strmode, Binary_Head(bin));
                 else {
-                    Codepoint c;
-                    Option(Error*) e = Trap_Back_Scan_Utf8_Char(
-                        &c, &bp, &bytes_left
-                    );
-                    if (e)
-                        abrupt_panic (unwrap e);
+                    Codepoint c = trap (Back_Scan_Utf8_Char(&bp, &bytes_left));
+                    UNUSED(c);
                 }
 
                 ++num_codepoints;
@@ -685,18 +679,16 @@ Option(Error*) Trap_Alias_Blob_As(
             }
         }
 
-        if (Any_String_Type(as)) {
-            Init_Any_String_At(out, as, str, index);
-            return SUCCESS;
-        }
+        if (Any_String_Type(as))
+            return Init_Any_String_At(out, as, str, index);
 
         DECLARE_ELEMENT (string);
         Init_Any_String_At(string, TYPE_TEXT, str, index);
 
-        return Trap_Any_String_As(out, string, as);
+        return Alias_Any_String_As(out, string, as);
     }
 
-    return Error_Invalid_Type(as);
+    return fail (Error_Invalid_Type(as));
 }
 
 
@@ -707,9 +699,7 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
     Element* blob = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    Option(Error*) e = Trap_Alias_Blob_As(OUT, blob, as);
-    if (e)
-        panic (unwrap e);
+    require (Alias_Blob_As(OUT, blob, as));
 
     return OUT;
 }
@@ -890,10 +880,8 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Blob)
     if (size == 1 and *bp == 0)
         return Init_Integer(OUT, 0);  // codepoint of #{00} -> 0 [2]
 
-    Codepoint c;
-    Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, nullptr);
-    if (e)
-        return fail (unwrap e);
+    Codepoint c = trap (Back_Scan_Utf8_Char(&bp, nullptr));
+
     ++bp;  // Back_Scan() requires increment
 
     if (bp != Binary_Tail(Cell_Binary(blob)))

@@ -323,9 +323,7 @@ DECLARE_NATIVE(READ_LINE)
             }
 
             const Byte* bp = encoded;
-            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &size);
-            if (e)
-                return rebDelegate("panic", Varlist_Archetype(unwrap e));
+            c = require (Back_Scan_Utf8_Char(&bp, &size));
         }
 
         if (c == '\n') {  // found a newline
@@ -497,9 +495,7 @@ DECLARE_NATIVE(READ_CHAR)
         }
 
         const Byte* bp = encoded;
-        Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &size);
-        if (e)
-            return rebDelegate("panic", Varlist_Archetype(unwrap e));
+        c = require (Back_Scan_Utf8_Char(&bp, &size));
     }
 
     return rebChar(c);

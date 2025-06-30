@@ -307,9 +307,9 @@ Strand* Append_UTF8_May_Panic(
     for (; bytes_left > 0; --bytes_left, ++bp) {
         Codepoint c = *bp;
         if (Is_Utf8_Lead_Byte(c)) {
-            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &bp, &bytes_left);
-            if (e)
-                abrupt_panic (unwrap e);
+            c = Back_Scan_Utf8_Char(&bp, &bytes_left) except (Error* e) {
+                abrupt_panic (e);
+            }
         }
         else if (Should_Skip_Ascii_Byte_May_Panic(
             bp,

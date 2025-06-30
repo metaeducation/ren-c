@@ -523,23 +523,6 @@ int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 
 
 //
-//  Setify: C
-//
-// Turn a value into its SET-XXX! equivalent, if possible.  This tries to
-// "be smart" so even a TEXT! can be turned into a SET-WORD! (just an
-// unbound one).
-//
-Element* Setify(Element* out) {  // called on stack values; can't call eval
-    Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        out, TYPE_CHAIN, CELL_MASK_ERASED_0
-    );
-    if (error)
-        abrupt_panic (unwrap error);
-    return out;
-}
-
-
-//
 //  Unsingleheart_Sequence: C
 //
 // Evolve a cell containing a sequence that's just an element and a SPACE into
@@ -608,24 +591,9 @@ DECLARE_NATIVE(SETIFY)
 {
     INCLUDE_PARAMS_OF_SETIFY;
 
-    Element* e = Element_ARG(ELEMENT);
+    Element* e = require (Setify(Element_ARG(ELEMENT)));
 
-    return COPY(Setify(e));
-}
-
-
-//
-//  Getify: C
-//
-// Like Setify() but Makes GET-XXX! instead of SET-XXX!.
-//
-Element* Getify(Element* out) {  // called on stack values; can't call eval
-    Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-        out, TYPE_CHAIN, CELL_FLAG_LEADING_SPACE
-    );
-    if (error)
-        abrupt_panic (unwrap error);
-    return out;
+    return COPY(e);
 }
 
 
@@ -642,9 +610,9 @@ DECLARE_NATIVE(GETIFY)
 {
     INCLUDE_PARAMS_OF_GETIFY;
 
-    Element* e = Element_ARG(ELEMENT);
+    Element* e = require (Getify(Element_ARG(ELEMENT)));
 
-    return COPY(Getify(e));
+    return COPY(e);
 }
 
 

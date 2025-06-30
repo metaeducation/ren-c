@@ -38,18 +38,15 @@ const z_crc_t *crc32_table; // pointer to the zlib CRC32 table
 // See also: Hash_UTF8_Caseless(), which works with already validated UTF-8
 // bytes and takes a length in codepoints instead of a byte size.
 //
-uint32_t Hash_Scan_UTF8_Caseless_May_Panic(const Byte* utf8, Size size)
+Result(uint32_t) Hash_Scan_UTF8_Caseless(const Byte* utf8, Size size)
 {
     uint32_t crc = 0x00000000;
 
     for (; size != 0; ++utf8, --size) {
         Codepoint c = *utf8;
 
-        if (Is_Utf8_Lead_Byte(c)) {
-            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &utf8, &size);
-            if (e)
-                abrupt_panic (unwrap e);
-        }
+        if (Is_Utf8_Lead_Byte(c))
+            c = trap (Back_Scan_Utf8_Char(&utf8, &size));
 
         c = LO_CASE(c);
 

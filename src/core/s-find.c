@@ -101,14 +101,12 @@ REBINT Compare_UTF8(const Byte* s1, const Byte* s2, Size l2)
         c1 = *s1;
         c2 = *s2;
         if (c1 > 127) {
-            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c1, &s1, &l1);
-            assert(not e);  // UTF8 good, use Back_Scan_Utf8_Char_Unchecked()!
-            UNUSED(e);
+            // UTF8 good, use Back_Scan_Utf8_Char_Unchecked()!
+            c1 = wont_fail (Back_Scan_Utf8_Char(&s1, &l1));
         }
         if (c2 > 127) {
-            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c2, &s2, &l2);
-            assert(not e);  // UTF8 good, use Back_Scan_Utf8_Char_Unchecked()!
-            UNUSED(e);
+            // UTF8 good, use Back_Scan_Utf8_Char_Unchecked()!
+            c2 = wont_fail (Back_Scan_Utf8_Char(&s2, &l2));
         }
         if (c1 != c2) {
             if (LO_CASE(c1) != LO_CASE(c2))
@@ -210,7 +208,7 @@ REBINT Find_Binstr_In_Binstr(
 
     // If is_2_str then we have to treat the data in binstr1 as characters,
     // even if it's not validated UTF-8.  This requires knowing the size_at
-    // to pass to the checked version of Trap_Back_Scan_Utf8_Char().
+    // to pass to the checked version of Back_Scan_Utf8_Char().
     //
     const Byte* cp1;  // binstr1 position that is current test head of match
     Length len_head1;
@@ -271,8 +269,7 @@ REBINT Find_Binstr_In_Binstr(
             else if (is_2_str) {  // have to treat binstr1 as a string anyway
                 cp1 += skip1;
                 size -= skip1;  // size grows by skip
-                Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c1, &cp1, &size);
-                if (e) {
+                c1 = Back_Scan_Utf8_Char(&cp1, &size) except (Error* e) {
                     UNUSED(e);  // UTF-8 errors preallocated, cheap to ignore!
                     c1 = MAX_UNI + 1;  // won't match if `while` below breaks
                 }
@@ -291,8 +288,7 @@ REBINT Find_Binstr_In_Binstr(
             c1 = Codepoint_At(cast(Utf8(const*), cp1));
         else if (is_2_str) {  // have to treat binstr1 as a string anyway
             Size size_temp = size;
-            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c1, &cp1, &size_temp);
-            if (e) {
+            c1 = Back_Scan_Utf8_Char(&cp1, &size_temp) except (Error* e) {
                 UNUSED(e);  // UTF-8 errors preallocated, cheap to ignore!
                 goto no_match_at_this_position;
             }
@@ -337,10 +333,9 @@ REBINT Find_Binstr_In_Binstr(
                 else if (is_1_str)
                     tp1 = Back_Scan_Utf8_Char_Unchecked(&c1, tp1);
                 else {  // treating binstr1 as UTF-8 despite being binary
-                    Option(Error*) e = Trap_Back_Scan_Utf8_Char(
-                        &c1, &tp1, &size
-                    );
-                    if (e) {
+                    c1 = Back_Scan_Utf8_Char(&tp1, &size) except (
+                        Error* e
+                    ){
                         UNUSED(e);  // UTF-8 errors prealloc, cheap to ignore!
                         goto no_match_at_this_position;
                     }

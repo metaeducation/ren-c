@@ -848,14 +848,14 @@ IMPLEMENT_GENERIC(TO, Any_List)
 
 
 //
-//  Trap_Alias_Any_List_As: C
+//  Alias_Any_List_As: C
 //
 // 1. The init of a listlike sequence may not use the array you pass in.
 //    But regardless, the AS locks it...because whether it decides to
 //    use the array or not is an implementation detail.  It will reuse
 //    the array at least some of the time, so freeze it all of the time.
 //
-Option(Error*) Trap_Alias_Any_List_As(
+Result(Element*) Alias_Any_List_As(
     Sink(Element) out,
     const Element* list,
     Heart as
@@ -863,7 +863,7 @@ Option(Error*) Trap_Alias_Any_List_As(
     if (Any_List_Type(as)) {
         Copy_Cell(out, list);
         KIND_BYTE(out) = as;
-        return SUCCESS;
+        return out;
     }
 
     if (Any_Sequence_Type(as)) {
@@ -871,22 +871,19 @@ Option(Error*) Trap_Alias_Any_List_As(
             Freeze_Source_Shallow(Cell_Array_Ensure_Mutable(list));
 
         DECLARE_ELEMENT (temp);  // need to rebind
-        Option(Error*) e = Trap_Init_Any_Sequence_At_Listlike(
+        trap (Init_Any_Sequence_At_Listlike(
             temp,
             as,
             Cell_Array(list),
             Series_Index(list)
-        );
-        if (e)
-            return e;
+        ));
 
         /* Tweak_Cell_Binding(temp) = Cell_Binding(list); */  // may be unfit
-        Derelativize(out, temp, Cell_Binding(list));  // try this instead (?)
-
-        return SUCCESS;
+        
+        return Derelativize(out, temp, Cell_Binding(list));  // try this (?)
     }
 
-    return Error_Invalid_Type(as);
+    return fail (Error_Invalid_Type(as));
 }
 
 
@@ -897,9 +894,7 @@ IMPLEMENT_GENERIC(AS, Any_List)
     Element* list = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    Option(Error*) e = Trap_Alias_Any_List_As(OUT, list, as);
-    if (e)
-        panic (unwrap e);
+    require (Alias_Any_List_As(OUT, list, as));
 
     return OUT;
 }

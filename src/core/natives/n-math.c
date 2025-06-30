@@ -89,9 +89,7 @@ DECLARE_NATIVE(ADD)
         REBINT i = VAL_INT32(e2);
         if (i < 0)
             panic (Error_Codepoint_Negative_Raw());
-        Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, i);
-        if (error)
-            return fail (unwrap error);
+        trap (Init_Single_Codepoint_Rune(OUT, i));
         return OUT;
     }
 
@@ -101,9 +99,7 @@ DECLARE_NATIVE(ADD)
         REBINT i = VAL_INT32(e1);
         if (i < 0)
             panic (Error_Codepoint_Negative_Raw());
-        Option(Error*) error = Trap_Init_Single_Codepoint_Rune(OUT, i);
-        if (error)
-            return fail (unwrap error);
+        trap (Init_Single_Codepoint_Rune(OUT, i));
         return OUT;
     }
 

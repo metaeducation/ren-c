@@ -498,8 +498,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
         return nullptr;  // signal error if end of string
 
     if (Is_Utf8_Lead_Byte(c)) {  // multibyte sequence
-        Option(Error*) e = Trap_Back_Scan_Utf8_Char(out, &bp, nullptr);
-        if (e) {
+        *out = Back_Scan_Utf8_Char(&bp, nullptr) except (Error* e) {
             UNUSED(e);  // !!! This should be Trap_Scan_Utf8_Char_Escapable()
             return nullptr;
         }
@@ -605,8 +604,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 //    as easy as possible to work with BLOB! using string-based routines
 //    like FIND, etc., so use BLOB! if you need UTF-8 with '\0' in it.
 //
-static Option(Error*) Trap_Scan_String_Into_Mold_Core(
-    Sink(const Byte*) out,
+static Result(const Byte*) Scan_String_Into_Mold_Core(
     Molder* mo,  // pushed by calling wrapper, dropped if error returned
     const Byte* bp,
     Count dashes,
@@ -654,7 +652,7 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
                 ++cp;
             }
             if (count > VAL_INT32(TOP))
-                return Error_User("Nested -- level closure too long");
+                return fail ("Nested -- level closure too long");
             if (count == VAL_INT32(TOP)) {
                 DROP();
                 if (TOP_INDEX == base)
@@ -677,11 +675,11 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
 
         switch (c) {
           case '\0': {
-            return Error_Missing(S, right); }
+            return fail (Error_Missing(S, right)); }
 
           case '^':
             if (not (cp = maybe Try_Scan_UTF8_Char_Escapable(&c, cp)))
-                return Error_User("Bad character literal in string");
+                return fail ("Bad character literal in string");
             --cp;  // unlike Back_Scan_XXX, no compensation for ++cp later
             break;
 
@@ -716,42 +714,37 @@ static Option(Error*) Trap_Scan_String_Into_Mold_Core(
             }
             else
                 assert(strmode == STRMODE_NO_CR);
-            return (Error_Illegal_Cr(cp, S->begin)); }
+            return fail (Error_Illegal_Cr(cp, S->begin)); }
 
           case LF:
           linefeed:
             if (left == '"' and dashes == 0)
-                return Error_User("Plain quoted strings not multi-line");
+                return fail ("Plain quoted strings not multi-line");
             ++S->transcode->line;
             break;
 
           default:
-            if (Is_Utf8_Lead_Byte(c)) {
-                Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &cp, nullptr);
-                if (e)
-                    return e;
-            }
+            if (Is_Utf8_Lead_Byte(c))
+                c = trap (Back_Scan_Utf8_Char(&cp, nullptr));
         }
 
         ++cp;
 
         if (c == '\0')  // e.g. ^(00) or ^@
-            abrupt_panic (Error_Illegal_Zero_Byte_Raw());  // illegal in strings [2]
+            return fail (Error_Illegal_Zero_Byte_Raw());  // not in strings [2]
 
         Append_Codepoint(Mold_Buffer(mo), c);
     }
 
   finished:
 
-    *out = cp;
-    return SUCCESS;
+    return cp;
 }
 
 
 // Wrapper which handles dropping the stack and mold buffer on error case.
 //
-static Option(Error*) Trap_Scan_String_Push_Mold(
-    Sink(const Byte*) out,
+static Result(const Byte*) Scan_String_Push_Mold(
     Molder* mo,
     const Byte* bp,
     Count dashes,
@@ -759,14 +752,14 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
 ){
     StackIndex base = TOP_INDEX;
     Push_Mold(mo);
-    Option(Error*) e = Trap_Scan_String_Into_Mold_Core(
-        out, mo, bp, dashes, S, base
-    );
-    if (e) {
+    const Byte* ep = Scan_String_Into_Mold_Core(
+        mo, bp, dashes, S, base
+    ) except (Error* e) {
         Drop_Data_Stack_To(base);
         Drop_Mold(mo);
+        return fail (e);
     }
-    return e;
+    return ep;
 }
 
 
@@ -784,8 +777,7 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
 //    translations that affect round-trip copy and paste, and it seems
 //    applicable to FILE! too.)
 //
-Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
-    Sink(const Byte*) end_out,
+Result(const Byte*) Scan_Utf8_Item_Into_Mold(
     Molder* mo,
     const Byte* begin,
     Token token,
@@ -841,7 +833,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
                 DECLARE_ATOM (arg);
                 CATCH_THROWN(arg, TOP_LEVEL);
 
-                return Cell_Error(label);
+                return fail (Cell_Error(label));
             }
 
             Size size = transcode.at - cp;
@@ -870,10 +862,10 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
         if (token == TOKEN_FILE and c == '%') {
             Byte decoded;
             if (not (cp = maybe Try_Scan_Hex2(&decoded, cp + 1)))
-                return Error_User("Bad Hex Encoded Character");
+                return fail ("Bad Hex Encoded Character");
             c = decoded;
             if (Is_Utf8_Lead_Byte(c))
-                return Error_User(  // [1]
+                return fail (  // [1]
                     "Hex encoding for UTF-8 in Filenames not supported yet"
                 );
             goto check_for_invalid_ascii;
@@ -885,16 +877,14 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
 
         if (c == '^') {  // Accept ^X encoded char:
             if (not (cp = maybe Try_Scan_UTF8_Char_Escapable(&c, cp)))
-                return SUCCESS;
+                return fail ("Bad caret encoded literal in string");
             goto check_for_invalid_unicode;
         }
 
     } handle_multibyte_utf8_chars: { /////////////////////////////////////////
 
         if (Is_Utf8_Lead_Byte(c)) {
-            Option(Error*) e = Trap_Back_Scan_Utf8_Char(&c, &cp, nullptr);
-            if (e)
-                return e;
+            c = trap (Back_Scan_Utf8_Char(&cp, nullptr));
             ++cp;  // UTF-8 back scanning doesn't do the increment
             goto check_for_invalid_unicode;
         }
@@ -917,13 +907,13 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
             // Is char as literal valid? (e.g. () [] etc.)
             // Only searches ASCII characters.
             //
-            return Error_User("Invalid character in filename");
+            return fail ("Invalid character in filename");
         }
         else if (c < ' ') {
-            return Error_User("Control characters not allowed in filenames");
+            return fail ("Control characters not allowed in filenames");
         }
         else if (c == '\\') {
-            return Error_User("Backslash not allowed in filenames");  // [1]
+            return fail ("Backslash not allowed in filenames");  // [1]
         }
 
     } append_codepoint_and_continue: { ///////////////////////////////////////
@@ -932,30 +922,7 @@ Option(Error*) Trap_Scan_Utf8_Item_Into_Mold(
 
     }}
 
-    *end_out = cp;
-
-    return SUCCESS;
-}
-
-
-// Wrapper which handles dropping the stack and mold buffer on error case.
-//
-Option(Error*) Trap_Scan_Utf8_Item_Push_Mold(
-    Sink(const Byte*) out,
-    Molder* mo,
-    const Byte* bp,
-    Token token,
-    ScanState* S  // used for errors
-){
-    Push_Mold(mo);
-    Option(Error*) e = Trap_Scan_Utf8_Item_Into_Mold(
-        out, mo, bp, token, S
-    );
-    if (e) {
-        Drop_Mold(mo);
-        return e;
-    }
-    return SUCCESS;
+    return cp;
 }
 
 
@@ -1143,16 +1110,6 @@ static LexFlags Prescan_Fingerprint(ScanState* S)
     LEX_FLAG(LEX_SPECIAL_BAR))
 
 
-// Make it a little cleaner to return tokens from Trap_Locate_Token, returning
-// nullptr for the error, captures the pattern:
-//
-//    *token = TOKEN_XXX;
-//    return nullptr;
-//
-// as just `return LOCATED(TOKEN_XXX);`
-//
-#define LOCATED(tok) (*token_out = tok, SUCCESS)
-
 
 //
 //  Trap_Locate_Token_May_Push_Mold: C
@@ -1233,11 +1190,8 @@ static LexFlags Prescan_Fingerprint(ScanState* S)
 // encoded source is because all the characters that dictate the tokenization
 // are currently in the ASCII range (< 128).
 //
-static Option(Error*) Trap_Locate_Token_May_Push_Mold(
-    Sink(Token) token_out,
-    Molder* mo,
-    Level* L
-){
+static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
+{
     ScanState* S = &L->u.scan;
     TranscodeState* transcode = S->transcode;
 
@@ -1274,7 +1228,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         else switch (Detect_Rebol_Pointer(L->feed->p)) {
           case DETECTED_AS_END:
             L->feed->p = &PG_Feed_At_End;
-            return LOCATED(TOKEN_END);
+            return TOKEN_END;
 
           case DETECTED_AS_CELL: {
             Copy_Reified_Variadic_Feed_Cell(
@@ -1336,7 +1290,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
     if (*cp == '&') {
         S->end = cp + 1;
-        return LOCATED(TOKEN_CONSTRUCT);
+        return TOKEN_CONSTRUCT;
     }
 
     if (*cp == '-') {  // first priority: -[...]- --[...]--
@@ -1345,21 +1299,17 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         for (++dp; *dp == '-'; ++dp)
             ++dashes;
         if (*dp == '[' or *dp == '"') {
-            Option(Error*) error = Trap_Scan_String_Push_Mold(
-                &cp, mo, dp, dashes, S
-            );
-            if (error)
-                return error;
+            cp = trap (Scan_String_Push_Mold(mo, dp, dashes, S));
             goto check_str;
         }
     }
     else if (*cp == '^') {
         S->end = cp + 1;
-        return LOCATED(TOKEN_CARET);
+        return TOKEN_CARET;
     }
     else if (*cp == '@') {
         S->end = cp + 1;
-        return LOCATED(TOKEN_AT);
+        return TOKEN_AT;
     }
     else if (
         *cp == '$'
@@ -1367,7 +1317,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         and not (cp[1] == '-' and Get_Lex_Class(cp[2]) == LEX_CLASS_NUMBER)
     ){
         S->end = cp + 1;
-        return LOCATED(TOKEN_DOLLAR);
+        return TOKEN_DOLLAR;
     }
 
     Token token;  // only set if falling through to `scan_word`
@@ -1425,7 +1375,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (seen_angles and (*temp == '/' or *temp == '.'))
                 break;
 
-            return LOCATED(TOKEN_WORD);
+            return TOKEN_WORD;
         }
     }
 
@@ -1454,44 +1404,40 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             else
                 assert(strmode == STRMODE_NO_CR);
 
-            return Error_Illegal_Cr(cp, S->begin); }
+            return fail (Error_Illegal_Cr(cp, S->begin)); }
 
           case LEX_DELIMIT_LINEFEED:
           delimit_line_feed:
             ++transcode->line;
             S->end = cp + 1;
-            return LOCATED(TOKEN_NEWLINE);
+            return TOKEN_NEWLINE;
 
           case LEX_DELIMIT_LEFT_BRACKET:  // [BLOCK] begin
-            return LOCATED(TOKEN_BLOCK_BEGIN);
+            return TOKEN_BLOCK_BEGIN;
 
           case LEX_DELIMIT_RIGHT_BRACKET:  // [BLOCK] end
-            return LOCATED(TOKEN_BLOCK_END);
+            return TOKEN_BLOCK_END;
 
           case LEX_DELIMIT_LEFT_PAREN:  // (GROUP) begin
-            return LOCATED(TOKEN_GROUP_BEGIN);
+            return TOKEN_GROUP_BEGIN;
 
           case LEX_DELIMIT_RIGHT_PAREN:  // (GROUP) end
-            return LOCATED(TOKEN_GROUP_END);
+            return TOKEN_GROUP_END;
 
           case LEX_DELIMIT_LEFT_BRACE:  // {FENCE} begin
-            return LOCATED(TOKEN_FENCE_BEGIN);
+            return TOKEN_FENCE_BEGIN;
 
           case LEX_DELIMIT_RIGHT_BRACE:  // {FENCE} end
-            return LOCATED(TOKEN_FENCE_END);
+            return TOKEN_FENCE_END;
 
           case LEX_DELIMIT_DOUBLE_QUOTE: {  // "QUOTES"
-            Option(Error*) error = Trap_Scan_String_Push_Mold(
-                &cp, mo, cp, 0, S
-            );
-            if (error)
-                return error;
+            cp = trap (Scan_String_Push_Mold(mo, cp, 0, S));
             goto check_str; }
 
           check_str:
             if (cp) {
                 S->end = cp;
-                return LOCATED(TOKEN_STRING);
+                return TOKEN_STRING;
             }
             // try to recover at next new line...
             cp = S->begin + 1;
@@ -1500,10 +1446,10 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             S->end = cp;
 
             if (S->begin[0] == '"')
-                return Error_Missing(S, '"');
+                return fail (Error_Missing(S, '"'));
 
             if (S->begin[0] == '[')
-                return Error_Missing(S, ']');
+                return fail (Error_Missing(S, ']'));
 
             crash ("Invalid string start delimiter");
 
@@ -1530,20 +1476,20 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                         break;  // load `://` with / being the word
                     if (which == '/' and cp[1] == '.')
                         break;  // load `/.a` with / acting as path
-                    return LOCATED(TOKEN_WORD);  // like . or .. or ...
+                    return TOKEN_WORD;  // like . or .. or ...
                 }
                 ++cp;
             } while (*cp == which);
 
             S->end = S->begin + 1;
             switch (which) {
-              case '.': return LOCATED(TOKEN_TUPLE);
-              case ':': return LOCATED(TOKEN_CHAIN);
-              case '/': return LOCATED(TOKEN_PATH);
+              case '.': return TOKEN_TUPLE;
+              case ':': return TOKEN_CHAIN;
+              case '/': return TOKEN_PATH;
               default:
                 assert(false);
             }
-            return Error_Unknown_Error_Raw(); }
+            return fail (Error_Unknown_Error_Raw()); }
 
           case LEX_DELIMIT_END:
             //
@@ -1562,14 +1508,14 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             S->end = cp;
             if (*cp == ',' or not Is_Lex_Delimit(*cp)) {
                 ++S->end;  // don't allow `,,` or `a,b` etc.
-                return Error_Syntax(S, TOKEN_COMMA);
+                return fail (Error_Syntax(S, TOKEN_COMMA));
             }
-            return LOCATED(TOKEN_COMMA);
+            return TOKEN_COMMA;
 
           case LEX_DELIMIT_TILDE:
             assert(*cp == '~');
             S->end = cp + 1;
-            return LOCATED(TOKEN_TILDE);
+            return TOKEN_TILDE;
 
           default:
             crash ("Invalid LEX_DELIMIT class");
@@ -1580,7 +1526,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             while (not ANY_CR_LF_END(*cp))
                 ++cp;
             if (*cp == '\0')
-                return LOCATED(TOKEN_END);  // load ";" is [] w/no tail newline
+                return TOKEN_END;  // load ";" is [] w/no tail newline
             if (*cp == LF)
                 goto delimit_line_feed;
             assert(*cp == CR);
@@ -1594,7 +1540,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             and *cp != '#'  // want #@ to be an RUNE! (charlike)
         ){
             if (*cp == '@')  // consider `@a@b`, `@@`, etc. ambiguous
-                return Error_Syntax(S, TOKEN_EMAIL);
+                return fail (Error_Syntax(S, TOKEN_EMAIL));
 
             token = TOKEN_EMAIL;
             goto prescan_subsume_all_dots;
@@ -1615,14 +1561,14 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     and S->quasi_pending  // exceptions for ~%~ ~%%~ etc.
                 ){
                     S->end = cp;
-                    return LOCATED(TOKEN_WORD);
+                    return TOKEN_WORD;
                 }
                 if (
                     Is_Lex_Whitespace(*cp)  // [%%% ...]
                     or Is_Lex_End_List(*cp)  // [... %%%]
                 ){
                     S->end = cp;
-                    return LOCATED(TOKEN_WORD);  // % is a WORD! exception
+                    return TOKEN_WORD;  // % is a WORD! exception
                 }
                 if (*cp == '%') {  // %% and %%% etc. are also WORD! exceptions
                     ++cp;
@@ -1632,7 +1578,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
             if (cp != S->begin + 1) {  // prefix more than one % in a row
                 S->end = cp + 1;
-                return Error_Syntax(S, TOKEN_FILE);
+                return fail (Error_Syntax(S, TOKEN_FILE));
             }
 
             token = TOKEN_FILE;
@@ -1649,30 +1595,30 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (*cp == '"') {
                 /*Option(const Byte*) invalids = cb_cast(":;\""); */
 
-                Option(Error*) e = Trap_Scan_String_Push_Mold(
-                    &cp, mo, cp, 0, S
-                );
-                if (e)
-                    return e;
+                cp = trap (Scan_String_Push_Mold(mo, cp, 0, S));
                 S->end = cp;
-                return LOCATED(token);
+                return token;
             }
-            Option(Error*) e = Trap_Scan_Utf8_Item_Push_Mold(
-                &cp, mo, cp, token, S
-            );
-            if (e)
-                return e;
+
+            Push_Mold(mo);
+            cp = Scan_Utf8_Item_Into_Mold(
+                mo, cp, token, S
+            ) except (Error* e) {
+                Drop_Mold(mo);
+                return fail (e);
+            }
+
             S->end = cp;
-            return LOCATED(token); }
+            return token; }
 
           case LEX_SPECIAL_APOSTROPHE:
             while (*cp == '\'')  // get sequential apostrophes as one token
                 ++cp;
             S->end = cp;
-            return LOCATED(TOKEN_APOSTROPHE);
+            return TOKEN_APOSTROPHE;
 
           case LEX_SPECIAL_GREATER:  // arrow words like `>` handled above
-            return Error_Syntax(S, TOKEN_TAG);
+            return fail (Error_Syntax(S, TOKEN_TAG));
 
           case LEX_SPECIAL_LESSER:
             cp = Seek_To_End_Of_Tag(cp);
@@ -1683,10 +1629,10 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     or Is_Lex_Whitespace(*cp)  // `<abc>def` not legal
                 )
             ){
-                return Error_Syntax(S, TOKEN_TAG);
+                return fail (Error_Syntax(S, TOKEN_TAG));
             }
             S->end = cp;
-            return LOCATED(TOKEN_TAG);
+            return TOKEN_TAG;
 
           case LEX_SPECIAL_PLUS:  // +123 +123.45
           case LEX_SPECIAL_MINUS:  // -123 -123.45
@@ -1708,7 +1654,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     goto next_lex_special;
                 if (*cp == '+' or *cp == '-')
                     goto prescan_word;
-                return Error_Syntax(S, TOKEN_WORD);
+                return fail (Error_Syntax(S, TOKEN_WORD));
             }
             goto prescan_word;
 
@@ -1722,7 +1668,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             // legal words (at least for the time being).
             //
             if (Is_Lex_Delimit(cp[1]) or Is_Lex_Whitespace(cp[1]))
-                return LOCATED(TOKEN_UNDERSCORE);
+                return TOKEN_UNDERSCORE;
             goto prescan_word;
 
           case LEX_SPECIAL_POUND:
@@ -1731,30 +1677,24 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (*cp == '"' or *cp == '[') {  // CHAR #"]" or #["]
                 S->end = S->begin;
                 S->begin = cp;
-                Option(Error*) e = Trap_Scan_String_Push_Mold(
-                    &cp, mo, cp, 0, S
-                );
-                if (e)
-                    return e;
+                cp = trap (Scan_String_Push_Mold(mo, cp, 0, S));
                 if (*cp == '#')  // allow for e.g. ~#[this is trash]#~
                     ++cp;
                 S->begin = S->end;  // restore start
                 S->end = cp;
-                return LOCATED(TOKEN_CHAR);
+                return TOKEN_CHAR;
             }
             if (*cp == '{') {  // BINARY #{12343132023902902302938290382}
                 S->end = S->begin;  // save start
                 S->begin = cp;
-                Option(Error*) e = Trap_Scan_String_Push_Mold(
-                    &cp, mo, cp, 0, S
-                );
+
+                cp = trap (Scan_String_Push_Mold(mo, cp, 0, S));
                 Drop_Mold(mo);  // not used...?
-                if (e)
-                    return e;
+
                 S->begin = S->end;  // restore start
                 if (cp) {
                     S->end = cp;
-                    return LOCATED(TOKEN_BINARY);
+                    return TOKEN_BINARY;
                 }
                 // try to recover at next new line...
                 cp = S->begin + 1;
@@ -1768,7 +1708,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 // have bad characters in it, but that would be detected by
                 // the caller, so we mention the missing `}` first.)
                 //
-                return Error_Missing(S, '}');
+                return fail (Error_Missing(S, '}'));
             }
             token = TOKEN_RUNE;
             goto rune_or_file_token;  // different policies on / : .
@@ -1780,7 +1720,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                 while (*cp == '$')
                     ++cp;
                 S->end = cp;
-                return LOCATED(TOKEN_WORD);
+                return TOKEN_WORD;
             }
             if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
                 token = TOKEN_EMAIL;
@@ -1790,10 +1730,10 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             goto prescan_subsume_up_to_one_dot;
 
           case LEX_SPECIAL_UTF8_ERROR:
-            return Error_Syntax(S, TOKEN_WORD);
+            return fail (Error_Syntax(S, TOKEN_WORD));
 
           default:
-            return Error_Syntax(S, TOKEN_WORD);
+            return fail (Error_Syntax(S, TOKEN_WORD));
         }
 
       case LEX_CLASS_WORD:
@@ -1801,7 +1741,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             Only_Lex_Flag(flags, LEX_SPECIAL_WORD)
             and *S->end != ':'  // need additional scan for URL if word://
         ){
-            return LOCATED(TOKEN_WORD);
+            return TOKEN_WORD;
         }
         goto prescan_word;
 
@@ -1814,19 +1754,19 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
         if (*S->end == ':') {  // special interpretation for 10:00 etc
             if (not Is_Lex_Number(S->end[1]))  // but not special for `a.1:`
-                return LOCATED(TOKEN_INTEGER);
+                return TOKEN_INTEGER;
             token = TOKEN_TIME;
             goto prescan_subsume_up_to_one_dot;
         }
 
         if (*S->end == '.') {  // special interpretation for 1.2 etc
             if (not Is_Lex_Number(S->end[1]))  // but not special for `1.a`
-                return LOCATED(TOKEN_INTEGER);
-            return LOCATED(TOKEN_INTEGER);  // !!! see TOKEN_INTEGER hack!
+                return TOKEN_INTEGER;
+            return TOKEN_INTEGER;  // !!! see TOKEN_INTEGER hack!
         }
 
         if (flags == 0)
-            return LOCATED(TOKEN_INTEGER);  // simple integer e.g. `123`
+            return TOKEN_INTEGER;  // simple integer e.g. `123`
 
         if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) {
             if (cp == S->begin) {  // no +2 +16 +64 allowed
@@ -1851,7 +1791,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     goto pound;  // base-2 binary, "very rare"
                 }
             }
-            return Error_Syntax(S, TOKEN_INTEGER);
+            return fail (Error_Syntax(S, TOKEN_INTEGER));
         }
 
         if (Has_Lex_Flag(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
@@ -1865,9 +1805,9 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
                     )
                 )
             ){
-                return Error_Syntax(S, TOKEN_INTEGER);
+                return fail (Error_Syntax(S, TOKEN_INTEGER));
             }
-            return LOCATED(TOKEN_INTEGER);
+            return TOKEN_INTEGER;
         }
 
         // Note: R3-Alpha supported dates like `1/2/1998`, despite the main
@@ -1878,25 +1818,25 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         for (; cp != S->end; cp++) {
             // what do we hit first? 1-AUG-97 or 123E-4
             if (*cp == '-')
-                return LOCATED(TOKEN_DATE);  // 1-2-97 1-jan-97
+                return TOKEN_DATE;  // 1-2-97 1-jan-97
             if (*cp == 'x' or *cp == 'X')
-                return LOCATED(TOKEN_PAIR);  // 320x200
+                return TOKEN_PAIR;  // 320x200
             if (*cp == 'E' or *cp == 'e') {
                 if (Skip_To_Byte(cp, S->end, 'x'))
-                    return LOCATED(TOKEN_PAIR);
-                return LOCATED(TOKEN_DECIMAL);  // 123E4
+                    return TOKEN_PAIR;
+                return TOKEN_DECIMAL;  // 123E4
             }
             if (*cp == '%')
-                return LOCATED(TOKEN_PERCENT);
+                return TOKEN_PERCENT;
 
             if (Is_Dot_Or_Slash(*cp)) {  // will be part of a TUPLE! or PATH!
                 S->end = cp;
-                return LOCATED(TOKEN_INTEGER);
+                return TOKEN_INTEGER;
             }
         }
         if (Has_Lex_Flag(flags, LEX_SPECIAL_APOSTROPHE))  // 1'200
-            return LOCATED(TOKEN_INTEGER);
-        return Error_Syntax(S, TOKEN_INTEGER);
+            return TOKEN_INTEGER;
+        return fail (Error_Syntax(S, TOKEN_INTEGER));
 
       default:
         break;  // crash() after switch, so no cases fall through accidentally
@@ -1914,11 +1854,11 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         else if (*cp == '/') {
             ++cp;  // saw `:/`
             if (*cp != '/')
-                return LOCATED(TOKEN_WORD);
+                return TOKEN_WORD;
             // saw `://`
         }
         else
-            return LOCATED(TOKEN_WORD);
+            return TOKEN_WORD;
 
         StackIndex base = TOP_INDEX;
         while (true) {  // saw `::` or `://`, okay treat as URL, look for its end
@@ -1945,13 +1885,13 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
               case '}': {
                 if (base == TOP_INDEX) {  // closing the code
                     S->end = cp;
-                    return LOCATED(TOKEN_URL);
+                    return TOKEN_URL;
                 }
 
                 Byte want = unwrap First_Byte_Of_Rune_If_Single_Char(TOP);
                 if (*cp != want) {
                     Drop_Data_Stack_To(base);
-                    return Error_Mismatch(want, *cp);
+                    return fail (Error_Mismatch(want, *cp));
                 }
                 DROP();
                 continue; }  // loop will increment
@@ -1969,11 +1909,11 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         if (base != TOP_INDEX) {
             Byte want = unwrap First_Byte_Of_Rune_If_Single_Char(TOP);
             Drop_Data_Stack_To(base);
-            return Error_Mismatch(want, *cp);
+            return fail (Error_Mismatch(want, *cp));
         }
 
         S->end = cp;
-        return LOCATED(TOKEN_URL);
+        return TOKEN_URL;
     }
     if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
         token = TOKEN_EMAIL;
@@ -1984,15 +1924,15 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         goto prescan_subsume_up_to_one_dot;
     }
     if (Has_Lex_Flags(flags, LEX_FLAGS_NONWORD_SPECIALS))
-        return Error_Syntax(S, TOKEN_WORD);  // has non-word chars (eg % \ )
+        return fail (Error_Syntax(S, TOKEN_WORD));  // non-word chars (eg % \ )
     if (
         Has_Lex_Flag(flags, LEX_SPECIAL_LESSER)
         or Has_Lex_Flag(flags, LEX_SPECIAL_GREATER)
     ){
-        return Error_Syntax(S, TOKEN_WORD);  // arrow words handled way above
+        return fail (Error_Syntax(S, TOKEN_WORD));  // arrow words way above
     }
 
-    return LOCATED(TOKEN_WORD);
+    return TOKEN_WORD;
 
 } prescan_subsume_up_to_one_dot: { ////////////////////////////////////////////
 
@@ -2011,7 +1951,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     if (*S->end == '.')
         dot_subsumed = true;
     else if (*S->end != ':' and *S->end != ',')
-        return LOCATED(token);
+        return token;
 
     cp = S->end + 1;
     while (
@@ -2023,7 +1963,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     }
     S->end = cp;
 
-    return LOCATED(token);
+    return token;
 
 } prescan_subsume_all_dots: { ////////////////////////////////////////////////
 
@@ -2039,7 +1979,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     // (This is just good enough to lets the existing tests work on EMAIL!)
 
     if (*S->end != '.')
-        return LOCATED(token);
+        return token;
 
     cp = S->end + 1;
     while (
@@ -2050,7 +1990,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
     }
     S->end = cp;
 
-    return LOCATED(token);
+    return token;
 }}
 
 
@@ -2286,19 +2226,13 @@ Bounce Scanner_Executor(Level* const L) {
 
 } loop: { ////////////////////////////////////////////////////////////////////
 
-    Token token;
-
-  locate_token: {
-
+{
     assert(mo->strand == nullptr);  // pushed mold should have been handled
-    Option(Error*) e = Trap_Locate_Token_May_Push_Mold(&token, mo, L);
-    if (e)
-        return fail (unwrap e);
+
+    Token token = trap (Locate_Token_May_Push_Mold(mo, L));
 
     if (token == TOKEN_END)
         goto reached_end_token;
-
-} handle_token: {
 
     assert(S->begin and S->end and S->begin < S->end);
 
@@ -2623,7 +2557,8 @@ Bounce Scanner_Executor(Level* const L) {
 } case TOKEN_WORD: { /////////////////////////////////////////////////////////
 
     assert(len != 0);
-    Init_Word(PUSH(), Intern_UTF8_Managed(S->begin, len));
+    const Symbol* symbol = trap (Intern_Utf8_Managed(S->begin, len));
+    Init_Word(PUSH(), symbol);
     goto lookahead;
 
 } case TOKEN_RUNE: { /////////////////////////////////////////////////////////
@@ -2679,7 +2614,10 @@ Bounce Scanner_Executor(Level* const L) {
 } case TOKEN_FILE: { /////////////////////////////////////////////////////////
 
     if (mo->base.size == Strand_Size(mo->strand)) {  // % is WORD!
-        Init_Word(PUSH(), Intern_UTF8_Managed(cb_cast("%"), 1));
+        const Symbol* symbol = wont_fail (
+            Intern_Utf8_Managed(cb_cast("%"), 1)
+        );
+        Init_Word(PUSH(), symbol);
         Drop_Mold(mo);
     }
     else {
@@ -3099,14 +3037,11 @@ Bounce Scanner_Executor(Level* const L) {
   // be stored in Cell with the same overhead as a WORD!.  (See %cell-tuple.h
   // for details on the applicable compressions and mechanisms.)
 
-    Sink(Element) scratch = SCRATCH;
-    Option(Error*) e = Trap_Pop_Sequence_Or_Conflation(
-        scratch,  // doesn't write directly to stack since popping stack
+    Element* scratch = trap (Pop_Sequence_Or_Conflation(
+        SCRATCH,  // doesn't write directly to stack since popping stack
         heart,
         stackindex_path_head - 1
-    );
-    if (e)
-        return fail (unwrap e);
+    ));
 
     assert(
         Is_Quasi_Word(scratch)     // [~ ~] => ~.~ or ~/~ or ~:~

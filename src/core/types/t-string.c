@@ -1014,7 +1014,7 @@ IMPLEMENT_GENERIC(TO, Any_String)
 //    the AS ANY-UTF8? generic from having to worry about converting types
 //    with indices.
 //
-Option(Error*) Trap_Any_String_As(
+Result(Element*) Alias_Any_String_As(
     Sink(Element) out,
     const Element* string,
     Heart as
@@ -1023,10 +1023,10 @@ Option(Error*) Trap_Any_String_As(
         Copy_Cell(out, string);
         KIND_BYTE(out) = as;
         Inherit_Const(out, string);
-        return SUCCESS;
+        return out;
     }
 
-    return Trap_Alias_Any_Utf8_As(out, string, as);
+    return Alias_Any_Utf8_As(out, string, as);
 }
 
 
@@ -1037,9 +1037,7 @@ IMPLEMENT_GENERIC(AS, Any_String)
     Element* string = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    Option(Error*) e = Trap_Any_String_As(OUT, string, as);
-    if (e)
-        panic (unwrap e);
+    require (Alias_Any_String_As(OUT, string, as));
 
     return OUT;
 }

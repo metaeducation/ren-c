@@ -634,11 +634,11 @@ DECLARE_NATIVE(LET)
     if (Heart_Of(vars) != TYPE_WORD) {  // more complex than we'd like [1]
         Setify(where);
         if (Heart_Of(vars) == TYPE_PATH) {
-            Option(Error*) error = Trap_Blank_Head_Or_Tail_Sequencify(
-                where, TYPE_PATH, CELL_FLAG_LEADING_SPACE
+            wont_fail (  // was a path when we got it!
+                Blank_Head_Or_Tail_Sequencify(
+                    where, TYPE_PATH, CELL_FLAG_LEADING_SPACE
+                )
             );
-            assert(not error);  // was a path when we got it!
-            UNUSED(error);
         }
         else
             assert(Heart_Of(vars) == TYPE_CHAIN);

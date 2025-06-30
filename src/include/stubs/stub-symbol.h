@@ -92,8 +92,8 @@ INLINE bool Are_Synonyms(const Symbol* s1, const Symbol* s2) {
     return false;  // stopped when circularly linked list loops back to self
 }
 
-#define Intern_UTF8_Managed(utf8,size) \
-    Intern_UTF8_Managed_Core(nullptr, (utf8), (size))
+#define Intern_Utf8_Managed(utf8,size) \
+    Intern_Utf8_Managed_Core(nullptr, (utf8), (size))
 
 
 // Hitches are a circularly linked list that includes transient binding info

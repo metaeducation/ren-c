@@ -142,10 +142,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
     }
     else switch (type) {
       case TYPE_RUNE: {
-        Codepoint c;
-        Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, arg);
-        if (e)
-            return fail (unwrap e);
+        Codepoint c = trap (Get_Rune_Single_Codepoint(arg));
         return Init_Decimal(OUT, cast(REBDEC, c)); }
 
       case TYPE_TIME: {
@@ -418,11 +415,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                     heart = Heart_Of_Builtin_Fundamental(val);
             }
             else if (heart == TYPE_RUNE) {
-                Codepoint c;
-                Option(Error*) e = Trap_Get_Rune_Single_Codepoint(&c, arg);
-                if (e)
-                    panic (unwrap e);
-
+                Codepoint c = require (Get_Rune_Single_Codepoint(arg));
                 d2 = cast(REBDEC, c);
                 heart = TYPE_DECIMAL;
             }

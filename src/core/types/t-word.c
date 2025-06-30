@@ -174,9 +174,9 @@ IMPLEMENT_GENERIC(TO, Is_Word)
 }
 
 //
-//  Trap_Alias_Any_Word_As: C
+//  Alias_Any_Word_As: C
 //
-Option(Error*) Trap_Alias_Any_Word_As(
+Result(Element*) Alias_Any_Word_As(
     Sink(Element) out,
     const Element* word,
     Heart as
@@ -184,13 +184,11 @@ Option(Error*) Trap_Alias_Any_Word_As(
     if (as == TYPE_WORD) {
         Copy_Cell(out, word);
         Plainify(out);
-        return SUCCESS;
+        return out;
     }
 
-    if (Any_String_Type(as)) {  // will be an immutable string
-        Init_Any_String(out, as, Word_Symbol(word));
-        return SUCCESS;
-    }
+    if (Any_String_Type(as))  // will be an immutable string
+        return Init_Any_String(out, as, Word_Symbol(word));
 
     if (as == TYPE_RUNE) {  // immutable (note no EMAIL! or URL! possible)
         const Symbol* s = Word_Symbol(word);
@@ -201,18 +199,15 @@ Option(Error*) Trap_Alias_Any_Word_As(
             Strand_Len(s),
             Strand_Size(s)
         )){
-            return SUCCESS;
+            return out;
         }
-        Init_Any_String(out, as, s);
-        return SUCCESS;
+        return Init_Any_String(out, as, s);
     }
 
-    if (as == TYPE_BLOB) {  // will be an immutable blob
-        Init_Blob(out, Word_Symbol(word));
-        return SUCCESS;
-    }
+    if (as == TYPE_BLOB)  // will be an immutable blob
+        return Init_Blob(out, Word_Symbol(word));
 
-    return Error_Invalid_Type(as);
+    return fail (Error_Invalid_Type(as));
 }
 
 
@@ -220,13 +215,11 @@ IMPLEMENT_GENERIC(AS, Is_Word)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Option(Error*) e = Trap_Alias_Any_Word_As(
+    require (Alias_Any_Word_As(
         OUT,
         Element_ARG(ELEMENT),
         Cell_Datatype_Builtin_Heart(ARG(TYPE))
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
     return OUT;
 }

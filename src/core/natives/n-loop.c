@@ -801,11 +801,9 @@ Element* Init_Loop_Each_May_Alias_Data(Sink(Element) iterator, Value* data)
 
     if (Any_Sequence(data)) {  // alias paths, chains, tuples as BLOCK!
         DECLARE_ELEMENT (temp);
-        Option(Error*) e = Trap_Alias_Any_Sequence_As(
-            temp, cast(Element*, data), TYPE_BLOCK
+        wont_fail (  // all sequences can alias as block
+            Alias_Any_Sequence_As(temp, cast(Element*, data), TYPE_BLOCK)
         );
-        assert(not e);
-        UNUSED(e);
         Copy_Cell(data, temp);
     }
 
