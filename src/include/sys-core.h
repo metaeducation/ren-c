@@ -490,22 +490,6 @@ typedef struct {
 
 #include "sys-globals.h"  // includes things like g_tick, used by crash()
 
-
-//=//// NEEDFUL HOOKS FOR ERROR HANDLING //////////////////////////////////=//
-//
-// The needful-result.h file defines macros that are used to handle errors
-// based on global error state.  But it doesn't hardcode how that state is
-// set or cleared, you have to define them.
-//
-
-INLINE Error* Needful_Test_And_Clear_Failure(void) {
-    Error* temp = g_failure;  // Option(Error*) optimized [1]
-    g_failure = nullptr;
-    g_divergent = false;
-    return temp;
-}
-
-
 #include "sys-crash.h"  // "blue screen of death"-style termination
 
 

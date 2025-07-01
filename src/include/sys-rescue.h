@@ -357,3 +357,41 @@ struct JumpStruct {
     } while (0)
 
 #endif
+
+
+//=//// NEEDFUL HOOKS FOR ERROR HANDLING //////////////////////////////////=//
+//
+// The needful-result.h file defines macros that are used to handle errors
+// based on global error state.  But it doesn't hardcode how that state is
+// set or cleared, you have to define them.
+//
+
+INLINE Error* Needful_Test_And_Clear_Failure(void) {
+    Error* temp = g_failure;  // Option(Error*) optimized [1]
+    g_failure = nullptr;
+    g_divergent = false;
+    return temp;
+}
+
+#if NO_RUNTIME_CHECKS
+    #define Needful_Set_Failure(p) \
+        (g_failure = Derive_Error_From_Pointer(p))
+#else
+    INLINE void Inline_Needful_Set_Failure(Error* error) {
+        g_failure = error;  // to set breakpoints here
+    }
+    #define Needful_Set_Failure(p) \
+        Inline_Needful_Set_Failure(Derive_Error_From_Pointer(p))
+#endif
+
+#define Needful_Get_Failure() \
+    g_failure
+
+#define Needful_Get_Divergence() \
+    g_divergent
+
+#define Needful_Force_Divergent() do { \
+    if (not g_divergent) /* hook for when divergence originates */ \
+        Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK); \
+      g_divergent = true; \
+} while (0)

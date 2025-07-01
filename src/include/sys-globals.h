@@ -154,7 +154,12 @@ TVAR Binary* TG_Byte_Buf;  // byte buffer used in various spots (as BYTE_BUF)
 **
 ***********************************************************************/
 
-TVAR Error* g_failure;  // used by natives and Result(T) functions
+// 1. While g_failure is technically Optional(Error*), we avoid the cost of
+//    the OptionWrapper in the C++ build because this is not exposed to
+//    most of the implementation, so we trust the macros that manipulate
+//    it are written correctly enough to not need the extra safety.
+
+TVAR Error* g_failure;  // for natives and Result(T) funcs, not `Optional` [1]
 TVAR bool g_divergent;  // says if g_failure is a panic or a fail
 
 TVAR MemoryState g_mem;

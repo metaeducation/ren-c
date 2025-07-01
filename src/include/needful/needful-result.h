@@ -14,27 +14,96 @@
 //=/////////////////////////////////////////////////////////////////////////=//
 //
 // These macros provide a C/C++-compatible mechanism for propagating and
-// handling errors in a style similar to Rust's `Result<T, E>` and the `?`
-// operator, but without requiring exceptions or setjmp/longjmp in C++ builds.
+// handling errors in a style similar to Rust's `Result<T, E>`, all without
+// requiring exceptions or setjmp/longjmp in C++ builds.
 //
-// They multiplex error and value returns using a global error state and
-// special return values, allowing for expressive, type-safe error handling.
+// Instead, the multiplexing of an Error with the return value type is done
+// with a global (or more generally, thread-local) error state.
 //
-// Thee macros enable a style of programming that is portable between C and
-// C++, avoids exceptions and longjmps, and provides clear, explicit error
-// handling and propagation.
+// A key feature is the ability to propagate errors automatically.  So
+// instead of having to laboriously write things like:
+//
+//     Error* Some_Func(int* result, int x) {
+//         if (x < 304)
+//             return fail ("the value is too small");
+//         *result = x + 20;
+//         return nullptr;  // no error
+//     }
+//
+//     Error* Other_Func(int* result) {
+//         int y;
+//         Error* e = Some_Func(&y, 1000);
+//         if (e)
+//             return e;
+//         assert(y == 1020);
+//
+//         int z;
+//         Error* e = Some_Func(&z, 10);
+//         if (e)
+//             return e;
+//         printf("this would never be reached...");
+//
+//         *result = z;
+//         return nullptr;  // no error
+//     }
+//
+// You can write it like this:
+//
+//     Result(int) Some_Func(int x) {
+//         if (x < 304)
+//             return fail ("the value is too small");
+//         return x + 20;
+//     }
+//
+//     Result(int) Other_Func(void) {
+//         int y = trap (Some_Func(1000));
+//         assert(y == 1020);
+//
+//         int z = trap (Some_Func(10);
+//         printf("this would never be reached...");
+//
+//         return z;
+//     }
+//
+// Also of particular note is the syntax for catching "exceptional" cases
+// (though again, not C++ exceptions and not longjmps).  This syntax looks
+// particularly natural due to clever use of a `for` loop to get a scope:
+//
+//     int result = Some_Func(10 + 20) except (Error* e) {
+//         /* e scoped to the block */
+//         printf("caught an error: %s\n", e->message);
+//     }
+//
+// So the macros enable a shockingly literate style of programming that is
+// portable between C and C++, avoids exceptions and longjmps, and provides
+// clear, explicit error handling and propagation.
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
-// A. In order for these macros to work, they need to be able to test and
+// A. As long as a datatype can be constructed from 0 within the rules of the
+//    C standard (pointers, enums, integers) it can be used with Result().
+//    You may have to disable compiler warnings related to the enum or
+//    pointer casts of 0, but it is legal so you should be able to do it.
+//
+//    In C builds with GCC/Clang, the flag you want is `-Wno-int-conversion`
+//
+//    (The C++ build doesn't require disabling the warnings because it uses
+//    a special "PermissiveZero" class to more precisely capture the intent.)
+//
+// B. In order for these macros to work, they need to be able to test and
 //    clear the global error state...as well as a flag as to whether the
 //    failure is divergent or not.  Hence you have to define:
 //
-//        Needful_Test_And_Clear_Failure()
-//        Needful_Get_Failure()
-//        Needful_Get_Failure_Divergence()
+//        ErrorType* Needful_Test_And_Clear_Failure()
+//        ErrorType* Needful_Get_Failure()
+//        void Needful_Set_Failure(ErrorType* error)
+//        bool Needful_Get_Divergence()
+//        void Needful_Force_Divergent()
 //
-// B. An attempt was made to actually subtype errors with Result(T,E) vs.
+//    These can be functions or macros with the same signature.  They should
+//    use thread-local state if they're to work in multi-threaded code.
+//
+// C. An attempt was made to actually subtype errors with Result(T,E) vs.
 //    just Result(T), and enforce that you could only auto-propagate errors
 //    out of compatible functions.  But injecting the type-awareness into
 //    the body of the function is weird:
@@ -55,12 +124,12 @@
 //    that can't work because you can't put INLINE before the `template<>`
 //
 //    FURTHERMORE... there are limits to the ability to handle errors in a
-//    polymoprhic way that works in both C and C++.  C++ has inheritance and
+//    polymorphic way that works in both C and C++.  C++ has inheritance and
 //    that's the only way to beat strict aliasing, while C can use common
 //    leading substructures which violate strict aliasing in C++.  Also, a
 //    divergent error has to be handled via a superclass of some kind.
 //
-//    AND FINALLY... Needful arose specifically for implmemtning Rebol, and
+//    AND FINALLY... Needful arose specifically for implementing Rebol, and
 //    unlike Rust, Rebol's own error handling lacks a notion of statically
 //    subclassing in its `except` and `trap` features.  When all of this is
 //    considered together, it explains why Result(T) is not parameterized
@@ -76,14 +145,9 @@
 // that C originally had with permissive 0 conversions, but more tightly
 // controlled through a special type.
 //
-// 1. While it is legal in the C standard to cast 0 to a pointer (or to an
-//    enum regardless of whether the enum contains a zero state), compilers
-//    still may warn about it.  We rely on the behavior, so you may have
-//    to disable warnings, such as -Wno-int-conversion for GCC.
-//
 
 #if NO_CPLUSPLUS_11
-    #define PERMISSIVE_ZERO  0  // likely must disable warnings in C [1]
+    #define PERMISSIVE_ZERO  0  // likely must disable warnings in C [A]
 #else
     struct PermissiveZero {
         template<typename T>
@@ -159,10 +223,10 @@
 //
 
 #if NO_CPLUSPLUS_11
-    #define Result(T)  T  // not Result(T,E)... see [B]
+    #define Result(T)  T  // not Result(T,E)... see [C]
 
-    #define Costless_Extract_Result(result)  result
-    #define Then_Costless_Extract_Result
+    #define Needful_Extract_Result(result)  result
+    #define Needful_Then_Extract_Result
 #else
     template<typename T>
     struct NEEDFUL_NODISCARD ResultWrapper {
@@ -192,10 +256,10 @@
         }
     };
 
-    #define Result(T) /* not Result(T,E)... see [B] */ \
+    #define Result(T) /* not Result(T,E)... see [C] */ \
         ResultWrapper<T>
 
-    #define Costless_Extract_Result(result)  result.extract()
+    #define Needful_Extract_Result(result)  result.extract()
 
     struct ResultExtractor {};
 
@@ -208,9 +272,9 @@
         return result.extract();
     }
 
-    constexpr ResultExtractor g_result_extractor = {};
+    constexpr ResultExtractor g_needful_result_extractor = {};
 
-    #define Then_Costless_Extract_Result  >> g_result_extractor
+    #define Needful_Then_Extract_Result  >> g_needful_result_extractor
 #endif
 
 
@@ -292,9 +356,9 @@
 //
 
 #define needful_fail(p) \
-    (assert(not g_failure and not g_divergent), \
-        g_failure = Derive_Error_From_Pointer(p), \
-        PERMISSIVE_ZERO)
+    (assert(not Needful_Get_Failure() and not Needful_Get_Divergence()), \
+    Needful_Set_Failure(p), \
+    PERMISSIVE_ZERO)
 
 
 //=//// panic() //////////////////////////////////////////////////////////=//
@@ -308,12 +372,12 @@
 //         panic (Error_Catastrophe());
 //
 
-#define needful_panic(p) \
-    return (assert(not g_failure and not g_divergent), \
-        Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-        g_failure = Derive_Error_From_Pointer(p), \
-        g_divergent = true, \
-        PERMISSIVE_ZERO)
+#define needful_panic(p) do { \
+    assert(not Needful_Get_Failure() and not Needful_Get_Divergence()); \
+    Needful_Set_Failure(p); \
+    Needful_Force_Divergent(); \
+    return PERMISSIVE_ZERO; \
+} while (0)
 
 
 //=//// trap(expr) ////////////////////////////////////////////////////////=//
@@ -331,10 +395,11 @@
 //
 
 #define needful_trap(expr) \
-    (assert(not g_failure), Costless_Extract_Result(expr)); \
-    if (g_failure) \
-      { possibly(g_divergent); return PERMISSIVE_ZERO; } \
-    NOOP
+    (assert(not Needful_Get_Failure()), Needful_Extract_Result(expr)); \
+    if (Needful_Get_Failure()) { \
+        possibly(Needful_Get_Divergence()); \
+        return PERMISSIVE_ZERO; \
+    } NOOP  /* force require semicolon at callsite */
 
 
 //=//// require(expr) /////////////////////////////////////////////////////=//
@@ -349,10 +414,12 @@
 //    // ... code continues only if no error ...
 
 #define needful_require(expr) \
-    (assert(not g_failure), Costless_Extract_Result(expr)); \
-    if (g_failure) \
-      { possibly(g_divergent); g_divergent = true; return PERMISSIVE_ZERO; } \
-    NOOP
+    (assert(not Needful_Get_Failure()), Needful_Extract_Result(expr)); \
+    if (Needful_Get_Failure()) { \
+        possibly(Needful_Get_Divergence()); \
+        Needful_Force_Divergent(); \
+        return PERMISSIVE_ZERO; \
+    } NOOP  /* force require semicolon at callsite */
 
 
 //=//// guarantee() ///////////////////////////////////////////////////////=//
@@ -366,8 +433,8 @@
 //
 
 #define needful_guarantee(expr) \
-    (assert(not g_failure), Costless_Extract_Result(expr)); \
-        assert(not g_failure)
+    (assert(not Needful_Get_Failure()), Needful_Extract_Result(expr)); \
+    assert(not Needful_Get_Failure())
 
 
 //=//// ...expr... except (decl) {...} ////////////////////////////////////=//
@@ -403,44 +470,91 @@
 
 #define needful_except_core(decl,extractor) \
     /* expression */ extractor; \
-        if (g_divergent) { return PERMISSIVE_ZERO; } \
-        for (decl = g_failure; Needful_Test_And_Clear_Failure(); )
-           /* implicitly takes code block after macro as except()-body */
+    if (Needful_Get_Divergence()) \
+        { return PERMISSIVE_ZERO; } \
+    for (decl = Needful_Get_Failure(); Needful_Test_And_Clear_Failure(); )
+        /* implicitly takes code block after macro as except()-body */
 
 #define needful_except(decl) \
-    needful_except_core(decl, Then_Costless_Extract_Result)
-
-
+    needful_except_core(decl, Needful_Then_Extract_Result)
 
 
 //=//// rescue (expr) (decl) {...} ////////////////////////////////////////=//
 //
-// Rescuing diverent failures uses a slightly different syntax.
+// Rescuing diverent failures uses a different syntax than except().
+//
+//     rescue (
+//         target = Some_Result_Bearing_Function(args)
+//     ) (Error* e) {
+//         // handle error in e
+//     }
+//
+// You should generally avoid handling divergent errors.  Experience has
+// borne out that trying to handle generic exceptions from deep in stacks you
+// don't understand is a nigh-impossible power to wield wisely.  Only very
+// special cases (language REPLs, for example) should try to do this kind
+// of recovery.
 //
 
 #define needful_rescue_core(expr,extractor) \
     expr extractor needful_rescue_then
 
 #define /* rescue (expr) */ needful_rescue_then(decl) \
-    /* possibly(g_divergent) */ ; \
-    for (decl = g_failure; Needful_Test_And_Clear_Failure(); )
+    ; /* semicolon required */ possibly(Needful_Get_Divergence()); \
+    for (decl = Needful_Get_Failure(); Needful_Test_And_Clear_Failure(); )
         /* implicitly takes code block after macro as except()-body */
 
 #define needful_rescue(expr) \
-    needful_rescue_core(expr, Then_Costless_Extract_Result)
+    needful_rescue_core(expr, Needful_Then_Extract_Result)
 
 
-//=//// RESULT DISCARDER //////////////////////////////////////////////////=//
-
+//=//// DISCARDING VARIANTS ///////////////////////////////////////////////=//
+//
+// `trap` and `require` have conflicting requirements: they need to be able
+// to execute return statements from within the expanded macro, but also
+// want to be usable as expressions on the right hand of an assignment.  This
+// forces them to expand into sequential statements that are not enclosed in
+// parentheses or a group.
+//
+// Given that reality, it's not safe to use `trap` or `require` as the branch
+// of something like an `if` or `while` without a block around it:
+//
+//      if (condition)
+//          trap (Some_Result_Bearing_Function(args));  // bad usage
+//
+// The expression portion of the `trap` expansion will be underneath the `if`
+// while the subsequent for reacting to failures and potentially executing
+// a `return` will be outside the `if`.
+//
+// Use of [[nodiscard]] and the "hot potato" extraction mechanism helps turn
+// these usages into compile-time errors.  But once you get the error, you
+// need some way to suppress it.
+//
+// There's a discarded() macro you could use, which puts the code in a
+// `do {...} while (0)` block and also suppresses the [[nodiscard]] warning.
+// It looks a little wordy in use:
+//
+//      if (condition)
+//          discarded(trap (Some_Result_Bearing_Function(args)));
+//
+// So macros that do this for you are named e.g. `trapped` and `required`:
+//
+//      if (condition)
+//          trapped (Some_Result_Bearing_Function(args));
+//
+// 1. `excepted` is weirder than `trapped` and `required`, but fits the
+//    pattern adn it's hard to think of what else to call it.
+//
 #if NO_CPLUSPLUS_11
-    #define NEEDFUL_DISCARD
-    #define Then_Costless_Consume_Result
+    #define Needful_Then_Consume_Result
+
+    #define needful_discarded(expr) do { expr; } while (0)
 #else
-    struct ExtractedResultDiscarder {};
+    struct ExtractionDiscarder {};
 
     template<typename T>
-    INLINE void operator|(
-        const ExtractedResultDiscarder&,
+    INLINE void operator|(  // using `|` for precedence lower than `>>`
+        const ExtractionDiscarder&,
         const ExtractedHotPotato<T>& extraction
     ){
         USED(extraction);  // mark as used, do nothing
@@ -449,30 +563,30 @@
     template<typename T>
     INLINE void operator>>(
         const ResultWrapper<T>& result,
-        const ExtractedResultDiscarder&
+        const ExtractionDiscarder&
     ){
         USED(result);  // mark as used, do nothing
     }
 
-    static constexpr ExtractedResultDiscarder g_extracted_result_discarder{};
+    static constexpr ExtractionDiscarder g_needful_extraction_discarder{};
 
-    #define NEEDFUL_DISCARD  g_extracted_result_discarder | /* <- overloaded */
+    #define needful_discarded(expr) do { \
+        g_needful_extraction_discarder | /* <- overloaded */ expr; \
+    } while (0)
 
-    #define Then_Costless_Consume_Result  >> g_extracted_result_discarder
+    #define Needful_Then_Consume_Result  >> g_needful_extraction_discarder
 #endif
 
-#define needful_discarded(expr) \
-    do {NEEDFUL_DISCARD expr;} while (0)
 
 #define needful_trapped(expr)       needful_discarded(needful_trap(expr))
 #define needful_required(expr)      needful_discarded(needful_require(expr))
 #define needful_guaranteed(expr)    needful_discarded(needful_guarantee(expr))
 
-#define needful_excepted(decl) \
-    needful_except_core(decl, Then_Costless_Consume_Result)
+#define needful_excepted(decl) /* weird name [1] */ \
+    needful_except_core(decl, Needful_Then_Consume_Result)
 
-#define needful_rescued(expr) \
-    needful_rescue_core(expr, Then_Costless_Extract_Result)
+#define needful_rescued(expr)  /* weird name [1] */ \
+    needful_rescue_core(expr, Needful_Then_Extract_Result)
 
 
 //=//// SHORTHAND MACROS //////////////////////////////////////////////////=//
