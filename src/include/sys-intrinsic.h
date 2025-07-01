@@ -40,7 +40,8 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * Intrinsics can only return Bounce values of: nullptr, BOUNCE_OKAY,
-//   BOUNCE_PANIC, and the Level's out pointer.
+//   and the Level's out pointer.  nullptr can either mean PERMISSIVE_ZERO
+//   (fail/panic) or Init_Nulled(OUT) (falsey)
 
 
 
@@ -131,7 +132,7 @@ INLINE Atom* Intrinsic_Atom_ARG(Level* L) {
 //    extracted.  So if we actually want to return a null cell, we use
 //    `return Init_Nulled(OUT)` here.
 //
-INLINE Option(Bounce) Trap_Bounce_Opt_Out_Element_Intrinsic(
+INLINE Result(Option(Bounce)) Bounce_Opt_Out_Element_Intrinsic(
     Sink(Element) elem_out,
     Level* L  // writing OUT and SPARE is allowed in this helper
 ){
@@ -143,7 +144,7 @@ INLINE Option(Bounce) Trap_Bounce_Opt_Out_Element_Intrinsic(
     const Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
     if (Is_Error(atom_arg))
-        return Native_Panic_Result(L, Cell_Error(atom_arg));
+        panic (Cell_Error(atom_arg));
 
     if (Is_Void(atom_arg))  // do PARAMETER_FLAG_OPT_OUT [1]
         return Init_Nulled(L->out);  // !!! overwrites out, illegal [2]
@@ -153,12 +154,12 @@ INLINE Option(Bounce) Trap_Bounce_Opt_Out_Element_Intrinsic(
     Decay_If_Unstable(atom_out);
 
     if (Is_Antiform(atom_out))
-        return BOUNCE_BAD_INTRINSIC_ARG;
+        panic (Error_Bad_Intrinsic_Arg_1(L));
 
     return nullptr;
 }
 
-INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
+INLINE Result(Option(Bounce)) Bounce_Decay_Value_Intrinsic(
     Sink(Value) val_out,
     Level* L
 ){
@@ -170,7 +171,7 @@ INLINE Option(Bounce) Trap_Bounce_Decay_Value_Intrinsic(
     const Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
     if (Is_Error(atom_arg))
-        return Native_Panic_Result(L, Cell_Error(atom_arg));
+        panic (Cell_Error(atom_arg));
 
     Init(Atom) atom_out = u_cast(Atom*, val_out);
     Copy_Cell(atom_out, atom_arg);

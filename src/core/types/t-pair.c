@@ -285,7 +285,7 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
         return Init_Any_String(OUT, to, s);
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 

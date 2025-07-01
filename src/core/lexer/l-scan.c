@@ -2102,7 +2102,7 @@ static Option(Error*) Trap_Flush_Pending_On_End(ScanState* S) {
 
 //=//// SCANNER-SPECIFIC RAISE HELPER /////////////////////////////////////=//
 //
-// Override the RAISE macro for returning definitional errors.  It adds a
+// Override `fail` macro for returning definitional errors.  It adds a
 // capture of the `transcode` state local variable in Scanner_Executor(),
 // so it can augment any error you give with the scanner's location.
 //
@@ -2115,9 +2115,8 @@ static Option(Error*) Trap_Flush_Pending_On_End(ScanState* S) {
 
 #define default_fail(p)  fail(p)
 
-INLINE Bounce Scanner_Fail_Helper(
+INLINE Error* Decorate_Error_For_Scanner(
     TranscodeState* transcode,
-    Level* level_,
     Error* error
 ){
     ERROR_VARS *vars = ERR_VARS(error);
@@ -2132,37 +2131,18 @@ INLINE Bounce Scanner_Fail_Helper(
             error, transcode, transcode->line, transcode->line_head
         );
 
-    return default_fail (error);
+    return error;
 }
 
 #undef fail
 #define fail(p) \
-    Scanner_Fail_Helper(transcode, level_, Derive_Error_From_Pointer(p))
-
-
-INLINE Bounce Scanner_Panic_Helper(
-    TranscodeState* transcode,
-    Level* level_,
-    Error* error
-){
-    ERROR_VARS *vars = ERR_VARS(error);
-
-    DECLARE_VALUE (nearest);
-    Option(Error*) e = Trap_Read_Slot(nearest, &vars->nearest);
-    if (e)
-        panic (unwrap e);
-
-    if (Is_Nulled(nearest))  // only update if it doesn't have it [1]
-        Update_Error_Near_For_Line(
-            error, transcode, transcode->line, transcode->line_head
-        );
-
-    return Native_Panic_Result(level_, error);
-}
+    needful_fail(Decorate_Error_For_Scanner( \
+        CAPTURE_BY_NAME(transcode), Derive_Error_From_Pointer(p)))
 
 #undef panic
 #define panic(p) \
-    return Scanner_Panic_Helper(transcode, level_, Derive_Error_From_Pointer(p))
+    needful_panic(Decorate_Error_For_Scanner( \
+        CAPTURE_BY_NAME(transcode), Derive_Error_From_Pointer(p)))
 
 
 //

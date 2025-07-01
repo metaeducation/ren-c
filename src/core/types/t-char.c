@@ -570,7 +570,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
         break; }
 
       default:
-        return UNHANDLED;
+        panic (UNHANDLED);
     }
 
     if (chr < 0)
@@ -702,7 +702,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return rebValue(CANON(AS), rebQ(ARG(TYPE)), CANON(TRANSCODE), rebQ(v));
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 

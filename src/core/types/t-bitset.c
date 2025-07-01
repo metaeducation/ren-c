@@ -633,7 +633,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 

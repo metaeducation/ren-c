@@ -323,7 +323,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 
@@ -372,7 +372,7 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
     if (to == TYPE_INTEGER)
         return COPY(val);
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 

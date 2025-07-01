@@ -60,6 +60,8 @@
 
 #include "needful/needful-corruption.h"
 
+#include "needful/needful-result.h"
+
 #include "needful/needful-option.h"
 
 #include "needful/needful-sinks.h"

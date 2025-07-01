@@ -332,7 +332,7 @@ void Set_Parameter_Spec(
 
 IMPLEMENT_GENERIC(MAKE, Is_Parameter)
 {
-    return UNHANDLED;  // !!! Needs to be designed!
+    panic (UNHANDLED);  // !!! Needs to be designed!
 }
 
 

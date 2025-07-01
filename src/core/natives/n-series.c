@@ -217,7 +217,7 @@ DECLARE_NATIVE(REVERSE_OF)
         not Handles_Generic(REVERSE, datatype)
         or not Handles_Generic(COPY, datatype)
     ){
-        return UNHANDLED;
+        panic (UNHANDLED);
     }
 
     Quotify(elem);

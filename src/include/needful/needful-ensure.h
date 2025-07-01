@@ -67,3 +67,13 @@
         return v;
     }
 #endif
+
+
+//=//// CAPTURE_BY_NAME() /////////////////////////////////////////////////=//
+//
+// Sometimes a macro wants to pick up a variable as a variable, by name.
+// This documents that in a way that leaving off parentheses does not.
+//
+// This avoids the variable being able to come from an expression.
+//
+#define CAPTURE_BY_NAME(variable)  (*&variable)

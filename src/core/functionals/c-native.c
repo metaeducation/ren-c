@@ -81,8 +81,7 @@ bool Raw_Native_Details_Querier(
 // native index is being loaded, which is non-obvious.  But these issues
 // could be addressed (e.g. by passing the native index number / DLL in).
 //
-Option(Error*) Trap_Make_Native_Dispatch_Details(
-    Sink(Details*) out,
+Result(Details*) Make_Native_Dispatch_Details(
     Element* spec,
     NativeType native_type,
     Dispatcher* dispatcher
@@ -107,15 +106,12 @@ Option(Error*) Trap_Make_Native_Dispatch_Details(
     StackIndex base = TOP_INDEX;
 
     VarList* adjunct;
-    ParamList* paramlist = Make_Paramlist_Managed(
+    ParamList* paramlist = require (Make_Paramlist_Managed(
         &adjunct,
         spec,
         MKF_DONT_POP_RETURN,  // we put it in Details, not ParamList
         SYM_RETURN  // native RETURN: types checked only if RUNTIME_CHECKS
-    )
-    except (Error* e) {
-        return e;
-    }
+    ));
 
     Assert_Flex_Term_If_Needed(paramlist);
 
@@ -176,8 +172,7 @@ Option(Error*) Trap_Make_Native_Dispatch_Details(
         UNUSED(param);
     }
 
-    *out = details;
-    return SUCCESS;
+    return details;
 }
 
 
@@ -222,15 +217,11 @@ static Bounce Native_Native_Core(Level* level_)
         rebRelease(action);
     }
     else {
-        Details* details;
-        Option(Error*) e = Trap_Make_Native_Dispatch_Details(
-            &details,
+        Details* details = require (Make_Native_Dispatch_Details(
             spec,
             native_type,
             f_cast(Dispatcher*, cfunc)
-        );
-        if (e)
-            panic (unwrap e);
+        ));
 
         Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     }
@@ -575,15 +566,11 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
     Derelativize(spec, At_Level(L), g_lib_context);
     Fetch_Next_In_Feed(L->feed);;
 
-    Details* details;
-    Option(Error*) e = Trap_Make_Native_Dispatch_Details(
-        &details,
+    Details* details = wont_fail (Make_Native_Dispatch_Details(
         spec,
         native_type,
         f_cast(Dispatcher*, *g_native_cfunc_pos)
-    );
-    if (e)
-        crash (unwrap e);
+    ));
 
     ++g_native_cfunc_pos;
 

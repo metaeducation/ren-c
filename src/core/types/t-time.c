@@ -530,7 +530,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
         }
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 

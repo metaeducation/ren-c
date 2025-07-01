@@ -127,7 +127,7 @@ DECLARE_NATIVE(SIGIL_Q)
     INCLUDE_PARAMS_OF_SIGIL_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = Trap_Bounce_Opt_Out_Element_Intrinsic(e, LEVEL);
+    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
     if (b)
         return unwrap b;
 

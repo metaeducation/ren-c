@@ -39,7 +39,7 @@ DECLARE_NATIVE(NULL_Q)
     INCLUDE_PARAMS_OF_NULL_Q;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
+    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
     if (bounce)
         return unwrap bounce;
 
@@ -61,7 +61,7 @@ DECLARE_NATIVE(OKAY_Q)
     INCLUDE_PARAMS_OF_OKAY_Q;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
+    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
     if (bounce)
         return unwrap bounce;
 
@@ -83,7 +83,7 @@ DECLARE_NATIVE(LOGIC_Q)
     INCLUDE_PARAMS_OF_LOGIC_Q;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
+    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
     if (bounce)
         return unwrap bounce;
 
@@ -123,7 +123,7 @@ DECLARE_NATIVE(BOOLEAN_Q)
     INCLUDE_PARAMS_OF_BOOLEAN_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = Trap_Bounce_Opt_Out_Element_Intrinsic(e, LEVEL);
+    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
     if (b)
         return unwrap b;
 
@@ -145,7 +145,7 @@ DECLARE_NATIVE(ONOFF_Q)
     INCLUDE_PARAMS_OF_ONOFF_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = Trap_Bounce_Opt_Out_Element_Intrinsic(e, LEVEL);
+    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
     if (b)
         return unwrap b;
 
@@ -167,7 +167,7 @@ DECLARE_NATIVE(YESNO_Q)
     INCLUDE_PARAMS_OF_YESNO_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = Trap_Bounce_Opt_Out_Element_Intrinsic(e, LEVEL);
+    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
     if (b)
         return unwrap b;
 
@@ -413,7 +413,7 @@ DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_NOT_1;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
+    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
     if (bounce)
         return unwrap bounce;
 
@@ -437,7 +437,7 @@ DECLARE_NATIVE(TO_LOGIC)
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = Trap_Bounce_Decay_Value_Intrinsic(v, LEVEL);
+    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
     if (bounce)
         return unwrap bounce;
 
@@ -455,10 +455,8 @@ DECLARE_NATIVE(TO_LOGIC)
 // This scales the idea back to a very simple concept of a literal GROUP!,
 // WORD!, or TUPLE!.
 //
-INLINE Option(Error*) Trap_Eval_Logic_Operation_Right_Side(
-    Sink(bool) cond,
-    Level* level_
-){
+INLINE Result(bool) Eval_Logic_Op_Right_Side(Level* level_)
+{
     INCLUDE_PARAMS_OF_AND_1;  // should be same as OR and XOR
 
     USED(ARG(LEFT));  // caller examines
@@ -466,12 +464,9 @@ INLINE Option(Error*) Trap_Eval_Logic_Operation_Right_Side(
 
     Value* synthesized;
     if (Is_Group(right)) {
-        if (Eval_Any_List_At_Throws(SPARE, right, SPECIFIED)) {
-          #if APPEASE_WEAK_STATIC_ANALYSIS
-            *cond = false;
-          #endif
-            return Error_No_Catch_For_Throw(level_);
-        }
+        if (Eval_Any_List_At_Throws(SPARE, right, SPECIFIED))
+            panic (Error_No_Catch_For_Throw(level_));
+
         synthesized = Decay_If_Unstable(SPARE);
     }
     else {
@@ -481,27 +476,18 @@ INLINE Option(Error*) Trap_Eval_Logic_Operation_Right_Side(
         Option(Error*) e = Trap_Get_Var(
             spare, NO_STEPS, right, SPECIFIED
         );
-        if (e) {
-          #if APPEASE_WEAK_STATIC_ANALYSIS
-            *cond = false;
-          #endif
-            return e;
-        }
+        if (e)
+            panic (unwrap e);
 
         if (Is_Action(spare))
-            abrupt_panic ("words/tuples can't be action as right side of OR AND XOR");
+            abrupt_panic (
+                "words/tuples can't be action as right side of OR AND XOR"
+            );
 
         synthesized = spare;
     }
 
-    *cond = Test_Conditional(synthesized) except (Error* e) {
-      #if APPEASE_WEAK_STATIC_ANALYSIS
-        *cond = false;
-      #endif
-        return e;
-    }
-
-    return SUCCESS;
+    return Test_Conditional(synthesized);
 }
 
 
@@ -524,11 +510,7 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
     if (not left)
         return LOGIC(false);  // if left is false, don't run right hand side
 
-    bool right;
-    Option(Error*) e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
-    USED(ARG(RIGHT));
-    if (e)
-        panic (unwrap e);
+    bool right = require(Eval_Logic_Op_Right_Side(LEVEL));
 
     return LOGIC(right);
 }
@@ -553,11 +535,8 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
     if (left)
         return LOGIC(true);  // if left is true, don't run right hand side
 
-    bool right;
-    Option(Error*) e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
+    bool right = require(Eval_Logic_Op_Right_Side(LEVEL));
     USED(ARG(RIGHT));
-    if (e)
-        panic (unwrap e);
 
     return LOGIC(right);
 }
@@ -578,11 +557,7 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_XOR_1;
 
-    bool right;  // right side always executed
-    Option(Error*) e = Trap_Eval_Logic_Operation_Right_Side(&right, LEVEL);
-    USED(ARG(RIGHT));
-    if (e)
-        panic (unwrap e);
+    bool right = require(Eval_Logic_Op_Right_Side(LEVEL));  // always evals
 
     bool left = require (Test_Conditional(ARG(LEFT)));
     if (not left)

@@ -44,10 +44,6 @@
 // alternative action if no handler is registered... e.g. REVERSE-OF will
 // fall back on COPY and REVERSE.)
 //
-// 1. panic () can't be used in %sys-core.h because not everything that
-//    includes %sys-core.h defines the helper macros.  We want this to be
-//    fast and get inlined, so expand the macro manually.
-//
 INLINE Bounce Dispatch_Generic_Core(
     SymId symid,
     GenericTable* table,
@@ -68,11 +64,7 @@ INLINE Bounce Dispatch_Generic_Core(
     DECLARE_ELEMENT (name);
     Init_Word(name, Canon_Symbol(symid));
 
-    return Native_Panic_Result(  // can't use FAIL() macro in %sys-core.h [1]
-        level_, Derive_Error_From_Pointer(
-            Error_Cannot_Use_Raw(name, datatype)
-        )
-    );
+    panic (Error_Cannot_Use_Raw(name, datatype));
 }
 
 

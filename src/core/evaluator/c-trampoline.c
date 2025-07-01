@@ -354,12 +354,17 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     //    would be a burden for the Executor to have to clear the flag between
     //    generating the error blame and returning, so just clear flag here.
 
-    if (bounce == BOUNCE_PANIC) {
+    bounce = maybe Irreducible_Bounce(TOP_LEVEL, bounce);
+
+    if (bounce == BOUNCE_THROWN) {
         assert(Is_Throwing_Panic(TOP_LEVEL));
         Clear_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);  // convenience [1]
         L = TOP_LEVEL;
         goto bounce_on_trampoline;
     }
+
+    if (not bounce)  // was API value, fail ERROR!, etc.
+        goto result_in_out;
 
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     crash (bounce);

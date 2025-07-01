@@ -312,14 +312,15 @@ static bool Subparse_Throws(
         return true;
     }
 
+    b = maybe Irreducible_Bounce(L, b);
+
     Drop_Level(L);
 
-    if (b == BOUNCE_PANIC) {
+    if (b) {
+        assert(b == BOUNCE_THROWN);
         assert(Is_Throwing_Panic(TOP_LEVEL));
         return true;
     }
-
-    assert(b == out);
 
     *interrupted_out = false;
     return false;

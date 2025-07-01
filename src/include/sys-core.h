@@ -265,7 +265,6 @@ typedef RebolHandleCleaner HandleCleaner;
 
 #include "enums/enum-flavor.h"  // Flex subclass byte (uses sizeof(Cell))
 
-
 #include "sys-hooks.h"  // function pointer definitions
 
 
@@ -492,6 +491,20 @@ typedef struct {
 #include "sys-globals.h"  // includes things like g_tick, used by crash()
 
 
+//=//// NEEDFUL HOOKS FOR ERROR HANDLING //////////////////////////////////=//
+//
+// The needful-result.h file defines macros that are used to handle errors
+// based on global error state.  But it doesn't hardcode how that state is
+// set or cleared, you have to define them.
+//
+
+INLINE Error* Needful_Test_And_Clear_Failure(void) {
+    Error* temp = g_failure;  // Option(Error*) optimized [1]
+    g_failure = nullptr;
+    return temp;
+}
+
+
 #include "sys-crash.h"  // "blue screen of death"-style termination
 
 
@@ -549,7 +562,7 @@ enum {
 
 #include "sys-tick.h"
 
-#include "sys-rescue.h" // includes RESCUE_SCOPE, panic()
+#include "sys-rescue.h" // includes RESCUE_SCOPE, panic_abruptly()
 
 #include "sys-base.h"
 
@@ -757,3 +770,22 @@ enum {
 #include "tmp-generic-fwd-decls.h"  // forward generic handler definitions [3]
 
 #include "sys-pick.h"
+
+
+//=//// UNDEFINE MACROS IF USER DIDN'T WANT THEM //////////////////////////=//
+//
+// It would be too burdensome to not be able to write inline code using the
+// macros, but some %sys-core.h clients may not want these defined.
+
+#define REBOL_EXCEPTION_SHORTHAND_MACROS  1  // WIP: investigate problem
+
+#if (! REBOL_EXCEPTION_SHORTHAND_MACROS)
+    #undef fail
+    #undef panic
+
+    #undef trap
+    #undef require
+    #undef wont_fail
+
+    #undef except
+#endif

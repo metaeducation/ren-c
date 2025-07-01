@@ -757,7 +757,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
         }
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 
   fix_time:
     Normalize_Time(&secs, &day);
@@ -1151,7 +1151,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Date)
 
     REBLEN year = VAL_YEAR(date);
     if (year == 0)
-        return UNHANDLED;
+        panic (UNHANDLED);
 
     const bool secure = Bool_ARG(SECURE);
 

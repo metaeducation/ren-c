@@ -724,7 +724,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         break; // fallthrough to error
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 
@@ -843,7 +843,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         panic ("TO PAIR! only works on lists with two integers");
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 
@@ -879,7 +879,7 @@ Result(Element*) Alias_Any_List_As(
         ));
 
         /* Tweak_Cell_Binding(temp) = Cell_Binding(list); */  // may be unfit
-        
+
         return Derelativize(out, temp, Cell_Binding(list));  // try this (?)
     }
 

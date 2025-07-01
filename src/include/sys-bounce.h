@@ -147,19 +147,3 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 //
 #define C_THROWN  'T'
 #define BOUNCE_THROWN  cast(Bounce, &g_bounce_thrown)
-
-
-// This signals that the evaluator is in a "thrown state".
-//
-#define C_PANIC  'P'
-#define BOUNCE_PANIC  cast(Bounce, &g_bounce_panic)
-
-
-// In order to be fast, intrinsics fold their typechecking into their native
-// implementation.  If that check fails, then they want to act like they
-// were never called...which may mean erroring in some places, or just being
-// bypassed (e.g. if used as a typechecker).  To make sure their type check
-// case is cheap, they simply return this bounce value.
-//
-#define C_BAD_INTRINSIC_ARG  'B'
-#define BOUNCE_BAD_INTRINSIC_ARG  cast(Bounce, &g_bounce_bad_intrinsic_arg)

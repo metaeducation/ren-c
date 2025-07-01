@@ -86,11 +86,9 @@ PVAR WildTwo g_bounce_redo_unchecked;
 PVAR WildTwo g_bounce_redo_checked;
 PVAR WildTwo g_bounce_downshifted;
 PVAR WildTwo g_bounce_thrown;
-PVAR WildTwo g_bounce_panic;
 PVAR WildTwo g_bounce_continuation;
 PVAR WildTwo g_bounce_delegation;
 PVAR WildTwo g_bounce_suspend;
-PVAR WildTwo g_bounce_bad_intrinsic_arg;
 
 PVAR Flex* g_dispatcher_table;
 
@@ -157,6 +155,7 @@ TVAR Binary* TG_Byte_Buf;  // byte buffer used in various spots (as BYTE_BUF)
 ***********************************************************************/
 
 TVAR Error* g_failure;  // used by natives and Result(T) functions
+TVAR bool g_divergent;  // says if g_failure is a panic or a fail
 
 TVAR MemoryState g_mem;
 

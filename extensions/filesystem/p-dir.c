@@ -299,5 +299,5 @@ DECLARE_NATIVE(DIR_ACTOR)
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }

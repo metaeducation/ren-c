@@ -1150,7 +1150,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 
@@ -1187,7 +1187,7 @@ IMPLEMENT_GENERIC(TO, Any_Context)
         return Copy_Any_Context(OUT, context, deep);
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 

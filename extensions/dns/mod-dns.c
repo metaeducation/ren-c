@@ -285,5 +285,5 @@ DECLARE_NATIVE(DNS_ACTOR)
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }

@@ -60,6 +60,8 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
 // for reference, to use as INCLUDE_PARAMS_OF_TYPECHECKER_ARCHETYPE in the
 // Typechecker_Dispatcher().
 {
+    INCLUDE_PARAMS_OF_TYPECHECKER_ARCHETYPE;
+
     panic ("TYPECHECKER-ARCHETYPE called (internal use only)");
 }
 
@@ -400,13 +402,16 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         Clear_Cell_Flag(SPARE, PROTECTED);
       #endif
 
-        if (bounce == nullptr or bounce == BOUNCE_BAD_INTRINSIC_ARG)
-            goto test_failed;
+        if (bounce == nullptr) {
+            if (g_failure) {  // was PERMISSIVE_ZERO (fail/panic)
+                g_divergent = false;
+                abrupt_panic (Needful_Test_And_Clear_Failure());
+            }
+            goto test_failed;  // was just `return nullptr`
+        }
         if (bounce == BOUNCE_OKAY)
             goto test_succeeded;
 
-        if (bounce == BOUNCE_PANIC)
-            abrupt_panic (Error_No_Catch_For_Throw(TOP_LEVEL));
         assert(bounce == L->out);  // no BOUNCE_CONTINUE, API vals, etc
         if (Is_Error(L->out))
             abrupt_panic (Cell_Error(L->out));

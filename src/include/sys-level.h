@@ -767,38 +767,6 @@ INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
 }
 
 
-// Doing `panic ()` from a native does all the same automatic cleanup
-// as if you triggered an abrupt panic, but doesn't go through the longjmp()
-// or C++ throw machinery.  This means it works even on systems that use
-// PANIC_JUST_ABORTS.  It should be preferred wherever possible.
-//
-INLINE Bounce Native_Panic_Result(Level* L, Error* error) {
-    assert(not Is_Throwing(L));
-
-    while (TOP_LEVEL != L) {  // convenience
-        Rollback_Level(TOP_LEVEL);
-        Drop_Level(TOP_LEVEL);
-        Erase_Cell(TOP_LEVEL->out);
-    }
-    // let trampoline rollback TOP_LEVEL
-
-  #if DEBUG_EXTANT_STACK_POINTERS  // want to use stack in error location set
-    Count save_extant = g_ds.num_refs_extant;
-    g_ds.num_refs_extant = 0;
-  #endif
-
-    Force_Location_Of_Error(error, L);
-
-  #if DEBUG_EXTANT_STACK_POINTERS
-    assert(g_ds.num_refs_extant == 0);
-    g_ds.num_refs_extant = save_extant;
-  #endif
-
-    Init_Thrown_Panic(L, error);
-    return BOUNCE_PANIC;  // means we can be renotified
-}
-
-
 // Convenience routine for returning a value which is *not* located in OUT.
 // (If at all possible, it's better to build values directly into OUT and
 // then return the OUT pointer...this is the fastest form of returning.)
@@ -923,11 +891,7 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     #define OKAY        BOUNCE_OKAY
     #define LOGIC(b)    ((b) == true ? BOUNCE_OKAY : nullptr)
 
-    #define panic(p) \
-        return (Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-            Native_Panic_Result(level_, Derive_Error_From_Pointer(p)))
-
-    // `return UNHANDLED;` is a shorthand for something that's written often
+    // `panic (UNHANDLED);` is a shorthand for something that's written often
     // enough in IMPLEMENT_GENERIC() handlers that it seems worthwhile.
     //
     // !!! Once it was customized based on the "verb" of a generic, but that
@@ -937,8 +901,7 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     // somehow?)
     //
     #define UNHANDLED \
-        (Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
-            Native_Panic_Result(level_, Error_Unhandled(level_)))
+        Error_Unhandled(level_)
 
     #define BASELINE   (&level_->baseline)
     #define STACK_BASE (level_->baseline.stack_base)

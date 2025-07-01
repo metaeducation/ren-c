@@ -123,10 +123,16 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
         g_ds.num_refs_extant = save_extant;
       #endif
 
-        Init_Warning(L->out, g_failure);
-        g_failure = nullptr;
+        if (g_divergent) {
+            Init_Thrown_Panic(L, g_failure);
+            g_divergent = false;
+            g_failure = nullptr;
+            return BOUNCE_THROWN;  // "irreducible"
+        }
 
+        Init_Warning(L->out, g_failure);
         Failify(L->out);
+        g_failure = nullptr;
         return nullptr;
     }
 
@@ -1007,11 +1013,6 @@ Bounce Action_Executor(Level* L)
       case C_THROWN:
         goto handle_thrown;
 
-      case C_PANIC:
-        if (Get_Action_Executor_Flag(L, DISPATCHER_CATCHES))
-            goto dispatch_phase;  // can run same cleanup code as for panic()
-        goto handle_thrown;
-
       case C_REDO_UNCHECKED:
         Clear_Action_Executor_Flag(L, IN_DISPATCH);
         goto dispatch;  // Note: dispatcher may have changed level's PHASE
@@ -1025,12 +1026,6 @@ Bounce Action_Executor(Level* L)
         L = Adjust_Level_For_Downshift(L);
         assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
         goto dispatch_phase;
-
-      case C_BAD_INTRINSIC_ARG:
-        assert(Not_Action_Executor_Flag(L, DISPATCHER_CATCHES));
-        b = Native_Panic_Result(L, Error_Bad_Intrinsic_Arg_1(L));
-        UNUSED(b);  // doesn't get used, not visible @handle_thrown
-        goto handle_thrown;
 
       default:
         assert(!"Invalid pseudotype returned from action dispatcher");

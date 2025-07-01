@@ -982,7 +982,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         }
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 

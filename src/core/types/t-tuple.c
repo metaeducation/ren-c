@@ -108,7 +108,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         goto legacy_tuple_math;
 
       default:
-        return UNHANDLED;
+        panic (UNHANDLED);
     }
 
   legacy_tuple_math: { ///////////////////////////////////////////////////////
@@ -236,7 +236,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
             break;
 
           default:
-            return UNHANDLED;
+            panic (UNHANDLED);
         }
 
         if (v > 255)
@@ -287,7 +287,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
         return Init_Any_String(OUT, to, s);
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 

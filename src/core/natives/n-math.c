@@ -446,7 +446,7 @@ DECLARE_NATIVE(RANDOM_PICK)
 
     const Value* datatype = Datatype_Of_Builtin_Fundamental(collection);
     if (not Handles_Generic(LENGTH_OF, datatype))
-        return UNHANDLED;
+        panic (UNHANDLED);
 
     Quotify(collection);
     return rebDelegate(
@@ -501,7 +501,7 @@ DECLARE_NATIVE(SHUFFLE_OF)
         not Handles_Generic(SHUFFLE, datatype)
         or not Handles_Generic(COPY, datatype)
     ){
-        return UNHANDLED;
+        panic (UNHANDLED);
     }
 
     Quotify(elem);

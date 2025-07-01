@@ -485,7 +485,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 
@@ -573,7 +573,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
         return Init_Integer(OUT, cast(REBI64, d));
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 

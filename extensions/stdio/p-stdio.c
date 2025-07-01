@@ -417,5 +417,5 @@ DECLARE_NATIVE(STDIO_ACTOR)
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }

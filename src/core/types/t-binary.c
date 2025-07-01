@@ -545,7 +545,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 
@@ -577,7 +577,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
         return Copy_Blob_Part_At_May_Modify_Index(OUT, v, part);
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 //

@@ -989,7 +989,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 

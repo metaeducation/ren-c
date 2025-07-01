@@ -741,7 +741,7 @@ DECLARE_NATIVE(NOQUOTE)
 {
     INCLUDE_PARAMS_OF_NOQUOTE;
 
-    Option(Bounce) b = Trap_Bounce_Opt_Out_Element_Intrinsic(OUT, LEVEL);
+    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(OUT, LEVEL));
     if (b)
         return unwrap b;
 

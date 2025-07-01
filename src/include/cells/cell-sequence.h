@@ -681,9 +681,17 @@ INLINE Element* Copy_Sequence_At(
     }
 }
 
-#define Derelativize_Sequence_At(out,sequence,n,context) \
-    Bind_If_Unbound(Copy_Sequence_At( \
-        (out), ensure(const Element*, (sequence)), (n)), (context))
+INLINE Element* Derelativize_Sequence_At(
+    Init(Element) out,
+    const Element* sequence,
+    REBLEN n,
+    Context* context
+){
+    Copy_Sequence_At(out, sequence, n);
+    if (Is_Bindable_Heart(Unchecked_Heart_Of(out)))
+        Bind_If_Unbound(out, context);
+    return out;
+}
 
 INLINE Byte Sequence_Byte_At(const Cell* sequence, REBLEN n) {
     DECLARE_ELEMENT (at);

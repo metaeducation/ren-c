@@ -185,5 +185,5 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }

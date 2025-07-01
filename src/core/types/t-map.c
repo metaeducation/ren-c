@@ -762,7 +762,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 
@@ -784,7 +784,7 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
         return Init_Map(OUT, Copy_Map(VAL_MAP(map), deep));
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 

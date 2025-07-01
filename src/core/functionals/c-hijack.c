@@ -163,9 +163,8 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 // If you HIJACK a function with void, it puts an unimplemented dispatcher
 // that will generate an error if the function is called.
 //
-Bounce Unimplemented_Dispatcher(Level* const L) {
-    USE_LEVEL_SHORTHANDS (L);
-
+Bounce Unimplemented_Dispatcher(Level* const L)
+{
     Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == 1);  // no details slots needed
     assert(Get_Stub_Flag(details, DYNAMIC));  // but all details are dynamic
@@ -269,6 +268,8 @@ bool Hijacker_Details_Querier(
 //
 DECLARE_NATIVE(UNIMPLEMENTED)
 {
+    INCLUDE_PARAMS_OF_UNIMPLEMENTED;
+
     panic (
         "Invoked function returned from HIJACK after hijacking a void-HIJACK"
     );

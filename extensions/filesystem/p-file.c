@@ -750,5 +750,5 @@ DECLARE_NATIVE(FILE_ACTOR)
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }

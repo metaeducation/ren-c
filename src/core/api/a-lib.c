@@ -3078,12 +3078,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
         return BOUNCE_CONTINUE;
     }
 
-    return Native_Panic_Result(
-        L,
-        Derive_Error_From_Pointer(
-            "Bad RebolBounce return in rebFunction() C implementation"
-        )
-    );
+    panic ("Bad RebolBounce return in rebFunction() C implementation");
 
 } typecheck_out: { ///////////////////////////////////////////////////////////
 

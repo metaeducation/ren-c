@@ -357,39 +357,3 @@ struct JumpStruct {
     } while (0)
 
 #endif
-
-
-//=//// NEW FALLIBLE TRAP HANDLING ////////////////////////////////////////=//
-//
-// Work in progress, explanation TBD.
-//
-// 1. There's no reason to involve an Option() type here, because the code
-//    is not user-exposed.
-
-INLINE Error* Test_And_Clear_Failure(void) {  // Option(Error*) optimized [1]
-    Error* temp = g_failure;
-    g_failure = nullptr;
-    return temp;
-}
-
-#define trap(expr) \
-    (assert(not g_failure), Extract_Result(expr)); \
-    if (g_failure) { return PERMISSIVE_ZERO; } \
-    NOOP
-
-#define wont_fail(expr) \
-    (assert(not g_failure), Extract_Result(expr)); \
-    assert(not g_failure)
-
-#define require(expr) \
-    (assert(not g_failure), Extract_Result(expr)); \
-    if (g_failure) { panic (Test_And_Clear_Failure()); } \
-    NOOP
-
-#define fail(p) \
-    (assert(not g_failure), \
-        g_failure = Derive_Error_From_Pointer(p), \
-        PERMISSIVE_ZERO)
-
-#define except(decl) \
-    Then_Extract_Result; for (decl = g_failure; Test_And_Clear_Failure(); )
