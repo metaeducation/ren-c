@@ -871,7 +871,7 @@ Result(Element*) Alias_Any_List_As(
             Freeze_Source_Shallow(Cell_Array_Ensure_Mutable(list));
 
         DECLARE_ELEMENT (temp);  // need to rebind
-        trap (Init_Any_Sequence_At_Listlike(
+        trapped (Init_Any_Sequence_At_Listlike(
             temp,
             as,
             Cell_Array(list),
@@ -894,7 +894,7 @@ IMPLEMENT_GENERIC(AS, Any_List)
     Element* list = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    require (Alias_Any_List_As(OUT, list, as));
+    required (Alias_Any_List_As(OUT, list, as));
 
     return OUT;
 }

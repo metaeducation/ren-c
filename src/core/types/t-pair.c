@@ -92,7 +92,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
     Element* arg = Element_ARG(DEF);
 
     if (Is_Text(arg)) {  // "-1234567890x-1234567890"
-        trap (Transcode_One(OUT, TYPE_PAIR, arg));
+        trapped (Transcode_One(OUT, TYPE_PAIR, arg));
         return OUT;
     }
 

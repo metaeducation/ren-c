@@ -604,7 +604,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
             break;
 
           case PARAMCLASS_SOFT:
-            require (Getify(Init_Word(param_word, Key_Symbol(key))));
+            required (Getify(Init_Word(param_word, Key_Symbol(key))));
             Quotify(param_word);
             break;
 

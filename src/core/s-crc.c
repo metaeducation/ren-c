@@ -45,8 +45,9 @@ Result(uint32_t) Hash_Scan_UTF8_Caseless(const Byte* utf8, Size size)
     for (; size != 0; ++utf8, --size) {
         Codepoint c = *utf8;
 
-        if (Is_Utf8_Lead_Byte(c))
+        if (Is_Utf8_Lead_Byte(c)) {
             c = trap (Back_Scan_Utf8_Char(&utf8, &size));
+        }
 
         c = LO_CASE(c);
 

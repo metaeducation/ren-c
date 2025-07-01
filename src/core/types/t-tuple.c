@@ -44,7 +44,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         );
 
     if (Is_Text(arg)) {
-        trap (Transcode_One(OUT, heart, arg));
+        trapped (Transcode_One(OUT, heart, arg));
         return OUT;
     }
 
@@ -426,7 +426,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
     Element* seq = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    require (Alias_Any_Sequence_As(OUT, seq, as));
+    required (Alias_Any_Sequence_As(OUT, seq, as));
 
     return OUT;
 }

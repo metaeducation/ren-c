@@ -757,7 +757,7 @@ Bounce Action_Executor(Level* L)
         assert(Is_Pushed_Refinement(TOP));
 
         if (not Cell_Binding(TOP)) {  // duplicate or junk, loop didn't index
-            Refinify_Pushed_Refinement(TOP_ELEMENT);
+            guaranteed (Refinify_Pushed_Refinement(TOP_ELEMENT));
             Element* spare = Copy_Cell(SPARE, TOP_ELEMENT);  // [1]
             panic (Error_Bad_Parameter_Raw(spare));
         }

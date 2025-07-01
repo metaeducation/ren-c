@@ -699,7 +699,7 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
     Element* blob = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    require (Alias_Blob_As(OUT, blob, as));
+    required (Alias_Blob_As(OUT, blob, as));
 
     return OUT;
 }

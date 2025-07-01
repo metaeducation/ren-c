@@ -140,6 +140,11 @@
         : p (other.p)  // necessary...won't use the (U something) template
       {}
 
+    template <typename X>
+    OptionWrapper (const ExtractedHotPotato<OptionWrapper<X>>& extracted)
+        : p (extracted.p.p)
+      {}
+
     operator uintptr_t() const {  // to work in switch() cases [3]
         static_assert(
             std::is_enum<T>::value or std::is_class<T>::value,

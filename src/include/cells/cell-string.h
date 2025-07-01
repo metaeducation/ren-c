@@ -190,7 +190,7 @@ INLINE Element* Init_Any_String_At(
 
 INLINE Element* Textify_Any_Utf8(Element* any_utf8) {  // always works
     DECLARE_ELEMENT (temp);
-    wont_fail (Alias_Any_Utf8_As(temp, any_utf8, TYPE_TEXT));
+    guaranteed (Alias_Any_Utf8_As(temp, any_utf8, TYPE_TEXT));
     Copy_Cell(any_utf8, temp);
     return any_utf8;
 }

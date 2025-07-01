@@ -247,7 +247,7 @@ DECLARE_NATIVE(ARROW)
   //=//// IF NOT OPTIMIZABLE, USE THE FULL PARAMLIST PROCESS //////////////=//
 
     if (not optimizable) {
-        require (Push_Keys_And_Params(
+        required (Push_Keys_And_Params(
             &adjunct,
             spec,
             MKF_MASK_NONE,

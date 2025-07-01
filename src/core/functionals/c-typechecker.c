@@ -62,6 +62,13 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER_ARCHETYPE;
 
+    /* UNUSED(ARG(VALUE))); */  // it's an intrinsic, no first param defined
+    UNUSED(ARG(TYPE));
+    UNUSED(ARG(QUOTED));
+    UNUSED(ARG(TIED));
+    UNUSED(ARG(PINNED));
+    UNUSED(ARG(METAFORM));
+
     panic ("TYPECHECKER-ARCHETYPE called (internal use only)");
 }
 
@@ -236,7 +243,7 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     Init_Block(spec, spec_array);
 
     VarList* adjunct;
-    ParamList* paramlist = wont_fail (Make_Paramlist_Managed(
+    ParamList* paramlist = guarantee (Make_Paramlist_Managed(
         &adjunct,
         spec,
         MKF_MASK_NONE,

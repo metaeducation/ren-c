@@ -1129,11 +1129,11 @@ DECLARE_NATIVE(DEFAULT)
     Element* steps = u_cast(Element*, SCRATCH);  // avoid double-eval [1]
     STATE = ST_DEFAULT_GETTING_TARGET;  // can't leave at STATE_0
 
-    wont_fail (Unsingleheart_Sequence(target));
-    heeded(Copy_Cell(SCRATCH, target));
-    heeded(Corrupt_Cell_If_Needful(SPARE));
+    guaranteed (Unsingleheart_Sequence(target));
+    heeded (Copy_Cell(SCRATCH, target));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    heeded(Init_Dual_Nulled_Pick_Signal(OUT));
+    heeded (Init_Dual_Nulled_Pick_Signal(OUT));
 
     Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(level_, steps);
     if (e)

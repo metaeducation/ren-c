@@ -625,7 +625,7 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
     INCLUDE_PARAMS_OF_META;  // META, PIN, TIE all same signature.
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require(Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
     if (b)
         return unwrap b;
 
@@ -804,7 +804,7 @@ DECLARE_NATIVE(UNCHAIN)
 
     Element* elem = Element_ARG(CHAIN);
 
-    trap (Unsingleheart_Sequence(elem));
+    trapped (Unsingleheart_Sequence(elem));
 
     return COPY(elem);
 }
@@ -825,7 +825,7 @@ DECLARE_NATIVE(UNPATH)
 
     Element* elem = Element_ARG(PATH);
 
-    trap (Unsingleheart_Sequence(elem));
+    trapped (Unsingleheart_Sequence(elem));
 
     return COPY(elem);
 }
@@ -846,7 +846,7 @@ DECLARE_NATIVE(UNTUPLE)
 
     Element* elem = Element_ARG(TUPLE);
 
-    trap (Unsingleheart_Sequence(elem));
+    trapped (Unsingleheart_Sequence(elem));
 
     return COPY(elem);
 }

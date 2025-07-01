@@ -713,7 +713,7 @@ DECLARE_NATIVE(JOIN)
 
     Sink(Element) out = OUT;
     if (Any_Sequence_Type(heart)) {
-        trap (Pop_Sequence(out, heart, STACK_BASE));
+        trapped (Pop_Sequence(out, heart, STACK_BASE));
     }
     else {
         Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);

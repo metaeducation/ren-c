@@ -383,7 +383,7 @@ Element* Decorate_According_To_Parameter(
     const Element* param
 ){
     if (Get_Parameter_Flag(param, REFINEMENT))
-        Refinify(e);
+        required (Refinify(e));
 
     switch (Parameter_Class(param)) {
       case PARAMCLASS_NORMAL:

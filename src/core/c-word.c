@@ -538,7 +538,7 @@ void Startup_Builtin_Symbols(
         ++at;
 
         Symbol* canon = &g_symbols.builtin_canons[id];  // not a Symbol*...yet
-        wont_fail (Intern_Utf8_Managed_Core(canon, at, size));  // now it is!
+        guaranteed (Intern_Utf8_Managed_Core(canon, at, size));  // now it is!
 
         at += size;
 

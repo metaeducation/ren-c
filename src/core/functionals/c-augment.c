@@ -107,7 +107,7 @@ DECLARE_NATIVE(AUGMENT)
 
 } add_parameters_from_spec: {
 
-    require (Push_Keys_And_Params(
+    required (Push_Keys_And_Params(
         &adjunct,
         spec,
         MKF_PARAMETER_SEEN,  // don't assume description string

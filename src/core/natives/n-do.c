@@ -299,7 +299,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         Remember_Cell_Is_Lifeguard(source);  // may be only reference!
 
         if (Is_Chain(source)) {  // e.g. :(...) or [...]:
-            wont_fail (Unsingleheart_Sequence(source));
+            guaranteed (Unsingleheart_Sequence(source));
             assert(Any_List(source));
             goto initial_entry_list;
         }

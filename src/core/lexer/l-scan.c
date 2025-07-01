@@ -724,8 +724,9 @@ static Result(const Byte*) Scan_String_Into_Mold_Core(
             break;
 
           default:
-            if (Is_Utf8_Lead_Byte(c))
+            if (Is_Utf8_Lead_Byte(c)) {
                 c = trap (Back_Scan_Utf8_Char(&cp, nullptr));
+            }
         }
 
         ++cp;
@@ -2594,7 +2595,7 @@ Bounce Scanner_Executor(Level* const L) {
 } case TOKEN_FILE: { /////////////////////////////////////////////////////////
 
     if (mo->base.size == Strand_Size(mo->strand)) {  // % is WORD!
-        const Symbol* symbol = wont_fail (
+        const Symbol* symbol = guarantee (
             Intern_Utf8_Managed(cb_cast("%"), 1)
         );
         Init_Word(PUSH(), symbol);

@@ -146,7 +146,7 @@ static void Push_Composer_Level(
         Copy_Cell(fundamental, list_or_seq);
         LIFT_BYTE(fundamental) = NOQUOTE_2;
 
-        wont_fail (  // all sequences alias as block
+        guaranteed (  // all sequences alias as block
             Alias_Any_Sequence_As(adjusted, list_or_seq, TYPE_BLOCK)
         );
 
@@ -210,7 +210,7 @@ static Result(Value*) Finalize_Composer_Level(
     Heart heart = Heart_Of_Builtin(composee);
 
     if (Any_Sequence_Type(heart)) {
-        trap (Pop_Sequence_Or_Element_Or_Nulled(
+        trapped (Pop_Sequence_Or_Element_Or_Nulled(
             out,
             Heart_Of_Builtin_Fundamental(composee),
             L->baseline.stack_base
@@ -666,7 +666,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     assert(Is_Logic(Known_Stable(OUT)));
 
-    trap (Finalize_Composer_Level(SUBLEVEL, input, Bool_ARG(CONFLATE)));
+    trapped (Finalize_Composer_Level(SUBLEVEL, input, Bool_ARG(CONFLATE)));
 
     Drop_Level(SUBLEVEL);
     return OUT;

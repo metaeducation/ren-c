@@ -112,7 +112,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
     if (Any_Utf8(arg)) {  // !!! odd historical behavior [1]
         Sink(Element) out = OUT;
 
-        require (Transcode_One(out, TYPE_0, arg));  // not bad make (?)
+        required (Transcode_One(out, TYPE_0, arg));  // not bad make (?)
 
         if (Is_Integer(out))
             return OUT;

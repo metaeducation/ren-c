@@ -501,6 +501,7 @@ typedef struct {
 INLINE Error* Needful_Test_And_Clear_Failure(void) {
     Error* temp = g_failure;  // Option(Error*) optimized [1]
     g_failure = nullptr;
+    g_divergent = false;
     return temp;
 }
 
@@ -785,7 +786,11 @@ enum {
 
     #undef trap
     #undef require
-    #undef wont_fail
-
+    #undef guarantee
     #undef except
+
+    #undef trapped
+    #undef required
+    #undef guaranteed
+    #undef excepted
 #endif

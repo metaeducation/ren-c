@@ -260,7 +260,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
             abrupt_panic ("Only RUNE! can MAKE a UTF-8 immutable type with INTEGER!");
 
         REBINT n = Int32(arg);
-        trap (Init_Single_Codepoint_Rune(OUT, n));
+        trapped (Init_Single_Codepoint_Rune(OUT, n));
         return OUT; }
 
       case TYPE_BLOB: {
@@ -290,7 +290,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
         }
-        trap (Init_Single_Codepoint_Rune(OUT, c));
+        trapped (Init_Single_Codepoint_Rune(OUT, c));
         return OUT; }
 
       default:
@@ -330,7 +330,7 @@ DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
     if (c == 0)
         return COPY(LIB(NUL));
 
-    trap (Init_Single_Codepoint_Rune(OUT, c));
+    trapped (Init_Single_Codepoint_Rune(OUT, c));
     return OUT;
 }
 
@@ -364,7 +364,7 @@ DECLARE_NATIVE(TO_CHAR)
     Element* e = Element_ARG(ELEMENT);
     if (Is_Integer(e)) {
         uint32_t c = VAL_UINT32(e);
-        trap (Init_Single_Codepoint_Rune(OUT, c));
+        trapped (Init_Single_Codepoint_Rune(OUT, c));
         return OUT;
     }
     if (Is_Rune_And_Is_Char(e))
@@ -576,7 +576,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     if (chr < 0)
         return fail (Error_Codepoint_Negative_Raw());
 
-    trap (Init_Single_Codepoint_Rune(OUT, cast(Codepoint, chr)));
+    trapped (Init_Single_Codepoint_Rune(OUT, cast(Codepoint, chr)));
     return OUT;
 }
 
@@ -685,12 +685,12 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         or to == TYPE_TIME
         or to == TYPE_PAIR
     ){
-        trap (Transcode_One(OUT, to, v));
+        trapped (Transcode_One(OUT, to, v));
         return OUT;
     }
 
     if (Any_Sequence_Type(to)) {  // to tuple! "a.b.c" -> a.b.c
-        trap (Transcode_One(OUT, to, v));
+        trapped (Transcode_One(OUT, to, v));
         return OUT;
     }
 
@@ -852,7 +852,7 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
     Element* any_utf8 = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    require (Alias_Any_Utf8_As(OUT, any_utf8, as));
+    required (Alias_Any_Utf8_As(OUT, any_utf8, as));
 
     return OUT;
 }
@@ -957,7 +957,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Rune)
             1 + (Random_Int(Bool_ARG(SECURE)) % limit)
         );
 
-        Init_Single_Codepoint_Rune(OUT, c) except (Error* e) {
+        Init_Single_Codepoint_Rune(OUT, c) excepted (Error* e) {
             dont(Free_Unmanaged_Flex(e));  // errors are prealloc'd
             UNUSED(e);
             again;

@@ -76,7 +76,7 @@ Result(Element*) Init_Any_Sequence_At_Listlike(
         if (at == tail - 1 and Is_Space(at))
             continue;  // (_) valid at tail
 
-        trap (Check_Sequence_Element(
+        trapped (Check_Sequence_Element(
             heart,
             at,
             at == head  // sigils and quotes not legal at head
@@ -462,7 +462,7 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
         Init_Integer(PUSH(), 0);
     }
 
-    wont_fail (Pop_Sequence(OUT, heart, STACK_BASE));
+    guaranteed (Pop_Sequence(OUT, heart, STACK_BASE));
 
     return OUT;
 }

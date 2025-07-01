@@ -1314,7 +1314,7 @@ DECLARE_NATIVE(TWEAK)
     Element* target = Element_ARG(TARGET);
 
     if (Is_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
-        wont_fail (Unsingleheart_Sequence(target));
+        guaranteed (Unsingleheart_Sequence(target));
 
     if (not Is_Group(target))  // !!! maybe SET-GROUP!, but GET-GROUP!?
         goto call_generic_tweak;

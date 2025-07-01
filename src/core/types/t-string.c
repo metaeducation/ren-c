@@ -1037,7 +1037,7 @@ IMPLEMENT_GENERIC(AS, Any_String)
     Element* string = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    require (Alias_Any_String_As(OUT, string, as));
+    required (Alias_Any_String_As(OUT, string, as));
 
     return OUT;
 }

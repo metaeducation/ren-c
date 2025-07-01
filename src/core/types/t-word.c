@@ -110,7 +110,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
     // (make word! '/a) or (make word! 'a:) etc.
 
     attempt {
-        Unsingleheart_Sequence(arg) except (Error* e) {
+        Unsingleheart_Sequence(arg) excepted (Error* e) {
             UNUSED(e);
             break;
         }
@@ -215,7 +215,7 @@ IMPLEMENT_GENERIC(AS, Is_Word)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    require (Alias_Any_Word_As(
+    required (Alias_Any_Word_As(
         OUT,
         Element_ARG(ELEMENT),
         Cell_Datatype_Builtin_Heart(ARG(TYPE))

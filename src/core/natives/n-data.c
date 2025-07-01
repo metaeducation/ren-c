@@ -860,14 +860,14 @@ DECLARE_NATIVE(RESOLVE)
             or single == TRAILING_SPACE_AND(WORD)  // a/
             or single == TRAILING_SPACE_AND(TUPLE)  // a.b.c/ or .a/
         ){
-            wont_fail (Unsingleheart_Sequence(source));
+            guaranteed (Unsingleheart_Sequence(source));
             return COPY(source);
         }
         if (
             single == LEADING_SPACE_AND(CHAIN)  // /a: or /a:b:c or /:a
             or single == TRAILING_SPACE_AND(CHAIN)  // a:/ or a:b:c/ or :a/
         ){
-            wont_fail (Unsingleheart_Sequence(source));
+            guaranteed (Unsingleheart_Sequence(source));
             // fall through to chain decoding.
         }
         else
@@ -884,7 +884,7 @@ DECLARE_NATIVE(RESOLVE)
         or single == TRAILING_SPACE_AND(WORD)  // :a
         or single == TRAILING_SPACE_AND(TUPLE)  // :a.b.c
     ){
-        wont_fail (Unsingleheart_Sequence(source));
+        guaranteed (Unsingleheart_Sequence(source));
         return COPY(source);
     }
 

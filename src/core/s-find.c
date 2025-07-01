@@ -102,11 +102,11 @@ REBINT Compare_UTF8(const Byte* s1, const Byte* s2, Size l2)
         c2 = *s2;
         if (c1 > 127) {
             // UTF8 good, use Back_Scan_Utf8_Char_Unchecked()!
-            c1 = wont_fail (Back_Scan_Utf8_Char(&s1, &l1));
+            c1 = guarantee (Back_Scan_Utf8_Char(&s1, &l1));
         }
         if (c2 > 127) {
             // UTF8 good, use Back_Scan_Utf8_Char_Unchecked()!
-            c2 = wont_fail (Back_Scan_Utf8_Char(&s2, &l2));
+            c2 = guarantee (Back_Scan_Utf8_Char(&s2, &l2));
         }
         if (c1 != c2) {
             if (LO_CASE(c1) != LO_CASE(c2))

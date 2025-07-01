@@ -511,6 +511,7 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
         return LOGIC(false);  // if left is false, don't run right hand side
 
     bool right = require(Eval_Logic_Op_Right_Side(LEVEL));
+    USED(ARG(RIGHT));
 
     return LOGIC(right);
 }
@@ -558,6 +559,7 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_XOR_1;
 
     bool right = require(Eval_Logic_Op_Right_Side(LEVEL));  // always evals
+    USED(ARG(RIGHT));
 
     bool left = require (Test_Conditional(ARG(LEFT)));
     if (not left)

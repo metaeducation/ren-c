@@ -137,7 +137,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
 
     Option(Type) type = Type_Of(arg);
     if (Any_Utf8_Type(type)) {
-        trap (Transcode_One(OUT, TYPE_DECIMAL, arg));
+        trapped (Transcode_One(OUT, TYPE_DECIMAL, arg));
         return OUT;
     }
     else switch (type) {

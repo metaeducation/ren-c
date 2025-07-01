@@ -34,6 +34,38 @@
 //        Needful_Get_Failure()
 //        Needful_Get_Failure_Divergence()
 //
+// B. An attempt was made to actually subtype errors with Result(T,E) vs.
+//    just Result(T), and enforce that you could only auto-propagate errors
+//    out of compatible functions.  But injecting the type-awareness into
+//    the body of the function is weird:
+//
+//       #define Result(T,E) /  /* Note: can't backslash in this comment */
+//           template<typename RetError = E> /
+//                ResultWrapper<T, E> /* function definition */
+//
+//    This way when you write `Result(T,E) Some_Func(...) {...}` you have
+//    awareness of the return error type inside the body for `trap()` to use.
+//
+//    But it doesn't solve the issue for `except()` which has to telegraph
+//    the error type of the called function out of an expression that has to
+//    be parenthesized, which is impossible.  And that definition of Result
+//    can't work in both a prototype and a definition, because it uses a
+//    default template parameter that can only be defined once.  Also, if
+//    you try to add inline like `INLINE Result(T, E) Some_Func(...) {...}`
+//    that can't work because you can't put INLINE before the `template<>`
+//
+//    FURTHERMORE... there are limits to the ability to handle errors in a
+//    polymoprhic way that works in both C and C++.  C++ has inheritance and
+//    that's the only way to beat strict aliasing, while C can use common
+//    leading substructures which violate strict aliasing in C++.  Also, a
+//    divergent error has to be handled via a superclass of some kind.
+//
+//    AND FINALLY... Needful arose specifically for implmemtning Rebol, and
+//    unlike Rust, Rebol's own error handling lacks a notion of statically
+//    subclassing in its `except` and `trap` features.  When all of this is
+//    considered together, it explains why Result(T) is not parameterized
+//    by an error type, and just assumes one common error.
+//
 
 
 //=//// PERMISSIVE_ZERO, More Lax Coercing Zero in C++ ////////////////////=//
@@ -63,6 +95,61 @@
 #endif
 
 
+//=//// EXTRACTED RESULT "HOT POTATO" /////////////////////////////////////=//
+//
+// The Result(T) type is [[nodiscard]] (C++17 feature, with some pre-C++17
+// support in MSVC and GCC).  That protects against:
+//
+//     Some_Result_Bearing_Function(args);  // no trap, no require, no except
+//
+// You'll get an error from your C++ builds because the Result(T) is not used,
+// guiding to the need for triage.  But due to the design of the macros and
+// language limitations, there's a problem with:
+//
+//      if (condition)
+//         trap(Some_Result_Bearing_Function(args));  // no warning
+//
+// Because the trap macro has to embed `return` statements -and- wants to
+// be used on the right hand side of assignments, it can't be wrapped up in
+// `do {...} while (0)` or parentheses to make it "safe" when used as a
+// branch. It expands to one expression that's inside the branch and then
+// subsequent lines that aren't.
+//
+// Since the Result(T) has already been "triaged" by the trap macro, its
+// [[nodiscard]] can't help.  So what's done is instead to use a 2-step
+// process...where an ExtractedHotPotato<T> is made, as another [[nodiscard]]
+// type that covers the case of a missing assignment on the left hand side
+// of the trap.  (If the assignment were present, it would naturally disallow
+// use as a branch or a loop body.)
+//
+// With this you have:
+//
+//      if (condition)
+//         trap(Some_Result_Bearing_Function(args));  // warning on discard
+//
+// This hot potato then has a specialized discarding operation:
+//
+//     if (condition)
+//         discarded(trap(Some_Result_Bearing_Function(args)));
+//
+// It's a bit of a mouthful, but in practice it is very easy for mistakes
+// to be made without the protections.
+//
+#if CPLUSPLUS_11
+    template<typename T>
+    struct NEEDFUL_NODISCARD ExtractedHotPotato {
+        T p;
+
+        ExtractedHotPotato(const T& something)
+            : p {something} {}
+
+        operator T() const {
+            return p;
+        }
+    };
+#endif
+
+
 //=//// RESULT TYPE ///////////////////////////////////////////////////////=//
 //
 // The Result type is trickery that mimics something like Rust's Result<T, E>
@@ -72,12 +159,13 @@
 //
 
 #if NO_CPLUSPLUS_11
-    #define Result(T)   T
+    #define Result(T)  T  // not Result(T,E)... see [B]
+
     #define Costless_Extract_Result(result)  result
     #define Then_Costless_Extract_Result
 #else
     template<typename T>
-    struct ResultWrapper {
+    struct NEEDFUL_NODISCARD ResultWrapper {
         T p;  // not always pointer, but use common convention with Sink/Need
 
         ResultWrapper() = delete;
@@ -99,20 +187,20 @@
             : p (u_cast(T, std::forward<U>(something)))
         {}
 
-        T& extract() {
+        ExtractedHotPotato<T> extract() {
             return p;
         }
     };
 
-    #define Result(T) \
-        ResultWrapper<T>  // C++11 version of Result, which is a wrapper
+    #define Result(T) /* not Result(T,E)... see [B] */ \
+        ResultWrapper<T>
 
     #define Costless_Extract_Result(result)  result.extract()
 
     struct ResultExtractor {};
 
     template<typename T>
-    T& operator>>(
+    ExtractedHotPotato<T> operator>>(
         ResultWrapper<T>&& result,
         const ResultExtractor& right
     ){
@@ -177,7 +265,9 @@
         ResultWrapper(const PermissiveZero&) {}
         ResultWrapper(const Nothing&) {}
 
-        void extract() {}  // less codegen in debug than `Nothing& extract()`
+        ExtractedHotPotato<Nothing> extract() {
+            return ExtractedHotPotato<Nothing>(nothing);
+        }
     };
 
     INLINE void operator>>(
@@ -265,22 +355,22 @@
     NOOP
 
 
-//=//// wont_fail() ///////////////////////////////////////////////////////=//
+//=//// guarantee() ///////////////////////////////////////////////////////=//
 //
 // Optimized case for when you have inside knowledge that a Result()-bearing
 // function call will not fail.  Needed to do compile-time unwrapping of
 // the result container class.
 //
-//    wont_fail (bar());
+//    guarantee (bar());
 //    // ... code always continues ...
 //
 
-#define needful_wont_fail(expr) \
+#define needful_guarantee(expr) \
     (assert(not g_failure), Costless_Extract_Result(expr)); \
         assert(not g_failure)
 
 
-//=//// ...expr... except(decl) {...} /////////////////////////////////////=//
+//=//// ...expr... except (decl) {...} ////////////////////////////////////=//
 //
 // Used after function calls that may have propagated a non-divergent error.
 // If an error was propagated, `except` allows handling it.  This leverages
@@ -311,11 +401,78 @@
 // 1. There's no reason to involve an Option() type here, because the code
 //    is not user-exposed.
 
-#define needful_except(decl) \
-    /* expression */ Then_Costless_Extract_Result; \
+#define needful_except_core(decl,extractor) \
+    /* expression */ extractor; \
         if (g_divergent) { return PERMISSIVE_ZERO; } \
         for (decl = g_failure; Needful_Test_And_Clear_Failure(); )
            /* implicitly takes code block after macro as except()-body */
+
+#define needful_except(decl) \
+    needful_except_core(decl, Then_Costless_Extract_Result)
+
+
+
+
+//=//// rescue (expr) (decl) {...} ////////////////////////////////////////=//
+//
+// Rescuing diverent failures uses a slightly different syntax.
+//
+
+#define needful_rescue_core(expr,extractor) \
+    expr extractor needful_rescue_then
+
+#define /* rescue (expr) */ needful_rescue_then(decl) \
+    /* possibly(g_divergent) */ ; \
+    for (decl = g_failure; Needful_Test_And_Clear_Failure(); )
+        /* implicitly takes code block after macro as except()-body */
+
+#define needful_rescue(expr) \
+    needful_rescue_core(expr, Then_Costless_Extract_Result)
+
+
+//=//// RESULT DISCARDER //////////////////////////////////////////////////=//
+
+#if NO_CPLUSPLUS_11
+    #define NEEDFUL_DISCARD
+    #define Then_Costless_Consume_Result
+#else
+    struct ExtractedResultDiscarder {};
+
+    template<typename T>
+    INLINE void operator|(
+        const ExtractedResultDiscarder&,
+        const ExtractedHotPotato<T>& extraction
+    ){
+        USED(extraction);  // mark as used, do nothing
+    }
+
+    template<typename T>
+    INLINE void operator>>(
+        const ResultWrapper<T>& result,
+        const ExtractedResultDiscarder&
+    ){
+        USED(result);  // mark as used, do nothing
+    }
+
+    static constexpr ExtractedResultDiscarder g_extracted_result_discarder{};
+
+    #define NEEDFUL_DISCARD  g_extracted_result_discarder | /* <- overloaded */
+
+    #define Then_Costless_Consume_Result  >> g_extracted_result_discarder
+#endif
+
+#define needful_discarded(expr) \
+    do {NEEDFUL_DISCARD expr;} while (0)
+
+#define needful_trapped(expr)       needful_discarded(needful_trap(expr))
+#define needful_required(expr)      needful_discarded(needful_require(expr))
+#define needful_guaranteed(expr)    needful_discarded(needful_guarantee(expr))
+
+#define needful_excepted(decl) \
+    needful_except_core(decl, Then_Costless_Consume_Result)
+
+#define needful_rescued(expr) \
+    needful_rescue_core(expr, Then_Costless_Extract_Result)
 
 
 //=//// SHORTHAND MACROS //////////////////////////////////////////////////=//
@@ -330,7 +487,21 @@
 
 #define trap(expr)          needful_trap(expr)
 #define require(expr)       needful_require(expr)
-#define wont_fail(expr)     needful_wont_fail(expr)
+#define guarantee(expr)     needful_guarantee(expr)
 
 #define /* expr */ except(decl) /* {body} */ \
     needful_except(decl)
+
+#define sys_util_rescue(expr) /* (decl) {body} */ \
+    needful_rescue(expr)
+
+#define discarded(expr)     needful_discarded(expr)
+#define trapped(expr)       needful_trapped(expr)
+#define required(expr)      needful_required(expr)
+#define guaranteed(expr)    needful_guaranteed(expr)
+
+#define /* expr */ excepted(decl) /* {body} */ \
+    needful_excepted(decl)
+
+#define sys_util_rescued(expr) /* (decl) {body} */ \
+    needful_rescued(expr)

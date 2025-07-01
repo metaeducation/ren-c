@@ -626,7 +626,7 @@ RebolValue* API_rebChar(uint32_t codepoint)
     ENTER_API;
 
     Value* v = Alloc_Value();
-    Init_Single_Codepoint_Rune(v, codepoint) except (Error* e) {
+    Init_Single_Codepoint_Rune(v, codepoint) excepted (Error* e) {
         rebRelease(v);
         abrupt_panic (e);
     }

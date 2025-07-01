@@ -566,7 +566,7 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
     Derelativize(spec, At_Level(L), g_lib_context);
     Fetch_Next_In_Feed(L->feed);;
 
-    Details* details = wont_fail (Make_Native_Dispatch_Details(
+    Details* details = guarantee (Make_Native_Dispatch_Details(
         spec,
         native_type,
         f_cast(Dispatcher*, *g_native_cfunc_pos)
