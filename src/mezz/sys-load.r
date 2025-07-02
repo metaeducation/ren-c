@@ -40,7 +40,7 @@ transcode-header: func [
     "Try to match a data blob! as being a script, fail if not"
 
     return: "Null, or the ~[header rest line]~"
-        [~[[null? block!] [null? blob!] [null? integer!]]~ error!]
+        [~[[null? block!] [null? blob!] [integer!]]~ error!]
 
     data [blob!]
     :file [file! url!]
@@ -56,7 +56,7 @@ transcode-header: func [
         return fail e
     ]
     if not rest [
-        return pack [null null null]  ; !!! rethink interface, impure null
+        return pack [null null line]  ; !!! rethink interface, impure null
     ]
     [rest :hdr]: transcode:next // [ ; BLOCK!
         rest
