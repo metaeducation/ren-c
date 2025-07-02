@@ -302,7 +302,7 @@ DECLARE_NATIVE(PROTECT)
 
         STATE = ST_PROTECT_POKING;
 
-        heeded(Corrupt_Cell_If_Needful(SPARE));
+        heeded (Corrupt_Cell_If_Needful(SPARE));
 
         Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
             LEVEL, NO_STEPS
@@ -371,7 +371,7 @@ DECLARE_NATIVE(UNPROTECT)
 
         STATE = ST_UNPROTECT_POKING;
 
-        heeded(Corrupt_Cell_If_Needful(SPARE));
+        heeded (Corrupt_Cell_If_Needful(SPARE));
 
         Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
             LEVEL, NO_STEPS

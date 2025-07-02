@@ -156,16 +156,19 @@ DECLARE_NATIVE(DUMP)
     Element* v = Element_ARG(VALUE);
 
     PROBE(v);
-    printf("=> ");
+
     if (Is_Word(v)) {
-        Sink(Value) spare = SPARE;
-        Option(Error*) e = Trap_Get_Word(spare, v, SPECIFIED);
-        if (e) {
+        printf("=> ");
+
+        Value* spare = Get_Word(
+            SPARE, v, SPECIFIED
+        ) except (Error* e) {
             printf("!!! ERROR FETCHING WORD FOR DUMP !!!");
-            PROBE(unwrap e);
+            PROBE(e);
+            return TRIPWIRE;
         }
-        else
-            PROBE(spare);
+
+        PROBE(spare);
     }
 
     return TRIPWIRE;

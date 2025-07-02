@@ -396,12 +396,11 @@ Bounce Stepper_Executor(Level* L)
 
     switch (KIND_BYTE_RAW(L_next)) {  // ignore Sigil
       case TYPE_WORD: {
-        Option(Error*) e = Trap_Get_Word(
+        Get_Word(
             L_next_gotten_raw,
             L_next,
             Feed_Binding(L->feed)  // L_binding breaks here [2]
-        );
-        if (e) {
+        ) excepted (Error* e) {
             Erase_Cell(L_next_gotten_raw);
             UNUSED(e);  // don't care (will hit on next step if we care)
             goto give_up_backward_quote_priority;
@@ -710,11 +709,7 @@ Bounce Stepper_Executor(Level* L)
 
     // A META-WORD! gives you the undecayed representation of the variable
 
-    Option(Error*) error = Trap_Get_Any_Word_Maybe_Trash(
-        OUT, CURRENT, L_binding
-    );
-    if (error)
-        panic (unwrap error);
+    required (Get_Any_Word_Maybe_Trash(OUT, CURRENT, L_binding));
 
     possibly(Not_Cell_Stable(OUT) or Is_Trash(Known_Stable(OUT)));
 
@@ -743,14 +738,13 @@ Bounce Stepper_Executor(Level* L)
 
     Plainify(CURRENT);  // remove the ^ sigil
 
-    heeded(Bind_If_Unbound(CURRENT, L_binding));
-    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded (Bind_If_Unbound(CURRENT, L_binding));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
-    if (e)
-        panic (unwrap e);
+    required (Get_Var_In_Scratch_To_Out(L, GROUPS_OK));
 
     possibly(Is_Error(OUT));  // last step may be missing, or meta-error [1]
+
     goto lookahead;  // even ERROR! wants lookahead (e.g. for EXCEPT)
 
 
@@ -944,12 +938,10 @@ Bounce Stepper_Executor(Level* L)
 
     assert(not Sigil_Of(CURRENT));
 
-    heeded(Bind_If_Unbound(CURRENT, L_binding));
-    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded (Bind_If_Unbound(CURRENT, L_binding));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
-    if (e)
-        panic (unwrap e);
+    required (Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS));
 
     if (Is_Error(OUT))  // e.g. couldn't pick word as field from binding
         panic (Cell_Error(OUT));  // don't conflate with action result
@@ -1126,15 +1118,12 @@ Bounce Stepper_Executor(Level* L)
         panic ("No current evaluation for things like :1 or <tag>:");
     }
 
-    Sink(Value) out = OUT;
-    Option(Error*) error = Trap_Get_Chain_Push_Refinements(
-        out,  // where to write action
+    Value* out = require (Get_Chain_Push_Refinements(
+        OUT,  // where to write action
         SPARE,  // temporary GC-safe scratch space
         CURRENT,
         L_binding
-    );
-    if (error)  // lookup failed, a GROUP! in path threw, etc.
-        panic (unwrap error);  // don't definitional error for now
+    ));
 
     assert(Is_Action(out));
 
@@ -1237,12 +1226,10 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead;
     }
 
-    heeded(Bind_If_Unbound(CURRENT, L_binding));
-    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded (Bind_If_Unbound(CURRENT, L_binding));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(L, GROUPS_OK);
-    if (e)
-        panic (unwrap e);
+    required (Get_Var_In_Scratch_To_Out(L, GROUPS_OK));
 
     possibly(Not_Cell_Stable(OUT));  // last step or unmeta'd item [1]
 
@@ -1350,13 +1337,12 @@ Bounce Stepper_Executor(Level* L)
   //    running infix with paths is `left ->- right/side`, which uses an infix
   //    WORD! to mediate the interaction.
 
-    heeded(Bind_If_Unbound(CURRENT, L_binding));
-    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded (Bind_If_Unbound(CURRENT, L_binding));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    Option(Error*) e = Trap_Get_Path_Push_Refinements(LEVEL);
-    if (e) {  // don't FAIL, PANIC [1]
+    Get_Path_Push_Refinements(LEVEL) excepted (Error* e) {
         possibly(slash_at_tail);  // ...or, exception for arity-0? [2]
-        panic (unwrap e);
+        panic (e);  // don't FAIL, PANIC [1]
     }
 
     Value* out = Known_Stable(OUT);
@@ -1433,12 +1419,10 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Lifted_Void(CURRENT))  // e.g. `(void): ...`  !!! use space var!
         goto lookahead;  // pass through everything
 
-    heeded(Bind_If_Unbound(CURRENT, L_binding));
-    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded (Bind_If_Unbound(CURRENT, L_binding));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK);
-    if (e)
-        panic (unwrap e);
+    required (Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK));
 
     Invalidate_Gotten(L_next_gotten_raw);  // cache tampers with lookahead [1]
 
@@ -1748,7 +1732,7 @@ Bounce Stepper_Executor(Level* L)
     Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
     if (is_action) {
         assert(var == &level_->scratch);
-        heeded(Set_Cell_Flag(var, SCRATCH_VAR_NOTE_ONLY_ACTION));
+        heeded (Set_Cell_Flag(var, SCRATCH_VAR_NOTE_ONLY_ACTION));
     }
 
     assert(LIFT_BYTE(var) == NOQUOTE_2);
@@ -1772,10 +1756,8 @@ Bounce Stepper_Executor(Level* L)
         goto circled_check;
 
     if (Is_Meta_Form_Of(WORD, var)) {
-        heeded(Corrupt_Cell_If_Needful(SPARE));
-        Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS);
-        if (e)
-            panic (unwrap e);
+        heeded (Corrupt_Cell_If_Needful(SPARE));
+        required (Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS));
 
         goto circled_check;  // ...because we may have circled this
     }
@@ -1789,10 +1771,8 @@ Bounce Stepper_Executor(Level* L)
         goto circled_check;
 
     if (Is_Word(var) or Is_Tuple(var) or Is_Pinned_Form_Of(WORD, var)) {
-        heeded(Corrupt_Cell_If_Needful(SPARE));
-        Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK);
-        if (e)
-            panic (unwrap e);
+        heeded (Corrupt_Cell_If_Needful(SPARE));
+        required (Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK));
     }
     else
         assert(false);
@@ -1947,21 +1927,16 @@ Bounce Stepper_Executor(Level* L)
     switch (Type_Of_Unchecked(L_next)) {
       case TYPE_WORD:  // only WORD! does infix now (TBD: CHAIN!) [2]
         if (not L_next_gotten) {
-            Option(Error*) e = Trap_Get_Word(
+            Get_Word(
                 L_next_gotten_raw, L_next, Feed_Binding(L->feed)
-            );
-            if (e) {
+            ) excepted (Error* e) {
                 Erase_Cell(L_next_gotten_raw);
                 UNUSED(e);
             }
         }
         else {
             DECLARE_VALUE (check);
-            Option(Error*) e = Trap_Get_Word(
-                check, L_next, Feed_Binding(L->feed)
-            );
-            assert(not e);
-            UNUSED(e);
+            guaranteed (Get_Word(check, L_next, Feed_Binding(L->feed)));
             assert(
                 memcmp(check, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
             );

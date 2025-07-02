@@ -393,21 +393,19 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
         and not SPORADICALLY(100)
     ){
-        Copy_Cell(SCRATCH, test);  // intrinsic may need action
+        Copy_Cell(SCRATCH, test);  // intrinsic may need, but panic() requires
+        possibly(Is_Antiform(SCRATCH));  // don't bother canonizing LIFT_BYTE()
 
-      #if DEBUG_CELL_READ_WRITE
-        assert(Not_Cell_Flag(SPARE, PROTECTED));
-        Set_Cell_Flag(SPARE, PROTECTED);
-      #endif
+        Remember_Cell_Is_Lifeguard(SPARE);
+        Remember_Cell_Is_Lifeguard(SCRATCH);
 
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         Set_Level_Flag(L, DISPATCHING_INTRINSIC);
         Bounce bounce = Apply_Cfunc(dispatcher, L);
         Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
 
-      #if DEBUG_CELL_READ_WRITE
-        Clear_Cell_Flag(SPARE, PROTECTED);
-      #endif
+        Forget_Cell_Was_Lifeguard(SPARE);
+        Forget_Cell_Was_Lifeguard(SCRATCH);
 
         if (bounce == nullptr) {
             if (g_failure) {  // was PERMISSIVE_ZERO (fail/panic)
@@ -459,8 +457,8 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
     Copy_Cell(arg, v);  // do not decay [4]
 
-    heeded(Corrupt_Cell_If_Needful(Level_Spare(sub)));
-    heeded(Corrupt_Cell_If_Needful(Level_Scratch(sub)));
+    heeded (Corrupt_Cell_If_Needful(Level_Spare(sub)));
+    heeded (Corrupt_Cell_If_Needful(Level_Scratch(sub)));
 
     if (not Typecheck_Coerce(sub, param, arg, false)) {
         Drop_Action(sub);
@@ -718,9 +716,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     KIND_BYTE(temp_item_word) = TYPE_WORD;
     LIFT_BYTE(temp_item_word) = NOQUOTE_2;  // ~word!~ or 'word! etc.
 
-    Option(Error*) error = Trap_Get_Word(test, temp_item_word, derived);
-    if (error)
-        abrupt_panic (unwrap error);
+    required (Get_Word(test, temp_item_word, derived));
 
     if (Is_Action(test)) {
         if (Typecheck_Spare_With_Predicate_Uses_Scratch(L, test, label))

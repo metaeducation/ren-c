@@ -3086,8 +3086,8 @@ Bounce Api_Function_Dispatcher(Level* const L)
         Phase_Paramlist(details), SYM_RETURN
     );
 
-    heeded(Corrupt_Cell_If_Needful(Level_Spare(L)));
-    heeded(Corrupt_Cell_If_Needful(Level_Scratch(L)));
+    heeded (Corrupt_Cell_If_Needful(Level_Spare(L)));
+    heeded (Corrupt_Cell_If_Needful(Level_Scratch(L)));
 
     if (not Typecheck_Coerce_Return(L, param, L->out))
         abrupt_panic (Error_Bad_Return_Type(L, L->out, param));

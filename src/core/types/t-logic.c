@@ -472,12 +472,7 @@ INLINE Result(bool) Eval_Logic_Op_Right_Side(Level* level_)
     else {
         assert(Is_Word(right) or Is_Tuple(right));
 
-        Sink(Value) spare = SPARE;
-        Option(Error*) e = Trap_Get_Var(
-            spare, NO_STEPS, right, SPECIFIED
-        );
-        if (e)
-            panic (unwrap e);
+        Value* spare = require(Get_Var(SPARE, NO_STEPS, right, SPECIFIED));
 
         if (Is_Action(spare))
             abrupt_panic (

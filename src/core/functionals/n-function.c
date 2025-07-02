@@ -239,8 +239,8 @@ Bounce Func_Dispatcher(Level* const L)
         Phase_Paramlist(details), SYM_RETURN
     );
 
-    heeded(Corrupt_Cell_If_Needful(SPARE));
-    heeded(Corrupt_Cell_If_Needful(SCRATCH));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+    heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
     if (not Typecheck_Coerce_Return(L, param, OUT))
         panic (
@@ -694,8 +694,8 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     );
 
     if (not Bool_ARG(RUN)) {  // plain simple RETURN (not weird tail-call)
-        heeded(Corrupt_Cell_If_Needful(SPARE));
-        heeded(Corrupt_Cell_If_Needful(SCRATCH));
+        heeded (Corrupt_Cell_If_Needful(SPARE));
+        heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
         if (not Typecheck_Coerce_Return(LEVEL, param, atom))  // do it now [2]
             panic (Error_Bad_Return_Type(target_level, atom, param));

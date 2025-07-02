@@ -240,9 +240,9 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
 
     if (Is_Integer(e)) {
         if (heart == TYPE_TUPLE) {
-            return fail (Error_User(  // reserve notation for future use [1]
+            return fail (  // reserve notation for future use [1]
                 "5. and .5 currently reserved, please use 5.0 and 0.5"
-            ));
+            );
         }
         // fallthrough (should be able to single cell optimize any INTEGER!)
     }

@@ -125,12 +125,9 @@ static Result(Nothing) Push_Keys_And_Params_Core(
             );
 
         DECLARE_ATOM (dummy);  // don't care about the actual value [1]
-        Option(Error*) e = Trap_Get_Any_Word_Maybe_Trash(
+        trapped (Get_Any_Word_Maybe_Trash(
             dummy, item, Level_Binding(L)
-        );
-        if (e)
-            return fail (unwrap e);
-
+        ));
         continue;
     }
 

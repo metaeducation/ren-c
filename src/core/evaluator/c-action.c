@@ -217,11 +217,9 @@ bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
     if (Type_Of_Unchecked(At_Feed(feed)) != TYPE_WORD)
         return false;
 
-    Option(Error*) e = Trap_Get_Word(
+    Get_Word(
         &feed->gotten, At_Feed(feed), Feed_Binding(feed)
-    );
-
-    if (e) {
+    ) excepted (Error* e) {
         Erase_Cell(&feed->gotten);  // could this be Trap_Get_Word() invariant?
         UNUSED(e);  // don't care (if we care, we'll hit it on next step)
         return false;
@@ -905,8 +903,8 @@ Bounce Action_Executor(Level* L)
             continue;
         }
 
-        heeded(Corrupt_Cell_If_Needful(SPARE));
-        heeded(Corrupt_Cell_If_Needful(SCRATCH));
+        heeded (Corrupt_Cell_If_Needful(SPARE));
+        heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
         if (not Typecheck_Coerce(L, param, ARG, false)) {
             Value* arg = Decay_If_Unstable(ARG);

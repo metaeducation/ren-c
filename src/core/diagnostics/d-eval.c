@@ -182,9 +182,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
         // !!! This is totally dicey, and likely to break.
 
         DECLARE_VALUE (check);
-        Option(Error*) e = Trap_Get_Word(check, L_next, L_binding);
-        assert(not e);
-        UNUSED(e);
+        guaranteed (Get_Word(check, L_next, L_binding));
         assert(
             memcmp(check, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
         );
@@ -290,8 +288,8 @@ void Do_After_Action_Checks_Debug(Level* level_) {
         );
         assert(Is_Parameter(param));
 
-        heeded(Corrupt_Cell_If_Needful(SPARE));
-        heeded(Corrupt_Cell_If_Needful(SCRATCH));
+        heeded (Corrupt_Cell_If_Needful(SPARE));
+        heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
         if (not Typecheck_Coerce_Return(LEVEL, param, OUT)) {
             assert(!"'Raw' native code violated return type contract!\n");

@@ -110,7 +110,7 @@ Context* Adjust_Context_For_Coupling(Context* c) {
 //
 // Convenience wrapper for getting tuples that errors on trash.
 //
-Option(Error*) Trap_Get_Tuple_Maybe_Trash(
+Result(Nothing) Get_Tuple_Maybe_Trash(
     Sink(Value) out,
     Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
@@ -124,24 +124,27 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
     Sink(Atom) atom_out = u_cast(Atom*, out);
     Push_Level_Erase_Out_If_State_0(atom_out, level_);
 
-    heeded(Derelativize(SCRATCH, tuple, context));
-    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded (Derelativize(SCRATCH, tuple, context));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(level_, steps_out);
+    Option(Error*) e;
+    Get_Var_In_Scratch_To_Out(level_, steps_out) excepted (e) {
+        // need to drop level before returning
+    }
 
     Drop_Level(level_);
 
     if (e)
-        return e;
+        return fail (unwrap e);
 
     Decay_If_Unstable(atom_out);
 
-    return SUCCESS;
+    return nothing;
 }
 
 
 //
-//  Trap_Get_Var_Maybe_Trash: C
+//  Get_Var_Maybe_Trash: C
 //
 // This is a generalized service routine for getting variables--including
 // PATH! and CHAIN!.
@@ -152,7 +155,7 @@ Option(Error*) Trap_Get_Tuple_Maybe_Trash(
 //    this function, and then let the Action_Executor() use the refinements
 //    on the stack directly.  That avoids making an intermediate action.
 //
-Option(Error*) Trap_Get_Var_Maybe_Trash(
+Result(Nothing) Get_Var_Maybe_Trash(
     Sink(Atom) out,
     Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* var,
@@ -168,11 +171,13 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
         Push_Lifeguard(safe);
 
         Option(Error*) error;
-        if (Is_Chain(var))
-            error = Trap_Get_Chain_Push_Refinements(
+        if (Is_Chain(var)) {
+            Get_Chain_Push_Refinements(
                 out, safe, var, context
-            );
-        else {
+            ) excepted (error) {
+                // need to drop level before returning
+            }
+        } else {
             Level* level_ = Make_End_Level(
                 &Stepper_Executor,
                 LEVEL_MASK_NONE | FLAG_STATE_BYTE(1)  // rule for trampoline
@@ -180,17 +185,19 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
 
             Push_Level_Erase_Out_If_State_0(out, level_);
 
-            heeded(Derelativize(SCRATCH, var, context));
-            heeded(Corrupt_Cell_If_Needful(SPARE));
+            heeded (Derelativize(SCRATCH, var, context));
+            heeded (Corrupt_Cell_If_Needful(SPARE));
 
-            error = Trap_Get_Path_Push_Refinements(level_);
+            Get_Path_Push_Refinements(level_) excepted (error) {
+                // need to drop level before returning
+            }
 
             Drop_Level(level_);
         }
         Drop_Lifeguard(safe);
 
         if (error)
-            return error;
+            return fail (unwrap error);
 
         assert(Is_Action(Known_Stable(out)));
 
@@ -210,7 +217,7 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
         if (steps_out and steps_out != GROUPS_OK)
             Init_Quasar(unwrap steps_out);  // !!! What to return?
 
-        return SUCCESS;
+        return nothing;
     }
 
     Level* level_ = Make_End_Level(
@@ -220,26 +227,29 @@ Option(Error*) Trap_Get_Var_Maybe_Trash(
 
     Push_Level_Erase_Out_If_State_0(out, level_);  // flushes corruption
 
-    heeded(Derelativize(SCRATCH, var, context));
-    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded (Derelativize(SCRATCH, var, context));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    Option(Error*) e = Trap_Get_Var_In_Scratch_To_Out(level_, steps_out);
+    Option(Error*) error;
+    Get_Var_In_Scratch_To_Out(level_, steps_out) excepted (error) {
+        // need to drop level before returning
+    }
 
     Drop_Level(level_);
 
-    if (e)
-        return e;
+    if (error)
+        return fail (unwrap error);
 
-    return SUCCESS;
+    return nothing;
 }
 
 
 //
-//  Trap_Get_Var: C
+//  Get_Var: C
 //
-// May generate specializations for paths.  See Trap_Get_Var_Maybe_Trash()
+// May generate specializations for paths.  See Get_Var_Maybe_Trash()
 //
-Option(Error*) Trap_Get_Var(
+Result(Value*) Get_Var(
     Sink(Value) out,
     Option(Element*) steps_out,  // if nullptr, then GROUP!s not legal
     const Element* var,
@@ -247,25 +257,23 @@ Option(Error*) Trap_Get_Var(
 ){
     Sink(Atom) atom_out = u_cast(Atom*, out);
 
-    Option(Error*) error = Trap_Get_Var_Maybe_Trash(
+    trapped (Get_Var_Maybe_Trash(
         atom_out, steps_out, var, context
-    );
-    if (error)
-        return error;
+    ));
 
     Decay_If_Unstable(atom_out);
 
     if (Is_Trash(out))
-        return Error_Bad_Word_Get(var, out);
+        return fail (Error_Bad_Word_Get(var, out));
 
-    return SUCCESS;
+    return out;
 }
 
 
 //
-//  Trap_Get_Chain_Push_Refinements: C
+//  Get_Chain_Push_Refinements: C
 //
-Option(Error*) Trap_Get_Chain_Push_Refinements(
+Result(Value*) Get_Chain_Push_Refinements(
     Sink(Value) out,
     Sink(Value) spare,
     const Element* chain,
@@ -282,36 +290,32 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
 
     if (Is_Group(head)) {  // historical Rebol didn't allow group at head
         if (Eval_Value_Throws(out, head, derived))
-            return Error_No_Catch_For_Throw(TOP_LEVEL);
+            panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
     else if (Is_Tuple(head)) {  // .member-function:refinement is legal
         DECLARE_ELEMENT (steps);
-        Option(Error*) error = Trap_Get_Tuple_Maybe_Trash(
+        required (Get_Tuple_Maybe_Trash(  // must panic on erorr
             out, steps, head, derived
-        );
-        if (error)
-            abrupt_panic (unwrap error);  // must be abrupt
+        ));
         if (Is_Trash(out))
-            abrupt_panic (Error_Bad_Word_Get(head, out));
+            panic (Error_Bad_Word_Get(head, out));
     }
     else if (Is_Word(head)) {
-        Option(Error*) error = Trap_Get_Word(out, head, derived);
-        if (error)
-            abrupt_panic (unwrap error);  // must be abrupt
+        required (Get_Word(out, head, derived));  // must panic on error
     }
     else
-        abrupt_panic (head);  // what else could it have been?
+        panic (head);  // what else could it have been?
 
     ++head;
 
     if (Is_Action(out))
         NOOP;  // it's good
     else if (Is_Antiform(out))
-        return Error_Bad_Antiform(out);
+        return fail (Error_Bad_Antiform(out));
     else if (Is_Frame(out))
         Actionify(out);
     else
-        return Error_User("Head of CHAIN! did not evaluate to an ACTION!");
+        panic ("Head of CHAIN! did not evaluate to an ACTION!");
 
     // We push the remainder of the chain in *reverse order* as words to act
     // as refinements to the function.  The action execution machinery will
@@ -330,7 +334,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
                 c_cast(Element*, at),
                 Derive_Binding(derived, at)
             )){
-                return Error_No_Catch_For_Throw(TOP_LEVEL);
+                panic (Error_No_Catch_For_Throw(TOP_LEVEL));
             }
             if (Is_Void(atom_spare))
                 continue;  // just skip it (voids are ignored, NULLs error)
@@ -338,22 +342,22 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
             item = Decay_If_Unstable(atom_spare);
 
             if (Is_Antiform(item))
-                return Error_Bad_Antiform(item);
+                return fail (Error_Bad_Antiform(item));
         }
 
         if (Is_Word(item)) {
             Init_Pushed_Refinement(PUSH(), Word_Symbol(item));
         }
         else
-            abrupt_panic (item);
+            panic (item);
     }
 
-    return SUCCESS;
+    return out;
 }
 
 
 //
-//  Trap_Get_Path_Push_Refinements: C
+//  Get_Path_Push_Refinements: C
 //
 // This is a high-level Get_Path() which only returns ACTION! in OUT.
 //
@@ -362,7 +366,7 @@ Option(Error*) Trap_Get_Chain_Push_Refinements(
 // implemented yet.  Right now a PATH! can only have two parts: a left side
 // (a WORD! or a TUPLE!) and a right side (a WORD! or a CHAIN!)
 //
-Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
+Result(Nothing) Get_Path_Push_Refinements(Level* level_)
 {
   #if NEEDFUL_DOES_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
     assert(Not_Cell_Readable(SPARE));
@@ -394,9 +398,10 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
       case FLAVOR_SYMBOL: {  // `/a` or `a/`
         Element* spare = Copy_Cell(SPARE, path);
         KIND_BYTE(spare) = TYPE_WORD;
-        e = Trap_Get_Any_Word_Maybe_Trash(OUT, spare, SPECIFIED);
-        if (e)
+
+        Get_Any_Word_Maybe_Trash(OUT, spare, SPECIFIED) excepted (e) {
             goto return_error;
+        }
 
         goto ensure_out_is_action; }
 
@@ -428,30 +433,31 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
     }
     else if (Is_Tuple(at)) {
         DECLARE_ELEMENT (steps);
-        e = Trap_Get_Tuple_Maybe_Trash(
+        Get_Tuple_Maybe_Trash(
             spare_left, steps, at, binding
-        );
-        if (e)
+        ) excepted (e) {
             goto return_error;
+        }
     }
     else if (Is_Word(at)) {
-        e = Trap_Get_Word(spare_left, at, binding);
-        if (e)
+        Get_Word(spare_left, at, binding) excepted (e) {
             goto return_error;
+        }
     }
     else if (Is_Chain(at)) {
         if ((at + 1 != tail) and not Is_Space(at + 1)) {
             e = Error_User("CHAIN! can only be last item in a path right now");
             goto return_error;
         }
-        e = Trap_Get_Chain_Push_Refinements(
+        Get_Chain_Push_Refinements(
             u_cast(Init(Value), OUT),
             SPARE,
             c_cast(Element*, at),
             Derive_Binding(binding, at)
-        );
-        if (e)
+        )
+        excepted (e) {
             goto return_error;
+        }
 
         goto return_success;  // chain must resolve to an action (?!)
     }
@@ -468,7 +474,7 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
     }
 
     if (at + 1 != tail and not Is_Space(at + 1))
-        return Error_User("PATH! can only be two items max at this time");
+        return fail ("PATH! can only be two items max at this time");
 
     // When we see `lib/append` for instance, we want to pick APPEND out of
     // LIB and make sure it is an action.
@@ -483,14 +489,15 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
     Sink(Value) out = OUT;
 
     if (Is_Chain(at)) {  // lib/append:dup
-        e = Trap_Get_Chain_Push_Refinements(
+        Get_Chain_Push_Refinements(
             out,
             SPARE,  // scratch space (Cell_Context() extracts)
             at,
             Cell_Context(spare_left)  // need to find head of chain in object
-        );
-        if (e)
+        )
+        excepted (e) {
             goto return_error;
+        }
 
         goto return_success;  // chain must resolve to an action (?!)
     }
@@ -554,14 +561,17 @@ Option(Error*) Trap_Get_Path_Push_Refinements(Level* level_)
     Unprotect_Cell(SCRATCH);
   #endif
 
-    return e;
+    if (e)
+        return fail (unwrap e);
+
+    return nothing;
 }}
 
 
 //
-//  Trap_Get_Any_Word_Maybe_Trash: C
+//  Get_Any_Word_Maybe_Trash: C
 //
-Option(Error*) Trap_Get_Any_Word_Maybe_Trash(
+Result(Nothing) Get_Any_Word_Maybe_Trash(
     Sink(Atom) out,
     const Element* word,  // heeds Sigil (^WORD! will UNLIFT)
     Context* context
@@ -577,17 +587,17 @@ Option(Error*) Trap_Get_Any_Word_Maybe_Trash(
 
       case SIGIL_PIN:
       case SIGIL_TIE:
-        return Error_User("Cannot GET a @PINNED or $TIED variable yet");
+        return fail ("Cannot GET a @PINNED or $TIED variable yet");
     }
 
-    return Trap_Get_Var_Maybe_Trash(out, NO_STEPS, word, context);
+    return Get_Var_Maybe_Trash(out, NO_STEPS, word, context);
 }
 
 
 //
-//  Trap_Get_Any_Word: C
+//  Get_Word: C
 //
-Option(Error*) Trap_Get_Word(
+Result(Value*) Get_Word(
     Sink(Value) out,
     const Element* word,
     Context* context
@@ -596,19 +606,15 @@ Option(Error*) Trap_Get_Word(
 
     Sink(Atom) atom_out = u_cast(Atom*, out);
 
-    Option(Error*) e = Trap_Get_Any_Word_Maybe_Trash(
-        atom_out, word, context
-    );
-    if (e)
-        return e;
+    trapped (Get_Any_Word_Maybe_Trash(atom_out, word, context));
 
     if (Is_Error(atom_out))  // !!! bad pick
-        return Cell_Error(atom_out);
+        return fail (Cell_Error(atom_out));
 
     if (Is_Trash(out))
-        return Error_Bad_Word_Get(word, out);
+        return fail (Error_Bad_Word_Get(word, out));
 
-    return SUCCESS;
+    return out;
 }
 
 
@@ -838,7 +844,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 // but they must do so carefully, because that would skip things like
 // accessors (which implement type checking, etc.)
 //
-// 1. The calling function should do `heeded(Corrupt_Cell_If_Needful(SPARE))`.
+// 1. The calling function should do `heeded (Corrupt_Cell_If_Needful(SPARE))`.
 //    This helps be sure they're not expecting SPARE to be untouched.  (It's
 //    better than trying to work "Corrupts_Spare()" into the already quite-long
 //    name of the function.)
@@ -1209,8 +1215,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
     dont(assert(TOP_INDEX == STACK_BASE));  // Hmmm, why not?
     StackIndex base = TOP_INDEX;
 
-    Option(Error*) e;
-    e = Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
+    Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         level_,
         steps_out != NO_STEPS
     );
@@ -1236,9 +1241,9 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
 
 
 //
-//  Trap_Set_Var_In_Scratch_To_Out: C
+//  Set_Var_In_Scratch_To_Out: C
 //
-Option(Error*) Trap_Set_Var_In_Scratch_To_Out(
+Result(Nothing) Set_Var_In_Scratch_To_Out(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
@@ -1248,34 +1253,37 @@ Option(Error*) Trap_Set_Var_In_Scratch_To_Out(
         steps_out
     );
     Unliftify_Undecayed(OUT);
-    return e;
+    if (e)
+        return fail (unwrap e);
+
+    return nothing;
 }
 
 
 //
-//  Trap_Get_Var_In_Scratch_To_Out: C
+//  Get_Var_In_Scratch_To_Out: C
 //
-Option(Error*) Trap_Get_Var_In_Scratch_To_Out(
+Result(Nothing) Get_Var_In_Scratch_To_Out(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
-    heeded(Init_Dual_Nulled_Pick_Signal(OUT));
+    heeded (Init_Dual_Nulled_Pick_Signal(OUT));
 
     Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
         level_,
         steps_out
     );
     if (e)
-        return e;
+        return fail (unwrap e);
 
     if (Is_Error(OUT))  // !!! weird can't pick case
-        return SUCCESS;
+        return nothing;
 
     if (Is_Dual_Word_Unset_Signal(Known_Stable(OUT)))
-        return Error_User("UNSET variable");
+        return fail ("UNSET variable");
 
     Unliftify_Undecayed(OUT);  // won't make unstable if wasn't ^META [1]
-    return SUCCESS;
+    return nothing;
 }
 
 
@@ -1361,8 +1369,8 @@ DECLARE_NATIVE(TWEAK)
 
     STATE = ST_TWEAK_TWEAKING;  // we'll be setting out to something not erased
 
-    heeded(Copy_Cell(SCRATCH, target));
-    heeded(Corrupt_Cell_If_Needful(SPARE));
+    heeded (Copy_Cell(SCRATCH, target));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(LEVEL, steps);
     if (e)

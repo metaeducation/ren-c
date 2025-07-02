@@ -76,7 +76,10 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         // and the rules apply.
 
         Sink(Value) out_value = out;
-        Option(Error*) e = Trap_Get_Word(out_value, look, binding);
+        Option(Error*) e;
+        Get_Word(out_value, look, binding) excepted (e) {
+            // !!! this code tolerated with `not e`, review right answer
+        }
 
         if (not e and Is_Action(out_value)) {
             Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(out_value);
@@ -341,8 +344,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     }
 
     if (param and not Is_Trash(out_value)) {
-        heeded(Corrupt_Cell_If_Needful(Level_Spare(TOP_LEVEL)));
-        heeded(Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
+        heeded (Corrupt_Cell_If_Needful(Level_Spare(TOP_LEVEL)));
+        heeded (Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
 
         if (not Typecheck_Coerce(TOP_LEVEL, param, out, false)) {
             // !!! Array-based varargs only store the parameter list they are

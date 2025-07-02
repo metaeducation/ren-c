@@ -431,14 +431,12 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
 
         bool error_on_deferred = true;
 
-        Option(Error*) e = Trap_Init_Frame_From_Feed(
+        required (Init_Frame_From_Feed(
             OUT,
             nullptr,
             feed,
             error_on_deferred
-        );
-        if (e)
-            panic (unwrap e);
+        ));
 
         Release_Feed(feed);
 

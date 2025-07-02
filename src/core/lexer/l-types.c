@@ -359,14 +359,11 @@ DECLARE_NATIVE(OF)
 
     Element* prop_of = Init_Word(SCRATCH, sym_of);
 
-    Sink(Value) spare_action = SPARE;
-    Option(Error*) e = Trap_Get_Word(
-        spare_action,
+    Value* spare_action = require (Get_Word(
+        SPARE,
         prop_of,
         Feed_Binding(LEVEL->feed)
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
     if (not Is_Action(spare_action))
         panic ("OF looked up to a value that wasn't an ACTION!");

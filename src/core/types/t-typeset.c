@@ -126,7 +126,7 @@ void Shutdown_Typesets(void)
 //    get the integer typecheck... but if WORD! is unbound then it would act
 //    as a WORD! typecheck.)
 //
-void Set_Parameter_Spec(
+Result(Nothing) Set_Parameter_Spec(
     Element* param,  // target should be GC safe [1]
     const Element* spec,
     Context* spec_binding
@@ -254,9 +254,7 @@ void Set_Parameter_Spec(
         DECLARE_VALUE (lookup);
 
         if (Is_Word(item)) {  // allow abstraction [3]
-            Option(Error*) e = Trap_Get_Word(lookup, item, spec_binding);
-            if (e)  // couldn't get the word (or got, and it was trash)
-                abrupt_panic (unwrap e);
+            required (Get_Word(lookup, item, spec_binding));
         }
         else
             Copy_Cell(lookup, item);
@@ -317,7 +315,7 @@ void Set_Parameter_Spec(
             // By pre-checking we can avoid needing to double check in the
             // actual type-checking phase.
 
-            abrupt_panic (item);
+            panic (item);
         }
     }
 
@@ -327,6 +325,8 @@ void Set_Parameter_Spec(
     Freeze_Source_Shallow(copy);  // !!! copy and freeze should likely be deep
 
     assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));
+
+    return nothing;
 }}
 
 

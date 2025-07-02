@@ -1203,8 +1203,8 @@ DECLARE_NATIVE(FOR_EACH)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    heeded(Corrupt_Cell_If_Needful(SPARE));
-    heeded(Corrupt_Cell_If_Needful(SCRATCH));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+    heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
     bool done;
     Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);
@@ -1320,8 +1320,8 @@ DECLARE_NATIVE(EVERY)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    heeded(Corrupt_Cell_If_Needful(SPARE));
-    heeded(Corrupt_Cell_If_Needful(SCRATCH));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+    heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
     bool done;
     Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);
@@ -1886,8 +1886,8 @@ DECLARE_NATIVE(MAP)
 
 } next_iteration: {  /////////////////////////////////////////////////////////
 
-    heeded(Corrupt_Cell_If_Needful(SPARE));
-    heeded(Corrupt_Cell_If_Needful(SCRATCH));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+    heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
     bool done;
     Option(Error*) e = Trap_Loop_Each_Next(&done, LEVEL);

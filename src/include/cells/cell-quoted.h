@@ -304,7 +304,7 @@ INLINE Atom* Unstably_Antiformize_Unbound_Fundamental(Need(Atom*) atom) {
     return atom;
 }
 
-INLINE Element* Quasify_Antiform(Atom* v) {
+INLINE Element* Quasify_Antiform(Need(Value*) v) {
     assert(Is_Antiform(v));
     LIFT_BYTE_RAW(v) = QUASIFORM_3;  // all antiforms can be quasi
     return u_cast(Element*, v);

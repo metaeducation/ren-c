@@ -129,7 +129,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 
 
 //
-//  Trap_Init_Invokable_From_Feed: C
+//  Init_Invokable_From_Feed: C
 //
 // This builds a frame from a feed *as if* it were going to be used to call
 // an action, but doesn't actually make the call.  Instead it leaves the
@@ -140,7 +140,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 // version of what would be evaluated to.  So in the case of NULL, it will be
 // a single quote of nothing.
 //
-Option(Error*) Trap_Init_Invokable_From_Feed(
+Result(Nothing) Init_Invokable_From_Feed(
     Sink(Value) out,
     Option(const Element*) first,  // override first value, vs. At_Feed(feed)
     Feed* feed,
@@ -152,7 +152,7 @@ Option(Error*) Trap_Init_Invokable_From_Feed(
     // needs review.
     //
     if (v == nullptr)  // no first, and feed was at end
-        return SUCCESS;
+        return nothing;
 
     if (Is_Group(v))  // `requote (append [a b c] #d, <can't-work>)`
         abrupt_panic ("Actions made with REFRAMER cannot work with GROUP!s");
@@ -160,9 +160,7 @@ Option(Error*) Trap_Init_Invokable_From_Feed(
     StackIndex base = TOP_INDEX;
 
     if (Is_Word(v) or Is_Tuple(v) or Is_Path(v) or Is_Chain(v)) {
-        Option(Error*) e = Trap_Get_Var(out, NO_STEPS, v, Feed_Binding(feed));
-        if (e)
-            return e;
+        required (Get_Var(out, NO_STEPS, v, Feed_Binding(feed)));
     }
     else
         Derelativize(out, v, Feed_Binding(feed));
@@ -172,7 +170,7 @@ Option(Error*) Trap_Init_Invokable_From_Feed(
 
     if (not Is_Action(out)) {
         Quotify(Known_Element(out));
-        return SUCCESS;
+        return nothing;
     }
 
     // !!! Process_Action_Throws() calls Drop_Action() and loses the phase.
@@ -196,7 +194,7 @@ Option(Error*) Trap_Init_Invokable_From_Feed(
     if (Is_Throwing(L)) {  // signals threw
         Drop_Level(L);
         Drop_Lifeguard(action);
-        return Error_No_Catch_For_Throw(L);
+        panic (Error_No_Catch_For_Throw(L));
     }
 
     // The exemplar may or may not be managed as of yet.  We want it
@@ -218,12 +216,12 @@ Option(Error*) Trap_Init_Invokable_From_Feed(
     ParamList* lens = Phase_Paramlist(Frame_Phase(action));
     Init_Lensed_Frame(out, varlist, lens, coupling);
 
-    return SUCCESS;
+    return nothing;
 }
 
 
 //
-//  Trap_Init_Frame_From_Feed: C
+//  Init_Frame_From_Feed: C
 //
 // Making an invokable from a feed might return a QUOTED?, because that is
 // more efficient (and truthful) than creating a FRAME! for the identity
@@ -231,20 +229,16 @@ Option(Error*) Trap_Init_Invokable_From_Feed(
 // that has to follow the rules of MAKE FRAME!...e.g. returning a frame.
 // This converts QUOTED?s into frames for the identity function.
 //
-Option(Error*) Trap_Init_Frame_From_Feed(
+Result(Nothing) Init_Frame_From_Feed(
     Sink(Value) out,
     const Element* first,
     Feed* feed,
     bool error_on_deferred
 ){
-    Option(Error*) e = Trap_Init_Invokable_From_Feed(
-        out, first, feed, error_on_deferred
-    );
-    if (e)
-        return e;
+    trapped (Init_Invokable_From_Feed(out, first, feed, error_on_deferred));
 
     if (Is_Frame(out))
-        return SUCCESS;
+        return nothing;
 
     assert(Is_Quoted(out));
     ParamList* exemplar = Make_Varlist_For_Action(
@@ -262,7 +256,7 @@ Option(Error*) Trap_Init_Frame_From_Feed(
     //
     Option(const Symbol*) label = nullptr;
     Init_Frame(out, exemplar, label, NONMETHOD);
-    return SUCCESS;
+    return nothing;
 }
 
 
@@ -304,14 +298,12 @@ Bounce Reframer_Dispatcher(Level* const L)
     bool error_on_deferred = true;
     Sink(Value) spare = SPARE;
 
-    Option(Error*) e = Trap_Init_Invokable_From_Feed(
+    required (Init_Invokable_From_Feed(
         spare,
         nullptr,
         L->feed,
         error_on_deferred
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
     Atom* arg = Level_Arg(L, VAL_INT32(param_index));
     Move_Cell(arg, spare);
@@ -385,8 +377,8 @@ Details* Alloc_Action_From_Exemplar(
             continue;
         }
 
-        heeded(Corrupt_Cell_If_Needful(Level_Spare(TOP_LEVEL)));
-        heeded(Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
+        heeded (Corrupt_Cell_If_Needful(Level_Spare(TOP_LEVEL)));
+        heeded (Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
 
         if (not Typecheck_Coerce(TOP_LEVEL, param, arg, false))
             abrupt_panic (Error_Arg_Type(label, key, param, arg));

@@ -142,28 +142,24 @@ DECLARE_NATIVE(TRANSCODE)
     else
         file = ANONYMOUS;
 
-    Sink(Value) line_number = SCRATCH;  // use as scratch space
+    Sink(Value) scratch_line_number = SCRATCH;  // use as scratch space
     if (Any_Word(ARG(LINE))) {
-        Option(Error*) e = Trap_Get_Var(
-            line_number,
+        required (Get_Var(
+            scratch_line_number,
             NO_STEPS,
             Element_ARG(LINE),
             SPECIFIED
-        );
-        if (e)
-            panic (unwrap e);
+        ));
+        // null not allowed, must be integer
     }
-    else {
-        assert(Is_Nulled(ARG(LINE)) or Is_Integer(ARG(LINE)));
-        Copy_Cell(line_number, ARG(LINE));
-    }
+    else if (Is_Nulled(ARG(LINE)))  // not provided
+        Init_Integer(scratch_line_number, 1);
+    else
+        Copy_Cell(scratch_line_number, ARG(LINE));
 
     LineNumber start_line;
-    if (Is_Nulled(line_number)) {
-        start_line = 1;
-    }
-    else if (Is_Integer(line_number)) {
-        start_line = VAL_INT32(line_number);
+    if (Is_Integer(scratch_line_number)) {
+        start_line = VAL_INT32(scratch_line_number);
         if (start_line <= 0)
             panic (PARAM(LINE));  // definitional?
     }
@@ -261,11 +257,9 @@ DECLARE_NATIVE(TRANSCODE)
     if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // want line number updated
         Init_Integer(OUT, transcode->line);
         Copy_Cell(Level_Scratch(SUBLEVEL), Element_ARG(LINE));  // variable
-        heeded(Corrupt_Cell_If_Needful(Level_Spare(SUBLEVEL)));
+        heeded (Corrupt_Cell_If_Needful(Level_Spare(SUBLEVEL)));
 
-        Option(Error*) e = Trap_Set_Var_In_Scratch_To_Out(SUBLEVEL, NO_STEPS);
-        if (e)
-            panic (unwrap e);
+        required (Set_Var_In_Scratch_To_Out(SUBLEVEL, NO_STEPS));
 
         UNUSED(*OUT);
     }
