@@ -890,8 +890,9 @@ Source* Context_To_Array(const Element* context, REBINT mode)
         if (mode & 1) {
             assert(e.index != 0);
             Init_Word(PUSH(), Key_Symbol(e.key));
-            if (mode & 2)
+            if (mode & 2) {
                 trapped (Setify(TOP_ELEMENT));
+            }
             if (Is_Module(context)) {
                 Tweak_Cell_Binding(TOP_ELEMENT, e.ctx);
             }

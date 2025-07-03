@@ -287,9 +287,11 @@ struct NEEDFUL_NODISCARD ResultWrapper {
         : p (u_cast(T, std::forward<U>(something)))
     {}
 
-    ExtractedHotPotato<T> extract() {
-        return p;
-    }
+    ExtractedHotPotato<T> Extract_Hot()  // [[nodiscard]] version
+      { return p; }
+
+    T Extract_Cold()  // plain type, discardable
+      { return p; }
 };
 
 #undef NeedfulResult
@@ -297,7 +299,10 @@ struct NEEDFUL_NODISCARD ResultWrapper {
     needful::ResultWrapper<T>
 
 #undef Needful_Prefix_Extract_Hot
-#define Needful_Prefix_Extract_Hot(expr)  (expr).extract()
+#define Needful_Prefix_Extract_Hot(expr)  (expr).Extract_Hot()
+
+#undef Needful_Prefix_Discard_Result
+#define Needful_Prefix_Discard_Result(expr)  USED(expr)
 
 struct ResultExtractor {};
 
@@ -307,7 +312,7 @@ ExtractedHotPotato<T> operator>>(
     const ResultExtractor& right
 ){
     UNUSED(right);
-    return result.extract();
+    return result.Extract_Hot();
 }
 
 constexpr ResultExtractor g_result_extractor = {};
@@ -365,11 +370,11 @@ inline void operator>>(
 
 //=//// EXTRACTION DISCARDER //////////////////////////////////////////////=//
 
-struct ExtractionDiscarder {};
+struct ResultDiscarder {};
 
 template<typename T>
-inline void operator|(  // using `|` for precedence lower than `>>`
-    const ExtractionDiscarder&,
+inline T operator|(  // using `|` for precedence lower than `>>`
+    const ResultDiscarder&,
     const ExtractedHotPotato<T>& extraction
 ){
     USED(extraction);  // mark as used, do nothing
@@ -378,17 +383,12 @@ inline void operator|(  // using `|` for precedence lower than `>>`
 template<typename T>
 inline void operator>>(
     const ResultWrapper<T>& result,
-    const ExtractionDiscarder&
+    const ResultDiscarder&
 ){
     USED(result);  // mark as used, do nothing
 }
 
-static constexpr ExtractionDiscarder g_extraction_discarder{};
+static constexpr ResultDiscarder g_result_discarder{};
 
-#undef needful_discarded
-#define needful_discarded(expr) do { \
-    needful::g_extraction_discarder | /* <- overloaded */ expr; \
-} while (0)
-
-#undef Needful_Postfix_Extract_Cold
-#define Needful_Postfix_Extract_Cold  >> needful::g_extraction_discarder
+#undef Needful_Postfix_Discard_Result
+#define Needful_Postfix_Discard_Result  >> needful::g_result_discarder

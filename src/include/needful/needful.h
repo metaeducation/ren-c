@@ -179,11 +179,6 @@
 
 #define NEEDFUL_NOOP  ((void)0)
 
-#define Needful_Prefix_Extract_Hot(expr)  (expr)
-
-#define Needful_Postfix_Extract_Hot
-#define Needful_Postfix_Extract_Cold
-
 #define needful_fail(p) \
     (assert(not Needful_Get_Failure() and not Needful_Get_Divergence()), \
     Needful_Set_Failure(p), \
@@ -196,23 +191,23 @@
     return NEEDFUL_PERMISSIVE_ZERO; \
 } while (0)
 
-#define needful_trap(expr) \
-    /* var = */ (Needful_Assert_Not_Failing(), Needful_Prefix_Extract_Hot(expr)); \
+#define needful_trap_core(expr, prefix_extractor) \
+    /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
     if (Needful_Get_Failure()) { \
         /* possibly(Needful_Get_Divergence()); */ \
         return NEEDFUL_PERMISSIVE_ZERO; \
     } NEEDFUL_NOOP  /* force require semicolon at callsite */
 
-#define needful_require(expr) \
-    /* var = */ (Needful_Assert_Not_Failing(), Needful_Prefix_Extract_Hot(expr)); \
+#define needful_require_core(expr, prefix_extractor) \
+    /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
     if (Needful_Get_Failure()) { \
         /* possibly(Needful_Get_Divergence()); */ \
         Needful_Force_Divergent(); \
         return NEEDFUL_PERMISSIVE_ZERO; \
     } NEEDFUL_NOOP  /* force require semicolon at callsite */
 
-#define needful_guarantee(expr) \
-    /* var = */ (Needful_Assert_Not_Failing(), Needful_Prefix_Extract_Hot(expr)); \
+#define needful_guarantee_core(expr, prefix_extractor) \
+    /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
     Needful_Assert_Not_Failing();
 
 #define needful_except_core(decl,postfix_extractor) \
@@ -222,32 +217,54 @@
     for (decl = Needful_Get_Failure(); Needful_Test_And_Clear_Failure(); )
         /* implicitly takes code block after macro as except()-body */
 
-#define /* expr */ needful_except(decl) /* {body} */ \
-    needful_except_core(decl, Needful_Postfix_Extract_Hot)
-
 #define needful_rescue_core(expr,postfix_extractor) \
-    expr postfix_extractor needful_rescue_then
+    expr postfix_extractor needful_rescue_then_internal /* (decl) {body} */
 
-#define needful_rescue_then(decl) \
-    /* rescue (expr) */ ; /* semicolon required */ \
+#define /* rescue (expr) */ needful_rescue_then_internal(decl) /* {body} */ \
+    ; /* semicolon required */ \
     /* possibly(Needful_Get_Divergence()); */ \
     for (decl = Needful_Get_Failure(); Needful_Test_And_Clear_Failure(); )
         /* { ...implicit code block after macro is except()-body ... } */
 
+//=//// "Hot Potato" Versions ////////////////////////////////////////////=//
+
+#define Needful_Prefix_Extract_Hot(expr)  (expr)
+#define Needful_Postfix_Extract_Hot
+
+#define needful_trap(expr) \
+    needful_trap_core(expr, Needful_Prefix_Extract_Hot)
+
+#define needful_require(expr) \
+    needful_require_core(expr, Needful_Prefix_Extract_Hot)
+
+#define needful_guarantee(expr) \
+    needful_guarantee_core(expr, Needful_Prefix_Extract_Hot)
+
+#define /* expr */ needful_except(decl) /* {body} */ \
+    needful_except_core(decl, Needful_Postfix_Extract_Hot)
+
 #define needful_rescue(expr) /* (decl) {body} */ \
     needful_rescue_core(expr, Needful_Postfix_Extract_Hot)
 
-#define needful_discarded(expr)  do { expr; } while (0)
+//=//// Discarded Result Versions /////////////////////////////////////////=//
 
-#define needful_trapped(expr)       needful_discarded(needful_trap(expr))
-#define needful_required(expr)      needful_discarded(needful_require(expr))
-#define needful_guaranteed(expr)    needful_discarded(needful_guarantee(expr))
+#define Needful_Prefix_Discard_Result(expr)  (expr)
+#define Needful_Postfix_Discard_Result
+
+#define needful_trapped(expr) \
+    needful_trap_core(expr, Needful_Prefix_Discard_Result)
+
+#define needful_required(expr) \
+    needful_require_core(expr, Needful_Prefix_Discard_Result)
+
+#define needful_guaranteed(expr) \
+    needful_guarantee_core(expr, Needful_Prefix_Discard_Result)
 
 #define /* expr */ needful_excepted(decl) /* {body} */ \
-    needful_except_core(decl, Needful_Postfix_Extract_Cold)
+    needful_except_core(decl, Needful_Postfix_Discard_Result)
 
 #define needful_rescued(expr) /* (decl) {body} */ \
-    needful_rescue_core(expr, Needful_Postfix_Extract_Hot)
+    needful_rescue_core(expr, Needful_Postfix_Discard_Result)
 
 
 //=//// Sink(T): INDICATE FUNCTION OUTPUT PARAMETERS //////////////////////=//
@@ -664,8 +681,29 @@ typedef enum {
 // valid, etc.)
 //
 
-#define NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL(expr)   STATIC_IGNORE(expr)
-#define NEEDFUL_STATIC_ASSERT_DECLTYPE_VALID(expr)  STATIC_IGNORE(expr)
+#define NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL(expr)  NEEDFUL_NOOP
+
+#define NEEDFUL_STATIC_ASSERT_DECLTYPE_VALID(expr) NEEDFUL_NOOP
+
+
+//=//// NODISCARD shim ////////////////////////////////////////////////////=//
+//
+// NODISCARD is a C++17 feature, but some compilers offer it as something
+// you can use in C code as well.  It's useful enough in terms of warning
+// of unused results that a macro is offered to generalize it.
+//
+// (The pre-[[nodiscard]] hacks only work on functions, not types.  They
+// can be applied to structs, but will have no effect.  [[nodiscard]] from
+// C++17 works on types as well as functions, so it is more powerful.)
+//
+
+#if defined(__GNUC__) || defined(__clang__)
+    #define NEEDFUL_NODISCARD  __attribute__((warn_unused_result))
+#elif defined(_MSC_VER)
+    #define NEEDFUL_NODISCARD _Check_return_
+#else
+    #define NEEDFUL_NODISCARD  // C++ overloads may redefine to [[nodiscard]]
+#endif
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -739,11 +777,6 @@ typedef enum {
     #define sys_util_rescued(expr)  needful_rescued(expr)  // stigmatize [1]
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_ZERO_SHORTHANDS)
-    #define Zero                    NeedfulZero
-    #define zero                    needful_zero
-#endif
-
 #if !defined(NEEDFUL_DONT_DEFINE_SINK_SHORTHANDS)
     #define Sink(T)                 NeedfulSink(T)
     #define Init(T)                 NeedfulInit(T)
@@ -756,6 +789,11 @@ typedef enum {
     #define whilst(condition)       needful_whilst(condition)
     #define then                    needful_then
     #define again                   needful_again
+#endif
+
+#if !defined(NEEDFUL_DONT_DEFINE_ZERO_SHORTHANDS)
+    #define Zero                    NeedfulZero
+    #define zero                    needful_zero
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)  // informative! [2]
@@ -802,26 +840,10 @@ typedef enum {
   #if !defined(NOOP)
     #define NOOP  NEEDFUL_NOOP
   #endif
-#endif
 
-
-//=//// NODISCARD shim ////////////////////////////////////////////////////=//
-//
-// NODISCARD is a C++17 feature, but some compilers offer it as something
-// you can use in C code as well.  It's useful enough in terms of warning
-// of unused results that a macro is offered to generalize it.
-//
-// (The pre-[[nodiscard]] hacks only work on functions, not types.  They
-// can be applied to structs, but will have no effect.  [[nodiscard]] from
-// C++17 works on types as well as functions, so it is more powerful.)
-//
-
-#if defined(__GNUC__) || defined(__clang__)
-    #define NEEDFUL_NODISCARD  __attribute__((warn_unused_result))
-#elif defined(_MSC_VER)
-    #define NEEDFUL_NODISCARD _Check_return_
-#else
-    #define NEEDFUL_NODISCARD  // C++ overloads may redefine to [[nodiscard]]
+  #if !defined(NODISCARD)
+    #define NODISCARD  NEEDFUL_NODISCARD
+  #endif
 #endif
 
 
