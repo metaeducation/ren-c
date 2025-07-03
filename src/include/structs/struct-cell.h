@@ -793,7 +793,8 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 #else
     struct Slot : public Cell {};  // can hold unstable antiforms
 
-  #if DEBUG_USE_SINKS
+  #if NEEDFUL_SINK_USES_WRAPPER
+  namespace needful {
     template<>
     struct AllowSinkConversion<Slot, Atom> : std::true_type {};
 
@@ -802,6 +803,7 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 
     template<>
     struct AllowSinkConversion<Slot, Element> : std::true_type {};
+  }
   #endif
 #endif
 

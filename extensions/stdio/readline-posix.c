@@ -32,7 +32,8 @@
 
 #include "assert-fix.h"
 #include "needful/needful.h"
-#define cast  h_cast
+#include "c-extras.h"  // for EXTERN_C, nullptr, etc.
+
 
 #include "rebol.h"  // not %sys-core.h !
 typedef RebolValue Value;

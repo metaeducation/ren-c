@@ -223,7 +223,7 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 // 1. Stub_Cell() is a critical function, and asserts can slow down the
 //    debug build significantly here.  Only do what's essential.
 
-INLINE_MUTABLE_IF_C(Atom*) Stub_Cell(CONST_IF_C(Stub*) stub)
+MUTABLE_IF_C(Atom*, INLINE) Stub_Cell(CONST_IF_C(Stub*) stub)
 {
     CONSTABLE(Stub*) s = m_cast(Stub*, stub);
 
@@ -365,7 +365,7 @@ INLINE void Flip_Stub_To_White(const Stub* f) {
     #define Ensure_Stub_Info_Managed(s)  (s)
     #define Ensure_Stub_Bonus_Managed(s)  (s)
 #else
-    INLINE_MUTABLE_IF_C(Stub*) Ensure_Stub_Link_Managed(
+    MUTABLE_IF_C(Stub*, INLINE) Ensure_Stub_Link_Managed(
         CONST_IF_C(Stub*) stub
     ){
         CONSTABLE(Stub*) s = m_cast(Stub*, stub);
@@ -373,7 +373,7 @@ INLINE void Flip_Stub_To_White(const Stub* f) {
         return s;
     }
 
-    INLINE_MUTABLE_IF_C(Stub*) Ensure_Stub_Misc_Managed(
+    MUTABLE_IF_C(Stub*, INLINE) Ensure_Stub_Misc_Managed(
         CONST_IF_C(Stub*) stub
     ){
         CONSTABLE(Stub*) s = m_cast(Stub*, stub);
@@ -381,7 +381,7 @@ INLINE void Flip_Stub_To_White(const Stub* f) {
         return s;
     }
 
-    INLINE_MUTABLE_IF_C(Stub*) Ensure_Stub_Info_Managed(
+    MUTABLE_IF_C(Stub*, INLINE) Ensure_Stub_Info_Managed(
         CONST_IF_C(Stub*) stub
     ){
         CONSTABLE(Stub*) s = m_cast(Stub*, stub);
@@ -389,7 +389,7 @@ INLINE void Flip_Stub_To_White(const Stub* f) {
         return s;
     }
 
-    INLINE_MUTABLE_IF_C(Stub*) Ensure_Stub_Bonus_Managed(
+    MUTABLE_IF_C(Stub*, INLINE) Ensure_Stub_Bonus_Managed(
         CONST_IF_C(Stub*) stub
     ){
         CONSTABLE(Stub*) s = m_cast(Stub*, stub);

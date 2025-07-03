@@ -37,7 +37,7 @@
 #if NO_RUNTIME_CHECKS
     #define Ensure_Date(v)  (v)
 #else
-    INLINE_MUTABLE_IF_C(Cell*) Ensure_Date(CONST_IF_C(Cell*) cell) {
+    MUTABLE_IF_C(Cell*, INLINE) Ensure_Date(CONST_IF_C(Cell*) cell) {
         CONSTABLE(Cell*) c = m_cast(Cell*, cell);
         assert(Heart_Of(c) == TYPE_DATE);
         return c;

@@ -1014,7 +1014,7 @@ DECLARE_NATIVE(JS_NATIVE)
     Append_Ascii(mo->strand, ", f);\n");
 
     Term_Binary(mo->strand);  // !!! is this necessary?
-    const char *js = cs_cast(Binary_At(mo->strand, mo->base.size));
+    const char *js = s_cast(Binary_At(mo->strand, mo->base.size));
 
     TRACE("Registering native_id %ld", cast(long, native_id));
 

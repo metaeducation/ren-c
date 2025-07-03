@@ -74,7 +74,7 @@ INLINE bool Is_Handle_Cfunc(const Value* v) {
     return CELL_HANDLE_LENGTH_U(v) == 0;
 }
 
-INLINE_MUTABLE_IF_C(Cell*) Extract_Cell_Handle_Canon(CONST_IF_C(Cell*) cell)
+MUTABLE_IF_C(Cell*, INLINE) Extract_Cell_Handle_Canon(CONST_IF_C(Cell*) cell)
 {
     CONSTABLE(Cell*) c = m_cast(Cell*, cell);
 

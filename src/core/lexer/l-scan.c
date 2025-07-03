@@ -421,7 +421,7 @@ static void Update_Error_Near_For_Line(
     Append_Ascii(mo->strand, "(line ");
     Append_Int(mo->strand, line);  // (maybe) different from line below
     Append_Ascii(mo->strand, ") ");
-    Append_UTF8_May_Panic(mo->strand, cs_cast(bp), size, STRMODE_NO_CR);
+    Append_UTF8_May_Panic(mo->strand, s_cast(bp), size, STRMODE_NO_CR);
 
     ERROR_VARS *vars = ERR_VARS(error);
     Init_Text(Slot_Init_Hack(&vars->nearest), Pop_Molded_Strand(mo));
@@ -554,7 +554,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
         // Check for identifiers
         for (c = 0; c <= MAX_ESC; c++) {
             cp = maybe Try_Diff_Bytes_Uncased(
-                bp, cb_cast(g_escape_info[c].name)
+                bp, b_cast(g_escape_info[c].name)
             );
             if (cp and *cp == ')') {
                 bp = cp + 1;
@@ -786,7 +786,7 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
 ){
     Option(const Byte*) invalids;
     if (token == TOKEN_FILE)  // percent-encoded historically :-/
-        invalids = cb_cast(":;\"");
+        invalids = b_cast(":;\"");
     else {
         assert(token == TOKEN_RUNE);
         invalids = nullptr;
@@ -903,7 +903,7 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
         if (c >= 128 or not invalids) {
             // not valid ASCII, so don't check it
         }
-        else if (strchr(cs_cast(unwrap invalids), c)) {
+        else if (strchr(s_cast(unwrap invalids), c)) {
             //
             // Is char as literal valid? (e.g. () [] etc.)
             // Only searches ASCII characters.
@@ -977,7 +977,7 @@ static Error* Error_Syntax(ScanState* S, Token token) {
     DECLARE_ELEMENT (token_text);
     Init_Text(
         token_text,
-        Make_Sized_Strand_UTF8(cs_cast(S->begin), S->end - S->begin)
+        Make_Sized_Strand_UTF8(s_cast(S->begin), S->end - S->begin)
     );
 
     return Error_Scan_Invalid_Raw(token_name, token_text);
@@ -1594,7 +1594,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
                 // URL! having semicolons intenrally?
             }
             if (*cp == '"') {
-                /*Option(const Byte*) invalids = cb_cast(":;\""); */
+                /*Option(const Byte*) invalids = b_cast(":;\""); */
 
                 cp = trap (Scan_String_Push_Mold(mo, cp, 0, S));
                 S->end = cp;
@@ -2138,12 +2138,12 @@ INLINE Error* Decorate_Error_For_Scanner(
 #undef fail
 #define fail(p) \
     needful_fail(Decorate_Error_For_Scanner( \
-        CAPTURE_BY_NAME(transcode), Derive_Error_From_Pointer(p)))
+        ENSURE_LVALUE(transcode), Derive_Error_From_Pointer(p)))
 
 #undef panic
 #define panic(p) \
     needful_panic(Decorate_Error_For_Scanner( \
-        CAPTURE_BY_NAME(transcode), Derive_Error_From_Pointer(p)))
+        ENSURE_LVALUE(transcode), Derive_Error_From_Pointer(p)))
 
 
 //
@@ -2596,7 +2596,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (mo->base.size == Strand_Size(mo->strand)) {  // % is WORD!
         const Symbol* symbol = guarantee (
-            Intern_Utf8_Managed(cb_cast("%"), 1)
+            Intern_Utf8_Managed(b_cast("%"), 1)
         );
         Init_Word(PUSH(), symbol);
         Drop_Mold(mo);
@@ -2629,7 +2629,7 @@ Bounce Scanner_Executor(Level* const L) {
     Size size = len - 2;  // !!! doesn't know where tag actually ends (?)
     Strand* s = Append_UTF8_May_Panic(
         nullptr,
-        cs_cast(S->begin + 1),
+        s_cast(S->begin + 1),
         size,
         STRMODE_NO_CR
     );
@@ -3210,8 +3210,8 @@ void Startup_Scanner(void)
     }
   #endif
 
-    UNUSED(Is_Lex_Sigil);
-    UNUSED(Interstitial_Match);
+    UNUSED(&Is_Lex_Sigil);
+    UNUSED(&Interstitial_Match);
 }
 
 

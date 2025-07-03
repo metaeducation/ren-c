@@ -270,7 +270,9 @@ INLINE Init(Slot) Slot_Init_Hack(Slot* slot) {
     return u_cast(Init(Slot), slot);
 }
 
-INLINE_MUTABLE_IF_C(Value*) Slot_Hack(CONST_IF_C(Slot*) slot) {
+MUTABLE_IF_C(Value*, INLINE) Slot_Hack(
+    CONST_IF_C(Slot*) slot
+){
     CONSTABLE(Slot*) s = m_cast(Slot*, slot);
     assert(LIFT_BYTE(s) != DUAL_0);
     return u_cast(Value*, s);

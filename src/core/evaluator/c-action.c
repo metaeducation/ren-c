@@ -100,7 +100,7 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
         }
 
         // if g_failure is set, nullptr came from `return fail()` not a
-        // `return nullptr` indicating null.  See PERMISSIVE_ZERO.
+        // `return nullptr` indicating null.  See NEEDFUL_PERMISSIVE_ZERO.
 
         assert(not Is_Throwing(L));
 

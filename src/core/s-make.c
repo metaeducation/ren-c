@@ -296,7 +296,7 @@ Strand* Append_UTF8_May_Panic(
     Size size,
     enum Reb_Strmode strmode
 ){
-    const Byte* bp = cb_cast(utf8);
+    const Byte* bp = b_cast(utf8);
 
     DECLARE_MOLDER (mo); // !!! REVIEW: don't need intermediate if no CRLF_TO_LF
     Push_Mold(mo);

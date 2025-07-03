@@ -242,6 +242,7 @@
     struct SuccessSentinel {};
     static const SuccessSentinel SUCCESS = SuccessSentinel();  // global ok
 
+  namespace needful {
     template<>
     struct OptionWrapper<Error*> {  // repeats some code, but that's life [2]
         Error* p;
@@ -272,4 +273,5 @@
         explicit operator bool()
           { return p != nullptr; }
     };
+  }  // end namespace needful
 #endif

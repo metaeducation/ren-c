@@ -45,7 +45,8 @@
 
 #include "assert-fix.h"
 #include "needful/needful.h"
-#define cast  h_cast
+#include "c-extras.h"  // for EXTERN_C, nullptr, etc.
+
 
 #include "tmp-constants.h" // need the extern definitions
 

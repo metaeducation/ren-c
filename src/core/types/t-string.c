@@ -49,7 +49,7 @@ enum {
 
 
 //
-//  String_At: C
+//  Non_Const_Correct_Strand_At: C
 //
 // Note that we only ever create caches for strings that have had Strand_At()
 // run on them.  So the more operations that avoid Strand_At(), the better!
@@ -57,7 +57,7 @@ enum {
 // to iterate much faster, and most of the strings in the system might be able
 // to get away with not having any bookmarks at all.
 //
-Utf8(*) Strand_At(const_if_c Strand* s, REBLEN at)
+Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
 {
     assert(s != g_mold.buffer);  // Strand_At() makes bookmarks, don't want!
 
@@ -345,7 +345,7 @@ DECLARE_NATIVE(TO_TEXT)
             TYPE_TEXT,
             Append_UTF8_May_Panic(
                 nullptr,
-                cs_cast(at),
+                s_cast(at),
                 size,
                 STRMODE_ALL_CODEPOINTS
             )
@@ -1369,7 +1369,7 @@ DECLARE_NATIVE(DECODE_UTF_8)
     return Init_Any_String(
         OUT,
         heart,
-        Append_UTF8_May_Panic(nullptr, cs_cast(at), size, STRMODE_NO_CR)
+        Append_UTF8_May_Panic(nullptr, s_cast(at), size, STRMODE_NO_CR)
     );
 }
 
@@ -1396,7 +1396,7 @@ void Startup_String(void)
     for (c = 0; c <= ' '; c++)
         g_url_escapes[c] = ESC_URL | ESC_FILE;
 
-    const Byte* dc = cb_cast(";%\"()[]{}<>");
+    const Byte* dc = b_cast(";%\"()[]{}<>");
 
     for (c = strsize(dc); c > 0; c--)
         g_url_escapes[*dc++] = ESC_URL | ESC_FILE;

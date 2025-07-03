@@ -396,6 +396,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
   //    checked build (functions aren't inlined).  So for this case, we
   //    just use a macro variant with no STATIC_ASSERT_LVALUE() check.
 
+  namespace needful {
     template<typename T>
     struct CorruptHelper<
         T,
@@ -405,6 +406,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
         Init_Unreadable_Untracked_Evil_Macro(&ref);  // &ref needs evil [1]
       }
     };
+  }
 #endif
 
 
@@ -864,7 +866,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     #define Ensure_Cell_Payload_1_Needs_Mark(c)  (c)
     #define Ensure_Cell_Payload_2_Needs_Mark(c)  (c)
 #else
-    INLINE_MUTABLE_IF_C(Cell*) Ensure_Cell_Extra_Needs_Mark(
+    MUTABLE_IF_C(Cell*, INLINE) Ensure_Cell_Extra_Needs_Mark(
         CONST_IF_C(Cell*) cell
     ){
         CONSTABLE(Cell*) c = m_cast(Cell*, cell);
@@ -872,7 +874,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
         return c;
     }
 
-    INLINE_MUTABLE_IF_C(Cell*) Ensure_Cell_Payload_1_Needs_Mark(
+    MUTABLE_IF_C(Cell*, INLINE) Ensure_Cell_Payload_1_Needs_Mark(
         CONST_IF_C(Cell*) cell
     ){
         CONSTABLE(Cell*) c = m_cast(Cell*, cell);
@@ -880,7 +882,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
         return c;
     }
 
-    INLINE_MUTABLE_IF_C(Cell*) Ensure_Cell_Payload_2_Needs_Mark(
+    MUTABLE_IF_C(Cell*, INLINE) Ensure_Cell_Payload_2_Needs_Mark(
         CONST_IF_C(Cell*) cell
     ){
         CONSTABLE(Cell*) c = m_cast(Cell*, cell);
@@ -946,6 +948,8 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 #else
     INLINE void Tweak_Cell_Binding(Element* c, Option(Context*) binding) {
         Assert_Cell_Writable(c);
+        Element* x = ensure(Element*, c);
+        USED(x);
         assert(Is_Cell_Bindable(c));
         c->extra.base = maybe binding;
         if (binding)
@@ -1333,7 +1337,7 @@ INLINE Value* Constify(Value* v) {
 // should not be passing values on the data stack to API functions.
 //
 
-#if DEBUG_USE_SINKS
+#if NEEDFUL_SINK_USES_WRAPPER
     inline const void* to_rebarg(const Sink(Value)& val)
         { return u_cast(Value*, val); }
 

@@ -300,6 +300,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         const Value* archetype = Varlist_Archetype(context);
         possibly(Cell_Varlist(archetype) == context);  // no longer a rule
         assert(CTX_TYPE(context) == heart);  // but this still is
+        UNUSED(archetype);
 
         // Note: for VAL_CONTEXT_FRAME, the FRM_CALL is either on the stack
         // (in which case it's already taken care of for marking) or it

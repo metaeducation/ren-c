@@ -197,7 +197,7 @@ Value* Lookup_Socket_Synchronously(
     SOCKREQ *sock = Sock_Of_Port(port);
 
     assert(Is_Text(hostname));
-    const char *hostname_utf8 = cs_cast(Cell_Utf8_At(hostname));
+    const char *hostname_utf8 = s_cast(Cell_Utf8_At(hostname));
     char *port_number_utf8 = rebSpell(
         CANON(TO), CANON(TEXT_X), rebI(sock->remote_port_number)
     );
@@ -226,7 +226,7 @@ Value* Lookup_Socket_Synchronously(
 
     // This is a replacement for:
     //
-    //     HOSTENT *host = gethostbyname(cs_cast(hostname_utf8));
+    //     HOSTENT *host = gethostbyname(s_cast(hostname_utf8));
     //
     uv_getaddrinfo_t req;
     int r = uv_getaddrinfo(

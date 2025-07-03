@@ -586,7 +586,7 @@ RebolValue* Register_Symbol(const char* utf8, SymId16 id16)
     assert(id16 > MAX_SYM_BUILTIN);
 
     const Symbol* symbol = Intern_Utf8_Managed(
-        cb_cast(utf8), strlen(utf8)
+        b_cast(utf8), strlen(utf8)
     ) except (Error* e) {
         abrupt_panic (e);
     }

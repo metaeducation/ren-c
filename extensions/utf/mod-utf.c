@@ -190,7 +190,7 @@ DECLARE_NATIVE(DECODE_TEXT)
 
     Size size;
     const Byte* data = Blob_Size_At(&size, ARG(DATA));
-    return rebSizedText(cs_cast(data), size);
+    return rebSizedText(s_cast(data), size);
 }
 
 

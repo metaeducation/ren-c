@@ -568,7 +568,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
         return Init_Any_String(
             OUT,
             to,
-            Append_UTF8_May_Panic(nullptr, cs_cast(at), size, STRMODE_NO_CR)
+            Append_UTF8_May_Panic(nullptr, s_cast(at), size, STRMODE_NO_CR)
         );
     }
 

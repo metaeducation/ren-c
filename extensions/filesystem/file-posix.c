@@ -443,7 +443,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
 
     const int num_bufs = 1;
     uv_buf_t buf;
-    buf.base = m_cast(char*, cs_cast(data));  // doesn't mutate
+    buf.base = m_cast(char*, s_cast(data));  // doesn't mutate
     buf.len = size;
 
     uv_fs_t req;

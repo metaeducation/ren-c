@@ -1,5 +1,5 @@
-#if (! NEEDFUL_CASTS_H)
-    STATIC_FAIL(needful_casts_h_must_be_included_before_cast_runtime_on_h)
+#if !defined(NEEDFUL_H)
+    STATIC_FAIL(needful_h_must_be_included_before_cast_runtime_on_h)
 #endif
 
 #if CPLUSPLUS_11

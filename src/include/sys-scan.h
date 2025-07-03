@@ -432,10 +432,10 @@ extern const EscapeInfo g_escape_info[MAX_ESC + 1];
 
 #ifdef ATOI64 // Ascii to integer conversion
     #define CHR_TO_INT(s) \
-        _atoi64(cs_cast(s))
+        _atoi64(s_cast(s))
 #else
     #define CHR_TO_INT(s) \
-        strtoll(cs_cast(s), 0, 10)
+        strtoll(s_cast(s), 0, 10)
 #endif
 
 

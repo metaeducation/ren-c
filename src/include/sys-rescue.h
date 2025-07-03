@@ -311,7 +311,7 @@ struct JumpStruct {
         return Derive_Error_From_Pointer_Core(p);
     }
 
-  #if DEBUG_USE_SINKS
+  #if NEEDFUL_SINK_USES_WRAPPER
     template <class T>
     INLINE Error* Derive_Error_From_Pointer(Sink(T) sink)
       { return Derive_Error_From_Pointer(sink.p); }
@@ -389,6 +389,9 @@ INLINE Error* Needful_Test_And_Clear_Failure(void) {
 
 #define Needful_Get_Divergence() \
     g_divergent
+
+#define Needful_Assert_Not_Failing() \
+    assert(not g_failure and not g_divergent)
 
 #define Needful_Force_Divergent() do { \
     if (not g_divergent) /* hook for when divergence originates */ \

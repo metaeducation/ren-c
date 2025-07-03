@@ -78,7 +78,9 @@ INLINE void Tweak_Link_Bookmarks(const Strand* s, Option(BookmarkList*) book) {
 
 //=//// STRING NAVIGATION /////////////////////////////////////////////////=//
 
-INLINE_MUTABLE_IF_C(Utf8(*)) Skip_Codepoint(CONST_IF_C(Utf8(*)) utf8) {
+MUTABLE_IF_C(Utf8(*), INLINE) Skip_Codepoint(
+    CONST_IF_C(Utf8(*)) utf8
+){
     CONSTABLE(Byte*) bp = m_cast(Byte*, utf8);
     do {
         ++bp;
@@ -86,7 +88,9 @@ INLINE_MUTABLE_IF_C(Utf8(*)) Skip_Codepoint(CONST_IF_C(Utf8(*)) utf8) {
     return c_cast(Utf8(*), bp);
 }
 
-INLINE_MUTABLE_IF_C(Utf8(*)) Step_Back_Codepoint(CONST_IF_C(Utf8(*)) utf8) {
+MUTABLE_IF_C(Utf8(*), INLINE) Step_Back_Codepoint(
+    CONST_IF_C(Utf8(*)) utf8
+){
     CONSTABLE(Byte*) bp = m_cast(Byte*, utf8);
     do {
         --bp;
@@ -94,7 +98,7 @@ INLINE_MUTABLE_IF_C(Utf8(*)) Step_Back_Codepoint(CONST_IF_C(Utf8(*)) utf8) {
     return c_cast(Utf8(*), bp);
 }
 
-INLINE_MUTABLE_IF_C(Utf8(*)) Utf8_Next(
+MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Next(
     Codepoint* codepoint_out,
     CONST_IF_C(Utf8(*)) utf8
 ){
@@ -106,7 +110,7 @@ INLINE_MUTABLE_IF_C(Utf8(*)) Utf8_Next(
     return c_cast(Utf8(*), bp + 1);  // see Back_Scan() for why +1
 }
 
-INLINE_MUTABLE_IF_C(Utf8(*)) Utf8_Back(
+MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Back(
     Codepoint* codepoint_out,
     CONST_IF_C(Utf8(*)) utf8
 ){
@@ -118,7 +122,7 @@ INLINE_MUTABLE_IF_C(Utf8(*)) Utf8_Back(
     return cast(Utf8(*), bp);
 }
 
-INLINE_MUTABLE_IF_C(Utf8(*)) Utf8_Skip(
+MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Skip(
     Codepoint* codepoint_out,
     CONST_IF_C(Utf8(*)) utf8,
     REBINT delta
@@ -187,6 +191,12 @@ INLINE bool Is_Strand_All_Ascii(const Strand* str) {
 #define Strand_Utf8(s)      Flex_Head(char, ensure(const Strand*, s))
 #define Strand_Head(s)      c_cast(Utf8(*), Flex_Head(Byte, s))
 #define Strand_Tail(s)      c_cast(Utf8(*), Flex_Tail(Byte, s))
+
+MUTABLE_IF_C(Utf8(*), INLINE) Strand_At(CONST_IF_C(Strand*) s_, REBLEN at)
+{
+    CONSTABLE(Strand*) s = m_cast(Strand*, s_);
+    return Non_Const_Correct_Strand_At(s, at);  /* return will fix const! */
+}
 
 #define Strand_Size(s) \
     Flex_Used(ensure(const Strand*, s))  // encoded byte size, not codepoints
@@ -293,7 +303,7 @@ INLINE BookmarkList* Alloc_BookmarkList(void) {
     return books;
 }
 
-INLINE void Free_Bookmarks_Maybe_Null(Strand* str) {
+INLINE void Free_Bookmarks_Maybe_Null(const Strand* str) {
     assert(not Is_Strand_Symbol(str));
     BookmarkList* book = maybe Link_Bookmarks(str);
     if (book) {
@@ -303,7 +313,7 @@ INLINE void Free_Bookmarks_Maybe_Null(Strand* str) {
 }
 
 #if RUNTIME_CHECKS
-    INLINE void Check_Bookmarks_Debug(Strand* s) {
+    INLINE void Check_Bookmarks_Debug(const Strand* s) {
         BookmarkList* book = maybe Link_Bookmarks(s);
         if (not book)
             return;
@@ -331,11 +341,6 @@ INLINE void Free_Bookmarks_Maybe_Null(Strand* str) {
             printf("/ ");  /* separate sections (spare leading /) */ \
             printf(__VA_ARGS__); \
         } } while (0)
-#endif
-
-#if CPLUSPLUS_11
-    INLINE Utf8(const*) Strand_At(const Strand* s, REBLEN at)
-      { return Strand_At(m_cast(Strand*, s), at); }
 #endif
 
 

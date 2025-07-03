@@ -85,6 +85,33 @@ core that could be packaged and configured by other "branded" distributions,
 such as Rebol itself.
 
 
+## Language Dependencies: C99 (or higher), C++11 (or higher)
+
+The baseline for building the Ren-C interpreter itself is C99.  The features
+it uses that were not defined in C89 are:
+
+    * __VA_ARGS__ variadic macros,
+    * double-slash comments
+    * declaring variables in the middle of functions
+    * declaring variables in the conditions of for loops
+
+(Many C89-era compilers could do these things before they were standards, so
+there's a possibility that Ren-C can be built by pre-C99 systems.)
+
+While the interpreter sources need C99, the API can be used by C89 client
+code.  The calls will be slightly uglier, due to the lack of variadic macros
+to take care of some of the boilerplate.  But it should work.
+
+If you use C++11 to build the sources, then this adds many extremely useful
+compile-time checks.  Anyone developing and submitting patches to the system
+should make sure their changes will compile with C++.
+
+(C++98 support was included for a while, but it lacks <type_traits> and
+other features which are required to make the C++ build of any real use
+beyond what C provides.  So support for C++98 was ultimately dropped, and
+if you don't have a C++11 compiler you should just use C99.)
+
+
 ## Building
 
 The system does not require GNU Make, CMake, or any other make tools.  It only

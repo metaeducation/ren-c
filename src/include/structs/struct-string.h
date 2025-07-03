@@ -191,7 +191,7 @@ typedef struct BookmarkStruct Bookmark;
         SymbolOrValueHolder(Option(const Symbol*)& s) : p (maybe s) {}
       #endif
 
-      #if DEBUG_USE_SINKS
+      #if NEEDFUL_SINK_USES_WRAPPER
         SymbolOrValueHolder(const NeedWrapper<Value>& v) : p (v.p) {}
         SymbolOrValueHolder(const SinkWrapper<Value>& v) : p (v.p) {}
         SymbolOrValueHolder(const InitWrapper<Value>& v) : p (v.p) {}

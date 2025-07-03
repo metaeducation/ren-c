@@ -175,7 +175,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // Windows ones alone.
 //
 #if !defined(REBOL_LEVEL_SHORTHAND_MACROS)
-    #define REBOL_LEVEL_SHORTHAND_MACROS 1
+    #define REBOL_LEVEL_SHORTHAND_MACROS  1
 #endif
 
 
@@ -445,7 +445,7 @@ Special internal defines used by RT, not Host-Kit developers:
 
 #if !defined(APPEASE_WEAK_STATIC_ANALYSIS)  // static analysis can be bad [3]
     #define APPEASE_WEAK_STATIC_ANALYSIS \
-        ((! DEBUG_STATIC_ANALYZING) && (! DEBUG_USE_SINKS))
+        ((! DEBUG_STATIC_ANALYZING) && (! NEEDFUL_SINK_USES_WRAPPER))
 #else
     STATIC_ASSERT(DEBUG_STATIC_ANALYZING == 0)
 #endif
@@ -667,11 +667,11 @@ Special internal defines used by RT, not Host-Kit developers:
 // interface--which is good to know.  But the Sink()/Need() functions are
 // actually crucial to CHECK_CELL_SUBCLASSES working.
 //
-#if !defined(DEBUG_USE_SINKS)
-    #define DEBUG_USE_SINKS CHECK_CELL_SUBCLASSES
+#if !defined(NEEDFUL_SINK_USES_WRAPPER)
+    #define NEEDFUL_SINK_USES_WRAPPER CHECK_CELL_SUBCLASSES
 #else
-    #if (! DEBUG_USE_SINKS) && CHECK_CELL_SUBCLASSES
-        #error "DEBUG_USE_SINKS muts be enabled for CHECK_CELL_SUBCLASSES"
+    #if (! NEEDFUL_SINK_USES_WRAPPER) && CHECK_CELL_SUBCLASSES
+        #error "NEEDFUL_SINK_USES_WRAPPER muts be enabled for CHECK_CELL_SUBCLASSES"
     #endif
 #endif
 
@@ -1008,6 +1008,49 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 #if !defined(DEBUG_DTOA)
     #define DEBUG_DTOA 0
+#endif
+
+
+//=//// CORRUPT UNUSED FIELDS /////////////////////////////////////////////=//
+//
+// It would seem that structs which don't use their payloads could just leave
+// them uninitialized...saving time on the assignments.
+//
+// Unfortunately, this is a technically gray area in C.  If you try to
+// copy the memory of that cell (as cells are often copied), it might be a
+// "trap representation".  Reading such representations to copy them...
+// even if not interpreted... is undefined behavior:
+//
+//   https://stackoverflow.com/q/60112841
+//   https://stackoverflow.com/q/33393569/
+//
+// Odds are it would still work fine if you didn't zero them.  However,
+// compilers will warn you--especially at higher optimization levels--if
+// they notice uninitialized values being used in copies.  This is a bad
+// warning to turn off, because it often points out defective code.
+//
+// So to play it safe and be able to keep warnings on, fields are zeroed out.
+// But it's set up as its own independent flag, so that someone looking
+// to squeak out a tiny bit more optimization could turn this off in a
+// release build.  It would save on a few null assignments.
+//
+// (In release builds, the fields are assigned 0 because it's presumably a
+// fast value to assign as an immediate.  In checked builds, they're assigned
+// a corrupt value because it's more likely to cause trouble if accessed.)
+//
+
+#if !defined(NEEDFUL_ASSIGNS_UNUSED_FIELDS)
+  #define NEEDFUL_ASSIGNS_UNUSED_FIELDS  1
+#endif
+
+#if NEEDFUL_ASSIGNS_UNUSED_FIELDS
+  #if RUNTIME_CHECKS
+    #define Corrupt_Unused_Field(ref)  Corrupt_If_Needful(ref)
+  #else
+    #define Corrupt_Unused_Field(ref)  ((ref) = 0)
+  #endif
+#else
+    #define Corrupt_Unused_Field(ref)  NOOP
 #endif
 
 #endif

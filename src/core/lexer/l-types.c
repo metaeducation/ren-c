@@ -693,7 +693,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
             return nullptr;
 
         for (num = 0; num != 12; ++num) {
-            const Byte* month_name = cb_cast(g_month_names[num]);
+            const Byte* month_name = b_cast(g_month_names[num]);
             if (0 == Compare_Ascii_Uncased(month_name, cp, size))
                 break;
         }
@@ -1044,7 +1044,7 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
 
     Strand* s = Append_UTF8_May_Panic(
         nullptr,
-        cs_cast(cp),
+        s_cast(cp),
         len,
         STRMODE_NO_CR
     );

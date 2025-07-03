@@ -57,6 +57,7 @@
 // Addressing that is an ongoing process.
 //
 
+
 #if defined(REBOL_CORE_API_INCLUDED)
     #error "sys-core.h included more than once"
     #include <stophere>  // https://stackoverflow.com/a/45661130
@@ -187,7 +188,7 @@ typedef RebolHandleCleaner HandleCleaner;
 
 //=//// HELPERS GIVING ENHANCEMENTS TO C IF BUILT AS C++ //////////////////=//
 //
-// Don't include C-enhanced until *after* standard includes, in case there
+// Don't include Needful until *after* standard includes, in case there
 // is any contention on naming in the compiler header files (for instance,
 // Init() is used in MSVC's xiosbase, and so if you define a macro with
 // that name it will break the compilation).  Generally speaking you should
@@ -195,12 +196,32 @@ typedef RebolHandleCleaner HandleCleaner;
 //
 
 #include "needful/needful.h"
-#define cast  h_cast
-#define Need  NeedTypemacro
-#define Sink  SinkTypemacro
-#define Init  InitTypemacro
+
+#if CPLUSPLUS_11
+    using needful::EnableIfSame;
+
+    using needful::PermissiveZero;
+    using needful::ResultWrapper;
+
+  #if NEEDFUL_OPTION_USES_WRAPPER
+    using needful::OptionWrapper;
+    using needful::UnwrapHelper;
+    using needful::MaybeHelper;
+  #endif
+
+  #if NEEDFUL_SINK_USES_WRAPPER
+    using needful::SinkWrapper;
+    using needful::InitWrapper;
+    using needful::NeedWrapper;
+  #endif
+#endif
 
 
+//=//// SOME EXTRA C THINGS ///////////////////////////////////////////////=//
+//
+// e.g. EXTERN_C, PP_CONCAT, etc.
+
+#include "c-extras.h"
 
 // Internal configuration:
 #define STACK_MIN   4000        // data stack increment size
@@ -577,10 +598,12 @@ enum {
 // fundamental definitions that are important for the casts.
 //
 #if DEBUG_CHECK_CASTS
+  namespace needful {  // so things like CastHook<> specialization easier
     #include "casts/cast-base.hpp"
     #include "casts/cast-stubs.hpp"
     #include "casts/cast-cells.hpp"
     #include "casts/cast-misc.hpp"
+  }
 #endif
 
 #include "sys-mold.h"

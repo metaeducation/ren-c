@@ -32,7 +32,7 @@
 //   to default to immutable access, and using functions that mutate cells
 //   requires you to consciously use a routine that checks the Flex at
 //   runtime before it will give you back a plain `Flex*` from which you can
-//   get non-const `Cell*`.  See `const_if_c` for why this is only done in
+//   get non-const `Cell*`.  See CONST_IF_C() for why this is only done in
 ///  the C++ build.
 //
 

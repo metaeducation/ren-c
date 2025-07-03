@@ -12,6 +12,12 @@ Rebol [
         See: http://www.apache.org/licenses/LICENSE-2.0
     ]--
     needs: 2.100.100
+    notes: --[
+      * The Needful library introduces creative TypeMacros like Option(T).
+        So we need special handling here to recognize that format.
+
+        (see the `typemacro_parentheses` rule)
+    ]--
 ]
 
 if not find (words of import/) 'into [  ; See %import-shim.r

@@ -60,7 +60,8 @@
 typedef RebolValue Value;
 
 #include "needful/needful.h"
-#define cast  h_cast
+#include "c-extras.h"  // for EXTERN_C, nullptr, etc.
+
 
 
 //

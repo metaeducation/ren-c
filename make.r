@@ -364,8 +364,8 @@ gen-obj: func [
 
     ; It's legal in the C language for a 0 integer literal to act as NULL.
     ; GCC warns about this, but we leverage it in the C build for polymorphism
-    ; in terms of how the fail() macro works.  See PERMISSIVE_ZERO for how
-    ; this is worked around in C++...but the only thing we can do in the C
+    ; in terms of how the fail() macro works.  See NEEDFUL_PERMISSIVE_ZERO for
+    ; how this is worked around in C++...but the only thing we can do in the C
     ; build to get the desired polymorphism is disable the warning.
     ;
     if no? cplusplus [

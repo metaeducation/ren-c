@@ -296,7 +296,7 @@ INLINE Length Flex_Dynamic_Used(const Flex* f) {
 //    concerned, `Flex_Head(T, s)` is the same as `Flex_At(T, s, 0)`
 //
 
-INLINE_MUTABLE_IF_C(Byte*) Flex_Data(CONST_IF_C(Flex*) flex)
+MUTABLE_IF_C(Byte*, INLINE) Flex_Data(CONST_IF_C(Flex*) flex)
 {
     CONSTABLE(Flex*) f = m_cast(Flex*, flex);
 
@@ -306,7 +306,7 @@ INLINE_MUTABLE_IF_C(Byte*) Flex_Data(CONST_IF_C(Flex*) flex)
         : u_cast(Byte*, &f->content);
 }
 
-INLINE_MUTABLE_IF_C(Byte*) Flex_Data_At(
+MUTABLE_IF_C(Byte*, INLINE) Flex_Data_At(
     Byte w,
     CONST_IF_C(Flex*) flex,
     REBLEN i
@@ -358,8 +358,10 @@ INLINE_MUTABLE_IF_C(Byte*) Flex_Data_At(
 #define Flex_Tail(T,f) \
     u_c_cast(T*, Flex_Data_Tail(sizeof(T), (f)))
 
-INLINE_MUTABLE_IF_C(Byte*) Flex_Data_Last(size_t wide, CONST_IF_C(Flex*) flex)
-{
+MUTABLE_IF_C(Byte*, INLINE) Flex_Data_Last(
+    size_t wide,
+    CONST_IF_C(Flex*) flex
+){
     CONSTABLE(Flex*) f = m_cast(Flex*, flex);
     assert(Flex_Used(f) != 0);
     return Flex_Data_At(wide, f, Flex_Used(f) - 1);

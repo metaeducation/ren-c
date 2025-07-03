@@ -181,6 +181,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
      { return Index {o + 1}; }
 
   #if NEEDFUL_OPTION_USES_WRAPPER
+  namespace needful {
     template<>
     struct OptionWrapper<Index> {  // bypass the 0 assert
         intptr_t p;
@@ -191,6 +192,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
            return p != 0 ? true : false;
         }
     };
+  }
 
     INLINE uintptr_t operator<<(  // see definition of Option() for explanation
         const UnwrapHelper& left,

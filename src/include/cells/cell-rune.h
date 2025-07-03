@@ -183,7 +183,7 @@ INLINE Element* Init_Utf8_Non_String(
     if (Try_Init_Small_Utf8_Untracked(out, heart, utf8, len, size))
         return out;
 
-    Strand* str = Make_Sized_Strand_UTF8(cs_cast(utf8), size);
+    Strand* str = Make_Sized_Strand_UTF8(s_cast(utf8), size);
     assert(Strand_Len(str) == len);  // ^-- revalidates :-/ should match
     Freeze_Flex(str);
     Init_Any_String(out, heart, str);

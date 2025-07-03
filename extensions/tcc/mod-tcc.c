@@ -579,7 +579,7 @@ DECLARE_NATIVE(COMPILE_P)
         if (
             tcc_compile_string(
                 state,
-                cs_cast(Binary_At(mo->strand, mo->base.size))
+                s_cast(Binary_At(mo->strand, mo->base.size))
             ) < 0
         ){
             return rebDelegate("panic [",

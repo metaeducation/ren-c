@@ -13,14 +13,7 @@
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
-// The idea behind a Sink() is to be able to mark on a function's interface
-// when a function argument passed by pointer is intended as an output.
-// This has benefits of documentation, and can also be given some teeth by
-// scrambling the memory that the pointer points at (so long as it isn't an
-// "in-out" parameter).
-//
-// But there's another feature implemented here, which is *covariance* for
-// input parameters, and "contravariance" for output parameters.
+
 //
 // e.g. if CHECK_CELL_SUBCLASSES is enabled, the inheritance heirarchy has
 // Atom at the base, with Element at the top.  Since what Elements can contain
@@ -56,7 +49,7 @@
 //    they'd make debugging confusing, and make it harder to add specific
 //    instrumentation if it were needed.
 //
-// C. This file names the macros [InitTypemacro SinkTypemacro NeedTypemacro]
+// C. This file names the macros [NeedfulInit NeedfulSink NeedfulNeed]
 //    instead of [Init Sink Need].  This is because those short names are
 //    particularly likely to be defined in existing codebases...so you can
 //    #define these to whatever name is appropriate for your code.
@@ -92,28 +85,27 @@
 //    workaround exposes a static member called `enable` that can be used in
 //    a `typename` context.
 //
-#if DEBUG_USE_SINKS
-    template<typename T> struct NeedWrapper;
-    template<typename T> struct SinkWrapper;
-    template<typename T> struct InitWrapper;
 
-    template<typename U, typename T>
-    struct AllowSinkConversion : std::false_type {};
+template<typename T> struct NeedWrapper;
+template<typename T> struct SinkWrapper;
+template<typename T> struct InitWrapper;
 
-    template<typename U, typename T>
-    struct IfReverseInheritable2 {  // used by Need()
-        static constexpr bool value
-            = std::is_same<U, T>::value or std::is_base_of<U, T>::value;
-        using enable = typename std::enable_if<value>;  // not ::type [1]
-    };
+template<typename U, typename T>
+struct AllowSinkConversion : std::false_type {};
 
-    template<typename U, typename T>
-    struct IfOutputConvertible2 {  // used by Init() and Sink()
-        static constexpr bool value = IfReverseInheritable2<U, T>::value
-            or AllowSinkConversion<U, T>::value;
-        using enable = typename std::enable_if<value>;  // not ::type [1]
-    };
-#endif
+template<typename U, typename T>
+struct IfReverseInheritable2 {  // used by Need()
+    static constexpr bool value
+        = std::is_same<U, T>::value or std::is_base_of<U, T>::value;
+    using enable = typename std::enable_if<value>;  // not ::type [1]
+};
+
+template<typename U, typename T>
+struct IfOutputConvertible2 {  // used by Init() and Sink()
+    static constexpr bool value = IfReverseInheritable2<U, T>::value
+        or AllowSinkConversion<U, T>::value;
+    using enable = typename std::enable_if<value>;  // not ::type [1]
+};
 
 
 //=//// SINK() WRAPPER FOR OUTPUT PARAMETERS //////////////////////////////=//
@@ -131,13 +123,12 @@
 //    the corruption after construction is necessary.  It's a bit tricky
 //    in terms of the handoffs and such.
 //
-#if (! DEBUG_USE_SINKS)
-  #define SinkTypemacro(T)  T *  // avoid name conflicts w/Sink by default [C]
-#else
-  #define SinkTypemacro(T)  SinkWrapper<T>
 
-  template<typename T>
-  struct SinkWrapper {
+#undef NeedfulSink
+#define NeedfulSink(T)  SinkWrapper<T>
+
+template<typename T>
+struct SinkWrapper {
     T* p;
     mutable bool corruption_pending;  // can't corrupt on construct [1]
 
@@ -147,11 +138,17 @@
     using IfSinkConvertible
         = typename IfOutputConvertible2<U, T>::enable::type;
 
-    SinkWrapper() : corruption_pending {false} {  // compiler MIGHT need [E]
+    SinkWrapper()  // compiler MIGHT need [E]
+        : corruption_pending {false}
+    {
         Corrupt_If_Needful(p);  // pointer itself, not contents!
     }
 
-    SinkWrapper(nullptr_t) : p {nullptr}, corruption_pending {false} {}
+    SinkWrapper(std::nullptr_t)
+        : p {nullptr},
+        corruption_pending {false}
+    {
+    }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
     SinkWrapper(U* u) {
@@ -184,7 +181,7 @@
         this->corruption_pending = (init.p != nullptr);  // corrupt
     }
 
-    SinkWrapper& operator=(nullptr_t) {
+    SinkWrapper& operator=(std::nullptr_t) {
         this->p = nullptr;
         this->corruption_pending = false;
         return *this;
@@ -251,8 +248,7 @@
         if (corruption_pending)
             Corrupt_If_Needful(*p);  // corrupt pointed-to item
     }
-  };
-#endif
+};
 
 
 //=//// HOOK TO CORRUPT *POINTER ITSELF* INSIDE SINK(T) ///////////////////=//
@@ -279,7 +275,7 @@
 // So we do just a pointer corruption, and clear the corruption_pending flag
 // so it doesn't try to corrupt the pointed-to data at the bad pointer.
 //
-#if DEBUG_USE_SINKS && NEEDFUL_USES_CORRUPT_HELPER
+#if NEEDFUL_USES_CORRUPT_HELPER
     template<typename T>
     struct CorruptHelper<SinkWrapper<T>&> {  // C pointer corrupt fails
       static void corrupt(SinkWrapper<T>& wrapper) {
@@ -323,7 +319,7 @@
 //    not be corrupt!  So if you think it might be corrupt, then you need to
 //    cast to another Sink() or Init() and not the raw type.
 //
-#if DEBUG_USE_SINKS
+#if 1
     template<typename V, typename T>
     struct CastHook<SinkWrapper<V>,T*> {  // don't use SinkWrapper<V>& [D]
       static T* convert(const SinkWrapper<V>& sink) {  // must be ref here
@@ -357,17 +353,21 @@
 //
 //     #define DEBUG_CHECK_INIT_SINKS  1  // Init() => actually Sink()
 //
-#if (! DEBUG_USE_SINKS)
-  #define InitTypemacro(T)  T *  // avoid name conflicts w/Init by default [C]
-#else
-  #if DEBUG_CHECK_INIT_SINKS
-    #define InitTypemacro(T)  SinkWrapper<T>
-  #else
-    #define InitTypemacro(T)  InitWrapper<T>
-  #endif
 
-  template<typename T>
-  struct InitWrapper {
+#if !defined(DEBUG_CHECK_INIT_SINKS)
+    #define DEBUG_CHECK_INIT_SINKS  0
+#endif
+
+#if DEBUG_CHECK_INIT_SINKS
+    #undef NeedfulInit
+    #define NeedfulInit(T)  SinkWrapper<T>
+#else
+    #undef NeedfulInit
+    #define NeedfulInit(T)  InitWrapper<T>
+#endif
+
+template<typename T>
+struct InitWrapper {
     T* p;
 
     template<typename U>
@@ -378,7 +378,7 @@
         dont(Corrupt_If_Needful(p));  // lightweight behavior vs. Sink()
     }
 
-    InitWrapper(nullptr_t) : p {nullptr}
+    InitWrapper(std::nullptr_t) : p {nullptr}
         {}
 
     template<typename U, IfInitConvertible<U>* = nullptr>
@@ -404,7 +404,7 @@
         sink.corruption_pending = false;  // squash corruption
     }
 
-    InitWrapper& operator=(nullptr_t) {
+    InitWrapper& operator=(std::nullptr_t) {
         this->p = nullptr;
         return *this;
     }
@@ -444,8 +444,7 @@
         { return const_cast<U*>(reinterpret_cast<const U*>(p)); }
 
     T* operator->() const { return p; }
-  };
-#endif
+};
 
 
 //=//// INIT() CAST HELPER TO RUN VALIDATING CASTS ON TYPE ////////////////=//
@@ -453,7 +452,7 @@
 // When you cast a variable that is InitWrapper<T> to a T*, that should run
 // whatever the CastHook<> specializations for T* are.
 //
-#if DEBUG_USE_SINKS
+#if 1
     template<typename V, typename T>
     struct CastHook<InitWrapper<V>,T*> {  // don't use InitWrapper<V>& [D]
       static constexpr T* convert(const InitWrapper<V>& init) {  // ref faster
@@ -482,14 +481,13 @@
 //    that turned out to be important.  It's better to have cross-cutting
 //    ways at runtime of noticing a given T* is corrupt regardless of Need().
 //
-#if (! DEBUG_USE_SINKS)
-  #define NeedTypemacro(TP)  TP  // avoid name conflicts w/Need by default [C]
-#else
-  #define NeedTypemacro(TP) \
+
+#undef NeedfulNeed
+#define NeedfulNeed(TP) \
     NeedWrapper<typename std::remove_pointer<TP>::type>  // * not implicit [1]
 
-  template<typename T>
-  struct NeedWrapper {
+template<typename T>
+struct NeedWrapper {
     T* p;
 
     using MT = typename std::remove_const<T>::type;  // mutable type
@@ -501,7 +499,7 @@
     NeedWrapper()  // compiler MIGHT need [E]
         { dont(Corrupt_If_Needful(p)); }  // may be zero in global scope
 
-    NeedWrapper(nullptr_t) : p {nullptr}
+    NeedWrapper(std::nullptr_t) : p {nullptr}
         {}
 
     template<typename U,
@@ -537,7 +535,7 @@
         : p {static_cast<T*>(init.p)}
         {}
 
-    NeedWrapper& operator=(nullptr_t) {
+    NeedWrapper& operator=(std::nullptr_t) {
         this->p = nullptr;
         return *this;
     }
@@ -577,8 +575,7 @@
         { return const_cast<U*>(reinterpret_cast<const U*>(p)); }
 
     T* operator->() const { return p; }
-  };
-#endif
+};
 
 
 //=//// NEED() CAST HELPER TO RUN VALIDATING CASTS ON TYPE ////////////////=//
@@ -586,7 +583,7 @@
 // When you cast a variable that is NeedWrapper<T> to a T*, that should run
 // whatever the CastHook<> specializations for T* are.
 //
-#if DEBUG_USE_SINKS
+#if 1
     template<typename V, typename T>
     struct CastHook<NeedWrapper<V>,T*> {  // don't use NeedWrapper<V>& [D]
       static constexpr T* convert(const NeedWrapper<V>& need) {  // ref faster

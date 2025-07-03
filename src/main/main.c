@@ -70,6 +70,8 @@
 
 #include "needful/needful.h"  // provides cast(), UNUSED(), etc.
 
+#include "c-extras.h"  // provides INLINE, nullptr, etc.
+
 
 // Initialization done by rebStartup() is intended to be as basic as possible
 // in order to get the Rebol series/values/list functions ready to be run.

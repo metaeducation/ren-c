@@ -408,7 +408,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         Forget_Cell_Was_Lifeguard(SCRATCH);
 
         if (bounce == nullptr) {
-            if (g_failure) {  // was PERMISSIVE_ZERO (fail/panic)
+            if (g_failure) {  // was NEEDFUL_PERMISSIVE_ZERO (fail/panic)
                 g_divergent = false;
                 abrupt_panic (Needful_Test_And_Clear_Failure());
             }

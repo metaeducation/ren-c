@@ -1591,7 +1591,7 @@ DECLARE_NATIVE(REMOVE_EACH)
                     Binary* b = cast(Binary*, flex);
                     Append_Ascii_Len(
                         mo->strand,
-                        cs_cast(Binary_At(b, start)),
+                        s_cast(Binary_At(b, start)),
                         1
                     );
                 }
@@ -1678,7 +1678,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         assert(start <= orig_len);
         Append_Ascii_Len(
             mo->strand,
-            cs_cast(Binary_At(b, start)),
+            s_cast(Binary_At(b, start)),
             orig_len - start
         );
 

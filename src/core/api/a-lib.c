@@ -980,7 +980,7 @@ const RebolBaseInternal* API_rebArgR(
         abrupt_panic ("rebArg() isn't actually variadic, it's arity-1");
 
     const Symbol* symbol = Intern_Utf8_Managed(
-        cb_cast(name), strsize(name)
+        b_cast(name), strsize(name)
     ) except (Error* e) {
         abrupt_panic (e);
     };

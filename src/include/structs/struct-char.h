@@ -182,6 +182,7 @@
   // Ren-C's w_cast() is smart enough to delegate to WrapperCastHelper so that
   // w_cast(Utf8(*)) of a Utf8(const*) can be made to work.
 
+  namespace needful {
     template<>
     inline Utf8(*) WritableWrapperCastHelper(Utf8(const*) utf8)  // [5]
       { return u_cast(Utf8(*), const_cast<Byte*>(utf8.p)); }
@@ -189,13 +190,16 @@
     template<>
     constexpr inline Utf8(*) WritableWrapperCastHelper(Utf8(*) utf8)  // [5]
       { return utf8; }
+  }
 
   //=//// CONSTIFY HELPER /////////////////////////////////////////////////=//
 
+  namespace needful {
     template<>
     struct ConstifyHelper<Utf8(*)> {
         using type = Utf8(const*);
     };
+  }
 
   //=//// CONST-PRESERVING CAST HELPERS ///////////////////////////////////=//
 
@@ -204,6 +208,7 @@
   // more brevity and means macros can be made that "do the right thing"
   // with const without having to write overloaded functions.
 
+  namespace needful {
     template<typename T>
     struct ConstPreservingCastHelper<Utf8(*), T*>
       { using type = Utf8(*); };
@@ -219,5 +224,5 @@
     template<typename T>
     struct ConstPreservingCastHelper<T*, Utf8(*)>
       { using type = T*; };
-
+  }
 #endif

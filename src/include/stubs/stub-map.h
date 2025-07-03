@@ -46,7 +46,7 @@
 #define Init_Zombie Init_Unreadable
 
 
-INLINE_MUTABLE_IF_C(PairList*) MAP_PAIRLIST(CONST_IF_C(Map*) map) {
+MUTABLE_IF_C(PairList*, INLINE) MAP_PAIRLIST(CONST_IF_C(Map*) map) {
     CONSTABLE(Map*) m = m_cast(Map*, map);
     return cast(PairList*, m);
 }

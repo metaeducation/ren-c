@@ -218,44 +218,37 @@ INLINE bool Not_Cell_Stable(Need(const Atom*) a) {
 // Ensure_Element() when you are not sure and want to panic if not.
 //
 
-INLINE Option(Element*) As_Element(const_if_c Value* v) {
+MUTABLE_IF_C(Option(Element*), INLINE) As_Element(CONST_IF_C(Value*) v_) {
+    CONSTABLE(Value*) v = m_cast(Value*, Ensure_Readable(v_));
     if (Is_Antiform(v))
         return nullptr;
-    return u_cast(Element*, v);
+    return u_c_cast(Element*, v);
 }
 
 #if NO_RUNTIME_CHECKS
     #define Known_Element(cell) \
         c_cast(Element*, (cell))
 #else
-    INLINE_MUTABLE_IF_C(Element*) Known_Element(CONST_IF_C(Atom*) cell) {
+    MUTABLE_IF_C(Element*, INLINE) Known_Element(CONST_IF_C(Atom*) cell) {
         CONSTABLE(Atom*) a = m_cast(Atom*, cell);
         assert(LIFT_BYTE(a) != ANTIFORM_1);
         return c_cast(Element*, a);
     }
 #endif
 
-INLINE_MUTABLE_IF_C(Element*) Ensure_Element(CONST_IF_C(Atom*) cell) {
+MUTABLE_IF_C(Element*, INLINE) Ensure_Element(CONST_IF_C(Atom*) cell) {
     CONSTABLE(Atom*) a = m_cast(Atom*, cell);
     if (LIFT_BYTE(a) == ANTIFORM_1)
         abrupt_panic (Error_Bad_Antiform(a));
     return c_cast(Element*, a);
 }
 
-#if CPLUSPLUS_11
-    INLINE Option(const Element*) As_Element(const Value* v) {
-        if (Is_Antiform(v))
-            return nullptr;
-        return c_cast(Element*, v);
-    }
-
-  #if CHECK_CELL_SUBCLASSES
+#if CHECK_CELL_SUBCLASSES
     void Ensure_Element(const Element*) = delete;
 
     #if RUNTIME_CHECKS
         void Known_Element(const Element*) = delete;
     #endif
-  #endif
 #endif
 
 

@@ -14,8 +14,7 @@
 #ifdef USING_LIBREBOL  // need %sys-core.h variation for IMPLEMENT_GENERIC()
     #include <assert.h>
     #include "needful/needful.h"
-    #define cast  h_cast
-    #define Sink SinkTypemacro
+    #include "c-extras.h"  // for EXTERN_C, nullptr, etc.
 
     #include "rebol.h"
     typedef RebolValue Value;
