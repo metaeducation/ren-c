@@ -47,7 +47,7 @@
 // and C++'s `std::optional`:
 //
 //     Option(char*) abc = "abc";
-//     Option(char*) xxx = nullptr;
+//     Option(char*) xxx = none;  // nullptr also legal for pointer types
 //
 //     if (abc)
 //        printf("abc is truthy, so `unwrap abc` is safe!\n")
@@ -72,6 +72,8 @@
 //
 
 #define NeedfulOption(T)  T
+
+#define needful_none  0  // polymorphic for all legal T for Option(T)
 
 #define needful_unwrap
 #define needful_maybe
@@ -156,7 +158,7 @@
 //    In C builds with GCC/Clang, the flag you want is `-Wno-int-conversion`
 //
 //    (The C++ build doesn't require disabling the warnings because it uses
-//    a "NeedfulPermissiveZero" class to more precisely capture the intent.)
+//    a "PermissiveZeroStruct" object to more precisely capture the intent.)
 //
 // B. In order for these macros to work, they need to be able to test and
 //    clear the global error state...as well as a flag as to whether the
@@ -752,8 +754,11 @@ typedef enum {
 
 #if !defined(NEEDFUL_DONT_DEFINE_OPTION_SHORTHANDS)
     #define Option(T)               NeedfulOption(T)
+    #define none                    needful_none
+
     #define unwrap                  needful_unwrap
     #define maybe                   needful_maybe
+
     #define NeverNull(T)            NeedfulNeverNull(T)
 #endif
 

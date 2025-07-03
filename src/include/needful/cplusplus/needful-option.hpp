@@ -14,6 +14,29 @@
 //=/////////////////////////////////////////////////////////////////////////=//
 //
 
+//=//// none: OPTIONAL DISENGAGED STATE ///////////////////////////////////=//
+//
+// The Option() type is designed to construct from PermissiveZeroStruct in
+// order to be compatible with `return fail ...;` when using Result(Option(T))
+// as a function's return type.  But PermissiveZeroStruct is used in wider
+// applications than Option().
+//
+// So NoneStruct instances are a specific narrowed type used to construct
+// an Option(T) for arbitrary T in the disengaged state.
+//
+//     Option(SomeEnum) foo = nullptr;  /* compile-time error */
+//     Option(SomeEnum) bar = 0;  /* compile-time error */
+//     Option(SomeEnum) baz = none;  /* OK */
+//
+
+struct NoneStruct {
+    NoneStruct () = default;
+    /* NoneStruct(int) {} */  // don't allow construction from int
+};
+
+#undef needful_none
+#define needful_none  needful::NoneStruct{}  // instantiate {} none instance
+
 
 //=//// OPTION WRAPPER ////////////////////////////////////////////////////=//
 //
@@ -56,8 +79,12 @@ struct OptionWrapper {
 
     OptionWrapper () = default;  // garbage, or 0 if global [2]
 
-    OptionWrapper(const PermissiveZero&)
-        : p (u_cast(T, NEEDFUL_PERMISSIVE_ZERO))
+    OptionWrapper(PermissiveZeroStruct&&)
+        : p (NEEDFUL_PERMISSIVE_ZERO)
+      {}
+
+    OptionWrapper(NoneStruct&&)
+        : p (NEEDFUL_PERMISSIVE_ZERO)
       {}
 
     template <typename U>
@@ -65,7 +92,10 @@ struct OptionWrapper {
         : p (something)
       {}
 
-    template <typename U>
+    template <
+        typename U,
+        DisableIfSame<U, NoneStruct, PermissiveZeroStruct> = nullptr
+    >
     explicit OptionWrapper(U&& something)  // needed for Byte->enum [3]
         : p (u_cast(T, std::forward<U>(something)))
       {}
@@ -116,8 +146,12 @@ struct OptionWrapper<uintptr_t> {
 
     OptionWrapper () = default;
 
-    OptionWrapper(const PermissiveZero&)
-        : p (u_cast(uintptr_t, 0))
+    OptionWrapper(PermissiveZeroStruct&&)
+        : p (0)
+      {}
+
+    OptionWrapper(NoneStruct&&)
+        : p (0)
       {}
 
     template <typename U>

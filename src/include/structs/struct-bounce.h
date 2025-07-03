@@ -73,7 +73,7 @@ typedef Byte WildTwo[2];
 
         Bounce(const nullptr_t&) : b {nullptr} {}
 
-        Bounce(const needful::PermissiveZero&) : b {nullptr} {}
+        Bounce(PermissiveZeroStruct&&) : b {nullptr} {}
 
         Bounce(const Cell* cell) : b {cell} {}  // either API cell or OUT [2]
 

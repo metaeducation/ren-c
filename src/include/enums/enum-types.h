@@ -119,6 +119,10 @@
             h = u_cast(HeartEnum, id);
         }
 
+        Heart (PermissiveZeroStruct&&)  // for return fail with Result(Heart)
+            : h (u_cast(HeartEnum, 0))  // (also used by Option(Heart) = none)
+          {}
+
         explicit operator bool() const  // for Option(Heart) in if() statements
           { return cast(Byte, h) != 0; }
 
@@ -147,6 +151,10 @@
             assert(id <= MAX_TYPE_BYTE);
             t = u_cast(TypeEnum, id);
         }
+
+        Type (PermissiveZeroStruct&&)  // for return fail with Result(Type)
+          : t (u_cast(TypeEnum, 0))  // (also used by Option(Type) = none)
+        {}
 
         explicit operator bool() const  // for Option(Type) in if() statements
           { return cast(Byte, t) != 0; }
@@ -303,7 +311,7 @@
 #define TYPE_0_constexpr  HEART_ENUM(0_internal)
 
 #define TYPE_0 /* add safety of the Option() [1] */ \
-    u_cast(Option(Heart), TYPE_0_constexpr)
+    u_cast(Option(Heart), none)
 
 #if NEEDFUL_OPTION_USES_WRAPPER  // make safe for extension types [2]
     bool operator==(Option(Type)& a, Option(Type)& b) = delete;

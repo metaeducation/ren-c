@@ -200,7 +200,7 @@ typedef RebolHandleCleaner HandleCleaner;
 #if CPLUSPLUS_11
     using needful::EnableIfSame;
 
-    using needful::PermissiveZero;
+    using needful::PermissiveZeroStruct;
     using needful::ResultWrapper;
 
   #if NEEDFUL_OPTION_USES_WRAPPER

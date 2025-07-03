@@ -36,6 +36,10 @@ template <typename T, typename... Allowed>
 using EnableIfSame =
     typename std::enable_if<IsSameAny<T, Allowed...>::value>::type*;
 
+template <typename T, typename... Allowed>
+using DisableIfSame =
+    typename std::enable_if<not IsSameAny<T, Allowed...>::value>::type*;
+
 
 //=//// TYPE LIST HELPER //////////////////////////////////////////////////=//
 //

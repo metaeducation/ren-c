@@ -191,7 +191,7 @@
 // controlled through a special type.
 //
 
-struct PermissiveZero {
+struct PermissiveZeroStruct {
     template<typename T>
     operator T() const {
         return u_cast(T, 0);
@@ -199,7 +199,7 @@ struct PermissiveZero {
 };
 
 #undef NEEDFUL_PERMISSIVE_ZERO
-#define NEEDFUL_PERMISSIVE_ZERO  PermissiveZero{}
+#define NEEDFUL_PERMISSIVE_ZERO  needful::PermissiveZeroStruct{}
 
 
 //=//// EXTRACTED RESULT "HOT POTATO" /////////////////////////////////////=//
@@ -270,7 +270,7 @@ struct NEEDFUL_NODISCARD ResultWrapper {
 
     ResultWrapper() = delete;
 
-    ResultWrapper(const PermissiveZero&)
+    ResultWrapper(PermissiveZeroStruct&&)
         : p (u_cast(T, NEEDFUL_PERMISSIVE_ZERO))
         {}
 
@@ -343,17 +343,17 @@ struct ZeroStruct {
 };
 
 #undef NeedfulZero
-#define NeedfulZero  needful::ZeroStruct  // a Zer type, capitalized [1]
+#define NeedfulZero  needful::ZeroStruct  // type in caps, instance lower [1]
 
 #undef needful_zero
-#define needful_zero  needful::ZeroStruct{}  // zero instance, lowercase [1]
+#define needful_zero  needful::ZeroStruct{}  // instantiate {} zero instance
 
 template<>
 struct ResultWrapper<Zero> {
     ResultWrapper() = delete;
 
-    ResultWrapper(const PermissiveZero&) {}
-    ResultWrapper(const Zero&) {}
+    ResultWrapper(PermissiveZeroStruct&&) {}
+    ResultWrapper(Zero&&) {}
 
     ExtractedHotPotato<Zero> extract() {
         return ExtractedHotPotato<Zero>{zero};
@@ -368,7 +368,10 @@ inline void operator>>(
     UNUSED(right);
 }
 
-//=//// EXTRACTION DISCARDER //////////////////////////////////////////////=//
+//=//// RESULT DISCARDER //////////////////////////////////////////////////=//
+//
+// The Result(T) type is [[nodiscard]], redefine macros to discard it.
+//
 
 struct ResultDiscarder {};
 
