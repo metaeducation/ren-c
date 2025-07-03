@@ -1108,7 +1108,7 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
 // This handles marking positions, either as plain `pos:` the SET-WORD! rule,
 // or the newer `mark pos` rule.  Handles WORD! and PATH!.
 //
-static Result(Nothing) Handle_Mark_Rule(
+static Result(Zero) Handle_Mark_Rule(
     Level* level_,
     const Element* quoted_set_or_copy_word  // bound
 ){
@@ -1136,11 +1136,11 @@ static Result(Nothing) Handle_Mark_Rule(
 
     Dequotify(Element_ARG(POSITION));  // go back to 0 quote level
 
-    return nothing;
+    return zero;
 }
 
 
-static Result(Nothing) Handle_Seek_Rule_Dont_Update_Begin(
+static Result(Zero) Handle_Seek_Rule_Dont_Update_Begin(
     Level* level_,
     const Element* rule,
     Context* context
@@ -1176,7 +1176,7 @@ static Result(Nothing) Handle_Seek_Rule_Dont_Update_Begin(
     else
         P_POS = index;
 
-    return nothing;
+    return zero;
 }
 
 // !!! Note callers will `continue` without any post-"match" processing, so

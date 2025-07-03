@@ -108,7 +108,7 @@
 //
 //    (Note that exceptions like [~/~ ~//~ ~...~] are quasi-words.)
 //
-INLINE Result(Nothing) Check_Sequence_Element(
+INLINE Result(Zero) Check_Sequence_Element(
     Heart sequence_heart,
     const Element* e,
     bool is_head
@@ -127,22 +127,22 @@ INLINE Result(Nothing) Check_Sequence_Element(
 
     if (h == TYPE_CHAIN) {  // inserting a chain
         if (sequence_heart == TYPE_PATH)
-            return nothing;  // chains can only be put in paths
+            return zero;  // chains can only be put in paths
         goto bad_sequence_item;
     }
 
     if (h == TYPE_TUPLE) {  // inserting a tuple
         if (sequence_heart != TYPE_TUPLE)
-            return nothing;  // legal in non-tuple sequences (path, chain)
+            return zero;  // legal in non-tuple sequences (path, chain)
         goto bad_sequence_item;
     }
 
     if (h == TYPE_RUNE) {
         if (Is_Quasar(e))  // Legal, e.g. `~/home/Projects/ren-c/README.md`
-            return nothing;
+            return zero;
 
         if (Any_Sigiled_Space(e))
-            return nothing;  // single-char forms legal for now
+            return zero;  // single-char forms legal for now
 
         if (Is_Space(e)) {
             assert(not is_head);  // callers check spaces at head or tail
@@ -160,7 +160,7 @@ INLINE Result(Nothing) Check_Sequence_Element(
     if (h == TYPE_WORD) {
         const Symbol* symbol = Word_Symbol(e);
         if (symbol == CANON(DOT_1) and sequence_heart != TYPE_TUPLE)
-            return nothing;
+            return zero;
         if (
             sequence_heart != TYPE_CHAIN  // !!! temporary for //: -- review
             and Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_SEQUENCE)
@@ -168,12 +168,12 @@ INLINE Result(Nothing) Check_Sequence_Element(
             goto bad_sequence_item;  //  [<| |>] => <|/|>  ; tag
         }
         if (sequence_heart == TYPE_PATH)
-            return nothing;
+            return zero;
         if (Get_Flavor_Flag(SYMBOL, symbol, ILLEGAL_IN_TUPLE))
             goto bad_sequence_item;  // e.g. contains a slash
     }
 
-    return nothing;  // all other words should be okay
+    return zero;  // all other words should be okay
 
   bad_sequence_item:
 

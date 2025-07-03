@@ -172,7 +172,7 @@ standard: make object! [  ; can't CONSTRUCT, dependency of MAKE on prior fields
     func-body: [
         /return: couple definitional-return/ binding of $return
         #BODY
-        ~  ; if you don't call RETURN, the result is a ~ antiform (nothing)
+        ~  ; if you don't call RETURN, the result is a ~ antiform (trash)
     ]
 
     ; !!! The %sysobj.r initialization currently runs natives (notably the

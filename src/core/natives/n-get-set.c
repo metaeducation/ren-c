@@ -110,7 +110,7 @@ Context* Adjust_Context_For_Coupling(Context* c) {
 //
 // Convenience wrapper for getting tuples that errors on trash.
 //
-Result(Nothing) Get_Tuple_Maybe_Trash(
+Result(Zero) Get_Tuple_Maybe_Trash(
     Sink(Value) out,
     Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
@@ -139,7 +139,7 @@ Result(Nothing) Get_Tuple_Maybe_Trash(
 
     Decay_If_Unstable(atom_out);
 
-    return nothing;
+    return zero;
 }
 
 
@@ -155,7 +155,7 @@ Result(Nothing) Get_Tuple_Maybe_Trash(
 //    this function, and then let the Action_Executor() use the refinements
 //    on the stack directly.  That avoids making an intermediate action.
 //
-Result(Nothing) Get_Var_Maybe_Trash(
+Result(Zero) Get_Var_Maybe_Trash(
     Sink(Atom) out,
     Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* var,
@@ -217,7 +217,7 @@ Result(Nothing) Get_Var_Maybe_Trash(
         if (steps_out and steps_out != GROUPS_OK)
             Init_Quasar(unwrap steps_out);  // !!! What to return?
 
-        return nothing;
+        return zero;
     }
 
     Level* level_ = Make_End_Level(
@@ -240,7 +240,7 @@ Result(Nothing) Get_Var_Maybe_Trash(
     if (error)
         return fail (unwrap error);
 
-    return nothing;
+    return zero;
 }
 
 
@@ -366,7 +366,7 @@ Result(Value*) Get_Chain_Push_Refinements(
 // implemented yet.  Right now a PATH! can only have two parts: a left side
 // (a WORD! or a TUPLE!) and a right side (a WORD! or a CHAIN!)
 //
-Result(Nothing) Get_Path_Push_Refinements(Level* level_)
+Result(Zero) Get_Path_Push_Refinements(Level* level_)
 {
   #if NEEDFUL_DOES_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
     assert(Not_Cell_Readable(SPARE));
@@ -564,14 +564,14 @@ Result(Nothing) Get_Path_Push_Refinements(Level* level_)
     if (e)
         return fail (unwrap e);
 
-    return nothing;
+    return zero;
 }}
 
 
 //
 //  Get_Any_Word_Maybe_Trash: C
 //
-Result(Nothing) Get_Any_Word_Maybe_Trash(
+Result(Zero) Get_Any_Word_Maybe_Trash(
     Sink(Atom) out,
     const Element* word,  // heeds Sigil (^WORD! will UNLIFT)
     Context* context
@@ -1243,7 +1243,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
 //
 //  Set_Var_In_Scratch_To_Out: C
 //
-Result(Nothing) Set_Var_In_Scratch_To_Out(
+Result(Zero) Set_Var_In_Scratch_To_Out(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
@@ -1256,14 +1256,14 @@ Result(Nothing) Set_Var_In_Scratch_To_Out(
     if (e)
         return fail (unwrap e);
 
-    return nothing;
+    return zero;
 }
 
 
 //
 //  Get_Var_In_Scratch_To_Out: C
 //
-Result(Nothing) Get_Var_In_Scratch_To_Out(
+Result(Zero) Get_Var_In_Scratch_To_Out(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
@@ -1277,13 +1277,13 @@ Result(Nothing) Get_Var_In_Scratch_To_Out(
         return fail (unwrap e);
 
     if (Is_Error(OUT))  // !!! weird can't pick case
-        return nothing;
+        return zero;
 
     if (Is_Dual_Word_Unset_Signal(Known_Stable(OUT)))
         return fail ("UNSET variable");
 
     Unliftify_Undecayed(OUT);  // won't make unstable if wasn't ^META [1]
-    return nothing;
+    return zero;
 }
 
 

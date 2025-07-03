@@ -74,7 +74,7 @@ Rebol [
 ;    exit codes, you don't have to worry about checking the result...but also
 ;    you won't get any information by checking the result.  Comparisons with
 ;    nothing are disallowed to help draw attention to misunderstandings of
-;    this kind, so we return nothing to take advantage of that:
+;    this kind, so we return zero to take advantage of that:
 ;
 ;      https://forum.rebol.info/t/2068/2
 ;

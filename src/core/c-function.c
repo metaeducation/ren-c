@@ -59,7 +59,7 @@ static void Force_Adjunct(VarList* *adjunct_out) {
 //    first slot of the paramlist.  Initially it was the last slot...but this
 //    enables adding more arguments/refinements/locals in derived functions.
 //
-static Result(Nothing) Push_Keys_And_Params_Core(
+static Result(Zero) Push_Keys_And_Params_Core(
     VarList* *adjunct,
     Level* L,
     Flags flags,
@@ -469,7 +469,7 @@ static Result(Nothing) Push_Keys_And_Params_Core(
     if (*adjunct)
         Drop_Lifeguard(*adjunct);
 
-    return nothing;
+    return zero;
 }
 
 
@@ -479,7 +479,7 @@ static Result(Nothing) Push_Keys_And_Params_Core(
 // Wrapper allowing `return fail` from Push_Keys_And_Params_Core() to properly
 // balance the stack.
 //
-Result(Nothing) Push_Keys_And_Params(
+Result(Zero) Push_Keys_And_Params(
     VarList* *adjunct,
     const Element* spec,
     Flags flags,
@@ -498,7 +498,7 @@ Result(Nothing) Push_Keys_And_Params(
     }
 
     Drop_Level_Unbalanced(L);  // pushed values on stack meant to be there
-    return nothing;
+    return zero;
 }
 
 

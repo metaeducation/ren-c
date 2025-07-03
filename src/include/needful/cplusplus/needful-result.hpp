@@ -316,47 +316,47 @@ constexpr ResultExtractor g_result_extractor = {};
 #define Needful_Postfix_Extract_Hot  >> needful::g_result_extractor
 
 
-// 1. This could be called NOTHING in all caps to be more consistent with
+// 1. This could be called ZERO in all caps to be more consistent with
 //    enum naming, but the enum is just an implementation detail.  This is
 //    not like the all-caps TRASH or VOID that suggest Rebol types, it's
 //    specifically an implementation detail in C.  Lowercase seems better.
 //
 // 2. When building as C++, when a `fail` produces NEEDFUL_PERMISSIVE_ZERO
 //    the ResultWrapper<> will typically try to construct its contents with
-//    a cast to zero.  Rather than make the Nonthing type support this generic
-//    methodology, we make a specialization of ResultWrapper<Nothing>.
+//    a cast to zero.  Rather than make the Zero type support this generic
+//    methodology, we make a specialization of ResultWrapper<Zero>.
 //
-//    Besides stopping constructions of Nothing from random integers, having a
+//    Besides stopping constructions of Zero from random integers, having a
 //    specialization may make it more efficient--if only in debug builds.
-//    Less code should be generated since the ResultWrapper<Nothing> is a
-//    completely empty class with no `Nothing` member.
+//    Less code should be generated since the ResultWrapper<Zero> is a
+//    completely empty class with no `Zero` member.
 //
 
-struct NothingStruct {
-    NothingStruct () = default;  // handle `return nothing;` case
-    /* NothingStruct(int) {} */  // don't allow construction from int [2]
+struct ZeroStruct {
+    ZeroStruct () = default;  // handle `return zero;` case
+    /* ZeroStruct(int) {} */  // don't allow construction from int [2]
 };
 
-#undef Nothing
-#define Nothing  needful::NothingStruct  // a Nothing type, capitalized [1]
+#undef NeedfulZero
+#define NeedfulZero  needful::ZeroStruct  // a Zer type, capitalized [1]
 
-#undef nothing
-#define nothing  needful::NothingStruct{}  // Nothing instance, lowercase [1]
+#undef needful_zero
+#define needful_zero  needful::ZeroStruct{}  // zero instance, lowercase [1]
 
 template<>
-struct ResultWrapper<Nothing> {
+struct ResultWrapper<Zero> {
     ResultWrapper() = delete;
 
     ResultWrapper(const PermissiveZero&) {}
-    ResultWrapper(const Nothing&) {}
+    ResultWrapper(const Zero&) {}
 
-    ExtractedHotPotato<Nothing> extract() {
-        return ExtractedHotPotato<Nothing>(nothing);
+    ExtractedHotPotato<Zero> extract() {
+        return ExtractedHotPotato<Zero>{zero};
     }
 };
 
 inline void operator>>(
-    ResultWrapper<Nothing>&& result,
+    ResultWrapper<Zero>&& result,
     const ResultExtractor& right
 ){
     UNUSED(result);

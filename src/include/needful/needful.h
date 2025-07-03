@@ -529,7 +529,7 @@
     { run_again_ = true; continue; }
 
 
-//=//// "NOTHING" TYPE (RETURN-ABLE `void` SURROGATE) /////////////////////=//
+//=//// ZERO TYPE (RETURN-ABLE `void` SURROGATE) /////////////////////////=//
 //
 // When using wrappers like Result(T) to do their magic, void can't be used
 // as something that is able to be constructed from 0 when trying to do
@@ -541,19 +541,27 @@
 //
 //   https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0146r0.html
 //
-// So instead of Result(void) we use Result(Nothing).  This is like what Rust
+// So instead of Result(void) we use Result(Zero).  This is like what Rust
 // would call the "unit type" (which they write as `()`).
 //
 // To make it work in C, it's just an enum with a single zero value.  But
 // the C++ version is more complex.
 //
+// 1. The name "Zero" is chosen because "Nothing" is too close to "None"
+//    which is being used for the `Option()` type's disengaged state.
+//
+// 2. There is no way the C++ enhancements can statically assert at
+//    compile-time that a Zero is only being constructed from the 0 literal.
+//    Because of this, you have to say `return zero` instead of `return 0`
+//    when using the Zero type to pass the C++ static analysis.
+//
 
 typedef enum {
-    NEEDFUL_NOTHING_ENUM_0 = 0  // use lowercase for the constant [1]
-} NeedfulNothingEnum;
+    NEEDFUL_ZERO_ENUM_0 = 0  // use lowercase for the constant [1]
+} NeedfulZeroEnum;
 
-#define NeedfulNothing  NeedfulNothingEnum  // rename to Zero
-#define needful_nothing   NEEDFUL_NOTHING_ENUM_0
+#define NeedfulZero  NeedfulZeroEnum  // rename to Zero [1]
+#define needful_zero  NEEDFUL_ZERO_ENUM_0  // use instead of 0 literal [2]
 
 
 //=//// NEEDFUL_DOES_CORRUPTIONS + CORRUPTION SEED/DOSE ///////////////////=//
@@ -712,9 +720,6 @@ typedef enum {
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_RESULT_SHORTHANDS)
-    #define Nothing                 NeedfulNothing
-    #define nothing                 needful_nothing
-
     #define Result(T)               NeedfulResult(T)
 
     #define fail(p)                 needful_fail(p)
@@ -732,6 +737,11 @@ typedef enum {
     #define guaranteed(expr)        needful_guaranteed(expr)
     #define excepted(decl)          needful_excepted(decl)
     #define sys_util_rescued(expr)  needful_rescued(expr)  // stigmatize [1]
+#endif
+
+#if !defined(NEEDFUL_DONT_DEFINE_ZERO_SHORTHANDS)
+    #define Zero                    NeedfulZero
+    #define zero                    needful_zero
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_SINK_SHORTHANDS)
