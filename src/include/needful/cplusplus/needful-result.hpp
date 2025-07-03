@@ -202,6 +202,23 @@ struct PermissiveZeroStruct {
 #define NEEDFUL_PERMISSIVE_ZERO  needful::PermissiveZeroStruct{}
 
 
+//=//// DETECT OPTION WRAPPER TRAIT //////////////////////////////////////=//
+//
+// Result(T) in particular wants to disable you from saying `return nullptr;`
+// unless you specifically are using `Result(Option(T*))`.  This keeps you
+// from mistakenly returning a nullptr to indicate failure, when you need
+// to use `return fail(...)` to do so.
+//
+// This can only be tested for if you're using the OptionWrapper<T> type,
+// so you don't get the check if you aren't doing a build with it.
+//
+
+#if NEEDFUL_OPTION_USES_WRAPPER
+    template<typename>
+    struct IsOptionWrapper : std::false_type {};
+#endif
+
+
 //=//// EXTRACTED RESULT "HOT POTATO" /////////////////////////////////////=//
 //
 // The Result(T) type is [[nodiscard]] (C++17 feature, with some pre-C++17
@@ -263,6 +280,19 @@ struct NEEDFUL_NODISCARD ExtractedHotPotato {
 // a failure by means of a global variable, but will construct the result
 // from zero in that case.
 //
+// 1. The error machinery hinges on the ability to return a zerolike state
+//    for anything that is a Result(T) in the case of a failure.  But rather
+//    than allow Result to be constructed from any integer in the C++
+//    checked build, it's narrowly constructible from PermissiveZeroStruct,
+//    which is what `return fail(...)` returns.
+//
+// 2. It's important that functions that particpate in the Result(T) error
+//    handling system don't return `nullptr` as a way of signaling failure.
+//    Not going through `return fail(...)` is a mistake, since it skips
+//    setting the global error state.  But since the error state is separate
+//    from the return value, zerolike states can be legal returns...so we
+//    allow it IF your return type is Result(Option(T*)) vs. Result(T*).
+//
 
 template<typename T>
 struct NEEDFUL_NODISCARD ResultWrapper {
@@ -270,9 +300,20 @@ struct NEEDFUL_NODISCARD ResultWrapper {
 
     ResultWrapper() = delete;
 
-    ResultWrapper(PermissiveZeroStruct&&)
+    ResultWrapper(PermissiveZeroStruct&&)  // how failures are returned [1]
         : p (u_cast(T, NEEDFUL_PERMISSIVE_ZERO))
         {}
+
+    ResultWrapper(const std::nullptr_t&)  // usually no `return nullptr;` [2]
+        : p (nullptr)
+    {
+      #if NEEDFUL_OPTION_USES_WRAPPER
+        static_assert(
+            IsOptionWrapper<T>::value,
+            "Use Result(Option(T*)) if `return nullptr`; is not a mistake"
+        );
+      #endif
+    }
 
     template <typename U>
     ResultWrapper(const U& other) : p {other} {}
@@ -287,11 +328,11 @@ struct NEEDFUL_NODISCARD ResultWrapper {
         : p (u_cast(T, std::forward<U>(something)))
     {}
 
-    ExtractedHotPotato<T> Extract_Hot()  // [[nodiscard]] version
+    ExtractedHotPotato<T> Extract_Hot() const  // [[nodiscard]] version
       { return p; }
 
-    T Extract_Cold()  // plain type, discardable
-      { return p; }
+    T Extract_Cold() const  // plain type, discardable
+      { return p; }  // (not used at the moment, only extract hot vs. discard)
 };
 
 #undef NeedfulResult

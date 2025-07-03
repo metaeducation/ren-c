@@ -941,6 +941,14 @@ typedef enum {
         #include <stdarg.h>  // ...but helps cast() catch bad va_list usages
     #endif
 
+  #if !defined(NEEDFUL_OPTION_USES_WRAPPER)
+    #define NEEDFUL_OPTION_USES_WRAPPER  0
+  #endif
+
+  #if !defined(NEEDFUL_SINK_USES_WRAPPER)
+    #define NEEDFUL_SINK_USES_WRAPPER  0
+  #endif
+
   namespace needful {  // put any non-macro helpers in the needful namespace
 
     #include "cplusplus/needful-asserts.hpp"
@@ -957,16 +965,8 @@ typedef enum {
 
     #include "cplusplus/needful-result.hpp"
 
-  #if !defined(NEEDFUL_OPTION_USES_WRAPPER)
-    #define NEEDFUL_OPTION_USES_WRAPPER  0
-  #endif
-
   #if NEEDFUL_OPTION_USES_WRAPPER
     #include "cplusplus/needful-option.hpp"
-  #endif
-
-  #if !defined(NEEDFUL_SINK_USES_WRAPPER)
-    #define NEEDFUL_SINK_USES_WRAPPER  0
   #endif
 
   #if NEEDFUL_SINK_USES_WRAPPER

@@ -218,6 +218,9 @@ bool operator!=(L left, const OptionWrapper<R>& right)
     };
 #endif
 
+template<typename X>
+struct IsOptionWrapper<OptionWrapper<X>> : std::true_type {};
+
 #undef NeedfulOption
 #define NeedfulOption(T)  needful::OptionWrapper<T>
 
