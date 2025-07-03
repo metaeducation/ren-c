@@ -170,6 +170,7 @@
 //        bool Needful_Get_Divergence()
 //        void Needful_Force_Divergent()
 //        void Needful_Assert_Not_Failing()  // avoids assert() dependency
+//        void Needful_Terminate_On_Bad_Result(...)  // variadic
 //
 //    These can be functions or macros with the same signature.  They should
 //    use thread-local state if they're to work in multi-threaded code.
@@ -181,14 +182,14 @@
 
 #define NEEDFUL_NOOP  ((void)0)
 
-#define needful_fail(p) \
-    (assert(not Needful_Get_Failure() and not Needful_Get_Divergence()), \
-    Needful_Set_Failure(p), \
+#define needful_fail(...) \
+    (assert((! Needful_Get_Failure()) && (! Needful_Get_Divergence())), \
+    Needful_Set_Failure(__VA_ARGS__), \
     NEEDFUL_PERMISSIVE_ZERO)
 
-#define needful_panic(p) do { \
-    assert(not Needful_Get_Failure() and not Needful_Get_Divergence()); \
-    Needful_Set_Failure(p); \
+#define needful_panic(...) do { \
+    assert((! Needful_Get_Failure()) && (! Needful_Get_Divergence())); \
+    Needful_Set_Failure(__VA_ARGS__); \
     Needful_Force_Divergent(); \
     return NEEDFUL_PERMISSIVE_ZERO; \
 } while (0)
@@ -206,6 +207,13 @@
         /* possibly(Needful_Get_Divergence()); */ \
         Needful_Force_Divergent(); \
         return NEEDFUL_PERMISSIVE_ZERO; \
+    } NEEDFUL_NOOP  /* force require semicolon at callsite */
+
+#define needful_expect_core(expr, prefix_extractor, ...) \
+    /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
+    if (Needful_Get_Failure()) { \
+        /* possibly(Needful_Get_Divergence()); */ \
+        Needful_Terminate_On_Bad_Result(__VA_ARGS__); \
     } NEEDFUL_NOOP  /* force require semicolon at callsite */
 
 #define needful_guarantee_core(expr, prefix_extractor) \
@@ -239,6 +247,9 @@
 #define needful_require(expr) \
     needful_require_core(expr, Needful_Prefix_Extract_Hot)
 
+#define needful_expect(expr,...) \
+    needful_expect_core(expr, Needful_Prefix_Extract_Hot, __VA_ARGS__)
+
 #define needful_guarantee(expr) \
     needful_guarantee_core(expr, Needful_Prefix_Extract_Hot)
 
@@ -258,6 +269,9 @@
 
 #define needful_required(expr) \
     needful_require_core(expr, Needful_Prefix_Discard_Result)
+
+#define needful_expected(expr,...) \
+    needful_expect_core(expr, Needful_Prefix_Discard_Result, __VA_ARGS__)
 
 #define needful_guaranteed(expr) \
     needful_guarantee_core(expr, Needful_Prefix_Discard_Result)
@@ -525,7 +539,7 @@
 #define needful_attempt /* {body} */ \
     bool run_then_ = false;  /* as long as run_then_ is false, keep going */ \
     bool run_again_ = false;  /* if run_again_, don't set run_then_ */ \
-    for (; not run_then_; \
+    for (; (! run_then_); \
         run_again_ ? (run_again_ = false), true  /* again keeps looping */ \
         : (run_then_ = true))  /* continue exits the attempt "loop" */
 
@@ -539,7 +553,7 @@
     bool run_then_ = false; \
     bool run_again_ = false; \
     for (; run_again_ ? (run_again_ = false), true :  /* skip condition */ \
-        (not condition) ? (run_then_ = true, false) : true; )
+        (! condition) ? (run_then_ = true, false) : true; )
 
 #define needful_then /* {branch} */ \
     if (run_then_)
@@ -718,12 +732,17 @@ typedef enum {
 // problems if they are defined as macros.  You can pick your own terms but
 // these are the ones that were used in Needful's original client.
 //
-// 1. It should be very rare for code to capture divergent errors.  This
+// 1. A quick and dirty way to write `return failed;` and not have to come
+//    up with an error might be useful in some codebases.  We don't try to
+//    define that here, because it's open ended as to what you'd use for
+//    your error value type.
+//
+// 2. It should be very rare for code to capture divergent errors.  This
 //    aligns with a Ren-C convention of making the divergent error handler
 //    look "less casual" by hiding it in the system.utilities namespace, vs.
 //    lookin more like a "keyword".
 //
-// 2. The idea beind shorthands like `possibly()` is to replace comments that
+// 3. The idea beind shorthands like `possibly()` is to replace comments that
 //    are carrying information about something that *might* be true:
 //
 //        int i = Get_Integer(...);  // i may be < 0
@@ -766,20 +785,22 @@ typedef enum {
     #define Result(T)               NeedfulResult(T)
 
     #define fail(p)                 needful_fail(p)
+    /* #define failed               needful_fail("generic failure");  [1] */
     #define panic(p)                needful_panic(p)
 
     #define trap(expr)              needful_trap(expr)
     #define require(expr)           needful_require(expr)
+    #define expect(decl)            needful_expect(decl)
     #define guarantee(expr)         needful_guarantee(expr)
     #define except(decl)            needful_except(decl)
-    #define sys_util_rescue(expr)   needful_rescue(expr)  // stigmatize [1]
+    #define sys_util_rescue(expr)   needful_rescue(expr)  // stigmatize [2]
 
-    #define discarded(expr)         needful_discarded(expr)
     #define trapped(expr)           needful_trapped(expr)
     #define required(expr)          needful_required(expr)
+    #define expected(decl)          needful_expected(decl)
     #define guaranteed(expr)        needful_guaranteed(expr)
     #define excepted(decl)          needful_excepted(decl)
-    #define sys_util_rescued(expr)  needful_rescued(expr)  // stigmatize [1]
+    #define sys_util_rescued(expr)  needful_rescued(expr)  // stigmatize [2]
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_SINK_SHORTHANDS)
@@ -801,7 +822,7 @@ typedef enum {
     #define zero                    needful_zero
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)  // informative! [2]
+#if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)  // informative! [3]
     #define possibly(expr)        NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL(expr)
     #define impossible(expr)      NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL(expr)
 
@@ -922,26 +943,26 @@ typedef enum {
 
   namespace needful {  // put any non-macro helpers in the needful namespace
 
-    #include "needful/cplusplus/needful-asserts.hpp"
+    #include "cplusplus/needful-asserts.hpp"
 
-    #include "needful/cplusplus/needful-utilities.hpp"
+    #include "cplusplus/needful-utilities.hpp"
 
-    #include "needful/cplusplus/needful-casts.hpp"
+    #include "cplusplus/needful-const.hpp"
 
-    #include "needful/cplusplus/needful-const.hpp"
+    #include "cplusplus/needful-casts.hpp"
 
   #if NEEDFUL_DOES_CORRUPTIONS
-    #include "needful/cplusplus/needful-corruption.hpp"
+    #include "cplusplus/needful-corruption.hpp"
   #endif
 
-    #include "needful/cplusplus/needful-result.hpp"
+    #include "cplusplus/needful-result.hpp"
 
   #if !defined(NEEDFUL_OPTION_USES_WRAPPER)
     #define NEEDFUL_OPTION_USES_WRAPPER  0
   #endif
 
   #if NEEDFUL_OPTION_USES_WRAPPER
-    #include "needful/cplusplus/needful-option.hpp"
+    #include "cplusplus/needful-option.hpp"
   #endif
 
   #if !defined(NEEDFUL_SINK_USES_WRAPPER)
@@ -949,7 +970,7 @@ typedef enum {
   #endif
 
   #if NEEDFUL_SINK_USES_WRAPPER
-    #include "needful/cplusplus/needful-sinks.hpp"
+    #include "cplusplus/needful-sinks.hpp"
   #endif
 
   }  // end namespace needful
