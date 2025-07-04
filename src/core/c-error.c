@@ -599,8 +599,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
 // regain control to properly call va_end with no longjmp to skip it.
 //
 Error* Make_Error_Managed_Vaptr(
-    SymId cat_id,
-    SymId id,
+    Option(SymId) cat_id,
+    Option(SymId) id,
     va_list* vaptr
 ){
     if (PG_Boot_Phase < BOOT_ERRORS) { // no STD_ERROR or template table yet
@@ -622,21 +622,21 @@ Error* Make_Error_Managed_Vaptr(
     DECLARE_VALUE (id_value);
     DECLARE_VALUE (type);
     const Value* message;  // Stack values ("movable") are allowed
-    if (cat_id == SYM_0 and id == SYM_0) {
+    if (not id) {
         Init_Nulled(id_value);
         Init_Nulled(type);
         message = va_arg(*vaptr, const Value*);
     }
     else {
-        assert(cat_id != SYM_0 and id != SYM_0);
-        Init_Word(type, Canon_Symbol(cat_id));
-        Init_Word(id_value, Canon_Symbol(id));
+        assert(cat_id != SYM_0);
+        Init_Word(type, Canon_Symbol(unwrap cat_id));
+        Init_Word(id_value, Canon_Symbol(unwrap id));
 
         // Assume that error IDs are unique across categories (this is checked
         // by %make-boot.r).  If they were not, then this linear search could
         // not be used.
         //
-        message = Find_Error_For_Sym(id);
+        message = Find_Error_For_Sym(unwrap id);
     }
 
     assert(message);
@@ -725,7 +725,7 @@ Error* Make_Error_Managed_Vaptr(
 
 
 //
-//  Make_Error_Managed: C
+//  Make_Error_Managed_Raw: C
 //
 // This variadic function takes a number of Value* arguments appropriate for
 // the error category and ID passed.  It is commonly used with panic():
@@ -745,21 +745,18 @@ Error* Make_Error_Managed_Vaptr(
 //
 //     abrupt_panic (Error_Something(arg1, thing_processed_to_make_arg2));
 //
-Error* Make_Error_Managed(
-    int cat_id,
-    int id, // can't be SymId, see note below
+Error* Make_Error_Managed_Raw(
+    int opt_cat_id,  // va_list is weird about enums...
+    int opt_id,  // ...note that va_arg(va, enum_type) is illegal!
     ... /* Value* arg1, Value* arg2, ... */
 ){
     va_list va;
 
-    // Note: if id is SymId, triggers: "passing an object that undergoes
-    // default argument promotion to 'va_start' has undefined behavior"
-    //
-    va_start(va, id);
+    va_start(va, opt_id);  // last fixed argument is opt_id, pass that
 
     Error* error = Make_Error_Managed_Vaptr(
-        cast(SymId, cat_id),
-        cast(SymId, id),
+        u_cast(Option(SymId), opt_cat_id),
+        u_cast(Option(SymId), opt_id),
         &va
     );
 
