@@ -54,7 +54,7 @@ const Stub* stub_cast_impl(const F* p, DowncastTag) {  // validate [C]
     if (not p)
         return nullptr;
 
-    if ((u_cast(const Stub*, p)->leader.bits & (
+    if ((u_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_CELL  // BASE_FLAG_UNREADABLE ok
     )) != (
         BASE_FLAG_BASE
@@ -90,7 +90,7 @@ const Flex* flex_cast_impl(const F* p, DowncastTag) {  // validate [C]
     if (not p)
         return nullptr;
 
-    if ((u_cast(const Stub*, p)->leader.bits & (
+    if ((u_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
     )) != (
         BASE_FLAG_BASE
@@ -128,7 +128,7 @@ const Binary* binary_cast_impl(const F* p, DowncastTag) {  // validate [C]
 
     const Stub* stub = u_cast(const Stub*, p);
 
-    if ((stub->leader.bits & (
+    if ((stub->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
     )) != (
         BASE_FLAG_BASE  // BASE_FLAG_UNREADABLE is diminished Stub
@@ -172,14 +172,14 @@ const Strand* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
     if (taste_byte != FLAVOR_NONSYMBOL and taste_byte != FLAVOR_SYMBOL)
         crash (p);
 
-    if ((stub->leader.bits & (
+    if ((stub->header.bits & (
         STUB_MASK_SYMBOL_STRING_COMMON
             | BASE_FLAG_UNREADABLE
             | BASE_FLAG_CELL
     )) !=
         STUB_MASK_SYMBOL_STRING_COMMON
     ){
-        assert(stub->leader.bits & STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY);
+        assert(stub->header.bits & STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY);
         crash (p);
     }
 
@@ -210,7 +210,7 @@ struct CastHook<const F*, const Symbol*> {
             return nullptr;
 
         const Stub* stub = u_cast(const Stub*, p);
-        if ((stub->leader.bits & (
+        if ((stub->header.bits & (
             (STUB_MASK_SYMBOL | STUB_MASK_TASTE)
                 | BASE_FLAG_UNREADABLE
                 | BASE_FLAG_CELL
@@ -244,7 +244,7 @@ const Array* array_cast_impl(const F* p, DowncastTag) {  // validate [C]
     if (not p)
         return nullptr;
 
-    if ((u_cast(const Stub*, p)->leader.bits & (
+    if ((u_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
     )) != (
         BASE_FLAG_BASE
@@ -280,7 +280,7 @@ const VarList* varlist_cast_impl(const F* p, DowncastTag) {  // validate [C]
     if (not p)
         return nullptr;
 
-    if ((u_cast(const Stub*, p)->leader.bits & (
+    if ((u_cast(const Stub*, p)->header.bits & (
         (STUB_MASK_LEVEL_VARLIST
             & (~ STUB_FLAG_LINK_NEEDS_MARK)  // next virtual, maybe null
             & (~ STUB_FLAG_MISC_NEEDS_MARK)  // adjunct, maybe null
@@ -320,7 +320,7 @@ struct CastHook<const F*, const Phase*> {  // both must be const [B]
         const Stub* stub = u_cast(const Stub*, p);
 
         if (TASTE_BYTE(stub) == FLAVOR_DETAILS) {
-            if ((stub->leader.bits & (
+            if ((stub->header.bits & (
                 (STUB_MASK_DETAILS | STUB_MASK_TASTE)
                     | BASE_FLAG_UNREADABLE
                     | BASE_FLAG_CELL
@@ -331,7 +331,7 @@ struct CastHook<const F*, const Phase*> {  // both must be const [B]
             }
         }
         else {
-            if ((stub->leader.bits & ((
+            if ((stub->header.bits & ((
                 (STUB_MASK_LEVEL_VARLIST | STUB_MASK_TASTE)
                     | BASE_FLAG_UNREADABLE
                     | BASE_FLAG_CELL

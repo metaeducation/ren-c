@@ -182,7 +182,7 @@ INLINE void Free_Value(Value* v)
         Disconnect_Api_Handle_From_Level(stub);
 
     Force_Poison_Cell(v);  // do last (removes BASE_FLAG_ROOT if set)
-    stub->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
+    stub->header.bits = STUB_MASK_NON_CANON_UNREADABLE;
     GC_Kill_Stub(stub);
 }
 

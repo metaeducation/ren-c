@@ -315,19 +315,22 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 //
 // !!! Overlaps with Assert_Varlist, review folding them together.
 //
-void Extra_Init_Context_Cell_Checks_Debug(Heart heart, VarList* v) {
-    assert(CTX_TYPE(v) == heart);
+void Extra_Init_Context_Cell_Checks_Debug(
+    Heart heart,
+    VarList* varlist
+){
+    assert(CTX_TYPE(varlist) == heart);
 
     if (heart == TYPE_FRAME)  // may not have Misc_Varlist_Adjunct()
         assert(
-            (v->leader.bits & STUB_MASK_LEVEL_VARLIST)
+            (varlist->header.bits & STUB_MASK_LEVEL_VARLIST)
             == STUB_MASK_LEVEL_VARLIST
         );
     else
-        assert((v->leader.bits & STUB_MASK_VARLIST) == STUB_MASK_VARLIST);
+        assert((varlist->header.bits & STUB_MASK_VARLIST) == STUB_MASK_VARLIST);
 
-    const Value* archetype = Varlist_Archetype(v);
-    assert(Cell_Varlist(archetype) == v);
+    const Value* archetype = Varlist_Archetype(varlist);
+    assert(Cell_Varlist(archetype) == varlist);
 
     // Currently only FRAME! uses the extra field, in order to capture the
     // ->coupling of the function value it links to (which is in ->phase)
@@ -337,12 +340,12 @@ void Extra_Init_Context_Cell_Checks_Debug(Heart heart, VarList* v) {
     // KeyLists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
     //
-    KeyList* keylist = Bonus_Keylist(v);
+    KeyList* keylist = Bonus_Keylist(varlist);
     Assert_Flex_Managed(keylist);
 
     assert(
-        not Misc_Varlist_Adjunct(v)
-        or Any_Context_Type(CTX_TYPE(unwrap Misc_Varlist_Adjunct(v)))
+        not Misc_Varlist_Adjunct(varlist)
+        or Any_Context_Type(CTX_TYPE(unwrap Misc_Varlist_Adjunct(varlist)))
     );
 }
 
@@ -358,7 +361,7 @@ void Extra_Init_Frame_Checks_Debug(Phase* phase) {
 
     KeyList* keylist = Phase_Keylist(phase);
     assert(
-        (keylist->leader.bits & STUB_MASK_KEYLIST)
+        (keylist->header.bits & STUB_MASK_KEYLIST)
         == STUB_MASK_KEYLIST
     );
 

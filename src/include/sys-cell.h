@@ -557,13 +557,7 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 //
 // This has to be defined after `Cell` is fully defined.
 //
-// 1. In lieu of typechecking cell is-a cell, we assume the macro finding
-//    a field called ->header with .bits in it is good enough.  All methods of
-//    checking seem to add overhead in the RUNTIME_CHECKS build that isn't
-//    worth it.  To help avoid accidentally passing stubs, the HeaderUnion in
-//    a Stub is named "leader" instead of "header".
-//
-// 2. It can often be helpful to inject code to when the KIND_BYTE() is being
+// 1. It can often be helpful to inject code to when the KIND_BYTE() is being
 //    assigned.  This mechanism also intercepts reads of the KIND_BYTE() too,
 //    which is done pervasively.  It slows down the code in checked builds by
 //    a noticeable amount, so we don't put it in all checked builds...only
@@ -574,7 +568,7 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
     #define KIND_BYTE(cell) \
         KIND_BYTE_RAW(cell)
 #else
-    struct HeartHolder {  // class for intercepting heart assignments [2]
+    struct HeartHolder {  // class for intercepting heart assignments [1]
         Cell* cell;
 
         HeartHolder(const Cell* cell)

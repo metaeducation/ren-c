@@ -1040,7 +1040,7 @@ void Assert_Varlist_Core(VarList* varlist)
 {
     Array* a = Varlist_Array(varlist);
 
-    if ((a->leader.bits & STUB_MASK_VARLIST) != STUB_MASK_VARLIST)
+    if ((a->header.bits & STUB_MASK_VARLIST) != STUB_MASK_VARLIST)
         crash (varlist);
 
     Value* rootvar = Rootvar_Of_Varlist(varlist);

@@ -746,7 +746,7 @@ static void Mark_Level(Level* L) {
     Context* L_binding = Level_Binding(L);  // marks binding, not feed->p [2]
     if (
         L_binding != SPECIFIED
-        and (L_binding->leader.bits & BASE_FLAG_MANAGED)
+        and (L_binding->header.bits & BASE_FLAG_MANAGED)
     ){
         Queue_Mark_Base_Deep(&Feed_Data(L->feed)->extra.base);
     }

@@ -169,7 +169,7 @@ static void Startup_Lib(void)
         Patch* patch = &g_lib_patches[id];
         assert(Is_Stub_Erased(patch));  // pre-boot state
 
-        patch->leader.bits = STUB_MASK_PATCH;
+        patch->header.bits = STUB_MASK_PATCH;
 
         assert(INFO_PATCH_SEA(patch) == nullptr);
         assert(LINK_PATCH_RESERVED(patch) == nullptr);

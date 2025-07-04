@@ -91,7 +91,7 @@ INLINE bool Is_Stub_Diminished(const Stub* s) {
 
 INLINE Stub* Set_Stub_Unreadable(Stub* s) {
     assert(Is_Base_Readable(s));
-    s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
+    s->header.bits = STUB_MASK_NON_CANON_UNREADABLE;
     assert(BASE_BYTE(s) == DIMINISHED_NON_CANON_BYTE);
 
     Corrupt_If_Needful(s->link.corrupt);
@@ -110,27 +110,22 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
 // Using token pasting macros achieves some brevity, but also helps to avoid
 // mixups with FLEX_INFO_XXX!
 //
-// 1. Avoid cost that inline functions (even constexpr) add to checked builds
-//    by "typechecking" via finding the name ->leader.bits in (f).  (The name
-//    "leader" is chosen to prevent calls with cells, which use "header".)
-//
-// 2. Flex flags are managed distinctly from conceptual immutability of their
-//    data, and so we w_cast away constness.  We do this on the HeaderUnion
-//    vs. m_cast() on the (f) to get the typechecking of [1]
+// 1. Flex flags are managed distinctly from conceptual immutability of their
+//    data, and so we we cast away constness.
 
 #define Get_Flex_Flag(f,name) \
-    ((ensure(const Flex*, (f))->leader.bits & FLEX_FLAG_##name) != 0)
+    ((ensure(const Flex*, (f))->header.bits & FLEX_FLAG_##name) != 0)
 
 #define Not_Flex_Flag(f,name) \
-    ((ensure(const Flex*, (f))->leader.bits & FLEX_FLAG_##name) == 0)
+    ((ensure(const Flex*, (f))->header.bits & FLEX_FLAG_##name) == 0)
 
 #define Set_Flex_Flag(f,name) \
-    (m_cast(HeaderUnion*, &ensure(const Flex*, (f))->leader)->bits \
+    (m_cast(Flex*, ensure(const Flex*, (f)))->header.bits \
         |= FLEX_FLAG_##name)
 
 #define Clear_Flex_Flag(f,name) \
-    (m_cast(HeaderUnion*, &ensure(const Flex*, (f))->leader)->bits \
-        &= ~FLEX_FLAG_##name)
+    (m_cast(Flex*, ensure(const Flex*, (f)))->header.bits \
+        &= (~ FLEX_FLAG_##name))
 
 
 //=//// FLEX "INFO" BITS (or INODE) ///////////////////////////////////////=//

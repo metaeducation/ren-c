@@ -756,7 +756,7 @@ VarList* Copy_Varlist_Extra_Managed(
         }
     }
 
-    varlist->leader.bits |= STUB_MASK_VARLIST;
+    varlist->header.bits |= STUB_MASK_VARLIST;
 
     VarList* copy = cast(VarList*, varlist); // now a well-formed context
 

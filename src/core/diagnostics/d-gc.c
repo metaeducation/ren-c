@@ -78,7 +78,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         KeyList* keylist = Bonus_Keylist(cast(VarList*, binding));
         if (
-            (keylist->leader.bits & STUB_MASK_KEYLIST)
+            (keylist->header.bits & STUB_MASK_KEYLIST)
             != STUB_MASK_KEYLIST
         ){
             crash (binding);

@@ -1038,7 +1038,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
         data_old = cast(char*, &content_old);
     }
 
-    f->leader.bits |= flags;
+    f->header.bits |= flags;
 
     // !!! Currently the remake won't make a Flex that fits entirely in
     // a Stub (so always STUB_FLAG_DYNAMIC).  All Flex code needs a general

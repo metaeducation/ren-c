@@ -69,7 +69,7 @@ void Dump_Flex(Flex* f, const char *memo)
     printf(" rest: %d\n", cast(int, Flex_Rest(f)));
 
     // flags includes len if non-dynamic
-    printf(" flags: %lx\n", cast(unsigned long, f->leader.bits));
+    printf(" flags: %lx\n", cast(unsigned long, f->header.bits));
 
     // info includes width
     printf(" info: %lx\n", cast(unsigned long, FLEX_INFO(f)));

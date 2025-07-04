@@ -66,7 +66,7 @@ void Startup_Datatypes(void)
         Patch* patch = &g_datatype_patches[cast(Byte, type)];
         assert(Is_Stub_Erased(patch));  // pre-boot state
 
-        patch->leader.bits = STUB_MASK_PATCH;
+        patch->header.bits = STUB_MASK_PATCH;
 
         assert(INFO_PATCH_SEA(patch) == nullptr);
         assert(LINK_PATCH_RESERVED(patch) == nullptr);

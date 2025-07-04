@@ -654,7 +654,7 @@ Result(Element*) Alias_Blob_As(
                 ++num_codepoints;
             }
             TASTE_BYTE(m_cast(Binary*, bin)) = FLAVOR_0;  // next step sets
-            m_cast(Binary*, bin)->leader.bits |= STUB_MASK_STRAND;
+            m_cast(Binary*, bin)->header.bits |= STUB_MASK_STRAND;
 
             str = c_cast(Strand*, bin);
 

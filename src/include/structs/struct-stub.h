@@ -29,8 +29,8 @@
 // expand the size to add tracking information).  It is defined as a union
 // with with two different layouts:
 //
-//      Dynamic: [leader link [allocation-tracking] info misc]
-//      Compact: [leader link [-sizeof(Cell)-data-] info misc]
+//      Dynamic: [header link [allocation-tracking] info misc]
+//      Compact: [header link [-sizeof(Cell)-data-] info misc]
 //
 // Choosing this size means that the same memory Pool that holds Stubs can
 // also hold GC-trackable entities representing two 4-platform-pointer-Cells:
@@ -51,10 +51,6 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * In order to help avoid confusion in optimizing macros that could be
-//   passed a Cell vs. Stub unintentionally, the header in a Stub is called
-//   `->leader`, distinguishing it from the stub's `->header`.
-//
 // * See %struct-base.h for how obeying the header-in-first-slot convention
 //   allows a Stub to be distinguished from a Cell or a UTF-8 string, and not
 //   run afoul of strict aliasing requirements!
@@ -69,7 +65,7 @@
 //
 
 
-#define STUB_MASK_0  0  // help locate places that treat zero leader specially
+#define STUB_MASK_0  0  // help locate places that treat zero header specially
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -144,16 +140,11 @@
 // Stub.bonus ... but there's no identity mechanism standardized that would
 // distinguish one extension's Stubs from another.
 //
-// 1. In lieu of typechecking stub is-a Stub, we assume the macro finding
-//    a field called ->leader with .bits in it is good enough.  All methods of
-//    checking seem to add overhead in the checked build that isn't worth it.
-//    To help avoid accidentally passing Cell, the HeaderUnion in a Stub
-//    is named "leader" instead of "header".
 
 typedef Byte TasteByte;
 
 #define TASTE_BYTE(stub) \
-    SECOND_BYTE(&(stub)->leader.bits)  // assume has ->leader means Stub [1]
+    SECOND_BYTE(ensure(const Stub*, (stub)))
 
 #define FLAG_TASTE_BYTE(byte)  FLAG_SECOND_BYTE(byte)
 
@@ -406,13 +397,13 @@ typedef union {
     struct StubStruct
 #endif
 {
-    // See the description of FLEX_FLAG_XXX for the bits in this header.
-    // It is in the same position as a Cell header, and the first byte
-    // can be read via BASE_BYTE() to determine which it is.  It's named
-    // "leader" to be distinct from a Cell's "header" to achieve a kind of
-    // poor-man's macro typechecking which doesn't incur checked build costs.
+    // See the description of STUB_FLAG_XXX for the bits in this header.
+    // It is in the same position as a Cell header, and the first byte can be
+    // read via BASE_BYTE() to determine what it is.
     //
-    HeaderUnion leader;
+    // (See Detect_Rebol_Pointer() for discernment based on BASE_BYTE().)
+    //
+    HeaderUnion header;
 
     // The `link` field is generally used for pointers to something that
     // when updated, all references to this Flex would want to be able

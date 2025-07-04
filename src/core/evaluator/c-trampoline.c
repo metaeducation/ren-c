@@ -587,7 +587,7 @@ void Rollback_Level(Level* L) {
         Stub* s = cast(Stub*, b);
         b = LINK_API_STUB_NEXT(s);
         Force_Poison_Cell(Stub_Cell(s));  // lose BASE_FLAG_ROOT
-        s->leader.bits = STUB_MASK_NON_CANON_UNREADABLE;
+        s->header.bits = STUB_MASK_NON_CANON_UNREADABLE;
         GC_Kill_Stub(s);
     }
     L->alloc_value_list = L;  // circularly linked list (terminates in L)

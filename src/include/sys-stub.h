@@ -70,10 +70,10 @@
 //    do that for this?
 
 INLINE bool Is_Stub_Erased(const Stub* s)
-  { return s->leader.bits == STUB_MASK_0; }
+  { return s->header.bits == STUB_MASK_0; }
 
 INLINE void Erase_Stub(Stub* s) {
-    s->leader.bits = STUB_MASK_0;  // just the header, is that all? [1]
+    s->header.bits = STUB_MASK_0;  // just the header, is that all? [1]
     Touch_Stub_If_Debug(s);
 }
 
@@ -82,25 +82,20 @@ INLINE void Erase_Stub(Stub* s) {
 //
 // See definitions of STUB_FLAG_XXX.
 //
-// 1. Avoid cost that inline functions (even constexpr) add to checked builds
-//    by "typechecking" via finding the name ->leader.bits in (f).  (The name
-//    "leader" is chosen to prevent calls with cells, which use "header".)
-//
-// 2. Stub flags are managed distinctly from conceptual immutability of their
-//    data, and so we w_cast away constness.  We do this on the HeaderUnion
-//    vs. m_cast() on the (f) to get the typechecking of [1]
+// 1. Stub flags are managed distinctly from conceptual immutability of their
+//    data, and so we we cast away constness.
 
-#define Get_Stub_Flag(f,name) \
-    (((f)->leader.bits & STUB_FLAG_##name) != 0)
+#define Get_Stub_Flag(s,name) \
+    ((ensure(const Stub*, (s))->header.bits & STUB_FLAG_##name) != 0)
 
-#define Not_Stub_Flag(f,name) \
-    (((f)->leader.bits & STUB_FLAG_##name) == 0)
+#define Not_Stub_Flag(s,name) \
+    ((ensure(const Stub*, (s))->header.bits & STUB_FLAG_##name) == 0)
 
-#define Set_Stub_Flag(f,name) \
-    m_cast(HeaderUnion*, &(f)->leader)->bits |= STUB_FLAG_##name
+#define Set_Stub_Flag(s,name) \
+    (m_cast(Stub*, (s))->header.bits |= STUB_FLAG_##name)  // m_cast() [1]
 
-#define Clear_Stub_Flag(f,name) \
-    m_cast(HeaderUnion*, &(f)->leader)->bits &= ~STUB_FLAG_##name
+#define Clear_Stub_Flag(s,name) \
+    (m_cast(Stub*, (s))->header.bits &= (~ STUB_FLAG_##name))  // m_cast() [1]
 
 
 //=//// STUB FLAVOR ACCESSORS /////////////////////////////////////////////=//
@@ -197,21 +192,21 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 #endif
 
 #define Get_Flavor_Flag(subclass,stub,name) \
-    ((ensure_flavor(FLAVOR_##subclass, (stub))->leader.bits \
+    ((ensure_flavor(FLAVOR_##subclass, (stub))->header.bits \
         & subclass##_FLAG_##name) != 0)
 
 #define Not_Flavor_Flag(subclass,stub,name) \
-    ((ensure_flavor(FLAVOR_##subclass, (stub))->leader.bits \
+    ((ensure_flavor(FLAVOR_##subclass, (stub))->header.bits \
         & subclass##_FLAG_##name) == 0)
 
 #define Set_Flavor_Flag(subclass,stub,name) \
     m_cast(HeaderUnion*, /* [1] */ \
-        &ensure_flavor(FLAVOR_##subclass, (stub))->leader)->bits \
+        &ensure_flavor(FLAVOR_##subclass, (stub))->header)->bits \
         |= subclass##_FLAG_##name
 
 #define Clear_Flavor_Flag(subclass,stub,name)\
     m_cast(HeaderUnion*, /* [1] */ \
-        &ensure_flavor(FLAVOR_##subclass, (stub))->leader)->bits \
+        &ensure_flavor(FLAVOR_##subclass, (stub))->header)->bits \
         &= ~subclass##_FLAG_##name
 
 
@@ -253,7 +248,7 @@ INLINE Stub* Prep_Stub(Flags flags, void *preallocated) {
     assert(not (flags & BASE_FLAG_CELL));
 
     Stub *s = u_cast(Stub*, preallocated);
-    s->leader.bits = flags | BASE_FLAG_BASE;  // #1
+    s->header.bits = flags | BASE_FLAG_BASE;  // #1
 
   #if (NO_RUNTIME_CHECKS)
     s->info.flags = FLEX_INFO_MASK_NONE;  // #7
