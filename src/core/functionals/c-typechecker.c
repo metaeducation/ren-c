@@ -538,7 +538,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         derived = SPECIFIED;
         match_all = false;
     }
-    else switch (Type_Of(tests)) {
+    else switch (maybe Type_Of(tests)) {
       case TYPE_DATATYPE:
         return Is_Cell_Stable(v) and (Type_Of(v) == Cell_Datatype_Type(tests));
 
@@ -724,7 +724,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         goto test_failed;
     }
 
-    switch (Type_Of_Unchecked(test)) {
+    switch (maybe Type_Of_Unchecked(test)) {
       case TYPE_PARAMETER: {
         if (Typecheck_Atom_In_Spare_Uses_Scratch(L, test, SPECIFIED))
             goto test_succeeded;
@@ -1102,7 +1102,7 @@ DECLARE_NATIVE(MATCH)
             return fail (Error_Type_Of_Null_Raw());  // for TRY TYPE OF [1]
     }
 
-    switch (Type_Of(test)) {
+    switch (maybe Type_Of(test)) {
       case TYPE_ACTION:
         if (not Typecheck_Spare_With_Predicate_Uses_Scratch(
             LEVEL, test, Cell_Frame_Label(test)

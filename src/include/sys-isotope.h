@@ -73,7 +73,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
                 CELL_FLAG_TYPE_SPECIFIC_A | CELL_FLAG_TYPE_SPECIFIC_B
             );
 
-            switch (Word_Id(elem)) {
+            switch (maybe Word_Id(elem)) {
               case SYM_NULL:
                 assert(not Is_Api_Value(elem));  // API uses nullptr [3]
                 Set_Cell_Flag(elem, KEYWORD_IS_NULL);

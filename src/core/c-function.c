@@ -291,7 +291,7 @@ static Result(Zero) Push_Keys_And_Params_Core(
         bool local = false;
         bool is_returner = false;
         if (type == TYPE_CHAIN) {
-            switch (Try_Get_Sequence_Singleheart(item)) {
+            switch (maybe Try_Get_Sequence_Singleheart(item)) {
               case LEADING_SPACE_AND(WORD): {
                 refinement = true;
                 symbol = Cell_Refinement_Symbol(item);

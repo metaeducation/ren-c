@@ -709,7 +709,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
     }
 
     if (sock->stream == nullptr) {  // Actions for an unopened socket
-        switch (Symbol_Id(verb)) {
+        switch (maybe Symbol_Id(verb)) {
           case SYM_OPEN_Q:
             return Init_False(OUT);
 
@@ -790,7 +790,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 
   //=//// ACTIONS ON "OPEN" SOCKETS ////////////////////////////////////////=//
 
-    switch (Symbol_Id(verb)) { // Ordered by frequency
+    switch (maybe Symbol_Id(verb)) { // Ordered by frequency
       case SYM_LENGTH_OF: {
         return Init_Integer(
             OUT,
@@ -1179,7 +1179,7 @@ DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
     if (not val) {
         timeout = ALL_BITS; // wait for all windows
     }
-    else switch (Type_Of(unwrap val)) {
+    else switch (maybe Type_Of(unwrap val)) {
       case TYPE_INTEGER:
       case TYPE_DECIMAL:
       case TYPE_TIME:

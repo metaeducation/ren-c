@@ -654,7 +654,7 @@ DECLARE_NATIVE(JOIN)
 
             Drop_Mold(mo);
         }
-        else switch (Type_Of(at)) {
+        else switch (maybe Type_Of(at)) {
           case TYPE_INTEGER:
             Expand_Flex_Tail(buf, 1);
             *Binary_At(buf, used) = cast(Byte, VAL_UINT8(at));  // can panic()

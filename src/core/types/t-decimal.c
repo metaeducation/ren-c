@@ -140,7 +140,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         trapped (Transcode_One(OUT, TYPE_DECIMAL, arg));
         return OUT;
     }
-    else switch (type) {
+    else switch (maybe type) {
       case TYPE_RUNE: {
         Codepoint c = trap (Get_Rune_Single_Codepoint(arg));
         return Init_Decimal(OUT, cast(REBDEC, c)); }
@@ -414,7 +414,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                 heart = Heart_Of_Builtin_Fundamental(val);  // 10% * 2 => 20%
             }
 
-            switch (id) {
+            switch (maybe id) {
 
             case SYM_ADD:
                 d1 += d2;
@@ -460,7 +460,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
     heart = Heart_Of_Builtin_Fundamental(val);
 
     // unary actions
-    switch (id) {
+    switch (maybe id) {
       case SYM_NEGATE:
         d1 = -d1;
         return Init_Decimal_Or_Percent(OUT, heart, d1);

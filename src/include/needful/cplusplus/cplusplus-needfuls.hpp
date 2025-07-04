@@ -58,14 +58,6 @@
 #include <utility>  // for std::forward()
 
 
-//=//// <cstdint> for uintptr_t ///////////////////////////////////////////=//
-//
-// The OptionWrapper type uses uintptr_t.  Could it just use int?
-//
-
-#include <stdint.h>  // uses uintptr_t for things (review: use int?)
-
-
 //=//// <iso646.h> for `and`, `not` etc. //////////////////////////////////=//
 //
 // In an attempt to make Needful as agnostic as possible in terms of its

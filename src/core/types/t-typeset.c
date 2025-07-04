@@ -459,7 +459,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
   handle_pick: { /////////////////////////////////////////////////////////////
 
-    switch (Word_Id(picker)) {
+    switch (maybe Word_Id(picker)) {
       case SYM_TEXT: {
         Option(const Strand*) string = Parameter_Strand(param);
         if (not string)
@@ -515,7 +515,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
     Element* poke = Known_Element(dual);
 
-    switch (Word_Id(picker)) {
+    switch (maybe Word_Id(picker)) {
       case SYM_TEXT: {
         if (not Is_Text(poke))
             panic (poke);

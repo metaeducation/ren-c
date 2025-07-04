@@ -1050,7 +1050,7 @@ Bounce Stepper_Executor(Level* L)
     //    only that is currently broken.  When we convert a SET-WORD to a
     //    WORD! to do the assign, that feature is lost.
 
-    switch (Try_Get_Sequence_Singleheart(CURRENT)) {
+    switch (maybe Try_Get_Sequence_Singleheart(CURRENT)) {
       case NOT_SINGLEHEART_0:
         break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
 
@@ -1289,7 +1289,7 @@ Bounce Stepper_Executor(Level* L)
       case LEADING_SPACE_AND(CHAIN): {  // /abc: or /?:?:?
         guaranteed (Unsingleheart_Sequence(CURRENT));
 
-        switch (Try_Get_Sequence_Singleheart(CURRENT)) {
+        switch (maybe Try_Get_Sequence_Singleheart(CURRENT)) {
           case TRAILING_SPACE_AND(WORD):  // /abc: is set actions only
             guaranteed (Unsingleheart_Sequence(CURRENT));
             Set_Cell_Flag(CURRENT, SCRATCH_VAR_NOTE_ONLY_ACTION);
@@ -1436,7 +1436,7 @@ Bounce Stepper_Executor(Level* L)
         Init_Lifted_Void(CURRENT);  // can't put voids in feed position
         goto handle_generic_set;
     }
-    else switch (Type_Of(SPARE)) {
+    else switch (maybe Type_Of(SPARE)) {
       case TYPE_BLOCK:
         Copy_Cell(CURRENT, cast(Element*, SPARE));
         STATE = ST_STEPPER_SET_BLOCK;
@@ -1924,7 +1924,7 @@ Bounce Stepper_Executor(Level* L)
         goto finished;  // hitting end is common, avoid do_next's switch()
     }
 
-    switch (Type_Of_Unchecked(L_next)) {
+    switch (maybe Type_Of_Unchecked(L_next)) {
       case TYPE_WORD:  // only WORD! does infix now (TBD: CHAIN!) [2]
         if (not L_next_gotten) {
             Get_Word(

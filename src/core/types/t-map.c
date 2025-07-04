@@ -687,7 +687,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
     Element* map = cast(Element*, ARG_N(1));
     assert(Is_Map(map));
 
-    switch (id) {
+    switch (maybe id) {
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
 

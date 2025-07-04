@@ -519,7 +519,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
     Element* list = cast(Element*, ARG_N(1));
     Context* binding = List_Binding(list);
 
-    switch (id) {
+    switch (maybe id) {
 
     //-- Search:
 

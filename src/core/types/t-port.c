@@ -253,7 +253,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Url)
     Element* url = cast(Element*, ARG_N(1));
     assert(Is_Url(url));
 
-    switch (id) {
+    switch (maybe id) {
       case SYM_READ:
       case SYM_WRITE:
       case SYM_QUERY:

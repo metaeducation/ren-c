@@ -68,14 +68,10 @@ struct NoneStruct {
 
 template<typename T>
 struct OptionWrapper {
+    using wrapped_type = T;
     T p;  // not always pointer, but use common convention with Sink/Need
 
     /* bool engaged; */  // unlike with std::optional, not needed! [1]
-
-    static_assert(
-        not std::is_same<T, uintptr_t>::value,
-        "Option(uintptr_t) is implemented via specialization (see below)"
-    );
 
     OptionWrapper () = default;  // garbage, or 0 if global [2]
 
@@ -110,14 +106,6 @@ struct OptionWrapper {
         : p (extracted.p.p)
       {}
 
-    operator uintptr_t() const {  // to work in switch() cases [4]
-        static_assert(
-            std::is_enum<T>::value or std::is_class<T>::value,
-            "non-explicit Option() -> uintptr_t() only for enum/class/struct"
-        );
-        return u_cast(uintptr_t, p);  // enum/class/struct, not a pointer!
-    }
-
     template<typename U>
     explicit operator U() const  // *explicit* cast if not using `unwrap`
       { return u_cast(U, p); }  // remember: p not always a pointer
@@ -126,54 +114,6 @@ struct OptionWrapper {
         // explicit exception in `if` https://stackoverflow.com/q/39995573/
         return p ? true : false;
     }
-};
-
-  //=//// SPECIALIZATION FOR uintptr_t (YES, IT'S NECESSARY) //////////////=//
-
-  // We want enum and class types to have an implicit `operator uintptr_t()`
-  // defined, so Option(SomeEnum) can be used in switch() statements without
-  // having to be unwrapped.  But in order to allow Option(uintptr_t) to be
-  // used, there can't be an implicit `operator uintptr_t()` defined in it.
-  //
-  // There's sadly no way to exclude a conversion operator to a built-in type
-  // using SFINAE.  Specialization is the only way to do it.  :-(
-  //
-  // NOTE: For comments, see the unspecialized definition above.
-
-template<>
-struct OptionWrapper<uintptr_t> {
-    uintptr_t p;
-
-    OptionWrapper () = default;
-
-    OptionWrapper(PermissiveZeroStruct&&)
-        : p (0)
-      {}
-
-    OptionWrapper(NoneStruct&&)
-        : p (0)
-      {}
-
-    template <typename U>
-    OptionWrapper (const U& something)
-        : p (something)
-      {}
-
-    template <typename U>
-    explicit OptionWrapper(U&& something)
-        : p (u_cast(uintptr_t, std::forward<U>(something)))
-      {}
-
-    template <typename X>
-    OptionWrapper (const OptionWrapper<X>& other)
-        : p (other.p)
-      {}
-
-    explicit operator uintptr_t() const
-      { return p; }
-
-    explicit operator bool() const
-      { return p ? true : false; }
 };
 
   //=//// LABORIOUS REPEATED OPERATORS ////////////////////////////////////=//

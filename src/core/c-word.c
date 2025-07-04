@@ -367,7 +367,7 @@ Result(const Symbol*) Intern_Utf8_Managed_Core(  // implicitly managed [1]
         Tweak_Link_Next_Synonym(synonym, c_cast(Symbol*, b));
 
         assert(SECOND_UINT16(&b->info) == SYM_0);
-        SET_SECOND_UINT16(&b->info, Symbol_Id(synonym));  // same symid [2]
+        SET_SECOND_UINT16(&b->info, maybe Symbol_Id(synonym));  // same id [2]
     }
 
     Tweak_Misc_Hitch(b, b);  // circular list of module vars and bind info [3]
@@ -527,7 +527,9 @@ void Startup_Builtin_Symbols(
         SYM_GZIP
     );
 
-    assert(Is_Stub_Erased(&g_symbols.builtin_canons[SYM_0]));  // invalid [1]
+    assert(  // invalid [1]
+        Is_Stub_Erased(&g_symbols.builtin_canons[u_cast(int, SYM_0)])
+    );
 
     Byte* tail = bytes + uncompressed_size;
     Byte* at = bytes;
@@ -642,7 +644,7 @@ void Unregister_Symbol(RebolValue* word, SymId16 id16)
 //
 void Shutdown_Builtin_Symbols(void)
 {
-    assert(Is_Stub_Erased(&g_symbols.builtin_canons[SYM_0]));
+    assert(Is_Stub_Erased(&g_symbols.builtin_canons[u_cast(int, SYM_0)]));
 
     for (SymId16 id = 1; id <= MAX_SYM_BUILTIN; ++id) {
         Symbol* canon = &g_symbols.builtin_canons[id];

@@ -308,7 +308,7 @@ DECLARE_NATIVE(STDIO_ACTOR)
 
     VarList* ctx = Cell_Varlist(port);
 
-    switch (Symbol_Id(verb)) {
+    switch (maybe Symbol_Id(verb)) {
       case SYM_OPEN_Q:
         return LOGIC(true);  // stdio port always open
 

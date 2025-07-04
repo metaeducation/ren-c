@@ -771,7 +771,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
     Element* v = cast(Element*, ARG_N(1));
     assert(Any_String(v) or Any_Utf8(v));  // UTF-8 delegates, but immutable
 
-    switch (id) {
+    switch (maybe id) {
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 

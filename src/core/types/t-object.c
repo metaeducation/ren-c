@@ -1062,7 +1062,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
     //
     assert(not Is_Port(context));
 
-    switch (id) {
+    switch (maybe id) {
 
     //=//// PROTECT* ///////////////////////////////////////////////////////=//
 
@@ -1292,7 +1292,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
 } handle_named_signal: { /////////////////////////////////////////////////////
 
-    switch (Word_Id(dual)) {
+    switch (maybe Word_Id(dual)) {
       case SYM_PROTECT:
         Set_Cell_Flag(slot, PROTECTED);
         break;

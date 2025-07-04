@@ -126,7 +126,7 @@ static bool Try_Init_Startupinfo_Sink(
             *hsink = *hwrite;
         }
     }
-    else switch (Type_Of(arg)) {
+    else switch (maybe Type_Of(arg)) {
       case TYPE_TEXT:  // write to pre-existing TEXT!
       case TYPE_BLOB:  // write to pre-existing BLOB!
         if (not CreatePipe(hread, hwrite, NULL, 0))
@@ -348,7 +348,7 @@ Bounce Call_Core(Level* level_) {
              );  // don't offer any stdin
         }
     }
-    else switch (Type_Of(ARG(INPUT))) {
+    else switch (maybe Type_Of(ARG(INPUT))) {
       case TYPE_TEXT: {  // feed standard input from TEXT!
         //
         // See notes at top of file about why UTF-16/UCS-2 are not used here.

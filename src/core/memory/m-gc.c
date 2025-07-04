@@ -1192,7 +1192,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
     }
     Propagate_All_GC_Marks();
 
-    assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // skip SYM_0
+    assert(Is_Stub_Erased(&g_lib_patches[u_cast(int, SYM_0)]));  // skip SYM_0
 
     for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
         Patch* patch = &g_lib_patches[id];
@@ -1307,7 +1307,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
         Remove_GC_Mark(patch);
     }
 
-    assert(Is_Stub_Erased(&g_lib_patches[SYM_0]));  // skip SYM_0
+    assert(Is_Stub_Erased(&g_lib_patches[u_cast(int, SYM_0)]));  // skip SYM_0
 
     for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
         Patch* patch = &g_lib_patches[id];
@@ -1316,7 +1316,9 @@ REBLEN Recycle_Core(Flex* sweeplist)
 
     // Unmark the CANON() fixed symbols (not in stub pool, never get swept)
 
-    assert(Is_Stub_Erased(&g_symbols.builtin_canons[SYM_0]));  // skip SYM_0
+    assert(  // skip SYM_0
+        Is_Stub_Erased(&g_symbols.builtin_canons[u_cast(int, SYM_0)])
+    );
 
     for (SymId16 id = 1; id <= MAX_SYM_BUILTIN; ++id) {
         Symbol* canon = &g_symbols.builtin_canons[id];

@@ -93,7 +93,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
     Element* sequence = cast(Element*, ARG_N(1));
     Length len = Sequence_Len(sequence);
 
-    switch (id) {
+    switch (maybe id) {
       case SYM_ADD:
       case SYM_SUBTRACT:
       case SYM_DIVIDE:
@@ -180,7 +180,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         if (ap)
             a = *ap++;
 
-        switch (id) {
+        switch (maybe id) {
           case SYM_ADD: v += a; break;
 
           case SYM_SUBTRACT: v -= a; break;

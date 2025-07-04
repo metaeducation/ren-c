@@ -254,7 +254,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
     Element* arg = Element_ARG(DEF);
 
-    switch(Type_Of(arg)) {
+    switch (maybe Type_Of(arg)) {
       case TYPE_INTEGER: {
         if (heart != TYPE_RUNE)
             abrupt_panic ("Only RUNE! can MAKE a UTF-8 immutable type with INTEGER!");
@@ -423,7 +423,7 @@ static Result(REBI64) Get_Math_Arg_For_Char(
     Value* arg,
     const Symbol* verb
 ){
-    switch (Type_Of(arg)) {
+    switch (maybe Type_Of(arg)) {
       case TYPE_INTEGER:
         return VAL_INT32(arg);
 
@@ -558,7 +558,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     REBI64 chr = cast(REBI64, c);
     REBI64 arg;
 
-    switch (id) {
+    switch (maybe id) {
       case SYM_ADD: {
         arg = require (Get_Math_Arg_For_Char(ARG_N(2), verb));
         chr += arg;

@@ -745,7 +745,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
         }
     }
     else {
-        switch (id) {
+        switch (maybe id) {
           case SYM_EVEN_Q:
             return LOGIC(((~day) & 1) == 0);
 
@@ -846,7 +846,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
 
 } handle_pick: { /////////////////////////////////////////////////////////////
 
-    switch (sym) {
+    switch (maybe sym) {
       case SYM_YEAR:
         Init_Integer(OUT, year);  // tz adjusted year
         break;
@@ -957,7 +957,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
 
     Value* poke = Unliftify_Known_Stable(dual);
 
-    switch (sym) {
+    switch (maybe sym) {
       case SYM_YEAR:
         year = Int_From_Date_Arg(poke);
         break;

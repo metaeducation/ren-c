@@ -194,7 +194,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
 
     Element* arg = Element_ARG(DEF);
 
-    switch (Type_Of(arg)) {
+    switch (maybe Type_Of(arg)) {
       case TYPE_INTEGER:  // !!! R3-Alpha nebulously tolerated DECIMAL! :-(
         return Init_Blob(OUT, Make_Binary(Int32s(arg, 0)));
 
@@ -311,7 +311,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
     Element* v = cast(Element*, ARG_N(1));
     assert(Is_Blob(v));
 
-    switch (id) {
+    switch (maybe id) {
     //-- Modification:
       case SYM_APPEND:
       case SYM_INSERT:
@@ -471,7 +471,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
 
         Byte* dest = Binary_Head(b);
 
-        switch (id) {
+        switch (maybe id) {
           case SYM_BITWISE_AND: {
             REBLEN i;
             for (i = 0; i < smaller; i++)

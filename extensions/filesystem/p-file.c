@@ -170,7 +170,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         file->offset = FILEOFFSET_UNKNOWN;
     }
 
-    switch (Symbol_Id(verb)) {
+    switch (maybe Symbol_Id(verb)) {
 
       case SYM_OFFSET_OF:
         return Init_Integer(OUT, file->offset);

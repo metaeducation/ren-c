@@ -1685,7 +1685,7 @@ intptr_t API_rebUnbox(
     if (Is_Logic(v)) {
         return Cell_Logic(v) ? 1 : 0;
     }
-    else switch (Type_Of(v)) {
+    else switch (maybe Type_Of(v)) {
       case TYPE_INTEGER:
         return VAL_INT64(v);
 

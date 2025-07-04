@@ -699,7 +699,7 @@ e-symids/emit [syms-cscape --[
      * assigned 16-bit integer "SYM" compile-time-constants, to be used in
      * switch() for efficiency in the core.
      *
-     *     switch (Word_Id(color)) {
+     *     switch (maybe Word_Id(color)) {
      *       case SYM_BLUE: ...
      *       case SYM_RED: ...
      *     }

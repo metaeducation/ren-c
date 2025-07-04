@@ -570,7 +570,7 @@ SQLRETURN ODBC_BindParameter(
     // We don't expose integer mappings for Rebol data types in libRebol to
     // use in a switch() statement, so no:
     //
-    //    switch (Type_Of(v)) { case TYPE_INTEGER: {...} ...}
+    //    switch (maybe Type_Of(v)) { case TYPE_INTEGER: {...} ...}
     //
     // But since the goal is to translate into ODBC types anyway, we can go
     // ahead and do that with Rebol code that embeds those types.

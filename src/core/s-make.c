@@ -381,7 +381,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
 
     const Element* val = List_Item_At(blk);
     for (; limit > 0; val++, limit--) {
-        switch (Type_Of(val)) {
+        switch (maybe Type_Of(val)) {
           case TYPE_QUASIFORM:
             abrupt_panic (Error_Bad_Value(val));
 

@@ -54,7 +54,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
     Value* port = ARG_N(1);
     const Symbol* verb = Level_Verb(LEVEL);
 
-    switch (Symbol_Id(verb)) {
+    switch (maybe Symbol_Id(verb)) {
       case SYM_OPEN_Q:
         return LOGIC(true); // !!! need "port state"?  :-/
 

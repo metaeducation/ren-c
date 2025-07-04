@@ -121,7 +121,7 @@ DECLARE_NATIVE(DIR_ACTOR)
 
     Option(SymId) id = Symbol_Id(verb);
 
-    switch (id) {
+    switch (maybe id) {
 
         // !!! Previously the directory synchronously read all the entries
         // on OPEN.  That method is being rethought.
