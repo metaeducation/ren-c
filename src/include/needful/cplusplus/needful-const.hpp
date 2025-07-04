@@ -20,16 +20,23 @@
 // There is no standardized way to request constness be added to a wrapped
 // pointer in C++.  All implemenations of this are equally ad-hoc.
 //
-template<typename T>
-struct ConstifyHelper  // default: non-pointer types, add const
+template<
+    typename T,
+    bool = std::is_fundamental<T>::value or std::is_enum<T>::value
+>
+struct ConstifyHelper
   { using type = const T; };
 
 template<typename T>
-struct ConstifyHelper<T*>  // raw pointer specialization: inject const
+struct ConstifyHelper<T, true>  // true => fundamental/nullptr_t or enum
+  { using type = T; };
+
+template<typename T>
+struct ConstifyHelper<T*, false>  // raw pointer specialization: inject const
   { using type = const T*; };
 
 template<typename T>
-struct ConstifyHelper<T* const>  // when the pointer *itself* is const...
+struct ConstifyHelper<T* const, false>  // when the pointer *itself* is const
   { using type = const T* const; };
 
 #define needful_constify_type(T) \
@@ -38,16 +45,23 @@ struct ConstifyHelper<T* const>  // when the pointer *itself* is const...
     >::type
 
 
-template<typename T>
-struct UnconstifyHelper  // default: non-pointer types
+template<
+    typename T,
+    bool = std::is_fundamental<T>::value or std::is_enum<T>::value
+>
+struct UnconstifyHelper
   { using type = typename std::remove_const<T>::type; };
 
 template<typename T>
-struct UnconstifyHelper<T*>  // raw pointer specialization
+struct UnconstifyHelper<T, true>  // true => fundamental/nullptr_t or enum
+  { using type = T; };
+
+template<typename T>
+struct UnconstifyHelper<T*, false>  // raw pointer specialization
   { using type = typename std::remove_const<T>::type*; };
 
 template<typename T>
-struct UnconstifyHelper<T* const>  // when the pointer *itself* is const...
+struct UnconstifyHelper<T* const, false>  // when the pointer *itself* is const...
   { using type = typename std::remove_const<T>::type* const; };
 
 #define needful_unconstify_type(T) \
@@ -56,7 +70,7 @@ struct UnconstifyHelper<T* const>  // when the pointer *itself* is const...
     >::type
 
 
-//=/// IsTypeConstlike: SMART-POINTER EXTENSIBLE CONSTNESS CHECK //////////=//
+//=/// IsConstlikeType: SMART-POINTER EXTENSIBLE CONSTNESS CHECK //////////=//
 //
 // This helper for testing if something is "constlike" is able to return
 // true for things like Option(const char*), and false for Option(char*).
@@ -66,12 +80,31 @@ struct UnconstifyHelper<T* const>  // when the pointer *itself* is const...
 // type is the same as its constification!
 
 template<typename T>
-struct IsTypeConstlike {
+struct IsConstlikeType {
     static constexpr bool value = std::is_same<
         needful_remove_reference(T),
         needful_constify_type(needful_remove_reference(T))
     >::value;
 };
+
+
+//=//// IsConstIrrelevantForType: DODGE GCC WARNINGS //////////////////////=//
+//
+// It would be nice if we could just mirror const onto things without
+// special-casing things.  But GCC will warn if you try to make const enum
+// values or things of the sort e.g. as a return type from a function
+// (it shouldn't matter, but the warning is probably there just to help make
+// sure you aren't misunderstanding and thinking the const does something).
+//
+// So we have special handling for types where constness is irrelevant.
+//
+
+template<typename T>
+struct IsConstIrrelevantForType : std::integral_constant<
+    bool,
+    std::is_fundamental<T>::value  // note: nullptr_t is fundamental
+        or std::is_enum<T>::value
+> {};
 
 
 //=//// CONST MIRRORING: TRANSFER CONSTNESS FROM ONE TYPE TO ANOTHER //////=//
@@ -85,9 +118,13 @@ struct IsTypeConstlike {
 template<typename From, typename To>
 struct MirrorConstHelper {
     using type = typename std::conditional<
-        IsTypeConstlike<From>::value,
-        needful_constify_type(To),
-        needful_unconstify_type(To)
+        IsConstIrrelevantForType<needful_remove_reference(From)>::value,
+        To,  // leave as-is for const-irrelevant types
+        typename std::conditional<
+            IsConstlikeType<From>::value,  // mirror constness otherwise
+            needful_constify_type(To),
+            needful_unconstify_type(To)
+        >::type
     >::type;
 };
 

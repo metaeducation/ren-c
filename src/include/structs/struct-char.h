@@ -108,14 +108,14 @@
         explicit ValidatedUtf8 (const Byte* p)  // [1]
             : p (p) {}
         explicit ValidatedUtf8 (const char *cstr)  // [1]
-            : p (u_c_cast(Byte*, cstr)) {}
+            : p (u_cast(Byte*, cstr)) {}
 
         operator const void*() const = delete;  // don't add, GCC ambiguity [2]
 
         constexpr operator const Byte*() const { return p; }  // [3]
 
         /*constexpr [4]*/ operator const char*() const  // [3]
-          { return u_c_cast(char*, p); }
+          { return u_cast(char*, p); }
 
         explicit operator bool() const
           { return p != nullptr; }  // if() uses
@@ -175,6 +175,28 @@
           { return u_cast(char*, const_cast<Byte*>(p)); }
     };
 
+  //=//// CONSTIFY HELPER /////////////////////////////////////////////////=//
+
+  // These must be defined BEFORE defining anything using u_cast(Utf8(*) ...)
+
+  namespace needful {
+    template<>
+    struct ConstifyHelper<Utf8(*), false>
+      { using type = Utf8(const*); };
+
+    template<>
+    struct ConstifyHelper<Utf8(const*), false>
+      { using type = Utf8(const*); };
+
+    template<>
+    struct UnconstifyHelper<Utf8(*), false>
+      { using type = Utf8(*); };
+
+    template<>
+    struct UnconstifyHelper<Utf8(const*), false>
+      { using type = Utf8(*); };
+  }
+
   //=//// MUTABILITY CAST HELPERS /////////////////////////////////////////=//
 
   // Wrapper classes don't know how to do `const_cast<>`.  In the C standard
@@ -190,25 +212,5 @@
     template<>
     constexpr inline Utf8(*) WritableWrapperCastHelper(Utf8(*) utf8)  // [5]
       { return utf8; }
-  }
-
-  //=//// CONSTIFY HELPER /////////////////////////////////////////////////=//
-
-  namespace needful {
-    template<>
-    struct ConstifyHelper<Utf8(*)>
-      { using type = Utf8(const*); };
-
-    template<>
-    struct ConstifyHelper<Utf8(const*)>
-      { using type = Utf8(const*); };
-
-    template<>
-    struct UnconstifyHelper<Utf8(*)>
-      { using type = Utf8(*); };
-
-    template<>
-    struct UnconstifyHelper<Utf8(const*)>
-      { using type = Utf8(*); };
   }
 #endif

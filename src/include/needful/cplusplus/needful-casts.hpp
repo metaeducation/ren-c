@@ -73,24 +73,18 @@
 #endif
 
 
-//=//// UNCHECKED CAST ////////////////////////////////////////////////////=//
+//=//// x_cast(): XTREME CAST (AKA WHAT PARENTHESES WOULD DO) /////////////=//
 //
 // Unhookable cast which does not offer any validation hooks.  Use e.g. when
 // casting a fresh allocation to avoid triggering validation of uninitialized
 // structures in debug builds.
 //
-// Also: while the other casts should not cost anything in release builds, the
-// practical concerns of debug builds do mean that even constexpr templates
-// have overhead.  So judicious use of this unchecked u_cast() operation can
-// be worth it for speeding up debug builds in critical trusted functions,
-// while still being easier to spot than a parentheses-based cast.
-//
 
-#define Unhookable_Cast(T,expr) \
+#define Xtreme_Cast(T,expr) \
     ((T)(expr))  // in both C and C++, just an alias for parentheses cast
 
-#undef u_cast
-#define u_cast  Unhookable_Cast
+#undef x_cast
+#define x_cast  Xtreme_Cast
 
 
 //=//// h_cast(): HOOKABLE CAST, IDEALLY cast() = h_cast() [A] ////////////=//
@@ -269,7 +263,7 @@ struct removes_constness<const T1*, T2*> {
 template<typename V, typename T>
 struct CastHook {  // object template for partial specialization [2]
     static T convert(V v) {
-        return u_cast(T, v);  // plain C cast is most versatile here
+        return x_cast(T, v);  // plain C cast is most versatile here
     }
 };
 
@@ -418,13 +412,13 @@ Hookable_Cast_Decay_Prelude(From&& v) {
 
 
 #define Unhookable_Const_Preserving_Cast(T,expr) /* outer parens [C] */ \
-    (u_cast(needful_mirror_const(decltype(expr), T), (expr)))
+    (x_cast(needful_mirror_const(decltype(expr), T), (expr)))
 
 #undef c_cast
 #define c_cast  Hookable_Const_Preserving_Cast  // can override [F]
 
-#undef u_c_cast
-#define u_c_cast  Unhookable_Const_Preserving_Cast
+#undef u_cast
+#define u_cast  Unhookable_Const_Preserving_Cast
 
 
 //=//// downcast(): CAST THAT WOULD BE SAFE FOR PLAIN ASSIGNMENT //////////=//
@@ -638,7 +632,7 @@ struct FunctionPointerCastHelper {
         "f_cast() requires both source and target to be function pointers."
     );
     static To convert(From from) {
-        return u_cast(To, from);
+        return x_cast(To, from);
     }
 };
 
@@ -740,7 +734,7 @@ using WhichCastDirection = typename std::conditional<  // tag selector
     #define strict_c_cast(T,expr)    (expr)
 
     #undef strict_u_c_cast
-    #define strict_u_c_cast(T,expr)  (expr)
+    #define strict_u_cast(T,expr)  (expr)
 
     #undef strict_cast
     #define strict_cast(T,expr)      (expr)

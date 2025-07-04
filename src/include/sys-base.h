@@ -47,7 +47,7 @@ typedef Byte BaseByte;
 
 #else
     INLINE Byte& BASE_BYTE(const Base* base) {
-        assert(u_c_cast(Byte*, base)[0] & BASE_BYTEMASK_0x80_NODE);
+        assert(u_cast(Byte*, base)[0] & BASE_BYTEMASK_0x80_NODE);
         return m_cast(Byte*, base)[0];   // cast away constness [2]
     }
 #endif

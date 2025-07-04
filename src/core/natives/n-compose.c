@@ -781,7 +781,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     Count pattern_depth = TOP_INDEX - base;  // number of pattern levels pushed
     Utf8(const*) start = c_cast(Utf8(*),
-        u_c_cast(Byte*, at) - pattern_depth  // start replacement at "([a])"
+        u_cast(Byte*, at) - pattern_depth  // start replacement at "([a])"
     );
 
   allocate_or_push_levels_for_each_pattern_end_delimiter: {

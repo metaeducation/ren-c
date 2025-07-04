@@ -149,14 +149,14 @@ MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Skip(
 }
 
 INLINE bool Codepoint_At_Is_NUL_0(Utf8(const*) utf8) {
-    Byte b = u_c_cast(Byte*, utf8)[0];
+    Byte b = u_cast(Byte*, utf8)[0];
     possibly(Is_Continuation_Byte(b));
     return b == '\0';
 }
 
 INLINE bool Codepoint_Back_Is_Ascii_Value(Utf8(const*) utf8, Codepoint ascii) {
     assert(ascii < 0x80);
-    Byte b = u_c_cast(Byte*, utf8)[-1];
+    Byte b = u_cast(Byte*, utf8)[-1];
     possibly(Is_Continuation_Byte(b));
     return b == ascii;
 }
@@ -331,7 +331,7 @@ INLINE void Free_Bookmarks_Maybe_Null(const Strand* str) {
         for (i = 0; i != index; ++i)
             cp = Skip_Codepoint(cp);
 
-        Size actual = u_c_cast(Byte*, cp) - Flex_Data(s);
+        Size actual = u_cast(Byte*, cp) - Flex_Data(s);
         assert(actual == offset);
     }
 #endif

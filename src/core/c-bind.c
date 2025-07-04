@@ -1472,7 +1472,7 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Atom* write)
     LIFT_BYTE(temp) = ONEQUOTE_NONQUASI_4;
     unnecessary(Push_Lifeguard(temp));  // slot protects it.
 
-    rebElide(CANON(SET), temp, rebQ(u_c_cast(Value*, write)));
+    rebElide(CANON(SET), temp, rebQ(u_cast(Value*, write)));
 
     unnecessary(slot->header.bits |= persist);  // didn't write actual slot
     return SUCCESS;

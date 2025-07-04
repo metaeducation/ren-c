@@ -70,7 +70,7 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
         and not SPORADICALLY(20)  // test non-ASCII codepath for ASCII
     ){
         possibly(Link_Bookmarks(s));  // mutations maintain for long strings
-        cp = u_cast(Utf8(const*), u_c_cast(Byte*, Strand_Head(s)) + at);
+        cp = u_cast(Utf8(const*), u_cast(Byte*, Strand_Head(s)) + at);
         return w_cast(Utf8(*), cp);
     }
 

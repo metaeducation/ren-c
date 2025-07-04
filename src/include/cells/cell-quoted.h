@@ -222,7 +222,7 @@ MUTABLE_IF_C(Option(Element*), INLINE) As_Element(CONST_IF_C(Value*) v_) {
     CONSTABLE(Value*) v = m_cast(Value*, Ensure_Readable(v_));
     if (Is_Antiform(v))
         return nullptr;
-    return u_c_cast(Element*, v);
+    return u_cast(Element*, v);
 }
 
 #if NO_RUNTIME_CHECKS

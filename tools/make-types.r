@@ -790,23 +790,23 @@ e-hearts/emit [rebs --[
     #endif
 
     #define MAX_HEART  $<MAX-HEART>
-    STATIC_ASSERT(u_cast(Byte, MAX_HEART) < 64);
+    STATIC_ASSERT(x_cast(Byte, MAX_HEART) < 64);
 
-    STATIC_ASSERT(u_cast(int, TYPE_METAFORM) == u_cast(int, MAX_HEART) + 1);
-    STATIC_ASSERT(u_cast(int, TYPE_TIED) == u_cast(int, MAX_HEART) + 2);
-    STATIC_ASSERT(u_cast(int, TYPE_PINNED) == u_cast(int, MAX_HEART) + 3);
-    STATIC_ASSERT(u_cast(int, TYPE_QUASIFORM) == u_cast(int, MAX_HEART) + 4);
-    STATIC_ASSERT(u_cast(int, TYPE_QUOTED) == u_cast(int, MAX_HEART) + 5);
+    STATIC_ASSERT(x_cast(int, TYPE_METAFORM) == x_cast(int, MAX_HEART) + 1);
+    STATIC_ASSERT(x_cast(int, TYPE_TIED) == x_cast(int, MAX_HEART) + 2);
+    STATIC_ASSERT(x_cast(int, TYPE_PINNED) == x_cast(int, MAX_HEART) + 3);
+    STATIC_ASSERT(x_cast(int, TYPE_QUASIFORM) == x_cast(int, MAX_HEART) + 4);
+    STATIC_ASSERT(x_cast(int, TYPE_QUOTED) == x_cast(int, MAX_HEART) + 5);
 
     #define MAX_TYPE_FUNDAMENTAL  TYPE_PINNED
 
     #define MAX_TYPE_ELEMENT  TYPE_QUOTED
-    #define MAX_TYPE_BYTE_ELEMENT  u_cast(Byte, TYPE_QUOTED)
+    #define MAX_TYPE_BYTE_ELEMENT  x_cast(Byte, TYPE_QUOTED)
 
     #define MAX_TYPE  $<MAX-TYPE>
-    #define MAX_TYPE_BYTE  u_cast(Byte, $<MAX-TYPE>)
+    #define MAX_TYPE_BYTE  x_cast(Byte, $<MAX-TYPE>)
 
-    STATIC_ASSERT(u_cast(int, $<MAX-TYPE>) <= 256);  /* Stored in bytes */
+    STATIC_ASSERT(x_cast(int, $<MAX-TYPE>) <= 256);  /* Stored in bytes */
 
     /*
      * SINGLEHEART OPTIMIZED SEQUENCE DETECTION

@@ -531,10 +531,10 @@
       { return strlen(cp); }
 
     inline size_t strsize(const unsigned char *bp)
-      { return strlen(u_cast(const char*, bp)); }
+      { return strlen(x_cast(const char*, bp)); }
 #else
     #define strsize(bp) \
-        strlen(u_cast(const char*, (bp)))
+        strlen(x_cast(const char*, (bp)))
 #endif
 
 

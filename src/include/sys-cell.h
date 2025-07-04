@@ -931,7 +931,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 #endif
 
 #define Cell_Binding(v) \
-    u_c_cast(Context*, (v)->extra.base)
+    u_cast(Context*, (v)->extra.base)
 
 #if (! DEBUG_CHECK_BINDING)
     #define Tweak_Cell_Binding(c,binding) \

@@ -650,7 +650,7 @@ INLINE Element* Copy_Sequence_At(
         return Copy_Cell(out, Pairing_Second(p));
     }
 
-    switch (Stub_Flavor(u_c_cast(Flex*, payload1))) {
+    switch (Stub_Flavor(u_cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
         if (Get_Cell_Flag(sequence, LEADING_SPACE) ? n == 0 : n != 0)

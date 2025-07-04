@@ -74,10 +74,10 @@
     #define FLAG_LEFT_BIT(n) \
         (u_cast(uintptr_t, 1) << (7 + ((n) / 8) * 8 - (n) % 8))
 
-    #define FLAG_FIRST_BYTE(b)      u_cast(uintptr_t, (b))
-    #define FLAG_SECOND_BYTE(b)     (u_cast(uintptr_t, (b)) << 8)
-    #define FLAG_THIRD_BYTE(b)      (u_cast(uintptr_t, (b)) << 16)
-    #define FLAG_FOURTH_BYTE(b)     (u_cast(uintptr_t, (b)) << 24)
+    #define FLAG_FIRST_BYTE(b)      x_cast(uintptr_t, (b))
+    #define FLAG_SECOND_BYTE(b)     (x_cast(uintptr_t, (b)) << 8)
+    #define FLAG_THIRD_BYTE(b)      (x_cast(uintptr_t, (b)) << 16)
+    #define FLAG_FOURTH_BYTE(b)     (x_cast(uintptr_t, (b)) << 24)
 #else
     // !!! There are macro hacks which can actually make reasonable guesses
     // at endianness, and should possibly be used in the config if nothing is
@@ -98,19 +98,19 @@
 // 1. The macros are in all-caps to show they are "weird" and usable as
 //    LValues.
 //
-// 2. u_c_cast() is used for "unchecked const-preserving casts" in the C++
+// 2. u_cast() is used for "unchecked const-preserving casts" in the C++
 //    build, so if (p) is const Byte* the Byte won't be mutable.  (The C
-//    build throws away constness in u_c_cast(), since it can't "sense" it.)
+//    build throws away constness in u_cast(), since it can't "sense" it.)
 //
 // 3. Byte alias for `unsigned char` is used vs. `uint8_t`, due to strict
 //    aliasing exemption for char types (some say uint8_t should count...).
 //    This means supposedly, it doesn't matter what type the memory you are
 //    reading from...you will get the correct up-to-date value of that byte.
 
-#define FIRST_BYTE(p)       u_c_cast(Byte*, (p))[0]  // CAPS_NAME: LValue [1]
-#define SECOND_BYTE(p)      u_c_cast(Byte*, (p))[1]  // const-preserving [2]
-#define THIRD_BYTE(p)       u_c_cast(Byte*, (p))[2]  // Byte strict exempt [3]
-#define FOURTH_BYTE(p)      u_c_cast(Byte*, (p))[3]
+#define FIRST_BYTE(p)       x_cast(Byte*, (p))[0]  // CAPS_NAME: LValue [1]
+#define SECOND_BYTE(p)      x_cast(Byte*, (p))[1]  // const-preserving [2]
+#define THIRD_BYTE(p)       x_cast(Byte*, (p))[2]  // Byte strict exempt [3]
+#define FOURTH_BYTE(p)      x_cast(Byte*, (p))[3]
 
 
 // There might not seem to be a good reason to keep the uint16_t variant in
@@ -121,23 +121,23 @@
 // as long as there has to be an order, might as well be platform-independent.
 
 INLINE uint16_t FIRST_UINT16(const void* p) {
-    const Byte* bp = c_cast(Byte*, p);
+    const Byte* bp = u_cast(Byte*, p);
     return cast(uint16_t, bp[0] << 8) | bp[1];
 }
 
 INLINE uint16_t SECOND_UINT16(const void* p) {
-    const Byte* bp = c_cast(Byte*, p);
+    const Byte* bp = u_cast(Byte*, p);
     return cast(uint16_t, bp[2] << 8) | bp[3];
 }
 
 INLINE void SET_FIRST_UINT16(void *p, uint16_t u) {
-    Byte* bp = cast(Byte*, p);
+    Byte* bp = u_cast(Byte*, p);
     bp[0] = u / 256;
     bp[1] = u % 256;
 }
 
 INLINE void SET_SECOND_UINT16(void* p, uint16_t u) {
-    Byte* bp = cast(Byte*, p);
+    Byte* bp = u_cast(Byte*, p);
     bp[2] = u / 256;
     bp[3] = u % 256;
 }

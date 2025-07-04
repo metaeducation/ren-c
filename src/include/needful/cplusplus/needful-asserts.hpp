@@ -68,4 +68,4 @@ struct EnsureStaticAsserter {
         needful_remove_reference(decltype(expr)), \
         T \
     >{})), \
-    u_cast(needful_mirror_const(decltype(expr), T), (expr)))
+    x_cast(needful_mirror_const(decltype(expr), T), (expr)))

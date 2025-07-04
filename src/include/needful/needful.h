@@ -434,7 +434,7 @@
 //    * Type AND mutability:       m_cast()    // const T1* => T2*
 //    * Preserving constness:      c_cast()    // T1* => T2* ...or...
 //                                               // const T1* => const T2*
-//    * Unhookable c_cast():     u_c_cast()    // c_cast() w/no h_cast() hooks
+//    * Unhookable c_cast():     u_cast()    // c_cast() w/no h_cast() hooks
 //
 // TYPE CONVERSIONS
 //    * Non-pointer to pointer:    p_cast()    // intptr_t => T*
@@ -472,12 +472,11 @@
 #define h_cast(T,expr)    ((T)(expr))
 
 #define c_cast(T,expr)    ((T)(expr))
-#define u_c_cast(T,expr)  ((T)(expr))
 #define m_cast(T,expr)    ((T)(expr))
 #define w_cast(T,expr)    ((T)(expr))
 
-#define s_cast(bytes)   u_c_cast(char*, ensure(const unsigned char*, (bytes)))
-#define b_cast(chars)   u_c_cast(unsigned char*, ensure(const char*, (chars)))
+#define s_cast(bytes)   u_cast(char*, ensure(const unsigned char*, (bytes)))
+#define b_cast(chars)   u_cast(unsigned char*, ensure(const char*, (chars)))
 
 #define p_cast(T,expr)    ((T)(expr))
 #define i_cast(T,expr)    ((T)(expr))
@@ -489,7 +488,7 @@
 #define strict_h_cast(T,expr)    h_cast(T,(expr))
 
 #define strict_c_cast(T,expr)    c_cast(T,(expr))
-#define strict_u_c_cast(T,expr)  u_c_cast(T,(expr))
+#define strict_u_cast(T,expr)  u_cast(T,(expr))
 
 #define strict_cast(T,expr)      cast(T,(expr))  // however you define cast()
 

@@ -328,30 +328,30 @@ MUTABLE_IF_C(Byte*, INLINE) Flex_Data_At(
 
     return ((w) * (i)) + (  // v-- inlining of Flex_Data() [2]
         Get_Stub_Flag(f, DYNAMIC)
-            ? u_c_cast(Byte*, f->content.dynamic.data)
-            : u_c_cast(Byte*, &f->content)
+            ? u_cast(Byte*, f->content.dynamic.data)
+            : u_cast(Byte*, &f->content)
         );
 }
 
 #define Flex_At(T,f,i) \
-    u_c_cast(T*, Flex_Data_At(sizeof(T), (f), (i)))  // zero-based [3]
+    u_cast(T*, Flex_Data_At(sizeof(T), (f), (i)))  // zero-based [3]
 
 #if RUNTIME_CHECKS
     #define Flex_Head(T,f) \
         Flex_At(T, (f), 0)  // Flex_Data() doesn't check width, _At() does
 #else
     #define Flex_Head(T,f) \
-        u_c_cast(T*, Flex_Data(f))  // slightly faster, but no width check
+        u_cast(T*, Flex_Data(f))  // slightly faster, but no width check
 #endif
 
 #define Flex_Head_Dynamic(T,f) \
-    u_c_cast(T*, (f)->content.dynamic.data)  // faster if you know it's dynamic
+    u_cast(T*, (f)->content.dynamic.data)  // faster if you know it's dynamic
 
 #define Flex_Data_Tail(w,f) \
-    u_c_cast(Byte*, Flex_Data_At((w), (f), Flex_Used(f)))
+    u_cast(Byte*, Flex_Data_At((w), (f), Flex_Used(f)))
 
 #define Flex_Tail(T,f) \
-    u_c_cast(T*, Flex_Data_Tail(sizeof(T), (f)))
+    u_cast(T*, Flex_Data_Tail(sizeof(T), (f)))
 
 MUTABLE_IF_C(Byte*, INLINE) Flex_Data_Last(
     size_t wide,
@@ -363,7 +363,7 @@ MUTABLE_IF_C(Byte*, INLINE) Flex_Data_Last(
 }
 
 #define Flex_Last(T,f) \
-    u_c_cast(T*, Flex_Data_Last(sizeof(T), (f)))
+    u_cast(T*, Flex_Data_Last(sizeof(T), (f)))
 
 
 //=//// FLEX TERMINATION //////////////////////////////////////////////////=//
