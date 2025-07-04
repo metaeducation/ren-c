@@ -118,8 +118,13 @@ MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Back(
     --bp;
     while (Is_Continuation_Byte(*bp))
         --bp;
-    Utf8_Next(codepoint_out, cast(Utf8(*), bp));
-    return cast(Utf8(*), bp);
+
+    if (Is_Byte_Ascii(*bp))  // repeats logic of Utf8_Next() w/no bp update
+        *codepoint_out = *bp;
+    else
+        Back_Scan_Utf8_Char_Unchecked(codepoint_out, bp);
+
+    return c_cast(Utf8(*), bp);
 }
 
 MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Skip(
@@ -321,12 +326,12 @@ INLINE void Free_Bookmarks_Maybe_Null(const Strand* str) {
         REBLEN index = BOOKMARK_INDEX(book);
         Size offset = BOOKMARK_OFFSET(book);
 
-        Utf8(*) cp = Strand_Head(s);
+        Utf8(const*) cp = Strand_Head(s);
         REBLEN i;
         for (i = 0; i != index; ++i)
             cp = Skip_Codepoint(cp);
 
-        Size actual = cast(Byte*, cp) - Flex_Data(s);
+        Size actual = u_c_cast(Byte*, cp) - Flex_Data(s);
         assert(actual == offset);
     }
 #endif

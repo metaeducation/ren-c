@@ -181,11 +181,6 @@
     };
 
   namespace needful {
-    template<>
-    struct ConstPreservingCastHelper<Byte*, OnStack(Value*) const&> {
-        typedef Byte* type;
-    };
-
     template<typename S, typename T>
     struct CastHook<OnStackPointer<S>,T>
       { static T convert(OnStackPointer<S> stk) { return (T)(stk.p);} };

@@ -413,35 +413,12 @@ Hookable_Cast_Decay_Prelude(From&& v) {
 //     }
 //
 
-template<typename TP, typename VQP>
-struct ConstPreservingCastHelper {
-    static_assert(std::is_pointer<TP>::value, "c_cast() non pointer!");
-    static_assert(not std::is_reference<VQP>::value, "pass non-reference!");
-    typedef typename std::remove_pointer<VQP>::type VQ;
-    typedef typename std::remove_pointer<TP>::type T;
-    typedef typename std::add_const<T>::type TC;
-    typedef typename std::add_pointer<TC>::type TCP;
-    typedef typename std::conditional<
-        std::is_const<VQ>::value,
-        TCP,
-        TP
-    >::type type;
-};
+#define Hookable_Const_Preserving_Cast(T,expr) /* outer parens [C] */ \
+    (h_cast(needful_mirror_const(decltype(expr), T), (expr)))
 
-#define Hookable_Const_Preserving_Cast(TP,v) /* outer parens [C] */ \
-    (needful::ConstAwareCastDispatcher< \
-        needful_remove_reference(decltype(v)), \
-        typename needful::ConstPreservingCastHelper< \
-            TP, \
-            needful_remove_reference(decltype(v)) \
-        >::type \
-    >::convert(v))
 
-#define Unhookable_Const_Preserving_Cast(TP,v) /* outer parens [C] */ \
-    ((typename needful::ConstPreservingCastHelper< \
-        TP, \
-        needful_remove_reference(decltype(v)) \
-    >::type)(v))
+#define Unhookable_Const_Preserving_Cast(T,expr) /* outer parens [C] */ \
+    (u_cast(needful_mirror_const(decltype(expr), T), (expr)))
 
 #undef c_cast
 #define c_cast  Hookable_Const_Preserving_Cast  // can override [F]

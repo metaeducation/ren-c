@@ -63,15 +63,17 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
 
     assert(at <= Strand_Len(s));
 
+    Utf8(const*) cp;  // can use to get offset (relative to Strand_Head())
+
     if (
         Is_Strand_All_Ascii(s)
         and not SPORADICALLY(20)  // test non-ASCII codepath for ASCII
     ){
         possibly(Link_Bookmarks(s));  // mutations maintain for long strings
-        return cast(Utf8(*), cast(Byte*, Strand_Head(s)) + at);
+        cp = u_cast(Utf8(const*), u_c_cast(Byte*, Strand_Head(s)) + at);
+        return w_cast(Utf8(*), cp);
     }
 
-    Utf8(*) cp;  // can be used to calculate offset (relative to Strand_Head())
     REBLEN index;
 
     Option(BookmarkList*) book = nullptr;  // updated at end if not nulled out
@@ -159,9 +161,9 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
 
     index = booked;
     if (book)
-        cp = cast(Utf8(*), Flex_Data(s) + BOOKMARK_OFFSET(unwrap book));
+        cp = u_cast(Utf8(const*), Flex_Data(s) + BOOKMARK_OFFSET(unwrap book));
     else
-        cp = cast(Utf8(*), Flex_Data(s));
+        cp = u_cast(Utf8(const*), Flex_Data(s));
 
     if (index > at) {
       #if DEBUG_TRACE_BOOKMARKS
@@ -190,7 +192,7 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
         cp = Skip_Codepoint(cp);
 
     if (not book)
-        return cp;
+        return w_cast(Utf8(*), cp);
 
     goto update_bookmark;
 
@@ -212,7 +214,7 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
       #if DEBUG_TRACE_BOOKMARKS
         BOOKMARK_TRACE("not cached\n");
       #endif
-        return cp;
+        return w_cast(Utf8(*), cp);
     }
 
 } update_bookmark: { /////////////////////////////////////////////////////////
@@ -224,14 +226,14 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
     BOOKMARK_OFFSET(unwrap book) = cp - Strand_Head(s);
 
   #if DEBUG_VERIFY_STR_AT
-    Utf8(*) check_cp = Strand_Head(s);
+    Utf8(const*) check_cp = Strand_Head(s);
     REBLEN check_index = 0;
     for (; check_index != at; ++check_index)
         check_cp = Skip_Codepoint(check_cp);
     assert(check_cp == cp);
   #endif
 
-    return cp;
+    return w_cast(Utf8(*), cp);
 }}
 
 

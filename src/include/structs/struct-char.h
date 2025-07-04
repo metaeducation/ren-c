@@ -196,33 +196,19 @@
 
   namespace needful {
     template<>
-    struct ConstifyHelper<Utf8(*)> {
-        using type = Utf8(const*);
-    };
-  }
-
-  //=//// CONST-PRESERVING CAST HELPERS ///////////////////////////////////=//
-
-  // These helpers assist in c_cast() and u_c_cast(), and picks the right
-  // output type to not lose constness in the conversion.  This allows for
-  // more brevity and means macros can be made that "do the right thing"
-  // with const without having to write overloaded functions.
-
-  namespace needful {
-    template<typename T>
-    struct ConstPreservingCastHelper<Utf8(*), T*>
-      { using type = Utf8(*); };
-
-    template<typename T>
-    struct ConstPreservingCastHelper<Utf8(*), const T*>
+    struct ConstifyHelper<Utf8(*)>
       { using type = Utf8(const*); };
 
-    template<typename T>
-    struct ConstPreservingCastHelper<T*, Utf8(const*)>
-      { using type = const T*; };
+    template<>
+    struct ConstifyHelper<Utf8(const*)>
+      { using type = Utf8(const*); };
 
-    template<typename T>
-    struct ConstPreservingCastHelper<T*, Utf8(*)>
-      { using type = T*; };
+    template<>
+    struct UnconstifyHelper<Utf8(*)>
+      { using type = Utf8(*); };
+
+    template<>
+    struct UnconstifyHelper<Utf8(const*)>
+      { using type = Utf8(*); };
   }
 #endif
