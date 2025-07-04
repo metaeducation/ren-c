@@ -78,8 +78,6 @@
 #define needful_unwrap
 #define needful_maybe
 
-#define NeedfulNeverNull(T)  T
-
 
 //=//// Result(T): MULTIPLEXED ERROR AND RETURN RESULT ////////////////////=//
 //
@@ -780,8 +778,6 @@ typedef enum {
 
     #define unwrap                  needful_unwrap
     #define maybe                   needful_maybe
-
-    #define NeverNull(T)            NeedfulNeverNull(T)
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_RESULT_SHORTHANDS)
