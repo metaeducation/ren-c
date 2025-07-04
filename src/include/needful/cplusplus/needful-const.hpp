@@ -122,24 +122,6 @@ struct Unconstify {
     typename needful::Unconstify<T>::type
 
 
-//=/// IsConstlikeType: SMART-POINTER EXTENSIBLE CONSTNESS CHECK //////////=//
-//
-// This helper for testing if something is "constlike" is able to return
-// true for things like Option(const char*), and false for Option(char*).
-//
-// It does so by building on top of the hook that such types already have
-// to write for ConstifyHelper<T>... all it does is check to see if the
-// type is the same as its constification!
-
-template<typename T>
-struct IsConstlikeType {
-    static constexpr bool value = std::is_same<
-        needful_remove_reference(T),
-        needful_constify_type(needful_remove_reference(T))
-    >::value;
-};
-
-
 //=//// IsConstIrrelevantForType: DODGE GCC WARNINGS //////////////////////=//
 //
 // It would be nice if we could just mirror const onto things without
@@ -152,11 +134,35 @@ struct IsConstlikeType {
 //
 
 template<typename T>
-struct IsConstIrrelevantForType : std::integral_constant<
+struct IsConstIrrelevant : std::integral_constant<
     bool,
     std::is_fundamental<T>::value  // note: nullptr_t is fundamental
         or std::is_enum<T>::value
 > {};
+
+#define needful_is_const_irrelevant(T) \
+    needful::IsConstIrrelevant<needful_remove_reference(T)>::value
+
+
+//=/// IsConstlikeType: SMART-POINTER EXTENSIBLE CONSTNESS CHECK //////////=//
+//
+// This helper for testing if something is "constlike" is able to return
+// true for things like Option(const char*), and false for Option(char*).
+//
+// It does so by building on top of the hook that such types already have
+// to write for ConstifyHelper<T>... all it does is check to see if the
+// type is the same as its constification!
+
+template<typename T>
+struct IsConstlike {
+    static constexpr bool value = std::is_same<
+        T,
+        needful_constify_type(T)
+    >::value;
+};
+
+#define needful_is_constlike(T) \
+    needful::IsConstlike<needful_remove_reference(T)>::value
 
 
 //=//// CONST MIRRORING: TRANSFER CONSTNESS FROM ONE TYPE TO ANOTHER //////=//
@@ -170,10 +176,10 @@ struct IsConstIrrelevantForType : std::integral_constant<
 template<typename From, typename To>
 struct MirrorConstHelper {
     using type = typename std::conditional<
-        IsConstIrrelevantForType<needful_remove_reference(From)>::value,
+        needful_is_const_irrelevant(From),
         To,  // leave as-is for const-irrelevant types
         typename std::conditional<
-            IsConstlikeType<From>::value,  // mirror constness otherwise
+            needful_is_constlike(From),  // mirror constness otherwise
             needful_constify_type(To),
             needful_unconstify_type(To)
         >::type

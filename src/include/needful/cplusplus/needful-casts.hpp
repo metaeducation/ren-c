@@ -478,9 +478,9 @@ struct UpcastWrapper {
 
 #undef upcast
 #define upcast(expr) \
-    ((needful::UpcastWrapper< \
-        needful_remove_reference(decltype(expr) \
-    >((expr))))
+    (needful::UpcastWrapper< \
+        needful_remove_reference(decltype(expr)) \
+    >(expr))
 
 
 //=//// m_cast(): MUTABILITY CAST FOR COMPATIBLE POINTER TYPES ////////////=//
@@ -556,6 +556,11 @@ struct MutableCastHelper {
 // !!! At the moment this is necessary also for casting pointers-to-pointers,
 // which is not handled by m_cast().  Review.
 //
+// NOTE: Attempts to make Writable_Wrapper_Cast() arity-1 and auto-detect
+// the type to cast to were tried, with the C version just casting to void*.
+// But this winds up requiring C++-specific code to leak into %needful.h
+// because the C version of w_cast() that creates void* would no longer be
+// legal in C++.
 
 template<typename T, typename V, bool = HasWrappedType<T>::value>
 struct WritableWrapperCastHelperImpl;

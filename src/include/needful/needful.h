@@ -896,4 +896,14 @@ typedef enum {
 #endif
 
 
+//=//// TEMPORARY: NEEDFUL TESTS //////////////////////////////////////////=//
+//
+// This is a temporary measure to allow the tests to be run without having
+// a separate build step to do so, just to start getting the tests written.
+//
+
+#if defined(__cplusplus) && !defined(NDEBUG)
+    #include "tests/all-needful-tests.hpp"
+#endif
+
 #endif  // !defined(NEEDFUL_H)

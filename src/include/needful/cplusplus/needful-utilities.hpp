@@ -1,5 +1,5 @@
 
-//=//// PRINT TYPE NAME FOR DEBUGGING ////////////////////////////////////=//
+//=//// DUMP TYPE NAME FOR DEBUGGING //////////////////////////////////////=//
 //
 // Somehow, despite decades of C++ development, there is no standard way to
 // print the name of a type at compile time.  This is a workaround that
@@ -7,10 +7,15 @@
 // the error message.
 //
 
-template<typename T>
-struct ProbeType {
-    static_assert(sizeof(T) == 0, "Look at compiler errors for type name");
-};
+#if !defined(NDEBUG)
+    template<typename T>
+    struct ProbeTypeHelper {
+        static_assert(sizeof(T) == 0, "See compiler errors for probed name");
+    };
+
+    #define PROBE_TYPE(T) \
+        (needful::ProbeTypeHelper<T>())
+#endif
 
 
 //=//// ENABLE IF FOR SAME TYPE ///////////////////////////////////////////=//
