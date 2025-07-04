@@ -353,7 +353,7 @@ struct HookableCastHelper<From, To, true> {
 
 template<typename To, typename From>
 typename std::enable_if<  // For ints/enums: use & as && can't bind const
-    not std::is_array<typename std::remove_reference<From>::type>::value
+    not std::is_array<needful_remove_reference(From)>::value
         and (
             std::is_fundamental<To>::value
             or std::is_enum<To>::value
@@ -368,7 +368,7 @@ Hookable_Cast_Decay_Prelude(const From& v) {
 
 template<typename To, typename From>
 typename std::enable_if<  // For arrays: decay to pointer
-    std::is_array<typename std::remove_reference<From>::type>::value
+    std::is_array<needful_remove_reference(From)>::value
         and not std::is_fundamental<To>::value
         and not std::is_enum<To>::value,
     To
@@ -381,7 +381,7 @@ Hookable_Cast_Decay_Prelude(From&& v) {
 
 template<typename To, typename From>
 typename std::enable_if<  // For non-arrays: forward as-is
-    not std::is_array<typename std::remove_reference<From>::type>::value
+    not std::is_array<needful_remove_reference(From)>::value
         and not std::is_fundamental<To>::value
         and not std::is_enum<To>::value,
     To
@@ -430,17 +430,17 @@ struct ConstPreservingCastHelper {
 
 #define Hookable_Const_Preserving_Cast(TP,v) /* outer parens [C] */ \
     (needful::ConstAwareCastDispatcher< \
-        typename std::remove_reference<decltype(v)>::type, \
+        needful_remove_reference(decltype(v)), \
         typename needful::ConstPreservingCastHelper< \
             TP, \
-            typename std::remove_reference<decltype(v)>::type \
+            needful_remove_reference(decltype(v)) \
         >::type \
     >::convert(v))
 
 #define Unhookable_Const_Preserving_Cast(TP,v) /* outer parens [C] */ \
     ((typename needful::ConstPreservingCastHelper< \
         TP, \
-        typename std::remove_reference<decltype(v)>::type \
+        needful_remove_reference(decltype(v)) \
     >::type)(v))
 
 #undef c_cast
@@ -474,7 +474,7 @@ struct DowncastHelper {
 #undef downcast
 #define downcast(T,expr) \
     ((typename needful::DowncastHelper< \
-        typename std::remove_reference<decltype(expr)>::type, \
+        needful_remove_reference(decltype(expr)), \
         T \
     >::type)(expr))
 
@@ -508,7 +508,7 @@ struct UpcastWrapper {
 #undef upcast
 #define upcast(expr) \
     ((needful::UpcastWrapper< \
-        typename std::remove_reference<decltype(expr)>::type \
+        needful_remove_reference(decltype(expr) \
     >((expr))))
 
 
@@ -559,7 +559,7 @@ struct MutableCastHelper {
     (const_cast<T>( \
         (typename needful::MutableCastHelper< \
             T, \
-            typename std::remove_reference<decltype(expr)>::type \
+            needful_remove_reference(decltype(expr)) \
         >::ConstTo \
     )(expr)))
 

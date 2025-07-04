@@ -64,7 +64,7 @@
 //
 //    decltype(ref) deduces the type of ref (incl. reference/cv qualifiers)
 //
-//    std::remove_reference strips the reference, so the template matches
+//    remove_reference strips the reference, so the template matches
 //    the CorruptHelper<T> specializations
 //
 
@@ -102,7 +102,7 @@ struct CorruptHelper {
 #undef Corrupt_If_Needful
 #define Corrupt_If_Needful(ref) /* macro for efficiency [4] */ \
     needful::CorruptHelper< \
-        typename std::remove_reference<decltype(ref)>::type \
+        needful_remove_reference(decltype(ref))
     >::corrupt(ref)
 
 STATIC_ASSERT(NEEDFUL_USES_CORRUPT_HELPER == 0);

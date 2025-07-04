@@ -41,6 +41,23 @@ using DisableIfSame =
     typename std::enable_if<not IsSameAny<T, Allowed...>::value>::type*;
 
 
+//=//// REMOVE REFERENCE SHORTHAND ////////////////////////////////////////=//
+//
+// Removing references is a common operation in C++ template code.  While
+// sometimes you want to make distinctions for the behavior of a reference
+// type vs. a value type, it's often more convenient to collapse them (for
+// instance if you're trying to dispatch to specialization code...and don't
+// want people to have to write separate specializations for T and T&).
+//
+// Macros are not namespaced, so we have to use a prefix to avoid conflicts.
+// As a result, this macro isn't much shorter than what it replaces... but
+// it makes the callsites eaier to scan without all the symbols.
+//
+
+#define needful_remove_reference(T) \
+    typename std::remove_reference<T>::type
+
+
 //=//// TYPE LIST HELPER //////////////////////////////////////////////////=//
 //
 // Type lists allow checking if a type is in a list of types at compile time:

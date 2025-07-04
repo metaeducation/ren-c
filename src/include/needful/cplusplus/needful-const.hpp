@@ -32,7 +32,7 @@ struct ConstifyHelper<T*> {  // raw pointer specialization: inject const
 
 #define needful_constify_type(T) \
     typename needful::ConstifyHelper< \
-        typename std::remove_reference<T>::type \
+        needful_remove_reference(T) \
     >::type
 
 
