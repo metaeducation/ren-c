@@ -450,6 +450,68 @@ struct ConstPreservingCastHelper {
 #define u_c_cast  Unhookable_Const_Preserving_Cast
 
 
+//=//// downcast(): CAST THAT WOULD BE SAFE FOR PLAIN ASSIGNMENT //////////=//
+//
+// Downcast behaves like what would also be called an "implicit cast", which
+// is anything that would be safe if done through a normal assignment.  It's
+// just a nicer, shorter name than implicit_cast())!
+//
+// No checking is needed (none would have been done for an assignment).
+//
+// It preserves the constness of the input type.
+//
+
+template<typename From, typename To>
+struct DowncastHelper {
+    using type = typename MirrorConstHelper<From, To>::type;
+
+    static_assert(
+        std::is_convertible<From, type>::value,
+        "downcast() cannot implicitly convert expression to type T"
+    );
+};
+
+#undef downcast
+#define downcast(T,expr) \
+    ((typename needful::DowncastHelper< \
+        typename std::remove_reference<decltype(expr)>::type, \
+        T \
+    >::type)(expr))
+
+
+//=//// upcast(): SINGLE-ARITY CAST THAT ONLY ALLOWS UPCASTING ///////////=//
+//
+// A technique that Needful codebases can use is to use inheritance of types
+// when built as C++, but not when built as C.  The C build can define the
+// "base class" just by void*, and the C++ build can define base classes
+// using the empty base class optimization.
+//
+// We can introduce some safety in these casting hierarchies while still
+// getting brevity.
+//
+
+template<typename From>
+struct UpcastWrapper {
+    From p;
+    explicit constexpr UpcastWrapper(const From& from) : p {from} {}
+
+    template<
+        typename To,
+        typename = typename std::enable_if<
+            std::is_convertible<To, From>::value
+        >::type
+    >
+    operator To() const noexcept
+        { return HookableCastHelper<From, To>::convert(p); }
+};
+
+#undef upcast
+#define upcast(expr) \
+    ((needful::UpcastWrapper< \
+        typename std::remove_reference<decltype(expr)>::type \
+    >((expr))))
+
+
 //=//// m_cast(): MUTABILITY CAST FOR COMPATIBLE POINTER TYPES ////////////=//
 //
 // This is a cast for producing a mutable pointer from a compatible pointer

@@ -64,4 +64,4 @@ struct EnsureStaticAsserter {
 
 #undef ensure
 #define ensure(T,expr) /* clang requires USED() on checker */ \
-    (USED((needful::EnsureStaticAsserter<decltype(expr),T>{})), (expr))
+    (NEEDFUL_USED((needful::EnsureStaticAsserter<decltype(expr),T>{})), (expr))

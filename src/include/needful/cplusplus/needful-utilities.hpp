@@ -128,21 +128,3 @@ struct CTypeList<T1, Ts...> {  // Specialization for non-empty lists
 
 template<typename T>  // T is ignored, just here to make it a template
 struct AlwaysFalseTrait : std::false_type {};  // for SFINAE static_assert [2]
-
-
-//=//// CONST COPYING TYPE TRAIT //////////////////////////////////////////=//
-//
-// This is a simple trait which adds const to the first type if the second
-// type is const.
-//
-template<typename U,typename T>
-struct copy_const {
-    using type = typename std::conditional<
-        std::is_const<T>::value,
-        typename std::add_const<U>::type,
-        U
-    >::type;
-};
-
-template<typename U,typename T>
-using copy_const_t = typename copy_const<U,T>::type;

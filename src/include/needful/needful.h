@@ -495,6 +495,9 @@
 
 #define strict_cast(T,expr)      cast(T,(expr))  // however you define cast()
 
+#define downcast(T,expr)    ((T)(expr))
+#define upcast(expr)        ((void*)(expr))
+
 
 //=//// attempt, until, whilst: ENHANCED LOOP MACROS //////////////////////=//
 //

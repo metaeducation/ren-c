@@ -81,9 +81,6 @@
 #if (! DEBUG_HOOK_MIRROR_BYTE)
     #define MIRROR_BYTE(source) \
         MIRROR_BYTE_RAW(ensure(const Source*, (source)))
-
-    #define Mirror_Of(source) \
-      u_cast(Option(Heart), u_cast(HeartEnum, MIRROR_BYTE(source)))
 #else
     struct MirrorHolder {
         Source* & ref;
@@ -130,10 +127,10 @@
 
     #define MIRROR_BYTE(source) \
         MirrorHolder{source}
-
-    #define Mirror_Of(source) \
-        u_cast(Option(Heart), MIRROR_BYTE_RAW(source))
 #endif
+
+#define Mirror_Of(source) \
+    u_cast(Option(Heart), MIRROR_BYTE_RAW(source))
 
 
 // !!! Currently, many bits of code that make copies don't specify if they are
