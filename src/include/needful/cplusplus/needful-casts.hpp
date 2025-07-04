@@ -557,13 +557,38 @@ struct MutableCastHelper {
 // which is not handled by m_cast().  Review.
 //
 
+template<typename T, typename V, bool = HasWrappedType<T>::value>
+struct WritableWrapperCastHelperImpl;
+
+// Case 1: T is a wrapper type with wrapped_type
+template<typename T, typename V>
+struct WritableWrapperCastHelperImpl<T, V, true> {
+    using MutableWrapped = typename UnconstifyHelper<typename T::wrapped_type>::type;
+
+    using MutableWrapper = typename TemplateExtractor<T>::template type<MutableWrapped>::result;
+
+    static MutableWrapper convert(V v) {
+        return MutableWrapper {
+            const_cast<MutableWrapped>(x_cast(typename V::wrapped_type, v))
+        };
+    }
+};
+
+// Case 2: T is not a wrapper type
+template<typename T, typename V>
+struct WritableWrapperCastHelperImpl<T, V, false> {
+    static T convert(V v) {
+        return const_cast<T>(v);
+    }
+};
+
 template<typename T, typename V>
 constexpr T WritableWrapperCastHelper(V v) {
-    static_assert(not std::is_const<T>::value,
+    static_assert(!std::is_const<T>::value,
         "invalid w_cast() - requested a const type for output result");
     static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
         "invalid w_cast() - input and output have mismatched volatility");
-    return const_cast<T>(v);
+    return WritableWrapperCastHelperImpl<T, V>::convert(v);
 }
 
 #define Writable_Wrapper_Cast(T,expr) /* outer parens [C] */ \

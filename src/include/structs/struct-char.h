@@ -100,7 +100,9 @@
 
     template<>
     struct ValidatedUtf8<const Byte*> {
-        const Byte* p;  // underlying pointer mutable if constructed mutable
+        using wrapped_type = const Byte*;
+
+        wrapped_type p;  // underlying pointer mutable if constructed mutable
 
         ValidatedUtf8 () = default;
         ValidatedUtf8 (nullptr_t n) : p (n) {}
@@ -153,6 +155,8 @@
 
     template<>
     struct ValidatedUtf8<Byte*> : public ValidatedUtf8<const Byte*> {
+        using wrapped_type = Byte*;
+
         ValidatedUtf8 () = default;
         ValidatedUtf8 (nullptr_t n)
             : ValidatedUtf8<const Byte*>(n) {}
@@ -175,42 +179,4 @@
           { return u_cast(char*, const_cast<Byte*>(p)); }
     };
 
-  //=//// CONSTIFY HELPER /////////////////////////////////////////////////=//
-
-  // These must be defined BEFORE defining anything using u_cast(Utf8(*) ...)
-
-  namespace needful {
-    template<>
-    struct ConstifyHelper<Utf8(*), false>
-      { using type = Utf8(const*); };
-
-    template<>
-    struct ConstifyHelper<Utf8(const*), false>
-      { using type = Utf8(const*); };
-
-    template<>
-    struct UnconstifyHelper<Utf8(*), false>
-      { using type = Utf8(*); };
-
-    template<>
-    struct UnconstifyHelper<Utf8(const*), false>
-      { using type = Utf8(*); };
-  }
-
-  //=//// MUTABILITY CAST HELPERS /////////////////////////////////////////=//
-
-  // Wrapper classes don't know how to do `const_cast<>`.  In the C standard
-  // library  things like std::shared_ptr<> use std::const_cast_pointer.  But
-  // Ren-C's w_cast() is smart enough to delegate to WrapperCastHelper so that
-  // w_cast(Utf8(*)) of a Utf8(const*) can be made to work.
-
-  namespace needful {
-    template<>
-    inline Utf8(*) WritableWrapperCastHelper(Utf8(const*) utf8)  // [5]
-      { return u_cast(Utf8(*), const_cast<Byte*>(utf8.p)); }
-
-    template<>
-    constexpr inline Utf8(*) WritableWrapperCastHelper(Utf8(*) utf8)  // [5]
-      { return utf8; }
-  }
 #endif

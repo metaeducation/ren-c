@@ -1,3 +1,18 @@
+
+//=//// PRINT TYPE NAME FOR DEBUGGING ////////////////////////////////////=//
+//
+// Somehow, despite decades of C++ development, there is no standard way to
+// print the name of a type at compile time.  This is a workaround that
+// uses a static assertion to force the compiler to print the type name in
+// the error message.
+//
+
+template<typename T>
+struct ProbeType {
+    static_assert(sizeof(T) == 0, "Look at compiler errors for type name");
+};
+
+
 //=//// ENABLE IF FOR SAME TYPE ///////////////////////////////////////////=//
 //
 // This is useful for SFINAE (Substitution Failure Is Not An Error), as a
@@ -134,7 +149,7 @@ struct CTypeList<T1, Ts...> {  // Specialization for non-empty lists
     list::contains<T>()
 
 
-// 2. always_false<T> is a template that always yields false, but is dependent
+// 2. AlwaysFalse<T> is a template that always yields false, but is dependent
 //    on T.  This works around the problem of static_assert()s inside of
 //    SFINAE'd functions, which would fail even if the SFINAE conditions
 //    were not met:
@@ -144,4 +159,42 @@ struct CTypeList<T1, Ts...> {  // Specialization for non-empty lists
 //
 
 template<typename T>  // T is ignored, just here to make it a template
-struct AlwaysFalseTrait : std::false_type {};  // for SFINAE static_assert [2]
+struct AlwaysFalse : std::false_type {};  // for SFINAE static_assert [2]
+
+
+//=//// ALWAYS VOID FOR SFINAE DETECTION //////////////////////////////////=//
+
+template<typename...>
+using AlwaysVoid = void;  // std::void_t in C++17
+
+
+//=//// WRAPPED TYPE DETECTION ////////////////////////////////////////////=//
+
+// Simple wrapper types can be used to add C++ power to C++ codebase.  But
+// the wrappers get in the way of metaprogramming operations.  To simplify
+// this, make type wrappers have a static member called `wrapped_type`, so
+// that some metaprogramming operations can be automatic without having
+// to write specializations for every wrapper type.
+
+template<typename T>
+struct HasWrappedType {
+private:
+    template<typename U>
+    static auto test(int) -> decltype(typename U::wrapped_type{}, std::true_type{});
+    template<typename>
+    static std::false_type test(...);
+public:
+    static constexpr bool value = decltype(test<T>(0))::value;
+};
+
+// Helper to extract template and rewrap - using struct instead of alias
+template<typename T>
+struct TemplateExtractor;
+
+template<template<typename> class Wrapper, typename T>
+struct TemplateExtractor<Wrapper<T>> {
+    template<typename U>
+    struct type {
+        using result = Wrapper<U>;
+    };
+};

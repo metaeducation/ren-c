@@ -20,54 +20,106 @@
 // There is no standardized way to request constness be added to a wrapped
 // pointer in C++.  All implemenations of this are equally ad-hoc.
 //
-template<
-    typename T,
-    bool = std::is_fundamental<T>::value or std::is_enum<T>::value
->
-struct ConstifyHelper
-  { using type = const T; };
+
+// Forward declarations
+template<typename T, bool = std::is_fundamental<T>::value || std::is_enum<T>::value>
+struct ConstifyHelper;
+
+template<typename T, bool = std::is_fundamental<T>::value || std::is_enum<T>::value>
+struct UnconstifyHelper;
+
+// ConstifyHelper - fundamental/enum case (no const added)
+template<typename T>
+struct ConstifyHelper<T, true> {
+    using type = T;
+};
+
+// ConstifyHelper - general case
+template<typename T>
+struct ConstifyHelper<T, false> {
+private:
+    template<typename U, bool has_wrapped>
+    struct ConstifyImpl {
+        using type = const U;
+    };
+
+    template<typename U>
+    struct ConstifyImpl<U, true> {
+        using type = typename TemplateExtractor<U>::template type<
+            typename ConstifyHelper<typename U::wrapped_type>::type
+        >::result;
+    };
+
+public:
+    using type = typename ConstifyImpl<T, HasWrappedType<T>::value>::type;
+};
+
+// ConstifyHelper - pointer specializations
+template<typename T>
+struct ConstifyHelper<T*, false> {
+    using type = const T*;
+};
 
 template<typename T>
-struct ConstifyHelper<T, true>  // true => fundamental/nullptr_t or enum
-  { using type = T; };
+struct ConstifyHelper<T* const, false> {
+    using type = const T* const;
+};
+
+// UnconstifyHelper - fundamental/enum case (remove const if present)
+template<typename T>
+struct UnconstifyHelper<T, true> {
+    using type = typename std::remove_const<T>::type;
+};
+
+// UnconstifyHelper - general case
+template<typename T>
+struct UnconstifyHelper<T, false> {
+private:
+    template<typename U, bool has_wrapped>
+    struct UnconstifyImpl {
+        using type = typename std::remove_const<U>::type;
+    };
+
+    template<typename U>
+    struct UnconstifyImpl<U, true> {
+        using type = typename TemplateExtractor<U>::template type<
+            typename UnconstifyHelper<typename U::wrapped_type>::type
+        >::result;
+    };
+
+public:
+    using type = typename UnconstifyImpl<T, HasWrappedType<T>::value>::type;
+};
+
+// UnconstifyHelper - pointer specializations
+template<typename T>
+struct UnconstifyHelper<T*, false> {
+    using type = typename std::remove_const<T>::type*;
+};
 
 template<typename T>
-struct ConstifyHelper<T*, false>  // raw pointer specialization: inject const
-  { using type = const T*; };
+struct UnconstifyHelper<T* const, false> {
+    using type = typename std::remove_const<T>::type* const;
+};
+
+// Convenience aliases (C++11 compatible)
+template<typename T>
+struct Constify {
+    using type = typename ConstifyHelper<typename std::remove_reference<T>::type>::type;
+};
 
 template<typename T>
-struct ConstifyHelper<T* const, false>  // when the pointer *itself* is const
-  { using type = const T* const; };
+struct Unconstify {
+    using type = typename UnconstifyHelper<typename std::remove_reference<T>::type>::type;
+};
 
+
+// Macros for convenience
 #define needful_constify_type(T) \
-    typename needful::ConstifyHelper< \
-        needful_remove_reference(T) \
-    >::type
-
-
-template<
-    typename T,
-    bool = std::is_fundamental<T>::value or std::is_enum<T>::value
->
-struct UnconstifyHelper
-  { using type = typename std::remove_const<T>::type; };
-
-template<typename T>
-struct UnconstifyHelper<T, true>  // true => fundamental/nullptr_t or enum
-  { using type = T; };
-
-template<typename T>
-struct UnconstifyHelper<T*, false>  // raw pointer specialization
-  { using type = typename std::remove_const<T>::type*; };
-
-template<typename T>
-struct UnconstifyHelper<T* const, false>  // when the pointer *itself* is const...
-  { using type = typename std::remove_const<T>::type* const; };
+    typename needful::Constify<T>::type
 
 #define needful_unconstify_type(T) \
-    typename needful::UnconstifyHelper< \
-        needful_remove_reference(T) \
-    >::type
+    typename needful::Unconstify<T>::type
 
 
 //=/// IsConstlikeType: SMART-POINTER EXTENSIBLE CONSTNESS CHECK //////////=//
