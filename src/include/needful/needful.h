@@ -884,101 +884,21 @@ typedef enum {
 //
 // needful.h is written out with all the "noop" C definitions first, to help
 // give a clear sense to people how trivial and non-invasive the library can
-// be for C programs--introducing no dependencies or complexity.
+// be for C programs--introducing no dependencies or complexity.  There's
+// non-zero value to the documentation that these definitions provide, even
+// with minimal behavior (and the Result(T) handling still has runtime
+// benefits).
 //
-// BUT the real power of Needful comes from C++ builds, performing powerful
+// But the *REAL* power of Needful comes from C++ builds, performing powerful
 // compile-time checks (and optional runtime validations).
 //
 // When these headers are activated, they will #undef the simple definitions
 // given above, and redefine them with actual machinery to give them teeth!
 //
-// All the required #include statements for the advanced features are kept
-// here in %needful.h for transparency, so you can see what's going on.
-//
-// 1. For the uninitiated: <type_traits> is what enables most of the magic
-//    that Needful does.  It's a library of queries you can perform at
-//    compile-time, and guide the behavior of things from the answers:
-//
-//      https://en.cppreference.com/w/cpp/header/type_traits.html
-//
-//    It's a powerful static-analysis tool that comes built into the compiler
-//    you already have!
-//
-// 2. The C++ implementation uses assert(), but doesn't #include <assert.h>
-//    on its own, as there may be overriding assert() definitions desired.
-//    (Some assert implementations provided by the system are antagonistic
-//    to debuggers and need replacement.)
-//
-// 3. Not all clients necessarily want to #include <stdarg.h> ... it may not
-//    be available on the platform or could cause problems if included in
-//    some codebases.  Default to including it since it offers protections
-//    people may not be aware are necessary, but allow it to be turned off.
-//
 
 #if defined(__cplusplus)
-    #include <type_traits>  // *power-tool* for compile-time calculations! [1]
-
-    #include <utility>  // for std::forward()
-
-    #include <stdint.h>  // uses uintptr_t for things (review: use int?)
-
-  #if defined(_MSC_VER)
-    #include <iso646.h>  // MSVC doesn't have `and`, `not`, etc. w/o this
-  #else
-    // C++ compilers *should* define them, they're even in the C++98 standard!
-  #endif
-
-    #if !defined(assert)  // must define assert() [2]
-        #error "Include <assert.h> or assert-fix.h before including needful.h"
-        #include <stophere>  // https://stackoverflow.com/a/45661130
-    #endif
-
-    #if !defined(NEEDFUL_DONT_INCLUDE_STDARG_H)
-        #define NEEDFUL_DONT_INCLUDE_STDARG_H  0
-    #else
-        STATIC_ASSERT(NEEDFUL_DONT_INCLUDE_STDARG_H == 1 or
-                    NEEDFUL_DONT_INCLUDE_STDARG_H == 0);
-    #endif
-
-    #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // may not want to include it... [3]
-        #include <stdarg.h>  // ...but helps cast() catch bad va_list usages
-    #endif
-
-  #if !defined(NEEDFUL_OPTION_USES_WRAPPER)
-    #define NEEDFUL_OPTION_USES_WRAPPER  0
-  #endif
-
-  #if !defined(NEEDFUL_SINK_USES_WRAPPER)
-    #define NEEDFUL_SINK_USES_WRAPPER  0
-  #endif
-
-  namespace needful {  // put any non-macro helpers in the needful namespace
-
-    #include "cplusplus/needful-asserts.hpp"
-
-    #include "cplusplus/needful-utilities.hpp"
-
-    #include "cplusplus/needful-const.hpp"
-
-    #include "cplusplus/needful-casts.hpp"
-
-  #if NEEDFUL_DOES_CORRUPTIONS
-    #include "cplusplus/needful-corruption.hpp"
-  #endif
-
-    #include "cplusplus/needful-result.hpp"
-
-  #if NEEDFUL_OPTION_USES_WRAPPER
-    #include "cplusplus/needful-option.hpp"
-  #endif
-
-  #if NEEDFUL_SINK_USES_WRAPPER
-    #include "cplusplus/needful-sinks.hpp"
-  #endif
-
-  }  // end namespace needful
-
-#endif // CPLUSPLUS_11
+    #include "cplusplus/cplusplus-needfuls.hpp"
+#endif
 
 
 #endif  // !defined(NEEDFUL_H)
