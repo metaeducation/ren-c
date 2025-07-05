@@ -208,7 +208,7 @@ DECLARE_NATIVE(IF)
 
     bool cond = require (Test_Conditional(condition));
     if (not cond)
-        return nullptr;  // "light" null (not in a pack) if condition is false
+        return NULLED;  // "light" null (not in a pack) if condition is false
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
 }
@@ -326,7 +326,7 @@ DECLARE_NATIVE(THEN)
     Value* branch = ARG(BRANCH);
 
     if (Is_Light_Null(atom))
-        return nullptr;
+        return NULLED;
 
     return DELEGATE_BRANCH(OUT, branch, atom);
 }
@@ -396,7 +396,7 @@ DECLARE_NATIVE(ALSO)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Light_Null(atom))
-        return nullptr;
+        return NULLED;
 
     STATE = ST_ALSO_RUNNING_BRANCH;
     return CONTINUE_BRANCH(OUT, branch, atom);
@@ -561,7 +561,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     switch (which) {
       case NATIVE_IS_ANY:
-        return nullptr;  // non-vanishing expressions, but none of them passed
+        return NULLED;  // non-vanishing expressions, but none of them passed
 
       case NATIVE_IS_ALL:
         return BRANCHED(OUT);  // successful ALL returns the last value
@@ -582,7 +582,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 } return_null: { /////////////////////////////////////////////////////////////
 
     Drop_Level(SUBLEVEL);
-    return nullptr;
+    return NULLED;
 }}
 
 
@@ -1263,7 +1263,7 @@ DECLARE_NATIVE(CATCH_P)  // specialized to plain CATCH w/ NAME="THROW" in boot
 } code_result_in_out: {  //////////////////////////////////////////////////////
 
     if (not THROWING)
-        return nullptr;  // no throw means just return null (pure, for ELSE)
+        return NULLED;  // no throw means just return null (pure, for ELSE)
 
     const Value* label = VAL_THROWN_LABEL(LEVEL);
     if (not Any_Context(label))

@@ -580,7 +580,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
             panic (Error_Bad_Refines_Raw());
 
         if (not Check_Bits(VAL_BITSET(v), ARG(VALUE), Bool_ARG(CASE)))
-            return nullptr;
+            return LOGIC(false);
         return LOGIC(true); }
 
       case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.

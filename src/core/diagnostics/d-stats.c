@@ -73,7 +73,7 @@ DECLARE_NATIVE(STATS)
     if (Bool_ARG(POOL)) {
         Value* pool_id = ARG(POOL);
         Dump_All_Flex_In_Pool(VAL_INT32(pool_id));
-        return nullptr;
+        return NULLED;
     }
 
     if (Bool_ARG(SHOW))

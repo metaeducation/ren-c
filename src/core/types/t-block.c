@@ -574,7 +574,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         );
 
         if (find == NOT_FOUND)
-            return nullptr;
+            return NULLED;
 
         REBLEN ret = find;
         assert(ret <= limit);
@@ -597,7 +597,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 
         ret += len;
         if (ret >= limit)
-            return nullptr;
+            return NULLED;
 
         Element* out = Derelativize(OUT, Array_At(arr, ret), binding);
         return Inherit_Const(out, list); }
@@ -1165,7 +1165,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
     );
 
     if (not Try_Pick_Block(OUT, list, spare))
-        return nullptr;
+        return NULLED;
     return Inherit_Const(OUT, list);
 }
 

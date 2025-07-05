@@ -251,7 +251,7 @@ DECLARE_NATIVE(HAS)
     const bool strict = true;
     Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
     if (not index)
-        return nullptr;
+        return NULLED;
 
     if (not Is_Module(context)) {
         VarList* varlist = Cell_Varlist(context);
@@ -299,7 +299,7 @@ DECLARE_NATIVE(WITHOUT)
             Element_ARG(CONTEXT), symbol, strict
         );
         if (not index)
-            return nullptr;
+            return NULLED;
         Init_Word_Bound(
             OUT,
             symbol,  // !!! incoming case...consider impact of strict if false?
@@ -1383,7 +1383,7 @@ DECLARE_NATIVE(LIGHT)
         return COPY(atom);
 
     if (Is_Lifted_Null(first))  // only case we care about, pack of one null
-        return nullptr;  // return the null, no longer in a pack
+        return NULLED;  // return the null, no longer in a pack
 
     return COPY(atom);
 }

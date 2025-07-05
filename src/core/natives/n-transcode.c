@@ -304,7 +304,7 @@ DECLARE_NATIVE(TRANSCODE)
     }
 
     if (Is_Light_Null(OUT))  // no more Elements were left to transcode
-        return nullptr;  // must return pure null for THEN/ELSE to work right
+        return NULLED;  // must return pure null for THEN/ELSE to work right
 
 } calculate_and_return_how_far_transcode_advanced: {
 

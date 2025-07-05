@@ -705,7 +705,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         );
 
         if (not n)
-            return nullptr;
+            return NULLED;
 
         const Value* val = Flex_At(
             Value,
@@ -713,7 +713,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
             (((unwrap n) - 1) * 2) + 1
         );
         if (Is_Zombie(val))
-            return nullptr;
+            return NULLED;
 
         return Copy_Cell(OUT, val); }
 

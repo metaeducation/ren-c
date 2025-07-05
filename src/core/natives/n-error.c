@@ -42,10 +42,10 @@ DECLARE_NATIVE(TRY)
     Atom* atom = Intrinsic_Atom_ARG(LEVEL);
 
     if (Is_Void(atom) or Is_Light_Null(atom))
-        return nullptr;
+        return NULLED;
 
     if (Is_Error(atom))
-        return nullptr;
+        return NULLED;
 
     return COPY(atom);  // !!! also tolerates other antiforms, should it?
 }
@@ -335,5 +335,5 @@ DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
     Error* error = Cell_Error(ARG(ERROR));
     Set_Location_Of_Error(error, where);
 
-    return nullptr;
+    return NULLED;
 }

@@ -603,7 +603,7 @@ DECLARE_NATIVE(ADJUNCT_OF)
     }
 
     if (not adjunct)
-        return nullptr;
+        return NULLED;
 
     return COPY(Varlist_Archetype(unwrap adjunct));
 }
@@ -1123,7 +1123,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
             panic (pattern);
 
         if (not Is_Word(pattern))
-            return nullptr;
+            return NULLED;
 
         Option(Index) index = Find_Symbol_In_Context(
             context,
@@ -1131,7 +1131,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
             Bool_ARG(CASE)
         );
         if (not index)
-            return nullptr;
+            return NULLED;
 
         if (Is_Stub_Sea(c))
             panic ("SeaOfVars SELECT not implemented yet");
@@ -1548,7 +1548,7 @@ DECLARE_NATIVE(COUPLING_OF)
     Option(VarList*) coupling = Cell_Frame_Coupling(frame);
 
     if (not coupling)  // NONMETHOD
-        return nullptr;
+        return NULLED;
 
     if (UNCOUPLED == unwrap coupling)
         return TRIPWIRE;
@@ -1581,7 +1581,7 @@ DECLARE_NATIVE(LABEL_OF)
         return Init_Word(OUT, unwrap label);
 
     if (Is_Frame_Details(frame))
-        return nullptr;  // not handled by Level lookup
+        return NULLED;  // not handled by Level lookup
 
     Phase* phase = Frame_Phase(frame);
     if (Is_Stub_Details(phase))
@@ -1593,7 +1593,7 @@ DECLARE_NATIVE(LABEL_OF)
     if (label)
         return Init_Word(OUT, unwrap label);
 
-    return nullptr;
+    return NULLED;
 }
 
 
@@ -1738,7 +1738,7 @@ DECLARE_NATIVE(PARENT_OF)
         VarList* v_parent = Varlist_Of_Level_Force_Managed(parent);
         return COPY(Varlist_Archetype(v_parent));
     }
-    return nullptr;
+    return NULLED;
 }
 
 

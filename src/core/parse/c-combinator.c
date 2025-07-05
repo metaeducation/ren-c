@@ -433,9 +433,9 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
         const Element* tail;
         const Element* at = List_At(&tail, input);
         if (at == tail)  // no item to match against
-            return nullptr;
+            return NULLED;
         if (not Equal_Values(at, v, true))  // not case-insensitive equal
-            return nullptr;
+            return NULLED;
 
         ++SERIES_INDEX_UNBOUNDED(input);
         Copy_Cell(ARG(REMAINDER), input);
@@ -456,7 +456,7 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
         1  // skip
     );
     if (index == NOT_FOUND)
-        return nullptr;
+        return NULLED;
 
     assert(index == Series_Index(input));  // asked for AM_FIND_MATCH
     SERIES_INDEX_UNBOUNDED(input) += len;
@@ -530,7 +530,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
 
     if (Is_Light_Null(OUT)) {  // didn't match even once, so not enough
         Remove_Flex_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
-        return nullptr;
+        return NULLED;
     }
 
 } call_parser_again: {  //////////////////////////////////////////////////////
@@ -600,12 +600,12 @@ DECLARE_NATIVE(FURTHER_COMBINATOR)
 } parser_result_in_out: {  ///////////////////////////////////////////////////
 
     if (Is_Light_Null(OUT))
-        return nullptr;  // the parse rule did not match
+        return NULLED;  // the parse rule did not match
 
     Copy_Cell(SPARE, remainder);
 
     if (Series_Index(SPARE) <= Series_Index(input))
-        return nullptr;  // the rule matched but did not advance the input
+        return NULLED;  // the rule matched but did not advance the input
 
     return OUT;
 }}

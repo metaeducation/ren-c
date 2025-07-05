@@ -315,7 +315,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
       case ST_EVALUATE_SINGLE_STEPPING:
         if (Is_Endlike_Unset(OUT)) {
             Drop_Level(SUBLEVEL);
-            return nullptr;  // no result, not even GHOST [3]
+            return NULLED;  // no result, not even GHOST [3]
         }
         goto single_step_dual_in_out;
 

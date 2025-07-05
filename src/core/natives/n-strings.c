@@ -181,7 +181,7 @@ DECLARE_NATIVE(JOIN)
 
     if (not rest) {  // simple base case: nullptr or COPY
         if (joining_datatype)
-            return nullptr;
+            return NULLED;
         return rebValue(CANON(COPY), unwrap base);
     }
     if (joining_datatype and Any_Utf8(unwrap rest))
@@ -527,7 +527,7 @@ DECLARE_NATIVE(JOIN)
     if (TOP_INDEX == VAL_INT32(original_index)) {  // nothing pushed
         Drop_Data_Stack_To(STACK_BASE);
         if (joining_datatype)
-            return nullptr;
+            return NULLED;
         return rebValue(CANON(COPY), rebQ(unwrap base));
     }
 
@@ -1451,5 +1451,5 @@ DECLARE_NATIVE(INVALID_UTF8_Q)
         }
     }
 
-    return nullptr;  // no invalid byte found
+    return NULLED;  // no invalid byte found
 }

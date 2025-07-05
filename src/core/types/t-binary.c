@@ -405,7 +405,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         );
 
         if (ret == NOT_FOUND)
-            return nullptr;
+            return NULLED;
 
         if (id == SYM_FIND) {
             Source* pack = Make_Source_Managed(2);
@@ -424,7 +424,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
 
         ret++;
         if (ret >= tail)
-            return nullptr;
+            return NULLED;
 
         return Init_Integer(OUT, *Binary_At(Cell_Binary(v), ret)); }
 

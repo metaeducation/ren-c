@@ -232,7 +232,7 @@ IMPLEMENT_GENERIC(BINDING_OF, Is_Word)
     Element* any_word = Element_ARG(ELEMENT);
 
     if (not Try_Get_Binding_Of(OUT, any_word))
-        return nullptr;
+        return NULLED;
 
     return OUT;
 }

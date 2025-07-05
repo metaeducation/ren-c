@@ -844,6 +844,13 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
 // to #undef the Windows versions and would rather pick their own shorthands,
 // (if any).
 //
+// 1. Once it was relatively trivial to say `return nullptr;` vs to say
+//    `return Init_Nulled(OUT);`, so it wasn't considered to be any big
+//    savings to not return the output cell pointer directly.  That was
+//    before Result(T), where more complex discernment is needed on the 0
+//    bounce state to decide if it's an error or not.  It's now worth it to
+//    `return NULLED;` to avoid the extra checking.
+//
 #if REBOL_LEVEL_SHORTHAND_MACROS
     //
     // To make it clearer why you are defining the `level_` alias, use this
@@ -869,8 +876,9 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
 
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
-    #define VOID        u_cast(Bounce, Init_Void(OUT))
-    #define TRIPWIRE    u_cast(Bounce, Init_Tripwire(OUT))
+    #define VOID        x_cast(Bounce, Init_Void(OUT))
+    #define TRIPWIRE    x_cast(Bounce, Init_Tripwire(OUT))
+    #define NULLED      x_cast(Bounce, Init_Nulled(OUT))  // nontrivial [1]
 
     #undef GHOST        // must specify whether it's "surprising" or not
     #define THROWN      Native_Thrown_Result(level_)

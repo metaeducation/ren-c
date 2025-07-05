@@ -896,7 +896,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         );
 
         if (find == NOT_FOUND)
-            return nullptr;
+            return NULLED;
 
         REBLEN ret = find;
         assert(ret <= tail);
@@ -919,7 +919,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
 
         ++ret;
         if (ret == tail)
-            return nullptr;
+            return NULLED;
 
         return Init_Char_Unchecked(
             OUT,

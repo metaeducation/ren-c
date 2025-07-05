@@ -258,7 +258,7 @@ DECLARE_NATIVE(REDUCE)
 
     Drop_Data_Stack_To(STACK_BASE);
     Drop_Level(SUBLEVEL);
-    return nullptr;
+    return NULLED;
 }}
 
 

@@ -87,7 +87,7 @@ DECLARE_NATIVE(RECYCLE)
 
     if (Bool_ARG(OFF)) {
         g_gc.disabled = true;
-        return nullptr;
+        return NULLED;
     }
 
     if (Bool_ARG(ON)) {
@@ -106,7 +106,7 @@ DECLARE_NATIVE(RECYCLE)
     }
 
     if (g_gc.disabled)
-        return nullptr; // don't give misleading "0", since no recycle ran
+        return NULLED;  // don't give misleading "0", since no recycle ran
 
     REBLEN count;
 
@@ -272,7 +272,7 @@ DECLARE_NATIVE(C_DEBUG_TICK)
   #if TRAMPOLINE_COUNTS_TICKS
     return Init_Integer(OUT, g_tick);
   #else
-    return nullptr;
+    return NULLED;
   #endif
 }
 

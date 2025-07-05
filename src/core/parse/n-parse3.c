@@ -2453,7 +2453,7 @@ DECLARE_NATIVE(PARSE3)
 
     if (Is_Light_Null(OUT)) {  // a match failed (but may be at end of input)
         if (Bool_ARG(MATCH))
-            return nullptr;
+            return NULLED;
         return fail (Error_Parse3_Incomplete_Raw());
     }
 
@@ -2462,7 +2462,7 @@ DECLARE_NATIVE(PARSE3)
 
     if (index != Series_Len_Head(input)) {  // didn't reach end of input
         if (Bool_ARG(MATCH))
-            return nullptr;
+            return NULLED;
         if (not Bool_ARG(RELAX))
             return fail (Error_Parse3_Incomplete_Raw());
     }

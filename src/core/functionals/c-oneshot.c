@@ -61,7 +61,7 @@ Bounce Downshot_Dispatcher(Level* const L)  // runs until count is reached
 
     Value* n = Details_At(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) == 0)
-        return nullptr;  // always return null once 0 is reached
+        return NULLED;  // always return null once 0 is reached
     mutable_VAL_INT64(n) -= 1;
 
     Value* code = Known_Stable(Level_Arg(L, 1));
@@ -82,7 +82,7 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
     Value* n = Details_At(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) < 0) {
         mutable_VAL_INT64(n) += 1;
-        return nullptr;  // return null until 0 is reached
+        return NULLED;  // return null until 0 is reached
     }
 
     Value* code = Known_Stable(Level_Arg(L, 1));

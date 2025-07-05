@@ -117,7 +117,7 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 
 
 #define DUAL_LIFTED(v)    Liftify(v ? v : Init_Nulled(OUT))
-#define DUAL_SIGNAL_NULL_ABSENT  cast(Bounce, Init_Nulled(OUT))
+#define DUAL_SIGNAL_NULL_ABSENT  NULLED
 #define Is_Dual_Nulled_Absent_Signal(dual)  Is_Nulled(dual)
 
 #define WRITEBACK(out)  DUAL_LIFTED(out)  // commentary

@@ -220,7 +220,7 @@ static Bounce Loop_Series_Common(
                 return THROWN;
 
             if (breaking)
-                return nullptr;
+                return NULLED;
         }
         return OUT;
     }
@@ -1440,7 +1440,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     Flex* flex = Cell_Flex_Ensure_Mutable(data);  // check even if empty
 
     if (Series_Index(data) >= Series_Len_At(data))  // past series end
-        return nullptr;
+        return NULLED;
 
     VarList* varlist;
     Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
@@ -1958,7 +1958,7 @@ DECLARE_NATIVE(MAP)
     if (Not_Cell_Erased(OUT)) {  // only modifies on break or veto
         assert(Is_Light_Null(OUT));  // BREAK or VETO, so *must* return null
         Drop_Data_Stack_To(STACK_BASE);
-        return nullptr;
+        return NULLED;
     }
 
     return Init_Block(  // always returns block unless break [1]
