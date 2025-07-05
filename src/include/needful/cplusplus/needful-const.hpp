@@ -15,111 +15,76 @@
 //
 
 
-//=//// CONSTIFY: ADD CONST TO POINTED-TO TYPE ////////////////////////////=//
+//=//// REMOVE CONST SHORTHAND ////////////////////////////////////////////=//
 //
-// There is no standardized way to request constness be added to a wrapped
-// pointer in C++.  All implemenations of this are equally ad-hoc.
+// Like needful_remove_reference(), it's just easier to read.
 //
 
-// Forward declarations
-template<typename T, bool = std::is_fundamental<T>::value || std::is_enum<T>::value>
-struct ConstifyHelper;
+#define needful_remove_const(T) \
+    typename std::remove_const<T>::type
 
-template<typename T, bool = std::is_fundamental<T>::value || std::is_enum<T>::value>
-struct UnconstifyHelper;
 
-// ConstifyHelper - fundamental/enum case (no const added)
-template<typename T>
-struct ConstifyHelper<T, true> {
-    using type = T;
-};
+//=//// CONSTIFY/UNCONSTIFY: ADD/REMOVE CONST ON POSSIBLY-WRAPPED TYPE ////=//
+//
+// There is no standardized way to request constness be added or removed
+// from wrapped pointers in C++.
+//
+// 1. Some compilers (like GCC) do not like it if you have something like
+//    a return type of a function being `const int` or `const MyEnum`.
+//    While it should not matter, the warning is probably there to help
+//    make sure you aren't misunderstanding and thinking the const does
+//    something.  So we have to special-case fundamental and enum types
+//    so that they don't get consted and trigger warnings.
+//
 
-// ConstifyHelper - general case
-template<typename T>
-struct ConstifyHelper<T, false> {
-private:
-    template<typename U, bool has_wrapped>
-    struct ConstifyImpl {
-        using type = const U;
-    };
-
-    template<typename U>
-    struct ConstifyImpl<U, true> {
-        using type = typename TemplateExtractor<U>::template type<
-            typename ConstifyHelper<typename U::wrapped_type>::type
-        >::result;
-    };
-
-public:
-    using type = typename ConstifyImpl<T, HasWrappedType<T>::value>::type;
-};
-
-// ConstifyHelper - pointer specializations
-template<typename T>
-struct ConstifyHelper<T*, false> {
-    using type = const T*;
+template<typename T, typename Enable = void>
+struct ConstifyHelper {
+    using consted = const T;
+    using unconsted = needful_remove_const(T);
 };
 
 template<typename T>
-struct ConstifyHelper<T* const, false> {
-    using type = const T* const;
-};
-
-// UnconstifyHelper - fundamental/enum case (remove const if present)
-template<typename T>
-struct UnconstifyHelper<T, true> {
-    using type = typename std::remove_const<T>::type;
-};
-
-// UnconstifyHelper - general case
-template<typename T>
-struct UnconstifyHelper<T, false> {
-private:
-    template<typename U, bool has_wrapped>
-    struct UnconstifyImpl {
-        using type = typename std::remove_const<U>::type;
-    };
-
-    template<typename U>
-    struct UnconstifyImpl<U, true> {
-        using type = typename TemplateExtractor<U>::template type<
-            typename UnconstifyHelper<typename U::wrapped_type>::type
-        >::result;
-    };
-
-public:
-    using type = typename UnconstifyImpl<T, HasWrappedType<T>::value>::type;
-};
-
-// UnconstifyHelper - pointer specializations
-template<typename T>
-struct UnconstifyHelper<T*, false> {
-    using type = typename std::remove_const<T>::type*;
+struct ConstifyHelper<T, typename std::enable_if<  // fundamental/enum [1]
+    std::is_fundamental<T>::value or std::is_enum<T>::value
+>::type> {
+    using consted = T;  // don't add const for these [1]
+    using unconsted = needful_remove_const(T);
 };
 
 template<typename T>
-struct UnconstifyHelper<T* const, false> {
-    using type = typename std::remove_const<T>::type* const;
-};
-
-// Convenience aliases (C++11 compatible)
-template<typename T>
-struct Constify {
-    using type = typename ConstifyHelper<typename std::remove_reference<T>::type>::type;
+struct ConstifyHelper<T*, void> {  // specialization for pointed-to things
+    using consted = const T*;
+    using unconsted = needful_remove_const(T)*;
 };
 
 template<typename T>
-struct Unconstify {
-    using type = typename UnconstifyHelper<typename std::remove_reference<T>::type>::type;
+struct ConstifyHelper<T* const, void> {  // when pointer *itself* is const
+    using consted = const T* const;
+    using unconsted = needful_remove_const(T)* const;
 };
 
-
-// Macros for convenience
 #define needful_constify_type(T) \
-    typename needful::Constify<T>::type
+    typename needful::ConstifyHelper<needful_remove_reference(T)>::consted
 
 #define needful_unconstify_type(T) \
-    typename needful::Unconstify<T>::type
+    typename needful::ConstifyHelper<needful_remove_reference(T)>::unconsted
+
+template<typename T>
+struct ConstifyHelper<T, typename std::enable_if<
+    HasWrappedType<T>::value  // wrapped type specialization
+    and not std::is_fundamental<T>::value
+    and not std::is_enum<T>::value
+    and not std::is_pointer<T>::value
+>::type> {
+    using consted = needful_rewrap_type(
+        T,  // replacing the ::wrapped_type in this T
+        needful_constify_type(typename T::wrapped_type)
+    );
+    using unconsted = needful_rewrap_type(
+        T,  // replacing the ::wrapped_type in this T
+        needful_unconstify_type(typename T::wrapped_type)
+    );
+};
 
 
 //=//// IsConstIrrelevantForType: DODGE GCC WARNINGS //////////////////////=//

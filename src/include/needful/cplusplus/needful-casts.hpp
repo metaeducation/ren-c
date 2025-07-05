@@ -64,14 +64,6 @@
 //       #include "needful/cast-hooks-on.h"
 //
 
-//=//// NEEDFUL_ASSIGNS_UNUSED_FIELDS /////////////////////////////////////=//
-//
-// See Corrupt_Unused_Field()
-//
-#if !defined(NEEDFUL_ASSIGNS_UNUSED_FIELDS)
-    #define NEEDFUL_ASSIGNS_UNUSED_FIELDS  1
-#endif
-
 
 //=//// x_cast(): XTREME CAST (AKA WHAT PARENTHESES WOULD DO) /////////////=//
 //
@@ -329,18 +321,18 @@ struct HookableCastHelper {
     #endif
 
     static To convert(const From& v) {
-    return ConstAwareCastDispatcher<From, To>::convert(v);
+        return ConstAwareCastDispatcher<From, To>::convert(v);
     }
 };
 
 template<typename From, typename To>  // const removal specialization
 struct HookableCastHelper<From, To, true> {
     static To convert(From /*v*/) {
-    static_assert(
-        false,
-        "cast removing const: use m_cast() if you mean it"
-    );
-    return nullptr;
+        static_assert(
+            false,
+            "cast removing const: use m_cast() if you mean it"
+        );
+        return nullptr;
     }
 };
 

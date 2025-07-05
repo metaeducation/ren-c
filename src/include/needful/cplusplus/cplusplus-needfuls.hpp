@@ -150,6 +150,8 @@ namespace needful {  //=//// BEGIN `needful::` NAMESPACE //////////////////=//
 
     #include "needful-utilities.hpp"
 
+    #include "needful-wrapping.hpp"
+
     #include "needful-const.hpp"
 
     #include "needful-casts.hpp"
