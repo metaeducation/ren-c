@@ -3063,7 +3063,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
 
     Bounce b = maybe Irreducible_Bounce(
         L,
-        cast(Bounce, Apply_Cfunc(*cfunc, context))
+        x_cast(Bounce, Apply_Cfunc(*cfunc, context))
     );
     if (not b)  // not irreducible, so final value in OUT cell
         goto typecheck_out;

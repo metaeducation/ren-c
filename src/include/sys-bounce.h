@@ -89,13 +89,13 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 // who thought the types had been checked.
 //
 #define C_REDO_UNCHECKED  'r'
-#define BOUNCE_REDO_UNCHECKED   cast(Bounce, &g_bounce_redo_unchecked)
+#define BOUNCE_REDO_UNCHECKED   x_cast(Bounce, &g_bounce_redo_unchecked)
 
 #define C_REDO_CHECKED  'R'
-#define BOUNCE_REDO_CHECKED  cast(Bounce, &g_bounce_redo_checked)
+#define BOUNCE_REDO_CHECKED  x_cast(Bounce, &g_bounce_redo_checked)
 
 #define C_DOWNSHIFTED  'd'
-#define BOUNCE_DOWNSHIFTED  cast(Bounce, &g_bounce_downshifted)
+#define BOUNCE_DOWNSHIFTED  x_cast(Bounce, &g_bounce_downshifted)
 
 
 // Continuations are used to mitigate the problems that occur when the C stack
@@ -113,21 +113,21 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 // function will be called back again when the continuation finishes.
 //
 #define C_CONTINUATION  'C'
-#define BOUNCE_CONTINUE  cast(Bounce, &g_bounce_continuation)
+#define BOUNCE_CONTINUE  x_cast(Bounce, &g_bounce_continuation)
 
 
 // A dispatcher may want to run a "continuation" but not be called back.
 // This is referred to as delegation.
 //
 #define C_DELEGATION  'D'
-#define BOUNCE_DELEGATE  cast(Bounce, &g_bounce_delegation)
+#define BOUNCE_DELEGATE  x_cast(Bounce, &g_bounce_delegation)
 
 
 // For starters, a simple signal for suspending stacks in order to be able to
 // try not using Asyncify (or at least not relying on it so heavily)
 //
 #define C_SUSPEND  'S'
-#define BOUNCE_SUSPEND  cast(Bounce, &g_bounce_suspend)
+#define BOUNCE_SUSPEND  x_cast(Bounce, &g_bounce_suspend)
 
 
 // Intrinsic typecheckers want to be able to run in the same Level as an
@@ -146,4 +146,4 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 // This signals that the evaluator is in a "thrown state".
 //
 #define C_THROWN  'T'
-#define BOUNCE_THROWN  cast(Bounce, &g_bounce_thrown)
+#define BOUNCE_THROWN  x_cast(Bounce, &g_bounce_thrown)

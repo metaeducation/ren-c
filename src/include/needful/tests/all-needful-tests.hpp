@@ -7,6 +7,10 @@ namespace needful {  //=//// BEGIN `needful::` NAMESPACE //////////////////=//
         #include "test-needful-const.hpp"
     }
 
+    namespace test_casts {
+        #include "test-needful-casts.hpp"
+    }
+
   #if NEEDFUL_OPTION_USES_WRAPPER
     namespace test_option {
         #include "test-needful-option.hpp"

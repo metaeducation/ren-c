@@ -37,54 +37,71 @@
 //    so that they don't get consted and trigger warnings.
 //
 
-template<typename T, typename Enable = void>
+template<typename T, bool TopLevel = true, typename Enable = void>
 struct ConstifyHelper {
+    using consted = T;  // don't add const for top level [1]
+    using unconsted = needful_remove_const(T);
+};
+
+template<typename T>
+struct ConstifyHelper<T, false, typename std::enable_if<  // TopLevel = true
+    not HasWrappedType<T>::value
+    and not std::is_pointer<T>::value
+>::type> {
     using consted = const T;
     using unconsted = needful_remove_const(T);
 };
 
+/*
+// Wrapped: allow constification of any type
 template<typename T>
-struct ConstifyHelper<T, typename std::enable_if<  // fundamental/enum [1]
-    std::is_fundamental<T>::value or std::is_enum<T>::value
->::type> {
-    using consted = T;  // don't add const for these [1]
+struct ConstifyHelper<T, false, void> {
+    using consted = const T;
     using unconsted = needful_remove_const(T);
-};
+};*/
 
-template<typename T>
-struct ConstifyHelper<T*, void> {  // specialization for pointed-to things
-    using consted = const T*;
+template<typename T, bool TopLevel>
+struct ConstifyHelper<T*, TopLevel, void> {  // pointed-to things, any level
+    using consted = const T*;  // even top level adds const
     using unconsted = needful_remove_const(T)*;
 };
 
-template<typename T>
-struct ConstifyHelper<T* const, void> {  // when pointer *itself* is const
+template<typename T, bool TopLevel>
+struct ConstifyHelper<T* const, TopLevel, void> {  // pointer *itself* is const
     using consted = const T* const;
     using unconsted = needful_remove_const(T)* const;
 };
 
+template<typename Ret, typename... Args>
+struct ConstifyHelper<Ret(*)(Args...), true, void> {  // function pointers
+    using consted = Ret(*)(Args...);  // function pointers can't be const
+    using unconsted = Ret(*)(Args...);
+};
+
+// For recursion inside wrappers, use TopLevel = false
+template<typename T, bool TopLevel>
+struct ConstifyHelper<T, TopLevel, typename std::enable_if<
+    HasWrappedType<T>::value
+>::type> {
+  private:
+    using wrapped_consted = typename ConstifyHelper<
+        typename T::wrapped_type, false
+    >::consted;
+
+    using wrapped_unconsted = typename ConstifyHelper<
+        typename T::wrapped_type, false
+    >::unconsted;
+
+  public:
+    using consted = needful_rewrap_type(T, wrapped_consted);
+    using unconsted = needful_rewrap_type(T, wrapped_unconsted);
+};
+
 #define needful_constify_type(T) \
-    typename needful::ConstifyHelper<needful_remove_reference(T)>::consted
+    typename needful::ConstifyHelper<needful_remove_reference(T), true>::consted
 
 #define needful_unconstify_type(T) \
-    typename needful::ConstifyHelper<needful_remove_reference(T)>::unconsted
-
-template<typename T>
-struct ConstifyHelper<T, typename std::enable_if<
-    HasWrappedType<T>::value  // wrapped type specialization
-    and not std::is_fundamental<T>::value
-    and not std::is_enum<T>::value
-    and not std::is_pointer<T>::value
->::type> {
-    using consted = needful_rewrap_type(
-        T,  // replacing the ::wrapped_type in this T
-        needful_constify_type(typename T::wrapped_type)
-    );
-    using unconsted = needful_rewrap_type(
-        T,  // replacing the ::wrapped_type in this T
-        needful_unconstify_type(typename T::wrapped_type)
-    );
-};
+    typename needful::ConstifyHelper<needful_remove_reference(T), true>::unconsted
 
 
 //=//// IsConstIrrelevantForType: DODGE GCC WARNINGS //////////////////////=//
@@ -101,8 +118,8 @@ struct ConstifyHelper<T, typename std::enable_if<
 template<typename T>
 struct IsConstIrrelevant : std::integral_constant<
     bool,
-    std::is_fundamental<T>::value  // note: nullptr_t is fundamental
-        or std::is_enum<T>::value
+    not std::is_pointer<T>::value
+    and not HasWrappedType<T>::value
 > {};
 
 #define needful_is_const_irrelevant(T) \

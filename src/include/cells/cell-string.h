@@ -56,7 +56,7 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
     assert(Any_Utf8_Type(Heart_Of(c)));
 
     if (not Cell_Payload_1_Needs_Mark(c))  // must store bytes in cell direct
-        return cast(Utf8(const*), c->payload.at_least_8);
+        return u_cast(Utf8(const*), c->payload.at_least_8);
 
     const Strand* str = c_cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(c));
     return Strand_Head(str);  // symbols are strings

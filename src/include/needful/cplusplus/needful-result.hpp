@@ -194,7 +194,7 @@
 struct PermissiveZeroStruct {
     template<typename T>
     operator T() const {
-        return u_cast(T, 0);
+        return x_cast(T, 0);
     }
 };
 
@@ -296,6 +296,8 @@ struct NEEDFUL_NODISCARD ExtractedHotPotato {
 
 template<typename T>
 struct NEEDFUL_NODISCARD ResultWrapper {
+    using wrapped_type = T;
+
     T p;  // not always pointer, but use common convention with Sink/Need
 
     ResultWrapper() = delete;

@@ -95,7 +95,7 @@ typedef Byte WildTwo[2];
 #undef rebDelegate
 
 #define rebDelegate(...) \
-    cast(Bounce, rebDelegate_helper( \
+    x_cast(Bounce, rebDelegate_helper( \
         LIBREBOL_BINDING_NAME(),  /* captured from callsite! */ \
         __VA_ARGS__, rebEND \
     ))

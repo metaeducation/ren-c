@@ -48,7 +48,7 @@
 
 MUTABLE_IF_C(PairList*, INLINE) MAP_PAIRLIST(CONST_IF_C(Map*) map) {
     CONSTABLE(Map*) m = m_cast(Map*, map);
-    return cast(PairList*, m);
+    return c_cast(PairList*, m);
 }
 
 INLINE HashList* Link_Hashlist(const Array* pairlist) {

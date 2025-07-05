@@ -398,7 +398,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         }
         else {
             len = 0;
-            Utf8(const*) at = cast(Utf8(const*), v->payload.at_least_8);
+            Utf8(const*) at = u_cast(Utf8(const*), v->payload.at_least_8);
             for (; len < *(unwrap limit); ++len)
                 at = Skip_Codepoint(at);
             size = at - v->payload.at_least_8;
@@ -408,7 +408,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
             *(unwrap length_out) = len;
         if (size_out)
             *(unwrap size_out) = size;
-        return cast(Utf8(const*), v->payload.at_least_8);
+        return u_cast(Utf8(const*), v->payload.at_least_8);
     }
 
     Utf8(const*) utf8 = String_At(v);

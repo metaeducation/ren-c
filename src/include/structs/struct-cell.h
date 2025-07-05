@@ -716,10 +716,10 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
     };
 
 #define Mem_Copy(dst,src,size) \
-    memcpy(cast(char*, (dst)), (src), (size))  // [4]
+    memcpy(x_cast(char*, (dst)), (src), (size))  // [4]
 
 #define Mem_Fill(dst,byte,size) \
-    memset(cast(char*, (dst)), (byte), (size))  // [4]
+    memset(x_cast(char*, (dst)), (byte), (size))  // [4]
 
 
 //=//// CELL SUBCLASSES FOR QUARANTINING STABLE/UNSTABLE ANTIFORMS ////////=//

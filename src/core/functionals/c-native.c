@@ -629,7 +629,10 @@ void Startup_Natives(const Element* boot_natives)
     // of evaluation when all we have are (foo: native [...]) statements.
 
     assert(g_native_cfunc_pos == nullptr);
-    g_native_cfunc_pos = cast(CFunction* const*, g_core_native_dispatchers);
+    g_native_cfunc_pos = u_cast(
+        CFunction* const*,
+        &g_core_native_dispatchers[0]
+    );
     assert(g_currently_loading_module == nullptr);
     g_currently_loading_module = g_lib_context;
 
@@ -680,7 +683,7 @@ void Startup_Natives(const Element* boot_natives)
     assert(
         g_native_cfunc_pos
         == (
-            cast(CFunction* const*, g_core_native_dispatchers)
+            u_cast(CFunction* const*, &g_core_native_dispatchers[0])
             + g_num_core_natives
         )
     );

@@ -79,6 +79,36 @@
 #define x_cast  Xtreme_Cast
 
 
+//=//// m_cast(): MUTABILITY CAST /////////////////////////////////////////=//
+//
+// The mutability cast works on regular types, but also on wrapped types...
+// so long as the wrapping struct has a static field called `::wrapped_type`.
+// (See %needful-wrapping.hpp for more information on this convention.)
+//
+// m_cast() is stylized so that it does not need to invoke any functions,
+// because even constexpr functions have cost in debug builds.  If the type
+// you are casting is not a wrapper, it should be able to do its work
+// entirely at compile-time...even in debug builds!  This is accomplished
+// by static casting the wrapper type to its extracted type, then running a
+// const_cast on that type, then static casting again to the target type.
+// This can be made to work for both pointers and wrapped pointers.
+//
+// 1. Attempts to make m_cast() arity-1 and auto-detect the target type were
+//    tried, with the C version just casting to void*.  But this winds up
+//    requiring C++-specific code to leak into %needful.h - because the C
+//    version of m_cast() that creates void* would no longer be legal in C++.
+//    This goes against the design principle of Needful to have a baseline of
+//    building with a single header file of C-only definitions.
+//
+
+#undef Needful_Mutable_Cast
+#define Needful_Mutable_Cast(T,expr) /* Note: not arity-1 on purpose! */ \
+    (static_cast<T>( \
+        const_cast< \
+            needful_unconstify_type(needful_unwrapped_type(T)) \
+        >(static_cast<needful_constify_type(needful_unwrapped_type(T))>(expr))))
+
+
 //=//// h_cast(): HOOKABLE CAST, IDEALLY cast() = h_cast() [A] ////////////=//
 //
 // This is the form of hookable cast you should generally reach for.  Default
@@ -208,49 +238,6 @@ struct is_function_pointer : std::false_type {};
 template<typename Ret, typename... Args>
 struct is_function_pointer<Ret (*)(Args...)> : std::true_type {};
 
-template<typename From, typename To>
-struct is_const_removing_pointer_cast {  // catching const incorrectness
-    static constexpr bool value =
-        std::is_pointer<From>::value and std::is_pointer<To>::value
-        and (
-            std::is_const<typename std::remove_pointer<From>::type>::value
-        ) and not (
-            std::is_const<typename std::remove_pointer<To>::type>::value
-        );
-};
-
-template<typename T>
-struct make_const_ptr {
-    typedef T type;
-};
-
-template<typename T>
-struct make_const_ptr<T*> {
-    typedef const T* type;
-};
-
-#define DEFINE_MAKE_CONST_PTR_FOR_CONVENTION(...) \
-    template<typename Ret, typename... Args> \
-    struct make_const_ptr<Ret(__VA_ARGS__ *)(Args...)> { \
-        using type = Ret(__VA_ARGS__ *)(Args...); \
-    }
-
-DEFINE_MAKE_CONST_PTR_FOR_CONVENTION();
-/* DEFINE_MAKE_CONST_PTR_FOR_CONVENTION(__cdecl); */
-/* DEFINE_MAKE_CONST_PTR_FOR_CONVENTION(__stdcall); */
-/* DEFINE_MAKE_CONST_PTR_FOR_CONVENTION(__fastcall); */
-#undef DEFINE_MAKE_CONST_PTR_FOR_CONVENTION
-
-// Helper to check if a cast would remove constness
-template<typename From, typename To>
-struct removes_constness {
-    static const bool value = false;
-};
-
-template<typename T1, typename T2>
-struct removes_constness<const T1*, T2*> {
-    static const bool value = true;
-};
 
 template<typename V, typename T>
 struct CastHook {  // object template for partial specialization [2]
@@ -259,50 +246,77 @@ struct CastHook {  // object template for partial specialization [2]
     }
 };
 
-template<typename From, typename To>
-struct ConstAwareCastDispatcher {  // implements const canonization [1]
-    // Case 1: Both are pointers - dispatch to const version
-    template<typename F = From, typename T = To>
-    static typename std::enable_if<
-        std::is_pointer<F>::value and std::is_pointer<T>::value,
-        T
-    >::type convert(const F& from) {
-        typedef typename make_const_ptr<F>::type ConstFrom;
-        typedef typename make_const_ptr<T>::type ConstTo;
 
-        ConstTo const_result = CastHook<ConstFrom, ConstTo>::convert(
-            const_cast<ConstFrom>(from)
-        );
+template<typename To, typename From>
+typename std::enable_if<  // For ints/enums: use & as && can't bind const
+    not std::is_array<needful_remove_reference(From)>::value
+        and (
+            std::is_fundamental<To>::value
+            or std::is_enum<To>::value
+        ),
+    To
+>::type
+Hookable_Cast_Helper(const From& from) {
+    using ConstFrom = needful_constify_type(From);
+    using ConstTo = needful_constify_type(To);
 
-        return const_cast<T>(const_result);
-    }
+    return CastHook<ConstFrom, ConstTo>::convert(from);
+}
 
-    // Case 2: Not both pointers - direct cast
-    template<typename F = From, typename T = To>
-    static typename std::enable_if<
-        not (std::is_pointer<F>::value and std::is_pointer<T>::value),
-        T
-    >::type convert(const F& from) {
-        return CastHook<F, T>::convert(from);
-    }
-};
-
-template<  // Main cast with constness validation
-    typename From,
+template<
     typename To,
-    bool RemovesConst = is_const_removing_pointer_cast<From, To>::value
+    typename FromRef,
+    typename ResultType = needful_merge_const(  // lenient cast
+        needful_remove_reference(FromRef), To
+    )
 >
-struct HookableCastHelper {
+typename std::enable_if<  // For arrays: decay to pointer
+    std::is_array<needful_remove_reference(FromRef)>::value
+        and not std::is_fundamental<To>::value
+        and not std::is_enum<To>::value,
+    ResultType
+>::type
+Hookable_Cast_Helper(FromRef const && from) {
+    using From = typename std::decay<From>::type;
+    using ConstFrom = needful_constify_type(From);
+    using ConstTo = needful_constify_type(To);
+
+    return Needful_Mutable_Cast(
+        ResultType,  // passthru const on const mismatch (lenient)
+        (CastHook<ConstFrom, ConstTo>::convert(std::forward<FromRef>(from)))
+    );
+}
+
+template<
+    typename To,
+    typename FromRef,
+    typename ResultType = needful_merge_const(  // lenient cast
+        needful_remove_reference(FromRef), To
+    )
+>
+typename std::enable_if<  // For non-arrays: forward as-is
+    not std::is_array<needful_remove_reference(FromRef)>::value
+        and not std::is_fundamental<To>::value
+        and not std::is_enum<To>::value,
+    ResultType
+>::type
+Hookable_Cast_Helper(FromRef&& from)
+{
+    using From = needful_remove_reference(FromRef);
+    using ConstFrom = needful_constify_type(From);
+    using ConstTo = needful_constify_type(To);
+
     static_assert(
         not is_function_pointer<From>::value
         and not is_function_pointer<To>::value,
         "Use f_cast() for function pointer casts"
     );
 
-    static_assert(
+/*    static_assert(  // make cast_lenient and cast_rigid
         not is_const_removing_pointer_cast<From, To>::value,
         "cast removing const: use m_cast() if you mean it"
-    );
+    ); */
+
 
     #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
     static_assert(
@@ -320,67 +334,15 @@ struct HookableCastHelper {
     );  // read [B] at top of file for more information
     #endif
 
-    static To convert(const From& v) {
-        return ConstAwareCastDispatcher<From, To>::convert(v);
-    }
-};
-
-template<typename From, typename To>  // const removal specialization
-struct HookableCastHelper<From, To, true> {
-    static To convert(From /*v*/) {
-        static_assert(
-            false,
-            "cast removing const: use m_cast() if you mean it"
-        );
-        return nullptr;
-    }
-};
-
-
-template<typename To, typename From>
-typename std::enable_if<  // For ints/enums: use & as && can't bind const
-    not std::is_array<needful_remove_reference(From)>::value
-        and (
-            std::is_fundamental<To>::value
-            or std::is_enum<To>::value
-        ),
-    To
->::type
-Hookable_Cast_Decay_Prelude(const From& v) {
-    return HookableCastHelper<
-        typename std::decay<From>::type, To
-    >::convert(v);
-}
-
-template<typename To, typename From>
-typename std::enable_if<  // For arrays: decay to pointer
-    std::is_array<needful_remove_reference(From)>::value
-        and not std::is_fundamental<To>::value
-        and not std::is_enum<To>::value,
-    To
->::type
-Hookable_Cast_Decay_Prelude(From&& v) {
-    return HookableCastHelper<
-        typename std::decay<From>::type, To
-    >::convert(std::forward<From>(v));
-}
-
-template<typename To, typename From>
-typename std::enable_if<  // For non-arrays: forward as-is
-    not std::is_array<needful_remove_reference(From)>::value
-        and not std::is_fundamental<To>::value
-        and not std::is_enum<To>::value,
-    To
->::type
-Hookable_Cast_Decay_Prelude(From&& v) {
-    return HookableCastHelper<From, To>::convert(
-        std::forward<From>(v)  // preserves reference-ness
+    return Needful_Mutable_Cast(
+        ResultType,  // passthru const on const mismatch (lenient)
+        (CastHook<ConstFrom, ConstTo>::convert(std::forward<FromRef>(from)))
     );
 }
 
 #undef Needful_Hookable_Cast
-#define Needful_Hookable_Cast(T, v) /* outer parens [C] */ \
-    (needful::Hookable_Cast_Decay_Prelude<T>(v))  // func: universal refs [3]
+#define Needful_Hookable_Cast(T,expr) /* outer parens [C] */ \
+    (needful::Hookable_Cast_Helper<T>(expr))  // func: universal refs [3]
 
 
 //=//// c_cast(): CONST-PRESERVING CAST ///////////////////////////////////=//
@@ -461,7 +423,7 @@ struct UpcastWrapper {
         >::type
     >
     operator To() const noexcept
-        { return HookableCastHelper<From, To>::convert(p); }
+        { return Needful_Hookable_Cast(To, p); }
 };
 
 #undef upcast
@@ -469,37 +431,6 @@ struct UpcastWrapper {
     (needful::UpcastWrapper< \
         needful_remove_reference(decltype(expr)) \
     >(expr))
-
-
-//=//// m_cast(): MUTABILITY CAST /////////////////////////////////////////=//
-//
-// The mutability cast works on regular types, but also on wrapped types...
-// so long as the wrapping struct has a static field called `::wrapped_type`.
-//
-// It is stylized in such a way that it does not need to invoke any functions,
-// because even constexpr functions have cost in debug builds.  If the type
-// you are casting is not a wrapper, it should be able to do its work
-// entirely at compile-time...even in debug builds!  This is accomplished
-// by static casting the wrapper type to its extrcted type, then running a
-// const_cast on that type, then static casting again to the target type.
-// This can be made to work for both pointers and wrapped pointers.
-//
-// NOTE: NOT MADE ARITY-1 ON PURPOSE!
-//
-// Attempts to make m_cast() arity-1 and auto-detect the target type were
-// tried, with the C version just casting to void*.  But this winds up
-// requiring C++-specific code to leak into %needful.h - because the C
-// version of m_cast() that creates void* would no longer be legal in C++.
-// This goes against the design principle of Needful to have a baseline of
-// building with a single header file of C-only definitions.
-//
-
-#undef Needful_Mutable_Cast
-#define Needful_Mutable_Cast(T,expr) \
-    static_cast<T>( \
-        const_cast< \
-            needful_unconstify_type(needful_unwrapped_type(T)) \
-        >(static_cast<needful_constify_type(needful_unwrapped_type(T))>(expr)))
 
 
 //=//// NON-POINTER TO POINTER CAST ////////////////////////////////////////=//
@@ -556,8 +487,12 @@ constexpr T i_cast_helper(V v) {
 
 template<typename From, typename To>
 struct FunctionPointerCastHelper {
+    using FromDecayed = typename std::decay<From>::type;
+    using ToDecayed = typename std::decay<To>::type;
+
     static_assert(
-        is_function_pointer<From>::value && is_function_pointer<To>::value,
+        is_function_pointer<FromDecayed>::value
+        and is_function_pointer<ToDecayed>::value,
         "f_cast() requires both source and target to be function pointers."
     );
     static To convert(From from) {
