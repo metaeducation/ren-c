@@ -71,7 +71,7 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
     ){
         possibly(Link_Bookmarks(s));  // mutations maintain for long strings
         cp = u_cast(Utf8(const*), u_cast(Byte*, Strand_Head(s)) + at);
-        return w_cast(Utf8(*), cp);
+        return m_cast(Utf8(*), cp);
     }
 
     REBLEN index;
@@ -192,7 +192,7 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
         cp = Skip_Codepoint(cp);
 
     if (not book)
-        return w_cast(Utf8(*), cp);
+        return m_cast(Utf8(*), cp);
 
     goto update_bookmark;
 
@@ -214,7 +214,7 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
       #if DEBUG_TRACE_BOOKMARKS
         BOOKMARK_TRACE("not cached\n");
       #endif
-        return w_cast(Utf8(*), cp);
+        return m_cast(Utf8(*), cp);
     }
 
 } update_bookmark: { /////////////////////////////////////////////////////////
@@ -233,7 +233,7 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
     assert(check_cp == cp);
   #endif
 
-    return w_cast(Utf8(*), cp);
+    return m_cast(Utf8(*), cp);
 }}
 
 

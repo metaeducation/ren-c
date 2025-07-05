@@ -4,7 +4,7 @@
 
 #if CPLUSPLUS_11
     #undef h_cast
-    #define h_cast  Hookable_Cast
+    #define h_cast  Needful_Hookable_Cast
 
     #undef c_cast
     #define c_cast  Hookable_Const_Preserving_Cast

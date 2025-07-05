@@ -309,7 +309,7 @@ struct HookableCastHelper {
 
     static_assert(
         not is_const_removing_pointer_cast<From, To>::value,
-        "cast removing const: use w_cast() or m_cast() if you mean it"
+        "cast removing const: use m_cast() if you mean it"
     );
 
     #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
@@ -338,7 +338,7 @@ struct HookableCastHelper<From, To, true> {
     static To convert(From /*v*/) {
     static_assert(
         false,
-        "cast removing const: use w_cast() or m_cast() if you mean it"
+        "cast removing const: use m_cast() if you mean it"
     );
     return nullptr;
     }
@@ -386,11 +386,9 @@ Hookable_Cast_Decay_Prelude(From&& v) {
     );
 }
 
-#define Hookable_Cast(T, v) /* outer parens [C] */ \
+#undef Needful_Hookable_Cast
+#define Needful_Hookable_Cast(T, v) /* outer parens [C] */ \
     (needful::Hookable_Cast_Decay_Prelude<T>(v))  // func: universal refs [3]
-
-#undef h_cast
-#define h_cast  Hookable_Cast  // can override [F]
 
 
 //=//// c_cast(): CONST-PRESERVING CAST ///////////////////////////////////=//
@@ -408,17 +406,15 @@ Hookable_Cast_Decay_Prelude(From&& v) {
 //
 
 #define Hookable_Const_Preserving_Cast(T,expr) /* outer parens [C] */ \
-    (h_cast(needful_mirror_const(decltype(expr), T), (expr)))
+    (Needful_Hookable_Cast(needful_mirror_const(decltype(expr), T), (expr)))
 
-
-#define Unhookable_Const_Preserving_Cast(T,expr) /* outer parens [C] */ \
-    (x_cast(needful_mirror_const(decltype(expr), T), (expr)))
 
 #undef c_cast
 #define c_cast  Hookable_Const_Preserving_Cast  // can override [F]
 
-#undef u_cast
-#define u_cast  Unhookable_Const_Preserving_Cast
+#undef Needful_Unhookable_Cast
+#define Needful_Unhookable_Cast(T,expr) /* outer parens [C] */ \
+    (x_cast(needful_mirror_const(decltype(expr), T), (expr)))
 
 
 //=//// downcast(): CAST THAT WOULD BE SAFE FOR PLAIN ASSIGNMENT //////////=//
@@ -483,124 +479,35 @@ struct UpcastWrapper {
     >(expr))
 
 
-//=//// m_cast(): MUTABILITY CAST FOR COMPATIBLE POINTER TYPES ////////////=//
+//=//// m_cast(): MUTABILITY CAST /////////////////////////////////////////=//
 //
-// This is a cast for producing a mutable pointer from a compatible pointer
-// type (that may or may not already be mutable).  Because it works with
-// compatible pointer types, it's more permissive than C++'s const_cast<>
-// which modifies the constness but won't do any other changes.
+// The mutability cast works on regular types, but also on wrapped types...
+// so long as the wrapping struct has a static field called `::wrapped_type`.
 //
-// However, it doesn't let you do absolutely anything.  This would be legal:
+// It is stylized in such a way that it does not need to invoke any functions,
+// because even constexpr functions have cost in debug builds.  If the type
+// you are casting is not a wrapper, it should be able to do its work
+// entirely at compile-time...even in debug builds!  This is accomplished
+// by static casting the wrapper type to its extrcted type, then running a
+// const_cast on that type, then static casting again to the target type.
+// This can be made to work for both pointers and wrapped pointers.
 //
-//     const Derived* derived = ...;
-//     Base* base = m_cast(Base*, derived);
+// NOTE: NOT MADE ARITY-1 ON PURPOSE!
 //
-// But this would not be legal:
-//
-//     const Base* base = ...;
-//     Derived* derived = m_cast(Derived*, base);  /* !!! Error !!! */
-//
-// 1. There's no validation hook run on an m_cast(), because other than the
-//    mutability, it's not casting anything that wouldn't just be allowed
-//    by ordinary pointer assignment.  Hence no need for u_m_cast().
+// Attempts to make m_cast() arity-1 and auto-detect the target type were
+// tried, with the C version just casting to void*.  But this winds up
+// requiring C++-specific code to leak into %needful.h - because the C
+// version of m_cast() that creates void* would no longer be legal in C++.
+// This goes against the design principle of Needful to have a baseline of
+// building with a single header file of C-only definitions.
 //
 
-template<typename To, typename From>
-struct MutableCastHelper {
-    static_assert(
-        std::is_pointer<To>::value, "m_cast() target must be pointer"
-    );
-
-    typedef typename std::remove_pointer<To>::type T;
-
-    static_assert(
-        not std::is_const<T>::value, "m_cast() target must be mutable"
-    );
-
-    typedef typename std::add_const<T>::type TC;
-    typedef typename std::add_pointer<TC>::type ConstTo;
-
-    static_assert(
-        std::is_convertible<From, ConstTo>::value,
-        "m_cast() source must be convertible to target pointer type"
-    );
-};
-
-#define Mutable_Cast(T,expr) /* outer parens [C] */ \
-    (const_cast<T>( \
-        (typename needful::MutableCastHelper< \
-            T, \
-            needful_remove_reference(decltype(expr)) \
-        >::ConstTo \
-    )(expr)))
-
-#undef m_cast
-#define m_cast  Mutable_Cast
-
-// no u_m_cast() defined, as m_cast() is not validated [1]
-
-
-//=//// w_cast(): WRITABILITY CAST FOR POINTER WRAPPERS ///////////////////=//
-//
-// m_cast() is optimized to not have any cost in debug builds, by not relying
-// on a templated function.  That can work when the type you are converting
-// from is a pointer wrapper cast, because C++ is willing to look for a
-// conversion operator to a raw pointer (e.g. `operator T*()`).  But when the
-// pointer wrapper is the type you're converting *to*, the type traits like
-// `std::is_pointer<To>` and `std::reomve_pointer<To>` don't recognize the
-// wrapper as a pointer type.
-//
-// So w_cast() is a variation to use when circumstances require it.  You can
-// specialize the WrapperCastHelper for your pointer wrapper types.
-//
-// !!! At the moment this is necessary also for casting pointers-to-pointers,
-// which is not handled by m_cast().  Review.
-//
-// NOTE: Attempts to make Writable_Wrapper_Cast() arity-1 and auto-detect
-// the type to cast to were tried, with the C version just casting to void*.
-// But this winds up requiring C++-specific code to leak into %needful.h
-// because the C version of w_cast() that creates void* would no longer be
-// legal in C++.
-
-template<typename T, typename V, bool = HasWrappedType<T>::value>
-struct WritableWrapperCastHelperImpl;
-
-// Case 1: T is a wrapper type with wrapped_type
-template<typename T, typename V>
-struct WritableWrapperCastHelperImpl<T, V, true> {
-    using MutableWrapped = typename UnconstifyHelper<typename T::wrapped_type>::type;
-
-    using MutableWrapper = typename TemplateExtractor<T>::template type<MutableWrapped>::result;
-
-    static MutableWrapper convert(V v) {
-        return MutableWrapper {
-            const_cast<MutableWrapped>(x_cast(typename V::wrapped_type, v))
-        };
-    }
-};
-
-// Case 2: T is not a wrapper type
-template<typename T, typename V>
-struct WritableWrapperCastHelperImpl<T, V, false> {
-    static T convert(V v) {
-        return const_cast<T>(v);
-    }
-};
-
-template<typename T, typename V>
-constexpr T WritableWrapperCastHelper(V v) {
-    static_assert(!std::is_const<T>::value,
-        "invalid w_cast() - requested a const type for output result");
-    static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-        "invalid w_cast() - input and output have mismatched volatility");
-    return WritableWrapperCastHelperImpl<T, V>::convert(v);
-}
-
-#define Writable_Wrapper_Cast(T,expr) /* outer parens [C] */ \
-    (needful::WritableWrapperCastHelper<T>(expr))
-
-#undef w_cast
-#define w_cast  Writable_Wrapper_Cast
+#undef Needful_Mutable_Cast
+#define Needful_Mutable_Cast(T,expr) \
+    static_cast<T>( \
+        const_cast< \
+            needful_unconstify_type(needful_unwrapped_type(T)) \
+        >(static_cast<needful_constify_type(needful_unwrapped_type(T))>(expr)))
 
 
 //=//// NON-POINTER TO POINTER CAST ////////////////////////////////////////=//

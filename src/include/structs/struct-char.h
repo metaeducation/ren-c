@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //

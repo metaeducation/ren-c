@@ -145,7 +145,7 @@ MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Skip(
         }
     }
     Utf8_Next(codepoint_out, utf8);
-    return w_cast(Utf8(*), utf8);  // return type is const if input is const
+    return m_cast(Utf8(*), utf8);  // return type is const if input is const
 }
 
 INLINE bool Codepoint_At_Is_NUL_0(Utf8(const*) utf8) {

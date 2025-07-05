@@ -23,7 +23,7 @@
 // your project to get it to compile with Needful.
 //
 // The C++ definitions are optionally included at the end of the file.  They
-// will #undef the simple definitions, #define them as more powerful ones.
+// will #undef the simple definitions, #define them as more complex ones.
 // This is what gives the powerful compile-time checks.  You can enlist in
 // the Needful project separately in your continuous integration or whatever
 // build system you have, and the extra files will only be included when you
@@ -31,9 +31,12 @@
 //
 //=//// SERIOUSLY, FOLKS... ///////////////////////////////////////////////=//
 //
-// *It's just one file*, with insanely powerful validation for your plain C
-// codebase to get for cheap-as-free, with no extra tools needed but the
-// compiler you already have.  What have you got to lose?  :-)
+// *It only requires one file to build*, and helps document your code even
+// if you don't have the additional C++ files on hand.  But if you -do- build
+// with the C++ redefinitions, you get insanely powerful validation...with no
+// extra tools needed but the compiler you already have.
+//
+// What have you got to lose?  :-)
 //
 
 
@@ -61,9 +64,9 @@
 //     char* s3 = unwrap xxx;           // **runtime error
 //     char* s4 = maybe xxx;            // gets nullptr out
 //
-// Option() leverages the natural boolean coercibility of the contained type.
-// Hence you can use it with things like pointers, integers or enums where 0
-// can be coerced to a "non-valued" state.
+// It leverages the natural boolean coercibility of the contained type.  So
+// you can use it with things like pointers, integers or enums...anywhere the
+// C build can treat 0 as a "non-valued" state.
 //
 // While a no-op in C, in C++ builds a wrapper class can give compile-time
 // enforcement that you don't pass an Option() to a function that expects the
@@ -73,7 +76,7 @@
 
 #define NeedfulOption(T)  T
 
-#define needful_none  0  // polymorphic for all legal T for Option(T)
+#define needful_none  0  // C++ redefinition limits compatibility to Option(T)
 
 #define needful_unwrap
 #define needful_maybe
@@ -430,8 +433,7 @@
 //                                               // ...!!! or va_lists !!! [2]
 //
 // POINTER CONSTNESS
-//    * Adding mutability:         w_cast()    // const T* => T*
-//    * Type AND mutability:       m_cast()    // const T1* => T2*
+//    * Adding mutability:         m_cast()    // const T* => T*
 //    * Preserving constness:      c_cast()    // T1* => T2* ...or...
 //                                               // const T1* => const T2*
 //    * Unhookable c_cast():     u_cast()    // c_cast() w/no h_cast() hooks
@@ -468,12 +470,18 @@
 //
 // 3. <write note>
 
-#define u_cast(T,expr)    ((T)(expr))
-#define h_cast(T,expr)    ((T)(expr))
+#define Needful_Xtreme_Cast(T,expr)         ((T)(expr))
+#define Needful_Mutable_Cast(T,expr)        ((T)(expr))
+#define Needful_Hookable_Cast(T,expr)       ((T)(expr))
+#define Needful_Unhookable_Cast(T,expr)     ((T)(expr))
+
+#define x_cast            Needful_Xtreme_Cast
+
+#define u_cast            Needful_Unhookable_Cast
+#define h_cast            Needful_Hookable_Cast
 
 #define c_cast(T,expr)    ((T)(expr))
-#define m_cast(T,expr)    ((T)(expr))
-#define w_cast(T,expr)    ((T)(expr))
+#define m_cast            Needful_Mutable_Cast
 
 #define s_cast(bytes)   u_cast(char*, ensure(const unsigned char*, (bytes)))
 #define b_cast(chars)   u_cast(unsigned char*, ensure(const char*, (chars)))

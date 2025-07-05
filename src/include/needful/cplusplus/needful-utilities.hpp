@@ -183,12 +183,16 @@ using AlwaysVoid = void;  // std::void_t in C++17
 
 template<typename T>
 struct HasWrappedType {
-private:
+  private:
     template<typename U>
-    static auto test(int) -> decltype(typename U::wrapped_type{}, std::true_type{});
+    static auto test(int) -> decltype(
+        typename U::wrapped_type{},
+        std::true_type{}
+    );
     template<typename>
     static std::false_type test(...);
-public:
+
+  public:
     static constexpr bool value = decltype(test<T>(0))::value;
 };
 
@@ -203,3 +207,14 @@ struct TemplateExtractor<Wrapper<T>> {
         using result = Wrapper<U>;
     };
 };
+
+template<typename T, bool = HasWrappedType<T>::value>
+struct UnwrappedType
+  { using type = T; };
+
+template<typename T>
+struct UnwrappedType<T, true>
+  { using type = typename T::wrapped_type; };
+
+#define needful_unwrapped_type(T) \
+    typename needful::UnwrappedType<T>::type

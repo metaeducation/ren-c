@@ -438,7 +438,7 @@ gen-obj: func [
                 ;
                 <gcc:-Wno-long-long>
 
-                ; When constness is being deliberately cast away, `w_cast` is
+                ; When constness is being deliberately cast away, `m_cast` is
                 ; used (for "m"utability).  However, this is just a plain cast
                 ; in C as it has no const_cast.  Since the C language has no
                 ; way to say you're doing a mutability cast on purpose, the
