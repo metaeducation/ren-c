@@ -220,13 +220,9 @@ Bounce Call_Core(Level* level_) {
     else
         flag_wait = false;
 
-    // We synthesize the argc and argv from the "command".  This does dynamic
-    // allocations of argc strings through the API, which need to be freed
-    // before we return.
+    // Windows takes a command as a single string, not argc/argv like POSIX.
     //
     REBWCHAR *cmd;
-    int argc;
-    const REBWCHAR **argv;
 
     if (Is_Text(ARG(COMMAND))) {  // Windows takes command-lines by default
 
@@ -247,14 +243,6 @@ Bounce Call_Core(Level* level_) {
         else {
             cmd = rebSpellWide(ARG(COMMAND));
         }
-
-        argc = 1;
-        argv = rebAllocN(const REBWCHAR*, (argc + 1));
-
-        // !!! Make two copies because it frees cmd and all the argv.  Review.
-        //
-        argv[0] = rebSpellWide(ARG(COMMAND));
-        argv[1] = nullptr;
     }
     else if (Is_Block(ARG(COMMAND))) {
         //
@@ -686,14 +674,6 @@ Bounce Call_Core(Level* level_) {
 
     // Call may not succeed if r != 0, but we still have to run cleanup
     // before reporting any error...
-
-    assert(argc > 0);
-
-    int i;
-    for (i = 0; i != argc; ++i)
-        rebFree(w_cast(REBWCHAR*, argv[i]));
-
-    rebFree(w_cast(REBWCHAR**, argv));
 
     // We can actually recover the rebAlloc'd buffers as BLOB!.  If the
     // target is TEXT!, we DELINE it first to eliminate any CRs.  Note the
