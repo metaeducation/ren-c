@@ -95,8 +95,10 @@
                 assert(!"PUSH() while OnStack(Cell*) pointers are extant"); \
         } } while (0)
 
-    template<typename T>
+    template<typename TP>
     struct OnStackPointer {
+        using wrapped_type = TP;
+        using T = typename std::remove_pointer<TP>::type;
         T* p;
 
         static_assert(std::is_base_of<Cell, T>::value,
@@ -182,8 +184,8 @@
 
   namespace needful {
     template<typename S, typename T>
-    struct CastHook<OnStackPointer<S>,T>
-      { static T convert(OnStackPointer<S> stk) { return (T)(stk.p);} };
+    struct CastHook<OnStack(S*),T>
+      { static T convert(OnStack(S*) stk) { return x_cast(T, stk.p);} };
   }
 #endif
 

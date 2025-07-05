@@ -54,5 +54,5 @@
 #else
     template<typename T>
     struct OnStackPointer;
-    #define OnStack(TP) OnStackPointer<typename std::remove_pointer<TP>::type>
+    #define OnStack(TP)  OnStackPointer<TP>
 #endif

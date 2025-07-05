@@ -28,6 +28,33 @@
 // involved and write specializations.  All they have to do is permit
 // explicit casting to the wrapped type, and Needful can do the rest.
 //
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// A. In order for the metaprogramming assistance to work, the wrapped_type
+//    must be *the* type you are templated against.  e.g. don't do this:
+//
+//        template<typename T>
+//        struct MyWrapper {
+//           using wrapped_type = T*;
+//           T* pointer;
+//           ...
+//        };
+//
+//     When you didn't synchronize `wrapped_type` with the actual type then
+//     the intelligence to extract the type via an explicit cast and then
+//     use `needful_rewrap_type()` to build a new wrapper with a different
+//     inner type won't work.
+//
+//     If you want to do something like this, you can hide the pointer with
+//     a macro.  You'll be using a macro anyway, because Needful is for C
+//     codebases, so you wouldn't have <> in source anyway!
+//
+//         #if defined(__cplusplus)
+//             #define MyWrap(T) MyWrapper<T*>
+//         #else
+//             #define MyWrap(T) T*
+//         #endif
+//
 
 
 //=//// WRAPPER CLASS DETECTION ///////////////////////////////////////////=//
@@ -97,6 +124,11 @@ template<
 >
 struct RewrapHelper<Wrapper<OldInner>, NewInner> {
     using type = Wrapper<NewInner>;
+};
+
+template<typename Wrapper, typename NewWrapped>
+struct RewrapHelper<const Wrapper, NewWrapped> {  // const needs forwarding
+    using type = const typename RewrapHelper<Wrapper, NewWrapped>::type;
 };
 
 #define needful_rewrap_type(WrapperType, NewInnerType) \

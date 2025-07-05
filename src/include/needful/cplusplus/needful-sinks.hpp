@@ -125,10 +125,13 @@ struct IfOutputConvertible2 {  // used by Init() and Sink()
 //
 
 #undef NeedfulSink
-#define NeedfulSink(T)  SinkWrapper<T>
+#define NeedfulSink(T)  SinkWrapper<T*>
 
-template<typename T>
+template<typename TP>
 struct SinkWrapper {
+    using wrapped_type = TP;
+    using T = typename std::remove_pointer<TP>::type;
+
     T* p;
     mutable bool corruption_pending;  // can't corrupt on construct [1]
 
@@ -163,20 +166,20 @@ struct SinkWrapper {
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper(const NeedWrapper<U>& need) {
+    SinkWrapper(const NeedWrapper<U*>& need) {
         this->p = static_cast<T*>(need.p);
         this->corruption_pending = (need.p != nullptr);  // corrupt
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper(const SinkWrapper<U>& other) {
+    SinkWrapper(const SinkWrapper<U*>& other) {
         this->p = reinterpret_cast<MT*>(other.p);
         this->corruption_pending = (other.p != nullptr);  // corrupt
         other.corruption_pending = false;  // we take over corrupting
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper(const InitWrapper<U>& init) {
+    SinkWrapper(const InitWrapper<U*>& init) {
         this->p = reinterpret_cast<T*>(init.p);
         this->corruption_pending = (init.p != nullptr);  // corrupt
     }
@@ -204,14 +207,14 @@ struct SinkWrapper {
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper& operator=(const NeedWrapper<U>& need) {
+    SinkWrapper& operator=(const NeedWrapper<U*>& need) {
         this->p = u_cast(T*, need.p);
         this->corruption_pending = (need.p != nullptr);  // corrupt
         return *this;
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper& operator=(const InitWrapper<U>& init) {
+    SinkWrapper& operator=(const InitWrapper<U*>& init) {
         this->p = u_cast(T*, init.p);
         this->corruption_pending = (init.p != nullptr);  // corrupt
         return *this;
@@ -277,8 +280,8 @@ struct SinkWrapper {
 //
 #if NEEDFUL_USES_CORRUPT_HELPER
     template<typename T>
-    struct CorruptHelper<SinkWrapper<T>&> {  // C pointer corrupt fails
-      static void corrupt(SinkWrapper<T>& wrapper) {
+    struct CorruptHelper<SinkWrapper<T*>&> {  // C pointer corrupt fails
+      static void corrupt(SinkWrapper<T*>& wrapper) {
         Corrupt_If_Needful(wrapper.p);  // pointer itself (not contents)
         wrapper.corruption_pending = false;
       }
@@ -314,15 +317,15 @@ struct SinkWrapper {
 // of falling back on the default CastHook which uses value semantics
 // for simplicity.
 //
-// 1. If you happen to cast a SinkWrapper<T> to a T*, and there are validating
+// 1. If you happen to cast a SinkWrapper<T*> to a T*, and there are validating
 //    hooks in the CastHook<> specialization for that type, then it better
 //    not be corrupt!  So if you think it might be corrupt, then you need to
 //    cast to another Sink() or Init() and not the raw type.
 //
 #if 1
     template<typename V, typename T>
-    struct CastHook<SinkWrapper<V>,T*> {  // don't use SinkWrapper<V>& [D]
-      static T* convert(const SinkWrapper<V>& sink) {  // must be ref here
+    struct CastHook<SinkWrapper<V*>,T*> {  // don't use SinkWrapper<V>& [D]
+      static T* convert(const SinkWrapper<V*>& sink) {  // must be ref here
         if (sink.corruption_pending) {
             Corrupt_If_Needful(*sink.p);  // flush corruption
             sink.corruption_pending = false;
@@ -360,14 +363,17 @@ struct SinkWrapper {
 
 #if DEBUG_CHECK_INIT_SINKS
     #undef NeedfulInit
-    #define NeedfulInit(T)  SinkWrapper<T>
+    #define NeedfulInit(T)  SinkWrapper<T*>
 #else
     #undef NeedfulInit
-    #define NeedfulInit(T)  InitWrapper<T>
+    #define NeedfulInit(T)  InitWrapper<T*>
 #endif
 
-template<typename T>
+template<typename TP>
 struct InitWrapper {
+    using wrapped_type = TP;
+    using T = typename std::remove_pointer<TP>::type;
+
     T* p;
 
     template<typename U>
@@ -389,17 +395,17 @@ struct InitWrapper {
         {}
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper(const InitWrapper<U>& init)
+    InitWrapper(const InitWrapper<U*>& init)
         : p {reinterpret_cast<T*>(init.p)}
         {}
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper(const NeedWrapper<U>& need)
+    InitWrapper(const NeedWrapper<U*>& need)
         : p {static_cast<T*>(need.p)}
         {}
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper(const SinkWrapper<U>& sink) {
+    InitWrapper(const SinkWrapper<U*>& sink) {
         this->p = static_cast<T*>(sink.p);
         sink.corruption_pending = false;  // squash corruption
     }
@@ -423,13 +429,13 @@ struct InitWrapper {
     }
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper& operator=(const NeedWrapper<U>& need) {
+    InitWrapper& operator=(const NeedWrapper<U*>& need) {
         this->p = static_cast<T*>(need.p);
         return *this;
     }
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper& operator=(const SinkWrapper<U>& sink) {
+    InitWrapper& operator=(const SinkWrapper<U*>& sink) {
         this->p = static_cast<T*>(sink.p);
         sink.corruption_pending = false;  // squash corruption
         return *this;
@@ -454,8 +460,8 @@ struct InitWrapper {
 //
 #if 1
     template<typename V, typename T>
-    struct CastHook<InitWrapper<V>,T*> {  // don't use InitWrapper<V>& [D]
-      static constexpr T* convert(const InitWrapper<V>& init) {  // ref faster
+    struct CastHook<InitWrapper<V*>,T*> {  // don't use InitWrapper<V>& [D]
+      static constexpr T* convert(const InitWrapper<V*>& init) {  // ref faster
         return h_cast(T*, init.p);
       }
     };
@@ -470,8 +476,11 @@ struct InitWrapper {
 //
 // 1. It was decided that while Sink(T) and Init(T) implicitly add pointers
 //    to the type, you have to say Need(T*) if it's a pointer.  This is kind
-//    of an aesthetic choice.  NeedWrapper<T> is still in terms of the type
-//    without the pointer, so the typemacro has to remove the pointer.
+//    of an aesthetic choice.  However, the template -must- be parameterized
+//    with the type it is a stand-in for, so it is `SinkWrapper<T*>`,
+//    `InitWrapper<T*>`, and `NeedWrapper<T*>`.
+//
+//    (See needful_rewrap_type() for the reasoning behind this constraint.)
 //
 // 2. Uses in the codebase the Needful library were written for required that
 //    Need(T*) be able to accept cells with pending corruptions.  I guess
@@ -484,10 +493,13 @@ struct InitWrapper {
 
 #undef NeedfulNeed
 #define NeedfulNeed(TP) \
-    NeedWrapper<typename std::remove_pointer<TP>::type>  // * not implicit [1]
+    NeedWrapper<TP>  // * not implicit [1]
 
-template<typename T>
+template<typename TP>
 struct NeedWrapper {
+    using wrapped_type = TP;
+
+    using T = typename std::remove_pointer<TP>::type;
     T* p;
 
     using MT = typename std::remove_const<T>::type;  // mutable type
@@ -507,7 +519,7 @@ struct NeedWrapper {
                 std::is_same<typename std::remove_const<T>::type, U>::value
                 and std::is_const<T>::value
             >::type>
-    NeedWrapper(const NeedWrapper<U>& other)
+    NeedWrapper(const NeedWrapper<U*>& other)
         : p {static_cast<T*>(other.p)}
         {}
 
@@ -525,13 +537,13 @@ struct NeedWrapper {
         {}
 
     template<typename U, IfReverseInheritable<U>* = nullptr>
-    NeedWrapper(const SinkWrapper<U>& sink) {
+    NeedWrapper(const SinkWrapper<U*>& sink) {
         dont(assert(not sink.corruption_pending));  // must allow corrupt [2]
         this->p = static_cast<T*>(sink);  // not sink.p (flush corruption)
     }
 
     template<typename U, IfReverseInheritable<U>* = nullptr>
-    NeedWrapper(const InitWrapper<U>& init)
+    NeedWrapper(const InitWrapper<U*>& init)
         : p {static_cast<T*>(init.p)}
         {}
 
@@ -554,14 +566,14 @@ struct NeedWrapper {
     }
 
     template<typename U, IfReverseInheritable<U>* = nullptr>
-    NeedWrapper& operator=(const SinkWrapper<U>& sink) {
+    NeedWrapper& operator=(const SinkWrapper<U*>& sink) {
         dont(assert(not sink.corruption_pending));  // must allow corrupt [2]
         this->p = static_cast<T*>(sink);  // not sink.p (flush corruption)
         return *this;
     }
 
     template<typename U, IfReverseInheritable<U>* = nullptr>
-    NeedWrapper& operator=(const InitWrapper<U>& init) {
+    NeedWrapper& operator=(const InitWrapper<U*>& init) {
         this->p = static_cast<T*>(init.p);
         return *this;
     }
@@ -585,8 +597,8 @@ struct NeedWrapper {
 //
 #if 1
     template<typename V, typename T>
-    struct CastHook<NeedWrapper<V>,T*> {  // don't use NeedWrapper<V>& [D]
-      static constexpr T* convert(const NeedWrapper<V>& need) {  // ref faster
+    struct CastHook<NeedWrapper<V*>,T*> {  // don't use NeedWrapper<V>& [D]
+      static constexpr T* convert(const NeedWrapper<V*>& need) {  // ref faster
         return h_cast(T*, need.p);
       }
     };
