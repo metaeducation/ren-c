@@ -210,7 +210,7 @@ static void Startup_Lib(void)
 //
 static void Shutdown_Lib(void)
 {
-    assert(Is_Stub_Erased(&g_lib_patches[u_cast(int, SYM_0)]));
+    assert(Is_Stub_Erased(&g_lib_patches[cast(int, SYM_0)]));
 
     for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
         Patch* patch = &g_lib_patches[id];

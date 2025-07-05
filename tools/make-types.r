@@ -284,7 +284,7 @@ for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
 
     e-types/emit [tr --[
         INLINE bool Any_${Proper-Name}_Type(Option(Type) t)
-          { return u_cast(Byte, (t)) >= $<TR.START> and u_cast(Byte, (t)) <= $<TR.END>; }
+          { return cast(Byte, (t)) >= $<TR.START> and cast(Byte, (t)) <= $<TR.END>; }
 
         #define Any_${Proper-Name}(cell) \
             Any_${Proper-Name}_Type(Type_Of(cell))
@@ -342,7 +342,7 @@ e-types/emit newline
 for-each [ts-name types] sparse-typesets [
     e-types/emit [propercase-of ts-name --[
         INLINE bool Any_${propercase-of Ts-Name}_Type(Option(Type) t) {
-            return did (g_sparse_memberships[u_cast(Byte, (t))] & TYPESET_FLAG_${TS-NAME});
+            return did (g_sparse_memberships[cast(Byte, (t))] & TYPESET_FLAG_${TS-NAME});
         }
 
         #define Any_${propercase-of Ts-Name}(cell) \
@@ -642,7 +642,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-plain */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(u_cast(Byte, MAX_HEART))
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(cast(Byte, MAX_HEART))
     ]--]
     index: index + 1
 )
@@ -657,7 +657,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-fundamental */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(u_cast(Byte, MAX_TYPE_FUNDAMENTAL))
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(cast(Byte, MAX_TYPE_FUNDAMENTAL))
     ]--]
     index: index + 1
 )
@@ -790,23 +790,23 @@ e-hearts/emit [rebs --[
     #endif
 
     #define MAX_HEART  $<MAX-HEART>
-    STATIC_ASSERT(x_cast(Byte, MAX_HEART) < 64);
+    STATIC_ASSERT(cast(Byte, MAX_HEART) < 64);
 
-    STATIC_ASSERT(x_cast(int, TYPE_METAFORM) == x_cast(int, MAX_HEART) + 1);
-    STATIC_ASSERT(x_cast(int, TYPE_TIED) == x_cast(int, MAX_HEART) + 2);
-    STATIC_ASSERT(x_cast(int, TYPE_PINNED) == x_cast(int, MAX_HEART) + 3);
-    STATIC_ASSERT(x_cast(int, TYPE_QUASIFORM) == x_cast(int, MAX_HEART) + 4);
-    STATIC_ASSERT(x_cast(int, TYPE_QUOTED) == x_cast(int, MAX_HEART) + 5);
+    STATIC_ASSERT(cast(int, TYPE_METAFORM) == cast(int, MAX_HEART) + 1);
+    STATIC_ASSERT(cast(int, TYPE_TIED) == cast(int, MAX_HEART) + 2);
+    STATIC_ASSERT(cast(int, TYPE_PINNED) == cast(int, MAX_HEART) + 3);
+    STATIC_ASSERT(cast(int, TYPE_QUASIFORM) == cast(int, MAX_HEART) + 4);
+    STATIC_ASSERT(cast(int, TYPE_QUOTED) == cast(int, MAX_HEART) + 5);
 
     #define MAX_TYPE_FUNDAMENTAL  TYPE_PINNED
 
     #define MAX_TYPE_ELEMENT  TYPE_QUOTED
-    #define MAX_TYPE_BYTE_ELEMENT  x_cast(Byte, TYPE_QUOTED)
+    #define MAX_TYPE_BYTE_ELEMENT  cast(Byte, TYPE_QUOTED)
 
     #define MAX_TYPE  $<MAX-TYPE>
-    #define MAX_TYPE_BYTE  x_cast(Byte, $<MAX-TYPE>)
+    #define MAX_TYPE_BYTE  cast(Byte, $<MAX-TYPE>)
 
-    STATIC_ASSERT(x_cast(int, $<MAX-TYPE>) <= 256);  /* Stored in bytes */
+    STATIC_ASSERT(cast(int, $<MAX-TYPE>) <= 256);  /* Stored in bytes */
 
     /*
      * SINGLEHEART OPTIMIZED SEQUENCE DETECTION

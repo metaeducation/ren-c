@@ -316,7 +316,7 @@ MUTABLE_IF_C(Byte*, INLINE) Flex_Data_At(
             printf(
                 "Flex_Data_At() asked %d on width=%d\n",
                 w,
-                u_cast(int, Flex_Wide(f))
+                cast(int, Flex_Wide(f))
             );
         crash (f);
     }

@@ -128,11 +128,11 @@ struct CorruptHelper<T*> {  // Pointer (faster than memset() fallback)
           countdown = NEEDFUL_CORRUPTION_DOSE;
       }
       else {
-          ref = p_cast(T*, u_cast(intptr_t, 0xDECAFBAD));  // fixed value [1]
+          ref = p_cast(T*, cast(intptr_t, 0xDECAFBAD));  // fixed value [1]
           --countdown;
       }
     #else
-      ref = p_cast(T*, u_cast(intptr_t, 0xDECAFBAD));  // fixed value [1]
+      ref = p_cast(T*, cast(intptr_t, 0xDECAFBAD));  // fixed value [1]
     #endif
     }
 };
@@ -183,7 +183,7 @@ struct CorruptHelper<
           --countdown;
       }
     #else
-      ref = u_cast(T, 12345678);
+      ref = static_cast<T>(12345678);
     #endif
     }
 };

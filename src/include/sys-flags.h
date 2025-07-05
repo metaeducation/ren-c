@@ -54,19 +54,19 @@
 
     // 63,62,61...or...31,30,20
     #define FLAG_LEFT_BIT(n) \
-        (u_cast(uintptr_t, 1) << (PLATFORM_BITS - (n) - 1))
+        (cast(uintptr_t, 1) << (PLATFORM_BITS - (n) - 1))
 
     #define FLAG_FIRST_BYTE(b) \
-        (u_cast(uintptr_t, (b)) << (24 + (PLATFORM_BITS - 8)))
+        (cast(uintptr_t, (b)) << (24 + (PLATFORM_BITS - 8)))
 
     #define FLAG_SECOND_BYTE(b) \
-        (u_cast(uintptr_t, (b)) << (16 + (PLATFORM_BITS - 8)))
+        (cast(uintptr_t, (b)) << (16 + (PLATFORM_BITS - 8)))
 
     #define FLAG_THIRD_BYTE(b) \
-        (u_cast(uintptr_t, (b)) << (8 + (PLATFORM_BITS - 32)))
+        (cast(uintptr_t, (b)) << (8 + (PLATFORM_BITS - 32)))
 
     #define FLAG_FOURTH_BYTE(b) \
-        (u_cast(uintptr_t, (b)) << (0 + (PLATFORM_BITS - 32)))
+        (cast(uintptr_t, (b)) << (0 + (PLATFORM_BITS - 32)))
 
 #elif defined(ENDIAN_LITTLE)  // Byte w/least significant bit first (e.g. x86)
 
@@ -74,10 +74,10 @@
     #define FLAG_LEFT_BIT(n) \
         (u_cast(uintptr_t, 1) << (7 + ((n) / 8) * 8 - (n) % 8))
 
-    #define FLAG_FIRST_BYTE(b)      x_cast(uintptr_t, (b))
-    #define FLAG_SECOND_BYTE(b)     (x_cast(uintptr_t, (b)) << 8)
-    #define FLAG_THIRD_BYTE(b)      (x_cast(uintptr_t, (b)) << 16)
-    #define FLAG_FOURTH_BYTE(b)     (x_cast(uintptr_t, (b)) << 24)
+    #define FLAG_FIRST_BYTE(b)      cast(uintptr_t, (b))
+    #define FLAG_SECOND_BYTE(b)     (cast(uintptr_t, (b)) << 8)
+    #define FLAG_THIRD_BYTE(b)      (cast(uintptr_t, (b)) << 16)
+    #define FLAG_FOURTH_BYTE(b)     (cast(uintptr_t, (b)) << 24)
 #else
     // !!! There are macro hacks which can actually make reasonable guesses
     // at endianness, and should possibly be used in the config if nothing is
@@ -98,7 +98,7 @@
 // 1. The macros are in all-caps to show they are "weird" and usable as
 //    LValues.
 //
-// 2. u_cast() is used for "unchecked const-preserving casts" in the C++
+// 2. u_cast() is used for "unhookable const-preserving casts" in the C++
 //    build, so if (p) is const Byte* the Byte won't be mutable.  (The C
 //    build throws away constness in u_cast(), since it can't "sense" it.)
 //
@@ -107,10 +107,10 @@
 //    This means supposedly, it doesn't matter what type the memory you are
 //    reading from...you will get the correct up-to-date value of that byte.
 
-#define FIRST_BYTE(p)       x_cast(Byte*, (p))[0]  // CAPS_NAME: LValue [1]
-#define SECOND_BYTE(p)      x_cast(Byte*, (p))[1]  // const-preserving [2]
-#define THIRD_BYTE(p)       x_cast(Byte*, (p))[2]  // Byte strict exempt [3]
-#define FOURTH_BYTE(p)      x_cast(Byte*, (p))[3]
+#define FIRST_BYTE(p)       u_cast(Byte*, (p))[0]  // CAPS_NAME: LValue [1]
+#define SECOND_BYTE(p)      u_cast(Byte*, (p))[1]  // const-preserving [2]
+#define THIRD_BYTE(p)       u_cast(Byte*, (p))[2]  // Byte strict exempt [3]
+#define FOURTH_BYTE(p)      u_cast(Byte*, (p))[3]
 
 
 // There might not seem to be a good reason to keep the uint16_t variant in

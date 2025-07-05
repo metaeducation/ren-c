@@ -565,8 +565,8 @@ enum {
 
 #define Make_Error_Managed(cat_id, id, ...) \
     Make_Error_Managed_Raw( \
-        u_cast(int, ensure(Option(SymId), cat_id)), \
-        u_cast(int, ensure(Option(SymId), id)), \
+        cast(int, ensure(Option(SymId), cat_id)), \
+        cast(int, ensure(Option(SymId), id)), \
         __VA_ARGS__ \
     )
 

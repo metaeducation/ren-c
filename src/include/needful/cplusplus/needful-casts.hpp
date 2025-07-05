@@ -262,14 +262,33 @@ struct CastHook {  // object template for partial specialization [2]
     }
 };
 
+template<typename T>
+struct IsBasicType {
+    static constexpr bool value = std::is_fundamental<T>::value
+        or std::is_enum<T>::value
+        or (HasWrappedType<T>::value and (
+            std::is_fundamental<needful_unwrapped_type(T)>::value
+            or std::is_enum<needful_unwrapped_type(T)>::value
+        ));
+};
 
 template<typename To, typename From>
 typename std::enable_if<  // For ints/enums: use & as && can't bind const
-    not std::is_array<needful_remove_reference(From)>::value
-        and (
-            std::is_fundamental<To>::value
-            or std::is_enum<To>::value
-        ),
+    IsBasicType<From>::value and IsBasicType<To>::value,
+    To
+>::type
+constexpr Hookable_Cast_Helper(const From& from) {
+    return static_cast<To>(from);
+}
+
+
+template<typename To, typename From>
+typename std::enable_if<  // For ints/enums: use & as && can't bind const
+    (not std::is_array<needful_remove_reference(From)>::value
+        and not IsBasicType<From>::value
+    ) and (
+        IsBasicType<To>::value
+    ),
     To
 >::type
 Hookable_Cast_Helper(const From& from) {

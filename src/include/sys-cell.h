@@ -724,14 +724,14 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
     switch (LIFT_BYTE(atom)) {
       case 1:  // ANTIFORM_1 (not constant in some debug builds)
-        return u_cast(TypeEnum,
+        return cast(TypeEnum,
             (KIND_BYTE(atom) % MOD_HEART_64) + MAX_TYPE_BYTE_ELEMENT
         );
 
       case NOQUOTE_2:  // heart might be TYPE_0 to be extension type
-        switch (u_cast(Sigil, KIND_BYTE(atom) >> KIND_SIGIL_SHIFT)) {
+        switch (cast(Sigil, KIND_BYTE(atom) >> KIND_SIGIL_SHIFT)) {
           case SIGIL_0:
-            return u_cast(HeartEnum, (KIND_BYTE(atom) % MOD_HEART_64));
+            return cast(HeartEnum, (KIND_BYTE(atom) % MOD_HEART_64));
 
           case SIGIL_META:
             return TYPE_METAFORM;

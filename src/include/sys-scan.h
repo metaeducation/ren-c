@@ -70,9 +70,9 @@ enum TokenEnum {
 };
 typedef enum TokenEnum Token;
 
-STATIC_ASSERT(TOKEN_CARET == u_cast(int, SIGIL_META));
-STATIC_ASSERT(TOKEN_AT == u_cast(int, SIGIL_PIN));
-STATIC_ASSERT(TOKEN_DOLLAR == u_cast(int, SIGIL_TIE));
+STATIC_ASSERT(TOKEN_CARET == cast(int, SIGIL_META));
+STATIC_ASSERT(TOKEN_AT == cast(int, SIGIL_PIN));
+STATIC_ASSERT(TOKEN_DOLLAR == cast(int, SIGIL_TIE));
 
 
 
@@ -115,7 +115,7 @@ STATIC_ASSERT(LEX_CLASS_NUMBER < 4);
 typedef enum LexClassEnum LexClass;
 
 #define Get_Lex_Class(b) \
-    u_cast(LexClass, Lex_Of(b) >> LEX_SHIFT)
+    cast(LexClass, Lex_Of(b) >> LEX_SHIFT)
 
 enum LexClassMasksEnum {  // using an enum helps catch incorrect uses [2]
     LEX_DELIMIT =   (LEX_CLASS_DELIMIT << LEX_SHIFT),
@@ -189,7 +189,7 @@ STATIC_ASSERT(MAX_LEX_DELIMIT < 16);
 typedef enum LexDelimitEnum LexDelimit;
 
 #define Get_Lex_Delimit(b) \
-    u_cast(LexDelimit, Get_Lex_Value(LEX_CLASS_DELIMIT, (b)))
+    cast(LexDelimit, Get_Lex_Value(LEX_CLASS_DELIMIT, (b)))
 
 
 typedef uint16_t LexFlags;  // 16 flags per lex class
@@ -253,7 +253,7 @@ STATIC_ASSERT(MAX_LEX_SPECIAL < 16);
 typedef enum LexSpecialEnum LexSpecial;
 
 #define Get_Lex_Special(b) \
-    u_cast(LexSpecial, Get_Lex_Value(LEX_CLASS_SPECIAL, (b)))
+    cast(LexSpecial, Get_Lex_Value(LEX_CLASS_SPECIAL, (b)))
 
 
 #define Get_Lex_Number(b) \

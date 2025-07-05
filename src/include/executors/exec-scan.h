@@ -177,7 +177,7 @@ typedef enum {
 
 #if NO_RUNTIME_CHECKS
     #define Scanner_State_For_Terminal(term) \
-        u_cast(ScannerStateByte, (term))
+        cast(ScannerStateByte, (term))
 #else
     INLINE ScannerStateByte Scanner_State_For_Terminal(Byte term) {
         assert(
@@ -185,7 +185,7 @@ typedef enum {
             or term == ST_SCANNER_GROUP_MODE
             or term == ST_SCANNER_FENCE_MODE
         );
-        return u_cast(ScannerStateByte, term);
+        return cast(ScannerStateByte, term);
     }
 #endif
 

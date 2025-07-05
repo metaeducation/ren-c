@@ -158,13 +158,13 @@ Bounce Typechecker_Dispatcher(Level* const L)
         Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
     );
 
-    if (Is_Trash(v) and typeset_byte != u_cast(Byte, TYPE_TRASH))
+    if (Is_Trash(v) and typeset_byte != cast(Byte, TYPE_TRASH))
         panic ("trash! antiforms can't be typechecked");
 
     if (
         Is_Nulled(v) and (
-            typeset_byte != u_cast(Byte, TYPE_KEYWORD)
-            and typeset_byte != u_cast(Byte, TYPE_TRASH)
+            typeset_byte != cast(Byte, TYPE_KEYWORD)
+            and typeset_byte != cast(Byte, TYPE_TRASH)
         )
     ){
         panic (
@@ -990,10 +990,10 @@ Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
             abrupt_panic ("TYPECHECKER does not support extension types yet");
 
         Byte type_byte = u_cast(Byte, unwrap t);
-        SymId16 id16 = u_cast(SymId16, type_byte) + MIN_SYM_TYPESETS - 1;
+        SymId16 id16 = cast(SymId16, type_byte) + MIN_SYM_TYPESETS - 1;
         assert(id16 == type_byte);  // MIN_SYM_TYPESETS should be 1
 
-        Copy_Cell(out, Lib_Var(u_cast(SymId, id16)));
+        Copy_Cell(out, Lib_Var(cast(SymId, id16)));
         assert(Ensure_Cell_Frame_Details(out));  // need TypesetByte
 
         return out;

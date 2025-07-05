@@ -112,28 +112,28 @@
         HeartEnum h;  // an "enum class" in MSVC (members are HeartEnum::XXX)
 
         Heart () = default;
-        Heart (HeartEnum heart) : h (u_cast(HeartEnum, heart)) {}
-        explicit Heart (Byte byte) : h (u_cast(HeartEnum, byte)) {}
+        Heart (HeartEnum heart) : h (cast(HeartEnum, heart)) {}
+        explicit Heart (Byte byte) : h (cast(HeartEnum, byte)) {}
         explicit Heart (SymId id) {
-            assert(id <= u_cast(Byte, MAX_HEART));
-            h = u_cast(HeartEnum, id);
+            assert(id <= cast(Byte, MAX_HEART));
+            h = cast(HeartEnum, id);
         }
 
         Heart (PermissiveZeroStruct&&)  // for return fail with Result(Heart)
-            : h (u_cast(HeartEnum, 0))  // (also used by Option(Heart) = none)
+            : h (cast(HeartEnum, 0))  // (also used by Option(Heart) = none)
           {}
 
         explicit operator bool() const  // for Option(Heart) in if() statements
           { return cast(Byte, h) != 0; }
 
         explicit operator Byte() const
-          { return u_cast(Byte, h); }
+          { return cast(Byte, h); }
 
         explicit operator SymId() const
-          { return u_cast(SymId, h); }
+          { return cast(SymId, h); }
 
         explicit operator uintptr_t() const
-          { return u_cast(uintptr_t, h); }
+          { return cast(uintptr_t, h); }
 
         operator HeartEnum() const
           { return h; }
@@ -143,30 +143,30 @@
         TypeEnum t;  // an "enum class" in MSVC (members are TypeEnum::XXX)
 
         Type () = default;
-        Type (HeartEnum heart) : t (u_cast(TypeEnum, heart)) {}
-        Type (const Heart& heart) : t (u_cast(TypeEnum, heart.h)) {}
+        Type (HeartEnum heart) : t (cast(TypeEnum, heart)) {}
+        Type (const Heart& heart) : t (cast(TypeEnum, heart.h)) {}
         Type (TypeEnum type) : t (type) {}
-        explicit Type (Byte byte) : t (u_cast(TypeEnum, byte)) {}
+        explicit Type (Byte byte) : t (cast(TypeEnum, byte)) {}
         explicit Type (SymId id) {
             assert(id <= MAX_TYPE_BYTE);
-            t = u_cast(TypeEnum, id);
+            t = cast(TypeEnum, id);
         }
 
         Type (PermissiveZeroStruct&&)  // for return fail with Result(Type)
-          : t (u_cast(TypeEnum, 0))  // (also used by Option(Type) = none)
+          : t (cast(TypeEnum, 0))  // (also used by Option(Type) = none)
         {}
 
         explicit operator bool() const  // for Option(Type) in if() statements
           { return cast(Byte, t) != 0; }
 
         explicit operator Byte() const
-          { return u_cast(Byte, t); }
+          { return cast(Byte, t); }
 
         explicit operator SymId() const
-          { return u_cast(SymId, t); }
+          { return cast(SymId, t); }
 
         explicit operator uintptr_t() const
-          { return u_cast(uintptr_t, t); }
+          { return cast(uintptr_t, t); }
 
         operator TypeEnum() const
           { return t; }
@@ -200,16 +200,16 @@
 
   #if defined(_MSC_VER)
     INLINE bool operator==(Heart& left, Heart& right)
-      { return u_cast(Byte, left.h) == u_cast(Byte, right.h); }
+      { return left.h == right.h; }
 
     INLINE bool operator!=(Heart& left, Heart& right)
-      { return u_cast(Byte, left.h) != u_cast(Byte, right.h); }
+      { return left.h != right.h; }
 
     INLINE bool operator==(Type& left, Type& right)
-      { return u_cast(Byte, left.t) == u_cast(Byte, right.t); }
+      { return left.t == right.t; }
 
     INLINE bool operator!=(Type& left, Type& right)
-      { return u_cast(Byte, left.t) != u_cast(Byte, right.t); }
+      { return left.t != right.t; }
 
     // Very narrow equality tests, only applying to literal HeartEnum values.
 
@@ -360,17 +360,17 @@
 // (See notes on SingleHeart definition for more...)
 
 #define Leading_Space_And(heart) \
-    u_cast(SingleHeart, (u_cast(Byte, heart) << 8) + 1)
+    cast(SingleHeart, (u_cast(Byte, heart) << 8) + 1)
 
 #define Trailing_Space_And(heart) \
-    u_cast(SingleHeart, u_cast(Byte, heart) << 8)
+    cast(SingleHeart, u_cast(Byte, heart) << 8)
 
 #define LEADING_SPACE_AND(name)     Leading_Space_And(TYPE_##name)
 #define TRAILING_SPACE_AND(name)    Trailing_Space_And(TYPE_##name)
 
 INLINE bool Singleheart_Has_Leading_Space(SingleHeart single) {
     assert(single != NOT_SINGLEHEART_0);
-    return did (u_cast(uint_fast16_t, single) & 1);
+    return did (cast(uint_fast16_t, single) & 1);
 }
 
 #define Singleheart_Has_Trailing_Space(single) \
@@ -378,7 +378,7 @@ INLINE bool Singleheart_Has_Leading_Space(SingleHeart single) {
 
 INLINE Heart Heart_Of_Singleheart(SingleHeart single) {
     assert(single != NOT_SINGLEHEART_0);
-    HeartEnum heart = u_cast(HeartEnum, u_cast(uint_fast16_t, single) >> 8);
+    HeartEnum heart = cast(HeartEnum, cast(uint_fast16_t, single) >> 8);
     assert(heart != TYPE_0 and heart != TYPE_RUNE);
     return heart;
 }
@@ -393,8 +393,8 @@ INLINE Heart Heart_Of_Singleheart(SingleHeart single) {
 INLINE bool Is_Stable_Antiform_Kind_Byte(KindByte kind_byte) {
     assert((kind_byte / MOD_HEART_64) == 0);  // antiforms don't have sigils
     return (
-        kind_byte != u_cast(KindByte, TYPE_BLOCK)  // Is_Pack()
-        and kind_byte != u_cast(KindByte, TYPE_WARNING)  // Is_Error()
-        and kind_byte != u_cast(KindByte, TYPE_COMMA)  // Is_Ghost()
+        kind_byte != cast(KindByte, TYPE_BLOCK)  // Is_Pack()
+        and kind_byte != cast(KindByte, TYPE_WARNING)  // Is_Error()
+        and kind_byte != cast(KindByte, TYPE_COMMA)  // Is_Ghost()
     );
 }

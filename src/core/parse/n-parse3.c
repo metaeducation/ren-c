@@ -212,8 +212,8 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 INLINE Option(SymId) VAL_CMD(const Cell* v) {
     Option(SymId) sym = Word_Id(v);
     if (
-        u_cast(int, sym) >= MIN_SYM_PARSE3
-        and u_cast(int, sym) <= MAX_SYM_PARSE3
+        cast(int, sym) >= MIN_SYM_PARSE3
+        and cast(int, sym) <= MAX_SYM_PARSE3
     ){
         return sym;
     }
@@ -378,8 +378,8 @@ static Result(Option(SymId)) Get_Parse_Value(
     if (Is_Word(rule)) {
         Option(SymId) id = Word_Id(rule);
         if (
-            u_cast(int, id) >= MIN_SYM_PARSE3
-            and u_cast(int, id) <= MAX_SYM_PARSE3
+            cast(int, id) >= MIN_SYM_PARSE3
+            and cast(int, id) <= MAX_SYM_PARSE3
         ){
             return id;
         }
@@ -1418,10 +1418,10 @@ DECLARE_NATIVE(SUBPARSE)
             }
 
             assert(
-                u_cast(int, cmd) >= MIN_SYM_PARSE3
-                and u_cast(int, cmd) <= MAX_SYM_PARSE3
+                cast(int, cmd) >= MIN_SYM_PARSE3
+                and cast(int, cmd) <= MAX_SYM_PARSE3
             );
-            if (u_cast(int, cmd) >= MIN_SYM_PARSE3_MATCH)
+            if (cast(int, cmd) >= MIN_SYM_PARSE3_MATCH)
                 goto skip_pre_rule;
 
             switch (maybe cmd) {

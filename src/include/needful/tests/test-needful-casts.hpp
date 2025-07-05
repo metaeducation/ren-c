@@ -4,16 +4,18 @@ struct MyWrapper {
     T value;
 };
 
-#undef Needful_Hookable_Cast
-#define Needful_Hookable_Cast(T,expr) /* outer parens [C] */ \
-    (needful::Hookable_Cast_Helper<T>(expr))  // func: universal refs [3]
-
 
 inline void test_needful_const()
 {
     char data[] = "some data";
     char* mdata = data;
     const char* cdata = data;
+
+    constexpr int trivial = Needful_Hookable_Cast(int, 'a');
+    NEEDFUL_UNUSED(trivial);
+
+    constexpr int u_trivial = Needful_Unhookable_Cast(int, 'a');
+    NEEDFUL_UNUSED(u_trivial);
 
     STATIC_ASSERT_SAME(
         decltype(Needful_Mutable_Cast(char*, cdata)),  // cast away const

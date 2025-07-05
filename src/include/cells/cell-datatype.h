@@ -137,20 +137,20 @@ INLINE void Unregister_Datatype(RebolValue* datatype_holder)
 INLINE bool Is_Symbol_Id_Of_Builtin_Type(SymId id) {
     assert(id != SYM_0_constexpr);
     return (
-        u_cast(SymId16, id) >= MIN_SYM_BUILTIN_TYPES
-        and u_cast(SymId16, id) <= MAX_SYM_BUILTIN_TYPES
+        cast(SymId16, id) >= MIN_SYM_BUILTIN_TYPES
+        and cast(SymId16, id) <= MAX_SYM_BUILTIN_TYPES
     );
 }
 
 INLINE Type Type_From_Symbol_Id(SymId id) {
     assert(Is_Symbol_Id_Of_Builtin_Type(id));
-    return u_cast(TypeEnum, id - MIN_SYM_BUILTIN_TYPES + 1);
+    return cast(TypeEnum, id - MIN_SYM_BUILTIN_TYPES + 1);
 }
 
 INLINE SymId Symbol_Id_From_Type(Type type) {
     assert(type != TYPE_0_constexpr);
     return cast(SymId,
-        u_cast(SymId16, u_cast(Byte, type) + MIN_SYM_BUILTIN_TYPES - 1)
+        cast(SymId16, u_cast(Byte, type) + MIN_SYM_BUILTIN_TYPES - 1)
     );
 }
 
@@ -185,7 +185,7 @@ INLINE Option(Type) Cell_Datatype_Type(const Value* v) {
 
 INLINE Option(Heart) Cell_Datatype_Heart(const Value* v) {
     Byte type_byte_or_0 = u_cast(Byte, Cell_Datatype_Type(v));
-    assert(type_byte_or_0 <= u_cast(Byte, MAX_HEART));  // no QUOTE/QUASI/ANTI
+    assert(type_byte_or_0 <= cast(Byte, MAX_HEART));  // no QUOTE/QUASI/ANTI
     return u_cast(Option(Heart), type_byte_or_0);
 }
 
