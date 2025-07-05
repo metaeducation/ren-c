@@ -53,19 +53,27 @@
 
 
 //=//// TYPE ENSURING HELPER //////////////////////////////////////////////=//
-
+//
 
 template<typename From, typename To>
-struct EnsureStaticAsserter {
+struct IsConvertibleAsserter {
     static_assert(
         std::is_convertible<From, To>::value, "ensure() failed"
     );
 };
 
-#undef ensure
-#define ensure(T,expr) /* clang requires USED() on checker */ \
-    (NEEDFUL_USED((needful::EnsureStaticAsserter< \
+#undef Needful_Ensure_Rigid
+#define Needful_Ensure_Rigid(T,expr) \
+    (NEEDFUL_USED((needful::IsConvertibleAsserter< /* USED() for clang */ \
         needful_remove_reference(decltype(expr)), \
         T \
     >{})), \
-    x_cast(needful_mirror_const(decltype(expr), T), (expr)))
+    x_cast(T, (expr)))
+
+#undef Needful_Ensure_Lenient
+#define Needful_Ensure_Lenient(T,expr) \
+    (NEEDFUL_USED((needful::IsConvertibleAsserter< /* USED() for clang */ \
+        needful_remove_reference(decltype(expr)), \
+        needful_constify_type(T) /* loosen to matching constified T too */ \
+    >{})), \
+    x_cast(needful_merge_const(decltype(expr), T), (expr)))

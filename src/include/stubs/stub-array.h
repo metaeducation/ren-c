@@ -64,7 +64,7 @@
 #define Array_Last(a)           Flex_Last(Element, (a))
 
 #define Array_Len(a) \
-    Flex_Used(ensure(const Array*, (a)))
+    Flex_Used(ensure(Array*, (a)))
 
 
 // See Ensure_Readable(), Ensure_Writable() and related functions for an

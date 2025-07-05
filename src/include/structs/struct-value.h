@@ -36,7 +36,7 @@
 
 
 #define Stable_Unchecked(atom) \
-    m_cast(Value*, ensure(const Atom*, (atom)))
+    m_cast(Value*, ensure(Atom*, (atom)))
 
 
 //=//// EXTANT STACK POINTERS /////////////////////////////////////////////=//

@@ -67,7 +67,7 @@
     (ensure(Heart, (maybe opt_heart)) >= TYPE_COMMA)  // only one test [2]
 
 #define Is_Cell_Bindable(elem) \
-    Is_Bindable_Heart(Unchecked_Heart_Of(ensure(const Element*, (elem))))
+    Is_Bindable_Heart(Unchecked_Heart_Of(ensure(Element*, (elem))))
 
 
 //=//// MISC /////////////////////////////////////////////////////////////=//

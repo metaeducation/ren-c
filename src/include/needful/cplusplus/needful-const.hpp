@@ -165,7 +165,7 @@ struct IsConstlike {
     needful::IsConstlike<needful_remove_reference(T)>::value
 
 
-//=//// CONST MIRRORING: TRANSFER CONSTNESS FROM ONE TYPE TO ANOTHER //////=//
+//=//// CONST MIRRORING: MATCH CONSTNESS OF ONE TYPE ONTO ANOTHER ////////=//
 //
 // This const mirroring builds on top of the ConstifyHelper, rather than
 // needing to be a separate construct that things like smart pointers need
@@ -188,6 +188,25 @@ struct MirrorConstHelper {
 
 #define needful_mirror_const(From, To) \
     typename needful::MirrorConstHelper<From, To>::type
+
+
+//=//// CONST MERGING: ADD ANY CONSTNESS FROM ONE TYPE ONTO ANOTHER ///////=//
+//
+// This is a slight variation on the MirrorConstHelper, which will not make
+// the constness match (so it doesn't unconstify), but will add constness.
+//
+
+template<typename From, typename To>
+struct MergeConstHelper {
+    using type = typename std::conditional<
+        not needful_is_const_irrelevant(From) and needful_is_constlike(From),
+        needful_constify_type(To),
+        To  // don't unconstify (see needful_mirror_const() for that)
+    >::type;
+};
+
+#define needful_merge_const(From, To) \
+    typename needful::MergeConstHelper<From, To>::type
 
 
 //=//// PROPAGATE CONSTNESS FROM ARGUMENTS TO RETURN TYPES ///////////////=//

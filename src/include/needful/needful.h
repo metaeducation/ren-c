@@ -340,8 +340,14 @@
 // It does not cost anything at runtime--even in debug builds--because it
 // doesn't rely on a function template in the C++ override.
 //
+// 1. The Rigid form of Ensure will error if you try to pass a const pointer
+//    in when a non-const pointer was specified.  But the lenient form will
+//    match as a const pointer, and pass through the const pointer.  This
+//    turns out to be more useful in most cases than enforcing mutability,
+//    and it also is briefer to read at the callsite.
 
-#define ensure(T,expr)  (expr)
+#define Needful_Ensure_Rigid(T,expr)  (expr)
+#define Needful_Ensure_Lenient(T,expr)  (expr)  // const passthru as const [1]
 
 
 //=//// CONST PROPAGATION TOOLS ///////////////////////////////////////////=//
@@ -483,8 +489,8 @@
 #define c_cast(T,expr)    ((T)(expr))
 #define m_cast            Needful_Mutable_Cast
 
-#define s_cast(bytes)   u_cast(char*, ensure(const unsigned char*, (bytes)))
-#define b_cast(chars)   u_cast(unsigned char*, ensure(const char*, (chars)))
+#define s_cast(bytes)   u_cast(char*, ensure(unsigned char*, (bytes)))
+#define b_cast(chars)   u_cast(unsigned char*, ensure(char*, (chars)))
 
 #define p_cast(T,expr)    ((T)(expr))
 #define i_cast(T,expr)    ((T)(expr))
@@ -750,7 +756,13 @@ typedef enum {
 //    look "less casual" by hiding it in the system.utilities namespace, vs.
 //    lookin more like a "keyword".
 //
-// 3. The idea beind shorthands like `possibly()` is to replace comments that
+// 3. The lenient form of ensure() is quite useful for writing polymorphic
+//    macros which are const-in => const-out and mutable-in => mutable-out.
+//    This tends to be more useful than wanting to enforce that only mutable
+//    pointers can be passed into a macro (the bulk of macros are reading
+//    operations, anyway).  So lenient defaults to the short name `ensure()`.
+//
+// 4. The idea beind shorthands like `possibly()` is to replace comments that
 //    are carrying information about something that *might* be true:
 //
 //        int i = Get_Integer(...);  // i may be < 0
@@ -774,6 +786,7 @@ typedef enum {
 //    the compiler.  `heeded()` marks things that look stray or like they
 //    would have effect, but their side-effect is intentional (perhaps only
 //    in debug builds, that check for what they did).
+//
 
 #if !defined(NEEDFUL_DONT_DEFINE_CAST_SHORTHANDS)
     #define cast(T,expr)            h_cast(T,expr)
@@ -815,6 +828,13 @@ typedef enum {
     #define Need(TP)                NeedfulNeed(TP)
 #endif
 
+#if !defined(NEEDFUL_DONT_DEFINE_ENSURE_SHORTHANDS)
+    #define ensure_rigid(T,expr)    Needful_Ensure_Rigid(T,expr)
+    #define ensure_lenient(T,expr)  Needful_Ensure_Lenient(T,expr)
+
+    #define ensure(T,expr)          Needful_Ensure_Lenient(T,expr)  // [3]
+#endif
+
 #if !defined(NEEDFUL_DONT_DEFINE_LOOP_SHORTHANDS)
     #define attempt                 needful_attempt
     #define until(condition)        needful_until(condition)
@@ -828,7 +848,7 @@ typedef enum {
     #define zero                    needful_zero
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)  // informative! [3]
+#if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)  // informative! [4]
     #define possibly(expr)        NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL(expr)
     #define impossible(expr)      NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL(expr)
 

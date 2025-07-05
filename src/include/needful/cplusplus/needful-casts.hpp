@@ -414,7 +414,7 @@ Hookable_Cast_Decay_Prelude(From&& v) {
 
 #undef Needful_Unhookable_Cast
 #define Needful_Unhookable_Cast(T,expr) /* outer parens [C] */ \
-    (x_cast(needful_mirror_const(decltype(expr), T), (expr)))
+    (x_cast(needful_merge_const(decltype(expr), T), (expr)))
 
 
 //=//// downcast(): CAST THAT WOULD BE SAFE FOR PLAIN ASSIGNMENT //////////=//

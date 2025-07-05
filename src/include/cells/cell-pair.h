@@ -38,7 +38,7 @@
 #define PAIRLIKE_PAYLOAD_1_PAIRING_BASE(c)  SERIESLIKE_PAYLOAD_1_BASE(c)
 
 #define Pairing_Head(p) \
-    u_cast(Element*, ensure(const Pairing*, (p)))
+    u_cast(Element*, ensure(Pairing*, (p)))
 
 #define Pairing_Tail(p) \
     (Pairing_Head(p) + PAIRING_LEN_2)

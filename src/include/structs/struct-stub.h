@@ -144,7 +144,7 @@
 typedef Byte TasteByte;
 
 #define TASTE_BYTE(stub) \
-    SECOND_BYTE(ensure(const Stub*, (stub)))
+    SECOND_BYTE(ensure(Stub*, (stub)))
 
 #define FLAG_TASTE_BYTE(byte)  FLAG_SECOND_BYTE(byte)
 

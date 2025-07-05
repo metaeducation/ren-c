@@ -33,16 +33,16 @@
 // 1. See mutability notes on Set_Flex_Flag() / Clear_Flex_Flag()
 
 #define Get_Source_Flag(a,flag) \
-    Get_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
+    Get_Flavor_Flag(SOURCE, ensure(Source*, (a)), flag)
 
 #define Not_Source_Flag(a,flag) \
-    Not_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
+    Not_Flavor_Flag(SOURCE, ensure(Source*, (a)), flag)
 
 #define Set_Source_Flag(a,flag) \
-    Set_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
+    Set_Flavor_Flag(SOURCE, ensure(Source*, (a)), flag)
 
 #define Clear_Source_Flag(a,flag) \
-    Clear_Flavor_Flag(SOURCE, ensure(const Source*, (a)), flag)
+    Clear_Flavor_Flag(SOURCE, ensure(Source*, (a)), flag)
 
 
 #define STUB_MASK_UNMANAGED_SOURCE \
@@ -80,7 +80,7 @@
 
 #if (! DEBUG_HOOK_MIRROR_BYTE)
     #define MIRROR_BYTE(source) \
-        MIRROR_BYTE_RAW(ensure(const Source*, (source)))
+        MIRROR_BYTE_RAW(ensure(Source*, (source)))
 #else
     struct MirrorHolder {
         Source* & ref;
