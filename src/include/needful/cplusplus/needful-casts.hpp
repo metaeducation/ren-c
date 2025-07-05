@@ -616,7 +616,7 @@ constexpr TP p_cast_helper(V v) {
         "invalid p_cast() - target type must be pointer");
     static_assert(not std::is_pointer<V>::value,
         "invalid p_cast() - source type can't be pointer");
-    return reinterpret_cast<TP>(static_cast<uintptr_t>(v));
+    return reinterpret_cast<TP>(v);
 }
 
 #undef p_cast
