@@ -637,7 +637,7 @@ Bounce Stepper_Executor(Level* L)
         panic (Error_Need_Non_End(CURRENT));
 
     assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
-    const Element* elem = c_cast(Element*, L->feed->p);
+    const Element* elem = cast(Element*, L->feed->p);
 
     bool antiform = Get_Cell_Flag(elem, FEED_NOTE_META);  // [2]
     Clear_Cell_Flag(m_cast(Element*, elem), FEED_NOTE_META);  // [3]

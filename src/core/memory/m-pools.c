@@ -1173,7 +1173,7 @@ Stub* Diminish_Stub(Stub* s)
         if (Is_Stub_Varlist(f) or Is_Stub_Details(f))  // save archetype [1]
             Mem_Copy(
                 &f->content.fixed.cell,
-                Array_Head(c_cast(Array*, f)),
+                Array_Head(cast(Array*, f)),
                 sizeof(Cell)
             );
 

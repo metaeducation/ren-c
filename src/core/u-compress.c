@@ -181,7 +181,7 @@ Byte* Compress_Alloc_Core(
     uLong buf_size = deflateBound(&strm, size_in);  // easier as uLong not Size
 
     strm.avail_in = size_in;
-    strm.next_in = c_cast(z_Bytef*, input);
+    strm.next_in = cast(z_Bytef*, input);
 
     Byte* output = rebAllocN(Byte, buf_size);  // can rebRepossess() this [1]
     strm.avail_out = buf_size;
@@ -267,7 +267,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
     strm.total_out = 0;
 
     strm.avail_in = size_in;
-    strm.next_in = c_cast(z_Bytef*, input);
+    strm.next_in = cast(z_Bytef*, input);
 
     int window_bits = window_bits_gzip;
     if (not envelope) {
@@ -304,7 +304,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
             abrupt_panic ("GZIP compressed size less than minimum for gzip format");
 
         buf_size = Bytes_To_U32_BE(  // size is last 4 bytes [2]
-            c_cast(Byte*, input) + size_in - sizeof(uint32_t)
+            cast(Byte*, input) + size_in - sizeof(uint32_t)
         );
     }
     else {  // no decompressed size in envelope (or untrusted), must guess [3]

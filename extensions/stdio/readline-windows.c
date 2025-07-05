@@ -161,7 +161,7 @@ static void WRITE_UTF8(const unsigned char *utf8, size_t size)
     DWORD num_wchars = MultiByteToWideChar(
         CP_UTF8,
         0,
-        c_cast(char*, utf8),
+        cast(char*, utf8),
         size,
         wchar_buf,
         size * 2 + 2

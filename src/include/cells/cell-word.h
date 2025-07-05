@@ -48,7 +48,7 @@ INLINE bool Is_Cell_Wordlike(const Cell* v) {
 
 INLINE const Symbol* Word_Symbol(const Cell* c) {
     assert(Is_Cell_Wordlike(c));
-    return c_cast(Symbol*, WORDLIKE_PAYLOAD_1_SYMBOL_BASE(c));
+    return cast(Symbol*, WORDLIKE_PAYLOAD_1_SYMBOL_BASE(c));
 }
 
 #define Word_Id(v) \

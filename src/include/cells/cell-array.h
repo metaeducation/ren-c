@@ -23,7 +23,7 @@ INLINE const Source* Cell_Array(const Cell* c) {  // PACK!s are allowed
     if (Not_Base_Readable(series))
         abrupt_panic (Error_Series_Data_Freed_Raw());
 
-    return c_cast(Source*, series);
+    return cast(Source*, series);
 }
 
 #define Cell_Array_Ensure_Mutable(v) \
@@ -51,9 +51,9 @@ INLINE const Element* List_Len_At(
         assert(SERIESLIKE_PAYLOAD_2_INDEX(cell) == 0);
         if (len_at_out)
             *(unwrap len_at_out) = PAIRING_LEN_2;
-        return c_cast(Element*, base);
+        return cast(Element*, base);
     }
-    const Source* array = c_cast(Source*, base);
+    const Source* array = cast(Source*, base);
     REBIDX i = SERIESLIKE_PAYLOAD_2_INDEX(cell);
     Length len = Array_Len(array);
     if (i < 0 or i > len)
@@ -70,12 +70,12 @@ INLINE const Element* List_At(
     const Base* base = SERIESLIKE_PAYLOAD_1_BASE(cell);
     if (Is_Base_A_Cell(base)) {
         assert(Any_Sequence_Type(Heart_Of(cell)));
-        const Pairing* p = c_cast(Pairing*, base);
+        const Pairing* p = cast(Pairing*, base);
         if (tail_out)
             *(unwrap tail_out) = Pairing_Tail(p);
         return Pairing_Head(p);
     }
-    const Source* array = c_cast(Source*, base);
+    const Source* array = cast(Source*, base);
     REBIDX i = SERIESLIKE_PAYLOAD_2_INDEX(cell);
     Length len = Array_Len(array);
     if (i < 0 or i > len)

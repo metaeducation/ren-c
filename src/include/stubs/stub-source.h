@@ -148,7 +148,7 @@ INLINE Array* Make_Array_For_Copy(
     if (
         original
         and Stub_Flavor(original) == FLAVOR_SOURCE
-        and Get_Source_Flag(c_cast(Source*, original), NEWLINE_AT_TAIL)
+        and Get_Source_Flag(cast(Source*, original), NEWLINE_AT_TAIL)
     ){
         //
         // All of the newline bits for cells get copied, so it only makes
@@ -162,7 +162,7 @@ INLINE Array* Make_Array_For_Copy(
         Flavor_From_Flags(flags) == FLAVOR_SOURCE
         and original
         and Stub_Flavor(original) == FLAVOR_SOURCE
-        and (filename = Link_Filename(c_cast(Source*, original)))
+        and (filename = Link_Filename(cast(Source*, original)))
     ){
         Source* a = cast(Source*, Make_Array_Core(flags, capacity));
         Tweak_Link_Filename(a, filename);

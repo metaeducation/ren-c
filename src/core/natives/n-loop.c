@@ -944,7 +944,7 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
         if (Any_List_Type(heart)) {
             Element* spare_element = Copy_Cell(
                 SPARE,
-                Array_At(c_cast(Array*, les->flex), les->u.eser.index)
+                Array_At(cast(Array*, les->flex), les->u.eser.index)
             );
             e = Trap_Write_Loop_Slot_May_Bind(slot, spare_element, les->data);
             if (e)
@@ -1016,11 +1016,11 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
             const Value* val;
             while (true) {  // pass over the unused map slots
                 key = (
-                    Array_At(c_cast(Array*, les->flex), les->u.eser.index)
+                    Array_At(cast(Array*, les->flex), les->u.eser.index)
                 );
                 ++les->u.eser.index;
                 val = (
-                    Array_At(c_cast(Array*, les->flex), les->u.eser.index)
+                    Array_At(cast(Array*, les->flex), les->u.eser.index)
                 );
                 ++les->u.eser.index;
                 if (les->u.eser.index == les->u.eser.len)
@@ -1061,7 +1061,7 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
         if (Any_String_Type(heart)) {
             Element* spare_rune = Init_Char_Unchecked(
                 SPARE,
-                Get_Strand_Char_At(c_cast(Strand*, les->flex), les->u.eser.index)
+                Get_Strand_Char_At(cast(Strand*, les->flex), les->u.eser.index)
             );
 
             e = Trap_Write_Loop_Slot_May_Bind(slot, spare_rune, les->data);
@@ -1075,7 +1075,7 @@ static Option(Error*) Trap_Loop_Each_Next(Sink(bool) done, Level* level_)
         }
 
         if (heart == TYPE_BLOB) {
-            const Binary* b = c_cast(Binary*, les->flex);
+            const Binary* b = cast(Binary*, les->flex);
 
             Element* spare_integer = Init_Integer(
                 SPARE, Binary_Head(b)[les->u.eser.index]

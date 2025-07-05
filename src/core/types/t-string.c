@@ -1230,8 +1230,8 @@ static int Qsort_Char_Callback(void *state, const void *v1, const void *v2)
 {
     Flags* flags = cast(Flags*, state);
 
-    Byte b1 = *c_cast(Byte*, v1);
-    Byte b2 = *c_cast(Byte*, v2);
+    Byte b1 = *cast(Byte*, v1);
+    Byte b2 = *cast(Byte*, v2);
 
     assert(b1 < 0x80 and b2 < 0x80);
 
@@ -1334,7 +1334,7 @@ DECLARE_NATIVE(ENCODE_UTF_8) {
     Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
 
     Binary* b = Make_Binary(utf8_size);
-    memcpy(Binary_Head(b), c_cast(Byte*, utf8), utf8_size);
+    memcpy(Binary_Head(b), cast(Byte*, utf8), utf8_size);
     Term_Binary_Len(b, utf8_size);
     return Init_Blob(OUT, b);
 }

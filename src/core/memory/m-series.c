@@ -456,7 +456,7 @@ void Assert_Flex_Term_Core(const Flex* f)
       #endif
     }
     else if (Stub_Holds_Bytes(f)) {
-        const Byte* tail = Binary_Tail(c_cast(Binary*, f));
+        const Byte* tail = Binary_Tail(cast(Binary*, f));
         if (Is_Stub_Strand(f)) {
             if (*tail != '\0')
                 crash (f);

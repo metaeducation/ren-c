@@ -619,7 +619,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
         Strand* s = Make_Strand(size);
-        memcpy(cast(Byte*, Strand_Head(s)), c_cast(Byte*, utf8), size);
+        memcpy(cast(Byte*, Strand_Head(s)), cast(Byte*, utf8), size);
         Term_Strand_Len_Size(s, len, size);
         return Init_Any_String(OUT, to, s);
     }
@@ -750,7 +750,7 @@ Result(Element*) Alias_Any_Utf8_As(
         );
         memcpy(
             Flex_Data(str),
-            c_cast(Byte*, utf8),
+            cast(Byte*, utf8),
             size + 1  // +1 to include '\0'
         );
         Term_Strand_Len_Size(str, len, size);

@@ -1104,7 +1104,7 @@ DECLARE_NATIVE(JS_EVAL_P)
 
     Value* source = ARG(SOURCE);
 
-    const char *utf8 = c_cast(char*, Cell_Utf8_At(source));
+    const char *utf8 = cast(char*, Cell_Utf8_At(source));
     heapaddr_t addr;
 
     // Methods for global evaluation:

@@ -965,7 +965,7 @@ const RebolBaseInternal* API_rebArgR(
     const char* name;
     const void* p2;
     if (vaptr) {
-        name = c_cast(char*, p);
+        name = cast(char*, p);
         p2 = va_arg(
             *u_cast(va_list*, vaptr),  // can't cast() va_list*!
             const void*
@@ -973,7 +973,7 @@ const RebolBaseInternal* API_rebArgR(
     }
     else {
         const void* const *packed = cast(const void* const*, p);
-        name = c_cast(char*, *packed++);
+        name = cast(char*, *packed++);
         p2 = *packed++;
     }
     if (Detect_Rebol_Pointer(p2) != DETECTED_AS_END)
@@ -992,7 +992,7 @@ const RebolBaseInternal* API_rebArgR(
         if (Are_Synonyms(Key_Symbol(key), symbol)) {
             if (Not_Cell_Stable(arg))
                 abrupt_panic ("rebArg() called on non-stable argument");
-            return c_cast(
+            return cast(
                 RebolBaseInternal*,
                 NULLIFY_NULLED(Known_Stable(arg))
             );
@@ -1019,7 +1019,7 @@ RebolValue* API_rebArg(
     if (not argR)
         return nullptr;
 
-    const Value* arg = c_cast(Value*, argR);  // sneaky, but we know!
+    const Value* arg = cast(Value*, argR);  // sneaky, but we know!
     return Copy_Cell(Alloc_Value(), arg);  // don't give Value* arg directly
 }
 
@@ -1955,7 +1955,7 @@ static Size Spell_Into(
     }
 
     Size limit = MIN(bsize, utf8_size);
-    memcpy(buf, c_cast(char*, utf8), limit);
+    memcpy(buf, cast(char*, utf8), limit);
     buf[limit] = 0;
     return utf8_size;
 }
@@ -2445,13 +2445,13 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
     ENTER_API;
 
     if (p == nullptr)
-        return c_cast(RebolBaseInternal*, g_quasi_null);
+        return cast(RebolBaseInternal*, g_quasi_null);
 
     Stub* stub;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
-        stub = m_cast(Stub*, c_cast(Stub*, p));
+        stub = m_cast(Stub*, cast(Stub*, p));
         if (Not_Flavor_Flag(API, stub, RELEASE))
             abrupt_panic ("Can't quote instructions (besides rebR())");
         break; }
@@ -2460,7 +2460,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
         const Value* at = cast(const Value*, p);
         if (Is_Nulled(at)) {
             assert(not Is_Api_Value(at));  // only internals use nulled cells
-            return c_cast(RebolBaseInternal*, g_quasi_null);
+            return cast(RebolBaseInternal*, g_quasi_null);
         }
 
         Value* v = Alloc_Value();
@@ -2475,7 +2475,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
 
     Value* v = u_cast(Value*, Stub_Cell(stub));
     Liftify(v);
-    return c_cast(RebolBaseInternal*, stub);  // C needs cast
+    return cast(RebolBaseInternal*, stub);  // C needs cast
 }
 
 
@@ -2498,13 +2498,13 @@ RebolBaseInternal* API_rebUNQUOTING(const void* p)
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
-        stub = m_cast(Stub*, c_cast(Stub*, p));
+        stub = m_cast(Stub*, cast(Stub*, p));
         if (Not_Flavor_Flag(API, stub, RELEASE))
             abrupt_panic ("Can't unquote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
-        Value* v = Copy_Cell(Alloc_Value(), c_cast(Value*, p));
+        Value* v = Copy_Cell(Alloc_Value(), cast(Value*, p));
         stub = Compact_Stub_From_Cell(v);
         Set_Flavor_Flag(API, stub, RELEASE);
         break; }
@@ -2589,7 +2589,7 @@ RebolBaseInternal* API_rebRUN(const void* p)
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
-        stub = m_cast(Stub*, c_cast(Stub*, p));
+        stub = m_cast(Stub*, cast(Stub*, p));
         v = cast(Value*, Stub_Cell(stub));
         if (Not_Flavor_Flag(API, stub, RELEASE))
             abrupt_panic ("Can't quote instructions (besides rebR())");

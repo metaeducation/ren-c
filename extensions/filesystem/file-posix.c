@@ -423,7 +423,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
         // are writing "text".  You have to send BLOB! (which can be done
         // cheaply with an alias, AS TEXT!, uses the same memory)
         //
-        const Byte* tail = c_cast(Byte*, utf8) + size;
+        const Byte* tail = cast(Byte*, utf8) + size;
         const Byte* pos = utf8;
         for (; pos != tail; ++pos)
             if (*pos == CR)

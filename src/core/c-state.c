@@ -127,7 +127,7 @@ INLINE void Tweak_Plug_Suspended_Level(Array* plug, Level* L)
 //
 static Level* Level_Of_Plug(const Value* plug) {
     if (Handle_Holds_Base(plug)) {
-        const Array* a = c_cast(Array*, Cell_Handle_Base(plug));
+        const Array* a = cast(Array*, Cell_Handle_Base(plug));
         assert(Stub_Flavor(a) == FLAVOR_DATASTACK);
         return Plug_Suspended_Level(a);
     }

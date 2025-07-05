@@ -61,7 +61,7 @@ INLINE void Probe_Molded_Value(Molder* mo, const Value* v)
         Append_Ascii(mo->strand, "  ; anti");
     }
     else {
-        Mold_Element(mo, c_cast(Element*, v));
+        Mold_Element(mo, cast(Element*, v));
     }
 }
 
@@ -74,7 +74,7 @@ void Probe_Cell_Print_Helper(
 ){
     Probe_Print_Helper(p, expr, "Value", file, line);
 
-    const Atom* atom = c_cast(Atom*, p);
+    const Atom* atom = cast(Atom*, p);
 
     if (Is_Cell_Poisoned(atom)) {
         Append_Ascii(mo->strand, "\\\\poisoned\\\\");
@@ -133,7 +133,7 @@ void* Probe_Core_Debug(
     }
     else switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
-        if (*c_cast(Byte*, p) == '\0')
+        if (*cast(Byte*, p) == '\0')
             Probe_Print_Helper(
                 p,
                 expr,
@@ -142,7 +142,7 @@ void* Probe_Core_Debug(
               );
         else {
             Probe_Print_Helper(p, expr, "UTF-8 String", file, line);
-            printf("\"%s\"\n", c_cast(char*, p));
+            printf("\"%s\"\n", cast(char*, p));
         }
         goto cleanup;
 
@@ -170,7 +170,7 @@ void* Probe_Core_Debug(
 
   handle_flex: {
 
-    const Flex* f = c_cast(Flex* , p);
+    const Flex* f = cast(Flex* , p);
     assert(Is_Base_Readable(f));
     Flavor flavor = Stub_Flavor(f);
     Assert_Flex(f);  // if corrupt, gives better info than a print crash
@@ -244,7 +244,7 @@ void* Probe_Core_Debug(
 
       case FLAVOR_LET: {
         Probe_Print_Helper(p, expr, "LET single variable", file, line);
-        Append_Spelling(mo->strand, Let_Symbol(c_cast(Let*, f)));
+        Append_Spelling(mo->strand, Let_Symbol(cast(Let*, f)));
         break; }
 
       case FLAVOR_USE: {
@@ -342,12 +342,12 @@ void* Probe_Core_Debug(
 
       case FLAVOR_NONSYMBOL: {
         Probe_Print_Helper(p, expr, "Non-Symbol String Flex", file, line);
-        Mold_Text_Flex_At(mo, c_cast(Strand*, f), 0);  // could be TAG!, etc.
+        Mold_Text_Flex_At(mo, cast(Strand*, f), 0);  // could be TAG!, etc.
         break; }
 
       case FLAVOR_SYMBOL: {
         Probe_Print_Helper(p, expr, "Interned (Symbol) Flex", file, line);
-        Mold_Text_Flex_At(mo, c_cast(Symbol*, f), 0);
+        Mold_Text_Flex_At(mo, cast(Symbol*, f), 0);
         break; }
 
       case FLAVOR_THE_GLOBAL_INACCESSIBLE: {
@@ -362,7 +362,7 @@ void* Probe_Core_Debug(
 } cleanup: {
 
     if (mo->base.size != Strand_Size(mo->strand))
-        printf("%s\n", c_cast(char*, Binary_At(mo->strand, mo->base.size)));
+        printf("%s\n", cast(char*, Binary_At(mo->strand, mo->base.size)));
 
     if (mo->opts & MOLD_FLAG_WAS_TRUNCATED)
         printf("...\\\\truncated\\\\...\n");

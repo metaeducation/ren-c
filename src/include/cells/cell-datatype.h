@@ -108,7 +108,7 @@ INLINE RebolValue* Register_Datatype(const char* name)  // return "holder" [1]
 
     Option(Patch*) patch = Sea_Patch(g_datatypes_context, symbol, true);
     if (patch) {
-        Value* datatype = c_cast(Value*, Stub_Cell(unwrap patch));
+        Value* datatype = cast(Value*, Stub_Cell(unwrap patch));
         assert(Is_Datatype(datatype));
         Copy_Cell(result, datatype);
         return rebUnmanage(result);  // "forward" registrations [2]
@@ -209,7 +209,7 @@ INLINE const ExtraHeart* Cell_Datatype_Extra_Heart(const Value* v) {
 
 INLINE const ExtraHeart* Cell_Extra_Heart(const Cell* v) {
     assert(Heart_Of_Is_0(v));
-    return c_cast(ExtraHeart*, v->extra.base);
+    return cast(ExtraHeart*, v->extra.base);
 }
 
 
@@ -218,7 +218,7 @@ INLINE Value* Init_Extended_Datatype_Untracked(
     const ExtraHeart* ext_heart
 ){
     assert(Is_Stub_Patch(ext_heart));
-    const Value* datatype = c_cast(Value*, Stub_Cell(ext_heart));
+    const Value* datatype = cast(Value*, Stub_Cell(ext_heart));
     assert(Is_Datatype(datatype));
     return Copy_Cell(out, datatype);
 }

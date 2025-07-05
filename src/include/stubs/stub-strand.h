@@ -85,7 +85,7 @@ MUTABLE_IF_C(Utf8(*), INLINE) Skip_Codepoint(
     do {
         ++bp;
     } while (Is_Continuation_Byte(*bp));
-    return c_cast(Utf8(*), bp);
+    return cast(Utf8(*), bp);
 }
 
 MUTABLE_IF_C(Utf8(*), INLINE) Step_Back_Codepoint(
@@ -95,7 +95,7 @@ MUTABLE_IF_C(Utf8(*), INLINE) Step_Back_Codepoint(
     do {
         --bp;
     } while (Is_Continuation_Byte(*bp));
-    return c_cast(Utf8(*), bp);
+    return cast(Utf8(*), bp);
 }
 
 MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Next(
@@ -107,7 +107,7 @@ MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Next(
         *codepoint_out = *bp;
     else
         bp = m_cast(Byte*, Back_Scan_Utf8_Char_Unchecked(codepoint_out, bp));
-    return c_cast(Utf8(*), bp + 1);  // see Back_Scan() for why +1
+    return cast(Utf8(*), bp + 1);  // see Back_Scan() for why +1
 }
 
 MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Back(
@@ -124,7 +124,7 @@ MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Back(
     else
         Back_Scan_Utf8_Char_Unchecked(codepoint_out, bp);
 
-    return c_cast(Utf8(*), bp);
+    return cast(Utf8(*), bp);
 }
 
 MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Skip(
@@ -194,8 +194,8 @@ INLINE bool Is_Strand_All_Ascii(const Strand* str) {
 }
 
 #define Strand_Utf8(s)      Flex_Head(char, ensure(Strand*, s))
-#define Strand_Head(s)      c_cast(Utf8(*), Flex_Head(Byte, s))
-#define Strand_Tail(s)      c_cast(Utf8(*), Flex_Tail(Byte, s))
+#define Strand_Head(s)      cast(Utf8(*), Flex_Head(Byte, s))
+#define Strand_Tail(s)      cast(Utf8(*), Flex_Tail(Byte, s))
 
 MUTABLE_IF_C(Utf8(*), INLINE) Strand_At(CONST_IF_C(Strand*) s_, REBLEN at)
 {
@@ -521,8 +521,8 @@ INLINE Error* Error_Illegal_Cr(const Byte* at, const Byte* start)
         ++back_len;
     }
     Value* str = rebSizedText(
-        c_cast(char*, back),
-        at - c_cast(Byte*, back) + 1  // include CR (escaped, e.g. ^M)
+        cast(char*, back),
+        at - cast(Byte*, back) + 1  // include CR (escaped, e.g. ^M)
     );
     Error* error = Error_Illegal_Cr_Raw(str);
     rebRelease(str);

@@ -57,7 +57,7 @@
             std::is_same<T, const void>::value,
             "Is_End() is not designed to operate on Cell, Flex, etc."
         );
-        const Byte* bp = c_cast(Byte*, p);
+        const Byte* bp = cast(Byte*, p);
         if (*bp != END_SIGNAL_BYTE) {
             assert(*bp & BASE_BYTEMASK_0x08_CELL);
             return false;
@@ -139,7 +139,7 @@ INLINE const Element* At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
     assert(feed->p != &PG_Feed_At_End);
 
-    const Element* elem = c_cast(Element*, feed->p);
+    const Element* elem = cast(Element*, feed->p);
     if (
         feed->p == &feed->fetched  // CELL_FLAG_NOTE may have other meaning!
         and Get_Cell_Flag(elem, FEED_NOTE_META)  // ...if not in this location
@@ -242,7 +242,7 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
         Set_Cell_Flag(out, FEED_NOTE_META);  // @ turns back [2]
     }
     else
-        Copy_Cell_Core(out, c_cast(Element*, v), CELL_MASK_THROW);
+        Copy_Cell_Core(out, cast(Element*, v), CELL_MASK_THROW);
 
     return out;
 }
@@ -259,7 +259,7 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
 INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
     Feed* feed
 ){
-    Flex* f = m_cast(Flex*, c_cast(Flex*, feed->p));
+    Flex* f = m_cast(Flex*, cast(Flex*, feed->p));
 
     switch (Stub_Flavor(f)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
@@ -307,7 +307,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         feed->p = single;
         feed->p = Copy_Reified_Variadic_Feed_Cell(
             &feed->fetched,
-            c_cast(Value*, feed->p)
+            cast(Value*, feed->p)
         );
         rebRelease(single);  // *is* the instruction
         break; }
@@ -319,7 +319,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         // in debugging than putting the actions themselves.
         //
       case FLAVOR_SYMBOL: {
-        Init_Word(&feed->fetched, c_cast(Symbol*, f));
+        Init_Word(&feed->fetched, cast(Symbol*, f));
         feed->p = &feed->fetched;
         break; }
 
@@ -407,7 +407,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Panic(Feed* feed)
         crash (feed->p);
     }
 
-    assert(Is_Feed_At_End(feed) or Ensure_Readable(c_cast(Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or Ensure_Readable(cast(Cell*, feed->p)));
     return;
 
 } detect_again: {  ///////////////////////////////////////////////////////////
@@ -428,7 +428,7 @@ INLINE void Sync_Feed_At_Cell_Or_End_May_Panic(Feed* feed) {
         Force_Variadic_Feed_At_Cell_Or_End_May_Panic(feed);
         Clear_Feed_Flag(feed, NEEDS_SYNC);
     }
-    assert(Is_Feed_At_End(feed) or Ensure_Readable(c_cast(Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or Ensure_Readable(cast(Cell*, feed->p)));
 }
 
 
@@ -523,7 +523,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
         Set_Cell_Flag(&feed->fetched, PROTECTED);
   #endif
 
-    assert(Is_Feed_At_End(feed) or Ensure_Readable(c_cast(Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or Ensure_Readable(cast(Cell*, feed->p)));
 }
 
 
@@ -690,7 +690,7 @@ INLINE Feed* Prep_Array_Feed(
     if (Is_Feed_At_End(feed))
         assert(Feed_Pending(feed) == nullptr);
     else
-        assert(Ensure_Readable(c_cast(Cell*, feed->p)));
+        assert(Ensure_Readable(cast(Cell*, feed->p)));
 
     return feed;
 }
@@ -736,7 +736,7 @@ INLINE Feed* Prep_Variadic_Feed(
 
     if (not vaptr) {  // `p` should be treated as a packed void* array
         FEED_VAPTR_POINTER(feed) = nullptr;
-        FEED_PACKED(feed) = cast(const void* const*, p);  // can't use c_cast()
+        FEED_PACKED(feed) = cast(const void* const*, p);  // can't use cast()
         feed->p = *FEED_PACKED(feed)++;
     }
     else {

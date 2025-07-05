@@ -259,7 +259,7 @@ static bool Subparse_Throws(
 
     Derelativize(
         Erase_ARG(INPUT),
-        c_cast(Element*, input),
+        cast(Element*, input),
         input_binding
     );
 
@@ -714,7 +714,7 @@ static Result(REBIXO) Parse_One_Rule(
                 uncased = false;
             }
             else {
-                uni = Get_Strand_Char_At(c_cast(Strand*, P_INPUT), P_POS);
+                uni = Get_Strand_Char_At(cast(Strand*, P_INPUT), P_POS);
                 uncased = not (P_FLAGS & AM_FIND_CASE);
             }
 

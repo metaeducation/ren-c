@@ -55,7 +55,7 @@ typedef Byte BaseByte;
 #define FLAG_BASE_BYTE(byte)    FLAG_FIRST_BYTE(byte)
 
 #define Is_Base(p) \
-    (c_cast(Byte*, (p))[0] & BASE_BYTEMASK_0x80_NODE)
+    (cast(Byte*, (p))[0] & BASE_BYTEMASK_0x80_NODE)
 
 #define Is_Base_A_Cell(n)   (did (BASE_BYTE(n) & BASE_BYTEMASK_0x08_CELL))
 #define Is_Base_A_Stub(n)   (not Is_Base_A_Cell(n))

@@ -227,12 +227,12 @@ MUTABLE_IF_C(Option(Element*), INLINE) As_Element(CONST_IF_C(Value*) v_) {
 
 #if NO_RUNTIME_CHECKS
     #define Known_Element(cell) \
-        c_cast(Element*, (cell))
+        cast(Element*, (cell))
 #else
     MUTABLE_IF_C(Element*, INLINE) Known_Element(CONST_IF_C(Atom*) cell) {
         CONSTABLE(Atom*) a = m_cast(Atom*, cell);
         assert(LIFT_BYTE(a) != ANTIFORM_1);
-        return c_cast(Element*, a);
+        return cast(Element*, a);
     }
 #endif
 
@@ -240,7 +240,7 @@ MUTABLE_IF_C(Element*, INLINE) Ensure_Element(CONST_IF_C(Atom*) cell) {
     CONSTABLE(Atom*) a = m_cast(Atom*, cell);
     if (LIFT_BYTE(a) == ANTIFORM_1)
         abrupt_panic (Error_Bad_Antiform(a));
-    return c_cast(Element*, a);
+    return cast(Element*, a);
 }
 
 #if CHECK_CELL_SUBCLASSES

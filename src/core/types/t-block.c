@@ -442,7 +442,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
         n = 1 + Find_In_Array_Simple(
             Cell_Array(v),
             Series_Index(v),
-            c_cast(Element*, picker)
+            cast(Element*, picker)
         );
     }
 
@@ -1284,8 +1284,8 @@ static int Qsort_Values_Callback(void *state, const void *p1, const void *p2)
 {
     SortInfo* info = cast(SortInfo*, state);
 
-    const Element* v1 = Known_Element(c_cast(Atom*, p1));
-    const Element* v2 = Known_Element(c_cast(Atom*, p2));
+    const Element* v1 = Known_Element(cast(Atom*, p1));
+    const Element* v2 = Known_Element(cast(Atom*, p2));
     possibly(info->cased);  // !!! not applicable in LESSER? comparisons
     bool strict = false;
 
@@ -1544,7 +1544,7 @@ DECLARE_NATIVE(GLOM)
 
     Source* a = Make_Source_Managed(1);
     Set_Flex_Len(a, 1);
-    Copy_Cell(Array_Head(a), c_cast(Element*, value));
+    Copy_Cell(Array_Head(a), cast(Element*, value));
     return Init_Block(OUT, a);
 
 } handle_block_accumulator: { ////////////////////////////////////////////////
@@ -1563,7 +1563,7 @@ DECLARE_NATIVE(GLOM)
     // practice all GLOM that exist for the moment will be working on
     // series that are at their head, so this won't help.
 
-    Copy_Cell(Alloc_Tail_Array(a), c_cast(Element*, value));
+    Copy_Cell(Alloc_Tail_Array(a), cast(Element*, value));
     return COPY(accumulator);
 
 } append_many_items: { ///////////////////////////////////////////////////////

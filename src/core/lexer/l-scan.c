@@ -1234,7 +1234,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
           case DETECTED_AS_CELL: {
             Copy_Reified_Variadic_Feed_Cell(
                 PUSH(),
-                c_cast(Value*, L->feed->p)
+                cast(Value*, L->feed->p)
             );
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
@@ -1255,7 +1255,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             break; }
 
           case DETECTED_AS_UTF8: {  // String segment, scan it ordinarily.
-            transcode->at = c_cast(Byte*, L->feed->p);  // breaks the loop...
+            transcode->at = cast(Byte*, L->feed->p);  // breaks the loop...
 
             // If we're using a va_list, we start the scan with no C string
             // pointer to serve as the beginning of line for an error message.
@@ -2546,7 +2546,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     Size mold_size = Strand_Size(mo->strand) - mo->base.size;
     Length mold_len = Strand_Len(mo->strand) - mo->base.index;
-    Utf8(const*) utf8 = c_cast(Utf8(*), Binary_At(mo->strand, mo->base.size));
+    Utf8(const*) utf8 = cast(Utf8(*), Binary_At(mo->strand, mo->base.size));
 
     if (mold_size == 0) {
         assert(mold_len == 0);

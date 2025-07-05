@@ -592,12 +592,12 @@ INLINE Length Sequence_Len(const Cell* c) {
     if (Is_Base_A_Cell(payload1))  // see if it's a pairing
         return 2;  // compressed 2-element sequence, sizeof(Stub)
 
-    switch (Stub_Flavor(c_cast(Flex*, payload1))) {
+    switch (Stub_Flavor(cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL :  // compressed single WORD! sequence
         return 2;
 
       case FLAVOR_SOURCE : {  // uncompressed sequence
-        const Source* a = c_cast(Source*, payload1);
+        const Source* a = cast(Source*, payload1);
         if (Mirror_Of(a))
             return 2;  // e.g. `(a):` stores TYPE_GROUP in the mirror byte
         assert(Array_Len(a) >= 2);
@@ -643,7 +643,7 @@ INLINE Element* Copy_Sequence_At(
 
     const Base* payload1 = CELL_PAYLOAD_1(sequence);
     if (Is_Base_A_Cell(payload1)) {  // test if it's a pairing
-        const Pairing* p = c_cast(Pairing*, payload1);  // compressed pair
+        const Pairing* p = cast(Pairing*, payload1);  // compressed pair
         if (n == 0)
             return Copy_Cell(out, Pairing_First(p));
         assert(n == 1);
@@ -662,7 +662,7 @@ INLINE Element* Copy_Sequence_At(
         return out; }
 
       case FLAVOR_SOURCE : {  // uncompressed sequence, or compressed "mirror"
-        const Source* a = c_cast(Source*, SERIESLIKE_PAYLOAD_1_BASE(sequence));
+        const Source* a = cast(Source*, SERIESLIKE_PAYLOAD_1_BASE(sequence));
         if (Mirror_Of(a)) {  // [4]
             assert(n < 2);
             if (Get_Cell_Flag(sequence, LEADING_SPACE) ? n == 0 : n != 0)
@@ -718,7 +718,7 @@ INLINE Context* Sequence_Binding(const Element* sequence) {
     if (Is_Base_A_Cell(payload1))  // see if it's a pairing
         return Cell_Binding(sequence);  // compressed 2-element sequence
 
-    switch (Stub_Flavor(c_cast(Flex*, payload1))) {
+    switch (Stub_Flavor(cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL:  // compressed single WORD! sequence
         return SPECIFIED;
 

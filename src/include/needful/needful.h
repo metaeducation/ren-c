@@ -377,10 +377,10 @@
 // a proxy variable in the body if you want mutable access).
 //
 // 1. If writing a simple wrapper whose only purpose is to pipe const-correct
-//    output results from the input's constness, a trick is to use `c_cast()`
+//    output results from the input's constness, a trick is to use `cast()`
 //    which is a "const-preserving cast".
 //
-//    #define Get_Member_As_Foo(ptr)  c_cast(Foo*, Get_Member(ptr))
+//    #define Get_Member_As_Foo(ptr)  cast(Foo*, Get_Member(ptr))
 //
 // 2. The C++ version of MUTABLE_IF_C() actually spits out a `template<>`
 //    prelude.  If we didn't offer a "hook" to that, then if you wrote:
@@ -396,7 +396,7 @@
 //
 
 #define CONST_IF_C(param_type) \
-    const param_type  // Note: use c_cast() macros instead, if you can [1]
+    const param_type  // Note: use cast() macros instead, if you can [1]
 
 #define MUTABLE_IF_C(return_type, ...) \
     __VA_ARGS__ return_type  // __VA_ARGS__ needed for INLINE etc. [2]
@@ -440,9 +440,9 @@
 //
 // POINTER CONSTNESS
 //    * Adding mutability:         m_cast()    // const T* => T*
-//    * Preserving constness:      c_cast()    // T1* => T2* ...or...
+//    * Preserving constness:      cast()    // T1* => T2* ...or...
 //                                               // const T1* => const T2*
-//    * Unhookable c_cast():     u_cast()    // c_cast() w/no h_cast() hooks
+//    * Unhookable cast():     u_cast()    // cast() w/no h_cast() hooks
 //
 // TYPE CONVERSIONS
 //    * Non-pointer to pointer:    p_cast()    // intptr_t => T*
@@ -486,7 +486,6 @@
 #define u_cast            Needful_Unhookable_Cast
 #define h_cast            Needful_Hookable_Cast
 
-#define c_cast(T,expr)    ((T)(expr))
 #define m_cast            Needful_Mutable_Cast
 
 #define s_cast(bytes)   u_cast(char*, ensure(unsigned char*, (bytes)))
@@ -501,7 +500,7 @@
 #define strict_u_cast(T,expr)    u_cast(T,(expr))
 #define strict_h_cast(T,expr)    h_cast(T,(expr))
 
-#define strict_c_cast(T,expr)    c_cast(T,(expr))
+#define strict_c_cast(T,expr)    cast(T,(expr))
 #define strict_u_cast(T,expr)  u_cast(T,(expr))
 
 #define strict_cast(T,expr)      cast(T,(expr))  // however you define cast()

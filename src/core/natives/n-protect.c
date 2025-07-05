@@ -155,8 +155,8 @@ void Protect_Flex(const Flex* f, REBLEN index, Flags flags)
 
     Flip_Stub_To_Black(f);  // recursion protection
 
-    const Value* val_tail = Flex_Tail(Value, c_cast(Array*, f));
-    const Value* val = Flex_At(Value, c_cast(Array*, f), index);
+    const Value* val_tail = Flex_Tail(Value, cast(Array*, f));
+    const Value* val = Flex_At(Value, cast(Array*, f), index);
     for (; val != val_tail; val++)
         Protect_Value(val, flags);
 }

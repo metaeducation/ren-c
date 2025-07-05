@@ -124,7 +124,7 @@ REBLEN Modify_Array(
         // use passed in Cell
         ilen = 1;
         assert(Not_Antiform(src_val));
-        src_rel = c_cast(Element*, src_val);
+        src_rel = cast(Element*, src_val);
     }
 
     REBLEN size = dups * ilen;  // total to insert (dups is > 0)
@@ -397,7 +397,7 @@ REBLEN Modify_String_Or_Blob(
         }
         else {
             if (Is_Stub_Strand(b)) {  // guaranteed valid UTF-8
-                const Strand* str = c_cast(Strand*, b);
+                const Strand* str = cast(Strand*, b);
                 if (Is_Continuation_Byte(*src_ptr))
                     abrupt_panic (Error_Bad_Utf8_Bin_Edit_Raw());
 

@@ -1405,7 +1405,7 @@ Option(Error*) Trap_Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
     assert(not Is_Blackhole_Slot(slot));
 
     DECLARE_ELEMENT (temp);  // don't have to guard--slot guards
-    Copy_Cell(temp, c_cast(Element*, slot));
+    Copy_Cell(temp, cast(Element*, slot));
   #if RUNTIME_CHECKS
     LIFT_BYTE(temp) = NOQUOTE_2;
     assert(Is_Pinned_Form_Of(WORD, temp));  // alias

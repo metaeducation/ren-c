@@ -780,7 +780,7 @@ DECLARE_NATIVE(COMPOSE2)
     transcode->at = at;  // scanner needs at, e.g. "a])", not "([a])", see [2]
 
     Count pattern_depth = TOP_INDEX - base;  // number of pattern levels pushed
-    Utf8(const*) start = c_cast(Utf8(*),
+    Utf8(const*) start = cast(Utf8(*),
         u_cast(Byte*, at) - pattern_depth  // start replacement at "([a])"
     );
 
@@ -992,7 +992,7 @@ DECLARE_NATIVE(COMPOSE2)
             panic ("For the moment, COMPOSE string only does NOQUOTE_2");
 
         if (Is_File(eval) and Is_File(input)) {  // "File calculus" [1]
-            const Byte* at = c_cast(Byte*, head) + at_offset;
+            const Byte* at = cast(Byte*, head) + at_offset;
             bool eval_slash_tail = (
                 Series_Len_At(eval) != 0
                 and Codepoint_Back_Is_Ascii_Value(Cell_Strand_Tail(eval), '/')

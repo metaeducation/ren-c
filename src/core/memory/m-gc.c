@@ -298,7 +298,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         // !!! KeyLists may not be the only category that are just a straight
         // list of base pointers.
         //
-        const KeyList* keylist = c_cast(KeyList*, s);
+        const KeyList* keylist = cast(KeyList*, s);
         const Key* tail = Flex_Tail(Key, keylist);
         const Key* key = Flex_Head(Key, keylist);
         for (; key != tail; ++key) {
@@ -313,7 +313,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         }
     }
     else if (Stub_Holds_Cells(s)) {
-        Array* a = m_cast(Array*, c_cast(Array*, s));
+        Array* a = m_cast(Array*, cast(Array*, s));
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
 
@@ -698,14 +698,14 @@ static void Mark_Guarded(void)
     REBLEN n = Flex_Used(g_gc.guarded);
     for (; n > 0; --n, ++pp) {
         if (FIRST_BYTE(*pp) == 0) {  // assume erased cell, tolerate [1]
-            assert(Is_Cell_Erased(c_cast(Cell*, *pp)));
+            assert(Is_Cell_Erased(cast(Cell*, *pp)));
             continue;
         }
 
         Base** npp = cast(Base**, pp);
         if (Is_Base_A_Cell(*npp)) {
             assert(Not_Base_Marked(*npp));  // shouldn't live in array [2]
-            Queue_Mark_Maybe_Erased_Cell_Deep(c_cast(Cell*, *npp));
+            Queue_Mark_Maybe_Erased_Cell_Deep(cast(Cell*, *npp));
         }
         else  // a Stub
             Queue_Mark_Base_Deep(npp);
@@ -1414,13 +1414,13 @@ REBLEN Recycle(void)
 void Push_Lifeguard(const void* p)  // BASE_FLAG_BASE may not be set [1]
 {
     if (FIRST_BYTE(p) == 0) {  // assume erased cell [1]
-        assert(Is_Cell_Erased(c_cast(Cell*, p)));
+        assert(Is_Cell_Erased(cast(Cell*, p)));
     }
-    else if (Is_Base_A_Cell(c_cast(Base*, p))) {
-        assert(Not_Base_Marked(c_cast(Base*, p)));  // don't guard during GC
+    else if (Is_Base_A_Cell(cast(Base*, p))) {
+        assert(Not_Base_Marked(cast(Base*, p)));  // don't guard during GC
 
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER
-        const Cell* cell = c_cast(Cell*, p);
+        const Cell* cell = cast(Cell*, p);
 
         Base* containing = Try_Find_Containing_Base_Debug(v);
         if (containing)  // cell shouldn't live in array or pairing [2]
@@ -1428,9 +1428,9 @@ void Push_Lifeguard(const void* p)  // BASE_FLAG_BASE may not be set [1]
       #endif
     }
     else {  // It's a Stub
-        assert(Is_Base_Readable(c_cast(Base*, p)));  // not diminished
-        assert(Not_Base_Marked(c_cast(Base*, p)));  // don't guard during GC
-        assert(Is_Base_Managed(c_cast(Base*, p)));  // [3]
+        assert(Is_Base_Readable(cast(Base*, p)));  // not diminished
+        assert(Not_Base_Marked(cast(Base*, p)));  // don't guard during GC
+        assert(Is_Base_Managed(cast(Base*, p)));  // [3]
     }
 
     if (Is_Flex_Full(g_gc.guarded))

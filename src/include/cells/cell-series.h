@@ -125,7 +125,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     else {
         assert(Any_Sequence_Type(heart));
         assert(Is_Stub_Source(f));
-        assert(Is_Source_Frozen_Shallow(c_cast(Source*, f)));
+        assert(Is_Source_Frozen_Shallow(cast(Source*, f)));
     }
   #endif
 

@@ -356,7 +356,7 @@ Result(Element*) Alias_Any_Sequence_As(
 
         const Base* payload1 = CELL_PAYLOAD_1(seq);
         if (Is_Base_A_Cell(payload1)) {  // Pairings hold two items [2]
-            const Pairing* p = c_cast(Pairing*, payload1);
+            const Pairing* p = cast(Pairing*, payload1);
             Context *binding = List_Binding(seq);
             Source* a = Make_Source_Managed(2);
             Set_Flex_Len(a, 2);
@@ -365,7 +365,7 @@ Result(Element*) Alias_Any_Sequence_As(
             Freeze_Source_Shallow(a);
             Init_Any_List(out, as, a);
         }
-        else switch (Stub_Flavor(c_cast(Flex*, payload1))) {
+        else switch (Stub_Flavor(cast(Flex*, payload1))) {
           case FLAVOR_SYMBOL: {
             Source* a = Make_Source_Managed(2);
             Set_Flex_Len(a, 2);

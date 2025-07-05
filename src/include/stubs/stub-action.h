@@ -84,7 +84,7 @@ INLINE Details* Phase_Details(Phase* p) {
 
 INLINE bool Is_Frame_Details(const Cell* v) {
     assert(Heart_Of(v) == TYPE_FRAME);
-    return Is_Stub_Details(c_cast(Stub*, CELL_FRAME_PAYLOAD_1_PHASE(v)));
+    return Is_Stub_Details(cast(Stub*, CELL_FRAME_PAYLOAD_1_PHASE(v)));
 }
 
 #define Is_Frame_Exemplar(v) (not Is_Frame_Details(v))

@@ -650,7 +650,7 @@ DECLARE_NATIVE(JOIN)
             Size size = Strand_Size(mo->strand) - mo->base.size;
 
             Expand_Flex_Tail(buf, size);
-            memcpy(Binary_At(buf, used), c_cast(Byte*, utf8), size);
+            memcpy(Binary_At(buf, used), cast(Byte*, utf8), size);
 
             Drop_Mold(mo);
         }
@@ -677,7 +677,7 @@ DECLARE_NATIVE(JOIN)
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, at);
 
             Expand_Flex_Tail(buf, utf8_size);
-            memcpy(Binary_At(buf, used), c_cast(Byte*, utf8), utf8_size);
+            memcpy(Binary_At(buf, used), cast(Byte*, utf8), utf8_size);
             /*Set_Flex_Len(buf, used + utf8_size); */
             break; }
 
@@ -963,7 +963,7 @@ DECLARE_NATIVE(DEHEX)
                 cp = Step_Back_Codepoint(cp);
                 cp = Step_Back_Codepoint(cp);
                 cp = Step_Back_Codepoint(cp);
-                assert(*c_cast(Byte*, cp) == '%');
+                assert(*cast(Byte*, cp) == '%');
                 break;
             }
 

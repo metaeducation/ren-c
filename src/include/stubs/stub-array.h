@@ -260,7 +260,7 @@ enum {
 
     INLINE void Assert_Flex(const Flex* f) {
         if (Stub_Holds_Cells(f))
-            Assert_Array_Core(c_cast(Array*, f));  // calls _Flex_Basics()
+            Assert_Array_Core(cast(Array*, f));  // calls _Flex_Basics()
         else
             Assert_Flex_Basics_Core(f);
     }

@@ -215,7 +215,7 @@ uint32_t Hash_Cell(const Cell* cell)
         if (Is_Base_A_Cell(payload1))
             goto hash_pair;
 
-        switch (Stub_Flavor(c_cast(Flex*, payload1))) {
+        switch (Stub_Flavor(cast(Flex*, payload1))) {
           case FLAVOR_SYMBOL:
             goto hash_any_word;
 

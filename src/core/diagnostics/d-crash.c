@@ -132,9 +132,9 @@ ATTRIBUTE_NO_RETURN void Crash_With_Cell_Debug(const Cell* c) {
     Printf_Stderr("Cell.lift_byte=%d\n", u_cast(int, LIFT_BYTE(c)));
 
     if (Cell_Payload_1_Needs_Mark(c))
-        Printf_Stderr("has payload1: %p\n", c_cast(void*, CELL_PAYLOAD_1(c)));
+        Printf_Stderr("has payload1: %p\n", cast(void*, CELL_PAYLOAD_1(c)));
     if (Cell_Payload_2_Needs_Mark(c))
-        Printf_Stderr("has payload2: %p\n", c_cast(void*, CELL_PAYLOAD_2(c)));
+        Printf_Stderr("has payload2: %p\n", cast(void*, CELL_PAYLOAD_2(c)));
 
     Base* containing = Try_Find_Containing_Base_Debug(c);
 
@@ -142,11 +142,11 @@ ATTRIBUTE_NO_RETURN void Crash_With_Cell_Debug(const Cell* c) {
         Printf_Stderr("No containing Stub or Pairing (global variable?)\n");
         if (Cell_Payload_1_Needs_Mark(c) and Is_Base_A_Stub(CELL_PAYLOAD_1(c))) {
             Printf_Stderr("Crashing on payload1 in case it helps\n");
-            Crash_With_Stub_Debug(c_cast(Stub*, CELL_PAYLOAD_1(c)));
+            Crash_With_Stub_Debug(cast(Stub*, CELL_PAYLOAD_1(c)));
         }
         if (Cell_Payload_2_Needs_Mark(c) and Is_Base_A_Stub(CELL_PAYLOAD_2(c))) {
             Printf_Stderr("No payload1, crashing on payload2 in case it helps\n");
-            Crash_With_Stub_Debug(c_cast(Stub*, CELL_PAYLOAD_2(c)));
+            Crash_With_Stub_Debug(cast(Stub*, CELL_PAYLOAD_2(c)));
         }
         Printf_Stderr("No payload1 or payload2 for further info, aborting\n");
         abort();
@@ -257,14 +257,14 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
       case DETECTED_AS_UTF8: // string might be empty...handle specially?
         strncat(
             buf,
-            c_cast(char*, p),
+            cast(char*, p),
             PANIC_BUF_SIZE - strsize(buf)
         );
         break;
 
       case DETECTED_AS_STUB: {  // non-FREE stub
       #if DEBUG_FANCY_CRASH
-        const Stub* s = c_cast(Stub*, p);
+        const Stub* s = cast(Stub*, p);
         Printf_Stderr("Stub detected...\n");
         if (Stub_Flavor(s) == FLAVOR_VARLIST) {
             Printf_Stderr("...and it's a varlist...\n");
@@ -282,7 +282,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
       case DETECTED_AS_CELL:
       case DETECTED_AS_END: {
       #if DEBUG_FANCY_CRASH
-        const Cell* c = c_cast(Cell*, p);
+        const Cell* c = cast(Cell*, p);
         if (Heart_Of(c) == TYPE_WARNING) {
             Printf_Stderr("...crash() on an ERROR! Cell, trying to PROBE...");
             PROBE(c);
@@ -376,7 +376,7 @@ DECLARE_NATIVE(CRASH)
     }
     else {  // interpret reason as a message
         if (Is_Text(info)) {
-            p = c_cast(char*, Cell_Utf8_At(info));
+            p = cast(char*, Cell_Utf8_At(info));
         }
         else if (Is_Warning(info)) {
             p = Cell_Varlist(info);
@@ -493,7 +493,7 @@ void Crash_On_Unwritable_Cell(const Cell* c) {
 void Panic_Cell_Unaligned(Cell* c) {
     printf(
         "Cell address %p not aligned to %d bytes\n",
-        c_cast(void*, (c)),
+        cast(void*, (c)),
         cast(int, ALIGN_SIZE)
     );
     crash (c);

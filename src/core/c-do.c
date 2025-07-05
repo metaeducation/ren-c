@@ -144,7 +144,7 @@ bool Pushed_Continuation(
         assert(flags & LEVEL_FLAG_FORCE_HEAVY_NULLS);  // needed for trick
         Level* grouper = Make_Level_At_Core(
             &The_Group_Branch_Executor,  // evaluates to synthesize branch
-            c_cast(Element*, branch),
+            cast(Element*, branch),
             binding,
             (flags & (~ LEVEL_FLAG_FORCE_HEAVY_NULLS))
         );
@@ -158,7 +158,7 @@ bool Pushed_Continuation(
 
   switch_on_sigil: {
 
-    Option(Sigil) sigil = Sigil_Of(c_cast(Element*, branch));
+    Option(Sigil) sigil = Sigil_Of(cast(Element*, branch));
     if (sigil) {
         switch (unwrap sigil) {
           case SIGIL_META:
@@ -168,7 +168,7 @@ bool Pushed_Continuation(
             break;
 
           case SIGIL_TIE:
-            Plainify(Derelativize(out, c_cast(Element*, branch), binding));
+            Plainify(Derelativize(out, cast(Element*, branch), binding));
             goto just_use_out;
 
           default:
@@ -177,25 +177,25 @@ bool Pushed_Continuation(
     }
     else switch (maybe Type_Of(branch)) {
       case TYPE_QUOTED:
-        Unquotify(Derelativize(out, c_cast(Element*, branch), binding));
+        Unquotify(Derelativize(out, cast(Element*, branch), binding));
         goto just_use_out;
 
       case TYPE_QUASIFORM:
         if (
-            Is_Lifted_Null(c_cast(Element*, branch))
+            Is_Lifted_Null(cast(Element*, branch))
             and (flags & LEVEL_FLAG_FORCE_HEAVY_NULLS)
         ){
             Init_Heavy_Null(out);
         }
         else {
-            Derelativize(out, c_cast(Element*, branch), binding);
+            Derelativize(out, cast(Element*, branch), binding);
             Unliftify_Undecayed(out);
         }
         goto just_use_out;
 
       case TYPE_BLOCK: {
         Level* L = Make_Level_At_Core(
-            &Evaluator_Executor, c_cast(Element*, branch), binding, flags
+            &Evaluator_Executor, cast(Element*, branch), binding, flags
         );
         Init_Void(Evaluator_Primed_Cell(L));
 
@@ -226,7 +226,7 @@ bool Pushed_Continuation(
         }
 
         arg = First_Unspecialized_Arg(&param, L);
-        Derelativize(arg, c_cast(Element*, branch), binding);
+        Derelativize(arg, cast(Element*, branch), binding);
         KIND_BYTE(arg) = TYPE_BLOCK;  // :[1 + 2] => [3], not :[3]
 
         Push_Level_Erase_Out_If_State_0(out, L);

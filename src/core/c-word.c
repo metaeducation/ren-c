@@ -359,12 +359,12 @@ Result(const Symbol*) Intern_Utf8_Managed_Core(  // implicitly managed [1]
     //    Upon the initial interning of a Symbol, this list is empty.
 
     if (not synonym) {
-        Tweak_Link_Next_Synonym(b, c_cast(Symbol*, b));  // 1-item circle list
+        Tweak_Link_Next_Synonym(b, cast(Symbol*, b));  // 1-item circle list
         assert(SECOND_UINT16(&b->info) == SYM_0);  // Startup may assign [1]
     }
     else {  // synonym for existing canon, add to circularly linked list
         Tweak_Link_Next_Synonym(b, Link_Next_Synonym(synonym));
-        Tweak_Link_Next_Synonym(synonym, c_cast(Symbol*, b));
+        Tweak_Link_Next_Synonym(synonym, cast(Symbol*, b));
 
         assert(SECOND_UINT16(&b->info) == SYM_0);
         SET_SECOND_UINT16(&b->info, maybe Symbol_Id(synonym));  // same id [2]

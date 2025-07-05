@@ -2,7 +2,7 @@
 
 INLINE const Binary* Cell_Binary(const Cell* cell) {
     assert(Unchecked_Heart_Of(cell) == TYPE_BLOB);
-    return c_cast(Binary*, Cell_Flex(cell));
+    return cast(Binary*, Cell_Flex(cell));
 }
 
 #define Cell_Binary_Ensure_Mutable(cell) \

@@ -52,7 +52,7 @@
 //
 // F. By default, most of the cast() are defined to use the runtime validation
 //    hooks.  However, it's possible to easily turn them off...so that a
-//    macro like c_cast() would not run validation.  Simply do an #include:
+//    macro like cast() would not run validation.  Simply do an #include:
 //
 //       #include "needful/cast-hooks-off.h"
 //
@@ -72,11 +72,27 @@
 // structures in debug builds.
 //
 
-#define Xtreme_Cast(T,expr) \
-    ((T)(expr))  // in both C and C++, just an alias for parentheses cast
+/* no need to override the C definition from %needful.h here */
 
-#undef x_cast
-#define x_cast  Xtreme_Cast
+
+//=//// u_cast(): UNHOOKABLE CONST-PRESERVING CAST ////////////////////////=//
+//
+// This cast is useful for defining macros that want to mirror the constness
+// of the input pointer, when you don't know if the caller is passing a
+// const or mutable pointer in.  The C build will always give you a mutable
+// pointer back, so you have to rely on the C++ build for const enforcement.
+//
+// It can also be nice as a shorthand, even if you know the input is const:
+//
+//     const Float* Const_Number_To_Float(const Number* n) {
+//         return cast(Float*, n);  // briefer than `cast(const Float*, n)`
+//     }
+//
+
+#undef Needful_Unhookable_Cast
+#define Needful_Unhookable_Cast(T,expr) /* outer parens [C] */ \
+    Needful_Xtreme_Cast(needful_merge_const(decltype(expr), T), (expr))
+
 
 
 //=//// m_cast(): MUTABILITY CAST /////////////////////////////////////////=//
@@ -277,7 +293,7 @@ typename std::enable_if<  // For arrays: decay to pointer
     ResultType
 >::type
 Hookable_Cast_Helper(FromRef const && from) {
-    using From = typename std::decay<From>::type;
+    using From = typename std::decay<FromRef>::type;
     using ConstFrom = needful_constify_type(From);
     using ConstTo = needful_constify_type(To);
 
@@ -343,32 +359,6 @@ Hookable_Cast_Helper(FromRef&& from)
 #undef Needful_Hookable_Cast
 #define Needful_Hookable_Cast(T,expr) /* outer parens [C] */ \
     (needful::Hookable_Cast_Helper<T>(expr))  // func: universal refs [3]
-
-
-//=//// c_cast(): CONST-PRESERVING CAST ///////////////////////////////////=//
-//
-// This cast is useful for defining macros that want to mirror the constness
-// of the input pointer, when you don't know if the caller is passing a
-// const or mutable pointer in.  The C build will always give you a mutable
-// pointer back, so you have to rely on the C++ build for const enforcement.
-//
-// It can also be nice as a shorthand, even if you know the input is const:
-//
-//     const Float* Const_Number_To_Float(const Number* n) {
-//         return c_cast(Float*, n);  // briefer than `cast(const Float*, n)`
-//     }
-//
-
-#define Hookable_Const_Preserving_Cast(T,expr) /* outer parens [C] */ \
-    (Needful_Hookable_Cast(needful_mirror_const(decltype(expr), T), (expr)))
-
-
-#undef c_cast
-#define c_cast  Hookable_Const_Preserving_Cast  // can override [F]
-
-#undef Needful_Unhookable_Cast
-#define Needful_Unhookable_Cast(T,expr) /* outer parens [C] */ \
-    (x_cast(needful_merge_const(decltype(expr), T), (expr)))
 
 
 //=//// downcast(): CAST THAT WOULD BE SAFE FOR PLAIN ASSIGNMENT //////////=//

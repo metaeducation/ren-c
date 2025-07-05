@@ -11,7 +11,7 @@ INLINE const Strand* Cell_Strand(const Cell* v) {
         return Word_Symbol(v);
 
     assert(Stringlike_Cell(v));
-    return c_cast(Strand*, Cell_Flex(v));
+    return cast(Strand*, Cell_Flex(v));
 }
 
 #define Cell_Strand_Ensure_Mutable(v) \
@@ -27,7 +27,7 @@ INLINE const Strand* Cell_Strand(const Cell* v) {
 INLINE Length Series_Len_Head(const Cell* v) {
     const Flex* f = Cell_Flex(v);
     if (Is_Stub_Strand(f) and Heart_Of(v) != TYPE_BLOB)
-        return Strand_Len(c_cast(Strand*, f));
+        return Strand_Len(cast(Strand*, f));
     return Flex_Used(f);
 }
 
@@ -58,7 +58,7 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
     if (not Cell_Payload_1_Needs_Mark(c))  // must store bytes in cell direct
         return u_cast(Utf8(const*), c->payload.at_least_8);
 
-    const Strand* str = c_cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(c));
+    const Strand* str = cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(c));
     return Strand_Head(str);  // symbols are strings
 }
 
@@ -68,7 +68,7 @@ INLINE Utf8(const*) String_At(const Cell* v) {
     if (not Any_String_Type(heart))  // non-positional: URL, RUNE, WORD...
         return Cell_Utf8_Head(v);  // might store utf8 directly in cell
 
-    const Strand* str = c_cast(Strand*, Cell_Flex(v));
+    const Strand* str = cast(Strand*, Cell_Flex(v));
     REBIDX i = SERIES_INDEX_UNBOUNDED(v);
     if (i < 0 or i > Strand_Len(str))
         abrupt_panic (Error_Index_Out_Of_Range_Raw());
@@ -85,7 +85,7 @@ INLINE Utf8(const*) Cell_Strand_Tail(const Cell* c) {
         return cast(Utf8(const*), c->payload.at_least_8 + size);
     }
 
-    const Strand* str = c_cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(c));
+    const Strand* str = cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(c));
     return Strand_Tail(str);
 }
 
@@ -105,7 +105,7 @@ INLINE REBLEN String_Len_At(const Cell* c) {
     if (not Stringlike_Has_Stub(c))  // content directly in cell
         return c->extra.at_least_4[IDX_EXTRA_LEN];
 
-    const Strand* str = c_cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(c));
+    const Strand* str = cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(c));
     return Strand_Len(str);
 }
 

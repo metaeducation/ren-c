@@ -208,7 +208,7 @@ const Value* Datatype_From_Type(Type type)
 {
     assert(type <= MAX_TYPE);
     Patch* patch = &g_datatype_patches[cast(Byte, type)];
-    const Value* datatype = c_cast(Value*, Stub_Cell(patch));
+    const Value* datatype = cast(Value*, Stub_Cell(patch));
     assert(Is_Datatype(datatype));
     return datatype;
 }
@@ -229,7 +229,7 @@ const Value* Datatype_Of(const Atom* value)
     const ExtraHeart* ext_heart = Cell_Extra_Heart(value);
     assert(Is_Stub_Patch(ext_heart));
 
-    const Value* datatype = c_cast(Value*, Stub_Cell(ext_heart));
+    const Value* datatype = cast(Value*, Stub_Cell(ext_heart));
     assert(Is_Datatype(datatype));
     return datatype;
 }
@@ -544,7 +544,7 @@ Result(Element*) Unsingleheart_Sequence(Element* out)
   test_for_pairing_sequence: {
 
     if (Is_Base_A_Cell(payload1)) {  // compressed 2-elements, sizeof(Stub)
-        const Pairing* pairing = c_cast(Pairing*, payload1);
+        const Pairing* pairing = cast(Pairing*, payload1);
         if (Is_Space(Pairing_First(pairing))) {
             assert(not Is_Space(Pairing_Second(pairing)));
             Derelativize(out, Pairing_Second(pairing), Cell_Binding(out));
@@ -559,14 +559,14 @@ Result(Element*) Unsingleheart_Sequence(Element* out)
 
 } test_for_flex_sequence: {
 
-    const Flex* f = c_cast(Flex*, payload1);
+    const Flex* f = cast(Flex*, payload1);
     if (Is_Stub_Symbol(f)) {
         KIND_BYTE(out) = TYPE_WORD;
         Clear_Cell_Flag(out, LEADING_SPACE);  // !!! necessary?
         return out;
     }
 
-    Option(Heart) mirror = Mirror_Of(c_cast(Source*, f));
+    Option(Heart) mirror = Mirror_Of(cast(Source*, f));
     if (mirror) {  // no length 2 sequence arrays unless mirror
         KIND_BYTE(out) = unwrap mirror;
         Clear_Cell_Flag(out, LEADING_SPACE);  // !!! necessary

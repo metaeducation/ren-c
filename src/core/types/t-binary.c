@@ -119,7 +119,7 @@ DECLARE_NATIVE(ENCODE_IEEE_754) {
     Byte* bp = Binary_Head(bin);
 
     REBDEC d = VAL_DECIMAL(arg);
-    const Byte* cp = c_cast(Byte*, &d);
+    const Byte* cp = cast(Byte*, &d);
 
   #if defined(ENDIAN_LITTLE)
     REBLEN n;
@@ -202,7 +202,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
         REBLEN len = Sequence_Len(arg);
         Binary* b = Make_Binary(len);
         Byte* head = Binary_Head(b);
-        if (Try_Get_Sequence_Bytes(head, c_cast(Element*, arg), len)) {
+        if (Try_Get_Sequence_Bytes(head, cast(Element*, arg), len)) {
             Term_Binary_Len(b, len);
             return Init_Blob(OUT, b);
         }
@@ -656,7 +656,7 @@ Result(Element*) Alias_Blob_As(
             TASTE_BYTE(m_cast(Binary*, bin)) = FLAVOR_0;  // next step sets
             m_cast(Binary*, bin)->header.bits |= STUB_MASK_STRAND;
 
-            str = c_cast(Strand*, bin);
+            str = cast(Strand*, bin);
 
             Term_Strand_Len_Size(
                 m_cast(Strand*, str),  // legal for tweaking cached data
@@ -668,7 +668,7 @@ Result(Element*) Alias_Blob_As(
             // !!! TBD: cache index/offset
         }
         else {  // it's a string, but doesn't accelerate offset -> index
-            str = c_cast(Strand*, bin);
+            str = cast(Strand*, bin);
             index = 0;  // we'll count up to find the codepoint index
 
             Utf8(const*) cp = Strand_Head(str);
@@ -906,8 +906,8 @@ static int Qsort_Byte_Callback(void *state, const void *v1, const void *v2)
 {
     Flags* flags = cast(Flags*, state);
 
-    Byte b1 = *c_cast(Byte*, v1);
-    Byte b2 = *c_cast(Byte*, v2);
+    Byte b1 = *cast(Byte*, v1);
+    Byte b2 = *cast(Byte*, v2);
 
     if (*flags & CC_FLAG_REVERSE)
         return b2 - b1;

@@ -152,7 +152,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Cell_Payload_1_Needs_Mark(v));
         if (Not_Base_Accessible_Canon(CELL_BITSET_BINARY(v)))
             break;
-        const Flex* f = c_cast(Flex*, CELL_BITSET_BINARY(v));
+        const Flex* f = cast(Flex*, CELL_BITSET_BINARY(v));
         Assert_Flex_Term_Core(f);
         assert(Is_Base_Marked(f));
         break; }
@@ -202,7 +202,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Not_Base_Accessible_Canon(SERIESLIKE_PAYLOAD_1_BASE(v)))
             break;
 
-        const Binary* b = c_cast(Binary*, SERIESLIKE_PAYLOAD_1_BASE(v));
+        const Binary* b = cast(Binary*, SERIESLIKE_PAYLOAD_1_BASE(v));
         assert(Stub_Holds_Bytes(b));
         Assert_Flex_Term_If_Needed(b);
         assert(Is_Base_Marked(b));
@@ -214,7 +214,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Not_Base_Accessible_Canon(SERIESLIKE_PAYLOAD_1_BASE(v)))
             break;
 
-        const Strand* s = c_cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(v));
+        const Strand* s = cast(Strand*, SERIESLIKE_PAYLOAD_1_BASE(v));
         Assert_Flex_Term_If_Needed(s);
 
         assert(Stub_Holds_Bytes(s));
@@ -327,13 +327,13 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Not_Base_Accessible_Canon(SERIESLIKE_PAYLOAD_1_BASE(v)))
             break;
 
-        const Array* a = c_cast(Array*, SERIESLIKE_PAYLOAD_1_BASE(v));
+        const Array* a = cast(Array*, SERIESLIKE_PAYLOAD_1_BASE(v));
         Assert_Flex_Term_If_Needed(a);
         assert(Is_Base_Marked(a));
 
         if (LIFT_BYTE(v) == ANTIFORM_1) {
             if (heart == TYPE_FENCE) {
-                const Value* value = c_cast(Value*, v);
+                const Value* value = cast(Value*, v);
                 assert(
                     Cell_Datatype_Type(value)
                     == Cell_Datatype_Type_Slow_Debug(value)

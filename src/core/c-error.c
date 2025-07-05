@@ -54,10 +54,10 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
-        return Error_User(c_cast(char*, p));
+        return Error_User(cast(char*, p));
 
       case DETECTED_AS_STUB: {
-        Flex* f = m_cast(Flex*, c_cast(Flex*, p));  // don't mutate
+        Flex* f = m_cast(Flex*, cast(Flex*, p));  // don't mutate
         if (not Is_Stub_Varlist(f))
             crash (f);  // only kind of Flex allowed are contexts of ERROR!
         if (CTX_TYPE(cast(VarList*, f)) != TYPE_WARNING)
@@ -65,11 +65,11 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
         return cast(Error*, f); }
 
       case DETECTED_AS_CELL: {
-        const Atom* atom = c_cast(Atom*, p);
+        const Atom* atom = cast(Atom*, p);
         assert(Is_Cell_Stable(atom));  // !!! Should unstable args be allowed?
         UNUSED(atom);
 
-        const Value* v = c_cast(Value*, p);
+        const Value* v = cast(Value*, p);
 
         if (Is_Base_Root_Bit_Set(v)) {  // API handles must be errors [1]
             Error* error;
@@ -693,12 +693,12 @@ Error* Make_Error_Managed_Vaptr(
                 break;
 
               case DETECTED_AS_CELL: {
-                Copy_Cell(slot, c_cast(Value*, p));
+                Copy_Cell(slot, cast(Value*, p));
                 break; }
 
               case DETECTED_AS_STUB: {  // let symbols act as words
-                assert(Is_Stub_Symbol(c_cast(Stub*, p)));
-                Init_Word(slot, c_cast(Symbol*, p));
+                assert(Is_Stub_Symbol(cast(Stub*, p)));
+                Init_Word(slot, cast(Symbol*, p));
                 break; }
 
               default:
@@ -1388,7 +1388,7 @@ static void Mold_Element_Limit(Molder* mo, Element* v, REBLEN limit)
 
     if (end_len - start_len > limit) {
         Utf8(const*) at = cast(Utf8(const*),
-            c_cast(Byte*, Strand_Head(str)) + start_size
+            cast(Byte*, Strand_Head(str)) + start_size
         );
         REBLEN n = 0;
         for (; n < limit; ++n)

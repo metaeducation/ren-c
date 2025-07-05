@@ -331,7 +331,7 @@ Result(Value*) Get_Chain_Push_Refinements(
             Sink(Atom) atom_spare = u_cast(Atom*, spare);
             if (Eval_Value_Throws(
                 atom_spare,
-                c_cast(Element*, at),
+                cast(Element*, at),
                 Derive_Binding(derived, at)
             )){
                 panic (Error_No_Catch_For_Throw(TOP_LEVEL));
@@ -394,7 +394,7 @@ Result(Zero) Get_Path_Push_Refinements(Level* level_)
     if (Is_Base_A_Cell(payload1)) {
         // pairing, but "Listlike", so List_At() will work on it
     }
-    else switch (Stub_Flavor(c_cast(Flex*, payload1))) {
+    else switch (Stub_Flavor(cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {  // `/a` or `a/`
         Element* spare = Copy_Cell(SPARE, path);
         KIND_BYTE(spare) = TYPE_WORD;
@@ -452,7 +452,7 @@ Result(Zero) Get_Path_Push_Refinements(Level* level_)
         Get_Chain_Push_Refinements(
             u_cast(Init(Value), OUT),
             SPARE,
-            c_cast(Element*, at),
+            cast(Element*, at),
             Derive_Binding(binding, at)
         )
         excepted (e) {
@@ -924,7 +924,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     if (Is_Base_A_Cell(payload1)) {  // pair optimization
         // pairings considered "Listlike", handled by List_At()
     }
-    else switch (Stub_Flavor(c_cast(Flex*, payload1))) {
+    else switch (Stub_Flavor(cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {
         if (Get_Cell_Flag(scratch_var, LEADING_SPACE)) {  // `/a` or `.a`
             abrupt_panic ("Leading dot selection is being redesigned.");

@@ -722,7 +722,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     Value* v = Decay_If_Unstable(atom);
     if (
         Is_Tag(v)
-        and strcmp(c_cast(char*, Cell_Utf8_At(v)), "redo") == 0
+        and strcmp(cast(char*, Cell_Utf8_At(v)), "redo") == 0
     ){
         gather_args = LIB(NULL);
     }
