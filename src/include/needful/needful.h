@@ -533,13 +533,6 @@
 
 #define f_cast(T,expr)    ((T)(expr))
 
-// Strict cast alternatives because GCC doesn't follow the C++ standard [3]
-
-#define strict_u_cast(T,expr)    u_cast(T,(expr))
-#define strict_h_cast(T,expr)    h_cast(T,(expr))
-
-#define strict_cast(T,expr)      cast(T,(expr))  // however you define cast()
-
 
 
 //=//// attempt, until, whilst: ENHANCED LOOP MACROS //////////////////////=//
