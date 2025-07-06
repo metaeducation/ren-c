@@ -548,13 +548,13 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Time)
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
         default:
-            abrupt_panic (picker);
+            panic (picker);
         }
     }
     else if (Is_Integer(picker))
         i = VAL_INT32(picker) - 1;
     else
-        abrupt_panic (picker);
+        panic (picker);
 
     REB_TIMEF tf;
     Split_Time(VAL_NANO(time), &tf); // loses sign
@@ -623,7 +623,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Time)
         if (Is_Decimal(poke)) {
             REBDEC f = VAL_DECIMAL(poke);
             if (f < 0.0)
-                abrupt_panic (Error_Out_Of_Range(poke));
+                panic (Error_Out_Of_Range(poke));
 
             tf.s = f;
             tf.n = (f - tf.s) * SEC_SEC;

@@ -140,7 +140,7 @@ Strand* To_REBOL_Path(const Value* string, Flags flags)
             // Handle the vol:dir/file format:
             //
             if (saw_colon or saw_slash)
-                abrupt_panic ("no prior : or / allowed for vol:dir/file format");
+                panic ("no prior : or / allowed for vol:dir/file format");
 
             if (not lead_slash) {
                 //

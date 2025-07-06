@@ -309,7 +309,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
     }
 
     if (not Is_Block(val))
-        abrupt_panic (Error_Invalid_Type_Raw(Datatype_Of(val)));
+        panic (Error_Invalid_Type_Raw(Datatype_Of(val)));
 
     const Element* tail;
     const Element* item = List_At(&tail, val);
@@ -337,13 +337,13 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
                 if (Is_Rune_And_Is_Char(item)) {
                     Codepoint c2 = Rune_Known_Single_Codepoint(item);
                     if (c2 < c)
-                        abrupt_panic (Error_Index_Out_Of_Range_Raw());
+                        panic (Error_Index_Out_Of_Range_Raw());
                     do {
                         Set_Bit(bset, c, set);
                     } while (c++ < c2);  // post-increment test BEFORE overflow
                 }
                 else
-                    abrupt_panic (Error_Bad_Value(item));
+                    panic (Error_Bad_Value(item));
             }
             else
                 Set_Bit(bset, c, set);
@@ -370,12 +370,12 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
                 if (Is_Integer(item)) {
                     n = Int32s(item, 0);
                     if (n < c)
-                        abrupt_panic (Error_Index_Out_Of_Range_Raw());
+                        panic (Error_Index_Out_Of_Range_Raw());
                     for (; c <= n; c++)
                         Set_Bit(bset, c, set);
                 }
                 else
-                    abrupt_panic (Error_Bad_Value(item));
+                    panic (Error_Bad_Value(item));
             }
             else
                 Set_Bit(bset, n, set);
@@ -455,7 +455,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
     }
 
     if (!Any_List(val))
-        abrupt_panic (Error_Invalid_Type_Raw(Datatype_Of(val)));
+        panic (Error_Invalid_Type_Raw(Datatype_Of(val)));
 
     // Loop through block of bit specs
 
@@ -479,13 +479,13 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                 if (Is_Rune_And_Is_Char(item)) {
                     Codepoint c2 = Rune_Known_Single_Codepoint(item);
                     if (c2 < c)
-                        abrupt_panic (Error_Index_Out_Of_Range_Raw());
+                        panic (Error_Index_Out_Of_Range_Raw());
                     for (; c <= c2; c++)
                         if (Check_Bit(bset, c, uncased))
                             return true;
                 }
                 else
-                    abrupt_panic (Error_Bad_Value(item));
+                    panic (Error_Bad_Value(item));
             }
             else
                 if (Check_Bit(bset, c, uncased))
@@ -505,13 +505,13 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
                 if (Is_Integer(item)) {
                     n = Int32s(item, 0);
                     if (n < c)
-                        abrupt_panic (Error_Index_Out_Of_Range_Raw());
+                        panic (Error_Index_Out_Of_Range_Raw());
                     for (; c <= n; c++)
                         if (Check_Bit(bset, c, uncased))
                             return true;
                 }
                 else
-                    abrupt_panic (Error_Bad_Value(item));
+                    panic (Error_Bad_Value(item));
             }
             else
                 if (Check_Bit(bset, n, uncased))
@@ -530,7 +530,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
             break;
 
         default:
-            abrupt_panic (Error_Invalid_Type_Raw(Datatype_Of(item)));
+            panic (Error_Invalid_Type_Raw(Datatype_Of(item)));
         }
     }
     return false;

@@ -353,7 +353,7 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
         Shutdown_Evars(&e1);
         Shutdown_Evars(&e2);
 
-        abrupt_panic ("Illegal comparison");
+        panic ("Illegal comparison");
     }
 
   finished:
@@ -1002,7 +1002,7 @@ const Symbol* Symbol_From_Picker(const Element* context, const Value* picker)
     UNUSED(context);  // Might the picker be context-sensitive?
 
     if (not Is_Word(picker))
-        abrupt_panic (picker);
+        panic (picker);
 
     return Word_Symbol(picker);
 }
@@ -1061,7 +1061,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
     //=//// PROTECT* ///////////////////////////////////////////////////////=//
 
       case SYM_APPEND:
-        abrupt_panic ("APPEND on OBJECT!, MODULE!, etc. replaced with EXTEND");
+        panic ("APPEND on OBJECT!, MODULE!, etc. replaced with EXTEND");
 
       case SYM_EXTEND: {
         INCLUDE_PARAMS_OF_EXTEND;

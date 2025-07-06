@@ -155,7 +155,7 @@ Result(Zero) Init_Invokable_From_Feed(
         return zero;
 
     if (Is_Group(v))  // `requote (append [a b c] #d, <can't-work>)`
-        abrupt_panic ("Actions made with REFRAMER cannot work with GROUP!s");
+        panic ("Actions made with REFRAMER cannot work with GROUP!s");
 
     StackIndex base = TOP_INDEX;
 
@@ -381,7 +381,7 @@ Details* Alloc_Action_From_Exemplar(
         heeded (Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
 
         if (not Typecheck_Coerce(TOP_LEVEL, param, arg, false))
-            abrupt_panic (Error_Arg_Type(label, key, param, arg));
+            panic (Error_Arg_Type(label, key, param, arg));
     }
 
     DECLARE_ELEMENT (elem);

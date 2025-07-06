@@ -76,7 +76,7 @@ bool Try_Match_For_Compose(
 
     while (Series_Len_At(pattern) != 0) {
         if (Series_Len_At(pattern) != 1)
-            abrupt_panic ("COMPOSE patterns only nested length 1 or 0 right now");
+            panic ("COMPOSE patterns only nested length 1 or 0 right now");
 
         if (Series_Len_At(match) == 0)
             return false;  // no nested list or item to match
@@ -92,7 +92,7 @@ bool Try_Match_For_Compose(
             continue;
         }
         if (not (Is_Tag(pattern_1) or Is_File(pattern_1)))
-            abrupt_panic ("COMPOSE non-list patterns just TAG! and FILE! atm");
+            panic ("COMPOSE non-list patterns just TAG! and FILE! atm");
 
         if (Type_Of(match_1) != Type_Of(pattern_1))
             return false;

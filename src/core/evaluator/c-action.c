@@ -1119,7 +1119,7 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
     )){
         Set_Stub_Unreadable(s);
         GC_Kill_Stub(s);  // ^-- needs non-null data unless free
-        abrupt_panic (Error_No_Memory(
+        panic (Error_No_Memory(
             sizeof(Cell) * (num_args + 1 + ONE_IF_POISON_TAILS))
         );
     }

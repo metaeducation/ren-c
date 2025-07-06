@@ -86,7 +86,7 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* c) {
 
     const Base* base = CELL_PARAMETER_PAYLOAD_1_SPEC(c);
     if (base != nullptr and Not_Base_Readable(base))
-        abrupt_panic (Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
 
     return cast(Source*, base);
 }

@@ -149,7 +149,7 @@ EXTERN_C int __wrap_fcntl64(int fd, int cmd, ...)
       case F_SET_FILE_RW_HINT: goto takes_uint64_t_ptr;
 
       default:
-        abrupt_panic ("fcntl64 dependency workaround got unknown F_XXX constant");
+        panic ("fcntl64 dependency workaround got unknown F_XXX constant");
     }
 
   takes_void:

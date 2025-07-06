@@ -610,13 +610,13 @@ EXTERN_C void API_rebResolveNative_internal(
     Bounce bounce = Bounce_From_Bounce_Id(bounce_id);
 
     if (bounce == BOUNCE_DELEGATE)
-        abrupt_panic ("reb.Delegate() not yet supported in JavaScript Natives");
+        panic ("reb.Delegate() not yet supported in JavaScript Natives");
 
     if (bounce == BOUNCE_CONTINUE)
-        abrupt_panic ("reb.Continue() not yet supported in JavaScript Natives");
+        panic ("reb.Continue() not yet supported in JavaScript Natives");
 
     if (not Is_Bounce_An_Atom(bounce))
-        abrupt_panic ("non-Value Bounce returned from JavaScript Native");
+        panic ("non-Value Bounce returned from JavaScript Native");
 
     Value* result = cast(Value*, Atom_From_Bounce(bounce));
     Assert_Cell_Stable(result);

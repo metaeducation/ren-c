@@ -174,7 +174,7 @@ Byte* Compress_Alloc_Core(
         Z_DEFAULT_STRATEGY
     );
     if (ret_init != Z_OK)
-        abrupt_panic (Error_Compression(&strm, ret_init));
+        panic (Error_Compression(&strm, ret_init));
 
     // http://stackoverflow.com/a/4938401
     //
@@ -189,7 +189,7 @@ Byte* Compress_Alloc_Core(
 
     int ret_deflate = deflate(&strm, Z_FINISH);
     if (ret_deflate != Z_STREAM_END)
-        abrupt_panic (Error_Compression(&strm, ret_deflate));
+        panic (Error_Compression(&strm, ret_deflate));
 
     assert(strm.total_out == buf_size - strm.avail_out);
     if (size_out)
@@ -292,7 +292,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
 
     int ret_init = inflateInit2(&strm, window_bits);
     if (ret_init != Z_OK)
-        abrupt_panic (Error_Compression(&strm, ret_init));
+        panic (Error_Compression(&strm, ret_init));
 
     uLong buf_size;  // easiest to speak in zlib uLong vs. signed `Size`
     if (
@@ -301,7 +301,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
     ){
         const Size gzip_min_overhead = 18;  // at *least* 18 bytes
         if (size_in < gzip_min_overhead)
-            abrupt_panic ("GZIP compressed size less than minimum for gzip format");
+            panic ("GZIP compressed size less than minimum for gzip format");
 
         buf_size = Bytes_To_U32_BE(  // size is last 4 bytes [2]
             cast(Byte*, input) + size_in - sizeof(uint32_t)
@@ -328,7 +328,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
             break;  // Finished. (and buffer was big enough)
 
         if (ret_inflate != Z_OK)
-            abrupt_panic (Error_Compression(&strm, ret_inflate));
+            panic (Error_Compression(&strm, ret_inflate));
 
         // Note: `strm.avail_out` isn't necessarily 0 here, first observed
         // with `inflate #{AAAAAAAAAAAAAAAAAAAA}` (which is bad, but still)
@@ -338,7 +338,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
         if (max >= 0 and Cast_Signed(buf_size) >= max) {
             DECLARE_ELEMENT (temp);
             Init_Integer(temp, max);
-            abrupt_panic (Error_Size_Limit_Raw(temp));
+            panic (Error_Size_Limit_Raw(temp));
         }
 
         // Use remaining input amount to guess how much more decompressed

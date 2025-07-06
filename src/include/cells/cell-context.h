@@ -19,8 +19,8 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
     Base* base = CELL_PAYLOAD_1(c);  // ParamList or Details
     if (Not_Base_Readable(base)) {
         if (heart == TYPE_FRAME)
-            abrupt_panic (Error_Expired_Frame_Raw());  // !!! different warning?
-        abrupt_panic (Error_Series_Data_Freed_Raw());
+            panic (Error_Expired_Frame_Raw());  // !!! different warning?
+        panic (Error_Series_Data_Freed_Raw());
     }
 
     while (not Is_Stub_Varlist(cast(Stub*, base))) {
@@ -87,7 +87,7 @@ INLINE Let* Cell_Let(const Cell* c) {
 
     Base* base = CELL_PAYLOAD_1(c);
     if (Not_Base_Readable(base))
-        abrupt_panic (Error_Series_Data_Freed_Raw());
+        panic (Error_Series_Data_Freed_Raw());
 
     return cast(Let*, base);
 }

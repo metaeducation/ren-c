@@ -342,7 +342,7 @@ REBLEN Milliseconds_From_Value(const Value* v) {
     }
 
     if (msec < 0)
-        abrupt_panic (Error_Out_Of_Range(v));
+        panic (Error_Out_Of_Range(v));
 
     return msec;
 }

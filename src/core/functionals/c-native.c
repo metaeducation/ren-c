@@ -311,7 +311,7 @@ void Unregister_Generics(const ExtraGenericTable* generics)
         ExtraGenericInfo* seek = entry->table->ext_info;
         if (seek == nullptr) {
             assert(false);
-            abrupt_panic ("Unregister_Generics: no ext_info in table");
+            panic ("Unregister_Generics: no ext_info in table");
         }
         if (seek == entry->ext_info)  // have to update list head
             entry->table->ext_info = seek->next;
@@ -324,7 +324,7 @@ void Unregister_Generics(const ExtraGenericTable* generics)
                 seek = seek->next;
                 if (seek == nullptr) {
                     assert(false);
-                    abrupt_panic ("Unregister_Generics: ext_info not found");
+                    panic ("Unregister_Generics: ext_info not found");
                 }
             }
         entry->ext_info->next = nullptr;  // null out list link [1]

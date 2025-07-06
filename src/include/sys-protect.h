@@ -103,18 +103,18 @@ INLINE void Panic_If_Read_Only_Flex(const Flex* f) {
         return;
 
     if (Get_Flex_Info(f, AUTO_LOCKED))
-        abrupt_panic (Error_Series_Auto_Frozen_Raw());
+        panic (Error_Series_Auto_Frozen_Raw());
 
     if (Get_Flex_Info(f, HOLD))
-        abrupt_panic (Error_Series_Held_Raw());
+        panic (Error_Series_Held_Raw());
 
     if (Get_Flex_Info(f, FROZEN_SHALLOW))
-        abrupt_panic (Error_Series_Frozen_Raw());
+        panic (Error_Series_Frozen_Raw());
 
     assert(Not_Flex_Info(f, FROZEN_DEEP));  // implies FROZEN_SHALLOW
 
     assert(Get_Flex_Info(f, PROTECTED));
-    abrupt_panic (Error_Series_Protected_Raw());
+    panic (Error_Series_Protected_Raw());
 }
 
 
@@ -182,5 +182,5 @@ INLINE const Value* Ensure_Mutable(const Value* v) {
     if (Not_Cell_Flag(v, CONST))
         return v;
 
-    abrupt_panic (Error_Const_Value_Raw(v));
+    panic (Error_Const_Value_Raw(v));
 }

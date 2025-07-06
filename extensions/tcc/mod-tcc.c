@@ -517,7 +517,7 @@ DECLARE_NATIVE(COMPILE_P)
                         != &Pending_Native_Dispatcher
                     )
                 ){
-                    abrupt_panic ("Only user natives can be in COMPILABLES list");
+                    panic ("Only user natives can be in COMPILABLES list");
                 }
 
                 // Remember this function, because we're going to need to come

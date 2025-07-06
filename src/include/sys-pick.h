@@ -90,7 +90,7 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 ){
     Option(Heart) heart = Cell_Datatype_Builtin_Heart(datatype);
     if (not heart)
-        abrupt_panic ("Generic dispatch not supported for extension types yet");
+        panic ("Generic dispatch not supported for extension types yet");
 
     return Get_Builtin_Generic_Dispatcher(table, unwrap heart);
 }

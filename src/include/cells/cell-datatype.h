@@ -158,10 +158,10 @@ INLINE SymId Symbol_Id_From_Type(Type type) {
 INLINE Option(SymId) Cell_Datatype_Id(const Value* v) {
     assert(Is_Datatype(v));
     if (Series_Len_At(v) != 1)
-        abrupt_panic ("Type blocks only allowed one element for now");
+        panic ("Type blocks only allowed one element for now");
     const Element* item = List_At(nullptr, v);
     if (not Is_Word(item))
-        abrupt_panic ("Type blocks only allowed WORD! items for now");
+        panic ("Type blocks only allowed WORD! items for now");
     return Word_Id(item);
 }
 

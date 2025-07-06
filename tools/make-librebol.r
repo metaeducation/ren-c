@@ -621,7 +621,7 @@ e-lib/emit [ver --[
  *     int foo(int x) {
  *         if (x < 1020)
  *             return x + 304;
- *         abrupt_panic ("x is too big"); // compiler may warn no return
+ *         panic ("x is too big"); // compiler may warn no return
  *     }
  *
  * One way of annotating to say this is okay is on the caller, with DEAD_END:
@@ -629,7 +629,7 @@ e-lib/emit [ver --[
  *     int foo(int x) {
  *         if (x < 1020)
  *             return x + 304;
- *         abrupt_panic ("x is too big");
+ *         panic ("x is too big");
  *         DEAD_END; // our warning-suppression macro for applicable compilers
  *     }
  *

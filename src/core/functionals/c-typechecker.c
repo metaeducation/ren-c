@@ -409,7 +409,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
         if (bounce == nullptr) {
             if (g_failure) {  // was NEEDFUL_RESULT_0 (fail/panic)
-                abrupt_panic (Needful_Test_And_Clear_Failure());
+                panic (Needful_Test_And_Clear_Failure());
             }
             goto test_failed;  // was just `return nullptr`
         }
@@ -418,8 +418,8 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
         assert(bounce == L->out);  // no BOUNCE_CONTINUE, API vals, etc
         if (Is_Error(L->out))
-            abrupt_panic (Cell_Error(L->out));
-        abrupt_panic (Error_No_Logic_Typecheck(label));
+            panic (Cell_Error(L->out));
+        panic (Error_No_Logic_Typecheck(label));
     }
   #endif
 
@@ -452,7 +452,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
     arg = First_Unspecialized_Arg(&param, sub);
     if (not arg)
-        abrupt_panic (Error_No_Arg_Typecheck(label));  // must take argument
+        panic (Error_No_Arg_Typecheck(label));  // must take argument
 
     Copy_Cell(arg, v);  // do not decay [4]
 
@@ -466,14 +466,14 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     }
 
     if (Trampoline_With_Top_As_Root_Throws())
-        abrupt_panic (Error_No_Catch_For_Throw(sub));
+        panic (Error_No_Catch_For_Throw(sub));
 
     Drop_Level(sub);
 
     Value* scratch = Known_Stable(SCRATCH);
 
     if (not Is_Logic(scratch))  // sub wasn't limited to intrinsics
-        abrupt_panic (Error_No_Logic_Typecheck(label));
+        panic (Error_No_Logic_Typecheck(label));
 
     if (Cell_Logic(scratch))
         goto test_succeeded;
@@ -571,7 +571,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
       default:
         assert(false);
-        abrupt_panic ("Bad test passed to Typecheck_Value");
+        panic ("Bad test passed to Typecheck_Value");
     }
 
     DECLARE_VALUE (test);
@@ -618,7 +618,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         goto test_failed;
     }
 
-    abrupt_panic (item);
+    panic (item);
 
   handle_non_word_quasiform: { ///////////////////////////////////////////////
 
@@ -651,7 +651,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     }
 
     if (Heart_Of(item) == TYPE_FENCE) {  // interpret as datatype [2]
-        abrupt_panic ("Quasiform FENCE! in type spec not supported yet");
+        panic ("Quasiform FENCE! in type spec not supported yet");
     }
 
     if (Heart_Of(item) == TYPE_GROUP) {  // match any element literally [3]
@@ -674,7 +674,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         goto test_failed;
     }
 
-    abrupt_panic (item);
+    panic (item);
 
 } handle_non_word_quoted: { //////////////////////////////////////////////////
 
@@ -686,7 +686,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     //
     // Review when this gets further.
 
-    abrupt_panic (item);
+    panic (item);
 
 } adjust_quote_level_and_run_type_constraint: {
 
@@ -744,7 +744,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         break;
     }
 
-    abrupt_panic ("Invalid element in TYPE-GROUP!");
+    panic ("Invalid element in TYPE-GROUP!");
 
 } test_succeeded: {
 
@@ -986,7 +986,7 @@ Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
     if (Is_Datatype(datatype_or_block)) {
         Option(Type) t = Cell_Datatype_Type(datatype_or_block);
         if (not t)
-            abrupt_panic ("TYPECHECKER does not support extension types yet");
+            panic ("TYPECHECKER does not support extension types yet");
 
         Byte type_byte = u_cast(Byte, unwrap t);
         SymId16 id16 = cast(SymId16, type_byte) + MIN_SYM_TYPESETS - 1;
@@ -1021,7 +1021,7 @@ Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
     Drop_Lifeguard(def);
 
     if (threw)
-        abrupt_panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     return out;
 }

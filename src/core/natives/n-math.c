@@ -635,7 +635,7 @@ DECLARE_NATIVE(TANGENT)
 
     REBDEC dval = Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SYM_TANGENT);
     if (Eq_Decimal(fabs(dval), PI / 2.0))
-        abrupt_panic (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     return Init_Decimal(OUT, tan(dval));
 }
@@ -745,7 +745,7 @@ DECLARE_NATIVE(LOG_10)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
-        abrupt_panic (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, log10(dval));
 }
@@ -766,7 +766,7 @@ DECLARE_NATIVE(LOG_2)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
-        abrupt_panic (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, log(dval) / LOG2);
 }
@@ -787,7 +787,7 @@ DECLARE_NATIVE(LOG_E)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval <= 0)
-        abrupt_panic (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, log(dval));
 }
@@ -808,7 +808,7 @@ DECLARE_NATIVE(SQUARE_ROOT)
 
     REBDEC dval = AS_DECIMAL(ARG(VALUE));
     if (dval < 0)
-        abrupt_panic (Error_Positive_Raw());
+        panic (Error_Positive_Raw());
 
     return Init_Decimal(OUT, sqrt(dval));
 }

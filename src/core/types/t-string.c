@@ -739,7 +739,7 @@ bool Try_Get_Series_Index_From_Picker(
     const Value* picker
 ){
     if (not (Is_Integer(picker) or Is_Decimal(picker)))  // !!! why DECIMAL! ?
-        abrupt_panic (Error_Bad_Pick_Raw(picker));
+        panic (Error_Bad_Pick_Raw(picker));
 
     REBINT n = Int32(picker);
     if (n == 0)

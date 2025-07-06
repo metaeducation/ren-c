@@ -115,7 +115,7 @@ INLINE uint_fast8_t Encoded_Size_For_Codepoint(Codepoint c) {
     /*len = 3;
     c = UNI_REPLACEMENT_CHAR; */  // 1. previous code could tolerate
 
-    abrupt_panic ("Codepoint is greater than maximum legal UTF-32 value");
+    panic ("Codepoint is greater than maximum legal UTF-32 value");
 }
 
 // Encodes a single codepoint with known size (see Write_Codepoint() wrapper)

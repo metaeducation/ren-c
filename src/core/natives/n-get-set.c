@@ -92,7 +92,7 @@ Context* Adjust_Context_For_Coupling(Context* c) {
 
         Level* level = Level_Of_Varlist_If_Running(frame_varlist);
         if (not level)
-            abrupt_panic (".field access only in running functions");  // nullptr?
+            panic (".field access only in running functions");  // nullptr?
         VarList* coupling = maybe Level_Coupling(level);
         if (not coupling)
             continue;  // skip NULL couplings (default for FUNC, DOES, etc.)
@@ -931,7 +931,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     else switch (Stub_Flavor(cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {
         if (Get_Cell_Flag(scratch_var, LEADING_SPACE)) {  // `/a` or `.a`
-            abrupt_panic ("Leading dot selection is being redesigned.");
+            panic ("Leading dot selection is being redesigned.");
             /*if (Heart_Of(scratch_var) == TYPE_TUPLE) {
                 Context* context = Cell_Binding(scratch_var);
                 context = Adjust_Context_For_Coupling(context);

@@ -88,7 +88,7 @@ INLINE Element* Quotify_Depth(Element* elem, Count depth) {
         return elem;
 
     if (Quotes_Of(elem) + depth >  MAX_QUOTE_DEPTH)
-        abrupt_panic ("Quoting Depth of 126 Exceeded");
+        panic ("Quoting Depth of 126 Exceeded");
 
     LIFT_BYTE_RAW(elem) += Quote_Shift(depth);
     return elem;
@@ -104,7 +104,7 @@ INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
         return elem;
 
     if (depth > Quotes_Of(elem))
-        abrupt_panic ("Attempt to set quoting level of value to less than 0");
+        panic ("Attempt to set quoting level of value to less than 0");
 
     LIFT_BYTE_RAW(elem) -= Quote_Shift(depth);
     return elem;
@@ -239,7 +239,7 @@ MUTABLE_IF_C(Option(Element*), INLINE) As_Element(CONST_IF_C(Value*) v_) {
 MUTABLE_IF_C(Element*, INLINE) Ensure_Element(CONST_IF_C(Atom*) cell) {
     CONSTABLE(Atom*) a = m_cast(Atom*, cell);
     if (LIFT_BYTE(a) == ANTIFORM_1)
-        abrupt_panic (Error_Bad_Antiform(a));
+        panic (Error_Bad_Antiform(a));
     return cast(Element*, a);
 }
 
@@ -342,7 +342,7 @@ INLINE Atom* Unliftify_Undecayed(Need(Atom*) atom) {
     if (LIFT_BYTE_RAW(atom) == QUASIFORM_3) {
         Option(Error*) e = Trap_Coerce_To_Antiform(atom);
         if (e)
-            abrupt_panic (unwrap e);  // !!! shouldn't abruptly panic :-(
+            panic (unwrap e);  // !!! shouldn't abruptly panic :-(
 
         return atom;
     }

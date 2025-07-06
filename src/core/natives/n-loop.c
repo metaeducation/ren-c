@@ -982,7 +982,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 }
             }
             else
-                abrupt_panic ("Loop enumeration of contexts must be 1 or 2 vars");
+                panic ("Loop enumeration of contexts must be 1 or 2 vars");
 
             les->more_data = Try_Advance_Evars(&les->u.evars);
 
@@ -1027,7 +1027,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 trapped (Write_Loop_Slot_May_Bind(slot, spare_val, les->data));
             }
             else
-                abrupt_panic ("Loop enumeration of contexts must be 1 or 2 vars");
+                panic ("Loop enumeration of contexts must be 1 or 2 vars");
 
             goto maybe_lift_and_continue;
         }

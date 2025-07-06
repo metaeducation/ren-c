@@ -239,7 +239,7 @@ Result(Zero) Set_Parameter_Spec(
                 // concept is.
             }
             else {
-                abrupt_panic (item);
+                panic (item);
             }
             Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
             continue;

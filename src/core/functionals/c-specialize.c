@@ -306,13 +306,13 @@ bool Specialize_Action_Throws(
         // checked already... don't type check again (?)
         //
         if (Get_Parameter_Flag(param, VARIADIC))
-            abrupt_panic ("Cannot currently SPECIALIZE variadic arguments.");
+            panic ("Cannot currently SPECIALIZE variadic arguments.");
 
         heeded (Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
         heeded (Corrupt_Cell_If_Needful(Level_Spare(TOP_LEVEL)));
 
         if (not Typecheck_Coerce(TOP_LEVEL, param, arg, false))
-            abrupt_panic (Error_Arg_Type(label, key, param, arg));
+            panic (Error_Arg_Type(label, key, param, arg));
 
         Mark_Typechecked(arg);
 
@@ -349,7 +349,7 @@ bool Specialize_Action_Throws(
             );
             if (not Cell_Binding(ordered)) {  // specialize print:asdf/
                 guaranteed (Refinify_Pushed_Refinement(ordered));
-                abrupt_panic (Error_Bad_Parameter_Raw(ordered));
+                panic (Error_Bad_Parameter_Raw(ordered));
             }
 
             Value* ordered_slot = Slot_Hack(
@@ -376,7 +376,7 @@ bool Specialize_Action_Throws(
         }
         else {
             Manage_Flex(partials);
-            abrupt_panic ("Refinement Promotion is being rethought");
+            panic ("Refinement Promotion is being rethought");
         }
     }
 

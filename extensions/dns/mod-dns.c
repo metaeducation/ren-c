@@ -143,7 +143,7 @@ static void Get_Local_Ip_Via_Google_DNS_May_Panic(Sink(Value) out)
     if (info)
         freeaddrinfo(info);
     if (error)
-        abrupt_panic (error);
+        panic (error);
 }}
 #endif
 

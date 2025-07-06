@@ -355,7 +355,7 @@ Result(Details*) Make_Interpreted_Action(
         MKF_MASK_NONE,
         returner
     ) except (Error* e) {
-        abrupt_panic (e);
+        panic (e);
     }
 
     Details* details = Make_Dispatch_Details(

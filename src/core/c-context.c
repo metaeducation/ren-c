@@ -761,7 +761,7 @@ VarList* Make_Varlist_Detect_Managed(
 
     Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, head, tail);
     if (e)
-        abrupt_panic (unwrap e);
+        panic (unwrap e);
 
     Length len = cl->next_index - 1;  // is next index, so subtract 1
 
@@ -1001,7 +1001,7 @@ Slot* Obj_Slot(Value* value, Index index)
     VarList* context = Cell_Varlist(value);
 
     if (index > Varlist_Len(context))
-        abrupt_panic ("Could not pick index out of object");  // !!! Review [1]
+        panic ("Could not pick index out of object");  // !!! Review [1]
 
     return Varlist_Slot(context, index);
 }

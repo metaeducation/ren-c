@@ -234,5 +234,5 @@ DECLARE_NATIVE(STEP)
 {
     INCLUDE_PARAMS_OF_STEP;
     UNUSED(ARG(AMOUNT));
-    abrupt_panic ("STEP's methodology was deprecated, it is being re-implemented");
+    panic ("STEP's methodology was deprecated, it is being re-implemented");
 }

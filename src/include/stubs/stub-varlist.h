@@ -347,7 +347,7 @@ INLINE Level* Level_Of_Varlist_If_Running(VarList* varlist) {
 INLINE Level* Level_Of_Varlist_May_Panic(VarList* c) {
     Level* L = Level_Of_Varlist_If_Running(c);
     if (not L)
-        abrupt_panic (Error_Frame_Not_On_Stack_Raw());
+        panic (Error_Frame_Not_On_Stack_Raw());
     return L;
 }
 

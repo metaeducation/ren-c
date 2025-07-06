@@ -188,22 +188,22 @@ Source* Expanded_Combinator_Spec(const Element* original)
     if (Is_Text(item)) {
         Derelativize(PUSH(), item, binding);  // {combinator description}
         if (item == tail)
-            abrupt_panic ("too few combinator args");
+            panic ("too few combinator args");
         ++item;
     }
     Derelativize(PUSH(), item, binding);  // return:
     if (item == tail)
-        abrupt_panic ("too few combinator args");
+        panic ("too few combinator args");
     ++item;
     if (Is_Text(item)) {
         Derelativize(PUSH(), item, binding);  // "return description"
         if (item == tail)
-            abrupt_panic ("too few combinator args");
+            panic ("too few combinator args");
     }
     ++item;
     Derelativize(PUSH(), item, binding);  // [return type block]
     if (item == tail)
-        abrupt_panic ("too few combinator args");
+        panic ("too few combinator args");
     ++item;
 
     const Byte utf8[] =
@@ -328,7 +328,7 @@ void Push_Parser_Sublevel(
         Key_Id(remainder_key) != SYM_REMAINDER
         or Key_Id(input_key) != SYM_INPUT
     ){
-        abrupt_panic ("Push_Parser_Sublevel() only works on unadulterated combinators");
+        panic ("Push_Parser_Sublevel() only works on unadulterated combinators");
     }
 
     Slot* remainder_slot = Varlist_Slot(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
@@ -694,7 +694,7 @@ static bool Combinator_Param_Hook(
             or (Is_Comma(item) or Is_Bar(item) or Is_Bar_Bar(item))
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
-                abrupt_panic ("Too few parameters for combinator");  // !!! Error_No_Arg
+                panic ("Too few parameters for combinator");  // !!! Error_No_Arg
             Init_Unset_Due_To_End(u_cast(Atom*, var));
         }
         else {
@@ -719,7 +719,7 @@ static bool Combinator_Param_Hook(
             or (Is_Comma(item) or Is_Bar(item) or Is_Bar_Bar(item))
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
-                abrupt_panic ("Too few parameters for combinator");  // !!! Error_No_Arg
+                panic ("Too few parameters for combinator");  // !!! Error_No_Arg
             Init_Unset_Due_To_End(u_cast(Atom*, var));
         }
         else {
@@ -743,7 +743,7 @@ static bool Combinator_Param_Hook(
         break; }
 
       default:
-        abrupt_panic ("COMBINATOR parameters must be normal or quoted at this time");
+        panic ("COMBINATOR parameters must be normal or quoted at this time");
     }
 
     return true;  // want to see all parameters
@@ -804,7 +804,7 @@ DECLARE_NATIVE(COMBINATORIZE)
     // mechanisms for refinements on combinators.
     //
     if (Bool_ARG(PATH))
-        abrupt_panic ("PATH! mechanics in COMBINATORIZE not supported ATM");
+        panic ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
     ParamList* paramlist = Make_Varlist_For_Action(
         ARG(COMBINATOR),

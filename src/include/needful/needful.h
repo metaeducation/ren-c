@@ -199,7 +199,7 @@
 
 #define needful_panic(...) do { \
     Needful_Assert_Not_Failing(); \
-    Needful_Panic_Abruptly(__VA_ARGS__) \
+    Needful_Panic_Abruptly(__VA_ARGS__); \
     /* DEAD_END; */ \
 } while (0)
 

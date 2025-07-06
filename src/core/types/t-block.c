@@ -321,7 +321,7 @@ REBINT Find_In_Array(
     }
 
     if (Is_Antiform(pattern))
-        abrupt_panic ("Only Antiforms Supported by FIND are ACTION and SPLICE");
+        panic ("Only Antiforms Supported by FIND are ACTION and SPLICE");
 
     if (Is_Nulled(pattern)) {  // never match [1]
         *len = 0;
@@ -1300,11 +1300,11 @@ static int Qsort_Values_Callback(void *state, const void *p1, const void *p2)
             info->reverse ? rebQ(v1) : rebQ(v2),
             info->reverse ? rebQ(v2) : rebQ(v1)
     )){
-        abrupt_panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
     if (not Is_Logic(result))
-        abrupt_panic ("SORT predicate must return logic (NULL or OKAY antiform)");
+        panic ("SORT predicate must return logic (NULL or OKAY antiform)");
 
     if (Cell_Logic(result))  // comparator has LESSER? semantics
         return 1;  // returning 1 means lesser, it seems (?)
@@ -1338,7 +1338,7 @@ IMPLEMENT_GENERIC(SORT, Any_List)
     else if (Is_Integer(cmp)) {
         info.comparator = nullptr;
         info.offset = Int32(cmp) - 1;
-        abrupt_panic ("INTEGER! support (e.g. column select) not working in sort");
+        panic ("INTEGER! support (e.g. column select) not working in sort");
     }
     else {
         assert(Is_Nulled(cmp));

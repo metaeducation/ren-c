@@ -144,7 +144,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
             &key
         ) != ERROR_SUCCESS
     ){
-        abrupt_panic ("Could not open registry key for http\\shell\\open\\command");
+        panic ("Could not open registry key for http\\shell\\open\\command");
     }
 
     DWORD num_bytes = 0; // pass NULL and use 0 for initial length, to query

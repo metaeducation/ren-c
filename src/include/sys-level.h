@@ -583,7 +583,7 @@ INLINE Level* Prep_Level_Core(
     Flags flags
 ){
     if (L == nullptr)  // e.g. a failed allocation
-       abrupt_panic (Error_No_Memory(sizeof(Level)));
+       panic (Error_No_Memory(sizeof(Level)));
 
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;
 

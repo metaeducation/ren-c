@@ -255,7 +255,7 @@ uint32_t Hash_Cell(const Cell* cell)
         //
         // !!! Why not?
         //
-        abrupt_panic (Error_Invalid_Type(TYPE_PARAMETER));
+        panic (Error_Invalid_Type(TYPE_PARAMETER));
 
       hash_any_word:
         //
@@ -319,10 +319,10 @@ uint32_t Hash_Cell(const Cell* cell)
         //
         // !!! Review hashing behavior or needs of these types if necessary.
         //
-        abrupt_panic (Error_Invalid_Type(TYPE_HANDLE));
+        panic (Error_Invalid_Type(TYPE_HANDLE));
 
       case TYPE_OPAQUE:
-        abrupt_panic (Error_Invalid_Type(TYPE_OPAQUE));
+        panic (Error_Invalid_Type(TYPE_OPAQUE));
 
       default:
         crash (nullptr); // List should be comprehensive
@@ -409,7 +409,7 @@ HashList* Hash_Block(const Value* block, REBLEN skip, bool cased)
                     // than not, this will catch bugs in callers vs. be
                     // a roadblock to them.
                     //
-                    abrupt_panic (Error_Block_Skip_Wrong_Raw());
+                    panic (Error_Block_Skip_Wrong_Raw());
                 }
 
                 return hashlist;

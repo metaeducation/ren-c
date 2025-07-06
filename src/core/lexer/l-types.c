@@ -520,7 +520,7 @@ Option(const Byte*) Try_Scan_Decimal_To_Stack(
     char *se;
     double d = strtod(s_cast(buf), &se);
     if (fabs(d) == HUGE_VAL)  // !!! TBD: need check for NaN, and INF
-        abrupt_panic (Error_Overflow_Raw());
+        panic (Error_Overflow_Raw());
 
     Init_Decimal(PUSH(), d);
     return cp;

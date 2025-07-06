@@ -71,18 +71,18 @@ INLINE Element* Init_Integer_Untracked(Init(Element) out, REBI64 i64) {
 
 INLINE int32_t VAL_INT32(const Value* v) {
     if (VAL_INT64(v) > INT32_MAX or VAL_INT64(v) < INT32_MIN)
-        abrupt_panic (Error_Out_Of_Range(v));
+        panic (Error_Out_Of_Range(v));
     return cast(int32_t, VAL_INT64(v));
 }
 
 INLINE uint32_t VAL_UINT32(const Value* v) {
     if (VAL_INT64(v) < 0 or VAL_INT64(v) > UINT32_MAX)
-        abrupt_panic (Error_Out_Of_Range(v));
+        panic (Error_Out_Of_Range(v));
     return cast(uint32_t, VAL_INT64(v));
 }
 
 INLINE Byte VAL_UINT8(const Value* v) {
     if (VAL_INT64(v) > 255 or VAL_INT64(v) < 0)
-        abrupt_panic (Error_Out_Of_Range(v));
+        panic (Error_Out_Of_Range(v));
     return cast(Byte, VAL_INT32(v));
 }

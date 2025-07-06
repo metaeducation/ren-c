@@ -500,12 +500,12 @@ DECLARE_NATIVE(EVAL_FREE)
         panic (Error_Series_Data_Freed_Raw());
 
     if (Is_Stub_Details(Frame_Phase(frame)))
-        abrupt_panic ("Can't currently EVAL-FREE a Details-based Stub");
+        panic ("Can't currently EVAL-FREE a Details-based Stub");
 
     VarList* varlist = Cell_Varlist(frame);
 
     if (Level_Of_Varlist_If_Running(varlist))
-        abrupt_panic ("Use REDO to restart a running FRAME! (not EVAL-FREE)");
+        panic ("Use REDO to restart a running FRAME! (not EVAL-FREE)");
 
     Level* L = Make_End_Level(
         &Action_Executor,

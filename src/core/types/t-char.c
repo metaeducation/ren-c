@@ -257,7 +257,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
     switch (maybe Type_Of(arg)) {
       case TYPE_INTEGER: {
         if (heart != TYPE_RUNE)
-            abrupt_panic ("Only RUNE! can MAKE a UTF-8 immutable type with INTEGER!");
+            panic ("Only RUNE! can MAKE a UTF-8 immutable type with INTEGER!");
 
         REBINT n = Int32(arg);
         trapped (Init_Single_Codepoint_Rune(OUT, n));
@@ -265,7 +265,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
       case TYPE_BLOB: {
         if (heart != TYPE_RUNE)
-            abrupt_panic ("Only RUNE! can MAKE a UTF-8 immutable type with BLOB!");
+            panic ("Only RUNE! can MAKE a UTF-8 immutable type with BLOB!");
 
         Size size;
         const Byte* bp = Blob_Size_At(&size, arg);

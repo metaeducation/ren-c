@@ -237,7 +237,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     panic ("WORDS! in VALUES needs work in PROTECT");
                 }
                 else if (Is_Path(item)) {
-                    abrupt_panic ("PATH! handling no longer in Protect_Unprotect");
+                    panic ("PATH! handling no longer in Protect_Unprotect");
                 }
                 else {
                     Copy_Cell(safe, item);
@@ -253,7 +253,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     }
 
     if (flags & PROT_HIDE)
-        abrupt_panic (Error_Bad_Refines_Raw());
+        panic (Error_Bad_Refines_Raw());
 
     Protect_Value(value, flags);
 
@@ -360,7 +360,7 @@ DECLARE_NATIVE(UNPROTECT)
     USED(PARAM(VALUES));
 
     if (Bool_ARG(HIDE))
-        abrupt_panic ("Cannot un-hide an object field once hidden");
+        panic ("Cannot un-hide an object field once hidden");
 
     Element* v = Element_ARG(VALUE);
 
@@ -481,7 +481,7 @@ void Force_Value_Frozen_Core(
             /*}*/
         }
         else
-            abrupt_panic ("What does a shallow freeze of a context mean?");
+            panic ("What does a shallow freeze of a context mean?");
     }
     else if (Any_Series_Type(heart)) {
         UNUSED(deep);
@@ -497,7 +497,7 @@ void Force_Value_Frozen_Core(
         // No freezing needed
     }
     else
-        abrupt_panic (Error_Invalid_Type(heart));  // not yet implemented
+        panic (Error_Invalid_Type(heart));  // not yet implemented
 }
 
 

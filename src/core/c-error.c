@@ -31,7 +31,7 @@
 //
 // This is the polymorphic code behind panic(), FAIL(), and FAIL():
 //
-//    abrupt_panic ("UTF-8 string");  // delivers error with that text
+//    panic ("UTF-8 string");  // delivers error with that text
 //    panic (api_value);       // ensure it's an ERROR!, release and use as-is
 //    panic (error_context);   // use the Error* as-is
 //    panic (PARAM(NAME));     // impliciate parameter as having a bad value
@@ -129,7 +129,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 // or to identify systemically with some kind of "error code".  However,
 // it's a realistic quick-and-dirty way of delivering a more meaningful
 // error than just using a RE_MISC error code, and can be found just as easily
-// to clean up later with a textual search for `abrupt_panic ("`
+// to clean up later with a textual search for `panic ("`
 //
 Error* Panic_Abruptly_Helper(Error* error)
 {
@@ -694,7 +694,7 @@ Error* Make_Error_Managed_Vaptr(
 
               default:
                 assert(false);
-                abrupt_panic ("Bad pointer passed to Make_Error_Managed()");
+                panic ("Bad pointer passed to Make_Error_Managed()");
             }
         }
     }
@@ -734,7 +734,7 @@ Error* Make_Error_Managed_Vaptr(
 // fixed number of arguments specific to each error...and the wrappers can
 // also do additional argument processing:
 //
-//     abrupt_panic (Error_Something(arg1, thing_processed_to_make_arg2));
+//     panic (Error_Something(arg1, thing_processed_to_make_arg2));
 //
 Error* Make_Error_Managed_Raw(
     int opt_cat_id,  // va_list is weird about enums...

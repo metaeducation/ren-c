@@ -3287,22 +3287,24 @@ Option(Source*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
 {
     assert(Detect_Rebol_Pointer(feed->p) == DETECTED_AS_UTF8);
 
-    TranscodeState transcode;
+    TranscodeState transcode_struct;
     const LineNumber start_line = 1;
     Init_Transcode(
-        &transcode,
+        &transcode_struct,
         ANONYMOUS,  // %tmp-boot.r name in boot overwritten currently by this
         start_line,
         nullptr  // let scanner fetch feed->p Utf8 as new S->begin
     );
 
+    TranscodeState* transcode = &transcode_struct;
+
     Flags flags = FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
-    Level* L = Make_Scan_Level(&transcode, feed, flags);
+    Level* L = Make_Scan_Level(transcode, feed, flags);
 
     DECLARE_ATOM (temp);
     Push_Level_Erase_Out_If_State_0(temp, L);
     if (Trampoline_With_Top_As_Root_Throws())
-        abrupt_panic (Error_No_Catch_For_Throw(L));
+        panic (Error_No_Catch_For_Throw(L));
 
     if (TOP_INDEX == L->baseline.stack_base) {
         Drop_Level(L);

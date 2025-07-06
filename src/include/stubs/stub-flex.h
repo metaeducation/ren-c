@@ -551,7 +551,7 @@ INLINE Flex* Make_Flex_Into(
 
     size_t wide = Wide_For_Flavor(flavor);
     if (cast(REBU64, capacity) * wide > INT32_MAX)
-        abrupt_panic (Error_No_Memory(cast(REBU64, capacity) * wide));
+        panic (Error_No_Memory(cast(REBU64, capacity) * wide));
 
     Flex* s = cast(Flex*, Prep_Stub(flags, preallocated));
 
@@ -566,7 +566,7 @@ INLINE Flex* Make_Flex_Into(
             Set_Stub_Unreadable(s);
             GC_Kill_Stub(s);
 
-            abrupt_panic (Error_No_Memory(capacity * wide));
+            panic (Error_No_Memory(capacity * wide));
         }
 
       #if DEBUG_COLLECT_STATS

@@ -310,7 +310,7 @@ struct JumpStruct {
 // and is what the RESCUE_SCOPE() abstraction is designed to catch:
 //
 //     if (Foo_Type(foo) == BAD_FOO) {
-//         abrupt_panic (Error_Bad_Foo_Operation(...));
+//         panic (Error_Bad_Foo_Operation(...));
 //
 //         /* this line will never be reached, because it longjmp'd or
 //            C++ throw'd up the stack where execution continues */
@@ -370,14 +370,14 @@ struct JumpStruct {
 
 #if PANIC_JUST_ABORTS
 
-    #define abrupt_panic(p) do { \
+    #define Needful_Panic_Abruptly(p) do { \
         Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
         crash (Panic_Abruptly_Helper(Derive_Error_From_Pointer(p))); \
     } while (0)
 
 #elif PANIC_USES_TRY_CATCH
 
-    #define abrupt_panic(p) do { \
+    #define Needful_Panic_Abruptly(p) do { \
         Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
         throw Panic_Abruptly_Helper(Derive_Error_From_Pointer(p)); \
     } while (0)
@@ -391,7 +391,7 @@ struct JumpStruct {
     //
     //  http://en.cppreference.com/w/c/program/longjmp
 
-    #define abrupt_panic(p) do { \
+    #define Needful_Panic_Abruptly(p) do { \
         Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK), \
         g_ts.jump_list->error = Panic_Abruptly_Helper( \
             Derive_Error_From_Pointer(p)  /* longjmp() arg too small */ \
@@ -431,6 +431,3 @@ INLINE Error* Needful_Test_And_Clear_Failure(void) {
 
 #define Needful_Assert_Not_Failing() \
     assert(not g_failure)
-
-#define Needful_Panic_Abruptly(...) \
-    abrupt_panic (__VA_ARGS__);

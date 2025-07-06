@@ -18,7 +18,7 @@ INLINE const Byte* Blob_Size_At(Option(Sink(Size)) size_at, const Cell* cell)
     REBIDX i = SERIES_INDEX_UNBOUNDED(cell);
     Size size = Binary_Len(b);
     if (i < 0 or i > size)
-        abrupt_panic (Error_Index_Out_Of_Range_Raw());
+        panic (Error_Index_Out_Of_Range_Raw());
     if (size_at)
         *(unwrap size_at) = size - i;
     return Binary_At(b, i);

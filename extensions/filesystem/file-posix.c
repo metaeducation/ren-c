@@ -423,7 +423,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
         const Byte* pos = utf8;
         for (; pos != tail; ++pos)
             if (*pos == CR)
-                abrupt_panic (Error_Illegal_Cr(pos, utf8));
+                panic (Error_Illegal_Cr(pos, utf8));
 
         data = utf8;
     }

@@ -727,7 +727,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 
     assert(index <= Flex_Used(f));
     if (delta & 0x80000000)
-        abrupt_panic (Error_Index_Out_Of_Range_Raw()); // 2GB max
+        panic (Error_Index_Out_Of_Range_Raw()); // 2GB max
 
     if (delta == 0)
         return;
@@ -812,7 +812,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 //=//// INSUFFICIENT CAPACITY, NEW ALLOCATION REQUIRED ////////////////////=//
 
     if (Get_Flex_Flag(f, FIXED_SIZE))
-        abrupt_panic (Error_Locked_Series_Raw());
+        panic (Error_Locked_Series_Raw());
 
   #if RUNTIME_CHECKS
     if (g_mem.watch_expand) {
@@ -873,7 +873,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
     Set_Stub_Flag(f, DYNAMIC);
     Set_Flex_Flag(f, POWER_OF_2);
     if (not Try_Flex_Data_Alloc(f, used_old + delta + x))
-        abrupt_panic (Error_No_Memory((used_old + delta + x) * wide));
+        panic (Error_No_Memory((used_old + delta + x) * wide));
 
     assert(Get_Stub_Flag(f, DYNAMIC));
     if (Stub_Holds_Cells(f))
@@ -1049,7 +1049,7 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
         // Put Flex back how it was (there may be extant references)
         f->content.dynamic.data = cast(char*, data_old);
 
-        abrupt_panic (Error_No_Memory((units + 1) * wide));
+        panic (Error_No_Memory((units + 1) * wide));
     }
     assert(Get_Stub_Flag(f, DYNAMIC));
     if (Stub_Holds_Cells(f))

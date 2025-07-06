@@ -105,7 +105,7 @@ uint32_t Get_Hash_Prime_May_Panic(uint32_t minimum)
     if (not prime) {  // larger than hash prime table
         DECLARE_ELEMENT (temp);
         Init_Integer(temp, minimum);
-        abrupt_panic (Error_Size_Limit_Raw(temp));
+        panic (Error_Size_Limit_Raw(temp));
     }
     return unwrap prime;
 }
@@ -590,7 +590,7 @@ RebolValue* Register_Symbol(const char* utf8, SymId16 id16)
     const Symbol* symbol = Intern_Utf8_Managed(
         b_cast(utf8), strlen(utf8)
     ) except (Error* e) {
-        abrupt_panic (e);
+        panic (e);
     }
 
     Option(SymId) id = Symbol_Id(symbol);

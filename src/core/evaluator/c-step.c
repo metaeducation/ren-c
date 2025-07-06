@@ -173,7 +173,7 @@
 INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
 {
     if (Is_Feed_At_End(L->feed))  // `eval [x:]`, `eval [o.x:]`, etc. illegal
-        abrupt_panic (Error_Need_Non_End(CURRENT));
+        panic (Error_Need_Non_End(CURRENT));
 
     Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // always >= 2 elements [2]
 

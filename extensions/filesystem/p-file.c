@@ -99,7 +99,7 @@ INLINE uint64_t File_Size_Cacheable_May_Panic(const Value* port)
     uint64_t size;
     Value* error = Get_File_Size_Cacheable(&size, port);
     if (error)
-        abrupt_panic (error);
+        panic (error);
     return size;
 }
 

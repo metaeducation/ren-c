@@ -335,7 +335,7 @@ Value* Request_Connect_Socket(const Value* port)
     } while (rebreq->result == nullptr);
 
     if (not Is_Space(rebreq->result))
-        abrupt_panic (rebreq->result);
+        panic (rebreq->result);
     rebRelease(rebreq->result);
 
     rebFree(rebreq);
@@ -358,7 +358,7 @@ void on_new_connection(uv_stream_t *server, int status) {
     // WRITE calls.  How should such errors be delivered?
     //
     if (status < 0)
-        abrupt_panic (rebError_UV(status));
+        panic (rebError_UV(status));
 
     VarList* client = Copy_Varlist_Shallow_Managed(listener_port_ctx);
     Push_Lifeguard(client);
@@ -384,7 +384,7 @@ void on_new_connection(uv_stream_t *server, int status) {
 
     int r = uv_accept(server, sock_new->stream);
     if (r < 0)
-        abrupt_panic (rebError_UV(r));  // !!! See note on FAIL above about errors here
+        panic (rebError_UV(r));  // !!! See note on FAIL above about errors here
 
     // NOTE: REBOL stays in network byte order, no htonl(ip) needed
     //

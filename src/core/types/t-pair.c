@@ -162,15 +162,15 @@ REBINT Index_From_Picker_For_Pair(
         else if (Word_Id(picker) == SYM_Y)
             n = 2;
         else
-            abrupt_panic (picker);
+            panic (picker);
     }
     else if (Is_Integer(picker)) {
         n = Int32(picker);
         if (n != 1 and n != 2)
-            abrupt_panic (picker);
+            panic (picker);
     }
     else
-        abrupt_panic (picker);
+        panic (picker);
 
     return n;
 }

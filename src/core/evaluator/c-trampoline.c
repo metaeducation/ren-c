@@ -434,7 +434,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
     ){
         printf("Trampoline_With_Top_As_Root_Throws() got BOUNCE_%s\n", name);
         Dump_Stack(root);
-        abrupt_panic ("Cannot interpret Trampoline result");
+        panic ("Cannot interpret Trampoline result");
     }
   #endif
 

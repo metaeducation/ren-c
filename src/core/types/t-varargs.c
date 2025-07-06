@@ -110,7 +110,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         else if (pclass == PARAMCLASS_THE)
             Derelativize(out, look, binding);
         else
-            abrupt_panic (Error_Varargs_No_Look_Raw()); // hard quote only
+            panic (Error_Varargs_No_Look_Raw()); // hard quote only
 
         return true; // only a lookahead, no need to advance
     }
@@ -184,7 +184,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
         switch (pclass) {
         case PARAMCLASS_META:
-            abrupt_panic ("Variadic literal parameters not yet implemented");
+            panic ("Variadic literal parameters not yet implemented");
 
         case PARAMCLASS_NORMAL: {
             Level* L_temp = Make_Level_At(
@@ -252,7 +252,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             break;
 
         default:
-            abrupt_panic ("Invalid variadic parameter class");
+            panic ("Invalid variadic parameter class");
         }
 
         if (
@@ -325,7 +325,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             break;
 
         default:
-            abrupt_panic ("Invalid variadic parameter class");
+            panic ("Invalid variadic parameter class");
         }
     }
     else
@@ -355,9 +355,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             // vararg.  Revisit the question of how to give better errors.
             //
             if (not vararg_level)
-                abrupt_panic (out);
+                panic (out);
 
-            abrupt_panic (Error_Phase_Arg_Type(
+            panic (Error_Phase_Arg_Type(
                 unwrap vararg_level, key, param, cast(const Value*, out))
             );
         }

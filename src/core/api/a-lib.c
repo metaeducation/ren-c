@@ -329,7 +329,7 @@ void API_rebFree(void *ptr) {
     ENTER_API_RECYCLING_OK;
 
     if (ptr == nullptr)
-        abrupt_panic ("rebFree() does not take NULL, see rebFreeOpt()");
+        panic ("rebFree() does not take NULL, see rebFreeOpt()");
 
     API_rebFreeOpt(ptr);
 }
@@ -371,7 +371,7 @@ RebolValue* API_rebRepossess(void* ptr, size_t size)
     assert(Get_Flex_Flag(b, DONT_RELOCATE));
 
     if (size > Binary_Len(b) - ALIGN_SIZE)
-        abrupt_panic ("Attempt to rebRepossess() more than rebAlloc() capacity");
+        panic ("Attempt to rebRepossess() more than rebAlloc() capacity");
 
     Clear_Base_Root_Bit(b);
     Clear_Flex_Flag(b, DONT_RELOCATE);
@@ -627,7 +627,7 @@ RebolValue* API_rebChar(uint32_t codepoint)
     Value* v = Alloc_Value();
     Init_Single_Codepoint_Rune(v, codepoint) excepted (Error* e) {
         rebRelease(v);
-        abrupt_panic (e);
+        panic (e);
     }
     return v;
 }
@@ -841,7 +841,7 @@ RebolValue* API_rebTextWide(const REBWCHAR* wstr)
                 *(wstr + 1) >= UNI_SUR_LOW_START
                 and *(wstr + 1) <= UNI_SUR_LOW_END
             )){
-                abrupt_panic ("Invalid UTF-16 surrogate pair passed to rebTextWide()");
+                panic ("Invalid UTF-16 surrogate pair passed to rebTextWide()");
             }
             Append_Codepoint(mo->strand, Decode_UTF16_Pair(wstr));
             wstr += 2;
@@ -884,7 +884,7 @@ void API_rebModifyHandleCData(
     ENTER_API;
 
     if (not Is_Handle(v))
-        abrupt_panic ("rebModifyHandleCData() called on non-HANDLE!");
+        panic ("rebModifyHandleCData() called on non-HANDLE!");
 
     assert(Cell_Payload_1_Needs_Mark(v));  // api only sees managed handles
 
@@ -899,7 +899,7 @@ void API_rebModifyHandleLength(RebolValue* v, size_t length) {
     ENTER_API;
 
     if (not Is_Handle(v))
-        abrupt_panic ("rebModifyHandleLength() called on non-HANDLE!");
+        panic ("rebModifyHandleLength() called on non-HANDLE!");
 
     assert(Cell_Payload_1_Needs_Mark(v));  // api only sees managed handles
 
@@ -917,7 +917,7 @@ void API_rebModifyHandleCleaner(
     ENTER_API;
 
     if (not Is_Handle(v))
-        abrupt_panic ("rebModifyHandleCleaner() called on non-HANDLE!");
+        panic ("rebModifyHandleCleaner() called on non-HANDLE!");
 
     Stub* stub = Extract_Cell_Handle_Stub(v);  // api only sees managed handles
     Tweak_Handle_Cleaner(
@@ -976,12 +976,12 @@ const RebolBaseInternal* API_rebArgR(
         p2 = *packed++;
     }
     if (Detect_Rebol_Pointer(p2) != DETECTED_AS_END)
-        abrupt_panic ("rebArg() isn't actually variadic, it's arity-1");
+        panic ("rebArg() isn't actually variadic, it's arity-1");
 
     const Symbol* symbol = Intern_Utf8_Managed(
         b_cast(name), strsize(name)
     ) except (Error* e) {
-        abrupt_panic (e);
+        panic (e);
     };
 
     const Key* tail;
@@ -990,7 +990,7 @@ const RebolBaseInternal* API_rebArgR(
     for (; key != tail; ++key, ++arg) {
         if (Are_Synonyms(Key_Symbol(key), symbol)) {
             if (Not_Cell_Stable(arg))
-                abrupt_panic ("rebArg() called on non-stable argument");
+                panic ("rebArg() called on non-stable argument");
             return cast(
                 RebolBaseInternal*,
                 NULLIFY_NULLED(Known_Stable(arg))
@@ -998,7 +998,7 @@ const RebolBaseInternal* API_rebArgR(
         }
     }
 
-    abrupt_panic ("Unknown rebArg(...) name.");
+    panic ("Unknown rebArg(...) name.");
 }
 
 
@@ -1204,7 +1204,7 @@ static void Run_Valist_And_Call_Va_End_May_Panic(
         binding,
         p, vaptr
     ) except (Error* e) {
-        abrupt_panic (e);
+        panic (e);
     }
 }
 
@@ -1263,10 +1263,10 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     Drop_Level(L);  // will va_end() if not reified during evaluation
 
     if (too_many)
-        abrupt_panic (Error_Apply_Too_Many_Raw());
+        panic (Error_Apply_Too_Many_Raw());
 
     Decay_If_Unstable(atom_out) excepted (Error* e) {
-        abrupt_panic (e);
+        panic (e);
     }
 
     return false;
@@ -1457,7 +1457,7 @@ RebolValue* API_rebRescue(
     }
 
     Decay_If_Unstable(cast(Atom*, v)) excepted (Error* e) {
-        abrupt_panic (e);
+        panic (e);
     }
 
     Set_Base_Root_Bit(v);
@@ -1493,7 +1493,7 @@ RebolValue* API_rebRescueInterruptible(
     }
 
     Decay_If_Unstable(cast(Atom*, v)) excepted (Error* e) {
-        abrupt_panic (e);
+        panic (e);
     }
     Set_Base_Root_Bit(v);
     *value = v;
@@ -1524,7 +1524,7 @@ RebolValue* API_rebQuote(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (Is_Antiform(v))
-        abrupt_panic ("rebQuote() called on expression that returned an antiform");
+        panic ("rebQuote() called on expression that returned an antiform");
 
     return Quotify(cast(Element*, v));
 }
@@ -1608,7 +1608,7 @@ void API_rebJumps(
     if (p == nullptr)
         return;
 
-    abrupt_panic ("rebJumps() ran code, but it didn't FAIL or QUIT or THROW, etc.");
+    panic ("rebJumps() ran code, but it didn't FAIL or QUIT or THROW, etc.");
 }
 
 
@@ -1632,7 +1632,7 @@ bool API_rebDid(
     Run_Valist_And_Call_Va_End_May_Panic(eval, flags, binding, p, vaptr);
 
     bool cond = Test_Conditional(eval) except (Error* e) {
-        abrupt_panic (e);
+        panic (e);
     }
 
     return cond;
@@ -1697,12 +1697,12 @@ intptr_t API_rebUnbox(
 
       case TYPE_RUNE: {
         Codepoint c = Get_Rune_Single_Codepoint(v) except (Error* e) {
-            abrupt_panic (e);
+            panic (e);
         }
         return c; }
 
       default:
-        abrupt_panic ("C-based rebUnbox() only supports INTEGER!, CHAR!, and LOGIC!");
+        panic ("C-based rebUnbox() only supports INTEGER!, CHAR!, and LOGIC!");
     }
 }
 
@@ -1726,7 +1726,7 @@ bool API_rebUnboxLogic(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (not Is_Logic(v))
-        abrupt_panic ("rebUnboxLogic() called on non-LOGIC!");
+        panic ("rebUnboxLogic() called on non-LOGIC!");
 
     return Cell_Logic(v);
 }
@@ -1747,7 +1747,7 @@ bool API_rebUnboxBoolean(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (not Is_Boolean(v))
-        abrupt_panic ("rebUnboxBoolean() called on non-[true false]!");
+        panic ("rebUnboxBoolean() called on non-[true false]!");
 
     return Cell_True(v);
 }
@@ -1768,7 +1768,7 @@ bool API_rebUnboxYesNo(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (not Is_YesNo(v))
-        abrupt_panic ("rebUnboxYesNo() called on non-[yes no]!");
+        panic ("rebUnboxYesNo() called on non-[yes no]!");
 
     return Cell_Yes(v);
 }
@@ -1789,7 +1789,7 @@ bool API_rebUnboxOnOff(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (not Is_OnOff(v))
-        abrupt_panic ("rebUnboxOnOff() called on non-[on off]!");
+        panic ("rebUnboxOnOff() called on non-[on off]!");
 
     return Cell_On(v);
 }
@@ -1812,11 +1812,11 @@ int32_t API_rebUnboxInteger(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (not Is_Integer(v))
-        abrupt_panic ("rebUnboxInteger() called on non-INTEGER!");
+        panic ("rebUnboxInteger() called on non-INTEGER!");
 
     REBI64 i = VAL_INT64(v);
     if (i < INT32_MIN or i > INT32_MAX)
-        abrupt_panic ("rebUnboxInteger() called on INTEGER! out of range!");
+        panic ("rebUnboxInteger() called on INTEGER! out of range!");
 
     return cast(int32_t, i);
 }
@@ -1837,7 +1837,7 @@ int64_t API_rebUnboxInteger64(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (not Is_Integer(v))
-        abrupt_panic ("rebUnboxInteger() called on non-INTEGER!");
+        panic ("rebUnboxInteger() called on non-INTEGER!");
 
     return VAL_INT64(v);
 }
@@ -1863,7 +1863,7 @@ double API_rebUnboxDecimal(
     if (Is_Integer(v))
         return cast(double, VAL_INT64(v));
 
-    abrupt_panic ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");
+    panic ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");
 }
 
 
@@ -1887,7 +1887,7 @@ uint32_t API_rebUnboxChar(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (not Is_Rune_And_Is_Char(v))
-        abrupt_panic ("rebUnboxChar() called on non-CHAR");  // API error [1]
+        panic ("rebUnboxChar() called on non-CHAR");  // API error [1]
 
     return Rune_Known_Single_Codepoint(v);
 }
@@ -1909,7 +1909,7 @@ void* API_rebUnboxHandleCData(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (Type_Of(v) != TYPE_HANDLE)
-        abrupt_panic ("rebUnboxHandleCData() called on non-HANDLE!");
+        panic ("rebUnboxHandleCData() called on non-HANDLE!");
 
     if (size_out)
         *size_out = Cell_Handle_Len(v);
@@ -1934,7 +1934,7 @@ RebolHandleCleaner* API_rebExtractHandleCleaner(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (Type_Of(v) != TYPE_HANDLE)
-        abrupt_panic ("rebUnboxHandleCleaner() called on non-HANDLE!");
+        panic ("rebUnboxHandleCleaner() called on non-HANDLE!");
 
     return maybe Cell_Handle_Cleaner(v);
 }
@@ -1948,7 +1948,7 @@ static Size Spell_Into(
     const Value* v
 ){
     if (not Any_Utf8(v))
-        abrupt_panic ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
+        panic ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
 
     Size bsize = buf_size;  // see `Size`: we use signed sizes internally
 
@@ -2038,7 +2038,7 @@ char* API_rebSpell(
 ){
     char* spell = API_rebSpellMaybe(binding, p, vaptr);
     if (spell == nullptr)
-        abrupt_panic ("rebSpell() does not take NULL, see rebSpellMaybe()");
+        panic ("rebSpell() does not take NULL, see rebSpellMaybe()");
     return spell;
 }
 
@@ -2051,7 +2051,7 @@ static unsigned int Spell_Into_Wide(
     const Value* v
 ){
     if (not Any_Utf8(v))
-        abrupt_panic ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
+        panic ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
 
     if (not buf)  // querying for size
         assert(buf_wchars == 0);
@@ -2166,7 +2166,7 @@ REBWCHAR* API_rebSpellWide(
 ){
     REBWCHAR* spelling = API_rebSpellWideMaybe(binding, p, vaptr);
     if (spelling == nullptr)
-        abrupt_panic ("rebSpellWide() does not take NULL, see rebSpellWideMaybe()");
+        panic ("rebSpellWide() does not take NULL, see rebSpellWideMaybe()");
     return spelling;
 }
 
@@ -2196,7 +2196,7 @@ size_t API_rebBytesInto(
     Size bsize = buf_size;  // see `Size`: we use signed sizes internally
 
     if (not Any_Bytes_Type(Type_Of(v)))
-        abrupt_panic ("rebBytes() APIs need BLOB! or ANY-UTF8? datatypes");
+        panic ("rebBytes() APIs need BLOB! or ANY-UTF8? datatypes");
 
     Size size;
     const Byte* data = Cell_Bytes_At(&size, v);
@@ -2237,7 +2237,7 @@ unsigned char* API_rebBytesMaybe(  // unsigned char, no Byte required by API
     }
 
     if (not Any_Bytes_Type(Type_Of(v)))
-        abrupt_panic ("rebBytes() APIs need BLOB! or ANY-UTF8? datatypes");
+        panic ("rebBytes() APIs need BLOB! or ANY-UTF8? datatypes");
 
     Size size;
     const Byte* data = Cell_Bytes_At(&size, v);
@@ -2263,7 +2263,7 @@ unsigned char* API_rebBytes(
 ){
     unsigned char* bytes = API_rebBytesMaybe(binding, size_out, p, vaptr);
     if (bytes == nullptr)
-        abrupt_panic ("rebBytes() does not take NULL, see rebBytesMaybe()");
+        panic ("rebBytes() does not take NULL, see rebBytesMaybe()");
     return bytes;
 }
 
@@ -2292,7 +2292,7 @@ const unsigned char* API_rebLockBytes(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (not Any_Bytes_Type(Type_Of(v)))
-        abrupt_panic ("rebLockBytes() only works with types with byte storage");
+        panic ("rebLockBytes() only works with types with byte storage");
 
     // !!! lock code here [1]
 
@@ -2328,10 +2328,10 @@ unsigned char* API_rebLockMutableBytes(
     Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
 
     if (not Any_Bytes_Type(Type_Of(v)))
-        abrupt_panic ("rebLockBytes() only works with types with byte storage");
+        panic ("rebLockBytes() only works with types with byte storage");
 
     if (Is_Flex_Read_Only(Cell_Flex(v)))
-        abrupt_panic ("rebLockMutableBytes() called on read-only input");
+        panic ("rebLockMutableBytes() called on read-only input");
 
     // !!! lock code here [1]
 
@@ -2459,7 +2459,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
       case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, cast(Stub*, p));
         if (Not_Flavor_Flag(API, stub, RELEASE))
-            abrupt_panic ("Can't quote instructions (besides rebR())");
+            panic ("Can't quote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
@@ -2476,7 +2476,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
         break; }
 
       default:
-        abrupt_panic ("Unknown pointer");
+        panic ("Unknown pointer");
     }
 
     Value* v = u_cast(Value*, Stub_Cell(stub));
@@ -2498,7 +2498,7 @@ RebolBaseInternal* API_rebUNQUOTING(const void* p)
     ENTER_API;
 
     if (p == nullptr)
-        abrupt_panic ("Cannot unquote NULL");
+        panic ("Cannot unquote NULL");
 
     Stub* stub;
 
@@ -2506,7 +2506,7 @@ RebolBaseInternal* API_rebUNQUOTING(const void* p)
       case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, cast(Stub*, p));
         if (Not_Flavor_Flag(API, stub, RELEASE))
-            abrupt_panic ("Can't unquote instructions (besides rebR())");
+            panic ("Can't unquote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
@@ -2516,12 +2516,12 @@ RebolBaseInternal* API_rebUNQUOTING(const void* p)
         break; }
 
       default:
-        abrupt_panic ("Unknown pointer");
+        panic ("Unknown pointer");
     }
 
     Cell* v = Stub_Cell(stub);
     if (not Is_Quoted(v))
-        abrupt_panic ("rebUNQUOTING()/rebU() can only unquote QUOTED? values");
+        panic ("rebUNQUOTING()/rebU() can only unquote QUOTED? values");
 
     Unquotify(cast(Element*, v));
     return cast(RebolBaseInternal*, stub);  // cast needed in C
@@ -2544,11 +2544,11 @@ RebolBaseInternal* API_rebRELEASING(RebolValue* v)
         return nullptr;
 
     if (not Is_Api_Value(v))
-        abrupt_panic ("Cannot apply rebR() to non-API value");
+        panic ("Cannot apply rebR() to non-API value");
 
     Stub* stub = Compact_Stub_From_Cell(v);
     if (Get_Flavor_Flag(API, stub, RELEASE))
-        abrupt_panic ("Cannot apply rebR() more than once to the same API value");
+        panic ("Cannot apply rebR() more than once to the same API value");
 
     Set_Flavor_Flag(API, stub, RELEASE);
     return cast(RebolBaseInternal*, stub);  // cast needed in C
@@ -2567,7 +2567,7 @@ RebolBaseInternal* API_rebINLINE(const RebolValue* v)
     Stub* s = Make_Untracked_Stub(FLAG_FLAVOR(FLAVOR_INSTRUCTION_SPLICE));
 
     if (not (Is_Block(v) or Is_Quoted(v) or Is_Space(v)))
-        abrupt_panic ("rebINLINE() requires argument to be a BLOCK!/QUOTED?/SPACE");
+        panic ("rebINLINE() requires argument to be a BLOCK!/QUOTED?/SPACE");
 
     Copy_Cell(Stub_Cell(s), v);
 
@@ -2588,7 +2588,7 @@ RebolBaseInternal* API_rebRUN(const void* p)
     ENTER_API;
 
     if (p == nullptr)
-        abrupt_panic ("rebRUN() received nullptr");
+        panic ("rebRUN() received nullptr");
 
     Stub* stub;
     Value* v;
@@ -2598,13 +2598,13 @@ RebolBaseInternal* API_rebRUN(const void* p)
         stub = m_cast(Stub*, cast(Stub*, p));
         v = cast(Value*, Stub_Cell(stub));
         if (Not_Flavor_Flag(API, stub, RELEASE))
-            abrupt_panic ("Can't quote instructions (besides rebR())");
+            panic ("Can't quote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
         const Value* at = cast(const Value*, p);
         if (Is_Nulled(at))
-            abrupt_panic ("rebRUN() received null cell");
+            panic ("rebRUN() received null cell");
 
         v = Copy_Cell(Alloc_Value(), at);
         stub = Compact_Stub_From_Cell(v);
@@ -2612,13 +2612,13 @@ RebolBaseInternal* API_rebRUN(const void* p)
         break; }
 
       default:
-        abrupt_panic ("Unknown pointer");
+        panic ("Unknown pointer");
     }
 
     if (Is_Action(v))
         LIFT_BYTE(v) = NOQUOTE_2;
     else if (not Is_Frame(v))
-        abrupt_panic ("rebRUN() requires FRAME! or actions (aka FRAME! antiforms)");
+        panic ("rebRUN() requires FRAME! or actions (aka FRAME! antiforms)");
 
     return cast(RebolBaseInternal*, stub);  // cast needed in C
 }
@@ -2644,7 +2644,7 @@ RebolValue* API_rebManage(RebolValue* v)
     assert(Is_Base_Root_Bit_Set(stub));
 
     if (Is_Base_Managed(stub))
-        abrupt_panic ("Attempt to rebManage() an API value that's already managed.");
+        panic ("Attempt to rebManage() an API value that's already managed.");
 
     Set_Base_Managed_Bit(stub);
     Connect_Api_Handle_To_Level(stub, TOP_LEVEL);
@@ -2668,7 +2668,7 @@ RebolValue* API_rebUnmanage(RebolValue *v)
     assert(Is_Base_Root_Bit_Set(stub));
 
     if (Not_Base_Managed(stub))
-        abrupt_panic ("Attempt to rebUnmanage() API value with indefinite lifetime.");
+        panic ("Attempt to rebUnmanage() API value with indefinite lifetime.");
 
     // It's not safe to convert the average Flex that might be referred to
     // from managed to unmanaged, because you don't know how many references
@@ -3096,7 +3096,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     heeded (Corrupt_Cell_If_Needful(Level_Scratch(L)));
 
     if (not Typecheck_Coerce_Return(L, param, L->out))
-        abrupt_panic (Error_Bad_Return_Type(L, L->out, param));
+        panic (Error_Bad_Return_Type(L, L->out, param));
 
     return L->out;
 }}
@@ -3175,7 +3175,7 @@ RebolValue* API_rebFunctionFlipped(
         Fetch_Next_In_Feed(feed);
 
         if (Not_Feed_At_End(feed) or not Is_Block(spec))
-            abrupt_panic ("rebFunc() expects either no spec, or just one BLOCK!");
+            panic ("rebFunc() expects either no spec, or just one BLOCK!");
     }
 
     Release_Feed(feed);  // Note: exhausting feed takes care of the va_end()
@@ -3193,7 +3193,7 @@ RebolValue* API_rebFunctionFlipped(
         SYM_RETURN  // has return for type checking and continuation use
     )
     except (Error* e) {
-        abrupt_panic (e);
+        panic (e);
     }
 
     Details* details = Make_Dispatch_Details(
@@ -3262,7 +3262,7 @@ static void Panic_If_Top_Level_Not_Continuable(void) {
             API_CONTINUATIONS_OK
         )
     ){
-        abrupt_panic ("Can't Delegate/Continue unless inside API-ready function call");
+        panic ("Can't Delegate/Continue unless inside API-ready function call");
     }
 }
 

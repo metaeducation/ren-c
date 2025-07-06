@@ -539,7 +539,7 @@ INLINE bool Should_Skip_Ascii_Byte_May_Panic(
     const Byte* start  // need for knowing how far back for error context
 ){
     if (*bp == '\0')
-        abrupt_panic (Error_Illegal_Zero_Byte_Raw());  // never allow #{00} in strings
+        panic (Error_Illegal_Zero_Byte_Raw());  // never allow #{00} in strings
 
     if (*bp == CR) {
         switch (strmode) {
@@ -553,7 +553,7 @@ INLINE bool Should_Skip_Ascii_Byte_May_Panic(
 
           case STRMODE_NO_CR:
           strmode_no_cr:
-            abrupt_panic (Error_Illegal_Cr(bp, start));
+            panic (Error_Illegal_Cr(bp, start));
 
           case STRMODE_LF_TO_CRLF:
             assert(!"STRMODE_LF_TO_CRLF handled by exporting routines only");

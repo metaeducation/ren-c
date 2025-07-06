@@ -137,11 +137,11 @@ bool Pushed_Continuation(
             Copy_Cell(out, unwrap with);
             goto just_use_out;
         }
-        abrupt_panic ("Branch has no default value to give with void");
+        panic ("Branch has no default value to give with void");
     }
 
     if (Is_Antiform(branch))  // no other antiforms can be branches
-        abrupt_panic (Error_Bad_Antiform(branch));
+        panic (Error_Bad_Antiform(branch));
 
     if (Is_Pinned_Form_Of(GROUP, branch)) {  // [2] for GET-GROUP!
         assert(flags & LEVEL_FLAG_FORCE_HEAVY_NULLS);  // needed for trick
@@ -207,7 +207,7 @@ bool Pushed_Continuation(
 
       case TYPE_CHAIN: {  // effectively REDUCE
         if (not Is_Get_Block(branch))
-            abrupt_panic ("GET-BLOCK! is only CHAIN branch currently working");
+            panic ("GET-BLOCK! is only CHAIN branch currently working");
 
         Level* L = Make_End_Level(
             &Action_Executor,
@@ -242,7 +242,7 @@ bool Pushed_Continuation(
         break;
     }
 
-    abrupt_panic (Error_Bad_Branch_Type_Raw());  // narrow input types? [3]
+    panic (Error_Bad_Branch_Type_Raw());  // narrow input types? [3]
 
 } handle_action: { ///////////////////////////////////////////////////////////
 

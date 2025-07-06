@@ -150,17 +150,17 @@ void Hex_String_To_Integer(Value* out, const Element* value)  // !!! UNUSED
 
     if (utf8_size > MAX_HEX_LEN) {
         // Lacks BLOB!'s accommodation of leading 00s or FFs
-        abrupt_panic (Error_Out_Of_Range_Raw(value));
+        panic (Error_Out_Of_Range_Raw(value));
     }
 
     if (not Try_Scan_Hex_Integer(out, bp, utf8_size, utf8_size))
-        abrupt_panic (Error_Bad_Make(TYPE_INTEGER, value));
+        panic (Error_Bad_Make(TYPE_INTEGER, value));
 
     // !!! Unlike binary, always assumes unsigned (should it?).  Yet still
     // might run afoul of 64-bit range limit.
     //
     if (VAL_INT64(out) < 0)
-        abrupt_panic (Error_Out_Of_Range_Raw(value));
+        panic (Error_Out_Of_Range_Raw(value));
 }
 
 

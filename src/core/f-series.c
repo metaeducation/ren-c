@@ -513,7 +513,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     Option(Heart) t_heart = Heart_Of(t);
 
     if (not s_heart and not t_heart)
-        abrupt_panic ("Custom type Try_Lesser_Value not implemented yet");
+        panic ("Custom type Try_Lesser_Value not implemented yet");
 
     if (not s_heart or not t_heart)
         return false;  // one is a custom type, the other is not, so not equal
@@ -546,7 +546,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
 
     bool threw = Trampoline_Throws(atom_out, L);
     if (threw)
-        abrupt_panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+        panic (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     if (Is_Error(atom_out))
         return false;

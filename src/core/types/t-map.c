@@ -157,7 +157,7 @@ REBINT Find_Key_Hashed(
         }
         then {  // found synonym
             if (synonym_slot != -1) // another equivalent already matched
-                abrupt_panic (Error_Conflicting_Key_Raw(key));
+                panic (Error_Conflicting_Key_Raw(key));
             synonym_slot = slot; // save and continue checking
         }
 
@@ -360,7 +360,7 @@ void Append_Map(
             //
             // Keys with no value not allowed, e.g. `to map! [1 "foo" 2]`
             //
-            abrupt_panic (Error_Index_Out_Of_Range_Raw());
+            panic (Error_Index_Out_Of_Range_Raw());
         }
 
         bool strict = true;
