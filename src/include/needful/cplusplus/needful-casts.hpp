@@ -439,13 +439,13 @@ struct UpcastHelper {
 
     static_assert(
         std::is_convertible<From, type>::value,
-        "downcast() cannot implicitly convert expression to type T"
+        "upcast() cannot implicitly convert expression to type T"
     );
 };
 
-#undef needful_downcast
-#define needful_downcast(T,expr) \
-    ((typename needful::DowncastHelper< \
+#undef needful_upcast
+#define needful_upcast(T,expr) \
+    ((typename needful::UpcastHelper< \
         needful_remove_reference(decltype(expr)), \
         T \
     >::type)(expr))
@@ -462,18 +462,23 @@ struct UpcastHelper {
 // getting brevity.
 //
 
+template<typename T>
+struct OptionWrapper;
+
 template<typename From>
 struct DowncastHolder {
     From p;
     explicit constexpr DowncastHolder(const From& from) : p {from} {}
 
+    // Conversion for downcasting - allows converting from base to derived
     template<
         typename To,
         typename = typename std::enable_if<
-            std::is_convertible<To, From>::value
+            std::is_convertible<From, To>::value or
+            (std::is_pointer<From>::value and std::is_pointer<To>::value)
         >::type
     >
-    operator To() const noexcept
+    operator To() const
         { return needful_lenient_hookable_cast(To, p); }
 };
 

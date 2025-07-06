@@ -14,7 +14,7 @@
 //=//// fail() ////////////////////////////////////////////////////////////=//
 //
 // Sets the global error state (`g_failure`) to the error pointer `p` and
-// returns NEEDFUL_PERMISSIVE_ZERO from the current function, propagating th
+// returns NEEDFUL_RESULT_0 from the current function, propagating th
 // error up the call stack. This is for cooperative error signaling, and can
 // be caught by except()...see panic() for divergent errors.
 //
@@ -26,7 +26,7 @@
 // Like `return fail`, but for non-cooperative, abrupt errors that should not
 // be handled by normal except() handling or trap, but only propagated until
 // they are ultimately `rescue`'d.  Sets the error state, marks the
-// divergent flag, and returns NEEDFUL_PERMISSIVE_ZERO.
+// divergent flag, and returns NEEDFUL_RESULT_0.
 //
 //     if (catastrophic_condition)
 //         panic (Error_Catastrophe());
@@ -36,7 +36,7 @@
 // Evaluates `expr`, which should return a Result-like wrapper. If no error
 // occurs, the result is extracted and execution continues. If an error is
 // present in the global error state (`g_failure`), the current function
-// returns a special zero value (NEEDFUL_PERMISSIVE_ZERO), propagating the
+// returns a special zero value (NEEDFUL_RESULT_0), propagating the
 // error up the call stack. This is analogous to Rust's `?` operator.
 //
 //     Result(int) foo() {
@@ -47,7 +47,7 @@
 //=//// require(expr) /////////////////////////////////////////////////////=//
 //
 // Like `trap`, but if an error is detected, it also sets the divergent flag
-// (`g_divergent = true`) before returning `NEEDFUL_PERMISSIVE_ZERO`. Used
+// (`g_divergent = true`) before returning `NEEDFUL_RESULT_0`. Used
 // when a function must not continue after a failed operation, and signals
 // that the error is not recoverable in the current context.  It means that
 // constructs like except() will propagate the error vs. handle it.
@@ -182,7 +182,7 @@
 //
 
 
-//=//// NEEDFUL_PERMISSIVE_ZERO, More Lax Coercing Zero in C++ ////////////=//
+//=//// NEEDFUL_RESULT_0, More Lax Coercing Zero in C++ ////////////=//
 //
 // If you have code which wants to polymorphically be able to convert to an
 // Option(SomeEnum) or SomePointer* or bool, etc. then this introduces a
@@ -198,15 +198,12 @@
 //    is *not* used with return.)
 //
 
-struct NEEDFUL_NODISCARD PermissiveZeroStruct {  // [[nodiscard]] is good [1]
-    template<typename T>
-    operator T() const {
-        return x_cast(T, 0);
-    }
+struct NEEDFUL_NODISCARD Result0Struct {  // [[nodiscard]] is good [1]
+   // no members or behaviors
 };
 
-#undef NEEDFUL_PERMISSIVE_ZERO
-#define NEEDFUL_PERMISSIVE_ZERO  needful::PermissiveZeroStruct{}
+#undef NEEDFUL_RESULT_0
+#define NEEDFUL_RESULT_0  needful::Result0Struct{}
 
 
 //=//// DETECT OPTION WRAPPER TRAIT //////////////////////////////////////=//
@@ -290,7 +287,7 @@ struct NEEDFUL_NODISCARD ExtractedHotPotato {
 // 1. The error machinery hinges on the ability to return a zerolike state
 //    for anything that is a Result(T) in the case of a failure.  But rather
 //    than allow Result to be constructed from any integer in the C++
-//    checked build, it's narrowly constructible from PermissiveZeroStruct,
+//    checked build, it's narrowly constructible from Result0Struct,
 //    which is what `return fail(...)` returns.
 //
 // 2. It's important that functions that particpate in the Result(T) error
@@ -302,13 +299,18 @@ struct NEEDFUL_NODISCARD ExtractedHotPotato {
 //
 
 template<typename T>
+struct Result0InitHelper {
+    static T init() { return x_cast(T, 0); }
+};
+
+template<typename T>
 struct NEEDFUL_NODISCARD ResultWrapper {
     NEEDFUL_DECLARE_WRAPPED_FIELD (T, r);
 
     ResultWrapper() = delete;
 
-    ResultWrapper(PermissiveZeroStruct&&)  // how failures are returned [1]
-        : r (u_cast(T, NEEDFUL_PERMISSIVE_ZERO))
+    ResultWrapper(Result0Struct&&)  // how failures are returned [1]
+      : r {Result0InitHelper<T>::init()}
         {}
 
     ResultWrapper(const std::nullptr_t&)  // usually no `return nullptr;` [2]
@@ -374,7 +376,7 @@ constexpr ResultExtractor g_result_extractor = {};
 //    not like the all-caps TRASH or VOID that suggest Rebol types, it's
 //    specifically an implementation detail in C.  Lowercase seems better.
 //
-// 2. When building as C++, when a `fail` produces NEEDFUL_PERMISSIVE_ZERO
+// 2. When building as C++, when a `fail` produces NEEDFUL_RESULT_0
 //    the ResultWrapper<> will typically try to construct its contents with
 //    a cast to zero.  Rather than make the Zero type support this generic
 //    methodology, we make a specialization of ResultWrapper<Zero>.
@@ -400,12 +402,16 @@ template<>
 struct ResultWrapper<Zero> {
     ResultWrapper() = delete;
 
-    ResultWrapper(PermissiveZeroStruct&&) {}
+    ResultWrapper(Result0Struct&&) {}
     ResultWrapper(Zero&&) {}
 
-    ExtractedHotPotato<Zero> extract() {
+    ExtractedHotPotato<Zero> Extract_Hot() {  // [[nodiscard]] version
         return ExtractedHotPotato<Zero>{zero};
     }
+
+    Zero Extract_Cold() const  // plain type, discardable
+      { return zero; }
+
 };
 
 inline void operator>>(

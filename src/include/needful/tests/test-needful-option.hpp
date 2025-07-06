@@ -8,7 +8,7 @@ struct MyWrapper {
 
     MyWrapper(NoneStruct&&) : value {0} {}  // Initialize to zero for "none"
 
-    MyWrapper(PermissiveZeroStruct&&) : value {0} {}  // need overload
+    MyWrapper(Result0Struct&&) : value {0} {}  // need overload
 
     explicit operator bool() const {
         return value != 0;  // T needs a zero value representing "none"

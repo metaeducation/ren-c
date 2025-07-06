@@ -159,7 +159,7 @@
 //    In C builds with GCC/Clang, the flag you want is `-Wno-int-conversion`
 //
 //    (The C++ build doesn't require disabling the warnings because it uses
-//    a "PermissiveZeroStruct" object to more precisely capture the intent.)
+//    a "Result0Struct" object to more precisely capture the intent.)
 //
 // B. In order for these macros to work, they need to be able to test and
 //    clear the global error state...as well as a flag as to whether the
@@ -177,19 +177,19 @@
 
 #define NeedfulResult(T)  T
 
-#define NEEDFUL_PERMISSIVE_ZERO  0  // in C, likely must disable warnings [A]
+#define NEEDFUL_RESULT_0  0  // in C, likely must disable warnings [A]
 
 #define NEEDFUL_NOOP  ((void)0)
 
 #define needful_fail(...) \
     (Needful_Assert_Not_Failing(), \
         Needful_Set_Failure(__VA_ARGS__), \
-        NEEDFUL_PERMISSIVE_ZERO)
+        NEEDFUL_RESULT_0)
 
 #define needful_trap_core(expr, prefix_extractor) \
     /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
     if (Needful_Get_Failure()) { \
-        return NEEDFUL_PERMISSIVE_ZERO; \
+        return NEEDFUL_RESULT_0; \
     } NEEDFUL_NOOP  /* force require semicolon at callsite */
 
 #define needful_except_core(decl,postfix_extractor) \

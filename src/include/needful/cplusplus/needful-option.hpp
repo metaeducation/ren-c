@@ -16,11 +16,6 @@
 
 //=//// none: OPTIONAL DISENGAGED STATE ///////////////////////////////////=//
 //
-// The Option() type is designed to construct from PermissiveZeroStruct in
-// order to be compatible with `return fail ...;` when using Result(Option(T))
-// as a function's return type.  But PermissiveZeroStruct is used in wider
-// applications than Option().
-//
 // So NoneStruct instances are a specific narrowed type used to construct
 // an Option(T) for arbitrary T in the disengaged state.
 //
@@ -67,6 +62,11 @@ struct NoneStruct {
 //
 
 template<typename T>
+struct OptionNoneInitHelper {
+    static T init() { return needful_xtreme_cast(T, 0); }
+};
+
+template<typename T>
 struct OptionWrapper {
     NEEDFUL_DECLARE_WRAPPED_FIELD (T, o);
 
@@ -74,35 +74,38 @@ struct OptionWrapper {
 
     OptionWrapper () = default;  // garbage, or 0 if global [2]
 
-    OptionWrapper(PermissiveZeroStruct&&)
-        : o (NEEDFUL_PERMISSIVE_ZERO)
-      {}
+    OptionWrapper(Result0Struct&&) = delete;  // only for Result(T)
 
     OptionWrapper(NoneStruct&&)
-        : o (NEEDFUL_PERMISSIVE_ZERO)
+        : o {OptionNoneInitHelper<T>::init()}
       {}
 
     template <typename U>
     OptionWrapper (const U& something)
-        : o (something)
+        : o (something)  // not {something}, so narrowing conversions ok
+      {}
+
+    template <typename U>
+    OptionWrapper (const DowncastHolder<U>& down)
+        : o {down}
       {}
 
     template <
         typename U,
-        DisableIfSame<U, NoneStruct, PermissiveZeroStruct> = nullptr
+        DisableIfSame<U, NoneStruct, Result0Struct> = nullptr
     >
     explicit OptionWrapper(U&& something)  // needed for Byte->enum [3]
-        : o (u_cast(T, std::forward<U>(something)))
+        : o {std::forward<U>(something)}
       {}
 
     template <typename X>
     OptionWrapper (const OptionWrapper<X>& other)
-        : o (other.o)  // necessary...won't use the (U something) template
+        : o {other.o}  // necessary...won't use the (U something) template
       {}
 
     template <typename X>
     OptionWrapper (const ExtractedHotPotato<OptionWrapper<X>>& extracted)
-        : o (extracted.x.o)
+        : o {extracted.x.o}
       {}
 
     template<typename U>
@@ -163,6 +166,19 @@ struct IsOptionWrapper<OptionWrapper<X>> : std::true_type {};
 #undef NeedfulOption
 #define NeedfulOption(T)  needful::OptionWrapper<T>
 
+
+
+//=//// RESULT0 INIT HELPER //////////////////////////////////////////////=//
+//
+// We don't want to force Option(T) to be constructible from 0, so when a
+// Result(Option(T)) is constructed from NEEDFUL_RESULT_0, have that be
+// done via a NoneStruct{}.
+//
+
+template<typename U>
+struct Result0InitHelper<OptionWrapper<U>> {
+    static OptionWrapper<U> init() { return NoneStruct{}; }
+};
 
 
 //=/// UNWRAP AND MAYBE HELPER CLASSES ///////////////////////////////////=//

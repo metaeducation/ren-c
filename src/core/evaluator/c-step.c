@@ -283,8 +283,8 @@ Bounce Stepper_Executor(Level* L)
         Set_Level_Flag(L, DISPATCHING_INTRINSIC);  // level_ is not its Level
         Bounce bounce = Apply_Cfunc(dispatcher, L);
         if (bounce == nullptr) {
-            if (g_failure)  // was NEEDFUL_PERMISSIVE_ZERO (fail/panic)
-                return NEEDFUL_PERMISSIVE_ZERO;
+            if (g_failure)  // was NEEDFUL_RESULT_0 (fail/panic)
+                return NEEDFUL_RESULT_0;
             Init_Nulled(OUT);  // was `return nullptr`
         }
         else if (bounce == BOUNCE_OKAY)

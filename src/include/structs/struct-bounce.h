@@ -73,7 +73,7 @@ typedef Byte WildTwo[2];
 
         Bounce(const nullptr_t&) : b {nullptr} {}
 
-        Bounce(PermissiveZeroStruct&&) : b {nullptr} {}
+        Bounce(Result0Struct&&) : b {nullptr} {}
 
         Bounce(const Cell* cell) : b {cell} {}  // either API cell or OUT [2]
 
@@ -87,6 +87,13 @@ typedef Byte WildTwo[2];
         explicit operator const char*() const
           { return u_cast(const char*, b); }
     };
+
+  namespace needful {
+    template<>
+    struct OptionNoneInitHelper<Bounce> {
+        static Bounce init() { return Bounce {nullptr}; }
+    };
+  }
 #endif
 
 
