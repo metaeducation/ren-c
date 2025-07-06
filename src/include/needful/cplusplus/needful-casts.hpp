@@ -422,9 +422,9 @@ struct RigidCastAsserter {
     Needful_Lenient_Unhookable_Cast(T, (expr)))
 
 
-//=//// downcast(): CAST THAT WOULD BE SAFE FOR PLAIN ASSIGNMENT //////////=//
+//=//// upcast(): CAST THAT WOULD BE SAFE FOR PLAIN ASSIGNMENT ///////////=//
 //
-// Downcast behaves like what would also be called an "implicit cast", which
+// Upcast behaves like what would also be called an "implicit cast", which
 // is anything that would be safe if done through a normal assignment.  It's
 // just a nicer, shorter name than implicit_cast())!
 //
@@ -434,7 +434,7 @@ struct RigidCastAsserter {
 //
 
 template<typename From, typename To>
-struct DowncastHelper {
+struct UpcastHelper {
     using type = typename MirrorConstHelper<From, To>::type;
 
     static_assert(
@@ -451,7 +451,7 @@ struct DowncastHelper {
     >::type)(expr))
 
 
-//=//// upcast(): SINGLE-ARITY CAST THAT ONLY ALLOWS UPCASTING ///////////=//
+//=//// downcast(): SINGLE-ARITY CAST THAT ONLY ALLOWS DOWNCASTING ////////=//
 //
 // A technique that Needful codebases can use is to use inheritance of types
 // when built as C++, but not when built as C.  The C build can define the
@@ -463,9 +463,9 @@ struct DowncastHelper {
 //
 
 template<typename From>
-struct UpcastWrapper {
+struct DowncastHolder {
     From p;
-    explicit constexpr UpcastWrapper(const From& from) : p {from} {}
+    explicit constexpr DowncastHolder(const From& from) : p {from} {}
 
     template<
         typename To,
@@ -477,9 +477,9 @@ struct UpcastWrapper {
         { return needful_lenient_hookable_cast(To, p); }
 };
 
-#undef needful_upcast
-#define needful_upcast(expr) \
-    (needful::UpcastWrapper< \
+#undef needful_downcast
+#define needful_downcast(expr) \
+    (needful::DowncastHolder< \
         needful_remove_reference(decltype(expr)) \
     >(expr))
 
@@ -533,7 +533,9 @@ constexpr T IntegralCastHelper(V v) {
 // in terms of validating the "bits".  You can really only make it legal to
 // cast from certain function pointer types to others.  Rather than making
 // cast() bend itself into a pretzel to accommodate all the quirks of
-// funciton pointers, this defines a separate `f_cast()`.
+// function pointers, this defines a separate `f_cast()`.
+//
+// Stylized so that it costs nothing at runtime, even in debug builds.
 //
 
 template<typename From, typename To>
@@ -544,21 +546,17 @@ struct FunctionPointerCastHelper {
     static_assert(
         is_function_pointer<FromDecayed>::value
         and is_function_pointer<ToDecayed>::value,
-        "f_cast() requires both source and target to be function pointers."
+        "f_cast() requires both source and target to be function pointers"
     );
-    static To convert(From from) {
-        return x_cast(To, from);
-    }
+
+    using type = ToDecayed;
 };
 
-template<typename To, typename From>
-To FunctionPointerCastDecayer(From&& from) {
-    typedef typename std::decay<From>::type FromDecay;
-    return FunctionPointerCastHelper<FromDecay, To>::convert(from);
-}
-
-#undef f_cast
-#define f_cast(T,expr)  needful::FunctionPointerCastDecayer<T>(expr)
+#undef needful_function_cast
+#define needful_function_cast(T,expr) \
+    (reinterpret_cast< \
+        needful::FunctionPointerCastHelper<decltype(expr),T>::type \
+    >(expr))
 
 
 //=//// UPCAST AND DOWNCAST TAG DISPATCH //////////////////////////////////=//

@@ -451,35 +451,88 @@
 //    passthru, so you get an error omitting const in such cases.
 //
 
-#define needful_lenient_hookable_cast(T,expr) /* can alias as cast() [1] */ \
-    ((T)(expr))
+#define needful_lenient_hookable_cast(T,expr)       ((T)(expr))  // cast() [1]
 
-#define needful_lenient_unhookable_cast(T,expr) /* no validation hooks [2] */ \
-    ((T)(expr))
+#define needful_lenient_unhookable_cast(T,expr)     ((T)(expr))  // [2]
 
-#define needful_rigid_hookable_cast(T,expr) /* rigid sometimes wanted [3] */ \
-    ((T)(expr))
+#define needful_rigid_hookable_cast(T,expr)         ((T)(expr))  // [3]
 
-#define needful_rigid_unhookable_cast(T,expr) \
-    ((T)(expr))
+#define needful_rigid_unhookable_cast(T,expr)       ((T)(expr))
 
-#define needful_mutable_cast(T,expr) \
-    ((T)(expr))
 
-#define needful_pointer_cast(T,expr) \
-    ((T)(expr))
+//=//// m_cast(): MUTABILITY CASTS ////////////////////////////////////////=//
+//
 
-#define needful_integral_cast(T,expr) \
-    ((T)(expr))
+#define needful_mutable_cast(T,expr)                ((T)(expr))
+
+
+//=//// p_cast(), i_cast(), f_cast(): NARROWED CASTS //////////////////////=//
+//
+// Casts like those that turn pointers into integers are weird.  It would
+// create complexity to make the plain cast() macro handle them... but also,
+// the C++ build would be forced to do any reinterpret_cast<> through a
+// function template that can't be constexpr.  Optimizers would inline it,
+// but it would still be a function call in debug builds.
+//
+// It makes the source more communicative for these weird casts to stand out
+// anyway.  So these narrowed casts are provided.
+//
+
+#define needful_pointer_cast(T,expr)    ((T)(expr))
+
+#define needful_integral_cast(T,expr)   ((T)(expr))
+
+#define needful_function_cast(T,expr)   ((T)(expr))
+
+#define needful_valist_cast(T,expr)     ((T)(expr))
+
+
+//=//// downcast() and upcast(): "INHERITANCE" CASTING ////////////////////=//
+//
+// One of Needful's features is to facilitate using type hiearchies in C.
+// You can frame your data types as having inheritance in the sense that
+// derived types can be passed to functions taking base types but not vice
+// versa.  C++ checks it, but C does not.
+//
+// But also, upcast() is more generally applied for "implicit" casts, e.g.
+// any cast that would have worked as a normal assignment.
+//
+// 1. In the C build, performing an upcast() will give you a void pointer,
+//    which you can pass anywhere.  In the C++ build, it produces a temporary
+//    object to hold the expression result that is willing to convert itself
+//    anywhere the expression could have been used...but that temporary
+//    object disallows dereferencing, so you can't write:
+//
+//         upcast(Get_Some_Derived_Class())->base_member
+//
+//    This leads to consistent behavior in C and C+ builds, since the C
+//    void pointer result wouldn't allow such dereferencing either.
+//
+
+#define needful_downcast(T,expr)  ((T)(expr))
+
+#define needful_upcast(expr)  ((void*)(expr))  // void as "base class" [1]
+
+
+
+//=//// x_cast(): "WHAT PARENTHESES-CAST WOULD DO" ////////////////////////=//
+//
+// The parentheses-cast is the only cast in C, so it is maximally permissive.
+// In C++, it defaults to giving warnings if you cast away constness...but
+// any standards-compliant compiler must let you disable that warning.
+//
+// If you are in a situation where the Needful casts are not working for you,
+// the "xtreme" cast is a way to fall back on the C cast while still being
+// more visible as a cast in a code than parentheses.
+//
+// 1. The choice of the name "xtreme" is because `x_cast()` seems like the
+//    right name for it, whereas `c_cast()` would suggest something with
+//    constness (if m_cast() is for mutability).
+//
 
 #define needful_xtreme_cast(T,expr) \
     ((T)(expr))
 
-#define needful_downcast(T,expr) \
-    ((T)(expr))
-
-#define needful_upcast(expr) \
-    ((void*)(expr))
 
 
 //=//// CAST SELECTION GUIDE ///////////////////////////////////////////////=//
@@ -527,12 +580,6 @@
 //    cast() could be screwed up if you ever use va_list* with it.  We warn
 //    you to use u_cast() if possible--but it's not always possible, since
 //    it might look like a completely mundane type.  :-(
-//
-// 3. <write note>
-
-
-#define f_cast(T,expr)    ((T)(expr))
-
 
 
 //=//// attempt, until, whilst: ENHANCED LOOP MACROS //////////////////////=//
@@ -682,6 +729,7 @@ typedef enum {
 //
 
 #define NEEDFUL_USED(expr)    ((void)(expr))
+
 #define NEEDFUL_UNUSED(expr)  ((void)(expr))
 
 
@@ -825,6 +873,7 @@ typedef enum {
 
     #define p_cast            needful_pointer_cast
     #define i_cast            needful_integral_cast
+    #define f_cast            needful_function_cast
 
     #define downcast          needful_downcast
     #define upcast            needful_upcast
