@@ -346,13 +346,7 @@ DECLARE_NATIVE(USE)
     Element* vars = Element_ARG(VARS);
     Element* body = Element_ARG(BODY);
 
-    VarList* varlist;
-    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
-        &varlist, body, vars
-    );
-    if (e)
-        panic (unwrap e);
-
+    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
     UNUSED(varlist);  // managed, but [1]
 
     if (Eval_Any_List_At_Throws(OUT, body, SPECIFIED))

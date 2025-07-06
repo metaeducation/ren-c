@@ -1175,8 +1175,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 //    that can still hold onto the VarList*, to relieve the caller of the
 //    concern of protecting the VarList*.
 //
-Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
-    Sink(VarList*) varlist_out,  // VarList outlives loop [1]
+Result(VarList*) Create_Loop_Context_May_Bind_Body(
     Element* body,  // binding modified if new loop variables created [2]
     Element* spec  // spec BLOCK! -or- just a plain WORD!, @WORD!, SPACE, etc.
 ){
@@ -1190,13 +1189,13 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
             return Error_No_Catch_For_Throw(TOP_LEVEL);
         Decay_If_Unstable(temp);
         if (Is_Antiform(temp))
-            return Error_Bad_Antiform(temp);
-        Move_Cell(spec, cast(Element*, temp));
+            return fail (Error_Bad_Antiform(temp));
+        Move_Cell(spec, Known_Element(temp));
     }
 
     REBLEN num_vars = Is_Block(spec) ? Series_Len_At(spec) : 1;
     if (num_vars == 0)
-        return Error_Bad_Value(spec);
+        return fail (Error_Bad_Value(spec));
 
     const Element* tail;
     const Element* item;
@@ -1228,7 +1227,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
                 // (keylist) would be incomplete and tripped on by the GC if
                 // we didn't do some kind of workaround.
                 //
-                return Error_Bad_Value(check);
+                return fail (Error_Bad_Value(check));
             }
         }
     }
@@ -1352,7 +1351,7 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
 
     if (e) {
         Free_Unmanaged_Flex(varlist);
-        return e;
+        return fail (e);
     }
 
     Manage_Flex(varlist);  // must be managed to use in binding
@@ -1371,16 +1370,15 @@ Option(Error*) Trap_Create_Loop_Context_May_Bind_Body(
         Tweak_Cell_Binding(body, use);
     }
 
-    *varlist_out = varlist;
-    return SUCCESS;
+    return varlist;
 }
 
 
 //
 //  Trap_Read_Slot_Meta: C
 //
-// Trap_Create_Loop_Context_May_Bind_Body() allows @WORD! for reusing an
-// existing variable's binding:
+// Create_Loop_Context_May_Bind_Body() allows @WORD! for reusing an existing
+// variable's binding:
 //
 //     x: 10
 //     for-each @x [20 30 40] [...]

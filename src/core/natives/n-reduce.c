@@ -307,12 +307,7 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    VarList* varlist;
-    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
-        &varlist, body, vars
-    );
-    if (e)
-        panic (unwrap e);
+    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 

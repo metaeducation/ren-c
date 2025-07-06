@@ -443,12 +443,7 @@ DECLARE_NATIVE(CFOR)
     Element* word = Element_ARG(WORD);
     Element* body = Element_ARG(BODY);
 
-    VarList* varlist;
-    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
-        &varlist, body, word
-    );
-    if (e)
-        panic (unwrap e);
+    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, word));
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
@@ -536,12 +531,7 @@ DECLARE_NATIVE(FOR_SKIP)
     if (skip == 0)
         return VOID;  // https://forum.rebol.info/t/infinite-loop-vs-error/936
 
-    VarList* varlist;
-    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
-        &varlist, body, word
-    );
-    if (e)
-        panic (unwrap e);
+    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, word));
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
@@ -576,7 +566,7 @@ DECLARE_NATIVE(FOR_SKIP)
             SERIES_INDEX_UNBOUNDED(spare) = index;
         }
 
-        e = Trap_Write_Loop_Slot_May_Bind(slot, spare, body);
+        Option(Error*) e = Trap_Write_Loop_Slot_May_Bind(slot, spare, body);
         if (e)
             panic (unwrap e);
 
@@ -1168,12 +1158,7 @@ DECLARE_NATIVE(FOR_EACH)
     if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
-    VarList* varlist;
-    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
-        &varlist, body, vars
-    );
-    if (e)
-        panic (unwrap e);
+    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
 
     Remember_Cell_Is_Lifeguard(Init_Object(vars, varlist));
 
@@ -1285,12 +1270,7 @@ DECLARE_NATIVE(EVERY)
     if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
-    VarList* varlist;
-    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
-        &varlist, body, vars
-    );
-    if (e)
-        panic (unwrap e);
+    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
@@ -1442,12 +1422,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     if (Series_Index(data) >= Series_Len_At(data))  // past series end
         return NULLED;
 
-    VarList* varlist;
-    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
-        &varlist, body, vars
-    );
-    if (e)
-        panic (unwrap e);
+    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
@@ -1854,12 +1829,7 @@ DECLARE_NATIVE(MAP)
         );
     }
 
-    VarList* varlist;
-    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
-        &varlist, body, vars
-    );
-    if (e)
-        panic (unwrap e);
+    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
@@ -2121,12 +2091,7 @@ DECLARE_NATIVE(FOR)
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    VarList* varlist;
-    Option(Error*) e = Trap_Create_Loop_Context_May_Bind_Body(
-        &varlist, body, vars
-    );
-    if (e)
-        panic (unwrap e);
+    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
 
     assert(Varlist_Len(varlist) == 1);
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
@@ -2134,7 +2099,7 @@ DECLARE_NATIVE(FOR)
     Value* spare_one = Init_Integer(SPARE, 1);
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
-    e = Trap_Write_Loop_Slot_May_Bind(slot, spare_one, body);
+    Option(Error*) e = Trap_Write_Loop_Slot_May_Bind(slot, spare_one, body);
     if (e)
         panic (unwrap e);
 
