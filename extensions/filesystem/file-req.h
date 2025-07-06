@@ -107,9 +107,7 @@ INLINE Option(FileReq*) Filereq_Of_Port(const Value* port)
     VarList* ctx = Cell_Varlist(port);
     Slot* state_slot = Varlist_Slot(ctx, STD_PORT_STATE);
     DECLARE_VALUE (state);
-    Option(Error*) e = Trap_Read_Slot(state, state_slot);
-    if (e)
-        abrupt_panic (unwrap e);
+    required (Read_Slot(state, state_slot));
 
     if (Is_Nulled(state))
         return nullptr;  // no filereq, port not open

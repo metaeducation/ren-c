@@ -474,7 +474,7 @@ bool Process_Group_For_Parse_Throws(
         // allow it (can't decay)
     }
     else {
-        Decay_If_Unstable(eval);
+        required (Decay_If_Unstable(eval));
     }
 
     // !!! The input is not locked from modification by agents other than the
@@ -652,7 +652,10 @@ static Result(REBIXO) Parse_One_Rule(
         // !!! R3-Alpha said "Match with some other value"... is this a good
         // default?!
         //
-        if (Equal_Values(item, rule, did (P_FLAGS & AM_FIND_CASE)))
+        bool equal = require (
+            Equal_Values(item, rule, did (P_FLAGS & AM_FIND_CASE))
+        );
+        if (equal)
             return pos + 1;
 
         return END_FLAG;
@@ -1471,7 +1474,7 @@ DECLARE_NATIVE(SUBPARSE)
                     Derelativize(OUT, P_RULE, P_RULE_BINDING);
                 }
 
-                Value* out = Decay_If_Unstable(OUT);
+                Value* out = require (Decay_If_Unstable(OUT));
                 if (Is_Integer(out)) {
                     mincount = Int32s(out, 0);
                     maxcount = Int32s(out, 0);
@@ -1605,7 +1608,7 @@ DECLARE_NATIVE(SUBPARSE)
                     panic (Cell_Error(eval));
                 }
 
-                Decay_If_Unstable(eval);
+                required (Decay_If_Unstable(eval));
                 if (Is_Antiform(eval))
                     panic (Error_Bad_Antiform(eval));
 
@@ -1632,7 +1635,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                 FETCH_NEXT_RULE(L);
 
-                Value* condition = Decay_If_Unstable(eval);
+                Value* condition = require (Decay_If_Unstable(eval));
 
                 bool cond = require (Test_Conditional(condition));
                 if (cond)
@@ -1941,13 +1944,15 @@ DECLARE_NATIVE(SUBPARSE)
 
                 if (cmp == input_tail)
                     i = END_FLAG;
-                else if (
-                    Equal_Values(cmp, subrule, did (P_FLAGS & AM_FIND_CASE))
-                ){
-                    i = P_POS + 1;
+                else {
+                    bool equal = require (
+                        Equal_Values(cmp, subrule, did (P_FLAGS & AM_FIND_CASE))
+                    );
+                    if (equal)
+                        i = P_POS + 1;
+                    else
+                        i = END_FLAG;
                 }
-                else
-                    i = END_FLAG;
                 break; }
 
               case SYM_INTO: {
@@ -2287,7 +2292,7 @@ DECLARE_NATIVE(SUBPARSE)
                 )){
                     goto return_thrown;
                 }
-                Decay_If_Unstable(atom_evaluated);
+                required (Decay_If_Unstable(atom_evaluated));
 
             } handle_result: {
 

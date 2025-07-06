@@ -201,26 +201,26 @@ INLINE bool Is_Pack_Undecayable(Atom* pack)
 //    want to just silently discard it.  The best way to make sure no packs
 //    are hiding errors is to recursively decay.
 //
-INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
+INLINE Result(Value*) Decay_If_Unstable(Need(Atom*) v) {
     if (Not_Antiform(v))
-        return u_cast(Value*, u_cast(Atom*, v));
+        return u_cast(Value*, v);
 
     if (Is_Pack(v)) {  // iterate until result is not multi-return [1]
         if (Is_Pack_Undecayable(v))
-            abrupt_panic ("Undecayable pack in Decay_If_Unstable()");
+            return fail ("Undecayable pack in Decay_If_Unstable()");
 
         const Element* pack_at = List_At(nullptr, v);
         Sink(Element) sink = v;
         Copy_Cell(sink, pack_at);  // Note: no antiform binding (PACK!)
         Unliftify_Undecayed(v);
-        return u_cast(Value*, u_cast(Atom*, v));
+        return u_cast(Value*, v);
     }
 
     if (Is_Ghost(v))
-        abrupt_panic (Error_No_Value_Raw());  // distinct error from void?
+        return fail (Error_No_Value_Raw());  // distinct error from void?
 
     if (Is_Error(v))
-        abrupt_panic (Cell_Error(v));
+        return fail (Cell_Error(v));
 
-    return u_cast(Value*, u_cast(Atom*, v));
+    return u_cast(Value*, v);
 }

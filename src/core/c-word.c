@@ -596,7 +596,7 @@ RebolValue* Register_Symbol(const char* utf8, SymId16 id16)
     Option(SymId) id = Symbol_Id(symbol);
     if (id) {
         if (not (id16 == cast(SymId16, id)))
-            return fail ("Extensions using conflicting Register_Symbol() IDs");
+            panic ("Extensions using conflicting Register_Symbol() IDs");
     }
     else {
         const Symbol* synonym = symbol;

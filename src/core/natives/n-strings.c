@@ -411,7 +411,7 @@ DECLARE_NATIVE(JOIN)
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
         goto vetoed;
 
-    Value* spare = Decay_If_Unstable(SPARE);  // [1]
+    Value* spare = require (Decay_If_Unstable(SPARE));  // [1]
 
     if (Is_Splice(spare)) {  // only allow splice for mold, for now
         const Element* tail;
@@ -469,7 +469,7 @@ DECLARE_NATIVE(JOIN)
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
         goto vetoed;
 
-    Value* spare = Decay_If_Unstable(SPARE);
+    Value* spare = require (Decay_If_Unstable(SPARE));
 
     if (Is_Splice(spare)) {
         const Element* tail;

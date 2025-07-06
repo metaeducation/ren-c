@@ -55,7 +55,8 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
         return LOGIC(false);
 
     for (; a_item != a_tail; ++a_item, ++b_item) {
-        if (not Equal_Values(a_item, b_item, strict))
+        bool equal = require (Equal_Values(a_item, b_item, strict));
+        if (not equal)
             return LOGIC(false);
     }
 
@@ -108,7 +109,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_List)
             return LOGIC(lesser);  // LESSER? result was meaningful
 
         bool strict = true;
-        if (Equal_Values(a_item, b_item, strict))
+        bool equal = require(Equal_Values(a_item, b_item, strict));
+        if (equal)
             continue;  // don't fret they couldn't compare with LESSER?
 
         return fail ("Couldn't compare values");  // fret
@@ -222,7 +224,11 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
             if (Is_Ghost(OUT))
                 break;
 
-            Move_Cell(PUSH(), Decay_If_Unstable(OUT));
+            Value* out = require (Decay_If_Unstable(OUT));
+            if (Is_Antiform(out))
+                panic (Error_Bad_Antiform_Raw(out));
+
+            Move_Cell(PUSH(), Known_Element(out));
         } while (true);
 
         return Init_Any_List(OUT, heart, Pop_Source_From_Stack(base));
@@ -278,16 +284,16 @@ REBINT Find_In_Array(
             const Element* other_tail;
             const Element* other = List_At(&other_tail, pattern);
             for (; other != other_tail; ++other, ++item) {
-                if (
-                    item == item_tail or
-                    not Equal_Values(
-                        item,
-                        other,
-                        did (flags & AM_FIND_CASE)
-                    )
-                ){
+                if (item == item_tail)
                     break;
-                }
+
+                bool equal = require (
+                    Equal_Values(item, other, did (flags & AM_FIND_CASE))
+                );
+
+                if (not equal)
+                    break;
+
                 if (++count >= *len)
                     return index;
             }
@@ -354,13 +360,11 @@ REBINT Find_In_Array(
 
     for (; index >= start and index < end; index += skip) {
         const Element* item = Array_At(array, index);
-        if (Equal_Values(
-            item,
-            pattern,
-            did (flags & AM_FIND_CASE))
-        ){
+        bool equal = require (
+            Equal_Values(item, pattern, did (flags & AM_FIND_CASE))
+        );
+        if (equal)
             return index;
-        }
         if (flags & AM_FIND_MATCH)
             break;
     }
@@ -1305,7 +1309,8 @@ static int Qsort_Values_Callback(void *state, const void *p1, const void *p2)
     if (Cell_Logic(result))  // comparator has LESSER? semantics
         return 1;  // returning 1 means lesser, it seems (?)
 
-    if (Equal_Values(v1, v2, strict))
+    bool equal = require (Equal_Values(v1, v2, strict));
+    if (equal)
         return 0;
 
     return -1;  // not lesser, and not equal, so assume greater

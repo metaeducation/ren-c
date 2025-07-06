@@ -379,7 +379,9 @@ DECLARE_NATIVE(ANTIFORM_Q)
     if (not Bool_ARG(TYPE))
         return LOGIC(Is_Antiform(atom));
 
-    Value* datatype = Decay_If_Unstable(m_cast(Atom*, atom));  // mutable [1]
+    Value* datatype = require (
+        Decay_If_Unstable(m_cast(Atom*, atom))  // mutable [1]
+    );
 
     if (not Is_Datatype(datatype))
         panic ("ANTIFORM?:TYPE only accepts DATATYPE!");
@@ -665,7 +667,7 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
   decay_if_unstable: {
 
     Copy_Cell(OUT, atom);
-    Value* out = Decay_If_Unstable(OUT);
+    Value* out = require (Decay_If_Unstable(OUT));
 
     if (Is_Nulled(out))
         goto opting_out;

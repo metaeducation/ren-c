@@ -178,7 +178,7 @@ static Result(Zero) Push_Keys_And_Params_Core(
             return fail (Error_No_Catch_For_Throw(L));
 
         if (not meta) {
-            Value* decayed = Decay_If_Unstable(eval);
+            Value* decayed = require (Decay_If_Unstable(eval));
 
             if (must_be_action and not Is_Action(decayed))
                 return fail ("Assignment using /FOO must be an action");

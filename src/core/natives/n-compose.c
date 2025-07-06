@@ -391,7 +391,7 @@ Bounce Composer_Executor(Level* const L)
         return OUT;
     }
 
-    Value* out = Decay_If_Unstable(OUT);
+    Value* out = require (Decay_If_Unstable(OUT));
 
     if (Is_Antiform(out)) {
         if (list_lift_byte != NOQUOTE_2)
@@ -942,8 +942,9 @@ DECLARE_NATIVE(COMPOSE2)
     const Value* result;
     if (Is_Void(OUT))
         result = LIB(BLANK);  // void is translated to blank splice
-    else
-        result = Decay_If_Unstable(OUT);
+    else {
+        result = require (Decay_If_Unstable(OUT));
+    }
 
     StackIndex triples = VAL_INT32(Known_Element(SCRATCH));
     assert(Is_Block(Data_Stack_At(Element, triples + 1)));  // evaluated code

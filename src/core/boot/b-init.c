@@ -475,8 +475,10 @@ static void Init_System_Object(
     DECLARE_ATOM (result);
     if (Eval_Any_List_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
         crash (result);
-    if (not Is_Quasi_Word_With_Id(Decay_If_Unstable(result), SYM_END))
-        crash (result);
+
+    Value* result_value = require (Decay_If_Unstable(result));
+    if (not Is_Quasi_Word_With_Id(result_value, SYM_END))
+        crash (result_value);
 
     // Startup_Action_Adjunct_Shim() made Root_Action_Adjunct as bootstrap hack
     // since it needed to make function adjunct information for natives before
@@ -484,12 +486,10 @@ static void Init_System_Object(
     // made is actually identical to the definition in %sysobj.r.
     //
     DECLARE_VALUE (check);
-    Option(Error*) e = Trap_Read_Slot(
+    guaranteed (Read_Slot(
         check,
         Get_System(SYS_STANDARD, STD_ACTION_ADJUNCT)
-    );
-    assert(not e);
-    UNUSED(e);
+    ));
     assert(
         0 == CT_Context(
             Known_Element(check),
@@ -976,9 +976,7 @@ void Startup_Core(void)
     );
 
     Sink(Value) user = Alloc_Value();
-    Option(Error*) e = Trap_Read_Slot(user, Get_System(SYS_CONTEXTS, CTX_USER));
-    assert(not e);
-    UNUSED(e);
+    guaranteed (Read_Slot(user, Get_System(SYS_CONTEXTS, CTX_USER)));
 
     g_user_module = Known_Element(user);
     rebUnmanage(g_user_module);

@@ -467,15 +467,15 @@ INLINE Result(bool) Eval_Logic_Op_Right_Side(Level* level_)
         if (Eval_Any_List_At_Throws(SPARE, right, SPECIFIED))
             panic (Error_No_Catch_For_Throw(level_));
 
-        synthesized = Decay_If_Unstable(SPARE);
+        synthesized = require (Decay_If_Unstable(SPARE));
     }
     else {
         assert(Is_Word(right) or Is_Tuple(right));
 
-        Value* spare = require(Get_Var(SPARE, NO_STEPS, right, SPECIFIED));
+        Value* spare = require (Get_Var(SPARE, NO_STEPS, right, SPECIFIED));
 
         if (Is_Action(spare))
-            abrupt_panic (
+            panic (
                 "words/tuples can't be action as right side of OR AND XOR"
             );
 

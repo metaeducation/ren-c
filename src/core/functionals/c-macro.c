@@ -139,7 +139,7 @@ Bounce Macro_Dispatcher(Level* const L)
     if (Is_Void(OUT))
         return OUT;
 
-    Value* out = Decay_If_Unstable(OUT);
+    Value* out = require (Decay_If_Unstable(OUT));
     if (not Is_Block(out))
         panic ("MACRO must return VOID or BLOCK! for the moment");
 

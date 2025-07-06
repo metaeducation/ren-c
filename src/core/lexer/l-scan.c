@@ -1113,7 +1113,7 @@ static LexFlags Prescan_Fingerprint(ScanState* S)
 
 
 //
-//  Trap_Locate_Token_May_Push_Mold: C
+//  Locate_Token_May_Push_Mold: C
 //
 // Find the beginning and end character pointers for the next token in the
 // scanner state.  If the scanner is being fed variadically by a list of UTF-8
@@ -1148,7 +1148,7 @@ static LexFlags Prescan_Fingerprint(ScanState* S)
 //
 // !!! This is a somewhat weird separation of responsibilities, that seems to
 // arise from a desire to make "Scan_XXX" functions independent of the
-// "Trap_Locate_Token_May_Push_Mold" function.  But if work on locating the
+// "Locate_Token_May_Push_Mold" function.  But if the work of locating the
 // value means you have to basically do what you'd do to read it into a cell
 // anyway, why split it?  This is especially true now that the variadic
 // splicing pushes values directly from this routine.
@@ -2076,7 +2076,7 @@ static void Apply_Quotes_If_Pending(Element* e, ScanState* S) {
 //    It has been reclaimed as an illegal state, so it might be used for
 //    other out of band purposes in the scanner, such as line continuation.
 //
-static Option(Error*) Trap_Flush_Pending_On_End(ScanState* S) {
+static Result(Zero) Flush_Pending_On_End(ScanState* S) {
     attempt {
         if (S->sigil_pending) {  // e.g. "$]" or "''$]"
             assert(not S->quasi_pending);
@@ -2095,9 +2095,9 @@ static Option(Error*) Trap_Flush_Pending_On_End(ScanState* S) {
     }
     else {
         if (S->num_quotes_pending)  // "']" or "''']" are illegal [1]
-            return Error_Syntax(S, TOKEN_APOSTROPHE);
+            return fail (Error_Syntax(S, TOKEN_APOSTROPHE));
     }
-    return SUCCESS;
+    return zero;
 }
 
 
@@ -2123,9 +2123,7 @@ INLINE Error* Decorate_Error_For_Scanner(
     ERROR_VARS *vars = ERR_VARS(error);
 
     DECLARE_VALUE (nearest);
-    Option(Error*) e = Trap_Read_Slot(nearest, &vars->nearest);
-    if (e)
-        panic (unwrap e);
+    required (Read_Slot(nearest, &vars->nearest));
 
     if (Is_Nulled(nearest))  // only update if it doesn't have it [1]
         Update_Error_Near_For_Line(
@@ -2225,9 +2223,7 @@ Bounce Scanner_Executor(Level* const L) {
 
   case TOKEN_NEWLINE: { //////////////////////////////////////////////////////
 
-    Option(Error*) e = Trap_Flush_Pending_On_End(S);
-    if (e)
-        return fail (unwrap e);
+    trapped (Flush_Pending_On_End(S));
 
     Set_Scan_Executor_Flag(L, NEWLINE_PENDING);
     transcode->line_head = transcode->at;
@@ -2264,9 +2260,7 @@ Bounce Scanner_Executor(Level* const L) {
     }
     else {
         if (S->quasi_pending or S->sigil_pending) {  // ['$, 10] => '$ , 10
-            Option(Error*) error = Trap_Flush_Pending_On_End(S);
-            if (error)
-                return fail (unwrap error);
+            trapped (Flush_Pending_On_End(S));
         }
         else if (S->num_quotes_pending) {
             // fall through normally, want [', 10] => ', 10
@@ -2339,9 +2333,7 @@ Bounce Scanner_Executor(Level* const L) {
     if (not Is_Lex_Whitespace(*S->end) and not Is_Lex_End_List(*S->end))
         goto loop;
 
-    Option(Error*) e = Trap_Flush_Pending_On_End(S);
-    if (e)
-        return fail (unwrap e);
+    trapped (Flush_Pending_On_End(S));
 
     goto lookahead;
 
@@ -2383,9 +2375,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     assert(len == 1 and Is_Lex_End_List(*S->begin));
 
-    Option(Error*) error = Trap_Flush_Pending_On_End(S);
-    if (error)
-        return fail (unwrap error);
+    trapped (Flush_Pending_On_End(S));
 
     Byte end_delimiter = *S->begin;
     if (Scan_Mode_Matches(L, end_delimiter))
@@ -3104,9 +3094,7 @@ Bounce Scanner_Executor(Level* const L) {
     if (Is_List_Scan(L))
         return fail (Error_Missing(S, STATE));
 
-    Option(Error*) error = Trap_Flush_Pending_On_End(S);
-    if (error)
-        return fail (unwrap error);
+    trapped (Flush_Pending_On_End(S));
 
     goto done;
 

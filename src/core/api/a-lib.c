@@ -1128,7 +1128,7 @@ RebolValue* API_rebArg(
 //    Note that if vaptr is not null, then if p is null it actually means
 //    that it intends to represent a nulled cell as the first va_list item.
 //
-static Option(Error*) Trap_Run_Valist_And_Call_Va_End(  // va_end() handled [1]
+static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     Sink(Value) out,
     Flags run_flags,  // RUN_VA_FLAG_INTERRUPTIBLE, etc.
     RebolContext* binding,
@@ -1162,14 +1162,15 @@ static Option(Error*) Trap_Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     Drop_Level(L);
 
     if (threw)
-        return Error_No_Catch_For_Throw(TOP_LEVEL);
+        return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     if (run_flags & RUN_VA_FLAG_LIFT_RESULT)
         Liftify(atom_out);
-    else
-        Decay_If_Unstable(atom_out);  // should Trap(), not panic
+    else {
+        required (Decay_If_Unstable(atom_out));
+    }
 
-    return SUCCESS;
+    return zero;
 }
 
 
@@ -1197,14 +1198,14 @@ static void Run_Valist_And_Call_Va_End_May_Panic(
     const void* p,
     void* vaptr
 ){
-    Option(Error*) e = Trap_Run_Valist_And_Call_Va_End(
+    Run_Valist_And_Call_Va_End(
         out,
         run_flags,
         binding,
         p, vaptr
-    );
-    if (e)
-        abrupt_panic (unwrap e);
+    ) except (Error* e) {
+        abrupt_panic (e);
+    }
 }
 
 
@@ -1264,7 +1265,10 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     if (too_many)
         abrupt_panic (Error_Apply_Too_Many_Raw());
 
-    Decay_If_Unstable(atom_out);
+    Decay_If_Unstable(atom_out) excepted (Error* e) {
+        abrupt_panic (e);
+    }
+
     return false;
 }
 
@@ -1443,17 +1447,19 @@ RebolValue* API_rebRescue(
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Option(Error*) e = Trap_Run_Valist_And_Call_Va_End(
+    Run_Valist_And_Call_Va_End(
         v, flags, binding, p, vaptr
-    );
-
-    if (e) {
-        Init_Warning(v, unwrap e);
+    ) except (Error* e) {;
+        Init_Warning(v, e);
         Set_Base_Root_Bit(v);
         Corrupt_If_Needful(*value);  // !!! should introduce POISON API values
         return v;
     }
-    Decay_If_Unstable(cast(Atom*, v));
+
+    Decay_If_Unstable(cast(Atom*, v)) excepted (Error* e) {
+        abrupt_panic (e);
+    }
+
     Set_Base_Root_Bit(v);
     *value = v;
     return nullptr;
@@ -1477,17 +1483,18 @@ RebolValue* API_rebRescueInterruptible(
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
     Flags flags = RUN_VA_FLAG_INTERRUPTIBLE;
-    Option(Error*) e = Trap_Run_Valist_And_Call_Va_End(
+    Run_Valist_And_Call_Va_End(
         v, flags, binding, p, vaptr
-    );
-
-    if (e) {
-        Init_Warning(v, unwrap e);
+    ) except (Error* e) {
+        Init_Warning(v, e);
         Set_Base_Root_Bit(v);
         Corrupt_If_Needful(*value);  // !!! should introduce POISON API values
         return v;
     }
-    Decay_If_Unstable(cast(Atom*, v));
+
+    Decay_If_Unstable(cast(Atom*, v)) excepted (Error* e) {
+        abrupt_panic (e);
+    }
     Set_Base_Root_Bit(v);
     *value = v;
     return nullptr;

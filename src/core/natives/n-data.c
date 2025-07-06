@@ -946,20 +946,10 @@ DECLARE_NATIVE(PROXY_EXPORTS)
         Slot* dest = maybe Sea_Slot(where, symbol, strict);
         if (dest) {
             // Fail if found?
-            Option(Error*) e = Trap_Read_Slot(
-                Slot_Init_Hack(dest),
-                src
-            );
-            if (e)
-                panic (unwrap e);
+            required (Read_Slot(Slot_Init_Hack(dest), src));
         }
         else {
-            Option(Error*) e = Trap_Read_Slot(
-                Append_Context(where, symbol),
-                src
-            );
-            if (e)
-                panic (unwrap e);
+            required (Read_Slot(Append_Context(where, symbol), src));
         }
     }
 

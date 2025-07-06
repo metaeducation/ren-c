@@ -538,12 +538,10 @@ DECLARE_NATIVE(WHAT_DIR)
     INCLUDE_PARAMS_OF_WHAT_DIR;
 
     Sink(Value) spare_current_path = SPARE;
-    Option(Error*) e = Trap_Read_Slot(
+    required (Read_Slot(
         spare_current_path,
         Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH)
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
     if (Is_File(spare_current_path) or Is_Nulled(spare_current_path)) {
         //
@@ -557,12 +555,10 @@ DECLARE_NATIVE(WHAT_DIR)
 
         Value* refresh = Get_Current_Dir_Value();
         Copy_Cell(spare_current_path, refresh);
-        e = Trap_Write_Slot(
+        required (Write_Slot(
             Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH),
             refresh
-        );
-        if (e)
-            panic (unwrap e);
+        ));
         rebRelease(refresh);
     }
     else if (not Is_Url(spare_current_path)) {

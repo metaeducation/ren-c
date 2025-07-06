@@ -95,7 +95,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
 
     DECLARE_ATOM (temp);  // can't overwrite scratch if error can be raised
     Copy_Cell(temp, atom);
-    Value* v = Decay_If_Unstable(temp);
+    Value* v = require (Decay_If_Unstable(temp));
 
     Option(Type) type = Type_Of(v);
 
@@ -408,7 +408,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         Forget_Cell_Was_Lifeguard(SCRATCH);
 
         if (bounce == nullptr) {
-            if (g_failure) {  // was NEEDFUL_PERMISSIVE_ZERO (fail/panic)
+            if (g_failure) {  // was NEEDFUL_RESULT_0 (fail/panic)
                 abrupt_panic (Needful_Test_And_Clear_Failure());
             }
             goto test_failed;  // was just `return nullptr`
@@ -663,13 +663,13 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
         for (; splice_at != splice_tail; ++splice_at) {
             bool strict = true;  // system now case-sensitive by default
-            if (Equal_Values(
+            bool equal = require (Equal_Values(
                 Known_Element(SPARE),
                 splice_at,
                 strict
-            )){
+            ));
+            if (equal)
                 goto test_succeeded;
-            }
         }
         goto test_failed;
     }
@@ -944,7 +944,7 @@ bool Typecheck_Coerce(
             goto return_false;  // comma antiforms
 
         if (Is_Antiform(atom) and Is_Antiform_Unstable(atom)) {
-            Decay_If_Unstable(atom);
+            guaranteed (Decay_If_Unstable(atom));  // !!! shouldn't error (!?)
             assert(not coerced);  // should only decay once...
             coerced = true;
             goto typecheck_again;

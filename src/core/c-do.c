@@ -48,7 +48,7 @@
 //             ; nulls that triggered the branch would have been heavy forms?
 //         ]
 //
-void Prep_Action_Level(
+Result(Zero) Prep_Action_Level(
     Level* L,
     const Value* action,
     Option(const Atom*) with
@@ -77,10 +77,13 @@ void Prep_Action_Level(
 
         Copy_Cell(arg, unwrap with);  // do not decay [1]
 
-        if (Parameter_Class(param) != PARAMCLASS_META)
-            Decay_If_Unstable(arg);
+        if (Parameter_Class(param) != PARAMCLASS_META) {
+            required (Decay_If_Unstable(arg));
+        }
         break;
     } while (0);
+
+    return zero;
 }
 
 

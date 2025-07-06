@@ -137,7 +137,7 @@ Result(Zero) Get_Tuple_Maybe_Trash(
     if (e)
         return fail (unwrap e);
 
-    Decay_If_Unstable(atom_out);
+    required (Decay_If_Unstable(atom_out));
 
     return zero;
 }
@@ -261,7 +261,7 @@ Result(Value*) Get_Var(
         atom_out, steps_out, var, context
     ));
 
-    Decay_If_Unstable(atom_out);
+    required (Decay_If_Unstable(atom_out));
 
     if (Is_Trash(out))
         return fail (Error_Bad_Word_Get(var, out));
@@ -339,7 +339,7 @@ Result(Value*) Get_Chain_Push_Refinements(
             if (Is_Void(atom_spare))
                 continue;  // just skip it (voids are ignored, NULLs error)
 
-            item = Decay_If_Unstable(atom_spare);
+            item = require (Decay_If_Unstable(atom_spare));
 
             if (Is_Antiform(item))
                 return fail (Error_Bad_Antiform(item));
@@ -776,7 +776,9 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
             Copy_Cell(value_arg, TOP_ELEMENT);
             Unliftify_Undecayed(value_arg);
-            Decay_If_Unstable(value_arg);
+            Decay_If_Unstable(value_arg) excepted (Error* e) {
+                return e;
+            }
             Liftify(value_arg);
             break;
         }
@@ -802,7 +804,9 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
         Copy_Cell(value_arg, TOP_ELEMENT);
         Unliftify_Undecayed(value_arg);
-        Decay_If_Unstable(value_arg);
+        Decay_If_Unstable(value_arg) excepted (Error* e) {
+            return e;
+        };
         Liftify(value_arg);
 
         if (Is_Lifted_Action(Known_Stable(value_arg))) {
@@ -985,7 +989,9 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             goto finalize_and_return;
         }
 
-        Value* spare_picker = Decay_If_Unstable(SPARE);
+        Value* spare_picker = Decay_If_Unstable(SPARE) except (e)
+            goto return_error;
+
         possibly(Is_Antiform(spare_picker));  // e.g. PICK DATATYPE! from MAP!
         Liftify(spare_picker);  // signal literal pick
         Move_Cell(PUSH(), spare_picker);
@@ -1058,7 +1064,10 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
             if (not Is_Metaform(Data_Stack_At(Element, stackindex))) {
                 Unliftify_Undecayed(SPARE);  // review unlift + lift
-                Decay_If_Unstable(SPARE);
+                Decay_If_Unstable(SPARE) excepted (e) {
+                    Drop_Level(sub);
+                    goto return_error;
+                }
                 Liftify(SPARE);  // need lifted for dual protocol (review)
             }
 
@@ -1342,7 +1351,7 @@ DECLARE_NATIVE(TWEAK)
     if (Is_Void(SPARE))
         return OUT;
 
-    Value* spare = Decay_If_Unstable(SPARE);
+    Value* spare = require (Decay_If_Unstable(SPARE));
 
     if (not (
         Any_Word(spare)

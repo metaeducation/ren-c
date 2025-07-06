@@ -139,22 +139,29 @@ REBINT Find_Key_Hashed(
     REBLEN n;
     while ((n = indexes[slot]) != 0) {
         Value* k = Flex_At(Value, array, (n - 1) * wide); // stored key
-        if (Equal_Values(k, key, true)) {
-            if (strict)
-                return slot; // don't need to check synonyms, stop looking
-            goto found_synonym; // confirm exact match is the only match
-        }
 
-        if (not strict) {  // now do the non strict match (false)
-            if (Equal_Values(k, key, false)) {
+        attempt {
+            bool equal_strict = require (Equal_Values(k, key, true));
+            if (equal_strict) {
+                if (strict)
+                    return slot; // don't need to check synonyms, stop looking
+            }
+            else {
+                if (strict)
+                    goto continue_checking;
 
-              found_synonym:;
-
-                if (synonym_slot != -1) // another equivalent already matched
-                    abrupt_panic (Error_Conflicting_Key_Raw(key));
-                synonym_slot = slot; // save and continue checking
+                bool equal_lax = require (Equal_Values(k, key, false));
+                if (not equal_lax)
+                    goto continue_checking;
             }
         }
+        then {  // found synonym
+            if (synonym_slot != -1) // another equivalent already matched
+                abrupt_panic (Error_Conflicting_Key_Raw(key));
+            synonym_slot = slot; // save and continue checking
+        }
+
+      continue_checking: {
 
         if (wide > 1 && Is_Zombie(k + 1) && zombie_slot == -1)
             zombie_slot = slot;
@@ -162,7 +169,7 @@ REBINT Find_Key_Hashed(
         slot += skip;
         if (slot >= num_slots)
             slot -= num_slots;
-    }
+    }}
 
     if (synonym_slot != -1) {
         assert(not strict);
@@ -433,7 +440,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     if (Is_Ghost(SPARE))
         goto reduce_key;  // try again...
 
-    Value* key = Decay_If_Unstable(SPARE);
+    Value* key = require (Decay_If_Unstable(SPARE));
     if (Is_Nulled(key) or Is_Trash(key))
         panic ("Null or trash can't be used as key in MAP!");
 
@@ -455,7 +462,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     if (Is_Ghost(SPARE))
         goto reduce_value;  // try again...
 
-    Value* val = Decay_If_Unstable(SPARE);
+    Value* val = require (Decay_If_Unstable(SPARE));
     if (Is_Nulled(val) or Is_Trash(val))
         panic ("Null or trash can't be used as value in MAP!");
 

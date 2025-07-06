@@ -434,7 +434,8 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
         const Element* at = List_At(&tail, input);
         if (at == tail)  // no item to match against
             return NULLED;
-        if (not Equal_Values(at, v, true))  // not case-insensitive equal
+        bool equal = require (Equal_Values(at, v, true));
+        if (not equal)  // not case-insensitive equal
             return NULLED;
 
         ++SERIES_INDEX_UNBOUNDED(input);

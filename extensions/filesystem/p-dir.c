@@ -88,11 +88,7 @@ DECLARE_NATIVE(DIR_ACTOR)
     FileReq* dir = maybe Filereq_Of_Port(port);
     if (not dir) {
         DECLARE_VALUE (dir_path);
-        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
-            dir_path, port
-        );
-        if (e)
-            panic (unwrap e);
+        required (Get_Port_Path_From_Spec(dir_path, port));
 
         UNUSED(dir_path);  // we just tested to make sure would work later
 
@@ -149,11 +145,7 @@ DECLARE_NATIVE(DIR_ACTOR)
             panic (Error_Bad_Refines_Raw());
 
         DECLARE_VALUE (dir_path);
-        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
-            dir_path, port
-        );
-        if (e)
-            panic (unwrap e);
+        required (Get_Port_Path_From_Spec(dir_path, port));
 
         assert(TOP_INDEX == STACK_BASE);
         while (true) {
@@ -179,11 +171,7 @@ DECLARE_NATIVE(DIR_ACTOR)
 
       case SYM_CREATE: {
         DECLARE_VALUE (dir_path);
-        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
-            dir_path, port
-        );
-        if (e)
-            panic (unwrap e);
+        required (Get_Port_Path_From_Spec(dir_path, port));
 
         /*if (Is_Block(state))  // !!! what?
             panic (Error_Already_Open_Raw(dir_path));*/
@@ -203,11 +191,7 @@ DECLARE_NATIVE(DIR_ACTOR)
         UNUSED(ARG(FROM));  // already have as port parameter
 
         DECLARE_VALUE (dir_path);
-        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
-            dir_path, port
-        );
-        if (e)
-            panic (unwrap e);
+        required (Get_Port_Path_From_Spec(dir_path, port));
 
         Value* error = Rename_File_Or_Directory(port, ARG(TO));
         if (error) {
@@ -223,11 +207,7 @@ DECLARE_NATIVE(DIR_ACTOR)
 
       case SYM_DELETE: {
         DECLARE_VALUE (dir_path);
-        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
-            dir_path, port
-        );
-        if (e)
-            panic (unwrap e);
+        required (Get_Port_Path_From_Spec(dir_path, port));
 
         Value* error = Delete_File_Or_Directory(port);
         if (error) {
@@ -251,11 +231,7 @@ DECLARE_NATIVE(DIR_ACTOR)
         INCLUDE_PARAMS_OF_OPEN;
 
         DECLARE_VALUE (dir_path);
-        Option(Error*) e = Trap_Get_Port_Path_From_Spec(
-            dir_path, port
-        );
-        if (e)
-            panic (unwrap e);
+        required (Get_Port_Path_From_Spec(dir_path, port));
 
         UNUSED(PARAM(SPEC));
 

@@ -329,12 +329,8 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
         bool lesser;
         DECLARE_VALUE (v1);
         DECLARE_VALUE (v2);
-        Option(Error*) e = Trap_Read_Slot(v1, e1.slot);
-        if (e)
-            abrupt_panic (unwrap e);
-        e = Trap_Read_Slot(v2, e2.slot);
-        if (e)
-            abrupt_panic (unwrap e);
+        required (Read_Slot(v1, e1.slot));
+        required (Read_Slot(v2, e2.slot));
 
         if (Try_Lesser_Value(&lesser, v1, v2)) {  // works w/LESSER?
             if (lesser) {
@@ -342,14 +338,16 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
                 goto finished;
             }
 
-            if (not Equal_Values(v1, v2, strict)) {
+            bool equal = require (Equal_Values(v1, v2, strict));
+            if (not equal) {
                 diff = 1;
                 goto finished;
             }
             continue;
         }
 
-        if (Equal_Values(v1, v2, strict))  // if equal, we can continue
+        bool equal = require (Equal_Values(v1, v2, strict));
+        if (equal)  // if equal, we can continue
             continue;
 
         Shutdown_Evars(&e1);
@@ -842,9 +840,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             Append_Ascii(mo->strand, ": ");
 
             DECLARE_ATOM (var);
-            Option(Error*) e = Trap_Read_Slot_Meta(var, evars.slot);
-            if (e)
-                panic (unwrap e);  // !! rethink accessor error here
+            required (Read_Slot_Meta(var, evars.slot));
 
             if (Is_Antiform(var)) {
                 panic (Error_Bad_Antiform(var));  // can't FORM antiforms
@@ -891,9 +887,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         }
 
         DECLARE_ATOM (var);
-        Option(Error*) e = Trap_Read_Slot_Meta(var, evars.slot);
-        if (e)
-            panic (unwrap e);  // !! rethink accessor error here
+        required (Read_Slot_Meta(var, evars.slot));
 
         if (Is_Antiform(var)) {
             Liftify(var);  // will become quasi...
@@ -1138,9 +1132,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
         Slot* slot = Varlist_Slot(cast(VarList*, c), unwrap index);
 
-        Option(Error*) e = Trap_Read_Slot(OUT, slot);
-        if (e)
-            panic (unwrap e);
+        required (Read_Slot(OUT, slot));
 
         return OUT; }
 
@@ -1351,7 +1343,8 @@ IMPLEMENT_GENERIC(WORDS_OF, Any_Context)
     INCLUDE_PARAMS_OF_WORDS_OF;
 
     Element* context = Element_ARG(ELEMENT);
-    return Init_Block(OUT, Context_To_Array(context, 1));
+    Source* array = require (Context_To_Array(context, 1));
+    return Init_Block(OUT, array);
 }
 
 
@@ -1377,7 +1370,8 @@ IMPLEMENT_GENERIC(VALUES_OF, Any_Context)
     INCLUDE_PARAMS_OF_WORDS_OF;
 
     Element* context = Element_ARG(ELEMENT);
-    return Init_Block(OUT, Context_To_Array(context, 2));
+    Source* array = require (Context_To_Array(context, 1));
+    return Init_Block(OUT, array);
 }
 
 
@@ -1817,7 +1811,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
         Append_Codepoint(mo->strand, ' ');
     }
 
-    Array* parameters = Context_To_Array(v, 1);
+    Array* parameters = require (Context_To_Array(v, 1));
     Mold_Array_At(mo, parameters, 0, "[]");
     Free_Unmanaged_Flex(parameters);
 
@@ -1972,7 +1966,7 @@ DECLARE_NATIVE(CONSTRUCT)
 
 } eval_set_step_dual_in_spare: {  ////////////////////////////////////////////
 
-    Value* spare = Decay_If_Unstable(SPARE);
+    Value* spare = require (Decay_If_Unstable(SPARE));
 
     VarList* varlist = Cell_Varlist(OUT);
 

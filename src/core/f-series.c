@@ -440,7 +440,7 @@ IMPLEMENT_GENERIC(EXCLUDE, Any_Series)
 // Test to see if two values are equal.  Quoting level is heeded, and values
 // at distinct quoting levels are not considered equal.
 //
-bool Equal_Values(const Value* s, const Value* t, bool strict)
+Result(bool) Equal_Values(const Value* s, const Value* t, bool strict)
 {
     if (LIFT_BYTE(s) != LIFT_BYTE(t))
         return false;
@@ -449,7 +449,7 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
     Option(Heart) t_heart = Heart_Of(t);
 
     if (not s_heart and not t_heart)
-        abrupt_panic ("Custom type Equal_Values not implemented yet");
+        return fail ("Custom type Equal_Values not implemented yet");
 
     if (not s_heart or not t_heart)
         return false;  // one is a custom type, the other is not, so not equal
@@ -485,12 +485,12 @@ bool Equal_Values(const Value* s, const Value* t, bool strict)
 
     bool threw = Trampoline_Throws(atom_out, L);
     if (threw)
-        abrupt_panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+        return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     if (Is_Error(atom_out))
         return false;
 
-    Value* out = Decay_If_Unstable(atom_out);
+    Value* out = require (Decay_If_Unstable(atom_out));
     return Cell_Logic(out);
 }
 
@@ -551,7 +551,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     if (Is_Error(atom_out))
         return false;
 
-    Value* out = Decay_If_Unstable(atom_out);
+    Value* out = require (Decay_If_Unstable(atom_out));
     *lesser = Cell_Logic(out);
     return true;
 }
@@ -572,7 +572,8 @@ REBLEN Find_In_Array_Simple(
 
     bool strict = false;
     for (; index < Array_Len(array); index++) {
-        if (Equal_Values(value + index, target, strict))
+        bool equal = require (Equal_Values(value + index, target, strict));
+        if (equal)
             return index;
     }
 

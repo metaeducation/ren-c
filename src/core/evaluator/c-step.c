@@ -830,7 +830,7 @@ Bounce Stepper_Executor(Level* L)
     //    (Possibly ^ should turn surprising ghosts into voids, but it should
     //    definitely not turn surprising ghosts into unsurprising ghosts.)
 
-    Value* out = Decay_If_Unstable(OUT);
+    Value* out = require (Decay_If_Unstable(OUT));
     if (Is_Action(out))  // don't do ghosts, just actions [1]
         Set_Cell_Flag(out, OUT_HINT_UNSURPRISING);  // see flag notes
     goto lookahead;
@@ -1614,7 +1614,7 @@ Bounce Stepper_Executor(Level* L)
             Init_Quasar(PUSH());  // [(void)]: ... pass thru
         }
         else {
-            Value* spare = Decay_If_Unstable(SPARE);
+            Value* spare = require (Decay_If_Unstable(SPARE));
             if (Is_Antiform(spare))
                 panic (Error_Bad_Antiform(spare));
 
@@ -1765,7 +1765,7 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Error(OUT))  // don't pass thru errors if not ^ sigil
         panic (Cell_Error(OUT));
 
-    Decay_If_Unstable(OUT);
+    required (Decay_If_Unstable(OUT));
 
     if (Is_Space(var))
         goto circled_check;

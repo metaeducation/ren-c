@@ -177,7 +177,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
     if (Is_Void(branch))  // void branches giving their input is useful  [1]
         return Copy_Cell(OUT, with);
 
-    Decay_If_Unstable(branch);
+    required (Decay_If_Unstable(branch));
 
     if (Is_Pinned_Form_Of(WORD, branch))
         panic (Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
@@ -476,7 +476,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     Set_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST);
 
-    Value* spare = Decay_If_Unstable(SPARE);
+    Value* spare = require (Decay_If_Unstable(SPARE));
 
     if (not Is_Nulled(predicate))
         goto run_predicate_on_eval_product;
@@ -511,7 +511,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
     STATE = ST_ANY_ALL_NONE_EVAL_STEP;
 
-    condition = Decay_If_Unstable(SCRATCH);
+    condition = require (Decay_If_Unstable(SCRATCH));
 
 } process_condition: {
 
@@ -717,7 +717,7 @@ DECLARE_NATIVE(CASE)
     if (Is_Ghost(SPARE))  // skip over things like ELIDE, but not voids!
         goto handle_next_clause;
 
-    Decay_If_Unstable(SPARE);
+    required (Decay_If_Unstable(SPARE));
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // we tolerate "fallout" from a condition
@@ -787,9 +787,9 @@ DECLARE_NATIVE(CASE)
     //        >> if null <some-tag>
     //        ** Script Error: if does not allow tag! for its branch...
 
-    Value* branch = Decay_If_Unstable(SCRATCH);
+    Value* branch = require (Decay_If_Unstable(SCRATCH));
 
-    Value* spare = Decay_If_Unstable(SPARE);
+    Value* spare = require (Decay_If_Unstable(SPARE));
 
     bool cond = require (Test_Conditional(spare));
 
@@ -988,7 +988,7 @@ DECLARE_NATIVE(SWITCH)
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // nothing left, so drop frame and return
 
-    Value* spare = Decay_If_Unstable(SPARE);  // !!! predicate wants decayed?
+    Value* spare = require (Decay_If_Unstable(SPARE));  // predicate decays?
 
     if (Bool_ARG(TYPE)) {
         if (not Is_Datatype(spare) and not Is_Action(spare))
@@ -1145,7 +1145,7 @@ DECLARE_NATIVE(DEFAULT)
     if (not Is_Dual_Word_Unset_Signal(Known_Stable(OUT))) {
         Unliftify_Undecayed(OUT);
 
-        Value* out = Decay_If_Unstable(OUT);  // decay may be needed [2]
+        Value* out = require (Decay_If_Unstable(OUT));  // may need decay [2]
 
         if (not (Is_Trash(out) or Is_Nulled(out) or Is_Blank(out)))
             return OUT;  // consider it a "value" [3]

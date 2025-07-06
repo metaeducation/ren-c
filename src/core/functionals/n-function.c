@@ -290,9 +290,7 @@ bool Func_Details_Querier(
         Slot* std_func_body_slot = Get_System(SYS_STANDARD, STD_FUNC_BODY);
 
         DECLARE_VALUE (example);
-        Option(Error*) e = Trap_Read_Slot(example, std_func_body_slot);
-        if (e)
-            abrupt_panic (unwrap e);
+        required (Read_Slot(example, std_func_body_slot));
 
         REBLEN real_body_index = 6;
 
@@ -721,7 +719,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 
     const Value* gather_args;
 
-    Value* v = Decay_If_Unstable(atom);
+    Value* v = require (Decay_If_Unstable(atom));
     if (
         Is_Tag(v)
         and strcmp(cast(char*, Cell_Utf8_At(v)), "redo") == 0

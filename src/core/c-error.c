@@ -376,9 +376,7 @@ void Set_Location_Of_Error(
     Init_Block(Slot_Init_Hack(&vars->where), Pop_Source_From_Stack(base));
 
     DECLARE_VALUE (nearest);
-    Option(Error*) e = Trap_Read_Slot(nearest, &vars->nearest);
-    if (e)
-        abrupt_panic (unwrap e);
+    required (Read_Slot(nearest, &vars->nearest));
 
     if (Is_Nulled(nearest))  // don't override scanner data [4]
         Init_Near_For_Level(Slot_Init_Hack(&vars->nearest), where);
@@ -430,8 +428,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
     VarList* varlist;
     ERROR_VARS *vars; // C struct mirroring fixed portion of error fields
 
-    Option(Error*) e;
-
     if (Is_Block(arg)) {  // reuse MAKE OBJECT! logic for block
         const Element* tail;
         const Element* head = List_At(&tail, arg);
@@ -480,19 +476,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
         return fail (arg);
 
     DECLARE_VALUE (id);
-    e = Trap_Read_Slot(id, &vars->id);
-    if (e)
-        panic (unwrap e);
+    required (Read_Slot(id, &vars->id));
 
     DECLARE_VALUE (type);
-    e = Trap_Read_Slot(type, &vars->type);
-    if (e)
-        panic (unwrap e);
+    required (Read_Slot(type, &vars->type));
 
     DECLARE_VALUE (message);
-    e = Trap_Read_Slot(message, &vars->message);
-    if (e)
-        panic (unwrap e);
+    required (Read_Slot(message, &vars->message));
 
     // Validate the error contents, and reconcile message template and ID
     // information with any data in the object.  Do this for the IS_STRING
@@ -756,8 +746,8 @@ Error* Make_Error_Managed_Raw(
     va_start(va, opt_id);  // last fixed argument is opt_id, pass that
 
     Error* error = Make_Error_Managed_Vaptr(
-        u_cast(Option(SymId), opt_cat_id),
-        u_cast(Option(SymId), opt_id),
+        u_cast(Option(SymId), cast(SymId, opt_cat_id)),
+        u_cast(Option(SymId), cast(SymId, opt_id)),
         &va
     );
 
@@ -913,7 +903,9 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
     const Symbol* param_symbol = Key_Symbol(Phase_Key(Level_Phase(L), index));
 
     Atom* atom_arg = Level_Arg(L, index);
-    Value *arg = Decay_If_Unstable(atom_arg);
+    Value *arg = Decay_If_Unstable(atom_arg) except (Error* e) {
+        return e;
+    }
     return Error_Invalid_Arg_Raw(label, param_symbol, arg);
 }
 
@@ -939,7 +931,9 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 
     const Symbol* param_symbol = Key_Symbol(Phase_Key(details, 1));
 
-    Value* arg = Decay_If_Unstable(atom_arg);
+    Value* arg = Decay_If_Unstable(atom_arg) except (Error* e) {
+        return e;
+    }
     return Error_Invalid_Arg_Raw(label, param_symbol, arg);
 }
 
@@ -988,7 +982,9 @@ Error* Error_No_Catch_For_Throw(Level* level_)
         return Cell_Error(label);
     }
 
-    Value* stable_arg = Decay_If_Unstable(arg);
+    Value* stable_arg = Decay_If_Unstable(arg) except (Error* e) {
+        return e;
+    }
     return Error_No_Catch_Raw(stable_arg, label);
 }
 
@@ -1121,9 +1117,7 @@ Error* Error_Phase_Arg_Type(
     ERROR_VARS* vars = ERR_VARS(error);
 
     DECLARE_VALUE (id);
-    Option(Error*) e = Trap_Read_Slot(id, &vars->id);
-    if (e)
-        return unwrap e;
+    required (Read_Slot(id, &vars->id));
 
     assert(Is_Word(id));
     assert(Word_Id(id) == SYM_EXPECT_ARG);
@@ -1421,37 +1415,23 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     Error* error = Cell_Error(v);
     ERROR_VARS *vars = ERR_VARS(error);
 
-    Option(Error*) e;
-
     DECLARE_VALUE (type);
-    e = Trap_Read_Slot(type, &vars->type);
-    if (e)
-        panic (unwrap e);
+    required (Read_Slot(type, &vars->type));
 
     DECLARE_VALUE (message);
-    e = Trap_Read_Slot(message, &vars->message);
-    if (e)
-        panic (unwrap e);
+    required (Read_Slot(message, &vars->message));
 
     DECLARE_VALUE (where);
-    e = Trap_Read_Slot(where, &vars->where);
-    if (e)
-        panic (unwrap e);
+    required (Read_Slot(where, &vars->where));
 
     DECLARE_VALUE (nearest);
-    e = Trap_Read_Slot(nearest, &vars->nearest);
-    if (e)
-        panic (unwrap e);
+    required (Read_Slot(nearest, &vars->nearest));
 
     DECLARE_VALUE (file);
-    e = Trap_Read_Slot(file, &vars->file);
-    if (e)
-        panic (unwrap e);
+    required (Read_Slot(file, &vars->file));
 
     DECLARE_VALUE (line);
-    e = Trap_Read_Slot(line, &vars->line);
-    if (e)
-        panic (unwrap e);
+    required (Read_Slot(line, &vars->line));
 
     // Form: ** <type> Error:
     //

@@ -336,7 +336,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     if (Is_Cell_Erased(out))
         return false;
 
-    Value* out_value = Decay_If_Unstable(out);
+    Value* out_value = require (Decay_If_Unstable(out));
 
     if (op == VARARG_OP_TAIL_Q) {
         assert(Is_Logic(out_value));
@@ -461,7 +461,13 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
         }
         if (Is_Ghost(OUT))
             break;
-        Move_Cell(PUSH(), Decay_If_Unstable(OUT));
+
+        Value* out = require (Decay_If_Unstable(OUT));
+
+        if (Is_Antiform(out))
+            panic (Error_Bad_Antiform_Raw(out));
+
+        Move_Cell(PUSH(), Known_Element(out));
     }
 
     return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));  // block? [1]

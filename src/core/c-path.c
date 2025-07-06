@@ -394,7 +394,8 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_Sequence)
         Copy_Sequence_At(a_item, a, n);
         Copy_Sequence_At(b_item, b, n);
 
-        if (not Equal_Values(a_item, b_item, strict))
+        bool equal = require (Equal_Values(a_item, b_item, strict));
+        if (not equal)
             return LOGIC(false);
     }
 
@@ -428,7 +429,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Sequence)
             return LOGIC(lesser);  // LESSER? result was meaningful
 
         bool strict = true;
-        if (Equal_Values(a_item, b_item, strict))
+        bool equal = require (Equal_Values(a_item, b_item, strict));
+        if (equal)
             continue;  // don't fret they couldn't compare with LESSER?
 
         return fail ("Couldn't compare values");  // fret

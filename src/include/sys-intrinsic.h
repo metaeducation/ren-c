@@ -40,7 +40,7 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * Intrinsics can only return Bounce values of: nullptr, BOUNCE_OKAY,
-//   and the Level's out pointer.  nullptr can mean NEEDFUL_PERMISSIVE_ZERO
+//   and the Level's out pointer.  nullptr can mean NEEDFUL_RESULT_0
 //   (fail/panic) or Init_Nulled(OUT) (falsey)
 
 
@@ -146,17 +146,17 @@ INLINE Result(Option(Bounce)) Bounce_Opt_Out_Element_Intrinsic(
     const Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
     if (Is_Error(atom_arg))
-        panic (Cell_Error(atom_arg));
+        return fail (Cell_Error(atom_arg));
 
     if (Is_Void(atom_arg))  // do PARAMETER_FLAG_OPT_OUT [1]
         return Init_Nulled(L->out);  // !!! overwrites out, illegal [2]
 
     Init(Atom) atom_out = u_cast(Atom*, elem_out);
     Copy_Cell(atom_out, atom_arg);
-    Decay_If_Unstable(atom_out);
+    trapped (Decay_If_Unstable(atom_out));
 
     if (Is_Antiform(atom_out))
-        panic (Error_Bad_Intrinsic_Arg_1(L));
+        return fail (Error_Bad_Intrinsic_Arg_1(L));
 
     return nullptr;
 }
@@ -173,11 +173,11 @@ INLINE Result(Option(Bounce)) Bounce_Decay_Value_Intrinsic(
     const Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
     if (Is_Error(atom_arg))
-        panic (Cell_Error(atom_arg));
+        return fail (Cell_Error(atom_arg));
 
     Init(Atom) atom_out = u_cast(Atom*, val_out);
     Copy_Cell(atom_out, atom_arg);
-    Decay_If_Unstable(atom_out);
+    trapped (Decay_If_Unstable(atom_out));
 
     return nullptr;
 }

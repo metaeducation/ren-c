@@ -355,8 +355,8 @@ INLINE Value* Unliftify_Known_Stable(Need(Value*) val) {
     return val;
 }
 
-INLINE Value* Decay_If_Unstable(Need(Atom*) v);
+INLINE Result(Value*) Decay_If_Unstable(Need(Atom*) v);
 
-INLINE Value* Unliftify_Decayed(Value* v) {
+INLINE Result(Value*) Unliftify_Decayed(Value* v) {
     return Decay_If_Unstable(Unliftify_Undecayed(cast(Atom*, v)));
 }

@@ -546,7 +546,7 @@ DECLARE_NATIVE(LET)
     if (Eval_Any_List_At_Throws(SPARE, vars, SPECIFIED))
         return THROWN;
 
-    Decay_If_Unstable(SPARE);
+    required (Decay_If_Unstable(SPARE));
     if (Is_Antiform(SPARE))
         panic (Error_Bad_Antiform(SPARE));
 
@@ -705,7 +705,7 @@ DECLARE_NATIVE(LET)
                 Init_Space(OUT);
             }
             else {
-                Decay_If_Unstable(OUT);
+                required (Decay_If_Unstable(OUT));
                 if (Is_Antiform(OUT))
                     panic (Error_Bad_Antiform(OUT));
             }
@@ -909,7 +909,7 @@ DECLARE_NATIVE(ADD_LET_BINDING)
     }
     else {
         assert(Is_Word(word));
-        Value* value = Decay_If_Unstable(atom);
+        Value* value = require (Decay_If_Unstable(atom));
         Copy_Cell(Stub_Cell(let), value);
     }
 
@@ -1186,8 +1186,8 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     if (Is_Group(spec)) {
         DECLARE_ATOM (temp);
         if (Eval_Any_List_At_Throws(temp, spec, SPECIFIED))
-            return Error_No_Catch_For_Throw(TOP_LEVEL);
-        Decay_If_Unstable(temp);
+            return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+        required (Decay_If_Unstable(temp));
         if (Is_Antiform(temp))
             return fail (Error_Bad_Antiform(temp));
         Move_Cell(spec, Known_Element(temp));
@@ -1375,7 +1375,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 
 
 //
-//  Trap_Read_Slot_Meta: C
+//  Read_Slot_Meta: C
 //
 // Create_Loop_Context_May_Bind_Body() allows @WORD! for reusing an existing
 // variable's binding:
@@ -1387,13 +1387,13 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 // It accomplishes this by putting a word into the "variable" slot, and having
 // a flag to indicate a dereference is necessary.
 //
-Option(Error*) Trap_Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
+Result(Zero) Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
 {
     if (LIFT_BYTE(slot) != DUAL_0) {
         const Value* var = Slot_Hack(slot);
 
         Copy_Cell(out, var);
-        return SUCCESS;
+        return zero;
     }
 
   handle_dual_slot: {
@@ -1413,30 +1413,28 @@ Option(Error*) Trap_Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
 
     Sink(Value) out_value = u_cast(Value*, out);
     if (rebRunThrows(out_value, CANON(GET), temp))
-        return Error_No_Catch_For_Throw(TOP_LEVEL);
+        return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-    return SUCCESS;
+    return zero;
 }}
 
 
 //
-//  Trap_Read_Slot: C
+//  Read_Slot: C
 //
-Option(Error*) Trap_Read_Slot(Sink(Value) out, const Slot* slot) {
+Result(Zero) Read_Slot(Sink(Value) out, const Slot* slot) {
     Sink(Atom) atom_out = u_cast(Atom*, out);
-    Option(Error*) e = Trap_Read_Slot_Meta(atom_out, slot);
-    if (e)
-        return e;
+    trapped (Read_Slot_Meta(atom_out, slot));
     if (Not_Cell_Stable(atom_out))
-        return Error_User("Cannot read unstable slot with Trap_Read_Slot()");
-    return SUCCESS;  // out is Known_Stable()
+        return fail ("Cannot read unstable slot with Read_Slot()");
+    return zero;  // out is Known_Stable()
 }
 
 
 //
-//  Trap_Write_Slot: C
+//  Write_Slot: C
 //
-Option(Error*) Trap_Write_Slot(Slot* slot, const Atom* write)
+Result(Zero) Write_Slot(Slot* slot, const Atom* write)
 {
     Flags persist = (slot->header.bits & CELL_MASK_PERSIST_SLOT);
 
@@ -1454,12 +1452,12 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Atom* write)
     Copy_Cell(var, write);
 
     slot->header.bits |= persist;  // preserve persist bits
-    return SUCCESS;
+    return zero;
 
 } handle_dual_slot: { ////////////////////////////////////////////////////////
 
     if (Is_Blackhole_Slot(slot))  // e.g. `for-each _ [1 2 3] [...]`
-        return SUCCESS;  // toss it
+        return zero;  // toss it
 
     assert(Is_Cell_Stable(write));
 
@@ -1475,24 +1473,24 @@ Option(Error*) Trap_Write_Slot(Slot* slot, const Atom* write)
     rebElide(CANON(SET), temp, rebQ(u_cast(Value*, write)));
 
     unnecessary(slot->header.bits |= persist);  // didn't write actual slot
-    return SUCCESS;
+    return zero;
 }}
 
 
 //
 //  Trap_Write_Loop_Slot_May_Bind_Or_Decay: C
 //
-Option(Error*) Trap_Write_Loop_Slot_May_Bind_Or_Decay(
+Result(Zero) Write_Loop_Slot_May_Bind_Or_Decay(
     Slot* slot,
     Option(Atom*) write,
     const Value* container
 ){
     if (not write)
-        return Trap_Write_Slot(slot, LIB(NULL));
+        return Write_Slot(slot, LIB(NULL));
 
     attempt {  // attempt to get stable antiform to write
         if (Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)) {
-            Decay_If_Unstable(unwrap write);
+            required (Decay_If_Unstable(unwrap write));
             continue;
         }
 
@@ -1504,17 +1502,17 @@ Option(Error*) Trap_Write_Loop_Slot_May_Bind_Or_Decay(
             Is_Action(Known_Stable(unwrap write))
             and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)
         ){
-            return Error_User(
+            return fail (
                 "Cannot write to loop slot with ACTION! unless it is ^META"
             );
         }
     }
 
     if (Not_Cell_Flag(slot, LOOP_SLOT_NOTE_TIE))
-        return Trap_Write_Slot(slot, unwrap write);
+        return Write_Slot(slot, unwrap write);
 
     if (not Any_List(container))
-        return Error_User("Loop data must be list to use $var notation");
+        return fail ("Loop data must be list to use $var notation");
 
     DECLARE_ELEMENT (temp);
     Derelativize(
@@ -1523,19 +1521,19 @@ Option(Error*) Trap_Write_Loop_Slot_May_Bind_Or_Decay(
         List_Binding(cast(const Element*, container))
     );
     Copy_Cell(unwrap write, temp);
-    return Trap_Write_Slot(slot, temp);
+    return Write_Slot(slot, temp);
 }
 
 
 //
 //  Trap_Write_Loop_Slot_May_Bind: C
 //
-Option(Error*) Trap_Write_Loop_Slot_May_Bind(
+Result(Zero) Write_Loop_Slot_May_Bind(
     Slot* slot,
     Option(Value*) write,
     const Value* container
 ){
-    return Trap_Write_Loop_Slot_May_Bind_Or_Decay(slot, write, container);
+    return Write_Loop_Slot_May_Bind_Or_Decay(slot, write, container);
 }
 
 

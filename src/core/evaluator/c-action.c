@@ -100,7 +100,7 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
         }
 
         // if g_failure is set, nullptr came from `return fail()` not a
-        // `return nullptr` indicating null.  See NEEDFUL_PERMISSIVE_ZERO.
+        // `return nullptr` indicating null.  See NEEDFUL_RESULT_0.
 
         assert(not Is_Throwing(L));
 
@@ -111,21 +111,20 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
         }
         Rollback_Level(L);  // not throwing, no trampoline rollback TOP_LEVEL
 
+        Init_Warning(L->out, g_failure);
+        g_failure = nullptr;  // have to do before Force_Location_Of_Error()
+        Failify(L->out);  // forces location of error to level
+
       #if DEBUG_EXTANT_STACK_POINTERS  // want to use stack in location setting
         Count save_extant = g_ds.num_refs_extant;
         g_ds.num_refs_extant = 0;
       #endif
-
-        Force_Location_Of_Error(g_failure, L);
 
       #if DEBUG_EXTANT_STACK_POINTERS
         assert(g_ds.num_refs_extant == 0);
         g_ds.num_refs_extant = save_extant;
       #endif
 
-        Init_Warning(L->out, g_failure);
-        Failify(L->out);
-        g_failure = nullptr;
         return nullptr;
     }
 
@@ -468,13 +467,13 @@ Bounce Action_Executor(Level* L)
             }
 
             if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // non-empty is ok [4]
-                Value* out = Decay_If_Unstable(OUT);  // !!! ^META variadics?
+                Value* out = require (Decay_If_Unstable(OUT));  // !!! ^META?
                 Init_Varargs_Untyped_Infix(ARG, out);
                 Erase_Cell(OUT);
             }
             else switch (pclass) {
               case PARAMCLASS_NORMAL:
-                Decay_If_Unstable(OUT);
+                required (Decay_If_Unstable(OUT));
                 Move_Atom(ARG, OUT);
                 break;
 
@@ -880,7 +879,7 @@ Bounce Action_Executor(Level* L)
                 Not_Cell_Stable(ARG)
                 or not Is_Varargs(Known_Stable(ARG))
             ){
-                Value* arg = Decay_If_Unstable(ARG);
+                Value* arg = require (Decay_If_Unstable(ARG));
                 panic (Error_Not_Varargs(L, KEY, param, arg));
             }
 
@@ -900,7 +899,7 @@ Bounce Action_Executor(Level* L)
         heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
         if (not Typecheck_Coerce(L, param, ARG, false)) {
-            Value* arg = Decay_If_Unstable(ARG);
+            Value* arg = require (Decay_If_Unstable(ARG));
             panic (Error_Phase_Arg_Type(L, KEY, param, arg));
         }
 

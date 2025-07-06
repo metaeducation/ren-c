@@ -282,9 +282,7 @@ Slot* Get_System(REBLEN i1, REBLEN i2)
         return obj_slot;
 
     DECLARE_VALUE (obj);
-    Option(Error*) e = Trap_Read_Slot(obj, obj_slot);
-    if (e)
-        abrupt_panic (unwrap e);
+    required (Read_Slot(obj, obj_slot));
 
     assert(Is_Object(obj));
 

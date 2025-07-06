@@ -142,7 +142,8 @@ DECLARE_NATIVE(SHOVE)
         if (Eval_Any_List_At_Throws(OUT, right, Level_Binding(L)))
             return THROWN;
 
-        Move_Cell(shovee, Decay_If_Unstable(OUT));
+        Value* decayed = require (Decay_If_Unstable(OUT));
+        Move_Cell(shovee, decayed);
     }
     else
         Copy_Cell(shovee, right);
@@ -194,8 +195,9 @@ DECLARE_NATIVE(SHOVE)
         Flags flags = LEVEL_MASK_NONE;
         if (Eval_Element_Core_Throws(OUT, flags, left, Level_Binding(L)))
             return THROWN;
-        if (pclass == PARAMCLASS_NORMAL)
-            Decay_If_Unstable(OUT);
+        if (pclass == PARAMCLASS_NORMAL) {
+            required (Decay_If_Unstable(OUT));
+        }
         else {
             // The infix fulfillment code will Liftify() OUT
         }
@@ -875,7 +877,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         Move_Atom(var, SPARE);
     else {
         Move_Atom(var, SPARE);
-        Decay_If_Unstable(var);
+        required (Decay_If_Unstable(var));
     }
 
     goto handle_next_item;

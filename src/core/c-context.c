@@ -842,9 +842,7 @@ VarList* Make_Varlist_Detect_Managed(
             // !!! If we are creating a derived object, should it be able
             // to copy the ACCESSOR/etc.?
             //
-            e = Trap_Read_Slot_Meta(dest, src);
-            if (e)
-                abrupt_panic (unwrap e);  // !!! review if panic should be possible
+            required (Read_Slot_Meta(dest, src));
 
             bool deeply = true;  // !!! Copies series deeply, why? [1]
             if (not Is_Antiform(dest)) {  // !!! whole model needs review
@@ -877,7 +875,7 @@ VarList* Make_Varlist_Detect_Managed(
 //     2 for value
 //     3 for words and values
 //
-Source* Context_To_Array(const Element* context, REBINT mode)
+Result(Source*) Context_To_Array(const Element* context, REBINT mode)
 {
     assert(!(mode & 4));
 
@@ -911,7 +909,7 @@ Source* Context_To_Array(const Element* context, REBINT mode)
             // This whole idea needs review.
             //
             if (Is_Antiform(Slot_Hack(e.slot)))
-                abrupt_panic (Error_Anti_Object_Block_Raw());
+                return fail (Error_Anti_Object_Block_Raw());
 
             Copy_Cell(PUSH(), Slot_Hack(e.slot));
         }

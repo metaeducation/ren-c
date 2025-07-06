@@ -341,9 +341,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
    );
    if (shutdown_slot) {
         Sink(Value) spare_shutdown = SPARE;
-        Option(Error*) e = Trap_Read_Slot(spare_shutdown, shutdown_slot);
-        if (e)
-            panic (unwrap e);
+        required (Read_Slot(spare_shutdown, shutdown_slot));
         rebElide(rebRUN(spare_shutdown));
    }
 
@@ -360,9 +358,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
    );
    if (unregister_slot) {
         Sink(Value) spare_unregister = SPARE;
-        Option(Error*) e = Trap_Read_Slot(spare_unregister, unregister_slot);
-        if (e)
-            panic (unwrap e);
+        required (Read_Slot(spare_unregister, unregister_slot));
         rebElide(rebRUN(spare_unregister));
    }
 

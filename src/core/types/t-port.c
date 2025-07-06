@@ -138,12 +138,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 
     Sink(Value) spare_actor = SPARE;
 
-    Option(Error*) e = Trap_Read_Slot(
+    required (Read_Slot(
         spare_actor,
         Varlist_Slot(ctx, STD_PORT_ACTOR)
-    );
-    if (e)
-        panic (unwrap e);
+    ));
 
     // If actor is an ACTION!, it should be an OLDGENERIC Dispatcher for PORT!
     //
@@ -179,12 +177,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     if (not index)
         Init_Nulled(scratch_action);
     else {
-        e = Trap_Read_Slot(
+        required (Read_Slot(
             scratch_action,
             Varlist_Slot(Cell_Varlist(spare_actor), unwrap index)
-        );
-        if (e)
-            panic (unwrap e);
+        ));
     }
 
     if (not Is_Action(scratch_action))
@@ -301,7 +297,7 @@ IMPLEMENT_GENERIC(TO, Url)
 
 
 //
-//  Trap_Get_Port_Path_From_Spec: C
+//  Get_Port_Path_From_Spec: C
 //
 // Previously the FileReq would store a pointer to a Value* that was the path,
 // which was assumed to live in the spec somewhere.  Object Slots are now
@@ -309,36 +305,26 @@ IMPLEMENT_GENERIC(TO, Url)
 // reads the path from the port spec each time its needed...which should
 // still work because it was extracted and assigned once anyway.
 //
-Option(Error*) Trap_Get_Port_Path_From_Spec(
+Result(Option(Value*)) Get_Port_Path_From_Spec(
     Sink(Value) out,
     const Value* port
 ){
     VarList* ctx = Cell_Varlist(port);
 
     DECLARE_VALUE (spec);
-    Option(Error*) e = Trap_Read_Slot(
-        spec, Varlist_Slot(ctx, STD_PORT_SPEC)
-    );
-    if (e)
-        return e;
+    required (Read_Slot(spec, Varlist_Slot(ctx, STD_PORT_SPEC)));
     if (not Is_Object(spec))
-        return Error_Invalid_Spec_Raw(spec);
+        return fail (Error_Invalid_Spec_Raw(spec));
 
-    e = Trap_Read_Slot(
-        out, Obj_Slot(spec, STD_PORT_SPEC_HEAD_REF)
-    );
+    required (Read_Slot(out, Obj_Slot(spec, STD_PORT_SPEC_HEAD_REF)));
     if (Is_Nulled(out))
-        return Error_Invalid_Spec_Raw(spec);
+        return fail (Error_Invalid_Spec_Raw(spec));
 
     if (Is_Url(out)) {
-        e = Trap_Read_Slot(
-            out, Obj_Slot(spec, STD_PORT_SPEC_HEAD_PATH)
-        );
-        if (e)
-            return e;
+        required (Read_Slot(out, Obj_Slot(spec, STD_PORT_SPEC_HEAD_PATH)));
     }
     else if (not Is_File(out))
-        return Error_Invalid_Spec_Raw(spec);
+        return fail (Error_Invalid_Spec_Raw(spec));
 
-    return SUCCESS;
+    return out;
 }

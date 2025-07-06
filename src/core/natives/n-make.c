@@ -193,7 +193,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
         return OUT;
     }
 
-    Value* out = Decay_If_Unstable(OUT);  // should packs from TO be legal?
+    Value* out = require (Decay_If_Unstable(OUT));  // should packs be legal?
 
     if (Heart_Of_Fundamental(out) != to_or_as)
         panic ("Forward TO/AS transform produced wrong type");
@@ -203,7 +203,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
         and (Any_List(out) or Any_String(out) or Is_Blob(out))
     ){
         if (Is_Flex_Read_Only(Cell_Flex(out)))
-            abrupt_panic ("TO transform of LIST/STRING/BLOB made immutable series");
+            panic ("TO transform of LIST/STRING/BLOB made immutable series");
     }
 
     // Reset TO_P sublevel to do reverse transformation
@@ -237,7 +237,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     if (Is_Error(scratch_reverse_atom))
         panic (Cell_Error(scratch_reverse_atom));
 
-    Value* scratch_reverse = Decay_If_Unstable(scratch_reverse_atom);
+    Value* scratch_reverse = require (Decay_If_Unstable(scratch_reverse_atom));
 
     if (to_or_as == TYPE_MAP) {  // doesn't preserve order requirement :-/
         if (Type_Of(scratch_reverse) != Type_Of(spare_input))

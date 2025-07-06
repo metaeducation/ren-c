@@ -215,7 +215,7 @@ DECLARE_NATIVE(REDUCE)
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
         goto vetoed;
 
-    Value* spare = Decay_If_Unstable(SPARE);
+    Value* spare = require (Decay_If_Unstable(SPARE));
 
     if (Is_Splice(spare)) {
         const Element* tail;
@@ -352,11 +352,7 @@ DECLARE_NATIVE(REDUCE_EACH)
     if (Is_Ghost(SPARE) and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META))
         goto reduce_next;  // skip ghost unless meta?
 
-    Option(Error*) e = Trap_Write_Loop_Slot_May_Bind_Or_Decay(
-        slot, SPARE, block
-    );
-    if (e)
-        panic (unwrap e);
+    required (Write_Loop_Slot_May_Bind_Or_Decay(slot, SPARE, block));
 
 } next_reduce_each: { ////////////////////////////////////////////////////////
 
