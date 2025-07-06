@@ -4,5 +4,5 @@
 
 #if CPLUSPLUS_11
     #undef h_cast
-    #define h_cast  Needful_Hookable_Cast
+    #define h_cast  needful_lenient_hookable_cast
 #endif

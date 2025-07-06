@@ -346,8 +346,9 @@
 //    turns out to be more useful in most cases than enforcing mutability,
 //    and it also is briefer to read at the callsite.
 
-#define Needful_Ensure_Rigid(T,expr)  (expr)
-#define Needful_Ensure_Lenient(T,expr)  (expr)  // const passthru as const [1]
+#define needful_rigid_ensure(T,expr)  (expr)
+
+#define needful_lenient_ensure(T,expr)  (expr)  // const passthru as const [1]
 
 
 //=//// CONST PROPAGATION TOOLS ///////////////////////////////////////////=//
@@ -404,7 +405,7 @@
 #define CONSTABLE(param_type)  param_type  // use m_cast() on assignment
 
 
-//=//// cast() VARIATIONS: VISIBLE (AND HOOKABLE!) SEMANATIC CASTS ////////=//
+//=//// cast(): VISIBLE (AND HOOKABLE!) ERGONOMIC CASTS ///////////////////=//
 //
 // These macros for casting provide *easier-to-spot* variants of parentheses
 // cast (so you can see where the casts are in otherwise-parenthesized
@@ -414,6 +415,7 @@
 // The definitions in C are trivial--they just act like a parenthesized cast.
 // But there are enhanced features when you build as C++11 or higher, where
 // the casts can implement their narrower policies and validation logic.
+// In release builds, the casts have zero overhead.
 //
 // Also, the casts are designed to be "hookable" so that customized checks
 // can be added in C++ builds.  These can be compile-time checks (to limit
@@ -421,13 +423,65 @@
 // builds, that can actually validate that the data being cast is legal for
 // the target type.  This even works for casts of raw pointers to types!
 //
-// All casts are designed to:
+// 1. As with all needful macros, we don't force short names on clients.
+//    You may have a `cast()` function or variable in your codebase, and if
+//    that's more important than having the macro be named cast() you can
+//    define it some other way.  But a short name like cast() or coerce()
+//    is certainly recommended to get the maximum benefit.
 //
-// * Be visually distinct from parentheses casts
-// * Document intent at the callsite
-// * Provide compile-time checks in C++ builds
-// * Have zero overhead in release builds
+// 2. You don't always want to run validation hooks when casting that make
+//    sure the data is valid for the target type.  For example, if you are
+//    casting a fresh malloc(), the data won't be initialized yet.  It may
+//    also be that performance critical code wants to avoid the overhead
+//    of validation--even in debug builds.
 //
+// 3. By default the casts are "lenient" in terms of constness, in the sense
+//    that if you try to cast a const pointer to a non-const pointer, it
+//    won't error...but will pass through a const version of the target type.
+//    This makes casts briefer, e.g. you don't have to be redundant:
+//
+//       void Some_Func(const Base* base) {
+//           const Derived* derived = cast(const Derived*, base);
+//              /* why not just Derived*? --^ */
+//       }
+//
+//    If you just do `cast(Derived*, base)` the C build would just do a cast
+//    to the mutable Derived*, but you'd get the const correctness in the C++
+//    build with less typing.  In any case, the "rigid" casts don't do this
+//    passthru, so you get an error omitting const in such cases.
+//
+
+#define needful_lenient_hookable_cast(T,expr) /* can alias as cast() [1] */ \
+    ((T)(expr))
+
+#define needful_lenient_unhookable_cast(T,expr) /* no validation hooks [2] */ \
+    ((T)(expr))
+
+#define needful_rigid_hookable_cast(T,expr) /* rigid sometimes wanted [3] */ \
+    ((T)(expr))
+
+#define needful_rigid_unhookable_cast(T,expr) \
+    ((T)(expr))
+
+#define needful_mutable_cast(T,expr) \
+    ((T)(expr))
+
+#define needful_pointer_cast(T,expr) \
+    ((T)(expr))
+
+#define needful_integral_cast(T,expr) \
+    ((T)(expr))
+
+#define needful_xtreme_cast(T,expr) \
+    ((T)(expr))
+
+#define needful_downcast(T,expr) \
+    ((T)(expr))
+
+#define needful_upcast(expr) \
+    ((void*)(expr))
+
+
 //=//// CAST SELECTION GUIDE ///////////////////////////////////////////////=//
 //
 //        PRO-TIP: #define cast() as h_cast() in your codebase!!! [1]
@@ -476,23 +530,7 @@
 //
 // 3. <write note>
 
-#define Needful_Xtreme_Cast(T,expr)         ((T)(expr))
-#define Needful_Mutable_Cast(T,expr)        ((T)(expr))
-#define Needful_Hookable_Cast(T,expr)       ((T)(expr))
-#define Needful_Unhookable_Cast(T,expr)     ((T)(expr))
 
-#define x_cast            Needful_Xtreme_Cast
-
-#define u_cast            Needful_Unhookable_Cast
-#define h_cast            Needful_Hookable_Cast
-
-#define m_cast            Needful_Mutable_Cast
-
-#define s_cast(bytes)   u_cast(char*, ensure(unsigned char*, (bytes)))
-#define b_cast(chars)   u_cast(unsigned char*, ensure(char*, (chars)))
-
-#define p_cast(T,expr)    ((T)(expr))
-#define i_cast(T,expr)    ((T)(expr))
 #define f_cast(T,expr)    ((T)(expr))
 
 // Strict cast alternatives because GCC doesn't follow the C++ standard [3]
@@ -500,13 +538,8 @@
 #define strict_u_cast(T,expr)    u_cast(T,(expr))
 #define strict_h_cast(T,expr)    h_cast(T,(expr))
 
-#define strict_c_cast(T,expr)    cast(T,(expr))
-#define strict_u_cast(T,expr)  u_cast(T,(expr))
-
 #define strict_cast(T,expr)      cast(T,(expr))  // however you define cast()
 
-#define downcast(T,expr)    ((T)(expr))
-#define upcast(expr)        ((void*)(expr))
 
 
 //=//// attempt, until, whilst: ENHANCED LOOP MACROS //////////////////////=//
@@ -788,7 +821,20 @@ typedef enum {
 //
 
 #if !defined(NEEDFUL_DONT_DEFINE_CAST_SHORTHANDS)
-    #define cast(T,expr)            h_cast(T,expr)
+    #define cast              needful_lenient_hookable_cast
+
+    #define x_cast            needful_xtreme_cast
+
+    #define u_cast            needful_lenient_unhookable_cast
+    #define h_cast            needful_lenient_hookable_cast
+
+    #define m_cast            needful_mutable_cast
+
+    #define p_cast            needful_pointer_cast
+    #define i_cast            needful_integral_cast
+
+    #define downcast          needful_downcast
+    #define upcast            needful_upcast
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_OPTION_SHORTHANDS)
@@ -828,10 +874,10 @@ typedef enum {
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_ENSURE_SHORTHANDS)
-    #define ensure_rigid(T,expr)    Needful_Ensure_Rigid(T,expr)
-    #define ensure_lenient(T,expr)  Needful_Ensure_Lenient(T,expr)
+    #define rigid_ensure(T,expr)    needful_rigid_ensure(T,expr)
+    #define lenient_ensure(T,expr)  needful_lenient_ensure(T,expr)
 
-    #define ensure(T,expr)          Needful_Ensure_Lenient(T,expr)  // [3]
+    #define ensure(T,expr)          needful_lenient_ensure(T,expr)  // [3]
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_LOOP_SHORTHANDS)

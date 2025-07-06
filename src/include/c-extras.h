@@ -538,4 +538,17 @@
 #endif
 
 
+//=//// Byte* casts to char* /////////////////////////////////////////////=//
+//
+// These were once part of the Needful library, but they're so simple to
+// define for anyone who wants them, and tough to explain.
+//
+// The idea is just to make a narrow conversion so if all you're doing is
+// switching from signed to unsigned char, this cast does *only* that.
+//
+
+#define s_cast(bytes)   u_cast(char*, ensure(unsigned char*, (bytes)))
+#define b_cast(chars)   u_cast(unsigned char*, ensure(char*, (chars)))
+
+
 #endif

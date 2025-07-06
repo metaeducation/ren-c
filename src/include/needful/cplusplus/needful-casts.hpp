@@ -89,9 +89,9 @@
 //     }
 //
 
-#undef Needful_Unhookable_Cast
-#define Needful_Unhookable_Cast(T,expr) /* outer parens [C] */ \
-    Needful_Xtreme_Cast(needful_merge_const(decltype(expr), T), (expr))
+#undef needful_lenient_unhookable_cast
+#define needful_lenient_unhookable_cast(T,expr) /* outer parens [C] */ \
+    needful_xtreme_cast(needful_merge_const(decltype(expr), T), (expr))
 
 
 
@@ -117,8 +117,8 @@
 //    building with a single header file of C-only definitions.
 //
 
-#undef Needful_Mutable_Cast
-#define Needful_Mutable_Cast(T,expr) /* Note: not arity-1 on purpose! */ \
+#undef needful_mutable_cast
+#define needful_mutable_cast(T,expr) /* Note: not arity-1 on purpose! */ \
     (static_cast<T>( \
         const_cast< \
             needful_unconstify_type(needful_unwrapped_type(T)) \
@@ -258,7 +258,7 @@ struct is_function_pointer<Ret (*)(Args...)> : std::true_type {};
 template<typename V, typename T>
 struct CastHook {  // object template for partial specialization [2]
     static T convert(V v) {
-        return x_cast(T, v);  // plain C cast is most versatile here
+        return needful_xtreme_cast(T, v);  // plain C cast is most versatile
     }
 };
 
@@ -278,7 +278,7 @@ typename std::enable_if<  // For ints/enums: use & as && can't bind const
     To
 >::type
 constexpr Hookable_Cast_Helper(const From& from) {
-    return static_cast<To>(from);
+    return static_cast<To>(from);  // static_cast can be constexpr
 }
 
 
@@ -294,6 +294,13 @@ typename std::enable_if<  // For ints/enums: use & as && can't bind const
 Hookable_Cast_Helper(const From& from) {
     using ConstFrom = needful_constify_type(From);
     using ConstTo = needful_constify_type(To);
+
+    static_assert(
+        not (std::is_pointer<From>::value and not std::is_pointer<To>::value)
+        and
+        not (not std::is_pointer<From>::value and std::is_pointer<To>::value),
+        "use needful_pointer_cast() [p_cast()] for pointer <-> integer casts"
+    );
 
     return CastHook<ConstFrom, ConstTo>::convert(from);
 }
@@ -316,7 +323,7 @@ Hookable_Cast_Helper(FromRef const && from) {
     using ConstFrom = needful_constify_type(From);
     using ConstTo = needful_constify_type(To);
 
-    return Needful_Mutable_Cast(
+    return needful_mutable_cast(
         ResultType,  // passthru const on const mismatch (lenient)
         (CastHook<ConstFrom, ConstTo>::convert(std::forward<FromRef>(from)))
     );
@@ -347,12 +354,6 @@ Hookable_Cast_Helper(FromRef&& from)
         "Use f_cast() for function pointer casts"
     );
 
-/*    static_assert(  // make cast_lenient and cast_rigid
-        not is_const_removing_pointer_cast<From, To>::value,
-        "cast removing const: use m_cast() if you mean it"
-    ); */
-
-
     #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
     static_assert(
         (   // v-- we can't warn you about va_list* cast() if this is true
@@ -369,15 +370,56 @@ Hookable_Cast_Helper(FromRef&& from)
     );  // read [B] at top of file for more information
     #endif
 
-    return Needful_Mutable_Cast(
+    return needful_mutable_cast(
         ResultType,  // passthru const on const mismatch (lenient)
         (CastHook<ConstFrom, ConstTo>::convert(std::forward<FromRef>(from)))
     );
 }
 
-#undef Needful_Hookable_Cast
-#define Needful_Hookable_Cast(T,expr) /* outer parens [C] */ \
+#undef needful_lenient_hookable_cast
+#define needful_lenient_hookable_cast(T,expr) /* outer parens [C] */ \
     (needful::Hookable_Cast_Helper<T>(expr))  // func: universal refs [3]
+
+
+//=//// RIGID CAST FORMS /////////////////////////////////////////////////=//
+//
+// By default, cast() and u_cast() are lenient, meaning if you try to cast
+// a const expression to a mutable type, rather than giving a compile-time
+// error, the expression will be cast but with constness applied to the
+// output type.  This is useful for many cases (such as making a polymorphic
+// macro that can make either a const or mutable pointer based on the
+// input expression.)  But if you really want to ensure that when you target
+// a mutable type you get a mutable expression, the "Rigid" forms of the
+// cast macros add a static assert to the non-rigid forms that stops them
+// from doing their passthru behavior.
+//
+
+template<typename From, typename To>
+struct RigidCastAsserter {
+    static_assert(
+        not (
+            not needful_is_constlike(To)
+            and needful_is_constlike(From)
+        ),
+        "rigid_hookable_cast() won't pass thru constness on mutable casts"
+    );
+};
+
+#undef needful_rigid_hookable_cast
+#define needful_rigid_hookable_cast(T,expr) /* outer parens [C] */ \
+    (NEEDFUL_USED((needful::RigidCastAsserter< /* USED() for clang */ \
+        needful_remove_reference(decltype(expr)), \
+        T \
+    >{})), \
+    needful_lenient_hookable_cast(T, (expr)))
+
+#undef needful_rigid_unhookable_cast
+#define needful_rigid_unhookable_cast(T,expr) /* outer parens [C] */ \
+    (NEEDFUL_USED((needful::RigidCastAsserter< /* USED() for clang */ \
+        needful_remove_reference(decltype(expr)), \
+        T \
+    >{})), \
+    Needful_Lenient_Unhookable_Cast(T, (expr)))
 
 
 //=//// downcast(): CAST THAT WOULD BE SAFE FOR PLAIN ASSIGNMENT //////////=//
@@ -401,8 +443,8 @@ struct DowncastHelper {
     );
 };
 
-#undef downcast
-#define downcast(T,expr) \
+#undef needful_downcast
+#define needful_downcast(T,expr) \
     ((typename needful::DowncastHelper< \
         needful_remove_reference(decltype(expr)), \
         T \
@@ -432,11 +474,11 @@ struct UpcastWrapper {
         >::type
     >
     operator To() const noexcept
-        { return Needful_Hookable_Cast(To, p); }
+        { return needful_lenient_hookable_cast(To, p); }
 };
 
-#undef upcast
-#define upcast(expr) \
+#undef needful_upcast
+#define needful_upcast(expr) \
     (needful::UpcastWrapper< \
         needful_remove_reference(decltype(expr)) \
     >(expr))
@@ -450,7 +492,7 @@ struct UpcastWrapper {
 //
 
 template<typename TP, typename V>
-constexpr TP p_cast_helper(V v) {
+constexpr TP PointerCastHelper(V v) {
     static_assert(std::is_pointer<TP>::value,
         "invalid p_cast() - target type must be pointer");
     static_assert(not std::is_pointer<V>::value,
@@ -458,9 +500,9 @@ constexpr TP p_cast_helper(V v) {
     return reinterpret_cast<TP>(v);
 }
 
-#undef p_cast
-#define p_cast(TP,v) \
-    needful::p_cast_helper<TP>(v)
+#undef needful_pointer_cast
+#define needful_pointer_cast(TP,expr) \
+    needful::PointerCastHelper<TP>(expr)
 
 
 //=//// NON-INTEGRAL TO INTEGRAL CAST /////////////////////////////////////=//
@@ -471,7 +513,7 @@ constexpr TP p_cast_helper(V v) {
 //
 
 template<typename T, typename V>
-constexpr T i_cast_helper(V v) {
+constexpr T IntegralCastHelper(V v) {
     static_assert(std::is_integral<T>::value,
         "invalid i_cast() - target type must be integral");
     static_assert(not std::is_integral<V>::value,
@@ -479,9 +521,9 @@ constexpr T i_cast_helper(V v) {
     return reinterpret_cast<T>(v);
 }
 
-#undef i_cast
-#define i_cast(T,expr) \
-    needful::i_cast_helper<T>(expr)
+#undef needful_integral_cast
+#define needful_integral_cast(T,expr) \
+    needful::IntegralCastHelper<T>(expr)
 
 
 //=//// FUNCTION POINTER CAST /////////////////////////////////////////////=//

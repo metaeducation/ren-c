@@ -62,16 +62,16 @@ struct IsConvertibleAsserter {
     );
 };
 
-#undef Needful_Ensure_Rigid
-#define Needful_Ensure_Rigid(T,expr) \
+#undef needful_rigid_ensure
+#define needful_rigid_ensure(T,expr) \
     (NEEDFUL_USED((needful::IsConvertibleAsserter< /* USED() for clang */ \
         needful_remove_reference(decltype(expr)), \
         T \
     >{})), \
     x_cast(T, (expr)))
 
-#undef Needful_Ensure_Lenient
-#define Needful_Ensure_Lenient(T,expr) \
+#undef needful_lenient_ensure
+#define needful_lenient_ensure(T,expr) \
     (NEEDFUL_USED((needful::IsConvertibleAsserter< /* USED() for clang */ \
         needful_remove_reference(decltype(expr)), \
         needful_constify_type(T) /* loosen to matching constified T too */ \
