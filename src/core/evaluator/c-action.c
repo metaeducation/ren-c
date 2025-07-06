@@ -123,13 +123,6 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
         g_ds.num_refs_extant = save_extant;
       #endif
 
-        if (g_divergent) {
-            Init_Thrown_Panic(L, g_failure);
-            g_divergent = false;
-            g_failure = nullptr;
-            return BOUNCE_THROWN;  // "irreducible"
-        }
-
         Init_Warning(L->out, g_failure);
         Failify(L->out);
         g_failure = nullptr;

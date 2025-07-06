@@ -409,7 +409,6 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
         if (bounce == nullptr) {
             if (g_failure) {  // was NEEDFUL_PERMISSIVE_ZERO (fail/panic)
-                g_divergent = false;
                 abrupt_panic (Needful_Test_And_Clear_Failure());
             }
             goto test_failed;  // was just `return nullptr`

@@ -212,17 +212,16 @@ unsigned char* API_rebAllocBytes(size_t size)
 //
 unsigned char* API_rebTryAllocBytes(size_t size)
 {
-    Byte* p;
-
-    RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC {
-        p = API_rebAllocBytes(size);
+    RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED {
+        Byte* p = API_rebAllocBytes(size);
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return p;
-    } ON_ABRUPT_PANIC (error) {
-        UNUSED(error);
-        CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
+    } ON_ABRUPT_PANIC (Error* e) {
+        UNUSED(e);
         return nullptr;
     }
+
+    DEAD_END;  // not actually reachable, but silences warning
 }
 
 

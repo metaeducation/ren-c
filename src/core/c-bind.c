@@ -1351,7 +1351,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 
     if (e) {
         Free_Unmanaged_Flex(varlist);
-        return fail (e);
+        return fail (unwrap e);
     }
 
     Manage_Flex(varlist);  // must be managed to use in binding

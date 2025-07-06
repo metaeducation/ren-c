@@ -168,10 +168,8 @@
 //        ErrorType* Needful_Test_And_Clear_Failure()
 //        ErrorType* Needful_Get_Failure()
 //        void Needful_Set_Failure(ErrorType* error)
-//        bool Needful_Get_Divergence()
-//        void Needful_Force_Divergent()
+//        void Needful_Panic_Abruptly()
 //        void Needful_Assert_Not_Failing()  // avoids assert() dependency
-//        void Needful_Terminate_On_Bad_Result(...)  // variadic
 //
 //    These can be functions or macros with the same signature.  They should
 //    use thread-local state if they're to work in multi-threaded code.
@@ -179,63 +177,42 @@
 
 #define NeedfulResult(T)  T
 
-#define NEEDFUL_PERMISSIVE_ZERO  0  // likely must disable warnings in C [A]
+#define NEEDFUL_PERMISSIVE_ZERO  0  // in C, likely must disable warnings [A]
 
 #define NEEDFUL_NOOP  ((void)0)
 
 #define needful_fail(...) \
-    (assert((! Needful_Get_Failure()) && (! Needful_Get_Divergence())), \
-    Needful_Set_Failure(__VA_ARGS__), \
-    NEEDFUL_PERMISSIVE_ZERO)
-
-#define needful_panic(...) do { \
-    assert((! Needful_Get_Failure()) && (! Needful_Get_Divergence())); \
-    Needful_Set_Failure(__VA_ARGS__); \
-    Needful_Force_Divergent(); \
-    return NEEDFUL_PERMISSIVE_ZERO; \
-} while (0)
+    (Needful_Assert_Not_Failing(), \
+        Needful_Set_Failure(__VA_ARGS__), \
+        NEEDFUL_PERMISSIVE_ZERO)
 
 #define needful_trap_core(expr, prefix_extractor) \
     /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
     if (Needful_Get_Failure()) { \
-        /* possibly(Needful_Get_Divergence()); */ \
         return NEEDFUL_PERMISSIVE_ZERO; \
     } NEEDFUL_NOOP  /* force require semicolon at callsite */
+
+#define needful_except_core(decl,postfix_extractor) \
+    /* expression */ postfix_extractor; \
+    for (decl = Needful_Get_Failure(); Needful_Test_And_Clear_Failure(); )
+        /* implicitly takes code block after macro as except()-body */
+
+#define needful_panic(...) do { \
+    Needful_Assert_Not_Failing(); \
+    Needful_Panic_Abruptly(__VA_ARGS__) \
+    /* DEAD_END; */ \
+} while (0)
 
 #define needful_require_core(expr, prefix_extractor) \
     /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
     if (Needful_Get_Failure()) { \
-        /* possibly(Needful_Get_Divergence()); */ \
-        Needful_Force_Divergent(); \
-        return NEEDFUL_PERMISSIVE_ZERO; \
-    } NEEDFUL_NOOP  /* force require semicolon at callsite */
-
-#define needful_expect_core(expr, prefix_extractor, ...) \
-    /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
-    if (Needful_Get_Failure()) { \
-        /* possibly(Needful_Get_Divergence()); */ \
-        Needful_Terminate_On_Bad_Result(__VA_ARGS__); \
+        Needful_Panic_Abruptly(Needful_Test_And_Clear_Failure()); \
+        /* DEAD_END; */ \
     } NEEDFUL_NOOP  /* force require semicolon at callsite */
 
 #define needful_guarantee_core(expr, prefix_extractor) \
     /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
     Needful_Assert_Not_Failing();
-
-#define needful_except_core(decl,postfix_extractor) \
-    /* expression */ postfix_extractor; \
-    if (Needful_Get_Divergence()) \
-        { return NEEDFUL_PERMISSIVE_ZERO; } \
-    for (decl = Needful_Get_Failure(); Needful_Test_And_Clear_Failure(); )
-        /* implicitly takes code block after macro as except()-body */
-
-#define needful_rescue_core(expr,postfix_extractor) \
-    expr postfix_extractor needful_rescue_then_internal /* (decl) {body} */
-
-#define /* rescue (expr) */ needful_rescue_then_internal(decl) /* {body} */ \
-    ; /* semicolon required */ \
-    /* possibly(Needful_Get_Divergence()); */ \
-    for (decl = Needful_Get_Failure(); Needful_Test_And_Clear_Failure(); )
-        /* { ...implicit code block after macro is except()-body ... } */
 
 //=//// "Hot Potato" Versions ////////////////////////////////////////////=//
 
@@ -245,20 +222,14 @@
 #define needful_trap(expr) \
     needful_trap_core(expr, Needful_Prefix_Extract_Hot)
 
-#define needful_require(expr) \
-    needful_require_core(expr, Needful_Prefix_Extract_Hot)
-
-#define needful_expect(expr,...) \
-    needful_expect_core(expr, Needful_Prefix_Extract_Hot, __VA_ARGS__)
-
-#define needful_guarantee(expr) \
-    needful_guarantee_core(expr, Needful_Prefix_Extract_Hot)
-
 #define /* expr */ needful_except(decl) /* {body} */ \
     needful_except_core(decl, Needful_Postfix_Extract_Hot)
 
-#define needful_rescue(expr) /* (decl) {body} */ \
-    needful_rescue_core(expr, Needful_Postfix_Extract_Hot)
+#define needful_require(expr) \
+    needful_require_core(expr, Needful_Prefix_Extract_Hot)
+
+#define needful_guarantee(expr) \
+    needful_guarantee_core(expr, Needful_Prefix_Extract_Hot)
 
 //=//// Discarded Result Versions /////////////////////////////////////////=//
 
@@ -268,20 +239,14 @@
 #define needful_trapped(expr) \
     needful_trap_core(expr, Needful_Prefix_Discard_Result)
 
-#define needful_required(expr) \
-    needful_require_core(expr, Needful_Prefix_Discard_Result)
-
-#define needful_expected(expr,...) \
-    needful_expect_core(expr, Needful_Prefix_Discard_Result, __VA_ARGS__)
-
-#define needful_guaranteed(expr) \
-    needful_guarantee_core(expr, Needful_Prefix_Discard_Result)
-
 #define /* expr */ needful_excepted(decl) /* {body} */ \
     needful_except_core(decl, Needful_Postfix_Discard_Result)
 
-#define needful_rescued(expr) /* (decl) {body} */ \
-    needful_rescue_core(expr, Needful_Postfix_Discard_Result)
+#define needful_required(expr) \
+    needful_require_core(expr, Needful_Prefix_Discard_Result)
+
+#define needful_guaranteed(expr) \
+    needful_guarantee_core(expr, Needful_Prefix_Discard_Result)
 
 
 //=//// Sink(T): INDICATE FUNCTION OUTPUT PARAMETERS //////////////////////=//
@@ -894,14 +859,12 @@ typedef enum {
 
     #define trap(expr)              needful_trap(expr)
     #define require(expr)           needful_require(expr)
-    #define expect(decl)            needful_expect(decl)
     #define guarantee(expr)         needful_guarantee(expr)
     #define except(decl)            needful_except(decl)
     #define sys_util_rescue(expr)   needful_rescue(expr)  // stigmatize [2]
 
     #define trapped(expr)           needful_trapped(expr)
     #define required(expr)          needful_required(expr)
-    #define expected(decl)          needful_expected(decl)
     #define guaranteed(expr)        needful_guaranteed(expr)
     #define excepted(decl)          needful_excepted(decl)
     #define sys_util_rescued(expr)  needful_rescued(expr)  // stigmatize [2]

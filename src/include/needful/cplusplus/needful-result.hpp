@@ -190,8 +190,15 @@
 // that C originally had with permissive 0 conversions, but more tightly
 // controlled through a special type.
 //
+// 1. The main purpose of permissive zero is to be the polymorphic return
+//    value of `fail(...)` used in `return fail (...)` that is able to make
+//    the T in any Result(T) type.  Making it [[nodiscard]] helps catch
+//    cases where someone omits the `return`, which would be a mistake
+//    (easy to make, as `panic (...)` looks similar and takes an error but
+//    is *not* used with return.)
+//
 
-struct PermissiveZeroStruct {
+struct NEEDFUL_NODISCARD PermissiveZeroStruct {  // [[nodiscard]] is good [1]
     template<typename T>
     operator T() const {
         return x_cast(T, 0);

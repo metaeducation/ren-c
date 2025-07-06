@@ -160,7 +160,6 @@ TVAR Binary* TG_Byte_Buf;  // byte buffer used in various spots (as BYTE_BUF)
 //    it are written correctly enough to not need the extra safety.
 
 TVAR Error* g_failure;  // for natives and Result(T) funcs, not `Optional` [1]
-TVAR bool g_divergent;  // says if g_failure is a panic or a fail
 
 TVAR MemoryState g_mem;
 

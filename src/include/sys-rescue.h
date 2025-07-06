@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -26,17 +26,25 @@
 // in C code.  These happen at arbitrary moments and are not willing (or able)
 // to go through a normal `return` chain to pipe an ERROR! up the stack.
 //
-// The abstraction is done with macros, and looks similar to try/catch:
+// The abstraction is done with macros, and looks similar to try/catch...
+// with a particularly clever trick in the C build using a for() loop to
+// capture the Error variable in a scope!
 //
-//     RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC {
+//     int modified_local = 1020;
+//     int unmodified_local = 304;
+//     RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED {
 //        //
 //        // code that may trigger a panic() ...
 //        //
-//     } ON_ABRUPT_PANIC (error) {
+//        modified_local = 0;  // modification means "clobbering"
+//        CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;  // necessary, unfortunately!
+//     } ON_ABRUPT_PANIC (Error* e) {
 //        //
-//        // code that handles the error in `error`
+//        // code that handles the error in `e`
 //        //
 //     }
+//     // don't read modified_local here, it may have been clobbered
+//     assert(unmodified_local == 304);  // this is safe, not clobbered
 //
 // Being able to build either way has important benefits, beyond just the
 // stubborn insistence that Rebol can compile as C99.  Some older/simpler
@@ -97,6 +105,18 @@ struct JumpStruct {
   #endif
 
     struct JumpStruct* last_jump;
+
+    bool clean_exit;  // debug flag, but #ifdef'ing macro code would be a pain
+
+  #if CPLUSPLUS_11 && RUNTIME_CHECKS
+    JumpStruct() {
+        clean_exit = false;
+    }
+    ~JumpStruct() {
+        if (not clean_exit)
+            assert("Missing CLEANUP_BEFORE_EXITING_RESCUE_SCOPE() call");
+    }
+  #endif
 };
 
 
@@ -172,11 +192,26 @@ struct JumpStruct {
 //    when you've done a `return` out of the trapped block.  As a result, the
 //    notion of which CPU buffer to jump to cannot be updated--which is a
 //    requirement when nested instances of RESCUE are allowed.  So you have
-//    to manually call a CLEANUP_BEFORE_EXITING_RESCUE_SCOPE macro.
+//    to manually call a CLEANUP_BEFORE_EXITING_RESCUE_SCOPE macro if you
+//    are going to exit the rescued scope prematurely.
 //
 //    By having the non-longjmp() versions do the same work, we help ensure
 //    that the longjmp() build stays working by detecting imbalances.
 //
+// 6. The way that the longjmp() version works, it does a goto out of the
+//    scope being rescued, to the same place that would be reached from a
+//    fallthrough with no abrupt panic.  Unfortunately, the decision to
+//    run the code block in the ON_ABRUPT_PANIC() macro is made based on
+//    testing if the jump error state is null, and the compiler doesn't know
+//    you can never fall through with a non-null error state if the block
+//    being rescued doesn't return.
+
+#define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
+    assert(jump.error == nullptr); \
+    g_ts.jump_list = jump.last_jump; \
+    jump.clean_exit = true
+
+
 #if PANIC_USES_LONGJMP
 
     STATIC_ASSERT(PANIC_USES_TRY_CATCH == 0);
@@ -193,66 +228,65 @@ struct JumpStruct {
         #define LONG_JUMP(s,v)  longjmp((s), (v))
     #endif
 
-    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC \
-        NOOP; /* stops warning when case previous statement was label */ \
+    #define RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED \
+        NOOP;  /* stops warning when previous statement was label */ \
         Jump jump;  /* one setjmp() per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
         jump.error = nullptr; \
         g_ts.jump_list = &jump; \
         if (1 == SET_JUMP(jump.cpu_state))  /* beware return value [3] */ \
-            goto longjmp_happened; /* jump.error will be set */ \
+            goto on_longjmp_or_scope_exited; /* jump.error will be set */ \
         /* fall through to subsequent block, happens on first SET_JUMP() */
 
-    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
-        assert(jump.error == nullptr); \
-        g_ts.jump_list = jump.last_jump
+    INLINE Error* Test_And_Clear_Jump_Error(Jump* jump)
+    {
+        if (not jump->error)
+            return nullptr;
+        Error* error = jump->error;
+        jump->error = nullptr;
+        g_ts.jump_list = jump->last_jump;
+        jump->clean_exit = true;
+        return error;
+    }
 
-    #define ON_ABRUPT_PANIC(name) \
-      longjmp_happened: \
-        NOOP; /* must be statement after label */ \
-        Error* name; /* can't initialize here, or goto couldn't cross it */ \
-        name = jump.error; \
-        jump.error = nullptr; \
-        /* fall through to subsequent block */
+    #define ON_ABRUPT_PANIC(decl) \
+      on_longjmp_or_scope_exited: \
+        if (jump.error) \
+            for (decl = jump.error; Test_And_Clear_Jump_Error(&jump); ) \
+                /* fall through to subsequent block */
+        /* must have code for fallthrough after the abrupt panic block [6] */
 
 #elif PANIC_USES_TRY_CATCH
 
     STATIC_ASSERT(PANIC_JUST_ABORTS == 0);
 
-    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC \
-        ; /* in case previous tatement was label */ \
+    #define RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED \
+        NOOP;  /* stops warning when previous statement was label */ \
         Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
         g_ts.jump_list = &jump; \
         try /* picks up subsequent {...} block */
 
-    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
-        g_ts.jump_list = jump.last_jump
-
-    #define ON_ABRUPT_PANIC(name) \
-        catch (Error* name) /* picks up subsequent {...} block */
+    #define ON_ABRUPT_PANIC(decl) \
+        catch (decl) /* picks up subsequent {...} block */
+        /* must have code for fallthrough after the abrupt panic block [6] */
 
 #else
 
     STATIC_ASSERT(PANIC_JUST_ABORTS);
 
-    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC \
-        ; /* in case previous tatement was label */ \
+    #define RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIEDC \
+        NOOP;  /* stops warning when previous statement was label */ \
         Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
         g_ts.jump_list = &jump; \
         if (false) \
             goto on_abrupt_panic;  /* avoids unreachable code warning */
 
-    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
-        g_ts.jump_list = jump.last_jump
-
-    #define ON_ABRUPT_PANIC(name) \
+    #define ON_ABRUPT_PANIC(decl) \
       on_abrupt_panic: /* impossible jump here to avoid unreachable warning */ \
         assert(!"ON_ABRUPT_PANIC() reached w/PANIC_JUST_ABORTS=1"); \
-        Error* name; \
-        name = Error_User("PANIC_JUST_ABORTS=1, should not reach!");
-
+        /* must have code for fallthrough after the abrupt panic block [6] */
 #endif
 
 
@@ -369,7 +403,6 @@ struct JumpStruct {
 INLINE Error* Needful_Test_And_Clear_Failure(void) {
     Error* temp = g_failure;  // Option(Error*) optimized [1]
     g_failure = nullptr;
-    g_divergent = false;
     return temp;
 }
 
@@ -387,14 +420,8 @@ INLINE Error* Needful_Test_And_Clear_Failure(void) {
 #define Needful_Get_Failure() \
     g_failure
 
-#define Needful_Get_Divergence() \
-    g_divergent
-
 #define Needful_Assert_Not_Failing() \
-    assert(not g_failure and not g_divergent)
+    assert(not g_failure)
 
-#define Needful_Force_Divergent() do { \
-    if (not g_divergent) /* hook for when divergence originates */ \
-        Panic_Prelude_File_Line_Tick(__FILE__, __LINE__, TICK); \
-      g_divergent = true; \
-} while (0)
+#define Needful_Panic_Abruptly(...) \
+    abrupt_panic (__VA_ARGS__);

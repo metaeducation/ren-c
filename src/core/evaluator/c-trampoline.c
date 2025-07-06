@@ -114,7 +114,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   // panic() has occurred.  Else jump to `bounce_on_trampoline_with_rescue`
   // to put the rescue back into effect.
 
-  RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC {  ////////////////////////////////////
+  RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED {  //////////////////////////
 
     Level* L = TOP_LEVEL;  // Current level changes, and isn't always top...
 
@@ -369,7 +369,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     crash (bounce);
 
-} ON_ABRUPT_PANIC (error) {  /////////////////////////////////////////////////
+} ON_ABRUPT_PANIC (Error* e) {  //////////////////////////////////////////////
 
     // A panic() can happen at any moment--even due to something like a memory
     // allocation requested by an executor itself.  These are "abrupt panics",
@@ -388,18 +388,18 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Level* L = TOP_LEVEL;  // may not be same as L whose executor() called [1]
 
-    Assert_Varlist(error);
-    assert(CTX_TYPE(error) == TYPE_WARNING);
+    Assert_Varlist(e);
+    assert(CTX_TYPE(e) == TYPE_WARNING);
 
     Clear_Lingering_Out_Cell_Protect_If_Debug(L);  // abrupt skips cleanup [2]
-    Init_Thrown_Panic(L, error);
+    Init_Thrown_Panic(L, e);
 
     possibly(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // panic in intrinsic
     Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
 
-    CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;  // no way around it with longjmp :-(
     goto bounce_on_trampoline_with_rescue;  // abrupt panic "used up" rescue
-}}
+
+} DEAD_END; }
 
 
 //
