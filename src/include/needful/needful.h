@@ -514,7 +514,6 @@
 #define needful_upcast(expr)  ((void*)(expr))  // void as "base class" [1]
 
 
-
 //=//// x_cast(): "WHAT PARENTHESES-CAST WOULD DO" ////////////////////////=//
 //
 // The parentheses-cast is the only cast in C, so it is maximally permissive.
@@ -532,7 +531,6 @@
 
 #define needful_xtreme_cast(T,expr) \
     ((T)(expr))
-
 
 
 //=//// CAST SELECTION GUIDE ///////////////////////////////////////////////=//

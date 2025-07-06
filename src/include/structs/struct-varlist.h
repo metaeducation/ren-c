@@ -245,33 +245,33 @@
   namespace needful {
     template<>
     struct OptionWrapper<Error*> {  // repeats some code, but that's life [2]
-        Error* p;
+        NEEDFUL_DECLARE_WRAPPED_FIELD (Error*, o);
 
         OptionWrapper() = default;
 
-        OptionWrapper(SuccessSentinel) : p {nullptr} {}
+        OptionWrapper(SuccessSentinel) : o {nullptr} {}
 
-        OptionWrapper(Error* ptr) : p {ptr} {
-            dont(assert(p != nullptr));  // except() macro uses null assign
+        OptionWrapper(Error* ptr) : o {ptr} {
+            dont(assert(o != nullptr));  // except() macro uses null assign
         }
 
         OptionWrapper(std::nullptr_t) = delete;  // explicitly disallow
 
         template<typename X>
         OptionWrapper(const OptionWrapper<X>& other)
-            : p {other.p} {
+            : o {other.o} {
             static_assert(std::is_convertible<X, Error*>::value,
                 "Incompatible pointer type");
-            assert(p != nullptr and "Use SUCCESS for null values");
+            assert(o != nullptr and "Use SUCCESS for null values");
         }
 
         operator uintptr_t() const
-          { return reinterpret_cast<uintptr_t>(p); }
+          { return reinterpret_cast<uintptr_t>(o); }
 
-        explicit operator Error*() { return p; }
+        explicit operator Error*() { return o; }
 
         explicit operator bool()
-          { return p != nullptr; }
+          { return o != nullptr; }
     };
   }  // end namespace needful
 #endif

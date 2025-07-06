@@ -1335,14 +1335,14 @@ INLINE Value* Constify(Value* v) {
     inline const void* to_rebarg(const Sink(Value)& val)
         { return u_cast(Value*, val); }
 
-    inline const void* to_rebarg(const Need(Value)& val)
+    inline const void* to_rebarg(const Need(Value*)& val)
         { return u_cast(Value*, val); }
 
   #if CHECK_CELL_SUBCLASSES
     inline const void* to_rebarg(const Sink(Element)& val)
         { return u_cast(Value*, val); }
 
-    inline const void* to_rebarg(const Need(Element)& val)
+    inline const void* to_rebarg(const Need(Element*)& val)
         { return u_cast(Value*, val); }
   #endif
 #endif

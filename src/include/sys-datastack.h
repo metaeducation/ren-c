@@ -97,14 +97,13 @@
 
     template<typename TP>
     struct OnStackPointer {
-        using wrapped_type = TP;
         using T = typename std::remove_pointer<TP>::type;
-        T* p;
 
         static_assert(std::is_base_of<Cell, T>::value,
             "OnStack(T) must be used with a Cell-derived type");
 
-      public:
+        NEEDFUL_DECLARE_WRAPPED_FIELD (TP, p);
+
         OnStackPointer () : p (nullptr) {}
         OnStackPointer (T* p) : p (p) {
             if (p != nullptr)

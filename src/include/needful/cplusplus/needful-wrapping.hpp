@@ -57,6 +57,27 @@
 //
 
 
+//=//// WRAPPER CLASS DEFINITION ///////////////////////////////////////////=//
+//
+// This is better than just `using wrapped_type = T;` because it helps people
+// reading the code naviate to this definition and read the rationale for
+// why this convention is used.  It also means you can't cheat--the bits
+// are the same as the C definition.
+//
+// 1. If you have a base class which has the actual storage of the wrapped
+//    type, and a derived class which just adjusts the access for it, then
+//    this is a special case where the derived class may need to override
+//    the wrapped_type to be in sync with its template parameter.
+//
+
+#define NEEDFUL_DECLARE_WRAPPED_FIELD(T,name) \
+    using wrapped_type = T; \
+    T name
+
+#define NEEDFUL_OVERRIDE_WRAPPED_FIELD_TYPE(T) /* derived class may use */ \
+      using wrapped_type = T
+
+
 //=//// WRAPPER CLASS DETECTION ///////////////////////////////////////////=//
 //
 // Uses SFINAE (Substitution Failure Is Not An Error) to detect if a type T

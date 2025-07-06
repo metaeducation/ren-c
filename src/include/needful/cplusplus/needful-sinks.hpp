@@ -13,9 +13,7 @@
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
-
-//
-// e.g. if CHECK_CELL_SUBCLASSES is enabled, the inheritance heirarchy has
+// If CHECK_CELL_SUBCLASSES is enabled, the inheritance heirarchy has
 // Atom at the base, with Element at the top.  Since what Elements can contain
 // is more constrained than what Atoms can contain, this means you can pass
 // Element* to a parameter taking an Atom*, but not vice-versa.
@@ -129,12 +127,11 @@ struct IfOutputConvertible2 {  // used by Init() and Sink()
 
 template<typename TP>
 struct SinkWrapper {
-    using wrapped_type = TP;
-    using T = typename std::remove_pointer<TP>::type;
+    NEEDFUL_DECLARE_WRAPPED_FIELD (TP, p);
 
-    T* p;
     mutable bool corruption_pending;  // can't corrupt on construct [1]
 
+    using T = typename std::remove_pointer<TP>::type;
     using MT = typename std::remove_const<T>::type;  // mutable type
 
     template<typename U>
@@ -289,53 +286,6 @@ struct SinkWrapper {
 #endif
 
 
-//=//// HOOK TO CAST SINK(T) AVOIDING TEMPORARIES /////////////////////////=//
-//
-// The cast() macros allow for instrumentation of arbitrary casts, and for
-// simplicity most of them are based on value semantics instead of reference
-// semantics.  Using reference semantics introduces issues with function
-// pointers and other types that have difficulty being taken by reference.
-//
-// However, value semantics means introducing temporaries...and SinkWrapper
-// is a type that has a "unusual" meaning when taken by value, that makes
-// a new corruption intent on each call.  e.g.:
-//
-//     void Foo_Maker_One(Sink(Foo) out) { ... }
-//     void Foo_Maker_Two(Sink(Foo) out) { ... }
-//
-//     void Foo_Maker_Three(Sink(Foo) out) {  // out enters corrupt
-//         Foo_Maker_One(out);  // initializes out so no longer corrupt
-//         Do_Something_With_Foo(out);  // legal to use out now
-//         Foo_Maker_Two(out);  // needs out to enter as corrupt again
-//     }
-//
-// So it is intrinsic to the mechanism that by-value passing of Sinks will
-// start a new corruption.  But if a temporary SinkWrapper is ever created
-// it can create an unwanted corruption out of thin air.
-//
-// Hence we hook the cast() macros to use a reference to SinkWrapper instead
-// of falling back on the default CastHook which uses value semantics
-// for simplicity.
-//
-// 1. If you happen to cast a SinkWrapper<T*> to a T*, and there are validating
-//    hooks in the CastHook<> specialization for that type, then it better
-//    not be corrupt!  So if you think it might be corrupt, then you need to
-//    cast to another Sink() or Init() and not the raw type.
-//
-#if 1
-    template<typename V, typename T>
-    struct CastHook<SinkWrapper<V*>,T*> {  // don't use SinkWrapper<V>& [D]
-      static T* convert(const SinkWrapper<V*>& sink) {  // must be ref here
-        if (sink.corruption_pending) {
-            Corrupt_If_Needful(*sink.p);  // flush corruption
-            sink.corruption_pending = false;
-        }
-        return h_cast(T*, sink.p);  // run validating cast if applicable [1]
-      }
-    };
-#endif
-
-
 //=//// INIT() AS (USUALLY) FAST VARIANT OF SINK() ////////////////////////=//
 //
 // When we write initialization routines, the output is technically a Sink(),
@@ -371,10 +321,9 @@ struct SinkWrapper {
 
 template<typename TP>
 struct InitWrapper {
-    using wrapped_type = TP;
-    using T = typename std::remove_pointer<TP>::type;
+    NEEDFUL_DECLARE_WRAPPED_FIELD (TP, p);
 
-    T* p;
+    using T = typename std::remove_pointer<TP>::type;
 
     template<typename U>
     using IfInitConvertible
@@ -453,21 +402,6 @@ struct InitWrapper {
 };
 
 
-//=//// INIT() CAST HELPER TO RUN VALIDATING CASTS ON TYPE ////////////////=//
-//
-// When you cast a variable that is InitWrapper<T> to a T*, that should run
-// whatever the CastHook<> specializations for T* are.
-//
-#if 1
-    template<typename V, typename T>
-    struct CastHook<InitWrapper<V*>,T*> {  // don't use InitWrapper<V>& [D]
-      static constexpr T* convert(const InitWrapper<V*>& init) {  // ref faster
-        return h_cast(T*, init.p);
-      }
-    };
-#endif
-
-
 //=//// NEED() FOR CONTRAVARIANT INPUT PARAMETERS /////////////////////////=//
 //
 // Need() enforces the contravariance of types (e.g. you can't pass a derived
@@ -497,11 +431,9 @@ struct InitWrapper {
 
 template<typename TP>
 struct NeedWrapper {
-    using wrapped_type = TP;
+    NEEDFUL_DECLARE_WRAPPED_FIELD (TP, p);
 
     using T = typename std::remove_pointer<TP>::type;
-    T* p;
-
     using MT = typename std::remove_const<T>::type;  // mutable type
 
     template<typename U>
@@ -520,7 +452,7 @@ struct NeedWrapper {
                 and std::is_const<T>::value
             >::type>
     NeedWrapper(const NeedWrapper<U*>& other)
-        : p {static_cast<T*>(other.p)}
+        : p {other.p}
         {}
 
     template<
@@ -530,7 +462,7 @@ struct NeedWrapper {
         >::type,
         IfReverseInheritable<U>* = nullptr
     >
-    NeedWrapper(U* u) : p {(MT*)(u)}
+    NeedWrapper(U* u) : p {x_cast(MT*, u)}
         {}
 
     NeedWrapper(const NeedWrapper& other) : p {other.p}
@@ -588,18 +520,3 @@ struct NeedWrapper {
 
     T* operator->() const { return p; }
 };
-
-
-//=//// NEED() CAST HELPER TO RUN VALIDATING CASTS ON TYPE ////////////////=//
-//
-// When you cast a variable that is NeedWrapper<T> to a T*, that should run
-// whatever the CastHook<> specializations for T* are.
-//
-#if 1
-    template<typename V, typename T>
-    struct CastHook<NeedWrapper<V*>,T*> {  // don't use NeedWrapper<V>& [D]
-      static constexpr T* convert(const NeedWrapper<V*>& need) {  // ref faster
-        return h_cast(T*, need.p);
-      }
-    };
-#endif

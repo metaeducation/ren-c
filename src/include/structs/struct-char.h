@@ -73,6 +73,9 @@
     #define Utf8(star_or_const_star) \
         ValidatedUtf8<Byte star_or_const_star>
 
+  // 0. The underlying pointer for a const* ValidatedUtf8 may be mutable if
+  //    it was constructed mutable.
+  //
   // 1. These constructors are explicit because we want conversions from char*
   //    and Byte* to require an explicit cast, to convey that "yes, I'm sure
   //    these bytes are valid UTF-8".
@@ -100,9 +103,7 @@
 
     template<>
     struct ValidatedUtf8<const Byte*> {
-        using wrapped_type = const Byte*;
-
-        wrapped_type p;  // underlying pointer mutable if constructed mutable
+        NEEDFUL_DECLARE_WRAPPED_FIELD (const Byte*, p);  // maybe mutable [0]
 
         ValidatedUtf8 () = default;
         ValidatedUtf8 (nullptr_t n) : p (n) {}
@@ -155,7 +156,7 @@
 
     template<>
     struct ValidatedUtf8<Byte*> : public ValidatedUtf8<const Byte*> {
-        using wrapped_type = Byte*;
+        NEEDFUL_OVERRIDE_WRAPPED_FIELD_TYPE (Byte*);
 
         ValidatedUtf8 () = default;
         ValidatedUtf8 (nullptr_t n)

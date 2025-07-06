@@ -68,24 +68,23 @@ struct NoneStruct {
 
 template<typename T>
 struct OptionWrapper {
-    using wrapped_type = T;
-    T p;  // not always pointer, but use common convention with Sink/Need
+    NEEDFUL_DECLARE_WRAPPED_FIELD (T, o);
 
     /* bool engaged; */  // unlike with std::optional, not needed! [1]
 
     OptionWrapper () = default;  // garbage, or 0 if global [2]
 
     OptionWrapper(PermissiveZeroStruct&&)
-        : p (NEEDFUL_PERMISSIVE_ZERO)
+        : o (NEEDFUL_PERMISSIVE_ZERO)
       {}
 
     OptionWrapper(NoneStruct&&)
-        : p (NEEDFUL_PERMISSIVE_ZERO)
+        : o (NEEDFUL_PERMISSIVE_ZERO)
       {}
 
     template <typename U>
     OptionWrapper (const U& something)
-        : p (something)
+        : o (something)
       {}
 
     template <
@@ -93,26 +92,26 @@ struct OptionWrapper {
         DisableIfSame<U, NoneStruct, PermissiveZeroStruct> = nullptr
     >
     explicit OptionWrapper(U&& something)  // needed for Byte->enum [3]
-        : p (u_cast(T, std::forward<U>(something)))
+        : o (u_cast(T, std::forward<U>(something)))
       {}
 
     template <typename X>
     OptionWrapper (const OptionWrapper<X>& other)
-        : p (other.p)  // necessary...won't use the (U something) template
+        : o (other.o)  // necessary...won't use the (U something) template
       {}
 
     template <typename X>
     OptionWrapper (const ExtractedHotPotato<OptionWrapper<X>>& extracted)
-        : p (extracted.p.p)
+        : o (extracted.x.o)
       {}
 
     template<typename U>
     explicit operator U() const  // *explicit* cast if not using `unwrap`
-      { return u_cast(U, p); }  // remember: p not always a pointer
+      { return u_cast(U, o); }
 
     explicit operator bool() const {
         // explicit exception in `if` https://stackoverflow.com/q/39995573/
-        return p ? true : false;
+        return o ? true : false;
     }
 };
 
@@ -123,37 +122,37 @@ struct OptionWrapper {
 
 template<typename L, typename R>
 bool operator==(const OptionWrapper<L>& left, const OptionWrapper<R>& right)
-  { return left.p == right.p; }
+  { return left.o == right.o; }
 
 template<typename L, typename R>
 bool operator==(const OptionWrapper<L>& left, R right)
-  { return left.p == right; }
+  { return left.o == right; }
 
 template<typename L, typename R>
 bool operator==(L left, const OptionWrapper<R>& right)
-  { return left == right.p; }
+  { return left == right.o; }
 
 template<typename L, typename R>
 bool operator!=(const OptionWrapper<L>& left, const OptionWrapper<R>& right)
-  { return left.p != right.p; }
+  { return left.o != right.o; }
 
 template<typename L, typename R>
 bool operator!=(const OptionWrapper<L>& left, R right)
-  { return left.p != right; }
+  { return left.o != right; }
 
 template<typename L, typename R>
 bool operator!=(L left, const OptionWrapper<R>& right)
-  { return left != right.p; }
+  { return left != right.o; }
 
   //=//// CORRUPTION HELPER ///////////////////////////////////////////////=//
 
   // See %needful-corruption.h for motivation and explanation.
 
 #if NEEDFUL_USES_CORRUPT_HELPER
-    template<typename P>
-    struct CorruptHelper<OptionWrapper<P>> {
-      static void corrupt(OptionWrapper<P>& option) {
-        Corrupt_If_Needful(option.p);
+    template<typename T>
+    struct CorruptHelper<OptionWrapper<T>> {
+      static void corrupt(OptionWrapper<T>& option) {
+        Corrupt_If_Needful(option.o);
       }
     };
 #endif
@@ -197,8 +196,8 @@ T operator<<(
     const OptionWrapper<T>& option
 ){
     UNUSED(left);
-    assert(option.p);  // non-null pointers or int/enum checks != 0
-    return option.p;
+    assert(option.o);  // non-null pointers or int/enum checks != 0
+    return option.o;
 }
 
 template<typename T>
@@ -207,7 +206,7 @@ T operator<<(
     const OptionWrapper<T>& option
 ){
     UNUSED(left);
-    return option.p;
+    return option.o;
 }
 
 constexpr UnwrapHelper g_unwrap_helper = {};

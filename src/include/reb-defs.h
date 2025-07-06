@@ -184,12 +184,13 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
   namespace needful {
     template<>
     struct OptionWrapper<Index> {  // bypass the 0 assert
-        intptr_t p;
-        OptionWrapper(intptr_t i) : p {i} {}  // no assert
+        NEEDFUL_DECLARE_WRAPPED_FIELD (intptr_t, o);
+
+        OptionWrapper(intptr_t init) : o {init} {}  // no assert
 
         explicit operator bool() {
            // explicit exception in if https://stackoverflow.com/q/39995573/
-           return p != 0 ? true : false;
+           return o != 0 ? true : false;
         }
     };
   }
@@ -199,8 +200,8 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
         const OptionWrapper<Index>& option
     ){
         UNUSED(left);
-        assert(option.p != 0);
-        return option.p;
+        assert(option.o != 0);
+        return option.o;
     }
 
     INLINE uintptr_t operator<<(  // see definition of Option() for explanation
@@ -208,7 +209,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
         const OptionWrapper<Index>& option
     ){
         UNUSED(left);
-        return option.p;
+        return option.o;
     }
   #endif
 #endif

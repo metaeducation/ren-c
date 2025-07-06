@@ -1,7 +1,6 @@
 template<typename T>
 struct MyWrapper {
-    using wrapped_type = T;
-    T value;
+    NEEDFUL_DECLARE_WRAPPED_FIELD (T, value);
 };
 
 inline void test_needful_const()

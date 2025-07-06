@@ -249,26 +249,26 @@ struct PermissiveZeroStruct {
 // With this you have:
 //
 //      if (condition)
-//         trap(Some_Result_Bearing_Function(args));  // warning on discard
+//         trap (Some_Result_Bearing_Function(args));  // warning on discard
 //
-// This hot potato then has a specialized discarding operation:
+// This hot potato then has specialized discarding operations, e.g.` trapped`:
 //
 //     if (condition)
-//         discarded(trap(Some_Result_Bearing_Function(args)));
+//         trapped (Some_Result_Bearing_Function(args)));
 //
-// It's a bit of a mouthful, but in practice it is very easy for mistakes
-// to be made without the protections.
+// It's unfortunate to need another name for this, but in practice it is very
+// easy for mistakes to be made without the protections.
 //
 
 template<typename T>
 struct NEEDFUL_NODISCARD ExtractedHotPotato {
-    T p;
+    T x;
 
     ExtractedHotPotato(const T& something)
-        : p {something} {}
+        : x {something} {}
 
     operator T() const {
-        return p;
+        return x;
     }
 };
 
@@ -296,18 +296,16 @@ struct NEEDFUL_NODISCARD ExtractedHotPotato {
 
 template<typename T>
 struct NEEDFUL_NODISCARD ResultWrapper {
-    using wrapped_type = T;
-
-    T p;  // not always pointer, but use common convention with Sink/Need
+    NEEDFUL_DECLARE_WRAPPED_FIELD (T, r);
 
     ResultWrapper() = delete;
 
     ResultWrapper(PermissiveZeroStruct&&)  // how failures are returned [1]
-        : p (u_cast(T, NEEDFUL_PERMISSIVE_ZERO))
+        : r (u_cast(T, NEEDFUL_PERMISSIVE_ZERO))
         {}
 
     ResultWrapper(const std::nullptr_t&)  // usually no `return nullptr;` [2]
-        : p (nullptr)
+        : r (nullptr)
     {
       #if NEEDFUL_OPTION_USES_WRAPPER
         static_assert(
@@ -318,23 +316,23 @@ struct NEEDFUL_NODISCARD ResultWrapper {
     }
 
     template <typename U>
-    ResultWrapper(const U& other) : p {other} {}
+    ResultWrapper(const U& other) : r {other} {}
 
     template <typename X>
     ResultWrapper (const ResultWrapper<X>& other)
-        : p (other.p)
+        : r {other.r}
     {}
 
     template <typename U>
     explicit ResultWrapper(U&& something)  // see OptionWrapper
-        : p (u_cast(T, std::forward<U>(something)))
+        : r {needful_xtreme_cast(T, std::forward<U>(something))}
     {}
 
     ExtractedHotPotato<T> Extract_Hot() const  // [[nodiscard]] version
-      { return p; }
+      { return r; }
 
     T Extract_Cold() const  // plain type, discardable
-      { return p; }  // (not used at the moment, only extract hot vs. discard)
+      { return r; }  // (not used at the moment, only extract hot vs. discard)
 };
 
 #undef NeedfulResult
