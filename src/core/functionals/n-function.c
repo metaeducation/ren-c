@@ -499,7 +499,8 @@ Bounce Init_Thrown_Unwind_Value(
         }
     }
 
-    return Init_Thrown_With_Label(level_, value, label);
+    Init_Thrown_With_Label(level_, value, label);
+    return BOUNCE_THROWN;
 }
 
 
@@ -704,7 +705,8 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
         Copy_Cell(label, LIB(UNWIND)); // see Make_Thrown_Unwind_Value
         g_ts.unwind_level = target_level;
 
-        return Init_Thrown_With_Label(LEVEL, atom, label);
+        Init_Thrown_With_Label(LEVEL, atom, label);
+        return BOUNCE_THROWN;
     }
 
   //=//// TAIL-CALL HANDLING //////////////////////////////////////////////=//
@@ -745,7 +747,8 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
         Varlist_Of_Level_Force_Managed(target_level)
     );
 
-    return Init_Thrown_With_Label(LEVEL, gather_args, spare);
+    Init_Thrown_With_Label(LEVEL, gather_args, spare);
+    return BOUNCE_THROWN;
 }
 
 

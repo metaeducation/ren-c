@@ -859,7 +859,8 @@ Bounce JavaScript_Dispatcher(Level* const L)
         //
         Clear_Trampoline_Flag(HALT);
 
-        return Init_Thrown_With_Label(LEVEL, LIB(NULL), LIB(HALT));
+        Init_Thrown_With_Label(LEVEL, LIB(NULL), LIB(HALT));
+        return BOUNCE_THROWN;
     }
 
     TRACE("Calling panic() with error context");

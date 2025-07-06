@@ -83,7 +83,7 @@ INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
 //
 #define CELL_MASK_THROW (CELL_MASK_COPY | CELL_FLAG_HINT)
 
-INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
+INLINE void Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Level* L,
     const Atom* arg,
     const Value* label
@@ -103,15 +103,13 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Erase_Cell(L->out);
 
     assert(Is_Throwing(L));
-
-    return BOUNCE_THROWN;
 }
 
 // When failures are put in the throw state, they are the label--not the value.
 //
-INLINE Bounce Init_Thrown_Panic(Level* L, Error* error) {
+INLINE void Init_Thrown_Panic(Level* L, Error* error) {
     UNUSED(L);
-    return Init_Thrown_With_Label(
+    Init_Thrown_With_Label(
         TOP_LEVEL, LIB(NULL), Varlist_Archetype(error)  // error is the "label"
     );
 }

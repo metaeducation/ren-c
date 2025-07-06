@@ -628,7 +628,8 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
             CANON(YIELD),
             Level_Varlist(yielder_level)
         );
-        return Init_Thrown_With_Label(LEVEL, atom, spare);
+        Init_Thrown_With_Label(LEVEL, atom, spare);
+        return BOUNCE_THROWN;
     }
 
   //=//// PLAIN YIELD MUST "UNPLUG STACK" FOR LATER RESUMPTION ////////////=//

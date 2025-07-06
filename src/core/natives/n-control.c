@@ -1303,5 +1303,6 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
     Element* label = Init_Frame(
         SCRATCH, cast(ParamList*, unwrap coupling), ANONYMOUS, NONMETHOD
     );
-    return Init_Thrown_With_Label(LEVEL, atom, label);
+    Init_Thrown_With_Label(LEVEL, atom, label);
+    return BOUNCE_THROWN;
 }

@@ -55,15 +55,15 @@
         LEVEL_FLAG_FORCE_HEAVY_NULLS | LEVEL_FLAG_FORCE_SURPRISING, \
         SPECIFIED, __VA_ARGS__)
 
-INLINE Bounce Continue_Sublevel_Helper(Level* L, Level* sub) {
+INLINE void Continue_Sublevel_Helper(Level* L, Level* sub) {
     assert(sub == TOP_LEVEL);  // currently sub must be pushed & top level
     UNUSED(sub);
     UNUSED(L);
-    return BOUNCE_CONTINUE;
 }
 
 #define CONTINUE_SUBLEVEL(sub) \
-    Continue_Sublevel_Helper(level_, (sub))
+    (Continue_Sublevel_Helper(level_, (sub)), \
+        /* <- */ BOUNCE_CONTINUE)
 
 
 //=//// DELEGATION HELPER MACROS ///////////////////////////////////////////=//

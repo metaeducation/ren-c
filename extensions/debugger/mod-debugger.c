@@ -214,7 +214,8 @@ DECLARE_NATIVE(RESUME)
     // this stack level--and it failed or threw--we'd stay stuck in the
     // breakpoint's sandbox.  We throw it as-is and it gets evaluated later.
     //
-    return Init_Thrown_With_Label(LEVEL, expr, resume);
+    Init_Thrown_With_Label(LEVEL, expr, resume);
+    return BOUNCE_THROWN;
 }
 
 

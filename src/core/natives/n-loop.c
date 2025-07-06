@@ -105,7 +105,8 @@ DECLARE_NATIVE(DEFINITIONAL_BREAK)
         cast(VarList*, loop_level->varlist)
     );
 
-    return Init_Thrown_With_Label(LEVEL, LIB(NULL), label);
+    Init_Thrown_With_Label(LEVEL, LIB(NULL), label);
+    return BOUNCE_THROWN;
 }
 
 
@@ -152,7 +153,8 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
         Varlist_Of_Level_Force_Managed(loop_level)
     );
 
-    return Init_Thrown_With_Label(LEVEL, with, label);
+    Init_Thrown_With_Label(LEVEL, with, label);
+    return BOUNCE_THROWN;
 }
 
 
@@ -638,7 +640,8 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
         cast(VarList*, loop_level->varlist)
     );
 
-    return Init_Thrown_With_Label(LEVEL, with, label);
+    Init_Thrown_With_Label(LEVEL, with, label);
+    return BOUNCE_THROWN;
 }
 
 

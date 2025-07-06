@@ -64,8 +64,8 @@ typedef Byte WildTwo[2];
 #if NO_CPLUSPLUS_11 || NO_RUNTIME_CHECKS
     typedef RebolBounce Bounce;
 #else
-    struct Bounce {  // same size as RebolBounce...not directly compatible [1]
-        RebolBounce b;  // void*
+    struct NEEDFUL_NODISCARD Bounce {
+        RebolBounce b;  // Bounce not directly compatible w/RebolBounce!!! [1]
 
         Bounce() = default;
 

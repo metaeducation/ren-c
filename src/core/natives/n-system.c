@@ -37,7 +37,8 @@ DECLARE_NATIVE(HALT)
 {
     INCLUDE_PARAMS_OF_HALT;
 
-    return Init_Thrown_With_Label(LEVEL, LIB(NULL), LIB(HALT));
+    Init_Thrown_With_Label(LEVEL, LIB(NULL), LIB(HALT));
+    return BOUNCE_THROWN;
 }
 
 
