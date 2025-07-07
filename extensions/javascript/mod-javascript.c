@@ -108,10 +108,11 @@
 #if DEBUG_JAVASCRIPT_EXTENSION
     #undef assert  // if it was defined (most emscripten builds are NDEBUG)
     #define assert(expr) \
-        do { if (!(expr)) { \
-            printf("%s:%d - assert(%s)\n", __FILE__, __LINE__, #expr); \
-            exit(0); \
-        } } while (0)
+        ((expr) ? 0 : ( \
+            printf("%s:%d - assert(%s)\n", __FILE__, __LINE__, #expr), \
+            exit(0), \
+            0 \
+        ))
 
     static bool PG_JS_Trace = false;  // Turned on/off with JS-TRACE native
 
@@ -254,7 +255,7 @@ INLINE Bounce Bounce_From_Bounce_Id(heapaddr_t id) {
     if (id == 0)
         return nullptr;
 
-    Bounce b = cast(Bounce, Pointer_From_Heapaddr(id));
+    Bounce b = u_cast(Bounce, Pointer_From_Heapaddr(id));
     return b;
 }
 
@@ -834,7 +835,8 @@ Bounce JavaScript_Dispatcher(Level* const L)
     heeded (Corrupt_Cell_If_Needful(SPARE));
     heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
-    if (not Typecheck_Coerce(L, param, OUT))
+    bool is_return = true;
+    if (not Typecheck_Coerce(L, param, OUT, is_return))
         panic (Error_Bad_Return_Type(L, OUT, param));
 
     return OUT;
@@ -847,7 +849,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     // "tunnel" the error through and preserve the identity as best it
     // could.  But for starters, the transformations are lossy.
 
-    if (Is_Nulled(OUT)) {  // special HALT signal
+    if (Is_Light_Null(OUT)) {  // special HALT signal
         //
         // We clear the signal now that we've reacted to it.  (If we did
         // not, then when the console tried to continue running to handle
@@ -1076,7 +1078,7 @@ DECLARE_NATIVE(JS_NATIVE)
     assert(Misc_Phase_Adjunct(details) == nullptr);
     Tweak_Misc_Phase_Adjunct(details, adjunct);
 
-    return Init_Action(OUT, details, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
 }
 
 
