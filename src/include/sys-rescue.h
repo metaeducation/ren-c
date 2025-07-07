@@ -206,12 +206,6 @@ struct JumpStruct {
 //    you can never fall through with a non-null error state if the block
 //    being rescued doesn't return.
 
-#define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
-    assert(jump.error == nullptr); \
-    g_ts.jump_list = jump.last_jump; \
-    jump.clean_exit = true
-
-
 #if PANIC_USES_LONGJMP
 
     STATIC_ASSERT(PANIC_USES_TRY_CATCH == 0);
@@ -237,6 +231,11 @@ struct JumpStruct {
         if (1 == SET_JUMP(jump.cpu_state))  /* beware return value [3] */ \
             goto on_longjmp_or_scope_exited; /* jump.error will be set */ \
         /* fall through to subsequent block, happens on first SET_JUMP() */
+
+    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
+        assert(jump.error == nullptr); \
+        g_ts.jump_list = jump.last_jump; \
+        jump.clean_exit = true
 
     INLINE Error* Test_And_Clear_Jump_Error(Jump* jump)
     {
@@ -267,6 +266,11 @@ struct JumpStruct {
         g_ts.jump_list = &jump; \
         try /* picks up subsequent {...} block */
 
+    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
+        /* assert(jump.error == nullptr); */ /* not needed w/C++ catch */ \
+        g_ts.jump_list = jump.last_jump; \
+        jump.clean_exit = true
+
     #define ON_ABRUPT_PANIC(decl) \
         catch (decl) /* picks up subsequent {...} block */
         /* must have code for fallthrough after the abrupt panic block [6] */
@@ -282,6 +286,11 @@ struct JumpStruct {
         g_ts.jump_list = &jump; \
         if (false) \
             goto on_abrupt_panic;  /* avoids unreachable code warning */
+
+    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
+        /* assert(jump.error == nullptr); */ /* no error in this version */ \
+        g_ts.jump_list = jump.last_jump; \
+        jump.clean_exit = true
 
     #define ON_ABRUPT_PANIC(decl) \
       on_abrupt_panic: /* impossible jump here to avoid unreachable warning */ \
