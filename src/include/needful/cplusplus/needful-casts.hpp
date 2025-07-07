@@ -248,6 +248,13 @@
 //    specialized while objects can.  However, we want "universal references"
 //    which is how (T&& arg) is interpreted for functions vs. objects.
 //
+
+template<typename>
+struct IsResultWrapper : std::false_type {};
+
+template<typename T>
+struct ResultWrapper;
+
 template<typename T>
 struct is_function_pointer : std::false_type {};
 
@@ -461,32 +468,71 @@ struct UpcastHelper {
 // We can introduce some safety in these casting hierarchies while still
 // getting brevity.
 //
+// 1. Sadly, every method for trying to parameterize the DowncastHolder with
+//    either hookable casting or unhookable casting leads to either uglier
+//    incomprehensible code, or added runtime cost in debug builds (or both!)
+//    Using a macro to do the work seems the best way.
+//
+// 2. Although it's called "downcast" it can actually be used with things
+//    that aren't classes, e.g. you can downcast a void* to an int*.  If
+//    the reverse conversion is legal, that's what's allowed.
+//
+// 3. By making DowncastHolder [[nodiscard]], it's safe to use with things
+//    like trap() and except():
+//
+//       Derived* derived = trap (downcast(base_ptr));
+//
+//    So it's a variant form of the "ExtractedHotPotato", which might be
+//    thought of as an "UpcastHolder" if you wanted to think of it that way
+//    (but upcast() itself doesn't get any temporaries involved, it's cheaper
+//    to not use a holder if you can avoid it).
+//
 
-template<typename T>
-struct OptionWrapper;
+#define NEEDFUL_DEFINE_DOWNCAST_HELPERS(BaseName, hookability) /* ugh [1] */ \
+    template<typename From> \
+    struct NEEDFUL_NODISCARD BaseName##Holder { /* NODISCARD needed [3] */ \
+        From f; \
+        \
+        template< /* "downcast" means "reverse is_convertible" [2] */ \
+            typename To, \
+            typename = typename std::enable_if< \
+                std::is_convertible<To, From>::value \
+            >::type \
+        > \
+        operator To() const \
+            { return needful_lenient_##hookability##_cast(To, f); } \
+        \
+        BaseName##Holder<From> Extract_Hot() const { \
+            return *this; \
+        } \
+    }; \
+    \
+    struct BaseName##Maker { \
+        template<typename T> \
+        BaseName##Holder<needful_remove_reference(T)> \
+        operator<<(const T& value) const { \
+            return BaseName##Holder<T>{value}; \
+        } \
+        \
+        template<typename T> \
+        BaseName##Holder<needful_remove_reference(T)> \
+        operator<<(const ResultWrapper<T>& result) const { \
+            return BaseName##Holder<T>{result.r}; \
+        } \
+    }; \
+    \
+    constexpr BaseName##Maker g_##BaseName##_maker{};
 
-template<typename From>
-struct DowncastHolder {
-    From p;
-    explicit constexpr DowncastHolder(const From& from) : p {from} {}
+NEEDFUL_DEFINE_DOWNCAST_HELPERS(HookableDowncast, hookable)
+NEEDFUL_DEFINE_DOWNCAST_HELPERS(UnhookableDowncast, unhookable)
 
-    // Conversion for downcasting - allows converting from base to derived
-    template<
-        typename To,
-        typename = typename std::enable_if<
-            std::is_convertible<From, To>::value or
-            (std::is_pointer<From>::value and std::is_pointer<To>::value)
-        >::type
-    >
-    operator To() const
-        { return needful_lenient_hookable_cast(To, p); }
-};
+#undef NEEDFUL_DEFINE_DOWNCAST_HELPERS  // macro need not leak
 
-#undef needful_downcast
-#define needful_downcast(expr) \
-    (needful::DowncastHolder< \
-        needful_remove_reference(decltype(expr)) \
-    >(expr))
+#undef needful_hookable_downcast
+#define needful_hookable_downcast  needful::g_HookableDowncast_maker <<
+
+#undef needful_unhookable_downcast
+#define needful_unhookable_downcast  needful::g_UnhookableDowncast_maker <<
 
 
 //=//// NON-POINTER TO POINTER CAST ////////////////////////////////////////=//

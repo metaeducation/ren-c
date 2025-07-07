@@ -217,6 +217,9 @@ struct NEEDFUL_NODISCARD Result0Struct {  // [[nodiscard]] is good [1]
 // so you don't get the check if you aren't doing a build with it.
 //
 
+template<typename T>
+struct OptionWrapper;
+
 #if NEEDFUL_OPTION_USES_WRAPPER
     template<typename>
     struct IsOptionWrapper : std::false_type {};
@@ -370,7 +373,12 @@ constexpr ResultExtractor g_result_extractor = {};
 #undef Needful_Postfix_Extract_Hot
 #define Needful_Postfix_Extract_Hot  >> needful::g_result_extractor
 
+template<typename X>
+struct IsResultWrapper<ResultWrapper<X>> : std::true_type {};
 
+
+//=//// ZERO (METAPROGRAMMING SURROGATE FOR LAME `void`) //////////////////=//
+//
 // 1. This could be called ZERO in all caps to be more consistent with
 //    enum naming, but the enum is just an implementation detail.  This is
 //    not like the all-caps TRASH or VOID that suggest Rebol types, it's

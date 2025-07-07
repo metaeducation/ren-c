@@ -1124,7 +1124,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 
     // Currently we start by making a shallow copy and then adjust it
 
-    Source* copy = cast(Source*, Make_Array_For_Copy(flags, original, len));
+    Source* copy = u_cast(Source*, Make_Array_For_Copy(flags, original, len));
     Set_Flex_Len(copy, len);
 
     const Element* src = Array_At(original, index);

@@ -456,7 +456,7 @@
 #define needful_valist_cast(T,expr)     ((T)(expr))
 
 
-//=//// downcast() and upcast(): "INHERITANCE" CASTING ////////////////////=//
+//=//// downcast and upcast(): "INHERITANCE" CASTING ////////////////////=//
 //
 // One of Needful's features is to facilitate using type hiearchies in C.
 // You can frame your data types as having inheritance in the sense that
@@ -478,9 +478,12 @@
 //    void pointer result wouldn't allow such dereferencing either.
 //
 
-#define needful_downcast(T,expr)  ((T)(expr))
+#define needful_hookable_downcast  (void*)  // cast to void pointer (prefix)
+#define needful_unhookable_downcast  (void*)
 
-#define needful_upcast(expr)  ((void*)(expr))  // void as "base class" [1]
+#define needful_upcast(T,expr)  (expr)  // void as "base class" [1]
+
+#define needful_nocast  needful_unhookable_downcast
 
 
 //=//// x_cast(): "WHAT PARENTHESES-CAST WOULD DO" ////////////////////////=//
@@ -837,7 +840,11 @@ typedef enum {
     #define i_cast            needful_integral_cast
     #define f_cast            needful_function_cast
 
-    #define downcast          needful_downcast
+    #define downcast          needful_hookable_downcast
+    #define u_downcast        needful_unhookable_downcast  // just nocast :-/
+
+    #define nocast            needful_nocast
+
     #define upcast            needful_upcast
 #endif
 
