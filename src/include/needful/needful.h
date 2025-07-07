@@ -210,10 +210,6 @@
         /* DEAD_END; */ \
     } NEEDFUL_NOOP  /* force require semicolon at callsite */
 
-#define needful_guarantee_core(expr, prefix_extractor) \
-    /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
-    Needful_Assert_Not_Failing();
-
 //=//// "Hot Potato" Versions ////////////////////////////////////////////=//
 
 #define Needful_Prefix_Extract_Hot(expr)  (expr)
@@ -227,9 +223,6 @@
 
 #define needful_require(expr) \
     needful_require_core(expr, Needful_Prefix_Extract_Hot)
-
-#define needful_guarantee(expr) \
-    needful_guarantee_core(expr, Needful_Prefix_Extract_Hot)
 
 //=//// Discarded Result Versions /////////////////////////////////////////=//
 
@@ -245,8 +238,19 @@
 #define needful_required(expr) \
     needful_require_core(expr, Needful_Prefix_Discard_Result)
 
+//=//// Guaranteed Result Versions ////////////////////////////////////=//
+
+#define Needful_Prefix_Guarantee_Result(expr)  (expr)  // C++ version asserts
+
+#define needful_guarantee_core(expr, prefix_guarantor) \
+    /* var = */ (Needful_Assert_Not_Failing(), prefix_guarantor(expr)) \
+    /* Needful_Assert_Not_Failing() */  /* folded into prefix_guarantor */
+
+#define needful_guarantee(expr) \
+    needful_guarantee_core(expr, Needful_Prefix_Guarantee_Result)
+
 #define needful_guaranteed(expr) \
-    needful_guarantee_core(expr, Needful_Prefix_Discard_Result)
+    needful_guarantee_core(expr, Needful_Prefix_Guarantee_Result)
 
 
 //=//// Sink(T): INDICATE FUNCTION OUTPUT PARAMETERS //////////////////////=//
@@ -787,18 +791,13 @@ typedef enum {
 //    define that here, because it's open ended as to what you'd use for
 //    your error value type.
 //
-// 2. It should be very rare for code to capture divergent errors.  This
-//    aligns with a Ren-C convention of making the divergent error handler
-//    look "less casual" by hiding it in the system.utilities namespace, vs.
-//    lookin more like a "keyword".
-//
-// 3. The lenient form of ensure() is quite useful for writing polymorphic
+// 2. The lenient form of ensure() is quite useful for writing polymorphic
 //    macros which are const-in => const-out and mutable-in => mutable-out.
 //    This tends to be more useful than wanting to enforce that only mutable
 //    pointers can be passed into a macro (the bulk of macros are reading
 //    operations, anyway).  So lenient defaults to the short name `ensure()`.
 //
-// 4. The idea beind shorthands like `possibly()` is to replace comments that
+// 3. The idea beind shorthands like `possibly()` is to replace comments that
 //    are carrying information about something that *might* be true:
 //
 //        int i = Get_Integer(...);  // i may be < 0
@@ -859,15 +858,14 @@ typedef enum {
 
     #define trap(expr)              needful_trap(expr)
     #define require(expr)           needful_require(expr)
-    #define guarantee(expr)         needful_guarantee(expr)
     #define except(decl)            needful_except(decl)
-    #define sys_util_rescue(expr)   needful_rescue(expr)  // stigmatize [2]
 
     #define trapped(expr)           needful_trapped(expr)
     #define required(expr)          needful_required(expr)
-    #define guaranteed(expr)        needful_guaranteed(expr)
     #define excepted(decl)          needful_excepted(decl)
-    #define sys_util_rescued(expr)  needful_rescued(expr)  // stigmatize [2]
+
+    #define guarantee(expr)         needful_guarantee(expr)
+    #define guaranteed(expr)        needful_guaranteed(expr)
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_SINK_SHORTHANDS)
@@ -880,7 +878,7 @@ typedef enum {
     #define rigid_ensure(T,expr)    needful_rigid_ensure(T,expr)
     #define lenient_ensure(T,expr)  needful_lenient_ensure(T,expr)
 
-    #define ensure(T,expr)          needful_lenient_ensure(T,expr)  // [3]
+    #define ensure(T,expr)          needful_lenient_ensure(T,expr)  // [2]
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_LOOP_SHORTHANDS)
@@ -896,7 +894,7 @@ typedef enum {
     #define zero                    needful_zero
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)  // informative! [4]
+#if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)  // informative! [3]
     #define possibly(expr)        NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL(expr)
     #define impossible(expr)      NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL(expr)
 

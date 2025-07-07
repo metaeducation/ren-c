@@ -199,7 +199,7 @@
 //
 
 struct NEEDFUL_NODISCARD Result0Struct {  // [[nodiscard]] is good [1]
-   // no members or behaviors
+   // no members or behaviors, should only initialize ResultWrapper<T>
 };
 
 #undef NEEDFUL_RESULT_0
@@ -449,3 +449,26 @@ static constexpr ResultDiscarder g_result_discarder{};
 
 #undef Needful_Postfix_Discard_Result
 #define Needful_Postfix_Discard_Result  >> needful::g_result_discarder
+
+
+//=//// RESULT GUARANTOR /////////////////////////////////////////////////=//
+//
+// To make it easier to use guarantee() in expressions, it doesn't have any
+// code outside the expression (because it doesn't have branching or a
+// need to execute return).  It just asserts, but it needs to do so after
+// the expression, hence it needs some way of doing that as part of
+// an expression.
+//
+// 1. The underscore in `_result` is to reduce the odds of warnings about
+//    conflicts with a local variable named `result`.  It would be better
+//    to avoid using a lambda at all, but Needful_Assert_Not_Failing() is
+//    not defined by the library...it's supplied after the fact by the
+//    library client.
+//
+
+#undef Needful_Prefix_Guarantee_Result
+#define Needful_Prefix_Guarantee_Result(expr) \
+    ([&](auto&& _result) { /* underscore reduces odds of warnings [1] */ \
+        Needful_Assert_Not_Failing(); \
+        return std::forward<decltype(_result)>(_result).Extract_Cold(); \
+    }((expr)))

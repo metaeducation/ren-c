@@ -79,6 +79,9 @@ typedef Byte WildTwo[2];
 
         explicit Bounce(WildTwo* wildtwo) : b {wildtwo} {}
 
+        explicit Bounce(int z) : b {nullptr}
+          { assert(z == 0); }  // only 0 allowed, for Result(Bounce) from 0
+
         Bounce(const char* utf8) : b {utf8} {}
 
         operator const void*() const
@@ -88,12 +91,14 @@ typedef Byte WildTwo[2];
           { return u_cast(const char*, b); }
     };
 
+  #if NEEDFUL_OPTION_USES_WRAPPER
   namespace needful {
     template<>
     struct OptionNoneInitHelper<Bounce> {
         static Bounce init() { return Bounce {nullptr}; }
     };
   }
+  #endif
 #endif
 
 
