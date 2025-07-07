@@ -327,17 +327,50 @@ struct NEEDFUL_NODISCARD ResultWrapper {
       #endif
     }
 
-    template <typename U>
-    ResultWrapper(const U& other) : r {other} {}
+    template <
+        typename U,
+        typename = typename std::enable_if<
+            not std::is_same<
+                typename std::decay<U>::type, ResultWrapper<T>
+            >::value
+            and std::is_convertible<U, T>::value  // implicit cast okay
+        >::type
+    >
+    ResultWrapper(const U& something) : r {something} {}
 
-    template <typename X>
-    ResultWrapper (const ResultWrapper<X>& other)
-        : r {other.r}
+    template <
+        typename U,
+        typename = typename std::enable_if<
+            not std::is_same<
+                typename std::decay<U>::type, ResultWrapper<T>
+            >::value
+            and not std::is_convertible<U, T>::value  // must cast explicitly
+        >::type,
+        typename = void
+    >
+    explicit ResultWrapper(const U& something)
+        : r {needful_xtreme_cast(T, something)}
     {}
 
-    template <typename U>
-    explicit ResultWrapper(U&& something)  // see OptionWrapper
-        : r {needful_xtreme_cast(T, std::forward<U>(something))}
+    template <
+        typename X,
+        typename = typename std::enable_if<
+            std::is_convertible<X, T>::value
+        >::type
+    >
+    ResultWrapper (const ResultWrapper<X>& result)
+        : r {result.r}
+    {}
+
+    template <
+        typename X,
+        typename = typename std::enable_if<
+            not std::is_convertible<X, T>::value
+        >::type,
+        typename = void
+    >
+    explicit ResultWrapper (const ResultWrapper<X>& result)
+        : r {needful_xtreme_cast(T, result.r)}
     {}
 
     ExtractedHotPotato<T> Extract_Hot() const  // [[nodiscard]] version
@@ -361,7 +394,7 @@ struct ResultExtractor {};
 
 template<typename T>
 ExtractedHotPotato<T> operator>>(
-    ResultWrapper<T>&& result,
+    const ResultWrapper<T>& result,
     const ResultExtractor& right
 ){
     UNUSED(right);
@@ -440,7 +473,7 @@ struct ResultDiscarder {};
 template<typename T>
 inline T operator|(  // using `|` for precedence lower than `>>`
     const ResultDiscarder&,
-    const ExtractedHotPotato<T>& extraction
+    ExtractedHotPotato<T>&& extraction
 ){
     USED(extraction);  // mark as used, do nothing
 }

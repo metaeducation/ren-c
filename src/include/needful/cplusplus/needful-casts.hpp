@@ -345,6 +345,7 @@ template<
 >
 typename std::enable_if<  // For non-arrays: forward as-is
     not std::is_array<needful_remove_reference(FromRef)>::value
+    and not IsResultWrapper<needful_remove_reference(FromRef)>::value
         and not std::is_fundamental<To>::value
         and not std::is_enum<To>::value,
     ResultType
@@ -380,6 +381,52 @@ Hookable_Cast_Helper(FromRef&& from)
     return needful_mutable_cast(
         ResultType,  // passthru const on const mismatch (lenient)
         (CastHook<ConstFrom, ConstTo>::convert(std::forward<FromRef>(from)))
+    );
+}
+
+
+template<
+    typename To,
+    typename FromWrapperRef,
+    typename ResultType = ResultWrapper<needful_merge_const(  // lenient cast
+        needful_remove_reference(FromWrapperRef), To
+    )>
+>
+typename std::enable_if<
+    IsResultWrapper<needful_remove_reference(FromWrapperRef)>::value,
+    ResultWrapper<To>
+>::type
+Hookable_Cast_Helper(const FromWrapperRef& from_wrapper)
+{
+    using From = needful_remove_reference(FromWrapperRef)::wrapped_type;
+    using ConstFrom = needful_constify_type(From);
+    using ConstTo = needful_constify_type(To);
+
+    static_assert(
+        not is_function_pointer<From>::value
+        and not is_function_pointer<To>::value,
+        "Use f_cast() for function pointer casts"
+    );
+
+    #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
+    static_assert(
+        (   // v-- we can't warn you about va_list* cast() if this is true
+            std::is_pointer<va_list>::value
+            and std::is_fundamental<
+                typename std::remove_pointer<va_list>::type
+            >::value
+        )
+        or (  // v-- but if it's a struct or something we can warn you
+            not std::is_same<From, va_list*>::value
+            and not std::is_same<To, va_list*>::value
+        ),
+        "can't cast va_list*!  u_cast() mutable va_list* <-> void* only"
+    );  // read [B] at top of file for more information
+    #endif
+
+    return needful_mutable_cast(
+        ResultType,  // passthru const on const mismatch (lenient)
+        (CastHook<ConstFrom, ConstTo>::convert(from_wrapper.r))
     );
 }
 
