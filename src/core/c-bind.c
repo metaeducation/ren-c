@@ -1478,7 +1478,7 @@ Result(Zero) Write_Slot(Slot* slot, const Atom* write)
 
 
 //
-//  Trap_Write_Loop_Slot_May_Bind_Or_Decay: C
+//  Write_Loop_Slot_May_Bind_Or_Decay: C
 //
 Result(Zero) Write_Loop_Slot_May_Bind_Or_Decay(
     Slot* slot,
@@ -1526,7 +1526,7 @@ Result(Zero) Write_Loop_Slot_May_Bind_Or_Decay(
 
 
 //
-//  Trap_Write_Loop_Slot_May_Bind: C
+//  Write_Loop_Slot_May_Bind: C
 //
 Result(Zero) Write_Loop_Slot_May_Bind(
     Slot* slot,

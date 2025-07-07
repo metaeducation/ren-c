@@ -206,7 +206,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 Poison_Cell(shared);
             }
             else {
-                Unliftify_Undecayed(out);
+                required (Unliftify_Undecayed(out));
 
                 // The indexor is "prefetched", so though the temp level would
                 // be ready to use again we're throwing it away, and need to

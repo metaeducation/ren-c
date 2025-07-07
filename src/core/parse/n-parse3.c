@@ -353,7 +353,7 @@ INLINE Error* Error_Parse3_Variable(Level* level_) {
 
 
 //
-//  Trap_Get_Parse_Value: C
+//  Get_Parse_Value: C
 //
 // Gets the value of a word (when not a command) or path.  Returns all other
 // values as-is.

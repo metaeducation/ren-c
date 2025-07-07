@@ -258,7 +258,9 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(Is_Handle(plug));
 
     Copy_Cell(OUT, yielded_lifted);  // keep yielded_lifted around for resume
-    return Unliftify_Undecayed(OUT);
+    guaranteed (Unliftify_Undecayed(OUT));
+
+    return OUT;
 
 } resume_body_if_not_reentrant: {  ///////////////////////////////////////////
 
@@ -340,7 +342,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(LEVEL_STATE_BYTE(yield_level) == ST_YIELD_SUSPENDED);
 
     Copy_Cell(yield_level->out, yielded_lifted);  // resumed YIELD's result [2]
-    Unliftify_Undecayed(yield_level->out);
+    guaranteed (Unliftify_Undecayed(yield_level->out));
     Init_Unreadable(yielded_lifted);
 
     assert(STATE == ST_YIELDER_INVOKED);
@@ -400,7 +402,8 @@ Bounce Yielder_Dispatcher(Level* const L)
         CATCH_THROWN(OUT, L);
         if (not Is_Error(OUT)) {  // THROW:FINAL value
             Init_Space(original_frame);
-            return Unliftify_Undecayed(OUT);  // done, this is last value
+            guaranteed (Unliftify_Undecayed(OUT));  // this is last value
+            return OUT;  // done
         }
         if (Is_Error_Done_Signal(Cell_Error(OUT))) {
             Init_Space(original_frame);

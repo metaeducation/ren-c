@@ -581,7 +581,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
 }
 
 //
-//   Trap_Alias_Blob_As: C
+//   Alias_Blob_As: C
 //
 // The key aliasing AS conversion for binary BLOB!s is as UTF-8 data.
 // It's a fair bit of effort, but can potentially save significantly

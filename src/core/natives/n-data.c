@@ -1468,9 +1468,7 @@ DECLARE_NATIVE(DEGRADE)
 
     Copy_Cell(OUT, elem);
 
-    Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
-    if (e)
-        panic (unwrap e);
+    required (Coerce_To_Antiform(OUT));
 
     return OUT;
 }

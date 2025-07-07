@@ -499,7 +499,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 
     if (Is_Utf8_Lead_Byte(c)) {  // multibyte sequence
         *out = Back_Scan_Utf8_Char(&bp, nullptr) except (Error* e) {
-            UNUSED(e);  // !!! This should be Trap_Scan_Utf8_Char_Escapable()
+            UNUSED(e);  // !!! This should be Scan_Utf8_Char_Escapable()
             return nullptr;
         }
         return bp + 1;  // Back_Scan advances one less than the full encoding
@@ -2685,9 +2685,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (*transcode->at != '~')
             return fail (Error_Syntax(S, TOKEN_TILDE));
 
-        Option(Error*) e = Trap_Coerce_To_Quasiform(TOP_ELEMENT);
-        if (e)
-            return fail (unwrap e);
+        trapped (Coerce_To_Quasiform(TOP_ELEMENT));
 
         ++transcode->at;  // must compensate the `transcode->at = S->end`
         S->quasi_pending = false;

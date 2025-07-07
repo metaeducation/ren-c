@@ -60,7 +60,7 @@ bool Raw_Native_Details_Querier(
 
 
 //
-//  Trap_Make_Native_Dispatch_Details: C
+//  Make_Native_Dispatch_Details: C
 //
 // Reused function in Startup_Natives() as well as extensions loading natives,
 // which can be parameterized with a different context in which to look up

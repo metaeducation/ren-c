@@ -231,8 +231,9 @@ DECLARE_NATIVE(INLINE)
       case ST_INLINE_INITIAL_ENTRY:
         goto initial_entry;
 
-      case ST_INLINE_REEVALUATING:  // stepper uses dual protocol
-        return Unliftify_Undecayed(OUT);
+      case ST_INLINE_REEVALUATING: {  // stepper uses dual protocol
+        required (Unliftify_Undecayed(OUT));
+        return OUT; }
 
       default:
         assert(false);

@@ -177,7 +177,7 @@ DECLARE_NATIVE(PICK)
 
 } pick_succeeded_out_is_lifted: {
 
-    Unliftify_Undecayed(OUT);
+    required (Unliftify_Undecayed(OUT));
 
     if (Not_Cell_Stable(OUT)) {
         assert(false);  // Note: once usermode TWEAK* exists, it may screw up

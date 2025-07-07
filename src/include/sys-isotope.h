@@ -51,11 +51,11 @@
 //    If you were allowed to pass in an Element*, then you'd have an invalid
 //    Element at the callsite when the operation completed.
 //
-INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
+INLINE Result(Atom*) Coerce_To_Antiform(Need(Atom*) atom) {
     Element* elem = Known_Element(atom);  // guaranteed element on input (?)
 
     if (Sigil_Of(elem))
-        return Error_User("Cells with sigils cannot become antiforms");
+        return fail (Error_User("Cells with sigils cannot become antiforms"));
 
     Option(Heart) heart = Heart_Of(atom);
 
@@ -64,7 +64,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
 
     if (not Any_Isotopic_Type(heart)) {
         LIFT_BYTE(elem) = NOQUOTE_2;
-        return Error_Non_Isotopic_Type_Raw(elem);
+        return fail (Error_Non_Isotopic_Type_Raw(elem));
     }
 
     if (Is_Bindable_Heart(heart)) {  // strip off any binding [2]
@@ -85,7 +85,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
 
               default: {
                 LIFT_BYTE(elem) = NOQUOTE_2;
-                return Error_Illegal_Keyword_Raw(elem);  // only a few ok [4]
+                return fail (Error_Illegal_Keyword_Raw(elem));  // limited [4]
               }
             }
 
@@ -102,7 +102,7 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
                     true
                 ))
             ){
-                return Error_Bad_Value(elem);
+                return fail (elem);
             }
             // !!! don't mess with flags (e.g. SLOT_WEIRD_MARKED_DUAL)
             atom->payload = Stub_Cell(unwrap patch)->payload;
@@ -119,23 +119,23 @@ INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom) {
     }
 
     LIFT_BYTE_RAW(atom) = ANTIFORM_1;  // few places should use LIFT_BYTE_RAW!
-    return SUCCESS;
+    return atom;
 }
 
 // 1. There's an exception in the case of KEYWORD! which is the antiform of
 //    WORD!.  Only a limited set of them are allowed to exist.  But all
 //    words are allowed to be quasiforms.
 //
-INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v) {
+INLINE Result(Element*) Coerce_To_Quasiform(Need(Element*) v) {
     Option(Heart) heart = Heart_Of(v);
 
     if (not Any_Isotopic_Type(heart)) {  // Note: all words have quasiforms [1]
         LIFT_BYTE(v) = NOQUOTE_2;
-        return Error_Non_Isotopic_Type_Raw(v);
+        return fail (Error_Non_Isotopic_Type_Raw(v));
     }
 
     LIFT_BYTE_RAW(v) = QUASIFORM_3;  // few places should use LIFT_BYTE_RAW!
-    return SUCCESS;
+    return u_cast(Element*, v);
 }
 
 
@@ -212,7 +212,7 @@ INLINE Result(Value*) Decay_If_Unstable(Need(Atom*) v) {
         const Element* pack_at = List_At(nullptr, v);
         Sink(Element) sink = v;
         Copy_Cell(sink, pack_at);  // Note: no antiform binding (PACK!)
-        Unliftify_Undecayed(v);
+        required (Unliftify_Undecayed(v));
         return u_cast(Value*, v);
     }
 

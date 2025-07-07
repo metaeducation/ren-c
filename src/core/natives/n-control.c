@@ -1143,7 +1143,7 @@ DECLARE_NATIVE(DEFAULT)
         panic (Cell_Error(OUT));
 
     if (not Is_Dual_Word_Unset_Signal(Known_Stable(OUT))) {
-        Unliftify_Undecayed(OUT);
+        required (Unliftify_Undecayed(OUT));
 
         Value* out = require (Decay_If_Unstable(OUT));  // may need decay [2]
 

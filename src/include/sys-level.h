@@ -763,7 +763,8 @@ INLINE Bounce Native_Ghost_Result_Untracked(
 INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
     assert(not THROWING);
     Copy_Cell(level_->out, v);
-    return Unliftify_Undecayed(level_->out);
+    Atom* atom = require (Unliftify_Undecayed(level_->out));
+    return atom;
 }
 
 

@@ -185,9 +185,7 @@ DECLARE_NATIVE(QUASI)
 
     Element* out = Copy_Cell(OUT, elem);
 
-    Option(Error*) e = Trap_Coerce_To_Quasiform(out);
-    if (e)
-        return fail (unwrap e);  // RAISE so (try quasi ':foo:) gives null
+    trapped (Coerce_To_Quasiform(out));  // (try quasi ':foo:) is null
 
     return OUT;
 }
@@ -299,7 +297,8 @@ DECLARE_NATIVE(UNLIFT)
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {  // intrinsic shortcut
         if (not Any_Lifted(atom))
             panic ("Plain UNLIFT only accepts quasiforms and quoteds");
-        return COPY(Unliftify_Undecayed(atom));
+        required (Unliftify_Undecayed(atom));
+        return COPY(atom);
     }
 
     if (Is_Antiform(atom)) {
@@ -315,9 +314,7 @@ DECLARE_NATIVE(UNLIFT)
 
         Copy_Cell(OUT, atom);
 
-        Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
-        if (e)
-            panic (unwrap e);
+        required (Coerce_To_Antiform(OUT));
 
         return OUT;
     }
@@ -327,7 +324,8 @@ DECLARE_NATIVE(UNLIFT)
             "UNLIFT:LITE does not accept quasiforms (plain forms are meta)"
         );
 
-    return COPY(Unliftify_Undecayed(atom));  // quoted or quasi
+    required (Unliftify_Undecayed(atom));
+    return COPY(atom);  // quoted or quasi
 }
 
 
@@ -345,7 +343,8 @@ DECLARE_NATIVE(UNLIFT_P)
     INCLUDE_PARAMS_OF_UNLIFT_P;
 
     Copy_Cell(OUT, ARG(LIFTED));
-    return Unliftify_Undecayed(OUT);
+    required (Unliftify_Undecayed(OUT));
+    return OUT;
 }
 
 
@@ -412,9 +411,7 @@ DECLARE_NATIVE(ANTI)
     Element* elem = Element_ARG(ELEMENT);
 
     Copy_Cell(OUT, elem);
-    Option(Error*) e = Trap_Coerce_To_Antiform(OUT);
-    if (e)
-        panic (unwrap e);
+    required (Coerce_To_Antiform(OUT));
 
     return OUT;
 }
@@ -520,7 +517,7 @@ INLINE bool Pack_Native_Core_Throws(
         return true;
     }
 
-    Unliftify_Undecayed(out);
+    required (Unliftify_Undecayed(out));
     return false;
 }
 

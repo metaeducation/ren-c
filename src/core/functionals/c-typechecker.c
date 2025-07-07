@@ -318,7 +318,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
     for (; types_at != types_tail; ++types_at, ++pack_at) {
         Copy_Cell(SPARE, pack_at);
-        Unliftify_Undecayed(SPARE);
+        guaranteed (Unliftify_Undecayed(SPARE));
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(
             L, types_at, types_binding
         )){

@@ -775,7 +775,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
                 );
 
             Copy_Cell(value_arg, TOP_ELEMENT);
-            Unliftify_Undecayed(value_arg);
+            required (Unliftify_Undecayed(value_arg));
             Decay_If_Unstable(value_arg) excepted (Error* e) {
                 return e;
             }
@@ -803,7 +803,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         }
 
         Copy_Cell(value_arg, TOP_ELEMENT);
-        Unliftify_Undecayed(value_arg);
+        required (Unliftify_Undecayed(value_arg));
         Decay_If_Unstable(value_arg) excepted (Error* e) {
             return e;
         };
@@ -1063,7 +1063,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         if (Any_Lifted(SPARE)) {  // most common answer--successful pick
 
             if (not Is_Metaform(Data_Stack_At(Element, stackindex))) {
-                Unliftify_Undecayed(SPARE);  // review unlift + lift
+                required (Unliftify_Undecayed(SPARE));  // review unlift + lift
                 Decay_If_Unstable(SPARE) excepted (e) {
                     Drop_Level(sub);
                     goto return_error;
@@ -1261,7 +1261,7 @@ Result(Zero) Set_Var_In_Scratch_To_Out(
         level_,
         steps_out
     );
-    Unliftify_Undecayed(OUT);
+    required (Unliftify_Undecayed(OUT));
     if (e)
         return fail (unwrap e);
 
@@ -1291,7 +1291,7 @@ Result(Zero) Get_Var_In_Scratch_To_Out(
     if (Is_Dual_Word_Unset_Signal(Known_Stable(OUT)))
         return fail ("UNSET variable");
 
-    Unliftify_Undecayed(OUT);  // won't make unstable if wasn't ^META [1]
+    required (Unliftify_Undecayed(OUT));  // not unstable if wasn't ^META [1]
     return zero;
 }
 
@@ -1494,7 +1494,8 @@ DECLARE_NATIVE(GET)
     if (not Any_Lifted(OUT))
         panic ("GET of UNSET or other weird state (see TWEAK)");
 
-    return Unliftify_Undecayed(OUT);
+    required (Unliftify_Undecayed(OUT));
+    return OUT;
 }
 
 

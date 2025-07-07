@@ -550,9 +550,7 @@ Bounce Stepper_Executor(Level* L)
 
     Copy_Cell_Core(OUT, CURRENT, CELL_MASK_THROW);
 
-    Option(Error*) e = Trap_Coerce_To_Antiform(OUT);  // may be illegal [1]
-    if (e)
-        panic (unwrap e);
+    required (Coerce_To_Antiform(OUT));  // may be illegal [1]
 
     Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // !!! hack [2]
 
@@ -790,7 +788,7 @@ Bounce Stepper_Executor(Level* L)
     Copy_Cell(OUT, temp);
     rebRelease(temp);
 
-    Unliftify_Undecayed(OUT);
+    guaranteed (Unliftify_Undecayed(OUT));
     goto lookahead;
 
 
@@ -1193,7 +1191,7 @@ Bounce Stepper_Executor(Level* L)
     if (not Any_Lifted(OUT))
         panic ("^GROUP! can only UNLIFT quoted/quasiforms");
 
-    Unliftify_Undecayed(OUT);  // GHOST! legal, ACTION! legal...
+    required (Unliftify_Undecayed(OUT));  // GHOST! legal, ACTION! legal...
     Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // just lifted approve [1]
     goto lookahead;
 
@@ -1749,7 +1747,7 @@ Bounce Stepper_Executor(Level* L)
     }
     else {
         Copy_Cell(OUT, pack_at_lifted);
-        Unliftify_Undecayed(OUT);  // unlift for output...
+        required (Unliftify_Undecayed(OUT));  // unlift for output...
     }
 
     if (Is_Metaform_Space(var))

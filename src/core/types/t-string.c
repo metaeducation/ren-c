@@ -1010,7 +1010,7 @@ IMPLEMENT_GENERIC(TO, Any_String)
 
 
 //
-//  Trap_Any_String_As: C
+//  Alias_Any_String_As: C
 //
 // 1. The reason that strings have a different AS aliasing is that it keeps
 //    the AS ANY-UTF8? generic from having to worry about converting types

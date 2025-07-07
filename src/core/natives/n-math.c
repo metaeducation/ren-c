@@ -546,9 +546,9 @@ static REBDEC Trig_Value(
 
 
 //
-//  Trap_Arc_Trans: C
+//  Arc_Trans: C
 //
-static Option(Error*) Trap_Arc_Trans(
+static Result(Zero) Arc_Trans(
     Sink(Value) out,
     const Value* value,
     bool radians,
@@ -556,7 +556,7 @@ static Option(Error*) Trap_Arc_Trans(
 ){
     REBDEC dval = AS_DECIMAL(value);
     if (which != SYM_TANGENT and (dval < -1 or dval > 1))
-        return Error_Overflow_Raw();
+        return fail (Error_Overflow_Raw());
 
     if (which == SYM_SINE)
         dval = asin(dval);
@@ -571,7 +571,7 @@ static Option(Error*) Trap_Arc_Trans(
         dval = dval * 180.0 / PI; // to degrees
 
     Init_Decimal(out, dval);
-    return SUCCESS;
+    return zero;
 }
 
 
@@ -655,11 +655,9 @@ DECLARE_NATIVE(ARCCOSINE)
 {
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
-    Option(Error*) e = Trap_Arc_Trans(
+    required (Arc_Trans(
         OUT, ARG(COSINE), Bool_ARG(RADIANS), SYM_COSINE
-    );
-    if (e)
-        panic (unwrap e);
+    ));
     return OUT;
 }
 
@@ -678,9 +676,7 @@ DECLARE_NATIVE(ARCSINE)
 {
     INCLUDE_PARAMS_OF_ARCSINE;
 
-    Option(Error*) e = Trap_Arc_Trans(OUT, ARG(SINE), Bool_ARG(RADIANS), SYM_SINE);
-    if (e)
-        panic (unwrap e);
+    required (Arc_Trans(OUT, ARG(SINE), Bool_ARG(RADIANS), SYM_SINE));
     return OUT;
 }
 
@@ -699,11 +695,9 @@ DECLARE_NATIVE(ARCTANGENT)
 {
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
-    Option(Error*) e = Trap_Arc_Trans(
+    required (Arc_Trans(
         OUT, ARG(TANGENT), Bool_ARG(RADIANS), SYM_TANGENT
-    );
-    if (e)
-        panic (unwrap e);
+    ));
     return OUT;
 }
 

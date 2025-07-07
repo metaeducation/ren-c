@@ -408,7 +408,7 @@ void Collect_Context_Keys(
 
 
 //
-//  Trap_Collect_Inner_Loop: C
+//  Collect_Inner_Loop: C
 //
 // The inner recursive loop used for collecting context keys or ANY-WORD?s.
 //
@@ -418,7 +418,7 @@ void Collect_Context_Keys(
 //
 //      https://github.com/rebol/rebol-issues/issues/2276
 //
-static Option(Error*) Trap_Collect_Inner_Loop(
+static Result(Zero) Collect_Inner_Loop(
     Collector *cl,
     CollectFlags flags,
     const Element* head,
@@ -440,7 +440,7 @@ static Option(Error*) Trap_Collect_Inner_Loop(
                 if (flags & COLLECT_TOLERATE_PREBOUND)
                     continue;
 
-                return Error_Collectable_Bound_Raw(e);
+                return fail (Error_Collectable_Bound_Raw(e));
             }
 
             if (cl->sea) {
@@ -459,7 +459,7 @@ static Option(Error*) Trap_Collect_Inner_Loop(
             else if (flags & COLLECT_NO_DUP) {
                 DECLARE_ELEMENT (duplicate);
                 Init_Word(duplicate, unwrap symbol);
-                return Error_Dup_Vars_Raw(duplicate);
+                return fail (Error_Dup_Vars_Raw(duplicate));
             }
             else {
                 // tolerate duplicate
@@ -471,14 +471,13 @@ static Option(Error*) Trap_Collect_Inner_Loop(
         if (Is_Set_Block(e)) {  // `[[a b] ^c :d (e)]:` collects all but E
             const Element* sub_tail;
             const Element* sub_at = List_At(&sub_tail, e);
-            Option(Error*) error = Trap_Collect_Inner_Loop(
+
+            trapped (Collect_Inner_Loop(
                 cl,
                 COLLECT_ANY_WORD | COLLECT_DEEP_BLOCKS | COLLECT_DEEP_FENCES,
                 sub_at,
                 sub_tail
-            );
-            if (error)
-                return error;
+            ));
 
             continue;
         }
@@ -493,24 +492,21 @@ static Option(Error*) Trap_Collect_Inner_Loop(
 
         const Element* sub_tail;
         const Element* sub_at = List_At(&sub_tail, e);
-        Option(Error*) error = Trap_Collect_Inner_Loop(
-            cl, flags, sub_at, sub_tail
-        );
-        if (error)
-            return error;
+
+        trapped (Collect_Inner_Loop(cl, flags, sub_at, sub_tail));
     }
 
-    return SUCCESS;
+    return zero;
 }
 
 
 //
-//  Trap_Wrap_Extend_Core: C
+//  Wrap_Extend_Core: C
 //
 // This exposes the functionality of WRAP* so it can be used by the boot
 // process on LIB before natives can be called.
 //
-Option(Error*) Trap_Wrap_Extend_Core(
+Result(Zero) Wrap_Extend_Core(
     Context* context,
     const Element* list,
     CollectFlags flags
@@ -521,10 +517,11 @@ Option(Error*) Trap_Wrap_Extend_Core(
     const Element* tail;
     const Element* at = List_At(&tail, list);
 
-    Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, at, tail);
-    if (e) {
+    Collect_Inner_Loop(
+        cl, flags, at, tail
+    ) except (Error* e) {
         Destruct_Collector(cl);
-        return e;
+        return fail (e);
     }
 
     Option(Stump*) stump = cl->binder.stump_list;
@@ -534,7 +531,7 @@ Option(Error*) Trap_Wrap_Extend_Core(
     }
 
     Destruct_Collector(cl);
-    return SUCCESS;
+    return zero;
 }
 
 
@@ -562,10 +559,7 @@ DECLARE_NATIVE(WRAP_P)
     Context* context = Cell_Context(ARG(CONTEXT));
     Element* list = cast(Element*, ARG(LIST));
 
-    Option(Error*) e = Trap_Wrap_Extend_Core(context, list, flags);
-    if (e)
-        panic (unwrap e);
-
+    required (Wrap_Extend_Core(context, list, flags));
     /*
         Tweak_Cell_Binding(list, use);  // what should do what here?
         return COPY(list);  // should this return a list?
@@ -709,9 +703,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
     const Element* block_tail;
     const Element* block_at = List_At(&block_tail, ARG(BLOCK));
 
-    Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, block_at, block_tail);
-    if (e)
-        panic (unwrap e);
+    required (Collect_Inner_Loop(cl, flags, block_at, block_tail));
 
     StackIndex base = TOP_INDEX;  // could be more efficient to calc/add
 
@@ -759,9 +751,7 @@ VarList* Make_Varlist_Detect_Managed(
     DECLARE_COLLECTOR (cl);
     Construct_Collector(cl, flags, parent);  // preload binder with parent's keys
 
-    Option(Error*) e = Trap_Collect_Inner_Loop(cl, flags, head, tail);
-    if (e)
-        panic (unwrap e);
+    required (Collect_Inner_Loop(cl, flags, head, tail));
 
     Length len = cl->next_index - 1;  // is next index, so subtract 1
 

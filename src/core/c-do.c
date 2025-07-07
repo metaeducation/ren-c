@@ -192,7 +192,7 @@ bool Pushed_Continuation(
         }
         else {
             Derelativize(out, cast(Element*, branch), binding);
-            Unliftify_Undecayed(out);
+            required (Unliftify_Undecayed(out));
         }
         goto just_use_out;
 

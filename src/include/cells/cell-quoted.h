@@ -258,8 +258,8 @@ MUTABLE_IF_C(Element*, INLINE) Ensure_Element(CONST_IF_C(Atom*) cell) {
 //   operations in the ^META domain to easily use functions like ALL and ANY
 //   on the lifted values.  (See the FOR-BOTH example.)
 
-INLINE Option(Error*) Trap_Coerce_To_Antiform(Need(Atom*) atom);
-INLINE Option(Error*) Trap_Coerce_To_Quasiform(Need(Element*) v);
+INLINE Result(Atom*) Coerce_To_Antiform(Need(Atom*) atom);
+INLINE Result(Element*) Coerce_To_Quasiform(Need(Element*) v);
 
 #define Is_Quasiform(v) \
     (LIFT_BYTE(Ensure_Readable(v)) == QUASIFORM_3)
@@ -338,19 +338,16 @@ INLINE Element* Liftify(Atom* atom) {
     return Quotify(cast(Element*, atom));  // a non-antiform winds up quoted
 }
 
-INLINE Atom* Unliftify_Undecayed(Need(Atom*) atom) {
+INLINE Result(Atom*) Unliftify_Undecayed(Need(Atom*) atom) {
     if (LIFT_BYTE_RAW(atom) == QUASIFORM_3) {
-        Option(Error*) e = Trap_Coerce_To_Antiform(atom);
-        if (e)
-            panic (unwrap e);  // !!! shouldn't abruptly panic :-(
-
+        trapped (Coerce_To_Antiform(atom));
         return atom;
     }
     return Unquotify(cast(Element*, atom));  // asserts that it's quoted
 }
 
 INLINE Value* Unliftify_Known_Stable(Need(Value*) val) {
-    Unliftify_Undecayed(cast(Atom*, val));
+    guaranteed (Unliftify_Undecayed(cast(Atom*, val)));
     Assert_Cell_Stable(val);
     return val;
 }
@@ -358,5 +355,6 @@ INLINE Value* Unliftify_Known_Stable(Need(Value*) val) {
 INLINE Result(Value*) Decay_If_Unstable(Need(Atom*) v);
 
 INLINE Result(Value*) Unliftify_Decayed(Value* v) {
-    return Decay_If_Unstable(Unliftify_Undecayed(cast(Atom*, v)));
+    Atom *atom = trap (Unliftify_Undecayed(cast(Atom*, v)));
+    return Decay_If_Unstable(atom);
 }

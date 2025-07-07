@@ -1478,8 +1478,8 @@ DECLARE_NATIVE(REMOVE_EACH)
   } process_body_result: {  //////////////////////////////////////////////////
 
     // The only signals allowed are OKAY, NULL, and VOID.  This likely catches
-    // more errors than allowing any Trap_Test_Conditional() value to mean
-    // "remove" (e.g. use DID MATCH or NOT MATCH instead of just MATCH).
+    // more errors than allowing any Test_Conditional() value to mean "remove"
+    // (e.g. use DID MATCH or NOT MATCH instead of just MATCH).
     //
     // 1. The reason VOID is tolerated is because CONTINUE with no argument
     //    acts as if the body returned VOID.  This is a general behavioral

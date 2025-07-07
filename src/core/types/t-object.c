@@ -1090,9 +1090,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         if (Bool_ARG(PREBOUND))
             flags |= COLLECT_TOLERATE_PREBOUND;
 
-        Option(Error*) e = Trap_Wrap_Extend_Core(c, def, flags);
-        if (e)
-            panic (unwrap e);
+        required (Wrap_Extend_Core(c, def, flags));
 
         Use* use = Alloc_Use_Inherits(Cell_Binding(def));
         Copy_Cell(Stub_Cell(use), context);
@@ -1274,7 +1272,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     Copy_Cell(m_cast(Value*, u_cast(Value*, slot)), dual);
 
     if (Any_Lifted(dual)) {  // don't antagonize...yet [1]
-        Unliftify_Undecayed(m_cast(Atom*, u_cast(Atom*, slot)));
+        required (Unliftify_Undecayed(m_cast(Atom*, u_cast(Atom*, slot))));
         return NO_WRITEBACK_NEEDED;
     }
 
