@@ -105,7 +105,9 @@ INLINE Element* Init_Varargs_Untyped_Infix(
         Source* singular = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
         Copy_Cell(Stub_Cell(singular), unwrap left);
 
-        feed = Make_Untracked_Stub(FLAG_FLAVOR(FLAVOR_FEED) | BASE_FLAG_MANAGED);
+        feed = require (Make_Untracked_Stub(
+            FLAG_FLAVOR(FLAVOR_FEED) | BASE_FLAG_MANAGED
+        ));
         Init_Block(Stub_Cell(feed), singular);  // index 0
     }
 

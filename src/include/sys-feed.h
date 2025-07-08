@@ -620,8 +620,11 @@ INLINE Feed* Add_Feed_Reference(Feed* feed) {
     return feed;
 }
 
-INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
-   Feed* feed = u_cast(Feed*, preallocated);
+INLINE Result(Feed*) Prep_Feed_Common(
+    Result(void*) preallocated,
+    Flags flags
+){
+   Feed* feed = trap (u_cast(Result(Feed*), preallocated));
 
   #if TRAMPOLINE_COUNTS_TICKS
     feed->tick = g_tick;
@@ -629,10 +632,11 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
 
     Force_Erase_Cell(&feed->fetched);
 
-    Stub* s = Prep_Stub(
+    Stub* s = guarantee (Prep_Stub(
         BASE_FLAG_BASE | FLAG_FLAVOR(FLAVOR_FEED),
         &feed->singular  // preallocated
-    );
+    ));
+
     Force_Erase_Cell(Stub_Cell(s));
     Tweak_Link_Feedstub_Splice(s, nullptr);
     Tweak_Misc_Feedstub_Pending(s, nullptr);
@@ -646,8 +650,8 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
     return feed;
 }
 
-INLINE Feed* Prep_Array_Feed(
-    void* preallocated,
+INLINE Result(Feed*) Prep_Array_Feed(
+    Result(void*) preallocated,
     Option(const Cell*) first,
     const Source* array,
     REBLEN index,
@@ -656,7 +660,7 @@ INLINE Feed* Prep_Array_Feed(
 ){
     assert(not binding or Is_Base_Managed(binding));
 
-    Feed* feed = Prep_Feed_Common(preallocated, flags);
+    Feed* feed = trap (Prep_Feed_Common(preallocated, flags));
 
     if (first) {
         feed->p = unwrap first;
@@ -721,13 +725,15 @@ INLINE Feed* Prep_Array_Feed(
 // scanner leaves all spliced values with whatever bindings they have (even
 // if that is none).
 //
-INLINE Feed* Prep_Variadic_Feed(
-    void* preallocated,
+INLINE Result(Feed*) Prep_Variadic_Feed(
+    Result(void*) preallocated,
     const void *p,
     Option(va_list*) vaptr,
     Flags flags
 ){
-    Feed* feed = Prep_Feed_Common(preallocated, flags | FEED_FLAG_NEEDS_SYNC);
+    Feed* feed = trap (
+        Prep_Feed_Common(preallocated, flags | FEED_FLAG_NEEDS_SYNC)
+    );
 
     // We want to initialize with something that will give back SPECIFIED.
     // It must therefore be bindable.  Try a COMMA!
@@ -771,12 +777,14 @@ INLINE Feed* Prep_Variadic_Feed(
 //    and if we forced the caller to drop the quasi or quoted state then they
 //    have to store that information somewhere, which would be extra work.
 //
-INLINE Feed* Prep_At_Feed(
-    void *preallocated,
+INLINE Result(Feed*) Prep_At_Feed(
+    Result(void*) preallocated,
     const Element* list,  // array is extracted and HOLD put on
     Context* binding,
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){
+    void* p = trap (preallocated);
+
     STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);
     assert(Any_List_Type(Heart_Of(list)));  // tolerates quasi/quoted [1]
 
@@ -785,7 +793,7 @@ INLINE Feed* Prep_At_Feed(
         | (list->header.bits & CELL_FLAG_CONST);  // heed
 
     return Prep_Array_Feed(
-        preallocated,
+        p,
         nullptr,  // `first` = nullptr, don't inject arbitrary 1st element
         Cell_Array(list),
         Series_Index(list),

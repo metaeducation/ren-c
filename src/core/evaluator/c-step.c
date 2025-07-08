@@ -180,11 +180,11 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
     Flags flags =  // v-- if L was fulfilling, we are
         (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
 
-    Level* sub = Make_Level(
+    Level* sub = require (Make_Level(
         &Stepper_Executor,
         L->feed,
         flags  // inert optimize adjusted the flags to jump in mid-eval
-    );
+    ));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     return sub;
@@ -484,8 +484,8 @@ Bounce Stepper_Executor(Level* L)
 
 } right_hand_literal_infix_wins: { ///////////////////////////////////////////
 
-    Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, L_current_gotten_raw, infix_mode);
+    Level* sub = require (Make_Action_Sublevel(L));
+    required (Push_Action(sub, L_current_gotten_raw, infix_mode));
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
     goto process_action;
 
@@ -891,9 +891,9 @@ Bounce Stepper_Executor(Level* L)
 
     Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(CURRENT);
 
-    Level* sub = Make_Action_Sublevel(L);
+    Level* sub = require (Make_Action_Sublevel(L));
     assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
-    Push_Action(sub, CURRENT, infix_mode);
+    required (Push_Action(sub, CURRENT, infix_mode));
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
 
     goto process_action;
@@ -1022,15 +1022,15 @@ Bounce Stepper_Executor(Level* L)
 
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
 
-        Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
+        Level* sub = require (Make_Level(&Stepper_Executor, L->feed, flags));
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
         STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
         return CONTINUE_SUBLEVEL(sub);
     }
   #endif
 
-    Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, out, infix_mode);  // action first, before OUT erased
+    Level* sub = require (Make_Action_Sublevel(L));
+    required (Push_Action(sub, out, infix_mode));  // before OUT erased
     Erase_Cell(OUT);  // want OUT clear, even if infix_mode sets state nonzero
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
@@ -1076,12 +1076,12 @@ Bounce Stepper_Executor(Level* L)
       case TRAILING_SPACE_AND(GROUP): {  // (xxx): -- generic retrigger set
         guaranteed (Unsingleheart_Sequence(CURRENT));
         Invalidate_Gotten(L_next_gotten_raw);  // arbitrary code changes
-        Level* sub = Make_Level_At_Inherit_Const(
+        Level* sub = require (Make_Level_At_Inherit_Const(
             &Evaluator_Executor,
             CURRENT,
             L_binding,
             LEVEL_MASK_NONE
-        );
+        ));
         Init_Void(Evaluator_Primed_Cell(sub));
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
         STATE = ST_STEPPER_SET_GROUP;
@@ -1134,10 +1134,10 @@ Bounce Stepper_Executor(Level* L)
 
     Value* out = cast(Value*, OUT);
 
-    Level* sub = Make_Action_Sublevel(L);
+    Level* sub = require (Make_Action_Sublevel(L));
     sub->baseline.stack_base = STACK_BASE;  // refinements
 
-    Push_Action(sub, out, PREFIX_0);
+    required (Push_Action(sub, out, PREFIX_0));
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // not infix, sub state is 0
     goto process_action;
 
@@ -1164,12 +1164,12 @@ Bounce Stepper_Executor(Level* L)
 
     Flags flags = LEVEL_MASK_NONE;
 
-    Level* sub = Make_Level_At_Inherit_Const(
+    Level* sub = require (Make_Level_At_Inherit_Const(
         &Evaluator_Executor,
         CURRENT,
         L_binding,
         flags
-    );
+    ));
 
     Atom* primed = Evaluator_Primed_Cell(sub);
     Init_Unsurprising_Ghost(primed);  // want to vaporize if all ghosts [1]
@@ -2097,8 +2097,8 @@ Bounce Stepper_Executor(Level* L)
     // of parameter fulfillment.  We want to reuse the OUT value and get it
     // into the new function's frame.
 
-    Level* sub = Make_Action_Sublevel(L);
-    Push_Action(sub, L_next_gotten_raw, infix_mode);
+    Level* sub = require (Make_Action_Sublevel(L));
+    required (Push_Action(sub, L_next_gotten_raw, infix_mode));
     Fetch_Next_In_Feed(L->feed);
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state

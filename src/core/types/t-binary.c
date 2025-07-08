@@ -260,21 +260,21 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
     switch (binary_base) {
       default:
       case 16: {
-        Append_Ascii(mo->strand, "#{"); // default, so #{...} not #16{...}
+        required (Append_Ascii(mo->strand, "#{")); // #{...}, not #16{...}
 
         const bool brk = (size > 32);
         Form_Base16(mo, data, size, brk);
         break; }
 
       case 64: {
-        Append_Ascii(mo->strand, "64#{");
+        required (Append_Ascii(mo->strand, "64#{"));
 
         const bool brk = (size > 64);
         Form_Base64(mo, data, size, brk);
         break; }
 
       case 2: {
-        Append_Ascii(mo->strand, "2#{");
+        required (Append_Ascii(mo->strand, "2#{"));
 
         const bool brk = (size > 8);
         Form_Base2(mo, data, size, brk);
@@ -288,18 +288,16 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
 }
 
 
-static Element* Copy_Blob_Part_At_May_Modify_Index(
+static Result(Element*) Copy_Blob_Part_At_May_Modify_Index(
     Sink(Element) out,
     Element* blob,  // may modify index
     const Value* part
 ){
     Length len = Part_Len_May_Modify_Index(blob, part);
-
-    return Init_Series(
-        out,
-        TYPE_BLOB,
+    Binary* copy = trap (
         Copy_Binary_At_Len(Cell_Binary(blob), Series_Index(blob), len)
     );
+    return Init_Series(out, TYPE_BLOB, copy);
 }
 
 
@@ -574,7 +572,8 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
 
     if (to == TYPE_BLOB) {
         const Value* part = LIB(NULL);  // no :PART, copy to end
-        return Copy_Blob_Part_At_May_Modify_Index(OUT, v, part);
+        required (Copy_Blob_Part_At_May_Modify_Index(OUT, v, part));
+        return OUT;
     }
 
     panic (UNHANDLED);
@@ -712,7 +711,8 @@ IMPLEMENT_GENERIC(COPY, Is_Blob)
     Element* blob = Element_ARG(VALUE);
     UNUSED(Bool_ARG(DEEP));  // :DEEP is historically ignored on BLOB!
 
-    return Copy_Blob_Part_At_May_Modify_Index(OUT, blob, ARG(PART));
+    required (Copy_Blob_Part_At_May_Modify_Index(OUT, blob, ARG(PART)));
+    return OUT;
 }
 
 
@@ -756,8 +756,10 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
 
     if (not Bool_ARG(PART))  // just return byte value
         Init_Integer(OUT, *Blob_At(blob));
-    else  // return binary series
-        Init_Blob(OUT, Copy_Binary_At_Len(bin, index, len));
+    else { // return binary series
+        Binary* copy = require (Copy_Binary_At_Len(bin, index, len));
+        Init_Blob(OUT, copy);
+    }
 
     Remove_Any_Series_Len(blob, index, len);  // bad UTF-8 alias fails
     return OUT;

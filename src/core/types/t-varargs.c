@@ -187,11 +187,11 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             panic ("Variadic literal parameters not yet implemented");
 
         case PARAMCLASS_NORMAL: {
-            Level* L_temp = Make_Level_At(
+            Level* L_temp = require (Make_Level_At(
                 &Stepper_Executor,
                 shared,
                 EVAL_EXECUTOR_FLAG_FULFILLING_ARG
-            );
+            ));
             Push_Level_Erase_Out_If_State_0(out, L_temp);
 
             // Note: a sublevel is not needed here because this is a single use
@@ -296,7 +296,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         case PARAMCLASS_NORMAL: {
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
-            Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
+            Level* sub = require (
+                Make_Level(&Stepper_Executor, L->feed, flags)
+            );
             if (Trampoline_Throws(out, sub))  // !!! Stackful, should yield!
                 return true;
             break; }
@@ -595,7 +597,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
     const Param* param = Param_For_Varargs_Maybe_Null(&key, v);
     if (param == NULL) {
         pclass = PARAMCLASS_JUST;
-        Append_Ascii(mo->strand, "???"); // never bound to an argument
+        required (Append_Ascii(mo->strand, "???"));  // never bound to arg
     }
     else {
         DECLARE_ELEMENT (param_word);
@@ -623,31 +625,35 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
         Mold_Element(mo, param_word);
     }
 
-    Append_Ascii(mo->strand, " => ");
+    required (Append_Ascii(mo->strand, " => "));
 
     Level* L;
     Element* shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
-        if (Is_Cell_Poisoned(shared))
-            Append_Ascii(mo->strand, "[]");
+        if (Is_Cell_Poisoned(shared)) {
+            required (Append_Ascii(mo->strand, "[]"));
+        }
         else if (pclass == PARAMCLASS_JUST or pclass == PARAMCLASS_THE)
             Mold_Element(mo, shared); // full feed can be shown if hard quoted
-        else
-            Append_Ascii(mo->strand, "[...]"); // can't look ahead
+        else {
+            required (Append_Ascii(mo->strand, "[...]"));  // can't look ahead
+        }
     }
     else if (Is_Level_Style_Varargs_Maybe_Null(&L, v)) {
-        if (L == NULL)
-            Append_Ascii(mo->strand, "!!!");
+        if (L == NULL) {
+            required (Append_Ascii(mo->strand, "!!!"));
+        }
         else if (Is_Feed_At_End(L->feed)) {
-            Append_Ascii(mo->strand, "[]");
+            required (Append_Ascii(mo->strand, "[]"));
         }
         else if (pclass == PARAMCLASS_JUST or pclass == PARAMCLASS_THE) {
-            Append_Ascii(mo->strand, "[");
+            required (Append_Ascii(mo->strand, "["));
             Mold_Element(mo, At_Feed(L->feed));  // 1 value shown if hard quote
-            Append_Ascii(mo->strand, " ...]");
+            required (Append_Ascii(mo->strand, " ...]"));
         }
-        else
-            Append_Ascii(mo->strand, "[...]");
+        else {
+            required (Append_Ascii(mo->strand, "[...]"));
+        }
     }
     else
         assert(false);

@@ -149,11 +149,11 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 
     DECLARE_ELEMENT (block);
     Init_Block(block, normals);
-    Level* L2 = Make_Level_At(&Action_Executor, block, flags);
+    Level* L2 = require (Make_Level_At(&Action_Executor, block, flags));
     L2->baseline.stack_base = base;
 
     Push_Level_Erase_Out_If_State_0(out, L2);
-    Push_Action(L2, run, PREFIX_0);
+    required (Push_Action(L2, run, PREFIX_0));
 }
 
 

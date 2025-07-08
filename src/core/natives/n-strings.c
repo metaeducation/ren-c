@@ -248,12 +248,15 @@ DECLARE_NATIVE(JOIN)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
     if (Is_Block(unwrap rest)) {
-        sub = Make_Level_At(&Stepper_Executor, unwrap rest, flags);
+        sub = require (Make_Level_At(&Stepper_Executor, unwrap rest, flags));
     }
-    else if (Is_Pinned_Form_Of(BLOCK, unwrap rest))
-        sub = Make_Level_At(&Inert_Stepper_Executor, unwrap rest, flags);
+    else if (Is_Pinned_Form_Of(BLOCK, unwrap rest)) {
+        sub = require (
+            Make_Level_At(&Inert_Stepper_Executor, unwrap rest, flags)
+        );
+    }
     else {
-        Feed* feed = Prep_Array_Feed(  // leverage feed mechanics [1]
+        Result(Feed*) feed = Prep_Array_Feed(  // leverage feed mechanics [1]
             Alloc_Feed(),
             unwrap rest,  // first--in this case, the only value in the feed...
             g_empty_array,  // ...because we're using the empty array after that
@@ -262,7 +265,7 @@ DECLARE_NATIVE(JOIN)
             FEED_MASK_DEFAULT | ((unwrap rest)->header.bits & FEED_FLAG_CONST)
         );
 
-        sub = Make_Level(&Inert_Stepper_Executor, feed, flags);
+        sub = require (Make_Level(&Inert_Stepper_Executor, feed, flags));
     }
 
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
@@ -597,12 +600,9 @@ DECLARE_NATIVE(JOIN)
         Init_Utf8_Non_String(OUT, heart, utf8, size, len);
     }
     else if (heart == TYPE_EMAIL) {
-        if (
-            cast(const Byte*, utf8) + size
-            != Try_Scan_Email_To_Stack(utf8, size)
-        ){
+        const Byte* ep = trap (Scan_Email_To_Stack(utf8, size));
+        if (ep != cast(const Byte*, utf8) + size)
             return fail ("Invalid EMAIL!");
-        }
         Move_Cell(OUT, TOP_ELEMENT);
         DROP();
     }

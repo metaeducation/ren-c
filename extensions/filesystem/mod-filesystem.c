@@ -477,7 +477,8 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
         if (not Bool_ARG(PASS))
             return "panic -[LOCAL-TO-FILE needs :PASS to passthru FILE!]-";
 
-        return Init_File(OUT, Copy_String_At(path));  // many callers modify
+        Strand* copy = require (Copy_String_At(path));
+        return Init_File(OUT, copy);  // many callers modify
     }
 
     return Init_File(
@@ -510,7 +511,8 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
         if (not Bool_ARG(PASS))
             return "-[FILE-TO-LOCAL needs :PASS to passthru STRING!]-";
 
-        return Init_Text(OUT, Copy_String_At(path));  // callers modify
+        Strand* copy = require (Copy_String_At(path));
+        return Init_Text(OUT, copy);  // callers modify
     }
 
     return Init_Text(

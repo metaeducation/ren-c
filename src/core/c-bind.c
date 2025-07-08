@@ -248,7 +248,7 @@ Let* Make_Let_Variable(
     const Symbol* symbol,
     Option(Context*) inherit
 ){
-    Stub* let = Make_Untracked_Stub(STUB_MASK_LET);  // one variable
+    Stub* let = require (Make_Untracked_Stub(STUB_MASK_LET));  // one variable
 
     Init(Slot) slot = Slot_Init_Hack(u_cast(Slot*, Stub_Cell(let)));
     Init_Dual_Unset(slot);
@@ -811,7 +811,7 @@ DECLARE_NATIVE(LET)
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
         | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
 
-    Level* sub = Make_Level(&Stepper_Executor, LEVEL->feed, flags);
+    Level* sub = require (Make_Level(&Stepper_Executor, LEVEL->feed, flags));
     Copy_Cell(Evaluator_Level_Current(sub), spare);
     Force_Invalidate_Gotten(&sub->u.eval.current_gotten);
 
@@ -946,7 +946,7 @@ DECLARE_NATIVE(ADD_USE_OBJECT) {
     if (L_binding)
         Set_Base_Managed_Bit(L_binding);
 
-    Use* use = Alloc_Use_Inherits(L_binding);
+    Use* use = require (Alloc_Use_Inherits(L_binding));
     Copy_Cell(Stub_Cell(use), object);
 
     Tweak_Cell_Binding(Feed_Data(L->feed), use);
@@ -988,7 +988,7 @@ DECLARE_NATIVE(ADD_USE_OBJECT) {
 //    we don't know if it's going to be aliased as that same sequence type
 //    again...but is that worth testing if it's a sequence here?
 //
-void Clonify_And_Bind_Relative(
+Result(Zero) Clonify_And_Bind_Relative(
     Element* v,
     Flags flags,
     bool deeply,
@@ -1049,7 +1049,9 @@ void Clonify_And_Bind_Relative(
             deep_tail = Array_Tail(copy);
         }
         else if (Any_Series_Type(heart)) {
-            Flex* copy = Copy_Flex_Core(BASE_FLAG_MANAGED, Cell_Flex(v));
+            Flex* copy = trap (
+                Copy_Flex_Core(BASE_FLAG_MANAGED, Cell_Flex(v))
+            );
             PAIRLIKE_PAYLOAD_1_PAIRING_BASE(v) = copy;
         }
 
@@ -1057,14 +1059,15 @@ void Clonify_And_Bind_Relative(
         // copied Array and "clonify" the values in it.
         //
         if (deep) {
-            for (; deep != deep_tail; ++deep)
-                Clonify_And_Bind_Relative(
+            for (; deep != deep_tail; ++deep) {
+                trapped (Clonify_And_Bind_Relative(
                     deep,
                     flags,
                     deeply,
                     binder,
                     relative
-                );
+                ));
+            }
         }
     }
     else {
@@ -1073,6 +1076,8 @@ void Clonify_And_Bind_Relative(
         //
         v->header.bits |= (flags & ARRAY_FLAG_CONST_SHALLOW);
     }
+
+    return zero;
 }
 
 
@@ -1365,7 +1370,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     // Virtual version of `Bind_Values_Deep(Array_Head(body_out), context)`
     //
     if (rebinding) {
-        Use* use = Alloc_Use_Inherits(List_Binding(body));
+        Use* use = require (Alloc_Use_Inherits(List_Binding(body)));
         Copy_Cell(Stub_Cell(use), Varlist_Archetype(varlist));
         Tweak_Cell_Binding(body, use);
     }

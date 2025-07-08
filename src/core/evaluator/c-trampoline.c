@@ -509,10 +509,10 @@ void Startup_Trampoline(void)
     assert(TOP_LEVEL == nullptr);
     assert(BOTTOM_LEVEL == nullptr);
 
-    Level* L = Make_End_Level(  // ensure L->prior [1]
+    Level* L = require (Make_End_Level(  // ensure L->prior [1]
         &Stepper_Executor,  // executor is irrelevant (permit nullptr?)
         LEVEL_FLAG_UNINTERRUPTIBLE  // can't interrupt while initializing [2]
-    );
+    ));
     Push_Level_Dont_Inherit_Interruptibility(  // to attach API handles to [3]
         u_cast(Atom*, &g_erased_cell),
         L

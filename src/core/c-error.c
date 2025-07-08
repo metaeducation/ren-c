@@ -440,7 +440,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
             root_error // parent
         );
 
-        Use* use = Alloc_Use_Inherits(List_Binding(arg));
+        Use* use = require (Alloc_Use_Inherits(List_Binding(arg)));
         Init_Warning(Stub_Cell(use), varlist);
 
         Tweak_Cell_Binding(arg, use);  // arg is GC protected, so Use is too
@@ -470,7 +470,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
         /*assert(Is_Nulled(&vars->type));*/  // TEMP! IGNORE
         /*assert(Is_Nulled(&vars->id));*/
 
-        Init_Text(Slot_Init_Hack(&vars->message), Copy_String_At(arg));
+        Strand* copy = require (Copy_String_At(arg));
+        Init_Text(Slot_Init_Hack(&vars->message), copy);
     }
     else
         return fail (arg);
@@ -839,21 +840,6 @@ Error* Error_Unspecified_Arg(Level* L) {
 
     Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
     return Error_Unspecified_Arg_Raw(label, param_symbol);
-}
-
-
-//
-//  Error_No_Memory: C
-//
-// !!! Historically, Rebol had a stack overflow error that didn't want to
-// create new C function stack levels.  So the error was preallocated.  The
-// same needs to apply to out of memory errors--they shouldn't be allocating
-// a new error object.
-//
-Error* Error_No_Memory(REBLEN bytes)
-{
-    UNUSED(bytes);  // !!! Revisit how this information could be tunneled
-    return Cell_Error(g_error_no_memory);
 }
 
 
@@ -1392,7 +1378,7 @@ static void Mold_Element_Limit(Molder* mo, Element* v, REBLEN limit)
         Term_Strand_Len_Size(str, start_len + limit, at - Strand_Head(str));
         Free_Bookmarks_Maybe_Null(str);
 
-        Append_Ascii(str, "...");
+        required (Append_Ascii(str, "..."));
     }
 }
 
@@ -1435,14 +1421,14 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
 
     // Form: ** <type> Error:
     //
-    Append_Ascii(mo->strand, "** ");
+    required (Append_Ascii(mo->strand, "** "));
     if (Is_Word(type)) {  // has a <type>
         Append_Spelling(mo->strand, Word_Symbol(type));
         Append_Codepoint(mo->strand, ' ');
     }
     else
         assert(Is_Nulled(type));  // no <type>
-    Append_Ascii(mo->strand, RM_ERROR_LABEL);  // "Error:"
+    required (Append_Ascii(mo->strand, RM_ERROR_LABEL));  // "Error:"
 
     // Append: error message ARG1, ARG2, etc.
     if (Is_Block(message)) {
@@ -1451,8 +1437,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     }
     else if (Is_Text(message))
         Form_Element(mo, cast(Element*, message));
-    else
-        Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT);
+    else {
+        required (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
+    }
 
     // Form: ** Where: function
     if (
@@ -1461,17 +1448,18 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     ){
         if (Is_Block(where)) {
             Append_Codepoint(mo->strand, '\n');
-            Append_Ascii(mo->strand, RM_ERROR_WHERE);
+            required (Append_Ascii(mo->strand, RM_ERROR_WHERE));
             Mold_Element(mo, cast(Element*, where));  // want {fence} shown
         }
-        else
-            Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT);
+        else {
+            required (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
+        }
     }
 
     // Form: ** Near: location
     if (not Is_Nulled(nearest)) {
         Append_Codepoint(mo->strand, '\n');
-        Append_Ascii(mo->strand, RM_ERROR_NEAR);
+        required (Append_Ascii(mo->strand, RM_ERROR_NEAR));
 
         if (Is_Text(nearest)) {
             //
@@ -1485,8 +1473,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
         }
         else if (Any_List(nearest) or Is_Path(nearest))
             Mold_Element_Limit(mo, cast(Element*, nearest), 60);
-        else
-            Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT);
+        else {
+            required (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
+        }
     }
 
     // Form: ** File: filename
@@ -1498,21 +1487,23 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     //
     if (not Is_Nulled(file)) {
         Append_Codepoint(mo->strand, '\n');
-        Append_Ascii(mo->strand, RM_ERROR_FILE);
+        required (Append_Ascii(mo->strand, RM_ERROR_FILE));
         if (Is_File(file))
             Form_Element(mo, cast(Element*, file));
-        else
-            Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT);
+        else {
+            required (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
+        }
     }
 
     // Form: ** Line: line-number
     if (not Is_Nulled(line)) {
         Append_Codepoint(mo->strand, '\n');
-        Append_Ascii(mo->strand, RM_ERROR_LINE);
+        required (Append_Ascii(mo->strand, RM_ERROR_LINE));
         if (Is_Integer(line))
             Form_Element(mo, cast(Element*, line));
-        else
-            Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT);
+        else {
+            required (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
+        }
     }
 
     return TRIPWIRE;

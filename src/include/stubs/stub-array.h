@@ -148,15 +148,17 @@ INLINE void Tweak_Link_Filename(Source* source, Option(const Strand*) filename)
 //
 INLINE Array* Make_Array_Core_Into(
     Flags flags,  // Make_Flex_Into() ensures not FLAVOR_0
-    void* preallocated,
+    Result(void*) preallocated,
     REBLEN capacity
 ){
+    void* pre = require (preallocated);
+
   #if DEBUG_POISON_FLEX_TAILS  // non-dynamic arrays poisoned by bit pattern
     if (capacity > 1 or (flags & STUB_FLAG_DYNAMIC))
         capacity += 1;  // account for space needed for poison cell
   #endif
 
-    Array* a = u_cast(Array*, Make_Flex_Into(flags, preallocated, capacity));
+    Array* a = require (nocast Make_Flex_Into(flags, pre, capacity));
     assert(Stub_Holds_Cells(a));  // flavor should have been an array flavor
 
     if (Get_Stub_Flag(a, DYNAMIC)) {
@@ -202,11 +204,11 @@ INLINE Array* Make_Array_Core_Into(
 INLINE Source* Alloc_Singular(Flags flags) {
     assert(Flavor_From_Flags(flags) == FLAVOR_SOURCE);
     assert(not (flags & STUB_FLAG_DYNAMIC));
-    Source* a = u_cast(Source*, Make_Flex_Into(
+    Source* a = require (u_cast(Result(Source*), Make_Flex_Into(
         flags | FLEX_FLAG_FIXED_SIZE,
         Alloc_Stub(),
         1
-    ));
+    )));
     assert(Stub_Holds_Cells(a));  // flavor should have been an array flavor
     Force_Erase_Cell(Stub_Cell(a));  // poison len 0, erased len 1
     return a;

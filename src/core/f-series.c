@@ -465,12 +465,12 @@ Result(bool) Equal_Values(const Value* s, const Value* t, bool strict)
     // the idea of duplicating the work, but it is undoubtedly a bit more
     // costly to make and dispatch the frame, even if done elegantly.
 
-    Level* const L = Make_End_Level(
+    Level* const L = require (Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
-    );
+    ));
 
-    Push_Action(L, LIB(EQUAL_Q), PREFIX_0);
+    required (Push_Action(L, LIB(EQUAL_Q), PREFIX_0));
 
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_EQUAL_Q;
@@ -529,12 +529,12 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     // the idea of duplicating the work, but it is undoubtedly a bit more
     // costly to make and dispatch the frame, even if done elegantly.
 
-    Level* const L = Make_End_Level(
+    Level* const L = require (Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
-    );
+    ));
 
-    Push_Action(L, LIB(LESSER_Q), PREFIX_0);
+    required (Push_Action(L, LIB(LESSER_Q), PREFIX_0));
 
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_LESSER_Q;

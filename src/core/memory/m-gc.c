@@ -1465,29 +1465,26 @@ void Startup_GC(void)
     // As a trick to keep this Flex from trying to track itself, say it's
     // managed, then sneak the flag off.
     //
-    ensure_nullptr(g_gc.manuals) = Make_Flex(
+    ensure_nullptr(g_gc.manuals) = require (Make_Flex(
         FLAG_FLAVOR(FLAVOR_FLEXLIST) | BASE_FLAG_MANAGED,  // lie!
-        Flex,
         15
-    );
+    ));
     Clear_Base_Managed_Bit(g_gc.manuals);  // untracked and indefinite lifetime
 
     // Flexes and Cells protected from GC.  Holds base pointers.
     //
-    ensure_nullptr(g_gc.guarded) = Make_Flex(
+    ensure_nullptr(g_gc.guarded) = require (Make_Flex(
         FLAG_FLAVOR(FLAVOR_NODELIST),
-        Flex,
         15
-    );
+    ));
 
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.
     //
-    ensure_nullptr(g_gc.mark_stack) = Make_Flex(
+    ensure_nullptr(g_gc.mark_stack) = require (Make_Flex(
         FLAG_FLAVOR(FLAVOR_NODELIST),
-        Flex,
         100
-    );
+    ));
 
     g_gc.ballast = MEM_BALLAST;  // or overwritten by R3_RECYCLE_TORTURE below
 
@@ -1520,12 +1517,12 @@ void Startup_GC(void)
     // the GC gets a chance to run, those stubs can be swept with all the
     // inaccessible references canonized to this one global Stub.
     //
-    Stub* s = Prep_Stub(
+    Stub* s = require (Prep_Stub(
         FLAG_FLAVOR(FLAVOR_THE_GLOBAL_INACCESSIBLE)
             | BASE_FLAG_UNREADABLE
             | BASE_FLAG_MARKED,
         &PG_Inaccessible_Stub
-    );
+    ));
     assert(Is_Stub_Diminished(&PG_Inaccessible_Stub));
     assert(BASE_BYTE(s) == DIMINISHED_CANON_BYTE);
     UNUSED(s);

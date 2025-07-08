@@ -176,7 +176,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Integer)
 
     Byte buf[60];
     REBINT len = Emit_Integer(buf, VAL_INT64(v));
-    Append_Ascii_Len(mo->strand, s_cast(buf), len);
+    required (Append_Ascii_Len(mo->strand, s_cast(buf), len));
 
     return TRIPWIRE;
 }

@@ -343,10 +343,10 @@ uint32_t Hash_Cell(const Cell* cell)
 // (Review making them non-managed, and freed in Diminish_Stub(), since they
 // are not shared in maps.  Consider impacts on the set operations.)
 //
-HashList* Make_Hashlist(REBLEN len)
+Result(HashList*) Make_Hashlist(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime_May_Panic(len * 2);  // best when 2X # of keys
-    Flex* f = Make_Flex(FLAG_FLAVOR(FLAVOR_HASHLIST), Flex, n + 1);
+    Flex* f = trap (Make_Flex(FLAG_FLAVOR(FLAVOR_HASHLIST), n + 1));
     Clear_Flex(f);
     Set_Flex_Len(f, n);
 
@@ -362,9 +362,9 @@ HashList* Make_Hashlist(REBLEN len)
 //
 // Note: hash array contents (indexes) are 1-based!
 //
-HashList* Hash_Block(const Value* block, REBLEN skip, bool cased)
+Result(HashList*) Hash_Block(const Value* block, REBLEN skip, bool cased)
 {
-    HashList* hashlist = Make_Hashlist(Series_Len_At(block));  // integers
+    HashList* hashlist = trap (Make_Hashlist(Series_Len_At(block)));  // ints
 
     const Element* tail;
     const Element* value = List_At(&tail, block);

@@ -90,18 +90,18 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     StackIndex base,
     bool error_on_deferred
 ){
-    Level* L = Make_Level(
+    Level* L = require (Make_Level(
         &Action_Executor,
         feed,
         LEVEL_MASK_NONE  // FULFILL_ONLY added after Push_Action()
-    );
+    ));
     L->baseline.stack_base = base;  // incorporate refinements
     Push_Level_Erase_Out_If_State_0(u_cast(Atom*, out), L);
 
     if (error_on_deferred)  // can't deal with ELSE/THEN [1]
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX;
 
-    Push_Action(L, action, PREFIX_0);
+    required (Push_Action(L, action, PREFIX_0));
 
     Array* varlist = L->varlist;  // Drop_Action() will null out L->varlist
 

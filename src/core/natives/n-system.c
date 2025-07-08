@@ -113,7 +113,9 @@ DECLARE_NATIVE(RECYCLE)
 
     if (Bool_ARG(VERBOSE)) {
       #if RUNTIME_CHECKS
-        Flex* sweeplist = Make_Flex(FLAG_FLAVOR(FLAVOR_NODELIST), Flex, 100);
+        Flex* sweeplist = require (
+            Make_Flex(FLAG_FLAVOR(FLAVOR_NODELIST), 100)
+        );
         count = Recycle_Core(sweeplist);
         assert(count == Flex_Used(sweeplist));
 

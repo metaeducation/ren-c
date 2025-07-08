@@ -244,10 +244,12 @@ INLINE Stub* Compact_Stub_From_Cell(const Cell* v) {
 // need to be initialized to get a functional non-dynamic Flex or Array of
 // length 0!  Only two are set here.
 //
-INLINE Stub* Prep_Stub(Flags flags, void *preallocated) {
+INLINE Result(Stub*) Prep_Stub(Flags flags, Result(void*) preallocated) {
+    void* pre = trap (preallocated);
+
     assert(not (flags & BASE_FLAG_CELL));
 
-    Stub *s = u_cast(Stub*, preallocated);
+    Stub *s = u_cast(Stub*, pre);
     s->header.bits = flags | BASE_FLAG_BASE;  // #1
 
   #if (NO_RUNTIME_CHECKS)
@@ -284,12 +286,12 @@ INLINE Stub* Prep_Stub(Flags flags, void *preallocated) {
 // (Because this leaks easily, it should really only be used by low-level code
 // that really knows what it's doing, and needs the performance.)
 //
-INLINE Stub* Make_Untracked_Stub(Flags flags) {
+INLINE Result(Stub*) Make_Untracked_Stub(Flags flags) {
     Flavor flavor = Flavor_From_Flags(flags);
     assert(flavor != FLAVOR_0 and flavor <= MAX_FLAVOR);
     UNUSED(flavor);
     assert(not (flags & (STUB_FLAG_DYNAMIC | FLEX_FLAG_FIXED_SIZE)));
-    Stub* s = Prep_Stub(flags | FLEX_FLAG_FIXED_SIZE, Alloc_Stub());
+    Stub* s = trap (Prep_Stub(flags | FLEX_FLAG_FIXED_SIZE, Alloc_Stub()));
     Force_Erase_Cell(&s->content.fixed.cell);  // should callers do?
     return s;
 }

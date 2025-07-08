@@ -525,11 +525,12 @@ INLINE void Set_Flex_Len(Flex* f, Length len) {
 
 // Optimized expand when at tail (but, does not reterminate)
 //
-INLINE void Expand_Flex_Tail(Flex* f, REBLEN delta) {
+INLINE Result(Zero) Expand_Flex_Tail(Flex* f, REBLEN delta) {
     if (Flex_Fits(f, delta))
         Set_Flex_Used(f, Flex_Used(f) + delta);  // no termination implied
     else
         Expand_Flex(f, Flex_Used(f), delta);  // currently terminates
+    return zero;
 }
 
 
@@ -541,19 +542,24 @@ INLINE void Expand_Flex_Tail(Flex* f, REBLEN delta) {
 //   create it in the managed state.  But be sure no evaluations are called
 //   before it's made reachable by the GC, or use Push_Lifeguard().
 //
-INLINE Flex* Make_Flex_Into(
+INLINE Result(Flex*) Make_Flex_Into(
     Flags flags,
-    void* preallocated,
+    Result(void*) preallocated,
     REBLEN capacity
 ){
+    void* pre = require (preallocated);
+
     Flavor flavor = Flavor_From_Flags(flags);
     assert(flavor != FLAVOR_0 and flavor <= MAX_FLAVOR);
 
     size_t wide = Wide_For_Flavor(flavor);
-    if (cast(REBU64, capacity) * wide > INT32_MAX)
-        panic (Error_No_Memory(cast(REBU64, capacity) * wide));
+    if (cast(REBU64, capacity) * wide > INT32_MAX) {
+        Size requested_size = cast(REBU64, capacity) * wide;
+        UNUSED(requested_size);  // can't alloc memory, how to report?
+        return fail (Cell_Error(g_error_no_memory));
+    }
 
-    Flex* s = cast(Flex*, Prep_Stub(flags, preallocated));
+    Flex* s = cast(Flex*, guarantee (Prep_Stub(flags, pre)));
 
     if (
         (flags & STUB_FLAG_DYNAMIC)  // inlining will constant fold
@@ -561,12 +567,12 @@ INLINE Flex* Make_Flex_Into(
     ){
         Set_Stub_Flag(s, DYNAMIC);
 
-        if (not Try_Flex_Data_Alloc(s, capacity)) {
+        Flex_Data_Alloc(s, capacity) except (Error* e) {
             Clear_Base_Managed_Bit(s);
             Set_Stub_Unreadable(s);
             GC_Kill_Stub(s);
 
-            panic (Error_No_Memory(capacity * wide));
+            return fail (e);
         }
 
       #if DEBUG_COLLECT_STATS
@@ -586,12 +592,8 @@ INLINE Flex* Make_Flex_Into(
     return s;
 }
 
-#define Make_Flex_Core(flags, capacity) \
+#define Make_Flex(flags, capacity) \
     Make_Flex_Into((flags), Alloc_Pooled(STUB_POOL), (capacity))
-
-#define Make_Flex(flags,T,capacity) \
-    cast(T*, Make_Flex_Core((flags), (capacity)))
-
 
 //=//// FLEX MONITORING ///////////////////////////////////////////////////=//
 //

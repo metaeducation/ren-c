@@ -61,7 +61,7 @@ DECLARE_NATIVE(BIND)
             if (not Is_Pinned_Form_Of(WORD, at))
                 panic ("BLOCK! binds all @word for the moment");
 
-            Use* use = Alloc_Use_Inherits(Cell_Binding(v));
+            Use* use = require (Alloc_Use_Inherits(Cell_Binding(v)));
             Derelativize(Stub_Cell(use), at, Cell_Binding(spec));
             KIND_BYTE(Stub_Cell(use)) = TYPE_WORD;
 
@@ -91,7 +91,7 @@ DECLARE_NATIVE(BIND)
         if (not Is_Cell_Listlike(v))  // QUOTED? could have wrapped any type
             panic (Error_Invalid_Arg(level_, PARAM(VALUE)));
 
-        Use* use = Alloc_Use_Inherits(Cell_Binding(v));
+        Use* use = require (Alloc_Use_Inherits(Cell_Binding(v)));
         Copy_Cell(Stub_Cell(use), spec);
         KIND_BYTE(Stub_Cell(use)) = TYPE_WORD;
 
@@ -113,7 +113,7 @@ DECLARE_NATIVE(BIND)
     if (not Is_Cell_Listlike(v))  // QUOTED? could have wrapped any type
         panic (Error_Invalid_Arg(level_, PARAM(VALUE)));
 
-    Use* use = Alloc_Use_Inherits(Cell_Binding(v));
+    Use* use = require (Alloc_Use_Inherits(Cell_Binding(v)));
     Copy_Cell(Stub_Cell(use), context);
     Tweak_Cell_Binding(v, use);
 
@@ -218,7 +218,7 @@ DECLARE_NATIVE(OVERBIND)
     else
         assert(Any_Context(defs));
 
-    Use* use = Alloc_Use_Inherits(List_Binding(v));
+    Use* use = require (Alloc_Use_Inherits(List_Binding(v)));
     Copy_Cell(Stub_Cell(use), defs);
 
     Tweak_Cell_Binding(v, use);
@@ -310,7 +310,7 @@ DECLARE_NATIVE(WITHOUT)
         return OUT;
     }
 
-    Use* use = Alloc_Use_Inherits(List_Binding(v));
+    Use* use = require (Alloc_Use_Inherits(List_Binding(v)));
     Copy_Cell(Stub_Cell(use), Varlist_Archetype(ctx));
 
     Tweak_Cell_Binding(v, use);

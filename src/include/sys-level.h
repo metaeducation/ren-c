@@ -576,18 +576,23 @@ INLINE void Drop_Level(Level* L)
 //    out, but some clients do depend on the StackIndex being captured before
 //    Push_Level() is called, so this snaps the whole baseline here.
 //
-INLINE Level* Prep_Level_Core(
+INLINE Result(Level*) Prep_Level_Core(
     Executor* executor,
-    Level* L,
-    Feed* feed,
+    Result(void*) preallocated,
+    Result(Feed*) feed,
     Flags flags
 ){
-    if (L == nullptr)  // e.g. a failed allocation
-       panic (Error_No_Memory(sizeof(Level)));
+    Level* L = require (u_cast(Result(Level*), preallocated));
 
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;
 
-    L->feed = feed;
+    L->feed = feed except (Error* e) {
+        Free_Pooled(LEVEL_POOL, L);
+        return fail (e);
+    }
+
+    Add_Feed_Reference(L->feed);
+
     Force_Erase_Cell(&L->spare);
     Force_Erase_Cell(&L->scratch);
     Corrupt_If_Needful(L->out);
@@ -613,8 +618,7 @@ INLINE Level* Prep_Level_Core(
 }
 
 #define Make_Level(executor,feed,flags) \
-    Prep_Level_Core(executor, u_cast(Level*, Alloc_Pooled(LEVEL_POOL)), \
-        Add_Feed_Reference(feed), (flags))
+    Prep_Level_Core(executor, Alloc_Pooled(LEVEL_POOL), (feed), (flags))
 
 #define Make_Level_At_Inherit_Const(executor,list,binding,level_flags) \
     Make_Level( \

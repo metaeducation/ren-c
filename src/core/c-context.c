@@ -49,11 +49,10 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
     Alloc_Tail_Array(a);  // allocate rootvar
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);
 
-    KeyList* keylist = Make_Flex(
+    KeyList* keylist = require (nocast Make_Flex(
         STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,  // always shareable
-        KeyList,
         capacity  // no terminator
-    );
+    ));
     Tweak_Link_Keylist_Ancestor(keylist, keylist);  // default to self
     assert(Flex_Used(keylist) == 0);
 
@@ -69,7 +68,9 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 SeaOfVars* Alloc_Sea_Core(Flags flags) {
     assert(Flavor_From_Flags(flags) == FLAVOR_0);  // always make sea
 
-    Stub* s = Prep_Stub(flags | STUB_MASK_SEA_NO_MARKING, Alloc_Stub());
+    Stub* s = require (
+        Prep_Stub(flags | STUB_MASK_SEA_NO_MARKING, Alloc_Stub()
+    ));
     Force_Erase_Cell(&s->content.fixed.cell);
     Init_Space(Stub_Cell(s));
     LINK_CONTEXT_INHERIT_BIND(s) = nullptr;  // no LINK_NEEDS_MARK flag
@@ -122,7 +123,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
     Set_Flex_Len(Varlist_Array(varlist), len + delta + 1);  // include rootvar
 
     if (Get_Flavor_Flag(KEYLIST, k, SHARED)) {  // need new keylist [1]
-        KeyList* k_copy = cast(KeyList*, Copy_Flex_At_Len_Extra(
+        KeyList* k_copy = require (nocast Copy_Flex_At_Len_Extra(
             STUB_MASK_KEYLIST,
             k,
             0,
@@ -189,7 +190,7 @@ Init(Slot) Append_To_Sea_Core(
         TRACK(Erase_Cell(Stub_Cell(patch)));  // prepare for addition
     }
     else {
-        patch = cast(Patch*, Make_Untracked_Stub(STUB_MASK_PATCH));
+        patch = require (nocast Make_Untracked_Stub(STUB_MASK_PATCH));
     }
 
   add_to_circularly_linked_list_hung_on_symbol: {
@@ -776,11 +777,10 @@ VarList* Make_Varlist_Detect_Managed(
         );
     }
     else {  // new keys, need new keylist
-        KeyList* keylist = Make_Flex(
+        KeyList* keylist = require (nocast Make_Flex(
             STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
-            KeyList,
             len  // no terminator, 0-based
-        );
+        ));
 
         Set_Flex_Used(keylist, len);
 

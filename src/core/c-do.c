@@ -53,7 +53,7 @@ Result(Zero) Prep_Action_Level(
     const Value* action,
     Option(const Atom*) with
 ){
-    Push_Action(L, action, PREFIX_0);
+    trapped (Push_Action(L, action, PREFIX_0));
 
     const Key* key = L->u.action.key;
     const Param* param = L->u.action.param;
@@ -96,10 +96,10 @@ void Push_Frame_Continuation(
     const Value* frame,  // may be antiform
     Option(const Atom*) with
 ){
-    Level* L = Make_End_Level(
+    Level* L = require (Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
-    );
+    ));
     Prep_Action_Level(L, frame, with);
     Push_Level_Erase_Out_If_State_0(out, L);
 }
@@ -145,12 +145,12 @@ bool Pushed_Continuation(
 
     if (Is_Pinned_Form_Of(GROUP, branch)) {  // [2] for GET-GROUP!
         assert(flags & LEVEL_FLAG_FORCE_HEAVY_NULLS);  // needed for trick
-        Level* grouper = Make_Level_At_Core(
+        Level* grouper = require (Make_Level_At_Core(
             &The_Group_Branch_Executor,  // evaluates to synthesize branch
             cast(Element*, branch),
             binding,
             (flags & (~ LEVEL_FLAG_FORCE_HEAVY_NULLS))
-        );
+        ));
         if (with == nullptr)  // spare will hold the value
             assert(Is_Cell_Erased(Level_Spare(grouper)));
         else
@@ -197,9 +197,9 @@ bool Pushed_Continuation(
         goto just_use_out;
 
       case TYPE_BLOCK: {
-        Level* L = Make_Level_At_Core(
+        Level* L = require (Make_Level_At_Core(
             &Evaluator_Executor, cast(Element*, branch), binding, flags
-        );
+        ));
         Init_Void(Evaluator_Primed_Cell(L));
 
         Push_Level_Erase_Out_If_State_0(out, L);
@@ -209,12 +209,12 @@ bool Pushed_Continuation(
         if (not Is_Get_Block(branch))
             panic ("GET-BLOCK! is only CHAIN branch currently working");
 
-        Level* L = Make_End_Level(
+        Level* L = require (Make_End_Level(
             &Action_Executor,
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
-        );
+        ));
 
-        Push_Action(L, LIB(REDUCE), PREFIX_0);
+        required (Push_Action(L, LIB(REDUCE), PREFIX_0));
 
         const Key* key = L->u.action.key;
         const Param* param = L->u.action.param;

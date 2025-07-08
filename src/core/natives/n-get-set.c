@@ -116,10 +116,10 @@ Result(Zero) Get_Tuple_Maybe_Trash(
     const Element* tuple,
     Context* context
 ){
-    Level* level_ = Make_End_Level(
+    Level* level_ = require (Make_End_Level(
         &Stepper_Executor,
         LEVEL_MASK_NONE | FLAG_STATE_BYTE(1) // rule for trampoline
-    );
+    ));
 
     Sink(Atom) atom_out = u_cast(Atom*, out);
     Push_Level_Erase_Out_If_State_0(atom_out, level_);
@@ -178,10 +178,10 @@ Result(Zero) Get_Var_Maybe_Trash(
                 // need to drop level before returning
             }
         } else {
-            Level* level_ = Make_End_Level(
+            Level* level_ = require (Make_End_Level(
                 &Stepper_Executor,
                 LEVEL_MASK_NONE | FLAG_STATE_BYTE(1)  // rule for trampoline
-            );
+            ));
 
             Push_Level_Erase_Out_If_State_0(out, level_);
 
@@ -220,10 +220,10 @@ Result(Zero) Get_Var_Maybe_Trash(
         return zero;
     }
 
-    Level* level_ = Make_End_Level(
+    Level* level_ = require (Make_End_Level(
         &Stepper_Executor,
         LEVEL_MASK_NONE | FLAG_STATE_BYTE(1)  // rule for trampoline
-    );
+    ));
 
     Push_Level_Erase_Out_If_State_0(out, level_);  // flushes corruption
 
@@ -642,7 +642,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     if (Is_Quasiform(SPARE))
         return Error_User("TWEAK* cannot be used on antiforms");
 
-    Push_Action(sub, LIB(TWEAK_P), PREFIX_0);
+    required (Push_Action(sub, LIB(TWEAK_P), PREFIX_0));
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
     bool picker_was_meta;
@@ -731,7 +731,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
     Atom* spare_location_dual = SPARE;
 
-    Push_Action(sub, LIB(TWEAK_P), PREFIX_0);
+    required (Push_Action(sub, LIB(TWEAK_P), PREFIX_0));
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
     Element* location_arg;
@@ -1047,7 +1047,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
   keep_picking_until_last_step: {
 
-    Level* sub = Make_End_Level(&Action_Executor, flags);
+    Level* sub = require (Make_End_Level(&Action_Executor, flags));
 
     for (; stackindex != limit; ++stackindex, Restart_Action_Level(sub)) {
         e = Trap_Call_Pick_Refresh_Dual_In_Spare(
@@ -1139,7 +1139,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     // as we go back through the list of steps to update any bits that are
     // required to update in the referencing cells.
 
-    Level* sub = Make_End_Level(&Action_Executor, flags);
+    Level* sub = require (Make_End_Level(&Action_Executor, flags));
 
     e = Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         level_,

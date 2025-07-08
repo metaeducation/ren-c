@@ -212,28 +212,20 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 //  "Introduce periodic or deterministic fuzzing of out of memory errors"
 //
 //      return: []
-//      factor "Ticks or percentage of time to cause allocation errors"
-//          [integer! percent!]
+//      factor [integer! percent!]
 //  ]
 //
 DECLARE_NATIVE(FUZZ)
-//
-// 1. A negative g_mem.fuzz_factor will just count ticks.
-//
-// 2. A positive g_mem.fuzz_factor is used with SPORADICALLY(10000) as the
-//    number it is compared against.  If the result is less than the specified
-//    amount it's a hit.  1.0 is thus 10000, which will always trigger.  0.0
-//    is thus 0 and will never trigger.
 {
     INCLUDE_PARAMS_OF_FUZZ;
 
-  #if RUNTIME_CHECKS
+  #if TRAMPOLINE_COUNTS_TICKS && RUNTIME_CHECKS
     if (Is_Integer(ARG(FACTOR))) {
-        g_mem.fuzz_factor = - VAL_INT32(ARG(FACTOR));  // negative [1]
+        g_mem.fuzz_factor = VAL_UINT32(ARG(FACTOR));
     }
     else {
         assert(Is_Percent(ARG(FACTOR)));
-        g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(FACTOR));  // positive [2]
+        g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(FACTOR));
     }
     return TRIPWIRE;
   #else

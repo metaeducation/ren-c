@@ -33,15 +33,14 @@
 // of encoded data.  Note that this is not a guarantee of being able to hold
 // more than `encoded_capacity / UNI_ENCODED_MAX` unencoded codepoints...
 //
-Strand* Make_Strand_Core(Flags flags, Size encoded_capacity)
+Result(Strand*) Make_Strand_Core(Flags flags, Size encoded_capacity)
 {
     assert(Flavor_From_Flags(flags) == FLAVOR_NONSYMBOL);
 
-    Strand* str = Make_Flex(
+    Strand* str = trap (nocast Make_Flex(
         STUB_MASK_STRAND | flags,
-        Strand,
         encoded_capacity + 1  // + 1 makes room for '\0' terminator
-    );
+    ));
     Tweak_Misc_Num_Codepoints(str, 0);
     Tweak_Link_Bookmarks(str, nullptr);  // generated on demand
     *Binary_Head(str) = '\0';  // zero length, so head = tail
@@ -69,8 +68,10 @@ Binary* Make_Binary_From_Sized_Bytes(const Byte* src, Size len)
 // Copying a Strand is distinct from copying a Binary due to the length being
 // counted in characters, and not units of the Flex width (1).
 //
-Strand* Copy_String_At_Limit(const Cell* src, Option(const Length*) limit)
-{
+Result(Strand*) Copy_String_At_Limit(
+    const Cell* src,
+    Option(const Length*) limit
+){
     Size limited_size;
     Length limited_length;
     Utf8(const*) utf8 = Cell_Utf8_Len_Size_At_Limit(
@@ -80,7 +81,7 @@ Strand* Copy_String_At_Limit(const Cell* src, Option(const Length*) limit)
         limit
     );
 
-    Strand* dst = Make_Strand(limited_size);
+    Strand* dst = trap (Make_Strand(limited_size));
     memcpy(cast(Byte*, Strand_Head(dst)), cast(Byte*, utf8), limited_size);
     Term_Strand_Len_Size(dst, limited_length, limited_size);
 
@@ -131,13 +132,13 @@ Strand* Append_Codepoint(Strand* dst, Codepoint c)
 // !!! This could be more optimal if a CHAR! is passed in, because it caches
 // the UTF-8 encoding in the cell.  Review callsites if that is actionable.
 //
-Strand* Make_Codepoint_Strand(Codepoint c)
+Result(Strand*) Make_Codepoint_Strand(Codepoint c)
 {
     if (c == '\0')
-        panic (Error_Illegal_Zero_Byte_Raw());
+        return fail (Error_Illegal_Zero_Byte_Raw());
 
     Size size = Encoded_Size_For_Codepoint(c);
-    Strand* s = Make_Strand(size);
+    Strand* s = trap (Make_Strand(size));
     Encode_UTF8_Char(Strand_Head(s), c, size);
     Term_Strand_Len_Size(s, 1, size);
     return s;
@@ -153,20 +154,20 @@ Strand* Make_Codepoint_Strand(Codepoint c)
 // !!! Should checked build assert it's ASCII?  Most of these are coming from
 // C literals in the source.
 //
-Strand* Append_Ascii_Len(Strand* dst, const char *ascii, REBLEN len)
+Result(Strand*) Append_Ascii_Len(Strand* dst, const char *ascii, REBLEN len)
 {
     REBLEN old_size;
     REBLEN old_len;
 
     if (dst == nullptr) {
-        dst = Make_Strand(len);
+        dst = trap (Make_Strand(len));
         old_size = 0;
         old_len = 0;
     }
     else {
         old_size = Strand_Size(dst);
         old_len = Strand_Len(dst);
-        Expand_Flex_Tail(dst, len);
+        trapped (Expand_Flex_Tail(dst, len));
     }
 
     memcpy(Binary_At(dst, old_size), ascii, len);
@@ -184,7 +185,7 @@ Strand* Append_Ascii_Len(Strand* dst, const char *ascii, REBLEN len)
 //
 // !!! Should be in a header file so it can be inlined.
 //
-Strand* Append_Ascii(Strand* dst, const char *src)
+Result(Strand*) Append_Ascii(Strand* dst, const char *src)
 {
     return Append_Ascii_Len(dst, src, strsize(src));
 }
@@ -247,12 +248,13 @@ void Append_Any_Utf8_Limit(
 //
 // Append an integer string.
 //
-void Append_Int(Strand* dst, REBINT num)
+Result(Zero) Append_Int(Strand* dst, REBINT num)
 {
     Byte buf[32];
     Form_Int(buf, num);
 
-    Append_Ascii(dst, s_cast(buf));
+    trapped (Append_Ascii(dst, s_cast(buf)));
+    return zero;
 }
 
 
@@ -261,7 +263,7 @@ void Append_Int(Strand* dst, REBINT num)
 //
 // Append an integer string.
 //
-void Append_Int_Pad(Strand* dst, REBINT num, REBINT digs)
+Result(Zero) Append_Int_Pad(Strand* dst, REBINT num, REBINT digs)
 {
     Byte buf[32];
     if (digs > 0)
@@ -269,7 +271,8 @@ void Append_Int_Pad(Strand* dst, REBINT num, REBINT digs)
     else
         Form_Int_Pad(buf, num, -digs, digs, '0');
 
-    Append_Ascii(dst, s_cast(buf));
+    trapped (Append_Ascii(dst, s_cast(buf)));
+    return zero;
 }
 
 

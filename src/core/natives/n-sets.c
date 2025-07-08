@@ -116,7 +116,7 @@ Flex* Make_Set_Operation_Flex(
         // efficient.
         //
         Array* buffer = Make_Source(i);
-        hret = Make_Hashlist(i);   // allocated
+        hret = require (Make_Hashlist(i));   // allocated
 
         // Optimization note: !!
         // This code could be optimized for small blocks by not hashing them
@@ -129,8 +129,9 @@ Flex* Make_Set_Operation_Flex(
 
             // Check what is in series1 but not in series2
             //
-            if (flags & SOP_FLAG_CHECK)
-                hflex = Hash_Block(val2, skip, cased);
+            if (flags & SOP_FLAG_CHECK) {
+                hflex = require (Hash_Block(val2, skip, cased));
+            }
 
             // Iterate over first series
             //

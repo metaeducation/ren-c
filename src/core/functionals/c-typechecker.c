@@ -428,12 +428,12 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 }} non_intrinsic_dispatch: { /////////////////////////////////////////////////
 
     Flags flags = 0;
-    Level* sub = Make_End_Level(
+    Level* sub = require (Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
-    );
+    ));
     Push_Level_Erase_Out_If_State_0(SCRATCH, sub);  // sub's out is L->scratch
-    Push_Action(sub, test, PREFIX_0);
+    required (Push_Action(sub, test, PREFIX_0));
 
     const Key* key = sub->u.action.key;
     const Param* param = sub->u.action.param;

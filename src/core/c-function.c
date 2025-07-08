@@ -206,7 +206,7 @@ static Result(Zero) Push_Keys_And_Params_Core(
                 assert(not *adjunct);
                 Force_Adjunct(adjunct);
 
-                Strand* strand = Copy_String_At(item);
+                Strand* strand = require (Copy_String_At(item));
                 Manage_Flex(strand);
                 Freeze_Flex(strand);
                 Init_Text(
@@ -224,7 +224,7 @@ static Result(Zero) Push_Keys_And_Params_Core(
                 if (Parameter_Strand(TOP_ELEMENT))
                     return fail (Error_Bad_Func_Def_Raw(item));
 
-                Strand* strand = Copy_String_At(item);
+                Strand* strand = require (Copy_String_At(item));
                 Manage_Flex(strand);
                 Freeze_Flex(strand);
                 Set_Parameter_Strand(TOP_ELEMENT, strand);
@@ -485,11 +485,11 @@ Result(Zero) Push_Keys_And_Params(
     Flags flags,
     Option(SymId) returner  // e.g. SYM_RETURN or SYM_YIELD
 ){
-    Level* L = Make_Level_At(
+    Level* L = require (Make_Level_At(
         &Stepper_Executor,
         spec,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-    );
+    ));
 
     Push_Keys_And_Params_Core(adjunct, L, flags, returner) except (Error* e) {
         Drop_Data_Stack_To(L->baseline.stack_base);
@@ -519,11 +519,10 @@ Result(ParamList*) Pop_Paramlist(
 ){
     Count num_params = (TOP_INDEX - base) / 2;
 
-    KeyList* keylist = Make_Flex(
+    KeyList* keylist = require (nocast Make_Flex(
         STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
-        KeyList,
         num_params
-    );
+    ));
     Set_Flex_Used(keylist, num_params);  // no terminator
     Tweak_Link_Keylist_Ancestor(keylist, keylist);  // chain
 

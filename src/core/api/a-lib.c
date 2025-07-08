@@ -169,16 +169,15 @@ unsigned char* API_rebAllocBytes(size_t size)
 {
     ENTER_API;
 
-    Binary* b = Make_Flex(
+    Binary* b = require (nocast Make_Flex(
         FLAG_FLAVOR(FLAVOR_BINARY)  // rebRepossess() only creates BLOB! ATM
             | BASE_FLAG_ROOT  // indicate this originated from the API
             | STUB_FLAG_DYNAMIC  // rebRepossess() needs bias field
             | FLEX_FLAG_DONT_RELOCATE,  // direct data pointer handed back
-        Binary,
         ALIGN_SIZE  // stores Binary* (must be at least big enough for void*)
             + size  // for the actual data capacity (may be 0, see notes)
             + 1  // for termination (AS TEXT! of rebRepossess(), see notes)
-    );
+    ));
 
     Byte* ptr = Binary_Head(b) + ALIGN_SIZE;
 
@@ -1136,10 +1135,10 @@ static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     const void* p,  // null vaptr means void* array [2] else first param [3]
     Option(void*) vaptr  // guides interpretation of p [4]
 ){
-    Feed* feed = Make_Variadic_Feed(
+    Feed* feed = trap (Make_Variadic_Feed(
         p, u_cast(va_list*, maybe vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
-    );
+    ));
 
     if (binding == nullptr) {
         assert(Is_Stub_Sea(g_user_context));
@@ -1149,7 +1148,13 @@ static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     assert(Is_Base_Managed(binding));
     Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
-    Level* L = Make_Level(&Evaluator_Executor, feed, LEVEL_MASK_NONE);
+    Level* L = Make_Level(
+        &Evaluator_Executor, feed, LEVEL_MASK_NONE
+    ) except (Error* e) {
+        Free_Feed(feed);
+        return fail (e);
+    }
+
     Init_Unsurprising_Ghost(Evaluator_Primed_Cell(L));
 
     if (run_flags & RUN_VA_FLAG_INTERRUPTIBLE)
@@ -1236,10 +1241,10 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     uintptr_t flags,  // Flags not exported in API
     const void* p, void* vaptr
 ){
-    Feed* feed = Make_Variadic_Feed(
+    Feed* feed = require (Make_Variadic_Feed(
         p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
-    );
+    ));
 
     if (binding == nullptr) {
         assert(Is_Stub_Sea(g_user_context));
@@ -1250,7 +1255,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     Tweak_Feed_Binding(feed, cast(Stub*, binding));
 
     Sink(Atom) atom_out = u_cast(Atom*, out);
-    Level* L = Make_Level(&Stepper_Executor, feed, flags);
+    Level* L = require (Make_Level(&Stepper_Executor, feed, flags));
     Push_Level_Erase_Out_If_State_0(atom_out, L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
@@ -1312,10 +1317,10 @@ RebolValue* API_rebTranscodeInto(
 ){
     ENTER_API;
 
-    Feed* feed = Make_Variadic_Feed(
+    Feed* feed = require (Make_Variadic_Feed(
         p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
-    );
+    ));
     Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Panic(feed);
 
@@ -1370,7 +1375,7 @@ void API_rebPushContinuation_internal(
     else
         Tweak_Cell_Binding(block, g_lib_context);  // [3]
 
-    Level* L = Make_Level_At(&Evaluator_Executor, block, flags);
+    Level* L = require (Make_Level_At(&Evaluator_Executor, block, flags));
     Init_Unsurprising_Ghost(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(u_cast(Atom*, out), L);
 }
@@ -2565,7 +2570,9 @@ RebolBaseInternal* API_rebINLINE(const RebolValue* v)
 {
     ENTER_API;
 
-    Stub* s = Make_Untracked_Stub(FLAG_FLAVOR(FLAVOR_INSTRUCTION_SPLICE));
+    Stub* s = require (
+        Make_Untracked_Stub(FLAG_FLAVOR(FLAVOR_INSTRUCTION_SPLICE))
+    );
 
     if (not (Is_Block(v) or Is_Quoted(v) or Is_Space(v)))
         panic ("rebINLINE() requires argument to be a BLOCK!/QUOTED?/SPACE");
@@ -3159,10 +3166,10 @@ RebolValue* API_rebFunctionFlipped(
     RebolActionCFunction* cfunc,  // for typechecking, must be first [1]
     const void* p, void* vaptr
 ){
-    Feed* feed = Make_Variadic_Feed(
+    Feed* feed = require (Make_Variadic_Feed(
         p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
-    );
+    ));
     Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Panic(feed);
 

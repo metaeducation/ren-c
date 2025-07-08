@@ -149,12 +149,12 @@ Bounce The_Group_Branch_Executor(Level* const L)
     if (Is_Cell_Erased(with))
         Init_Nulled(with);
 
-    Level* sub = Make_Level(
+    Level* sub = require (Make_Level(
         &Evaluator_Executor,
         LEVEL->feed,
         LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
             & (~ LEVEL_FLAG_FORCE_HEAVY_NULLS)  // take off branch flag [1]
-    );
+    ));
     Init_Void(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(branch, sub);  // branch GC-protected [2]
 
@@ -457,7 +457,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     }
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
-    Level* sub = Make_Level_At(executor, block, flags);
+    Level* sub = require (Make_Level_At(executor, block, flags));
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
     STATE = ST_ANY_ALL_NONE_EVAL_STEP;
@@ -684,11 +684,11 @@ DECLARE_NATIVE(CASE)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Level* L = Make_Level_At(
+    Level* L = require (Make_Level_At(
         &Stepper_Executor,
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-    );
+    ));
 
     Push_Level_Erase_Out_If_State_0(SPARE, L);
 
@@ -767,12 +767,12 @@ DECLARE_NATIVE(CASE)
     if (not Is_Group(branch))
         goto handle_processed_branch_in_scratch;
 
-    Level* sub = Make_Level_At_Inherit_Const(
+    Level* sub = require (Make_Level_At_Inherit_Const(
         &Evaluator_Executor,
         branch,  // non @GROUP! branches are run unconditionally
         Level_Binding(SUBLEVEL),
         LEVEL_MASK_NONE
-    );
+    ));
     Init_Void(Evaluator_Primed_Cell(sub));
 
     STATE = ST_CASE_EVALUATING_GROUP_BRANCH;
@@ -917,11 +917,11 @@ DECLARE_NATIVE(SWITCH)
         LIFT_BYTE(predicate) = NOQUOTE_2;
     }
 
-    Level* sub = Make_Level_At(
+    Level* sub = require (Make_Level_At(
         &Stepper_Executor,
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-    );
+    ));
 
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 

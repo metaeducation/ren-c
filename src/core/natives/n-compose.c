@@ -155,7 +155,7 @@ static void Push_Composer_Level(
     else
         assert(Any_List_Type(heart));
 
-    Level* sub = Make_Level_At_Inherit_Const(
+    Level* sub = require (Make_Level_At_Inherit_Const(
         &Composer_Executor,
         Is_Cell_Erased(adjusted) ? list_or_seq : adjusted,
         Derive_Binding(
@@ -163,7 +163,7 @@ static void Push_Composer_Level(
             Is_Cell_Erased(adjusted) ? list_or_seq : adjusted
         ),
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
-    );
+    ));
     Push_Level_Erase_Out_If_State_0(out, sub);  // sublevel may fail
 
     sub->u.compose.main_level = main_level;   // pass options [2]
@@ -675,7 +675,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     Utf8(const*) head = Cell_Utf8_At(input);
 
-    TranscodeState* transcode = Try_Alloc_Memory(TranscodeState);
+    TranscodeState* transcode = require (Alloc_On_Heap(TranscodeState));
     Init_Handle_Cdata(SCRATCH, transcode, 1);
 
     const LineNumber start_line = 1;

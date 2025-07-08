@@ -786,7 +786,7 @@ Element* Init_Loop_Each_May_Alias_Data(Sink(Element) iterator, Value* data)
 {
     assert(not Is_Api_Value(data));  // used to be cue to free, but not now
 
-    LoopEachState *les = Try_Alloc_Memory(LoopEachState);
+    LoopEachState *les = require (Alloc_On_Heap(LoopEachState));
 
     if (Any_Sequence(data)) {  // alias paths, chains, tuples as BLOCK!
         DECLARE_ELEMENT (temp);
@@ -1537,11 +1537,11 @@ DECLARE_NATIVE(REMOVE_EACH)
                 assert(start <= len);
                 if (Is_Blob(data)) {
                     Binary* b = cast(Binary*, flex);
-                    Append_Ascii_Len(
+                    required (Append_Ascii_Len(
                         mo->strand,
                         s_cast(Binary_At(b, start)),
                         1
-                    );
+                    ));
                 }
                 else {
                     Append_Codepoint(
@@ -1624,11 +1624,11 @@ DECLARE_NATIVE(REMOVE_EACH)
         //
         REBLEN orig_len = Series_Len_Head(data);
         assert(start <= orig_len);
-        Append_Ascii_Len(
+        required (Append_Ascii_Len(
             mo->strand,
             s_cast(Binary_At(b, start)),
             orig_len - start
-        );
+        ));
 
         Binary* popped = Pop_Molded_Binary(mo);  // not UTF-8 if binary [7]
 

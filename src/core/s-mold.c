@@ -122,7 +122,7 @@ Byte* Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 //
 void Begin_Non_Lexical_Mold(Molder* mo, const Element* v)
 {
-    Append_Ascii(mo->strand, "&[");
+    required (Append_Ascii(mo->strand, "&["));
 
     const Value* datatype = Datatype_Of(v);
     const Element* word = List_Item_At(datatype);
@@ -171,8 +171,9 @@ void New_Indented_Line(Molder* mo)
     // Add proper indentation:
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_INDENT)) {
         REBINT n;
-        for (n = 0; n < mo->indent; n++)
-            Append_Ascii(mo->strand, "    ");
+        for (n = 0; n < mo->indent; n++) {
+            required (Append_Ascii(mo->strand, "    "));
+        }
     }
 }
 
@@ -242,7 +243,7 @@ void Mold_Array_At(
     if (Find_Pointer_In_Flex(g_mold.stack, a) != NOT_FOUND) {
         if (sep[0] != '\0')
             Append_Codepoint(mo->strand, sep[0]);
-        Append_Ascii(mo->strand, "...");
+        required (Append_Ascii(mo->strand, "..."));
         if (sep[1] != '\0')
             Append_Codepoint(mo->strand, sep[1]);
         return;
@@ -433,7 +434,7 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
 
     if (Not_Cell_Readable(e)) {
       #if RUNTIME_CHECKS
-        Append_Ascii(mo->strand, "\\\\unreadable\\\\");
+        required (Append_Ascii(mo->strand, "\\\\unreadable\\\\"));
       #endif
         return;  // !!! should never happen in release builds
     }
@@ -584,7 +585,7 @@ Strand* Pop_Molded_String_Core(Strand* buf, Size offset, Length index)
     Size size = Strand_Size(buf) - offset;
     Length len = Strand_Len(buf) - index;
 
-    Strand* popped = Make_Strand(size);
+    Strand* popped = require (Make_Strand(size));
     memcpy(Binary_Head(popped), Binary_At(buf, offset), size);
     Term_Strand_Len_Size(popped, len, size);
 
@@ -701,14 +702,14 @@ void Drop_Mold_Core(
 //
 void Startup_Mold(Size encoded_capacity)
 {
-    g_mold.stack = Make_Flex(FLAG_FLAVOR(FLAVOR_MOLDSTACK), Flex, 10);
+    g_mold.stack = require (Make_Flex(FLAG_FLAVOR(FLAVOR_MOLDSTACK), 10));
 
-    ensure_nullptr(g_mold.buffer) = Make_Strand_Core(
+    ensure_nullptr(g_mold.buffer) = require (Make_Strand_Core(
         STUB_MASK_STRAND
             | (not BASE_FLAG_MANAGED)
             | STUB_FLAG_DYNAMIC,
         encoded_capacity
-    );
+    ));
 }
 
 

@@ -258,13 +258,15 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
 }
 
 
-INLINE void *Alloc_Pooled(PoolId pool_id) {
+INLINE Result(void*) Alloc_Pooled(PoolId pool_id) {
     void *node = Try_Alloc_Pooled(pool_id);
     if (node)
         return node;
 
     Pool* pool = &g_mem.pools[pool_id];
-    panic (Error_No_Memory(pool->wide * pool->num_units_per_segment));
+    Size requested_size = pool->wide * pool->num_units_per_segment;
+    UNUSED(requested_size);  // can't alloc memory, so how to report?
+    return fail (Cell_Error(g_error_no_memory));
 }
 
 #define Alloc_Stub() ( \
@@ -348,13 +350,7 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
 
 //=//// MEMORY ALLOCATION AND FREEING MACROS //////////////////////////////=//
 //
-// Rebol's internal memory management is done based on a pooled model, which
-// use Try_Alloc_Memory_Core() and Free_Memory_Core() instead of malloc/free.
-// (Comments on those routines explain why this was done--even in an age of
-// modern thread-safe allocators--due to Rebol's ability to exploit extra
-// data in its pool unit when a Flex grows.)
-//
-// Free_MemorY_Core() requires callers to pass in the size of the memory being
+// Raw_Free() requires callers to pass in the size of the memory being
 // freed, and can be tricky.  These macros are modeled after C++'s new/delete
 // and new[]/delete[], and allocations take either a type or a type and a
 // length.  The size calculation is done automatically, and the result is cast
@@ -365,17 +361,11 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
 // Free_Memory() call lines up with the type of pointer being freed.
 //
 
-#define Try_Alloc_Memory(T) \
-    cast(T*, Try_Alloc_Memory_Core(sizeof(T)))
+#define Alloc_On_Heap(T) \
+    u_cast(Result(T*), Raw_Alloc(sizeof(T)))
 
-#define Try_Alloc_Memory_Zerofill(t) \
-    cast(T*, memset(Try_Alloc_Memory_Core(T), '\0', sizeof(T)))
-
-#define Try_Alloc_Memory_N(T,n) \
-    cast(T*, Try_Alloc_Memory_Core(sizeof(T) * (n)))
-
-#define Try_Alloc_Memory_N_Zerofill(T,n) \
-    cast(T*, memset(Try_Alloc_Memory_N(T, (n)), '\0', sizeof(T) * (n)))
+#define Alloc_N_On_Heap(T,n) \
+    u_cast(Result(T*), Raw_Alloc(sizeof(T) * (n)))
 
 #if CPLUSPLUS_11
     #define Free_Memory(T,p) \
@@ -384,7 +374,7 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
                 std::is_same<decltype(p), std::add_pointer<T>::type>::value, \
                 "mismatched Free_Memory() type" \
             ); \
-            Free_Memory_Core(p, sizeof(T)); \
+            Raw_Free(p, sizeof(T)); \
         } while (0)
 
     #define Free_Memory_N(T,n,p) \
@@ -393,12 +383,12 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
                 std::is_same<decltype(p), std::add_pointer<T>::type>::value, \
                 "mismatched Free_Memory_N() type" \
             ); \
-            Free_Memory_Core(p, sizeof(T) * (n)); \
+            Raw_Free(p, sizeof(T) * (n)); \
         } while (0)
 #else
     #define Free_Memory(T,p) \
-        Free_Memory_Core((p), sizeof(T))
+        Raw_Free((p), sizeof(T))
 
     #define Free_Memory_N(T,n,p) \
-        Free_Memory_Core((p), sizeof(T) * (n))
+        Raw_Free((p), sizeof(T) * (n))
 #endif

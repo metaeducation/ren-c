@@ -64,7 +64,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
 
     Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH;
 
-    Level* sub = Make_Level(&Action_Executor, L->feed, flags);
+    Level* sub = require (Make_Level(&Action_Executor, L->feed, flags));
     Push_Level_Erase_Out_If_State_0(out, sub);
     assert(sub->varlist == nullptr);
     sub->varlist = L->varlist;
@@ -197,7 +197,7 @@ Bounce Cascader_Executor(Level* const L)
     ++SERIES_INDEX_UNBOUNDED(pipeline);  // update series index to next FRAME! to call
 
     Restart_Action_Level(sub);  // see notes
-    Push_Action(sub, pipeline_at, PREFIX_0);
+    required (Push_Action(sub, pipeline_at, PREFIX_0));
 
     LEVEL_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY_INFIX;  // [1]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);

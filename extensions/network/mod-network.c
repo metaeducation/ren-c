@@ -368,7 +368,7 @@ void on_new_connection(uv_stream_t *server, int status) {
     );
 
     Value* c_state = Slot_Hack(Varlist_Slot(client, STD_PORT_STATE));
-    SOCKREQ* sock = Try_Alloc_Memory(SOCKREQ);
+    SOCKREQ* sock = require (Alloc_On_Heap(SOCKREQ));
     memset(sock, 0, sizeof(SOCKREQ));
 
     Init_Handle_Cdata_Managed(
@@ -693,7 +693,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         // things compatible while ripping out the devreq code this must too.
         //
         assert(Is_Nulled(state));
-        sock = Try_Alloc_Memory(SOCKREQ);
+        sock = require (Alloc_On_Heap(SOCKREQ));
         memset(sock, 0, sizeof(SOCKREQ));
         Init_Handle_Cdata_Managed(
             state,

@@ -27,7 +27,7 @@
 
 
 //
-//  Try_Flex_Data_Alloc: C
+//  Flex_Data_Alloc: C
 //
 // Allocates the data array for an already allocated Flex Stub structure.
 // Resets the bias and tail to zero, and sets the new width.  Flags like
@@ -57,23 +57,21 @@
 //    feature in the future again.  So since Set_Flex_Bias() uses bit masks
 //    on an existing value, clear out the whole value for starters.
 //
-bool Try_Flex_Data_Alloc(Flex* s, REBLEN capacity) {
+Result(Zero) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
     assert(Get_Stub_Flag(s, DYNAMIC));  // once set, never shrinks [1]
 
     Byte wide = Flex_Wide(s);
     assert(wide != 0);
 
     if (cast(REBU64, capacity) * wide > INT32_MAX)  // R3-Alpha said "too big"
-        return false;
+        return zero;
 
     Size size;  // size of allocation, possibly bigger than we need [2]
 
     PoolId pool_id = Pool_Id_For_Size(capacity * wide);
 
     if (pool_id < SYSTEM_POOL) {  // a pool is designated for this size range
-        s->content.dynamic.data = cast(char*, Try_Alloc_Pooled(pool_id));
-        if (not s->content.dynamic.data)
-            return false;
+        s->content.dynamic.data = trap (nocast Alloc_Pooled(pool_id));
 
         size = g_mem.pools[pool_id].wide;
         assert(size >= capacity * wide);
@@ -92,9 +90,7 @@ bool Try_Flex_Data_Alloc(Flex* s, REBLEN capacity) {
                 Clear_Flex_Flag(s, POWER_OF_2);  // flag isn't necessary
         }
 
-        s->content.dynamic.data = Try_Alloc_Memory_N(char, size);
-        if (not s->content.dynamic.data)
-            return false;
+        s->content.dynamic.data = trap (Alloc_N_On_Heap(char, size));
 
         g_mem.pools[SYSTEM_POOL].has += size;
         g_mem.pools[SYSTEM_POOL].free++;
@@ -115,7 +111,7 @@ bool Try_Flex_Data_Alloc(Flex* s, REBLEN capacity) {
         Set_Trampoline_Flag(RECYCLE);  // queue it to run on next evaluation
 
     assert(Flex_Total(s) <= size);  // irregular widths won't use all space
-    return true;
+    return zero;
 }
 
 
@@ -146,7 +142,7 @@ void Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
 // middle of a UTF-8 codepoint, hence a String Flex aliased as a Binary
 // could only have its copy used in a BLOB!.
 //
-Flex* Copy_Flex_Core(Flags flags, const Flex* f)
+Result(Flex*) Copy_Flex_Core(Flags flags, const Flex* f)
 {
     if (Flavor_From_Flags(flags) == FLAVOR_0)
         flags |= FLAG_FLAVOR(Stub_Flavor(f));  // use source's type
@@ -167,18 +163,18 @@ Flex* Copy_Flex_Core(Flags flags, const Flex* f)
         // Note: If the string was a symbol (aliased via AS) it will lose
         // that information.
         //
-        copy = Make_Strand_Core(flags, used);
+        copy = trap (Make_Strand_Core(flags, used));
         Set_Flex_Used(copy, used);
         *Flex_Tail(Byte, copy) = '\0';
         Tweak_Link_Bookmarks(cast(Strand*, copy), nullptr);  // !!! copy these?
         MISC_STRAND_NUM_CODEPOINTS(copy) = MISC_STRAND_NUM_CODEPOINTS(f);
     }
     else if (Flex_Wide(f) == 1) {  // non-string BLOB!
-        copy = Make_Flex_Core(flags, used + 1);  // term space
+        copy = trap (Make_Flex(flags, used + 1));  // term space
         Set_Flex_Used(copy, used);
     }
     else {
-        copy = Make_Flex_Core(flags, used);
+        copy = trap (Make_Flex(flags, used));
         Set_Flex_Used(copy, used);
     }
 
@@ -203,7 +199,7 @@ Flex* Copy_Flex_Core(Flags flags, const Flex* f)
 // boundary.  This is a low-level routine, so the caller must fix up the
 // length information, or Init_Any_String() will complain.
 //
-Flex* Copy_Flex_At_Len_Extra(
+Result(Flex*) Copy_Flex_At_Len_Extra(
     Flags flags,
     const Flex* f,
     REBLEN index,
@@ -215,7 +211,7 @@ Flex* Copy_Flex_At_Len_Extra(
     REBLEN capacity = len + extra;
     if (Stub_Holds_Bytes(f))
         ++capacity;  // for '\0' terminator, always allow to alias as Strand
-    Flex* copy = Make_Flex_Core(flags, capacity);
+    Flex* copy = trap (Make_Flex(flags, capacity));
     assert(Flex_Wide(f) == Flex_Wide(copy));
     memcpy(
         Flex_Data(copy),

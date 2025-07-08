@@ -618,7 +618,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         Length len;
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
-        Strand* s = Make_Strand(size);
+        Strand* s = require (Make_Strand(size));
         memcpy(cast(Byte*, Strand_Head(s)), cast(Byte*, utf8), size);
         Term_Strand_Len_Size(s, len, size);
         return Init_Any_String(OUT, to, s);
@@ -631,7 +631,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 
         Size size;  // TO conversion of mutable data, can't reuse stub
         Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
-        const Symbol* sym = require(Intern_Utf8_Managed(at, size));
+        const Symbol* sym = require (Intern_Utf8_Managed(at, size));
         return Init_Word(OUT, sym);
     }
 
@@ -655,12 +655,10 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
 
         if (to == TYPE_EMAIL) {
-            if (
-                cast(const Byte*, utf8) + size
-                != Try_Scan_Email_To_Stack(utf8, size)
-            ){
+            const Byte* ep = require (Scan_Email_To_Stack(utf8, size));
+            if (ep != cast(const Byte*, utf8) + size)
                 return fail (Error_Scan_Invalid_Raw(ARG(TYPE), v));
-            }
+
             Move_Cell(OUT, TOP_ELEMENT);
             DROP();
             return OUT;
@@ -744,10 +742,10 @@ Result(Element*) Alias_Any_Utf8_As(
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
         assert(size + 1 <= Size_Of(v->payload.at_least_8));
 
-        Strand* str = Make_Strand_Core(
+        Strand* str = require (Make_Strand_Core(
             STUB_MASK_STRAND | BASE_FLAG_MANAGED,
             size
-        );
+        ));
         memcpy(
             Flex_Data(str),
             cast(Byte*, utf8),

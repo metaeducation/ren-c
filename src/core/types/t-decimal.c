@@ -333,10 +333,11 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
         GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
         mo->digits
     );
-    Append_Ascii_Len(mo->strand, s_cast(buf), len);
+    required (Append_Ascii_Len(mo->strand, s_cast(buf), len));
 
-    if (heart == TYPE_PERCENT)
-        Append_Ascii(mo->strand, "%");
+    if (heart == TYPE_PERCENT) {
+        required (Append_Ascii(mo->strand, "%"));
+    }
 
     return TRIPWIRE;
 }

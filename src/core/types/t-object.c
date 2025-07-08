@@ -420,9 +420,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
                 panic ("Expected BLOCK!-style varargs");
             }
 
-            feed = Prep_At_Feed(
+            feed = require (Prep_At_Feed(
                 Alloc_Feed(), shared, SPECIFIED, FEED_MASK_DEFAULT
-            );
+            ));
         }
 
         Add_Feed_Reference(feed);
@@ -504,7 +504,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
                 varlist
             );
 
-            Use* use = Alloc_Use_Inherits(List_Binding(arg));
+            Use* use = require (Alloc_Use_Inherits(List_Binding(arg)));
             Copy_Cell(Stub_Cell(use), Varlist_Archetype(derived));
 
             Tweak_Cell_Binding(arg, use);  // def is GC-safe, use will be too
@@ -534,7 +534,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             nullptr  // no parent (MAKE SOME-OBJ ... calls any_context generic)
         );
 
-        Use* use = Alloc_Use_Inherits(List_Binding(arg));
+        Use* use = require (Alloc_Use_Inherits(List_Binding(arg)));
         Copy_Cell(Stub_Cell(use), Varlist_Archetype(ctx));
 
         Tweak_Cell_Binding(arg, use);  // arg is GC-safe, so use will be too
@@ -766,7 +766,7 @@ VarList* Copy_Varlist_Extra_Managed(
     else {
         assert(CTX_TYPE(original) != TYPE_FRAME);  // can't expand FRAME!s
 
-        KeyList* keylist = cast(KeyList*, Copy_Flex_At_Len_Extra(
+        KeyList* keylist = require (nocast Copy_Flex_At_Len_Extra(
             STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
             Bonus_Keylist(original),
             0,
@@ -817,7 +817,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             Begin_Non_Lexical_Mold(mo, v); // If molding, get &[object! etc.
             Append_Codepoint(s, '[');
         }
-        Append_Ascii(s, "...");
+        required (Append_Ascii(s, "..."));
 
         if (not form) {
             Append_Codepoint(s, ']');
@@ -837,7 +837,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         bool had_output = false;
         while (Try_Advance_Evars(&evars)) {
             Append_Spelling(mo->strand, Key_Symbol(evars.key));
-            Append_Ascii(mo->strand, ": ");
+            required (Append_Ascii(mo->strand, ": "));
 
             DECLARE_ATOM (var);
             required (Read_Slot_Meta(var, evars.slot));
@@ -882,7 +882,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         Append_Codepoint(mo->strand, ' ');
 
         if (Is_Dual_Unset(evars.slot)) {
-            Append_Ascii(mo->strand, "\\~\\  ; unset");  // !!! review
+            required (Append_Ascii(mo->strand, "\\~\\  ; unset"));  // !!!
             continue;
         }
 
@@ -933,7 +933,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
             Begin_Non_Lexical_Mold(mo, v); // If molding, get &[let! etc.
             Append_Codepoint(s, '[');
         }
-        Append_Ascii(s, "...");
+        required (Append_Ascii(s, "..."));
 
         if (not form) {
             Append_Codepoint(s, ']');
@@ -948,7 +948,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
 
     if (form) {
         Append_Spelling(mo->strand, spelling);
-        Append_Ascii(mo->strand, ": ");
+        required (Append_Ascii(mo->strand, ": "));
 
         if (Is_Antiform(var))
             panic (Error_Bad_Antiform(var));  // can't FORM antiforms
@@ -1092,7 +1092,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
         required (Wrap_Extend_Core(c, def, flags));
 
-        Use* use = Alloc_Use_Inherits(Cell_Binding(def));
+        Use* use = require (Alloc_Use_Inherits(Cell_Binding(def)));
         Copy_Cell(Stub_Cell(use), context);
 
         Tweak_Cell_Binding(def, use);
@@ -1909,7 +1909,7 @@ DECLARE_NATIVE(CONSTRUCT)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    Level* sub = Make_Level_At(executor, spec, flags);
+    Level* sub = require (Make_Level_At(executor, spec, flags));
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
 } continue_processing_spec: {  ////////////////////////////////////////////////

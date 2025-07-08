@@ -158,12 +158,12 @@ INLINE bool Eval_Any_List_At_Core_Throws(
     const Element* list,
     Context* context
 ){
-    Level* L = Make_Level_At_Core(
+    Level* L = require (Make_Level_At_Core(
         &Evaluator_Executor,
         list,
         context,
         flags
-    );
+    ));
     Init_Void(Evaluator_Primed_Cell(L));
 
     return Trampoline_Throws(out, L);
@@ -188,16 +188,16 @@ INLINE bool Eval_Element_Core_Throws(
         return false;  // fast things that don't need levels (should inline)
     }
 
-    Feed* feed = Prep_Array_Feed(
+    Feed* feed = require (Prep_Array_Feed(
         Alloc_Feed(),
         value,  // first--in this case, the only value in the feed...
         g_empty_array,  // ...because we're using the empty array after that
         0,  // ...at index 0
         context,
         FEED_MASK_DEFAULT | (value->header.bits & FEED_FLAG_CONST)
-    );
+    ));
 
-    Level* L = Make_Level(&Stepper_Executor, feed, flags);
+    Level* L = require (Make_Level(&Stepper_Executor, feed, flags));
 
     return Trampoline_Throws(out, L);
 }

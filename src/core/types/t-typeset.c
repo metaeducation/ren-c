@@ -519,7 +519,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
       case SYM_TEXT: {
         if (not Is_Text(poke))
             panic (poke);
-        Strand* strand = Copy_String_At(poke);
+        Strand* strand = require (Copy_String_At(poke));
         Manage_Flex(strand);
         Freeze_Flex(strand);
         Set_Parameter_Strand(param, strand);

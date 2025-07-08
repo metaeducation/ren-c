@@ -32,13 +32,13 @@
 // allocation.  But if that pointer is already occupied then a Use stub has
 // to be created as a holder to give it a place to put in another chain.
 //
-INLINE Use* Alloc_Use_Inherits_Core(
+INLINE Result(Use*) Alloc_Use_Inherits_Core(
     Flags flags,
     Context* inherit
 ){
     assert(0 == (flags & ~(USE_FLAG_SET_WORDS_ONLY)));
 
-    Stub* use = Make_Untracked_Stub(STUB_MASK_USE | flags);
+    Stub* use = trap (Make_Untracked_Stub(STUB_MASK_USE | flags));
     Tweak_Link_Inherit_Bind(use, inherit);
     Corrupt_Unused_Field(use->misc.corrupt);
     Corrupt_Unused_Field(use->info.corrupt);

@@ -73,7 +73,7 @@ REBINT Detect_UTF(const Byte* bp, Size size)
 
 
 //
-//  Decode_UCS2: C
+//  Decode_Ucs2: C
 //
 // No terminator is added.
 //
@@ -87,13 +87,13 @@ REBINT Detect_UTF(const Byte* bp, Size size)
 //
 // 3. All-ASCII optimization flag on strings is a work-in-progress.
 //
-static Strand* Decode_UCS2(  // [1]
+static Result(Strand*) Decode_Ucs2(  // [1]
     const Byte* src,
     Size size,  // byte length of source (not number of codepoints)
     bool little_endian,
     bool crlf_to_lf
 ){
-    Strand* s = Make_Strand(size * 2);  // conservative over-alloc [2]
+    Strand* s = trap (Make_Strand(size * 2));  // conservative alloc [2]
 
     bool expect_lf = false;
     bool ascii = true;
@@ -300,7 +300,8 @@ DECLARE_NATIVE(DECODE_UTF16LE)
     const Byte* data = Blob_Size_At(&size, ARG(DATA));
 
     const bool little_endian = true;
-    Init_Text(OUT, Decode_UCS2(data, size, little_endian, false));
+    Strand* ucs2 = require (Decode_Ucs2(data, size, little_endian, false));
+    Init_Text(OUT, ucs2);
 
     // Drop byte-order marker, if present
     //
@@ -387,7 +388,8 @@ DECLARE_NATIVE(DECODE_UTF16BE)
     const Byte* data = Blob_Size_At(&size, ARG(DATA));
 
     const bool little_endian = false;
-    Init_Text(OUT, Decode_UCS2(data, size, little_endian, false));
+    Strand* ucs2 = require (Decode_Ucs2(data, size, little_endian, false));
+    Init_Text(OUT, ucs2);
 
     // Drop byte-order marker, if present
     //

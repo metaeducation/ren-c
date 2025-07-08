@@ -139,10 +139,10 @@ DECLARE_NATIVE(REDUCE)
     if (Any_Inert(v))
         return COPY(v);  // save time if it's something like a TEXT!
 
-    Level* sub = Make_End_Level(
+    Level* sub = require (Make_End_Level(
         &Stepper_Executor,
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
-    );
+    ));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     Copy_Cell(Evaluator_Level_Current(sub), v);
@@ -152,11 +152,11 @@ DECLARE_NATIVE(REDUCE)
 
 } initial_entry_list: {  /////////////////////////////////////////////////////
 
-    Level* sub = Make_Level_At(
+    Level* sub = require (Make_Level_At(
         &Stepper_Executor,
         v,  // TYPE_BLOCK or TYPE_GROUP
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
-    );
+    ));
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
     goto next_reduce_step;
 
@@ -325,7 +325,7 @@ DECLARE_NATIVE(REDUCE_EACH)
         executor = &Stepper_Executor;
     }
 
-    Level* sub = Make_Level_At(executor, block, flags);
+    Level* sub = require (Make_Level_At(executor, block, flags));
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
 } reduce_next: { ////////////////////////////////////////////////////////////

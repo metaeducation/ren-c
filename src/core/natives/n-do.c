@@ -58,7 +58,9 @@ DECLARE_NATIVE(REEVAL)
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
-    Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
+    Level* sub = require (
+        Make_Level(&Stepper_Executor, level_->feed, flags)
+    );
     Copy_Cell(Evaluator_Level_Current(sub), v);  // evaluator's CURRENT
     Force_Invalidate_Gotten(&sub->u.eval.current_gotten);
 
@@ -235,8 +237,10 @@ DECLARE_NATIVE(SHOVE)
 
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_INFIX);  // [1]
 
-    Level* sub = Make_Level(&Action_Executor, level_->feed, flags);
-    Push_Action(sub, shovee, infix_mode);  // can know if it's infix [2]
+    Level* sub = require (
+        Make_Level(&Action_Executor, level_->feed, flags)
+    );
+    required (Push_Action(sub, shovee, infix_mode));  // know if it's infix [2]
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
@@ -347,11 +351,11 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
     Flags flags = LEVEL_FLAG_FORCE_SURPRISING;
 
-    Level* sub = Make_Level_At(
+    Level* sub = require (Make_Level_At(
         Bool_ARG(STEP) ? &Stepper_Executor : &Evaluator_Executor,
         source,  // all lists treated the same [1]
         flags
-    );
+    ));
     if (not Bool_ARG(STEP))
         Init_Surprising_Ghost(Evaluator_Primed_Cell(sub));  // don't vanish [2]
     Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -425,9 +429,9 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     if (Is_Level_At_End(L))
         return VOID;
 
-    Level* sub = Make_Level(  // need to do evaluation in a sublevel [3]
+    Level* sub = require (Make_Level(  // need evaluation in a sublevel [3]
         &Evaluator_Executor, L->feed, LEVEL_MASK_NONE
-    );
+    ));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 
@@ -507,10 +511,10 @@ DECLARE_NATIVE(EVAL_FREE)
     if (Level_Of_Varlist_If_Running(varlist))
         panic ("Use REDO to restart a running FRAME! (not EVAL-FREE)");
 
-    Level* L = Make_End_Level(
+    Level* L = require (Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
-    );
+    ));
 
     Set_Action_Level_Label(L, Cell_Frame_Label_Deep(frame));
 
@@ -607,10 +611,10 @@ DECLARE_NATIVE(APPLIQUE)
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
 
-    Use* use = Alloc_Use_Inherits_Core(
+    Use* use = require (Alloc_Use_Inherits_Core(
         USE_FLAG_SET_WORDS_ONLY,
         List_Binding(def)
-    );
+    ));
     Copy_Cell(Stub_Cell(use), Element_LOCAL(FRAME));
 
     Tweak_Cell_Binding(def, use);
@@ -676,14 +680,14 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
 
-    Level* L = Make_Level_At(
+    Level* L = require (Make_Level_At(
         &Stepper_Executor,
         args,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-    );
+    ));
     Push_Level_Erase_Out_If_State_0(SPARE, L);
 
-    EVARS *e = Try_Alloc_Memory(EVARS);
+    EVARS *e = require (Alloc_On_Heap(EVARS));
     Init_Evars(e, frame);  // sees locals [3]
 
     iterator = Init_Handle_Cdata(LOCAL(ITERATOR), e, sizeof(EVARS));
@@ -1048,9 +1052,9 @@ DECLARE_NATIVE(RUN)
     Value* action = ARG(FRAME);
     UNUSED(ARG(ARGS));  // uses internal mechanisms to act variadic
 
-    Level* sub = Make_Action_Sublevel(level_);
+    Level* sub = require (Make_Action_Sublevel(level_));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
-    Push_Action(sub, action, PREFIX_0);
+    required (Push_Action(sub, action, PREFIX_0));
 
     return DELEGATE_SUBLEVEL(sub);
 }

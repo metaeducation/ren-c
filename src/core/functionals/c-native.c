@@ -610,9 +610,9 @@ void Startup_Natives(const Element* boot_natives)
     assert(Cell_Binding(boot_natives) == UNBOUND);
 
     DECLARE_ATOM (dual_step);
-    Level* L = Make_Level_At_Core(
+    Level* L = require (Make_Level_At_Core(
         &Evaluator_Executor, boot_natives, lib, LEVEL_MASK_NONE
-    );
+    ));
     Init_Void(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(dual_step, L);
 

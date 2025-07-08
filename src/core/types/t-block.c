@@ -109,7 +109,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_List)
             return LOGIC(lesser);  // LESSER? result was meaningful
 
         bool strict = true;
-        bool equal = require(Equal_Values(a_item, b_item, strict));
+        bool equal = require (Equal_Values(a_item, b_item, strict));
         if (equal)
             continue;  // don't fret they couldn't compare with LESSER?
 
@@ -828,7 +828,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         const Element* tail;
         const Element* at = List_At(&tail, list);
 
-        Map* map = Make_Map(len / 2);  // map size is half block length
+        Map* map = require (Make_Map(len / 2));  // map size is half block len
         Append_Map(map, at, tail, len);
         Rehash_Map(map);
         return Init_Map(OUT, map);

@@ -150,11 +150,10 @@ static void Expand_Word_Table(void)
     Length num_slots = Get_Hash_Prime_May_Panic(old_num_slots + 1);
     assert(Flex_Wide(g_symbols.by_hash) == sizeof(Symbol*));
 
-    Flex* table = Make_Flex(
+    Flex* table = require (Make_Flex(
         FLAG_FLAVOR(FLAVOR_CANONTABLE) | FLEX_FLAG_POWER_OF_2,
-        Flex,
         num_slots
-    );
+    ));
     Clear_Flex(table);
     Set_Flex_Len(table, num_slots);
 
@@ -276,7 +275,7 @@ Result(const Symbol*) Intern_Utf8_Managed_Core(  // implicitly managed [1]
 
 } new_interning: { ///////////////////////////////////////////////////////////
 
-    Binary* b = cast(Binary*, Make_Flex_Into(
+    Binary* b = trap (nocast Make_Flex_Into(
         STUB_MASK_SYMBOL
             | SYMBOL_FLAG_ALL_ASCII,  // removed below if non-ascii found
         preallocated ? unwrap preallocated : Alloc_Stub(),
@@ -489,11 +488,10 @@ void Startup_Interning(void)
         n = 1; // force exercise of rehashing logic half the time on startup
   #endif
 
-    ensure_nullptr(g_symbols.by_hash) = Make_Flex(
+    ensure_nullptr(g_symbols.by_hash) = require (Make_Flex(
         FLAG_FLAVOR(FLAVOR_CANONTABLE) | FLEX_FLAG_POWER_OF_2,
-        Flex,
         n
-    );
+    ));
     Clear_Flex(g_symbols.by_hash);  // all slots start as nullptr
     Set_Flex_Len(g_symbols.by_hash, n);
 }

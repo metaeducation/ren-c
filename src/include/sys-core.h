@@ -370,7 +370,7 @@ typedef struct {
     uintptr_t usage;  // Overall memory used
     Option(uintptr_t) usage_limit;  // Memory limit set by SECURE
 
-  #if TRAMPOLINE_COUNTS_TICKS  // Used by the FUZZ native to inject alloc failures
+  #if TRAMPOLINE_COUNTS_TICKS && RUNTIME_CHECKS
     intptr_t fuzz_factor;  // (-) => a countdown, (+) percent of 10000
   #endif
 
@@ -575,6 +575,8 @@ enum {
 #include "sys-tick.h"
 
 #include "sys-rescue.h" // includes RESCUE_SCOPE, panic_abruptly()
+
+INLINE Error* Cell_Error(const Cell* c);
 
 #include "sys-base.h"
 

@@ -318,8 +318,10 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
 
     Element* def = Element_ARG(DEF);
 
-    if (Is_Integer(def))  // new string with given integer capacity [2]
-        return Init_Any_String(OUT, heart, Make_Strand(Int32s(def, 0)));
+    if (Is_Integer(def)) { // new string with given integer capacity [2]
+        Strand* strand = require (Make_Strand(Int32s(def, 0)));
+        return Init_Any_String(OUT, heart, strand);
+    }
 
     return fail (Error_Bad_Make(heart, def));
 }
@@ -419,11 +421,11 @@ void Mold_Codepoint(Molder* mo, Codepoint c, bool non_ascii_parened)
         // !!! Comment here said "do not AND with the above"
         //
         if (non_ascii_parened or c == 0x1E or c == 0xFEFF) {
-            Append_Ascii(buf, "^(");
+            required (Append_Ascii(buf, "^("));
 
             Length len_old = Strand_Len(buf);
             Size size_old = Strand_Size(buf);
-            Expand_Flex_Tail(buf, 5);  // worst case: ^(1234), ^( is done
+            required (Expand_Flex_Tail(buf, 5));  // worst: ^(1234), ^( is done
             Term_Strand_Len_Size(buf, len_old, size_old);
 
             Byte* bp = Binary_Tail(buf);
@@ -457,7 +459,7 @@ void Mold_Text_Flex_At(Molder* mo, const Strand* s, REBLEN index) {
     Strand* buf = mo->strand;
 
     if (index >= Strand_Len(s)) {
-        Append_Ascii(buf, "\"\"");
+        required (Append_Ascii(buf, "\"\""));
         return;
     }
 
@@ -709,7 +711,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 
       case TYPE_FILE:
         if (String_Len_At(v) == 0) {
-            Append_Ascii(buf, "%\"\"");
+            required (Append_Ascii(buf, "%\"\""));
             break;
         }
         Mold_File(mo, v);
@@ -1055,10 +1057,11 @@ IMPLEMENT_GENERIC(COPY, Any_String)
 
     REBINT len = Part_Len_May_Modify_Index(string, ARG(PART));
 
+    Strand* copy = require (Copy_String_At_Limit(string, &len));
     return Init_Any_String(
         OUT,
         Heart_Of_Builtin_Fundamental(string),
-        Copy_String_At_Limit(string, &len)
+        copy
     );
 }
 
@@ -1078,7 +1081,8 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
         len = Part_Len_May_Modify_Index(v, ARG(PART));
         if (len == 0) {
             Heart heart = Heart_Of_Builtin_Fundamental(v);
-            return Init_Any_String(OUT, heart, Make_Strand(0));
+            Strand* strand = require (Make_Strand(0));
+            return Init_Any_String(OUT, heart, strand);
         }
     } else
         len = 1;
@@ -1100,14 +1104,16 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
         if (not Bool_ARG(PART))
             return fail (Error_Nothing_To_Take_Raw());
         Heart heart = Heart_Of_Builtin_Fundamental(v);
-        return Init_Any_String(OUT, heart, Make_Strand(0));
+        Strand* strand = require (Make_Strand(0));
+        return Init_Any_String(OUT, heart, strand);
     }
 
     // if no :PART, just return value, else return string
     //
     if (Bool_ARG(PART)) {
         Heart heart = Heart_Of_Builtin_Fundamental(v);
-        Init_Any_String(OUT, heart, Copy_String_At_Limit(v, &len));
+        Strand* strand = require (Copy_String_At_Limit(v, &len));
+        Init_Any_String(OUT, heart, strand);
     }
     else
         Init_Char_Unchecked(OUT, Codepoint_At(String_At(v)));
@@ -1381,7 +1387,8 @@ DECLARE_NATIVE(DECODE_UTF_8)
 //
 void Startup_String(void)
 {
-    g_char_escapes = Try_Alloc_Memory_N_Zerofill(Byte, MAX_ESC_CHAR + 1);
+    g_char_escapes = require (Alloc_N_On_Heap(Byte, MAX_ESC_CHAR + 1));
+    Mem_Fill(g_char_escapes, 0, MAX_ESC_CHAR + 1);
 
     Byte* cp = g_char_escapes;
     Byte c;
@@ -1393,7 +1400,8 @@ void Startup_String(void)
     g_char_escapes[cast(Byte, '"')] = '"';
     g_char_escapes[cast(Byte, '^')] = '^';
 
-    g_url_escapes = Try_Alloc_Memory_N_Zerofill(Byte, MAX_URL_CHAR + 1);
+    g_url_escapes = require (Alloc_N_On_Heap(Byte, MAX_URL_CHAR + 1));
+    Mem_Fill(g_url_escapes, 0, MAX_URL_CHAR + 1);
 
     for (c = 0; c <= ' '; c++)
         g_url_escapes[c] = ESC_URL | ESC_FILE;

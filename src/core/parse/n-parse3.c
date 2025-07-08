@@ -246,7 +246,7 @@ static bool Subparse_Throws(
 
     Push_Level_Erase_Out_If_State_0(out, L);
 
-    Push_Action(L, LIB(SUBPARSE), PREFIX_0);
+    required (Push_Action(L, LIB(SUBPARSE), PREFIX_0));
 
     // This needs to be set before INCLUDE_PARAMS_OF_SUBPARSE; it is what
     // ensures that usermode accesses to the frame won't be able to fiddle
@@ -574,11 +574,11 @@ static Result(REBIXO) Parse_One_Rule(
         REBLEN pos_before = P_POS;
         P_POS = pos;  // modify input position
 
-        Level* sub = Make_Level_At_Inherit_Const(
+        Level* sub = require (Make_Level_At_Inherit_Const(
             &Action_Executor,  // !!! Parser_Executor?
             rule, rule_binding(),
             LEVEL_MASK_NONE
-        );
+        ));
 
         DECLARE_ATOM (subresult);
         bool interrupted;
@@ -1991,11 +1991,11 @@ DECLARE_NATIVE(SUBPARSE)
                     break;
                 }
 
-                Level* sub = Make_Level_At_Inherit_Const(
+                Level* sub = require (Make_Level_At_Inherit_Const(
                     &Action_Executor,  // !!! Parser_Executor?
                     subrule, P_RULE_BINDING,
                     LEVEL_MASK_NONE
-                );
+                ));
 
                 bool interrupted;
                 if (Subparse_Throws(
@@ -2040,11 +2040,11 @@ DECLARE_NATIVE(SUBPARSE)
         }
         else if (Is_Block(rule)) {  // word fetched block, or inline block
 
-            Level* sub = Make_Level_At_Core(
+            Level* sub = require (Make_Level_At_Core(
                 &Action_Executor,  // !!! Parser_Executor?
                 rule, rule_binding(),
                 LEVEL_MASK_NONE
-            );
+            ));
 
             bool interrupted;
             if (Subparse_Throws(
@@ -2183,10 +2183,11 @@ DECLARE_NATIVE(SUBPARSE)
                     );
                 }
                 else if (P_HEART == TYPE_BLOB) {
-                    Init_Blob(  // R3-Alpha behavior (e.g. not AS TEXT!)
-                        OUT,
+                    Binary* bin = require (
                         Copy_Binary_At_Len(P_INPUT_BINARY, begin, count)
                     );
+
+                    Init_Blob(OUT, bin);
                 }
                 else {
                     assert(Any_String_Type(P_HEART));
@@ -2199,10 +2200,10 @@ DECLARE_NATIVE(SUBPARSE)
                     // have no scheme:// at their head, or getting <bc>
                     // out of <abcd> as if `<b` or `c>` had been found.
                     //
-                    Init_Text(
-                        OUT,
+                    Strand* copy = require (
                         Copy_String_At_Limit(begin_val, &count)
                     );
+                    Init_Text(OUT, copy);
                 }
 
                 // !!! As we are losing the datatype here, it doesn't make
@@ -2425,11 +2426,11 @@ DECLARE_NATIVE(PARSE3)
 
     assert(Any_Series(input));
 
-    Level* sub = Make_Level_At(
+    Level* sub = require (Make_Level_At(
         &Action_Executor,  // !!! Parser_Executor?
         rules,
         LEVEL_MASK_NONE
-    );
+    ));
 
     bool interrupted;
     if (Subparse_Throws(

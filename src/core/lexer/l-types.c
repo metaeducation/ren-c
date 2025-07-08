@@ -370,7 +370,7 @@ DECLARE_NATIVE(OF)
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
-    Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags);
+    Level* sub = require (Make_Level(&Stepper_Executor, level_->feed, flags));
     Copy_Lifted_Cell(Evaluator_Level_Current(sub), spare_action);
     LIFT_BYTE(Evaluator_Level_Current(sub)) = NOQUOTE_2;  // plain FRAME!
     Force_Invalidate_Gotten(&sub->u.eval.current_gotten);
@@ -852,13 +852,13 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
 
 
 //
-//  Try_Scan_Email_To_Stack: C
+//  Scan_Email_To_Stack: C
 //
 // Scan and convert email.
 //
-Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
+Result(const Byte*) Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 {
-    Strand* s = Make_Strand(len * 2);  // !!! guess...use mold buffer instead?
+    Strand* s = trap (Make_Strand(len * 2));  // use mold buffer vs. guess?
     Utf8(*) up = Strand_Head(s);
 
     REBLEN num_chars = 0;
@@ -867,17 +867,17 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
     for (; len > 0; len--) {
         if (*cp == '@') {
             if (found_at)
-                return nullptr;
+                return fail ("Email address cannot have multiple '@' symbols");
             found_at = true;
         }
 
         if (*cp == '%') {
             if (len <= 2)
-                return nullptr;
+                return fail ("Email must have at least 2 characters after %");
 
             Byte decoded;
             if (not (cp = maybe Try_Scan_Hex2(&decoded, cp + 1)))
-                return nullptr;
+                return fail ("Coudn't Scan_Hex() in email address");
 
             up = Write_Codepoint(up, decoded);
             ++num_chars;
@@ -890,7 +890,7 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
     }
 
     if (not found_at)
-        return nullptr;
+        return fail ("Email address must contain an '@' symbol");
 
     Term_Strand_Len_Size(s, num_chars, up - Strand_Head(s));
 
@@ -914,7 +914,7 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 
 
 //
-//  Try_Scan_Money_To_Stack: C
+//  Scan_Money_To_Stack: C
 //
 // MONEY! in historical Rebol was numeric with an abandoned and esoteric
 // implementation.  Ren-C makes it an ANY-UTF8? type instead, giving it the
@@ -929,9 +929,9 @@ Option(const Byte*) Try_Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 //    use for dialecting is simply as integers, e.g. $1 $2 $3 $4 $5 for
 //    locating substitution points.
 //
-Option(const Byte*) Try_Scan_Money_To_Stack(const Byte* cp, REBLEN len)
+Result(const Byte*) Scan_Money_To_Stack(const Byte* cp, REBLEN len)
 {
-    Strand* s = Make_Strand(len);  // only ASCII allowed, "1"-"9" and "."
+    Strand* s = trap (Make_Strand(len));  // only ASCII, "1"-"9" and "."
     Utf8(*) up = Strand_Head(s);
 
     assert(*cp == '$');
@@ -950,7 +950,7 @@ Option(const Byte*) Try_Scan_Money_To_Stack(const Byte* cp, REBLEN len)
     for (n = 0; n < len; ++n, ++cp) {
         if (*cp == '.') {
             if (dot_and_digits_len != 0)
-                return nullptr;  // don't allow $10.00.0, etc [1]
+                return fail ("money! doesn't allow $10.00.0, etc");  // [1]
 
             dot_and_digits_len = 1;  // need exactly two more...
         }
@@ -959,13 +959,13 @@ Option(const Byte*) Try_Scan_Money_To_Stack(const Byte* cp, REBLEN len)
                 ++dot_and_digits_len;
         }
         else
-            return nullptr;
+            return fail ("money! only allows digits and a dot");
 
         up = Write_Codepoint(up, *cp);
     }
 
     if (dot_and_digits_len != 0 and dot_and_digits_len != 3)
-        return nullptr;  // Only allow 2 digits after the dot, if present [1]
+        return fail ("money! only allows 2 digits after dot");  // [1]
 
     Term_Strand_Len_Size(s, len, up - Strand_Head(s));
 
@@ -1262,7 +1262,7 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
         // correctly, it would need to use Utf8_Next to count the characters
         // in the loop above.  Better to convert to usermode.
 
-        Strand* strand = Make_Strand(len * 2);
+        Strand* strand = require (Make_Strand(len * 2));
         Utf8(*) at = Strand_Head(strand);
         cp = start;
 

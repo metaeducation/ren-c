@@ -243,10 +243,10 @@ bool Specialize_Action_Throws(
         // to whatever value was in the context the specialization is running
         // in, but this is likely the more useful behavior.
         //
-        Use* use = Alloc_Use_Inherits_Core(
+        Use* use = require (Alloc_Use_Inherits_Core(
             USE_FLAG_SET_WORDS_ONLY,
             List_Binding(unwrap def)
-        );
+        ));
         Init_Frame(Stub_Cell(use), exemplar, label, coupling);
 
         Tweak_Cell_Binding(unwrap def, use);

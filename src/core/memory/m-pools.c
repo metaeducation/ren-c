@@ -64,20 +64,19 @@
 
 
 //
-//  Try_Alloc_Memory_Core: C
+//  Raw_Alloc: C
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// NOTE: Use Try_Alloc_Memory() and Try_Alloc_Memory_N() instead of
-// Try_Alloc_Memory_Core() to ensure the memory matches the size for the type,
-// and that the code builds as C++.
+// NOTE: Use Alloc_On_Heap() and Alloc_N_On_Heap() instead of this function,
+// to ensure the memory matches the size for the type, and that the code
+// builds as C++.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Try_Alloc_Memory_Core() is a basic allocator, which clients must call with
-// the correct size of memory block to be freed.  This differs from malloc(),
-// whose clients do not need to remember the size of the allocation to pass
-// into free().
+// Raw_Alloc() is a basic allocator, which clients must call with the correct
+// size of memory block to free.  This differs from malloc(), whose clients do
+// not need to remember the size of the allocation to pass into free().
 //
 // One motivation behind using such an allocator in Rebol is to allow it to
 // keep knowledge of how much memory the system is using.  This means it can
@@ -94,9 +93,9 @@
 //
 // 2. We cache the size at the head of the allocation in checked builds to
 //    make sure the right size is passed in.  This has the side benefit of
-//    catching free() use with Alloc_Memory() instead of Free_Memory().
+//    catching free() use with Alloc_On_Heap() instead of Free_Memory().
 //
-void* Try_Alloc_Memory_Core(Size size)
+Result(void*) Raw_Alloc(Size size)
 {
     g_mem.usage += size;
 
@@ -105,60 +104,56 @@ void* Try_Alloc_Memory_Core(Size size)
         and g_mem.usage > unwrap g_mem.usage_limit
     ){
         g_mem.usage -= size;
-        return nullptr;
+        return fail (Cell_Error(g_error_no_memory));  // distinguish error?
     }
 
-  #if TRAMPOLINE_COUNTS_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS && RUNTIME_CHECKS
     if (g_mem.fuzz_factor != 0) {
-        if (g_mem.fuzz_factor < 0) {
-            ++g_mem.fuzz_factor;
-            if (g_mem.fuzz_factor == 0)
-                return nullptr;
-        }
-        else if ((g_tick % 10000) <= cast(Tick, g_mem.fuzz_factor)) {
-            g_mem.fuzz_factor = 0;
-            return nullptr;
-        }
+        if (SPORADICALLY(g_mem.fuzz_factor))
+            return fail ("Artificial allocation failure (fuzz_factor)");
     }
   #endif
 
   #if NO_RUNTIME_CHECKS
     void *p = malloc(size);  // malloc remembers the size [1]
   #else
-    void *p_extra = malloc(size + ALIGN_SIZE);  // cache size in alloc [2]
-    if (not p_extra) {
-        g_mem.usage -= size;
-        return nullptr;
+    void *p = malloc(size + ALIGN_SIZE);  // cache size in alloc [2]
+    if (p) {
+        *cast(REBI64*, p) = size;  // ALIGN_SIZE >= 64-bit
+        p = cast(char*, p) + ALIGN_SIZE;
     }
-    *cast(REBI64*, p_extra) = size;  // 64-bit preserves CHECK_MEMORY_ALIGNMENT
-    void *p = cast(char*, p_extra) + ALIGN_SIZE;
   #endif
 
   #if CHECK_MEMORY_ALIGNMENT
     assert(i_cast(uintptr_t, p) % ALIGN_SIZE == 0);
   #endif
 
+    if (not p) {
+        g_mem.usage -= size;
+        return fail (Cell_Error(g_error_no_memory));
+    }
+
     return p;
 }
 
 
 //
-//  Free_Memory_Core: C
+//  Raw_Free: C
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// NOTE: Instead of Free_Memory_Core(), use Free_Memory() and Free_Memory_N()
+// NOTE: Instead of Raw_Free(), use Free_Memory() and Free_Memory_N()
 // wrapper macros to ensure the memory block being freed matches the
 // appropriate size and type.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Free_Memory_Core() is a wrapper over free(), that subtracts from a total
-// count that Rebol can see how much memory was released.  This information
-// assists in deciding when it is necessary to run a garbage collection, or
-// when to impose a quota.
+// Raw_Free() is a wrapper over free(), that subtracts from a total count that
+// Rebol can see how much memory was released.  This information assists in
+// deciding when it is necessary to run a garbage collection, or when to
+// impose a quota.
 //
-void Free_Memory_Core(void *mem, Size size)
+void Raw_Free(void *mem, Size size)
 {
   #if NO_RUNTIME_CHECKS
     free(mem);
@@ -276,7 +271,7 @@ void  Startup_Pools(REBINT scale)
         scale = 1;
     }
 
-    g_mem.pools = Try_Alloc_Memory_N(Pool, MAX_POOLS);
+    g_mem.pools = require (Alloc_N_On_Heap(Pool, MAX_POOLS));
 
     REBLEN n;
     for (n = 0; n < MAX_POOLS; n++) {  // copy pool sizes to new pool structure
@@ -301,7 +296,7 @@ void  Startup_Pools(REBINT scale)
         g_mem.pools[n].has = 0;
     }
 
-    g_mem.pools_by_size = Try_Alloc_Memory_N(Byte, POOLS_BY_SIZE_LEN);
+    g_mem.pools_by_size = require (Alloc_N_On_Heap(Byte, POOLS_BY_SIZE_LEN));
 
     // sizes 0 - 8 are pool 0
     for (n = 0; n <= 8; n++) g_mem.pools_by_size[n] = 0;
@@ -323,9 +318,7 @@ void  Startup_Pools(REBINT scale)
     assert(g_mem.objects_made == 0);
   #endif
 
-    g_mem.prior_expand = Try_Alloc_Memory_N(Flex*, MAX_EXPAND_LIST);
-    if (not g_mem.prior_expand)
-        crash (nullptr);
+    g_mem.prior_expand = require (Alloc_N_On_Heap(Flex*, MAX_EXPAND_LIST));
     memset(g_mem.prior_expand, 0, sizeof(Flex*) * MAX_EXPAND_LIST);
     g_mem.prior_expand[0] = (Flex*)1;
 }
@@ -448,9 +441,7 @@ bool Try_Fill_Pool(Pool* pool)
     REBLEN num_units = pool->num_units_per_segment;
     REBLEN mem_size = pool->wide * num_units + sizeof(Segment);
 
-    Segment* seg = cast(Segment*, Try_Alloc_Memory_N(char, mem_size));
-    if (seg == nullptr)
-        return false;
+    Segment* seg = require (nocast Raw_Alloc(mem_size));
 
     seg->size = mem_size;
     seg->next = pool->segments;
@@ -588,7 +579,7 @@ Base* Try_Find_Containing_Base_Debug(const void *p)
 //
 Pairing* Alloc_Pairing(Flags flags) {
     assert(flags == 0 or flags == BASE_FLAG_MANAGED);
-    Pairing* p = cast(Pairing*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
+    Pairing* p = require (nocast Alloc_Pooled(PAIR_POOL));  // 2x cell size
 
     Pairing_First(p)->header.bits = CELL_MASK_UNREADABLE | flags;
     Pairing_Second(p)->header.bits = CELL_MASK_UNREADABLE;
@@ -721,16 +712,16 @@ static void Free_Unbiased_Flex_Data(char *unbiased, Size total)
 // can be relocated in memory.  Only store if you are certain the Flex is
 // set to not be resizable and you control the lifetime of the Flex.
 //
-void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
+Result(Zero) Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 {
     Assert_Flex_Term_If_Needed(f);
 
     assert(index <= Flex_Used(f));
     if (delta & 0x80000000)
-        panic (Error_Index_Out_Of_Range_Raw()); // 2GB max
+        return fail (Error_Index_Out_Of_Range_Raw());  // 2GB max
 
     if (delta == 0)
-        return;
+        return zero;
 
     REBLEN used_old = Flex_Used(f);
 
@@ -762,7 +753,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
         }
       #endif
         Assert_Flex_Term_If_Needed(f);
-        return;
+        return zero;
     }
 
     // Width adjusted variables:
@@ -806,13 +797,13 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
             }
         }
       #endif
-        return;
+        return zero;
     }
 
 //=//// INSUFFICIENT CAPACITY, NEW ALLOCATION REQUIRED ////////////////////=//
 
     if (Get_Flex_Flag(f, FIXED_SIZE))
-        panic (Error_Locked_Series_Raw());
+        return fail (Error_Locked_Series_Raw());
 
   #if RUNTIME_CHECKS
     if (g_mem.watch_expand) {
@@ -872,8 +863,7 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 
     Set_Stub_Flag(f, DYNAMIC);
     Set_Flex_Flag(f, POWER_OF_2);
-    if (not Try_Flex_Data_Alloc(f, used_old + delta + x))
-        panic (Error_No_Memory((used_old + delta + x) * wide));
+    trapped (Flex_Data_Alloc(f, used_old + delta + x));
 
     assert(Get_Stub_Flag(f, DYNAMIC));
     if (Stub_Holds_Cells(f))
@@ -911,6 +901,8 @@ void Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 
     assert(Not_Base_Marked(f));
     Term_Flex_If_Necessary(f);  // code will not copy terminator over
+
+    return zero;
 }
 
 
@@ -1002,7 +994,7 @@ DECLARE_NATIVE(SWAP_CONTENTS)
 // Reallocate a Flex as a given maximum size.  Content in the retained
 // portion of the length will be preserved if BASE_FLAG_BASE is passed in.
 //
-void Remake_Flex(Flex* f, REBLEN units, Flags flags)
+Result(Zero) Remake_Flex(Flex* f, REBLEN units, Flags flags)
 {
     // !!! This routine is being scaled back in terms of what it's allowed to
     // do for the moment; so the method of passing in flags is a bit strange.
@@ -1045,11 +1037,13 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
     // audit, so that should be one of the things considered.
 
     Set_Stub_Flag(f, DYNAMIC);
-    if (not Try_Flex_Data_Alloc(f, units + 1)) {
+    Flex_Data_Alloc(f, units + 1) except (Error* e) {
         // Put Flex back how it was (there may be extant references)
         f->content.dynamic.data = cast(char*, data_old);
 
-        panic (Error_No_Memory((units + 1) * wide));
+        Size requested_size = (units + 1) * wide;
+        UNUSED(requested_size);  // can't alloc memory, how to report?
+        return fail (e);
     }
     assert(Get_Stub_Flag(f, DYNAMIC));
     if (Stub_Holds_Cells(f))
@@ -1076,6 +1070,8 @@ void Remake_Flex(Flex* f, REBLEN units, Flags flags)
 
     if (was_dynamic)
         Free_Unbiased_Flex_Data(data_old - (wide * bias_old), size_old);
+
+    return zero;
 }
 
 
@@ -1156,7 +1152,7 @@ Stub* Diminish_Stub(Stub* s)
     //    themselves...have they never been accounted for, e.g. in R3-Alpha?
     //    If not, they should be...additional sizeof(Stub), also tracking
     //    overhead for that.  Review the question of how the GC watermarks
-    //    interact with Try_Alloc_Memory() and "higher level" allocations.
+    //    interact with Try_Alloc_On_Heap() and "higher level" allocations.
 
     for (REBLEN n = 1; n < MAX_EXPAND_LIST; n++) {  // might be in expand list
         if (g_mem.prior_expand[n] == s)

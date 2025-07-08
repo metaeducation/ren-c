@@ -414,7 +414,9 @@ EXTERN_C intptr_t API_rebPromise(
     // the long run, there's no ordering guarantee of promises (e.g. if they
     // were running on individual threads).
 
-    struct Reb_Promise_Info *info = Try_Alloc_Memory(struct Reb_Promise_Info);
+    struct Reb_Promise_Info *info = require (
+        Alloc_On_Heap(struct Reb_Promise_Info)
+    );
     info->state = PROMISE_STATE_QUEUEING;
     info->promise_id = Heapaddr_From_Pointer(code);
     if (binding)
@@ -464,8 +466,8 @@ void RunPromise(void)
     Init_Block(code, a);
     Tweak_Cell_Binding(code, cast(Context*, info->binding));
 
-    Level* L = Make_Level_At(
-        &Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL
+    Level* L = require (
+        Make_Level_At(&Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL)
     );
 
     Push_Level_Dont_Inherit_Interruptibility(  // you can HALT inside a promise
@@ -947,10 +949,8 @@ DECLARE_NATIVE(JS_NATIVE)
     if (Is_Flex_Frozen(Cell_Strand(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_JS_NATIVE_SOURCE), source);
     else {
-        Init_Text(
-            Details_At(details, IDX_JS_NATIVE_SOURCE),
-            Copy_String_At(source)  // might change
-        );
+        Strand* copy = require (Copy_String_At(source));  // might change
+        Init_Text(Details_At(details, IDX_JS_NATIVE_SOURCE), copy);
     }
 
     // !!! A bit wasteful to use a whole cell for this--could just be whether
@@ -995,26 +995,31 @@ DECLARE_NATIVE(JS_NATIVE)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    Append_Ascii(mo->strand, "let f = ");  // variable we store function in
+    required (Append_Ascii(mo->strand, "let f = "));  // store function here
 
-    if (Bool_ARG(AWAITER))
-        Append_Ascii(mo->strand, "async ");  // run inside rebPromise() [1]
+    if (Bool_ARG(AWAITER)) {  // runs in rebPromise() [1]
+        required (Append_Ascii(mo->strand, "async "));
+    }
 
-    Append_Ascii(mo->strand, "function (reb) {");  // just one arg [2]
+    required (Append_Ascii(mo->strand, "function (reb) {"));  // one arg [2]
     Append_Any_Utf8(mo->strand, source);
-    Append_Ascii(mo->strand, "};\n");  // end `function() {`
+    required (Append_Ascii(mo->strand, "};\n"));  // end `function() {`
 
-    if (Bool_ARG(AWAITER))
-        Append_Ascii(mo->strand, "f.is_awaiter = true;\n");
-    else
-        Append_Ascii(mo->strand, "f.is_awaiter = false;\n");
+    if (Bool_ARG(AWAITER)) {
+        required (Append_Ascii(mo->strand, "f.is_awaiter = true;\n"));
+    }
+    else {
+        required (Append_Ascii(mo->strand, "f.is_awaiter = false;\n"));
+    }
 
     Byte id_buf[60];  // !!! Why 60?  Copied from MF_Integer()
     REBINT len = Emit_Integer(id_buf, native_id);
 
-    Append_Ascii(mo->strand, "reb.RegisterId_internal(");  // put in table [3]
-    Append_Ascii_Len(mo->strand, s_cast(id_buf), len);
-    Append_Ascii(mo->strand, ", f);\n");
+    required (  // put in table [3]
+        Append_Ascii(mo->strand, "reb.RegisterId_internal(")
+    );
+    required (Append_Ascii_Len(mo->strand, s_cast(id_buf), len));
+    required (Append_Ascii(mo->strand, ", f);\n"));
 
     Term_Binary(mo->strand);  // !!! is this necessary?
     const char *js = s_cast(Binary_At(mo->strand, mo->base.size));

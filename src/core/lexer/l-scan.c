@@ -117,7 +117,7 @@ INLINE bool Interstitial_Match(Byte b, Byte mode) {
     return b == mode;
 }
 
-INLINE bool Scan_Mode_Matches(Level* L, Byte mode) {
+INLINE bool Scanner_Mode_Matches(Level* L, Byte mode) {
     assert(Is_Lex_Interstitial(mode) or Is_Lex_End_List(mode));
     return LEVEL_STATE_BYTE(L) == mode;
 }
@@ -418,9 +418,9 @@ static void Update_Error_Near_For_Line(
 
     DECLARE_MOLDER (mo);  // put line count and line's text into string [3]
     Push_Mold(mo);
-    Append_Ascii(mo->strand, "(line ");
+    required (Append_Ascii(mo->strand, "(line "));
     Append_Int(mo->strand, line);  // (maybe) different from line below
-    Append_Ascii(mo->strand, ") ");
+    required (Append_Ascii(mo->strand, ") "));
     Append_UTF8_May_Panic(mo->strand, s_cast(bp), size, STRMODE_NO_CR);
 
     ERROR_VARS *vars = ERR_VARS(error);
@@ -991,7 +991,8 @@ static Error* Error_Syntax(ScanState* S, Token token) {
 //
 static Error* Error_Extra(Byte seen) {
     DECLARE_ELEMENT (unexpected);
-    Init_Text(unexpected, Make_Codepoint_Strand(seen));
+    Strand* strand = require (Make_Codepoint_Strand(seen));
+    Init_Text(unexpected, strand);
     return Error_Scan_Extra_Raw(unexpected);
 }
 
@@ -2025,7 +2026,7 @@ Level* Make_Scan_Level(
     Feed* feed,
     Flags flags
 ){
-    Level* L = Make_Level(&Scanner_Executor, feed, flags);
+    Level* L = require (Make_Level(&Scanner_Executor, feed, flags));
 
     Byte mode = LEVEL_STATE_BYTE(L);
     assert(mode != 0);  // must use non-zero state byte
@@ -2378,7 +2379,7 @@ Bounce Scanner_Executor(Level* const L) {
     trapped (Flush_Pending_On_End(S));
 
     Byte end_delimiter = *S->begin;
-    if (Scan_Mode_Matches(L, end_delimiter))
+    if (Scanner_Mode_Matches(L, end_delimiter))
         goto done;
 
     if (Is_Interstitial_Scan(L)) {  // implicit end [the /] (abc/)
@@ -2496,7 +2497,9 @@ Bounce Scanner_Executor(Level* const L) {
         ++S->end;  // include / in error message
         return fail (Error_Syntax(S, token));
     }
-    if (S->end != Try_Scan_Money_To_Stack(S->begin, len))
+
+    const Byte* ep = trap (Scan_Money_To_Stack(S->begin, len));
+    if (S->end != ep)
         return fail (Error_Syntax(S, token));
 
     goto lookahead;
@@ -2511,7 +2514,7 @@ Bounce Scanner_Executor(Level* const L) {
 } case TOKEN_DATE: { /////////////////////////////////////////////////////////
 
     const Byte* ep = S->end;
-    while (*ep == '/' and not Scan_Mode_Matches(L, '/')) {  // Is date/time?
+    while (*ep == '/' and not Scanner_Mode_Matches(L, '/')) {  // Is date/time?
         ep++;
         while (*ep == '.' or *ep == ':' or Is_Lex_Not_Delimit(*ep))
             ++ep;
@@ -2599,7 +2602,8 @@ Bounce Scanner_Executor(Level* const L) {
 
 } case TOKEN_EMAIL: { ////////////////////////////////////////////////////////
 
-    if (S->end != Try_Scan_Email_To_Stack(S->begin, len))
+    const Byte* ep = require (Scan_Email_To_Stack(S->begin, len));
+    if (S->end != ep)
         return fail (Error_Syntax(S, token));
     goto lookahead;
 
@@ -2841,17 +2845,17 @@ Bounce Scanner_Executor(Level* const L) {
 
     switch (sub_mode) {
       case '/':
-        assert(not Scan_Mode_Matches(L, '/'));  // should have continued
+        assert(not Scanner_Mode_Matches(L, '/'));  // should have continued
         heart = TYPE_PATH;
         break;
 
       case ':':
-        assert(not Scan_Mode_Matches(L, ':'));  // should have continued
+        assert(not Scanner_Mode_Matches(L, ':'));  // should have continued
         heart = TYPE_CHAIN;
         break;
 
       case '.':
-        assert(not Scan_Mode_Matches(L, '.'));  // should have continued
+        assert(not Scanner_Mode_Matches(L, '.'));  // should have continued
         heart = TYPE_TUPLE;
         break;
 
@@ -3141,10 +3145,10 @@ Source* Scan_UTF8_Managed(
     UNUSED(size);  // scanner stops at `\0` (no size limit functionality)
 
     const void* packed[2] = {utf8, rebEND};  // BEWARE: Stack, can't trampoline!
-    Feed* feed = Make_Variadic_Feed(  // scanner requires variadic [1]
+    Feed* feed = require (Make_Variadic_Feed(  // scanner requires variadic [1]
         packed, nullptr,  // va_list* as nullptr means `p` is packed [2]
         FEED_MASK_DEFAULT
-    );
+    ));
     Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Panic(feed);
 

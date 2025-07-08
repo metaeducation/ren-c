@@ -75,11 +75,10 @@ INLINE Binary* Make_Binary_Core(Flags flags, Size capacity)
 {
     assert(Flavor_From_Flags(flags) == 0);  // shouldn't pass in a flavor
 
-    Binary* b = Make_Flex(
+    Binary* b = require (nocast Make_Flex(
         FLAG_FLAVOR(FLAVOR_BINARY) | flags,
-        Binary,
         capacity + 1
-    );
+    ));
   #if DEBUG_POISON_FLEX_TAILS
     *Flex_Head(Byte, b) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
   #endif

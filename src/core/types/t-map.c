@@ -76,10 +76,16 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Map)
 // Capacity is measured in key-value pairings.
 // A hash Flex is also created.
 //
-Map* Make_Map(REBLEN capacity)
+Result(Map*) Make_Map(REBLEN capacity)
 {
     Array* pairlist = Make_Array_Core(STUB_MASK_PAIRLIST, capacity * 2);
-    Tweak_Link_Hashlist(pairlist, Make_Hashlist(capacity));
+
+    HashList* hashlist = Make_Hashlist(capacity) except (Error* e) {
+        Free_Unmanaged_Flex(pairlist);
+        return fail (e);
+    }
+
+    Tweak_Link_Hashlist(pairlist, hashlist);
 
     return cast(Map*, pairlist);
 }
@@ -405,8 +411,10 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
   initial_entry: { ///////////////////////////////////////////////////////////
 
-    if (Any_Number(arg))
-        return Init_Map(OUT, Make_Map(Int32s(arg, 0)));
+    if (Any_Number(arg)) {
+        Map* map = require (Make_Map(Int32s(arg, 0)));
+        return Init_Map(OUT, map);
+    }
 
     Executor* executor;
     if (Is_Pinned_Form_Of(BLOCK, arg))
@@ -420,7 +428,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    Level* sub = Make_Level_At(executor, arg, flags);
+    Level* sub = require (Make_Level_At(executor, arg, flags));
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
 } reduce_key: { /////////////////////////////////////////////////////////////
@@ -486,7 +494,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     );
     assert(Array_Len(pairlist) % 2 == 0);  // is [key value key value...]
     Count capacity = Array_Len(pairlist) / 2;
-    Tweak_Link_Hashlist(pairlist, Make_Hashlist(capacity));
+
+    HashList* hashlist = Make_Hashlist(capacity) except (Error* e) {
+        Free_Unmanaged_Flex(pairlist);
+        panic (e);
+    }
+
+    Tweak_Link_Hashlist(pairlist, hashlist);
 
     Map* map = cast(Map*, pairlist);
     Init_Map(OUT, map);  // !!! Note: hashlist invalid...
@@ -498,7 +512,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 }}
 
 
-INLINE Map* Copy_Map(const Map* map, bool deeply) {
+INLINE Result(Map*) Copy_Map(const Map* map, bool deeply) {
     Array* copy = Copy_Array_Shallow_Flags(
         STUB_MASK_PAIRLIST,
         MAP_PAIRLIST(map)
@@ -508,7 +522,7 @@ INLINE Map* Copy_Map(const Map* map, bool deeply) {
     // a literal copy of the hashlist can still be used, as a start (needs
     // its own copy so new map's hashes will reflect its own mutations)
     //
-    HashList* hashlist = cast(HashList*, Copy_Flex_Core(
+    HashList* hashlist = trap (nocast Copy_Flex_Core(
         FLEX_FLAGS_NONE | FLAG_FLAVOR(FLAVOR_HASHLIST),  // !!! No BASE_FLAG_MANAGED?
         MAP_HASHLIST(map)
     ));
@@ -633,7 +647,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 
     // Prevent endless mold loop:
     if (Find_Pointer_In_Flex(g_mold.stack, m) != NOT_FOUND) {
-        Append_Ascii(mo->strand, "...]");
+        required (Append_Ascii(mo->strand, "...]"));
         return TRIPWIRE;
     }
 
@@ -788,7 +802,8 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
 
     if (to == TYPE_MAP) {
         bool deep = false;
-        return Init_Map(OUT, Copy_Map(VAL_MAP(map), deep));
+        Map* copy = require (Copy_Map(VAL_MAP(map), deep));
+        return Init_Map(OUT, copy);
     }
 
     panic (UNHANDLED);
@@ -804,7 +819,8 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
     if (Bool_ARG(PART))
         panic (Error_Bad_Refines_Raw());
 
-    return Init_Map(OUT, Copy_Map(VAL_MAP(map), Bool_ARG(DEEP)));
+    Map* copy = require (Copy_Map(VAL_MAP(map), Bool_ARG(DEEP)));
+    return Init_Map(OUT, copy);
 }
 
 

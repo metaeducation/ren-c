@@ -607,7 +607,9 @@ Bounce Action_Executor(Level* L)
           case PARAMCLASS_META: {
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
-            Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
+            Level* sub = require (
+                Make_Level(&Stepper_Executor, L->feed, flags)
+            );
             Push_Level_Erase_Out_If_State_0(ARG, sub);  // duplicate erase!
 
             return CONTINUE_SUBLEVEL(sub); }
@@ -686,7 +688,9 @@ Bounce Action_Executor(Level* L)
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 
-                Level* sub = Make_Level(&Stepper_Executor, L->feed, flags);
+                Level* sub = require (
+                    Make_Level(&Stepper_Executor, L->feed, flags)
+                );
                 Push_Level_Erase_Out_If_State_0(ARG, sub);  // not state 0
                 return CONTINUE_SUBLEVEL(sub);
             }
@@ -1088,8 +1092,11 @@ Bounce Action_Executor(Level* L)
 // GC have to be sensitive to how far fulfillment has progressed, to avoid
 // marking uninitialized memory.
 //
-void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
-{
+Result(Zero) Push_Action(
+    Level* L,
+    const Value* frame,
+    Option(InfixMode) infix_mode
+){
     assert(L->executor == &Action_Executor);
 
     assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
@@ -1103,7 +1110,7 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
 
     Set_Action_Level_Label(L, Cell_Frame_Label_Deep(frame));
 
-    Flex* s = cast(Flex*, Prep_Stub(
+    Flex* s = require (nocast Prep_Stub(
         STUB_MASK_LEVEL_VARLIST
             | FLEX_FLAG_FIXED_SIZE,  // FRAME!s don't expand ATM
             // not managed by default, see Force_Level_Varlist_Managed()
@@ -1113,15 +1120,13 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
     Tweak_Bonus_Keylist_Shared(s, Phase_Keylist(phase));
     Tweak_Link_Inherit_Bind(s, nullptr);
 
-    if (not Try_Flex_Data_Alloc(
+    Flex_Data_Alloc(
         s,
         num_args + 1 + ONE_IF_POISON_TAILS  // +1 is rootvar
-    )){
+    ) except (Error* e) {
         Set_Stub_Unreadable(s);
         GC_Kill_Stub(s);  // ^-- needs non-null data unless free
-        panic (Error_No_Memory(
-            sizeof(Cell) * (num_args + 1 + ONE_IF_POISON_TAILS))
-        );
+        return fail (e);
     }
 
     L->varlist = u_cast(Array*, s);
@@ -1167,6 +1172,7 @@ void Push_Action(Level* L, const Value* frame, Option(InfixMode) infix_mode)
     ARG = L->rootvar + 1;
 
     Begin_Action(L, infix_mode);
+    return zero;
 }
 
 

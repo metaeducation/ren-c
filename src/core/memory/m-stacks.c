@@ -87,7 +87,9 @@ void Startup_Feeds(void)
     PG_Feed_At_End.header.bits = FLAG_FIRST_BYTE(END_SIGNAL_BYTE);
 
     static const void* packed = &PG_Feed_At_End;  // "packed feed items"
-    TG_End_Feed = Make_Variadic_Feed(&packed, nullptr, FEED_MASK_DEFAULT);
+    TG_End_Feed = require (
+        Make_Variadic_Feed(&packed, nullptr, FEED_MASK_DEFAULT)
+    );
     Clear_Feed_Flag(TG_End_Feed, NEEDS_SYNC);  // !!! or asserts on shutdown
     Add_Feed_Reference(TG_End_Feed);
     assert(Is_Feed_At_End(TG_End_Feed));

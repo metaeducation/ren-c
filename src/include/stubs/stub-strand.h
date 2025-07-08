@@ -297,12 +297,11 @@ INLINE void Term_Strand_Len_Size(Strand* s, Length len, Size used) {
     Flex_Head(Bookmark, (b))->offset
 
 INLINE BookmarkList* Alloc_BookmarkList(void) {
-    BookmarkList* books = Make_Flex(
+    BookmarkList* books = require (nocast Make_Flex(
         FLAG_FLAVOR(FLAVOR_BOOKMARKLIST)
             | BASE_FLAG_MANAGED,  // lie to be untracked
-        BookmarkList,
         1
-    );
+    ));
     Clear_Base_Managed_Bit(books);  // untracked and indefinite lifetime
     Set_Flex_Len(books, 1);
     return books;
@@ -491,18 +490,18 @@ INLINE Offset First_Hash_Candidate_Slot(
 #define Copy_String_At(v) \
     Copy_String_At_Limit((v), UNLIMITED)
 
-INLINE Binary* Copy_Binary_At_Len(
+INLINE Result(Binary*) Copy_Binary_At_Len(
     const Binary* b,
     REBLEN index,
     REBLEN len
 ){
-    return cast(Binary*, Copy_Flex_At_Len_Extra(
+    return nocast Copy_Flex_At_Len_Extra(
         FLAG_FLAVOR(FLAVOR_BINARY) | FLEX_FLAGS_NONE,
         b,
         index,
         len,
         0
-    ));
+    );
 }
 
 

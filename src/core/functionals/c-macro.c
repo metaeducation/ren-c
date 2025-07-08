@@ -67,9 +67,9 @@ void Splice_Block_Into_Feed(Feed* feed, const Element* splice) {
     }
 
     if (FEED_IS_VARIADIC(feed) or Not_End(feed->p)) {
-        Stub* saved = Make_Untracked_Stub(  // save old feed stub [2]
+        Stub* saved = require (Make_Untracked_Stub(  // save old feed stub [2]
             FLAG_FLAVOR(FLAVOR_FEED)
-        );
+        ));
         Mem_Copy(saved, Feed_Singular(feed), sizeof(Stub));
         assert(Not_Base_Managed(saved));
 
@@ -145,7 +145,9 @@ Bounce Macro_Dispatcher(Level* const L)
 
     Splice_Block_Into_Feed(L->feed, Known_Element(out));
 
-    Level* sub = Make_Level(&Stepper_Executor, L->feed, LEVEL_MASK_NONE);
+    Level* sub = require (
+        Make_Level(&Stepper_Executor, L->feed, LEVEL_MASK_NONE)
+    );
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     return DELEGATE_SUBLEVEL(sub);
@@ -260,7 +262,9 @@ DECLARE_NATIVE(INLINE)
         Splice_Block_Into_Feed(level_->feed, code);
     }
 
-    Level* sub = Make_Level(&Stepper_Executor, level_->feed, LEVEL_MASK_NONE);
+    Level* sub = require (
+        Make_Level(&Stepper_Executor, level_->feed, LEVEL_MASK_NONE)
+    );
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     STATE = ST_INLINE_REEVALUATING;

@@ -99,8 +99,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
 
     const Binary* bset = VAL_BITSET(v);
 
-    if (BITS_NOT(bset))
-        Append_Ascii(mo->strand, "[not bits ");
+    if (BITS_NOT(bset)) {
+        required (Append_Ascii(mo->strand, "[not bits "));
+    }
 
     Init_Blob(v, bset);
     Init_Nulled(ARG(FORM));  // form = false
@@ -695,7 +696,7 @@ IMPLEMENT_GENERIC(COPY, Is_Bitset)
     if (Bool_ARG(PART) or Bool_ARG(DEEP))
         panic (Error_Bad_Refines_Raw());
 
-    Binary* copy = cast(Binary*, Copy_Flex_Core(BASE_FLAG_MANAGED, bits));
+    Binary* copy = require (nocast Copy_Flex_Core(BASE_FLAG_MANAGED, bits));
     INIT_BITS_NOT(copy, BITS_NOT(bits));
 
     return Init_Bitset(OUT, copy);
@@ -729,9 +730,8 @@ IMPLEMENT_GENERIC(COMPLEMENT, Is_Bitset)
 
     Element* bset = Element_ARG(VALUE);
 
-    Binary* copy = cast(
-        Binary*,
-        Copy_Flex_Core(BASE_FLAG_MANAGED, VAL_BITSET(bset))
+    Binary* copy = require (
+        nocast Copy_Flex_Core(BASE_FLAG_MANAGED, VAL_BITSET(bset))
     );
     INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(bset)));
     return Init_Bitset(OUT, copy);

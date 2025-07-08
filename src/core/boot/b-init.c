@@ -329,11 +329,10 @@ static void Init_Root_Vars(void)
     Tweak_Misc_Varlist_Adjunct(a, nullptr);
     Tweak_Link_Inherit_Bind(a, nullptr);
 
-    KeyList* keylist = Make_Flex(
+    KeyList* keylist = require (nocast Make_Flex(
         STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
-        KeyList,
         len  // no terminator, 0-based
-    );
+    ));
 
     Set_Flex_Used(keylist, len);
 
@@ -369,7 +368,7 @@ static void Init_Root_Vars(void)
 
     // Note: rebText() can't run yet, review.
     //
-    Strand* nulled_uni = Make_Strand(1);
+    Strand* nulled_uni = require (Make_Strand(1));
 
   #if RUNTIME_CHECKS
     Codepoint test_nul;
@@ -391,11 +390,10 @@ static void Init_Root_Vars(void)
     ensure_nullptr(g_tripwire) = Init_Tripwire(Alloc_Value());
     Protect_Cell(g_tripwire);
 
-    ensure_nullptr(g_dispatcher_table) = Make_Flex(
+    ensure_nullptr(g_dispatcher_table) = require (Make_Flex(
         FLAG_FLAVOR(FLAVOR_DISPATCHERTABLE) | STUB_FLAG_DYNAMIC,
-        Flex,
         15
-    );
+    ));
 }}
 
 static void Shutdown_Root_Vars(void)
@@ -463,7 +461,9 @@ static void Init_System_Object(
     Init_Object(Sink_Lib_Var(SYM_SYSTEM), system);
     Init_Object(Sink_Lib_Var(SYM_SYS), system);
 
-    Use* use = Alloc_Use_Inherits(List_Binding(boot_sysobj_spec));
+    Use* use = require (
+        Alloc_Use_Inherits(List_Binding(boot_sysobj_spec))
+    );
     Copy_Cell(Stub_Cell(use), Varlist_Archetype(system));
 
     DECLARE_ELEMENT (sysobj_spec_virtual);

@@ -96,11 +96,11 @@ DECLARE_NATIVE(ENRESCUE)
     //    that to void, and maybe even that should be the default, but at
     //    time of writing serving the needs of the console is most important.
 
-    Level* L = Make_Level_At(
+    Level* L = require (Make_Level_At(
         &Evaluator_Executor,
         code,
         LEVEL_MASK_NONE
-    );
+    ));
     Init_Void(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
@@ -178,11 +178,11 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
 
     Level* sub;
     if (Is_Block(code)) {
-        sub = Make_Level_At(
+        sub = require (Make_Level_At(
             &Stepper_Executor,
             code,  // TYPE_BLOCK or TYPE_GROUP
             flags
-        );
+        ));
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
         STATE = ST_ENTRAP_EVAL_STEPPING;
         unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // [1]
