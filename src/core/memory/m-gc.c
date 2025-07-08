@@ -912,7 +912,7 @@ static REBLEN Sweep_Distinct_Pairing_Pool(void)
                     Remove_GC_Mark(c);
                 }
                 else {
-                    Free_Pooled(PAIR_POOL, unit);  // manuals use Free_Pairing
+                    Raw_Pooled_Free(PAIR_POOL, unit);  // manuals use Free_Pairing
                     ++sweep_count;
                 }
             }
@@ -966,7 +966,7 @@ Count Sweep_Stubs(void)
                 assert(not (unit[0] & BASE_BYTEMASK_0x01_MARKED));
 
                 if (unit[0] == DIMINISHED_NON_CANON_BYTE) {
-                    Free_Pooled(STUB_POOL, unit);
+                    Raw_Pooled_Free(STUB_POOL, unit);
                     continue;
                 }
                 assert(not (unit[0] & BASE_BYTEMASK_0x40_UNREADABLE));
@@ -983,7 +983,7 @@ Count Sweep_Stubs(void)
             ++sweep_count;  // managed but not marked => free it!
 
             if (unit[0] & BASE_BYTEMASK_0x08_CELL) {  // managed pairing
-                Free_Pooled(STUB_POOL, unit);  // manuals use Free_Pairing()
+                Raw_Pooled_Free(STUB_POOL, unit);  // manuals use Free_Pairing()
                 continue;
             }
 

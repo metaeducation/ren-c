@@ -450,7 +450,7 @@ INLINE void Free_Level_Internal(Level* L) {
     L->tick = TICK;
   #endif
 
-    Free_Pooled(LEVEL_POOL, L);
+    Raw_Pooled_Free(LEVEL_POOL, L);
 }
 
 // 1. Push_Level() takes an Atom* for the output.  It is a Need() and not a
@@ -587,7 +587,7 @@ INLINE Result(Level*) Prep_Level_Core(
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;
 
     L->feed = feed except (Error* e) {
-        Free_Pooled(LEVEL_POOL, L);
+        Raw_Pooled_Free(LEVEL_POOL, L);
         return fail (e);
     }
 
@@ -618,7 +618,7 @@ INLINE Result(Level*) Prep_Level_Core(
 }
 
 #define Make_Level(executor,feed,flags) \
-    Prep_Level_Core(executor, Alloc_Pooled(LEVEL_POOL), (feed), (flags))
+    Prep_Level_Core(executor, Raw_Pooled_Alloc(LEVEL_POOL), (feed), (flags))
 
 #define Make_Level_At_Inherit_Const(executor,list,binding,level_flags) \
     Make_Level( \

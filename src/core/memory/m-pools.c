@@ -64,19 +64,19 @@
 
 
 //
-//  Raw_Alloc: C
+//  Raw_Heap_Alloc: C
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // NOTE: Use Alloc_On_Heap() and Alloc_N_On_Heap() instead of this function,
-// to ensure the memory matches the size for the type, and that the code
-// builds as C++.
+// as they use the datatype to calculate the size of the alloc/free.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Raw_Alloc() is a basic allocator, which clients must call with the correct
-// size of memory block to free.  This differs from malloc(), whose clients do
-// not need to remember the size of the allocation to pass into free().
+// Raw_Heap_Alloc() is low-level, and clients must call Raw_Heap_Free() with
+// the size of the memory they're asking to free.  This differs fromm alloc(),
+// whose clients do not need to remember the size of the allocation to pass
+// into free().
 //
 // One motivation behind using such an allocator in Rebol is to allow it to
 // keep knowledge of how much memory the system is using.  This means it can
@@ -95,7 +95,7 @@
 //    make sure the right size is passed in.  This has the side benefit of
 //    catching free() use with Alloc_On_Heap() instead of Free_Memory().
 //
-Result(void*) Raw_Alloc(Size size)
+Result(void*) Raw_Heap_Alloc(Size size)
 {
     g_mem.usage += size;
 
@@ -138,22 +138,22 @@ Result(void*) Raw_Alloc(Size size)
 
 
 //
-//  Raw_Free: C
+//  Raw_Heap_Free: C
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// NOTE: Instead of Raw_Free(), use Free_Memory() and Free_Memory_N()
+// NOTE: Instead of Raw_Heap_Free(), use Free_Memory() and Free_Memory_N()
 // wrapper macros to ensure the memory block being freed matches the
 // appropriate size and type.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Raw_Free() is a wrapper over free(), that subtracts from a total count that
+// Raw_Heap_Free() is a wrapper over free(), that subtracts from a total count that
 // Rebol can see how much memory was released.  This information assists in
 // deciding when it is necessary to run a garbage collection, or when to
 // impose a quota.
 //
-void Raw_Free(void *mem, Size size)
+void Raw_Heap_Free(void *mem, Size size)
 {
   #if NO_RUNTIME_CHECKS
     free(mem);
@@ -430,18 +430,18 @@ void Shutdown_Pools(void)
 
 
 //
-//  Try_Fill_Pool: C
+//  Fill_Pool: C
 //
 // Allocate memory for a pool.  The amount allocated will be determined from
 // the size and units specified when the pool header was created.  The nodes
 // of the pool are linked to the free list.
 //
-bool Try_Fill_Pool(Pool* pool)
+Result(Zero) Fill_Pool(Pool* pool)
 {
     REBLEN num_units = pool->num_units_per_segment;
     REBLEN mem_size = pool->wide * num_units + sizeof(Segment);
 
-    Segment* seg = require (nocast Raw_Alloc(mem_size));
+    Segment* seg = trap (nocast Raw_Heap_Alloc(mem_size));
 
     seg->size = mem_size;
     seg->next = pool->segments;
@@ -475,7 +475,7 @@ bool Try_Fill_Pool(Pool* pool)
     }
 
     pool->last = unit;
-    return true;
+    return zero;
 }
 
 
@@ -579,7 +579,7 @@ Base* Try_Find_Containing_Base_Debug(const void *p)
 //
 Pairing* Alloc_Pairing(Flags flags) {
     assert(flags == 0 or flags == BASE_FLAG_MANAGED);
-    Pairing* p = require (nocast Alloc_Pooled(PAIR_POOL));  // 2x cell size
+    Pairing* p = require (nocast Raw_Pooled_Alloc(PAIR_POOL));  // 2x cell size
 
     Pairing_First(p)->header.bits = CELL_MASK_UNREADABLE | flags;
     Pairing_Second(p)->header.bits = CELL_MASK_UNREADABLE;
@@ -634,7 +634,7 @@ void Unmanage_Pairing(Pairing* p) {
 //
 void Free_Pairing(Cell* paired) {
     assert(Not_Base_Managed(paired));
-    Free_Pooled(STUB_POOL, paired);
+    Raw_Pooled_Free(STUB_POOL, paired);
 
   #if DEBUG_STUB_ORIGINS && TRAMPOLINE_COUNTS_TICKS
     //
@@ -1212,10 +1212,10 @@ void GC_Kill_Stub(Stub* s)
     Touch_Stub_If_Debug(s);
 
     Corrupt_If_Needful(s->info.corrupt);
-    // The spot LINK occupies will be used by Free_Pooled() to link the freelist
+    // The spot LINK occupies will be used by Raw_Pooled_Free() to link the freelist
     Corrupt_If_Needful(s->misc.corrupt);
 
-    Free_Pooled(STUB_POOL, s);
+    Raw_Pooled_Free(STUB_POOL, s);
 
     if (g_gc.depletion > 0)
         Clear_Trampoline_Flag(RECYCLE);  // Enough space GC request can cancel

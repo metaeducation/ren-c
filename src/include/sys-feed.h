@@ -563,7 +563,7 @@ INLINE void Just_Next_In_Feed(Sink(Element) out, Feed* feed) {
 
 
 #define Alloc_Feed() \
-    Alloc_Pooled(FEED_POOL)
+    Raw_Pooled_Alloc(FEED_POOL)
 
 INLINE void Free_Feed(Feed* feed) {
     //
@@ -606,7 +606,7 @@ INLINE void Free_Feed(Feed* feed) {
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
-    Free_Pooled(FEED_POOL, feed);
+    Raw_Pooled_Free(FEED_POOL, feed);
 }
 
 INLINE void Release_Feed(Feed* feed) {

@@ -200,25 +200,17 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
 //    is required for correct functioning of some types.  (See notes on
 //    alignment in %struct-cell.h.)
 //
-INLINE void *Try_Alloc_Pooled(PoolId pool_id)
+INLINE Result(void*) Raw_Pooled_Alloc(PoolId pool_id)
 {
     Pool* pool = &g_mem.pools[pool_id];
     if (not pool->first) {  // pool has run out of nodes
-        if (not Try_Fill_Pool(pool))  // attempt to refill it
-            return nullptr;
+        trapped (Fill_Pool(pool));  // attempt to refill it
     }
 
-  #if TRAMPOLINE_COUNTS_TICKS
+  #if TRAMPOLINE_COUNTS_TICKS && RUNTIME_CHECKS
     if (g_mem.fuzz_factor != 0) {
-        if (g_mem.fuzz_factor < 0) {
-            ++g_mem.fuzz_factor;
-            if (g_mem.fuzz_factor == 0)
-                return nullptr;
-        }
-        else if ((g_tick % 10000) <= cast(Tick, g_mem.fuzz_factor)) {
-            g_mem.fuzz_factor = 0;
-            return nullptr;
-        }
+        if (SPORADICALLY(g_mem.fuzz_factor))
+            return fail ("Artificial allocation failure (fuzz_factor)");
     }
   #endif
 
@@ -254,33 +246,22 @@ INLINE void *Try_Alloc_Pooled(PoolId pool_id)
         FIRST_BYTE(unit) = u_cast(Byte, g_tick % 256);
   #endif
 
-    return cast(void*, unit);
+    return unit;
 }
 
-
-INLINE Result(void*) Alloc_Pooled(PoolId pool_id) {
-    void *node = Try_Alloc_Pooled(pool_id);
-    if (node)
-        return node;
-
-    Pool* pool = &g_mem.pools[pool_id];
-    Size requested_size = pool->wide * pool->num_units_per_segment;
-    UNUSED(requested_size);  // can't alloc memory, so how to report?
-    return fail (Cell_Error(g_error_no_memory));
-}
 
 #define Alloc_Stub() ( \
     (g_gc.depletion -= sizeof(Stub)) <= 0 \
         ? Set_Trampoline_Flag(RECYCLE) \
         : NOOP, \
-    Alloc_Pooled(STUB_POOL))  // not a formed stub yet, don't cast it
+    Raw_Pooled_Alloc(STUB_POOL))  // not a formed stub yet, don't cast it
 
 
 // Free a Unit, returning it to its pool.  Once it is freed, its header will
 // have BASE_FLAG_UNREADABLE...which will identify the Unit as not in use to
 // anyone enumerating Units in the pool (such as the garbage collector).
 //
-INLINE void Free_Pooled(PoolId pool_id, void* p)
+INLINE void Raw_Pooled_Free(PoolId pool_id, void* p)
 {
   #if DEBUG_MONITOR_FLEX
     if (p == maybe g_mem.monitoring) {
@@ -304,21 +285,22 @@ INLINE void Free_Pooled(PoolId pool_id, void* p)
     // cache usage, but makes the "poisoning" nearly useless.
     //
     // This code was added to insert an empty segment, such that this Unit
-    // won't be picked by the next Alloc_Pooled.  That enlongates the poisonous
-    // time of this area to catch stale pointers.  But doing this in the
-    // checked build only creates a source of variant behavior.
+    // won't be picked by the next Raw_Pooled_Alloc.  That enlongates the
+    // poisonous time of this area to catch stale pointers.  But doing this
+    // in the checked build only creates a source of variant behavior.
 
-    bool out_of_memory = false;
-
+    Option(Error*) error = SUCCESS;
     if (not pool->last) {  // Fill pool if empty
-        if (not Try_Fill_Pool(pool))
-            out_of_memory = true;
+        Fill_Pool(pool) except (error) {
+            // error handled below (want to still run common code)
+        }
     }
 
-    if (out_of_memory) {
+    if (error) {
         //
-        // We don't want Free_Base to panic with an "out of memory" error, so
-        // just fall back to the release build behavior in this case.
+        // We don't want freeing operations to be able to to panic with an
+        // "out of memory" error, so just fall back to the release build
+        // behavior in this case.
         //
         unit->next_if_free = pool->first;
         pool->first = unit;
@@ -350,7 +332,7 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
 
 //=//// MEMORY ALLOCATION AND FREEING MACROS //////////////////////////////=//
 //
-// Raw_Free() requires callers to pass in the size of the memory being
+// Raw_Heap_Free() requires callers to pass in the size of the memory being
 // freed, and can be tricky.  These macros are modeled after C++'s new/delete
 // and new[]/delete[], and allocations take either a type or a type and a
 // length.  The size calculation is done automatically, and the result is cast
@@ -362,10 +344,10 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
 //
 
 #define Alloc_On_Heap(T) \
-    u_cast(Result(T*), Raw_Alloc(sizeof(T)))
+    u_cast(Result(T*), Raw_Heap_Alloc(sizeof(T)))
 
 #define Alloc_N_On_Heap(T,n) \
-    u_cast(Result(T*), Raw_Alloc(sizeof(T) * (n)))
+    u_cast(Result(T*), Raw_Heap_Alloc(sizeof(T) * (n)))
 
 #if CPLUSPLUS_11
     #define Free_Memory(T,p) \
@@ -374,7 +356,7 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
                 std::is_same<decltype(p), std::add_pointer<T>::type>::value, \
                 "mismatched Free_Memory() type" \
             ); \
-            Raw_Free(p, sizeof(T)); \
+            Raw_Heap_Free(p, sizeof(T)); \
         } while (0)
 
     #define Free_Memory_N(T,n,p) \
@@ -383,12 +365,12 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
                 std::is_same<decltype(p), std::add_pointer<T>::type>::value, \
                 "mismatched Free_Memory_N() type" \
             ); \
-            Raw_Free(p, sizeof(T) * (n)); \
+            Raw_Heap_Free(p, sizeof(T) * (n)); \
         } while (0)
 #else
     #define Free_Memory(T,p) \
-        Raw_Free((p), sizeof(T))
+        Raw_Heap_Free((p), sizeof(T))
 
     #define Free_Memory_N(T,n,p) \
-        Raw_Free((p), sizeof(T) * (n))
+        Raw_Heap_Free((p), sizeof(T) * (n))
 #endif

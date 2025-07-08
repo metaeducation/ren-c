@@ -593,7 +593,7 @@ INLINE Result(Flex*) Make_Flex_Into(
 }
 
 #define Make_Flex(flags, capacity) \
-    Make_Flex_Into((flags), Alloc_Pooled(STUB_POOL), (capacity))
+    Make_Flex_Into((flags), Raw_Pooled_Alloc(STUB_POOL), (capacity))
 
 //=//// FLEX MONITORING ///////////////////////////////////////////////////=//
 //

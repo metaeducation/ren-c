@@ -71,7 +71,7 @@ Result(Zero) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
     PoolId pool_id = Pool_Id_For_Size(capacity * wide);
 
     if (pool_id < SYSTEM_POOL) {  // a pool is designated for this size range
-        s->content.dynamic.data = trap (nocast Alloc_Pooled(pool_id));
+        s->content.dynamic.data = trap (nocast Raw_Pooled_Alloc(pool_id));
 
         size = g_mem.pools[pool_id].wide;
         assert(size >= capacity * wide);
