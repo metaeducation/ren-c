@@ -624,7 +624,7 @@ INLINE Result(Feed*) Prep_Feed_Common(
     Result(void*) preallocated,
     Flags flags
 ){
-   Feed* feed = trap (u_cast(Result(Feed*), preallocated));
+   Feed* feed = trap (nocast preallocated);
 
   #if TRAMPOLINE_COUNTS_TICKS
     feed->tick = g_tick;

@@ -582,7 +582,7 @@ INLINE Result(Level*) Prep_Level_Core(
     Result(Feed*) feed,
     Flags flags
 ){
-    Level* L = require (u_cast(Result(Level*), preallocated));
+    Level* L = trap (nocast preallocated);
 
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;
 

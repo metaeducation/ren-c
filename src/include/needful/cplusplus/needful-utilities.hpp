@@ -13,8 +13,8 @@
         static_assert(sizeof(T) == 0, "See compiler errors for probed name");
     };
 
-    #define PROBE_TYPE(T) \
-        (needful::ProbeTypeHelper<T>())
+    #define PROBE_DECLTYPE(expr) \
+        (needful::ProbeTypeHelper<decltype(expr)>())
 #endif
 
 

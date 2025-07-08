@@ -538,7 +538,9 @@ struct UpcastHelper {
 #define NEEDFUL_DEFINE_DOWNCAST_HELPERS(BaseName, hookability) /* ugh [1] */ \
     template<typename From> \
     struct NEEDFUL_NODISCARD BaseName##Holder { /* NODISCARD needed [3] */ \
-        From f; \
+        From f; /* trivially constructible only (fastest for debug) */\
+        \
+        BaseName##Holder() = delete; /* to trivially construct w/Result(T) */ \
         \
         template< /* "downcast" means "reverse is_convertible" [2] */ \
             typename To, \
@@ -549,37 +551,36 @@ struct UpcastHelper {
         operator To() const \
             { return needful_lenient_##hookability##_cast(To, f); } \
         \
-        BaseName##Holder<From> Extract_Hot() const { \
-            return *this; \
+        template<typename F = From> \
+        typename std::enable_if< \
+            IsResultWrapper<needful_remove_reference(F)>::value, \
+            BaseName##Holder<typename F::wrapped_type> \
+        >::type \
+        Extract_Hot() const { \
+            return BaseName##Holder<typename F::wrapped_type>{f.r}; \
         } \
     }; \
     \
     struct BaseName##Maker { \
         template<typename T> \
         BaseName##Holder<needful_remove_reference(T)> \
-        operator<<(const T& value) const { \
+        operator%(const T& value) const { \
             return BaseName##Holder<T>{value}; \
-        } \
-        \
-        template<typename T> \
-        BaseName##Holder<needful_remove_reference(T)> \
-        operator<<(const ResultWrapper<T>& result) const { \
-            return BaseName##Holder<T>{result.r}; \
         } \
     }; \
     \
-    constexpr BaseName##Maker g_##BaseName##_maker{};
+    constexpr BaseName##Maker g_##BaseName##_maker{}
 
-NEEDFUL_DEFINE_DOWNCAST_HELPERS(HookableDowncast, hookable)
-NEEDFUL_DEFINE_DOWNCAST_HELPERS(UnhookableDowncast, unhookable)
+NEEDFUL_DEFINE_DOWNCAST_HELPERS(HookableDowncast, hookable);
+NEEDFUL_DEFINE_DOWNCAST_HELPERS(UnhookableDowncast, unhookable);
 
 #undef NEEDFUL_DEFINE_DOWNCAST_HELPERS  // macro need not leak
 
 #undef needful_hookable_downcast
-#define needful_hookable_downcast  needful::g_HookableDowncast_maker <<
+#define needful_hookable_downcast  needful::g_HookableDowncast_maker %
 
 #undef needful_unhookable_downcast
-#define needful_unhookable_downcast  needful::g_UnhookableDowncast_maker <<
+#define needful_unhookable_downcast  needful::g_UnhookableDowncast_maker %
 
 
 //=//// NON-POINTER TO POINTER CAST ////////////////////////////////////////=//

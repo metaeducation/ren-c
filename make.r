@@ -659,6 +659,16 @@ gen-obj: func [
                 ; https://forum.rebol.info/t/2157
                 ;
                 <msc:/wd4459>
+
+                ; "possible change in behavior, change in UDT return calling
+                ; convention" happens when you return a user-defined datatype
+                ; by value from an operator overload.  There's no excuse for
+                ; this being a problem.  Returning user-defined datatypes by
+                ; value is fully legitimate modern C++ behavior, and MSVC
+                ; is complaining because they did a bad optimization at some
+                ; point for stream operators.  Ignore this with prejudice.
+                ;
+                <msc:/wd4686>
             ]
         ]
         'no [

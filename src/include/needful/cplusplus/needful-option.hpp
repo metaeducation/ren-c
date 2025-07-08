@@ -16,18 +16,15 @@
 
 //=//// none: OPTIONAL DISENGAGED STATE ///////////////////////////////////=//
 //
-// So NoneStruct instances are a specific narrowed type used to construct
-// an Option(T) for arbitrary T in the disengaged state.
+// NoneStruct instances are a specific narrowed type used to construct an
+// Option(T) for arbitrary T in the disengaged state.
 //
 //     Option(SomeEnum) foo = nullptr;  /* compile-time error */
 //     Option(SomeEnum) bar = 0;  /* compile-time error */
 //     Option(SomeEnum) baz = none;  /* OK */
 //
 
-struct NoneStruct {
-    NoneStruct () = default;
-    /* NoneStruct(int) {} */  // don't allow construction from int
-};
+struct NoneStruct {};
 
 #undef needful_none
 #define needful_none  needful::NoneStruct{}  // instantiate {} none instance
@@ -48,14 +45,6 @@ struct NoneStruct {
 //    structures with members that are Option().  :-(  Also, global variables
 //    need to be compatible with the 0-initialization property they'd have
 //    if they weren't marked Option().
-//
-// 3. If doing something like `u_cast(Option(SomeEnum), 17)` there has to be
-//    a universal reference to grab onto these constants.  Make the explicit
-//    converting constructor willing to do such conversions use &&.
-//
-// 4. For convenience, an Option(SomeEnum) is allowed to work in switch()
-//    statements without unwrapping it.  Also, wrapper classes which may
-//    be able to convert to uintptr_t are allowed.  Raw pointers are not.
 //
 // If used in the C++ build with smart pointer classes, they must be boolean
 // coercible, e.g. `operator bool() const {...}`
@@ -80,22 +69,24 @@ struct OptionWrapper {
         : o {OptionNoneInitHelper<T>::init()}
       {}
 
-    template <typename U>
-    OptionWrapper (const U& something)
+    template <
+        typename U,
+        typename = typename std::enable_if<
+            std::is_convertible<U, T>::value
+        >::type
+    >
+    OptionWrapper (U&& something)
         : o (something)  // not {something}, so narrowing conversions ok
-      {}
-
-    template <typename U>
-    OptionWrapper (const DowncastHolder<U>& down)
-        : o {down}
       {}
 
     template <
         typename U,
-        DisableIfSame<U, NoneStruct, Result0Struct> = nullptr
+        typename = typename std::enable_if<
+            not std::is_convertible<U, T>::value
+        >::type
     >
-    explicit OptionWrapper(U&& something)  // needed for Byte->enum [3]
-        : o {std::forward<U>(something)}
+    explicit OptionWrapper(const U& something)
+        : o {needful_xtreme_cast(T, something)}
       {}
 
     template <typename X>

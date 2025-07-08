@@ -204,11 +204,11 @@ INLINE Array* Make_Array_Core_Into(
 INLINE Source* Alloc_Singular(Flags flags) {
     assert(Flavor_From_Flags(flags) == FLAVOR_SOURCE);
     assert(not (flags & STUB_FLAG_DYNAMIC));
-    Source* a = require (u_cast(Result(Source*), Make_Flex_Into(
+    Source* a = require (nocast Make_Flex_Into(
         flags | FLEX_FLAG_FIXED_SIZE,
         Alloc_Stub(),
         1
-    )));
+    ));
     assert(Stub_Holds_Cells(a));  // flavor should have been an array flavor
     Force_Erase_Cell(Stub_Cell(a));  // poison len 0, erased len 1
     return a;

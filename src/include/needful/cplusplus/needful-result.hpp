@@ -269,14 +269,10 @@ struct OptionWrapper;
 
 template<typename T>
 struct NEEDFUL_NODISCARD ExtractedHotPotato {
-    T x;
+    T x;  // trivially constructible (fastest in debug builds)
 
-    ExtractedHotPotato(const T& something)
-        : x {something} {}
-
-    operator T() const {
-        return x;
-    }
+    operator T() const
+      { return x; }
 };
 
 
@@ -299,6 +295,13 @@ struct NEEDFUL_NODISCARD ExtractedHotPotato {
 //    setting the global error state.  But since the error state is separate
 //    from the return value, zerolike states can be legal returns...so we
 //    allow it IF your return type is Result(Option(T*)) vs. Result(T*).
+//
+// 3. Attempts to generalize the construction of ResultWrapper<T> to wrappers
+//    that are able to produce ResultWrapper<T> by means of conversion
+//    operators seemed to fail.  DowncastHolder is a good example of what
+//    didn't work and had to be overridden explicitly.  Someone who knows
+//    more than me can look into this and see if it can generalize so that
+//    DowncastHolder need not be mentioned explicitly here.
 //
 
 template<typename T>
@@ -330,25 +333,27 @@ struct NEEDFUL_NODISCARD ResultWrapper {
     template <
         typename U,
         typename = typename std::enable_if<
-            not std::is_same<
+            not std::is_convertible<
                 typename std::decay<U>::type, ResultWrapper<T>
             >::value
+            and not IsResultWrapper<typename std::decay<U>::type>::value
             and std::is_convertible<U, T>::value  // implicit cast okay
         >::type
     >
-    ResultWrapper(const U& something) : r {something} {}
+    ResultWrapper(U&& something) : r {something} {}
 
     template <
         typename U,
         typename = typename std::enable_if<
-            not std::is_same<
+            not std::is_convertible<
                 typename std::decay<U>::type, ResultWrapper<T>
             >::value
+            and not IsResultWrapper<typename std::decay<U>::type>::value
             and not std::is_convertible<U, T>::value  // must cast explicitly
         >::type,
         typename = void
     >
-    explicit ResultWrapper(const U& something)
+    explicit ResultWrapper(U&& something)
         : r {needful_xtreme_cast(T, something)}
     {}
 
@@ -373,8 +378,30 @@ struct NEEDFUL_NODISCARD ResultWrapper {
         : r {needful_xtreme_cast(T, result.r)}
     {}
 
+    template<
+        typename X,
+        typename = typename std::enable_if<
+            std::is_convertible<T, X>::value
+        >::type
+    >
+    ResultWrapper (const UnhookableDowncastHolder<X> down)  // generalize? [3]
+        : r {needful_xtreme_cast(T, down.f)}
+    {
+    }
+
+    template<
+        typename X,
+        typename = typename std::enable_if<
+            std::is_convertible<T, X>::value
+        >::type
+    >
+    ResultWrapper (const HookableDowncastHolder<X> down)  // generalize? [3]
+        : r {needful_lenient_hookable_cast(T, down.f)}
+    {
+    }
+
     ExtractedHotPotato<T> Extract_Hot() const  // [[nodiscard]] version
-      { return r; }
+      { return ExtractedHotPotato<T> {r}; }
 
     T Extract_Cold() const  // plain type, discardable
       { return r; }  // (not used at the moment, only extract hot vs. discard)
@@ -428,10 +455,7 @@ struct IsResultWrapper<ResultWrapper<X>> : std::true_type {};
 //    completely empty class with no `Zero` member.
 //
 
-struct ZeroStruct {
-    ZeroStruct () = default;  // handle `return zero;` case
-    /* ZeroStruct(int) {} */  // don't allow construction from int [2]
-};
+struct ZeroStruct {};
 
 #undef NeedfulZero
 #define NeedfulZero  needful::ZeroStruct  // type in caps, instance lower [1]
@@ -446,7 +470,7 @@ struct ResultWrapper<Zero> {
     ResultWrapper(Result0Struct&&) {}
     ResultWrapper(Zero&&) {}
 
-    ExtractedHotPotato<Zero> Extract_Hot() {  // [[nodiscard]] version
+    ExtractedHotPotato<Zero> Extract_Hot() const {  // [[nodiscard]] version
         return ExtractedHotPotato<Zero>{zero};
     }
 
