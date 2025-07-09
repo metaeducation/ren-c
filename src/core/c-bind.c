@@ -334,7 +334,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
         if (Is_Frame(overbind)) {
             lens = Cell_Frame_Lens(overbind);
             if (not lens)  // need lens to not default to full visibility [1]
-                lens = Phase_Paramlist(Frame_Phase(overbind));
+                lens = cast(Phase*, Phase_Paramlist(Frame_Phase(overbind)));
         }
 
         c = Cell_Context(overbind);  // do search on other contexts
@@ -400,7 +400,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
 
     if (CTX_TYPE(vlist) == TYPE_FRAME) {
         if (not lens) {  // want full visibility (Use would have defaulted...)
-            lens = Phase_Details(cast(ParamList*, vlist));
+            lens = cast(Phase*, Phase_Details(cast(ParamList*, vlist)));
         }
         Init_Lensed_Frame(
             out, cast(ParamList*, vlist), lens, NONMETHOD
@@ -993,7 +993,7 @@ Result(Zero) Clonify_And_Bind_Relative(
     Flags flags,
     bool deeply,
     Option(Binder*) binder,
-    Option(Phase*) relative
+    Option(Details*) relative
 ){
     assert(flags & BASE_FLAG_MANAGED);
 

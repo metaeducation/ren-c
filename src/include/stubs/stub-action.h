@@ -68,18 +68,61 @@
 
 
 
+//=//// MAKE ensure(Phase*, ...) WORK /////////////////////////////////////=//
+//
+// Phase can be either ParamList or Details, but those types aren't on the
+// same inheritance chain.  This means the usual ensure() won't work.  BUT
+// Needful allows you to overload it... so we can make a version that can
+// do the validation.  (The C build just thinks these are all Stub*, anyway.)
+//
+// See the definition of Phase for more information.
+//
+
+#if CPLUSPLUS_11
+namespace needful {
+    template<typename From>
+    struct IsConvertibleAsserter<From, const Phase*> {
+        static_assert(
+            needful::IsConvertibleAny<
+                From,
+                ParamList*, Details*, Phase*
+            >::value,
+            "ensure() failed: Phase* only converts from ParamList* or Details*"
+        );
+        typedef Phase* type;  // e.g. ensure(Phase*, details) -> Phase*
+    };
+
+  #if NEEDFUL_OPTION_USES_WRAPPER
+    template<typename From>
+    struct IsConvertibleAsserter<From, Option(const Phase*)> {
+        static_assert(
+            needful::IsConvertibleAny<
+                From,
+                Option(ParamList*), Option(Details*), Option(Phase*)
+            >::value,
+            "ensure() failed: Phase* only converts from ParamList* or Details*"
+        );
+        typedef Phase* type;  // e.g. ensure(Phase*, details) -> Phase*
+    };
+  #endif
+}
+#endif
+
 
 // For performance, all Details and VarList stubs are STUB_FLAG_DYNAMIC.
 //
 #define Phase_Archetype(phase) \
     Flex_Head_Dynamic(Element, ensure(Phase*, (phase)))
 
-INLINE Details* Phase_Details(Phase* p) {
+INLINE Details* Phase_Details_Core(Phase* p) {
     while (not Is_Stub_Details(p)) {
         p = cast(Phase*, CELL_FRAME_PAYLOAD_1_PHASE(Phase_Archetype(p)));
     }
     return cast(Details*, p);
 }
+
+#define Phase_Details(p) \
+    Phase_Details_Core(ensure(Phase*, (p)))
 
 
 INLINE bool Is_Frame_Details(const Cell* v) {
@@ -101,11 +144,15 @@ INLINE void Tweak_Frame_Lens_Or_Label(Cell* c, Option(const Stub*) f) {
     CELL_FRAME_EXTRA_LENS_OR_LABEL(c) = m_cast(Stub*, maybe f);  // no flag
 }
 
-INLINE ParamList* Phase_Paramlist(Phase* p) {
+INLINE ParamList* Phase_Paramlist_Core(Phase* p) {
     while (Is_Stub_Details(p))
         p = u_cast(Phase*, CELL_FRAME_PAYLOAD_1_PHASE(Phase_Archetype(p)));
     return u_cast(ParamList*, p);
 }
+
+#define Phase_Paramlist(p) \
+    Phase_Paramlist_Core(ensure(Phase*, (p)))
+
 
 // More optimized version of Bonus_Keylist(Phase_Paramlist(a)),
 // and also forward declared.
@@ -119,10 +166,13 @@ INLINE ParamList* Phase_Paramlist(Phase* p) {
 #define Phase_Keys(tail,p) \
     Varlist_Keys((tail), Phase_Paramlist(p))
 
-INLINE Param* Phase_Params_Head(Phase* p) {
+INLINE Param* Phase_Params_Head_Core(Phase* p) {
     ParamList* list = Phase_Paramlist(p);
     return Flex_Head_Dynamic(Param, list) + 1;  // skip archetype
 }
+
+#define Phase_Params_Head(p) \
+    Phase_Params_Head_Core(ensure(Phase*, (p)))
 
 INLINE Dispatcher* Details_Dispatcher(Details* details)
   { return f_cast(Dispatcher*, LINK_DETAILS_DISPATCHER(details)); }
@@ -304,30 +354,6 @@ INLINE bool Action_Is_Derived_From(Phase* derived, Phase* base) {
     Not_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
 
 
-INLINE const Element* Quoted_Returner_Of_Paramlist(
-    ParamList* paramlist,
-    SymId returner
-){
-    assert(Key_Id(Phase_Keys_Head(paramlist)) == returner);
-    UNUSED(returner);
-    Value* param = Phase_Params_Head(paramlist);
-    assert(
-        LIFT_BYTE(param) == ONEQUOTE_NONQUASI_4
-        and Heart_Of(param) == TYPE_PARAMETER
-    );
-    return cast(Element*, param);
-}
 
-// There's a minor compression used by FUNC and YIELDER which stores the type
-// information for RETURN as a quoted PARAMETER! in the paramlist slot that
-// defines the cell where the DEFINITIONAL-RETURN is put.
-//
-INLINE void Extract_Paramlist_Returner(
-    Sink(Element) out,
-    ParamList* paramlist,
-    SymId returner
-){
-    const Element* param = Quoted_Returner_Of_Paramlist(paramlist, returner);
-    Copy_Cell(out, param);
-    LIFT_BYTE(out) = NOQUOTE_2;
-}
+#define First_Unspecialized_Param(key_out,phase) \
+    First_Unspecialized_Param_Core((key_out), ensure(Phase*, (phase)))

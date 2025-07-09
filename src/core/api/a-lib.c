@@ -3223,8 +3223,8 @@ RebolValue* API_rebFunctionFlipped(
     );
     Tweak_Cell_Binding(holder, Cell_Binding(spec));
 
-    assert(Misc_Phase_Adjunct(details) == nullptr);
-    Tweak_Misc_Phase_Adjunct(details, adjunct);
+    assert(Misc_Details_Adjunct(details) == nullptr);
+    Tweak_Misc_Details_Adjunct(details, adjunct);
 
     return Init_Action(Alloc_Value(), details, ANONYMOUS, NONMETHOD);
 }

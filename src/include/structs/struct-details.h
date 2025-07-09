@@ -190,9 +190,37 @@ typedef struct {
 #endif
 
 
-// cast() checks Phase is only cast from ParamList or Details
+//=//// PHASE IS A WEIRD "TYPESET" OF DETAILS* AND PARAMLIST* ////////////=//
 //
-typedef Context Phase;  // can be cast from either ParamList or Details
+// We would like to say:
+//
+//     struct Details : public Phase {}
+//     struct ParamList : public Phase {}
+//
+// This way you could pass a Details* or a ParamList* anywhere a Phase* would
+// be accepted.  Except this would lose important properties--like that
+// a ParamList* is actually a Context*.  It makes more sense for ParamList
+// to inherit from VarList.
+//
+// The Needful library gives us a tool for building compile-time typecheckers
+// that check for a match against a list of arbitrary types:
+//
+//     ensure_any((Phase*, Details*, ParamList*), expression)
+//
+// Beyond that, it actually lets you specialize arity-1 ensure(), so that
+// you can make the check against that list the semantics of:
+//
+//     ensure(Phase*, expression)
+//
+// So we rely on this--although it forces us to write macros to interface
+// with functions that take Phase* in order to get them to take Details* or
+// ParamList*.  But it seems to work.
+//
+#if CPLUSPLUS_11
+    struct Phase : public Stub {};
+#else
+    typedef Stub Phase;
+#endif
 
 
 // Includes STUB_FLAG_DYNAMIC because an action's paramlist is always

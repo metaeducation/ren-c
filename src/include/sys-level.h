@@ -277,10 +277,13 @@ INLINE Details* Ensure_Level_Details(Level* L) {
     return cast(Details*, phase);
 }
 
-INLINE void Tweak_Level_Phase(Level* L, Phase* phase) {
+INLINE void Tweak_Level_Phase_Core(Level* L, Phase* phase) {
     assert(Is_Stub_Details(phase) or Is_Stub_Varlist(phase));
     CELL_FRAME_PAYLOAD_1_PHASE(L->rootvar) = phase;
 }
+
+#define Tweak_Level_Phase(L,phase) \
+    Tweak_Level_Phase_Core(L, ensure(Phase*, (phase)))
 
 INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
   { Tweak_Frame_Coupling(L->rootvar, coupling); }  // also fast

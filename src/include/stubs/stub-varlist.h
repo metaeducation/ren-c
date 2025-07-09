@@ -66,19 +66,27 @@ INLINE void Tweak_Misc_Varlist_Adjunct_Raw(
 #define Tweak_Misc_Varlist_Adjunct(varlist, adjunct) \
     Tweak_Misc_Varlist_Adjunct_Raw(ensure(VarList*, (varlist)), adjunct)
 
-INLINE void Tweak_Misc_Phase_Adjunct(Phase* a, Option(VarList*) adjunct) {
+INLINE void Tweak_Misc_Phase_Adjunct_Core(
+    Phase* a,
+    Option(VarList*) adjunct
+){
     if (Is_Stub_Details(a))
         Tweak_Misc_Details_Adjunct(cast(Details*, a), adjunct);
     else
         Tweak_Misc_Varlist_Adjunct(cast(ParamList*, a), adjunct);
 }
 
-INLINE Option(VarList*) Misc_Phase_Adjunct(Phase* a) {
+INLINE Option(VarList*) Misc_Phase_Adjunct_Core(Phase* a) {
     if (Is_Stub_Details(a))
         return Misc_Details_Adjunct(cast(Details*, a));
     return Misc_Varlist_Adjunct(cast(ParamList*, a));
 }
 
+#define Misc_Phase_Adjunct(p) \
+    Misc_Phase_Adjunct_Core(ensure(Phase*, (p)))
+
+#define Tweak_Misc_Phase_Adjunct(p, adjunct) \
+    Tweak_Misc_Phase_Adjunct_Core(ensure(Phase*, (p)), adjunct)
 
 
 #define CELL_CONTEXT_VARLIST(c)  CELL_PAYLOAD_1(c)
@@ -392,3 +400,34 @@ INLINE void Deep_Freeze_Context(VarList* c) {
 
 #define Is_Context_Frozen_Deep(c) \
     Is_Source_Frozen_Deep(Varlist_Array(c))
+
+
+//=////////////////////////////////////////////////////////////////////////=//
+
+INLINE const Element* Quoted_Returner_Of_Paramlist(
+    ParamList* paramlist,
+    SymId returner
+){
+    assert(Key_Id(Varlist_Keys_Head(paramlist)) == returner);
+    UNUSED(returner);
+    Value* param = Slot_Hack(Varlist_Slots_Head(paramlist));
+    assert(
+        LIFT_BYTE(param) == ONEQUOTE_NONQUASI_4
+        and Heart_Of(param) == TYPE_PARAMETER
+    );
+    return cast(Element*, param);
+}
+
+// There's a minor compression used by FUNC and YIELDER which stores the type
+// information for RETURN as a quoted PARAMETER! in the paramlist slot that
+// defines the cell where the DEFINITIONAL-RETURN is put.
+//
+INLINE void Extract_Paramlist_Returner(
+    Sink(Element) out,
+    ParamList* paramlist,
+    SymId returner
+){
+    const Element* param = Quoted_Returner_Of_Paramlist(paramlist, returner);
+    Copy_Cell(out, param);
+    LIFT_BYTE(out) = NOQUOTE_2;
+}

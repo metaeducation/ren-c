@@ -137,7 +137,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 
             assert(Cell_Binding(ordered) == UNBOUND);  // we bind only one
             Tweak_Word_Index(ordered, index);
-            Tweak_Cell_Binding(ordered, phase);  // !!! Review
+            Tweak_Cell_Relative_Binding(ordered, cast(Details*, phase));
 
             if (not Is_Parameter_Unconstrained(param))  // needs argument
                 goto continue_unspecialized;
@@ -455,7 +455,7 @@ DECLARE_NATIVE(SPECIALIZE)
 
 
 //
-//  First_Unspecialized_Param: C
+//  First_Unspecialized_Param_Core: C
 //
 // Note that refinement promotion can make this a bit strange:
 //
@@ -464,8 +464,10 @@ DECLARE_NATIVE(SPECIALIZE)
 //
 // This means that the last parameter (D) is actually the first of FOO-D.
 //
-const Param* First_Unspecialized_Param(Sink(const Key*) key_out, Phase* phase)
-{
+const Param* First_Unspecialized_Param_Core(
+    Sink(const Key*) key_out,
+    Phase* phase
+){
     const Key* key_tail;
     const Key* key = Phase_Keys(&key_tail, phase);
     Param* param = Phase_Params_Head(phase);

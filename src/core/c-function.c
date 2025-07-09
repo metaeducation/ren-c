@@ -547,7 +547,12 @@ Result(ParamList*) Pop_Paramlist(
     if (prior)
         Init_Frame(rootvar, unwrap prior, ANONYMOUS, prior_coupling);
     else
-        Init_Frame_Unchecked(rootvar, paramlist, ANONYMOUS, NONMETHOD);
+        Init_Frame_Unchecked(
+            rootvar,
+            u_cast(Phase*, paramlist),
+            ANONYMOUS,
+            NONMETHOD
+        );
 
     Value* param = 1 + rootvar;
     Key* key = Flex_Head(Key, keylist);

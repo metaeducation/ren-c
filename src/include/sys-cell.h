@@ -933,8 +933,8 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     #define Tweak_Cell_Binding(c,binding) \
         ((c)->extra.base = binding)
 
-    #define Tweak_Cell_Relative_Binding(c,binding) \
-        ((c)->extra.base = binding)
+    #define Tweak_Cell_Relative_Binding(c,details) \
+        ((c)->extra.base = details)
 #else
     INLINE void Tweak_Cell_Binding(Element* c, Option(Context*) binding) {
         Assert_Cell_Writable(c);
@@ -945,8 +945,8 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
         if (binding)
             Assert_Cell_Binding_Valid(c);
     }
-    INLINE void Tweak_Cell_Relative_Binding(Element* c, Phase* phase) {
-        c->extra.base = phase;
+    INLINE void Tweak_Cell_Relative_Binding(Element* c, Details* details) {
+        c->extra.base = details;  // !!! relative binding may be deprecated
     }
 #endif
 

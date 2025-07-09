@@ -599,15 +599,17 @@ bool Typecheck_Coerce_Return(
         and Type_Of(atom) != TYPE_PACK  // all PACK! are potentially surprising
     ){
       #if RUNTIME_CHECKS
-        Details* details = Ensure_Level_Details(L);
+        Phase* phase = Level_Phase(L);
+        assert(Is_Stub_Details(phase));
+        Details* details = u_cast(Details*, phase);
         if (
             Get_Details_Flag(details, RAW_NATIVE)
             and Not_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
             and (Is_Possibly_Unstable_Atom_Action(atom) or Is_Ghost(atom))
-            and (details != Frame_Phase(LIB(DEFINITIONAL_RETURN)))
-            and (details != Frame_Phase(LIB(DEFINITIONAL_YIELD)))
-            and (details != Frame_Phase(LIB(LET)))  // review
-            and (details != Frame_Phase(LIB(SET)))  // review
+            and (phase != Frame_Phase(LIB(DEFINITIONAL_RETURN)))
+            and (phase != Frame_Phase(LIB(DEFINITIONAL_YIELD)))
+            and (phase != Frame_Phase(LIB(LET)))  // review
+            and (phase != Frame_Phase(LIB(SET)))  // review
         ){
             assert(!"NATIVE relies on typechecking for UNSURPRISING flag");
         }
@@ -617,15 +619,17 @@ bool Typecheck_Coerce_Return(
     }
     else {
       #if RUNTIME_CHECKS
-        Details* details = Ensure_Level_Details(L);
+        Phase* phase = Level_Phase(L);
+        assert(Is_Stub_Details(phase));
+        Details* details = u_cast(Details*, phase);
         if (
             Get_Details_Flag(details, RAW_NATIVE)
             and Get_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
             and (Is_Possibly_Unstable_Atom_Action(atom) or Is_Ghost(atom))
-            and (details != Frame_Phase(LIB(DEFINITIONAL_RETURN)))
-            and (details != Frame_Phase(LIB(DEFINITIONAL_YIELD)))
-            and (details != Frame_Phase(LIB(LET)))  // review
-            and (details != Frame_Phase(LIB(SET)))  // review
+            and (phase != Frame_Phase(LIB(DEFINITIONAL_RETURN)))
+            and (phase != Frame_Phase(LIB(DEFINITIONAL_YIELD)))
+            and (phase != Frame_Phase(LIB(LET)))  // review
+            and (phase != Frame_Phase(LIB(SET)))  // review
         ){
             assert(!"NATIVE relies on typechecking for SURPRISING flag");
         }

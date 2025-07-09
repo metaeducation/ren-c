@@ -212,22 +212,16 @@ INLINE Element* Init_Frame_Untracked(
     return Init_Frame_Unchecked_Untracked(out, phase, lens_or_label, coupling);
 }
 
-#define Init_Frame_Untracked_Macro(out,identity,lens_or_label,coupling) \
-    Init_Frame_Untracked((out), \
-        ensure_any((Phase*, Details*, ParamList*), (identity)), \
-        ensure_any((Option(const Symbol*), Option(Phase*)), (lens_or_label)), \
-        (coupling))
-
 #define Init_Frame_Unchecked(out,identity,label,coupling) \
     TRACK(Init_Frame_Unchecked_Untracked( \
-        (out), (identity), (label), (coupling)))
+        (out), ensure(Phase*, (identity)), (label), (coupling)))
 
 #define Init_Frame(out,identity,label,coupling) \
-    TRACK(Init_Frame_Untracked_Macro((out), (identity), \
+    TRACK(Init_Frame_Untracked((out), ensure(Phase*, (identity)), \
         ensure(Option(const Symbol*), (label)), (coupling)))
 
 #define Init_Lensed_Frame(out,identity,lens,coupling) \
-    TRACK(Init_Frame_Untracked_Macro((out), (identity), \
+    TRACK(Init_Frame_Untracked((out), ensure(Phase*, (identity)), \
         ensure(Option(Phase*), (lens)), (coupling)))
 
 

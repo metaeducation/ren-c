@@ -368,7 +368,16 @@ Bounce Action_Executor(Level* L)
                 );
                 REBLEN offset = ARG - u_cast(Atom*, Level_Args_Head(L));
                 Tweak_Word_Index(ordered, offset + 1);
-                Tweak_Cell_Binding(ordered, L->u.action.original);
+                if (Is_Stub_Details(L->u.action.original))  // !!!
+                    Tweak_Cell_Relative_Binding(
+                        ordered,
+                        cast(Details*, L->u.action.original)
+                    );
+                else
+                    Tweak_Cell_Binding(
+                        ordered,
+                        cast(ParamList*, L->u.action.original)
+                    );
 
                 if (Is_Parameter_Unconstrained(PARAM)) {
                     //

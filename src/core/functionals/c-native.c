@@ -581,7 +581,7 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
         NONMETHOD  // coupling
     );
 
-    assert(Frame_Phase(Lib_Var(id)) == details);  // sanity check
+    assert(cast(Details*, Frame_Phase(Lib_Var(id))) == details);  // make sure
 }
 
 
