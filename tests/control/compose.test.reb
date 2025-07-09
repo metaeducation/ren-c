@@ -46,7 +46,7 @@
 ([] = compose [])
 (
     blk: []
-    append blk [trap [1 / 0]]
+    append blk [rescue [1 / 0]]
     blk = compose blk
 )
 ; RETURN stops the evaluation
@@ -59,7 +59,7 @@
 ; BREAK stops the evaluation
 (null? repeat 1 [compose [(break 2)] 2])
 ; Test that errors do not stop the evaluation:
-(block? compose [(trap [1 / 0])])
+(block? compose [(rescue [1 / 0])])
 (
     blk: []
     not same? blk compose blk

@@ -135,7 +135,7 @@ DECLARE_NATIVE(ENRECOVER)
 
 
 //
-//  entrap: native [
+//  enrescue: native [
 //
 //  "Tries to EVAL a block, trapping error antiforms"
 //
@@ -145,26 +145,26 @@ DECLARE_NATIVE(ENRECOVER)
 //          [block! frame!]
 //  ]
 //
-DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
+DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 //
-// Unlike SYS.UTIL/RESCUE, the ENTRAP function only reacts to errors from the
-// functions it directly calls.  Hence it doesn't intercept "panics", making it
-// much safer to react to the errors one gets back from it.
+// Unlike SYS.UTIL/ENRECOVER, the ENRESCUE function only reacts to errors from
+// the expressions it directly evaluates.  Hence it doesn't intercept panics,
+// making it much safer to react to the errors one gets back from it.
 {
-    INCLUDE_PARAMS_OF_ENTRAP;
+    INCLUDE_PARAMS_OF_ENRESCUE;
 
     Element* code = Element_ARG(CODE);
 
     enum {
-        ST_ENTRAP_INITIAL_ENTRY = STATE_0,
-        ST_ENTRAP_EVAL_STEPPING,
-        ST_ENTRAP_RUNNING_FRAME
+        ST_ENRESCUE_INITIAL_ENTRY = STATE_0,
+        ST_ENRESCUE_EVAL_STEPPING,
+        ST_ENRESCUE_RUNNING_FRAME
     };
 
     switch (STATE) {
-      case ST_ENTRAP_INITIAL_ENTRY: goto initial_entry;
-      case ST_ENTRAP_EVAL_STEPPING: goto eval_step_dual_in_spare;
-      case ST_ENTRAP_RUNNING_FRAME: goto eval_result_in_spare;
+      case ST_ENRESCUE_INITIAL_ENTRY: goto initial_entry;
+      case ST_ENRESCUE_EVAL_STEPPING: goto eval_step_dual_in_spare;
+      case ST_ENRESCUE_RUNNING_FRAME: goto eval_result_in_spare;
       default: assert(false);
     }
 
@@ -184,7 +184,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
             flags
         ));
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
-        STATE = ST_ENTRAP_EVAL_STEPPING;
+        STATE = ST_ENRESCUE_EVAL_STEPPING;
         unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // [1]
         return CONTINUE_SUBLEVEL(sub);
     }
@@ -200,7 +200,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
     UNUSED(pushed);
     sub = TOP_LEVEL;
 
-    STATE = ST_ENTRAP_RUNNING_FRAME;
+    STATE = ST_ENRESCUE_RUNNING_FRAME;
     unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // [1]
     return CONTINUE_SUBLEVEL(sub);
 
@@ -218,7 +218,7 @@ DECLARE_NATIVE(ENTRAP)  // wrapped as TRAP and ATTEMPT
         return BRANCHED(OUT);
     }
 
-    if (STATE == ST_ENTRAP_RUNNING_FRAME) {
+    if (STATE == ST_ENRESCUE_RUNNING_FRAME) {
         Copy_Cell(OUT, SPARE);
         goto finished;
     }

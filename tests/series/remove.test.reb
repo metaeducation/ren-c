@@ -76,13 +76,13 @@
         ok
     )
 
-    ~bad-utf8-bin-edit~ !! (pick trap [take:part bin 2])
+    ~bad-utf8-bin-edit~ !! (pick rescue [take:part bin 2])
     (str = "Tæke Pært")
 
     ((as blob! "Tæ") = take:part bin 3)
     (str = "ke Pært")
 
-    ~bad-utf8-bin-edit~ !! (pick trap [take:part bin 5])
+    ~bad-utf8-bin-edit~ !! (pick rescue [take:part bin 5])
     (str = "ke Pært")
 
     ((as blob! "ke Pæ") = take:part bin 6)

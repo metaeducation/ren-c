@@ -53,7 +53,7 @@ Result(Element*) Transcode_One(
     const Element* any_utf8
 ){
     assert(Any_Utf8(any_utf8));  // use rebQ(), as SIGIL!, WORD!, evaluative
-    Value* trapped = rebEntrap("transcode:one as text!", rebQ(any_utf8));
+    Value* trapped = rebEnrescue("transcode:one as text!", rebQ(any_utf8));
     if (Is_Warning(trapped)) {
         Error* error = Cell_Error(trapped);
         rebRelease(trapped);

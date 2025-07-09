@@ -511,39 +511,39 @@
 
 
 ; warning! reflexivity
-; Evaluates (trap [1 / 0]) to get warning! value.
+; Evaluates (rescue [1 / 0]) to get warning! value.
 (
     a-value: space
-    set $a-value (trap [1 / 0])
+    set $a-value (rescue [1 / 0])
     lax-equal? a-value a-value
 )
 ; warning! structural equivalence
-; Evaluates (trap [1 / 0]) to get warning! value.
-(lax-equal? (trap [1 / 0]) (trap [1 / 0]))
+; Evaluates (rescue [1 / 0]) to get warning! value.
+(lax-equal? (rescue [1 / 0]) (rescue [1 / 0]))
 ; warning! structural equivalence
 (lax-equal? (make warning! "hello") (make warning! "hello"))
 ; warning! difference in code
-(not lax-equal? (trap [1 / 0]) (make warning! "hello"))
+(not lax-equal? (rescue [1 / 0]) (make warning! "hello"))
 ; warning! difference in data
 (not lax-equal? (make warning! "hello") (make warning! "there"))
 ; warning! basic comparison
-(not lax-equal? (trap [1 / 0]) space)
+(not lax-equal? (rescue [1 / 0]) space)
 ; warning! basic comparison
-(not lax-equal? space (trap [1 / 0]))
+(not lax-equal? space (rescue [1 / 0]))
 ; warning! basic comparison symmetry
-(lax-equal? lax-equal? (trap [1 / 0]) space lax-equal? space (trap [1 / 0]))
+(lax-equal? lax-equal? (rescue [1 / 0]) space lax-equal? space (rescue [1 / 0]))
 ; warning! basic comparison with = op
-(not ((trap [1 / 0]) = space))
+(not ((rescue [1 / 0]) = space))
 ; warning! basic comparison with != op
-((trap [1 / 0]) != space)
+((rescue [1 / 0]) != space)
 ; warning! basic comparison with = op
-(not (space = (trap [1 / 0])))
+(not (space = (rescue [1 / 0])))
 ; warning! basic comparison with != op
-(space != (trap [1 / 0]))
+(space != (rescue [1 / 0]))
 ; warning! symmetry with = op
-(lax-equal? not ((trap [1 / 0]) = space) not (space = (trap [1 / 0])))
+(lax-equal? not ((rescue [1 / 0]) = space) not (space = (rescue [1 / 0])))
 ; warning! symmetry with != op
-(lax-equal? (trap [1 / 0]) != space space != (trap [1 / 0]))
+(lax-equal? (rescue [1 / 0]) != space space != (rescue [1 / 0]))
 ; port! reflexivity
 ; Error in R2 (could be fixed).
 (lax-equal? p: make port! http:// p)

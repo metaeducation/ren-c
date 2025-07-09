@@ -45,7 +45,7 @@
     - -[very.”(),:;<>[]”.VERY.”very@\\ "very”.unusual@strange.example.com]-
 ][
     assert [find [+ -] supported]
-    trap [
+    rescue [
         let email: transcode:one text
         let type: type of email
         if type <> email! [

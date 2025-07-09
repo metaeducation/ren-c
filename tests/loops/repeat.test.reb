@@ -44,7 +44,7 @@
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
-    e: repeat 2 [num: num + 1 trap [1 / 0]]
+    e: repeat 2 [num: num + 1 rescue [1 / 0]]
     all [warning? e num = 2]
 )
 ; loop recursivity

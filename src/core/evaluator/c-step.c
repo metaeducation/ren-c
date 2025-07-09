@@ -1670,7 +1670,7 @@ Bounce Stepper_Executor(Level* L)
     // 1. On errors we don't assign variables, yet pass the error through.
     //    That permits code like this to work:
     //
-    //        trap [[a b]: transcode "1&aa"]
+    //        rescue [[a b]: transcode "1&aa"]
 
     if (Is_Error(OUT))  // don't assign variables [1]
         goto set_block_drop_stack_and_continue;

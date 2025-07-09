@@ -53,7 +53,7 @@
     a-value: me@here.com
     same? a-value any [a-value]
 )
-(warning? any [trap [1 / 0]])
+(warning? any [rescue [1 / 0]])
 (
     a-value: %""
     same? a-value any [a-value]
@@ -152,7 +152,7 @@
     a-value: me@here.com
     same? a-value any [null a-value]
 )
-(warning? any [null trap [1 / 0]])
+(warning? any [null rescue [1 / 0]])
 (
     a-value: %""
     same? a-value any [null a-value]
@@ -248,7 +248,7 @@
     a-value: me@here.com
     same? a-value any [a-value null]
 )
-(warning? any [trap [1 / 0] null])
+(warning? any [rescue [1 / 0] null])
 (
     a-value: %""
     same? a-value any [a-value null]

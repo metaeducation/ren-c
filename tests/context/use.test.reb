@@ -8,7 +8,7 @@
 )
 (
     a: 1
-    warning? trap [use 'a [a: 2]]
+    warning? rescue [use 'a [a: 2]]
     a = 1
 )
 

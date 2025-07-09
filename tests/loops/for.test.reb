@@ -71,7 +71,7 @@
 (
     num: 0
     blk: [1 2]
-    e: for 'i each blk [num: i trap [1 / 0]]
+    e: for 'i each blk [num: i rescue [1 / 0]]
     all [warning? e num = 2]
 )
 

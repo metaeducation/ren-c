@@ -149,7 +149,7 @@ defined?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    return not trap [get var]
+    return not rescue [get var]
 ]
 
 undefined?: func [
@@ -157,7 +157,7 @@ undefined?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    return did trap [get var]
+    return did rescue [get var]
 ]
 
 unspecialized?: func [
@@ -373,13 +373,13 @@ specialized?: func [
 ;
 attempt: specialize repeat/ [count: 1]
 
-trap: func [
+rescue: func [
     "If evaluation returns an antiform error, return as warning, else NULL"
 
     return: [null? warning!]
     code [block!]
 ][
-    return match warning! entrap code
+    return match warning! enrescue code
 ]
 
 /reduce*: redescribe [
@@ -411,7 +411,7 @@ trap: func [
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
             let result
-            trap [^result: eval f] then e -> [
+            rescue [^result: eval f] then e -> [
                 set word f.series
                 panic e
             ]
@@ -554,7 +554,7 @@ cause-error: func [
 
 
 fail: func [
-    "Interrupts execution by reporting an error (a TRAP can intercept it)"
+    "Return unstable ERROR! antiform state (RESCUE, EXCEPT, TRY can intercept)"
 
     return: [<divergent>]
     reason "ERROR! value, ID, URL, message text, or failure spec"

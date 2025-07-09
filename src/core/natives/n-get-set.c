@@ -1389,7 +1389,7 @@ DECLARE_NATIVE(TWEAK)
 } return_value_even_if_we_dont_assign: {
 
   // We want parity between (set $x expression) and (x: expression).  It's
-  // very useful that you can write (e: trap [x: expression]) and in the case
+  // very useful that you can write (e: rescue [x: expression]) and in the case
   // of an error, have the assignment skipped and the error trapped.
   //
   // Note that (set $ '^x fail "hi") will assign the error! to X, but will

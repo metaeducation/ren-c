@@ -91,7 +91,7 @@
     ([abc def] = [_]: transcode "abc def")
     ('abc = [_ {_}]: transcode:next "abc def")
     (error? [_ {_}]: transcode:next "3o4")
-    ('scan-invalid = pick trap [[_ _]: transcode:next "3o4"] 'id)
+    ('scan-invalid = pick rescue [[_ _]: transcode:next "3o4"] 'id)
 ]
 
 (
@@ -100,6 +100,6 @@
 )
 
 [
-    ('scan-invalid = pick trap [transcode "^^2022"] 'id)  ; escaped
-    ('scan-invalid = pick trap [transcode "@2022"] 'id)
+    ('scan-invalid = pick rescue [transcode "^^2022"] 'id)  ; escaped
+    ('scan-invalid = pick rescue [transcode "@2022"] 'id)
 ]

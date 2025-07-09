@@ -63,7 +63,7 @@
     a-value: me@here.com
     same? a-value all [a-value]
 )
-(warning? all [trap [1 / 0]])
+(warning? all [rescue [1 / 0]])
 (
     a-value: %""
     same? a-value all [a-value]
@@ -160,7 +160,7 @@
     a-value: me@here.com
     same? a-value all [okay a-value]
 )
-(warning? all [okay trap [1 / 0]])
+(warning? all [okay rescue [1 / 0]])
 (
     a-value: %""
     same? a-value all [okay a-value]
@@ -254,7 +254,7 @@
     a-value: me@here.com
     okay = all [a-value okay]
 )
-(okay = all [trap [1 / 0] okay])
+(okay = all [rescue [1 / 0] okay])
 (
     a-value: %""
     okay = all [a-value okay]

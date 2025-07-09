@@ -2429,8 +2429,8 @@ default-combinators: make map! [
 
             f.input: pos
 
-            if not warning? temp: entrap f [
-                [^temp pos subpending]: unlift temp
+            if not error? ^temp: eval f [
+                [^temp pos subpending]: ^temp
                 if unset? $pos [
                     print mold:limit rules 200
                     panic "Combinator did not set remainder"
@@ -2853,7 +2853,7 @@ parsify: func [
 ; But UPARSE goes deeper by letting rules evaluate to arbitrary results, and
 ; bubbles out the final result.  All values are in-band, so NULL can't be
 ; drawn out as signals of a lack of completion...definitional errors, and
-; hence EXCEPT or TRAP must be used:
+; hence EXCEPT or RESCUE must be used:
 ;
 ;     result: parse data rules except [...]
 ;

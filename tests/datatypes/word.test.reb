@@ -39,7 +39,7 @@
     same? :a-value a-value
 )
 (
-    warning? a-value: trap [1 / 0]
+    warning? a-value: rescue [1 / 0]
     same? :a-value a-value
 )
 (
@@ -190,7 +190,7 @@
             assert [path = compose $a/(word)/b]
         ] else [
             comment [  ; !!! Path scan with arrow words is buggy, scans tags
-                let e: trap [transcode:next unspaced ["a/" str "/b"]]
+                let e: rescue [transcode:next unspaced ["a/" str "/b"]]
                 assert [e]
             ]
         ]
@@ -222,7 +222,7 @@
     for-each 'bad [  ; !!! This could be a much longer list of bad things!
         -[<ab>cd]- -[>ab<cd]- -[<<ab-cd]- -[>abcd]-
     ][
-        assert ['scan-invalid = (trap [load bad]).id]
+        assert ['scan-invalid = (rescue [load bad]).id]
     ]
     ok
 )]

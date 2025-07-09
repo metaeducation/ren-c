@@ -691,7 +691,7 @@ bind construct [
         elide (loud-print ["Checking for rebol.reb file in" o.bin])
         exists? join o.bin %rebol.reb
     ] then [
-        trap [
+        rescue [
             do (join o.bin %rebol.reb)
             append o.loaded (join o.bin %rebol.reb)
             loud-print ["Finished evaluating script:" (join o.bin %rebol.reb)]
@@ -709,7 +709,7 @@ bind construct [
         elide (loud-print ["Checking for user.reb file in" o.resources])
         exists? join o.resources %user.reb
     ] then [
-        trap [
+        rescue [
             do join o.resources %user.reb
             append o.loaded join o.resources %user.reb
             loud-print ["Finished evaluating:" join o.resources %user.reb]

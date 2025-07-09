@@ -3,7 +3,7 @@
 (-1 = negate 1)
 (1 = negate -1)
 <32bit>
-(warning? trap [negate -2147483648])
+(warning? rescue [negate -2147483648])
 ; decimal
 (0.0 = negate 0.0)
 (-1.0 = negate 1.0)

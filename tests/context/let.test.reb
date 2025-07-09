@@ -283,7 +283,7 @@
 ; torture recycling on.
 (
     recycle:torture
-    e: let [x]: trap [1 / 0]
+    e: let [x]: rescue [1 / 0]
     recycle:on  ; semantics are to restore to basic ballast setting
     e.id = 'zero-divide
 )

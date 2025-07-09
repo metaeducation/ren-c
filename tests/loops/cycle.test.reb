@@ -38,8 +38,8 @@
     e: null
     cycle [
         num: num + 1
-        if num = 10 [e: trap [1 / 0] break]
-        trap [1 / 0]
+        if num = 10 [e: rescue [1 / 0] break]
+        rescue [1 / 0]
     ]
     all [warning? e, num = 10]
 )

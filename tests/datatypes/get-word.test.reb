@@ -65,7 +65,7 @@
     (/a. = /a.)
     (.a. = .a.)
 
-    ('inert-with-slashed = pick trap [ a/ ] 'id)
+    ('inert-with-slashed = pick rescue [ a/ ] 'id)
     (/a/ = /a/)
     (.a/ = .a/)
 
@@ -80,9 +80,9 @@
     ; (<inert> = get $/a.)  ; !!! Not working ATM, needs path overhaul
     ; (<inert> = get $.a.)  ; !!! Not working ATM, needs path overhaul
 
-    ('inert-with-slashed = pick trap [ get $a/ ] 'id)
-    ('inert-with-slashed = pick trap [ get $/a/ ] 'id)
-    ('inert-with-slashed = pick trap [ get $.a/ ] 'id)
+    ('inert-with-slashed = pick rescue [ get $a/ ] 'id)
+    ('inert-with-slashed = pick rescue [ get $/a/ ] 'id)
+    ('inert-with-slashed = pick rescue [ get $.a/ ] 'id)
   ]
   ok
 )]
@@ -99,7 +99,7 @@
     (/a = /a)
     (.a = .a)
 
-    ('action-with-dotted = pick trap [ a. ] 'id)
+    ('action-with-dotted = pick rescue [ a. ] 'id)
     (/a. = /a.)
     (.a. = .a.)
 
@@ -114,7 +114,7 @@
     (action? get $/a)
     (action? get $.a)
 
-    ('action-with-dotted = pick trap [ get $a. ] 'id)
+    ('action-with-dotted = pick rescue [ get $a. ] 'id)
     ; (<inert> = get $/a.)  ; !!! Not working ATM, needs path overhaul
     ; (<inert> = get $.a.)  ; !!! Not working ATM, needs path overhaul
 

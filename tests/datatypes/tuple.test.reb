@@ -91,7 +91,7 @@
 ]
 
 (
-    e: trap [join tuple! @[_ _]]
+    e: rescue [join tuple! @[_ _]]
     all [
         e.id = 'conflated-sequence
         e.arg1 = word!
@@ -100,7 +100,7 @@
     ]
 )
 (
-    e: trap [join tuple! @[~ ~]]
+    e: rescue [join tuple! @[~ ~]]
     all [
         e.id = 'conflated-sequence
         e.arg1 = quasiform!
@@ -110,7 +110,7 @@
     ]
 )
 (
-    e: trap [join tuple! @[a _ b]]
+    e: rescue [join tuple! @[a _ b]]
     all [
         e.id = 'bad-sequence-space
     ]

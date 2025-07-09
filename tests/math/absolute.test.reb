@@ -27,6 +27,6 @@
 (2147483647x2147483647 = abs -2147483647x-2147483647)
 <64bit>
 [#833 (
-    a: trap [abs decode [BE +/-] #{8000000000000000}]
+    a: rescue [abs decode [BE +/-] #{8000000000000000}]
     any [warning? a not negative? a]
 )]

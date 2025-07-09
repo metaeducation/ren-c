@@ -11,7 +11,7 @@
 ; access symmetry
 (
     b: #{0b}
-    not warning? trap [b.1: b.1]
+    not warning? rescue [b.1: b.1]
 )
 [#42 (
     b: #{0b}

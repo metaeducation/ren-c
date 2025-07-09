@@ -25,8 +25,8 @@
         parser2 [action!]
         <local> error1 error2 result1' result2' remainder1 remainder2
     ][
-        error1: trap [[^result1' remainder1]: parser1 input]
-        error2: trap [[^result2' remainder2]: parser2 input]
+        error1: rescue [[^result1' remainder1]: parser1 input]
+        error2: rescue [[^result2' remainder2]: parser2 input]
         if error2 [  ; parser2 didn't succeed
             if error1 [
                 return fail error1  ; neither succeeded
@@ -204,8 +204,8 @@
             error1 error2 result1' result2'
             remainder1 remainder2 pending1 pending2
     ][
-        error1: trap [[^result1' remainder1 pending1]: parser1 input]
-        error2: trap [[^result2' remainder2 pending2]: parser2 input]
+        error1: rescue [[^result1' remainder1 pending1]: parser1 input]
+        error2: rescue [[^result2' remainder2 pending2]: parser2 input]
         if error2 [  ; parser2 didn't succeed
             if error1 [
                 return fail error1  ; neither succeeded

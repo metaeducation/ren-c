@@ -110,7 +110,7 @@
     a-value: me@here.com
     same? a-value eval reduce [a-value]
 )
-(warning? eval [trap [1 / 0]])
+(warning? eval [rescue [1 / 0]])
 (
     a-value: %""
     same? a-value eval reduce [a-value]
@@ -185,7 +185,7 @@
 ; and can only be caught with SYS.UTIL/RESCUE.  Should it be?  Or should a
 ; EVAL of an ERROR! just make it into a definitional warning?
 ;
-~zero-divide~ !! (warning? trap [eval trap [1 / 0] 1])
+~zero-divide~ !! (warning? rescue [eval rescue [1 / 0] 1])
 
 (
     a-value: first [(2)]
@@ -246,7 +246,7 @@
     ]
 )
 (
-    [pos value]: evaluate:step [trap [1 / 0]]
+    [pos value]: evaluate:step [rescue [1 / 0]]
     all [
         warning? value
         pos = []

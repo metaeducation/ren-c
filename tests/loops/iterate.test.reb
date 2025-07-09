@@ -60,7 +60,7 @@
 (
     num: 0
     blk: [1 2]
-    e: iterate @blk [num: first blk trap [1 / 0]]
+    e: iterate @blk [num: first blk rescue [1 / 0]]
     all [warning? e num = 2]
 )
 ; recursivity

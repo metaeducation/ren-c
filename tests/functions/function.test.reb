@@ -56,7 +56,7 @@
     same? a-value f
 )
 (
-    f: does [trap [1 / 0]]
+    f: does [rescue [1 / 0]]
     warning? f
 )
 (
@@ -211,7 +211,7 @@
 )
 
 ~zero-divide~ !! (
-    warning? trap [
+    warning? rescue [
         let f: does [1 / 0 2]  ; "error out" of a function
         f
         2
@@ -251,7 +251,7 @@
 (
     f: lambda [x] [
         either x = 1 [
-            warning? trap [f 2]
+            warning? rescue [f 2]
             x = 1
         ] [1 / 0]
     ]
@@ -349,7 +349,7 @@
 
 [#27
     ~not-bound~ !! (
-        warning? trap [(kind of) 1]
+        warning? rescue [(kind of) 1]
     )
 ]
 

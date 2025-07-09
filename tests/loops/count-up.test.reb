@@ -19,7 +19,7 @@
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
-    e: count-up 'i 2 [num: i trap [1 / 0]]
+    e: count-up 'i 2 [num: i rescue [1 / 0]]
     all [warning? e num = 2]
 )
 

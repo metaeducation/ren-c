@@ -68,7 +68,7 @@
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
-    e: cfor 'i 1 2 1 [num: i trap [1 / 0]]
+    e: cfor 'i 1 2 1 [num: i rescue [1 / 0]]
     all [warning? e num = 2]
 )
 

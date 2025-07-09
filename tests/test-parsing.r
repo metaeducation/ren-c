@@ -37,7 +37,7 @@ export test-source-rule: [
         let position: <here>
 
         ["{" | -["]-] inline (  ; handle string using TRANSCODE, see note
-            trap [
+            rescue [
                 [position #]: transcode:next position
             ] then [
                 'veto  ; result rule to say stop the parse

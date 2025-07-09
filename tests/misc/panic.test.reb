@@ -87,6 +87,6 @@
         ]
     )
 
-    (e: 1020, all [(trap [e: fail "hi"]).message = "hi", e = 1020])
-    (e: 1020, all [(trap [[e]: fail "hi"]).message = "hi", e = 1020])
+    (e: 1020, all [(rescue [e: fail "hi"]).message = "hi", e = 1020])
+    (e: 1020, all [(rescue [[e]: fail "hi"]).message = "hi", e = 1020])
 ]

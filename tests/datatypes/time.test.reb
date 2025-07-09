@@ -11,7 +11,7 @@
 (
     t: ~
     any [
-        warning? trap [t: -596522:0:0 - 1:00]
+        warning? rescue [t: -596522:0:0 - 1:00]
         t = transcode:one mold t
     ]
 )
@@ -20,13 +20,13 @@
 (
     t: ~
     any [
-        warning? trap [t: 596522:0:0 + 1:00]
+        warning? rescue [t: 596522:0:0 + 1:00]
         t = transcode:one mold t
     ]
 )
 
 ; strange value
-(warning? trap [load "--596523:-14:-07.772224"])
+(warning? rescue [load "--596523:-14:-07.772224"])
 
 ; minimal time
 (time? -596523:14:07.999999999)

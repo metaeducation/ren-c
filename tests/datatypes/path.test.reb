@@ -210,7 +210,7 @@
 (the foo/ = join path! @[foo _])
 
 (
-    e: trap [join path! @[_ _]]
+    e: rescue [join path! @[_ _]]
     all [
         e.id = 'conflated-sequence
         e.arg1 = word!
@@ -219,7 +219,7 @@
     ]
 )
 (
-    e: trap [join path! @[~ ~]]
+    e: rescue [join path! @[~ ~]]
     all [
         e.id = 'conflated-sequence
         e.arg1 = quasiform!
@@ -229,7 +229,7 @@
     ]
 )
 (
-    e: trap [join path! @[a _ b]]
+    e: rescue [join path! @[a _ b]]
     all [
         e.id = 'bad-sequence-space
     ]

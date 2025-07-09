@@ -3,7 +3,7 @@
 ; would do for scripts in files.
 
 (
-    e: trap [do "Rebol [] quit 42"]
+    e: rescue [do "Rebol [] quit 42"]
     e.exit-code = 42
 )
 

@@ -1,22 +1,22 @@
 ; datatypes/error.r
-(warning? trap [1 / 0])
+(warning? rescue [1 / 0])
 (not warning? 1)
-(warning! = type of trap [1 / 0])
+(warning! = type of rescue [1 / 0])
 
 ; error evaluation
-(warning? eval head of insert copy [] trap [1 / 0])
+(warning? eval head of insert copy [] rescue [1 / 0])
 
 ; error that does not exist in the SCRIPT category--all of whose ids are
 ; reserved by the system and must be formed from mezzanine/user code in
 ; accordance with the structure the system would form.  Hence, illegal.
 ;
-(trap [make warning! [type: 'script id: 'nonexistent-id]] then [okay])
+(rescue [make warning! [type: 'script id: 'nonexistent-id]] then [okay])
 
 ; triggered errors should not be assignable
 ;
-(a: 1 warning? trap [a: 1 / 0] a = 1)
-(a: 1 warning? trap [set $a 1 / 0] a = 1)
-(a: 1 warning? trap [set:any $a 1 / 0] a = 1)
+(a: 1 warning? rescue [a: 1 / 0] a = 1)
+(a: 1 warning? rescue [set $a 1 / 0] a = 1)
+(a: 1 warning? rescue [set:any $a 1 / 0] a = 1)
 
 [#2190
     ~zero-divide~ !! (
@@ -151,8 +151,8 @@
 ; !!! This used to use `/` instead of divide, but a period of time where
 ; `/` was a zero-length path complicated the error, review.
 (
-    e1: trap [divide 1 0]
-    e2: trap [divide 2 0]
+    e1: rescue [divide 1 0]
+    e2: rescue [divide 2 0]
 
     all [
         e1.id = 'zero-divide

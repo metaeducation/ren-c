@@ -59,7 +59,7 @@
         assert [sig = first roundtrip ["[" mold sig _ "<t>" "]"]]
         assert [sig = first roundtrip ["[" _ mold sig space "<t>]"]]
         assert [
-            let e: trap [roundtrip ["~" mold sig "~"]]
+            let e: rescue [roundtrip ["~" mold sig "~"]]
             e.id = 'scan-invalid  ; quasi/anti forms of sigil are illegal ATM
         ]
     ]

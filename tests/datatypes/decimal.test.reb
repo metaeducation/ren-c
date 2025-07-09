@@ -129,7 +129,7 @@
 
 (1.1 = to decimal! 1.1)
 (1.1 = to decimal! "1.1")
-(warning? trap [to decimal! "t"])
+(warning? rescue [to decimal! "t"])
 
 ; Experiment: MAKE DECIMAL! of 2-element INTEGER! PATH! treats as fraction
 [

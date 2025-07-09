@@ -1407,13 +1407,13 @@ RebolValue* API_rebLift(
 
 
 //
-//  rebEntrap: API
+//  rebEnrescue: API
 //
-// Builds in an ENTRAP operation to rebValue; shorthand that's more efficient.
+// Builds an ENRESCUE operation to rebValue; shorthand that's more efficient.
 //
-//     rebEntrap(...) => rebValue("entrap [", ..., "]")
+//     rebEnrescue(...) => rebValue("enrescue [", ..., "]")
 //
-RebolValue* API_rebEntrap(
+RebolValue* API_rebEnrescue(
     RebolContext* binding,
     const void* p, void* vaptr
 ){

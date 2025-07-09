@@ -217,7 +217,7 @@
 )
 (
     a: ~
-    not warning? trap [set $a '~okay~]
+    not warning? rescue [set $a '~okay~]
 )
 
 

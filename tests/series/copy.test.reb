@@ -27,14 +27,14 @@
 ;    ~stack-overflow~ !! (
 ;        a: copy []
 ;        insert a a
-;        warning? trap [copy:deep a]
+;        warning? rescue [copy:deep a]
 ;        ok
 ;    )
 ;]
 
 [#2043 (
     f: func [] []
-    warning? trap [copy :f]
+    warning? rescue [copy :f]
     ok
 )]
 

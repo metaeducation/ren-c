@@ -25,7 +25,7 @@
     ]
 )]
 ~zero-divide~ !! (
-    warning? trap [  ; not a plain throw-type error, won't TRAP
+    warning? rescue [  ; not an immediate call (underneath make), won't RESCUE
         make object! [1 / 0]
         2
     ]
@@ -89,7 +89,7 @@
 ;
 ; [#2076 (
 ;     o: make object! [x: 10]
-;     e: trap [append o spread [self: 1]]
+;     e: rescue [append o spread [self: 1]]
 ;     e.id = 'hidden
 ; )]
 ;

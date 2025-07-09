@@ -23,21 +23,21 @@
         ok
     )
 
-    ('illegal-cr = pick trap [to text! t-bin] 'id)
-    ('illegal-cr = pick trap [to-text t-bin] 'id)
+    ('illegal-cr = pick rescue [to text! t-bin] 'id)
+    ('illegal-cr = pick rescue [to-text t-bin] 'id)
     (str = to-text:relax t-bin)
 
-    ('illegal-cr = pick trap [to text! a-bin] 'id)
-    ('illegal-cr = pick trap [to-text a-bin] 'id)
+    ('illegal-cr = pick rescue [to text! a-bin] 'id)
+    ('illegal-cr = pick rescue [to-text a-bin] 'id)
     (str = to-text:relax a-bin)
 
     (str = as text! t-bin)
     (str = as-text t-bin)
-    ('illegal-cr = pick trap [as-text:strict t-bin] 'id)
+    ('illegal-cr = pick rescue [as-text:strict t-bin] 'id)
 
     (str = as text! a-bin)
     (str = as-text a-bin)
-    ('illegal-cr = pick trap [as-text:strict a-bin] 'id)
+    ('illegal-cr = pick rescue [as-text:strict a-bin] 'id)
 ]
 
 ; #{00} bytes are illegal in strings regardless of :RELAX or :STRICT
@@ -66,8 +66,8 @@
 
     ("^/" = deline "^/")
 
-    ('illegal-cr = pick trap [deline "^M"] 'id)
-    ('mixed-cr-lf-found = pick trap [deline "a^/b^M^/c"] 'id)
+    ('illegal-cr = pick rescue [deline "^M"] 'id)
+    ('mixed-cr-lf-found = pick rescue [deline "a^/b^M^/c"] 'id)
 ]
 
 ; Ren-C ENLINE is strict about requiring no CR on the input string
@@ -77,15 +77,15 @@
     ("a^M^/b^M^/" = enline "a^/b^/")
     ("^M^/a^M^/b" = enline "^/a^/b")
 
-    ('illegal-cr = pick trap [enline "^M"] 'id)
-    ('illegal-cr = pick trap [enline "^M^/"] 'id)
-    ('illegal-cr = pick trap [enline "^/^M"] 'id)
+    ('illegal-cr = pick rescue [enline "^M"] 'id)
+    ('illegal-cr = pick rescue [enline "^M^/"] 'id)
+    ('illegal-cr = pick rescue [enline "^/^M"] 'id)
 ]
 
 [
     (
         comment "WRITE of TEXT! disallows CR by default"
-        'illegal-cr = pick trap [write %enlined.tmp enline "a^/b"] 'id
+        'illegal-cr = pick rescue [write %enlined.tmp enline "a^/b"] 'id
     )
     (
         comment "Bypass by writing BLOB!, *but* ENLINE modifies"
@@ -106,17 +106,17 @@
         ]
     )
 
-    ('illegal-cr = pick trap [read:string %enlined.tmp] 'id)
-    ('illegal-cr = pick trap [to text! read %enlined.tmp] 'id)
+    ('illegal-cr = pick rescue [read:string %enlined.tmp] 'id)
+    ('illegal-cr = pick rescue [to text! read %enlined.tmp] 'id)
     ("a^M^/b" = as text! read %enlined.tmp)
     ("a^/b" = deline read %enlined.tmp)
 ]
 
 ; The scanner expects files to be in the LF-only format
 [
-    ('illegal-cr = pick trap [do "Rebol [] 1^M^/+ 2"] 'id)
-    ('illegal-cr = pick trap [load "1^M^/+ 2"] 'id)
-    ('illegal-cr = pick trap [load unspaced ["{a" "^M^/" "b}"]] 'id)
+    ('illegal-cr = pick rescue [do "Rebol [] 1^M^/+ 2"] 'id)
+    ('illegal-cr = pick rescue [load "1^M^/+ 2"] 'id)
+    ('illegal-cr = pick rescue [load unspaced ["{a" "^M^/" "b}"]] 'id)
     ({a^M^/b} = transcode:one "{a^^M^^/b}")
 ]
 

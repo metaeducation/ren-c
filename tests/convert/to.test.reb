@@ -29,5 +29,5 @@
     (#xx = to rune! "xx")
 
     ; !!! Should this be legal and return `#`?
-    ('illegal-zero-byte = pick trap [to rune! ""] 'id)
+    ('illegal-zero-byte = pick rescue [to rune! ""] 'id)
 ]

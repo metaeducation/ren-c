@@ -16,7 +16,7 @@
 ('~[~null~]~ = lift switch 1 [1 [null]])
 
 (
-    cases: reduce [1 head of insert copy [] trap [1 / 0]]
+    cases: reduce [1 head of insert copy [] rescue [1 / 0]]
     warning? switch 1 cases
 )
 

@@ -180,7 +180,7 @@
         iter: my next
 
         let items
-        trap [
+        rescue [
             items: transcode text
         ] then error -> [
             if iter.1 <> '!! [

@@ -14,7 +14,7 @@
 ((lift void) = ^ if null [])
 ('~[]~ = ^ if ok [])
 
-(warning? if ok [trap [1 / 0]])
+(warning? if ok [rescue [1 / 0]])
 ; RETURN stops the evaluation
 (
     f1: func [return: [integer!]] [
@@ -108,7 +108,7 @@
 ((lift void) = ^ if not okay [1])
 ('~[~null~]~ = ^ if no? 'no [null])
 
-(warning? if off? 'off [trap [1 / 0]])
+(warning? if off? 'off [rescue [1 / 0]])
 
 ; RETURN stops the evaluation
 (

@@ -18,7 +18,7 @@
     (repeat 1 [spec-of continue] ok)
 ]
 ; continue should not be caught by try
-(a: 1 repeat 1 [a: warning? trap [continue]] a = 1)
+(a: 1 repeat 1 [a: warning? rescue [continue]] a = 1)
 
 ; CONTINUE with a value pretends loop body finished with that result.
 

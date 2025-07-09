@@ -16,7 +16,7 @@
 (0% = to percent! "0")
 (100% = to percent! 100)
 (10% = to percent! 10)
-(warning? trap [to percent! "t"])
+(warning? rescue [to percent! "t"])
 (0.0 = to decimal! 0%)
 (10.0 = to decimal! 10%)
 (100.0 = to decimal! 100%)

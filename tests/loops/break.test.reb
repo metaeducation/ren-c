@@ -65,4 +65,4 @@
 ]
 
 ; the "result" of break should not be caught by try
-(a: 1 repeat 1 [a: warning? trap [break]] a = 1)
+(a: 1 repeat 1 [a: warning? rescue [break]] a = 1)

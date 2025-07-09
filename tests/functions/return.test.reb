@@ -17,7 +17,7 @@
     null? f1
 )
 (
-    f1: func [return: [warning!]] [return trap [1 / 0]]
+    f1: func [return: [warning!]] [return rescue [1 / 0]]
     warning? f1
 )
 
@@ -42,9 +42,9 @@
     (run func [return: [integer!]] [spec-of return 1020] ok)
 ]
 
-; return should not be caught by TRAP
+; return should not be caught by RESCUE
 (
-    a: 1 reeval reify func [return: [integer!]] [a: warning? trap [return 2]]
+    a: 1 reeval reify func [return: [integer!]] [a: warning? rescue [return 2]]
     a = 1
 )
 

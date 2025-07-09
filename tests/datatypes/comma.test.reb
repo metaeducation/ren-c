@@ -34,7 +34,7 @@
 ; There must be space or other delimiters after commas.
 (
     for-each [text] ["a,b" "a,, b" ",,"] [
-        e: trap [load text]
+        e: rescue [load text]
         assert [e.id = 'scan-invalid]
     ]
     ok

@@ -28,9 +28,9 @@
 (-2147483648 = make integer! -2147483648.9)
 (2147483647 = make integer! 2147483647.9)
 <32bit>
-(warning? trap [make integer! -2147483649.0])
+(warning? rescue [make integer! -2147483649.0])
 <32bit>
-(warning? trap [make integer! 2147483648.0])
+(warning? rescue [make integer! 2147483648.0])
 [#921
     ~overflow~ !! (make integer! 9.2233720368547765e18)
     ~overflow~ !! (make integer! -9.2233720368547779e18)
@@ -44,7 +44,7 @@
 (0 = to integer! #0)
 (1 = to integer! #1)
 (302961000000 = make integer! "3.02961E+11")
-(warning? trap [to integer! "t"])
+(warning? rescue [to integer! "t"])
 ("0" = mold 0)
 ("1" = mold 1)
 ("-1" = mold -1)

@@ -53,7 +53,7 @@
 (
     num: 0
     blk: [1 2]
-    e: iterate-skip @blk 1 [num: first blk trap [1 / 0]]
+    e: iterate-skip @blk 1 [num: first blk rescue [1 / 0]]
     all [warning? e num = 2]
 )
 ; recursivity

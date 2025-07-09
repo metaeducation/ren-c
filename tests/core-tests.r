@@ -110,8 +110,8 @@
 %control/match.test.reb
 %control/reduce.test.reb
 %control/reeval.test.reb
+%control/rescue.test.reb
 %control/switch.test.reb
-%control/try.test.reb
 %control/unless.test.reb
 %control/wait.test.reb
 %control/quit.test.reb
