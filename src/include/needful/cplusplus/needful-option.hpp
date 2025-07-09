@@ -71,9 +71,7 @@ struct OptionWrapper {
 
     template <
         typename U,
-        typename = typename std::enable_if<
-            std::is_convertible<U, T>::value
-        >::type
+        typename = enable_if_t<needful_is_convertible_v(U, T)>
     >
     OptionWrapper (U&& something)
         : o (something)  // not {something}, so narrowing conversions ok
@@ -81,9 +79,7 @@ struct OptionWrapper {
 
     template <
         typename U,
-        typename = typename std::enable_if<
-            not std::is_convertible<U, T>::value
-        >::type
+        typename = enable_if_t<not needful_is_convertible_v(U, T)>
     >
     explicit OptionWrapper(const U& something)
         : o {needful_xtreme_cast(T, something)}

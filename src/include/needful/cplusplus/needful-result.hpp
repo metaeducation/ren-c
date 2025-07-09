@@ -332,25 +332,21 @@ struct NEEDFUL_NODISCARD ResultWrapper {
 
     template <
         typename U,
-        typename = typename std::enable_if<
-            not std::is_convertible<
-                typename std::decay<U>::type, ResultWrapper<T>
-            >::value
-            and not IsResultWrapper<typename std::decay<U>::type>::value
-            and std::is_convertible<U, T>::value  // implicit cast okay
-        >::type
+        typename = enable_if_t<
+            not needful_is_convertible_v(decay_t<U>, ResultWrapper<T>)
+            and not IsResultWrapper<decay_t<U>>::value
+            and needful_is_convertible_v(U, T)  // implicit cast okay
+        >
     >
     ResultWrapper(U&& something) : r {something} {}
 
     template <
         typename U,
-        typename = typename std::enable_if<
-            not std::is_convertible<
-                typename std::decay<U>::type, ResultWrapper<T>
-            >::value
-            and not IsResultWrapper<typename std::decay<U>::type>::value
-            and not std::is_convertible<U, T>::value  // must cast explicitly
-        >::type,
+        typename = enable_if_t<
+            not needful_is_convertible_v(decay_t<U>, ResultWrapper<T>)
+            and not IsResultWrapper<decay_t<U>>::value
+            and not needful_is_convertible_v(U, T)  // must cast explicitly
+        >,
         typename = void
     >
     explicit ResultWrapper(U&& something)
@@ -359,9 +355,7 @@ struct NEEDFUL_NODISCARD ResultWrapper {
 
     template <
         typename X,
-        typename = typename std::enable_if<
-            std::is_convertible<X, T>::value
-        >::type
+        typename = enable_if_t<needful_is_convertible_v(X, T)>
     >
     ResultWrapper (const ResultWrapper<X>& result)
         : r {result.r}
@@ -369,9 +363,7 @@ struct NEEDFUL_NODISCARD ResultWrapper {
 
     template <
         typename X,
-        typename = typename std::enable_if<
-            not std::is_convertible<X, T>::value
-        >::type,
+        typename = enable_if_t<not needful_is_convertible_v(X, T)>,
         typename = void
     >
     explicit ResultWrapper (const ResultWrapper<X>& result)
@@ -380,9 +372,7 @@ struct NEEDFUL_NODISCARD ResultWrapper {
 
     template<
         typename X,
-        typename = typename std::enable_if<
-            std::is_convertible<T, X>::value
-        >::type
+        typename = enable_if_t<needful_is_convertible_v(T, X)>
     >
     ResultWrapper (const UnhookableDowncastHolder<X> down)  // generalize? [3]
         : r {needful_xtreme_cast(T, down.f)}
@@ -391,9 +381,7 @@ struct NEEDFUL_NODISCARD ResultWrapper {
 
     template<
         typename X,
-        typename = typename std::enable_if<
-            std::is_convertible<T, X>::value
-        >::type
+        typename = enable_if_t<needful_is_convertible_v(T, X)>
     >
     ResultWrapper (const HookableDowncastHolder<X> down)  // generalize? [3]
         : r {needful_lenient_hookable_cast(T, down.f)}

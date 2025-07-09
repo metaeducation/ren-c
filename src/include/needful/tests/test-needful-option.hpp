@@ -24,7 +24,7 @@ inline void test_needful_option()
     assert(oi1);  // Should be truthy
 
     // int direct = oi1;  /* illegal */
-    STATIC_ASSERT((not std::is_convertible<decltype(oi1), int>::value));
+    STATIC_ASSERT(not needful_is_convertible_v(decltype(oi1), int));
 
     STATIC_ASSERT_SAME(decltype(unwrap(oi1)), int);
     STATIC_ASSERT_SAME(decltype(maybe(oi1)), int);
@@ -42,7 +42,7 @@ inline void test_needful_option()
     assert(not oe2);
 
     // MyEnum direct = oe1;  /* illegal */
-    STATIC_ASSERT((not std::is_convertible<decltype(oe1), MyEnum>::value));
+    STATIC_ASSERT((not needful_is_convertible_v(decltype(oe1), MyEnum)));
 
     STATIC_ASSERT_SAME(decltype(unwrap oe1), MyEnum);
     STATIC_ASSERT_SAME(decltype(maybe oe1), MyEnum);
@@ -56,7 +56,7 @@ inline void test_needful_option()
     assert(not op3);
 
     // char* direct = op1;  /* illegal */
-    STATIC_ASSERT((not std::is_convertible<decltype(op1), const char*>::value));
+    STATIC_ASSERT((not needful_is_convertible_v(decltype(op1), const char*)));
 
     STATIC_ASSERT_SAME(decltype(unwrap op1), const char*);
     STATIC_ASSERT_SAME(decltype(maybe op1), const char*);

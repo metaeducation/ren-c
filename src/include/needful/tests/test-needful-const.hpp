@@ -6,36 +6,36 @@ struct MyWrapper {
 inline void test_needful_const()
 {
     // Test fundamental types
-    STATIC_ASSERT_SAME(needful_constify_type(int), int);
-    STATIC_ASSERT_SAME(needful_unconstify_type(const int), int);
+    STATIC_ASSERT_SAME(needful_constify_t(int), int);
+    STATIC_ASSERT_SAME(needful_unconstify_t(const int), int);
 
     // Test enum types
     enum MyEnum { A, B, C };
-    STATIC_ASSERT_SAME(needful_constify_type(MyEnum), MyEnum);
-    STATIC_ASSERT_SAME(needful_unconstify_type(const MyEnum), MyEnum);
+    STATIC_ASSERT_SAME(needful_constify_t(MyEnum), MyEnum);
+    STATIC_ASSERT_SAME(needful_unconstify_t(const MyEnum), MyEnum);
 
     // Test regular class types
     struct MyClass {};
-    STATIC_ASSERT_SAME(needful_constify_type(MyClass), MyClass);
-    STATIC_ASSERT_SAME(needful_unconstify_type(const MyClass), MyClass);
+    STATIC_ASSERT_SAME(needful_constify_t(MyClass), MyClass);
+    STATIC_ASSERT_SAME(needful_unconstify_t(const MyClass), MyClass);
 
     // Test pointer types
-    STATIC_ASSERT_SAME(needful_constify_type(int*), const int*);
-    STATIC_ASSERT_SAME(needful_unconstify_type(const int*), int*);
+    STATIC_ASSERT_SAME(needful_constify_t(int*), const int*);
+    STATIC_ASSERT_SAME(needful_unconstify_t(const int*), int*);
 
     // Test template wrapper types
     STATIC_ASSERT_SAME(
-        needful_constify_type(MyWrapper<int>), MyWrapper<const int>
+        needful_constify_t(MyWrapper<int>), MyWrapper<const int>
     );
     STATIC_ASSERT_SAME(
-        needful_constify_type(MyWrapper<MyClass>), MyWrapper<const MyClass>
+        needful_constify_t(MyWrapper<MyClass>), MyWrapper<const MyClass>
     );
     STATIC_ASSERT_SAME(
-        needful_unconstify_type(MyWrapper<const MyClass>), MyWrapper<MyClass>
+        needful_unconstify_t(MyWrapper<const MyClass>), MyWrapper<MyClass>
     );
 
     STATIC_ASSERT_SAME(
-        needful_constify_type(MyWrapper<int*>), MyWrapper<const int*>
+        needful_constify_t(MyWrapper<int*>), MyWrapper<const int*>
     );
 
     STATIC_ASSERT_SAME(

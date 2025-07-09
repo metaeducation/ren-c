@@ -131,8 +131,8 @@ struct SinkWrapper {
 
     mutable bool corruption_pending;  // can't corrupt on construct [1]
 
-    using T = typename std::remove_pointer<TP>::type;
-    using MT = typename std::remove_const<T>::type;  // mutable type
+    using T = remove_pointer_t<TP>;
+    using MT = remove_const_t<T>;  // mutable type
 
     template<typename U>
     using IfSinkConvertible
@@ -323,7 +323,7 @@ template<typename TP>
 struct InitWrapper {
     NEEDFUL_DECLARE_WRAPPED_FIELD (TP, p);
 
-    using T = typename std::remove_pointer<TP>::type;
+    using T = remove_pointer_t<TP>;
 
     template<typename U>
     using IfInitConvertible
@@ -433,8 +433,8 @@ template<typename TP>
 struct NeedWrapper {
     NEEDFUL_DECLARE_WRAPPED_FIELD (TP, p);
 
-    using T = typename std::remove_pointer<TP>::type;
-    using MT = typename std::remove_const<T>::type;  // mutable type
+    using T = remove_pointer_t<TP>;
+    using MT = remove_const_t<T>;  // mutable type
 
     template<typename U>
     using IfReverseInheritable
@@ -446,20 +446,22 @@ struct NeedWrapper {
     NeedWrapper(std::nullptr_t) : p {nullptr}
         {}
 
-    template<typename U,
-            typename = typename std::enable_if<
-                std::is_same<typename std::remove_const<T>::type, U>::value
-                and std::is_const<T>::value
-            >::type>
+    template<
+        typename U,
+        typename = enable_if_t<
+            std::is_same<remove_const_t<T>, U>::value
+            and std::is_const<T>::value
+        >
+    >
     NeedWrapper(const NeedWrapper<U*>& other)
         : p {other.p}
         {}
 
     template<
         typename U,
-        typename = typename std::enable_if<  // don't disregard constness
-            std::is_convertible<U*, T*>::value
-        >::type,
+        typename = enable_if_t<  // don't disregard constness
+            needful_is_convertible_v(U*, T*)
+        >,
         IfReverseInheritable<U>* = nullptr
     >
     NeedWrapper(U* u) : p {x_cast(MT*, u)}

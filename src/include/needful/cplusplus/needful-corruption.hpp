@@ -102,7 +102,7 @@ struct CorruptHelper {
 #undef Corrupt_If_Needful
 #define Corrupt_If_Needful(ref) /* macro for efficiency [4] */ \
     needful::CorruptHelper< \
-        needful_remove_reference(decltype(ref))
+        needful::remove_reference_t<decltype(ref)>
     >::corrupt(ref)
 
 STATIC_ASSERT(NEEDFUL_USES_CORRUPT_HELPER == 0);
@@ -164,12 +164,12 @@ struct CorruptHelper<bool> {
 template<typename T>
 struct CorruptHelper<
     T,  // Integer/bool/float/enum/etc. (faster than memset() fallback)
-    typename std::enable_if<
+    enable_if_t<
         not std::is_same<T, bool>::value and (
             std::is_fundamental<T>::value
             or std::is_enum<T>::value
         )
-    >::type
+    >
 >{
     static void corrupt(T& ref) {
     #if NEEDFUL_PSEUDO_RANDOM_CORRUPTIONS

@@ -52,13 +52,13 @@ struct IsSameAny<T>
 
 #undef ENABLE_IF_EXACT_ARG_TYPE
 #define ENABLE_IF_EXACT_ARG_TYPE(...) \
-    template <typename T, typename std::enable_if< \
-        needful::IsSameAny<T, __VA_ARGS__>::value>::type* = nullptr>
+    template <typename T, needful::enable_if_t< \
+        needful::IsSameAny<T, __VA_ARGS__>::value>* = nullptr>
 
 #undef DISABLE_IF_EXACT_ARG_TYPE
 #define DISABLE_IF_EXACT_ARG_TYPE(...) \
-    template <typename T, typename std::enable_if< \
-        not needful::IsSameAny<T, __VA_ARGS__>::value>::type* = nullptr>
+    template <typename T, typename needful::enable_if_t< \
+        not needful::IsSameAny<T, __VA_ARGS__>::value>* = nullptr>
 
 #undef ENABLEABLE
 #define ENABLEABLE(T, name)  T name
@@ -73,7 +73,7 @@ struct IsConvertibleAny;
 template <typename T, typename First, typename... Rest>
 struct IsConvertibleAny<T, First, Rest...> {
     static constexpr bool value =
-        std::is_convertible<T, First>::value
+        needful_is_convertible_v(T, First)
         or IsConvertibleAny<T, Rest...>::value;
 };
 
@@ -84,13 +84,13 @@ struct IsConvertibleAny<T>
 
 #undef ENABLE_IF_ARG_CONVERTIBLE_TO
 #define ENABLE_IF_ARG_CONVERTIBLE_TO(...) \
-    template <typename T, typename std::enable_if< \
-        needful::IsConvertibleAny<T, __VA_ARGS__>::value>::type* = nullptr>
+    template <typename T, needful::enable_if_t< \
+        needful::IsConvertibleAny<T, __VA_ARGS__>::value>* = nullptr>
 
 #undef DISABLE_IF_ARG_CONVERTIBLE_TO
 #define DISABLE_IF_ARG_CONVERTIBLE_TO(...) \
-    template <typename T, typename std::enable_if< \
-        not needful::IsConvertibleAny<T, __VA_ARGS__>::value>::type* = nullptr>
+    template <typename T, needful::enable_if_t< \
+        not needful::IsConvertibleAny<T, __VA_ARGS__>::value>* = nullptr>
 
 // Uses same ENABLEABLE()
 
@@ -117,25 +117,25 @@ struct IsConvertibleAsserter {
 
 #undef needful_rigid_ensure
 #define needful_rigid_ensure(T,expr) \
-    (NEEDFUL_USED(sizeof(needful::IsConvertibleAsserter< \
-        needful_remove_reference(decltype(expr)), \
+    (NEEDFUL_USED(sizeof(typename needful::IsConvertibleAsserter< \
+        needful::remove_reference_t<decltype(expr)>, \
         T \
-    >)), \
+    >::type)), \
     x_cast(T, (expr)))
 
 #undef needful_lenient_ensure
 #define needful_lenient_ensure(T,expr) \
-    (NEEDFUL_USED(sizeof(needful::IsConvertibleAsserter< \
-        needful_remove_reference(decltype(expr)), \
-        needful_constify_type(T) /* loosen to matching constified T too */ \
+    (NEEDFUL_USED(sizeof(typename needful::IsConvertibleAsserter< \
+        needful::remove_reference_t<decltype(expr)>, \
+        needful_constify_t(T) /* loosen to matching constified T too */ \
     >::type)), \
     x_cast(needful_merge_const(decltype(expr), T), (expr)))
 
 
 #undef needful_ensure_any
 #define needful_ensure_any(TLIST,expr) \
-    (NEEDFUL_USED(sizeof(needful::IsConvertibleAsserter< \
-        needful_remove_reference(decltype(expr)), \
+    (NEEDFUL_USED(sizeof(typename needful::IsConvertibleAsserter< \
+        needful::remove_reference_t<decltype(expr)>, \
         NEEDFUL_UNPARENTHESIZE TLIST \
     >::type)), \
     (expr))

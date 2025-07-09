@@ -121,8 +121,8 @@
 #define needful_mutable_cast(T,expr) /* Note: not arity-1 on purpose! */ \
     (static_cast<T>( \
         const_cast< \
-            needful_unconstify_type(needful_unwrapped_type(T)) \
-        >(static_cast<needful_constify_type(needful_unwrapped_type(T))>(expr))))
+            needful_unconstify_t(needful_unwrapped_type(T)) \
+        >(static_cast<needful_constify_t(needful_unwrapped_type(T))>(expr))))
 
 
 //=//// h_cast(): HOOKABLE CAST, IDEALLY cast() = h_cast() [A] ////////////=//
@@ -279,27 +279,26 @@ struct IsBasicType {
 };
 
 template<typename To, typename From>
-typename std::enable_if<  // For ints/enums: use & as && can't bind const
+enable_if_t<  // For ints/enums: use & as && can't bind const
     IsBasicType<From>::value and IsBasicType<To>::value,
     To
->::type
+>
 constexpr Hookable_Cast_Helper(const From& from) {
     return static_cast<To>(from);  // static_cast can be constexpr
 }
 
 
 template<typename To, typename From>
-typename std::enable_if<  // For ints/enums: use & as && can't bind const
-    (not std::is_array<needful_remove_reference(From)>::value
+enable_if_t<  // For ints/enums: use & as && can't bind const
+    (not std::is_array<remove_reference_t<From>>::value
         and not IsBasicType<From>::value
     ) and (
         IsBasicType<To>::value
     ),
     To
->::type
+>
 Hookable_Cast_Helper(const From& from) {
-    using ConstFrom = needful_constify_type(From);
-    using ConstTo = needful_constify_type(To);
+    using ConstTo = needful_constify_t(To);
 
     static_assert(
         not (std::is_pointer<From>::value and not std::is_pointer<To>::value)
@@ -309,6 +308,7 @@ Hookable_Cast_Helper(const From& from) {
     );
 
   #if NEEDFUL_CAST_CALLS_HOOKS
+    using ConstFrom = needful_constify_t(From);
     CastHook<ConstFrom, ConstTo>::Validate_Bits(from);
   #endif
 
@@ -319,21 +319,21 @@ template<
     typename To,
     typename FromRef,
     typename ResultType = needful_merge_const(  // lenient cast
-        needful_remove_reference(FromRef), To
+        remove_reference_t<FromRef>, To
     )
 >
-typename std::enable_if<  // For arrays: decay to pointer
-    std::is_array<needful_remove_reference(FromRef)>::value
+enable_if_t<  // For arrays: decay to pointer
+    std::is_array<remove_reference_t<FromRef>>::value
         and not std::is_fundamental<To>::value
         and not std::is_enum<To>::value,
     ResultType
->::type
+>
 Hookable_Cast_Helper(FromRef const && from) {
-    using From = typename std::decay<FromRef>::type;
-    using ConstFrom = needful_constify_type(From);
-    using ConstTo = needful_constify_type(To);
+    using ConstTo = needful_constify_t(To);
 
   #if NEEDFUL_CAST_CALLS_HOOKS
+    using From = decay_t<FromRef>;
+    using ConstFrom = needful_constify_t(From);
     CastHook<ConstFrom, ConstTo>::Validate_Bits(std::forward<FromRef>(from));
   #endif
 
@@ -347,21 +347,20 @@ template<
     typename To,
     typename FromRef,
     typename ResultType = needful_merge_const(  // lenient cast
-        needful_remove_reference(FromRef), To
+        remove_reference_t<FromRef>, To
     )
 >
-typename std::enable_if<  // For non-arrays: forward as-is
-    not std::is_array<needful_remove_reference(FromRef)>::value
-    and not IsResultWrapper<needful_remove_reference(FromRef)>::value
+enable_if_t<  // For non-arrays: forward as-is
+    not std::is_array<remove_reference_t<FromRef>>::value
+    and not IsResultWrapper<remove_reference_t<FromRef>>::value
         and not std::is_fundamental<To>::value
         and not std::is_enum<To>::value,
     ResultType
->::type
+>
 Hookable_Cast_Helper(FromRef&& from)
 {
-    using From = needful_remove_reference(FromRef);
-    using ConstFrom = needful_constify_type(From);
-    using ConstTo = needful_constify_type(To);
+    using From = remove_reference_t<FromRef>;
+    using ConstTo = needful_constify_t(To);
 
     static_assert(
         not is_function_pointer<From>::value
@@ -373,9 +372,7 @@ Hookable_Cast_Helper(FromRef&& from)
     static_assert(
         (   // v-- we can't warn you about va_list* cast() if this is true
             std::is_pointer<va_list>::value
-            and std::is_fundamental<
-                typename std::remove_pointer<va_list>::type
-            >::value
+            and std::is_fundamental<remove_pointer_t<va_list>>::value
         )
         or (  // v-- but if it's a struct or something we can warn you
             not std::is_same<From, va_list*>::value
@@ -386,6 +383,7 @@ Hookable_Cast_Helper(FromRef&& from)
     #endif
 
   #if NEEDFUL_CAST_CALLS_HOOKS
+    using ConstFrom = needful_constify_t(From);
     CastHook<ConstFrom, ConstTo>::Validate_Bits(std::forward<FromRef>(from));
   #endif
 
@@ -400,18 +398,17 @@ template<
     typename To,
     typename FromWrapperRef,
     typename ResultType = ResultWrapper<needful_merge_const(  // lenient cast
-        needful_remove_reference(FromWrapperRef), To
+        remove_reference_t<FromWrapperRef>, To
     )>
 >
-typename std::enable_if<
-    IsResultWrapper<needful_remove_reference(FromWrapperRef)>::value,
+enable_if_t<
+    IsResultWrapper<remove_reference_t<FromWrapperRef>>::value,
     ResultWrapper<To>
->::type
+>
 Hookable_Cast_Helper(const FromWrapperRef& from_wrapper)
 {
-    using From = needful_remove_reference(FromWrapperRef)::wrapped_type;
-    using ConstFrom = needful_constify_type(From);
-    using ConstTo = needful_constify_type(To);
+    using From = typename remove_reference_t<FromWrapperRef>::wrapped_type;
+    using ConstTo = needful_constify_t(To);
 
     static_assert(
         not is_function_pointer<From>::value
@@ -423,9 +420,7 @@ Hookable_Cast_Helper(const FromWrapperRef& from_wrapper)
     static_assert(
         (   // v-- we can't warn you about va_list* cast() if this is true
             std::is_pointer<va_list>::value
-            and std::is_fundamental<
-                typename std::remove_pointer<va_list>::type
-            >::value
+            and std::is_fundamental<remove_pointer_t<va_list>>::value
         )
         or (  // v-- but if it's a struct or something we can warn you
             not std::is_same<From, va_list*>::value
@@ -436,6 +431,7 @@ Hookable_Cast_Helper(const FromWrapperRef& from_wrapper)
     #endif
 
   #if NEEDFUL_CAST_CALLS_HOOKS
+    using ConstFrom = needful_constify_t(From);
     CastHook<ConstFrom, ConstTo>::Validate_Bits(from_wrapper.r);
   #endif
 
@@ -477,7 +473,7 @@ struct RigidCastAsserter {
 #undef needful_rigid_hookable_cast
 #define needful_rigid_hookable_cast(T,expr) /* outer parens [C] */ \
     (NEEDFUL_USED((needful::RigidCastAsserter< /* USED() for clang */ \
-        needful_remove_reference(decltype(expr)), \
+        needful::remove_reference_t<decltype(expr)>, \
         T \
     >{})), \
     needful_lenient_hookable_cast(T, (expr)))
@@ -485,7 +481,7 @@ struct RigidCastAsserter {
 #undef needful_rigid_unhookable_cast
 #define needful_rigid_unhookable_cast(T,expr) /* outer parens [C] */ \
     (NEEDFUL_USED((needful::RigidCastAsserter< /* USED() for clang */ \
-        needful_remove_reference(decltype(expr)), \
+        needful::remove_reference_t<decltype(expr)>, \
         T \
     >{})), \
     Needful_Lenient_Unhookable_Cast(T, (expr)))
@@ -504,10 +500,10 @@ struct RigidCastAsserter {
 
 template<typename From, typename To>
 struct UpcastHelper {
-    using type = typename MirrorConstHelper<From, To>::type;
+    using type = needful_mirror_const_t(From, To);
 
     static_assert(
-        std::is_convertible<From, type>::value,
+        needful_is_convertible_v(From, type),
         "upcast() cannot implicitly convert expression to type T"
     );
 };
@@ -515,7 +511,7 @@ struct UpcastHelper {
 #undef needful_upcast
 #define needful_upcast(T,expr) \
     ((typename needful::UpcastHelper< \
-        needful_remove_reference(decltype(expr)), \
+        needful::remove_reference_t<decltype(expr)>, \
         T \
     >::type)(expr))
 
@@ -551,6 +547,10 @@ struct UpcastHelper {
 //    (but upcast() itself doesn't get any temporaries involved, it's cheaper
 //    to not use a holder if you can avoid it).
 //
+// 4. Modulus is chosen as the infix operator to overload because it's not
+//    something you would be using on pointers, which tend to be what you'd
+//    be putting into a downcast helper...and the precedence is favorable.
+//
 
 #define NEEDFUL_DEFINE_DOWNCAST_HELPERS(BaseName, hookability) /* ugh [1] */ \
     template<typename From> \
@@ -561,18 +561,16 @@ struct UpcastHelper {
         \
         template< /* "downcast" means "reverse is_convertible" [2] */ \
             typename To, \
-            typename = typename std::enable_if< \
-                std::is_convertible<To, From>::value \
-            >::type \
+            typename = enable_if_t<needful_is_convertible_v(To, From)> \
         > \
         operator To() const \
             { return needful_lenient_##hookability##_cast(To, f); } \
         \
         template<typename F = From> \
-        typename std::enable_if< \
-            IsResultWrapper<needful_remove_reference(F)>::value, \
+        enable_if_t< \
+            IsResultWrapper<remove_reference_t<F>>::value, \
             BaseName##Holder<typename F::wrapped_type> \
-        >::type \
+        > \
         Extract_Hot() const { \
             return BaseName##Holder<typename F::wrapped_type>{f.r}; \
         } \
@@ -580,8 +578,8 @@ struct UpcastHelper {
     \
     struct BaseName##Maker { \
         template<typename T> \
-        BaseName##Holder<needful_remove_reference(T)> \
-        operator%(const T& value) const { \
+        BaseName##Holder<remove_reference_t<T>> \
+        operator%(const T& value) const { /* modulus [3] */ \
             return BaseName##Holder<T>{value}; \
         } \
     }; \
@@ -594,10 +592,12 @@ NEEDFUL_DEFINE_DOWNCAST_HELPERS(UnhookableDowncast, unhookable);
 #undef NEEDFUL_DEFINE_DOWNCAST_HELPERS  // macro need not leak
 
 #undef needful_hookable_downcast
-#define needful_hookable_downcast  needful::g_HookableDowncast_maker %
+#define needful_hookable_downcast \
+    needful::g_HookableDowncast_maker %  // modulus [3]
 
 #undef needful_unhookable_downcast
-#define needful_unhookable_downcast  needful::g_UnhookableDowncast_maker %
+#define needful_unhookable_downcast \
+    needful::g_UnhookableDowncast_maker %  // modulus [3]
 
 
 //=//// NON-POINTER TO POINTER CAST ////////////////////////////////////////=//
@@ -656,8 +656,8 @@ constexpr T IntegralCastHelper(V v) {
 
 template<typename From, typename To>
 struct FunctionPointerCastHelper {
-    using FromDecayed = typename std::decay<From>::type;
-    using ToDecayed = typename std::decay<To>::type;
+    using FromDecayed = decay_t<From>;
+    using ToDecayed = decay_t<To>;
 
     static_assert(
         is_function_pointer<FromDecayed>::value
