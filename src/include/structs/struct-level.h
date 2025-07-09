@@ -263,12 +263,6 @@ typedef struct LevelStruct Level;
 #include "executors/exec-scan.h"
 
 
-// C function implementing a native ACTION!
-//
-typedef Bounce (Executor)(Level* level_);
-typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
-
-
 // NOTE: The ordering of the fields in `LevelStruct` are specifically done so
 // as to accomplish correct 64-bit alignment of pointers on 64-bit systems.
 //
@@ -386,7 +380,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
     // grow to be able to capture evaluator state as a reified notion to
     // automate in debugging.  That's very speculative, but, possible.
     //
-    Array* varlist;  // must be Array, isn't legit VarList* while being built
+    ParamList* varlist;  // may be partial if under construction
     Element* rootvar;  // cached Varlist_Archetype() if varlist is not null
 
     // The "baseline" is a digest of the state of global variables at the

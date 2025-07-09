@@ -326,8 +326,8 @@ static void Init_Root_Vars(void)
         1 + len  // needs room for rootvar
     );
     Set_Flex_Len(a, 1 + len);
-    Tweak_Misc_Varlist_Adjunct(a, nullptr);
-    Tweak_Link_Inherit_Bind(a, nullptr);
+    Tweak_Misc_Varlist_Adjunct_Raw(a, nullptr);
+    Tweak_Link_Inherit_Bind_Raw(a, nullptr);
 
     KeyList* keylist = require (nocast Make_Flex(
         STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,

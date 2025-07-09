@@ -285,7 +285,7 @@ bool Func_Details_Querier(
     //    give it the appearance of executing code in place, we use a GROUP!.
 
       case SYM_BODY_OF: {
-        Element* body = cast(Element*, Array_At(details, IDX_DETAILS_1));
+        Element* body = cast(Element*, Details_At(details, IDX_DETAILS_1));
 
         Slot* std_func_body_slot = Get_System(SYS_STANDARD, STD_FUNC_BODY);
 

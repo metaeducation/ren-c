@@ -518,7 +518,7 @@ DECLARE_NATIVE(EVAL_FREE)
 
     Set_Action_Level_Label(L, Cell_Frame_Label_Deep(frame));
 
-    L->varlist = Varlist_Array(varlist);
+    L->varlist = u_cast(ParamList*, varlist);
     L->rootvar = Rootvar_Of_Varlist(varlist);
     if (MISC_VARLIST_ADJUNCT(varlist) != nullptr)  // might have adjunct
         assert(Get_Stub_Flag(varlist, MISC_NEEDS_MARK));

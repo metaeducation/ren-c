@@ -850,7 +850,7 @@ Bounce Action_Executor(Level* L)
         Phase* phase = Level_Phase(L);
         const Param* param = PARAM;
         while (Is_Specialized(param)) {
-            Element* archetype = Flex_Head(Element, phase);
+            Element* archetype = Phase_Archetype(phase);
             phase = Frame_Phase(archetype);
             param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
         }
@@ -1118,7 +1118,7 @@ Result(Zero) Push_Action(
     ));
     Tweak_Misc_Runlevel(s, L);  // maps varlist back to L
     Tweak_Bonus_Keylist_Shared(s, Phase_Keylist(phase));
-    Tweak_Link_Inherit_Bind(s, nullptr);
+    Tweak_Link_Inherit_Bind_Raw(s, nullptr);
 
     Flex_Data_Alloc(
         s,
@@ -1129,7 +1129,7 @@ Result(Zero) Push_Action(
         return fail (e);
     }
 
-    L->varlist = u_cast(Array*, s);
+    L->varlist = u_cast(ParamList*, s);
     L->rootvar = Flex_Head_Dynamic(Element, s);
 
     possibly(LIFT_BYTE(frame) != NOQUOTE_2);  // can be ACTION!, quasi, etc.
@@ -1145,7 +1145,7 @@ Result(Zero) Push_Action(
 
   #if DEBUG_POISON_UNINITIALIZED_CELLS
   {
-    Cell* tail = Array_Tail(L->varlist);
+    Cell* tail = Array_Tail(Varlist_Array(L->varlist));
     Cell* uninitialized = L->rootvar + 1;
     for (; uninitialized < tail; ++uninitialized)
         Force_Poison_Cell(uninitialized);

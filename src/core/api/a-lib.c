@@ -1142,11 +1142,11 @@ static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
 
     if (binding == nullptr) {
         assert(Is_Stub_Sea(g_user_context));
-        binding = cast(RebolContext*, g_user_context);
+        binding = u_cast(RebolContext*, g_user_context);
     }
 
     assert(Is_Base_Managed(binding));
-    Tweak_Feed_Binding(feed, cast(Stub*, binding));
+    Tweak_Feed_Binding(feed, u_cast(Context*, binding));
 
     Level* L = Make_Level(
         &Evaluator_Executor, feed, LEVEL_MASK_NONE
@@ -1252,7 +1252,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     }
 
     assert(Is_Base_Managed(binding));
-    Tweak_Feed_Binding(feed, cast(Stub*, binding));
+    Tweak_Feed_Binding(feed, cast(Context*, binding));
 
     Sink(Atom) atom_out = u_cast(Atom*, out);
     Level* L = require (Make_Level(&Stepper_Executor, feed, flags));
@@ -3053,7 +3053,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
 
     Element* holder = Details_Element_At(details, IDX_API_ACTION_BINDING_BLOCK);
 
-    Add_Link_Inherit_Bind(L->varlist, List_Binding(holder));  // [1]
+    Add_Link_Inherit_Bind_Raw(L->varlist, List_Binding(holder));  // [1]
 
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
 
@@ -3066,7 +3066,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     //
 
     assert(Is_Base_Managed(L->varlist));
-    assert(Link_Inherit_Bind(L->varlist));  // must inherit from something (?)
+    assert(Link_Inherit_Bind_Raw(L->varlist));  // must inherit (?)
 
     RebolContext* context = cast(RebolContext*, L->varlist);  // [1]
 

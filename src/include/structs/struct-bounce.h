@@ -102,6 +102,12 @@ typedef Byte WildTwo[2];
 #endif
 
 
+// C function implementing a native ACTION!
+//
+typedef Bounce (Executor)(Level* level_);
+typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
+
+
 //=//// RE-SKIN APIS RETURNING RebolBounce TO RETURN Bounce ///////////////=//
 
 #undef rebDelegate

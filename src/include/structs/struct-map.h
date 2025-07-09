@@ -46,10 +46,10 @@
 
     struct Map : public Flex {};  // the "pairlist" is the identity
 #else
-    typedef Flex HashList;
-    typedef Flex PairList;
+    typedef Stub HashList;
+    typedef Stub PairList;
 
-    typedef Flex Map;
+    typedef Stub Map;
 #endif
 
 

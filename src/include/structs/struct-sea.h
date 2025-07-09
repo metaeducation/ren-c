@@ -58,7 +58,7 @@
 //
 
 #if CPLUSPLUS_11
-    struct SeaOfVars : public Stub {};  // actual variables hang off of Symbols
+    struct SeaOfVars : public Context {};  // variables hang off of Symbols
 #else
     typedef Stub SeaOfVars;
 #endif

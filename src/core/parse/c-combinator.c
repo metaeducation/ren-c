@@ -83,7 +83,7 @@ Bounce Combinator_Dispatcher(Level* L)
 
     Bounce b;
     if (Is_Frame(body)) {  // NATIVE-COMBINATOR
-        Set_Flex_Info(L->varlist, HOLD);  // mandatory for natives.
+        Set_Flex_Info(Varlist_Array(L->varlist), HOLD);  // natives require
         assert(Is_Stub_Details(Frame_Phase(body)));
         Dispatcher* dispatcher = Details_Dispatcher(
             cast(Details*, Frame_Phase(body))

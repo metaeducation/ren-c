@@ -98,7 +98,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     STATE = ST_ADAPTER_RUNNING_PRELUDE;
 
-    assert(not Link_Inherit_Bind(L->varlist));  // can't own [1]
+    assert(not Link_Inherit_Bind_Raw(L->varlist));  // can't own [1]
 
     Force_Level_Varlist_Managed(L);
 
@@ -204,7 +204,7 @@ DECLARE_NATIVE(ADAPT)
     );
 
     Element* rebound = Init_Block(
-        Array_At(details, IDX_ADAPTER_PRELUDE),
+        Details_At(details, IDX_ADAPTER_PRELUDE),
         prelude_copy
     );
     Tweak_Cell_Binding(rebound, List_Binding(prelude));

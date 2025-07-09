@@ -252,7 +252,7 @@ static bool Subparse_Throws(
     // ensures that usermode accesses to the frame won't be able to fiddle
     // the frame values to bit patterns the native might crash on.
     //
-    Set_Flex_Info(L->varlist, HOLD);
+    Set_Flex_Info(Varlist_Array(L->varlist), HOLD);
 
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_SUBPARSE;

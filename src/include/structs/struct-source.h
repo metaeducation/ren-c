@@ -29,7 +29,7 @@
 #if CPLUSPLUS_11
     struct Source : public Array {};
 #else
-    typedef Flex Source;
+    typedef Stub Source;
 #endif
 
 

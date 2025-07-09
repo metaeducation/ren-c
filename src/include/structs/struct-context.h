@@ -35,7 +35,11 @@
 // (It may be that someday Pairings or Cell* are considered for binding, but
 // right now all instances are derived from Stub.)
 //
-typedef Stub Context;
+#if CPLUSPLUS_11
+    struct Context : public Stub {};
+#else
+    typedef Stub Context;
+#endif
 
 #define LINK_CONTEXT_INHERIT_BIND(c)    STUB_LINK(c)
 // MISC, INFO, BONUS are alls used differently for different CONTEXT subtypes
@@ -48,7 +52,11 @@ typedef Stub Context;
 // directly to it.
 //
 
-typedef Context Let;
+#if CPLUSPLUS_11
+    struct Let : public Context {};
+#else
+    typedef Stub Let;
+#endif
 
 #define STUB_MASK_LET ( \
     FLAG_FLAVOR(FLAVOR_LET) \
@@ -74,7 +82,11 @@ typedef Context Let;
 //    form that has merit, but that one didn't help anything.
 //
 
-typedef Context Use;
+#if CPLUSPLUS_11
+    struct Use : public Context {};
+#else
+    typedef Stub Use;
+#endif
 
 #define STUB_MASK_USE ( \
     FLAG_FLAVOR(FLAVOR_USE) \

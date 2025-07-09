@@ -43,8 +43,8 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
             | flags,  // e.g. BASE_FLAG_MANAGED
         capacity + 1  // size + room for rootvar (array terminator implicit)
     );
-    Tweak_Misc_Varlist_Adjunct(a, nullptr);
-    Tweak_Link_Inherit_Bind(a, nullptr);
+    Tweak_Misc_Varlist_Adjunct_Raw(a, nullptr);
+    Tweak_Link_Inherit_Bind_Raw(a, nullptr);
 
     Alloc_Tail_Array(a);  // allocate rootvar
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);
@@ -119,7 +119,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 
     Length len = Varlist_Len(varlist);
 
-    Extend_Flex_If_Necessary(varlist, delta);  // same identity, easy part
+    Extend_Flex_If_Necessary(Varlist_Array(varlist), delta);  // easy part
     Set_Flex_Len(Varlist_Array(varlist), len + delta + 1);  // include rootvar
 
     if (Get_Flavor_Flag(KEYLIST, k, SHARED)) {  // need new keylist [1]
@@ -764,8 +764,8 @@ VarList* Make_Varlist_Detect_Managed(
         1 + len  // needs room for rootvar
     );
     Set_Flex_Len(a, 1 + len);
-    Tweak_Misc_Varlist_Adjunct(a, nullptr);
-    Tweak_Link_Inherit_Bind(a, nullptr);
+    Tweak_Misc_Varlist_Adjunct_Raw(a, nullptr);
+    Tweak_Link_Inherit_Bind_Raw(a, nullptr);
 
     if (
         parent

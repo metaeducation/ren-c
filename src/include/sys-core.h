@@ -268,17 +268,21 @@ typedef RebolHandleCleaner HandleCleaner;
 
 #include "structs/struct-context.h"  // Context superclass
 #include "structs/struct-varlist.h"
-#include "structs/struct-sea.h"  // !!! currently a subclass of VarList
 
-#include "structs/struct-feed.h"
-#include "structs/struct-state.h"  // state of variables restored on jumps
+#include "structs/struct-patch.h"
+#include "structs/struct-sea.h"
+
+struct LevelStruct;
+typedef struct LevelStruct Level;  // forward declaration for Level
+
 #include "structs/struct-bounce.h"  // return value from native dispatchers
-#include "structs/struct-level.h"  // C struct for running level, uses feed
 
 #include "structs/struct-details.h"  // Array subclass
 #include "structs/struct-map.h"  // Array subclass (PairList)
 
-#include "structs/struct-patch.h"
+#include "structs/struct-feed.h"
+#include "structs/struct-state.h"  // state of variables restored on jumps
+#include "structs/struct-level.h"  // C struct for running level, uses feed
 
 #include "structs/struct-mold.h"
 

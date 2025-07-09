@@ -318,7 +318,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         Diminish_Stub(L->varlist);  // maybe lingering references [3]
 
     Tweak_Misc_Runlevel(original_varlist, L);  // [4]
-    L->varlist = Varlist_Array(original_varlist);  // rootvar must match
+    L->varlist = u_cast(ParamList*, original_varlist);  // rootvar must match
     L->rootvar = m_cast(Element*, Varlist_Archetype(original_varlist));
 
   //=//// RESUME THE YIELD-SUSPENDED STATE ////////////////////////////////=//

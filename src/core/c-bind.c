@@ -253,11 +253,11 @@ Let* Make_Let_Variable(
     Init(Slot) slot = Slot_Init_Hack(u_cast(Slot*, Stub_Cell(let)));
     Init_Dual_Unset(slot);
 
-    Tweak_Link_Inherit_Bind(let, inherit);  // linked list [1]
+    Tweak_Link_Inherit_Bind_Raw(let, inherit);  // linked list [1]
     Corrupt_Unused_Field(let->misc.corrupt);  // not currently used
     INFO_LET_SYMBOL(let) = m_cast(Symbol*, symbol);
 
-    return let;
+    return u_cast(Let*, let);
 }
 
 
@@ -370,8 +370,8 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
   // needed by ParamList to hold the inherited phase.
 
     if (flavor == FLAVOR_LET) {
-        if (Let_Symbol(c) == symbol) {
-            Init_Let(out, c);
+        if (Let_Symbol(u_cast(Let*, c)) == symbol) {
+            Init_Let(out, u_cast(Let*, c));
             Tweak_Word_Stub(wordlike, c);
             return true;
         }
@@ -1355,7 +1355,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     Destruct_Binder(binder);  // must remove bind indices even if failing
 
     if (e) {
-        Free_Unmanaged_Flex(varlist);
+        Free_Unmanaged_Flex(Varlist_Array(varlist));
         return fail (unwrap e);
     }
 
@@ -1365,7 +1365,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     // able to expand them...because things like FOR-EACH have historically
     // not been robust to the memory moving.
     //
-    Set_Flex_Flag(varlist, FIXED_SIZE);
+    Set_Flex_Flag(Varlist_Array(varlist), FIXED_SIZE);
 
     // Virtual version of `Bind_Values_Deep(Array_Head(body_out), context)`
     //

@@ -71,7 +71,7 @@
 #if CPLUSPLUS_11
     struct KeyList : public Flex {};
 #else
-    typedef Flex KeyList;
+    typedef Stub KeyList;
 #endif
 
 //=//// KEYLIST_FLAG_SHARED ///////////////////////////////////////////////=//
@@ -105,23 +105,10 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-// 1. Not all VarList* can be Phase, only ParamList*.  But it's sufficiently
-//    annoying to not be able to do "VarList things" with a ParamList that
-//    in order for ParamList to be passed to places both that accept Phase
-//    and VarList, something has to give.  This is the tradeoff made.
-//
-//    (Ideally ParamList could multiply inherit from VarList and Phase.  But
-//    that would require virtual inheritance so that two copies of the
-//    underlying Flex aren't included, and virtual inheritance breaks all
-//    sorts of things...including the requirement that the C++ build make
-//    standard layout types.)
-//
 #if CPLUSPLUS_11
-    struct Phase : public Flex {};
-    struct VarList : public Phase {};  // pragmatic inheritance decision [1]
+    struct VarList : public Context {};  // pragmatic inheritance decision [1]
 #else
-    typedef Flex Phase;
-    typedef Flex VarList;
+    typedef Stub VarList;
 #endif
 
 
@@ -233,7 +220,7 @@
 #if CPLUSPLUS_11
     struct Error : public VarList {};
 #else
-    typedef VarList Error;
+    typedef Stub Error;
 #endif
 
 #if (! NEEDFUL_OPTION_USES_WRAPPER)

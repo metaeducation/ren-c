@@ -24,5 +24,5 @@
 #if CPLUSPLUS_11
     struct Binary : public Flex {};  // used by BLOB!
 #else
-    typedef Flex Binary;
+    typedef Stub Binary;
 #endif

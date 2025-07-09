@@ -671,7 +671,7 @@ SeaOfVars* Copy_Sea_Managed(SeaOfVars* original) {
     else {
         Tweak_Misc_Sea_Adjunct(sea, nullptr);
     }
-    Tweak_Link_Inherit_Bind(sea, nullptr);
+    Tweak_Link_Inherit_Bind_Raw(sea, nullptr);
 
     SeaOfVars* copy = cast(SeaOfVars*, sea);  // now a well-formed context
     assert(Not_Stub_Flag(copy, DYNAMIC));
@@ -784,15 +784,15 @@ VarList* Copy_Varlist_Extra_Managed(
     // If we're copying a frame here, we know it's not running.
     //
     if (CTX_TYPE(original) == TYPE_FRAME)
-        Tweak_Misc_Varlist_Adjunct(varlist, nullptr);
+        Tweak_Misc_Varlist_Adjunct_Raw(varlist, nullptr);
     else {
         // !!! Should the adjunct object be copied for other context types?
         // Deep copy?  Shallow copy?  Just a reference to the same object?
         //
-        Tweak_Misc_Varlist_Adjunct(varlist, nullptr);
+        Tweak_Misc_Varlist_Adjunct_Raw(varlist, nullptr);
     }
 
-    Tweak_Link_Inherit_Bind(varlist, nullptr);
+    Tweak_Link_Inherit_Bind_Raw(varlist, nullptr);
 
     return copy;
 }

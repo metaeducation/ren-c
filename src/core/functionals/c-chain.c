@@ -70,7 +70,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     sub->varlist = L->varlist;
     assert(Misc_Runlevel(sub->varlist) == L);
     Tweak_Misc_Runlevel(sub->varlist, sub);
-    sub->rootvar = Array_Head(sub->varlist);
+    sub->rootvar = Array_Head(Varlist_Array(sub->varlist));
 
     L->varlist = nullptr;  // Note: may be TRAMPOLINE_KEEPALIVE! [1]
     Corrupt_If_Needful(L->rootvar);
@@ -294,7 +294,7 @@ DECLARE_NATIVE(CASCADE_P)  // see extended CASCADE in %base-defs.r
     );
     Force_Value_Frozen_Shallow(pipeline);
     Copy_Cell(  // index of this block gets incremented as pipeline executes
-        Array_At(details, IDX_CASCADER_PIPELINE),
+        Details_At(details, IDX_CASCADER_PIPELINE),
         pipeline
     );
 

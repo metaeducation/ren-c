@@ -811,7 +811,7 @@ static void Mark_Level(Level* L) {
         );
 
         Queue_Mark_Base_Deep(  // may be incomplete, can't cast(VarList*) [2]
-            cast(Base**, m_cast(Array**, &L->varlist))
+            cast(Base**, m_cast(ParamList**, &L->varlist))
         );
         return;
     }

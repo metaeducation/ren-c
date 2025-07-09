@@ -44,9 +44,9 @@
 //
 
 #if CPLUSPLUS_11
-    struct Details : public Phase {};
+    struct Details : public Context {};
 #else
-    typedef Flex Details;
+    typedef Stub Details;
 #endif
 
 
@@ -183,13 +183,17 @@ typedef struct {
 } DispatcherAndQuerier;
 
 
-
-
 #if CPLUSPLUS_11
     struct ParamList : public VarList {};  // see VarList (inherits from Phase)
 #else
-    typedef Flex ParamList;
+    typedef Stub ParamList;
 #endif
+
+
+// cast() checks Phase is only cast from ParamList or Details
+//
+typedef Context Phase;  // can be cast from either ParamList or Details
+
 
 // Includes STUB_FLAG_DYNAMIC because an action's paramlist is always
 // allocated dynamically, in order to make access to the archetype and the

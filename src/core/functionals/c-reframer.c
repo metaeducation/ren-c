@@ -103,7 +103,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 
     required (Push_Action(L, action, PREFIX_0));
 
-    Array* varlist = L->varlist;  // Drop_Action() will null out L->varlist
+    ParamList* varlist = L->varlist;  // Drop_Action() will null out L->varlist
 
     Set_Executor_Flag(ACTION, L, FULFILL_ONLY);  // Push_Action() won't allow
 

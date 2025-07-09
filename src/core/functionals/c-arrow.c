@@ -274,7 +274,7 @@ DECLARE_NATIVE(ARROW)
     assert(Misc_Phase_Adjunct(details) == nullptr);
     Tweak_Misc_Phase_Adjunct(details, adjunct);
 
-    Copy_Cell(Array_At(details, IDX_ARROW_BODY), body);
+    Copy_Cell(Details_At(details, IDX_ARROW_BODY), body);
 
     Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);

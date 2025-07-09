@@ -703,7 +703,7 @@ DECLARE_NATIVE(COMPILE_P)
 
         Swap_Stub_Content(details_tcc, details_api);
 
-        Free_Unmanaged_Flex(details_api);  // now not managed
+        Free_Unmanaged_Flex(Details_Array(details_api));  // now not managed
 
         DROP();
     }

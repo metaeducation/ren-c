@@ -310,7 +310,7 @@ template<typename F>  // [A]
 struct CastHook<const F*, const Phase*> {  // both must be const [B]
     static const Phase* convert(const F* p) {
         DECLARE_C_TYPE_LIST(type_list,
-            void, Byte, Base, Stub, Flex, Array
+            void, Byte, Base, ParamList, Details
         );
         STATIC_ASSERT(In_C_Type_List(type_list, F));
 

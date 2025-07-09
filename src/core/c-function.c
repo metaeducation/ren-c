@@ -608,8 +608,8 @@ Result(ParamList*) Pop_Paramlist(
     Manage_Stub(paramlist);
 
     Tweak_Bonus_Keylist_Unique(paramlist, keylist);
-    Tweak_Misc_Varlist_Adjunct(paramlist, nullptr);
-    Tweak_Link_Inherit_Bind(paramlist, nullptr);
+    Tweak_Misc_Varlist_Adjunct_Raw(paramlist, nullptr);
+    Tweak_Link_Inherit_Bind_Raw(paramlist, nullptr);
 
     // With all the values extracted from stack to array, restore stack pointer
     //
@@ -804,7 +804,7 @@ Details* Make_Dispatch_Details(
     // action...you have to make a new variation.  Note that the exemplar
     // can be exposed by AS FRAME! of this action...
     //
-    Set_Flex_Flag(paramlist, FIXED_SIZE);
+    Set_Flex_Flag(Varlist_Array(paramlist), FIXED_SIZE);
     Set_Flavor_Flag(VARLIST, paramlist, IMMUTABLE);
 
     assert(Details_Querier(details));  // must register querier

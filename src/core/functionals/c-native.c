@@ -113,7 +113,7 @@ Result(Details*) Make_Native_Dispatch_Details(
         SYM_RETURN  // native RETURN: types checked only if RUNTIME_CHECKS
     ));
 
-    Assert_Flex_Term_If_Needed(paramlist);
+    Assert_Flex_Term_If_Needed(Varlist_Array(paramlist));
 
     Flags details_flags = (
         BASE_FLAG_MANAGED

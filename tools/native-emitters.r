@@ -255,10 +255,10 @@ export emit-include-params-macro: func [
     let varlist-hold: if is-intrinsic [
         [
             -[if (Not_Level_Flag(level_, DISPATCHING_INTRINSIC))]-
-            -[    Set_Flex_Info(level_->varlist, HOLD);]-
+            -[    Set_Flex_Info(Varlist_Array(level_->varlist), HOLD);]-
         ]
     ] else [
-        [-[Set_Flex_Info(level_->varlist, HOLD);]-]
+        [-[Set_Flex_Info(Varlist_Array(level_->varlist), HOLD);]-]
     ]
 
     if empty? items [  ; vaporization currently not allowed

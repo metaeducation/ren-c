@@ -96,9 +96,9 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 // before the place where the exemplar is to be found.
 //
 
-INLINE void Tweak_Frame_Lens_Or_Label(Cell* c, Option(const Flex*) f) {
+INLINE void Tweak_Frame_Lens_Or_Label(Cell* c, Option(const Stub*) f) {
     assert(Heart_Of(c) == TYPE_FRAME);
-    CELL_FRAME_EXTRA_LENS_OR_LABEL(c) = m_cast(Flex*, maybe f);  // no flag
+    CELL_FRAME_EXTRA_LENS_OR_LABEL(c) = m_cast(Stub*, maybe f);  // no flag
 }
 
 INLINE ParamList* Phase_Paramlist(Phase* p) {

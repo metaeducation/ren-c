@@ -32,7 +32,12 @@
 INLINE Option(Context*) Link_Inherit_Bind(Context* context)
   { return u_cast(Context*, context->link.base); }
 
-INLINE void Tweak_Link_Inherit_Bind(Context* context, Option(Context*) next) {
+INLINE Option(Context*) Link_Inherit_Bind_Raw(Stub* context) {
+    assert(Stub_Flavor(context) == FLAVOR_VARLIST);
+    return u_cast(Context*, context->link.base);
+}
+
+INLINE void Tweak_Link_Inherit_Bind_Raw(Stub* context, Option(Context*) next) {
     LINK_CONTEXT_INHERIT_BIND(context) = maybe next;
 
     if (not next)
@@ -52,10 +57,16 @@ INLINE void Tweak_Link_Inherit_Bind(Context* context, Option(Context*) next) {
     }
 }
 
-INLINE void Add_Link_Inherit_Bind(Context* context, Option(Context*) next) {
+#define Tweak_Link_Inherit_Bind(context, next) \
+    Tweak_Link_Inherit_Bind_Raw(ensure(Context*, (context)), next)
+
+INLINE void Add_Link_Inherit_Bind_Raw(Stub* context, Option(Context*) next) {
     assert(LINK_CONTEXT_INHERIT_BIND(context) == nullptr);
-    Tweak_Link_Inherit_Bind(context, next);
+    Tweak_Link_Inherit_Bind_Raw(context, next);
 }
+
+#define Add_Link_Inherit_Bind(context,next) \
+    Add_Link_Inherit_Bind_Raw(ensure(Context*, (context)), next)
 
 
 // !!! Need better mechanism for getting context types.

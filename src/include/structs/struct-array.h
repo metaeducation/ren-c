@@ -51,7 +51,7 @@
 #if CPLUSPLUS_11
     struct Array : public Flex {};
 #else
-    typedef Flex Array;
+    typedef Stub Array;
 #endif
 
 

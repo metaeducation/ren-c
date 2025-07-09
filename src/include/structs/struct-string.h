@@ -27,10 +27,10 @@
 
     struct BookmarkList : public Flex {};
 #else
-    typedef Flex Strand;
-    typedef Flex Symbol;
+    typedef Stub Strand;
+    typedef Stub Symbol;
 
-    typedef Flex BookmarkList;
+    typedef Stub BookmarkList;
 #endif
 
 

@@ -51,7 +51,7 @@ INLINE Option(VarList*) Misc_Varlist_Adjunct(VarList* varlist) {
     return cast(VarList*, MISC_VARLIST_ADJUNCT(varlist));
 }
 
-INLINE void Tweak_Misc_Varlist_Adjunct(
+INLINE void Tweak_Misc_Varlist_Adjunct_Raw(
     Stub* varlist,
     Option(VarList*) adjunct
 ){
@@ -62,6 +62,9 @@ INLINE void Tweak_Misc_Varlist_Adjunct(
     else
         Clear_Stub_Flag(varlist, MISC_NEEDS_MARK);
 }
+
+#define Tweak_Misc_Varlist_Adjunct(varlist, adjunct) \
+    Tweak_Misc_Varlist_Adjunct_Raw(ensure(VarList*, (varlist)), adjunct)
 
 INLINE void Tweak_Misc_Phase_Adjunct(Phase* a, Option(VarList*) adjunct) {
     if (Is_Stub_Details(a))
@@ -211,16 +214,16 @@ INLINE KeyList* Bonus_Keylist(VarList* c) {
     return cast(KeyList*, BONUS_VARLIST_KEYLIST(c));
 }
 
-INLINE void Tweak_Bonus_Keylist_Shared(Flex* f, KeyList* keylist) {
-    assert(Is_Stub_Varlist(f));  // may not be complete yet
+INLINE void Tweak_Bonus_Keylist_Shared(Stub* s, KeyList* keylist) {
+    assert(Is_Stub_Varlist(s));  // may not be complete yet
     Set_Flavor_Flag(KEYLIST, keylist, SHARED);
-    BONUS_VARLIST_KEYLIST(f) = keylist;
+    BONUS_VARLIST_KEYLIST(s) = keylist;
 }
 
-INLINE void Tweak_Bonus_Keylist_Unique(Flex* f, KeyList *keylist) {
-    assert(Is_Stub_Varlist(f));  // may not be complete yet
+INLINE void Tweak_Bonus_Keylist_Unique(Stub* s, KeyList *keylist) {
+    assert(Is_Stub_Varlist(s));  // may not be complete yet
     assert(Not_Flavor_Flag(KEYLIST, keylist, SHARED));
-    BONUS_VARLIST_KEYLIST(f) = keylist;
+    BONUS_VARLIST_KEYLIST(s) = keylist;
 }
 
 
@@ -255,7 +258,7 @@ INLINE Slot* Varlist_Slot(VarList* c, Index n) {  // 1-based
 }
 
 INLINE Fixed(Slot*) Varlist_Fixed_Slot(VarList* c, Index n) {  // 1-based
-    assert(Get_Flex_Flag(c, FIXED_SIZE));  // not movable, see #2274
+    assert(Get_Flex_Flag(Varlist_Array(c), FIXED_SIZE));  // see #2274
     return Varlist_Slot(c, n);
 }
 
@@ -301,7 +304,7 @@ INLINE Slot* Varlist_Slots(Sink(const Slot*) tail, VarList* v) {
 }
 
 INLINE Fixed(Slot*) Varlist_Fixed_Slots(Sink(const Slot*) tail, VarList* v) {
-    assert(Get_Flex_Flag(v, FIXED_SIZE));  // not movable, see #2274
+    assert(Get_Flex_Flag(Varlist_Array(v), FIXED_SIZE));  // see #2274
     return Varlist_Slots(tail, v);
 }
 
@@ -314,7 +317,7 @@ INLINE Fixed(Slot*) Varlist_Fixed_Slots(Sink(const Slot*) tail, VarList* v) {
 
 INLINE Option(Level*) Misc_Runlevel(Stub* varlist) {
     assert(Is_Stub_Varlist(varlist));
-    assert(CTX_TYPE(varlist) == TYPE_FRAME);
+    assert(CTX_TYPE(u_cast(VarList*, varlist)) == TYPE_FRAME);
     assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
     return cast(Level*, MISC_VARLIST_RUNLEVEL(varlist));
 }
