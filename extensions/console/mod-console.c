@@ -299,7 +299,7 @@ DECLARE_NATIVE(CONSOLE)
 } run_skin: {  ///////////////////////////////////////////////////////////////
 
   // 1. This runs CONSOLE*, which returns *requests* to execute arbitrary
-  //    code by way of its return results.  The ENTRAP is thus here to catch
+  //    code by way of its return results.  rebRecover() is thus here to catch
   //    bugs in CONSOLE* itself.  Any evaluations for the user (or on behalf
   //    of the console) are in their own separate step with rebContinue()
   //
@@ -317,7 +317,7 @@ DECLARE_NATIVE(CONSOLE)
   recover: { /////////////////////////////////////////////////////////////////
 
     Value* code;
-    Value* warning = rebRescue(  // Rescue catches buggy CONSOLE* [1]
+    Value* warning = rebRecover(  // Rescue catches buggy CONSOLE* [1]
         &code,
         "console*",  // action that takes 4 args, run it
             "code",  // group! or block! executed prior (or null)
@@ -400,7 +400,7 @@ DECLARE_NATIVE(CONSOLE)
 
         "state: 'running-request",
 
-        "sys.util/rescue [",  // pollutes stack trace [3]
+        "sys.util/recover [",  // pollutes stack trace [3]
             "catch* 'quit* [",  // definitional quit (customized THROW) [4]
                 "sys.contexts.user.quit: sys.util/make-quit:console quit*/",
                 "result': lift* eval code",

@@ -277,18 +277,18 @@ int main(int argc, char *argv_ansi[])
   // code (such as `--do` code on the command line) by way of its return
   // results.  ENRESCUE is thus to intercept bugs *in MAIN-STARTUP itself*.
 
-    Value* enrescued = rebValue(
-        "sys.util/enrescue [",  // MAIN-STARTUP takes one argument (argv[])
+    Value* enrecovered = rebValue(
+        "sys.util/enrecover [",  // MAIN-STARTUP takes one argument (argv[])
             rebRUN(main_startup), rebR(argv_block),
         "]"
     );
     rebRelease(main_startup);
 
-    if (rebUnboxLogic("warning?", enrescued))  // error in MAIN-STARTUP itself
-        rebJumps("crash", enrescued);  // terminates
+    if (rebUnboxLogic("warning?", enrecovered))  // error in MAIN-STARTUP itself
+        rebJumps("crash", enrecovered);  // terminates
 
-    Value* code = rebValue("unlift @", enrescued);  // non-errors are ^META
-    rebRelease(enrescued);
+    Value* code = rebValue("unlift @", enrecovered);  // non-errors are ^META
+    rebRelease(enrecovered);
 
   delegate_evals_to_console_may_start_interactive_session: {
 

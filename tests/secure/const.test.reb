@@ -6,7 +6,7 @@
     data: mutable [a b c]
     data-readonly: const data
     all [
-        let e: sys.util/rescue [append data-readonly <readonly>]
+        let e: sys.util/recover [append data-readonly <readonly>]
         e.id = 'const-value
         append data <readwrite>
         data = [a b c <readwrite>]
@@ -105,8 +105,8 @@
     data: ~
     repeat 1 [data: copy [a [b [c]]]]
     append data <success>
-    e2: sys.util/rescue [append data.2 <panic>]
-    e22: sys.util/rescue [append data.2.2 <panic>]
+    e2: sys.util/recover [append data.2 <panic>]
+    e22: sys.util/recover [append data.2.2 <panic>]
     all [
         data = [a [b [c]] <success>]
         e2.id = 'const-value

@@ -106,7 +106,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 //
 //  Panic_Abruptly_Helper: C
 //
-// Trigger panic of an error by crossing stacks to enclosing RESCUE_SCOPE.
+// Trigger panic of an error by crossing stacks to enclosing RECOVER_SCOPE.
 // Note these panics interrupt code mid-stream, so if a Rebol function is
 // running it will not make it to the point of returning the result value.
 // This distinguishes the "panic" mechanic from the "throw" mechanic, which has
@@ -206,7 +206,7 @@ Error* Panic_Abruptly_Helper(Error* error)
     if (PG_Boot_Phase < BOOT_DONE)
         crash (error);
 
-    // There should be a RESCUE_SCOPE of some kind in effect if a `panic` can
+    // There should be a RECOVER_SCOPE of some kind in effect if a `panic` can
     // ever be run.
     //
     if (g_ts.jump_list == nullptr)

@@ -173,7 +173,7 @@ void Init_Evars(EVARS *e, const Element* v) {
 // !!! When enumerating an ordinary context, this currently does not put a
 // HOLD on the context.  So running user code during the enumeration that can
 // modify the object and add fields is dangerous.  The FOR-EACH variants do
-// put on the hold and use a rebRescue() to make sure the hold gets removed
+// put on the hold and use a rebRecover() to make sure the hold gets removed
 // in case of errors.  That becomes cheaper in the stackless model where a
 // single setjmp/exception boundary can wrap an arbitrary number of stack
 // levels.  Ultimately there should probably be a Shutdown_Evars().

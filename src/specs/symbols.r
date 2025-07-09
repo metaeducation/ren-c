@@ -44,8 +44,6 @@ no
 
 NaN
 
-errored  ; when rebRescue() has no handler and evaluates to non-fail ERROR!
-
 optimized-out
 anonymous
 

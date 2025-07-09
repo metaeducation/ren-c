@@ -449,7 +449,7 @@ typedef struct {
     Level* top_level;
     Level* bottom_level;
 
-    Jump* jump_list;  // Saved state for RESCUE_SCOPE
+    Jump* jump_list;  // Saved state for RECOVER_SCOPE
 
     Atom thrown_arg;
     Value thrown_label;
@@ -576,7 +576,7 @@ enum {
 
 #include "sys-tick.h"
 
-#include "sys-rescue.h" // includes RESCUE_SCOPE, panic_abruptly()
+#include "sys-recover.h" // includes RECOVER_SCOPE, panic_abruptly()
 
 INLINE Error* Cell_Error(const Cell* c);
 

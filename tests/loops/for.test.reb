@@ -187,7 +187,7 @@
 )(
     block: copy [a b c]
     all [
-        let e: sys.util/rescue [
+        let e: sys.util/recover [
             for 'item each block [
                 append block <panic>
             ]

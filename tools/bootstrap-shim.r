@@ -60,7 +60,7 @@ if not find (words of import/) 'into [
 ; specific other version if push came to shove, but it would be work for no
 ; obvious reward.)
 ;
-sys.util/rescue [
+sys.util/recover [
     spread []
 ] then [
     ; Fall through to the body of this file, we are shimming version ~8994d23

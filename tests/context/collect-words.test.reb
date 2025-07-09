@@ -34,7 +34,7 @@
         ok
     )
     (all [
-        let e: sys.util/rescue [extend obj compose [(setify $z) 300 c: 40]]
+        let e: sys.util/recover [extend obj compose [(setify $z) 300 c: 40]]
         e.id = 'collectable-bound
         e.arg1 = 'z:
         z = 30

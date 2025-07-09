@@ -32,7 +32,7 @@
 )
 ; "error out" of USE
 (
-    warning? sys.util/rescue [
+    warning? sys.util/recover [
         use [a] [1 / 0]
         2
     ]

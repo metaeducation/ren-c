@@ -15,7 +15,7 @@
    ]
 )
 (
-    e: sys.util/rescue [
+    e: sys.util/recover [
         panic "foo" then [print "THEN"] else [print "ELSE"]
     ]
     e.message = "foo"

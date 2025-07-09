@@ -29,7 +29,7 @@
 
 [#1122 (
     any [
-        warning? sys.util/rescue [load "9999999999999999999"]
+        warning? sys.util/recover [load "9999999999999999999"]
         greater? transcode:one "9999999999999999999" transcode:one "9223372036854775807"
     ]
 )]

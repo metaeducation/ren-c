@@ -52,7 +52,7 @@ DECLARE_NATIVE(TRY)
 
 
 //
-//  enrescue: native [
+//  enrecover: native [
 //
 //  "Sandbox code to intercept failures at ANY depth (including typos)"
 //
@@ -63,33 +63,33 @@ DECLARE_NATIVE(TRY)
 //      :relax "Allow non-erroring premature exits (THROW, RETURN, etc.)"
 //  ]
 //
-DECLARE_NATIVE(ENRESCUE)
+DECLARE_NATIVE(ENRECOVER)
 //
 // Note: During boot, this operation is removed from LIB and moved to the
-// system utilities, so it is typically called as SYS.UTIL/ENRESCUE.  Reason
+// system utilities, so it is typically called as SYS.UTIL/ENRECOVER.  Reason
 // is to help raise awareness of the risks involved with using this function,
 // because it's dangerous to react to these errors (or suppress them) due to
 // how little you know about what actually happened.
 {
-    INCLUDE_PARAMS_OF_ENRESCUE;
+    INCLUDE_PARAMS_OF_ENRECOVER;
 
     Element* code = Element_ARG(CODE);
 
     enum {
-        ST_ENRESCUE_INITIAL_ENTRY = STATE_0,
-        ST_ENRESCUE_EVALUATING
+        ST_ENRECOVER_INITIAL_ENTRY = STATE_0,
+        ST_ENRECOVER_EVALUATING
     };
 
     switch (STATE) {
-      case ST_ENRESCUE_INITIAL_ENTRY: goto initial_entry;
-      case ST_ENRESCUE_EVALUATING: goto eval_result_in_out;
+      case ST_ENRECOVER_INITIAL_ENTRY: goto initial_entry;
+      case ST_ENRECOVER_EVALUATING: goto eval_result_in_out;
       default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. We prime the evaluator with nihil so (enrescue [comment "hi"]) and
-    //    (enrescue []) will return a ~[]~ empty block antiform.  This is
+    // 1. We prime the evaluator with nihil so (enrecover [comment "hi"]) and
+    //    (enrecover []) will return a ~[]~ empty block antiform.  This is
     //    because a key early use of ENRESCUE is in the console, and the
     //    console wishes to give the user the clearest feedback on what
     //    is going on.  It may be that there should be an option that decays
@@ -105,7 +105,7 @@ DECLARE_NATIVE(ENRESCUE)
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 
-    STATE = ST_ENRESCUE_EVALUATING;
+    STATE = ST_ENRECOVER_EVALUATING;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // fail not caught by default
     return CONTINUE_SUBLEVEL(L);
 

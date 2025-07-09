@@ -2961,7 +2961,7 @@ parse*: func [
     f.rule-start: null
     f.rule-end: null
 
-    sys.util/rescue:relax [  ; :RELAX allows RETURN from block
+    sys.util/recover:relax [  ; :RELAX allows RETURN from block
         [^synthesized remainder pending]: eval f except e -> [
             assert [empty? state.loops]
             pending: blank  ; didn't get assigned due to error

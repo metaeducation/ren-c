@@ -57,7 +57,7 @@ run-single-test: func [
 
     log [mold code]
 
-    let result: sys.util/enrescue code
+    let result: sys.util/enrecover code
 
     all [
         warning? result
@@ -236,7 +236,7 @@ process-tests: func [
                 ;
                 flags: []
 
-                sys.util/rescue [
+                sys.util/recover [
                     handler flags collected
                 ]
                 then error -> [

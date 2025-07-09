@@ -16,14 +16,14 @@
 (
     x: make object! [a: 1]
     all [
-        warning? sys.util/rescue [set x reduce [()]]
+        warning? sys.util/recover [set x reduce [()]]
         x.a = 1
     ]
 )
 (
     x: make object! [a: 1 b: 2]
     all [
-        warning? sys.util/rescue [set x reduce [3 ()]]
+        warning? sys.util/recover [set x reduce [3 ()]]
         x.a = 1
     ]
 )

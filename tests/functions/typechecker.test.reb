@@ -23,6 +23,6 @@
     let m: matcher word!
     'abc = m 'abc
     null = m <abc>
-    let e: sys.util/rescue [m null]
+    let e: sys.util/recover [m null]
     e.id = 'bad-antiform
 ])

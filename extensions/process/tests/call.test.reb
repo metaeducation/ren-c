@@ -85,7 +85,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
     (#{DECAFBAD} = echoer #{DECAFBAD} #{})
 
     (
-        e: sys.util/rescue [#{DECAFBAD} = echoer #{DECAFBAD} ""]
+        e: sys.util/recover [#{DECAFBAD} = echoer #{DECAFBAD} ""]
         e.id = 'overlong-utf8
     )
 ]

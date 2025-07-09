@@ -774,7 +774,7 @@
     x = "a"
 )(
     x: <before>
-    e: sys.util/rescue [
+    e: sys.util/recover [
         parse3 ["a" "b" 1] [x: some text! integer!]
     ]
     all [

@@ -2,14 +2,14 @@
 ; Ren-C's version is invisible, like a COMMENT
 
 (
-    null? e: sys.util/rescue [assert [1 = 1]]
+    null? e: sys.util/recover [assert [1 = 1]]
 )(
-    e: sys.util/rescue [assert [1 = 2]]
+    e: sys.util/recover [assert [1 = 2]]
     e.id = 'assertion-failure
 )(
-    null? e: sys.util/rescue [assert [1 = 1, 2 = 2]]
+    null? e: sys.util/recover [assert [1 = 1, 2 = 2]]
 )(
-    e: sys.util/rescue [assert [1 = 1, 304 = 1020]]
+    e: sys.util/recover [assert [1 = 1, 304 = 1020]]
     e.id = 'assertion-failure
 )(
     10 = all [
@@ -73,7 +73,7 @@
     (
         e: ~
         all [
-            ["hooked"] = collect [e: sys.util/rescue [
+            ["hooked"] = collect [e: sys.util/recover [
                 assert:handler [1 = 2, 2 = 2, 2 = 3] [keep "hooked"]
             ]]
             e.id = 'assertion-failure

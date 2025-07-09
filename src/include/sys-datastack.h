@@ -39,7 +39,7 @@
 // a check in the main evaluator loop that the stack has been balanced to
 // wherever it started by the time a function call ends.  It's not necessary
 // necessary to balance the stack in the case of calling a `panic`--because
-// it is restored to where it was by the mechanics of RESCUE_SCOPE.
+// it is restored to where it was by the mechanics of RECOVER_SCOPE.
 //
 // To speed pushes and pops to the stack while also making sure that each
 // push is tested to see if an expansion is needed, a trick is used.  This

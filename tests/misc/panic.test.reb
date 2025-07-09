@@ -15,12 +15,12 @@
 
 ; A simple PANIC with a string message has no error ID
 ;
-(e: sys.util/rescue [panic "hello"], (e.id = null) and (e.message = "hello"))
+(e: sys.util/recover [panic "hello"], (e.id = null) and (e.message = "hello"))
 
 
 ; PANIC instead with a WORD! will make the error have that ID
 ;
-(e: sys.util/rescue [panic 'some-error-id], e.id = 'some-error-id)
+(e: sys.util/recover [panic 'some-error-id], e.id = 'some-error-id)
 
 
 ; PANIC can be given a :BLAME parameter.  It gives a more informative message,
@@ -29,7 +29,7 @@
     (
         foo: func [x] [panic @x]
 
-        e: sys.util/rescue [foo 10]
+        e: sys.util/recover [foo 10]
         all [
             e.id = 'invalid-arg
             e.arg1 = 'foo
@@ -40,7 +40,7 @@
     )(
         foo: func [x] [panic:blame "error reason" $x]
 
-        e: sys.util/rescue [foo 10]
+        e: sys.util/recover [foo 10]
         all [
             e.id = null  ; no longer an invalid arg error
             [foo 10] = copy:part e.near 2  ; still implicates callsite

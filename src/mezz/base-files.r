@@ -141,7 +141,7 @@ make-dir: func [
         append path slash
         make-dir path except e -> [
             for-each 'dir created [
-                sys.util/rescue [delete dir]
+                sys.util/recover [delete dir]
             ]
             return fail e
         ]
@@ -162,7 +162,7 @@ delete-dir: func [
     ] [
         for-each 'file files [delete-dir (join dir file)]
     ]
-    sys.util/rescue [
+    sys.util/recover [
         delete dir
     ]
 ]

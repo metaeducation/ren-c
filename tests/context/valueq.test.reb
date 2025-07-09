@@ -7,7 +7,7 @@
 ; It panics for now.
 ;
 (all [
-    let e: sys.util/rescue [set? $utternonsense]
+    let e: sys.util/recover [set? $utternonsense]
     e.id = 'not-bound
     e.arg1 = 'utternonsense
 ])

@@ -317,7 +317,7 @@
     (
         x: <x>
         all [
-            e: sys.util/rescue [
+            e: sys.util/recover [
                 let x: fail 'test
             ]
             warning? e

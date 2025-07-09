@@ -3,7 +3,7 @@
 ; Basic disallowal of re-entry
 (
     g: generator [g]
-    'yielder-reentered = (sys.util/rescue [g]).id
+    'yielder-reentered = (sys.util/recover [g]).id
 )
 
 
@@ -13,9 +13,9 @@
 
     all [
         g = 1
-        warning? sys.util/rescue [g]
-        (sys.util/rescue [g]).id = 'yielder-panicked
-        (sys.util/rescue [g]).id = 'yielder-panicked
+        warning? sys.util/recover [g]
+        (sys.util/recover [g]).id = 'yielder-panicked
+        (sys.util/recover [g]).id = 'yielder-panicked
     ]
 )
 
@@ -49,7 +49,7 @@
 
     did all [
         g = 1
-        'frame-not-on-stack = (sys.util/rescue [stolen-yield 3]).id
+        'frame-not-on-stack = (sys.util/recover [stolen-yield 3]).id
     ]
 )
 

@@ -32,7 +32,7 @@
         1 / 0
         success: 'false
     ]
-    warning? sys.util/rescue [f1]
+    warning? sys.util/recover [f1]
     true? success
 )
 [#822
@@ -41,7 +41,7 @@
     )
 ]
 #rescue (
-    sys.util/rescue [panic make warning! ""] then [okay]
+    sys.util/recover [panic make warning! ""] then [okay]
 )
 #trap (
     trap [1 / 0] then (:warning?)
@@ -54,7 +54,7 @@
 )
 [#1514
     #trap (
-        warning? sys.util/rescue [trap [1 / 0] then (:add)]
+        warning? sys.util/recover [trap [1 / 0] then (:add)]
     )
 ]
 

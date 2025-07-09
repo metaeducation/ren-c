@@ -162,7 +162,7 @@
         ]
     ][
         error: me or (
-            'bad-parameter = (sys.util/rescue [eval inside [] code]).id
+            'bad-parameter = (sys.util/recover [eval inside [] code]).id
         )
     ]
 

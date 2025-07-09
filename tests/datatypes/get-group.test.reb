@@ -45,13 +45,13 @@
         e.message = "handled"
     )
     (
-        e: sys.util/rescue [
+        e: sys.util/recover [
             (fail "unhandled" 1 + 2)
         ]
         e.message = "unhandled"
     )
     (
-        e: sys.util/rescue [
+        e: sys.util/recover [
             unquasi lift (fail "unhandled" 1 + 2)
         ]
         e.message = "unhandled"

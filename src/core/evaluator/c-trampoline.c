@@ -92,9 +92,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     USED(tick);
   #endif
 
-  bounce_on_trampoline_with_rescue:
+  bounce_on_trampoline_with_recover:
 
-  // RESCUE_SCOPE is an abstraction of `try {} catch(...) {}` which can also
+  // RECOVER_SCOPE is an abstraction of `try {} catch(...) {}` which can also
   // work in plain C using setjmp/longjmp().  It's considered desirable to
   // support both approaches: plain C compilation (e.g. with TCC) runs on many
   // legacy/embedded platforms, but structured exception handling has support
@@ -111,10 +111,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   // after a longjmp() occurs, so obviously it needs to be re-setjmp'd.
   //
   // So either way, we can only jump to `bounce_on_trampoline` if no abrupt
-  // panic() has occurred.  Else jump to `bounce_on_trampoline_with_rescue`
+  // panic() has occurred.  Else jump to `bounce_on_trampoline_with_recover`
   // to put the rescue back into effect.
 
-  RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED {  //////////////////////////
+  RECOVER_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED {  /////////////////////////
 
     Level* L = TOP_LEVEL;  // Current level changes, and isn't always top...
 
@@ -226,7 +226,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         if (Get_Level_Flag(L, ROOT_LEVEL)) {  // don't abort top
             assert(Not_Level_Flag(TOP_LEVEL, TRAMPOLINE_KEEPALIVE));
-            CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
+            CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;
             return BOUNCE_THROWN;
         }
 
@@ -289,7 +289,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         if (Get_Level_Flag(L, ROOT_LEVEL)) {
             assert(L == TOP_LEVEL);
-            CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
+            CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;
             return L->out;
         }
 
@@ -330,7 +330,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     }
 
     if (bounce == BOUNCE_SUSPEND) {  // to get emscripten started w/o Asyncify
-        CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
+        CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;
         return BOUNCE_SUSPEND;
     }
 
@@ -371,20 +371,20 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
 } ON_ABRUPT_PANIC (Error* e) {  //////////////////////////////////////////////
 
-    // A panic() can happen at any moment--even due to something like a memory
-    // allocation requested by an executor itself.  These are "abrupt panics",
-    // and they cannot be TRAP'd or TRY'd in the same way an ERROR! can be.
-    //
-    // 1. We don't really know *what* panicked...all levels get a chance to
-    //    clean up the state.
-    //
-    //    (Example: When something like ALL is "between steps", the level it
-    //    pushed to process its block will be above it on the stack.  If the
-    //    ALL decides to call panic(), the non-running stack level can be
-    //    "TOP_LEVEL" above the ALL's level whose executor was pushed.)
-    //
-    // 2. If a native protected the output Cell as a sanity check in the
-    //    debug build, it won't run the code path to clean that up here.
+  // A panic() can happen at any moment--even due to something like a memory
+  // allocation requested by an executor itself.  These are "abrupt panics",
+  // and they can't be RESCUE'd, TRY'd, or EXCEPT'd like an ERROR! can be.
+  //
+  // 1. We don't really know *what* panicked...all levels get a chance to
+  //    clean up the state.
+  //
+  //    (Example: When something like ALL is "between steps", the level it
+  //    pushed to process its block will be above it on the stack.  If the
+  //    ALL decides to call panic(), the non-running stack level can be
+  //    "TOP_LEVEL" above the ALL's level whose executor was pushed.)
+  //
+  // 2. If a native protected the output Cell as a sanity check in the
+  //    debug build, it won't run the code path to clean that up here.
 
     Level* L = TOP_LEVEL;  // may not be same as L whose executor() called [1]
 
@@ -397,7 +397,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     possibly(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // panic in intrinsic
     Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
 
-    goto bounce_on_trampoline_with_rescue;  // abrupt panic "used up" rescue
+    goto bounce_on_trampoline_with_recover;  // abrupt panic "used up" rescue
 
 } DEAD_END; }
 
@@ -439,7 +439,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
   #endif
 
   #if RUNTIME_CHECKS
-    assert(check == g_ts.jump_list);  // see CLEANUP_BEFORE_EXITING_RESCUE_SCOPE
+    assert(check == g_ts.jump_list);  // CLEANUP_BEFORE_EXITING_RECOVER_SCOPE
   #endif
 
     assert(TOP_LEVEL == root);

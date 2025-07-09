@@ -20,7 +20,7 @@
     f: make frame! append/
     f.series: 1  ; not a valid APPEND target
     f.value: <ae>
-    e: sys.util/rescue [eval f]
+    e: sys.util/recover [eval f]
     all [
         e.id = 'expect-arg
         e.arg1 = 'append

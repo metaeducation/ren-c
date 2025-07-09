@@ -88,7 +88,7 @@ ok)
     ][
         if no? good [
             good: to-yesno (
-                'bad-parameter <> (sys.util/rescue [eval inside [] code]).id
+                'bad-parameter <> (sys.util/recover [eval inside [] code]).id
             )
         ]
     ]

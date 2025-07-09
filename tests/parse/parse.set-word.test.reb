@@ -67,14 +67,14 @@
 [https://github.com/red/red/issues/4318
     (
         x4318: 0
-        warning? sys.util/rescue [
+        warning? sys.util/recover [
             parse [] [x4318: across]
         ]
         zero? x4318
     )
     (
         x4318: 0
-        warning? sys.util/rescue [
+        warning? sys.util/recover [
             parse [] [x4318:]
         ]
         zero? x4318

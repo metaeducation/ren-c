@@ -9,8 +9,8 @@
 (1.2.3 = join tuple! [1 2 3])
 ;(1x2 = join tuple! [1 2])  ; !!! TBD when unified with pairs
 
-(warning? sys.util/rescue [load "1."])  ; !!! Reserved
-(warning? sys.util/rescue [load ".1"])  ; !!! Reserved
+(warning? sys.util/recover [load "1."])  ; !!! Reserved
+(warning? sys.util/recover [load ".1"])  ; !!! Reserved
 ;(.1 = join tuple! [_ 1])  ; No representation due to reservation
 ;(1. = join tuple! [1 _])  ; No representation due to reservation
 

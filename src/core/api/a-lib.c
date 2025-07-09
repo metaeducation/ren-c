@@ -207,14 +207,14 @@ unsigned char* API_rebAllocBytes(size_t size)
 //  rebTryAllocBytes: API
 //
 // Variant of rebAllocBytes() that returns nullptr on failure.  To accomplish
-// this it just uses a RESCUE_SCOPE to intercept any panic() that happens in the
-// course of the underlying Flex creation.
+// this it just uses a RECOVER_SCOPE to intercept any panic() that happens in
+// the course of the underlying Flex creation.
 //
 unsigned char* API_rebTryAllocBytes(size_t size)
 {
-    RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED {
+    RECOVER_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED {
         Byte* p = API_rebAllocBytes(size);
-        CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
+        CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;
         return p;
     } ON_ABRUPT_PANIC (Error* e) {
         UNUSED(e);
@@ -1437,13 +1437,13 @@ RebolValue* API_rebEntrap(
 
 
 //
-//  rebRescue: API
+//  rebRecover: API
 //
 // Builds in an RESCUE operation to rebValue; shorthand that's more efficient.
 //
-//     rebRescue(...) => rebValue("enrescue [", ..., "]")
+//     rebRecover(...) => rebValue("enrecover [", ..., "]")
 //
-RebolValue* API_rebRescue(
+RebolValue* API_rebRecover(
     RebolContext* binding,
     RebolValue** value,
     const void* p, void* vaptr
@@ -1473,13 +1473,13 @@ RebolValue* API_rebRescue(
 
 
 //
-//  rebRescueInterruptible: API
+//  rebRecoverInterruptible: API
 //
 // !!! How should interruptibility be communicated more generally in the
 // API, if more functions have Rescue variations?  An API instruction, like
 // rebINTERRUPTIBLE(), that you pass in?
 //
-RebolValue* API_rebRescueInterruptible(
+RebolValue* API_rebRecoverInterruptible(
     RebolContext* binding,
     RebolValue** value,
     const void* p, void* vaptr

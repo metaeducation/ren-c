@@ -1,5 +1,5 @@
 //
-//  file: %sys-rescue.h
+//  file: %sys-recover.h
 //  summary: "Abstraction of setjmp/longjmp and C++ throw/catch"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This file implements a RESCUE_SCOPE abstraction of C++'s `try/catch`
+// This file implements a RECOVER_SCOPE abstraction of C++'s `try/catch`
 // which can also be compiled as plain C using setjmp/longjmp().  It's for
 // trapping "abrupt panics", that trigger from the `panic` pseudo-"keyword"
 // in C code.  These happen at arbitrary moments and are not willing (or able)
@@ -32,12 +32,12 @@
 //
 //     int modified_local = 1020;
 //     int unmodified_local = 304;
-//     RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED {
+//     RECOVER_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED {
 //        //
 //        // code that may trigger a panic() ...
 //        //
 //        modified_local = 0;  // modification means "clobbering"
-//        CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;  // necessary, unfortunately!
+//        CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;  // necessary, unfortunately!
 //     } ON_ABRUPT_PANIC (Error* e) {
 //        //
 //        // code that handles the error in `e`
@@ -114,13 +114,13 @@ struct JumpStruct {
     }
     ~JumpStruct() {
         if (not clean_exit)
-            assert("Missing CLEANUP_BEFORE_EXITING_RESCUE_SCOPE() call");
+            assert("Missing CLEANUP_BEFORE_EXITING_RECOVER_SCOPE() call");
     }
   #endif
 };
 
 
-////// RESCUE_SCOPE ABSTRACTION //////////////////////////////////////////////
+////// RECOVER_SCOPE ABSTRACTION /////////////////////////////////////////////
 //
 // This is a pretty clever bit of design trickery, if I do say so myself!
 //
@@ -142,7 +142,7 @@ struct JumpStruct {
 // IN THE TRY/CATCH IMPLEMENTATION...
 //
 // With the setjmp() version of the macros, it's incidental that what follows
-// the RESCUE_SCOPE is a C scope {...}.  But it's critical to the TRY/CATCH
+// the RECOVER_SCOPE is a C scope {...}.  But it's critical to the TRY/CATCH
 // version...because the last thing in the macro is a hanging `try` keyword.
 // Similarly, what follows the ON_ABRUPT_PANIC() need not be a scope in the
 // setjmp() version, but must be a block for the hanging `catch(...)`.
@@ -192,7 +192,7 @@ struct JumpStruct {
 //    when you've done a `return` out of the trapped block.  As a result, the
 //    notion of which CPU buffer to jump to cannot be updated--which is a
 //    requirement when nested instances of RESCUE are allowed.  So you have
-//    to manually call a CLEANUP_BEFORE_EXITING_RESCUE_SCOPE macro if you
+//    to manually call a CLEANUP_BEFORE_EXITING_RECOVER_SCOPE macro if you
 //    are going to exit the rescued scope prematurely.
 //
 //    By having the non-longjmp() versions do the same work, we help ensure
@@ -222,7 +222,7 @@ struct JumpStruct {
         #define LONG_JUMP(s,v)  longjmp((s), (v))
     #endif
 
-    #define RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED \
+    #define RECOVER_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED \
         NOOP;  /* stops warning when previous statement was label */ \
         Jump jump;  /* one setjmp() per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
@@ -232,7 +232,7 @@ struct JumpStruct {
             goto on_longjmp_or_scope_exited; /* jump.error will be set */ \
         /* fall through to subsequent block, happens on first SET_JUMP() */
 
-    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
+    #define CLEANUP_BEFORE_EXITING_RECOVER_SCOPE /* can't avoid [5] */ \
         assert(jump.error == nullptr); \
         g_ts.jump_list = jump.last_jump; \
         jump.clean_exit = true
@@ -259,14 +259,14 @@ struct JumpStruct {
 
     STATIC_ASSERT(PANIC_JUST_ABORTS == 0);
 
-    #define RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED \
+    #define RECOVER_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED \
         NOOP;  /* stops warning when previous statement was label */ \
         Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
         g_ts.jump_list = &jump; \
         try /* picks up subsequent {...} block */
 
-    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
+    #define CLEANUP_BEFORE_EXITING_RECOVER_SCOPE /* can't avoid [5] */ \
         /* assert(jump.error == nullptr); */ /* not needed w/C++ catch */ \
         g_ts.jump_list = jump.last_jump; \
         jump.clean_exit = true
@@ -279,7 +279,7 @@ struct JumpStruct {
 
     STATIC_ASSERT(PANIC_JUST_ABORTS);
 
-    #define RESCUE_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIEDC \
+    #define RECOVER_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED \
         NOOP;  /* stops warning when previous statement was label */ \
         Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
@@ -287,7 +287,7 @@ struct JumpStruct {
         if (false) \
             goto on_abrupt_panic;  /* avoids unreachable code warning */
 
-    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
+    #define CLEANUP_BEFORE_EXITING_RECOVER_SCOPE /* can't avoid [5] */ \
         /* assert(jump.error == nullptr); */ /* no error in this version */ \
         g_ts.jump_list = jump.last_jump; \
         jump.clean_exit = true
@@ -307,7 +307,7 @@ struct JumpStruct {
 // work on platforms that don't have exception handling or longjmp().
 //
 // But the uncooperative form of `panic (...)` can be called at any moment,
-// and is what the RESCUE_SCOPE() abstraction is designed to catch:
+// and is what the RECOVER_SCOPE() abstraction is designed to catch:
 //
 //     if (Foo_Type(foo) == BAD_FOO) {
 //         panic (Error_Bad_Foo_Operation(...));

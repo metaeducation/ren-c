@@ -136,8 +136,8 @@
 
 ; are error reports for DO and EVALUATE consistent?
 (
-    e1: sys.util/rescue [do "Rebol [] 1 / 0"]
-    e2: sys.util/rescue [evaluate [1 / 0]]
+    e1: sys.util/recover [do "Rebol [] 1 / 0"]
+    e2: sys.util/recover [evaluate [1 / 0]]
     e1.near = e2.near
 )
 

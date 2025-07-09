@@ -27,7 +27,7 @@
                 #{01FF02FF03}
             ] (wrap [
                 protect value: copy original
-                sys.util/rescue code then e -> [
+                sys.util/recover code then e -> [
                     any [
                         e.id <> 'series-protected
                         not equal? value original

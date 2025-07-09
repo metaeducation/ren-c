@@ -45,7 +45,7 @@
     ([a b c d e d e] = apply append/ [:dup 2, [a b c] spread [d e]])
 
     (all [
-        e: sys.util/rescue [
+        e: sys.util/recover [
             [a b c d e d e] = apply append/ [:dup, 2 [a b c] spread [d e]]
         ]
         e.arg1 = 'need-non-end
@@ -57,7 +57,7 @@
 ; If you specify a refinement, there has to be a value after it
 [
     (all [
-        e: sys.util/rescue [
+        e: sys.util/recover [
             [a b c d e d e] = apply append/ [
                 :dup :part 1 [a b c] spread [d e]
             ]
@@ -66,7 +66,7 @@
         e.arg2 = ':dup
     ])
     (all [
-        e: sys.util/rescue [
+        e: sys.util/recover [
             [a b c d e d e] = apply append/ [[a b c] spread [d e] :dup]
         ]
         e.arg1 = 'need-non-end
@@ -101,7 +101,7 @@
     ~expect-arg~ !! (apply testme/ [:refine 'false])
 
     (all [
-        e: sys.util/rescue [apply testme/ [:refine #garbage]]
+        e: sys.util/recover [apply testme/ [:refine #garbage]]
         e.id = 'bad-argless-refine
         e.arg1 = ':refine
     ])

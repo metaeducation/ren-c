@@ -4,7 +4,7 @@
 ; #1711
 (
     any wrap [
-        not warning? e: sys.util/rescue [make-dir %/folder-to-save-test-files]
+        not warning? e: sys.util/recover [make-dir %/folder-to-save-test-files]
         e.type = 'access
     ]
 )

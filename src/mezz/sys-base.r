@@ -29,15 +29,17 @@ Rebol [
 ;
 script-pre-load-hook: ~
 
-/enrescue: lib.enrescue/
-/rescue: enclose enrescue/ lambda [f] [
+; NOTE: we are in SYS context here!
+
+/enrecover: lib.enrecover/
+/recover: enclose enrecover/ lambda [f] [
     match warning! eval-free f
 ]
 
-lib.enrescue: ~#[See SYS.UTIL/ENRESCUE and https://forum.rebol.info/t/1871]#~
+lib.enrecover: ~#[See SYS.UTIL/ENRECOVER and https://forum.rebol.info/t/1871]#~
 
-set extend lib 'rescue (
-    ~#[See SYS.UTIL/RESCUE and https://forum.rebol.info/t/1871]#~
+set extend lib 'recover (
+    ~#[See SYS.UTIL/RECOVER and https://forum.rebol.info/t/1871]#~
 )
 
 exit: lib.exit/

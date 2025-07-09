@@ -318,7 +318,7 @@ list-dir: func [
     l: default [make text! 62]  ; approx width
 
     let files
-    sys.util/rescue [
+    sys.util/recover [
         files: read %./
     ] then [
         print ["Not found:" :path]

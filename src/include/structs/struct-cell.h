@@ -35,8 +35,10 @@
 //   See %struct-base.h for explanations of these flags.
 //
 // * KIND_BYTE: the second byte indicates what type of information the other
-//   3 slots in the cell describe.  It corresponds to a datatype, such as
-//   TYPE_INTEGER, TYPE_BLOCK, TYPE_TEXT, tec.
+//   3 slots in the cell describe.  It holds a fundamental datatype known
+//   as a "Heart", which has values like TYPE_INTEGER, TYPE_BLOCK, TYPE_TEXT.
+//   It also reserves two bits to hold the "Sigil" of the cell, which is
+//   whether it's annotated with `@` or `^` or `$`.
 //
 // * LIFT_BYTE: the third byte indicates how quoted something is, or if it
 //   is a quaisform or antiform.  See %sys-quoted.h for more on how the byte
