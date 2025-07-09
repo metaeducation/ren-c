@@ -39,20 +39,16 @@
 
 //=//// cast(Stub*, ...) //////////////////////////////////////////////////=//
 
-template<typename F>
-const Stub* stub_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
-    return u_cast(const Flex*, p);
-}
-
-template<typename F>
-const Stub* stub_cast_impl(const F* p, DowncastTag) {  // validate [C]
+template<typename F>  // [A]
+struct CastHook<const F*, const Stub*> {  // both must be const [B]
+  static void Validate_Bits(const F* p) {
     DECLARE_C_TYPE_LIST(type_list,
         void, Byte, Base
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
-        return nullptr;
+        return;
 
     if ((u_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_CELL  // BASE_FLAG_UNREADABLE ok
@@ -61,34 +57,22 @@ const Stub* stub_cast_impl(const F* p, DowncastTag) {  // validate [C]
     )){
         crash (p);
     }
-
-    return u_cast(const Stub*, p);
-}
-
-template<typename F>  // [A]
-struct CastHook<const F*, const Stub*> {  // both must be const [B]
-    static const Stub* convert(const F* p) {
-        return stub_cast_impl(p, WhichCastDirection<F, Stub>{});
-    }
+  }
 };
 
 
 //=//// cast(Flex*, ...) //////////////////////////////////////////////////=//
 
-template<typename F>
-const Flex* flex_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
-    return u_cast(const Flex*, p);
-}
-
-template<typename F>
-const Flex* flex_cast_impl(const F* p, DowncastTag) {  // validate [C]
+template<typename F>  // [A]
+struct CastHook<const F*, const Flex*> {  // both must be const [B]
+  static void Validate_Bits(const F* p) {
     DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Base, Stub
+        void, Byte, Base, Stub, HashList
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
-        return nullptr;
+        return;
 
     if ((u_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
@@ -97,34 +81,22 @@ const Flex* flex_cast_impl(const F* p, DowncastTag) {  // validate [C]
     )){
         crash (p);
     }
-
-    return u_cast(const Flex*, p);
-}
-
-template<typename F>  // [A]
-struct CastHook<const F*, const Flex*> {  // both must be const [B]
-    static const Flex* convert(const F* p) {
-        return flex_cast_impl(p, WhichCastDirection<F, Flex>{});
-    }
+  }
 };
 
 
 //=//// cast(Binary*, ...) ////////////////////////////////////////////////=//
 
-template<typename F>
-const Binary* binary_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
-    return u_cast(const Binary*, p);
-}
-
-template<typename F>
-const Binary* binary_cast_impl(const F* p, DowncastTag) {  // validate [C]
+template<typename F>  // [A]
+struct CastHook<const F*, const Binary*> {  // both must be const [B]
+  static void Validate_Bits(const F* p) {
     DECLARE_C_TYPE_LIST(type_list,
         void, Byte, Base, Flex
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
-        return nullptr;
+        return;
 
     const Stub* stub = u_cast(const Stub*, p);
 
@@ -137,34 +109,22 @@ const Binary* binary_cast_impl(const F* p, DowncastTag) {  // validate [C]
     }
 
     impossible(not Stub_Holds_Bytes(stub));  // we *could* check this here
-
-    return u_cast(const Binary*, p);
-};
-
-template<typename F>  // [A]
-struct CastHook<const F*, const Binary*> {  // both must be const [B]
-    static const Binary* convert(const F* p) {
-        return binary_cast_impl(p, WhichCastDirection<F, Binary>{});
-    }
+  }
 };
 
 
 //=//// cast(Strand*, ...) ////////////////////////////////////////////////=//
 
-template<typename F>
-const Strand* string_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
-    return u_cast(const Strand*, p);
-}
-
-template<typename F>
-const Strand* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
+template<typename F>  // [A]
+struct CastHook<const F*, const Strand*> {  // both must be const [B]
+  static void Validate_Bits(const F* p) {
     DECLARE_C_TYPE_LIST(type_list,
         void, Byte, Base, Stub, Flex, Binary
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
-        return nullptr;
+        return;
 
     const Stub* stub = u_cast(const Stub*, p);
 
@@ -184,15 +144,7 @@ const Strand* string_cast_impl(const F* p, DowncastTag) {  // validate [C]
     }
 
     impossible(not Stub_Holds_Bytes(stub));  // we *could* check this here
-
-    return u_cast(const Strand*, p);
-};
-
-template<typename F>  // [A]
-struct CastHook<const F*, const Strand*> {  // both must be const [B]
-    static const Strand* convert(const F* p) {
-        return string_cast_impl(p, WhichCastDirection<F, Strand>{});
-    }
+  }
 };
 
 
@@ -200,14 +152,14 @@ struct CastHook<const F*, const Strand*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Symbol*> {
-    static const Symbol* convert(const F* p) {
+    static void Validate_Bits(const F* p) {
         DECLARE_C_TYPE_LIST(type_list,
             void, Byte, Base, Stub, Flex, Binary, Strand
         );
         STATIC_ASSERT(In_C_Type_List(type_list, F));
 
         if (not p)
-            return nullptr;
+            return;
 
         const Stub* stub = u_cast(const Stub*, p);
         if ((stub->header.bits & (
@@ -221,28 +173,22 @@ struct CastHook<const F*, const Symbol*> {
         }
 
         impossible(not Stub_Holds_Bytes(stub));  // we *could* check this here
-
-        return u_cast(const Symbol*, p);
     }
 };
 
 
 //=//// cast(Array*, ...) /////////////////////////////////////////////////=//
 
-template<typename F>
-const Array* array_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
-    return u_cast(const Array*, p);
-}
-
-template<typename F>
-const Array* array_cast_impl(const F* p, DowncastTag) {  // validate [C]
+template<typename F>  // [A]
+struct CastHook<const F*, const Array*> {  // both must be const [B]
+  static void Validate_Bits(const F* p) {
     DECLARE_C_TYPE_LIST(type_list,
         void, Byte, Base, Stub, Flex
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
-        return nullptr;
+        return;
 
     if ((u_cast(const Stub*, p)->header.bits & (
         BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
@@ -251,34 +197,22 @@ const Array* array_cast_impl(const F* p, DowncastTag) {  // validate [C]
     )){
         crash (p);
     }
-
-    return u_cast(const Array*, p);
-};
-
-template<typename F>  // [A]
-struct CastHook<const F*, const Array*> {  // both must be const [B]
-    static const Array* convert(const F* p) {
-        return array_cast_impl(p, WhichCastDirection<F, Array>{});
-    }
+  }
 };
 
 
 //=//// cast(VarList*, ...) ///////////////////////////////////////////////=//
 
-template<typename F>
-const VarList* varlist_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
-    return u_cast(const VarList*, p);
-}
-
-template<typename F>
-const VarList* varlist_cast_impl(const F* p, DowncastTag) {  // validate [C]
+template<typename F>  // [A]
+struct CastHook<const F*, const VarList*> {  // both must be const [B]
+  static void Validate_Bits(const F* p) {
     DECLARE_C_TYPE_LIST(type_list,
-        void, Byte, Base, Stub, Flex, Array
+        void, Byte, Base, Stub, Array, Flex, Context
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
-        return nullptr;
+        return;
 
     if ((u_cast(const Stub*, p)->header.bits & (
         (STUB_MASK_LEVEL_VARLIST
@@ -292,15 +226,7 @@ const VarList* varlist_cast_impl(const F* p, DowncastTag) {  // validate [C]
     ){
         crash (p);
     }
-
-    return u_cast(const VarList*, p);
-};
-
-template<typename F>  // [A]
-struct CastHook<const F*, const VarList*> {  // both must be const [B]
-    static const VarList* convert(const F* p) {
-        return varlist_cast_impl(p, WhichCastDirection<F, VarList>{});
-    }
+  }
 };
 
 
@@ -308,41 +234,39 @@ struct CastHook<const F*, const VarList*> {  // both must be const [B]
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Phase*> {  // both must be const [B]
-    static const Phase* convert(const F* p) {
-        DECLARE_C_TYPE_LIST(type_list,
-            void, Byte, Base, ParamList, Details
-        );
-        STATIC_ASSERT(In_C_Type_List(type_list, F));
+  static void Validate_Bits(const F* p) {
+    DECLARE_C_TYPE_LIST(type_list,
+        void, Byte, Base, Stub, Flex, ParamList, Details
+    );
+    STATIC_ASSERT(In_C_Type_List(type_list, F));
 
-        if (not p)
-            return nullptr;
+    if (not p)
+        return;
 
-        const Stub* stub = u_cast(const Stub*, p);
+    const Stub* stub = u_cast(const Stub*, p);
 
-        if (TASTE_BYTE(stub) == FLAVOR_DETAILS) {
-            if ((stub->header.bits & (
-                (STUB_MASK_DETAILS | STUB_MASK_TASTE)
-                    | BASE_FLAG_UNREADABLE
-                    | BASE_FLAG_CELL
-            )) !=
-                STUB_MASK_DETAILS
-            ){
-                crash (p);
-            }
+    if (TASTE_BYTE(stub) == FLAVOR_DETAILS) {
+        if ((stub->header.bits & (
+            (STUB_MASK_DETAILS | STUB_MASK_TASTE)
+                | BASE_FLAG_UNREADABLE
+                | BASE_FLAG_CELL
+        )) !=
+            STUB_MASK_DETAILS
+        ){
+            crash (p);
         }
-        else {
-            if ((stub->header.bits & ((
-                (STUB_MASK_LEVEL_VARLIST | STUB_MASK_TASTE)
-                    | BASE_FLAG_UNREADABLE
-                    | BASE_FLAG_CELL
-                )
-            )) !=
-                STUB_MASK_LEVEL_VARLIST  // maybe no MISC_NEEDS_MARK
-            ){
-                crash (p);
-            }
-        }
-
-        return u_cast(const Phase*, p);
     }
+    else {
+        if ((stub->header.bits & ((
+            (STUB_MASK_LEVEL_VARLIST | STUB_MASK_TASTE)
+                | BASE_FLAG_UNREADABLE
+                | BASE_FLAG_CELL
+            )
+        )) !=
+            STUB_MASK_LEVEL_VARLIST  // maybe no MISC_NEEDS_MARK
+        ){
+            crash (p);
+        }
+    }
+  }
 };

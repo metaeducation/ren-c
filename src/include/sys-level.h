@@ -353,15 +353,15 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 #define Try_Is_Level_At_End_Optimization(L) \
     (In_Debug_Mode(32) ? false : Is_Feed_At_End((L)->feed))
 
-INLINE VarList* Varlist_Of_Level_Maybe_Unmanaged(Level* L) {
+INLINE ParamList* Varlist_Of_Level_Maybe_Unmanaged(Level* L) {
     assert(Is_Level_Dispatching(L));
-    return cast(VarList*, L->varlist);
+    return L->varlist;
 }
 
 INLINE ParamList* Varlist_Of_Level_Force_Managed(Level* L) {
     assert(Is_Level_Dispatching(L));
     Force_Level_Varlist_Managed(L);  // may already be managed
-    return cast(ParamList*, L->varlist);
+    return L->varlist;
 }
 
 
@@ -985,6 +985,6 @@ INLINE void Inject_Definitional_Returner(
         cell,
         Frame_Phase(definitional),  // DEFINITIONAL-RETURN or YIELD
         Canon_Symbol(returner),  // relabel as plain RETURN or YIELD
-        cast(VarList*, L->varlist)  // so knows where to RETURN/YIELD from
+        L->varlist  // so knows where to RETURN/YIELD from
     );
 }

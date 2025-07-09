@@ -102,7 +102,7 @@ DECLARE_NATIVE(DEFINITIONAL_BREAK)
         SPARE,
         Frame_Phase(LIB(DEFINITIONAL_BREAK)),
         CANON(BREAK),
-        cast(VarList*, loop_level->varlist)
+        loop_level->varlist
     );
 
     Init_Thrown_With_Label(LEVEL, LIB(NULL), label);
@@ -633,7 +633,7 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
         SPARE,
         Frame_Phase(LIB(DEFINITIONAL_STOP)),
         CANON(STOP),
-        cast(VarList*, loop_level->varlist)
+        loop_level->varlist
     );
 
     Init_Thrown_With_Label(LEVEL, with, label);
@@ -657,7 +657,7 @@ void Add_Definitional_Stop(
         Stub_Cell(let_stop),
         Frame_Phase(LIB(DEFINITIONAL_STOP)),
         CANON(STOP),  // relabel (the STOP in lib is a dummy action)
-        cast(VarList*, loop_level->varlist)  // what to stop
+        loop_level->varlist  // what to stop
     );
 
     Tweak_Cell_Binding(body, let_stop);  // extend chain

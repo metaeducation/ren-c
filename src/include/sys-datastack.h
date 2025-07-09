@@ -180,12 +180,6 @@
            return temp;
         }
     };
-
-  namespace needful {
-    template<typename S, typename T>
-    struct CastHook<OnStack(S*),T>
-      { static T convert(OnStack(S*) stk) { return x_cast(T, stk.p);} };
-  }
 #endif
 
 #define TOP_INDEX \

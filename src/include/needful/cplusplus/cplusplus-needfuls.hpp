@@ -136,6 +136,15 @@
 #endif
 
 
+//=//// NEEDFUL_CAST_CALLS_HOOKS //////////////////////////////////////////=//
+//
+// Off by default.  Review configuration strategy.
+
+#if !defined(NEEDFUL_CAST_CALLS_HOOKS)
+  #define NEEDFUL_CAST_CALLS_HOOKS  0
+#endif
+
+
 //=//// INCLUDE THE NEEDFUL OVERRIDES /////////////////////////////////////=//
 //
 // 1. It's technically most correct to scope things with `::needful::`, which

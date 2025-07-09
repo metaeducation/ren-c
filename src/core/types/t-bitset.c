@@ -674,7 +674,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Bitset)
 
     bool cond = Cell_Logic(poke);
 
-    Binary* bits = cast(Binary*, VAL_BITSET_Ensure_Mutable(bset));
+    Binary* bits = VAL_BITSET_Ensure_Mutable(bset);
     if (not Set_Bits(
         bits,
         picker,

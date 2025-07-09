@@ -37,30 +37,29 @@
 
 //=//// cast(Base*, ...) //////////////////////////////////////////////////=//
 
-template<typename F>
-const Base* base_cast_impl(const F* p, UpcastTag) {  // trust upcast [C]
-    return u_cast(const Base*, p);
-}
+// 1. RebolContext and RebolInstruction are synonyms for Base, so you see
+//    cast(RebolContext*, ...) of Context* pointers or subclasses in the API
+//    when it's trying to export those pointers.  Review if this can be
+//    done more elegantly--but remember the goal is to be as correct as
+//    possible while not having the API return void pointers (because we
+//    don't want the variadic APIs to be un-type-checked and take any old
+//    pointer...since the C++ variadic API can enforce typechecking due
+//    to recursively packing the arguments).
 
-template<typename F>
-const Base* base_cast_impl(const F* p, DowncastTag) {  // validate [C]
+template<typename F>  // [A]
+struct CastHook<const F*, const Base*> {  // both must be const [B]
+  static void Validate_Bits(const F* p) {
     DECLARE_C_TYPE_LIST(type_list,
-        void, Byte
+        void, Byte,
+        Stub, ParamList, Context, SeaOfVars,
+        Element, Value
     );
     STATIC_ASSERT(In_C_Type_List(type_list, F));
 
     if (not p)
-        return nullptr;
+        return;
 
     if (not (*u_cast(const Byte*, p) & BASE_BYTEMASK_0x80_NODE))
         crash (p);
-
-    return u_cast(const Base*, p);
-};
-
-template<typename F>  // [A]
-struct CastHook<const F*, const Base*> {  // both must be const [B]
-    static const Base* convert(const F* p) {
-        return base_cast_impl(p, WhichCastDirection<F, Base>{});
-    }
+  }
 };

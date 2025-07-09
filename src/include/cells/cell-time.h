@@ -100,7 +100,7 @@ INLINE bool Does_Date_Have_Zone(const Cell* c)
         ZoneHolder(T* cell) : cell (cell)
           { assert(Heart_Of(cell) == TYPE_DATE); }
 
-        operator int () {  // stop accidental reads of NO_DATE_ZONE
+        operator int () const {  // stop accidental reads of NO_DATE_ZONE
             assert(CELL_DATE_YMDZ(cell).zone != NO_DATE_ZONE);
             return CELL_DATE_YMDZ(cell).zone;
         }

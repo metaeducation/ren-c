@@ -42,13 +42,13 @@
 //    So don't write:
 //
 //        struct CastHook<Foo<X>&, Y*>
-//          { static Y* convert(Foo<X>& foo) { ... } }
+//          { static void Validate_Bits(Foo<X>& foo) { ... } }
 //
 //    It won't ever match since the reference was removed by the macro.  But
-//    do note you can leave the reference on the convert method if needed:
+//    do note you can leave the reference on the Validate_Bits arg if needed:
 //
 //        struct CastHook<Foo<X>, Y*>  // note no reference on Foo<X>
-//          { static Y* convert(Foo<X>& foo) { ... } }
+//          { static void Validate_Bits(Foo<X>& foo) { ... } }
 //
 // F. By default, most of the cast() are defined to use the runtime validation
 //    hooks.  However, it's possible to easily turn them off...so that a
@@ -144,7 +144,7 @@
 //
 //    template<>
 //    struct CastHook<SourceType, TargetType> {
-//        static TargetType convert(SourceType value) {
+//        static void Validate_Bits(SourceType value) {
 //            // Add validation logic here
 //            return reinterpret_cast<TargetType>(value);
 //        }
@@ -206,9 +206,8 @@
 //
 //    template<>
 //    struct CastHook<const Number*,const Float*> {  // const pointers! [1]
-//        static const Float* convert(const Number* num) {
+//        static void Validate_Bits(const Number* num) {
 //            assert(num->is_float);
-//            return reinterpret_cast<const Float*>(num);
 //        }
 //    };
 //
@@ -220,10 +219,9 @@
 //
 //    template<typename V>
 //    struct CastHook<const Number*,const V*> {  // const pointers! [1]
-//        static const Float* convert(const V* v) {
+//        static void Validate_Bits(const V* v) {
 //            static_assert(std::is_same<V, Float>::value, "Float expected");
 //            assert(num->is_float);
-//            return reinterpret_cast<const Float*>(num);
 //        }
 //    };
 //
@@ -264,8 +262,9 @@ struct is_function_pointer<Ret (*)(Args...)> : std::true_type {};
 
 template<typename V, typename T>
 struct CastHook {  // object template for partial specialization [2]
-    static T convert(V v) {
-        return needful_xtreme_cast(T, v);  // plain C cast is most versatile
+    static void Validate_Bits(V v) {
+        UNUSED(v);
+        return;
     }
 };
 
@@ -309,7 +308,11 @@ Hookable_Cast_Helper(const From& from) {
         "use needful_pointer_cast() [p_cast()] for pointer <-> integer casts"
     );
 
-    return CastHook<ConstFrom, ConstTo>::convert(from);
+  #if NEEDFUL_CAST_CALLS_HOOKS
+    CastHook<ConstFrom, ConstTo>::Validate_Bits(from);
+  #endif
+
+    return needful_xtreme_cast(ConstTo, from);
 }
 
 template<
@@ -330,9 +333,13 @@ Hookable_Cast_Helper(FromRef const && from) {
     using ConstFrom = needful_constify_type(From);
     using ConstTo = needful_constify_type(To);
 
+  #if NEEDFUL_CAST_CALLS_HOOKS
+    CastHook<ConstFrom, ConstTo>::Validate_Bits(std::forward<FromRef>(from));
+  #endif
+
     return needful_mutable_cast(
         ResultType,  // passthru const on const mismatch (lenient)
-        (CastHook<ConstFrom, ConstTo>::convert(std::forward<FromRef>(from)))
+        needful_xtreme_cast(ConstTo, std::forward<FromRef>(from))
     );
 }
 
@@ -378,9 +385,13 @@ Hookable_Cast_Helper(FromRef&& from)
     );  // read [B] at top of file for more information
     #endif
 
+  #if NEEDFUL_CAST_CALLS_HOOKS
+    CastHook<ConstFrom, ConstTo>::Validate_Bits(std::forward<FromRef>(from));
+  #endif
+
     return needful_mutable_cast(
         ResultType,  // passthru const on const mismatch (lenient)
-        (CastHook<ConstFrom, ConstTo>::convert(std::forward<FromRef>(from)))
+        needful_xtreme_cast(ConstTo, std::forward<FromRef>(from))
     );
 }
 
@@ -424,9 +435,13 @@ Hookable_Cast_Helper(const FromWrapperRef& from_wrapper)
     );  // read [B] at top of file for more information
     #endif
 
+  #if NEEDFUL_CAST_CALLS_HOOKS
+    CastHook<ConstFrom, ConstTo>::Validate_Bits(from_wrapper.r);
+  #endif
+
     return needful_mutable_cast(
         ResultType,  // passthru const on const mismatch (lenient)
-        (CastHook<ConstFrom, ConstTo>::convert(from_wrapper.r))
+        needful_xtreme_cast(ConstTo, from_wrapper.r)
     );
 }
 
@@ -506,6 +521,8 @@ struct UpcastHelper {
 
 
 //=//// downcast(): SINGLE-ARITY CAST THAT ONLY ALLOWS DOWNCASTING ////////=//
+//
+//   https://en.wikipedia.org/wiki/Downcasting
 //
 // A technique that Needful codebases can use is to use inheritance of types
 // when built as C++, but not when built as C.  The C build can define the
@@ -656,46 +673,3 @@ struct FunctionPointerCastHelper {
     (reinterpret_cast< \
         needful::FunctionPointerCastHelper<decltype(expr),T>::type \
     >(expr))
-
-
-//=//// UPCAST AND DOWNCAST TAG DISPATCH //////////////////////////////////=//
-//
-// By default, if you upcast (e.g. casting from a derived class like Array to
-// a base class like Flex), we do this with a very-low-cost constexpr that
-// does the cast for free.  This is because every Array is-a Flex, and if you
-// have an Array* in your hand we can assume you got it through a means that
-// you knew it was valid.
-//
-// But if you downcast (e.g. from a Base* to a VarList*), then it's a riskier
-// operation, so validation code is run:
-//
-//   https://en.wikipedia.org/wiki/Downcasting
-//
-// However, this rule can be bent when you need to.  If debugging a scenario
-// and you suspect corruption is happening in placees an upcast could help
-// locate, just comment out the optimization and run the checks for all casts.
-//
-// Pursuant to [D], we generally want to trust the type system when it comes
-// to upcasting, and be more skeptical of downcasts...verifying the bits.
-//
-// To make this easier to do, this factors out the logic for determining if
-// something is an upcast or downcast into a tag type.  You can then write
-// two functions taking a pointer and either an UpcastTag or DowncastTag,
-// and use the `WhichCastDirection<...>` to select which one to call.
-//
-
-template<typename V, typename Base>
-struct IsUpcastTo : std::integral_constant<
-    bool,
-    std::is_base_of<Base, V>::value
-> {};
-
-struct UpcastTag {};
-struct DowncastTag {};
-
-template<typename V, typename Base>
-using WhichCastDirection = typename std::conditional<  // tag selector
-    IsUpcastTo<V, Base>::value,
-    UpcastTag,
-    DowncastTag
->::type;  // WhichCastDirection<...>{} will instantiate the appropriate tag

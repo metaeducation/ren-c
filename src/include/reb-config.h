@@ -805,6 +805,10 @@ Special internal defines used by RT, not Host-Kit developers:
     #error "DEBUG_CHECK_CASTS requires C++11 (or later)"
     #include <stophere>  // https://stackoverflow.com/a/45661130
   #endif
+
+  #define NEEDFUL_CAST_CALLS_HOOKS  1
+#else
+  #define NEEDFUL_CAST_CALLS_HOOKS  0
 #endif
 
 
