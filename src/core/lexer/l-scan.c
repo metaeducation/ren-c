@@ -2588,7 +2588,7 @@ Bounce Scanner_Executor(Level* const L) {
 } case TOKEN_FILE: { /////////////////////////////////////////////////////////
 
     if (mo->base.size == Strand_Size(mo->strand)) {  // % is WORD!
-        const Symbol* symbol = guarantee (
+        const Symbol* symbol = assume (
             Intern_Utf8_Managed(b_cast("%"), 1)
         );
         Init_Word(PUSH(), symbol);

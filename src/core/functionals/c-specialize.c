@@ -348,7 +348,7 @@ bool Specialize_Action_Throws(
                 Element, ordered_stackindex
             );
             if (not Cell_Binding(ordered)) {  // specialize print:asdf/
-                guaranteed (Refinify_Pushed_Refinement(ordered));
+                assumed (Refinify_Pushed_Refinement(ordered));
                 panic (Error_Bad_Parameter_Raw(ordered));
             }
 

@@ -559,7 +559,7 @@ INLINE Result(Flex*) Make_Flex_Into(
         return fail (Cell_Error(g_error_no_memory));
     }
 
-    Flex* s = cast(Flex*, guarantee (Prep_Stub(flags, pre)));
+    Flex* s = assume (nocast Prep_Stub(flags, pre));
 
     if (
         (flags & STUB_FLAG_DYNAMIC)  // inlining will constant fold

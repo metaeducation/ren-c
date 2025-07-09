@@ -1140,7 +1140,7 @@ Error* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 Error* Error_Bad_Argless_Refine(const Key* key)
 {
     DECLARE_ELEMENT (refinement);
-    guaranteed (Refinify(Init_Word(refinement, Key_Symbol(key))));
+    assumed (Refinify(Init_Word(refinement, Key_Symbol(key))));
     return Error_Bad_Argless_Refine_Raw(refinement);
 }
 

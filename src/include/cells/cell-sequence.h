@@ -993,7 +993,7 @@ INLINE const Symbol* Cell_Refinement_Symbol(const Cell* v) {
 
 INLINE Element* Blockify_Any_Sequence(Element* seq) {  // always works
     DECLARE_ELEMENT (temp);
-    guaranteed (Alias_Any_Sequence_As(temp, seq, TYPE_BLOCK));
+    assumed (Alias_Any_Sequence_As(temp, seq, TYPE_BLOCK));
     Copy_Cell(seq, temp);
     return seq;
 }

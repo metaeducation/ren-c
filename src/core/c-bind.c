@@ -502,7 +502,7 @@ DECLARE_NATIVE(LET)
 
     if (Is_Set_Group(vars)) {
         Set_Level_Flag(L, LET_IS_SETTING);
-        guaranteed (Unsingleheart_Sequence(vars));  // turn into normal GROUP!
+        assumed (Unsingleheart_Sequence(vars));  // turn into normal GROUP!
         goto escape_groups;
     }
 
@@ -568,7 +568,7 @@ DECLARE_NATIVE(LET)
     }
     else if (Is_Word(spare) or Is_Block(spare)) {
         if (Get_Level_Flag(L, LET_IS_SETTING)) {
-            guaranteed(Setify(spare));  // graft colon off (...): on word/block
+            assumed (Setify(spare));  // graft colon off (...): on word/block
             Clear_Level_Flag(L, LET_IS_SETTING);  // let block/word signal it
         }
     }
@@ -632,9 +632,9 @@ DECLARE_NATIVE(LET)
 
     Init_Word_Bound(where, symbol, bindings);
     if (Heart_Of(vars) != TYPE_WORD) {  // more complex than we'd like [1]
-        guaranteed(Setify(where));
+        assumed (Setify(where));
         if (Heart_Of(vars) == TYPE_PATH) {
-            guaranteed (  // was a path when we got it!
+            assumed (  // was a path when we got it!
                 Blank_Head_Or_Tail_Sequencify(
                     where, TYPE_PATH, CELL_FLAG_LEADING_SPACE
                 )
@@ -759,7 +759,7 @@ DECLARE_NATIVE(LET)
 
     if (altered) {  // elements altered, can't reuse input block rebound
         assert(Get_Level_Flag(L, LET_IS_SETTING));
-        guaranteed (Setify(Init_Any_List(
+        assumed (Setify(Init_Any_List(
             where,  // may be SPARE, and vars may point to it
             TYPE_BLOCK,
             Pop_Managed_Source_From_Stack(STACK_BASE)

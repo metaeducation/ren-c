@@ -61,7 +61,7 @@
 // function call will not fail.  Needed to do compile-time unwrapping of
 // the result container class.
 //
-//    guarantee (bar());
+//    assume (bar());
 //    // ... code always continues ...
 //
 //
@@ -504,13 +504,12 @@ static constexpr ResultDiscarder g_result_discarder{};
 #define Needful_Postfix_Discard_Result  >> needful::g_result_discarder
 
 
-//=//// RESULT GUARANTOR /////////////////////////////////////////////////=//
+//=//// RESULT ASSUMER ////////////////////////////////////////////////////=//
 //
-// To make it easier to use guarantee() in expressions, it doesn't have any
-// code outside the expression (because it doesn't have branching or a
-// need to execute return).  It just asserts, but it needs to do so after
-// the expression, hence it needs some way of doing that as part of
-// an expression.
+// To make it easier to use assume() in expressions, it doesn't have any code
+// outside the expression (because it doesn't have branching or a need to
+// execute return).  It just asserts, but it needs to do so after the
+// expression, hence it needs some way of doing that as part of an expression.
 //
 // 1. The underscore in `_result` is to reduce the odds of warnings about
 //    conflicts with a local variable named `result`.  It would be better
@@ -519,8 +518,8 @@ static constexpr ResultDiscarder g_result_discarder{};
 //    library client.
 //
 
-#undef Needful_Prefix_Guarantee_Result
-#define Needful_Prefix_Guarantee_Result(expr) \
+#undef Needful_Prefix_Assume_Result
+#define Needful_Prefix_Assume_Result(expr) \
     ([&](auto&& _result) { /* underscore reduces odds of warnings [1] */ \
         Needful_Assert_Not_Failing(); \
         return std::forward<decltype(_result)>(_result).Extract_Cold(); \

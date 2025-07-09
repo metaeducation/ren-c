@@ -347,7 +347,7 @@ INLINE Result(Atom*) Unliftify_Undecayed(Need(Atom*) atom) {
 }
 
 INLINE Value* Unliftify_Known_Stable(Need(Value*) val) {
-    guaranteed (Unliftify_Undecayed(cast(Atom*, val)));
+    assumed (Unliftify_Undecayed(cast(Atom*, val)));
     Assert_Cell_Stable(val);
     return val;
 }

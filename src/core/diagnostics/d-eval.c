@@ -182,7 +182,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
         // !!! This is totally dicey, and likely to break.
 
         DECLARE_VALUE (check);
-        guaranteed (Get_Word(check, L_next, L_binding));
+        assumed (Get_Word(check, L_next, L_binding));
         assert(
             memcmp(check, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
         );

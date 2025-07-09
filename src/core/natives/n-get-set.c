@@ -989,8 +989,9 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             goto finalize_and_return;
         }
 
-        Value* spare_picker = Decay_If_Unstable(SPARE) except (e)
+        Value* spare_picker = Decay_If_Unstable(SPARE) except (e) {
             goto return_error;
+        }
 
         possibly(Is_Antiform(spare_picker));  // e.g. PICK DATATYPE! from MAP!
         Liftify(spare_picker);  // signal literal pick
@@ -1331,7 +1332,7 @@ DECLARE_NATIVE(TWEAK)
     Element* target = Element_ARG(TARGET);
 
     if (Is_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
-        guaranteed (Unsingleheart_Sequence(target));
+        assumed (Unsingleheart_Sequence(target));
 
     if (not Is_Group(target))  // !!! maybe SET-GROUP!, but GET-GROUP!?
         goto call_generic_tweak;

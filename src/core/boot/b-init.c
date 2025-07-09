@@ -486,7 +486,7 @@ static void Init_System_Object(
     // made is actually identical to the definition in %sysobj.r.
     //
     DECLARE_VALUE (check);
-    guaranteed (Read_Slot(
+    assumed (Read_Slot(
         check,
         Get_System(SYS_STANDARD, STD_ACTION_ADJUNCT)
     ));
@@ -694,7 +694,7 @@ void Startup_Core(void)
         SYM_GZIP
     );
 
-    const Symbol* tmp_boot = guarantee (
+    const Symbol* tmp_boot = assume (
         Intern_Unsized_Managed("tmp-boot-r")  // !!! should be Strand for .
     );
     Push_Lifeguard(tmp_boot);  // recycle torture frees on scanner first push!
@@ -976,7 +976,7 @@ void Startup_Core(void)
     );
 
     Sink(Value) user = Alloc_Value();
-    guaranteed (Read_Slot(user, Get_System(SYS_CONTEXTS, CTX_USER)));
+    assumed (Read_Slot(user, Get_System(SYS_CONTEXTS, CTX_USER)));
 
     g_user_module = Known_Element(user);
     rebUnmanage(g_user_module);

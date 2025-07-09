@@ -210,6 +210,10 @@
         /* DEAD_END; */ \
     } NEEDFUL_NOOP  /* force require semicolon at callsite */
 
+#define needful_assume_core(expr, prefix_assumer) \
+    /* var = */ (Needful_Assert_Not_Failing(), prefix_assumer(expr)); \
+    Needful_Assert_Not_Failing()
+
 //=//// "Hot Potato" Versions ////////////////////////////////////////////=//
 
 #define Needful_Prefix_Extract_Hot(expr)  (expr)
@@ -223,6 +227,9 @@
 
 #define needful_require(expr) \
     needful_require_core(expr, Needful_Prefix_Extract_Hot)
+
+#define needful_assume(expr) \
+    needful_assume_core(expr, Needful_Prefix_Extract_Hot)
 
 //=//// Discarded Result Versions /////////////////////////////////////////=//
 
@@ -238,19 +245,12 @@
 #define needful_required(expr) \
     needful_require_core(expr, Needful_Prefix_Discard_Result)
 
-//=//// Guaranteed Result Versions ////////////////////////////////////=//
+#define needful_assumed(expr) \
+    needful_assume_core(expr, Needful_Prefix_Discard_Result)
 
-#define Needful_Prefix_Guarantee_Result(expr)  (expr)  // C++ version asserts
-
-#define needful_guarantee_core(expr, prefix_guarantor) \
-    /* var = */ (Needful_Assert_Not_Failing(), prefix_guarantor(expr)) \
-    /* Needful_Assert_Not_Failing() */  /* folded into prefix_guarantor */
-
-#define needful_guarantee(expr) \
-    needful_guarantee_core(expr, Needful_Prefix_Guarantee_Result)
-
-#define needful_guaranteed(expr) \
-    needful_guarantee_core(expr, Needful_Prefix_Guarantee_Result)
+#define needful_rescue(expr) \
+    (Needful_Assert_Not_Failing(), Needful_Prefix_Discard_Result(expr), \
+        Needful_Test_And_Clear_Failure())
 
 
 //=//// Sink(T): INDICATE FUNCTION OUTPUT PARAMETERS //////////////////////=//
@@ -880,8 +880,8 @@ typedef enum {
     #define required(expr)          needful_required(expr)
     #define excepted(decl)          needful_excepted(decl)
 
-    #define guarantee(expr)         needful_guarantee(expr)
-    #define guaranteed(expr)        needful_guaranteed(expr)
+    #define assume(expr)            needful_assume(expr)
+    #define assumed(expr)           needful_assumed(expr)
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_SINK_SHORTHANDS)

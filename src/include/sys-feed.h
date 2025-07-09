@@ -632,7 +632,7 @@ INLINE Result(Feed*) Prep_Feed_Common(
 
     Force_Erase_Cell(&feed->fetched);
 
-    Stub* s = guarantee (Prep_Stub(
+    Stub* s = assume (Prep_Stub(
         BASE_FLAG_BASE | FLAG_FLAVOR(FLAVOR_FEED),
         &feed->singular  // preallocated
     ));

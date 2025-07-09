@@ -146,7 +146,7 @@ static void Push_Composer_Level(
         Copy_Cell(fundamental, list_or_seq);
         LIFT_BYTE(fundamental) = NOQUOTE_2;
 
-        guaranteed (  // all sequences alias as block
+        assumed (  // all sequences alias as block
             Alias_Any_Sequence_As(adjusted, list_or_seq, TYPE_BLOCK)
         );
 

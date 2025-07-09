@@ -1129,7 +1129,7 @@ DECLARE_NATIVE(DEFAULT)
     Element* steps = u_cast(Element*, SCRATCH);  // avoid double-eval [1]
     STATE = ST_DEFAULT_GETTING_TARGET;  // can't leave at STATE_0
 
-    guaranteed (Unsingleheart_Sequence(target));
+    assumed (Unsingleheart_Sequence(target));
     heeded (Copy_Cell(SCRATCH, target));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 

@@ -788,7 +788,7 @@ Bounce Stepper_Executor(Level* L)
     Copy_Cell(OUT, temp);
     rebRelease(temp);
 
-    guaranteed (Unliftify_Undecayed(OUT));
+    assumed (Unliftify_Undecayed(OUT));
     goto lookahead;
 
 
@@ -1056,25 +1056,25 @@ Bounce Stepper_Executor(Level* L)
         Bind_If_Unbound(CURRENT, L_binding);
         if (Is_Metaform(CURRENT)) {  // ^foo: -> ^foo
             Plainify(CURRENT);
-            guaranteed (Unsingleheart_Sequence(CURRENT));
+            assumed (Unsingleheart_Sequence(CURRENT));
             Metafy(CURRENT);
         }
         else
-            guaranteed (Unsingleheart_Sequence(CURRENT));  // foo: -> foo
+            assumed (Unsingleheart_Sequence(CURRENT));  // foo: -> foo
         goto handle_generic_set; }
 
       case TRAILING_SPACE_AND(TUPLE):  // a.b.c: is a set tuple
-        guaranteed (Unsingleheart_Sequence(CURRENT));
+        assumed (Unsingleheart_Sequence(CURRENT));
         assert(Is_Tuple(CURRENT));
         goto handle_generic_set;
 
       case TRAILING_SPACE_AND(BLOCK):  // [a b]: multi-return assign
-        guaranteed (Unsingleheart_Sequence(CURRENT));
+        assumed (Unsingleheart_Sequence(CURRENT));
         STATE = ST_STEPPER_SET_BLOCK;
         goto handle_set_block;
 
       case TRAILING_SPACE_AND(GROUP): {  // (xxx): -- generic retrigger set
-        guaranteed (Unsingleheart_Sequence(CURRENT));
+        assumed (Unsingleheart_Sequence(CURRENT));
         Invalidate_Gotten(L_next_gotten_raw);  // arbitrary code changes
         Level* sub = require (Make_Level_At_Inherit_Const(
             &Evaluator_Executor,
@@ -1088,17 +1088,17 @@ Bounce Stepper_Executor(Level* L)
         return CONTINUE_SUBLEVEL(sub); }
 
       case LEADING_SPACE_AND(WORD):  // :FOO, refinement, error on eval?
-        guaranteed (Unsingleheart_Sequence(CURRENT));
+        assumed (Unsingleheart_Sequence(CURRENT));
         STATE = ST_STEPPER_GET_WORD;
         panic (":WORD! meaning is likely to become TRY WORD!");
 
       case LEADING_SPACE_AND(TUPLE):  // :a.b.c -- what will this do?
-        guaranteed (Unsingleheart_Sequence(CURRENT));
+        assumed (Unsingleheart_Sequence(CURRENT));
         STATE = ST_STEPPER_GET_TUPLE;
         panic (":TUPLE! meaning is likely to become TRY TUPLE!");
 
       case LEADING_SPACE_AND(BLOCK):  // !!! :[a b] reduces, not great...
-        guaranteed (Unsingleheart_Sequence(CURRENT));
+        assumed (Unsingleheart_Sequence(CURRENT));
         Bind_If_Unbound(CURRENT, L_binding);
         if (rebRunThrows(
             u_cast(Sink(Value), OUT),  // <-- output, API won't make atoms
@@ -1109,7 +1109,7 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead;
 
       case LEADING_SPACE_AND(GROUP):
-        guaranteed (Unsingleheart_Sequence(CURRENT));
+        assumed (Unsingleheart_Sequence(CURRENT));
         panic ("GET-GROUP! has no evaluator meaning at this time");
 
       default:  // it's just something like :1 or <tag>:
@@ -1280,21 +1280,21 @@ Bounce Stepper_Executor(Level* L)
     }
     else switch (unwrap single) {
       case LEADING_SPACE_AND(WORD):
-        guaranteed (Unsingleheart_Sequence(CURRENT));
+        assumed (Unsingleheart_Sequence(CURRENT));
         Set_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD);
         goto handle_word_where_action_lookups_are_active;
 
       case LEADING_SPACE_AND(CHAIN): {  // /abc: or /?:?:?
-        guaranteed (Unsingleheart_Sequence(CURRENT));
+        assumed (Unsingleheart_Sequence(CURRENT));
 
         switch (maybe Try_Get_Sequence_Singleheart(CURRENT)) {
           case TRAILING_SPACE_AND(WORD):  // /abc: is set actions only
-            guaranteed (Unsingleheart_Sequence(CURRENT));
+            assumed (Unsingleheart_Sequence(CURRENT));
             Set_Cell_Flag(CURRENT, SCRATCH_VAR_NOTE_ONLY_ACTION);
             goto handle_generic_set;
 
           case TRAILING_SPACE_AND(TUPLE):  // /a.b.c: is set actions only
-            guaranteed (Unsingleheart_Sequence(CURRENT));
+            assumed (Unsingleheart_Sequence(CURRENT));
             Set_Cell_Flag(CURRENT, SCRATCH_VAR_NOTE_ONLY_ACTION);
             goto handle_generic_set;
 
@@ -1575,7 +1575,7 @@ Bounce Stepper_Executor(Level* L)
             "Only leading SPACE CHAIN! in SET BLOCK! dialect"
         );
     }
-    guaranteed (Unsingleheart_Sequence(CURRENT));
+    assumed (Unsingleheart_Sequence(CURRENT));
     is_optional = true;
 
 } optional_detection_finished: {
@@ -1594,7 +1594,7 @@ Bounce Stepper_Executor(Level* L)
             "Only leading SPACE PATH! in SET BLOCK! dialect"
         );
     }
-    guaranteed (Unsingleheart_Sequence(CURRENT));
+    assumed (Unsingleheart_Sequence(CURRENT));
     is_action = true;
 
 } path_detection_finished: {
@@ -1934,7 +1934,7 @@ Bounce Stepper_Executor(Level* L)
         }
         else {
             DECLARE_VALUE (check);
-            guaranteed (Get_Word(check, L_next, Feed_Binding(L->feed)));
+            assumed (Get_Word(check, L_next, Feed_Binding(L->feed)));
             assert(
                 memcmp(check, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
             );

@@ -243,7 +243,7 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     Init_Block(spec, spec_array);
 
     VarList* adjunct;
-    ParamList* paramlist = guarantee (Make_Paramlist_Managed(
+    ParamList* paramlist = assume (Make_Paramlist_Managed(
         &adjunct,
         spec,
         MKF_MASK_NONE,
@@ -318,7 +318,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
     for (; types_at != types_tail; ++types_at, ++pack_at) {
         Copy_Cell(SPARE, pack_at);
-        guaranteed (Unliftify_Undecayed(SPARE));
+        assumed (Unliftify_Undecayed(SPARE));
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(
             L, types_at, types_binding
         )){
@@ -944,7 +944,7 @@ bool Typecheck_Coerce(
             goto return_false;  // comma antiforms
 
         if (Is_Antiform(atom) and Is_Antiform_Unstable(atom)) {
-            guaranteed (Decay_If_Unstable(atom));  // !!! shouldn't error (!?)
+            assumed (Decay_If_Unstable(atom));  // !!! shouldn't error (!?)
             assert(not coerced);  // should only decay once...
             coerced = true;
             goto typecheck_again;

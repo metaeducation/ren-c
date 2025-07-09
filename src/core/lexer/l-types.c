@@ -353,7 +353,7 @@ DECLARE_NATIVE(OF)
     ++size;
     buffer[size] = 'f';
     ++size;
-    sym_of = guarantee (Intern_Utf8_Managed(buffer, size));
+    sym_of = assume (Intern_Utf8_Managed(buffer, size));
 
 } have_sym_of: { /////////////////////////////////////////////////////////////
 

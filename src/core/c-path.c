@@ -464,7 +464,7 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
         Init_Integer(PUSH(), 0);
     }
 
-    guaranteed (Pop_Sequence(OUT, heart, STACK_BASE));
+    assumed (Pop_Sequence(OUT, heart, STACK_BASE));
 
     return OUT;
 }

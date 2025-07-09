@@ -100,7 +100,7 @@
 INLINE RebolValue* Register_Datatype(const char* name)  // return "holder" [1]
 {
     Size size = strsize(name);
-    const Symbol* symbol = guarantee (
+    const Symbol* symbol = assume (
         Intern_Utf8_Managed(b_cast(name), size)
     );
 
