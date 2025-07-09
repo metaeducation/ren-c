@@ -136,7 +136,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
         else
             Tweak_Link_Keylist_Ancestor(k_copy, k);
 
-        Manage_Flex(k_copy);
+        Manage_Stub(k_copy);
         Tweak_Bonus_Keylist_Unique(varlist, k_copy);
 
         Set_Flex_Len(k_copy, len + delta);

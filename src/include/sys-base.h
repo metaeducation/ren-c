@@ -82,7 +82,7 @@ typedef Byte BaseByte;
 
 // Add "_Bit" suffix to reinforce lack of higher level function.  (A macro
 // with the name Set_Base_Managed() might sound like it does more, like
-// removing from the manuals list the way Manage_Flex() etc. do)
+// removing from the manuals list the way Manage_Stub() etc. do)
 
 #define Set_Base_Root_Bit(n) \
     BASE_BYTE(n) |= BASE_BYTEMASK_0x02_ROOT

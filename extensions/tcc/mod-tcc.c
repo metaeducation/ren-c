@@ -701,7 +701,7 @@ DECLARE_NATIVE(COMPILE_P)
         );
         Tweak_Cell_Binding(block, g_user_context);  // !!! MAKE-NATIVE capture?
 
-        Swap_Flex_Content(details_tcc, details_api);
+        Swap_Stub_Content(details_tcc, details_api);
 
         Free_Unmanaged_Flex(details_api);  // now not managed
 

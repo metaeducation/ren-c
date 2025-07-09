@@ -930,7 +930,7 @@ static REBLEN Sweep_Distinct_Pairing_Pool(void)
 //
 // Scans all Stub structs in all segments that are part of the STUB_POOL.  If
 // a Stub had its lifetime management delegated to the garbage collector with
-// Manage_Flex(), then if it didn't get "marked" as live during the marking
+// Manage_Stub(), then if it didn't get "marked" as live during the marking
 // phase then free it.
 //
 // 1. We use a generic byte pointer (unsigned char*) to dodge the rules for

@@ -187,7 +187,7 @@ ParamList* Make_Varlist_For_Action(
         placeholder
     );
 
-    Manage_Flex(exemplar);  // !!! was needed before, review
+    Manage_Stub(exemplar);  // !!! was needed before, review
     Drop_Data_Stack_To(lowest_stackindex);
     return exemplar;
 }
@@ -233,7 +233,7 @@ bool Specialize_Action_Throws(
         def ? binder : nullptr,
         g_quasi_null  // !!! random hack, signal now weird
     );
-    Manage_Flex(exemplar);  // destined to be managed, guarded
+    Manage_Stub(exemplar);  // destined to be managed, guarded
 
     if (def) { // code that fills the frame...fully or partially
         //
@@ -375,7 +375,7 @@ bool Specialize_Action_Throws(
             partials = nullptr;
         }
         else {
-            Manage_Flex(partials);
+            Manage_Stub(partials);
             panic ("Refinement Promotion is being rethought");
         }
     }

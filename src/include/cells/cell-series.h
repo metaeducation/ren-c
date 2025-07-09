@@ -129,7 +129,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     }
   #endif
 
-    Force_Flex_Managed(f);
+    Force_Stub_Managed(f);
 
     Reset_Cell_Header_Noquote(
         out,

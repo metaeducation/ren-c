@@ -601,7 +601,7 @@ DECLARE_NATIVE(APPLIQUE)
         nullptr,  // no binder needed
         g_tripwire  // fill all slots with nothing to start
     );
-    Manage_Flex(exemplar);
+    Manage_Stub(exemplar);
     Init_Lensed_Frame(
         LOCAL(FRAME),
         exemplar,
@@ -669,7 +669,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         nullptr,  // doesn't use a Binder [2]
         nullptr  // leave unspecialized slots as antiform parameter!
     );
-    Manage_Flex(exemplar); // Putting into a frame
+    Manage_Stub(exemplar); // Putting into a frame
     frame = Init_Frame(
         LOCAL(FRAME),
         exemplar,

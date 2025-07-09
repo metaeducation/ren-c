@@ -9,38 +9,38 @@
 // Manual Flexes are tracked, and automatically freed in the case of a panic().
 //
 // All manual Flexes *must* either be freed with Free_Unmanaged_Flex() or
-// delegated to the GC with Manage_Flex() before the Level ends.  Once a
+// delegated to the GC with Manage_Stub() before the Level ends.  Once a
 // Flex is managed, only the GC is allowed to free it.
 //
-// Manage_Flex() is shallow--it only sets a bit on that *one* Flex, not
+// Manage_Stub() is shallow--it only sets a bit on that *one* Flex, not
 // any Flexes referenced by values resident in it.  Hence many routines that
 // build hierarchical structures (like the scanner) only return managed
 // results, since they can manage it as they build them.
 
-INLINE void Untrack_Manual_Flex(const Flex* f)
+INLINE void Untrack_Manual_Stub(const Stub* s)
 {
-    Flex* * const last_ptr
-        = &cast(Flex**, g_gc.manuals->content.dynamic.data)[
+    Stub* * const last_ptr
+        = &cast(Stub**, g_gc.manuals->content.dynamic.data)[
             g_gc.manuals->content.dynamic.used - 1
         ];
 
     assert(g_gc.manuals->content.dynamic.used >= 1);
-    if (*last_ptr != f) {
+    if (*last_ptr != s) {
         //
-        // If the Flex is not the last manually added Flex, then find where it
-        // is, then move the last manually added Flex to that position to
-        // preserve it when we chop off the tail (instead of keeping the Flex
+        // If the Stub is not the last manually added Stub, then find where it
+        // is, then move the last manually added Stub to that position to
+        // preserve it when we chop off the tail (instead of keeping the Stub
         // we want to free).
         //
-        Flex* *current_ptr = last_ptr - 1;
-        for (; *current_ptr != f; --current_ptr) {
+        Stub* *current_ptr = last_ptr - 1;
+        for (; *current_ptr != s; --current_ptr) {
           #if RUNTIME_CHECKS
             if (
                 current_ptr
-                <= cast(Flex**, g_gc.manuals->content.dynamic.data)
+                <= cast(Stub**, g_gc.manuals->content.dynamic.data)
             ){
-                printf("Flex not in list of last manually added Flexes\n");
-                crash (f);
+                printf("Stub not in list of last manually added Stubs\n");
+                crash (s);
             }
           #endif
         }
@@ -52,24 +52,24 @@ INLINE void Untrack_Manual_Flex(const Flex* f)
     --g_gc.manuals->content.dynamic.used;
 }
 
-INLINE void Manage_Flex(const Flex* f)  // give manual Flex to GC
+INLINE void Manage_Stub(const Stub* s)  // give manual Stub to GC
 {
-    assert(not Is_Base_Managed(f));
-    Untrack_Manual_Flex(f);
-    Set_Base_Managed_Bit(f);
+    assert(not Is_Base_Managed(s));
+    Untrack_Manual_Stub(s);
+    Set_Base_Managed_Bit(s);
 }
 
-INLINE void Force_Flex_Managed(const Flex* f) {
-    if (Not_Base_Managed(f)) {
-        Untrack_Manual_Flex(f);
-        Set_Base_Managed_Bit(f);
+INLINE void Force_Stub_Managed(const Stub* s) {
+    if (Not_Base_Managed(s)) {
+        Untrack_Manual_Stub(s);
+        Set_Base_Managed_Bit(s);
     }
 }
 
 #if NO_RUNTIME_CHECKS
-    #define Assert_Flex_Managed(f) NOOP
+    #define Assert_Stub_Managed(f) NOOP
 #else
-    INLINE void Assert_Flex_Managed(const Flex* f) {
+    INLINE void Assert_Stub_Managed(const Stub* f) {
         if (Not_Base_Managed(f))
             crash (f);
     }

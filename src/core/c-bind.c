@@ -1359,7 +1359,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
         return fail (unwrap e);
     }
 
-    Manage_Flex(varlist);  // must be managed to use in binding
+    Manage_Stub(varlist);  // must be managed to use in binding
 
     // If the user gets ahold of these contexts, we don't want them to be
     // able to expand them...because things like FOR-EACH have historically

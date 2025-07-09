@@ -520,7 +520,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
         if (not Is_Text(poke))
             panic (poke);
         Strand* strand = require (Copy_String_At(poke));
-        Manage_Flex(strand);
+        Manage_Stub(strand);
         Freeze_Flex(strand);
         Set_Parameter_Strand(param, strand);
         return WRITEBACK(Copy_Cell(OUT, param)); }  // need Cell pointer update

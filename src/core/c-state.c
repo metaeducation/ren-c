@@ -456,14 +456,14 @@ void Assert_State_Balanced_Debug(
         //
         // Note: Should this ever actually happen, crash() on the Flex won't
         // do any real good in helping debug it.  You'll probably need
-        // additional checks in Manage_Flex() and Free_Unmanaged_Flex()
+        // additional checks in Manage_Stub() and Free_Unmanaged_Flex()
         // that check against the caller's manuals_len.
         //
         crash_at ("manual Flex freed outside checkpoint", file, line);
     }
     else if (s->manuals_len < Flex_Used(g_gc.manuals)) {
         printf(
-            "Make_Flex()x%d w/o Free_Unmanaged_Flex() or Manage_Flex()\n",
+            "Make_Flex()x%d w/o Free_Unmanaged_Flex() or Manage_Stub()\n",
             cast(int, Flex_Used(g_gc.manuals) - s->manuals_len)
         );
         Flex* manual = *(Flex_At(

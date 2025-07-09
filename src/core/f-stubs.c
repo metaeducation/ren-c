@@ -339,7 +339,7 @@ void Extra_Init_Context_Cell_Checks_Debug(
     // "sometimes managed, sometimes not" keylists...a bad invariant.
     //
     KeyList* keylist = Bonus_Keylist(varlist);
-    Assert_Flex_Managed(keylist);
+    Assert_Stub_Managed(keylist);
 
     assert(
         not Misc_Varlist_Adjunct(varlist)

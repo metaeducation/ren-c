@@ -132,7 +132,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Bitset)
         return fail (arg);
 
     Binary* bset = Make_Bitset(len);
-    Manage_Flex(bset);
+    Manage_Stub(bset);
     Init_Bitset(OUT, bset);
 
     if (Is_Integer(arg))

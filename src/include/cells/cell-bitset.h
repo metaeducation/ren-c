@@ -64,7 +64,7 @@ INLINE Binary* VAL_BITSET(const Cell* v) {
     m_cast(Binary*, VAL_BITSET(Ensure_Mutable(v)))
 
 INLINE Element* Init_Bitset(Init(Element) out, Binary* bset) {
-    Assert_Flex_Managed(bset);
+    Assert_Stub_Managed(bset);
 
     Reset_Cell_Header_Noquote(out, CELL_MASK_BITSET);
     Corrupt_Unused_Field(out->extra.corrupt);

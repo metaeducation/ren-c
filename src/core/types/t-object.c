@@ -732,7 +732,7 @@ VarList* Copy_Varlist_Extra_Managed(
     Copy_Cell(dest, Varlist_Archetype(original));
     CELL_CONTEXT_VARLIST(dest) = varlist;
 
-    Assert_Flex_Managed(Bonus_Keylist(original));
+    Assert_Stub_Managed(Bonus_Keylist(original));
 
     ++dest;
 

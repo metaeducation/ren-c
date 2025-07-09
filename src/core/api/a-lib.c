@@ -429,7 +429,7 @@ void* API_rebUnmanageMemory(void* ptr)
     //
     Binary* b = *pb;
     assert(Is_Base_Root_Bit_Set(b));
-    Manage_Flex(b);  // crashes if already unmanaged... should it tolerate?
+    Manage_Stub(b);  // crashes if already unmanaged... should it tolerate?
 
     Poison_Memory_If_Sanitize(pb, sizeof(Binary*));  // catch underruns
 

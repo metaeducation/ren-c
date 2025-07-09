@@ -178,8 +178,8 @@ INLINE void Update_Frame_Cell_Label(Value* c, Option(const Symbol*) label) {
 
 INLINE Element* Init_Frame_Unchecked_Untracked(
     Init(Element) out,  // may be rootvar
-    Flex* phase,  // may not be completed or managed if out is rootvar
-    Option(const Flex*) lens_or_label,
+    Stub* phase,  // may not be completed or managed if out is rootvar
+    Option(const Stub*) lens_or_label,
     Option(VarList*) coupling
 ){
     Reset_Cell_Header_Noquote(
@@ -191,7 +191,7 @@ INLINE Element* Init_Frame_Unchecked_Untracked(
     );
     CELL_FRAME_PAYLOAD_1_PHASE(out) = phase;
     CELL_FRAME_EXTRA_LENS_OR_LABEL(out) = m_cast(  // no flag
-        Flex*, maybe lens_or_label
+        Stub*, maybe lens_or_label
     );
     CELL_FRAME_PAYLOAD_2_COUPLING(out) = maybe coupling;  // flag sync above
     return out;
@@ -204,10 +204,10 @@ INLINE Element* Init_Frame_Unchecked_Untracked(
 INLINE Element* Init_Frame_Untracked(
     Init(Element) out,
     Phase* phase,
-    Option(const Flex*) lens_or_label,
+    Option(const Stub*) lens_or_label,
     Option(VarList*) coupling
 ){
-    Force_Flex_Managed(phase);
+    Force_Stub_Managed(phase);
 
   #if RUNTIME_CHECKS
     Extra_Init_Frame_Checks_Debug(phase);

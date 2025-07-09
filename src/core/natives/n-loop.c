@@ -1635,7 +1635,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         assert(Binary_Len(popped) <= Series_Len_Head(data));
         removals = Series_Len_Head(data) - Binary_Len(popped);
 
-        Swap_Flex_Content(popped, b);  // swap identity, process_non_blank:[1]
+        Swap_Stub_Content(popped, b);  // swap identity, process_non_blank:[1]
 
         Free_Unmanaged_Flex(popped);  // now frees incoming Flex's data
         Init_Blob(OUT, b);
@@ -1662,7 +1662,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         assert(Strand_Len(popped) <= Series_Len_Head(data));
         removals = Series_Len_Head(data) - Strand_Len(popped);
 
-        Swap_Flex_Content(popped, s);  // swap Flex identity [3]
+        Swap_Stub_Content(popped, s);  // swap Flex identity [3]
 
         Free_Unmanaged_Flex(popped);  // frees incoming Flex's data
         Init_Any_String(OUT, Heart_Of_Builtin_Fundamental(data), s);

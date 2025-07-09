@@ -907,9 +907,9 @@ Result(Zero) Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 
 
 //
-//  Swap_Flex_Content: C
+//  Swap_Stub_Content: C
 //
-// Retain the identity of the two Flexes but do a low-level swap of their
+// Retain the identity of the two Stubs but do a low-level swap of their
 // content with each other.
 //
 // This is a low-level operation that should only be called when the client is
@@ -922,7 +922,7 @@ Result(Zero) Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 // 2. Swapping managed stubs with unmanaged ones does come up, and when it
 //    does the flags have to be correct for their original identity.
 //
-void Swap_Flex_Content(Flex* a, Flex* b)
+void Swap_Stub_Content(Stub* a, Stub* b)
 {
     assert(Flex_Wide(a) == Flex_Wide(b));  // seemingly should always be true
     assert(Stub_Holds_Cells(a) == Stub_Holds_Cells(b));  // also seems sane
@@ -982,7 +982,7 @@ DECLARE_NATIVE(SWAP_CONTENTS)
 
     Flex* f1 = Cell_Flex_Ensure_Mutable(ARG(SERIES1));
     Flex* f2 = Cell_Flex_Ensure_Mutable(ARG(SERIES2));
-    Swap_Flex_Content(f1, f2);
+    Swap_Stub_Content(f1, f2);
 
     return TRIPWIRE;
 }
@@ -1245,7 +1245,7 @@ void Free_Unmanaged_Flex(Flex* f)
     }
   #endif
 
-    Untrack_Manual_Flex(f);
+    Untrack_Manual_Stub(f);
     GC_Kill_Flex(f);  // with bookkeeping done, use same routine as GC
 }
 

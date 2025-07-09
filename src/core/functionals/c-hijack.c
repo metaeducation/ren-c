@@ -346,7 +346,7 @@ DECLARE_NATIVE(HIJACK)
 
     Tweak_Misc_Phase_Adjunct(proxy, adjunct);  // shared reference [3]
 
-    Swap_Flex_Content(victim, proxy);  // after swap, victim is hijacker
+    Swap_Stub_Content(victim, proxy);  // after swap, victim is hijacker
 
     Element* victim_archetype = Phase_Archetype(victim);  // v-- inf. recurse!
     assert(CELL_FRAME_PAYLOAD_1_PHASE(victim_archetype) == victim);
@@ -359,7 +359,7 @@ DECLARE_NATIVE(HIJACK)
     else {
         Init_Action(
             OUT,
-            proxy,  // after Swap_Flex_Content(), new identity for victim
+            proxy,  // after Swap_Stub_Content(), new identity for victim
             Cell_Frame_Label(ARG(VICTIM)),
             Cell_Frame_Coupling(ARG(VICTIM))
         );

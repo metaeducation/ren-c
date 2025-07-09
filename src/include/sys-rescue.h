@@ -62,7 +62,7 @@
 // * To help Rebol clean up after itself for some kinds of "dangling" state,
 //   it will automatically free manually memory managed Flexes made with
 //   Make_Flex() but never passed to either Free_Unmanaged_Flex() or
-//   Manage_Flex().  These Flexes are used to implement rebAlloc() so
+//   Manage_Stub().  These Flexes are used to implement rebAlloc() so
 //   that allocations will be automatically freed on failure.  But if you've
 //   written code that performs a raw malloc and triggers an abrupt failure
 //   up the stack, it will leak the malloc.

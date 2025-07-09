@@ -211,7 +211,7 @@ Result(Zero) Init_Invokable_From_Feed(
     Drop_Level(L);
     Drop_Lifeguard(action);
 
-    Set_Base_Managed_Bit(varlist);  // can't use Manage_Flex
+    Set_Base_Managed_Bit(varlist);  // can't use Manage_Stub
 
     ParamList* lens = Phase_Paramlist(Frame_Phase(action));
     Init_Lensed_Frame(out, varlist, lens, coupling);
@@ -478,7 +478,7 @@ DECLARE_NATIVE(REFRAMER)
     assert(Is_Parameter(var));
     Copy_Cell(var, Varlist_Archetype(exemplar));
 
-    Manage_Flex(exemplar);
+    Manage_Stub(exemplar);
 
     Details* details = Alloc_Action_From_Exemplar(
         exemplar,  // shim minus the frame argument

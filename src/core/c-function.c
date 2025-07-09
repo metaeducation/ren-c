@@ -207,7 +207,7 @@ static Result(Zero) Push_Keys_And_Params_Core(
                 Force_Adjunct(adjunct);
 
                 Strand* strand = require (Copy_String_At(item));
-                Manage_Flex(strand);
+                Manage_Stub(strand);
                 Freeze_Flex(strand);
                 Init_Text(
                     Slot_Hack(
@@ -225,7 +225,7 @@ static Result(Zero) Push_Keys_And_Params_Core(
                     return fail (Error_Bad_Func_Def_Raw(item));
 
                 Strand* strand = require (Copy_String_At(item));
-                Manage_Flex(strand);
+                Manage_Stub(strand);
                 Freeze_Flex(strand);
                 Set_Parameter_Strand(TOP_ELEMENT, strand);
             }
@@ -605,7 +605,7 @@ Result(ParamList*) Pop_Paramlist(
     }
     assert(param == Array_Tail(paramlist));
 
-    Manage_Flex(paramlist);
+    Manage_Stub(paramlist);
 
     Tweak_Bonus_Keylist_Unique(paramlist, keylist);
     Tweak_Misc_Varlist_Adjunct(paramlist, nullptr);

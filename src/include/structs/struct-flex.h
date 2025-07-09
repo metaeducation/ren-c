@@ -60,7 +60,7 @@
 //
 // Flex may be either manually memory managed or delegated to the garbage
 // collector.  Free_Unmanaged_Flex() may only be called on manual Flex.
-// See Manage_Flex()/Push_Lifeguard() for remarks on how to work safely
+// See Manage_Stub()/Push_Lifeguard() for remarks on how to work safely
 // with pointers to garbage-collected Flexes, to avoid having them be GC'd
 // out from under the code while working with them.
 //

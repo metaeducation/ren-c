@@ -49,9 +49,9 @@ INLINE const Map* VAL_MAP(const Cell* c) {
 INLINE Element* Init_Map(Init(Element) out, Map* map)
 {
     if (MAP_HASHLIST(map))
-        Force_Flex_Managed(MAP_HASHLIST(map));
+        Force_Stub_Managed(MAP_HASHLIST(map));
 
-    Force_Flex_Managed(MAP_PAIRLIST(map));
+    Force_Stub_Managed(MAP_PAIRLIST(map));
 
     Reset_Cell_Header_Noquote(TRACK(out), CELL_MASK_MAP);
     Corrupt_Unused_Field(out->extra.corrupt);

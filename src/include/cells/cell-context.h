@@ -61,7 +61,7 @@ INLINE Element* Init_Context_Cell(
     Extra_Init_Context_Cell_Checks_Debug(heart, c);
   #endif
     UNUSED(heart);
-    Assert_Flex_Managed(c);
+    assert(Is_Base_Managed(c));
     assert(CTX_TYPE(c) != TYPE_MODULE);  // catch straggling bad casts
     return Copy_Cell(out, Varlist_Archetype(c));
 }
