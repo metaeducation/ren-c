@@ -179,16 +179,16 @@
     // This doesn't stop comparing Type variables to Heart variables, which
     // is considered to be valid.  (Should it be?)
 
-    template <typename T, EnableIfSame<T, TypeEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
     INLINE bool operator==(const Heart& heart, T&& t) = delete;
 
-    template <typename T, EnableIfSame<T, TypeEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
     INLINE bool operator==(T&& t, const Heart& heart) = delete;
 
-    template <typename T, EnableIfSame<T, TypeEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
     INLINE bool operator!=(const Heart& heart, T&& t) = delete;
 
-    template <typename T, EnableIfSame<T, TypeEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
     INLINE bool operator!=(T&& t, const Heart& heart) = delete;
 
     // If using enum classes, things get complicated.  Because there are
@@ -213,35 +213,35 @@
 
     // Very narrow equality tests, only applying to literal HeartEnum values.
 
-    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
     INLINE bool operator==(const Heart& heart, T&& h)
       { return heart.h == h; }
 
-    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
     INLINE bool operator==(T&& h, const Heart& heart)
       { return h == heart.h; }
 
-    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
     INLINE bool operator!=(const Heart& heart, T&& h)
       { return heart.h != h; }
 
-    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
     INLINE bool operator!=(T&& h, const Heart& heart)
       { return h != heart.h; }
 
-    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
     INLINE bool operator==(const Type& type, T&& h)
       { return u_cast(Byte, type.t) == u_cast(Byte, h); }
 
-    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
     INLINE bool operator==(T&& h, const Type& type)
       { return u_cast(Byte, h) == u_cast(Byte, type.t); }
 
-    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
     INLINE bool operator!=(const Type& type, T&& h)
       { return u_cast(Byte, type.t) != u_cast(Byte, h); }
 
-    template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
     INLINE bool operator!=(T&& h, const Type& type)
       { return u_cast(Byte, h) != u_cast(Byte, type.t); }
 
@@ -322,19 +322,19 @@
     bool operator!=(Option(Heart)& a, Option(Heart)& b) = delete;
 
     #if defined(_MSC_VER)
-        template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
         INLINE bool operator==(const Option(Type)& a, T b)
           { return u_cast(Byte, maybe a) == u_cast(Byte, b); }
 
-        template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
         INLINE bool operator==(T a, const Option(Type)& b)
           { return u_cast(Byte, a) == u_cast(Byte, maybe b); }
 
-        template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
         INLINE bool operator!=(const Option(Type)& a, T b)
           {  return u_cast(Byte, maybe a) != u_cast(Byte, b); }
 
-        template <typename T, EnableIfSame<T, HeartEnum> = nullptr>
+        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
         INLINE bool operator!=(T a, const Option(Type)& b)
           {  return u_cast(Byte, a) != u_cast(Byte, maybe b); }
     #endif

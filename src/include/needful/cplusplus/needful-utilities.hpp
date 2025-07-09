@@ -1,3 +1,18 @@
+//
+//  file: %needful-utilities.h
+//  summary: "Utility macros for C++11 and higher"
+//  homepage: <needful homepage TBD>
+//
+//=/////////////////////////////////////////////////////////////////////////=//
+//
+// Copyright 2015-2025 hostilefork.com
+//
+// Licensed under the MIT License
+//
+// https://en.wikipedia.org/wiki/MIT_License
+//
+//=/////////////////////////////////////////////////////////////////////////=//
+//
 
 //=//// DUMP TYPE NAME FOR DEBUGGING //////////////////////////////////////=//
 //
@@ -18,47 +33,32 @@
 #endif
 
 
-//=//// ENABLE IF FOR SAME TYPE ///////////////////////////////////////////=//
+//=//// VARIADIC MACRO PARENTHESES REMOVAL ////////////////////////////////=//
 //
-// This is useful for SFINAE (Substitution Failure Is Not An Error), as a
-// very common pattern.  It's variadic, so you can use it like:
+// NEEDFUL_UNPARENTHESIZE is used to remove a single layer of parentheses
+// from a macro argument.  This is useful if you want to capture variadic
+// arguments at a macro callsite as a single argument in parentheses.
 //
-//   template <typename T, EnableIfSame<T, TypeOne, TypeTwo> = nullptr>
-//   INLINE bool operator==(const TypeThree& three, T&& t) = delete;
+// Needful uses it to transfer variadic arguments to C++ templates in a way
+// that C can just ignore:
 //
-// Written out long form that would look like:
+//     #define MY_MACRO(list,expr) \
+//         my_template<NEEDFUL_UNPARENTHESIZE list>(expr)
 //
-//    template <
-//        typename T,
-//        typename std::enable_if<
-//            std::is_same<T, TypeOne>::value
-//            or std::is_same<T, TypeTwo>::value
-//        >::type* = nullptr
-//     >
-//     INLINE bool operator==(const TypeThree& three, T&& t) = delete;
+// Note the macro isn't invoked with parentheses in the expansion--it uses
+// the parentheses in the argument.  So if you say:
 //
-
-template <typename T, typename... Allowed>
-struct IsSameAny;
-
-template <typename T, typename First, typename... Rest>
-struct IsSameAny<T, First, Rest...> {
-    static constexpr bool value =
-        std::is_same<T, First>::value or IsSameAny<T, Rest...>::value;
-};
-
-template <typename T>
-struct IsSameAny<T> {
-    static constexpr bool value = false;
-};
-
-template <typename T, typename... Allowed>
-using EnableIfSame =
-    typename std::enable_if<IsSameAny<T, Allowed...>::value>::type*;
-
-template <typename T, typename... Allowed>
-using DisableIfSame =
-    typename std::enable_if<not IsSameAny<T, Allowed...>::value>::type*;
+//    MY_MACRO((int, float, double), value)
+//
+// It expands to:
+//
+//    my_template<NEEDFUL_UNPARENTHESIZE (int, float, double)>(expr)
+//
+// Which further expands to:
+//
+//    my_template<int, float, double>(expr)
+//
+#define NEEDFUL_UNPARENTHESIZE(...)  __VA_ARGS__
 
 
 //=//// REMOVE REFERENCE SHORTHAND ////////////////////////////////////////=//
@@ -77,81 +77,6 @@ using DisableIfSame =
 #define needful_remove_reference(T) \
     typename std::remove_reference<T>::type
 
-
-//=//// TYPE LIST HELPER //////////////////////////////////////////////////=//
-//
-// Type lists allow checking if a type is in a list of types at compile time:
-//
-//     template<typename T>
-//     void process(T value) {
-//         using NumericTypes = CTypeList<int, float, double>;
-//         static_assert(NumericTypes::contains<T>{}, "T must be numeric");
-//         // ...
-//     }
-//
-// 1. For C++11 compatibility, it must be `List::contains<T>{}` with braces.
-//    C++14 or higher has variable templates:
-//
-//        struct contains_impl {  /* instead of calling this `contains` */
-//            enum { value = false };
-//        };
-//        template<typename T>
-//        static constexpr bool contains = contains_impl<T>::value;
-//
-//    Without that capability, best we can do is to construct an instance via
-//    a default constructor, and then have a constexpr implicit boolean
-//    coercion for that instance.
-//
-// 2. To expose the type list functionality in a way that will look less
-//    intimidating to C programmers, `DECLARE_C_TYPE_LIST` is provided, along
-//    with `In_C_Type_List`.  This lets you make it look like a regular
-//    function call:
-//
-//     template<typename T>
-//     void process(T value) {
-//         DECLARE_C_TYPE_LIST(numeric_types,
-//             int, float, double
-//         );
-//         STATIC_ASSERT(In_C_Type_List(numeric_types, T));
-//         // ...
-//     }
-//
-//    While obfuscating the C++ is questionable in terms of people's education
-//    about the language--and making compile-time code look like runtime
-//    functions is a bit of a lie--this does make it easier.  It also means
-//    the In_C_Type_List() function can be used in STATIC_ASSERT() macros
-//    without making you write STATIC_ASSERT(()) to wrap < and > characters
-//    that would appear with ::contains<T> at the callsite.
-//
-
-template<typename... Ts>
-struct CTypeList {
-    template<typename T>
-    struct contains {
-        enum { value = false };
-
-        // Allow usage without ::value in most contexts [1]
-        constexpr operator bool() const { return value; }
-    };
-};
-
-template<typename T1, typename... Ts>
-struct CTypeList<T1, Ts...> {  // Specialization for non-empty lists
-    template<typename T>
-    struct contains {
-        enum { value = std::is_same<T, T1>::value or
-                    typename CTypeList<Ts...>::template contains<T>() };
-
-        // Allow usage without ::value in most contexts [1]
-        constexpr operator bool() const { return value; }
-    };
-};
-
-#define DECLARE_C_TYPE_LIST(name, ...)  /* friendly for C [2] */ \
-    using name = CTypeList<__VA_ARGS__>
-
-#define In_C_Type_List(list,T)  /* friendly for C [2] */ \
-    list::contains<T>()
 
 
 // 2. AlwaysFalse<T> is a template that always yields false, but is dependent

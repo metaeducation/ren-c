@@ -586,15 +586,11 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
         void operator=(const HeartHolder& right)  // must write explicitly
           { *this = u_cast(KindByte, right); }
 
-        template <typename T, EnableIfSame<T,
-            HeartEnum, HeartHolder, Heart
-        > = nullptr>
+        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum, HeartHolder, Heart)
         void operator=(T right)
           { *this = u_cast(KindByte, right); }  // inherit operator= checks
 
-        template <typename T, EnableIfSame<T,
-            Heart, HeartEnum
-        > = nullptr>
+        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum, Heart)
         explicit operator T() const   // inherit Byte() cast extraction checks
           { return u_cast(T, u_cast(Byte, *this)); }
     };

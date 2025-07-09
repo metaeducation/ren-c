@@ -197,10 +197,6 @@ INLINE Element* Init_Frame_Unchecked_Untracked(
     return out;
 }
 
-#define Init_Frame_Unchecked(out,identity,label,coupling) \
-    TRACK(Init_Frame_Unchecked_Untracked( \
-        (out), (identity), (label), (coupling)))
-
 INLINE Element* Init_Frame_Untracked(
     Init(Element) out,
     Phase* phase,
@@ -216,32 +212,22 @@ INLINE Element* Init_Frame_Untracked(
     return Init_Frame_Unchecked_Untracked(out, phase, lens_or_label, coupling);
 }
 
-#if CPLUSPLUS_11
-    template<
-        typename P,
-        typename L,
-        typename std::enable_if<
-            std::is_same<P,VarList*>::value
-            or not (
-                std::is_convertible<L,Option(const Symbol*)>::value
-                or std::is_convertible<L,Option(Phase*)>::value
-            )
-        >::type* = nullptr
-    >
-    void Init_Frame_Untracked(
-        Init(Element) out,
-        P phase,  // mitigate awkward "VarList inherits Phase" [1]
-        L lens_or_label,  // restrict to Option(const Symbol*), Option(Phase*)
-        Option(VarList*) coupling
-    ) = delete;
-#endif
+#define Init_Frame_Untracked_Macro(out,identity,lens_or_label,coupling) \
+    Init_Frame_Untracked((out), \
+        ensure_any((Phase*, Details*, ParamList*), (identity)), \
+        ensure_any((Option(const Symbol*), Option(Phase*)), (lens_or_label)), \
+        (coupling))
+
+#define Init_Frame_Unchecked(out,identity,label,coupling) \
+    TRACK(Init_Frame_Unchecked_Untracked( \
+        (out), (identity), (label), (coupling)))
 
 #define Init_Frame(out,identity,label,coupling) \
-    TRACK(Init_Frame_Untracked((out), (identity), \
+    TRACK(Init_Frame_Untracked_Macro((out), (identity), \
         ensure(Option(const Symbol*), (label)), (coupling)))
 
 #define Init_Lensed_Frame(out,identity,lens,coupling) \
-    TRACK(Init_Frame_Untracked((out), (identity), \
+    TRACK(Init_Frame_Untracked_Macro((out), (identity), \
         ensure(Option(Phase*), (lens)), (coupling)))
 
 

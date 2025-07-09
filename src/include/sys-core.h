@@ -198,8 +198,6 @@ typedef RebolHandleCleaner HandleCleaner;
 #include "needful/needful.h"
 
 #if CPLUSPLUS_11
-    using needful::EnableIfSame;
-
     using needful::Result0Struct;
     using needful::ResultWrapper;
 

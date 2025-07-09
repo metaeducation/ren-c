@@ -50,30 +50,3 @@
     static_assert( \
         std::is_lvalue_reference<decltype((x))>::value, /* [1] */ \
         "must be lvalue reference")
-
-
-//=//// TYPE ENSURING HELPER //////////////////////////////////////////////=//
-//
-
-template<typename From, typename To>
-struct IsConvertibleAsserter {
-    static_assert(
-        std::is_convertible<From, To>::value, "ensure() failed"
-    );
-};
-
-#undef needful_rigid_ensure
-#define needful_rigid_ensure(T,expr) \
-    (NEEDFUL_USED((needful::IsConvertibleAsserter< /* USED() for clang */ \
-        needful_remove_reference(decltype(expr)), \
-        T \
-    >{})), \
-    x_cast(T, (expr)))
-
-#undef needful_lenient_ensure
-#define needful_lenient_ensure(T,expr) \
-    (NEEDFUL_USED((needful::IsConvertibleAsserter< /* USED() for clang */ \
-        needful_remove_reference(decltype(expr)), \
-        needful_constify_type(T) /* loosen to matching constified T too */ \
-    >{})), \
-    x_cast(needful_merge_const(decltype(expr), T), (expr)))

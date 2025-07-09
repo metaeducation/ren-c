@@ -100,15 +100,11 @@
         void operator=(const MirrorHolder& right)  // must write explicitly
           { *this = u_cast(Byte, right); }
 
-        template <typename T, EnableIfSame<T,
-            HeartEnum, Heart
-        > = nullptr>
+        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum, Heart)
         void operator=(T right)
           { *this = u_cast(Byte, right); }  // inherit operator= Byte checks
 
-        template <typename T, EnableIfSame<T,
-            HeartEnum, Heart
-        > = nullptr>
+        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum, Heart)
         explicit operator T() const  // inherit Byte() cast extraction checks
           { return u_cast(T, u_cast(Byte, *this)); }
     };

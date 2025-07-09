@@ -319,6 +319,15 @@
 
 #define needful_lenient_ensure(T,expr)  (expr)  // const passthru as const [1]
 
+#define needful_ensure_any(TLIST,expr)  (expr)
+
+//=//// ENABLEABLE: Argument Type Subsetting //////////////////////////////=//
+//
+
+#define ENABLE_IF_EXACT_ARG_TYPE(...)
+#define DISABLE_IF_EXACT_ARG_TYPE(...)
+#define ENABLEABLE(T, name) T name
+
 
 //=//// CONST PROPAGATION TOOLS ///////////////////////////////////////////=//
 //
@@ -886,6 +895,7 @@ typedef enum {
     #define lenient_ensure(T,expr)  needful_lenient_ensure(T,expr)
 
     #define ensure(T,expr)          needful_lenient_ensure(T,expr)  // [2]
+    #define ensure_any(TLIST,expr)  needful_ensure_any(TLIST,expr)
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_LOOP_SHORTHANDS)
