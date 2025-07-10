@@ -100,7 +100,7 @@ void Push_Frame_Continuation(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
     ));
-    Prep_Action_Level(L, frame, with);
+    required (Prep_Action_Level(L, frame, with));
     Push_Level_Erase_Out_If_State_0(out, L);
 }
 

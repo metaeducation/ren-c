@@ -46,7 +46,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
     Tweak_Misc_Varlist_Adjunct_Raw(a, nullptr);
     Tweak_Link_Inherit_Bind_Raw(a, nullptr);
 
-    Alloc_Tail_Array(a);  // allocate rootvar
+    required (Alloc_Tail_Array(a));  // allocate rootvar
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);
 
     KeyList* keylist = require (nocast Make_Flex(
@@ -119,7 +119,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 
     Length len = Varlist_Len(varlist);
 
-    Extend_Flex_If_Necessary(Varlist_Array(varlist), delta);  // easy part
+    required (Extend_Flex_If_Necessary(Varlist_Array(varlist), delta));
     Set_Flex_Len(Varlist_Array(varlist), len + delta + 1);  // include rootvar
 
     if (Get_Flavor_Flag(KEYLIST, k, SHARED)) {  // need new keylist [1]
@@ -143,7 +143,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
         return k_copy;
     }
 
-    Extend_Flex_If_Necessary(k, delta);  // unshared, extend in place [3]
+    required(Extend_Flex_If_Necessary(k, delta));  // unshared, in place [3]
     Set_Flex_Len(k, len + delta);
 
     return k;
@@ -836,7 +836,7 @@ VarList* Make_Varlist_Detect_Managed(
 
             bool deeply = true;  // !!! Copies series deeply, why? [1]
             if (not Is_Antiform(dest)) {  // !!! whole model needs review
-                Clonify(Known_Element(dest), clone_flags, deeply);
+                required (Clonify(Known_Element(dest), clone_flags, deeply));
                 Clear_Cell_Flag(dest, CONST);  // remove constness from copies
             }
         }

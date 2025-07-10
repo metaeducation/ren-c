@@ -140,7 +140,7 @@ void Expand_Data_Stack_May_Panic(REBLEN amount)
         Panic_Stack_Overflow(); // !!! Should this be a "data stack" message?
     }
 
-    Extend_Flex_If_Necessary(g_ds.array, amount);
+    required (Extend_Flex_If_Necessary(g_ds.array, amount));
 
     g_ds.movable_top = Flex_At(Value, g_ds.array, g_ds.index);  // needs update
 

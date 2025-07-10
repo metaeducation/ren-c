@@ -512,7 +512,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
         // !!! Binaries need +1 space for the terminator, but that is handled
         // internally to Extend_Flex.  Review wasted space in array case.
         //
-        Extend_Flex_If_Necessary(bin, bufsize);
+        required (Extend_Flex_If_Necessary(bin, bufsize));
     }
 
     buf->base = s_cast(Binary_Tail(bin));
@@ -942,21 +942,21 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 
         VarList* info = Cell_Varlist(result);
 
-        Init_Tuple_Bytes(
+        required (Init_Tuple_Bytes(
             Slot_Init_Hack(Varlist_Slot(info, STD_NET_INFO_LOCAL_IP)),
             cast(Byte*, &sock->local_ip),
             4
-        );
+        ));
         Init_Integer(
             Slot_Init_Hack(Varlist_Slot(info, STD_NET_INFO_LOCAL_PORT)),
             sock->local_port_number
         );
 
-        Init_Tuple_Bytes(
+        required (Init_Tuple_Bytes(
             Slot_Init_Hack(Varlist_Slot(info, STD_NET_INFO_REMOTE_IP)),
             cast(Byte*, &sock->remote_ip),
             4
-        );
+        ));
         Init_Integer(
             Slot_Init_Hack(Varlist_Slot(info, STD_NET_INFO_REMOTE_PORT)),
             sock->remote_port_number
@@ -1188,7 +1188,8 @@ DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
 
       case TYPE_PORT: {
         Source* single = Make_Source(1);
-        Append_Value(single, unwrap val);
+        Sink(Element) cell = require (Alloc_Tail_Array(single));
+        Copy_Cell(cell, unwrap val);
         Init_Block(ARG(VALUE), single);
         ports = ARG(VALUE);
 

@@ -325,7 +325,7 @@ bool Specialize_Action_Throws(
     // Everything should have balanced out for a valid specialization.
     // Turn partial refinements into an array of things to push.
     //
-    Array* partials;
+    Source* partials;
     if (ordered_stackindex == TOP_INDEX)
         partials = nullptr;
     else {
@@ -360,12 +360,13 @@ bool Specialize_Action_Throws(
                 // It's still partial...
                 //
                 assert(VAL_WORD_INDEX(ordered) != 0);
-                Init_Pushable_Refinement_Bound(
-                    Alloc_Tail_Array(partials),
+                Sink(Element) cell = require (Alloc_Tail_Array(partials));
+                required (Init_Pushable_Refinement_Bound(
+                    cell,
                     Key_Symbol(Varlist_Key(exemplar, VAL_WORD_INDEX(ordered))),
                     exemplar,
                     VAL_WORD_INDEX(ordered)
-                );
+                ));
             }
         }
         Drop_Data_Stack_To(lowest_stackindex);

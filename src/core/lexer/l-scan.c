@@ -419,7 +419,7 @@ static void Update_Error_Near_For_Line(
     DECLARE_MOLDER (mo);  // put line count and line's text into string [3]
     Push_Mold(mo);
     required (Append_Ascii(mo->strand, "(line "));
-    Append_Int(mo->strand, line);  // (maybe) different from line below
+    required (Append_Int(mo->strand, line));  // (maybe) diferent line lower
     required (Append_Ascii(mo->strand, ") "));
     Append_UTF8_May_Panic(mo->strand, s_cast(bp), size, STRMODE_NO_CR);
 
@@ -840,7 +840,7 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
             Size size = transcode.at - cp;
             Size original_used = Binary_Len(buf);
             Size original_len = Strand_Len(buf);
-            Expand_Flex_Tail(buf, size);  // updates used size
+            required (Expand_Flex_Tail(buf, size));  // updates used size
             Byte* dest = Binary_At(buf, original_used);
             Length len = 0;
             for (; cp != transcode.at; ++cp, ++dest) {

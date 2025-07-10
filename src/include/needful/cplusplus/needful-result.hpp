@@ -452,7 +452,7 @@ struct ZeroStruct {};
 #define needful_zero  needful::ZeroStruct{}  // instantiate {} zero instance
 
 template<>
-struct ResultWrapper<Zero> {
+struct NEEDFUL_NODISCARD ResultWrapper<Zero> {
     ResultWrapper() = delete;
 
     ResultWrapper(Result0Struct&&) {}

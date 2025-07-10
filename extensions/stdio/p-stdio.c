@@ -367,7 +367,7 @@ DECLARE_NATIVE(STDIO_ACTOR)
         }
         else if (Flex_Rest(Cell_Binary(data)) < readbuf_size) {
             Binary* b = Cell_Binary_Ensure_Mutable(data);
-            Expand_Flex_Tail(b, readbuf_size - Flex_Rest(b));
+            required (Expand_Flex_Tail(b, readbuf_size - Flex_Rest(b)));
         }
 
         // !!! An egregious hack in READ-LINE to try and coax the system to

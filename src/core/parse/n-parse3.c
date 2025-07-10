@@ -412,7 +412,7 @@ static Result(Option(SymId)) Get_Parse_Value(
             Quasify_Antiform(out_value);
         else if (Is_Datatype(out)) {  // convert to functions for now
             DECLARE_VALUE (checker);
-            Init_Typechecker(checker, out);
+            required (Init_Typechecker(checker, out));
             assert(Heart_Of(checker) == TYPE_FRAME);
             Copy_Cell(out_value, checker);
             LIFT_BYTE(out_value) = NOQUOTE_2;
@@ -1059,7 +1059,7 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
             DECLARE_ELEMENT (rule_value);
             Copy_Cell(rule_value, rule);
             Quasify_Isotopic_Fundamental(rule_value);
-            Init_Typechecker(temp, rule_value);
+            required (Init_Typechecker(temp, rule_value));
         }
         else {
             Copy_Cell(temp, rule);
@@ -1201,7 +1201,7 @@ static Result(Zero) Handle_Seek_Rule_Dont_Update_Begin(
 // position if the seek appears to be a "separate rule" in its own right.
 //
 #define HANDLE_SEEK_RULE_UPDATE_BEGIN(f,rule,context) \
-    Handle_Seek_Rule_Dont_Update_Begin((L), (rule), (context)); \
+    required (Handle_Seek_Rule_Dont_Update_Begin((L), (rule), (context))); \
     if (not (P_FLAGS & PF_STATE_MASK)) \
         begin = P_POS;
 
@@ -1774,8 +1774,9 @@ DECLARE_NATIVE(SUBPARSE)
         Value* spare = require (Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING));
 
         if (Is_Datatype(spare)) {
-            Init_Typechecker(u_cast(Value*, P_SAVE), spare);  // will be FRAME!
+            required (Init_Typechecker(u_cast(Value*, P_SAVE), spare));
             LIFT_BYTE(spare) = NOQUOTE_2;
+            assert(Is_Frame(spare));
             rule = Known_Element(spare);
         }
         else if (Is_Antiform(spare))
@@ -2308,7 +2309,7 @@ DECLARE_NATIVE(SUBPARSE)
                     // to happen in rule processing if GROUP!s execute.
                     //
                     Source* a = Cell_Array_Ensure_Mutable(ARG(POSITION));
-                    P_POS = Modify_Array(
+                    P_POS = require (Modify_Array(
                         a,
                         begin,
                         (P_FLAGS & PF_CHANGE)
@@ -2318,14 +2319,14 @@ DECLARE_NATIVE(SUBPARSE)
                         mod_flags,
                         count,
                         1
-                    );
+                    ));
                 }
                 else {
                     P_POS = begin;
 
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
 
-                    P_POS = Modify_String_Or_Blob(  // checks read-only
+                    P_POS = require (Modify_String_Or_Blob(  // checks readonly
                         ARG(POSITION),
                         (P_FLAGS & PF_CHANGE)
                             ? SYM_CHANGE
@@ -2334,7 +2335,7 @@ DECLARE_NATIVE(SUBPARSE)
                         mod_flags,
                         count,
                         1
-                    );
+                    ));
                 }
             }}
 

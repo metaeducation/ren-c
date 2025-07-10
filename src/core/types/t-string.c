@@ -286,14 +286,14 @@ static void Reverse_Strand(Strand* str, REBLEN index, Length len)
 
         DECLARE_VALUE (string);  // !!! Temp value, string type is irrelevant
         Init_Any_String_At(string, TYPE_TEXT, str, index);
-        Modify_String_Or_Blob(  // CHANGE:PART to overwrite reversed portion
+        required(Modify_String_Or_Blob(  // :PART to overwrite reversed portion
             string,
             SYM_CHANGE,
             temp,
             AM_PART,  // heed len for deletion
             len,
             1 // dup count
-        );
+        ));
 
         assert(Series_Len_Head(string) == len_head);  // shouldn't change
         UNUSED(len_head);
@@ -857,14 +857,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         else
             assert(not Is_Antiform(unwrap arg));
 
-        SERIES_INDEX_UNBOUNDED(v) = Modify_String_Or_Blob(  // does read-only check
-            v,
+        SERIES_INDEX_UNBOUNDED(v) = require (Modify_String_Or_Blob(
+            v,  // does read-only check
             unwrap id,
             arg,
             flags,
             len,
             Bool_ARG(DUP) ? Int32(ARG(DUP)) : 1
-        );
+        ));
         return COPY(v); }
 
     //-- Search:
@@ -969,8 +969,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             Codepoint v_c = Get_Strand_Char_At(v_str, Series_Index(v));
             Codepoint arg_c = Get_Strand_Char_At(arg_str, Series_Index(arg));
 
-            Set_Char_At(v_str, Series_Index(v), arg_c);
-            Set_Char_At(arg_str, Series_Index(arg), v_c);
+            required (Set_Char_At(v_str, Series_Index(v), arg_c));
+            required (Set_Char_At(arg_str, Series_Index(arg), v_c));
         }
         return COPY(v); }
 
@@ -1190,8 +1190,8 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_String)
         REBLEN k = index + (Random_Int(secure) % n);
         n--;
         Codepoint swap = Get_Strand_Char_At(s, k);
-        Set_Char_At(s, k, Get_Strand_Char_At(s, n + index));
-        Set_Char_At(s, n + index, swap);
+        required (Set_Char_At(s, k, Get_Strand_Char_At(s, n + index)));
+        required (Set_Char_At(s, n + index, swap));
     }
     return COPY(string);
 }

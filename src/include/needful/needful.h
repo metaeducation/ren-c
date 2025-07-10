@@ -236,17 +236,20 @@
 #define Needful_Prefix_Discard_Result(expr)  (expr)
 #define Needful_Postfix_Discard_Result
 
-#define needful_trapped(expr) \
-    needful_trap_core(expr, Needful_Prefix_Discard_Result)
+#define needful_trapped(expr) do { \
+    needful_trap_core(expr, Needful_Prefix_Discard_Result); \
+} while (0)
 
 #define /* expr */ needful_excepted(decl) /* {body} */ \
     needful_except_core(decl, Needful_Postfix_Discard_Result)
 
-#define needful_required(expr) \
-    needful_require_core(expr, Needful_Prefix_Discard_Result)
+#define needful_required(expr) do { \
+    needful_require_core(expr, Needful_Prefix_Discard_Result); \
+} while (0)
 
-#define needful_assumed(expr) \
-    needful_assume_core(expr, Needful_Prefix_Discard_Result)
+#define needful_assumed(expr) do { \
+    needful_assume_core(expr, Needful_Prefix_Discard_Result); \
+} while (0)
 
 #define needful_rescue(expr) \
     (Needful_Assert_Not_Failing(), Needful_Prefix_Discard_Result(expr), \
@@ -882,6 +885,8 @@ typedef enum {
 
     #define assume(expr)            needful_assume(expr)
     #define assumed(expr)           needful_assumed(expr)
+
+    #define rescue(expr)            needful_rescue(expr)
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_SINK_SHORTHANDS)

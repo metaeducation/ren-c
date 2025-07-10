@@ -103,7 +103,7 @@
 Byte* Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 {
     REBLEN tail = Strand_Len(mo->strand);
-    Expand_Flex_Tail(mo->strand, num_bytes);  // terminates at guess
+    required (Expand_Flex_Tail(mo->strand, num_bytes));  // terminates at guess
     return Binary_At(mo->strand, tail);
 }
 
@@ -208,8 +208,9 @@ REBINT Find_Pointer_In_Flex(Flex* f, const void *p)
 //
 void Push_Pointer_To_Flex(Flex* f, const void *p)
 {
-    if (Is_Flex_Full(f))
-        Extend_Flex_If_Necessary(f, 8);
+    if (Is_Flex_Full(f)) {
+        required (Extend_Flex_If_Necessary(f, 8));
+    }
     *Flex_At(const void*, f, Flex_Used(f)) = p;
     Set_Flex_Used(f, Flex_Used(f) + 1);
 }
@@ -518,7 +519,7 @@ void Push_Mold(Molder* mo)
         // compatible with the appending mold is to come back with an
         // empty buffer after a push.
         //
-        Expand_Flex(s, mo->base.size, mo->reserve);
+        required (Expand_Flex(s, mo->base.size, mo->reserve));
         Set_Flex_Used(s, mo->base.size);
     }
     else if (Flex_Rest(s) - Flex_Used(s) > MAX_COMMON) {
@@ -529,11 +530,11 @@ void Push_Mold(Molder* mo)
         // ->start index in the stack!
         //
         Length len = Strand_Len(g_mold.buffer);
-        Remake_Flex(
+        required (Remake_Flex(
             s,
             Flex_Used(s) + MIN_COMMON,
             BASE_FLAG_BASE // BASE_FLAG_BASE means preserve the data
-        );
+        ));
         Term_Strand_Len_Size(mo->strand, len, Flex_Used(s));
     }
 

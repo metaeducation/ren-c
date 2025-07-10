@@ -196,15 +196,15 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Time)
 
     // "H:MM" (pad minutes to two digits, but not the hour)
     //
-    Append_Int(mo->strand, tf.h);
+    required (Append_Int(mo->strand, tf.h));
     Append_Codepoint(mo->strand, ':');
-    Append_Int_Pad(mo->strand, tf.m, 2);
+    required (Append_Int_Pad(mo->strand, tf.m, 2));
 
     // If seconds or nanoseconds nonzero, pad seconds to ":SS", else omit
     //
     if (tf.s != 0 or tf.n != 0) {
         Append_Codepoint(mo->strand, ':');
-        Append_Int_Pad(mo->strand, tf.s, 2);
+        required (Append_Int_Pad(mo->strand, tf.s, 2));
     }
 
     // If nanosecond component is present, present as a fractional amount...
@@ -212,7 +212,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Time)
     //
     if (tf.n > 0) {
         Append_Codepoint(mo->strand, '.');
-        Append_Int_Pad(mo->strand, tf.n, -9);
+        required (Append_Int_Pad(mo->strand, tf.n, -9));
         Trim_Tail(mo, '0');
     }
 

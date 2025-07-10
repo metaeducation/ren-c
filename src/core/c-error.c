@@ -811,8 +811,10 @@ Error* Error_Bad_Func_Def(const Element* spec, const Element* body)
     // error that existed before refactoring code out of Make_Function().
 
     Source* a = Make_Source_Managed(2);
-    Append_Value(a, spec);
-    Append_Value(a, body);
+    Sink(Element) cell = require (Alloc_Tail_Array(a));
+    Copy_Cell(cell, spec);
+    cell = require (Alloc_Tail_Array(a));
+    Copy_Cell(cell, body);
 
     DECLARE_ELEMENT (def);
     Init_Block(def, a);

@@ -528,8 +528,9 @@ INLINE void Set_Flex_Len(Flex* f, Length len) {
 INLINE Result(Zero) Expand_Flex_Tail(Flex* f, REBLEN delta) {
     if (Flex_Fits(f, delta))
         Set_Flex_Used(f, Flex_Used(f) + delta);  // no termination implied
-    else
-        Expand_Flex(f, Flex_Used(f), delta);  // currently terminates
+    else {
+        trapped (Expand_Flex(f, Flex_Used(f), delta));  // currently terminates
+    }
     return zero;
 }
 
@@ -581,8 +582,12 @@ INLINE Result(Flex*) Make_Flex_Into(
     }
 
     if (not (flags & BASE_FLAG_MANAGED)) {  // more efficient if managed [1]
-        if (Is_Flex_Full(g_gc.manuals))
-            Extend_Flex_If_Necessary(g_gc.manuals, 8);
+        if (Is_Flex_Full(g_gc.manuals)) {
+            Extend_Flex_If_Necessary(g_gc.manuals, 8) except (Error* e) {
+                Free_Unmanaged_Flex(s);
+                return fail (e);
+            }
+        }
 
         cast(Flex**, g_gc.manuals->content.dynamic.data)[
             g_gc.manuals->content.dynamic.used++

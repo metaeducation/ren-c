@@ -295,7 +295,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
 // This will likely be easy to reuse in an RUNE!+CHAR! unification, so
 // revisit this low-priority idea at that time.
 
-INLINE Element* Init_Any_Sequence_Bytes(
+INLINE Result(Element*) Init_Any_Sequence_Bytes(
     Init(Element) out,
     Heart heart,
     const Byte* data,
@@ -310,9 +310,10 @@ INLINE Element* Init_Any_Sequence_Bytes(
 
     if (size > Size_Of(out->payload.at_least_8) - 1) {  // too big
         Source* a = Make_Source_Managed(size);
-        for (; size > 0; --size, ++data)
-            Init_Integer(Alloc_Tail_Array(a), *data);
-
+        for (; size > 0; --size, ++data) {
+            Sink(Element) cell = trap (Alloc_Tail_Array(a));
+            Init_Integer(cell, *data);
+        }
         Init_Block(out, Freeze_Source_Shallow(a));  // !!! TBD: compact BLOB!
     }
     else {
@@ -326,7 +327,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
 }
 
 #define Init_Tuple_Bytes(out,data,len) \
-    Init_Any_Sequence_Bytes((out), TYPE_TUPLE, (data), (len));
+    Init_Any_Sequence_Bytes((out), TYPE_TUPLE, (data), (len))
 
 INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
     Init(Element) out,
@@ -432,7 +433,8 @@ INLINE Result(Element*) Init_Any_Sequence_Or_Conflation_Pairlike(
         if (i1 >= 0 and i2 >= 0 and i1 <= 255 and i2 <= 255) {
             buf[0] = cast(Byte, i1);
             buf[1] = cast(Byte, i2);
-            return Init_Any_Sequence_Bytes(out, heart, buf, 2);
+            required (Init_Any_Sequence_Bytes(out, heart, buf, 2));
+            return out;
         }
 
         // fall through

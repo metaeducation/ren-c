@@ -68,7 +68,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
                 panic (arg);
             *vp++ = decoded;
         }
-        Init_Tuple_Bytes(OUT, buf, size);
+        required (Init_Tuple_Bytes(OUT, buf, size));
         return OUT;
     }
 
@@ -77,7 +77,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         const Byte* at = Blob_Size_At(&size, arg);
         if (size > MAX_TUPLE)
             size = MAX_TUPLE;
-        Init_Tuple_Bytes(OUT, at, size);
+        required (Init_Tuple_Bytes(OUT, at, size));
         return OUT;
     }
 
@@ -129,7 +129,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         REBLEN temp = len;
         for (; temp > 0; --temp, vp++)
             *vp = cast(Byte, ~*vp);
-        return Init_Tuple_Bytes(OUT, buf, len);
+        required (Init_Tuple_Bytes(OUT, buf, len));
+        return OUT;
     }
 
     Byte abuf[MAX_TUPLE];
@@ -246,7 +247,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         *vp = cast(Byte, v);
     }
 
-    return Init_Tuple_Bytes(OUT, buf, len);
+    required (Init_Tuple_Bytes(OUT, buf, len));
+    return OUT;
 }}
 
 

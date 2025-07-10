@@ -338,8 +338,9 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         // !!! Should this use a "bumping a NULL at the end" technique to
         // grow, like the data stack?
         //
-        if (Is_Flex_Full(g_gc.mark_stack))
-            Extend_Flex_If_Necessary(g_gc.mark_stack, 8);
+        if (Is_Flex_Full(g_gc.mark_stack)) {
+            required (Extend_Flex_If_Necessary(g_gc.mark_stack, 8));
+        }
         *Flex_At(Array*, g_gc.mark_stack, Flex_Used(g_gc.mark_stack)) = a;
         Set_Flex_Used(  // doesn't add a terminator
             g_gc.mark_stack,
@@ -1037,7 +1038,7 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                     Remove_GC_Mark(s);
                 }
                 else {
-                    Expand_Flex_Tail(sweeplist, 1);
+                    assumed (Expand_Flex_Tail(sweeplist, 1));
                     *Flex_At(Base*, sweeplist, sweep_count) = s;
                     ++sweep_count;
                 }
@@ -1056,7 +1057,7 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                     Remove_GC_Mark(pairing);
                 }
                 else {
-                    Expand_Flex_Tail(sweeplist, 1);
+                    assumed (Expand_Flex_Tail(sweeplist, 1));
                     *Flex_At(Base*, sweeplist, sweep_count) = pairing;
                     ++sweep_count;
                 }
@@ -1433,8 +1434,9 @@ void Push_Lifeguard(const void* p)  // BASE_FLAG_BASE may not be set [1]
         assert(Is_Base_Managed(cast(Base*, p)));  // [3]
     }
 
-    if (Is_Flex_Full(g_gc.guarded))
-        Extend_Flex_If_Necessary(g_gc.guarded, 8);
+    if (Is_Flex_Full(g_gc.guarded)) {
+        required (Extend_Flex_If_Necessary(g_gc.guarded, 8));
+    }
 
     *Flex_At(const void*, g_gc.guarded, Flex_Used(g_gc.guarded)) = p;
 

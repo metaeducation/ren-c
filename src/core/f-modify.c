@@ -30,7 +30,7 @@
 //
 // Returns new dst_idx
 //
-REBLEN Modify_Array(
+Result(REBLEN) Modify_Array(
     Source* dst_arr,  // target
     REBLEN dst_idx,  // position
     SymId op,  // INSERT, APPEND, CHANGE
@@ -139,16 +139,15 @@ REBLEN Modify_Array(
 
     if (op != SYM_CHANGE) {
         // Always expand dst_arr for INSERT and APPEND actions:
-        Expand_Flex(dst_arr, dst_idx, size);
+        trapped (Expand_Flex(dst_arr, dst_idx, size));
     }
     else {
         if (size > part)
-            Expand_Flex(dst_arr, dst_idx, size - part);
+            trapped (Expand_Flex(dst_arr, dst_idx, size - part));
         else if (size < part and (flags & AM_PART))
             Remove_Flex_Units(dst_arr, dst_idx, part - size);
-        else if (size + dst_idx > tail_idx) {
-            Expand_Flex_Tail(dst_arr, size - (tail_idx - dst_idx));
-        }
+        else if (size + dst_idx > tail_idx)
+            trapped (Expand_Flex_Tail(dst_arr, size - (tail_idx - dst_idx)));
     }
 
     tail_idx = (op == SYM_APPEND) ? 0 : size + dst_idx;
@@ -235,7 +234,7 @@ static Error* Error_Bad_Utf8_Bin_Edit(Error* cause) {
 // of Series_Index() is different.  So in addition to the detection of the
 // FLEX_FLAG_IS_STRING on the Flex, we must know if dst is a BLOB!.
 //
-REBLEN Modify_String_Or_Blob(
+Result(REBLEN) Modify_String_Or_Blob(
     Value* dst,  // ANY-STRING? or BLOB! value to modify
     SymId op,  // SYM_APPEND @ tail, SYM_INSERT or SYM_CHANGE @ index
     Option(const Value*) opt_src,  // argument with content to inject
@@ -455,7 +454,7 @@ REBLEN Modify_String_Or_Blob(
         //
         if (b == dst_flex) {
             Set_Flex_Len(BYTE_BUF, 0);
-            Expand_Flex_Tail(BYTE_BUF, src_size_raw);
+            trapped (Expand_Flex_Tail(BYTE_BUF, src_size_raw));
             memcpy(Binary_Head(BYTE_BUF), src_ptr, src_size_raw);
             src_ptr = Binary_Head(BYTE_BUF);
         }
@@ -563,7 +562,7 @@ REBLEN Modify_String_Or_Blob(
     // longer series.
 
     if (op == SYM_APPEND or op == SYM_INSERT) {  // always expands
-        Expand_Flex(dst_flex, dst_off, src_size_total);
+        trapped (Expand_Flex(dst_flex, dst_off, src_size_total));
         Set_Flex_Used(dst_flex, dst_used + src_size_total);
 
         if (Is_Stub_Strand(dst_flex)) {
@@ -677,11 +676,11 @@ REBLEN Modify_String_Or_Blob(
             //
             // We're adding more bytes than we're taking out.  Expand.
             //
-            Expand_Flex(
+            trapped (Expand_Flex(
                 dst_flex,
                 dst_off,
                 src_size_total - part_size
-            );
+            ));
             Set_Flex_Used(dst_flex, dst_used + src_size_total - part_size);
         }
         else if (part_size > src_size_total) {

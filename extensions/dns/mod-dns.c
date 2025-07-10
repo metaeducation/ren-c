@@ -134,7 +134,9 @@ static void Get_Local_Ip_Via_Google_DNS_May_Panic(Sink(Value) out)
         goto cleanup_and_panic_if_error;
     }
 
-    Init_Tuple_Bytes(out, cast(Byte*, &local_addr.sin_addr.s_addr), 4);
+    require (
+        Init_Tuple_Bytes(out, cast(Byte*, &local_addr.sin_addr.s_addr), 4)
+    );
 
 } cleanup_and_panic_if_error: { //////////////////////////////////////////////
 
@@ -192,8 +194,12 @@ DECLARE_NATIVE(DNS_ACTOR)
             //
           #if TO_WINDOWS
             HOSTENT *he = gethostbyname("");  // 1 HOSTENT per thread
-            if (he != nullptr)
-                return Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4);
+            if (he != nullptr) {
+                required (
+                    Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4)
+                );
+                return OUT;
+            }
           #else
             Get_Local_Ip_Via_Google_DNS_May_Panic(OUT);
             return OUT;
@@ -237,8 +243,12 @@ DECLARE_NATIVE(DNS_ACTOR)
             HOSTENT *he = gethostbyname(name);  // 1 HOSTENT per thread
 
             rebFree(name);
-            if (he != nullptr)
-                return Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4);
+            if (he != nullptr) {
+                required (
+                  Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4)
+                );
+                return OUT;
+            }
 
             // ...else fall through to error handling...
         }

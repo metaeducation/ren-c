@@ -1137,13 +1137,13 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Copy_Cell(dest, src);
-        Clonify_And_Bind_Relative(
+        required (Clonify_And_Bind_Relative(  // !!! undo allocations?
             dest,
             flags | BASE_FLAG_MANAGED,
             deeply,
             binder,
             relative
-        );
+        ));
     }
 
     Destruct_Binder(binder);

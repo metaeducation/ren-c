@@ -279,7 +279,7 @@ Flex* Make_Set_Operation_Flex(
 
         Binary* buf = BYTE_BUF;
         REBLEN buf_start_len = Binary_Len(buf);
-        Expand_Flex_Tail(buf, i);  // ask for at least `i` capacity
+        required (Expand_Flex_Tail(buf, i));  // ask for at least `i` capacity
         REBLEN buf_at = buf_start_len;
 
         do {
@@ -336,7 +336,7 @@ Flex* Make_Set_Operation_Flex(
                         skip
                     )
                 ){
-                    Expand_Flex_Tail(buf, skip);
+                    required (Expand_Flex_Tail(buf, skip));
                     Size size_at;
                     const Byte* iter_at = Blob_Size_At(&size_at, iter);
                     REBLEN min = MIN(size_at, skip);

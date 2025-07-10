@@ -492,7 +492,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
     Value* input = ARG(INPUT);
 
     Value* state = ARG(STATE);
-    Array* loops = Cell_Array_Ensure_Mutable(
+    Source* loops = Cell_Array_Ensure_Mutable(
         Slot_Hack(Varlist_Slot(Cell_Varlist(state), IDX_UPARSE_PARAM_LOOPS))
     );
 
@@ -521,7 +521,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
     //    removing frames from the loops list in usermode.  Mirror that
     //    limitation here in the native implementation for now.
 
-    Element* loop_last = Alloc_Tail_Array(loops);
+    Sink(Element) loop_last = require (Alloc_Tail_Array(loops));
     Init_Frame(loop_last, Level_Varlist(level_), CANON(SOME), NONMETHOD);
 
     Push_Parser_Sublevel(OUT, remainder, parser, input);

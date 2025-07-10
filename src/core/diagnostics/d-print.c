@@ -104,12 +104,12 @@ void Form_Hex_Esc(Molder* mo, Byte b)
 //
 // Convert 32 bit RGBA to xxxxxx format.
 //
-void Form_RGBA(Molder* mo, const Byte* dp)
+Result(Zero) Form_RGBA(Molder* mo, const Byte* dp)
 {
     REBLEN len_old = Strand_Len(mo->strand);
     Size used_old = Strand_Size(mo->strand);
 
-    Expand_Flex_Tail(mo->strand, 8);  // grow by 8 bytes, may realloc
+    trapped (Expand_Flex_Tail(mo->strand, 8));  // grow by 8 bytes, may realloc
 
     Byte* bp = Binary_At(mo->strand, used_old);  // potentially new buffer
 
@@ -124,6 +124,7 @@ void Form_RGBA(Molder* mo, const Byte* dp)
     bp[8] = '\0';
 
     Term_Strand_Len_Size(mo->strand, len_old + 8, used_old + 8);
+    return zero;
 }
 
 

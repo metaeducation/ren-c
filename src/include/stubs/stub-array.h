@@ -214,9 +214,6 @@ INLINE Source* Alloc_Singular(Flags flags) {
     return a;
 }
 
-#define Append_Value(a,v) \
-    Copy_Cell(Alloc_Tail_Array(a), (v))
-
 // Modes allowed by Copy_Block function:
 enum {
     COPY_SHALLOW = 1 << 0,
@@ -269,4 +266,27 @@ enum {
 
     #define IS_VALUE_IN_ARRAY_DEBUG(a,v) \
         (Array_Len(a) != 0 and (v) >= Array_Head(a) and (v) < Array_Tail(a))
+#endif
+
+
+// Append a cell to a Rebol Array Flex at its tail.
+// Returns the new cell for you to initialize.
+//
+// Will use existing memory capacity already in the Flex if it is available,
+// but will expand the Flex if necessary.
+//
+INLINE Result(Cell*) Alloc_Tail_Array(Array* a)
+{
+    trapped (Expand_Flex_Tail(a, 1));
+    Set_Flex_Len(a, Array_Len(a));
+    return Flex_Last(Cell, a);
+}
+
+#if CPLUSPLUS_11
+    INLINE Result(Sink(Element)) Alloc_Tail_Array(Source* a)
+    {
+        trapped (Expand_Flex_Tail(a, 1));
+        Set_Flex_Len(a, Array_Len(a));
+        return Array_Last(a);
+    }
 #endif

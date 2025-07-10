@@ -140,7 +140,8 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
         // The arguments were already evaluated to put them in the frame, do
         // not evaluate them again.
         //
-        Copy_Lifted_Cell(Alloc_Tail_Array(normals), Slot_Hack(e.slot));
+        Sink(Element) cell = require (Alloc_Tail_Array(normals));
+        Copy_Lifted_Cell(cell, Slot_Hack(e.slot));
     }
 
     Shutdown_Evars(&e);

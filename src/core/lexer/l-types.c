@@ -1194,7 +1194,7 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
         if (*cp != ':')
             break;
 
-        Cell* val = nullptr;  // suppress maybe uninitialized warning
+        Sink(Element) val = nullptr;  // suppress maybe uninitialized warning
 
         const Symbol* name = require (Intern_Utf8_Managed(start, cp - start));
 
@@ -1210,17 +1210,20 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
                 // Does it already use a block?
                 if (Is_Block(item + 1)) {
                     // Block of values already exists:
-                    val = Alloc_Tail_Array(Cell_Array_Ensure_Mutable(item + 1));
+                    val = require (
+                        Alloc_Tail_Array(Cell_Array_Ensure_Mutable(item + 1))
+                    );
                 }
                 else {
                     // Create new block for values:
                     Source* a = Make_Source_Managed(2);
+                    Sink(Element) prior = require (Alloc_Tail_Array(a));
                     Derelativize(
-                        Alloc_Tail_Array(a),
-                        item + 1, // prior value
-                        SPECIFIED // no relative values added
+                        prior,
+                        item + 1,  // prior value
+                        SPECIFIED  // no relative values added
                     );
-                    val = Alloc_Tail_Array(a);
+                    val = require (Alloc_Tail_Array(a));
                     Init_Block(item + 1, a);
                 }
                 break;
@@ -1228,8 +1231,9 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
         }
 
         if (item == item_tail) {  // didn't break, add space for new word/value
-            Init_Set_Word(Alloc_Tail_Array(result), name);
-            val = Alloc_Tail_Array(result);
+            Sink(Element) cell = require (Alloc_Tail_Array(result));
+            Init_Set_Word(cell, name);
+            val = require (Alloc_Tail_Array(result));
         }
 
         while (Is_Lex_Space(*cp)) cp++;

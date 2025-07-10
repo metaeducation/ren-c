@@ -122,12 +122,12 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
 //
 //  Clonify: C
 //
-void Clonify(
+Result(Zero) Clonify(
     Element* v,
     Flags flags,
     bool deeply
 ){
-    Clonify_And_Bind_Relative(v, flags, deeply, nullptr, nullptr);
+    return Clonify_And_Bind_Relative(v, flags, deeply, nullptr, nullptr);
 }
 
 
@@ -140,7 +140,7 @@ void Clonify(
 // the resulting Array will already be deeply under GC management, and hence
 // cannot be freed with Free_Unmanaged_Flex().
 //
-Array* Copy_Array_Core_Managed(  // always managed, [1]
+Result(Array*) Copy_Array_Core_Managed(  // always managed, [1]
     Flags flags,
     const Array* original,
     REBLEN index,
@@ -170,31 +170,14 @@ Array* Copy_Array_Core_Managed(  // always managed, [1]
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Copy_Cell(dest, src);
-        Clonify(
+        trapped (Clonify(  // !!! undo previous allocations?
             dest,
             flags | BASE_FLAG_MANAGED,
             deeply
-        );
+        ));
     }
 
     return copy;
-}
-
-
-//
-//  Alloc_Tail_Array: C
-//
-// Append a cell to a Rebol Array Flex at its tail.
-// Returns the new cell for you to initialize.
-//
-// Will use existing memory capacity already in the Flex if it is available,
-// but will expand the Flex if necessary.
-//
-Sink(Element) Alloc_Tail_Array(Array* a)
-{
-    Expand_Flex_Tail(a, 1);
-    Set_Flex_Len(a, Array_Len(a));
-    return Array_Last(a);
 }
 
 

@@ -750,7 +750,7 @@ VarList* Copy_Varlist_Extra_Managed(
 
         Flags flags = BASE_FLAG_MANAGED;  // !!! Review, which flags?
         if (not Is_Antiform(dest)) {
-            Clonify(Known_Element(dest), flags, deeply);
+            required (Clonify(Known_Element(dest), flags, deeply));
         }
     }
 

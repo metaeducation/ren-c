@@ -120,11 +120,12 @@ Result(Zero) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
 //
 // Extend a series at its end without affecting its tail index.
 //
-void Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
+Result(Zero) Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
 {
     REBLEN used_old = Flex_Used(f);
-    Expand_Flex_Tail(f, delta);
+    trapped (Expand_Flex_Tail(f, delta));
     Set_Flex_Len(f, used_old);
+    return zero;
 }
 
 
@@ -336,14 +337,14 @@ void Remove_Any_Series_Len(Element* v, REBLEN index, REBINT len)
             Cell_Flex(v),
             index
         );
-        Modify_String_Or_Blob(
+        required (Modify_String_Or_Blob(
             temp,
             SYM_CHANGE,
             nullptr,  // e.g. void
             AM_PART,
             len,
             1  // dups
-        );
+        ));
     }
     else  // ANY-LIST? is more straightforward
         Remove_Flex_Units(Cell_Flex_Ensure_Mutable(v), index, len);
@@ -429,7 +430,7 @@ Byte* Reset_Buffer(Flex* buf, REBLEN len)
 
     Set_Flex_Len(buf, 0);
     Unbias_Flex(buf, true);
-    Expand_Flex(buf, 0, len); // sets new tail
+    required (Expand_Flex(buf, 0, len));  // sets new tail
 
     return Flex_Data(buf);
 }

@@ -980,7 +980,10 @@ bool Typecheck_Coerce(
 //
 // Give back an action antiform which can act as a checker for a datatype.
 //
-Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
+Result(Value*) Init_Typechecker(
+    Init(Value) out,
+    const Value* datatype_or_block
+){
     possibly(out == datatype_or_block);
 
     if (Is_Datatype(datatype_or_block)) {
@@ -1007,8 +1010,12 @@ Value* Init_Typechecker(Init(Value) out, const Value* datatype_or_block) {
         Array_At(a, 1), FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
     );
     Push_Lifeguard(param);
-    Set_Parameter_Spec(param, block, Cell_Binding(block));
+    Option(Error*) e = rescue (
+        Set_Parameter_Spec(param, block, Cell_Binding(block))
+    );
     Drop_Lifeguard(param);
+    if (e)
+        return fail (unwrap e);
 
     DECLARE_ELEMENT (def);
 
@@ -1053,7 +1060,8 @@ DECLARE_NATIVE(TYPECHECKER)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    return UNSURPRISING(Init_Typechecker(OUT, ARG(TYPES)));
+    required (Init_Typechecker(OUT, ARG(TYPES)));
+    return UNSURPRISING(OUT);
 }
 
 

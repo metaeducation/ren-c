@@ -259,7 +259,7 @@ void Set_Bit(Binary* bset, REBLEN n, bool set)
     // Expand if not enough room:
     if (i >= tail) {
         if (!set) return; // no need to expand
-        Expand_Flex(bset, tail, (i - tail) + 1);
+        required (Expand_Flex(bset, tail, (i - tail) + 1));
         memset(Binary_At(bset, tail), 0, (i - tail) + 1);
         Term_Flex_If_Necessary(bset);
     }
@@ -404,7 +404,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
 
             Codepoint c = Binary_Len(bset);
             if (n >= Cast_Signed(c)) {
-                Expand_Flex(bset, c, (n - c));
+                required (Expand_Flex(bset, c, (n - c)));
                 memset(Binary_At(bset, c), 0, (n - c));
             }
             memcpy(Binary_Head(bset), at, n);

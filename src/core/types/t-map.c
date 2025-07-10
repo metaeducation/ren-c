@@ -196,8 +196,10 @@ REBINT Find_Key_Hashed(
         indexes[slot] = (Array_Len(array) / wide) + 1;
 
         REBLEN index;
-        for (index = 0; index < wide; ++src, ++index)
-            Copy_Cell(u_cast(Value*, Alloc_Tail_Array(array)), src);
+        for (index = 0; index < wide; ++src, ++index) {
+            Cell* dest = require (Alloc_Tail_Array(array));
+            Copy_Cell(dest, src);
+        }
     }
 
     return (mode > 0) ? -1 : slot;
@@ -251,11 +253,11 @@ void Expand_Hashlist(HashList* hashlist)
     assert(Stub_Flavor(hashlist) == FLAVOR_HASHLIST);
 
     REBINT prime = Get_Hash_Prime_May_Panic(Hashlist_Num_Slots(hashlist) + 1);
-    Remake_Flex(
+    required (Remake_Flex(
         hashlist,
         prime + 1,
         FLEX_FLAG_POWER_OF_2  // not(BASE_FLAG_BASE) => don't keep data
-    );
+    ));
 
     Clear_Flex(hashlist);
     Set_Flex_Len(hashlist, prime);
@@ -342,8 +344,10 @@ Option(Index) Update_Map_Entry(
     if (not val)
         return 0;  // trying to remove non-existing key
 
-    Copy_Cell(u_cast(Value*, Alloc_Tail_Array(pairlist)), key);
-    Copy_Cell(u_cast(Value*, Alloc_Tail_Array(pairlist)), unwrap val);
+    Cell* key_cell = require (Alloc_Tail_Array(pairlist));
+    Cell* val_cell = require (Alloc_Tail_Array(pairlist));
+    Copy_Cell(key_cell, key);
+    Copy_Cell(val_cell, unwrap val);
 
     return (indexes[slot] = (Array_Len(pairlist) / 2));
 }
@@ -549,7 +553,7 @@ INLINE Result(Map*) Copy_Map(const Map* map, bool deeply) {
 
         Flags flags = BASE_FLAG_MANAGED;  // !!! Review
         if (not Is_Antiform(v)) {
-            Clonify(Known_Element(v), flags, deeply);
+            required (Clonify(Known_Element(v), flags, deeply));
         }
     }
 

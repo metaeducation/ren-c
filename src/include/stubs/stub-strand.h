@@ -370,7 +370,7 @@ INLINE Codepoint Get_Strand_Char_At(const Strand* s, REBLEN n) {
 // it is an optimization that may-or-may-not be worth the added complexity of
 // having more than one way of doing a CHANGE to a character.  Review.
 //
-INLINE void Set_Char_At(Strand* s, REBLEN n, Codepoint c) {
+INLINE Result(Zero) Set_Char_At(Strand* s, REBLEN n, Codepoint c) {
     //
     // We are maintaining the same length, but DEBUG_UTF8_EVERYWHERE will
     // corrupt the length every time the Flex_Used() changes.  Workaround that
@@ -406,7 +406,7 @@ INLINE void Set_Char_At(Strand* s, REBLEN n, Codepoint c) {
             Set_Flex_Used(s, Flex_Used(s) + delta);
         }
         else {
-            Expand_Flex_Tail(s, delta);  // this adds to SERIES_USED
+            trapped (Expand_Flex_Tail(s, delta));  // this adds to SERIES_USED
             cp = cast(Utf8(*),  // refresh `cp` (may've reallocated!)
                 cast(Byte*, Strand_Head(s)) + cp_offset
             );
@@ -435,6 +435,7 @@ INLINE void Set_Char_At(Strand* s, REBLEN n, Codepoint c) {
 
     Encode_UTF8_Char(cp, c, size);
     Assert_Flex_Term_If_Needed(s);
+    return zero;
 }
 
 INLINE REBLEN Num_Codepoints_For_Bytes(

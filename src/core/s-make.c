@@ -113,7 +113,7 @@ Strand* Append_Codepoint(Strand* dst, Codepoint c)
 
     Size tail = Strand_Size(dst);
     Size encoded_size = Encoded_Size_For_Codepoint(c);
-    Expand_Flex_Tail(dst, encoded_size);
+    required (Expand_Flex_Tail(dst, encoded_size));
     Encode_UTF8_Char(Binary_At(dst, tail), c, encoded_size);
 
     // "length" grew by 1 codepoint, but "size" grew by 1 to UNI_MAX_ENCODED
@@ -202,7 +202,7 @@ void Append_Utf8(Strand* dst, Utf8(const*) utf8, Length len, Size size)
     Size old_used = Strand_Size(dst);
 
     REBLEN tail = Strand_Size(dst);
-    Expand_Flex(dst, tail, size);  // Flex_Used() changes too
+    required (Expand_Flex(dst, tail, size));  // Flex_Used() changes too
 
     memcpy(Binary_At(dst, tail), cast(Byte*, utf8), size);
     Term_Strand_Len_Size(dst, old_len + len, old_used + size);
@@ -340,7 +340,7 @@ Strand* Append_UTF8_May_Panic(
     Length old_len = Strand_Len(dst);
     Size old_size = Strand_Size(dst);
 
-    Expand_Flex_Tail(dst, size);
+    required (Expand_Flex_Tail(dst, size));
     memcpy(
         Binary_At(dst, old_size),
         Binary_At(mo->strand, mo->base.size),
@@ -389,14 +389,14 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             panic (Error_Bad_Value(val));
 
           case TYPE_INTEGER:
-            Expand_Flex_Tail(buf, 1);
+            required (Expand_Flex_Tail(buf, 1));
             *Binary_At(buf, tail) = cast(Byte, VAL_UINT8(val));  // can panic()
             break;
 
           case TYPE_BLOB: {
             Size size;
             const Byte* data = Blob_Size_At(&size, val);
-            Expand_Flex_Tail(buf, size);
+            required (Expand_Flex_Tail(buf, size));
             memcpy(Binary_At(buf, tail), data, size);
             break; }
 
@@ -409,7 +409,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             Size utf8_size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, val);
 
-            Expand_Flex_Tail(buf, utf8_size);
+            required (Expand_Flex_Tail(buf, utf8_size));
             memcpy(Binary_At(buf, tail), cast(Byte*, utf8), utf8_size);
             Set_Flex_Len(buf, tail + utf8_size);
             break; }

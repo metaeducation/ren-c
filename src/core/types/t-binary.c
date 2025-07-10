@@ -363,14 +363,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         else
             panic (PARAM(VALUE));
 
-        SERIES_INDEX_UNBOUNDED(v) = Modify_String_Or_Blob(
+        SERIES_INDEX_UNBOUNDED(v) = require (Modify_String_Or_Blob(
             v,
             unwrap id,
             arg,
             flags,
             len,
             Bool_ARG(DUP) ? Int32(ARG(DUP)) : 1
-        );
+        ));
         return COPY(v); }
 
     //-- Search:

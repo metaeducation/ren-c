@@ -259,8 +259,13 @@ static Result(Zero) Push_Keys_And_Params_Core(
 
             Context* derived = Derive_Binding(Level_Binding(L), item);
             Push_Lifeguard(param);
-            Set_Parameter_Spec(param, item, derived);
+            Option(Error*) e = rescue (
+                Set_Parameter_Spec(param, item, derived)
+            );
             Drop_Lifeguard(param);
+
+            if (e)
+                return fail (unwrap e);
 
             Copy_Cell(TOP_ELEMENT, param);  // put modification back on stack
 
@@ -829,8 +834,9 @@ Details* Make_Dispatch_Details(
 //
 void Register_Dispatcher(Dispatcher* dispatcher, DetailsQuerier* querier)
 {
-    if (Is_Flex_Full(g_dispatcher_table))
-        Extend_Flex_If_Necessary(g_dispatcher_table, 8);
+    if (Is_Flex_Full(g_dispatcher_table)) {
+        required (Extend_Flex_If_Necessary(g_dispatcher_table, 8));
+    }
 
     Sink(DispatcherAndQuerier) d_and_q =
         &(Flex_Head_Dynamic(DispatcherAndQuerier, g_dispatcher_table)[

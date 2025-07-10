@@ -649,21 +649,21 @@ DECLARE_NATIVE(JOIN)
             );
             Size size = Strand_Size(mo->strand) - mo->base.size;
 
-            Expand_Flex_Tail(buf, size);
+            required (Expand_Flex_Tail(buf, size));
             memcpy(Binary_At(buf, used), cast(Byte*, utf8), size);
 
             Drop_Mold(mo);
         }
         else switch (maybe Type_Of(at)) {
           case TYPE_INTEGER:
-            Expand_Flex_Tail(buf, 1);
+            required (Expand_Flex_Tail(buf, 1));
             *Binary_At(buf, used) = cast(Byte, VAL_UINT8(at));  // can panic()
             break;
 
           case TYPE_BLOB: {
             Size size;
             const Byte* data = Blob_Size_At(&size, at);
-            Expand_Flex_Tail(buf, size);
+            required (Expand_Flex_Tail(buf, size));
             memcpy(Binary_At(buf, used), data, size);
             break; }
 
@@ -676,7 +676,7 @@ DECLARE_NATIVE(JOIN)
             Size utf8_size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, at);
 
-            Expand_Flex_Tail(buf, utf8_size);
+            required (Expand_Flex_Tail(buf, utf8_size));
             memcpy(Binary_At(buf, used), cast(Byte*, utf8), utf8_size);
             /*Set_Flex_Len(buf, used + utf8_size); */
             break; }
@@ -1128,7 +1128,7 @@ DECLARE_NATIVE(ENLINE)
         return COPY(ARG(STRING)); // nothing to do
 
     REBLEN old_len = Misc_Num_Codepoints(s);
-    Expand_Flex_Tail(s, delta);  // corrupts misc.num_codepoints
+    required (Expand_Flex_Tail(s, delta));  // corrupts misc.num_codepoints
     Tweak_Misc_Num_Codepoints(s, old_len + delta);  // just adding CR's
 
     // One feature of using UTF-8 for strings is that CR/LF substitution can

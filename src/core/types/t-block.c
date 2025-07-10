@@ -538,8 +538,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             if (id == SYM_SELECT)
                 panic ("Cannot SELECT with antiforms on lists");
 
-            if (Is_Datatype(pattern))
-                Init_Typechecker(pattern, pattern);  // out = in is okay
+            if (Is_Datatype(pattern)) {
+                required (
+                    Init_Typechecker(pattern, pattern)  // out = in is okay
+                );
+            }
             else if (Is_Action(pattern)) {
                 // treat as FIND function
             }
@@ -644,7 +647,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         if (Bool_ARG(LINE))
             flags |= AM_LINE;
 
-        SERIES_INDEX_UNBOUNDED(OUT) = Modify_Array(
+        SERIES_INDEX_UNBOUNDED(OUT) = require (Modify_Array(
             arr,
             index,
             unwrap id,
@@ -652,7 +655,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             flags,
             len,
             Bool_ARG(DUP) ? Int32(ARG(DUP)) : 1
-        );
+        ));
         return OUT; }
 
       case SYM_CLEAR: {
@@ -923,7 +926,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
 
     flags |= (list->header.bits & ARRAY_FLAG_CONST_SHALLOW);  // retain [1]
 
-    Source* copy = cast(Source*, Copy_Array_Core_Managed(
+    Source* copy = require (nocast Copy_Array_Core_Managed(
         flags, // flags
         arr,
         index, // at
@@ -1010,15 +1013,27 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
 
     if (Any_List(series)) {
         Source* arr = Cell_Array_Ensure_Mutable(series);
-        Modify_Array(arr, n, SYM_CHANGE, poke, AM_PART, part, dups);
+        required (
+            Modify_Array(
+                arr, n, SYM_CHANGE, poke, AM_PART, part, dups
+            )
+        );
     }
     else if (Any_String(series)) {
         SERIES_INDEX_UNBOUNDED(series) = n;
-        Modify_String_Or_Blob(series, SYM_CHANGE, poke, AM_PART, part, dups);
+        required (
+            Modify_String_Or_Blob(
+                series, SYM_CHANGE, poke, AM_PART, part, dups
+            )
+        );
     }
     else {
         SERIES_INDEX_UNBOUNDED(series) = n;
-        Modify_String_Or_Blob(series, SYM_CHANGE, poke, AM_PART, part, dups);
+        required (
+            Modify_String_Or_Blob(
+                series, SYM_CHANGE, poke, AM_PART, part, dups
+            )
+        );
     }
 
     return NO_WRITEBACK_NEEDED;  // Array* in Cell stays the same
@@ -1568,7 +1583,8 @@ DECLARE_NATIVE(GLOM)
     // practice all GLOM that exist for the moment will be working on
     // series that are at their head, so this won't help.
 
-    Copy_Cell(Alloc_Tail_Array(a), cast(Element*, value));
+    Sink(Element) cell = require (Alloc_Tail_Array(a));
+    Copy_Cell(cell, Known_Element(value));
     return COPY(accumulator);
 
 } append_many_items: { ///////////////////////////////////////////////////////
@@ -1583,7 +1599,7 @@ DECLARE_NATIVE(GLOM)
     Array* r = Cell_Array_Ensure_Mutable(value);
     Length a_len = Array_Len(a);
     Length r_len = Array_Len(r);
-    Expand_Flex_Tail(a, r_len);  // can move memory, get `at` after
+    required (Expand_Flex_Tail(a, r_len));  // can move memory, get `at` after
     Element* dst = Array_At(a, a_len);  // old tail position
     Element* src = Array_Head(r);
 

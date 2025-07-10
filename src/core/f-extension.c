@@ -95,7 +95,8 @@ DECLARE_NATIVE(BUILTIN_EXTENSIONS)
         assert(Is_Block(details));
         assert(Series_Len_At(details) == MAX_COLLATOR + 1);
 
-        Copy_Cell(Alloc_Tail_Array(list), Ensure_Element(details));
+        Sink(Element) cell = require (Alloc_Tail_Array(list));
+        Copy_Cell(cell, Ensure_Element(details));
         rebRelease(details);
     }
     return Init_Block(OUT, list);
