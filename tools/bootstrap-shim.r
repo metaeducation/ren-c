@@ -94,7 +94,7 @@ sys.util/recover [
     export /split-path3: enclose (
         augment split-path/ [:file [any-word? tuple!]]
     ) f -> [
-        let results: meta:lite eval f  ; no [...]: in bootstrap load of file
+        let results: lift:lite eval f  ; no [...]: in bootstrap load of file
         set opt f.file unlift results.2
         unlift results.1
     ]
@@ -231,6 +231,11 @@ for-each [alias] [
 ]
 
 function3: ~#[FUNCTION slated for synonym of FUNC, so no FUNCTION3]#~
+
+
+=== "RENAME META AND UNMETA" ===
+
+; Task: switch Boostrap META and UNMETA to LIFT and UNLIFT
 
 lift: meta3/
 unlift: unmeta3/

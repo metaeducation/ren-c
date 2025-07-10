@@ -75,7 +75,7 @@
 [(
     all wrap [
         orig: func ["description" a "a" :b "b"] [return <unused>]
-        aug: meta:lite augment orig/ [c "c" :d "d"]
+        aug: lift:lite augment orig/ [c "c" :d "d"]
         if m: adjunct-of aug [
             m.description = null  ; description not inherited ATM
         ]

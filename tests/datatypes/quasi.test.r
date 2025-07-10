@@ -50,7 +50,7 @@
     x: 10
     all [
         '~,~ = x: lift eval []
-        ghost? unmeta x
+        ghost? unlift x
     ]
 )
 (

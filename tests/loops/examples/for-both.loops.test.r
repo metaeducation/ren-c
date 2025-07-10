@@ -46,8 +46,8 @@
     (
         for-both: lambda [var blk1 blk2 body] [
             unlift:lite all [
-                meta:lite for-each var blk1 body
-                meta:lite for-each var blk2 body
+                lift:lite for-each var blk1 body
+                lift:lite for-each var blk2 body
             ]
         ]
 

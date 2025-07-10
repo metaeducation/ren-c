@@ -571,7 +571,7 @@ fail: func [
         [word! frame!]
 ][
     if trash? get:any $reason [
-        reason: as text! meta:lite reason  ; antiform tag! ~#unreachable~
+        reason: as text! lift:lite reason  ; antiform tag! ~#unreachable~
     ]
     all [warning? reason, not blame] then [
         return fail* reason  ; fast shortcut

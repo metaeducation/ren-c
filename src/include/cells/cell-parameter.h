@@ -165,7 +165,7 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* c) {
 // it is not the last word.  There is a type underlying it which also needs
 // to be checked.  Consider:
 //
-//     >> ap-int: copy meta:lite append/
+//     >> ap-int: copy lift:lite append/
 //
 //     >> ap-int.value: make parameter! [integer!]  ; or whatever syntax
 //     == &[parameter! [integer!]]

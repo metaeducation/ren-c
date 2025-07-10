@@ -403,7 +403,7 @@ DECLARE_NATIVE(CONSOLE)
         "sys.util/recover [",  // pollutes stack trace [3]
             "catch* 'quit* [",  // definitional quit (customized THROW) [4]
                 "sys.contexts.user.quit: sys.util/make-quit:console quit*/",
-                "result': lift* eval code",
+                "result': lift eval code",
             "] then caught -> [",  // QUIT wraps QUIT* to only throw integers
                 "result': caught",  // INTEGER! due to :CONSOLE, out of band
             "]",

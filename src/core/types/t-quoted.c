@@ -212,13 +212,12 @@ DECLARE_NATIVE(UNQUASI)
 //
 //  lift: native:intrinsic [
 //
-//  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
+//  "antiforms -> quasiforms, adds a quote to rest"
 //
-//      return: "Keywords and plain forms if :LITE, plain ERROR! ok if :EXCEPT"
+//      return: "Keywords and plain forms if :LITE"
 //          [quoted! quasiform! keyword! element? warning!]
 //      ^atom
 //      :lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
-//      :except "If argument is antiform ERROR!, give back as plain ERROR!"
 //  ]
 //
 DECLARE_NATIVE(LIFT)
@@ -235,18 +234,13 @@ DECLARE_NATIVE(LIFT)
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))  // intrinsic shortcut
         return COPY(Liftify(atom));
 
-    if (Is_Error(atom)) {
-        if (not Bool_ARG(EXCEPT))
-            panic (Cell_Error(atom));
-
-        LIFT_BYTE(atom) = NOQUOTE_2;
-        return COPY(atom);  // plain WARNING!
-    }
-
     if (
         Bool_ARG(LITE)  // LIFT:LITE handles quasiforms specially
         and Is_Antiform(atom)
     ){
+        if (Is_Error(atom))
+            panic (Cell_Error(atom));  // conservative... should it passthru?
+
         if (Is_Light_Null(atom) or Is_Void(atom))
             return COPY(atom);  // ^META valid [1]
 
@@ -259,19 +253,24 @@ DECLARE_NATIVE(LIFT)
 
 
 //
-//  lift*: native:intrinsic [
+//  lift-require: native:intrinsic [
 //
-//  "LIFT operator that works on any value (errors, packs, ghosts, etc.)"
+//  "antiforms -> quasiforms, adds a quote to rest, panic on error"
 //
 //      return: [quoted! quasiform!]
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(LIFT_P)
+DECLARE_NATIVE(LIFT_REQUIRE)  // synonym for LIFT REQUIRE
+//
+// This is currently used by PACK as the constraint passed to REDUCE.
 {
-    INCLUDE_PARAMS_OF_LIFT_P;
+    INCLUDE_PARAMS_OF_LIFT_REQUIRE;
 
     Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+
+    if (Is_Error(atom))
+        panic (Cell_Error(atom));
 
     return COPY(Liftify(atom));
 }
@@ -328,24 +327,6 @@ DECLARE_NATIVE(UNLIFT)
     return COPY(atom);  // quoted or quasi
 }
 
-
-//
-//  unlift*: native [
-//
-//  "Variant of UNLIFT that can synthesize any atom (error, pack, ghost...)"
-//
-//      return: [any-atom?]
-//      lifted [quoted! quasiform?]
-//  ]
-//
-DECLARE_NATIVE(UNLIFT_P)
-{
-    INCLUDE_PARAMS_OF_UNLIFT_P;
-
-    Copy_Cell(OUT, ARG(LIFTED));
-    required (Unliftify_Undecayed(OUT));
-    return OUT;
-}
 
 
 //
@@ -523,6 +504,9 @@ INLINE bool Pack_Native_Core_Throws(
 
 
 //
+
+
+//
 //  pack: native [
 //
 //  "Create a pack of arguments from a list, no errors (see PACK*)"
@@ -535,8 +519,8 @@ INLINE bool Pack_Native_Core_Throws(
 //
 DECLARE_NATIVE(PACK)
 //
-// 1. Using the predicate META means that error antiforms aren't tolerated in
-//    the main pack routine.  You have to use PACK*, which uses META* instead.
+// 1. Using LIFT-REQUIRE as a predicate means error antiforms aren't tolerated
+//    in PACK.  You have to use PACK*, which uses unconstrained LIFT.
 //
 //        https://forum.rebol.info/t/2206
 {
@@ -544,7 +528,7 @@ DECLARE_NATIVE(PACK)
 
     Element* block = Element_ARG(BLOCK);
 
-    if (Pack_Native_Core_Throws(OUT, block, LIB(LIFT)))  // no errors [1]
+    if (Pack_Native_Core_Throws(OUT, block, LIB(LIFT_REQUIRE)))  // no fail [1]
         return THROWN;
     return OUT;
 }
@@ -563,8 +547,8 @@ DECLARE_NATIVE(PACK)
 //
 DECLARE_NATIVE(PACK_P)
 //
-// 1. Using the predicate LIFT* means that errors will be tolerated by PACK*,
-//    whereas PACK does not.
+// 1. Using the predicate LIFT means that errors will be tolerated by PACK*,
+//    whereas PACK uses LIFT-REQUIRE by default.
 //
 //        https://forum.rebol.info/t/2206
 {
@@ -572,7 +556,7 @@ DECLARE_NATIVE(PACK_P)
 
     Element* block = Element_ARG(BLOCK);
 
-    if (Pack_Native_Core_Throws(OUT, block, LIB(LIFT_P)))  // fail ok [1]
+    if (Pack_Native_Core_Throws(OUT, block, LIB(LIFT)))  // fail ok [1]
         return THROWN;
     return OUT;
 }

@@ -129,6 +129,7 @@
 %errors/disarm.test.r
 %errors/except.test.r
 %errors/rescue.test.r
+%errors/require.test.r
 %errors/trap.test.r
 
 %examples/circled.test.r

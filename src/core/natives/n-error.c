@@ -316,6 +316,29 @@ DECLARE_NATIVE(TRAP)
 
 
 //
+//  require: native [
+//
+//  "If passed an ERROR! antiform, panic on it, otherwise passthru"
+//
+//      return: "Anything that wasn't an ERROR! antiform"
+//          [any-atom?]
+//      ^atom [any-atom?]
+//  ]
+//
+DECLARE_NATIVE(REQUIRE)
+{
+    INCLUDE_PARAMS_OF_REQUIRE;
+
+    Atom* atom = Atom_ARG(ATOM);
+
+    if (not Is_Error(atom))
+        return COPY(atom);  // pass thru any non-errors
+
+    panic (Cell_Error(atom));
+}
+
+
+//
 //  error?: native:intrinsic [
 //
 //  "Tells you if argument is an ERROR! antiform, doesn't panic if it is"

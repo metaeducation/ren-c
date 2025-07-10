@@ -1156,7 +1156,7 @@ default-combinators: make map! [
         ; We lift the result.  This lets us emit antiforms, since the MAKE
         ; OBJECT! evaluates.
         ;
-        pending: glom pending reduce [target lift ^result]
+        pending: glom pending reduce [target lift require ^result]
         return ^result
     ]
 

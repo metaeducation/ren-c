@@ -51,7 +51,7 @@ probe: func [
     ; Remember this is early in the boot, so many things not defined.
 
     write stdout if antiform? ^atom [
-        unspaced [mold lift* ^atom _ _ "; anti"]  ; lifted is quasiform
+        unspaced [mold lift ^atom _ _ "; anti"]  ; lifted is quasiform
     ] else [
         mold ^atom  ; possibly ACTION! or TRASH!, use ^atom to "defuse"
     ]
