@@ -81,7 +81,7 @@ if dir? tests [
     tests: dirize tests
     change-dir tests
     for-each 'file read tests [
-        if %.test.reb = find-last file %.t [run-tests file]
+        if %.test.r = find-last file %.t [run-tests file]
     ]
 ] else [
     run-tests tests

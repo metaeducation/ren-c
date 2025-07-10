@@ -310,7 +310,7 @@ export do-recover: func [
                 [
                     position: <here>
 
-                    ; Test filenames appear in the log, %x.test.reb
+                    ; Test filenames appear in the log, %x.test.r
                     "%" (
                         next-position: null  ; !!! for SET-WORD! gather
                         [next-position value]: transcode:next position

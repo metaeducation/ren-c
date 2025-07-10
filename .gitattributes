@@ -4,11 +4,11 @@
 # to the lexical types (e.g. making SET-WORD!  show up in bold), the highlight
 # of "keywords" in the Linguist handling of Rebol code is against the very
 # principle of the language.  It also turns refinements pink, which is very
-# jarring and impedes readability. 
+# jarring and impedes readability.
 #
 # Unfortunately, color schemes can't be adjusted.  So the only viable option is
 # to disable syntax highlighting entirely.
 #
 *.r linguist-language=text
 *.reb linguist-language=text
-*.test.reb linguist-language=text
+*.test.r linguist-language=text
