@@ -48,22 +48,18 @@ transcode-header: func [
     <local> key hdr rest line
 ][
     line: 1
-    [rest :key]: transcode:next // [  ; "REBOL"
+    [rest :key]: trap transcode:next // [  ; "REBOL"
         data
         file: file
         line: $line
-    ] except e -> [
-        return fail e
     ]
     if not rest [
         return pack [null null line]  ; !!! rethink interface, impure null
     ]
-    [rest :hdr]: transcode:next // [ ; BLOCK!
+    [rest :hdr]: trap transcode:next // [  ; BLOCK!
         rest
         file: file
         line: $line
-    ] except e -> [
-        return fail e
     ]
 
     hdr: all [key = 'Rebol, block? hdr, hdr]
@@ -208,9 +204,7 @@ bind construct [
         rest: skip data 2  ; !!! what is this skipping ("hdr.length" ??)
 
         if find opt hdr.options 'compress [  ; script encoded only
-            rest: (gunzip first rest) except e -> [
-                return fail e
-            ]
+            rest: trap gunzip first rest
         ]
     ]
 
@@ -282,7 +276,7 @@ load: func [
 
     ensure [text! blob!] data
 
-    [header data line]: load-header:file data file except e -> [return fail e]
+    [header data line]: trap load-header:file data file
 
     if word? opt header [cause-error 'syntax header source]
 
@@ -293,9 +287,9 @@ load: func [
 
     if not block? data [
         assert [match [blob! text!] data]  ; UTF-8
-        data: (transcode:file:line data file $line) except e -> [
-            return fail e
-        ]
+
+        data: trap transcode:file:line data file $line
+
         if not data [  ; completely empty file e.g. (load "Rebol []")
             data: copy []  ; allow it in this case
         ]

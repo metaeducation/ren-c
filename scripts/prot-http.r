@@ -142,7 +142,7 @@ do-request: func [
 
     read port.state.connection  ; read some data from the TCP port
     insist [
-        check-response port except e -> [return fail e]  ; see if it was enough
+        trap check-response port  ; see if it was enough
         ; if not it asks for more
         (port.state.mode = <ready>) or (port.state.mode = <close>)
     ]
@@ -339,9 +339,7 @@ check-response: func [
                     ]]
                     in headers 'Location
                 ] also [
-                    do-redirect port headers.location headers except e -> [
-                        return fail e
-                    ]
+                    trap do-redirect port headers.location headers
                 ] else [
                     return fail make warning! [
                         type: 'access
@@ -460,7 +458,7 @@ do-redirect: func [
     ; information, and clear out the port data.  (Redirects weren't part of
     ; the original scheme code, and were grafted on afterwards.)
     ;
-    let data: do-request port except e -> [return fail e]
+    let data: trap do-request port
     assert [null? port.data]
     port.data: data
 ]
@@ -630,7 +628,7 @@ sys.util/make-scheme [
                 need-close: 'yes
             ]
 
-            data: do-request port except e -> [return fail e]
+            data: trap do-request port
             assert [find [<ready> <close>] port.state.mode]
 
             if yes? need-close [
@@ -679,7 +677,7 @@ sys.util/make-scheme [
             ]
 
             parse-write-dialect port value
-            data: do-request port except e -> [return fail e]
+            data: trap do-request port
             assert [find [<ready> <close>] port.state.mode]
 
             if yes? need-close [

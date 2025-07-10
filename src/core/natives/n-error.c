@@ -280,6 +280,42 @@ DECLARE_NATIVE(EXCEPT)
 
 
 //
+//  trap: native [  ; performs arbitrary evaluation, can't be :intrinsic ATM
+//
+//  "If passed an ERROR! antiform, tunnel it to RETURN in scope, else passthru"
+//
+//      return: "Anything that wasn't an ERROR! antiform"
+//          [any-atom?]  ; [1]
+//      ^atom [any-atom?]
+//  ]
+//
+DECLARE_NATIVE(TRAP)
+{
+    INCLUDE_PARAMS_OF_TRAP;
+
+    Atom* atom = Atom_ARG(ATOM);
+
+    if (not Is_Error(atom))
+        return COPY(atom);  // pass thru any non-errors
+
+    Element* return_word = Init_Word(SCRATCH, CANON(RETURN));
+
+    Value* spare_action = require (Get_Word(
+        SPARE,
+        return_word,
+        Feed_Binding(LEVEL->feed)
+    ));
+
+    if (not Is_Action(spare_action))
+        panic ("TRAP can't find RETURN in scope to tunnel ERROR! to");
+
+    Element* lifted_atom = Liftify(atom);
+
+    return rebDelegate(rebRUN(spare_action), lifted_atom);
+}
+
+
+//
 //  error?: native:intrinsic [
 //
 //  "Tells you if argument is an ERROR! antiform, doesn't panic if it is"

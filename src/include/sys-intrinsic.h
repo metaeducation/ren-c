@@ -114,6 +114,8 @@ INLINE Option(const Symbol*) Level_Intrinsic_Label(Level* L) {
 //
 // Typically use this when you take an ^atom with no type constraints.
 //
+// !!! Make this a macro that can't be accidentally used w/non-intrinsic.
+//
 INLINE Atom* Intrinsic_Atom_ARG(Level* L) {
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC))
         return Level_Spare(L);

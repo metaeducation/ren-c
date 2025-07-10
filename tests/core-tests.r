@@ -101,7 +101,6 @@
 %control/compose.test.reb
 %control/default.test.reb
 %control/destructure.test.reb
-%control/disarm.test.reb
 %control/do.test.reb
 %control/either.test.reb
 %control/else.test.reb
@@ -110,7 +109,6 @@
 %control/match.test.reb
 %control/reduce.test.reb
 %control/reeval.test.reb
-%control/rescue.test.reb
 %control/switch.test.reb
 %control/unless.test.reb
 %control/wait.test.reb
@@ -127,6 +125,11 @@
 %convert/to-hex.test.reb
 
 %define/func.test.reb
+
+%errors/disarm.test.reb
+%errors/except.test.reb
+%errors/rescue.test.reb
+%errors/trap.test.reb
 
 %examples/circled.test.reb
 %examples/flow.test.reb

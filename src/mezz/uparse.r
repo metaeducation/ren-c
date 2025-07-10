@@ -190,10 +190,8 @@ bind construct [
                         f2
                         <local> ^result remainder subpending
                     ][
-                        [^result remainder subpending]:
-                            eval-free f2 except e -> [
-                                return fail e
-                            ]
+                        [^result remainder subpending]: trap eval-free f2
+
                         pending: glom pending spread subpending
                         return pack [^result remainder subpending]
                     ]
@@ -290,16 +288,12 @@ default-combinators: make map! [
         :negated
     ][
         if negated [  ; NOT NOT, e.g. call parser without negating it
-            return [{^} remainder]: parser input except e -> [
-                return fail e
-            ]
+            return [{^} remainder]: trap parser input
         ]
         if not negatable-parser? parser/ [
             panic "NOT called on non-negatable combinator"
         ]
-        return [{^} remainder]: parser:negated input except e -> [
-            return fail e
-        ]
+        return [{^} remainder]: trap parser:negated input
     ]
 
     === CONDITIONAL COMBINATOR ===
@@ -310,9 +304,8 @@ default-combinators: make map! [
         parser [action!]
         <local> result
     ][
-        [^result remainder]: parser input except e -> [
-            return fail e  ; non-matching parser means WHEN did not match
-        ]
+        [^result remainder]: trap parser input  ; non-matching parser, no match
+
         if void? ^result [
             panic "CONDITIONAL combinator received VOID antiform result"
         ]
@@ -369,9 +362,8 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result
     ][
-        [^result remainder]: parser input except e -> [
-            return fail e
-        ]
+        [^result remainder]: trap parser input
+
         if (not any-list? ^result) [
             panic "SPREAD only accepts ANY-LIST? and QUOTED!"
         ]
@@ -402,9 +394,8 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result pos
     ][
-        [^result pos]: parser input except e -> [
-            return fail e  ; the parse rule did not match
-        ]
+        [^result pos]: trap parser input  ; TRAP propagates fail if no match
+
         if (index of pos) <= (index of input) [
             return fail "FURTHER rule matched, but did not advance the input"
         ]
@@ -573,9 +564,7 @@ default-combinators: make map! [
     ][
         ^result: ~  ; default `[stop]` returns trash (tripwire)
         if not unset? $parser [  ; parser argument is optional
-            [^result input]: parser input except e -> [
-                return fail e
-            ]
+            [^result input]: trap parser input
         ]
 
         f: take:last state.loops except [
@@ -605,9 +594,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^value
     ][
-        [^value _]: parser input except e -> [
-            return fail e
-        ]
+        [^value _]: trap parser input
 
         ; !!! STATE is filled in as the frame of the top-level UPARSE call.  If
         ; we UNWIND then we bypass any of its handling code, so it won't set
@@ -657,7 +644,7 @@ default-combinators: make map! [
         parser [action!]
         <local> start end
     ][
-        [^ remainder]: parser input except e -> [return fail e]
+        [^ remainder]: trap parser input
 
         end: index of remainder
         start: index of input
@@ -692,13 +679,9 @@ default-combinators: make map! [
         replacer [action!]  ; !!! How to say result is used here?
         <local> ^replacement
     ][
-        [^ remainder]: parser input except e -> [  ; first find end position
-            return fail e
-        ]
+        [^ remainder]: trap parser input  ; first find end position
 
-        [^replacement _]: replacer input except e -> [
-            return fail e
-        ]
+        [^replacement _]: trap replacer input
 
         ; CHANGE returns tail, use as new remainder
         ;
@@ -711,9 +694,7 @@ default-combinators: make map! [
         return: [trash!]
         parser [action!]
     ][
-        [^ remainder]: parser input except e -> [  ; first find end position
-            return fail e
-        ]
+        [^ remainder]: trap parser input  ; first find end position
 
         remainder: remove:part input remainder
         return ~#remove~  ; note that REMOVE <END> is considered successful
@@ -725,9 +706,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^insertion
     ][
-        [^insertion _]: parser input except e -> [  ; remainder ignored
-            return fail e
-        ]
+        [^insertion _]: trap parser input  ; remainder ignored
 
         remainder: insert input ^insertion
         return ~#insert~
@@ -782,9 +761,8 @@ default-combinators: make map! [
         parser [action!]
         <local> where
     ][
-        [^where remainder]: parser input except e -> [
-            return fail e
-        ]
+        [^where remainder]: trap parser input
+
         case [
             void? ^where [
                 remainder: input
@@ -810,9 +788,7 @@ default-combinators: make map! [
         parser-right [action!]
         <local> start limit
     ][
-        [^ start]: parser-left input except e -> [
-            return fail e
-        ]
+        [^ start]: trap parser-left input
 
         limit: start
         cycle [
@@ -893,9 +869,8 @@ default-combinators: make map! [
             [any-series?]
         parser [action!]
     ][
-        [^ remainder]: parser input except e -> [
-            return fail e
-        ]
+        [^ remainder]: trap parser input
+
         if any-list? input [
             return as block! copy:part input remainder
         ]
@@ -966,16 +941,13 @@ default-combinators: make map! [
         :relax "Don't have to match input completely, just don't mismatch"
         <local> subseries subremainder ^result
     ][
-        [^subseries remainder]: parser input except e -> [
-            ;
-            ; If the parser in the first argument can't get a value to subparse
-            ; then we don't process it.
-            ;
-            ; !!! Review: should we allow non-value-bearing parsers that just
-            ; set limits on the input?
-            ;
-            return fail e
-        ]
+        ; If the parser in the first argument can't get a value to subparse
+        ; then TRAP propagates the FAIL and we don't process it.
+        ;
+        ; !!! Review: should we allow non-value-bearing parsers that just
+        ; set limits on the input?
+        ;
+        [^subseries remainder]: trap parser input
 
         if void? ^subseries [
             panic "Cannot SUPBARSE into a void"
@@ -996,9 +968,8 @@ default-combinators: make map! [
         ; If the entirety of the item at the list is matched by the
         ; supplied parser rule, then we advance past the item.
         ;
-        [^result subremainder]: subparser subseries except e -> [
-            return fail e
-        ]
+        [^result subremainder]: trap subparser subseries
+
         if (not relax) and (not tail? subremainder) [
             return fail "SUBPARSE succeeded, but didn't complete subseries"
         ]
@@ -1025,9 +996,7 @@ default-combinators: make map! [
         parser [action!]
         <local> collected
     ][
-        [^ remainder pending]: parser input except e -> [
-            return fail e
-        ]
+        [^ remainder pending]: trap parser input
 
         ; PENDING can be NULL or a block full of items that may or may
         ; not be intended for COLLECT.  Right now the logic is that all QUOTED!
@@ -1054,9 +1023,8 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result
     ][
-        [^result remainder pending]: parser input except e -> [
-            return fail e
-        ]
+        [^result remainder pending]: trap parser input
+
         if void? ^result [
             pending: blank
             return null
@@ -1136,9 +1104,7 @@ default-combinators: make map! [
         parser [action!]
         <local> obj
     ][
-        [^ remainder pending]: parser input except e -> [
-            return fail e
-        ]
+        [^ remainder pending]: trap parser input
 
         ; Currently we assume that all the BLOCK! items in the pending are
         ; intended for GATHER.
@@ -1185,9 +1151,7 @@ default-combinators: make map! [
             target: unbind target  ; `emit foo:` okay in function defining foo
         ]
 
-        [^result remainder pending]: parser input except e -> [
-            return fail e
-        ]
+        [^result remainder pending]: trap parser input
 
         ; We lift the result.  This lets us emit antiforms, since the MAKE
         ; OBJECT! evaluates.
@@ -1217,7 +1181,7 @@ default-combinators: make map! [
             var: eval var
         ]
 
-        [^result remainder]: parser input except e -> [return fail e]
+        [^result remainder]: trap parser input
 
         return set var ^result
     ]
@@ -1402,9 +1366,8 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result
     ][
-        [^result remainder]: parser input except e -> [
-            return fail e
-        ]
+        [^result remainder]: trap parser input
+
         state.env: add-let-binding state.env (unchain vars) ^result
 
         return ^result
@@ -1421,9 +1384,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result
     ][
-        [^result remainder]: parser input except e -> [
-            return fail e
-        ]
+        [^result remainder]: trap parser input
 
         return inside state.input ^result
     ]
@@ -1490,9 +1451,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result
     ][
-        [^result remainder pending]: parser input except e -> [
-            return fail e
-        ]
+        [^result remainder pending]: trap parser input
 
         ; Run GROUP!s in order, removing them as one goes
         ;
@@ -1774,7 +1733,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^times min max ^result
     ][
-        [^times input]: times-parser input except e -> [return fail e]
+        [^times input]: trap times-parser input
 
         if void? ^times [  ; VOID-in-NULL-out
             remainder: input
@@ -1887,7 +1846,7 @@ default-combinators: make map! [
             if negated [
                 panic "TYPE-BLOCK! only supported negated for array input"
             ]
-            [remainder item]: transcode:next input except e -> [return fail e]
+            [remainder item]: trap transcode:next input
 
             ; If TRANSCODE knew what kind of item we were looking for, it could
             ; shortcut this.  Since it doesn't, we might waste time and memory
@@ -1990,10 +1949,8 @@ default-combinators: make map! [
         case [
             group? value [  ; run GROUP! to get *actual* value to match
                 comb: runs state.combinators.(group!)
-                [^result remainder pending]: comb state input value
-                    except e -> [
-                        return fail e
-                    ]
+                [^result remainder pending]: trap comb state input value
+
                 if void? ^result [
                     return void
                 ]
@@ -2006,19 +1963,14 @@ default-combinators: make map! [
             ]
             block? value [  ; match literal block redundant [4]
                 comb: runs state.combinators.(block!)
-                [^result remainder pending]: comb state input value
-                    except e -> [
-                        return fail e
-                    ]
+                [^result remainder pending]: trap comb state input value
             ]
         ]
 
         ensure [quoted! quasiform!] result  ; quasi means antiform [2]
         comb: runs state.combinators.(type of result)  ; quoted or quasi
-        [^result remainder subpending]: comb state remainder result  ; metaform
-            except e -> [
-                return fail e
-            ]
+
+        [^result remainder subpending]: trap comb state remainder result
 
         pending: glom pending spread subpending
         return ^result
@@ -2032,7 +1984,7 @@ default-combinators: make map! [
         return: [ghost!]
         parser [action!]
     ][
-        [^ remainder]: parser input except e -> [return fail e]
+        [^ remainder]: trap parser input
         return ghost
     ]
 
@@ -2051,7 +2003,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result
     ][
-        [^result _]: parser input except e -> [return fail e]
+        [^result _]: trap parser input
 
         if space? ^result [
             remainder: input
@@ -2131,11 +2083,9 @@ default-combinators: make map! [
             let param: select value key
             if not param.optional [
                 ensure frame! parsers.1
-                f.(key): [{_} input subpending]: (
-                    run parsers.1 input
-                ) except e -> [
-                    return fail e
-                ]
+
+                f.(key): [{_} input subpending]: trap run parsers.1 input
+
                 pending: glom pending spread subpending
                 parsers: next parsers
             ]
@@ -2274,8 +2224,8 @@ default-combinators: make map! [
             if not tail? input [
                 for-each 'item block [
                     if input.1 = any [
-                        ? if any-string? input [to rune! item]
-                        ? if blob? input [to blob! item]
+                        when any-string? input [to rune! item]
+                        when blob? input [to blob! item]
                         item
                     ][
                         remainder: next input
@@ -2993,9 +2943,8 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
     "Process input in the parse dialect, definitional error on failure"
 ] ]
     enclose parse*/ func [f] [
-        let [^synthesized pending]: eval-free f except e -> [
-            return fail e
-        ]
+        let [^synthesized pending]: trap eval-free f
+
         if not empty? pending [
             panic "PARSE completed, but pending list was not empty"
         ]
@@ -3075,9 +3024,7 @@ parse-furthest-hook: func [
     f [frame!]
     var [word! tuple!]
 ][
-    let ^result: eval f except e -> [
-        return fail e
-    ]
+    let ^result: trap eval f
 
     let remainder: unquote second unquasi result
     if (index of remainder) > (index of get var) [
