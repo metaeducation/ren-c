@@ -53,19 +53,22 @@ Result(Element*) Transcode_One(
     const Element* any_utf8
 ){
     assert(Any_Utf8(any_utf8));  // use rebQ(), as SIGIL!, WORD!, evaluative
-    Value* trapped = rebEnrescue("transcode:one as text!", rebQ(any_utf8));
-    if (Is_Warning(trapped)) {
-        Error* error = Cell_Error(trapped);
-        rebRelease(trapped);
+    Value* result;
+    RebolValue* warning = rebRescue2(
+        &result,
+        "transcode:one as text!", rebQ(any_utf8)
+    );
+    if (warning) {
+        Error* error = Cell_Error(warning);
+        rebRelease(warning);
         return fail (error);
     }
-    Unliftify_Known_Stable(trapped);
-    if (heart and Heart_Of(trapped) != heart) {
-        rebRelease(trapped);
+    if (heart and Heart_Of(result) != heart) {
+        rebRelease(result);
         return fail ("Transcode_One() gave unwanted type");
     }
-    Copy_Cell(out, cast(Element*, trapped));
-    rebRelease(trapped);
+    Copy_Cell(out, Known_Element(result));
+    rebRelease(result);
     return out;
 }
 

@@ -1437,6 +1437,51 @@ RebolValue* API_rebEnrescue(
 
 
 //
+//  rebRescue2: API
+//
+// Alternate formulation of rebEnrescue, to split the result out to make it
+// easier to handle at the callsite.
+//
+RebolValue* API_rebRescue2(
+    RebolContext* binding,
+    RebolValue** value,
+    const void* p, void* vaptr
+){
+    ENTER_API;
+
+    Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
+
+    Flags flags = RUN_VA_FLAG_LIFT_RESULT;
+    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+
+    assert(Any_Lifted(v));
+
+    if (Is_Lifted_Error(v)) {
+        LIFT_BYTE(v) = NOQUOTE_2;  // plain error
+        return v;  // caller must rebRelease();
+    }
+
+    if (Is_Lifted_Null(v)) {
+        Free_Value(v);
+        *value = nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
+        return nullptr;
+    }
+
+    Unliftify_Undecayed(cast(Atom*, v)) excepted (Error* e) {
+        panic (e);
+    };
+
+    Decay_If_Unstable(cast(Atom*, v)) excepted (Error* e) {
+        panic (e);
+    }
+
+    Set_Base_Root_Bit(v);
+    *value = v;  // caller must rebRelease()
+    return nullptr;
+}
+
+
+//
 //  rebRecover: API
 //
 // Builds in an RESCUE operation to rebValue; shorthand that's more efficient.
