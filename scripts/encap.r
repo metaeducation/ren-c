@@ -1241,7 +1241,7 @@ generic-format: context [
 encap: func [
     return: "Path location of the resulting output"
         [file!]
-    spec "Single script to embed, directory to zip with main.reb, or dialect"
+    spec "Single script to embed, directory to zip with main.r, or dialect"
         [file! block!]
     :rebol "Path to a Rebol to encap instead of using the current one"
         [file! url!]

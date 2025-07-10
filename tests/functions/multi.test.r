@@ -1,4 +1,4 @@
-; %multi.rest.reb
+; %multi.rest.r
 ;
 ; Multiple return values are based on unstable BLOCK! antiforms (PACK!).
 

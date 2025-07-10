@@ -25,8 +25,8 @@ Rebol [
 import <bootstrap-shim.r>
 
 c-lexical: import <c-lexicals.r>
-import <text-lines.reb>
-import <parsing-tools.reb>
+import <text-lines.r>
+import <parsing-tools.r>
 
 load-until-double-newline: func [
     "Load rebol values from text until double newline."

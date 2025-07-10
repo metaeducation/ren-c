@@ -58,7 +58,7 @@ DECLARE_NATIVE(LOCALE)
 //
 // 1. This function only needs to make OS calls on Windows.  The POSIX version
 //    parses environment variables and uses compiled-in tables.  See the HIJACK
-//    in %ext-locale-init.reb for that.
+//    in %ext-locale-init.r for that.
 {
     INCLUDE_PARAMS_OF_LOCALE;
 

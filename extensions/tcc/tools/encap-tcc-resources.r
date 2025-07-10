@@ -1,7 +1,7 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Gather and Compress redistributable includes/libs for TCC"
-    file: %encap-tcc-resources.reb  ; used by MAKE-EMITTER
+    file: %encap-tcc-resources.r  ; used by MAKE-EMITTER
 
     rights: --[
         Copyright 2019 Ren-C Open Source Contributors

@@ -195,7 +195,7 @@ compile: func [
     ]
 
     ; If we are on Windows and no explicit include or lib paths were provided,
-    ; try using the win32/include path.  %encap-tcc-resources.reb puts those
+    ; try using the win32/include path.  %encap-tcc-resources.r puts those
     ; into the resource zip, and it gives *some* Win32 entry points.
     ;
     ; https://repo.or.cz/tinycc.git/blob/HEAD:/win32/tcc-win32.txt
@@ -396,7 +396,7 @@ compile: func [
         config.librebol-path: default [any [
             get-env "LIBREBOL_INCLUDE_DIR"
 
-            ; Guess it is in the runtime directory (%encap-tcc-resources.reb
+            ; Guess it is in the runtime directory (%encap-tcc-resources.r
             ; puts it into the root of the zip file at the moment)
             ;
             config.runtime-path

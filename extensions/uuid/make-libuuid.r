@@ -1,6 +1,6 @@
 Rebol [
     title: "Extract libUUID"
-    file: %make-libuuid.reb
+    file: %make-libuuid.r
 
     description: --[
         The Linux Kernel organization has something called `util-linux`, which

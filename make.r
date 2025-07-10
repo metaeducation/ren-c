@@ -1961,7 +1961,7 @@ prep: make rebmake.entry-class [
             ]
         ]
 
-        keep ["$(REBOL)" join src-dir %main/prep-main.reb]
+        keep ["$(REBOL)" join src-dir %main/prep-main.r]
     ]
     depends: reduce [
         reb-tool

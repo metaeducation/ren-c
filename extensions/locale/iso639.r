@@ -1,6 +1,6 @@
 Rebol []
 
-init: %ext-locale-init.reb
+init: %ext-locale-init.r
 inp: %ISO-639-2_utf-8.txt
 count: read inp
 if #{EFBBBF} = as blob! copy:part count 3 [  ; UTF-8 BOM

@@ -12,10 +12,10 @@
 ; Returning of Rebol values from called to calling script via QUIT w/arg.
 (
     do-script-returning: lambda [value <local> script] [
-        script: %tmp-inner.reb
+        script: %tmp-inner.r
         save:header script compose [quit:value (value)] []
         do script
-        elide delete %tmp-inner.reb
+        elide delete %tmp-inner.r
     ]
     for-each 'value reduce [
         0

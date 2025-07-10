@@ -1,7 +1,7 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Create C .inc file with const data of r3.exe startup code"
-    file: %prep-main.reb
+    file: %prep-main.r
     rights: --[
         Copyright 2012-2021 Ren-C Open Source Contributors
         Copyright 2012 REBOL Technologies
@@ -48,8 +48,8 @@ change-dir repo-dir
 ; is embedded as well.
 ;
 for-each 'file reduce [
-    %scripts/unzip.reb
-    %scripts/encap.reb
+    %scripts/unzip.r
+    %scripts/encap.r
 
     ; %prot-http.r and %prot-tls.r don't have any native code directly in them,
     ; so they don't need to be "extensions".  They could just be encapped
@@ -62,7 +62,7 @@ for-each 'file reduce [
     %scripts/prot-tls.r  ; TLS (a.k.a. the "S" in HTTPS)
     %scripts/prot-http.r  ; HTTP Client (HTTPS if used with TLS)
 
-    %src/main/main-startup.reb
+    %src/main/main-startup.r
 ][
     let header: ~
     let contents: stripload:header file $header

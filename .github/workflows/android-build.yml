@@ -300,7 +300,7 @@ jobs:
     #
     - name: Make a .ZIP File of the Encap Resources for TCC
       run: |
-        # "${R3MAKE}" extensions/tcc/encap-tcc-resources.reb OS_ID=0.13.2
+        # "${R3MAKE}" extensions/tcc/encap-tcc-resources.r OS_ID=0.13.2
 
         cp build/prep/include/rebol.h tcc/
         cd tcc

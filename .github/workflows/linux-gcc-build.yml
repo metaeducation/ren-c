@@ -434,7 +434,7 @@ jobs:
       if: github.ref == 'refs/heads/master'
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
       run: |
-        latest-of: do %scripts/latest-of.reb
+        latest-of: do %scripts/latest-of.r
 
         os-id: to tuple! get-env 'OS_ID
         variation: if "-debug" = get-env 'VARIATION ['debug] else ['release]

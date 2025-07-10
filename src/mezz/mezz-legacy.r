@@ -12,7 +12,7 @@ Rebol [
     ]--
     description: --[
         These are a few compatibility scraps left over from extracting the
-        R3-Alpha emulation layer into %redbol.reb.
+        R3-Alpha emulation layer into %redbol.r.
     ]--
 ]
 

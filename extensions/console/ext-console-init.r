@@ -45,14 +45,14 @@ Rebol [
 boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
-    ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
+    ; !!! Duplicates code in %main-startup.r, where this isn't exported.
     enclose print/ f -> [if no? system.options.quiet [eval f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
-    ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
+    ; !!! Duplicates code in %main-startup.r, where this isn't exported.
     enclose print/ f -> [if yes? system.options.verbose [eval f]]
 )
 
@@ -369,12 +369,12 @@ bind construct [
     === MAKE CONSOLE! INSTANCE FOR SKINNING ===
 
     ; Instantiate console! object into system.console.  This is updated via
-    ; %console-skin.reb if in system.options.resources
+    ; %console-skin.r if in system.options.resources
 
     let skin-file: case [
         file? opt skin [skin]
         object? opt skin [null]
-    ] else [%console-skin.reb]
+    ] else [%console-skin.r]
 
     loud-print "Starting console..."
     loud-print newline

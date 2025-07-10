@@ -25,7 +25,7 @@
 //
 //  <body>
 //      /* optional Rebol scripts: */
-//      <script type="text/rebol" src="file.reb">
+//      <script type="text/rebol" src="file.r">
 //          ...optional Rebol code...
 //      </script>
 //      ....
@@ -705,7 +705,7 @@ return assign_git_commit_promiser(os_id)  // sets git_commit
         base_url = url.slice(0, url.lastIndexOf('/')) + '/'
 
     // Note: this sets `system.options.path`, so that functions like DO can
-    // locate relative FILE!s, e.g. `do %script.reb` knows where to look.
+    // locate relative FILE!s, e.g. `do %script.r` knows where to look.
     //
     reb.Elide("change-dir as url!", reb.T(base_url))
 

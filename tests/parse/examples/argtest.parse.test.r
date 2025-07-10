@@ -1,6 +1,6 @@
-; %argtest.parse.reb
+; %argtest.parse.r
 ;
-; This is a little test made to try adjusting rebol-server's webserver.reb to
+; This is a little test made to try adjusting rebol-server's webserver.r to
 ; use a PARSE rule instead of an "ITERATE".  Since it was written, keep it.
 
 [

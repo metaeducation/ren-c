@@ -526,7 +526,7 @@ e1/write-emitted
 ; script is blended together and looks like:
 ;
 ;    Rebol [
-;        title: "This header is whatever was in the %ext-xxx-init.reb"
+;        title: "This header is whatever was in the %ext-xxx-init.r"
 ;        type: module
 ;        ...
 ;    ]
@@ -538,7 +538,7 @@ e1/write-emitted
 ;    export alpha: native [...]  ; v-- see EXPORT note below
 ;    beta: infix native [...]
 ;
-;    ; The rest of the code was the body of %ext-xxx-init.reb
+;    ; The rest of the code was the body of %ext-xxx-init.r
 ;    ;
 ;    something: <value>
 ;    gamma: func [...] [alpha ..., beta ...]
@@ -747,7 +747,7 @@ e/emit [--[
 
 === "EMIT COMPRESSED STARTUP SCRIPT CODE AS C BYTE ARRAY" ===
 
-script-name: cscape [%ext-$<mod>-init.reb]
+script-name: cscape [%ext-$<mod>-init.r]
 
 header: ~
 initscript-body: stripload:header (join ext-src-dir script-name) $header

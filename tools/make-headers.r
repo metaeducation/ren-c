@@ -30,7 +30,7 @@ import <common.r>
 import <common-emitter.r>
 import <common-parsers.r>
 import <native-emitters.r>  ; for EMIT-INCLUDES-PARAM-MACRO
-import <text-lines.reb>
+import <text-lines.r>
 
 c-lexical: import <c-lexicals.r>
 

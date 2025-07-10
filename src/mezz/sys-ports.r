@@ -43,7 +43,7 @@ make-port*: func [
         ]
         block! [
             ;
-            ; !!! This BLOCK! may be dialected, for instance httpd.reb creates
+            ; !!! This BLOCK! may be dialected, for instance httpd.r creates
             ; a server with:
             ;
             ;     make port! [scheme: 'httpd 8000 [render "Hello"]]

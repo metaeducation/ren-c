@@ -30,10 +30,10 @@
 // blocks, but it can take any other data type that DO will accept...such as
 // a FILE! or URL!:
 //
-//     >> d: does https://example.com/some-script.reb
+//     >> d: does https://example.com/some-script.r
 //
 //     >> d
-//     ; Will act like `do https://example/some-script.reb`
+//     ; Will act like `do https://example/some-script.r`
 //
 //=//// NOTES ////////////////////////////////////////////////////////////=//
 //

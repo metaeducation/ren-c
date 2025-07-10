@@ -1,5 +1,5 @@
 Rebol [
-    file: %latest-of.reb
+    file: %latest-of.r
     date: [26-Mar-2019 24-Nov-2021]
     version: 0.2.0
 
@@ -84,7 +84,7 @@ Rebol [
         greenlighting process itself.  Once a build is greenlit it makes sure
         the script will run and return the URL it just uploaded.  But note that
         this is subject to bootstrap problems...your interpreter may become out
-        of date so it cannot run the current incarnation of %latest-of.reb - if
+        of date so it cannot run the current incarnation of %latest-of.r - if
         you hit that, run LATEST-OF in the Web Repl instead of a desktop build.
     ]--
 ]

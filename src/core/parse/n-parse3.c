@@ -34,7 +34,7 @@
 // the parser were unified with the level model of recursing the evaluator...
 // but that was the only true big change.
 //
-// However, a full redesign has been started with %src/mezz/uparse.reb.  This
+// However, a full redesign has been started with %src/mezz/uparse.r.  This
 // is in the spirit of "parser combinators" as defined in many other languages,
 // but brings in the PARSE dialect's succinct symbolic nature.  That design is
 // extremely slow, however--and will need to be merged in with some of the

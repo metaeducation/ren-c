@@ -25,7 +25,7 @@ import <bootstrap-shim.r>
 import <common.r>
 import <common-emitter.r>
 
-import <text-lines.reb>
+import <text-lines.r>
 
 
 native-info!: make object! [

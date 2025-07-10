@@ -1,7 +1,7 @@
 Rebol [
     system: "Rebol [R3] Language Interpreter and Run-time Environment"
     title: "Pre-Build Step for API entry points exported via tcc_add_symbol()"
-    file: %prep-libr3-tcc.reb
+    file: %prep-libr3-tcc.r
 
     rights: --[
         Copyright 2017 Atronix Engineering

@@ -13,7 +13,7 @@
 
 [
     (
-        rebsource: import %source-tools.reb
+        rebsource: import %source-tools.r
         source-analysis: rebsource.analyse/files
         save %../source-analysis.log source-analysis
         ok

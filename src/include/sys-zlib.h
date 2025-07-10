@@ -733,7 +733,7 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #endif
 
 // !!! The patch for defined __HAIKU__ was added for Ren-C, but would be lost
-// if %make-zlib.reb were executed again to extract from the main sources.
+// if %make-zlib.r were executed again to extract from the main sources.
 // The change should be submitted to zlib if it's important.
 //
 #if defined _BEOS_ || defined __HAIKU__

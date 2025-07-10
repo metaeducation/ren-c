@@ -149,16 +149,16 @@ usage: func [
 
     Examples:
 
-        REBOL script.reb
-        REBOL -s script.reb
-        REBOL script.reb 10:30 test@example.com
+        REBOL script.r
+        REBOL -s script.r
+        REBOL script.r 10:30 test@example.com
         REBOL --do "print [1 + 1]"
         #!/sbin/REBOL -cs
 
     Console (no script/arguments or Standard option used):
 
         REBOL
-        REBOL -q --about --suppress "%rebol.reb %user.reb"
+        REBOL -q --about --suppress "%rebol.r %user.r"
     ]--
 ]
 
@@ -557,7 +557,7 @@ bind construct [
         "--suppress" [param: text! | (param-missing "SUPPRESS")] (
             o.suppress: if param = "*" [
                 ; suppress all known start-up files
-                [%rebol.reb %user.reb %console-skin.reb]
+                [%rebol.r %user.r %console-skin.r]
             ] else [
                 make block! param
             ]
@@ -682,39 +682,39 @@ bind construct [
     ; start-up scripts, o.loaded tracks which ones are loaded (with full path)
     ;
 
-    ; Evaluate rebol.reb script:
+    ; Evaluate rebol.r script:
     ; !!! see https://github.com/rebol/rebol-issues/issues/706
     ;
     all [
         o.bin
-        not find opt o.suppress %rebol.reb
-        elide (loud-print ["Checking for rebol.reb file in" o.bin])
-        exists? join o.bin %rebol.reb
+        not find opt o.suppress %rebol.r
+        elide (loud-print ["Checking for rebol.r file in" o.bin])
+        exists? join o.bin %rebol.r
     ] then [
         rescue [
-            do (join o.bin %rebol.reb)
-            append o.loaded (join o.bin %rebol.reb)
-            loud-print ["Finished evaluating script:" (join o.bin %rebol.reb)]
+            do (join o.bin %rebol.r)
+            append o.loaded (join o.bin %rebol.r)
+            loud-print ["Finished evaluating script:" (join o.bin %rebol.r)]
         ] then e -> [
-            die:error "Error found in rebol.reb script" e
+            die:error "Error found in rebol.r script" e
         ]
     ]
 
-    ; Evaluate user.reb script:
+    ; Evaluate user.r script:
     ; !!! Should it query permissions to ensure RESOURCES is owner writable?
     ;
     all [
         o.resources
-        not find opt o.suppress %user.reb
-        elide (loud-print ["Checking for user.reb file in" o.resources])
-        exists? join o.resources %user.reb
+        not find opt o.suppress %user.r
+        elide (loud-print ["Checking for user.r file in" o.resources])
+        exists? join o.resources %user.r
     ] then [
         rescue [
-            do join o.resources %user.reb
-            append o.loaded join o.resources %user.reb
-            loud-print ["Finished evaluating:" join o.resources %user.reb]
+            do join o.resources %user.r
+            append o.loaded join o.resources %user.r
+            loud-print ["Finished evaluating:" join o.resources %user.r]
         ] then e -> [
-            die:error "Error found in user.reb script" e
+            die:error "Error found in user.r script" e
         ]
     ]
 
@@ -727,13 +727,13 @@ bind construct [
         ; made available somehow.  It shouldn't be part of the "core"
         ; but just responsibility of the host that supports encap
         ; based loading.  We put it in o.encap, and see if it contains a
-        ; %main.reb...if it does, we run it.
+        ; %main.r...if it does, we run it.
 
-        main: select boot-embedded %main.reb
+        main: select boot-embedded %main.r
     ]
     then [
         if not blob? main [
-            die "%main.reb not a BLOB! in encapped data"
+            die "%main.r not a BLOB! in encapped data"
         ]
         let [code header]: load main
 
@@ -741,8 +741,8 @@ bind construct [
         ; it's a module and handling HEADER correctly.  Also, scripts should
         ; be passed as arguments...not executed.  And the active directory
         ; should be in the ZIP, so that FILE! paths are resolved relative to
-        ; %main.reb's location.  But for now, just do a proof of concept by
-        ; showing execution of a main.reb if that is found in the encapping.
+        ; %main.r's location.  But for now, just do a proof of concept by
+        ; showing execution of a main.r if that is found in the encapping.
 
         emit [
             do (<*> code) except e -> [
@@ -761,7 +761,7 @@ bind construct [
     ;
     ; This can be worked around with multiple do statements in a row, e.g.:
     ;
-    ;     r3 --do "eval %script1.reb" --do "eval %script2.reb"
+    ;     r3 --do "eval %script1.r" --do "eval %script2.r"
     ;
     if match [file! url!] opt o.script [
         emit [

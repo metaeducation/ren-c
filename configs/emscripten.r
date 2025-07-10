@@ -35,7 +35,7 @@ Rebol [
 
       * There is special binding glue which implements the libRebol API in
         Emscripten, so that functions like reb.Value(...) are available to
-        JavaScript in the build.  See %prep-libr3-js.reb for that somewhat
+        JavaScript in the build.  See %prep-libr3-js.r for that somewhat
         intricate glue.
     ]--
 ]
@@ -366,7 +366,7 @@ ldflags: compose [
         ; faster, as raw WASM.  But it also means blacklisted APIs can be
         ; called from within a JS-AWAITER, since they don't require use of
         ; the suspended bytecode interpreter.  See additional notes in the
-        ; blacklist and whitelist generation code in %prep-libr3-js.reb
+        ; blacklist and whitelist generation code in %prep-libr3-js.r
         ;
         ; Note: If you build as C++, names will be mangled and so the list
         ; will not work.  Hence to use the asyncify build (with a whitelist)

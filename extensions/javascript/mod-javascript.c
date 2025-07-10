@@ -914,7 +914,7 @@ bool Javascript_Details_Querier(
 //
 DECLARE_NATIVE(JS_NATIVE)
 //
-// Note: specialized as JS-AWAITER in %ext-javascript-init.reb
+// Note: specialized as JS-AWAITER in %ext-javascript-init.r
 {
     INCLUDE_PARAMS_OF_JS_NATIVE;
 

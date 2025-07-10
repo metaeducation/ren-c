@@ -104,7 +104,7 @@ locale: construct [
         ; This is a list mapping tags to URLs as [<tag> http://example.com]
         ; They make it easy to do things like `import @json` or `do @chess`
         ;
-        utilities: https://raw.githubusercontent.com/r3n/renclib/master/userutils.reb
+        utilities: https://raw.githubusercontent.com/r3n/renclib/master/userutils.r
     ]
     locale:
     locale*: null
@@ -122,7 +122,7 @@ options: construct [  ; Options supplied to REBOL during startup
     boot: null      ; Path of executable, ie. system.options.bin/r3-exe
     home: null      ; Path of home directory
     resources: null ; users resources directory (for %user.r, skins, modules etc)
-    suppress: null  ; block of user --suppress items, eg [%rebol.r %user.r %console-skin.reb]
+    suppress: null  ; block of user --suppress items, eg [%rebol.r %user.r %console-skin.r]
     loaded: '[]     ; block with full paths to loaded start-up scripts
     path: null      ; Where script was started or the startup dir
 
@@ -142,7 +142,7 @@ options: construct [  ; Options supplied to REBOL during startup
     verbose: 'no
 
     module-paths: '[%./]
-    default-suffix: %.reb ; Used by IMPORT if no suffix is provided
+    default-suffix: %.r ; Used by IMPORT if no suffix is provided
     file-types: copy '[
         %.reb %.r3 %.r rebol
     ]

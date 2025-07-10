@@ -43,8 +43,8 @@ import %../../tools/common.r  ; sets REPO-DIR (among other things)
 
 c-lexical: import compose %(repo-dir)/tools/c-lexicals.r
 import compose %(repo-dir)/tools/common-parsers.r
-import compose %(repo-dir)/tools/text-lines.reb
-import compose %(repo-dir)/tools/read-deep.reb
+import compose %(repo-dir)/tools/text-lines.r
+import compose %(repo-dir)/tools/read-deep.r
 
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;

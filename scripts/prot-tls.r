@@ -19,7 +19,7 @@ Rebol [
         TLS scheme instead of a TCP connection underneath.
 
         Only the client side of the protocol is implemented ATM.  Adapting
-        it to work as a server (e.g. for use with %httpd.reb) would be more
+        it to work as a server (e.g. for use with %httpd.r) would be more
         work.  But it would involve most of the same general methods, as the
         protocol is fairly symmetrical.
 

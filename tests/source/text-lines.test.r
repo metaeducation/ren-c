@@ -1,11 +1,11 @@
-; Tests for text-lines.reb
+; Tests for text-lines.r
 ; Included as they are part of the build and source tests.
 
 [
     ; Setup test.
     (
         import %../../tools/common.r
-        import %../../tools/text-lines.reb
+        import %../../tools/text-lines.r
         ok
     )
 

@@ -528,7 +528,7 @@ unzip: func [
             ; !!! TBD: Improve handling of flags.
             ;
             (? if not zero? flags.1 and+ 1 [
-                panic "Encryption not supported by unzip.reb (yet)"
+                panic "Encryption not supported by unzip.r (yet)"
             ])
 
             ; We're now right past the local directory entry, where the

@@ -1,4 +1,4 @@
-; %topaz-expression.parse.reb
+; %topaz-expression.parse.r
 ;
 ; Adapted from:
 ;
