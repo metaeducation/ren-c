@@ -949,10 +949,12 @@ Result(const Byte*) Scan_Money_To_Stack(const Byte* cp, REBLEN len)
     ++cp;
     --len;
 
+    uint_fast8_t sign_len = 0;
     if (*cp == '-' or *cp == '+') {  // -$1.00 no longer legal, use $-1.00
         up = Write_Codepoint(up, *cp);
         ++cp;
         --len;
+        sign_len = 1;
     }
 
     uint_fast8_t dot_and_digits_len = 0;
@@ -978,7 +980,7 @@ Result(const Byte*) Scan_Money_To_Stack(const Byte* cp, REBLEN len)
     if (dot_and_digits_len != 0 and dot_and_digits_len != 3)
         return fail ("money! only allows 2 digits after dot");  // [1]
 
-    Term_Strand_Len_Size(s, len, up - Strand_Head(s));
+    Term_Strand_Len_Size(s, len + sign_len, up - Strand_Head(s));
 
     if (Try_Init_Small_Utf8(
         PUSH(),

@@ -224,12 +224,12 @@ DECLARE_NATIVE(LOAD_EXTENSION)
         Binary* b = Cell_Binary_Ensure_Mutable(script);
         TASTE_BYTE(b) = FLAVOR_0;  // set to FLAVOR_NONSYMBOL by STUB_MASK
         b->header.bits |= STUB_MASK_STRAND;
+        Tweak_Link_Bookmarks(u_cast(Strand*, b), nullptr);
         Term_Strand_Len_Size(
-            cast(Strand*, b),  // legal for tweaking cached data
+            u_cast(Strand*, b),  // legal for tweaking cached data
             script_num_codepoints,
             Binary_Len(b)
         );
-        Tweak_Link_Bookmarks(cast(Strand*, b), nullptr);
 
         if (SPORADICALLY(2))
             Init_Text(script, cast(Strand*, b));

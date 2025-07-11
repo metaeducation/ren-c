@@ -1454,3 +1454,49 @@ void Shutdown_String(void)
     Free_Memory_N(Byte, MAX_ESC_CHAR + 1, g_char_escapes);
     Free_Memory_N(Byte, MAX_URL_CHAR + 1, g_url_escapes);
 }
+
+
+#if DEBUG_UTF8_EVERYWHERE
+
+//
+//  Verify_Strand_Length_Debug: C
+//
+void Verify_Strand_Length_Debug(const Strand* s) {
+    if (Is_Strand_Symbol(s))
+        return;  // no cached codepoint length for symbols
+
+    Size size = Flex_Used(s);
+    Length len = MISC_STRAND_NUM_CODEPOINTS(s);
+
+    const Byte* tail = cast(Byte*, Strand_Head(s)) + size;
+
+    Utf8(const*) check_cp = Strand_Head(s);
+    REBLEN check_len = 0;
+    for (; check_cp != tail; ++check_len)
+        check_cp = Skip_Codepoint(check_cp);
+
+    assert(check_len == len);
+}
+
+//
+//  Verify_Strand_Bookmarks_Debug: C
+//
+void Verify_Strand_Bookmarks_Debug(const Strand* s) {
+    if (Is_Strand_Symbol(s))
+        return;  // no bookmarks for symbols
+
+    BookmarkList* book = maybe Link_Bookmarks(s);
+    if (not book)
+        return;  // no bookmarks
+
+    REBLEN index = BOOKMARK_INDEX(book);
+    REBLEN offset = BOOKMARK_OFFSET(book);
+
+    Utf8(const*) check_cp = Strand_Head(s);
+    REBLEN check_index = 0;
+    for (; check_index != index; ++check_index)
+        check_cp = Skip_Codepoint(check_cp);
+    assert(check_cp == cast(Byte*, Strand_Head(s)) + offset);
+}
+
+#endif

@@ -551,4 +551,79 @@
 #define b_cast(chars)   u_cast(unsigned char*, ensure(char*, (chars)))
 
 
+//=//// CONST PROPAGATION TOOLS ///////////////////////////////////////////=//
+//
+// !!! This is a very wacky idea that was struck from Needful for the time
+// being due to its weirdness and possibility to be used incorrectly.  But
+// it is used in Ren-C.
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// C lacks overloading, which means that having one version of code for const
+// input and another for non-const input requires two entirely different names
+// for the function variations.  That can wind up seeming noisier than is
+// worth it for a compile-time check.
+//
+//    const Member* Get_Member_Const(const Object* ptr) { ... }
+//
+//    Member* Get_Member(Object *ptr) { ... }
+//
+// Needful provides a way to use a single name and avoid code duplication.
+// It's a little tricky, but looks like this:
+//
+//     MUTABLE_IF_C(Member*) Get_Member(CONST_IF_C(Object*) ptr_) {
+//         CONSTABLE(Object*) ptr = m_cast(Object*, ptr_);
+//         ...
+//     }
+//
+// As the macro names suggest, the C build will behave in such a way that
+// the input argument will always appear to be const, and the output argument
+// will always appear to be mutable.  So it will compile permissively with
+// no const const checking in the C build.. BUT the C++ build synchronizes
+// the constness of the input and output arguments (though you have to use
+// a proxy variable in the body if you want mutable access).
+//
+// 1. If writing a simple wrapper whose only purpose is to pipe const-correct
+//    output results from the input's constness, a trick is to use `cast()`
+//    which is a "const-preserving cast".
+//
+//    #define Get_Member_As_Foo(ptr)  cast(Foo*, Get_Member(ptr))
+//
+// 2. The C++ version of MUTABLE_IF_C() actually spits out a `template<>`
+//    prelude.  If we didn't offer a "hook" to that, then if you wrote:
+//
+//        INLINE MUTABLE_IF_C(Type) Some_Func(...) {...}
+//
+//    You would get:
+//
+//        INLINE template<...> Some_Func(...) {...}
+//
+//    Since that would error, provide a generalized mechanism for optionally
+//    slipping decorators before the template<> definition.
+//
+
+#if NO_CPLUSPLUS_11
+    #define CONST_IF_C(param_type) \
+        const param_type  // Note: use cast() macros instead, if you can [1]
+
+    #define MUTABLE_IF_C(return_type, ...) \
+        __VA_ARGS__ return_type  // __VA_ARGS__ needed for INLINE etc. [2]
+
+    #define CONSTABLE(param_type)  param_type  // use m_cast() on assignment
+#else
+    #undef MUTABLE_IF_C
+    #define MUTABLE_IF_C(ReturnType, ...) \
+        template<typename T> \
+        __VA_ARGS__ needful_mirror_const_t(T, ReturnType)
+
+    #undef CONST_IF_C
+    #define CONST_IF_C(ParamType) /* !!! static_assert ParamType somehow? */ \
+        T&&  // universal reference to arg
+
+    #undef CONSTABLE
+    #define CONSTABLE(ParamType) \
+        needful_mirror_const_t(T, ParamType)
+#endif
+
+
 #endif

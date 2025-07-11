@@ -666,12 +666,12 @@ Result(Element*) Alias_Blob_As(
 
             str = cast(Strand*, bin);
 
+            Tweak_Link_Bookmarks(str, nullptr);
             Term_Strand_Len_Size(
                 m_cast(Strand*, str),  // legal for tweaking cached data
                 num_codepoints,
                 Binary_Len(bin)
             );
-            Tweak_Link_Bookmarks(str, nullptr);
 
             // !!! TBD: cache index/offset
         }

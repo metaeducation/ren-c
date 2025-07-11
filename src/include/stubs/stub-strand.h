@@ -132,20 +132,22 @@ MUTABLE_IF_C(Utf8(*), INLINE) Utf8_Skip(
     CONST_IF_C(Utf8(*)) utf8,
     REBINT delta
 ){
+    CONSTABLE(Utf8(*)) pos = m_cast(Utf8(*), utf8);
+
     if (delta > 0) {
         while (delta != 0) {
-            utf8 = Skip_Codepoint(utf8);
+            pos = Skip_Codepoint(pos);
             --delta;
         }
     }
     else {
         while (delta != 0) {
-            utf8 = Step_Back_Codepoint(utf8);
+            pos = Step_Back_Codepoint(pos);
             ++delta;
         }
     }
-    Utf8_Next(codepoint_out, utf8);
-    return m_cast(Utf8(*), utf8);  // return type is const if input is const
+    Utf8_Next(codepoint_out, pos);
+    return pos;
 }
 
 INLINE bool Codepoint_At_Is_NUL_0(Utf8(const*) utf8) {

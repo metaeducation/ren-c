@@ -171,20 +171,3 @@ struct MergeConstHelper {
 
 #define needful_merge_const(From, To) \
     typename needful::MergeConstHelper<From, To>::type
-
-
-//=//// PROPAGATE CONSTNESS FROM ARGUMENTS TO RETURN TYPES ///////////////=//
-
-
-#undef MUTABLE_IF_C
-#define MUTABLE_IF_C(ReturnType, ...) \
-    template<typename T> \
-    __VA_ARGS__ needful_mirror_const_t(T, ReturnType)
-
-#undef CONST_IF_C
-#define CONST_IF_C(ParamType) /* !!! static_assert ParamType somehow? */ \
-    T&&  // universal reference to arg
-
-#undef CONSTABLE
-#define CONSTABLE(ParamType) \
-    needful_mirror_const_t(T, ParamType)
