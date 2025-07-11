@@ -198,3 +198,72 @@
 ("a {b} c" = -[a {b} c]-)
 ("a {b c" = -[a {b c]-)
 ("a ---[b]--- c" = -[a ---[b]--- c]-)
+
+
+; === RANDOM STRING WALK ===
+
+; This is a poor but better-than-nothing quick test that just does random
+; string edits to see if anything crashes or asserts.  It's not checked
+; against a known good string library, so it relies on things like the
+; assertions in DEBUG_UTF8_EVERYWHERE that do integrity checks to be of
+; much use.
+(
+    randomize "Deterministic!"
+
+    random-string: func [n <local> len str] [
+        str: copy ""
+        len: random n
+        repeat len [
+            either 1 = random 8 [
+                append str insist [try make rune! random 1114111]
+            ][
+                append str make rune! 64 + random 64
+            ]
+        ]
+        return str
+    ]
+
+    test: ""
+    halftime: lambda [block] [if 2 = random 2 (block)]
+
+    repeat 1000 [
+        if 1 = random 80 [
+            clear test
+        ]
+        switch random-pick [append insert change remove] [
+            'append [
+                append // [
+                    test
+                    random-string 30
+                    part: halftime [random 30]
+                    dup: halftime [random 3]
+                ]
+            ]
+            'insert [
+                insert // [
+                    skip test (random 1 + length of test) - 1
+                    random-string 30
+                    part: halftime [random 30]
+                    dup: halftime [random 3]
+                ]
+            ]
+            'change [
+                change // [
+                    skip test (random 1 + length of test) - 1
+                    random-string 30
+                    part: halftime [random 30]
+                    dup: halftime [random 3]
+                ]
+            ]
+            'remove [
+                remove // [
+                    skip test (random 1 + length of test) - 1
+                    part: halftime [random 30]
+                ]
+            ]
+        ]
+        if not empty? test [
+            assert [find test last test]  ; random find just to iterate it
+        ]
+    ]
+)

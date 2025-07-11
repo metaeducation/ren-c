@@ -205,6 +205,8 @@ INLINE Element* Init_Utf8_Non_String(
 //
 INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     assert(c != '\0');  // NUL is #{00} (see Is_Blob_And_Is_Zero())
+    assert(not (c >= UNI_SUR_HIGH_START and c <= UNI_SUR_LOW_END));
+    assert(not (c > UNI_MAX_LEGAL_UTF32));
 
     Reset_Cell_Header_Noquote(
         out,
@@ -236,6 +238,9 @@ INLINE Result(Element*) Init_Single_Codepoint_Rune_Untracked(
 ){
     if (c > MAX_UNI)
         return fail (Cell_Error(g_error_codepoint_too_high));  // no param [1]
+
+    if (c >= UNI_SUR_HIGH_START and c <= UNI_SUR_LOW_END)
+        return fail (Cell_Error(g_error_no_utf8_surrogates));  // param [1]
 
     // !!! Should other values that can't be read be forbidden?  Byte order
     // mark?  UTF-16 surrogate stuff?  If something is not legitimate in a
