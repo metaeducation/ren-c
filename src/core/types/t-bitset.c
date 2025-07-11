@@ -262,7 +262,7 @@ void Set_Bit(Binary* bset, REBLEN n, bool set)
     if (i >= tail) {
         if (!set) return; // no need to expand
         require (
-          Expand_Flex(bset, tail, (i - tail) + 1)
+          Expand_Flex_At_Index_And_Update_Used(bset, tail, (i - tail) + 1)
         );
         memset(Binary_At(bset, tail), 0, (i - tail) + 1);
         Term_Flex_If_Necessary(bset);
@@ -409,7 +409,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
             Codepoint c = Binary_Len(bset);
             if (n >= Cast_Signed(c)) {
                 require (
-                  Expand_Flex(bset, c, (n - c))
+                  Expand_Flex_At_Index_And_Update_Used(bset, c, (n - c))
                 );
                 memset(Binary_At(bset, c), 0, (n - c));
             }

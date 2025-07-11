@@ -140,21 +140,23 @@ Result(REBLEN) Modify_Array(
     if (op != SYM_CHANGE) {
         // Always expand dst_arr for INSERT and APPEND actions:
         trap (
-           Expand_Flex(dst_arr, dst_idx, size)
+           Expand_Flex_At_Index_And_Update_Used(dst_arr, dst_idx, size)
         );
     }
     else {
         if (size > part) {
             trap (
-              Expand_Flex(dst_arr, dst_idx, size - part)
-            );
+              Expand_Flex_At_Index_And_Update_Used(
+                dst_arr, dst_idx, size - part
+            ));
         }
         else if (size < part and (flags & AM_PART))
-            Remove_Flex_Units(dst_arr, dst_idx, part - size);
+            Remove_Flex_Units_And_Update_Used(dst_arr, dst_idx, part - size);
         else if (size + dst_idx > tail_idx) {
             trap (
-              Expand_Flex_Tail(dst_arr, size - (tail_idx - dst_idx))
-            );
+              Expand_Flex_Tail_And_Update_Used(
+                dst_arr, size - (tail_idx - dst_idx)
+            ));
         }
     }
 
@@ -463,7 +465,7 @@ Result(REBLEN) Modify_String_Or_Blob(
         if (b == dst_flex) {
             Set_Flex_Len(BYTE_BUF, 0);
             trap (
-              Expand_Flex_Tail(BYTE_BUF, src_size_raw)
+              Expand_Flex_Tail_And_Update_Used(BYTE_BUF, src_size_raw)
             );
             memcpy(Binary_Head(BYTE_BUF), src_ptr, src_size_raw);
             src_ptr = Binary_Head(BYTE_BUF);
@@ -573,9 +575,9 @@ Result(REBLEN) Modify_String_Or_Blob(
 
     if (op == SYM_APPEND or op == SYM_INSERT) {  // always expands
         trap (
-          Expand_Flex(dst_flex, dst_off, src_size_total)
-        );
-        Set_Flex_Used(dst_flex, dst_used + src_size_total);
+          Expand_Flex_At_Index_And_Update_Used(
+            dst_flex, dst_off, src_size_total
+        ));
 
         if (Is_Stub_Strand(dst_flex)) {
             book = maybe Link_Bookmarks(cast(Strand*, dst_flex));
@@ -689,23 +691,21 @@ Result(REBLEN) Modify_String_Or_Blob(
             // We're adding more bytes than we're taking out.  Expand.
             //
             trap (
-              Expand_Flex(
+              Expand_Flex_At_Index_And_Update_Used(
                 dst_flex,
                 dst_off,
                 src_size_total - part_size
             ));
-            Set_Flex_Used(dst_flex, dst_used + src_size_total - part_size);
         }
         else if (part_size > src_size_total) {
             //
             // We're taking out more bytes than we're inserting.  Slide left.
             //
-            Remove_Flex_Units(
+            Remove_Flex_Units_And_Update_Used(
                 dst_flex,
                 dst_off,
                 part_size - src_size_total
             );
-            Set_Flex_Used(dst_flex, dst_used + src_size_total - part_size);
         }
         else {
             // staying the same size (change "abc" "-" => "-bc")

@@ -408,7 +408,7 @@ INLINE Result(Zero) Set_Char_At(Strand* s, REBLEN n, Codepoint c) {
         }
         else {
             trap (
-              Expand_Flex_Tail(s, delta)  // this adds to SERIES_USED
+              Expand_Flex_Tail_And_Update_Used(s, delta)
             );
             cp = cast(Utf8(*),  // refresh `cp` (may've reallocated!)
                 cast(Byte*, Strand_Head(s)) + cp_offset

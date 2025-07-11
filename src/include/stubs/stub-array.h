@@ -283,7 +283,7 @@ enum {
 INLINE Result(Cell*) Alloc_Tail_Array(Array* a)
 {
     trap (
-      Expand_Flex_Tail(a, 1)
+      Expand_Flex_Tail_And_Update_Used(a, 1)
     );
     Set_Flex_Len(a, Array_Len(a));
     return Flex_Last(Cell, a);
@@ -293,7 +293,7 @@ INLINE Result(Cell*) Alloc_Tail_Array(Array* a)
     INLINE Result(Sink(Element)) Alloc_Tail_Array(Source* a)
     {
         trap (
-          Expand_Flex_Tail(a, 1)
+          Expand_Flex_Tail_And_Update_Used(a, 1)
         );
         Set_Flex_Len(a, Array_Len(a));
         return Array_Last(a);

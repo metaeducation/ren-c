@@ -430,8 +430,8 @@ void Mold_Codepoint(Molder* mo, Codepoint c, bool non_ascii_parened)
 
             Length len_old = Strand_Len(buf);
             Size size_old = Strand_Size(buf);
-            require (
-              Expand_Flex_Tail(buf, 5)  // worst: ^(1234), ^( is done
+            require (  // worst: ^(1234), ^( has already been added done
+              Expand_Flex_Tail_And_Update_Used(buf, 5)
             );
             Term_Strand_Len_Size(buf, len_old, size_old);
 
@@ -810,7 +810,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         Size offset = String_Byte_Offset_For_Index(v, index);
         Size size_old = Strand_Size(s);
 
-        Remove_Flex_Units(s, offset, size);  // !!! at one time, kept term
+        Remove_Flex_Units_And_Update_Used(s, offset, size);
         Free_Bookmarks_Maybe_Null(s);
         Term_Strand_Len_Size(s, tail - len, size_old - size);
 

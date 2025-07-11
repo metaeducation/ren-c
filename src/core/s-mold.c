@@ -103,8 +103,8 @@
 Byte* Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 {
     REBLEN tail = Strand_Len(mo->strand);
-    require (
-      Expand_Flex_Tail(mo->strand, num_bytes)  // terminates at guess
+    require (  // termination will be at guessed tail + num_bytes
+      Expand_Flex_Tail_And_Update_Used(mo->strand, num_bytes)
     );
     return Binary_At(mo->strand, tail);
 }
@@ -216,7 +216,7 @@ void Push_Pointer_To_Flex(Flex* f, const void *p)
 {
     if (Is_Flex_Full(f)) {
         require (
-          Extend_Flex_If_Necessary(f, 8)
+          Extend_Flex_If_Necessary_But_Dont_Change_Used(f, 8)
         );
     }
     *Flex_At(const void*, f, Flex_Used(f)) = p;
@@ -532,7 +532,7 @@ void Push_Mold(Molder* mo)
         // empty buffer after a push.
         //
         require (
-          Expand_Flex(s, mo->base.size, mo->reserve)
+          Expand_Flex_At_Index_And_Update_Used(s, mo->base.size, mo->reserve)
         );
         Set_Flex_Used(s, mo->base.size);
     }

@@ -123,7 +123,9 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
     Length len = Varlist_Len(varlist);
 
     require (
-      Extend_Flex_If_Necessary(Varlist_Array(varlist), delta)
+      Extend_Flex_If_Necessary_But_Dont_Change_Used(
+        Varlist_Array(varlist), delta
+      )
     );
     Set_Flex_Len(Varlist_Array(varlist), len + delta + 1);  // include rootvar
 
@@ -149,8 +151,8 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
         return k_copy;
     }
 
-    require (
-      Extend_Flex_If_Necessary(k, delta)  // unshared, in place [3]
+    require (  // unshared, in place [3]
+      Extend_Flex_If_Necessary_But_Dont_Change_Used(k, delta)
     );
     Set_Flex_Len(k, len + delta);
 

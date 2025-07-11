@@ -117,7 +117,7 @@ Strand* Append_Codepoint(Strand* dst, Codepoint c)
     Size tail = Strand_Size(dst);
     Size encoded_size = Encoded_Size_For_Codepoint(c);
     require (
-      Expand_Flex_Tail(dst, encoded_size)
+      Expand_Flex_Tail_And_Update_Used(dst, encoded_size)
     );
     Encode_UTF8_Char(Binary_At(dst, tail), c, encoded_size);
 
@@ -177,7 +177,7 @@ Result(Strand*) Append_Ascii_Len(Strand* dst, const char *ascii, REBLEN len)
         old_size = Strand_Size(dst);
         old_len = Strand_Len(dst);
         trap (
-          Expand_Flex_Tail(dst, len)
+          Expand_Flex_Tail_And_Update_Used(dst, len)
         );
     }
 
@@ -214,7 +214,7 @@ void Append_Utf8(Strand* dst, Utf8(const*) utf8, Length len, Size size)
 
     REBLEN tail = Strand_Size(dst);
     require (
-      Expand_Flex(dst, tail, size)  // Flex_Used() changes too
+      Expand_Flex_At_Index_And_Update_Used(dst, tail, size)
     );
 
     memcpy(Binary_At(dst, tail), cast(Byte*, utf8), size);
@@ -358,7 +358,7 @@ Strand* Append_UTF8_May_Panic(
     Size old_size = Strand_Size(dst);
 
     require (
-      Expand_Flex_Tail(dst, size)
+      Expand_Flex_Tail_And_Update_Used(dst, size)
     );
     memcpy(
         Binary_At(dst, old_size),
@@ -409,7 +409,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
 
           case TYPE_INTEGER:
             require (
-              Expand_Flex_Tail(buf, 1)
+              Expand_Flex_Tail_And_Update_Used(buf, 1)
             );
             *Binary_At(buf, tail) = cast(Byte, VAL_UINT8(val));  // can panic()
             break;
@@ -418,7 +418,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             Size size;
             const Byte* data = Blob_Size_At(&size, val);
             require (
-              Expand_Flex_Tail(buf, size)
+              Expand_Flex_Tail_And_Update_Used(buf, size)
             );
             memcpy(Binary_At(buf, tail), data, size);
             break; }
@@ -433,7 +433,7 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, val);
 
             require (
-              Expand_Flex_Tail(buf, utf8_size)
+              Expand_Flex_Tail_And_Update_Used(buf, utf8_size)
             );
             memcpy(Binary_At(buf, tail), cast(Byte*, utf8), utf8_size);
             Set_Flex_Len(buf, tail + utf8_size);

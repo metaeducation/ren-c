@@ -110,7 +110,7 @@ Result(Zero) Form_RGBA(Molder* mo, const Byte* dp)
     Size used_old = Strand_Size(mo->strand);
 
     trap (  // grow by 8 bytes (may realloc)
-      Expand_Flex_Tail(mo->strand, 8)
+      Expand_Flex_Tail_And_Update_Used(mo->strand, 8)
     );
 
     Byte* bp = Binary_At(mo->strand, used_old);  // potentially new buffer

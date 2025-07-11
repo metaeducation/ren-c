@@ -368,7 +368,7 @@ DECLARE_NATIVE(STDIO_ACTOR)
         else if (Flex_Rest(Cell_Binary(data)) < readbuf_size) {
             Binary* b = Cell_Binary_Ensure_Mutable(data);
             require (
-              Expand_Flex_Tail(b, readbuf_size - Flex_Rest(b))
+              Expand_Flex_Tail_And_Update_Used(b, readbuf_size - Flex_Rest(b))
             );
         }
 

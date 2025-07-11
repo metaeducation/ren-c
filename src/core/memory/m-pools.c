@@ -658,10 +658,10 @@ void Free_Pairing(Cell* paired) {
 //  Free_Unbiased_Flex_Data: C
 //
 // Routines that are part of the core Flex implementation call this, including
-// Expand_Flex().  It requires a low-level awareness that the Flex data pointer
-// cannot be freed without subtracting out the "biasing" which skips the
-// pointer ahead to account for unused capacity at the head of the allocation.
-// They also must know the total allocation size.
+// Expand_Flex_At_Index_And_Update_Used().  It requires a low-level awareness
+// that the Flex data pointer cannot be freed without subtracting out the
+// "biasing" which skips the pointer ahead to account for unused capacity at
+// the head of the allocation.  They also must know the total allocation size.
 //
 static void Free_Unbiased_Flex_Data(char *unbiased, Size total)
 {
@@ -720,8 +720,11 @@ static void Free_Unbiased_Flex_Data(char *unbiased, Size total)
 // can be relocated in memory.  Only store if you are certain the Flex is
 // set to not be resizable and you control the lifetime of the Flex.
 //
-Result(Zero) Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
-{
+Result(Zero) Expand_Flex_At_Index_And_Update_Used(
+    Flex* f,
+    REBLEN index,
+    REBLEN delta
+){
     Assert_Flex_Term_If_Needed(f);
 
     assert(index <= Flex_Used(f));

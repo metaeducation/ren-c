@@ -1094,7 +1094,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
     else
         Derelativize(OUT, Array_At(arr, index), List_Binding(list));
 
-    Remove_Flex_Units(arr, index, len);
+    Remove_Flex_Units_And_Update_Used(arr, index, len);
     return OUT;
 }
 
@@ -1618,7 +1618,7 @@ DECLARE_NATIVE(GLOM)
     Length a_len = Array_Len(a);
     Length r_len = Array_Len(r);
     require (
-      Expand_Flex_Tail(a, r_len)  // can move memory, get `at` after
+      Expand_Flex_Tail_And_Update_Used(a, r_len)  // moves memory, get `at` after
     );
     Element* dst = Array_At(a, a_len);  // old tail position
     Element* src = Array_Head(r);
@@ -1627,7 +1627,7 @@ DECLARE_NATIVE(GLOM)
     for (index = 0; index < r_len; ++index, ++src, ++dst)
         Copy_Cell(dst, src);
 
-    assert(Array_Len(a) == a_len + r_len);  // Expand_Flex_Tail sets
+    assert(Array_Len(a) == a_len + r_len);  // Expand_Flex updated
 
   #if DEBUG_POISON_FLEX_TAILS
     Term_Flex_If_Necessary(a);

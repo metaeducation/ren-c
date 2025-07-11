@@ -849,7 +849,7 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
             Size original_used = Binary_Len(buf);
             Size original_len = Strand_Len(buf);
             require (
-              Expand_Flex_Tail(buf, size)  // updates used size
+              Expand_Flex_Tail_And_Update_Used(buf, size)
             );
             Byte* dest = Binary_At(buf, original_used);
             Length len = 0;

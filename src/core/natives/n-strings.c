@@ -663,7 +663,7 @@ DECLARE_NATIVE(JOIN)
             Size size = Strand_Size(mo->strand) - mo->base.size;
 
             require (
-              Expand_Flex_Tail(buf, size)
+              Expand_Flex_Tail_And_Update_Used(buf, size)
             );
             memcpy(Binary_At(buf, used), cast(Byte*, utf8), size);
 
@@ -672,7 +672,7 @@ DECLARE_NATIVE(JOIN)
         else switch (maybe Type_Of(at)) {
           case TYPE_INTEGER:
             require (
-              Expand_Flex_Tail(buf, 1)
+              Expand_Flex_Tail_And_Update_Used(buf, 1)
             );
             *Binary_At(buf, used) = cast(Byte, VAL_UINT8(at));  // can panic()
             break;
@@ -681,7 +681,7 @@ DECLARE_NATIVE(JOIN)
             Size size;
             const Byte* data = Blob_Size_At(&size, at);
             require (
-              Expand_Flex_Tail(buf, size)
+              Expand_Flex_Tail_And_Update_Used(buf, size)
             );
             memcpy(Binary_At(buf, used), data, size);
             break; }
@@ -696,7 +696,7 @@ DECLARE_NATIVE(JOIN)
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, at);
 
             require (
-              Expand_Flex_Tail(buf, utf8_size)
+              Expand_Flex_Tail_And_Update_Used(buf, utf8_size)
             );
             memcpy(Binary_At(buf, used), cast(Byte*, utf8), utf8_size);
             /*Set_Flex_Len(buf, used + utf8_size); */
@@ -1152,8 +1152,8 @@ DECLARE_NATIVE(ENLINE)
         return COPY(ARG(STRING)); // nothing to do
 
     REBLEN old_len = Misc_Num_Codepoints(s);
-    require (
-      Expand_Flex_Tail(s, delta)  // corrupts misc.num_codepoints
+    require (  // setting `used` will corrupt misc.num_codepoints
+      Expand_Flex_Tail_And_Update_Used(s, delta)
     );
     Tweak_Misc_Num_Codepoints(s, old_len + delta);  // just adding CR's
 

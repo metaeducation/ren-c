@@ -340,7 +340,7 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         //
         if (Is_Flex_Full(g_gc.mark_stack)) {
             require (
-              Extend_Flex_If_Necessary(g_gc.mark_stack, 8)
+              Extend_Flex_If_Necessary_But_Dont_Change_Used(g_gc.mark_stack, 8)
             );
         }
         *Flex_At(Array*, g_gc.mark_stack, Flex_Used(g_gc.mark_stack)) = a;
@@ -1041,7 +1041,7 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                 }
                 else {
                     assume (
-                      Expand_Flex_Tail(sweeplist, 1)
+                      Expand_Flex_Tail_And_Update_Used(sweeplist, 1)
                     );
                     *Flex_At(Base*, sweeplist, sweep_count) = s;
                     ++sweep_count;
@@ -1062,7 +1062,7 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                 }
                 else {
                     assume (
-                      Expand_Flex_Tail(sweeplist, 1)
+                      Expand_Flex_Tail_And_Update_Used(sweeplist, 1)
                     );
                     *Flex_At(Base*, sweeplist, sweep_count) = pairing;
                     ++sweep_count;
@@ -1442,7 +1442,7 @@ void Push_Lifeguard(const void* p)  // BASE_FLAG_BASE may not be set [1]
 
     if (Is_Flex_Full(g_gc.guarded)) {
         require (
-          Extend_Flex_If_Necessary(g_gc.guarded, 8)
+          Extend_Flex_If_Necessary_But_Dont_Change_Used(g_gc.guarded, 8)
         );
     }
 

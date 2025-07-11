@@ -101,7 +101,8 @@ Result(Zero) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
     if (Is_Flex_Biased(s))
         BONUS_FLEX_BIAS(s) = 0;  // fully clear value [4]
     else {
-        // Leave corrupt, or as existing bonus (if called in Expand_Flex())
+        // Leave corrupt, or as existing bonus
+        // (if called in Expand_Flex_At_Index_And_Update_Used())
     }
 
     /*assert(size % wide == 0);*/  // allow irregular sizes
@@ -118,15 +119,17 @@ Result(Zero) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
 
 
 //
-//  Extend_Flex_If_Necessary: C
+//  Extend_Flex_If_Necessary_But_Dont_Change_Used: C
 //
 // Extend a series at its end without affecting its tail index.
 //
-Result(Zero) Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
-{
+Result(Zero) Extend_Flex_If_Necessary_But_Dont_Change_Used(
+  Flex* f,
+  REBLEN delta
+){
     REBLEN used_old = Flex_Used(f);
     trap (
-      Expand_Flex_Tail(f, delta)
+      Expand_Flex_Tail_And_Update_Used(f, delta)
     );
     Set_Flex_Len(f, used_old);
     return zero;
@@ -238,12 +241,12 @@ Result(Flex*) Copy_Flex_At_Len_Extra(
 
 
 //
-//  Remove_Flex_Units: C
+//  Remove_Flex_Units_And_Update_Used: C
 //
 // Remove a series of values (bytes, longs, reb-vals) from the
 // series at the given index.
 //
-void Remove_Flex_Units(Flex* f, Size byteoffset, REBLEN quantity)
+void Remove_Flex_Units_And_Update_Used(Flex* f, Size byteoffset, REBLEN quantity)
 {
     if (quantity == 0)
         return;
@@ -360,7 +363,7 @@ void Remove_Any_Series_Len(Element* v, REBLEN index, REBINT len)
         ));
     }
     else  // ANY-LIST? is more straightforward
-        Remove_Flex_Units(Cell_Flex_Ensure_Mutable(v), index, len);
+        Remove_Flex_Units_And_Update_Used(Cell_Flex_Ensure_Mutable(v), index, len);
 
     Assert_Flex_Term_If_Needed(Cell_Flex(v));
 }
@@ -444,7 +447,7 @@ Byte* Reset_Buffer(Flex* buf, REBLEN len)
     Set_Flex_Len(buf, 0);
     Unbias_Flex(buf, true);
     require (
-      Expand_Flex(buf, 0, len)  // sets new tail
+      Expand_Flex_At_Index_And_Update_Used(buf, 0, len)
     );
     return Flex_Data(buf);
 }

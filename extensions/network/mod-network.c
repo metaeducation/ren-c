@@ -515,7 +515,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
         // internally to Extend_Flex.  Review wasted space in array case.
         //
         require (
-          Extend_Flex_If_Necessary(bin, bufsize)
+          Extend_Flex_If_Necessary_But_Dont_Change_Used(bin, bufsize)
         );
     }
 

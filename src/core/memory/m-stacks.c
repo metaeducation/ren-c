@@ -141,7 +141,7 @@ void Expand_Data_Stack_May_Panic(REBLEN amount)
     }
 
     require (
-      Extend_Flex_If_Necessary(g_ds.array, amount)
+      Extend_Flex_If_Necessary_But_Dont_Change_Used(g_ds.array, amount)
     );
     g_ds.movable_top = Flex_At(Value, g_ds.array, g_ds.index);  // needs update
 

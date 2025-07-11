@@ -845,7 +845,7 @@ void Register_Dispatcher(Dispatcher* dispatcher, DetailsQuerier* querier)
 {
     if (Is_Flex_Full(g_dispatcher_table)) {
         require (
-          Extend_Flex_If_Necessary(g_dispatcher_table, 8)
+          Extend_Flex_If_Necessary_But_Dont_Change_Used(g_dispatcher_table, 8)
         );
     }
 

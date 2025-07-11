@@ -537,8 +537,8 @@ DECLARE_NATIVE(SOME_COMBINATOR)
 
 } first_parse_result_in_out: {  //////////////////////////////////////////////
 
-    if (Is_Light_Null(OUT)) {  // didn't match even once, so not enough
-        Remove_Flex_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
+    if (Is_Light_Null(OUT)) {  // didn't match even once, not enough, drop loop
+        Remove_Flex_Units_And_Update_Used(loops, Array_Len(loops) - 1, 1);
         return NULLED;
     }
 
@@ -554,8 +554,8 @@ DECLARE_NATIVE(SOME_COMBINATOR)
 } later_parse_result_in_spare: {  ////////////////////////////////////////////
 
     if (Is_Light_Null(SPARE)) {  // first still succeeded, so we're okay.
-        Copy_Cell(remainder, input);  // put back [3]
-        Remove_Flex_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
+        Copy_Cell(remainder, input);  // put back [3] and drop loop
+        Remove_Flex_Units_And_Update_Used(loops, Array_Len(loops) - 1, 1);
         return OUT;  // return previous successful parser result
     }
 

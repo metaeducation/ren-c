@@ -525,12 +525,12 @@ INLINE void Set_Flex_Len(Flex* f, Length len) {
 
 // Optimized expand when at tail (but, does not reterminate)
 //
-INLINE Result(Zero) Expand_Flex_Tail(Flex* f, REBLEN delta) {
+INLINE Result(Zero) Expand_Flex_Tail_And_Update_Used(Flex* f, REBLEN delta) {
     if (Flex_Fits(f, delta))
         Set_Flex_Used(f, Flex_Used(f) + delta);  // no termination implied
     else {
-        trap (
-          Expand_Flex(f, Flex_Used(f), delta)  // currently terminates
+        trap (  // comment said "currently terminates"...does it?
+          Expand_Flex_At_Index_And_Update_Used(f, Flex_Used(f), delta)
         );
     }
     return zero;
@@ -589,7 +589,9 @@ INLINE Result(Flex*) Make_Flex_Into(
 
     if (not (flags & BASE_FLAG_MANAGED)) {  // more efficient if managed [1]
         if (Is_Flex_Full(g_gc.manuals)) {
-            Extend_Flex_If_Necessary(g_gc.manuals, 8) except (Error* e) {
+            Extend_Flex_If_Necessary_But_Dont_Change_Used(
+                g_gc.manuals, 8
+            ) except (Error* e) {
                 Free_Unmanaged_Flex(s);
                 return fail (e);
             }
