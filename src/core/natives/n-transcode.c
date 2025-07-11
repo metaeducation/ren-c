@@ -147,7 +147,8 @@ DECLARE_NATIVE(TRANSCODE)
 
     Sink(Value) scratch_line_number = SCRATCH;  // use as scratch space
     if (Any_Word(ARG(LINE))) {
-        required (Get_Var(
+        require (
+          Get_Var(
             scratch_line_number,
             NO_STEPS,
             Element_ARG(LINE),
@@ -176,7 +177,9 @@ DECLARE_NATIVE(TRANSCODE)
     //
     // Note: Could reuse global TG_End_Feed if context was null.
 
-    Feed* feed = require (Make_Array_Feed_Core(g_empty_array, 0, SPECIFIED));
+    require (
+      Feed* feed = Make_Array_Feed_Core(g_empty_array, 0, SPECIFIED)
+    );
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
@@ -262,8 +265,9 @@ DECLARE_NATIVE(TRANSCODE)
         Copy_Cell(Level_Scratch(SUBLEVEL), Element_ARG(LINE));  // variable
         heeded (Corrupt_Cell_If_Needful(Level_Spare(SUBLEVEL)));
 
-        required (Set_Var_In_Scratch_To_Out(SUBLEVEL, NO_STEPS));
-
+        require (
+          Set_Var_In_Scratch_To_Out(SUBLEVEL, NO_STEPS)
+        );
         UNUSED(*OUT);
     }
 

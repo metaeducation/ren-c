@@ -212,7 +212,8 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
     assert(flag == CELL_MASK_ERASED_0 or flag == CELL_FLAG_LEADING_SPACE);
     assert(Any_Sequence_Type(heart));
 
-    trapped (Check_Sequence_Element(
+    trap (
+      Check_Sequence_Element(
         heart,
         e,
         flag == CELL_MASK_ERASED_0  // 0 means no leading space, item is "head"
@@ -311,7 +312,9 @@ INLINE Result(Element*) Init_Any_Sequence_Bytes(
     if (size > Size_Of(out->payload.at_least_8) - 1) {  // too big
         Source* a = Make_Source_Managed(size);
         for (; size > 0; --size, ++data) {
-            Sink(Element) cell = trap (Alloc_Tail_Array(a));
+            trap (
+              Sink(Element) cell = Alloc_Tail_Array(a)
+            );
             Init_Integer(cell, *data);
         }
         Init_Block(out, Freeze_Source_Shallow(a));  // !!! TBD: compact BLOB!
@@ -433,15 +436,21 @@ INLINE Result(Element*) Init_Any_Sequence_Or_Conflation_Pairlike(
         if (i1 >= 0 and i2 >= 0 and i1 <= 255 and i2 <= 255) {
             buf[0] = cast(Byte, i1);
             buf[1] = cast(Byte, i2);
-            required (Init_Any_Sequence_Bytes(out, heart, buf, 2));
+            require (
+              Init_Any_Sequence_Bytes(out, heart, buf, 2)
+            );
             return out;
         }
 
         // fall through
     }
 
-    trapped (Check_Sequence_Element(heart, first, true));
-    trapped (Check_Sequence_Element(heart, second, false));
+    trap (
+      Check_Sequence_Element(heart, first, true)
+    );
+    trap (
+      Check_Sequence_Element(heart, second, false)
+    );
 
     Pairing* pairing = Alloc_Pairing(BASE_FLAG_MANAGED);
     Copy_Cell(Pairing_First(pairing), first);
@@ -467,8 +476,8 @@ INLINE Result(Element*) Init_Any_Sequence_Pairlike(
     const Element* first,
     const Element* second
 ){
-    trapped (
-        Init_Any_Sequence_Or_Conflation_Pairlike(out, heart, first, second)
+    trap (
+      Init_Any_Sequence_Or_Conflation_Pairlike(out, heart, first, second)
     );
 
     if (not Any_Sequence(out))
@@ -494,7 +503,7 @@ INLINE Result(Element*) Pop_Sequence_Or_Conflation(
             heart,
             TOP_ELEMENT - 1,
             TOP_ELEMENT
-        ) excepted (e) {
+        ) except (e) {
             // drop stack before returning error
         };
         Drop_Data_Stack_To(base);
@@ -524,8 +533,9 @@ INLINE Result(Element*) Pop_Sequence(
     Heart heart,
     StackIndex base
 ){
-    trapped (Pop_Sequence_Or_Conflation(out, heart, base));
-
+    trap (
+      Pop_Sequence_Or_Conflation(out, heart, base)
+    );
     if (not Any_Sequence(out))
         return fail (Error_Conflated_Sequence_Raw(Datatype_Of(out), out));
 
@@ -564,7 +574,8 @@ INLINE Result(Value*) Pop_Sequence_Or_Element_Or_Nulled(
         DROP();  // balances stack
 
         if (not Is_Space(out)) {  // allow _.(void) to be _ if COMPOSE'd
-            trapped (Check_Sequence_Element(
+            trap (
+              Check_Sequence_Element(
                 sequence_heart,
                 cast(Element*, out),
                 false  // don't think of it as head, or do?
@@ -995,7 +1006,9 @@ INLINE const Symbol* Cell_Refinement_Symbol(const Cell* v) {
 
 INLINE Element* Blockify_Any_Sequence(Element* seq) {  // always works
     DECLARE_ELEMENT (temp);
-    assumed (Alias_Any_Sequence_As(temp, seq, TYPE_BLOCK));
+    assume (
+      Alias_Any_Sequence_As(temp, seq, TYPE_BLOCK)
+    );
     Copy_Cell(seq, temp);
     return seq;
 }

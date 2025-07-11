@@ -76,7 +76,8 @@ Result(Element*) Init_Any_Sequence_At_Listlike(
         if (at == tail - 1 and Is_Space(at))
             continue;  // (_) valid at tail
 
-        trapped (Check_Sequence_Element(
+        trap (
+          Check_Sequence_Element(
             heart,
             at,
             at == head  // sigils and quotes not legal at head
@@ -177,7 +178,9 @@ DECLARE_NATIVE(PICK)
 
 } pick_succeeded_out_is_lifted: {
 
-    required (Unliftify_Undecayed(OUT));
+    require (
+      Unliftify_Undecayed(OUT)
+    );
 
     if (Not_Cell_Stable(OUT)) {
         assert(false);  // Note: once usermode TWEAK* exists, it may screw up
@@ -394,7 +397,9 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_Sequence)
         Copy_Sequence_At(a_item, a, n);
         Copy_Sequence_At(b_item, b, n);
 
-        bool equal = require (Equal_Values(a_item, b_item, strict));
+        require (
+          bool equal = Equal_Values(a_item, b_item, strict)
+        );
         if (not equal)
             return LOGIC(false);
     }
@@ -429,7 +434,9 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Sequence)
             return LOGIC(lesser);  // LESSER? result was meaningful
 
         bool strict = true;
-        bool equal = require (Equal_Values(a_item, b_item, strict));
+        require (
+          bool equal = Equal_Values(a_item, b_item, strict)
+        );
         if (equal)
             continue;  // don't fret they couldn't compare with LESSER?
 
@@ -464,7 +471,8 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
         Init_Integer(PUSH(), 0);
     }
 
-    assumed (Pop_Sequence(OUT, heart, STACK_BASE));
-
+    assume (
+      Pop_Sequence(OUT, heart, STACK_BASE)
+    );
     return OUT;
 }

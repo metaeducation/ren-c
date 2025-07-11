@@ -509,7 +509,8 @@ void Startup_Trampoline(void)
     assert(TOP_LEVEL == nullptr);
     assert(BOTTOM_LEVEL == nullptr);
 
-    Level* L = require (Make_End_Level(  // ensure L->prior [1]
+    require (
+      Level* L = Make_End_Level(  // ensure L->prior [1]
         &Stepper_Executor,  // executor is irrelevant (permit nullptr?)
         LEVEL_FLAG_UNINTERRUPTIBLE  // can't interrupt while initializing [2]
     ));

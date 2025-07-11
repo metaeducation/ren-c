@@ -418,9 +418,15 @@ static void Update_Error_Near_For_Line(
 
     DECLARE_MOLDER (mo);  // put line count and line's text into string [3]
     Push_Mold(mo);
-    required (Append_Ascii(mo->strand, "(line "));
-    required (Append_Int(mo->strand, line));  // (maybe) diferent line lower
-    required (Append_Ascii(mo->strand, ") "));
+    require (
+      Append_Ascii(mo->strand, "(line ")
+    );
+    require (  // transcode->line below *may* be different
+      Append_Int(mo->strand, line)
+    );
+    require (
+      Append_Ascii(mo->strand, ") ")
+    );
     Append_UTF8_May_Panic(mo->strand, s_cast(bp), size, STRMODE_NO_CR);
 
     ERROR_VARS *vars = ERR_VARS(error);
@@ -725,7 +731,9 @@ static Result(const Byte*) Scan_String_Into_Mold_Core(
 
           default:
             if (Is_Utf8_Lead_Byte(c)) {
-                c = trap (Back_Scan_Utf8_Char(&cp, nullptr));
+                trap (
+                  c = Back_Scan_Utf8_Char(&cp, nullptr)
+                );
             }
         }
 
@@ -840,7 +848,9 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
             Size size = transcode.at - cp;
             Size original_used = Binary_Len(buf);
             Size original_len = Strand_Len(buf);
-            required (Expand_Flex_Tail(buf, size));  // updates used size
+            require (
+              Expand_Flex_Tail(buf, size)  // updates used size
+            );
             Byte* dest = Binary_At(buf, original_used);
             Length len = 0;
             for (; cp != transcode.at; ++cp, ++dest) {
@@ -885,7 +895,9 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
     } handle_multibyte_utf8_chars: { /////////////////////////////////////////
 
         if (Is_Utf8_Lead_Byte(c)) {
-            c = trap (Back_Scan_Utf8_Char(&cp, nullptr));
+            trap (
+              c = Back_Scan_Utf8_Char(&cp, nullptr)
+            );
             ++cp;  // UTF-8 back scanning doesn't do the increment
             goto check_for_invalid_unicode;
         }
@@ -991,7 +1003,9 @@ static Error* Error_Syntax(ScanState* S, Token token) {
 //
 static Error* Error_Extra(Byte seen) {
     DECLARE_ELEMENT (unexpected);
-    Strand* strand = require (Make_Codepoint_Strand(seen));
+    require (
+      Strand* strand = Make_Codepoint_Strand(seen)
+    );
     Init_Text(unexpected, strand);
     return Error_Scan_Extra_Raw(unexpected);
 }
@@ -1301,7 +1315,9 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
         for (++dp; *dp == '-'; ++dp)
             ++dashes;
         if (*dp == '[' or *dp == '"') {
-            cp = trap (Scan_String_Push_Mold(mo, dp, dashes, S));
+            trap (
+              cp = Scan_String_Push_Mold(mo, dp, dashes, S)
+            );
             goto check_str;
         }
     }
@@ -1433,7 +1449,9 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             return TOKEN_FENCE_END;
 
           case LEX_DELIMIT_DOUBLE_QUOTE: {  // "QUOTES"
-            cp = trap (Scan_String_Push_Mold(mo, cp, 0, S));
+            trap (
+              cp = Scan_String_Push_Mold(mo, cp, 0, S)
+            );
             goto check_str; }
 
           check_str:
@@ -1597,7 +1615,9 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             if (*cp == '"') {
                 /*Option(const Byte*) invalids = b_cast(":;\""); */
 
-                cp = trap (Scan_String_Push_Mold(mo, cp, 0, S));
+                trap (
+                  cp = Scan_String_Push_Mold(mo, cp, 0, S)
+                );
                 S->end = cp;
                 return token;
             }
@@ -1679,7 +1699,9 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             if (*cp == '"' or *cp == '[') {  // CHAR #"]" or #["]
                 S->end = S->begin;
                 S->begin = cp;
-                cp = trap (Scan_String_Push_Mold(mo, cp, 0, S));
+                trap (
+                  cp = Scan_String_Push_Mold(mo, cp, 0, S)
+                );
                 if (*cp == '#')  // allow for e.g. ~#[this is trash]#~
                     ++cp;
                 S->begin = S->end;  // restore start
@@ -1690,7 +1712,9 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
                 S->end = S->begin;  // save start
                 S->begin = cp;
 
-                cp = trap (Scan_String_Push_Mold(mo, cp, 0, S));
+                trap (
+                  cp = Scan_String_Push_Mold(mo, cp, 0, S)
+                );
                 Drop_Mold(mo);  // not used...?
 
                 S->begin = S->end;  // restore start
@@ -2026,7 +2050,9 @@ Level* Make_Scan_Level(
     Feed* feed,
     Flags flags
 ){
-    Level* L = require (Make_Level(&Scanner_Executor, feed, flags));
+    require (
+      Level* L = Make_Level(&Scanner_Executor, feed, flags)
+    );
 
     Byte mode = LEVEL_STATE_BYTE(L);
     assert(mode != 0);  // must use non-zero state byte
@@ -2124,8 +2150,9 @@ INLINE Error* Decorate_Error_For_Scanner(
     ERROR_VARS *vars = ERR_VARS(error);
 
     DECLARE_VALUE (nearest);
-    required (Read_Slot(nearest, &vars->nearest));
-
+    require (
+      Read_Slot(nearest, &vars->nearest)
+    );
     if (Is_Nulled(nearest))  // only update if it doesn't have it [1]
         Update_Error_Near_For_Line(
             error, transcode, transcode->line, transcode->line_head
@@ -2209,8 +2236,9 @@ Bounce Scanner_Executor(Level* const L) {
 {
     assert(mo->strand == nullptr);  // pushed mold should have been handled
 
-    Token token = trap (Locate_Token_May_Push_Mold(mo, L));
-
+    trap (
+      Token token = Locate_Token_May_Push_Mold(mo, L)
+    );
     if (token == TOKEN_END)
         goto reached_end_token;
 
@@ -2224,8 +2252,9 @@ Bounce Scanner_Executor(Level* const L) {
 
   case TOKEN_NEWLINE: { //////////////////////////////////////////////////////
 
-    trapped (Flush_Pending_On_End(S));
-
+    trap (
+      Flush_Pending_On_End(S)
+    );
     Set_Scan_Executor_Flag(L, NEWLINE_PENDING);
     transcode->line_head = transcode->at;
 
@@ -2261,7 +2290,9 @@ Bounce Scanner_Executor(Level* const L) {
     }
     else {
         if (S->quasi_pending or S->sigil_pending) {  // ['$, 10] => '$ , 10
-            trapped (Flush_Pending_On_End(S));
+            trap (
+              Flush_Pending_On_End(S)
+            );
         }
         else if (S->num_quotes_pending) {
             // fall through normally, want [', 10] => ', 10
@@ -2334,8 +2365,9 @@ Bounce Scanner_Executor(Level* const L) {
     if (not Is_Lex_Whitespace(*S->end) and not Is_Lex_End_List(*S->end))
         goto loop;
 
-    trapped (Flush_Pending_On_End(S));
-
+    trap (
+      Flush_Pending_On_End(S)
+    );
     goto lookahead;
 
 } case TOKEN_FENCE_BEGIN: //// BEGIN LIST ('[' or '{' or '(') ////////////////
@@ -2376,7 +2408,9 @@ Bounce Scanner_Executor(Level* const L) {
 
     assert(len == 1 and Is_Lex_End_List(*S->begin));
 
-    trapped (Flush_Pending_On_End(S));
+    trap (
+      Flush_Pending_On_End(S)
+    );
 
     Byte end_delimiter = *S->begin;
     if (Scanner_Mode_Matches(L, end_delimiter))
@@ -2498,7 +2532,9 @@ Bounce Scanner_Executor(Level* const L) {
         return fail (Error_Syntax(S, token));
     }
 
-    const Byte* ep = trap (Scan_Money_To_Stack(S->begin, len));
+    trap (
+      const Byte* ep = Scan_Money_To_Stack(S->begin, len)
+    );
     if (S->end != ep)
         return fail (Error_Syntax(S, token));
 
@@ -2531,7 +2567,9 @@ Bounce Scanner_Executor(Level* const L) {
 } case TOKEN_WORD: { /////////////////////////////////////////////////////////
 
     assert(len != 0);
-    const Symbol* symbol = trap (Intern_Utf8_Managed(S->begin, len));
+    trap (
+      const Symbol* symbol = Intern_Utf8_Managed(S->begin, len)
+    );
     Init_Word(PUSH(), symbol);
     goto lookahead;
 
@@ -2588,8 +2626,8 @@ Bounce Scanner_Executor(Level* const L) {
 } case TOKEN_FILE: { /////////////////////////////////////////////////////////
 
     if (mo->base.size == Strand_Size(mo->strand)) {  // % is WORD!
-        const Symbol* symbol = assume (
-            Intern_Utf8_Managed(b_cast("%"), 1)
+        assume (
+          const Symbol* symbol = Intern_Utf8_Managed(b_cast("%"), 1)
         );
         Init_Word(PUSH(), symbol);
         Drop_Mold(mo);
@@ -2602,7 +2640,9 @@ Bounce Scanner_Executor(Level* const L) {
 
 } case TOKEN_EMAIL: { ////////////////////////////////////////////////////////
 
-    const Byte* ep = require (Scan_Email_To_Stack(S->begin, len));
+    require (
+      const Byte* ep = Scan_Email_To_Stack(S->begin, len)
+    );
     if (S->end != ep)
         return fail (Error_Syntax(S, token));
     goto lookahead;
@@ -2689,7 +2729,9 @@ Bounce Scanner_Executor(Level* const L) {
         if (*transcode->at != '~')
             return fail (Error_Syntax(S, TOKEN_TILDE));
 
-        trapped (Coerce_To_Quasiform(TOP_ELEMENT));
+        trap (
+          Coerce_To_Quasiform(TOP_ELEMENT)
+        );
 
         ++transcode->at;  // must compensate the `transcode->at = S->end`
         S->quasi_pending = false;
@@ -3010,7 +3052,8 @@ Bounce Scanner_Executor(Level* const L) {
   // be stored in Cell with the same overhead as a WORD!.  (See %cell-tuple.h
   // for details on the applicable compressions and mechanisms.)
 
-    Element* scratch = trap (Pop_Sequence_Or_Conflation(
+    trap (
+      Element* scratch = Pop_Sequence_Or_Conflation(
         SCRATCH,  // doesn't write directly to stack since popping stack
         heart,
         stackindex_path_head - 1
@@ -3096,8 +3139,9 @@ Bounce Scanner_Executor(Level* const L) {
     if (Is_List_Scan(L))
         return fail (Error_Missing(S, STATE));
 
-    trapped (Flush_Pending_On_End(S));
-
+    trap (
+      Flush_Pending_On_End(S)
+    );
     goto done;
 
 } done: { ////////////////////////////////////////////////////////////////////
@@ -3145,7 +3189,8 @@ Source* Scan_UTF8_Managed(
     UNUSED(size);  // scanner stops at `\0` (no size limit functionality)
 
     const void* packed[2] = {utf8, rebEND};  // BEWARE: Stack, can't trampoline!
-    Feed* feed = require (Make_Variadic_Feed(  // scanner requires variadic [1]
+    require (
+      Feed* feed = Make_Variadic_Feed(  // scanner requires variadic [1]
         packed, nullptr,  // va_list* as nullptr means `p` is packed [2]
         FEED_MASK_DEFAULT
     ));

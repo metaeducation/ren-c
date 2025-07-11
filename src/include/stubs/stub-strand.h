@@ -297,7 +297,8 @@ INLINE void Term_Strand_Len_Size(Strand* s, Length len, Size used) {
     Flex_Head(Bookmark, (b))->offset
 
 INLINE BookmarkList* Alloc_BookmarkList(void) {
-    BookmarkList* books = require (nocast Make_Flex(
+    require (
+      BookmarkList* books = nocast Make_Flex(
         FLAG_FLAVOR(FLAVOR_BOOKMARKLIST)
             | BASE_FLAG_MANAGED,  // lie to be untracked
         1
@@ -406,7 +407,9 @@ INLINE Result(Zero) Set_Char_At(Strand* s, REBLEN n, Codepoint c) {
             Set_Flex_Used(s, Flex_Used(s) + delta);
         }
         else {
-            trapped (Expand_Flex_Tail(s, delta));  // this adds to SERIES_USED
+            trap (
+              Expand_Flex_Tail(s, delta)  // this adds to SERIES_USED
+            );
             cp = cast(Utf8(*),  // refresh `cp` (may've reallocated!)
                 cast(Byte*, Strand_Head(s)) + cp_offset
             );

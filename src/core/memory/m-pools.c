@@ -271,7 +271,9 @@ void  Startup_Pools(REBINT scale)
         scale = 1;
     }
 
-    g_mem.pools = require (Alloc_N_On_Heap(Pool, MAX_POOLS));
+    require (
+      g_mem.pools = Alloc_N_On_Heap(Pool, MAX_POOLS)
+    );
 
     REBLEN n;
     for (n = 0; n < MAX_POOLS; n++) {  // copy pool sizes to new pool structure
@@ -296,7 +298,9 @@ void  Startup_Pools(REBINT scale)
         g_mem.pools[n].has = 0;
     }
 
-    g_mem.pools_by_size = require (Alloc_N_On_Heap(Byte, POOLS_BY_SIZE_LEN));
+    require (
+      g_mem.pools_by_size = Alloc_N_On_Heap(Byte, POOLS_BY_SIZE_LEN)
+    );
 
     // sizes 0 - 8 are pool 0
     for (n = 0; n <= 8; n++) g_mem.pools_by_size[n] = 0;
@@ -318,7 +322,9 @@ void  Startup_Pools(REBINT scale)
     assert(g_mem.objects_made == 0);
   #endif
 
-    g_mem.prior_expand = require (Alloc_N_On_Heap(Flex*, MAX_EXPAND_LIST));
+    require (
+      g_mem.prior_expand = Alloc_N_On_Heap(Flex*, MAX_EXPAND_LIST)
+    );
     memset(g_mem.prior_expand, 0, sizeof(Flex*) * MAX_EXPAND_LIST);
     g_mem.prior_expand[0] = (Flex*)1;
 }
@@ -441,8 +447,9 @@ Result(Zero) Fill_Pool(Pool* pool)
     REBLEN num_units = pool->num_units_per_segment;
     REBLEN mem_size = pool->wide * num_units + sizeof(Segment);
 
-    Segment* seg = trap (nocast Raw_Heap_Alloc(mem_size));
-
+    trap (
+      Segment* seg = nocast Raw_Heap_Alloc(mem_size)
+    );
     seg->size = mem_size;
     seg->next = pool->segments;
     pool->segments = seg;
@@ -579,8 +586,9 @@ Base* Try_Find_Containing_Base_Debug(const void *p)
 //
 Pairing* Alloc_Pairing(Flags flags) {
     assert(flags == 0 or flags == BASE_FLAG_MANAGED);
-    Pairing* p = require (nocast Raw_Pooled_Alloc(PAIR_POOL));  // 2x cell size
-
+    require (
+      Pairing* p = nocast Raw_Pooled_Alloc(PAIR_POOL)  // 2x cell size
+    );
     Pairing_First(p)->header.bits = CELL_MASK_UNREADABLE | flags;
     Pairing_Second(p)->header.bits = CELL_MASK_UNREADABLE;
 
@@ -863,8 +871,9 @@ Result(Zero) Expand_Flex(Flex* f, REBLEN index, REBLEN delta)
 
     Set_Stub_Flag(f, DYNAMIC);
     Set_Flex_Flag(f, POWER_OF_2);
-    trapped (Flex_Data_Alloc(f, used_old + delta + x));
-
+    trap (
+      Flex_Data_Alloc(f, used_old + delta + x)
+    );
     assert(Get_Stub_Flag(f, DYNAMIC));
     if (Stub_Holds_Cells(f))
         Prep_Array(u_cast(Array*, f), 0);  // capacity doesn't matter to prep

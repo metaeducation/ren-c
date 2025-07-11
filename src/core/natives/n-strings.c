@@ -248,11 +248,13 @@ DECLARE_NATIVE(JOIN)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
     if (Is_Block(unwrap rest)) {
-        sub = require (Make_Level_At(&Stepper_Executor, unwrap rest, flags));
+        require (
+          sub = Make_Level_At(&Stepper_Executor, unwrap rest, flags)
+        );
     }
     else if (Is_Pinned_Form_Of(BLOCK, unwrap rest)) {
-        sub = require (
-            Make_Level_At(&Inert_Stepper_Executor, unwrap rest, flags)
+        require (
+          sub = Make_Level_At(&Inert_Stepper_Executor, unwrap rest, flags)
         );
     }
     else {
@@ -265,7 +267,9 @@ DECLARE_NATIVE(JOIN)
             FEED_MASK_DEFAULT | ((unwrap rest)->header.bits & FEED_FLAG_CONST)
         );
 
-        sub = require (Make_Level(&Inert_Stepper_Executor, feed, flags));
+        require (
+          sub = Make_Level(&Inert_Stepper_Executor, feed, flags)
+        );
     }
 
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
@@ -367,8 +371,9 @@ DECLARE_NATIVE(JOIN)
         Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
         if (Is_Pinned_Form_Of(WORD, item)) {
-            required (Get_Var(SPARE, NO_STEPS, item, Level_Binding(sub)));
-
+            require (
+              Get_Var(SPARE, NO_STEPS, item, Level_Binding(sub))
+            );
             Fetch_Next_In_Feed(sub->feed);
             goto mold_step_result_in_spare;
         }
@@ -414,7 +419,9 @@ DECLARE_NATIVE(JOIN)
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
         goto vetoed;
 
-    Value* spare = require (Decay_If_Unstable(SPARE));  // [1]
+    require (
+      Value* spare = Decay_If_Unstable(SPARE)  // [1]
+    );
 
     if (Is_Splice(spare)) {  // only allow splice for mold, for now
         const Element* tail;
@@ -472,7 +479,9 @@ DECLARE_NATIVE(JOIN)
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
         goto vetoed;
 
-    Value* spare = require (Decay_If_Unstable(SPARE));
+    require (
+      Value* spare = Decay_If_Unstable(SPARE)
+    );
 
     if (Is_Splice(spare)) {
         const Element* tail;
@@ -590,7 +599,9 @@ DECLARE_NATIVE(JOIN)
     Length len = Strand_Len(mo->strand) - mo->base.index;
 
     if (heart == TYPE_WORD) {
-        const Symbol* s = require (Intern_Utf8_Managed(utf8, size));
+        require (
+          const Symbol* s = Intern_Utf8_Managed(utf8, size)
+        );
         Init_Word(OUT, s);
     }
     else if (Any_String_Type(heart)) {
@@ -600,7 +611,9 @@ DECLARE_NATIVE(JOIN)
         Init_Utf8_Non_String(OUT, heart, utf8, size, len);
     }
     else if (heart == TYPE_EMAIL) {
-        const Byte* ep = trap (Scan_Email_To_Stack(utf8, size));
+        trap (
+          const Byte* ep = Scan_Email_To_Stack(utf8, size)
+        );
         if (ep != cast(const Byte*, utf8) + size)
             return fail ("Invalid EMAIL!");
         Move_Cell(OUT, TOP_ELEMENT);
@@ -649,21 +662,27 @@ DECLARE_NATIVE(JOIN)
             );
             Size size = Strand_Size(mo->strand) - mo->base.size;
 
-            required (Expand_Flex_Tail(buf, size));
+            require (
+              Expand_Flex_Tail(buf, size)
+            );
             memcpy(Binary_At(buf, used), cast(Byte*, utf8), size);
 
             Drop_Mold(mo);
         }
         else switch (maybe Type_Of(at)) {
           case TYPE_INTEGER:
-            required (Expand_Flex_Tail(buf, 1));
+            require (
+              Expand_Flex_Tail(buf, 1)
+            );
             *Binary_At(buf, used) = cast(Byte, VAL_UINT8(at));  // can panic()
             break;
 
           case TYPE_BLOB: {
             Size size;
             const Byte* data = Blob_Size_At(&size, at);
-            required (Expand_Flex_Tail(buf, size));
+            require (
+              Expand_Flex_Tail(buf, size)
+            );
             memcpy(Binary_At(buf, used), data, size);
             break; }
 
@@ -676,7 +695,9 @@ DECLARE_NATIVE(JOIN)
             Size utf8_size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, at);
 
-            required (Expand_Flex_Tail(buf, utf8_size));
+            require (
+              Expand_Flex_Tail(buf, utf8_size)
+            );
             memcpy(Binary_At(buf, used), cast(Byte*, utf8), utf8_size);
             /*Set_Flex_Len(buf, used + utf8_size); */
             break; }
@@ -709,7 +730,9 @@ DECLARE_NATIVE(JOIN)
 
     Sink(Element) out = OUT;
     if (Any_Sequence_Type(heart)) {
-        trapped (Pop_Sequence(out, heart, STACK_BASE));
+        trap (
+          Pop_Sequence(out, heart, STACK_BASE)
+        );
     }
     else {
         Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);
@@ -979,8 +1002,9 @@ DECLARE_NATIVE(DEHEX)
         scan[scan_size] = '\0';
 
         const Byte* next = scan;
-        Codepoint decoded = trap (Back_Scan_Utf8_Char(&next, &scan_size));
-
+        trap (
+          Codepoint decoded = Back_Scan_Utf8_Char(&next, &scan_size)
+        );
         --scan_size;  // see definition of Back_Scan for why it's off by one
         if (scan_size != 0)
             return fail ("Extra continuation characters in %XX of dehex");
@@ -1128,7 +1152,9 @@ DECLARE_NATIVE(ENLINE)
         return COPY(ARG(STRING)); // nothing to do
 
     REBLEN old_len = Misc_Num_Codepoints(s);
-    required (Expand_Flex_Tail(s, delta));  // corrupts misc.num_codepoints
+    require (
+      Expand_Flex_Tail(s, delta)  // corrupts misc.num_codepoints
+    );
     Tweak_Misc_Num_Codepoints(s, old_len + delta);  // just adding CR's
 
     // One feature of using UTF-8 for strings is that CR/LF substitution can

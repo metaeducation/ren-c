@@ -624,7 +624,9 @@ INLINE Result(Feed*) Prep_Feed_Common(
     Result(void*) preallocated,
     Flags flags
 ){
-   Feed* feed = trap (nocast preallocated);
+   trap (
+     Feed* feed = nocast preallocated
+   );
 
   #if TRAMPOLINE_COUNTS_TICKS
     feed->tick = g_tick;
@@ -632,7 +634,8 @@ INLINE Result(Feed*) Prep_Feed_Common(
 
     Force_Erase_Cell(&feed->fetched);
 
-    Stub* s = assume (Prep_Stub(
+    assume (
+      Stub* s = Prep_Stub(
         BASE_FLAG_BASE | FLAG_FLAVOR(FLAVOR_FEED),
         &feed->singular  // preallocated
     ));
@@ -660,7 +663,9 @@ INLINE Result(Feed*) Prep_Array_Feed(
 ){
     assert(not binding or Is_Base_Managed(binding));
 
-    Feed* feed = trap (Prep_Feed_Common(preallocated, flags));
+    trap (
+      Feed* feed = Prep_Feed_Common(preallocated, flags)
+    );
 
     if (first) {
         feed->p = unwrap first;
@@ -731,8 +736,8 @@ INLINE Result(Feed*) Prep_Variadic_Feed(
     Option(va_list*) vaptr,
     Flags flags
 ){
-    Feed* feed = trap (
-        Prep_Feed_Common(preallocated, flags | FEED_FLAG_NEEDS_SYNC)
+    trap (
+      Feed* feed = Prep_Feed_Common(preallocated, flags | FEED_FLAG_NEEDS_SYNC)
     );
 
     // We want to initialize with something that will give back SPECIFIED.
@@ -783,7 +788,9 @@ INLINE Result(Feed*) Prep_At_Feed(
     Context* binding,
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){
-    void* p = trap (preallocated);
+    trap (
+      void* p = preallocated
+    );
 
     STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);
     assert(Any_List_Type(Heart_Of(list)));  // tolerates quasi/quoted [1]

@@ -247,7 +247,8 @@ DECLARE_NATIVE(ARROW)
   //=//// IF NOT OPTIMIZABLE, USE THE FULL PARAMLIST PROCESS //////////////=//
 
     if (not optimizable) {
-        required (Push_Keys_And_Params(
+        require (
+          Push_Keys_And_Params(
             &adjunct,
             spec,
             MKF_MASK_NONE,
@@ -260,8 +261,8 @@ DECLARE_NATIVE(ARROW)
     Option(Phase*) prior = nullptr;
     Option(VarList*) prior_coupling = nullptr;
 
-    ParamList* paramlist = require (
-        Pop_Paramlist(STACK_BASE, prior, prior_coupling)
+    require (
+      ParamList* paramlist = Pop_Paramlist(STACK_BASE, prior, prior_coupling)
     );
 
     Details* details = Make_Dispatch_Details(

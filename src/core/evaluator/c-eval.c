@@ -107,7 +107,8 @@ Bounce Evaluator_Executor(Level* const L)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (In_Debug_Mode(64)) {
-        Level* sub = require (Make_Level(  // sublevel to hook steps, see [A]
+        require (
+          Level* sub = Make_Level(  // sublevel to hook steps, see [A]
             &Stepper_Executor,
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE

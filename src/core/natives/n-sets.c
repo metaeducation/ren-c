@@ -116,7 +116,9 @@ Flex* Make_Set_Operation_Flex(
         // efficient.
         //
         Array* buffer = Make_Source(i);
-        hret = require (Make_Hashlist(i));   // allocated
+        require  (
+          hret = Make_Hashlist(i)   // allocated
+        );
 
         // Optimization note: !!
         // This code could be optimized for small blocks by not hashing them
@@ -130,7 +132,9 @@ Flex* Make_Set_Operation_Flex(
             // Check what is in series1 but not in series2
             //
             if (flags & SOP_FLAG_CHECK) {
-                hflex = require (Hash_Block(val2, skip, cased));
+                require (
+                  hflex = Hash_Block(val2, skip, cased)
+                );
             }
 
             // Iterate over first series
@@ -279,7 +283,9 @@ Flex* Make_Set_Operation_Flex(
 
         Binary* buf = BYTE_BUF;
         REBLEN buf_start_len = Binary_Len(buf);
-        required (Expand_Flex_Tail(buf, i));  // ask for at least `i` capacity
+        require (
+          Expand_Flex_Tail(buf, i)  // ask for at least `i` capacity
+        );
         REBLEN buf_at = buf_start_len;
 
         do {
@@ -336,7 +342,9 @@ Flex* Make_Set_Operation_Flex(
                         skip
                     )
                 ){
-                    required (Expand_Flex_Tail(buf, skip));
+                    require (
+                      Expand_Flex_Tail(buf, skip)
+                    );
                     Size size_at;
                     const Byte* iter_at = Blob_Size_At(&size_at, iter);
                     REBLEN min = MIN(size_at, skip);

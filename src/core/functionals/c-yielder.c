@@ -258,8 +258,9 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(Is_Handle(plug));
 
     Copy_Cell(OUT, yielded_lifted);  // keep yielded_lifted around for resume
-    assumed (Unliftify_Undecayed(OUT));
-
+    assume (
+      Unliftify_Undecayed(OUT)
+    );
     return OUT;
 
 } resume_body_if_not_reentrant: {  ///////////////////////////////////////////
@@ -342,7 +343,9 @@ Bounce Yielder_Dispatcher(Level* const L)
     assert(LEVEL_STATE_BYTE(yield_level) == ST_YIELD_SUSPENDED);
 
     Copy_Cell(yield_level->out, yielded_lifted);  // resumed YIELD's result [2]
-    assumed (Unliftify_Undecayed(yield_level->out));
+    assume (
+      Unliftify_Undecayed(yield_level->out)
+    );
     Init_Unreadable(yielded_lifted);
 
     assert(STATE == ST_YIELDER_INVOKED);
@@ -402,7 +405,9 @@ Bounce Yielder_Dispatcher(Level* const L)
         CATCH_THROWN(OUT, L);
         if (not Is_Error(OUT)) {  // THROW:FINAL value
             Init_Space(original_frame);
-            assumed (Unliftify_Undecayed(OUT));  // this is last value
+            assume (
+              Unliftify_Undecayed(OUT)  // this is last value
+            );
             return OUT;  // done
         }
         if (Is_Error_Done_Signal(Cell_Error(OUT))) {
@@ -502,7 +507,8 @@ DECLARE_NATIVE(YIELDER)
     Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
 
-    Details* details = require (Make_Interpreted_Action(
+    require (
+      Details* details = Make_Interpreted_Action(
         spec,
         body,  // relativized and put in Details array at IDX_YIELDER_BODY
         SYM_YIELD,  // give it a YIELD, but no RETURN (see YIELD:FINAL)

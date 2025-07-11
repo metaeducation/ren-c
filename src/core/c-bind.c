@@ -248,7 +248,9 @@ Let* Make_Let_Variable(
     const Symbol* symbol,
     Option(Context*) inherit
 ){
-    Stub* let = require (Make_Untracked_Stub(STUB_MASK_LET));  // one variable
+    require (
+      Stub* let = Make_Untracked_Stub(STUB_MASK_LET)  // one variable
+    );
 
     Init(Slot) slot = Slot_Init_Hack(u_cast(Slot*, Stub_Cell(let)));
     Init_Dual_Unset(slot);
@@ -502,7 +504,9 @@ DECLARE_NATIVE(LET)
 
     if (Is_Set_Group(vars)) {
         Set_Level_Flag(L, LET_IS_SETTING);
-        assumed (Unsingleheart_Sequence(vars));  // turn into normal GROUP!
+        assume (
+          Unsingleheart_Sequence(vars)  // turn into normal GROUP!
+        );
         goto escape_groups;
     }
 
@@ -546,7 +550,9 @@ DECLARE_NATIVE(LET)
     if (Eval_Any_List_At_Throws(SPARE, vars, SPECIFIED))
         return THROWN;
 
-    required (Decay_If_Unstable(SPARE));
+    require (
+      Decay_If_Unstable(SPARE)
+    );
     if (Is_Antiform(SPARE))
         panic (Error_Bad_Antiform(SPARE));
 
@@ -568,7 +574,9 @@ DECLARE_NATIVE(LET)
     }
     else if (Is_Word(spare) or Is_Block(spare)) {
         if (Get_Level_Flag(L, LET_IS_SETTING)) {
-            assumed (Setify(spare));  // graft colon off (...): on word/block
+            assume (
+              Setify(spare)  // graft colon off (...): on word/block
+            );
             Clear_Level_Flag(L, LET_IS_SETTING);  // let block/word signal it
         }
     }
@@ -632,13 +640,14 @@ DECLARE_NATIVE(LET)
 
     Init_Word_Bound(where, symbol, bindings);
     if (Heart_Of(vars) != TYPE_WORD) {  // more complex than we'd like [1]
-        assumed (Setify(where));
+        assume (
+          Setify(where)
+          );
         if (Heart_Of(vars) == TYPE_PATH) {
-            assumed (  // was a path when we got it!
-                Blank_Head_Or_Tail_Sequencify(
-                    where, TYPE_PATH, CELL_FLAG_LEADING_SPACE
-                )
-            );
+            assume (  // was a path when we got it!
+              Blank_Head_Or_Tail_Sequencify(
+                where, TYPE_PATH, CELL_FLAG_LEADING_SPACE
+            ));
         }
         else
             assert(Heart_Of(vars) == TYPE_CHAIN);
@@ -705,7 +714,9 @@ DECLARE_NATIVE(LET)
                 Init_Space(OUT);
             }
             else {
-                required (Decay_If_Unstable(OUT));
+                require (
+                  Decay_If_Unstable(OUT)
+                );
                 if (Is_Antiform(OUT))
                     panic (Error_Bad_Antiform(OUT));
             }
@@ -759,7 +770,8 @@ DECLARE_NATIVE(LET)
 
     if (altered) {  // elements altered, can't reuse input block rebound
         assert(Get_Level_Flag(L, LET_IS_SETTING));
-        assumed (Setify(Init_Any_List(
+        assume (
+          Setify(Init_Any_List(
             where,  // may be SPARE, and vars may point to it
             TYPE_BLOCK,
             Pop_Managed_Source_From_Stack(STACK_BASE)
@@ -811,7 +823,9 @@ DECLARE_NATIVE(LET)
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
         | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
 
-    Level* sub = require (Make_Level(&Stepper_Executor, LEVEL->feed, flags));
+    require (
+      Level* sub = Make_Level(&Stepper_Executor, LEVEL->feed, flags)
+    );
     Copy_Cell(Evaluator_Level_Current(sub), spare);
     Force_Invalidate_Gotten(&sub->u.eval.current_gotten);
 
@@ -909,7 +923,9 @@ DECLARE_NATIVE(ADD_LET_BINDING)
     }
     else {
         assert(Is_Word(word));
-        Value* value = require (Decay_If_Unstable(atom));
+        require (
+          Value* value = Decay_If_Unstable(atom)
+        );
         Copy_Cell(Stub_Cell(let), value);
     }
 
@@ -946,7 +962,9 @@ DECLARE_NATIVE(ADD_USE_OBJECT) {
     if (L_binding)
         Set_Base_Managed_Bit(L_binding);
 
-    Use* use = require (Alloc_Use_Inherits(L_binding));
+    require (
+      Use* use = Alloc_Use_Inherits(L_binding)
+    );
     Copy_Cell(Stub_Cell(use), object);
 
     Tweak_Cell_Binding(Feed_Data(L->feed), use);
@@ -1049,8 +1067,8 @@ Result(Zero) Clonify_And_Bind_Relative(
             deep_tail = Array_Tail(copy);
         }
         else if (Any_Series_Type(heart)) {
-            Flex* copy = trap (
-                Copy_Flex_Core(BASE_FLAG_MANAGED, Cell_Flex(v))
+            trap (
+              Flex* copy = Copy_Flex_Core(BASE_FLAG_MANAGED, Cell_Flex(v))
             );
             PAIRLIKE_PAYLOAD_1_PAIRING_BASE(v) = copy;
         }
@@ -1060,7 +1078,8 @@ Result(Zero) Clonify_And_Bind_Relative(
         //
         if (deep) {
             for (; deep != deep_tail; ++deep) {
-                trapped (Clonify_And_Bind_Relative(
+                trap (
+                  Clonify_And_Bind_Relative(
                     deep,
                     flags,
                     deeply,
@@ -1137,7 +1156,8 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Copy_Cell(dest, src);
-        required (Clonify_And_Bind_Relative(  // !!! undo allocations?
+        require (
+          Clonify_And_Bind_Relative(  // !!! undo allocations?
             dest,
             flags | BASE_FLAG_MANAGED,
             deeply,
@@ -1192,7 +1212,9 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
         DECLARE_ATOM (temp);
         if (Eval_Any_List_At_Throws(temp, spec, SPECIFIED))
             return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
-        required (Decay_If_Unstable(temp));
+        require (
+          Decay_If_Unstable(temp)
+        );
         if (Is_Antiform(temp))
             return fail (Error_Bad_Antiform(temp));
         Move_Cell(spec, Known_Element(temp));
@@ -1370,7 +1392,9 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     // Virtual version of `Bind_Values_Deep(Array_Head(body_out), context)`
     //
     if (rebinding) {
-        Use* use = require (Alloc_Use_Inherits(List_Binding(body)));
+        require (
+          Use* use = Alloc_Use_Inherits(List_Binding(body))
+        );
         Copy_Cell(Stub_Cell(use), Varlist_Archetype(varlist));
         Tweak_Cell_Binding(body, use);
     }
@@ -1429,7 +1453,9 @@ Result(Zero) Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
 //
 Result(Zero) Read_Slot(Sink(Value) out, const Slot* slot) {
     Sink(Atom) atom_out = u_cast(Atom*, out);
-    trapped (Read_Slot_Meta(atom_out, slot));
+    trap (
+      Read_Slot_Meta(atom_out, slot)
+    );
     if (Not_Cell_Stable(atom_out))
         return fail ("Cannot read unstable slot with Read_Slot()");
     return zero;  // out is Known_Stable()
@@ -1495,7 +1521,9 @@ Result(Zero) Write_Loop_Slot_May_Bind_Or_Decay(
 
     attempt {  // attempt to get stable antiform to write
         if (Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)) {
-            required (Decay_If_Unstable(unwrap write));
+            require (
+              Decay_If_Unstable(unwrap write)
+            );
             continue;
         }
 

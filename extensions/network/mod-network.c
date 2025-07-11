@@ -368,7 +368,9 @@ void on_new_connection(uv_stream_t *server, int status) {
     );
 
     Value* c_state = Slot_Hack(Varlist_Slot(client, STD_PORT_STATE));
-    SOCKREQ* sock = require (Alloc_On_Heap(SOCKREQ));
+    require (
+      SOCKREQ* sock = Alloc_On_Heap(SOCKREQ)
+    );
     memset(sock, 0, sizeof(SOCKREQ));
 
     Init_Handle_Cdata_Managed(
@@ -512,7 +514,9 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
         // !!! Binaries need +1 space for the terminator, but that is handled
         // internally to Extend_Flex.  Review wasted space in array case.
         //
-        required (Extend_Flex_If_Necessary(bin, bufsize));
+        require (
+          Extend_Flex_If_Necessary(bin, bufsize)
+        );
     }
 
     buf->base = s_cast(Binary_Tail(bin));
@@ -693,7 +697,9 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         // things compatible while ripping out the devreq code this must too.
         //
         assert(Is_Nulled(state));
-        sock = require (Alloc_On_Heap(SOCKREQ));
+        require (
+          sock = Alloc_On_Heap(SOCKREQ)
+        );
         memset(sock, 0, sizeof(SOCKREQ));
         Init_Handle_Cdata_Managed(
             state,
@@ -942,7 +948,8 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 
         VarList* info = Cell_Varlist(result);
 
-        required (Init_Tuple_Bytes(
+        require (
+          Init_Tuple_Bytes(
             Slot_Init_Hack(Varlist_Slot(info, STD_NET_INFO_LOCAL_IP)),
             cast(Byte*, &sock->local_ip),
             4
@@ -952,7 +959,8 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
             sock->local_port_number
         );
 
-        required (Init_Tuple_Bytes(
+        require (
+          Init_Tuple_Bytes(
             Slot_Init_Hack(Varlist_Slot(info, STD_NET_INFO_REMOTE_IP)),
             cast(Byte*, &sock->remote_ip),
             4
@@ -1188,7 +1196,9 @@ DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
 
       case TYPE_PORT: {
         Source* single = Make_Source(1);
-        Sink(Element) cell = require (Alloc_Tail_Array(single));
+        require (
+          Sink(Element) cell = Alloc_Tail_Array(single)
+        );
         Copy_Cell(cell, unwrap val);
         Init_Block(ARG(VALUE), single);
         ports = ARG(VALUE);

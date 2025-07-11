@@ -137,12 +137,16 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
 
     Option(Type) type = Type_Of(arg);
     if (Any_Utf8_Type(type)) {
-        trapped (Transcode_One(OUT, TYPE_DECIMAL, arg));
+        trap (
+          Transcode_One(OUT, TYPE_DECIMAL, arg)
+        );
         return OUT;
     }
     else switch (maybe type) {
       case TYPE_RUNE: {
-        Codepoint c = trap (Get_Rune_Single_Codepoint(arg));
+        trap (
+          Codepoint c = Get_Rune_Single_Codepoint(arg)
+        );
         return Init_Decimal(OUT, cast(REBDEC, c)); }
 
       case TYPE_TIME: {
@@ -333,10 +337,14 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
         GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
         mo->digits
     );
-    required (Append_Ascii_Len(mo->strand, s_cast(buf), len));
+    require (
+      Append_Ascii_Len(mo->strand, s_cast(buf), len)
+    );
 
     if (heart == TYPE_PERCENT) {
-        required (Append_Ascii(mo->strand, "%"));
+        require (
+          Append_Ascii(mo->strand, "%")
+        );
     }
 
     return TRIPWIRE;
@@ -406,7 +414,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
                     heart = Heart_Of_Builtin_Fundamental(val);
             }
             else if (heart == TYPE_RUNE) {
-                Codepoint c = require (Get_Rune_Single_Codepoint(arg));
+                require (
+                  Codepoint c = Get_Rune_Single_Codepoint(arg)
+                );
                 d2 = cast(REBDEC, c);
                 heart = TYPE_DECIMAL;
             }

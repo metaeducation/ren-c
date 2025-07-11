@@ -71,8 +71,9 @@ Result(Zero) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
     PoolId pool_id = Pool_Id_For_Size(capacity * wide);
 
     if (pool_id < SYSTEM_POOL) {  // a pool is designated for this size range
-        s->content.dynamic.data = trap (nocast Raw_Pooled_Alloc(pool_id));
-
+        trap (
+          s->content.dynamic.data = nocast Raw_Pooled_Alloc(pool_id)
+        );
         size = g_mem.pools[pool_id].wide;
         assert(size >= capacity * wide);
 
@@ -90,8 +91,9 @@ Result(Zero) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
                 Clear_Flex_Flag(s, POWER_OF_2);  // flag isn't necessary
         }
 
-        s->content.dynamic.data = trap (Alloc_N_On_Heap(char, size));
-
+        trap (
+          s->content.dynamic.data = Alloc_N_On_Heap(char, size)
+        );
         g_mem.pools[SYSTEM_POOL].has += size;
         g_mem.pools[SYSTEM_POOL].free++;
     }
@@ -123,7 +125,9 @@ Result(Zero) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
 Result(Zero) Extend_Flex_If_Necessary(Flex* f, REBLEN delta)
 {
     REBLEN used_old = Flex_Used(f);
-    trapped (Expand_Flex_Tail(f, delta));
+    trap (
+      Expand_Flex_Tail(f, delta)
+    );
     Set_Flex_Len(f, used_old);
     return zero;
 }
@@ -164,18 +168,24 @@ Result(Flex*) Copy_Flex_Core(Flags flags, const Flex* f)
         // Note: If the string was a symbol (aliased via AS) it will lose
         // that information.
         //
-        copy = trap (Make_Strand_Core(flags, used));
+        trap (
+          copy = Make_Strand_Core(flags, used)
+        );
         Set_Flex_Used(copy, used);
         *Flex_Tail(Byte, copy) = '\0';
         Tweak_Link_Bookmarks(cast(Strand*, copy), nullptr);  // !!! copy these?
         MISC_STRAND_NUM_CODEPOINTS(copy) = MISC_STRAND_NUM_CODEPOINTS(f);
     }
     else if (Flex_Wide(f) == 1) {  // non-string BLOB!
-        copy = trap (Make_Flex(flags, used + 1));  // term space
+        trap (
+          copy = Make_Flex(flags, used + 1)  // +1 for '\0' terminator capacity
+        );
         Set_Flex_Used(copy, used);
     }
     else {
-        copy = trap (Make_Flex(flags, used));
+        trap (
+          copy = Make_Flex(flags, used)
+        );
         Set_Flex_Used(copy, used);
     }
 
@@ -212,7 +222,9 @@ Result(Flex*) Copy_Flex_At_Len_Extra(
     REBLEN capacity = len + extra;
     if (Stub_Holds_Bytes(f))
         ++capacity;  // for '\0' terminator, always allow to alias as Strand
-    Flex* copy = trap (Make_Flex(flags, capacity));
+    trap (
+      Flex* copy = Make_Flex(flags, capacity)
+    );
     assert(Flex_Wide(f) == Flex_Wide(copy));
     memcpy(
         Flex_Data(copy),
@@ -337,7 +349,8 @@ void Remove_Any_Series_Len(Element* v, REBLEN index, REBINT len)
             Cell_Flex(v),
             index
         );
-        required (Modify_String_Or_Blob(
+        require (
+          Modify_String_Or_Blob(
             temp,
             SYM_CHANGE,
             nullptr,  // e.g. void
@@ -430,8 +443,9 @@ Byte* Reset_Buffer(Flex* buf, REBLEN len)
 
     Set_Flex_Len(buf, 0);
     Unbias_Flex(buf, true);
-    required (Expand_Flex(buf, 0, len));  // sets new tail
-
+    require (
+      Expand_Flex(buf, 0, len)  // sets new tail
+    );
     return Flex_Data(buf);
 }
 

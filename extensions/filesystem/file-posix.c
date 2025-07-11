@@ -287,8 +287,9 @@ Value* Open_File(const Value* port, int flags)
     }
 
     DECLARE_VALUE (file_path);
-    required (Get_Port_Path_From_Spec(file_path, port));
-
+    require (
+      Get_Port_Path_From_Spec(file_path, port)
+    );
     char *path_utf8 = rebSpell("file-to-local:full", file_path);
 
     uv_fs_t req;
@@ -501,7 +502,9 @@ Value* Create_Directory(const Value* port)
     UNUSED(dir);
 
     DECLARE_VALUE (dir_path);
-    required (Get_Port_Path_From_Spec(dir_path, port));
+    require (
+      Get_Port_Path_From_Spec(dir_path, port)
+    );
 
     // !!! We use /NO-TAIL-SLASH here because there was some historical issue
     // about leaving the tail slash on calling mkdir() on some implementation.
@@ -532,7 +535,9 @@ Value* Delete_File_Or_Directory(const Value* port)
     FileReq* file = unwrap Filereq_Of_Port(port);
 
     DECLARE_VALUE (file_path);
-    required (Get_Port_Path_From_Spec(file_path, port));
+    require (
+      Get_Port_Path_From_Spec(file_path, port)
+    );
 
     // !!! There is a /NO-TAIL-SLASH refinement, but the tail slash was left on
     // for directory removal, because it seemed to be supported.  Review if
@@ -565,7 +570,9 @@ Value* Rename_File_Or_Directory(const Value* port, const Value* to)
     UNUSED(file);  // was once needed for path
 
     DECLARE_VALUE (file_path);
-    required (Get_Port_Path_From_Spec(file_path, port));
+    require (
+      Get_Port_Path_From_Spec(file_path, port)
+    );
 
     char *from_utf8 = rebSpell(
         "file-to-local:full:no-tail-slash", file_path
@@ -751,7 +758,9 @@ Value* Query_File_Or_Directory(const Value* port)
     FileReq* file = unwrap Filereq_Of_Port(port);
 
     DECLARE_VALUE (file_path);
-    required (Get_Port_Path_From_Spec(file_path, port));
+    require (
+      Get_Port_Path_From_Spec(file_path, port)
+    );
 
     // The original implementation here used /no-trailing-slash for the
     // FILE-TO-LOCAL, which meant that %/ would turn into an empty string.

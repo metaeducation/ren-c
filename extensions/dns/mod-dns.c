@@ -135,7 +135,7 @@ static void Get_Local_Ip_Via_Google_DNS_May_Panic(Sink(Value) out)
     }
 
     require (
-        Init_Tuple_Bytes(out, cast(Byte*, &local_addr.sin_addr.s_addr), 4)
+      Init_Tuple_Bytes(out, cast(Byte*, &local_addr.sin_addr.s_addr), 4)
     );
 
 } cleanup_and_panic_if_error: { //////////////////////////////////////////////
@@ -195,7 +195,7 @@ DECLARE_NATIVE(DNS_ACTOR)
           #if TO_WINDOWS
             HOSTENT *he = gethostbyname("");  // 1 HOSTENT per thread
             if (he != nullptr) {
-                required (
+                require (
                     Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4)
                 );
                 return OUT;
@@ -244,7 +244,7 @@ DECLARE_NATIVE(DNS_ACTOR)
 
             rebFree(name);
             if (he != nullptr) {
-                required (
+                require (
                   Init_Tuple_Bytes(OUT, cast(Byte*, *he->h_addr_list), 4)
                 );
                 return OUT;

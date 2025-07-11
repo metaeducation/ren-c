@@ -102,7 +102,9 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     Force_Level_Varlist_Managed(L);
 
-    Use* use = require (Alloc_Use_Inherits(Cell_Binding(prelude)));
+    require (
+      Use* use = Alloc_Use_Inherits(Cell_Binding(prelude))
+    );
     Init_Lensed_Frame(
         Stub_Cell(use),
         Level_Varlist(L),

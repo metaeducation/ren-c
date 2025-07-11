@@ -37,7 +37,8 @@ Result(Strand*) Make_Strand_Core(Flags flags, Size encoded_capacity)
 {
     assert(Flavor_From_Flags(flags) == FLAVOR_NONSYMBOL);
 
-    Strand* str = trap (nocast Make_Flex(
+    trap (
+      Strand* str = nocast Make_Flex(
         STUB_MASK_STRAND | flags,
         encoded_capacity + 1  // + 1 makes room for '\0' terminator
     ));
@@ -81,7 +82,9 @@ Result(Strand*) Copy_String_At_Limit(
         limit
     );
 
-    Strand* dst = trap (Make_Strand(limited_size));
+    trap (
+      Strand* dst = Make_Strand(limited_size)
+    );
     memcpy(cast(Byte*, Strand_Head(dst)), cast(Byte*, utf8), limited_size);
     Term_Strand_Len_Size(dst, limited_length, limited_size);
 
@@ -113,7 +116,9 @@ Strand* Append_Codepoint(Strand* dst, Codepoint c)
 
     Size tail = Strand_Size(dst);
     Size encoded_size = Encoded_Size_For_Codepoint(c);
-    required (Expand_Flex_Tail(dst, encoded_size));
+    require (
+      Expand_Flex_Tail(dst, encoded_size)
+    );
     Encode_UTF8_Char(Binary_At(dst, tail), c, encoded_size);
 
     // "length" grew by 1 codepoint, but "size" grew by 1 to UNI_MAX_ENCODED
@@ -138,7 +143,9 @@ Result(Strand*) Make_Codepoint_Strand(Codepoint c)
         return fail (Error_Illegal_Zero_Byte_Raw());
 
     Size size = Encoded_Size_For_Codepoint(c);
-    Strand* s = trap (Make_Strand(size));
+    trap (
+      Strand* s = Make_Strand(size)
+    );
     Encode_UTF8_Char(Strand_Head(s), c, size);
     Term_Strand_Len_Size(s, 1, size);
     return s;
@@ -160,14 +167,18 @@ Result(Strand*) Append_Ascii_Len(Strand* dst, const char *ascii, REBLEN len)
     REBLEN old_len;
 
     if (dst == nullptr) {
-        dst = trap (Make_Strand(len));
+        trap (
+          dst = Make_Strand(len)
+        );
         old_size = 0;
         old_len = 0;
     }
     else {
         old_size = Strand_Size(dst);
         old_len = Strand_Len(dst);
-        trapped (Expand_Flex_Tail(dst, len));
+        trap (
+          Expand_Flex_Tail(dst, len)
+        );
     }
 
     memcpy(Binary_At(dst, old_size), ascii, len);
@@ -202,7 +213,9 @@ void Append_Utf8(Strand* dst, Utf8(const*) utf8, Length len, Size size)
     Size old_used = Strand_Size(dst);
 
     REBLEN tail = Strand_Size(dst);
-    required (Expand_Flex(dst, tail, size));  // Flex_Used() changes too
+    require (
+      Expand_Flex(dst, tail, size)  // Flex_Used() changes too
+    );
 
     memcpy(Binary_At(dst, tail), cast(Byte*, utf8), size);
     Term_Strand_Len_Size(dst, old_len + len, old_used + size);
@@ -253,7 +266,9 @@ Result(Zero) Append_Int(Strand* dst, REBINT num)
     Byte buf[32];
     Form_Int(buf, num);
 
-    trapped (Append_Ascii(dst, s_cast(buf)));
+    trap (
+      Append_Ascii(dst, s_cast(buf))
+    );
     return zero;
 }
 
@@ -271,7 +286,9 @@ Result(Zero) Append_Int_Pad(Strand* dst, REBINT num, REBINT digs)
     else
         Form_Int_Pad(buf, num, -digs, digs, '0');
 
-    trapped (Append_Ascii(dst, s_cast(buf)));
+    trap (
+      Append_Ascii(dst, s_cast(buf))
+    );
     return zero;
 }
 
@@ -340,7 +357,9 @@ Strand* Append_UTF8_May_Panic(
     Length old_len = Strand_Len(dst);
     Size old_size = Strand_Size(dst);
 
-    required (Expand_Flex_Tail(dst, size));
+    require (
+      Expand_Flex_Tail(dst, size)
+    );
     memcpy(
         Binary_At(dst, old_size),
         Binary_At(mo->strand, mo->base.size),
@@ -389,14 +408,18 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             panic (Error_Bad_Value(val));
 
           case TYPE_INTEGER:
-            required (Expand_Flex_Tail(buf, 1));
+            require (
+              Expand_Flex_Tail(buf, 1)
+            );
             *Binary_At(buf, tail) = cast(Byte, VAL_UINT8(val));  // can panic()
             break;
 
           case TYPE_BLOB: {
             Size size;
             const Byte* data = Blob_Size_At(&size, val);
-            required (Expand_Flex_Tail(buf, size));
+            require (
+              Expand_Flex_Tail(buf, size)
+            );
             memcpy(Binary_At(buf, tail), data, size);
             break; }
 
@@ -409,7 +432,9 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
             Size utf8_size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, val);
 
-            required (Expand_Flex_Tail(buf, utf8_size));
+            require (
+              Expand_Flex_Tail(buf, utf8_size)
+            );
             memcpy(Binary_At(buf, tail), cast(Byte*, utf8), utf8_size);
             Set_Flex_Len(buf, tail + utf8_size);
             break; }

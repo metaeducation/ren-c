@@ -212,7 +212,9 @@ INLINE Result(Value*) Decay_If_Unstable(Need(Atom*) v) {
         const Element* pack_at = List_At(nullptr, v);
         Sink(Element) sink = v;
         Copy_Cell(sink, pack_at);  // Note: no antiform binding (PACK!)
-        required (Unliftify_Undecayed(v));
+        require (
+          Unliftify_Undecayed(v)
+        );
         return u_cast(Value*, v);
     }
 

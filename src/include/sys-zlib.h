@@ -2075,7 +2075,7 @@ ZEXTERN uLong ZEXPORT zlibCompileFlags OF((void));
 /*
      The following utility functions are implemented on top of the basic
    stream-oriented functions.  To simplify the interface, some default options
-   are assumed (compression level and memory usage, standard memory allocation
+   are assume (compression level and memory usage, standard memory allocation
    functions).  The source code of these utility functions can be modified if
    you need special options.
 */

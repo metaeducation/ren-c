@@ -149,7 +149,8 @@ Bounce The_Group_Branch_Executor(Level* const L)
     if (Is_Cell_Erased(with))
         Init_Nulled(with);
 
-    Level* sub = require (Make_Level(
+    require (
+      Level* sub = Make_Level(
         &Evaluator_Executor,
         LEVEL->feed,
         LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
@@ -177,8 +178,9 @@ Bounce The_Group_Branch_Executor(Level* const L)
     if (Is_Void(branch))  // void branches giving their input is useful  [1]
         return Copy_Cell(OUT, with);
 
-    required (Decay_If_Unstable(branch));
-
+    require (
+      Decay_If_Unstable(branch)
+    );
     if (Is_Pinned_Form_Of(WORD, branch))
         panic (Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
 
@@ -206,7 +208,9 @@ DECLARE_NATIVE(IF)
     Value* condition = ARG(CONDITION);
     Value* branch = ARG(BRANCH);
 
-    bool cond = require (Test_Conditional(condition));
+    require (
+      bool cond = Test_Conditional(condition)
+    );
     if (not cond)
         return NULLED;  // "light" null (not in a pack) if condition is false
 
@@ -233,7 +237,9 @@ DECLARE_NATIVE(WHEN)
     Value* condition = ARG(CONDITION);
     Value* branch = ARG(BRANCH);
 
-    bool cond = require (Test_Conditional(condition));
+    require (
+      bool cond = Test_Conditional(condition)
+    );
     if (not cond)
         return VOID;  // deviation from IF (!) ...VOID not NULL
 
@@ -261,7 +267,9 @@ DECLARE_NATIVE(EITHER)
 
     Value* condition = ARG(CONDITION);
 
-    bool cond = require (Test_Conditional(condition));
+    require (
+      bool cond = Test_Conditional(condition)
+    );
 
     Value* branch = cond ? ARG(OKAY_BRANCH) : ARG(NULL_BRANCH);
 
@@ -457,7 +465,9 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     }
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
-    Level* sub = require (Make_Level_At(executor, block, flags));
+    require (
+      Level* sub = Make_Level_At(executor, block, flags)
+    );
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
     STATE = ST_ANY_ALL_NONE_EVAL_STEP;
@@ -476,7 +486,9 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     Set_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST);
 
-    Value* spare = require (Decay_If_Unstable(SPARE));
+    require (
+      Value* spare = Decay_If_Unstable(SPARE)
+    );
 
     if (not Is_Nulled(predicate))
         goto run_predicate_on_eval_product;
@@ -511,11 +523,15 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     SUBLEVEL->executor = &Stepper_Executor;  // done tunneling [2]
     STATE = ST_ANY_ALL_NONE_EVAL_STEP;
 
-    condition = require (Decay_If_Unstable(SCRATCH));
+    require (
+      condition = Decay_If_Unstable(SCRATCH)
+    );
 
 } process_condition: {
 
-    bool cond = require (Test_Conditional(condition));
+    require (
+      bool cond = Test_Conditional(condition)
+    );
 
     switch (which) {
       case NATIVE_IS_ANY:
@@ -684,7 +700,8 @@ DECLARE_NATIVE(CASE)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Level* L = require (Make_Level_At(
+    require (
+      Level* L = Make_Level_At(
         &Stepper_Executor,
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
@@ -717,7 +734,9 @@ DECLARE_NATIVE(CASE)
     if (Is_Ghost(SPARE))  // skip over things like ELIDE, but not voids!
         goto handle_next_clause;
 
-    required (Decay_If_Unstable(SPARE));
+    require (
+      Decay_If_Unstable(SPARE)
+    );
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // we tolerate "fallout" from a condition
@@ -767,7 +786,8 @@ DECLARE_NATIVE(CASE)
     if (not Is_Group(branch))
         goto handle_processed_branch_in_scratch;
 
-    Level* sub = require (Make_Level_At_Inherit_Const(
+    require (
+      Level* sub = Make_Level_At_Inherit_Const(
         &Evaluator_Executor,
         branch,  // non @GROUP! branches are run unconditionally
         Level_Binding(SUBLEVEL),
@@ -787,11 +807,15 @@ DECLARE_NATIVE(CASE)
     //        >> if null <some-tag>
     //        ** Script Error: if does not allow tag! for its branch...
 
-    Value* branch = require (Decay_If_Unstable(SCRATCH));
-
-    Value* spare = require (Decay_If_Unstable(SPARE));
-
-    bool cond = require (Test_Conditional(spare));
+    require (
+      Value* branch = Decay_If_Unstable(SCRATCH)
+    );
+    require (
+      Value* spare = Decay_If_Unstable(SPARE)
+    );
+    require (
+      bool cond = Test_Conditional(spare)
+    );
 
     if (not cond) {
         if (not Any_Branch(branch))  // like IF [1]
@@ -917,7 +941,8 @@ DECLARE_NATIVE(SWITCH)
         LIFT_BYTE(predicate) = NOQUOTE_2;
     }
 
-    Level* sub = require (Make_Level_At(
+    require (
+      Level* sub = Make_Level_At(
         &Stepper_Executor,
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
@@ -988,7 +1013,9 @@ DECLARE_NATIVE(SWITCH)
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // nothing left, so drop frame and return
 
-    Value* spare = require (Decay_If_Unstable(SPARE));  // predicate decays?
+    require (  // predicate decays?
+      Value* spare = Decay_If_Unstable(SPARE)
+    );
 
     if (Bool_ARG(TYPE)) {
         if (not Is_Datatype(spare) and not Is_Action(spare))
@@ -1014,7 +1041,9 @@ DECLARE_NATIVE(SWITCH)
             return BOUNCE_THROWN;  // aborts sublevel
         }
 
-        bool cond = require (Test_Conditional(scratch));
+        require (
+          bool cond = Test_Conditional(scratch)
+        );
 
         if (not cond)
             goto next_switch_step;
@@ -1129,7 +1158,9 @@ DECLARE_NATIVE(DEFAULT)
     Element* steps = u_cast(Element*, SCRATCH);  // avoid double-eval [1]
     STATE = ST_DEFAULT_GETTING_TARGET;  // can't leave at STATE_0
 
-    assumed (Unsingleheart_Sequence(target));
+    assume (
+      Unsingleheart_Sequence(target)
+    );
     heeded (Copy_Cell(SCRATCH, target));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
@@ -1143,10 +1174,12 @@ DECLARE_NATIVE(DEFAULT)
         panic (Cell_Error(OUT));
 
     if (not Is_Dual_Word_Unset_Signal(Known_Stable(OUT))) {
-        required (Unliftify_Undecayed(OUT));
-
-        Value* out = require (Decay_If_Unstable(OUT));  // may need decay [2]
-
+        require (
+          Unliftify_Undecayed(OUT)
+        );
+        require (  // may need decay [2]
+          Value* out = Decay_If_Unstable(OUT)
+        );
         if (not (Is_Trash(out) or Is_Nulled(out) or Is_Blank(out)))
             return OUT;  // consider it a "value" [3]
     }
@@ -1159,7 +1192,7 @@ DECLARE_NATIVE(DEFAULT)
     assert(Is_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS) excepted (Error* e) {
+    Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS) except (Error* e) {
         assert(false);  // shouldn't be able to happen (steps is pinned)
         panic (e);
     }

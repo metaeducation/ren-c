@@ -55,7 +55,9 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
         return LOGIC(false);
 
     for (; a_item != a_tail; ++a_item, ++b_item) {
-        bool equal = require (Equal_Values(a_item, b_item, strict));
+        require (
+          bool equal = Equal_Values(a_item, b_item, strict)
+        );
         if (not equal)
             return LOGIC(false);
     }
@@ -109,7 +111,9 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_List)
             return LOGIC(lesser);  // LESSER? result was meaningful
 
         bool strict = true;
-        bool equal = require (Equal_Values(a_item, b_item, strict));
+        require (
+          bool equal = Equal_Values(a_item, b_item, strict)
+        );
         if (equal)
             continue;  // don't fret they couldn't compare with LESSER?
 
@@ -224,7 +228,9 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
             if (Is_Ghost(OUT))
                 break;
 
-            Value* out = require (Decay_If_Unstable(OUT));
+            require (
+              Value* out = Decay_If_Unstable(OUT)
+            );
             if (Is_Antiform(out))
                 panic (Error_Bad_Antiform_Raw(out));
 
@@ -287,10 +293,11 @@ REBINT Find_In_Array(
                 if (item == item_tail)
                     break;
 
-                bool equal = require (
-                    Equal_Values(item, other, did (flags & AM_FIND_CASE))
+                require (
+                  bool equal = Equal_Values(
+                    item, other, did (flags & AM_FIND_CASE)
+                  )
                 );
-
                 if (not equal)
                     break;
 
@@ -360,8 +367,8 @@ REBINT Find_In_Array(
 
     for (; index >= start and index < end; index += skip) {
         const Element* item = Array_At(array, index);
-        bool equal = require (
-            Equal_Values(item, pattern, did (flags & AM_FIND_CASE))
+        require (
+          bool equal = Equal_Values(item, pattern, did (flags & AM_FIND_CASE))
         );
         if (equal)
             return index;
@@ -539,7 +546,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
                 panic ("Cannot SELECT with antiforms on lists");
 
             if (Is_Datatype(pattern)) {
-                required (
+                require (
                     Init_Typechecker(pattern, pattern)  // out = in is okay
                 );
             }
@@ -647,7 +654,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         if (Bool_ARG(LINE))
             flags |= AM_LINE;
 
-        SERIES_INDEX_UNBOUNDED(OUT) = require (Modify_Array(
+        require (
+          SERIES_INDEX_UNBOUNDED(OUT) = Modify_Array(
             arr,
             index,
             unwrap id,
@@ -831,7 +839,9 @@ IMPLEMENT_GENERIC(TO, Any_List)
         const Element* tail;
         const Element* at = List_At(&tail, list);
 
-        Map* map = require (Make_Map(len / 2));  // map size is half block len
+        require (  // map size is half block len
+          Map* map = Make_Map(len / 2)
+        );
         Append_Map(map, at, tail, len);
         Rehash_Map(map);
         return Init_Map(OUT, map);
@@ -878,7 +888,8 @@ Result(Element*) Alias_Any_List_As(
             Freeze_Source_Shallow(Cell_Array_Ensure_Mutable(list));
 
         DECLARE_ELEMENT (temp);  // need to rebind
-        trapped (Init_Any_Sequence_At_Listlike(
+        trap (
+          Init_Any_Sequence_At_Listlike(
             temp,
             as,
             Cell_Array(list),
@@ -901,7 +912,9 @@ IMPLEMENT_GENERIC(AS, Any_List)
     Element* list = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    required (Alias_Any_List_As(OUT, list, as));
+    require (
+      Alias_Any_List_As(OUT, list, as)
+    );
 
     return OUT;
 }
@@ -926,7 +939,8 @@ IMPLEMENT_GENERIC(COPY, Any_List)
 
     flags |= (list->header.bits & ARRAY_FLAG_CONST_SHALLOW);  // retain [1]
 
-    Source* copy = require (nocast Copy_Array_Core_Managed(
+    require (
+      Source* copy = nocast Copy_Array_Core_Managed(
         flags, // flags
         arr,
         index, // at
@@ -1013,7 +1027,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
 
     if (Any_List(series)) {
         Source* arr = Cell_Array_Ensure_Mutable(series);
-        required (
+        require (
             Modify_Array(
                 arr, n, SYM_CHANGE, poke, AM_PART, part, dups
             )
@@ -1021,7 +1035,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
     }
     else if (Any_String(series)) {
         SERIES_INDEX_UNBOUNDED(series) = n;
-        required (
+        require (
             Modify_String_Or_Blob(
                 series, SYM_CHANGE, poke, AM_PART, part, dups
             )
@@ -1029,7 +1043,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
     }
     else {
         SERIES_INDEX_UNBOUNDED(series) = n;
-        required (
+        require (
             Modify_String_Or_Blob(
                 series, SYM_CHANGE, poke, AM_PART, part, dups
             )
@@ -1324,7 +1338,9 @@ static int Qsort_Values_Callback(void *state, const void *p1, const void *p2)
     if (Cell_Logic(result))  // comparator has LESSER? semantics
         return 1;  // returning 1 means lesser, it seems (?)
 
-    bool equal = require (Equal_Values(v1, v2, strict));
+    require (
+      bool equal = Equal_Values(v1, v2, strict)
+    );
     if (equal)
         return 0;
 
@@ -1583,7 +1599,9 @@ DECLARE_NATIVE(GLOM)
     // practice all GLOM that exist for the moment will be working on
     // series that are at their head, so this won't help.
 
-    Sink(Element) cell = require (Alloc_Tail_Array(a));
+    require (
+      Sink(Element) cell = Alloc_Tail_Array(a)
+    );
     Copy_Cell(cell, Known_Element(value));
     return COPY(accumulator);
 
@@ -1599,7 +1617,9 @@ DECLARE_NATIVE(GLOM)
     Array* r = Cell_Array_Ensure_Mutable(value);
     Length a_len = Array_Len(a);
     Length r_len = Array_Len(r);
-    required (Expand_Flex_Tail(a, r_len));  // can move memory, get `at` after
+    require (
+      Expand_Flex_Tail(a, r_len)  // can move memory, get `at` after
+    );
     Element* dst = Array_At(a, a_len);  // old tail position
     Element* src = Array_Head(r);
 

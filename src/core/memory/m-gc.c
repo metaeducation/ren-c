@@ -339,7 +339,9 @@ static void Queue_Unmarked_Accessible_Stub_Deep(const Stub* s)
         // grow, like the data stack?
         //
         if (Is_Flex_Full(g_gc.mark_stack)) {
-            required (Extend_Flex_If_Necessary(g_gc.mark_stack, 8));
+            require (
+              Extend_Flex_If_Necessary(g_gc.mark_stack, 8)
+            );
         }
         *Flex_At(Array*, g_gc.mark_stack, Flex_Used(g_gc.mark_stack)) = a;
         Set_Flex_Used(  // doesn't add a terminator
@@ -1038,7 +1040,9 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                     Remove_GC_Mark(s);
                 }
                 else {
-                    assumed (Expand_Flex_Tail(sweeplist, 1));
+                    assume (
+                      Expand_Flex_Tail(sweeplist, 1)
+                    );
                     *Flex_At(Base*, sweeplist, sweep_count) = s;
                     ++sweep_count;
                 }
@@ -1057,7 +1061,9 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                     Remove_GC_Mark(pairing);
                 }
                 else {
-                    assumed (Expand_Flex_Tail(sweeplist, 1));
+                    assume (
+                      Expand_Flex_Tail(sweeplist, 1)
+                    );
                     *Flex_At(Base*, sweeplist, sweep_count) = pairing;
                     ++sweep_count;
                 }
@@ -1435,7 +1441,9 @@ void Push_Lifeguard(const void* p)  // BASE_FLAG_BASE may not be set [1]
     }
 
     if (Is_Flex_Full(g_gc.guarded)) {
-        required (Extend_Flex_If_Necessary(g_gc.guarded, 8));
+        require (
+          Extend_Flex_If_Necessary(g_gc.guarded, 8)
+        );
     }
 
     *Flex_At(const void*, g_gc.guarded, Flex_Used(g_gc.guarded)) = p;
@@ -1467,7 +1475,8 @@ void Startup_GC(void)
     // As a trick to keep this Flex from trying to track itself, say it's
     // managed, then sneak the flag off.
     //
-    ensure_nullptr(g_gc.manuals) = require (Make_Flex(
+    require (
+      ensure_nullptr(g_gc.manuals) = Make_Flex(
         FLAG_FLAVOR(FLAVOR_FLEXLIST) | BASE_FLAG_MANAGED,  // lie!
         15
     ));
@@ -1475,7 +1484,8 @@ void Startup_GC(void)
 
     // Flexes and Cells protected from GC.  Holds base pointers.
     //
-    ensure_nullptr(g_gc.guarded) = require (Make_Flex(
+    require (
+      ensure_nullptr(g_gc.guarded) = Make_Flex(
         FLAG_FLAVOR(FLAVOR_NODELIST),
         15
     ));
@@ -1483,7 +1493,8 @@ void Startup_GC(void)
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.
     //
-    ensure_nullptr(g_gc.mark_stack) = require (Make_Flex(
+    require (
+      ensure_nullptr(g_gc.mark_stack) = Make_Flex(
         FLAG_FLAVOR(FLAVOR_NODELIST),
         100
     ));
@@ -1519,7 +1530,8 @@ void Startup_GC(void)
     // the GC gets a chance to run, those stubs can be swept with all the
     // inaccessible references canonized to this one global Stub.
     //
-    Stub* s = require (Prep_Stub(
+    require (
+      Stub* s = Prep_Stub(
         FLAG_FLAVOR(FLAVOR_THE_GLOBAL_INACCESSIBLE)
             | BASE_FLAG_UNREADABLE
             | BASE_FLAG_MARKED,

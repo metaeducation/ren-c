@@ -1814,7 +1814,7 @@
  * When this option is enabled, the PSA API exposes the cryptographic
  * mechanisms requested by the `PSA_WANT_XXX` symbols defined in
  * include/psa/crypto_config.h. The corresponding `MBEDTLS_XXX` settings are
- * automatically enabled if required (i.e. if no PSA driver provides the
+ * automatically enabled if require (i.e. if no PSA driver provides the
  * mechanism). You may still freely enable additional `MBEDTLS_XXX` symbols
  * in mbedtls_config.h.
  *

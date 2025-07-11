@@ -58,7 +58,9 @@ INLINE void Probe_Molded_Value(Molder* mo, const Value* v)
         Copy_Cell(temp, v);
         Element* elem = Quasify_Antiform(temp);
         Mold_Element(mo, elem);
-        required (Append_Ascii(mo->strand, "  ; anti"));
+        require (
+          Append_Ascii(mo->strand, "  ; anti")
+        );
     }
     else {
         Mold_Element(mo, cast(Element*, v));
@@ -77,12 +79,16 @@ void Probe_Cell_Print_Helper(
     const Atom* atom = cast(Atom*, p);
 
     if (Is_Cell_Poisoned(atom)) {
-        required (Append_Ascii(mo->strand, "\\\\poisoned\\\\"));
+        require (
+          Append_Ascii(mo->strand, "\\\\poisoned\\\\")
+        );
         return;
     }
 
     if (Not_Cell_Readable(atom)) {
-        required (Append_Ascii(mo->strand, "\\\\unreadable\\\\"));
+        require (
+          Append_Ascii(mo->strand, "\\\\unreadable\\\\")
+        );
         return;
     }
 
@@ -90,7 +96,9 @@ void Probe_Cell_Print_Helper(
         DECLARE_ELEMENT (reified);
         Copy_Lifted_Cell(reified, atom);
         Mold_Element(mo, reified);
-        required (Append_Ascii(mo->strand, "  ; anti"));
+        require (
+          Append_Ascii(mo->strand, "  ; anti")
+        );
     }
     else
         Mold_Element(mo, cast(const Element*, atom));
@@ -286,12 +294,16 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "KeyList Flex", file, line);
         const Key* tail = Flex_Tail(Key, f);
         const Key* key = Flex_Head(Key, f);
-        required (Append_Ascii(mo->strand, "<< "));
+        require (
+          Append_Ascii(mo->strand, "<< ")
+        );
         for (; key != tail; ++key) {
             Mold_Text_Flex_At(mo, Key_Symbol(key), 0);
             Append_Codepoint(mo->strand, ' ');
         }
-        required (Append_Ascii(mo->strand, ">>"));
+        require (
+          Append_Ascii(mo->strand, ">>")
+        );
         break; }
 
       case FLAVOR_POINTERS:
@@ -333,9 +345,13 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Byte-Size Flex", file, line);
 
         const bool brk = (Binary_Len(b) > 32);  // !!! duplicates MF_Blob code
-        required (Append_Ascii(mo->strand, "#{"));
+        require (
+          Append_Ascii(mo->strand, "#{")
+        );
         Form_Base16(mo, Binary_Head(b), Binary_Len(b), brk);
-        required (Append_Ascii(mo->strand, "}"));
+        require (
+          Append_Ascii(mo->strand, "}")
+        );
         break; }
 
     //=//// FLEXES WITH ELEMENTS WIDTH 1 INTERPRETED AS UTF-8 /////////////=//

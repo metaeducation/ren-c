@@ -86,7 +86,9 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 //             // do ASCII stuff...
 //         }
 //         else {
-//             Codepoint c = require (Back_Scan_Utf8_Char(&bp, &size));
+//             require (
+//               Codepoint c = Back_Scan_Utf8_Char(&bp, &size)
+//             );
 //             // do UNICODE stuff...
 //         }
 //     }
@@ -260,7 +262,9 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
             panic ("Only RUNE! can MAKE a UTF-8 immutable type with INTEGER!");
 
         REBINT n = Int32(arg);
-        trapped (Init_Single_Codepoint_Rune(OUT, n));
+        trap (
+          Init_Single_Codepoint_Rune(OUT, n)
+        );
         return OUT; }
 
       case TYPE_BLOB: {
@@ -282,15 +286,18 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
             c = *bp;
         }
         else {
-            c = trap (Back_Scan_Utf8_Char(&bp, &size));
-
+            trap (
+              c = Back_Scan_Utf8_Char(&bp, &size)
+            );
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0) {
                 Copy_Cell(ARG(TYPE), Datatype_From_Type(TYPE_RUNE));
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
         }
-        trapped (Init_Single_Codepoint_Rune(OUT, c));
+        trap (
+          Init_Single_Codepoint_Rune(OUT, c)
+        );
         return OUT; }
 
       default:
@@ -330,7 +337,9 @@ DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
     if (c == 0)
         return COPY(LIB(NUL));
 
-    trapped (Init_Single_Codepoint_Rune(OUT, c));
+    trap (
+      Init_Single_Codepoint_Rune(OUT, c)
+    );
     return OUT;
 }
 
@@ -364,7 +373,9 @@ DECLARE_NATIVE(TO_CHAR)
     Element* e = Element_ARG(ELEMENT);
     if (Is_Integer(e)) {
         uint32_t c = VAL_UINT32(e);
-        trapped (Init_Single_Codepoint_Rune(OUT, c));
+        trap (
+          Init_Single_Codepoint_Rune(OUT, c)
+        );
         return OUT;
     }
     if (Is_Rune_And_Is_Char(e))
@@ -385,7 +396,9 @@ DECLARE_NATIVE(TO_CHAR)
     Codepoint c;
     const Byte* bp = at;
     if (Is_Blob(e)) {
-        c = trap (Back_Scan_Utf8_Char(&bp, nullptr));
+        trap (
+          c = Back_Scan_Utf8_Char(&bp, nullptr)
+        );
     } else {
         bp = Back_Scan_Utf8_Char_Unchecked(&c, bp);
     }
@@ -550,7 +563,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     if (not Is_Rune_And_Is_Char(rune))
         panic ("Math operations only usable on single-character RUNE!");
 
-    Codepoint c = require (Get_Rune_Single_Codepoint(rune));
+    require (
+      Codepoint c = Get_Rune_Single_Codepoint(rune)
+    );
 
     // Don't use a Codepoint for chr, because it does signed math and then will
     // detect overflow.
@@ -560,12 +575,16 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
 
     switch (maybe id) {
       case SYM_ADD: {
-        arg = require (Get_Math_Arg_For_Char(ARG_N(2), verb));
+        require (
+          arg = Get_Math_Arg_For_Char(ARG_N(2), verb)
+        );
         chr += arg;
         break; }
 
       case SYM_SUBTRACT: {
-        arg = require (Get_Math_Arg_For_Char(ARG_N(2), verb));
+        require (
+          arg = Get_Math_Arg_For_Char(ARG_N(2), verb)
+        );
         chr -= arg;
         break; }
 
@@ -576,7 +595,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Utf8)
     if (chr < 0)
         return fail (Error_Codepoint_Negative_Raw());
 
-    trapped (Init_Single_Codepoint_Rune(OUT, cast(Codepoint, chr)));
+    trap (
+      Init_Single_Codepoint_Rune(OUT, cast(Codepoint, chr))
+    );
     return OUT;
 }
 
@@ -618,7 +639,9 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         Length len;
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
-        Strand* s = require (Make_Strand(size));
+        require (
+          Strand* s = Make_Strand(size)
+        );
         memcpy(cast(Byte*, Strand_Head(s)), cast(Byte*, utf8), size);
         Term_Strand_Len_Size(s, len, size);
         return Init_Any_String(OUT, to, s);
@@ -631,7 +654,9 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 
         Size size;  // TO conversion of mutable data, can't reuse stub
         Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
-        const Symbol* sym = require (Intern_Utf8_Managed(at, size));
+        require (
+          const Symbol* sym = Intern_Utf8_Managed(at, size)
+        );
         return Init_Word(OUT, sym);
     }
 
@@ -655,7 +680,9 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
 
         if (to == TYPE_EMAIL) {
-            const Byte* ep = require (Scan_Email_To_Stack(utf8, size));
+            require (
+              const Byte* ep = Scan_Email_To_Stack(utf8, size)
+            );
             if (ep != cast(const Byte*, utf8) + size)
                 return fail (Error_Scan_Invalid_Raw(ARG(TYPE), v));
 
@@ -683,12 +710,16 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         or to == TYPE_TIME
         or to == TYPE_PAIR
     ){
-        trapped (Transcode_One(OUT, to, v));
+        trap (
+          Transcode_One(OUT, to, v)
+        );
         return OUT;
     }
 
     if (Any_Sequence_Type(to)) {  // to tuple! "a.b.c" -> a.b.c
-        trapped (Transcode_One(OUT, to, v));
+        trap (
+          Transcode_One(OUT, to, v)
+        );
         return OUT;
     }
 
@@ -742,7 +773,8 @@ Result(Element*) Alias_Any_Utf8_As(
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
         assert(size + 1 <= Size_Of(v->payload.at_least_8));
 
-        Strand* str = require (Make_Strand_Core(
+        require (
+          Strand* str = Make_Strand_Core(
             STUB_MASK_STRAND | BASE_FLAG_MANAGED,
             size
         ));
@@ -777,7 +809,9 @@ Result(Element*) Alias_Any_Utf8_As(
 
         Size size;
         Utf8(const*) at = Cell_Utf8_Size_At(&size, v);
-        const Symbol* sym = trap (Intern_Utf8_Managed(at, size));
+        trap (
+          const Symbol* sym = Intern_Utf8_Managed(at, size)
+        );
         return Init_Word(out, sym);
     }
 
@@ -793,7 +827,9 @@ Result(Element*) Alias_Any_Utf8_As(
     }
 
     if (as == TYPE_INTEGER) {
-        Codepoint c = trap (Get_Rune_Single_Codepoint(v));
+        trap (
+          Codepoint c = Get_Rune_Single_Codepoint(v)
+        );
         return Init_Integer(out, c);
     }
 
@@ -850,8 +886,9 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
     Element* any_utf8 = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    required (Alias_Any_Utf8_As(OUT, any_utf8, as));
-
+    require (
+      Alias_Any_Utf8_As(OUT, any_utf8, as)
+    );
     return OUT;
 }
 
@@ -942,7 +979,9 @@ IMPLEMENT_GENERIC(RANDOM, Is_Rune)
 
     Element* rune = Element_ARG(MAX);
 
-    Codepoint limit = require (Get_Rune_Single_Codepoint(rune));
+    require (
+      Codepoint limit = Get_Rune_Single_Codepoint(rune)
+    );
 
   keep_generating_until_valid_char_found: {
 
@@ -955,7 +994,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Rune)
             1 + (Random_Int(Bool_ARG(SECURE)) % limit)
         );
 
-        Init_Single_Codepoint_Rune(OUT, c) excepted (Error* e) {
+        Init_Single_Codepoint_Rune(OUT, c) except (Error* e) {
             dont(Free_Unmanaged_Flex(e));  // errors are prealloc'd
             UNUSED(e);
             again;

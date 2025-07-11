@@ -329,8 +329,12 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
         bool lesser;
         DECLARE_VALUE (v1);
         DECLARE_VALUE (v2);
-        required (Read_Slot(v1, e1.slot));
-        required (Read_Slot(v2, e2.slot));
+        require (
+          Read_Slot(v1, e1.slot)
+        );
+        require (
+          Read_Slot(v2, e2.slot)
+        );
 
         if (Try_Lesser_Value(&lesser, v1, v2)) {  // works w/LESSER?
             if (lesser) {
@@ -338,7 +342,9 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
                 goto finished;
             }
 
-            bool equal = require (Equal_Values(v1, v2, strict));
+            require (
+              bool equal = Equal_Values(v1, v2, strict)
+            );
             if (not equal) {
                 diff = 1;
                 goto finished;
@@ -346,7 +352,9 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
             continue;
         }
 
-        bool equal = require (Equal_Values(v1, v2, strict));
+        require (
+          bool equal = Equal_Values(v1, v2, strict)
+        );
         if (equal)  // if equal, we can continue
             continue;
 
@@ -420,7 +428,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
                 panic ("Expected BLOCK!-style varargs");
             }
 
-            feed = require (Prep_At_Feed(
+            require (
+              feed = Prep_At_Feed(
                 Alloc_Feed(), shared, SPECIFIED, FEED_MASK_DEFAULT
             ));
         }
@@ -429,7 +438,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
 
         bool error_on_deferred = true;
 
-        required (Init_Frame_From_Feed(
+        require (
+          Init_Frame_From_Feed(
             OUT,
             nullptr,
             feed,
@@ -504,7 +514,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
                 varlist
             );
 
-            Use* use = require (Alloc_Use_Inherits(List_Binding(arg)));
+            require (
+              Use* use = Alloc_Use_Inherits(List_Binding(arg))
+            );
             Copy_Cell(Stub_Cell(use), Varlist_Archetype(derived));
 
             Tweak_Cell_Binding(arg, use);  // def is GC-safe, use will be too
@@ -534,7 +546,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             nullptr  // no parent (MAKE SOME-OBJ ... calls any_context generic)
         );
 
-        Use* use = require (Alloc_Use_Inherits(List_Binding(arg)));
+        require (
+          Use* use = Alloc_Use_Inherits(List_Binding(arg))
+        );
         Copy_Cell(Stub_Cell(use), Varlist_Archetype(ctx));
 
         Tweak_Cell_Binding(arg, use);  // arg is GC-safe, so use will be too
@@ -750,7 +764,9 @@ VarList* Copy_Varlist_Extra_Managed(
 
         Flags flags = BASE_FLAG_MANAGED;  // !!! Review, which flags?
         if (not Is_Antiform(dest)) {
-            required (Clonify(Known_Element(dest), flags, deeply));
+            require (
+              Clonify(Known_Element(dest), flags, deeply)
+            );
         }
     }
 
@@ -766,7 +782,8 @@ VarList* Copy_Varlist_Extra_Managed(
     else {
         assert(CTX_TYPE(original) != TYPE_FRAME);  // can't expand FRAME!s
 
-        KeyList* keylist = require (nocast Copy_Flex_At_Len_Extra(
+        require (
+          KeyList* keylist = nocast Copy_Flex_At_Len_Extra(
             STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
             Bonus_Keylist(original),
             0,
@@ -817,8 +834,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             Begin_Non_Lexical_Mold(mo, v); // If molding, get &[object! etc.
             Append_Codepoint(s, '[');
         }
-        required (Append_Ascii(s, "..."));
-
+        require (
+          Append_Ascii(s, "...")
+        );
         if (not form) {
             Append_Codepoint(s, ']');
             End_Non_Lexical_Mold(mo);
@@ -837,11 +855,14 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         bool had_output = false;
         while (Try_Advance_Evars(&evars)) {
             Append_Spelling(mo->strand, Key_Symbol(evars.key));
-            required (Append_Ascii(mo->strand, ": "));
+            require (
+              Append_Ascii(mo->strand, ": ")
+            );
 
             DECLARE_ATOM (var);
-            required (Read_Slot_Meta(var, evars.slot));
-
+            require (
+              Read_Slot_Meta(var, evars.slot)
+            );
             if (Is_Antiform(var)) {
                 panic (Error_Bad_Antiform(var));  // can't FORM antiforms
             }
@@ -882,12 +903,16 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         Append_Codepoint(mo->strand, ' ');
 
         if (Is_Dual_Unset(evars.slot)) {
-            required (Append_Ascii(mo->strand, "\\~\\  ; unset"));  // !!!
+            require (
+              Append_Ascii(mo->strand, "\\~\\  ; unset")  // !!! rethink
+            );
             continue;
         }
 
         DECLARE_ATOM (var);
-        required (Read_Slot_Meta(var, evars.slot));
+        require (
+          Read_Slot_Meta(var, evars.slot)
+        );
 
         if (Is_Antiform(var)) {
             Liftify(var);  // will become quasi...
@@ -933,8 +958,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
             Begin_Non_Lexical_Mold(mo, v); // If molding, get &[let! etc.
             Append_Codepoint(s, '[');
         }
-        required (Append_Ascii(s, "..."));
-
+        require (
+          Append_Ascii(s, "...")
+        );
         if (not form) {
             Append_Codepoint(s, ']');
             End_Non_Lexical_Mold(mo);
@@ -948,8 +974,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
 
     if (form) {
         Append_Spelling(mo->strand, spelling);
-        required (Append_Ascii(mo->strand, ": "));
-
+        require (
+          Append_Ascii(mo->strand, ": ")
+        );
         if (Is_Antiform(var))
             panic (Error_Bad_Antiform(var));  // can't FORM antiforms
 
@@ -1090,9 +1117,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         if (Bool_ARG(PREBOUND))
             flags |= COLLECT_TOLERATE_PREBOUND;
 
-        required (Wrap_Extend_Core(c, def, flags));
-
-        Use* use = require (Alloc_Use_Inherits(Cell_Binding(def)));
+        require (
+          Wrap_Extend_Core(c, def, flags)
+        );
+        require (
+          Use* use = Alloc_Use_Inherits(Cell_Binding(def))
+        );
         Copy_Cell(Stub_Cell(use), context);
 
         Tweak_Cell_Binding(def, use);
@@ -1130,8 +1160,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
         Slot* slot = Varlist_Slot(cast(VarList*, c), unwrap index);
 
-        required (Read_Slot(OUT, slot));
-
+        require (
+          Read_Slot(OUT, slot)
+        );
         return OUT; }
 
       default:
@@ -1272,7 +1303,9 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     Copy_Cell(m_cast(Value*, u_cast(Value*, slot)), dual);
 
     if (Any_Lifted(dual)) {  // don't antagonize...yet [1]
-        required (Unliftify_Undecayed(m_cast(Atom*, u_cast(Atom*, slot))));
+        require (
+          Unliftify_Undecayed(m_cast(Atom*, u_cast(Atom*, slot)))
+        );
         return NO_WRITEBACK_NEEDED;
     }
 
@@ -1341,7 +1374,9 @@ IMPLEMENT_GENERIC(WORDS_OF, Any_Context)
     INCLUDE_PARAMS_OF_WORDS_OF;
 
     Element* context = Element_ARG(ELEMENT);
-    Source* array = require (Context_To_Array(context, 1));
+    require (
+      Source* array = Context_To_Array(context, 1)
+    );
     return Init_Block(OUT, array);
 }
 
@@ -1368,7 +1403,9 @@ IMPLEMENT_GENERIC(VALUES_OF, Any_Context)
     INCLUDE_PARAMS_OF_WORDS_OF;
 
     Element* context = Element_ARG(ELEMENT);
-    Source* array = require (Context_To_Array(context, 1));
+    require (
+      Source* array = Context_To_Array(context, 1)
+    );
     return Init_Block(OUT, array);
 }
 
@@ -1809,7 +1846,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
         Append_Codepoint(mo->strand, ' ');
     }
 
-    Array* parameters = require (Context_To_Array(v, 1));
+    require (
+      Array* parameters = Context_To_Array(v, 1)
+    );
     Mold_Array_At(mo, parameters, 0, "[]");
     Free_Unmanaged_Flex(parameters);
 
@@ -1909,7 +1948,9 @@ DECLARE_NATIVE(CONSTRUCT)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    Level* sub = require (Make_Level_At(executor, spec, flags));
+    require (
+      Level* sub = Make_Level_At(executor, spec, flags)
+    );
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
 } continue_processing_spec: {  ////////////////////////////////////////////////
@@ -1964,7 +2005,9 @@ DECLARE_NATIVE(CONSTRUCT)
 
 } eval_set_step_dual_in_spare: {  ////////////////////////////////////////////
 
-    Value* spare = require (Decay_If_Unstable(SPARE));
+    require (
+      Value* spare = Decay_If_Unstable(SPARE)
+    );
 
     VarList* varlist = Cell_Varlist(OUT);
 

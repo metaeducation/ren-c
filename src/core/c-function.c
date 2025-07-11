@@ -125,7 +125,8 @@ static Result(Zero) Push_Keys_And_Params_Core(
             );
 
         DECLARE_ATOM (dummy);  // don't care about the actual value [1]
-        trapped (Get_Any_Word_Maybe_Trash(
+        trap (
+          Get_Any_Word_Maybe_Trash(
             dummy, item, Level_Binding(L)
         ));
         continue;
@@ -178,7 +179,9 @@ static Result(Zero) Push_Keys_And_Params_Core(
             return fail (Error_No_Catch_For_Throw(L));
 
         if (not meta) {
-            Value* decayed = require (Decay_If_Unstable(eval));
+            require (
+              Value* decayed = Decay_If_Unstable(eval)
+            );
 
             if (must_be_action and not Is_Action(decayed))
                 return fail ("Assignment using /FOO must be an action");
@@ -206,7 +209,9 @@ static Result(Zero) Push_Keys_And_Params_Core(
                 assert(not *adjunct);
                 Force_Adjunct(adjunct);
 
-                Strand* strand = require (Copy_String_At(item));
+                require (
+                  Strand* strand = Copy_String_At(item)
+                );
                 Manage_Stub(strand);
                 Freeze_Flex(strand);
                 Init_Text(
@@ -224,7 +229,9 @@ static Result(Zero) Push_Keys_And_Params_Core(
                 if (Parameter_Strand(TOP_ELEMENT))
                     return fail (Error_Bad_Func_Def_Raw(item));
 
-                Strand* strand = require (Copy_String_At(item));
+                require (
+                  Strand* strand = Copy_String_At(item)
+                );
                 Manage_Stub(strand);
                 Freeze_Flex(strand);
                 Set_Parameter_Strand(TOP_ELEMENT, strand);
@@ -490,7 +497,8 @@ Result(Zero) Push_Keys_And_Params(
     Flags flags,
     Option(SymId) returner  // e.g. SYM_RETURN or SYM_YIELD
 ){
-    Level* L = require (Make_Level_At(
+    require (
+      Level* L = Make_Level_At(
         &Stepper_Executor,
         spec,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
@@ -524,7 +532,8 @@ Result(ParamList*) Pop_Paramlist(
 ){
     Count num_params = (TOP_INDEX - base) / 2;
 
-    KeyList* keylist = require (nocast Make_Flex(
+    require (
+      KeyList* keylist = nocast Make_Flex(
         STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
         num_params
     ));
@@ -835,7 +844,9 @@ Details* Make_Dispatch_Details(
 void Register_Dispatcher(Dispatcher* dispatcher, DetailsQuerier* querier)
 {
     if (Is_Flex_Full(g_dispatcher_table)) {
-        required (Extend_Flex_If_Necessary(g_dispatcher_table, 8));
+        require (
+          Extend_Flex_If_Necessary(g_dispatcher_table, 8)
+        );
     }
 
     Sink(DispatcherAndQuerier) d_and_q =

@@ -158,7 +158,8 @@ INLINE bool Eval_Any_List_At_Core_Throws(
     const Element* list,
     Context* context
 ){
-    Level* L = require (Make_Level_At_Core(
+    require (
+      Level* L = Make_Level_At_Core(
         &Evaluator_Executor,
         list,
         context,
@@ -188,7 +189,8 @@ INLINE bool Eval_Element_Core_Throws(
         return false;  // fast things that don't need levels (should inline)
     }
 
-    Feed* feed = require (Prep_Array_Feed(
+    require (
+      Feed* feed = Prep_Array_Feed(
         Alloc_Feed(),
         value,  // first--in this case, the only value in the feed...
         g_empty_array,  // ...because we're using the empty array after that
@@ -196,8 +198,9 @@ INLINE bool Eval_Element_Core_Throws(
         context,
         FEED_MASK_DEFAULT | (value->header.bits & FEED_FLAG_CONST)
     ));
-
-    Level* L = require (Make_Level(&Stepper_Executor, feed, flags));
+    require (
+      Level* L = Make_Level(&Stepper_Executor, feed, flags)
+    );
 
     return Trampoline_Throws(out, L);
 }

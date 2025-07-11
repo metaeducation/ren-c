@@ -151,14 +151,18 @@ INLINE Array* Make_Array_Core_Into(
     Result(void*) preallocated,
     REBLEN capacity
 ){
-    void* pre = require (preallocated);
+    require (
+      void* pre = preallocated
+    );
 
   #if DEBUG_POISON_FLEX_TAILS  // non-dynamic arrays poisoned by bit pattern
     if (capacity > 1 or (flags & STUB_FLAG_DYNAMIC))
         capacity += 1;  // account for space needed for poison cell
   #endif
 
-    Array* a = require (nocast Make_Flex_Into(flags, pre, capacity));
+    require (
+      Array* a = nocast Make_Flex_Into(flags, pre, capacity)
+    );
     assert(Stub_Holds_Cells(a));  // flavor should have been an array flavor
 
     if (Get_Stub_Flag(a, DYNAMIC)) {
@@ -204,7 +208,8 @@ INLINE Array* Make_Array_Core_Into(
 INLINE Source* Alloc_Singular(Flags flags) {
     assert(Flavor_From_Flags(flags) == FLAVOR_SOURCE);
     assert(not (flags & STUB_FLAG_DYNAMIC));
-    Source* a = require (nocast Make_Flex_Into(
+    require (
+      Source* a = nocast Make_Flex_Into(
         flags | FLEX_FLAG_FIXED_SIZE,
         Alloc_Stub(),
         1
@@ -277,7 +282,9 @@ enum {
 //
 INLINE Result(Cell*) Alloc_Tail_Array(Array* a)
 {
-    trapped (Expand_Flex_Tail(a, 1));
+    trap (
+      Expand_Flex_Tail(a, 1)
+    );
     Set_Flex_Len(a, Array_Len(a));
     return Flex_Last(Cell, a);
 }
@@ -285,7 +292,9 @@ INLINE Result(Cell*) Alloc_Tail_Array(Array* a)
 #if CPLUSPLUS_11
     INLINE Result(Sink(Element)) Alloc_Tail_Array(Source* a)
     {
-        trapped (Expand_Flex_Tail(a, 1));
+        trap (
+          Expand_Flex_Tail(a, 1)
+        );
         Set_Flex_Len(a, Array_Len(a));
         return Array_Last(a);
     }

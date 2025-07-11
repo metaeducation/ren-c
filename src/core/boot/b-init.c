@@ -329,7 +329,8 @@ static void Init_Root_Vars(void)
     Tweak_Misc_Varlist_Adjunct_Raw(a, nullptr);
     Tweak_Link_Inherit_Bind_Raw(a, nullptr);
 
-    KeyList* keylist = require (nocast Make_Flex(
+    require (
+      KeyList* keylist = nocast Make_Flex(
         STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
         len  // no terminator, 0-based
     ));
@@ -366,9 +367,9 @@ static void Init_Root_Vars(void)
     Set_Cell_Flag(Root_Feed_Null_Substitute, FEED_NOTE_META);
     Protect_Cell(Root_Feed_Null_Substitute);
 
-    // Note: rebText() can't run yet, review.
-    //
-    Strand* nulled_uni = require (Make_Strand(1));
+    require (
+      Strand* nulled_uni = Make_Strand(1)  // rebText() can't run yet, review
+    );
 
   #if RUNTIME_CHECKS
     Codepoint test_nul;
@@ -390,7 +391,8 @@ static void Init_Root_Vars(void)
     ensure_nullptr(g_tripwire) = Init_Tripwire(Alloc_Value());
     Protect_Cell(g_tripwire);
 
-    ensure_nullptr(g_dispatcher_table) = require (Make_Flex(
+    require (
+      ensure_nullptr(g_dispatcher_table) = Make_Flex(
         FLAG_FLAVOR(FLAVOR_DISPATCHERTABLE) | STUB_FLAG_DYNAMIC,
         15
     ));
@@ -461,8 +463,8 @@ static void Init_System_Object(
     Init_Object(Sink_Lib_Var(SYM_SYSTEM), system);
     Init_Object(Sink_Lib_Var(SYM_SYS), system);
 
-    Use* use = require (
-        Alloc_Use_Inherits(List_Binding(boot_sysobj_spec))
+    require (
+      Use* use = Alloc_Use_Inherits(List_Binding(boot_sysobj_spec))
     );
     Copy_Cell(Stub_Cell(use), Varlist_Archetype(system));
 
@@ -476,7 +478,9 @@ static void Init_System_Object(
     if (Eval_Any_List_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
         crash (result);
 
-    Value* result_value = require (Decay_If_Unstable(result));
+    require (
+      Value* result_value = Decay_If_Unstable(result)
+    );
     if (not Is_Quasi_Word_With_Id(result_value, SYM_END))
         crash (result_value);
 
@@ -486,7 +490,8 @@ static void Init_System_Object(
     // made is actually identical to the definition in %sysobj.r.
     //
     DECLARE_VALUE (check);
-    assumed (Read_Slot(
+    assume (
+      Read_Slot(
         check,
         Get_System(SYS_STANDARD, STD_ACTION_ADJUNCT)
     ));
@@ -694,8 +699,8 @@ void Startup_Core(void)
         SYM_GZIP
     );
 
-    const Symbol* tmp_boot = assume (
-        Intern_Unsized_Managed("tmp-boot-r")  // !!! should be Strand for .
+    assume (  // !!! can't put dots in Symbol*, should be using Strand here
+        const Symbol* tmp_boot = Intern_Unsized_Managed("tmp-boot-r")
     );
     Push_Lifeguard(tmp_boot);  // recycle torture frees on scanner first push!
     Array* boot_array = Scan_UTF8_Managed(
@@ -976,7 +981,9 @@ void Startup_Core(void)
     );
 
     Sink(Value) user = Alloc_Value();
-    assumed (Read_Slot(user, Get_System(SYS_CONTEXTS, CTX_USER)));
+    assume (
+      Read_Slot(user, Get_System(SYS_CONTEXTS, CTX_USER))
+    );
 
     g_user_module = Known_Element(user);
     rebUnmanage(g_user_module);

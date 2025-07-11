@@ -107,7 +107,8 @@ DECLARE_NATIVE(AUGMENT)
 
 } add_parameters_from_spec: {
 
-    required (Push_Keys_And_Params(
+    require (
+      Push_Keys_And_Params(
         &adjunct,
         spec,
         MKF_PARAMETER_SEEN,  // don't assume description string
@@ -123,8 +124,8 @@ DECLARE_NATIVE(AUGMENT)
     Phase* prior = Frame_Phase(ARG(ORIGINAL));
     Option(VarList*) prior_coupling = Cell_Frame_Coupling(ARG(ORIGINAL));
 
-    ParamList* paramlist = require (  // checks for duplicates
-        Pop_Paramlist(STACK_BASE, prior, prior_coupling)
+    require (  // checks for duplicates
+      ParamList* paramlist = Pop_Paramlist(STACK_BASE, prior, prior_coupling)
     );
 
     assert(Misc_Phase_Adjunct(paramlist) == nullptr);

@@ -138,7 +138,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 
     Sink(Value) spare_actor = SPARE;
 
-    required (Read_Slot(
+    require (
+      Read_Slot(
         spare_actor,
         Varlist_Slot(ctx, STD_PORT_ACTOR)
     ));
@@ -177,7 +178,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     if (not index)
         Init_Nulled(scratch_action);
     else {
-        required (Read_Slot(
+        require (
+          Read_Slot(
             scratch_action,
             Varlist_Slot(Cell_Varlist(spare_actor), unwrap index)
         ));
@@ -312,16 +314,22 @@ Result(Option(Value*)) Get_Port_Path_From_Spec(
     VarList* ctx = Cell_Varlist(port);
 
     DECLARE_VALUE (spec);
-    required (Read_Slot(spec, Varlist_Slot(ctx, STD_PORT_SPEC)));
+    require (
+      Read_Slot(spec, Varlist_Slot(ctx, STD_PORT_SPEC))
+    );
     if (not Is_Object(spec))
         return fail (Error_Invalid_Spec_Raw(spec));
 
-    required (Read_Slot(out, Obj_Slot(spec, STD_PORT_SPEC_HEAD_REF)));
+    require (
+      Read_Slot(out, Obj_Slot(spec, STD_PORT_SPEC_HEAD_REF))
+    );
     if (Is_Nulled(out))
         return fail (Error_Invalid_Spec_Raw(spec));
 
     if (Is_Url(out)) {
-        required (Read_Slot(out, Obj_Slot(spec, STD_PORT_SPEC_HEAD_PATH)));
+        require (
+          Read_Slot(out, Obj_Slot(spec, STD_PORT_SPEC_HEAD_PATH))
+        );
     }
     else if (not Is_File(out))
         return fail (Error_Invalid_Spec_Raw(spec));

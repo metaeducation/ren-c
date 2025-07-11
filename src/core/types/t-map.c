@@ -147,7 +147,9 @@ REBINT Find_Key_Hashed(
         Value* k = Flex_At(Value, array, (n - 1) * wide); // stored key
 
         attempt {
-            bool equal_strict = require (Equal_Values(k, key, true));
+            require (
+              bool equal_strict = Equal_Values(k, key, true)
+            );
             if (equal_strict) {
                 if (strict)
                     return slot; // don't need to check synonyms, stop looking
@@ -156,7 +158,9 @@ REBINT Find_Key_Hashed(
                 if (strict)
                     goto continue_checking;
 
-                bool equal_lax = require (Equal_Values(k, key, false));
+                require (
+                  bool equal_lax = Equal_Values(k, key, false)
+                );
                 if (not equal_lax)
                     goto continue_checking;
             }
@@ -197,7 +201,9 @@ REBINT Find_Key_Hashed(
 
         REBLEN index;
         for (index = 0; index < wide; ++src, ++index) {
-            Cell* dest = require (Alloc_Tail_Array(array));
+            require (
+              Cell* dest = Alloc_Tail_Array(array)
+            );
             Copy_Cell(dest, src);
         }
     }
@@ -253,7 +259,8 @@ void Expand_Hashlist(HashList* hashlist)
     assert(Stub_Flavor(hashlist) == FLAVOR_HASHLIST);
 
     REBINT prime = Get_Hash_Prime_May_Panic(Hashlist_Num_Slots(hashlist) + 1);
-    required (Remake_Flex(
+    require (
+      Remake_Flex(
         hashlist,
         prime + 1,
         FLEX_FLAG_POWER_OF_2  // not(BASE_FLAG_BASE) => don't keep data
@@ -344,10 +351,14 @@ Option(Index) Update_Map_Entry(
     if (not val)
         return 0;  // trying to remove non-existing key
 
-    Cell* key_cell = require (Alloc_Tail_Array(pairlist));
-    Cell* val_cell = require (Alloc_Tail_Array(pairlist));
-    Copy_Cell(key_cell, key);
-    Copy_Cell(val_cell, unwrap val);
+    require (
+      Cell* cell = Alloc_Tail_Array(pairlist)
+    );
+    Copy_Cell(cell, key);
+    require (
+      cell = Alloc_Tail_Array(pairlist)
+    );
+    Copy_Cell(cell, unwrap val);
 
     return (indexes[slot] = (Array_Len(pairlist) / 2));
 }
@@ -416,7 +427,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
   initial_entry: { ///////////////////////////////////////////////////////////
 
     if (Any_Number(arg)) {
-        Map* map = require (Make_Map(Int32s(arg, 0)));
+        require (
+          Map* map = Make_Map(Int32s(arg, 0))
+        );
         return Init_Map(OUT, map);
     }
 
@@ -432,7 +445,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    Level* sub = require (Make_Level_At(executor, arg, flags));
+    require (
+      Level* sub = Make_Level_At(executor, arg, flags)
+    );
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
 } reduce_key: { /////////////////////////////////////////////////////////////
@@ -452,7 +467,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     if (Is_Ghost(SPARE))
         goto reduce_key;  // try again...
 
-    Value* key = require (Decay_If_Unstable(SPARE));
+    require (
+      Value* key = Decay_If_Unstable(SPARE)
+    );
     if (Is_Nulled(key) or Is_Trash(key))
         panic ("Null or trash can't be used as key in MAP!");
 
@@ -474,7 +491,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     if (Is_Ghost(SPARE))
         goto reduce_value;  // try again...
 
-    Value* val = require (Decay_If_Unstable(SPARE));
+    require (
+      Value* val = Decay_If_Unstable(SPARE)
+    );
     if (Is_Nulled(val) or Is_Trash(val))
         panic ("Null or trash can't be used as value in MAP!");
 
@@ -526,7 +545,8 @@ INLINE Result(Map*) Copy_Map(const Map* map, bool deeply) {
     // a literal copy of the hashlist can still be used, as a start (needs
     // its own copy so new map's hashes will reflect its own mutations)
     //
-    HashList* hashlist = trap (nocast Copy_Flex_Core(
+    trap (
+      HashList* hashlist = nocast Copy_Flex_Core(
         FLEX_FLAGS_NONE | FLAG_FLAVOR(FLAVOR_HASHLIST),  // !!! No BASE_FLAG_MANAGED?
         MAP_HASHLIST(map)
     ));
@@ -553,7 +573,9 @@ INLINE Result(Map*) Copy_Map(const Map* map, bool deeply) {
 
         Flags flags = BASE_FLAG_MANAGED;  // !!! Review
         if (not Is_Antiform(v)) {
-            required (Clonify(Known_Element(v), flags, deeply));
+            require (
+              Clonify(Known_Element(v), flags, deeply)
+            );
         }
     }
 
@@ -651,7 +673,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 
     // Prevent endless mold loop:
     if (Find_Pointer_In_Flex(g_mold.stack, m) != NOT_FOUND) {
-        required (Append_Ascii(mo->strand, "...]"));
+        require (
+          Append_Ascii(mo->strand, "...]")
+        );
         return TRIPWIRE;
     }
 
@@ -806,7 +830,9 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
 
     if (to == TYPE_MAP) {
         bool deep = false;
-        Map* copy = require (Copy_Map(VAL_MAP(map), deep));
+        require (
+          Map* copy = Copy_Map(VAL_MAP(map), deep)
+        );
         return Init_Map(OUT, copy);
     }
 
@@ -823,7 +849,9 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
     if (Bool_ARG(PART))
         panic (Error_Bad_Refines_Raw());
 
-    Map* copy = require (Copy_Map(VAL_MAP(map), Bool_ARG(DEEP)));
+    require (
+      Map* copy = Copy_Map(VAL_MAP(map), Bool_ARG(DEEP))
+    );
     return Init_Map(OUT, copy);
 }
 

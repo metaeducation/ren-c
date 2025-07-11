@@ -414,8 +414,8 @@ EXTERN_C intptr_t API_rebPromise(
     // the long run, there's no ordering guarantee of promises (e.g. if they
     // were running on individual threads).
 
-    struct Reb_Promise_Info *info = require (
-        Alloc_On_Heap(struct Reb_Promise_Info)
+    require (
+      struct Reb_Promise_Info *info = Alloc_On_Heap(struct Reb_Promise_Info)
     );
     info->state = PROMISE_STATE_QUEUEING;
     info->promise_id = Heapaddr_From_Pointer(code);
@@ -466,8 +466,8 @@ void RunPromise(void)
     Init_Block(code, a);
     Tweak_Cell_Binding(code, cast(Context*, info->binding));
 
-    Level* L = require (
-        Make_Level_At(&Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL)
+    require (
+      Level* L = Make_Level_At(&Stepper_Executor, code, LEVEL_FLAG_ROOT_LEVEL)
     );
 
     Push_Level_Dont_Inherit_Interruptibility(  // you can HALT inside a promise
@@ -922,7 +922,8 @@ DECLARE_NATIVE(JS_NATIVE)
     Element* source = Element_ARG(SOURCE);
 
     VarList* adjunct;
-    ParamList* paramlist = require (Make_Paramlist_Managed(
+    require (
+      ParamList* paramlist = Make_Paramlist_Managed(
         &adjunct,
         spec,
         MKF_MASK_NONE,
@@ -949,7 +950,9 @@ DECLARE_NATIVE(JS_NATIVE)
     if (Is_Flex_Frozen(Cell_Strand(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_JS_NATIVE_SOURCE), source);
     else {
-        Strand* copy = require (Copy_String_At(source));  // might change
+        require (
+          Strand* copy = Copy_String_At(source)  // might change
+        );
         Init_Text(Details_At(details, IDX_JS_NATIVE_SOURCE), copy);
     }
 
@@ -995,31 +998,45 @@ DECLARE_NATIVE(JS_NATIVE)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    required (Append_Ascii(mo->strand, "let f = "));  // store function here
-
+    require (
+      Append_Ascii(mo->strand, "let f = ")  // store function here
+    );
     if (Bool_ARG(AWAITER)) {  // runs in rebPromise() [1]
-        required (Append_Ascii(mo->strand, "async "));
+        require (
+          Append_Ascii(mo->strand, "async ")
+        );
     }
 
-    required (Append_Ascii(mo->strand, "function (reb) {"));  // one arg [2]
+    require (
+      Append_Ascii(mo->strand, "function (reb) {")  // one arg [2]
+    );
     Append_Any_Utf8(mo->strand, source);
-    required (Append_Ascii(mo->strand, "};\n"));  // end `function() {`
-
+    require (
+      Append_Ascii(mo->strand, "};\n")  // end `function() {`
+    );
     if (Bool_ARG(AWAITER)) {
-        required (Append_Ascii(mo->strand, "f.is_awaiter = true;\n"));
+        require (
+          Append_Ascii(mo->strand, "f.is_awaiter = true;\n")
+        );
     }
     else {
-        required (Append_Ascii(mo->strand, "f.is_awaiter = false;\n"));
+        require (
+          Append_Ascii(mo->strand, "f.is_awaiter = false;\n")
+        );
     }
 
     Byte id_buf[60];  // !!! Why 60?  Copied from MF_Integer()
     REBINT len = Emit_Integer(id_buf, native_id);
 
-    required (  // put in table [3]
-        Append_Ascii(mo->strand, "reb.RegisterId_internal(")
+    require (  // put in table [3]
+      Append_Ascii(mo->strand, "reb.RegisterId_internal(")
     );
-    required (Append_Ascii_Len(mo->strand, s_cast(id_buf), len));
-    required (Append_Ascii(mo->strand, ", f);\n"));
+    require (
+      Append_Ascii_Len(mo->strand, s_cast(id_buf), len)
+    );
+    require (
+      Append_Ascii(mo->strand, ", f);\n")
+    );
 
     Term_Binary(mo->strand);  // !!! is this necessary?
     const char *js = s_cast(Binary_At(mo->strand, mo->base.size));

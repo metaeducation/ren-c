@@ -260,22 +260,25 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
     switch (binary_base) {
       default:
       case 16: {
-        required (Append_Ascii(mo->strand, "#{")); // #{...}, not #16{...}
-
+        require (
+          Append_Ascii(mo->strand, "#{") // #{...}, not #16{...}
+        );
         const bool brk = (size > 32);
         Form_Base16(mo, data, size, brk);
         break; }
 
       case 64: {
-        required (Append_Ascii(mo->strand, "64#{"));
-
+        require (
+          Append_Ascii(mo->strand, "64#{")
+        );
         const bool brk = (size > 64);
         Form_Base64(mo, data, size, brk);
         break; }
 
       case 2: {
-        required (Append_Ascii(mo->strand, "2#{"));
-
+        require (
+          Append_Ascii(mo->strand, "2#{")
+        );
         const bool brk = (size > 8);
         Form_Base2(mo, data, size, brk);
         break; }
@@ -294,9 +297,10 @@ static Result(Element*) Copy_Blob_Part_At_May_Modify_Index(
     const Value* part
 ){
     Length len = Part_Len_May_Modify_Index(blob, part);
-    Binary* copy = trap (
-        Copy_Binary_At_Len(Cell_Binary(blob), Series_Index(blob), len)
-    );
+    trap (
+      Binary* copy = Copy_Binary_At_Len(
+        Cell_Binary(blob), Series_Index(blob), len
+    ));
     return Init_Series(out, TYPE_BLOB, copy);
 }
 
@@ -363,7 +367,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         else
             panic (PARAM(VALUE));
 
-        SERIES_INDEX_UNBOUNDED(v) = require (Modify_String_Or_Blob(
+        require (
+          SERIES_INDEX_UNBOUNDED(v) = Modify_String_Or_Blob(
             v,
             unwrap id,
             arg,
@@ -572,7 +577,9 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
 
     if (to == TYPE_BLOB) {
         const Value* part = LIB(NULL);  // no :PART, copy to end
-        required (Copy_Blob_Part_At_May_Modify_Index(OUT, v, part));
+        require (
+          Copy_Blob_Part_At_May_Modify_Index(OUT, v, part)
+        );
         return OUT;
     }
 
@@ -646,7 +653,9 @@ Result(Element*) Alias_Blob_As(
                 if (Is_Byte_Ascii(*bp))
                     Validate_Ascii_Byte(bp, strmode, Binary_Head(bin));
                 else {
-                    Codepoint c = trap (Back_Scan_Utf8_Char(&bp, &bytes_left));
+                    trap (
+                      Codepoint c = Back_Scan_Utf8_Char(&bp, &bytes_left)
+                    );
                     UNUSED(c);
                 }
 
@@ -698,8 +707,9 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
     Element* blob = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    required (Alias_Blob_As(OUT, blob, as));
-
+    require (
+      Alias_Blob_As(OUT, blob, as)
+    );
     return OUT;
 }
 
@@ -711,7 +721,9 @@ IMPLEMENT_GENERIC(COPY, Is_Blob)
     Element* blob = Element_ARG(VALUE);
     UNUSED(Bool_ARG(DEEP));  // :DEEP is historically ignored on BLOB!
 
-    required (Copy_Blob_Part_At_May_Modify_Index(OUT, blob, ARG(PART)));
+    require (
+      Copy_Blob_Part_At_May_Modify_Index(OUT, blob, ARG(PART))
+    );
     return OUT;
 }
 
@@ -757,7 +769,9 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     if (not Bool_ARG(PART))  // just return byte value
         Init_Integer(OUT, *Blob_At(blob));
     else { // return binary series
-        Binary* copy = require (Copy_Binary_At_Len(bin, index, len));
+        require (
+          Binary* copy = Copy_Binary_At_Len(bin, index, len)
+        );
         Init_Blob(OUT, copy);
     }
 
@@ -882,8 +896,9 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Blob)
     if (size == 1 and *bp == 0)
         return Init_Integer(OUT, 0);  // codepoint of #{00} -> 0 [2]
 
-    Codepoint c = trap (Back_Scan_Utf8_Char(&bp, nullptr));
-
+    trap (
+      Codepoint c = Back_Scan_Utf8_Char(&bp, nullptr)
+    );
     ++bp;  // Back_Scan() requires increment
 
     if (bp != Binary_Tail(Cell_Binary(blob)))

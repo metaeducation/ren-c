@@ -144,7 +144,9 @@ DECLARE_NATIVE(FILE_ACTOR)
     }
     else {
         DECLARE_VALUE (file_path);
-        required (Get_Port_Path_From_Spec(file_path, port));
+        require (
+          Get_Port_Path_From_Spec(file_path, port)
+        );
 
         UNUSED(file_path);  // we just tested to make sure would work later
 
@@ -213,7 +215,9 @@ DECLARE_NATIVE(FILE_ACTOR)
         // converted into a PORT! but has not been opened yet.
 
         DECLARE_VALUE (file_path);
-        required (Get_Port_Path_From_Spec(file_path, port));
+        require (
+          Get_Port_Path_From_Spec(file_path, port)
+        );
 
         bool opened_temporarily;
         if (file->id != FILEHANDLE_NONE)
@@ -342,7 +346,9 @@ DECLARE_NATIVE(FILE_ACTOR)
         // to a PORT! but it hasn't been opened yet.
 
         DECLARE_VALUE (file_path);
-        required (Get_Port_Path_From_Spec(file_path, port));
+        require (
+          Get_Port_Path_From_Spec(file_path, port)
+        );
 
         bool opened_temporarily;
         if (file->id != FILEHANDLE_NONE) {  // already open
@@ -483,7 +489,9 @@ DECLARE_NATIVE(FILE_ACTOR)
         UNUSED(PARAM(SPEC));
 
         DECLARE_VALUE (file_path);
-        required (Get_Port_Path_From_Spec(file_path, port));
+        require (
+          Get_Port_Path_From_Spec(file_path, port)
+        );
 
         Flags flags = 0;
 
@@ -586,7 +594,9 @@ DECLARE_NATIVE(FILE_ACTOR)
         UNUSED(ARG(FROM));  // implicitly same as `port`
 
         DECLARE_VALUE (file_path);
-        required (Get_Port_Path_From_Spec(file_path, port));
+        require (
+          Get_Port_Path_From_Spec(file_path, port)
+        );
 
         int flags = -1;
         size_t index = -1;

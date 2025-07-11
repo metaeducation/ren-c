@@ -103,7 +103,9 @@
 Byte* Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 {
     REBLEN tail = Strand_Len(mo->strand);
-    required (Expand_Flex_Tail(mo->strand, num_bytes));  // terminates at guess
+    require (
+      Expand_Flex_Tail(mo->strand, num_bytes)  // terminates at guess
+    );
     return Binary_At(mo->strand, tail);
 }
 
@@ -122,7 +124,9 @@ Byte* Prep_Mold_Overestimated(Molder* mo, REBLEN num_bytes)
 //
 void Begin_Non_Lexical_Mold(Molder* mo, const Element* v)
 {
-    required (Append_Ascii(mo->strand, "&["));
+    require (
+      Append_Ascii(mo->strand, "&[")
+    );
 
     const Value* datatype = Datatype_Of(v);
     const Element* word = List_Item_At(datatype);
@@ -172,7 +176,9 @@ void New_Indented_Line(Molder* mo)
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_INDENT)) {
         REBINT n;
         for (n = 0; n < mo->indent; n++) {
-            required (Append_Ascii(mo->strand, "    "));
+            require (
+              Append_Ascii(mo->strand, "    ")
+            );
         }
     }
 }
@@ -209,7 +215,9 @@ REBINT Find_Pointer_In_Flex(Flex* f, const void *p)
 void Push_Pointer_To_Flex(Flex* f, const void *p)
 {
     if (Is_Flex_Full(f)) {
-        required (Extend_Flex_If_Necessary(f, 8));
+        require (
+          Extend_Flex_If_Necessary(f, 8)
+        );
     }
     *Flex_At(const void*, f, Flex_Used(f)) = p;
     Set_Flex_Used(f, Flex_Used(f) + 1);
@@ -244,7 +252,9 @@ void Mold_Array_At(
     if (Find_Pointer_In_Flex(g_mold.stack, a) != NOT_FOUND) {
         if (sep[0] != '\0')
             Append_Codepoint(mo->strand, sep[0]);
-        required (Append_Ascii(mo->strand, "..."));
+        require (
+          Append_Ascii(mo->strand, "...")
+        );
         if (sep[1] != '\0')
             Append_Codepoint(mo->strand, sep[1]);
         return;
@@ -435,7 +445,9 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
 
     if (Not_Cell_Readable(e)) {
       #if RUNTIME_CHECKS
-        required (Append_Ascii(mo->strand, "\\\\unreadable\\\\"));
+        require (
+          Append_Ascii(mo->strand, "\\\\unreadable\\\\")
+        );
       #endif
         return;  // !!! should never happen in release builds
     }
@@ -519,7 +531,9 @@ void Push_Mold(Molder* mo)
         // compatible with the appending mold is to come back with an
         // empty buffer after a push.
         //
-        required (Expand_Flex(s, mo->base.size, mo->reserve));
+        require (
+          Expand_Flex(s, mo->base.size, mo->reserve)
+        );
         Set_Flex_Used(s, mo->base.size);
     }
     else if (Flex_Rest(s) - Flex_Used(s) > MAX_COMMON) {
@@ -530,7 +544,8 @@ void Push_Mold(Molder* mo)
         // ->start index in the stack!
         //
         Length len = Strand_Len(g_mold.buffer);
-        required (Remake_Flex(
+        require (
+          Remake_Flex(
             s,
             Flex_Used(s) + MIN_COMMON,
             BASE_FLAG_BASE // BASE_FLAG_BASE means preserve the data
@@ -586,7 +601,9 @@ Strand* Pop_Molded_String_Core(Strand* buf, Size offset, Length index)
     Size size = Strand_Size(buf) - offset;
     Length len = Strand_Len(buf) - index;
 
-    Strand* popped = require (Make_Strand(size));
+    require (
+      Strand* popped = Make_Strand(size)
+    );
     memcpy(Binary_Head(popped), Binary_At(buf, offset), size);
     Term_Strand_Len_Size(popped, len, size);
 
@@ -703,9 +720,12 @@ void Drop_Mold_Core(
 //
 void Startup_Mold(Size encoded_capacity)
 {
-    g_mold.stack = require (Make_Flex(FLAG_FLAVOR(FLAVOR_MOLDSTACK), 10));
+    require (
+      g_mold.stack = Make_Flex(FLAG_FLAVOR(FLAVOR_MOLDSTACK), 10)
+    );
 
-    ensure_nullptr(g_mold.buffer) = require (Make_Strand_Core(
+    require (
+      ensure_nullptr(g_mold.buffer) = Make_Strand_Core(
         STUB_MASK_STRAND
             | (not BASE_FLAG_MANAGED)
             | STUB_FLAG_DYNAMIC,

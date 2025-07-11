@@ -282,8 +282,9 @@ Slot* Get_System(REBLEN i1, REBLEN i2)
         return obj_slot;
 
     DECLARE_VALUE (obj);
-    required (Read_Slot(obj, obj_slot));
-
+    require (
+      Read_Slot(obj, obj_slot)
+    );
     assert(Is_Object(obj));
 
     return Varlist_Slot(Cell_Varlist(obj), i2);
@@ -592,7 +593,9 @@ DECLARE_NATIVE(SETIFY)
 {
     INCLUDE_PARAMS_OF_SETIFY;
 
-    Element* e = require (Setify(Element_ARG(ELEMENT)));
+    require (
+      Element* e = Setify(Element_ARG(ELEMENT))
+    );
 
     return COPY(e);
 }
@@ -611,7 +614,9 @@ DECLARE_NATIVE(GETIFY)
 {
     INCLUDE_PARAMS_OF_GETIFY;
 
-    Element* e = require (Getify(Element_ARG(ELEMENT)));
+    require (
+      Element* e = Getify(Element_ARG(ELEMENT))
+    );
 
     return COPY(e);
 }
@@ -626,7 +631,9 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
     INCLUDE_PARAMS_OF_META;  // META, PIN, TIE all same signature.
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -709,7 +716,9 @@ static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
     INCLUDE_PARAMS_OF_UNMETA;  // same signature as UNPIN, UNTIE
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -782,7 +791,9 @@ DECLARE_NATIVE(PLAIN)
     INCLUDE_PARAMS_OF_PLAIN;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -804,9 +815,9 @@ DECLARE_NATIVE(UNCHAIN)
     INCLUDE_PARAMS_OF_UNCHAIN;
 
     Element* elem = Element_ARG(CHAIN);
-
-    trapped (Unsingleheart_Sequence(elem));
-
+    trap (
+      Unsingleheart_Sequence(elem)
+    );
     return COPY(elem);
 }
 
@@ -825,9 +836,9 @@ DECLARE_NATIVE(UNPATH)
     INCLUDE_PARAMS_OF_UNPATH;
 
     Element* elem = Element_ARG(PATH);
-
-    trapped (Unsingleheart_Sequence(elem));
-
+    trap (
+      Unsingleheart_Sequence(elem)
+    );
     return COPY(elem);
 }
 
@@ -846,8 +857,8 @@ DECLARE_NATIVE(UNTUPLE)
     INCLUDE_PARAMS_OF_UNTUPLE;
 
     Element* elem = Element_ARG(TUPLE);
-
-    trapped (Unsingleheart_Sequence(elem));
-
+    trap (
+      Unsingleheart_Sequence(elem)
+    );
     return COPY(elem);
 }

@@ -58,8 +58,8 @@ DECLARE_NATIVE(REEVAL)
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
-    Level* sub = require (
-        Make_Level(&Stepper_Executor, level_->feed, flags)
+    require (
+      Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags)
     );
     Copy_Cell(Evaluator_Level_Current(sub), v);  // evaluator's CURRENT
     Force_Invalidate_Gotten(&sub->u.eval.current_gotten);
@@ -131,7 +131,8 @@ DECLARE_NATIVE(SHOVE)
         Is_Word(right) or Is_Tuple(right)
         or Is_Path(right) or Is_Chain(right)
     ){
-        Value* out = require (Get_Var(
+        require (
+          Value* out = Get_Var(
             OUT,  // can't eval directly into arg slot
             NO_STEPS,
             At_Level(L),
@@ -144,7 +145,9 @@ DECLARE_NATIVE(SHOVE)
         if (Eval_Any_List_At_Throws(OUT, right, Level_Binding(L)))
             return THROWN;
 
-        Value* decayed = require (Decay_If_Unstable(OUT));
+        require (
+          Value* decayed = Decay_If_Unstable(OUT)
+        );
         Move_Cell(shovee, decayed);
     }
     else
@@ -198,7 +201,9 @@ DECLARE_NATIVE(SHOVE)
         if (Eval_Element_Core_Throws(OUT, flags, left, Level_Binding(L)))
             return THROWN;
         if (pclass == PARAMCLASS_NORMAL) {
-            required (Decay_If_Unstable(OUT));
+            require (
+              Decay_If_Unstable(OUT)
+            );
         }
         else {
             // The infix fulfillment code will Liftify() OUT
@@ -237,11 +242,12 @@ DECLARE_NATIVE(SHOVE)
 
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_INFIX);  // [1]
 
-    Level* sub = require (
-        Make_Level(&Action_Executor, level_->feed, flags)
+    require (
+      Level* sub = Make_Level(&Action_Executor, level_->feed, flags)
     );
-    required (Push_Action(sub, shovee, infix_mode));  // know if it's infix [2]
-
+    require (
+      Push_Action(sub, shovee, infix_mode)  // know if it's infix [2]
+    );
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 }
@@ -302,7 +308,9 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         Remember_Cell_Is_Lifeguard(source);  // may be only reference!
 
         if (Is_Chain(source)) {  // e.g. :(...) or [...]:
-            assumed (Unsingleheart_Sequence(source));
+            assume (
+              Unsingleheart_Sequence(source)
+            );
             assert(Any_List(source));
             goto initial_entry_list;
         }
@@ -351,7 +359,8 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
     Flags flags = LEVEL_FLAG_FORCE_SURPRISING;
 
-    Level* sub = require (Make_Level_At(
+    require (
+      Level* sub = Make_Level_At(
         Bool_ARG(STEP) ? &Stepper_Executor : &Evaluator_Executor,
         source,  // all lists treated the same [1]
         flags
@@ -429,7 +438,8 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     if (Is_Level_At_End(L))
         return VOID;
 
-    Level* sub = require (Make_Level(  // need evaluation in a sublevel [3]
+    require (
+      Level* sub = Make_Level(  // need evaluation in a sublevel [3]
         &Evaluator_Executor, L->feed, LEVEL_MASK_NONE
     ));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -511,7 +521,8 @@ DECLARE_NATIVE(EVAL_FREE)
     if (Level_Of_Varlist_If_Running(varlist))
         panic ("Use REDO to restart a running FRAME! (not EVAL-FREE)");
 
-    Level* L = require (Make_End_Level(
+    require (
+      Level* L = Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
     ));
@@ -611,7 +622,8 @@ DECLARE_NATIVE(APPLIQUE)
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
 
-    Use* use = require (Alloc_Use_Inherits_Core(
+    require (
+      Use* use = Alloc_Use_Inherits_Core(
         USE_FLAG_SET_WORDS_ONLY,
         List_Binding(def)
     ));
@@ -680,14 +692,17 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
 
-    Level* L = require (Make_Level_At(
+    require (
+      Level* L = Make_Level_At(
         &Stepper_Executor,
         args,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     ));
     Push_Level_Erase_Out_If_State_0(SPARE, L);
 
-    EVARS *e = require (Alloc_On_Heap(EVARS));
+    require (
+      EVARS *e = Alloc_On_Heap(EVARS)
+    );
     Init_Evars(e, frame);  // sees locals [3]
 
     iterator = Init_Handle_Cdata(LOCAL(ITERATOR), e, sizeof(EVARS));
@@ -881,7 +896,9 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         Move_Atom(var, SPARE);
     else {
         Move_Atom(var, SPARE);
-        required (Decay_If_Unstable(var));
+        require (
+          Decay_If_Unstable(var)
+        );
     }
 
     goto handle_next_item;
@@ -989,8 +1006,8 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 
     STATE = ST__S_S_GETTING_OPERATION;  // will be necessary in the future...
 
-    Value* spare = require (
-        Get_Var(SPARE, GROUPS_OK, operation, SPECIFIED)
+    require (
+      Value* spare = Get_Var(SPARE, GROUPS_OK, operation, SPECIFIED)
     );
 
     if (not Is_Action(spare) and not Is_Frame(spare))
@@ -1052,9 +1069,12 @@ DECLARE_NATIVE(RUN)
     Value* action = ARG(FRAME);
     UNUSED(ARG(ARGS));  // uses internal mechanisms to act variadic
 
-    Level* sub = require (Make_Action_Sublevel(level_));
+    require (
+      Level* sub = Make_Action_Sublevel(level_)
+    );
     Push_Level_Erase_Out_If_State_0(OUT, sub);
-    required (Push_Action(sub, action, PREFIX_0));
-
+    require (
+      Push_Action(sub, action, PREFIX_0)
+    );
     return DELEGATE_SUBLEVEL(sub);
 }

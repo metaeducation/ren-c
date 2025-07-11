@@ -340,14 +340,18 @@ INLINE Element* Liftify(Atom* atom) {
 
 INLINE Result(Atom*) Unliftify_Undecayed(Need(Atom*) atom) {
     if (LIFT_BYTE_RAW(atom) == QUASIFORM_3) {
-        trapped (Coerce_To_Antiform(atom));
+        trap (
+          Coerce_To_Antiform(atom)
+        );
         return atom;
     }
     return Unquotify(cast(Element*, atom));  // asserts that it's quoted
 }
 
 INLINE Value* Unliftify_Known_Stable(Need(Value*) val) {
-    assumed (Unliftify_Undecayed(cast(Atom*, val)));
+    assume (
+      Unliftify_Undecayed(cast(Atom*, val))
+    );
     Assert_Cell_Stable(val);
     return val;
 }
@@ -355,6 +359,8 @@ INLINE Value* Unliftify_Known_Stable(Need(Value*) val) {
 INLINE Result(Value*) Decay_If_Unstable(Need(Atom*) v);
 
 INLINE Result(Value*) Unliftify_Decayed(Value* v) {
-    Atom *atom = trap (Unliftify_Undecayed(cast(Atom*, v)));
+    trap (
+      Atom *atom = Unliftify_Undecayed(cast(Atom*, v))
+    );
     return Decay_If_Unstable(atom);
 }

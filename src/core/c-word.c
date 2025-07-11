@@ -150,7 +150,8 @@ static void Expand_Word_Table(void)
     Length num_slots = Get_Hash_Prime_May_Panic(old_num_slots + 1);
     assert(Flex_Wide(g_symbols.by_hash) == sizeof(Symbol*));
 
-    Flex* table = require (Make_Flex(
+    require (
+      Flex* table = Make_Flex(
         FLAG_FLAVOR(FLAVOR_CANONTABLE) | FLEX_FLAG_POWER_OF_2,
         num_slots
     ));
@@ -234,7 +235,9 @@ Result(const Symbol*) Intern_Utf8_Managed_Core(  // implicitly managed [1]
 
     Symbol** symbols_by_hash = Flex_Head(Symbol*, g_symbols.by_hash);
 
-    uint32_t hash = trap (Hash_Scan_UTF8_Caseless(utf8, utf8_size));
+    trap (
+      uint32_t hash = Hash_Scan_UTF8_Caseless(utf8, utf8_size)
+    );
 
     Length skip;  // how many slots to skip when occupied candidates found
     Offset slot = First_Hash_Candidate_Slot(&skip, hash, num_slots);
@@ -275,7 +278,8 @@ Result(const Symbol*) Intern_Utf8_Managed_Core(  // implicitly managed [1]
 
 } new_interning: { ///////////////////////////////////////////////////////////
 
-    Binary* b = trap (nocast Make_Flex_Into(
+    trap (
+      Binary* b = nocast Make_Flex_Into(
         STUB_MASK_SYMBOL
             | SYMBOL_FLAG_ALL_ASCII,  // removed below if non-ascii found
         preallocated ? unwrap preallocated : Alloc_Stub(),
@@ -488,7 +492,8 @@ void Startup_Interning(void)
         n = 1; // force exercise of rehashing logic half the time on startup
   #endif
 
-    ensure_nullptr(g_symbols.by_hash) = require (Make_Flex(
+    require (
+      ensure_nullptr(g_symbols.by_hash) = Make_Flex(
         FLAG_FLAVOR(FLAVOR_CANONTABLE) | FLEX_FLAG_POWER_OF_2,
         n
     ));
@@ -538,7 +543,9 @@ void Startup_Builtin_Symbols(
         ++at;
 
         Symbol* canon = &g_symbols.builtin_canons[id];  // not a Symbol*...yet
-        assumed (Intern_Utf8_Managed_Core(canon, at, size));  // now it is!
+        require (
+          Intern_Utf8_Managed_Core(canon, at, size)  // now it is!
+        );
 
         at += size;
 

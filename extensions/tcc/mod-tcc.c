@@ -308,7 +308,8 @@ DECLARE_NATIVE(MAKE_NATIVE)
     Element* source = Element_ARG(SOURCE);
 
     VarList* adjunct;
-    ParamList* paramlist = require (Make_Paramlist_Managed(
+    require (
+      ParamList* paramlist = Make_Paramlist_Managed(
         &adjunct,
         spec,
         MKF_MASK_NONE,
@@ -331,7 +332,9 @@ DECLARE_NATIVE(MAKE_NATIVE)
     if (Is_Flex_Frozen(Cell_Strand(source)))  // don't have to copy if frozen
         Copy_Cell(Details_At(details, IDX_TCC_NATIVE_SOURCE), source);
     else {
-        Strand* copy = require (Copy_String_At(source));  // might change
+        require (
+          Strand* copy = Copy_String_At(source)  // might change
+        );
         Init_Text(Details_At(details, IDX_TCC_NATIVE_SOURCE), copy);
     }
 
@@ -341,7 +344,9 @@ DECLARE_NATIVE(MAKE_NATIVE)
         if (Is_Flex_Frozen(Cell_Strand(linkname)))
             Copy_Cell(Details_At(details, IDX_TCC_NATIVE_LINKNAME), linkname);
         else {
-            Strand* copy = require (Copy_String_At(linkname));  // might change
+            require (
+              Strand* copy = Copy_String_At(linkname)  // might change
+            );
             Init_Text(Details_At(details, IDX_TCC_NATIVE_LINKNAME), copy);
         }
     }
@@ -529,16 +534,21 @@ DECLARE_NATIVE(COMPILE_P)
                 // !!! Review: how to choose LIBREBOL_BINDING_NAME when doing
                 // TCC natives?  It includes "rebol.h".
 
-                required (Append_Ascii(mo->strand, "RebolBounce "));
+                require (
+                  Append_Ascii(mo->strand, "RebolBounce ")
+                );
                 Append_Any_Utf8(mo->strand, linkname);
-                required (Append_Ascii(
+                require (
+                  Append_Ascii(
                     mo->strand,
                     "(RebolContext* LIBREBOL_BINDING_NAME())\n{"
                 ));
 
                 Append_Any_Utf8(mo->strand, source);
 
-                required (Append_Ascii(mo->strand, "}\n\n"));
+                require (
+                  Append_Ascii(mo->strand, "}\n\n")
+                );
             }
             else if (Is_Text(item)) {
                 //
@@ -550,7 +560,9 @@ DECLARE_NATIVE(COMPILE_P)
                 // in the compile where it is given in the list.
                 //
                 Append_Any_Utf8(mo->strand, item);
-                required (Append_Ascii(mo->strand, "\n"));
+                require (
+                  Append_Ascii(mo->strand, "\n")
+                );
             }
             else {
                 // COMPILE should've vetted the list to only TEXT! and ACTION!

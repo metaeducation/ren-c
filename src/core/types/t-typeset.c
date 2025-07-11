@@ -254,7 +254,9 @@ Result(Zero) Set_Parameter_Spec(
         DECLARE_VALUE (lookup);
 
         if (Is_Word(item)) {  // allow abstraction [3]
-            required (Get_Word(lookup, item, spec_binding));
+            require (
+              Get_Word(lookup, item, spec_binding)
+            );
         }
         else
             Copy_Cell(lookup, item);
@@ -383,7 +385,9 @@ Element* Decorate_According_To_Parameter(
     const Element* param
 ){
     if (Get_Parameter_Flag(param, REFINEMENT)) {
-        required (Refinify(e));
+        require (
+          Refinify(e)
+        );
     }
 
     switch (Parameter_Class(param)) {
@@ -519,7 +523,9 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
       case SYM_TEXT: {
         if (not Is_Text(poke))
             panic (poke);
-        Strand* strand = require (Copy_String_At(poke));
+        require (
+          Strand* strand = Copy_String_At(poke)
+        );
         Manage_Stub(strand);
         Freeze_Flex(strand);
         Set_Parameter_Strand(param, strand);

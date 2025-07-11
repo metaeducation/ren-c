@@ -127,10 +127,14 @@
 //     }
 //
 //     Result(int) Other_Func(void) {
-//         int y = trap (Some_Func(1000));
+//         trap (
+//           int y = Some_Func(1000)
+//         );
 //         assert(y == 1020);
 //
-//         int z = trap (Some_Func(10);
+//         trap (
+//           int z = Some_Func(10)
+//         );
 //         printf("this would never be reached...");
 //
 //         return z;
@@ -181,21 +185,23 @@
 
 #define NEEDFUL_NOOP  ((void)0)
 
+#if defined(NDEBUG)
+    #define NEEDFUL_SCOPE_GUARD  NEEDFUL_NOOP
+#else
+    #define NEEDFUL_PASTE2(a, b)  a##b
+    #define NEEDFUL_PASTE1(a, b)  NEEDFUL_PASTE2(a, b)
+
+    #define NEEDFUL_UNIQUE_NAME(base)  NEEDFUL_PASTE1(base, __LINE__)
+
+    #define NEEDFUL_SCOPE_GUARD \
+        int NEEDFUL_UNIQUE_NAME(_statement_must_be_in_braces_); \
+        NEEDFUL_UNUSED(NEEDFUL_UNIQUE_NAME(_statement_must_be_in_braces_))
+#endif
+
 #define needful_fail(...) \
     (Needful_Assert_Not_Failing(), \
         Needful_Set_Failure(__VA_ARGS__), \
         NEEDFUL_RESULT_0)
-
-#define needful_trap_core(expr, prefix_extractor) \
-    /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
-    if (Needful_Get_Failure()) { \
-        return NEEDFUL_RESULT_0; \
-    } NEEDFUL_NOOP  /* force require semicolon at callsite */
-
-#define needful_except_core(decl,postfix_extractor) \
-    /* expression */ postfix_extractor; \
-    for (decl = Needful_Get_Failure(); Needful_Test_And_Clear_Failure(); )
-        /* implicitly takes code block after macro as except()-body */
 
 #define needful_panic(...) do { \
     Needful_Assert_Not_Failing(); \
@@ -203,56 +209,38 @@
     /* DEAD_END; */ \
 } while (0)
 
-#define needful_require_core(expr, prefix_extractor) \
-    /* var = */ (Needful_Assert_Not_Failing(), prefix_extractor(expr)); \
+#define needful_postfix_extract_result  // no-op in C build
+
+#define needful_trap(_stmt_) \
+    NEEDFUL_SCOPE_GUARD; \
+    Needful_Assert_Not_Failing(); \
+    _stmt_  needful_postfix_extract_result; \
+    if (Needful_Get_Failure()) { \
+        return NEEDFUL_RESULT_0; \
+    } NEEDFUL_NOOP  /* force require semicolon at callsite */
+
+#define needful_require(_stmt_) \
+    NEEDFUL_SCOPE_GUARD; \
+    Needful_Assert_Not_Failing(); \
+    _stmt_ needful_postfix_extract_result; \
     if (Needful_Get_Failure()) { \
         Needful_Panic_Abruptly(Needful_Test_And_Clear_Failure()); \
         /* DEAD_END; */ \
     } NEEDFUL_NOOP  /* force require semicolon at callsite */
 
-#define needful_assume_core(expr, prefix_assumer) \
-    /* var = */ (Needful_Assert_Not_Failing(), prefix_assumer(expr)); \
+#define needful_assume(_stmt_) \
+    NEEDFUL_SCOPE_GUARD; \
+    Needful_Assert_Not_Failing(); \
+    _stmt_ needful_postfix_extract_result; \
     Needful_Assert_Not_Failing()
 
-//=//// "Hot Potato" Versions ////////////////////////////////////////////=//
+#define needful_except(_decl_) \
+    /* _stmt_ */ needful_postfix_extract_result; \
+    for (_decl_ = Needful_Get_Failure(); Needful_Test_And_Clear_Failure(); )
+        /* {body} implicitly picked up after macro by for, decl is scoped */
 
-#define Needful_Prefix_Extract_Hot(expr)  (expr)
-#define Needful_Postfix_Extract_Hot
-
-#define needful_trap(expr) \
-    needful_trap_core(expr, Needful_Prefix_Extract_Hot)
-
-#define /* expr */ needful_except(decl) /* {body} */ \
-    needful_except_core(decl, Needful_Postfix_Extract_Hot)
-
-#define needful_require(expr) \
-    needful_require_core(expr, Needful_Prefix_Extract_Hot)
-
-#define needful_assume(expr) \
-    needful_assume_core(expr, Needful_Prefix_Extract_Hot)
-
-//=//// Discarded Result Versions /////////////////////////////////////////=//
-
-#define Needful_Prefix_Discard_Result(expr)  (expr)
-#define Needful_Postfix_Discard_Result
-
-#define needful_trapped(expr) do { \
-    needful_trap_core(expr, Needful_Prefix_Discard_Result); \
-} while (0)
-
-#define /* expr */ needful_excepted(decl) /* {body} */ \
-    needful_except_core(decl, Needful_Postfix_Discard_Result)
-
-#define needful_required(expr) do { \
-    needful_require_core(expr, Needful_Prefix_Discard_Result); \
-} while (0)
-
-#define needful_assumed(expr) do { \
-    needful_assume_core(expr, Needful_Prefix_Discard_Result); \
-} while (0)
-
-#define needful_rescue(expr) \
-    (Needful_Assert_Not_Failing(), Needful_Prefix_Discard_Result(expr), \
+#define needful_rescue(_expr_) \
+    (Needful_Assert_Not_Failing(), _expr_ needful_postfix_extract_result, \
         Needful_Test_And_Clear_Failure())
 
 
@@ -879,12 +867,9 @@ typedef enum {
     #define require(expr)           needful_require(expr)
     #define except(decl)            needful_except(decl)
 
-    #define trapped(expr)           needful_trapped(expr)
-    #define required(expr)          needful_required(expr)
     #define excepted(decl)          needful_excepted(decl)
 
-    #define assume(expr)            needful_assume(expr)
-    #define assumed(expr)           needful_assumed(expr)
+    #define assume(stmt)            needful_assume(stmt)
 
     #define rescue(expr)            needful_rescue(expr)
 #endif

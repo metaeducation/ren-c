@@ -107,7 +107,8 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     Flags flags = LEVEL_MASK_NONE;
 
-    Level* sub = require (Make_Level_At_Core(
+    require (
+      Level* sub = Make_Level_At_Core(
         &Evaluator_Executor, spare_rebound, SPECIFIED, flags
     ));
     Init_Unsurprising_Ghost(Evaluator_Primed_Cell(sub));  // allow vanish [1]
@@ -169,7 +170,8 @@ DECLARE_NATIVE(LAMBDA)
     Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
 
-    Details* details = require (Make_Interpreted_Action(
+    require (
+      Details* details = Make_Interpreted_Action(
         spec,
         body,
         SYM_0,  // no RETURN: in the paramlist

@@ -127,7 +127,9 @@ DECLARE_NATIVE(SIGIL_Q)
     INCLUDE_PARAMS_OF_SIGIL_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -353,13 +355,16 @@ DECLARE_NATIVE(OF)
     ++size;
     buffer[size] = 'f';
     ++size;
-    sym_of = assume (Intern_Utf8_Managed(buffer, size));
+    assume (
+      sym_of = Intern_Utf8_Managed(buffer, size)
+    );
 
 } have_sym_of: { /////////////////////////////////////////////////////////////
 
     Element* prop_of = Init_Word(SCRATCH, sym_of);
 
-    Value* spare_action = require (Get_Word(
+    require (
+      Value* spare_action = Get_Word(
         SPARE,
         prop_of,
         Feed_Binding(LEVEL->feed)
@@ -370,7 +375,9 @@ DECLARE_NATIVE(OF)
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
-    Level* sub = require (Make_Level(&Stepper_Executor, level_->feed, flags));
+    require (
+      Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags)
+    );
     Copy_Lifted_Cell(Evaluator_Level_Current(sub), spare_action);
     LIFT_BYTE(Evaluator_Level_Current(sub)) = NOQUOTE_2;  // plain FRAME!
     Force_Invalidate_Gotten(&sub->u.eval.current_gotten);
@@ -858,7 +865,9 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
 //
 Result(const Byte*) Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 {
-    Strand* s = trap (Make_Strand(len * 2));  // use mold buffer vs. guess?
+    trap (  // use mold buffer vs. guess size?
+      Strand* s = Make_Strand(len * 2)
+    );
     Utf8(*) up = Strand_Head(s);
 
     REBLEN num_chars = 0;
@@ -931,7 +940,9 @@ Result(const Byte*) Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 //
 Result(const Byte*) Scan_Money_To_Stack(const Byte* cp, REBLEN len)
 {
-    Strand* s = trap (Make_Strand(len));  // only ASCII, "1"-"9" and "."
+    trap (
+      Strand* s = Make_Strand(len)  // only ASCII, "1"-"9" and "."
+    );
     Utf8(*) up = Strand_Head(s);
 
     assert(*cp == '$');
@@ -1196,7 +1207,9 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
 
         Sink(Element) val = nullptr;  // suppress maybe uninitialized warning
 
-        const Symbol* name = require (Intern_Utf8_Managed(start, cp - start));
+        require (
+          const Symbol* name = Intern_Utf8_Managed(start, cp - start)
+        );
 
         cp++;
         // Search if word already present:
@@ -1210,20 +1223,24 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
                 // Does it already use a block?
                 if (Is_Block(item + 1)) {
                     // Block of values already exists:
-                    val = require (
-                        Alloc_Tail_Array(Cell_Array_Ensure_Mutable(item + 1))
+                    require (
+                      val =Alloc_Tail_Array(Cell_Array_Ensure_Mutable(item + 1))
                     );
                 }
                 else {
                     // Create new block for values:
                     Source* a = Make_Source_Managed(2);
-                    Sink(Element) prior = require (Alloc_Tail_Array(a));
+                    require (
+                      Sink(Element) prior = Alloc_Tail_Array(a)
+                    );
                     Derelativize(
                         prior,
                         item + 1,  // prior value
                         SPECIFIED  // no relative values added
                     );
-                    val = require (Alloc_Tail_Array(a));
+                    require (
+                      val = Alloc_Tail_Array(a)
+                    );
                     Init_Block(item + 1, a);
                 }
                 break;
@@ -1231,9 +1248,13 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
         }
 
         if (item == item_tail) {  // didn't break, add space for new word/value
-            Sink(Element) cell = require (Alloc_Tail_Array(result));
+            require (
+              Sink(Element) cell = Alloc_Tail_Array(result)
+            );
             Init_Set_Word(cell, name);
-            val = require (Alloc_Tail_Array(result));
+            require (
+              val = Alloc_Tail_Array(result)
+            );
         }
 
         while (Is_Lex_Space(*cp)) cp++;
@@ -1266,7 +1287,9 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
         // correctly, it would need to use Utf8_Next to count the characters
         // in the loop above.  Better to convert to usermode.
 
-        Strand* strand = require (Make_Strand(len * 2));
+        require (
+          Strand* strand = Make_Strand(len * 2)
+        );
         Utf8(*) at = Strand_Head(strand);
         cp = start;
 

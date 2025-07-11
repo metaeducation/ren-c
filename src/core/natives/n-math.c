@@ -89,7 +89,9 @@ DECLARE_NATIVE(ADD)
         REBINT i = VAL_INT32(e2);
         if (i < 0)
             panic (Error_Codepoint_Negative_Raw());
-        trapped (Init_Single_Codepoint_Rune(OUT, i));
+        trap (
+          Init_Single_Codepoint_Rune(OUT, i)
+        );
         return OUT;
     }
 
@@ -99,7 +101,9 @@ DECLARE_NATIVE(ADD)
         REBINT i = VAL_INT32(e1);
         if (i < 0)
             panic (Error_Codepoint_Negative_Raw());
-        trapped (Init_Single_Codepoint_Rune(OUT, i));
+        trap (
+          Init_Single_Codepoint_Rune(OUT, i)
+        );
         return OUT;
     }
 
@@ -655,9 +659,9 @@ DECLARE_NATIVE(ARCCOSINE)
 {
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
-    required (Arc_Trans(
-        OUT, ARG(COSINE), Bool_ARG(RADIANS), SYM_COSINE
-    ));
+    require (
+      Arc_Trans(OUT, ARG(COSINE), Bool_ARG(RADIANS), SYM_COSINE)
+    );
     return OUT;
 }
 
@@ -676,7 +680,9 @@ DECLARE_NATIVE(ARCSINE)
 {
     INCLUDE_PARAMS_OF_ARCSINE;
 
-    required (Arc_Trans(OUT, ARG(SINE), Bool_ARG(RADIANS), SYM_SINE));
+    require (
+      Arc_Trans(OUT, ARG(SINE), Bool_ARG(RADIANS), SYM_SINE)
+    );
     return OUT;
 }
 
@@ -695,9 +701,9 @@ DECLARE_NATIVE(ARCTANGENT)
 {
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
-    required (Arc_Trans(
-        OUT, ARG(TANGENT), Bool_ARG(RADIANS), SYM_TANGENT
-    ));
+    require (
+        Arc_Trans(OUT, ARG(TANGENT), Bool_ARG(RADIANS), SYM_TANGENT)
+    );
     return OUT;
 }
 

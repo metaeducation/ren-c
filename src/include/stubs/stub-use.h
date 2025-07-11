@@ -38,7 +38,9 @@ INLINE Result(Use*) Alloc_Use_Inherits_Core(
 ){
     assert(0 == (flags & ~(USE_FLAG_SET_WORDS_ONLY)));
 
-    Stub* use = trap (Make_Untracked_Stub(STUB_MASK_USE | flags));
+    trap (
+      Stub* use = Make_Untracked_Stub(STUB_MASK_USE | flags)
+    );
     Tweak_Link_Inherit_Bind_Raw(use, inherit);
     Corrupt_Unused_Field(use->misc.corrupt);
     Corrupt_Unused_Field(use->info.corrupt);

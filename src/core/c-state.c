@@ -374,7 +374,9 @@ void Replug_Stack(Level* base, Value* plug) {
             Init_Unreadable(Level_Scratch(base));
         else {
             Copy_Cell(Level_Scratch(base), item);
-            assumed (Unliftify_Undecayed(Level_Scratch(base)));
+            assume (
+              Unliftify_Undecayed(Level_Scratch(base))
+            );
         }
     }
     else
@@ -386,7 +388,9 @@ void Replug_Stack(Level* base, Value* plug) {
             Init_Unreadable(Level_Spare(base));
         else {
             Copy_Cell(&base->spare, item);
-            assumed (Unliftify_Undecayed(Level_Spare(base)));
+            assume (
+              Unliftify_Undecayed(Level_Spare(base))
+            );
         }
     }
     else

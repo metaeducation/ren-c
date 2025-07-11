@@ -95,7 +95,9 @@ DECLARE_NATIVE(BUILTIN_EXTENSIONS)
         assert(Is_Block(details));
         assert(Series_Len_At(details) == MAX_COLLATOR + 1);
 
-        Sink(Element) cell = require (Alloc_Tail_Array(list));
+        require (
+          Sink(Element) cell = Alloc_Tail_Array(list)
+        );
         Copy_Cell(cell, Ensure_Element(details));
         rebRelease(details);
     }
@@ -342,7 +344,9 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
    );
    if (shutdown_slot) {
         Sink(Value) spare_shutdown = SPARE;
-        required (Read_Slot(spare_shutdown, shutdown_slot));
+        require (
+          Read_Slot(spare_shutdown, shutdown_slot)
+        );
         rebElide(rebRUN(spare_shutdown));
    }
 
@@ -359,7 +363,9 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
    );
    if (unregister_slot) {
         Sink(Value) spare_unregister = SPARE;
-        required (Read_Slot(spare_unregister, unregister_slot));
+        require (
+          Read_Slot(spare_unregister, unregister_slot)
+        );
         rebElide(rebRUN(spare_unregister));
    }
 

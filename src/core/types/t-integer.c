@@ -112,8 +112,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
     if (Any_Utf8(arg)) {  // !!! odd historical behavior [1]
         Sink(Element) out = OUT;
 
-        required (Transcode_One(out, TYPE_0, arg));  // not bad make (?)
-
+        require (
+          Transcode_One(out, TYPE_0, arg)  // not bad make (?)
+        );
         if (Is_Integer(out))
             return OUT;
         if (Is_Decimal(out))
@@ -176,7 +177,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Integer)
 
     Byte buf[60];
     REBINT len = Emit_Integer(buf, VAL_INT64(v));
-    required (Append_Ascii_Len(mo->strand, s_cast(buf), len));
+    require (
+      Append_Ascii_Len(mo->strand, s_cast(buf), len)
+    );
 
     return TRIPWIRE;
 }

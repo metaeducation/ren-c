@@ -185,8 +185,9 @@ DECLARE_NATIVE(QUASI)
 
     Element* out = Copy_Cell(OUT, elem);
 
-    trapped (Coerce_To_Quasiform(out));  // (try quasi ':foo:) is null
-
+    trap (  // use TRAP vs. PANIC, such that (try quasi ':foo:) is null
+      Coerce_To_Quasiform(out)
+    );
     return OUT;
 }
 
@@ -296,7 +297,9 @@ DECLARE_NATIVE(UNLIFT)
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {  // intrinsic shortcut
         if (not Any_Lifted(atom))
             panic ("Plain UNLIFT only accepts quasiforms and quoteds");
-        required (Unliftify_Undecayed(atom));
+        require (
+          Unliftify_Undecayed(atom)
+        );
         return COPY(atom);
     }
 
@@ -313,8 +316,9 @@ DECLARE_NATIVE(UNLIFT)
 
         Copy_Cell(OUT, atom);
 
-        required (Coerce_To_Antiform(OUT));
-
+        require (
+          Coerce_To_Antiform(OUT)
+        );
         return OUT;
     }
 
@@ -323,7 +327,9 @@ DECLARE_NATIVE(UNLIFT)
             "UNLIFT:LITE does not accept quasiforms (plain forms are meta)"
         );
 
-    required (Unliftify_Undecayed(atom));
+    require (
+      Unliftify_Undecayed(atom)
+    );
     return COPY(atom);  // quoted or quasi
 }
 
@@ -359,8 +365,8 @@ DECLARE_NATIVE(ANTIFORM_Q)
     if (not Bool_ARG(TYPE))
         return LOGIC(Is_Antiform(atom));
 
-    Value* datatype = require (
-        Decay_If_Unstable(m_cast(Atom*, atom))  // mutable [1]
+    require (  // mutable [1]
+      Value* datatype = Decay_If_Unstable(m_cast(Atom*, atom))
     );
 
     if (not Is_Datatype(datatype))
@@ -392,8 +398,9 @@ DECLARE_NATIVE(ANTI)
     Element* elem = Element_ARG(ELEMENT);
 
     Copy_Cell(OUT, elem);
-    required (Coerce_To_Antiform(OUT));
-
+    require (
+      Coerce_To_Antiform(OUT)
+    );
     return OUT;
 }
 
@@ -498,12 +505,11 @@ INLINE bool Pack_Native_Core_Throws(
         return true;
     }
 
-    required (Unliftify_Undecayed(out));
+    require (
+      Unliftify_Undecayed(out)
+    );
     return false;
 }
-
-
-//
 
 
 //
@@ -648,8 +654,9 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
   decay_if_unstable: {
 
     Copy_Cell(OUT, atom);
-    Value* out = require (Decay_If_Unstable(OUT));
-
+    require (
+      Value* out = Decay_If_Unstable(OUT)
+    );
     if (Is_Nulled(out))
         goto opting_out;
 
@@ -724,7 +731,9 @@ DECLARE_NATIVE(NOQUOTE)
 {
     INCLUDE_PARAMS_OF_NOQUOTE;
 
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(OUT, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(OUT, LEVEL)
+    );
     if (b)
         return unwrap b;
 

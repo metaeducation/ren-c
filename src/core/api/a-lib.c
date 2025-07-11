@@ -169,7 +169,8 @@ unsigned char* API_rebAllocBytes(size_t size)
 {
     ENTER_API;
 
-    Binary* b = require (nocast Make_Flex(
+    require (
+      Binary* b = nocast Make_Flex(
         FLAG_FLAVOR(FLAVOR_BINARY)  // rebRepossess() only creates BLOB! ATM
             | BASE_FLAG_ROOT  // indicate this originated from the API
             | STUB_FLAG_DYNAMIC  // rebRepossess() needs bias field
@@ -625,7 +626,7 @@ RebolValue* API_rebChar(uint32_t codepoint)
     ENTER_API;
 
     Value* v = Alloc_Value();
-    Init_Single_Codepoint_Rune(v, codepoint) excepted (Error* e) {
+    Init_Single_Codepoint_Rune(v, codepoint) except (Error* e) {
         rebRelease(v);
         panic (e);
     }
@@ -1135,7 +1136,8 @@ static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     const void* p,  // null vaptr means void* array [2] else first param [3]
     Option(void*) vaptr  // guides interpretation of p [4]
 ){
-    Feed* feed = trap (Make_Variadic_Feed(
+    trap (
+      Feed* feed = Make_Variadic_Feed(
         p, u_cast(va_list*, maybe vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
     ));
@@ -1173,7 +1175,9 @@ static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     if (run_flags & RUN_VA_FLAG_LIFT_RESULT)
         Liftify(atom_out);
     else {
-        required (Decay_If_Unstable(atom_out));
+        require (
+          Decay_If_Unstable(atom_out)
+        );
     }
 
     return zero;
@@ -1241,7 +1245,8 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     uintptr_t flags,  // Flags not exported in API
     const void* p, void* vaptr
 ){
-    Feed* feed = require (Make_Variadic_Feed(
+    require (
+      Feed* feed = Make_Variadic_Feed(
         p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
     ));
@@ -1255,7 +1260,9 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     Tweak_Feed_Binding(feed, cast(Context*, binding));
 
     Sink(Atom) atom_out = u_cast(Atom*, out);
-    Level* L = require (Make_Level(&Stepper_Executor, feed, flags));
+    require (
+      Level* L = Make_Level(&Stepper_Executor, feed, flags)
+    );
     Push_Level_Erase_Out_If_State_0(atom_out, L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
@@ -1271,7 +1278,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     if (too_many)
         panic (Error_Apply_Too_Many_Raw());
 
-    Decay_If_Unstable(atom_out) excepted (Error* e) {
+    Decay_If_Unstable(atom_out) except (Error* e) {
         panic (e);
     }
 
@@ -1317,7 +1324,8 @@ RebolValue* API_rebTranscodeInto(
 ){
     ENTER_API;
 
-    Feed* feed = require (Make_Variadic_Feed(
+    require (
+      Feed* feed = Make_Variadic_Feed(
         p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
     ));
@@ -1375,7 +1383,9 @@ void API_rebPushContinuation_internal(
     else
         Tweak_Cell_Binding(block, g_lib_context);  // [3]
 
-    Level* L = require (Make_Level_At(&Evaluator_Executor, block, flags));
+    require (
+      Level* L = Make_Level_At(&Evaluator_Executor, block, flags)
+    );
     Init_Unsurprising_Ghost(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(u_cast(Atom*, out), L);
 }
@@ -1467,11 +1477,11 @@ RebolValue* API_rebRescue2(
         return nullptr;
     }
 
-    Unliftify_Undecayed(cast(Atom*, v)) excepted (Error* e) {
+    Unliftify_Undecayed(cast(Atom*, v)) except (Error* e) {
         panic (e);
     };
 
-    Decay_If_Unstable(cast(Atom*, v)) excepted (Error* e) {
+    Decay_If_Unstable(cast(Atom*, v)) except (Error* e) {
         panic (e);
     }
 
@@ -1507,7 +1517,7 @@ RebolValue* API_rebRecover(
         return v;
     }
 
-    Decay_If_Unstable(cast(Atom*, v)) excepted (Error* e) {
+    Decay_If_Unstable(cast(Atom*, v)) except (Error* e) {
         panic (e);
     }
 
@@ -1543,7 +1553,7 @@ RebolValue* API_rebRecoverInterruptible(
         return v;
     }
 
-    Decay_If_Unstable(cast(Atom*, v)) excepted (Error* e) {
+    Decay_If_Unstable(cast(Atom*, v)) except (Error* e) {
         panic (e);
     }
     Set_Base_Root_Bit(v);
@@ -2615,8 +2625,8 @@ RebolBaseInternal* API_rebINLINE(const RebolValue* v)
 {
     ENTER_API;
 
-    Stub* s = require (
-        Make_Untracked_Stub(FLAG_FLAVOR(FLAVOR_INSTRUCTION_SPLICE))
+    require (
+      Stub* s = Make_Untracked_Stub(FLAG_FLAVOR(FLAVOR_INSTRUCTION_SPLICE))
     );
 
     if (not (Is_Block(v) or Is_Quoted(v) or Is_Space(v)))
@@ -3211,7 +3221,8 @@ RebolValue* API_rebFunctionFlipped(
     RebolActionCFunction* cfunc,  // for typechecking, must be first [1]
     const void* p, void* vaptr
 ){
-    Feed* feed = require (Make_Variadic_Feed(
+    require (
+      Feed* feed = Make_Variadic_Feed(
         p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
     ));

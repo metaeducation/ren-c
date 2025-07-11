@@ -211,7 +211,7 @@ bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
 
     Get_Word(
         &feed->gotten, At_Feed(feed), Feed_Binding(feed)
-    ) excepted (Error* e) {
+    ) except (Error* e) {
         Erase_Cell(&feed->gotten);  // could this be Trap_Get_Word() invariant?
         UNUSED(e);  // don't care (if we care, we'll hit it on next step)
         return false;
@@ -476,13 +476,17 @@ Bounce Action_Executor(Level* L)
             }
 
             if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // non-empty is ok [4]
-                Value* out = require (Decay_If_Unstable(OUT));  // !!! ^META?
+                require (
+                  Value* out = Decay_If_Unstable(OUT)  // !!! ^META?
+                );
                 Init_Varargs_Untyped_Infix(ARG, out);
                 Erase_Cell(OUT);
             }
             else switch (pclass) {
               case PARAMCLASS_NORMAL:
-                required (Decay_If_Unstable(OUT));
+                require (
+                  Decay_If_Unstable(OUT)
+                );
                 Move_Atom(ARG, OUT);
                 break;
 
@@ -616,8 +620,8 @@ Bounce Action_Executor(Level* L)
           case PARAMCLASS_META: {
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
-            Level* sub = require (
-                Make_Level(&Stepper_Executor, L->feed, flags)
+            require (
+              Level* sub = Make_Level(&Stepper_Executor, L->feed, flags)
             );
             Push_Level_Erase_Out_If_State_0(ARG, sub);  // duplicate erase!
 
@@ -697,8 +701,8 @@ Bounce Action_Executor(Level* L)
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 
-                Level* sub = require (
-                    Make_Level(&Stepper_Executor, L->feed, flags)
+                require (
+                  Level* sub = Make_Level(&Stepper_Executor, L->feed, flags)
                 );
                 Push_Level_Erase_Out_If_State_0(ARG, sub);  // not state 0
                 return CONTINUE_SUBLEVEL(sub);
@@ -760,7 +764,9 @@ Bounce Action_Executor(Level* L)
         assert(Is_Pushed_Refinement(TOP));
 
         if (not Cell_Binding(TOP)) {  // duplicate or junk, loop didn't index
-            assumed (Refinify_Pushed_Refinement(TOP_ELEMENT));
+            assume (
+              Refinify_Pushed_Refinement(TOP_ELEMENT)
+            );
             Element* spare = Copy_Cell(SPARE, TOP_ELEMENT);  // [1]
             panic (Error_Bad_Parameter_Raw(spare));
         }
@@ -892,7 +898,9 @@ Bounce Action_Executor(Level* L)
                 Not_Cell_Stable(ARG)
                 or not Is_Varargs(Known_Stable(ARG))
             ){
-                Value* arg = require (Decay_If_Unstable(ARG));
+                require (
+                  Value* arg = Decay_If_Unstable(ARG)
+                );
                 panic (Error_Not_Varargs(L, KEY, param, arg));
             }
 
@@ -912,7 +920,9 @@ Bounce Action_Executor(Level* L)
         heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
         if (not Typecheck_Coerce(L, param, ARG, false)) {
-            Value* arg = require (Decay_If_Unstable(ARG));
+            require (
+              Value* arg = Decay_If_Unstable(ARG)
+            );
             panic (Error_Phase_Arg_Type(L, KEY, param, arg));
         }
 
@@ -1119,7 +1129,8 @@ Result(Zero) Push_Action(
 
     Set_Action_Level_Label(L, Cell_Frame_Label_Deep(frame));
 
-    Flex* s = require (nocast Prep_Stub(
+    require (
+      Flex* s = nocast Prep_Stub(
         STUB_MASK_LEVEL_VARLIST
             | FLEX_FLAG_FIXED_SIZE,  // FRAME!s don't expand ATM
             // not managed by default, see Force_Level_Varlist_Managed()

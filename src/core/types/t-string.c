@@ -286,7 +286,8 @@ static void Reverse_Strand(Strand* str, REBLEN index, Length len)
 
         DECLARE_VALUE (string);  // !!! Temp value, string type is irrelevant
         Init_Any_String_At(string, TYPE_TEXT, str, index);
-        required(Modify_String_Or_Blob(  // :PART to overwrite reversed portion
+        require(
+          Modify_String_Or_Blob(  // :PART to overwrite reversed portion
             string,
             SYM_CHANGE,
             temp,
@@ -319,7 +320,9 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
     Element* def = Element_ARG(DEF);
 
     if (Is_Integer(def)) { // new string with given integer capacity [2]
-        Strand* strand = require (Make_Strand(Int32s(def, 0)));
+        require (
+          Strand* strand = Make_Strand(Int32s(def, 0))
+        );
         return Init_Any_String(OUT, heart, strand);
     }
 
@@ -421,11 +424,15 @@ void Mold_Codepoint(Molder* mo, Codepoint c, bool non_ascii_parened)
         // !!! Comment here said "do not AND with the above"
         //
         if (non_ascii_parened or c == 0x1E or c == 0xFEFF) {
-            required (Append_Ascii(buf, "^("));
+            require (
+              Append_Ascii(buf, "^(")
+            );
 
             Length len_old = Strand_Len(buf);
             Size size_old = Strand_Size(buf);
-            required (Expand_Flex_Tail(buf, 5));  // worst: ^(1234), ^( is done
+            require (
+              Expand_Flex_Tail(buf, 5)  // worst: ^(1234), ^( is done
+            );
             Term_Strand_Len_Size(buf, len_old, size_old);
 
             Byte* bp = Binary_Tail(buf);
@@ -459,7 +466,9 @@ void Mold_Text_Flex_At(Molder* mo, const Strand* s, REBLEN index) {
     Strand* buf = mo->strand;
 
     if (index >= Strand_Len(s)) {
-        required (Append_Ascii(buf, "\"\""));
+        require (
+          Append_Ascii(buf, "\"\"")
+        );
         return;
     }
 
@@ -711,7 +720,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 
       case TYPE_FILE:
         if (String_Len_At(v) == 0) {
-            required (Append_Ascii(buf, "%\"\""));
+            require (
+              Append_Ascii(buf, "%\"\"")
+            );
             break;
         }
         Mold_File(mo, v);
@@ -857,7 +868,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         else
             assert(not Is_Antiform(unwrap arg));
 
-        SERIES_INDEX_UNBOUNDED(v) = require (Modify_String_Or_Blob(
+        require (
+          SERIES_INDEX_UNBOUNDED(v) = Modify_String_Or_Blob(
             v,  // does read-only check
             unwrap id,
             arg,
@@ -969,8 +981,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             Codepoint v_c = Get_Strand_Char_At(v_str, Series_Index(v));
             Codepoint arg_c = Get_Strand_Char_At(arg_str, Series_Index(arg));
 
-            required (Set_Char_At(v_str, Series_Index(v), arg_c));
-            required (Set_Char_At(arg_str, Series_Index(arg), v_c));
+            require (
+              Set_Char_At(v_str, Series_Index(v), arg_c)
+            );
+            require (
+              Set_Char_At(arg_str, Series_Index(arg), v_c)
+            );
         }
         return COPY(v); }
 
@@ -1041,8 +1057,9 @@ IMPLEMENT_GENERIC(AS, Any_String)
     Element* string = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    required (Alias_Any_String_As(OUT, string, as));
-
+    require (
+      Alias_Any_String_As(OUT, string, as)
+    );
     return OUT;
 }
 
@@ -1057,7 +1074,9 @@ IMPLEMENT_GENERIC(COPY, Any_String)
 
     REBINT len = Part_Len_May_Modify_Index(string, ARG(PART));
 
-    Strand* copy = require (Copy_String_At_Limit(string, &len));
+    require (
+      Strand* copy = Copy_String_At_Limit(string, &len)
+    );
     return Init_Any_String(
         OUT,
         Heart_Of_Builtin_Fundamental(string),
@@ -1081,7 +1100,9 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
         len = Part_Len_May_Modify_Index(v, ARG(PART));
         if (len == 0) {
             Heart heart = Heart_Of_Builtin_Fundamental(v);
-            Strand* strand = require (Make_Strand(0));
+            require (
+              Strand* strand = Make_Strand(0)
+            );
             return Init_Any_String(OUT, heart, strand);
         }
     } else
@@ -1104,7 +1125,9 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
         if (not Bool_ARG(PART))
             return fail (Error_Nothing_To_Take_Raw());
         Heart heart = Heart_Of_Builtin_Fundamental(v);
-        Strand* strand = require (Make_Strand(0));
+        require (
+          Strand* strand = Make_Strand(0)
+        );
         return Init_Any_String(OUT, heart, strand);
     }
 
@@ -1112,7 +1135,9 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
     //
     if (Bool_ARG(PART)) {
         Heart heart = Heart_Of_Builtin_Fundamental(v);
-        Strand* strand = require (Copy_String_At_Limit(v, &len));
+        require (
+          Strand* strand = Copy_String_At_Limit(v, &len)
+        );
         Init_Any_String(OUT, heart, strand);
     }
     else
@@ -1190,8 +1215,12 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_String)
         REBLEN k = index + (Random_Int(secure) % n);
         n--;
         Codepoint swap = Get_Strand_Char_At(s, k);
-        required (Set_Char_At(s, k, Get_Strand_Char_At(s, n + index)));
-        required (Set_Char_At(s, n + index, swap));
+        require (
+          Set_Char_At(s, k, Get_Strand_Char_At(s, n + index))
+        );
+        require (
+          Set_Char_At(s, n + index, swap)
+        );
     }
     return COPY(string);
 }
@@ -1387,7 +1416,9 @@ DECLARE_NATIVE(DECODE_UTF_8)
 //
 void Startup_String(void)
 {
-    g_char_escapes = require (Alloc_N_On_Heap(Byte, MAX_ESC_CHAR + 1));
+    require (
+      g_char_escapes = Alloc_N_On_Heap(Byte, MAX_ESC_CHAR + 1)
+    );
     Mem_Fill(g_char_escapes, 0, MAX_ESC_CHAR + 1);
 
     Byte* cp = g_char_escapes;
@@ -1400,7 +1431,9 @@ void Startup_String(void)
     g_char_escapes[cast(Byte, '"')] = '"';
     g_char_escapes[cast(Byte, '^')] = '^';
 
-    g_url_escapes = require (Alloc_N_On_Heap(Byte, MAX_URL_CHAR + 1));
+    require (
+      g_url_escapes = Alloc_N_On_Heap(Byte, MAX_URL_CHAR + 1)
+    );
     Mem_Fill(g_url_escapes, 0, MAX_URL_CHAR + 1);
 
     for (c = 0; c <= ' '; c++)

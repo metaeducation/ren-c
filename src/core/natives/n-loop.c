@@ -445,8 +445,9 @@ DECLARE_NATIVE(CFOR)
     Element* word = Element_ARG(WORD);
     Element* body = Element_ARG(BODY);
 
-    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, word));
-
+    require (
+      VarList* varlist = Create_Loop_Context_May_Bind_Body(body, word)
+    );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
@@ -533,8 +534,9 @@ DECLARE_NATIVE(FOR_SKIP)
     if (skip == 0)
         return VOID;  // https://forum.rebol.info/t/infinite-loop-vs-error/936
 
-    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, word));
-
+    require (
+      VarList* varlist = Create_Loop_Context_May_Bind_Body(body, word)
+    );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
@@ -568,7 +570,9 @@ DECLARE_NATIVE(FOR_SKIP)
             SERIES_INDEX_UNBOUNDED(spare) = index;
         }
 
-        required (Write_Loop_Slot_May_Bind(slot, spare, body));
+        require (
+          Write_Loop_Slot_May_Bind(slot, spare, body)
+        );
 
         if (Eval_Branch_Throws(OUT, ARG(BODY))) {
             bool breaking;
@@ -581,8 +585,9 @@ DECLARE_NATIVE(FOR_SKIP)
 
         // Modifications to var are allowed, to another ANY-SERIES? value.
         //
-        required (Read_Slot(spare, slot));
-
+        require (
+          Read_Slot(spare, slot)
+        );
         if (not Any_Series(spare))
             panic (spare);
 
@@ -786,11 +791,13 @@ Element* Init_Loop_Each_May_Alias_Data(Sink(Element) iterator, Value* data)
 {
     assert(not Is_Api_Value(data));  // used to be cue to free, but not now
 
-    LoopEachState *les = require (Alloc_On_Heap(LoopEachState));
+    require (
+      LoopEachState *les = Alloc_On_Heap(LoopEachState)
+    );
 
     if (Any_Sequence(data)) {  // alias paths, chains, tuples as BLOCK!
         DECLARE_ELEMENT (temp);
-        assumed (  // all sequences can alias as block
+        assume (  // all sequences can alias as block
             Alias_Any_Sequence_As(temp, cast(Element*, data), TYPE_BLOCK)
         );
         Copy_Cell(data, temp);
@@ -884,8 +891,9 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
     Slot* slot = Varlist_Slots(&slot_tail, vars_ctx);
     for (; slot != slot_tail; ++slot) {
         if (not les->more_data) {  // Y is null in `for-each [x y] [1] ...`
-            trapped (Write_Loop_Slot_May_Bind(slot, nullptr, les->data));
-
+            trap (
+              Write_Loop_Slot_May_Bind(slot, nullptr, les->data)
+            );
             goto maybe_lift_and_continue;
         }
 
@@ -895,13 +903,13 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 Is_Lifted_Error(generated)
                 and Is_Error_Done_Signal(Cell_Error(generated))
             )) {
-                Unliftify_Decayed(generated) excepted (Error* e) {
+                Unliftify_Decayed(generated) except (Error* e) {
                     rebRelease(generated);
                     return fail (e);
                 };
                 Write_Loop_Slot_May_Bind(
                     slot, generated, les->data
-                ) excepted (Error* e) {
+                ) except (Error* e) {
                     rebRelease(generated);
                     return fail (e);
                 }
@@ -917,7 +925,9 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                     //
                     return true;
                 }
-                trapped (Write_Loop_Slot_May_Bind(slot, nullptr, les->data));
+                trap (
+                  Write_Loop_Slot_May_Bind(slot, nullptr, les->data)
+                );
             }
 
             goto maybe_lift_and_continue;
@@ -932,7 +942,9 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 SPARE,
                 Array_At(cast(Array*, les->flex), les->u.eser.index)
             );
-            trapped (Write_Loop_Slot_May_Bind(slot, spare_element, les->data));
+            trap (
+              Write_Loop_Slot_May_Bind(slot, spare_element, les->data)
+            );
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
 
@@ -954,7 +966,9 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 Tweak_Cell_Binding(spare_key, Cell_Varlist(les->data));
                 Tweak_Word_Index(spare_key, les->u.evars.index);
             }
-            trapped (Write_Loop_Slot_May_Bind(slot, spare_key, les->data));
+            trap (
+              Write_Loop_Slot_May_Bind(slot, spare_key, les->data)
+            );
 
             if (Varlist_Len(vars_ctx) == 1) {
                 //
@@ -974,10 +988,11 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 }
                 else {
                     Sink(Value) spare_val = SPARE;
-                    trapped (Read_Slot(spare_val, les->u.evars.slot));
-
-                    trapped (
-                        Write_Loop_Slot_May_Bind(slot, spare_val, les->data)
+                    trap (
+                      Read_Slot(spare_val, les->u.evars.slot)
+                    );
+                    trap (
+                      Write_Loop_Slot_May_Bind(slot, spare_val, les->data)
                     );
                 }
             }
@@ -1012,7 +1027,9 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
             } while (Is_Zombie(val));
 
             Value* spare_key = Copy_Cell(SPARE, key);
-            trapped (Write_Loop_Slot_May_Bind(slot, spare_key, les->data));
+            trap (
+              Write_Loop_Slot_May_Bind(slot, spare_key, les->data)
+            );
 
             if (Varlist_Len(vars_ctx) == 1) {
                 //
@@ -1024,7 +1041,9 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 //
                 ++slot;
                 Value* spare_val = Copy_Cell(SPARE, val);
-                trapped (Write_Loop_Slot_May_Bind(slot, spare_val, les->data));
+                trap (
+                  Write_Loop_Slot_May_Bind(slot, spare_val, les->data)
+                );
             }
             else
                 panic ("Loop enumeration of contexts must be 1 or 2 vars");
@@ -1038,7 +1057,9 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 Get_Strand_Char_At(cast(Strand*, les->flex), les->u.eser.index)
             );
 
-            trapped (Write_Loop_Slot_May_Bind(slot, spare_rune, les->data));
+            trap (
+              Write_Loop_Slot_May_Bind(slot, spare_rune, les->data)
+            );
 
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
@@ -1052,7 +1073,9 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
             Element* spare_integer = Init_Integer(
                 SPARE, Binary_Head(b)[les->u.eser.index]
             );
-            trapped (Write_Loop_Slot_May_Bind(slot, spare_integer, les->data));
+            trap (
+              Write_Loop_Slot_May_Bind(slot, spare_integer, les->data)
+            );
 
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
@@ -1137,7 +1160,9 @@ DECLARE_NATIVE(FOR_EACH)
     if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
-    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
+    require (
+      VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
+    );
 
     Remember_Cell_Is_Lifeguard(Init_Object(vars, varlist));
 
@@ -1170,7 +1195,9 @@ DECLARE_NATIVE(FOR_EACH)
     heeded (Corrupt_Cell_If_Needful(SPARE));
     heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
-    bool done = require (Loop_Each_Next_Maybe_Done(LEVEL));
+    require (
+      bool done = Loop_Each_Next_Maybe_Done(LEVEL)
+    );
     if (done)
         goto finalize_for_each;
 
@@ -1246,8 +1273,9 @@ DECLARE_NATIVE(EVERY)
     if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
-    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
-
+    require (
+      VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
+    );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
@@ -1279,7 +1307,9 @@ DECLARE_NATIVE(EVERY)
     heeded (Corrupt_Cell_If_Needful(SPARE));
     heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
-    bool done = require (Loop_Each_Next_Maybe_Done(LEVEL));
+    require (
+      bool done = Loop_Each_Next_Maybe_Done(LEVEL)
+    );
     if (done)
         goto finalize_every;
 
@@ -1314,9 +1344,12 @@ DECLARE_NATIVE(EVERY)
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 
-    Value* spare = require (Decay_If_Unstable(SPARE));
-
-    bool cond = require (Test_Conditional(spare));
+    require (
+      Value* spare = Decay_If_Unstable(SPARE)
+    );
+    require (
+      bool cond = Test_Conditional(spare)
+    );
     if (not cond) {
         Init_Nulled(OUT);
     }
@@ -1395,8 +1428,9 @@ DECLARE_NATIVE(REMOVE_EACH)
     if (Series_Index(data) >= Series_Len_At(data))  // past series end
         return NULLED;
 
-    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
-
+    require (
+      VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
+    );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
     if (Is_Block(body))
@@ -1494,8 +1528,9 @@ DECLARE_NATIVE(REMOVE_EACH)
 
       decay_out: {
 
-        Value* out = require (Decay_If_Unstable(OUT));
-
+        require (
+          Value* out = Decay_If_Unstable(OUT)
+        );
         if (Is_Okay(out)) {  // pure logic required [1]
             keep = false;  // okay is remove
         }
@@ -1537,7 +1572,8 @@ DECLARE_NATIVE(REMOVE_EACH)
                 assert(start <= len);
                 if (Is_Blob(data)) {
                     Binary* b = cast(Binary*, flex);
-                    required (Append_Ascii_Len(
+                    require (
+                      Append_Ascii_Len(
                         mo->strand,
                         s_cast(Binary_At(b, start)),
                         1
@@ -1624,7 +1660,8 @@ DECLARE_NATIVE(REMOVE_EACH)
         //
         REBLEN orig_len = Series_Len_Head(data);
         assert(start <= orig_len);
-        required (Append_Ascii_Len(
+        require (
+          Append_Ascii_Len(
             mo->strand,
             s_cast(Binary_At(b, start)),
             orig_len - start
@@ -1802,7 +1839,9 @@ DECLARE_NATIVE(MAP)
         );
     }
 
-    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
+    require (
+      VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
+    );
 
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
@@ -1832,7 +1871,9 @@ DECLARE_NATIVE(MAP)
     heeded (Corrupt_Cell_If_Needful(SPARE));
     heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
-    bool done = require (Loop_Each_Next_Maybe_Done(LEVEL));
+    require (
+      bool done = Loop_Each_Next_Maybe_Done(LEVEL)
+    );
     if (done)
         goto finalize_map;
 
@@ -1867,8 +1908,9 @@ DECLARE_NATIVE(MAP)
         goto finalize_map;
     }
 
-    Value* spare = require (Decay_If_Unstable(SPARE));
-
+    require (
+      Value* spare = Decay_If_Unstable(SPARE)
+    );
     if (Is_Splice(spare)) {
         const Element* tail;
         const Element* v = List_At(&tail, spare);
@@ -2061,15 +2103,18 @@ DECLARE_NATIVE(FOR)
     if (Is_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
-
+    require (
+      VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
+    );
     assert(Varlist_Len(varlist) == 1);
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
     Value* spare_one = Init_Integer(SPARE, 1);
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
-    required (Write_Loop_Slot_May_Bind(slot, spare_one, body));
+    require (
+      Write_Loop_Slot_May_Bind(slot, spare_one, body)
+    );
 
     STATE = ST_FOR_RUNNING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
@@ -2089,7 +2134,9 @@ DECLARE_NATIVE(FOR)
     Fixed(Slot*) slot = Varlist_Fixed_Slot(Cell_Varlist(vars), 1);
 
     Sink(Value) spare = SPARE;
-    required (Read_Slot(spare, slot));
+    require (
+      Read_Slot(spare, slot)
+    );
 
     if (not Is_Integer(spare))
         panic (Error_Invalid_Type_Raw(Datatype_Of(spare)));
@@ -2100,7 +2147,9 @@ DECLARE_NATIVE(FOR)
     if (Add_I64_Overflows(&mutable_VAL_INT64(spare), VAL_INT64(spare), 1))
         panic (Error_Overflow_Raw());
 
-    required (Write_Loop_Slot_May_Bind(slot, spare, body));
+    require (
+      Write_Loop_Slot_May_Bind(slot, spare, body)
+    );
 
     assert(STATE == ST_FOR_RUNNING_BODY);
     assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
@@ -2192,9 +2241,12 @@ DECLARE_NATIVE(INSIST)
     if (Is_Ghost(OUT))
         panic ("Body of INSIST must not return GHOST");  // tolerate? [3]
 
-    Value* out = require (Decay_If_Unstable(OUT));  // decay for truth test [4]
-
-    bool cond = require (Test_Conditional(out));
+    require (  // decay for truth test [4]
+      Value* out = Decay_If_Unstable(OUT)
+    );
+    require (
+      bool cond = Test_Conditional(out)
+    );
     if (cond)
         return LOOPED(OUT);
 
@@ -2257,9 +2309,12 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
     if (Is_Error(SPARE) and Is_Error_Done_Signal(Cell_Error(SPARE)))
         goto return_out;
 
-    Value* spare = require (Decay_If_Unstable(SPARE));
-
-    bool cond = require (Test_Conditional(spare));
+    require (
+      Value* spare = Decay_If_Unstable(SPARE)
+    );
+    require (
+      bool cond = Test_Conditional(spare)
+    );
 
     if (is_while) {
         if (not cond)

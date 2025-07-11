@@ -540,12 +540,7 @@ struct UpcastHelper {
 // 3. By making DowncastHolder [[nodiscard]], it's safe to use with things
 //    like trap() and except():
 //
-//       Derived* derived = trap (downcast(base_ptr));
-//
-//    So it's a variant form of the "ExtractedHotPotato", which might be
-//    thought of as an "UpcastHolder" if you wanted to think of it that way
-//    (but upcast() itself doesn't get any temporaries involved, it's cheaper
-//    to not use a holder if you can avoid it).
+//       trap (Derived* derived = downcast(base_ptr));
 //
 // 4. Modulus is chosen as the infix operator to overload because it's not
 //    something you would be using on pointers, which tend to be what you'd

@@ -95,7 +95,9 @@ Bounce Typechecker_Dispatcher(Level* const L)
 
     DECLARE_ATOM (temp);  // can't overwrite scratch if error can be raised
     Copy_Cell(temp, atom);
-    Value* v = require (Decay_If_Unstable(temp));
+    require (
+      Value* v = Decay_If_Unstable(temp)
+    );
 
     Option(Type) type = Type_Of(v);
 
@@ -243,7 +245,8 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     Init_Block(spec, spec_array);
 
     VarList* adjunct;
-    ParamList* paramlist = assume (Make_Paramlist_Managed(
+    assume (
+      ParamList* paramlist = Make_Paramlist_Managed(
         &adjunct,
         spec,
         MKF_MASK_NONE,
@@ -318,7 +321,9 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
     for (; types_at != types_tail; ++types_at, ++pack_at) {
         Copy_Cell(SPARE, pack_at);
-        assumed (Unliftify_Undecayed(SPARE));
+        assume (
+          Unliftify_Undecayed(SPARE)
+        );
         if (not Typecheck_Atom_In_Spare_Uses_Scratch(
             L, types_at, types_binding
         )){
@@ -428,12 +433,15 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 }} non_intrinsic_dispatch: { /////////////////////////////////////////////////
 
     Flags flags = 0;
-    Level* sub = require (Make_End_Level(
+    require (
+      Level* sub = Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
     ));
     Push_Level_Erase_Out_If_State_0(SCRATCH, sub);  // sub's out is L->scratch
-    required (Push_Action(sub, test, PREFIX_0));
+    require (
+      Push_Action(sub, test, PREFIX_0)
+    );
 
     const Key* key = sub->u.action.key;
     const Param* param = sub->u.action.param;
@@ -663,7 +671,8 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
         for (; splice_at != splice_tail; ++splice_at) {
             bool strict = true;  // system now case-sensitive by default
-            bool equal = require (Equal_Values(
+            require (
+              bool equal = Equal_Values(
                 Known_Element(SPARE),
                 splice_at,
                 strict
@@ -715,7 +724,9 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     KIND_BYTE(temp_item_word) = TYPE_WORD;
     LIFT_BYTE(temp_item_word) = NOQUOTE_2;  // ~word!~ or 'word! etc.
 
-    required (Get_Word(test, temp_item_word, derived));
+    require (
+      Get_Word(test, temp_item_word, derived)
+    );
 
     if (Is_Action(test)) {
         if (Typecheck_Spare_With_Predicate_Uses_Scratch(L, test, label))
@@ -944,7 +955,9 @@ bool Typecheck_Coerce(
             goto return_false;  // comma antiforms
 
         if (Is_Antiform(atom) and Is_Antiform_Unstable(atom)) {
-            assumed (Decay_If_Unstable(atom));  // !!! shouldn't error (!?)
+            assume (
+              Decay_If_Unstable(atom)  // !!! shouldn't error (!?)
+            );
             assert(not coerced);  // should only decay once...
             coerced = true;
             goto typecheck_again;
@@ -1060,7 +1073,9 @@ DECLARE_NATIVE(TYPECHECKER)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    required (Init_Typechecker(OUT, ARG(TYPES)));
+    require (
+      Init_Typechecker(OUT, ARG(TYPES))
+    );
     return UNSURPRISING(OUT);
 }
 

@@ -146,7 +146,7 @@ static void Push_Composer_Level(
         Copy_Cell(fundamental, list_or_seq);
         LIFT_BYTE(fundamental) = NOQUOTE_2;
 
-        assumed (  // all sequences alias as block
+        assume (  // all sequences alias as block
             Alias_Any_Sequence_As(adjusted, list_or_seq, TYPE_BLOCK)
         );
 
@@ -155,7 +155,8 @@ static void Push_Composer_Level(
     else
         assert(Any_List_Type(heart));
 
-    Level* sub = require (Make_Level_At_Inherit_Const(
+    require (
+      Level* sub = Make_Level_At_Inherit_Const(
         &Composer_Executor,
         Is_Cell_Erased(adjusted) ? list_or_seq : adjusted,
         Derive_Binding(
@@ -210,7 +211,8 @@ static Result(Value*) Finalize_Composer_Level(
     Heart heart = Heart_Of_Builtin(composee);
 
     if (Any_Sequence_Type(heart)) {
-        trapped (Pop_Sequence_Or_Element_Or_Nulled(
+        trap (
+          Pop_Sequence_Or_Element_Or_Nulled(
             out,
             Heart_Of_Builtin_Fundamental(composee),
             L->baseline.stack_base
@@ -391,7 +393,9 @@ Bounce Composer_Executor(Level* const L)
         return OUT;
     }
 
-    Value* out = require (Decay_If_Unstable(OUT));
+    require (
+      Value* out = Decay_If_Unstable(OUT)
+    );
 
     if (Is_Antiform(out)) {
         if (list_lift_byte != NOQUOTE_2)
@@ -666,8 +670,9 @@ DECLARE_NATIVE(COMPOSE2)
 
     assert(Is_Logic(Known_Stable(OUT)));
 
-    trapped (Finalize_Composer_Level(SUBLEVEL, input, Bool_ARG(CONFLATE)));
-
+    trap (
+      Finalize_Composer_Level(SUBLEVEL, input, Bool_ARG(CONFLATE))
+    );
     Drop_Level(SUBLEVEL);
     return OUT;
 
@@ -675,7 +680,9 @@ DECLARE_NATIVE(COMPOSE2)
 
     Utf8(const*) head = Cell_Utf8_At(input);
 
-    TranscodeState* transcode = require (Alloc_On_Heap(TranscodeState));
+    require (
+      TranscodeState* transcode = Alloc_On_Heap(TranscodeState)
+    );
     Init_Handle_Cdata(SCRATCH, transcode, 1);
 
     const LineNumber start_line = 1;
@@ -943,7 +950,9 @@ DECLARE_NATIVE(COMPOSE2)
     if (Is_Void(OUT))
         result = LIB(BLANK);  // void is translated to blank splice
     else {
-        result = require (Decay_If_Unstable(OUT));
+        require (
+          result = Decay_If_Unstable(OUT)
+        );
     }
 
     StackIndex triples = VAL_INT32(Known_Element(SCRATCH));

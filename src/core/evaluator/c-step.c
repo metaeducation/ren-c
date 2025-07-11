@@ -180,7 +180,8 @@ INLINE Level* Maybe_Rightward_Continuation_Needed(Level* L)
     Flags flags =  // v-- if L was fulfilling, we are
         (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG);
 
-    Level* sub = require (Make_Level(
+    require (
+      Level* sub = Make_Level(
         &Stepper_Executor,
         L->feed,
         flags  // inert optimize adjusted the flags to jump in mid-eval
@@ -400,7 +401,7 @@ Bounce Stepper_Executor(Level* L)
             L_next_gotten_raw,
             L_next,
             Feed_Binding(L->feed)  // L_binding breaks here [2]
-        ) excepted (Error* e) {
+        ) except (Error* e) {
             Erase_Cell(L_next_gotten_raw);
             UNUSED(e);  // don't care (will hit on next step if we care)
             goto give_up_backward_quote_priority;
@@ -484,8 +485,12 @@ Bounce Stepper_Executor(Level* L)
 
 } right_hand_literal_infix_wins: { ///////////////////////////////////////////
 
-    Level* sub = require (Make_Action_Sublevel(L));
-    required (Push_Action(sub, L_current_gotten_raw, infix_mode));
+    require (
+      Level* sub = Make_Action_Sublevel(L)
+    );
+    require (
+      Push_Action(sub, L_current_gotten_raw, infix_mode)
+    );
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
     goto process_action;
 
@@ -550,7 +555,9 @@ Bounce Stepper_Executor(Level* L)
 
     Copy_Cell_Core(OUT, CURRENT, CELL_MASK_THROW);
 
-    required (Coerce_To_Antiform(OUT));  // may be illegal [1]
+    require (  // may be illegal [1]
+      Coerce_To_Antiform(OUT)
+    );
 
     Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // !!! hack [2]
 
@@ -707,7 +714,9 @@ Bounce Stepper_Executor(Level* L)
 
     // A META-WORD! gives you the undecayed representation of the variable
 
-    required (Get_Any_Word_Maybe_Trash(OUT, CURRENT, L_binding));
+    require (
+      Get_Any_Word_Maybe_Trash(OUT, CURRENT, L_binding)
+    );
 
     possibly(Not_Cell_Stable(OUT) or Is_Trash(Known_Stable(OUT)));
 
@@ -739,8 +748,9 @@ Bounce Stepper_Executor(Level* L)
     heeded (Bind_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    required (Get_Var_In_Scratch_To_Out(L, GROUPS_OK));
-
+    require (
+      Get_Var_In_Scratch_To_Out(L, GROUPS_OK)
+    );
     possibly(Is_Error(OUT));  // last step may be missing, or meta-error [1]
 
     goto lookahead;  // even ERROR! wants lookahead (e.g. for EXCEPT)
@@ -788,7 +798,9 @@ Bounce Stepper_Executor(Level* L)
     Copy_Cell(OUT, temp);
     rebRelease(temp);
 
-    assumed (Unliftify_Undecayed(OUT));
+    assume (
+      Unliftify_Undecayed(OUT)
+    );
     goto lookahead;
 
 
@@ -828,7 +840,9 @@ Bounce Stepper_Executor(Level* L)
     //    (Possibly ^ should turn surprising ghosts into voids, but it should
     //    definitely not turn surprising ghosts into unsurprising ghosts.)
 
-    Value* out = require (Decay_If_Unstable(OUT));
+    require (
+        Value* out = Decay_If_Unstable(OUT)
+    );
     if (Is_Action(out))  // don't do ghosts, just actions [1]
         Set_Cell_Flag(out, OUT_HINT_UNSURPRISING);  // see flag notes
     goto lookahead;
@@ -891,9 +905,13 @@ Bounce Stepper_Executor(Level* L)
 
     Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(CURRENT);
 
-    Level* sub = require (Make_Action_Sublevel(L));
+    require (
+      Level* sub = Make_Action_Sublevel(L)
+    );
     assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
-    required (Push_Action(sub, CURRENT, infix_mode));
+    require (
+      Push_Action(sub, CURRENT, infix_mode)
+    );
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state
 
     goto process_action;
@@ -939,7 +957,9 @@ Bounce Stepper_Executor(Level* L)
     heeded (Bind_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    required (Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS));
+    require (
+      Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS)
+    );
 
     if (Is_Error(OUT))  // e.g. couldn't pick word as field from binding
         panic (Cell_Error(OUT));  // don't conflate with action result
@@ -1022,15 +1042,21 @@ Bounce Stepper_Executor(Level* L)
 
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
 
-        Level* sub = require (Make_Level(&Stepper_Executor, L->feed, flags));
+        require (
+          Level* sub = Make_Level(&Stepper_Executor, L->feed, flags)
+        );
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
         STATE = ST_STEPPER_CALCULATING_INTRINSIC_ARG;
         return CONTINUE_SUBLEVEL(sub);
     }
   #endif
 
-    Level* sub = require (Make_Action_Sublevel(L));
-    required (Push_Action(sub, out, infix_mode));  // before OUT erased
+    require (
+      Level* sub = Make_Action_Sublevel(L)
+    );
+    require (
+      Push_Action(sub, out, infix_mode)  // before OUT erased
+    );
     Erase_Cell(OUT);  // want OUT clear, even if infix_mode sets state nonzero
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
@@ -1056,27 +1082,39 @@ Bounce Stepper_Executor(Level* L)
         Bind_If_Unbound(CURRENT, L_binding);
         if (Is_Metaform(CURRENT)) {  // ^foo: -> ^foo
             Plainify(CURRENT);
-            assumed (Unsingleheart_Sequence(CURRENT));
+            assume (
+              Unsingleheart_Sequence(CURRENT)
+            );
             Metafy(CURRENT);
         }
-        else
-            assumed (Unsingleheart_Sequence(CURRENT));  // foo: -> foo
+        else {
+            assume (
+              Unsingleheart_Sequence(CURRENT)  // foo: -> foo
+            );
+        }
         goto handle_generic_set; }
 
       case TRAILING_SPACE_AND(TUPLE):  // a.b.c: is a set tuple
-        assumed (Unsingleheart_Sequence(CURRENT));
+        assume (
+          Unsingleheart_Sequence(CURRENT)
+        );
         assert(Is_Tuple(CURRENT));
         goto handle_generic_set;
 
       case TRAILING_SPACE_AND(BLOCK):  // [a b]: multi-return assign
-        assumed (Unsingleheart_Sequence(CURRENT));
+        assume (
+          Unsingleheart_Sequence(CURRENT)
+        );
         STATE = ST_STEPPER_SET_BLOCK;
         goto handle_set_block;
 
       case TRAILING_SPACE_AND(GROUP): {  // (xxx): -- generic retrigger set
-        assumed (Unsingleheart_Sequence(CURRENT));
+        assume (
+          Unsingleheart_Sequence(CURRENT)
+        );
         Invalidate_Gotten(L_next_gotten_raw);  // arbitrary code changes
-        Level* sub = require (Make_Level_At_Inherit_Const(
+        require (
+          Level* sub = Make_Level_At_Inherit_Const(
             &Evaluator_Executor,
             CURRENT,
             L_binding,
@@ -1088,17 +1126,23 @@ Bounce Stepper_Executor(Level* L)
         return CONTINUE_SUBLEVEL(sub); }
 
       case LEADING_SPACE_AND(WORD):  // :FOO, refinement, error on eval?
-        assumed (Unsingleheart_Sequence(CURRENT));
+        assume (
+          Unsingleheart_Sequence(CURRENT)
+        );
         STATE = ST_STEPPER_GET_WORD;
         panic (":WORD! meaning is likely to become TRY WORD!");
 
       case LEADING_SPACE_AND(TUPLE):  // :a.b.c -- what will this do?
-        assumed (Unsingleheart_Sequence(CURRENT));
+        assume (
+          Unsingleheart_Sequence(CURRENT)
+        );
         STATE = ST_STEPPER_GET_TUPLE;
         panic (":TUPLE! meaning is likely to become TRY TUPLE!");
 
       case LEADING_SPACE_AND(BLOCK):  // !!! :[a b] reduces, not great...
-        assumed (Unsingleheart_Sequence(CURRENT));
+        assume (
+          Unsingleheart_Sequence(CURRENT)
+        );
         Bind_If_Unbound(CURRENT, L_binding);
         if (rebRunThrows(
             u_cast(Sink(Value), OUT),  // <-- output, API won't make atoms
@@ -1109,14 +1153,17 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead;
 
       case LEADING_SPACE_AND(GROUP):
-        assumed (Unsingleheart_Sequence(CURRENT));
+        assume (
+          Unsingleheart_Sequence(CURRENT)
+        );
         panic ("GET-GROUP! has no evaluator meaning at this time");
 
       default:  // it's just something like :1 or <tag>:
         panic ("No current evaluation for things like :1 or <tag>:");
     }
 
-    Value* out = require (Get_Chain_Push_Refinements(
+    require (
+      Value* out = Get_Chain_Push_Refinements(
         OUT,  // where to write action
         SPARE,  // temporary GC-safe scratch space
         CURRENT,
@@ -1134,10 +1181,14 @@ Bounce Stepper_Executor(Level* L)
 
     Value* out = cast(Value*, OUT);
 
-    Level* sub = require (Make_Action_Sublevel(L));
+    require (
+      Level* sub = Make_Action_Sublevel(L)
+    );
     sub->baseline.stack_base = STACK_BASE;  // refinements
 
-    required (Push_Action(sub, out, PREFIX_0));
+    require (
+      Push_Action(sub, out, PREFIX_0)
+    );
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // not infix, sub state is 0
     goto process_action;
 
@@ -1164,7 +1215,8 @@ Bounce Stepper_Executor(Level* L)
 
     Flags flags = LEVEL_MASK_NONE;
 
-    Level* sub = require (Make_Level_At_Inherit_Const(
+    require (
+      Level* sub = Make_Level_At_Inherit_Const(
         &Evaluator_Executor,
         CURRENT,
         L_binding,
@@ -1191,7 +1243,9 @@ Bounce Stepper_Executor(Level* L)
     if (not Any_Lifted(OUT))
         panic ("^GROUP! can only UNLIFT quoted/quasiforms");
 
-    required (Unliftify_Undecayed(OUT));  // GHOST! legal, ACTION! legal...
+    require (
+      Unliftify_Undecayed(OUT)  // GHOST! legal, ACTION! legal...
+    );
     Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // just lifted approve [1]
     goto lookahead;
 
@@ -1227,8 +1281,9 @@ Bounce Stepper_Executor(Level* L)
     heeded (Bind_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    required (Get_Var_In_Scratch_To_Out(L, GROUPS_OK));
-
+    require (
+      Get_Var_In_Scratch_To_Out(L, GROUPS_OK)
+    );
     possibly(Not_Cell_Stable(OUT));  // last step or unmeta'd item [1]
 
     if (Is_Possibly_Unstable_Atom_Action(OUT))
@@ -1280,21 +1335,29 @@ Bounce Stepper_Executor(Level* L)
     }
     else switch (unwrap single) {
       case LEADING_SPACE_AND(WORD):
-        assumed (Unsingleheart_Sequence(CURRENT));
+        assume (
+          Unsingleheart_Sequence(CURRENT)
+        );
         Set_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD);
         goto handle_word_where_action_lookups_are_active;
 
       case LEADING_SPACE_AND(CHAIN): {  // /abc: or /?:?:?
-        assumed (Unsingleheart_Sequence(CURRENT));
+        assume (
+          Unsingleheart_Sequence(CURRENT)
+        );
 
         switch (maybe Try_Get_Sequence_Singleheart(CURRENT)) {
           case TRAILING_SPACE_AND(WORD):  // /abc: is set actions only
-            assumed (Unsingleheart_Sequence(CURRENT));
+            assume (
+              Unsingleheart_Sequence(CURRENT)
+            );
             Set_Cell_Flag(CURRENT, SCRATCH_VAR_NOTE_ONLY_ACTION);
             goto handle_generic_set;
 
           case TRAILING_SPACE_AND(TUPLE):  // /a.b.c: is set actions only
-            assumed (Unsingleheart_Sequence(CURRENT));
+            assume (
+              Unsingleheart_Sequence(CURRENT)
+            );
             Set_Cell_Flag(CURRENT, SCRATCH_VAR_NOTE_ONLY_ACTION);
             goto handle_generic_set;
 
@@ -1338,7 +1401,7 @@ Bounce Stepper_Executor(Level* L)
     heeded (Bind_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    Get_Path_Push_Refinements(LEVEL) excepted (Error* e) {
+    Get_Path_Push_Refinements(LEVEL) except (Error* e) {
         possibly(slash_at_tail);  // ...or, exception for arity-0? [2]
         panic (e);  // don't FAIL, PANIC [1]
     }
@@ -1420,7 +1483,9 @@ Bounce Stepper_Executor(Level* L)
     heeded (Bind_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    required (Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK));
+    require (
+      Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK)
+    );
 
     Invalidate_Gotten(L_next_gotten_raw);  // cache tampers with lookahead [1]
 
@@ -1575,7 +1640,9 @@ Bounce Stepper_Executor(Level* L)
             "Only leading SPACE CHAIN! in SET BLOCK! dialect"
         );
     }
-    assumed (Unsingleheart_Sequence(CURRENT));
+    assume (
+      Unsingleheart_Sequence(CURRENT)
+    );
     is_optional = true;
 
 } optional_detection_finished: {
@@ -1594,7 +1661,9 @@ Bounce Stepper_Executor(Level* L)
             "Only leading SPACE PATH! in SET BLOCK! dialect"
         );
     }
-    assumed (Unsingleheart_Sequence(CURRENT));
+    assume (
+      Unsingleheart_Sequence(CURRENT)
+    );
     is_action = true;
 
 } path_detection_finished: {
@@ -1612,7 +1681,9 @@ Bounce Stepper_Executor(Level* L)
             Init_Quasar(PUSH());  // [(void)]: ... pass thru
         }
         else {
-            Value* spare = require (Decay_If_Unstable(SPARE));
+            require (
+              Value* spare = Decay_If_Unstable(SPARE)
+            );
             if (Is_Antiform(spare))
                 panic (Error_Bad_Antiform(spare));
 
@@ -1747,7 +1818,9 @@ Bounce Stepper_Executor(Level* L)
     }
     else {
         Copy_Cell(OUT, pack_at_lifted);
-        required (Unliftify_Undecayed(OUT));  // unlift for output...
+        require (
+          Unliftify_Undecayed(OUT)  // unlift for output...
+        );
     }
 
     if (Is_Metaform_Space(var))
@@ -1755,22 +1828,27 @@ Bounce Stepper_Executor(Level* L)
 
     if (Is_Meta_Form_Of(WORD, var)) {
         heeded (Corrupt_Cell_If_Needful(SPARE));
-        required (Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS));
-
+        require (
+          Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS)
+        );
         goto circled_check;  // ...because we may have circled this
     }
 
     if (Is_Error(OUT))  // don't pass thru errors if not ^ sigil
         panic (Cell_Error(OUT));
 
-    required (Decay_If_Unstable(OUT));
+    require (
+      Decay_If_Unstable(OUT)
+    );
 
     if (Is_Space(var))
         goto circled_check;
 
     if (Is_Word(var) or Is_Tuple(var) or Is_Pinned_Form_Of(WORD, var)) {
         heeded (Corrupt_Cell_If_Needful(SPARE));
-        required (Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK));
+        require (
+          Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK)
+        );
     }
     else
         assert(false);
@@ -1927,14 +2005,16 @@ Bounce Stepper_Executor(Level* L)
         if (not L_next_gotten) {
             Get_Word(
                 L_next_gotten_raw, L_next, Feed_Binding(L->feed)
-            ) excepted (Error* e) {
+            ) except (Error* e) {
                 Erase_Cell(L_next_gotten_raw);
                 UNUSED(e);
             }
         }
         else {
             DECLARE_VALUE (check);
-            assumed (Get_Word(check, L_next, Feed_Binding(L->feed)));
+            assume (
+              Get_Word(check, L_next, Feed_Binding(L->feed))
+            );
             assert(
                 memcmp(check, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
             );
@@ -2097,8 +2177,12 @@ Bounce Stepper_Executor(Level* L)
     // of parameter fulfillment.  We want to reuse the OUT value and get it
     // into the new function's frame.
 
-    Level* sub = require (Make_Action_Sublevel(L));
-    required (Push_Action(sub, L_next_gotten_raw, infix_mode));
+    require (
+      Level* sub = Make_Action_Sublevel(L)
+    );
+    require (
+      Push_Action(sub, L_next_gotten_raw, infix_mode)
+    );
     Fetch_Next_In_Feed(L->feed);
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);  // infix_mode sets state

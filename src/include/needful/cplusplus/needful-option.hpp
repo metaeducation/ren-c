@@ -90,11 +90,6 @@ struct OptionWrapper {
         : o {other.o}  // necessary...won't use the (U something) template
       {}
 
-    template <typename X>
-    OptionWrapper (const ExtractedHotPotato<OptionWrapper<X>>& extracted)
-        : o {extracted.x.o}
-      {}
-
     template<typename U>
     explicit operator U() const  // *explicit* cast if not using `unwrap`
       { return u_cast(U, o); }

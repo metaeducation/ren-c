@@ -477,7 +477,9 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
         if (not Bool_ARG(PASS))
             return "panic -[LOCAL-TO-FILE needs :PASS to passthru FILE!]-";
 
-        Strand* copy = require (Copy_String_At(path));
+        require (
+          Strand* copy = Copy_String_At(path)
+        );
         return Init_File(OUT, copy);  // many callers modify
     }
 
@@ -511,7 +513,9 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
         if (not Bool_ARG(PASS))
             return "-[FILE-TO-LOCAL needs :PASS to passthru STRING!]-";
 
-        Strand* copy = require (Copy_String_At(path));
+        require (
+          Strand* copy = Copy_String_At(path)
+        );
         return Init_Text(OUT, copy);  // callers modify
     }
 
@@ -540,7 +544,8 @@ DECLARE_NATIVE(WHAT_DIR)
     INCLUDE_PARAMS_OF_WHAT_DIR;
 
     Sink(Value) spare_current_path = SPARE;
-    required (Read_Slot(
+    require (
+      Read_Slot(
         spare_current_path,
         Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH)
     ));
@@ -557,7 +562,8 @@ DECLARE_NATIVE(WHAT_DIR)
 
         Value* refresh = Get_Current_Dir_Value();
         Copy_Cell(spare_current_path, refresh);
-        required (Write_Slot(
+        require (
+          Write_Slot(
             Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH),
             refresh
         ));

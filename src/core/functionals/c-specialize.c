@@ -243,7 +243,8 @@ bool Specialize_Action_Throws(
         // to whatever value was in the context the specialization is running
         // in, but this is likely the more useful behavior.
         //
-        Use* use = require (Alloc_Use_Inherits_Core(
+        require (
+          Use* use = Alloc_Use_Inherits_Core(
             USE_FLAG_SET_WORDS_ONLY,
             List_Binding(unwrap def)
         ));
@@ -348,7 +349,9 @@ bool Specialize_Action_Throws(
                 Element, ordered_stackindex
             );
             if (not Cell_Binding(ordered)) {  // specialize print:asdf/
-                assumed (Refinify_Pushed_Refinement(ordered));
+                assume (
+                  Refinify_Pushed_Refinement(ordered)
+                );
                 panic (Error_Bad_Parameter_Raw(ordered));
             }
 
@@ -360,13 +363,15 @@ bool Specialize_Action_Throws(
                 // It's still partial...
                 //
                 assert(VAL_WORD_INDEX(ordered) != 0);
-                Sink(Element) cell = require (Alloc_Tail_Array(partials));
-                required (Init_Pushable_Refinement_Bound(
+                require (
+                  Sink(Element) cell = Alloc_Tail_Array(partials)
+                );
+                Init_Pushable_Refinement_Bound(
                     cell,
                     Key_Symbol(Varlist_Key(exemplar, VAL_WORD_INDEX(ordered))),
                     exemplar,
                     VAL_WORD_INDEX(ordered)
-                ));
+                );
             }
         }
         Drop_Data_Stack_To(lowest_stackindex);

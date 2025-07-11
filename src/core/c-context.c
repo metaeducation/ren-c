@@ -46,10 +46,13 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
     Tweak_Misc_Varlist_Adjunct_Raw(a, nullptr);
     Tweak_Link_Inherit_Bind_Raw(a, nullptr);
 
-    required (Alloc_Tail_Array(a));  // allocate rootvar
+    require (  // allocate rootvar
+      Alloc_Tail_Array(a)
+    );
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);
 
-    KeyList* keylist = require (nocast Make_Flex(
+    require (
+      KeyList* keylist = nocast Make_Flex(
         STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,  // always shareable
         capacity  // no terminator
     ));
@@ -68,9 +71,9 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
 SeaOfVars* Alloc_Sea_Core(Flags flags) {
     assert(Flavor_From_Flags(flags) == FLAVOR_0);  // always make sea
 
-    Stub* s = require (
-        Prep_Stub(flags | STUB_MASK_SEA_NO_MARKING, Alloc_Stub()
-    ));
+    require (
+      Stub* s = Prep_Stub(flags | STUB_MASK_SEA_NO_MARKING, Alloc_Stub())
+    );
     Force_Erase_Cell(&s->content.fixed.cell);
     Init_Space(Stub_Cell(s));
     LINK_CONTEXT_INHERIT_BIND(s) = nullptr;  // no LINK_NEEDS_MARK flag
@@ -119,11 +122,14 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 
     Length len = Varlist_Len(varlist);
 
-    required (Extend_Flex_If_Necessary(Varlist_Array(varlist), delta));
+    require (
+      Extend_Flex_If_Necessary(Varlist_Array(varlist), delta)
+    );
     Set_Flex_Len(Varlist_Array(varlist), len + delta + 1);  // include rootvar
 
     if (Get_Flavor_Flag(KEYLIST, k, SHARED)) {  // need new keylist [1]
-        KeyList* k_copy = require (nocast Copy_Flex_At_Len_Extra(
+        require (
+          KeyList* k_copy = nocast Copy_Flex_At_Len_Extra(
             STUB_MASK_KEYLIST,
             k,
             0,
@@ -143,7 +149,9 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
         return k_copy;
     }
 
-    required(Extend_Flex_If_Necessary(k, delta));  // unshared, in place [3]
+    require (
+      Extend_Flex_If_Necessary(k, delta)  // unshared, in place [3]
+    );
     Set_Flex_Len(k, len + delta);
 
     return k;
@@ -190,7 +198,9 @@ Init(Slot) Append_To_Sea_Core(
         TRACK(Erase_Cell(Stub_Cell(patch)));  // prepare for addition
     }
     else {
-        patch = require (nocast Make_Untracked_Stub(STUB_MASK_PATCH));
+        require (
+          patch = nocast Make_Untracked_Stub(STUB_MASK_PATCH)
+        );
     }
 
   add_to_circularly_linked_list_hung_on_symbol: {
@@ -473,7 +483,8 @@ static Result(Zero) Collect_Inner_Loop(
             const Element* sub_tail;
             const Element* sub_at = List_At(&sub_tail, e);
 
-            trapped (Collect_Inner_Loop(
+            trap (
+              Collect_Inner_Loop(
                 cl,
                 COLLECT_ANY_WORD | COLLECT_DEEP_BLOCKS | COLLECT_DEEP_FENCES,
                 sub_at,
@@ -494,7 +505,9 @@ static Result(Zero) Collect_Inner_Loop(
         const Element* sub_tail;
         const Element* sub_at = List_At(&sub_tail, e);
 
-        trapped (Collect_Inner_Loop(cl, flags, sub_at, sub_tail));
+        trap (
+          Collect_Inner_Loop(cl, flags, sub_at, sub_tail)
+        );
     }
 
     return zero;
@@ -560,7 +573,9 @@ DECLARE_NATIVE(WRAP_P)
     Context* context = Cell_Context(ARG(CONTEXT));
     Element* list = cast(Element*, ARG(LIST));
 
-    required (Wrap_Extend_Core(context, list, flags));
+    require (
+      Wrap_Extend_Core(context, list, flags)
+    );
     /*
         Tweak_Cell_Binding(list, use);  // what should do what here?
         return COPY(list);  // should this return a list?
@@ -704,7 +719,9 @@ DECLARE_NATIVE(COLLECT_WORDS)
     const Element* block_tail;
     const Element* block_at = List_At(&block_tail, ARG(BLOCK));
 
-    required (Collect_Inner_Loop(cl, flags, block_at, block_tail));
+    require (
+      Collect_Inner_Loop(cl, flags, block_at, block_tail)
+    );
 
     StackIndex base = TOP_INDEX;  // could be more efficient to calc/add
 
@@ -752,7 +769,9 @@ VarList* Make_Varlist_Detect_Managed(
     DECLARE_COLLECTOR (cl);
     Construct_Collector(cl, flags, parent);  // preload binder with parent's keys
 
-    required (Collect_Inner_Loop(cl, flags, head, tail));
+    require (
+      Collect_Inner_Loop(cl, flags, head, tail)
+    );
 
     Length len = cl->next_index - 1;  // is next index, so subtract 1
 
@@ -777,7 +796,8 @@ VarList* Make_Varlist_Detect_Managed(
         );
     }
     else {  // new keys, need new keylist
-        KeyList* keylist = require (nocast Make_Flex(
+        require (
+          KeyList* keylist = nocast Make_Flex(
             STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
             len  // no terminator, 0-based
         ));
@@ -832,11 +852,15 @@ VarList* Make_Varlist_Detect_Managed(
             // !!! If we are creating a derived object, should it be able
             // to copy the ACCESSOR/etc.?
             //
-            required (Read_Slot_Meta(dest, src));
+            require (
+              Read_Slot_Meta(dest, src)
+            );
 
             bool deeply = true;  // !!! Copies series deeply, why? [1]
             if (not Is_Antiform(dest)) {  // !!! whole model needs review
-                required (Clonify(Known_Element(dest), clone_flags, deeply));
+                require (
+                  Clonify(Known_Element(dest), clone_flags, deeply)
+                );
                 Clear_Cell_Flag(dest, CONST);  // remove constness from copies
             }
         }
@@ -879,7 +903,9 @@ Result(Source*) Context_To_Array(const Element* context, REBINT mode)
             assert(e.index != 0);
             Init_Word(PUSH(), Key_Symbol(e.key));
             if (mode & 2) {
-                trapped (Setify(TOP_ELEMENT));
+                trap (
+                  Setify(TOP_ELEMENT)
+                );
             }
             if (Is_Module(context)) {
                 Tweak_Cell_Binding(TOP_ELEMENT, e.ctx);

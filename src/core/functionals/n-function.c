@@ -210,7 +210,9 @@ Bounce Func_Dispatcher(Level* const L)
     Value* out = cast(Value*, OUT);
 
     Restart_Action_Level(L);
-    required (Push_Action(L, out, PREFIX_0));
+    require (
+      Push_Action(L, out, PREFIX_0)
+    );
 
     Erase_Cell(OUT);  // invariant for ST_ACTION_INITIAL_ENTRY
 
@@ -290,7 +292,9 @@ bool Func_Details_Querier(
         Slot* std_func_body_slot = Get_System(SYS_STANDARD, STD_FUNC_BODY);
 
         DECLARE_VALUE (example);
-        required (Read_Slot(example, std_func_body_slot));
+        require (
+          Read_Slot(example, std_func_body_slot)
+        );
 
         REBLEN real_body_index = 6;
 
@@ -419,7 +423,8 @@ DECLARE_NATIVE(FUNCTION)
     Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
 
-    Details* details = require (Make_Interpreted_Action(
+    require (
+      Details* details = Make_Interpreted_Action(
         spec,
         body,
         SYM_RETURN,  // has a RETURN: in the paramlist
@@ -723,7 +728,9 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 
     const Value* gather_args;
 
-    Value* v = require (Decay_If_Unstable(atom));
+    require (
+      Value* v = Decay_If_Unstable(atom)
+    );
     if (
         Is_Tag(v)
         and strcmp(cast(char*, Cell_Utf8_At(v)), "redo") == 0

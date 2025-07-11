@@ -139,7 +139,8 @@ DECLARE_NATIVE(REDUCE)
     if (Any_Inert(v))
         return COPY(v);  // save time if it's something like a TEXT!
 
-    Level* sub = require (Make_End_Level(
+    require (
+      Level* sub = Make_End_Level(
         &Stepper_Executor,
         FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING)
     ));
@@ -152,7 +153,8 @@ DECLARE_NATIVE(REDUCE)
 
 } initial_entry_list: {  /////////////////////////////////////////////////////
 
-    Level* sub = require (Make_Level_At(
+    require (
+      Level* sub = Make_Level_At(
         &Stepper_Executor,
         v,  // TYPE_BLOCK or TYPE_GROUP
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
@@ -215,8 +217,9 @@ DECLARE_NATIVE(REDUCE)
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
         goto vetoed;
 
-    Value* spare = require (Decay_If_Unstable(SPARE));
-
+    require (
+      Value* spare = Decay_If_Unstable(SPARE)
+    );
     if (Is_Splice(spare)) {
         const Element* tail;
         const Element* at = List_At(&tail, spare);
@@ -307,8 +310,9 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
-
+    require (
+      VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
+    );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
     if (Varlist_Len(varlist) != 1)  // current limitation [1]
@@ -325,7 +329,9 @@ DECLARE_NATIVE(REDUCE_EACH)
         executor = &Stepper_Executor;
     }
 
-    Level* sub = require (Make_Level_At(executor, block, flags));
+    require (
+      Level* sub = Make_Level_At(executor, block, flags)
+    );
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
 } reduce_next: { ////////////////////////////////////////////////////////////
@@ -352,9 +358,11 @@ DECLARE_NATIVE(REDUCE_EACH)
     if (Is_Ghost(SPARE) and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META))
         goto reduce_next;  // skip ghost unless meta?
 
-    required (Write_Loop_Slot_May_Bind_Or_Decay(slot, SPARE, block));
+    require (
+      Write_Loop_Slot_May_Bind_Or_Decay(slot, SPARE, block)
+    );
 
-} next_reduce_each: { ////////////////////////////////////////////////////////
+} next_reduce_each: {
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // pass through sublevel
 

@@ -61,7 +61,9 @@ DECLARE_NATIVE(BIND)
             if (not Is_Pinned_Form_Of(WORD, at))
                 panic ("BLOCK! binds all @word for the moment");
 
-            Use* use = require (Alloc_Use_Inherits(Cell_Binding(v)));
+            require (
+              Use* use = Alloc_Use_Inherits(Cell_Binding(v))
+            );
             Derelativize(Stub_Cell(use), at, Cell_Binding(spec));
             KIND_BYTE(Stub_Cell(use)) = TYPE_WORD;
 
@@ -91,7 +93,9 @@ DECLARE_NATIVE(BIND)
         if (not Is_Cell_Listlike(v))  // QUOTED? could have wrapped any type
             panic (Error_Invalid_Arg(level_, PARAM(VALUE)));
 
-        Use* use = require (Alloc_Use_Inherits(Cell_Binding(v)));
+        require (
+          Use* use = Alloc_Use_Inherits(Cell_Binding(v))
+        );
         Copy_Cell(Stub_Cell(use), spec);
         KIND_BYTE(Stub_Cell(use)) = TYPE_WORD;
 
@@ -113,7 +117,9 @@ DECLARE_NATIVE(BIND)
     if (not Is_Cell_Listlike(v))  // QUOTED? could have wrapped any type
         panic (Error_Invalid_Arg(level_, PARAM(VALUE)));
 
-    Use* use = require (Alloc_Use_Inherits(Cell_Binding(v)));
+    require (
+      Use* use = Alloc_Use_Inherits(Cell_Binding(v))
+    );
     Copy_Cell(Stub_Cell(use), context);
     Tweak_Cell_Binding(v, use);
 
@@ -218,7 +224,9 @@ DECLARE_NATIVE(OVERBIND)
     else
         assert(Any_Context(defs));
 
-    Use* use = require (Alloc_Use_Inherits(List_Binding(v)));
+    require (
+      Use* use = Alloc_Use_Inherits(List_Binding(v))
+    );
     Copy_Cell(Stub_Cell(use), defs);
 
     Tweak_Cell_Binding(v, use);
@@ -310,7 +318,9 @@ DECLARE_NATIVE(WITHOUT)
         return OUT;
     }
 
-    Use* use = require (Alloc_Use_Inherits(List_Binding(v)));
+    require (
+      Use* use = Alloc_Use_Inherits(List_Binding(v))
+    );
     Copy_Cell(Stub_Cell(use), Varlist_Archetype(ctx));
 
     Tweak_Cell_Binding(v, use);
@@ -346,7 +356,9 @@ DECLARE_NATIVE(USE)
     Element* vars = Element_ARG(VARS);
     Element* body = Element_ARG(BODY);
 
-    VarList* varlist = require (Create_Loop_Context_May_Bind_Body(body, vars));
+    require (
+      VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
+    );
     UNUSED(varlist);  // managed, but [1]
 
     if (Eval_Any_List_At_Throws(OUT, body, SPECIFIED))
@@ -370,7 +382,9 @@ DECLARE_NATIVE(REFINEMENT_Q)
     INCLUDE_PARAMS_OF_REFINEMENT_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -392,7 +406,9 @@ DECLARE_NATIVE(SET_WORD_Q)
     INCLUDE_PARAMS_OF_SET_WORD_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -414,7 +430,9 @@ DECLARE_NATIVE(SET_RUN_WORD_Q)
     INCLUDE_PARAMS_OF_SET_RUN_WORD_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -436,7 +454,9 @@ DECLARE_NATIVE(RUN_WORD_Q)
     INCLUDE_PARAMS_OF_SET_RUN_WORD_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -462,7 +482,9 @@ DECLARE_NATIVE(GET_WORD_Q)
     INCLUDE_PARAMS_OF_GET_WORD_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -484,7 +506,9 @@ DECLARE_NATIVE(SET_TUPLE_Q)
     INCLUDE_PARAMS_OF_SET_TUPLE_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -506,7 +530,9 @@ DECLARE_NATIVE(GET_TUPLE_Q)
     INCLUDE_PARAMS_OF_GET_TUPLE_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -528,7 +554,9 @@ DECLARE_NATIVE(SET_GROUP_Q)
     INCLUDE_PARAMS_OF_SET_GROUP_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -550,7 +578,9 @@ DECLARE_NATIVE(GET_GROUP_Q)
     INCLUDE_PARAMS_OF_GET_GROUP_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -572,7 +602,9 @@ DECLARE_NATIVE(SET_BLOCK_Q)
     INCLUDE_PARAMS_OF_SET_BLOCK_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -594,7 +626,9 @@ DECLARE_NATIVE(GET_BLOCK_Q)
     INCLUDE_PARAMS_OF_GET_BLOCK_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -616,7 +650,9 @@ DECLARE_NATIVE(ANY_SET_VALUE_Q)
     INCLUDE_PARAMS_OF_ANY_SET_VALUE_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -638,7 +674,9 @@ DECLARE_NATIVE(ANY_GET_VALUE_Q)
     INCLUDE_PARAMS_OF_ANY_GET_VALUE_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -660,7 +698,9 @@ DECLARE_NATIVE(QUASI_WORD_Q)
     INCLUDE_PARAMS_OF_QUASI_WORD_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -682,7 +722,9 @@ DECLARE_NATIVE(CHAR_Q)
     INCLUDE_PARAMS_OF_CHAR_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -704,7 +746,9 @@ DECLARE_NATIVE(LIT_WORD_Q)
     INCLUDE_PARAMS_OF_LIT_WORD_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -728,7 +772,9 @@ DECLARE_NATIVE(LIT_PATH_Q)
     INCLUDE_PARAMS_OF_LIT_PATH_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -750,7 +796,9 @@ DECLARE_NATIVE(ANY_INERT_Q)
     INCLUDE_PARAMS_OF_ANY_INERT_Q;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 
@@ -854,14 +902,18 @@ DECLARE_NATIVE(RESOLVE)
             or single == TRAILING_SPACE_AND(WORD)  // a/
             or single == TRAILING_SPACE_AND(TUPLE)  // a.b.c/ or .a/
         ){
-            assumed (Unsingleheart_Sequence(source));
+            assume (
+              Unsingleheart_Sequence(source)
+            );
             return COPY(source);
         }
         if (
             single == LEADING_SPACE_AND(CHAIN)  // /a: or /a:b:c or /:a
             or single == TRAILING_SPACE_AND(CHAIN)  // a:/ or a:b:c/ or :a/
         ){
-            assumed (Unsingleheart_Sequence(source));
+            assume (
+              Unsingleheart_Sequence(source)
+            );
             // fall through to chain decoding.
         }
         else
@@ -878,7 +930,9 @@ DECLARE_NATIVE(RESOLVE)
         or single == TRAILING_SPACE_AND(WORD)  // :a
         or single == TRAILING_SPACE_AND(TUPLE)  // :a.b.c
     ){
-        assumed (Unsingleheart_Sequence(source));
+        assume (
+          Unsingleheart_Sequence(source)
+        );
         return COPY(source);
     }
 
@@ -946,10 +1000,14 @@ DECLARE_NATIVE(PROXY_EXPORTS)
         Slot* dest = maybe Sea_Slot(where, symbol, strict);
         if (dest) {
             // Fail if found?
-            required (Read_Slot(Slot_Init_Hack(dest), src));
+            require (
+              Read_Slot(Slot_Init_Hack(dest), src)
+            );
         }
         else {
-            required (Read_Slot(Append_Context(where, symbol), src));
+            require (
+              Read_Slot(Append_Context(where, symbol), src)
+            );
         }
     }
 
@@ -1189,7 +1247,9 @@ DECLARE_NATIVE(ANY_WORD_Q)
     INCLUDE_PARAMS_OF_ANY_WORD_Q;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 
@@ -1230,7 +1290,9 @@ DECLARE_NATIVE(BLANK_Q)
     INCLUDE_PARAMS_OF_BLANK_Q;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 
@@ -1252,7 +1314,9 @@ DECLARE_NATIVE(TRIPWIRE_Q)
     INCLUDE_PARAMS_OF_TRIPWIRE_Q;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 
@@ -1290,7 +1354,9 @@ DECLARE_NATIVE(QUASAR_Q)
     INCLUDE_PARAMS_OF_QUASAR_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -1312,7 +1378,9 @@ DECLARE_NATIVE(SPACE_Q)
     INCLUDE_PARAMS_OF_SPACE_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -1386,7 +1454,9 @@ DECLARE_NATIVE(DECAY)
 {
     INCLUDE_PARAMS_OF_DECAY;
 
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(OUT, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(OUT, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 
@@ -1417,7 +1487,9 @@ DECLARE_NATIVE(REIFY)
 {
     INCLUDE_PARAMS_OF_REIFY;
 
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(OUT, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(OUT, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 
@@ -1439,7 +1511,9 @@ DECLARE_NATIVE(NOQUASI)
 {
     INCLUDE_PARAMS_OF_NOQUASI;
 
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(OUT, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(OUT, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -1468,8 +1542,9 @@ DECLARE_NATIVE(DEGRADE)
 
     Copy_Cell(OUT, elem);
 
-    required (Coerce_To_Antiform(OUT));
-
+    require (
+      Coerce_To_Antiform(OUT)
+    );
     return OUT;
 }
 
@@ -1488,7 +1563,9 @@ DECLARE_NATIVE(NOANTIFORM)
     INCLUDE_PARAMS_OF_NOANTIFORM;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 

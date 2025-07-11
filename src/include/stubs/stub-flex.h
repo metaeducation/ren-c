@@ -529,7 +529,9 @@ INLINE Result(Zero) Expand_Flex_Tail(Flex* f, REBLEN delta) {
     if (Flex_Fits(f, delta))
         Set_Flex_Used(f, Flex_Used(f) + delta);  // no termination implied
     else {
-        trapped (Expand_Flex(f, Flex_Used(f), delta));  // currently terminates
+        trap (
+          Expand_Flex(f, Flex_Used(f), delta)  // currently terminates
+        );
     }
     return zero;
 }
@@ -548,7 +550,9 @@ INLINE Result(Flex*) Make_Flex_Into(
     Result(void*) preallocated,
     REBLEN capacity
 ){
-    void* pre = require (preallocated);
+    require (
+      void* pre = preallocated
+    );
 
     Flavor flavor = Flavor_From_Flags(flags);
     assert(flavor != FLAVOR_0 and flavor <= MAX_FLAVOR);
@@ -560,7 +564,9 @@ INLINE Result(Flex*) Make_Flex_Into(
         return fail (Cell_Error(g_error_no_memory));
     }
 
-    Flex* s = assume (nocast Prep_Stub(flags, pre));
+    assume (
+      Flex* s = nocast Prep_Stub(flags, pre)
+    );
 
     if (
         (flags & STUB_FLAG_DYNAMIC)  // inlining will constant fold

@@ -72,8 +72,9 @@ INLINE void Force_Location_Of_Error(Error* error, Level* L) {
     ERROR_VARS *vars = ERR_VARS(error);
 
     DECLARE_VALUE (where);
-    required (Read_Slot(where, &vars->where));
-
+    require (
+      Read_Slot(where, &vars->where)
+    );
     if (Is_Nulled(where))
         Set_Location_Of_Error(error, L);
 }
@@ -136,8 +137,9 @@ INLINE bool Is_Error_Veto_Signal(Error* error) {
     ERROR_VARS *vars = ERR_VARS(error);
 
     DECLARE_VALUE (id);
-    required (Read_Slot(id, &vars->id));
-
+    require (
+      Read_Slot(id, &vars->id)
+    );
     if (not Is_Word(id))
         return false;
     return Word_Id(id) == SYM_VETO;
@@ -169,8 +171,9 @@ INLINE bool Is_Error_Done_Signal(Error* error) {
     ERROR_VARS *vars = ERR_VARS(error);
 
     DECLARE_VALUE (id);
-    required (Read_Slot(id, &vars->id));
-
+    require (
+      Read_Slot(id, &vars->id)
+    );
     if (not Is_Word(id))
         return false;
     return Word_Id(id) == SYM_DONE;

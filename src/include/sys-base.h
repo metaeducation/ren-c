@@ -204,7 +204,9 @@ INLINE Result(void*) Raw_Pooled_Alloc(PoolId pool_id)
 {
     Pool* pool = &g_mem.pools[pool_id];
     if (not pool->first) {  // pool has run out of nodes
-        trapped (Fill_Pool(pool));  // attempt to refill it
+        trap (  // attempt to refill it
+          Fill_Pool(pool)
+        );
     }
 
   #if TRAMPOLINE_COUNTS_TICKS && RUNTIME_CHECKS

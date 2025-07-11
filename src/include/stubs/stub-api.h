@@ -154,7 +154,8 @@ INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
 
 INLINE Init(Value) Alloc_Value_Core(Flags flags)
 {
-    Stub* stub = require (Make_Untracked_Stub(
+    require (
+      Stub* stub = Make_Untracked_Stub(
         FLAG_FLAVOR(FLAVOR_API) | BASE_FLAG_ROOT | BASE_FLAG_MANAGED
     ));
 

@@ -162,7 +162,9 @@ Bounce Encloser_Dispatcher(Level* const L)
   #if DEBUG_LEVEL_LABELS
     L->label_utf8 = nullptr;  // Begin_Action() requires
   #endif
-    required (Prep_Action_Level(L, outer, arg));
+    require (
+      Prep_Action_Level(L, outer, arg)
+    );
     if (original_label) {
         Corrupt_If_Needful(L->u.action.label);
       #if DEBUG_LEVEL_LABELS

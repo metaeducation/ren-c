@@ -44,7 +44,9 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         );
 
     if (Is_Text(arg)) {
-        trapped (Transcode_One(OUT, heart, arg));
+        trap (
+          Transcode_One(OUT, heart, arg)
+        );
         return OUT;
     }
 
@@ -68,7 +70,9 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
                 panic (arg);
             *vp++ = decoded;
         }
-        required (Init_Tuple_Bytes(OUT, buf, size));
+        require (
+          Init_Tuple_Bytes(OUT, buf, size)
+        );
         return OUT;
     }
 
@@ -77,7 +81,9 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         const Byte* at = Blob_Size_At(&size, arg);
         if (size > MAX_TUPLE)
             size = MAX_TUPLE;
-        required (Init_Tuple_Bytes(OUT, at, size));
+        require (
+          Init_Tuple_Bytes(OUT, at, size)
+        );
         return OUT;
     }
 
@@ -129,7 +135,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         REBLEN temp = len;
         for (; temp > 0; --temp, vp++)
             *vp = cast(Byte, ~*vp);
-        required (Init_Tuple_Bytes(OUT, buf, len));
+        require (
+          Init_Tuple_Bytes(OUT, buf, len)
+        );
         return OUT;
     }
 
@@ -247,7 +255,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         *vp = cast(Byte, v);
     }
 
-    required (Init_Tuple_Bytes(OUT, buf, len));
+    require (
+      Init_Tuple_Bytes(OUT, buf, len)
+    );
     return OUT;
 }}
 
@@ -428,8 +438,9 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
     Element* seq = Element_ARG(ELEMENT);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
-    required (Alias_Any_Sequence_As(OUT, seq, as));
-
+    require (
+      Alias_Any_Sequence_As(OUT, seq, as)
+    );
     return OUT;
 }
 

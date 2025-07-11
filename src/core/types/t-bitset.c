@@ -100,7 +100,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
     const Binary* bset = VAL_BITSET(v);
 
     if (BITS_NOT(bset)) {
-        required (Append_Ascii(mo->strand, "[not bits "));
+        require (
+          Append_Ascii(mo->strand, "[not bits ")
+        );
     }
 
     Init_Blob(v, bset);
@@ -259,7 +261,9 @@ void Set_Bit(Binary* bset, REBLEN n, bool set)
     // Expand if not enough room:
     if (i >= tail) {
         if (!set) return; // no need to expand
-        required (Expand_Flex(bset, tail, (i - tail) + 1));
+        require (
+          Expand_Flex(bset, tail, (i - tail) + 1)
+        );
         memset(Binary_At(bset, tail), 0, (i - tail) + 1);
         Term_Flex_If_Necessary(bset);
     }
@@ -404,7 +408,9 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
 
             Codepoint c = Binary_Len(bset);
             if (n >= Cast_Signed(c)) {
-                required (Expand_Flex(bset, c, (n - c)));
+                require (
+                  Expand_Flex(bset, c, (n - c))
+                );
                 memset(Binary_At(bset, c), 0, (n - c));
             }
             memcpy(Binary_Head(bset), at, n);
@@ -696,7 +702,9 @@ IMPLEMENT_GENERIC(COPY, Is_Bitset)
     if (Bool_ARG(PART) or Bool_ARG(DEEP))
         panic (Error_Bad_Refines_Raw());
 
-    Binary* copy = require (nocast Copy_Flex_Core(BASE_FLAG_MANAGED, bits));
+    require (
+      Binary* copy = nocast Copy_Flex_Core(BASE_FLAG_MANAGED, bits)
+    );
     INIT_BITS_NOT(copy, BITS_NOT(bits));
 
     return Init_Bitset(OUT, copy);
@@ -730,8 +738,8 @@ IMPLEMENT_GENERIC(COMPLEMENT, Is_Bitset)
 
     Element* bset = Element_ARG(VALUE);
 
-    Binary* copy = require (
-        nocast Copy_Flex_Core(BASE_FLAG_MANAGED, VAL_BITSET(bset))
+    require (
+      Binary* copy = nocast Copy_Flex_Core(BASE_FLAG_MANAGED, VAL_BITSET(bset))
     );
     INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(bset)));
     return Init_Bitset(OUT, copy);

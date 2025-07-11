@@ -585,8 +585,9 @@ INLINE Result(Level*) Prep_Level_Core(
     Result(Feed*) feed,
     Flags flags
 ){
-    Level* L = trap (nocast preallocated);
-
+    trap (
+      Level* L = nocast preallocated
+    );
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;
 
     L->feed = feed except (Error* e) {
@@ -770,7 +771,9 @@ INLINE Bounce Native_Ghost_Result_Untracked(
 INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
     assert(not THROWING);
     Copy_Cell(level_->out, v);
-    Atom* atom = require (Unliftify_Undecayed(level_->out));
+    require (
+      Atom* atom = Unliftify_Undecayed(level_->out)
+    );
     return atom;
 }
 

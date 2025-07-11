@@ -323,7 +323,9 @@ DECLARE_NATIVE(READ_LINE)
             }
 
             const Byte* bp = encoded;
-            c = require (Back_Scan_Utf8_Char(&bp, &size));
+            require (
+              c = Back_Scan_Utf8_Char(&bp, &size)
+            );
         }
 
         if (c == '\n') {  // found a newline
@@ -495,7 +497,9 @@ DECLARE_NATIVE(READ_CHAR)
         }
 
         const Byte* bp = encoded;
-        c = require (Back_Scan_Utf8_Char(&bp, &size));
+        require (
+          c = Back_Scan_Utf8_Char(&bp, &size)
+        );
     }
 
     return rebChar(c);

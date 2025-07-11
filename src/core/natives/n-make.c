@@ -193,7 +193,9 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
         return OUT;
     }
 
-    Value* out = require (Decay_If_Unstable(OUT));  // should packs be legal?
+    require (  // should packs be legal?
+      Value* out = Decay_If_Unstable(OUT)
+    );
 
     if (Heart_Of_Fundamental(out) != to_or_as)
         panic ("Forward TO/AS transform produced wrong type");
@@ -210,7 +212,9 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
 
     level_->executor = &Action_Executor;  // Drop_Action() nulled it
     SymId id = Get_Level_Flag(L, CHECKING_TO) ? SYM_TO : SYM_AS;
-    required (Push_Action(level_, Lib_Var(id), PREFIX_0));
+    require (
+      Push_Action(level_, Lib_Var(id), PREFIX_0)
+    );
     Set_Executor_Flag(ACTION, level_, IN_DISPATCH);
 
     INCLUDE_PARAMS_OF_TO;
@@ -237,7 +241,9 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     if (Is_Error(scratch_reverse_atom))
         panic (Cell_Error(scratch_reverse_atom));
 
-    Value* scratch_reverse = require (Decay_If_Unstable(scratch_reverse_atom));
+    require (
+      Value* scratch_reverse = Decay_If_Unstable(scratch_reverse_atom)
+    );
 
     if (to_or_as == TYPE_MAP) {  // doesn't preserve order requirement :-/
         if (Type_Of(scratch_reverse) != Type_Of(spare_input))

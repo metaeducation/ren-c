@@ -53,7 +53,9 @@ Result(Zero) Prep_Action_Level(
     const Value* action,
     Option(const Atom*) with
 ){
-    trapped (Push_Action(L, action, PREFIX_0));
+    trap (
+      Push_Action(L, action, PREFIX_0)
+    );
 
     const Key* key = L->u.action.key;
     const Param* param = L->u.action.param;
@@ -78,7 +80,9 @@ Result(Zero) Prep_Action_Level(
         Copy_Cell(arg, unwrap with);  // do not decay [1]
 
         if (Parameter_Class(param) != PARAMCLASS_META) {
-            required (Decay_If_Unstable(arg));
+            require (
+              Decay_If_Unstable(arg)
+            );
         }
         break;
     } while (0);
@@ -96,11 +100,14 @@ void Push_Frame_Continuation(
     const Value* frame,  // may be antiform
     Option(const Atom*) with
 ){
-    Level* L = require (Make_End_Level(
+    require (
+      Level* L = Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
     ));
-    required (Prep_Action_Level(L, frame, with));
+    require (
+      Prep_Action_Level(L, frame, with)
+    );
     Push_Level_Erase_Out_If_State_0(out, L);
 }
 
@@ -145,7 +152,8 @@ bool Pushed_Continuation(
 
     if (Is_Pinned_Form_Of(GROUP, branch)) {  // [2] for GET-GROUP!
         assert(flags & LEVEL_FLAG_FORCE_HEAVY_NULLS);  // needed for trick
-        Level* grouper = require (Make_Level_At_Core(
+        require (
+          Level* grouper = Make_Level_At_Core(
             &The_Group_Branch_Executor,  // evaluates to synthesize branch
             cast(Element*, branch),
             binding,
@@ -192,12 +200,15 @@ bool Pushed_Continuation(
         }
         else {
             Derelativize(out, cast(Element*, branch), binding);
-            required (Unliftify_Undecayed(out));
+            require (
+              Unliftify_Undecayed(out)
+            );
         }
         goto just_use_out;
 
       case TYPE_BLOCK: {
-        Level* L = require (Make_Level_At_Core(
+        require (
+          Level* L = Make_Level_At_Core(
             &Evaluator_Executor, cast(Element*, branch), binding, flags
         ));
         Init_Void(Evaluator_Primed_Cell(L));
@@ -209,12 +220,15 @@ bool Pushed_Continuation(
         if (not Is_Get_Block(branch))
             panic ("GET-BLOCK! is only CHAIN branch currently working");
 
-        Level* L = require (Make_End_Level(
+        require (
+          Level* L = Make_End_Level(
             &Action_Executor,
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
         ));
 
-        required (Push_Action(L, LIB(REDUCE), PREFIX_0));
+        require (
+          Push_Action(L, LIB(REDUCE), PREFIX_0)
+        );
 
         const Key* key = L->u.action.key;
         const Param* param = L->u.action.param;

@@ -93,7 +93,9 @@ static Result(Strand*) Decode_Ucs2(  // [1]
     bool little_endian,
     bool crlf_to_lf
 ){
-    Strand* s = trap (Make_Strand(size * 2));  // conservative alloc [2]
+    trap (
+      Strand* s = Make_Strand(size * 2)  // conservative alloc [2]
+    );
 
     bool expect_lf = false;
     bool ascii = true;
@@ -300,7 +302,9 @@ DECLARE_NATIVE(DECODE_UTF16LE)
     const Byte* data = Blob_Size_At(&size, ARG(DATA));
 
     const bool little_endian = true;
-    Strand* ucs2 = require (Decode_Ucs2(data, size, little_endian, false));
+    require (
+      Strand* ucs2 = Decode_Ucs2(data, size, little_endian, false)
+    );
     Init_Text(OUT, ucs2);
 
     // Drop byte-order marker, if present
@@ -388,7 +392,9 @@ DECLARE_NATIVE(DECODE_UTF16BE)
     const Byte* data = Blob_Size_At(&size, ARG(DATA));
 
     const bool little_endian = false;
-    Strand* ucs2 = require (Decode_Ucs2(data, size, little_endian, false));
+    require (
+      Strand* ucs2 = Decode_Ucs2(data, size, little_endian, false)
+    );
     Init_Text(OUT, ucs2);
 
     // Drop byte-order marker, if present

@@ -77,7 +77,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 
         Sink(Value) out_value = out;
         Option(Error*) e;
-        Get_Word(out_value, look, binding) excepted (e) {
+        Get_Word(out_value, look, binding) except (e) {
             // !!! this code tolerated with `not e`, review right answer
         }
 
@@ -187,7 +187,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             panic ("Variadic literal parameters not yet implemented");
 
         case PARAMCLASS_NORMAL: {
-            Level* L_temp = require (Make_Level_At(
+            require (
+              Level* L_temp = Make_Level_At(
                 &Stepper_Executor,
                 shared,
                 EVAL_EXECUTOR_FLAG_FULFILLING_ARG
@@ -206,7 +207,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 Poison_Cell(shared);
             }
             else {
-                required (Unliftify_Undecayed(out));
+                require (
+                  Unliftify_Undecayed(out)
+                );
 
                 // The indexor is "prefetched", so though the temp level would
                 // be ready to use again we're throwing it away, and need to
@@ -296,8 +299,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         case PARAMCLASS_NORMAL: {
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
-            Level* sub = require (
-                Make_Level(&Stepper_Executor, L->feed, flags)
+            require (
+              Level* sub = Make_Level(&Stepper_Executor, L->feed, flags)
             );
             if (Trampoline_Throws(out, sub))  // !!! Stackful, should yield!
                 return true;
@@ -338,7 +341,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     if (Is_Cell_Erased(out))
         return false;
 
-    Value* out_value = require (Decay_If_Unstable(out));
+    require (
+      Value* out_value = Decay_If_Unstable(out)
+    );
 
     if (op == VARARG_OP_TAIL_Q) {
         assert(Is_Logic(out_value));
@@ -464,8 +469,9 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
         if (Is_Ghost(OUT))
             break;
 
-        Value* out = require (Decay_If_Unstable(OUT));
-
+        require (
+          Value* out = Decay_If_Unstable(OUT)
+        );
         if (Is_Antiform(out))
             panic (Error_Bad_Antiform_Raw(out));
 
@@ -597,7 +603,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
     const Param* param = Param_For_Varargs_Maybe_Null(&key, v);
     if (param == NULL) {
         pclass = PARAMCLASS_JUST;
-        required (Append_Ascii(mo->strand, "???"));  // never bound to arg
+        require (
+          Append_Ascii(mo->strand, "???")  // never bound to arg
+        );
     }
     else {
         DECLARE_ELEMENT (param_word);
@@ -615,7 +623,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
             break;
 
           case PARAMCLASS_SOFT:
-            required (Getify(Init_Word(param_word, Key_Symbol(key))));
+            require (
+              Getify(Init_Word(param_word, Key_Symbol(key)))
+            );
             Quotify(param_word);
             break;
 
@@ -625,34 +635,50 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
         Mold_Element(mo, param_word);
     }
 
-    required (Append_Ascii(mo->strand, " => "));
+    require (
+      Append_Ascii(mo->strand, " => ")
+    );
 
     Level* L;
     Element* shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (Is_Cell_Poisoned(shared)) {
-            required (Append_Ascii(mo->strand, "[]"));
+            require (
+              Append_Ascii(mo->strand, "[]")
+            );
         }
         else if (pclass == PARAMCLASS_JUST or pclass == PARAMCLASS_THE)
             Mold_Element(mo, shared); // full feed can be shown if hard quoted
         else {
-            required (Append_Ascii(mo->strand, "[...]"));  // can't look ahead
+            require (
+              Append_Ascii(mo->strand, "[...]")  // can't look ahead
+            );
         }
     }
     else if (Is_Level_Style_Varargs_Maybe_Null(&L, v)) {
         if (L == NULL) {
-            required (Append_Ascii(mo->strand, "!!!"));
+            require (
+              Append_Ascii(mo->strand, "!!!")
+            );
         }
         else if (Is_Feed_At_End(L->feed)) {
-            required (Append_Ascii(mo->strand, "[]"));
+            require (
+              Append_Ascii(mo->strand, "[]")
+            );
         }
         else if (pclass == PARAMCLASS_JUST or pclass == PARAMCLASS_THE) {
-            required (Append_Ascii(mo->strand, "["));
+            require (
+              Append_Ascii(mo->strand, "[")
+            );
             Mold_Element(mo, At_Feed(L->feed));  // 1 value shown if hard quote
-            required (Append_Ascii(mo->strand, " ...]"));
+            require (
+              Append_Ascii(mo->strand, " ...]")
+            );
         }
         else {
-            required (Append_Ascii(mo->strand, "[...]"));
+            require (
+              Append_Ascii(mo->strand, "[...]")
+            );
         }
     }
     else

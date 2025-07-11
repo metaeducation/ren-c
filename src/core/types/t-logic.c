@@ -39,7 +39,9 @@ DECLARE_NATIVE(NULL_Q)
     INCLUDE_PARAMS_OF_NULL_Q;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 
@@ -61,7 +63,9 @@ DECLARE_NATIVE(OKAY_Q)
     INCLUDE_PARAMS_OF_OKAY_Q;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 
@@ -83,7 +87,9 @@ DECLARE_NATIVE(LOGIC_Q)
     INCLUDE_PARAMS_OF_LOGIC_Q;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 
@@ -123,7 +129,9 @@ DECLARE_NATIVE(BOOLEAN_Q)
     INCLUDE_PARAMS_OF_BOOLEAN_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -145,7 +153,9 @@ DECLARE_NATIVE(ONOFF_Q)
     INCLUDE_PARAMS_OF_ONOFF_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -167,7 +177,9 @@ DECLARE_NATIVE(YESNO_Q)
     INCLUDE_PARAMS_OF_YESNO_Q;
 
     DECLARE_ELEMENT (e);
-    Option(Bounce) b = require (Bounce_Opt_Out_Element_Intrinsic(e, LEVEL));
+    require (
+      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+    );
     if (b)
         return unwrap b;
 
@@ -222,8 +234,9 @@ DECLARE_NATIVE(BOOLEAN)
 {
     INCLUDE_PARAMS_OF_BOOLEAN;
 
-    bool cond = require (Test_Conditional(ARG(VALUE)));
-
+    require (
+      bool cond = Test_Conditional(ARG(VALUE))
+    );
     return Init_Word(OUT, cond ? CANON(TRUE) : CANON(FALSE));
 }
 
@@ -275,8 +288,9 @@ DECLARE_NATIVE(TO_YESNO)
 {
     INCLUDE_PARAMS_OF_TO_YESNO;
 
-    bool cond = require (Test_Conditional(ARG(CONDITION)));
-
+    require (
+      bool cond = Test_Conditional(ARG(CONDITION))
+    );
     return Init_Word(OUT, cond ? CANON(YES) : CANON(NO));
 }
 
@@ -328,8 +342,9 @@ DECLARE_NATIVE(TO_ONOFF)
 {
     INCLUDE_PARAMS_OF_TO_ONOFF;
 
-    bool cond = require (Test_Conditional(ARG(CONDITION)));
-
+    require (
+      bool cond = Test_Conditional(ARG(CONDITION))
+    );
     return Init_Word(OUT, cond ? CANON(ON) : CANON(OFF));
 }
 
@@ -348,8 +363,12 @@ DECLARE_NATIVE(AND_Q)
 {
     INCLUDE_PARAMS_OF_AND_Q;
 
-    bool cond1 = require (Test_Conditional(ARG(VALUE1)));
-    bool cond2 = require (Test_Conditional(ARG(VALUE2)));
+    require (
+      bool cond1 = Test_Conditional(ARG(VALUE1))
+    );
+    require (
+      bool cond2 = Test_Conditional(ARG(VALUE2))
+    );
 
     if (cond1 and cond2)
         return LOGIC(true);
@@ -372,8 +391,12 @@ DECLARE_NATIVE(OR_Q)
 {
     INCLUDE_PARAMS_OF_OR_Q;
 
-    bool cond1 = require (Test_Conditional(ARG(VALUE1)));
-    bool cond2 = require (Test_Conditional(ARG(VALUE2)));
+    require (
+      bool cond1 = Test_Conditional(ARG(VALUE1))
+    );
+    require (
+      bool cond2 = Test_Conditional(ARG(VALUE2))
+    );
 
     if (cond1 or cond2)
         return LOGIC(true);
@@ -413,12 +436,15 @@ DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_NOT_1;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 
-    bool cond = require (Test_Conditional(v));
-
+    require (
+      bool cond = Test_Conditional(v)
+    );
     return LOGIC(not cond);
 }
 
@@ -437,12 +463,15 @@ DECLARE_NATIVE(TO_LOGIC)
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
     DECLARE_VALUE (v);
-    Option(Bounce) bounce = require (Bounce_Decay_Value_Intrinsic(v, LEVEL));
+    require (
+      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+    );
     if (bounce)
         return unwrap bounce;
 
-    bool cond = require (Test_Conditional(v));
-
+    require (
+      bool cond = Test_Conditional(v)
+    );
     return LOGIC(cond);
 }
 
@@ -467,13 +496,16 @@ INLINE Result(bool) Eval_Logic_Op_Right_Side(Level* level_)
         if (Eval_Any_List_At_Throws(SPARE, right, SPECIFIED))
             panic (Error_No_Catch_For_Throw(level_));
 
-        synthesized = require (Decay_If_Unstable(SPARE));
+        require (
+          synthesized = Decay_If_Unstable(SPARE)
+        );
     }
     else {
         assert(Is_Word(right) or Is_Tuple(right));
 
-        Value* spare = require (Get_Var(SPARE, NO_STEPS, right, SPECIFIED));
-
+        require (
+          Value* spare = Get_Var(SPARE, NO_STEPS, right, SPECIFIED)
+        );
         if (Is_Action(spare))
             panic (
                 "words/tuples can't be action as right side of OR AND XOR"
@@ -501,11 +533,15 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_AND_1;
 
-    bool left = require (Test_Conditional(ARG(LEFT)));
+    require (
+      bool left = Test_Conditional(ARG(LEFT))
+    );
     if (not left)
         return LOGIC(false);  // if left is false, don't run right hand side
 
-    bool right = require (Eval_Logic_Op_Right_Side(LEVEL));
+    require (
+      bool right = Eval_Logic_Op_Right_Side(LEVEL)
+    );
     USED(ARG(RIGHT));
 
     return LOGIC(right);
@@ -527,11 +563,15 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_OR_1;
 
-    bool left = require (Test_Conditional(ARG(LEFT)));
+    require (
+      bool left = Test_Conditional(ARG(LEFT))
+    );
     if (left)
         return LOGIC(true);  // if left is true, don't run right hand side
 
-    bool right = require (Eval_Logic_Op_Right_Side(LEVEL));
+    require (
+      bool right = Eval_Logic_Op_Right_Side(LEVEL)
+    );
     USED(ARG(RIGHT));
 
     return LOGIC(right);
@@ -553,10 +593,14 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_XOR_1;
 
-    bool right = require (Eval_Logic_Op_Right_Side(LEVEL));  // always evals
+    require (
+      bool right = Eval_Logic_Op_Right_Side(LEVEL)
+    );  // always evals
     USED(ARG(RIGHT));
 
-    bool left = require (Test_Conditional(ARG(LEFT)));
+    require (
+      bool left = Test_Conditional(ARG(LEFT))
+    );
     if (not left)
         return LOGIC(right);
 

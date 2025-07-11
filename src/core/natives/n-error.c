@@ -96,7 +96,8 @@ DECLARE_NATIVE(ENRECOVER)
     //    that to void, and maybe even that should be the default, but at
     //    time of writing serving the needs of the console is most important.
 
-    Level* L = require (Make_Level_At(
+    require (
+      Level* L = Make_Level_At(
         &Evaluator_Executor,
         code,
         LEVEL_MASK_NONE
@@ -178,7 +179,8 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 
     Level* sub;
     if (Is_Block(code)) {
-        sub = require (Make_Level_At(
+        require (
+          sub = Make_Level_At(
             &Stepper_Executor,
             code,  // TYPE_BLOCK or TYPE_GROUP
             flags
@@ -300,7 +302,8 @@ DECLARE_NATIVE(TRAP)
 
     Element* return_word = Init_Word(SCRATCH, CANON(RETURN));
 
-    Value* spare_action = require (Get_Word(
+    require (
+      Value* spare_action = Get_Word(
         SPARE,
         return_word,
         Feed_Binding(LEVEL->feed)

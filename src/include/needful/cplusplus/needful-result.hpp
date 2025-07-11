@@ -55,7 +55,7 @@
 //    require (bar());
 //    // ... code continues only if no error ...
 //
-//=//// guarantee() ///////////////////////////////////////////////////////=//
+//=//// assume() //////////////////////////////////////////////////////////=//
 //
 // Optimized case for when you have inside knowledge that a Result()-bearing
 // function call will not fail.  Needed to do compile-time unwrapping of
@@ -108,43 +108,6 @@
 // don't understand is a nigh-impossible power to wield wisely.  Only very
 // special cases (language REPLs, for example) should try to do this kind
 // of recovery.
-//
-//=//// DISCARDING VARIANTS ///////////////////////////////////////////////=//
-//
-// `trap` and `require` have conflicting requirements: they need to be able
-// to execute return statements from within the expanded macro, but also
-// want to be usable as expressions on the right hand of an assignment.  This
-// forces them to expand into sequential statements that are not enclosed in
-// parentheses or a group.
-//
-// Given that reality, it's not safe to use `trap` or `require` as the branch
-// of something like an `if` or `while` without a block around it:
-//
-//      if (condition)
-//          trap (Some_Result_Bearing_Function(args));  // bad usage
-//
-// The expression portion of the `trap` expansion will be underneath the `if`
-// while the subsequent for reacting to failures and potentially executing
-// a `return` will be outside the `if`.
-//
-// Use of [[nodiscard]] and the "hot potato" extraction mechanism helps turn
-// these usages into compile-time errors.  But once you get the error, you
-// need some way to suppress it.
-//
-// There's a discarded() macro you could use, which puts the code in a
-// `do {...} while (0)` block and also suppresses the [[nodiscard]] warning.
-// It looks a little wordy in use:
-//
-//      if (condition)
-//          discarded(trap (Some_Result_Bearing_Function(args)));
-//
-// So macros that do this for you are named e.g. `trapped` and `required`:
-//
-//      if (condition)
-//          trapped (Some_Result_Bearing_Function(args));
-//
-// 1. `excepted` is weirder than `trapped` and `required`, but fits the
-//    pattern adn it's hard to think of what else to call it.
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
@@ -224,56 +187,6 @@ struct OptionWrapper;
     template<typename>
     struct IsOptionWrapper : std::false_type {};
 #endif
-
-
-//=//// EXTRACTED RESULT "HOT POTATO" /////////////////////////////////////=//
-//
-// The Result(T) type is [[nodiscard]] (C++17 feature, with some pre-C++17
-// support in MSVC and GCC).  That protects against:
-//
-//     Some_Result_Bearing_Function(args);  // no trap, no require, no except
-//
-// You'll get an error from your C++ builds because the Result(T) is not used,
-// guiding to the need for triage.  But due to the design of the macros and
-// language limitations, there's a problem with:
-//
-//      if (condition)
-//         trap(Some_Result_Bearing_Function(args));  // no warning
-//
-// Because the trap macro has to embed `return` statements -and- wants to
-// be used on the right hand side of assignments, it can't be wrapped up in
-// `do {...} while (0)` or parentheses to make it "safe" when used as a
-// branch. It expands to one expression that's inside the branch and then
-// subsequent lines that aren't.
-//
-// Since the Result(T) has already been "triaged" by the trap macro, its
-// [[nodiscard]] can't help.  So what's done is instead to use a 2-step
-// process...where an ExtractedHotPotato<T> is made, as another [[nodiscard]]
-// type that covers the case of a missing assignment on the left hand side
-// of the trap.  (If the assignment were present, it would naturally disallow
-// use as a branch or a loop body.)
-//
-// With this you have:
-//
-//      if (condition)
-//         trap (Some_Result_Bearing_Function(args));  // warning on discard
-//
-// This hot potato then has specialized discarding operations, e.g.` trapped`:
-//
-//     if (condition)
-//         trapped (Some_Result_Bearing_Function(args)));
-//
-// It's unfortunate to need another name for this, but in practice it is very
-// easy for mistakes to be made without the protections.
-//
-
-template<typename T>
-struct NEEDFUL_NODISCARD ExtractedHotPotato {
-    T x;  // trivially constructible (fastest in debug builds)
-
-    operator T() const
-      { return x; }
-};
 
 
 //=//// RESULT WRAPPER ////////////////////////////////////////////////////=//
@@ -387,39 +300,11 @@ struct NEEDFUL_NODISCARD ResultWrapper {
         : r {needful_lenient_hookable_cast(T, down.f)}
     {
     }
-
-    ExtractedHotPotato<T> Extract_Hot() const  // [[nodiscard]] version
-      { return ExtractedHotPotato<T> {r}; }
-
-    T Extract_Cold() const  // plain type, discardable
-      { return r; }  // (not used at the moment, only extract hot vs. discard)
 };
 
 #undef NeedfulResult
 #define NeedfulResult(T) /* not Result(T,E)... see [C] */ \
     needful::ResultWrapper<T>
-
-#undef Needful_Prefix_Extract_Hot
-#define Needful_Prefix_Extract_Hot(expr)  (expr).Extract_Hot()
-
-#undef Needful_Prefix_Discard_Result
-#define Needful_Prefix_Discard_Result(expr)  USED(expr)
-
-struct ResultExtractor {};
-
-template<typename T>
-ExtractedHotPotato<T> operator>>(
-    const ResultWrapper<T>& result,
-    const ResultExtractor& right
-){
-    UNUSED(right);
-    return result.Extract_Hot();
-}
-
-constexpr ResultExtractor g_result_extractor = {};
-
-#undef Needful_Postfix_Extract_Hot
-#define Needful_Postfix_Extract_Hot  >> needful::g_result_extractor
 
 template<typename X>
 struct IsResultWrapper<ResultWrapper<X>> : std::true_type {};
@@ -457,70 +342,46 @@ struct NEEDFUL_NODISCARD ResultWrapper<Zero> {
 
     ResultWrapper(Result0Struct&&) {}
     ResultWrapper(Zero&&) {}
-
-    ExtractedHotPotato<Zero> Extract_Hot() const {  // [[nodiscard]] version
-        return ExtractedHotPotato<Zero>{zero};
-    }
-
-    Zero Extract_Cold() const  // plain type, discardable
-      { return zero; }
-
 };
 
-inline void operator>>(
-    ResultWrapper<Zero>&& result,
-    const ResultExtractor& right
-){
-    UNUSED(result);
-    UNUSED(right);
-}
 
-//=//// RESULT DISCARDER //////////////////////////////////////////////////=//
-//
-// The Result(T) type is [[nodiscard]], redefine macros to discard it.
+//=//// RESULT EXTRACTOR //////////////////////////////////////////////////=//
 //
 
-struct ResultDiscarder {};
+struct ResultExtractor {};
 
 template<typename T>
-inline T operator|(  // using `|` for precedence lower than `>>`
-    const ResultDiscarder&,
-    ExtractedHotPotato<T>&& extraction
-){
-    USED(extraction);  // mark as used, do nothing
-}
-
-template<typename T>
-inline void operator>>(
+inline T operator>>(
     const ResultWrapper<T>& result,
-    const ResultDiscarder&
+    const ResultExtractor&
 ){
-    USED(result);  // mark as used, do nothing
+    return result.r;
 }
 
-static constexpr ResultDiscarder g_result_discarder{};
+inline void operator>>(
+    const ResultWrapper<ZeroStruct>&,
+    const ResultExtractor&
+){
+}
 
-#undef Needful_Postfix_Discard_Result
-#define Needful_Postfix_Discard_Result  >> needful::g_result_discarder
+template<typename T>
+inline UnhookableDowncastHolder<T> operator>>(
+    const UnhookableDowncastHolder<ResultWrapper<T>>& down,
+    const ResultExtractor&
+){
+    return UnhookableDowncastHolder<T> {down.f.r};
+}
 
+template<typename T>
+inline HookableDowncastHolder<T> operator>>(
+    const HookableDowncastHolder<ResultWrapper<T>>& down,
+    const ResultExtractor&
+){
+    return HookableDowncastHolder {down.f.r};
+}
 
-//=//// RESULT ASSUMER ////////////////////////////////////////////////////=//
-//
-// To make it easier to use assume() in expressions, it doesn't have any code
-// outside the expression (because it doesn't have branching or a need to
-// execute return).  It just asserts, but it needs to do so after the
-// expression, hence it needs some way of doing that as part of an expression.
-//
-// 1. The underscore in `_result` is to reduce the odds of warnings about
-//    conflicts with a local variable named `result`.  It would be better
-//    to avoid using a lambda at all, but Needful_Assert_Not_Failing() is
-//    not defined by the library...it's supplied after the fact by the
-//    library client.
-//
+static constexpr ResultExtractor g_result_extractor{};
 
-#undef Needful_Prefix_Assume_Result
-#define Needful_Prefix_Assume_Result(expr) \
-    ([&](auto&& _result) { /* underscore reduces odds of warnings [1] */ \
-        Needful_Assert_Not_Failing(); \
-        return std::forward<decltype(_result)>(_result).Extract_Cold(); \
-    }((expr)))
+#undef needful_postfix_extract_result
+#define needful_postfix_extract_result \
+    /* _stmt_ */  >>  needful::g_result_extractor

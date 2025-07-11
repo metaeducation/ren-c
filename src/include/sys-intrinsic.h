@@ -155,8 +155,9 @@ INLINE Result(Option(Bounce)) Bounce_Opt_Out_Element_Intrinsic(
 
     Init(Atom) atom_out = u_cast(Atom*, elem_out);
     Copy_Cell(atom_out, atom_arg);
-    trapped (Decay_If_Unstable(atom_out));
-
+    trap (
+      Decay_If_Unstable(atom_out)
+    );
     if (Is_Antiform(atom_out))
         return fail (Error_Bad_Intrinsic_Arg_1(L));
 
@@ -179,7 +180,8 @@ INLINE Result(Option(Bounce)) Bounce_Decay_Value_Intrinsic(
 
     Init(Atom) atom_out = u_cast(Atom*, val_out);
     Copy_Cell(atom_out, atom_arg);
-    trapped (Decay_If_Unstable(atom_out));
-
+    trap (
+      Decay_If_Unstable(atom_out)
+    );
     return nullptr;
 }

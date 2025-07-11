@@ -170,7 +170,8 @@ Result(Array*) Copy_Array_Core_Managed(  // always managed, [1]
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Copy_Cell(dest, src);
-        trapped (Clonify(  // !!! undo previous allocations?
+        trap (
+          Clonify(  // !!! undo previous allocations?
             dest,
             flags | BASE_FLAG_MANAGED,
             deeply

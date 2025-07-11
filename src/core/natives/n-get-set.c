@@ -116,7 +116,8 @@ Result(Zero) Get_Tuple_Maybe_Trash(
     const Element* tuple,
     Context* context
 ){
-    Level* level_ = require (Make_End_Level(
+    require (
+      Level* level_ = Make_End_Level(
         &Stepper_Executor,
         LEVEL_MASK_NONE | FLAG_STATE_BYTE(1) // rule for trampoline
     ));
@@ -128,7 +129,7 @@ Result(Zero) Get_Tuple_Maybe_Trash(
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) e;
-    Get_Var_In_Scratch_To_Out(level_, steps_out) excepted (e) {
+    Get_Var_In_Scratch_To_Out(level_, steps_out) except (e) {
         // need to drop level before returning
     }
 
@@ -137,8 +138,9 @@ Result(Zero) Get_Tuple_Maybe_Trash(
     if (e)
         return fail (unwrap e);
 
-    required (Decay_If_Unstable(atom_out));
-
+    require (
+      Decay_If_Unstable(atom_out)
+    );
     return zero;
 }
 
@@ -174,11 +176,12 @@ Result(Zero) Get_Var_Maybe_Trash(
         if (Is_Chain(var)) {
             Get_Chain_Push_Refinements(
                 out, safe, var, context
-            ) excepted (error) {
+            ) except (error) {
                 // need to drop level before returning
             }
         } else {
-            Level* level_ = require (Make_End_Level(
+            require (
+              Level* level_ = Make_End_Level(
                 &Stepper_Executor,
                 LEVEL_MASK_NONE | FLAG_STATE_BYTE(1)  // rule for trampoline
             ));
@@ -188,7 +191,7 @@ Result(Zero) Get_Var_Maybe_Trash(
             heeded (Derelativize(SCRATCH, var, context));
             heeded (Corrupt_Cell_If_Needful(SPARE));
 
-            Get_Path_Push_Refinements(level_) excepted (error) {
+            Get_Path_Push_Refinements(level_) except (error) {
                 // need to drop level before returning
             }
 
@@ -220,7 +223,8 @@ Result(Zero) Get_Var_Maybe_Trash(
         return zero;
     }
 
-    Level* level_ = require (Make_End_Level(
+    require (
+      Level* level_ = Make_End_Level(
         &Stepper_Executor,
         LEVEL_MASK_NONE | FLAG_STATE_BYTE(1)  // rule for trampoline
     ));
@@ -231,7 +235,7 @@ Result(Zero) Get_Var_Maybe_Trash(
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
     Option(Error*) error;
-    Get_Var_In_Scratch_To_Out(level_, steps_out) excepted (error) {
+    Get_Var_In_Scratch_To_Out(level_, steps_out) except (error) {
         // need to drop level before returning
     }
 
@@ -257,12 +261,13 @@ Result(Value*) Get_Var(
 ){
     Sink(Atom) atom_out = u_cast(Atom*, out);
 
-    trapped (Get_Var_Maybe_Trash(
-        atom_out, steps_out, var, context
-    ));
+    trap (
+      Get_Var_Maybe_Trash(atom_out, steps_out, var, context)
+    );
 
-    required (Decay_If_Unstable(atom_out));
-
+    require (
+      Decay_If_Unstable(atom_out)
+    );
     if (Is_Trash(out))
         return fail (Error_Bad_Word_Get(var, out));
 
@@ -294,14 +299,16 @@ Result(Value*) Get_Chain_Push_Refinements(
     }
     else if (Is_Tuple(head)) {  // .member-function:refinement is legal
         DECLARE_ELEMENT (steps);
-        required (Get_Tuple_Maybe_Trash(  // must panic on erorr
+        require (  // must panic on error
+          Get_Tuple_Maybe_Trash(
             out, steps, head, derived
         ));
         if (Is_Trash(out))
             panic (Error_Bad_Word_Get(head, out));
     }
     else if (Is_Word(head)) {
-        required (Get_Word(out, head, derived));  // must panic on error
+        require (  // must panic on error
+          Get_Word(out, head, derived));
     }
     else
         panic (head);  // what else could it have been?
@@ -339,7 +346,9 @@ Result(Value*) Get_Chain_Push_Refinements(
             if (Is_Void(atom_spare))
                 continue;  // just skip it (voids are ignored, NULLs error)
 
-            item = require (Decay_If_Unstable(atom_spare));
+            require (
+              item = Decay_If_Unstable(atom_spare)
+            );
 
             if (Is_Antiform(item))
                 return fail (Error_Bad_Antiform(item));
@@ -399,7 +408,7 @@ Result(Zero) Get_Path_Push_Refinements(Level* level_)
         Element* spare = Copy_Cell(SPARE, path);
         KIND_BYTE(spare) = TYPE_WORD;
 
-        Get_Any_Word_Maybe_Trash(OUT, spare, SPECIFIED) excepted (e) {
+        Get_Any_Word_Maybe_Trash(OUT, spare, SPECIFIED) except (e) {
             goto return_error;
         }
 
@@ -435,12 +444,12 @@ Result(Zero) Get_Path_Push_Refinements(Level* level_)
         DECLARE_ELEMENT (steps);
         Get_Tuple_Maybe_Trash(
             spare_left, steps, at, binding
-        ) excepted (e) {
+        ) except (e) {
             goto return_error;
         }
     }
     else if (Is_Word(at)) {
-        Get_Word(spare_left, at, binding) excepted (e) {
+        Get_Word(spare_left, at, binding) except (e) {
             goto return_error;
         }
     }
@@ -455,7 +464,7 @@ Result(Zero) Get_Path_Push_Refinements(Level* level_)
             cast(Element*, at),
             Derive_Binding(binding, at)
         )
-        excepted (e) {
+        except (e) {
             goto return_error;
         }
 
@@ -495,7 +504,7 @@ Result(Zero) Get_Path_Push_Refinements(Level* level_)
             at,
             Cell_Context(spare_left)  // need to find head of chain in object
         )
-        excepted (e) {
+        except (e) {
             goto return_error;
         }
 
@@ -606,8 +615,9 @@ Result(Value*) Get_Word(
 
     Sink(Atom) atom_out = u_cast(Atom*, out);
 
-    trapped (Get_Any_Word_Maybe_Trash(atom_out, word, context));
-
+    trap (
+      Get_Any_Word_Maybe_Trash(atom_out, word, context)
+    );
     if (Is_Error(atom_out))  // !!! bad pick
         return fail (Cell_Error(atom_out));
 
@@ -642,7 +652,9 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     if (Is_Quasiform(SPARE))
         return Error_User("TWEAK* cannot be used on antiforms");
 
-    required (Push_Action(sub, LIB(TWEAK_P), PREFIX_0));
+    require (
+      Push_Action(sub, LIB(TWEAK_P), PREFIX_0)
+    );
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
     bool picker_was_meta;
@@ -731,7 +743,9 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
     Atom* spare_location_dual = SPARE;
 
-    required (Push_Action(sub, LIB(TWEAK_P), PREFIX_0));
+    require (
+      Push_Action(sub, LIB(TWEAK_P), PREFIX_0)
+    );
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
     Element* location_arg;
@@ -775,8 +789,10 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
                 );
 
             Copy_Cell(value_arg, TOP_ELEMENT);
-            required (Unliftify_Undecayed(value_arg));
-            Decay_If_Unstable(value_arg) excepted (Error* e) {
+            require (
+              Unliftify_Undecayed(value_arg)
+            );
+            Decay_If_Unstable(value_arg) except (Error* e) {
                 return e;
             }
             Liftify(value_arg);
@@ -803,8 +819,10 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         }
 
         Copy_Cell(value_arg, TOP_ELEMENT);
-        required (Unliftify_Undecayed(value_arg));
-        Decay_If_Unstable(value_arg) excepted (Error* e) {
+        require (
+          Unliftify_Undecayed(value_arg)
+        );
+        Decay_If_Unstable(value_arg) except (Error* e) {
             return e;
         };
         Liftify(value_arg);
@@ -1048,7 +1066,9 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
   keep_picking_until_last_step: {
 
-    Level* sub = require (Make_End_Level(&Action_Executor, flags));
+    require (
+      Level* sub = Make_End_Level(&Action_Executor, flags)
+    );
 
     for (; stackindex != limit; ++stackindex, Restart_Action_Level(sub)) {
         e = Trap_Call_Pick_Refresh_Dual_In_Spare(
@@ -1064,8 +1084,10 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         if (Any_Lifted(SPARE)) {  // most common answer--successful pick
 
             if (not Is_Metaform(Data_Stack_At(Element, stackindex))) {
-                required (Unliftify_Undecayed(SPARE));  // review unlift + lift
-                Decay_If_Unstable(SPARE) excepted (e) {
+                require (
+                  Unliftify_Undecayed(SPARE)  // review unlift + lift
+                );
+                Decay_If_Unstable(SPARE) except (e) {
                     Drop_Level(sub);
                     goto return_error;
                 }
@@ -1140,7 +1162,9 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     // as we go back through the list of steps to update any bits that are
     // required to update in the referencing cells.
 
-    Level* sub = require (Make_End_Level(&Action_Executor, flags));
+    require (
+      Level* sub = Make_End_Level(&Action_Executor, flags)
+    );
 
     e = Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         level_,
@@ -1262,7 +1286,9 @@ Result(Zero) Set_Var_In_Scratch_To_Out(
         level_,
         steps_out
     );
-    required (Unliftify_Undecayed(OUT));
+    require (
+      Unliftify_Undecayed(OUT)
+    );
     if (e)
         return fail (unwrap e);
 
@@ -1292,7 +1318,9 @@ Result(Zero) Get_Var_In_Scratch_To_Out(
     if (Is_Dual_Word_Unset_Signal(Known_Stable(OUT)))
         return fail ("UNSET variable");
 
-    required (Unliftify_Undecayed(OUT));  // not unstable if wasn't ^META [1]
+    require (
+      Unliftify_Undecayed(OUT)  // not unstable if wasn't ^META [1]
+    );
     return zero;
 }
 
@@ -1331,8 +1359,11 @@ DECLARE_NATIVE(TWEAK)
 
     Element* target = Element_ARG(TARGET);
 
-    if (Is_Chain(target))  // GET-WORD, SET-WORD, SET-GROUP, etc.
-        assumed (Unsingleheart_Sequence(target));
+    if (Is_Chain(target)) { // GET-WORD, SET-WORD, SET-GROUP, etc.
+        assume (
+          Unsingleheart_Sequence(target)
+        );
+    }
 
     if (not Is_Group(target))  // !!! maybe SET-GROUP!, but GET-GROUP!?
         goto call_generic_tweak;
@@ -1352,7 +1383,9 @@ DECLARE_NATIVE(TWEAK)
     if (Is_Void(SPARE))
         return OUT;
 
-    Value* spare = require (Decay_If_Unstable(SPARE));
+    require (
+      Value* spare = Decay_If_Unstable(SPARE)
+    );
 
     if (not (
         Any_Word(spare)
@@ -1495,7 +1528,9 @@ DECLARE_NATIVE(GET)
     if (not Any_Lifted(OUT))
         panic ("GET of UNSET or other weird state (see TWEAK)");
 
-    required (Unliftify_Undecayed(OUT));
+    require (
+      Unliftify_Undecayed(OUT)
+    );
     return OUT;
 }
 

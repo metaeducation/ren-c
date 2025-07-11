@@ -245,11 +245,11 @@ INLINE Stub* Compact_Stub_From_Cell(const Cell* v) {
 // length 0!  Only two are set here.
 //
 INLINE Result(Stub*) Prep_Stub(Flags flags, Result(void*) preallocated) {
-    void* pre = trap (preallocated);
-
     assert(not (flags & BASE_FLAG_CELL));
 
-    Stub *s = u_cast(Stub*, pre);
+    trap (
+      Stub *s = nocast preallocated
+    );
     s->header.bits = flags | BASE_FLAG_BASE;  // #1
 
   #if (NO_RUNTIME_CHECKS)
@@ -291,7 +291,9 @@ INLINE Result(Stub*) Make_Untracked_Stub(Flags flags) {
     assert(flavor != FLAVOR_0 and flavor <= MAX_FLAVOR);
     UNUSED(flavor);
     assert(not (flags & (STUB_FLAG_DYNAMIC | FLEX_FLAG_FIXED_SIZE)));
-    Stub* s = trap (Prep_Stub(flags | FLEX_FLAG_FIXED_SIZE, Alloc_Stub()));
+    trap (
+      Stub* s = Prep_Stub(flags | FLEX_FLAG_FIXED_SIZE, Alloc_Stub())
+    );
     Force_Erase_Cell(&s->content.fixed.cell);  // should callers do?
     return s;
 }

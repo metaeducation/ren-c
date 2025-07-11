@@ -46,7 +46,9 @@ Result(uint32_t) Hash_Scan_UTF8_Caseless(const Byte* utf8, Size size)
         Codepoint c = *utf8;
 
         if (Is_Utf8_Lead_Byte(c)) {
-            c = trap (Back_Scan_Utf8_Char(&utf8, &size));
+          trap (
+            c = Back_Scan_Utf8_Char(&utf8, &size)
+          );
         }
 
         c = LO_CASE(c);
@@ -346,7 +348,9 @@ uint32_t Hash_Cell(const Cell* cell)
 Result(HashList*) Make_Hashlist(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime_May_Panic(len * 2);  // best when 2X # of keys
-    Flex* f = trap (Make_Flex(FLAG_FLAVOR(FLAVOR_HASHLIST), n + 1));
+    trap (
+      Flex* f = Make_Flex(FLAG_FLAVOR(FLAVOR_HASHLIST), n + 1)
+    );
     Clear_Flex(f);
     Set_Flex_Len(f, n);
 
@@ -364,7 +368,9 @@ Result(HashList*) Make_Hashlist(REBLEN len)
 //
 Result(HashList*) Hash_Block(const Value* block, REBLEN skip, bool cased)
 {
-    HashList* hashlist = trap (Make_Hashlist(Series_Len_At(block)));  // ints
+    trap (
+      HashList* hashlist = Make_Hashlist(Series_Len_At(block))  // ints
+    );
 
     const Element* tail;
     const Element* value = List_At(&tail, block);

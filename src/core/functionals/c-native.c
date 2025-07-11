@@ -106,7 +106,8 @@ Result(Details*) Make_Native_Dispatch_Details(
     StackIndex base = TOP_INDEX;
 
     VarList* adjunct;
-    ParamList* paramlist = require (Make_Paramlist_Managed(
+    require (
+      ParamList* paramlist = Make_Paramlist_Managed(
         &adjunct,
         spec,
         MKF_DONT_POP_RETURN,  // we put it in Details, not ParamList
@@ -217,7 +218,8 @@ static Bounce Native_Native_Core(Level* level_)
         rebRelease(action);
     }
     else {
-        Details* details = require (Make_Native_Dispatch_Details(
+        require (
+          Details* details = Make_Native_Dispatch_Details(
             spec,
             native_type,
             f_cast(Dispatcher*, cfunc)
@@ -566,7 +568,8 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
     Derelativize(spec, At_Level(L), g_lib_context);
     Fetch_Next_In_Feed(L->feed);;
 
-    Details* details = assume (Make_Native_Dispatch_Details(
+    assume (
+      Details* details = Make_Native_Dispatch_Details(
         spec,
         native_type,
         f_cast(Dispatcher*, *g_native_cfunc_pos)
@@ -610,7 +613,8 @@ void Startup_Natives(const Element* boot_natives)
     assert(Cell_Binding(boot_natives) == UNBOUND);
 
     DECLARE_ATOM (dual_step);
-    Level* L = require (Make_Level_At_Core(
+    require (
+      Level* L = Make_Level_At_Core(
         &Evaluator_Executor, boot_natives, lib, LEVEL_MASK_NONE
     ));
     Init_Void(Evaluator_Primed_Cell(L));

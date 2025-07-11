@@ -215,8 +215,8 @@ INLINE bool Try_Add_Binder_Index(
     if (Get_Flavor_Flag(SYMBOL, symbol, HITCH_IS_BIND_STUMP))
         return false;  // already has a mapping
 
-    Stump* stump = require (
-        cast(Stump*, Make_Untracked_Stub(STUB_MASK_STUMP))
+    require (
+      Stump* stump = cast(Stump*, Make_Untracked_Stub(STUB_MASK_STUMP))
     );
     Tweak_Link_Stump_Next(stump, binder->stump_list);
     Tweak_Misc_Hitch(stump, Misc_Hitch(symbol));

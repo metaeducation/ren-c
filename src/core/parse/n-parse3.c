@@ -246,7 +246,9 @@ static bool Subparse_Throws(
 
     Push_Level_Erase_Out_If_State_0(out, L);
 
-    required (Push_Action(L, LIB(SUBPARSE), PREFIX_0));
+    require (
+      Push_Action(L, LIB(SUBPARSE), PREFIX_0)
+    );
 
     // This needs to be set before INCLUDE_PARAMS_OF_SUBPARSE; it is what
     // ensures that usermode accesses to the frame won't be able to fiddle
@@ -384,12 +386,16 @@ static Result(Option(SymId)) Get_Parse_Value(
             return id;
         }
 
-        required (Get_Var(out_value, NO_STEPS, rule, context));
+        require (
+          Get_Var(out_value, NO_STEPS, rule, context)
+        );
 
         // fallthrough to fix up antiforms in aliased out
     }
     else if (Is_Tuple(rule) or Is_Path(rule)) {
-        required (Get_Var(out_value, NO_STEPS, rule, context));
+        require (
+          Get_Var(out_value, NO_STEPS, rule, context)
+        );
 
         // fallthrough to fix up antiforms in aliased out
     }
@@ -412,7 +418,9 @@ static Result(Option(SymId)) Get_Parse_Value(
             Quasify_Antiform(out_value);
         else if (Is_Datatype(out)) {  // convert to functions for now
             DECLARE_VALUE (checker);
-            required (Init_Typechecker(checker, out));
+            require (
+              Init_Typechecker(checker, out)
+            );
             assert(Heart_Of(checker) == TYPE_FRAME);
             Copy_Cell(out_value, checker);
             LIFT_BYTE(out_value) = NOQUOTE_2;
@@ -474,7 +482,9 @@ bool Process_Group_For_Parse_Throws(
         // allow it (can't decay)
     }
     else {
-        required (Decay_If_Unstable(eval));
+        require (
+          Decay_If_Unstable(eval)
+        );
     }
 
     // !!! The input is not locked from modification by agents other than the
@@ -574,7 +584,8 @@ static Result(REBIXO) Parse_One_Rule(
         REBLEN pos_before = P_POS;
         P_POS = pos;  // modify input position
 
-        Level* sub = require (Make_Level_At_Inherit_Const(
+        require (
+          Level* sub = Make_Level_At_Inherit_Const(
             &Action_Executor,  // !!! Parser_Executor?
             rule, rule_binding(),
             LEVEL_MASK_NONE
@@ -615,7 +626,9 @@ static Result(REBIXO) Parse_One_Rule(
             rule = Unquotify(Copy_Cell(SPARE, rule));
         }
         else if (Is_Pinned_Form_Of(WORD, rule)) {
-            required (Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING));
+            require (
+              Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING)
+            );
             if (Is_Antiform(SPARE))
                 panic (Error_Bad_Antiform(SPARE));
 
@@ -652,8 +665,8 @@ static Result(REBIXO) Parse_One_Rule(
         // !!! R3-Alpha said "Match with some other value"... is this a good
         // default?!
         //
-        bool equal = require (
-            Equal_Values(item, rule, did (P_FLAGS & AM_FIND_CASE))
+        require (
+          bool equal = Equal_Values(item, rule, did (P_FLAGS & AM_FIND_CASE))
         );
         if (equal)
             return pos + 1;
@@ -664,7 +677,9 @@ static Result(REBIXO) Parse_One_Rule(
         assert(Any_String_Type(P_HEART) or P_HEART == TYPE_BLOB);
 
         if (Is_Pinned_Form_Of(WORD, rule)) {
-            required (Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING));
+            require (
+              Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING)
+            );
             if (Is_Antiform(SPARE))
                 panic (Error_Bad_Antiform(SPARE));
             rule = Known_Element(SPARE);
@@ -802,8 +817,9 @@ static Result(REBIXO) To_Thru_Block_Rule(
                         panic (Error_Parse3_Rule());
                 }
                 else {
-                    required (Get_Parse_Value(cell, rule, P_RULE_BINDING));
-
+                    require (
+                      Get_Parse_Value(cell, rule, P_RULE_BINDING)
+                    );
                     rule = cell;
                 }
             }
@@ -821,8 +837,9 @@ static Result(REBIXO) To_Thru_Block_Rule(
                     panic ("TAG! combinator must be <here> or <end> ATM");
             }
             else if (Is_Tuple(rule) or Is_Path(rule)) {
-                required (Get_Parse_Value(cell, rule, P_RULE_BINDING));
-
+                require (
+                  Get_Parse_Value(cell, rule, P_RULE_BINDING)
+                );
                 rule = cell;
             }
             else {
@@ -834,8 +851,10 @@ static Result(REBIXO) To_Thru_Block_Rule(
                 if (Any_List(rule))
                     panic (Error_Parse3_Rule());
 
-                REBIXO ixo = require (
-                    Parse_One_Rule(level_, Series_Index(iter), rule)
+                require (
+                    REBIXO ixo = Parse_One_Rule(
+                        level_, Series_Index(iter), rule
+                    )
                 );
                 if (ixo == THROWN_FLAG)
                     return THROWN_FLAG;
@@ -1050,7 +1069,9 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
             Unquotify(Derelativize(temp, rule, P_RULE_BINDING));
         }
         else if (Is_Pinned_Form_Of(WORD, rule)) {
-            required (Get_Var(temp, NO_STEPS, rule, P_RULE_BINDING));
+            require (
+              Get_Var(temp, NO_STEPS, rule, P_RULE_BINDING)
+            );
             if (Is_Antiform(temp))
                 panic (Error_Bad_Antiform(temp));
             rule = Known_Element(temp);  // fall through to direct match
@@ -1059,7 +1080,9 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
             DECLARE_ELEMENT (rule_value);
             Copy_Cell(rule_value, rule);
             Quasify_Isotopic_Fundamental(rule_value);
-            required (Init_Typechecker(temp, rule_value));
+            require (
+              Init_Typechecker(temp, rule_value)
+            );
         }
         else {
             Copy_Cell(temp, rule);
@@ -1087,7 +1110,9 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
     }
     else {
         if (Is_Pinned_Form_Of(WORD, rule)) {
-            required (Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING));
+            require (
+              Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING)
+            );
             if (Is_Antiform(SPARE))
                 panic (Error_Bad_Antiform(SPARE));
             rule = Known_Element(SPARE);
@@ -1160,7 +1185,9 @@ static Result(Zero) Handle_Seek_Rule_Dont_Update_Begin(
 
     Option(Type) t = Type_Of(rule);
     if (t == TYPE_WORD or t == TYPE_TUPLE) {
-        required (Get_Var(SPARE, NO_STEPS, rule, context));
+        require (
+          Get_Var(SPARE, NO_STEPS, rule, context)
+        );
         if (Is_Antiform(SPARE))
             panic (Error_Bad_Antiform(SPARE));
         rule = Known_Element(SPARE);
@@ -1201,7 +1228,9 @@ static Result(Zero) Handle_Seek_Rule_Dont_Update_Begin(
 // position if the seek appears to be a "separate rule" in its own right.
 //
 #define HANDLE_SEEK_RULE_UPDATE_BEGIN(f,rule,context) \
-    required (Handle_Seek_Rule_Dont_Update_Begin((L), (rule), (context))); \
+    require ( \
+      Handle_Seek_Rule_Dont_Update_Begin((L), (rule), (context)) \
+    ); \
     if (not (P_FLAGS & PF_STATE_MASK)) \
         begin = P_POS;
 
@@ -1474,7 +1503,9 @@ DECLARE_NATIVE(SUBPARSE)
                     Derelativize(OUT, P_RULE, P_RULE_BINDING);
                 }
 
-                Value* out = require (Decay_If_Unstable(OUT));
+                require (
+                  Value* out = Decay_If_Unstable(OUT)
+                );
                 if (Is_Integer(out)) {
                     mincount = Int32s(out, 0);
                     maxcount = Int32s(out, 0);
@@ -1608,7 +1639,9 @@ DECLARE_NATIVE(SUBPARSE)
                     panic (Cell_Error(eval));
                 }
 
-                required (Decay_If_Unstable(eval));
+                require (
+                  Decay_If_Unstable(eval)
+                );
                 if (Is_Antiform(eval))
                     panic (Error_Bad_Antiform(eval));
 
@@ -1635,9 +1668,12 @@ DECLARE_NATIVE(SUBPARSE)
 
                 FETCH_NEXT_RULE(L);
 
-                Value* condition = require (Decay_If_Unstable(eval));
-
-                bool cond = require (Test_Conditional(condition));
+                require (
+                  Value* condition = Decay_If_Unstable(eval)
+                );
+                require (
+                  bool cond = Test_Conditional(condition)
+                );
                 if (cond)
                     goto pre_rule;
 
@@ -1763,7 +1799,9 @@ DECLARE_NATIVE(SUBPARSE)
                 assert(Is_Word(rule));  // word - some other variable
 
                 if (rule != P_SAVE) {
-                    required (Get_Parse_Value(P_SAVE, rule, P_RULE_BINDING));
+                    require (
+                      Get_Parse_Value(P_SAVE, rule, P_RULE_BINDING)
+                    );
 
                     rule = P_SAVE;
                 }
@@ -1771,10 +1809,13 @@ DECLARE_NATIVE(SUBPARSE)
         }
     }
     else if (Is_Tuple(rule)) {
-        Value* spare = require (Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING));
-
+        require (
+          Value* spare = Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING)
+        );
         if (Is_Datatype(spare)) {
-            required (Init_Typechecker(u_cast(Value*, P_SAVE), spare));
+            require (
+              Init_Typechecker(u_cast(Value*, P_SAVE), spare)
+            );
             LIFT_BYTE(spare) = NOQUOTE_2;
             assert(Is_Frame(spare));
             rule = Known_Element(spare);
@@ -1785,8 +1826,8 @@ DECLARE_NATIVE(SUBPARSE)
             rule = Copy_Cell(P_SAVE, Known_Element(spare));
     }
     else if (Is_Path(rule)) {
-        Value* spare = require (
-            Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING)
+        require (
+          Value* spare = Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING)
         );
 
         if (not Is_Action(spare))
@@ -1817,7 +1858,9 @@ DECLARE_NATIVE(SUBPARSE)
             else
                 panic ("SET-WORD! works with <HERE> tag in PARSE3");
 
-            required (Handle_Mark_Rule(L, quoted_set_or_copy_word));
+            require (
+              Handle_Mark_Rule(L, quoted_set_or_copy_word)
+            );
             goto pre_rule;
         }
 
@@ -1912,8 +1955,9 @@ DECLARE_NATIVE(SUBPARSE)
                     panic (Error_Parse3_End());
 
                 if (subrule == nullptr) {  // capture only on iteration #1
-                    required (Get_Parse_Value(P_SAVE, P_RULE, P_RULE_BINDING));
-
+                    require (
+                      Get_Parse_Value(P_SAVE, P_RULE, P_RULE_BINDING)
+                    );
                     subrule = P_SAVE;
                     FETCH_NEXT_RULE(L);
                 }
@@ -1921,10 +1965,14 @@ DECLARE_NATIVE(SUBPARSE)
                 bool is_thru = (cmd == SYM_THRU);
 
                 if (Is_Block(subrule)) {
-                    i = require (To_Thru_Block_Rule(L, subrule, is_thru));
+                    require (
+                      i = To_Thru_Block_Rule(L, subrule, is_thru)
+                    );
                 }
                 else {
-                    i = require (To_Thru_Non_Block_Rule(L, subrule, is_thru));
+                    require (
+                      i = To_Thru_Non_Block_Rule(L, subrule, is_thru)
+                    );
                 }
                 break; }
 
@@ -1946,8 +1994,10 @@ DECLARE_NATIVE(SUBPARSE)
                 if (cmp == input_tail)
                     i = END_FLAG;
                 else {
-                    bool equal = require (
-                        Equal_Values(cmp, subrule, did (P_FLAGS & AM_FIND_CASE))
+                    require (
+                      bool equal = Equal_Values(
+                        cmp, subrule, did (P_FLAGS & AM_FIND_CASE)
+                      )
                     );
                     if (equal)
                         i = P_POS + 1;
@@ -1961,8 +2011,9 @@ DECLARE_NATIVE(SUBPARSE)
                     panic (Error_Parse3_End());
 
                 if (subrule == nullptr) {  // capture only on iteration #1
-                    required (Get_Parse_Value(P_SAVE, P_RULE, P_RULE_BINDING));
-
+                    require (
+                      Get_Parse_Value(P_SAVE, P_RULE, P_RULE_BINDING)
+                    );
                     subrule = P_SAVE;
                     FETCH_NEXT_RULE(L);
                 }
@@ -1992,7 +2043,8 @@ DECLARE_NATIVE(SUBPARSE)
                     break;
                 }
 
-                Level* sub = require (Make_Level_At_Inherit_Const(
+                require (
+                  Level* sub = Make_Level_At_Inherit_Const(
                     &Action_Executor,  // !!! Parser_Executor?
                     subrule, P_RULE_BINDING,
                     LEVEL_MASK_NONE
@@ -2040,8 +2092,8 @@ DECLARE_NATIVE(SUBPARSE)
             }
         }
         else if (Is_Block(rule)) {  // word fetched block, or inline block
-
-            Level* sub = require (Make_Level_At_Core(
+            require (
+              Level* sub = Make_Level_At_Core(
                 &Action_Executor,  // !!! Parser_Executor?
                 rule, rule_binding(),
                 LEVEL_MASK_NONE
@@ -2088,7 +2140,9 @@ DECLARE_NATIVE(SUBPARSE)
         else {
             // Parse according to datatype
 
-            i = require (Parse_One_Rule(L, P_POS, rule));
+            require (
+              i = Parse_One_Rule(L, P_POS, rule)
+            );
             if (i == THROWN_FLAG)
                 return THROWN;
         }
@@ -2184,9 +2238,12 @@ DECLARE_NATIVE(SUBPARSE)
                     );
                 }
                 else if (P_HEART == TYPE_BLOB) {
-                    Binary* bin = require (
-                        Copy_Binary_At_Len(P_INPUT_BINARY, begin, count)
-                    );
+                    require (
+                      Binary* bin = Copy_Binary_At_Len(
+                        P_INPUT_BINARY,
+                        begin,
+                        count
+                    ));
 
                     Init_Blob(OUT, bin);
                 }
@@ -2201,8 +2258,8 @@ DECLARE_NATIVE(SUBPARSE)
                     // have no scheme:// at their head, or getting <bc>
                     // out of <abcd> as if `<b` or `c>` had been found.
                     //
-                    Strand* copy = require (
-                        Copy_String_At_Limit(begin_val, &count)
+                    require (
+                      Strand* copy = Copy_String_At_Limit(begin_val, &count)
                     );
                     Init_Text(OUT, copy);
                 }
@@ -2270,8 +2327,9 @@ DECLARE_NATIVE(SUBPARSE)
 
                 // new value...comment said "CHECK FOR QUOTE!!"
 
-                required (Get_Parse_Value(P_SAVE, P_RULE, P_RULE_BINDING));
-
+                require (
+                  Get_Parse_Value(P_SAVE, P_RULE, P_RULE_BINDING)
+                );
                 rule = P_SAVE;
                 FETCH_NEXT_RULE(L);
 
@@ -2294,7 +2352,9 @@ DECLARE_NATIVE(SUBPARSE)
                 )){
                     goto return_thrown;
                 }
-                required (Decay_If_Unstable(atom_evaluated));
+                require (
+                  Decay_If_Unstable(atom_evaluated)
+                );
 
             } handle_result: {
 
@@ -2309,7 +2369,8 @@ DECLARE_NATIVE(SUBPARSE)
                     // to happen in rule processing if GROUP!s execute.
                     //
                     Source* a = Cell_Array_Ensure_Mutable(ARG(POSITION));
-                    P_POS = require (Modify_Array(
+                    require (
+                      P_POS = Modify_Array(
                         a,
                         begin,
                         (P_FLAGS & PF_CHANGE)
@@ -2326,7 +2387,8 @@ DECLARE_NATIVE(SUBPARSE)
 
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
 
-                    P_POS = require (Modify_String_Or_Blob(  // checks readonly
+                    require (
+                      P_POS = Modify_String_Or_Blob(  // checks readonly
                         ARG(POSITION),
                         (P_FLAGS & PF_CHANGE)
                             ? SYM_CHANGE
@@ -2427,7 +2489,8 @@ DECLARE_NATIVE(PARSE3)
 
     assert(Any_Series(input));
 
-    Level* sub = require (Make_Level_At(
+    require (
+      Level* sub = Make_Level_At(
         &Action_Executor,  // !!! Parser_Executor?
         rules,
         LEVEL_MASK_NONE

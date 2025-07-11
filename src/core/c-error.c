@@ -376,7 +376,7 @@ void Set_Location_Of_Error(
     Init_Block(Slot_Init_Hack(&vars->where), Pop_Source_From_Stack(base));
 
     DECLARE_VALUE (nearest);
-    required (Read_Slot(nearest, &vars->nearest));
+    require (Read_Slot(nearest, &vars->nearest));
 
     if (Is_Nulled(nearest))  // don't override scanner data [4]
         Init_Near_For_Level(Slot_Init_Hack(&vars->nearest), where);
@@ -440,7 +440,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
             root_error // parent
         );
 
-        Use* use = require (Alloc_Use_Inherits(List_Binding(arg)));
+        require (
+          Use* use = Alloc_Use_Inherits(List_Binding(arg))
+        );
         Init_Warning(Stub_Cell(use), varlist);
 
         Tweak_Cell_Binding(arg, use);  // arg is GC protected, so Use is too
@@ -470,20 +472,22 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
         /*assert(Is_Nulled(&vars->type));*/  // TEMP! IGNORE
         /*assert(Is_Nulled(&vars->id));*/
 
-        Strand* copy = require (Copy_String_At(arg));
+        require (
+          Strand* copy = Copy_String_At(arg)
+        );
         Init_Text(Slot_Init_Hack(&vars->message), copy);
     }
     else
         return fail (arg);
 
     DECLARE_VALUE (id);
-    required (Read_Slot(id, &vars->id));
+    require (Read_Slot(id, &vars->id));
 
     DECLARE_VALUE (type);
-    required (Read_Slot(type, &vars->type));
+    require (Read_Slot(type, &vars->type));
 
     DECLARE_VALUE (message);
-    required (Read_Slot(message, &vars->message));
+    require (Read_Slot(message, &vars->message));
 
     // Validate the error contents, and reconcile message template and ID
     // information with any data in the object.  Do this for the IS_STRING
@@ -811,9 +815,13 @@ Error* Error_Bad_Func_Def(const Element* spec, const Element* body)
     // error that existed before refactoring code out of Make_Function().
 
     Source* a = Make_Source_Managed(2);
-    Sink(Element) cell = require (Alloc_Tail_Array(a));
+    require (
+      Sink(Element) cell = Alloc_Tail_Array(a)
+    );
     Copy_Cell(cell, spec);
-    cell = require (Alloc_Tail_Array(a));
+    require (
+      cell = Alloc_Tail_Array(a)
+    );
     Copy_Cell(cell, body);
 
     DECLARE_ELEMENT (def);
@@ -1105,7 +1113,7 @@ Error* Error_Phase_Arg_Type(
     ERROR_VARS* vars = ERR_VARS(error);
 
     DECLARE_VALUE (id);
-    required (Read_Slot(id, &vars->id));
+    require (Read_Slot(id, &vars->id));
 
     assert(Is_Word(id));
     assert(Word_Id(id) == SYM_EXPECT_ARG);
@@ -1142,7 +1150,7 @@ Error* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 Error* Error_Bad_Argless_Refine(const Key* key)
 {
     DECLARE_ELEMENT (refinement);
-    assumed (Refinify(Init_Word(refinement, Key_Symbol(key))));
+    assume (Refinify(Init_Word(refinement, Key_Symbol(key))));
     return Error_Bad_Argless_Refine_Raw(refinement);
 }
 
@@ -1380,7 +1388,7 @@ static void Mold_Element_Limit(Molder* mo, Element* v, REBLEN limit)
         Term_Strand_Len_Size(str, start_len + limit, at - Strand_Head(str));
         Free_Bookmarks_Maybe_Null(str);
 
-        required (Append_Ascii(str, "..."));
+        require (Append_Ascii(str, "..."));
     }
 }
 
@@ -1404,33 +1412,33 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     ERROR_VARS *vars = ERR_VARS(error);
 
     DECLARE_VALUE (type);
-    required (Read_Slot(type, &vars->type));
+    require (Read_Slot(type, &vars->type));
 
     DECLARE_VALUE (message);
-    required (Read_Slot(message, &vars->message));
+    require (Read_Slot(message, &vars->message));
 
     DECLARE_VALUE (where);
-    required (Read_Slot(where, &vars->where));
+    require (Read_Slot(where, &vars->where));
 
     DECLARE_VALUE (nearest);
-    required (Read_Slot(nearest, &vars->nearest));
+    require (Read_Slot(nearest, &vars->nearest));
 
     DECLARE_VALUE (file);
-    required (Read_Slot(file, &vars->file));
+    require (Read_Slot(file, &vars->file));
 
     DECLARE_VALUE (line);
-    required (Read_Slot(line, &vars->line));
+    require (Read_Slot(line, &vars->line));
 
     // Form: ** <type> Error:
     //
-    required (Append_Ascii(mo->strand, "** "));
+    require (Append_Ascii(mo->strand, "** "));
     if (Is_Word(type)) {  // has a <type>
         Append_Spelling(mo->strand, Word_Symbol(type));
         Append_Codepoint(mo->strand, ' ');
     }
     else
         assert(Is_Nulled(type));  // no <type>
-    required (Append_Ascii(mo->strand, RM_ERROR_LABEL));  // "Error:"
+    require (Append_Ascii(mo->strand, RM_ERROR_LABEL));  // "Error:"
 
     // Append: error message ARG1, ARG2, etc.
     if (Is_Block(message)) {
@@ -1440,7 +1448,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     else if (Is_Text(message))
         Form_Element(mo, cast(Element*, message));
     else {
-        required (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
+        require (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
     }
 
     // Form: ** Where: function
@@ -1450,18 +1458,18 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     ){
         if (Is_Block(where)) {
             Append_Codepoint(mo->strand, '\n');
-            required (Append_Ascii(mo->strand, RM_ERROR_WHERE));
+            require (Append_Ascii(mo->strand, RM_ERROR_WHERE));
             Mold_Element(mo, cast(Element*, where));  // want {fence} shown
         }
         else {
-            required (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
+            require (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
         }
     }
 
     // Form: ** Near: location
     if (not Is_Nulled(nearest)) {
         Append_Codepoint(mo->strand, '\n');
-        required (Append_Ascii(mo->strand, RM_ERROR_NEAR));
+        require (Append_Ascii(mo->strand, RM_ERROR_NEAR));
 
         if (Is_Text(nearest)) {
             //
@@ -1476,7 +1484,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
         else if (Any_List(nearest) or Is_Path(nearest))
             Mold_Element_Limit(mo, cast(Element*, nearest), 60);
         else {
-            required (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
+            require (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
         }
     }
 
@@ -1489,22 +1497,22 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     //
     if (not Is_Nulled(file)) {
         Append_Codepoint(mo->strand, '\n');
-        required (Append_Ascii(mo->strand, RM_ERROR_FILE));
+        require (Append_Ascii(mo->strand, RM_ERROR_FILE));
         if (Is_File(file))
             Form_Element(mo, cast(Element*, file));
         else {
-            required (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
+            require (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
         }
     }
 
     // Form: ** Line: line-number
     if (not Is_Nulled(line)) {
         Append_Codepoint(mo->strand, '\n');
-        required (Append_Ascii(mo->strand, RM_ERROR_LINE));
+        require (Append_Ascii(mo->strand, RM_ERROR_LINE));
         if (Is_Integer(line))
             Form_Element(mo, cast(Element*, line));
         else {
-            required (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
+            require (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
         }
     }
 

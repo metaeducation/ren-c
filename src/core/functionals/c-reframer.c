@@ -90,7 +90,8 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     StackIndex base,
     bool error_on_deferred
 ){
-    Level* L = require (Make_Level(
+    require (
+      Level* L = Make_Level(
         &Action_Executor,
         feed,
         LEVEL_MASK_NONE  // FULFILL_ONLY added after Push_Action()
@@ -101,7 +102,9 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     if (error_on_deferred)  // can't deal with ELSE/THEN [1]
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX;
 
-    required (Push_Action(L, action, PREFIX_0));
+    require (
+      Push_Action(L, action, PREFIX_0)
+    );
 
     ParamList* varlist = L->varlist;  // Drop_Action() will null out L->varlist
 
@@ -160,7 +163,9 @@ Result(Zero) Init_Invokable_From_Feed(
     StackIndex base = TOP_INDEX;
 
     if (Is_Word(v) or Is_Tuple(v) or Is_Path(v) or Is_Chain(v)) {
-        required (Get_Var(out, NO_STEPS, v, Feed_Binding(feed)));
+        require (
+          Get_Var(out, NO_STEPS, v, Feed_Binding(feed))
+        );
     }
     else
         Derelativize(out, v, Feed_Binding(feed));
@@ -235,8 +240,9 @@ Result(Zero) Init_Frame_From_Feed(
     Feed* feed,
     bool error_on_deferred
 ){
-    trapped (Init_Invokable_From_Feed(out, first, feed, error_on_deferred));
-
+    trap (
+      Init_Invokable_From_Feed(out, first, feed, error_on_deferred)
+    );
     if (Is_Frame(out))
         return zero;
 
@@ -298,7 +304,8 @@ Bounce Reframer_Dispatcher(Level* const L)
     bool error_on_deferred = true;
     Sink(Value) spare = SPARE;
 
-    required (Init_Invokable_From_Feed(
+    require (
+      Init_Invokable_From_Feed(
         spare,
         nullptr,
         L->feed,

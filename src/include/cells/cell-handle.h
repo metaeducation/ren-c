@@ -191,11 +191,12 @@ INLINE void Init_Handle_Managed_Common(
     uintptr_t length,
     Option(HandleCleaner*) cleaner
 ){
-    Stub* stub = require (Make_Untracked_Stub(
+    require (
+      Stub* stub = Make_Untracked_Stub(
         FLAG_FLAVOR(FLAVOR_HANDLE)
             | STUB_FLAG_CLEANS_UP_BEFORE_GC_DECAY  // calls the HandleCleaner
-            | BASE_FLAG_MANAGED));
-
+            | BASE_FLAG_MANAGED
+    ));
     Tweak_Handle_Cleaner(stub, cleaner);  // FLAVOR_HANDLE in Diminish_Stub()
 
     Sink(Element) single = Stub_Cell(stub);

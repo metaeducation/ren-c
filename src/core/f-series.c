@@ -465,12 +465,15 @@ Result(bool) Equal_Values(const Value* s, const Value* t, bool strict)
     // the idea of duplicating the work, but it is undoubtedly a bit more
     // costly to make and dispatch the frame, even if done elegantly.
 
-    Level* const L = require (Make_End_Level(
+    require (
+      Level* const L = Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
     ));
 
-    required (Push_Action(L, LIB(EQUAL_Q), PREFIX_0));
+    require (
+      Push_Action(L, LIB(EQUAL_Q), PREFIX_0)
+    );
 
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_EQUAL_Q;
@@ -490,7 +493,9 @@ Result(bool) Equal_Values(const Value* s, const Value* t, bool strict)
     if (Is_Error(atom_out))
         return false;
 
-    Value* out = require (Decay_If_Unstable(atom_out));
+    require (
+      Value* out = Decay_If_Unstable(atom_out)
+    );
     return Cell_Logic(out);
 }
 
@@ -529,12 +534,15 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     // the idea of duplicating the work, but it is undoubtedly a bit more
     // costly to make and dispatch the frame, even if done elegantly.
 
-    Level* const L = require (Make_End_Level(
+    require (
+      Level* const L = Make_End_Level(
         &Action_Executor,
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
     ));
 
-    required (Push_Action(L, LIB(LESSER_Q), PREFIX_0));
+    require (
+      Push_Action(L, LIB(LESSER_Q), PREFIX_0)
+    );
 
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_LESSER_Q;
@@ -551,7 +559,9 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     if (Is_Error(atom_out))
         return false;
 
-    Value* out = require (Decay_If_Unstable(atom_out));
+    require (
+      Value* out = Decay_If_Unstable(atom_out)
+    );
     *lesser = Cell_Logic(out);
     return true;
 }
@@ -572,7 +582,9 @@ REBLEN Find_In_Array_Simple(
 
     bool strict = false;
     for (; index < Array_Len(array); index++) {
-        bool equal = require (Equal_Values(value + index, target, strict));
+        require (
+          bool equal = Equal_Values(value + index, target, strict)
+        );
         if (equal)
             return index;
     }

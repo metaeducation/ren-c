@@ -212,8 +212,8 @@ Source* Expanded_Combinator_Spec(const Element* original)
 
     const void* packed[2] = {utf8, rebEND};  // BEWARE: Stack, can't Trampoline!
 
-    Feed* feed = require (
-        Make_Variadic_Feed(packed, nullptr, FEED_MASK_DEFAULT)
+    require (
+      Feed* feed = Make_Variadic_Feed(packed, nullptr, FEED_MASK_DEFAULT)
     );
     Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Panic(feed);
@@ -259,7 +259,8 @@ DECLARE_NATIVE(COMBINATOR)
     Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
     VarList* adjunct;
-    ParamList* paramlist = require (Make_Paramlist_Managed(
+    require (
+      ParamList* paramlist = Make_Paramlist_Managed(
         &adjunct,
         expanded_spec,
         MKF_MASK_NONE,
@@ -424,7 +425,8 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
 
     VarList* state = Cell_Varlist(ARG(STATE));
 
-    bool cased = require (Test_Conditional(  // or trust it's a LOGIC ?
+    require (
+      bool cased = Test_Conditional(  // or trust it's a LOGIC ?
         Slot_Hack(Varlist_Slot(state, IDX_UPARSE_PARAM_CASE))
     ));
 
@@ -436,7 +438,9 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
         const Element* at = List_At(&tail, input);
         if (at == tail)  // no item to match against
             return NULLED;
-        bool equal = require (Equal_Values(at, v, true));
+        require (
+          bool equal = Equal_Values(at, v, true)
+        );
         if (not equal)  // not case-insensitive equal
             return NULLED;
 
@@ -521,7 +525,9 @@ DECLARE_NATIVE(SOME_COMBINATOR)
     //    removing frames from the loops list in usermode.  Mirror that
     //    limitation here in the native implementation for now.
 
-    Sink(Element) loop_last = require (Alloc_Tail_Array(loops));
+    require (
+      Sink(Element) loop_last = Alloc_Tail_Array(loops)
+    );
     Init_Frame(loop_last, Level_Varlist(level_), CANON(SOME), NONMETHOD);
 
     Push_Parser_Sublevel(OUT, remainder, parser, input);
@@ -736,7 +742,8 @@ static bool Combinator_Param_Hook(
             Value* parser = rebValue(
                 "[_", temp, "]: parsify", rebQ(ARG(STATE)), ARG(RULES)
             );
-            required (Get_Var(
+            require (
+              Get_Var(
                 ARG(RULES), NO_STEPS, temp, SPECIFIED
             ));
             Copy_Cell(var, parser);
