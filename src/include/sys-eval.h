@@ -131,7 +131,7 @@ INLINE Result(Element*) Refinify_Pushed_Refinement(Element* e) {
 // evaluation step.  Callsites that use it should be rewritten to yield to
 // the trampoline.
 //
-INLINE bool Eval_Step_Throws(Atom* out, Level* L) {
+INLINE bool Eval_Step_Throws(Init(Atom) out, Level* L) {
     assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
 
     assert(
@@ -153,7 +153,7 @@ INLINE bool Eval_Step_Throws(Atom* out, Level* L) {
 // trampoline.
 //
 INLINE bool Eval_Any_List_At_Core_Throws(
-    Atom* out,
+    Init(Atom) out,
     Flags flags,
     const Element* list,
     Context* context
@@ -179,7 +179,7 @@ INLINE bool Eval_Any_List_At_Core_Throws(
 // trampoline.
 //
 INLINE bool Eval_Element_Core_Throws(
-    Atom* out,
+    Init(Atom) out,
     Flags flags,
     const Element* value,  // e.g. a BLOCK! here would just evaluate to itself!
     Context* context

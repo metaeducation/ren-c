@@ -258,7 +258,11 @@ bool Specialize_Action_Throws(
         //
         Destruct_Binder_Core(binder);
 
-        bool threw = Eval_Any_List_At_Throws(out, unwrap def, SPECIFIED);
+        bool threw = Eval_Any_List_At_Throws(
+            u_cast(Atom*, out),  // use as temporary output
+            unwrap def,
+            SPECIFIED
+        );
 
         if (threw) {
             Drop_Data_Stack_To(lowest_stackindex);

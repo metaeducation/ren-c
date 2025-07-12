@@ -347,6 +347,18 @@ struct NEEDFUL_NODISCARD ResultWrapper<Zero> {
 
 //=//// RESULT EXTRACTOR //////////////////////////////////////////////////=//
 //
+// 1. The error is a bit opaque if you write:
+//
+//        trap (
+//           Some_Function();
+//        );
+//
+//    ignoring returned value of type needful::ResultWrapper<RebolValueStruct*>
+//    declared with attribute 'nodiscard'
+//
+//    We try to give you a hint what's going on with the comment, if you
+//    read on to the error about the operator not getting its left side.
+//
 
 struct ResultExtractor {};
 
@@ -384,4 +396,4 @@ static constexpr ResultExtractor g_result_extractor{};
 
 #undef needful_postfix_extract_result
 #define needful_postfix_extract_result \
-    /* _stmt_ */  >>  needful::g_result_extractor
+    /* ; <-- ERROR? DON'T PUT SEMICOLON! [1] */ >> needful::g_result_extractor

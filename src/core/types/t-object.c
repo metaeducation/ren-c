@@ -555,10 +555,11 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
         Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // keeps context alive
 
         bool threw = Eval_Any_List_At_Throws(SPARE, arg, SPECIFIED);
-        UNUSED(SPARE);  // result disregarded
-
         if (threw)
             return BOUNCE_THROWN;
+
+        if (Is_Error(SPARE))  // e.g. `make object! [1 / 0]`
+            panic (Cell_Error(SPARE));
 
         return Init_Object(OUT, ctx);
     }

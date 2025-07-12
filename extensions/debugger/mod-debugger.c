@@ -52,7 +52,7 @@
 // this is not implemented.
 //
 bool Do_Breakpoint_Throws(
-    Sink(Value) out,
+    Sink(Atom) out,
     bool interrupted,  // Ctrl-C (as opposed to a BREAKPOINT)
     const Value* paused
 ){

@@ -293,9 +293,15 @@ Result(Value*) Get_Chain_Push_Refinements(
 
     // The first item must resolve to an action.
 
+    Atom* atom_out = u_cast(Atom*, out);
+
     if (Is_Group(head)) {  // historical Rebol didn't allow group at head
-        if (Eval_Value_Throws(out, head, derived))
+        if (Eval_Value_Throws(atom_out, head, derived))
             panic (Error_No_Catch_For_Throw(TOP_LEVEL));
+
+        require (
+          Decay_If_Unstable(atom_out)
+        );
     }
     else if (Is_Tuple(head)) {  // .member-function:refinement is legal
         DECLARE_ELEMENT (steps);
@@ -435,10 +441,13 @@ Result(Zero) Get_Path_Push_Refinements(Level* level_)
 
     Sink(Value) spare_left = SPARE;
     if (Is_Group(at)) {
-        if (Eval_Value_Throws(spare_left, at, binding)) {
+        if (Eval_Value_Throws(SPARE, at, binding)) {
             e = Error_No_Catch_For_Throw(TOP_LEVEL);
             goto return_error;
         }
+        require (
+          Decay_If_Unstable(SPARE)
+        );
     }
     else if (Is_Tuple(at)) {
         DECLARE_ELEMENT (steps);
