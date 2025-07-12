@@ -2625,17 +2625,8 @@ Bounce Scanner_Executor(Level* const L) {
 
 } case TOKEN_FILE: { /////////////////////////////////////////////////////////
 
-    if (mo->base.size == Strand_Size(mo->strand)) {  // % is WORD!
-        assume (
-          const Symbol* symbol = Intern_Utf8_Managed(b_cast("%"), 1)
-        );
-        Init_Word(PUSH(), symbol);
-        Drop_Mold(mo);
-    }
-    else {
-        Strand* s = Pop_Molded_Strand(mo);
-        Init_File(PUSH(), s);
-    }
+    Strand* s = Pop_Molded_Strand(mo);
+    Init_File(PUSH(), s);
     goto lookahead;
 
 } case TOKEN_EMAIL: { ////////////////////////////////////////////////////////
