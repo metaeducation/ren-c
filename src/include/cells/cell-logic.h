@@ -277,7 +277,11 @@ INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
 //    falsey?  Not known since it's not in use yet.  But generally right now
 //    it looks like ~null~ and ~okay~ the only things to consider, and if
 //    anything else is tested it errors.
-
+//
+// 3. At one time, TRASH! was considered to be an error to test conditionally.
+//    That didn't seem very useful, but stopping it in comparisons was deemed
+//    to be useful.  So trash is truthy now.
+//
 INLINE Result(bool) Test_Conditional(
     const Value* v  // Not Atom*, has to be stable... no VOID [1]
 ){
@@ -289,8 +293,7 @@ INLINE Result(bool) Test_Conditional(
     if (LIFT_BYTE(v) != ANTIFORM_1)
         return true;  // all non-antiforms (including quasi/quoted) are truthy
 
-    if (Heart_Of(v) == TYPE_RUNE)  // trash--not legal to test conditionally
-        return fail (Error_Trash_Condition_Raw(v));
+    possibly(Heart_Of(v) == TYPE_RUNE);  // trash--now truthy [3]
 
     return true;  // !!! are all non-word/non-trash stable antiforms truthy?
 }

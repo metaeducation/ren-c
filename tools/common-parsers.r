@@ -103,7 +103,7 @@ export proto-parser: context [
             ahead is-fileheader
             eoh: <here>
             (
-                if set? $emit-fileheader [
+                if not trash? get:any $emit-fileheader [
                     emit-fileheader data
                 ]
             )
@@ -124,7 +124,7 @@ export proto-parser: context [
                 opt some [not ahead newline c-pp-token]
             ] eol
             (
-                if set? $emit-directive [
+                if not trash? get:any $emit-directive [
                     emit-directive data
                 ]
             )
