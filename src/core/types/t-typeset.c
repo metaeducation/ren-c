@@ -342,7 +342,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -428,14 +428,14 @@ Element* Decorate_According_To_Parameter(
 //
 //      return: [element?]
 //      parameter [parameter!]
-//      element [element?]
+//      value [element?]
 //  ]
 //
 DECLARE_NATIVE(DECORATE_PARAMETER)
 {
     INCLUDE_PARAMS_OF_DECORATE_PARAMETER;
 
-    Element* element = Element_ARG(ELEMENT);
+    Element* element = Element_ARG(VALUE);
     Element* param = Element_ARG(PARAMETER);
     return COPY(Decorate_According_To_Parameter(element, param));
 }

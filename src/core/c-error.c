@@ -1397,7 +1397,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 

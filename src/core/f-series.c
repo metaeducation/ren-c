@@ -132,7 +132,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Series)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* ser = Element_ARG(ELEMENT);
+    Element* ser = Element_ARG(VALUE);
     return Init_Integer(OUT, Series_Len_At(ser));
 }
 
@@ -141,7 +141,7 @@ IMPLEMENT_GENERIC(INDEX_OF, Any_Series)  // 1-based
 {
     INCLUDE_PARAMS_OF_INDEX_OF;
 
-    Element* ser = Element_ARG(ELEMENT);
+    Element* ser = Element_ARG(VALUE);
     return Init_Integer(OUT, SERIES_INDEX_UNBOUNDED(ser) + 1);
 }
 
@@ -150,7 +150,7 @@ IMPLEMENT_GENERIC(OFFSET_OF, Any_Series)  // 0-based
 {
     INCLUDE_PARAMS_OF_OFFSET_OF;
 
-    Element* ser = Element_ARG(ELEMENT);
+    Element* ser = Element_ARG(VALUE);
     return Init_Integer(OUT, SERIES_INDEX_UNBOUNDED(ser));
 }
 
@@ -161,14 +161,14 @@ IMPLEMENT_GENERIC(OFFSET_OF, Any_Series)  // 0-based
 //  "Get the head of a series (or other type...? HEAD of a PORT?)"
 //
 //      return: [null? fundamental?]
-//      element [<opt-out> fundamental?]
+//      value [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(HEAD_OF)
 {
     INCLUDE_PARAMS_OF_HEAD_OF;
 
-    return Dispatch_Generic(HEAD_OF, Element_ARG(ELEMENT), LEVEL);
+    return Dispatch_Generic(HEAD_OF, Element_ARG(VALUE), LEVEL);
 }
 
 
@@ -178,14 +178,14 @@ DECLARE_NATIVE(HEAD_OF)
 //  "Get the tail of a series (or other type...? TAIL of a PORT?)"
 //
 //      return: [null? fundamental?]
-//      element [<opt-out> fundamental?]
+//      value [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(TAIL_OF)
 {
     INCLUDE_PARAMS_OF_TAIL_OF;
 
-    return Dispatch_Generic(TAIL_OF, Element_ARG(ELEMENT), LEVEL);
+    return Dispatch_Generic(TAIL_OF, Element_ARG(VALUE), LEVEL);
 }
 
 
@@ -195,14 +195,14 @@ DECLARE_NATIVE(TAIL_OF)
 //  "Test if something is at the head position"
 //
 //      return: [logic?]
-//      element [<opt-out> fundamental?]
+//      value [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(HEAD_Q)
 {
     INCLUDE_PARAMS_OF_HEAD_Q;
 
-    Element* elem = Element_ARG(ELEMENT);
+    Element* elem = Element_ARG(VALUE);
     Plainify(elem);  // (head? @[a b c]) -> ~okay~
 
     return Dispatch_Generic(HEAD_Q, elem, LEVEL);
@@ -215,14 +215,14 @@ DECLARE_NATIVE(HEAD_Q)
 //  "Test if something is at the tail position"
 //
 //      return: [logic?]
-//      element [fundamental?]
+//      value [fundamental?]
 //  ]
 //
 DECLARE_NATIVE(TAIL_Q)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* elem = Element_ARG(ELEMENT);
+    Element* elem = Element_ARG(VALUE);
     Plainify(elem);  // (tail? @[]) -> ~okay~
 
     return Dispatch_Generic(TAIL_Q, elem, LEVEL);
@@ -235,14 +235,14 @@ DECLARE_NATIVE(TAIL_Q)
 //  "Test if something is past the tail position"
 //
 //      return: [logic?]
-//      element [fundamental?]
+//      value [fundamental?]
 //  ]
 //
 DECLARE_NATIVE(PAST_Q)
 {
     INCLUDE_PARAMS_OF_PAST_Q;
 
-    Element* elem = Element_ARG(ELEMENT);
+    Element* elem = Element_ARG(VALUE);
     Plainify(elem);  // (past? next of @[]) -> ~okay~
 
     return Dispatch_Generic(PAST_Q, elem, LEVEL);
@@ -253,7 +253,7 @@ IMPLEMENT_GENERIC(HEAD_OF, Any_Series)
 {
     INCLUDE_PARAMS_OF_HEAD_OF;
 
-    Element* ser = Element_ARG(ELEMENT);
+    Element* ser = Element_ARG(VALUE);
 
     Copy_Cell(OUT, ser);
     SERIES_INDEX_UNBOUNDED(OUT) = 0;
@@ -265,7 +265,7 @@ IMPLEMENT_GENERIC(TAIL_OF, Any_Series)
 {
     INCLUDE_PARAMS_OF_TAIL_OF;
 
-    Element* ser = Element_ARG(ELEMENT);
+    Element* ser = Element_ARG(VALUE);
 
     Copy_Cell(OUT, ser);
     SERIES_INDEX_UNBOUNDED(OUT) = Series_Len_Head(ser);
@@ -277,7 +277,7 @@ IMPLEMENT_GENERIC(HEAD_Q, Any_Series)
 {
     INCLUDE_PARAMS_OF_HEAD_Q;
 
-    Element* ser = Element_ARG(ELEMENT);
+    Element* ser = Element_ARG(VALUE);
 
     return LOGIC(SERIES_INDEX_UNBOUNDED(ser) == 0);
 }
@@ -287,7 +287,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Any_Series)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* ser = Element_ARG(ELEMENT);
+    Element* ser = Element_ARG(VALUE);
 
     return Init_Logic(
         OUT,
@@ -300,7 +300,7 @@ IMPLEMENT_GENERIC(PAST_Q, Any_Series)
 {
     INCLUDE_PARAMS_OF_PAST_Q;
 
-    Element* ser = Element_ARG(ELEMENT);
+    Element* ser = Element_ARG(VALUE);
 
     return Init_Logic(
         OUT,

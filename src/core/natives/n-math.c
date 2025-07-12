@@ -482,7 +482,7 @@ DECLARE_NATIVE(SHUFFLE)
 //  "Give back a shuffled copy of the argument (can be immutable)"
 //
 //      return: [element?]
-//      element [fundamental?]
+//      value [fundamental?]
 //      :secure "Returns a cryptographically secure random number"
 //      :part "Limits to a given length or position"
 //          [any-number? any-series?]
@@ -492,7 +492,7 @@ DECLARE_NATIVE(SHUFFLE_OF)
 {
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
-    Element* elem = cast(Element*, ARG(ELEMENT));
+    Element* elem = cast(Element*, ARG(VALUE));
     USED(Bool_ARG(SECURE));  // other args get passed via LEVEL
     USED(Bool_ARG(PART));
 

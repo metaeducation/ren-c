@@ -121,7 +121,7 @@ DECLARE_NATIVE(LOGICAL)
 //  "Tells you if the argument is the TRUE or FALSE word"
 //
 //      return: [logic?]
-//      element [<opt-out> element?]
+//      value [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(BOOLEAN_Q)
@@ -145,7 +145,7 @@ DECLARE_NATIVE(BOOLEAN_Q)
 //  "Tells you if the argument is the ON or OFF word"
 //
 //      return: [logic?]
-//      element [<opt-out> element?]
+//      value [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(ONOFF_Q)

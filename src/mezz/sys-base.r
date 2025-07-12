@@ -206,10 +206,10 @@ module: func [
         ^product: fail error
     ]
 
-    mod.quit: func [atom] [
+    mod.quit: func [value] [
         panic // [
             "Module finished init, no QUIT (do you want SYS.UTIL/EXIT?)"
-            blame: $atom
+            blame: $value
         ]
     ]
 

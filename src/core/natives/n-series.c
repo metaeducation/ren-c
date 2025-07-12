@@ -198,7 +198,7 @@ DECLARE_NATIVE(REVERSE)
 //  "Give a copy of the reversal of a value (works on immutable types)"
 //
 //      return: [fundamental?]
-//      element "At position if series"
+//      value "At position if series"
 //          [<opt-out> fundamental?]
 //      :part "Limits to a given length or position"
 //          [any-number? any-series?]

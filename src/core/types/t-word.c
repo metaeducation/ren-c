@@ -136,7 +136,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Word)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -157,7 +157,7 @@ IMPLEMENT_GENERIC(TO, Is_Word)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    USED(ARG(ELEMENT));  // deferred to other generic implementations
+    USED(ARG(VALUE));  // deferred to other generic implementations
 
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
@@ -218,7 +218,7 @@ IMPLEMENT_GENERIC(AS, Is_Word)
     require (
       Alias_Any_Word_As(
         OUT,
-        Element_ARG(ELEMENT),
+        Element_ARG(VALUE),
         Cell_Datatype_Builtin_Heart(ARG(TYPE))
     ));
 
@@ -230,7 +230,7 @@ IMPLEMENT_GENERIC(BINDING_OF, Is_Word)
 {
     INCLUDE_PARAMS_OF_BINDING_OF;
 
-    Element* any_word = Element_ARG(ELEMENT);
+    Element* any_word = Element_ARG(VALUE);
 
     if (not Try_Get_Binding_Of(OUT, any_word))
         return NULLED;

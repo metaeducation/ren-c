@@ -551,7 +551,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* vararg = Element_ARG(ELEMENT);
+    Element* vararg = Element_ARG(VALUE);
 
     if (Do_Vararg_Op_Maybe_End_Throws(
         OUT,
@@ -588,7 +588,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 

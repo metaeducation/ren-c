@@ -124,8 +124,8 @@ leaders: [
     moldify  ; early so PROBE() works as early as it can! (uses LOGIC?)
 
     ;... these all use LOGIC?
-    any-stable?
     any-atom?
+    any-stable?  ; uses ANY-ATOM?
     null?
     space?
     quasar?

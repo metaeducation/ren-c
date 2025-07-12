@@ -32,7 +32,7 @@
 //  "Suppress escalation to PANIC from ERROR!s, by returning NULL"
 //
 //      return: [any-stable?]
-//      ^atom  ; e.g. TRY on a pack returns the pack
+//      ^value [any-atom?]  ; e.g. TRY on a pack returns the pack
 //  ]
 //
 DECLARE_NATIVE(TRY)
@@ -248,7 +248,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 //
 //      return: "Non-failure input, or product of processing failure"
 //          [any-atom?]  ; [1]
-//      ^atom "<deferred argument> Run branch if this is definitional fail"
+//      ^value "<deferred argument> Run branch if this is ERROR! antiform"
 //          [any-atom?]
 //      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch?]
@@ -268,7 +268,7 @@ DECLARE_NATIVE(EXCEPT)
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Atom* atom = Atom_ARG(ATOM);
+    Atom* atom = Atom_ARG(VALUE);
     Value* branch = ARG(BRANCH);
 
     if (not Is_Error(atom))
@@ -288,14 +288,14 @@ DECLARE_NATIVE(EXCEPT)
 //
 //      return: "Anything that wasn't an ERROR! antiform"
 //          [any-atom?]  ; [1]
-//      ^atom [any-atom?]
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(TRAP)
 {
     INCLUDE_PARAMS_OF_TRAP;
 
-    Atom* atom = Atom_ARG(ATOM);
+    Atom* atom = Atom_ARG(VALUE);
 
     if (not Is_Error(atom))
         return COPY(atom);  // pass thru any non-errors
@@ -325,14 +325,14 @@ DECLARE_NATIVE(TRAP)
 //
 //      return: "Anything that wasn't an ERROR! antiform"
 //          [any-atom?]
-//      ^atom [any-atom?]
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(REQUIRE)
 {
     INCLUDE_PARAMS_OF_REQUIRE;
 
-    Atom* atom = Atom_ARG(ATOM);
+    Atom* atom = Atom_ARG(VALUE);
 
     if (not Is_Error(atom))
         return COPY(atom);  // pass thru any non-errors
@@ -347,7 +347,7 @@ DECLARE_NATIVE(REQUIRE)
 //  "Tells you if argument is an ERROR! antiform, doesn't panic if it is"
 //
 //      return: [logic?]
-//      ^atom
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(ERROR_Q)

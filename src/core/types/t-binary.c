@@ -237,7 +237,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -562,7 +562,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_String_Type(to)) {  // (to text! binary) questionable [1]
@@ -704,7 +704,7 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* blob = Element_ARG(ELEMENT);
+    Element* blob = Element_ARG(VALUE);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     require (
@@ -868,7 +868,7 @@ IMPLEMENT_GENERIC(SIZE_OF, Is_Blob)
 {
     INCLUDE_PARAMS_OF_SIZE_OF;
 
-    Element* blob = Element_ARG(ELEMENT);
+    Element* blob = Element_ARG(VALUE);
 
     Size size;
     Blob_Size_At(&size, blob);
@@ -889,7 +889,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Blob)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    Element* blob = Element_ARG(ELEMENT);
+    Element* blob = Element_ARG(VALUE);
 
     Size size;
     const Byte* bp = Blob_Size_At(&size, blob);

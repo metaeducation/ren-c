@@ -419,9 +419,9 @@ bind construct [
         ; should maybe ban it as well (or at least make it inconvenient).  But
         ; do it for the moment since that is how it has worked in the past.
         ;
-        assert [pack? ^atom]
+        assert [pack? ^value]
         if where [
-            let mod: ensure module! atom  ; decaying fetch
+            let mod: ensure module! value  ; decaying fetch
             let exports: select (opt adjunct-of mod) 'exports
             proxy-exports where mod (opt exports)
         ]

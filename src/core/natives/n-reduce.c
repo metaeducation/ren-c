@@ -69,7 +69,7 @@ DECLARE_NATIVE(VETO)
 //  "Detect whether argument is an error with (id = 'veto)"
 //
 //      return: [logic?]
-//      ^atom
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(VETO_Q)

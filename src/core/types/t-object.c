@@ -819,7 +819,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -943,7 +943,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -1182,7 +1182,7 @@ IMPLEMENT_GENERIC(TO, Any_Context)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* context = Element_ARG(ELEMENT);
+    Element* context = Element_ARG(VALUE);
     Context* c = Cell_Context(context);
     Heart heart = Heart_Of_Builtin_Fundamental(context);
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
@@ -1342,7 +1342,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* context = Element_ARG(ELEMENT);
+    Element* context = Element_ARG(VALUE);
     Context* c = Cell_Context(context);
     possibly(Is_Port(context));
 
@@ -1358,14 +1358,14 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
 //  "Get the keys of a context or map (should be KEYS-OF)"
 //
 //      return: [null? block!]
-//      element [<opt-out> fundamental?]
+//      value [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(WORDS_OF)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
-    return Dispatch_Generic(WORDS_OF, Element_ARG(ELEMENT), LEVEL);
+    return Dispatch_Generic(WORDS_OF, Element_ARG(VALUE), LEVEL);
 }
 
 
@@ -1373,7 +1373,7 @@ IMPLEMENT_GENERIC(WORDS_OF, Any_Context)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
-    Element* context = Element_ARG(ELEMENT);
+    Element* context = Element_ARG(VALUE);
     require (
       Source* array = Context_To_Array(context, 1)
     );
@@ -1387,14 +1387,14 @@ IMPLEMENT_GENERIC(WORDS_OF, Any_Context)
 //  "Get the values of a context or map (may panic if context has antiforms)"
 //
 //      return: [null? block!]
-//      element [<opt-out> fundamental?]
+//      value [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(VALUES_OF)
 {
     INCLUDE_PARAMS_OF_VALUES_OF;
 
-    return Dispatch_Generic(VALUES_OF, Element_ARG(ELEMENT), LEVEL);
+    return Dispatch_Generic(VALUES_OF, Element_ARG(VALUE), LEVEL);
 }
 
 
@@ -1402,7 +1402,7 @@ IMPLEMENT_GENERIC(VALUES_OF, Any_Context)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
-    Element* context = Element_ARG(ELEMENT);
+    Element* context = Element_ARG(VALUE);
     require (
       Source* array = Context_To_Array(context, 1)
     );
@@ -1432,7 +1432,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Any_Context)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* context = Element_ARG(ELEMENT);
+    Element* context = Element_ARG(VALUE);
     Context* c = Cell_Context(context);
 
     if (Is_Stub_Sea(c))
@@ -1669,7 +1669,7 @@ IMPLEMENT_GENERIC(FILE_OF, Is_Frame)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    Element* frame = Element_ARG(ELEMENT);
+    Element* frame = Element_ARG(VALUE);
     Level* L;
     const Source* a;
     File_Line_Frame_Heuristic(&L, &a, frame);
@@ -1694,7 +1694,7 @@ IMPLEMENT_GENERIC(LINE_OF, Is_Frame)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
-    Element* frame = Element_ARG(ELEMENT);
+    Element* frame = Element_ARG(VALUE);
     Level* L;
     const Source* a;
     File_Line_Frame_Heuristic(&L, &a, frame);
@@ -1826,7 +1826,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
 
     if (LIFT_BYTE(v) != QUASIFORM_3) {

@@ -653,7 +653,7 @@ bool Typecheck_Coerce_Return(
 //  "RETURN, giving a result to the caller"
 //
 //      return: [<divergent>]
-//      ^atom [any-atom?]
+//      ^value [any-atom?]
 //      :run "Reuse stack level for another call (<redo> uses locals/args too)"
 //      ;   [<variadic> any-stable?]  ; would force this frame managed
 //  ]
@@ -684,7 +684,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]
 
-    Atom* atom = Atom_ARG(ATOM);
+    Atom* atom = Atom_ARG(VALUE);
 
     Level* return_level = LEVEL;  // Level of this RETURN call
 

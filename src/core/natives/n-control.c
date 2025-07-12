@@ -283,14 +283,14 @@ DECLARE_NATIVE(EITHER)
 //  "Test for NOT being a 'light' null (IF THEN? is prefix THEN)"
 //
 //      return: [logic?]
-//      ^atom [any-atom?]
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(THEN_Q)
 {
     INCLUDE_PARAMS_OF_THEN_Q;
 
-    Atom* atom = Atom_ARG(ATOM);
+    Atom* atom = Atom_ARG(VALUE);
     return LOGIC(not Is_Light_Null(atom));
 }
 
@@ -301,14 +301,14 @@ DECLARE_NATIVE(THEN_Q)
 //  "Test for being a 'light' null (`IF ELSE?` is prefix `ELSE`)"
 //
 //      return: [logic?]
-//      ^atom [any-atom?]
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(ELSE_Q)
 {
     INCLUDE_PARAMS_OF_ELSE_Q;
 
-    Atom* atom = Atom_ARG(ATOM);
+    Atom* atom = Atom_ARG(VALUE);
     return LOGIC(Is_Light_Null(atom));
 }
 
@@ -320,7 +320,7 @@ DECLARE_NATIVE(ELSE_Q)
 //
 //      return: "null if input is null, or branch result"
 //          [any-atom?]
-//      ^atom "<deferred argument> Run branch if this is not null"
+//      ^value "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
 //      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch?]
@@ -330,7 +330,7 @@ DECLARE_NATIVE(THEN)
 {
     INCLUDE_PARAMS_OF_THEN;
 
-    Atom* atom = Atom_ARG(ATOM);
+    Atom* atom = Atom_ARG(VALUE);
     Value* branch = ARG(BRANCH);
 
     if (Is_Light_Null(atom))
@@ -347,7 +347,7 @@ DECLARE_NATIVE(THEN)
 //
 //      return: "Input value if not null, or branch result"
 //          [any-atom?]
-//      ^atom "<deferred argument> Run branch if this is null"
+//      ^value "<deferred argument> Run branch if this is null"
 //          [any-atom?]
 //      @(branch) [<unrun> any-branch?]
 //  ]
@@ -356,7 +356,7 @@ DECLARE_NATIVE(ELSE)
 {
     INCLUDE_PARAMS_OF_ELSE;
 
-    Atom* atom = Atom_ARG(ATOM);
+    Atom* atom = Atom_ARG(VALUE);
     Value* branch = ARG(BRANCH);
 
     if (not Is_Light_Null(atom))
@@ -373,7 +373,7 @@ DECLARE_NATIVE(ELSE)
 //
 //      return: "The same value as input, regardless of if branch runs"
 //          [any-atom?]
-//      ^atom "<deferred argument> Run branch if this is not null"
+//      ^value "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
 //      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch?]
@@ -383,7 +383,7 @@ DECLARE_NATIVE(ALSO)
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    Atom* atom = Atom_ARG(ATOM);
+    Atom* atom = Atom_ARG(VALUE);
     Value* branch = ARG(BRANCH);
 
     enum {
@@ -1210,7 +1210,7 @@ DECLARE_NATIVE(DEFAULT)
 //          [any-stable?]
 //      @target "Word or tuple which might be set (or not)"
 //          [set-group? set-word? set-tuple?]  ; should do set-block!, etc [1]
-//      ^atom "Quantity used to overwrite the left if not null"
+//      ^value "Quantity used to overwrite the left if not null"
 //          [any-atom?]  ; to do set-block! etc. needs to take PACK!
 //  ]
 //
@@ -1223,7 +1223,7 @@ DECLARE_NATIVE(MAYBE)
     INCLUDE_PARAMS_OF_MAYBE;
 
     Element* target = Element_ARG(TARGET);
-    Atom* atom = Atom_ARG(ATOM);
+    Atom* atom = Atom_ARG(VALUE);
 
     if (Is_Error(atom))
         return COPY(atom);  // pass through but don't assign anything
@@ -1317,7 +1317,7 @@ DECLARE_NATIVE(CATCH_P)  // specialized to plain CATCH w/ NAME="THROW" in boot
 //  "Throws control back to a previous catch"
 //
 //      return: [<divergent>]
-//      ^atom "What CATCH will receive (unstable antiforms ok, e.g. RAISED?)"
+//      ^value "What CATCH will receive (unstable antiforms ok, e.g. ERROR!)"
 //          [any-atom?]
 //  ]
 //
@@ -1325,7 +1325,7 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_THROW;
 
-    Atom* atom = Atom_ARG(ATOM);
+    Atom* atom = Atom_ARG(VALUE);
 
     Level* throw_level = LEVEL;  // Level of this RETURN call
 

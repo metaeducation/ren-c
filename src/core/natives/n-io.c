@@ -52,7 +52,7 @@ DECLARE_NATIVE(FORM)
 //  "Stopgap concept for methodizing mold using new generics"
 //
 //      return: []  ; returning a string would be too slow to compound
-//      element [fundamental?]
+//      value [fundamental?]
 //      molder "Settings for the mold, including in progress series"
 //          [handle!]
 //      form "Do not put system delimiters on item"
@@ -66,7 +66,7 @@ DECLARE_NATIVE(MOLDIFY)
     USED(ARG(MOLDER));  // passed via LEVEL
     USED(ARG(FORM));
 
-    return Dispatch_Generic(MOLDIFY, Element_ARG(ELEMENT), LEVEL);
+    return Dispatch_Generic(MOLDIFY, Element_ARG(VALUE), LEVEL);
 }
 
 
@@ -77,7 +77,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Fundamental)  // catch-all for ExtraHeart*
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     UNUSED(ARG(FORM));
 
-    Element* custom = Element_ARG(ELEMENT);
+    Element* custom = Element_ARG(VALUE);
     /*assert(Heart_Of_Is_0(custom));*/  // !!! currently does HANDLE!
 
     Begin_Non_Lexical_Mold(mo, custom);

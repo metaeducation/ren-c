@@ -89,7 +89,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -715,7 +715,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* bset = Element_ARG(ELEMENT);
+    Element* bset = Element_ARG(VALUE);
 
     return Init_Integer(OUT, Binary_Len(VAL_BITSET(bset)) * 8);
 }
@@ -727,7 +727,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* bset = Element_ARG(ELEMENT);
+    Element* bset = Element_ARG(VALUE);
     return LOGIC(Binary_Len(VAL_BITSET(bset)) == 0);
 }
 

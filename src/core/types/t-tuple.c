@@ -273,7 +273,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* seq = Element_ARG(ELEMENT);
+    Element* seq = Element_ARG(VALUE);
 
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
@@ -435,7 +435,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* seq = Element_ARG(ELEMENT);
+    Element* seq = Element_ARG(VALUE);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     require (
@@ -543,7 +543,7 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_REVERSE_OF;
 
-    Element* seq = Element_ARG(ELEMENT);
+    Element* seq = Element_ARG(VALUE);
     Value* part = ARG(PART);
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
@@ -604,7 +604,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
-    Element* seq = Element_ARG(ELEMENT);
+    Element* seq = Element_ARG(VALUE);
     Value* part = ARG(PART);
 
     if (Bool_ARG(SECURE) or Bool_ARG(PART))
@@ -623,7 +623,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* seq = Element_ARG(ELEMENT);
+    Element* seq = Element_ARG(VALUE);
 
     return Init_Integer(OUT, Sequence_Len(seq));
 }
@@ -662,7 +662,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* c = Element_ARG(ELEMENT);
+    Element* c = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 

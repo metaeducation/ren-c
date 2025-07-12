@@ -586,7 +586,7 @@ Result(Element*) Unsingleheart_Sequence(Element* out)
 //  "If possible, convert a value to a SET-XXX! representation"
 //
 //      return: [null? any-set-value? set-word?]
-//      element [<opt-out> element?]
+//      value [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(SETIFY)
@@ -594,7 +594,7 @@ DECLARE_NATIVE(SETIFY)
     INCLUDE_PARAMS_OF_SETIFY;
 
     require (
-      Element* e = Setify(Element_ARG(ELEMENT))
+      Element* e = Setify(Element_ARG(VALUE))
     );
 
     return COPY(e);
@@ -607,7 +607,7 @@ DECLARE_NATIVE(SETIFY)
 //  "If possible, convert a value to a GET-XXX! representation"
 //
 //      return: [null? any-get-value? get-word?]
-//      element [<opt-out> element?]
+//      value [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(GETIFY)
@@ -615,7 +615,7 @@ DECLARE_NATIVE(GETIFY)
     INCLUDE_PARAMS_OF_GETIFY;
 
     require (
-      Element* e = Getify(Element_ARG(ELEMENT))
+      Element* e = Getify(Element_ARG(VALUE))
     );
 
     return COPY(e);
@@ -783,7 +783,7 @@ DECLARE_NATIVE(UNTIE)
 //  "Convert a value into its plain representation"
 //
 //      return: [null? plain?]
-//      element [<opt-out> element?]
+//      value [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(PLAIN)

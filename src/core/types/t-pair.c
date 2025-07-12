@@ -137,7 +137,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -253,7 +253,7 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_List_Type(to)) {

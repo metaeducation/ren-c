@@ -486,7 +486,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -760,7 +760,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* list = Element_ARG(ELEMENT);
+    Element* list = Element_ARG(VALUE);
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_List_Type(to)) {
@@ -909,7 +909,7 @@ IMPLEMENT_GENERIC(AS, Any_List)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* list = Element_ARG(ELEMENT);
+    Element* list = Element_ARG(VALUE);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     require (
@@ -1221,7 +1221,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_List)
 //  "Get the file (or URL) that a value was loaded from, if possible"
 //
 //      return: [file! url! error!]
-//      element "Typically only ANY-LIST? know their file"
+//      value "Typically only ANY-LIST? know their file"
 //          [<opt-out> element?]
 //  ]
 //
@@ -1229,7 +1229,7 @@ DECLARE_NATIVE(FILE_OF)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    Element* elem = Element_ARG(ELEMENT);
+    Element* elem = Element_ARG(VALUE);
     LIFT_BYTE(elem) = NOQUOTE_2;  // allow line-of and file-of on quoted/quasi
 
     return Dispatch_Generic(FILE_OF, elem, LEVEL);
@@ -1239,7 +1239,7 @@ IMPLEMENT_GENERIC(FILE_OF, Any_Element)  // generic fallthrough returns error
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    UNUSED(ARG(ELEMENT));
+    UNUSED(ARG(VALUE));
 
     panic ("No file available for element");
 }
@@ -1251,7 +1251,7 @@ IMPLEMENT_GENERIC(FILE_OF, Any_Element)  // generic fallthrough returns error
 //  "Get the line number that a value was loaded from, if possible"
 //
 //      return: [integer! error!]
-//      element "Typically only ANY-LIST? know their file"
+//      value "Typically only ANY-LIST? know their file"
 //          [<opt-out> element?]
 //  ]
 //
@@ -1259,7 +1259,7 @@ DECLARE_NATIVE(LINE_OF)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
-    Element* elem = Element_ARG(ELEMENT);
+    Element* elem = Element_ARG(VALUE);
     LIFT_BYTE(elem) = NOQUOTE_2;  // allow line-of and file-of on quoted/quasi
 
     return Dispatch_Generic(FILE_OF, elem, LEVEL);
@@ -1269,7 +1269,7 @@ IMPLEMENT_GENERIC(LINE_OF, Any_Element)  // generic fallthrough returns error
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
-    UNUSED(ARG(ELEMENT));
+    UNUSED(ARG(VALUE));
 
     panic ("No line available for element");
 }
@@ -1279,7 +1279,7 @@ IMPLEMENT_GENERIC(FILE_OF, Any_List)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    Element* list = Element_ARG(ELEMENT);
+    Element* list = Element_ARG(VALUE);
     const Source* s = Cell_Array(list);
 
     Option(const Strand*) file = Link_Filename(s);
@@ -1293,7 +1293,7 @@ IMPLEMENT_GENERIC(LINE_OF, Any_List)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
-    Element* list = Element_ARG(ELEMENT);
+    Element* list = Element_ARG(VALUE);
     const Source* s = Cell_Array(list);
 
     if (MISC_SOURCE_LINE(s) == 0)

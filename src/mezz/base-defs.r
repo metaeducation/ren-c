@@ -46,18 +46,18 @@ probe: func [
 
     return: "Same as the input value"
         [any-atom?]
-    ^atom [any-atom?]
+    ^value [any-atom?]
 ][
     ; Remember this is early in the boot, so many things not defined.
 
-    write stdout if antiform? ^atom [
-        unspaced [mold lift ^atom _ _ "; anti"]  ; lifted is quasiform
+    write stdout if antiform? ^value [
+        unspaced [mold lift ^value _ _ "; anti"]  ; lifted is quasiform
     ] else [
-        mold ^atom  ; possibly ACTION! or TRASH!, use ^atom to "defuse"
+        mold ^value  ; possibly ACTION! or TRASH!, use ^value to "defuse"
     ]
     write stdout newline
 
-    return ^atom
+    return ^value
 ]
 
 compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
@@ -154,11 +154,11 @@ elide-if-void: func [
     "Argument is evaluative, but discarded if void"
 
     return: [any-atom?]
-    ^atom "Evaluation product to be ignored"
+    ^value "Evaluation product to be ignored"
         [any-atom?]  ; ghost! is passed through
 ][
-    if '~[]~ = atom [return ghost]
-    return ^atom
+    if '~[]~ = value [return ghost]
+    return ^value
 ]
 
 ; COMMA! is the new expression barrier.  But `||` is included as a way to

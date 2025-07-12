@@ -57,12 +57,7 @@
 )
 (
     foo: func [return: [integer!]] [
-        ;
-        ; !!! Note that RETURN's parameter is done with the ^-convention.  This
-        ; is an implementation detail that affects code that subverts the
-        ; traditional calling mode.
-        ;
-        let /return-5: specialize return/ [atom: quote 5]
+        let /return-5: specialize return/ [value: 5]
         return-5
         "this shouldn't be returned"
     ]

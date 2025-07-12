@@ -199,9 +199,9 @@ bind construct [
             ]
         ])
 
-        return: lambda [^atom] compose2:deep '{} [  ; already composing w/()
+        return: lambda [^value] compose2:deep '{} [  ; already composing w/()
             {unrun return/} pack [
-                {? if not ghostable ['unghost]} (^atom except e -> [
+                {? if not ghostable ['unghost]} (^value except e -> [
                     {unrun return/} fail e
                 ])
                 remainder

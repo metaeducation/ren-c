@@ -53,7 +53,7 @@ DECLARE_NATIVE(GHOST)
 //  "Tells you if argument is a comma antiform (unstable)"
 //
 //      return: [logic?]
-//      ^atom
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(GHOST_Q)
@@ -72,7 +72,7 @@ DECLARE_NATIVE(GHOST_Q)
 //  "If argument is a ghost (antiform comma) or void (empty antiform block)"
 //
 //      return: [logic?]
-//      ^atom
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(GHOST_OR_VOID_Q)
@@ -127,7 +127,7 @@ DECLARE_NATIVE(ELIDE)
 //  "If the argument is a GHOST!, convert it to a VOID!, else passthru"
 //
 //      return: [any-atom?]
-//      ^atom
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(UNGHOST)

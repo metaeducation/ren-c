@@ -43,14 +43,14 @@ REBINT CT_Port(const Element* a, const Element* b, bool strict)
 //  "Test if a port is open (or other type?)"
 //
 //      return: [logic?]
-//      element [fundamental?]
+//      value [fundamental?]
 //  ]
 //
 DECLARE_NATIVE(OPEN_Q)
 {
     INCLUDE_PARAMS_OF_OPEN_Q;
 
-    return Dispatch_Generic(OPEN_Q, Element_ARG(ELEMENT), LEVEL);
+    return Dispatch_Generic(OPEN_Q, Element_ARG(VALUE), LEVEL);
 }
 
 
@@ -292,7 +292,7 @@ IMPLEMENT_GENERIC(TO, Url)
     INCLUDE_PARAMS_OF_TO;
 
     USED(ARG(TYPE));  // deferred to string via LEVEL
-    USED(ARG(ELEMENT));
+    USED(ARG(VALUE));
 
     return GENERIC_CFUNC(TO, Any_String)(LEVEL);
 }

@@ -320,7 +320,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Heart heart = Heart_Of_Builtin_Fundamental(v);
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
@@ -529,7 +529,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* val = Element_ARG(ELEMENT);
+    Element* val = Element_ARG(VALUE);
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     REBDEC d = VAL_DECIMAL(val);

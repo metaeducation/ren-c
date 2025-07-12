@@ -220,7 +220,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     INCLUDE_PARAMS_OF_TO;
 
     Copy_Cell(Erase_ARG(TYPE), Datatype_From_Type(from));
-    Copy_Cell(Erase_ARG(ELEMENT), out);
+    Copy_Cell(Erase_ARG(VALUE), out);
 
     STATE = STATE_0;
 
@@ -276,7 +276,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 
     Value* datatype = ARG(TYPE);
     STATE = cast(Byte, Cell_Datatype_Builtin_Heart(datatype));  // might alter
-    Copy_Cell(SPARE, ARG(ELEMENT));  // may alter ELEMENT too, save in SPARE
+    Copy_Cell(SPARE, ARG(VALUE));  // may alter ELEMENT too, save in SPARE
 
     Level* sub = Push_Downshifted_Level(OUT, level_);
 
@@ -304,7 +304,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 //      return: "ELEMENT converted to TYPE (copied if same type as ELEMENT)"
 //          [plain?]
 //      type [<opt-out> datatype!]
-//      element [<opt-out> plain? datatype!]
+//      value [<opt-out> plain? datatype!]
 //  ]
 //
 DECLARE_NATIVE(TO)
@@ -317,23 +317,23 @@ DECLARE_NATIVE(TO)
     if (MAX_HEART < unwrap to)
         panic ("TO can't produce quoted/quasiform/antiform");
 
-    if (Is_Datatype(ARG(ELEMENT))) {  // do same coercions as WORD!
-        Value* datatype = ARG(ELEMENT);
+    if (Is_Datatype(ARG(VALUE))) {  // do same coercions as WORD!
+        Value* datatype = ARG(VALUE);
         Option(Type) type = Cell_Datatype_Type(datatype);
         if (not type)
             panic ("TO doesn't work with extension types");
 
         SymId id = Symbol_Id_From_Type(unwrap type);
-        Init_Word(ARG(ELEMENT), Canon_Symbol(id));
+        Init_Word(ARG(VALUE), Canon_Symbol(id));
     }
 
-    Element* e = Element_ARG(ELEMENT);
+    Element* e = Element_ARG(VALUE);
 
   #if NO_RUNTIME_CHECKS
 
     Bounce bounce = Dispatch_Generic(TO, e, LEVEL);
     /*if (bounce == UNHANDLED)  // distinct error for AS or TO ?
-        return Error_Bad_Cast_Raw(ARG(ELEMENT), ARG(TYPE)); */
+        return Error_Bad_Cast_Raw(ARG(VALUE), ARG(TYPE)); */
     return bounce;
 
   #else  // add monitor to ensure result is right
@@ -355,14 +355,14 @@ DECLARE_NATIVE(TO)
 //
 //      return: [null? plain?]
 //      type [datatype!]
-//      element [<opt-out> plain?]
+//      value [<opt-out> plain?]
 //  ]
 //
 DECLARE_NATIVE(AS)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* e = Element_ARG(ELEMENT);
+    Element* e = Element_ARG(VALUE);
     Option(Type) as = Cell_Datatype_Type(ARG(TYPE));
     if (not as)
         panic ("TO doesn't work with extension types");

@@ -200,7 +200,7 @@ help-value: func [
     "Give non-dialected help for an atom with any datatype"
 
     return: []
-    ^atom [any-atom?]
+    ^value [any-atom?]
     :name [word! tuple! path!]
 ][
     if name [
@@ -208,15 +208,15 @@ help-value: func [
     ]
 
     case [  ; !!! should come from %types.r
-        trash? ^atom ['trash!]
-        keyword? ^atom ['keyword!]
-        splice? ^atom ['splice!]
-        action? ^atom ['action]
-        pack? ^atom ['pack!]
-        ghost? ^atom ['ghost!]
-        error? ^atom ['error!]
+        trash? ^value ['trash!]
+        keyword? ^value ['keyword!]
+        splice? ^value ['splice!]
+        action? ^value ['action]
+        pack? ^value ['pack!]
+        ghost? ^value ['ghost!]
+        error? ^value ['error!]
 
-        antiform? ^atom [
+        antiform? ^value [
             panic "Invalid Antiform Heart Found, Please Report:" @atom'
         ]
     ] then antitype -> [
@@ -224,12 +224,12 @@ help-value: func [
         print [
             (opt name) "is" (an antitype) ["(antiform of" _ @(heart) ")"]
         ]
-        if free? atom [
+        if free? value [
             print "!!! contents no longer available, as it has been FREE'd !!!"
             return ~
         ]
-        if action? ^atom [
-            help-action ^atom
+        if action? ^value [
+            help-action ^value
             return ~
         ]
         let [molded truncated]: mold:limit atom' 2000  ; quasiform
@@ -237,8 +237,7 @@ help-value: func [
         return ~
     ]
 
-    let value: ^atom
-    atom: ~#[antiform HELP already handled]~
+    value: decay ^value  ; Note: synonym for (value: ^value)
 
     print [opt name "is an element of type" to word! type of value]
     if free? value [

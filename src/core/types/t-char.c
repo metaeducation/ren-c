@@ -351,7 +351,7 @@ DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
 //
 //      return: "Will be #{00} NUL BLOB! representation if input is #{00}"
 //          [char?]
-//      element [char? any-utf8? blob!]
+//      value [char? any-utf8? blob!]
 //  ]
 //
 DECLARE_NATIVE(TO_CHAR)
@@ -370,7 +370,7 @@ DECLARE_NATIVE(TO_CHAR)
 {
     INCLUDE_PARAMS_OF_TO_CHAR;
 
-    Element* e = Element_ARG(ELEMENT);
+    Element* e = Element_ARG(VALUE);
     if (Is_Integer(e)) {
         uint32_t c = VAL_UINT32(e);
         trap (
@@ -416,14 +416,14 @@ DECLARE_NATIVE(TO_CHAR)
 //  "Test if a value is the #{00} binary BLOB!, representing codepoint 0"
 //
 //      return: [logic?]
-//      element [element?]
+//      value [element?]
 //  ]
 //
 DECLARE_NATIVE(NUL_Q)
 {
     INCLUDE_PARAMS_OF_NUL_Q;
 
-    Element* e = Element_ARG(ELEMENT);
+    Element* e = Element_ARG(VALUE);
     return LOGIC(Is_Blob_And_Is_Zero(e));
 }
 
@@ -453,7 +453,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -631,7 +631,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* v = Element_ARG(ELEMENT);  // rune, email, etc.
+    Element* v = Element_ARG(VALUE);  // rune, email, etc.
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
     possibly(Any_Word(v));  // delegates some cases
 
@@ -883,7 +883,7 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* any_utf8 = Element_ARG(ELEMENT);
+    Element* any_utf8 = Element_ARG(VALUE);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     require (
@@ -946,7 +946,7 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_REVERSE_OF;
 
-    Element* any_utf8 = Element_ARG(ELEMENT);
+    Element* any_utf8 = Element_ARG(VALUE);
     Value* part = ARG(PART);
 
     Value* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
@@ -1009,7 +1009,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
-    Element* any_utf8 = Element_ARG(ELEMENT);
+    Element* any_utf8 = Element_ARG(VALUE);
     Value* part = ARG(PART);
 
     if (Bool_ARG(SECURE))
@@ -1030,14 +1030,14 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
 //  "Get the singular codepoint that an RUNE! or BINARY! correspond to"
 //
 //      return: [null? integer!]
-//      element [<opt-out> fundamental?]
+//      value [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(CODEPOINT_OF)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    return Dispatch_Generic(CODEPOINT_OF, Element_ARG(ELEMENT), LEVEL);
+    return Dispatch_Generic(CODEPOINT_OF, Element_ARG(VALUE), LEVEL);
 }
 
 
@@ -1045,7 +1045,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Is_Rune)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    Element* rune = Element_ARG(ELEMENT);
+    Element* rune = Element_ARG(VALUE);
 
     Option(Codepoint) c = Codepoint_Of_Rune_If_Single_Char(rune);
 
@@ -1060,7 +1060,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     possibly(Any_Word(v));  // !!! should WORD! disallow LENGTH OF ?
 
     REBLEN len;
@@ -1073,7 +1073,7 @@ IMPLEMENT_GENERIC(SIZE_OF, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_SIZE_OF;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     possibly(Any_String(v));  // delegates here
     possibly(Any_Word(v));  // !!! should WORD! disable `size of`?
 

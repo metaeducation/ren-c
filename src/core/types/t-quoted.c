@@ -84,7 +84,7 @@ DECLARE_NATIVE(THE)
 //
 //      return: "Input value, verbatim"
 //          [any-stable?]
-//      'element [element?]
+//      'value [element?]
 //  ]
 //
 DECLARE_NATIVE(JUST)
@@ -93,7 +93,7 @@ DECLARE_NATIVE(JUST)
 {
     INCLUDE_PARAMS_OF_JUST;
 
-    Element* quoted = Element_ARG(ELEMENT);
+    Element* quoted = Element_ARG(VALUE);
     return COPY(quoted);
 }
 
@@ -105,7 +105,7 @@ DECLARE_NATIVE(JUST)
 //
 //      return: "Quoted value (if depth = 0, may not be quoted)"
 //          [element?]
-//      element [element?]
+//      value [element?]
 //      :depth "Number of quoting levels to apply (default 1)"
 //          [integer!]
 //  ]
@@ -114,7 +114,7 @@ DECLARE_NATIVE(QUOTE)
 {
     INCLUDE_PARAMS_OF_QUOTE;
 
-    Element* e = Element_ARG(ELEMENT);
+    Element* e = Element_ARG(VALUE);
     REBINT depth = Bool_ARG(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1;
 
     if (depth < 0)
@@ -161,7 +161,7 @@ DECLARE_NATIVE(UNQUOTE)
 //
 //      return: "Raises an error if type cannot make the quasiform"
 //          [quasiform! error!]
-//      element "Any non-QUOTED! value for which quasiforms are legal"
+//      value "Any non-QUOTED! value for which quasiforms are legal"
 //          [fundamental? quasiform!]
 //      :pass "If input is already a quasiform, then pass it trhough"
 //  ]
@@ -175,7 +175,7 @@ DECLARE_NATIVE(QUASI)
 {
     INCLUDE_PARAMS_OF_QUASI;
 
-    Element* elem = Element_ARG(ELEMENT);
+    Element* elem = Element_ARG(VALUE);
 
     if (Is_Quasiform(elem)) {
         if (Bool_ARG(PASS))
@@ -217,7 +217,7 @@ DECLARE_NATIVE(UNQUASI)
 //
 //      return: "Keywords and plain forms if :LITE"
 //          [quoted! quasiform! keyword! element? warning!]
-//      ^atom
+//      ^value [any-atom?]
 //      :lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
 //  ]
 //
@@ -259,7 +259,7 @@ DECLARE_NATIVE(LIFT)
 //  "antiforms -> quasiforms, adds a quote to rest, panic on error"
 //
 //      return: [quoted! quasiform!]
-//      ^atom
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(LIFT_REQUIRE)  // synonym for LIFT REQUIRE
@@ -341,7 +341,7 @@ DECLARE_NATIVE(UNLIFT)
 //  "Tells you whether argument is a stable or unstable antiform"
 //
 //      return: [logic?]
-//      ^atom
+//      ^value [any-atom?]
 //      :type
 //  ]
 //
@@ -387,7 +387,7 @@ DECLARE_NATIVE(ANTIFORM_Q)
 //  "Give the antiform of the plain argument (like UNMETA QUASI)"
 //
 //      return: [antiform?]
-//      element "Any non-QUOTED!, non-QUASI value"
+//      value "Any non-QUOTED!, non-QUASI value"
 //          [fundamental?]
 //  ]
 //
@@ -395,7 +395,7 @@ DECLARE_NATIVE(ANTI)
 {
     INCLUDE_PARAMS_OF_ANTI;
 
-    Element* elem = Element_ARG(ELEMENT);
+    Element* elem = Element_ARG(VALUE);
 
     Copy_Cell(OUT, elem);
     require (
@@ -574,7 +574,7 @@ DECLARE_NATIVE(PACK_P)
 //  "Tells you if argument is a parameter pack (antiform block)"
 //
 //      return: [logic?]
-//      ^atom
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(PACK_Q)
@@ -677,7 +677,8 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
 //  "If argument is null, make it VOID (or VETO), else passthru"
 //
 //      return: [any-atom?]
-//      ^atom "Decayed if pack"
+//      ^value "Decayed if pack"
+//          [any-atom?]
 //      :veto "If true, then return VETO instead of VOID"
 //  ]
 //
@@ -701,7 +702,8 @@ DECLARE_NATIVE(OPTIONAL)  // ususally used via its aliases of OPT or ?
 //  "If argument is null or error antiform make it VETO, else passthru"
 //
 //      return: [any-atom?]
-//      ^atom "Decayed if pack"
+//      ^value "Decayed if pack"
+//          [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(OPTIONAL_VETO)  // usually used via its alias of ?!
@@ -724,7 +726,7 @@ DECLARE_NATIVE(OPTIONAL_VETO)  // usually used via its alias of ?!
 //  "Removes all levels of quoting from a (potentially) quoted element"
 //
 //      return: [fundamental?]
-//      element [<opt-out> element?]
+//      value [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(NOQUOTE)

@@ -607,7 +607,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Url)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -622,7 +622,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Email)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -637,7 +637,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Money)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -699,7 +699,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -1020,7 +1020,7 @@ IMPLEMENT_GENERIC(TO, Any_String)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    USED(ARG(ELEMENT));
+    USED(ARG(VALUE));
     USED(ARG(TYPE));
 
     return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);
@@ -1054,7 +1054,7 @@ IMPLEMENT_GENERIC(AS, Any_String)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    Element* string = Element_ARG(ELEMENT);
+    Element* string = Element_ARG(VALUE);
     Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     require (
@@ -1230,7 +1230,7 @@ IMPLEMENT_GENERIC(CODEPOINT_OF, Any_String)
 {
     INCLUDE_PARAMS_OF_CODEPOINT_OF;
 
-    Element* str = Element_ARG(ELEMENT);
+    Element* str = Element_ARG(VALUE);
     const Byte* bp = String_At(str);  // downgrade validated Utf8(*)
 
     Codepoint c;

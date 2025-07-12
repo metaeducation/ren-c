@@ -665,7 +665,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -822,7 +822,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 IMPLEMENT_GENERIC(TO, Is_Map) {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* map = Element_ARG(ELEMENT);
+    Element* map = Element_ARG(VALUE);
     Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_List_Type(to))  // !!! not ordered! [1]
@@ -936,7 +936,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Is_Map)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    Element* map = Element_ARG(ELEMENT);
+    Element* map = Element_ARG(VALUE);
     const Map* m = VAL_MAP(map);
 
     return Init_Integer(OUT, Num_Map_Entries_Used(m));
@@ -947,7 +947,7 @@ IMPLEMENT_GENERIC(WORDS_OF, Is_Map)
 {
     INCLUDE_PARAMS_OF_WORDS_OF;
 
-    Element* map = Element_ARG(ELEMENT);
+    Element* map = Element_ARG(VALUE);
     const Map* m = VAL_MAP(map);
 
     return Init_Block(OUT, Map_To_Array(m, -1));
@@ -958,7 +958,7 @@ IMPLEMENT_GENERIC(VALUES_OF, Is_Map)
 {
     INCLUDE_PARAMS_OF_VALUES_OF;
 
-    Element* map = Element_ARG(ELEMENT);
+    Element* map = Element_ARG(VALUE);
     const Map* m = VAL_MAP(map);
 
     return Init_Block(OUT, Map_To_Array(m, 1));
@@ -969,7 +969,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Map)
 {
     INCLUDE_PARAMS_OF_TAIL_Q;
 
-    Element* map = Element_ARG(ELEMENT);
+    Element* map = Element_ARG(VALUE);
     const Map* m = VAL_MAP(map);
 
     return LOGIC(Num_Map_Entries_Used(m) == 0);

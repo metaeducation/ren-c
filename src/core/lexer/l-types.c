@@ -56,7 +56,7 @@ DECLARE_NATIVE(TYPE_OF)
 //  "Give back a cell's heart (e.g. HEART OF ~FOO~ or ''FOO is WORD!)"
 //
 //      return: [null? datatype!]
-//      element "Antiforms not accepted, use (heart of lift value) if needed"
+//      value "Antiforms not accepted, use (heart of lift value) if needed"
 //          [<opt-out> element?]
 //  ]
 //
@@ -64,7 +64,7 @@ DECLARE_NATIVE(HEART_OF)
 {
     INCLUDE_PARAMS_OF_HEART_OF;
 
-    Element* elem = Element_ARG(ELEMENT);
+    Element* elem = Element_ARG(VALUE);
 
     Option(Heart) heart = Heart_Of(elem);
     if (heart)
@@ -80,14 +80,14 @@ DECLARE_NATIVE(HEART_OF)
 //  "Return how many quote levels are on a value (quasiforms have 0 quotes)"
 //
 //      return: [null? integer!]
-//      element [<opt-out> element?]
+//      value [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(QUOTES_OF)
 {
     INCLUDE_PARAMS_OF_QUOTES_OF;
 
-    return Init_Integer(OUT, Quotes_Of(Element_ARG(ELEMENT)));
+    return Init_Integer(OUT, Quotes_Of(Element_ARG(VALUE)));
 }
 
 
@@ -97,14 +97,14 @@ DECLARE_NATIVE(QUOTES_OF)
 //  "Get the SIGIL! on a value, e.g. $WORD has the $ sigil, WORD has none"
 //
 //      return: [null? sigil?]
-//      element [<opt-out> fundamental?]
+//      value [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(SIGIL_OF)
 {
     INCLUDE_PARAMS_OF_SIGIL_OF;
 
-    Element* elem = Element_ARG(ELEMENT);
+    Element* elem = Element_ARG(VALUE);
 
     Option(Sigil) sigil = Sigil_Of(elem);
     if (not sigil)
@@ -119,7 +119,7 @@ DECLARE_NATIVE(SIGIL_OF)
 //  "Test if a value is a SIGIL... e.g. pin, meta, or tie [@ ^ $]"
 //
 //      return: [logic?]
-//      element [<opt-out> fundamental?]
+//      value [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(SIGIL_Q)
@@ -143,7 +143,7 @@ DECLARE_NATIVE(SIGIL_Q)
 //  "Get the length (in series units, e.g. codepoints) of series or other type"
 //
 //      return: [null? integer!]
-//      element [<opt-out> plain?]  ; not quoted/quasi/sigil'd [1]
+//      value [<opt-out> plain?]  ; not quoted/quasi/sigil'd [1]
 //  ]
 //
 DECLARE_NATIVE(LENGTH_OF)
@@ -156,7 +156,7 @@ DECLARE_NATIVE(LENGTH_OF)
 {
     INCLUDE_PARAMS_OF_LENGTH_OF;
 
-    return Dispatch_Generic(LENGTH_OF, Element_ARG(ELEMENT), LEVEL);
+    return Dispatch_Generic(LENGTH_OF, Element_ARG(VALUE), LEVEL);
 }
 
 
@@ -166,7 +166,7 @@ DECLARE_NATIVE(LENGTH_OF)
 //  "Get the size (in bytes, e.g. UTF-encoded bytes) of series or other type"
 //
 //      return: [null? integer!]
-//      element [<opt-out> fundamental?]
+//      value [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(SIZE_OF)
@@ -179,7 +179,7 @@ DECLARE_NATIVE(SIZE_OF)
 {
     INCLUDE_PARAMS_OF_SIZE_OF;
 
-    Element* elem = Element_ARG(ELEMENT);
+    Element* elem = Element_ARG(VALUE);
 
     if (Is_File(elem) or Is_Url(elem))  // !!! hack in FILE! and URL! [1]
         return rebDelegate(
@@ -196,7 +196,7 @@ DECLARE_NATIVE(SIZE_OF)
 //  "Get the index of a series type"
 //
 //      return: [null? integer!]
-//      element [<opt-out> fundamental?]
+//      value [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(INDEX_OF)
@@ -206,7 +206,7 @@ DECLARE_NATIVE(INDEX_OF)
 {
     INCLUDE_PARAMS_OF_INDEX_OF;
 
-    return Dispatch_Generic(INDEX_OF, Element_ARG(ELEMENT), LEVEL);
+    return Dispatch_Generic(INDEX_OF, Element_ARG(VALUE), LEVEL);
 }
 
 
@@ -216,14 +216,14 @@ DECLARE_NATIVE(INDEX_OF)
 //  "Get the offset of a series type or port (zero-based?)"
 //
 //      return: [null? integer!]
-//      element [<opt-out> fundamental?]
+//      value [<opt-out> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(OFFSET_OF)
 {
     INCLUDE_PARAMS_OF_OFFSET_OF;
 
-    return Dispatch_Generic(OFFSET_OF, Element_ARG(ELEMENT), LEVEL);
+    return Dispatch_Generic(OFFSET_OF, Element_ARG(VALUE), LEVEL);
 }
 
 
@@ -233,7 +233,7 @@ DECLARE_NATIVE(OFFSET_OF)
 //  "Get the memory address of a type's data (low-level, beware!)"
 //
 //      return: [null? integer!]
-//      element [<opt-out> <unrun> fundamental?]
+//      value [<opt-out> <unrun> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(ADDRESS_OF)
@@ -244,7 +244,7 @@ DECLARE_NATIVE(ADDRESS_OF)
 {
     INCLUDE_PARAMS_OF_ADDRESS_OF;
 
-    Element* elem = Element_ARG(ELEMENT);
+    Element* elem = Element_ARG(VALUE);
 
     return Dispatch_Generic(ADDRESS_OF, elem, LEVEL);
 }
@@ -260,7 +260,7 @@ IMPLEMENT_GENERIC(ADDRESS_OF, Is_Frame)
 {
     INCLUDE_PARAMS_OF_ADDRESS_OF;
 
-    Element* frame = Element_ARG(ELEMENT);
+    Element* frame = Element_ARG(VALUE);
 
     Phase* phase = Frame_Phase(frame);
     if (not Is_Stub_Details(phase))
