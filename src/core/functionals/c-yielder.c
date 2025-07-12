@@ -169,14 +169,13 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     Details* details = Ensure_Level_Details(L);
 
-    Element* body = Details_Element_At(details, IDX_YIELDER_BODY);
     Value* original_frame = Details_At(details, IDX_YIELDER_ORIGINAL_FRAME);
     Value* plug = Details_At(details, IDX_YIELDER_PLUG);
     Value* yielded_lifted = Details_At(details, IDX_YIELDER_YIELDED_LIFTED);
 
     switch (STATE) {  // Can't use STATE byte for "mode" (see ST_YIELDER enum)
       case ST_YIELDER_INVOKED: {
-        if (Not_Cell_Readable(original_frame))
+        if (Is_Nulled(original_frame))
             goto begin_body;  // first run, haven't set original frame yet
 
         if (Is_Frame(original_frame))
@@ -189,7 +188,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         goto invoke_yielder_that_abruptly_panicked; }
 
       case ST_YIELDER_RUNNING_BODY: {
-        if (Is_Cell_Readable(yielded_lifted))  // YIELD is suspending us
+        if (not Is_Nulled(yielded_lifted))  // YIELD is suspending us
             goto yielding;
 
         goto body_finished_or_threw; }
@@ -200,32 +199,32 @@ Bounce Yielder_Dispatcher(Level* const L)
 
   begin_body: {  /////////////////////////////////////////////////////////////
 
-    // 1. Many calls can be made to a yielder, with each call having a new
-    //    FRAME!'s worth of arguments (and a new VarList identity for that
-    //    frame).  However, when we poke an identity into the definitional
-    //    YIELDs that are associated with a yielder, that YIELD could be
-    //    copied or stowed places besides in the Yielder's frame...and
-    //    they need to still work.  So resumptions need to take over the
-    //    original VarList identity each time, moving their arguments in to
-    //    overwrite the last call.  Stow that original VarList in Details.
-    //
-    // 2. We can't fire-and-forget to run the yielder body, because we have
-    //    to clean up the Details array on completion or a throw/panic.
-    //    That cleanup isn't just to free things up for the GC, but also to
-    //    make sure future attempts to invoke the yielder see information in
-    //    the Details array telling them it has finished.
-    //
-    // 3. We use CONTINUE() instead of DELEGATE() because we need a call
-    //    back when the body finishes running.  The result of the body
-    //    evaluation is not used, so we write it into SPARE (which must be
-    //    preserved in suspension).
+  // 1. Many calls can be made to a yielder, with each call having a new
+  //    FRAME!'s worth of arguments (and a new VarList identity for that
+  //    frame).  However, when we poke an identity into the definitional
+  //    YIELDs that are associated with a yielder, that YIELD could be copied
+  //    or stowed places besides in the Yielder's frame...and they need to
+  //    still work.  So resumptions need to take over the original VarList
+  //    identity each time, moving their arguments in to overwrite the last
+  //    call.  Stow that original VarList in Details.
+  //
+  // 2. We can't fire-and-forget to run the yielder body, because we have to
+  //    clean up the Details array on completion or a throw/panic.  That
+  //    cleanup isn't just to free things up for the GC, but also to make sure
+  //    future attempts to invoke the yielder see information in the Details
+  //    array telling them it has finished.
+  //
+  // 3. We use CONTINUE() instead of DELEGATE() because we need a call back
+  //    when the body finishes running.  The result of the body evaluation is
+  //    not used, so write it to SPARE (which is preserved in suspension).
 
-    assert(Not_Cell_Readable(original_frame));  // each call needs [1]
+    assert(Is_Nulled(original_frame));  // each call needs [1]
     Force_Level_Varlist_Managed(L);
     Init_Frame(original_frame, Level_Varlist(L), Level_Label(L), NONMETHOD);
 
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_YIELD), SYM_YIELD);
 
+    Element* body = Details_Element_At(details, IDX_YIELDER_BODY);
     assert(Is_Block(body));  // can mutate (only one call)
     Add_Link_Inherit_Bind(L->varlist, List_Binding(body));
     Tweak_Cell_Binding(body, L->varlist);
@@ -237,12 +236,12 @@ Bounce Yielder_Dispatcher(Level* const L)
 
 } yielding: {  ///////////////////////////////////////////////////////////////
 
-    // When YIELD is called, it unplugs the stack and stores it in the
-    // YIELDER_PLUG slot of the Yielder's Details.  After it has done this,
-    // the Yielder_Dispatcher()'s Level becomes the top of the stack, and
-    // gets bounced to, and it's what bubbles the value in OUT.
+  // When YIELD is called it unplugs the stack, storing it in the YIELDER_PLUG
+  // slot of the Yielder's Details.  After that, Yielder_Dispatcher()'s Level
+  // becomes the top of the stack, and gets bounced to, and it's what bubbles
+  // the value in OUT.
 
-    if (Not_Cell_Readable(plug)) {  // no plug, must be YIELD of a RAISED...
+    if (Is_Nulled(plug)) {  // no plug, must be YIELD of a RAISED...
         assert(Is_Lifted_Error(yielded_lifted));
 
         if (Is_Error_Done_Signal(Cell_Error(yielded_lifted))) {
@@ -265,39 +264,38 @@ Bounce Yielder_Dispatcher(Level* const L)
 
 } resume_body_if_not_reentrant: {  ///////////////////////////////////////////
 
-    // If we're given a request for an invocation that isn't the initial
-    // invocation, and there's no stored "plug" of suspended levels, then
-    // that means the code isn't suspended.  So it's something like:
-    //
-    //     >> g: generator [g]  ; not legal!
+  // If we're given a request for an invocation that isn't the initial
+  // invocation, and there's no stored "plug" of suspended levels, then that
+  // means the code isn't suspended.  So it's something like:
+  //
+  //     >> g: generator [g]  ; not legal!
 
-    if (Not_Cell_Readable(plug))
+    if (Is_Nulled(plug))
         panic (Error_Yielder_Reentered_Raw());
 
   //=//// RECLAIM ORIGINAL YIELDER'S VARLIST IDENTITY /////////////////////=//
 
-    // 1. We want the identity of the old varlist to replace this yielder's
-    //    varlist identity.  But we want the frame's values to reflect the
-    //    args the user passed in to this invocation of the yielder.  So move
-    //    those into the old varlist before replacing this varlist with that
-    //    prior identity.
-    //
-    // 2. With variables extracted, we no longer need the varlist for this
-    //    invocation (wrong identity) so we free it, if it isn't GC-managed,
-    //    as it wouldn't get freed otherwise.
-    //
-    // 3. It may seem like there'd be no reason for the varlist to become
-    //    managed (Yielder_Dispatcher() is the native dispatcher, and in this
-    //    case we're not putting the VarList into a YIELD cell or doing
-    //    anything to otherwise manage it).  But things like ENCLOSE or
-    //    other operations can lead to the VarList being managed before it
-    //    gets to Yielder_Dispatcher(), so if it did we can't free it, but
-    //    just decay it minimally down to a Stub.)
-    //
-    // 3. Now that the last call's context varlist is pointing at our current
-    //    invocation level, we point the other way from the level to the
-    //    varlist.  We also update the cached pointer to the rootvar of that
-    //    frame (used to speed up Level_Phase() and Level_Coupling())
+  // 1. We want the identity of the old varlist to replace this yielder's
+  //    varlist identity.  But we want the frame's values to reflect the
+  //    args the user passed in to this invocation of the yielder.  So move
+  //    those into the old varlist before replacing this varlist with that
+  //    prior identity.
+  //
+  // 2. With variables extracted, we no longer need the varlist for this
+  //    invocation (wrong identity) so we free it, if it isn't GC-managed,
+  //    as it wouldn't get freed otherwise.
+  //
+  // 3. It may seem like there'd be no reason for the varlist to become
+  //    managed (Yielder_Dispatcher() is the native dispatcher, and in this
+  //    case we're not putting the VarList into a YIELD cell or doing anything
+  //    to otherwise manage it).  But things like ENCLOSE or other operations
+  //    can manage the VarList before it gets to Yielder_Dispatcher(), so if
+  //    it did we can't free it, but just decay it minimally down to a Stub.
+  //
+  // 4. Now that the last call's context varlist is pointing at our current
+  //    invocation level, point the other way from the level to the varlist.
+  //    We also update the cached pointer to the rootvar of that frame (used
+  //    to speed up Level_Phase() and Level_Coupling())
 
     Level* yielder_level = L;  // alias for clarity
     VarList* original_varlist = Cell_Varlist(original_frame);
@@ -324,19 +322,19 @@ Bounce Yielder_Dispatcher(Level* const L)
 
   //=//// RESUME THE YIELD-SUSPENDED STATE ////////////////////////////////=//
 
-    // 1. Restore the in-progress SPARE state that was going on when the YIELD
-    //    ran (e.g. if it interrupted a CASE or something, it could have held
-    //    state in its OUT cell which would be the Level's SPARE, that goes
-    //    away when that Level is destroyed.  We have to is would be what
-    //    the case had in the OUT cell at moment of interrupt,
-    //    which may have been a meaningful state).
-    //
-    // 2. We could make YIELD appear to return void when we jump back in
-    //    to resume it.  But it's more interesting to return what the YIELD
-    //    received as an arg (YIELD cached it in details before unwinding).
+  // 1. Restore the in-progress SPARE state that was going on when the YIELD
+  //    ran (e.g. if it interrupted a CASE or something, it could have held
+  //    state in its OUT cell which would be the Level's SPARE, that goes
+  //    away when that Level is destroyed.  We have to is would be what the
+  //    case had in the OUT cell at moment of interrupt, which may have been
+  //    a meaningful state).
+  //
+  // 2. We could make YIELD appear to return void when we jump back in to
+  //    resume it.  But it's more interesting to return what the YIELD
+  //    received as an arg (YIELD cached it in details before unwinding).
 
     Replug_Stack(yielder_level, plug);
-    assert(Not_Cell_Readable(plug));  // Replug wiped, make GC safe
+    assert(Is_Nulled(plug));  // Replug wiped, make GC safe
 
     Level* yield_level = TOP_LEVEL;
     assert(yield_level != L);
@@ -346,7 +344,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     assume (
       Unliftify_Undecayed(yield_level->out)
     );
-    Init_Unreadable(yielded_lifted);
+    Init_Nulled(yielded_lifted);
 
     assert(STATE == ST_YIELDER_INVOKED);
     STATE = ST_YIELDER_RUNNING_BODY;  // resume where the last YIELD left off
@@ -356,33 +354,34 @@ Bounce Yielder_Dispatcher(Level* const L)
 
 } body_finished_or_threw: {  /////////////////////////////////////////////////
 
-    // 1. It's a question as to whether to error or not if you do something
-    //    like THROW out of a yielder or generator:
-    //
-    //        catch [g: generator [yield 1, throw 20, print "???"], g, g]
-    //
-    //    Throwing destroys the evaluation state, and you can't bring it
-    //    back to make another call.  But should it be considered a
-    //    successful completion?  A THROW of this nature in a normal
-    //    function running its body would be all right, so we go by that
-    //    and say that cooperative (non-abrupt-panic) throws are valid
-    //    ways to signal the yielder is finished.
-    //
-    // 2. There are some big picture issues about the garbage collection of
-    //    yielders and generators that don't get run to completion--because
-    //    there's really nothing that will clean them up.  Do what we can
-    //    here, at least, and reduce the GC burden when they do complete
-    //    by clearing out references to frames and the original body.
-    //
-    // 3. When you have (g: generator [yield 1, yield 2, append [a b] 'c])
-    //    one might ask if the third call to G should yield [a b c], or
-    //    be like a function and yield trash (~), or just be considered
-    //    an end state.  End state makes the most sense by far.
+  // 1. It's a question as to whether to error or not if you do something like
+  //    THROW out of a yielder or generator:
+  //
+  //        catch [g: generator [yield 1, throw 20, print "???"], g, g]
+  //
+  //    Throwing destroys the evaluation state, and you can't bring it back to
+  //    make another call.  But should it be considered successful completion?
+  //    A THROW of this nature in a normal function running its body would be
+  //    all right, so we go by that and say a cooperative (non-abrupt-panic)
+  //    throw is a valid way to signal the yielder is finished.
+  //
+  // 2. There are some big picture issues about the garbage collection of
+  //    yielders and generators that don't get run to completion--because
+  //    there's really nothing that will clean them up.  Do what we can here,
+  //    at least, and reduce the GC burden when they do complete by clearing
+  //    out references to frames and the original body.
+  //
+  // 3. When you have (g: generator [yield 1, yield 2, append [a b] 'c]) one
+  //    might ask if the third call to G should yield [a b c], or be like a
+  //    function and yield trash (~), or just be considered an end state.
+  //    End state makes the most sense by far.
 
+    Value* body = Details_Element_At(details, IDX_YIELDER_BODY);
     assert(Is_Block(body));  // clean up details for GC [2]
-    Init_Unreadable(body);
-    assert(Not_Cell_Readable(plug));
-    assert(Not_Cell_Readable(yielded_lifted));
+    Init_Nulled(body);
+
+    assert(Is_Nulled(plug));
+    assert(Is_Nulled(yielded_lifted));
 
     assert(Is_Frame(original_frame));
 
@@ -424,9 +423,9 @@ Bounce Yielder_Dispatcher(Level* const L)
 
 } invoke_completed_yielder: {  ///////////////////////////////////////////////
 
-    // Our signal of completion is the EXHAUSTED definitional error.  Using a
-    // error antiform pushes it out of band from all other return states,
-    // because other error antiforms passed to YIELD are elevated to a panic.
+  // Our signal of completion is the EXHAUSTED definitional error.  Using an
+  // error antiform pushes it out of band from all other return states,
+  // because other error antiforms passed to YIELD are elevated to a panic.
 
     assert(Is_Space(original_frame));
 
@@ -435,15 +434,15 @@ Bounce Yielder_Dispatcher(Level* const L)
 
 } invoke_yielder_that_abruptly_panicked: {  //////////////////////////////////
 
-    // A yielder that has abruptly panicked currently does not store the error
-    // that caused it to panic.  It conceivably could do so, and then every
-    // subsequent call could keep returning that error...but that might
-    // be misleading, suggesting that the error had happened again (when it
-    // may represent something that would no longer be an error if the same
-    // operation were tried).  Also, holding the error would prevent it from
-    // garbage collecting.  So we instead just report a generic error about
-    // a previous panic...which is probably better than conflating it
-    // with saying that the yielder is done.
+  // A yielder that has abruptly panicked currently does not store the error
+  // that caused it to panic.  It conceivably could do so, and then every
+  // subsequent call could keep returning that error...but that might be
+  // misleading, suggesting that the error had happened again (when it may
+  // represent something that would no longer be an error if the same
+  // operation were tried).  Also, holding the error would prevent it from
+  // garbage collecting.  So we instead just report a generic error about a
+  // previous panic...which is probably better than conflating it with saying
+  // that the yielder is done.
 
     assert(Is_Quasar(original_frame));
 
@@ -517,9 +516,9 @@ DECLARE_NATIVE(YIELDER)
     ));
 
     assert(Is_Block(Details_At(details, IDX_YIELDER_BODY)));
-    Init_Unreadable(Details_At(details, IDX_YIELDER_ORIGINAL_FRAME));
-    Init_Unreadable(Details_At(details, IDX_YIELDER_PLUG));
-    Init_Unreadable(Details_At(details, IDX_YIELDER_YIELDED_LIFTED));
+    Init_Nulled(Details_At(details, IDX_YIELDER_ORIGINAL_FRAME));
+    Init_Nulled(Details_At(details, IDX_YIELDER_PLUG));
+    Init_Nulled(Details_At(details, IDX_YIELDER_YIELDED_LIFTED));
 
     Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);
@@ -615,12 +614,12 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     assert(Details_Dispatcher(yielder_details) == &Yielder_Dispatcher);
 
     Value* plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
-    assert(Not_Cell_Readable(plug));
+    assert(Is_Nulled(plug));
 
     Value* yielded_lifted = Details_At(
         yielder_details, IDX_YIELDER_YIELDED_LIFTED
     );
-    assert(Not_Cell_Readable(yielded_lifted));
+    assert(Is_Nulled(yielded_lifted));
 
   //=//// IF YIELD:FINAL OR RAISED ERROR, THROW YIELD'S ARGUMENT //////////=//
 

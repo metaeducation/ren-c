@@ -654,7 +654,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     Element* args = Element_ARG(ARGS);
 
     Element* frame;
-    Element* iterator;
+    Value* iterator;  // HANDLE! or NULLED (once initialized)
 
     Atom* var;  // may come from evars iterator or found by index
     Param* param;  // (same)
@@ -717,7 +717,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     // ITERATOR locals are initialized.
 
     frame = Element_LOCAL(FRAME);
-    iterator = Element_LOCAL(ITERATOR);
+    iterator = Value_LOCAL(ITERATOR);
 
     switch (STATE) {
       case ST_FRAME_FILLER_INITIALIZED_ITERATOR:
@@ -732,7 +732,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
       case ST_FRAME_FILLER_UNLABELED_EVAL_STEP:
         if (THROWING)
             goto finalize_maybe_throwing;
-        if (Not_Cell_Readable(iterator)) {
+        if (Is_Nulled(iterator)) {
             assert(Bool_ARG(RELAX));
             goto handle_next_item;
         }
@@ -765,7 +765,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         or not (single = Try_Get_Sequence_Singleheart(at))
         or not (Singleheart_Has_Trailing_Space(unwrap single))
     ){
-        if (Not_Cell_Readable(iterator))
+        if (Is_Nulled(iterator))
             goto handle_discarded_item;
 
         goto handle_unlabeled_item;
@@ -832,7 +832,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
             Shutdown_Evars(e);
             Free_Memory(EVARS, e);
-            Init_Unreadable(iterator);
+            Init_Nulled(iterator);
             param = nullptr;  // we're throwing away the evaluated product
             break;
         }
@@ -909,13 +909,13 @@ Bounce Native_Frame_Filler_Core(Level* level_)
   //    happen after we have delegated to the function.  But should DELEGATE()
   //    itself rule that out automatically?  It asserts for now.
 
-    if (Not_Cell_Readable(iterator))
+    if (Is_Nulled(iterator))
         assert(Bool_ARG(RELAX));
     else {
         EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
         Shutdown_Evars(e);
         Free_Memory(EVARS, e);
-        Init_Unreadable(iterator);
+        Init_Nulled(iterator);
     }
 
     if (THROWING)

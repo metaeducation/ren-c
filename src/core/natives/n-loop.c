@@ -1109,7 +1109,7 @@ void Shutdown_Loop_Each(Value* iterator)
         Shutdown_Evars(&les->u.evars);
 
     Free_Memory(LoopEachState, les);
-    Init_Unreadable(iterator);
+    Init_Nulled(iterator);
 }
 
 
@@ -1257,7 +1257,7 @@ DECLARE_NATIVE(EVERY)
     Value* data = ARG(DATA);
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
-    Element* iterator;  // holds Loop_Each_State, all paths must cleanup!
+    Value* iterator;  // holds Loop_Each_State, all paths must cleanup!
 
     enum {
         ST_EVERY_INITIAL_ENTRY = STATE_0,
@@ -1289,7 +1289,7 @@ DECLARE_NATIVE(EVERY)
 
 } not_initial_entry: {  //////////////////////////////////////////////////////
 
-    iterator = Element_LOCAL(ITERATOR);
+    iterator = Value_LOCAL(ITERATOR);
 
     switch (STATE) {
       case ST_EVERY_INITIALIZED_ITERATOR:
@@ -1800,7 +1800,7 @@ DECLARE_NATIVE(MAP)
     Value* data = ARG(DATA);  // action invokes, frame enumerates
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
-    Element* iterator;  // holds Loop_Each_State, all paths must cleanup!
+    Value* iterator;  // holds Loop_Each_State, all paths must cleanup!
 
     enum {
         ST_MAP_INITIAL_ENTRY = STATE_0,
@@ -1853,7 +1853,7 @@ DECLARE_NATIVE(MAP)
 
 } not_initial_entry: {  //////////////////////////////////////////////////////
 
-    iterator = Element_LOCAL(ITERATOR);
+    iterator = Value_LOCAL(ITERATOR);
 
     switch (STATE) {
       case ST_MAP_INITIALIZED_ITERATOR:

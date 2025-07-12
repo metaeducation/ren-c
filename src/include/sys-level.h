@@ -717,6 +717,9 @@ INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 #define Element_LOCAL(name) \
     Known_Element(Level_Arg(level_, (param_##name##_)))
 
+#define Value_LOCAL(name) \
+    Known_Stable(Level_Arg(level_, (param_##name##_)))
+
 #define PARAM(name) \
     Phase_Param(Level_Phase(level_), (param_##name##_))  // a TYPESET!
 
