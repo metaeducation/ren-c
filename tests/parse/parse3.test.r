@@ -444,22 +444,26 @@
 )
 
 
-; GET-GROUP!
+; INLINE
 ; These evaluate and inject their material into the PARSE, if it is not null.
-; They act like a COMPOSE that runs each time the GET-GROUP! is passed.
+; They act like a COMPOSE that runs each time the INLINE is passed
 
 (
-    parse3 "aaabbb" [:([some "a"]) :([some "b"])]
+    parse3 "aaabbb" [inline ([some "a"]) inline ([some "b"])]
     ok
 )
 (
-    parse3 "aaabbb" [:([some "a"]) :(if null [some "c"]) :([some "b"])]
+    parse3 "aaabbb" [
+        inline ([some "a"]) inline (when null [some "c"]) inline ([some "b"])
+    ]
     ok
 )
 (
-    parse3 "aaa" [:('some) "a"]
+    parse3 "aaa" [inline ('some) "a"]
     ok
 )
+
+
 ~parse3-incomplete~ !! (
     parse3 "aaa" [repeat (1 + 1) "a"]
 )
@@ -484,14 +488,14 @@
     parse3 "ab" ["a" null "b"]
 )
 (
-    parse3 "ab" ["a" :(1 = 1) "b"]
+    parse3 "ab" ["a" cond (1 = 1) "b"]
     ok
 )
-~???~ !! (
-    parse3 "ab" ["a" :(1 = 2) "b"]
-)
 (
-    parse3 "ab" ["a" :(opt 1 = 2) "b"]
+    not try parse3 "ab" ["a" cond (1 = 2) "b"]
+)
+~???~ !! (
+    parse3 "ab" ["a" cond (opt 1 = 2) "b"]
     ok
 )
 

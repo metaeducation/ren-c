@@ -1496,34 +1496,37 @@ default-combinators: make map! [
         :pending [blank? block!]   ; we retrigger combinator; it may KEEP, etc.
 
         parser [action!]
-        <local> ^r comb
+        <local> ^r comb subpending
     ][
-        ^r: parser input except e -> [panic e]  ; can't fail [1]
+        [^r remainder pending]: parser input except e -> [
+            panic e  ; can't use TRAP here, don't want to fail [1]
+        ]
 
         if (void? ^r) or (ghost? ^r) [
             return ghost
         ]
 
-        ^r: decay ^r  ; packs can't act as rules, decay them
+        r: decay ^r  ; packs can't act as rules, decay them
 
         if antiform? ^r [  ; REVIEW: splices?
             return fail "INLINE can't evaluate to antiform"
         ]
 
-        pending: blank
-        remainder: input
-
-        if not block? ^r [
-            ^r: envelop [] ^r  ; enable arity-0 combinators [2]
+        if not block? r [
+            r: envelop [] r  ; enable arity-0 combinators [2]
         ]
 
-        if not comb: select state.combinators (type of ^r) [
+        if not comb: select state.combinators (type of r) [
             panic [
-                "Unhandled type in GET-GROUP! combinator:" to word! type of ^r
+                "Unhandled type in GET-GROUP! combinator:" to word! type of r
             ]
         ]
 
-        return [{^} remainder pending]: run comb state input ^r  ; [3]
+        input: remainder
+        [^r remainder subpending]: trap run comb state input r  ; [3]
+        pending: glom pending subpending
+
+        return ^r
     ]
 
     === GET-BLOCK! COMBINATOR ===
