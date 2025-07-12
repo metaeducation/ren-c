@@ -419,7 +419,7 @@ DECLARE_NATIVE(FAIL_P)
 //  "Early-boot version of panic (overridden by more complex usermode version)"
 //
 //      return: [<divergent>]
-//      reason [any-value?]  ; permissive to avoid callsite error
+//      reason [any-stable?]  ; permissive to avoid callsite error
 //      :blame [word!]
 //  ]
 //

@@ -1679,7 +1679,7 @@ void API_rebJumps(
 // Simply returns the logical result, with no returned handle to release.
 //
 // If you know the argument is either NULL or OKAY antiforms, then you can
-// use rebUnboxLogic() to get a runtime check of that.  This tests ANY-VALUE?
+// use rebUnboxLogic() to get a runtime check of that.  This tests ANY-STABLE?
 //
 bool API_rebDid(
     RebolContext* binding,
@@ -3029,7 +3029,7 @@ RebolValue* API_rebError_OS(int errnum)  // see also macro rebPanic_OS()
 //
 //      return: "Heap address of the autoreleasing (rebR()) API handle"
 //          [integer!]
-//      value [any-value?]
+//      value [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(API_TRANSIENT)

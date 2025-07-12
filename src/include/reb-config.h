@@ -977,7 +977,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // This is a *painfully* slow debug switch, which allows you to say that the
 // intrinsic functions never run intrinsically, but are called normally with
 // their own Level.  That means type checking is very slow, because things
-// like ANY-VALUE? become first-class function calls in all cases.
+// like ANY-STABLE? become first-class function calls in all cases.
 //
 // If you don't use this switch, the debug build SPORADICALLY() throws in a
 // normal evaluation for intrinsics just to test the code path.  But if you

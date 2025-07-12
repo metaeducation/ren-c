@@ -112,10 +112,10 @@ Result(Element*) Init_Any_Sequence_At_Listlike(
 //  "Perform a path picking operation, same as `:(location).(picker)`"
 //
 //      return: "Picked value, or null if picker can't fulfill the request"
-//          [any-value?]
+//          [any-stable?]
 //      location [<opt-out> <unrun> plain?]  ; can't pick sigil'd/quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
-//          [<opt-out> any-value?]
+//          [<opt-out> any-stable?]
 //      <local> dual  ; slot in position of DUAL for TWEAK*
 //  ]
 //
@@ -296,12 +296,12 @@ DECLARE_NATIVE(TWEAK_P_BOOTSTRAP)
 //  "Perform a path poking operation, same as `(location).(picker): value`"
 //
 //      return: "Input value, or propagated error (no assignment on errors)"
-//          [any-value? error!]
+//          [any-stable? error!]
 //      location "(modified)"
 //          [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
-//          [<opt-out> any-value?]
-//      ^value [any-value? error! void?]
+//          [<opt-out> any-stable?]
+//      ^value [any-stable? error! void?]
 //      <local> store
 //  ]
 //

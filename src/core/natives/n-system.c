@@ -192,9 +192,9 @@ DECLARE_NATIVE(LIMIT_USAGE)
 //
 //  "Run integrity check on value in RUNTIME_CHECKS builds of the interpreter"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //      value "System will terminate abnormally if this value is corrupt"
-//          [any-value?]
+//          [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(CHECK)  // !!! Review the necessity of this (hasn't been used)

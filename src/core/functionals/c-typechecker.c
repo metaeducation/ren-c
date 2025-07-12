@@ -21,7 +21,7 @@
 //
 // Making a typechecker can be easy:
 //
-//     >> integer?: lambda [v [any-value?]] [integer! = type of :v]
+//     >> integer?: lambda [v [any-stable?]] [integer! = type of :v]
 //
 //     >> integer? 10
 //     == \~okay~\  ; antiform
@@ -44,7 +44,7 @@
 //      return: "Whether the type matched"
 //          [logic?]
 //      value "Value to test"
-//          [<opt-out> any-value?]
+//          [<opt-out> any-stable?]
 //      :type "Test a concrete type, (integer?:type integer!) passes"
 //      :quoted
 //      :tied
@@ -890,7 +890,7 @@ bool Typecheck_Coerce(
         }
     }
 
-    if (Get_Parameter_Flag(param, ANY_VALUE_OK) and Is_Cell_Stable(atom))
+    if (Get_Parameter_Flag(param, ANY_STABLE_OK) and Is_Cell_Stable(atom))
         goto return_true;
 
     if (Get_Parameter_Flag(param, ANY_ATOM_OK))
@@ -1086,10 +1086,10 @@ DECLARE_NATIVE(TYPECHECKER)
 //  "Check value using the same typechecking that functions use for parameters"
 //
 //      return: "Input if it matched, NULL if it did not"
-//          [any-value?]
+//          [any-stable?]
 //      test [block! datatype! parameter! action!]
 //      value "If not :LIFT, NULL values illegal (null return is no match)"
-//          [<opt-out> any-value?]
+//          [<opt-out> any-stable?]
 //      :lift "Return the result lifted (allows checks on NULL)"
 //  ]
 //

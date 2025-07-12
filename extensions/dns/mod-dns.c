@@ -156,7 +156,7 @@ static void Get_Local_Ip_Via_Google_DNS_May_Panic(Sink(Value) out)
 //
 //  "Handler for OLDGENERIC dispatch on DNS PORT!s"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(DNS_ACTOR)

@@ -110,7 +110,7 @@
     (|1|: lambda [
         "Barrier that's willing to only run one expression after it"
 
-        right [any-value? <variadic>]
+        right [any-stable? <variadic>]
         'lookahead [element? <variadic>]
         <local> look
     ][

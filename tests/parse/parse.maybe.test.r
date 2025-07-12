@@ -9,7 +9,7 @@
 ;     'opt combinator [
 ;        "If applying parser fails, succeed and vanish; don't advance input"
 ;        return: "PARSER's result if it succeeds w/non-NULL, otherwise vanish"
-;            [any-value?]
+;            [any-stable?]
 ;        parser [action!]
 ;        <local> result'
 ;    ][

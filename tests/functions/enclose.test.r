@@ -56,7 +56,7 @@
         var: 1020
         return ~,~
     ]
-    /outer: enclose inner/ func [return: [ghost! any-value?] f] [
+    /outer: enclose inner/ func [return: [ghost! any-stable?] f] [
         return eval-free f  ; now try unquoting
     ]
     all [

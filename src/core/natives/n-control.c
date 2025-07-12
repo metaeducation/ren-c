@@ -196,7 +196,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
 //
 //      return: "will be a PACK! containing NULL if branch evaluates to NULL"
 //          [any-atom?]
-//      condition [any-value?]
+//      condition [any-stable?]
 //      @(branch) "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
 //  ]
@@ -225,7 +225,7 @@ DECLARE_NATIVE(IF)
 //
 //      return: "will be a PACK! containing NULL if branch evaluates to NULL"
 //          [any-atom?]
-//      condition [any-value?]
+//      condition [any-stable?]
 //      @(branch) "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
 //  ]
@@ -254,7 +254,7 @@ DECLARE_NATIVE(WHEN)
 //
 //      return: "will be a PACK! containing NULL if branch evaluates to NULL"
 //          [any-atom?]
-//      condition [any-value?]
+//      condition [any-stable?]
 //      @(okay-branch) "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
 //      @(null-branch)
@@ -608,7 +608,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 //  "Short-circuiting variant of AND, using a block of expressions as input"
 //
 //      return: "Product of last passing evaluation if all truthy, else null"
-//          [any-value?]
+//          [any-stable?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! @block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
@@ -627,7 +627,7 @@ DECLARE_NATIVE(ALL)
 //  "Short-circuiting version of OR, using a block of expressions as input"
 //
 //      return: "First passing evaluative result, or null if none pass"
-//          [any-value?]
+//          [any-stable?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! @block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
@@ -646,7 +646,7 @@ DECLARE_NATIVE(ANY)
 //  "Short-circuiting shorthand for NOT ALL"
 //
 //      return: "First passing evaluative result, or null if none pass"
-//          [any-value?]
+//          [any-stable?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! @block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
@@ -665,7 +665,7 @@ DECLARE_NATIVE(NONE)
 //  "Evaluates each condition, and when true, evaluates what follows it"
 //
 //      return: "Last matched case evaluation, or null if no cases matched"
-//          [any-value?]
+//          [any-stable?]
 //      cases "Conditions followed by branches"
 //          [block!]
 //      :all "Do not stop after finding first logically true case"
@@ -881,8 +881,8 @@ DECLARE_NATIVE(CASE)
 //  "Selects a choice and evaluates the block that follows it"
 //
 //      return: "Last case evaluation, or null if no cases matched"
-//          [any-value?]
-//      value [any-value?]
+//          [any-stable?]
+//      value [any-stable?]
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      :all "Evaluate all matches (not just first one)"
@@ -1105,7 +1105,7 @@ DECLARE_NATIVE(SWITCH)
 //  "Set word or path to a calculated value if it is not set"
 //
 //      return: "Former value or branch result"
-//          [any-value?]
+//          [any-stable?]
 //      @target "Word or path which might be set (or not)"
 //          [set-group? set-word? set-tuple?]  ; to left of DEFAULT
 //      @(branch) "If target needs default, this is evaluated and stored there"
@@ -1207,7 +1207,7 @@ DECLARE_NATIVE(DEFAULT)
 //  "If the right hand side is not NULL, overwrite the left hand side"
 //
 //      return: "Former value or branch result"
-//          [any-value?]
+//          [any-stable?]
 //      @target "Word or tuple which might be set (or not)"
 //          [set-group? set-word? set-tuple?]  ; should do set-block!, etc [1]
 //      ^atom "Quantity used to overwrite the left if not null"
@@ -1245,7 +1245,7 @@ DECLARE_NATIVE(MAYBE)
 //  "Catches a throw from a block and returns its value"
 //
 //      return: "Thrown value"
-//          [any-value?]
+//          [any-stable?]
 //      name "Name of the THROW construct to use"
 //          [word!]
 //      block "Block to evaluate"

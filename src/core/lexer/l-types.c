@@ -34,7 +34,7 @@
 //
 //      return: "TYPE-OF null returns an error, use TRY if meant"
 //          [datatype! error!]
-//      value [any-value?]
+//      value [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(TYPE_OF)
@@ -282,7 +282,7 @@ IMPLEMENT_GENERIC(ADDRESS_OF, Is_Frame)
 //
 //  "Call XXX-OF functions without a hyphen, e.g. HEAD OF X => HEAD-OF X"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //      @(property) "Escapable slot for WORD!"
 //          [word!]
 //  ]

@@ -820,7 +820,7 @@ DECLARE_NATIVE(SQUARE_ROOT)
 //  "Tells you if default would overwrite a value (TRASH, NULL?, BLANK?)"
 //
 //      return: [logic?]
-//      value [any-value?]
+//      value [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(VACANCY_Q)
@@ -866,8 +866,8 @@ DECLARE_NATIVE(VACANCY_Q)
 //  "TRUE if the values are equal"
 //
 //      return: [logic?]
-//      ^value1 [any-value? void?]
-//      ^value2 [any-value? void?]
+//      ^value1 [any-stable? void?]
+//      ^value2 [any-stable? void?]
 //      :relax "Use less strict comparison rules (e.g. caseless comparison)"
 //  ]
 //
@@ -978,8 +978,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Element)
 //  "TRUE if the values are identical"
 //
 //      return: [logic?]
-//      ^value1 [any-value? void?]  ; !!! antiforms okay? e.g. "same splice"?
-//      ^value2 [any-value? void?]
+//      ^value1 [any-stable? void?]  ; !!! antiforms okay? e.g. "same splice"?
+//      ^value2 [any-stable? void?]
 //  ]
 //
 DECLARE_NATIVE(SAME_Q)

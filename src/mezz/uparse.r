@@ -283,7 +283,7 @@ default-combinators: make map! [
 
     'not combinator [
         "If the parser argument is negatable, invoke it in the negated sense"
-        return: [any-value? pack!]
+        return: [any-stable? pack!]
         parser [action!]
         :negated
     ][
@@ -300,7 +300,7 @@ default-combinators: make map! [
 
     'conditional combinator [
         "If parser's synthesized result is null, skip to next alternate"
-        return: [any-value?]
+        return: [any-stable?]
         parser [action!]
         <local> result
     ][
@@ -330,7 +330,7 @@ default-combinators: make map! [
     'try combinator [
         "If parser fails, succeed and return NULL; don't advance input"
         return: "PARSER's result if it succeeds, otherwise NULL"
-            [any-value? pack!]
+            [any-stable? pack!]
         parser [action!]
         <local> ^result
     ][
@@ -344,7 +344,7 @@ default-combinators: make map! [
     'optional combinator [
         "If parser fails, succeed and return VOID; don't advance input"
         return: "PARSER's result if it succeeds, otherwise VOID"
-            [any-value? pack!]
+            [any-stable? pack!]
         parser [action!]
         <local> ^result
     ][
@@ -373,7 +373,7 @@ default-combinators: make map! [
     'ahead combinator [
         "Leave the parse position at the same location, but fail if no match"
         return: "parser result if success, NULL if failure"
-            [any-value? pack! ~#not~]
+            [any-stable? pack! ~#not~]
         parser [action!]
         :negated
     ][
@@ -390,7 +390,7 @@ default-combinators: make map! [
     'further combinator [
         "Pass through the result only if the input was advanced by the rule"
         return: "parser result if it succeeded and advanced input, else NULL"
-            [any-value? pack!]
+            [any-stable? pack!]
         parser [action!]
         <local> ^result pos
     ][
@@ -421,7 +421,7 @@ default-combinators: make map! [
     'some combinator [
         "Run the parser argument in a loop, requiring at least one match"
         return: "Result of last successful match"
-            [any-value? pack!]
+            [any-stable? pack!]
         parser [action!]
         <local> ^result
     ][
@@ -444,7 +444,7 @@ default-combinators: make map! [
     'while combinator [
         "Run the body parser in a loop, for as long as condition matches"
         return: "Result of last body parser (or void if body never ran)"
-            [any-value? pack!]
+            [any-stable? pack!]
         condition-parser [action!]
         body-parser [action!]
         <local> ^result
@@ -474,7 +474,7 @@ default-combinators: make map! [
     'until combinator [
         "Run the body parser in a loop, until the condition matches"
         return: "Result of last body parser (or void if body never ran)"
-            [any-value? pack!]
+            [any-stable? pack!]
         condition-parser [action!]
         body-parser [action!]
         <local> ^result
@@ -505,7 +505,7 @@ default-combinators: make map! [
     'cycle combinator [
         "Run the body parser continuously in a loop until BREAK or STOP"
         return: "Result of last body parser (or void if body never matched)"
-            [any-value? pack!]
+            [any-stable? pack!]
         parser [action!]
         <local> ^result
     ][
@@ -584,7 +584,7 @@ default-combinators: make map! [
     ;
     ; RETURN was removed for a time in Ren-C due to concerns about how it
     ; could lead to abruptly ending a parse before all the matching was
-    ; complete.  Now UPARSE can return ANY-VALUE? (or PACK?) and the only
+    ; complete.  Now UPARSE can return ANY-STABLE? (or PACK?) and the only
     ; reason you'd ever use ACCEPT would be specifically for the abrupt exit,
     ; so it's fit for purpose.
 
@@ -717,7 +717,7 @@ default-combinators: make map! [
     'to combinator [
         "Match up TO a certain rule (result position before succeeding rule)"
         return: "The rule's product"
-            [any-value? pack!]
+            [any-stable? pack!]
         parser [action!]
         <local> ^result
     ][
@@ -738,7 +738,7 @@ default-combinators: make map! [
     'thru combinator [
         "Match up THRU a certain rule (result position after succeeding rule)"
         return: "The rule's product"
-            [any-value? pack!]
+            [any-stable? pack!]
         parser [action!]
         <local> ^result
     ][
@@ -934,7 +934,7 @@ default-combinators: make map! [
     'subparse combinator [
         "Recursion into other data with a rule, result of rule if match"
         return: "Result of the subparser"
-            [any-value? pack!]
+            [any-stable? pack!]
         parser [action!]  ; !!! Easier expression of value-bearing parser?
         subparser [action!]
         :match "Return input on match, not synthesized value"
@@ -1018,7 +1018,7 @@ default-combinators: make map! [
 
     'keep combinator [
         return: "The kept value (same as input)"
-            [any-value?]
+            [any-stable?]
         :pending [blank? block!]
         parser [action!]
         <local> ^result
@@ -1122,7 +1122,7 @@ default-combinators: make map! [
 
     'emit combinator [
         return: "The emitted value"
-            [any-value?]
+            [any-stable?]
         :pending [blank? block!]
         @target [set-word? set-group?]
         parser [action!]
@@ -1171,7 +1171,7 @@ default-combinators: make map! [
 
     '*: combinator [
         return: "The set value"
-            [any-value?]
+            [any-stable?]
         value [set-word? set-tuple? set-group?]
         parser "If assignment, failed parser means target will be unchanged"
             [action!]
@@ -1361,7 +1361,7 @@ default-combinators: make map! [
 
     'let combinator [
         return: "Result of the LET if assignment, else bound word"
-            [any-value?]
+            [any-stable?]
         'vars [set-word?]
         parser [action!]
         <local> ^result
@@ -1380,7 +1380,7 @@ default-combinators: make map! [
 
     '*in* combinator [
         return: "Argument binding gotten INSIDE the current input"
-            [any-value?]
+            [any-stable?]
         parser [action!]
         <local> ^result
     ][
@@ -1446,7 +1446,7 @@ default-combinators: make map! [
 
     'phase combinator [
         return: "Result of the parser evaluation"
-            [any-value? pack! ghost!]
+            [any-stable? pack! ghost!]
         :pending [blank? block!]
         parser [action!]
         <local> ^result
@@ -1492,7 +1492,7 @@ default-combinators: make map! [
 
     'inline combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [any-value? pack! ghost!]
+            [any-stable? pack! ghost!]
         :pending [blank? block!]   ; we retrigger combinator; it may KEEP, etc.
 
         parser [action!]
@@ -1728,7 +1728,7 @@ default-combinators: make map! [
 
     'repeat combinator [
         return: "Last parser result"
-            [any-value? pack!]
+            [any-stable? pack!]
         times-parser [action!]
         parser [action!]
         <local> ^times min max ^result
@@ -2057,7 +2057,7 @@ default-combinators: make map! [
     action! combinator [
         "Run an ordinary action with parse rule products as its arguments"
         return: "The return value of the action"
-            [any-value? pack!]
+            [any-stable? pack!]
         :pending [blank? block!]
         value [frame!]
         ; AUGMENT is used to add param1, param2, param3, etc.
@@ -2106,7 +2106,7 @@ default-combinators: make map! [
 
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [any-value? pack!]
+            [any-stable? pack!]
         :pending [blank? block!]
         value [word! tuple!]
         <local> ^r comb rule-start rule-end
@@ -2194,7 +2194,7 @@ default-combinators: make map! [
 
     'any combinator [
         return: "Last result value"
-            [any-value? pack!]
+            [any-stable? pack!]
         :pending [blank? block!]
         @arg "Acts as rules if WORD!/BLOCK!, pinned acts inert"
             [word! block! group! @word! @block! @group! ]
@@ -2273,7 +2273,7 @@ default-combinators: make map! [
 
     block! (block-combinator: combinator [
         return: "Last result value"
-            [any-value? pack! ghost!]
+            [any-stable? pack! ghost!]
         :pending [blank? block!]
         value [block!]
         :limit "Limit of how far to consider (used by ... recursion)"
@@ -2830,7 +2830,7 @@ parse*: func [
     "Process as much of the input as parse rules consume (see also PARSE)"
 
     return: "Synthesized value from last match rule, and any pending values"
-        [~[[any-value? pack!] [blank? block!]]~ error!]
+        [~[[any-stable? pack!] [blank? block!]]~ error!]
     input "Input data"
         [<opt-out> any-series? url! any-sequence?]
     rules "Block of parse rules"

@@ -445,7 +445,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
 //  "Dynamically add a new binding into the stream of evaluation"
 //
 //      return: "Expression result if SET form, else gives the new vars"
-//          [any-value?]  ; should vanish if (let x), give var if (let $x)
+//          [any-stable?]  ; should vanish if (let x), give var if (let $x)
 //      'vars "Variable(s) to create"  ; can't soft quote due to DEFAULT
 //          [word! ^word! set-word? ^set-word? set-run-word? group!
 //          block! set-block? set-group?]

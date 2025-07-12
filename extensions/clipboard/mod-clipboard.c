@@ -42,7 +42,7 @@
 //
 //  "Handler for OLDGENERIC dispatch on Clipboard PORT!s"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(CLIPBOARD_ACTOR)

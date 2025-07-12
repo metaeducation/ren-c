@@ -133,7 +133,7 @@ DECLARE_NATIVE(BIND)
 //  "Return whether a datatype is bindable or not"
 //
 //      return: [logic?]
-//      value [<opt-out> any-value?]  ; takes antiforms for fail, good idea?
+//      value [<opt-out> any-stable?]  ; takes antiforms for fail, good idea?
 //  ]
 //
 DECLARE_NATIVE(BINDABLE_Q)
@@ -173,7 +173,7 @@ DECLARE_NATIVE(BINDING_OF)
 //
 //  "Returns a view of the input bound virtually to the context"
 //
-//      return: [null? any-value?]
+//      return: [null? any-stable?]
 //      where [any-context? any-list? any-sequence?]
 //      element [<opt-out> element?]  ; QUOTED? support?
 //  ]
@@ -205,7 +205,7 @@ DECLARE_NATIVE(INSIDE)
 //
 //  "Add definitions from context to environment of value"
 //
-//      return: [null? any-value?]
+//      return: [null? any-stable?]
 //      definitions [word! any-context?]
 //      value [<opt-out> any-list?]  ; QUOTED? support?
 //  ]
@@ -334,7 +334,7 @@ DECLARE_NATIVE(WITHOUT)
 //
 //  "Defines words local to a block (See also: LET)"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //      vars "Local word(s) to the block"
 //          [block! word!]
 //      body "Block to evaluate"
@@ -1131,7 +1131,7 @@ DECLARE_NATIVE(FREE)
 //
 //      return: "Returns false if value wouldn't be FREEable (e.g. LOGIC!)"
 //          [logic?]
-//      value [<opt-out> any-value?]
+//      value [<opt-out> any-stable?]
 //  ]
 //
 DECLARE_NATIVE(FREE_Q)
@@ -1184,7 +1184,7 @@ DECLARE_NATIVE(ALIASES_Q)
 
 
 //
-//  any-value?: native:intrinsic [
+//  any-stable?: native:intrinsic [
 //
 //  "Tells you if the argument (taken as meta) is storable in a variable"
 //
@@ -1192,14 +1192,14 @@ DECLARE_NATIVE(ALIASES_Q)
 //      ^atom
 //  ]
 //
-DECLARE_NATIVE(ANY_VALUE_Q)
+DECLARE_NATIVE(ANY_STABLE_Q)
 //
 // This works in concert with the decaying mechanisms of typechecking.  So
-// if you say your function has [return: [any-value?]] and you try to return
+// if you say your function has [return: [any-stable?]] and you try to return
 // something like an unstable antiform pack, the type check will fail...but
 // it will try again after decaying.
 {
-    INCLUDE_PARAMS_OF_ANY_VALUE_Q;
+    INCLUDE_PARAMS_OF_ANY_STABLE_Q;
 
     const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
@@ -1237,7 +1237,7 @@ DECLARE_NATIVE(ANY_ATOM_Q)
 //  "!!! Temporary !!! attempt to answer if [word ^word $word @word]"
 //
 //      return: [logic?]
-//      value
+//      value [<opt-out> any-stable?]
 //  ]
 //
 DECLARE_NATIVE(ANY_WORD_Q)
@@ -1446,7 +1446,7 @@ DECLARE_NATIVE(LIGHT)
 //
 //  "Handle unstable isotopes like assignments do, pass through other values"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //      value
 //  ]
 //

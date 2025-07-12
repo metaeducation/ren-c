@@ -256,7 +256,7 @@ do: func [
     "Execution facility for Rebol or other Languages/Dialects (see also: EVAL)"
 
     return: "Evaluative product, or error"
-        [any-value? error!]
+        [any-stable? error!]
     source "Files interpreted based on extension, dialects based on 'kind'"
         [
             <opt-out>  ; opts out of the DO, returns null

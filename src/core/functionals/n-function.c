@@ -655,7 +655,7 @@ bool Typecheck_Coerce_Return(
 //      return: [<divergent>]
 //      ^atom [any-atom?]
 //      :run "Reuse stack level for another call (<redo> uses locals/args too)"
-//      ;   [<variadic> any-value?]  ; would force this frame managed
+//      ;   [<variadic> any-stable?]  ; would force this frame managed
 //  ]
 //
 DECLARE_NATIVE(DEFINITIONAL_RETURN)

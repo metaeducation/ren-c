@@ -104,7 +104,7 @@ DECLARE_NATIVE(CHANGE)  // Must be frame-compatible with APPEND, INSERT
 //
 //  "Removes and returns one or more elements"
 //
-//      return: [any-value?]  ; !!! Variadic TAKE may evaluate, rethink
+//      return: [any-stable?]  ; !!! Variadic TAKE may evaluate, rethink
 //      series "At position (modified)"
 //          [<opt-out> any-series? port! varargs!]
 //      :part "Specifies a length or end position"
@@ -328,9 +328,9 @@ DECLARE_NATIVE(FIND)  // Must be frame-compatible with SELECT
 //
 //  "Searches for a value; returns the value that follows, else null"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //      series [<opt-out> any-series? any-context? map! bitset!]
-//      value [<opt-out> any-value?]
+//      value [<opt-out> any-stable?]
 //      :part "Limits the search to a given length or position"
 //          [any-number? any-series? pair!]
 //      :case "Characters are case-sensitive"

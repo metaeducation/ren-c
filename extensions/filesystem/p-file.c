@@ -109,7 +109,7 @@ INLINE uint64_t File_Size_Cacheable_May_Panic(const Value* port)
 //
 //  "Handler for OLDGENERIC dispatch on File PORT!s"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(FILE_ACTOR)

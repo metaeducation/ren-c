@@ -184,7 +184,7 @@ ask: func [
     "Ask the user for input"
 
     return: "Null if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
-        [any-value?]
+        [any-stable?]
     question "Prompt to user, datatype to request, or dialect block"
         [block! text! datatype!]
     :hide "mask input with * (Rebol2 feature, not yet implemented)"
@@ -369,7 +369,7 @@ undirize: func [
 
 in-dir: func [
     "Evaluate a block in a directory, and restore current directory when done"
-    return: [any-value?]
+    return: [any-stable?]
     dir [file!]
         "Directory to change to (changed back after)"
     block [block!]

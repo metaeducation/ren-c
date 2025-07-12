@@ -206,7 +206,7 @@ host-script-pre-load: func [
 main-startup: func [
     "Usermode command-line processing: handles args, security, scripts"
 
-    return: [any-value?] "!!! Narrow down return type?"
+    return: [any-stable?] "!!! Narrow down return type?"
     argv "Raw command line argument block received by main() as TEXT!s"
         [block!]
 ]

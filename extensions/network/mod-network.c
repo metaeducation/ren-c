@@ -1006,7 +1006,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 //
 //  "Handler for OLDGENERIC dispatch on TCP PORT!s"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(TCP_ACTOR)
@@ -1020,7 +1020,7 @@ DECLARE_NATIVE(TCP_ACTOR)
 //
 //  "Handler for OLDGENERIC dispatch on UDP PORT!s"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(UDP_ACTOR)

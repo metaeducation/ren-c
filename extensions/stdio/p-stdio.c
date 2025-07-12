@@ -88,7 +88,7 @@ Value* Read_Line(STD_TERM *t)
     while (line == nullptr) {
         const bool buffered = true;
         Value* e = Try_Get_One_Console_Event(t, buffered, 0);
-        // (^-- it's an ANY-VALUE!, not a R3-Alpha-style EVENT!)
+        // (^-- it's an ANY-STABLE!, not a R3-Alpha-style EVENT!)
 
         if (e == nullptr) {
             rebJumps(
@@ -298,7 +298,7 @@ Value* Read_Line(STD_TERM *t)
 //
 //  "Handler for OLDGENERIC dispatch on Stdio PORT!s"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(STDIO_ACTOR)

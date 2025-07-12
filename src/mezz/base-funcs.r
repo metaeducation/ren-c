@@ -36,7 +36,7 @@ steal: lambda [
     "Return a variable's value prior to an assignment, then do the assignment"
 
     evaluation "Takes assigned value (variadic enables STEAL X: DEFAULT [...])"
-        [any-value? <variadic>]
+        [any-stable? <variadic>]
     @look [set-word? set-tuple? <variadic>]
 ][
     get first look  ; returned value
@@ -232,11 +232,11 @@ specialized?: func [
 /so: infix:postpone func [
     "Postfix assertion which stops running if left expression is inhibitor"
 
-    return: [any-value?]
+    return: [any-stable?]
     condition "Condition to test, must resolve to logic (use DID, NOT)"
         [logic?]
     feed "Needs value to return as result e.g. (x: even? 4 so 10 + 20)"
-        [<end> any-value? <variadic>]
+        [<end> any-stable? <variadic>]
 ][
     if not get:any $condition [
         panic:blame make warning! [
@@ -253,7 +253,7 @@ specialized?: func [
 /was: infix:postpone redescribe [
     "Assert that the left hand side--when fully evaluated--IS the right"
 ](
-    lambda [left [any-value?] right [any-value?]] [
+    lambda [left [any-stable?] right [any-stable?]] [
         if :left != :right [
             panic:blame make warning! [
                 type: 'script
@@ -497,7 +497,7 @@ eval-all: func [
 
     return: [ghost!]
     expressions "Any number of expressions on the right"
-        [any-value? <variadic>]
+        [any-stable? <variadic>]
 ][
     eval expressions
     return ghost

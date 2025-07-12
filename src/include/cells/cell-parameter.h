@@ -98,7 +98,7 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* c) {
 // path that is used to call a function.
 //
 // The interpretation of a null Parameter_Spec() for a refinement is that
-// it does not take an argument at a callsite--not that it takes ANY-VALUE!
+// it does not take an argument at a callsite--not that it takes ANY-STABLE!
 //
 #define PARAMETER_FLAG_REFINEMENT \
     FLAG_LEFT_BIT(8)
@@ -244,17 +244,17 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* c) {
     FLAG_LEFT_BIT(17)
 
 
-//=//// PARAMETER_FLAG_ANY_VALUE_OK ///////////////////////////////////////=//
+//=//// PARAMETER_FLAG_ANY_STABLE_OK //////////////////////////////////////=//
 //
-// The check for ANY-VALUE? (e.g. any element or stable isotope) is very
-// common, and has an optimized flag if the ANY-VALUE? function is detected
+// The check for ANY-STABLE? (e.g. any element or stable antiform) is very
+// common, and has an optimized flag if the ANY-STABLE? function is detected
 // in the parameter spec.
 //
-#define PARAMETER_FLAG_ANY_VALUE_OK \
+#define PARAMETER_FLAG_ANY_STABLE_OK \
     FLAG_LEFT_BIT(18)
 
 
-//=//// PARAMETER_FLAG_ANY_ATOM ///////////////////////////////////////////=//
+//=//// PARAMETER_FLAG_ANY_ATOM_OK ////////////////////////////////////////=//
 //
 // The ANY-ATOM? check takes its argument as a meta parameter, so it doesn't
 // fit the TypesetByte optimization.  It's likely that TypesetByte should

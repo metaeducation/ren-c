@@ -218,7 +218,7 @@ DECLARE_NATIVE(MACRO)
 //
 //  "Inject a list of content into the execution stream, or single value"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //      code "If quoted single value, if void no insertion (e.g. invisible)"
 //          [<opt> block! quoted!]
 //  ]

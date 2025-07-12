@@ -48,7 +48,7 @@
 //  "Returns value passed in without evaluation, but with binding"
 //
 //      return: "Input value, verbatim--unless /SOFT and soft quoted type"
-//          [any-value?]
+//          [any-stable?]
 //      @value [element?]
 //      :soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-TUPLE!"
 //  ]
@@ -83,7 +83,7 @@ DECLARE_NATIVE(THE)
 //  "Returns value passed in without evaluation, and no additional binding"
 //
 //      return: "Input value, verbatim"
-//          [any-value?]
+//          [any-stable?]
 //      'element [element?]
 //  ]
 //

@@ -227,7 +227,7 @@ DECLARE_NATIVE(FALSE_Q)
 //  "The word TRUE if the condition is a branch trigger, otherwise FALSE"
 //
 //      return: [~(true false)~]
-//      value [any-value?]
+//      value [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(BOOLEAN)
@@ -281,7 +281,7 @@ DECLARE_NATIVE(NO_Q)
 //  "The word YES if the condition is a branch trigger, otherwise NO"
 //
 //      return: [~(yes no)~]
-//      condition [any-value?]
+//      condition [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(TO_YESNO)
@@ -335,7 +335,7 @@ DECLARE_NATIVE(OFF_Q)
 //  "The word ON if the condition is a branch trigger, otherwise OFF"
 //
 //      return: [~(on off)~]
-//      condition [any-value?]
+//      condition [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(TO_ONOFF)
@@ -355,8 +355,8 @@ DECLARE_NATIVE(TO_ONOFF)
 //  "Returns true if both values are conditionally true (no 'short-circuit')"
 //
 //      return: [logic?]
-//      value1 [any-value?]
-//      value2 [any-value?]
+//      value1 [any-stable?]
+//      value2 [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(AND_Q)
@@ -383,8 +383,8 @@ DECLARE_NATIVE(AND_Q)
 //  "Returns true if both values are conditionally false (no 'short-circuit')"
 //
 //      return: [logic?]
-//      value1 [any-value?]
-//      value2 [any-value?]
+//      value1 [any-stable?]
+//      value2 [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(OR_Q)
@@ -524,7 +524,7 @@ INLINE Result(bool) Eval_Logic_Op_Right_Side(Level* level_)
 //  "Boolean AND, right hand side must be in GROUP! to allow short-circuit"
 //
 //      return: [logic?]
-//      left [any-value?]
+//      left [any-stable?]
 //      @right "Right is evaluated if left is true"
 //          [group! tuple! word!]
 //  ]
@@ -554,7 +554,7 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
 //  "Boolean OR, right hand side must be in GROUP! to allow short-circuit"
 //
 //      return: [logic?]
-//      left [any-value?]
+//      left [any-stable?]
 //      @right "Right is evaluated if left is false"
 //          [group! tuple! word!]
 //  ]
@@ -584,7 +584,7 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
 //  "Boolean XOR (operation cannot be short-circuited)"
 //
 //      return: [logic?]
-//      left [any-value?]
+//      left [any-stable?]
 //      @right "Always evaluated"
 //          [group! tuple! word!]
 //  ]
@@ -613,9 +613,9 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
 //
 //  "Give left hand side when right hand side is not pure null"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //      left "Expression which will always be evaluated"
-//          [any-value?]
+//          [any-stable?]
 //      ^right "Expression that's also always evaluated (can't short circuit)"
 //          [any-atom?]  ; not literal GROUP! as with XOR
 //  ]

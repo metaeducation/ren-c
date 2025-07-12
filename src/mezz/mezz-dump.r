@@ -17,7 +17,7 @@ dump: func [
 
     return: "Doesn't return anything, not even void (so like a COMMENT)"
         [ghost!]
-    @(value) [any-value?]
+    @(value) [any-stable?]
     @extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
         [element? <variadic>]
     :prefix "Put a custom marker at the beginning of each output line"
@@ -35,7 +35,7 @@ bind construct [
         eval f
     ]
 
-    let val-to-text: func [return: [text!] ^val [any-value?]] [
+    let val-to-text: func [return: [text!] ^val [any-stable?]] [
         return case [
             void? val ["; void"]
             quasi? val [unspaced [mold val space space "; anti"]]
@@ -142,7 +142,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
     @(value) "If issue, create non-specialized dumper...#on or #off by default"
         [rune! text! integer! word! set-word? set-tuple? group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
-        [<opt> any-value? <variadic>]
+        [<opt> any-stable? <variadic>]
 ][
     let d
     if rune? value [

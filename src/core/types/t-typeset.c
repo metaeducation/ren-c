@@ -284,8 +284,8 @@ Result(Zero) Set_Parameter_Spec(
                 and Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
             ){
                 Dispatcher* dispatcher = Details_Dispatcher(details);
-                if (dispatcher == NATIVE_CFUNC(ANY_VALUE_Q))
-                    *flags |= PARAMETER_FLAG_ANY_VALUE_OK;
+                if (dispatcher == NATIVE_CFUNC(ANY_STABLE_Q))
+                    *flags |= PARAMETER_FLAG_ANY_STABLE_OK;
                 else if (dispatcher == NATIVE_CFUNC(ANY_ATOM_Q))
                     *flags |= PARAMETER_FLAG_ANY_ATOM_OK;
                 else if (dispatcher == NATIVE_CFUNC(VOID_Q))

@@ -82,7 +82,7 @@ Bounce Copy_Quoter_Executor(Level* level_)
 //  "Copies a series, object, or other value"
 //
 //      return: "Return type will match the input type"
-//          [any-value?]
+//          [any-stable?]
 //      value "If an ANY-SERIES?, it is only copied from its current position"
 //          [<opt-out> element?]
 //      :part "Limits to a given length or position"

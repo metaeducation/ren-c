@@ -1059,7 +1059,7 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 //
 //      return: [any-atom?]
 //      frame [<unrun> frame!]
-//      args [any-value? <variadic>]
+//      args [any-stable? <variadic>]
 //  ]
 //
 DECLARE_NATIVE(RUN)

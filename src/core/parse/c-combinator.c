@@ -160,7 +160,7 @@ bool Combinator_Details_Querier(
 //             reduce [spec.1 spec.2 spec.3]
 //             elide spec: my skip 3
 //         ] else [
-//             [return: [any-value?]],
+//             [return: [any-stable?]],
 //         ])
 //
 //         remainder: [null? any-series?]
@@ -361,7 +361,7 @@ void Push_Parser_Sublevel(
 //  "If supplied parser fails, succeed anyway without advancing the input"
 //
 //      return: "PARSER's result if it succeeds, otherwise NULL"
-//          [any-value?]
+//          [any-stable?]
 //      parser [action!]
 //      <local> remainder  ; !!! no longer separate output, review
 //  ]
@@ -482,7 +482,7 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
 //  "Must run at least one match"
 //
 //      return: "Result of last successful match"
-//          [any-value?]
+//          [any-stable?]
 //      parser [action!]
 //      <local> remainder  ; !!! no longer separate output, review
 //  ]
@@ -570,7 +570,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
 //  "Pass through the result only if the input was advanced by the rule"
 //
 //      return: "parser result if it succeeded and advanced input, else NULL"
-//          [any-value?]
+//          [any-stable?]
 //      parser [action!]
 //      <local> remainder  ; !!! no longer separate output, review
 //  ]

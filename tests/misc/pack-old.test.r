@@ -25,7 +25,7 @@
 
 [(pack-old: infix func [
     "Prepare a BLOCK! of values for storing each in a SET-BLOCK!"
-    return: [any-value?]
+    return: [any-stable?]
     @vars [set-block? set-group?]
     block "Reduced if normal [block], but values used as-is if @[block]"
         [block! @block!]

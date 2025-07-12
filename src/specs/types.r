@@ -284,5 +284,5 @@ word!       "evaluates a variable or action"
 ; However the sheer number of edge cases involved made it better to clean
 ; up the %make-types.r process to do the pseudotype generation itself.
 ;
-; !!! Could ANY-VALUE? be generated in a more automatic fashion, now that
+; !!! Could ANY-STABLE? be generated in a more automatic fashion, now that
 ; a ^META parameter is not required to receive TRASH! ?

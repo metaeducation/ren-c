@@ -22,7 +22,7 @@
 )
 
 (
-    f: func [args [any-value? <variadic>]] [
+    f: func [args [any-stable? <variadic>]] [
        let b: take args
        return either tail? args [b] ["not at end"]
     ]
@@ -75,7 +75,7 @@
     (28 = eval [multiply 3 9 defers])  ; seen as (multiply 3 9) defers))
 ][
     (
-        soft: infix func [@(v) [any-value? <variadic>]] [
+        soft: infix func [@(v) [any-stable? <variadic>]] [
             return collect [
                 until [tail? v] [
                     keep take v
@@ -93,7 +93,7 @@
     ([7] = eval [(1 + 2) (3 + 4) soft])
 ][
     (
-        hard: infix func ['v [any-value? <variadic>]] [
+        hard: infix func ['v [any-stable? <variadic>]] [
             return collect [
                 until [tail? v] [
                     keep take v
@@ -138,7 +138,7 @@
 (
     vblock: collect wrap [
         log: adapt keep/ [set:any $value spread reduce value]
-        variadic2: func [return: [text!] v [any-value? <variadic>]] [
+        variadic2: func [return: [text!] v [any-stable? <variadic>]] [
            log [<1> take v]
            log [<2> take v]
            if not tail? v [panic "THEN SHOULD APPEAR AS IF IT IS VARARGS END"]

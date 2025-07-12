@@ -621,12 +621,12 @@ export*: func [
     "Add words to module's (exports: []) list"
 
     return: "Evaluated expression if used with SET-WORD!"
-        [any-value?]
+        [any-stable?]
     where "Specialized for each module via EXPORT"
         [module!]
     @what [set-word? set-run-word? set-group? group? block!]
     args "(export x: ...) for single or (export [...]) for words list"
-        [any-value? <variadic>]
+        [any-stable? <variadic>]
     <local>
         hdr exports val word types items
 ][

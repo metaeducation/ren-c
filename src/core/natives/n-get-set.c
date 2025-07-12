@@ -1331,7 +1331,7 @@ Result(Zero) Get_Var_In_Scratch_To_Out(
 //  "Low-level variable setter, that can assign within the dual band"
 //
 //      return: "Same value as input (error passthru even it skips the assign)"
-//          [any-value?]
+//          [any-stable?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
@@ -1438,7 +1438,7 @@ DECLARE_NATIVE(TWEAK)
 //  "Sets a variable to specified value (for dual band states, see TWEAK)"
 //
 //      return: "Same value as input (error passthru even it skips the assign)"
-//          [any-value?]
+//          [any-stable?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
@@ -1488,7 +1488,7 @@ DECLARE_NATIVE(SET)
 //  "Gets a variable (for dual band states, see TWEAK)"
 //
 //      return: "Same value as input (error passthru even it skips the assign)"
-//          [any-value?]
+//          [any-stable?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]

@@ -7,7 +7,7 @@
 log: elide/
 
 switch2: func [
-    value [any-value?]
+    value [any-stable?]
     cases [block!]
     :multi
     <local> more found result' condition branch
@@ -85,10 +85,10 @@ ok)
 
 (#t = switch2 <ren-c> [match integer! => [#i], match tag! => [#t]])
 
-([<integer!> <any-value?>] = collect [
+([<integer!> <any-stable?>] = collect [
     switch2:multi 1 [
         match integer! => [keep <integer!>]
-        match any-value?/ => [keep <any-value?>]
+        match any-stable?/ => [keep <any-stable?>]
     ]
 ])
 ]

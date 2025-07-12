@@ -74,7 +74,7 @@ Value* Try_Read_Directory_Entry(FileReq* dir, Value* dir_path);
 //
 //  "Handler for OLDGENERIC dispatch on Directory PORT!s"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(DIR_ACTOR)

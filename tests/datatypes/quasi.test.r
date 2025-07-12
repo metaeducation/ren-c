@@ -88,7 +88,7 @@
 
 ; Explicit return of VOID
 [
-    (did foo: func [return: [any-value?]] [return void])
+    (did foo: func [return: [any-stable?]] [return void])
 
     (void? foo)
     ((lift void) = lift foo)
@@ -99,14 +99,14 @@
 ; Not providing an argument is an error (too easy to pick up random arguments
 ; from another line if 0-arity were allowed)
 [
-    (did foo: func [return: [any-value?] x] [])
+    (did foo: func [return: [any-stable?] x] [])
 
     ~unspecified-arg~ !! (foo)
 ]
 
 ; ~()~ antiforms were VOID for a short time, but void is now its own thing
 [
-    (did foo: func [return: [any-value?]] [return ~()~])
+    (did foo: func [return: [any-stable?]] [return ~()~])
 
     (not void? foo)
     ('~()~ = ^ foo)

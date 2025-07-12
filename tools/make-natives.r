@@ -124,7 +124,7 @@ leaders: [
     moldify  ; early so PROBE() works as early as it can! (uses LOGIC?)
 
     ;... these all use LOGIC?
-    any-value?
+    any-stable?
     any-atom?
     null?
     space?

@@ -13,7 +13,7 @@
 
 ; return value tests
 (
-    f1: func [return: [any-value?]] [return null]
+    f1: func [return: [any-stable?]] [return null]
     null? f1
 )
 (

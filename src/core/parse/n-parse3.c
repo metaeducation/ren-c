@@ -2453,7 +2453,7 @@ DECLARE_NATIVE(SUBPARSE)
 //  "Parse series according to grammar rules"
 //
 //      return: "Parse product (return value may be what's passed to ACCEPT)"
-//          [any-value?]
+//          [any-stable?]
 //
 //      input "Input series to parse"
 //          [<opt-out> any-series? any-sequence? any-utf8?]

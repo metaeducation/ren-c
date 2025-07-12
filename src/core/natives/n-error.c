@@ -31,7 +31,7 @@
 //
 //  "Suppress escalation to PANIC from ERROR!s, by returning NULL"
 //
-//      return: [any-value?]
+//      return: [any-stable?]
 //      ^atom  ; e.g. TRY on a pack returns the pack
 //  ]
 //

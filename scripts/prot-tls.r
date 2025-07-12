@@ -1821,7 +1821,7 @@ sys.util/make-scheme [
         write: func [
             return: [null? port!]
             port [port!]
-            value [any-value?]
+            value [any-stable?]
         ][
             if find [#encrypted-handshake #application] port.state.mode [
                 do-commands port compose [

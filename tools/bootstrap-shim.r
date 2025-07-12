@@ -393,8 +393,8 @@ unpath: lambda3 [path [refinement3!]] [
     to-word path
 ]
 
-any-value?: lambda3 [x] [okay]  ; now inclusive of null
-element?: any-value?/  ; used to exclude null
+any-stable?: lambda3 [x] [okay]  ; now inclusive of null
+element?: any-stable?/  ; used to exclude null
 
 typechecker: lambda3 [x [datatype! typeset! block!]] [
     if x [if block? x [make typeset! x] else [x]]
@@ -657,7 +657,7 @@ modernize-typespec: func3 [
 ][
     types: copy types
     for-each [current bootstrap] [
-        any-value?      [null? any-value!]
+        any-stable?      [null? any-value!]
         any-string?     any-string!
         element?        any-value!
         action?         action!
