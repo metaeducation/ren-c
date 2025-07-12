@@ -4,7 +4,7 @@
 
 [
     (for-parallel: func [
-        return: [any-atom?]
+        return: [any-value?]
         vars [block!]
         ^blk1 [~[]~ any-list?]
         ^blk2 [~[]~ any-list?]

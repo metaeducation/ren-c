@@ -53,7 +53,7 @@ DECLARE_NATIVE(GHOST)
 //  "Tells you if argument is a comma antiform (unstable)"
 //
 //      return: [logic?]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(GHOST_Q)
@@ -72,7 +72,7 @@ DECLARE_NATIVE(GHOST_Q)
 //  "If argument is a ghost (antiform comma) or void (empty antiform block)"
 //
 //      return: [logic?]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(GHOST_OR_VOID_Q)
@@ -110,7 +110,7 @@ DECLARE_NATIVE(COMMENT)
 //
 //      return: [ghost!]
 //      ^discarded "Evaluation to discard, (elide elide print -[x]-) is legal"
-//          [any-atom?]
+//          [any-value?]
 //  ]
 //
 DECLARE_NATIVE(ELIDE)
@@ -126,8 +126,8 @@ DECLARE_NATIVE(ELIDE)
 //
 //  "If the argument is a GHOST!, convert it to a VOID!, else passthru"
 //
-//      return: [any-atom?]
-//      ^value [any-atom?]
+//      return: [any-value?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(UNGHOST)

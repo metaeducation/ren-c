@@ -69,7 +69,7 @@ DECLARE_NATIVE(VETO)
 //  "Detect whether argument is an error with (id = 'veto)"
 //
 //      return: [logic?]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(VETO_Q)
@@ -271,7 +271,7 @@ DECLARE_NATIVE(REDUCE)
 //  "Evaluates expressions, keeping each result (EVAL only gives last result)"
 //
 //      return: "Last body result"
-//          [any-atom?]
+//          [any-value?]
 //      vars "Variable to receive each reduced value (multiple TBD)"
 //          [_ word! @word! block!]
 //      block "Input block of expressions (@[...] acts like FOR-EACH)"

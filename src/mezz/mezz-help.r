@@ -200,7 +200,7 @@ help-value: func [
     "Give non-dialected help for an atom with any datatype"
 
     return: []
-    ^value [any-atom?]
+    ^value [any-value?]
     :name [word! tuple! path!]
 ][
     if name [

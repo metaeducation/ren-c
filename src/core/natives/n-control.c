@@ -195,7 +195,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
 //  "If CONDITION is not NULL, execute branch, otherwise return NULL"
 //
 //      return: "will be a PACK! containing NULL if branch evaluates to NULL"
-//          [any-atom?]
+//          [any-value?]
 //      condition [any-stable?]
 //      @(branch) "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
@@ -224,7 +224,7 @@ DECLARE_NATIVE(IF)
 //  "When CONDITION is not NULL, execute branch, otherwise return VOID"
 //
 //      return: "will be a PACK! containing NULL if branch evaluates to NULL"
-//          [any-atom?]
+//          [any-value?]
 //      condition [any-stable?]
 //      @(branch) "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
@@ -253,7 +253,7 @@ DECLARE_NATIVE(WHEN)
 //  "Choose a branch to execute, based on whether CONDITION is NULL"
 //
 //      return: "will be a PACK! containing NULL if branch evaluates to NULL"
-//          [any-atom?]
+//          [any-value?]
 //      condition [any-stable?]
 //      @(okay-branch) "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch?]
@@ -283,7 +283,7 @@ DECLARE_NATIVE(EITHER)
 //  "Test for NOT being a 'light' null (IF THEN? is prefix THEN)"
 //
 //      return: [logic?]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(THEN_Q)
@@ -301,7 +301,7 @@ DECLARE_NATIVE(THEN_Q)
 //  "Test for being a 'light' null (`IF ELSE?` is prefix `ELSE`)"
 //
 //      return: [logic?]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(ELSE_Q)
@@ -319,9 +319,9 @@ DECLARE_NATIVE(ELSE_Q)
 //  "If input is null, return null, otherwise evaluate the branch"
 //
 //      return: "null if input is null, or branch result"
-//          [any-atom?]
+//          [any-value?]
 //      ^value "<deferred argument> Run branch if this is not null"
-//          [any-atom?]
+//          [any-value?]
 //      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch?]
 //  ]
@@ -346,9 +346,9 @@ DECLARE_NATIVE(THEN)
 //  "If input is not null, return that value, otherwise evaluate the branch"
 //
 //      return: "Input value if not null, or branch result"
-//          [any-atom?]
+//          [any-value?]
 //      ^value "<deferred argument> Run branch if this is null"
-//          [any-atom?]
+//          [any-value?]
 //      @(branch) [<unrun> any-branch?]
 //  ]
 //
@@ -372,9 +372,9 @@ DECLARE_NATIVE(ELSE)
 //  "For non-null input, evaluate and discard branch (like a pass-thru THEN)"
 //
 //      return: "The same value as input, regardless of if branch runs"
-//          [any-atom?]
+//          [any-value?]
 //      ^value "<deferred argument> Run branch if this is not null"
-//          [any-atom?]
+//          [any-value?]
 //      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch?]
 //  ]
@@ -1211,7 +1211,7 @@ DECLARE_NATIVE(DEFAULT)
 //      @target "Word or tuple which might be set (or not)"
 //          [set-group? set-word? set-tuple?]  ; should do set-block!, etc [1]
 //      ^value "Quantity used to overwrite the left if not null"
-//          [any-atom?]  ; to do set-block! etc. needs to take PACK!
+//          [any-value?]  ; to do set-block! etc. needs to take PACK!
 //  ]
 //
 DECLARE_NATIVE(MAYBE)
@@ -1318,7 +1318,7 @@ DECLARE_NATIVE(CATCH_P)  // specialized to plain CATCH w/ NAME="THROW" in boot
 //
 //      return: [<divergent>]
 //      ^value "What CATCH will receive (unstable antiforms ok, e.g. ERROR!)"
-//          [any-atom?]
+//          [any-value?]
 //  ]
 //
 DECLARE_NATIVE(DEFINITIONAL_THROW)

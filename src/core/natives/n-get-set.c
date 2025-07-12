@@ -1443,7 +1443,7 @@ DECLARE_NATIVE(TWEAK)
 //          [<opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
 //      ^value "Will be decayed if not assigned to metavariables"
-//          [any-atom?]  ; should take PACK! [1]
+//          [any-value?]  ; should take PACK! [1]
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //  ]

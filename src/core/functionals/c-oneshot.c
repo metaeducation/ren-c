@@ -124,7 +124,7 @@ bool Oneshot_Details_Querier(
 //
 //  "Sample Interface for a Simplified EVAL that just runs a Branch"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      branch [any-branch?]
 //  ]
 //

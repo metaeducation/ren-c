@@ -114,7 +114,7 @@ export console!: make object! [
     print-result: method [
         return: []
         ^v "Value (done with meta parameter to handle unstable isotopes)"
-            [any-atom?]
+            [any-value?]
     ][
         try ^last-result: ^v  ; don't decay, suppress ERROR! propagation
 

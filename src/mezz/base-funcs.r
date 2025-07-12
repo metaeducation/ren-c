@@ -440,7 +440,7 @@ rescue: func [
 
 count-up: func [
     "Loop the body, setting a word from 1 up to the end value given"
-    return: [any-atom?]
+    return: [any-value?]
     var [word!]
     limit [<opt-out> integer! rune!]
     body [block!]

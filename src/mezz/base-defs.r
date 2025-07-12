@@ -45,15 +45,15 @@ probe: func [
     "Debug print a molded value and returns that same value"
 
     return: "Same as the input value"
-        [any-atom?]
-    ^value [any-atom?]
+        [any-value?]
+    ^value [any-value?]
 ][
     ; Remember this is early in the boot, so many things not defined.
 
     write stdout if antiform? ^value [
         unspaced [mold lift ^value _ _ "; anti"]  ; lifted is quasiform
     ] else [
-        mold ^value  ; possibly ACTION! or TRASH!, use ^value to "defuse"
+        mold value
     ]
     write stdout newline
 
@@ -153,9 +153,9 @@ nand: infix cascade [and/ not/]
 elide-if-void: func [
     "Argument is evaluative, but discarded if void"
 
-    return: [any-atom?]
+    return: [any-value?]
     ^value "Evaluation product to be ignored"
-        [any-atom?]  ; ghost! is passed through
+        [any-value?]  ; ghost! is passed through
 ][
     if '~[]~ = value [return ghost]
     return ^value

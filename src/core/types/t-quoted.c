@@ -217,7 +217,7 @@ DECLARE_NATIVE(UNQUASI)
 //
 //      return: "Keywords and plain forms if :LITE"
 //          [quoted! quasiform! keyword! element? warning!]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //      :lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
 //  ]
 //
@@ -259,7 +259,7 @@ DECLARE_NATIVE(LIFT)
 //  "antiforms -> quasiforms, adds a quote to rest, panic on error"
 //
 //      return: [quoted! quasiform!]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(LIFT_REQUIRE)  // synonym for LIFT REQUIRE
@@ -282,7 +282,7 @@ DECLARE_NATIVE(LIFT_REQUIRE)  // synonym for LIFT REQUIRE
 //
 //  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      ^value "Can be plain or antiform like NULL or VOID if :LITE"
 //          [null? void? element? quoted! quasiform!]
 //      :lite "Pass thru NULL and VOID antiforms as-is"
@@ -341,7 +341,7 @@ DECLARE_NATIVE(UNLIFT)
 //  "Tells you whether argument is a stable or unstable antiform"
 //
 //      return: [logic?]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //      :type
 //  ]
 //
@@ -574,7 +574,7 @@ DECLARE_NATIVE(PACK_P)
 //  "Tells you if argument is a parameter pack (antiform block)"
 //
 //      return: [logic?]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(PACK_Q)
@@ -676,9 +676,9 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
 //
 //  "If argument is null, make it VOID (or VETO), else passthru"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      ^value "Decayed if pack"
-//          [any-atom?]
+//          [any-value?]
 //      :veto "If true, then return VETO instead of VOID"
 //  ]
 //
@@ -701,9 +701,9 @@ DECLARE_NATIVE(OPTIONAL)  // ususally used via its aliases of OPT or ?
 //
 //  "If argument is null or error antiform make it VETO, else passthru"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      ^value "Decayed if pack"
-//          [any-atom?]
+//          [any-value?]
 //  ]
 //
 DECLARE_NATIVE(OPTIONAL_VETO)  // usually used via its alias of ?!

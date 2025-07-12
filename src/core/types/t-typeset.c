@@ -286,7 +286,7 @@ Result(Zero) Set_Parameter_Spec(
                 Dispatcher* dispatcher = Details_Dispatcher(details);
                 if (dispatcher == NATIVE_CFUNC(ANY_STABLE_Q))
                     *flags |= PARAMETER_FLAG_ANY_STABLE_OK;
-                else if (dispatcher == NATIVE_CFUNC(ANY_ATOM_Q))
+                else if (dispatcher == NATIVE_CFUNC(ANY_VALUE_Q))
                     *flags |= PARAMETER_FLAG_ANY_ATOM_OK;
                 else if (dispatcher == NATIVE_CFUNC(VOID_Q))
                     *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;

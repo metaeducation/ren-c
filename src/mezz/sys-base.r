@@ -63,7 +63,7 @@ make-quit: lambda [
 ][
     func compose:deep [
         ^result "If not :value, integer! exit code (non-zero is failure)"
-            [any-atom? (? if console [<end>])]  ; endability has pitfalls [2]
+            [any-value? (? if console [<end>])]  ; endability has pitfalls [2]
         :value "Return any value, non-errors all signify exit code 0"
     ][
         result: default [0]
@@ -125,7 +125,7 @@ module: func [
     "Creates a new module (used by both IMPORT and DO)"
 
     return: "Module and meta-result (may be error) of running the body"  ; [1]
-        [~[module! any-atom?]~]
+        [~[module! any-value?]~]
     spec "The header block of the module (modified)"
         [<opt> block! object!]
     body "The body of the module"

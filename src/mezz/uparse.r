@@ -1402,7 +1402,7 @@ default-combinators: make map! [
 
     group! combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
-            [any-atom?]
+            [any-value?]
         :pending [blank? block!]
         value [any-list?]  ; allow any array to use this "EVAL combinator"
         <local> ^result
@@ -1939,7 +1939,7 @@ default-combinators: make map! [
     ; @ combinator is used for a different purpose [1]
 
     pinned! combinator compose [
-        return: [any-atom?]
+        return: [any-value?]
         :pending [blank? block!]
         value [@any-element?]
         <local> ^result comb subpending

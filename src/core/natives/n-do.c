@@ -39,7 +39,7 @@
 //
 //  "Process an evaluated argument *inline* as an evaluator step would"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      value "BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns..."
 //          [element?]
 //      expressions "Depending on VALUE, more expressions may be consumed"
@@ -77,7 +77,7 @@ DECLARE_NATIVE(REEVAL)
 //
 //  "Shove a parameter into an ACTION! as its first argument"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      'left "Hard literal, will be processed according to right's first arg"
 //          [element?]
 //      'right "Arbitrary variadic feed of expressions on the right"
@@ -259,7 +259,7 @@ DECLARE_NATIVE(SHOVE)
 //  "Run a list through the evaluator iteratively, or take a single step"
 //
 //      return: "Evaluation product, or ~[position product]~ pack if :STEP"
-//          [any-atom?]  ; :STEP changes primary return product [1]
+//          [any-value?]  ; :STEP changes primary return product [1]
 //      source [
 //          <opt-out>  ; useful for `evaluate opt ...` scenarios
 //          any-list? get-group? set-group? get-block? set-block?  ; code
@@ -487,7 +487,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 //
 //  "Optimized version of EVAL that frees its target frame"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      frame [frame!]
 //  ]
 //
@@ -569,7 +569,7 @@ DECLARE_NATIVE(EVAL_FREE)
 //
 //  "Invoke an ACTION! with all required arguments specified"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      operation [<unrun> frame!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
@@ -934,7 +934,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 //
 //  "Invoke an action with all required arguments specified"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      operation [<unrun> frame!]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 ref: refine1]"
 //          [block!]
@@ -976,7 +976,7 @@ DECLARE_NATIVE(APPLY)
 //
 //  "Infix version of APPLY with name of thing to apply literally on left"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      @(operation) [<unrun> word! tuple! chain! path! frame! action!]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 :ref refine1]"
 //          [block!]
@@ -1057,7 +1057,7 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 //
 //  "Invoke code inline as if it had been invoked via a WORD!"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      frame [<unrun> frame!]
 //      args [any-stable? <variadic>]
 //  ]

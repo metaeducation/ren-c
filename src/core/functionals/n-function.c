@@ -516,7 +516,7 @@ Bounce Init_Thrown_Unwind_Value(
 //      level "Frame or index to exit from"
 //          [frame! integer!]
 //      ^result "Result for enclosing state"
-//          [any-atom?]
+//          [any-value?]
 //  ]
 //
 DECLARE_NATIVE(UNWIND)
@@ -653,7 +653,7 @@ bool Typecheck_Coerce_Return(
 //  "RETURN, giving a result to the caller"
 //
 //      return: [<divergent>]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //      :run "Reuse stack level for another call (<redo> uses locals/args too)"
 //      ;   [<variadic> any-stable?]  ; would force this frame managed
 //  ]
@@ -679,7 +679,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 //    !!! In the userspace formulation of this abstraction, it indicates
 //    it's not RETURN's type signature that is constrained, as if it were
 //    then RETURN would be implicated in the error.  Instead, RETURN must
-//    take [any-atom?] as its argument, and then report the error itself...
+//    take [any-value?] as its argument, and then report the error itself...
 //    implicating the frame (in a way parallel to this native).
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]

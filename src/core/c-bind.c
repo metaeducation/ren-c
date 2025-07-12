@@ -885,7 +885,7 @@ DECLARE_NATIVE(LET)
 //      return: [frame! any-list?]
 //      environment [frame! any-list?]
 //      word [word! ^word!]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(ADD_LET_BINDING)

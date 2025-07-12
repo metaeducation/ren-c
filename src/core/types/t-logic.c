@@ -617,7 +617,7 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
 //      left "Expression which will always be evaluated"
 //          [any-stable?]
 //      ^right "Expression that's also always evaluated (can't short circuit)"
-//          [any-atom?]  ; not literal GROUP! as with XOR
+//          [any-value?]  ; not literal GROUP! as with XOR
 //  ]
 //
 DECLARE_NATIVE(UNLESS)

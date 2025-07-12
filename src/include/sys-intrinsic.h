@@ -112,7 +112,7 @@ INLINE Option(const Symbol*) Level_Intrinsic_Label(Level* L) {
 // Unchecked argument to an intrinsic function, adjusted for whether you
 // are dispatching an intrinsic or not.
 //
-// Typically use this when you take a ^value with typespec [any-atom?]
+// Typically use this when you take a ^value with typespec [any-value?]
 //
 // !!! Make this a macro that can't be accidentally used w/non-intrinsic.
 //

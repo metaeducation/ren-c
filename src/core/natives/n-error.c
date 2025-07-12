@@ -32,7 +32,7 @@
 //  "Suppress escalation to PANIC from ERROR!s, by returning NULL"
 //
 //      return: [any-stable?]
-//      ^value [any-atom?]  ; e.g. TRY on a pack returns the pack
+//      ^value [any-value?]  ; e.g. TRY on a pack returns the pack
 //  ]
 //
 DECLARE_NATIVE(TRY)
@@ -247,9 +247,9 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 //  "Analogue to something like a THEN which traps definitional errors"
 //
 //      return: "Non-failure input, or product of processing failure"
-//          [any-atom?]  ; [1]
+//          [any-value?]  ; [1]
 //      ^value "<deferred argument> Run branch if this is ERROR! antiform"
-//          [any-atom?]
+//          [any-value?]
 //      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch?]
 //  ]
@@ -287,8 +287,8 @@ DECLARE_NATIVE(EXCEPT)
 //  "If passed an ERROR! antiform, tunnel it to RETURN in scope, else passthru"
 //
 //      return: "Anything that wasn't an ERROR! antiform"
-//          [any-atom?]  ; [1]
-//      ^value [any-atom?]
+//          [any-value?]  ; [1]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(TRAP)
@@ -324,8 +324,8 @@ DECLARE_NATIVE(TRAP)
 //  "If passed an ERROR! antiform, panic on it, otherwise passthru"
 //
 //      return: "Anything that wasn't an ERROR! antiform"
-//          [any-atom?]
-//      ^value [any-atom?]
+//          [any-value?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(REQUIRE)
@@ -347,7 +347,7 @@ DECLARE_NATIVE(REQUIRE)
 //  "Tells you if argument is an ERROR! antiform, doesn't panic if it is"
 //
 //      return: [logic?]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(ERROR_Q)

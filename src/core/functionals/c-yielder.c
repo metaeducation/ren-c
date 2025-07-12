@@ -75,7 +75,7 @@ DECLARE_NATIVE(DONE)
 //  "Detect whether argument is an error with (id = 'done)"
 //
 //      return: [logic?]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(DONE_Q)
@@ -553,9 +553,9 @@ DECLARE_NATIVE(GENERATOR)  // could also be made in LIB with SPECIALIZE
 //  "Function used with GENERATOR and YIELDER to emit results"
 //
 //      return: "Same value given as input is returned when YIELD resumes"
-//          [any-atom?]
+//          [any-value?]
 //      ^value "Value to yield or the DONE error antiform to signal completion"
-//          [any-atom?]
+//          [any-value?]
 //      :final "Yield, but also signal the yielder or generator is done"
 //  ]
 //

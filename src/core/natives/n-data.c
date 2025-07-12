@@ -1077,8 +1077,8 @@ DECLARE_NATIVE(INFIX)
 //
 //  "Returns input value (https://en.wikipedia.org/wiki/Identity_function)"
 //
-//      return: [any-atom?]
-//      ^value [any-atom?]
+//      return: [any-value?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(IDENTITY)  // sample uses: https://stackoverflow.com/q/3136338
@@ -1189,7 +1189,7 @@ DECLARE_NATIVE(ALIASES_Q)
 //  "Tells you if the argument (taken as meta) is storable in a variable"
 //
 //      return: [logic?]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(ANY_STABLE_Q)
@@ -1208,24 +1208,24 @@ DECLARE_NATIVE(ANY_STABLE_Q)
 
 
 //
-//  any-atom?: native:intrinsic [
+//  any-value?: native:intrinsic [
 //
 //  "Accepts absolutely any argument state (unstable antiforms included)"
 //
 //      return: [logic?]
-//      ^value  ; can't use any-atom? - recursive
+//      ^value  ; can't use any-value? - recursive
 //  ]
 //
-DECLARE_NATIVE(ANY_ATOM_Q)
+DECLARE_NATIVE(ANY_VALUE_Q)  // synonym for internal concept of ANY_ATOM
 //
 // !!! The automatic typecheckers that are built don't handle unstable
 // antiforms at this time.  They need to, so things like this and PACK?
 // and ERROR? don't have to be special cased.
 //
-// !!! ELEMENT? isn't ANY-ELEMENT?, so should this just be ATOM?  The policy
+// !!! ELEMENT? isn't ANY-ELEMENT?, so should this just be VALUE?  The policy
 // for putting ANY- in front of things has been in flux.
 {
-    INCLUDE_PARAMS_OF_ANY_ATOM_Q;
+    INCLUDE_PARAMS_OF_ANY_VALUE_Q;
 
     return OKAY;
 }
@@ -1263,7 +1263,7 @@ DECLARE_NATIVE(ANY_WORD_Q)
 //  "Tells you if argument is an ~[]~ antiform, e.g. an empty pack"
 //
 //      return: [logic?]
-//      ^value [any-atom?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(VOID_Q)
@@ -1393,8 +1393,8 @@ DECLARE_NATIVE(SPACE_Q)
 //
 //  "Make the heavy form of NULL (passes through all other values)"
 //
-//      return: [any-atom?]
-//      ^value [any-atom?]
+//      return: [any-value?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(HEAVY)
@@ -1415,8 +1415,8 @@ DECLARE_NATIVE(HEAVY)
 //
 //  "Make the light form of NULL (passes through all other values)"
 //
-//      return: [any-atom?]
-//      ^value [any-atom?]
+//      return: [any-value?]
+//      ^value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(LIGHT)
@@ -1528,7 +1528,7 @@ DECLARE_NATIVE(NOQUASI)
 //
 //  "Make quasiforms into their antiforms, pass thru other values"
 //
-//      return: [any-atom?]
+//      return: [any-value?]
 //      value [element?]
 //  ]
 //
