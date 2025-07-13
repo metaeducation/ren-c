@@ -5,5 +5,5 @@
 )
 (
     blk: tail of [1]
-    null? next blk
+    null? try next blk
 )

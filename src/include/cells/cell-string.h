@@ -44,10 +44,8 @@ INLINE Length Series_Len_At(const Cell* v) {
     // This is a longstanding historical Rebol issue that needs review.
     //
     REBIDX i = Series_Index(v);
-    if (i > Series_Len_Head(v))
-        panic ("Index past end of series");
-    if (i < 0)
-        panic ("Index before beginning of series");
+    if (i < 0 or i > Series_Len_Head(v))
+        panic (Error_Index_Out_Of_Range_Raw());
 
     return Series_Len_Head(v) - i;  // take current index into account
 }

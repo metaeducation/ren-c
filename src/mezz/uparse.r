@@ -2002,9 +2002,7 @@ default-combinators: make map! [
         if not integer? ^result [
             panic "SKIP expects INTEGER! amount to skip"
         ]
-        input: skip input ^result else [
-            return fail "Attempt to SKIP past end of parse input"
-        ]
+        input: trap skip input ^result  ; out of bounds is just match failure
         return ghost
     ]
 
@@ -2024,10 +2022,7 @@ default-combinators: make map! [
         return: "One element of series input"
             [element?]
     ][
-        if tail? input [
-            return fail "PARSE position at tail, <NEXT> can't advance position"
-        ]
-        input: next input
+        input: trap next input  ; match fail if out of bounds, tail is legal
         return input
     ]
 

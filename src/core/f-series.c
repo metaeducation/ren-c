@@ -54,7 +54,7 @@ IMPLEMENT_GENERIC(SKIP, Any_Series)
 
     if (not Bool_ARG(UNBOUNDED)) {
         if (i < 0 or i > cast(REBI64, Series_Len_Head(v)))
-            return NULLED;
+            return fail (Error_Index_Out_Of_Range_Raw());
     }
 
     SERIES_INDEX_UNBOUNDED(v) = i;
