@@ -144,8 +144,6 @@ bind construct [
             ]
         )
 
-        :remainder [any-series?]  ; all combinators have remainder
-
         (if ':pending = try spec.1 [
             assert [spec.2 = [blank? block!]]
             autopipe: 'no  ; they're asking to handle pending themselves
@@ -204,7 +202,7 @@ bind construct [
                 {? if not ghostable ['unghost]} (^value except e -> [
                     {unrun return/} fail e
                 ])
-                remainder
+                input
                 pending
             ]
         ]
@@ -288,12 +286,12 @@ default-combinators: make map! [
         :negated
     ][
         if negated [  ; NOT NOT, e.g. call parser without negating it
-            return [{^} remainder]: trap parser input
+            return [{^} input]: trap parser input
         ]
         if not negatable-parser? parser/ [
             panic "NOT called on non-negatable combinator"
         ]
-        return [{^} remainder]: trap parser:negated input
+        return [{^} input]: trap parser:negated input
     ]
 
     === CONDITIONAL COMBINATOR ===
@@ -304,7 +302,7 @@ default-combinators: make map! [
         parser [action!]
         <local> result
     ][
-        [^result remainder]: trap parser input  ; non-matching parser, no match
+        [^result input]: trap parser input  ; non-matching parser, no match
 
         if void? ^result [
             panic "CONDITIONAL combinator received VOID antiform result"
@@ -332,12 +330,12 @@ default-combinators: make map! [
         return: "PARSER's result if it succeeds, otherwise NULL"
             [any-stable? pack!]
         parser [action!]
-        <local> ^result
+        <local> ^result remainder
     ][
         [^result remainder]: parser input except e -> [
-            remainder: input  ; succeed on parser fail but don't advance input
-            return null
+            return null  ; succeed w/null on parse fail, don't advance input
         ]
+        input: remainder  ; advance input
         return ^result  ; return successful parser result
     ]
 
@@ -346,12 +344,12 @@ default-combinators: make map! [
         return: "PARSER's result if it succeeds, otherwise VOID"
             [any-stable? pack!]
         parser [action!]
-        <local> ^result
+        <local> ^result remainder
     ][
         [^result remainder]: parser input except e -> [
-            remainder: input  ; succeed on parser fail but don't advance input
-            return void
+            return void  ; succeed w/void on parse fail, don't advance input
         ]
+        input: remainder  ; advance input
         return ^result  ; return successful parser result
     ]
 
@@ -362,7 +360,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result
     ][
-        [^result remainder]: trap parser input
+        [^result input]: trap parser input
 
         if (not any-list? ^result) [
             panic "SPREAD only accepts ANY-LIST? and QUOTED!"
@@ -377,14 +375,13 @@ default-combinators: make map! [
         parser [action!]
         :negated
     ][
-        remainder: input  ; never advances
         if negated [
             parser input except e -> [
                 return ~#not~
             ]
             return fail "Negated parser passed to AHEAD succeded"
         ]
-        return parser input  ; don't care about what parser's remainder is
+        return [{^}]: parser input  ; don't care about parser's remainder
     ]
 
     'further combinator [
@@ -399,7 +396,7 @@ default-combinators: make map! [
         if (index of pos) <= (index of input) [
             return fail "FURTHER rule matched, but did not advance the input"
         ]
-        remainder: pos
+        input: pos
         return ^result
     ]
 
@@ -434,7 +431,6 @@ default-combinators: make map! [
         cycle [  ; if first try succeeds, we'll succeed overall--keep looping
             [^result input]: parser input except [
                 take:last state.loops
-                remainder: input
                 return ^result
             ]
         ]
@@ -456,7 +452,6 @@ default-combinators: make map! [
         cycle [
             [^ input]: condition-parser input except [
                 take:last state.loops
-                remainder: input
                 return ^result
             ]
 
@@ -496,7 +491,6 @@ default-combinators: make map! [
                 continue
             ]
             take:last state.loops
-            remainder: input
             return ^result
         ]
         panic ~#unreachable~
@@ -535,7 +529,6 @@ default-combinators: make map! [
         cycle [
             [^ input]: parser input except [
                 take:last state.loops
-                remainder: input
                 return count
             ]
             count: count + 1
@@ -571,7 +564,7 @@ default-combinators: make map! [
             panic "No PARSE iteration to STOP"
         ]
 
-        f.remainder: input
+        f.input: input  ; is set remainder to where stop is always the rule?
         f/return ^result
     ]
 
@@ -594,7 +587,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^value
     ][
-        [^value _]: trap parser input
+        [^value _]: trap parser input  ; returning, don't need to update input
 
         ; !!! STATE is filled in as the frame of the top-level UPARSE call.  If
         ; we UNWIND then we bypass any of its handling code, so it won't set
@@ -633,7 +626,6 @@ default-combinators: make map! [
         return: "The INDEX OF the parse position"
             [integer!]
     ][
-        remainder: input
         return index of input
     ]
 
@@ -642,7 +634,7 @@ default-combinators: make map! [
         return: "Length in series units"
             [integer!]
         parser [action!]
-        <local> start end
+        <local> start end remainder
     ][
         [^ remainder]: trap parser input
 
@@ -650,12 +642,13 @@ default-combinators: make map! [
         start: index of input
 
         ; Because parse operations can SEEK, this can potentially create
-        ; issues.  We currently fail if the index is before.
+        ; issues.  We currently fail if the index is before (return negative?)
         ;
         if start > end [
-            panic "Can't MEASURE region where rules did a SEEK before the INPUT"
+            panic "Can't MEASURE region if rules SEEK'd before the INPUT"
         ]
 
+        input: remainder  ; advance the input now that difference is measured
         return end - start
     ]
 
@@ -677,15 +670,15 @@ default-combinators: make map! [
         return: [trash!]
         parser [action!]
         replacer [action!]  ; !!! How to say result is used here?
-        <local> ^replacement
+        <local> ^replacement remainder
     ][
         [^ remainder]: trap parser input  ; first find end position
 
         [^replacement _]: trap replacer input
 
-        ; CHANGE returns tail, use as new remainder
+        ; CHANGE returns tail, use as new position
         ;
-        remainder: change:part input ^replacement remainder
+        input: change:part input ^replacement remainder
         return ~#change~
     ]
 
@@ -693,10 +686,11 @@ default-combinators: make map! [
         "Remove data that matches a parse rule"
         return: [trash!]
         parser [action!]
+        <local> remainder
     ][
         [^ remainder]: trap parser input  ; first find end position
 
-        remainder: remove:part input remainder
+        input: remove:part input remainder
         return ~#remove~  ; note that REMOVE <END> is considered successful
     ]
 
@@ -708,7 +702,7 @@ default-combinators: make map! [
     ][
         [^insertion _]: trap parser input  ; remainder ignored
 
-        remainder: insert input ^insertion
+        input: insert input ^insertion
         return ~#insert~
     ]
 
@@ -729,7 +723,7 @@ default-combinators: make map! [
                 input: next input
                 continue
             ]
-            remainder: input  ; TO means do not include match range
+            ; don't factor in parser's advancement here (THRU does)
             return ^result
         ]
         panic ~#unreachable~
@@ -740,7 +734,7 @@ default-combinators: make map! [
         return: "The rule's product"
             [any-stable? pack!]
         parser [action!]
-        <local> ^result
+        <local> ^result remainder
     ][
         cycle [
             [^result remainder]: parser input except [
@@ -750,6 +744,7 @@ default-combinators: make map! [
                 input: next input
                 continue
             ]
+            input: remainder  ; factor in parser's advancement (TO doesn't)
             return ^result
         ]
         panic ~#unreachable~
@@ -759,26 +754,26 @@ default-combinators: make map! [
         return: "seeked position"
             [any-series?]
         parser [action!]
-        <local> where
+        <local> where remainder
     ][
         [^where remainder]: trap parser input
 
         case [
             void? ^where [
-                remainder: input
+                input: remainder
             ]
             integer? ^where [
-                remainder: at (head of input) ^where
+                input: at (head of input) ^where
             ]
             any-series? ^where [
                 if not same? (head of input) (head of ^where) [
                     panic "Series SEEK in UPARSE must be in the same series"
                 ]
-                remainder: ^where
+                input: ^where
             ]
             panic "SEEK requires INTEGER!, series position, or VOID"
         ]
-        return remainder
+        return input  ; does seeked position as return value make sense?
     ]
 
     'between combinator [
@@ -786,7 +781,7 @@ default-combinators: make map! [
             [any-series?]
         parser-left [action!]
         parser-right [action!]
-        <local> start limit
+        <local> start limit remainder
     ][
         [^ start]: trap parser-left input
 
@@ -799,6 +794,7 @@ default-combinators: make map! [
                 limit: next limit
                 continue  ; don't try to assign the `[^ remainder]:`
             ]
+            input: remainder
             return copy:part start limit
         ]
         panic ~#unreachable~
@@ -815,7 +811,6 @@ default-combinators: make map! [
         return: "parse position"
             [any-series?]
     ][
-        remainder: input
         return input
     ]
 
@@ -824,7 +819,6 @@ default-combinators: make map! [
         return: [ghost!]
         :negated
     ][
-        remainder: input  ; never advances
         if tail? input [
             if negated [
                 return fail "PARSE position at <end> (but parser negated)"
@@ -842,7 +836,6 @@ default-combinators: make map! [
         return: "parse position"
             [any-series?]
     ][
-        remainder: input
         return state.input
     ]
 
@@ -851,7 +844,6 @@ default-combinators: make map! [
         return: "parse position"
             [any-series?]
     ][
-        remainder: input
         return head of input  ; !!! What if SUBPARSE series not at head?
     ]
 
@@ -868,16 +860,18 @@ default-combinators: make map! [
         return: "Copied series"
             [any-series?]
         parser [action!]
+        <local> start
     ][
-        [^ remainder]: trap parser input
+        start: input
+        [^ input]: trap parser input
 
         if any-list? input [
-            return as block! copy:part input remainder
+            return as block! copy:part start input
         ]
         if any-string? input [
-            return as text! copy:part input remainder
+            return as text! copy:part start input
         ]
-        return copy:part input remainder
+        return copy:part start input
     ]
 
     'copy combinator [
@@ -947,7 +941,7 @@ default-combinators: make map! [
         ; !!! Review: should we allow non-value-bearing parsers that just
         ; set limits on the input?
         ;
-        [^subseries remainder]: trap parser input
+        [^subseries input]: trap parser input
 
         if void? ^subseries [
             panic "Cannot SUPBARSE into a void"
@@ -996,9 +990,9 @@ default-combinators: make map! [
         parser [action!]
         <local> collected
     ][
-        [^ remainder pending]: trap parser input
+        [^ input pending]: trap parser input
 
-        ; PENDING can be NULL or a block full of items that may or may
+        ; PENDING can be blank or a block full of items that may or may
         ; not be intended for COLLECT.  Right now the logic is that all QUOTED!
         ; items are intended for collect, extract those from the pending list.
         ;
@@ -1023,7 +1017,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result
     ][
-        [^result remainder pending]: trap parser input
+        [^result input pending]: trap parser input
 
         if void? ^result [
             pending: blank
@@ -1069,10 +1063,9 @@ default-combinators: make map! [
         <local> collected
     ][
         collected: copy []
-        remainder: input
         cycle [
             append collected (
-                [{^} remainder]: parser remainder except e -> [
+                [{^} input]: parser input except e -> [
                     return collected
                 ]
             )
@@ -1104,7 +1097,7 @@ default-combinators: make map! [
         parser [action!]
         <local> obj
     ][
-        [^ remainder pending]: trap parser input
+        [^ input pending]: trap parser input
 
         ; Currently we assume that all the BLOCK! items in the pending are
         ; intended for GATHER.
@@ -1151,7 +1144,7 @@ default-combinators: make map! [
             target: unbind target  ; `emit foo:` okay in function defining foo
         ]
 
-        [^result remainder pending]: trap parser input
+        [^result input pending]: trap parser input
 
         ; We lift the result.  This lets us emit antiforms, since the MAKE
         ; OBJECT! evaluates.
@@ -1163,11 +1156,11 @@ default-combinators: make map! [
     === SET-WORD! and SET-TUPLE! COMBINATOR ===
 
     ; The concept behind Ren-C's SET-WORD! in PARSE is that parse combinators
-    ; don't just update the remainder of the parse input, but they also return
-    ; values.  If these appear to the right of a set-word, then the set word
-    ; will be assigned on a match.
+    ; don't just update the parse input position, but they also return values.
+    ; If these appear to the right of a set-word, then the set word will be
+    ; assigned on a match.
     ;
-    ; !!! SET-PATH! is not supported, as paths will be used for functions only.
+    ; !!! SET-PATH! support will be very narrow, for assigning functions.
 
     '*: combinator [
         return: "The set value"
@@ -1181,7 +1174,7 @@ default-combinators: make map! [
             var: eval var
         ]
 
-        [^result remainder]: trap parser input
+        [^result input]: trap parser input
 
         return set var ^result
     ]
@@ -1211,23 +1204,24 @@ default-combinators: make map! [
         return: "The rule series matched against (not input value)"
             [text!]
         value [text!]
-        <local> neq?
+        <local> neq? item
     ][
         case [
             any-list? input [
+                item: trap input.1
                 /neq?: either state.case [not-equal?/] [lax-not-equal?/]
-                if neq? try input.1 value [
+                if neq? item value [
                     return fail "Value at parse position does not match TEXT!"
                 ]
-                remainder: next input
-                return input.1
+                input: next input
+                return item
             ]
 
-            ; for both of these cases, we have to use the rule, since there's
-            ; no isolated value to capture.  Should we copy it?
+            ; for both of these cases, we have to use value as the result,
+            ; since there's no unique item to capture.  Should we copy it?
 
             any-string? input [
-                [_ remainder]: find // [
+                [_ input]: find // [
                     input value
                     match: ok
                     case: state.case
@@ -1237,7 +1231,7 @@ default-combinators: make map! [
             ]
             <default> [
                 assert [blob? input]
-                [_ remainder]: find // [
+                [_ input]: find // [
                     input value
                     match: ok
                     case: state.case
@@ -1262,21 +1256,24 @@ default-combinators: make map! [
             [rune!]
         value [rune!]
         :negated
+        <local> item
     ][
         if tail? input [
             return fail "RUNE! cannot match at end of input"
         ]
         case [
             any-list? input [
-                remainder: next input
-                if value = input.1 [
+                item: input.1
+                if value = item [
                     if negated [
                         return fail "RUNE! matched, but combinator negated"
                     ]
-                    return input.1
+                    input: next input
+                    return item
                 ]
                 if negated [
-                    return input.1
+                    input: next input
+                    return item
                 ]
                 return fail "Value at parse position does not match RUNE!"
             ]
@@ -1285,13 +1282,14 @@ default-combinators: make map! [
                     if (not char? value) [
                         panic "NOT RUNE! with strings is only for single char"
                     ]
-                    if input.1 = value [
+                    item: input.1
+                    if item = value [
                         return fail "Negated RUNE! char matched at string"
                     ]
                     remainder: next input
-                    return input.1
+                    return item
                 ]
-                [_ remainder]: find:match:case input value else [
+                [_ input]: find:match:case input value else [
                     return fail [
                         "String at parse position does not match RUNE!"
                     ]
@@ -1304,13 +1302,14 @@ default-combinators: make map! [
                     if (not char? value) or (255 < codepoint of value) [
                         panic "NOT RUNE! with blobs is only for single byte"
                     ]
-                    if input.1 = codepoint of value [
+                    item: input.1
+                    if item = codepoint of value [
                         return fail "Negated RUNE! char matched at blob"
                     ]
                     remainder: next input
-                    return make-char input.1
+                    return make-char item
                 ]
-                [_ remainder]: find:match:case input value else [
+                [_ input]: find:match:case input value else [
                     return fail [
                         "Binary at parse position does not match RUNE!"
                     ]
@@ -1331,18 +1330,20 @@ default-combinators: make map! [
         return: "The binary matched against (not input value)"
             [blob!]
         value [blob!]
+        <local> item
     ][
         case [
             any-list? input [
-                if value = try input.1 [
-                    remainder: next input
-                    return input.1
+                item: try input.1  ; use TRAP?
+                if value = item [
+                    input: next input
+                    return item
                 ]
                 return fail "Value at parse position does not match BLOB!"
             ]
             <default> [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
-                [_ remainder]: find:match input value else [
+                [_ input]: find:match input value else [
                     return fail [
                         "Content at parse position does not match BLOB!"
                     ]
@@ -1366,7 +1367,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result
     ][
-        [^result remainder]: trap parser input
+        [^result input]: trap parser input
 
         state.env: add-let-binding state.env (unchain vars) ^result
 
@@ -1384,7 +1385,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result
     ][
-        [^result remainder]: trap parser input
+        [^result input]: trap parser input
 
         return inside state.input ^result
     ]
@@ -1407,8 +1408,6 @@ default-combinators: make map! [
         value [any-list?]  ; allow any array to use this "EVAL combinator"
         <local> ^result
     ][
-        remainder: input
-
         if tail? value [
             pending: blank
             return ghost
@@ -1451,7 +1450,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^result
     ][
-        [^result remainder pending]: trap parser input
+        [^result input pending]: trap parser input
 
         ; Run GROUP!s in order, removing them as one goes
         ;
@@ -1498,7 +1497,7 @@ default-combinators: make map! [
         parser [action!]
         <local> ^r comb subpending
     ][
-        [^r remainder pending]: parser input except e -> [
+        [^r input pending]: parser input except e -> [
             panic e  ; can't use TRAP here, don't want to fail [1]
         ]
 
@@ -1522,8 +1521,7 @@ default-combinators: make map! [
             ]
         ]
 
-        input: remainder
-        [^r remainder subpending]: trap run comb state input r  ; [3]
+        [^r input subpending]: trap run comb state input r  ; [3]
         pending: glom pending subpending
 
         return ^r
@@ -1554,28 +1552,28 @@ default-combinators: make map! [
         return: "The matched input value"
             [char? integer!]
         value [bitset!]
+        <local> item
     ][
-        if tail? input [
-            return fail "BITSET! cannot match at end of input"
-        ]
+        item: trap input.1
+
         case [
             any-list? input [
-                if value = input.1 [
-                    remainder: next input
-                    return input.1
+                if value = item [
+                    input: next input
+                    return item
                 ]
             ]
             any-string? input [
-                if pick value input.1 [
-                    remainder: next input
-                    return input.1
+                if pick value item [
+                    input: next input
+                    return item
                 ]
             ]
             <default> [
                 assert [blob? input]
-                if pick value input.1 [
-                    remainder: next input
-                    return input.1
+                if pick value item [
+                    input: next input
+                    return item
                 ]
             ]
         ]
@@ -1596,27 +1594,25 @@ default-combinators: make map! [
             [element?]
         value [quoted!]
         :negated
-        <local> comb neq?
+        <local> comb eq? item
     ][
-        if tail? input [
-            return fail "QUOTED! cannot match at end of input"
-        ]
-
         if any-list? input [
-            /neq?: either state.case [not-equal?/] [lax-not-equal?/]
-            remainder: next input
-            if neq? input.1 unquote value [
+            item: trap input.1
+            input: next input
+
+            /eq?: either state.case [equal?/] [lax-equal?/]
+            if eq? item unquote value [
                 if negated [
-                    return input.1
+                    return fail "Negated QUOTED! parser matched item"
                 ]
-                return fail [
-                    "Value at parse position wasn't unquote of QUOTED! item"
-                ]
+                return unquote value
             ]
             if negated [
-                return fail "Negated QUOTED! parser matched item"
+                return item
             ]
-            return unquote value
+            return fail [
+                "Value at parse position wasn't unquote of QUOTED! item"
+            ]
         ]
 
         if negated [  ; !!! allow single-char or single-byte negations?
@@ -1625,7 +1621,11 @@ default-combinators: make map! [
 
         ensure [any-string? blob!] input
 
-        [_ remainder]: find:match input value else [
+        if tail? input [
+            return fail "QUOTED! cannot match at end of input"
+        ]
+
+        [_ input]: find:match input value else [
             return fail "Molded form of QUOTED! item didn't match"
         ]
         return unquote value
@@ -1643,7 +1643,7 @@ default-combinators: make map! [
         ; of ['''x] may be clarifying when trying to match ''x (for instance)
 
         comb: state.combinators.(quoted!)
-        return [{_} remainder pending]: run comb state input (lift value)
+        return [{_} input pending]: run comb state input (lift value)
     ]
 
     === ANTIFORM COMBINATORS ===
@@ -1660,7 +1660,6 @@ default-combinators: make map! [
     '~[]~ combinator [
         return: [~[]~]
     ][
-        remainder: input
         return void
     ]
 
@@ -1687,7 +1686,6 @@ default-combinators: make map! [
         <local> comb neq?
     ][
         pending: blank
-        remainder: input
 
         if tail? input [
             return fail "SPLICE! cannot match at end of input"
@@ -1699,12 +1697,12 @@ default-combinators: make map! [
 
         /neq?: either state.case [not-equal?/] [lax-not-equal?/]
         for-each 'item unanti value [
-            if neq? remainder.1 item [
+            if neq? input.1 item [
                 return fail [
                     "Value at input position didn't match splice element"
                 ]
             ]
-            remainder: next remainder
+            input: next input
         ]
         return value  ; matched splice is result
     ]
@@ -1725,7 +1723,6 @@ default-combinators: make map! [
             [integer!]
         value [integer!]
     ][
-        remainder: input
         return value
     ]
 
@@ -1739,13 +1736,11 @@ default-combinators: make map! [
         [^times input]: trap times-parser input
 
         if void? ^times [  ; VOID-in-NULL-out
-            remainder: input
             return null
         ]
         switch:type ^times [
             rune! [
                 if ^times = _ [  ; should space be tolerated if void is?
-                    remainder: input
                     return void  ; `[repeat (_) rule]` is a no-op
                 ]
 
@@ -1760,7 +1755,6 @@ default-combinators: make map! [
             block! block?:pinned/ [
                 parse ^times [
                     '_ '_ <end> (
-                        remainder: input
                         return void  ; `[repeat ([_ _]) rule]` is a no-op
                     )
                     |
@@ -1796,13 +1790,11 @@ default-combinators: make map! [
                 if i <= min [  ; `<=` not `<` as this iteration failed!
                     return fail "REPEAT did not reach minimum repetitions"
                 ]
-                remainder: input
                 return ^result
             ]
         ]
 
         take:last state.loops
-        remainder: input
         return ^result
     ]
 
@@ -1829,39 +1821,37 @@ default-combinators: make map! [
         :negated
         <local> item error
     ][
-        if tail? input [
-            return fail "TYPE-BLOCK! cannot match at end of input"
-        ]
-        either any-list? input [
-            if value <> type of input.1 [
+        if any-list? input [
+            item: trap input.1
+            input: next input
+            if value <> type of item [
                 if negated [
-                    remainder: next input
-                    return input.1
+                    return item
                 ]
                 return fail "Value at parse position did not match TYPE-BLOCK!"
             ]
             if negated [
                 return fail "Value at parse position matched TYPE-BLOCK!"
             ]
-            remainder: next input
-            return input.1
-        ][
-            if negated [
-                panic "TYPE-BLOCK! only supported negated for array input"
-            ]
-            [remainder item]: trap transcode:next input
-
-            ; If TRANSCODE knew what kind of item we were looking for, it could
-            ; shortcut this.  Since it doesn't, we might waste time and memory
-            ; doing something like transcoding a very long block, only to find
-            ; afterward it's not something like a requested integer!.  Red
-            ; has some type sniffing in their fast lexer, review relevance.
-            ;
-            if value != type of item [
-                return fail "Could not TRANSCODE the datatype from input"
-            ]
             return item
         ]
+
+        if negated [
+            panic "TYPE-BLOCK! only supported negated for array input"
+        ]
+
+        [input item]: trap transcode:next input
+
+        ; If TRANSCODE knew what kind of item we were looking for, it could
+        ; shortcut this.  Since it doesn't, we might waste time and memory
+        ; doing something like transcoding a very long block, only to find
+        ; afterward it's not something like a requested integer!.  Red
+        ; has some type sniffing in their fast lexer, review relevance.
+        ;
+        if value != type of item [
+            return fail "Could not TRANSCODE the datatype from input"
+        ]
+        return item
     ]
 
     === MATCH COMBINATOR ===
@@ -1869,10 +1859,13 @@ default-combinators: make map! [
     'match combinator [
         return: "Element if it matches the match rule" [element?]
         value [frame!]
+        <local> item
     ][
-        if run value opt try input.1 [
-            remainder: next input
-            return input.1
+        item: trap input.1
+
+        if run value item [
+            input: next input
+            return item
         ]
 
         return fail "MATCH didn't match type of current input position item"
@@ -1886,7 +1879,6 @@ default-combinators: make map! [
         return: "Quoted form of literal value (not matched)" [element?]
         'value [element?]
     ][
-        remainder: input
         return value
     ]
 
@@ -1894,7 +1886,6 @@ default-combinators: make map! [
         return: "Quoted form of literal value (not matched)" [element?]
         @value [element?]
     ][
-        remainder: input
         return value
     ]
 
@@ -1952,7 +1943,7 @@ default-combinators: make map! [
         case [
             group? value [  ; run GROUP! to get *actual* value to match
                 comb: runs state.combinators.(group!)
-                [^result remainder pending]: trap comb state input value
+                [^result input pending]: trap comb state input value
 
                 if void? ^result [
                     return void
@@ -1962,17 +1953,16 @@ default-combinators: make map! [
             word? value [
                 ^result: get value
                 pending: blank  ; no pending, only "subpending"
-                remainder: input  ; didn't need to consume input to get result
             ]
             block? value [  ; match literal block redundant [4]
                 comb: runs state.combinators.(block!)
-                [^result remainder pending]: trap comb state input value
+                [^result input pending]: trap comb state input value
             ]
         ]
 
         comb: runs state.combinators.(type of lift result)  ; quoted or quasi
 
-        [^result remainder subpending]: trap comb state remainder lift result
+        [^result input subpending]: trap comb state input lift result
 
         pending: glom pending spread subpending
         return ^result
@@ -1986,7 +1976,7 @@ default-combinators: make map! [
         return: [ghost!]
         parser [action!]
     ][
-        [^ remainder]: trap parser input
+        [^ input]: trap parser input
         return ghost
     ]
 
@@ -1995,7 +1985,6 @@ default-combinators: make map! [
         return: [ghost!]
         'ignored [block! text! tag! rune!]
     ][
-        remainder: input
         return ghost
     ]
 
@@ -2008,13 +1997,12 @@ default-combinators: make map! [
         [^result _]: trap parser input
 
         if space? ^result [
-            remainder: input
             return ghost
         ]
         if not integer? ^result [
             panic "SKIP expects INTEGER! amount to skip"
         ]
-        remainder: skip input ^result else [
+        input: skip input ^result else [
             return fail "Attempt to SKIP past end of parse input"
         ]
         return ghost
@@ -2024,12 +2012,11 @@ default-combinators: make map! [
         "Match one series item in input, succeeding so long as it's not at END"
         return: "One element of series input"
             [element?]
+        <local> item
     ][
-        if tail? input [
-            return fail "PARSE position at tail, ONE has no item to match"
-        ]
-        remainder: next input
-        return input.1
+        item: trap input.1
+        input: next input
+        return item
     ]
 
     <next> combinator [  ; historically used "SKIP" for this, also
@@ -2040,8 +2027,8 @@ default-combinators: make map! [
         if tail? input [
             return fail "PARSE position at tail, <NEXT> can't advance position"
         ]
-        remainder: next input
-        return remainder
+        input: next input
+        return input
     ]
 
     === ACTION! COMBINATOR ===
@@ -2093,7 +2080,6 @@ default-combinators: make map! [
             ]
         ]
         assert [tail? parsers]
-        remainder: input
         return eval f
     ]
 
@@ -2145,7 +2131,6 @@ default-combinators: make map! [
             bitset! []
 
             void?/ [
-                remainder: input
                 pending: blank  ; not delegating to combinator with pending
                 return void  ; yield void
             ]
@@ -2174,7 +2159,7 @@ default-combinators: make map! [
         ;
         ; !!! REVIEW: handle `rule-start` and `rule-end` ?
         ;
-        return [{^} remainder pending]: run comb state input ^r
+        return [{^} input pending]: run comb state input ^r
     ]
 
     === NEW-STYLE ANY COMBINATOR ===
@@ -2220,7 +2205,6 @@ default-combinators: make map! [
             block: unpin block  ; should be able to enumerate regardless..
             pending: blank  ; not running any rules, won't add to pending
             if tail? block [
-                remainder: input
                 return void  ; empty literal blocks match at any location
             ]
             if not tail? input [
@@ -2230,7 +2214,7 @@ default-combinators: make map! [
                         when blob? input [to blob! item]
                         item
                     ][
-                        remainder: next input
+                        input: next input
                         return item  ; (parse "a" [any @[a]] -> a) ... not #a
                     ]
                 ]
@@ -2248,7 +2232,7 @@ default-combinators: make map! [
             ; We take the first parser that succeeds.
             ;
             let [/parser 'block]: parsify state block  ; /parser for surprising
-            return [{^result} remainder pending]: parser input except [
+            return [{^result} input pending]: parser input except [
                 continue
             ]
         ]
@@ -2334,7 +2318,7 @@ default-combinators: make map! [
                 ; If we didn't find an inline sequencing operator, then the
                 ; successful alternate means the whole block is done.
                 ;
-                remainder: pos
+                input: pos
                 return ^result
             ]
 
@@ -2353,7 +2337,7 @@ default-combinators: make map! [
             if rules.1 = '... [  ; "variadic" parser, use recursion
                 rules: next rules
                 if tail? rules [  ; if at end, act like [elide to <end>]
-                    remainder: tail of pos
+                    input: tail of pos
                     return ^result
                 ]
                 sublimit: find:part rules [...] limit
@@ -2423,7 +2407,6 @@ default-combinators: make map! [
                     ]
                 ] else [
                     if (not thru) or (tail? input) [
-                        remainder: null
                         return fail* make warning! [
                             id: 'parse-mismatch
                             message:
@@ -2437,7 +2420,7 @@ default-combinators: make map! [
             ]
         ]
 
-        remainder: pos
+        input: pos
         return ^result
     ])
 

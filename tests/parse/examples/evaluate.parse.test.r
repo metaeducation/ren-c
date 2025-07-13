@@ -11,7 +11,7 @@
         return: "Result of one evaluation step"
             [any-stable?]
     ][
-        return [remainder {_}]: evaluate:step input else [
+        return [input {^}]: evaluate:step input else [
             fail "PARSE-EVALUATE attempted at series tail"
         ]
     ]

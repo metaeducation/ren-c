@@ -36,11 +36,11 @@
                 error1
                 (index of remainder1) < (index of remainder2)
             ] then [
-                remainder: remainder2
+                input: remainder2
                 return ^result2'
             ]
         ]
-        remainder: remainder1
+        input: remainder1
         return ^result1'
     ]
     ok
@@ -215,12 +215,12 @@
                 error1
                 (index of remainder1) < (index of remainder2)
             ] then [
-                remainder: remainder2
+                input: remainder2
                 pending: pending2
                 return ^result2'
             ]
         ]
-        remainder: remainder1
+        input: remainder1
         pending: pending1
         return ^result1'
     ]

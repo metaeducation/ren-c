@@ -26,7 +26,6 @@
         ]
 
         pending: blank
-        remainder: input
 
         any [
             ^r = okay  ; like [:(1 = 1)]
@@ -49,7 +48,7 @@
             panic ["Unhandled type in GROUP! combinator:" to word! type of r]
         ]
 
-        return [{_} remainder pending]: run comb state input r
+        return [{_} input pending]: run comb state input r
     ]
 
     ; DISCARD is different from ELIDE when GROUP! acts like a GET-GROUP!,
@@ -60,7 +59,6 @@
         @group [group!]
     ][
         eval group
-        remainder: input
         return ghost
     ]
 
