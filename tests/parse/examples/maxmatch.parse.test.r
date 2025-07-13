@@ -21,6 +21,7 @@
 
         return: "Result of the longest match (favors first parser if equal)"
            [any-stable? pack!]
+        input [any-series?]
         parser1 [action!]
         parser2 [action!]
         <local> error1 error2 result1' result2' remainder1 remainder2
@@ -197,6 +198,7 @@
 
         return: "Result of the longest match (favors first parser if equal)"
            [any-stable? pack!]
+        input [any-series?]
         :pending [blank? block!]
         parser1 [action!]
         parser2 [action!]

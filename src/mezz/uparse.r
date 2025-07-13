@@ -144,6 +144,23 @@ bind construct [
             ]
         )
 
+        state [frame!]
+
+        (
+            assert [spec.1 = 'input]
+            let [description types]: if block? spec.2 [  ; no description
+                pack [null spec.2]
+                elide spec: my skip 2
+            ] else [
+                pack [ensure text! spec.2, ensure block! spec.3]
+                elide spec: my skip 3
+            ]
+            ghostable: did find types 'ghost!
+            spread compose:deep [
+                input (opt description) (types)
+            ]
+        )
+
         (if ':pending = try spec.1 [
             assert [spec.2 = [blank? block!]]
             autopipe: 'no  ; they're asking to handle pending themselves
@@ -153,9 +170,6 @@ bind construct [
             autopipe: 'yes  ; they didn't mention pending, handle automatically
             spread [:pending [blank? block!]]
         ])
-
-        state [frame!]
-        input [any-series?]
 
         ; Whatever arguments the combinator takes, if any
         ;
@@ -282,6 +296,7 @@ default-combinators: make map! [
     'not combinator [
         "If the parser argument is negatable, invoke it in the negated sense"
         return: [any-stable? pack!]
+        input [any-series?]
         parser [action!]
         :negated
     ][
@@ -299,6 +314,7 @@ default-combinators: make map! [
     'conditional combinator [
         "If parser's synthesized result is null, skip to next alternate"
         return: [any-stable?]
+        input [any-series?]
         parser [action!]
         <local> result
     ][
@@ -318,6 +334,7 @@ default-combinators: make map! [
     'veto combinator [
         "Stop the current rule chain, and skip to the next `|` alternate"
         return: [<divergent>]
+        input [any-series?]
         ; :negated  <- could this be negated to not veto?
     ][
         return fail "VETO to next alternate rule requested"
@@ -329,6 +346,7 @@ default-combinators: make map! [
         "If parser fails, succeed and return NULL; don't advance input"
         return: "PARSER's result if it succeeds, otherwise NULL"
             [any-stable? pack!]
+        input [any-series?]
         parser [action!]
         <local> ^result remainder
     ][
@@ -343,6 +361,7 @@ default-combinators: make map! [
         "If parser fails, succeed and return VOID; don't advance input"
         return: "PARSER's result if it succeeds, otherwise VOID"
             [any-stable? pack!]
+        input [any-series?]
         parser [action!]
         <local> ^result remainder
     ][
@@ -357,6 +376,7 @@ default-combinators: make map! [
         "Return antiform group for list arguments"
         return: "Splice antiform if input is list"
             [null? void? element? splice!]
+        input [any-series?]
         parser [action!]
         <local> ^result
     ][
@@ -372,6 +392,7 @@ default-combinators: make map! [
         "Leave the parse position at the same location, but fail if no match"
         return: "parser result if success, NULL if failure"
             [any-stable? pack! ~#not~]
+        input [any-series?]
         parser [action!]
         :negated
     ][
@@ -388,6 +409,7 @@ default-combinators: make map! [
         "Pass through the result only if the input was advanced by the rule"
         return: "parser result if it succeeded and advanced input, else NULL"
             [any-stable? pack!]
+        input [any-series?]
         parser [action!]
         <local> ^result pos
     ][
@@ -419,6 +441,7 @@ default-combinators: make map! [
         "Run the parser argument in a loop, requiring at least one match"
         return: "Result of last successful match"
             [any-stable? pack!]
+        input [any-series?]
         parser [action!]
         <local> ^result
     ][
@@ -441,6 +464,7 @@ default-combinators: make map! [
         "Run the body parser in a loop, for as long as condition matches"
         return: "Result of last body parser (or void if body never ran)"
             [any-stable? pack!]
+        input [any-series?]
         condition-parser [action!]
         body-parser [action!]
         <local> ^result
@@ -470,6 +494,7 @@ default-combinators: make map! [
         "Run the body parser in a loop, until the condition matches"
         return: "Result of last body parser (or void if body never ran)"
             [any-stable? pack!]
+        input [any-series?]
         condition-parser [action!]
         body-parser [action!]
         <local> ^result
@@ -500,6 +525,7 @@ default-combinators: make map! [
         "Run the body parser continuously in a loop until BREAK or STOP"
         return: "Result of last body parser (or void if body never matched)"
             [any-stable? pack!]
+        input [any-series?]
         parser [action!]
         <local> ^result
     ][
@@ -520,6 +546,7 @@ default-combinators: make map! [
         "Iterate a rule and count the number of times it matches"
         return: "Number of matches (can be 0)"
             [integer!]
+        input [any-series?]
         parser [action!]
         <local> count
     ][
@@ -539,6 +566,7 @@ default-combinators: make map! [
     'break combinator [
         "Break an iterated construct like SOME or REPEAT, failing the match"
         return: [<divergent>]
+        input [any-series?]
         <local> f
     ][
         f: take:last state.loops except [
@@ -552,6 +580,7 @@ default-combinators: make map! [
     'stop combinator [
         "Break an iterated construct like SOME or REPEAT, succeeding the match"
         return: [<divergent>]
+        input [any-series?]
         parser [<end> action!]
         <local> f ^result
     ][
@@ -584,6 +613,7 @@ default-combinators: make map! [
     'accept combinator [
         "Return a value explicitly from the parse, terminating early"
         return: [<divergent>]
+        input [any-series?]
         parser [action!]
         <local> ^value
     ][
@@ -625,6 +655,7 @@ default-combinators: make map! [
         "Get the current series index of the PARSE operation"
         return: "The INDEX OF the parse position"
             [integer!]
+        input [any-series?]
     ][
         return index of input
     ]
@@ -633,6 +664,7 @@ default-combinators: make map! [
         "Get the length of a matched portion of content"
         return: "Length in series units"
             [integer!]
+        input [any-series?]
         parser [action!]
         <local> start end remainder
     ][
@@ -668,6 +700,7 @@ default-combinators: make map! [
     'change combinator [
         "Substitute a match with new data"
         return: [trash!]
+        input [any-series?]
         parser [action!]
         replacer [action!]  ; !!! How to say result is used here?
         <local> ^replacement remainder
@@ -685,6 +718,7 @@ default-combinators: make map! [
     'remove combinator [
         "Remove data that matches a parse rule"
         return: [trash!]
+        input [any-series?]
         parser [action!]
         <local> remainder
     ][
@@ -697,6 +731,7 @@ default-combinators: make map! [
     'insert combinator [
         "Insert literal data into the input series"
         return: [trash!]
+        input [any-series?]
         parser [action!]
         <local> ^insertion
     ][
@@ -712,6 +747,7 @@ default-combinators: make map! [
         "Match up TO a certain rule (result position before succeeding rule)"
         return: "The rule's product"
             [any-stable? pack!]
+        input [any-series?]
         parser [action!]
         <local> ^result
     ][
@@ -733,6 +769,7 @@ default-combinators: make map! [
         "Match up THRU a certain rule (result position after succeeding rule)"
         return: "The rule's product"
             [any-stable? pack!]
+        input [any-series?]
         parser [action!]
         <local> ^result remainder
     ][
@@ -753,6 +790,7 @@ default-combinators: make map! [
     'seek combinator [
         return: "seeked position"
             [any-series?]
+        input [any-series?]
         parser [action!]
         <local> where remainder
     ][
@@ -779,6 +817,7 @@ default-combinators: make map! [
     'between combinator [
         return: "Copy of content between the left and right parsers"
             [any-series?]
+        input [any-series?]
         parser-left [action!]
         parser-right [action!]
         <local> start limit remainder
@@ -810,6 +849,7 @@ default-combinators: make map! [
         "Get the current parse input position, without advancing input"
         return: "parse position"
             [any-series?]
+        input [any-series?]
     ][
         return input
     ]
@@ -817,6 +857,7 @@ default-combinators: make map! [
     <end> combinator [
         "Only match if the input is at the end"
         return: [ghost!]
+        input [any-series?]
         :negated
     ][
         if tail? input [
@@ -835,6 +876,7 @@ default-combinators: make map! [
         "Get the original input of the PARSE operation"
         return: "parse position"
             [any-series?]
+        input [any-series?]
     ][
         return state.input
     ]
@@ -843,6 +885,7 @@ default-combinators: make map! [
         "Get the input of the SUBPARSE operation"
         return: "parse position"
             [any-series?]
+        input [any-series?]
     ][
         return head of input  ; !!! What if SUBPARSE series not at head?
     ]
@@ -859,6 +902,7 @@ default-combinators: make map! [
         "Copy from the current parse position through a rule"
         return: "Copied series"
             [any-series?]
+        input [any-series?]
         parser [action!]
         <local> start
     ][
@@ -877,6 +921,7 @@ default-combinators: make map! [
     'copy combinator [
         "Disabled combinator, included to help guide to use ACROSS"
         return: [<divergent>]
+        input [any-series?]
     ][
         panic [
             "Transitionally (maybe permanently?) the COPY function in UPARSE"
@@ -929,6 +974,7 @@ default-combinators: make map! [
         "Recursion into other data with a rule, result of rule if match"
         return: "Result of the subparser"
             [any-stable? pack!]
+        input [any-series?]
         parser [action!]  ; !!! Easier expression of value-bearing parser?
         subparser [action!]
         :match "Return input on match, not synthesized value"
@@ -986,6 +1032,7 @@ default-combinators: make map! [
     'collect combinator [
         return: "Block of collected values"
             [block!]
+        input [any-series?]
         :pending [blank? block!]
         parser [action!]
         <local> collected
@@ -1013,6 +1060,7 @@ default-combinators: make map! [
     'keep combinator [
         return: "The kept value (same as input)"
             [any-stable?]
+        input [any-series?]
         :pending [blank? block!]
         parser [action!]
         <local> ^result
@@ -1059,6 +1107,7 @@ default-combinators: make map! [
     'accumulate combinator [
         return: "Block of collected values"
             [block!]
+        input [any-series?]
         parser [action!]
         <local> collected
     ][
@@ -1093,6 +1142,7 @@ default-combinators: make map! [
     'gather combinator [
         return: "The gathered object"
             [object!]
+        input [any-series?]
         :pending [blank? block!]
         parser [action!]
         <local> obj
@@ -1116,6 +1166,7 @@ default-combinators: make map! [
     'emit combinator [
         return: "The emitted value"
             [any-stable?]
+        input [any-series?]
         :pending [blank? block!]
         @target [set-word? set-group?]
         parser [action!]
@@ -1165,6 +1216,7 @@ default-combinators: make map! [
     '*: combinator [
         return: "The set value"
             [any-stable?]
+        input [any-series?]
         value [set-word? set-tuple? set-group?]
         parser "If assignment, failed parser means target will be unchanged"
             [action!]
@@ -1182,6 +1234,7 @@ default-combinators: make map! [
     'set combinator [
         "Disabled combinator, included to help guide to use SET-WORD!"
         return: [<divergent>]
+        input [any-series?]
     ][
         panic [
             "The SET keyword in UPARSE is done with SET-WORD!, and if SET does"
@@ -1203,6 +1256,7 @@ default-combinators: make map! [
     text! combinator [
         return: "The rule series matched against (not input value)"
             [text!]
+        input [any-series?]
         value [text!]
         <local> neq? item
     ][
@@ -1254,6 +1308,7 @@ default-combinators: make map! [
     rune! combinator [
         return: "The token matched against (not input value)"
             [rune!]
+        input [any-series?]
         value [rune!]
         :negated
         <local> item
@@ -1329,6 +1384,7 @@ default-combinators: make map! [
     blob! combinator [
         return: "The binary matched against (not input value)"
             [blob!]
+        input [any-series?]
         value [blob!]
         <local> item
     ][
@@ -1363,6 +1419,7 @@ default-combinators: make map! [
     'let combinator [
         return: "Result of the LET if assignment, else bound word"
             [any-stable?]
+        input [any-series?]
         'vars [set-word?]
         parser [action!]
         <local> ^result
@@ -1382,6 +1439,7 @@ default-combinators: make map! [
     '*in* combinator [
         return: "Argument binding gotten INSIDE the current input"
             [any-stable?]
+        input [any-series?]
         parser [action!]
         <local> ^result
     ][
@@ -1404,6 +1462,7 @@ default-combinators: make map! [
     group! combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
             [any-value?]
+        input [any-series?]
         :pending [blank? block!]
         value [any-list?]  ; allow any array to use this "EVAL combinator"
         <local> ^result
@@ -1446,6 +1505,7 @@ default-combinators: make map! [
     'phase combinator [
         return: "Result of the parser evaluation"
             [any-stable? pack! ghost!]
+        input [any-series?]
         :pending [blank? block!]
         parser [action!]
         <local> ^result
@@ -1492,6 +1552,7 @@ default-combinators: make map! [
     'inline combinator [
         return: "Result of running combinator from fetching the WORD!"
             [any-stable? pack! ghost!]
+        input [any-series?]
         :pending [blank? block!]   ; we retrigger combinator; it may KEEP, etc.
 
         parser [action!]
@@ -1551,6 +1612,7 @@ default-combinators: make map! [
     bitset! combinator [
         return: "The matched input value"
             [char? integer!]
+        input [any-series?]
         value [bitset!]
         <local> item
     ][
@@ -1592,6 +1654,7 @@ default-combinators: make map! [
     quoted! combinator [
         return: "The matched value"
             [element?]
+        input [any-series?]
         value [quoted!]
         :negated
         <local> comb eq? item
@@ -1635,6 +1698,7 @@ default-combinators: make map! [
 
     'literal combinator [  ; shorthanded as LIT
         return: "Literal value" [element?]
+        input [any-series?]
         :pending [blank? block!]
         'value [element?]
         <local> comb
@@ -1659,12 +1723,14 @@ default-combinators: make map! [
     ;
     '~[]~ combinator [
         return: [~[]~]
+        input [any-series?]
     ][
         return void
     ]
 
     keyword! combinator [
         return: [ghost!]
+        input [any-series?]
         value [keyword!]
         <local> comb neq?
     ][
@@ -1681,6 +1747,7 @@ default-combinators: make map! [
 
     splice! combinator [
         return: [<divergent>]
+        input [any-series?]
         :pending [blank? block!]
         value [splice!]
         <local> comb neq?
@@ -1721,6 +1788,7 @@ default-combinators: make map! [
     integer! combinator [
         return: "Just the INTEGER! (see REPEAT for repeating rules)"
             [integer!]
+        input [any-series?]
         value [integer!]
     ][
         return value
@@ -1729,6 +1797,7 @@ default-combinators: make map! [
     'repeat combinator [
         return: "Last parser result"
             [any-stable? pack!]
+        input [any-series?]
         times-parser [action!]
         parser [action!]
         <local> ^times min max ^result
@@ -1817,6 +1886,7 @@ default-combinators: make map! [
     datatype! combinator [
         return: "Matched or synthesized value"
             [element?]
+        input [any-series?]
         value [datatype!]
         :negated
         <local> item error
@@ -1858,6 +1928,7 @@ default-combinators: make map! [
 
     'match combinator [
         return: "Element if it matches the match rule" [element?]
+        input [any-series?]
         value [frame!]
         <local> item
     ][
@@ -1877,6 +1948,7 @@ default-combinators: make map! [
 
     'just combinator [
         return: "Quoted form of literal value (not matched)" [element?]
+        input [any-series?]
         'value [element?]
     ][
         return value
@@ -1884,6 +1956,7 @@ default-combinators: make map! [
 
     'the combinator [
         return: "Quoted form of literal value (not matched)" [element?]
+        input [any-series?]
         @value [element?]
     ][
         return value
@@ -1934,6 +2007,7 @@ default-combinators: make map! [
 
     pinned! combinator compose [
         return: [any-value?]
+        input [any-series?]
         :pending [blank? block!]
         value [@any-element?]
         <local> ^result comb subpending
@@ -1974,6 +2048,7 @@ default-combinators: make map! [
     'elide combinator [
         "Transform a result-bearing combinator into one that has no result"
         return: [ghost!]
+        input [any-series?]
         parser [action!]
     ][
         [^ input]: trap parser input
@@ -1983,6 +2058,7 @@ default-combinators: make map! [
     'comment combinator [
         "Comment out an arbitrary amount of PARSE material"
         return: [ghost!]
+        input [any-series?]
         'ignored [block! text! tag! rune!]
     ][
         return ghost
@@ -1991,6 +2067,7 @@ default-combinators: make map! [
     'skip combinator [
         "Skip an integral number of items"
         return: [ghost!]
+        input [any-series?]
         parser [action!]
         <local> ^result
     ][
@@ -2010,6 +2087,7 @@ default-combinators: make map! [
         "Match one series item in input, succeeding so long as it's not at END"
         return: "One element of series input"
             [element?]
+        input [any-series?]
         <local> item
     ][
         item: trap input.1
@@ -2021,6 +2099,7 @@ default-combinators: make map! [
         "Give next position in input, succeeding so long as it's not at END"
         return: "One element of series input"
             [element?]
+        input [any-series?]
     ][
         input: trap next input  ; match fail if out of bounds, tail is legal
         return input
@@ -2042,6 +2121,7 @@ default-combinators: make map! [
         "Run an ordinary action with parse rule products as its arguments"
         return: "The return value of the action"
             [any-stable? pack! ghost!]
+        input [any-series?]
         :pending [blank? block!]
         value [frame!]
         ; AUGMENT is used to add param1, param2, param3, etc.
@@ -2090,6 +2170,7 @@ default-combinators: make map! [
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
             [any-stable? pack! ghost!]
+        input [any-series?]
         :pending [blank? block!]
         value [word! tuple!]
         <local> ^r comb rule-start rule-end
@@ -2177,6 +2258,7 @@ default-combinators: make map! [
     'any combinator [
         return: "Last result value"
             [any-stable? pack!]
+        input [any-series?]
         :pending [blank? block!]
         @arg "Acts as rules if WORD!/BLOCK!, pinned acts inert"
             [word! block! group! @word! @block! @group! ]
@@ -2255,6 +2337,7 @@ default-combinators: make map! [
     block! (block-combinator: combinator [
         return: "Last result value"
             [any-stable? pack! ghost!]
+        input [any-series?]
         :pending [blank? block!]
         value [block!]
         :limit "Limit of how far to consider (used by ... recursion)"
@@ -2434,6 +2517,7 @@ default-combinators: make map! [
 
     'panic combinator [
         return: [<divergent>]
+        input [any-series?]
         'reason [@block!]
         <local> e
     ][

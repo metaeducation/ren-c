@@ -14,8 +14,8 @@
 
     ugly-combinators.(group!): combinator [
         return: [any-stable? pack!]
+        input [any-series?]
         :pending [blank? block!]   ; we retrigger combinator; it may KEEP, etc.
-
         value [group?]
         <local> r comb
     ][
@@ -56,6 +56,7 @@
     ;
     ugly-combinators.discard: combinator [
         return: "Don't return anything" [ghost!]
+        input [any-series?]
         @group [group!]
     ][
         eval group

@@ -10,6 +10,7 @@
         "Run the evaluator one step to advance input, and produce a result"
         return: "Result of one evaluation step"
             [any-stable?]
+        input [any-series?]
     ][
         return [input {^}]: evaluate:step input else [
             fail "PARSE-EVALUATE attempted at series tail"
