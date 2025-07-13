@@ -92,7 +92,7 @@
         res: ~
         f563: lambda [t [text!]] [did try parse t [opt some r]]
 
-        r: [#+, inline (res: f563 "-", assert [not res], opt res)]
+        r: [#+, cond (f563 "-")]
 
         all [
             not f563 "-"
@@ -118,7 +118,7 @@
                 x: across repeat (l) one
                 [
                     #","
-                    | #"]" inline (f x)
+                    | #"]" cond (f x)
                 ]
             ]
             return not error? parse s [opt some r <end>]

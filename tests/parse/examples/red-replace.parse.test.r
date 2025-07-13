@@ -15,7 +15,7 @@
         if not all [match [text! blob!] f.target, block? f.pattern] [
             return eval-free f
         ]
-        rule: if action? :f.replacement '[
+        rule: if action? ^f.replacement '[
             head: <here>
             change [f.pattern, tail: <here>] (
                 apply:relax f.replacement/ [const head, const tail]
@@ -55,8 +55,8 @@
                 replace data [between "(" ")"] func [head tail] [
                     let item: copy:part head tail
                     keep item
-                    if item = "(powerful)" [item: copy "(ren-c)"]
-                    return uppercase item
+                    if item = "(powerful)" [item: "(ren-c)"]
+                    return uppercase copy item
                 ]
             ]
             data = "(REAL)1020(REN-C)0304(MAGIC)"

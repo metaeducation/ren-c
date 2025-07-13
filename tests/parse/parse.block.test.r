@@ -151,3 +151,8 @@
         ]
     )
 ]
+
+
+; Recursion should work
+;
+(1020 = rule: ["a" (print "Found an A") [ahead "a" rule | accept (1020)]])

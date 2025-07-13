@@ -1325,7 +1325,7 @@ Result(Zero) Get_Var_In_Scratch_To_Out(
         return zero;
 
     if (Is_Dual_Word_Unset_Signal(Known_Stable(OUT)))
-        return fail ("UNSET variable");
+        return fail (Error_Unset_Variable_Raw(Known_Element(SCRATCH)));
 
     require (
       Unliftify_Undecayed(OUT)  // not unstable if wasn't ^META [1]

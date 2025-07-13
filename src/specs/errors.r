@@ -167,6 +167,8 @@ script: [
     no-arg:             [:arg1 "is missing its" :arg2 "argument"]
     unspecified-arg:    [:arg1 "has" :arg2 "unspecified (~ antiform)"]
 
+    unset-variable:     ["Unset variable:" :arg1]
+
     ; These need to have the same arguments (shared code coerces them)
     ;
     expect-arg:         [:arg1 "expects" :arg2 "for its" :arg3 "argument"]

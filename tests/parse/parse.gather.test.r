@@ -77,8 +77,9 @@
         word: 'xxx
         obj: parse "a" [gather [emit (word): one]]
         obj.xxx = #a
-    )(
-        word: @xxx
+    )
+    ~collectable-bound~ !! (
+        word: @xxx  ; we don't blindly overwrite the binding if one exists
         obj: parse "a" [gather [emit (word): one]]
         obj.xxx = #a
     )

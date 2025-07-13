@@ -43,7 +43,6 @@
     defaulters: null
     var: #dummy  ; enter PARSE with truthy state (gets overwritten)
     loc: null
-    with-return: null
 
     parse spec [opt some [
         inline (if var '[  ; so long as we haven't reached any <local> or <with> etc.

@@ -1509,7 +1509,7 @@ default-combinators: make map! [
         r: decay ^r  ; packs can't act as rules, decay them
 
         if antiform? ^r [  ; REVIEW: splices?
-            return fail "INLINE can't evaluate to antiform"
+            panic "INLINE can't evaluate to antiform"  ; also not a fail [1]
         ]
 
         if not block? r [
@@ -1970,10 +1970,9 @@ default-combinators: make map! [
             ]
         ]
 
-        ensure [quoted! quasiform!] result  ; quasi means antiform [2]
-        comb: runs state.combinators.(type of result)  ; quoted or quasi
+        comb: runs state.combinators.(type of lift result)  ; quoted or quasi
 
-        [^result remainder subpending]: trap comb state remainder result
+        [^result remainder subpending]: trap comb state remainder lift result
 
         pending: glom pending spread subpending
         return ^result
@@ -2060,7 +2059,7 @@ default-combinators: make map! [
     action! combinator [
         "Run an ordinary action with parse rule products as its arguments"
         return: "The return value of the action"
-            [any-stable? pack!]
+            [any-stable? pack! ghost!]
         :pending [blank? block!]
         value [frame!]
         ; AUGMENT is used to add param1, param2, param3, etc.
@@ -2109,7 +2108,7 @@ default-combinators: make map! [
 
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [any-stable? pack!]
+            [any-stable? pack! ghost!]
         :pending [blank? block!]
         value [word! tuple!]
         <local> ^r comb rule-start rule-end
@@ -2472,6 +2471,11 @@ default-combinators: make map! [
 ]
 
 
+=== EQUIVALENTS ===
+
+default-combinators.(tuple!): default-combinators.(word!)
+
+
 === ABBREVIATIONS ===
 
 default-combinators.opt: default-combinators.optional
@@ -2706,14 +2710,14 @@ parsify: func [
     ;--- SPECIAL-CASE VARIADIC SCENARIOS BEFORE DISPATCHING BY DATATYPE
 
     case [
-        word? r [  ; non-"keyword" WORD! (didn't look up literally)
+        match [tuple! word!] r [  ; non-"keyword" WORD! (no literal lookup)
             if null? value: get r [
                 panic make warning! [type: 'script, id: 'bad-antiform]
             ]
 
             if comb: match frame! value [  ; variable held a combinator [4]
-                if combinator? :comb [
-                    return combinatorize :comb rules state
+                if combinator? comb [
+                    return combinatorize comb rules state
                 ]
 
                 let name: uppercase to text! r
@@ -3029,7 +3033,7 @@ parse-furthest-hook: func [
 ][
     let ^result: trap eval f
 
-    let remainder: unquote second unquasi result
+    let remainder: unquote second unanti ^result
     if (index of remainder) > (index of get var) [
         set var remainder
     ]

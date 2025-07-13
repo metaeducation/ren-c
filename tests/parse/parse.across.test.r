@@ -21,7 +21,7 @@
         s: ~
         all [
             "abcde" = parse "abcde" [
-                "xyz" | s: across to <end> (se53-copied: :s)
+                "xyz" | s: across to <end> (se53-copied: s)
             ]
             "abcde" = se53-copied
         ]
@@ -31,7 +31,7 @@
         s: ~
         all [
             #{0102030405} = parse #{0102030405} [
-                #{AABBCC} | s: across to <end> (se53-copied: :s)
+                #{AABBCC} | s: across to <end> (se53-copied: s)
             ]
             #{0102030405} = se53-copied
         ]
