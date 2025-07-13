@@ -370,15 +370,24 @@ DECLARE_NATIVE(JOIN)
     if (Is_Pinned(item)) {  // fetch and mold
         Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
-        if (Is_Pinned_Form_Of(WORD, item)) {
+        Option(Heart) item_heart = Heart_Of(item);
+        if (item_heart == TYPE_WORD or item_heart == TYPE_TUPLE) {
+            Element* subscratch = Copy_Cell(Level_Scratch(sub), item);
+            Plainify(subscratch);
+            Bind_If_Unbound(subscratch, Level_Binding(sub));
+            heeded (Corrupt_If_Needful(Level_Spare(sub)));
+            assert(sub->out == SPARE);
+            assert(LEVEL_STATE_BYTE(sub) == 0);
+            LEVEL_STATE_BYTE(sub) = 1;
             require (
-              Get_Var(SPARE, NO_STEPS, item, Level_Binding(sub))
+              Get_Var_In_Scratch_To_Out(sub, NO_STEPS)
             );
+            LEVEL_STATE_BYTE(sub) = STATE_0;
             Fetch_Next_In_Feed(sub->feed);
             goto mold_step_result_in_spare;
         }
 
-        if (Is_Pinned_Form_Of(GROUP, item)) {
+        if (item_heart == TYPE_GROUP) {
             SUBLEVEL->executor = &Just_Use_Out_Executor;
             Derelativize(SCRATCH, item, Level_Binding(sub));
             KIND_BYTE(SCRATCH) = TYPE_BLOCK;  // the-block is different
