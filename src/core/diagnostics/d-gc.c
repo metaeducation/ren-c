@@ -264,10 +264,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Not_Base_Accessible_Canon(base))
             break;
 
-        assert(
-            (v->header.bits & CELL_MASK_ANY_CONTEXT)
-            == CELL_MASK_ANY_CONTEXT
-        );
         VarList* context = cast(VarList*, base);
         assert(Is_Base_Marked(context));
 
@@ -292,7 +288,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
                 assert(Is_Stub_Let(Compact_Stub_From_Cell(v)));
         }
 
-        if (v->payload.split.two.base) {
+        if (not v->payload.split.two.base)
+            assert(Get_Cell_Flag(v, DONT_MARK_PAYLOAD_2));
+        else {
+            assert(Not_Cell_Flag(v, DONT_MARK_PAYLOAD_2));
             assert(heart == TYPE_FRAME); // may be heap-based frame
             assert(Is_Base_Marked(v->payload.split.two.base));  // lens/label
         }

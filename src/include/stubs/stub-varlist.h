@@ -187,7 +187,8 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
     Reset_Cell_Header_Noquote(
         rootvar,
         FLAG_HEART(heart)
-            | CELL_MASK_ANY_CONTEXT
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // varlist
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // coupling only on frames
             | CELL_FLAG_PROTECTED  // should not be modified
     );
     CELL_CONTEXT_VARLIST(rootvar) = varlist;

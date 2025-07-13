@@ -155,15 +155,6 @@
     (PARAMLIST_FLAG_QUOTES_FIRST)
 
 
-// The Coupling is for FRAME! only.  We default CELL_MASK_ANY_CONTEXT to
-// saying you don't mark the payload slot 2 for coupling.
-//
-#define CELL_MASK_ANY_CONTEXT ( \
-    (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  /* varlist */ \
-        | CELL_FLAG_DONT_MARK_PAYLOAD_2  /* coupling only on frames */ \
-)
-
-
 
 // A context's varlist is always allocated dynamically, in order to speed
 // up variable access--no need to test USED_BYTE_OR_255 for 255.
