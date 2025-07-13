@@ -74,7 +74,7 @@ void Startup_Type_Predicates(void)
         Details* details = Make_Typechecker(typeset_byte);
 
         Init_Action(Sink_Lib_Var(id), details, Canon_Symbol(id), NONMETHOD);
-        assert(Ensure_Cell_Frame_Details(Lib_Var(id)));
+        assert(Ensure_Frame_Details(Lib_Var(id)));
     }
 
     // Shorthands used in native specs, so have to be available in boot
@@ -278,7 +278,7 @@ Result(Zero) Set_Parameter_Spec(
             Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
         }
         else if (type == TYPE_ACTION) {
-            Details* details = maybe Try_Cell_Frame_Details(lookup);
+            Details* details = maybe Try_Frame_Details(lookup);
             if (
                 details
                 and Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)

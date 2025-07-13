@@ -110,7 +110,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 
     Set_Executor_Flag(ACTION, L, FULFILL_ONLY);  // Push_Action() won't allow
 
-    assert(Level_Coupling(L) == Cell_Frame_Coupling(action));  // no invocation
+    assert(Level_Coupling(L) == Frame_Coupling(action));  // no invocation
 
     if (Trampoline_With_Top_As_Root_Throws())
         return L;
@@ -125,7 +125,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 
     L->u.action.original = Frame_Phase(action);
     Tweak_Level_Phase(L, Frame_Phase(action));  // Drop_Action() cleared
-    Tweak_Level_Coupling(L, Cell_Frame_Coupling(action));
+    Tweak_Level_Coupling(L, Frame_Coupling(action));
 
     return L;  // may not be at end or thrown, e.g. (/x: does+ just y x = 'y)
 }
@@ -186,7 +186,7 @@ Result(Zero) Init_Invokable_From_Feed(
     Move_Cell(action, out);
     Push_Lifeguard(action);
 
-    Option(VarList*) coupling = Cell_Frame_Coupling(action);
+    Option(VarList*) coupling = Frame_Coupling(action);
 
     Level* L = Make_Pushed_Level_From_Action_Feed_May_Throw(
         out,
@@ -206,7 +206,7 @@ Result(Zero) Init_Invokable_From_Feed(
     // managed, but Push_Action() does not use ordinary series creation to
     // make its nodes, so manual ones don't wind up in the tracking list.
     //
-    assert(Level_Coupling(L) == Cell_Frame_Coupling(action));
+    assert(Level_Coupling(L) == Frame_Coupling(action));
 
     assert(Not_Base_Managed(L->varlist));
 
@@ -316,7 +316,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     Move_Cell(arg, spare);
 
     Tweak_Level_Phase(L, Frame_Phase(shim));
-    Tweak_Level_Coupling(L, Cell_Frame_Coupling(shim));
+    Tweak_Level_Coupling(L, Frame_Coupling(shim));
 
     return BOUNCE_REDO_CHECKED;  // the redo will use the updated phase & binding
 }
@@ -441,7 +441,7 @@ DECLARE_NATIVE(REFRAMER)
     INCLUDE_PARAMS_OF_REFRAMER;
 
     Phase* shim = Frame_Phase(ARG(SHIM));
-    Option(const Symbol*) label = Cell_Frame_Label_Deep(ARG(SHIM));
+    Option(const Symbol*) label = Frame_Label_Deep(ARG(SHIM));
 
     DECLARE_BINDER (binder);
     Construct_Binder(binder);

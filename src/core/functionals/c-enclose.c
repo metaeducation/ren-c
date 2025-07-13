@@ -150,7 +150,7 @@ Bounce Encloser_Dispatcher(Level* const L)
         SPARE,
         cast(ParamList*, varlist),
         lens,
-        Cell_Frame_Coupling(inner)
+        Frame_Coupling(inner)
     );
 
     assert(Is_Level_Dispatching(L));
@@ -239,6 +239,6 @@ DECLARE_NATIVE(ENCLOSE)
 
     Copy_Cell(Details_At(details, IDX_ENCLOSER_OUTER), outer);
 
-    Init_Action(OUT, details, Cell_Frame_Label(inner), NONMETHOD);
+    Init_Action(OUT, details, Frame_Label(inner), NONMETHOD);
     return UNSURPRISING(OUT);
 }

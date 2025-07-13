@@ -1029,7 +1029,7 @@ DECLARE_NATIVE(INFIX_Q)
     INCLUDE_PARAMS_OF_INFIX_Q;
 
     Element* frame = Element_ARG(FRAME);
-    return LOGIC(Is_Cell_Frame_Infix(frame));
+    return LOGIC(Is_Frame_Infix(frame));
 }
 
 

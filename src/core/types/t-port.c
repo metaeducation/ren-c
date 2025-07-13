@@ -149,7 +149,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     if (Is_Action(spare_actor)) {
         level_->u.action.label = verb;  // legacy hack, used by Level_Verb()
 
-        Details* details = Ensure_Cell_Frame_Details(spare_actor);
+        Details* details = Ensure_Frame_Details(spare_actor);
         Dispatcher* dispatcher = Details_Dispatcher(details);
         Bounce b = maybe Irreducible_Bounce(
             LEVEL,

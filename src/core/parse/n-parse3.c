@@ -638,7 +638,7 @@ static Result(REBIXO) Parse_One_Rule(
           case TYPE_FRAME: {  // want to run a type constraint...
             Copy_Cell(SPARE, item);
             if (Typecheck_Spare_With_Predicate_Uses_Scratch(
-                level_, rule, Cell_Frame_Label(rule)
+                level_, rule, Frame_Label(rule)
             )){
                 return pos + 1;
             }

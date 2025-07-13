@@ -82,7 +82,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         }
 
         if (not e and Is_Action(out_value)) {
-            Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(out_value);
+            Option(InfixMode) infix_mode = Frame_Infix_Mode(out_value);
             if (infix_mode) {
                 if (
                     pclass == PARAMCLASS_NORMAL or

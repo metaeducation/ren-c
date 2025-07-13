@@ -107,7 +107,7 @@ Bounce Func_Dispatcher(Level* const L)
         if (
             not Is_Frame(label)
             or Frame_Phase(label) != Frame_Phase(LIB(DEFINITIONAL_REDO))
-            or Cell_Frame_Coupling(label) != L->varlist
+            or Frame_Coupling(label) != L->varlist
         ){
             return BOUNCE_THROWN;  // wasn't a REDO thrown to this level
         }

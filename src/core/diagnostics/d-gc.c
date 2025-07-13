@@ -282,7 +282,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
                 // !!! Needs review
                 /*Level* L = Level_Of_Varlist_If_Running(context);
                 if (L)  // comes from execution, not MAKE FRAME!
-                    assert(Cell_Frame_Coupling(v) == Level_Coupling(L)); */
+                    assert(Frame_Coupling(v) == Level_Coupling(L)); */
             }
             else
                 assert(Is_Stub_Let(Compact_Stub_From_Cell(v)));

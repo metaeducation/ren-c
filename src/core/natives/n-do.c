@@ -158,8 +158,8 @@ DECLARE_NATIVE(SHOVE)
     Option(InfixMode) infix_mode;
     if (Is_Frame(shovee)) {
         if (not label)
-            label = Cell_Frame_Label_Deep(shovee);
-        infix_mode = Cell_Frame_Infix_Mode(shovee);
+            label = Frame_Label_Deep(shovee);
+        infix_mode = Frame_Infix_Mode(shovee);
     }
     else {
         panic (  // used to allow shoving into set-words, but... [1]
@@ -527,7 +527,7 @@ DECLARE_NATIVE(EVAL_FREE)
         FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
     ));
 
-    Set_Action_Level_Label(L, Cell_Frame_Label_Deep(frame));
+    Set_Action_Level_Label(L, Frame_Label_Deep(frame));
 
     L->varlist = u_cast(ParamList*, varlist);
     L->rootvar = Rootvar_Of_Varlist(varlist);
@@ -540,7 +540,7 @@ DECLARE_NATIVE(EVAL_FREE)
     assert(phase == Frame_Phase(
         Phase_Archetype(cast(ParamList*, varlist)))
     );
-    Tweak_Level_Coupling(L, Cell_Frame_Coupling(frame));
+    Tweak_Level_Coupling(L, Frame_Coupling(frame));
 
     L->u.action.original = phase;
 
@@ -617,7 +617,7 @@ DECLARE_NATIVE(APPLIQUE)
         LOCAL(FRAME),
         exemplar,
         Frame_Phase(op),
-        Cell_Frame_Coupling(op)
+        Frame_Coupling(op)
     );
 
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
@@ -685,8 +685,8 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     frame = Init_Frame(
         LOCAL(FRAME),
         exemplar,
-        Cell_Frame_Label(op),
-        Cell_Frame_Coupling(op)
+        Frame_Label(op),
+        Frame_Coupling(op)
     );
     Remember_Cell_Is_Lifeguard(frame);
 

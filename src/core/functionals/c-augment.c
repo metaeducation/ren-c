@@ -76,8 +76,8 @@ DECLARE_NATIVE(AUGMENT)
     Element* spec = Element_ARG(SPEC);
     Element* original = Element_ARG(ORIGINAL);
 
-    Option(const Symbol*) label = Cell_Frame_Label_Deep(original);
-    Option(VarList*) coupling = Cell_Frame_Coupling(original);
+    Option(const Symbol*) label = Frame_Label_Deep(original);
+    Option(VarList*) coupling = Frame_Coupling(original);
 
     Phase* augmentee = Frame_Phase(original);
 
@@ -122,7 +122,7 @@ DECLARE_NATIVE(AUGMENT)
   // augmentee's action information (phase and coupling) into the paramlist.
 
     Phase* prior = Frame_Phase(ARG(ORIGINAL));
-    Option(VarList*) prior_coupling = Cell_Frame_Coupling(ARG(ORIGINAL));
+    Option(VarList*) prior_coupling = Frame_Coupling(ARG(ORIGINAL));
 
     require (  // checks for duplicates
       ParamList* paramlist = Pop_Paramlist(STACK_BASE, prior, prior_coupling)

@@ -114,7 +114,7 @@ INLINE Result(Atom*) Coerce_To_Antiform(Need(Atom*) atom) {
         }
     }
     else if (heart == TYPE_FRAME) {
-        if (Cell_Frame_Lens(elem))  // no lens on antiforms...show only inputs
+        if (Frame_Lens(elem))  // no lens on antiforms...show only inputs
             Tweak_Frame_Lens_Or_Label(elem, ANONYMOUS);
     }
 

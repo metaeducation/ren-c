@@ -277,7 +277,7 @@ Bounce Stepper_Executor(Level* L)
     #if (! DEBUG_DISABLE_INTRINSICS)
       intrinsic_dual_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
-        Details* details = Ensure_Cell_Frame_Details(CURRENT);
+        Details* details = Ensure_Frame_Details(CURRENT);
         Dispatcher* dispatcher = Details_Dispatcher(details);
 
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
@@ -408,7 +408,7 @@ Bounce Stepper_Executor(Level* L)
         }
         if (
             not Is_Action(L_next_gotten_raw)
-            or not (infix_mode = Cell_Frame_Infix_Mode(L_next_gotten_raw))
+            or not (infix_mode = Frame_Infix_Mode(L_next_gotten_raw))
         ){
             goto give_up_backward_quote_priority;
         }
@@ -900,10 +900,10 @@ Bounce Stepper_Executor(Level* L)
     // 1. If an infix function is run at this moment, it will not have a left
     //    hand side argument.
 
-    if (Cell_Frame_Lens(CURRENT))  // running frame if lensed
+    if (Frame_Lens(CURRENT))  // running frame if lensed
         panic ("Use REDO to restart a running FRAME! (can't EVAL)");
 
-    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(CURRENT);
+    Option(InfixMode) infix_mode = Frame_Infix_Mode(CURRENT);
 
     require (
       Level* sub = Make_Action_Sublevel(L)
@@ -984,7 +984,7 @@ Bounce Stepper_Executor(Level* L)
 } run_action_in_out: {
 
     Value* out = cast(Value*, OUT);
-    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(out);
+    Option(InfixMode) infix_mode = Frame_Infix_Mode(out);
 
     if (infix_mode) {
         if (infix_mode != INFIX_TIGHT) {  // defer or postpone
@@ -1004,7 +1004,7 @@ Bounce Stepper_Executor(Level* L)
     }
 
   #if (! DEBUG_DISABLE_INTRINSICS)
-    Details* details = maybe Try_Cell_Frame_Details(out);
+    Details* details = maybe Try_Frame_Details(out);
     if (
         not infix_mode  // too rare a case for intrinsic optimization
         and details
@@ -1015,8 +1015,8 @@ Bounce Stepper_Executor(Level* L)
         Init_Frame(
             CURRENT,
             details,
-            Cell_Frame_Label_Deep(out),
-            Cell_Frame_Coupling(out)
+            Frame_Label_Deep(out),
+            Frame_Coupling(out)
         );
         Param* param = Phase_Param(details, 1);
         Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
@@ -1172,7 +1172,7 @@ Bounce Stepper_Executor(Level* L)
 
     assert(Is_Action(out));
 
-    if (Is_Cell_Frame_Infix(out)) {  // too late, left already evaluated
+    if (Is_Frame_Infix(out)) {  // too late, left already evaluated
         Drop_Data_Stack_To(STACK_BASE);
         panic ("Use `->-` to shove left infix operands into CHAIN!s");
     }
@@ -1422,7 +1422,7 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead;
     }
 
-    if (Is_Cell_Frame_Infix(out)) {  // too late, left already evaluated [4]
+    if (Is_Frame_Infix(out)) {  // too late, left already evaluated [4]
         Drop_Data_Stack_To(STACK_BASE);
         panic ("Use `->-` to shove left infix operands into PATH!s");
     }
@@ -2040,7 +2040,7 @@ Bounce Stepper_Executor(Level* L)
             not (Is_Word(L_next) and Is_Action(L_next_gotten_raw))
             and not Is_Frame(L_next)
         )
-        or not (infix_mode = Cell_Frame_Infix_Mode(L_next_gotten_raw))
+        or not (infix_mode = Frame_Infix_Mode(L_next_gotten_raw))
     ){
       lookback_quote_too_late: // run as if starting new expression
 

@@ -220,7 +220,7 @@ bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
     if (not Is_Action(&feed->gotten))
         return false;
 
-    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(&feed->gotten);
+    Option(InfixMode) infix_mode = Frame_Infix_Mode(&feed->gotten);
     if (not infix_mode)
         return false;
 
@@ -1127,7 +1127,7 @@ Result(Zero) Push_Action(
 
     assert(L->varlist == nullptr);
 
-    Set_Action_Level_Label(L, Cell_Frame_Label_Deep(frame));
+    Set_Action_Level_Label(L, Frame_Label_Deep(frame));
 
     require (
       Flex* s = nocast Prep_Stub(

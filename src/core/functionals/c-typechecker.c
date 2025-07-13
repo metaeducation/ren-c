@@ -196,7 +196,7 @@ bool Typechecker_Details_Querier(
     switch (property) {
       case SYM_RETURN_OF: {
         const Value* archetype = LIB(TYPECHECKER_ARCHETYPE);
-        Details* archetype_details = Ensure_Cell_Frame_Details(archetype);
+        Details* archetype_details = Ensure_Frame_Details(archetype);
         return Raw_Native_Details_Querier(
             out, archetype_details, SYM_RETURN_OF
         ); }
@@ -373,7 +373,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
   // being the Typechecker_Dispatcher().  This means it's one of 255 built-in
   // type checks, such as ANY-WORD? or INTEGER? or INTEGER!.
 
-    Details* details = maybe Try_Cell_Frame_Details(test);
+    Details* details = maybe Try_Frame_Details(test);
     if (not details)
         goto non_intrinsic_dispatch;
 
@@ -574,7 +574,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         return Typecheck_Spare_With_Predicate_Uses_Scratch(
             L,
             tests,
-            Cell_Frame_Label(tests)
+            Frame_Label(tests)
         );
 
       default:
@@ -1009,7 +1009,7 @@ Result(Value*) Init_Typechecker(
         assert(id16 == type_byte);  // MIN_SYM_TYPESETS should be 1
 
         Copy_Cell(out, Lib_Var(cast(SymId, id16)));
-        assert(Ensure_Cell_Frame_Details(out));  // need TypesetByte
+        assert(Ensure_Frame_Details(out));  // need TypesetByte
 
         return out;
     }
@@ -1127,7 +1127,7 @@ DECLARE_NATIVE(MATCH)
     switch (maybe Type_Of(test)) {
       case TYPE_ACTION:
         if (not Typecheck_Spare_With_Predicate_Uses_Scratch(
-            LEVEL, test, Cell_Frame_Label(test)
+            LEVEL, test, Frame_Label(test)
         )){
             return nullptr;
         }

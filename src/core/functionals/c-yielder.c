@@ -399,7 +399,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     if (
         Is_Frame(label)
         and Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_YIELD))
-        and Cell_Frame_Coupling(label) == Level_Varlist(L)
+        and Frame_Coupling(label) == Level_Varlist(L)
     ){
         CATCH_THROWN(OUT, L);
         if (not Is_Error(OUT)) {  // THROW:FINAL value

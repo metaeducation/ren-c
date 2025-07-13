@@ -51,7 +51,7 @@ bool Try_Catch_Break_Or_Continue(
 
     if (
         Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_BREAK))
-        and Cell_Frame_Coupling(label) == Level_Varlist(loop_level)
+        and Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
         Init_Unreadable(out);  // caller must interpret breaking flag
@@ -61,7 +61,7 @@ bool Try_Catch_Break_Or_Continue(
 
     if (
         Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_CONTINUE))
-        and Cell_Frame_Coupling(label) == Level_Varlist(loop_level)
+        and Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
         if (not Is_Void(out))  // nihil signals no argument to CONTINUE
@@ -743,7 +743,7 @@ DECLARE_NATIVE(CYCLE)
     if (
         Is_Frame(label)
         and Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_STOP))
-        and Cell_Frame_Coupling(label) == Level_Varlist(LEVEL)
+        and Frame_Coupling(label) == Level_Varlist(LEVEL)
     ){
         CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
 
@@ -1766,10 +1766,10 @@ DECLARE_NATIVE(MAP_EACH)
     Quotify(Element_ARG(DATA));  // dialect, in theory [1]
 
     const Value* map_action = LIB(MAP);
-    Details* details = Ensure_Cell_Frame_Details(map_action);
+    Details* details = Ensure_Frame_Details(map_action);
 
     Tweak_Level_Phase(LEVEL, details);
-    Tweak_Level_Coupling(LEVEL, Cell_Frame_Coupling(map_action));
+    Tweak_Level_Coupling(LEVEL, Frame_Coupling(map_action));
 
     Dispatcher* dispatcher = Details_Dispatcher(details);
     return Apply_Cfunc(dispatcher, LEVEL);

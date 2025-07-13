@@ -135,7 +135,7 @@ void Init_Evars(EVARS *e, const Element* v) {
 
             e->slot = Varlist_Slots_Head(varlist) - 1;
 
-            Phase* lens = maybe Cell_Frame_Lens(v);
+            Phase* lens = maybe Frame_Lens(v);
             if (not lens) {  // unlensed, only inputs visible [1]
                 e->lens_mode = LENS_MODE_INPUTS;
                 lens = Frame_Phase(v);
@@ -456,7 +456,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
     if (not Is_Frame(arg))
         return fail (Error_Bad_Make(TYPE_FRAME, arg));
 
-    Option(VarList*) coupling = Cell_Frame_Coupling(arg);
+    Option(VarList*) coupling = Frame_Coupling(arg);
 
     ParamList* exemplar = Make_Varlist_For_Action(
         arg,  // being used here as input (e.g. the ACTION!)
@@ -1053,8 +1053,8 @@ static Element* Copy_Any_Context(
             cast(ParamList*,
                 Copy_Varlist_Extra_Managed(Cell_Varlist(context), 0, deep)
             ),
-            Cell_Frame_Label(context),
-            Cell_Frame_Coupling(context)
+            Frame_Label(context),
+            Frame_Coupling(context)
         );
     }
 
@@ -1285,7 +1285,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     if (  // !!! BUGGY, new system needed
         KIND_BYTE(OUT) == TYPE_FRAME
         and LIFT_BYTE_RAW(OUT) == ANTIFORM_1
-        and Cell_Frame_Coupling(u_cast(Value*, OUT)) == UNCOUPLED
+        and Frame_Coupling(u_cast(Value*, OUT)) == UNCOUPLED
     ){
         Context* c = Cell_Context(context);
         Tweak_Frame_Coupling(u_cast(Value*, OUT), cast(VarList*, c));
@@ -1469,7 +1469,7 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
         OUT,
         copy,
         lens,
-        Cell_Frame_Coupling(frame)
+        Frame_Coupling(frame)
     );
 }
 
@@ -1494,7 +1494,7 @@ DECLARE_NATIVE(PARAMETERS_OF)
         OUT,
         Frame_Phase(frame),
         ANONYMOUS,
-        Cell_Frame_Coupling(frame)
+        Frame_Coupling(frame)
     );
 }
 
@@ -1575,7 +1575,7 @@ DECLARE_NATIVE(COUPLING_OF)
     INCLUDE_PARAMS_OF_COUPLING_OF;
 
     Element* frame = Element_ARG(FRAME);
-    Option(VarList*) coupling = Cell_Frame_Coupling(frame);
+    Option(VarList*) coupling = Frame_Coupling(frame);
 
     if (not coupling)  // NONMETHOD
         return NULLED;
@@ -1606,7 +1606,7 @@ DECLARE_NATIVE(LABEL_OF)
 
     Element* frame = Element_ARG(FRAME);
 
-    Option(const Symbol*) label = Cell_Frame_Label_Deep(frame);
+    Option(const Symbol*) label = Frame_Label_Deep(frame);
     if (label)
         return Init_Word(OUT, unwrap label);
 
@@ -1790,8 +1790,8 @@ REBINT CT_Frame(const Element* a, const Element* b, bool strict)
     if (a_details != b_details)
         return a_details > b_details ? 1 : -1;
 
-    VarList* a_coupling = maybe Cell_Frame_Coupling(a);
-    VarList* b_coupling = maybe Cell_Frame_Coupling(b);
+    VarList* a_coupling = maybe Frame_Coupling(a);
+    VarList* b_coupling = maybe Frame_Coupling(b);
 
     if (a_coupling != b_coupling)
         return a_coupling > b_coupling ? 1 : -1;
@@ -1839,7 +1839,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
 
     Begin_Non_Lexical_Mold(mo, v);
 
-    Option(const Symbol*) label = Cell_Frame_Label_Deep(v);
+    Option(const Symbol*) label = Frame_Label_Deep(v);
     if (label) {
         Append_Codepoint(mo->strand, '"');
         Append_Spelling(mo->strand, unwrap label);

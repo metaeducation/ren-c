@@ -798,8 +798,8 @@ DECLARE_NATIVE(COMBINATORIZE)
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
     Phase* phase = Frame_Phase(ARG(COMBINATOR));
-    Option(const Symbol*) label = Cell_Frame_Label_Deep(ARG(COMBINATOR));
-    Option(VarList*) coupling = Cell_Frame_Coupling(ARG(COMBINATOR));
+    Option(const Symbol*) label = Frame_Label_Deep(ARG(COMBINATOR));
+    Option(VarList*) coupling = Frame_Coupling(ARG(COMBINATOR));
 
     Value* rule_start = Copy_Cell(LOCAL(RULE_START), ARG(RULES));
     if (Series_Index(rule_start) > 0)

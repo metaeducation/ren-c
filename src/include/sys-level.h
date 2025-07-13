@@ -295,7 +295,7 @@ INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
 // intended to return from (break out of, etc.)
 //
 #define Level_Coupling(L) \
-    Cell_Frame_Coupling((L)->rootvar)
+    Frame_Coupling((L)->rootvar)
 
 INLINE Option(const Symbol*) Level_Label(Level* L) {
     assert(Is_Action_Level(L));

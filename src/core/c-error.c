@@ -349,7 +349,7 @@ void Set_Location_Of_Error(
         if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {  // [1]
             Value* frame = Known_Stable(Level_Scratch(L));
             possibly(Is_Action(frame));
-            Option(const Symbol*) label = Cell_Frame_Label_Deep(frame);
+            Option(const Symbol*) label = Frame_Label_Deep(frame);
             if (label)
                 Init_Word(PUSH(), unwrap label);
             else

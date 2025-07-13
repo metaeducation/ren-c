@@ -80,7 +80,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
     Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
     Tweak_Level_Phase(L, Frame_Phase(reorderee));
-    Tweak_Level_Coupling(L, Cell_Frame_Coupling(reorderee));
+    Tweak_Level_Coupling(L, Frame_Coupling(reorderee));
 
     return BOUNCE_REDO_UNCHECKED;  // exemplar unchanged; known to be valid
 }
@@ -130,7 +130,7 @@ DECLARE_NATIVE(REORDER)
 
     Element* original = Element_ARG(ORIGINAL);
     Phase* reorderee = Frame_Phase(ARG(ORIGINAL));
-    Option(const Symbol*) label  = Cell_Frame_Label_Deep(ARG(ORIGINAL));
+    Option(const Symbol*) label  = Frame_Label_Deep(ARG(ORIGINAL));
 
     // Working with just the exemplar means we will lose the partials ordering
     // information from the interface.  But that's what we want, as the

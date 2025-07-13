@@ -334,7 +334,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
         }
 
         if (Is_Frame(overbind)) {
-            lens = Cell_Frame_Lens(overbind);
+            lens = Frame_Lens(overbind);
             if (not lens)  // need lens to not default to full visibility [1]
                 lens = cast(Phase*, Phase_Paramlist(Frame_Phase(overbind)));
         }

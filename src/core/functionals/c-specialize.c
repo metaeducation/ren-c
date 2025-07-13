@@ -214,8 +214,8 @@ bool Specialize_Action_Throws(
 ){
     assert(out != specializee);
 
-    Option(const Symbol*) label = Cell_Frame_Label(specializee);
-    Option(VarList*) coupling = Cell_Frame_Coupling(specializee);
+    Option(const Symbol*) label = Frame_Label(specializee);
+    Option(VarList*) coupling = Frame_Coupling(specializee);
 
     DECLARE_BINDER (binder);
     if (def)
@@ -286,7 +286,7 @@ bool Specialize_Action_Throws(
     // !!! Needs handling for interaction with REORDER.
     //
     bool first_param = true;
-    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(specializee);
+    Option(InfixMode) infix_mode = Frame_Infix_Mode(specializee);
 
     for (; key != tail; ++key, ++param, ++slot) {
         if (Is_Specialized(param)) {  // was specialized in underlying phase
@@ -453,7 +453,7 @@ DECLARE_NATIVE(SPECIALIZE)
 
     Element* specializee = Element_ARG(OPERATION);
 
-    Option(InfixMode) infix_mode = Cell_Frame_Infix_Mode(specializee);
+    Option(InfixMode) infix_mode = Frame_Infix_Mode(specializee);
 
     Value* out = Copy_Cell(OUT, Element_LOCAL(FRAME));
     Actionify(out);

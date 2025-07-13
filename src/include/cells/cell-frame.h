@@ -85,13 +85,13 @@ INLINE Phase* Frame_Phase(const Cell* c) {
     return cast(Phase*, f);
 }
 
-INLINE Details* Ensure_Cell_Frame_Details(const Cell* c) {
+INLINE Details* Ensure_Frame_Details(const Cell* c) {
     Phase* phase = Frame_Phase(c);
     assert(Is_Stub_Details(phase));
     return cast(Details*, phase);
 }
 
-INLINE Option(Details*) Try_Cell_Frame_Details(const Cell* c) {
+INLINE Option(Details*) Try_Frame_Details(const Cell* c) {
     Phase* phase = Frame_Phase(c);
     if (not Is_Stub_Details(phase))
         return nullptr;
@@ -129,7 +129,7 @@ INLINE void Tweak_Frame_Lens(Value* v, Phase* lens) {
     Tweak_Frame_Lens_Or_Label(v, lens);
 }
 
-INLINE Option(Phase*) Cell_Frame_Lens(const Value* c) {
+INLINE Option(Phase*) Frame_Lens(const Value* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
     Flex* f = cast(Flex*, CELL_FRAME_EXTRA_LENS_OR_LABEL(c));
     if (not f or Is_Stub_Symbol(f))
@@ -138,7 +138,7 @@ INLINE Option(Phase*) Cell_Frame_Lens(const Value* c) {
     return cast(Phase*, f);
 }
 
-INLINE Option(const Symbol*) Cell_Frame_Label(const Value* c) {
+INLINE Option(const Symbol*) Frame_Label(const Value* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
     Flex* f = cast(Flex*, CELL_FRAME_EXTRA_LENS_OR_LABEL(c));
     if (not f)
@@ -150,11 +150,11 @@ INLINE Option(const Symbol*) Cell_Frame_Label(const Value* c) {
     return cast(Symbol*, f);
 }
 
-INLINE Option(const Symbol*) Cell_Frame_Label_Deep(const Value* c) {
-    Option(const Symbol*) label = Cell_Frame_Label(c);
+INLINE Option(const Symbol*) Frame_Label_Deep(const Value* c) {
+    Option(const Symbol*) label = Frame_Label(c);
     if (label)
         return label;
-    return Cell_Frame_Label(Phase_Archetype(Frame_Phase(c)));
+    return Frame_Label(Phase_Archetype(Frame_Phase(c)));
 }
 
 INLINE void Update_Frame_Cell_Label(Value* c, Option(const Symbol*) label) {
@@ -276,7 +276,7 @@ INLINE Value* Deactivate_If_Action(Need(Value*) v) {
 // checked quickly by the evaluator.
 //
 
-INLINE Option(InfixMode) Cell_Frame_Infix_Mode(const Value* c) {
+INLINE Option(InfixMode) Frame_Infix_Mode(const Value* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
     return u_cast(InfixMode, Get_Cell_Crumb(c));
 }
@@ -286,7 +286,7 @@ INLINE void Tweak_Frame_Infix_Mode(Value* c, Option(InfixMode) mode) {
     Set_Cell_Crumb(c, maybe mode);
 }
 
-INLINE bool Is_Cell_Frame_Infix(const Value* c) {  // faster than != PREFIX_0
+INLINE bool Is_Frame_Infix(const Value* c) {  // faster than != PREFIX_0
     assert(Heart_Of(c) == TYPE_FRAME);
     return did (c->header.bits & CELL_MASK_CRUMB);
 }

@@ -164,10 +164,10 @@ Bounce Cascader_Executor(Level* const L)
         sub,
         Phase_Details(Frame_Phase(first))  // has varlist already [3]
     );
-    Tweak_Level_Coupling(sub, Cell_Frame_Coupling(first));
+    Tweak_Level_Coupling(sub, Frame_Coupling(first));
 
     sub->u.action.original = Frame_Phase(first);
-    Set_Action_Level_Label(sub, Cell_Frame_Label_Deep(first));
+    Set_Action_Level_Label(sub, Frame_Label_Deep(first));
 
     STATE = ST_CASCADER_RUNNING_SUBFUNCTION;
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);
@@ -302,7 +302,7 @@ DECLARE_NATIVE(CASCADE_P)  // see extended CASCADE in %base-defs.r
         pipeline
     );
 
-    Init_Action(OUT, details, Cell_Frame_Label_Deep(first), NONMETHOD);
+    Init_Action(OUT, details, Frame_Label_Deep(first), NONMETHOD);
 
     return UNSURPRISING(OUT);
 }

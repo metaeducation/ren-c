@@ -214,7 +214,7 @@ Bounce Hijacker_Dispatcher(Level* const L)
     Value* hijacker_frame = Details_At(details, IDX_HIJACKER_FRAME);
 
     Phase* hijacker = Frame_Phase(hijacker_frame);
-    Option(VarList*) hijacker_coupling = Cell_Frame_Coupling(hijacker_frame);
+    Option(VarList*) hijacker_coupling = Frame_Coupling(hijacker_frame);
 
     // If the hijacked function was called directly -or- by an adaptation or
     // specalization etc. which was made *after* the hijack, the frame should
@@ -367,8 +367,8 @@ DECLARE_NATIVE(HIJACK)
         Init_Action(
             OUT,
             proxy,  // after Swap_Stub_Content(), new identity for victim
-            Cell_Frame_Label(ARG(VICTIM)),
-            Cell_Frame_Coupling(ARG(VICTIM))
+            Frame_Label(ARG(VICTIM)),
+            Frame_Coupling(ARG(VICTIM))
         );
     }
 

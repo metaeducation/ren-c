@@ -96,7 +96,7 @@ INLINE Details* Level_Intrinsic_Details(Level* L) {
 
     Value* frame = Known_Stable(Level_Scratch(L));
     possibly(Is_Antiform(frame));  // LIFT_BYTE() is not canonized
-    return Ensure_Cell_Frame_Details(frame);
+    return Ensure_Frame_Details(frame);
 }
 
 INLINE Option(const Symbol*) Level_Intrinsic_Label(Level* L) {
@@ -105,7 +105,7 @@ INLINE Option(const Symbol*) Level_Intrinsic_Label(Level* L) {
 
     Value* frame = Known_Stable(Level_Scratch(L));
     possibly(Is_Antiform(frame));  // LIFT_BYTE() is not canonized
-    return Cell_Frame_Label_Deep(frame);
+    return Frame_Label_Deep(frame);
 }
 
 

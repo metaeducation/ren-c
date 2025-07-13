@@ -500,7 +500,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     if (  // give label to action/frame if it's a word and doesn't have one
         Is_Word(TOP)
         and (Is_Action(val) or Is_Frame(val))
-        and not Cell_Frame_Label_Deep(val)
+        and not Frame_Label_Deep(val)
     ){
         Update_Frame_Cell_Label(val, Word_Symbol(TOP));
     }

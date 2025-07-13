@@ -675,7 +675,7 @@ DECLARE_NATIVE(COMPILE_P)
     // their function pointers to substitute in for the dispatcher.
     //
     while (TOP_INDEX != STACK_BASE) {
-        Details* details_tcc = Ensure_Cell_Frame_Details(TOP);  // stack live
+        Details* details_tcc = Ensure_Frame_Details(TOP);  // stack live
         assert(Details_Dispatcher(details_tcc) == &Pending_Native_Dispatcher);
 
         Value* linkname = Details_At(details_tcc, IDX_TCC_NATIVE_LINKNAME);

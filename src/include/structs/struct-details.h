@@ -71,7 +71,7 @@
 
 //=//// DETAILS_FLAG_OWNS_PARAMLIST ////////////////////////////////////////=//
 //
-// When the Cell_Frame_Lens() of a FRAME! is a Details*, then this flag drives
+// When the Frame_Lens() of a FRAME! is a Details*, then this flag drives
 // whether or not all the variables of the associated ParamList* are visible
 // or just the inputs.  It's important because while ADAPT shares the same
 // ParamList* as the function it's adapting, you shouldn't be able to get
