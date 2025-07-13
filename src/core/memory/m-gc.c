@@ -1139,13 +1139,17 @@ void Emergency_Shutdown_Gc_Debug(void)
 // to be a Flex whose width is sizeof(Stub), and it will be filled with
 // the list of Stubs that *would* be recycled.
 //
-REBLEN Recycle_Core(Flex* sweeplist)
+Count Recycle_Core(Flex* sweeplist)
 {
-    // Ordinarily, it should not be possible to spawn a recycle during a
-    // recycle.  But when debug code is added into the recycling code, it
-    // could cause a recursion.  Be tolerant of such recursions to make that
-    // debugging easier...but make a note that it's not ordinarily legal.
-    //
+    Count sweep_count;
+
+  block_recycle_re_entry: {
+
+  // Ordinarily, it should not be possible to spawn a recycle during a
+  // recycle.  But when debug code is added into the recycling code, it
+  // could cause a recursion.  Be tolerant of such recursions to make that
+  // debugging easier...but make a note that it's not ordinarily legal.
+
   #if RUNTIME_CHECKS
     if (g_gc.recycling) {
         printf("Recycle re-entry; should only happen in debug scenarios.\n");
@@ -1154,13 +1158,17 @@ REBLEN Recycle_Core(Flex* sweeplist)
     }
   #endif
 
-    // If disabled by RECYCLE:OFF, exit now but set the pending flag.  (If
-    // shutdown, ignore so recycling runs and can be checked for balance.)
-    //
+} skip_recycling_if_disabled: {
+
+  // If disabled by RECYCLE:OFF, exit now but set the pending flag.  (If
+  // shutdown, ignore so recycling runs and can be checked for balance.)
+
     if (g_gc.disabled) {
         Set_Trampoline_Flag(RECYCLE);
         return 0;
     }
+
+} set_global_flag_indicating_recycling_in_progress: {
 
     g_gc.recycling = true;
 
@@ -1171,15 +1179,14 @@ REBLEN Recycle_Core(Flex* sweeplist)
     g_gc.recycled_stubs = g_mem.pools[STUB_POOL].free;
   #endif
 
-    // Builtin patches for Lib contain variables that can be read by LIB(XXX)
-    // in the C code.  Since effectively any of them could become referred
-    // to in code, we need to keep the cells alive.
-    //
-    // We don't technically need to mark the patches themselves to protect
-    // them from GC--because they're not in the STUB_POOL so Sweep_Stubs()
-    // wouldn't free them.  But we mark them anyway--for clarity, and it
-    // speeds up references that would mark them to see they're spoken for
-    // (so they don't have to detect it's an array, queue the cell...)
+} dont_mark_inaccessible_stub: {
+
+    // The PG_Inaccessible_Stub always looks marked, so we can skip it
+    // quickly in GC (and not confuse it with non-canon diminished stubs).
+
+    assert(Is_Base_Marked(&PG_Inaccessible_Stub));
+
+} mark_builtin_datatypes: {
 
     assert(Is_Stub_Erased(&g_datatype_patches[cast(Byte, TYPE_0)]));  // skip
 
@@ -1199,6 +1206,18 @@ REBLEN Recycle_Core(Flex* sweeplist)
     }
     Propagate_All_GC_Marks();
 
+} mark_builtin_lib_patches: {
+
+  // Builtin patches for Lib contain variables that can be read by LIB(XXX)
+  // in the C code.  Since effectively any of them could become referred to
+  // in code, we need to keep the cells alive.
+  //
+  // We don't technically need to mark the patches themselves to protect them
+  // from GC--because they're not in the STUB_POOL so Sweep_Stubs() wouldn't
+  // free them.  But we mark them anyway--for clarity, and it speeds up
+  // references that would mark them to see they're spoken for (so they don't
+  // have to detect it's an array, queue the cell...)
+
     assert(Is_Stub_Erased(&g_lib_patches[cast(int, SYM_0)]));  // skip SYM_0
 
     for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
@@ -1210,39 +1229,61 @@ REBLEN Recycle_Core(Flex* sweeplist)
     }
     Propagate_All_GC_Marks();
 
-    // It was previously assumed no recycle would happen while the evaluator
-    // was in a thrown state.  There's no particular reason to enforce that
-    // in stackless, so it has been relaxed.
-    //
+} mark_thrown_state: {
+
+  // It was once assumed no recycle would happen while the evaluator was in a
+  // thrown state.  There's no particular reason to enforce that in stackless,
+  // so it has been relaxed.
+
     Queue_Mark_Maybe_Erased_Cell_Deep(&g_ts.thrown_arg);
     Queue_Mark_Maybe_Erased_Cell_Deep(&g_ts.thrown_label);
     Propagate_All_GC_Marks();
 
-    // MARKING PHASE: the "root set" from which we determine the liveness
-    // (or deadness) of a Stub.  If we are shutting down, we do not mark
-    // several categories of Stub...but we do need to run the root marking.
-    // (In particular because that is when API Stubs whose lifetimes
-    // are bound to Levels will be freed, if the Level is expired.)
-    //
+} mark_failure_state: {
+
+  // Currently it's possible for the failure to be set during a GC, because
+  // you can do `return fail` from an executor, which runs a GC.  Rather than
+  // prohibit it, allow it for now--though the policy should be reviewed.
+
+    if (g_failure)
+        Queue_Mark_Base_Deep(u_cast(Base**, &g_failure));
+
+} mark_root_stubs: {
+
+  // The "root set" from which we determine the liveness (or deadness) of a
+  // Stub.  If we are shutting down, we do not mark several categories of
+  // Stub...but we do need to run the root marking.  (In particular because
+  // that is when API Stubs whose lifetimes are bound to Levels will be freed,
+  // if the Level is expired.)
+
     Mark_Root_Stubs();
     Assert_No_GC_Marks_Pending();
+
+} mark_data_stack: {
 
     Mark_Data_Stack();
     Assert_No_GC_Marks_Pending();
 
+} mark_guarded: {
+
     Mark_Guarded();
     Assert_No_GC_Marks_Pending();
+
+} mark_all_levels: {
 
     Mark_All_Levels();
     Assert_No_GC_Marks_Pending();
 
-    // The last thing we do is go through all the "sea contexts" and make sure
-    // that if anyone referenced the context, then their variables remain live.
-    //
-    // This must be done *iteratively* so long as the process transitions any
-    // more modules into the live set.  Our weak method at the moment is just
-    // to check if any more markings occur.
-    //
+} mark_sea_contexts: {
+
+  // The last thing we do before sweeping is go through all the "sea contexts"
+  // and make sure that if anyone referenced the context, their variables
+  // remain live.
+  //
+  // This must be done *iteratively* so long as the process transitions any
+  // more modules into the live set.  Our weak method at the moment is just
+  // to check if any more markings occur.
+
     while (true) {
         bool added_marks = false;
 
@@ -1277,23 +1318,16 @@ REBLEN Recycle_Core(Flex* sweeplist)
             break;
     }
 
-    // SWEEPING PHASE
-
     Assert_No_GC_Marks_Pending();
 
-    // The PG_Inaccessible_Stub always looks marked, so we can skip it
-    // quickly in GC (and not confuse it with non-canon diminished stubs).
-    //
-    assert(Is_Base_Marked(&PG_Inaccessible_Stub));
+} sweep_stubs: {
 
-    REBLEN sweep_count;
-
-    if (sweeplist != NULL) {
-    #if NO_RUNTIME_CHECKS
+    if (sweeplist != nullptr) {
+      #if NO_RUNTIME_CHECKS
         crash (sweeplist);
-    #else
+      #else
         sweep_count = Fill_Sweeplist(sweeplist);
-    #endif
+      #endif
     }
     else
         sweep_count = Sweep_Stubs();
@@ -1332,41 +1366,49 @@ REBLEN Recycle_Core(Flex* sweeplist)
         Remove_GC_Mark_If_Marked(canon);
     }
 
+} ensure_mark_count_balanced: {
+
   #if RUNTIME_CHECKS
-    assert(g_gc.mark_count == 0);  // should have balanced out
+    assert(g_gc.mark_count == 0);
   #endif
 
+} update_recycling_stats: {
+
   #if DEBUG_COLLECT_STATS
-    // Compute new stats:
     g_gc.recycled_stubs
         = g_mem.pools[STUB_POOL].free - g_gc.recycled_stubs;
     g_gc.recycled_stubs_total += g_gc.recycled_stubs;
   #endif
 
-    // !!! This reset of the "ballast" is the original code from R3-Alpha:
-    //
-    // https://github.com/rebol/rebol/blob/25033f897b2bd466068d7663563cd3ff64740b94/src/core/m-gc.c#L599
-    //
-    // Atronix R3 modified it, but that modification created problems:
-    //
-    // https://github.com/zsx/r3/issues/32
-    //
-    // Reverted to the R3-Alpha state, accommodating a comment "do not adjust
-    // task variables or boot strings in shutdown when they are being freed."
-    //
+} reset_gc_ballast: {
+
+  // !!! This reset of the "ballast" is the original code from R3-Alpha:
+  //
+  // https://github.com/rebol/rebol/blob/25033f897b2bd466068d7663563cd3ff64740b94/src/core/m-gc.c#L599
+  //
+  // Atronix R3 modified it, but that modification created problems:
+  //
+  // https://github.com/zsx/r3/issues/32
+  //
+  // Reverted to the R3-Alpha state, accommodating a comment "do not adjust
+  // task variables or boot strings in shutdown when they are being freed."
+
     g_gc.depletion = g_gc.ballast;
 
     Assert_No_GC_Marks_Pending();
 
+} clear_global_recycling_flag: {
+
     g_gc.recycling = false;
 
+} print_sweep_count_if_watch_recycle: {
+
+  // This might be an interesting feature for release builds, but using normal
+  // I/O here that runs evaluations could be problematic.  Even though we've
+  // finished the recycle, we're still in the signal handling stack.  Calling
+  // into the evaluator e.g. for rebPrint() may be bad.
+
   #if RUNTIME_CHECKS
-    //
-    // This might be an interesting feature for release builds, but using
-    // normal I/O here that runs evaluations could be problematic.  Even
-    // though we've finished the recycle, we're still in the signal handling
-    // stack, so calling into the evaluator e.g. for rebPrint() may be bad.
-    //
     if (g_gc.watch_recycle) {
         printf("RECYCLE: %u nodes\n", cast(unsigned int, sweep_count));
         fflush(stdout);
@@ -1374,7 +1416,7 @@ REBLEN Recycle_Core(Flex* sweeplist)
   #endif
 
     return sweep_count;
-}
+}}
 
 
 //
