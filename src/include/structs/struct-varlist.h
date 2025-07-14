@@ -199,7 +199,11 @@
 //    I think it's more grounding.  At first this was NO_ERROR, but since
 //    Windows.h defines that we use SUCCESS.
 //
-// 2. Enforcement of use of SUCCESS instead of nullptr is done by making a
+// 2. Error* is a typedef, and as such can't be [[nodiscard]] by itself.  But
+//    template specializations can be [[nodiscard]]...so this is helpful in
+//    catching cases of someone ignoring a returned Error*.
+//
+// 3. Enforcement of use of SUCCESS instead of nullptr is done by making a
 //    specialization of the OptionWrapper<> template for Error*.  All we
 //    want to do is stop it from constructing from nullptr and allow it to
 //    initialize with a dummy struct (SuccessSentinal) that is SUCCESS.  But
@@ -221,8 +225,8 @@
     static const SuccessSentinel SUCCESS = SuccessSentinel();  // global ok
 
   namespace needful {
-    template<>
-    struct OptionWrapper<Error*> {  // repeats some code, but that's life [2]
+    template<>  // v-- template specializations can be NODISCARD [2]
+    struct NEEDFUL_NODISCARD OptionWrapper<Error*> {  // repeats code [3]
         NEEDFUL_DECLARE_WRAPPED_FIELD (Error*, o);
 
         OptionWrapper() = default;
