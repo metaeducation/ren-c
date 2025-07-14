@@ -247,6 +247,10 @@ DECLARE_NATIVE(LOAD_EXTENSION)
         crash ("NATIVE calls did not line up with stored C function count");
     g_native_cfunc_pos = nullptr;
 
+    RebolContext** binding_ref
+        = Cell_Handle_Pointer(RebolContext*, binding_ref_handle);
+    *binding_ref = cast(RebolContext*, g_currently_loading_module);
+
     assert(g_currently_loading_module == sea);
     g_currently_loading_module = nullptr;
 
@@ -255,10 +259,6 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     Drop_Lifeguard(collated);
 
     rebElide("append system.extensions", module);
-
-    RebolContext** binding_ref
-        = Cell_Handle_Pointer(RebolContext*, binding_ref_handle);
-    *binding_ref = cast(RebolContext*, g_currently_loading_module);
 
     // !!! If modules are to be "unloadable", they would need some kind of
     // finalizer to clean up their resources.  There are shutdown actions

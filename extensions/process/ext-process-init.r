@@ -38,7 +38,7 @@ Rebol [
             ; the CALL block that looks a bit more like a shell invocation.
             ;
             let pattern: inside command '()
-            map-each 'arg compose pattern command [
+            map-each 'arg compose2 pattern command [
                 switch:type arg [
                     text! [arg]  ; pass through as is
                     file! [file-to-local arg]
