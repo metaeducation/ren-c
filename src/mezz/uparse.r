@@ -122,6 +122,7 @@ bind construct [
 ][
     let autopipe: ~
     let ghostable: ~  ; need to UNGHOST return result if no GHOST! return
+    let input-name: ~  ; whatever they called INPUT
 
     let ^action: func compose [  ; ^action to not store ACTION as label
         ; Get the text description if given
@@ -147,7 +148,8 @@ bind construct [
         state [frame!]
 
         (
-            assert [spec.1 = 'input]
+            input-name: spec.1
+            assert [word? input-name]  ; can call it almost anything you want
             let [description types]: if block? spec.2 [  ; no description
                 pack [null spec.2]
                 elide spec: my skip 2
@@ -155,9 +157,9 @@ bind construct [
                 pack [ensure text! spec.2, ensure block! spec.3]
                 elide spec: my skip 3
             ]
-            ghostable: did find types 'ghost!
-            spread compose:deep [
-                input (opt description) (types)
+            assert [types = [any-series?]]  ; enforce for now...
+            spread reduce [
+                input-name, opt description, types
             ]
         )
 
@@ -184,10 +186,10 @@ bind construct [
             let f: binding of $return
 
             pending: blank
-            let in-args: 'no
+            let in-args: null
             for-each [key ^val] f [
-                if no? in-args [
-                    if key = 'input [in-args: 'yes]
+                if not in-args [
+                    if key = input-name [in-args: okay]
                     continue
                 ]
                 all [
@@ -216,8 +218,8 @@ bind construct [
                 {? if not ghostable ['unghost]} (^value except e -> [
                     {unrun return/} fail e
                 ])
-                input
-                pending
+                {input-name}
+                pending  ; can't change PENDING name at this time
             ]
         ]
 
@@ -263,6 +265,12 @@ negatable-parser?: func [
     return did find words of frame 'negated
 ]
 
+; An un-lens'd combinator has the input in position 2, but we don't know
+; what name it was given.  Help document places that assume it's position 2.
+;
+set-combinator-input: lambda [f input] [
+    f.2: input  ; f.1 is STATE, f.2 is whatever they called INPUT
+]
 
 block-combinator: ~  ; need in variable for recursion implementing "..."
 
@@ -593,7 +601,7 @@ default-combinators: make map! [
             panic "No PARSE iteration to STOP"
         ]
 
-        f.input: input  ; is set remainder to where stop is always the rule?
+        set-combinator-input f input  ; always set remainder to stop's input?
         f/return ^result
     ]
 
@@ -2429,6 +2437,7 @@ default-combinators: make map! [
                 ;
                 f: make frame! block-combinator/  ; this combinator
                 f.state: state
+                f.input: pos  ; know parameter is called "input"
                 f.value: rules
                 f.limit: sublimit
                 f.rule-start: rules
@@ -2439,9 +2448,8 @@ default-combinators: make map! [
                 rules: sublimit else [tail of rules]
             ] else [
                 f: make frame! [{_} rules]: parsify state rules
+                f.1: pos  ; PARSIFY specialized STATE in, so input is 1st
             ]
-
-            f.input: pos
 
             if not error? ^temp: eval f [
                 [^temp pos subpending]: ^temp
@@ -2967,7 +2975,7 @@ parse*: func [
 
     let f: make frame! combinators.(block!)
     f.state: state
-    f.input: input
+    set-combinator-input f input  ; don't know what BLOCK! combinator called it
     f.value: rules
 
     ; There's a display issue with giving the whole rule in that the outermost
@@ -3029,7 +3037,7 @@ parse: (comment [redescribe [  ; redescribe not working at the moment (?)
 ](
     enclose parse/ func [f] [
         eval f except [return null]
-        return f.input
+        return f.input  ; PARSE fixes name of INPUT (combinators can rename it)
     ]
 )
 

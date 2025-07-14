@@ -641,22 +641,25 @@ static bool Combinator_Param_Hook(
 
     Option(SymId) symid = Key_Id(key);
 
-    if (symid == SYM_INPUT or symid == SYM_REMAINDER) {
-        //
-        // The idea is that INPUT is always left unspecialized (a completed
-        // parser produced from a combinator takes it as the only parameter).
-        // And the REMAINDER is an output, so it's the callers duty to fill.
-        //
-        return true;  // keep iterating the parameters.
-    }
-
-
     // we need to calculate what variable slot this lines up with.  Can be
     // done based on the offset of the param from the head.
 
     REBLEN offset = param - Phase_Params_Head(
         Frame_Phase(ARG(COMBINATOR))
     );
+
+    if (offset == 2) {  // [RETURN STATE INPUT ...]
+        //
+        // The idea is that INPUT is always left unspecialized (a completed
+        // parser produced from a combinator takes it as the only parameter).
+        // We have to use the index to determine which argument is INPUT,
+        // because COMBINATOR allows people to use arbitrary names for it.
+        // It's the second parameter in the spec, after STATE, but we also
+        // have to account for the RETURN slot.
+        //
+        return true;  // keep iterating the parameters.
+    }
+
     Value* var = Slot_Hack(Varlist_Slots_Head(s->ctx) + offset);
 
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
