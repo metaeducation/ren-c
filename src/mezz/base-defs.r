@@ -186,22 +186,18 @@ each: quote/
 
 ; REQUOTE is helpful when functions do not accept QUOTED! values.
 ;
-/requote: reframer lambda [
+/requote: reframer func [
     "Remove Quoting Levels From First Argument and Re-Apply to Result"
     f [frame!]
-    <local> p num-quotes result
+    <local> num-quotes
 ][
-    if not p: first words of f [
+    num-quotes: quotes of (f.1 except [
         panic ["REQUOTE must have an argument to process"]
-    ]
+    ])
 
-    num-quotes: quotes of f.(p)
+    f.1: noquote f.1
 
-    f.(p): noquote f.(p)
-
-    light (eval f then result -> [  ; !!! proper light-null handling here?
-        quote:depth get:any $result num-quotes
-    ] else [null])
+    return quote:depth opt (trap eval f) num-quotes
 ]
 
 ; https://forum.rebol.info/t/for-lightweight-lambda-arrow-functions/2172

@@ -1025,17 +1025,6 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
 }
 
 
-const Symbol* Symbol_From_Picker(const Element* context, const Value* picker)
-{
-    UNUSED(context);  // Might the picker be context-sensitive?
-
-    if (not Is_Word(picker))
-        panic (picker);
-
-    return Word_Symbol(picker);
-}
-
-
 // 1. !!! Special attention on copying frames is going to be needed, because
 //    copying a frame will be expected to create a new identity for an ACTION!
 //    if that frame is aliased AS ACTION!.  The design is still evolving, but
@@ -1235,17 +1224,61 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     possibly(Is_Port(context));
 
     const Value* picker = ARG(PICKER);
-    const Symbol* symbol = Symbol_From_Picker(context, picker);
+    const Symbol* symbol;
 
     bool strict = false;
     Slot* slot;
     if (Is_Module(context)) {
+        if (not Is_Word(picker))
+            panic (PARAM(PICKER));
+        symbol = Word_Symbol(picker);
         slot = maybe Sea_Slot(Cell_Module_Sea(context), symbol, strict);
     }
     else if (Is_Let(context)) {
+        if (not Is_Word(picker))
+            panic (PARAM(PICKER));  // allow (let var: 10, var.1) ?
+        symbol = Word_Symbol(picker);
         slot = maybe Lookup_Let_Slot(Cell_Let(context), symbol, strict);
     }
+    else if (Is_Integer(picker)) {
+        if (not Is_Frame(context))
+            panic (PARAM(PICKER));  // only FRAME!s pick by index atm
+
+        Phase* lens = maybe Frame_Lens(context);
+        if (not lens)
+            lens = Frame_Phase(context);
+        else if (Is_Stub_Details(lens))  // all values visible
+            lens = u_cast(Phase*,
+                Phase_Paramlist(lens)  // just interface
+            );
+
+        Index index = VAL_UINT32(picker);
+        if (index <= 0)
+            panic (Error_Bad_Pick_Raw(picker));
+
+        const Param* param = Phase_Params_Head(lens);
+        const Key* key_tail;
+        const Key* key = Phase_Keys(&key_tail, lens);
+        slot = Varlist_Slots_Head(u_cast(VarList*, Cell_Varlist(context)));
+        for (; key != key_tail; ++key, ++param, ++slot) {
+            if (Is_Specialized(param))
+                continue;
+            if (Get_Parameter_Flag(param, REFINEMENT))
+                continue;
+            --index;
+            if (index == 0)
+                break;
+        }
+        if (index != 0)
+            panic (Error_Bad_Pick_Raw(picker));
+
+        symbol = Key_Symbol(key);
+    }
     else {
+        if (not Is_Word(picker))
+            panic (PARAM(PICKER));
+
+        symbol = Word_Symbol(picker);
         Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
         if (not index)
             slot = nullptr;

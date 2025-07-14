@@ -636,6 +636,21 @@ Result(Value*) Get_Word(
     return out;
 }
 
+// We want to allow (append.series) to give you back a PARAMETER!, this may
+// be applicable to other antiforms also (SPLICE!, maybe?)  But probably too
+// risky to let you do it with ERROR!, and misleading to do it with PACK!.
+//
+static Option(Error*) Trap_Adjust_Lifted_Antiform_For_Tweak(Atom* spare)
+{
+    assert(Is_Quasiform(spare));
+    if (Heart_Of(spare) == TYPE_FRAME) {  // e.g. (append.series)
+        LIFT_BYTE_RAW(spare) = ONEQUOTE_NONQUASI_4;
+        return SUCCESS;
+    }
+
+    return Error_User("TWEAK* cannot be used on non-ACTION! antiforms");
+}
+
 
 // This breaks out the stylized code for calling TWEAK*, in a Level that
 // can be reused across multiple TWEAK* calls.
@@ -658,8 +673,11 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     Level* sub,  // will Push_Level() if not already pushed
     StackIndex picker_index
 ){
-    if (Is_Quasiform(SPARE))
-        return Error_User("TWEAK* cannot be used on antiforms");
+    if (Is_Quasiform(SPARE)) {  // lifted antiform
+        Option(Error*) e = Trap_Adjust_Lifted_Antiform_For_Tweak(SPARE);
+        if (e)
+            return e;  // don't panic, caller will handle
+    }
 
     require (
       Push_Action(sub, LIB(TWEAK_P), PREFIX_0)

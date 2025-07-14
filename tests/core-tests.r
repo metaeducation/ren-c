@@ -49,6 +49,7 @@
 %datatypes/object.test.r
 %datatypes/pair.test.r
 %datatypes/paren.test.r
+%datatypes/parameter.test.r
 %datatypes/path.test.r
 %datatypes/percent.test.r
 %datatypes/port.test.r

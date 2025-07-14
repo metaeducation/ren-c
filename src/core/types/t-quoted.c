@@ -678,7 +678,7 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
 //
 //      return: [any-value?]
 //      ^value "Decayed if pack"
-//          [any-value?]
+//          [<opt-out> any-value?]
 //      :veto "If true, then return VETO instead of VOID"
 //  ]
 //
