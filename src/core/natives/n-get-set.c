@@ -274,7 +274,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
 } adjust_frame_arguments_now_that_its_safe_to_panic: {
 
-    attempt {
+    attempt {  // v-- how to handle cases like x.^(...) and know it's ^META?
         if (Any_Lifted(picker_arg)) {  // literal x.'y or x.('y) => 'y
             Unliftify_Known_Stable(picker_arg);
 
@@ -282,6 +282,11 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
                 return Error_User(
                     "PICK with keyword or trash picker never allowed"
                 );
+
+            if (Is_Lifted_Void(TOP)) {  // don't know if it was ^META :-(
+                Init_Dual_Word_Remove_Signal(value_arg);
+                break;
+            }
 
             Copy_Cell(value_arg, TOP_ELEMENT);
             require (

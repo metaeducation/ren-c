@@ -78,3 +78,13 @@
     ~expect-arg~ !! (map-each 'x '~ [panic])
     ~unspecified-arg~ !! (map-each 'x ~ [panic])
 ]
+
+; VOID removes from MAP! if not ^META
+(
+    m: make map! ['key 1000]
+    all [
+        m.key = 1000
+        elide m.('key): void
+        not try m.key
+    ]
+)
