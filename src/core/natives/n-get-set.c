@@ -66,43 +66,6 @@
 #include "sys-core.h"
 
 
-//
-//  Adjust_Context_For_Coupling: C
-//
-// Ren-C injects the object from which a function was dispatched in a path
-// into the function call, as something called a "coupling".  This coupling is
-// tied in with the FRAME! for the function call, and can be used as a context
-// to do special lookups in.
-//
-Context* Adjust_Context_For_Coupling(Context* c) {
-    for (; c != nullptr; c = maybe Link_Inherit_Bind(c)) {
-        VarList* frame_varlist;
-        if (Is_Stub_Varlist(c)) {  // ordinary FUNC frame context
-            frame_varlist = cast(VarList*, c);
-            if (CTX_TYPE(frame_varlist) != TYPE_FRAME)
-                continue;
-        }
-        else if (Is_Stub_Use(c)) {  // e.g. LAMBDA or DOES uses this
-            if (not Is_Frame(Known_Stable(Stub_Cell(c))))
-                continue;
-            frame_varlist = Cell_Varlist(Stub_Cell(c));
-        }
-        else
-            continue;
-
-        Level* level = Level_Of_Varlist_If_Running(frame_varlist);
-        if (not level)
-            panic (".field access only in running functions");  // nullptr?
-        VarList* coupling = maybe Level_Coupling(level);
-        if (not coupling)
-            continue;  // skip NULL couplings (default for FUNC, DOES, etc.)
-        if (coupling == UNCOUPLED)
-            return nullptr;  // uncoupled frame (method, just not coupled)
-        return coupling;
-    }
-    return nullptr;
-}
-
 
 // We want to allow (append.series) to give you back a PARAMETER!, this may
 // be applicable to other antiforms also (SPLICE!, maybe?)  But probably too
@@ -449,13 +412,24 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     else switch (Stub_Flavor(cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {
         if (Get_Cell_Flag(scratch_var, LEADING_SPACE)) {  // `/a` or `.a`
-            panic ("Leading dot selection is being redesigned.");
-            /*if (Heart_Of(scratch_var) == TYPE_TUPLE) {
-                Context* context = Cell_Binding(scratch_var);
-                context = Adjust_Context_For_Coupling(context);
-                Tweak_Cell_Binding(scratch_var, context);
+            if (Heart_Of(scratch_var) != TYPE_TUPLE) {
+                e = Error_User("GET leading space only allowed on TUPLE!");
+                goto return_error;
             }
-            goto handle_scratch_var_as_wordlike;*/
+            Init_Word(SPARE, CANON(DOT_1));
+            Tweak_Cell_Binding(
+                u_cast(Element*, SPARE),
+                Cell_Binding(scratch_var)
+            );
+            if (not Try_Get_Binding_Of(PUSH(), u_cast(Element*, SPARE))) {
+                DROP();
+                e = Error_No_Binding_Raw(Known_Element(SPARE));
+                goto return_error;
+            }
+            Liftify(TOP);
+            Liftify(Init_Word(PUSH(), CANON(DOT_1)));
+            Liftify(Init_Word(PUSH(), u_cast(const Symbol*, payload1)));
+            goto set_from_steps_on_stack;
         }
 
         // `a/` or `a.`
@@ -1572,24 +1546,4 @@ DECLARE_NATIVE(GET)
       Unliftify_Undecayed(OUT)
     );
     return OUT;
-}
-
-
-//
-//  .: native [
-//
-//  "Get the current coupling from the binding environment"
-//
-//      return: [null? object!]
-//  ]
-//
-DECLARE_NATIVE(DOT_1)
-{
-    INCLUDE_PARAMS_OF_DOT_1;
-
-    Context* coupling = Adjust_Context_For_Coupling(Level_Binding(LEVEL));
-    if (not coupling)
-        return fail ("No current coupling in effect");
-
-    return Init_Object(OUT, cast(VarList*, coupling));
 }

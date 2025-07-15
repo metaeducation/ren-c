@@ -152,8 +152,19 @@ Bounce Func_Dispatcher(Level* const L)
 
     STATE = ST_FUNC_BODY_EXECUTING;
 
+    Context* binding = u_cast(ParamList*, L->varlist);
+    Context* coupling = maybe Level_Coupling(L);
+    if (coupling) {
+        Let* let = Make_Let_Variable(CANON(DOT_1), binding);
+        Init_Object(
+            Slot_Init_Hack(Let_Slot(let)),
+            cast(VarList*, coupling)
+        );
+        binding = let;
+    }
+
     Element* spare = Copy_Cell(SPARE, body);
-    Tweak_Cell_Binding(spare, L->varlist);
+    Tweak_Cell_Binding(spare, binding);
 
     Enable_Dispatcher_Catching_Of_Throws(L);  // for RETURN:RUN, not RETURN [1]
 
