@@ -430,9 +430,9 @@ DECLARE_NATIVE(UNANTI)
 //
 //  "Make block arguments splice"
 //
-//      return: "Antiform of GROUP! or unquoted value (pass null and void)"
-//          [null? element? splice!]
-//      value [<opt-out> blank? any-list? quasiform!]  ; see [1] [2]
+//      return: "Antiform of GROUP! or unquoted value (passthru void)"
+//          [void? null? element? splice!]
+//      ^value [void? null? blank? any-list? quasiform!]  ; see [1] [2]
 //  ]
 //
 DECLARE_NATIVE(SPREAD)
@@ -451,7 +451,13 @@ DECLARE_NATIVE(SPREAD)
 {
     INCLUDE_PARAMS_OF_SPREAD;
 
+    if (Is_Void(Atom_ARG(VALUE)))
+        return VOID;  // void is a no-op, so just pass it through
+
     Value* v = ARG(VALUE);
+
+    if (Is_Nulled(v))
+        return NULLED;
 
     if (Any_List(v))  // most common case
         return COPY(Splicify(v));
