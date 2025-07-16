@@ -675,8 +675,8 @@ DECLARE_NATIVE(NOT_EQUAL_Q)
 //  {TRUE if the values are identical}
 //
 //      return: [logic!]
-//      value1 [any-atom!]
-//      value2 [any-atom!]
+//      value1 [any-value!]
+//      value2 [any-value!]
 //  ]
 //
 DECLARE_NATIVE(SAME_Q)

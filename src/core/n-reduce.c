@@ -86,14 +86,14 @@ DECLARE_NATIVE(VETO)
 //  "Detect whether argument is an error with (id = 'veto)"
 //
 //      return: [logic!]
-//      atom [any-atom!]
+//      value [any-value!]
 //  ]
 //
 DECLARE_NATIVE(VETO_Q)
 {
     INCLUDE_PARAMS_OF_VETO_Q;
 
-    const Value* atom = ARG(ATOM);
+    const Value* atom = ARG(VALUE);
 
     if (not Is_Error(atom))
         return nullptr;
@@ -231,7 +231,7 @@ Value* Meta_Unquotify(Value* v)
 //
 //      return: {~null~ if null, or `(the ...)` where ... is passed-in cell}
 //          [any-metaform!]
-//      value [any-atom!]
+//      value [any-value!]
 //   ]
 //
 DECLARE_NATIVE(META)
@@ -256,7 +256,7 @@ DECLARE_NATIVE(META)
 //
 //  "Narrower form of evaluation that only evaluates META products"
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //      value [any-metaform!]
 //   ]
 //

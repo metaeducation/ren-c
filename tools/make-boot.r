@@ -456,17 +456,17 @@ e-types/emit {
      * Subtract signal for end and  (signal for "endability")
      * Includes TYPE_VOID.
      */
-    #define TS_ATOM \
+    #define TS_VALUE \
         ((FLAGIT_KIND(TYPE_MAX) - 1) - FLAGIT_KIND(TYPE_0_END))
 
     /*
-     * TS_ATOM minus VOID
+     * TS_VALUE minus VOID
      */
     #define TS_STABLE \
-        (TS_ATOM - FLAGIT_KIND(TYPE_VOID))
+        (TS_VALUE - FLAGIT_KIND(TYPE_VOID))
 
     /*
-     * TS_ATOM minus TRASH
+     * TS_VALUE minus TRASH
      *
      * (you can compare things to VOID, e.g. (xxx = while [...] [...])
      * and have it not die just because the while never ran a loop iteration.)
@@ -476,7 +476,7 @@ e-types/emit {
      * comparisons on tripwires, because they're true antiforms.
      */
     #define TS_EQUATABLE \
-        (TS_ATOM - FLAGIT_KIND(TYPE_TRASH))
+        (TS_VALUE - FLAGIT_KIND(TYPE_TRASH))
 
     /*
      * TS_STABLE minus NULL, VOID, and TRASH

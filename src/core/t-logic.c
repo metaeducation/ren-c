@@ -267,18 +267,17 @@ DECLARE_NATIVE(DID_Q)
 //
 //  did: native [
 //
-//  "Variant of TO-LOGIC which considers null values to also be false"
+//  "Synonym for TO-LOGIC"
 //
 //      return: [logic!]
-//          {true if value is NOT a LOGIC! false, BLANK!, or null}
-//      optional [any-stable!]
+//      value [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(DID)
 {
     INCLUDE_PARAMS_OF_DID;
 
-    return Init_Logic(OUT, IS_TRUTHY(ARG(OPTIONAL)));
+    return Init_Logic(OUT, IS_TRUTHY(ARG(VALUE)));
 }
 
 
@@ -303,18 +302,17 @@ DECLARE_NATIVE(NOT_Q)
 //
 //  not: native [
 //
-//  "Returns the logic complement, considering voids to be false."
+//  "Returns null if the value is truthy, otherwise okay if nulled"
 //
 //      return: [logic!]
-//          "Only LOGIC!'s FALSE, BLANK!, and void for cell return TRUE"
-//      optional [any-stable!]
+//      value [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(NOT)
 {
     INCLUDE_PARAMS_OF_NOT;
 
-    return Init_Logic(OUT, IS_FALSEY(ARG(OPTIONAL)));
+    return Init_Logic(OUT, IS_FALSEY(ARG(VALUE)));
 }
 
 

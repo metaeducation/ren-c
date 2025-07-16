@@ -126,7 +126,7 @@ console!: make object! [
         write-stdout space
     ]
 
-    print-result: function [return: [~] v [any-atom!]]  [
+    print-result: function [return: [~] v [any-value!]]  [
         last-result': meta :v
 
         if (void? :v) [  ; nothingness (e.g. result of eval [])

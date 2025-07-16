@@ -239,7 +239,7 @@ DECLARE_NATIVE(BIND)
 //
 //  {Defines words local to a block.}
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //      vars [block! word!]
 //          {Local word(s) to the block}
 //      body [block!]
@@ -705,8 +705,8 @@ DECLARE_NATIVE(SET)
 //
 //  {Convert nulls to voids, pass through most other values}
 //
-//      return: [any-atom!]
-//      atom [any-atom!]
+//      return: [any-value!]
+//      value [any-value!]
 //      /veto "Instead of turning into a void, turn into a VETO"
 //  ]
 //
@@ -714,10 +714,10 @@ DECLARE_NATIVE(OPTIONAL)
 {
     INCLUDE_PARAMS_OF_OPTIONAL;
 
-    if (Is_Nulled(ARG(ATOM)))
+    if (Is_Nulled(ARG(VALUE)))
         return Bool_ARG(VETO) ? Copy_Cell(OUT, g_error_veto) : Init_Void(OUT);
 
-    RETURN (ARG(ATOM));
+    RETURN (ARG(VALUE));
 }
 
 

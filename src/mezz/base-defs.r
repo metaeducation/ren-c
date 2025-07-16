@@ -35,8 +35,8 @@ probe: func [
     {Debug print a molded value and returns that same value.}
 
     return: "Same as the input value"
-        [any-atom!]
-    value [any-atom!]
+        [any-value!]
+    value [any-value!]
 ][
     case [
         trash? :value [write-stdout "~  ; anti"]

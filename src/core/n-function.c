@@ -191,7 +191,7 @@ DECLARE_NATIVE(UNWIND)
 //  {RETURN, giving a result to the caller}
 //
 //      return: []
-//      value [any-atom!]
+//      value [any-value!]
 //  ]
 //
 DECLARE_NATIVE(RETURN)
@@ -296,7 +296,7 @@ DECLARE_NATIVE(TYPECHECKER)
           case TYPE_OKAY:
           case TYPE_TRASH:
           case TYPE_ERROR:  // antiform in mainline, allow error? on NULL
-            bits = TS_ATOM;
+            bits = TS_VALUE;
             break;
 
           default:
@@ -305,8 +305,8 @@ DECLARE_NATIVE(TYPECHECKER)
     }
     else {
         assert(Is_Typeset(type));
-        if (Cell_Typeset_Bits(type) & (TS_ATOM & ~TS_ELEMENT))
-            bits = TS_ATOM;
+        if (Cell_Typeset_Bits(type) & (TS_VALUE & ~TS_ELEMENT))
+            bits = TS_VALUE;
         else
             bits = TS_ELEMENT;
     }

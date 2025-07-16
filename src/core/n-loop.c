@@ -801,7 +801,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
 //
 //  {Evaluate a block over a range of values. (See also: REPEAT)}
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //      'word [word! lit-word! refinement!]
 //          "Variable to hold current value"
 //      start [any-series! any-number!]
@@ -880,7 +880,7 @@ DECLARE_NATIVE(FOR)
 //  "Evaluates a block for periodic values in a series"
 //
 //      return: "Last body result, or null if BREAK"
-//          [any-atom!]
+//          [any-value!]
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word! refinement! issue! blank!]
 //      series "The series to iterate over"
@@ -1015,7 +1015,7 @@ DECLARE_NATIVE(STOP)
 //
 //  "Evaluates a block endlessly, until a BREAK or a STOP is hit"
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //          {Null if BREAK, or non-null value passed to STOP}
 //      body [block! action!]
 //          "Block or action to evaluate each time"
@@ -1057,7 +1057,7 @@ DECLARE_NATIVE(CYCLE)
 //
 //  "Evaluates a block for each value(s) in a series."
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //          {Last body result, or null if BREAK}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time, no new var if LIT-WORD!"
@@ -1078,7 +1078,7 @@ DECLARE_NATIVE(FOR_EACH)
 //
 //  {Iterate and return false if any previous body evaluations were false}
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
@@ -1519,7 +1519,7 @@ DECLARE_NATIVE(MAP_EACH)
 //
 //  "Evaluates a block a specified number of times."
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //          {Last body result, or null if BREAK}
 //      count [<opt-out> any-number! logic!]
 //          "Repetitions (true loops infinitely, false doesn't run)"
@@ -1575,7 +1575,7 @@ DECLARE_NATIVE(REPEAT)
 //
 //  {Evaluates a block over a series.}
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //          {Last body result or BREAK value}
 //      'word [word! lit-word! refinement!]
 //          "Word to set each time"
@@ -1688,7 +1688,7 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
 //
 //  {While a condition is conditionally true, evaluates the body.}
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //          "Last body result, or null if BREAK"
 //      condition [block! action!]
 //      body [block! action!]
@@ -1706,7 +1706,7 @@ DECLARE_NATIVE(WHILE)
 //
 //  {Until a condition is conditionally true, evaluates the body.}
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //          "Last body result, or null if BREAK"
 //      condition [block! action!]
 //      body [block! action!]

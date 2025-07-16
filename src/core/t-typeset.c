@@ -50,7 +50,7 @@ const struct {
     SymId sym;
     REBU64 bits;
 } Typesets[] = {
-    {SYM_ANY_ATOM_X, TS_ATOM},
+    {SYM_ANY_VALUE_X, TS_VALUE},
     {SYM_ANY_STABLE_X, TS_STABLE},
     {SYM_ANY_EQUATABLE_X, TS_STABLE},
     {SYM_ANY_ELEMENT_X, TS_ELEMENT},
@@ -246,10 +246,10 @@ bool Update_Typeset_Bits_Core(
     // variable can hold, even though you can't put it in blocks).  You have
     // to explicitly say TRASH! to get it.
     //
-    // We override this if using the TS_ATOM typeset
+    // We override this if using the TS_VALUE typeset
     //
     if (clear_trash_flag)
-        if (TS_ATOM != (Cell_Typeset_Bits(typeset) & TS_ATOM))
+        if (TS_VALUE != (Cell_Typeset_Bits(typeset) & TS_VALUE))
             Clear_Typeset_Flag(typeset, TYPE_TRASH);
 
     // If you use <opt-out> or <undo-opt> then null is not legal as an input

@@ -50,7 +50,7 @@ lib/enrescue: make tripwire! (
 ;
 do*: function [
     {SYS: Called by system for DO on datatypes that require special handling.}
-    return: [any-atom!]
+    return: [any-value!]
     source [file! url! text! binary! tag!]
         {Files, urls and modules evaluate as scripts, other strings don't.}
     arg [any-stable!]

@@ -355,7 +355,7 @@ Array* Make_Paramlist_Managed_May_Panic(
         //
         Value* typeset = Init_Typeset(
             PUSH(),  // volatile if you PUSH() again
-            TS_ATOM,  // any value (includes trash, void, null, action)
+            TS_VALUE,  // any value (includes trash, void, null, action)
             Word_Symbol(item) // don't canonize, see #2258
         );
 
@@ -460,7 +460,7 @@ Array* Make_Paramlist_Managed_May_Panic(
             // allowed anything by default.  Generally speaking, the checks
             // are on the input side, not the output.
             //
-            Init_Typeset(PUSH(), TS_ATOM, CANON(RETURN));
+            Init_Typeset(PUSH(), TS_VALUE, CANON(RETURN));
             Tweak_Parameter_Class(TOP, PARAMCLASS_RETURN);
             return_stackindex = TOP_INDEX;
 

@@ -45,7 +45,7 @@
 //
 //  {Process received value *inline* as the evaluator loop would.}
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //      value [any-element!]
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
 //      expressions [any-stable! <...>]
@@ -192,7 +192,7 @@ DECLARE_NATIVE(EVAL_INFIX)
 //
 //  {Evaluates a block of source code (directly or fetched according to type)}
 //
-//      return: [any-atom!]
+//      return: [any-value!]
 //      source [
 //          <opt-out> ;-- useful for `do maybe ...` scenarios when no match
 //          text! ;-- source code in text form
@@ -290,7 +290,7 @@ DECLARE_NATIVE(DO)
 //  "Run a list through the evaluator iteratively, or take a single step"
 //
 //      return: "Evaluation product, or ~[position product]~ pack if /STEP3"
-//          [any-atom!]  ; /STEP3 changes primary return product [1]
+//          [any-value!]  ; /STEP3 changes primary return product [1]
 //      source [
 //          <opt-out>  ; useful for `evaluate maybe ...` scenarios
 //          any-list!  ; code
