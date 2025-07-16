@@ -2116,6 +2116,8 @@ DECLARE_NATIVE(SUBPARSE)
                                     set_or_copy_word, P_RULE_SPECIFIER
                                 )
                             );
+                        else
+                            panic ("Can't SET a variable to OPT in bootstrap");
                     }
                     else if (Is_Flex_Array(P_INPUT)) {
                         Derelativize(
