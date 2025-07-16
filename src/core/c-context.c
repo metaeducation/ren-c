@@ -231,7 +231,7 @@ Value* Append_Context(
     Expand_Flex_Tail(keylist, 1);
     Value* key = Init_Typeset(
         Array_Last(keylist), // !!! non-dynamic, could optimize
-        TS_VALUE, // !!! Currently not paid attention to
+        TS_STABLE, // !!! Currently not paid attention to
         unwrap symbol
     );
     UNUSED(key);
@@ -516,7 +516,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
             if (cl->flags & COLLECT_AS_TYPESET)
                 Init_Typeset(
                     Array_Last(BUF_COLLECT),
-                    TS_VALUE, // !!! Not used at the moment
+                    TS_STABLE, // !!! Not used at the moment
                     Word_Symbol(v)
                 );
             else
@@ -593,7 +593,7 @@ Array* Collect_Keylist_Managed(
             //
             Cell* self_key = Init_Typeset(
                 Array_At(BUF_COLLECT, 1),
-                TS_VALUE, // !!! Currently not paid attention to
+                TS_STABLE, // !!! Currently not paid attention to
                 CANON(SELF)
             );
 

@@ -19,7 +19,7 @@
 )
 
 (
-    f: lambda [args [any-value! ~null~ <...>]] [
+    f: lambda [args [any-stable! ~null~ <...>]] [
        b: take args
        either tail? args [b] ["not at end"]
     ]
@@ -72,7 +72,7 @@
     (27 = eval [multiply 3 9 normal]) ;-- seen as (multiply 3 (9 tight))
 ][
     (
-        soft: infix function ['v [any-value! <...>]] [
+        soft: infix function ['v [any-stable! <...>]] [
             stuff: copy []
             while [not tail? v] [
                 append/only stuff take v

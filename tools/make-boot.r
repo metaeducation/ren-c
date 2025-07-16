@@ -462,7 +462,7 @@ e-types/emit {
     /*
      * TS_ATOM minus VOID
      */
-    #define TS_VALUE \
+    #define TS_STABLE \
         (TS_ATOM - FLAGIT_KIND(TYPE_VOID))
 
     /*
@@ -479,10 +479,10 @@ e-types/emit {
         (TS_ATOM - FLAGIT_KIND(TYPE_TRASH))
 
     /*
-     * TS_VALUE minus NULL, VOID, and TRASH
+     * TS_STABLE minus NULL, VOID, and TRASH
      */
     #define TS_ELEMENT \
-        (TS_VALUE - FLAGIT_KIND(TYPE_TRASH) - FLAGIT_KIND(TYPE_NULLED) \
+        (TS_STABLE - FLAGIT_KIND(TYPE_TRASH) - FLAGIT_KIND(TYPE_NULLED) \
             - FLAGIT_KIND(TYPE_OKAY))
 
     #define TS_LOGIC \

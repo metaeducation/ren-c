@@ -364,7 +364,7 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
 //
 //  "Test if value can be put in a block (e.g. `element? null` is FALSE)"
 //
-//      value [any-value!]
+//      value [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(ELEMENT_Q)
@@ -472,7 +472,7 @@ INLINE void Get_Opt_Polymorphic_May_Panic(
 //
 //  {Gets the value of a word or path, or block of words/paths.}
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //      source [<opt-out> any-word! any-path! block!]
 //          {Word or path to get, or block of words or paths}
 //      /any "Retrieve ANY-VALUE! (e.g. do not error on trash)"
@@ -515,7 +515,7 @@ DECLARE_NATIVE(GET)
 //
 //  {Gets the value of a word or path, allows trash}
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //      source "Word or path to get"
 //          [<opt-out> <dequote> any-word! any-path!]
 //  ]
@@ -613,11 +613,11 @@ DECLARE_NATIVE(INFIX)
 //
 //  {Sets a word, path, or block of words and paths to specified value(s).}
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //          {Will be the values set to, or void if any set values are void}
 //      target [<opt-out> any-word! any-path! block!]
 //          {Word or path, or block of words and paths}
-//      value [any-value! trash!]
+//      value [any-stable! trash!]
 //          "Value or block of values"
 //      /single "If target and value are blocks, set each to the same value"
 //      /some "blank values (or values past end of block) are not set."
@@ -875,8 +875,8 @@ DECLARE_NATIVE(INFIX_Q)
 //
 //  {Function for returning the same value that it got in (identity function)}
 //
-//      return: [any-value!]
-//      value [<end> any-value!]
+//      return: [any-stable!]
+//      value [<end> any-stable!]
 //          {!!! <end> flag is hack to limit infix reach to the left}
 //  ]
 //
@@ -932,7 +932,7 @@ DECLARE_NATIVE(FREE)
 //
 //      return: "Returns false if value wouldn't be FREEable (e.g. LOGIC!)"
 //          [logic!]
-//      value [any-value!]
+//      value [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(FREE_Q)
@@ -1202,7 +1202,7 @@ DECLARE_NATIVE(UNSET_Q)
 //  "Returns value passed in without evaluation."
 //
 //      return: {The input value, verbatim--unless /SOFT and soft quoted type}
-//          [any-value!]
+//          [any-stable!]
 //      :value {Value to literalize, ~null~ is impossible (see UNEVAL)}
 //          [any-element!]
 //      /soft {Evaluate if a GROUP!, GET-WORD!, or GET-PATH!}

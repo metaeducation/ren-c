@@ -15,7 +15,7 @@ Rebol [
 
 do %line-numberq.r
 
-null-to-blank: func [x [any-value!]] [return either null? x [_] [:x]]
+null-to-blank: func [x [any-stable!]] [return either null? x [_] [:x]]
 
 parse2: :parse/redbol
 

@@ -48,7 +48,7 @@
 //      return: [any-atom!]
 //      value [any-element!]
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
-//      expressions [any-value! <...>]
+//      expressions [any-stable! <...>]
 //          {Depending on VALUE, more expressions may be consumed}
 //  ]
 //
@@ -84,8 +84,8 @@ DECLARE_NATIVE(REEVAL)
 //
 //  {Service routine for implementing ME (needs review/generalization)}
 //
-//      return: [any-value!]
-//      left [any-value!]
+//      return: [any-stable!]
+//      left [any-stable!]
 //          {Value to preload as the left hand-argument (won't reevaluate)}
 //      rest [varargs!]
 //          {The code stream to execute (head element must be infixed)}
@@ -535,7 +535,7 @@ DECLARE_NATIVE(EVALUATE)
 //
 //  {Invoke an ACTION! with all required arguments specified}
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //      applicand "Literal action, or location to find one (preserves name)"
 //          [action! word! path!]
 //      def "Frame definition block (will be bound and evaluated)"

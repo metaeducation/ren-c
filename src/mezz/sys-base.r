@@ -53,7 +53,7 @@ do*: function [
     return: [any-atom!]
     source [file! url! text! binary! tag!]
         {Files, urls and modules evaluate as scripts, other strings don't.}
-    arg [any-value!]
+    arg [any-stable!]
         "Args passed as system/script/args to a script (normally a string)"
     only [logic!]
         "Do not catch quits...propagate them."

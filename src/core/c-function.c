@@ -1084,7 +1084,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 // acting more like:
 //
 //     return: lambda [
-//         {Returns a value from a function.} value [any-value!]
+//         {Returns a value from a function.} value [any-stable!]
 //     ][
 //         unwind/with (binding of 'return) :value
 //     ]

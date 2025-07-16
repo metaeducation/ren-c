@@ -381,7 +381,7 @@ bool Is_Value_Immutable(const Cell* v) {
 //  {Determine if the value is locked (deeply and permanently immutable)}
 //
 //      return: [logic!]
-//      value [any-value!]
+//      value [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(LOCKED_Q)
@@ -430,7 +430,7 @@ void Force_Value_Frozen_Deep(const Cell* v, Flex* opt_locker) {
 //
 //  {Permanently lock values (if applicable) so they can be immutably shared.}
 //
-//      value [any-value!]
+//      value [any-stable!]
 //          {Value to lock (will be locked deeply if an ANY-ARRAY!)}
 //      /clone
 //          {Will lock a clone of the original (if not already immutable)}

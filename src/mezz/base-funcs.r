@@ -48,7 +48,7 @@ so: infix func [
 
     return: [~]
     condition "Condition to test (voids are treated as false)"
-        [any-value!]
+        [any-stable!]
 ][
     any [condition null] else [
         panic/blame ["Postfix 'SO assertion' failed"] 'condition
@@ -473,7 +473,7 @@ ensure: redescribe [
     {Pass through value if it matches test, otherwise trigger a PANIC}
 ](
     specialize 'either-test [
-        branch: func [arg [any-value!]] [
+        branch: func [arg [any-stable!]] [
             ;
             ; !!! Can't use PANIC/BLAME until there is a good way to SPECIALIZE
             ; a conditional with a branch referring to invocation parameters:
@@ -493,8 +493,8 @@ ensure: redescribe [
 really: func [
     {PANIC if value is null, otherwise pass it through}
 
-    return: [any-value!]
-    value [any-value!]
+    return: [any-stable!]
+    value [any-stable!]
 ][
     if null? :value [panic "REALLY requires non-NULL"]
     return :value
@@ -656,7 +656,7 @@ find-last: specialize :find [
 
 reify: func [
     return: [any-element!]
-    value [~null~ ~void~ trash! any-value!]
+    value [~null~ ~void~ trash! any-stable!]
 ][
     case [
         void? :value [return '~void~]
@@ -668,8 +668,8 @@ reify: func [
 ]
 
 degrade: func [
-    return: [~void~ any-value!]
-    value [any-value!]
+    return: [~void~ any-stable!]
+    value [any-stable!]
 ][
     case [
         '~void~ = :value [return void]

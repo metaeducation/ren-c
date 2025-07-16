@@ -69,7 +69,7 @@ spec-of: function [
 title-of: function [
     {Extracts a summary of a value's purpose from its "meta" information.}
 
-    value [any-value!]
+    value [any-stable!]
 ][
     return degrade switch type of :value [
         action! [

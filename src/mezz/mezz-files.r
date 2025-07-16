@@ -242,7 +242,7 @@ undirize: function [
 
 in-dir: function [
     "Evaluate a block while in a directory."
-    return: [any-value!]
+    return: [any-stable!]
     dir [file!]
         "Directory to change to (changed back after)"
     block [block!]

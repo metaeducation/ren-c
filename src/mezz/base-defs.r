@@ -74,7 +74,7 @@ elide: func [
 
     return: [~void~]
         {The evaluator will skip over the result (not seen, not even void)}
-    discarded [any-value! trash!]
+    discarded [any-stable! trash!]
         {Evaluated value to be ignored.}
 ][
     return void

@@ -618,7 +618,7 @@ VarList* Alloc_Context_From_Map(REBMAP *map)
             // that function specs did.)
             Init_Typeset(
                 key,
-                TS_VALUE, // !!! Not used at the moment
+                TS_STABLE, // !!! Not used at the moment
                 Word_Symbol(mval)
             );
             ++key;

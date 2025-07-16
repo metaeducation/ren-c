@@ -83,7 +83,7 @@ DECLARE_NATIVE(FALSE_Q)
 //  "The word TRUE if the supplied value is a branch trigger, otherwise FALSE"
 //
 //      return: [word!]
-//      value [any-value!]
+//      value [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(BOOLEAN)
@@ -191,8 +191,8 @@ DECLARE_NATIVE(OFF_Q)
 //
 //  {Returns true if both values are conditionally true (no "short-circuit")}
 //
-//      value1 [any-value!]
-//      value2 [any-value!]
+//      value1 [any-stable!]
+//      value2 [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(AND_Q)
@@ -211,8 +211,8 @@ DECLARE_NATIVE(AND_Q)
 //
 //  {Returns true if both values are conditionally false (no "short-circuit")}
 //
-//      value1 [any-value!]
-//      value2 [any-value!]
+//      value1 [any-stable!]
+//      value2 [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(NOR_Q)
@@ -231,8 +231,8 @@ DECLARE_NATIVE(NOR_Q)
 //
 //  {Returns false if both values are conditionally true (no "short-circuit")}
 //
-//      value1 [any-value!]
-//      value2 [any-value!]
+//      value1 [any-stable!]
+//      value2 [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(NAND_Q)
@@ -253,7 +253,7 @@ DECLARE_NATIVE(NAND_Q)
 //
 //      return: [logic!]
 //          "Only LOGIC!'s FALSE and BLANK! for value return FALSE"
-//      value [any-value!]
+//      value [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(DID_Q)
@@ -271,7 +271,7 @@ DECLARE_NATIVE(DID_Q)
 //
 //      return: [logic!]
 //          {true if value is NOT a LOGIC! false, BLANK!, or null}
-//      optional [any-value!]
+//      optional [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(DID)
@@ -289,7 +289,7 @@ DECLARE_NATIVE(DID)
 //
 //      return: [logic!]
 //          "Only LOGIC!'s FALSE and BLANK! for value return TRUE"
-//      value [any-value!]
+//      value [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(NOT_Q)
@@ -307,7 +307,7 @@ DECLARE_NATIVE(NOT_Q)
 //
 //      return: [logic!]
 //          "Only LOGIC!'s FALSE, BLANK!, and void for cell return TRUE"
-//      optional [any-value!]
+//      optional [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(NOT)
@@ -323,8 +323,8 @@ DECLARE_NATIVE(NOT)
 //
 //  {Returns true if either value is conditionally true (no "short-circuit")}
 //
-//      value1 [any-value!]
-//      value2 [any-value!]
+//      value1 [any-stable!]
+//      value2 [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(OR_Q)
@@ -343,8 +343,8 @@ DECLARE_NATIVE(OR_Q)
 //
 //  {Returns true if only one of the two values is conditionally true.}
 //
-//      value1 [any-value!]
-//      value2 [any-value!]
+//      value1 [any-stable!]
+//      value2 [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(XOR_Q)
@@ -367,7 +367,7 @@ DECLARE_NATIVE(XOR_Q)
 //
 //      return: [logic!]
 //      left "Result of evaluation of left hand item"
-//          [any-value!]
+//          [any-stable!]
 //      :right "Evaluated only if left is not null"
 //          [group! word! path!]
 //  ]
@@ -406,7 +406,7 @@ DECLARE_NATIVE(AND)
 //
 //      return: [logic!]
 //      left "Result of evaluation of left hand item"
-//          [any-value!]
+//          [any-stable!]
 //      :right "Evaluated only if left is null"
 //          [group! word! path!]
 //  ]
@@ -445,7 +445,7 @@ DECLARE_NATIVE(OR)
 //
 //      return: [logic!]
 //      left "Result of evaluation of left hand item"
-//          [any-value!]
+//          [any-stable!]
 //      :right "Will always be evaluated"
 //          [group! word! path!]
 //  ]
@@ -484,11 +484,11 @@ DECLARE_NATIVE(XOR)
 //  {Variant of non-short-circuit OR which favors the right-hand side result}
 //
 //      return: "Conditionally true or false value (not coerced to LOGIC!)"
-//          [any-value!]
+//          [any-stable!]
 //      left "Expression which will always be evaluated"
-//          [any-value!]
+//          [any-stable!]
 //      right "Expression that's also always evaluated (can't short circuit)"
-//          [any-value!] ;-- not a literal GROUP! as with XOR
+//          [any-stable!] ;-- not a literal GROUP! as with XOR
 //  ]
 //
 DECLARE_NATIVE(UNLESS)

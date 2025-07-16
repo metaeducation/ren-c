@@ -181,7 +181,7 @@ static void Append_To_Context(VarList* context, Value* arg)
             Expand_Flex_Tail(BUF_COLLECT, 1);
             Init_Typeset(
                 Array_Last(BUF_COLLECT),
-                TS_VALUE, // !!! Currently ignored
+                TS_STABLE, // !!! Currently ignored
                 Word_Symbol(word)
             );
         }

@@ -248,7 +248,7 @@ DECLARE_NATIVE(RETURN)
     // !!! In the userspace formulation of this abstraction, it indicates
     // it's not RETURN's type signature that is constrained, as if it were
     // then RETURN would be implicated in the error.  Instead, RETURN must
-    // take [any-value!] as its argument, and then report the error
+    // take [any-stable!] as its argument, and then report the error
     // itself...implicating the frame (in a way parallel to this native).
     //
     if (not Typeset_Check(typeset, Type_Of(v)))

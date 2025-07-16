@@ -32,7 +32,7 @@ dump: function [
         ]
     ]
 
-    val-to-text: function [return: [text!] val [any-value!]] [
+    val-to-text: function [return: [text!] val [any-stable!]] [
         return case [
             null? val ["// null"]
             object? :val [unspaced ["make object! [" (dump-obj val) "]"]]
@@ -133,7 +133,7 @@ dumps: infix function [
     :value "If issue, create non-specialized dumper...#on or #off by default"
         [issue! text! integer! word! set-word! set-path! group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
-        [any-value! <...>]
+        [any-stable! <...>]
 ][
     if issue? value [
         d: specialize 'dump-to-newline [sigil: as text! name]
@@ -197,7 +197,7 @@ dump-obj: function [
         return str
     ]
 
-    form-val: func [val [any-value!]] [
+    form-val: func [val [any-stable!]] [
         ; Form a limited string from the value provided.
         if any-list? :val [return spaced ["length:" length of val]]
         if datatype? :val [return form val]

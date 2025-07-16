@@ -1,6 +1,6 @@
 //
 //  file: %sys-rebval.h
-//  summary:{any-value! defs BEFORE %tmp-internals.h (see: %sys-value.h)}
+//  summary:{any-stable! defs BEFORE %tmp-internals.h (see: %sys-value.h)}
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //

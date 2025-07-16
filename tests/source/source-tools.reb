@@ -46,7 +46,7 @@ do join tools-dir %common-parsers.r
 do join tools-dir %text-lines.reb
 do join tools-dir %read-deep.reb
 
-null-to-blank: lambda [x [any-value!]] [either null? x [_] [:x]]
+null-to-blank: lambda [x [any-stable!]] [either null? x [_] [:x]]
 
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;

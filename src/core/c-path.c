@@ -550,10 +550,10 @@ VarList* Resolve_Path(const Value* path, REBLEN *index_out)
 //
 //  {Perform a path picking operation, same as `:(:location)/(:picker)`}
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //          {Picked value, or null if picker can't fulfill the request}
-//      location [any-value!]
-//      picker [any-value!]
+//      location [any-stable!]
+//      picker [any-stable!]
 //          {Index offset, symbol, or other value to use as index}
 //  ]
 //
@@ -633,13 +633,13 @@ DECLARE_NATIVE(PICK)
 //
 //  {Perform a path poking operation, same as `(:location)/(:picker): :value`}
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //          {Same as value}
-//      location [any-value!]
+//      location [any-stable!]
 //          {(modified)}
 //      picker
 //          {Index offset, symbol, or other value to use as index}
-//      value [any-value! trash!]
+//      value [any-stable! trash!]
 //          {The new value}
 //  ]
 //
@@ -707,8 +707,8 @@ DECLARE_NATIVE(POKE)
 //
 //  {Temporary native in lieu of PD_Xxx() dispatch so `/` performs division}
 //
-//      left [any-value!]
-//      right [any-value!]
+//      left [any-stable!]
+//      right [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(PATH_0)

@@ -978,7 +978,7 @@ DECLARE_NATIVE(FOR_SKIP)
 //
 //      return: []
 //      value "If no argument is provided, assume trash"
-//          [~null~ <end> any-value!]
+//          [~null~ <end> any-stable!]
 //  ]
 //
 DECLARE_NATIVE(STOP)
@@ -1616,7 +1616,7 @@ DECLARE_NATIVE(FOR_NEXT)
 //
 //  "Evaluates the body until it evaluates to a conditionally true value"
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //          {Last body result or BREAK value.}
 //      body [block! action!]
 //  ]

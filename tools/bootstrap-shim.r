@@ -92,6 +92,8 @@ trap [  ; in even older bootstrap executable, this means SYS.UTIL/RESCUE
 
 print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="
 
+any-stable!: any-value!  ; no such thing as antiforms, much less unstable ones
+
 ; Use FUNC3 to mean old func conventions
 
 func3: :lib/func
@@ -226,7 +228,7 @@ noop: :lib/null
 junk: :lib/void  ; function that returns a very ornery value
 junk?: :lib/void?
 
-junkify: func3 [x [<opt> any-value!]] [
+junkify: func3 [x [<opt> any-stable!]] [
     if3 lib/blank? :x [return junk]
     ; if3 lib/null? :x [return junk]  ; assume null is pure null
     :x
@@ -271,17 +273,17 @@ blank: blank?: func3 [] [panic/blame "No BLANK in bootstrap-shim" 'return]
 null: ~null~: _
 null?: :blank3?
 
-null3-to-blank3: func3 [x [<opt> any-value!]] [  ; bootstrap TRY no "voids"
+null3-to-blank3: func3 [x [<opt> any-stable!]] [  ; bootstrap TRY no "voids"
     if3 null3? :x [return _]
     :x
 ]
-blank3-to-null3: func3 [x [<opt> any-value!]] [  ; bootstrap OPT makes "voids"
+blank3-to-null3: func3 [x [<opt> any-stable!]] [  ; bootstrap OPT makes "voids"
     if3 blank3? :x [return null3]
     :x
 ]
 
 opt: :blank3-to-null3
-opt+: func3 [x [<opt> any-value!]] [  ; see [A]
+opt+: func3 [x [<opt> any-stable!]] [  ; see [A]
     if3 null3? :x [panic "MAYBE+: X is BOOTSTRAP VOID (// NULL)"]
     return :x
 ]
@@ -316,12 +318,12 @@ else: enfix enclose :lib/else func3 [f] [
     junkify lib/do f
 ]
 
-empty?: func3 [x [<opt> any-value!]] [  ; need to expand typespec for null3
+empty?: func3 [x [<opt> any-stable!]] [  ; need to expand typespec for null3
     if3 blank3? :x [panic "EMPTY?: series is bootstrap NULL (BLANK!)"]
     if3 null3? :x [return okay]
     return lib/empty? :x
 ]
-for-each: func ['var data [<opt> any-value!] body] [  ; need to take NULL3
+for-each: func ['var data [<opt> any-stable!] body] [  ; need to take NULL3
     if3 blank3? :data [panic "FOR-EACH: data is bootstrap NULL (BLANK!)"]
     data: null3-to-blank3 :data
     lib/for-each (var) data body
@@ -416,7 +418,7 @@ and: or: func [] [
 
 ; === MAKE TRY A POOR-MAN'S DEFINITIONAL ERROR HANDLER ===
 
-try: func3 [value [<opt> any-value!]] [  ; poor man's definitional error handler
+try: func3 [value [<opt> any-stable!]] [  ; poor man's definitional error handler
     if error? :value [return null]
     return :value
 ]
@@ -430,7 +432,7 @@ try: func3 [value [<opt> any-value!]] [  ; poor man's definitional error handler
 ; likely one that you're trying to preserve (usually it's null that the
 ; bootstrap reifies)
 
-reify: func3 [value [<opt> any-value!]] [
+reify: func3 [value [<opt> any-stable!]] [
     case [
         lib/null? :value [return '~void~]  ; bootstrap-EXE's //NULL
         okay? :value [return '~okay~]
@@ -439,7 +441,7 @@ reify: func3 [value [<opt> any-value!]] [
     return :value
 ]
 
-degrade: func3 [value [any-value!]] [
+degrade: func3 [value [any-stable!]] [
     case [
         '~void~ = :value [return lib/null]  ; append [a b c] null is no-op
         '~okay~ = :value [return okay]

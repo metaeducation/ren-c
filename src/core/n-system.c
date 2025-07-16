@@ -55,7 +55,7 @@ DECLARE_NATIVE(HALT)
 //  {Stop evaluating and return control to command shell or calling script.}
 //
 //      atom "See: http://en.wikipedia.org/wiki/Exit_status"
-//          [<end> any-value!]
+//          [<end> any-stable!]
 //      /value "Allow non-integers for yielding values to calling scripts"
 //  ]
 //
@@ -209,7 +209,7 @@ DECLARE_NATIVE(RECYCLE)
 //
 //  "Run an integrity check on a value in debug builds of the interpreter"
 //
-//      value [any-value!]
+//      value [any-stable!]
 //          {System will terminate abnormally if this value is corrupt.}
 //  ]
 //
@@ -388,7 +388,7 @@ DECLARE_NATIVE(C_DEBUG_BREAK)
 //
 //  "This is a place to put test code in debug builds."
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //          {For maximum freedom, can be anything}
 //      :value [<end> any-element!]
 //          {An argument (which test code may or may not use)}

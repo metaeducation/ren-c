@@ -795,7 +795,7 @@ Error* Make_Error_Managed_Vaptr(
 
                 Init_Typeset(
                     key,
-                    TS_VALUE, // !!! Currently not in use
+                    TS_STABLE, // !!! Currently not in use
                     Word_Symbol(temp)
                 );
                 key++;
@@ -1469,7 +1469,7 @@ void MF_Error(Molder* mo, const Cell* v, bool form)
 //
 //  "Approximation of modern Ren-C definitional error try (nullify ERROR!)"
 //
-//      value [any-value!]
+//      value [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(TRY)
@@ -1490,7 +1490,7 @@ DECLARE_NATIVE(TRY)
 //
 //  "Approximation of modern Ren-C definitional error trap (ERROR! => ERROR!)"
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //      code [block!]
 //  ]
 //
@@ -1533,9 +1533,9 @@ DECLARE_NATIVE(TRAP)
 //  "If left hand side is an ERROR!, run the branch"
 //
 //      return: "Input value if not error, or branch result"
-//          [any-value!]
+//          [any-stable!]
 //      left "Run branch if this is an error"
-//          [any-value!]
+//          [any-stable!]
 //      branch [block! action!]
 //  ]
 //

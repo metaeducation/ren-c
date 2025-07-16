@@ -217,7 +217,7 @@ binary-to-c: function [
 for-each-record: function [
     {Iterate a table with a header by creating an object for each row}
 
-    return: [any-value!]
+    return: [any-stable!]
     'var "Word to set each time to the row made into an object record"
         [word!]
     table "Table of values with header block as first element"

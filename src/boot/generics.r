@@ -176,7 +176,7 @@ round: generic [
 
 random: generic [
     {Returns a random value of the same datatype; or shuffles series.}
-    return: [any-value!]
+    return: [any-stable!]
     value   {Maximum value of result (modified when series)}
     /seed   {Restart or randomize}
     /secure {Returns a cryptographically secure random number}
@@ -223,7 +223,7 @@ find: generic [
     return: {position found, else null (NOTHING if non-positional)}
         [~null~ any-series! logic!]
     series [<opt-out> blank! any-series! any-context! map! bitset! typeset!]
-    value [<opt-out> any-value!]
+    value [<opt-out> any-stable!]
     /part {Limits the search to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Treats a series value as only a single value}
@@ -238,9 +238,9 @@ find: generic [
 
 select: generic [
     {Searches for a value; returns the value that follows, else null.}
-    return: [any-value!]
+    return: [any-stable!]
     series [<opt-out> blank! any-series! any-context! map!]
-    value [<opt-out> any-value!]
+    value [<opt-out> any-stable!]
     /part {Limits the search to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Treats a series value as only a single value}
@@ -261,10 +261,10 @@ select: generic [
 ;
 put: generic [
     {Replaces the value following a key, and returns the new value.}
-    return: [any-value!]
+    return: [any-stable!]
     series [map!]
-    key [any-value!]
-    value [any-value!]
+    key [any-stable!]
+    value [any-stable!]
     /case {Perform a case-sensitive search}
 ]
 
@@ -274,7 +274,7 @@ copy: generic [
     {Copies a series, object, or other value.}
 
     return: {Return type will match the input type, or void if blank}
-        [any-value!]
+        [any-stable!]
     value {If an ANY-SERIES!, it is only copied from its current position}
         [<opt-out> any-element!]
     /part {Limits to a given length or position}
@@ -287,7 +287,7 @@ copy: generic [
 take: generic [
     {Removes and returns one or more elements}
 
-    return: [any-value!]
+    return: [any-stable!]
     series [<opt-out> blank! any-series! port! blank! varargs!]
         {At position (modified)}
     /part {Specifies a length or end position}
@@ -302,7 +302,7 @@ take: generic [
 insert: generic [
     {Inserts element(s); for series, returns just past the insert.}
     return: {Just past the insert (~null~ needed for COLLECT/KEEP, see notes)}
-        [any-value!]
+        [any-stable!]
     series [<opt-out> any-series! port! map! object! bitset! port!] {At position (modified)}
     value [<undo-opt> any-element!] {The value to insert}
     /part {Limits to a given length or position}
@@ -410,7 +410,7 @@ open: generic [
 
 close: generic [
     {Closes a port/library.}
-    return: [any-value!]
+    return: [any-stable!]
     port [port!]
 ]
 

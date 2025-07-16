@@ -131,7 +131,7 @@ for-each [comparison-op function-name] compose [
 me: infix func [
     {Update variable using it as the left hand argument to an infix operator}
 
-    return: [any-value!]
+    return: [any-stable!]
     :var [set-word! set-path!]
         {Variable to assign (and use as the left hand infix argument)}
     :rest [any-element! <...>]
@@ -143,7 +143,7 @@ me: infix func [
 my: infix func [
     {Update variable using it as the first argument to a prefix operator}
 
-    return: [any-value!]
+    return: [any-stable!]
     :var [set-word! set-path!]
         {Variable to assign (and use as the first prefix argument)}
     :rest [any-element! <...>]

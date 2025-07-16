@@ -81,7 +81,7 @@ Bounce MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  {Constructs or allocates the specified datatype.}
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //          {Constructed value, or NULL if BLANK! input}
 //      type [<opt-out> datatype! event! any-context!]
 //          {The datatype -or- an examplar value of the type to construct}
@@ -193,7 +193,7 @@ Bounce TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //  {Converts to a specified datatype, copying any underying data}
 //
 //      return: "VALUE converted to TYPE, null if type or value are blank"
-//          [any-value!]
+//          [any-stable!]
 //      type [<opt-out> datatype!]
 //      value [<opt-out> any-element!]
 //  ]
@@ -296,9 +296,9 @@ Bounce Reflect_Core(Level* level_)
 //
 //  {Returns specific details about a datatype.}
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //      value "Accepts TRASH! so REFLECT ~ 'TYPE can be returned as TRASH!"
-//          [any-value! trash!]
+//          [any-stable! trash!]
 //      property [word!]
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
@@ -319,10 +319,10 @@ DECLARE_NATIVE(REFLECT)
 //
 //  {Infix form of REFLECT which quotes its left (X OF Y => REFLECT Y 'X)}
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //      'property [word!]
 //      value "Accepts TRASH! so TYPE OF ~ can be returned as TRASH!"
-//          [void! any-value! trash!]
+//          [void! any-stable! trash!]
 //  ]
 //
 DECLARE_NATIVE(OF)

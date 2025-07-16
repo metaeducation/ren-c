@@ -17,7 +17,7 @@ Rebol [
 ]
 
 any-atom!  ;-- signal typesets start (SYM_ANY_ATOM_X hardcoded reference)
-any-value!
+any-stable!
 any-equatable!
 any-element!
 logic!

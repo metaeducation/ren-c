@@ -12,7 +12,7 @@
 ;
 (did redbol-apply: function [
     {APPLY interface is still evolving, see https://trello.com/c/P2HCcu0V}
-    return: [any-value!]
+    return: [any-stable!]
     action [action!]
     block [block!]
     /only
@@ -110,7 +110,7 @@
 
 (
     trash? redbol-apply lambda [
-        x [any-value! trash!]
+        x [any-stable! trash!]
     ][
         get/any 'x
     ][
@@ -119,7 +119,7 @@
 )
 (
     trash? redbol-apply lambda [
-        'x [any-value! trash!]
+        'x [any-stable! trash!]
     ][
         get/any 'x
     ][
@@ -128,8 +128,8 @@
 )
 (
     trash? redbol-apply func [
-        return: [any-value!]
-        x [any-value! trash!]
+        return: [any-stable!]
+        x [any-stable! trash!]
     ][
         return get/any 'x
     ][
@@ -138,8 +138,8 @@
 )
 (
     trash? redbol-apply func [
-        return: [any-value!]
-        'x [any-value! trash!]
+        return: [any-stable!]
+        'x [any-stable! trash!]
     ][
         return get/any 'x
     ][
@@ -147,7 +147,7 @@
     ]
 )
 (
-    error? redbol-apply func ['x [any-value! trash!]] [
+    error? redbol-apply func ['x [any-stable! trash!]] [
         return get 'x
     ][
         make error! ""
@@ -164,7 +164,7 @@
 (
     use [x] [
         x: null
-        equal? first [:x] redbol-apply/only func ['x [any-value!]] [
+        equal? first [:x] redbol-apply/only func ['x [any-stable!]] [
             return get 'x
         ] [:x]
     ]
@@ -176,7 +176,7 @@
 (
     use [x] [
         x: null
-        equal? 'x redbol-apply/only func ['x [any-value!]] [
+        equal? 'x redbol-apply/only func ['x [any-stable!]] [
             return get 'x
         ] [x]
     ]

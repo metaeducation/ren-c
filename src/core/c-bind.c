@@ -500,7 +500,7 @@ void Virtual_Bind_Deep_To_New_Context(
         if (Is_Word(item) or Is_Refinement(item) or Is_Lit_Word(item)) {
             Init_Typeset(
                 key,
-                TS_VALUE, // !!! Currently not paid attention to
+                TS_STABLE, // !!! Currently not paid attention to
                 Word_Symbol(item)
             );
 
@@ -544,7 +544,7 @@ void Virtual_Bind_Deep_To_New_Context(
             //
             Init_Typeset(
                 key,
-                TS_VALUE, // !!! Currently not paid attention to
+                TS_STABLE, // !!! Currently not paid attention to
                 Word_Symbol(item)
             );
             Set_Typeset_Flag(key, TYPE_TS_UNBINDABLE);

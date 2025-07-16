@@ -58,7 +58,7 @@
 //
 //      return: "null if branch not run, otherwise branch result"
 //          [any-atom!]
-//      condition [any-value!]
+//      condition [any-stable!]
 //      branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [block! action!]
 //  ]
@@ -84,7 +84,7 @@ DECLARE_NATIVE(IF)
 //
 //      return: "null if branch not run, otherwise branch result"
 //          [any-atom!]
-//      condition [any-value!]
+//      condition [any-stable!]
 //      branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [block! action!]
 //  ]
@@ -110,7 +110,7 @@ DECLARE_NATIVE(WHEN)
 //
 //      return: "null if branch not run, otherwise branch result"
 //          [any-atom!]
-//      condition [any-value!]
+//      condition [any-stable!]
 //      branch [block! action!]
 //  ]
 //
@@ -135,7 +135,7 @@ DECLARE_NATIVE(IF_NOT)
 //
 //      return: [any-atom!]
 //          "Returns null if either branch returns null (unlike IF...ELSE)"
-//      condition [any-value!]
+//      condition [any-stable!]
 //      true-branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [block! action!]
 //      false-branch [block! action!]
@@ -319,7 +319,7 @@ bool Either_Test_Core_Throws(
 //              datatype! typeset! block! ;-- typeset specification forms
 //              logic! ;-- tests TO-LOGIC compatibility
 //          ]
-//      arg [any-value!]
+//      arg [any-stable!]
 //      branch "If arity-1 ACTION!, receives the non-matching argument"
 //          [block! action!]
 //  ]
@@ -430,12 +430,12 @@ DECLARE_NATIVE(ALSO)
 //  {Check value using tests (match types, TRUE or FALSE, or filter action)}
 //
 //      return: "Input if it matched, otherwise null (void if falsey match)"
-//          [any-value!]
+//          [any-stable!]
 //      test "Typeset membership, LOGIC! to test for truth, filter function"
 //          [
 //              datatype! typeset! block! logic! action! ;-- like EITHER-TEST
 //          ]
-//      value [any-value!]
+//      value [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(MATCH)
@@ -466,11 +466,11 @@ DECLARE_NATIVE(MATCH)
 //  {Make sure a value does NOT match a type constraint (see also: ENSURE)}
 //
 //      return: "Input value if it passes the type test"
-//          [any-value!]
+//          [any-stable!]
 //      test "The test to apply (limited to DATATYPE! and NULL at this time)"
 //          [~null~ datatype!]
 //      value "Value to test (will either be returned as result or error)"
-//          [any-value!]
+//          [any-stable!]
 // ]
 //
 DECLARE_NATIVE(NON)
@@ -757,7 +757,7 @@ static Bounce Case_Choose_Core_May_Throw(
 //
 //  {Evaluates each condition, and when true, evaluates what follows it}
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //          "Last matched case evaluation, or null if no cases matched"
 //      cases [block!]
 //          "Block of cases (conditions followed by branches)"
@@ -777,7 +777,7 @@ DECLARE_NATIVE(CASE)
 //
 //  {Evaluates each condition, and gives back the value that follows it}
 //
-//      return: [any-value!]
+//      return: [any-stable!]
 //          "Last matched choice value, or void if no choices matched"
 //      choices [block!]
 //          "Evaluate all choices (do not stop at first TRUTHY? choice)"
@@ -803,7 +803,7 @@ DECLARE_NATIVE(CHOOSE)
 //  {Selects a choice and evaluates the block that follows it.}
 //
 //      return: "Last case evaluation, or null if no cases matched"
-//          [any-value!]
+//          [any-stable!]
 //      value "Target value"
 //          [any-equatable!]
 //      cases "Block of cases (comparison lists followed by block branches)"
@@ -947,7 +947,7 @@ DECLARE_NATIVE(SWITCH)
 //  {Set word or path to a default value if it is not set yet or blank.}
 //
 //      return: "Former value or branch result, can only be null if no target"
-//          [any-value!]
+//          [any-stable!]
 //     :target "Word or path which might be set--no target always branches"
 //          [<skip> set-word! set-path!]
 //      branch "If target not set already, this is evaluated and stored there"
