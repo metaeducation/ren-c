@@ -71,7 +71,7 @@ REBREQ *Ensure_Port_State(Value* port, REBLEN device)
         assert(VAL_LEN_HEAD(state) == req_size); // should be right size
     }
 
-    return cast(REBREQ*, Cell_Blob_Head(state));
+    return cast(REBREQ*, Blob_Head(state));
 }
 
 
@@ -89,7 +89,7 @@ bool Pending_Port(Value* port)
     if (Is_Port(port)) {
         state = Varlist_Slot(Cell_Varlist(port), STD_PORT_STATE);
         if (Is_Binary(state)) {
-            req = cast(REBREQ*, Cell_Blob_Head(state));
+            req = cast(REBREQ*, Blob_Head(state));
             if (not (req->flags & RRF_PENDING))
                 return false;
         }
@@ -476,7 +476,7 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
                 panic ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
             Flex* decoded = Make_Sized_String_UTF8(
-                cs_cast(Cell_Blob_At(OUT)),
+                cs_cast(Blob_At(OUT)),
                 Series_Len_At(OUT)
             );
             Init_Text(OUT, decoded);

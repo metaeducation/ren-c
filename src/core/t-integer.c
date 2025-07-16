@@ -155,7 +155,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // attempts to "future-proof" for other integer sizes and as an
         // interface could support BigNums in the future.
 
-        Byte *bp = Cell_Blob_At(value);
+        Byte *bp = Blob_At(value);
         REBLEN n = Series_Len_At(value);
         bool negative;
         REBINT fill;
@@ -744,7 +744,7 @@ DECLARE_NATIVE(DEBIN)
     // to be correct for starters...
 
     REBINT delta = little ? -1 : 1;
-    Byte* bp = Cell_Blob_At(ARG(BINARY));
+    Byte* bp = Blob_At(ARG(BINARY));
     if (little)
         bp += num_bytes - 1;  // go backwards
 

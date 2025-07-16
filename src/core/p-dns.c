@@ -109,7 +109,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
                 memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(tmp), 4);
             }
             else // lookup string's IP address
-                sock->common.data = Cell_Blob_Head(arg);
+                sock->common.data = Blob_Head(arg);
         }
         else
             panic (Error_On_Port(SYM_INVALID_SPEC, port, -10));

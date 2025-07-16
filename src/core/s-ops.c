@@ -185,10 +185,10 @@ Binary* Temp_UTF8_At_Managed(
 Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
 {
     Byte *p0 = Is_Binary(value)
-        ? Cell_Blob_At(value)
+        ? Blob_At(value)
         : Binary_Head(Cell_Bitset(value));
     Byte *p1 = Is_Binary(arg)
-        ? Cell_Blob_At(arg)
+        ? Blob_At(arg)
         : Binary_Head(Cell_Bitset(arg));
 
     REBLEN t0 = Is_Binary(value)
@@ -278,7 +278,7 @@ Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
 //
 Flex* Complement_Binary(Value* value)
 {
-    const Byte *bp = Cell_Blob_At(value);
+    const Byte *bp = Blob_At(value);
     REBLEN len = Series_Len_At(value);
 
     Binary* bin = Make_Binary(len);
@@ -359,7 +359,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
     REBLEN n = 0;
 
     if (VAL_BYTE_SIZE(val)) {
-        Byte *bp = Cell_Blob_At(val);
+        Byte *bp = Blob_At(val);
         if (upper)
             for (; n != len; n++)
                 bp[n] = cast(Byte, UP_CASE(bp[n]));

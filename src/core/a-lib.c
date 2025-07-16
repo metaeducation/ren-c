@@ -1180,7 +1180,7 @@ size_t API_rebBytesInto(
     }
 
     REBLEN limit = MIN(buf_size, size);
-    memcpy(s_cast(buf), cs_cast(Cell_Blob_At(blob)), limit);
+    memcpy(s_cast(buf), cs_cast(Blob_At(blob)), limit);
     buf[limit] = '\0';
     return size;
 }

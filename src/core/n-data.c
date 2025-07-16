@@ -1014,7 +1014,7 @@ DECLARE_NATIVE(AS)
         //
         if (Is_Binary(v)) {
             Flex* string = Make_Sized_String_UTF8(
-                cs_cast(Cell_Blob_At(v)),
+                cs_cast(Blob_At(v)),
                 Series_Len_At(v)
             );
             if (Is_Value_Immutable(v))
@@ -1080,7 +1080,7 @@ DECLARE_NATIVE(AS)
             return Init_Any_Word(
                 OUT,
                 new_kind,
-                Intern_UTF8_Managed(Cell_Blob_At(v), Series_Len_At(v))
+                Intern_UTF8_Managed(Blob_At(v), Series_Len_At(v))
             );
         }
 

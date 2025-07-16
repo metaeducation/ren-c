@@ -31,7 +31,7 @@
 #include "sys-core.h"
 
 // For reference to port/state series that holds the file structure:
-#define AS_FILE(s) cast(REBREQ*, Cell_Blob_Head(s))
+#define AS_FILE(s) cast(REBREQ*, Blob_Head(s))
 #define READ_MAX ((REBLEN)(-1))
 #define HL64(v) (v##l + (v##h << 32))
 #define MAX_READ_MASK 0x7FFFFFFF // max size per chunk
@@ -196,7 +196,7 @@ static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, b
         req->modes &= ~RFM_TEXT; // DO NOT do LF => CR LF, e.g. on Windows
     }
     else {
-        req->common.data = Cell_Blob_At(data);
+        req->common.data = Blob_At(data);
         req->modes &= ~RFM_TEXT; // don't do LF => CR LF, e.g. on Windows
     }
     req->length = len;

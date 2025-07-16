@@ -103,7 +103,7 @@ static void swap_chars(Value* val1, Value* val2)
 
 static void reverse_binary(Value* v, REBLEN len)
 {
-    Byte *bp = Cell_Blob_At(v);
+    Byte *bp = Blob_At(v);
 
     REBLEN n = 0;
     REBLEN m = len - 1;
@@ -197,7 +197,7 @@ static REBLEN find_string(
             return Find_Byte_Str(
                 cast(Binary*, series),
                 start,
-                Cell_Blob_At(target),
+                Blob_At(target),
                 target_len,
                 not (flags & AM_FIND_CASE),
                 did (flags & AM_FIND_MATCH)
@@ -222,7 +222,7 @@ static REBLEN find_string(
         return Find_Byte_Str(
             cast(Binary*, series),
             start,
-            Cell_Blob_At(target),
+            Blob_At(target),
             target_len,
             uncase, // "don't treat case insensitively"
             did (flags & AM_FIND_MATCH)
@@ -273,7 +273,7 @@ static Flex* MAKE_TO_String_Common(const Value* arg)
     // MAKE/TO <type> <binary!>
     if (Is_Binary(arg)) {
         flex = Make_Sized_String_UTF8(
-            cs_cast(Cell_Blob_At(arg)), Series_Len_At(arg)
+            cs_cast(Blob_At(arg)), Series_Len_At(arg)
         );
     }
     // MAKE/TO <type> <any-string>
@@ -346,7 +346,7 @@ static Binary* make_binary(const Value* arg, bool make)
 
     // MAKE/TO BINARY! BINARY!
     case TYPE_BINARY:
-        flex = Copy_Bytes(Cell_Blob_At(arg), Series_Len_At(arg));
+        flex = Copy_Bytes(Blob_At(arg), Series_Len_At(arg));
         break;
 
     // MAKE/TO BINARY! <any-string>
@@ -381,7 +381,7 @@ static Binary* make_binary(const Value* arg, bool make)
 
     // MAKE/TO BINARY! <bitset!>
     case TYPE_BITSET:
-        flex = Copy_Bytes(Cell_Blob_Head(arg), VAL_LEN_HEAD(arg));
+        flex = Copy_Bytes(Blob_Head(arg), VAL_LEN_HEAD(arg));
         break;
 
     default:
@@ -1029,19 +1029,19 @@ void MF_Binary(Molder* mo, const Cell* v, bool form)
     switch (binary_base) {
       case 16: {
         const bool brk = (len > 32);
-        enbased = Encode_Base16(Cell_Blob_At(v), len, brk);
+        enbased = Encode_Base16(Blob_At(v), len, brk);
         break; }
 
       case 64: {
         const bool brk = (len > 64);
         Append_Unencoded(mo->utf8flex, "64");
-        enbased = Encode_Base64(Cell_Blob_At(v), len, brk);
+        enbased = Encode_Base64(Blob_At(v), len, brk);
         break; }
 
       case 2: {
         const bool brk = (len > 8);
         Append_Codepoint(mo->utf8flex, '2');
-        enbased = Encode_Base2(Cell_Blob_At(v), len, brk);
+        enbased = Encode_Base2(Blob_At(v), len, brk);
         break; }
 
       default:
@@ -1345,7 +1345,7 @@ REBTYPE(String)
         //
         if (not Bool_ARG(PART)) {
             if (Is_Binary(v))
-                Init_Integer(OUT, *Cell_Blob_At(v));
+                Init_Integer(OUT, *Blob_At(v));
             else
                 str_to_char(OUT, v, VAL_INDEX(v));
         }
@@ -1472,7 +1472,7 @@ REBTYPE(String)
         while (amount != 0) {
             REBLEN wheel = VAL_LEN_HEAD(v) - 1;
             while (true) {
-                Byte *b = Cell_Blob_At_Head(v, wheel);
+                Byte *b = Blob_At_Head(v, wheel);
                 if (amount > 0) {
                     if (*b == 255) {
                         if (wheel == VAL_INDEX(v))
@@ -1587,7 +1587,7 @@ REBTYPE(String)
                 return nullptr;
             index += (REBLEN)Random_Int(Bool_ARG(SECURE)) % (tail - index);
             if (Is_Binary(v)) // same as PICK
-                return Init_Integer(OUT, *Cell_Blob_At_Head(v, index));
+                return Init_Integer(OUT, *Blob_At_Head(v, index));
 
             str_to_char(OUT, v, index);
             return OUT;

@@ -180,7 +180,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         if (Series_Len_At(arg) < 8)
             panic (Error_Invalid(arg));
 
-        Init_Decimal_Bits(out, Cell_Blob_At(arg)); // makes TYPE_DECIMAL
+        Init_Decimal_Bits(out, Blob_At(arg)); // makes TYPE_DECIMAL
         RESET_CELL(out, kind); // override type if TYPE_PERCENT
         d = VAL_DECIMAL(out);
         break;

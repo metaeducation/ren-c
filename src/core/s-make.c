@@ -384,7 +384,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
         case TYPE_BINARY: {
             REBLEN len = Series_Len_At(val);
             Expand_Flex_Tail(series, len);
-            memcpy(Binary_At(series, tail), Cell_Blob_At(val), len);
+            memcpy(Binary_At(series, tail), Blob_At(val), len);
             break; }
 
         case TYPE_TEXT:

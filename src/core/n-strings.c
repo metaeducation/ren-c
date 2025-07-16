@@ -232,7 +232,7 @@ DECLARE_NATIVE(CHECKSUM)
                 Byte *keycp;
                 Size keylen;
                 if (Is_Binary(key)) {
-                    keycp = Cell_Blob_At(key);
+                    keycp = Blob_At(key);
                     keylen = Series_Len_At(key);
                 }
                 else {
@@ -333,7 +333,7 @@ DECLARE_NATIVE(DEFLATE)
     Size size;
     Byte *bp;
     if (Is_Binary(data)) {
-        bp = Cell_Blob_At(data);
+        bp = Blob_At(data);
         size = len; // width = sizeof(Byte), so limit = len
     }
     else {
@@ -426,7 +426,7 @@ DECLARE_NATIVE(INFLATE)
     size_t decompressed_size;
     void *decompressed = Decompress_Alloc_Core(
         &decompressed_size,
-        Cell_Blob_At(data),
+        Blob_At(data),
         len,
         max,
         envelope
@@ -503,7 +503,7 @@ DECLARE_NATIVE(ENBASE)
     Size size;
     Byte *bp;
     if (Is_Binary(v)) {
-        bp = Cell_Blob_At(v);
+        bp = Blob_At(v);
         size = Series_Len_At(v);
     }
     else { // Convert the string to UTF-8
@@ -1245,7 +1245,7 @@ DECLARE_NATIVE(FIND_SCRIPT)
 
     Value* arg = ARG(SCRIPT);
 
-    REBINT offset = Scan_Header(Cell_Blob_At(arg), Series_Len_At(arg));
+    REBINT offset = Scan_Header(Blob_At(arg), Series_Len_At(arg));
     if (offset == -1)
         return nullptr;
 
@@ -1269,12 +1269,12 @@ DECLARE_NATIVE(INVALID_UTF8_Q)
 
     Value* arg = ARG(DATA);
 
-    Byte *bp = Check_UTF8(Cell_Blob_At(arg), Series_Len_At(arg));
+    Byte *bp = Check_UTF8(Blob_At(arg), Series_Len_At(arg));
     if (not bp)
         return nullptr;
 
     Copy_Cell(OUT, arg);
-    VAL_INDEX(OUT) = bp - Cell_Blob_Head(arg);
+    VAL_INDEX(OUT) = bp - Blob_Head(arg);
     return OUT;
 }
 
@@ -1314,7 +1314,7 @@ DECLARE_NATIVE(DECODE_UTF8)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF8;
 
-    Init_Text(OUT, Make_String_UTF8(cs_cast(Cell_Blob_At(ARG(DATA)))));
+    Init_Text(OUT, Make_String_UTF8(cs_cast(Blob_At(ARG(DATA)))));
     return OUT;
 }
 

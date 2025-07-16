@@ -72,7 +72,7 @@ Bounce MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Char(out, n); }
 
       case TYPE_BINARY: {
-        const Byte *bp = Cell_Blob_Head(arg);
+        const Byte *bp = Blob_Head(arg);
         Size len = Series_Len_At(arg);
         if (len == 0)
             goto bad_make;

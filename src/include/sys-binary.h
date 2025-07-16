@@ -78,20 +78,20 @@ INLINE void Term_Binary_Len(Binary* bin, REBLEN len) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-#define Cell_Blob_Head(v) \
+#define Blob_Head(v) \
     Binary_Head(Cell_Binary(v))
 
-INLINE Byte *Cell_Blob_At(const Cell* v) {
+INLINE Byte *Blob_At(const Cell* v) {
     return Binary_At(Cell_Binary(v), VAL_INDEX(v));
 }
 
-INLINE Byte *Cell_Blob_Tail(const Cell* v) {
+INLINE Byte *Blob_Tail(const Cell* v) {
     return Flex_Tail(Byte, Cell_Binary(v));
 }
 
-// !!! RE: Cell_Blob_At_Head() see remarks on Cell_List_At_Head()
+// !!! RE: Blob_At_Head() see remarks on Cell_List_At_Head()
 //
-#define Cell_Blob_At_Head(v,n) \
+#define Blob_At_Head(v,n) \
     Binary_At(Cell_Binary(v), (n))
 
 #define VAL_BYTE_SIZE(v) \

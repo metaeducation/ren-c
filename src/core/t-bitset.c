@@ -126,7 +126,7 @@ Bounce MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
         return out; // allocated at a size, no contents.
 
     if (Is_Binary(arg)) {
-        memcpy(Binary_Head(flex), Cell_Blob_At(arg), len/8 + 1);
+        memcpy(Binary_Head(flex), Blob_At(arg), len/8 + 1);
         return out;
     }
 
@@ -297,7 +297,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
     if (Is_Binary(val)) {
         REBLEN i = VAL_INDEX(val);
 
-        Byte *bp = Cell_Blob_Head(val);
+        Byte *bp = Blob_Head(val);
         for (; i != VAL_LEN_HEAD(val); i++)
             Set_Bit(bset, bp[i], set);
 
@@ -406,7 +406,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
                 Expand_Flex(bset, c, (n - c));
                 CLEAR(Binary_At(bset, c), (n - c));
             }
-            memcpy(Binary_Head(bset), Cell_Blob_At(item), n);
+            memcpy(Binary_Head(bset), Blob_At(item), n);
             break; }
 
         default:
@@ -434,7 +434,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
 
     if (Is_Binary(val)) {
         REBLEN i = VAL_INDEX(val);
-        Byte *bp = Cell_Blob_Head(val);
+        Byte *bp = Blob_Head(val);
         for (; i != VAL_LEN_HEAD(val); ++i)
             if (Check_Bit(bset, bp[i], uncased))
                 return true;

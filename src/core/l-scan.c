@@ -2956,7 +2956,7 @@ DECLARE_NATIVE(TRANSCODE)
         &transcode,
         filename,
         start_line,
-        converted ? Binary_Head(converted) : Cell_Blob_At(source),
+        converted ? Binary_Head(converted) : Blob_At(source),
         converted ? Binary_Len(converted) : Series_Len_At(source)
     );
 
@@ -3000,7 +3000,7 @@ DECLARE_NATIVE(TRANSCODE)
         }
         else {
             assert(Is_Binary(OUT));  // was utf-8 data
-            VAL_INDEX(OUT) = transcode.at - Cell_Blob_Head(OUT);  // advance
+            VAL_INDEX(OUT) = transcode.at - Blob_Head(OUT);  // advance
         }
     }
 

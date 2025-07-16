@@ -362,7 +362,7 @@ static Bounce Transport_Actor(
         Binary* temp;
         if (Is_Binary(data)) {
             temp = nullptr;
-            sock->common.data = Cell_Blob_At(data);
+            sock->common.data = Blob_At(data);
             sock->length = len;
 
             Copy_Cell(Varlist_Slot(ctx, STD_PORT_DATA), data); // keep it GC safe

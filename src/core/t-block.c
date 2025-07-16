@@ -173,7 +173,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         return Init_Any_List(
             out,
             kind,
-            Scan_UTF8_Managed(filename, Cell_Blob_At(arg), Series_Len_At(arg))
+            Scan_UTF8_Managed(filename, Blob_At(arg), Series_Len_At(arg))
         );
     }
     else if (Is_Map(arg)) {
