@@ -70,11 +70,11 @@ REBINT Cmp_Event(const Cell* t1, const Cell* t2)
 //
 static bool Set_Event_Var(Value* event, const Value* word, const Value* val)
 {
-    switch (Cell_Word_Id(word)) {
+    switch (Word_Id(word)) {
     case SYM_TYPE: {
         if (!Is_Word(val) && !Is_Lit_Word(val))
             return false;
-        Option(SymId) id = Cell_Word_Id(val);
+        Option(SymId) id = Word_Id(val);
         if (id == SYM_0)
             return false;
         VAL_EVENT_TYPE(event) = id;

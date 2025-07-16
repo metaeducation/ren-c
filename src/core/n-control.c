@@ -248,8 +248,8 @@ bool Either_Test_Core_Throws(
                 var = item;
             else {
                 if (
-                    Cell_Word_Id(item) == SYM__TNULL_T
-                    or Cell_Word_Id(item) == SYM_NULL_Q
+                    Word_Id(item) == SYM__TNULL_T
+                    or Word_Id(item) == SYM_NULL_Q
                 ){
                     if (Is_Nulled(arg)) {
                         Init_Logic(out, true);
@@ -258,8 +258,8 @@ bool Either_Test_Core_Throws(
                     continue;
                 }
                 if (
-                    Cell_Word_Id(item) == SYM__TOKAY_T
-                    or Cell_Word_Id(item) == SYM_OKAY_Q
+                    Word_Id(item) == SYM__TOKAY_T
+                    or Word_Id(item) == SYM_OKAY_Q
                 ){
                     if (Is_Okay(arg)) {
                         Init_Logic(out, true);
@@ -268,8 +268,8 @@ bool Either_Test_Core_Throws(
                     continue;
                 }
                 if (
-                    Cell_Word_Id(item) == SYM__TVOID_T
-                    or Cell_Word_Id(item) == SYM_VOID_Q
+                    Word_Id(item) == SYM__TVOID_T
+                    or Word_Id(item) == SYM_VOID_Q
                 ){
                     if (Is_Void(arg)) {
                         Init_Logic(out, true);

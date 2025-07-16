@@ -366,7 +366,7 @@ void Pick_Time(Value* out, const Value* value, const Value* picker)
 {
     REBINT i;
     if (Is_Word(picker)) {
-        switch (Cell_Word_Id(picker)) {
+        switch (Word_Id(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
@@ -411,7 +411,7 @@ void Poke_Time_Immediate(
 ) {
     REBINT i;
     if (Is_Word(picker)) {
-        switch (Cell_Word_Id(picker)) {
+        switch (Word_Id(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
@@ -500,7 +500,7 @@ REBTYPE(Time)
 
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
-    Option(SymId) sym = Cell_Word_Id(verb);
+    Option(SymId) sym = Word_Id(verb);
 
     // !!! This used to use IS_BINARY_ACT(), which is not available under
     // the symbol-based dispatch.  Consider doing another way.
@@ -549,7 +549,7 @@ REBTYPE(Time)
         else if (type == TYPE_INTEGER) {     // handle TIME - INTEGER cases
             REBI64 num = VAL_INT64(arg);
 
-            switch (Cell_Word_Id(verb)) {
+            switch (Word_Id(verb)) {
             case SYM_ADD:
                 secs = Add_Max(TYPE_TIME, secs, num * SEC_SEC, MAX_TIME);
                 goto fixTime;
@@ -584,7 +584,7 @@ REBTYPE(Time)
         else if (type == TYPE_DECIMAL) {     // handle TIME - DECIMAL cases
             REBDEC dec = VAL_DECIMAL(arg);
 
-            switch (Cell_Word_Id(verb)) {
+            switch (Word_Id(verb)) {
             case SYM_ADD:
                 secs = Add_Max(
                     TYPE_TIME,

@@ -55,13 +55,13 @@ static Bounce Clipboard_Actor(
 ){
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(VALUE)); // implied by `port`
-        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
+        Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != 0);
 
         switch (property) {

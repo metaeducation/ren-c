@@ -149,7 +149,7 @@ static void reverse_string(Value* v, REBLEN len)
     Init_Word(verb, CANON(CHANGE));
     Modify_String(
         v,
-        unwrap Cell_Word_Id(verb),
+        unwrap Word_Id(verb),
         temp,
         0, // not AM_PART, we want to change all len bytes
         len,
@@ -1151,7 +1151,7 @@ REBTYPE(String)
     REBINT index = cast(REBINT, VAL_INDEX(v));
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
 
-    Option(SymId) sym = Cell_Word_Id(verb);
+    Option(SymId) sym = Word_Id(verb);
     switch (sym) {
       case SYM_APPEND:
       case SYM_INSERT:
@@ -1166,7 +1166,7 @@ REBTYPE(String)
         PANIC_IF_ERROR(arg);
 
         REBLEN len; // length of target
-        if (Cell_Word_Id(verb) == SYM_CHANGE)
+        if (Word_Id(verb) == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(v, ARG(LIMIT));
         else
             len = Part_Len_Append_Insert_May_Modify_Index(arg, ARG(LIMIT));
@@ -1193,7 +1193,7 @@ REBTYPE(String)
 
             VAL_INDEX(v) = Modify_Binary(
                 v,
-                unwrap Cell_Word_Id(verb),
+                unwrap Word_Id(verb),
                 arg,
                 flags,
                 len,
@@ -1206,7 +1206,7 @@ REBTYPE(String)
 
             VAL_INDEX(v) = Modify_String(
                 v,
-                unwrap Cell_Word_Id(verb),
+                unwrap Word_Id(verb),
                 arg,
                 flags,
                 len,
@@ -1285,7 +1285,7 @@ REBTYPE(String)
         if (Bool_ARG(ONLY))
             len = 1;
 
-        if (Cell_Word_Id(verb) == SYM_FIND) {
+        if (Word_Id(verb) == SYM_FIND) {
             if (Bool_ARG(TAIL) || Bool_ARG(MATCH))
                 ret += len;
             VAL_INDEX(v) = ret;
@@ -1459,7 +1459,7 @@ REBTYPE(String)
         else
             panic (Error_Invalid(arg)); // what about other types?
 
-        if (Cell_Word_Id(verb) == SYM_SUBTRACT)
+        if (Word_Id(verb) == SYM_SUBTRACT)
             amount = -amount;
 
         if (amount == 0) { // adding or subtracting 0 works, even #{} + 0

@@ -49,7 +49,7 @@ INLINE bool IS_WORD_UNBOUND(const Cell* v) {
 #define IS_WORD_BOUND(v) \
     cast(bool, not IS_WORD_UNBOUND(v))
 
-INLINE Symbol* Cell_Word_Symbol(const Cell* v) {
+INLINE Symbol* Word_Symbol(const Cell* v) {
     assert(Any_Word(v));
     return v->payload.any_word.symbol;
 }
@@ -73,7 +73,7 @@ INLINE Symbol* VAL_STORED_CANON(const Cell* v) {
     return v->payload.any_word.symbol;
 }
 
-INLINE Option(SymId) Cell_Word_Id(const Cell* v) {
+INLINE Option(SymId) Word_Id(const Cell* v) {
     return Symbol_Id(v->payload.any_word.symbol);
 }
 

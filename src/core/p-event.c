@@ -149,13 +149,13 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
     if (!Is_Block(state))
         Init_Block(state, Make_Array(EVENTS_CHUNK - 1));
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(VALUE)); // implicit in port
-        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
+        Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
@@ -197,9 +197,9 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
         Bounce bounce = T_List(level_, verb);
         SET_SIGNAL(SIG_EVENT_PORT);
         if (
-            Cell_Word_Id(verb) == SYM_INSERT
-            || Cell_Word_Id(verb) == SYM_APPEND
-            || Cell_Word_Id(verb) == SYM_REMOVE
+            Word_Id(verb) == SYM_INSERT
+            || Word_Id(verb) == SYM_APPEND
+            || Word_Id(verb) == SYM_REMOVE
         ){
             RETURN (save_port);
         }

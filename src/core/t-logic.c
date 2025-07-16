@@ -46,9 +46,9 @@ DECLARE_NATIVE(TRUE_Q)
 
     Value* word = ARG(WORD);
 
-    if (Cell_Word_Id(word) == SYM_TRUE)
+    if (Word_Id(word) == SYM_TRUE)
         return Init_Logic(OUT, true);
-    if (Cell_Word_Id(word) == SYM_FALSE)
+    if (Word_Id(word) == SYM_FALSE)
         return Init_Logic(OUT, false);
     panic ("TRUE? requires word to be TRUE or FALSE");
 }
@@ -69,9 +69,9 @@ DECLARE_NATIVE(FALSE_Q)
 
     Value* word = ARG(WORD);
 
-    if (Cell_Word_Id(word) == SYM_FALSE)
+    if (Word_Id(word) == SYM_FALSE)
         return Init_Logic(OUT, true);
-    if (Cell_Word_Id(word) == SYM_TRUE)
+    if (Word_Id(word) == SYM_TRUE)
         return Init_Logic(OUT, false);
     panic ("FALSE? requires word to be TRUE or FALSE");
 }
@@ -109,9 +109,9 @@ DECLARE_NATIVE(YES_Q)
 
     Value* word = ARG(WORD);
 
-    if (Cell_Word_Id(word) == SYM_YES)
+    if (Word_Id(word) == SYM_YES)
         return Init_Logic(OUT, true);
-    if (Cell_Word_Id(word) == SYM_NO)
+    if (Word_Id(word) == SYM_NO)
         return Init_Logic(OUT, false);
     panic ("YES? requires word to be YES or NO");
 }
@@ -132,9 +132,9 @@ DECLARE_NATIVE(NO_Q)
 
     Value* word = ARG(WORD);
 
-    if (Cell_Word_Id(word) == SYM_NO)
+    if (Word_Id(word) == SYM_NO)
         return Init_Logic(OUT, true);
-    if (Cell_Word_Id(word) == SYM_YES)
+    if (Word_Id(word) == SYM_YES)
         return Init_Logic(OUT, false);
     panic ("NO? requires word to be YES or NO");
 }
@@ -155,9 +155,9 @@ DECLARE_NATIVE(ON_Q)
 
     Value* word = ARG(WORD);
 
-    if (Cell_Word_Id(word) == SYM_ON)
+    if (Word_Id(word) == SYM_ON)
         return Init_Logic(OUT, true);
-    if (Cell_Word_Id(word) == SYM_OFF)
+    if (Word_Id(word) == SYM_OFF)
         return Init_Logic(OUT, false);
     panic ("ON? requires word to be ON or OFF");
 }
@@ -178,9 +178,9 @@ DECLARE_NATIVE(OFF_Q)
 
     Value* word = ARG(WORD);
 
-    if (Cell_Word_Id(word) == SYM_OFF)
+    if (Word_Id(word) == SYM_OFF)
         return Init_Logic(OUT, true);
-    if (Cell_Word_Id(word) == SYM_ON)
+    if (Word_Id(word) == SYM_ON)
         return Init_Logic(OUT, false);
     panic ("OFF? requires word to be ON or OFF");
 }
@@ -537,7 +537,7 @@ REBTYPE(Logic)
     bool b1 = VAL_LOGIC(D_ARG(1));
     bool b2;
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_INTERSECT:
         b2 = Math_Arg_For_Logic(D_ARG(2));

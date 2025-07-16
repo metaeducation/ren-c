@@ -172,9 +172,9 @@ DECLARE_NATIVE(NEW_LINE)
     INCLUDE_PARAMS_OF_NEW_LINE;
 
     bool mark;
-    if (Cell_Word_Id(ARG(MARK)) == SYM_YES)
+    if (Word_Id(ARG(MARK)) == SYM_YES)
         mark = true;
-    else if (Cell_Word_Id(ARG(MARK)) == SYM_NO)
+    else if (Word_Id(ARG(MARK)) == SYM_NO)
         mark = false;
     else
         panic (PARAM(MARK));

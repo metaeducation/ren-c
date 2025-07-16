@@ -501,7 +501,7 @@ void Virtual_Bind_Deep_To_New_Context(
             Init_Typeset(
                 key,
                 TS_VALUE, // !!! Currently not paid attention to
-                Cell_Word_Symbol(item)
+                Word_Symbol(item)
             );
 
             // !!! For loops, nothing should be able to be aware of this
@@ -545,7 +545,7 @@ void Virtual_Bind_Deep_To_New_Context(
             Init_Typeset(
                 key,
                 TS_VALUE, // !!! Currently not paid attention to
-                Cell_Word_Symbol(item)
+                Word_Symbol(item)
             );
             Set_Typeset_Flag(key, TYPE_TS_UNBINDABLE);
             Set_Typeset_Flag(key, TYPE_TS_HIDDEN);

@@ -175,9 +175,9 @@ Bounce PD_Pair(
     REBINT n = 0;
 
     if (Is_Word(picker)) {
-        if (Cell_Word_Id(picker) == SYM_X)
+        if (Word_Id(picker) == SYM_X)
             n = 1;
-        else if (Cell_Word_Id(picker) == SYM_Y)
+        else if (Word_Id(picker) == SYM_Y)
             n = 2;
         else
             return BOUNCE_UNHANDLED;
@@ -249,7 +249,7 @@ REBTYPE(Pair)
     Value* first2 = nullptr;
     Value* second2 = nullptr;
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
       case SYM_REVERSE:
         return Init_Pair(OUT, second1, first1);
 

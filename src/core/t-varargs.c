@@ -437,12 +437,12 @@ REBTYPE(Varargs)
 {
     Value* value = D_ARG(1);
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(VALUE)); // already have `value`
-        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
+        Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {

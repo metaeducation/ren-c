@@ -156,7 +156,7 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 // see if they're really the best option.
 //
 INLINE Option(SymId) VAL_CMD(const Cell* v) {
-    Option(SymId) sym = Cell_Word_Id(v);
+    Option(SymId) sym = Word_Id(v);
     if (sym >= SYM_SET and sym <= SYM_END)
         return sym;
     return SYM_0;
@@ -400,7 +400,7 @@ static const Value* Get_Parse_Value(
 ){
     if (Is_Word(rule)) {
         if (VAL_CMD(rule))  // includes Is_Bar()...also a "command"
-            return Init_Word(out, Cell_Word_Symbol(rule));
+            return Init_Word(out, Word_Symbol(rule));
 
         Move_Opt_Var_May_Panic(out, rule, specifier);
 
@@ -796,7 +796,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         return i;
     }
 
-    if (Is_Word(rule) and Cell_Word_Id(rule) == SYM_END) {
+    if (Is_Word(rule) and Word_Id(rule) == SYM_END) {
         if (not (P_FLAGS & PF_REDBOL))
             panic ("Use <end> instead of END outside PARSE2");
 
@@ -968,7 +968,7 @@ static REBIXO To_Thru_Block_Rule(
 
         if (Series_Len_At(rule_block) == 1) {
             const Cell* at = Cell_List_At(rule_block);
-            if (Is_Word(at) and Cell_Word_Id(at) == SYM__TVOID_T)
+            if (Is_Word(at) and Word_Id(at) == SYM__TVOID_T)
                 return P_POS;  // make `to [~void~]` about as fast as `to []`
         }
     }
@@ -1363,7 +1363,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                         if (
                             Is_Word(P_RULE)
-                            and Cell_Word_Id(P_RULE) == SYM_ACROSS
+                            and Word_Id(P_RULE) == SYM_ACROSS
                         ){
                             FETCH_NEXT_RULE(L);
                             P_FLAGS &= ~PF_SET;
@@ -1381,7 +1381,7 @@ DECLARE_NATIVE(SUBPARSE)
                         if (not (P_FLAGS & PF_REDBOL)) {
                             if (not (
                                 Is_Word(P_RULE)
-                                and Cell_Word_Id(P_RULE) == SYM_AHEAD
+                                and Word_Id(P_RULE) == SYM_AHEAD
                             ) and not (
                                 Is_Tag(P_RULE)
                                 and 0 == Compare_String_Vals(

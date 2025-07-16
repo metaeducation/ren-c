@@ -324,7 +324,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
     if (
         NOT_END(item)
         && Is_Word(item)
-        && Cell_Word_Id(item) == SYM_NOT
+        && Word_Id(item) == SYM_NOT
     ){
         INIT_BITS_NOT(bset, true);
         item++;
@@ -340,7 +340,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
             if (
                 NOT_END(item + 1)
                 && Is_Word(item + 1)
-                && Cell_Word_Id(item + 1) == SYM_HYPHEN_1
+                && Word_Id(item + 1) == SYM_HYPHEN_1
             ){
                 item += 2;
                 if (Is_Char(item)) {
@@ -365,7 +365,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
             if (
                 NOT_END(item + 1)
                 && Is_Word(item + 1)
-                && Cell_Word_Id(item + 1) == SYM_HYPHEN_1
+                && Word_Id(item + 1) == SYM_HYPHEN_1
             ){
                 Ucs2Unit c = n;
                 item += 2;
@@ -395,7 +395,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
 
         case TYPE_WORD: {
             // Special: BITS #{000...}
-            if (not Is_Word(item) or Cell_Word_Id(item) != SYM_BITS)
+            if (not Is_Word(item) or Word_Id(item) != SYM_BITS)
                 return false;
             item++;
             if (not Is_Binary(item))
@@ -466,7 +466,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
 
         case TYPE_CHAR: {
             Ucs2Unit c = VAL_CHAR(item);
-            if (Is_Word(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN_1) {
+            if (Is_Word(item + 1) && Word_Id(item + 1) == SYM_HYPHEN_1) {
                 item += 2;
                 if (Is_Char(item)) {
                     REBLEN n = VAL_CHAR(item);
@@ -488,7 +488,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
             REBLEN n = Int32s(KNOWN(item), 0);
             if (n > 0xffff)
                 return false;
-            if (Is_Word(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN_1) {
+            if (Is_Word(item + 1) && Word_Id(item + 1) == SYM_HYPHEN_1) {
                 Ucs2Unit c = n;
                 item += 2;
                 if (Is_Integer(item)) {
@@ -588,13 +588,13 @@ REBTYPE(Bitset)
     // !!! Set_Bits does locked series check--what should the more general
     // responsibility be for checking?
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(VALUE)); // covered by `value`
-        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
+        Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {

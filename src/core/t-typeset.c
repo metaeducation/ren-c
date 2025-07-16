@@ -170,28 +170,28 @@ bool Update_Typeset_Bits_Core(
         const Cell* item;
 
         if (Is_Word(maybe_word)) {
-            if (Cell_Word_Id(maybe_word) == SYM_TILDE_1) {  // ~
+            if (Word_Id(maybe_word) == SYM_TILDE_1) {  // ~
                 Set_Typeset_Flag(typeset, TYPE_TRASH);
                 clear_trash_flag = false;
                 continue;
             }
             if (
-                Cell_Word_Id(maybe_word) == SYM__TNULL_T  // ~null~
-                or Cell_Word_Id(maybe_word) == SYM_NULL_Q  // null?
+                Word_Id(maybe_word) == SYM__TNULL_T  // ~null~
+                or Word_Id(maybe_word) == SYM_NULL_Q  // null?
             ){
                 Set_Typeset_Flag(typeset, TYPE_NULLED);
                 continue;
             }
             else if (
-                Cell_Word_Id(maybe_word) == SYM__TVOID_T  // ~void~
-                or Cell_Word_Id(maybe_word) == SYM_VOID_Q  // void?
+                Word_Id(maybe_word) == SYM__TVOID_T  // ~void~
+                or Word_Id(maybe_word) == SYM_VOID_Q  // void?
             ){
                 Set_Typeset_Flag(typeset, TYPE_VOID);
                 continue;
             }
             else if (
-                Cell_Word_Id(maybe_word) == SYM__TOKAY_T  // ~void~
-                or Cell_Word_Id(maybe_word) == SYM_OKAY_Q  // void?
+                Word_Id(maybe_word) == SYM__TOKAY_T  // ~void~
+                or Word_Id(maybe_word) == SYM_OKAY_Q  // void?
             ){
                 Set_Typeset_Flag(typeset, TYPE_OKAY);
                 continue;
@@ -385,7 +385,7 @@ REBTYPE(Typeset)
     Value* val = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_FIND:
         if (not Is_Datatype(arg))
@@ -405,12 +405,12 @@ REBTYPE(Typeset)
         else if (not Is_Typeset(arg))
             panic (Error_Invalid(arg));
 
-        if (Cell_Word_Id(verb) == SYM_UNION)
+        if (Word_Id(verb) == SYM_UNION)
             Cell_Typeset_Bits(val) |= Cell_Typeset_Bits(arg);
-        else if (Cell_Word_Id(verb) == SYM_INTERSECT)
+        else if (Word_Id(verb) == SYM_INTERSECT)
             Cell_Typeset_Bits(val) &= Cell_Typeset_Bits(arg);
         else {
-            assert(Cell_Word_Id(verb) == SYM_DIFFERENCE);
+            assert(Word_Id(verb) == SYM_DIFFERENCE);
             Cell_Typeset_Bits(val) ^= Cell_Typeset_Bits(arg);
         }
         RETURN (val);

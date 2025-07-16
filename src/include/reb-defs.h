@@ -218,7 +218,7 @@ typedef uint_fast32_t StackIndex;  // 0 for empty stack ([0] entry is trash)
 //
 // We want to avoid bugs that can happen when you say things like:
 //
-//     if (Cell_Word_Id(a) == Cell_Word_Id(b)) { ... }
+//     if (Word_Id(a) == Word_Id(b)) { ... }
 //
 // If you were allowed to do that, then all non-built-ins would give back
 // SYM_) and appear to be equal.  It's a tricky enough bug to catch to warrant

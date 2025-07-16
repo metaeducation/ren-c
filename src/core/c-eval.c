@@ -634,7 +634,7 @@ bool Eval_Core_Throws(Level* const L)
             goto give_up_backward_quote_priority;
 
     Push_Action(L, VAL_ACTION(L->gotten), VAL_BINDING(L->gotten));
-    Begin_Action(L, Cell_Word_Symbol(L->value), LOOKBACK_ARG);
+    Begin_Action(L, Word_Symbol(L->value), LOOKBACK_ARG);
 
     // Lookback args are fetched from L->out, then copied into an arg
     // slot.  Put the backwards quoted value into L->out.
@@ -806,7 +806,7 @@ bool Eval_Core_Throws(Level* const L)
 
                 assert(Is_Refinement(L->special));
                 assert(
-                    Cell_Word_Symbol(L->special)
+                    Word_Symbol(L->special)
                     == Cell_Parameter_Symbol(L->param)
                 ); // !!! Maybe not, if REDESCRIBE renamed args, but...
                 L->refine = L->arg;
@@ -1222,7 +1222,7 @@ bool Eval_Core_Throws(Level* const L)
             assert(
                 Is_Refinement(L->refine)
                 and (
-                    Cell_Word_Symbol(L->refine)
+                    Word_Symbol(L->refine)
                     == Cell_Parameter_Symbol(L->param - 1)
                 )
             );
@@ -1403,7 +1403,7 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_WORD:
-        switch (Cell_Word_Id(current)) {  // quasiform simulation
+        switch (Word_Id(current)) {  // quasiform simulation
           case SYM__TVOID_T:
             Init_Void(L->out);
             goto post_switch;
@@ -1440,7 +1440,7 @@ bool Eval_Core_Throws(Level* const L)
             //
             Begin_Action(
                 L,
-                Cell_Word_Symbol(current), // use word as stack frame label
+                Word_Symbol(current), // use word as stack frame label
                 Get_Cell_Flag(current_gotten, INFIX_IF_ACTION)
                     ? LOOKBACK_ARG
                     : ORDINARY_ARG
@@ -2048,7 +2048,7 @@ bool Eval_Core_Throws(Level* const L)
     Push_Action(L, VAL_ACTION(L->gotten), VAL_BINDING(L->gotten));
 
     assert(Is_Word(L->value));
-    Begin_Action(L, Cell_Word_Symbol(L->value), LOOKBACK_ARG);
+    Begin_Action(L, Word_Symbol(L->value), LOOKBACK_ARG);
 
     Fetch_Next_In_Level(nullptr, L); // advances L->value
     goto process_action;

@@ -796,7 +796,7 @@ Error* Make_Error_Managed_Vaptr(
                 Init_Typeset(
                     key,
                     TS_VALUE, // !!! Currently not in use
-                    Cell_Word_Symbol(temp)
+                    Word_Symbol(temp)
                 );
                 key++;
             }
@@ -972,7 +972,7 @@ Error* Error_No_Relative_Core(const Cell* any_word)
     Init_Any_Word(
         unbound,
         Type_Of(any_word),
-        Cell_Word_Symbol(any_word)
+        Word_Symbol(any_word)
     );
 
     return Error_No_Relative_Raw(unbound);

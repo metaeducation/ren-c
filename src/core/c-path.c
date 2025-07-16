@@ -247,7 +247,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     //
     if (Is_Action(pvs->out) and Is_Word(PVS_PICKER(pvs))) {
         if (not pvs->opt_label)
-            pvs->opt_label = Cell_Word_Symbol(PVS_PICKER(pvs));
+            pvs->opt_label = Word_Symbol(PVS_PICKER(pvs));
     }
 
     if (
@@ -358,7 +358,7 @@ bool Eval_Path_Throws_Core(
             if (Get_Cell_Flag(pvs->u.ref.cell, INFIX_IF_ACTION))
                 Set_Cell_Flag(pvs->out, INFIX_IF_ACTION);
 
-            pvs->opt_label = Cell_Word_Symbol(pvs->value);
+            pvs->opt_label = Word_Symbol(pvs->value);
         }
     }
     else if (Is_Group(pvs->value)) {

@@ -205,7 +205,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
         // normal module export...also Make_Native() doesn't understand it
         //
         bool is_export;
-        if (Is_Word(item) and Cell_Word_Id(item) == SYM_EXPORT) {
+        if (Is_Word(item) and Word_Id(item) == SYM_EXPORT) {
             is_export = true;
             ++item;
         }
@@ -235,7 +235,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
         // the list of the exports and pass it to the module code.
         //
         if (is_export) {
-            Init_Word(PUSH(), Cell_Word_Symbol(name));
+            Init_Word(PUSH(), Word_Symbol(name));
             if (0 == Try_Bind_Word(module_ctx, TOP))
                 crash ("Couldn't bind word just added -- problem");
         }

@@ -2448,7 +2448,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             return RAISE(Error_Malconstruct_Raw(temp));
         }
 
-        Option(SymId) id = Cell_Word_Id(Array_Head(array));
+        Option(SymId) id = Word_Id(Array_Head(array));
         if (not id)
             return RAISE(Error_Syntax(S, token));
 

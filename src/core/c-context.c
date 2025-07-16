@@ -216,7 +216,7 @@ Value* Append_Context(
     Array* keylist = Keylist_Of_Varlist(context);
     if (any_word) {
         assert(not symbol);
-        symbol = Cell_Word_Symbol(unwrap any_word);
+        symbol = Word_Symbol(unwrap any_word);
     }
     else
         assert(symbol);
@@ -504,7 +504,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
             if (not Try_Add_Binder_Index(&cl->binder, canon, cl->index)) {
                 if (cl->flags & COLLECT_NO_DUP) {
                     DECLARE_VALUE (duplicate);
-                    Init_Word(duplicate, Cell_Word_Symbol(v));
+                    Init_Word(duplicate, Word_Symbol(v));
                     panic (Error_Dup_Vars_Raw(duplicate)); // cleans bindings
                 }
                 continue; // tolerate duplicate
@@ -517,10 +517,10 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
                 Init_Typeset(
                     Array_Last(BUF_COLLECT),
                     TS_VALUE, // !!! Not used at the moment
-                    Cell_Word_Symbol(v)
+                    Word_Symbol(v)
                 );
             else
-                Init_Word(Array_Last(BUF_COLLECT), Cell_Word_Symbol(v));
+                Init_Word(Array_Last(BUF_COLLECT), Word_Symbol(v));
 
             continue;
         }

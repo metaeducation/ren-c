@@ -567,7 +567,7 @@ void Pick_Or_Poke_Date(
 ){
     Option(SymId) sym;
     if (Is_Word(picker)) {
-        sym = Cell_Word_Id(picker); // error later if SYM_0 or not a match
+        sym = Word_Id(picker); // error later if SYM_0 or not a match
     }
     else if (Is_Integer(picker)) {
         switch (Int32(picker)) {
@@ -891,7 +891,7 @@ REBTYPE(Date)
     Value* val = D_ARG(1);
     assert(Is_Date(val));
 
-    Option(SymId) sym = Cell_Word_Id(verb);
+    Option(SymId) sym = Word_Id(verb);
 
     RESET_CELL(OUT, TYPE_DATE); // so we can set flags on it
 

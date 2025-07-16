@@ -327,7 +327,7 @@ REBTYPE(Decimal)
 
     REBDEC d1 = VAL_DECIMAL(val);
 
-    Option(SymId) sym = Cell_Word_Id(verb);
+    Option(SymId) sym = Word_Id(verb);
 
     // !!! This used to use IS_BINARY_ACT() which is no longer available with
     // symbol-based dispatch.  Consider doing this another way.

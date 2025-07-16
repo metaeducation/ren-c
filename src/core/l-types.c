@@ -255,7 +255,7 @@ Bounce Reflect_Core(Level* level_)
     if (kind == TYPE_VOID)
         return nullptr;  // all reflect questions give
 
-    Option(SymId) id = Cell_Word_Id(ARG(PROPERTY));
+    Option(SymId) id = Word_Id(ARG(PROPERTY));
 
     if (not id) {
         //
@@ -1331,7 +1331,7 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
         // Search if word already present:
         for (item = Array_Head(result); NOT_END(item); item += 2) {
             assert(Is_Text(item + 1) || Is_Block(item + 1));
-            if (Are_Synonyms(Cell_Word_Symbol(item), name)) {
+            if (Are_Synonyms(Word_Symbol(item), name)) {
                 // Does it already use a block?
                 if (Is_Block(item + 1)) {
                     // Block of values already exists:

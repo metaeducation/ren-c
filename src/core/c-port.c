@@ -460,7 +460,7 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
     // !!! Note this code is incorrect for files read in chunks!!!
 
   post_process_output:
-    if (Cell_Word_Id(verb) == SYM_READ) {
+    if (Word_Id(verb) == SYM_READ) {
         INCLUDE_PARAMS_OF_READ;
 
         UNUSED(PARAM(SOURCE));

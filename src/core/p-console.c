@@ -41,13 +41,13 @@ static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
     VarList* ctx = Cell_Varlist(port);
     REBREQ *req = Ensure_Port_State(port, RDI_STDIO);
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(VALUE)); // implied by `port`
-        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
+        Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {

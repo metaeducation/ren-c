@@ -505,7 +505,7 @@ INLINE Value* Get_Mutable_Var_May_Panic(
     //
     if (Get_Cell_Flag(var, PROTECTED)) {
         DECLARE_VALUE (unwritable);
-        Init_Word(unwritable, Cell_Word_Symbol(any_word));
+        Init_Word(unwritable, Word_Symbol(any_word));
         panic (Error_Protected_Word_Raw(unwritable));
     }
 

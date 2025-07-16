@@ -143,7 +143,7 @@ REBTYPE(Unit)
     else
         assert(Is_Blank(val));
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     // !!! The category of "non-mutating type actions" should be knowable via
     // some meta information.  Any new such actions should get the behavior
@@ -158,7 +158,7 @@ REBTYPE(Unit)
         // and that would mean it would be legal.  For now, carry over ad
         // hoc things that R3-Alpha returned BLANK! for.
 
-        switch (Cell_Word_Id(ARG(PROPERTY))) {
+        switch (Word_Id(ARG(PROPERTY))) {
         case SYM_INDEX:
         case SYM_LENGTH:
             if (Is_Blank(val))

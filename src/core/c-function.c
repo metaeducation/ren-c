@@ -356,7 +356,7 @@ Array* Make_Paramlist_Managed_May_Panic(
         Value* typeset = Init_Typeset(
             PUSH(),  // volatile if you PUSH() again
             TS_ATOM,  // any value (includes trash, void, null, action)
-            Cell_Word_Symbol(item) // don't canonize, see #2258
+            Word_Symbol(item) // don't canonize, see #2258
         );
 
         // Use LAMBDA if you don't want a definitional return.
@@ -1475,7 +1475,7 @@ bool Get_If_Word_Or_Path_Throws(
     bool push_refinements
 ) {
     if (Is_Word(v)) {
-        *opt_name_out = Cell_Word_Symbol(v);
+        *opt_name_out = Word_Symbol(v);
         Move_Opt_Var_May_Panic(out, v, specifier);
     }
     else if (Is_Path(v)) {

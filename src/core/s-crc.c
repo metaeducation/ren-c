@@ -305,7 +305,7 @@ uint32_t Hash_Value(const Cell* v)
         // !!! Should this hash be cached on the words somehow, e.g. in the
         // data payload before the actual string?
         //
-        hash = Hash_String(Cell_Word_Symbol(v));
+        hash = Hash_String(Word_Symbol(v));
         break; }
 
     case TYPE_ACTION:

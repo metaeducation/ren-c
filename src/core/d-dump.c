@@ -193,7 +193,7 @@ void Dump_Values(Cell* vp, REBLEN count)
         }
         n = 0;
         if (Is_Word(val) || Is_Get_Word(val) || Is_Set_Word(val)) {
-            const char *name_utf8 = Symbol_Head(Cell_Word_Symbol(val));
+            const char *name_utf8 = Symbol_Head(Word_Symbol(val));
             n = snprintf(
                 s_cast(cp), sizeof(buf) - (cp - buf), " (%s)", name_utf8
             );

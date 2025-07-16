@@ -1030,7 +1030,7 @@ size_t API_rebSpellInto(
     else {
         assert(Any_Word(v));
 
-        Symbol* symbol = Cell_Word_Symbol(v);
+        Symbol* symbol = Word_Symbol(v);
         utf8 = Symbol_Head(symbol);
         utf8_size = Symbol_Size(symbol);
     }
@@ -1098,7 +1098,7 @@ unsigned int API_rebSpellIntoW(
     else {
         assert(Any_Word(v));
 
-        Symbol* symbol = Cell_Word_Symbol(v);
+        Symbol* symbol = Word_Symbol(v);
         s = Make_Sized_String_UTF8(Symbol_Head(symbol), Symbol_Size(symbol));
         index = 0;
         len = Flex_Len(s);

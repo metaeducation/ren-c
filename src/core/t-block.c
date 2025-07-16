@@ -319,7 +319,7 @@ REBLEN Find_In_Array(
             if (Any_Word(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
-                        Cell_Word_Symbol(item) == Cell_Word_Symbol(target)
+                        Word_Symbol(item) == Word_Symbol(target)
                         && Type_Of(item) == Type_Of(target)
                     ){
                         return index;
@@ -770,7 +770,7 @@ REBTYPE(List)
     Array* arr = Cell_Array(list);
     Specifier* specifier = VAL_SPECIFIER(list);
 
-    Option(SymId) sym = Cell_Word_Id(verb);
+    Option(SymId) sym = Word_Id(verb);
     switch (sym) {
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
@@ -848,7 +848,7 @@ REBTYPE(List)
         if (Bool_ARG(ONLY))
             len = 1;
 
-        if (Cell_Word_Id(verb) == SYM_FIND) {
+        if (Word_Id(verb) == SYM_FIND) {
             if (Bool_ARG(TAIL) || Bool_ARG(MATCH))
                 ret += len;
             VAL_INDEX(list) = ret;
@@ -875,7 +875,7 @@ REBTYPE(List)
         PANIC_IF_ERROR(arg);
 
         REBLEN len; // length of target
-        if (Cell_Word_Id(verb) == SYM_CHANGE)
+        if (Word_Id(verb) == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(list, ARG(LIMIT));
         else
             len = Part_Len_Append_Insert_May_Modify_Index(arg, ARG(LIMIT));
@@ -906,7 +906,7 @@ REBTYPE(List)
 
         Copy_Cell(OUT, list);
         VAL_INDEX(OUT) = Modify_Array(
-            unwrap Cell_Word_Id(verb),
+            unwrap Word_Id(verb),
             arr,
             index,
             arg,

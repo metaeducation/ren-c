@@ -312,7 +312,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
         MISC(intern).bind_index.other = 0;
         MISC(intern).bind_index.lib = 0;
 
-        // leave header.bits as 0 for SYM_0 as answer to Cell_Word_Id()
+        // leave header.bits as 0 for SYM_0 as answer to Word_Id()
         // Startup_Symbols() tags values from %words.r after the fact.
     }
     else {
@@ -436,8 +436,8 @@ void GC_Kill_Interning(Symbol* intern)
 //
 REBINT Compare_Word(const Cell* s, const Cell* t, bool strict)
 {
-    const Byte *sp = cb_cast(Symbol_Head(Cell_Word_Symbol(s)));
-    const Byte *tp = cb_cast(Symbol_Head(Cell_Word_Symbol(t)));
+    const Byte *sp = cb_cast(Symbol_Head(Word_Symbol(s)));
+    const Byte *tp = cb_cast(Symbol_Head(Word_Symbol(t)));
 
     if (strict)
         return COMPARE_BYTES(sp, tp); // must match byte-for-byte
@@ -501,7 +501,7 @@ void Startup_Interning(void)
 //
 // This goes through the name series for %words.r words and tags them with
 // SYM_XXX constants.  This allows the small number to be quickly extracted to
-// use with Cell_Word_Id() in C switch statements.  These are the only words
+// use with Word_Id() in C switch statements.  These are the only words
 // that have fixed symbol numbers--others are only managed and compared
 // through their pointers.
 //
@@ -516,7 +516,7 @@ void Startup_Symbols(Array* words)
         FLEX_FLAG_FIXED_SIZE // can't ever add more SYM_XXX lookups
     );
 
-    // All words that not in %words.r will get back Cell_Word_Id(w) == SYM_0
+    // All words that not in %words.r will get back Word_Id(w) == SYM_0
     // Hence, SYM_0 cannot be canonized.  Letting CANON(0) return nullptr
     // and try and use that meaningfully is too risky, so it is simply
     // prohibited to canonize SYM_0, and trash the Symbol* in the [0] slot.
@@ -630,7 +630,7 @@ void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBLEN i)
         keysource = Keylist_Of_Varlist(CTX(binding));
     assert(Are_Synonyms(
         Key_Symbol(Array_At(keysource, i)),
-        Cell_Word_Symbol(v)
+        Word_Symbol(v)
     ));
 }
 

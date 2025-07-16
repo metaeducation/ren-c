@@ -159,13 +159,13 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
     dir.devreq.port_ctx = ctx;
     dir.devreq.device = RDI_FILE;
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(VALUE)); // implicitly supplied as `port`
-        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
+        Option(SymId) property = Word_Id(ARG(PROPERTY));
 
         switch (property) {
         case SYM_LENGTH: {
@@ -234,7 +234,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
 
         rebRelease(result); // ignore result
 
-        if (Cell_Word_Id(verb) != SYM_CREATE)
+        if (Word_Id(verb) != SYM_CREATE)
             Init_Nulled(state);
 
         RETURN (port); }

@@ -737,7 +737,7 @@ DECLARE_NATIVE(SAME_Q)
         //
         // ANY-WORD! must match in binding as well as be otherwise equal.
         //
-        if (Cell_Word_Symbol(v1) != Cell_Word_Symbol(v2))
+        if (Word_Symbol(v1) != Word_Symbol(v2))
             return LOGIC(false);
         if (VAL_BINDING(v1) != VAL_BINDING(v2))
             return LOGIC(false);

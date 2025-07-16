@@ -46,7 +46,7 @@ REBINT CT_Datatype(const Cell* a, const Cell* b, REBINT mode)
 //
 Bounce MAKE_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (Is_Word(arg)) {
-        Option(SymId) sym = Cell_Word_Id(arg);
+        Option(SymId) sym = Word_Id(arg);
         if (not sym or (unwrap sym >= SYM_FROM_KIND(TYPE_MAX)))
             goto bad_make;
 
@@ -88,10 +88,10 @@ REBTYPE(Datatype)
     Value* arg = D_ARG(2);
     enum Reb_Kind kind = CELL_DATATYPE_TYPE(value);
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_REFLECT: {
-        Option(SymId) sym = Cell_Word_Id(arg);
+        Option(SymId) sym = Word_Id(arg);
         if (sym == SYM_SPEC) {
             //
             // The "type specs" were loaded as an array, but this reflector

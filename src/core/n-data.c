@@ -780,7 +780,7 @@ DECLARE_NATIVE(IN)
                         return Init_Any_Word_Bound(
                             OUT,
                             Type_Of(word),
-                            Cell_Word_Symbol(word),
+                            Word_Symbol(word),
                             context,
                             index
                         );
@@ -807,7 +807,7 @@ DECLARE_NATIVE(IN)
     return Init_Any_Word_Bound(
         OUT,
         Type_Of(word),
-        Cell_Word_Symbol(word),
+        Word_Symbol(word),
         context,
         index
     );
@@ -1000,7 +1000,7 @@ DECLARE_NATIVE(AS)
         // WORD! should become a thing, if they're not bound or locked.)
         //
         if (Any_Word(v)) {
-            Symbol* symbol = Cell_Word_Symbol(v);
+            Symbol* symbol = Word_Symbol(v);
             Flex* string = Make_Sized_String_UTF8(
                 Symbol_Head(symbol),
                 Symbol_Size(symbol)
@@ -1097,7 +1097,7 @@ DECLARE_NATIVE(AS)
         //
         if (Any_Word(v)) {
             assert(Is_Value_Immutable(v));
-            return Init_Blob(OUT, Cell_Word_Symbol(v));
+            return Init_Blob(OUT, Word_Symbol(v));
         }
 
         if (Any_String(v)) {

@@ -138,7 +138,7 @@ REBINT Find_Key_Hashed(
         while ((n = indexes[slot]) != 0) {
             Cell* k = Array_At(array, (n - 1) * wide); // stored key
             if (Any_Word(k)) {
-                if (Cell_Word_Symbol(key) == Cell_Word_Symbol(k))
+                if (Word_Symbol(key) == Word_Symbol(k))
                     FOUND_EXACT;
                 else if (not cased)
                     if (VAL_WORD_CANON(key) == VAL_WORD_CANON(k))
@@ -619,7 +619,7 @@ VarList* Alloc_Context_From_Map(REBMAP *map)
             Init_Typeset(
                 key,
                 TS_VALUE, // !!! Not used at the moment
-                Cell_Word_Symbol(mval)
+                Word_Symbol(mval)
             );
             ++key;
             Copy_Cell(var, &mval[1]);
@@ -696,13 +696,13 @@ REBTYPE(Map)
 
     REBMAP *map = VAL_MAP(val);
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(VALUE)); // covered by `val`
-        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
+        Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
@@ -770,7 +770,7 @@ REBTYPE(Map)
             KNOWN(Array_At(MAP_PAIRLIST(map), ((n - 1) * 2) + 1))
         );
 
-        if (Cell_Word_Id(verb) == SYM_FIND)
+        if (Word_Id(verb) == SYM_FIND)
             return Is_Zombie(OUT) ? nullptr : Init_Logic(OUT, true);
 
         return OUT; }

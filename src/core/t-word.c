@@ -47,7 +47,7 @@ REBINT CT_Word(const Cell* a, const Cell* b, REBINT mode)
             //
             // Symbols must be exact match, case-sensitively
             //
-            if (Cell_Word_Symbol(a) != Cell_Word_Symbol(b))
+            if (Word_Symbol(a) != Word_Symbol(b))
                 return 0;
         }
         else {
@@ -137,7 +137,7 @@ Bounce TO_Word(Value* out, enum Reb_Kind kind, const Value* arg)
 void MF_Word(Molder* mo, const Cell* v, bool form) {
     UNUSED(form); // no difference between MOLD and FORM at this time
 
-    Symbol* symbol = Cell_Word_Symbol(v);
+    Symbol* symbol = Word_Symbol(v);
     const char *head = Symbol_Head(symbol);  // UTF-8
     size_t size = Symbol_Size(symbol);  // number of UTF-8 bytes
 
@@ -192,7 +192,7 @@ Bounce PD_Word(
     const Value* picker,
     const Value* opt_setval
 ){
-    Symbol* str = Cell_Word_Symbol(pvs->out);
+    Symbol* str = Word_Symbol(pvs->out);
 
     if (not opt_setval) { // PICK-ing
         if (Is_Integer(picker)) {
@@ -239,17 +239,17 @@ REBTYPE(Word)
     Value* val = D_ARG(1);
     assert(Any_Word(val));
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(VALUE));
-        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
+        Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {
         case SYM_LENGTH: {
-            Symbol* symbol = Cell_Word_Symbol(val);
+            Symbol* symbol = Word_Symbol(val);
             const Byte *bp = cb_cast(Symbol_Head(symbol));
             Size size = Symbol_Size(symbol);
             REBLEN len = 0;

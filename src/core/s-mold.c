@@ -104,7 +104,7 @@ void Emit(Molder* mo, const char *fmt, ...)
         switch (*fmt) {
         case 'W': { // Word symbol
             const Value* any_word = va_arg(va, const Value*);
-            Symbol* symbol = Cell_Word_Symbol(any_word);
+            Symbol* symbol = Word_Symbol(any_word);
             Append_Utf8_Utf8(
                 s, Symbol_Head(symbol), Symbol_Size(symbol)
             );

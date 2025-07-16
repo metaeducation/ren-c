@@ -102,13 +102,13 @@ static Bounce Transport_Actor(
 
     if (not (sock->flags & RRF_OPEN)) {
 
-        switch (Cell_Word_Id(verb)) { // Ordered by frequency
+        switch (Word_Id(verb)) { // Ordered by frequency
 
         case SYM_REFLECT: {
             INCLUDE_PARAMS_OF_REFLECT;
 
             UNUSED(ARG(VALUE)); // covered by `port`
-            Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
+            Option(SymId) property = Word_Id(ARG(PROPERTY));
             assert(property != SYM_0);
 
             switch (property) {
@@ -204,13 +204,13 @@ static Bounce Transport_Actor(
 
   open_socket_actions:;
 
-    switch (Cell_Word_Id(verb)) { // Ordered by frequency
+    switch (Word_Id(verb)) { // Ordered by frequency
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(VALUE)); // covered by `port`
-        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
+        Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {

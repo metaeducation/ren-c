@@ -49,10 +49,10 @@ Bounce Series_Common_Action_Maybe_Unhandled(
     REBINT index = cast(REBINT, VAL_INDEX(value));
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(value));
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_REFLECT: {
-        Option(SymId) property = Cell_Word_Id(arg);
+        Option(SymId) property = Word_Id(arg);
         assert(property != SYM_0);
 
         switch (property) {
@@ -113,7 +113,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
         REBINT len = Get_Num_From_Arg(arg);
         REBI64 i;
-        if (Cell_Word_Id(verb) == SYM_SKIP) {
+        if (Word_Id(verb) == SYM_SKIP) {
             //
             // `skip x logic` means `either logic [skip x] [x]` (this is
             // reversed from R3-Alpha and Rebol2, which skipped when false)
@@ -131,7 +131,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             }
         }
         else {
-            assert(Cell_Word_Id(verb) == SYM_AT);
+            assert(Word_Id(verb) == SYM_AT);
 
             // `at series 1` means first element, adjust index
             //

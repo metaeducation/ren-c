@@ -258,7 +258,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // more sense as these would be hexes likely typed in by users,
         // who rarely do 2s-complement math in their head.
 
-        Symbol* symbol= Cell_Word_Symbol(value);
+        Symbol* symbol= Word_Symbol(value);
         const Byte *bp = cb_cast(Symbol_Head(symbol));
         size_t size = Symbol_Size(symbol);
 
@@ -378,7 +378,7 @@ REBTYPE(Integer)
 
     REBI64 arg;
 
-    Option(SymId) sym = Cell_Word_Id(verb);
+    Option(SymId) sym = Word_Id(verb);
 
     // !!! This used to rely on IS_BINARY_ACT, which is no longer available
     // in the symbol based dispatch.  Consider doing another way.
@@ -403,7 +403,7 @@ REBTYPE(Integer)
         else {
             // Decimal or other numeric second argument:
             REBLEN n = 0; // use to flag special case
-            switch (Cell_Word_Id(verb)) {
+            switch (Word_Id(verb)) {
             // Anything added to an integer is same as adding the integer:
             case SYM_ADD:
             case SYM_MULTIPLY: {

@@ -129,7 +129,7 @@ static void Append_To_Context(VarList* context, Value* arg)
     if (Any_Word(arg)) {
         if (0 == Find_Canon_In_Context(context, VAL_WORD_CANON(arg), true)) {
             Expand_Context(context, 1); // copy word table also
-            Append_Context(context, nullptr, Cell_Word_Symbol(arg));
+            Append_Context(context, nullptr, Word_Symbol(arg));
             // default of Append_Context is that arg's value is void
         }
         return;
@@ -182,7 +182,7 @@ static void Append_To_Context(VarList* context, Value* arg)
             Init_Typeset(
                 Array_Last(BUF_COLLECT),
                 TS_VALUE, // !!! Currently ignored
-                Cell_Word_Symbol(word)
+                Word_Symbol(word)
             );
         }
         if (IS_END(word + 1))
@@ -697,10 +697,10 @@ Bounce Context_Common_Action_Maybe_Unhandled(
 
     VarList* c = Cell_Varlist(value);
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_REFLECT: {
-        Option(SymId) property = Cell_Word_Id(arg);
+        Option(SymId) property = Word_Id(arg);
         assert(property != SYM_0);
 
         switch (property) {
@@ -763,10 +763,10 @@ REBTYPE(Context)
 
     VarList* c = Cell_Varlist(value);
 
-    switch (Cell_Word_Id(verb)) {
+    switch (Word_Id(verb)) {
 
     case SYM_REFLECT: {
-        Option(SymId) sym = Cell_Word_Id(arg);
+        Option(SymId) sym = Word_Id(arg);
         if (Type_Of(value) != TYPE_FRAME)
             break;
 
@@ -872,7 +872,7 @@ REBTYPE(Context)
         if (n == 0)
             return nullptr;
 
-        if (Cell_Word_Id(verb) == SYM_FIND)
+        if (Word_Id(verb) == SYM_FIND)
             return LOGIC(true); // !!! not optimal, OKAY would be better
 
         RETURN (Varlist_Slot(c, n)); }

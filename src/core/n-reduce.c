@@ -60,7 +60,7 @@ bool Is_Error_Veto_Signal(Error* e) {
     ERROR_VARS *vars = ERR_VARS(e);
     if (not Is_Word(&vars->id))
         return false;
-    return Cell_Word_Id(&vars->id) == SYM_VETO;
+    return Word_Id(&vars->id) == SYM_VETO;
 }
 
 
@@ -119,10 +119,10 @@ static Value* Init_Lib_Word(Cell* out, SymId id) {
 bool Any_Metaform(Value* v) {
     if (Is_Word(v)) {
         if (
-            Cell_Word_Id(v) == SYM__TNULL_T
-            or Cell_Word_Id(v) == SYM__TOKAY_T
-            or Cell_Word_Id(v) == SYM__TVOID_T
-            or Cell_Word_Id(v) == SYM_TILDE_1
+            Word_Id(v) == SYM__TNULL_T
+            or Word_Id(v) == SYM__TOKAY_T
+            or Word_Id(v) == SYM__TVOID_T
+            or Word_Id(v) == SYM_TILDE_1
         ){
             return true;
         }
@@ -136,7 +136,7 @@ bool Any_Metaform(Value* v) {
         Is_Group(v)
         and Series_Len_At(v) == 2
         and Is_Word(Cell_List_At(v))
-        and Cell_Word_Id(Cell_List_At(v)) == SYM_THE
+        and Word_Id(Cell_List_At(v)) == SYM_THE
     );
 }
 
@@ -188,7 +188,7 @@ Value* Meta_Quotify(Value* v)
 Value* Meta_Unquotify(Value* v)
 {
     if (Is_Word(v)) {
-        switch (Cell_Word_Id(v)) {
+        switch (Word_Id(v)) {
           case SYM__TVOID_T:
             return Init_Void(v);
           case SYM__TOKAY_T:
@@ -213,7 +213,7 @@ Value* Meta_Unquotify(Value* v)
         Is_Group(v)
         and Series_Len_At(v) == 2
         and Is_Word(Cell_List_At(v))
-        and Cell_Word_Id(Cell_List_At(v)) == SYM_THE
+        and Word_Id(Cell_List_At(v)) == SYM_THE
     ){
         return Copy_Cell(v, cast(Value*, Cell_List_At(v) + 1));
     }

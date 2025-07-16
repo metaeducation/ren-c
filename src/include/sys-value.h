@@ -612,7 +612,7 @@ INLINE Value* Trashify_Branched(Value* cell) {
     Init_Word((out), CANON(BAR_1));
 
 #define Is_Bar(v) \
-    (Is_Word(v) and Cell_Word_Id(v) == SYM_BAR_1)
+    (Is_Word(v) and Word_Id(v) == SYM_BAR_1)
 
 
 //=////////////////////////////////////////////////////////////////////////=//

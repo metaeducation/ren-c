@@ -110,7 +110,7 @@ Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     REBLEN alen;
 
     if (Is_Issue(arg)) {
-        Symbol* symbol = Cell_Word_Symbol(arg);
+        Symbol* symbol = Word_Symbol(arg);
         const Byte *ap = cb_cast(Symbol_Head(symbol));
         size_t size = Symbol_Size(symbol); // UTF-8 len
         if (size & 1)
@@ -331,7 +331,7 @@ REBTYPE(Tuple)
     Byte *vp = VAL_TUPLE(value);
     len = VAL_TUPLE_LEN(value);
 
-    Option(SymId) sym = Cell_Word_Id(verb);
+    Option(SymId) sym = Word_Id(verb);
 
     // !!! This used to depend on "IS_BINARY_ACT", a concept that does not
     // exist any longer with symbol-based action dispatch.  Patch with more
@@ -375,7 +375,7 @@ REBTYPE(Tuple)
             if (ap)
                 a = (REBINT) *ap++;
 
-            switch (Cell_Word_Id(verb)) {
+            switch (Word_Id(verb)) {
             case SYM_ADD: v += a; break;
 
             case SYM_SUBTRACT: v -= a; break;
@@ -461,7 +461,7 @@ REBTYPE(Tuple)
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(VALUE));
-        Option(SymId) property = Cell_Word_Id(ARG(PROPERTY));
+        Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
         switch (property) {

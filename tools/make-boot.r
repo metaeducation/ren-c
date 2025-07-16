@@ -977,9 +977,9 @@ e-symbols/emit {
      *
      * Note: SYM_0 is not a symbol of the string "0".  It's the "SYM" constant
      * that is returned for any interning that *does not have* a compile-time
-     * constant assigned to it.  Since Cell_Word_Id() will return SYM_0 for
+     * constant assigned to it.  Since Word_Id() will return SYM_0 for
      * all user (and extension) defined words, don't try to check equality
-     * with `Cell_Word_Id(word1) == Cell_Word_Id(word2)`.
+     * with `Word_Id(word1) == Word_Id(word2)`.
      */
     enum SymIdEnum {
         SYM_0_internal = 0,

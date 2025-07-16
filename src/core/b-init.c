@@ -254,7 +254,7 @@ static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
 
     Cell* word = Array_Head(boot_types);
 
-    if (Cell_Word_Id(word) != SYM_ACTION_X)
+    if (Word_Id(word) != SYM_ACTION_X)
         crash (word); // First type should be ACTION!
 
     Array* catalog = Make_Array(TYPE_MAX - 1);
@@ -536,15 +536,15 @@ Value* Make_Native(
 
     bool infix;
     bool defer;
-    if (Is_Word(*item) and Cell_Word_Id(*item) == SYM_INFIX) {
+    if (Is_Word(*item) and Word_Id(*item) == SYM_INFIX) {
         infix = true;
         defer = false;
         ++*item;
     }
     else if (
         Is_Path(*item)
-        and Cell_Word_Id(Cell_List_At(*item)) == SYM_INFIX
-        and Cell_Word_Id(Cell_List_At(*item) + 1) == SYM_DEFER
+        and Word_Id(Cell_List_At(*item)) == SYM_INFIX
+        and Word_Id(Cell_List_At(*item) + 1) == SYM_DEFER
     ){
         infix = true;
         defer = true;
@@ -557,7 +557,7 @@ Value* Make_Native(
 
     if (
         not Is_Word(*item)
-        or Cell_Word_Id(*item) != SYM_NATIVE
+        or Word_Id(*item) != SYM_NATIVE
     ){
         crash (*item);
     }
@@ -675,7 +675,7 @@ static Array* Startup_Natives(const Value* boot_natives)
         Value* catalog_item = Copy_Cell(Alloc_Tail_Array(catalog), name);
         CHANGE_VAL_TYPE_BITS(catalog_item, TYPE_WORD);
 
-        if (Cell_Word_Id(name) == SYM_GENERIC)
+        if (Word_Id(name) == SYM_GENERIC)
             generic_word = name;
 
         ++n;
@@ -1365,7 +1365,7 @@ void Startup_Core(void)
     Init_Bar(&PG_Bar_Value[0]);
     Poison_Cell(&PG_Bar_Value[1]);
 
-    // Symbol_Id(), Cell_Word_Id() and CANON(XXX) now available
+    // Symbol_Id(), Word_Id() and CANON(XXX) now available
 
     PG_Boot_Phase = BOOT_LOADED;
 
