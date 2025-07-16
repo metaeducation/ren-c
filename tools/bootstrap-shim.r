@@ -417,6 +417,10 @@ spread: func3 [
 ]
 
 append: func3 [series value [<undo-opt> any-element!] /line <local> only] [
+    if not value [
+        return series
+    ]
+
     any [
         object? series
         map? series
@@ -445,6 +449,10 @@ append: func3 [series value [<undo-opt> any-element!] /line <local> only] [
 ]
 
 insert: func3 [series value [<undo-opt> any-element!] /line <local> only] [
+    if not value [
+        return series
+    ]
+
     only: 'only
     if (block? value) and (#splice! = first value) [
         value: second value
@@ -460,6 +468,10 @@ insert: func3 [series value [<undo-opt> any-element!] /line <local> only] [
 ]
 
 change: func3 [series value [<undo-opt> any-element!] /line <local> only] [
+    if not value [
+        return series
+    ]
+
     only: 'only
     if (block? value) and (#splice! = first value) [
         value: second value
@@ -476,6 +488,10 @@ replace: func3 [
     pattern [<undo-opt> any-element!]
     replacement [<undo-opt> any-element!]
 ][
+    if not pattern [
+        return target
+    ]
+
     if (block? pattern) and (#splice! = first pattern) [
         pattern: second pattern
     ] else [
@@ -483,7 +499,7 @@ replace: func3 [
             pattern: reduce [pattern]
         ]
     ]
-    if (block? replacement) and (#splice! = first replacement) [
+    if (block? opt replacement) and (#splice! = first replacement) [
         pattern: second replacement
     ] else [
         if pattern [
@@ -534,8 +550,11 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
             f [frame!]
             <with> out
         ][
+            if not f.value [  ; APPEND's value is <opt> so this means null in
+                return null  ; VOID-in-NULL-out: doesn't "count" as collected
+            ]
+
             assert [not action? get $f.value]
-            if void? f.value [return void]  ; doesn't "count" as collected
 
             f.series: out: default [make block! 16]  ; won't return null now
             f.value  ; ELIDE leaves as result (F.VALUE invalid after EVAL F)
@@ -860,7 +879,7 @@ apply: func3 [
     ; Now go by the SET-WORD!s.  If it's a refinement that takes an argument,
     ; we have to set the refinement to okay
     ;
-    while [set-word? :args.1] [
+    while [set-word? opt :args.1] [
         pos: find params to refinement3! args.1 else [
             panic ["Unknown refinement" args.1]
         ]
