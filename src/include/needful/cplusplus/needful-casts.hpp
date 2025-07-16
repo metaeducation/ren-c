@@ -560,15 +560,6 @@ struct UpcastHelper {
         > \
         operator To() const \
             { return needful_lenient_##hookability##_cast(To, f); } \
-        \
-        template<typename F = From> \
-        enable_if_t< \
-            IsResultWrapper<remove_reference_t<F>>::value, \
-            BaseName##Holder<typename F::wrapped_type> \
-        > \
-        Extract_Hot() const { \
-            return BaseName##Holder<typename F::wrapped_type>{f.r}; \
-        } \
     }; \
     \
     struct BaseName##Maker { \
