@@ -205,7 +205,7 @@ bool Either_Test_Core_Throws(
         Init_Logic(out, Typeset_Check(test, Type_Of(arg)));
         return false;
 
-    case TYPE_BLOCK: {
+      case TYPE_BLOCK: {
         Cell* item = Cell_List_At(test);
         if (IS_END(item)) {
             //
@@ -221,21 +221,30 @@ bool Either_Test_Core_Throws(
             if (not Is_Word(item))
                 var = item;
             else {
-                if (Cell_Word_Id(item) == SYM__TNULL_T) {
+                if (
+                    Cell_Word_Id(item) == SYM__TNULL_T
+                    or Cell_Word_Id(item) == SYM_NULL_Q
+                ){
                     if (Is_Nulled(arg)) {
                         Init_Logic(out, true);
                         return false;
                     }
                     continue;
                 }
-                if (Cell_Word_Id(item) == SYM__TOKAY_T) {
+                if (
+                    Cell_Word_Id(item) == SYM__TOKAY_T
+                    or Cell_Word_Id(item) == SYM_OKAY_Q
+                ){
                     if (Is_Okay(arg)) {
                         Init_Logic(out, true);
                         return false;
                     }
                     continue;
                 }
-                if (Cell_Word_Id(item) == SYM__TVOID_T) {
+                if (
+                    Cell_Word_Id(item) == SYM__TVOID_T
+                    or Cell_Word_Id(item) == SYM_VOID_Q
+                ){
                     if (Is_Void(arg)) {
                         Init_Logic(out, true);
                         return false;

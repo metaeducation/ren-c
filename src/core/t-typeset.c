@@ -175,12 +175,25 @@ bool Update_Typeset_Bits_Core(
                 clear_trash_flag = false;
                 continue;
             }
-            if (Cell_Word_Id(maybe_word) == SYM__TNULL_T) {  // ~null~
+            if (
+                Cell_Word_Id(maybe_word) == SYM__TNULL_T  // ~null~
+                or Cell_Word_Id(maybe_word) == SYM_NULL_Q  // null?
+            ){
                 Set_Typeset_Flag(typeset, TYPE_NULLED);
                 continue;
             }
-            else if (Cell_Word_Id(maybe_word) == SYM__TVOID_T) {  // ~void~
+            else if (
+                Cell_Word_Id(maybe_word) == SYM__TVOID_T  // ~void~
+                or Cell_Word_Id(maybe_word) == SYM_VOID_Q  // void?
+            ){
                 Set_Typeset_Flag(typeset, TYPE_VOID);
+                continue;
+            }
+            else if (
+                Cell_Word_Id(maybe_word) == SYM__TOKAY_T  // ~void~
+                or Cell_Word_Id(maybe_word) == SYM_OKAY_Q  // void?
+            ){
+                Set_Typeset_Flag(typeset, TYPE_OKAY);
                 continue;
             }
             item = Get_Opt_Var_May_Panic(maybe_word, specifier);

@@ -53,8 +53,11 @@ none
 ;
 "~"  ; SYM_TILDE_1 (TRASH in modern Ren-C, but UNDEFINED in R3C)
 ~void~
+void?
 ~null~
+null?
 ~okay~
+okay?
 void
 null
 okay
