@@ -214,13 +214,13 @@ subdir: null
 parse3 file-base.core [some [
     ahead [path! '->] subdir: path! '-> ahead block! into [  ; descend
         (subdir: to file! subdir)
-        some [name: [tuple! | path! | file!] options: opt block! (
+        some [name: [tuple! | path! | file!] options: try block! (
             handle-item name subdir opt options
         )]
         (subdir: null)
     ]
     |
-    name: [tuple! | path! | file!] options: opt block! (
+    name: [tuple! | path! | file!] options: try block! (
         handle-item name void opt options
     )
 ]]
