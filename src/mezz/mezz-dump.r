@@ -257,7 +257,7 @@ dump-obj: function [
                 append str form-pad reify type 10 - ((length of str) - 15)
                 keep spaced [
                     "  " str
-                    if type [form-val :val]
+                    when type [form-val :val]
                     newline
                 ]
             ]

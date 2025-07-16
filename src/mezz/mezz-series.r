@@ -149,7 +149,7 @@ replace: function [
         any-list? :pattern [length of :pattern]
     ]
 
-    while [pos: find/(if case_REPLACE [/case]) target :pattern] [
+    while [pos: find/(when case_REPLACE [/case]) target :pattern] [
         target: change/part pos opt :replacement len
 
         if one [break]
@@ -320,7 +320,7 @@ reword: function [
                         ;
                         append/part out a b
 
-                        v: select/(if case_REWORD [/case]) values keyword-match
+                        v: select/(when case_REWORD [/case]) values keyword-match
                         append out case [
                             action? :v [v :keyword-match]
                             block? :v [eval :v]
@@ -349,7 +349,7 @@ reword: function [
         (append out a)
     ]
 
-    parse/(if case_REWORD [/case]) source rule else [
+    parse/(when case_REWORD [/case]) source rule else [
         panic "Unexpected error in REWORD's parse rule, should not happen."
     ]
 
@@ -432,7 +432,7 @@ alter: func [
         append series :value
         return okay
     ]
-    if remove (find/(if case_ALTER [/case]) series :value) [
+    if remove (find/(when case_ALTER [/case]) series :value) [
         append series :value
         return okay
     ]

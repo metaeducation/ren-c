@@ -574,7 +574,7 @@ cc: make compiler-class [
                     ]
                 ][
                     unspaced [
-                        if find (any [dep/flags []]) 'static ["-static "]
+                        when find (any [dep/flags []]) 'static ["-static "]
                         "-l" dep/output
                     ]
                 ]
@@ -1291,7 +1291,7 @@ makefile: make generator-class [
                     append buf gen-rule make entry-class [
                         target: dep/output
                         depends: append objs map-each ddep dep/depends [
-                            if ddep/class <> #object-library [ddep]
+                            when ddep/class <> #object-library [ddep]
                         ]
                         commands: append reduce [dep/command] opt dep/post-build-commands
                         assert [not find commands _]

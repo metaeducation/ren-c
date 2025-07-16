@@ -302,7 +302,7 @@ Bounce PD_Action(
     if (Is_Void(picker)) {
         //
         // Leave the function value as-is, and continue processing.  This
-        // enables things like `append/(if only [/only])/dup`...
+        // enables things like `append/(when only [/only])/dup`...
         //
         // Note this feature doesn't have obvious applications to refinements
         // that take arguments...only ones that don't.  Use "revoking" to

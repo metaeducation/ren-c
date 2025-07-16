@@ -100,6 +100,8 @@ function3: :lib/function
 if3: :lib/if
 either3: :lib/either
 
+when: :if3  ; void-returning variation (IF returns null), same in preboot
+
 ; ALIAS DO AS EVAL
 ;
 eval: evaluate: :lib/do

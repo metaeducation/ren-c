@@ -29,7 +29,7 @@
 ]
 
 [
-    (did blk: [1 + 2 if null [10 + 20] 100 + 200])
+    (did blk: [1 + 2 when null [10 + 20] 100 + 200])
     ([3 300] = reduce blk)
 ]
 

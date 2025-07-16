@@ -254,7 +254,7 @@
 
 (did parse/match "aaabbb" [inline ([some "a"]) inline ([some "b"])])
 (did parse/match "aaabbb" [
-    inline ([some "a"]) inline (if null [some "c"]) inline ([some "b"])]
+    inline ([some "a"]) inline (when null [some "c"]) inline ([some "b"])]
 )
 (did parse/match "aaa" [inline ('some) "a"])
 

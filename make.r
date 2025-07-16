@@ -521,7 +521,7 @@ append app-config/cflags switch user-config/standard [
             ; when building as pre-C++11 where it was introduced, unless you
             ; disable that warning.
             ;
-            (if user-config/standard = 'c++98 [<gcc:-Wno-c++0x-compat>])
+            (when user-config/standard = 'c++98 [<gcc:-Wno-c++0x-compat>])
 
             ; Note: The C and C++ user-config/standards do not dictate if
             ; `char` is signed or unsigned.  Lest anyone think environments
