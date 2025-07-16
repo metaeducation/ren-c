@@ -912,9 +912,10 @@ for-each 'entry read extension-dir [
     append extensions ext
 ]
 
-for-each [name val] user-config.extensions [  ; all found ones were removed
-    print ["!!! Unrecognized extension name in config:" name]
-] then [
+if not empty? user-config.extensions [  ; all found ones were removed
+    for-each [name val] user-config.extensions [
+        print ["!!! Unrecognized extension name in config:" name]
+    ]
     panic "Unrecognized extensions, aborting"
 ]
 
@@ -1690,7 +1691,7 @@ for-each 'ext extensions [
             (panic [type of name "can't be a dependency of a module"])
         ]]]
 
-        libraries: map-each 'lib ext.libraries [
+        libraries: map-each 'lib opt ext.libraries [
             case [
                 file? lib [
                     make rebmake.ext-dynamic-class [
@@ -1956,7 +1957,7 @@ prep: make rebmake.entry-class [
             "$(REBOL)" join tools-dir %make-extensions-table.r
             unspaced [
                 "EXTENSIONS=" delimit ":" map-each 'ext extensions [
-                    if ext.mode = <builtin> [as text! ext.name]
+                    when ext.mode = <builtin> [as text! ext.name]
                 ]
             ]
         ]

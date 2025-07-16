@@ -219,7 +219,7 @@ non-variadic-api-macros: map-each-api [
     if name = "rebFunction" [  ; handled specially, easiest for now
         continue
     ]
-    if not is-variadic [
+    when not is-variadic [
         cscape [:api "#define $<Name> LIBREBOL_PREFIX($<Name>)"]
     ]
 ]
@@ -298,7 +298,7 @@ for-each-api [
 ]
 
 variadic-api-binding-capturing-macros: map-each-api [
-    if is-variadic [
+    when is-variadic [
         let fixed-params: map-each [type var] paramlist [
             to-text var
         ]
@@ -314,7 +314,7 @@ variadic-api-binding-capturing-macros: map-each-api [
 ]
 
 variadic-api-explicit-binding-macros: map-each-api [
-    if is-variadic [
+    when is-variadic [
         let fixed-params: map-each [type var] paramlist [
             to-text var
         ]
@@ -330,7 +330,7 @@ variadic-api-explicit-binding-macros: map-each-api [
 ]
 
 variadic-api-c89-alias-macros: map-each-api [
-    if is-variadic [
+    when is-variadic [
         cscape [:api "#define $<Name>_c89 $<Name>_helper"]
     ]
 ]

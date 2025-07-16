@@ -993,7 +993,7 @@ write (join prep-dir %include/libr3.exports.json) json-collect [
 write (join prep-dir %include/asyncify-blacklist.json) delimit newline collect [
     keep "["
     for-next 'names load3 %../asyncify-blacklist.r [
-        keep unspaced [_ _ _ _ -["]- names.1 -["]- if not last? names [","]]
+        keep unspaced [_ _ _ _ -["]- names.1 -["]- when not last? names [","]]
     ]
     keep "]"
 ]

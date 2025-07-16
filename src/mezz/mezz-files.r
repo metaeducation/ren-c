@@ -143,17 +143,17 @@ clean-path: func [
 
     return to url! head of insert path unspaced [
         form scheme.scheme "://"
-        if scheme.user [
+        when scheme.user [
             unspaced [
                 scheme.user
-                if scheme.pass [
+                when scheme.pass [
                     unspaced [":" scheme.pass]
                 ]
                 "@"
             ]
         ]
         scheme.host
-        if scheme.port-id [
+        when scheme.port-id [
             unspaced [":" scheme.port-id]
         ]
     ]
