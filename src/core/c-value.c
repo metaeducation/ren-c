@@ -38,7 +38,7 @@
 #if RUNTIME_CHECKS
 
 //
-//  Crash_Value_Debug: C
+//  Crash_On_Value_Debug: C
 //
 // This is a debug-only "error generator", which will hunt through all the
 // series allocations and crash on the series that contains the value (if

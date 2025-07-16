@@ -181,7 +181,7 @@ list-dir: function [
         panic ["No directory listing protocol registered for" save-dir]
     ]
 
-    switch type of :path [
+    switch try type of :path [
         null [] ; Stay here
         file! [change-dir path]
         text! [change-dir local-to-file path]
