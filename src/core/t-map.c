@@ -334,7 +334,7 @@ REBLEN Find_Map_Entry(
     if (val == nullptr)
         return n; // was just fetching the value
 
-    assert(not Is_Nulled(val) and not Is_Void(val));
+    assert(not Is_Antiform(val) or Is_Void(val));
 
     // If not just a GET, it may try to set the value in the map.  Which means
     // the key may need to be stored.  Since copies of keys are never made,
@@ -347,14 +347,14 @@ REBLEN Find_Map_Entry(
     // Must set the value:
     if (n) {  // re-set it:
         Cell* dest = Array_At(pairlist, ((n - 1) * 2) + 1);
-        if (Is_Trash(val))
+        if (Is_Void(val))
             Init_Zombie(dest);
         else
             Derelativize(dest, val, val_specifier);
         return n;
     }
 
-    if (Is_Trash(val))
+    if (Is_Void(val))
         return 0; // trying to remove non-existing key
 
     // Create new entry.  Note that it does not copy underlying series (e.g.
@@ -378,8 +378,8 @@ Bounce PD_Map(
     assert(Is_Map(pvs->out));
 
     if (opt_setval != nullptr) {
-        if (Is_Antiform(opt_setval) and not Is_Trash(opt_setval))
-            panic ("Can't set map entries to void or null");
+        if (Is_Antiform(opt_setval) and not Is_Void(opt_setval))
+            panic ("Can't set map entries to antiforms, use void to unset");
 
         Panic_If_Read_Only_Flex(Cell_Flex(pvs->out));
     }
@@ -403,7 +403,7 @@ Bounce PD_Map(
     );
 
     if (opt_setval != nullptr) {
-        assert(n != 0);
+        assert(n != 0 or Is_Void(opt_setval));
         return BOUNCE_INVISIBLE;
     }
 

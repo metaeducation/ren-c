@@ -409,6 +409,9 @@ Bounce PD_Context(
     if (opt_setval) {
         PANIC_IF_READ_ONLY_CONTEXT(c);
 
+        if (Is_Void(opt_setval))
+            panic ("Can't assign void to a context slot in bootstrap EXE");
+
         if (Get_Cell_Flag(Varlist_Slot(c, n), PROTECTED))
             panic (Error_Protected_Word_Raw(picker));
     }

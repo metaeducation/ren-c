@@ -1689,9 +1689,6 @@ bool Eval_Core_Throws(Level* const L)
                 goto return_thrown;
         }
 
-        if (Is_Void(L->out))  // try to model after mainline EXE
-            panic ("Can't assign ~void~ state via SET-PATH!");
-
         if (Eval_Path_Throws_Core(
             Level_Spare(L), // output if thrown, used as scratch space otherwise
             nullptr,  // not requesting symbol means refinements not allowed

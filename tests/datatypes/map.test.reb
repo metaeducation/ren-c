@@ -20,6 +20,10 @@
     not find m 'a
 )]
 
+; Void removes
+
+(m: make map! [a 1 b 2] m.a: void not m.a)
+
 (did find make map! [foo 0] 'foo)
 
 [#2293 (
