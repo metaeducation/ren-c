@@ -215,7 +215,7 @@ export cscape: func [
                     ]
                 ]
                 #delimit [
-                    delimit (unspaced [opt :suffix newline]) sub else [
+                    delimit (unspaced [opt suffix newline]) sub else [
                         panic [
                             "No vaporizing blocks in CSCAPE $() or $[]" newline
                             mold:limit template 200
@@ -225,7 +225,7 @@ export cscape: func [
                 panic ["Invalid CSCAPE mode:" mode]
             ]
 
-            assert [not null? :sub]
+            assert [not null? sub]
 
             case [
                 any-upper and (not any-lower) [
@@ -239,7 +239,7 @@ export cscape: func [
             ; If the substitution started at a certain column, make any line
             ; breaks continue at the same column.
             ;
-            let indent: unspaced [newline opt :prefix]
+            let indent: unspaced [newline opt prefix]
             replace sub newline indent
 
             keep sub

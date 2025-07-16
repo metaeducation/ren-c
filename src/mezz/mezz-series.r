@@ -426,8 +426,8 @@ format: func [
 ][
     pad: default [space]
 
-    rules: blockify :rules
-    values: blockify :values
+    rules: blockify rules
+    values: blockify values
 
     ; Compute size of output (for better mem usage):
     let val: 0
