@@ -625,7 +625,7 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
 
         return Init_File(
             OUT,
-            Copy_Sequence_At_Len( // Copy (callers frequently modify result)
+            Copy_Non_Array_Flex_At_Len( // Copy (callers frequently modify result)
                 Cell_Flex(path),
                 VAL_INDEX(path),
                 Series_Len_At(path)
@@ -670,7 +670,7 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
 
         return Init_Text(
             OUT,
-            Copy_Sequence_At_Len( // Copy (callers frequently modify result)
+            Copy_Non_Array_Flex_At_Len( // Copy (callers frequently modify result)
                 Cell_Flex(path),
                 VAL_INDEX(path),
                 Series_Len_At(path)

@@ -1354,7 +1354,7 @@ REBTYPE(String)
             if (Is_Binary(v)) {
                 Init_Blob(
                     OUT,
-                    Copy_Sequence_At_Len(Cell_Flex(v), VAL_INDEX(v), len)
+                    Copy_Non_Array_Flex_At_Len(Cell_Flex(v), VAL_INDEX(v), len)
                 );
             } else
                 Init_Any_Series(OUT, kind, Copy_String_At_Len(v, len));
@@ -1392,7 +1392,7 @@ REBTYPE(String)
 
         Flex* flex;
         if (Is_Binary(v))
-            flex = Copy_Sequence_At_Len(Cell_Flex(v), VAL_INDEX(v), len);
+            flex = Copy_Non_Array_Flex_At_Len(Cell_Flex(v), VAL_INDEX(v), len);
         else
             flex = Copy_String_At_Len(v, len);
         return Init_Any_Series(OUT, Type_Of(v), flex); }

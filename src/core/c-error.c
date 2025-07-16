@@ -551,7 +551,7 @@ bool Make_Error_Object_Throws(
         assert(Is_Nulled(&vars->type));
         assert(Is_Nulled(&vars->id));
 
-        Init_Text(&vars->message, Copy_Sequence_At_Position(arg));
+        Init_Text(&vars->message, Copy_Non_Array_Flex_At_Position(arg));
     }
     else
         panic (Error_Invalid(arg));

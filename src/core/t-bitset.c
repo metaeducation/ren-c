@@ -704,7 +704,7 @@ REBTYPE(Bitset)
         Init_Any_Series_At(
             OUT,
             TYPE_BITSET,
-            Copy_Sequence_At_Position(value),
+            Copy_Non_Array_Flex_At_Position(value),
             VAL_INDEX(value) // !!! can bitset ever not be at 0?
         );
         INIT_BITS_NOT(Cell_Bitset(OUT), BITS_NOT(Cell_Bitset(value)));

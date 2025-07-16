@@ -423,7 +423,7 @@ Array* Split_Lines(const Value* str)
         if (c == LF or c == CR) {
             Init_Text(
                 PUSH(),
-                Copy_Sequence_At_Len(
+                Copy_Non_Array_Flex_At_Len(
                     s,
                     start - Strand_Head(s),
                     up - start - 1
@@ -457,7 +457,7 @@ Array* Split_Lines(const Value* str)
     if (up > start) {
         Init_Text(
             PUSH(),
-            Copy_Sequence_At_Len(
+            Copy_Non_Array_Flex_At_Len(
                 s,
                 start - Strand_Head(s),
                 up - start  // no -1, backed up if '\n'

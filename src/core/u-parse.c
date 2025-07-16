@@ -2087,7 +2087,7 @@ DECLARE_NATIVE(SUBPARSE)
                     else if (Is_Binary(P_INPUT_VALUE)) {
                         Init_Blob(
                             temp,
-                            Copy_Sequence_At_Len(P_INPUT, begin, count)
+                            Copy_Non_Array_Flex_At_Len(P_INPUT, begin, count)
                         );
                     }
                     else {

@@ -289,14 +289,14 @@ INLINE REBINT First_Hash_Candidate_Slot(
 // Copy helpers
 //
 
-INLINE Flex* Copy_Sequence_At_Position(const Value* v)
+INLINE Flex* Copy_Non_Array_Flex_At_Position(const Value* v)
 {
     return Copy_Non_Array_Flex_At_Len_Extra(
         Cell_Flex(v), VAL_INDEX(v), Series_Len_At(v), 0
     );
 }
 
-INLINE Flex* Copy_Sequence_At_Len(
+INLINE Flex* Copy_Non_Array_Flex_At_Len(
     Flex* s,
     REBLEN index,
     REBLEN len

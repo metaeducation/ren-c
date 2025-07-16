@@ -327,7 +327,7 @@ REBLEN Modify_Binary(
     if (dst_ser == src_ser) {
         assert(!needs_free);
         src_ser = cast(Binary*,
-            Copy_Sequence_At_Len(src_ser, src_idx, src_len)
+            Copy_Non_Array_Flex_At_Len(src_ser, src_idx, src_len)
         );
         needs_free = true;
         src_idx = 0;
@@ -458,7 +458,7 @@ REBLEN Modify_String(
     if (dst_ser == src_ser) {
         assert(!needs_free);
         src_ser = cast(Strand*,
-            Copy_Sequence_At_Len(src_ser, src_idx, src_len)
+            Copy_Non_Array_Flex_At_Len(src_ser, src_idx, src_len)
         );
         needs_free = true;
         src_idx = 0;

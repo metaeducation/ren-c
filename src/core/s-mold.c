@@ -805,7 +805,7 @@ Flex* Pop_Molded_UTF8(Molder* mo)
     Assert_Flex_Term(mo->utf8flex);
     Throttle_Mold(mo);
 
-    Flex* bytes = Copy_Sequence_At_Len(
+    Flex* bytes = Copy_Non_Array_Flex_At_Len(
         mo->utf8flex, mo->start, Flex_Len(mo->utf8flex) - mo->start
     );
     assert(BYTE_SIZE(bytes));
