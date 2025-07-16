@@ -637,7 +637,7 @@ make-obj-defs: function [
         for-each field words-of obj [
             if all [
                 field != 'standard
-                object? get in obj field
+                object? opt get in obj field
             ][
                 extended-prefix: uppercase unspaced [prefix "_" field]
                 make-obj-defs e obj/(field) extended-prefix (depth - 1)

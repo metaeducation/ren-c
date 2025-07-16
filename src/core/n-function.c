@@ -288,12 +288,37 @@ DECLARE_NATIVE(TYPECHECKER)
     archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
 
+    REBU64 bits;  // don't allow INTEGER? NULL tests, must be INTEGER? OPT NULL
+    if (Is_Datatype(type)) {
+        switch (CELL_DATATYPE_TYPE(type)) {
+          case TYPE_VOID:
+          case TYPE_NULLED:
+          case TYPE_OKAY:
+          case TYPE_TRASH:
+          case TYPE_ERROR:  // antiform in mainline, allow error? on NULL
+            bits = TS_ATOM;
+            break;
+
+          default:
+            bits = TS_ELEMENT;
+       }
+    }
+    else {
+        assert(Is_Typeset(type));
+        if (Cell_Typeset_Bits(type) & (TS_ATOM & ~TS_ELEMENT))
+            bits = TS_ATOM;
+        else
+            bits = TS_ELEMENT;
+    }
+
     Value* param = Init_Typeset(
         Alloc_Tail_Array(paramlist),
-        TS_ATOM,  // Allow void, e.g. void? void
+        bits,
         CANON(VALUE)
     );
     Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);
+    if (bits == TS_ELEMENT)
+        Set_Typeset_Flag(param, TYPE_TS_NOOP_IF_VOID);
     assert(not Is_Param_Endable(param));
 
     MISC(paramlist).meta = nullptr;  // !!! auto-generate info for HELP?

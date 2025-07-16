@@ -190,10 +190,13 @@ reeval func [
         ]
     ]
 ]
-    trash?:
+    trash?:  ; begin antiform-tolerant, TYPECHECKER makes exceptions
     void?:
+    nulled?:  ; aliased as NULL? below
+    okay?:
+    logic?:  ; end antiform-tolerant
+
     blank?:
-    logic?:
     integer?:
     decimal?:
     percent?:
@@ -247,6 +250,7 @@ reeval func [
     any-list?:
     <end>
 
+null?: :nulled?
 
 trashified?: :trash?  ; helps make tests clearer for trashification
 

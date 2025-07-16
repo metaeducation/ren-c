@@ -496,7 +496,7 @@ use [
         assert in s [
             word? platform-name
             integer? platform-number
-            any [word? build-label  not build-label]
+            any [not build-label  word? build-label]
             tuple? id
             id/1 = 0  id/2 = platform-number
             (to-text os-name) = (lowercase to-text os-name)

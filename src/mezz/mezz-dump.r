@@ -219,7 +219,7 @@ dump-obj: function [
 
     ; Search for matching strings:
     return collect [
-        wild: did all [set? 'pat  text? pat  find pat "*"]
+        wild: did all [set? 'pat  text? opt pat  find pat "*"]
 
         for-each [word val] obj [
             if unset? 'val [

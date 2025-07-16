@@ -249,7 +249,7 @@ dig-action-meta-fields: function [
         get 'meta/specializee
         get 'meta/adaptee
         all [
-            block? :meta/pipeline
+            block? opt :meta/pipeline
             first meta/pipeline
         ]
     ]
@@ -753,11 +753,11 @@ module: func [
     ; To try and standardize the variance, Ren-C does not accept LIT-WORD!
     ; in these slots.
     ;
-    if lit-word? spec/name [
+    if lit-word? opt spec/name [
         spec/name: as word! spec/name
         panic ["Ren-C module name:" (spec/name) "must be WORD!, not LIT-WORD!"]
     ]
-    if lit-word? spec/type [
+    if lit-word? opt spec/type [
         spec/type: as word! spec/type
         panic ["Ren-C module type:" (spec/type) "must be WORD!, not LIT-WORD!"]
     ]
@@ -794,7 +794,7 @@ module: func [
 
     ; Collect 'export keyword exports, removing the keywords
     if find body 'export [
-        if not block? select spec 'exports [
+        if not block? opt select spec 'exports [
             append spec reduce ['exports make block! 10]
         ]
 
@@ -835,14 +835,17 @@ module: func [
     ]
 
     ; Add hidden words next to the context (performance):
-    if block? hidden [bind/new hidden mod]
-
-    if block? hidden [protect/hide/words hidden]
+    ;
+    if hidden [
+        ensure block! hidden
+        bind/new hidden mod
+        protect/hide/words hidden
+    ]
 
     set-meta mod spec
 
     ; Add exported words at top of context (performance):
-    if block? select spec 'exports [bind/new spec/exports mod]
+    if block? opt select spec 'exports [bind/new spec/exports mod]
 
     either find spec/options 'isolate [
         ;

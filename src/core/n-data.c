@@ -1242,58 +1242,6 @@ DECLARE_NATIVE(NOOP)
 
 
 //
-//  null?: native [
-//
-//  "Tells you if the argument is not a value"
-//
-//      return: [logic!]
-//      optional [any-atom!]
-//  ]
-//
-DECLARE_NATIVE(NULL_Q)
-{
-    INCLUDE_PARAMS_OF_NULL_Q;
-
-    return Init_Logic(OUT, Is_Nulled(ARG(OPTIONAL)));
-}
-
-
-//
-//  okay?: native [
-//
-//  "Tells you if the argument is antiform okay"
-//
-//      return: [logic!]
-//      optional [any-atom!]
-//  ]
-//
-DECLARE_NATIVE(OKAY_Q)
-{
-    INCLUDE_PARAMS_OF_OKAY_Q;
-
-    return Init_Logic(OUT, Is_Okay(ARG(OPTIONAL)));
-}
-
-
-//
-//  logic?: native [
-//
-//  "Tells you if the argument is either the ~null~ or ~okay~ antiform"
-//
-//      return: [logic!]  ; Note: using LOGIC? to typecheck would be recursive
-//      value [any-atom!]
-//  ]
-//
-DECLARE_NATIVE(LOGIC_Q)
-{
-    INCLUDE_PARAMS_OF_LOGIC_Q;
-
-    Value* v = ARG(VALUE);
-    return LOGIC(Is_Logic(v));
-}
-
-
-//
 //  logical: native [
 //
 //  "Produces ~null~ antiform for 0, or ~okay~ antiform for all other integers"

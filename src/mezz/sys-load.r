@@ -271,7 +271,7 @@ load: function [
         set [hdr: data:] load-header data 'line
         hdr: degrade hdr
 
-        if word? hdr [cause-error 'syntax hdr source]
+        if word? opt hdr [cause-error 'syntax hdr source]
     ]
 
     ensure [~null~ object!] hdr
@@ -510,7 +510,7 @@ load-module: function [
         name: :hdr/name
     ]
 
-    if (not no-lib) and (not word? :name) [ ; requires name for full import
+    if (not no-lib) and (not word? opt :name) [ ; requires name for full import
         ; Unnamed module can't be imported to lib, so /no-lib here
         no-lib: okay  ; Still not /no-lib in IMPORT
 
@@ -518,7 +518,7 @@ load-module: function [
             hdr/options: append any [hdr/options make block! 1] 'private
         ]
     ]
-    if not tuple? set 'modver :hdr/version [
+    if not tuple? opt set 'modver :hdr/version [
         modver: 0.0.0 ; get version
     ]
 

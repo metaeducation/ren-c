@@ -999,7 +999,7 @@ add-project-flags: func [
     ]
 
     if D [
-        if block? project/definitions [
+        if block? opt project/definitions [
             append project/definitions definitions
         ] else [
             ensure [~null~] project/definitions
@@ -1008,7 +1008,7 @@ add-project-flags: func [
     ]
 
     if I [
-        if block? project/includes [
+        if block? opt project/includes [
             append project/includes includes
         ] else [
             ensure [~null~] project/includes
@@ -1016,7 +1016,7 @@ add-project-flags: func [
         ]
     ]
     if c [
-        if block? project/cflags [
+        if block? opt project/cflags [
             append project/cflags cflags
         ] else [
             ensure [~null~] project/cflags
@@ -1098,6 +1098,7 @@ for-each ext builtin-extensions [
     ; another object-library
     ;
     all [
+        ext/depends
         block? ext/depends
         not empty? ext/depends
     ] then [
@@ -1144,7 +1145,7 @@ calculate-sequence: function [
     ext
     <local> req b
 ][
-    if integer? ext/sequence [return ext/sequence]
+    if ext/sequence [return ext/sequence]
     if ext/visited [panic ["circular dependency on" ext]]
     if not ext/requires [ext/sequence: 0 return ext/sequence]
     ext/visited: okay

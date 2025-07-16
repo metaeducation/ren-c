@@ -674,7 +674,8 @@ host-start: function [
     ;
     ;     r3 --do "do %script1.reb" --do "do %script2.reb"
     ;
-    if file? o/script [
+    if o/script [
+        ensure file! o/script
         emit {Use DO/ONLY so QUIT exits vs. being DO's return value}
         emit [do/only/args (<*> o/script) (<*> enblock script-args)]
     ]
