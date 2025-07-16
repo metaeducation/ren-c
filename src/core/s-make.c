@@ -105,7 +105,7 @@ Flex* Copy_String_At_Len(const Cell* src, REBINT limit)
     assert(length_limit * 2 == size); // !!! Temporary
 
     Strand* dst = Make_Strand(size / 2);
-    memcpy(Strand_At(dst, 0), Cell_String_At(src), size);
+    memcpy(Strand_At(dst, 0), String_At(src), size);
     Term_Non_Array_Flex_Len(dst, length_limit);
 
     return dst;
@@ -393,7 +393,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
         case TYPE_URL:
         case TYPE_TAG: {
             REBLEN val_len = Series_Len_At(val);
-            size_t val_size = Size_As_UTF8(Cell_String_At(val), val_len);
+            size_t val_size = Size_As_UTF8(String_At(val), val_len);
 
             Expand_Flex_Tail(series, val_size);
             Set_Flex_Len(
@@ -401,7 +401,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
                 tail + Encode_UTF8(
                     Binary_At(series, tail),
                     val_size,
-                    Cell_String_At(val),
+                    String_At(val),
                     &val_len
                 )
             );

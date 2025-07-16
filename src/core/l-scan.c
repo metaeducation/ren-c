@@ -2946,7 +2946,7 @@ DECLARE_NATIVE(TRANSCODE)
     Value* source = ARG(SOURCE);
     Binary* converted = nullptr;
     if (Is_Text(source)) {
-        converted = Make_Utf8_From_Cell_String_At_Limit(
+        converted = Make_Utf8_From_String_At_Limit(
             source, Series_Len_At(source)
         );
     }

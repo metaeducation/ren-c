@@ -63,7 +63,7 @@ Flex* To_REBOL_Path(const Cell* string, Flags flags)
     bool last_was_slash = false; // was last character appended a slash?
 
 restart:;
-    Ucs2(const*) up = Cell_String_At(string);
+    Ucs2(const*) up = String_At(string);
     REBLEN len = Series_Len_At(string);
 
     Ucs2Unit c = '\0'; // for test after loop (in case loop does not run)
@@ -142,7 +142,7 @@ restart:;
 void Mold_File_To_Local(Molder* mo, const Cell* file, Flags flags) {
     assert(Is_File(file));
 
-    Ucs2(const*) up = Cell_String_At(file);
+    Ucs2(const*) up = String_At(file);
     REBLEN len = Series_Len_At(file);
 
     REBLEN i = 0;

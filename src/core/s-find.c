@@ -164,7 +164,7 @@ REBINT Compare_String_Vals(const Cell* v1, const Cell* v2, bool uncase)
     REBLEN l2  = Series_Len_At(v2);
     REBLEN len = MIN(l1, l2);
 
-    REBINT n = Compare_Uni_Str(Cell_String_At(v1), Cell_String_At(v2), len, uncase);
+    REBINT n = Compare_Uni_Str(String_At(v1), String_At(v2), len, uncase);
 
     if (n != 0)
         return n;

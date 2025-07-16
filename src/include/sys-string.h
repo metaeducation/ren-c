@@ -135,13 +135,13 @@ INLINE Strand* Cell_Strand(const Cell* cell) {
     return cast(Strand*, Cell_Flex(cell));
 }
 
-#define Cell_String_Head(v) \
+#define String_Head(v) \
     Strand_Head(Cell_Strand(v))
 
-#define Cell_String_Tail(v) \
+#define String_Tail(v) \
     Strand_Tail(Cell_Strand(v))
 
-INLINE Ucs2(*) Cell_String_At(const Cell* v) {
+INLINE Ucs2(*) String_At(const Cell* v) {
     return Strand_At(Cell_Strand(v), VAL_INDEX(v));
 }
 
@@ -152,13 +152,13 @@ INLINE Size VAL_SIZE_LIMIT_AT(
 ){
     assert(Any_String(v));
 
-    Ucs2(const*) at = Cell_String_At(v); // !!! update cache if needed
+    Ucs2(const*) at = String_At(v); // !!! update cache if needed
     Ucs2(const*) tail;
 
     if (limit == -1) {
         if (length != nullptr)
             *length = Series_Len_At(v);
-        tail = Cell_String_Tail(v); // byte count known (fast)
+        tail = String_Tail(v); // byte count known (fast)
     }
     else {
         if (length != nullptr)

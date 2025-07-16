@@ -981,17 +981,17 @@ Binary* Make_Utf8_From_String(Strand* string) {
 
 
 //
-//  Make_Utf8_From_Cell_String_At_Limit: C
+//  Make_Utf8_From_String_At_Limit: C
 //
 // !!! With UTF-8 Everywhere, strings will already be in UTF-8.
 //
-Binary* Make_Utf8_From_Cell_String_At_Limit(
+Binary* Make_Utf8_From_String_At_Limit(
     const Cell* any_string,
     REBLEN len
 ){
     assert(Any_String(any_string));
 
-    const Ucs2Unit *data = Cell_String_At(any_string);
+    const Ucs2Unit *data = String_At(any_string);
     size_t size = Size_As_UTF8(data, len);
     Binary* bin = Make_Binary(size);
     Set_Flex_Len(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));

@@ -42,7 +42,7 @@ static bool Check_Char_Range(const Value* val, REBINT limit)
     assert(Any_String(val));
 
     REBLEN len = Series_Len_At(val);
-    Ucs2(const*) up = Cell_String_At(val);
+    Ucs2(const*) up = String_At(val);
 
     for (; len > 0; len--) {
         Ucs2Unit c;
@@ -1101,7 +1101,7 @@ DECLARE_NATIVE(AS)
         }
 
         if (Any_String(v)) {
-            Binary* bin = Make_Utf8_From_Cell_String_At_Limit(v, Series_Len_At(v));
+            Binary* bin = Make_Utf8_From_String_At_Limit(v, Series_Len_At(v));
 
             // !!! Making a binary out of a UCS-2 encoded string currently
             // frees the string data if it's mutable, and if that's not

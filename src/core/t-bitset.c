@@ -172,7 +172,7 @@ REBINT Find_Max_Bit(const Cell* val)
 //  case TYPE_ISSUE:
     case TYPE_TAG: {
         n = VAL_INDEX(val);
-        Ucs2(const*) up = Cell_String_At(val);
+        Ucs2(const*) up = String_At(val);
         for (; n < cast(REBINT, VAL_LEN_HEAD(val)); n++) {
             Ucs2Unit c;
             up = Ucs2_Next(&c, up);
@@ -306,7 +306,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
 
     if (Any_String(val)) {
         REBLEN i = VAL_INDEX(val);
-        Ucs2(const*) up = Cell_String_At(val);
+        Ucs2(const*) up = String_At(val);
         for (; i < VAL_LEN_HEAD(val); ++i) {
             Ucs2Unit c;
             up = Ucs2_Next(&c, up);
@@ -443,7 +443,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
 
     if (Any_String(val)) {
         REBLEN i = VAL_INDEX(val);
-        Ucs2(const*) up = Cell_String_At(val);
+        Ucs2(const*) up = String_At(val);
         for (; i != VAL_LEN_HEAD(val); ++i) {
             Ucs2Unit c;
             up = Ucs2_Next(&c, up);

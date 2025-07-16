@@ -68,7 +68,7 @@ Byte *Analyze_String_For_Scan(
     const Value* any_string,
     REBLEN max_len // maximum length in *codepoints*
 ){
-    Ucs2(const*) up = Cell_String_At(any_string);
+    Ucs2(const*) up = String_At(any_string);
     REBLEN index = VAL_INDEX(any_string);
     REBLEN len = Series_Len_At(any_string);
     if (len == 0)
@@ -164,7 +164,7 @@ Binary* Temp_UTF8_At_Managed(
 
     assert(length_limit <= Series_Len_At(str));
 
-    Binary* bin = Make_Utf8_From_Cell_String_At_Limit(str, length_limit);
+    Binary* bin = Make_Utf8_From_String_At_Limit(str, length_limit);
     assert(BYTE_SIZE(bin));
 
     Manage_Flex(bin);
@@ -368,7 +368,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
                 bp[n] = cast(Byte, LO_CASE(bp[n]));
         }
     } else {
-        Ucs2Unit* up = Cell_String_At(val);
+        Ucs2Unit* up = String_At(val);
         if (upper) {
             for (; n != len; n++) {
                 if (up[n] < UNICODE_CASES)
@@ -409,7 +409,7 @@ Array* Split_Lines(const Value* str)
     REBLEN len = Series_Len_At(str);
     REBLEN i = VAL_INDEX(str);
 
-    Ucs2(const*) start = Cell_String_At(str);
+    Ucs2(const*) start = String_At(str);
     Ucs2(const*) up = start;
 
     if (i == len)

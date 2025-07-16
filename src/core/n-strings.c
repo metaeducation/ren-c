@@ -868,7 +868,7 @@ DECLARE_NATIVE(DELINE)
 
     REBLEN len_at = Series_Len_At(val);
 
-    Ucs2(*) dest = Cell_String_At(val);
+    Ucs2(*) dest = String_At(val);
     Ucs2(const*) src = dest;
 
     REBLEN n;
@@ -999,7 +999,7 @@ DECLARE_NATIVE(ENTAB)
     REBLEN len = Series_Len_At(val);
     Byte *dp = Prep_Mold_Overestimated(mo, len * 4); // max UTF-8 charsize
 
-    Ucs2(const*) up = Cell_String_At(val);
+    Ucs2(const*) up = String_At(val);
     REBLEN index = VAL_INDEX(val);
 
     REBINT n = 0;
@@ -1074,7 +1074,7 @@ DECLARE_NATIVE(DETAB)
 
     // Estimate new length based on tab expansion:
 
-    Ucs2(const*) cp = Cell_String_At(val);
+    Ucs2(const*) cp = String_At(val);
     REBLEN index = VAL_INDEX(val);
 
     REBLEN count = 0;
@@ -1094,7 +1094,7 @@ DECLARE_NATIVE(DETAB)
             + (count * (tabsize - 1)) // expanded tabs add tabsize - 1 to len
     );
 
-    cp = Cell_String_At(val);
+    cp = String_At(val);
 
     n = 0;
     for (; index < len; ++index) {
@@ -1334,7 +1334,7 @@ DECLARE_NATIVE(ENCODE_UTF8)
 
     Value* string = ARG(STRING);
 
-    Binary* bin = Make_Utf8_From_Cell_String_At_Limit(
+    Binary* bin = Make_Utf8_From_String_At_Limit(
         string,
         Series_Len_At(string)
     );

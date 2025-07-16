@@ -294,9 +294,9 @@ REBLEN Modify_Binary(
     else if (Any_String(src_val)) {
         REBLEN len_at = Series_Len_At(src_val);
         if (limit >= 0 && len_at > cast(REBLEN, limit))
-            src_ser = Make_Utf8_From_Cell_String_At_Limit(src_val, limit);
+            src_ser = Make_Utf8_From_String_At_Limit(src_val, limit);
         else
-            src_ser = Make_Utf8_From_Cell_String_At_Limit(src_val, len_at);
+            src_ser = Make_Utf8_From_String_At_Limit(src_val, len_at);
         needs_free = true;
         limit = -1;
     }

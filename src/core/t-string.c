@@ -357,7 +357,7 @@ static Binary* make_binary(const Value* arg, bool make)
     case TYPE_URL:
     case TYPE_TAG:
 //  case TYPE_ISSUE:
-        flex = Make_Utf8_From_Cell_String_At_Limit(arg, Series_Len_At(arg));
+        flex = Make_Utf8_From_String_At_Limit(arg, Series_Len_At(arg));
         break;
 
     case TYPE_BLOCK:
