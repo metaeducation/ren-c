@@ -1608,7 +1608,7 @@ calculate-sequence: func [
     return: [integer!]
     ext
 ][
-    if integer? ext.sequence [return ext.sequence]
+    if ext.sequence [return ensure integer! ext.sequence]
     if yes? ext.visited [panic ["circular dependency on" ext]]
     if null? ext.requires [ext.sequence: 0 return ext.sequence]
     ext.visited: 'yes

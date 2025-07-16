@@ -537,8 +537,8 @@ use [
             word? name
             integer? number
             any [
-                word? build-label
                 not build-label
+                word? build-label
             ]
             tuple? id
             all [

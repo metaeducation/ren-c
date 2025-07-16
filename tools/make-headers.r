@@ -190,7 +190,7 @@ handle-item: func [
     file: to file! name
 
     all [
-        block? options
+        block? opt options
         find options <no-make-header>
     ] then [
         return ~  ; skip this file
