@@ -417,7 +417,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             Set_Seek(file, ARG(INDEX));
 
         // Determine length. Clip /PART to size of string if needed.
-        REBLEN len = Cell_Series_Len_At(data);
+        REBLEN len = Series_Len_At(data);
         if (Bool_ARG(PART)) {
             REBLEN n = Int32s(ARG(LIMIT), 0);
             if (n <= len) len = n;

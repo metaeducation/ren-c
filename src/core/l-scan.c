@@ -2947,7 +2947,7 @@ DECLARE_NATIVE(TRANSCODE)
     Binary* converted = nullptr;
     if (Is_Text(source)) {
         converted = Make_Utf8_From_Cell_String_At_Limit(
-            source, Cell_Series_Len_At(source)
+            source, Series_Len_At(source)
         );
     }
 
@@ -2957,7 +2957,7 @@ DECLARE_NATIVE(TRANSCODE)
         filename,
         start_line,
         converted ? Binary_Head(converted) : Cell_Blob_At(source),
-        converted ? Binary_Len(converted) : Cell_Series_Len_At(source)
+        converted ? Binary_Len(converted) : Series_Len_At(source)
     );
 
     ScanState scan;

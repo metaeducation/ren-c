@@ -592,7 +592,7 @@ bool Eval_Core_Throws(Level* const L)
         // For now, see comments in the WORD branch above for more details.
         //
         if (
-            Cell_Series_Len_At(current) > 0
+            Series_Len_At(current) > 0
             and Is_Word(Cell_List_At(current))
         ){
             assert(not current_gotten); // no caching for paths
@@ -1584,7 +1584,7 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_PATH: {
-        assert(Cell_Series_Len_At(current) >= 2);
+        assert(Series_Len_At(current) >= 2);
         bool tail_blank = Is_Blank(Array_Last(Cell_Array(current)));
 
         Symbol* opt_label;
@@ -1906,7 +1906,7 @@ bool Eval_Core_Throws(Level* const L)
 
     if (eval_type == TYPE_PATH) {
         if (
-            Cell_Series_Len_At(L->value) != 0
+            Series_Len_At(L->value) != 0
             or Get_Eval_Flag(L, NO_LOOKAHEAD)
         ){
             if (Not_Eval_Flag(L, TO_END))

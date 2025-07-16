@@ -134,7 +134,7 @@ bool Any_Metaform(Value* v) {
 
     return (
         Is_Group(v)
-        and Cell_Series_Len_At(v) == 2
+        and Series_Len_At(v) == 2
         and Is_Word(Cell_List_At(v))
         and Cell_Word_Id(Cell_List_At(v)) == SYM_THE
     );
@@ -211,7 +211,7 @@ Value* Meta_Unquotify(Value* v)
     }
     else if (
         Is_Group(v)
-        and Cell_Series_Len_At(v) == 2
+        and Series_Len_At(v) == 2
         and Is_Word(Cell_List_At(v))
         and Cell_Word_Id(Cell_List_At(v)) == SYM_THE
     ){
@@ -377,7 +377,7 @@ bool Match_For_Compose(const Cell* group, const Value* pattern) {
     if (Is_Nulled(pattern))
         return true;
 
-    if (Cell_Series_Len_At(group) == 0) // yhave a pattern, so leave `()` as-is
+    if (Series_Len_At(group) == 0) // yhave a pattern, so leave `()` as-is
         return false;
 
     Cell* first = Cell_List_At(group);

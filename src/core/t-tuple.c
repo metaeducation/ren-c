@@ -130,7 +130,7 @@ Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     }
     else if (Is_Binary(arg)) {
         Byte *ap = Cell_Blob_At(arg);
-        REBLEN len = Cell_Series_Len_At(arg);
+        REBLEN len = Series_Len_At(arg);
         if (len > MAX_TUPLE) len = MAX_TUPLE;
         VAL_TUPLE_LEN(out) = len;
         for (alen = 0; alen < len; alen++) *vp++ = *ap++;

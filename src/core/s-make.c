@@ -367,7 +367,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
     REBLEN tail = 0;
 
     if (limit < 0)
-        limit = Cell_Series_Len_At(blk);
+        limit = Series_Len_At(blk);
 
     Set_Flex_Len(series, 0);
 
@@ -382,7 +382,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
             break;
 
         case TYPE_BINARY: {
-            REBLEN len = Cell_Series_Len_At(val);
+            REBLEN len = Series_Len_At(val);
             Expand_Flex_Tail(series, len);
             memcpy(Binary_At(series, tail), Cell_Blob_At(val), len);
             break; }
@@ -392,7 +392,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
         case TYPE_EMAIL:
         case TYPE_URL:
         case TYPE_TAG: {
-            REBLEN val_len = Cell_Series_Len_At(val);
+            REBLEN val_len = Series_Len_At(val);
             size_t val_size = Size_As_UTF8(Cell_String_At(val), val_len);
 
             Expand_Flex_Tail(series, val_size);

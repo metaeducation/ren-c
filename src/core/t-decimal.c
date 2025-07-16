@@ -177,7 +177,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         break; }
 
     case TYPE_BINARY:
-        if (Cell_Series_Len_At(arg) < 8)
+        if (Series_Len_At(arg) < 8)
             panic (Error_Invalid(arg));
 
         Init_Decimal_Bits(out, Cell_Blob_At(arg)); // makes TYPE_DECIMAL

@@ -100,7 +100,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
             Size offset;
             Size size;
             Binary* temp = Temp_UTF8_At_Managed(
-                &offset, &size, arg, Cell_Series_Len_At(arg)
+                &offset, &size, arg, Series_Len_At(arg)
             );
 
             DECLARE_VALUE (tmp);

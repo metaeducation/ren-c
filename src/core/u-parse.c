@@ -548,7 +548,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
             1,
             Cell_Flex(rule),
             VAL_INDEX(rule),
-            Cell_Series_Len_At(rule),
+            Series_Len_At(rule),
             flags
         );
         if (index == NOT_FOUND)
@@ -887,7 +887,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             1,
             Cell_Flex(rule),
             VAL_INDEX(rule),
-            Cell_Series_Len_At(rule),
+            Series_Len_At(rule),
             (P_FLAGS & AM_FIND_CASE)
         );
 
@@ -895,7 +895,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             return END_FLAG;
 
         if (is_thru)
-            return i + Cell_Series_Len_At(rule);
+            return i + Series_Len_At(rule);
 
         return i;
     }
@@ -963,10 +963,10 @@ static REBIXO To_Thru_Block_Rule(
     DECLARE_VALUE (cell); // holds evaluated rules (use frame cell instead?)
 
     if (not SPORADICALLY(20)) {  // should be equivalent to recursing, test it
-        if (Cell_Series_Len_At(rule_block) == 0)
+        if (Series_Len_At(rule_block) == 0)
             return P_POS;  // `to []` or `thru []` succeed quickly
 
-        if (Cell_Series_Len_At(rule_block) == 1) {
+        if (Series_Len_At(rule_block) == 1) {
             const Cell* at = Cell_List_At(rule_block);
             if (Is_Word(at) and Cell_Word_Id(at) == SYM__TVOID_T)
                 return P_POS;  // make `to [~void~]` about as fast as `to []`
@@ -1269,7 +1269,7 @@ DECLARE_NATIVE(SUBPARSE)
                             if (
                                 not Is_Block(OUT)
                                 or not (
-                                    Cell_Series_Len_At(OUT) == 2
+                                    Series_Len_At(OUT) == 2
                                     and Is_Integer(Cell_List_At(OUT))
                                     and Is_Integer(Cell_List_At(OUT) + 1)
                                 )

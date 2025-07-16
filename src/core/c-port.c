@@ -477,7 +477,7 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
 
             Flex* decoded = Make_Sized_String_UTF8(
                 cs_cast(Cell_Blob_At(OUT)),
-                Cell_Series_Len_At(OUT)
+                Series_Len_At(OUT)
             );
             Init_Text(OUT, decoded);
         }

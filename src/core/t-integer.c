@@ -156,7 +156,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // interface could support BigNums in the future.
 
         Byte *bp = Cell_Blob_At(value);
-        REBLEN n = Cell_Series_Len_At(value);
+        REBLEN n = Series_Len_At(value);
         bool negative;
         REBINT fill;
 
@@ -281,7 +281,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
     }
     else if (Any_String(value)) {
         Size size;
-        const REBLEN max_len = Cell_Series_Len_At(value); // e.g. "no maximum"
+        const REBLEN max_len = Series_Len_At(value); // e.g. "no maximum"
         Byte *bp = Analyze_String_For_Scan(&size, value, max_len);
         if (
             memchr(bp, '.', size)
@@ -597,7 +597,7 @@ DECLARE_NATIVE(ENBIN)
     INCLUDE_PARAMS_OF_ENBIN;
 
     Value* settings = rebValue("compose", ARG(SETTINGS));
-    if (Cell_Series_Len_At(settings) != 3)
+    if (Series_Len_At(settings) != 3)
         panic ("ENBIN requires array of length 3 for settings for now");
     bool little = rebDid(
         "degrade switch first", settings, "[",
@@ -703,7 +703,7 @@ DECLARE_NATIVE(DEBIN)
     INCLUDE_PARAMS_OF_DEBIN;
 
     Value* settings = rebValue("compose", ARG(SETTINGS));
-    if (Cell_Series_Len_At(settings) != 2 and Cell_Series_Len_At(settings) != 3)
+    if (Series_Len_At(settings) != 2 and Series_Len_At(settings) != 3)
         panic ("DEBIN requires array of length 2 or 3 for settings for now");
     bool little = rebDid(
         "degrade switch first", settings, "[",
@@ -721,12 +721,12 @@ DECLARE_NATIVE(DEBIN)
     REBLEN num_bytes;
     Cell* third = Cell_List_At_Head(settings, index + 2);
     if (IS_END(third))
-        num_bytes = Cell_Series_Len_At(ARG(BINARY));
+        num_bytes = Series_Len_At(ARG(BINARY));
     else {
         if (not Is_Integer(third))
             panic ("Third element of DEBIN settings must be an integer}");
         num_bytes = VAL_INT32(third);
-        if (Cell_Series_Len_At(ARG(BINARY)) != num_bytes)
+        if (Series_Len_At(ARG(BINARY)) != num_bytes)
             panic ("Input binary is longer than number of bytes to DEBIN");
     }
     if (num_bytes <= 0) {

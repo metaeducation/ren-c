@@ -426,7 +426,7 @@ Flex* Hash_Block(const Value* block, REBLEN skip, bool cased)
     Cell* value;
 
     // Create the hash array (integer indexes):
-    hashlist = Make_Hash_Sequence(Cell_Series_Len_At(block));
+    hashlist = Make_Hash_Sequence(Series_Len_At(block));
     hashes = Flex_Head(REBLEN, hashlist);
 
     value = Cell_List_At(block);

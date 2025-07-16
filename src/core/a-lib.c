@@ -1023,7 +1023,7 @@ size_t API_rebSpellInto(
     if (Any_String(v)) {
         Size offset;
         Binary* temp = Temp_UTF8_At_Managed(
-            &offset, &utf8_size, v, Cell_Series_Len_At(v)
+            &offset, &utf8_size, v, Series_Len_At(v)
         );
         utf8 = cs_cast(Binary_At(temp, offset));
     }
@@ -1093,7 +1093,7 @@ unsigned int API_rebSpellIntoW(
     if (Any_String(v)) {
         s = Cell_Flex(v);
         index = VAL_INDEX(v);
-        len = Cell_Series_Len_At(v);
+        len = Series_Len_At(v);
     }
     else {
         assert(Any_Word(v));
@@ -1172,7 +1172,7 @@ size_t API_rebBytesInto(
     if (not Is_Binary(blob))
         panic ("rebBytesInto() only works on BINARY!");
 
-    REBLEN size = Cell_Series_Len_At(blob);
+    REBLEN size = Series_Len_At(blob);
 
     if (not buf) {
         assert(buf_size == 0);

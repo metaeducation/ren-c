@@ -507,7 +507,7 @@ INLINE void Set_Cell_Flex(Cell* v, Flex* s) {
 #define VAL_LEN_HEAD(v) \
     Flex_Len(Cell_Flex(v))
 
-INLINE REBLEN Cell_Series_Len_At(const Cell* v) {
+INLINE REBLEN Series_Len_At(const Cell* v) {
     if (VAL_INDEX(v) >= VAL_LEN_HEAD(v))
         return 0; // avoid negative index
     return VAL_LEN_HEAD(v) - VAL_INDEX(v); // take current index into account

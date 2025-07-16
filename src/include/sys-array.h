@@ -472,7 +472,7 @@ INLINE void INIT_VAL_ARRAY(Cell* v, Array* a) {
     Array_At(Cell_Array(v), VAL_INDEX(v))
 
 #define VAL_ARRAY_LEN_AT(v) \
-    Cell_Series_Len_At(v)
+    Series_Len_At(v)
 
 // These operations do not need to take the value's index position into
 // account; they strictly operate on the array series

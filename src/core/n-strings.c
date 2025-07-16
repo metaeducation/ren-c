@@ -233,14 +233,14 @@ DECLARE_NATIVE(CHECKSUM)
                 Size keylen;
                 if (Is_Binary(key)) {
                     keycp = Cell_Blob_At(key);
-                    keylen = Cell_Series_Len_At(key);
+                    keylen = Series_Len_At(key);
                 }
                 else {
                     assert(Is_Text(key));
 
                     Size offset;
                     Binary* temp = Temp_UTF8_At_Managed(
-                        &offset, &keylen, key, Cell_Series_Len_At(key)
+                        &offset, &keylen, key, Series_Len_At(key)
                     );
                     Push_GC_Guard(temp);
                     keycp = Binary_At(temp, offset);
@@ -458,7 +458,7 @@ DECLARE_NATIVE(DEBASE)
     Size offset;
     Size size;
     Binary* temp = Temp_UTF8_At_Managed(
-        &offset, &size, ARG(VALUE), Cell_Series_Len_At(ARG(VALUE))
+        &offset, &size, ARG(VALUE), Series_Len_At(ARG(VALUE))
     );
 
     REBINT base = 64;
@@ -504,12 +504,12 @@ DECLARE_NATIVE(ENBASE)
     Byte *bp;
     if (Is_Binary(v)) {
         bp = Cell_Blob_At(v);
-        size = Cell_Series_Len_At(v);
+        size = Series_Len_At(v);
     }
     else { // Convert the string to UTF-8
         assert(Any_String(v));
         Size offset;
-        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Series_Len_At(v));
         bp = Binary_At(temp, offset);
     }
 
@@ -574,7 +574,7 @@ DECLARE_NATIVE(ENHEX)
             "-._~:/?#[]@!$&'()*+,;=";
   #endif
 
-    REBLEN len = Cell_Series_Len_At(ARG(STRING));
+    REBLEN len = Series_Len_At(ARG(STRING));
 
     DECLARE_MOLDER (mo);
     Push_Mold (mo);
@@ -725,7 +725,7 @@ DECLARE_NATIVE(DEHEX)
 {
     INCLUDE_PARAMS_OF_DEHEX;
 
-    REBLEN len = Cell_Series_Len_At(ARG(STRING));
+    REBLEN len = Series_Len_At(ARG(STRING));
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
@@ -866,7 +866,7 @@ DECLARE_NATIVE(DELINE)
     Strand* s = Cell_Strand(val);
     REBLEN len_head = Flex_Len(s);
 
-    REBLEN len_at = Cell_Series_Len_At(val);
+    REBLEN len_at = Series_Len_At(val);
 
     Ucs2(*) dest = Cell_String_At(val);
     Ucs2(const*) src = dest;
@@ -911,7 +911,7 @@ DECLARE_NATIVE(ENLINE)
 
     Strand* flex = Cell_Strand(val);
     REBLEN idx = VAL_INDEX(val);
-    REBLEN len = Cell_Series_Len_At(val);
+    REBLEN len = Series_Len_At(val);
 
     REBLEN delta = 0;
 
@@ -996,7 +996,7 @@ DECLARE_NATIVE(ENTAB)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    REBLEN len = Cell_Series_Len_At(val);
+    REBLEN len = Series_Len_At(val);
     Byte *dp = Prep_Mold_Overestimated(mo, len * 4); // max UTF-8 charsize
 
     Ucs2(const*) up = Cell_String_At(val);
@@ -1062,7 +1062,7 @@ DECLARE_NATIVE(DETAB)
 
     Value* val = ARG(STRING);
 
-    REBLEN len = Cell_Series_Len_At(val);
+    REBLEN len = Series_Len_At(val);
 
     REBINT tabsize;
     if (Bool_ARG(SIZE))
@@ -1245,7 +1245,7 @@ DECLARE_NATIVE(FIND_SCRIPT)
 
     Value* arg = ARG(SCRIPT);
 
-    REBINT offset = Scan_Header(Cell_Blob_At(arg), Cell_Series_Len_At(arg));
+    REBINT offset = Scan_Header(Cell_Blob_At(arg), Series_Len_At(arg));
     if (offset == -1)
         return nullptr;
 
@@ -1269,7 +1269,7 @@ DECLARE_NATIVE(INVALID_UTF8_Q)
 
     Value* arg = ARG(DATA);
 
-    Byte *bp = Check_UTF8(Cell_Blob_At(arg), Cell_Series_Len_At(arg));
+    Byte *bp = Check_UTF8(Cell_Blob_At(arg), Series_Len_At(arg));
     if (not bp)
         return nullptr;
 
@@ -1336,7 +1336,7 @@ DECLARE_NATIVE(ENCODE_UTF8)
 
     Binary* bin = Make_Utf8_From_Cell_String_At_Limit(
         string,
-        Cell_Series_Len_At(string)
+        Series_Len_At(string)
     );
 
     return Init_Blob(OUT, bin);

@@ -1405,7 +1405,7 @@ void MF_Error(Molder* mo, const Cell* v, bool form)
     Value* where = KNOWN(&vars->where);
     if (
         not Is_Nulled(where)
-        and not (Is_Block(where) and Cell_Series_Len_At(where) == 0)
+        and not (Is_Block(where) and Series_Len_At(where) == 0)
     ){
         Append_Codepoint(mo->utf8flex, '\n');
         Append_Unencoded(mo->utf8flex, RM_ERROR_WHERE);

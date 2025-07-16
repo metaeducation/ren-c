@@ -304,7 +304,7 @@ Value* Init_Any_Series_At_Core(
     INIT_BINDING(out, binding);
 
     if (Any_Path_Kind(type)) {
-        if (Cell_Series_Len_At(out) < 2)
+        if (Series_Len_At(out) < 2)
             panic ("ANY-PATH! must have at least 2 elements");
     }
 
@@ -424,7 +424,7 @@ static REBLEN Part_Len_Core(
     const Value* limit // /PART (number, position in value, or NULLED cell)
 ){
     if (Is_Nulled(limit)) // limit is nulled when /PART refinement unused
-        return Cell_Series_Len_At(series); // leave index alone, use plain length
+        return Series_Len_At(series); // leave index alone, use plain length
 
     REBI64 len;
     if (Is_Integer(limit) or Is_Decimal(limit))
@@ -444,7 +444,7 @@ static REBLEN Part_Len_Core(
     // Restrict length to the size available
     //
     if (len >= 0) {
-        REBINT maxlen = cast(REBINT, Cell_Series_Len_At(series));
+        REBINT maxlen = cast(REBINT, Series_Len_At(series));
         if (len > maxlen)
             len = maxlen;
     }

@@ -42,8 +42,8 @@
 //
 REBINT Compare_Binary_Vals(const Cell* v1, const Cell* v2)
 {
-    REBLEN l1 = Cell_Series_Len_At(v1);
-    REBLEN l2 = Cell_Series_Len_At(v2);
+    REBLEN l1 = Series_Len_At(v1);
+    REBLEN l2 = Series_Len_At(v2);
     REBLEN len = MIN(l1, l2);
     REBINT n;
 
@@ -160,8 +160,8 @@ REBINT Compare_String_Vals(const Cell* v1, const Cell* v2, bool uncase)
 {
     assert(not Is_Binary(v1) and not Is_Binary(v2));
 
-    REBLEN l1  = Cell_Series_Len_At(v1);
-    REBLEN l2  = Cell_Series_Len_At(v2);
+    REBLEN l1  = Series_Len_At(v1);
+    REBLEN l2  = Series_Len_At(v2);
     REBLEN len = MIN(l1, l2);
 
     REBINT n = Compare_Uni_Str(Cell_String_At(v1), Cell_String_At(v2), len, uncase);

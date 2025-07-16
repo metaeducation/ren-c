@@ -41,7 +41,7 @@ static bool Check_Char_Range(const Value* val, REBINT limit)
 
     assert(Any_String(val));
 
-    REBLEN len = Cell_Series_Len_At(val);
+    REBLEN len = Series_Len_At(val);
     Ucs2(const*) up = Cell_String_At(val);
 
     for (; len > 0; len--) {
@@ -491,7 +491,7 @@ DECLARE_NATIVE(GET)
         return OUT;
     }
 
-    Array* results = Make_Array(Cell_Series_Len_At(source));
+    Array* results = Make_Array(Series_Len_At(source));
     Value* dest = KNOWN(Array_Head(results));
     Cell* item = Cell_List_At(source);
 
@@ -505,7 +505,7 @@ DECLARE_NATIVE(GET)
         Trashify_Branched(dest);  // !!! can't put nulls in blocks (blankify?)
     }
 
-    Term_Array_Len(results, Cell_Series_Len_At(source));
+    Term_Array_Len(results, Series_Len_At(source));
     return Init_Block(OUT, results);
 }
 
@@ -1015,7 +1015,7 @@ DECLARE_NATIVE(AS)
         if (Is_Binary(v)) {
             Flex* string = Make_Sized_String_UTF8(
                 cs_cast(Cell_Blob_At(v)),
-                Cell_Series_Len_At(v)
+                Series_Len_At(v)
             );
             if (Is_Value_Immutable(v))
                 Set_Flex_Info(string, FROZEN_DEEP);
@@ -1058,7 +1058,7 @@ DECLARE_NATIVE(AS)
             Size utf8_size;
             Size offset;
             Binary* temp = Temp_UTF8_At_Managed(
-                &offset, &utf8_size, v, Cell_Series_Len_At(v)
+                &offset, &utf8_size, v, Series_Len_At(v)
             );
             return Init_Any_Word(
                 OUT,
@@ -1080,7 +1080,7 @@ DECLARE_NATIVE(AS)
             return Init_Any_Word(
                 OUT,
                 new_kind,
-                Intern_UTF8_Managed(Cell_Blob_At(v), Cell_Series_Len_At(v))
+                Intern_UTF8_Managed(Cell_Blob_At(v), Series_Len_At(v))
             );
         }
 
@@ -1101,7 +1101,7 @@ DECLARE_NATIVE(AS)
         }
 
         if (Any_String(v)) {
-            Binary* bin = Make_Utf8_From_Cell_String_At_Limit(v, Cell_Series_Len_At(v));
+            Binary* bin = Make_Utf8_From_Cell_String_At_Limit(v, Series_Len_At(v));
 
             // !!! Making a binary out of a UCS-2 encoded string currently
             // frees the string data if it's mutable, and if that's not

@@ -96,7 +96,7 @@ DECLARE_NATIVE(BUILTIN_EXTENSIONS)
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
         Value* details = (*collator)();
-        assert(Is_Block(details) and Cell_Series_Len_At(details) == IDX_COLLATOR_MAX);
+        assert(Is_Block(details) and Series_Len_At(details) == IDX_COLLATOR_MAX);
         Copy_Cell(Alloc_Tail_Array(list), details);
         rebRelease(details);
     }

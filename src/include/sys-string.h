@@ -157,7 +157,7 @@ INLINE Size VAL_SIZE_LIMIT_AT(
 
     if (limit == -1) {
         if (length != nullptr)
-            *length = Cell_Series_Len_At(v);
+            *length = Series_Len_At(v);
         tail = Cell_String_Tail(v); // byte count known (fast)
     }
     else {
@@ -292,7 +292,7 @@ INLINE REBINT First_Hash_Candidate_Slot(
 INLINE Flex* Copy_Sequence_At_Position(const Value* v)
 {
     return Copy_Non_Array_Flex_At_Len_Extra(
-        Cell_Flex(v), VAL_INDEX(v), Cell_Series_Len_At(v), 0
+        Cell_Flex(v), VAL_INDEX(v), Series_Len_At(v), 0
     );
 }
 

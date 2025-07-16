@@ -273,7 +273,7 @@ static Flex* MAKE_TO_String_Common(const Value* arg)
     // MAKE/TO <type> <binary!>
     if (Is_Binary(arg)) {
         flex = Make_Sized_String_UTF8(
-            cs_cast(Cell_Blob_At(arg)), Cell_Series_Len_At(arg)
+            cs_cast(Cell_Blob_At(arg)), Series_Len_At(arg)
         );
     }
     // MAKE/TO <type> <any-string>
@@ -346,7 +346,7 @@ static Binary* make_binary(const Value* arg, bool make)
 
     // MAKE/TO BINARY! BINARY!
     case TYPE_BINARY:
-        flex = Copy_Bytes(Cell_Blob_At(arg), Cell_Series_Len_At(arg));
+        flex = Copy_Bytes(Cell_Blob_At(arg), Series_Len_At(arg));
         break;
 
     // MAKE/TO BINARY! <any-string>
@@ -357,7 +357,7 @@ static Binary* make_binary(const Value* arg, bool make)
     case TYPE_URL:
     case TYPE_TAG:
 //  case TYPE_ISSUE:
-        flex = Make_Utf8_From_Cell_String_At_Limit(arg, Cell_Series_Len_At(arg));
+        flex = Make_Utf8_From_Cell_String_At_Limit(arg, Series_Len_At(arg));
         break;
 
     case TYPE_BLOCK:
@@ -432,7 +432,7 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
             goto bad_make;
 
         REBINT i = Int32(index) - 1 + VAL_INDEX(any_binstr);
-        if (i < 0 || i > cast(REBINT, Cell_Series_Len_At(any_binstr)))
+        if (i < 0 || i > cast(REBINT, Series_Len_At(any_binstr)))
             goto bad_make;
 
         return Init_Any_Series_At(out, kind, Cell_Flex(any_binstr), i);
@@ -459,7 +459,7 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
 Bounce TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     if (kind == TYPE_FILE and Is_Path(arg)) {
-        REBLEN len = Cell_Series_Len_At(arg);
+        REBLEN len = Series_Len_At(arg);
         Cell* tail = Cell_List_At_Head(arg, len - 1);
 
         Strand* s = Copy_Form_Value(arg, 0);
@@ -954,7 +954,7 @@ void Mold_Text_Series_At(
 static void Mold_Url(Molder* mo, const Cell* v)
 {
     Flex* series = Cell_Flex(v);
-    REBLEN len = Cell_Series_Len_At(v);
+    REBLEN len = Series_Len_At(v);
     Byte *dp = Prep_Mold_Overestimated(mo, len * 4); // 4 bytes max UTF-8
 
     REBLEN n;
@@ -970,7 +970,7 @@ static void Mold_Url(Molder* mo, const Cell* v)
 static void Mold_File_Or_Money(Molder* mo, const Cell* v)
 {
     Flex* series = Cell_Flex(v);
-    REBLEN len = Cell_Series_Len_At(v);
+    REBLEN len = Series_Len_At(v);
 
     REBLEN estimated_bytes = 4 * len; // UTF-8 characters are max 4 bytes
 
@@ -1007,7 +1007,7 @@ static void Mold_Tag(Molder* mo, const Cell* v)
 
     Size offset;
     Size size;
-    Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
+    Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Series_Len_At(v));
     Append_Utf8_Utf8(mo->utf8flex, cs_cast(Binary_At(temp, offset)), size);
 
     Append_Codepoint(mo->utf8flex, '>');
@@ -1021,7 +1021,7 @@ void MF_Binary(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
-    REBLEN len = Cell_Series_Len_At(v);
+    REBLEN len = Series_Len_At(v);
 
     REBLEN binary_base = 16;  // used to depend on global option, bad
 
@@ -1076,7 +1076,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
     if (form and not Is_Tag(v)) {
         Size offset;
         Size size;
-        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Series_Len_At(v));
 
         Append_Utf8_Utf8(mo->utf8flex, cs_cast(Binary_At(temp, offset)), size);
         return;
@@ -1093,7 +1093,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
         break;
 
     case TYPE_FILE:
-        if (Cell_Series_Len_At(v) == 0) {
+        if (Series_Len_At(v) == 0) {
             Append_Unencoded(s, "%\"\"");
             break;
         }
@@ -1113,7 +1113,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
     case TYPE_TRIPWIRE: {
         Size offset;
         Size size;
-        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Series_Len_At(v));
 
         Append_Unencoded(mo->utf8flex, "~#[");
         Append_Utf8_Utf8(mo->utf8flex, cs_cast(Binary_At(temp, offset)), size);
@@ -1245,7 +1245,7 @@ REBTYPE(String)
                 len = 1;
             }
             else
-                len = Cell_Series_Len_At(arg);
+                len = Series_Len_At(arg);
         }
         else {
             if (Is_Char(arg) or Is_Bitset(arg))
@@ -1262,7 +1262,7 @@ REBTYPE(String)
                     Flex* copy = Copy_Form_Value(arg, 0);
                     Init_Text(arg, copy);
                 }
-                len = Cell_Series_Len_At(arg);
+                len = Series_Len_At(arg);
             }
         }
 
@@ -1466,7 +1466,7 @@ REBTYPE(String)
             Copy_Cell(OUT, v);
             return OUT;
         }
-        else if (Cell_Series_Len_At(v) == 0) // add/subtract to #{} otherwise
+        else if (Series_Len_At(v) == 0) // add/subtract to #{} otherwise
             panic (Error_Overflow_Raw());
 
         while (amount != 0) {
@@ -1576,7 +1576,7 @@ REBTYPE(String)
                         Cell_Flex(v),
                         VAL_INDEX(v)
                     ),
-                    Cell_Series_Len_At(v) * Flex_Wide(Cell_Flex(v))
+                    Series_Len_At(v) * Flex_Wide(Cell_Flex(v))
                 )
             );
             return nullptr;

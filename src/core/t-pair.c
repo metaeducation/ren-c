@@ -62,7 +62,7 @@ Bounce MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
         // -1234567890x-1234567890
         //
         Size size;
-        Byte *bp = Analyze_String_For_Scan(&size, arg, Cell_Series_Len_At(arg));
+        Byte *bp = Analyze_String_For_Scan(&size, arg, Series_Len_At(arg));
 
         Erase_Cell(out);
         if (nullptr == Scan_Pair(out, bp, size))
@@ -75,7 +75,7 @@ Bounce MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
     const Cell* y;
 
     if (Is_Block(arg)) {
-        if (Cell_Series_Len_At(arg) != 2)
+        if (Series_Len_At(arg) != 2)
             goto bad_make;
 
         x = Cell_List_At(arg);

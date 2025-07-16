@@ -246,7 +246,7 @@ DECLARE_NATIVE(CRASH)
         Size offset;
         Size size;
         Binary* temp = Temp_UTF8_At_Managed(
-            &offset, &size, v, Cell_Series_Len_At(v)
+            &offset, &size, v, Series_Len_At(v)
         );
 
         p = Binary_At(temp, offset); // UTF-8 data

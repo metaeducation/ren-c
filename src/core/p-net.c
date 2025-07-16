@@ -147,7 +147,7 @@ static Bounce Transport_Actor(
                 Size offset;
                 Size size;
                 Binary* temp = Temp_UTF8_At_Managed(
-                    &offset, &size, arg, Cell_Series_Len_At(arg)
+                    &offset, &size, arg, Series_Len_At(arg)
                 );
                 Push_GC_Guard(temp);
 
@@ -350,7 +350,7 @@ static Bounce Transport_Actor(
         // Determine length. Clip /PART to size of string if needed.
         Value* data = ARG(DATA);
 
-        REBLEN len = Cell_Series_Len_At(data);
+        REBLEN len = Series_Len_At(data);
         if (Bool_ARG(PART)) {
             REBLEN n = Int32s(ARG(LIMIT), 0);
             if (n <= len)

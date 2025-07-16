@@ -172,7 +172,7 @@ DECLARE_NATIVE(RC4)
             rc4_ctx,
             Cell_Blob_At(data), // input "message"
             Cell_Blob_At(data), // output (same, since it modifies)
-            Cell_Series_Len_At(data)
+            Series_Len_At(data)
         );
 
         // In %host-core.c this used to fall through to return the first arg,
@@ -187,7 +187,7 @@ DECLARE_NATIVE(RC4)
         RC4_setup(
             rc4_ctx,
             Cell_Blob_At(ARG(CRYPT_KEY)),
-            Cell_Series_Len_At(ARG(CRYPT_KEY))
+            Series_Len_At(ARG(CRYPT_KEY))
         );
 
         return Init_Handle_Managed(OUT, rc4_ctx, 0, &cleanup_rc4_ctx);
@@ -504,7 +504,7 @@ DECLARE_NATIVE(AES)
         AES_CTX *aes_ctx = VAL_HANDLE_POINTER(AES_CTX, ARG(CTX));
 
         Byte *dataBuffer = Cell_Blob_At(ARG(DATA));
-        REBINT len = Cell_Series_Len_At(ARG(DATA));
+        REBINT len = Series_Len_At(ARG(DATA));
 
         if (len == 0)
             return nullptr;  // !!! Is nullptr a good result for 0 data?
@@ -552,7 +552,7 @@ DECLARE_NATIVE(AES)
         uint8_t iv[AES_IV_SIZE];
 
         if (Is_Binary(ARG(IV))) {
-            if (Cell_Series_Len_At(ARG(IV)) < AES_IV_SIZE)
+            if (Series_Len_At(ARG(IV)) < AES_IV_SIZE)
                 panic ("Length of initialization vector less than AES size");
 
             memcpy(iv, Cell_Blob_At(ARG(IV)), AES_IV_SIZE);
@@ -564,7 +564,7 @@ DECLARE_NATIVE(AES)
 
         //key defined - setup new context
 
-        REBINT len = Cell_Series_Len_At(ARG(CRYPT_KEY)) << 3;
+        REBINT len = Series_Len_At(ARG(CRYPT_KEY)) << 3;
         if (len != 128 and len != 256) {
             DECLARE_VALUE (i);
             Init_Integer(i, len);
@@ -615,7 +615,7 @@ DECLARE_NATIVE(SHA256)
     if (Is_Text(data)) {
         Size offset;
         Binary* temp = Temp_UTF8_At_Managed(
-            &offset, &size, data, Cell_Series_Len_At(data)
+            &offset, &size, data, Series_Len_At(data)
         );
         bp = Binary_At(temp, offset);
     }
@@ -623,7 +623,7 @@ DECLARE_NATIVE(SHA256)
         assert(Is_Binary(data));
 
         bp = Cell_Blob_At(data);
-        size = Cell_Series_Len_At(data);
+        size = Series_Len_At(data);
     }
 
     SHA256_CTX ctx;
