@@ -656,7 +656,7 @@ cc: make compiler-class [
             ]
 
             for-each 'dep depends [
-                keep opt .accept dep
+                keep opt ./accept dep
             ]
         ]
     ]
@@ -913,7 +913,7 @@ cl: make compiler-class [
             ]
 
             for-each 'dep depends [
-                keep opt .accept dep
+                keep opt ./accept dep
             ]
 
             ; /link must precede linker-specific options
@@ -1208,7 +1208,7 @@ generator-class: make object! [
                     #cmd-create #cmd-delete #cmd-strip
                 ] cmd.class
             ]
-            cmd: .gen-cmd cmd
+            cmd: ./gen-cmd cmd
         ]
         if not cmd [return null]
 
@@ -1242,7 +1242,7 @@ generator-class: make object! [
         solution [object!]
     ][
         if find words-of solution 'output [
-            .setup-outputs solution
+            ./setup-outputs solution
         ]
         flip-flag solution 'no
 
@@ -1343,14 +1343,14 @@ generator-class: make object! [
             #solution
             #object-library [
                 if yes? project.generated [return ~]
-                .setup-output project
+                ./setup-output project
                 project.generated: 'yes
                 for-each 'dep project.depends [
-                    .setup-outputs dep
+                    ./setup-outputs dep
                 ]
             ]
             #object-file [
-                .setup-output project
+                ./setup-output project
             ]
         ] else [return ~]
     ]
@@ -1431,7 +1431,7 @@ makefile: make generator-class [
                     for-each 'cmd (ensure block! entry.commands) [
                         let c: any [
                             match text! cmd
-                            .gen-cmd cmd
+                            ./gen-cmd cmd
                             continue
                         ]
                         if empty? c [continue]  ; !!! Review why this happens
@@ -1473,7 +1473,7 @@ makefile: make generator-class [
                             append objs spread obj.depends
                         ]
                     ]
-                    append buf .gen-rule make entry-class [
+                    append buf ./gen-rule make entry-class [
                         target: dep.output
                         depends: append copy objs (
                             spread map-each 'ddep dep.depends [
@@ -1496,7 +1496,7 @@ makefile: make generator-class [
                         assert [obj.class = #object-file]
                         if no? obj.generated [
                             obj.generated: 'yes
-                            append buf (.gen-rule obj.gen-entries // [
+                            append buf (./gen-rule obj.gen-entries // [
                                 dep
                                 PIC: (project.class = #dynamic-library)
                             ])
@@ -1504,10 +1504,10 @@ makefile: make generator-class [
                     ]
                 ]
                 #object-file [
-                    append buf .gen-rule dep/gen-entries project
+                    append buf ./gen-rule dep/gen-entries project
                 ]
                 #entry #variable [
-                    append buf .gen-rule dep
+                    append buf ./gen-rule dep
                 ]
                 #dynamic-extension #static-extension [
                     ; nothing to do
@@ -1526,9 +1526,9 @@ makefile: make generator-class [
         let buf: make text! 2048
         assert [solution.class = #solution]
 
-        .prepare solution
+        ./prepare solution
 
-        .emit buf solution
+        ./emit buf solution
 
         write output append buf "^/^/.PHONY:"
     ]
@@ -1594,12 +1594,12 @@ export execution: make generator-class [
                 ]
                 either block? target.commands [
                     for-each 'cmd target.commands [
-                        cmd: .do-substitutions cmd
+                        cmd: ./do-substitutions cmd
                         print ["Running:" cmd]
                         call:shell cmd
                     ]
                 ][
-                    let cmd: .do-substitutions target.commands
+                    let cmd: ./do-substitutions target.commands
                     print ["Running:" cmd]
                     call:shell cmd
                 ]
@@ -1618,7 +1618,7 @@ export execution: make generator-class [
         ;dump project
         if not object? project [return ~]
 
-        .prepare project
+        ./prepare project
 
         if not find [#dynamic-extension #static-extension] project.class [
             if yes? project.generated [return ~]
@@ -1636,9 +1636,9 @@ export execution: make generator-class [
                     ]
                 ]
                 for-each 'dep project.depends [
-                    .run:parent dep project
+                    ./run:parent dep project
                 ]
-                .run-target make entry-class [
+                ./run-target make entry-class [
                     target: project.output
                     depends: append copy project.depends objs  ; JOIN reduces
                     commands: reduce [project/command]
@@ -1649,7 +1649,7 @@ export execution: make generator-class [
                     assert [obj.class = #object-file]
                     if no? obj.generated [
                         obj.generated: 'yes
-                        .run-target obj.gen-entries // [
+                        ./run-target obj.gen-entries // [
                             project
                             PIC: (parent.class = #dynamic-library)
                         ]
@@ -1658,17 +1658,17 @@ export execution: make generator-class [
             ]
             #object-file [
                 assert [parent]
-                .run-target project/gen-entries p-project
+                ./run-target project/gen-entries p-project
             ]
             #entry #variable [
-                .run-target project
+                ./run-target project
             ]
             #dynamic-extension #static-extension [
                 ; nothing to do
             ]
             #solution [
                 for-each 'dep project.depends [
-                    .run dep
+                    ./run dep
                 ]
             ]
             (elide dump project)
