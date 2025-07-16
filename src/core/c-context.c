@@ -535,7 +535,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
         // behavior which is probably wrong.
         //
         if (kind == TYPE_BLOCK or kind == TYPE_GROUP)
-            Collect_Inner_Loop(cl, Cell_List_At(v));
+            Collect_Inner_Loop(cl, List_At(v));
     }
 }
 
@@ -661,7 +661,7 @@ Array* Collect_Unique_Words_Managed(
     // assumes you were collecting for a keylist...it doesn't have access to
     // the "ignore" bindings.)  Do a pre-pass to panic first.
 
-    Cell* check = Cell_List_At(ignore);
+    Cell* check = List_At(ignore);
     for (; NOT_END(check); ++check) {
         if (not Any_Word(check))
             panic (Error_Invalid_Core(check, VAL_SPECIFIER(ignore)));
@@ -681,7 +681,7 @@ Array* Collect_Unique_Words_Managed(
     // an error...so they will just be skipped when encountered.
     //
     if (Is_Block(ignore)) {
-        Cell* item = Cell_List_At(ignore);
+        Cell* item = List_At(ignore);
         for (; NOT_END(item); ++item) {
             assert(Any_Word(item)); // pre-pass checked this
             Symbol* canon = VAL_WORD_CANON(item);
@@ -719,7 +719,7 @@ Array* Collect_Unique_Words_Managed(
     Array* array = Grab_Collected_Array_Managed(cl);
 
     if (Is_Block(ignore)) {
-        Cell* item = Cell_List_At(ignore);
+        Cell* item = List_At(ignore);
         for (; NOT_END(item); ++item) {
             assert(Any_Word(item));
             Symbol* canon = VAL_WORD_CANON(item);
@@ -1186,7 +1186,7 @@ void Resolve_Context(
     }
     else if (Is_Block(only_words)) {
         // Limit exports to only these words:
-        Cell* word = Cell_List_At(only_words);
+        Cell* word = List_At(only_words);
         for (; NOT_END(word); word++) {
             if (Is_Word(word) or Is_Set_Word(word)) {
                 Add_Binder_Index(&binder, VAL_WORD_CANON(word), -1);
@@ -1273,7 +1273,7 @@ void Resolve_Context(
                 Remove_Binder_Index_Else_0(&binder, Key_Canon(key));
         }
         else if (Is_Block(only_words)) {
-            Cell* word = Cell_List_At(only_words);
+            Cell* word = List_At(only_words);
             for (; NOT_END(word); word++) {
                 if (Is_Word(word) or Is_Set_Word(word))
                     Remove_Binder_Index_Else_0(&binder, VAL_WORD_CANON(word));

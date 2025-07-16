@@ -186,7 +186,7 @@ DECLARE_NATIVE(NEW_LINE)
 
     Copy_Cell(OUT, pos); // always returns the input position
 
-    Cell* item = Cell_List_At(pos);
+    Cell* item = List_At(pos);
 
     if (IS_END(item)) { // no value at tail to mark; use bit in array
         if (mark)
@@ -265,7 +265,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
         }
         else if (Is_Block_Style_Varargs(&shared, pos)) {
             arr = Cell_Array(shared);
-            item = Cell_List_At(shared);
+            item = List_At(shared);
         }
         else
             crash ("Bad VARARGS!");
@@ -273,7 +273,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
     else {
         assert(Is_Group(pos) or Is_Block(pos));
         arr = Cell_Array(pos);
-        item = Cell_List_At(pos);
+        item = List_At(pos);
     }
 
     if (NOT_END(item))

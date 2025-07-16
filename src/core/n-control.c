@@ -232,7 +232,7 @@ bool Either_Test_Core_Throws(
         return false;
 
       case TYPE_BLOCK: {
-        Cell* item = Cell_List_At(test);
+        Cell* item = List_At(test);
         if (IS_END(item)) {
             //
             // !!! If the test is just [], what's that?  People aren't likely
@@ -1083,7 +1083,7 @@ DECLARE_NATIVE(CATCH)
             //
             // Test all the words in the block for a match to catch
 
-            Cell* candidate = Cell_List_At(ARG(NAMES));
+            Cell* candidate = List_At(ARG(NAMES));
             for (; NOT_END(candidate); candidate++) {
                 //
                 // !!! Should we test a typeset for illegal name types?

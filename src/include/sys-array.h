@@ -468,7 +468,7 @@ INLINE void INIT_VAL_ARRAY(Cell* v, Array* a) {
 // of the word AT with a missing index is a hint that the index is coming
 // from the VAL_INDEX() of the value itself.
 //
-#define Cell_List_At(v) \
+#define List_At(v) \
     Array_At(Cell_Array(v), VAL_INDEX(v))
 
 #define VAL_ARRAY_LEN_AT(v) \
@@ -493,8 +493,8 @@ INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
 }
 
 
-// !!! Cell_List_At_Head() is a leftover from the old definition of
-// Cell_List_At().  Unlike SKIP in Rebol, this definition did *not* take
+// !!! List_At_Head() is a leftover from the old definition of
+// List_At().  Unlike SKIP in Rebol, this definition did *not* take
 // the current index position of the value into account.  It rather extracted
 // the array, counted rom the head, and disregarded the index entirely.
 //
@@ -504,7 +504,7 @@ INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
 // head because it's taking an index.  So  it looks weird enough to suggest
 // looking here for what the story is.
 //
-#define Cell_List_At_Head(v,n) \
+#define List_At_Head(v,n) \
     Array_At(Cell_Array(v), (n))
 
 #define Init_Any_List_At(v,t,a,i) \

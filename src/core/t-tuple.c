@@ -82,7 +82,7 @@ Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
         REBLEN len = 0;
         REBINT n;
 
-        Cell* item = Cell_List_At(arg);
+        Cell* item = List_At(arg);
 
         for (; NOT_END(item); ++item, ++vp, ++len) {
             if (len >= MAX_TUPLE)

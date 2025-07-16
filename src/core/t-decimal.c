@@ -187,7 +187,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
 
     default:
         if (Any_List(arg) && VAL_ARRAY_LEN_AT(arg) == 2) {
-            Cell* item = Cell_List_At(arg);
+            Cell* item = List_At(arg);
             if (Is_Integer(item))
                 d = cast(REBDEC, VAL_INT64(item));
             else if (Is_Decimal(item) || Is_Percent(item))

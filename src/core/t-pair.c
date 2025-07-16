@@ -78,8 +78,8 @@ Bounce MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
         if (Series_Len_At(arg) != 2)
             goto bad_make;
 
-        x = Cell_List_At(arg);
-        y = Cell_List_At(arg) + 1;
+        x = List_At(arg);
+        y = List_At(arg) + 1;
     }
     else {
         x = arg;

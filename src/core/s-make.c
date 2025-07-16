@@ -372,7 +372,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
     Set_Flex_Len(series, 0);
 
     Cell* val;
-    for (val = Cell_List_At(blk); limit > 0; val++, limit--) {
+    for (val = List_At(blk); limit > 0; val++, limit--) {
         switch (Type_Of(val)) {
         case TYPE_INTEGER:
             if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)

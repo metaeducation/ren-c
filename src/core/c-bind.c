@@ -83,7 +83,7 @@ void Bind_Values_Inner_Loop(
         else if (Any_List(v) and (flags & BIND_DEEP)) {
             Bind_Values_Inner_Loop(
                 binder,
-                Cell_List_At(v),
+                List_At(v),
                 context,
                 bind_types,
                 add_midstream_types,
@@ -167,7 +167,7 @@ void Unbind_Values_Core(Cell* head, VarList* context, bool deep)
             Unbind_Any_Word(v);
         }
         else if (Any_List(v) and deep)
-            Unbind_Values_Core(Cell_List_At(v), context, true);
+            Unbind_Values_Core(List_At(v), context, true);
     }
 }
 
@@ -230,7 +230,7 @@ static void Bind_Relative_Inner_Loop(
         }
         else if (Any_List(v)) {
             Bind_Relative_Inner_Loop(
-                binder, Cell_List_At(v), paramlist, bind_types
+                binder, List_At(v), paramlist, bind_types
             );
 
             // !!! Technically speaking it is not necessary for an array to
@@ -314,7 +314,7 @@ void Rebind_Values_Deep(
     Cell* v = head;
     for (; NOT_END(v); ++v) {
         if (Any_List(v)) {
-            Rebind_Values_Deep(src, dst, Cell_List_At(v), opt_binder);
+            Rebind_Values_Deep(src, dst, List_At(v), opt_binder);
         }
         else if (Any_Word(v) and VAL_BINDING(v) == src) {
             INIT_BINDING(v, dst);
@@ -415,7 +415,7 @@ void Virtual_Bind_Deep_To_New_Context(
     Specifier* specifier;
     bool rebinding;
     if (Is_Block(spec)) {
-        item = Cell_List_At(spec);
+        item = List_At(spec);
         specifier = VAL_SPECIFIER(spec);
 
         rebinding = false;
@@ -433,7 +433,7 @@ void Virtual_Bind_Deep_To_New_Context(
             }
         }
 
-        item = Cell_List_At(spec);
+        item = List_At(spec);
     }
     else {
         item = spec;
@@ -621,7 +621,7 @@ void Virtual_Bind_Deep_To_New_Context(
         // duplicates.
         //
         Bind_Values_Inner_Loop(
-            &binder, Cell_List_At(body_in_out), c, TS_WORD, 0, BIND_DEEP
+            &binder, List_At(body_in_out), c, TS_WORD, 0, BIND_DEEP
         );
     }
 

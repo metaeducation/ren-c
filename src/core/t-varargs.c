@@ -156,7 +156,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            IS_END(shared) ? END_NODE : Cell_List_At(shared),
+            IS_END(shared) ? END_NODE : List_At(shared),
             IS_END(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
             pclass
         )){
@@ -215,20 +215,20 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             break; }
 
         case PARAMCLASS_HARD_QUOTE:
-            Derelativize(out, Cell_List_At(shared), VAL_SPECIFIER(shared));
+            Derelativize(out, List_At(shared), VAL_SPECIFIER(shared));
             VAL_INDEX(shared) += 1;
             break;
 
         case PARAMCLASS_SOFT_QUOTE:
-            if (IS_QUOTABLY_SOFT(Cell_List_At(shared))) {
+            if (IS_QUOTABLY_SOFT(List_At(shared))) {
                 if (Eval_Value_Core_Throws(
-                    out, Cell_List_At(shared), VAL_SPECIFIER(shared)
+                    out, List_At(shared), VAL_SPECIFIER(shared)
                 )){
                     return true;
                 }
             }
             else { // not a soft-"exception" case, quote ordinarily
-                Derelativize(out, Cell_List_At(shared), VAL_SPECIFIER(shared));
+                Derelativize(out, List_At(shared), VAL_SPECIFIER(shared));
             }
             VAL_INDEX(shared) += 1;
             break;
@@ -357,7 +357,7 @@ Bounce MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
         // should be an END marker (not an array at its end)
         //
         Array* array1 = Alloc_Singular(NODE_FLAG_MANAGED);
-        if (IS_END(Cell_List_At(arg)))
+        if (IS_END(List_At(arg)))
             SET_END(ARR_SINGLE(array1));
         else
             Copy_Cell(ARR_SINGLE(array1), arg);

@@ -612,7 +612,7 @@ DECLARE_NATIVE(ENBIN)
             "panic {Second element of ENBIN settings must be + or +/-}",
         "]"
     );
-    Cell* third = Cell_List_At_Head(settings, index + 2);
+    Cell* third = List_At_Head(settings, index + 2);
     if (not Is_Integer(third))
         panic ("Third element of ENBIN settings must be an integer}");
     REBINT num_bytes = VAL_INT32(third);
@@ -719,7 +719,7 @@ DECLARE_NATIVE(DEBIN)
         "]"
     );
     REBLEN num_bytes;
-    Cell* third = Cell_List_At_Head(settings, index + 2);
+    Cell* third = List_At_Head(settings, index + 2);
     if (IS_END(third))
         num_bytes = Series_Len_At(ARG(BINARY));
     else {

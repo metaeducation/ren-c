@@ -218,7 +218,7 @@ DECLARE_NATIVE(BIND)
         Init_Any_List(OUT, Type_Of(v), copy);
     }
     else {
-        at = Cell_List_At(v); // only affects binding from current index
+        at = List_At(v); // only affects binding from current index
         Copy_Cell(OUT, v);
     }
 
@@ -395,7 +395,7 @@ DECLARE_NATIVE(UNBIND)
     if (Any_Word(word))
         Unbind_Any_Word(word);
     else
-        Unbind_Values_Core(Cell_List_At(word), nullptr, Bool_ARG(DEEP));
+        Unbind_Values_Core(List_At(word), nullptr, Bool_ARG(DEEP));
 
     RETURN (word);
 }
@@ -432,7 +432,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
 
     UNUSED(Bool_ARG(IGNORE)); // implied used or unused by ARG(HIDDEN)'s voidness
 
-    Cell* head = Cell_List_At(ARG(BLOCK));
+    Cell* head = List_At(ARG(BLOCK));
     return Init_Block(
         OUT,
         Collect_Unique_Words_Managed(head, flags, ARG(HIDDEN))
@@ -493,7 +493,7 @@ DECLARE_NATIVE(GET)
 
     Array* results = Make_Array(Series_Len_At(source));
     Value* dest = KNOWN(Array_Head(results));
-    Cell* item = Cell_List_At(source);
+    Cell* item = List_At(source);
 
     for (; NOT_END(item); ++item, ++dest) {
         Get_Opt_Polymorphic_May_Panic(
@@ -666,11 +666,11 @@ DECLARE_NATIVE(SET)
         RETURN (value);
     }
 
-    const Cell* item = Cell_List_At(target);
+    const Cell* item = List_At(target);
 
     const Cell* v;
     if (Is_Block(value) and not Bool_ARG(SINGLE))
-        v = Cell_List_At(value);
+        v = List_At(value);
     else
         v = value;
 
@@ -766,7 +766,7 @@ DECLARE_NATIVE(IN)
             for (i = VAL_INDEX(val); i < VAL_LEN_HEAD(val); i++) {
                 Get_Simple_Value_Into(
                     safe,
-                    Cell_List_At_Head(val, i),
+                    List_At_Head(val, i),
                     VAL_SPECIFIER(val)
                 );
 

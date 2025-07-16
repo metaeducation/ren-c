@@ -210,7 +210,7 @@ static bool Subparse_Throws(
     L->out = out;
 
     L->gotten = nullptr;
-    SET_FRAME_VALUE(L, Cell_List_At(rules)); // not an END due to test above
+    SET_FRAME_VALUE(L, List_At(rules)); // not an END due to test above
     L->specifier = Derive_Specifier(rules_specifier, rules);
 
     L->source->vaptr = nullptr;
@@ -967,7 +967,7 @@ static REBIXO To_Thru_Block_Rule(
             return P_POS;  // `to []` or `thru []` succeed quickly
 
         if (Series_Len_At(rule_block) == 1) {
-            const Cell* at = Cell_List_At(rule_block);
+            const Cell* at = List_At(rule_block);
             if (Is_Word(at) and Word_Id(at) == SYM__TVOID_T)
                 return P_POS;  // make `to [~void~]` about as fast as `to []`
         }
@@ -1270,15 +1270,15 @@ DECLARE_NATIVE(SUBPARSE)
                                 not Is_Block(OUT)
                                 or not (
                                     Series_Len_At(OUT) == 2
-                                    and Is_Integer(Cell_List_At(OUT))
-                                    and Is_Integer(Cell_List_At(OUT) + 1)
+                                    and Is_Integer(List_At(OUT))
+                                    and Is_Integer(List_At(OUT) + 1)
                                 )
                             ){
                                 panic ("REPEAT takes INTEGER! or length 2 BLOCK! range");
                             }
 
-                            mincount = Int32s(Cell_List_At(OUT), 0);
-                            maxcount = Int32s(Cell_List_At(OUT) + 1, 0);
+                            mincount = Int32s(List_At(OUT), 0);
+                            maxcount = Int32s(List_At(OUT) + 1, 0);
 
                             if (maxcount < mincount)
                                 panic ("REPEAT range can't have lower max than minimum");

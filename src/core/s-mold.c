@@ -652,7 +652,7 @@ Strand* Form_Tight_Block(const Value* blk)
     Push_Mold(mo);
 
     Cell* item;
-    for (item = Cell_List_At(blk); NOT_END(item); ++item)
+    for (item = List_At(blk); NOT_END(item); ++item)
         Form_Value(mo, item);
 
     return Pop_Molded_String(mo);

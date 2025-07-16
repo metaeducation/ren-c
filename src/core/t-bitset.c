@@ -188,7 +188,7 @@ REBINT Find_Max_Bit(const Cell* val)
         break;
 
     case TYPE_BLOCK:
-        for (val = Cell_List_At(val); NOT_END(val); val++) {
+        for (val = List_At(val); NOT_END(val); val++) {
             n = Find_Max_Bit(val);
             if (n > maxi) maxi = n;
         }
@@ -319,7 +319,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
     if (!Any_List(val))
         panic (Error_Invalid_Type(Type_Of(val)));
 
-    Cell* item = Cell_List_At(val);
+    Cell* item = List_At(val);
 
     if (
         NOT_END(item)
@@ -460,7 +460,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
     // Loop through block of bit specs
 
     Cell* item;
-    for (item = Cell_List_At(val); NOT_END(item); item++) {
+    for (item = List_At(val); NOT_END(item); item++) {
 
         switch (Type_Of(item)) {
 

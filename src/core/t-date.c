@@ -449,7 +449,7 @@ Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
     }
 
     if (Any_List(arg) && VAL_ARRAY_LEN_AT(arg) >= 3) {
-        const Cell* item = Cell_List_At(arg);
+        const Cell* item = List_At(arg);
         if (not Is_Integer(item))
             goto bad_make;
 

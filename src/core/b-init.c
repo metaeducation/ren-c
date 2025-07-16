@@ -543,8 +543,8 @@ Value* Make_Native(
     }
     else if (
         Is_Path(*item)
-        and Word_Id(Cell_List_At(*item)) == SYM_INFIX
-        and Word_Id(Cell_List_At(*item) + 1) == SYM_DEFER
+        and Word_Id(List_At(*item)) == SYM_INFIX
+        and Word_Id(List_At(*item) + 1) == SYM_DEFER
     ){
         infix = true;
         defer = true;
@@ -635,7 +635,7 @@ static Array* Startup_Natives(const Value* boot_natives)
     Init_Action_Meta_Shim();
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
-    Cell* item = Cell_List_At(boot_natives);
+    Cell* item = List_At(boot_natives);
     Specifier* specifier = VAL_SPECIFIER(boot_natives);
 
     // Although the natives are not being "executed", there are typesets
@@ -699,7 +699,7 @@ static Array* Startup_Natives(const Value* boot_natives)
 static Array* Startup_Generics(const Value* boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
-    Cell* head = Cell_List_At(boot_generics);
+    Cell* head = List_At(boot_generics);
     Specifier* specifier = VAL_SPECIFIER(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib
@@ -921,13 +921,13 @@ static void Init_System_Object(
     VarList* errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
-    Cell* spec_head = Cell_List_At(boot_sysobj_spec);
+    Cell* spec_head = List_At(boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
     VarList* system = Make_Selfish_Context_Detect_Managed(
         TYPE_OBJECT, // type
-        Cell_List_At(boot_sysobj_spec), // scan for toplevel set-words
+        List_At(boot_sysobj_spec), // scan for toplevel set-words
         nullptr  // parent
     );
 

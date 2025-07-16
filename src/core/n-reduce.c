@@ -135,8 +135,8 @@ bool Any_Metaform(Value* v) {
     return (
         Is_Group(v)
         and Series_Len_At(v) == 2
-        and Is_Word(Cell_List_At(v))
-        and Word_Id(Cell_List_At(v)) == SYM_THE
+        and Is_Word(List_At(v))
+        and Word_Id(List_At(v)) == SYM_THE
     );
 }
 
@@ -212,10 +212,10 @@ Value* Meta_Unquotify(Value* v)
     else if (
         Is_Group(v)
         and Series_Len_At(v) == 2
-        and Is_Word(Cell_List_At(v))
-        and Word_Id(Cell_List_At(v)) == SYM_THE
+        and Is_Word(List_At(v))
+        and Word_Id(List_At(v)) == SYM_THE
     ){
-        return Copy_Cell(v, cast(Value*, Cell_List_At(v) + 1));
+        return Copy_Cell(v, cast(Value*, List_At(v) + 1));
     }
 
     panic (
@@ -380,7 +380,7 @@ bool Match_For_Compose(const Cell* group, const Value* pattern) {
     if (Series_Len_At(group) == 0) // yhave a pattern, so leave `()` as-is
         return false;
 
-    Cell* first = Cell_List_At(group);
+    Cell* first = List_At(group);
     if (not Is_Tag(first))
         return false;
     return 0 == Compare_String_Vals(cast(Value*, first), pattern, true);
@@ -466,7 +466,7 @@ bool Compose_To_Stack_Throws(
                 //
                 // compose [not-only ([a b]) merges] => [not-only a b merges]
 
-                Cell* push = Cell_List_At(out);
+                Cell* push = List_At(out);
                 if (NOT_END(push)) {
                     //
                     // Only proxy newline flag from the template on *first*
@@ -602,7 +602,7 @@ static void Flatten_Core(
         if (Is_Block(item) and level != FLATTEN_NOT) {
             Specifier* derived = Derive_Specifier(specifier, item);
             Flatten_Core(
-                Cell_List_At(item),
+                List_At(item),
                 derived,
                 level == FLATTEN_ONCE ? FLATTEN_NOT : FLATTEN_DEEP
             );
@@ -632,7 +632,7 @@ DECLARE_NATIVE(FLATTEN)
     StackIndex base = TOP_INDEX;
 
     Flatten_Core(
-        Cell_List_At(ARG(BLOCK)),
+        List_At(ARG(BLOCK)),
         VAL_SPECIFIER(ARG(BLOCK)),
         Bool_ARG(DEEP) ? FLATTEN_DEEP : FLATTEN_ONCE
     );

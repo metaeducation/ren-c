@@ -187,7 +187,7 @@ Bounce MAKE_Event(Value* out, enum Reb_Kind kind, const Value* arg) {
     RESET_CELL(out, TYPE_EVENT);
     Set_Event_Vars(
         out,
-        Cell_List_At(arg),
+        List_At(arg),
         VAL_SPECIFIER(arg)
     );
     return out;

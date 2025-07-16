@@ -258,8 +258,8 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 //
 REBINT Cmp_Array(const Cell* sval, const Cell* tval, bool is_case)
 {
-    Cell* s = Cell_List_At(sval);
-    Cell* t = Cell_List_At(tval);
+    Cell* s = List_At(sval);
+    Cell* t = List_At(tval);
 
     if (C_STACK_OVERFLOWING(&s))
         Panic_Stack_Overflow();

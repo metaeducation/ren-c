@@ -341,7 +341,7 @@ struct Reb_Series_Payload {
     //
     // !!! Review that it doesn't seem like these checks are being done
     // in a systemic way.  Series_Len_At() bounds the length at the index
-    // position by the physical length, but Cell_List_At() doesn't check.
+    // position by the physical length, but List_At() doesn't check.
     //
     REBLEN index;
 };

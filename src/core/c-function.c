@@ -183,7 +183,7 @@ Array* Make_Paramlist_Managed_May_Panic(
 
     bool refinement_seen = false;
 
-    const Cell* value = Cell_List_At(spec);
+    const Cell* value = List_At(spec);
 
     while (NOT_END(value)) {
         const Cell* item = value; // "faked", e.g. <return> => RETURN:

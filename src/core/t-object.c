@@ -140,7 +140,7 @@ static void Append_To_Context(VarList* context, Value* arg)
 
     // Process word/value argument block:
 
-    Cell* item = Cell_List_At(arg);
+    Cell* item = List_At(arg);
 
     // Can't actually panic() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
@@ -923,7 +923,7 @@ DECLARE_NATIVE(CONSTRUCT)
             OUT,
             Construct_Context_Managed(
                 TYPE_OBJECT,
-                Cell_List_At(body),
+                List_At(body),
                 VAL_SPECIFIER(body),
                 Bool_ARG(WITH) ? Cell_Varlist(ARG(OTHER)) : nullptr
             )
@@ -967,7 +967,7 @@ Bounce MAKE_With_Parent(
             // scan for toplevel set-words
             Is_Blank(body)
                 ? cast(const Cell*, END_NODE) // gcc/g++ 2.95 needs (bug)
-                : Cell_List_At(body),
+                : List_At(body),
             parent
         );
         Init_Object(out, context);
@@ -977,7 +977,7 @@ Bounce MAKE_With_Parent(
             // !!! This binds the actual body data, not a copy of it.  See
             // Virtual_Bind_Deep_To_New_Context() for future directions.
             //
-            Bind_Values_Deep(Cell_List_At(body), context);
+            Bind_Values_Deep(List_At(body), context);
 
             DECLARE_VALUE (temp);
             if (Eval_List_At_Throws(temp, body)) {

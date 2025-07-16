@@ -129,14 +129,14 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         //
         if (
             VAL_ARRAY_LEN_AT(arg) != 2
-            || !Any_List(Cell_List_At(arg))
-            || !Is_Integer(Cell_List_At(arg) + 1)
+            || !Any_List(List_At(arg))
+            || !Is_Integer(List_At(arg) + 1)
         ) {
             goto bad_make;
         }
 
-        Cell* any_array = Cell_List_At(arg);
-        REBINT index = VAL_INDEX(any_array) + Int32(Cell_List_At(arg) + 1) - 1;
+        Cell* any_array = List_At(arg);
+        REBINT index = VAL_INDEX(any_array) + Int32(List_At(arg) + 1) - 1;
 
         if (index < 0 || index > cast(REBINT, VAL_LEN_HEAD(any_array)))
             goto bad_make;
@@ -270,7 +270,7 @@ Bounce TO_List(Value* out, enum Reb_Kind kind, const Value* arg) {
             out,
             kind,
             Copy_Values_Len_Shallow(
-                Cell_List_At(arg), VAL_SPECIFIER(arg), VAL_ARRAY_LEN_AT(arg)
+                List_At(arg), VAL_SPECIFIER(arg), VAL_ARRAY_LEN_AT(arg)
             )
         );
     }
@@ -343,7 +343,7 @@ REBLEN Find_In_Array(
             Cell* item = Array_At(array, index);
 
             REBLEN count = 0;
-            Cell* other = Cell_List_At(target);
+            Cell* other = List_At(target);
             for (; NOT_END(other); ++other, ++item) {
                 if (
                     IS_END(item) ||
@@ -545,7 +545,7 @@ static void Sort_List(
         skip = 1;
 
     reb_qsort_r(
-        Cell_List_At(block),
+        List_At(block),
         len / skip,
         sizeof(Cell) * skip,
         &flags,
@@ -622,7 +622,7 @@ Bounce PD_List(
         n = -1;
 
         Symbol* canon = VAL_WORD_CANON(picker);
-        Cell* item = Cell_List_At(pvs->out);
+        Cell* item = List_At(pvs->out);
         REBLEN index = VAL_INDEX(pvs->out);
         for (; NOT_END(item); ++item, ++index) {
             if (Any_Word(item) && canon == VAL_WORD_CANON(item)) {
@@ -665,7 +665,7 @@ Bounce PD_List(
     if (opt_setval)
         Panic_If_Read_Only_Flex(Cell_Flex(pvs->out));
 
-    pvs->u.ref.cell = Cell_List_At_Head(pvs->out, n);
+    pvs->u.ref.cell = List_At_Head(pvs->out, n);
     pvs->u.ref.specifier = VAL_SPECIFIER(pvs->out);
     return BOUNCE_REFERENCE;
 }
@@ -685,7 +685,7 @@ Cell* Pick_Block(Value* out, const Value* block, const Value* picker)
         return nullptr;
     }
 
-    Cell* slot = Cell_List_At_Head(block, n);
+    Cell* slot = List_At_Head(block, n);
     Derelativize(out, slot, VAL_SPECIFIER(block));
     return slot;
 }
@@ -981,13 +981,13 @@ REBTYPE(List)
         ){
             // Cell bits can be copied within the same array
             //
-            Cell* a = Cell_List_At(list);
+            Cell* a = List_At(list);
             Cell temp;
             temp.header = a->header;
             temp.payload = a->payload;
             temp.extra = a->extra;
-            Blit_Cell(Cell_List_At(list), Cell_List_At(arg));
-            Blit_Cell(Cell_List_At(arg), &temp);
+            Blit_Cell(List_At(list), List_At(arg));
+            Blit_Cell(List_At(arg), &temp);
         }
         RETURN (list);
     }
@@ -999,7 +999,7 @@ REBTYPE(List)
         if (len == 0)
             RETURN (list); // !!! do 1-element reversals update newlines?
 
-        Cell* front = Cell_List_At(list);
+        Cell* front = List_At(list);
         Cell* back = front + len - 1;
 
         // We must reverse the sense of the newline markers as well, #2326

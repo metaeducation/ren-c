@@ -96,7 +96,7 @@ REBLEN Modify_Array(
             ilen = Series_Len_At(src_val);
 
         if (not tail_newline) {
-            Cell* tail_cell = Cell_List_At(src_val) + ilen;
+            Cell* tail_cell = List_At(src_val) + ilen;
             if (IS_END(tail_cell)) {
                 tail_newline = Get_Array_Flag(
                     Cell_Array(src_val),
@@ -122,7 +122,7 @@ REBLEN Modify_Array(
             specifier = SPECIFIED; // copy already specified it
         }
         else {
-            src_rel = Cell_List_At(src_val); // skips by VAL_INDEX values
+            src_rel = List_At(src_val); // skips by VAL_INDEX values
             specifier = VAL_SPECIFIER(src_val);
         }
     }

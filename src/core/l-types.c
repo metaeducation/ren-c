@@ -109,7 +109,7 @@ DECLARE_NATIVE(MAKE)
         Copy_Cell(OUT, type); // !!! very "shallow" clone of the event
         Set_Event_Vars(
             OUT,
-            Cell_List_At(arg),
+            List_At(arg),
             VAL_SPECIFIER(arg)
         );
         return OUT;

@@ -514,7 +514,7 @@ bool Make_Error_Object_Throws(
 
         varlist = Make_Selfish_Context_Detect_Managed(
             TYPE_ERROR, // type
-            Cell_List_At(arg), // values to scan for toplevel set-words
+            List_At(arg), // values to scan for toplevel set-words
             root_error // parent
         );
 
@@ -524,7 +524,7 @@ bool Make_Error_Object_Throws(
         Init_Error(out, cast(Error*, varlist));
 
         Rebind_Context_Deep(root_error, varlist, nullptr);  // no more binds
-        Bind_Values_Deep(Cell_List_At(arg), varlist);
+        Bind_Values_Deep(List_At(arg), varlist);
 
         DECLARE_VALUE (evaluated);
         if (Eval_List_At_Throws(evaluated, arg)) {
@@ -1311,7 +1311,7 @@ VarList* Startup_Errors(const Value* boot_errors)
     assert(VAL_INDEX(boot_errors) == 0);
     VarList* catalog = Construct_Context_Managed(
         TYPE_OBJECT,
-        Cell_List_At(boot_errors),
+        List_At(boot_errors),
         VAL_SPECIFIER(boot_errors),
         nullptr
     );

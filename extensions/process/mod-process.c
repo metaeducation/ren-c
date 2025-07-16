@@ -1564,7 +1564,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
 
         int i;
         for (i = 0; i < argc; i ++) {
-            Cell* param = Cell_List_At_Head(block, i);
+            Cell* param = List_At_Head(block, i);
             if (Is_Text(param)) {
                 argv[i] = rebValSpellingAllocOS(KNOWN(param));
             }

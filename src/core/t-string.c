@@ -421,13 +421,13 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         if (VAL_ARRAY_LEN_AT(def) != 2)
             goto bad_make;
 
-        Cell* any_binstr = Cell_List_At(def);
+        Cell* any_binstr = List_At(def);
         if (not (Is_Binary(any_binstr) or Any_String(any_binstr)))
             goto bad_make;
         if (Is_Binary(any_binstr) != (kind == TYPE_BINARY))
             goto bad_make;
 
-        Cell* index = Cell_List_At(def) + 1;
+        Cell* index = List_At(def) + 1;
         if (!Is_Integer(index))
             goto bad_make;
 
@@ -460,7 +460,7 @@ Bounce TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     if (kind == TYPE_FILE and Is_Path(arg)) {
         REBLEN len = Series_Len_At(arg);
-        Cell* tail = Cell_List_At_Head(arg, len - 1);
+        Cell* tail = List_At_Head(arg, len - 1);
 
         Strand* s = Copy_Form_Value(arg, 0);
         if (Is_Blank(tail)) {

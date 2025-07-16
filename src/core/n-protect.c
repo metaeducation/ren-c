@@ -224,7 +224,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     if (Is_Block(value)) {
         if (Bool_ARG(WORDS)) {
             Cell* val;
-            for (val = Cell_List_At(value); NOT_END(val); val++) {
+            for (val = List_At(value); NOT_END(val); val++) {
                 DECLARE_VALUE (word); // need binding, can't pass Cell
                 Derelativize(word, val, VAL_SPECIFIER(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
@@ -237,7 +237,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 
             DECLARE_VALUE (safe);
 
-            for (item = Cell_List_At(value); NOT_END(item); ++item) {
+            for (item = List_At(value); NOT_END(item); ++item) {
                 if (Is_Word(item)) {
                     //
                     // Since we *are* PROTECT we allow ourselves to get mutable

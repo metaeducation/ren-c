@@ -1136,7 +1136,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
     REBLEN count = 0;
     if (Any_List(res->data)) {
         if (res->broke) { // cleanup markers, don't do removals
-            Cell* temp = Cell_List_At(res->data);
+            Cell* temp = List_At(res->data);
             for (; NOT_END(temp); ++temp) {
                 if (Is_Node_Marked(temp))
                     Clear_Node_Marked_Bit(temp);
@@ -1146,7 +1146,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
 
         REBLEN len = VAL_LEN_HEAD(res->data);
 
-        Cell* dest = Cell_List_At(res->data);
+        Cell* dest = List_At(res->data);
         Cell* src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
@@ -1281,7 +1281,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
             if (Any_List(res->data))
                 Derelativize(
                     var,
-                    Cell_List_At_Head(res->data, index),
+                    List_At_Head(res->data, index),
                     VAL_SPECIFIER(res->data)
                 );
             else if (Is_Binary(res->data))
@@ -1325,7 +1325,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
 
             do {
                 assert(res->start <= len);
-                Cell_List_At_Head(res->data, res->start)->header.bits
+                List_At_Head(res->data, res->start)->header.bits
                     |= NODE_FLAG_MARKED;
                 ++res->start;
             } while (res->start != index);

@@ -278,7 +278,7 @@ Bounce MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
     if (!Is_Block(arg)) goto bad_make;
 
     Init_Typeset(out, 0, nullptr);
-    Update_Typeset_Bits_Core(out, Cell_List_At(arg), VAL_SPECIFIER(arg));
+    Update_Typeset_Bits_Core(out, List_At(arg), VAL_SPECIFIER(arg));
     return out;
 
   bad_make:

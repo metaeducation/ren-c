@@ -593,13 +593,13 @@ bool Eval_Core_Throws(Level* const L)
         //
         if (
             Series_Len_At(current) > 0
-            and Is_Word(Cell_List_At(current))
+            and Is_Word(List_At(current))
         ){
             assert(not current_gotten); // no caching for paths
 
             Specifier* derived = Derive_Specifier(L->specifier, current);
 
-            Cell* path_at = Cell_List_At(current);
+            Cell* path_at = List_At(current);
             const Value* var_at = Try_Get_Opt_Var(path_at, derived);
 
             if (
