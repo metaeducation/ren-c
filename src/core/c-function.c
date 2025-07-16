@@ -134,9 +134,9 @@ enum Reb_Spec_Mode {
 //
 // Ren-C breaks this into two parts: one is the mechanical understanding of
 // the LAMBDA function for parameters in the evaluator.  Then it is the job
-// of a generator to tag the resulting function with a "meta object" with any
-// descriptions.  As a proxy for the work of a usermode generator, this
-// routine tries to fill in FUNCTION-META (see %sysobj.r) as well as to
+// of a generator to tag the resulting function with a "adjunct object" with
+// any descriptions.  As a proxy for the work of a usermode generator, this
+// routine tries to fill in FUNCTION-ADJUNCT (see %sysobj.r) as well as to
 // produce a paramlist suitable for the function.
 //
 // Note a "true local" (indicated by a set-word) is considered to be tacit
@@ -195,7 +195,7 @@ Array* Make_Paramlist_Managed_May_Panic(
             //
             // Consider `[<with> some-extern "description of that extern"]` to
             // be purely commentary for the implementation, and don't include
-            // it in the meta info.
+            // it in the adjunct info.
             //
             if (mode == SPEC_MODE_WITH)
                 continue;
@@ -568,18 +568,20 @@ Array* Make_Paramlist_Managed_May_Panic(
 
     //=///////////////////////////////////////////////////////////////////=//
     //
-    // BUILD META INFORMATION OBJECT (IF NEEDED)
+    // BUILD ADJUNCT INFORMATION OBJECT (IF NEEDED)
     //
     //=///////////////////////////////////////////////////////////////////=//
 
-    // !!! See notes on ACTION-META in %sysobj.r
+    // !!! See notes on ACTION-ADJUNCT in %sysobj.r
 
-    VarList* meta = nullptr;
+    VarList* adjunct = nullptr;
 
     if (has_description or has_types or has_notes)
-        meta = Copy_Context_Shallow_Managed(Cell_Varlist(Root_Action_Meta));
+        adjunct = Copy_Context_Shallow_Managed(
+            Cell_Varlist(Root_Action_Adjunct)
+        );
 
-    MISC(paramlist).meta = meta;
+    MISC(paramlist).adjunct = adjunct;
 
     // If a description string was gathered, it's sitting in the first string
     // slot, the third cell we pushed onto the stack.  Extract it if so.
@@ -587,7 +589,7 @@ Array* Make_Paramlist_Managed_May_Panic(
     if (has_description) {
         assert(Is_Text(Data_Stack_At(base + 3)));
         Copy_Cell(
-            Varlist_Slot(meta, STD_ACTION_META_DESCRIPTION),
+            Varlist_Slot(adjunct, STD_ACTION_ADJUNCT_DESCRIPTION),
             Data_Stack_At(base + 3)
         );
     }
@@ -599,7 +601,7 @@ Array* Make_Paramlist_Managed_May_Panic(
             num_slots,
             SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
         );
-        MISC(types_varlist).meta = nullptr;  // GC sees this, must initialize
+        MISC(types_varlist).adjunct = nullptr;  // GC sees this, must initialize
         Tweak_Keylist_Of_Varlist_Shared(CTX(types_varlist), paramlist);
 
         Value* rootvar = RESET_CELL(Array_Head(types_varlist), TYPE_FRAME);
@@ -625,7 +627,7 @@ Array* Make_Paramlist_Managed_May_Panic(
 
         if (definitional_return) {
             //
-            // We put the return note in the top-level meta information, not
+            // We put the return note in the top-level adjunct information, not
             // on the local itself (the "return-ness" is a distinct property
             // of the function from what word is used for RETURN:, and it
             // is possible to use the word RETURN for a local or refinement
@@ -634,7 +636,7 @@ Array* Make_Paramlist_Managed_May_Panic(
             //
             if (VAL_ARRAY_LEN_AT(definitional_return + 1) != 0) {
                 Copy_Cell(
-                    Varlist_Slot(meta, STD_ACTION_META_RETURN_TYPE),
+                    Varlist_Slot(adjunct, STD_ACTION_ADJUNCT_RETURN_TYPE),
                     &definitional_return[1]
                 );
             }
@@ -646,7 +648,7 @@ Array* Make_Paramlist_Managed_May_Panic(
         Term_Array_Len(types_varlist, num_slots);
 
         Init_Any_Context(
-            Varlist_Slot(meta, STD_ACTION_META_PARAMETER_TYPES),
+            Varlist_Slot(adjunct, STD_ACTION_ADJUNCT_PARAMETER_TYPES),
             TYPE_FRAME,
             CTX(types_varlist)
         );
@@ -659,7 +661,7 @@ Array* Make_Paramlist_Managed_May_Panic(
             num_slots,
             SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
         );
-        MISC(notes_varlist).meta = nullptr;  // GC sees this, must initialize
+        MISC(notes_varlist).adjunct = nullptr;  // GC sees this, must initialize
         Tweak_Keylist_Of_Varlist_Shared(CTX(notes_varlist), paramlist);
 
         Value* rootvar = RESET_CELL(Array_Head(notes_varlist), TYPE_FRAME);
@@ -686,14 +688,16 @@ Array* Make_Paramlist_Managed_May_Panic(
         if (definitional_return) {
             //
             // See remarks on the return type--the RETURN is documented in
-            // the top-level META-OF, not the "incidentally" named RETURN
+            // the top-level ADJUNCT-OF, not the "incidentally" named RETURN
             // parameter in the list
             //
             if (Flex_Len(Cell_Flex(definitional_return + 2)) == 0)
-                Init_Nulled(Varlist_Slot(meta, STD_ACTION_META_RETURN_NOTE));
+                Init_Nulled(
+                    Varlist_Slot(adjunct, STD_ACTION_ADJUNCT_RETURN_NOTE)
+                );
             else {
                 Copy_Cell(
-                    Varlist_Slot(meta, STD_ACTION_META_RETURN_NOTE),
+                    Varlist_Slot(adjunct, STD_ACTION_ADJUNCT_RETURN_NOTE),
                     &definitional_return[2]
                 );
             }
@@ -705,7 +709,7 @@ Array* Make_Paramlist_Managed_May_Panic(
         Term_Array_Len(notes_varlist, num_slots);
 
         Init_Frame(
-            Varlist_Slot(meta, STD_ACTION_META_PARAMETER_NOTES),
+            Varlist_Slot(adjunct, STD_ACTION_ADJUNCT_PARAMETER_NOTES),
             CTX(notes_varlist)
         );
     }
@@ -885,13 +889,13 @@ REBACT *Make_Action(
         LINK(details).specialty = Varlist_Array(opt_exemplar);
     }
 
-    // The meta information may already be initialized, since the native
-    // version of paramlist construction sets up the FUNCTION-META information
-    // used by HELP.  If so, it must be a valid VarList*.  Otherwise nullptr.
+    // The adjunct information may already be initialized, since the native
+    // paramlist construction sets up the FUNCTION-ADJUNCT information used by
+    // HELP.  If so, it must be a valid VarList*.  Otherwise nullptr.
     //
     assert(
-        not MISC(paramlist).meta
-        or Get_Array_Flag(MISC(paramlist).meta, IS_VARLIST)
+        not MISC(paramlist).adjunct
+        or Get_Array_Flag(MISC(paramlist).adjunct, IS_VARLIST)
     );
 
     assert(Not_Array_Flag(paramlist, HAS_FILE_LINE));
@@ -928,7 +932,7 @@ VarList* Make_Expired_Level_Ctx_Managed(REBACT *a)
     );
     Set_Flex_Flag(varlist, ALWAYS_DYNAMIC);  // asserts check
     Set_Flex_Info(varlist, INACCESSIBLE);
-    MISC(varlist).meta = nullptr;
+    MISC(varlist).adjunct = nullptr;
 
     Cell* rootvar = RESET_CELL(ARR_SINGLE(varlist), TYPE_FRAME);
     rootvar->payload.any_context.varlist = varlist;
@@ -1076,8 +1080,8 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 //     make function! copy/deep reduce [spec body]
 //
 // Ren-C's doesn't need to copy the spec (it does not save it--parameter
-// descriptions are in a meta object).  The body is copied implicitly (as it
-// must be in order to relativize it).
+// descriptions are in an adjunct object).  The body is copied implicitly
+// (as it must be in order to relativize it).
 //
 // There is also a "definitional return" MKF_RETURN option used by FUNC, so
 // the body will introduce a RETURN specific to each action invocation, thus

@@ -428,7 +428,7 @@ INLINE void Push_Action(
                 | FLAG_LEN_BYTE_OR_255(255) // signals dynamic
         );
         s->link_private.keysource = NOD(L); // maps varlist back to f
-        s->misc_private.meta = nullptr; // GC will sees this
+        s->misc_private.adjunct = nullptr; // GC will sees this
         L->varlist = cast_Array(s);
     }
     else {

@@ -164,7 +164,7 @@ REBTYPE(Action)
         );
         Array_Head(proxy_paramlist)->payload.action.paramlist
             = proxy_paramlist;
-        MISC(proxy_paramlist).meta = ACT_META(act);
+        MISC(proxy_paramlist).adjunct = ACT_ADJUNCT(act);
 
         // If the function had code, then that code will be bound relative
         // to the original paramlist that's getting hijacked.  So when the

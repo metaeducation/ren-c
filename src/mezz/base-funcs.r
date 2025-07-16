@@ -226,17 +226,17 @@ function: func [
 ]
 
 
-; Actions can be cascaded, adapted, and specialized--repeatedly.  The meta
+; Actions can be cascaded, adapted, and specialized--repeatedly.  The adjunct
 ; information from which HELP is determined can be inherited through links
-; in that meta information.  Though in order to mutate the information for
+; in that adjunct information.  Though in order to mutate the information for
 ; the purposes of distinguishing a derived action, it must be copied.
 ;
-dig-action-meta-fields: function [
+dig-action-adjunct-fields: function [
     return: [object!]
     value [action!]
 ][
-    meta: meta-of :value else [
-        return make system/standard/action-meta [
+    adjunct: adjunct-of :value else [
+        return make system/standard/action-adjunct [
             description: null
             return-type: null
             return-note: null
@@ -246,17 +246,17 @@ dig-action-meta-fields: function [
     ]
 
     underlying: ensure [~null~ action!] any [
-        get 'meta/specializee
-        get 'meta/adaptee
+        get 'adjunct/specializee
+        get 'adjunct/adaptee
         all [
-            block? opt :meta/pipeline
-            first meta/pipeline
+            block? opt :adjunct/pipeline
+            first adjunct/pipeline
         ]
     ]
 
     fields: all [
         :underlying
-        dig-action-meta-fields :underlying
+        dig-action-adjunct-fields :underlying
     ]
 
     inherit-frame: function [
@@ -273,25 +273,25 @@ dig-action-meta-fields: function [
         return child
     ]
 
-    return make system/standard/action-meta [
+    return make system/standard/action-adjunct [
         description: ensure [~null~ text!] any [
-            select meta 'description
+            select adjunct 'description
             copy opt select opt fields 'description
         ]
         return-type: ensure [~null~ block!] any [
-            select meta 'return-type
+            select adjunct 'return-type
             copy opt select opt fields 'return-type
         ]
         return-note: ensure [~null~ text!] any [
-            select meta 'return-note
+            select adjunct 'return-note
             copy opt select opt fields 'return-note
         ]
         parameter-types: ensure [~null~ frame!] any [
-            select meta 'parameter-types
+            select adjunct 'parameter-types
             inherit-frame opt get opt 'parameter-types
         ]
         parameter-notes: ensure [~null~ frame!] any [
-            select meta 'parameter-notes
+            select adjunct 'parameter-notes
             inherit-frame opt get opt 'parameter-notes
         ]
     ]
@@ -308,30 +308,30 @@ redescribe: function [
     value [action!]
         {(modified) Action whose description is to be updated.}
 ][
-    meta: meta-of :value
+    adjunct: adjunct-of :value
     notes: null
 
     ; For efficiency, objects are only created on demand by hitting the
     ; required point in the PARSE.  Hence `redescribe [] :foo` will not tamper
-    ; with the meta information at all, while `redescribe [{stuff}] :foo` will
-    ; only manipulate the description.
+    ; with the adjunct information at all, while `redescribe [{stuff}] :foo`
+    ; will only manipulate the description.
 
-    on-demand-meta: does [
-        meta: default [set-meta :value copy system/standard/action-meta]
+    on-demand-adjunct: does [
+        adjunct: default [set-adjunct :value copy system/standard/action-adjunct]
 
-        if not find meta 'description [
-            panic [{archetype META-OF doesn't have DESCRIPTION slot} meta]
+        if not find adjunct 'description [
+            panic [{archetype ADJUNCT-OF doesn't have DESCRIPTION slot} adjunct]
         ]
 
-        if notes: get 'meta/parameter-notes [
+        if notes: get 'adjunct/parameter-notes [
             if not frame? notes [
-                panic [{PARAMETER-NOTES in META-OF is not a FRAME!} notes]
+                panic [{PARAMETER-NOTES in ADJUNCT-OF is not a FRAME!} notes]
             ]
 
           ; Getting error on equality test from expired frame...review
           comment [
             if not equal? :value (action of notes) [
-                panic [{PARAMETER-NOTES in META-OF frame mismatch} notes]
+                panic [{PARAMETER-NOTES in ADJUNCT-OF frame mismatch} notes]
             ]
           ]
         ]
@@ -346,17 +346,17 @@ redescribe: function [
     ; variations that clients like HELP have to reason about.)
     ;
     on-demand-notes: does [ ;-- was a DOES CATCH, removed during DOES tweaking
-        on-demand-meta
+        on-demand-adjunct
 
-        if find meta 'parameter-notes [
-            fields: dig-action-meta-fields :value
+        if find adjunct 'parameter-notes [
+            fields: dig-action-adjunct-fields :value
 
-            meta: null ;-- need to get a parameter-notes field in the OBJECT!
-            on-demand-meta ;-- ...so this loses SPECIALIZEE, etc.
+            adjunct: null ;-- need to get a parameter-notes field in the OBJECT!
+            on-demand-adjunct ;-- ...so this loses SPECIALIZEE, etc.
 
-            description: meta/description: fields/description
-            notes: meta/parameter-notes: fields/parameter-notes
-            types: meta/parameter-types: fields/parameter-types
+            description: adjunct/description: fields/description
+            notes: adjunct/parameter-notes: fields/parameter-notes
+            types: adjunct/parameter-types: fields/parameter-types
         ]
     ]
 
@@ -365,12 +365,12 @@ redescribe: function [
             description: text! (
                 either all [
                     equal? description {}
-                    not meta
+                    not adjunct
                 ][
-                    ; No action needed (no meta to delete old description in)
+                    ; No action needed (no adjunct to delete old description in)
                 ][
-                    on-demand-meta
-                    meta/description: if equal? description {} [
+                    on-demand-adjunct
+                    adjunct/description: if equal? description {} [
                         _
                     ] else [
                         description
@@ -387,9 +387,9 @@ redescribe: function [
             ; to delete a note.
             ;
             opt [note: text! (
-                on-demand-meta
+                on-demand-adjunct
                 either equal? param (the return:) [
-                    meta/return-note: all [
+                    adjunct/return-note: all [
                         not equal? note {}
                         copy note
                     ]
@@ -415,14 +415,14 @@ redescribe: function [
         panic [{REDESCRIBE specs should be STRING! and ANY-WORD! only:} spec]
     ]
 
-    ; If you kill all the notes then they will be cleaned up.  The meta
+    ; If you kill all the notes then they will be cleaned up.  The adjunct
     ; object will be left behind, however.
     ;
     if notes and (every [param note] notes [(unset? 'note) or (null? note)]) [
-        meta/parameter-notes: null
+        adjunct/parameter-notes: null
     ]
 
-    return :value ;-- should have updated the meta
+    return :value ;-- should have updated the adjunct
 ]
 
 
@@ -780,7 +780,7 @@ module: func [
     spec/options: default [copy []]
 
     ; In Ren-C, MAKE MODULE! acts just like MAKE OBJECT! due to the generic
-    ; facility for SET-META.
+    ; facility for SET-ADJUNCT.
 
     mod: default [
         make module! 7 ; arbitrary starting size
@@ -842,7 +842,7 @@ module: func [
         protect/hide/words hidden
     ]
 
-    set-meta mod spec
+    set-adjunct mod spec
 
     ; Add exported words at top of context (performance):
     if block? opt select spec 'exports [bind/new spec/exports mod]
@@ -885,7 +885,7 @@ cause-error: func [
     ; Filter out functional values:
     iterate args [
         if action? first args [
-            change/only args meta-of first args
+            change/only args adjunct-of first args
         ]
     ]
 

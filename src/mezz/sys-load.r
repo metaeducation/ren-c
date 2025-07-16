@@ -468,7 +468,7 @@ load-module: function [
 
     ; Get info from preloaded or delayed modules
     if module? mod [
-        delay: no-share: null hdr: meta-of mod
+        delay: no-share: null hdr: adjunct-of mod
         ensure [~null~ block!] hdr/options
     ]
     if block? mod [
@@ -531,7 +531,7 @@ load-module: function [
     ] then [
         ; Get existing module's info
 
-        if module? :mod0 [hdr0: meta-of mod0] ; final header
+        if module? :mod0 [hdr0: adjunct-of mod0] ; final header
         if block? :mod0 [hdr0: first mod0] ; cached preparsed header
 
         ensure word! name0
@@ -707,7 +707,7 @@ import: function [
     case [
         any [
             no-user
-            not block? exports: select hdr: meta-of mod 'exports
+            not block? exports: select hdr: adjunct-of mod 'exports
             empty? exports
         ][
             ; Do nothing if /no-user or no exports.

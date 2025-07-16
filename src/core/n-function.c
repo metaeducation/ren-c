@@ -321,7 +321,7 @@ DECLARE_NATIVE(TYPECHECKER)
         Set_Typeset_Flag(param, TYPE_TS_NOOP_IF_VOID);
     assert(not Is_Param_Endable(param));
 
-    MISC(paramlist).meta = nullptr;  // !!! auto-generate info for HELP?
+    MISC(paramlist).adjunct = nullptr;  // !!! auto-generate info for HELP?
 
     REBACT *typechecker = Make_Action(
         paramlist,
@@ -393,22 +393,22 @@ DECLARE_NATIVE(CASCADE)
     );
     Array_Head(paramlist)->payload.action.paramlist = paramlist;
 
-    // Initialize the "meta" information, which is used by HELP.  Because it
+    // Initialize the "adjunct" information, which is used by HELP.  Because it
     // has a link to the pipeline, it is not necessary to copy parameter
     // descriptions...HELP can follow the link and find the information.
     //
-    // See %sysobj.r for `cascaded-meta:` object template
+    // See %sysobj.r for `cascaded-adjunct:` object template
     //
     // !!! There could be a system for preserving names in the cascade, by
     // accepting lit-words instead of functions--or even by reading the
     // GET-WORD!s in the block.  Consider for the future.
     //
-    Value* std_meta = Get_System(SYS_STANDARD, STD_CASCADED_META);
-    VarList* meta = Copy_Context_Shallow_Managed(Cell_Varlist(std_meta));
-    Init_Nulled(Varlist_Slot(meta, STD_CASCADED_META_DESCRIPTION)); // default
-    Init_Block(Varlist_Slot(meta, STD_CASCADED_META_PIPELINE), pipeline);
-    Init_Nulled(Varlist_Slot(meta, STD_CASCADED_META_PIPELINE_NAMES));
-    MISC(paramlist).meta = meta; // must initialize before Make_Action
+    Value* std_adjunct = Get_System(SYS_STANDARD, STD_CASCADED_ADJUNCT);
+    VarList* adjunct = Copy_Context_Shallow_Managed(Cell_Varlist(std_adjunct));
+    Init_Nulled(Varlist_Slot(adjunct, STD_CASCADED_ADJUNCT_DESCRIPTION));
+    Init_Block(Varlist_Slot(adjunct, STD_CASCADED_ADJUNCT_PIPELINE), pipeline);
+    Init_Nulled(Varlist_Slot(adjunct, STD_CASCADED_ADJUNCT_PIPELINE_NAMES));
+    MISC(paramlist).adjunct = adjunct; // must initialize before Make_Action
 
     REBACT *cascade = Make_Action(
         paramlist,
@@ -468,22 +468,22 @@ DECLARE_NATIVE(ADAPT)
     );
     Array_Head(paramlist)->payload.action.paramlist = paramlist;
 
-    // See %sysobj.r for `adapted-meta:` object template
+    // See %sysobj.r for `adapted-adjunct:` object template
 
-    Value* example = Get_System(SYS_STANDARD, STD_ADAPTED_META);
+    Value* example = Get_System(SYS_STANDARD, STD_ADAPTED_ADJUNCT);
 
-    VarList* meta = Copy_Context_Shallow_Managed(Cell_Varlist(example));
-    Init_Nulled(Varlist_Slot(meta, STD_ADAPTED_META_DESCRIPTION)); // default
-    Copy_Cell(Varlist_Slot(meta, STD_ADAPTED_META_ADAPTEE), adaptee);
+    VarList* adjunct = Copy_Context_Shallow_Managed(Cell_Varlist(example));
+    Init_Nulled(Varlist_Slot(adjunct, STD_ADAPTED_ADJUNCT_DESCRIPTION));
+    Copy_Cell(Varlist_Slot(adjunct, STD_ADAPTED_ADJUNCT_ADAPTEE), adaptee);
     if (opt_adaptee_name == nullptr)
-        Init_Nulled(Varlist_Slot(meta, STD_ADAPTED_META_ADAPTEE_NAME));
+        Init_Nulled(Varlist_Slot(adjunct, STD_ADAPTED_ADJUNCT_ADAPTEE_NAME));
     else
         Init_Word(
-            Varlist_Slot(meta, STD_ADAPTED_META_ADAPTEE_NAME),
+            Varlist_Slot(adjunct, STD_ADAPTED_ADJUNCT_ADAPTEE_NAME),
             opt_adaptee_name
         );
 
-    MISC(paramlist).meta = meta;
+    MISC(paramlist).adjunct = adjunct;
 
     REBACT *underlying = ACT_UNDERLYING(VAL_ACTION(adaptee));
 
@@ -585,30 +585,30 @@ DECLARE_NATIVE(ENCLOSE)
     //
     CUSTOM_BYTE(rootparam) = 0;
 
-    // See %sysobj.r for `enclosed-meta:` object template
+    // See %sysobj.r for `enclosed-adjunct:` object template
 
-    Value* example = Get_System(SYS_STANDARD, STD_ENCLOSED_META);
+    Value* example = Get_System(SYS_STANDARD, STD_ENCLOSED_ADJUNCT);
 
-    VarList* meta = Copy_Context_Shallow_Managed(Cell_Varlist(example));
-    Init_Nulled(Varlist_Slot(meta, STD_ENCLOSED_META_DESCRIPTION)); // default
-    Copy_Cell(Varlist_Slot(meta, STD_ENCLOSED_META_INNER), inner);
+    VarList* adjunct = Copy_Context_Shallow_Managed(Cell_Varlist(example));
+    Init_Nulled(Varlist_Slot(adjunct, STD_ENCLOSED_ADJUNCT_DESCRIPTION)); // default
+    Copy_Cell(Varlist_Slot(adjunct, STD_ENCLOSED_ADJUNCT_INNER), inner);
     if (opt_inner_name == nullptr)
-        Init_Nulled(Varlist_Slot(meta, STD_ENCLOSED_META_INNER_NAME));
+        Init_Nulled(Varlist_Slot(adjunct, STD_ENCLOSED_ADJUNCT_INNER_NAME));
     else
         Init_Word(
-            Varlist_Slot(meta, STD_ENCLOSED_META_INNER_NAME),
+            Varlist_Slot(adjunct, STD_ENCLOSED_ADJUNCT_INNER_NAME),
             opt_inner_name
         );
-    Copy_Cell(Varlist_Slot(meta, STD_ENCLOSED_META_OUTER), outer);
+    Copy_Cell(Varlist_Slot(adjunct, STD_ENCLOSED_ADJUNCT_OUTER), outer);
     if (opt_outer_name == nullptr)
-        Init_Nulled(Varlist_Slot(meta, STD_ENCLOSED_META_OUTER_NAME));
+        Init_Nulled(Varlist_Slot(adjunct, STD_ENCLOSED_ADJUNCT_OUTER_NAME));
     else
         Init_Word(
-            Varlist_Slot(meta, STD_ENCLOSED_META_OUTER_NAME),
+            Varlist_Slot(adjunct, STD_ENCLOSED_ADJUNCT_OUTER_NAME),
             opt_outer_name
         );
 
-    MISC(paramlist).meta = meta;
+    MISC(paramlist).adjunct = adjunct;
 
     REBACT *enclosure = Make_Action(
         paramlist,
@@ -746,7 +746,7 @@ DECLARE_NATIVE(HIJACK)
         Term_Array_Len(victim_details, 1);
     }
 
-    // !!! What should be done about MISC(victim_paramlist).meta?  Leave it
+    // !!! What should be done about MISC(victim_paramlist).adjunct?  Leave it
     // alone?  Add a note about the hijacking?  Also: how should binding and
     // hijacking interact?
 
@@ -848,7 +848,7 @@ DECLARE_NATIVE(N_SHOT)
     Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);
     assert(not Is_Param_Endable(param));
 
-    MISC(paramlist).meta = nullptr;  // !!! auto-generate info for HELP?
+    MISC(paramlist).adjunct = nullptr;  // !!! auto-generate info for HELP?
 
     REBACT *n_shot = Make_Action(
         paramlist,

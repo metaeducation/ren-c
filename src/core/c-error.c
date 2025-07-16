@@ -725,7 +725,7 @@ Error* Make_Error_Managed_Vaptr(
     }
     else {
         // !!! See remarks on how the modern way to handle this may be to
-        // put error arguments in the error object, and then have the META-OF
+        // put error arguments in the error object, and then have ADJUNCT-OF
         // hold the generic error parameters.  Investigate how this ties in
         // with user-defined types.
 

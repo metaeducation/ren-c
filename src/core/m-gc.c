@@ -645,9 +645,9 @@ static void Propagate_All_GC_Marks(void)
             else
                 assert(specialty == a);
 
-            VarList* meta = MISC(a).meta;
-            if (meta)
-                Queue_Mark_Context_Deep(meta);
+            VarList* adjunct = MISC(a).adjunct;
+            if (adjunct)
+                Queue_Mark_Context_Deep(adjunct);
 
             // Functions can't currently be freed by FREE...
             //
@@ -697,9 +697,9 @@ static void Propagate_All_GC_Marks(void)
                 Queue_Mark_Array_Subclass_Deep(keylist);
             }
 
-            VarList* meta = MISC(a).meta;
-            if (meta != nullptr)
-                Queue_Mark_Context_Deep(meta);
+            VarList* adjunct = MISC(a).adjunct;
+            if (adjunct != nullptr)
+                Queue_Mark_Context_Deep(adjunct);
 
             // Stack-based frames will be inaccessible if they are no longer
             // running, so there's no data to mark...

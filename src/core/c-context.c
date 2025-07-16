@@ -85,7 +85,7 @@ VarList* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
         SERIES_MASK_CONTEXT // includes assurance of dynamic allocation
             | flags // e.g. NODE_FLAG_MANAGED
     );
-    MISC(varlist).meta = nullptr; // GC sees meta object, must init
+    MISC(varlist).adjunct = nullptr; // GC sees adjunct object, must init
 
     // varlist[0] is a value instance of the OBJECT!/MODULE!/PORT!/ERROR! we
     // are building which contains this context.
@@ -319,11 +319,11 @@ VarList* Copy_Context_Shallow_Extra_Managed(VarList* src, REBLEN extra) {
 
     Varlist_Archetype(dest)->payload.any_context.varlist = Varlist_Array(dest);
 
-    // !!! Should the new object keep the meta information, or should users
+    // !!! Should the new object keep the adjunct information, or should users
     // have to copy that manually?  If it's copied would it be a shallow or
     // a deep copy?
     //
-    MISC(varlist).meta = nullptr;
+    MISC(varlist).adjunct = nullptr;
 
     return dest;
 }
@@ -806,7 +806,7 @@ VarList* Make_Selfish_Context_Detect_Managed(
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
     );
     Term_Array_Len(varlist, len);
-    MISC(varlist).meta = nullptr;  // clear meta object (GC sees this)
+    MISC(varlist).adjunct = nullptr;  // clear adjunct object (GC sees this)
 
     VarList* context = CTX(varlist);
 
@@ -1054,8 +1054,8 @@ VarList* Merge_Contexts_Selfish_Managed(VarList* parent1, VarList* parent2)
     // that keylists are always managed.  The BUF_COLLECT contains only
     // typesets, so no need for a specifier in the copy.
     //
-    // !!! Review: should child start fresh with no meta information, or get
-    // the meta information held by parents?
+    // !!! Review: should child start fresh with no adjunct information, or get
+    // the adjunct information held by parents?
     //
     Array* keylist = Copy_Array_Shallow_Flags(
         BUF_COLLECT,
@@ -1074,7 +1074,7 @@ VarList* Merge_Contexts_Selfish_Managed(VarList* parent1, VarList* parent2)
         SERIES_MASK_CONTEXT
             | NODE_FLAG_MANAGED // rebind below requires managed context
     );
-    MISC(varlist).meta = nullptr;  // GC sees this, it must be initialized
+    MISC(varlist).adjunct = nullptr;  // GC sees this, it must be initialized
 
     VarList* merged = CTX(varlist);
     Tweak_Keylist_Of_Varlist_Unique(merged, keylist);

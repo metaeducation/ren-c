@@ -180,10 +180,10 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     Bind_Values_Deep(Array_Head(specs), Lib_Context);
 
     // Some of the things being tacked on here (like the DLL info etc.) should
-    // reside in the META OF portion, vs. being in-band in the module itself.
+    // be in the ADJUNCT-OF portion, vs. being in-band in the module itself.
     // For the moment, go ahead and bind the code to its own copy of lib.
 
-    // !!! used to use STD_EXT_CTX, now this would go in META OF
+    // !!! used to use STD_EXT_CTX, now this would go in ADJUNCT-OF
 
     VarList* module_ctx = Alloc_Context_Core(
         TYPE_MODULE,

@@ -432,7 +432,7 @@ INLINE VarList* Steal_Context_Vars(VarList* c, Node* keysource) {
         cast(char*, &stub->content),
         sizeof(union StubContentUnion)
     );
-    copy->misc_private.meta = nullptr; // let stub have the meta
+    copy->misc_private.adjunct = nullptr;  // let stub have the adjunct
 
     Value* rootvar = cast(Value*, copy->content.dynamic.data);
 

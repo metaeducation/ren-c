@@ -144,7 +144,7 @@ custom
 
 value ; used by TYPECHECKER to name the argument of the generated function
 
-; !!! See notes on FUNCTION-META and SPECIALIZER-META in %sysobj.r
+; !!! See notes on FUNCTION-ADJUNCT and SPECIALIZER-ADJUNCT in %sysobj.r
 description
 return-type
 return-note

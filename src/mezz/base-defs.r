@@ -176,7 +176,7 @@ reeval func [
     return: [~]
     'set-words [tag! set-word! <...>]
     <local>
-        set-word type-name tester meta
+        set-word type-name tester
 ][
     while [not equal? <end> set-word: take set-words] [
         type-name: copy as text! set-word
@@ -184,7 +184,7 @@ reeval func [
         tester: typechecker (get bind (as word! type-name) binding of set-word)
         set set-word :tester
 
-        set-meta :tester make system/standard/action-meta [
+        set-adjunct :tester make system/standard/action-adjunct [
             description: spaced [{Returns TRUE if the value is} an type-name]
             return-type: [logic!]
         ]

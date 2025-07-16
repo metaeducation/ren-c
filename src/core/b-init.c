@@ -458,40 +458,40 @@ static void Shutdown_Action_Spec_Tags(void)
 
 
 //
-//  Init_Action_Meta_Shim: C
+//  Init_Action_Adjunct_Shim: C
 //
-// Make_Paramlist_Managed_May_Panic() needs the object archetype ACTION-META
+// Make_Paramlist_Managed_May_Panic() needs the object archetype ACTION-ADJUNCT
 // from %sysobj.r, to have the keylist to use in generating the info used
 // by HELP for the natives.  However, natives themselves are used in order
 // to run the object construction in %sysobj.r
 //
 // To break this Catch-22, this code builds a field-compatible version of
-// ACTION-META.  After %sysobj.r is loaded, an assert checks to make sure
+// ACTION-ADJUNCT.  After %sysobj.r is loaded, an assert checks to make sure
 // that this manual construction actually matches the definition in the file.
 //
-static void Init_Action_Meta_Shim(void) {
+static void Init_Action_Adjunct_Shim(void) {
     SymId field_syms[6] = {
         SYM_SELF, SYM_DESCRIPTION, SYM_RETURN_TYPE, SYM_RETURN_NOTE,
         SYM_PARAMETER_TYPES, SYM_PARAMETER_NOTES
     };
-    VarList* meta = Alloc_Context_Core(TYPE_OBJECT, 6, NODE_FLAG_MANAGED);
+    VarList* adjunct = Alloc_Context_Core(TYPE_OBJECT, 6, NODE_FLAG_MANAGED);
     REBLEN i = 1;
     for (; i != 7; ++i)
         Init_Nulled(
-            Append_Context(meta, nullptr, Canon_From_Id(field_syms[i - 1]))
+            Append_Context(adjunct, nullptr, Canon_From_Id(field_syms[i - 1]))
         );
 
-    Init_Object(Varlist_Slot(meta, 1), meta); // it's "selfish"
+    Init_Object(Varlist_Slot(adjunct, 1), adjunct); // it's "selfish"
 
-    Root_Action_Meta = Init_Object(Alloc_Value(), meta);
+    Root_Action_Adjunct = Init_Object(Alloc_Value(), adjunct);
 
     Flex* locker = nullptr;
-    Force_Value_Frozen_Deep(Root_Action_Meta, locker);
+    Force_Value_Frozen_Deep(Root_Action_Adjunct, locker);
 
 }
 
-static void Shutdown_Action_Meta_Shim(void) {
-    rebRelease(Root_Action_Meta);
+static void Shutdown_Action_Adjunct_Shim(void) {
+    rebRelease(Root_Action_Adjunct);
 }
 
 
@@ -632,7 +632,7 @@ static Array* Startup_Natives(const Value* boot_natives)
 {
     // Must be called before first use of Make_Paramlist_Managed_May_Panic()
     //
-    Init_Action_Meta_Shim();
+    Init_Action_Adjunct_Shim();
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     Cell* item = List_At(boot_natives);
@@ -958,15 +958,15 @@ static void Init_System_Object(
     //
     Root_System = Init_Object(Alloc_Value(), system);
 
-    // Init_Action_Meta_Shim() made Root_Action_Meta as a bootstrap hack
+    // Init_Action_Adjunct_Shim() made Root_Action_Adjunct as a bootstrap hack
     // since it needed to make function meta information for natives before
     // %sysobj.r's code could run using those natives.  But make sure what it
     // made is actually identical to the definition in %sysobj.r.
     //
     assert(
         0 == CT_Context(
-            Get_System(SYS_STANDARD, STD_ACTION_META),
-            Root_Action_Meta,
+            Get_System(SYS_STANDARD, STD_ACTION_ADJUNCT),
+            Root_Action_Adjunct,
             1 // "strict equality"
         )
     );
@@ -1573,7 +1573,7 @@ void Shutdown_Core(void)
     Shutdown_System_Object();
     Shutdown_Typesets();
 
-    Shutdown_Action_Meta_Shim();
+    Shutdown_Action_Adjunct_Shim();
     Shutdown_Action_Spec_Tags();
     Shutdown_Root_Vars();
 

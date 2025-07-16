@@ -130,7 +130,7 @@ PVAR Array* PG_Empty_Array; // optimization of Cell_Array(Root_Empty_Block)
 PVAR Value* Root_Space_Char; // ' ' as a CHAR!
 PVAR Value* Root_Newline_Char; // '\n' as a CHAR!
 
-PVAR Value* Root_Action_Meta;
+PVAR Value* Root_Action_Adjunct;
 
 PVAR Value* Root_Stats_Map;
 

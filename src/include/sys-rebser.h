@@ -609,7 +609,7 @@ STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == NODE_FLAG_CELL);
 // help exchange a common "currency" of allocation size more efficiently.
 // They are planned for use in the PAIR! and MAP! datatypes, and anticipated
 // to play a crucial part in the API--allowing a persistent handle for a
-// GC'able cell and associated "meta" value (which can be used for
+// GC'able cell and associated secondary value (which can be used for
 // reference counting or other tracking.)
 //
 // Most of the time, code does not need to be concerned about distinguishing
@@ -723,7 +723,7 @@ union StubLinkUnion {
     // discern the case where it can be cast to a Level* vs. Array*.
     //
     // (Note: FRAME!s used to use a field `misc.L` to track the associated
-    // frame...but that prevented the ability to SET-META on a frame.  While
+    // frame...but that prevented the ability to SET-ADJUNCT on a frame.  While
     // that feature may not be essential, it seems awkward to not allow it
     // since it's allowed for other ANY-CONTEXT!s.  Also, it turns out that
     // heap-based FRAME! values--such as those that come from MAKE FRAME!--
@@ -826,11 +826,11 @@ union StubMiscUnion {
         int other:16;
     } bind_index;
 
-    // ACTION! paramlists and ANY-CONTEXT! varlists can store a "meta"
+    // ACTION! paramlists and ANY-CONTEXT! varlists can store an "adjunct"
     // object.  It's where information for HELP is saved, and it's how modules
     // store out-of-band information that doesn't appear in their body.
     //
-    VarList* meta;
+    VarList* adjunct;
 
     // native dispatcher code, see Reb_Function's body_holder
     //

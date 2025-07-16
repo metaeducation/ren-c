@@ -392,7 +392,7 @@ struct Reb_Action_Payload {
     // because they have to have the right number of slots to line up with
     // the frame of the underlying function.
     //
-    // The `misc.meta` field of the paramlist holds a meta object (if any)
+    // The `misc.adjunct` field of the paramlist holds an object (if any)
     // that describes the function.  This is read by help.
     //
     Array* paramlist;
@@ -430,7 +430,7 @@ struct Reb_Context_Payload {
     // may be shared with an arbitrary number of other contexts.  Changing
     // the keylist involves making a copy if it is shared.
     //
-    // TYPE_MODULE depends on a property stored in the "meta" Stub.link
+    // TYPE_MODULE depends on a property stored in the "adjunct" Stub.link
     // field of the keylist, which is another object's-worth of data *about*
     // the module's contents (e.g. the processed header)
     //

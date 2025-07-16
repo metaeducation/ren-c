@@ -176,7 +176,7 @@ standard: construct [
 
     ; !!! The %sysobj.r initialization currently runs natives (notably the
     ; natives for making objects, and here using COMMENT because it can).
-    ; This means that if the ACTION-META information is going to be produced
+    ; This means that if the ACTION-ADJUCNT information is going to be produced
     ; from a spec block for natives, it wouldn't be available while the
     ; natives are getting initialized.
     ;
@@ -185,7 +185,7 @@ standard: construct [
     ; the archetypal context has to be created "by hand" for natives to use,
     ; with this archetype used by the REDESCRIBE Mezzanine.
     ;
-    action-meta: construct [
+    action-adjunct: construct [
         description:
         return-type:
         return-note:
@@ -196,25 +196,25 @@ standard: construct [
 
     ; The common case is that derived actions will not need to be
     ; REDESCRIBE'd besides their title.  If they are, then they switch the
-    ; meta archetype to `action-meta` and subset the parameters.  Otherwise
+    ; adjunct archetype to `action-adjunct` and subset the parameters.  Else
     ; HELP just follows the link (`specializee`, `adaptee`) and gets
     ; descriptions there.
 
-    specialized-meta: construct [
+    specialized-adjunct: construct [
         description:
         specializee:
         specializee-name:
             null
     ]
 
-    adapted-meta: construct [
+    adapted-adjunct: construct [
         description:
         adaptee:
         adaptee-name:
             null
     ]
 
-    enclosed-meta: construct [
+    enclosed-adjunct: construct [
         description:
         inner:
         inner-name:
@@ -223,7 +223,7 @@ standard: construct [
             null
     ]
 
-    cascaded-meta: construct [
+    cascaded-adjunct: construct [
         description:
         pipeline:
         pipeline-names:
@@ -232,7 +232,7 @@ standard: construct [
 
     ; !!! This is the template used for all errors, to which extra fields are
     ; added if the error has parameters.  It likely makes sense to put this
-    ; information into the META-OF of the error, so that parameterizing the
+    ; information into the ADJUNCT-OF of the error, so that parameterizing the
     ; error does not require a keylist expansion...and also so that fields
     ; like FILE and LINE would not conflict with parameters.
     ;

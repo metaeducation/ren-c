@@ -18,28 +18,28 @@ spec-of: function [
     return: [block!]
     action [action!]
 ][
-    meta: match object! meta-of :action
+    adjunct: match object! adjunct-of :action
 
-    specializee: match action! select opt meta 'specializee
-    adaptee: match action! select opt meta 'adaptee
-    original-meta: match object! any [
-        meta-of opt :specializee
-        meta-of opt :adaptee
+    specializee: match action! select opt adjunct 'specializee
+    adaptee: match action! select opt adjunct 'adaptee
+    original-adjunct: match object! any [
+        adjunct-of opt :specializee
+        adjunct-of opt :adaptee
     ]
 
     return collect [
         keep/line opt ensure [~null~ text!] any [
-            select opt meta 'description
-            select opt original-meta 'description
+            select opt adjunct 'description
+            select opt original-adjunct 'description
         ]
 
         return-type: ensure [~null~ block!] any [
-            select opt meta 'return-type
-            select opt original-meta 'return-type
+            select opt adjunct 'return-type
+            select opt original-adjunct 'return-type
         ]
         return-note: ensure [~null~ text!] any [
-            select opt meta 'return-note
-            select opt original-meta 'return-note
+            select opt adjunct 'return-note
+            select opt original-adjunct 'return-note
         ]
         if any [return-type return-note] [
             keep compose/only [
@@ -48,12 +48,12 @@ spec-of: function [
         ]
 
         types: ensure [~null~ frame!] any [
-            select opt meta 'parameter-types
-            select opt original-meta 'parameter-types
+            select opt adjunct 'parameter-types
+            select opt original-adjunct 'parameter-types
         ]
         notes: ensure [~null~ frame!] any [
-            select opt meta 'parameter-notes
-            select opt original-meta 'parameter-notes
+            select opt adjunct 'parameter-notes
+            select opt original-adjunct 'parameter-notes
         ]
 
         for-each param words of :action [
@@ -67,15 +67,15 @@ spec-of: function [
 
 
 title-of: function [
-    {Extracts a summary of a value's purpose from its "meta" information.}
+    {Extracts a summary of a value's purpose from its "adjunct" information.}
 
     value [any-stable!]
 ][
     return degrade switch type of :value [
         action! [
             reify all [
-                meta: match object! meta-of :value
-                copy opt match text! select opt meta 'description
+                adjunct: match object! adjunct-of :value
+                copy opt match text! select opt adjunct 'description
             ]
         ]
 
@@ -303,7 +303,7 @@ help: function [
     ; The HELP mechanics for ACTION! are more complex in Ren-C due to the
     ; existence of function composition tools like SPECIALIZE, CHAIN, ADAPT,
     ; HIJACK, etc.  Rather than keep multiple copies of the help strings,
-    ; the relationships are maintained in META-OF information on the ACTION!
+    ; the relationships are maintained in ADJUNCT-OF information on the ACTION!
     ; and are "dug through" in order to dynamically inherit the information.
     ;
     ; Code to do this evolved rather organically, as automatically generating
@@ -337,27 +337,27 @@ help: function [
         ]
     ]
 
-    ; Dig deeply, but try to inherit the most specific meta fields available
+    ; Dig deeply, but try to inherit the most specific adjunct fields available
     ;
-    fields: dig-action-meta-fields :value
+    fields: dig-action-adjunct-fields :value
 
     ; For reporting what *kind* of action this is, don't dig at all--just
-    ; look at the meta information of the action being asked about.  Note that
-    ; not all actions have META-OF (e.g. those from LAMBDA or FUNC
+    ; look at adjunct information of the action being asked about.  Note that
+    ; not all actions have ADJUNCT-OF (e.g. those from LAMBDA or FUNC
     ; when there was no type annotations or description information.)
     ;
-    meta: meta-of :value
+    adjunct: adjunct-of :value
 
     original-name: (ensure [~null~ word!] any [
-        select opt meta 'specializee-name
-        select opt meta 'adaptee-name
+        select opt adjunct 'specializee-name
+        select opt adjunct 'adaptee-name
     ]) also arrow name [
         uppercase mold name
     ]
 
-    specializee: ensure [~null~ action!] select opt meta 'specializee
-    adaptee: ensure [~null~ action!] select opt meta 'adaptee
-    pipeline: ensure [~null~ block!] select opt meta 'pipeline
+    specializee: ensure [~null~ action!] select opt adjunct 'specializee
+    adaptee: ensure [~null~ action!] select opt adjunct 'adaptee
+    pipeline: ensure [~null~ block!] select opt adjunct 'pipeline
 
     classification: case [
         :specializee [
@@ -478,7 +478,7 @@ source: function [
     ;; ACTION!
     ;;
     ;; The system doesn't preserve the literal spec, so it must be rebuilt
-    ;; from combining the the META-OF information.
+    ;; from combining the the ADJUNCT-OF information.
 
     write-stdout unspaced [
         mold name ":" space "lambda" space mold spec-of :f

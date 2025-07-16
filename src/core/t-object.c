@@ -423,78 +423,78 @@ Bounce PD_Context(
 
 
 //
-//  meta-of: native [
+//  adjunct-of: native [
 //
-//  {Get a reference to the "meta" context associated with a value.}
+//  {Get a reference to the "adjunct" context associated with a value.}
 //
 //      return: [~null~ any-context!]
 //      value [<opt-out> action! any-context!]
 //  ]
 //
-DECLARE_NATIVE(META_OF)
+DECLARE_NATIVE(ADJUNCT_OF)
 //
-// See notes accompanying the `meta` field in the StubStruct definition.
+// See notes accompanying the `adjunct` field in the StubStruct definition.
 {
-    INCLUDE_PARAMS_OF_META_OF;
+    INCLUDE_PARAMS_OF_ADJUNCT_OF;
 
     Value* v = ARG(VALUE);
 
-    VarList* meta;
+    VarList* adjunct;
     if (Is_Action(v))
-        meta = VAL_ACT_META(v);
+        adjunct = VAL_ACT_ADJUNCT(v);
     else {
         assert(Any_Context(v));
-        meta = MISC(Cell_Varlist(v)).meta;
+        adjunct = MISC(Cell_Varlist(v)).adjunct;
     }
 
-    if (not meta)
+    if (not adjunct)
         return nullptr;
 
-    RETURN (Varlist_Archetype(meta));
+    RETURN (Varlist_Archetype(adjunct));
 }
 
 
 //
-//  set-meta: native [
+//  set-adjunct: native [
 //
-//  {Set "meta" object associated with all references to a value.}
+//  {Set "adjunct" object associated with all references to a value.}
 //
 //      return: [~null~ any-context!]
 //      value [action! any-context!]
-//      meta [~null~ any-context!]
+//      adjunct [~null~ any-context!]
 //  ]
 //
-DECLARE_NATIVE(SET_META)
+DECLARE_NATIVE(SET_ADJUNCT)
 //
-// See notes accompanying the `meta` field in the StubStruct definition.
+// See notes accompanying the `adjunct` field in the StubStruct definition.
 {
-    INCLUDE_PARAMS_OF_SET_META;
+    INCLUDE_PARAMS_OF_SET_ADJUNCT;
 
-    VarList* meta;
-    if (Any_Context(ARG(META))) {
-        if (VAL_BINDING(ARG(META)) != UNBOUND)
-            panic ("SET-META can't store context bindings, must be unbound");
+    VarList* adjunct;
+    if (Any_Context(ARG(ADJUNCT))) {
+        if (VAL_BINDING(ARG(ADJUNCT)) != UNBOUND)
+            panic ("SET-ADJUNCT can't store context bindings, must be unbound");
 
-        meta = Cell_Varlist(ARG(META));
+        adjunct = Cell_Varlist(ARG(ADJUNCT));
     }
     else {
-        assert(Is_Nulled(ARG(META)));
-        meta = nullptr;
+        assert(Is_Nulled(ARG(ADJUNCT)));
+        adjunct = nullptr;
     }
 
     Value* v = ARG(VALUE);
 
     if (Is_Action(v))
-        MISC(VAL_ACT_PARAMLIST(v)).meta = meta;
+        MISC(VAL_ACT_PARAMLIST(v)).adjunct = adjunct;
     else {
         assert(Any_Context(v));
-        MISC(Cell_Varlist(v)).meta = meta;
+        MISC(Cell_Varlist(v)).adjunct = adjunct;
     }
 
-    if (not meta)
+    if (not adjunct)
         return nullptr;
 
-    RETURN (Varlist_Archetype(meta));
+    RETURN (Varlist_Archetype(adjunct));
 }
 
 
@@ -550,12 +550,12 @@ VarList* Copy_Context_Core_Managed(VarList* original, REBU64 types)
     // If we're copying a frame here, we know it's not running.
     //
     if (CTX_TYPE(original) == TYPE_FRAME)
-        MISC(varlist).meta = nullptr;
+        MISC(varlist).adjunct = nullptr;
     else {
-        // !!! Should the meta object be copied for other context types?
+        // !!! Should the adjunct object be copied for other context types?
         // Deep copy?  Shallow copy?  Just a reference to the same object?
         //
-        MISC(varlist).meta = nullptr;
+        MISC(varlist).adjunct = nullptr;
     }
 
     if (types != 0) {

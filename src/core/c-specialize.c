@@ -234,7 +234,7 @@ VarList* Make_Managed_Context_For_Action_May_Panic(
     }
 
     Term_Array_Len(varlist, num_slots);
-    MISC(varlist).meta = nullptr;  // GC sees this, we must initialize
+    MISC(varlist).adjunct = nullptr;  // GC sees this, we must initialize
 
     Tweak_Keylist_Of_Varlist_Shared(CTX(varlist), ACT_PARAMLIST(act));
 
@@ -435,26 +435,28 @@ bool Specialize_Action_Throws(
     Cell* rootparam = Array_Head(paramlist);
     rootparam->payload.action.paramlist = paramlist;
 
-    // See %sysobj.r for `specialized-meta:` object template
+    // See %sysobj.r for `specialized-adjunct:` object template
 
-    Value* example = Get_System(SYS_STANDARD, STD_SPECIALIZED_META);
+    Value* example = Get_System(SYS_STANDARD, STD_SPECIALIZED_ADJUNCT);
 
-    VarList* meta = Copy_Context_Shallow_Managed(Cell_Varlist(example));
+    VarList* adjunct = Copy_Context_Shallow_Managed(Cell_Varlist(example));
 
-    Init_Nulled(Varlist_Slot(meta, STD_SPECIALIZED_META_DESCRIPTION)); // default
+    Init_Nulled(Varlist_Slot(adjunct, STD_SPECIALIZED_ADJUNCT_DESCRIPTION));
     Copy_Cell(
-        Varlist_Slot(meta, STD_SPECIALIZED_META_SPECIALIZEE),
+        Varlist_Slot(adjunct, STD_SPECIALIZED_ADJUNCT_SPECIALIZEE),
         specializee
     );
     if (not opt_specializee_name)
-        Init_Nulled(Varlist_Slot(meta, STD_SPECIALIZED_META_SPECIALIZEE_NAME));
+        Init_Nulled(
+            Varlist_Slot(adjunct, STD_SPECIALIZED_ADJUNCT_SPECIALIZEE_NAME)
+        );
     else
         Init_Word(
-            Varlist_Slot(meta, STD_SPECIALIZED_META_SPECIALIZEE_NAME),
+            Varlist_Slot(adjunct, STD_SPECIALIZED_ADJUNCT_SPECIALIZEE_NAME),
             opt_specializee_name
         );
 
-    MISC(paramlist).meta = meta;
+    MISC(paramlist).adjunct = adjunct;
 
     REBACT *specialized = Make_Action(
         paramlist,
@@ -672,7 +674,7 @@ DECLARE_NATIVE(DOES)
     INIT_BINDING(archetype, UNBOUND);
     Term_Array_Len(paramlist, 1);
 
-    MISC(paramlist).meta = nullptr; // REDESCRIBE can be used to add help
+    MISC(paramlist).adjunct = nullptr; // REDESCRIBE can be used to add help
 
     //
     // `does [...]` and `does eval [...]` are not exactly the same.  The

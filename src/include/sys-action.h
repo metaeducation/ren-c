@@ -141,8 +141,8 @@ INLINE Value* ACT_PARAM(REBACT *a, REBLEN n) {
 #define ACT_NUM_PARAMS(a) \
     (cast(Flex*, ACT_PARAMLIST(a))->content.dynamic.len - 1)
 
-#define ACT_META(a) \
-    MISC(a).meta
+#define ACT_ADJUNCT(a) \
+    MISC(a).adjunct
 
 
 
@@ -268,9 +268,9 @@ INLINE Dispatcher* VAL_ACT_DISPATCHER(const Cell* v) {
     return MISC(v->payload.action.details).dispatcher;
 }
 
-INLINE VarList* VAL_ACT_META(const Cell* v) {
+INLINE VarList* VAL_ACT_ADJUNCT(const Cell* v) {
     assert(Is_Action(v));
-    return MISC(v->payload.action.paramlist).meta;
+    return MISC(v->payload.action.paramlist).adjunct;
 }
 
 

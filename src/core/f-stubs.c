@@ -360,8 +360,8 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, VarList* c) {
     assert(Not_Array_Flag(keylist, HAS_FILE_LINE));
 
     assert(
-        not MISC(varlist).meta
-        or Any_Context(Varlist_Archetype(MISC(varlist).meta)) // current rule
+        not MISC(varlist).adjunct
+        or Any_Context(Varlist_Archetype(MISC(varlist).adjunct)) // current rule
     );
 
     // FRAME!s must always fill in the phase slot, but that piece of the
@@ -402,8 +402,8 @@ void Extra_Init_Action_Checks_Debug(REBACT *a) {
     // though the interface may expand.
     //
     assert(
-        MISC(paramlist).meta == nullptr
-        or Any_Context(Varlist_Archetype(MISC(paramlist).meta))
+        MISC(paramlist).adjunct == nullptr
+        or Any_Context(Varlist_Archetype(MISC(paramlist).adjunct))
     );
 }
 

@@ -125,7 +125,7 @@ void Startup_Level_Stack(void)
         1,
         NODE_FLAG_MANAGED | SERIES_MASK_ACTION
     );
-    MISC(paramlist).meta = nullptr;
+    MISC(paramlist).adjunct = nullptr;
 
     Value* archetype = RESET_CELL(Array_Head(paramlist), TYPE_ACTION);
     archetype->extra.binding = UNBOUND;
