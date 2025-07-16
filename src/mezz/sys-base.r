@@ -114,11 +114,11 @@ do*: function [
             if only [
                 quit/value value'  ; "rethrow" the QUIT if DO/ONLY
             ] else [
-                value': meta value'  ; wasn't meta
+                value': lift value'  ; wasn't lifted
             ]
         ]
 
-        return unmeta value'  ; returns from DO*, because it's a lambda
+        return unlift value'  ; returns from DO*, because it's a lambda
     ]
 
     ; Load the code (do this before CHANGE-DIR so if there's an error in the
@@ -153,7 +153,7 @@ do*: function [
             ;
             ;     do "append {abc} {de}"
             ;
-            result': meta eval code ;-- !!! pass args implicitly?
+            result': lift eval code ;-- !!! pass args implicitly?
         ] then :finalizer/quit
     ] else [
         ; Make the new script object
@@ -173,12 +173,12 @@ do*: function [
         ; Eval the block or make the module, returned
         either is-module [ ; Import the module and set the var
             catch/quit [
-                result': meta import module hdr code
+                result': lift import module hdr code
             ] then :finalizer/quit
         ][
             intern code   ; Bind the user script
             catch/quit [
-                result': meta eval code
+                result': lift eval code
             ] then :finalizer/quit
         ]
     ]

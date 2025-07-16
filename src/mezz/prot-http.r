@@ -755,7 +755,7 @@ sys/util/make-scheme [
             ]
             port/state/connection: conn: make port! compose [
                 scheme: (
-                    meta switch port/spec/scheme [
+                    lift switch port/spec/scheme [
                         'http ['tcp]
                         'tls [
                             panic "TLS not included in bootstrap EXE anymore"

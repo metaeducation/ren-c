@@ -21,7 +21,7 @@ any-stable!
 any-equatable!
 any-element!
 logic!
-any-metaform!
+any-lifted!
 any-word!
 any-path!
 any-number!

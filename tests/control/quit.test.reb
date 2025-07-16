@@ -22,7 +22,7 @@
         1900-01-30
         ; make object! [x: 42]  ; construction syntax for LOAD not enabled
     ][
-        meta (value = do-script-returning value)
+        lift (value = do-script-returning value)
     ]
 )
 

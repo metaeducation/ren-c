@@ -96,9 +96,9 @@ static Value* Enrescue_Dangerous(Level* level_) {
 //
 //  enrescue: native [
 //
-//  {DO a block and return META'd result, unless error is raised}
+//  {DO a block and return LIFT'd result, unless error is raised}
 //
-//      return: "ERROR! if raised, or meta result"
+//      return: "ERROR! if raised, or lift'd result"
 //          [error! word! group!]
 //      code "Code to execute and monitor"
 //          [block! action!]

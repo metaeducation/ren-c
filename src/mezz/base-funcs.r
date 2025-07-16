@@ -127,7 +127,7 @@ function: func [
             ]
             defaulters: default [copy []]
             append defaulters compose/deep [
-                (as set-word! var) default [(meta eval other/1)]
+                (as set-word! var) default [(lift eval other/1)]
             ]
         )
     |
@@ -141,7 +141,7 @@ function: func [
             if other [
                 defaulters: default [copy []]
                 append defaulters compose/deep [ ;-- always sets
-                    (as set-word! var) (meta eval other)
+                    (as set-word! var) (lift eval other)
                 ]
             ]
         )]
@@ -537,9 +537,9 @@ iterate-skip: redescribe [
             :result
         ]
 
-        result: meta eval f
+        result: lift eval f
         set word saved
-        return unmeta result
+        return unlift result
     ][
         series: <overwritten>
     ]

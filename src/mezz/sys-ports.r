@@ -36,14 +36,14 @@ make-port*: function [
             if not lit-word? name [
                 panic ["BLOCK! scheme name is LIT-WORD!, not:" name]
             ]
-            name: unmeta name
+            name: unlift name
         ]
         block! [
             name: select spec to set-word! 'scheme
             if not lit-word? name [
                 panic ["BLOCK! scheme name is LIT-WORD!, not:" name]
             ]
-            name: unmeta name
+            name: unlift name
         ]
         object! [
             name: get in spec 'scheme
@@ -111,7 +111,7 @@ make-port*: function [
             ; scheme name: [//]
             s1: across some scheme-char ":" opt "//" (  ; "//" optional ("URN")
                 append out compose [
-                    scheme: (meta to word! s1)
+                    scheme: (lift to word! s1)
                 ]
             )
 

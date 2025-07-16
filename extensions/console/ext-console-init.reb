@@ -77,7 +77,7 @@ console!: make object! [
     repl: okay  ; used to identify this as a console! object (quack!)
     is-loaded: null  ; if okay then this is a loaded (external) skin
     was-updated: null  ; if okay then console! object found in loaded skin
-    last-result': ~  ; meta of last evaluated result (sent by HOST-CONSOLE)
+    last-result': ~  ; lift of last evaluated result (sent by HOST-CONSOLE)
 
     ;; APPEARANCE (can be overridden)
 
@@ -127,7 +127,7 @@ console!: make object! [
     ]
 
     print-result: function [return: [~] v [any-value!]]  [
-        last-result': meta :v
+        last-result': lift :v
 
         if (void? :v) [  ; nothingness (e.g. result of eval [])
             print [result "~void~  ; anti"]
@@ -375,7 +375,7 @@ ext-console-impl: function [
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [blank! block! group!]
     result "Unevaluated result of evaluating PRIOR, or error"
-        [~null~ any-metaform! error!]  ; null if never ran before
+        [~null~ any-lifted! error!]  ; null if never ran before
     resumable "Is the RESUME function allowed to exit this console"
         [logic!]
 ][
@@ -435,9 +435,9 @@ ext-console-impl: function [
             ]
             <bad> [
                 emit #no-unskin-if-error
-                emit [print (<*> mold meta prior)]
+                emit [print (<*> mold lift prior)]
                 emit [
-                    panic ["Bad REPL continuation:" (<*> enblock [meta result])]
+                    panic ["Bad REPL continuation:" (<*> enblock [lift result])]
                 ]
             ]
         ] then [
@@ -558,7 +558,7 @@ ext-console-impl: function [
             e: make error! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
             e/near: result/near
             e/where: result/where
-            emit [system/console/print-error (<*> meta e)]
+            emit [system/console/print-error (<*> lift e)]
             return <prompt>
         ]
         return :result/arg1
@@ -571,9 +571,9 @@ ext-console-impl: function [
         ; interpreter is being called non-interactively from the shell).
         ;
         if object? opt system/console [
-            emit [system/console/print-error (<*> meta result)]
+            emit [system/console/print-error (<*> lift result)]
         ] else [
-            emit [print [form (<*> meta result)]]
+            emit [print [form (<*> lift result)]]
         ]
         if find directives #die-if-error [
             return <die>
@@ -620,11 +620,11 @@ ext-console-impl: function [
     ]
 
     if group? prior [ ;-- plain execution of user code
-        emit [system/console/print-result (<*> result)]  ; result is meta here
+        emit [system/console/print-result (<*> result)]  ; result is lifted
         return <prompt>
     ]
 
-    result: unmeta result  ; can't be VOID, or this will error...
+    result: unlift result  ; can't be VOID, or this will error...
 
     ; If PRIOR is BLOCK!, this is a continuation the console sent to itself.
     ; RESULT can be:
@@ -703,7 +703,7 @@ ext-console-impl: function [
         ; Could be an unclosed double quote (unclosed tag?) which more input
         ; on a new line cannot legally close ATM
         ;
-        emit [system/console/print-error (<*> meta error)]
+        emit [system/console/print-error (<*> lift error)]
         return <prompt>
     ]
 

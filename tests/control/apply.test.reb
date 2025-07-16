@@ -22,11 +22,11 @@
     using-args: okay
 
     while [not tail? block] [
-        block: unmeta (if only [
+        block: unlift (if only [
             arg: block/1
-            meta next block
+            lift next block
         ] else [
-            meta evaluate/step3 block the arg:
+            lift evaluate/step3 block the arg:
         ])
 
         if refinement? first opt params [

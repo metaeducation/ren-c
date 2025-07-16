@@ -70,7 +70,7 @@ make object! compose [
 
 
             (
-                result: unmeta result
+                result: unlift result
                 null
             )[
                 ; Poor-man's elide (clause that evaluates to null)

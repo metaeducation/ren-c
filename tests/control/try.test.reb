@@ -37,8 +37,8 @@
 
 ; ENRESCUE (similar to RESCUE, but puts results in groups or antiform words)
 
-(void? unmeta sys/util/enrescue [])
-(null? unmeta sys/util/enrescue [null])
-(3 = unmeta sys/util/enrescue [1 + 2])
-([b c] = unmeta sys/util/enrescue [skip [a b c] 1])
+(void? unlift sys/util/enrescue [])
+(null? unlift sys/util/enrescue [null])
+(3 = unlift sys/util/enrescue [1 + 2])
+([b c] = unlift sys/util/enrescue [skip [a b c] 1])
 ('no-arg = (sys/util/enrescue [the])/id)

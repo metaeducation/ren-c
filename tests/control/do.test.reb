@@ -148,8 +148,8 @@
         (to-word :a-value) = (reeval :a-value)
     ]
 )
-(okay = reeval meta okay)
-(null = reeval meta null)
+(okay = reeval lift okay)
+(null = reeval lift null)
 ($1 = reeval $1)
 (null? try reeval (specialize 'of [property: 'type]) null)
 (null? eval void)

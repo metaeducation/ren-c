@@ -114,9 +114,9 @@ static Value* Init_Lib_Word(Cell* out, SymId id) {
 
 
 //
-//  Any_Metaform: C
+//  Any_Lifted: C
 //
-bool Any_Metaform(Value* v) {
+bool Any_Lifted(Value* v) {
     if (Is_Word(v)) {
         if (
             Word_Id(v) == SYM__TNULL_T
@@ -144,7 +144,7 @@ bool Any_Metaform(Value* v) {
 //
 //  Meta_Quotify: C
 //
-// Poor man's implementation of the "meta" functionality.
+// Poor man's implementation of the "lift" functionality in mainline Ren-C
 //
 // Note that the "quasi-words" don't look up to anything, and are simply
 // special cases in the evaluator handling of TYPE_WORD.
@@ -219,31 +219,30 @@ Value* Meta_Unquotify(Value* v)
     }
 
     panic (
-        "UNMETA needs [~ ~NULL~ ~VOID~ ~OKAY~ LIT-WORD! LIT-PATH! (THE <item>)]"
+        "UNLIFT needs [~ ~NULL~ ~VOID~ ~OKAY~ LIT-WORD! LIT-PATH! (THE <item>)]"
     );
 }
 
 
 //
-//  meta: native [
+//  lift: native [
 //
 //  "Make expression that when evaluated, will produce the input"
 //
-//      return: {~null~ if null, or `(the ...)` where ... is passed-in cell}
-//          [any-metaform!]
+//      return: [any-lifted!]
 //      value [any-value!]
 //   ]
 //
-DECLARE_NATIVE(META)
+DECLARE_NATIVE(LIFT)
 //
-// Note: META is done far more elegantly with quasiforms and quoting in the
+// Note: LIFT is done far more elegantly with quasiforms and quoting in the
 // mainline code.  This exists in R3C prior to those designs.
 //
 // (This was initially written in usermode, but since REDUCE and COMPOSE and
 // APPEND all won't let you put errors into blocks--as part of the bootstrap
 // executable's "simulation of definitional errors"--a native is needed.)
 {
-    INCLUDE_PARAMS_OF_META;
+    INCLUDE_PARAMS_OF_LIFT;
 
     Value* v = ARG(VALUE);
     Meta_Quotify(v);
@@ -252,19 +251,19 @@ DECLARE_NATIVE(META)
 
 
 //
-//  unmeta: native [
+//  unlift: native [
 //
-//  "Narrower form of evaluation that only evaluates META products"
+//  "Narrower form of evaluation that only evaluates LIFT products"
 //
 //      return: [any-value!]
-//      value [any-metaform!]
+//      value [any-lifted!]
 //   ]
 //
-DECLARE_NATIVE(UNMETA)
+DECLARE_NATIVE(UNLIFT)
 //
-// See notes on META
+// See notes on LIFT
 {
-    INCLUDE_PARAMS_OF_UNMETA;
+    INCLUDE_PARAMS_OF_UNLIFT;
 
     Value* v = ARG(VALUE);
     Meta_Unquotify(v);

@@ -188,7 +188,7 @@ static Value* Run_Sandboxed_Code(Value* group_or_block) {
     //
     Value* result = rebValueInline(group_or_block);
 
-    Value* out = rebValue(NAT_VALUE(META), rebQ(result));
+    Value* out = rebValue(NAT_VALUE(LIFT), rebQ(result));
     rebRelease(result);
     return out;
 }
@@ -258,7 +258,7 @@ DECLARE_NATIVE(CONSOLE)
             "sys/util/enrescue [",
                 "ext-console-impl", // action! that takes 2 args, run it
                 rebQ(code), // group!/block! executed prior (or blank!)
-                rebQ(result), // prior result meta'd, or error
+                rebQ(result), // prior result lift'd, or error
                 rebQ(resumable),
             "]"
         );

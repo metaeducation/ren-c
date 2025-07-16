@@ -1222,7 +1222,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             Array* instruction = cast(Array*, m_cast(void*, p));
             Value* single = KNOWN(ARR_SINGLE(instruction));
 
-            assert(Any_Metaform(single));
+            assert(Any_Lifted(single));
 
             Copy_Cell(PUSH(), single);
 
