@@ -35,8 +35,10 @@ Rebol [
     warning: --[
         This code is not representative of modern practices, because it has
         to run in a very old bootstrap executable.  It is also very much a
-        hodgepodge just to keep things running.  It's the absolute wrong place
-        to be looking for exemplary Ren-C code.
+        hodgepodge just to keep things running.  While efforts have been made
+        so the bootstrap executable "emulates" the look of modern Ren-C, it's
+        there are many compromises.  So generally speaking, don't look here
+        for exemplary code.
     ]--
 ]
 
@@ -1449,7 +1451,7 @@ makefile: make generator-class [
 
     emit: method [
         return: []
-        buf [blob!]
+        buf [text!]
         project [object!]
         :parent [object!]  ; !!! Not heeded?
     ][
@@ -1521,7 +1523,7 @@ makefile: make generator-class [
         output [file!]
         solution [object!]
     ][
-        let buf: make blob! 2048
+        let buf: make text! 2048
         assert [solution.class = #solution]
 
         .prepare solution
