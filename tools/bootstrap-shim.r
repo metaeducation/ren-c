@@ -197,9 +197,6 @@ for-each [alias] [
     head3:                      ; use HEAD OF instead
     tail3:                      ; use TAIL OF instead
 
-    meta3:                      ; became LIFT
-    unmeta3:                    ; became UNLIFT
-
     issue3!:                    ; now it's rune!
     issue3?:                    ; ...
     refinement3?:               ; Former refinements of /FOO now :FOO
@@ -231,14 +228,6 @@ for-each [alias] [
 ]
 
 function3: ~#[FUNCTION slated for synonym of FUNC, so no FUNCTION3]#~
-
-
-=== "RENAME META AND UNMETA" ===
-
-; Task: switch Boostrap META and UNMETA to LIFT and UNLIFT
-
-lift: meta3/
-unlift: unmeta3/
 
 
 === "BINARY! => BLOB!" ===

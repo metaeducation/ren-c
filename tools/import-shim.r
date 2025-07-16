@@ -212,9 +212,9 @@ do: lib3/enclose lib3.do/ lib3/func [
         ]
         wrap-module: 'no  ; only wrap one level of DO
     ]
-    result: lib3/meta eval f
+    result: lift eval f
     system.script: old-system-script
-    return lib3/unmeta result
+    return unlift result
 ]
 
 already-imported: to map! []  ; avoid importing things twice
