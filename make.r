@@ -1914,6 +1914,7 @@ prep: make rebmake.entry-class [
         ]
 
         for-each 'ext extensions [
+            let name
             let molded-sources: mold collect [
                 parse3 ext.sources [some [
                     name: [tuple! | path! | file!] opt block! (
