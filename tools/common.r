@@ -210,7 +210,7 @@ export binary-to-c: func [
 
     until [empty? opt data] [
         let hexed: enbase:base (copy:part data 8) 16
-        data: skip data 8
+        data: try skip data 8
         for-each [digit1 digit2] hexed [
             append out unspaced [-[0x]- digit1 digit2 -[,]- space]
         ]
