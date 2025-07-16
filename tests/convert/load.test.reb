@@ -83,3 +83,10 @@
 [
     ([abc/def:] = transcode "/abc.def:")
 ]
+
+; No leading dots (used for methods, want normal binding)
+[
+    ([abc] = transcode "./abc")
+    ([abc/def] = transcode "./abc/def")
+    ([abc/def] = transcode "./abc:def")  ; what you'd write in bootstrap
+]

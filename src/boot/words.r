@@ -74,6 +74,7 @@ yes
 no
 
 ...  ; SYM_ELLIPSIS_3
+.  ; SYM_PERIOD_1
 
 generic ;-- used in boot, see %generics.r
 

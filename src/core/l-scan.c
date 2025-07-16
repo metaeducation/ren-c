@@ -2637,9 +2637,11 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
 
         assert(TOP_INDEX - base >= 2);  // must push at least 2 things
 
+        Value* base_item = Data_Stack_At(base + 1);
+
         if (  // look for refinement-style paths [_ word]
             TOP_INDEX - base == 2
-            and Is_Blank(TOP - 1)
+            and Is_Blank(base_item)
             and Is_Word(TOP)
         ){
             Copy_Cell(TOP - 1, TOP);
@@ -2648,13 +2650,27 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             goto finished_path_scan;
         }
 
-        bool leading_blank = Is_Blank(Data_Stack_At(base + 1));
+        if (  // look for method calls (./word, e.g. [. word])
+            TOP_INDEX - base == 2
+            and (Is_Word(base_item) and Word_Id(base_item) == SYM_PERIOD_1)
+            and Is_Word(TOP)
+        ){
+            Copy_Cell(TOP - 1, TOP);
+            DROP();
+            assert(Is_Word(TOP));
+            goto finished_path_scan;
+        }
+
+        bool leading_blank_or_dot = (  // load ./foo/bar as foo/bar
+            Is_Blank(base_item)
+            or (Is_Word(base_item) and Word_Id(base_item) == SYM_PERIOD_1)
+        );
         Array* a = Pop_Stack_Values_Core(
-            leading_blank ? base + 1 : base,
+            leading_blank_or_dot ? base + 1 : base,
             NODE_FLAG_MANAGED
                 | (captured_newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
         );
-        if (leading_blank)
+        if (leading_blank_or_dot)
             DROP();
 
         assert(Array_Len(a) >= 2);
