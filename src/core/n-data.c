@@ -1197,6 +1197,33 @@ DECLARE_NATIVE(UNSET_Q)
 
 
 //
+//  antiform?: native [
+//
+//  "Bootstrap way of responding if something is an antiform"
+//
+//      return: [logic!]
+//      value [any-value!]
+//  ]
+//
+DECLARE_NATIVE(ANTIFORM_Q)
+{
+    INCLUDE_PARAMS_OF_ANTIFORM_Q;
+
+    Value* v = ARG(VALUE);
+    switch (Type_Of(v)) {
+      case TYPE_OKAY:
+      case TYPE_NULLED:
+      case TYPE_VOID:
+      case TYPE_TRASH:
+        return Init_Logic(OUT, true);
+
+      default:
+        return Init_Logic(OUT, false);
+    }
+}
+
+
+//
 //  the: native [
 //
 //  "Returns value passed in without evaluation."

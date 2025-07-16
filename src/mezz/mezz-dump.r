@@ -199,15 +199,18 @@ dump-obj: function [
 
     form-val: func [val [any-stable!]] [
         ; Form a limited string from the value provided.
-        if any-list? :val [return spaced ["length:" length of val]]
-        if datatype? :val [return form val]
-        if action? :val [
+        if antiform? :val [
+            return mold reify :val
+        ]
+        if action? :val [  ; not an antiform in bootstrap
             return clip-str any [title-of :val  mold spec-of :val]
         ]
-        if object? :val [val: words of val]
-        if typeset? :val [val: make block! val]
-        if port? :val [val: reduce [val/spec/title val/spec/ref]]
-        return clip-str mold reify :val
+        if any-list? val [return spaced ["length:" length of val]]
+        if datatype? val [return form val]
+        if object? val [val: words of val]
+        if typeset? val [val: make block! val]
+        if port? val [val: reduce [val/spec/title val/spec/ref]]
+        return clip-str mold val
     ]
 
     form-pad: func [val size] [
