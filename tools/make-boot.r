@@ -337,14 +337,11 @@ change at-value 'platform reduce [
     any [platform-config.build-label ""]
 ]
 
-; If debugging something code in %sysobj.r, the C-DEBUG-BREAK should only
-; apply in the non-bootstrap case.
-;
-c-debug-break: :void
+c-debug-break: ~#[C-DEBUG-BREAK applies in non-bootstrap %sysobj.r only]#~
 
 ob: make object! boot-sysobj
 
-c-debug-break: get $lib/c-debug-break
+/c-debug-break: get $lib.c-debug-break
 
 make-obj-defs: func [
     "Given a Rebol OBJECT!, write C structs that can access its raw variables"
