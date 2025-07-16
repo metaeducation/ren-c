@@ -155,7 +155,7 @@ typedef Stub Flex;
 #if CPLUSPLUS_11
     struct Binary;
     struct Symbol;
-    struct String;
+    struct Strand;
 
     struct Array;
 
@@ -167,7 +167,7 @@ typedef Stub Flex;
 #else
     typedef Flex Binary;
     typedef Flex Symbol;
-    typedef Flex String;
+    typedef Flex Strand;
 
     typedef Flex Array;
 

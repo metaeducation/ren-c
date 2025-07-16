@@ -774,7 +774,7 @@ REBTYPE(Context)
 
         switch (sym) {
           case SYM_FILE: {
-            Option(String*) file = File_Of_Level(L);
+            Option(Strand*) file = File_Of_Level(L);
             if (not file)
                 return nullptr;
             return Init_File(OUT, unwrap file); }

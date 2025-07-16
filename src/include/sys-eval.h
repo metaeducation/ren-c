@@ -175,9 +175,9 @@ INLINE void Push_Level_Core(Level* L)
     //
     // !!! TBD: the relevant file/line update when L->source->array changes
     //
-    Option(String*) file = File_Of_Level(L);
+    Option(Strand*) file = File_Of_Level(L);
     if (file)
-        L->file_ucs2 = String_Head(unwrap file);  // sadly UCS-2 in old branch
+        L->file_ucs2 = Strand_Head(unwrap file);  // sadly UCS-2 in old branch
     else
         L->file_ucs2 = nullptr;
     L->line = LVL_LINE(L);
@@ -350,7 +350,7 @@ INLINE void Set_Level_Detected_Fetch(
         StackIndex base = TOP_INDEX;
 
         TranscodeState transcode;
-        String* filename = nullptr;
+        Strand* filename = nullptr;
         const LineNumber start_line = 1;
         Init_Transcode_Vaptr(
             &transcode,

@@ -103,46 +103,46 @@ INLINE bool Is_Flex_Ucs2(Flex* s) {
     return Flex_Wide(s) == sizeof(Ucs2Unit);
 }
 
-INLINE REBLEN String_Len(String* s) {
+INLINE REBLEN String_Len(Strand* s) {
     assert(Flex_Wide(s) == sizeof(Ucs2Unit));
     return Flex_Len(s);
 }
 
-INLINE void Set_String_Len(String* s, REBLEN len) {
+INLINE void Set_String_Len(Strand* s, REBLEN len) {
     assert(Flex_Wide(s) == sizeof(Ucs2Unit));
     Set_Flex_Len(s, len);
 }
 
-INLINE Ucs2(*) String_At(String* s, REBLEN n)
+INLINE Ucs2(*) Strand_At(Strand* s, REBLEN n)
   { return Flex_At(Ucs2Unit, (s), (n)); }
 
-INLINE Ucs2Unit* String_Head(String* s)
+INLINE Ucs2Unit* Strand_Head(Strand* s)
   { return Flex_Head(Ucs2Unit, s); }
 
-INLINE Ucs2Unit* String_Tail(String* s)
+INLINE Ucs2Unit* Strand_Tail(Strand* s)
   { return Flex_Tail(Ucs2Unit, s); }
 
-INLINE Ucs2Unit* String_Last(String* s)
+INLINE Ucs2Unit* Strand_Last(Strand* s)
   { return Series_Last(Ucs2Unit, s); }
 
-INLINE void Term_String_Len(String* s, REBLEN len) {
+INLINE void Term_Strand_Len(Strand* s, REBLEN len) {
     Set_Flex_Len(s, len);
     *Flex_At(Ucs2Unit, s, len) = '\0';
 }
 
-INLINE String* Cell_String(const Cell* cell) {
+INLINE Strand* Cell_Strand(const Cell* cell) {
     assert(Any_String(cell));
-    return cast(String*, Cell_Flex(cell));
+    return cast(Strand*, Cell_Flex(cell));
 }
 
 #define Cell_String_Head(v) \
-    String_Head(Cell_String(v))
+    Strand_Head(Cell_Strand(v))
 
 #define Cell_String_Tail(v) \
-    String_Tail(Cell_String(v))
+    Strand_Tail(Cell_Strand(v))
 
 INLINE Ucs2(*) Cell_String_At(const Cell* v) {
-    return String_At(Cell_String(v), VAL_INDEX(v));
+    return Strand_At(Cell_Strand(v), VAL_INDEX(v));
 }
 
 INLINE Size VAL_SIZE_LIMIT_AT(
@@ -257,13 +257,13 @@ INLINE const Byte *Back_Scan_UTF8_Char(
 // rebStringXXX() APIs for this).  Note that these routines may panic() if the
 // data they are given is not UTF-8.
 
-INLINE String* Make_String_UTF8(const char *utf8)
+INLINE Strand* Make_String_UTF8(const char *utf8)
 {
     const bool crlf_to_lf = false;
     return Append_UTF8_May_Panic(nullptr, utf8, strsize(utf8), crlf_to_lf);
 }
 
-INLINE String* Make_Sized_String_UTF8(const char *utf8, size_t size)
+INLINE Strand* Make_Sized_String_UTF8(const char *utf8, size_t size)
 {
     const bool crlf_to_lf = false;
     return Append_UTF8_May_Panic(nullptr, utf8, size, crlf_to_lf);

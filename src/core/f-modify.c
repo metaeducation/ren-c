@@ -386,7 +386,7 @@ REBLEN Modify_String(
 
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
-    String* dst_ser = Cell_String(dst_val);
+    Strand* dst_ser = Cell_Strand(dst_val);
     REBLEN dst_idx = VAL_INDEX(dst_val);
 
     // For INSERT/PART and APPEND/PART
@@ -416,7 +416,7 @@ REBLEN Modify_String(
     // If the src_val is not a string, then we need to create a string:
 
     REBLEN src_idx = 0;
-    String* src_ser;
+    Strand* src_ser;
     REBLEN src_len;
     bool needs_free;
     if (Is_Char(src_val)) {
@@ -435,7 +435,7 @@ REBLEN Modify_String(
         Any_String(src_val)
         and not (Is_Tag(src_val) or (flags & AM_LINE))
     ){
-        src_ser = Cell_String(src_val);
+        src_ser = Cell_Strand(src_val);
         src_idx = VAL_INDEX(src_val);
         src_len = Cell_Series_Len_At(src_val);
 
@@ -457,7 +457,7 @@ REBLEN Modify_String(
     //
     if (dst_ser == src_ser) {
         assert(!needs_free);
-        src_ser = cast(String*,
+        src_ser = cast(Strand*,
             Copy_Sequence_At_Len(src_ser, src_idx, src_len)
         );
         needs_free = true;
@@ -491,8 +491,8 @@ REBLEN Modify_String(
     // For dup count:
     for (; dups > 0; dups--) {
         memcpy(
-            String_At(dst_ser, dst_idx),
-            String_At(src_ser, src_idx),
+            Strand_At(dst_ser, dst_idx),
+            Strand_At(src_ser, src_idx),
             sizeof(Ucs2Unit) * src_len
         );
 

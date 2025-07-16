@@ -863,8 +863,8 @@ static void Init_Root_Vars(void)
 
     // Note: rebText() can't run yet, review.
     //
-    String* nulled_uni = Make_String(1);
-    assert(Codepoint_At(String_At(nulled_uni, 0)) == '\0');
+    Strand* nulled_uni = Make_Strand(1);
+    assert(Codepoint_At(Strand_At(nulled_uni, 0)) == '\0');
     assert(String_Len(nulled_uni) == 0);
     Root_Empty_Text = Init_Text(Alloc_Value(), nulled_uni);
     Force_Value_Frozen_Deep(Root_Empty_Text, locker);
@@ -1345,7 +1345,7 @@ void Startup_Core(void)
 
     Value* filename = rebText("tmp-boot.r");
     Array* boot_array = Scan_UTF8_Managed(
-        Cell_String(filename),
+        Cell_Strand(filename),
         utf8,
         utf8_size
     );

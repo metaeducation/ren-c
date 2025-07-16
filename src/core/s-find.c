@@ -569,7 +569,7 @@ REBLEN Find_Str_Char(
         }
     }
     else {
-        Ucs2Unit* up = String_Head(cast(String*, series));
+        Ucs2Unit* up = Strand_Head(cast(Strand*, series));
         while (true) {
             if (up[index] == casings[0] || up[index] == casings[1])
                 goto return_index;

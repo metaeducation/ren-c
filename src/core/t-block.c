@@ -87,7 +87,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
             &offset, &size, arg, Cell_Series_Len_At(arg)
         );
         Push_GC_Guard(temp);
-        Option(String*) filename = nullptr;
+        Option(Strand*) filename = nullptr;
         Init_Any_List(
             out,
             kind,
@@ -169,7 +169,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
         // goes directly to the scanner to make an unbound code array.
         //
-        Option(String*) filename = nullptr;
+        Option(Strand*) filename = nullptr;
         return Init_Any_List(
             out,
             kind,

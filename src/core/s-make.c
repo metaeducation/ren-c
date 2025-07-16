@@ -49,13 +49,13 @@ Binary* Make_Binary(REBLEN capacity)
 
 
 //
-//  Make_String: C
+//  Make_Strand: C
 //
 // Make a unicode string series. Add 1 extra to capacity for terminator.
 //
-String* Make_String(REBLEN capacity)
+Strand* Make_Strand(REBLEN capacity)
 {
-    String* str = cast(String*, Make_Flex(capacity + 1, sizeof(Ucs2Unit)));
+    Strand* str = cast(Strand*, Make_Flex(capacity + 1, sizeof(Ucs2Unit)));
     Term_Non_Array_Flex(str);
     return str;
 }
@@ -104,8 +104,8 @@ Flex* Copy_String_At_Len(const Cell* src, REBINT limit)
     Size size = VAL_SIZE_LIMIT_AT(&length_limit, src, limit);
     assert(length_limit * 2 == size); // !!! Temporary
 
-    String* dst = Make_String(size / 2);
-    memcpy(String_At(dst, 0), Cell_String_At(src), size);
+    Strand* dst = Make_Strand(size / 2);
+    memcpy(Strand_At(dst, 0), Cell_String_At(src), size);
     Term_Non_Array_Flex_Len(dst, length_limit);
 
     return dst;
@@ -155,14 +155,14 @@ Binary* Append_Unencoded(Binary* dst, const char *src)
 //
 // Append a non-encoded character to a string.
 //
-String* Append_String_Ucs2Unit(String* dst, Ucs2Unit codepoint)
+Strand* Append_String_Ucs2Unit(Strand* dst, Ucs2Unit codepoint)
 {
     assert(Flex_Wide(dst) == sizeof(Ucs2Unit)); // invariant for "Latin1 Nowhere"
 
     REBLEN tail = Flex_Len(dst);
     Expand_Flex_Tail(dst, 1);
 
-    Ucs2(*) cp = String_At(dst, tail);
+    Ucs2(*) cp = Strand_At(dst, tail);
     cp = Write_Codepoint(cp, codepoint);
     cp = Write_Codepoint(cp, '\0'); // should always be capacity for terminator
 
@@ -192,13 +192,13 @@ Binary* Append_Codepoint(Binary* dst, Codepoint codepoint)
 //
 // Create a string that holds a single codepoint.
 //
-String* Make_Codepoint_String(REBLEN codepoint)
+Strand* Make_Codepoint_String(REBLEN codepoint)
 {
     assert(codepoint < (1 << 16));
 
-    String* out = Make_String(1);
-    *String_Head(out) = codepoint;
-    Term_String_Len(out, 1);
+    Strand* out = Make_Strand(1);
+    *Strand_Head(out) = codepoint;
+    Term_Strand_Len(out, 1);
 
     return out;
 }
@@ -277,8 +277,8 @@ void Append_Int_Pad(Binary* dst, REBINT num, REBINT digs)
 //
 // `dst = nullptr` means make a new string.
 //
-String* Append_UTF8_May_Panic(
-    String* dst,
+Strand* Append_UTF8_May_Panic(
+    Strand* dst,
     const char *utf8,
     size_t size,
     bool crlf_to_lf
@@ -293,11 +293,11 @@ String* Append_UTF8_May_Panic(
     // * In the future, some operations will be accelerated by knowing that
     //   a string only contains ASCII codepoints.
 
-    String* temp = BUF_UCS2; // buffer is Unicode width
+    Strand* temp = BUF_UCS2; // buffer is Unicode width
 
     Resize_Flex(temp, size + 1); // needs at most this many unicode chars
 
-    Ucs2Unit* up = String_Head(temp);
+    Ucs2Unit* up = Strand_Head(temp);
     const Byte *src = cb_cast(utf8);
 
     bool all_ascii = true;
@@ -324,11 +324,11 @@ String* Append_UTF8_May_Panic(
         *up++ = ch;
     }
 
-    up = String_Head(temp);
+    up = Strand_Head(temp);
 
     REBLEN old_len;
     if (dst == nullptr) {
-        dst = Make_String(num_codepoints);
+        dst = Make_Strand(num_codepoints);
         old_len = 0;
     }
     else {
@@ -336,7 +336,7 @@ String* Append_UTF8_May_Panic(
         Expand_Flex_Tail(dst, num_codepoints);
     }
 
-    Ucs2(*) dp = String_At(dst, old_len);
+    Ucs2(*) dp = Strand_At(dst, old_len);
     Set_Flex_Len(dst, old_len + num_codepoints); // counted down to 0 below
 
     for (; num_codepoints > 0; --num_codepoints)

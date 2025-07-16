@@ -199,7 +199,7 @@ void* Probe_Core_Debug(
         }
         else if (Flex_Wide(s) == sizeof(Ucs2Unit)) {
             Probe_Print_Helper(p, "REBWCHAR-Size Flex", file, line);
-            String* str = cast(String*, m_cast(void*, p));
+            Strand* str = cast(Strand*, m_cast(void*, p));
 
             Mold_Text_Series_At(mo, str, 0); // might be TAG! etc, not TEXT!
         }

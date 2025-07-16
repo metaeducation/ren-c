@@ -707,7 +707,7 @@ union StubLinkUnion {
     // source that was running at the time is propagated into the new
     // second-generation Array.
     //
-    String* file;
+    Strand* file;
 
     // Context types use this field of their varlist (which is the identity of
     // an ANY-CONTEXT!) to find their "keylist".  It is stored in the Stub
@@ -919,7 +919,7 @@ struct StubStruct {
 
 #if CPLUSPLUS_11
     struct Binary : public Flex {};
-    struct String : public Flex {};  // derives from Binary in main branch
+    struct Strand : public Flex {};  // derives from Binary in main branch
     struct Symbol : public Binary {};  // derives from String in main branch
 
     struct Array : public Flex {};

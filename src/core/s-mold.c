@@ -547,7 +547,7 @@ void Mold_Or_Form_Value(Molder* mo, const Cell* v, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-String* Copy_Mold_Or_Form_Value(const Cell* v, Flags opts, bool form)
+Strand* Copy_Mold_Or_Form_Value(const Cell* v, Flags opts, bool form)
 {
     DECLARE_MOLDER (mo);
     mo->opts = opts;
@@ -645,7 +645,7 @@ bool Form_Reduce_Throws(
 //
 //  Form_Tight_Block: C
 //
-String* Form_Tight_Block(const Value* blk)
+Strand* Form_Tight_Block(const Value* blk)
 {
     DECLARE_MOLDER (mo);
 
@@ -762,7 +762,7 @@ void Throttle_Mold(Molder* mo) {
 // it will be copied up to `len`.  If there are not enough characters then
 // the debug build will assert.
 //
-String* Pop_Molded_String_Core(Molder* mo, REBLEN len)
+Strand* Pop_Molded_String_Core(Molder* mo, REBLEN len)
 {
     assert(mo->utf8flex);  // if nullptr there was no Push_Mold()
 
@@ -773,7 +773,7 @@ String* Pop_Molded_String_Core(Molder* mo, REBLEN len)
     if (len == UNKNOWN)
         len = Flex_Len(mo->utf8flex) - mo->start;
 
-    String* result = Make_Sized_String_UTF8(
+    Strand* result = Make_Sized_String_UTF8(
         cs_cast(Binary_At(mo->utf8flex, mo->start)),
         len
     );

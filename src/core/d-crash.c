@@ -261,7 +261,7 @@ DECLARE_NATIVE(CRASH)
     // the dump would be the one that would queue up right to the exact moment
     // *before* the CRASH ACTION! was invoked.
 
-    Option(String*) file = File_Of_Level(level_);
+    Option(Strand*) file = File_Of_Level(level_);
     const char* file_utf8;
     if (file) {
         Binary* bin = Make_Utf8_From_String(unwrap file);  // leak ok, crash()

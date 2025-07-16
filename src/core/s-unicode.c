@@ -966,10 +966,10 @@ REBLEN Encode_UTF8(
 //
 //  Make_Utf8_From_String: C
 //
-Binary* Make_Utf8_From_String(String* string) {
+Binary* Make_Utf8_From_String(Strand* string) {
     assert(Is_Flex_Ucs2(string));
 
-    const Ucs2Unit* data = String_Head(string);
+    const Ucs2Unit* data = Strand_Head(string);
     size_t size = Size_As_UTF8(data, String_Len(string));
     Binary* bin = Make_Binary(size);
     REBLEN len = 0;

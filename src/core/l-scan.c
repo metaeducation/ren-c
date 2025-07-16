@@ -1884,7 +1884,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 //
 void Init_Transcode_Vaptr(
     TranscodeState* transcode,
-    Option(String*) file,
+    Option(Strand*) file,
     LineNumber line,
     Option(const Byte*) begin,  // preload the scanner outside the va_list
     va_list *vaptr
@@ -1918,7 +1918,7 @@ void Init_Transcode_Vaptr(
 //
 void Init_Transcode(
     TranscodeState* transcode,
-    Option(String*) file,
+    Option(Strand*) file,
     LineNumber line,
     const Byte *utf8,
     REBLEN limit
@@ -2813,7 +2813,7 @@ static Option(Error*) Trap_Scan_Array(Array** out, ScanState* S, Byte mode)
 // Scan source code. Scan state initialized. No header required.
 //
 Array* Scan_UTF8_Managed(
-    Option(String*) filename,
+    Option(Strand*) filename,
     const Byte *utf8,
     REBLEN size
 ){
@@ -2851,7 +2851,7 @@ Array* Scan_UTF8_Managed(
 REBINT Scan_Header(const Byte *utf8, REBLEN len)
 {
     TranscodeState ss;
-    String* filename = nullptr;
+    Strand* filename = nullptr;
     const LineNumber start_line = 1;
     Init_Transcode(&ss, filename, start_line, utf8, len);
 
@@ -2883,7 +2883,7 @@ void Startup_Scanner(void)
         ++n;
     assert(cast(Token, n) == TOKEN_MAX);
 
-    TG_Buf_Ucs2 = Make_String(1020);
+    TG_Buf_Ucs2 = Make_Strand(1020);
 }
 
 
@@ -2921,8 +2921,8 @@ DECLARE_NATIVE(TRANSCODE)
 
     // !!! Should the base name and extension be stored, or whole path?
     //
-    String* filename = Bool_ARG(FILE)
-        ? Cell_String(ARG(FILE_NAME))
+    Strand* filename = Bool_ARG(FILE)
+        ? Cell_Strand(ARG(FILE_NAME))
         : nullptr;
 
     LineNumber start_line;
@@ -3057,7 +3057,7 @@ const Byte *Scan_Any_Word(
     REBLEN len
 ) {
     TranscodeState transcode;
-    String* filename = nullptr;
+    Strand* filename = nullptr;
     const LineNumber start_line = 1;
     Init_Transcode(&transcode, filename, start_line, utf8, len);
 

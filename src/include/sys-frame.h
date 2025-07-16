@@ -119,7 +119,7 @@ INLINE REBLEN LVL_EXPR_INDEX(Level* L) {
         : L->expr_index - 1;
 }
 
-INLINE Option(String*) File_Of_Level(Level* L) {
+INLINE Option(Strand*) File_Of_Level(Level* L) {
     //
     // !!! the rebValue function could be a variadic macro in C99 or higher, as
     // `rebValueFileLine(__FILE__, __LINE__, ...`.  This could let the file and
@@ -134,7 +134,7 @@ INLINE Option(String*) File_Of_Level(Level* L) {
     if (Not_Array_Flag(L->source->array, HAS_FILE_LINE))
         return nullptr;
 
-    Option(String*) file = LINK(L->source->array).file;
+    Option(Strand*) file = LINK(L->source->array).file;
     if (file)
         assert(Is_Flex_Ucs2(unwrap file));
 

@@ -863,7 +863,7 @@ DECLARE_NATIVE(DELINE)
     if (Bool_ARG(LINES))
         return Init_Block(OUT, Split_Lines(val));
 
-    String* s = Cell_String(val);
+    Strand* s = Cell_Strand(val);
     REBLEN len_head = Flex_Len(s);
 
     REBLEN len_at = Cell_Series_Len_At(val);
@@ -888,7 +888,7 @@ DECLARE_NATIVE(DELINE)
         dest = Write_Codepoint(dest, c);
     }
 
-    Term_String_Len(s, len_head);
+    Term_Strand_Len(s, len_head);
 
     RETURN (ARG(STRING));
 }
@@ -909,7 +909,7 @@ DECLARE_NATIVE(ENLINE)
 
     Value* val = ARG(STRING);
 
-    String* flex = Cell_String(val);
+    Strand* flex = Cell_Strand(val);
     REBLEN idx = VAL_INDEX(val);
     REBLEN len = Cell_Series_Len_At(val);
 
@@ -923,7 +923,7 @@ DECLARE_NATIVE(ENLINE)
     // but this would not work if someone added, say, an ENLINE/PART...since
     // the byte ending position of interest might not be end of the string.
 
-    Ucs2(*) cp = String_At(flex, idx);
+    Ucs2(*) cp = Strand_At(flex, idx);
 
     Ucs2Unit c_prev = '\0';
 
@@ -951,7 +951,7 @@ DECLARE_NATIVE(ENLINE)
     // UCS-2 has the CR LF bytes in codepoint sequences that aren't CR LF.
     // So sliding is done in full character counts.
 
-    Ucs2Unit* up = String_Head(flex); // expand may change the pointer
+    Ucs2Unit* up = Strand_Head(flex); // expand may change the pointer
     REBLEN tail = Flex_Len(flex); // length after expansion
 
     // Add missing CRs

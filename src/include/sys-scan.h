@@ -259,7 +259,7 @@ typedef struct {
     REBLEN line;
     const Byte *line_head; // head of current line (used for errors)
 
-    Option(String*) file;
+    Option(Strand*) file;
 
     // If the binder isn't nullptr, then any words or arrays are bound into it
     // during the loading process.
@@ -368,7 +368,7 @@ extern const Byte g_lex_map[256];
 //
 // So for instance: instead of simply saying:
 //
-//     Ucs2Unit* ptr = String_Head(string_series);
+//     Ucs2Unit* ptr = Strand_Head(string_series);
 //     Ucs2Unit c = *ptr++;
 //
 // ...the idea is you would write:

@@ -130,8 +130,8 @@ static void reverse_string(Value* v, REBLEN len)
 
     REBLEN val_len_head = VAL_LEN_HEAD(v);
 
-    String* flex = Cell_String(v);
-    Ucs2(const*) up = String_Last(flex); // last exists due to len != 0
+    Strand* flex = Cell_Strand(v);
+    Ucs2(const*) up = Strand_Last(flex); // last exists due to len != 0
     REBLEN n;
     for (n = 0; n < len; ++n) {
         Ucs2Unit c;
@@ -406,7 +406,7 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         if (kind == TYPE_BINARY)
             return Init_Blob(out, Make_Binary(Int32s(def, 0)));
         else
-            return Init_Any_Series(out, kind, Make_String(Int32s(def, 0)));
+            return Init_Any_Series(out, kind, Make_Strand(Int32s(def, 0)));
     }
     else if (Is_Block(def)) {
         //
@@ -462,14 +462,14 @@ Bounce TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
         REBLEN len = Cell_Series_Len_At(arg);
         Cell* tail = Cell_List_At_Head(arg, len - 1);
 
-        String* s = Copy_Form_Value(arg, 0);
+        Strand* s = Copy_Form_Value(arg, 0);
         if (Is_Blank(tail)) {
             // leave (some/dir/) as %some-dir/
         }
         else {
-            Ucs2Unit* cp = String_Tail(s);
+            Ucs2Unit* cp = Strand_Tail(s);
             while (true) {
-                assert(cp != String_Head(s));
+                assert(cp != Strand_Head(s));
                 --cp;
                 if (*cp == '/') {
                     *cp = '.';
@@ -713,11 +713,11 @@ typedef struct TYPE_Str_Flags {
 } TYPE_STRF;
 
 
-static void Sniff_String(String* str, REBLEN idx, TYPE_STRF *sf)
+static void Sniff_String(Strand* str, REBLEN idx, TYPE_STRF *sf)
 {
     // Scan to find out what special chars the string contains?
 
-    Ucs2(const*) up = String_At(str, idx);
+    Ucs2(const*) up = Strand_At(str, idx);
 
     REBLEN n;
     for (n = idx; n < String_Len(str); n++) {
@@ -846,7 +846,7 @@ Byte *Emit_Uni_Char(Byte *bp, Ucs2Unit chr, bool parened)
 //
 void Mold_Text_Series_At(
     Molder* mo,
-    String* str,
+    Strand* str,
     REBLEN index
 ){
     if (index >= String_Len(str)) {
@@ -863,7 +863,7 @@ void Mold_Text_Series_At(
     if (not non_ascii_parened)
         sf.paren = 0;
 
-    Ucs2(const*) up = String_At(str, index);
+    Ucs2(const*) up = Strand_At(str, index);
 
     // If it is a short quoted string, emit it as "string"
     //
@@ -1084,7 +1084,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
 
     switch (Type_Of(v)) {
     case TYPE_TEXT:
-        Mold_Text_Series_At(mo, Cell_String(v), VAL_INDEX(v));
+        Mold_Text_Series_At(mo, Cell_Strand(v), VAL_INDEX(v));
         break;
 
     case TYPE_MONEY:

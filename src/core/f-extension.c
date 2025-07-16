@@ -164,7 +164,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
         CANON(GZIP)
     );
 
-    Option(String*) filename = nullptr;  // !!! Name of DLL if available?
+    Option(Strand*) filename = nullptr;  // !!! Name of DLL if available?
     Array* specs = Scan_UTF8_Managed(
         filename,
         specs_utf8,

@@ -405,7 +405,7 @@ Array* Split_Lines(const Value* str)
 {
     StackIndex base = TOP_INDEX;
 
-    String* s = Cell_String(str);
+    Strand* s = Cell_Strand(str);
     REBLEN len = Cell_Series_Len_At(str);
     REBLEN i = VAL_INDEX(str);
 
@@ -425,7 +425,7 @@ Array* Split_Lines(const Value* str)
                 PUSH(),
                 Copy_Sequence_At_Len(
                     s,
-                    start - String_Head(s),
+                    start - Strand_Head(s),
                     up - start - 1
                 )
             );
@@ -459,7 +459,7 @@ Array* Split_Lines(const Value* str)
             PUSH(),
             Copy_Sequence_At_Len(
                 s,
-                start - String_Head(s),
+                start - Strand_Head(s),
                 up - start  // no -1, backed up if '\n'
             )
         );

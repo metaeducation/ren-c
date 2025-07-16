@@ -1018,8 +1018,8 @@ const Byte *Scan_Email(
 ) {
     assert(Is_Cell_Erased(out));
 
-    String* s = Make_String(len);
-    Ucs2(*) up = String_Head(s);
+    Strand* s = Make_Strand(len);
+    Ucs2(*) up = Strand_Head(s);
 
     REBLEN num_chars = 0;
 
@@ -1052,7 +1052,7 @@ const Byte *Scan_Email(
     if (not found_at)
         return_NULL;
 
-    Term_String_Len(s, num_chars);
+    Term_Strand_Len(s, num_chars);
 
     Init_Email(out, s);
     return cp;
@@ -1389,8 +1389,8 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
         // correctly, it would need to use NEXT_CHR to count the characters
         // in the loop above.  Better to convert to usermode.
 
-        String* string = Make_String(len);
-        Ucs2(*) str = String_Head(string);
+        Strand* strand = Make_Strand(len);
+        Ucs2(*) str = Strand_Head(strand);
         cp = start;
 
         // "Code below *MUST* mirror that above:"
@@ -1409,8 +1409,8 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
             while (!ANY_CR_LF_END(*cp))
                 str = Write_Codepoint(str, *cp++);
         }
-        Term_String_Len(string, len);
-        Init_Text(val, string);
+        Term_Strand_Len(strand, len);
+        Init_Text(val, strand);
     }
 
     return Init_Block(OUT, result);

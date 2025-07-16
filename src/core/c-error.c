@@ -454,7 +454,7 @@ void Set_Location_Of_Error(
         break;
     }
     if (L != BOTTOM_LEVEL) {
-        Option(String*) file = LINK(L->source->array).file;
+        Option(Strand*) file = LINK(L->source->array).file;
         LineNumber line = MISC(L->source->array).line;
 
         if (file)
