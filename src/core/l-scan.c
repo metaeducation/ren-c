@@ -932,18 +932,21 @@ const Byte *Scan_Item_Push_Mold(
 }
 
 
-//
-//  Skip_Tag: C
-//
 // Skip the entire contents of a tag, including quoted strings.
 // The argument points to the opening '<'.  nullptr is returned on errors.
 //
-static const Byte *Skip_Tag(const Byte *cp)
+static const Byte *Skip_To_Delimit(const Byte *cp, Byte want)
 {
-    if (*cp == '<')
-        ++cp;
+    if (*cp == '<') {
+        assert(want == '>');
+    }
+    else {
+        assert(*cp == '[');
+        assert(want == ']');
+    }
+    ++cp;
 
-    while (*cp != '\0' and *cp != '>') {
+    while (*cp != '\0' and *cp != want) {
         if (*cp == '"') {
             cp++;
             while (*cp != '\0' and *cp != '"')
@@ -1631,11 +1634,19 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
         }
 
     case LEX_CLASS_WORD:
-        if (*cp == '~' and cp[1] == '<') {  // ~<it's a tripwire...>~
-            cp = Skip_Tag(cp);
+        if (*cp == '~' and cp[1] == '#') {  // ~#[it's a tripwire...]#~
+            ++cp;
+            ++cp;
+            if (*cp != '[')
+                return Error_Syntax(S, TOKEN_TRIPWIRE);
+
+            cp = Skip_To_Delimit(cp, ']');
             if (cp == nullptr)
                 return Error_Syntax(S, TOKEN_TRIPWIRE);
-            assert(cp[-1] == '>');
+            assert(cp[-1] == ']');
+            if (*cp != '#')
+                return Error_Syntax(S, TOKEN_TRIPWIRE);
+            ++cp;
             if (*cp != '~')
                 return Error_Syntax(S, TOKEN_TRIPWIRE);
             S->end = cp + 1;
@@ -2419,9 +2430,9 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         // The Scan_Any routine (only used here for tag) doesn't
         // know where the tag ends, so it scans the len.
         //
-        const Byte* bp = S->begin + 2;  // skip '~<'
-        const Byte* ep = S->end - 2;  // !!! subtract out what ???
-        if (ep != Scan_Any(PUSH(), bp, len - 4, TYPE_TRIPWIRE))
+        const Byte* bp = S->begin + 3;  // skip `~#[`
+        const Byte* ep = S->end - 3;  // !!! subtract `]#~`
+        if (ep != Scan_Any(PUSH(), bp, len - 6, TYPE_TRIPWIRE))
             return RAISE(Error_Syntax(S, token));
         break; }
 

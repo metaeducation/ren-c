@@ -1110,11 +1110,15 @@ void MF_String(Molder* mo, const Cell* v, bool form)
         Mold_Tag(mo, v);
         break;
 
-    case TYPE_TRIPWIRE:
-        Append_Codepoint(mo->utf8flex, '~');
-        Mold_Tag(mo, v);
-        Append_Codepoint(mo->utf8flex, '~');
-        break;
+    case TYPE_TRIPWIRE: {
+        Size offset;
+        Size size;
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Cell_Series_Len_At(v));
+
+        Append_Unencoded(mo->utf8flex, "~#[");
+        Append_Utf8_Utf8(mo->utf8flex, cs_cast(Binary_At(temp, offset)), size);
+        Append_Unencoded(mo->utf8flex, "]#~");
+        break; }
 
     default:
         crash (v);

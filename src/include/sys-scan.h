@@ -58,8 +58,8 @@ enum TokenEnum {
     TOKEN_EMAIL,
     TOKEN_URL,
     TOKEN_ISSUE,
-    TOKEN_TAG,
     TOKEN_TRIPWIRE,
+    TOKEN_TAG,
     TOKEN_PATH,
     TOKEN_CONSTRUCT,
     TOKEN_MAX
