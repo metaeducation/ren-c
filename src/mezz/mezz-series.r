@@ -495,7 +495,7 @@ split: func [
         [
             <opt>  ; just return input
             block!  ; parse rule
-            @[block!]  ; list of integers for piece lengths
+            @block!  ; list of integers for piece lengths
             integer!  ; length of pieces (or number of pieces if /INTO)
             bitset!  ; set of characters to split by
             char? text!  ; text to split by
