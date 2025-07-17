@@ -313,3 +313,6 @@
     pos: parse "abc10def" ["abc" "10" accept <here>]
     "def" = pos
 )
+
+(did parse/match [1] [integer?/])
+(not parse/match [a] [integer?/])

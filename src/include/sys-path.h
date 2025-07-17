@@ -87,6 +87,7 @@ INLINE bool Get_Path_Throws_Core(
     const Cell* any_path,
     Specifier* specifier
 ){
+    possibly(out == any_path);
     return Eval_Path_Throws_Core(
         out,
         nullptr,  // not requesting symbol means refinements not allowed

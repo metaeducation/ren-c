@@ -477,6 +477,7 @@ INLINE void Move_Opt_Var_May_Panic(
     const Cell* any_word,
     Specifier* specifier
 ){
+    possibly(out == any_word);
     Copy_Cell(out, Get_Opt_Var_May_Panic(any_word, specifier));
 }
 

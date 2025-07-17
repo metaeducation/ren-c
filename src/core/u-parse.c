@@ -398,6 +398,8 @@ static const Value* Get_Parse_Value(
     const Cell* rule,
     Specifier* specifier
 ){
+    possibly(out == rule);  // permitted by path and word getting
+
     if (Is_Word(rule)) {
         if (VAL_CMD(rule))  // includes Is_Bar()...also a "command"
             return Init_Word(out, Word_Symbol(rule));
@@ -410,6 +412,11 @@ static const Value* Get_Parse_Value(
         if (Is_Nulled(out))
             panic (Error_No_Value_Core(rule, specifier));
 
+        if (Is_Action(out))
+            panic (
+                "Can't use ACTION! in PARSE rule unless tail slash"
+            );
+
         return out;
     }
 
@@ -420,6 +427,9 @@ static const Value* Get_Parse_Value(
         // Should PATH!s be evaluating GROUP!s?  This does, but would need
         // to route potential thrown values up to do it properly.
 
+        assert(Series_Len_At(rule) >= 2);
+        bool tail_blank = Is_Blank(Array_Last(Cell_Array(rule)));
+
         if (Get_Path_Throws_Core(out, rule, specifier))
             panic (Error_No_Catch_For_Throw(out));
 
@@ -428,6 +438,11 @@ static const Value* Get_Parse_Value(
 
         if (Is_Nulled(out))
             panic (Error_No_Value_Core(rule, specifier));
+
+        if (Is_Action(out) and not tail_blank)
+            panic (
+                "Can't use ACTION! in PARSE rule unless tail slash"
+            );
 
         return out;
     }
@@ -675,33 +690,34 @@ static REBIXO Parse_Array_One_Rule_Core(
         return END_FLAG;
     }
 
-    switch (Type_Of(rule)) {
-    case TYPE_BLANK:
+    Type rule_type = Type_Of(rule);
+    switch (rule_type) {
+      case TYPE_BLANK:
         if (Type_Of(item) == TYPE_BLANK)
             return pos + 1;
         return END_FLAG;
 
-    case TYPE_DATATYPE:
+      case TYPE_DATATYPE:
         if (Type_Of(item) == Datatype_Type(rule)) // specific datatype match
             return pos + 1;
         return END_FLAG;
 
-    case TYPE_TYPESET:
+      case TYPE_TYPESET:
         if (Typeset_Check(rule, Type_Of(item))) // type was found in the typeset
             return pos + 1;
         return END_FLAG;
 
-    case TYPE_LIT_WORD:
+      case TYPE_LIT_WORD:
         if (Is_Word(item) and VAL_WORD_CANON(item) == VAL_WORD_CANON(rule))
             return pos + 1;
         return END_FLAG;
 
-    case TYPE_LIT_PATH:
+      case TYPE_LIT_PATH:
         if (Is_Path(item) and Cmp_Array(item, rule, false) == 0)
             return pos + 1;
         return END_FLAG;
 
-    case TYPE_BLOCK: {
+      case TYPE_BLOCK: {
         //
         // Process a subrule.  The subrule will run in its own frame, so it
         // will not change P_POS directly (it will have its own P_INPUT_VALUE)
@@ -738,11 +754,28 @@ static REBIXO Parse_Array_One_Rule_Core(
         assert(index >= 0);
         return cast(REBLEN, index); }
 
-    case TYPE_TEXT:
-    case TYPE_ISSUE:
+      case TYPE_TEXT:
+      case TYPE_ISSUE:
         break;
 
-    default:
+      // Get_Parse_Value() only allows trailing slash PATH! to be looked up
+      // as an ACTION!, which we treat here as a type constraint.
+      //
+      case TYPE_ACTION: {
+        Derelativize(P_OUT, item, P_INPUT_SPECIFIER);
+        Value* v = rebValue(rule, rebQ(P_OUT));
+        SET_END(P_OUT);
+        if (v and not Is_Okay(v))
+            panic ("Type constraint didn't return LOGIC! in UPARSE");
+
+        bool logic = (v != nullptr);
+        rebRelease(v);
+
+        if (not logic)
+            return END_FLAG;
+        return pos + 1; }
+
+      default:
         panic ("Unknown value type for match in ANY-ARRAY!");
     }
 
@@ -1669,11 +1702,8 @@ DECLARE_NATIVE(SUBPARSE)
 
                 // word - some other variable
                 if (Is_Word(rule)) {
-                    assert(rule == save);  // need to be careful...
-                    rule = Copy_Cell(
-                        save,  // safe because we get, then copy
-                        Get_Opt_Var_May_Panic(rule, SPECIFIED)
-                    );
+                    assert(rule == save);  // Get_Parse_Value() allows this...
+                    rule = Get_Parse_Value(save, rule, SPECIFIED);
 
                     if (Is_Nulled(rule) or Is_Trash(rule))
                         panic (Error_No_Value_Core(rule, P_RULE_SPECIFIER));
@@ -1685,12 +1715,7 @@ DECLARE_NATIVE(SUBPARSE)
         }
         else if (Any_Path(rule)) {
             if (Is_Path(rule)) {
-                if (Get_Path_Throws_Core(save, rule, P_RULE_SPECIFIER)) {
-                    Copy_Cell(P_OUT, save);
-                    return BOUNCE_THROWN;
-                }
-
-                rule = save;
+                rule = Get_Parse_Value(save, rule, P_RULE_SPECIFIER);
             }
             else if (Is_Set_Path(rule)) {
                 if (Set_Path_Throws_Core(
