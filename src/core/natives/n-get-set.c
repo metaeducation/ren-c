@@ -1503,8 +1503,8 @@ DECLARE_NATIVE(SET)
 //
 //      return: "Same value as input (error passthru even it skips the assign)"
 //          [any-stable?]
-//      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [<opt> any-word? tuple! group!
+//      target "Word or tuple or path, or calculated sequence steps (from GET)"
+//          [<opt> any-word? tuple! path! group!
 //          any-get-value? any-set-value? @block!]
 //      :dual-ignore "!!! Just for frame compatibility !!!"  ; dummy [1]
 //      :any "Do not error on unset words"
