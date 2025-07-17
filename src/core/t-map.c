@@ -696,7 +696,7 @@ REBTYPE(Map)
 
     REBMAP *map = VAL_MAP(val);
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -705,7 +705,7 @@ REBTYPE(Map)
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
-        switch (property) {
+        switch (maybe property) {
         case SYM_LENGTH:
             return Init_Integer(OUT, Length_Map(map));
 

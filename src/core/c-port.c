@@ -427,7 +427,7 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
     // it's some other kind of handle value this could crash.
     //
     if (Is_Native_Port_Actor(actor)) {
-        bounce = cast(PORT_HOOK, VAL_HANDLE_CFUNC(actor))(level_, port, verb);
+        bounce = f_cast(PORT_HOOK, VAL_HANDLE_CFUNC(actor))(level_, port, verb);
         goto post_process_output;
     }
 
@@ -476,7 +476,7 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
                 panic ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
             Flex* decoded = Make_Sized_String_UTF8(
-                cs_cast(Blob_At(OUT)),
+                s_cast(Blob_At(OUT)),
                 Series_Len_At(OUT)
             );
             Init_Text(OUT, decoded);
@@ -518,5 +518,5 @@ Bounce Do_Port_Action(Level* level_, Value* port, Value* verb)
 //
 void Make_Port_Actor_Handle(Value* out, PORT_HOOK paf)
 {
-    Init_Handle_Cfunc(out, cast(CFUNC*, paf), 0);
+    Init_Handle_Cfunc(out, f_cast(CFunction*, paf), 0);
 }

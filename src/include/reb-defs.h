@@ -232,9 +232,9 @@ typedef uint_fast32_t StackIndex;  // 0 for empty stack ([0] entry is trash)
 typedef enum SymIdEnum SymId;
 
 #define SYM_0 \
-    cast(Option(SymId), SYM_0_internal)  // 0 cast needed if not -fpermissive
+    u_cast(Option(SymId), SYM_0_internal)  // 0 cast needed if not -fpermissive
 
-#if DEBUG_CHECK_OPTIONALS
+#if NEEDFUL_OPTION_USES_WRAPPER
     bool operator==(Option(SymId)& a, Option(SymId)& b) = delete;
     void operator!=(Option(SymId)& a, Option(SymId)& b) = delete;
 #endif

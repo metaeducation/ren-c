@@ -65,7 +65,7 @@ DECLARE_NATIVE(RESCUE)
 {
     INCLUDE_PARAMS_OF_RESCUE;
 
-    Value* error = rebRescue(cast(REBDNG*, &Rescue_Dangerous), level_);
+    Value* error = rebRescue(f_cast(REBDNG*, &Rescue_Dangerous), level_);
     UNUSED(ARG(CODE));  // gets used by the above call, via the level_ pointer
 
     if (not error)  // code didn't panic() or throw
@@ -108,7 +108,7 @@ DECLARE_NATIVE(ENRESCUE)
 {
     INCLUDE_PARAMS_OF_ENRESCUE;
 
-    Bounce error = rebRescue(cast(REBDNG*, &Enrescue_Dangerous), level_);
+    Bounce error = rebRescue(f_cast(REBDNG*, &Enrescue_Dangerous), level_);
     UNUSED(ARG(CODE)); // gets used by the above call, via the level_ pointer
 
     if (error)

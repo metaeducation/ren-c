@@ -51,7 +51,9 @@
 #include "pstdint.h" // polyfill <stdint.h> for pre-C99/C++11 compilers
 #include "pstdbool.h" // polyfill <stdbool.h> for pre-C99/C++11 compilers
 
-#include "c-enhanced.h"
+#include "assert-fix.h"
+#include "needful/needful.h"
+#include "c-extras.h"
 
 #include "rebol.h"
 typedef RebolValue Value;

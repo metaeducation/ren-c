@@ -33,9 +33,6 @@
 #include <signal.h>
 #endif
 
-#include <assert.h>
-#include "assert-fixes.h"
-
 // REBOL Device Identifiers:
 // Critical: Must be in same order as Device table in host-device.c
 enum {

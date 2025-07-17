@@ -408,13 +408,9 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
                 // shared singular value are nullptr.
                 //
                 if (Get_Cell_Flag(v, HANDLE_CFUNC))
-                    assert(
-                        Is_CFunction_Corrupt_Debug(v->payload.handle.data.cfunc)
-                    );
+                    Assert_Corrupted_If_Needful(v->payload.handle.data.cfunc);
                 else
-                    assert(
-                        Is_Pointer_Corrupt_Debug(v->payload.handle.data.pointer)
-                    );
+                    Assert_Corrupted_If_Needful(v->payload.handle.data.pointer);
             }
         #endif
         }
@@ -597,7 +593,7 @@ static void Propagate_All_GC_Marks(void)
         // Termination is not required in the release build (the length is
         // enough to know where it ends).  But overwrite with trash in debug.
         //
-        Corrupt_Pointer_If_Debug(
+        Corrupt_If_Needful(
             *Flex_At(Array*, GC_Mark_Stack, Flex_Len(GC_Mark_Stack))
         );
 
@@ -967,7 +963,7 @@ static void Mark_Data_Stack(void)
 static void Mark_Symbols(void)
 {
     Symbol* *canon = Flex_Head(Symbol*, PG_Symbol_Canons);
-    assert(Is_Pointer_Corrupt_Debug(*canon)); // SYM_0 is for all non-builtin words
+    Assert_Corrupted_If_Needful(*canon);  // SYM_0 is for all non-builtin words
     ++canon;
     for (; *canon != nullptr; ++canon)
         Mark_Stub_Only(*canon);
@@ -1055,7 +1051,7 @@ static void Mark_Level_Stack_Deep(void)
         // earlier in the recycle process (don't want to create new arrays
         // once the recycling has started...)
         //
-        assert(not L->source->vaptr or Is_Pointer_Corrupt_Debug(L->source->vaptr));
+        /* L->source->vaptr is either nullptr or corrupt */
 
         // Note: L->source->pending should either live in L->source->array, or
         // it may be trash (e.g. if it's an apply).  GC can ignore it.
@@ -1070,22 +1066,12 @@ static void Mark_Level_Stack_Deep(void)
         //
         Queue_Mark_Opt_End_Cell_Deep(L->value);
 
-        // If L->gotten is set, it usually shouldn't need markeding because
+        // If L->gotten is set, it usually shouldn't need marking because
         // it's fetched via L->value and so would be kept alive by it.  Any
         // code that a frame runs that might disrupt that relationship so it
         // would fetch differently should have meant clearing L->gotten.
         //
-        // However, the SHOVE operation is special, and puts an infix ACTION!
-        // into the frame's `shove` cell and points L->gotten to that.  It
-        // needs to be marked here.
-        //
-        if (not L->gotten)
-            NOOP;
-        else
-            assert(
-                Is_Pointer_Corrupt_Debug(L->gotten)
-                or L->gotten == Try_Get_Opt_Var(L->value, L->specifier)
-            );
+        dont(Queue_Mark_Opt_End_Cell_Deep(L->gotten));
 
         if (
             L->specifier != SPECIFIED

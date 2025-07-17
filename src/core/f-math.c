@@ -228,7 +228,7 @@ Byte *Form_Int(Byte *buf, REBINT val)
 Byte *Form_Integer(Byte *buf, REBI64 val)
 {
     INT_TO_STR(val, buf);
-    return buf+LEN_BYTES(buf);
+    return buf+strsize(buf);
 }
 
 
@@ -238,7 +238,7 @@ Byte *Form_Integer(Byte *buf, REBI64 val)
 REBINT Emit_Integer(Byte *buf, REBI64 val)
 {
     INT_TO_STR(val, buf);
-    return LEN_BYTES(buf);
+    return strsize(buf);
 }
 
 

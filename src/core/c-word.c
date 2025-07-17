@@ -235,7 +235,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
         assert(Get_Flex_Info(canon, CANON_SYMBOL));
 
         REBINT cmp;
-        cmp = Compare_UTF8(cb_cast(Symbol_Head(canon)), utf8, size);
+        cmp = Compare_UTF8(b_cast(Symbol_Head(canon)), utf8, size);
         if (cmp == 0)
             return canon; // was a case-sensitive match
         if (cmp < 0)
@@ -251,7 +251,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
         while (synonym != canon) {
             assert(Not_Flex_Info(synonym, CANON_SYMBOL));
 
-            cmp = Compare_UTF8(cb_cast(Symbol_Head(synonym)), utf8, size);
+            cmp = Compare_UTF8(b_cast(Symbol_Head(synonym)), utf8, size);
             if (cmp == 0)
                 return synonym; // exact spelling match means no new interning
 
@@ -327,7 +327,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
         // words in C switch statements, the synonym inherits that number.
         //
         SET_SECOND_UINT16(&intern->leader, 0);
-        SET_SECOND_UINT16(&intern->leader, Symbol_Id(canon));
+        SET_SECOND_UINT16(&intern->leader, maybe Symbol_Id(canon));
     }
 
   #if RUNTIME_CHECKS
@@ -436,17 +436,17 @@ void GC_Kill_Interning(Symbol* intern)
 //
 REBINT Compare_Word(const Cell* s, const Cell* t, bool strict)
 {
-    const Byte *sp = cb_cast(Symbol_Head(Word_Symbol(s)));
-    const Byte *tp = cb_cast(Symbol_Head(Word_Symbol(t)));
+    const Byte *sp = b_cast(Symbol_Head(Word_Symbol(s)));
+    const Byte *tp = b_cast(Symbol_Head(Word_Symbol(t)));
 
     if (strict)
-        return COMPARE_BYTES(sp, tp); // must match byte-for-byte
+        return strcmp(s_cast(sp), s_cast(tp)); // must match byte-for-byte
 
     if (VAL_WORD_CANON(s) == VAL_WORD_CANON(t))
         return 0; // equivalent canon forms are considered equal
 
     // They must differ by case....
-    return Compare_UTF8(sp, tp, LEN_BYTES(tp)) + 2;
+    return Compare_UTF8(sp, tp, strsize(tp)) + 2;
 }
 
 
@@ -521,8 +521,8 @@ void Startup_Symbols(Array* words)
     // and try and use that meaningfully is too risky, so it is simply
     // prohibited to canonize SYM_0, and trash the Symbol* in the [0] slot.
     //
-    REBLEN sym = SYM_0;
-    Corrupt_Pointer_If_Debug(
+    REBLEN sym = SYM_0_internal;
+    Corrupt_If_Needful(
         *Flex_At(Symbol*, PG_Symbol_Canons, sym)
     );
 

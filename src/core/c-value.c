@@ -192,7 +192,7 @@ void* Probe_Core_Debug(
             Append_Unencoded(mo->utf8flex, "#{");
             Append_Utf8_Utf8(
                 mo->utf8flex,
-                cs_cast(Binary_Head(enbased)), Binary_Len(enbased)
+                s_cast(Binary_Head(enbased)), Binary_Len(enbased)
             );
             Append_Unencoded(mo->utf8flex, "}");
             Free_Unmanaged_Flex(enbased);

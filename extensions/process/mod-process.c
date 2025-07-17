@@ -1641,12 +1641,12 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
 
     int i;
     for (i = 0; i != argc; ++i)
-        rebFree(m_cast(OSCHR*, argv[i]));
+        rebFree(m_cast(OSCHR*, u_cast(const OSCHR*, argv[i])));
 
     if (cmd != nullptr)
         rebFree(cmd);
 
-    rebFree(m_cast(OSCHR**, argv));
+    rebFree(argv);
 
     if (Is_Text(ARG(OUT))) {
         if (output_len > 0) {

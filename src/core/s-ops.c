@@ -232,7 +232,7 @@ Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
 
     Byte *p2 = Binary_Head(series);
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
     case SYM_INTERSECT: { // and
         REBLEN i;
         for (i = 0; i < mt; i++)

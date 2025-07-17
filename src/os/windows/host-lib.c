@@ -221,10 +221,10 @@ void OS_Close_Library(void *dll)
 //
 // Get a DLL function address from its string name.
 //
-CFUNC *OS_Find_Function(void *dll, const char *funcname)
+CFunction *OS_Find_Function(void *dll, const char *funcname)
 {
     // !!! See notes about data pointers vs. function pointers in the
-    // definition of CFUNC.  This is trying to stay on the right side
+    // definition of CFunction.  This is trying to stay on the right side
     // of the specification, but OS APIs often are not standard C.  So
     // this implementation is not guaranteed to work, just to suppress
     // compiler warnings.  See:
@@ -235,7 +235,7 @@ CFUNC *OS_Find_Function(void *dll, const char *funcname)
 
     //DWORD err = GetLastError();
 
-    return cast(CFUNC*, fp);
+    return f_cast(CFunction*, fp);
 }
 
 

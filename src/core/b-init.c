@@ -408,7 +408,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
 
     REBLEN i;
     for (i = 0; names[i] != nullptr; ++i) {
-        Symbol* str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
+        Symbol* str = Intern_UTF8_Managed(b_cast(names[i]), strlen(names[i]));
         Value* val = Append_Context(Lib_Context, nullptr, str);
         assert(Is_Trash(val));  // functions will fill in
         UNUSED(val);
@@ -1164,9 +1164,9 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot);
 static void Startup_Corrupt_Globals(void)
 {
     assert(not TG_Top_Level);
-    Corrupt_Pointer_If_Debug(TG_Top_Level);
+    Corrupt_If_Needful(TG_Top_Level);
     assert(not TG_Bottom_Level);
-    Corrupt_Pointer_If_Debug(TG_Bottom_Level);
+    Corrupt_If_Needful(TG_Bottom_Level);
 
     // ...add more on a case-by-case basis if the case seems helpful...
 }
@@ -1470,7 +1470,7 @@ void Startup_Core(void)
 
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
-    Value* error = rebRescue(cast(REBDNG*, &Startup_Mezzanine), boot);
+    Value* error = rebRescue(f_cast(REBDNG*, &Startup_Mezzanine), boot);
     if (error) {
         //
         // There is theoretically some level of error recovery that could

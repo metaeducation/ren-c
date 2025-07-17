@@ -492,7 +492,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 #if !defined(__cplusplus) // poorer protection in C, loses constness
     INLINE Value* KNOWN(const Cell* v) {
         assert(IS_END(v) or IS_SPECIFIC(v));
-        return m_cast(Value*, c_cast(Cell*, v));
+        return m_cast(Value*, u_cast(Cell*, v));
     }
 #else
     INLINE const Value* KNOWN(const Cell* v) {
@@ -533,7 +533,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 //
 
 #define NULLED_CELL \
-    c_cast(const Value*, &PG_Nulled_Cell[0])
+    u_cast(const Value*, &PG_Nulled_Cell[0])
 
 #define Is_Nulled(v) \
     (Type_Of(v) == TYPE_NULLED)
@@ -569,7 +569,7 @@ INLINE bool Is_Endish_Nulled(const Cell* v) {
 //
 
 #define TRASH_VALUE \
-    c_cast(const Value*, &PG_Trash_Value[0])
+    u_cast(const Value*, &PG_Trash_Value[0])
 
 #define Init_Trash(out) \
     RESET_CELL((out), TYPE_TRASH)
@@ -606,7 +606,7 @@ INLINE Value* Trashify_Branched(Value* cell) {
 //
 
 #define BAR_VALUE \
-    c_cast(const Value*, &PG_Bar_Value[0])
+    u_cast(const Value*, &PG_Bar_Value[0])
 
 #define Init_Bar(out) \
     Init_Word((out), CANON(BAR_1));
@@ -634,7 +634,7 @@ INLINE Value* Trashify_Branched(Value* cell) {
 //
 
 #define BLANK_VALUE \
-    c_cast(const Value*, &PG_Blank_Value[0])
+    u_cast(const Value*, &PG_Blank_Value[0])
 
 #define Init_Blank(v) \
     Reset_Cell_Header((v), TYPE_BLANK, 0)
@@ -686,7 +686,7 @@ INLINE bool Is_Cell_Unreadable(const Cell* c) {
 //
 
 #define OKAY_VALUE \
-    c_cast(const Value*, &PG_Okay_Value[0])
+    u_cast(const Value*, &PG_Okay_Value[0])
 
 #define Init_Okay(out) \
     Reset_Cell_Header((out), TYPE_OKAY, 0)

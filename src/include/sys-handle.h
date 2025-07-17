@@ -48,7 +48,7 @@
 
 // Note: In the C language, sizeof(void*) may not be the same size as a
 // function pointer; hence they can't necessarily be cast between each other.
-// In practice, a void* is generally big enough to hold a CFUNC*, and many
+// In practice, a void* is generally big enough to hold a CFunction*, and many
 // APIs do assume this.
 //
 #define CELL_FLAG_HANDLE_CFUNC FLAG_TYPE_SPECIFIC_BIT(0)
@@ -74,7 +74,7 @@ INLINE void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
 #define VAL_HANDLE_POINTER(t, v) \
     cast(t *, VAL_HANDLE_VOID_POINTER(v))
 
-INLINE CFUNC *VAL_HANDLE_CFUNC(const Cell* v) {
+INLINE CFunction *VAL_HANDLE_CFUNC(const Cell* v) {
     assert(Is_Handle(v));
     assert(Get_Cell_Flag(v, HANDLE_CFUNC));
     if (v->extra.singular)
@@ -106,7 +106,7 @@ INLINE void SET_HANDLE_POINTER(Cell* v, void *pointer) {
         v->payload.handle.data.pointer = pointer;
 }
 
-INLINE void SET_HANDLE_CFUNC(Cell* v, CFUNC *cfunc) {
+INLINE void SET_HANDLE_CFUNC(Cell* v, CFunction *cfunc) {
     assert(Is_Handle(v));
     assert(Get_Cell_Flag(v, HANDLE_CFUNC));
     if (v->extra.singular)
@@ -129,7 +129,7 @@ INLINE Value* Init_Handle_Simple(
 
 INLINE Value* Init_Handle_Cfunc(
     Cell* out,
-    CFUNC *cfunc,
+    CFunction *cfunc,
     uintptr_t length
 ){
     Reset_Cell_Header(out, TYPE_HANDLE, CELL_FLAG_HANDLE_CFUNC);
@@ -155,8 +155,8 @@ INLINE void Init_Handle_Managed_Common(
     // the same union member, so trashing them both is semi-superfluous, but
     // serves a commentary purpose here.
     //
-    Corrupt_Pointer_If_Debug(v->payload.handle.data.pointer);
-    Corrupt_CFunction_If_Debug(v->payload.handle.data.cfunc);
+    Corrupt_If_Needful(v->payload.handle.data.pointer);
+    Corrupt_If_Needful(v->payload.handle.data.cfunc);
 
     // Don't fill the handle properties in the instance if it's the managed
     // form.  This way, you can set the properties in the canon value and
@@ -165,7 +165,7 @@ INLINE void Init_Handle_Managed_Common(
     //
     RESET_CELL(out, TYPE_HANDLE);
     out->extra.singular = singular;
-    Corrupt_Pointer_If_Debug(out->payload.handle.data.pointer);
+    Corrupt_If_Needful(out->payload.handle.data.pointer);
 }
 
 INLINE Value* Init_Handle_Managed(
@@ -187,7 +187,7 @@ INLINE Value* Init_Handle_Managed(
 
 INLINE Value* Init_Handle_Managed_Cfunc(
     Cell* out,
-    CFUNC *cfunc,
+    CFunction *cfunc,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
 ){

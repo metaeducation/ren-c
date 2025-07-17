@@ -298,7 +298,7 @@ Strand* Append_UTF8_May_Panic(
     Resize_Flex(temp, size + 1); // needs at most this many unicode chars
 
     Ucs2Unit* up = Strand_Head(temp);
-    const Byte *src = cb_cast(utf8);
+    const Byte *src = b_cast(utf8);
 
     bool all_ascii = true;
 

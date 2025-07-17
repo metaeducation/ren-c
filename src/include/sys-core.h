@@ -93,10 +93,10 @@ typedef RebolValue Value;
 // assert() is enabled by default; disable with `#define NDEBUG`
 // http://stackoverflow.com/a/17241278
 //
-#include <assert.h>
-#include "assert-fixes.h"
+#include "assert-fix.h"
 
-#include "c-enhanced.h"
+#include "needful/needful.h"
+#include "c-extras.h"
 
 
 //

@@ -181,7 +181,7 @@ void Dump_Values(Cell* vp, REBLEN count)
         *cp++ = ':';
         *cp++ = ' ';
 
-        type = cb_cast(Symbol_Head(Get_Type_Name(val)));
+        type = b_cast(Symbol_Head(Get_Type_Name(val)));
         for (n = 0; n < 11; n++) {
             if (*type) *cp++ = *type++;
             else *cp++ = ' ';

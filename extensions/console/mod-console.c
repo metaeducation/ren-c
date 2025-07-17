@@ -317,7 +317,7 @@ DECLARE_NATIVE(CONSOLE)
         // reason to fall back to the default skin).
         //
         Enable_Ctrl_C();
-        result = rebRescue(cast(REBDNG*, &Run_Sandboxed_Code), code);
+        result = rebRescue(f_cast(REBDNG*, &Run_Sandboxed_Code), code);
         Disable_Ctrl_C();
     }
 

@@ -798,7 +798,7 @@ const Byte *Scan_Date(
             return_NULL;
 
         for (num = 0; num < 12; num++) {
-            if (!Compare_Bytes(cb_cast(Month_Names[num]), cp, size, true))
+            if (!Compare_Bytes(b_cast(Month_Names[num]), cp, size, true))
                 break;
         }
         month = num + 1;
@@ -982,11 +982,11 @@ const Byte *Scan_File_Or_Money(
         cp++;
         len--;
         term = '"';
-        invalid = cb_cast(":;\"");
+        invalid = b_cast(":;\"");
     }
     else {
         term = 0;
-        invalid = cb_cast(":;()[]\"");
+        invalid = b_cast(":;()[]\"");
     }
 
     DECLARE_MOLDER (mo);
@@ -1263,7 +1263,7 @@ const Byte *Scan_Any(
     //
     bool crlf_to_lf = true;
 
-    Flex* s = Append_UTF8_May_Panic(nullptr, cs_cast(cp), num_bytes, crlf_to_lf);
+    Flex* s = Append_UTF8_May_Panic(nullptr, s_cast(cp), num_bytes, crlf_to_lf);
     Init_Any_Series(out, type, s);
 
     return cp + num_bytes;

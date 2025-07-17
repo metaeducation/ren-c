@@ -273,7 +273,7 @@ static Flex* MAKE_TO_String_Common(const Value* arg)
     // MAKE/TO <type> <binary!>
     if (Is_Binary(arg)) {
         flex = Make_Sized_String_UTF8(
-            cs_cast(Blob_At(arg)), Series_Len_At(arg)
+            s_cast(Blob_At(arg)), Series_Len_At(arg)
         );
     }
     // MAKE/TO <type> <any-string>
@@ -1008,7 +1008,7 @@ static void Mold_Tag(Molder* mo, const Cell* v)
     Size offset;
     Size size;
     Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Series_Len_At(v));
-    Append_Utf8_Utf8(mo->utf8flex, cs_cast(Binary_At(temp, offset)), size);
+    Append_Utf8_Utf8(mo->utf8flex, s_cast(Binary_At(temp, offset)), size);
 
     Append_Codepoint(mo->utf8flex, '>');
 }
@@ -1052,7 +1052,7 @@ void MF_Binary(Molder* mo, const Cell* v, bool form)
     Append_Unencoded(mo->utf8flex, "#{");
     Append_Utf8_Utf8(
         mo->utf8flex,
-        cs_cast(Binary_Head(enbased)),
+        s_cast(Binary_Head(enbased)),
         Binary_Len(enbased)
     );
     Append_Unencoded(mo->utf8flex, "}");
@@ -1078,7 +1078,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
         Size size;
         Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Series_Len_At(v));
 
-        Append_Utf8_Utf8(mo->utf8flex, cs_cast(Binary_At(temp, offset)), size);
+        Append_Utf8_Utf8(mo->utf8flex, s_cast(Binary_At(temp, offset)), size);
         return;
     }
 
@@ -1116,7 +1116,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
         Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Series_Len_At(v));
 
         Append_Unencoded(mo->utf8flex, "~#[");
-        Append_Utf8_Utf8(mo->utf8flex, cs_cast(Binary_At(temp, offset)), size);
+        Append_Utf8_Utf8(mo->utf8flex, s_cast(Binary_At(temp, offset)), size);
         Append_Unencoded(mo->utf8flex, "]#~");
         break; }
 
@@ -1152,7 +1152,7 @@ REBTYPE(String)
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
 
     Option(SymId) sym = Word_Id(verb);
-    switch (sym) {
+    switch (maybe sym) {
       case SYM_APPEND:
       case SYM_INSERT:
       case SYM_CHANGE: {
@@ -1632,9 +1632,9 @@ void Startup_String(void)
     for (c = 0; c <= ' '; c++)
         URL_Escapes[c] = ESC_URL | ESC_FILE;
 
-    const Byte *dc = cb_cast(";%\"()[]{}<>");
+    const Byte *dc = b_cast(";%\"()[]{}<>");
 
-    for (c = LEN_BYTES(dc); c > 0; c--)
+    for (c = strsize(dc); c > 0; c--)
         URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
 }
 

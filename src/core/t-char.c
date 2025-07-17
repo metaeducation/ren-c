@@ -176,7 +176,7 @@ REBTYPE(Char)
     REBI64 chr = cast(REBI64, VAL_CHAR(D_ARG(1)));
     REBI64 arg;
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
 
     case SYM_ADD: {
         arg = Math_Arg_For_Char(D_ARG(2), verb);

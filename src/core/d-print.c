@@ -186,7 +186,7 @@ void Debug_String_No_Newline(const Byte *utf8, Size size)
 //
 void Debug_Line(void)
 {
-    Debug_String_No_Newline(cb_cast("\n"), 1);
+    Debug_String_No_Newline(b_cast("\n"), 1);
 }
 
 
@@ -500,7 +500,7 @@ pick:
         case '-':
         case '1':   case '2':   case '3':   case '4':
         case '5':   case '6':   case '7':   case '8':   case '9':
-            fmt = cs_cast(Grab_Int(cb_cast(fmt), &pad));
+            fmt = s_cast(Grab_Int(b_cast(fmt), &pad));
             goto pick;
 
         case 'd':
@@ -517,10 +517,10 @@ pick:
 
         case 's':
             cp = va_arg(*vaptr, Byte *);
-            if (pad == 1) pad = LEN_BYTES(cp);
+            if (pad == 1) pad = strsize(cp);
             if (pad < 0) {
                 pad = -pad;
-                pad -= LEN_BYTES(cp);
+                pad -= strsize(cp);
                 for (; pad > 0; pad--)
                     Append_Codepoint(flex, ' ');
             }
@@ -530,7 +530,7 @@ pick:
             // to make the output somewhat match without worrying heavily
             // about the padding features of this debug routine.
             //
-            pad -= LEN_BYTES(cp);
+            pad -= strsize(cp);
 
             for (; pad > 0; pad--)
                 Append_Codepoint(flex, ' ');

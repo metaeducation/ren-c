@@ -37,7 +37,7 @@
 #define FLAG_NODE_BYTE(byte)    FLAG_FIRST_BYTE(byte)
 
 #define Is_Node(p) \
-    (c_cast(Byte*, (p))[0] & NODE_BYTEMASK_0x80_NODE)
+    (u_cast(Byte*, (p))[0] & NODE_BYTEMASK_0x80_NODE)
 
 #define Is_Node_A_Cell(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x08_CELL))
 #define Is_Node_A_Stub(n)   (not Is_Node_A_Cell(n))

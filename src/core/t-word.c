@@ -201,7 +201,7 @@ Bounce PD_Word(
                 return nullptr;
 
             Size size = Flex_Len(str);
-            const Byte *bp = cb_cast(Symbol_Head(str));
+            const Byte *bp = b_cast(Symbol_Head(str));
             Ucs2Unit c;
             do {
                 if (size == 0)
@@ -239,7 +239,7 @@ REBTYPE(Word)
     Value* val = D_ARG(1);
     assert(Any_Word(val));
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -247,10 +247,10 @@ REBTYPE(Word)
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
-        switch (property) {
+        switch (maybe property) {
         case SYM_LENGTH: {
             Symbol* symbol = Word_Symbol(val);
-            const Byte *bp = cb_cast(Symbol_Head(symbol));
+            const Byte *bp = b_cast(Symbol_Head(symbol));
             Size size = Symbol_Size(symbol);
             REBLEN len = 0;
             for (; size > 0; ++bp, --size) {

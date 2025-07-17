@@ -874,7 +874,7 @@ Error* Make_Error_Managed(
 Error* Error_User(const char *utf8) {
     DECLARE_VALUE (message);
     Init_Text(message, Make_String_UTF8(utf8));
-    return Make_Error_Managed(SYM_0, SYM_0, message, rebEND);
+    return Make_Error_Managed(SYM_0_internal, SYM_0_internal, message, rebEND);
 }
 
 

@@ -774,7 +774,7 @@ Strand* Pop_Molded_String_Core(Molder* mo, REBLEN len)
         len = Flex_Len(mo->utf8flex) - mo->start;
 
     Strand* result = Make_Sized_String_UTF8(
-        cs_cast(Binary_At(mo->utf8flex, mo->start)),
+        s_cast(Binary_At(mo->utf8flex, mo->start)),
         len
     );
     assert(Flex_Wide(result) == sizeof(Ucs2Unit));

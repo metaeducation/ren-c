@@ -687,9 +687,7 @@ union StubLinkUnion {
     // that is "corrupted" in the debug build when the series is created, and
     // hopefully it will lead to the other fields reading garbage (vs. zero)
     //
-  #if RUNTIME_CHECKS
     void *corrupt;
-  #endif
 
     // API handles use "singular" format arrays (see notes on that), which
     // lay out the link field in the bytes preceding the Value* payload.
@@ -786,9 +784,7 @@ union StubMiscUnion {
     //
     // Used to preload bad data in the debug build; see notes on link.corrupt
     //
-  #if RUNTIME_CHECKS
     void *corrupt;
-  #endif
 
     // Ordinary source Arrays store the line number here.  It perhaps could
     // have some bits taken out of it, vs. being a full 32-bit integer on

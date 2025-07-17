@@ -730,7 +730,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
     // If there is a panic() and we took a FLEX_INFO_HOLD, that hold needs
     // to be released.  For this reason, the code has to trap errors.
 
-    bounce = rebRescue(cast(REBDNG*, &Loop_Each_Core), &les);
+    bounce = rebRescue(f_cast(REBDNG*, &Loop_Each_Core), &les);
 
     //=//// CLEANUPS THAT NEED TO BE DONE DESPITE ERROR, THROW, ETC. //////=//
 
@@ -1190,7 +1190,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         assert(res->start <= orig_len);
         Append_Unencoded_Len(
             res->mo->utf8flex,
-            cs_cast(Binary_At(cast(Binary*, res->series), res->start)),
+            s_cast(Binary_At(cast(Binary*, res->series), res->start)),
             orig_len - res->start
         );
 
@@ -1345,7 +1345,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
                 if (Is_Binary(res->data)) {
                     Append_Unencoded_Len(
                         res->mo->utf8flex,
-                        cs_cast(
+                        s_cast(
                             Binary_At(cast(Binary*, res->series), res->start)
                         ),
                         1
@@ -1446,7 +1446,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         // left behind).  But worth testing the technique of marking in case
         // it's ever required for other scenarios.
         //
-        Corrupt_Pointer_If_Debug(res.mo);
+        Corrupt_If_Needful(res.mo);
     }
     else {
         // We're going to generate a new data allocation, but then swap its
@@ -1471,7 +1471,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     res.broke = false; // will be set to true if there is a BREAK
 
-    Bounce bounce = rebRescue(cast(REBDNG*, &Remove_Each_Core), &res);
+    Bounce bounce = rebRescue(f_cast(REBDNG*, &Remove_Each_Core), &res);
 
     // Currently, if a panic() happens during the iteration, any removals
     // which were indicated will be enacted before propagating failure.

@@ -711,7 +711,7 @@ append app-config/cflags switch user-config/rigorous [
             ; It's useful to be told when a function pointer is assigned to
             ; an incompatible type of function pointer.  However, Rebol relies
             ; on the ability to have a kind of "void*-for-functions", e.g.
-            ; CFUNC, which holds arbitrary function pointers.  There seems to
+            ; CFunction, which holds arbitrary function pointers.  There seems to
             ; be no way to enable function pointer type checking that allows
             ; downcasts and upcasts from just that pointer type, so it pretty
             ; much has to be completely disabled (or managed with #pragma,
@@ -1123,7 +1123,7 @@ for-each ext builtin-extensions [
 
     ; %prep-extensions.r creates a temporary .c file which contains the
     ; collated information for the module (compressed script and spec bytes,
-    ; array of dispatcher CFUNC pointers for the natives) and RX_Collate
+    ; array of dispatcher CFunction pointers for the natives) and RX_Collate
     ; function.  It is located in the %prep/ directory for the extension.
     ;
     ext-name-lower: lowercase copy to text! ext/name

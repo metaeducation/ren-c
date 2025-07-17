@@ -174,7 +174,7 @@ for-each native native-defs [
         ; existing "exports: []" section.
         ;
         ; But for the moment, the system uses "internal magic" to get the
-        ; native specs paired up with their corresponding CFUNC pointers thatis
+        ; native specs paired up with their corresponding CFunction pointers thatis
         ; are embedded in a C-style array inside of a HANDLE!.  Since that
         ; internal magic does not inject the specs into that user-written
         ; module, it goes ahead and pays attention to the EXPORT word as

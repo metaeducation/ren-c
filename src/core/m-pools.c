@@ -1154,8 +1154,8 @@ void GC_Kill_Flex(Flex* s)
     s->info.bits = FLAG_WIDE_BYTE_OR_0(77); // corrupt Flex_Wide()
   #endif
 
-    Corrupt_Pointer_If_Debug(MISC(s).corrupt);
-    Corrupt_Pointer_If_Debug(LINK(s).corrupt);
+    Corrupt_If_Needful(MISC(s).corrupt);
+    Corrupt_If_Needful(LINK(s).corrupt);
 
     Free_Pooled(STUB_POOL, s);
 

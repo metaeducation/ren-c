@@ -426,9 +426,9 @@ bool Eval_Core_Throws(Level* const L)
     enum Reb_Kind eval_type;
 
     const Value* current_gotten;
-    Corrupt_Pointer_If_Debug(current_gotten);
+    Corrupt_If_Needful(current_gotten);
     const Cell* current;
-    Corrupt_Pointer_If_Debug(current);
+    Corrupt_If_Needful(current);
 
     // Given how the evaluator is written, it's inevitable that there will
     // have to be a test for points to `goto` before running normal eval.
@@ -714,8 +714,8 @@ bool Eval_Core_Throws(Level* const L)
         assert(TOP_INDEX >= L->stack_base);  // path process may push refines
         assert(L->refine == LOOKBACK_ARG or L->refine == ORDINARY_ARG);
 
-        Corrupt_Pointer_If_Debug(current); // shouldn't be used below
-        Corrupt_Pointer_If_Debug(current_gotten);
+        Corrupt_If_Needful(current); // shouldn't be used below
+        Corrupt_If_Needful(current_gotten);
 
         Clear_Eval_Flag(L, DOING_PICKUPS);
 
@@ -773,7 +773,7 @@ bool Eval_Core_Throws(Level* const L)
                     goto arg_loop_and_any_pickups_done;
                 }
 
-                Corrupt_Pointer_If_Debug(L->refine); // must update to new value
+                Corrupt_If_Needful(L->refine); // must update to new value
 
                 Value* ordered = TOP;
                 Symbol* param_canon = Cell_Param_Canon(L->param); // #2258
@@ -860,7 +860,7 @@ bool Eval_Core_Throws(Level* const L)
 
               used_refinement:;
 
-                assert(not Is_Pointer_Corrupt_Debug(L->refine)); // must be set
+                assert(L->refine != ARG_TO_UNUSED_REFINEMENT);  // must be set
                 Init_Refinement(L->arg, Cell_Parameter_Symbol(L->param));
                 Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
@@ -1403,7 +1403,7 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_WORD:
-        switch (Word_Id(current)) {  // quasiform simulation
+        switch (maybe Word_Id(current)) {  // quasiform simulation
           case SYM__TVOID_T:
             Init_Void(L->out);
             goto post_switch;

@@ -437,7 +437,7 @@ REBTYPE(Varargs)
 {
     Value* value = D_ARG(1);
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -445,7 +445,7 @@ REBTYPE(Varargs)
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
-        switch (property) {
+        switch (maybe property) {
         case SYM_TAIL_Q: {
             if (Do_Vararg_Op_Maybe_End_Throws(
                 OUT,

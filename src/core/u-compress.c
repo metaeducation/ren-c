@@ -152,7 +152,7 @@ unsigned char *Compress_Alloc_Core(
         // be invocable via nullptr for bootstrap; not really applicable to
         // the compression side, but might as well be consistent.
     }
-    else switch (Symbol_Id(envelope)) {
+    else switch (maybe Symbol_Id(envelope)) {
       case SYM_NONE:
         window_bits = window_bits_zlib_raw;
         break;
@@ -256,7 +256,7 @@ unsigned char *Decompress_Alloc_Core(
         // in %words.r are loaded as part of the boot process from code that
         // is compressed with GZIP, so it's a Catch-22 otherwise.
     }
-    else switch (Symbol_Id(envelope)) {
+    else switch (maybe Symbol_Id(envelope)) {
       case SYM_NONE:
         window_bits = window_bits_zlib_raw;
         break;

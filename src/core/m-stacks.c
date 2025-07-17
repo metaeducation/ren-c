@@ -101,15 +101,15 @@ Bounce Dummy_Dispatcher(Level* L)
 void Startup_Level_Stack(void)
 {
   #if RUNTIME_CHECKS // see Startup_Corrupt_Globals() for explanation
-    assert(Is_Pointer_Corrupt_Debug(TG_Top_Level));
-    assert(Is_Pointer_Corrupt_Debug(TG_Bottom_Level));
+    Assert_Corrupted_If_Needful(TG_Top_Level);
+    Assert_Corrupted_If_Needful(TG_Bottom_Level);
     TG_Top_Level = TG_Bottom_Level = nullptr;
   #endif
 
     TG_Level_Source_End.index = 0;
     TG_Level_Source_End.vaptr = nullptr;
     TG_Level_Source_End.array = EMPTY_ARRAY; // for HOLD flag in Push_Level
-    Corrupt_Pointer_If_Debug(TG_Level_Source_End.pending);
+    Corrupt_If_Needful(TG_Level_Source_End.pending);
 
     Level* L = ALLOC(Level); // needs dynamic allocation
     Erase_Cell(Level_Spare(L));
@@ -157,7 +157,7 @@ void Startup_Level_Stack(void)
     L->arg = m_cast(Value*, END_NODE);
     L->special = END_NODE;
 
-    Corrupt_Pointer_If_Debug(L->prior); // help catch enumeration past BOTTOM_LEVEL
+    Corrupt_If_Needful(L->prior); // help catch enumeration past BOTTOM_LEVEL
     TG_Bottom_Level = L;
 
     assert(TOP_LEVEL == L and BOTTOM_LEVEL == L);
@@ -175,7 +175,7 @@ void Shutdown_Level_Stack(void)
     // the bottom frame as a "real stack level", it had a trash pointer put
     // in the debug build.  Restore it to a typical null before the drop.
     //
-    assert(Is_Pointer_Corrupt_Debug(TG_Bottom_Level->prior));
+    Assert_Corrupted_If_Needful(TG_Bottom_Level->prior);
     TG_Bottom_Level->prior = nullptr;
 
     Level* L = TOP_LEVEL;

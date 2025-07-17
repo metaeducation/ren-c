@@ -53,7 +53,7 @@
 //
 
 INLINE const char *Symbol_Head(Symbol* str) {
-    return cs_cast(Binary_Head(str));
+    return s_cast(Binary_Head(str));
 }
 
 INLINE Symbol* Canon_Symbol(Symbol* str) {
@@ -271,7 +271,7 @@ INLINE Strand* Make_Sized_String_UTF8(const char *utf8, size_t size)
 
 
 INLINE REBINT Hash_String(Symbol* str)
-    { return Hash_UTF8(cb_cast(Symbol_Head(str)), Symbol_Size(str)); }
+    { return Hash_UTF8(b_cast(Symbol_Head(str)), Symbol_Size(str)); }
 
 INLINE REBINT First_Hash_Candidate_Slot(
     REBLEN *skip_out,

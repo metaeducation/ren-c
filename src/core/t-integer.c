@@ -259,7 +259,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // who rarely do 2s-complement math in their head.
 
         Symbol* symbol= Word_Symbol(value);
-        const Byte *bp = cb_cast(Symbol_Head(symbol));
+        const Byte *bp = b_cast(Symbol_Head(symbol));
         size_t size = Symbol_Size(symbol);
 
         if (size > MAX_HEX_LEN) {
@@ -403,7 +403,7 @@ REBTYPE(Integer)
         else {
             // Decimal or other numeric second argument:
             REBLEN n = 0; // use to flag special case
-            switch (Word_Id(verb)) {
+            switch (maybe Word_Id(verb)) {
             // Anything added to an integer is same as adding the integer:
             case SYM_ADD:
             case SYM_MULTIPLY: {
@@ -444,7 +444,7 @@ REBTYPE(Integer)
     else
         arg = 0xDECAFBAD; // wasteful, but avoid maybe unassigned warning
 
-    switch (sym) {
+    switch (maybe sym) {
 
     case SYM_COPY:
         Copy_Cell(OUT, val);

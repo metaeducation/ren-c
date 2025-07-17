@@ -588,7 +588,7 @@ REBTYPE(Bitset)
     // !!! Set_Bits does locked series check--what should the more general
     // responsibility be for checking?
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -597,7 +597,7 @@ REBTYPE(Bitset)
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
-        switch (property) {
+        switch (maybe property) {
         case SYM_LENGTH:
             return Init_Integer(value, VAL_LEN_HEAD(value) * 8);
 

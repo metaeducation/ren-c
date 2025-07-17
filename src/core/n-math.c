@@ -929,10 +929,10 @@ DECLARE_NATIVE(NEGATIVE_Q)
 {
     INCLUDE_PARAMS_OF_NEGATIVE_Q;
 
-    DECLARE_VALUE (zero);
-    Init_Zeroed_Hack(zero, Type_Of(ARG(NUMBER)));
+    DECLARE_VALUE (z);
+    Init_Zeroed_Hack(z, Type_Of(ARG(NUMBER)));
 
-    if (Compare_Modify_Values(ARG(NUMBER), zero, -1))
+    if (Compare_Modify_Values(ARG(NUMBER), z, -1))
         return LOGIC(false);
 
     return LOGIC(true);
@@ -951,10 +951,10 @@ DECLARE_NATIVE(POSITIVE_Q)
 {
     INCLUDE_PARAMS_OF_POSITIVE_Q;
 
-    DECLARE_VALUE (zero);
-    Init_Zeroed_Hack(zero, Type_Of(ARG(NUMBER)));
+    DECLARE_VALUE (z);
+    Init_Zeroed_Hack(z, Type_Of(ARG(NUMBER)));
 
-    if (Compare_Modify_Values(ARG(NUMBER), zero, -2))
+    if (Compare_Modify_Values(ARG(NUMBER), z, -2))
         return LOGIC(true);
 
     return LOGIC(false);
@@ -976,10 +976,10 @@ DECLARE_NATIVE(ZERO_Q)
     enum Reb_Kind type = Type_Of(ARG(VALUE));
 
     if (type >= TYPE_INTEGER and type <= TYPE_TIME) {
-        DECLARE_VALUE (zero);
-        Init_Zeroed_Hack(zero, type);
+        DECLARE_VALUE (z);
+        Init_Zeroed_Hack(z, type);
 
-        if (Compare_Modify_Values(ARG(VALUE), zero, 1))
+        if (Compare_Modify_Values(ARG(VALUE), z, 1))
             return LOGIC(true);
     }
     return LOGIC(false);

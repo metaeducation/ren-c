@@ -249,7 +249,7 @@ REBTYPE(Pair)
     Value* first2 = nullptr;
     Value* second2 = nullptr;
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
       case SYM_REVERSE:
         return Init_Pair(OUT, second1, first1);
 

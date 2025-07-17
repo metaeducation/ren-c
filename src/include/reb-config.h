@@ -481,11 +481,11 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 // runtime costs because it will assert if you unwrap the pointer and it is
 // null when it shouldn't be.  Add it to the sanitized build.
 //
-#if !defined(DEBUG_CHECK_OPTIONALS)
+#if !defined(NEEDFUL_OPTION_USES_WRAPPER)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_CHECK_OPTIONALS  (RUNTIME_CHECKS && CPLUSPLUS_11)
+    #define NEEDFUL_OPTION_USES_WRAPPER  (RUNTIME_CHECKS && CPLUSPLUS_11)
   #else
-    #define DEBUG_CHECK_OPTIONALS  0
+    #define NEEDFUL_OPTION_USES_WRAPPER  0
   #endif
 #endif
 

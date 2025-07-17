@@ -43,7 +43,7 @@ static Array* Read_Dir_May_Panic(struct devreq_file *dir)
     struct devreq_file file;
     CLEARS(&file);
 
-    Corrupt_Pointer_If_Debug(file.path); // file is output (not input)
+    Corrupt_If_Needful(file.path); // file is output (not input)
 
     REBREQ *req = AS_REBREQ(dir);
     req->modes |= RFM_DIR;
@@ -159,7 +159,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
     dir.devreq.port_ctx = ctx;
     dir.devreq.device = RDI_FILE;
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -167,7 +167,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         UNUSED(ARG(VALUE)); // implicitly supplied as `port`
         Option(SymId) property = Word_Id(ARG(PROPERTY));
 
-        switch (property) {
+        switch (maybe property) {
         case SYM_LENGTH: {
             REBLEN len = Is_Block(state) ? VAL_ARRAY_LEN_AT(state) : 0;
             return Init_Integer(OUT, len); }

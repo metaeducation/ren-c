@@ -426,7 +426,7 @@ INLINE VarList* Steal_Context_Vars(VarList* c, Node* keysource) {
         FLAG_WIDE_BYTE_OR_0(0) // implicit termination, and indicates array
             | FLAG_LEN_BYTE_OR_255(255) // indicates dynamic (varlist rule)
     );
-    Corrupt_Pointer_If_Debug(copy->link_private.keysource); // needs update
+    Corrupt_If_Needful(copy->link_private.keysource); // needs update
     memcpy(
         cast(char*, &copy->content),
         cast(char*, &stub->content),
@@ -455,7 +455,7 @@ INLINE VarList* Steal_Context_Vars(VarList* c, Node* keysource) {
         NODE_FLAG_NODE | NODE_FLAG_CELL | FLAG_KIND_BYTE(TYPE_FRAME);
     INIT_BINDING(single, VAL_BINDING(rootvar));
     single->payload.any_context.varlist = cast_Array(stub);
-    Corrupt_Pointer_If_Debug(single->payload.any_context.phase);
+    Corrupt_If_Needful(single->payload.any_context.phase);
     /* single->payload.any_context.phase = L->original; */ // !!! needed?
 
     rootvar->payload.any_context.varlist = cast_Array(copy);

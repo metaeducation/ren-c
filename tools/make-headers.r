@@ -163,12 +163,12 @@ e-syms/emit {
      * !!! Also, void pointers and function pointers are not guaranteed to be
      * the same size, even if TCC assumes so for these symbol purposes.
      */
-    #define SYM_CFUNC(x) {#x, (CFUNC*)(x)}
+    #define SYM_CFUNC(x) {#x, (CFunction*)(x)}
     #define SYM_DATA(x) {#x, &x}
 
     struct rebol_sym_cfunc_t {
         const char *name;
-        CFUNC *cfunc;
+        CFunction *cfunc;
     };
 
     struct rebol_sym_data_t {

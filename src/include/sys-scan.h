@@ -424,8 +424,8 @@ INLINE Ucs2(*) Write_Codepoint(Ucs2(*) p, REBWCHAR codepoint) {
 
 #ifdef ATOI64 // Ascii to integer conversion
     #define CHR_TO_INT(s) \
-        _atoi64(cs_cast(s))
+        _atoi64(s_cast(s))
 #else
     #define CHR_TO_INT(s) \
-        strtoll(cs_cast(s), 0, 10)
+        strtoll(s_cast(s), 0, 10)
 #endif

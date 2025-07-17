@@ -54,14 +54,14 @@
 //  cleanup_extension_init_handler: C
 //
 void cleanup_extension_init_handler(const Value* v)
-  { UNUSED(v); } // cleanup CFUNC* just serves as an ID for the HANDLE!
+  { UNUSED(v); } // cleanup CFunction* just serves as an ID for the HANDLE!
 
 
 //
 //  cleanup_extension_quit_handler: C
 //
 void cleanup_extension_quit_handler(const Value* v)
-  { UNUSED(v); } // cleanup CFUNC* just serves as an ID for the HANDLE!
+  { UNUSED(v); } // cleanup CFunction* just serves as an ID for the HANDLE!
 
 
 //

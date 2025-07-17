@@ -196,7 +196,7 @@ REBINT Compare_String_Vals(const Cell* v1, const Cell* v2, bool uncase)
 REBINT Compare_UTF8(const Byte *s1, const Byte *s2, Size l2)
 {
     Ucs2Unit c1, c2;
-    Size l1 = LEN_BYTES(s1);
+    Size l1 = strsize(s1);
     REBINT result = 0;
 
     for (; l1 > 0 && l2 > 0; s1++, s2++, l1--, l2--) {
@@ -543,9 +543,7 @@ REBLEN Find_Str_Char(
                 // the string if no match.
                 //
                 while (true) {
-                    index += strcspn(
-                        cast(char*, bp + index), cast(char*, breakset)
-                    );
+                    index += strcspn(s_cast(bp + index), s_cast(breakset));
                     if (index >= cast(REBINT, highest))
                         goto return_not_found;
 

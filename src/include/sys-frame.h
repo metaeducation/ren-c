@@ -364,7 +364,7 @@ INLINE void Begin_Action(
     assert(not L->original);
     L->original = LVL_PHASE_OR_DUMMY(L);
 
-    assert(Is_Pointer_Corrupt_Debug(L->opt_label)); // only valid w/TYPE_ACTION
+    Assert_Corrupted_If_Needful(L->opt_label);  // only valid w/TYPE_ACTION
     assert(not opt_label or Get_Flex_Flag(opt_label, UTF8_SYMBOL));
     L->opt_label = opt_label;
   #if DEBUG_FRAME_LABELS  // helpful for looking in the debugger
@@ -571,16 +571,16 @@ INLINE void Drop_Action(Level* L) {
         Value* rootvar = cast(Value*, Array_Head(L->varlist));
         assert(Is_Frame(rootvar));
         assert(rootvar->payload.any_context.varlist == L->varlist);
-        Corrupt_Pointer_If_Debug(rootvar->payload.any_context.phase);
-        Corrupt_Pointer_If_Debug(rootvar->extra.binding);
+        Corrupt_If_Needful(rootvar->payload.any_context.phase);
+        Corrupt_If_Needful(rootvar->extra.binding);
     }
   #endif
 
     L->original = nullptr; // signal an action is no longer running
 
-    Corrupt_Pointer_If_Debug(L->opt_label);
+    Corrupt_If_Needful(L->opt_label);
   #if DEBUG_FRAME_LABELS
-    Corrupt_Pointer_If_Debug(L->label_utf8);
+    Corrupt_If_Needful(L->label_utf8);
   #endif
 }
 

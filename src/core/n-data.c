@@ -1014,7 +1014,7 @@ DECLARE_NATIVE(AS)
         //
         if (Is_Binary(v)) {
             Flex* string = Make_Sized_String_UTF8(
-                cs_cast(Blob_At(v)),
+                s_cast(Blob_At(v)),
                 Series_Len_At(v)
             );
             if (Is_Value_Immutable(v))

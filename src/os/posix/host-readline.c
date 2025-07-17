@@ -226,7 +226,7 @@ static bool Read_Bytes_Interrupted(STD_TERM *term, unsigned char *buf, int len)
     // If we have leftovers:
     //
     if (term->residue[0]) {
-        int end = LEN_BYTES(term->residue);
+        int end = strsize(term->residue);
         if (end < len)
             len = end;
         memcpy(s_cast(buf), s_cast(term->residue), len); // terminated below
@@ -318,7 +318,7 @@ static void Recall_Line(STD_TERM *term)
     else {
         // Fetch prior line:
         strcpy(s_cast(term->buffer), s_cast(Line_History[term->hist]));
-        term->pos = term->end = LEN_BYTES(term->buffer);
+        term->pos = term->end = strsize(term->buffer);
     }
 }
 
@@ -924,16 +924,16 @@ return_halt:
 line_end_reached:
     // Not at end of input? Save any unprocessed chars:
     if (*cp != '\0') {
-        if (LEN_BYTES(term->residue) + LEN_BYTES(cp) >= TERM_BUF_LEN - 1) {
+        if (strsize(term->residue) + strsize(cp) >= TERM_BUF_LEN - 1) {
             //
             // avoid overrun
         }
         else
-            strcat(s_cast(term->residue), cs_cast(cp));
+            strcat(s_cast(term->residue), s_cast(cp));
     }
 
     // Fill the output buffer:
-    int len = LEN_BYTES(term->out); // length of IO read
+    int len = strsize(term->out); // length of IO read
     if (len >= limit - 1)
         len = limit - 2;
     strncpy(s_cast(result), s_cast(term->out), limit);

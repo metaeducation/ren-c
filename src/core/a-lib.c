@@ -138,7 +138,7 @@ void *API_rebMalloc(size_t size)
 
     Binary* *ps = (cast(Binary**, ptr) - 1);
     *ps = bin;  // save self in bytes *right before* data
-    POISON_MEMORY(ps, sizeof(Binary*));  // let ASAN catch underruns
+    Poison_Memory_If_Sanitize(ps, sizeof(Binary*));  // let ASAN catch underruns
 
     // !!! The data is uninitialized, and if it is turned into a BINARY! via
     // rebRepossess() before all bytes are assigned initialized, it could be
@@ -183,7 +183,7 @@ void *API_rebRealloc(void *ptr, size_t new_size)
         return rebMalloc(new_size);
 
     Binary* *ps = cast(Binary**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(Binary*)); // need to underrun to fetch `s`
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*)); // need to underrun to fetch `s`
 
     Binary* bin = *ps;
 
@@ -212,7 +212,7 @@ void API_rebFree(void *ptr)
         return;
 
     Binary* *ps = cast(Binary**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(Binary*)); // need to underrun to fetch `s`
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*)); // need to underrun to fetch `s`
 
     Binary* s = *ps;
     if (Is_Node_A_Cell(s)) {
@@ -257,7 +257,7 @@ void API_rebFree(void *ptr)
 RebolValue* API_rebRepossess(void *ptr, size_t size)
 {
     Binary* *ps = cast(Binary**, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(Binary*));  // need to underrun to fetch `s`
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // need to underrun to fetch `s`
 
     Binary* bin = *ps;
     assert(not Is_Flex_Managed(bin));
@@ -433,8 +433,8 @@ RebolValue* API_rebArg(const void *p, va_list *vaptr)
         panic ("rebArg() isn't actually variadic, it's arity-1");
 
     Symbol* symbol = Intern_UTF8_Managed(
-        cb_cast(name),
-        LEN_BYTES(cb_cast(name))
+        b_cast(name),
+        strsize(b_cast(name))
     );
 
     Value* param = ACT_PARAMS_HEAD(act);
@@ -1025,7 +1025,7 @@ size_t API_rebSpellInto(
         Binary* temp = Temp_UTF8_At_Managed(
             &offset, &utf8_size, v, Series_Len_At(v)
         );
-        utf8 = cs_cast(Binary_At(temp, offset));
+        utf8 = s_cast(Binary_At(temp, offset));
     }
     else {
         assert(Any_Word(v));
@@ -1180,7 +1180,7 @@ size_t API_rebBytesInto(
     }
 
     REBLEN limit = MIN(buf_size, size);
-    memcpy(s_cast(buf), cs_cast(Blob_At(blob)), limit);
+    memcpy(s_cast(buf), s_cast(Blob_At(blob)), limit);
     buf[limit] = '\0';
     return size;
 }

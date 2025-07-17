@@ -256,7 +256,7 @@ Value* OS_Do_Device(REBREQ *req, int command)
     // now, preserve that behavior by always running the device code with
     // a trap in effect.
 
-    Value* error_or_int = rebRescue(cast(REBDNG*, &Dangerous_Command), req);
+    Value* error_or_int = rebRescue(f_cast(REBDNG*, &Dangerous_Command), req);
 
     if (rebDid("error?", error_or_int)) {
         if (dev->pending)

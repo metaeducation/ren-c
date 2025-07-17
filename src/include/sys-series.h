@@ -563,12 +563,12 @@ INLINE Flex* Alloc_Flex_Stub(Flags flags) {
     // set by the caller.
     //
     s->leader.bits = NODE_FLAG_NODE | flags | FLEX_FLAG_8_IS_TRUE;  // #1
-    Corrupt_Pointer_If_Debug(LINK(s).corrupt);  // #2
+    Corrupt_If_Needful(LINK(s).corrupt);  // #2
   #if RUNTIME_CHECKS
     memset(cast(char*, &s->content.fixed), 0xBD, sizeof(s->content));  // #3-#6
     memset(&s->info, 0xAE, sizeof(s->info));  // #7, caller sets Flex_Wide()
   #endif
-    Corrupt_Pointer_If_Debug(MISC(s).corrupt);  // #8
+    Corrupt_If_Needful(MISC(s).corrupt);  // #8
 
     // Note: This series will not participate in management tracking!
     // See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Flex_Core().

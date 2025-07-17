@@ -180,7 +180,7 @@ DECLARE_NATIVE(CHECKSUM)
     SymId sym;
     if (Bool_ARG(METHOD)) {
         sym = maybe Word_Id(ARG(WORD));
-        if (sym == SYM_0) // not in %words.r, no SYM_XXX constant
+        if (not sym) // not in %words.r, no SYM_XXX constant
             panic (Error_Invalid(ARG(WORD)));
     }
     else
@@ -347,7 +347,7 @@ DECLARE_NATIVE(DEFLATE)
         envelope = CANON(NONE);  // Note: nullptr is gzip (for bootstrap)
     else {
         envelope = Word_Symbol(ARG(FORMAT));
-        switch (Symbol_Id(envelope)) {
+        switch (maybe Symbol_Id(envelope)) {
           case SYM_ZLIB:
           case SYM_GZIP:
             break;
@@ -411,7 +411,7 @@ DECLARE_NATIVE(INFLATE)
     if (not Bool_ARG(ENVELOPE))
         envelope = CANON(NONE);  // Note: nullptr is gzip (for bootstrap)
     else {
-        switch (Word_Id(ARG(FORMAT))) {
+        switch (maybe Word_Id(ARG(FORMAT))) {
           case SYM_ZLIB:
           case SYM_GZIP:
           case SYM_DETECT:
@@ -538,7 +538,7 @@ DECLARE_NATIVE(ENBASE)
 
     Init_Text(
         OUT,
-        Make_Sized_String_UTF8(cs_cast(Binary_Head(enbased)), Binary_Len(enbased))
+        Make_Sized_String_UTF8(s_cast(Binary_Head(enbased)), Binary_Len(enbased))
     );
     Free_Unmanaged_Flex(enbased);
 
@@ -1314,7 +1314,7 @@ DECLARE_NATIVE(DECODE_UTF8)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF8;
 
-    Init_Text(OUT, Make_String_UTF8(cs_cast(Blob_At(ARG(DATA)))));
+    Init_Text(OUT, Make_String_UTF8(s_cast(Blob_At(ARG(DATA)))));
     return OUT;
 }
 

@@ -859,7 +859,7 @@ REBACT *Make_Action(
 
     MISC(details).dispatcher = dispatcher; // level of indirection, hijackable
 
-    assert(Is_Pointer_Corrupt_Debug(LINK(paramlist).corrupt));
+    Assert_Corrupted_If_Needful(LINK(paramlist).corrupt);
 
     if (opt_underlying)
         LINK(paramlist).underlying = opt_underlying;

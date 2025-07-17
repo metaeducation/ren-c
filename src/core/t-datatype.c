@@ -88,7 +88,7 @@ REBTYPE(Datatype)
     Value* arg = D_ARG(2);
     enum Reb_Kind kind = CELL_DATATYPE_TYPE(value);
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
 
     case SYM_REFLECT: {
         Option(SymId) sym = Word_Id(arg);

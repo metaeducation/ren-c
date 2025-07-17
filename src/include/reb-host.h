@@ -36,7 +36,9 @@
 #include "rebol.h"
 typedef RebolValue Value;
 
-#include "c-enhanced.h" // API should only require <stdbool.h> and <stdint.h>
+#include "assert-fix.h"
+#include "needful/needful.h"
+#include "c-extras.h"
 
 struct rebol_devreq;
 typedef struct rebol_devreq REBREQ;

@@ -49,13 +49,13 @@ Bounce Series_Common_Action_Maybe_Unhandled(
     REBINT index = cast(REBINT, VAL_INDEX(value));
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(value));
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
 
     case SYM_REFLECT: {
         Option(SymId) property = Word_Id(arg);
         assert(property != SYM_0);
 
-        switch (property) {
+        switch (maybe property) {
         case SYM_INDEX:
             return Init_Integer(OUT, cast(REBI64, index) + 1);
 

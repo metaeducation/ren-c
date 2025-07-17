@@ -346,7 +346,7 @@ static void Update_Error_Near_For_Line(
     Append_Unencoded(mo->utf8flex, "(line ");
     Append_Int(mo->utf8flex, line);
     Append_Unencoded(mo->utf8flex, ") ");
-    Append_Utf8_Utf8(mo->utf8flex, cs_cast(bp), len);
+    Append_Utf8_Utf8(mo->utf8flex, s_cast(bp), len);
 
     ERROR_VARS *vars = ERR_VARS(error);
     Init_Text(&vars->nearest, Pop_Molded_String(mo));
@@ -367,8 +367,7 @@ static void Update_Error_Near_For_Line(
 // e.g. where the end point of the token is seen.
 //
 static Error* Error_Syntax(ScanState* S, Token token) {
-    assert(S->begin and not Is_Pointer_Corrupt_Debug(S->begin));
-    assert(S->end and not Is_Pointer_Corrupt_Debug(S->end));
+    assert(*S->begin == *S->begin and *S->end == *S->end);  // valid to deref
     assert(S->end >= S->begin);
 
     DECLARE_VALUE (token_name);
@@ -381,7 +380,7 @@ static Error* Error_Syntax(ScanState* S, Token token) {
     Init_Text(
         token_text,
         Make_Sized_String_UTF8(
-            cs_cast(S->begin), cast(REBLEN, S->end - S->begin)
+            s_cast(S->begin), cast(REBLEN, S->end - S->begin)
         )
     );
     return Error_Scan_Invalid_Raw(token_name, token_text);
@@ -549,7 +548,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 
         // Check for identifiers:
         for (c = 0; c < ESC_MAX; c++) {
-            if ((cp = Match_Bytes(bp, cb_cast(Esc_Names[c])))) {
+            if ((cp = Match_Bytes(bp, b_cast(Esc_Names[c])))) {
                 if (cp != nullptr and *cp == ')') {
                     bp = cp + 1;
                     *out = Esc_Codes[c];
@@ -902,7 +901,7 @@ const Byte *Scan_Item_Push_Mold(
             if (nullptr == (bp = Back_Scan_UTF8_Char(&c, bp, 0)))
                 return nullptr;
         }
-        else if (opt_invalids and nullptr != strchr(cs_cast(opt_invalids), c)) {
+        else if (opt_invalids and nullptr != strchr(s_cast(opt_invalids), c)) {
             //
             // Is char as literal valid? (e.g. () [] etc.)
             // Only searches ASCII characters.
@@ -998,8 +997,8 @@ static REBLEN Prescan_Token(ScanState* S)
 {
     TranscodeState* ss = S->ss;
 
-    assert(Is_Pointer_Corrupt_Debug(S->begin));
-    assert(Is_Pointer_Corrupt_Debug(S->end));
+    Assert_Corrupted_If_Needful(S->begin);
+    Assert_Corrupted_If_Needful(S->end);
 
     const Byte *cp = ss->at;
     REBLEN flags = 0;
@@ -1160,8 +1159,8 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
 
   acquisition_loop: {
 
-    Corrupt_Pointer_If_Debug(S->begin);
-    Corrupt_Pointer_If_Debug(S->end);
+    Corrupt_If_Needful(S->begin);
+    Corrupt_If_Needful(S->end);
 
     // If a non-variadic scan of a UTF-8 string is being done, then ss->vaptr
     // will be nullptr and ss->at will be set to the data to scan.  A variadic
@@ -1421,7 +1420,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             // there's more content yet to come.
             //
             ss->at = nullptr;
-            Corrupt_Pointer_If_Debug(S->end);
+            Corrupt_If_Needful(S->end);
             goto acquisition_loop;
 
         default:
@@ -2015,7 +2014,7 @@ static REBINT Scan_Head(TranscodeState* ss)
             break;
         case 'R':
         case 'r':
-            if (Match_Bytes(cp, cb_cast(Str_REBOL))) {
+            if (Match_Bytes(cp, b_cast(Str_REBOL))) {
                 rp = cp;
                 cp += 5;
                 break;

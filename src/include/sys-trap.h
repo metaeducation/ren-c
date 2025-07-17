@@ -261,6 +261,8 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 // more "keyword-like" and draw attention to the fact it is a `noreturn` call.
 //
 
+#undef panic
+
 #if NO_RUNTIME_CHECKS
     //
     // We don't want release builds to have to pay for the parameter

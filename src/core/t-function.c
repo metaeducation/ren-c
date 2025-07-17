@@ -134,7 +134,7 @@ REBTYPE(Action)
     Value* value = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
@@ -195,7 +195,7 @@ REBTYPE(Action)
     case SYM_REFLECT: {
         Option(SymId) sym = Word_Id(arg);
 
-        switch (sym) {
+        switch (maybe sym) {
 
         case SYM_BINDING: {
             if (Did_Get_Binding_Of(OUT, value))

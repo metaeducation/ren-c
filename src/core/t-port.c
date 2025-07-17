@@ -158,7 +158,7 @@ REBTYPE(Port)
     // https://github.com/metaeducation/ren-c/issues/311
     //
     if (not Is_Port(D_ARG(1))) {
-        switch (Word_Id(verb)) {
+        switch (maybe Word_Id(verb)) {
 
         case SYM_READ:
         case SYM_WRITE:

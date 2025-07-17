@@ -111,7 +111,7 @@ Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 
     if (Is_Issue(arg)) {
         Symbol* symbol = Word_Symbol(arg);
-        const Byte *ap = cb_cast(Symbol_Head(symbol));
+        const Byte *ap = b_cast(Symbol_Head(symbol));
         size_t size = Symbol_Size(symbol); // UTF-8 len
         if (size & 1)
             panic (arg); // must have even # of chars
@@ -375,7 +375,7 @@ REBTYPE(Tuple)
             if (ap)
                 a = (REBINT) *ap++;
 
-            switch (Word_Id(verb)) {
+            switch (maybe Word_Id(verb)) {
             case SYM_ADD: v += a; break;
 
             case SYM_SUBTRACT: v -= a; break;
@@ -455,7 +455,7 @@ REBTYPE(Tuple)
         RETURN (value);
     }
 
-    switch (sym) {
+    switch (maybe sym) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -464,7 +464,7 @@ REBTYPE(Tuple)
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
-        switch (property) {
+        switch (maybe property) {
         case SYM_LENGTH:
             return Init_Integer(OUT, MAX(len, 3));
 

@@ -697,13 +697,13 @@ Bounce Context_Common_Action_Maybe_Unhandled(
 
     VarList* c = Cell_Varlist(value);
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
 
     case SYM_REFLECT: {
         Option(SymId) property = Word_Id(arg);
         assert(property != SYM_0);
 
-        switch (property) {
+        switch (maybe property) {
         case SYM_LENGTH: // !!! Should this be legal?
             return Init_Integer(OUT, Varlist_Len(c));
 
@@ -763,7 +763,7 @@ REBTYPE(Context)
 
     VarList* c = Cell_Varlist(value);
 
-    switch (Word_Id(verb)) {
+    switch (maybe Word_Id(verb)) {
 
     case SYM_REFLECT: {
         Option(SymId) sym = Word_Id(arg);
@@ -772,7 +772,7 @@ REBTYPE(Context)
 
         Level* L = Level_Of_Varlist_May_Panic(c);
 
-        switch (sym) {
+        switch (maybe sym) {
           case SYM_FILE: {
             Option(Strand*) file = File_Of_Level(L);
             if (not file)

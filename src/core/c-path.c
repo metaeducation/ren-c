@@ -180,7 +180,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             //
             panic ("Path evaluation produced temporary value, can't POKE it");
         }
-        Corrupt_Pointer_If_Debug(pvs->special);
+        Corrupt_If_Needful(pvs->special);
     }
     else {
         pvs->u.ref.cell = nullptr; // clear status of the reference
