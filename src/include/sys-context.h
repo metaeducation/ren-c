@@ -103,7 +103,7 @@ INLINE Array* Keylist_Of_Varlist(VarList* c) {
     // just the keylist of the underlying function.
     //
     Value* archetype = Varlist_Archetype(c);
-    assert(VAL_TYPE_RAW(archetype) == TYPE_FRAME);
+    assert(Unchecked_Type_Of(archetype) == TYPE_FRAME);
     return ACT_PARAMLIST(archetype->payload.any_context.phase);
 }
 
@@ -272,13 +272,13 @@ INLINE void INIT_Cell_Varlist(Value* v, VarList* c) {
 //
 INLINE Value* Init_Any_Context(
     Cell* out,
-    enum Reb_Kind kind,
+    Type type,
     VarList* c
 ){
   #if RUNTIME_CHECKS
-    Extra_Init_Any_Context_Checks_Debug(kind, c);
+    Extra_Init_Any_Context_Checks_Debug(type, c);
   #endif
-    UNUSED(kind);
+    UNUSED(type);
     assert(Is_Flex_Managed(Varlist_Array(c)));
     assert(Is_Flex_Managed(Keylist_Of_Varlist(c)));
     return Copy_Cell(out, Varlist_Archetype(c));
@@ -316,8 +316,8 @@ INLINE Value* Init_Any_Context(
 // not have to go in the unmanaged roots list and be removed later.  (Be
 // careful not to do any evaluations or trigger GC until it's well formed)
 //
-#define Alloc_Context(kind,capacity) \
-    Alloc_Context_Core((kind), (capacity), FLEX_FLAGS_NONE)
+#define Alloc_Context(type,capacity) \
+    Alloc_Context_Core((type), (capacity), FLEX_FLAGS_NONE)
 
 
 //=////////////////////////////////////////////////////////////////////////=//

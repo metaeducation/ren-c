@@ -371,9 +371,9 @@ e-types/emit [{
      * used for out-of-band purposes, which should be kept in consideration.
      */
   #if CPLUSPLUS_11
-    enum Reb_Kind : uint_fast8_t {
+    enum TypeEnum : uint_fast8_t {
   #else
-    enum Reb_Kind {
+    enum TypeEnum {
   #endif
         TYPE_0 = 0, /* reserved for internal purposes */
         TYPE_0_END = TYPE_0, /* ...most commonly array termination cells... */
@@ -410,6 +410,8 @@ e-types/emit [{
     };
   #endif
 
+    typedef enum TypeEnum Type;
+
     /*
      * Not really a type, but a state cells can be in that's valid but not
      * intended to be read.
@@ -422,7 +424,7 @@ e-types/emit [{
      * SINGLE TYPE CHECK MACROS, e.g. Is_Block() or Is_Tag()
      *
      * These routines are based on Type_Of(), which does much more checking
-     * than VAL_TYPE_RAW() in the debug build.  In some commonly called
+     * than Unchecked_Type_Of() in the debug build.  In some commonly called
      * routines, it may be worth it to use the less checked version.
      */
 }]
@@ -457,13 +459,13 @@ e-types/emit {
      * Includes TYPE_VOID.
      */
     #define TS_VALUE \
-        ((FLAGIT_KIND(TYPE_MAX) - 1) - FLAGIT_KIND(TYPE_0_END))
+        ((FLAG_TYPE(TYPE_MAX) - 1) - FLAG_TYPE(TYPE_0_END))
 
     /*
      * TS_VALUE minus VOID
      */
     #define TS_STABLE \
-        (TS_VALUE - FLAGIT_KIND(TYPE_VOID))
+        (TS_VALUE - FLAG_TYPE(TYPE_VOID))
 
     /*
      * TS_VALUE minus TRASH
@@ -476,21 +478,21 @@ e-types/emit {
      * comparisons on tripwires, because they're true antiforms.
      */
     #define TS_EQUATABLE \
-        (TS_VALUE - FLAGIT_KIND(TYPE_TRASH))
+        (TS_VALUE - FLAG_TYPE(TYPE_TRASH))
 
     /*
      * TS_STABLE minus NULL, VOID, and TRASH
      */
     #define TS_ELEMENT \
-        (TS_STABLE - FLAGIT_KIND(TYPE_TRASH) - FLAGIT_KIND(TYPE_NULLED) \
-            - FLAGIT_KIND(TYPE_OKAY))
+        (TS_STABLE - FLAG_TYPE(TYPE_TRASH) - FLAG_TYPE(TYPE_NULLED) \
+            - FLAG_TYPE(TYPE_OKAY))
 
     #define TS_LOGIC \
-        (FLAGIT_KIND(TYPE_NULLED) | FLAGIT_KIND(TYPE_OKAY))
+        (FLAG_TYPE(TYPE_NULLED) | FLAG_TYPE(TYPE_OKAY))
 
     #define TS_LIFTED \
-        (FLAGIT_KIND(TYPE_WORD) | FLAGIT_KIND(TYPE_GROUP) \
-            | FLAGIT_KIND(TYPE_LIT_WORD) | FLAGIT_KIND(TYPE_LIT_PATH))
+        (FLAG_TYPE(TYPE_WORD) | FLAG_TYPE(TYPE_GROUP) \
+            | FLAG_TYPE(TYPE_LIT_WORD) | FLAG_TYPE(TYPE_LIT_PATH))
 }
 typeset-sets: copy []
 
@@ -508,7 +510,7 @@ remove/part typeset-sets 2 ; the - markers
 for-each [ts types] typeset-sets [
     flagits: collect [
         for-each t types [
-            keep cscape [t {FLAGIT_KIND(TYPE_${T})}]
+            keep cscape [t {FLAG_TYPE(TYPE_${T})}]
         ]
     ]
     e-types/emit [flagits ts {

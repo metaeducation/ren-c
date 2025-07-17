@@ -48,8 +48,6 @@
 
 #define AS_DECIMAL(n) (Is_Integer(n) ? (REBDEC)VAL_INT64(n) : VAL_DECIMAL(n))
 
-enum {SINE, COSINE, TANGENT};
-
 
 //
 //  Trig_Value: C
@@ -57,7 +55,7 @@ enum {SINE, COSINE, TANGENT};
 // Convert integer arg, if present, to decimal and convert to radians
 // if necessary.  Clip ranges for correct REBOL behavior.
 //
-static REBDEC Trig_Value(const Value* value, bool radians, REBLEN which)
+static REBDEC Trig_Value(const Value* value, bool radians, SymId which)
 {
     REBDEC dval = AS_DECIMAL(value);
 
@@ -67,10 +65,10 @@ static REBDEC Trig_Value(const Value* value, bool radians, REBLEN which)
 
         /* get dval between -180.0 and 180.0 */
         if (fabs (dval) > 180.0) dval += dval < 0.0 ? 360.0 : -360.0;
-        if (which == TANGENT) {
+        if (which == SYM_TANGENT) {
             /* get dval between -90.0 and 90.0 */
             if (fabs (dval) > 90.0) dval += dval < 0.0 ? 180.0 : -180.0;
-        } else if (which == SINE) {
+        } else if (which == SYM_SINE) {
             /* get dval between -90.0 and 90.0 */
             if (fabs (dval) > 90.0) dval = (dval < 0.0 ? -180.0 : 180.0) - dval;
         }
@@ -84,14 +82,14 @@ static REBDEC Trig_Value(const Value* value, bool radians, REBLEN which)
 //
 //  Arc_Trans: C
 //
-static void Arc_Trans(Value* out, const Value* value, bool radians, REBLEN kind)
+static void Arc_Trans(Value* out, const Value* value, bool radians, SymId id)
 {
     REBDEC dval = AS_DECIMAL(value);
-    if (kind != TANGENT and (dval < -1 || dval > 1))
+    if (id != SYM_TANGENT and (dval < -1 || dval > 1))
         panic (Error_Overflow_Raw());
 
-    if (kind == SINE) dval = asin(dval);
-    else if (kind == COSINE) dval = acos(dval);
+    if (id == SYM_SINE) dval = asin(dval);
+    else if (id == SYM_COSINE) dval = acos(dval);
     else dval = atan(dval);
 
     if (not radians)
@@ -116,7 +114,7 @@ DECLARE_NATIVE(COSINE)
 {
     INCLUDE_PARAMS_OF_COSINE;
 
-    REBDEC dval = cos(Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), COSINE));
+    REBDEC dval = cos(Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SYM_COSINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -139,7 +137,7 @@ DECLARE_NATIVE(SINE)
 {
     INCLUDE_PARAMS_OF_SINE;
 
-    REBDEC dval = sin(Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SINE));
+    REBDEC dval = sin(Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SYM_SINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -162,7 +160,7 @@ DECLARE_NATIVE(TANGENT)
 {
     INCLUDE_PARAMS_OF_TANGENT;
 
-    REBDEC dval = Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), TANGENT);
+    REBDEC dval = Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SYM_TANGENT);
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         panic (Error_Overflow_Raw());
 
@@ -185,7 +183,7 @@ DECLARE_NATIVE(ARCCOSINE)
 {
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
-    Arc_Trans(OUT, ARG(COSINE), Bool_ARG(RADIANS), COSINE);
+    Arc_Trans(OUT, ARG(COSINE), Bool_ARG(RADIANS), SYM_COSINE);
     return OUT;
 }
 
@@ -205,7 +203,7 @@ DECLARE_NATIVE(ARCSINE)
 {
     INCLUDE_PARAMS_OF_ARCSINE;
 
-    Arc_Trans(OUT, ARG(SINE), Bool_ARG(RADIANS), SINE);
+    Arc_Trans(OUT, ARG(SINE), Bool_ARG(RADIANS), SYM_SINE);
     return OUT;
 }
 
@@ -225,7 +223,7 @@ DECLARE_NATIVE(ARCTANGENT)
 {
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
-    Arc_Trans(OUT, ARG(TANGENT), Bool_ARG(RADIANS), TANGENT);
+    Arc_Trans(OUT, ARG(TANGENT), Bool_ARG(RADIANS), SYM_TANGENT);
     return OUT;
 }
 
@@ -466,8 +464,8 @@ REBINT CT_Unhooked(const Cell* a, const Cell* b, REBINT mode)
 //
 REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 {
-    enum Reb_Kind ta = Type_Of(a);
-    enum Reb_Kind tb = Type_Of(b);
+    Type ta = Type_Of(a);
+    Type tb = Type_Of(b);
 
     if (ta == TYPE_TRASH or tb == TYPE_TRASH)  // should not call w/trash!
         panic ("Cannot compare TRASH (~ antiform) with equality/inequality");
@@ -973,7 +971,7 @@ DECLARE_NATIVE(ZERO_Q)
 {
     INCLUDE_PARAMS_OF_ZERO_Q;
 
-    enum Reb_Kind type = Type_Of(ARG(VALUE));
+    Type type = Type_Of(ARG(VALUE));
 
     if (type >= TYPE_INTEGER and type <= TYPE_TIME) {
         DECLARE_VALUE (z);

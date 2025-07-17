@@ -36,7 +36,7 @@
 //
 REBINT CT_Datatype(const Cell* a, const Cell* b, REBINT mode)
 {
-    if (mode >= 0) return (CELL_DATATYPE_TYPE(a) == CELL_DATATYPE_TYPE(b));
+    if (mode >= 0) return (Datatype_Type(a) == Datatype_Type(b));
     return -1;
 }
 
@@ -44,25 +44,25 @@ REBINT CT_Datatype(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Datatype: C
 //
-Bounce MAKE_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce MAKE_Datatype(Value* out, Type type, const Value* arg) {
     if (Is_Word(arg)) {
         Option(SymId) sym = Word_Id(arg);
-        if (not sym or (unwrap sym >= SYM_FROM_KIND(TYPE_MAX)))
+        if (not sym or (unwrap sym >= Symbol_Id_From_Type(TYPE_MAX)))
             goto bad_make;
 
         return Init_Datatype(out, KIND_FROM_SYM(unwrap sym));
     }
 
   bad_make:;
-    panic (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(type, arg));
 }
 
 
 //
 //  TO_Datatype: C
 //
-Bounce TO_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
-    return MAKE_Datatype(out, kind, arg);
+Bounce TO_Datatype(Value* out, Type type, const Value* arg) {
+    return MAKE_Datatype(out, type, arg);
 }
 
 
@@ -86,7 +86,7 @@ REBTYPE(Datatype)
 {
     Value* value = D_ARG(1);
     Value* arg = D_ARG(2);
-    enum Reb_Kind kind = CELL_DATATYPE_TYPE(value);
+    Type type = Datatype_Type(value);
 
     switch (maybe Word_Id(verb)) {
 
@@ -114,7 +114,9 @@ REBTYPE(Datatype)
             ++key; ++var;
 
             Cell* item = Array_Head(
-                CELL_DATATYPE_SPEC(Varlist_Slot(Lib_Context, SYM_FROM_KIND(kind)))
+                Datatype_Spec(
+                    Varlist_Slot(Lib_Context, Symbol_Id_From_Type(type))
+                )
             );
 
             for (; NOT_END(var); ++var, ++key) {

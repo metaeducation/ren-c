@@ -66,10 +66,10 @@ REBINT CT_Action(const Cell* a1, const Cell* a2, REBINT mode)
 // MAKE ACTION! is replaced by LAMBDA and FUNC(TION).
 // FUNCTION is a synonym for FUNC in in the main branch.
 //
-Bounce MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Action(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_ACTION);
-    UNUSED(kind);
+    assert(type == TYPE_ACTION);
+    UNUSED(type);
     UNUSED(out);
 
     panic (Error_Bad_Make(TYPE_ACTION, arg));
@@ -83,10 +83,10 @@ Bounce MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 // from a BLOCK!, e.g. `x: does [1 + y]`, so TO ACTION! of a block doesn't
 // need to do that (for instance).
 //
-Bounce TO_Action(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Action(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_ACTION);
-    UNUSED(kind);
+    assert(type == TYPE_ACTION);
+    UNUSED(type);
 
     UNUSED(out);
 

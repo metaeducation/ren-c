@@ -607,7 +607,7 @@ DECLARE_NATIVE(APPLIQUE)
         &binder,
         VAL_ARRAY_HEAD(ARG(DEF)), // !!! bindings are mutated!  :-(
         exemplar,
-        FLAGIT_KIND(TYPE_SET_WORD), // types to bind (just set-word!),
+        FLAG_TYPE(TYPE_SET_WORD), // types to bind (just set-word!),
         0, // types to "add midstream" to binding as we go (nothing)
         BIND_DEEP
     );

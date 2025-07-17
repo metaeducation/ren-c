@@ -395,7 +395,7 @@ static Binary* make_binary(const Value* arg, bool make)
 //
 //  MAKE_String: C
 //
-Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
+Bounce MAKE_String(Value* out, Type type, const Value* def) {
     Flex* flex; // goto would cross initialization
 
     if (Is_Integer(def)) {
@@ -403,10 +403,10 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         // !!! R3-Alpha tolerated decimal, e.g. `make text! 3.14`, which
         // is semantically nebulous (round up, down?) and generally bad.
         //
-        if (kind == TYPE_BINARY)
+        if (type == TYPE_BINARY)
             return Init_Blob(out, Make_Binary(Int32s(def, 0)));
         else
-            return Init_Any_Series(out, kind, Make_Strand(Int32s(def, 0)));
+            return Init_Any_Series(out, type, Make_Strand(Int32s(def, 0)));
     }
     else if (Is_Block(def)) {
         //
@@ -424,7 +424,7 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         Cell* any_binstr = List_At(def);
         if (not (Is_Binary(any_binstr) or Any_String(any_binstr)))
             goto bad_make;
-        if (Is_Binary(any_binstr) != (kind == TYPE_BINARY))
+        if (Is_Binary(any_binstr) != (type == TYPE_BINARY))
             goto bad_make;
 
         Cell* index = List_At(def) + 1;
@@ -435,10 +435,10 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         if (i < 0 || i > cast(REBINT, Series_Len_At(any_binstr)))
             goto bad_make;
 
-        return Init_Any_Series_At(out, kind, Cell_Flex(any_binstr), i);
+        return Init_Any_Series_At(out, type, Cell_Flex(any_binstr), i);
     }
 
-    if (kind == TYPE_BINARY)
+    if (type == TYPE_BINARY)
         flex = make_binary(def, true);
     else
         flex = MAKE_TO_String_Common(def);
@@ -446,19 +446,19 @@ Bounce MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
     if (!flex)
         goto bad_make;
 
-    return Init_Any_Series_At(out, kind, flex, 0);
+    return Init_Any_Series_At(out, type, flex, 0);
 
   bad_make:
-    panic (Error_Bad_Make(kind, def));
+    panic (Error_Bad_Make(type, def));
 }
 
 
 //
 //  TO_String: C
 //
-Bounce TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_String(Value* out, Type type, const Value* arg)
 {
-    if (kind == TYPE_FILE and Is_Path(arg)) {
+    if (type == TYPE_FILE and Is_Path(arg)) {
         REBLEN len = Series_Len_At(arg);
         Cell* tail = List_At_Head(arg, len - 1);
 
@@ -481,7 +481,7 @@ Bounce TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
     }
 
     Flex* flex;
-    if (kind == TYPE_BINARY)
+    if (type == TYPE_BINARY)
         flex = make_binary(arg, false);
     else
         flex = MAKE_TO_String_Common(arg);
@@ -489,7 +489,7 @@ Bounce TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
     if (flex == nullptr)
         panic (Error_Invalid(arg));
 
-    return Init_Any_Series(out, kind, flex);
+    return Init_Any_Series(out, type, flex);
 }
 
 
@@ -1350,14 +1350,14 @@ REBTYPE(String)
                 str_to_char(OUT, v, VAL_INDEX(v));
         }
         else {
-            enum Reb_Kind kind = Type_Of(v);
+            Type type = Type_Of(v);
             if (Is_Binary(v)) {
                 Init_Blob(
                     OUT,
                     Copy_Non_Array_Flex_At_Len(Cell_Flex(v), VAL_INDEX(v), len)
                 );
             } else
-                Init_Any_Series(OUT, kind, Copy_String_At_Len(v, len));
+                Init_Any_Series(OUT, type, Copy_String_At_Len(v, len));
         }
         Remove_Flex(flex, VAL_INDEX(v), len);
         return OUT; }

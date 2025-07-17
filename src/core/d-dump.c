@@ -250,7 +250,7 @@ void Dump_Stack(Level* L, REBLEN level)
         "STACK[%d](%s) - %d\n",
         cast(int, level),
         Frame_Label_Or_Anonymous_UTF8(L),
-        VAL_TYPE_RAW(L->value)
+        Unchecked_Type_Of(L->value)
     );
 
     if (not Is_Action_Level(L)) {

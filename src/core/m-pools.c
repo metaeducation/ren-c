@@ -1111,7 +1111,7 @@ void Decay_Flex(Flex* s)
 
         if (Is_Flex_Array(s)) {
             Cell* v = Array_Head(cast_Array(s));
-            if (NOT_END(v) and VAL_TYPE_RAW(v) == TYPE_HANDLE) {
+            if (NOT_END(v) and Unchecked_Type_Of(v) == TYPE_HANDLE) {
                 if (v->extra.singular == cast_Array(s)) {
                     //
                     // Some handles use the managed form just because they

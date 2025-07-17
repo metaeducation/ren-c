@@ -339,10 +339,10 @@ bool Do_Vararg_Op_Maybe_End_Throws(
 //
 //  MAKE_Varargs: C
 //
-Bounce MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Varargs(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_VARARGS);
-    UNUSED(kind);
+    assert(type == TYPE_VARARGS);
+    UNUSED(type);
 
     // With MAKE VARARGS! on an ANY-ARRAY!, the array is the backing store
     // (shared) that the varargs interface cannot affect, but changes to
@@ -379,10 +379,10 @@ Bounce MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Varargs: C
 //
-Bounce TO_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Varargs(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_VARARGS);
-    UNUSED(kind);
+    assert(type == TYPE_VARARGS);
+    UNUSED(type);
 
     UNUSED(out);
 
@@ -566,18 +566,18 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
         Append_Unencoded(mo->utf8flex, "???"); // never bound to an argument
     }
     else {
-        enum Reb_Kind kind;
+        Type type;
         switch ((pclass = Cell_Parameter_Class(param))) {
         case PARAMCLASS_NORMAL:
-            kind = TYPE_WORD;
+            type = TYPE_WORD;
             break;
 
         case PARAMCLASS_HARD_QUOTE:
-            kind = TYPE_GET_WORD;
+            type = TYPE_GET_WORD;
             break;
 
         case PARAMCLASS_SOFT_QUOTE:
-            kind = TYPE_LIT_WORD;
+            type = TYPE_LIT_WORD;
             break;
 
         default:
@@ -585,7 +585,7 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
         };
 
         DECLARE_VALUE (param_word);
-        Init_Any_Word(param_word, kind, Cell_Parameter_Symbol(param));
+        Init_Any_Word(param_word, type, Cell_Parameter_Symbol(param));
         Mold_Value(mo, param_word);
     }
 

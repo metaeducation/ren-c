@@ -229,9 +229,9 @@ bool Update_Typeset_Bits_Core(
             }
         }
         else if (Is_Datatype(item)) {
-            assert(CELL_DATATYPE_TYPE(item) != TYPE_0);
-            Set_Typeset_Flag(typeset, CELL_DATATYPE_TYPE(item));
-            if (CELL_DATATYPE_TYPE(item) == TYPE_TRASH)
+            assert(Datatype_Type(item) != TYPE_0);
+            Set_Typeset_Flag(typeset, Datatype_Type(item));
+            if (Datatype_Type(item) == TYPE_TRASH)
                 clear_trash_flag = false;
         }
         else if (Is_Typeset(item)) {
@@ -267,10 +267,10 @@ bool Update_Typeset_Bits_Core(
 //
 //  MAKE_Typeset: C
 //
-Bounce MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Typeset(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_TYPESET);
-    UNUSED(kind);
+    assert(type == TYPE_TYPESET);
+    UNUSED(type);
 
     if (Is_Typeset(arg))
         return Copy_Cell(out, arg);
@@ -289,9 +289,9 @@ Bounce MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Typeset: C
 //
-Bounce TO_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Typeset(Value* out, Type type, const Value* arg)
 {
-    return MAKE_Typeset(out, kind, arg);
+    return MAKE_Typeset(out, type, arg);
 }
 
 
@@ -306,7 +306,7 @@ Array* Typeset_To_Array(const Value* tset)
 
     REBINT n;
     for (n = 1; n < TYPE_NULLED; ++n) {
-        if (Typeset_Check(tset, cast(enum Reb_Kind, n))) {
+        if (Typeset_Check(tset, cast(Type, n))) {
             if (n == TYPE_NULLED) {
                 Init_Word(PUSH(), CANON(_TNULL_T));
             }
@@ -314,7 +314,7 @@ Array* Typeset_To_Array(const Value* tset)
                 Init_Word(PUSH(), CANON(_TVOID_T));
             }
             else
-                Init_Datatype(PUSH(), cast(enum Reb_Kind, n));
+                Init_Datatype(PUSH(), cast(Type, n));
         }
     }
 
@@ -361,8 +361,8 @@ void MF_Typeset(Molder* mo, const Cell* v, bool form)
     // Convert bits to types.
     //
     for (n = TYPE_0 + 1; n < TYPE_MAX; n++) {
-        if (Typeset_Check(v, cast(enum Reb_Kind, n))) {
-            MF_Datatype(mo, Datatype_From_Kind(cast(enum Reb_Kind, n)), false);
+        if (Typeset_Check(v, cast(Type, n))) {
+            MF_Datatype(mo, Datatype_From_Type(cast(Type, n)), false);
             Append_Codepoint(mo->utf8flex, ' ');
         }
     }
@@ -391,7 +391,7 @@ REBTYPE(Typeset)
         if (not Is_Datatype(arg))
             panic (Error_Invalid(arg));
 
-        if (Typeset_Check(val, CELL_DATATYPE_TYPE(arg)))
+        if (Typeset_Check(val, Datatype_Type(arg)))
             return LOGIC(true);
 
         return LOGIC(false);
@@ -400,7 +400,7 @@ REBTYPE(Typeset)
     case SYM_UNION:
     case SYM_DIFFERENCE:
         if (Is_Datatype(arg)) {
-            Cell_Typeset_Bits(arg) = FLAGIT_KIND(Type_Of(arg));
+            Cell_Typeset_Bits(arg) = FLAG_TYPE(Type_Of(arg));
         }
         else if (not Is_Typeset(arg))
             panic (Error_Invalid(arg));

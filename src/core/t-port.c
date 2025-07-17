@@ -47,10 +47,10 @@ REBINT CT_Port(const Cell* a, const Cell* b, REBINT mode)
 // Create a new port. This is done by calling the MAKE_PORT
 // function stored in the system/intrinsic object.
 //
-Bounce MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Port(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_PORT);
-    UNUSED(kind);
+    assert(type == TYPE_PORT);
+    UNUSED(type);
 
     const bool fully = true; // error if not all arguments consumed
 
@@ -72,10 +72,10 @@ Bounce MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Port: C
 //
-Bounce TO_Port(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Port(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_PORT);
-    UNUSED(kind);
+    assert(type == TYPE_PORT);
+    UNUSED(type);
 
     if (!Is_Object(arg))
         panic (Error_Bad_Make(TYPE_PORT, arg));

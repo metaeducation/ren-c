@@ -46,10 +46,10 @@ REBINT CT_Integer(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Integer: C
 //
-Bounce MAKE_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Integer(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_INTEGER);
-    UNUSED(kind);
+    assert(type == TYPE_INTEGER);
+    UNUSED(type);
 
     if (Is_Logic(arg)) {
         //
@@ -85,10 +85,10 @@ Bounce MAKE_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Integer: C
 //
-Bounce TO_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Integer(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_INTEGER);
-    UNUSED(kind);
+    assert(type == TYPE_INTEGER);
+    UNUSED(type);
 
     // use signed logic by default (use TO-INTEGER/UNSIGNED to force
     // unsigned interpretation or error if that doesn't make sense)

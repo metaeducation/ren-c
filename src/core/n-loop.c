@@ -430,8 +430,8 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
                 continue;
             }
 
-            enum Reb_Kind kind = Type_Of(les->data);
-            switch (kind) {
+            Type type = Type_Of(les->data);
+            switch (type) {
               case TYPE_BLOCK:
               case TYPE_GROUP:
               case TYPE_PATH:
@@ -701,7 +701,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
             // debugging...as well as showing a case where the enumerated
             // data has to be snapshotted and freed.
             //
-            switch (CELL_DATATYPE_TYPE(les.data)) {
+            switch (Datatype_Type(les.data)) {
               case TYPE_ACTION:
                 les.data_ser = Snapshot_All_Actions();
                 assert(Not_Node_Managed(les.data_ser));

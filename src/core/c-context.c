@@ -76,7 +76,7 @@
 // configured, hence this is an "Alloc" instead of a "Make" (because there
 // is still work to be done before it will pass ASSERT_CONTEXT).
 //
-VarList* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
+VarList* Alloc_Context_Core(Type type, REBLEN capacity, Flags flags)
 {
     assert(not (flags & ARRAY_FLAG_HAS_FILE_LINE)); // LINK and MISC are taken
 
@@ -90,7 +90,7 @@ VarList* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
     // varlist[0] is a value instance of the OBJECT!/MODULE!/PORT!/ERROR! we
     // are building which contains this context.
 
-    Value* rootvar = RESET_CELL(Alloc_Tail_Array(varlist), kind);
+    Value* rootvar = RESET_CELL(Alloc_Tail_Array(varlist), type);
     rootvar->payload.any_context.varlist = varlist;
     rootvar->payload.any_context.phase = nullptr;
     INIT_BINDING(rootvar, UNBOUND);
@@ -495,9 +495,9 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
 {
     const Cell* v = head;
     for (; NOT_END(v); ++v) {
-        enum Reb_Kind kind = Type_Of(v);
-        if (Any_Word_Kind(kind)) {
-            if (kind != TYPE_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
+        Type type = Type_Of(v);
+        if (Any_Word_Type(type)) {
+            if (type != TYPE_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue; // kind of word we're not interested in collecting
 
             Symbol* canon = VAL_WORD_CANON(v);
@@ -534,7 +534,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
         // them which could need to be collected.  This is historical R3-Alpha
         // behavior which is probably wrong.
         //
-        if (kind == TYPE_BLOCK or kind == TYPE_GROUP)
+        if (type == TYPE_BLOCK or type == TYPE_GROUP)
             Collect_Inner_Loop(cl, List_At(v));
     }
 }
@@ -787,7 +787,7 @@ void Rebind_Context_Deep(
 // This routine will *always* make a context with a SELF.
 //
 VarList* Make_Selfish_Context_Detect_Managed(
-    enum Reb_Kind kind,
+    Type type,
     const Cell* head,
     VarList* opt_parent
 ) {
@@ -836,7 +836,7 @@ VarList* Make_Selfish_Context_Detect_Managed(
 
     // context[0] is an instance value of the OBJECT!/PORT!/ERROR!/MODULE!
     //
-    Value* var = RESET_CELL(Array_Head(varlist), kind);
+    Value* var = RESET_CELL(Array_Head(varlist), type);
     var->payload.any_context.varlist = varlist;
     var->payload.any_context.phase = nullptr;
     INIT_BINDING(var, UNBOUND);
@@ -914,13 +914,13 @@ VarList* Make_Selfish_Context_Detect_Managed(
 // they were used as values, so they are not currently permitted.
 //
 VarList* Construct_Context_Managed(
-    enum Reb_Kind kind,
+    Type type,
     Cell* head, // !!! Warning: modified binding
     Specifier* specifier,
     VarList* opt_parent
 ) {
     VarList* context = Make_Selfish_Context_Detect_Managed(
-        kind, // type
+        type,
         head, // values to scan for toplevel set-words
         opt_parent // parent
     );

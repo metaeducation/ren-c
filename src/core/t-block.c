@@ -67,12 +67,12 @@ REBINT CT_List(const Cell* a, const Cell* b, REBINT mode)
 //     MAKE_Get_Path
 //     MAKE_Lit_Path
 //
-Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce MAKE_List(Value* out, Type type, const Value* arg) {
     if (Is_Integer(arg) or Is_Decimal(arg)) {
         //
         // `make block! 10` => creates array with certain initial capacity
         //
-        return Init_Any_List(out, kind, Make_Array(Int32s(arg, 0)));
+        return Init_Any_List(out, type, Make_Array(Int32s(arg, 0)));
     }
     else if (Is_Text(arg)) {
         //
@@ -90,7 +90,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         Option(Strand*) filename = nullptr;
         Init_Any_List(
             out,
-            kind,
+            type,
             Scan_UTF8_Managed(filename, Binary_At(temp, offset), size)
         );
         Drop_GC_Guard(temp);
@@ -151,7 +151,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         Specifier* derived = Derive_Specifier(VAL_SPECIFIER(arg), any_array);
         return Init_Any_Series_At_Core(
             out,
-            kind,
+            type,
             Cell_Array(any_array),
             index,
             derived
@@ -162,7 +162,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         // !!! Should MAKE GROUP! and MAKE PATH! from a TYPESET! work like
         // MAKE BLOCK! does?  Allow it for now.
         //
-        return Init_Any_List(out, kind, Typeset_To_Array(arg));
+        return Init_Any_List(out, type, Typeset_To_Array(arg));
     }
     else if (Is_Binary(arg)) {
         //
@@ -172,15 +172,15 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         Option(Strand*) filename = nullptr;
         return Init_Any_List(
             out,
-            kind,
+            type,
             Scan_UTF8_Managed(filename, Blob_At(arg), Series_Len_At(arg))
         );
     }
     else if (Is_Map(arg)) {
-        return Init_Any_List(out, kind, Map_To_Array(VAL_MAP(arg), 0));
+        return Init_Any_List(out, type, Map_To_Array(VAL_MAP(arg), 0));
     }
     else if (Any_Context(arg)) {
-        return Init_Any_List(out, kind, Context_To_Array(Cell_Varlist(arg), 3));
+        return Init_Any_List(out, type, Context_To_Array(Cell_Varlist(arg), 3));
     }
     else if (Is_Varargs(arg)) {
         //
@@ -235,7 +235,7 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
             Copy_Cell(PUSH(), out);
         } while (true);
 
-        return Init_Any_List(out, kind, Pop_Stack_Values(base));
+        return Init_Any_List(out, type, Pop_Stack_Values(base));
     }
     else if (Is_Action(arg)) {
         //
@@ -250,25 +250,25 @@ Bounce MAKE_List(Value* out, enum Reb_Kind kind, const Value* arg) {
             Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
-        return Init_Any_List(out, kind, Pop_Stack_Values(base));
+        return Init_Any_List(out, type, Pop_Stack_Values(base));
     }
 
   bad_make:;
-    panic (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(type, arg));
 }
 
 
 //
 //  TO_List: C
 //
-Bounce TO_List(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce TO_List(Value* out, Type type, const Value* arg) {
     if (
-        kind == Type_Of(arg) // always act as COPY if types match
-        or Splices_Into_Type_Without_Only(kind, arg) // see comments
+        type == Type_Of(arg) // always act as COPY if types match
+        or Splices_Into_Type_Without_Only(type, arg) // see comments
     ){
         return Init_Any_List(
             out,
-            kind,
+            type,
             Copy_Values_Len_Shallow(
                 List_At(arg), VAL_SPECIFIER(arg), VAL_ARRAY_LEN_AT(arg)
             )
@@ -279,7 +279,7 @@ Bounce TO_List(Value* out, enum Reb_Kind kind, const Value* arg) {
         //
         Array* single = Alloc_Singular(NODE_FLAG_MANAGED);
         Copy_Cell(ARR_SINGLE(single), arg);
-        return Init_Any_List(out, kind, single);
+        return Init_Any_List(out, type, single);
     }
 }
 
@@ -367,11 +367,11 @@ REBLEN Find_In_Array(
             Cell* item = Array_At(array, index);
 
             if (Is_Datatype(target)) {
-                if (Type_Of(item) == CELL_DATATYPE_TYPE(target))
+                if (Type_Of(item) == Datatype_Type(target))
                     return index;
                 if (
                     Is_Datatype(item)
-                    && CELL_DATATYPE_TYPE(item) == CELL_DATATYPE_TYPE(target)
+                    && Datatype_Type(item) == Datatype_Type(target)
                 ){
                     return index;
                 }
@@ -381,7 +381,7 @@ REBLEN Find_In_Array(
                     return index;
                 if (
                     Is_Datatype(item)
-                    && Typeset_Check(target, CELL_DATATYPE_TYPE(item))
+                    && Typeset_Check(target, Datatype_Type(item))
                 ){
                     return index;
                 }
@@ -705,8 +705,8 @@ void MF_List(Molder* mo, const Cell* v, bool form)
 
     const char *sep;
 
-    enum Reb_Kind kind = Type_Of(v);
-    switch(kind) {
+    Type type = Type_Of(v);
+    switch(type) {
       case TYPE_BLOCK:
         if (GET_MOLD_FLAG(mo, MOLD_FLAG_ONLY)) {
             CLEAR_MOLD_FLAG(mo, MOLD_FLAG_ONLY); // only top level
@@ -947,7 +947,7 @@ REBTYPE(List)
 
         if (Bool_ARG(TYPES)) {
             if (Is_Datatype(ARG(KINDS)))
-                types |= FLAGIT_KIND(Type_Of(ARG(KINDS)));
+                types |= FLAG_TYPE(Type_Of(ARG(KINDS)));
             else
                 types |= Cell_Typeset_Bits(ARG(KINDS));
         }

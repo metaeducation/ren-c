@@ -224,10 +224,10 @@ REBINT CT_Time(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Time: C
 //
-Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Time(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_TIME);
-    UNUSED(kind);
+    assert(type == TYPE_TIME);
+    UNUSED(type);
 
     switch (Type_Of(arg)) {
     case TYPE_TIME: // just copy it (?)
@@ -335,9 +335,9 @@ Bounce MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Time: C
 //
-Bounce TO_Time(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Time(Value* out, Type type, const Value* arg)
 {
-    return MAKE_Time(out, kind, arg);
+    return MAKE_Time(out, type, arg);
 }
 
 
@@ -561,7 +561,7 @@ REBTYPE(Time)
             case SYM_MULTIPLY:
                 secs *= num;
                 if (secs < -MAX_TIME || secs > MAX_TIME)
-                    panic (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_TIME)));
+                    panic (Error_Type_Limit_Raw(Datatype_From_Type(TYPE_TIME)));
                 goto setTime;
 
             case SYM_DIVIDE:

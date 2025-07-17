@@ -56,7 +56,7 @@ ATTRIBUTE_NO_RETURN void Crash_On_Value_Debug(const Cell* v) {
 
     Node* containing = Try_Find_Containing_Node_Debug(v);
 
-    switch (VAL_TYPE_RAW(v)) {
+    switch (Unchecked_Type_Of(v)) {
     case TYPE_NULLED:
     case TYPE_BLANK:
     case TYPE_OKAY:
@@ -80,7 +80,7 @@ ATTRIBUTE_NO_RETURN void Crash_On_Value_Debug(const Cell* v) {
         break;
     }
 
-    printf("Kind=%d\n", cast(int, VAL_TYPE_RAW(v)));
+    printf("Kind=%d\n", cast(int, Unchecked_Type_Of(v)));
     fflush(stdout);
 
     if (containing and Is_Node_A_Stub(containing)) {

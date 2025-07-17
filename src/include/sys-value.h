@@ -153,17 +153,17 @@
 // not be put in typesets as written.
 //
 
-#define VAL_TYPE_RAW(v) \
-    cast(enum Reb_Kind, KIND_BYTE(v))
+#define Unchecked_Type_Of(v) \
+    cast(Type, KIND_BYTE(v))
 
-#define FLAGIT_KIND(t) \
-    (cast(REBU64, 1) << (t)) // makes a 64-bit bitflag
+#define FLAG_TYPE(t) \
+    (cast(REBU64, 1) << ensure(Type, (t))) // makes a 64-bit bitflag
 
 #if NO_RUNTIME_CHECKS
     #define Type_Of(v) \
-        VAL_TYPE_RAW(v)
+        Unchecked_Type_Of(v)
 #else
-    INLINE enum Reb_Kind Type_Of(const Cell* v){
+    INLINE Type Type_Of(const Cell* v){
         // VAL_TYPE is called *a lot*, so that makes it a great place to do
         // sanity checks in the debug build.  But a debug build will not
         // inline this function, and makes *no* optimizations.  Using no
@@ -176,8 +176,8 @@
                 NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE
             )) == (NODE_FLAG_NODE | NODE_FLAG_CELL)
         ){
-            assert(VAL_TYPE_RAW(v) <= TYPE_MAX);
-            return VAL_TYPE_RAW(v); // majority of calls hopefully return here
+            assert(Unchecked_Type_Of(v) <= TYPE_MAX);
+            return Unchecked_Type_Of(v); // majority of calls hopefully return here
         }
 
         // Could be a LOGIC! false, blank, or NULL bit pattern in bad cell
@@ -193,14 +193,14 @@
 
         // Cell is good, so let the good cases pass through
         //
-        if (VAL_TYPE_RAW(v) == TYPE_NULLED)
+        if (Unchecked_Type_Of(v) == TYPE_NULLED)
             return TYPE_NULLED;
-        if (VAL_TYPE_RAW(v) == TYPE_OKAY)
+        if (Unchecked_Type_Of(v) == TYPE_OKAY)
             return TYPE_OKAY;
 
         // Special messages for END and trash (as these are common)
         //
-        if (VAL_TYPE_RAW(v) == TYPE_0_END) {
+        if (Unchecked_Type_Of(v) == TYPE_0_END) {
             printf("Type_Of() called on END marker\n");
             crash (v);
         }
@@ -301,22 +301,22 @@
 //
 INLINE Value* Reset_Cell_Header_Untracked(
     Cell* out,
-    enum Reb_Kind kind,
+    Type type,
     uintptr_t extra
 ){
     Assert_Cell_Writable(out);
 
     out->header.bits &= CELL_MASK_PERSIST;
-    out->header.bits |= FLAG_KIND_BYTE(kind) | extra;
+    out->header.bits |= FLAG_KIND_BYTE(type) | extra;
 
     return cast(Value*, out);
 }
 
-#define Reset_Cell_Header(out,kind,extra) \
-    TRACK(Reset_Cell_Header_Untracked((out), (kind), (extra)))
+#define Reset_Cell_Header(out,type,extra) \
+    TRACK(Reset_Cell_Header_Untracked((out), (type), (extra)))
 
-#define RESET_CELL(out,kind) \
-    TRACK(Reset_Cell_Header_Untracked((out), (kind), 0))
+#define RESET_CELL(out,type) \
+    TRACK(Reset_Cell_Header_Untracked((out), (type), 0))
 
 
 // This is another case where the debug build doesn't inline functions, and
@@ -359,14 +359,14 @@ INLINE bool Is_Cell_Erased(const Cell *cell)
   { return cell->header.bits == CELL_MASK_ERASE; }
 
 
-INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
+INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, Type type) {
     //
     // Note: Only use if you are sure the new type payload is in sync with
     // the type and bits (e.g. changing ANY-WORD! to another ANY-WORD!).
     // Otherwise the value-specific flags might be misinterpreted.
     //
     Assert_Cell_Writable(v);
-    KIND_BYTE(v) = kind;
+    KIND_BYTE(v) = type;
 }
 
 
@@ -751,11 +751,11 @@ INLINE bool Is_Refine_Unused(const Value* refine) {
 // !!! Consider renaming (or adding a synonym) to just TYPE!
 //
 
-#define CELL_DATATYPE_TYPE(v) \
-    ((v)->payload.datatype.kind)
+#define Datatype_Type(v) \
+    u_cast(Type, (v)->payload.datatype.type)  // avoid lvalue usage
 
-#define CELL_DATATYPE_SPEC(v) \
-    ((v)->payload.datatype.spec)
+#define Datatype_Spec(v) \
+    u_cast(Array*, (v)->payload.datatype.spec)  // avoid lvalue usage
 
 
 //=////////////////////////////////////////////////////////////////////////=//

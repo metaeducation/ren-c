@@ -49,10 +49,10 @@ REBINT CT_Pair(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Pair: C
 //
-Bounce MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Pair(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_PAIR);
-    UNUSED(kind);
+    assert(type == TYPE_PAIR);
+    UNUSED(type);
 
     if (Is_Pair(arg))
         return Copy_Cell(out, arg);
@@ -103,9 +103,9 @@ Bounce MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Pair: C
 //
-Bounce TO_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Pair(Value* out, Type type, const Value* arg)
 {
-    return MAKE_Pair(out, kind, arg);
+    return MAKE_Pair(out, type, arg);
 }
 
 

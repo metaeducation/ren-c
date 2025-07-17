@@ -33,93 +33,93 @@ Rebol [
         ** !!! Review how these might be auto-generated from the table.
         */
 
-        /* We use VAL_TYPE_RAW() for checking the bindable flag because it
+        /* We use Unchecked_Type_Of() for checking the bindable flag because it
            is called *extremely often*; the extra debug checks in Type_Of()
            make it prohibitively more expensive than a simple check of a
            flag, while these tests are very fast. */
 
         #define Is_Bindable(v) \
-            (VAL_TYPE_RAW(v) < TYPE_INTEGER)
+            (Unchecked_Type_Of(v) < TYPE_INTEGER)
 
         #define Not_Bindable(v) \
-            (VAL_TYPE_RAW(v) >= TYPE_INTEGER)
+            (Unchecked_Type_Of(v) >= TYPE_INTEGER)
 
         /* For other checks, we pay the cost in the debug build of all the
-           associated baggage that Type_Of() carries over VAL_TYPE_RAW() */
+           associated baggage that Type_Of() carries over Unchecked_Type_Of() */
 
-        INLINE bool Any_Element_Kind(enum Reb_Kind k) {
-            assert(k < TYPE_MAX and k != TYPE_0);
-            return k < TYPE_TRASH;
+        INLINE bool Any_Element_Type(Type t) {
+            assert(t < TYPE_MAX and t != TYPE_0);
+            return t < TYPE_TRASH;
         }
 
         #define Any_Element(v) \
-            Any_Element_Kind(Type_Of(v))
+            Any_Element_Type(Type_Of(v))
 
-        #define Any_Antiform_Kind(k) \
-            (not Any_Element_Kind(k))
+        #define Any_Antiform_Type(k) \
+            (not Any_Element_Type(k))
 
         #define Is_Antiform(v) \
             (not Any_Element(v))
 
-        INLINE bool Any_Scalar_Kind(enum Reb_Kind k) {
-            return k >= TYPE_INTEGER and k <= TYPE_DATE;
+        INLINE bool Any_Scalar_Type(Type t) {
+            return t >= TYPE_INTEGER and t <= TYPE_DATE;
         }
 
         #define Any_Scalar(v) \
-            Any_Scalar_Kind(Type_Of(v))
+            Any_Scalar_Type(Type_Of(v))
 
-        INLINE bool Any_Series_Kind(enum Reb_Kind k) {
-            return k >= TYPE_PATH and k <= TYPE_BITSET;
+        INLINE bool Any_Series_Type(Type t) {
+            return t >= TYPE_PATH and t <= TYPE_BITSET;
         }
 
         #define Any_Series(v) \
-            Any_Series_Kind(Type_Of(v))
+            Any_Series_Type(Type_Of(v))
 
-        INLINE bool Any_String_Kind(enum Reb_Kind k) {
-            return k >= TYPE_TEXT and k <= TYPE_TAG;
+        INLINE bool Any_String_Type(Type t) {
+            return t >= TYPE_TEXT and t <= TYPE_TAG;
         }
 
         #define Any_String(v) \
-            Any_String_Kind(Type_Of(v))
+            Any_String_Type(Type_Of(v))
 
-        INLINE bool Any_List_Kind(enum Reb_Kind k) {
-            return k >= TYPE_PATH and k <= TYPE_BLOCK;
+        INLINE bool Any_List_Type(Type t) {
+            return t >= TYPE_PATH and t <= TYPE_BLOCK;
         }
 
         #define Any_List(v) \
-            Any_List_Kind(Type_Of(v))
+            Any_List_Type(Type_Of(v))
 
-        INLINE bool Any_Word_Kind(enum Reb_Kind k) {
-            return k >= TYPE_WORD and k <= TYPE_ISSUE;
+        INLINE bool Any_Word_Type(Type t) {
+            return t >= TYPE_WORD and t <= TYPE_ISSUE;
         }
 
         #define Any_Word(v) \
-            Any_Word_Kind(Type_Of(v))
+            Any_Word_Type(Type_Of(v))
 
-        INLINE bool Any_Path_Kind(enum Reb_Kind k) {
-            return k >= TYPE_PATH and k <= TYPE_LIT_PATH;
+        INLINE bool Any_Path_Type(Type t) {
+            return t >= TYPE_PATH and t <= TYPE_LIT_PATH;
         }
 
         #define Any_Path(v) \
-            Any_Path_Kind(Type_Of(v))
+            Any_Path_Type(Type_Of(v))
 
-        INLINE bool Any_Context_Kind(enum Reb_Kind k) {
-            return k >= TYPE_OBJECT and k <= TYPE_PORT;
+        INLINE bool Any_Context_Type(Type t) {
+            return t >= TYPE_OBJECT and t <= TYPE_PORT;
         }
 
         #define Any_Context(v) \
-            Any_Context_Kind(Type_Of(v))
+            Any_Context_Type(Type_Of(v))
 
         /* !!! There was an IS_NUMBER() macro defined in R3-Alpha which was
            TYPE_INTEGER and TYPE_DECIMAL.  But ANY-NUMBER! the typeset included
            PERCENT! so this adds that and gets rid of IS_NUMBER() */
 
-        INLINE bool Any_Number_Kind(enum Reb_Kind k) {
-            return k == TYPE_INTEGER or k == TYPE_DECIMAL or k == TYPE_PERCENT;
+        INLINE bool Any_Number_Type(Type t) {
+            return t == TYPE_INTEGER or t == TYPE_DECIMAL or t == TYPE_PERCENT;
         }
 
         #define Any_Number(v) \
-            Any_Number_Kind(Type_Of(v))
+            Any_Number_Type(Type_Of(v))
 
         /* !!! Being able to locate inert types based on range *almost* works,
            but TYPE_ISSUE and TYPE_REFINEMENT want to be picked up as ANY-WORD!.
@@ -127,13 +127,13 @@ Rebol [
            get unified, but it's here to show how choosing these values
            carefully can help with speeding up tests. */
 
-        INLINE bool Any_Inert_Kind(enum Reb_Kind k) {
-            return (k >= TYPE_BLOCK and k <= TYPE_BLANK)
-                or k == TYPE_ISSUE or k == TYPE_REFINEMENT;
+        INLINE bool Any_Inert_Type(Type t) {
+            return (t >= TYPE_BLOCK and t <= TYPE_BLANK)
+                or t == TYPE_ISSUE or t == TYPE_REFINEMENT;
         }
 
         #define Any_Inert(v) \
-            Any_Inert_Kind(Type_Of(v))
+            Any_Inert_Type(Type_Of(v))
     }
 ]
 

@@ -710,7 +710,7 @@ INLINE Specifier* Derive_Specifier(Specifier* parent, const Cell* item) {
 //
 #define Bind_Values_Set_Midstream_Shallow(values, context) \
     Bind_Values_Core( \
-        (values), (context), TS_WORD, FLAGIT_KIND(TYPE_SET_WORD), BIND_0)
+        (values), (context), TS_WORD, FLAG_TYPE(TYPE_SET_WORD), BIND_0)
 
 #define Unbind_Values_Deep(values) \
     Unbind_Values_Core((values), nullptr, true)

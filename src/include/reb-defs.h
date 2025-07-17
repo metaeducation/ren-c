@@ -34,7 +34,7 @@
 //
 
 
-// Defines `enum Reb_Kind`, which is the enumeration of low-level cell types
+// Defines `Type`, which is the enumeration of low-level cell types
 // in Rebol (e.g. TYPE_BLOCK, TYPE_TEXT, etc.)
 //
 // The ordering encodes properties of the types for efficiency, so adding or
@@ -254,8 +254,8 @@ typedef Value* Bounce;
 //=//// DISPATCHERS ///////////////////////////////////////////////////////=//
 //
 typedef REBINT (*COMPARE_HOOK)(const Cell* a, const Cell* b, REBINT s);
-typedef Bounce (*MAKE_HOOK)(Value*, enum Reb_Kind, const Value*);
-typedef Bounce (*TO_HOOK)(Value*, enum Reb_Kind, const Value*);
+typedef Bounce (*MAKE_HOOK)(Value*, Type, const Value*);
+typedef Bounce (*TO_HOOK)(Value*, Type, const Value*);
 
 
 //=//// STRING MODES //////////////////////////////////////////////////////=//

@@ -51,7 +51,7 @@ void Bind_Values_Inner_Loop(
 ) {
     Cell* v = head;
     for (; NOT_END(v); ++v) {
-        REBU64 type_bit = FLAGIT_KIND(Type_Of(v));
+        REBU64 type_bit = FLAG_TYPE(Type_Of(v));
 
         if (type_bit & bind_types) {
             Symbol* canon = VAL_WORD_CANON(v);
@@ -205,7 +205,7 @@ static void Bind_Relative_Inner_Loop(
     Cell* v = head;
 
     for (; NOT_END(v); ++v) {
-        REBU64 type_bit = FLAGIT_KIND(Type_Of(v));
+        REBU64 type_bit = FLAG_TYPE(Type_Of(v));
 
         // The two-pass copy-and-then-bind should have gotten rid of all the
         // relative values to other functions during the copy.

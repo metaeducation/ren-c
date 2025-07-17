@@ -312,7 +312,7 @@ bool Specialize_Action_Throws(
         &binder,
         List_At(opt_def),
         exemplar,
-        FLAGIT_KIND(TYPE_SET_WORD), // types to bind (just set-word!)
+        FLAG_TYPE(TYPE_SET_WORD), // types to bind (just set-word!)
         0, // types to "add midstream" to binding as we go (nothing)
         BIND_DEEP
     );

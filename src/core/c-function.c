@@ -45,23 +45,23 @@ Array* List_Func_Words(const Cell* func, bool pure_locals)
         if (Is_Param_Hidden(param)) // specialization hides parameters
             continue;
 
-        enum Reb_Kind kind;
+        Type type;
 
         switch (Cell_Parameter_Class(param)) {
         case PARAMCLASS_NORMAL:
-            kind = TYPE_WORD;
+            type = TYPE_WORD;
             break;
 
         case PARAMCLASS_REFINEMENT:
-            kind = TYPE_REFINEMENT;
+            type = TYPE_REFINEMENT;
             break;
 
         case PARAMCLASS_HARD_QUOTE:
-            kind = TYPE_GET_WORD;
+            type = TYPE_GET_WORD;
             break;
 
         case PARAMCLASS_SOFT_QUOTE:
-            kind = TYPE_LIT_WORD;
+            type = TYPE_LIT_WORD;
             break;
 
         case PARAMCLASS_LOCAL:
@@ -69,7 +69,7 @@ Array* List_Func_Words(const Cell* func, bool pure_locals)
             if (not pure_locals)
                 continue; // treat as invisible, e.g. for WORDS-OF
 
-            kind = TYPE_SET_WORD;
+            type = TYPE_SET_WORD;
             break;
 
         default:
@@ -77,7 +77,7 @@ Array* List_Func_Words(const Cell* func, bool pure_locals)
             DEAD_END;
         }
 
-        Init_Any_Word(PUSH(), kind, Cell_Parameter_Symbol(param));
+        Init_Any_Word(PUSH(), type, Cell_Parameter_Symbol(param));
     }
 
     return Pop_Stack_Values(base);
@@ -779,7 +779,7 @@ REBACT *Make_Action(
     Assert_Flex_Managed(paramlist);
 
     Cell* rootparam = Array_Head(paramlist);
-    assert(VAL_TYPE_RAW(rootparam) == TYPE_ACTION); // !!! not fully formed...
+    assert(Unchecked_Type_Of(rootparam) == TYPE_ACTION); // !!! not fully formed...
     assert(rootparam->payload.action.paramlist == paramlist);
     assert(rootparam->extra.binding == UNBOUND); // archetype
 
@@ -1204,12 +1204,12 @@ Bounce Generic_Dispatcher(Level* L)
 {
     Array* details = ACT_DETAILS(Level_Phase(L));
 
-    enum Reb_Kind kind = Type_Of(Level_Arg(L, 1));
+    Type type = Type_Of(Level_Arg(L, 1));
     Value* verb = KNOWN(Array_Head(details));
     assert(Is_Word(verb));
-    assert(kind < TYPE_MAX);
+    assert(type < TYPE_MAX);
 
-    GENERIC_HOOK hook = Generic_Hooks[kind];
+    GENERIC_HOOK hook = Generic_Hooks[type];
     return hook(L, verb);
 }
 
@@ -1227,7 +1227,7 @@ Bounce Datatype_Checker_Dispatcher(Level* L)
 
     return Init_Logic(
         L->out,
-        Type_Of(Level_Arg(L, 1)) == CELL_DATATYPE_TYPE(datatype)
+        Type_Of(Level_Arg(L, 1)) == Datatype_Type(datatype)
     );
 }
 

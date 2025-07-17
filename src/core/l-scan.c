@@ -2452,9 +2452,9 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             return RAISE(Error_Syntax(S, token));
 
         if (IS_KIND_SYM(unwrap id)) {
-            enum Reb_Kind kind = KIND_FROM_SYM(unwrap id);
+            Type type = KIND_FROM_SYM(unwrap id);
 
-            MAKE_HOOK hook = Make_Hooks[kind];
+            MAKE_HOOK hook = Make_Hooks[type];
 
             if (hook == nullptr or Array_Len(array) != 2) {
                 DECLARE_VALUE (temp);
@@ -2474,7 +2474,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             Push_GC_Guard(cell);
 
             Push_GC_Guard(array);
-            Bounce bounce = hook(cell, kind, KNOWN(Array_At(array, 1)));
+            Bounce bounce = hook(cell, type, KNOWN(Array_At(array, 1)));
             if (bounce == BOUNCE_THROWN) { // !!! good argument against MAKE
                 assert(false);
                 return RAISE("MAKE during construction syntax threw--illegal");
@@ -3067,7 +3067,7 @@ DECLARE_NATIVE(TRANSCODE)
 //
 const Byte *Scan_Any_Word(
     Value* out,
-    enum Reb_Kind kind,
+    Type type,
     const Byte *utf8,
     REBLEN len
 ) {
@@ -3089,7 +3089,7 @@ const Byte *Scan_Any_Word(
     if (token != TOKEN_WORD)
         return nullptr;
 
-    Init_Any_Word(out, kind, Intern_UTF8_Managed(utf8, len));
+    Init_Any_Word(out, type, Intern_UTF8_Managed(utf8, len));
     Drop_Mold_If_Pushed(mo);
     return transcode.at;  // !!! is this right?
 }

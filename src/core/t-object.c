@@ -260,9 +260,9 @@ REBINT CT_Context(const Cell* a, const Cell* b, REBINT mode)
 // !!! MAKE functions currently don't have an explicit protocol for
 // thrown values.  So out just might be set as thrown.  Review.
 //
-Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Context(Value* out, Type type, const Value* arg)
 {
-    if (kind == TYPE_FRAME) {
+    if (type == TYPE_FRAME) {
         //
         // !!! The feature of MAKE FRAME! from a VARARGS! would be interesting
         // as a way to support usermode authoring of things like MATCH.
@@ -282,7 +282,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         }
 
         if (not Is_Action(out))
-            panic (Error_Bad_Make(kind, arg));
+            panic (Error_Bad_Make(type, arg));
 
         VarList* exemplar = Make_Managed_Context_For_Action_May_Panic(
             out,  // being used here as input (e.g. the ACTION!)
@@ -297,7 +297,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Frame(out, exemplar);
     }
 
-    if (kind == TYPE_OBJECT && Is_Block(arg)) {
+    if (type == TYPE_OBJECT && Is_Block(arg)) {
         //
         // Simple object creation with no evaluation, so all values are
         // handled "as-is".  Should have a spec block and a body block.
@@ -315,7 +315,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
     // arg is block/string, but let Make_Error_Object_Throws do the
     // type checking.
     //
-    if (kind == TYPE_ERROR) {
+    if (type == TYPE_ERROR) {
         if (Make_Error_Object_Throws(out, arg))
             return BOUNCE_THROWN;
 
@@ -332,7 +332,7 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         // get "completely fake SELF" out of index slot [0]
         //
         VarList* context = Make_Selfish_Context_Detect_Managed(
-            kind, // type
+            type,
             END_NODE, // values to scan for toplevel set-words (empty)
             nullptr  // parent
         );
@@ -342,30 +342,30 @@ Bounce MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         //
         /*
         REBINT n = Int32s(arg, 0);
-        context = Alloc_Context(kind, n);
+        context = Alloc_Context(type, n);
         RESET_CELL(Varlist_Archetype(context), target);
         CTX_SPEC(context) = nullptr;
         CTX_BODY(context) = nullptr; */
 
-        return Init_Any_Context(out, kind, context);
+        return Init_Any_Context(out, type, context);
     }
 
     // make object! map!
     if (Is_Map(arg)) {
         VarList* c = Alloc_Context_From_Map(VAL_MAP(arg));
-        return Init_Any_Context(out, kind, c);
+        return Init_Any_Context(out, type, c);
     }
 
-    panic (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(type, arg));
 }
 
 
 //
 //  TO_Context: C
 //
-Bounce TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Context(Value* out, Type type, const Value* arg)
 {
-    if (kind == TYPE_ERROR) {
+    if (type == TYPE_ERROR) {
         //
         // arg is checked to be block or string
         //
@@ -375,7 +375,7 @@ Bounce TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         return out;
     }
 
-    if (kind == TYPE_OBJECT) {
+    if (type == TYPE_OBJECT) {
         //
         // !!! Contexts hold canon values now that are typed, this init
         // will assert--a TO conversion would thus need to copy the varlist
@@ -383,7 +383,7 @@ Bounce TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Object(out, Cell_Varlist(arg));
     }
 
-    panic (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(type, arg));
 }
 
 
@@ -848,7 +848,7 @@ REBTYPE(Context)
         REBU64 types;
         if (Bool_ARG(TYPES)) {
             if (Is_Datatype(ARG(KINDS)))
-                types = FLAGIT_KIND(CELL_DATATYPE_TYPE(ARG(KINDS)));
+                types = FLAG_TYPE(Datatype_Type(ARG(KINDS)));
             else
                 types = Cell_Typeset_Bits(ARG(KINDS));
         }
@@ -946,7 +946,7 @@ DECLARE_NATIVE(CONSTRUCT)
 //
 Bounce MAKE_With_Parent(
     Value* out,
-    enum Reb_Kind target,
+    Type target,
     const Value* body,
     Option(const Value*) spec  // the parent
 ){

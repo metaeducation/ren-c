@@ -55,19 +55,19 @@
 #define IS_KIND_SYM(s) \
     ((s) < cast(SymId, TYPE_MAX))
 
-INLINE enum Reb_Kind KIND_FROM_SYM(SymId s) {
+INLINE Type KIND_FROM_SYM(SymId s) {
     assert(IS_KIND_SYM(s));
-    return cast(enum Reb_Kind, cast(int, (s)));
+    return cast(Type, cast(int, (s)));
 }
 
-#define SYM_FROM_KIND(k) \
-    cast(SymId, cast(enum Reb_Kind, (k)))
+#define Symbol_Id_From_Type(k) \
+    cast(SymId, cast(Type, (k)))
 
 #define VAL_TYPE_SYM(v) \
-    SYM_FROM_KIND((v)->payload.datatype.kind)
+    Symbol_Id_From_Type((v)->payload.datatype.type)
 
 INLINE Symbol* Get_Type_Name(const Cell* value)
-    { return CANON(FROM_KIND(Type_Of(value))); }
+    { return Canon_From_Id(Symbol_Id_From_Type(Type_Of(value))); }
 
 
 
@@ -78,13 +78,13 @@ INLINE Symbol* Get_Type_Name(const Cell* value)
 #define Cell_Typeset_Bits(v) ((v)->payload.typeset.bits)
 
 #define Typeset_Check(v,n) \
-    (did (Cell_Typeset_Bits(v) & FLAGIT_KIND(n)))
+    (did (Cell_Typeset_Bits(v) & FLAG_TYPE(n)))
 
 #define Set_Typeset_Flag(v,n) \
-    (Cell_Typeset_Bits(v) |= FLAGIT_KIND(n))
+    (Cell_Typeset_Bits(v) |= FLAG_TYPE(n))
 
 #define Clear_Typeset_Flag(v,n) \
-    (Cell_Typeset_Bits(v) &= ~FLAGIT_KIND(n))
+    (Cell_Typeset_Bits(v) &= ~FLAG_TYPE(n))
 
 #define Typesets_Equal(v,w) \
     (Cell_Typeset_Bits(v) == Cell_Typeset_Bits(w))
@@ -93,7 +93,7 @@ INLINE Symbol* Get_Type_Name(const Cell* value)
 // they have been called into question, as to exactly how copying mechanics
 // should work.
 
-#define TS_NOT_COPIED FLAGIT_KIND(TYPE_PORT)
+#define TS_NOT_COPIED FLAG_TYPE(TYPE_PORT)
 
 #define TS_STD_SERIES \
     (TS_SERIES & ~TS_NOT_COPIED)

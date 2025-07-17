@@ -48,10 +48,10 @@ REBINT CT_Tuple(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Tuple: C
 //
-Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Tuple(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_TUPLE);
-    UNUSED(kind);
+    assert(type == TYPE_TUPLE);
+    UNUSED(type);
 
     if (Is_Tuple(arg))
         return Copy_Cell(out, arg);
@@ -149,9 +149,9 @@ Bounce MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Tuple: C
 //
-Bounce TO_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Tuple(Value* out, Type type, const Value* arg)
 {
-    return MAKE_Tuple(out, kind, arg);
+    return MAKE_Tuple(out, type, arg);
 }
 
 

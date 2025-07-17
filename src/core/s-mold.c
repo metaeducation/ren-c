@@ -460,7 +460,7 @@ void MF_Unhooked(Molder* mo, const Cell* v, bool form)
     UNUSED(mo);
     UNUSED(form);
 
-    const Value* type = Datatype_From_Kind(Type_Of(v));
+    const Value* type = Datatype_From_Type(Type_Of(v));
     UNUSED(type); // !!! put in error message?
 
     panic ("Datatype does not have extension with a MOLD handler registered");

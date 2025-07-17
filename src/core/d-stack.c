@@ -66,8 +66,8 @@ void Collapsify_Array(Array* array, Specifier* specifier, REBLEN limit)
                 limit
             );
 
-            enum Reb_Kind kind = Type_Of(item);
-            Init_Any_List_At(item, kind, copy, 0); // at 0 now
+            Type type = Type_Of(item);
+            Init_Any_List_At(item, type, copy, 0); // at 0 now
             assert(IS_SPECIFIC(item));
             assert(
                 Not_Cell_Flag(item, NEWLINE_BEFORE) // gets cleared
@@ -184,7 +184,7 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
     //
     Collapsify_Array(near, SPECIFIED, 3);
 
-    if (Any_List_Kind(VAL_TYPE_RAW(L->value)))
+    if (Any_List_Type(Unchecked_Type_Of(L->value)))
         Init_Any_List(out, Type_Of(L->value), near);
     else
         Init_Block(out, near);

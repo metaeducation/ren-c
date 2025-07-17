@@ -104,10 +104,10 @@ void MF_Bitset(Molder* mo, const Cell* v, bool form)
 //
 //  MAKE_Bitset: C
 //
-Bounce MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Bitset(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_BITSET);
-    UNUSED(kind);
+    assert(type == TYPE_BITSET);
+    UNUSED(type);
 
     REBINT len = Find_Max_Bit(arg);
 
@@ -138,9 +138,9 @@ Bounce MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Bitset: C
 //
-Bounce TO_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Bitset(Value* out, Type type, const Value* arg)
 {
-    return MAKE_Bitset(out, kind, arg);
+    return MAKE_Bitset(out, type, arg);
 }
 
 

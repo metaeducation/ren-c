@@ -47,10 +47,10 @@
 //
 //  MAKE_Panic: C
 //
-Bounce MAKE_Panic(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Panic(Value* out, Type type, const Value* arg)
 {
     UNUSED(out);
-    UNUSED(kind);
+    UNUSED(type);
     UNUSED(arg);
 
     panic ("Datatype does not have a MAKE handler registered");
@@ -64,13 +64,13 @@ Bounce MAKE_Panic(Value* out, enum Reb_Kind kind, const Value* arg)
 // aren't ready yet as a general concept, this hook is overwritten in the
 // dispatch table when the extension loads.
 //
-Bounce MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Unhooked(Value* out, Type type, const Value* arg)
 {
     UNUSED(out);
     UNUSED(arg);
 
-    const Value* type = Datatype_From_Kind(kind);
-    UNUSED(type); // !!! put in error message?
+    const Value* datatype = Datatype_From_Type(type);
+    UNUSED(datatype); // !!! put in error message?
 
     panic ("Datatype is provided by an extension that's not currently loaded");
 }
@@ -99,14 +99,14 @@ DECLARE_NATIVE(MAKE)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Value* type = ARG(TYPE);
+    Value* datatype = ARG(TYPE);
     Value* arg = ARG(DEF);
 
-    if (Is_Event(type)) {  // an event instance, not EVENT! datatype
+    if (Is_Event(datatype)) {  // an event instance, not EVENT! datatype
         if (not Is_Block(arg))
             panic (Error_Bad_Make(TYPE_EVENT, arg));
 
-        Copy_Cell(OUT, type); // !!! very "shallow" clone of the event
+        Copy_Cell(OUT, datatype); // !!! very "shallow" clone of the event
         Set_Event_Vars(
             OUT,
             List_At(arg),
@@ -115,17 +115,17 @@ DECLARE_NATIVE(MAKE)
         return OUT;
     }
 
-    if (Any_Context(type))  // object instance, not a datatype
-        return MAKE_With_Parent(OUT, Type_Of(type), arg, type);
+    if (Any_Context(datatype))  // object instance, not a datatype
+        return MAKE_With_Parent(OUT, Type_Of(datatype), arg, datatype);
 
-    enum Reb_Kind kind;
-    if (Is_Datatype(type))
-        kind = CELL_DATATYPE_TYPE(type);
+    Type type;
+    if (Is_Datatype(datatype))
+        type = Datatype_Type(datatype);
     else
-        kind = Type_Of(type);
+        type = Type_Of(datatype);
 
 #if RUNTIME_CHECKS
-    if (Is_Event(type)) {
+    if (Is_Event(datatype)) {
         //
         // !!! It seems that EVENTs had some kind of inheritance mechanism, by
         // which you would write:
@@ -146,14 +146,14 @@ DECLARE_NATIVE(MAKE)
     }
 #endif
 
-    MAKE_HOOK hook = Make_Hooks[kind];
+    MAKE_HOOK hook = Make_Hooks[type];
     if (hook == nullptr)
-        panic (Error_Bad_Make(kind, arg));
+        panic (Error_Bad_Make(type, arg));
 
-    Bounce bounce = hook(OUT, kind, arg);  // might throw, fail...
+    Bounce bounce = hook(OUT, type, arg);  // might throw, fail...
     if (bounce == BOUNCE_THROWN)
         return bounce;
-    if (bounce == nullptr or Type_Of(bounce) != kind)
+    if (bounce == nullptr or Type_Of(bounce) != type)
         panic ("MAKE dispatcher did not return correct type");
     return bounce;  // may be OUT or an API handle
 }
@@ -162,10 +162,10 @@ DECLARE_NATIVE(MAKE)
 //
 //  TO_Panic: C
 //
-Bounce TO_Panic(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Panic(Value* out, Type type, const Value* arg)
 {
     UNUSED(out);
-    UNUSED(kind);
+    UNUSED(type);
     UNUSED(arg);
 
     panic ("Cannot convert to datatype");
@@ -175,13 +175,13 @@ Bounce TO_Panic(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Unhooked: C
 //
-Bounce TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Unhooked(Value* out, Type type, const Value* arg)
 {
     UNUSED(out);
     UNUSED(arg);
 
-    const Value* type = Datatype_From_Kind(kind);
-    UNUSED(type); // !!! put in error message?
+    const Value* datatype = Datatype_From_Type(type);
+    UNUSED(datatype); // !!! put in error message?
 
     panic ("Datatype does not have extension with a TO handler registered");
 }
@@ -203,18 +203,18 @@ DECLARE_NATIVE(TO)
     INCLUDE_PARAMS_OF_TO;
 
     Value* v = ARG(VALUE);
-    enum Reb_Kind new_kind = CELL_DATATYPE_TYPE(ARG(TYPE));
+    Type new_type = Datatype_Type(ARG(TYPE));
 
-    TO_HOOK hook = To_Hooks[new_kind];
+    TO_HOOK hook = To_Hooks[new_type];
     if (not hook)
         panic (Error_Invalid(v));
 
-    Bounce bounce = hook(OUT, new_kind, v);  // may panic();
+    Bounce bounce = hook(OUT, new_type, v);  // may panic();
     if (bounce == BOUNCE_THROWN) {
         assert(!"Illegal throw in TO conversion handler");
         panic (Error_No_Catch_For_Throw(OUT));
     }
-    if (bounce == nullptr or Type_Of(bounce) != new_kind) {
+    if (bounce == nullptr or Type_Of(bounce) != new_type) {
         assert(!"TO conversion did not return intended type");
         panic (Error_Invalid_Type(Type_Of(bounce)));
     }
@@ -250,9 +250,9 @@ Bounce Reflect_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
 
-    enum Reb_Kind kind = Type_Of(ARG(VALUE));
+    Type type = Type_Of(ARG(VALUE));
 
-    if (kind == TYPE_VOID)
+    if (type == TYPE_VOID)
         return nullptr;  // all reflect questions give
 
     Option(SymId) id = Word_Id(ARG(PROPERTY));
@@ -264,27 +264,27 @@ Bounce Reflect_Core(Level* level_)
         // operate on SYMs in a switch().  Longer term, a more extensible
         // idea will be necessary.
         //
-        panic (Error_Cannot_Reflect(kind, ARG(PROPERTY)));
+        panic (Error_Cannot_Reflect(type, ARG(PROPERTY)));
     }
 
     if (id == SYM_TYPE) {
-        if (kind == TYPE_NULLED)
+        if (type == TYPE_NULLED)
             return Init_Error(OUT, Error_Need_Non_Null_Raw());  // use TRY
 
-        return Init_Datatype(OUT, kind);
+        return Init_Datatype(OUT, type);
     }
 
-    if (kind == TYPE_NULLED)
+    if (type == TYPE_NULLED)
         panic (Error_Need_Non_Null_Raw());
 
     // !!! The reflector for TYPE is universal and so it is allowed on nulls,
     // but in general actions should not allow null first arguments...there's
     // no entry in the dispatcher table for them.
     //
-    if (kind == TYPE_NULLED)
+    if (type == TYPE_NULLED)
         panic ("NULL isn't valid for REFLECT, except for TYPE OF ()");
 
-    GENERIC_HOOK hook = Generic_Hooks[kind];
+    GENERIC_HOOK hook = Generic_Hooks[type];
     DECLARE_VALUE (verb);
     Init_Word(verb, CANON(REFLECT));
     return hook(level_, verb);
@@ -1246,7 +1246,7 @@ const Byte *Scan_Any(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const Byte *cp,
     REBLEN num_bytes,
-    enum Reb_Kind type
+    Type type
 ) {
     assert(Is_Cell_Erased(out));
 

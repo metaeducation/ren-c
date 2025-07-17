@@ -682,7 +682,7 @@ static REBIXO Parse_Array_One_Rule_Core(
         return END_FLAG;
 
     case TYPE_DATATYPE:
-        if (Type_Of(item) == CELL_DATATYPE_TYPE(rule)) // specific datatype match
+        if (Type_Of(item) == Datatype_Type(rule)) // specific datatype match
             return pos + 1;
         return END_FLAG;
 

@@ -67,7 +67,7 @@ enum TokenEnum {
 typedef enum TokenEnum Token;
 
 #define KIND_OF_WORD_FROM_TOKEN(t) \
-    cast(enum Reb_Kind, TYPE_WORD + ((t) - TOKEN_WORD))
+    cast(Type, TYPE_WORD + ((t) - TOKEN_WORD))
 
 /*
 **  Lexical Table Entry Encoding

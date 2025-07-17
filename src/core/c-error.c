@@ -985,10 +985,10 @@ Error* Error_No_Relative_Core(const Cell* any_word)
 Error* Error_Not_Varargs(
     Level* L,
     const Cell* param,
-    enum Reb_Kind kind
+    Type type
 ){
     assert(Is_Param_Variadic(param));
-    assert(kind != TYPE_VARARGS);
+    assert(type != TYPE_VARARGS);
 
     // Since the "types accepted" are a lie (an [integer! <...>] takes
     // VARARGS! when fulfilled in a frame directly, not INTEGER!) then
@@ -997,11 +997,11 @@ Error* Error_Not_Varargs(
     DECLARE_VALUE (honest_param);
     Init_Typeset(
         honest_param,
-        FLAGIT_KIND(TYPE_VARARGS), // actually expected
+        FLAG_TYPE(TYPE_VARARGS), // actually expected
         Cell_Parameter_Symbol(param)
     );
 
-    return Error_Arg_Type(L, honest_param, kind);
+    return Error_Arg_Type(L, honest_param, type);
 }
 
 
@@ -1132,9 +1132,9 @@ Error* Error_No_Catch_For_Throw(Value* thrown)
 //
 // <type> type is not allowed here.
 //
-Error* Error_Invalid_Type(enum Reb_Kind kind)
+Error* Error_Invalid_Type(Type type)
 {
-    return Error_Invalid_Type_Raw(Datatype_From_Kind(kind));
+    return Error_Invalid_Type_Raw(Datatype_From_Type(type));
 }
 
 
@@ -1166,34 +1166,34 @@ Error* Error_Protected_Key(Value* key)
 //
 //  Error_Illegal_Action: C
 //
-Error* Error_Illegal_Action(enum Reb_Kind type, Value* verb)
+Error* Error_Illegal_Action(Type type, Value* verb)
 {
     assert(Is_Word(verb));
-    return Error_Cannot_Use_Raw(verb, Datatype_From_Kind(type));
+    return Error_Cannot_Use_Raw(verb, Datatype_From_Type(type));
 }
 
 
 //
 //  Error_Math_Args: C
 //
-Error* Error_Math_Args(enum Reb_Kind type, Value* verb)
+Error* Error_Math_Args(Type type, Value* verb)
 {
     assert(Is_Word(verb));
-    return Error_Not_Related_Raw(verb, Datatype_From_Kind(type));
+    return Error_Not_Related_Raw(verb, Datatype_From_Type(type));
 }
 
 
 //
 //  Error_Unexpected_Type: C
 //
-Error* Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
+Error* Error_Unexpected_Type(Type expected, Type actual)
 {
     assert(expected < TYPE_MAX);
     assert(actual < TYPE_MAX);
 
     return Error_Expect_Val_Raw(
-        Datatype_From_Kind(expected),
-        Datatype_From_Kind(actual)
+        Datatype_From_Type(expected),
+        Datatype_From_Type(actual)
     );
 }
 
@@ -1207,7 +1207,7 @@ Error* Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 Error* Error_Arg_Type(
     Level* L,
     const Cell* param,
-    enum Reb_Kind actual
+    Type actual
 ) {
     assert(Is_Typeset(param));
 
@@ -1220,12 +1220,12 @@ Error* Error_Arg_Type(
     if (actual != TYPE_NULLED)
         return Error_Expect_Arg_Raw(
             label,
-            Datatype_From_Kind(actual),
+            Datatype_From_Type(actual),
             param_word
         );
 
     // Although TYPE_NULLED is not a type, the typeset bits are used
-    // to check it.  Since Datatype_From_Kind() will fail, use another error.
+    // to check it.  Since Datatype_From_Type() will fail, use another error.
     //
     return Error_Arg_Required_Raw(label, param_word);
 }
@@ -1234,35 +1234,35 @@ Error* Error_Arg_Type(
 //
 //  Error_Bad_Return_Type: C
 //
-Error* Error_Bad_Return_Type(Level* L, enum Reb_Kind kind) {
+Error* Error_Bad_Return_Type(Level* L, Type type) {
     DECLARE_VALUE (label);
     Get_Level_Label_Or_Blank(label, L);
 
-    if (kind == TYPE_NULLED)
+    if (type == TYPE_NULLED)
         return Error_Needs_Return_Opt_Raw(label);
 
-    if (kind == TYPE_TRASH)
+    if (type == TYPE_TRASH)
         return Error_Needs_Return_Value_Raw(label);
 
-    return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));
+    return Error_Bad_Return_Type_Raw(label, Datatype_From_Type(type));
 }
 
 
 //
 //  Error_Bad_Make: C
 //
-Error* Error_Bad_Make(enum Reb_Kind type, const Value* spec)
+Error* Error_Bad_Make(Type type, const Value* spec)
 {
-    return Error_Bad_Make_Arg_Raw(Datatype_From_Kind(type), spec);
+    return Error_Bad_Make_Arg_Raw(Datatype_From_Type(type), spec);
 }
 
 
 //
 //  Error_Cannot_Reflect: C
 //
-Error* Error_Cannot_Reflect(enum Reb_Kind type, const Value* arg)
+Error* Error_Cannot_Reflect(Type type, const Value* arg)
 {
-    return Error_Cannot_Use_Raw(arg, Datatype_From_Kind(type));
+    return Error_Cannot_Use_Raw(arg, Datatype_From_Type(type));
 }
 
 

@@ -290,7 +290,7 @@ DECLARE_NATIVE(TYPECHECKER)
 
     REBU64 bits;  // don't allow INTEGER? NULL tests, must be INTEGER? OPT NULL
     if (Is_Datatype(type)) {
-        switch (CELL_DATATYPE_TYPE(type)) {
+        switch (Datatype_Type(type)) {
           case TYPE_VOID:
           case TYPE_NULLED:
           case TYPE_OKAY:
@@ -842,7 +842,7 @@ DECLARE_NATIVE(N_SHOT)
     //
     Value* param = Init_Typeset(
         Alloc_Tail_Array(paramlist),
-        FLAGIT_KIND(TYPE_BLOCK) | FLAGIT_KIND(TYPE_ACTION),
+        FLAG_TYPE(TYPE_BLOCK) | FLAG_TYPE(TYPE_ACTION),
         CANON(VALUE) // SYM_CODE ?
     );
     Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);

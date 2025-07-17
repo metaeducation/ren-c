@@ -111,17 +111,17 @@ INLINE Value* Init_Pair(
 }
 
 
-INLINE Value* Init_Zeroed_Hack(Cell* out, enum Reb_Kind kind) {
+INLINE Value* Init_Zeroed_Hack(Cell* out, Type type) {
     //
     // !!! This captures of a dodgy behavior of R3-Alpha, which was to assume
     // that clearing the payload of a value and then setting the header made
     // it the `zero?` of that type.  Review uses.
     //
-    if (kind == TYPE_PAIR) {
+    if (type == TYPE_PAIR) {
         Init_Pair_Int(out, 0, 0);
     }
     else {
-        RESET_CELL(out, kind);
+        RESET_CELL(out, type);
         CLEAR(&out->extra, sizeof(union Reb_Value_Extra));
         CLEAR(&out->payload, sizeof(union Reb_Value_Payload));
     }

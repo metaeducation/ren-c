@@ -323,7 +323,7 @@ static REBDAT Normalize_Date(REBINT day, REBINT month, REBINT year, REBINT tz)
     }
 
     if (year < 0 || year > MAX_YEAR)
-        panic (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_DATE)));
+        panic (Error_Type_Limit_Raw(Datatype_From_Type(TYPE_DATE)));
 
     dr.date.year = year;
     dr.date.month = month+1;
@@ -432,9 +432,9 @@ REBINT Cmp_Date(const Cell* d1, const Cell* d2)
 //
 //  MAKE_Date: C
 //
-Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
-    assert(kind == TYPE_DATE);
-    UNUSED(kind);
+Bounce MAKE_Date(Value* out, Type type, const Value* arg) {
+    assert(type == TYPE_DATE);
+    UNUSED(type);
 
     if (Is_Date(arg))
         return Copy_Cell(out, arg);
@@ -540,8 +540,8 @@ Bounce MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 //  TO_Date: C
 //
-Bounce TO_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
-    return MAKE_Date(out, kind, arg);
+Bounce TO_Date(Value* out, Type type, const Value* arg) {
+    return MAKE_Date(out, type, arg);
 }
 
 

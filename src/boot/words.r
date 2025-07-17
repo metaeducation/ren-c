@@ -80,6 +80,10 @@ generic ;-- used in boot, see %generics.r
 
 export ;-- used in extensions
 
+sine  ; natives should get SYM_XXX implicitly (they do in mainline)
+cosine
+tangent
+
 ; The PICK action was killed in favor of a native that uses the same logic
 ; as path processing.  Code still remains for processing PICK, and ports or
 ; other mechanics may wind up using it...or path dispatch itself may be

@@ -208,27 +208,27 @@ REBI64 Int64s(const Value* val, REBINT sign)
 
 
 //
-//  Datatype_From_Kind: C
+//  Datatype_From_Type: C
 //
 // Returns the specified datatype value from the system context.
 // The datatypes are all at the head of the context.
 //
-const Value* Datatype_From_Kind(enum Reb_Kind kind)
+const Value* Datatype_From_Type(Type type)
 {
-    assert(kind > TYPE_0 and kind < TYPE_MAX);
-    Value* type = Varlist_Slot(Lib_Context, SYM_FROM_KIND(kind));
-    assert(Is_Datatype(type));
-    return type;
+    assert(type > TYPE_0 and type < TYPE_MAX);
+    Value* datatype = Varlist_Slot(Lib_Context, Symbol_Id_From_Type(type));
+    assert(Is_Datatype(datatype));
+    return datatype;
 }
 
 
 //
 //  Init_Datatype: C
 //
-Value* Init_Datatype(Cell* out, enum Reb_Kind kind)
+Value* Init_Datatype(Cell* out, Type type)
 {
-    assert(kind > TYPE_0 and kind < TYPE_MAX);
-    Copy_Cell(out, Datatype_From_Kind(kind));
+    assert(type > TYPE_0 and type < TYPE_MAX);
+    Copy_Cell(out, Datatype_From_Type(type));
     return KNOWN(out);
 }
 
@@ -241,7 +241,7 @@ Value* Init_Datatype(Cell* out, enum Reb_Kind kind)
 //
 Value* Datatype_Of(const Cell* value)
 {
-    return Varlist_Slot(Lib_Context, SYM_FROM_KIND(Type_Of(value)));
+    return Varlist_Slot(Lib_Context, Symbol_Id_From_Type(Type_Of(value)));
 }
 
 
@@ -281,7 +281,7 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 //
 Value* Init_Any_Series_At_Core(
     Cell* out, // allows Cell slot as input, but will be filled w/Value
-    enum Reb_Kind type,
+    Type type,
     Flex* series,
     REBLEN index,
     Stub* binding
@@ -303,7 +303,7 @@ Value* Init_Any_Series_At_Core(
     VAL_INDEX(out) = index;
     INIT_BINDING(out, binding);
 
-    if (Any_Path_Kind(type)) {
+    if (Any_Path_Type(type)) {
         if (Series_Len_At(out) < 2)
             panic ("ANY-PATH! must have at least 2 elements");
     }
@@ -343,12 +343,12 @@ void Set_Tuple(Value* value, Byte *bytes, REBLEN len)
 //
 // !!! Overlaps with ASSERT_CONTEXT, review folding them together.
 //
-void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, VarList* c) {
+void Extra_Init_Any_Context_Checks_Debug(Type type, VarList* c) {
     assert(Varlist_Array(c)->leader.bits & SERIES_MASK_CONTEXT);
 
     Value* archetype = Varlist_Archetype(c);
     assert(Cell_Varlist(archetype) == c);
-    assert(CTX_TYPE(c) == kind);
+    assert(CTX_TYPE(c) == type);
 
     // Currently only FRAME! uses the ->binding field, in order to capture the
     // ->binding of the function value it links to (which is in ->phase)
@@ -532,12 +532,12 @@ REBLEN Part_Len_Append_Insert_May_Modify_Index(
 //
 //  Add_Max: C
 //
-int64_t Add_Max(enum Reb_Kind kind_or_0, int64_t n, int64_t m, int64_t maxi)
+int64_t Add_Max(Option(Type) type, int64_t n, int64_t m, int64_t maxi)
 {
     int64_t r = n + m;
     if (r < -maxi or r > maxi) {
-        if (kind_or_0 != TYPE_0)
-            panic (Error_Type_Limit_Raw(Datatype_From_Kind(kind_or_0)));
+        if (type)
+            panic (Error_Type_Limit_Raw(Datatype_From_Type(unwrap type)));
         r = r > 0 ? maxi : -maxi;
     }
     return r;
@@ -547,10 +547,10 @@ int64_t Add_Max(enum Reb_Kind kind_or_0, int64_t n, int64_t m, int64_t maxi)
 //
 //  Mul_Max: C
 //
-int64_t Mul_Max(enum Reb_Kind type, int64_t n, int64_t m, int64_t maxi)
+int64_t Mul_Max(Type type, int64_t n, int64_t m, int64_t maxi)
 {
     int64_t r = n * m;
     if (r < -maxi or r > maxi)
-        panic (Error_Type_Limit_Raw(Datatype_From_Kind(type)));
+        panic (Error_Type_Limit_Raw(Datatype_From_Type(type)));
     return cast(int, r); // !!! (?) review this cast
 }

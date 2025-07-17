@@ -536,7 +536,7 @@ INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
 // https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
 //
 INLINE bool Splices_Into_Type_Without_Only(
-    enum Reb_Kind array_kind,
+    Type array_type,
     const Value* arg
 ){
     // !!! It's desirable for the system to make trash insertion "ornery".
@@ -549,10 +549,10 @@ INLINE bool Splices_Into_Type_Without_Only(
     if (Is_Trash(arg))
         panic ("Cannot put trash (~) into arrays");
 
-    assert(Any_List_Kind(array_kind));
+    assert(Any_List_Type(array_type));
     return Is_Group(arg)
         or Is_Block(arg)
-        or (Any_Path(arg) and Any_Path_Kind(array_kind));
+        or (Any_Path(arg) and Any_Path_Type(array_type));
 }
 
 

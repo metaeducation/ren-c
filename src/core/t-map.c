@@ -459,7 +459,7 @@ static void Append_Map(
 //
 //  MAKE_Map: C
 //
-Bounce MAKE_Map(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Map(Value* out, Type type, const Value* arg)
 {
     if (Any_Number(arg)) {
         return Init_Map(out, Make_Map(Int32s(arg, 0)));
@@ -468,7 +468,7 @@ Bounce MAKE_Map(Value* out, enum Reb_Kind kind, const Value* arg)
         // !!! R3-Alpha TO of MAP! was like MAKE but wouldn't accept just
         // being given a size.
         //
-        return TO_Map(out, kind, arg);
+        return TO_Map(out, type, arg);
     }
 }
 
@@ -515,10 +515,10 @@ INLINE REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
 //
 //  TO_Map: C
 //
-Bounce TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Map(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_MAP);
-    UNUSED(kind);
+    assert(type == TYPE_MAP);
+    UNUSED(type);
 
     if (Is_Block(arg) || Is_Group(arg)) {
         //
@@ -863,7 +863,7 @@ REBTYPE(Map)
 
         if (Bool_ARG(TYPES)) {
             if (Is_Datatype(ARG(KINDS)))
-                types |= FLAGIT_KIND(Type_Of(ARG(KINDS)));
+                types |= FLAG_TYPE(Type_Of(ARG(KINDS)));
             else
                 types |= Cell_Typeset_Bits(ARG(KINDS));
         }

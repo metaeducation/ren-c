@@ -139,7 +139,7 @@ Value* Init_Decimal_Bits(Cell* out, const Byte *bp)
 //
 //  MAKE_Decimal: C
 //
-Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Decimal(Value* out, Type type, const Value* arg)
 {
     REBDEC d;
 
@@ -170,7 +170,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 
         Erase_Cell(out);
-        if (nullptr == Scan_Decimal(out, bp, size, kind != TYPE_PERCENT))
+        if (nullptr == Scan_Decimal(out, bp, size, type != TYPE_PERCENT))
             goto bad_make;
 
         d = VAL_DECIMAL(out); // may need to divide if percent, fall through
@@ -181,7 +181,7 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
             panic (Error_Invalid(arg));
 
         Init_Decimal_Bits(out, Blob_At(arg)); // makes TYPE_DECIMAL
-        RESET_CELL(out, kind); // override type if TYPE_PERCENT
+        RESET_CELL(out, type); // override type if TYPE_PERCENT
         d = VAL_DECIMAL(out);
         break;
 
@@ -221,31 +221,31 @@ Bounce MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
             }
         }
         else
-            panic (Error_Bad_Make(kind, arg));
+            panic (Error_Bad_Make(type, arg));
     }
 
-    if (kind == TYPE_PERCENT)
+    if (type == TYPE_PERCENT)
         d /= 100.0;
 
 dont_divide_if_percent:
     if (!FINITE(d))
         panic (Error_Overflow_Raw());
 
-    RESET_CELL(out, kind);
+    RESET_CELL(out, type);
     VAL_DECIMAL(out) = d;
     return out;
 
 bad_make:
-    panic (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(type, arg));
 }
 
 
 //
 //  TO_Decimal: C
 //
-Bounce TO_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Decimal(Value* out, Type type, const Value* arg)
 {
-    return MAKE_Decimal(out, kind, arg);
+    return MAKE_Decimal(out, type, arg);
 }
 
 
@@ -323,7 +323,7 @@ REBTYPE(Decimal)
     Value* val = D_ARG(1);
     Value* arg;
     REBDEC d2;
-    enum Reb_Kind type;
+    Type type;
 
     REBDEC d1 = VAL_DECIMAL(val);
 

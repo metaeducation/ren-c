@@ -419,11 +419,11 @@ bool Eval_Core_Throws(Level* const L)
     assert(TOP_INDEX >= L->stack_base); // REDUCE accrues, APPLY refines...
     assert(L->out != Level_Spare(L)); // overwritten by temporary calculations
 
-    // Caching VAL_TYPE_RAW(L->value) in a local can make a slight performance
+    // Caching Unchecked_Type_Of(L->value) in a local can make a slight performance
     // difference, though how much depends on what the optimizer figures out.
     // Either way, it's useful to have handy in the debugger.
     //
-    enum Reb_Kind eval_type;
+    Type eval_type;
 
     const Value* current_gotten;
     Corrupt_If_Needful(current_gotten);
@@ -467,7 +467,7 @@ bool Eval_Core_Throws(Level* const L)
         goto reevaluate;
     }
 
-    eval_type = VAL_TYPE_RAW(L->value);
+    eval_type = Unchecked_Type_Of(L->value);
 
   do_next:;
 
@@ -500,7 +500,7 @@ bool Eval_Core_Throws(Level* const L)
     //
     Fetch_Next_In_Level(&current, L);
 
-    assert(eval_type != TYPE_0_END and eval_type == VAL_TYPE_RAW(current));
+    assert(eval_type != TYPE_0_END and eval_type == Unchecked_Type_Of(current));
 
   reevaluate:;
 
@@ -521,7 +521,7 @@ bool Eval_Core_Throws(Level* const L)
     // called "current" holds the current head of the expression that the
     // main switch would process.
 
-    if (VAL_TYPE_RAW(L->value) != TYPE_WORD) // END would be TYPE_0
+    if (Unchecked_Type_Of(L->value) != TYPE_WORD) // END would be TYPE_0
         goto give_up_backward_quote_priority;
 
     assert(not L->gotten); // Fetch_Next_In_Level() cleared it
@@ -657,7 +657,7 @@ bool Eval_Core_Throws(Level* const L)
     //
     // http://stackoverflow.com/questions/17061967/c-switch-and-jump-tables
 
-    assert(eval_type == VAL_TYPE_RAW(current));
+    assert(eval_type == Unchecked_Type_Of(current));
 
     switch (eval_type) {
 
@@ -1276,10 +1276,10 @@ bool Eval_Core_Throws(Level* const L)
         else if (not r) { // API and internal code can both return `nullptr`
             Init_Nulled(L->out);
         }
-        else if (VAL_TYPE_RAW(r) <= TYPE_MAX) { // should be an API value
+        else if (Unchecked_Type_Of(r) <= TYPE_MAX) { // should be an API value
             Handle_Api_Dispatcher_Result(L, r);
         }
-        else switch (VAL_TYPE_RAW(r)) { // it's a "pseudotype" instruction
+        else switch (Unchecked_Type_Of(r)) { // it's a "pseudotype" instruction
             //
             // !!! Thrown values used to be indicated with a bit on the value
             // itself, but now it's conveyed through a return value.  This
@@ -1899,7 +1899,7 @@ bool Eval_Core_Throws(Level* const L)
     // decide what parameter convention to use to the left based on what it
     // sees to the right.
 
-    eval_type = VAL_TYPE_RAW(L->value);
+    eval_type = Unchecked_Type_Of(L->value);
 
     if (eval_type == TYPE_0_END)
         goto finished; // hitting end is common, avoid do_next's switch()

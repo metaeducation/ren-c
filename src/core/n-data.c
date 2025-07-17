@@ -150,7 +150,7 @@ DECLARE_NATIVE(BIND)
         add_midstream_types = TS_WORD;
     }
     else if (Bool_ARG(SET)) {
-        add_midstream_types = FLAGIT_KIND(TYPE_SET_WORD);
+        add_midstream_types = FLAG_TYPE(TYPE_SET_WORD);
     }
     else
         add_midstream_types = 0;
@@ -970,15 +970,15 @@ DECLARE_NATIVE(AS)
     INCLUDE_PARAMS_OF_AS;
 
     Value* v = ARG(VALUE);
-    enum Reb_Kind new_kind = CELL_DATATYPE_TYPE(ARG(TYPE));
+    Type new_type = Datatype_Type(ARG(TYPE));
 
-    switch (new_kind) {
+    switch (new_type) {
     case TYPE_BLOCK:
     case TYPE_GROUP:
     case TYPE_PATH:
     case TYPE_LIT_PATH:
     case TYPE_GET_PATH:
-        if (new_kind == Type_Of(v))
+        if (new_type == Type_Of(v))
             RETURN (v); // no-op
 
         if (not Any_List(v))
@@ -990,7 +990,7 @@ DECLARE_NATIVE(AS)
     case TYPE_FILE:
     case TYPE_URL:
     case TYPE_EMAIL: {
-        if (new_kind == Type_Of(v))
+        if (new_type == Type_Of(v))
             RETURN (v); // no-op
 
         // !!! Until UTF-8 Everywhere, turning ANY-WORD! into an ANY-STRING!
@@ -1006,7 +1006,7 @@ DECLARE_NATIVE(AS)
                 Symbol_Size(symbol)
             );
             Set_Flex_Info(string, FROZEN_DEEP);
-            return Init_Any_Series(OUT, new_kind, string);
+            return Init_Any_Series(OUT, new_type, string);
         }
 
         // !!! Similarly, until UTF-8 Everywhere, we can't actually alias
@@ -1028,7 +1028,7 @@ DECLARE_NATIVE(AS)
                 //
                 Decay_Flex(Cell_Flex(v));
             }
-            return Init_Any_Series(OUT, new_kind, string);
+            return Init_Any_Series(OUT, new_type, string);
         }
 
         if (not Any_String(v))
@@ -1041,7 +1041,7 @@ DECLARE_NATIVE(AS)
     case TYPE_LIT_WORD:
     case TYPE_ISSUE:
     case TYPE_REFINEMENT: {
-        if (new_kind == Type_Of(v))
+        if (new_type == Type_Of(v))
             RETURN (v); // no-op
 
         // !!! Until UTF-8 Everywhere, turning ANY-STRING! into an ANY-WORD!
@@ -1062,7 +1062,7 @@ DECLARE_NATIVE(AS)
             );
             return Init_Any_Word(
                 OUT,
-                new_kind,
+                new_type,
                 Intern_UTF8_Managed(Binary_At(temp, offset), utf8_size)
             );
         }
@@ -1079,7 +1079,7 @@ DECLARE_NATIVE(AS)
             Freeze_Non_Array_Flex(Cell_Flex(v));
             return Init_Any_Word(
                 OUT,
-                new_kind,
+                new_type,
                 Intern_UTF8_Managed(Blob_At(v), Series_Len_At(v))
             );
         }
@@ -1089,7 +1089,7 @@ DECLARE_NATIVE(AS)
         break; }
 
     case TYPE_BINARY: {
-        if (new_kind == Type_Of(v))
+        if (new_type == Type_Of(v))
             RETURN (v); // no-op
 
         // !!! A locked BINARY! shouldn't (?) complain if it exposes a
@@ -1124,7 +1124,7 @@ DECLARE_NATIVE(AS)
     }
 
     Copy_Cell(OUT, v);
-    CHANGE_VAL_TYPE_BITS(OUT, new_kind);
+    CHANGE_VAL_TYPE_BITS(OUT, new_type);
     return OUT;
 }
 

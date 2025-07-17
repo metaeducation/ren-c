@@ -111,10 +111,10 @@ INLINE void Unbind_Any_Word(Cell* v) {
 
 INLINE Value* Init_Any_Word(
     Cell* out,
-    enum Reb_Kind kind,
+    Type type,
     Symbol* symbol
 ){
-    RESET_CELL(out, kind);
+    RESET_CELL(out, type);
     out->payload.any_word.symbol = symbol;
     INIT_BINDING(out, UNBOUND);
   #if RUNTIME_CHECKS
@@ -145,7 +145,7 @@ INLINE Value* Init_Any_Word(
 //
 INLINE Value* Init_Any_Word_Bound(
     Cell* out,
-    enum Reb_Kind type,
+    Type type,
     Symbol* symbol,
     VarList* context,
     REBLEN index

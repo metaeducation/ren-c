@@ -224,7 +224,7 @@ bool Either_Test_Core_Throws(
         return false; }
 
       case TYPE_DATATYPE:
-        Init_Logic(out, CELL_DATATYPE_TYPE(test) == Type_Of(arg));
+        Init_Logic(out, Datatype_Type(test) == Type_Of(arg));
         return false;
 
       case TYPE_TYPESET:
@@ -281,7 +281,7 @@ bool Either_Test_Core_Throws(
             }
 
             if (Is_Datatype(var)) {
-                if (CELL_DATATYPE_TYPE(var) == Type_Of(arg)) {
+                if (Datatype_Type(var) == Type_Of(arg)) {
                     Init_Logic(out, true);
                     return false;
                 }
@@ -488,11 +488,11 @@ DECLARE_NATIVE(NON)
         if (Is_Nulled(value))
             panic ("NON expected value to not be NULL, but it was");
     }
-    else if (CELL_DATATYPE_TYPE(test) == TYPE_TRASH) {  // specialize common case
+    else if (Datatype_Type(test) == TYPE_TRASH) {  // specialize common case
         if (Is_Trash(value))
             panic ("NON expected value to not be trash, but it was");
     }
-    else if (not Typeset_Check(value, CELL_DATATYPE_TYPE(test))) {
+    else if (not Typeset_Check(value, Datatype_Type(test))) {
         panic ("NON expected value to not match a type, but it did match");
     }
 

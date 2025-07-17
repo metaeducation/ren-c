@@ -71,7 +71,7 @@ REBINT CT_Word(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Word: C
 //
-Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Word(Value* out, Type type, const Value* arg)
 {
     if (Any_Word(arg)) {
         //
@@ -79,7 +79,7 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         // stay in sync with the binding state)
         //
         Copy_Cell(out, arg);
-        CHANGE_VAL_TYPE_BITS(out, kind);
+        CHANGE_VAL_TYPE_BITS(out, type);
         return out;
     }
 
@@ -87,14 +87,14 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         Size size;
         Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
-        if (kind == TYPE_ISSUE) {
+        if (type == TYPE_ISSUE) {
             Erase_Cell(out);
             if (nullptr == Scan_Issue(out, bp, size))
                 panic (Error_Bad_Char_Raw(arg));
         }
         else {
             Erase_Cell(out);
-            if (nullptr == Scan_Any_Word(out, kind, bp, size))
+            if (nullptr == Scan_Any_Word(out, type, bp, size))
                 panic (Error_Bad_Char_Raw(arg));
         }
         return out;
@@ -103,17 +103,17 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         Byte buf[8];
         REBLEN len = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg));
         Erase_Cell(out);
-        if (nullptr == Scan_Any_Word(out, kind, &buf[0], len))
+        if (nullptr == Scan_Any_Word(out, type, &buf[0], len))
             panic (Error_Bad_Char_Raw(arg));
         return out;
     }
     else if (Is_Datatype(arg)) {
-        return Init_Any_Word(out, kind, Canon_From_Id(VAL_TYPE_SYM(arg)));
+        return Init_Any_Word(out, type, Canon_From_Id(VAL_TYPE_SYM(arg)));
     }
     else if (Is_Logic(arg)) {
         return Init_Any_Word(
             out,
-            kind,
+            type,
             VAL_LOGIC(arg) ? CANON(TRUE) : CANON(FALSE)
         );
     }
@@ -125,9 +125,9 @@ Bounce MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Word: C
 //
-Bounce TO_Word(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Word(Value* out, Type type, const Value* arg)
 {
-    return MAKE_Word(out, kind, arg);
+    return MAKE_Word(out, type, arg);
 }
 
 

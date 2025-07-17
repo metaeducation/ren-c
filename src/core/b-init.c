@@ -265,8 +265,10 @@ static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
 
         Value* value = Append_Context(Lib_Context, KNOWN(word), nullptr);
         RESET_CELL(value, TYPE_DATATYPE);
-        CELL_DATATYPE_TYPE(value) = cast(enum Reb_Kind, n);
-        CELL_DATATYPE_SPEC(value) = Cell_Array(Array_At(boot_typespecs, n - 1));
+        value->payload.datatype.type = cast(Type, n);
+        value->payload.datatype.spec = Cell_Array(
+            Array_At(boot_typespecs, n - 1)
+    );
 
         // !!! The system depends on these definitions, as they are used by
         // Get_Type and Type_Of.  Lock it for safety...though consider an
@@ -276,7 +278,7 @@ static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
         // on lib...but it could still be technically possible, even in
         // a limited sense.)
         //
-        assert(value == Datatype_From_Kind(cast(enum Reb_Kind, n)));
+        assert(value == Datatype_From_Type(cast(Type, n)));
         Set_Cell_Flag(Varlist_Slot(Lib_Context, n), PROTECTED);
 
         Append_Value(catalog, KNOWN(word));

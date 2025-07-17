@@ -46,9 +46,9 @@ REBINT CT_Unit(const Cell* a, const Cell* b, REBINT mode)
 // MAKE is disallowed, with the general rule that a blank in will give
 // a null out... for e.g. `make object! opt select data spec else [...]`
 //
-Bounce MAKE_Unit(Value* out, enum Reb_Kind kind, const Value* arg) {
+Bounce MAKE_Unit(Value* out, Type type, const Value* arg) {
     UNUSED(out);
-    panic (Error_Bad_Make(kind, arg));
+    panic (Error_Bad_Make(type, arg));
 }
 
 
@@ -57,9 +57,9 @@ Bounce MAKE_Unit(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 // TO is disallowed, e.g. you can't TO convert an integer of 0 to a blank.
 //
-Bounce TO_Unit(Value* out, enum Reb_Kind kind, const Value* data) {
+Bounce TO_Unit(Value* out, Type type, const Value* data) {
     UNUSED(out);
-    panic (Error_Bad_Make(kind, data));
+    panic (Error_Bad_Make(type, data));
 }
 
 

@@ -273,8 +273,8 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     //
     // http://stackoverflow.com/questions/17061967/c-switch-and-jump-tables
     //
-    enum Reb_Kind kind = VAL_TYPE_RAW(v); // Note: unreadable BLANK!s are ok
-    switch (kind) {
+    Type type = Unchecked_Type_Of(v); // Note: unreadable BLANK!s are ok
+    switch (type) {
     case TYPE_0_END:
         break; // use Queue_Mark_Opt_Value_Deep() if END would be a bug
 
@@ -448,8 +448,8 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
     case TYPE_DATATYPE:
         // Type spec is allowed to be nullptr.  See %typespec.r file
-        if (CELL_DATATYPE_SPEC(v))
-            Queue_Mark_Array_Deep(CELL_DATATYPE_SPEC(v));
+        if (Datatype_Spec(v))
+            Queue_Mark_Array_Deep(Datatype_Spec(v));
         break;
 
     case TYPE_TYPESET:
@@ -522,7 +522,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
       #if RUNTIME_CHECKS
         Value* archetype = Varlist_Archetype(context);
-        assert(CTX_TYPE(context) == kind);
+        assert(CTX_TYPE(context) == type);
         assert(Cell_Varlist(archetype) == context);
       #endif
 
@@ -563,7 +563,7 @@ INLINE void Queue_Mark_Opt_Value_Deep(const Cell* v)
 INLINE void Queue_Mark_Value_Deep(const Cell* v)
 {
     assert(NOT_END(v));
-    assert(VAL_TYPE_RAW(v) != TYPE_NULLED); // Note: Unreadable blanks ok
+    assert(Unchecked_Type_Of(v) != TYPE_NULLED); // Note: Unreadable blanks ok
     Queue_Mark_Opt_End_Cell_Deep(v);
 }
 

@@ -305,7 +305,7 @@ INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
 
 
 struct Reb_Datatype_Payload {
-    enum Reb_Kind kind;
+    Type type;
     Array* spec;
 };
 
@@ -347,7 +347,7 @@ struct Reb_Series_Payload {
 };
 
 struct Reb_Typeset_Payload {
-    REBU64 bits; // One bit for each DATATYPE! (use with FLAGIT_KIND)
+    REBU64 bits; // One bit for each DATATYPE! (use with FLAG_TYPE)
 };
 
 

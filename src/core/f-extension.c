@@ -352,7 +352,7 @@ Value* rebCollateExtension_internal(
 // Rebol-frame-interfaced functions, not raw C structures like this.)
 //
 void Hook_Datatype(
-    enum Reb_Kind kind,
+    Type type,
     GENERIC_HOOK gen,
     PATH_HOOK pef,
     COMPARE_HOOK ctf,
@@ -360,50 +360,50 @@ void Hook_Datatype(
     TO_HOOK to_func,
     MOLD_HOOK mold_func
 ) {
-    if (Generic_Hooks[kind] != &T_Unhooked)
+    if (Generic_Hooks[type] != &T_Unhooked)
         panic ("Generic dispatcher already hooked.");
-    if (Path_Hooks[kind] != &PD_Unhooked)
+    if (Path_Hooks[type] != &PD_Unhooked)
         panic ("Path dispatcher already hooked.");
-    if (Compare_Hooks[kind] != &CT_Unhooked)
+    if (Compare_Hooks[type] != &CT_Unhooked)
         panic ("Comparison dispatcher already hooked.");
-    if (Make_Hooks[kind] != &MAKE_Unhooked)
+    if (Make_Hooks[type] != &MAKE_Unhooked)
         panic ("Make dispatcher already hooked.");
-    if (To_Hooks[kind] != &TO_Unhooked)
+    if (To_Hooks[type] != &TO_Unhooked)
         panic ("To dispatcher already hooked.");
-    if (Mold_Or_Form_Hooks[kind] != &MF_Unhooked)
+    if (Mold_Or_Form_Hooks[type] != &MF_Unhooked)
         panic ("Mold or Form dispatcher already hooked.");
 
-    Generic_Hooks[kind] = gen;
-    Path_Hooks[kind] = pef;
-    Compare_Hooks[kind] = ctf;
-    Make_Hooks[kind] = make_func;
-    To_Hooks[kind] = to_func;
-    Mold_Or_Form_Hooks[kind] = mold_func;
+    Generic_Hooks[type] = gen;
+    Path_Hooks[type] = pef;
+    Compare_Hooks[type] = ctf;
+    Make_Hooks[type] = make_func;
+    To_Hooks[type] = to_func;
+    Mold_Or_Form_Hooks[type] = mold_func;
 }
 
 
 //
 //  Unhook_Datatype: C
 //
-void Unhook_Datatype(enum Reb_Kind kind)
+void Unhook_Datatype(Type type)
 {
-    if (Generic_Hooks[kind] == &T_Unhooked)
+    if (Generic_Hooks[type] == &T_Unhooked)
         panic ("Generic dispatcher is not hooked.");
-    if (Path_Hooks[kind] == &PD_Unhooked)
+    if (Path_Hooks[type] == &PD_Unhooked)
         panic ("Path dispatcher is not hooked.");
-    if (Compare_Hooks[kind] == &CT_Unhooked)
+    if (Compare_Hooks[type] == &CT_Unhooked)
         panic ("Comparison dispatcher is not hooked.");
-    if (Make_Hooks[kind] == &MAKE_Unhooked)
+    if (Make_Hooks[type] == &MAKE_Unhooked)
         panic ("Make dispatcher is not hooked.");
-    if (To_Hooks[kind] == &TO_Unhooked)
+    if (To_Hooks[type] == &TO_Unhooked)
         panic ("To dispatcher is not hooked.");
-    if (Mold_Or_Form_Hooks[kind] == &MF_Unhooked)
+    if (Mold_Or_Form_Hooks[type] == &MF_Unhooked)
         panic ("Mold or Form dispatcher is not hooked.");
 
-    Generic_Hooks[kind] = &T_Unhooked;
-    Path_Hooks[kind] = &PD_Unhooked;
-    Compare_Hooks[kind] = &CT_Unhooked;
-    Make_Hooks[kind] = &MAKE_Unhooked;
-    To_Hooks[kind] = &TO_Unhooked;
-    Mold_Or_Form_Hooks[kind] = &MF_Unhooked;
+    Generic_Hooks[type] = &T_Unhooked;
+    Path_Hooks[type] = &PD_Unhooked;
+    Compare_Hooks[type] = &CT_Unhooked;
+    Make_Hooks[type] = &MAKE_Unhooked;
+    To_Hooks[type] = &TO_Unhooked;
+    Mold_Or_Form_Hooks[type] = &MF_Unhooked;
 }

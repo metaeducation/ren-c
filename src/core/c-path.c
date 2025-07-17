@@ -67,7 +67,7 @@ Bounce PD_Unhooked(
     UNUSED(picker);
     UNUSED(opt_setval);
 
-    const Value* type = Datatype_From_Kind(Type_Of(pvs->out));
+    const Value* type = Datatype_From_Type(Type_Of(pvs->out));
     UNUSED(type); // !!! put in error message?
 
     panic ("Datatype is provided by an extension which is not loaded.");
@@ -134,7 +134,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         if (bounce == nullptr)
             panic (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
 
-        switch (VAL_TYPE_RAW(bounce)) {
+        switch (Unchecked_Type_Of(bounce)) {
 
         case TYPE_0_END: // unhandled
             assert(bounce == BOUNCE_UNHANDLED); // shouldn't be other ends
@@ -207,10 +207,10 @@ bool Next_Path_Throws(REBPVS *pvs)
                 panic ("NULL used in path picking but was not handled");
             panic (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
         }
-        else if (VAL_TYPE_RAW(r) <= TYPE_NULLED) {
+        else if (Unchecked_Type_Of(r) <= TYPE_NULLED) {
             Handle_Api_Dispatcher_Result(pvs, r);
         }
-        else switch (VAL_TYPE_RAW(r)) {
+        else switch (Unchecked_Type_Of(r)) {
 
         case TYPE_0_END:
             panic (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
@@ -603,7 +603,7 @@ DECLARE_NATIVE(PICK)
     if (not bounce)
         return bounce;
 
-    switch (VAL_TYPE_RAW(bounce)) {
+    switch (Unchecked_Type_Of(bounce)) {
     case TYPE_0_END:
         assert(bounce == BOUNCE_UNHANDLED);
         panic (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
@@ -681,7 +681,7 @@ DECLARE_NATIVE(POKE)
     assert(hook); // &PD_Panic is used instead of nullptr
 
     const Value* bounce = hook(pvs, PVS_PICKER(pvs), ARG(VALUE));
-    switch (VAL_TYPE_RAW(bounce)) {
+    switch (Unchecked_Type_Of(bounce)) {
       case TYPE_0_END:
         assert(bounce == BOUNCE_UNHANDLED);
         panic (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));

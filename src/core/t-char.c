@@ -55,10 +55,10 @@ REBINT CT_Char(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Char: C
 //
-Bounce MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce MAKE_Char(Value* out, Type type, const Value* arg)
 {
-    assert(kind == TYPE_CHAR);
-    UNUSED(kind);
+    assert(type == TYPE_CHAR);
+    UNUSED(type);
 
     switch(Type_Of(arg)) {
     case TYPE_CHAR:
@@ -109,9 +109,9 @@ Bounce MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 //  TO_Char: C
 //
-Bounce TO_Char(Value* out, enum Reb_Kind kind, const Value* arg)
+Bounce TO_Char(Value* out, Type type, const Value* arg)
 {
-    return MAKE_Char(out, kind, arg);
+    return MAKE_Char(out, type, arg);
 }
 
 
@@ -265,7 +265,7 @@ REBTYPE(Char)
     }
 
     if (chr < 0 || chr > 0xffff)  // see main branch build for UTF-8 Everywhere
-        panic (Error_Type_Limit_Raw(Datatype_From_Kind(TYPE_CHAR)));
+        panic (Error_Type_Limit_Raw(Datatype_From_Type(TYPE_CHAR)));
 
     return Init_Char(OUT, cast(Ucs2Unit, chr));
 }
