@@ -84,7 +84,7 @@ INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
         Is_Base_Managed(binding)
         or IS_END(LVL(LINK(binding).keysource)->param) // not fulfilling
     );
-    binding->leader.bits |= BASE_FLAG_MANAGED; // !!! review managing needs
+    binding->header.bits |= BASE_FLAG_MANAGED; // !!! review managing needs
     return CTX(binding);
 }
 

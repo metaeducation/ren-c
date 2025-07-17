@@ -63,8 +63,8 @@ INLINE Symbol* Canon_Symbol(Symbol* str) {
 }
 
 INLINE Option(SymId) Symbol_Id(Symbol* str) {
-    uint16_t sym = SECOND_UINT16(&str->leader);
-    assert(sym == SECOND_UINT16(&Canon_Symbol(str)->leader));
+    uint16_t sym = SECOND_UINT16(&str->header);
+    assert(sym == SECOND_UINT16(&Canon_Symbol(str)->header));
     return cast(SymId, sym);
 }
 

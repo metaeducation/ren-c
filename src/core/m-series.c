@@ -403,7 +403,7 @@ ATTRIBUTE_NO_RETURN void Crash_On_Flex_Debug(Flex* s)
     fflush(stdout);
     fflush(stderr);
 
-    if (s->leader.bits & BASE_FLAG_MANAGED)
+    if (s->header.bits & BASE_FLAG_MANAGED)
         fprintf(stderr, "managed");
     else
         fprintf(stderr, "unmanaged");
@@ -412,7 +412,7 @@ ATTRIBUTE_NO_RETURN void Crash_On_Flex_Debug(Flex* s)
 
   #if DEBUG_STUB_ORIGINS
     fprintf(stderr, " was likely ");
-    if (s->leader.bits & BASE_FLAG_UNREADABLE)
+    if (s->header.bits & BASE_FLAG_UNREADABLE)
         fprintf(stderr, "freed");
     else
         fprintf(stderr, "created");

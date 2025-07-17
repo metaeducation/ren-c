@@ -122,7 +122,7 @@ INLINE void Mark_Stub_Only(Stub* s)
         assert(not Is_Flex_Dynamic(s));
   #endif
 
-    s->leader.bits |= BASE_FLAG_MARKED; // may be already set
+    s->header.bits |= BASE_FLAG_MARKED; // may be already set
 }
 
 
@@ -174,7 +174,7 @@ INLINE void Queue_Mark_Array_Deep(Array* a) { // plain array
     assert(Not_Array_Flag(a, IS_PAIRLIST));
 
     if (Get_Array_Flag(a, HAS_FILE_LINE) and LINK(a).file)
-        LINK(a).file->leader.bits |= BASE_FLAG_MARKED;
+        LINK(a).file->header.bits |= BASE_FLAG_MARKED;
 
     Queue_Mark_Array_Subclass_Deep(a);
 }
@@ -183,7 +183,7 @@ INLINE void Queue_Mark_Context_Deep(VarList* c) { // ARRAY_FLAG_IS_VARLIST
     Array* varlist = Varlist_Array(c);
     assert(
         Get_Flex_Info(varlist, INACCESSIBLE)
-        or SERIES_MASK_CONTEXT == (varlist->leader.bits & (
+        or SERIES_MASK_CONTEXT == (varlist->header.bits & (
             SERIES_MASK_CONTEXT // these should be set, not the others
                 | ARRAY_FLAG_IS_PAIRLIST
                 | ARRAY_FLAG_IS_PARAMLIST
@@ -197,7 +197,7 @@ INLINE void Queue_Mark_Context_Deep(VarList* c) { // ARRAY_FLAG_IS_VARLIST
 INLINE void Queue_Mark_Action_Deep(REBACT *a) { // ARRAY_FLAG_IS_PARAMLIST
     Array* paramlist = ACT_PARAMLIST(a);
     assert(
-        SERIES_MASK_ACTION == (paramlist->leader.bits & (
+        SERIES_MASK_ACTION == (paramlist->header.bits & (
             SERIES_MASK_ACTION // these should be set, not the others
                 | ARRAY_FLAG_IS_PAIRLIST
                 | ARRAY_FLAG_IS_VARLIST
@@ -211,7 +211,7 @@ INLINE void Queue_Mark_Action_Deep(REBACT *a) { // ARRAY_FLAG_IS_PARAMLIST
 INLINE void Queue_Mark_Map_Deep(REBMAP *m) { // ARRAY_FLAG_IS_PAIRLIST
     Array* pairlist = MAP_PAIRLIST(m);
     assert(
-        ARRAY_FLAG_IS_PAIRLIST == (pairlist->leader.bits & (
+        ARRAY_FLAG_IS_PAIRLIST == (pairlist->header.bits & (
             ARRAY_FLAG_IS_VARLIST | ARRAY_FLAG_IS_PAIRLIST | ARRAY_FLAG_IS_PARAMLIST
             | ARRAY_FLAG_HAS_FILE_LINE
         ))
@@ -226,11 +226,11 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
         return;
 
   #if RUNTIME_CHECKS
-    if (binding->leader.bits & ARRAY_FLAG_IS_PARAMLIST) {
+    if (binding->header.bits & ARRAY_FLAG_IS_PARAMLIST) {
         //
         // It's an action, any reasonable added check?
     }
-    else if (binding->leader.bits & ARRAY_FLAG_IS_VARLIST) {
+    else if (binding->header.bits & ARRAY_FLAG_IS_VARLIST) {
         //
         // It's a context, any reasonable added check?
     }
@@ -241,7 +241,7 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
     }
   #endif
 
-    if (binding->leader.bits & BASE_FLAG_MANAGED)
+    if (binding->header.bits & BASE_FLAG_MANAGED)
         Queue_Mark_Array_Subclass_Deep(cast_Array(binding));
 }
 
@@ -393,7 +393,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
             // data for the handle lives in that shared location.  There is
             // nothing the GC needs to see inside a handle.
             //
-            singular->leader.bits |= BASE_FLAG_MARKED;
+            singular->header.bits |= BASE_FLAG_MARKED;
 
         #if RUNTIME_CHECKS
             assert(Array_Len(singular) == 1);
@@ -432,7 +432,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         // process, as long as the bit is cleared at the end.
         //
         Flex* pairing = cast(Flex*, v->payload.pair);
-        pairing->leader.bits |= BASE_FLAG_MARKED;  // read via Stub
+        pairing->header.bits |= BASE_FLAG_MARKED;  // read via Stub
         break; }
 
     case TYPE_TUPLE:
@@ -600,7 +600,7 @@ static void Propagate_All_GC_Marks(void)
         // We should have marked this series at queueing time to keep it from
         // being doubly added before the queue had a chance to be processed
          //
-        assert(a->leader.bits & BASE_FLAG_MARKED);
+        assert(a->header.bits & BASE_FLAG_MARKED);
 
     #ifdef HEAVY_CHECKS
         //
@@ -830,19 +830,19 @@ static void Mark_Root_Stubs(void)
             if (Not_Base_Readable(s))
                 continue;
 
-            if (s->leader.bits & BASE_FLAG_ROOT) {
+            if (s->header.bits & BASE_FLAG_ROOT) {
                 //
                 // This came from Alloc_Value(); all references should be
                 // from the C stack, only this visit should be marking it.
                 //
-                assert(not (s->leader.bits & BASE_FLAG_MARKED));
+                assert(not (s->header.bits & BASE_FLAG_MARKED));
                 assert(not Is_Flex_Dynamic(s));
                 assert(
                     not LINK(s).owner
-                    or LINK(s).owner->leader.bits & BASE_FLAG_MANAGED
+                    or LINK(s).owner->header.bits & BASE_FLAG_MANAGED
                 );
 
-                if (not (s->leader.bits & BASE_FLAG_MANAGED))
+                if (not (s->header.bits & BASE_FLAG_MANAGED))
                     assert(not LINK(s).owner);
                 else if (
                     Varlist_Array(LINK(s).owner)->info.bits
@@ -865,7 +865,7 @@ static void Mark_Root_Stubs(void)
                     continue;
                 }
                 else // note that Mark_Level_Stack_Deep() will mark the owner
-                    s->leader.bits |= BASE_FLAG_MARKED;
+                    s->header.bits |= BASE_FLAG_MARKED;
 
                 // Note: Eval_Core_Throws() might target API cells, uses END
                 //
@@ -873,8 +873,8 @@ static void Mark_Root_Stubs(void)
                 continue;
             }
 
-            if (s->leader.bits & BASE_FLAG_CELL) { // a pairing
-                if (s->leader.bits & BASE_FLAG_MANAGED)
+            if (s->header.bits & BASE_FLAG_CELL) { // a pairing
+                if (s->header.bits & BASE_FLAG_MANAGED)
                     continue; // PAIR! or other value will mark it
 
                 assert(!"unmanaged pairings not believed to exist yet");
@@ -884,10 +884,10 @@ static void Mark_Root_Stubs(void)
             }
 
             if (Is_Flex_Array(s)) {
-                if (s->leader.bits & BASE_FLAG_MANAGED)
+                if (s->header.bits & BASE_FLAG_MANAGED)
                     continue; // BLOCK!, Mark_Level_Stack_Deep() etc. mark it
 
-                if (s->leader.bits & ARRAY_FLAG_IS_VARLIST) {
+                if (s->header.bits & ARRAY_FLAG_IS_VARLIST) {
                     //
                     // Legal when unmanaged varlists are held onto by
                     // Level*, and marked by them.  We check for that by
@@ -1012,7 +1012,7 @@ static void Mark_Guarded_Bases(void)
         }
         else { // a series
             Flex* s = cast(Flex*, base);
-            assert(s->leader.bits & BASE_FLAG_MANAGED);
+            assert(s->header.bits & BASE_FLAG_MANAGED);
             if (Is_Flex_Array(s))
                 Queue_Mark_Array_Subclass_Deep(cast_Array(s));
             else
@@ -1075,7 +1075,7 @@ static void Mark_Level_Stack_Deep(void)
 
         if (
             L->specifier != SPECIFIED
-            and (L->specifier->leader.bits & BASE_FLAG_MANAGED)
+            and (L->specifier->header.bits & BASE_FLAG_MANAGED)
         ){
             Queue_Mark_Context_Deep(CTX(L->specifier));
         }
@@ -1298,11 +1298,11 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
         Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            switch (FIRST_BYTE(&s->leader) >> 4) {
+            switch (FIRST_BYTE(&s->header) >> 4) {
             case 9: // 0x8 + 0x1
                 assert(Is_Flex_Managed(s));
-                if (s->leader.bits & BASE_FLAG_MARKED)
-                    s->leader.bits &= ~BASE_FLAG_MARKED;
+                if (s->header.bits & BASE_FLAG_MARKED)
+                    s->header.bits &= ~BASE_FLAG_MARKED;
                 else {
                     Expand_Flex_Tail(sweeplist, 1);
                     *Flex_At(Base*, sweeplist, count) = s;
@@ -1318,8 +1318,8 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                 // !!! It is a Base, but *not* a "Stub".
                 //
                 assert(Is_Flex_Managed(s));
-                if (s->leader.bits & BASE_FLAG_MARKED)
-                    s->leader.bits &= ~BASE_FLAG_MARKED;
+                if (s->header.bits & BASE_FLAG_MARKED)
+                    s->header.bits &= ~BASE_FLAG_MARKED;
                 else {
                     Expand_Flex_Tail(sweeplist, 1);
                     *Flex_At(Base*, sweeplist, count) = s;
@@ -1581,7 +1581,7 @@ Array* Snapshot_All_Actions(void)
         Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            switch (s->leader.bits & 0x7) {
+            switch (s->header.bits & 0x7) {
             case 5:
                 // A managed Stub which has no cell mask and is marked as
                 // *not* an END.  This is the typical signature of what one

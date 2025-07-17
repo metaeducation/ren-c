@@ -469,7 +469,7 @@ Base* Try_Find_Containing_Base_Debug(const void *p)
             if (Not_Base_Readable(s))
                 continue;
 
-            if (s->leader.bits & BASE_FLAG_CELL) {  // a "pairing"
+            if (s->header.bits & BASE_FLAG_CELL) {  // a "pairing"
                 if (p >= cast(void*, s) and p < cast(void*, s + 1))
                     return s;  // Stub slots are (sizeof(Cell) * 2)
                 continue;
@@ -1001,7 +1001,7 @@ void Remake_Flex(Flex* s, REBLEN units, Byte wide, Flags flags)
     }
 
     WIDE_BYTE_OR_0(s) = wide;
-    s->leader.bits |= flags;
+    s->header.bits |= flags;
 
     // !!! Currently the remake won't make a series that fits in the size of
     // a Stub.  All series code needs a general audit, so that should be one
@@ -1259,7 +1259,7 @@ void Manage_Flex(Flex* s)
     }
   #endif
 
-    s->leader.bits |= BASE_FLAG_MANAGED;
+    s->header.bits |= BASE_FLAG_MANAGED;
 
     Untrack_Manual_Flex(s);
 }

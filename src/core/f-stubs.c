@@ -344,7 +344,7 @@ void Set_Tuple(Value* value, Byte *bytes, REBLEN len)
 // !!! Overlaps with ASSERT_CONTEXT, review folding them together.
 //
 void Extra_Init_Any_Context_Checks_Debug(Type type, VarList* c) {
-    assert(Varlist_Array(c)->leader.bits & SERIES_MASK_CONTEXT);
+    assert(Varlist_Array(c)->header.bits & SERIES_MASK_CONTEXT);
 
     Value* archetype = Varlist_Archetype(c);
     assert(Cell_Varlist(archetype) == c);
@@ -390,7 +390,7 @@ void Extra_Init_Any_Context_Checks_Debug(Type type, VarList* c) {
 // !!! Overlaps with ASSERT_ACTION, review folding them together.
 //
 void Extra_Init_Action_Checks_Debug(REBACT *a) {
-    assert(ACT_PARAMLIST(a)->leader.bits & SERIES_MASK_ACTION);
+    assert(ACT_PARAMLIST(a)->header.bits & SERIES_MASK_ACTION);
 
     Value* archetype = ACT_ARCHETYPE(a);
     assert(VAL_ACTION(archetype) == a);

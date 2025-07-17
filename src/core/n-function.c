@@ -210,7 +210,7 @@ DECLARE_NATIVE(RETURN)
     if (not L_binding)
         panic (Error_Return_Archetype_Raw()); // must have binding to jump to
 
-    assert(L_binding->leader.bits & ARRAY_FLAG_IS_VARLIST);
+    assert(L_binding->header.bits & ARRAY_FLAG_IS_VARLIST);
     target_level = Level_Of_Varlist_May_Panic(CTX(L_binding));
 
     // !!! We only have a Level* via the binding.  We don't have distinct
@@ -254,7 +254,7 @@ DECLARE_NATIVE(RETURN)
     if (not Typeset_Check(typeset, Type_Of(v)))
         panic (Error_Bad_Return_Type(target_level, Type_Of(v)));
 
-    assert(L_binding->leader.bits & ARRAY_FLAG_IS_VARLIST);
+    assert(L_binding->header.bits & ARRAY_FLAG_IS_VARLIST);
 
     Copy_Cell(OUT, NAT_VALUE(UNWIND)); // see also Make_Thrown_Unwind_Value
     INIT_BINDING_MAY_MANAGE(OUT, L_binding);

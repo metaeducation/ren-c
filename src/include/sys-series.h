@@ -307,7 +307,7 @@ INLINE void Term_Non_Array_Flex_Len(Flex* s, REBLEN len) {
 //
 
 #define Is_Flex_Managed(s) \
-    (did ((s)->leader.bits & BASE_FLAG_MANAGED))
+    (did ((s)->header.bits & BASE_FLAG_MANAGED))
 
 INLINE void Force_Flex_Managed(Flex* s) {
     if (not Is_Flex_Managed(s))
@@ -562,7 +562,7 @@ INLINE Flex* Alloc_Flex_Stub(Flags flags) {
     // or array of length 0!  Two are set here, the third (info) should be
     // set by the caller.
     //
-    s->leader.bits = BASE_FLAG_BASE | flags | FLEX_FLAG_8_IS_TRUE;  // #1
+    s->header.bits = BASE_FLAG_BASE | flags | FLEX_FLAG_8_IS_TRUE;  // #1
     Corrupt_If_Needful(LINK(s).corrupt);  // #2
   #if RUNTIME_CHECKS
     memset(cast(char*, &s->content.fixed), 0xBD, sizeof(s->content));  // #3-#6

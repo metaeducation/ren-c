@@ -78,16 +78,16 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A Flex has two places to store bits...in the "leader" and in the "info".
+// A Flex has two places to store bits...in the "header" and in the "info".
 // The following are the FLEX_FLAG_XXX and ARRAY_FLAG_XXX etc. that are used
-// in the leader, while the FLEX_INFO_XXX flags will be found in the info.
+// in the header, while the FLEX_INFO_XXX flags will be found in the info.
 //
 // ** Make_Flex() takes FLEX_FLAG_XXX as a parameter, so anything that
 // controls series creation should be a _FLAG_ as opposed to an _INFO_! **
 //
 // (Other general rules might be that bits that are to be tested or set as
 // a group should be in the same flag group.  Perhaps things that don't change
-// for the lifetime of the Flex might prefer leader to the info, too?
+// for the lifetime of the Flex might prefer header to the info, too?
 // Such things might help with caching.)
 //
 
@@ -95,7 +95,7 @@
     0 // helps locate places that want to say "no flags"
 
 
-// Detect_Rebol_Pointer() uses the fact that this bit is 0 for series leaders
+// Detect_Rebol_Pointer() uses the fact that this bit is 0 for series headers
 // to discern between Stub, Cell, and END.  If push comes to shove that
 // could be done differently, and this bit retaken.
 //
@@ -588,8 +588,8 @@ STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == BASE_FLAG_CELL);
 // Units in the STUB_POOL are the size of two Cells, and there are 3 basic
 // layouts which can be overlaid inside the Unit:
 //
-//      Dynamic: [leader [allocation tracking] info link misc]
-//     Singular: [leader [cell] info link misc]
+//      Dynamic: [header [allocation tracking] info link misc]
+//     Singular: [header [cell] info link misc]
 //      Pairing: [[cell] [cell]]
 //
 // `info` is not the start of a "Rebol Base" (Base*, e.g. either a Stub or
@@ -847,14 +847,14 @@ union StubMiscUnion {
 
 struct StubStruct {
     //
-    // The bit that is checked in the leader is the USED bit, which is
+    // The bit that is checked in the header is the USED bit, which is
     // bit #9.  This is set on all Cells and also in END marking headers,
     // and should be set in used series Stubs.
     //
     // The remaining bits are free, and used to hold SYM values for those
     // words that have them.
     //
-    union HeaderUnion leader;
+    union HeaderUnion header;
 
     // The `link` field is generally used for pointers to something that
     // when updated, all references to this series would want to be able
@@ -952,7 +952,7 @@ struct StubStruct {
 
         if (base)
             assert(
-                (reinterpret_cast<Flex*>(p)->leader.bits & (
+                (reinterpret_cast<Flex*>(p)->header.bits & (
                     BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
                 )) == (
                     BASE_FLAG_BASE
@@ -978,7 +978,7 @@ struct StubStruct {
         if (base) {
             assert(WIDE_BYTE_OR_0(reinterpret_cast<Flex*>(p)) == 0);
             assert(
-                (reinterpret_cast<Flex*>(p)->leader.bits & (
+                (reinterpret_cast<Flex*>(p)->header.bits & (
                     BASE_FLAG_BASE
                         | BASE_FLAG_UNREADABLE
                         | BASE_FLAG_CELL
@@ -1001,30 +1001,26 @@ struct StubStruct {
 // Using token pasting macros achieves some brevity, but also helps to avoid
 // mixups with FLEX_INFO_XXX!
 //
-// 1. Avoid cost that inline functions (even constexpr) add to debug builds
-//    by "typechecking" via finding the name ->leader.bits in (f).  (The name
-//    "leader" is chosen to prevent calls with cells, which use "header".)
-//
-// 2. Flex flags are managed distinctly from conceptual immutability of their
+// 1. Flex flags are managed distinctly from conceptual immutability of their
 //    data, and so we m_cast away constness.  We do this on the HeaderUnion
 //    vs. x_cast() on the (f) to get the typechecking of [1]
 
 #define Get_Flex_Flag(f,name) \
-    (((f)->leader.bits & FLEX_FLAG_##name) != 0)
+    ((ensure(Flex*, (f))->header.bits & FLEX_FLAG_##name) != 0)
 
 #define Not_Flex_Flag(f,name) \
-    (((f)->leader.bits & FLEX_FLAG_##name) == 0)
+    ((ensure(Flex*, (f))->header.bits & FLEX_FLAG_##name) == 0)
 
-#define Set_Flex_Flag(f,name) \
-    m_cast(union HeaderUnion*, &(f)->leader)->bits |= FLEX_FLAG_##name
+#define Set_Flex_Flag(f,name) /* m_cast() [1] */ \
+    (m_cast(Flex*, ensure(Flex*, (f)))->header.bits |= FLEX_FLAG_##name)
 
-#define Clear_Flex_Flag(f,name) \
-    m_cast(union HeaderUnion*, &(f)->leader)->bits &= ~FLEX_FLAG_##name
+#define Clear_Flex_Flag(f,name) /* m_cast() [1] */ \
+    (m_cast(Flex*, ensure(Flex*, (f)))->header.bits &= (~ FLEX_FLAG_##name))
 
 
 
 //
-// Flex INFO bits (distinct from leader FLAGs)
+// Flex INFO bits (distinct from header FLAGs)
 //
 
 #define Get_Flex_Info(f,name) \
@@ -1049,16 +1045,16 @@ struct StubStruct {
 
 
 #define Get_Array_Flag(a,name) \
-    (((a)->leader.bits & ARRAY_FLAG_##name) != 0)
+    (((a)->header.bits & ARRAY_FLAG_##name) != 0)
 
 #define Not_Array_Flag(a,name) \
-    (((a)->leader.bits & ARRAY_FLAG_##name) == 0)
+    (((a)->header.bits & ARRAY_FLAG_##name) == 0)
 
 #define Set_Array_Flag(a,name) \
-    m_cast(union HeaderUnion*, &(a)->leader)->bits |= ARRAY_FLAG_##name
+    m_cast(union HeaderUnion*, &(a)->header)->bits |= ARRAY_FLAG_##name
 
 #define Clear_Array_Flag(a,name) \
-    m_cast(union HeaderUnion*, &(a)->leader)->bits &= ~ARRAY_FLAG_##name
+    m_cast(union HeaderUnion*, &(a)->header)->bits &= ~ARRAY_FLAG_##name
 
 
 // These are series implementation details that should not be used by most

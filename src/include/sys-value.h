@@ -221,16 +221,16 @@
 //
 
 #define Get_Cell_Flag(c,name) \
-    (((c)->header.bits & CELL_FLAG_##name) != 0)
+    ((ensure(Cell*, (c))->header.bits & CELL_FLAG_##name) != 0)
 
 #define Not_Cell_Flag(c,name) \
-    (((c)->header.bits & CELL_FLAG_##name) == 0)
+    ((ensure(Cell*, (c))->header.bits & CELL_FLAG_##name) == 0)
 
 #define Set_Cell_Flag(c,name) \
-    m_cast(union HeaderUnion*, &(c)->header)->bits |= CELL_FLAG_##name
+    (m_cast(Cell*, ensure(Cell*, (c)))->header.bits |= CELL_FLAG_##name)
 
 #define Clear_Cell_Flag(c,name) \
-    m_cast(union HeaderUnion*, &(c)->header)->bits &= ~CELL_FLAG_##name
+    (m_cast(Cell*, ensure(Cell*, (c)))->header.bits &= (~ CELL_FLAG_##name))
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -1072,11 +1072,11 @@ INLINE void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
 // and it had its ->header and ->info bits set in such a way as to avoid the
 // need for some conditional checks.  e.g. instead of writing:
 //
-//     if (binding and binding->leader.bits & BASE_FLAG_MANAGED) {...}
+//     if (binding and binding->header.bits & BASE_FLAG_MANAGED) {...}
 //
 // The special UNBOUND pointer set some bits, such as to pretend to be managed:
 //
-//     if (binding->leader.bits & BASE_FLAG_MANAGED) {...} // incl. UNBOUND
+//     if (binding->header.bits & BASE_FLAG_MANAGED) {...} // incl. UNBOUND
 //
 // Question was whether avoiding the branching involved from the extra test
 // for null would be worth it for a consistent ability to dereference.  At
@@ -1109,12 +1109,12 @@ INLINE void INIT_BINDING(Cell* v, Stub* binding) {
     if (not binding)
         return; // e.g. UNBOUND
 
-    assert(not (binding->leader.bits & BASE_FLAG_CELL)); // not currently used
+    assert(not (binding->header.bits & BASE_FLAG_CELL)); // not currently used
 
-    if (binding->leader.bits & BASE_FLAG_MANAGED) {
+    if (binding->header.bits & BASE_FLAG_MANAGED) {
         assert(
-            binding->leader.bits & ARRAY_FLAG_IS_VARLIST // specific
-            or binding->leader.bits & ARRAY_FLAG_IS_PARAMLIST // relative
+            binding->header.bits & ARRAY_FLAG_IS_VARLIST // specific
+            or binding->header.bits & ARRAY_FLAG_IS_PARAMLIST // relative
             or (
                 Is_Varargs(v) and not Is_Flex_Dynamic(binding)
             ) // varargs from MAKE VARARGS! [...], else is a varlist
@@ -1169,7 +1169,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, Stub* binding) {
     assert(IS_END(L->param)); // cannot manage frame varlist in mid fulfill!
     UNUSED(L); // !!! not actually used yet, coming soon
 
-    binding->leader.bits |= BASE_FLAG_MANAGED; // burdens the GC, now...
+    binding->header.bits |= BASE_FLAG_MANAGED; // burdens the GC, now...
     out->extra.binding = binding;
 }
 

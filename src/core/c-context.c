@@ -1388,7 +1388,7 @@ void Assert_Context_Core(VarList* c)
 {
     Array* varlist = Varlist_Array(c);
 
-    if (not (varlist->leader.bits & SERIES_MASK_CONTEXT))
+    if (not (varlist->header.bits & SERIES_MASK_CONTEXT))
         crash (varlist);
 
     Array* keylist = Keylist_Of_Varlist(c);

@@ -122,13 +122,13 @@ INLINE bool Is_Overriding_Context(VarList* stored, VarList* override)
     //
     if (
         Is_Base_A_Stub(stored_source)
-        and cast_Flex(stored_source)->leader.bits & ARRAY_FLAG_IS_PARAMLIST
+        and cast_Flex(stored_source)->header.bits & ARRAY_FLAG_IS_PARAMLIST
     ){
         return false;
     }
     if (
         Is_Base_A_Stub(temp)
-        and cast_Flex(temp)->leader.bits & ARRAY_FLAG_IS_PARAMLIST
+        and cast_Flex(temp)->header.bits & ARRAY_FLAG_IS_PARAMLIST
     ){
         return false;
     }
@@ -372,7 +372,7 @@ INLINE VarList* Get_Var_Context(
 
     VarList* c;
 
-    if (binding->leader.bits & ARRAY_FLAG_IS_VARLIST) {
+    if (binding->header.bits & ARRAY_FLAG_IS_VARLIST) {
 
         // SPECIFIC BINDING: The context the word is bound to is explicitly
         // contained in the `any_word` Value payload.  Extract it, but check
@@ -408,7 +408,7 @@ INLINE VarList* Get_Var_Context(
         }
     }
     else {
-        assert(binding->leader.bits & ARRAY_FLAG_IS_PARAMLIST);
+        assert(binding->header.bits & ARRAY_FLAG_IS_PARAMLIST);
 
         // RELATIVE BINDING: The word was made during a deep copy of the block
         // that was given as a function's body, and stored a reference to that
@@ -566,7 +566,7 @@ INLINE Value* Derelativize(
     if (not binding) {
         out->extra.binding = UNBOUND;
     }
-    else if (binding->leader.bits & ARRAY_FLAG_IS_PARAMLIST) {
+    else if (binding->header.bits & ARRAY_FLAG_IS_PARAMLIST) {
         //
         // The stored binding is relative to a function, and so the specifier
         // needs to be a frame to have a precise invocation to lookup in.
@@ -602,7 +602,7 @@ INLINE Value* Derelativize(
 
         INIT_BINDING_MAY_MANAGE(out, specifier);
     }
-    else if (specifier and (binding->leader.bits & ARRAY_FLAG_IS_VARLIST)) {
+    else if (specifier and (binding->header.bits & ARRAY_FLAG_IS_VARLIST)) {
         Stub* f_binding = SPC_BINDING(specifier);  // can't panic(), see notes
 
         if (
@@ -618,7 +618,7 @@ INLINE Value* Derelativize(
     }
     else { // no potential override
         assert(
-            (binding->leader.bits & ARRAY_FLAG_IS_VARLIST)
+            (binding->header.bits & ARRAY_FLAG_IS_VARLIST)
             or Is_Varargs(v) // BLOCK! style varargs use binding to hold array
         );
         INIT_BINDING_MAY_MANAGE(out, binding);

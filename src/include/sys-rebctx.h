@@ -62,7 +62,7 @@
 
         if (base)
             assert(
-                (reinterpret_cast<Flex*>(p)->leader.bits & (
+                (reinterpret_cast<Flex*>(p)->header.bits & (
                     BASE_FLAG_BASE | ARRAY_FLAG_IS_VARLIST
                         | BASE_FLAG_UNREADABLE
                         | BASE_FLAG_CELL
