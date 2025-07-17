@@ -396,10 +396,10 @@ DECLARE_NATIVE(EVALUATE)
         VarList* stolen = Steal_Context_Vars(c, phase);
         LINK(stolen).keysource = L;  // changes Varlist_Keys_Head() result
 
-        // Its data stolen, the context's node should now be GC'd when
+        // Its data stolen, the context's Stub should now be GC'd when
         // references in other FRAME! value cells have all gone away.
         //
-        assert(Is_Node_Managed(c));
+        assert(Is_Base_Managed(c));
         assert(Get_Flex_Info(c, INACCESSIBLE));
 
         L->varlist = Varlist_Array(stolen);

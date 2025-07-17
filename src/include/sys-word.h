@@ -81,10 +81,10 @@ INLINE VarList* VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
     Stub* binding = VAL_BINDING(v);
     assert(
-        Is_Node_Managed(binding)
+        Is_Base_Managed(binding)
         or IS_END(LVL(LINK(binding).keysource)->param) // not fulfilling
     );
-    binding->leader.bits |= NODE_FLAG_MANAGED; // !!! review managing needs
+    binding->leader.bits |= BASE_FLAG_MANAGED; // !!! review managing needs
     return CTX(binding);
 }
 

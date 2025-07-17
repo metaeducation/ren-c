@@ -77,7 +77,7 @@ typedef struct {
 //
 // !!! So long as events are directly hooking into the low-level cell
 // implementation, this could just use EVENT_FLAG_XXX flags.  eventee could
-// be a binding to a Node that was able to inspect that node to get the
+// be a binding to a Base that was able to inspect that pointer to get the
 // data "model".
 
 enum {

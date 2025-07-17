@@ -226,7 +226,7 @@ void Dump_Info(void)
 
     printf("    Ballast: %d\n", cast(int, GC_Ballast));
     printf("    Disable: %s\n", GC_Disabled ? "yes" : "no");
-    printf("    Guarded Nodes: %d\n", cast(int, Flex_Len(GC_Guarded)));
+    printf("    Guarded Bases: %d\n", cast(int, Flex_Len(GC_Guarded)));
     fflush(stdout);
 }
 

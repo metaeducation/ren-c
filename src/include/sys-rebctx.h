@@ -36,7 +36,7 @@
 // can't be FLEX_FLAG_FIXED_SIZE, because most varlists can expand.
 //
 #define SERIES_MASK_CONTEXT \
-    (NODE_FLAG_NODE | FLEX_FLAG_ALWAYS_DYNAMIC | ARRAY_FLAG_IS_VARLIST)
+    (BASE_FLAG_BASE | FLEX_FLAG_ALWAYS_DYNAMIC | ARRAY_FLAG_IS_VARLIST)
 
 
 #if NO_DEBUG_CHECK_CASTS
@@ -51,25 +51,25 @@
         constexpr bool derived = std::is_same<T, VarList>::value;
 
         constexpr bool base = std::is_same<T, void>::value
-            or std::is_same<T, Node>::value
+            or std::is_same<T, Base>::value
             or std::is_same<T, Flex>::value
             or std::is_same<T, Array>::value;
 
         static_assert(
             derived or base,
-            "CTX() works on Node/Flex/Array/VarList"
+            "CTX() works on Base/Flex/Array/VarList"
         );
 
         if (base)
             assert(
                 (reinterpret_cast<Flex*>(p)->leader.bits & (
-                    NODE_FLAG_NODE | ARRAY_FLAG_IS_VARLIST
-                        | NODE_FLAG_UNREADABLE
-                        | NODE_FLAG_CELL
+                    BASE_FLAG_BASE | ARRAY_FLAG_IS_VARLIST
+                        | BASE_FLAG_UNREADABLE
+                        | BASE_FLAG_CELL
                         | ARRAY_FLAG_IS_PARAMLIST
                         | ARRAY_FLAG_IS_PAIRLIST
                 )) == (
-                    NODE_FLAG_NODE | ARRAY_FLAG_IS_VARLIST
+                    BASE_FLAG_BASE | ARRAY_FLAG_IS_VARLIST
                 )
             );
 

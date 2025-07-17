@@ -539,7 +539,7 @@ void Virtual_Bind_Deep_To_New_Context(
             // setting the loop variables as they go.  It doesn't walk through
             // the array the user gave us, so if it's a GET-WORD! the
             // information is lost.  Do a trick where we put the GET-WORD!
-            // itself into the slot, and give it NODE_FLAG_MARKED...then
+            // itself into the slot, and give it BASE_FLAG_MARKED...then
             // hide it from the context and binding.
             //
             Init_Typeset(
@@ -636,9 +636,9 @@ void Virtual_Bind_Deep_To_New_Context(
         if (stored == 0)
             assert(duplicate);
         else if (stored > 0)
-            assert(Not_Node_Marked(var));
+            assert(Not_Base_Marked(var));
         else
-            assert(Is_Node_Marked(var));
+            assert(Is_Base_Marked(var));
     }
 
     SHUTDOWN_BINDER(&binder);
@@ -655,7 +655,7 @@ void Virtual_Bind_Deep_To_New_Context(
 //  Init_Interning_Binder: C
 //
 // The global "binding table" is actually now pieces of data that live on the
-// series nodes that store UTF-8 data for words.  This creates a mapping from
+// series stubs that store UTF-8 data for words.  This creates a mapping from
 // canon word spellings to signed integers.
 //
 void Init_Interning_Binder(

@@ -152,4 +152,4 @@ INLINE bool Do_Branch_Core_Throws(
     Do_Branch_Core_Throws((out), (branch), (condition))
 
 #define Do_Branch_Throws(out,branch) \
-    Do_Branch_Core_Throws((out), (branch), m_cast(Value*, END_NODE))
+    Do_Branch_Core_Throws((out), (branch), m_cast(Value*, END_BASE))

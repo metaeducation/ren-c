@@ -124,7 +124,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 // If op is VARARG_OP_TAIL_Q, then it will return ~okay~ or ~nulled~
 // and this case cannot return a thrown value.
 //
-// For other ops, it will return END_NODE if at the end of variadic input,
+// For other ops, it will return END_BASE if at the end of variadic input,
 // or OUT if there is a value.
 //
 // If an evaluation is involved, then a thrown value is possibly returned.
@@ -156,7 +156,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            IS_END(shared) ? END_NODE : List_At(shared),
+            IS_END(shared) ? END_BASE : List_At(shared),
             IS_END(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
             pclass
         )){
@@ -356,7 +356,7 @@ Bounce MAKE_Varargs(Value* out, Type type, const Value* arg)
         // By protocol, if the array is exhausted then the shared element
         // should be an END marker (not an array at its end)
         //
-        Array* array1 = Alloc_Singular(NODE_FLAG_MANAGED);
+        Array* array1 = Alloc_Singular(BASE_FLAG_MANAGED);
         if (IS_END(List_At(arg)))
             SET_END(ARR_SINGLE(array1));
         else

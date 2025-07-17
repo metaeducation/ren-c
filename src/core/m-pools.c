@@ -34,7 +34,7 @@
 //
 // Unless they've been explicitly marked as fixed-size, series have a dynamic
 // component.  But they also have a fixed-size component that is allocated
-// from a memory pool of other fixed-size things.  This is called the "Node"
+// from a memory pool of other fixed-size things.  This is called the "Base"
 // in both Rebol and Red terminology.  It is an item whose pointer is valid
 // for the lifetime of the object, regardless of resizing.  This is where
 // header information is stored, and pointers to these objects may be saved
@@ -170,7 +170,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 {
     // R3-Alpha had a "0-8 small string pool".  e.g. a pool of allocations for
     // payloads 0 to 8 bytes in length.  These are not technically possible in
-    // Ren-C's pool, because it requires 2*sizeof(void*) for each node at the
+    // Ren-C's pool, because it requires 2*sizeof(void*) for each Unit at the
     // minimum...because instead of just the freelist pointer, it has a
     // standardized header (0 when free).
     //
@@ -298,8 +298,8 @@ void Startup_Pools(REBINT scale)
     // As a trick to keep this Flex from trying to track itself, say it's
     // managed, then sneak the flag off.
     //
-    GC_Manuals = Make_Flex_Core(15, sizeof(Flex* ), NODE_FLAG_MANAGED);
-    Clear_Node_Managed_Bit(GC_Manuals);
+    GC_Manuals = Make_Flex_Core(15, sizeof(Flex* ), BASE_FLAG_MANAGED);
+    Clear_Base_Managed_Bit(GC_Manuals);
 
     Prior_Expand = ALLOC_N(Flex*, MAX_EXPAND_LIST);
     CLEAR(Prior_Expand, sizeof(Flex*) * MAX_EXPAND_LIST);
@@ -325,10 +325,10 @@ void Shutdown_Pools(void)
         Flex* series = cast(Flex*, debug_seg + 1);
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; n--, series++) {
-            if (Not_Node_Readable(series))
+            if (Not_Base_Readable(series))
                 continue;
 
-            assert(Not_Node_Managed(series));
+            assert(Not_Base_Managed(series));
             printf("At least one leaked series at shutdown...\n");
             crash (series);
         }
@@ -389,7 +389,7 @@ void Shutdown_Pools(void)
 //  Fill_Pool: C
 //
 // Allocate memory for a pool.  The amount allocated will be determined from
-// the size and units specified when the pool header was created.  The nodes
+// the size and units specified when the pool header was created.  The units
 // of the pool are linked to the free list.
 //
 void Fill_Pool(REBPOL *pool)
@@ -416,9 +416,9 @@ void Fill_Pool(REBPOL *pool)
     pool->has += units;
     pool->free += units;
 
-    // Add new nodes to the end of free list:
+    // Add new units to the end of free list:
 
-    // Can't use NOD() here because it tests for NOT(NODE_FLAG_UNREADABLE)
+    // Can't use BAS() here because it tests for NOT(BASE_FLAG_UNREADABLE)
     //
     PoolUnit* unit = cast(PoolUnit*, seg + 1);
 
@@ -439,7 +439,7 @@ void Fill_Pool(REBPOL *pool)
             break;
         }
 
-        // Can't use NOD() here because it tests for NODE_FLAG_UNREADABLE
+        // Can't use BAS() here because it tests for BASE_FLAG_UNREADABLE
         //
         unit->next_if_free = cast(PoolUnit*, cast(Byte*, unit) + pool->wide);
         unit = unit->next_if_free;
@@ -452,13 +452,13 @@ void Fill_Pool(REBPOL *pool)
 #if RUNTIME_CHECKS
 
 //
-//  Try_Find_Containing_Node_Debug: C
+//  Try_Find_Containing_Base_Debug: C
 //
 // This debug-build-only routine will look to see if it can find what series
 // a data pointer lives in.  It returns nullptr if it can't find one.  It's very
 // slow, because it has to look at all the series.  Use sparingly!
 //
-Node* Try_Find_Containing_Node_Debug(const void *p)
+Base* Try_Find_Containing_Base_Debug(const void *p)
 {
     REBSEG *seg;
 
@@ -466,10 +466,10 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
         Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (Not_Node_Readable(s))
+            if (Not_Base_Readable(s))
                 continue;
 
-            if (s->leader.bits & NODE_FLAG_CELL) {  // a "pairing"
+            if (s->leader.bits & BASE_FLAG_CELL) {  // a "pairing"
                 if (p >= cast(void*, s) and p < cast(void*, s + 1))
                     return s;  // Stub slots are (sizeof(Cell) * 2)
                 continue;
@@ -576,7 +576,7 @@ Value* Alloc_Pairing(void) {
 // paired value) Cell header.  API handle Cells are all managed.
 //
 void Manage_Pairing(Value* paired) {
-    Set_Node_Managed_Bit(paired);
+    Set_Base_Managed_Bit(paired);
 }
 
 
@@ -590,8 +590,8 @@ void Manage_Pairing(Value* paired) {
 // their lifetime.
 //
 void Unmanage_Pairing(Value* paired) {
-    assert(Is_Node_Managed(paired));
-    Clear_Node_Managed_Bit(paired);
+    assert(Is_Base_Managed(paired));
+    Clear_Base_Managed_Bit(paired);
 }
 
 
@@ -599,12 +599,12 @@ void Unmanage_Pairing(Value* paired) {
 //  Free_Pairing: C
 //
 void Free_Pairing(Value* paired) {
-    assert(Not_Node_Managed(paired));
+    assert(Not_Base_Managed(paired));
     Flex* s = cast(Flex*, paired);
     Free_Pooled(STUB_POOL, s);
 
   #if DEBUG_STUB_ORIGINS
-    s->tick = TICK;  // update to be tick on which node was freed
+    s->tick = TICK;  // update to be tick on which pairing was freed
   #endif
 }
 
@@ -629,10 +629,10 @@ void Free_Unbiased_Flex_Data(char *unbiased, REBLEN total)
 
     if (pool_num < SYSTEM_POOL) {
         //
-        // The series data does not honor "node protocol" when it is in use
+        // The series data does not honor "BASE_BYTE()" when it is in use
         // The pools are not swept the way the Stub pool is, so only the
-        // free nodes have significance to their headers.  Use a cast and not
-        // NOD() because that assumes not (NODE_FLAG_UNREADABLE)
+        // free units have significance to their headers.  Use a cast and not
+        // BAS() because that assumes not (BASE_FLAG_UNREADABLE)
         //
         PoolUnit* unit = cast(PoolUnit*, unbiased);
 
@@ -831,7 +831,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
     // area if there's no dynamic portion.  The in-Stub content has to be
     // copied to preserve the data.  This could be generalized so that the
     // routines that do calculations operate on the content as a whole, not
-    // the Stub node, so the content is extracted either way.
+    // the Stub, so the content is extracted either way.
     //
     union StubContentUnion content_old;
     REBINT bias_old;
@@ -896,7 +896,7 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
     PG_Reb_Stats->Series_Expanded++;
   #endif
 
-    assert(Not_Node_Marked(s));
+    assert(Not_Base_Marked(s));
 }
 
 
@@ -909,14 +909,14 @@ void Expand_Flex(Flex* s, REBLEN index, REBLEN delta)
 void Swap_Flex_Content(Flex* a, Flex* b)
 {
     // While the data series underlying a string may change widths over the
-    // lifetime of that string node, there's not really any reasonable case
-    // for mutating an array node into a non-array or vice versa.
+    // lifetime of that string Stub, there's not really any reasonable case
+    // for mutating an array Stub into a non-array or vice versa.
     //
     assert(Is_Flex_Array(a) == Is_Flex_Array(b));
 
     // There are bits in the ->info and ->header which pertain to the content,
     // which includes whether the series is dynamic or if the data lives in
-    // the node itself, the width (right 8 bits), etc.  Note that the length
+    // the Stub itself, the width (right 8 bits), etc.  Note that the length
     // of non-dynamic series lives in the info.
 
     Byte a_wide = WIDE_BYTE_OR_0(a); // indicates array if 0
@@ -952,16 +952,16 @@ void Swap_Flex_Content(Flex* a, Flex* b)
 //  Remake_Flex: C
 //
 // Reallocate a Flex as a given maximum size.  Content in the retained
-// portion of the length will be preserved if NODE_FLAG_NODE is passed in.
+// portion of the length will be preserved if BASE_FLAG_BASE is passed in.
 //
 void Remake_Flex(Flex* s, REBLEN units, Byte wide, Flags flags)
 {
     // !!! This routine is being scaled back in terms of what it's allowed to
     // do for the moment; so the method of passing in flags is a bit strange.
     //
-    assert((flags & ~(NODE_FLAG_NODE | FLEX_FLAG_POWER_OF_2)) == 0);
+    assert((flags & ~(BASE_FLAG_BASE | FLEX_FLAG_POWER_OF_2)) == 0);
 
-    bool preserve = did (flags & NODE_FLAG_NODE);
+    bool preserve = did (flags & BASE_FLAG_BASE);
 
     REBLEN len_old = Flex_Len(s);
     Byte wide_old = Flex_Wide(s);
@@ -1064,7 +1064,7 @@ void Decay_Flex(Flex* s)
         char *unbiased = s->content.dynamic.data - (wide * bias);
 
         // !!! Contexts and actions keep their archetypes, for now, in the
-        // now collapsed node.  For FRAME! this means holding onto the binding
+        // now collapsed Stub.  For FRAME! this means holding onto the binding
         // which winds up being used in Derelativize().  See SPC_BINDING.
         // Preserving ACTION!'s archetype is speculative--to point out the
         // possibility exists for the other array with a "canon" [0]
@@ -1084,7 +1084,7 @@ void Decay_Flex(Flex* s)
         Free_Unbiased_Flex_Data(unbiased, total);
 
         // !!! This indicates reclaiming of the space, not for the series
-        // nodes themselves...have they never been accounted for, e.g. in
+        // Stubs themselves...have they never been accounted for, e.g. in
         // R3-Alpha?  If not, they should be...additional sizeof(Stub),
         // also tracking overhead for that.  Review the question of how
         // the GC watermarks interact with Alloc_Mem and the "higher
@@ -1141,8 +1141,8 @@ void Decay_Flex(Flex* s)
 void GC_Kill_Flex(Flex* s)
 {
   #if RUNTIME_CHECKS
-    if (Not_Node_Readable(s)) {
-        printf("Freeing already freed node.\n");
+    if (Not_Base_Readable(s)) {
+        printf("Freeing already freed flex.\n");
         crash (s);
     }
   #endif
@@ -1217,7 +1217,7 @@ INLINE void Untrack_Manual_Flex(Flex* s)
 void Free_Unmanaged_Flex(Flex* s)
 {
   #if RUNTIME_CHECKS
-    if (Not_Node_Readable(s)) {
+    if (Not_Base_Readable(s)) {
         printf("Trying to Free_Unmanaged_Flex() on already freed Flex\n");
         crash (s); // erroring here helps not conflate with tracking problems
     }
@@ -1236,7 +1236,7 @@ void Free_Unmanaged_Flex(Flex* s)
 //
 //  Manage_Flex: C
 //
-// If NODE_FLAG_MANAGED is not explicitly passed to Make_Flex_Core(), a
+// If BASE_FLAG_MANAGED is not explicitly passed to Make_Flex_Core(), a
 // Flex will be manually memory-managed by default.  Thus, you don't need
 // to worry about the Flex being freed out from under you while building it,
 // and can call Free_Unmanaged_Flex() on it if you are done with it.
@@ -1259,7 +1259,7 @@ void Manage_Flex(Flex* s)
     }
   #endif
 
-    s->leader.bits |= NODE_FLAG_MANAGED;
+    s->leader.bits |= BASE_FLAG_MANAGED;
 
     Untrack_Manual_Flex(s);
 }
@@ -1276,8 +1276,8 @@ void Manage_Flex(Flex* s)
 //
 void Assert_Pointer_Detection_Working(void)
 {
-    uintptr_t cell_flag = NODE_FLAG_CELL;
-    assert(FIRST_BYTE(&cell_flag) == NODE_BYTEMASK_0x08_CELL);
+    uintptr_t cell_flag = BASE_FLAG_CELL;
+    assert(FIRST_BYTE(&cell_flag) == BASE_BYTEMASK_0x08_CELL);
     uintptr_t flag_left_bit_31 = FLAG_LEFT_BIT(31);
     assert(FOURTH_BYTE(&flag_left_bit_31) == 0x01);
 
@@ -1290,14 +1290,14 @@ void Assert_Pointer_Detection_Working(void)
     DECLARE_VALUE (end_cell);
     SET_END(end_cell);
     assert(Detect_Rebol_Pointer(end_cell) == DETECTED_AS_END);
-    assert(Detect_Rebol_Pointer(END_NODE) == DETECTED_AS_END);
+    assert(Detect_Rebol_Pointer(END_BASE) == DETECTED_AS_END);
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
 
-    // An Endlike_Header() can use the NODE_FLAG_MANAGED bit however it wants.
-    // But the canon END_NODE is not managed, which was once used for a trick
+    // An Endlike_Header() can use the BASE_FLAG_MANAGED bit however it wants.
+    // But the canon END_BASE is not managed, which was once used for a trick
     // of using it vs. nullptr...but that trick isn't being used right now.
     //
-    assert(not (END_NODE->header.bits & NODE_FLAG_MANAGED));
+    assert(not (END_BASE->header.bits & BASE_FLAG_MANAGED));
 
     Flex* flex = Make_Flex(1, sizeof(char));
     assert(Detect_Rebol_Pointer(flex) == DETECTED_AS_STUB);
@@ -1312,7 +1312,7 @@ void Assert_Pointer_Detection_Working(void)
 // Traverse the free lists of all pools -- just to prove we can.
 //
 // Note: This was useful in R3-Alpha for finding corruption from bad memory
-// writes, because a write past the end of a node destroys the pointer for the
+// writes, because a write past the end of a Unit destroys the pointer for the
 // next free area.  The Always_Malloc option for Ren-C leverages the faster
 // checking built into Valgrind or Address Sanitizer for the same problem.
 // However, a call to this is kept in the debug build on init and shutdown
@@ -1326,14 +1326,14 @@ REBLEN Check_Memory_Debug(void)
 
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (Not_Node_Readable(s))
+            if (Not_Base_Readable(s))
                 continue;
 
-            if (Is_Node_A_Cell(s))
+            if (Is_Base_A_Cell(s))
                 continue; // a pairing
 
             if (not Is_Flex_Dynamic(s))
-                continue; // data lives in the series node itself
+                continue; // data lives in the series stub itself
 
             if (Flex_Rest(s) == 0)
                 crash (s); // zero size allocations not legal
@@ -1347,17 +1347,17 @@ REBLEN Check_Memory_Debug(void)
         }
     }
 
-    REBLEN total_free_nodes = 0;
+    REBLEN total_free_units = 0;
 
     REBLEN pool_num;
     for (pool_num = 0; pool_num != SYSTEM_POOL; pool_num++) {
-        REBLEN pool_free_nodes = 0;
+        REBLEN pool_free_units = 0;
 
         PoolUnit* unit = Mem_Pools[pool_num].first;
         for (; unit != nullptr; unit = unit->next_if_free) {
-            assert(Not_Node_Readable(unit));
+            assert(Not_Base_Readable(unit));
 
-            ++pool_free_nodes;
+            ++pool_free_units;
 
             bool found = false;
             seg = Mem_Pools[pool_num].segs;
@@ -1370,7 +1370,7 @@ REBLEN Check_Memory_Debug(void)
                     )
                 ){
                     if (found) {
-                        printf("node belongs to more than one segment\n");
+                        printf("unit belongs to more than one segment\n");
                         crash (unit);
                     }
 
@@ -1379,18 +1379,18 @@ REBLEN Check_Memory_Debug(void)
             }
 
             if (not found) {
-                printf("node does not belong to one of the pool's segments\n");
+                printf("unit does not belong to one of the pool's segments\n");
                 crash (unit);
             }
         }
 
-        if (Mem_Pools[pool_num].free != pool_free_nodes)
-            crash ("actual free node count does not agree with pool header");
+        if (Mem_Pools[pool_num].free != pool_free_units)
+            crash ("actual free unit count does not agree with pool header");
 
-        total_free_nodes += pool_free_nodes;
+        total_free_units += pool_free_units;
     }
 
-    return total_free_nodes;
+    return total_free_units;
 }
 
 
@@ -1406,7 +1406,7 @@ void Dump_All_Flex_Of_Size(REBLEN size)
         Flex* s = cast(Flex*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (Not_Node_Readable(s))
+            if (Not_Base_Readable(s))
                 continue;
 
             if (Flex_Wide(s) == size) {
@@ -1436,10 +1436,10 @@ void Dump_Flex_In_Pool(REBLEN pool_id)
         Flex* s = cast(Flex*, seg + 1);
         REBLEN n = 0;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; --n, ++s) {
-            if (Not_Node_Readable(s))
+            if (Not_Base_Readable(s))
                 continue;
 
-            if (Is_Node_A_Cell(s))
+            if (Is_Base_A_Cell(s))
                 continue;  // pairing
 
             if (
@@ -1544,14 +1544,14 @@ REBU64 Inspect_Flex(bool show)
 
         REBLEN n;
         for (n = Mem_Pools[STUB_POOL].units; n > 0; n--) {
-            if (Not_Node_Readable(s)) {
+            if (Not_Base_Readable(s)) {
                 ++fre;
                 continue;
             }
 
             ++tot;
 
-            if (Is_Node_A_Cell(s))
+            if (Is_Base_A_Cell(s))
                 continue;
 
             tot_size += Flex_Total_If_Dynamic(s); // else 0
@@ -1620,7 +1620,7 @@ REBU64 Inspect_Flex(bool show)
             cast(unsigned long, tot_size)
         );
         printf("  %lu free headers\n", cast(unsigned long, fre));
-        printf("  %lu bytes node-space\n", cast(unsigned long, fre_size));
+        printf("  %lu bytes stub-space\n", cast(unsigned long, fre_size));
         printf("\n");
     }
 

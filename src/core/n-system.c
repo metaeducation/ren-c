@@ -118,7 +118,7 @@ DECLARE_NATIVE(EXIT_REBOL)
 //  "Recycles unused memory."
 //
 //      return: [~null~ integer!]
-//          {Number of series nodes recycled (if applicable)}
+//          {Number of series stubs recycled (if applicable)}
 //      /off
 //          "Disable auto-recycling"
 //      /on
@@ -167,15 +167,15 @@ DECLARE_NATIVE(RECYCLE)
       #if NO_RUNTIME_CHECKS
         panic (Error_Debug_Only_Raw());
       #else
-        Flex* sweeplist = Make_Flex(100, sizeof(Node*));
+        Flex* sweeplist = Make_Flex(100, sizeof(Base*));
         count = Recycle_Core(false, sweeplist);
         assert(count == Flex_Len(sweeplist));
 
         REBLEN index = 0;
         for (index = 0; index < count; ++index) {
-            Node* node = *Flex_At(Node*, sweeplist, index);
-            PROBE(node);
-            UNUSED(node);
+            Base* base = *Flex_At(Base*, sweeplist, index);
+            PROBE(base);
+            UNUSED(base);
         }
 
         Free_Unmanaged_Flex(sweeplist);

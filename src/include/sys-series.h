@@ -128,12 +128,12 @@
 //
 // The mechanics of the macros that get or set the length of a series are a
 // little bit complicated.  This is due to the optimization that allows data
-// which is sizeof(Cell) or smaller to fit directly inside the series node.
+// which is sizeof(Cell) or smaller to fit directly inside the Flex Stub.
 //
 // If a series is not "dynamic" (e.g. has a full pooled allocation) then its
 // length is stored in the header.  But if a series is dynamically allocated
 // out of the memory pools, then without the data itself taking up the
-// "content", there's room for a length in the node.
+// "content", there's room for a length in the Stub.
 //
 
 INLINE REBLEN Flex_Len(Flex* s) {
@@ -307,7 +307,7 @@ INLINE void Term_Non_Array_Flex_Len(Flex* s, REBLEN len) {
 //
 
 #define Is_Flex_Managed(s) \
-    (did ((s)->leader.bits & NODE_FLAG_MANAGED))
+    (did ((s)->leader.bits & BASE_FLAG_MANAGED))
 
 INLINE void Force_Flex_Managed(Flex* s) {
     if (not Is_Flex_Managed(s))
@@ -443,28 +443,28 @@ INLINE void Panic_If_Read_Only_Flex(Flex* s) {
 // before a command ends.
 //
 
-#define Push_Lifeguard(p) Push_Guard_Node(p)
+#define Push_Lifeguard(b) Push_Guard_Base(b)
 
 #if NO_RUNTIME_CHECKS
-    INLINE void Drop_Guard_Node(Node* n) {
-        UNUSED(n);
+    INLINE void Drop_Guard_Base(Base* b) {
+        UNUSED(b);
         GC_Guarded->content.dynamic.len--;
     }
 
-    #define Drop_Lifeguard(p) Drop_Guard_Node(p)
+    #define Drop_Lifeguard(b) Drop_Guard_Base(b)
 #else
-    INLINE void Drop_Guard_Node_Debug(
-        const Node* n,
+    INLINE void Drop_Guard_Base_Debug(
+        const Base* b,
         const char *file,
         int line
     ){
-        if (n != *Series_Last(const Node*, GC_Guarded))
-            crash_at (n, file, line);
+        if (b != *Series_Last(const Base*, GC_Guarded))
+            crash_at (b, file, line);
         GC_Guarded->content.dynamic.len--;
     }
 
-    #define Drop_Lifeguard(p) \
-        Drop_Guard_Node_Debug((p), __FILE__, __LINE__)
+    #define Drop_Lifeguard(b) \
+        Drop_Guard_Base_Debug((b), __FILE__, __LINE__)
 #endif
 
 
@@ -551,18 +551,18 @@ INLINE Binary* Cell_Bitset(const Cell* cell) {
 // allocation into a separate routine is not a huge cost.
 //
 INLINE Flex* Alloc_Flex_Stub(Flags flags) {
-    assert(not (flags & NODE_FLAG_CELL));
+    assert(not (flags & BASE_FLAG_CELL));
 
     Flex* s = cast(Flex*, Alloc_Pooled(STUB_POOL));
     if ((GC_Ballast -= sizeof(Stub)) <= 0)
         SET_SIGNAL(SIG_RECYCLE);
 
-    // Out of the 8 platform pointers that comprise a series node, only 3
+    // Out of the 8 platform pointers that comprise a Flex Stub, only 3
     // actually need to be initialized to get a functional non-dynamic series
     // or array of length 0!  Two are set here, the third (info) should be
     // set by the caller.
     //
-    s->leader.bits = NODE_FLAG_NODE | flags | FLEX_FLAG_8_IS_TRUE;  // #1
+    s->leader.bits = BASE_FLAG_BASE | flags | FLEX_FLAG_8_IS_TRUE;  // #1
     Corrupt_If_Needful(LINK(s).corrupt);  // #2
   #if RUNTIME_CHECKS
     memset(cast(char*, &s->content.fixed), 0xBD, sizeof(s->content));  // #3-#6
@@ -571,7 +571,7 @@ INLINE Flex* Alloc_Flex_Stub(Flags flags) {
     Corrupt_If_Needful(MISC(s).corrupt);  // #8
 
     // Note: This series will not participate in management tracking!
-    // See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Flex_Core().
+    // See BASE_FLAG_MANAGED handling in Make_Array_Core() and Make_Flex_Core().
 
   #if RUNTIME_CHECKS
     Touch_Stub_If_Debug(s); // tag current C stack as series origin in ASAN
@@ -595,7 +595,7 @@ INLINE REBLEN FIND_POOL(size_t size) {
 }
 
 
-// Allocates element array for an already allocated Stub node structure.
+// Allocates element array for an already allocated Stub structure.
 // Resets the bias and tail to zero, and sets the new width.  Flags like
 // FLEX_FLAG_FIXED_SIZE are left as they were, and other fields in the
 // series structure are untouched.
@@ -607,7 +607,7 @@ INLINE bool Did_Flex_Data_Alloc(Flex* s, REBLEN length) {
     //
     // Currently once a series becomes dynamic, it never goes back.  There is
     // no shrinking process that will pare it back to fit completely inside
-    // the Stub node.
+    // the Stub.
     //
     assert(Is_Flex_Dynamic(s)); // caller sets
 
@@ -686,7 +686,7 @@ INLINE bool Did_Flex_Data_Alloc(Flex* s, REBLEN length) {
 }
 
 
-// If the data is tiny enough, it will be fit into the series node itself.
+// If the data is tiny enough, it will be fit into the Flex Stub itself.
 // Small series will be allocated from a memory pool.
 // Large series will be allocated from system memory.
 //
@@ -700,7 +700,7 @@ INLINE Flex* Make_Flex_Core(
     if (cast(REBU64, capacity) * wide > INT32_MAX)
         panic (Error_No_Memory(cast(REBU64, capacity) * wide));
 
-    // Non-array series nodes do not need their info bits to conform to the
+    // Non-array Flex Stubs do not need their info bits to conform to the
     // rules of Endlike_Header(), so plain assignment can be used with a
     // non-zero second byte.  However, it obeys the fixed info bits for now.
     // (It technically doesn't need to.)
@@ -717,7 +717,7 @@ INLINE Flex* Make_Flex_Core(
         or (capacity * wide > sizeof(s->content))
     ){
         //
-        // Data won't fit in a Stub node, needs a dynamic allocation.  The
+        // Data won't fit in a Stub, needs a dynamic allocation.  The
         // capacity given back as the ->rest may be larger than the requested
         // size, because the memory pool reports the full rounded allocation.
 
@@ -736,7 +736,7 @@ INLINE Flex* Make_Flex_Core(
     //
     // !!! Code duplicated in Make_Array_Core() ATM.
     //
-    if (not (flags & NODE_FLAG_MANAGED)) {
+    if (not (flags & BASE_FLAG_MANAGED)) {
         if (Is_Flex_Full(GC_Manuals))
             Extend_Flex(GC_Manuals, 8);
 

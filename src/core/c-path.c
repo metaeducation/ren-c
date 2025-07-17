@@ -191,9 +191,9 @@ bool Next_Path_Throws(REBPVS *pvs)
             nullptr // no opt_setval, GET-PATH! or a SET-PATH! not at the end
         );
 
-        if (r and r != END_NODE) {
-            assert(r->header.bits & NODE_FLAG_CELL);
-            /* assert(not (r->header.bits & NODE_FLAG_ROOT)); */
+        if (r and r != END_BASE) {
+            assert(r->header.bits & BASE_FLAG_CELL);
+            /* assert(not (r->header.bits & BASE_FLAG_ROOT)); */
         }
 
         if (r == pvs->out) {
@@ -590,7 +590,7 @@ DECLARE_NATIVE(PICK)
 
     Copy_Cell(PVS_PICKER(pvs), ARG(PICKER));
 
-    pvs->value = END_NODE;
+    pvs->value = END_BASE;
     pvs->specifier = SPECIFIED;
 
     pvs->opt_label = nullptr;  // applies to e.g. :append/only returning APPEND
@@ -671,7 +671,7 @@ DECLARE_NATIVE(POKE)
 
     Copy_Cell(PVS_PICKER(pvs), ARG(PICKER));
 
-    pvs->value = END_NODE;
+    pvs->value = END_BASE;
     pvs->specifier = SPECIFIED;
 
     pvs->opt_label = nullptr;  // applies to e.g. :append/only returning APPEND

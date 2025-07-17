@@ -645,7 +645,7 @@ REBTYPE(Bitset)
     case SYM_COMPLEMENT:
     case SYM_NEGATE:
         flex = cast(Binary*,
-            Copy_Non_Array_Flex_Core(Cell_Bitset(value), NODE_FLAG_MANAGED)
+            Copy_Non_Array_Flex_Core(Cell_Bitset(value), BASE_FLAG_MANAGED)
         );
         INIT_BITS_NOT(flex, not BITS_NOT(Cell_Bitset(value)));
         Init_Bitset(value, flex);

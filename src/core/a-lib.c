@@ -191,7 +191,7 @@ void *API_rebRealloc(void *ptr, size_t new_size)
 
     // !!! It's less efficient to create a new series with another call to
     // rebMalloc(), but simpler for the time being.  Switch to do this with
-    // the same series node.
+    // the same series Stub.
     //
     void *reallocated = rebMalloc(new_size);
     memcpy(reallocated, ptr, old_size < new_size ? old_size : new_size);
@@ -215,7 +215,7 @@ void API_rebFree(void *ptr)
     Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*)); // need to underrun to fetch `s`
 
     Binary* s = *ps;
-    if (Is_Node_A_Cell(s)) {
+    if (Is_Base_A_Cell(s)) {
         rebJumps(
             "crash spaced [",
                 "{rebFree() mismatched with allocator!}"
@@ -279,7 +279,7 @@ RebolValue* API_rebRepossess(void *ptr, size_t size)
         bin->content.dynamic.rest -= ALIGN_SIZE;
     }
     else {
-        // Data is in Stub node itself, no bias.  Just slide the bytes down.
+        // Data is in Stub itself, no bias.  Just slide the bytes down.
         //
         memmove( // src overlaps destination, can't use memcpy()
             Binary_Head(bin),
@@ -768,19 +768,19 @@ RebolValue* API_rebRescue(
     // now pretend to be applying a dummy native.
     //
     DECLARE_END_LEVEL (L);
-    L->out = m_cast(Value*, END_NODE); // should not be written
+    L->out = m_cast(Value*, END_BASE); // should not be written
 
     Symbol* opt_label = nullptr;
     Push_Level_At_End(L, DO_MASK_NONE);
 
     Reuse_Varlist_If_Available(L); // needed to attach API handles to
     Push_Action(L, PG_Dummy_Action, UNBOUND);
-    Begin_Action(L, opt_label, m_cast(Value*, END_NODE));
+    Begin_Action(L, opt_label, m_cast(Value*, END_BASE));
     assert(IS_END(L->arg));
-    L->param = END_NODE; // signal all arguments gathered
-    assert(L->refine == END_NODE); // passed to Begin_Action();
-    L->arg = m_cast(Value*, END_NODE);
-    L->special = END_NODE;
+    L->param = END_BASE; // signal all arguments gathered
+    assert(L->refine == END_BASE); // passed to Begin_Action();
+    L->arg = m_cast(Value*, END_BASE);
+    L->special = END_BASE;
 
     // The first time through the following code 'error' will be null, but...
     // `panic` can longjmp here, so 'error' won't be null *if* that happens!
@@ -1321,12 +1321,12 @@ RebolValue* API_rebManage(RebolValue* v)
     assert(Is_Api_Value(v));
 
     Array* a = Singular_From_Cell(v);
-    assert(Is_Node_Root_Bit_Set(a));
+    assert(Is_Base_Root_Bit_Set(a));
 
     if (Is_Flex_Managed(a))
         panic ("Attempt to rebManage() a handle that's already managed.");
 
-    Set_Node_Managed_Bit(a);
+    Set_Base_Managed_Bit(a);
     assert(not LINK(a).owner);
     LINK(a).owner = Varlist_For_Level_May_Manage(TOP_LEVEL);
 
@@ -1341,15 +1341,15 @@ RebolValue* API_rebManage(RebolValue* v)
 //
 void API_rebUnmanage(void *p)
 {
-    Node* nod = p;
-    if (Is_Node_A_Stub(nod))
+    Base* base = p;
+    if (Is_Base_A_Stub(base))
         panic ("rebUnmanage() not yet implemented for rebMalloc() data");
 
-    Value* v = cast(Value*, nod);
+    Value* v = cast(Value*, base);
     assert(Is_Api_Value(v));
 
     Array* a = Singular_From_Cell(v);
-    assert(Is_Node_Root_Bit_Set(a));
+    assert(Is_Base_Root_Bit_Set(a));
 
     if (not Is_Flex_Managed(a))
         panic ("Attempt to rebUnmanage() a handle with indefinite lifetime.");
@@ -1360,7 +1360,7 @@ void API_rebUnmanage(void *p)
     // pointers to its cell being held by client C code only.  It's at their
     // own risk to do this, and not use those pointers after a free.
     //
-    Clear_Node_Managed_Bit(a);
+    Clear_Base_Managed_Bit(a);
     assert(Get_Array_Flag(LINK(a).owner, IS_VARLIST));
     LINK(a).owner = nullptr;
 }
@@ -1445,19 +1445,19 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     L->source->index = TRASHED_INDEX; // avoids warning in release build
     L->source->array = nullptr;
     L->source->vaptr = vaptr;
-    L->source->pending = END_NODE; // signal next fetch comes from va_list
+    L->source->pending = END_BASE; // signal next fetch comes from va_list
     L->source->deferring_infix = false;
 
     //
     // We reuse logic in Fetch_Next_In_Level() and Set_Level_Detected_Fetch()
-    // but the previous L->value will be tested for NODE_FLAG_ROOT.
+    // but the previous L->value will be tested for BASE_FLAG_ROOT.
     //
     DECLARE_VALUE (junk);
     L->value = Init_Unreadable(junk); // shows where garbage came from
 
     Set_Level_Detected_Fetch(nullptr, L, p);
 
-    L->out = m_cast(Value*, END_NODE);
+    L->out = m_cast(Value*, END_BASE);
     L->specifier = SPECIFIED; // relative values not allowed in va_lists
     L->gotten = nullptr;
 
@@ -1467,8 +1467,8 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     // The array is managed, but let's unmanage it so it doesn't get GC'd and
     // use it as the ID of the table entry for the promise.
     //
-    assert(Is_Node_Managed(L->source->array));
-    Clear_Node_Managed_Bit(L->source->array);
+    assert(Is_Base_Managed(L->source->array));
+    Clear_Base_Managed_Bit(L->source->array);
 
     EM_ASM_({
         setTimeout(function() { // evaluate the code w/no other code on GUI
@@ -1512,8 +1512,8 @@ void API_rebPromise_callback(intptr_t promise_id)
     // !!! We probably can't unmanage and free it after because it (may?) be
     // legal for references to that array to make it out to the debugger?
     //
-    assert(Not_Is_Node_Managed(arr));
-    Set_Node_Managed_Bit(arr);
+    assert(Not_Is_Base_Managed(arr));
+    Set_Base_Managed_Bit(arr);
 
     Value* result = Alloc_Value();
     if (THROWN_FLAG == Eval_At_Core(
@@ -1748,7 +1748,7 @@ RebolValue* API_rebError_OS(int errnum)
         Value* message = rebTextWide(lpMsgBuf);
         LocalFree(lpMsgBuf);
 
-        error = Make_Error_Managed(SYM_0, SYM_0, message, END_NODE);
+        error = Make_Error_Managed(SYM_0, SYM_0, message, END_BASE);
     }
   #else
     // strerror() is not thread-safe, but strerror_r is. Unfortunately, at

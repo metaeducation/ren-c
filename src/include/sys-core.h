@@ -277,7 +277,7 @@ typedef RebolValue Value;
 
 // !!! Definitions for the memory allocator generally don't need to be
 // included by all clients, though currently it is necessary to indicate
-// the pool where a "node" is to be allocated from.
+// the pool where a "Unit" is to be allocated from.
 //
 #include "mem-pools.h"
 

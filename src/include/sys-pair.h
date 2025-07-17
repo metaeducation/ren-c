@@ -26,7 +26,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A "pairing" fits in a sub-sized node, but holds two distinct Cells.
+// A "pairing" fits in a sub-sized unit, but holds two distinct Cells.
 //
 // !!! There is consideration of whether series payloads of length 2 might
 // be directly allocated as paireds.  This would require positioning such

@@ -115,7 +115,7 @@ void Startup_Level_Stack(void)
     Erase_Cell(Level_Spare(L));
     Init_Unreadable(Level_Spare(L));
 
-    L->out = m_cast(Value*, END_NODE); // should not be written
+    L->out = m_cast(Value*, END_BASE); // should not be written
     L->source = &TG_Level_Source_End;
     Push_Level_At_End(L, DO_MASK_NONE);
 
@@ -123,7 +123,7 @@ void Startup_Level_Stack(void)
     //
     Array* paramlist = Make_Array_Core(
         1,
-        NODE_FLAG_MANAGED | SERIES_MASK_ACTION
+        BASE_FLAG_MANAGED | SERIES_MASK_ACTION
     );
     MISC(paramlist).adjunct = nullptr;
 
@@ -150,12 +150,12 @@ void Startup_Level_Stack(void)
     Push_Action(L, PG_Dummy_Action, UNBOUND);
 
     Symbol* opt_label = nullptr;
-    Begin_Action(L, opt_label, m_cast(Value*, END_NODE));
+    Begin_Action(L, opt_label, m_cast(Value*, END_BASE));
     assert(IS_END(L->arg));
-    L->param = END_NODE; // signal all arguments gathered
-    assert(L->refine == END_NODE); // passed to Begin_Action();
-    L->arg = m_cast(Value*, END_NODE);
-    L->special = END_NODE;
+    L->param = END_BASE; // signal all arguments gathered
+    assert(L->refine == END_BASE); // passed to Begin_Action();
+    L->arg = m_cast(Value*, END_BASE);
+    L->special = END_BASE;
 
     Corrupt_If_Needful(L->prior); // help catch enumeration past BOTTOM_LEVEL
     TG_Bottom_Level = L;

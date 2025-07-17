@@ -101,7 +101,7 @@
     cast(Value*, &PG_Bounce_Immediate)
 
 #define BOUNCE_UNHANDLED \
-    cast(Value*, &PG_End_Node)  // ...an old and sort of superfluous conflation
+    cast(Value*, &PG_End_Base)  // ...an old and sort of superfluous conflation
 
 
 INLINE Array* ACT_PARAMLIST(REBACT *a) {
@@ -158,7 +158,7 @@ INLINE Value* ACT_PARAM(REBACT *a, REBLEN n) {
 
 
 // An efficiency trick makes functions that do not have exemplars NOT store
-// nullptr in the LINK(info).specialty node in that case--instead the params.
+// nullptr in the LINK(info).specialty in that case--instead the params.
 // This makes Push_Action() slightly faster in assigning L->special.
 //
 INLINE VarList* ACT_EXEMPLAR(REBACT *a) {

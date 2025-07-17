@@ -279,7 +279,7 @@ void Expand_Hash(Flex* flex)
         flex,
         pnum + 1,
         Flex_Wide(flex),
-        FLEX_FLAG_POWER_OF_2 // not(NODE_FLAG_NODE) => don't keep data
+        FLEX_FLAG_POWER_OF_2 // not(BASE_FLAG_BASE) => don't keep data
     );
 
     Clear_Flex(flex);
@@ -483,7 +483,7 @@ INLINE REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
     //
     LINK(copy).hashlist = Copy_Non_Array_Flex_Core(
         MAP_HASHLIST(map),
-        FLEX_FLAGS_NONE // !!! No NODE_FLAG_MANAGED?
+        FLEX_FLAGS_NONE // !!! No BASE_FLAG_MANAGED?
     );
 
     if (types == 0)

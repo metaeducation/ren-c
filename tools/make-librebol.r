@@ -431,7 +431,7 @@ e-lib/emit {
      *
      *     0xF5 (11110101), 0xF6 (11110110), 0xF7 (11110111)
      *
-     * The first bit being 1 means it's a "Node", the second that it is
+     * The first bit being 1 means it's a "Base", the second that it is
      * "Unreadable", the third and fourth bits would pertain to GC behavior
      * if applicable, the fifth bit being clear means it's *not* a Cell.
      * The seventh bit is for GC marking by design (to leverage the special

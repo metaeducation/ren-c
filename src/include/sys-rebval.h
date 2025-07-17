@@ -45,7 +45,7 @@
 // or even 3*64 bits!  You can fit the data for an INTEGER or DECIMAL in that
 // (at least until they become arbitrary precision) but it's not enough for
 // a generic BLOCK! or an ACTION! (for instance).  So the remaining bits
-// often will point to one or more Rebol "nodes" (see %sys-series.h for an
+// often will point to one or more Rebol "Bases" (see %sys-series.h for an
 // explanation of Series, Array, VarList, and REBMAP.)
 //
 // So the next part of the structure is the "Extra".  This is the size of one
@@ -92,7 +92,7 @@
 // that are putting data into a cell for the first time can check the bit.
 // (Series, having more than one kind of protection, put those bits in the
 // "info" so they can all be checked at once...otherwise there might be a
-// shared NODE_FLAG_PROTECTED in common.)
+// shared BASE_FLAG_PROTECTED in common.)
 //
 #define CELL_FLAG_PROTECTED \
     FLAG_LEFT_BIT(16)
@@ -219,7 +219,7 @@
 
 // Endlike headers have the second byte clear (to pass the IS_END() test).
 // But they also have leading bits `10` so they don't look like a UTF-8
-// string, and don't have NODE_FLAG_CELL set to prevents writing to them.
+// string, and don't have BASE_FLAG_CELL set to prevents writing to them.
 //
 // !!! One must be careful in reading and writing bits initialized via
 // different structure types.  As it is, setting and testing for ends is done
@@ -231,12 +231,12 @@
 INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
     assert(
         0 == (bits & (
-            NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
+            BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
             | FLAG_SECOND_BYTE(255)
         ))
     );
     union HeaderUnion h;
-    h.bits = bits | NODE_FLAG_NODE;
+    h.bits = bits | BASE_FLAG_BASE;
     return h;
 }
 
@@ -262,10 +262,10 @@ INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
 // cell if overwritten but not copied.  For now, this is why `foo: :+` does
 // not make foo an infixed operation.
 //
-// Note that this will clear NODE_FLAG_UNREADABLE, so it should be checked by
+// Note that this will clear BASE_FLAG_UNREADABLE, so it should be checked by
 // the debug build before resetting.
 //
-// Note also that NODE_FLAG_MARKED usage is a relatively new concept, e.g.
+// Note also that BASE_FLAG_MARKED usage is a relatively new concept, e.g.
 // to allow REMOVE-EACH to mark values in a locked series as to which should
 // be removed when the enumeration is finished.  This *should* not be able
 // to interfere with the GC, since userspace arrays don't use that flag with
@@ -273,10 +273,10 @@ INLINE union HeaderUnion Endlike_Header(uintptr_t bits) {
 //
 
 #define CELL_MASK_PERSIST \
-    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_MANAGED | NODE_FLAG_ROOT)
+    (BASE_FLAG_BASE | BASE_FLAG_CELL | BASE_FLAG_MANAGED | BASE_FLAG_ROOT)
 
 #define CELL_MASK_COPY \
-    ~(CELL_MASK_PERSIST | NODE_FLAG_MARKED | CELL_FLAG_PROTECTED \
+    ~(CELL_MASK_PERSIST | BASE_FLAG_MARKED | CELL_FLAG_PROTECTED \
         | CELL_FLAG_NOTE)
 
 
@@ -410,7 +410,7 @@ struct Reb_Action_Payload {
     // used to store a block of Rebol code that is equivalent to the native,
     // for illustrative purposes.  (a "fake" answer for SOURCE)
     //
-    // By storing the function dispatcher in the `details` array node instead
+    // By storing the function dispatcher in the `details` array Stub instead
     // of in the value cell itself, it also means the dispatcher can be
     // HIJACKed--or otherwise hooked to affect all instances of a function.
     //
@@ -717,7 +717,7 @@ union Reb_Value_Payload {
       #if RUNTIME_CHECKS
         Reb_Value () = default;
         ~Reb_Value () {
-            assert(this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL));
+            assert(this->header.bits & (BASE_FLAG_BASE | BASE_FLAG_CELL));
         }
       #endif
     };

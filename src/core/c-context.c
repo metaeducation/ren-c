@@ -83,7 +83,7 @@ VarList* Alloc_Context_Core(Type type, REBLEN capacity, Flags flags)
     Array* varlist = Make_Array_Core(
         capacity + 1, // size + room for ROOTVAR
         SERIES_MASK_CONTEXT // includes assurance of dynamic allocation
-            | flags // e.g. NODE_FLAG_MANAGED
+            | flags // e.g. BASE_FLAG_MANAGED
     );
     MISC(varlist).adjunct = nullptr; // GC sees adjunct object, must init
 
@@ -100,7 +100,7 @@ VarList* Alloc_Context_Core(Type type, REBLEN capacity, Flags flags)
 
     Array* keylist = Make_Array_Core(
         capacity + 1, // size + room for ROOTKEY
-        NODE_FLAG_MANAGED // No keylist flag, but we don't want line numbers
+        BASE_FLAG_MANAGED // No keylist flag, but we don't want line numbers
     );
     Init_Unreadable(Alloc_Tail_Array(keylist));
 
@@ -285,7 +285,7 @@ VarList* Copy_Context_Shallow_Extra_Managed(VarList* src, REBLEN extra) {
             Varlist_Array(src),
             SPECIFIED,
             SERIES_MASK_CONTEXT // includes assurance of non-dynamic
-                | NODE_FLAG_MANAGED
+                | BASE_FLAG_MANAGED
         );
 
         dest = CTX(varlist);
@@ -300,14 +300,14 @@ VarList* Copy_Context_Shallow_Extra_Managed(VarList* src, REBLEN extra) {
             0,
             SPECIFIED,
             extra,
-            NODE_FLAG_MANAGED
+            BASE_FLAG_MANAGED
         );
         varlist = Copy_Array_At_Extra_Shallow(
             Varlist_Array(src),
             0,
             SPECIFIED,
             extra,
-            SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
+            SERIES_MASK_CONTEXT | BASE_FLAG_MANAGED
         );
 
         dest = CTX(varlist);
@@ -372,7 +372,7 @@ Array* Grab_Collected_Array_Managed(struct Reb_Collector *collector)
     return Copy_Array_Shallow_Flags(
         BUF_COLLECT,
         SPECIFIED,
-        NODE_FLAG_MANAGED
+        BASE_FLAG_MANAGED
     );
 }
 
@@ -380,7 +380,7 @@ Array* Grab_Collected_Array_Managed(struct Reb_Collector *collector)
 //
 //  Collect_End: C
 //
-// Reset the bind markers in the canon series nodes so they can be reused,
+// Reset the bind markers in the canon series stubs so they can be reused,
 // and empty the BUF_COLLECT.
 //
 void Collect_End(struct Reb_Collector *cl)
@@ -803,7 +803,7 @@ VarList* Make_Selfish_Context_Detect_Managed(
     Array* varlist = Make_Array_Core(
         len,
         SERIES_MASK_CONTEXT
-            | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
+            | BASE_FLAG_MANAGED // Note: Rebind below requires managed context
     );
     Term_Array_Len(varlist, len);
     MISC(varlist).adjunct = nullptr;  // clear adjunct object (GC sees this)
@@ -1060,7 +1060,7 @@ VarList* Merge_Contexts_Selfish_Managed(VarList* parent1, VarList* parent2)
     Array* keylist = Copy_Array_Shallow_Flags(
         BUF_COLLECT,
         SPECIFIED,
-        NODE_FLAG_MANAGED
+        BASE_FLAG_MANAGED
     );
     Init_Unreadable(Array_Head(keylist)); // Currently no rootkey usage
 
@@ -1072,7 +1072,7 @@ VarList* Merge_Contexts_Selfish_Managed(VarList* parent1, VarList* parent2)
     Array* varlist = Make_Array_Core(
         Array_Len(keylist),
         SERIES_MASK_CONTEXT
-            | NODE_FLAG_MANAGED // rebind below requires managed context
+            | BASE_FLAG_MANAGED // rebind below requires managed context
     );
     MISC(varlist).adjunct = nullptr;  // GC sees this, it must be initialized
 

@@ -272,7 +272,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
 
   new_interning:;
 
-    // If possible, the allocation should be fit into a Stub node with no
+    // If possible, the allocation should be fit into a Stub with no
     // separate allocation.  Because automatically doing this is a new
     // feature, double check with an assert that the behavior matches.
     //
@@ -622,7 +622,7 @@ void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBLEN i)
     assert(IS_WORD_BOUND(v));
     Stub* binding = VAL_BINDING(v);
     Array* keysource;
-    if (Not_Node_Managed(binding))
+    if (Not_Base_Managed(binding))
         keysource = ACT_PARAMLIST(Level_Phase(LVL(LINK(binding).keysource)));
     else if (Get_Array_Flag(binding, IS_PARAMLIST))
         keysource = ACT_PARAMLIST(ACT(binding));

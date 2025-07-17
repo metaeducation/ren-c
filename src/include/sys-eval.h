@@ -104,7 +104,7 @@ INLINE void Push_Level_Core(Level* L)
         Panic_Stack_Overflow();
 
     assert(SECOND_BYTE(&L->flags) == 0); // END signal
-    assert(not (L->flags.bits & NODE_FLAG_CELL));
+    assert(not (L->flags.bits & BASE_FLAG_CELL));
 
     // Though we can protect the value written into the target pointer 'out'
     // from GC during the course of evaluation, we can't protect the
@@ -116,10 +116,10 @@ INLINE void Push_Level_Core(Level* L)
     // !!! A non-contiguous data stack which is not a series is a possibility.
     //
   #ifdef STRESS_CHECK_DO_OUT_POINTER
-    Node* containing;
+    Base* containing;
     if (
-        did (containing = Try_Find_Containing_Node_Debug(L->out))
-        and Is_Node_A_Stub(containing)
+        did (containing = Try_Find_Containing_Base_Debug(L->out))
+        and Is_Base_A_Stub(containing)
         and Not_Flex_Flag(cast_Flex(containing), DONT_RELOCATE)
     ){
         printf("Request for ->out location in movable series memory\n");
@@ -220,7 +220,7 @@ INLINE void Push_Level_At_End(Level* L, Flags flags) {
 
     assert(L->source == &TG_Level_Source_End); // see DECLARE_END_LEVEL
     L->gotten = nullptr;
-    SET_FRAME_VALUE(L, END_NODE);
+    SET_FRAME_VALUE(L, END_BASE);
     L->specifier = SPECIFIED;
 
     Push_Level_Core(L);
@@ -238,7 +238,7 @@ INLINE void Reuse_Varlist_If_Available(Level* L) {
         L->varlist = TG_Reuse;
         TG_Reuse = LINK(TG_Reuse).reuse;
         L->rootvar = cast(Value*, L->varlist->content.dynamic.data);
-        LINK(L->varlist).keysource = L;  // carries NODE_FLAG_CELL
+        LINK(L->varlist).keysource = L;  // carries BASE_FLAG_CELL
     }
 }
 
@@ -267,7 +267,7 @@ INLINE void Push_Level_At(
     // each evaluation.  But the GC expects initialized bits in the output
     // slot at all times; use an unwritable END until the first eval call.
     //
-    L->out = m_cast(Value*, END_NODE);
+    L->out = m_cast(Value*, END_BASE);
 
     Push_Level_Core(L);
     Reuse_Varlist_If_Available(L);
@@ -297,7 +297,7 @@ INLINE void Set_Level_Detected_Fetch(
     // supposed to be freeing it or releasing it, then it must be proxied
     // into a place where the data will be safe long enough for lookback.
 
-    if (Not_Node_Root_Bit_Set(L->value)) {
+    if (Not_Base_Root_Bit_Set(L->value)) {
         if (opt_lookback)
             *opt_lookback = L->value; // non-API values must be stable/GC-safe
         goto detect;
@@ -443,7 +443,7 @@ INLINE void Set_Level_Detected_Fetch(
         // the frame's cell for stable lookback--if necessary).
         //
         assert(Get_Flex_Info(instruction, API_INSTRUCTION));
-        assert(Not_Node_Managed(instruction));
+        assert(Not_Base_Managed(instruction));
         L->value = ARR_SINGLE(instruction);
         break; }
 
@@ -467,7 +467,7 @@ INLINE void Set_Level_Detected_Fetch(
         //
         // We're at the end of the variadic input, so end of the line.
         //
-        L->value = END_NODE;
+        L->value = END_BASE;
         Corrupt_If_Needful(L->source->pending);
 
         // The va_end() is taken care of here, or if there is a throw/panic it
@@ -555,7 +555,7 @@ INLINE void Fetch_Next_In_Level(
         if (opt_lookback)
             *opt_lookback = L->value; // all values would have been spooled
 
-        L->value = END_NODE;
+        L->value = END_BASE;
         Corrupt_If_Needful(L->source->pending);
 
         ++L->source->index; // for consistency in index termination state
@@ -597,7 +597,7 @@ INLINE void Quote_Next_In_Level(Value* dest, Level* L) {
 
 
 INLINE void Abort_Level(Level* L) {
-    if (L->varlist and Not_Node_Managed(L->varlist))
+    if (L->varlist and Not_Base_Managed(L->varlist))
         GC_Kill_Flex(L->varlist);  // not alloc'd with manuals tracking
     Corrupt_If_Needful(L->varlist);
 
@@ -656,7 +656,7 @@ INLINE void Drop_Level_Core(Level* L) {
   #endif
 
     if (L->varlist) {
-        assert(Not_Node_Managed(L->varlist));
+        assert(Not_Base_Managed(L->varlist));
         LINK(L->varlist).reuse = TG_Reuse;
         TG_Reuse = L->varlist;
     }
@@ -902,7 +902,7 @@ INLINE void Reify_Va_To_Array_In_Level(
         Init_Word(PUSH(), CANON(__OPTIMIZED_OUT__));
 
     if (NOT_END(L->value)) {
-        assert(L->source->pending == END_NODE);
+        assert(L->source->pending == END_BASE);
 
         do {
             assert(not Is_Antiform(L->value));
@@ -977,11 +977,11 @@ INLINE REBIXO Eval_Va_Core(
     L->source->index = TRASHED_INDEX; // avoids warning in release build
     L->source->array = nullptr;
     L->source->vaptr = vaptr;
-    L->source->pending = END_NODE; // signal next fetch comes from va_list
+    L->source->pending = END_BASE; // signal next fetch comes from va_list
     L->source->deferring_infix = false;
 
     // We reuse logic in Fetch_Next_In_Level() and Set_Level_Detected_Fetch()
-    // but the previous L->value will be tested for NODE_FLAG_ROOT.
+    // but the previous L->value will be tested for BASE_FLAG_ROOT.
     //
     DECLARE_VALUE (junk);
     L->value = Init_Unreadable(junk); // shows where garbage came from
@@ -1055,7 +1055,7 @@ INLINE void Handle_Api_Dispatcher_Result(Level* L, const Value* r) {
     assert(not THROWN(r)); // only L->out can return thrown cells
 
   #if RUNTIME_CHECKS
-    if (Not_Node_Root_Bit_Set(r)) {
+    if (Not_Base_Root_Bit_Set(r)) {
         printf("dispatcher returned non-API value not in OUT\n");
       #if DEBUG_FRAME_LABELS
         printf("during ACTION!: %s\n", L->label_utf8);
@@ -1069,6 +1069,6 @@ INLINE void Handle_Api_Dispatcher_Result(Level* L, const Value* r) {
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
     Copy_Cell(L->out, r);
-    if (Not_Node_Managed(r))
+    if (Not_Base_Managed(r))
         rebRelease(r);
 }

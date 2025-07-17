@@ -183,7 +183,7 @@ typedef Stub Flex;
 
 //=//// BINDING ///////////////////////////////////////////////////////////=//
 
-typedef void Node;
+typedef void Base;
 
 typedef Stub Specifier;
 

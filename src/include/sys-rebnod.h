@@ -54,7 +54,7 @@
 // for a stored pointer's type.  They can just check the first byte instead.
 //
 // For lack of a better name, the generic type covering the superclass is
-// called a "Rebol Node".
+// called a "Rebol Base".
 //
 
 
@@ -239,7 +239,7 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
         int _03_marked:1;
         int _02_managed:1;
         int _01_free:1;
-        int _00_node_always_true:1;
+        int _00_base_always_true:1;
 
         int _15_unused:1;
         int _14_unused:1;
@@ -268,7 +268,7 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
         int _03_black:1;
         int _02_unused:1;
         int _01_free_always_false:1;
-        int _00_node_always_true:1;
+        int _00_base_always_true:1;
 
         unsigned int _08to15_wide:8;
 
@@ -292,7 +292,7 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
         int _03_marked:1;
         int _02_managed:1;
         int _01_free:1;
-        int _00_node_always_true:1;
+        int _00_base_always_true:1;
 
         unsigned int _08to15_kind:8;
 
@@ -312,7 +312,7 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  NODE HEADER a.k.a `union HeaderUnion` (for Cell and Stub uses)
+//  BASE HEADER a.k.a `union HeaderUnion` (for Cell and Stub uses)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -357,92 +357,92 @@ union HeaderUnion {
 };
 
 
-//=//// NODE_FLAG_NODE (leftmost bit) /////////////////////////////////////=//
+//=//// BASE_FLAG_BASE (leftmost bit) /////////////////////////////////////=//
 //
-// For the sake of simplicity, the leftmost bit in a node is always one.  This
+// For the sake of simplicity, the leftmost bit in a Base is always one.  This
 // is because every UTF-8 string starting with a bit pattern 10xxxxxxx in the
 // first byte is invalid.
 //
-#define NODE_FLAG_NODE \
+#define BASE_FLAG_BASE \
     FLAG_LEFT_BIT(0)
-#define NODE_BYTEMASK_0x80_NODE 0x80
+#define BASE_BYTEMASK_0x80_BASE 0x80
 
 
-//=//// NODE_FLAG_UNREADABLE (second-leftmost bit) ////////////////////////=//
+//=//// BASE_FLAG_UNREADABLE (second-leftmost bit) ////////////////////////=//
 //
 // The second-leftmost bit will be 0 for most Cells and Stubs in the system.
-// This gives the most freedom to set the other node bits independently, since
+// This gives the most freedom to set the other Base bits independently, since
 // the bit pattern 10xxxxxx, is always an invalid leading byte in UTF-8.
 //
 // But when the bit is set and the pattern is 11xxxxxx, it's still possible
 // to cleverly use subsets of the remaining bit patterns for Cells and Stubs
-// and avoid conflating with legal UTF-8 states.  See NODE_FLAG_CELL for
+// and avoid conflating with legal UTF-8 states.  See BASE_FLAG_CELL for
 // how this is done.
 //
-// Additional non-UTF-8 states that have NODE_FLAG_UNREADABLE set are
+// Additional non-UTF-8 states that have BASE_FLAG_UNREADABLE set are
 // END_SIGNAL_BYTE, which uses 11000000, and FREE_POOLUNIT_BYTE, which uses
 // 110000001... which are the illegal UTF-8 bytes 192 and 193.
 //
-#define NODE_FLAG_UNREADABLE \
+#define BASE_FLAG_UNREADABLE \
     FLAG_LEFT_BIT(1)
-#define NODE_BYTEMASK_0x40_UNREADABLE 0x40
+#define BASE_BYTEMASK_0x40_UNREADABLE 0x40
 
 
-//=//// NODE_FLAG_GC_ONE / NODE_FLAG_GC_TWO (third/fourth-leftmost bit) ////=//
+//=//// BASE_FLAG_GC_ONE / BASE_FLAG_GC_TWO (third/fourth-leftmost bit) ////=//
 //
-// Both Cell* and Flex* have two bits in their NODE_BYTE which can be called
+// Both Cell* and Flex* have two bits in their BASE_BYTE which can be called
 // out for attention from the GC.  Though these bits are scarce, sacrificing
 // them means not needing to do a switch() on the TYPE_TYPE of the cell to
 // know how to mark them.
 //
-// The third potentially-node-holding slot in a cell ("Extra") is deemed
+// The third potentially-Base-holding slot in a cell ("Extra") is deemed
 // whether to be marked or not by the ordering in the %types.r file.  So no
 // bit is needed for that.
 //
 // !!! NOTE: The bootstrap executable doesn't implement this, it's based
 // on a switch() statement on the heart byte like R3-Alpha was.  But when
-// the values of the node bits were synchronized, these bits were included.
+// the values of the Base bits were synchronized, these bits were included.
 //
-#define NODE_FLAG_GC_ONE \
+#define BASE_FLAG_GC_ONE \
     FLAG_LEFT_BIT(2)
-#define NODE_BYTEMASK_0x20_GC_ONE 0x20
+#define BASE_BYTEMASK_0x20_GC_ONE 0x20
 
-#define NODE_FLAG_GC_TWO \
+#define BASE_FLAG_GC_TWO \
     FLAG_LEFT_BIT(3)
-#define NODE_BYTEMASK_0x10_GC_TWO 0x10
+#define BASE_BYTEMASK_0x10_GC_TWO 0x10
 
 
-//=//// NODE_FLAG_CELL (fifth-leftmost bit) //////////////////////////////=//
+//=//// BASE_FLAG_CELL (fifth-leftmost bit) //////////////////////////////=//
 //
 // If this bit is set in the header, it indicates the slot the header is for
 // is `sizeof(Cell)`.
 //
 // In checked builds, it provides some safety for all value writing routines.
-// In the release build, it distinguishes "Pairing" Nodes (holders for two
+// In the release build, it distinguishes "Pairing" Bases (holders for two
 // cells in the same Pool as ordinary Stubs) from an ordinary Flex Stub.
 // Stubs have the cell bit clear, while Pairings in the STUB_POOL have it set.
 //
 // The position chosen is not random.  It is picked as the 5th bit from the
-// left so that unreadable nodes can have the pattern:
+// left so that unreadable bases can have the pattern:
 //
-//    11111xxx: Flags: NODE | UNREADABLE | GC_ONE | GC_TWO | CELL | ...
+//    11111xxx: Flags: BASE | UNREADABLE | GC_ONE | GC_TWO | CELL | ...
 //
 // This pattern is for an Is_Cell_Unreadable() cell, and so long as we set the
 // GC_ONE and GC_TWO flags we can still have free choices of `xxx` (e.g.
 // arbitrary ROOT, MANAGED, and MARKED flags), while Detect_Rebol_Pointer()
 // can be certain it's a cell and not UTF-8.
 //
-#define NODE_FLAG_CELL \
+#define BASE_FLAG_CELL \
     FLAG_LEFT_BIT(4)
-#define NODE_BYTEMASK_0x08_CELL 0x08
+#define BASE_BYTEMASK_0x08_CELL 0x08
 
 
-//=//// NODE_FLAG_MANAGED (sixth-leftmost bit) ////////////////////////////=//
+//=//// BASE_FLAG_MANAGED (sixth-leftmost bit) ////////////////////////////=//
 //
 // The GC-managed bit is used on a Stub to indicate that its lifetime is
 // controlled by the garbage collector.  If this bit is not set, then it is
 // still manually managed...and during the GC's sweeping phase the simple fact
-// that it isn't NODE_FLAG_MARKED won't be enough to consider it for freeing.
+// that it isn't BASE_FLAG_MARKED won't be enough to consider it for freeing.
 //
 // See Manage_Flex() for details on the lifecycle of a Flex (how it starts
 // out manually managed, and then must either become managed or be freed
@@ -453,33 +453,33 @@ union HeaderUnion {
 // expensive, and we don't load source and free it manually anyway...how
 // would you know after running it that pointers in it weren't stored?)
 //
-#define NODE_FLAG_MANAGED \
+#define BASE_FLAG_MANAGED \
     FLAG_LEFT_BIT(5)
-#define NODE_BYTEMASK_0x04_MANAGED 0x04
+#define BASE_BYTEMASK_0x04_MANAGED 0x04
 
 
-//=//// NODE_FLAG_ROOT (seventh-leftmost bit) /////////////////////////////=//
+//=//// BASE_FLAG_ROOT (seventh-leftmost bit) /////////////////////////////=//
 //
-// Means the node should be treated as a root for GC purposes.  If the node
-// also has NODE_FLAG_CELL, that means the cell must live in a "pairing"
+// Means the Base should be treated as a root for GC purposes.  If the Base
+// also has BASE_FLAG_CELL, that means the cell must live in a "pairing"
 // Stub-sized structure for two cells.
 //
 // This flag is masked out by CELL_MASK_COPY, so that when values are moved
 // into or out of API handle cells the flag is left untouched.
 //
-#define NODE_FLAG_ROOT \
+#define BASE_FLAG_ROOT \
     FLAG_LEFT_BIT(6)
-#define NODE_BYTEMASK_0x02_ROOT 0x02
+#define BASE_BYTEMASK_0x02_ROOT 0x02
 
 
-//=//// NODE_FLAG_MARKED (eighth-leftmost bit) ////////////////////////////=//
+//=//// BASE_FLAG_MARKED (eighth-leftmost bit) ////////////////////////////=//
 //
-// On Stub Nodes, this flag is used by the mark-and-sweep of the garbage
+// On Stub Bases, this flag is used by the mark-and-sweep of the garbage
 // collector, and should not be referenced outside of %m-gc.c.
 //
 // 1. THE CHOICE OF BEING THE LAST BIT IS NOT RANDOM.  This means that decayed
 //    Stub states can be represented as 11000000 and 11000001, where you have
-//    just NODE_FLAG_NODE and NODE_FLAG_STUB plus whether the stub has been
+//    just BASE_FLAG_BASE and BASE_FLAG_STUB plus whether the stub has been
 //    marked or not, and these are illegal UTF-8.
 //
 // 2. See `FLEX_INFO_BLACK` for a generic bit available to other routines
@@ -491,17 +491,17 @@ union HeaderUnion {
 //    generic Cell.  If one is *certain* that a value is not "paired" (e.g. in
 //    a function arglist, or array slot), it may be used for other things).
 //
-#define NODE_FLAG_MARKED \
+#define BASE_FLAG_MARKED \
     FLAG_LEFT_BIT(7)
-#define NODE_BYTEMASK_0x01_MARKED 0x01
+#define BASE_BYTEMASK_0x01_MARKED 0x01
 
-// * ARG_MARKED_CHECKED -- This uses the NODE_FLAG_MARKED bit on args in
+// * ARG_MARKED_CHECKED -- This uses the BASE_FLAG_MARKED bit on args in
 //   action frames, and in particular specialization uses it to denote which
 //   arguments in a frame are actually specialized.  This helps notice the
 //   difference during an APPLY of encoded partial refinement specialization
 //   encoding from just a user putting random values in a refinement slot.
 //
-// * OUT_MARKED_STALE -- This application of NODE_FLAG_MARKED helps show
+// * OUT_MARKED_STALE -- This application of BASE_FLAG_MARKED helps show
 //   when an evaluation step didn't add any new output, but it does not
 //   overwrite the contents of the out cell.  This allows the evaluator to
 //   leave a value in the output slot even if there is trailing invisible
@@ -515,12 +515,12 @@ union HeaderUnion {
 //   used in circumstances where some understanding of being "in control"
 //   of the bit are in place--like processing an array a routine itself made.
 
-#define CELL_FLAG_ARG_MARKED_CHECKED NODE_FLAG_MARKED
-#define CELL_FLAG_OUT_MARKED_STALE NODE_FLAG_MARKED
-#define CELL_FLAG_VAR_MARKED_REUSE NODE_FLAG_MARKED
+#define CELL_FLAG_ARG_MARKED_CHECKED BASE_FLAG_MARKED
+#define CELL_FLAG_OUT_MARKED_STALE BASE_FLAG_MARKED
+#define CELL_FLAG_VAR_MARKED_REUSE BASE_FLAG_MARKED
 
 
-#define NODE_BYTE(n) \
+#define BASE_BYTE(n) \
     FIRST_BYTE(n)
 
 
@@ -529,38 +529,38 @@ union HeaderUnion {
 //
 //        0xF5 (11110101), 0xF6 (11110110), 0xF7 (11110111)
 //
-// If these were interpreted as flags, it's a stub (no NODE_FLAG_CELL) with:
+// If these were interpreted as flags, it's a stub (no BASE_FLAG_CELL) with:
 //
-//    11110xxx: Flags: NODE | UNREADABLE | GC_ONE | GC_TWO
+//    11110xxx: Flags: BASE | UNREADABLE | GC_ONE | GC_TWO
 //
 // 0xF7 is used for END_SIGNAL_BYTE
 // 0xF6 is used for FREE_POOLUNIT_BYTE
-// 0xF5 is NODE_BYTE_RESERVED for when some new idea comes up.
+// 0xF5 is BASE_BYTE_RESERVED for when some new idea comes up.
 //
 // 1. At time of writing, the END_SIGNAL_BYTE must always be followed by a
 //    zero byte.  It's easy to do with C strings(*see rebEND definition*).
 //    Not strictly necessary--one byte suffices--but it's a good sanity check.
 
 #define END_SIGNAL_BYTE 0xF7  // followed by a zero byte [1]
-STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x08_CELL));
+STATIC_ASSERT(not (END_SIGNAL_BYTE & BASE_BYTEMASK_0x08_CELL));
 
 #define FREE_POOLUNIT_BYTE 0xF6
 
-#define NODE_BYTE_RESERVED 0xF5
+#define BASE_BYTE_RESERVED 0xF5
 
 
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  NODE STRUCTURE
+//  UNIT STRUCTURE
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Though the name Node is used for a superclass that can be "in use" or
+// Though the name Base is used for a superclass that can be "in use" or
 // "free", this is the definition of the structure for its layout when it
-// has NODE_FLAG_UNREADABLE set.  In that case, the memory manager will set the
+// has BASE_FLAG_UNREADABLE set.  In that case, the memory manager will set the
 // header bits to have the leftmost byte as FREE_POOLUNIT_BYTE, and use the
-// pointer slot right after the header for its linked list of free nodes.
+// pointer slot right after the header for its linked list of free units.
 //
 
 struct PoolUnitStruct {
@@ -569,7 +569,7 @@ struct PoolUnitStruct {
     struct PoolUnitStruct* next_if_free; // if not free, unit is available
 
     // Size of a unit must be a multiple of 64-bits.  This is because there
-    // must be a baseline guarantee for node allocations to be able to know
+    // must be a baseline guarantee for unit allocations to be able to know
     // where 64-bit alignment boundaries are.
     //
     /* REBI64 payload[N];*/

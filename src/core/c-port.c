@@ -381,7 +381,7 @@ bool Redo_Action_Throws(Level* L, REBACT *run)
         DROP();
     }
     else {
-        Init_Path(first, Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED));
+        Init_Path(first, Pop_Stack_Values_Core(base, BASE_FLAG_MANAGED));
     }
 
     // Invoke DO with the special mode requesting non-evaluation on all

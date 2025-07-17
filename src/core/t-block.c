@@ -277,7 +277,7 @@ Bounce TO_List(Value* out, Type type, const Value* arg) {
     else {
         // !!! Review handling of making a 1-element PATH!, e.g. TO PATH! 10
         //
-        Array* single = Alloc_Singular(NODE_FLAG_MANAGED);
+        Array* single = Alloc_Singular(BASE_FLAG_MANAGED);
         Copy_Cell(ARR_SINGLE(single), arg);
         return Init_Any_List(out, type, single);
     }
@@ -1147,7 +1147,7 @@ void Assert_Array_Core(Array* a)
         assert(rest > 0 and rest > i);
 
         for (; i < rest - 1; ++i, ++item) {
-            const bool unwritable = not (item->header.bits & NODE_FLAG_CELL);
+            const bool unwritable = not (item->header.bits & BASE_FLAG_CELL);
             if (Get_Flex_Flag(a, FIXED_SIZE)) {
               #if RUNTIME_CHECKS
                 if (not unwritable) {
@@ -1166,7 +1166,7 @@ void Assert_Array_Core(Array* a)
         assert(item == Array_At(a, rest - 1));
 
         Cell* ultimate = Array_At(a, rest - 1);
-        if (NOT_END(ultimate) or (ultimate->header.bits & NODE_FLAG_CELL)) {
+        if (NOT_END(ultimate) or (ultimate->header.bits & BASE_FLAG_CELL)) {
             printf("Implicit termination/unwritable END missing from array\n");
             crash (a);
         }

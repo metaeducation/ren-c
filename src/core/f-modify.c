@@ -116,7 +116,7 @@ REBLEN Modify_Array(
                 VAL_INDEX(src_val),
                 VAL_SPECIFIER(src_val),
                 0, // extra
-                NODE_FLAG_MANAGED // !!! Worth it to not manage and free?
+                BASE_FLAG_MANAGED // !!! Worth it to not manage and free?
             );
             src_rel = Array_Head(copy);
             specifier = SPECIFIED; // copy already specified it

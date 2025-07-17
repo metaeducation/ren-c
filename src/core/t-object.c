@@ -333,7 +333,7 @@ Bounce MAKE_Context(Value* out, Type type, const Value* arg)
         //
         VarList* context = Make_Selfish_Context_Detect_Managed(
             type,
-            END_NODE, // values to scan for toplevel set-words (empty)
+            END_BASE, // values to scan for toplevel set-words (empty)
             nullptr  // parent
         );
 
@@ -506,7 +506,7 @@ DECLARE_NATIVE(SET_ADJUNCT)
 // which is created by a function call on the stack) has to have its "vars"
 // (the args and locals) copied from the chunk stack.  Several other things
 // have to be touched up to ensure consistency of the rootval and the
-// relevant ->link and ->misc fields in the series node.
+// relevant ->link and ->misc fields in the series stub.
 //
 VarList* Copy_Context_Core_Managed(VarList* original, REBU64 types)
 {
@@ -514,7 +514,7 @@ VarList* Copy_Context_Core_Managed(VarList* original, REBU64 types)
 
     Array* varlist = Make_Arr_For_Copy(
         Varlist_Len(original) + 1,
-        SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED,
+        SERIES_MASK_CONTEXT | BASE_FLAG_MANAGED,
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
     );
     Value* dest = KNOWN(Array_Head(varlist)); // all context vars are SPECIFIED
@@ -541,7 +541,7 @@ VarList* Copy_Context_Core_Managed(VarList* original, REBU64 types)
 
     // Reuse the keylist of the original.  (If the context of the source or
     // the copy are expanded, the sharing is unlinked and a copy is made).
-    // This goes into the ->link field of the Stub node.
+    // This goes into the ->link field of the Stub.
     //
     Tweak_Keylist_Of_Varlist_Shared(copy, Keylist_Of_Varlist(original));
 
@@ -966,7 +966,7 @@ Bounce MAKE_With_Parent(
             target, // type
             // scan for toplevel set-words
             Is_Blank(body)
-                ? cast(const Cell*, END_NODE) // gcc/g++ 2.95 needs (bug)
+                ? cast(const Cell*, END_BASE) // gcc/g++ 2.95 needs (bug)
                 : List_At(body),
             parent
         );

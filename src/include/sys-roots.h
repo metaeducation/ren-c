@@ -26,33 +26,33 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// API REBVALs live in singular arrays (which fit inside a Stub node, that
+// API Values live in singular arrays (which fit inside a Stub, that
 // is the size of 2 cells).  But they aren't kept alive by references from
 // other values, like the way that an Array used by a BLOCK! is kept alive.
 // They are kept alive by being roots (currently implemented with a flag
-// NODE_FLAG_ROOT, but it could also mean living in a distinct pool from
-// other series nodes).
+// BASE_FLAG_ROOT, but it could also mean living in a distinct pool from
+// other series Stubs).
 //
 // The API value content is in the single cell, with LINK().owner holding
 // a VarList* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
 // link field exists in the pointer immediately prior to the Value*, which
-// means it can be sniffed as a Node* and distinguished from handles that
+// means it can be sniffed as a Base* and distinguished from handles that
 // were given back with rebMalloc(), so routines can discern them.
 //
 // MISC() is currently unused, but could serve as a reference count or other
-// purpose.  It's not particularly necessary to have API handles use Stub
-// nodes--though the 2*sizeof(Cell) provides some optimality, and it
-// means that Stub nodes can be recycled for more purposes.  But it would
+// purpose.  It's not particularly necessary to have API handles use Stubs
+// although the 2*sizeof(Cell) provides some optimality, and it
+// means that the Stubs can be recycled for more purposes.  But it would
 // potentially be better to have them in their own pools, because being
 // roots could be discovered without a "pre-pass" in the GC.
 //
 
-// What distinguishes an API value is that it has both the NODE_FLAG_CELL and
-// NODE_FLAG_ROOT bits set.
+// What distinguishes an API value is that it has both the BASE_FLAG_CELL and
+// BASE_FLAG_ROOT bits set.
 //
 INLINE bool Is_Api_Value(const Cell* v) {
-    assert(v->header.bits & NODE_FLAG_CELL);
-    return did (v->header.bits & NODE_FLAG_ROOT);
+    assert(v->header.bits & BASE_FLAG_CELL);
+    return did (v->header.bits & BASE_FLAG_ROOT);
 }
 
 // !!! The return cell from this allocation is a trash cell which has had some
@@ -64,13 +64,13 @@ INLINE bool Is_Api_Value(const Cell* v) {
 //
 INLINE Value* Alloc_Value(void)
 {
-    Array* a = Alloc_Singular(NODE_FLAG_ROOT | NODE_FLAG_MANAGED);
+    Array* a = Alloc_Singular(BASE_FLAG_ROOT | BASE_FLAG_MANAGED);
 
-    // Giving the cell itself NODE_FLAG_ROOT lets a Value* be discerned as
+    // Giving the cell itself BASE_FLAG_ROOT lets a Value* be discerned as
     // either an API handle or not.  The flag is not copied by Copy_Cell().
     //
     Value* v = KNOWN(ARR_SINGLE(a));
-    v->header.bits |= NODE_FLAG_ROOT; // it's trash (can't use SET_VAL_FLAGS)
+    v->header.bits |= BASE_FLAG_ROOT; // it's trash (can't use SET_VAL_FLAGS)
 
     LINK(a).owner = Varlist_For_Level_May_Manage(TOP_LEVEL);
     return v;
@@ -107,7 +107,7 @@ INLINE Array* Alloc_Instruction(void) {
             | FLEX_INFO_API_RELEASE
     );
     TRACK(Stub_Cell(s))->header.bits =
-        CELL_MASK_ERASE_END | NODE_FLAG_ROOT;
+        CELL_MASK_ERASE_END | BASE_FLAG_ROOT;
     return cast_Array(s);
 }
 

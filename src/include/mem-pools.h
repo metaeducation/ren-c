@@ -27,8 +27,8 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // In R3-Alpha, the memory pool details were not exported to most of the
-// system.  However, Alloc_Pooled() takes a pool ID, so things that want to make
-// nodes need to know about STUB_POOL.  And in order to take advantage of
+// system.  However, Alloc_Pooled() takes a pool ID, so things that make
+// Stubs need to know about STUB_POOL.  And in order to take advantage of
 // inlining, the system has to put a lot of things in header files.  Not
 // being able to do so leads to a lot of pushing and popping overhead for
 // parameters to commonly called routines (e.g. Alloc_Pooled())
@@ -113,7 +113,7 @@ typedef struct rebol_mem_spec {
 struct rebol_mem_pool {
     REBSEG *segs; // first memory segment
     PoolUnit* first; // first free unit in pool
-    PoolUnit* last; // last free node in pool
+    PoolUnit* last; // last free unit in pool
     REBLEN wide; // size of allocation unit
     REBLEN units; // units per segment allocation
     REBLEN free; // number of units remaining

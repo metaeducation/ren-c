@@ -125,7 +125,7 @@ VarList* Make_Managed_Context_For_Action_May_Panic(
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;
     Array* varlist = Make_Array_Core(
         num_slots, // includes +1 for the Varlist_Archetype() at [0]
-        SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
+        SERIES_MASK_CONTEXT | BASE_FLAG_MANAGED
     );
 
     Value* rootvar = RESET_CELL(Array_Head(varlist), TYPE_FRAME);

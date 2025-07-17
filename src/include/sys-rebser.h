@@ -35,14 +35,14 @@
 // dynamically growing structure.  It is also used for fixed size structures
 // which would like to participate in garbage collection.
 //
-// The Stub is fixed-size, and is allocated as a "Node" from a memory pool.
+// The Stub is fixed-size, and is allocated as a "Base" from a memory pool.
 // That pool quickly grants and releases memory ranges that are sizeof(Stub)
 // without needing to use malloc() and free() for each individual allocation.
-// These nodes can also be enumerated in the pool without needing the series
+// These Stubs can also be enumerated in the pool without needing the series
 // to be tracked via a linked list or other structure.  The garbage collector
 // is one example of code that performs such an enumeration.
 //
-// A Stub node pointer will remain valid as long as outstanding references
+// A Stub pointer will remain valid as long as outstanding references
 // to the series exist in values visible to the GC.  On the other hand, the
 // series's data pointer may be freed and reallocated to respond to the needs
 // of resizing.  (In the future, it may be reallocated just as an idle task
@@ -67,7 +67,7 @@
 // * Several related types (REBACT for function, VarList for context) are
 //   actually stylized arrays.  They are laid out with special values in their
 //   content (e.g. at the [0] index), or by links to other series in their
-//   `->misc` field of the Stub node.  Hence series are the basic building
+//   `->misc` field of the Stub.  Hence series are the basic building
 //   blocks of nearly all variable-size structures in the system.
 //
 
@@ -217,7 +217,7 @@
 
 //=//// ARRAY_FLAG_HAS_FILE_LINE //////////////////////////////////////////=//
 //
-// The Stub node has two pointers in it, ->link and ->misc, which are
+// The Stub has two pointers in it, ->link and ->misc, which are
 // used for a variety of purposes (pointing to the keylist for an object,
 // the C code that runs as the dispatcher for a function, etc.)  But for
 // regular source series, they can be used to store the filename and line
@@ -257,7 +257,7 @@
 //
 // This indicates this Array represents the "varlist" of a context (which is
 // interchangeable with the identity of the varlist itself).  A second Flex
-// can be reached from it via the `->misc` field in the series node, which is
+// can be reached from it via the `->misc` field in the series Stub, which is
 // a second Array known as a "KeyList".
 //
 // See notes on VarList definition for further details.
@@ -269,7 +269,7 @@
 //=//// ARRAY_FLAG_IS_PAIRLIST ////////////////////////////////////////////=//
 //
 // Indicates that this series represents the "pairlist" of a map, so the
-// series also has a hashlist linked to in the series node.
+// series also has a hashlist linked to in the series Stub.
 //
 #define ARRAY_FLAG_IS_PAIRLIST \
     FLAG_LEFT_BIT(20)
@@ -321,18 +321,18 @@
 // See Endlike_Header() for why the reserved bits are chosen the way they are.
 //
 
-#define FLEX_INFO_0_IS_TRUE FLAG_LEFT_BIT(0) // NODE_FLAG_NODE
-#define FLEX_INFO_1_IS_FALSE FLAG_LEFT_BIT(1) // NOT(NODE_FLAG_UNREADABLE)
+#define FLEX_INFO_0_IS_TRUE FLAG_LEFT_BIT(0) // BASE_FLAG_BASE
+#define FLEX_INFO_1_IS_FALSE FLAG_LEFT_BIT(1) // NOT(BASE_FLAG_UNREADABLE)
 
-STATIC_ASSERT(FLEX_INFO_0_IS_TRUE == NODE_FLAG_NODE);
-STATIC_ASSERT(FLEX_INFO_1_IS_FALSE == NODE_FLAG_UNREADABLE);
+STATIC_ASSERT(FLEX_INFO_0_IS_TRUE == BASE_FLAG_BASE);
+STATIC_ASSERT(FLEX_INFO_1_IS_FALSE == BASE_FLAG_UNREADABLE);
 
 
 //=//// FLEX_INFO_2 /////////////////////////////////////////////////////=//
 //
 // reclaimed.
 //
-// Note: Same bit position as NODE_FLAG_MANAGED in flags, if that is relevant.
+// Note: Same bit position as BASE_FLAG_MANAGED in flags, if that is relevant.
 //
 #define FLEX_INFO_2 \
     FLAG_LEFT_BIT(2)
@@ -342,11 +342,11 @@ STATIC_ASSERT(FLEX_INFO_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 //
 // This is a generic bit for the "coloring API", e.g. Is_Flex_Black(),
 // Flip_Flex_White(), etc.  These let native routines engage in marking
-// and unmarking nodes without potentially wrecking the garbage collector by
-// reusing NODE_FLAG_MARKED.  Purposes could be for recursion protection or
+// and unmarking Bases without potentially wrecking the garbage collector by
+// reusing BASE_FLAG_MARKED.  Purposes could be for recursion protection or
 // other features, to avoid having to make a map from Flex to bool.
 //
-// Note: Same bit as NODE_FLAG_MARKED, interesting but irrelevant.
+// Note: Same bit as BASE_FLAG_MARKED, interesting but irrelevant.
 //
 #define FLEX_INFO_BLACK \
     FLAG_LEFT_BIT(3)
@@ -357,12 +357,12 @@ STATIC_ASSERT(FLEX_INFO_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 // The second info byte is TYPE_0 to indicate an END.  That helps reads know
 // there is an END for in-situ enumeration.  But as an added bit of safety,
 // we make sure the bit pattern in the info header also doesn't look like
-// a cell at all by having a 0 bit in the NODE_FLAG_CELL spot.
+// a cell at all by having a 0 bit in the BASE_FLAG_CELL spot.
 //
 #define FLEX_INFO_4_IS_FALSE \
     FLAG_LEFT_BIT(4)
 
-STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == NODE_FLAG_CELL);
+STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == BASE_FLAG_CELL);
 
 
 //=//// FLEX_INFO_HOLD //////////////////////////////////////////////////=//
@@ -488,8 +488,8 @@ STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == NODE_FLAG_CELL);
 //=//// FLEX_INFO_FRAME_PANICKED //////////////////////////////////////////=//
 //
 // In the specific case of a frame being freed due to a failure, this mark
-// is put on the context node.  What this allows is for the system to account
-// for which nodes are being GC'd due to lack of a rebRelease(), as opposed
+// is put on the context Stub.  What this allows is for the system to account
+// for which Stubs are being GC'd due to lack of a rebRelease(), as opposed
 // to those being GC'd due to failure.
 //
 // What this means is that the system can use managed handles by default
@@ -585,27 +585,27 @@ STATIC_ASSERT(FLEX_INFO_4_IS_FALSE == NODE_FLAG_CELL);
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A Stub Node is the size of two Cells, and there are 3 basic layouts
-// which can be overlaid inside the node:
+// Units in the STUB_POOL are the size of two Cells, and there are 3 basic
+// layouts which can be overlaid inside the Unit:
 //
 //      Dynamic: [leader [allocation tracking] info link misc]
 //     Singular: [leader [cell] info link misc]
 //      Pairing: [[cell] [cell]]
 //
-// `info` is not the start of a "Rebol Node" (REBNODE, e.g. either a Stub or
+// `info` is not the start of a "Rebol Base" (Base*, e.g. either a Stub or
 // a value Cell).  But in the singular case it is positioned right where
 // the next cell after the embedded cell *would* be.  Hence the second byte
 // in the info corresponding to Type_Of() is 0, making it conform to the
 // "terminating array" pattern.  To lower the risk of this implicit terminator
 // being accidentally overwritten (which would corrupt link and misc), the
-// bit corresponding to NODE_FLAG_CELL is clear.
+// bit corresponding to BASE_FLAG_CELL is clear.
 //
 // Singulars have widespread applications in the system, notably the
 // efficient implementation of FRAME!.  They also narrow the gap in overhead
 // between COMPOSE [A (B) C] vs. REDUCE ['A B 'C] such that the memory cost
 // of the array is nearly the same as just having another value in the array.
 //
-// Pairing nodes are allocated from the Stub pool instead of their own to
+// Pairing units are allocated from the Stub pool instead of their own to
 // help exchange a common "currency" of allocation size more efficiently.
 // They are planned for use in the PAIR! and MAP! datatypes, and anticipated
 // to play a crucial part in the API--allowing a persistent handle for a
@@ -650,7 +650,7 @@ struct StubDynamicStruct {
 
 union StubContentUnion {
     //
-    // If the Flex data does not fit into the Stub Node, then it must be
+    // If the Flex data does not fit into the Stub Base, then it must be
     // dynamically allocated.  This is the tracking structure for that
     // dynamic data allocation.
     //
@@ -709,7 +709,7 @@ union StubLinkUnion {
 
     // Context types use this field of their varlist (which is the identity of
     // an ANY-CONTEXT!) to find their "keylist".  It is stored in the Stub
-    // node of the varlist Array vs. in the cell of the ANY-CONTEXT! so
+    // of the varlist Array vs. in the cell of the ANY-CONTEXT! so
     // that the keylist can be changed without needing to update all the
     // REBVALs for that object.
     //
@@ -717,7 +717,7 @@ union StubLinkUnion {
     // FRAME! on the stack, it points to a Level*.  If it's a FRAME! that
     // is not running on the stack, it will be the function paramlist of the
     // actual phase that function is for.  Since Level* all start with a
-    // leading cell, this means NODE_FLAG_CELL can be used on the node to
+    // leading cell, this means BASE_FLAG_CELL can be used on the Base to
     // discern the case where it can be cast to a Level* vs. Array*.
     //
     // (Note: FRAME!s used to use a field `misc.L` to track the associated
@@ -726,14 +726,14 @@ union StubLinkUnion {
     // since it's allowed for other ANY-CONTEXT!s.  Also, it turns out that
     // heap-based FRAME! values--such as those that come from MAKE FRAME!--
     // have to get their keylist via the specifically applicable ->phase field
-    // anyway, and it's a faster test to check this for NODE_FLAG_CELL than to
+    // anyway, and it's a faster test to check this for BASE_FLAG_CELL than to
     // separately extract the CTX_TYPE() and treat frames differently.)
     //
-    // It is done as a base-class Node* as opposed to a union in order to
+    // It is done as a base-class Base* as opposed to a union in order to
     // not run afoul of C's rules, by which you cannot assign one member of
     // a union and then read from another.
     //
-    Node* keysource;
+    Base* keysource;
 
     // On the keylist of an object, this points at a keylist which has the
     // same number of keys or fewer, which represents an object which this
@@ -805,7 +805,7 @@ union StubMiscUnion {
     // those symbols were not garbage collected.  Ren-C uses Series
     // to store word symbols, and then has a hash table indexing them.
     // So the "binding table" is chosen to be indices reachable from the
-    // Stub nodes of the words themselves.
+    // Stubs of the words themselves.
     //
     // !!! This technique is modified heavily in modern Ren-C with what is
     // known as "sea of words", where variables are free-floating stubs
@@ -849,7 +849,7 @@ struct StubStruct {
     //
     // The bit that is checked in the leader is the USED bit, which is
     // bit #9.  This is set on all Cells and also in END marking headers,
-    // and should be set in used series nodes.
+    // and should be set in used series Stubs.
     //
     // The remaining bits are free, and used to hold SYM values for those
     // words that have them.
@@ -885,7 +885,7 @@ struct StubStruct {
     // It is purposefully positioned in the structure directly after the
     // ->content field, because its second byte is '\0' when the series is
     // an array.  Hence it appears to terminate an array of values if the
-    // content is not dynamic.  Yet NODE_FLAG_CELL is set to false, so it is
+    // content is not dynamic.  Yet BASE_FLAG_CELL is set to false, so it is
     // not a writable location (an "implicit terminator").
     //
     // !!! Only 32-bits are used on 64-bit platforms.  There could be some
@@ -953,9 +953,9 @@ struct StubStruct {
         if (base)
             assert(
                 (reinterpret_cast<Flex*>(p)->leader.bits & (
-                    NODE_FLAG_NODE | NODE_FLAG_UNREADABLE | NODE_FLAG_CELL
+                    BASE_FLAG_BASE | BASE_FLAG_UNREADABLE | BASE_FLAG_CELL
                 )) == (
-                    NODE_FLAG_NODE
+                    BASE_FLAG_BASE
                 )
             );
 
@@ -967,23 +967,23 @@ struct StubStruct {
         constexpr bool derived = std::is_same<T, Array>::value;
 
         constexpr bool base = std::is_same<T, void>::value
-            or std::is_same<T, Node>::value
+            or std::is_same<T, Base>::value
             or std::is_same<T, Flex>::value;
 
         static_assert(
             derived or base,
-            "ARR works on void/Node/Flex/Array"
+            "ARR works on void/Base/Flex/Array"
         );
 
         if (base) {
             assert(WIDE_BYTE_OR_0(reinterpret_cast<Flex*>(p)) == 0);
             assert(
                 (reinterpret_cast<Flex*>(p)->leader.bits & (
-                    NODE_FLAG_NODE
-                        | NODE_FLAG_UNREADABLE
-                        | NODE_FLAG_CELL
+                    BASE_FLAG_BASE
+                        | BASE_FLAG_UNREADABLE
+                        | BASE_FLAG_CELL
                 )) == (
-                    NODE_FLAG_NODE
+                    BASE_FLAG_BASE
                 )
            );
         }

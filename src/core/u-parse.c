@@ -225,12 +225,12 @@ static bool Subparse_Throws(
     Reuse_Varlist_If_Available(L);
     Push_Action(L, NAT_ACTION(SUBPARSE), UNBOUND);
 
-    Begin_Action(L, CANON(SUBPARSE), m_cast(Value*, END_NODE));
+    Begin_Action(L, CANON(SUBPARSE), m_cast(Value*, END_BASE));
 
-    L->param = END_NODE; // informs infix lookahead
-    L->arg = m_cast(Value*, END_NODE);
-    assert(L->refine == END_NODE); // passed to Begin_Action()
-    L->special = END_NODE;
+    L->param = END_BASE; // informs infix lookahead
+    L->arg = m_cast(Value*, END_BASE);
+    assert(L->refine == END_BASE); // passed to Begin_Action()
+    L->special = END_BASE;
 
     Erase_Cell(Level_Args_Head(L) + 0);
     Derelativize(Level_Args_Head(L) + 0, input, input_specifier);

@@ -28,7 +28,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Today's garbage collector is based on a conventional "mark and sweep",
-// of Stub "nodes", which is how it was done in R3-Alpha:
+// of "Stubs", which is how it was done in R3-Alpha:
 //
 //     https://en.wikipedia.org/wiki/Tracing_garbage_collection
 //
@@ -57,12 +57,12 @@
 // and the process repeated until no more items are queued.
 //
 // !!! There is actually not a specific list of roots of the garbage collect,
-// so a first pass of all the Stub nodes must be done to find them.  This is
-// because with the redesigned Librebol in Ren-C, ordinary Stub nodes do
-// double duty as lifetime-managed containers for REBVALs handed out by the
+// so a first pass of all the Stubs must be done to find them.  This is
+// because with the redesigned Librebol in Ren-C, ordinary Stubs do
+// double duty as lifetime-managed containers for Cells handed out by the
 // API--without requiring a separate series data allocation.  These could be
-// in their own "pool", but that would prevent mingling and reuse among Stub
-// nodes used for other purposes.  Review in light of any new garbage collect
+// in their own "pool", but that would prevent mingling and reuse among Stubs
+// used for other purposes.  Review in light of any new garbage collect
 // approaches used.
 //
 
@@ -112,9 +112,9 @@ static void Mark_Devices_Deep(void);
 INLINE void Mark_Stub_Only(Stub* s)
 {
   #if RUNTIME_CHECKS
-    if (Not_Node_Readable(s))
+    if (Not_Base_Readable(s))
         crash (s);
-    if (Not_Node_Managed(s)) {
+    if (Not_Base_Managed(s)) {
         printf("Link to non-MANAGED item reached by GC\n");
         crash (s);
     }
@@ -122,7 +122,7 @@ INLINE void Mark_Stub_Only(Stub* s)
         assert(not Is_Flex_Dynamic(s));
   #endif
 
-    s->leader.bits |= NODE_FLAG_MARKED; // may be already set
+    s->leader.bits |= BASE_FLAG_MARKED; // may be already set
 }
 
 
@@ -151,7 +151,7 @@ static void Queue_Mark_Array_Subclass_Deep(Array* a)
         crash (a);
   #endif
 
-    if (Is_Node_Marked(a))
+    if (Is_Base_Marked(a))
         return; // may not be finished marking yet, but has been queued
 
     Mark_Stub_Only(cast(Flex*, a));
@@ -174,7 +174,7 @@ INLINE void Queue_Mark_Array_Deep(Array* a) { // plain array
     assert(Not_Array_Flag(a, IS_PAIRLIST));
 
     if (Get_Array_Flag(a, HAS_FILE_LINE) and LINK(a).file)
-        LINK(a).file->leader.bits |= NODE_FLAG_MARKED;
+        LINK(a).file->leader.bits |= BASE_FLAG_MARKED;
 
     Queue_Mark_Array_Subclass_Deep(a);
 }
@@ -241,7 +241,7 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
     }
   #endif
 
-    if (binding->leader.bits & NODE_FLAG_MANAGED)
+    if (binding->leader.bits & BASE_FLAG_MANAGED)
         Queue_Mark_Array_Subclass_Deep(cast_Array(binding));
 }
 
@@ -340,12 +340,12 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         Flex* s = v->payload.any_series.series;
         if (Get_Flex_Info(s, INACCESSIBLE)) {
             //
-            // !!! Review: preserving the identity of inaccessible array nodes
-            // is likely uninteresting--the only reason the node wasn't freed
+            // !!! Review: preserving the identity of inaccessible array stubs
+            // is likely uninteresting--the only reason the Stub wasn't freed
             // in the first place was so this code wouldn't crash trying to
             // mark it.  So this should probably be used as an opportunity to
             // update the pointer in the cell to some global inaccessible
-            // Array, and *not* mark the dead node at all.
+            // Array, and *not* mark the dead Stub at all.
             //
             Mark_Stub_Only(s);
             Queue_Mark_Binding_Deep(v); // !!! Review this too, is it needed?
@@ -389,11 +389,11 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         }
         else {
             // Handle was created with Init_Handle_Managed.  It holds a
-            // Stub node that contains exactly one HANDLE!, and the actual
+            // Stub that contains exactly one HANDLE!, and the actual
             // data for the handle lives in that shared location.  There is
             // nothing the GC needs to see inside a handle.
             //
-            singular->leader.bits |= NODE_FLAG_MARKED;
+            singular->leader.bits |= BASE_FLAG_MARKED;
 
         #if RUNTIME_CHECKS
             assert(Array_Len(singular) == 1);
@@ -424,15 +424,15 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
     case TYPE_PAIR: {
         //
-        // Ren-C's PAIR! uses a special kind of node that does no additional
-        // memory allocation, but embeds two cellss in a Stub-sized slot.
+        // Ren-C's PAIR! uses a special kind of Unit that does no additional
+        // memory allocation, but embeds two Cells in a Stub-sized slot.
         // A Cell has a uintptr_t header at the beginning of its struct,
-        // just like a Stub, and the NODE_FLAG_MARKED bit is a 0
+        // just like a Stub, and the BASE_FLAG_MARKED bit is a 0
         // if unmarked...so it can stealthily participate in the marking
         // process, as long as the bit is cleared at the end.
         //
         Flex* pairing = cast(Flex*, v->payload.pair);
-        pairing->leader.bits |= NODE_FLAG_MARKED;  // read via Stub
+        pairing->leader.bits |= BASE_FLAG_MARKED;  // read via Stub
         break; }
 
     case TYPE_TUPLE:
@@ -600,7 +600,7 @@ static void Propagate_All_GC_Marks(void)
         // We should have marked this series at queueing time to keep it from
         // being doubly added before the queue had a chance to be processed
          //
-        assert(a->leader.bits & NODE_FLAG_MARKED);
+        assert(a->leader.bits & BASE_FLAG_MARKED);
 
     #ifdef HEAVY_CHECKS
         //
@@ -615,7 +615,7 @@ static void Propagate_All_GC_Marks(void)
         // and that it hasn't been freed.
         //
         assert(Is_Flex_Array(a));
-        assert(not Not_Node_Readable(a));
+        assert(not Not_Base_Readable(a));
     #endif
 
         Cell* v;
@@ -663,8 +663,8 @@ static void Propagate_All_GC_Marks(void)
             // because of the potential for overflowing the C stack with calls
             // to Queue_Mark_Context_Deep.
 
-            Node* keysource = LINK(a).keysource;
-            if (not Is_Node_A_Stub(keysource)) {
+            Base* keysource = LINK(a).keysource;
+            if (not Is_Base_A_Stub(keysource)) {
                 //
                 // Must be a FRAME! and it must be on the stack running.  If
                 // it has stopped running, then the keylist must be set to
@@ -803,15 +803,15 @@ static void Reify_Any_C_Valist_Frames(void)
 //  Mark_Root_Stubs: C
 //
 // Root Series are any manual series that were allocated but have not been
-// managed yet, as well as Alloc_Value() nodes that are explicitly "roots".
+// managed yet, as well as Alloc_Value() stubs that are explicitly "roots".
 //
-// For root nodes, this checks to see if their lifetime was dependent on a
+// For root stubs, this checks to see if their lifetime was dependent on a
 // FRAME!, and if that frame is no longer on the stack.  If so, it (currently)
 // will crash if that frame did not end due to a panic().  This could be
-// relaxed to automatically free those nodes as a normal GC.
+// relaxed to automatically free those stubs as a normal GC.
 //
-// !!! This implementation walks over *all* the nodes.  It wouldn't have to
-// if API nodes were in their own pool, or if the outstanding manuals list
+// !!! This implementation walks over *all* the stubs.  It wouldn't have to
+// if API stubs were in their own pool, or if the outstanding manuals list
 // were maintained even in non-debug builds--it could just walk those.  This
 // should be weighed against background GC and other more sophisticated
 // methods which might come down the road for the GC than this simple one.
@@ -827,22 +827,22 @@ static void Mark_Root_Stubs(void)
             // !!! A smarter switch statement here could do this more
             // optimally...see the sweep code for an example.
             //
-            if (Not_Node_Readable(s))
+            if (Not_Base_Readable(s))
                 continue;
 
-            if (s->leader.bits & NODE_FLAG_ROOT) {
+            if (s->leader.bits & BASE_FLAG_ROOT) {
                 //
                 // This came from Alloc_Value(); all references should be
                 // from the C stack, only this visit should be marking it.
                 //
-                assert(not (s->leader.bits & NODE_FLAG_MARKED));
+                assert(not (s->leader.bits & BASE_FLAG_MARKED));
                 assert(not Is_Flex_Dynamic(s));
                 assert(
                     not LINK(s).owner
-                    or LINK(s).owner->leader.bits & NODE_FLAG_MANAGED
+                    or LINK(s).owner->leader.bits & BASE_FLAG_MANAGED
                 );
 
-                if (not (s->leader.bits & NODE_FLAG_MANAGED))
+                if (not (s->leader.bits & BASE_FLAG_MANAGED))
                     assert(not LINK(s).owner);
                 else if (
                     Varlist_Array(LINK(s).owner)->info.bits
@@ -865,7 +865,7 @@ static void Mark_Root_Stubs(void)
                     continue;
                 }
                 else // note that Mark_Level_Stack_Deep() will mark the owner
-                    s->leader.bits |= NODE_FLAG_MARKED;
+                    s->leader.bits |= BASE_FLAG_MARKED;
 
                 // Note: Eval_Core_Throws() might target API cells, uses END
                 //
@@ -873,8 +873,8 @@ static void Mark_Root_Stubs(void)
                 continue;
             }
 
-            if (s->leader.bits & NODE_FLAG_CELL) { // a pairing
-                if (s->leader.bits & NODE_FLAG_MANAGED)
+            if (s->leader.bits & BASE_FLAG_CELL) { // a pairing
+                if (s->leader.bits & BASE_FLAG_MANAGED)
                     continue; // PAIR! or other value will mark it
 
                 assert(!"unmanaged pairings not believed to exist yet");
@@ -884,7 +884,7 @@ static void Mark_Root_Stubs(void)
             }
 
             if (Is_Flex_Array(s)) {
-                if (s->leader.bits & NODE_FLAG_MANAGED)
+                if (s->leader.bits & BASE_FLAG_MANAGED)
                     continue; // BLOCK!, Mark_Level_Stack_Deep() etc. mark it
 
                 if (s->leader.bits & ARRAY_FLAG_IS_VARLIST) {
@@ -892,9 +892,9 @@ static void Mark_Root_Stubs(void)
                     // Legal when unmanaged varlists are held onto by
                     // Level*, and marked by them.  We check for that by
                     // whether the keysource points to a frame (cell bit
-                    // set in node).
+                    // set in BASE_BYTE()).
                     //
-                    assert(not Is_Node_A_Stub(LINK(s).keysource));
+                    assert(not Is_Base_A_Stub(LINK(s).keysource));
                     continue;
                 }
 
@@ -992,27 +992,27 @@ static void Mark_Natives(void)
 
 
 //
-//  Mark_Guarded_Nodes: C
+//  Mark_Guarded_Bases: C
 //
 // Mark series and values that have been temporarily protected from garbage
 // collection with Push_Lifeguard.  Subclasses e.g. ARRAY_FLAG_CONTEXT will
 // have their LINK() and MISC() fields guarded appropriately for the class.
 //
-static void Mark_Guarded_Nodes(void)
+static void Mark_Guarded_Bases(void)
 {
-    Node** np = Flex_Head(Node*, GC_Guarded);
+    Base** np = Flex_Head(Base*, GC_Guarded);
     REBLEN n = Flex_Len(GC_Guarded);
     for (; n > 0; --n, ++np) {
-        Node* node = *np;
-        if (Is_Node_A_Cell(node)) {
+        Base* base = *np;
+        if (Is_Base_A_Cell(base)) {
             //
             // !!! What if someone tried to GC_GUARD a managed pairing?
             //
-            Queue_Mark_Opt_End_Cell_Deep(cast(Value*, node));
+            Queue_Mark_Opt_End_Cell_Deep(cast(Value*, base));
         }
         else { // a series
-            Flex* s = cast(Flex*, node);
-            assert(s->leader.bits & NODE_FLAG_MANAGED);
+            Flex* s = cast(Flex*, base);
+            assert(s->leader.bits & BASE_FLAG_MANAGED);
             if (Is_Flex_Array(s))
                 Queue_Mark_Array_Subclass_Deep(cast_Array(s));
             else
@@ -1075,7 +1075,7 @@ static void Mark_Level_Stack_Deep(void)
 
         if (
             L->specifier != SPECIFIED
-            and (L->specifier->leader.bits & NODE_FLAG_MANAGED)
+            and (L->specifier->leader.bits & BASE_FLAG_MANAGED)
         ){
             Queue_Mark_Context_Deep(CTX(L->specifier));
         }
@@ -1110,7 +1110,7 @@ static void Mark_Level_Stack_Deep(void)
         if (L->special)
             Queue_Mark_Opt_End_Cell_Deep(L->special);
 
-        if (L->varlist and Is_Node_Managed(L->varlist)) {
+        if (L->varlist and Is_Base_Managed(L->varlist)) {
             //
             // If the context is all set up with valid values and managed,
             // then it can just be marked normally...no need to do custom
@@ -1191,7 +1191,7 @@ static void Mark_Level_Stack_Deep(void)
 //
 //  Sweep_Stubs: C
 //
-// Scans all series nodes (Stub structs) in all segments that are part of
+// Scans all series Stubs (Stub structs) in all segments that are part of
 // the STUB_POOL.  If a series had its lifetime management delegated to the
 // garbage collector with Manage_Flex(), then if it didn't get "marked" as
 // live during the marking phase then free it.
@@ -1208,36 +1208,36 @@ static REBLEN Sweep_Stubs(void)
 
         for (; n > 0; --n, unit += sizeof(Stub)) {
             if (unit[0] == FREE_POOLUNIT_BYTE)
-                continue;  // only unit without NODE_FLAG_NODE (in ASCII range)
+                continue;  // only unit without BASE_FLAG_BASE (in ASCII range)
 
-            assert(unit[0] & NODE_BYTEMASK_0x80_NODE);
+            assert(unit[0] & BASE_BYTEMASK_0x80_BASE);
 
-            if (not (unit[0] & NODE_BYTEMASK_0x04_MANAGED)) {
-                assert(not (unit[0] & NODE_BYTEMASK_0x01_MARKED));
+            if (not (unit[0] & BASE_BYTEMASK_0x04_MANAGED)) {
+                assert(not (unit[0] & BASE_BYTEMASK_0x01_MARKED));
 
                 /*if (unit[0] == DECAYED_NON_CANON_BYTE) {
                     Free_Pooled(STUB_POOL, unit);
                     continue;
                 }*/
-                assert(not (unit[0] & NODE_BYTEMASK_0x40_UNREADABLE));
+                assert(not (unit[0] & BASE_BYTEMASK_0x40_UNREADABLE));
                 continue;  // ignore all unmanaged Stubs/Pairings
             }
 
-            if (unit[0] & NODE_BYTEMASK_0x01_MARKED) {  // managed and marked
-                unit[0] &= (~ NODE_BYTEMASK_0x01_MARKED);  // just remove mark
+            if (unit[0] & BASE_BYTEMASK_0x01_MARKED) {  // managed and marked
+                unit[0] &= (~ BASE_BYTEMASK_0x01_MARKED);  // just remove mark
                 continue;
             }
 
-            assert(not (unit[0] & NODE_BYTEMASK_0x02_ROOT));  // roots marked
+            assert(not (unit[0] & BASE_BYTEMASK_0x02_ROOT));  // roots marked
 
             ++count;  // managed but not marked => free it!
 
-            if (unit[0] & NODE_BYTEMASK_0x08_CELL) {  // managed pairing
+            if (unit[0] & BASE_BYTEMASK_0x08_CELL) {  // managed pairing
                 Free_Pooled(STUB_POOL, unit);  // manuals use Free_Pairing()
                 continue;
             }
 
-            /*if (unit[0] & NODE_BYTEMASK_0x40_UNREADABLE) {
+            /*if (unit[0] & BASE_BYTEMASK_0x40_UNREADABLE) {
                 //
                 // Stubs that have been marked freed may have outstanding
                 // references at the moment of being marked free...but the GC
@@ -1253,22 +1253,22 @@ static REBLEN Sweep_Stubs(void)
     }
 
     // For efficiency of memory use, Stub is nominally defined as
-    // 2*sizeof(Cell), and so pairs can use the same nodes.  But features
+    // 2*sizeof(Cell), and so pairs can use the same pool units.  But features
     // that might make the cells a size greater than Stub size require
     // doing pairings in a different pool.
     //
   #if UNUSUAL_CELL_SIZE
     for (seg = Mem_Pools[PAR_POOL].segs; seg != nullptr; seg = seg->next) {
-        if (NODE_BYTE(seg + 1) == FREE_POOLUNIT_BYTE)
+        if (BASE_BYTE(seg + 1) == FREE_POOLUNIT_BYTE)
             continue;
 
         Cell* c = cast(Value*, seg + 1);
-        assert(c->header.bits & NODE_FLAG_CELL);
+        assert(c->header.bits & BASE_FLAG_CELL);
 
-        if (c->header.bits & NODE_FLAG_MANAGED) {
-            assert(not (c->header.bits & NODE_FLAG_ROOT));
-            if (c->header.bits & NODE_FLAG_MARKED)
-                c->header.bits &= ~NODE_FLAG_MARKED;
+        if (c->header.bits & BASE_FLAG_MANAGED) {
+            assert(not (c->header.bits & BASE_FLAG_ROOT));
+            if (c->header.bits & BASE_FLAG_MARKED)
+                c->header.bits &= ~BASE_FLAG_MARKED;
             else {
                 Free_Pooled(PAR_POOL, c); // Free_Pairing is for manuals
                 ++count;
@@ -1288,7 +1288,7 @@ static REBLEN Sweep_Stubs(void)
 //
 REBLEN Fill_Sweeplist(Flex* sweeplist)
 {
-    assert(Flex_Wide(sweeplist) == sizeof(Node*));
+    assert(Flex_Wide(sweeplist) == sizeof(Base*));
     assert(Flex_Len(sweeplist) == 0);
 
     REBLEN count = 0;
@@ -1301,11 +1301,11 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
             switch (FIRST_BYTE(&s->leader) >> 4) {
             case 9: // 0x8 + 0x1
                 assert(Is_Flex_Managed(s));
-                if (s->leader.bits & NODE_FLAG_MARKED)
-                    s->leader.bits &= ~NODE_FLAG_MARKED;
+                if (s->leader.bits & BASE_FLAG_MARKED)
+                    s->leader.bits &= ~BASE_FLAG_MARKED;
                 else {
                     Expand_Flex_Tail(sweeplist, 1);
-                    *Flex_At(Node*, sweeplist, count) = s;
+                    *Flex_At(Base*, sweeplist, count) = s;
                     ++count;
                 }
                 break;
@@ -1315,14 +1315,14 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
                 // It's a cell which is managed where the value is not an END.
                 // This is a managed pairing, so mark bit should be heeded.
                 //
-                // !!! It is a Node, but *not* a "Stub".
+                // !!! It is a Base, but *not* a "Stub".
                 //
                 assert(Is_Flex_Managed(s));
-                if (s->leader.bits & NODE_FLAG_MARKED)
-                    s->leader.bits &= ~NODE_FLAG_MARKED;
+                if (s->leader.bits & BASE_FLAG_MARKED)
+                    s->leader.bits &= ~BASE_FLAG_MARKED;
                 else {
                     Expand_Flex_Tail(sweeplist, 1);
-                    *Flex_At(Node*, sweeplist, count) = s;
+                    *Flex_At(Base*, sweeplist, count) = s;
                     ++count;
                 }
                 break;
@@ -1406,7 +1406,7 @@ REBLEN Recycle_Core(bool shutdown, Flex* sweeplist)
 
         Mark_Data_Stack();
 
-        Mark_Guarded_Nodes();
+        Mark_Guarded_Bases();
 
         Mark_Level_Stack_Deep();
 
@@ -1511,19 +1511,19 @@ REBLEN Recycle(void)
 
 
 //
-//  Push_Guard_Node: C
+//  Push_Guard_Base: C
 //
-void Push_Guard_Node(const Node* node)
+void Push_Guard_Base(const Base* base)
 {
   #if RUNTIME_CHECKS
-    if (Is_Node_A_Cell(node)) {
+    if (Is_Base_A_Cell(base)) {
         //
         // It is a value.  Cheap check: require that it already contain valid
         // data when the guard call is made (even if GC isn't necessarily
         // going to happen immediately, and value could theoretically become
         // valid before then.)
         //
-        const Value* value = cast(const Value*, node);
+        const Value* value = cast(const Value*, base);
         assert(
             IS_END(value)
             or Is_Cell_Unreadable(value)
@@ -1538,7 +1538,7 @@ void Push_Guard_Node(const Node* node)
         // being able to resize and reallocate the data pointer.  But this is
         // a somewhat expensive check, so only feasible to run occasionally.
         //
-        Node* containing = Try_Find_Containing_Node_Debug(value);
+        Base* containing = Try_Find_Containing_Base_Debug(value);
         if (containing)
             crash (containing);
       #endif
@@ -1555,10 +1555,10 @@ void Push_Guard_Node(const Node* node)
         Extend_Flex(GC_Guarded, 8);
 
     *Flex_At(
-        const Node*,
+        const Base*,
         GC_Guarded,
         Flex_Len(GC_Guarded)
-    ) = node;
+    ) = base;
 
     Set_Flex_Len(GC_Guarded, Flex_Len(GC_Guarded) + 1);
 }
@@ -1615,9 +1615,9 @@ void Startup_GC(void)
 
     GC_Ballast = MEM_BALLAST;
 
-    // Temporary series and values protected from GC. Holds node pointers.
+    // Temporary series and values protected from GC. Holds Base pointers.
     //
-    GC_Guarded = Make_Flex(15, sizeof(Node*));
+    GC_Guarded = Make_Flex(15, sizeof(Base*));
 
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.

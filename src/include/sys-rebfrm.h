@@ -76,11 +76,11 @@
 // Level->cell, as well as be distinguished from a Value*, a Flex*, or
 // a UTF8 string.
 //
-#define EVAL_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // NODE_FLAG_NODE
-#define EVAL_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1) // NOT(NODE_FLAG_UNREADABLE)
+#define EVAL_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // BASE_FLAG_BASE
+#define EVAL_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1) // NOT(BASE_FLAG_UNREADABLE)
 
-STATIC_ASSERT(EVAL_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
-STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
+STATIC_ASSERT(EVAL_FLAG_0_IS_TRUE == BASE_FLAG_BASE);
+STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == BASE_FLAG_UNREADABLE);
 
 
 //=//// EVAL_FLAG_TO_END //////////////////////////////////////////////////=//
@@ -123,7 +123,7 @@ STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 // be irritating for every evaluator call to clear it.)
 //
 #define EVAL_FLAG_PRESERVE_STALE \
-    FLAG_LEFT_BIT(3) // same as OUT_FLAG_STALE (e.g. NODE_FLAG_MARKED)
+    FLAG_LEFT_BIT(3) // same as OUT_FLAG_STALE (e.g. BASE_FLAG_MARKED)
 
 
 //=//// EVAL_FLAG_4_IS_FALSE //////////////////////////////////////////////=//
@@ -131,12 +131,12 @@ STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_UNREADABLE);
 // The second do byte is TYPE_0 to indicate an END.  That helps reads know
 // there is an END for in-situ enumeration.  But as an added bit of safety,
 // we make sure the bit pattern in the level header also doesn't look like
-// a cell at all by having a 0 bit in the NODE_FLAG_CELL spot.
+// a cell at all by having a 0 bit in the BASE_FLAG_CELL spot.
 //
 #define EVAL_FLAG_4_IS_FALSE \
     FLAG_LEFT_BIT(4)
 
-STATIC_ASSERT(EVAL_FLAG_4_IS_FALSE == NODE_FLAG_CELL);
+STATIC_ASSERT(EVAL_FLAG_4_IS_FALSE == BASE_FLAG_CELL);
 
 
 //=//// EVAL_FLAG_POST_SWITCH /////////////////////////////////////////////=//
@@ -865,16 +865,16 @@ struct LevelStruct {
     template <class T>
     inline Level* LVL(T *p) {
         constexpr bool base = std::is_same<T, void>::value
-            or std::is_same<T, Node>::value;
+            or std::is_same<T, Base>::value;
 
-        static_assert(base, "LVL() works on void/Node");
+        static_assert(base, "LVL() works on void/Base");
 
         if (base)
             assert(
-                (NODE_BYTE(p) & (
-                    NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL
+                (BASE_BYTE(p) & (
+                    BASE_BYTEMASK_0x80_BASE | BASE_BYTEMASK_0x08_CELL
                 )) == (
-                    NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x08_CELL
+                    BASE_BYTEMASK_0x80_BASE | BASE_BYTEMASK_0x08_CELL
                 )
             );
 

@@ -29,7 +29,7 @@
 // R3-Alpha had a per-thread "bind table"; a large and sparsely populated hash
 // into which index numbers would be placed, for what index those words would
 // have as keys or parameters.  Ren-C's strategy is that binding information
-// is wedged into Stub nodes that represent the canon words themselves.
+// is wedged into Stubs that represent the canon words themselves.
 //
 // This would create problems if multiple threads were trying to bind at the
 // same time.  While threading was never realized in R3-Alpha, Ren-C doesn't
@@ -106,8 +106,8 @@
 //
 INLINE bool Is_Overriding_Context(VarList* stored, VarList* override)
 {
-    Node* stored_source = LINK(stored).keysource;
-    Node* temp = LINK(override).keysource;
+    Base* stored_source = LINK(stored).keysource;
+    Base* temp = LINK(override).keysource;
 
     // FRAME! "keylists" are actually paramlists, and the LINK.underlying
     // field is used in paramlists (precluding a LINK.ancestor).  Plus, since
@@ -121,13 +121,13 @@ INLINE bool Is_Overriding_Context(VarList* stored, VarList* override)
     // wind up overriding words bound to FRAME!s, even though not "derived".
     //
     if (
-        Is_Node_A_Stub(stored_source)
+        Is_Base_A_Stub(stored_source)
         and cast_Flex(stored_source)->leader.bits & ARRAY_FLAG_IS_PARAMLIST
     ){
         return false;
     }
     if (
-        Is_Node_A_Stub(temp)
+        Is_Base_A_Stub(temp)
         and cast_Flex(temp)->leader.bits & ARRAY_FLAG_IS_PARAMLIST
     ){
         return false;

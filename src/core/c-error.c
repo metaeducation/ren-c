@@ -92,8 +92,8 @@ void Assert_State_Balanced_Debug(
             "Push_Lifeguard()x%d without Drop_Lifeguard()\n",
             cast(int, Flex_Len(GC_Guarded) - s->guarded_len)
         );
-        Node* guarded = *Flex_At(
-            Node*,
+        Base* guarded = *Flex_At(
+            Base*,
             GC_Guarded,
             Flex_Len(GC_Guarded) - 1
         );
@@ -102,7 +102,7 @@ void Assert_State_Balanced_Debug(
 
     // !!! Note that this inherits a test that uses GC_Manuals->content.xxx
     // instead of Flex_Len().  The idea being that although some series
-    // are able to fit in the series node, the GC_Manuals wouldn't ever
+    // are able to fit in the series stub, the GC_Manuals wouldn't ever
     // pay for that check because it would always be known not to.  Review
     // this in general for things that may not need "series" overhead,
     // e.g. a contiguous pointer stack.
@@ -753,7 +753,7 @@ Error* Make_Error_Managed_Vaptr(
         //
         const Cell* temp =
             Is_Text(message)
-                ? cast(const Cell*, END_NODE) // gcc/g++ 2.95 needs (bug)
+                ? cast(const Cell*, END_BASE) // gcc/g++ 2.95 needs (bug)
                 : VAL_ARRAY_HEAD(message);
     #endif
 

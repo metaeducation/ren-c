@@ -215,7 +215,7 @@ Bounce PD_Pair(
     // to some variable from which this pair actually originated.
     //
     // !!! Technically since pairs are pairings of values in Ren-C, there is
-    // a series node which can be used to update their values, but could not
+    // a series Stub which can be used to update their values, but could not
     // be used to update other things (like header bits) from an originating
     // variable.
     //

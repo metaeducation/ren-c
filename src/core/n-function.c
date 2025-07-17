@@ -281,7 +281,7 @@ DECLARE_NATIVE(TYPECHECKER)
 
     Array* paramlist = Make_Array_Core(
         2,
-        SERIES_MASK_ACTION | NODE_FLAG_MANAGED
+        SERIES_MASK_ACTION | BASE_FLAG_MANAGED
     );
 
     Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), TYPE_ACTION);
@@ -367,7 +367,7 @@ DECLARE_NATIVE(CASCADE)
         // No more evaluations *should* run before putting this array in a
         // GC-safe spot, but leave unmanaged anyway.
         //
-        pipeline = Pop_Stack_Values(base); // no NODE_FLAG_MANAGED
+        pipeline = Pop_Stack_Values(base); // no BASE_FLAG_MANAGED
     }
 
     Value* first = KNOWN(Array_Head(pipeline));
@@ -389,7 +389,7 @@ DECLARE_NATIVE(CASCADE)
     Array* paramlist = Copy_Array_Shallow_Flags(
         VAL_ACT_PARAMLIST(Array_Head(pipeline)),
         SPECIFIED,
-        SERIES_MASK_ACTION | NODE_FLAG_MANAGED // flags not auto-copied
+        SERIES_MASK_ACTION | BASE_FLAG_MANAGED // flags not auto-copied
     );
     Array_Head(paramlist)->payload.action.paramlist = paramlist;
 
@@ -464,7 +464,7 @@ DECLARE_NATIVE(ADAPT)
     Array* paramlist = Copy_Array_Shallow_Flags(
         VAL_ACT_PARAMLIST(adaptee),
         SPECIFIED,
-        SERIES_MASK_ACTION | NODE_FLAG_MANAGED
+        SERIES_MASK_ACTION | BASE_FLAG_MANAGED
     );
     Array_Head(paramlist)->payload.action.paramlist = paramlist;
 
@@ -574,7 +574,7 @@ DECLARE_NATIVE(ENCLOSE)
     Array* paramlist = Copy_Array_Shallow_Flags(
         VAL_ACT_PARAMLIST(inner),
         SPECIFIED,
-        SERIES_MASK_ACTION | NODE_FLAG_MANAGED
+        SERIES_MASK_ACTION | BASE_FLAG_MANAGED
     );
     Value* rootparam = KNOWN(Array_Head(paramlist));
     rootparam->payload.action.paramlist = paramlist;
@@ -831,7 +831,7 @@ DECLARE_NATIVE(N_SHOT)
 
     Array* paramlist = Make_Array_Core(
         2,
-        SERIES_MASK_ACTION | NODE_FLAG_MANAGED
+        SERIES_MASK_ACTION | BASE_FLAG_MANAGED
     );
 
     Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), TYPE_ACTION);

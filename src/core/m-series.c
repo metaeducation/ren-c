@@ -374,13 +374,13 @@ void Assert_Flex_Term_Core(Flex* s)
 //
 void Assert_Flex_Core(Flex* s)
 {
-    if (Not_Node_Readable(s))
+    if (Not_Base_Readable(s))
         crash (s);
 
     assert(
-        Get_Flex_Info(s, 0_IS_TRUE) // @ NODE_FLAG_NODE
-        and Not_Flex_Info(s, 1_IS_FALSE) // @ NOT(NODE_FLAG_UNREADABLE)
-        and Not_Flex_Info(s, 4_IS_FALSE) // @ NODE_FLAG_CELL
+        Get_Flex_Info(s, 0_IS_TRUE) // @ BASE_FLAG_BASE
+        and Not_Flex_Info(s, 1_IS_FALSE) // @ NOT(BASE_FLAG_UNREADABLE)
+        and Not_Flex_Info(s, 4_IS_FALSE) // @ BASE_FLAG_CELL
     );
 
     assert(Flex_Len(s) < Flex_Rest(s));
@@ -403,7 +403,7 @@ ATTRIBUTE_NO_RETURN void Crash_On_Flex_Debug(Flex* s)
     fflush(stdout);
     fflush(stderr);
 
-    if (s->leader.bits & NODE_FLAG_MANAGED)
+    if (s->leader.bits & BASE_FLAG_MANAGED)
         fprintf(stderr, "managed");
     else
         fprintf(stderr, "unmanaged");
@@ -412,7 +412,7 @@ ATTRIBUTE_NO_RETURN void Crash_On_Flex_Debug(Flex* s)
 
   #if DEBUG_STUB_ORIGINS
     fprintf(stderr, " was likely ");
-    if (s->leader.bits & NODE_FLAG_UNREADABLE)
+    if (s->leader.bits & BASE_FLAG_UNREADABLE)
         fprintf(stderr, "freed");
     else
         fprintf(stderr, "created");

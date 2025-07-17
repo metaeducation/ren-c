@@ -730,7 +730,7 @@ DECLARE_NATIVE(WHAT_DIR)
     return Init_Any_Series_At(
         OUT,
         Type_Of(current_path),
-        Copy_Non_Array_Flex_Core(Cell_Flex(current_path), NODE_FLAG_MANAGED),
+        Copy_Non_Array_Flex_Core(Cell_Flex(current_path), BASE_FLAG_MANAGED),
         VAL_INDEX(current_path)
     );
 }

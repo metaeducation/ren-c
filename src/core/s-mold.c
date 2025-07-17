@@ -719,7 +719,7 @@ void Push_Mold(Molder* mo)
             s,
             Flex_Len(s) + MIN_COMMON,
             Flex_Wide(s),
-            NODE_FLAG_NODE // NODE_FLAG_NODE means preserve the data
+            BASE_FLAG_BASE // BASE_FLAG_BASE means preserve the data
         );
     }
 

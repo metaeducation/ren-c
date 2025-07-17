@@ -173,7 +173,7 @@ Value* Meta_Quotify(Value* v)
         return v;
     }
 
-    Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Array* a = Make_Array_Core(2, BASE_FLAG_MANAGED);
     Set_Flex_Len(a, 2);
     Init_Lib_Word(Array_At(a, 0), SYM_THE);
     Copy_Cell(Array_At(a, 1), v);
@@ -342,7 +342,7 @@ DECLARE_NATIVE(REDUCE)
         if (Reduce_To_Stack_Throws(OUT, value))
             return BOUNCE_THROWN;
 
-        Flags pop_flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
+        Flags pop_flags = BASE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
         if (Get_Array_Flag(Cell_Array(value), NEWLINE_AT_TAIL))
             pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
@@ -507,7 +507,7 @@ bool Compose_To_Stack_Throws(
                 return true;
             }
 
-            Flags flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
+            Flags flags = BASE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
             if (Get_Array_Flag(Cell_Array(L->value), NEWLINE_AT_TAIL))
                 flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
@@ -572,7 +572,7 @@ DECLARE_NATIVE(COMPOSE)
     // The stack values contain N NEWLINE_BEFORE flags, and we need N + 1
     // flags.  Borrow the one for the tail directly from the input Array.
     //
-    Flags flags = NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
+    Flags flags = BASE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
     if (Get_Array_Flag(Cell_Array(ARG(VALUE)), NEWLINE_AT_TAIL))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 

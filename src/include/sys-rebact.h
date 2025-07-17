@@ -38,7 +38,7 @@
 // for function composition expand them either at this time.
 //
 #define SERIES_MASK_ACTION \
-    (NODE_FLAG_NODE | FLEX_FLAG_ALWAYS_DYNAMIC | FLEX_FLAG_FIXED_SIZE \
+    (BASE_FLAG_BASE | FLEX_FLAG_ALWAYS_DYNAMIC | FLEX_FLAG_FIXED_SIZE \
         | ARRAY_FLAG_IS_PARAMLIST)
 
 
@@ -54,21 +54,21 @@
         constexpr bool derived = std::is_same<REBACT, void>::value;
 
         constexpr bool base = std::is_same<T, void>::value
-            or std::is_same<T, Node>::value
+            or std::is_same<T, Base>::value
             or std::is_same<T, Stub>::value
             or std::is_same<T, Array>::value;
 
         static_assert(
             derived or base,
-            "ACT() works on void/Node/Stub/Array/REBACT"
+            "ACT() works on void/Base/Stub/Array/REBACT"
         );
 
         if (base)
             assert(
                 SERIES_MASK_ACTION == (cast(Flex*, p)->leader.bits & (
                     SERIES_MASK_ACTION
-                        | NODE_FLAG_UNREADABLE
-                        | NODE_FLAG_CELL
+                        | BASE_FLAG_UNREADABLE
+                        | BASE_FLAG_CELL
                         | ARRAY_FLAG_IS_VARLIST
                         | ARRAY_FLAG_IS_PAIRLIST
                 ))

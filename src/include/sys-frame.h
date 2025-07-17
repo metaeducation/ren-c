@@ -51,7 +51,7 @@
 //
 
 INLINE bool THROWN(const Cell* v) {
-    assert(v->header.bits & NODE_FLAG_CELL);
+    assert(v->header.bits & BASE_FLAG_CELL);
 
     if (Get_Cell_Flag(v, THROW_SIGNAL)) {
         assert(NOT_END(v)); // can't throw END, but allow THROWN() to test it
@@ -374,7 +374,7 @@ INLINE void Begin_Action(
     assert(
         mode == LOOKBACK_ARG
         or mode == ORDINARY_ARG
-        or mode == END_NODE
+        or mode == END_BASE
     );
     L->refine = mode;
 
@@ -427,7 +427,7 @@ INLINE void Push_Action(
             FLAG_WIDE_BYTE_OR_0(0) // signals array, also implicit terminator
                 | FLAG_LEN_BYTE_OR_255(255) // signals dynamic
         );
-        s->link_private.keysource = NOD(L); // maps varlist back to f
+        s->link_private.keysource = BAS(L); // maps varlist back to f
         s->misc_private.adjunct = nullptr; // GC will sees this
         L->varlist = cast_Array(s);
     }
@@ -448,7 +448,7 @@ INLINE void Push_Action(
 
     L->rootvar = cast(Value*, s->content.dynamic.data);
     TRACK(L->rootvar)->header.bits =
-        NODE_FLAG_NODE | NODE_FLAG_CELL
+        BASE_FLAG_BASE | BASE_FLAG_CELL
         | CELL_FLAG_PROTECTED // cell payload/binding tweaked, not by user
         | FLAG_KIND_BYTE(TYPE_FRAME);
     L->rootvar->payload.any_context.varlist = L->varlist;
@@ -490,7 +490,7 @@ INLINE void Push_Action(
 
     L->source->deferring_infix = false;
 
-    assert(Not_Node_Managed(L->varlist));
+    assert(Not_Base_Managed(L->varlist));
     assert(Not_Flex_Info(L->varlist, INACCESSIBLE));
 }
 
@@ -512,21 +512,21 @@ INLINE void Drop_Action(Level* L) {
         //
         // If something like Encloser_Dispatcher() runs, it might steal the
         // variables from a context to give them to the user, leaving behind
-        // a non-dynamic node.  Pretty much all the bits in the node are
+        // a non-dynamic Stub.  Pretty much all the bits in the Stub are
         // therefore useless.  It served a purpose by being non-null during
         // the call, however, up to this moment.
         //
-        if (Is_Node_Managed(L->varlist))
+        if (Is_Base_Managed(L->varlist))
             L->varlist = nullptr; // references exist, let a new one alloc
         else {
-            // This node could be reused vs. calling Alloc_Pooled() on the next
+            // This stub could be reused vs. calling Alloc_Pooled() on the next
             // action invocation...but easier for the moment to let it go.
             //
             Free_Pooled(STUB_POOL, L->varlist);
             L->varlist = nullptr;
         }
     }
-    else if (Is_Node_Managed(L->varlist)) {
+    else if (Is_Base_Managed(L->varlist)) {
         //
         // The varlist wound up getting referenced in a cell that will outlive
         // this Drop_Action().  The pointer needed to stay working up until
@@ -545,8 +545,8 @@ INLINE void Drop_Action(Level* L) {
                 L->original  // degrade keysource from L
             )
         );
-        assert(Not_Node_Managed(L->varlist));
-        LINK(L->varlist).keysource = L;  // carries NODE_FLAG_CELL
+        assert(Not_Base_Managed(L->varlist));
+        LINK(L->varlist).keysource = L;  // carries BASE_FLAG_CELL
     }
     else {
         // We can reuse the varlist and its data allocation, which may be
@@ -557,7 +557,7 @@ INLINE void Drop_Action(Level* L) {
         //
         Clear_Flex_Info(L->varlist, HOLD);
         assert(0 == (L->varlist->info.bits & ~( // <- note bitwise not
-            FLEX_INFO_0_IS_TRUE // parallels NODE_FLAG_NODE
+            FLEX_INFO_0_IS_TRUE // parallels BASE_FLAG_BASE
             | FLAG_WIDE_BYTE_OR_0(0) // don't mask out wide (0 for arrays))
             | FLAG_LEN_BYTE_OR_255(255) // mask out non-dynamic-len (dynamic)
         )));
@@ -566,7 +566,7 @@ INLINE void Drop_Action(Level* L) {
   #if RUNTIME_CHECKS
     if (L->varlist) {
         assert(Not_Flex_Info(L->varlist, INACCESSIBLE));
-        assert(Not_Node_Managed(L->varlist));
+        assert(Not_Base_Managed(L->varlist));
 
         Value* rootvar = cast(Value*, Array_Head(L->varlist));
         assert(Is_Frame(rootvar));
@@ -591,7 +591,7 @@ INLINE void Drop_Action(Level* L) {
 INLINE VarList* Varlist_For_Level_May_Manage(Level* L)
 {
     assert(not Is_Action_Level_Fulfilling(L));
-    Set_Node_Managed_Bit(L->varlist);
+    Set_Base_Managed_Bit(L->varlist);
     return CTX(L->varlist);
 }
 

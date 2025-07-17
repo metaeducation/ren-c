@@ -144,7 +144,7 @@ INLINE void Init_Handle_Managed_Common(
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
 ){
-    Array* singular = Alloc_Singular(NODE_FLAG_MANAGED);
+    Array* singular = Alloc_Singular(BASE_FLAG_MANAGED);
     MISC(singular).cleaner = cleaner;
 
     Cell* v = Array_Head(singular);

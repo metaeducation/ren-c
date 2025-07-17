@@ -54,7 +54,7 @@ ATTRIBUTE_NO_RETURN void Crash_On_Value_Debug(const Cell* v) {
     fflush(stdout);
     fflush(stderr);
 
-    Node* containing = Try_Find_Containing_Node_Debug(v);
+    Base* containing = Try_Find_Containing_Base_Debug(v);
 
     switch (Unchecked_Type_Of(v)) {
     case TYPE_NULLED:
@@ -83,7 +83,7 @@ ATTRIBUTE_NO_RETURN void Crash_On_Value_Debug(const Cell* v) {
     printf("Kind=%d\n", cast(int, Unchecked_Type_Of(v)));
     fflush(stdout);
 
-    if (containing and Is_Node_A_Stub(containing)) {
+    if (containing and Is_Base_A_Stub(containing)) {
         printf("Containing Array for Cell found, crashing on it:\n");
         Crash_On_Flex_Debug(cast_Flex(containing));
     }

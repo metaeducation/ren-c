@@ -274,7 +274,7 @@ INLINE Array* Make_Array_Core(REBLEN capacity, Flags flags) {
     //
     // !!! Code duplicated in Make_Ser_Core ATM.
     //
-    if (not (flags & NODE_FLAG_MANAGED)) { // most callsites const fold this
+    if (not (flags & BASE_FLAG_MANAGED)) { // most callsites const fold this
         if (Is_Flex_Full(GC_Manuals))
             Extend_Flex(GC_Manuals, 8);
 
@@ -313,7 +313,7 @@ INLINE Array* Make_Array_Core(REBLEN capacity, Flags flags) {
 // copying an array to turn it into a paramlist or varlist, or to use as the
 // kind of array the use might see.  If we used plain Make_Array() then it
 // would add a flag saying there were line numbers available, which may
-// compete with the usage of the ->misc and ->link fields of the series node
+// compete with the usage of the ->misc and ->link fields of the series Stub
 // for internal arrays.
 //
 INLINE Array* Make_Arr_For_Copy(
@@ -347,7 +347,7 @@ INLINE Array* Make_Arr_For_Copy(
 
 
 // A singular array is specifically optimized to hold *one* value in a Stub
-// node directly, and stay fixed at that size.
+// directly, and stay fixed at that size.
 //
 // Note ARR_SINGLE() must be overwritten by the caller...it contains an END
 // marker but the array length is 1, so that will assert if you don't.

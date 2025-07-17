@@ -704,7 +704,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
             switch (Datatype_Type(les.data)) {
               case TYPE_ACTION:
                 les.data_ser = Snapshot_All_Actions();
-                assert(Not_Node_Managed(les.data_ser));
+                assert(Not_Base_Managed(les.data_ser));
                 les.data_idx = 0;
                 break;
 
@@ -1138,8 +1138,8 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         if (res->broke) { // cleanup markers, don't do removals
             Cell* temp = List_At(res->data);
             for (; NOT_END(temp); ++temp) {
-                if (Is_Node_Marked(temp))
-                    Clear_Node_Marked_Bit(temp);
+                if (Is_Base_Marked(temp))
+                    Clear_Base_Marked_Bit(temp);
             }
             return 0;
         }
@@ -1152,7 +1152,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         // avoid blitting cells onto themselves by making the first thing we
         // do is to pass up all the unmarked (kept) cells.
         //
-        while (NOT_END(src) and not (src->header.bits & NODE_FLAG_MARKED)) {
+        while (NOT_END(src) and not (src->header.bits & BASE_FLAG_MARKED)) {
             ++src;
             ++dest;
         }
@@ -1161,7 +1161,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         // on are going to be moving to somewhere besides the original spot
         //
         for (; NOT_END(dest); ++dest, ++src) {
-            while (NOT_END(src) and (src->header.bits & NODE_FLAG_MARKED)) {
+            while (NOT_END(src) and (src->header.bits & BASE_FLAG_MARKED)) {
                 ++src;
                 --len;
                 ++count;
@@ -1326,7 +1326,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
             do {
                 assert(res->start <= len);
                 List_At_Head(res->data, res->start)->header.bits
-                    |= NODE_FLAG_MARKED;
+                    |= BASE_FLAG_MARKED;
                 ++res->start;
             } while (res->start != index);
         }
@@ -1436,7 +1436,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     Molder molder;
     if (Any_List(res.data)) {
         //
-        // We're going to use NODE_FLAG_MARKED on the elements of data's
+        // We're going to use BASE_FLAG_MARKED on the elements of data's
         // array for those items we wish to remove later.
         //
         // !!! This may not be better than pushing kept values to the data

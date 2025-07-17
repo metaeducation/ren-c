@@ -173,8 +173,8 @@
 
         if (
             (v->header.bits & (
-                NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE
-            )) == (NODE_FLAG_NODE | NODE_FLAG_CELL)
+                BASE_FLAG_BASE | BASE_FLAG_CELL | BASE_FLAG_UNREADABLE
+            )) == (BASE_FLAG_BASE | BASE_FLAG_CELL)
         ){
             assert(Unchecked_Type_Of(v) <= TYPE_MAX);
             return Unchecked_Type_Of(v); // majority of calls hopefully return here
@@ -182,11 +182,11 @@
 
         // Could be a LOGIC! false, blank, or NULL bit pattern in bad cell
         //
-        if (not (v->header.bits & NODE_FLAG_CELL)) {
+        if (not (v->header.bits & BASE_FLAG_CELL)) {
             printf("Type_Of() called on non-cell\n");
             crash (v);
         }
-        if (v->header.bits & NODE_FLAG_UNREADABLE) {
+        if (v->header.bits & BASE_FLAG_UNREADABLE) {
             printf("Type_Of() called on cell marked UNREADABLE\n");
             crash (v);
         }
@@ -256,12 +256,12 @@
     #define Assert_Cell_Writable(c) \
         do { \
             STATIC_ASSERT_LVALUE(c);  /* evil macro, ensures used correctly */ \
-            if (not ((c)->header.bits & NODE_FLAG_CELL)) { \
+            if (not ((c)->header.bits & BASE_FLAG_CELL)) { \
                 printf("Non-cell passed to cell writing routine\n"); \
                 crash (c); \
             } \
-            else if (not ((c)->header.bits & NODE_FLAG_NODE)) { \
-                printf("Non-node passed to cell writing routine\n"); \
+            else if (not ((c)->header.bits & BASE_FLAG_BASE)) { \
+                printf("Non-Base passed to cell writing routine\n"); \
                 crash (c); \
             } else if ((c)->header.bits & CELL_FLAG_PROTECTED) { \
                 printf("Protected cell passed to writing routine\n"); \
@@ -286,7 +286,7 @@
 // of not needing to mask to do Type_Of() is worth it...also there may be a
 // use for 256 types (although type bitsets are only 64-bits at the moment)
 //
-// The value is expected to already be "pre-formatted" with the NODE_FLAG_CELL
+// The value is expected to already be "pre-formatted" with the BASE_FLAG_CELL
 // bit, so that is left as-is.
 //
 
@@ -341,7 +341,7 @@ INLINE Value* Reset_Cell_Header_Untracked(
 #endif
 
 #define CELL_MASK_ERASE \
-    (NODE_FLAG_NODE | NODE_FLAG_CELL)
+    (BASE_FLAG_BASE | BASE_FLAG_CELL)
 
 #define CELL_MASK_ERASE_END \
     (CELL_MASK_ERASE | FLAG_KIND_BYTE(TYPE_0)) // same, but more explicit
@@ -376,12 +376,12 @@ INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, Type type) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Poison mask has NODE_FLAG_CELL but no NODE_FLAG_NODE, so Ensure_Readable()
+// Poison mask has BASE_FLAG_CELL but no BASE_FLAG_BASE, so Ensure_Readable()
 // will fail, and it is CELL_FLAG_PROTECTED so Ensure_Writable() will fail.
 // Nor can it be freshened with Freshen_Cell().  It has to be Erase_Cell()'d.
 //
 #define CELL_MASK_POISON \
-    (NODE_FLAG_CELL | CELL_FLAG_PROTECTED)
+    (BASE_FLAG_CELL | CELL_FLAG_PROTECTED)
 
 INLINE Cell* Poison_Cell_Untracked(Cell* v) {
     v->header.bits = CELL_MASK_POISON;
@@ -392,7 +392,7 @@ INLINE Cell* Poison_Cell_Untracked(Cell* v) {
     TRACK(Poison_Cell_Untracked(v))
 
 INLINE bool Is_Cell_Poisoned(const Cell* v) {
-    assert(v->header.bits & NODE_FLAG_CELL);
+    assert(v->header.bits & BASE_FLAG_CELL);
     return v->header.bits == CELL_MASK_POISON;
 }
 
@@ -416,8 +416,8 @@ INLINE bool Is_Cell_Poisoned(const Cell* v) {
 // the second byte, hence two bytes are sufficient to indicate a terminator.
 //
 
-#define END_NODE \
-    cast(const Value*, &PG_End_Node) // rebEND is char*, not Value* aligned!
+#define END_BASE \
+    cast(const Value*, &PG_End_Base) // rebEND is char*, not Value* aligned!
 
 INLINE Value* SET_END_Untracked(Cell* v){
     Assert_Cell_Writable(v);
@@ -443,7 +443,7 @@ INLINE Value* SET_END_Untracked(Cell* v){
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Some value types use their `->extra` field in order to store a pointer to
-// a Node which constitutes their notion of "binding".
+// a Base which constitutes their notion of "binding".
 //
 // This can be null (which indicates unbound), to a function's paramlist
 // (which indicates a relative binding), or to a context's varlist (which
@@ -647,8 +647,8 @@ INLINE Value* Trashify_Branched(Value* cell) {
 //
 
 #define CELL_MASK_UNREADABLE \
-    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_UNREADABLE \
-        | NODE_FLAG_GC_ONE | NODE_FLAG_GC_TWO \
+    (BASE_FLAG_BASE | BASE_FLAG_CELL | BASE_FLAG_UNREADABLE \
+        | BASE_FLAG_GC_ONE | BASE_FLAG_GC_TWO \
         | FLAG_KIND_BYTE(TYPE_255_UNREADABLE))
 
 #define Init_Unreadable_Untracked(out) do { \
@@ -665,7 +665,7 @@ INLINE Value* Init_Unreadable_Untracked_Inline(Cell* out) {
 }
 
 INLINE bool Is_Cell_Unreadable(const Cell* c) {
-    if (not Not_Node_Readable(c))
+    if (not Not_Base_Readable(c))
         return false;
     assert((c->header.bits & CELL_MASK_UNREADABLE) == CELL_MASK_UNREADABLE);
     return true;
@@ -1061,7 +1061,7 @@ INLINE void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Some value types use their `->extra` field in order to store a pointer to
-// a Node which constitutes their notion of "binding".
+// a Base which constitutes their notion of "binding".
 //
 // This can either be null (a.k.a. UNBOUND), or to a function's paramlist
 // (indicates a relative binding), or to a context's varlist (which indicates
@@ -1072,11 +1072,11 @@ INLINE void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
 // and it had its ->header and ->info bits set in such a way as to avoid the
 // need for some conditional checks.  e.g. instead of writing:
 //
-//     if (binding and binding->leader.bits & NODE_FLAG_MANAGED) {...}
+//     if (binding and binding->leader.bits & BASE_FLAG_MANAGED) {...}
 //
-// The special UNBOUND node set some bits, such as to pretend to be managed:
+// The special UNBOUND pointer set some bits, such as to pretend to be managed:
 //
-//     if (binding->leader.bits & NODE_FLAG_MANAGED) {...} // incl. UNBOUND
+//     if (binding->leader.bits & BASE_FLAG_MANAGED) {...} // incl. UNBOUND
 //
 // Question was whether avoiding the branching involved from the extra test
 // for null would be worth it for a consistent ability to dereference.  At
@@ -1109,9 +1109,9 @@ INLINE void INIT_BINDING(Cell* v, Stub* binding) {
     if (not binding)
         return; // e.g. UNBOUND
 
-    assert(not (binding->leader.bits & NODE_FLAG_CELL)); // not currently used
+    assert(not (binding->leader.bits & BASE_FLAG_CELL)); // not currently used
 
-    if (binding->leader.bits & NODE_FLAG_MANAGED) {
+    if (binding->leader.bits & BASE_FLAG_MANAGED) {
         assert(
             binding->leader.bits & ARRAY_FLAG_IS_VARLIST // specific
             or binding->leader.bits & ARRAY_FLAG_IS_PARAMLIST // relative
@@ -1160,7 +1160,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, Stub* binding) {
         out->extra.binding = nullptr; // unbound
         return;
     }
-    if (Is_Node_Managed(binding)) {
+    if (Is_Base_Managed(binding)) {
         out->extra.binding = binding; // managed is safe for any `out`
         return;
     }
@@ -1169,7 +1169,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, Stub* binding) {
     assert(IS_END(L->param)); // cannot manage frame varlist in mid fulfill!
     UNUSED(L); // !!! not actually used yet, coming soon
 
-    binding->leader.bits |= NODE_FLAG_MANAGED; // burdens the GC, now...
+    binding->leader.bits |= BASE_FLAG_MANAGED; // burdens the GC, now...
     out->extra.binding = binding;
 }
 
@@ -1245,7 +1245,7 @@ INLINE void Blit_Cell(Cell* out, const Cell* v)
 // DECLARE_VALUE inside of a loop.  It should be at the outermost scope of
 // the function.
 //
-// Note: It sets NODE_FLAG_UNREADABLE, so this is a "trash" cell by default.
+// Note: It sets BASE_FLAG_UNREADABLE, so this is a "trash" cell by default.
 //
 #define DECLARE_VALUE(name) \
     Value name##_pair[2]; \

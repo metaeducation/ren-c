@@ -2666,7 +2666,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         );
         Array* a = Pop_Stack_Values_Core(
             leading_blank_or_dot ? base + 1 : base,
-            NODE_FLAG_MANAGED
+            BASE_FLAG_MANAGED
                 | (captured_newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
         );
         if (leading_blank_or_dot)
@@ -2807,7 +2807,7 @@ static Option(Error*) Trap_Scan_Array(Array** out, ScanState* S, Byte mode)
 
     Array* a = Pop_Stack_Values_Core(
         base,
-        NODE_FLAG_MANAGED
+        BASE_FLAG_MANAGED
             | (child.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
     );
 
@@ -2846,7 +2846,7 @@ Array* Scan_UTF8_Managed(
 
     Array* a = Pop_Stack_Values_Core(
         base,
-        NODE_FLAG_MANAGED
+        BASE_FLAG_MANAGED
             | (scan.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
     );
 
@@ -3047,7 +3047,7 @@ DECLARE_NATIVE(TRANSCODE)
 
     Array* a = Pop_Stack_Values_Core(
         base,
-        NODE_FLAG_MANAGED
+        BASE_FLAG_MANAGED
             | (scan.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
     );
     MISC(a).line = transcode.line;

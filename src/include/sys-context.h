@@ -73,7 +73,7 @@ INLINE Array* Varlist_Array(VarList* c) {
 
 // There may not be any dynamic or stack allocation available for a stack
 // allocated context, and in that case it will have to come out of the
-// Stub node data itself.
+// Stub data itself.
 //
 INLINE Value* Varlist_Archetype(VarList* c) {
     Array* varlist = Varlist_Array(c);
@@ -91,7 +91,7 @@ INLINE Value* Varlist_Archetype(VarList* c) {
 // possible--even in an unoptimized build.
 //
 INLINE Array* Keylist_Of_Varlist(VarList* c) {
-    if (Is_Node_A_Stub(LINK(c).keysource))
+    if (Is_Base_A_Stub(LINK(c).keysource))
         return cast_Array(LINK(c).keysource);  // not a Level, so use keylist
 
     // If the context in question is a FRAME! value, then the ->phase
@@ -140,8 +140,8 @@ INLINE void Tweak_Keylist_Of_Varlist_Unique(VarList* c, Array* keylist) {
     Flex_At(Value, Keylist_Of_Varlist(c), 1)  // always "specific"
 
 INLINE Option(Level*) Level_Of_Varlist_If_Running(VarList* c) {
-    Node* keysource = LINK(c).keysource;
-    if (Is_Node_A_Stub(keysource))
+    Base* keysource = LINK(c).keysource;
+    if (Is_Base_A_Stub(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
     assert(Not_Flex_Info(Varlist_Array(c), INACCESSIBLE));
@@ -312,7 +312,7 @@ INLINE Value* Init_Any_Context(
 #define Ensure_Keylist_Unique_Invalidated(context) \
     Expand_Context_Keylist_Core((context), 0)
 
-// Useful if you want to start a context out as NODE_FLAG_MANAGED so it does
+// Useful if you want to start a context out as BASE_FLAG_MANAGED so it does
 // not have to go in the unmanaged roots list and be removed later.  (Be
 // careful not to do any evaluations or trigger GC until it's well formed)
 //
@@ -404,18 +404,18 @@ INLINE bool Is_Native_Port_Actor(const Value* actor) {
 //  Steal_Context_Vars: C
 //
 // This is a low-level trick which mutates a context's varlist into a stub
-// "free" node, while grabbing the underlying memory for its variables into
+// "free" state, while grabbing the underlying memory for its variables into
 // an array of values.
 //
 // It has a notable use by DO of a heap-based FRAME!, so that the frame's
 // filled-in heap memory can be directly used as the args for the invocation,
 // instead of needing to push a redundant run of stack-based memory cells.
 //
-INLINE VarList* Steal_Context_Vars(VarList* c, Node* keysource) {
+INLINE VarList* Steal_Context_Vars(VarList* c, Base* keysource) {
     Flex* stub = c;
 
     // Rather than memcpy() and touch up the header and info to remove
-    // FLEX_INFO_HOLD put on by Enter_Native(), or NODE_FLAG_MANAGED,
+    // FLEX_INFO_HOLD put on by Enter_Native(), or BASE_FLAG_MANAGED,
     // etc.--use constant assignments and only copy the remaining fields.
     //
     Flex* copy = Alloc_Flex_Stub(
@@ -452,7 +452,7 @@ INLINE VarList* Steal_Context_Vars(VarList* c, Node* keysource) {
 
     Value* single = cast(Value*, &stub->content.fixed);
     single->header.bits =
-        NODE_FLAG_NODE | NODE_FLAG_CELL | FLAG_KIND_BYTE(TYPE_FRAME);
+        BASE_FLAG_BASE | BASE_FLAG_CELL | FLAG_KIND_BYTE(TYPE_FRAME);
     INIT_BINDING(single, VAL_BINDING(rootvar));
     single->payload.any_context.varlist = cast_Array(stub);
     Corrupt_If_Needful(single->payload.any_context.phase);

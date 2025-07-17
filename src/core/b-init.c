@@ -476,7 +476,7 @@ static void Init_Action_Adjunct_Shim(void) {
         SYM_SELF, SYM_DESCRIPTION, SYM_RETURN_TYPE, SYM_RETURN_NOTE,
         SYM_PARAMETER_TYPES, SYM_PARAMETER_NOTES
     };
-    VarList* adjunct = Alloc_Context_Core(TYPE_OBJECT, 6, NODE_FLAG_MANAGED);
+    VarList* adjunct = Alloc_Context_Core(TYPE_OBJECT, 6, BASE_FLAG_MANAGED);
     REBLEN i = 1;
     for (; i != 7; ++i)
         Init_Nulled(
@@ -744,16 +744,16 @@ static Array* Startup_Generics(const Value* boot_generics)
 
 
 //
-//  Startup_End_Node: C
+//  Startup_End_Base: C
 //
 // We can't actually put an end value in the middle of a block, so we poke
 // this one into a program global.  It is not legal to bit-copy an END (you
 // always use SET_END), so we can make it unwritable.
 //
-static void Startup_End_Node(void)
+static void Startup_End_Base(void)
 {
-    TRACK(&PG_End_Node)->header = Endlike_Header(0); // no NODE_FLAG_CELL, R/O
-    assert(IS_END(END_NODE)); // sanity check that it took
+    TRACK(&PG_End_Base)->header = Endlike_Header(0); // no BASE_FLAG_CELL, R/O
+    assert(IS_END(END_BASE)); // sanity check that it took
 }
 
 
@@ -763,11 +763,11 @@ static void Startup_End_Node(void)
 // Generic read-only empty array, which will be put into EMPTY_BLOCK when
 // Alloc_Value() is available.  Note it's too early for ARRAY_FLAG_HAS_FILE_LINE.
 //
-// Warning: GC must not run before Init_Root_Vars() puts it in an API node!
+// Warning: GC must not run before Init_Root_Vars() puts it in an API stub!
 //
 static void Startup_Empty_Array(void)
 {
-    PG_Empty_Array = Make_Array_Core(0, NODE_FLAG_MANAGED);
+    PG_Empty_Array = Make_Array_Core(0, BASE_FLAG_MANAGED);
     Set_Flex_Info(PG_Empty_Array, FROZEN_DEEP);
 }
 
@@ -984,7 +984,7 @@ static void Init_System_Object(
     //
     Init_Object(
         Get_System(SYS_CODECS, 0),
-        Alloc_Context_Core(TYPE_OBJECT, 10, NODE_FLAG_MANAGED)
+        Alloc_Context_Core(TYPE_OBJECT, 10, BASE_FLAG_MANAGED)
     );
 
     // The "standard error" template was created as an OBJECT!, because the
@@ -1291,7 +1291,7 @@ void Startup_Core(void)
     Set_Random(0);
     Startup_Interning();
 
-    Startup_End_Node();
+    Startup_End_Base();
     Startup_Empty_Array();
 
     Startup_Collector();
@@ -1386,10 +1386,10 @@ void Startup_Core(void)
 
     // !!! Have MAKE-BOOT compute # of words
     //
-    Lib_Context = Alloc_Context_Core(TYPE_OBJECT, 600, NODE_FLAG_MANAGED);
+    Lib_Context = Alloc_Context_Core(TYPE_OBJECT, 600, BASE_FLAG_MANAGED);
     Push_Lifeguard(Lib_Context);
 
-    Sys_Context = Alloc_Context_Core(TYPE_OBJECT, 50, NODE_FLAG_MANAGED);
+    Sys_Context = Alloc_Context_Core(TYPE_OBJECT, 50, BASE_FLAG_MANAGED);
     Push_Lifeguard(Sys_Context);
 
     Array* datatypes_catalog = Startup_Datatypes(

@@ -27,7 +27,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Maps are implemented as a light hashing layer on top of an array.  The
-// hash indices are stored in the series node's "misc", while the values are
+// hash indices are stored in the series Stub's "misc", while the values are
 // retained in pairs as `[key val key val key val ...]`.
 //
 // When there are too few values to warrant hashing, no hash indices are

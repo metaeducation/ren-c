@@ -131,7 +131,7 @@ static int Poll_Default(REBDEV *dev)
 //  Attach_Request: C
 //
 // Attach a request to a device's pending or accept list.
-// Node is a pointer to the head pointer of the req list.
+// Base is a pointer to the head pointer of the req list.
 //
 void Attach_Request(REBREQ **node, REBREQ *req)
 {

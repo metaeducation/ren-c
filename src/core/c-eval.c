@@ -737,7 +737,7 @@ bool Eval_Core_Throws(Level* const L)
                 Erase_Cell(L->arg); // improve...
             }
 
-            assert(L->arg->header.bits & NODE_FLAG_CELL);
+            assert(L->arg->header.bits & BASE_FLAG_CELL);
 
     //=//// A /REFINEMENT ARG /////////////////////////////////////////////=//
 
@@ -769,7 +769,7 @@ bool Eval_Core_Throws(Level* const L)
                     if (TOP_INDEX != L->stack_base)
                         goto next_pickup;
 
-                    L->param = END_NODE; // don't need L->param in paramlist
+                    L->param = END_BASE; // don't need L->param in paramlist
                     goto arg_loop_and_any_pickups_done;
                 }
 
@@ -1053,10 +1053,10 @@ bool Eval_Core_Throws(Level* const L)
                     if (IS_END(L->arg))
                         array1 = EMPTY_ARRAY;
                     else {
-                        Array* feed = Alloc_Singular(NODE_FLAG_MANAGED);
+                        Array* feed = Alloc_Singular(BASE_FLAG_MANAGED);
                         Copy_Cell(ARR_SINGLE(feed), L->arg);
 
-                        array1 = Alloc_Singular(NODE_FLAG_MANAGED);
+                        array1 = Alloc_Singular(BASE_FLAG_MANAGED);
                         Init_Block(ARR_SINGLE(array1), feed); // index 0
                     }
 

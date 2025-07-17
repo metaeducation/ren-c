@@ -188,7 +188,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     VarList* module_ctx = Alloc_Context_Core(
         TYPE_MODULE,
         80,
-        NODE_FLAG_MANAGED // !!! Is GC guard unnecessary due to references?
+        BASE_FLAG_MANAGED // !!! Is GC guard unnecessary due to references?
     );
     DECLARE_VALUE (module);
     Init_Any_Context(module, TYPE_MODULE, module_ctx);

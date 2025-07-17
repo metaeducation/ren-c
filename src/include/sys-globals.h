@@ -46,11 +46,11 @@ PVAR REBINT PG_Boot_Level;  // User specified startup level
 
 PVAR REBU64 PG_Mem_Usage;   // Overall memory used
 
-// In Ren-C, words are Series nodes (Symbol subtype).  They may be GC'd (unless
+// In Ren-C, words are Flex Stubs (Symbol subtype).  They may be GC'd (unless
 // they are in the %words.r list, in which case their canon forms are
 // protected in order to do SYM_XXX switch statements in the C source, etc.)
 //
-// There is a global hash table which accelerates finding a word's Series
+// There is a global hash table which accelerates finding a word's Flex
 // Stub from a UTF-8 source string.  Entries are added to it when new canon
 // forms of words are created, and removed when they are GC'd.  It is scaled
 // according to the total number of canons in the system.
@@ -90,7 +90,7 @@ PVAR REB_OPTS *Reb_Opts;
 // arrays--they are singular values, and the second element is set to
 // be trash to trap any unwanted access.
 //
-PVAR Cell PG_End_Node;
+PVAR Cell PG_End_Base;
 PVAR Value PG_Nulled_Cell[2];
 
 PVAR Value PG_Blank_Value[2];

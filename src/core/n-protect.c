@@ -487,7 +487,7 @@ DECLARE_NATIVE(LOCK)
             Init_Any_Series_At(
                 OUT,
                 Type_Of(v),
-                Copy_Non_Array_Flex_Core(Cell_Flex(v), NODE_FLAG_MANAGED),
+                Copy_Non_Array_Flex_Core(Cell_Flex(v), BASE_FLAG_MANAGED),
                 VAL_INDEX(v)
             );
         }

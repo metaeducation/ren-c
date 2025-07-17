@@ -149,7 +149,7 @@ static void Eval_Core_Shared_Checks_Debug(Level* L) {
     Assert_Corrupted_If_Needful(L->opt_label);
 
     if (L->varlist) {
-        assert(Not_Node_Managed(L->varlist));
+        assert(Not_Base_Managed(L->varlist));
         assert(Not_Flex_Info(L->varlist, INACCESSIBLE));
     }
 

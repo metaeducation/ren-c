@@ -599,7 +599,7 @@ Array* Make_Paramlist_Managed_May_Panic(
     if (has_types) {
         Array* types_varlist = Make_Array_Core(
             num_slots,
-            SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
+            SERIES_MASK_CONTEXT | BASE_FLAG_MANAGED
         );
         MISC(types_varlist).adjunct = nullptr;  // GC sees this, must initialize
         Tweak_Keylist_Of_Varlist_Shared(CTX(types_varlist), paramlist);
@@ -659,7 +659,7 @@ Array* Make_Paramlist_Managed_May_Panic(
     if (has_notes) {
         Array* notes_varlist = Make_Array_Core(
             num_slots,
-            SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
+            SERIES_MASK_CONTEXT | BASE_FLAG_MANAGED
         );
         MISC(notes_varlist).adjunct = nullptr;  // GC sees this, must initialize
         Tweak_Keylist_Of_Varlist_Shared(CTX(notes_varlist), paramlist);
@@ -852,7 +852,7 @@ REBACT *Make_Action(
     // the dispatcher understands it to be, by contract.  Terminate it
     // at the given length implicitly.
 
-    Array* details = Make_Array_Core(details_capacity, NODE_FLAG_MANAGED);
+    Array* details = Make_Array_Core(details_capacity, BASE_FLAG_MANAGED);
     Term_Array_Len(details, details_capacity);
 
     rootparam->payload.action.details = details;
@@ -883,7 +883,7 @@ REBACT *Make_Action(
         // the exemplar (though some of these parameters may be hidden due to
         // specialization, see TYPE_TS_HIDDEN).
         //
-        assert(Is_Node_Managed(opt_exemplar));
+        assert(Is_Base_Managed(opt_exemplar));
         assert(Varlist_Len(opt_exemplar) == Array_Len(paramlist) - 1);
 
         LINK(details).specialty = Varlist_Array(opt_exemplar);
@@ -928,7 +928,7 @@ VarList* Make_Expired_Level_Ctx_Managed(REBACT *a)
     //
     Array* varlist = Alloc_Singular(
         ARRAY_FLAG_IS_VARLIST
-        | NODE_FLAG_MANAGED
+        | BASE_FLAG_MANAGED
     );
     Set_Flex_Flag(varlist, ALWAYS_DYNAMIC);  // asserts check
     Set_Flex_Info(varlist, INACCESSIBLE);
@@ -1019,7 +1019,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
             maybe_fake_body = Copy_Array_Shallow_Flags(
                 Cell_Array(example),
                 VAL_SPECIFIER(example),
-                NODE_FLAG_MANAGED
+                BASE_FLAG_MANAGED
             );
             Set_Flex_Info(maybe_fake_body, FROZEN_DEEP);
 
@@ -1130,7 +1130,7 @@ REBACT *Make_Interpreted_Action_May_Panic(
 
     Array* copy;
     if (VAL_ARRAY_LEN_AT(code) == 0) // optimize empty body case (why?)
-        copy = Make_Array_Core(1, NODE_FLAG_MANAGED);
+        copy = Make_Array_Core(1, BASE_FLAG_MANAGED);
     else
         copy = Copy_And_Bind_Relative_Deep_Managed(
             code, // new copy has locals bound relatively to the new action
@@ -1305,7 +1305,7 @@ Bounce Func_Dispatcher(Level* L)
 //
 // A hijacker takes over another function's identity, replacing it with its
 // own implementation, injecting directly into the paramlist and body_holder
-// nodes held onto by all the victim's references.
+// stubs held onto by all the victim's references.
 //
 // Sometimes the hijacking function has the same underlying function
 // as the victim, in which case there's no need to insert a new dispatcher.
@@ -1396,7 +1396,7 @@ Bounce Encloser_Dispatcher(Level* L)
     // allocated through the usual mechanisms, so if unmanaged it's not in
     // the tracking list Init_Any_Context() expects.  Just fiddle the bit.
     //
-    Set_Node_Managed_Bit(c);
+    Set_Base_Managed_Bit(c);
 
     // When the DO of the FRAME! executes, we don't want it to run the
     // encloser again (infinite loop).
@@ -1418,7 +1418,7 @@ Bounce Encloser_Dispatcher(Level* L)
     // Note that since varlists aren't added to the manual series list, the
     // bit must be tweaked vs. using ENSURE_ARRAY_MANAGED.
     //
-    Set_Node_Managed_Bit(L->varlist);
+    Set_Base_Managed_Bit(L->varlist);
 
     const bool fully = true;
     if (Apply_Only_Throws(L->out, fully, outer, Level_Spare(L), rebEND))

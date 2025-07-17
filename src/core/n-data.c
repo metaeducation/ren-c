@@ -303,13 +303,8 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
             return false;
 
         // Requesting the context of a word that is relatively bound may
-        // result in that word having a FRAME! incarnated as a Stub node (if
+        // result in that word having a FRAME! incarnated as a Stub (if
         // it was not already reified.)
-        //
-        // !!! In the future Reb_Context will refer to a Node*, and only
-        // be reified based on the properties of the cell into which it is
-        // moved (e.g. OUT would be examined here to determine if it would
-        // have a longer lifetime than the Level* or other node)
         //
         VarList* c = VAL_WORD_CONTEXT(v);
         Copy_Cell(out, Varlist_Archetype(c));

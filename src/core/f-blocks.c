@@ -176,7 +176,7 @@ void Clonify_Values_Len_Managed(
                         0, // !!! what if VAL_INDEX() is nonzero?
                         derived,
                         0,
-                        NODE_FLAG_MANAGED
+                        BASE_FLAG_MANAGED
                     );
 
                     INIT_VAL_ARRAY(v, cast_Array(series)); // copies args
@@ -189,7 +189,7 @@ void Clonify_Values_Len_Managed(
                 else {
                     series = Copy_Non_Array_Flex_Core(
                         Cell_Flex(v),
-                        NODE_FLAG_MANAGED
+                        BASE_FLAG_MANAGED
                     );
                     Set_Cell_Flex(v, series);
                 }
@@ -253,7 +253,7 @@ static Array* Copy_Array_Core_Managed_Inner_Loop(
     REBU64 types
 ){
     assert(index <= tail and tail <= Array_Len(original));
-    assert(flags & NODE_FLAG_MANAGED);
+    assert(flags & BASE_FLAG_MANAGED);
 
     REBLEN len = tail - index;
 
@@ -300,7 +300,7 @@ Array* Copy_Array_Core_Managed(
         index = tail;
 
     if (index > Array_Len(original)) // !!! should this be asserted?
-        return Make_Array_Core(extra, flags | NODE_FLAG_MANAGED);
+        return Make_Array_Core(extra, flags | BASE_FLAG_MANAGED);
 
     return Copy_Array_Core_Managed_Inner_Loop(
         original,
@@ -308,7 +308,7 @@ Array* Copy_Array_Core_Managed(
         specifier,
         tail,
         extra,
-        flags | NODE_FLAG_MANAGED,
+        flags | BASE_FLAG_MANAGED,
         types
     );
 }
@@ -336,7 +336,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
     REBACT *before, // references to `before` will be changed to `after`
     REBACT *after
 ){
-    const Flags flags = NODE_FLAG_MANAGED;
+    const Flags flags = BASE_FLAG_MANAGED;
 
     Array* copy = Make_Arr_For_Copy(Array_Len(original), flags, original);
     Cell* src = Array_Head(original);
