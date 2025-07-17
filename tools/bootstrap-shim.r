@@ -126,6 +126,7 @@ sys.util/recover [
     export set-word3!: set-word?/
     export set-path3!: set-tuple?/
     export get-word3!: get-word?/
+    export lit-word3!: lit-word?/
     export refinement3!: run-word?/
     export char3!: char?/
 
