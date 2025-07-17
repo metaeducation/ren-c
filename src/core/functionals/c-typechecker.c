@@ -118,7 +118,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
                 return fail (Error_Bad_Refines_Raw());
             }
 
-            type = Cell_Datatype_Type(v);
+            type = Datatype_Type(v);
         }
         else {
             if (Bool_ARG(QUOTED)) {
@@ -547,7 +547,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     }
     else switch (maybe Type_Of(tests)) {
       case TYPE_DATATYPE:
-        return Is_Cell_Stable(v) and (Type_Of(v) == Cell_Datatype_Type(tests));
+        return Is_Cell_Stable(v) and (Type_Of(v) == Datatype_Type(tests));
 
       case TYPE_BLOCK:
         item = List_At(&tail, tests);
@@ -743,11 +743,11 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
       case TYPE_DATATYPE: {
         Option(Type) t = Type_Of(v);
         if (t) {  // builtin type
-            if (Cell_Datatype_Type(test) == t)
+            if (Datatype_Type(test) == t)
                 goto test_succeeded;
             goto test_failed;
         }
-        if (Cell_Datatype_Extra_Heart(test) == Cell_Extra_Heart(v))
+        if (Datatype_Extra_Heart(test) == Cell_Extra_Heart(v))
             goto test_succeeded;
         goto test_failed; }
 
@@ -1000,7 +1000,7 @@ Result(Value*) Init_Typechecker(
     possibly(out == datatype_or_block);
 
     if (Is_Datatype(datatype_or_block)) {
-        Option(Type) t = Cell_Datatype_Type(datatype_or_block);
+        Option(Type) t = Datatype_Type(datatype_or_block);
         if (not t)
             panic ("TYPECHECKER does not support extension types yet");
 

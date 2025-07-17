@@ -561,7 +561,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_DATE);
+    assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_DATE);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);

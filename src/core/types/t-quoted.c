@@ -372,7 +372,7 @@ DECLARE_NATIVE(ANTIFORM_Q)
     if (not Is_Datatype(datatype))
         panic ("ANTIFORM?:TYPE only accepts DATATYPE!");
 
-    Option(Type) type = Cell_Datatype_Type(datatype);
+    Option(Type) type = Datatype_Type(datatype);
 
     if (u_cast(Byte, type) > u_cast(Byte, MAX_TYPE_ELEMENT))
         return LOGIC(true);

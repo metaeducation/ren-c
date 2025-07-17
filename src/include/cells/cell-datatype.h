@@ -155,7 +155,7 @@ INLINE SymId Symbol_Id_From_Type(Type type) {
 }
 
 
-INLINE Option(SymId) Cell_Datatype_Id(const Value* v) {
+INLINE Option(SymId) Datatype_Id(const Value* v) {
     assert(Is_Datatype(v));
     if (Series_Len_At(v) != 1)
         panic ("Type blocks only allowed one element for now");
@@ -169,35 +169,35 @@ INLINE Option(SymId) Cell_Datatype_Id(const Value* v) {
 //    antiform is what canonizes the fence's array to one that has the
 //    DATATYPE_BYTE() set.  So you can only ask this of antiforms.
 //
-INLINE Option(Type) Cell_Datatype_Type(const Value* v) {
+INLINE Option(Type) Datatype_Type(const Value* v) {
     assert(Is_Datatype(v));  // only works on antiform [1]
     return u_cast(Option(Type), DATATYPE_BYTE(Cell_Array(v)));
 }
 
 #if RUNTIME_CHECKS
-    INLINE Option(Type) Cell_Datatype_Type_Slow_Debug(const Value* v) {
-        Option(SymId) id = Cell_Datatype_Id(v);
+    INLINE Option(Type) Datatype_Type_Slow_Debug(const Value* v) {
+        Option(SymId) id = Datatype_Id(v);
         if (id and Is_Symbol_Id_Of_Builtin_Type(unwrap id))
             return Type_From_Symbol_Id(unwrap id);
         return TYPE_0;
     }
 #endif
 
-INLINE Option(Heart) Cell_Datatype_Heart(const Value* v) {
-    Byte type_byte_or_0 = u_cast(Byte, Cell_Datatype_Type(v));
+INLINE Option(Heart) Datatype_Heart(const Value* v) {
+    Byte type_byte_or_0 = u_cast(Byte, Datatype_Type(v));
     assert(type_byte_or_0 <= cast(Byte, MAX_HEART));  // no QUOTE/QUASI/ANTI
     return u_cast(Option(Heart), type_byte_or_0);
 }
 
-INLINE Heart Cell_Datatype_Builtin_Heart(const Value* v) {
-    Option(Type) type = Cell_Datatype_Type(v);
+INLINE Heart Datatype_Builtin_Heart(const Value* v) {
+    Option(Type) type = Datatype_Type(v);
     assert(type);
     Byte type_byte = u_cast(Byte, type);
     assert(type_byte <= u_cast(Byte, MAX_HEART));  // not QUOTED/QUASI/ANTI
     return u_cast(HeartEnum, type_byte);
 }
 
-INLINE const ExtraHeart* Cell_Datatype_Extra_Heart(const Value* v) {
+INLINE const ExtraHeart* Datatype_Extra_Heart(const Value* v) {
     assert(Is_Datatype(v));
 
     const Symbol* s = Word_Symbol(List_Item_At(v));

@@ -416,7 +416,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_WARNING);
+    assert(Datatype_Type(ARG(TYPE)) == TYPE_WARNING);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);

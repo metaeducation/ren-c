@@ -314,7 +314,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_String_Type(heart) or Any_Utf8_Type(heart));  // rune calls [1]
 
     Element* def = Element_ARG(DEF);
@@ -1055,7 +1055,7 @@ IMPLEMENT_GENERIC(AS, Any_String)
     INCLUDE_PARAMS_OF_AS;
 
     Element* string = Element_ARG(VALUE);
-    Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart as = Datatype_Builtin_Heart(ARG(TYPE));
 
     require (
       Alias_Any_String_As(OUT, string, as)

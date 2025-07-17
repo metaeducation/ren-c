@@ -126,7 +126,7 @@ DECLARE_NATIVE(JOIN)
     Heart heart;
     if (Is_Datatype(ARG(BASE))) {
         base = nullptr;
-        Option(Heart) datatype_heart = Cell_Datatype_Heart(ARG(BASE));
+        Option(Heart) datatype_heart = Datatype_Heart(ARG(BASE));
         if (not datatype_heart)
             panic (PARAM(BASE));
         heart = unwrap datatype_heart;

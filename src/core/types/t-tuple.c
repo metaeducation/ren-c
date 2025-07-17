@@ -33,7 +33,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_Sequence_Type(heart));
 
     Element* arg = Element_ARG(DEF);
@@ -275,7 +275,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
 
     Element* seq = Element_ARG(VALUE);
 
-    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_Sequence_Type(to))  // e.g. `to chain! 'a.b.c` [1]
         return GENERIC_CFUNC(AS, Any_Sequence)(LEVEL);  // immutable, same code
@@ -436,7 +436,7 @@ IMPLEMENT_GENERIC(AS, Any_Sequence)
     INCLUDE_PARAMS_OF_AS;
 
     Element* seq = Element_ARG(VALUE);
-    Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart as = Datatype_Builtin_Heart(ARG(TYPE));
 
     require (
       Alias_Any_Sequence_As(OUT, seq, as)

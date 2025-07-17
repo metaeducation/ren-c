@@ -406,7 +406,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_MAP);
+    assert(Datatype_Type(ARG(TYPE)) == TYPE_MAP);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -823,7 +823,7 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
     INCLUDE_PARAMS_OF_TO;
 
     Element* map = Element_ARG(VALUE);
-    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_List_Type(to))  // !!! not ordered! [1]
         return Init_Any_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));

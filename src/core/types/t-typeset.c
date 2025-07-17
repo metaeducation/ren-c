@@ -268,7 +268,7 @@ Result(Zero) Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
-            Option(Type) datatype_type = Cell_Datatype_Type(lookup);
+            Option(Type) datatype_type = Datatype_Type(lookup);
             if (not datatype_type) {
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;

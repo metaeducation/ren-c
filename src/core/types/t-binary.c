@@ -189,7 +189,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_BLOB);
+    assert(Datatype_Type(ARG(TYPE)) == TYPE_BLOB);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -563,7 +563,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
     INCLUDE_PARAMS_OF_TO;
 
     Element* v = Element_ARG(VALUE);
-    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_String_Type(to)) {  // (to text! binary) questionable [1]
         Size size;
@@ -705,7 +705,7 @@ IMPLEMENT_GENERIC(AS, Is_Blob)
     INCLUDE_PARAMS_OF_AS;
 
     Element* blob = Element_ARG(VALUE);
-    Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart as = Datatype_Builtin_Heart(ARG(TYPE));
 
     require (
       Alias_Blob_As(OUT, blob, as)

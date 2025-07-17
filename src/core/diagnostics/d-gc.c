@@ -334,8 +334,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             if (heart == TYPE_FENCE) {
                 const Value* value = cast(Value*, v);
                 assert(
-                    Cell_Datatype_Type(value)
-                    == Cell_Datatype_Type_Slow_Debug(value)
+                    Datatype_Type(value)
+                    == Datatype_Type_Slow_Debug(value)
                 );
             }
         }

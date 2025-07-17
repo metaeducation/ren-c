@@ -251,7 +251,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_Utf8_Type(heart));
 
     Element* arg = Element_ARG(DEF);
@@ -632,7 +632,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
     INCLUDE_PARAMS_OF_TO;
 
     Element* v = Element_ARG(VALUE);  // rune, email, etc.
-    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart to = Datatype_Builtin_Heart(ARG(TYPE));
     possibly(Any_Word(v));  // delegates some cases
 
     if (Any_String_Type(to)) {  // always need mutable new copy of data
@@ -884,7 +884,7 @@ IMPLEMENT_GENERIC(AS, Any_Utf8)
     INCLUDE_PARAMS_OF_AS;
 
     Element* any_utf8 = Element_ARG(VALUE);
-    Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart as = Datatype_Builtin_Heart(ARG(TYPE));
 
     require (
       Alias_Any_Utf8_As(OUT, any_utf8, as)

@@ -278,7 +278,7 @@ void Register_Generics(const ExtraGenericTable* generics)
     const ExtraGenericTable* entry = generics;
     for (; entry->table != nullptr; ++entry) {
         assert(entry->ext_info->ext_heart == nullptr);
-        entry->ext_info->ext_heart = Cell_Datatype_Extra_Heart(
+        entry->ext_info->ext_heart = Datatype_Extra_Heart(
             *entry->datatype_ptr
         );
 
@@ -304,7 +304,7 @@ void Unregister_Generics(const ExtraGenericTable* generics)
 {
     const ExtraGenericTable* entry = generics;
     for (; entry->table != nullptr; ++entry) {
-        assert(entry->ext_info->ext_heart == Cell_Datatype_Extra_Heart(
+        assert(entry->ext_info->ext_heart == Datatype_Extra_Heart(
             *entry->datatype_ptr
         ));
         assert(Stub_Flavor(entry->ext_info->ext_heart) == FLAVOR_PATCH);
@@ -374,10 +374,10 @@ bool Try_Dispatch_Generic_Core(
     const Value* datatype,  // no quoted/quasi/anti [1]
     Level* const L
 ){
-    Option(Heart) heart = Cell_Datatype_Heart(datatype);
+    Option(Heart) heart = Datatype_Heart(datatype);
     if (not heart) {
         ExtraGenericInfo* ext_info = table->ext_info;
-        const ExtraHeart* ext_heart = Cell_Datatype_Extra_Heart(datatype);
+        const ExtraHeart* ext_heart = Datatype_Extra_Heart(datatype);
         while (ext_info) {
             if (ext_info->ext_heart == ext_heart) {
                 L->u.action.label = Canon_Symbol(symid);  // !!! Level_Verb()

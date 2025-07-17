@@ -380,7 +380,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_VARARGS);
+    assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_VARARGS);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);

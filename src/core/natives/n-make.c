@@ -275,7 +275,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
     Option(const Symbol*) label = Level_Label(level_);
 
     Value* datatype = ARG(TYPE);
-    STATE = cast(Byte, Cell_Datatype_Builtin_Heart(datatype));  // might alter
+    STATE = cast(Byte, Datatype_Builtin_Heart(datatype));  // might alter
     Copy_Cell(SPARE, ARG(VALUE));  // may alter ELEMENT too, save in SPARE
 
     Level* sub = Push_Downshifted_Level(OUT, level_);
@@ -311,7 +311,7 @@ DECLARE_NATIVE(TO)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Option(Type) to = Cell_Datatype_Type(ARG(TYPE));
+    Option(Type) to = Datatype_Type(ARG(TYPE));
     if (not to)
         panic ("TO doesn't work with extension types");
     if (MAX_HEART < unwrap to)
@@ -319,7 +319,7 @@ DECLARE_NATIVE(TO)
 
     if (Is_Datatype(ARG(VALUE))) {  // do same coercions as WORD!
         Value* datatype = ARG(VALUE);
-        Option(Type) type = Cell_Datatype_Type(datatype);
+        Option(Type) type = Datatype_Type(datatype);
         if (not type)
             panic ("TO doesn't work with extension types");
 
@@ -363,7 +363,7 @@ DECLARE_NATIVE(AS)
     INCLUDE_PARAMS_OF_AS;
 
     Element* e = Element_ARG(VALUE);
-    Option(Type) as = Cell_Datatype_Type(ARG(TYPE));
+    Option(Type) as = Datatype_Type(ARG(TYPE));
     if (not as)
         panic ("TO doesn't work with extension types");
     if ((unwrap as) > MAX_HEART)

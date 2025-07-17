@@ -124,7 +124,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_BITSET);
+    assert(Datatype_Type(ARG(TYPE)) == TYPE_BITSET);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);

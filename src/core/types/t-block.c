@@ -132,7 +132,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Heart heart = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_List_Type(heart));
 
     Element* arg = Element_ARG(DEF);
@@ -761,7 +761,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
     INCLUDE_PARAMS_OF_TO;
 
     Element* list = Element_ARG(VALUE);
-    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_List_Type(to)) {
         Length len;
@@ -910,7 +910,7 @@ IMPLEMENT_GENERIC(AS, Any_List)
     INCLUDE_PARAMS_OF_AS;
 
     Element* list = Element_ARG(VALUE);
-    Heart as = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart as = Datatype_Builtin_Heart(ARG(TYPE));
 
     require (
       Alias_Any_List_As(OUT, list, as)
@@ -1492,7 +1492,7 @@ DECLARE_NATIVE(ENVELOP)
     Element* copy;
 
     if (Is_Datatype(example)) {
-        if (not Any_List_Type(Cell_Datatype_Type(example)))
+        if (not Any_List_Type(Datatype_Type(example)))
             panic ("If ENVELOP example is datatype, must be a list type");
 
         copy = Known_Element(rebValue(CANON(MAKE), ARG(EXAMPLE), rebI(1)));

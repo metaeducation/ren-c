@@ -88,7 +88,7 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
     const GenericTable* table,
     const Value* datatype
 ){
-    Option(Heart) heart = Cell_Datatype_Builtin_Heart(datatype);
+    Option(Heart) heart = Datatype_Builtin_Heart(datatype);
     if (not heart)
         panic ("Generic dispatch not supported for extension types yet");
 

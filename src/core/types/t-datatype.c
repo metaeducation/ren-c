@@ -89,7 +89,7 @@ void Startup_Datatypes(void)
         Set_Cell_Flag(datatype, PROTECTED);
 
         assert(datatype == Datatype_From_Type(type));  // convenient [3]
-        assert(Cell_Datatype_Type(datatype) == type);  // sanity check
+        assert(Datatype_Type(datatype) == type);  // sanity check
     }
 
     ensure_nullptr(g_datatypes_context) = datatypes;

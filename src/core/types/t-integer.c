@@ -104,7 +104,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_INTEGER);
+    assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_INTEGER);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -335,7 +335,7 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
     INCLUDE_PARAMS_OF_TO;
 
     Element* val = Element_ARG(VALUE);
-    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_Utf8_Type(to) and to != TYPE_WORD) {
         DECLARE_MOLDER (mo);

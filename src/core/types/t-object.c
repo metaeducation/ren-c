@@ -404,7 +404,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_FRAME);
+    assert(Datatype_Type(ARG(TYPE)) == TYPE_FRAME);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -476,7 +476,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_MODULE);
+    assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_MODULE);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -532,7 +532,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
         return fail (Error_Bad_Make(TYPE_OBJECT, arg));
     }
 
-    assert(Cell_Datatype_Builtin_Heart(type) == TYPE_OBJECT);
+    assert(Datatype_Builtin_Heart(type) == TYPE_OBJECT);
 
     if (Is_Block(arg)) {
         const Element* tail;
@@ -1175,7 +1175,7 @@ IMPLEMENT_GENERIC(TO, Any_Context)
     Element* context = Element_ARG(VALUE);
     Context* c = Cell_Context(context);
     Heart heart = Heart_Of_Builtin_Fundamental(context);
-    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart to = Datatype_Builtin_Heart(ARG(TYPE));
     assert(heart != to);  // TO should have called COPY in this case
 
     if (to == TYPE_PORT) {

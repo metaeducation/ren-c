@@ -130,7 +130,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Cell_Datatype_Type(ARG(TYPE)) == TYPE_DECIMAL);
+    assert(Datatype_Type(ARG(TYPE)) == TYPE_DECIMAL);
     UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
@@ -530,7 +530,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
     INCLUDE_PARAMS_OF_TO;
 
     Element* val = Element_ARG(VALUE);
-    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
     REBDEC d = VAL_DECIMAL(val);
 
