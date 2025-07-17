@@ -782,7 +782,7 @@ e-cwrap/emit ---[
 
             let bounce_id
             if (res === undefined)  /* `resolve()`, `resolve(undefined)` */
-                bounce_id = reb.Trash()  /* allow it */
+                bounce_id = reb.Tripwire()  /* allow it */
             else if (res === null)  /* explicitly, e.g. `resolve(null)` */
                 bounce_id = 0  /* allow it */
             else if (typeof res == "number") { /* hope it's API heap handle */
@@ -897,7 +897,7 @@ e-cwrap/emit ---[
 
         switch (typeof js_value) {
           case 'undefined':
-            return reb.Trash()  /* or `reb.Value("~undefined~") antiform? */
+            return reb.Tripwire()  /* or `reb.Value("~undefined~") antiform? */
 
           case 'number':
             return reb.Integer(js_value)
@@ -909,7 +909,7 @@ e-cwrap/emit ---[
             return reb.Text(js_value)
 
           default:  /* used by JS-EVAL* with /VALUE; should it error here? */
-            return reb.Trash()
+            return reb.Tripwire()
         }
     }
 ]---

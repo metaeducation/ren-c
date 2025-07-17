@@ -547,7 +547,7 @@ bind construct [
         args: '(args)  ; variable same name as field, trips up binding
     ]
 
-    if (set? $script-pre-load-hook) and (match [file! url!] source) [
+    if (not trash? get $script-pre-load-hook) and (match [file! url!] source) [
         ;
         ; !!! It seems we could/should pass system.script here, and the
         ; filtering of source as something not to notify about would be the
