@@ -218,7 +218,7 @@ Bounce Cascader_Executor(Level* const L)
     Drop_Level(SUBLEVEL);
 
     assert(L->varlist == nullptr);
-    unnecessary(Corrupt_If_Needful(L->rootvar));  // already corrupt
+    Assert_Corrupted_If_Needful(L->rootvar);
 
     return OUT;
 }}

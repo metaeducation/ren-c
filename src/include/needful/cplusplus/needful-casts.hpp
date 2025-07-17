@@ -328,7 +328,7 @@ enable_if_t<  // For arrays: decay to pointer
         and not std::is_enum<To>::value,
     ResultType
 >
-Hookable_Cast_Helper(FromRef const && from) {
+Hookable_Cast_Helper(const FromRef & from) {
     using ConstTo = needful_constify_t(To);
 
   #if NEEDFUL_CAST_CALLS_HOOKS
@@ -339,7 +339,7 @@ Hookable_Cast_Helper(FromRef const && from) {
 
     return needful_mutable_cast(
         ResultType,  // passthru const on const mismatch (lenient)
-        needful_xtreme_cast(ConstTo, std::forward<FromRef>(from))
+        needful_xtreme_cast(ConstTo, from)
     );
 }
 

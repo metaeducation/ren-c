@@ -375,7 +375,7 @@ DECLARE_NATIVE(JOIN)
             Element* subscratch = Copy_Cell(Level_Scratch(sub), item);
             Plainify(subscratch);
             Bind_If_Unbound(subscratch, Level_Binding(sub));
-            heeded (Corrupt_If_Needful(Level_Spare(sub)));
+            heeded (Corrupt_Cell_If_Needful(Level_Spare(sub)));
             assert(sub->out == SPARE);
             assert(LEVEL_STATE_BYTE(sub) == 0);
             LEVEL_STATE_BYTE(sub) = 1;

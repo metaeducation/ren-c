@@ -1198,9 +1198,9 @@ Result(Zero) Get_Path_Push_Refinements(Level* level_)
 
   handle_context_on_left_of_at: {
 
-    Sink(Value) out = OUT;
-
     if (Is_Chain(at)) {  // lib/append:dup
+        Sink(Value) out = OUT;
+
         Get_Chain_Push_Refinements(
             out,
             SPARE,  // scratch space (Cell_Context() extracts)

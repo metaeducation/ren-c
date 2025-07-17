@@ -389,7 +389,7 @@ inline HookableDowncastHolder<T> operator>>(
     const HookableDowncastHolder<ResultWrapper<T>>& down,
     const ResultExtractor&
 ){
-    return HookableDowncastHolder {down.f.r};
+    return HookableDowncastHolder<T> {down.f.r};
 }
 
 static constexpr ResultExtractor g_result_extractor{};

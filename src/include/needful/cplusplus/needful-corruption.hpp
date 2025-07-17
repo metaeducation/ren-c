@@ -102,7 +102,7 @@ struct CorruptHelper {
 #undef Corrupt_If_Needful
 #define Corrupt_If_Needful(ref) /* macro for efficiency [4] */ \
     needful::CorruptHelper< \
-        needful::remove_reference_t<decltype(ref)>
+        needful::remove_reference_t<decltype(ref)> \
     >::corrupt(ref)
 
 STATIC_ASSERT(NEEDFUL_USES_CORRUPT_HELPER == 0);
@@ -135,7 +135,19 @@ struct CorruptHelper<T*> {  // Pointer (faster than memset() fallback)
       ref = p_cast(T*, cast(intptr_t, 0xDECAFBAD));  // fixed value [1]
     #endif
     }
+
+    static bool is_corrupt(T* ptr) {
+      #if NEEDFUL_PSEUDO_RANDOM_CORRUPTIONS
+        if (ptr == nullptr)
+            return true;  // have to consider nullptr potentially corrupt
+      #endif
+        return ptr == p_cast(T*, cast(intptr_t, 0xDECAFBAD));
+    }
 };
+
+#undef Assert_Corrupted_If_Needful
+#define Assert_Corrupted_If_Needful(ptr) \
+    assert(needful::CorruptHelper<decltype(ptr)>::is_corrupt(ptr))
 
 
 //=//// BOOLEAN CORRUPTION (MUST FLUCTUATE TRUE + FALSE) //////////////////=//

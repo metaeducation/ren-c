@@ -263,7 +263,7 @@ void Shutdown_Evars(EVARS *e)
     if (e->word)
         GC_Kill_Flex(e->wordlist);
     else
-        unnecessary(Corrupt_If_Needful(e->wordlist));  // corrupt already
+        Assert_Corrupted_If_Needful(e->wordlist);  // corrupt already
 
   #if RUNTIME_CHECKS
     --g_num_evars_outstanding;

@@ -1057,7 +1057,7 @@ static Error* Error_Mismatch(Byte wanted, Byte seen) {
 //
 static LexFlags Prescan_Fingerprint(ScanState* S)
 {
-    unnecessary(Corrupt_If_Needful(S->end));  //  prescan only uses ->begin
+    Assert_Corrupted_If_Needful(S->end);  //  prescan only uses ->begin
 
     const Byte* cp = S->transcode->at;
     LexFlags flags = 0;  // flags for all LEX_SPECIALs seen after S->begin[0]

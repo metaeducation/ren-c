@@ -58,6 +58,16 @@
 #include <utility>  // for std::forward()
 
 
+//=//// <stdint.h> FOR MAKING POINTERS FROM INTEGERS //////////////////////=//
+//
+// There's no portable way to cast an integer to a pointer in C++ without
+// using uintptr_t or intptr_t.  %needful-corruption.h uses pointer assigns
+// from integers to do fast corruption.
+//
+
+#include <stdint.h>
+
+
 //=//// <iso646.h> for `and`, `not` etc. //////////////////////////////////=//
 //
 // In an attempt to make Needful as agnostic as possible in terms of its

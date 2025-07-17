@@ -120,7 +120,7 @@ INLINE Option(const Strand*) Link_Filename(const Source* source) {
         assert(Stub_Flavor(filename) == FLAVOR_NONSYMBOL);
         return filename;
     }
-    // source->link.base is corrupt/random... make it something known?
+    Assert_Corrupted_If_Needful(source->link.base);
     return nullptr;
 }
 

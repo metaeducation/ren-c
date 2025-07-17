@@ -618,14 +618,20 @@ typedef enum {
 #endif
 
 #if (! NEEDFUL_DOES_CORRUPTIONS)
-    #define Corrupt_If_Needful(x)  NEEDFUL_NOOP
+    #define Corrupt_If_Needful(var)  NEEDFUL_NOOP
+    #define Assert_Corrupted_If_Needful(ptr)  NEEDFUL_NOOP
 #else
-    STATIC_ASSERT(! DEBUG_STATIC_ANALYZING);  /* [1] */
+    /* STATIC_ASSERT(! DEBUG_STATIC_ANALYZING); */  /* [1] */
 
-    #include <cstring>  /* for memset */
+    #include <string.h>  /* for memset */
 
-    #define Corrupt_If_Needful(x) \
-        memset(&(x), 0xBD, sizeof(x))  /* C99 fallback mechanism */
+    #define Corrupt_If_Needful(var) \
+        memset(&(var), 0xBD, sizeof(var))  /* C99 fallback mechanism */
+
+    #define Assert_Corrupted_If_Needful(var) do { \
+        if (*(unsigned char*)(&(var)) != 0xBD)  /* cheap check vs. loop */ \
+            assert("Expected variable to be corrupt and it was not"); \
+    } while (0)
 #endif
 
 #define NEEDFUL_USES_CORRUPT_HELPER  0

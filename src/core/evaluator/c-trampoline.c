@@ -551,7 +551,7 @@ void Startup_Trampoline(void)
 void Shutdown_Trampoline(void)
 {
     assert(TOP_LEVEL == BOTTOM_LEVEL);
-    unnecessary(Corrupt_If_Needful(TOP_LEVEL->prior));  // corrupt from start [1]
+    Assert_Corrupted_If_Needful(TOP_LEVEL->prior);  // corrupt from start [1]
 
     Drop_Level_Unbalanced(TOP_LEVEL);  // can't do balance check [2]
 

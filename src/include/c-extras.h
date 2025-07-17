@@ -1,4 +1,4 @@
-#if !defined C_EXTRAS_H
+#ifndef C_EXTRAS_H
 #define C_EXTRAS_H
 
 
