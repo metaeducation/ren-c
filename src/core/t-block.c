@@ -86,14 +86,14 @@ Bounce MAKE_List(Value* out, Type type, const Value* arg) {
         Binary* temp = Temp_UTF8_At_Managed(
             &offset, &size, arg, Series_Len_At(arg)
         );
-        Push_GC_Guard(temp);
+        Push_Lifeguard(temp);
         Option(Strand*) filename = nullptr;
         Init_Any_List(
             out,
             type,
             Scan_UTF8_Managed(filename, Binary_At(temp, offset), size)
         );
-        Drop_GC_Guard(temp);
+        Drop_Lifeguard(temp);
         return out;
     }
     else if (Any_List(arg)) {

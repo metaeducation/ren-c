@@ -643,7 +643,7 @@ static Bounce Case_Choose_Core_May_Throw(
 
     DECLARE_VALUE (cell); // unsafe to use ARG() slots as frame's L->out
     SET_END(cell);
-    Push_GC_Guard(cell);
+    Push_Lifeguard(cell);
 
     while (NOT_END(L->value)) {
 
@@ -651,7 +651,7 @@ static Bounce Case_Choose_Core_May_Throw(
         // Will consume any pending "invisibles" (COMMENT, ELIDE, DUMP...)
 
         if (Eval_Step_Throws(SET_END(cell), L)) {
-            Drop_GC_Guard(cell);
+            Drop_Lifeguard(cell);
             Copy_Cell(OUT, cell);
             Abort_Level(L);
             return BOUNCE_THROWN;
@@ -669,7 +669,7 @@ static Bounce Case_Choose_Core_May_Throw(
         //     choose [1 > 2 (literal group) 3 > 4 <tag> 10 + 20] = 30
         //
         if (IS_END(L->value)) {
-            Drop_GC_Guard(cell);
+            Drop_Lifeguard(cell);
             Drop_Level(L);
             return Copy_Cell(OUT, cell);
         }
@@ -686,7 +686,7 @@ static Bounce Case_Choose_Core_May_Throw(
             if (Eval_Step_Throws(SET_END(cell), L)) {
                 Abort_Level(L);
                 // preserving `out` value (may be previous match)
-                Drop_GC_Guard(cell);
+                Drop_Lifeguard(cell);
                 return Copy_Cell(OUT, cell);
             }
 
@@ -712,7 +712,7 @@ static Bounce Case_Choose_Core_May_Throw(
             // Note: we are preserving `cell` to pass to an arity-1 ACTION!
 
             if (Eval_Step_Throws(SET_END(OUT), L)) {
-                Drop_GC_Guard(cell);
+                Drop_Lifeguard(cell);
                 Abort_Level(L);
                 return BOUNCE_THROWN;
             }
@@ -723,14 +723,14 @@ static Bounce Case_Choose_Core_May_Throw(
             if (Is_Block(block)) {
                 if (Eval_List_At_Throws(OUT, block)) {
                     Abort_Level(L);
-                    Drop_GC_Guard(cell);
+                    Drop_Lifeguard(cell);
                     return BOUNCE_THROWN;
                 }
             }
             else if (Is_Action(OUT)) {
                 if (Do_Branch_With_Throws(OUT, block, cell)) {
                     Abort_Level(L);
-                    Drop_GC_Guard(cell);
+                    Drop_Lifeguard(cell);
                     return BOUNCE_THROWN;
                 }
             } else
@@ -740,13 +740,13 @@ static Bounce Case_Choose_Core_May_Throw(
         }
 
         if (not Bool_ARG(ALL)) {
-            Drop_GC_Guard(cell);
+            Drop_Lifeguard(cell);
             Abort_Level(L);
             return OUT;
         }
     }
 
-    Drop_GC_Guard(cell);
+    Drop_Lifeguard(cell);
     Drop_Level(L);
     return OUT;
 }

@@ -2471,9 +2471,9 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
             //
             DECLARE_VALUE (cell);
             Init_Unreadable(cell);
-            Push_GC_Guard(cell);
+            Push_Lifeguard(cell);
 
-            Push_GC_Guard(array);
+            Push_Lifeguard(array);
             Bounce bounce = hook(cell, type, KNOWN(Array_At(array, 1)));
             if (bounce == BOUNCE_THROWN) { // !!! good argument against MAKE
                 assert(false);
@@ -2483,10 +2483,10 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
                 assert(false);
                 return RAISE("MAKE during construction syntax not out cell");
             }
-            Drop_GC_Guard(array);
+            Drop_Lifeguard(array);
 
             Copy_Cell(PUSH(), cell);
-            Drop_GC_Guard(cell);
+            Drop_Lifeguard(cell);
         }
         else {
             DECLARE_VALUE (temp);

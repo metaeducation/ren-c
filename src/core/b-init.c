@@ -1023,10 +1023,10 @@ void Shutdown_System_Object(void)
 //
 static void Init_Contexts_Object(void)
 {
-    Drop_GC_Guard(Sys_Context);
+    Drop_Lifeguard(Sys_Context);
     Init_Object(Get_System(SYS_CONTEXTS, CTX_SYS), Sys_Context);
 
-    Drop_GC_Guard(Lib_Context);
+    Drop_Lifeguard(Lib_Context);
     Init_Object(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context);
     Init_Object(Get_System(SYS_CONTEXTS, CTX_USER), Lib_Context);
 }
@@ -1351,7 +1351,7 @@ void Startup_Core(void)
         utf8,
         utf8_size
     );
-    Push_GC_Guard(boot_array); // managed, so must be guarded
+    Push_Lifeguard(boot_array); // managed, so must be guarded
 
     rebRelease(filename);  // must release API handle
     rebFree(utf8); // don't need decompressed text after it's scanned
@@ -1387,16 +1387,16 @@ void Startup_Core(void)
     // !!! Have MAKE-BOOT compute # of words
     //
     Lib_Context = Alloc_Context_Core(TYPE_OBJECT, 600, NODE_FLAG_MANAGED);
-    Push_GC_Guard(Lib_Context);
+    Push_Lifeguard(Lib_Context);
 
     Sys_Context = Alloc_Context_Core(TYPE_OBJECT, 50, NODE_FLAG_MANAGED);
-    Push_GC_Guard(Sys_Context);
+    Push_Lifeguard(Sys_Context);
 
     Array* datatypes_catalog = Startup_Datatypes(
         Cell_Array(&boot->types), Cell_Array(&boot->typespecs)
     );
     Manage_Flex(datatypes_catalog);
-    Push_GC_Guard(datatypes_catalog);
+    Push_Lifeguard(datatypes_catalog);
 
     // !!! REVIEW: Startup_Typesets() uses symbols, data stack, and
     // adds words to lib--not available untilthis point in time.
@@ -1417,18 +1417,18 @@ void Startup_Core(void)
     //
     Array* natives_catalog = Startup_Natives(KNOWN(&boot->natives));
     Manage_Flex(natives_catalog);
-    Push_GC_Guard(natives_catalog);
+    Push_Lifeguard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
     Array* generics_catalog = Startup_Generics(KNOWN(&boot->generics));
     Manage_Flex(generics_catalog);
-    Push_GC_Guard(generics_catalog);
+    Push_Lifeguard(generics_catalog);
 
     // boot->errors is the error definition list from %errors.r
     //
     VarList* errors_catalog = Startup_Errors(KNOWN(&boot->errors));
-    Push_GC_Guard(errors_catalog);
+    Push_Lifeguard(errors_catalog);
 
     Init_System_Object(
         KNOWN(&boot->sysobj),
@@ -1438,10 +1438,10 @@ void Startup_Core(void)
         errors_catalog
     );
 
-    Drop_GC_Guard(errors_catalog);
-    Drop_GC_Guard(generics_catalog);
-    Drop_GC_Guard(natives_catalog);
-    Drop_GC_Guard(datatypes_catalog);
+    Drop_Lifeguard(errors_catalog);
+    Drop_Lifeguard(generics_catalog);
+    Drop_Lifeguard(natives_catalog);
+    Drop_Lifeguard(datatypes_catalog);
 
     Init_Contexts_Object();
 
@@ -1495,7 +1495,7 @@ void Startup_Core(void)
 
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
-    Drop_GC_Guard(boot_array);
+    Drop_Lifeguard(boot_array);
 
     PG_Boot_Phase = BOOT_DONE;
 

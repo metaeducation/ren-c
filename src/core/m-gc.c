@@ -995,7 +995,7 @@ static void Mark_Natives(void)
 //  Mark_Guarded_Nodes: C
 //
 // Mark series and values that have been temporarily protected from garbage
-// collection with Push_GC_Guard.  Subclasses e.g. ARRAY_FLAG_CONTEXT will
+// collection with Push_Lifeguard.  Subclasses e.g. ARRAY_FLAG_CONTEXT will
 // have their LINK() and MISC() fields guarded appropriately for the class.
 //
 static void Mark_Guarded_Nodes(void)

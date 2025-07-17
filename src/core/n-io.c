@@ -140,11 +140,11 @@ DECLARE_NATIVE(WRITE_STDOUT)
         Size offset;
         Size size;
         Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Series_Len_At(v));
-        Push_GC_Guard(temp);
+        Push_Lifeguard(temp);
 
         Prin_OS_String(Binary_At(temp, offset), size, OPT_ENC_0);
 
-        Drop_GC_Guard(temp);
+        Drop_Lifeguard(temp);
     }
 
     return Init_Trash(OUT);

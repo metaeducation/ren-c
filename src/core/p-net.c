@@ -149,7 +149,7 @@ static Bounce Transport_Actor(
                 Binary* temp = Temp_UTF8_At_Managed(
                     &offset, &size, arg, Series_Len_At(arg)
                 );
-                Push_GC_Guard(temp);
+                Push_Lifeguard(temp);
 
                 sock->common.data = Binary_At(temp, offset);
                 DEVREQ_NET(sock)->remote_port =
@@ -158,7 +158,7 @@ static Bounce Transport_Actor(
                 // Note: sets remote_ip field
                 //
                 Value* l_result = OS_DO_DEVICE(sock, RDC_LOOKUP);
-                Drop_GC_Guard(temp);
+                Drop_Lifeguard(temp);
 
                 assert(l_result != nullptr);
                 if (rebDid("error?", rebQ(l_result)))
@@ -387,7 +387,7 @@ static Bounce Transport_Actor(
             sock->common.data = Binary_At(temp, offset);
             sock->length = size;
 
-            Push_GC_Guard(temp);
+            Push_Lifeguard(temp);
         }
 
         sock->actual = 0;
@@ -395,7 +395,7 @@ static Bounce Transport_Actor(
         Value* result = OS_DO_DEVICE(sock, RDC_WRITE);
 
         if (temp != nullptr)
-            Drop_GC_Guard(temp);
+            Drop_Lifeguard(temp);
 
         if (result == nullptr) {
             //

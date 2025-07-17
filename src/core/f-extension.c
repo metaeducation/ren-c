@@ -130,7 +130,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     Array* details = Cell_Array(ARG(WHERE));
 
     assert(Array_Len(details) == IDX_COLLATOR_MAX);
-    Push_GC_Guard(details);
+    Push_Lifeguard(details);
 
     // !!! In the initial design, extensions were distinct from modules, and
     // could in fact load several different modules from the same DLL.  But
@@ -171,7 +171,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
         specs_size
     );
     rebFree(specs_utf8);
-    Push_GC_Guard(specs);
+    Push_Lifeguard(specs);
 
     // !!! Specs have datatypes in them which are looked up via Get_Var().
     // This is something that raises questions, but go ahead and bind them
@@ -192,7 +192,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     );
     DECLARE_VALUE (module);
     Init_Any_Context(module, TYPE_MODULE, module_ctx);
-    Push_GC_Guard(module);
+    Push_Lifeguard(module);
 
     StackIndex base = TOP_INDEX; // for accumulating exports
 
@@ -244,7 +244,7 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     Array* exports_arr = Pop_Stack_Values(base);
     DECLARE_VALUE (exports);
     Init_Block(exports, exports_arr);
-    Push_GC_Guard(exports);
+    Push_Lifeguard(exports);
 
     // Now we have an empty context that has natives in it.  Ultimately what
     // we want is to run the init code for a module.
@@ -276,10 +276,10 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     UNUSED(Bool_ARG(NO_USER));
     UNUSED(Bool_ARG(NO_LIB));
 
-    Drop_GC_Guard(exports);
-    Drop_GC_Guard(module);
-    Drop_GC_Guard(specs);
-    Drop_GC_Guard(details);
+    Drop_Lifeguard(exports);
+    Drop_Lifeguard(module);
+    Drop_Lifeguard(specs);
+    Drop_Lifeguard(details);
 
     // !!! If modules are to be "unloadable", they would need some kind of
     // finalizer to clean up their resources.  There are shutdown actions

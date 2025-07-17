@@ -681,7 +681,7 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
 
     VarList* listener = CTX(req->port_ctx);
     VarList* connection = Copy_Context_Shallow_Managed(listener);
-    Push_GC_Guard(connection);
+    Push_Lifeguard(connection);
 
     Init_Nulled(Varlist_Slot(connection, STD_PORT_DATA));  // just to be sure.
     Init_Nulled(Varlist_Slot(connection, STD_PORT_STATE));  // just to be sure.
@@ -712,7 +712,7 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
         Varlist_Archetype(connection)  // will GC protect during run
     );
 
-    Drop_GC_Guard(connection);
+    Drop_Lifeguard(connection);
 
     // We've added the new PORT! for the connection, but the client has to
     // find out about it and get an `accept` event.  Signal that.

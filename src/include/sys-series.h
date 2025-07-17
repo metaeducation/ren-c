@@ -64,7 +64,7 @@
 //
 // A Flex may be either manually memory managed or delegated to the garbage
 // collector.  Free_Unmanaged_Flex() may only be called on manual series.
-// See Manage_Flex()/Push_GC_Guard() for remarks on how to work safely
+// See Manage_Flex()/Push_Lifeguard() for remarks on how to work safely
 // with pointers to garbage-collected series, to avoid having them be GC'd
 // out from under the code while working with them.
 //
@@ -443,7 +443,7 @@ INLINE void Panic_If_Read_Only_Flex(Flex* s) {
 // before a command ends.
 //
 
-#define Push_GC_Guard(p) Push_Guard_Node(p)
+#define Push_Lifeguard(p) Push_Guard_Node(p)
 
 #if NO_RUNTIME_CHECKS
     INLINE void Drop_Guard_Node(Node* n) {
@@ -451,7 +451,7 @@ INLINE void Panic_If_Read_Only_Flex(Flex* s) {
         GC_Guarded->content.dynamic.len--;
     }
 
-    #define Drop_GC_Guard(p) Drop_Guard_Node(p)
+    #define Drop_Lifeguard(p) Drop_Guard_Node(p)
 #else
     INLINE void Drop_Guard_Node_Debug(
         const Node* n,
@@ -463,7 +463,7 @@ INLINE void Panic_If_Read_Only_Flex(Flex* s) {
         GC_Guarded->content.dynamic.len--;
     }
 
-    #define Drop_GC_Guard(p) \
+    #define Drop_Lifeguard(p) \
         Drop_Guard_Node_Debug((p), __FILE__, __LINE__)
 #endif
 
@@ -732,7 +732,7 @@ INLINE Flex* Make_Flex_Core(
 
     // It is more efficient if you know a series is going to become managed to
     // create it in the managed state.  But be sure no evaluations are called
-    // before it's made reachable by the GC, or use Push_GC_Guard().
+    // before it's made reachable by the GC, or use Push_Lifeguard().
     //
     // !!! Code duplicated in Make_Array_Core() ATM.
     //

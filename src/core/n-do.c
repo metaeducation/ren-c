@@ -154,7 +154,7 @@ DECLARE_NATIVE(EVAL_INFIX)
     // *as if* it were infixed, e.g. `series: my next`.
     //
     Set_Cell_Flag(temp, INFIX_IF_ACTION);
-    Push_GC_Guard(temp);
+    Push_Lifeguard(temp);
     L->gotten = temp;
 
     // !!! If we were to give an error on using ME with non-infix or MY with
@@ -178,11 +178,11 @@ DECLARE_NATIVE(EVAL_INFIX)
 
     Flags flags = EVAL_FLAG_FULFILLING_ARG | EVAL_FLAG_POST_SWITCH;
     if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child)) {
-        Drop_GC_Guard(temp);
+        Drop_Lifeguard(temp);
         return BOUNCE_THROWN;
     }
 
-    Drop_GC_Guard(temp);
+    Drop_Lifeguard(temp);
     return OUT;
 }
 
@@ -618,10 +618,10 @@ DECLARE_NATIVE(APPLIQUE)
 
     // Run the bound code, ignore evaluative result (unless thrown)
     //
-    Push_GC_Guard(exemplar);
+    Push_Lifeguard(exemplar);
     DECLARE_VALUE (temp);
     bool def_threw = Eval_List_At_Throws(temp, ARG(DEF));
-    Drop_GC_Guard(exemplar);
+    Drop_Lifeguard(exemplar);
 
     assert(Varlist_Keys_Head(exemplar) == ACT_PARAMS_HEAD(VAL_ACTION(applicand)));
     L->param = Varlist_Keys_Head(exemplar);

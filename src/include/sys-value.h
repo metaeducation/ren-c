@@ -43,8 +43,8 @@
 // A cell in a C stack variable does not have to worry about its memory
 // address becoming invalid--but by default the garbage collector does not
 // know that value exists.  So while the address may be stable, any series
-// it has in the payload might go bad.  Use Push_GC_Guard() to protect a
-// stack variable's payload, and then Drop_GC_Guard() when the protection
+// it has in the payload might go bad.  Use Push_Lifeguard() to protect a
+// stack variable's payload, and then Drop_Lifeguard() when the protection
 // is not needed.  (You must always drop the most recently pushed guard.)
 //
 // Function invocations keep their arguments in FRAME!s, which can be accessed

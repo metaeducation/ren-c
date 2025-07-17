@@ -249,7 +249,7 @@ int main(int argc, char *argv_ansi[])
     VarList* startup_ctx = Alloc_Context_Core(
         TYPE_OBJECT,
         80,
-        NODE_FLAG_MANAGED // no Push_GC_Guard needed, gets referenced
+        NODE_FLAG_MANAGED // no Push_Lifeguard needed, gets referenced
     );
 
     // Bind words that can be found in lib context (don't add any new words)

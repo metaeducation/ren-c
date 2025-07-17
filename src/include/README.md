@@ -5,7 +5,7 @@ API, which you get with `#include "reb-host.h"`.
 Code written to the internal API has to deal with the specific issues of
 series and garbage collection.  It has access to the data stack and can do
 anything that a native function could do.  This means functions like Array_At(),
-Push_GC_Guard(), Pop_Stack_Values(). etc are available.  The result is
+Push_Lifeguard(), Pop_Stack_Values(). etc are available.  The result is
 efficiency at the cost of needing to worry about details, as well as being
 more likely to need to change the code if the internals change.
 

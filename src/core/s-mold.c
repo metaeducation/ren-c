@@ -272,7 +272,7 @@ void New_Indented_Line(Molder* mo)
 // is robust to their existence.  These helper functions can be used to
 // maintain a stack of Flex pointers.
 //
-// !!! TBD: Unify this with the Push_GC_Guard and Drop_GC_Guard implementation
+// !!! TBD: Unify this with the Push_Lifeguard and Drop_Lifeguard implementation
 // so that improvements in one will improve the other?
 //
 //=////////////////////////////////////////////////////////////////////////=//

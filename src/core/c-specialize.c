@@ -321,9 +321,9 @@ bool Specialize_Action_Throws(
 
   //=//// RUN PROVIDED CODE (IGNORE RESULT, UNLESS IT IS THROWN) //////////=//
 
-    Push_GC_Guard(exemplar);
+    Push_Lifeguard(exemplar);
     bool threw = Eval_List_At_Throws(out, opt_def);
-    Drop_GC_Guard(exemplar);
+    Drop_Lifeguard(exemplar);
 
     if (threw) {
         Drop_Data_Stack_To(lowest_stackindex);

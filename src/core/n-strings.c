@@ -242,7 +242,7 @@ DECLARE_NATIVE(CHECKSUM)
                     Binary* temp = Temp_UTF8_At_Managed(
                         &offset, &keylen, key, Series_Len_At(key)
                     );
-                    Push_GC_Guard(temp);
+                    Push_Lifeguard(temp);
                     keycp = Binary_At(temp, offset);
                 }
 

@@ -33,7 +33,7 @@
 //
 // What characterizes the external API is that it is not necessary to #include
 // the extensive definitions of StubStruct/ValueStruct or APIs for dealing with
-// all the internal details (e.g. Push_GC_Guard(), which are easy to get
+// all the internal details (e.g. Push_Lifeguard(), which are easy to get
 // wrong).  Not only does this simplify the interface, but it also means that
 // the C code using the library isn't competing as much for definitions in
 // the global namespace.

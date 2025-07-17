@@ -270,7 +270,7 @@ INLINE Array* Make_Array_Core(REBLEN capacity, Flags flags) {
 
     // It is more efficient if you know a series is going to become managed to
     // create it in the managed state.  But be sure no evaluations are called
-    // before it's made reachable by the GC, or use Push_GC_Guard().
+    // before it's made reachable by the GC, or use Push_Lifeguard().
     //
     // !!! Code duplicated in Make_Ser_Core ATM.
     //
