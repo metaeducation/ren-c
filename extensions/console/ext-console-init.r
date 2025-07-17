@@ -481,7 +481,7 @@ console*: func [
     ; to add a parameter for what the QUIT/VALUE was--or multiplex it into
     ; the result--making this code more complicated for little point.)
 
-    if integer? result [  ; QUIT for console only returns exit statuses
+    if integer? opt result [  ; QUIT for console only returns exit statuses
         return result
     ]
 

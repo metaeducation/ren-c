@@ -317,11 +317,11 @@ DECLARE_NATIVE(CONSOLE)
   recover: { /////////////////////////////////////////////////////////////////
 
     Value* code;
-    Value* warning = rebRecover(  // Rescue catches buggy CONSOLE* [1]
+    Value* warning = rebRecover(  // Recover catches buggy CONSOLE* [1]
         &code,
         "console*",  // action that takes 4 args, run it
-            "code",  // group! or block! executed prior (or null)
-            "result'",  // prior result lifted, or error (or null)
+            "opt code",  // group! or block! executed prior (or null)
+            "opt result'",  // prior result lifted, or error (or null)
             "to-yesno resumable",
             "opt skin"
     );
