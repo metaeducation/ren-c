@@ -246,6 +246,7 @@ DECLARE_NATIVE(TRANSCODE)
     // Return a block of the results, so [1] and [[1]] in those cases.
 
     if (Is_Error(OUT)) {
+        assert(TOP_INDEX == STACK_BASE);
         Drop_Level(SUBLEVEL);
         return OUT;
     }

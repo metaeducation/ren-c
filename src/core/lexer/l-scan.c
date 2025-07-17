@@ -51,6 +51,11 @@
 
 #include "sys-core.h"
 
+// Generally speaking, the scanner should not panic--its job is to try and
+// load the code, and if it can't it should return a cooperative ERROR! value,
+// as opposed to longjmp()/throw up the stack.
+//
+#undef panic
 
 const EscapeInfo g_escape_info[MAX_ESC + 1] = {  // must match EscapeCodeEnum
     {10, "line"},
@@ -2128,53 +2133,6 @@ static Result(Zero) Flush_Pending_On_End(ScanState* S) {
 }
 
 
-//=//// SCANNER-SPECIFIC RAISE HELPER /////////////////////////////////////=//
-//
-// Override `fail` macro for returning definitional errors.  It adds a
-// capture of the `transcode` state local variable in Scanner_Executor(),
-// so it can augment any error you give with the scanner's location.
-//
-// 1. Some errors have more useful information to put in the "near", so this
-//    only adds it to errors that don't have that.  An example of a more
-//    specific error is that when you have an unclosed brace, it reports the
-//    opening location--not the end of the file (which is where the global
-//    transcode state would be when it made the discovery it was unmatched).
-//
-
-#define default_fail(p)  fail(p)
-
-INLINE Error* Decorate_Error_For_Scanner(
-    TranscodeState* transcode,
-    Error* error
-){
-    ERROR_VARS *vars = ERR_VARS(error);
-
-    DECLARE_VALUE (nearest);
-    require (
-      Read_Slot(nearest, &vars->nearest)
-    );
-    if (Is_Nulled(nearest))  // only update if it doesn't have it [1]
-        Update_Error_Near_For_Line(
-            error, transcode, transcode->line, transcode->line_head
-        );
-
-    return error;
-}
-
-#undef fail
-#define fail(p) \
-    needful_fail(Decorate_Error_For_Scanner( \
-        ENSURE_LVALUE(transcode), Derive_Error_From_Pointer(p)))
-
-#undef panic
-#define panic(p) \
-    needful_panic(Decorate_Error_For_Scanner( \
-        ENSURE_LVALUE(transcode), Derive_Error_From_Pointer(p)))
-
-
-//
-//  Scanner_Executor: C
-//
 // Scans values to the data stack, based on a mode.  This mode can be
 // ']', ')', '}, '/', '.' or ':' to indicate the processing type...or '\0'.
 //
@@ -2189,7 +2147,7 @@ INLINE Error* Decorate_Error_For_Scanner(
 // and the recursion collects elements so long as a matching interstitial is
 // seen between them.
 //
-Bounce Scanner_Executor(Level* const L) {
+static Bounce Scanner_Executor_Core(Level* const L) {
     USE_LEVEL_SHORTHANDS (L);
 
     if (THROWING)
@@ -2282,7 +2240,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (*S->end == '~') {
         if (not S->quasi_pending)
-            panic (
+            return fail (
                 "Comma only followed by ~ for ~,~ quasiform (meta-GHOST!)"
             );
         Quasify_Isotopic_Fundamental(Init_Comma(PUSH()));
@@ -2681,7 +2639,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (threw) {
         Drop_Level(sub);  // should not have accured stack if threw
-        panic (Error_No_Catch_For_Throw(L));
+        return fail (Error_No_Catch_For_Throw(L));
     }
 
     if (Is_Error(OUT)) {
@@ -2821,6 +2779,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (Is_Error(OUT)) {
         Drop_Level(SUBLEVEL);
+        Drop_Data_Stack_To(STACK_BASE);
         return OUT;
     }
 
@@ -2843,7 +2802,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (Get_Scan_Executor_Flag(L, SAVE_LEVEL_DONT_POP_ARRAY)) {  // see flag
         if (*transcode->at != STATE)
-            panic ("Delimiters malformed in interpolation");
+            return fail ("Delimiters malformed in interpolation");
         ++transcode->at;
 
         assert(sub->prior == L);  // sanity check
@@ -2933,7 +2892,7 @@ Bounce Scanner_Executor(Level* const L) {
     Drop_Level_Unbalanced(sub);  // allow stack accrual
 
     if (threw)  // automatically drops failing stack before throwing
-        panic (Error_No_Catch_For_Throw(L));
+        return fail (Error_No_Catch_For_Throw(L));
 
     if (Is_Error(OUT)) {  // no auto-drop without `return fail ()`
         Drop_Data_Stack_To(STACK_BASE);
@@ -3155,6 +3114,61 @@ Bounce Scanner_Executor(Level* const L) {
 
 
 //
+//  Scanner_Executor: C
+//
+// Small wrapper over the Scanner_Executor() which does handling of dropping
+// the data stack in case of failure, and decorates errors with the file
+// and line number if there's no annotations on them already.
+//
+// 1. Some errors have more useful information to put in the "near", so this
+//    only adds it to errors that don't have that.  An example of a more
+//    specific error is that when you have an unclosed brace, it reports the
+//    opening location--not the end of the file (which is where the global
+//    transcode state would be when it made the discovery it was unmatched).
+//
+Bounce Scanner_Executor(Level* level_)
+{
+    Bounce b = Scanner_Executor_Core(level_);
+    if (u_cast(const void*, b) != nullptr) {
+        if (u_cast(const void*, b) == level_->out) {
+            if (Is_Error(level_->out))
+                assert(TOP_INDEX == STACK_BASE);
+            else
+                assert(Is_Void(level_->out));
+        }
+        else
+            assert(b == BOUNCE_CONTINUE);
+        return b;
+    }
+
+    assert(g_failure);
+
+    Drop_Data_Stack_To(STACK_BASE);
+
+    Error* error = g_failure;  // so we can use Read_Slot()
+    g_failure = nullptr;
+
+    ScanState* S = &level_->u.scan;
+    TranscodeState* transcode = S->transcode;
+
+    ERROR_VARS *vars = ERR_VARS(error);
+
+    DECLARE_VALUE (nearest);
+    require (
+      Read_Slot(nearest, &vars->nearest)
+    );
+    if (Is_Nulled(nearest))  // only update if it doesn't have it [1]
+        Update_Error_Near_For_Line(
+            error, transcode, transcode->line, transcode->line_head
+        );
+
+    g_failure = error;  // restore failure
+
+    return b;
+}
+
+
+//
 //  Scan_UTF8_Managed: C
 //
 // This is a "stackful" call that takes a buffer of UTF-8 and will try to
@@ -3314,7 +3328,7 @@ Option(const Byte*) Try_Scan_Rune_To_Stack(const Byte* cp, Size size)
 //
 //  Try_Scan_Variadic_Feed_Utf8_Managed: C
 //
-Option(Source*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
+Result(Option(Source*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
 //
 // 1. We want to preserve CELL_FLAG_FEED_NOTE_META.  This tells us when what
 //    the feed sees as an quasiform was really originally intended as an
@@ -3342,7 +3356,7 @@ Option(Source*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
     DECLARE_ATOM (temp);
     Push_Level_Erase_Out_If_State_0(temp, L);
     if (Trampoline_With_Top_As_Root_Throws())
-        panic (Error_No_Catch_For_Throw(L));
+        return fail (Error_No_Catch_For_Throw(L));
 
     if (TOP_INDEX == L->baseline.stack_base) {
         Drop_Level(L);
