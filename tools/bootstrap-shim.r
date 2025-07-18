@@ -417,7 +417,7 @@ spread: func3 [
     ]
 ]
 
-append: func3 [series value [<undo-opt> any-element!] /line <local> only] [
+append: func3 [series value [<opt> any-element!] /line <local> only] [
     if not value [
         return series
     ]
@@ -449,7 +449,7 @@ append: func3 [series value [<undo-opt> any-element!] /line <local> only] [
     return append3:(opt only):(opt line) series opt value
 ]
 
-insert: func3 [series value [<undo-opt> any-element!] /line <local> only] [
+insert: func3 [series value [<opt> any-element!] /line <local> only] [
     if not value [
         return series
     ]
@@ -468,7 +468,7 @@ insert: func3 [series value [<undo-opt> any-element!] /line <local> only] [
     return insert3:(opt only):(opt line) series opt value
 ]
 
-change: func3 [series value [<undo-opt> any-element!] /line <local> only] [
+change: func3 [series value [<opt> any-element!] /line <local> only] [
     if not value [
         return series
     ]
@@ -486,8 +486,8 @@ change: func3 [series value [<undo-opt> any-element!] /line <local> only] [
 
 replace: func3 [
     target [<opt-out> any-series!]
-    pattern [<undo-opt> any-element!]
-    replacement [<undo-opt> any-element!]
+    pattern [<opt> any-element!]
+    replacement [<opt> any-element!]
 ][
     if not pattern [
         return target
@@ -666,13 +666,11 @@ modernize-typespec: func3 [
 ][
     types: copy types
     for-each [current bootstrap] [
-        any-stable?      [null? any-value!]
+        any-value?      any-value!  ; in bootstrap, only unstable is void
+        any-stable?     any-stable!
         any-string?     any-string!
-        element?        any-value!
-        action?         action!
+        element?        any-stable!  ; doesn't distinguish
         logic?          logic!
-        <opt-out>       <opt-out>   ; !!! works in both now !
-        <opt>           <undo-opt>  ; !!! will be updated at some point...
         <variadic>      <...>
         boolean?        word!
         onoff?          word!
@@ -938,7 +936,7 @@ mold: adapt mold3/ [  ; update so MOLD SPREAD works
     ]
 ]
 
-noquote: func3 [x [<undo-opt> any-value!]] [
+noquote: func3 [x [<opt> any-value!]] [
     assert [not action? get $x]
     switch type of x [
         lit-word3! [return to word! x]
