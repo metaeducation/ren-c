@@ -2055,7 +2055,7 @@ size_t API_rebSpellInto(
 
 
 //
-//  rebSpellMaybe: API
+//  rebSpellOpt: API
 //
 // This gives the spelling as UTF-8 bytes.  Length in codepoints should be
 // extracted with LENGTH OF.  If size in bytes of the encoded UTF-8 is needed,
@@ -2063,7 +2063,7 @@ size_t API_rebSpellInto(
 //
 // Can return nullptr.  Use rebSpell() if you want a failure instead.
 //
-char* API_rebSpellMaybe(
+char* API_rebSpellOpt(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
@@ -2097,9 +2097,9 @@ char* API_rebSpell(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
-    char* spell = API_rebSpellMaybe(binding, p, vaptr);
+    char* spell = API_rebSpellOpt(binding, p, vaptr);
     if (spell == nullptr)
-        panic ("rebSpell() does not take NULL, see rebSpellMaybe()");
+        panic ("rebSpell() does not take NULL, see rebSpellOpt()");
     return spell;
 }
 
@@ -2184,12 +2184,12 @@ unsigned int API_rebSpellIntoWide(
 
 
 //
-//  rebSpellWideMaybe: API
+//  rebSpellWideOpt: API
 //
 // Gives the spelling as WCHARs.  The result is UTF-16, so some codepoints
 // won't fit in single WCHARs.
 //
-REBWCHAR* API_rebSpellWideMaybe(
+REBWCHAR* API_rebSpellWideOpt(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
@@ -2225,9 +2225,9 @@ REBWCHAR* API_rebSpellWide(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
-    REBWCHAR* spelling = API_rebSpellWideMaybe(binding, p, vaptr);
+    REBWCHAR* spelling = API_rebSpellWideOpt(binding, p, vaptr);
     if (spelling == nullptr)
-        panic ("rebSpellWide() does not take NULL, see rebSpellWideMaybe()");
+        panic ("rebSpellWide() does not take NULL, see rebSpellWideOpt()");
     return spelling;
 }
 
@@ -2274,13 +2274,13 @@ size_t API_rebBytesInto(
 
 
 //
-//  rebBytesMaybe: API
+//  rebBytesOpt: API
 //
 // Can be used to get the bytes of a BLOB! and its size, or the UTF-8
 // encoding of an ANY-STRING? or ANY-WORD? and that size in bytes.  (Hence,
 // for strings it is like rebSpell() except telling you how many bytes.)
 //
-unsigned char* API_rebBytesMaybe(  // unsigned char, no Byte required by API
+unsigned char* API_rebBytesOpt(  // unsigned char, no Byte required by API
     RebolContext* binding,
     size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
     const void* p, void* vaptr
@@ -2322,9 +2322,9 @@ unsigned char* API_rebBytes(
     size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
     const void* p, void* vaptr
 ){
-    unsigned char* bytes = API_rebBytesMaybe(binding, size_out, p, vaptr);
+    unsigned char* bytes = API_rebBytesOpt(binding, size_out, p, vaptr);
     if (bytes == nullptr)
-        panic ("rebBytes() does not take NULL, see rebBytesMaybe()");
+        panic ("rebBytes() does not take NULL, see rebBytesOpt()");
     return bytes;
 }
 
@@ -2424,13 +2424,13 @@ void API_rebUnlockBytes(const unsigned char* bytes)
 
 
 //
-//  rebUnlockBytesMaybe: API
+//  rebUnlockBytesOpt: API
 //
 // Nullptr-tolerant version of rebUnlockBytes().
 //
 // 1. Unlocking logic not implemented yet.
 //
-void API_rebUnlockBytesMaybe(const unsigned char* bytes)
+void API_rebUnlockBytesOpt(const unsigned char* bytes)
 {
     ENTER_API;
 

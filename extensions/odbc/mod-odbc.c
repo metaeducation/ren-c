@@ -873,7 +873,7 @@ SQLRETURN Get_ODBC_Catalog(
 
     int index;
     for (index = 2; index != 6; ++index) {
-        pattern[index - 2] = rebSpellWideMaybe(  // returns nullptr if NULL
+        pattern[index - 2] = rebSpellWideOpt(  // returns nullptr if NULL
             "ensure [null? text!]",
                 "pick ensure block!", block, rebI(index)
         );

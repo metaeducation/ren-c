@@ -214,7 +214,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
         initial_dir_utf16 = nullptr;
     ofn.lpstrInitialDir = initial_dir_utf16;
 
-    WCHAR *title_utf16 = rebSpellWideMaybe("title");
+    WCHAR *title_utf16 = rebSpellWideOpt("title");
     ofn.lpstrTitle = title_utf16;  // nullptr defaults to "Save As" or "Open"
 
     // !!! What about OFN_NONETWORKBUTTON?
@@ -321,7 +321,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
 
     // Note: FILTER not implemented in GTK for Atronix R3
 
-    char *title_utf8 = rebSpellMaybe("title");
+    char *title_utf8 = rebSpellOpt("title");
 
     // !!! Using a null parent causes console to output:
     // "GtkDialog mapped without a transient parent. This is discouraged."
@@ -352,7 +352,7 @@ DECLARE_NATIVE(REQUEST_FILE_P)
 
     gtk_file_chooser_set_select_multiple(chooser, multi);
 
-    char* initial_utf8 = rebSpellMaybe(initial);
+    char* initial_utf8 = rebSpellOpt(initial);
     if (initial_utf8)
         gtk_file_chooser_set_current_folder(chooser, initial_utf8);
 
@@ -529,7 +529,7 @@ DECLARE_NATIVE(REQUEST_DIR_P)
     display[0] = '\0';
     bi.pszDisplayName = display; // assumed length is MAX_PATH
 
-    WCHAR* title_utf16 = rebSpellWideMaybe("title");
+    WCHAR* title_utf16 = rebSpellWideOpt("title");
     if (title_utf8)
         bi.lpszTitle = title_utf16;
     else
@@ -550,7 +550,7 @@ DECLARE_NATIVE(REQUEST_DIR_P)
     // field is called `bi.lParam`, it gets passed as the `lpData`)
     //
     bi.lpfn = ReqDirCallbackProc;
-    WCHAR* path_utf16 = rebSpellWideMaybe("path");
+    WCHAR* path_utf16 = rebSpellWideOpt("path");
     bi.lParam = i_cast(LPARAM, path_utf16);  // nullptr uses default
 
     LPCITEMIDLIST pFolder = SHBrowseForFolder(&bi);

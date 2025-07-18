@@ -266,9 +266,9 @@ to-js-type: func [
         ; UTF-8 on the emscripten heap (freed after the call).  Returned
         ; `char *` should be turned into JS GC'd strings, then freed.
         ;
-        ; !!! By default, unboxing APIs are not null tolerant. rebXXXMaybe()
+        ; !!! By default, unboxing APIs are not null tolerant. rebOptXxx()
         ; will allow returning nullptr if the input is null, for example
-        ; `rebSpellMaybe("second [{a}]")` gives nullptr
+        ; `rebSpellOpt("try second [{a}]")` gives nullptr
         ;
         (s = "char*") or (s = "const char*") ["'string'"]  ; see [1]
 
@@ -476,6 +476,8 @@ for-each-api [
             ; If `char *` is returned, it was rebAlloc'd and needs to be freed
             ; if it is to be converted into a JavaScript string
             --[
+                if (a == 0)  // null, can come back from e.g. rebSpellOpt()
+                    return null
                 var js_str = UTF8ToString(a)
                 reb.Free(a)
                 return js_str
@@ -800,8 +802,6 @@ e-cwrap/emit ---[
         }
 
         let rejecter = function(rej) {
-            console.log(rej)
-
             if (arguments.length > 1)
                 throw Error("JS-AWAITER's reject() takes 1 argument")
 

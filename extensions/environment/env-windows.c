@@ -103,7 +103,7 @@ Option(ErrorValue*) Trap_Update_Environment_Variable(
     Option(ErrorValue*) e = nullptr;
 
     WCHAR* key_wide = rebSpellWide(rebQ(key));
-    Option(WCHAR*) val_wide = rebSpellWideMaybe(maybe value);
+    Option(WCHAR*) val_wide = rebSpellWideOpt(maybe value);
 
     if (not SetEnvironmentVariable(
         key_wide,
