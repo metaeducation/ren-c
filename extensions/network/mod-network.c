@@ -287,7 +287,7 @@ static void on_connect(uv_connect_t *req, int status) {
         sock->stream = req->handle;
 
         Get_Local_IP(sock);
-        rebreq->result = rebBlank();
+        rebreq->result = rebSpace();
     }
 }
 
@@ -638,7 +638,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
     uv_read_stop(stream);  // stop on each read, no result to check [4]
     stream->data = nullptr;
 
-    rebreq->result = rebBlank();
+    rebreq->result = rebSpace();
 }}
 
 
@@ -652,7 +652,7 @@ void on_write_finished(uv_write_t *req, int status)
         rebreq->result = rebError_UV(status);
     }
     else {
-        rebreq->result = rebBlank();
+        rebreq->result = rebSpace();
     }
 
     // !!! We could more proactively free memory early for the GC here if

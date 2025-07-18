@@ -746,7 +746,8 @@ e-cwrap/emit ---[
     }
 
     reb.JavaScriptError = function(e, source_id) {
-        let source = source_id ? reb.Value(source_id) : reb.Blank()
+        let source = source_id ? reb.Value(source_id) : reb.Space()
+
         return reb.Value("make warning! [",
             "id: 'javascript-error",
             "message:", reb.T(String(e)),

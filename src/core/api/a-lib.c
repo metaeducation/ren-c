@@ -587,13 +587,24 @@ RebolValue* API_rebQuasar(void)
 
 
 //
+//  rebSpace: API
+//
+RebolValue* API_rebSpace(void)
+{
+    ENTER_API;
+
+    return Init_Space(Alloc_Value());
+}
+
+
+//
 //  rebBlank: API
 //
 RebolValue* API_rebBlank(void)
 {
     ENTER_API;
 
-    return Init_Space(Alloc_Value());
+    return Init_Blank(Alloc_Value());
 }
 
 
