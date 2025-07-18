@@ -608,7 +608,7 @@ bool Form_Reduce_Throws(
             panic (Error_Need_Non_Null_Raw());
 
         if (Is_Void(out))
-            continue; // <opt-out> and <undo-opt> keep it open to return NULL
+            continue; // <opt-out> and <opt> keep it open to return NULL
 
         nothing = false;
 

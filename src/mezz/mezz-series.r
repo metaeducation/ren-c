@@ -98,9 +98,9 @@ replace: function [
     target "Series to replace within (modified)"
         [any-series!]
     pattern "Value to be replaced (converted if necessary)"
-        [<undo-opt> any-element!]
+        [<opt> any-element!]
     replacement "Value to replace with (functions not called in this EXE)"
-        [<undo-opt> any-element!]
+        [<opt> any-element!]
 
     ; !!! Note these refinments alias ALL, CASE, TAIL natives!
     /one "Replace one occurrence"
@@ -598,7 +598,7 @@ split: function [
     series "The series to split"
         [<opt-out> any-series!]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
-        [<undo-opt> block! integer! char! bitset! text!]
+        [<opt> block! integer! char! bitset! text!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
     if not dlm [  ; nothing to split by

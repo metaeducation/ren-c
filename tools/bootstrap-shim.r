@@ -582,7 +582,7 @@ modernize-action: function3 [
                         panic "No BLANK! in bootstrap (it's acting like null)"
                     ]
                     replace typespec '~null~ blank!
-                    if find typespec <undo-opt> [  ; need to turn to blank3
+                    if find typespec <opt> [  ; need to turn to blank3
                         append blankers compose/deep [
                             if void? (as get-word w) [(as set-word! w) null]
                         ]

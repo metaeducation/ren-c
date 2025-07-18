@@ -38,7 +38,7 @@ raise: func [error [error!]] [  ; poor man's definitional error
     return error
 ]
 
-enblock: func [item [<undo-opt> any-element!]] [
+enblock: func [item [<opt> any-element!]] [
     if null? item [return copy []]
     return reduce [item]
 ]

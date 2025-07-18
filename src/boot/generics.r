@@ -304,7 +304,7 @@ insert: generic [
     return: {Just past the insert (~null~ needed for COLLECT/KEEP, see notes)}
         [any-stable!]
     series [<opt-out> any-series! port! map! object! bitset! port!] {At position (modified)}
-    value [<undo-opt> any-element!] {The value to insert}
+    value [<opt> any-element!] {The value to insert}
     /part {Limits to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only insert a block as a single value (not the contents of the block)}
@@ -320,7 +320,7 @@ append: generic [
     {Inserts element(s) at tail; for series, returns head.}
     series [<opt-out> any-series! port! map! object! module! bitset!]
         {Any position (modified)}
-    value [<undo-opt> any-element!] {The value to insert}
+    value [<opt> any-element!] {The value to insert}
     /part {Limits to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only insert a block as a single value (not the contents of the block)}
@@ -335,7 +335,7 @@ append: generic [
 change: generic [
     {Replaces element(s); returns just past the change.}
     series [<opt-out> any-series! port!]{At position (modified)}
-    value [<undo-opt> any-element!] {The new value}
+    value [<opt> any-element!] {The new value}
     /part {Limits the amount to change to a given length or position}
     limit [any-number! any-series! pair!]
     /only {Only change a block as a single value (not the contents of the block)}

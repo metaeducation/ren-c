@@ -161,7 +161,7 @@ open?: specialize 'reflect [property: 'open?]
 empty?: func [
     {TRUE if empty or BLANK!, or if series is at or beyond its tail.}
     return: [logic!]
-    series [<undo-opt> any-series! object! port! bitset! map! blank!]
+    series [<opt> any-series! object! port! bitset! map! blank!]
 ][
     return any [
         not series
@@ -284,7 +284,7 @@ print: func [
 ;
 ===: func [
     ; note: <...> is now a TUPLE!, and : used to be "hard quote" (vs ')
-    return: [<undo-opt>]
+    return: [<opt>]
     label [text!]
     'terminal [word!]
 ][
