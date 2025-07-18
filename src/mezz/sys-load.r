@@ -435,8 +435,8 @@ bind construct [
         let name: (adjunct-of source).name else [
             return pack [source 'nameless]  ; just RESOLVE to get variables
         ]
-        let mod: (select:skip system.modules name 2) else [
-            append system.modules spread :[name source]  ; not in mod list, add
+        let mod: select system.modules name else [
+            system.modules.(name): source  ; not in mod list, add
             return pack [source 'registered]
         ]
         if mod != source [
@@ -521,7 +521,7 @@ bind construct [
     ]
 
     let name: select opt hdr 'name
-    (select:skip system.modules opt name 2) then cached -> [
+    select system.modules name then cached -> [
         return pack [cached 'cached]
     ]
 
@@ -603,7 +603,7 @@ bind construct [
     ensure module! mod
 
     if (yes? is-module) and name [
-        append system.modules spread :[name mod]
+        system.modules.(name): mod
     ]
 
     === RESTORE SYSTEM.SCRIPT AND THE DIRECTORY IF THEY WERE CHANGED ===

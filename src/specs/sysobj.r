@@ -78,7 +78,7 @@ state: construct [
     last-error: null ; used by WHY?
 ]
 
-modules: '[]
+modules: to map! []
 extensions: '[]
 
 codecs: construct []

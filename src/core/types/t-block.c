@@ -429,9 +429,12 @@ static REBINT Try_Get_Array_Index_From_Picker(
     }
     else if (Is_Word(picker)) {
         //
-        // Linear search to case-insensitive find ANY-WORD? matching the canon
+        // Linear search to case-insensitive find SET-WORD matching the canon
         // and return the item after it.  Default to out of range.
         //
+        // !!! Semantics for this are not well-defined.
+        // https://rebol.metaeducation.com/t/block-and-object-parity/1086
+
         n = -1;
 
         const Symbol* symbol = Word_Symbol(picker);
@@ -439,7 +442,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
         const Element* item = List_At(&tail, v);
         REBLEN index = Series_Index(v);
         for (; item != tail; ++item, ++index) {
-            if (Any_Word(item) and Are_Synonyms(symbol, Word_Symbol(item))) {
+            if (Is_Set_Word(item) and Are_Synonyms(symbol, Word_Symbol(item))) {
                 n = index + 1;
                 break;
             }
