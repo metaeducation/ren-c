@@ -106,9 +106,15 @@ struct JumpStruct {
 
     struct JumpStruct* last_jump;
 
+  #if PANIC_USES_LONGJMP
     bool clean_exit;  // debug flag, but #ifdef'ing macro code would be a pain
+  #endif
 
-  #if CPLUSPLUS_11 && RUNTIME_CHECKS
+  #if PANIC_USES_TRY_CATCH
+    ~JumpStruct() {  // we don't get control otherwise when exceptions happen
+        g_ts.jump_list = this->last_jump;
+    }
+  #elif PANIC_USES_LONGJMP && CPLUSPLUS_11 && RUNTIME_CHECKS
     JumpStruct() {
         clean_exit = false;
     }
@@ -198,6 +204,10 @@ struct JumpStruct {
 //    By having the non-longjmp() versions do the same work, we help ensure
 //    that the longjmp() build stays working by detecting imbalances.
 //
+//    TECHNICALLY IT WOULDN'T BE NEEDED IF YOU FALL THROUGH NORMALLY.  But
+//    by having it required in all cases, this helps cue any premature
+//    exits at source level to do the work.
+//
 // 6. The way that the longjmp() version works, it does a goto out of the
 //    scope being rescued, to the same place that would be reached from a
 //    fallthrough with no abrupt panic.  Unfortunately, the decision to
@@ -268,8 +278,9 @@ struct JumpStruct {
 
     #define CLEANUP_BEFORE_EXITING_RECOVER_SCOPE /* can't avoid [5] */ \
         /* assert(jump.error == nullptr); */ /* not needed w/C++ catch */ \
-        g_ts.jump_list = jump.last_jump; \
-        jump.clean_exit = true
+        /* g_ts.jump_list = jump.last_jump; */ /* destructor does it */ \
+        /* jump.clean_exit = true */  /* C++ leaves loop without jump */ \
+        NOOP
 
     #define ON_ABRUPT_PANIC(decl) \
         catch (decl) /* picks up subsequent {...} block */
@@ -290,7 +301,8 @@ struct JumpStruct {
     #define CLEANUP_BEFORE_EXITING_RECOVER_SCOPE /* can't avoid [5] */ \
         /* assert(jump.error == nullptr); */ /* no error in this version */ \
         g_ts.jump_list = jump.last_jump; \
-        jump.clean_exit = true
+        /* jump.clean_exit = true */ /* not applicable */ \
+        NOOP
 
     #define ON_ABRUPT_PANIC(decl) \
       on_abrupt_panic: /* impossible jump here to avoid unreachable warning */ \

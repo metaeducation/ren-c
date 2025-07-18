@@ -33,7 +33,7 @@ synchronous side-effect.  One hits these immediately with things like PRINT
 or INPUT...which one would like to interact with the DOM vs. being stuck only
 as `alert()` or `console.log()` calls.  A plain JS-NATIVE that runs EM_ASM()
 and then continues running more Rebol on the same thread would never yield
-that thread to the GUI.  
+that thread to the GUI.
 
 The JS-AWAITER was introduced to deal with this problem, but the nuances are
 much more complex.  Still, JS-NATIVE is good for some quick things that do not
@@ -80,6 +80,14 @@ https://github.com/hostilefork/replpad-js/
 (Note: At time of writing, integration with Node.JS is untested--and would
 have to run the emterpreted build, as emscripten does not yet implement
 pthreads on Node.)
+
+### Optimization
+
+How many JS function recursions there are is affected by optimization levels
+like -Os or -Oz.  These avoid inlining, which means more JavaScript/WASM stack
+calls to do the same amount of work...leading to invisible limit being hit
+sooner.  We should always compile %c-eval.c with -O2 to try and avoid too many
+recursions, so see #prefer-O2-optimization in %file-base.r.
 
 ### License
 

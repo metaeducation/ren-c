@@ -24,36 +24,41 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * This extension expands librebol with new API_rebXXX() entry points.  It
-//   was tried to avoid this--doing everything with helper natives.  This
-//   would use things like `reb.UnboxInteger("rebpromise-helper", ...)` and
-//   build a pure-JS reb.Promise() on top of that.  Initially this was
-//   rejected due reb.UnboxInteger() allocating stack for the va_list calling
-//   convention...disrupting the "sneaky exit and reentry" done by the
-//   Emterpreter.  Now that Emterpreter is replaced with Asyncify, that's
-//   not an issue--but it's still faster to have raw WASM entry points like
-//   API_rebPromise_internal().
+// A. This extension expands librebol with new API_rebXXX() entry points.  It
+//    was tried to avoid this--doing everything with helper natives.  This
+//    would use things like `reb.UnboxInteger("rebpromise-helper", ...)` and
+//    build a pure-JS reb.Promise() on top of that.  Initially this was
+//    rejected due reb.UnboxInteger() allocating stack for the va_list calling
+//    convention...disrupting the "sneaky exit and reentry" done by the
+//    Emterpreter.  Now that Emterpreter is replaced with Asyncify, that's
+//    not an issue--but it's still faster to have raw WASM entry points like
+//    API_rebPromise_internal().
 //
-// * If the code block in the EM_ASM() family of functions contains a comma,
-//   then wrap the whole code block with parentheses ().  See the examples
-//   which are cited in %em_asm.h
+// B. If the code block in the EM_ASM() family of functions contains a comma,
+//    then wrap the whole code block with parentheses ().  See the examples
+//    which are cited in %em_asm.h
 //
-// * Stack overflows were historically checked via a limit calculated at boot
-//   time (see notes on Set_Stack_Limit()).  That can't be used in the
-//   emscripten build, hence stack overflows currently crash.  This is being
-//   tackled by means of the stackless branch (unfinished at time of writing):
+// C. When executing JavaScript code provided by the user, it's possible for
+//    there to be JavaScript exceptions thrown by the user, or exceptions
+//    caused by typos/etc.  But there are also WebAssembly exceptions...which
+//    occur when a libRebol API is called that does a C++ throw(), like:
 //
-//   https://forum.rebol.info/t/switching-to-stackless-why-this-why-now/1247
+//       >> js-eval "reb.Elide('asdfasdf');"
 //
-// * Note that how many JS function recursions there are is affected by
-//   optimization levels like -Os or -Oz.  These avoid inlining, which
-//   means more JavaScript/WASM stack calls to do the same amount of work...
-//   leading to invisible limit being hit sooner.  We should always compile
-//   %c-eval.c with -O2 to try and avoid too many recursions, so see
-//   #prefer-O2-optimization in %file-base.r.  Stackless will make this less
-//   of an issue.
+//    JavaScript sees C++ exceptions as instances of WebAssembly.Exception,
+//    and they are rather opaque.  There's a theoretical means of getting
+//    information out of them using the getArg() member, but this requires
+//    complex prep work on both the C++ and JavaScript side, and is very much
+//    a black art.
 //
-
+//    Fortunately, all we tend to want to do with such exceptions is pass
+//    them on as panic()s, which can be done from within EM_ASM() just by
+//    using JavaScript's throw on the WebAssembly.Exception.  But note that
+//    you can't do much between catching such exceptions and deciding to
+//    re-throw them... no WebAssembly calls can be made, and depending on
+//    what a JavaScript function does you may not be able to call JavaScript
+//    functions either.  The decision to re-throw must be made quickly.
+//
 
 #include "sys-core.h"
 #include "tmp-mod-javascript.h"
@@ -1066,7 +1071,8 @@ DECLARE_NATIVE(JS_NATIVE)
                 eval(UTF8ToString($0));
                 return null;
             }
-            catch (e) {
+            catch (e) { // v-- WASM EXCEPTIONS! DANGER! See [C]
+                if (e instanceof WebAssembly.Exception) throw e;
                 return reb.JavaScriptError(e, $1);
             }
         },
@@ -1110,11 +1116,10 @@ DECLARE_NATIVE(JS_NATIVE)
 //
 //  "Evaluate textual JavaScript code"
 //
-//      return: "Note: Only supports types that reb.Box() supports"
+//      return: "Only supports types that reb.Box() supports, else gives trash"
 //          [trash? null? logic? integer! text!]
 //      source "JavaScript code as a text string" [text!]
 //      :local "Evaluate in local scope (as opposed to global)"
-//      :value "Return a Rebol value"
 //  ]
 //
 DECLARE_NATIVE(JS_EVAL_P)
@@ -1139,41 +1144,17 @@ DECLARE_NATIVE(JS_EVAL_P)
     // !!! Note that if `eval()` is redefined, then all invocations will be
     // "indirect" and there will hence be no local evaluations.
     //
-    if (Bool_ARG(VALUE))
-        goto want_result;
-
-    if (Bool_ARG(LOCAL))
-        addr = EM_ASM_INT(
-            { try { eval(UTF8ToString($0)); return 0 }
-                catch(e) { return reb.JavaScriptError(e, $1) }
-            },
-            utf8,
-            Heapaddr_From_Pointer(source)
-        );
-    else
-        addr = EM_ASM_INT(
-            { try { (1,eval)(UTF8ToString($0)); return 0 }
-                catch(e) { return reb.JavaScriptError(e, $1) }
-            },
-            utf8,
-            Heapaddr_From_Pointer(source)
-        );
-
-    if (addr == 0)
-        return TRIPWIRE;
-
-    goto handle_error;
-
-  want_result: {  ////////////////////////////////////////////////////////////
-
     // Currently, reb.Box() only translates to INTEGER!, TEXT!, TRASH, NULL
     //
     // !!! All other types come back as trash (~ antiform).  Error instead?
     //
     if (Bool_ARG(LOCAL)) {
         addr = EM_ASM_INT(
-            { try { return reb.Box(eval(UTF8ToString($0))) }  // direct (local)
-              catch(e) { return reb.JavaScriptError(e, $1) }
+            { try { return reb.Box(eval(UTF8ToString($0))); }  // direct
+              catch(e) {  // v-- WASM EXCEPTIONS! DANGER! See [C]
+                  if (e instanceof WebAssembly.Exception) throw e;
+                  return reb.JavaScriptError(e, $1);
+              }
             },
             utf8,
             Heapaddr_From_Pointer(source)
@@ -1181,8 +1162,11 @@ DECLARE_NATIVE(JS_EVAL_P)
     }
     else {
         addr = EM_ASM_INT(
-            { try { return reb.Box((1,eval)(UTF8ToString($0))) }  // indirect
-              catch(e) { return reb.JavaScriptError(e, $1) }
+            { try { return reb.Box((1,eval)(UTF8ToString($0))); }  // indirect
+              catch(e) {  // v-- WASM EXCEPTIONS! DANGER! See [C]
+                  if (e instanceof WebAssembly.Exception) throw e;
+                  return reb.JavaScriptError(e, $1);
+              }
             },
             utf8,
             Heapaddr_From_Pointer(source)
@@ -1192,9 +1176,7 @@ DECLARE_NATIVE(JS_EVAL_P)
     if (not value or not Is_Warning(value))
         return value;  // evaluator takes ownership of handle
 
-    goto handle_error;
-
-} handle_error: {  ///////////////////////////////////////////////////////////
+  handle_error: {
 
     Value* errval = Value_From_Value_Id(addr);
     Error* e = Cell_Error(errval);
