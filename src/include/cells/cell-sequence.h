@@ -905,6 +905,13 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
     return Word_Symbol(temp);
 }
 
+INLINE bool Is_Set_Run_Word(const Value* v) {
+    if (not Is_Path(v))
+        return false;
+
+    return did Try_Get_Settable_Word_Symbol(nullptr, Known_Element(v));
+}
+
 
 // GET-TUPLE! and SET-TUPLE!
 

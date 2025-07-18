@@ -436,7 +436,7 @@ DECLARE_NATIVE(SET_RUN_WORD_Q)
     if (b)
         return unwrap b;
 
-    return LOGIC(Is_Path(e) and Try_Get_Settable_Word_Symbol(nullptr, e));
+    return LOGIC(Is_Set_Run_Word(e));
 }
 
 

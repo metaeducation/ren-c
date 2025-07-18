@@ -1107,7 +1107,7 @@ DECLARE_NATIVE(SWITCH)
 //      return: "Former value or branch result"
 //          [any-stable?]
 //      @target "Word or path which might be set (or not)"
-//          [set-group? set-word? set-tuple?]  ; to left of DEFAULT
+//          [set-run-word? set-group? set-word? set-tuple?]  ; to left
 //      @(branch) "If target needs default, this is evaluated and stored there"
 //          [any-branch?]
 //  ]
@@ -1158,6 +1158,12 @@ DECLARE_NATIVE(DEFAULT)
     Element* steps = u_cast(Element*, SCRATCH);  // avoid double-eval [1]
     STATE = ST_DEFAULT_GETTING_TARGET;  // can't leave at STATE_0
 
+    if (Is_Set_Run_Word(target)) {
+        assume (
+          Unsingleheart_Sequence(target)
+        );
+    }
+
     assume (
       Unsingleheart_Sequence(target)
     );
@@ -1196,7 +1202,7 @@ DECLARE_NATIVE(DEFAULT)
         assert(false);  // shouldn't be able to happen (steps is pinned)
         panic (e);
     }
-
+    Clear_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);
     return OUT;
 }}
 

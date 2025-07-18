@@ -973,7 +973,9 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
             return DUAL_SIGNAL_NULL_ABSENT;
     }
 
-    if (n < 0 or n >= Series_Len_Head(series))
+    if (n < 0)
+        return DUAL_SIGNAL_NULL_ABSENT;
+    if (n >= Series_Len_Head(series))
         return DUAL_SIGNAL_NULL_ABSENT;
 
     Value* poke;
