@@ -57,13 +57,13 @@ REBINT CT_String(const Cell* a, const Cell* b, REBINT mode)
 {
     REBINT num;
 
-    if (Is_Binary(a)) {
-        if (not Is_Binary(b))
+    if (Is_Blob(a)) {
+        if (not Is_Blob(b))
             panic ("Can't compare binary to string, use AS STRING/BINARY!");
 
         num = Compare_Binary_Vals(a, b);
     }
-    else if (Is_Binary(b))
+    else if (Is_Blob(b))
         panic ("Can't compare binary to string, use AS STRING!/BINARY!");
     else
         num = Compare_String_Vals(a, b, mode != 1);
@@ -187,7 +187,7 @@ static REBLEN find_string(
         else index--;
     }
 
-    if (Is_Binary(target) or Any_String(target)) {
+    if (Is_Blob(target) or Any_String(target)) {
         // Do the optimal search or the general search?
         if (
             BYTE_SIZE(series)
@@ -217,7 +217,7 @@ static REBLEN find_string(
             );
         }
     }
-    else if (Is_Binary(target)) {
+    else if (Is_Blob(target)) {
         const bool uncase = false;
         return Find_Byte_Str(
             cast(Binary*, series),
@@ -270,8 +270,8 @@ static Flex* MAKE_TO_String_Common(const Value* arg)
 {
     Flex* flex;
 
-    // MAKE/TO <type> <binary!>
-    if (Is_Binary(arg)) {
+    // MAKE/TO <type> <blob!>
+    if (Is_Blob(arg)) {
         flex = Make_Sized_String_UTF8(
             s_cast(Blob_At(arg)), Series_Len_At(arg)
         );
@@ -345,7 +345,7 @@ static Binary* make_binary(const Value* arg, bool make)
         break;
 
     // MAKE/TO BINARY! BINARY!
-    case TYPE_BINARY:
+    case TYPE_BLOB:
         flex = Copy_Bytes(Blob_At(arg), Series_Len_At(arg));
         break;
 
@@ -403,7 +403,7 @@ Bounce MAKE_String(Value* out, Type type, const Value* def) {
         // !!! R3-Alpha tolerated decimal, e.g. `make text! 3.14`, which
         // is semantically nebulous (round up, down?) and generally bad.
         //
-        if (type == TYPE_BINARY)
+        if (type == TYPE_BLOB)
             return Init_Blob(out, Make_Binary(Int32s(def, 0)));
         else
             return Init_Any_Series(out, type, Make_Strand(Int32s(def, 0)));
@@ -414,7 +414,7 @@ Bounce MAKE_String(Value* out, Type type, const Value* def) {
         // preloaded with an offset into the data is #[binary [#{0001} 2]].
         // In R3-Alpha make definitions didn't have to be a single value
         // (they are for compatibility between construction syntax and MAKE
-        // in Ren-C).  So the positional syntax was #[binary! #{0001} 2]...
+        // in Ren-C).  So the positional syntax was #[blob! #{0001} 2]...
         // while #[binary [#{0001} 2]] would join the pieces together in order
         // to produce #{000102}.  That behavior is not available in Ren-C.
 
@@ -422,9 +422,9 @@ Bounce MAKE_String(Value* out, Type type, const Value* def) {
             goto bad_make;
 
         Cell* any_binstr = List_At(def);
-        if (not (Is_Binary(any_binstr) or Any_String(any_binstr)))
+        if (not (Is_Blob(any_binstr) or Any_String(any_binstr)))
             goto bad_make;
-        if (Is_Binary(any_binstr) != (type == TYPE_BINARY))
+        if (Is_Blob(any_binstr) != (type == TYPE_BLOB))
             goto bad_make;
 
         Cell* index = List_At(def) + 1;
@@ -438,7 +438,7 @@ Bounce MAKE_String(Value* out, Type type, const Value* def) {
         return Init_Any_Series_At(out, type, Cell_Flex(any_binstr), i);
     }
 
-    if (type == TYPE_BINARY)
+    if (type == TYPE_BLOB)
         flex = make_binary(def, true);
     else
         flex = MAKE_TO_String_Common(def);
@@ -481,7 +481,7 @@ Bounce TO_String(Value* out, Type type, const Value* arg)
     }
 
     Flex* flex;
-    if (type == TYPE_BINARY)
+    if (type == TYPE_BLOB)
         flex = make_binary(arg, false);
     else
         flex = MAKE_TO_String_Common(arg);
@@ -628,7 +628,7 @@ Bounce PD_String(
             if (n < 0 or cast(REBLEN, n) >= Flex_Len(flex))
                 return nullptr;
 
-            if (Is_Binary(pvs->out))
+            if (Is_Blob(pvs->out))
                 Init_Integer(pvs->out, *Binary_At(cast(Binary*, flex), n));
             else
                 Init_Char(pvs->out, GET_ANY_CHAR(flex, n));
@@ -677,7 +677,7 @@ Bounce PD_String(
         if (c > MAX_CHAR || c < 0)
             return BOUNCE_UNHANDLED;
     }
-    else if (Is_Binary(opt_setval) or Any_String(opt_setval)) {
+    else if (Is_Blob(opt_setval) or Any_String(opt_setval)) {
         REBLEN i = VAL_INDEX(opt_setval);
         if (i >= VAL_LEN_HEAD(opt_setval))
             panic (Error_Invalid(opt_setval));
@@ -687,7 +687,7 @@ Bounce PD_String(
     else
         return BOUNCE_UNHANDLED;
 
-    if (Is_Binary(pvs->out)) {
+    if (Is_Blob(pvs->out)) {
         if (c > 0xff)
             panic (Error_Out_Of_Range(opt_setval));
 
@@ -1015,9 +1015,9 @@ static void Mold_Tag(Molder* mo, const Cell* v)
 
 
 //
-//  MF_Binary: C
+//  MF_Blob: C
 //
-void MF_Binary(Molder* mo, const Cell* v, bool form)
+void MF_Blob(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -1136,7 +1136,7 @@ void MF_String(Molder* mo, const Cell* v, bool form)
 REBTYPE(String)
 {
     Value* v = D_ARG(1);
-    assert(Is_Binary(v) || Any_String(v));
+    assert(Is_Blob(v) || Any_String(v));
 
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
@@ -1187,7 +1187,7 @@ REBTYPE(String)
         if (Bool_ARG(LINE))
             flags |= AM_LINE;
 
-        if (Is_Binary(v)) {
+        if (Is_Blob(v)) {
             if (Bool_ARG(LINE))
                 panic ("APPEND+INSERT+CHANGE cannot use /LINE with BINARY!");
 
@@ -1233,10 +1233,10 @@ REBTYPE(String)
         );
 
         REBINT len;
-        if (Is_Binary(v)) {
+        if (Is_Blob(v)) {
             flags |= AM_FIND_CASE;
 
-            if (!Is_Binary(arg) && !Is_Integer(arg) && !Is_Bitset(arg))
+            if (!Is_Blob(arg) && !Is_Integer(arg) && !Is_Bitset(arg))
                 panic (Error_Not_Same_Type_Raw());
 
             if (Is_Integer(arg)) {
@@ -1295,7 +1295,7 @@ REBTYPE(String)
             if (ret >= cast(REBLEN, tail))
                 return nullptr;
 
-            if (Is_Binary(v)) {
+            if (Is_Blob(v)) {
                 Init_Integer(v, *Binary_At(Cell_Binary(v), ret));
             }
             else
@@ -1344,14 +1344,14 @@ REBTYPE(String)
         // if no /PART, just return value, else return string
         //
         if (not Bool_ARG(PART)) {
-            if (Is_Binary(v))
+            if (Is_Blob(v))
                 Init_Integer(OUT, *Blob_At(v));
             else
                 str_to_char(OUT, v, VAL_INDEX(v));
         }
         else {
             Type type = Type_Of(v);
-            if (Is_Binary(v)) {
+            if (Is_Blob(v)) {
                 Init_Blob(
                     OUT,
                     Copy_Non_Array_Flex_At_Len(Cell_Flex(v), VAL_INDEX(v), len)
@@ -1391,7 +1391,7 @@ REBTYPE(String)
         UNUSED(Bool_ARG(PART)); // checked by if limit is nulled
 
         Flex* flex;
-        if (Is_Binary(v))
+        if (Is_Blob(v))
             flex = Copy_Non_Array_Flex_At_Len(Cell_Flex(v), VAL_INDEX(v), len);
         else
             flex = Copy_String_At_Len(v, len);
@@ -1402,7 +1402,7 @@ REBTYPE(String)
     case SYM_INTERSECT:
     case SYM_UNION:
     case SYM_DIFFERENCE: {
-        if (not Is_Binary(arg))
+        if (not Is_Blob(arg))
             panic (Error_Invalid(arg));
 
         if (VAL_INDEX(v) > VAL_LEN_HEAD(v))
@@ -1417,7 +1417,7 @@ REBTYPE(String)
             Xandor_Binary(verb, v, arg)); }
 
     case SYM_COMPLEMENT: {
-        if (not Is_Binary(v))
+        if (not Is_Blob(v))
             panic (Error_Invalid(v));
 
         return Init_Any_Series(OUT, Type_Of(v), Complement_Binary(v)); }
@@ -1446,7 +1446,7 @@ REBTYPE(String)
 
     case SYM_SUBTRACT:
     case SYM_ADD: {
-        if (not Is_Binary(v))
+        if (not Is_Blob(v))
             panic (Error_Invalid(v));
 
         Panic_If_Read_Only_Flex(Cell_Flex(v));
@@ -1454,7 +1454,7 @@ REBTYPE(String)
         REBINT amount;
         if (Is_Integer(arg))
             amount = VAL_INT32(arg);
-        else if (Is_Binary(arg))
+        else if (Is_Blob(arg))
             panic (Error_Invalid(arg)); // should work
         else
             panic (Error_Invalid(arg)); // what about other types?
@@ -1522,7 +1522,7 @@ REBTYPE(String)
 
         REBINT len = Part_Len_May_Modify_Index(v, D_ARG(3));
         if (len > 0) {
-            if (Is_Binary(v))
+            if (Is_Blob(v))
                 reverse_binary(v, len);
             else
                 reverse_string(v, len);
@@ -1586,7 +1586,7 @@ REBTYPE(String)
             if (index >= tail)
                 return nullptr;
             index += (REBLEN)Random_Int(Bool_ARG(SECURE)) % (tail - index);
-            if (Is_Binary(v)) // same as PICK
+            if (Is_Blob(v)) // same as PICK
                 return Init_Integer(OUT, *Blob_At_Head(v, index));
 
             str_to_char(OUT, v, index);

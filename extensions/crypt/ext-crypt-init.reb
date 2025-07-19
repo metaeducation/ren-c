@@ -14,9 +14,9 @@ init-crypto
 hmac-sha256: function [
     {computes the hmac-sha256 for message m using key k}
 
-    return: [binary!]
-    k [binary!]
-    m [binary!]
+    return: [blob!]
+    k [blob!]
+    m [blob!]
 ][
     key: copy k
     message: copy m

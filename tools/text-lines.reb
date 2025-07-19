@@ -129,7 +129,7 @@ text-line-of: function [
 
     return: [~null~ integer!]
         "Line 0 does not exist, and no counting is performed for empty text"
-    position [text! binary!]
+    position [text! blob!]
         "Position, where newline is considered the last character of a line"
 ][
     text: head of position
@@ -154,7 +154,7 @@ text-line-of: function [
 
 text-location-of: function [
     {Returns line and column of position within text.}
-    position [text! binary!]
+    position [text! blob!]
 ] [
 
     ; Here newline is considered last character of a line.

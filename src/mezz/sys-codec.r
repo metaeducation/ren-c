@@ -65,7 +65,7 @@ decode: function [
 
     type [word!]
         {Media type (jpeg, png, etc.)}
-    data [binary!]
+    data [blob!]
         {The data to decode}
 ][
     all [
@@ -82,7 +82,7 @@ decode: function [
 encode: function [
     {Encodes a datatype (e.g. image!) into a series of bytes.}
 
-    return: [binary!]
+    return: [blob!]
     type [word!]
         {Media type (jpeg, png, etc.)}
     data
@@ -106,7 +106,7 @@ encoding-of: function [
     "Returns the media codec name for given binary data. (identify)"
 
     return: [word!]
-    data [binary!]
+    data [blob!]
 ][
     for-each [name codec] system/codecs [
         if all [

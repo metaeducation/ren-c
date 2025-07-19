@@ -10,7 +10,7 @@ Rebol [
 to-text: function [
     "Convert the UUID to the text string form ({8-4-4-4-12})"
     return: [text!]
-    uuid [binary!]
+    uuid [blob!]
 ][
     return delimit "-" map-each w reduce [
         copy/part uuid 4

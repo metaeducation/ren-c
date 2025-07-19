@@ -178,8 +178,8 @@ delete-dir: func [
 script?: func [
     {Checks file, url, or text string for a valid script header.}
 
-    return: [~null~ binary!]
-    source [file! url! binary! text!]
+    return: [~null~ blob!]
+    source [file! url! blob! text!]
 ][
     switch type of source [
         file!
@@ -189,7 +189,7 @@ script?: func [
         text! [
             ; Remove this line if FIND-SCRIPT changed to accept text!
             ;
-            source: to binary! source
+            source: to blob! source
         ]
     ]
     return find-script source

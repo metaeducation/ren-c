@@ -381,7 +381,7 @@ Binary* Join_Binary(const Value* blk, REBINT limit)
             *Binary_At(series, tail) = (Byte)VAL_INT32(val);
             break;
 
-        case TYPE_BINARY: {
+        case TYPE_BLOB: {
             REBLEN len = Series_Len_At(val);
             Expand_Flex_Tail(series, len);
             memcpy(Binary_At(series, tail), Blob_At(val), len);

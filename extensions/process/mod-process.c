@@ -231,7 +231,7 @@ int OS_Create_Process(
     UNUSED(Bool_ARG(INPUT)); // implicitly covered by void ARG(IN)
     switch (Type_Of(ARG(IN))) {
     case TYPE_TEXT:
-    case TYPE_BINARY:
+    case TYPE_BLOB:
         if (!CreatePipe(&hInputRead, &hInputWrite, nullptr, 0)) {
             goto input_error;
         }
@@ -277,7 +277,7 @@ int OS_Create_Process(
     UNUSED(Bool_ARG(OUTPUT)); // implicitly covered by void ARG(OUT)
     switch (Type_Of(ARG(OUT))) {
     case TYPE_TEXT:
-    case TYPE_BINARY:
+    case TYPE_BLOB:
         if (!CreatePipe(&hOutputRead, &hOutputWrite, nullptr, 0)) {
             goto output_error;
         }
@@ -338,7 +338,7 @@ int OS_Create_Process(
     UNUSED(Bool_ARG(ERROR)); // implicitly covered by void ARG(ERR)
     switch (Type_Of(ARG(ERR))) {
     case TYPE_TEXT:
-    case TYPE_BINARY:
+    case TYPE_BLOB:
         if (!CreatePipe(&hErrorRead, &hErrorWrite, nullptr, 0)) {
             goto error_error;
         }
@@ -485,7 +485,7 @@ int OS_Create_Process(
                     }
                 }
             } else {
-                assert(Is_Binary(ARG(IN)));
+                assert(Is_Blob(ARG(IN)));
                 handles[count ++] = hInputWrite;
             }
         }
@@ -861,17 +861,17 @@ int OS_Create_Process(
     int stderr_pipe[] = {-1, -1};
     int info_pipe[] = {-1, -1};
 
-    if (Is_Text(ARG(IN)) or Is_Binary(ARG(IN))) {
+    if (Is_Text(ARG(IN)) or Is_Blob(ARG(IN))) {
         if (Open_Pipe_Fails(stdin_pipe))
             goto stdin_pipe_err;
     }
 
-    if (Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT))) {
+    if (Is_Text(ARG(OUT)) or Is_Blob(ARG(OUT))) {
         if (Open_Pipe_Fails(stdout_pipe))
             goto stdout_pipe_err;
     }
 
-    if (Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR))) {
+    if (Is_Text(ARG(ERR)) or Is_Blob(ARG(ERR))) {
         if (Open_Pipe_Fails(stderr_pipe))
             goto stdout_pipe_err;
     }
@@ -888,7 +888,7 @@ int OS_Create_Process(
         //
         // http://stackoverflow.com/questions/15126925/
 
-        if (Is_Text(ARG(IN)) or Is_Binary(ARG(IN))) {
+        if (Is_Text(ARG(IN)) or Is_Blob(ARG(IN))) {
             close(stdin_pipe[W]);
             if (dup2(stdin_pipe[R], STDIN_FILENO) < 0)
                 goto child_error;
@@ -920,7 +920,7 @@ int OS_Create_Process(
             // inherit stdin from the parent
         }
 
-        if (Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT))) {
+        if (Is_Text(ARG(OUT)) or Is_Blob(ARG(OUT))) {
             close(stdout_pipe[R]);
             if (dup2(stdout_pipe[W], STDOUT_FILENO) < 0)
                 goto child_error;
@@ -952,7 +952,7 @@ int OS_Create_Process(
             // inherit stdout from the parent
         }
 
-        if (Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR))) {
+        if (Is_Text(ARG(ERR)) or Is_Blob(ARG(ERR))) {
             close(stderr_pipe[R]);
             if (dup2(stderr_pipe[W], STDERR_FILENO) < 0)
                 goto child_error;
@@ -1446,13 +1446,13 @@ stdin_pipe_err:
 //          "Returns process information object"
 //      /input
 //          "Redirects stdin to in (if blank, /dev/null)"
-//      in [text! binary! file! blank!]
+//      in [text! blob! file! blank!]
 //      /output
 //          "Redirects stdout to out (if blank, /dev/null)"
-//      out [text! binary! file! blank!]
+//      out [text! blob! file! blank!]
 //      /error
 //          "Redirects stderr to err (if blank, /dev/null)"
-//      err [text! binary! file! blank!]
+//      err [text! blob! file! blank!]
 //      /relax "If exit code is non-zero, return the integer vs. raising error"
 //  ]
 //
@@ -1470,9 +1470,9 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
     // Make sure that if the output or error series are STRING! or BINARY!,
     // they are not read-only, before we try appending to them.
     //
-    if (Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT)))
+    if (Is_Text(ARG(OUT)) or Is_Blob(ARG(OUT)))
         Panic_If_Read_Only_Flex(Cell_Flex(ARG(OUT)));
-    if (Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR)))
+    if (Is_Text(ARG(ERR)) or Is_Blob(ARG(ERR)))
         Panic_If_Read_Only_Flex(Cell_Flex(ARG(ERR)));
 
     char *os_input;
@@ -1498,7 +1498,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
         input_len = size;
         break; }
 
-    case TYPE_BINARY: {
+    case TYPE_BLOB: {
         size_t size;
         os_input = s_cast(rebBytes(&size, ARG(IN)));
         input_len = size;
@@ -1515,9 +1515,9 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
     if (
         Bool_ARG(WAIT)
         or (
-            Is_Text(ARG(IN)) or Is_Binary(ARG(IN))
-            or Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT))
-            or Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR))
+            Is_Text(ARG(IN)) or Is_Blob(ARG(IN))
+            or Is_Text(ARG(OUT)) or Is_Blob(ARG(OUT))
+            or Is_Text(ARG(ERR)) or Is_Blob(ARG(ERR))
         ) // I/O redirection implies /WAIT
     ){
         flag_wait = true;
@@ -1628,10 +1628,10 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
         &exit_code,
         os_input,
         input_len,
-        Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT)) ? &os_output : nullptr,
-        Is_Text(ARG(OUT)) or Is_Binary(ARG(OUT)) ? &output_len : nullptr,
-        Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR)) ? &os_err : nullptr,
-        Is_Text(ARG(ERR)) or Is_Binary(ARG(ERR)) ? &err_len : nullptr
+        Is_Text(ARG(OUT)) or Is_Blob(ARG(OUT)) ? &os_output : nullptr,
+        Is_Text(ARG(OUT)) or Is_Blob(ARG(OUT)) ? &output_len : nullptr,
+        Is_Text(ARG(ERR)) or Is_Blob(ARG(ERR)) ? &os_err : nullptr,
+        Is_Text(ARG(ERR)) or Is_Blob(ARG(ERR)) ? &err_len : nullptr
     );
 
     // Call may not succeed if r != 0, but we still have to run cleanup
@@ -1654,7 +1654,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
             free(os_output);
         }
     }
-    else if (Is_Binary(ARG(OUT))) {
+    else if (Is_Blob(ARG(OUT))) {
         if (output_len > 0) {
             Append_Unencoded_Len(Cell_Binary(ARG(OUT)), os_output, output_len);
             free(os_output);
@@ -1666,7 +1666,7 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
             Append_OS_Str(ARG(ERR), os_err, err_len);
             free(os_err);
         }
-    } else if (Is_Binary(ARG(ERR))) {
+    } else if (Is_Blob(ARG(ERR))) {
         if (err_len > 0) {
             Append_Unencoded_Len(Cell_Binary(ARG(ERR)), os_err, err_len);
             free(os_err);

@@ -49,7 +49,7 @@
 )
 ; transcode...
 (
-    (unspaced ["<" mold transcode to binary! "a [b c]"  ">"])
+    (unspaced ["<" mold transcode to blob! "a [b c]"  ">"])
         = "<[a [b c]]>"
 )
 ; ...
@@ -76,4 +76,4 @@
     'file = exists? http://www.rebol.com/index.html
 )]
 
-(binary? read http://example.com)
+(blob? read http://example.com)

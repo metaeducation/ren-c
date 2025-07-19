@@ -478,7 +478,7 @@ INLINE Error* Error_Illegal_Cr(const Byte* at, const Byte* start)
 //
 // Advances the cp to just past the last position.
 //
-// test: to-integer load to-binary mold to-char 1234
+// test: to-integer load to-blob mold to-char 1234
 //
 static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
     Ucs2Unit* out,
@@ -2917,8 +2917,8 @@ void Shutdown_Scanner(void)
 //
 //  {Translates UTF-8 binary source to values.}
 //
-//      return: [any-stable! block! binary! text! error!]
-//      source [<opt-out> binary! text!]
+//      return: [any-stable! block! blob! text! error!]
+//      source [<opt-out> blob! text!]
 //          "Must be Unicode UTF-8 encoded"
 //      /next3
 //          {Translate next complete value (blocks as single value)}
@@ -3014,7 +3014,7 @@ DECLARE_NATIVE(TRANSCODE)
             }
         }
         else {
-            assert(Is_Binary(OUT));  // was utf-8 data
+            assert(Is_Blob(OUT));  // was utf-8 data
             VAL_INDEX(OUT) = transcode.at - Blob_Head(OUT);  // advance
         }
     }

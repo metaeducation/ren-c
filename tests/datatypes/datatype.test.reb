@@ -2,7 +2,7 @@
 (not datatype? 1)
 (datatype! = type of action!)
 (datatype? action!)
-(datatype? binary!)
+(datatype? blob!)
 (datatype? bitset!)
 (datatype? block!)
 (datatype? char!)

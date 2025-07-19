@@ -12,20 +12,20 @@
 ; No structural equivalence for action!
 (not lax-equal? func [] [] func [] [])
 (lax-equal? a-value: #{00} a-value)
-; binary!
+; blob!
 ; Same contents
 (lax-equal? #{00} #{00})
 ; Different contents
 (not lax-equal? #{00} #{01})
 ; Offset + similar contents at reference
-(lax-equal? #{00} #[binary! [#{0000} 2]])
+(lax-equal? #{00} #[blob! [#{0000} 2]])
 ; Offset + similar contents at reference
-(lax-equal? #{00} #[binary! [#{0100} 2]])
-(lax-equal? lax-equal? #{00} #[binary! [#{0100} 2]] lax-equal? #[binary! [#{0100} 2]] #{00})
-; No binary! padding
+(lax-equal? #{00} #[blob! [#{0100} 2]])
+(lax-equal? lax-equal? #{00} #[blob! [#{0100} 2]] lax-equal? #[blob! [#{0100} 2]] #{00})
+; No blob! padding
 (not lax-equal? #{00} #{0000})
 (lax-equal? lax-equal? #{00} #{0000} lax-equal? #{0000} #{00})
-; Empty binary! not blank
+; Empty blob! not blank
 (not lax-equal? #{} blank)
 (lax-equal? lax-equal? #{} blank lax-equal? blank #{})
 ; case sensitivity
@@ -55,7 +55,7 @@
     lax-equal? lax-equal? a-value to text! a-value lax-equal? to text! a-value a-value
 )
 
-; No implicit to binary! from integer!
+; No implicit to blob! from integer!
 (not lax-equal? #{00} to integer! #{00})
 (lax-equal? lax-equal? #{00} to integer! #{00} lax-equal? to integer! #{00} #{00})
 ; issue! vs. text!
@@ -65,11 +65,11 @@
     a-value: #a
     lax-equal? lax-equal? a-value to text! a-value lax-equal? to text! a-value a-value
 )
-; No implicit to binary! from text!
-(not lax-equal? a-value: "" to binary! a-value)
+; No implicit to blob! from text!
+(not lax-equal? a-value: "" to blob! a-value)
 (
     a-value: ""
-    lax-equal? lax-equal? a-value to binary! a-value lax-equal? to binary! a-value a-value
+    lax-equal? lax-equal? a-value to blob! a-value lax-equal? to blob! a-value a-value
 )
 ; tag! vs. text!
 ; RAMBO #3518
@@ -84,20 +84,20 @@
 (lax-equal? 1.0.0 1.0.0.0.0.0.0)
 ; tuple! right-pads with 0
 (lax-equal? 1.0.0.0.0.0.0 1.0.0)
-; No implicit to binary! from tuple!
+; No implicit to blob! from tuple!
 (
     a-value: 0.0.0.0
-    not lax-equal? to binary! a-value a-value
+    not lax-equal? to blob! a-value a-value
 )
 (
     a-value: 0.0.0.0
-    lax-equal? lax-equal? to binary! a-value a-value lax-equal? a-value to binary! a-value
+    lax-equal? lax-equal? to blob! a-value a-value lax-equal? a-value to blob! a-value
 )
 (lax-equal? #[bitset! #{00}] #[bitset! #{00}])
 ; bitset! with no bits set does not equal empty bitset
 ; This is because of the COMPLEMENT problem: bug#1085.
 (not lax-equal? #[bitset! #{}] #[bitset! #{00}])
-; No implicit to binary! from bitset!
+; No implicit to blob! from bitset!
 (not lax-equal? #{00} #[bitset! #{00}])
 (lax-equal? lax-equal? #[bitset! #{00}] #{00} lax-equal? #{00} #[bitset! #{00}])
 (lax-equal? [] [])
@@ -501,7 +501,7 @@
     ]
     b-value: construct/only [] [
         a: 1.0 b: $1 c: 100% d: 0.01
-        e: [/a a 'a :a a: #"A" #[binary! [#{0000} 2]]]
+        e: [/a a 'a :a a: #"A" #[blob! [#{0000} 2]]]
         f: [#a <A> http://A a@A.com "A"]
         g: :a/b/(c: 'd/e/f)/(b/d: [:f/g h/i])
     ]

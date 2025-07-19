@@ -71,7 +71,7 @@ Bounce MAKE_Char(Value* out, Type type, const Value* arg)
             goto bad_make;
         return Init_Char(out, n); }
 
-      case TYPE_BINARY: {
+      case TYPE_BLOB: {
         const Byte *bp = Blob_Head(arg);
         Size len = Series_Len_At(arg);
         if (len == 0)

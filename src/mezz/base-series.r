@@ -107,9 +107,9 @@ repend: redescribe [
 
 join: func [
     "Concatenates values to the end of a string or path."
-    return: [binary! any-string! path!]
-    series [binary! any-string! path!]
-    value [<opt> binary! any-string! path! word! integer!]
+    return: [blob! any-string! path!]
+    series [blob! any-string! path!]
+    value [<opt> blob! any-string! path! word! integer!]
 ][
     if not value [return copy series]
     return append/only copy series value
@@ -131,7 +131,7 @@ charset: function [
     {Makes a bitset of chars for the parse function.}
 
     return: [bitset!]
-    chars [text! block! binary! char! integer!]
+    chars [text! block! blob! char! integer!]
     /length "Preallocate this many bits"
     len [integer!] "Must be > 0"
 ][
@@ -155,14 +155,14 @@ trim: function [
     {Removes spaces from strings or blanks from blocks or objects.}
 
     series "Series (modified) or object (made)"
-        [any-string! any-list! binary! any-context!]
+        [any-string! any-list! blob! any-context!]
     /head "Removes only from the head"
     /tail "Removes only from the tail"
     /auto "Auto indents lines relative to first line"
     /lines "Removes all line breaks and extra spaces"
     /all "Removes all whitespace"
     /with "Same as /all, but removes characters in 'str'"
-    str [char! text! binary! integer! block! bitset!]
+    str [char! text! blob! integer! block! bitset!]
 ][
     tail_TRIM: :tail
     tail: :lib/tail
@@ -237,7 +237,7 @@ trim: function [
             if any [all_TRIM lines head_TRIM tail_TRIM] [append rule newline]
         ]
 
-        binary? series [
+        blob? series [
             if any [auto lines] [
                 panic "Invalid refinements for TRIM of BINARY!"
             ]

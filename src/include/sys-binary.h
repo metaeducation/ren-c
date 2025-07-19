@@ -39,7 +39,7 @@
 //
 
 INLINE Binary* Cell_Binary(const Cell* cell) {
-    assert(Is_Binary(cell));
+    assert(Is_Blob(cell));
     Flex* s = Cell_Flex(cell);
     assert(Flex_Wide(s) == 1);
     return cast(Binary*, s);
@@ -100,4 +100,4 @@ INLINE Byte *Blob_Tail(const Cell* v) {
 // defined as an inline to avoid side effects in:
 
 #define Init_Blob(out,binary) \
-    Init_Any_Series((out), TYPE_BINARY, (binary))
+    Init_Any_Series((out), TYPE_BLOB, (binary))

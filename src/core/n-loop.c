@@ -535,7 +535,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
 
                 break; }
 
-              case TYPE_BINARY:
+              case TYPE_BLOB:
                 Init_Integer(
                     var,
                     Binary_Head(cast(Binary*, les->data_ser))[les->data_idx]
@@ -1178,7 +1178,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         assert(count == 0);
         assert(len == VAL_LEN_HEAD(res->data));
     }
-    else if (Is_Binary(res->data)) {
+    else if (Is_Blob(res->data)) {
         if (res->broke) { // leave data unchanged
             Drop_Mold(res->mo);
             return 0;
@@ -1284,7 +1284,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
                     List_At_Head(res->data, index),
                     VAL_SPECIFIER(res->data)
                 );
-            else if (Is_Binary(res->data))
+            else if (Is_Blob(res->data))
                 Init_Integer(
                     var,
                     cast(REBI64, Flex_Head(Byte, res->series)[index])
@@ -1342,7 +1342,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
 
             do {
                 assert(res->start <= len);
-                if (Is_Binary(res->data)) {
+                if (Is_Blob(res->data)) {
                     Append_Unencoded_Len(
                         res->mo->utf8flex,
                         s_cast(
@@ -1396,7 +1396,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         return Init_Integer(OUT, 0);
 
     if (not (
-        Any_List(res.data) or Any_String(res.data) or Is_Binary(res.data)
+        Any_List(res.data) or Any_String(res.data) or Is_Blob(res.data)
     )){
         panic (Error_Invalid(res.data));
     }

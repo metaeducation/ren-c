@@ -164,7 +164,7 @@ Bounce MAKE_List(Value* out, Type type, const Value* arg) {
         //
         return Init_Any_List(out, type, Typeset_To_Array(arg));
     }
-    else if (Is_Binary(arg)) {
+    else if (Is_Blob(arg)) {
         //
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
         // goes directly to the scanner to make an unbound code array.

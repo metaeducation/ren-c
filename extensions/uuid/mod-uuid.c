@@ -56,7 +56,7 @@
 //
 //  "Generate a UUID"
 //
-//      return: [binary!]
+//      return: [blob!]
 //  ]
 //
 DECLARE_NATIVE(GENERATE)

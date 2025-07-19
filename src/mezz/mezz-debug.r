@@ -97,7 +97,7 @@ speed?: function [
             ]
             calc: [100'000 / secs / 100] ; arbitrary calc
         ][
-            tmp: make binary! 500'000
+            tmp: make blob! 500'000
             insert/dup tmp "abcdefghij" 50000
             repeat 10 [
                 random tmp

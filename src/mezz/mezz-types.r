@@ -25,13 +25,12 @@ Rebol [
 ; additional refinements), and thus should not be overwritten here
 
 to-decimal: to-percent: to-money: to-char: to-pair:
-to-tuple: to-time: to-date: to-binary: to-file: to-email: to-url: to-tag:
+to-tuple: to-time: to-date: to-blob: to-file: to-email: to-url: to-tag:
 to-text: to-bitset: to-image: to-vector: to-block: to-group:
 to-path: to-set-path: to-get-path: to-lit-path: to-map: to-datatype: to-typeset:
 to-word: to-set-word: to-get-word: to-lit-word: to-refinement: to-issue:
 to-function: to-object: to-module: to-error: to-port:
-to-event:
-    blank
+to-event: ~
 
 ; Auto-build the functions for the above TO-* words.
 use [word] [
@@ -42,7 +41,7 @@ use [word] [
         ; overwrite any NATIVE! implementations.  (e.g. TO-INTEGER is a
         ; native with a refinement for interpreting as unsigned.)
 
-        if (word: in lib word) and (blank? get word) [
+        if (word: in lib word) and (trash? get:any word) [
             set word redescribe compose [
                 (spaced ["Converts to" form type "value."])
             ](

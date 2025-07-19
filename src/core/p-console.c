@@ -82,7 +82,7 @@ static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
         // If no buffer, create a buffer:
         //
         Value* data = Varlist_Slot(ctx, STD_PORT_DATA);
-        if (not Is_Binary(data))
+        if (not Is_Blob(data))
             Init_Blob(data, Make_Binary(OUT_BUF_SIZE));
 
         Binary* flex = Cell_Binary(data);

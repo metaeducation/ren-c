@@ -49,13 +49,13 @@ Rebol [
 
 add: generic [
     {Returns the addition of two values.}
-    value1 [any-scalar! date! binary!]
+    value1 [any-scalar! date! blob!]
     value2
 ]
 
 subtract: generic [
     {Returns the second value subtracted from the first.}
-    value1 [any-scalar! date! binary!]
+    value1 [any-scalar! date! blob!]
     value2 [any-scalar! date!]
 ]
 
@@ -89,12 +89,12 @@ intersect: generic [
     value1 [
         logic! integer! char! tuple! ;-- math
         any-list! any-string! bitset! typeset! ;-- sets
-        binary! ;-- ???
+        blob! ;-- ???
     ]
     value2 [
         logic! integer! char! tuple! ;-- math
         any-list! any-string! bitset! typeset! ;-- sets
-        binary! ;-- ???
+        blob! ;-- ???
     ]
     /case
         "Uses case-sensitive comparison"
@@ -108,12 +108,12 @@ union: generic [
     value1 [
         logic! integer! char! tuple! ;-- math
         any-list! any-string! bitset! typeset! ;-- sets
-        binary! ;-- ???
+        blob! ;-- ???
     ]
     value2 [
         logic! integer! char! tuple! ;-- math
         any-list! any-string! bitset! typeset! ;-- sets
-        binary! ;-- ???
+        blob! ;-- ???
     ]
     /case
         "Use case-sensitive comparison"
@@ -127,13 +127,13 @@ difference: generic [
     value1 [
         logic! integer! char! tuple! ;-- math
         any-list! any-string! bitset! typeset! ;-- sets
-        binary! ;-- ???
+        blob! ;-- ???
         date! ;-- !!! Under review, this really doesn't fit
     ]
     value2 [
         logic! integer! char! tuple! ;-- math
         any-list! any-string! bitset! typeset! ;-- sets
-        binary! ;-- ???
+        blob! ;-- ???
         date! ;-- !!! Under review, this really doesn't fit
     ]
     /case
@@ -153,7 +153,7 @@ negate: generic [
 
 complement: generic [
     {Returns the one's complement value.}
-    value [logic! integer! tuple! binary! bitset! typeset!]
+    value [logic! integer! tuple! blob! bitset! typeset!]
 ]
 
 absolute: generic [
@@ -416,7 +416,7 @@ close: generic [
 
 read: generic [
     {Read from a file, URL, or other port.}
-    return: [~null~ binary! text! block! port!]
+    return: [~null~ blob! text! block! port!]
         "null on (some) failures !!! REVIEW as part of port model review"
     source [port! file! url! block!]
     /part {Partial read a given number of units (source relative)}
@@ -430,7 +430,7 @@ read: generic [
 write: generic [
     {Writes to a file, URL, or port - auto-converts text strings.}
     destination [port! file! url! block!]
-    data [binary! text! block! object!] ; !!! CHAR! support?
+    data [blob! text! block! object!] ; !!! CHAR! support?
         {Data to write (non-binary converts to UTF-8)}
     /part {Partial write a given number of units}
         limit [any-number!]

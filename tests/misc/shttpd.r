@@ -62,7 +62,7 @@ awake-client: function [event] [
     port: event/port
     return switch event/type [
         'read [
-            either find port/data to-binary unspaced [CR LF CR LF] [
+            either find port/data to-blob unspaced [CR LF CR LF] [
                 res: handle-request port/locals/config port/data
                 start-response port res
             ] [

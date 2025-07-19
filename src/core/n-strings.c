@@ -142,7 +142,7 @@ DECLARE_NATIVE(DELIMIT)
 //
 //  "Computes a checksum, CRC, or hash."
 //
-//      data [binary!]
+//      data [blob!]
 //          "Bytes to checksum"
 //      /part
 //      limit
@@ -161,7 +161,7 @@ DECLARE_NATIVE(DELIMIT)
 //          "Methods: SHA1 MD5 CRC32"
 //      /key
 //          "Returns keyed HMAC value"
-//      key-value [binary! text!]
+//      key-value [blob! text!]
 //          "Key to use"
 //  ]
 //
@@ -231,7 +231,7 @@ DECLARE_NATIVE(CHECKSUM)
 
                 Byte *keycp;
                 Size keylen;
-                if (Is_Binary(key)) {
+                if (Is_Blob(key)) {
                     keycp = Blob_At(key);
                     keylen = Series_Len_At(key);
                 }
@@ -309,8 +309,8 @@ DECLARE_NATIVE(CHECKSUM)
 //
 //  "Compress data using DEFLATE: https://en.wikipedia.org/wiki/DEFLATE"
 //
-//      return: [binary!]
-//      data [binary! text!]
+//      return: [blob!]
+//      data [blob! text!]
 //          "If text, it will be UTF-8 encoded"
 //      /part
 //      limit
@@ -332,7 +332,7 @@ DECLARE_NATIVE(DEFLATE)
 
     Size size;
     Byte *bp;
-    if (Is_Binary(data)) {
+    if (Is_Blob(data)) {
         bp = Blob_At(data);
         size = len; // width = sizeof(Byte), so limit = len
     }
@@ -374,8 +374,8 @@ DECLARE_NATIVE(DEFLATE)
 //
 //  "Decompresses DEFLATEd data: https://en.wikipedia.org/wiki/DEFLATE"
 //
-//      return: [binary!]
-//      data [binary!]
+//      return: [blob!]
+//      data [blob!]
 //      /part
 //      limit
 //          "Length of compressed data (must match end marker)"
@@ -441,9 +441,9 @@ DECLARE_NATIVE(INFLATE)
 //
 //  {Decodes binary-coded string (BASE-64 default) to binary value.}
 //
-//      return: [binary!]
+//      return: [blob!]
 //          ;-- Comment said "we don't know the encoding" of the return binary
-//      value [binary! text!]
+//      value [blob! text!]
 //          "The string to decode"
 //      /base
 //          "Binary base to use"
@@ -480,7 +480,7 @@ DECLARE_NATIVE(DEBASE)
 //  {Encodes data into a binary, hexadecimal, or base-64 ASCII string.}
 //
 //      return: [text!]
-//      value [binary! text!]
+//      value [blob! text!]
 //          "If text, will be UTF-8 encoded"
 //      /base
 //          "Binary base to use (BASE-64 default)"
@@ -502,7 +502,7 @@ DECLARE_NATIVE(ENBASE)
 
     Size size;
     Byte *bp;
-    if (Is_Binary(v)) {
+    if (Is_Blob(v)) {
         bp = Blob_At(v);
         size = Series_Len_At(v);
     }
@@ -1235,8 +1235,8 @@ DECLARE_NATIVE(TO_HEX)
 //
 //  {Find a script header within a binary string. Returns starting position.}
 //
-//      return: [~null~ binary!]
-//      script [binary!]
+//      return: [~null~ blob!]
+//      script [blob!]
 //  ]
 //
 DECLARE_NATIVE(FIND_SCRIPT)
@@ -1260,7 +1260,7 @@ DECLARE_NATIVE(FIND_SCRIPT)
 //
 //  {Checks UTF-8 encoding; if correct, returns null else position of error.}
 //
-//      data [binary!]
+//      data [blob!]
 //  ]
 //
 DECLARE_NATIVE(INVALID_UTF8_Q)
@@ -1285,7 +1285,7 @@ DECLARE_NATIVE(INVALID_UTF8_Q)
 //  {Codec for identifying BINARY! data for a .TXT file}
 //
 //      return: [logic!]
-//      data [binary!]
+//      data [blob!]
 //  ]
 //
 DECLARE_NATIVE(IDENTIFY_UTF8_Q)
@@ -1304,7 +1304,7 @@ DECLARE_NATIVE(IDENTIFY_UTF8_Q)
 //  {Codec for decoding BINARY! data for a .TXT file}
 //
 //      return: [text!]
-//      data [binary!]
+//      data [blob!]
 //  ]
 //
 DECLARE_NATIVE(DECODE_UTF8)
@@ -1324,7 +1324,7 @@ DECLARE_NATIVE(DECODE_UTF8)
 //
 //  {Codec for encoding a .TXT file}
 //
-//      return: [binary!]
+//      return: [blob!]
 //      string [text!]
 //  ]
 //

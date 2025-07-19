@@ -14,7 +14,7 @@ Rebol [
 ]
 
 line-number?: func [
-    s [text! binary!]
+    s [text! blob!]
     <local> t line-number
 ] [
     line-number: 1

@@ -1766,7 +1766,7 @@ bool Eval_Core_Throws(Level* const L)
 
       case TYPE_BLOCK:
         //
-      case TYPE_BINARY:
+      case TYPE_BLOB:
       case TYPE_TEXT:
       case TYPE_FILE:
       case TYPE_EMAIL:

@@ -864,14 +864,17 @@ boot-typespecs: make block! 100
 specs: load %typespec.r
 for-each-record t type-table [
     if t/name <> 0 [
-        append/only boot-typespecs really select specs to-word t/name
+        if not typespec: select specs to-word t/name [
+            panic [t/name "doesn't have entry in %typespec.r"]
+        ]
+        append/only boot-typespecs typespec
     ]
 ]
 
 ;-- Create main code section (compressed):
 
 write-if-changed join boot %tmp-boot-block.r mold reduce sections
-data: to-binary mold/flat reduce sections
+data: to-blob mold/flat reduce sections
 
 compressed: gzip data
 

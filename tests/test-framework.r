@@ -122,7 +122,7 @@ make object! compose [
         return: [block!]
         file [file!] {test file}
         flags [block!] {which flags to accept}
-        code-checksum [binary! blank!]
+        code-checksum [blob! blank!]
         log-file-prefix [file!]
         /local interpreter last-vector value position next-position
         test-sources test-checksum guard

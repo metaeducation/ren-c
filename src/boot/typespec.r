@@ -16,9 +16,9 @@ Rebol [
 ]
 
 action      ["an invokable Rebol subroutine" action]
-binary      ["string series of bytes" string]
 bitset      ["set of bit flags" string]
 blank       ["placeholder unit type which also is conditionally FALSE?" scalar]
+blob        ["series of bytes" string]
 block       ["array of values that blocks evaluation unless DO is used" block]
 char        ["8bit and 16bit character" scalar]
 datatype    ["type of datatype" symbol]

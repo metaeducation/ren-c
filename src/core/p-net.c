@@ -243,7 +243,7 @@ static Bounce Transport_Actor(
         //
         Value* port_data = Varlist_Slot(ctx, STD_PORT_DATA);
         if (sock->command == RDC_READ) {
-            if (Is_Binary(port_data) or Any_String(port_data)) {
+            if (Is_Blob(port_data) or Any_String(port_data)) {
                 Set_Flex_Len(
                     Cell_Flex(port_data),
                     VAL_LEN_HEAD(port_data) + sock->actual
@@ -284,7 +284,7 @@ static Bounce Transport_Actor(
         //
         Value* port_data = Varlist_Slot(ctx, STD_PORT_DATA);
         Binary* buffer;
-        if (not Is_Text(port_data) and not Is_Binary(port_data)) {
+        if (not Is_Text(port_data) and not Is_Blob(port_data)) {
             buffer = Make_Binary(NET_BUF_SIZE);
             Init_Blob(port_data, buffer);
         }
@@ -360,7 +360,7 @@ static Bounce Transport_Actor(
         // Setup the write:
 
         Binary* temp;
-        if (Is_Binary(data)) {
+        if (Is_Blob(data)) {
             temp = nullptr;
             sock->common.data = Blob_At(data);
             sock->length = len;

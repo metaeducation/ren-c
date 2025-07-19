@@ -23,7 +23,7 @@ Rebol [
         a block of files:
             zip %new-zip.zip [%file-1.txt %file-2.exe]
 
-        a block of data (binary!/text!) and files:
+        a block of data (blob!/text!) and files:
             zip %new-zip.zip [%my-file "my data"]
 
         a entire directory:
@@ -54,9 +54,9 @@ Rebol [
 ctx-zip: context [
     crc-32: func [
         "Returns a CRC32 checksum."
-        data [text! binary!] "Data to checksum"
+        data [text! blob!] "Data to checksum"
     ][
-        return copy skip to binary! checksum/method data 'crc32 4
+        return copy skip to blob! checksum/method data 'crc32 4
     ]
 
     local-file-sig: #{504B0304}
@@ -68,33 +68,33 @@ ctx-zip: context [
         "Converts an integer to a little-endian long."
         value [integer!] "AnyValue to convert"
     ][
-        return copy reverse skip to binary! value 4
+        return copy reverse skip to blob! value 4
     ]
 
     to-ishort: func [
         "Converts an integer to a little-endian short."
         value [integer!] "AnyValue to convert"
     ][
-        return copy/part reverse skip to binary! value 4 2
+        return copy/part reverse skip to blob! value 4 2
     ]
 
     to-long: func [
         "Converts an integer to a big-endian long."
         value [integer!] "AnyValue to convert"
     ][
-        return copy skip to binary! value 4
+        return copy skip to blob! value 4
     ]
 
     get-ishort: func [
         "Converts a little-endian short to an integer."
-        value [binary! port!] "AnyValue to convert"
+        value [blob! port!] "AnyValue to convert"
     ][
         return to integer! reverse copy/part value 2
     ]
 
     get-ilong: func [
         "Converts a little-endian long to an integer."
-        value [binary! port!] "AnyValue to convert"
+        value [blob! port!] "AnyValue to convert"
     ][
         return to integer! reverse copy/part value 4
     ]
@@ -118,7 +118,7 @@ ctx-zip: context [
 
     get-msdos-time: func [
         "Converts from a msdos time."
-        value [binary! port!]
+        value [blob! port!]
     ][
         value: get-ishort value
         return to time! reduce [
@@ -130,7 +130,7 @@ ctx-zip: context [
 
     get-msdos-date: func [
         "Converts from a msdos date."
-        value [binary! port!]
+        value [blob! port!]
     ][
         value: get-ishort value
         return to date! reduce [
@@ -148,7 +148,7 @@ ctx-zip: context [
             "Name of file"
         date [date!]
             "Modification date of file"
-        data [binary!]
+        data [blob!]
             "Data to compress"
         offset [integer!]
             "Offset where the compressed entry will be stored in the file"
@@ -173,7 +173,7 @@ ctx-zip: context [
 
         return reduce [
             ; local file entry
-            to binary! reduce [
+            to blob! reduce [
                 local-file-sig
                 #{0A00}  ; version (both Mac OS Zip and Linux Zip put #{0A00})
                 #{0000}  ; flags
@@ -193,7 +193,7 @@ ctx-zip: context [
             ; central-dir file entry.  note that the file attributes are
             ; interpreted based on the OS of origin--can't say Amiga :-(
             ;
-            to binary! reduce [
+            to blob! reduce [
                 central-file-sig
                 #{1E}  ; version of zip spec this encoder speaks (#{1E}=3.0)
                 #{03}  ; OS of origin: 0=DOS, 3=Unix, 7=Mac, 1=Amiga...
@@ -239,7 +239,7 @@ ctx-zip: context [
         {Builds a ZIP archive from a file or block of files.}
         return: [integer!]
             {Number of entries in archive.}
-        where [file! url! binary! text!]
+        where [file! url! blob! text!]
             "Where to build it"
         source [file! url! block!]
             "Files to include in archive"
@@ -302,7 +302,7 @@ ctx-zip: context [
                 first (source: next source)
             ]
 
-            if not binary? data [data: to binary! data]
+            if not blob? data [data: to blob! data]
 
             name: to-path-file name
             if verbose [print name]
@@ -315,7 +315,7 @@ ctx-zip: context [
             offset: me + length of file-entry
         ]
 
-        append where to binary! reduce [
+        append where to blob! reduce [
             central-directory
             end-of-central-sig
             #{0000}  ; disk num
@@ -335,7 +335,7 @@ ctx-zip: context [
         {Decompresses a ZIP archive with to a directory or a block.}
         where [file! url! any-list!]
             "Where to decompress it"
-        source [file! url! binary!]
+        source [file! url! blob!]
             "Archive to decompress (only STORE and DEFLATE methods supported)"
         /verbose
             "Lists files while decompressing (default)"

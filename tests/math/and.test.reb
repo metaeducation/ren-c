@@ -21,7 +21,7 @@
 (2.0.0 and+ 2.0.0 = 2.0.0)
 (255.255.255 and+ 255.255.255 = 255.255.255)
 
-; binary!
+; blob!
 (#{030000} and+ #{020000} = #{020000})
 
 ; !!! arccosing tests that somehow are in and.test.reb

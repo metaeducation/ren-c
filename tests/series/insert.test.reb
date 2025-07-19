@@ -186,13 +186,13 @@
 )
 [#855 (
     a: #{00}
-    b: make binary! 0
+    b: make blob! 0
     insert b first a
     a = b
 )]
 (
     a: #{00}
-    b: make binary! 0
+    b: make blob! 0
     insert b a
     a = b
 )

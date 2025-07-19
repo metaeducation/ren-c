@@ -91,7 +91,7 @@ load-header: function [
     return: "[header OBJECT!, body BINARY!] or error WORD!"
         [block! word!]
     source "Source code (text! will be UTF-8 encoded)"
-        [binary! text!]
+        [blob! text!]
     line-var [word!]
 
     /required "Script header is required"
@@ -104,7 +104,7 @@ load-header: function [
     ;    bad-header
     ;    bad-compress
     ;
-    if binary? source [
+    if blob? source [
         ;
         ; Used to "assert this was UTF-8", which was a weak check.
         ; If it's not UTF-8 the decoding will find that out.
@@ -112,7 +112,7 @@ load-header: function [
         tmp: source
     ]
 
-    if text? source [tmp: to binary! source]
+    if text? source [tmp: to blob! source]
 
     data: script? tmp else [ ; no script header found
         return either required ['no-header] [
@@ -162,7 +162,7 @@ load-header: function [
 
     ensure object! hdr
     ensure [~null~ block!] hdr/options
-    ensure [binary! block!] rest
+    ensure [blob! block!] rest
 
     return reduce [hdr rest]
 ]
@@ -175,7 +175,7 @@ load: function [
     {Loads code or data from a file, URL, text string, or binary.}
 
     source "Source or block of sources"
-        [tag! file! url! text! binary!]
+        [tag! file! url! text! blob!]
     /header "Result includes REBOL header object "
     /all "Load all values (cannot be used with /HEADER)"
     /type "Override default file-type"
@@ -259,7 +259,7 @@ load: function [
         panic ["No" ftype "LOADer found for" type of source]
     ]
 
-    ensure [text! binary!] data
+    ensure [text! blob!] data
 
     if block? data [
         return data ;-- !!! Things break if you don't pass through; review
@@ -275,14 +275,14 @@ load: function [
     ]
 
     ensure [~null~ object!] hdr
-    ensure [binary! block! text!] data
+    ensure [blob! block! text!] data
 
     ;-- Convert code to block, insert header if requested:
     if not block? data [
         if text? data [
-            data: to binary! data ;-- !!! inefficient, might be UTF8
+            data: to blob! data ;-- !!! inefficient, might be UTF8
         ]
-        assert [binary? data]
+        assert [blob? data]
         data: transcode/file/line data (opt file) (opt line)
     ]
 
@@ -317,7 +317,7 @@ load-module: function [
     {Loads a module and inserts it into the system module list.}
 
     source {Source (file, URL, binary, etc.) or block of sources}
-        [word! file! url! text! binary! module! block!]
+        [word! file! url! text! blob! module! block!]
     /version "Module must be this version or greater"
     ver [tuple!]
     /no-share "Force module to use its own non-shared global namespace"
@@ -383,8 +383,8 @@ load-module: function [
         ; then any strings passed in to loading have to be UTF-8 converted,
         ; which means making them into BINARY!.
         ;
-        binary! [data: source]
-        text! [data: to binary! source]
+        blob! [data: source]
+        text! [data: to blob! source]
 
         file!
         url! [
@@ -436,7 +436,7 @@ load-module: function [
                     tmp: <here>
                     name: try set-word!
                     mod: [
-                        word! | module! | file! | url! | text! | binary!
+                        word! | module! | file! | url! | text! | blob!
                     ]
                     ver: try tuple! (
                         append data reduce [
@@ -592,7 +592,7 @@ load-module: function [
 
         if find opt hdr/options 'isolate [no-share: okay] ; in case of delay
 
-        if binary? code [code: make block! code]
+        if blob? code [code: make block! code]
 
         ensure object! hdr
         ensure block! code
@@ -639,7 +639,7 @@ load-module: function [
 import: function [
     {Imports a module; locate, load, make, and setup its bindings.}
 
-    module [word! file! url! text! binary! module! block! tag!]
+    module [word! file! url! text! blob! module! block! tag!]
     /version "Module must be this version or greater"
     ver [tuple!]
     /no-share "Force module to use its own non-shared global namespace"

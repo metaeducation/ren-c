@@ -181,7 +181,7 @@ void* Probe_Core_Debug(
             Probe_Print_Helper(p, "Byte-Size Flex", file, line);
             Binary* bin = cast(Binary*, m_cast(void*, p));
 
-            // !!! Duplication of code in MF_Binary
+            // !!! Duplication of code in MF_Blob
             //
             const bool brk = (Binary_Len(bin) > 32);
             Binary* enbased = Encode_Base16(

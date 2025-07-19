@@ -217,6 +217,20 @@ lib/read: read: enclose :lib-read function3 [f [frame!]] [
 ]
 
 
+; === RE-STYLE OLD BINARY! AS BLOB! ===
+
+; BLOB! is a shorter name, and doesn't have the overloading problem (binary
+; meaning 1s and 0s, or the term for things like .EXE and .OBJ as "binaries)
+
+blob!: binary!
+blob?: :binary?
+to-blob: :to-binary
+
+to-binary: binary!: binary?: func [] [
+    panic/blame "Use BLOB!/BLOB? instead of BINARY!/BINARY?" 'return
+]
+
+
 ; === RE-STYLE OLD VOID AS "JUNK" ===
 
 ; r3-8994d23 lacks TRIPWIRE!, so in places where we would use a tripwire
@@ -631,21 +645,21 @@ replace: specialize 'replace [all: /all]
 
 transcode: function3 [
     return: "full block or remainder if /next3, or 'definitional' error"
-        [blank! block! text! binary! error!]  ; BLANK! is bootstrap null
-    source [text! binary!]
+        [blank! block! text! blob! error!]  ; BLANK! is bootstrap null
+    source [text! blob!]
     /next3
     next-arg [any-word!] "variable to set the transcoded element to"
 ][
     e: sys/util/rescue [  ; !!! Some weird interactions with THEN here
         values: lib/transcode/(either next3 ['next] [_])
-            either text? source [to binary! source] [source]
+            either text? source [to blob! source] [source]
     ]
     if error? :e [
         return e  ; poor man's definitional error
     ]
 
     pos: take/last values
-    assert [binary? pos]
+    assert [blob? pos]
 
     if next3 [
         assert [1 >= length of values]

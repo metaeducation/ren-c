@@ -6,7 +6,7 @@
 )
 (1 = reeval :abs -1)
 (
-    a-value: to binary! "1 + 1"
+    a-value: to blob! "1 + 1"
     2 = do a-value
 )
 (

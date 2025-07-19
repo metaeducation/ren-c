@@ -373,7 +373,7 @@ static void Set_Parse_Series(
             ? VAL_LEN_HEAD(any_series)
             : VAL_INDEX(any_series);
 
-    if (Is_Binary(any_series) || (P_FLAGS & AM_FIND_CASE))
+    if (Is_Blob(any_series) || (P_FLAGS & AM_FIND_CASE))
         P_FLAGS |= AM_FIND_CASE;
     else
         P_FLAGS &= ~AM_FIND_CASE;
@@ -554,7 +554,7 @@ static REBIXO Parse_String_One_Rule(Level* L, const Cell* rule) {
 
     case TYPE_EMAIL:
     case TYPE_TEXT:
-    case TYPE_BINARY: {
+    case TYPE_BLOB: {
         REBLEN index = Find_Str_Str(
             P_INPUT,
             0,
@@ -885,8 +885,8 @@ static REBIXO To_Thru_Non_Block_Rule(
 
     //=//// PARSE INPUT IS A STRING OR BINARY, USE A FIND ROUTINE /////////=//
 
-    if (Is_Binary(rule) or Any_String(rule)) {
-        if (not Is_Text(rule) and not Is_Binary(rule)) {
+    if (Is_Blob(rule) or Any_String(rule)) {
+        if (not Is_Text(rule) and not Is_Blob(rule)) {
             // !!! Can this be optimized not to use COPY?
             Flex* formed = Copy_Form_Value(rule, 0);
             REBLEN form_len = Flex_Len(formed);
@@ -1919,7 +1919,7 @@ DECLARE_NATIVE(SUBPARSE)
                     if (
                         IS_END(into)
                         or (not (
-                            Is_Binary(into)
+                            Is_Blob(into)
                             or Any_String(into)
                         )
                         and not Any_List(into))
@@ -2109,7 +2109,7 @@ DECLARE_NATIVE(SUBPARSE)
                             )
                         );
                     }
-                    else if (Is_Binary(P_INPUT_VALUE)) {
+                    else if (Is_Blob(P_INPUT_VALUE)) {
                         Init_Blob(
                             temp,
                             Copy_Non_Array_Flex_At_Len(P_INPUT, begin, count)
@@ -2158,7 +2158,7 @@ DECLARE_NATIVE(SUBPARSE)
                             set_or_copy_word, P_RULE_SPECIFIER
                         );
                         Ucs2Unit ch = GET_ANY_CHAR(P_INPUT, begin);
-                        if (P_TYPE == TYPE_BINARY)
+                        if (P_TYPE == TYPE_BLOB)
                             Init_Integer(var, ch);
                         else
                             Init_Char(var, ch);
@@ -2252,7 +2252,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                         REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
 
-                        if (P_TYPE == TYPE_BINARY)
+                        if (P_TYPE == TYPE_BLOB)
                             P_POS = Modify_Binary(
                                 P_INPUT_VALUE,
                                 (P_FLAGS & PF_CHANGE)
@@ -2352,7 +2352,7 @@ DECLARE_NATIVE(PARSE)
         SPECIFIED, // input is a non-relative Value
         rules,
         SPECIFIED, // rules is a non-relative Value
-        (Bool_ARG(CASE) or Is_Binary(ARG(INPUT)) ? AM_FIND_CASE : 0)
+        (Bool_ARG(CASE) or Is_Blob(ARG(INPUT)) ? AM_FIND_CASE : 0)
             | (Bool_ARG(REDBOL) ? PF_REDBOL : 0)
         //
         // We always want "case-sensitivity" on binary bytes, vs. treating

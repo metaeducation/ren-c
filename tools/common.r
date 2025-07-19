@@ -184,7 +184,7 @@ binary-to-c: function [
     '{0xYY, ...}' with 8 bytes per line}
 
     return: [text!]
-    data [binary!]
+    data [blob!]
 ][
     out: make text! 6 * (length of data)
     while [not tail? data] [
@@ -398,8 +398,8 @@ write-if-changed: function [
         content: spaced content
     ]
 
-    if not binary? content [
-        content: to binary! content
+    if not blob? content [
+        content: to blob! content
     ]
 
     any [

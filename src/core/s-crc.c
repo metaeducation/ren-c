@@ -240,7 +240,7 @@ uint32_t Hash_Value(const Cell* v)
             hash ^= VAL_DATE(v).bits;
         break;
 
-    case TYPE_BINARY:
+    case TYPE_BLOB:
     case TYPE_TEXT:
     case TYPE_FILE:
     case TYPE_EMAIL:

@@ -169,7 +169,7 @@ e-lib: make-emitter "Host Access Library" (join output-dir %include/host-lib.h)
 
 e-lib/emit {
     #define HOST_LIB_VER $<lib-version>
-    #define HOST_LIB_SUM $<checksum/tcp to-binary checksum-source>
+    #define HOST_LIB_SUM $<checksum/tcp to-blob checksum-source>
     #define HOST_LIB_SIZE $<proto-count>
 
     #ifdef __cplusplus

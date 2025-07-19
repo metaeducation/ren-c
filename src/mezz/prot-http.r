@@ -206,13 +206,13 @@ make-http-error: func [
 ]
 
 make-http-request: func [
-    return: [binary!]
+    return: [blob!]
     method [word! text!] "E.g. GET, HEAD, POST etc."
     target [file! text!]
         {In case of text!, no escaping is performed.}
         {(eg. useful to override escaping etc.). Careful!}
     headers [block!] "Request headers (set-word! text! pairs)"
-    content [any-string! binary! ~null~]
+    content [any-string! blob! ~null~]
         {Request contents (Content-Length is created automatically).}
         {Empty string not exactly like null.}
     <local> result
@@ -226,13 +226,13 @@ make-http-request: func [
         append result unspaced [mold word space string CR LF]
     ]
     if content [
-        content: to binary! content
+        content: to blob! content
         append result unspaced [
             "Content-Length:" space (length of content) CR LF
         ]
     ]
     append result unspaced [CR LF]
-    result: to binary! result
+    result: to blob! result
     if content [append result content]
     return result
 ]
@@ -272,7 +272,7 @@ parse-write-dialect: func [port block <local> spec debug] [
         opt [block: [file! | url!] (spec/path: block)]
         [block: block! (spec/headers: block) | (spec/headers: [])]
         [
-            block: [any-string! | binary!] (spec/content: block)
+            block: [any-string! | blob!] (spec/content: block)
             | (spec/content: null)
         ]
     ]
@@ -311,7 +311,7 @@ check-response: function [port] [
         ; that has been extracted into a completely separate native.  It
         ; should really be rewritten as user code with PARSE here.
         ;
-        assert [binary? d1]
+        assert [blob? d1]
         d1: scan-net-header d1
 
         info/headers: headers: construct/with/only d1 http-response-headers
@@ -572,7 +572,7 @@ check-data: function [
         headers/transfer-encoding = "chunked" [
             data: conn/data
             port/data: default [ ;-- only clear at request start
-                make binary! length of data
+                make blob! length of data
             ]
             out: port/data
 
@@ -630,7 +630,7 @@ check-data: function [
             port/data: conn/data
             if headers/content-length <= length of port/data [
                 state/state: 'ready
-                conn/data: make binary! 32000
+                conn/data: make blob! 32000
                 res: state/awake make event! [
                     type: 'custom
                     port: port
@@ -711,7 +711,7 @@ sys/util/make-scheme [
             port [port!]
             value
         ][
-            if not match [block! binary! text!] :value [
+            if not match [block! blob! text!] :value [
                 value: form :value
             ]
             if not block? value [

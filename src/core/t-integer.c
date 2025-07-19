@@ -131,7 +131,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         Init_Integer(out, cast(REBI64, VAL_DECIMAL(value)));
         goto check_sign;
     }
-    else if (Is_Binary(value)) { // must be before Any_String() test...
+    else if (Is_Blob(value)) { // must be before Any_String() test...
 
         // Rebol3 creates 8-byte big endian for signed 64-bit integers.
         // Rebol2 created 4-byte big endian for signed 32-bit integers.
@@ -339,7 +339,7 @@ check_sign:
 //
 //      value [
 //      integer! decimal! percent! money! char! time!
-//      issue! binary! any-string!
+//      issue! blob! any-string!
 //      ]
 //      /unsigned
 //      {For BINARY! interpret as unsigned, otherwise error if signed.}
@@ -579,7 +579,7 @@ REBTYPE(Integer)
 //
 //  {Encode value as a Little Endian or Big Endian BINARY!, signed/unsigned}
 //
-//      return: [binary!]
+//      return: [blob!]
 //      settings "[<LE or BE> <+ or +/-> <number of bytes>] (pre-COMPOSE'd)"
 //          [block!]
 //      value "Value to encode (currently only integers are supported)"
@@ -689,7 +689,7 @@ DECLARE_NATIVE(ENBIN)
 //      settings "[<LE or BE> <+ or +/-> <number of bytes>] (pre-COMPOSE'd)"
 //          [block!]
 //      binary "Decoded (defaults length of binary for number of bytes)"
-//          [binary!]
+//          [blob!]
 //  ]
 //
 DECLARE_NATIVE(DEBIN)

@@ -183,7 +183,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         RETURN (value); }
 
     case SYM_INTERSECT: {
-        if (Is_Binary(value))
+        if (Is_Blob(value))
             return BOUNCE_UNHANDLED; // !!! unhandled; use bitwise math, for now
 
         INCLUDE_PARAMS_OF_INTERSECT;
@@ -203,7 +203,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         ); }
 
     case SYM_UNION: {
-        if (Is_Binary(value))
+        if (Is_Blob(value))
             return BOUNCE_UNHANDLED; // !!! unhandled; use bitwise math, for now
 
         INCLUDE_PARAMS_OF_UNION;
@@ -223,7 +223,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         ); }
 
     case SYM_DIFFERENCE: {
-        if (Is_Binary(value))
+        if (Is_Blob(value))
             return BOUNCE_UNHANDLED; // !!! unhandled; use bitwise math, for now
 
         INCLUDE_PARAMS_OF_DIFFERENCE;
@@ -380,7 +380,7 @@ chkDecimal:
         return Compare_String_Vals(s, t, not is_case);
 
     case TYPE_BITSET:
-    case TYPE_BINARY:
+    case TYPE_BLOB:
         return Compare_Binary_Vals(s, t);
 
     case TYPE_DATATYPE:

@@ -39,7 +39,7 @@ do-core-tests: function [
         ]
     ] else [
         ; use system/build
-        interpreter-checksum: checksum/method to binary!
+        interpreter-checksum: checksum/method to blob!
             mold system/build 'sha1
     ]
 

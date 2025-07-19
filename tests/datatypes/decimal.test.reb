@@ -6,27 +6,27 @@
 (decimal? -1.0)
 (decimal? 1.5)
 
-; LOAD decimal and to binary! tests
+; LOAD decimal and to blob! tests
 ; 64-bit IEEE 754 maximum
-(equal? #{7FEFFFFFFFFFFFFF} to binary! 1.7976931348623157e308)
+(equal? #{7FEFFFFFFFFFFFFF} to blob! 1.7976931348623157e308)
 ; Minimal positive normalized
-(equal? #{0010000000000000} to binary! 2.2250738585072014E-308)
+(equal? #{0010000000000000} to blob! 2.2250738585072014E-308)
 ; Maximal positive denormalized
-(equal? #{000FFFFFFFFFFFFF} to binary! 2.225073858507201E-308)
+(equal? #{000FFFFFFFFFFFFF} to blob! 2.225073858507201E-308)
 ; Minimal positive denormalized
-(equal? #{0000000000000001} to binary! 4.9406564584124654E-324)
+(equal? #{0000000000000001} to blob! 4.9406564584124654E-324)
 ; zero
-(equal? #{0000000000000000} to binary! 0.0)
+(equal? #{0000000000000000} to blob! 0.0)
 ; negative zero
-(equal? #{8000000000000000} to binary! -0.0)
+(equal? #{8000000000000000} to blob! -0.0)
 ; Maximal negative denormalized
-(equal? #{8000000000000001} to binary! -4.9406564584124654E-324)
+(equal? #{8000000000000001} to blob! -4.9406564584124654E-324)
 ; Minimal negative denormalized
-(equal? #{800FFFFFFFFFFFFF} to binary! -2.225073858507201E-308)
+(equal? #{800FFFFFFFFFFFFF} to blob! -2.225073858507201E-308)
 ; Maximal negative normalized
-(equal? #{8010000000000000} to binary! -2.2250738585072014E-308)
+(equal? #{8010000000000000} to blob! -2.2250738585072014E-308)
 ; 64-bit IEEE 754 minimum
-(equal? #{FFEFFFFFFFFFFFFF} to binary! -1.7976931348623157e308)
+(equal? #{FFEFFFFFFFFFFFFF} to blob! -1.7976931348623157e308)
 
 ; 64-bit IEEE 754 maximum
 (zero? 1.7976931348623157e308 - load mold 1.7976931348623157e308)
@@ -74,17 +74,17 @@
 )]
 
 ; LOAD decimal accuracy tests
-(equal? to binary! 2.2250738585072004e-308 #{000FFFFFFFFFFFFE})
-(equal? to binary! 2.2250738585072005e-308 #{000FFFFFFFFFFFFE})
-(equal? to binary! 2.2250738585072006e-308 #{000FFFFFFFFFFFFE})
-(equal? to binary! 2.2250738585072007e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072008e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072009e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.225073858507201e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072011e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072012e-308 #{0010000000000000})
-(equal? to binary! 2.2250738585072013e-308 #{0010000000000000})
-(equal? to binary! 2.2250738585072014e-308 #{0010000000000000})
+(equal? to blob! 2.2250738585072004e-308 #{000FFFFFFFFFFFFE})
+(equal? to blob! 2.2250738585072005e-308 #{000FFFFFFFFFFFFE})
+(equal? to blob! 2.2250738585072006e-308 #{000FFFFFFFFFFFFE})
+(equal? to blob! 2.2250738585072007e-308 #{000FFFFFFFFFFFFF})
+(equal? to blob! 2.2250738585072008e-308 #{000FFFFFFFFFFFFF})
+(equal? to blob! 2.2250738585072009e-308 #{000FFFFFFFFFFFFF})
+(equal? to blob! 2.225073858507201e-308 #{000FFFFFFFFFFFFF})
+(equal? to blob! 2.2250738585072011e-308 #{000FFFFFFFFFFFFF})
+(equal? to blob! 2.2250738585072012e-308 #{0010000000000000})
+(equal? to blob! 2.2250738585072013e-308 #{0010000000000000})
+(equal? to blob! 2.2250738585072014e-308 #{0010000000000000})
 
 [#1753 (
     c: last mold 1e16
@@ -97,10 +97,10 @@
 (1.1 = to decimal! "1.1")
 (error? sys/util/rescue [to decimal! "t"])
 
-; decimal! to binary! and binary! to decimal!
-(equal? #{3ff0000000000000} to binary! 1.0)
+; decimal! to blob! and blob! to decimal!
+(equal? #{3ff0000000000000} to blob! 1.0)
 (same? to decimal! #{3ff0000000000000} 1.0)
 
 [#747 (
-    equal? #{3FF0000000000009} to binary! to decimal! #{3FF0000000000009}
+    equal? #{3FF0000000000009} to blob! to decimal! #{3FF0000000000009}
 )]

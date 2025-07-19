@@ -356,7 +356,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         }
         break; }
 
-    case TYPE_BINARY:
+    case TYPE_BLOB:
     case TYPE_TEXT:
     case TYPE_FILE:
     case TYPE_EMAIL:

@@ -63,7 +63,7 @@ comment: func [
 
     return: [~void~]
         {The evaluator will skip over the result (not seen, not even void)}
-    :discarded [block! any-string! binary! any-scalar!]
+    :discarded [block! any-string! blob! any-scalar!]
         "Literal value to be ignored." ;-- `comment print "hi"` disallowed
 ][
     return void
@@ -212,7 +212,7 @@ reeval func [
     lit-word?:
     refinement?:
     issue?:
-    binary?:
+    blob?:
     text?:
     file?:
     email?:

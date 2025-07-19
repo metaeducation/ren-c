@@ -138,12 +138,12 @@ static void cleanup_rc4_ctx(const Value* v)
 //          "Returns stream cipher context handle."
 //      /key
 //          "Provided only for the first time to get stream HANDLE!"
-//      crypt-key [binary!]
+//      crypt-key [blob!]
 //          "Crypt key."
 //      /stream
 //      ctx [handle!]
 //          "Stream cipher context."
-//      data [binary!]
+//      data [blob!]
 //          "Data to encrypt/decrypt."
 //  ]
 //
@@ -202,7 +202,7 @@ DECLARE_NATIVE(RC4)
 //
 //  "Encrypt/decrypt data using the RSA algorithm."
 //
-//      data [binary!]
+//      data [blob!]
 //      key-object [object!]
 //      /decrypt
 //         "Decrypts the data (default is to encrypt)"
@@ -218,23 +218,23 @@ DECLARE_NATIVE(RSA)
 
     // N and E are required
     //
-    Value* n = rebValue("ensure binary! pick", obj, "'n");
-    Value* e = rebValue("ensure binary! pick", obj, "'e");
+    Value* n = rebValue("ensure blob! pick", obj, "'n");
+    Value* e = rebValue("ensure blob! pick", obj, "'e");
 
     RSA_CTX *rsa_ctx = nullptr;
 
     REBINT binary_len;
     if (Bool_ARG(PRIVATE)) {
-        Value* d = rebValue("ensure binary! pick", obj, "'d");
+        Value* d = rebValue("ensure blob! pick", obj, "'d");
 
         if (not d)
             panic ("No d returned BLANK, can we assume error for cleanup?");
 
-        Value* p = rebValue("ensure binary! pick", obj, "'p");
-        Value* q = rebValue("ensure binary! pick", obj, "'q");
-        Value* dp = rebValue("ensure binary! pick", obj, "'dp");
-        Value* dq = rebValue("ensure binary! pick", obj, "'dq");
-        Value* qinv = rebValue("ensure binary! pick", obj, "'qinv");
+        Value* p = rebValue("ensure blob! pick", obj, "'p");
+        Value* q = rebValue("ensure blob! pick", obj, "'q");
+        Value* dp = rebValue("ensure blob! pick", obj, "'dp");
+        Value* dq = rebValue("ensure blob! pick", obj, "'dq");
+        Value* qinv = rebValue("ensure blob! pick", obj, "'qinv");
 
         // !!! Because BINARY! is not locked in memory or safe from GC, the
         // libRebol API doesn't allow direct pointer access.  Use the
@@ -378,8 +378,8 @@ DECLARE_NATIVE(DH_GENERATE_KEY)
 
     // !!! This used to ensure that all other fields, besides SELF, were blank
     //
-    Value* g = rebValue("ensure binary! pick", obj, "'g"); // generator
-    Value* p = rebValue("ensure binary! pick", obj, "'p"); // modulus
+    Value* g = rebValue("ensure blob! pick", obj, "'g"); // generator
+    Value* p = rebValue("ensure blob! pick", obj, "'p"); // modulus
 
     dh_ctx.g = Blob_At(g);
     dh_ctx.glen = rebUnbox("length of", g);
@@ -418,11 +418,11 @@ DECLARE_NATIVE(DH_GENERATE_KEY)
 //
 //  "Computes key from a private/public key pair and the peer's public key."
 //
-//      return: [binary!]
+//      return: [blob!]
 //          "Negotiated key"
 //      obj [object!]
 //          "The Diffie-Hellman key object"
-//      public-key [binary!]
+//      public-key [blob!]
 //          "Peer's public key"
 //  ]
 //
@@ -438,8 +438,8 @@ DECLARE_NATIVE(DH_COMPUTE_KEY)
     // !!! used to ensure object only had other fields SELF, PUB-KEY, G
     // otherwise gave Error(RE_EXT_CRYPT_INVALID_KEY_FIELD)
 
-    Value* p = rebValue("ensure binary! pick", obj, "'p");
-    Value* priv_key = rebValue("ensure binary! pick", obj, "'priv-key");
+    Value* p = rebValue("ensure blob! pick", obj, "'p");
+    Value* priv_key = rebValue("ensure blob! pick", obj, "'priv-key");
 
     dh_ctx.p = Blob_At(p);
     dh_ctx.len = rebUnbox("length of", p);
@@ -474,18 +474,18 @@ static void cleanup_aes_ctx(const Value* v)
 //
 //  "Encrypt/decrypt data using AES algorithm."
 //
-//      return: [handle! binary! logic!]
+//      return: [handle! blob! logic!]
 //          "Stream cipher context handle or encrypted/decrypted data."
 //      /key
 //          "Provided only for the first time to get stream HANDLE!"
-//      crypt-key [binary!]
+//      crypt-key [blob!]
 //          "Crypt key."
-//      iv [binary! blank!]
+//      iv [blob! blank!]
 //          "Optional initialization vector."
 //      /stream
 //      ctx [handle!]
 //          "Stream cipher context."
-//      data [binary!]
+//      data [blob!]
 //          "Data to encrypt/decrypt."
 //      /decrypt
 //          "Use the crypt-key for decryption (default is to encrypt)"
@@ -551,7 +551,7 @@ DECLARE_NATIVE(AES)
     if (Bool_ARG(KEY)) {
         uint8_t iv[AES_IV_SIZE];
 
-        if (Is_Binary(ARG(IV))) {
+        if (Is_Blob(ARG(IV))) {
             if (Series_Len_At(ARG(IV)) < AES_IV_SIZE)
                 panic ("Length of initialization vector less than AES size");
 
@@ -598,9 +598,9 @@ DECLARE_NATIVE(AES)
 //
 //  {Calculate a SHA256 hash value from binary data.}
 //
-//      return: [binary!]
+//      return: [blob!]
 //          {32-byte binary hash}
-//      data [binary! text!]
+//      data [blob! text!]
 //          {Data to hash, TEXT! will be converted to UTF-8}
 //  ]
 //
@@ -620,7 +620,7 @@ DECLARE_NATIVE(SHA256)
         bp = Binary_At(temp, offset);
     }
     else {
-        assert(Is_Binary(data));
+        assert(Is_Blob(data));
 
         bp = Blob_At(data);
         size = Series_Len_At(data);

@@ -1169,7 +1169,7 @@ size_t API_rebBytesInto(
     size_t buf_size,
     const RebolValue* blob
 ){
-    if (not Is_Binary(blob))
+    if (not Is_Blob(blob))
         panic ("rebBytesInto() only works on BINARY!");
 
     REBLEN size = Series_Len_At(blob);
@@ -1216,7 +1216,7 @@ unsigned char *API_rebBytes(
         return result;
     }
 
-    if (Is_Binary(series)) {
+    if (Is_Blob(series)) {
         *size_out = rebBytesInto(nullptr, 0, series);
         Byte *result = rebAllocN(Byte, (*size_out + 1));
         rebBytesInto(result, *size_out, series);

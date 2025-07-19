@@ -117,7 +117,7 @@ Bounce Retrigger_Append_As_Write(Level* level_) {
     assert(Is_Port(ARG(SERIES))); // !!! poorly named
     UNUSED(ARG(SERIES));
     if (not (
-        Is_Binary(ARG(VALUE))
+        Is_Blob(ARG(VALUE))
         or Is_Text(ARG(VALUE))
         or Is_Block(ARG(VALUE)))
     ){

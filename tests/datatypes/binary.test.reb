@@ -1,16 +1,16 @@
 ; datatypes/binary.r
-(binary? #{00})
-(not binary? 1)
-(binary! = type of #{00})
+(blob? #{00})
+(not blob? 1)
+(blob! = type of #{00})
 
 (#{00} = 2#{00000000})
 (#{000000} = 64#{AAAA})
-(#{} = make binary! 0)
+(#{} = make blob! 0)
 (error? sys/util/rescue [transcode {"^^(00)"}])
 ; minimum
-(binary? #{})
+(blob? #{})
 ; alternative literal representation
-(#{} = #[binary! #{}])
+(#{} = #[blob! #{}])
 ; access symmetry
 (
     b: #{0b}
@@ -26,7 +26,7 @@
 ]
 
 (
-    a: make binary! 0
+    a: make blob! 0
     insert a #"^(00)"
     a = #{00}
 )

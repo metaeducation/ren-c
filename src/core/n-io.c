@@ -93,7 +93,7 @@ DECLARE_NATIVE(MOLD)
 //  "Write text to standard output, or raw BINARY! (for control codes / CGI)"
 //
 //      return: [~null~ trash!]
-//      value [<opt-out> text! char! binary!]
+//      value [<opt-out> text! char! blob!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
@@ -103,7 +103,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
 
     Value* v = ARG(VALUE);
 
-    if (Is_Binary(v)) {
+    if (Is_Blob(v)) {
         //
         // It is sometimes desirable to write raw binary data to stdout.  e.g.
         // e.g. CGI scripts may be hooked up to stream data for a download,

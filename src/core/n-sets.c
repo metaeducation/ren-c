@@ -72,8 +72,8 @@ Flex* Make_Set_Operation_Flex(
         }
         else {
             // Binaries only operate with other binaries
-            assert(Is_Binary(val1));
-            if (not Is_Binary(val2))
+            assert(Is_Blob(val1));
+            if (not Is_Blob(val2))
                 panic (Error_Unexpected_Type(Type_Of(val1), Type_Of(val2)));
         }
     }
@@ -246,7 +246,7 @@ Flex* Make_Set_Operation_Flex(
         out_ser = Pop_Molded_String(mo);
     }
     else {
-        assert(Is_Binary(val1) and Is_Binary(val2));
+        assert(Is_Blob(val1) and Is_Blob(val2));
 
         DECLARE_MOLDER (mo);
 
@@ -331,9 +331,9 @@ Flex* Make_Set_Operation_Flex(
 //
 //  {Returns the first data set less the second data set.}
 //
-//      series [any-list! any-string! binary! bitset! typeset!]
+//      series [any-list! any-string! blob! bitset! typeset!]
 //          "original data"
-//      exclusions [any-list! any-string! binary! bitset! typeset!]
+//      exclusions [any-list! any-string! blob! bitset! typeset!]
 //          "data to exclude from series"
 //      /case
 //          "Uses case-sensitive comparison"
@@ -386,7 +386,7 @@ DECLARE_NATIVE(EXCLUDE)
 //
 //  "Returns the data set with duplicates removed."
 //
-//      series [any-list! any-string! binary! bitset! typeset!]
+//      series [any-list! any-string! blob! bitset! typeset!]
 //      /case
 //          "Use case-sensitive comparison (except bitsets)"
 //      /skip

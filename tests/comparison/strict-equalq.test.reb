@@ -11,7 +11,7 @@
 )
 ; no structural equality for action!
 (not equal? func [] [] func [] [])
-; binary!
+; blob!
 (equal? #{00} #{00})
 ; binary versus bitset
 (not equal? #{00} #[bitset! #{00}])
@@ -54,12 +54,12 @@
 (equal? equal? #{} blank equal? blank #{})
 (
     a-value: ""
-    not equal? a-value to binary! a-value
+    not equal? a-value to blob! a-value
 )
 ; symmetry
 (
     a-value: ""
-    equal? equal? a-value to binary! a-value equal? to binary! a-value a-value
+    equal? equal? a-value to blob! a-value equal? to blob! a-value a-value
 )
 (
     a-value: to tag! ""
@@ -72,12 +72,12 @@
 )
 (
     a-value: 0.0.0.0
-    not equal? to binary! a-value a-value
+    not equal? to blob! a-value a-value
 )
 ; symmetry
 (
     a-value: 0.0.0.0
-    equal? equal? to binary! a-value a-value equal? a-value to binary! a-value
+    equal? equal? to blob! a-value a-value equal? a-value to blob! a-value
 )
 (equal? #[bitset! #{00}] #[bitset! #{00}])
 (not equal? #[bitset! #{}] #[bitset! #{00}])

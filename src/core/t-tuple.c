@@ -128,7 +128,7 @@ Bounce MAKE_Tuple(Value* out, Type type, const Value* arg)
             ap += 2;
         }
     }
-    else if (Is_Binary(arg)) {
+    else if (Is_Blob(arg)) {
         Byte *ap = Blob_At(arg);
         REBLEN len = Series_Len_At(arg);
         if (len > MAX_TUPLE) len = MAX_TUPLE;

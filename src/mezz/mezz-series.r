@@ -140,9 +140,9 @@ replace: function [
             length of :pattern
         ]
 
-        binary? target [
+        blob? target [
             ; Target is binary, pattern is not, make pattern a binary
-            if not binary? :pattern [pattern: to-binary :pattern]
+            if not blob? :pattern [pattern: to-blob :pattern]
             length of :pattern
         ]
 
@@ -162,7 +162,7 @@ replace: function [
 reword: function [
     "Make a string or binary based on a template and substitution values."
 
-    source [any-string! binary!]
+    source [any-string! blob!]
         "Template series with escape sequences"
     values [map! object! block!]
         "Keyword literals and value expressions"
@@ -170,7 +170,7 @@ reword: function [
         "Characters are case-sensitive"  ;!!! Note CASE is redefined in here!
     /escape
         "Choose your own escape char(s) or [prefix suffix] delimiters"
-    delimiters [blank! char! any-string! word! binary! block!]
+    delimiters [blank! char! any-string! word! blob! block!]
         {Default "$"}
         ; Note: since blank is being taken deliberately, it's not possible
         ; to use the defaulting feature, e.g. ()
@@ -181,10 +181,10 @@ reword: function [
     ; BLOCK! excluded.
     ;
     delimiter-types (
-        make typeset! [blank! char! any-string! word! binary!]
+        make typeset! [blank! char! any-string! word! blob!]
     )
     keyword-types (
-        make typeset! [blank! char! any-string! integer! word! binary!]
+        make typeset! [blank! char! any-string! integer! word! blob!]
     )
 ][
     case_REWORD: case

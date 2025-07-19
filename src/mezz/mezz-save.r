@@ -28,7 +28,7 @@ mold64: function [
 
 save: function [
     {Saves a value, block, or other data to a file, URL, binary, or text.}
-    where [file! url! binary! text! blank!]
+    where [file! url! blob! text! blank!]
         {Where to save (suffix determines encoding)}
     value {Value(s) to save}
     /header
@@ -78,8 +78,8 @@ save: function [
     append data newline
 
     case/all [
-        not binary? data [
-            data: to-binary data
+        not blob? data [
+            data: to-blob data
         ]
 
         header-data [
@@ -104,7 +104,7 @@ save: function [
             data
         ]
     ] else [
-        ; text! or binary!, insert data
+        ; text! or blob!, insert data
         insert tail of where data
     ]
 ]

@@ -312,7 +312,7 @@ Value* Init_Any_Series_At_Core(
     if (Any_String(out)) {
         if (Flex_Wide(series) != 2)
             crash (series);
-    } else if (Is_Binary(out)) {
+    } else if (Is_Blob(out)) {
         if (Flex_Wide(series) != 1)
             crash (series);
     }

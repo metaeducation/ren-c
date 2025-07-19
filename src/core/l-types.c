@@ -1274,7 +1274,7 @@ const Byte *Scan_Any(
 //  scan-net-header: native [
 //      {Scan an Internet-style header (HTTP, SMTP).}
 //
-//      header [binary!]
+//      header [blob!]
 //          {Fields with duplicate words will be merged into a block.}
 //  ]
 //

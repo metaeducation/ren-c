@@ -1257,7 +1257,7 @@ makefile: make generator-class [
 
     emit: method [
         return: [~]
-        buf [binary!]
+        buf [blob!]
         project [object!]
         /parent parent-object
     ][
@@ -1337,7 +1337,7 @@ makefile: make generator-class [
         output [file!]
         solution [object!]
     ][
-        buf: make binary! 2048
+        buf: make blob! 2048
         assert [solution/class = #solution]
 
         prepare solution

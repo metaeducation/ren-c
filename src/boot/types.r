@@ -168,7 +168,7 @@ block       list        +       +       +       [series list]
 
 ; ANY-SERIES!, order matters (and contiguous with ANY-LIST above matters!)
 ;
-binary      string      +       +       binary  [series]
+blob        string      +       +       blob    [series]
 text        string      +       +       +       [series string]
 file        string      +       +       +       [series string]
 email       string      +       +       +       [series string]

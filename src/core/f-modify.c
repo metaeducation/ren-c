@@ -300,7 +300,7 @@ REBLEN Modify_Binary(
         needs_free = true;
         limit = -1;
     }
-    else if (Is_Binary(src_val)) {
+    else if (Is_Blob(src_val)) {
         src_ser = nullptr;
         needs_free = false;
     }

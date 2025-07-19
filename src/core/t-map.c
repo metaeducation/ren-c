@@ -152,14 +152,14 @@ REBINT Find_Key_Hashed(
                 slot -= len;
         }
     }
-    else if (Is_Binary(key) or Any_String(key)) {
+    else if (Is_Blob(key) or Any_String(key)) {
         REBLEN n;
         while ((n = indexes[slot]) != 0) {
             Cell* k = Array_At(array, (n - 1) * wide); // stored key
             if (Type_Of(k) == Type_Of(key)) {
                 if (0 == Compare_String_Vals(k, key, false))
                     FOUND_EXACT;
-                else if (not cased and not Is_Binary(key))
+                else if (not cased and not Is_Blob(key))
                     if (0 == Compare_String_Vals(k, key, true))
                         FOUND_SYNONYM;
             }

@@ -125,7 +125,7 @@
  *  When used, the private pool is PRIVATE_MEM bytes long:  2304 bytes,
  *  unless #defined to be a different length.  This default length
  *  suffices to get rid of MALLOC calls except for unusual cases,
- *  such as decimal-to-binary conversion of a very long string of
+ *  such as decimal-to-blob conversion of a very long string of
  *  digits.  The longest string dtoa can return is about 751 bytes
  *  long.  For conversions by strtod of strings of 800 digits and
  *  all dtoa conversions in single-threaded executions with 8-byte

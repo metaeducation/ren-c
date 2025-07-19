@@ -196,7 +196,7 @@ DECLARE_NATIVE(EVAL_INFIX)
 //      source [
 //          <opt-out> ;-- useful for `do maybe ...` scenarios when no match
 //          text! ;-- source code in text form
-//          binary! ;-- treated as UTF-8
+//          blob! ;-- treated as UTF-8
 //          url! ;-- load code from URL via protocol
 //          file! ;-- load code from file on local disk
 //          tag! ;-- module name (URL! looked up from table)
@@ -238,7 +238,7 @@ DECLARE_NATIVE(DO)
 
         return OUT; }
 
-    case TYPE_BINARY:
+    case TYPE_BLOB:
     case TYPE_TEXT:
     case TYPE_URL:
     case TYPE_FILE:

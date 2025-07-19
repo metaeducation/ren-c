@@ -176,7 +176,7 @@ Bounce MAKE_Decimal(Value* out, Type type, const Value* arg)
         d = VAL_DECIMAL(out); // may need to divide if percent, fall through
         break; }
 
-    case TYPE_BINARY:
+    case TYPE_BLOB:
         if (Series_Len_At(arg) < 8)
             panic (Error_Invalid(arg));
 

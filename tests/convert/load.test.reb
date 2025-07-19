@@ -18,7 +18,7 @@
 ;
 (error? sys/util/rescue [load/next "1"])
 (all [
-    #{} = transcode/next3 to binary! "1" 'value
+    #{} = transcode/next3 to blob! "1" 'value
     value = 1
 ])
 

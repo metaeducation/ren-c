@@ -91,8 +91,8 @@ void MF_Bitset(Molder* mo, const Cell* v, bool form)
         Append_Unencoded(mo->utf8flex, "[not bits ");
 
     DECLARE_VALUE (alias);
-    Init_Blob(alias, s);  // MF_Binary expects positional BINARY!
-    MF_Binary(mo, alias, false); // false = mold, don't form
+    Init_Blob(alias, s);  // MF_Blob expects positional BINARY!
+    MF_Blob(mo, alias, false); // false = mold, don't form
 
     if (BITS_NOT(s))
         Append_Codepoint(mo->utf8flex, ']');
@@ -125,7 +125,7 @@ Bounce MAKE_Bitset(Value* out, Type type, const Value* arg)
     if (Is_Integer(arg))
         return out; // allocated at a size, no contents.
 
-    if (Is_Binary(arg)) {
+    if (Is_Blob(arg)) {
         memcpy(Binary_Head(flex), Blob_At(arg), len/8 + 1);
         return out;
     }
@@ -182,7 +182,7 @@ REBINT Find_Max_Bit(const Cell* val)
         maxi++;
         break; }
 
-    case TYPE_BINARY:
+    case TYPE_BLOB:
         maxi = Series_Len_At(val) * 8 - 1;
         if (maxi < 0) maxi = 0;
         break;
@@ -294,7 +294,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
         return true;
     }
 
-    if (Is_Binary(val)) {
+    if (Is_Blob(val)) {
         REBLEN i = VAL_INDEX(val);
 
         Byte *bp = Blob_Head(val);
@@ -383,7 +383,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
                 Set_Bit(bset, n, set);
             break; }
 
-        case TYPE_BINARY:
+        case TYPE_BLOB:
         case TYPE_TEXT:
         case TYPE_FILE:
         case TYPE_EMAIL:
@@ -398,7 +398,7 @@ bool Set_Bits(Binary* bset, const Value* val, bool set)
             if (not Is_Word(item) or Word_Id(item) != SYM_BITS)
                 return false;
             item++;
-            if (not Is_Binary(item))
+            if (not Is_Blob(item))
                 return false;
             REBLEN n = Series_Len_At(item);
             Ucs2Unit c = Flex_Len(bset);
@@ -432,7 +432,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
     if (Is_Integer(val))
         return Check_Bit(bset, Int32s(val, 0), uncased);
 
-    if (Is_Binary(val)) {
+    if (Is_Blob(val)) {
         REBLEN i = VAL_INDEX(val);
         Byte *bp = Blob_Head(val);
         for (; i != VAL_LEN_HEAD(val); ++i)
@@ -507,7 +507,7 @@ bool Check_Bits(Binary* bset, const Value* val, bool uncased)
                     return true;
             break; }
 
-        case TYPE_BINARY:
+        case TYPE_BLOB:
         case TYPE_TEXT:
         case TYPE_FILE:
         case TYPE_EMAIL:
@@ -718,7 +718,7 @@ REBTYPE(Bitset)
     case SYM_INTERSECT:
     case SYM_UNION:
     case SYM_DIFFERENCE:
-        if (!Is_Bitset(arg) && !Is_Binary(arg))
+        if (!Is_Bitset(arg) && !Is_Blob(arg))
             panic (Error_Math_Args(Type_Of(arg), verb));
         flex = Xandor_Binary(verb, value, arg);
         Trim_Tail_Zeros(flex);

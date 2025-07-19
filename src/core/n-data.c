@@ -1007,7 +1007,7 @@ DECLARE_NATIVE(AS)
         // !!! Similarly, until UTF-8 Everywhere, we can't actually alias
         // the UTF-8 bytes in a binary as a WCHAR string.
         //
-        if (Is_Binary(v)) {
+        if (Is_Blob(v)) {
             Flex* string = Make_Sized_String_UTF8(
                 s_cast(Blob_At(v)),
                 Series_Len_At(v)
@@ -1070,7 +1070,7 @@ DECLARE_NATIVE(AS)
         // wait to implement the logic until the appropriate time...just lock
         // the binary for now.
         //
-        if (Is_Binary(v)) {
+        if (Is_Blob(v)) {
             Freeze_Non_Array_Flex(Cell_Flex(v));
             return Init_Any_Word(
                 OUT,
@@ -1083,7 +1083,7 @@ DECLARE_NATIVE(AS)
             goto bad_cast;
         break; }
 
-    case TYPE_BINARY: {
+    case TYPE_BLOB: {
         if (new_type == Type_Of(v))
             RETURN (v); // no-op
 

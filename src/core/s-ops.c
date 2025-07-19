@@ -184,17 +184,17 @@ Binary* Temp_UTF8_At_Managed(
 //
 Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
 {
-    Byte *p0 = Is_Binary(value)
+    Byte *p0 = Is_Blob(value)
         ? Blob_At(value)
         : Binary_Head(Cell_Bitset(value));
-    Byte *p1 = Is_Binary(arg)
+    Byte *p1 = Is_Blob(arg)
         ? Blob_At(arg)
         : Binary_Head(Cell_Bitset(arg));
 
-    REBLEN t0 = Is_Binary(value)
+    REBLEN t0 = Is_Blob(value)
         ? Series_Len_At(value)
         : Binary_Len(Cell_Bitset(value));
-    REBLEN t1 = Is_Binary(arg)
+    REBLEN t1 = Is_Blob(arg)
         ? Series_Len_At(arg)
         : Binary_Len(Cell_Bitset(arg));
 
@@ -261,7 +261,7 @@ Binary* Xandor_Binary(Value* verb, Value* value, Value* arg)
         return series; }
 
     default:
-        panic (Error_Illegal_Action(TYPE_BINARY, verb));
+        panic (Error_Illegal_Action(TYPE_BLOB, verb));
     }
 
     // Copy the residual

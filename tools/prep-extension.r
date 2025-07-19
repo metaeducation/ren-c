@@ -199,7 +199,7 @@ for-each native native-defs [
 
 ;print ["specs:" mold native-list]
 
-specs-compressed: gzip (specs-uncompressed: to-binary mold/only native-list)
+specs-compressed: gzip (specs-uncompressed: to-blob mold/only native-list)
 
 
 names: collect [

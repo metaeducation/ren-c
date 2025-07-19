@@ -145,7 +145,7 @@ rebsource: context [
                 return: [block!]
                     "Facts about the file (lines that are too long, etc.)"
                 file [file!]
-                data [binary!]
+                data [blob!]
             ][
                 analysis: analyse/text file data
                 emit: specialize 'log-emit [log: analysis]
