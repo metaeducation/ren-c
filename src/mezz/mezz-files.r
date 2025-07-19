@@ -50,7 +50,7 @@ clean-path: func [
     ]
 
     if match [@word!] path [  ; lookup @tool on the internet [2]
-        path: switch as tag! path  ; !!! list actually used tags, should change
+        path: switch as tag! unpin path  ; !!! list used tags, should change
             (load system.locale.library.utilities)
         else [
             panic ["Module" path "not in system.locale.library.utilities"]
