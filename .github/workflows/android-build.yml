@@ -258,15 +258,15 @@ jobs:
         cd build
 
         "$R3MAKE" ../make.r \
-            config="../configs/$CONFIG_FILE" \
-            target=makefile \
-            standard=$STANDARD \
-            os_id=$OS_ID \
-            debug=$DEBUG \
-            git_commit="-[$GIT_COMMIT]-" \
-            rigorous=no \
-            static=no \
-            extensions="$EXTENSIONS"
+            config: "../configs/$CONFIG_FILE" \
+            target: makefile \
+            standard: $STANDARD \
+            os-id: $OS_ID \
+            debug: $DEBUG \
+            git-commit: "-[$GIT_COMMIT]-" \
+            rigorous: no \
+            static: no \
+            extensions: "$EXTENSIONS"
 
     - name: Create Folders For Build Products (Compiler Won't Create Them)
       run: |

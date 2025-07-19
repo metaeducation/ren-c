@@ -137,9 +137,9 @@ jobs:
         echo "But that executable won't run on GitHub for some reason"
         # "$r3make" --do "print {TESTING 1 2 3}"  # NOT WORKING, dunno why
         cd prebuilt
-        wget http://hostilefork.com/media/shared/github/r3-linux-8994d23-patched
-        chmod +x r3-linux-8994d23-patched
-        r3make=$(pwd)/r3-linux-8994d23-patched
+        wget http://hostilefork.com/media/shared/r3bootstraps/r3-linux-x64-0a654c6
+        chmod +x r3-linux-x64-0a654c6
+        r3make=$(pwd)/r3-linux-x64-0a654c6
         echo "So now R3MAKE is $r3make"
         echo "R3MAKE=$r3make" >> $GITHUB_ENV  # pass to next step
 
@@ -199,15 +199,16 @@ jobs:
         # diagnostic changes the hash to maybe a WORD!
         #
         "$R3MAKE" ../make.r \
-            config="../configs/$CONFIG_FILE" \
-            target=makefile \
-            standard=c \
-            os_id=$OS_ID \
-            debug=$DEBUG \
-            git_commit="{$GIT_COMMIT}" \
-            rigorous=no \
-            static=no \
-            extensions="TCC +"
+            config: "../configs/$CONFIG_FILE" \
+            target: makefile \
+            compiler: tcc \
+            standard: c \
+            os-id: $OS_ID \
+            debug: $DEBUG \
+            git-commit: "-[$GIT_COMMIT]-" \
+            rigorous: no \
+            static: no \
+            extensions: "TCC +"
 
 
     - name: Create Folders For Build Products (Compiler Won't Create Them)

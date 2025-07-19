@@ -1301,7 +1301,7 @@ switch user-config.debug [
 ]
 
 switch user-config.optimize [
-    0 1 2 3 4 "s" "z" "g" 's 'z 'g [
+    0 1 2 3 4 's 'z 'g [
         app-config.optimization: user-config.optimize
     ]
 ] else [

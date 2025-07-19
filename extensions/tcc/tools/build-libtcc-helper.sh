@@ -256,7 +256,7 @@ elif [[ $OS_ID = 0.13.2 ]]; then  #arm-android5
 
 else
 
-    echo "helper can't build libtcc.a for OS_ID: $OS_ID"
+    echo "helper can't build libtcc.a for os-id: $OS_ID"
     exit 1
 
 fi

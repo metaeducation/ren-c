@@ -160,7 +160,8 @@ jobs:
     #
     - name: Fetch R3 To Use For "Prep" Build Steps as $R3MAKE
       run: |
-        curl https://s3.amazonaws.com/r3bootstraps/r3-windows-x86-8994d23.exe -o r3make.exe
+        # curl https://s3.amazonaws.com/r3bootstraps/r3-windows-x86-8994d23.exe -o r3make.exe
+        curl http://hostilefork.com/media/shared/r3bootstraps/r3-windows-x86-0a654c6.exe -o r3make.exe
         echo "R3MAKE=$(pwd)\r3make.exe" >> $GITHUB_ENV  # pass to next step
 
 
@@ -229,16 +230,16 @@ jobs:
         cd build
 
         "$R3MAKE" ../make.r \
-            config="../configs/$CONFIG_FILE" \
-            target=nmake \
-            standard=$STANDARD \
-            os_id=$OS_ID \
-            debug=$DEBUG \
-            optimize=$OPTIMIZE \
-            git_commit="{$GIT_COMMIT}" \
-            rigorous=no \
-            static=no \
-            extensions="$EXTENSIONS"
+            config: "../configs/$CONFIG_FILE" \
+            target: nmake \
+            standard: $STANDARD \
+            os-id: $OS_ID \
+            debug: $DEBUG \
+            optimize: $OPTIMIZE \
+            git-commit: "-[$GIT_COMMIT]-" \
+            rigorous: no \
+            static: no \
+            extensions: "$EXTENSIONS"
 
 
     - name: Create Folders For Build Products (Compiler Won't Create Them)

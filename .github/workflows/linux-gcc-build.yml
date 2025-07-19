@@ -69,6 +69,7 @@ jobs:
 
          - os-id: 0.4.40  # 64-bit Target (built on this 64-bit platform)
            config-file: generic.r
+           compiler: gcc
            standard: gnu99  # used for sigjmp_buf (signal safety)
            debug: none
            optimize: 2
@@ -77,6 +78,7 @@ jobs:
 
          - os-id: 0.4.40  # 64-bit Target (built on this 64-bit platform)
            config-file: generic.r
+           compiler: gcc
            standard: gnu99  # used for sigjmp_buf (signal safety)
            debug: normal
            optimize: g
@@ -85,6 +87,7 @@ jobs:
 
          - os-id: 0.4.4  # 32-bit Target (built on this 64-bit platform)
            config-file: generic-c++.r
+           compiler: g++
            standard: c++17  # c++11 is "default", no option for it
            debug: normal
            optimize: g
@@ -101,6 +104,7 @@ jobs:
       #
       OS_ID: ${{ matrix.os-id }}
       CONFIG_FILE: ${{ matrix.config-file }}
+      COMPILER: ${{ matrix.compiler }}
       STANDARD: ${{ matrix.standard }}
       DEBUG: ${{ matrix.debug }}
       OPTIMIZE: ${{ matrix.optimize }}
@@ -157,9 +161,9 @@ jobs:
         echo "But that executable won't run on GitHub for some reason"
         # "$r3make" --do "print {TESTING 1 2 3}"  # NOT WORKING, dunno why
         cd prebuilt
-        wget http://hostilefork.com/media/shared/github/r3-linux-8994d23-patched
-        chmod +x r3-linux-8994d23-patched
-        r3make=$(pwd)/r3-linux-8994d23-patched
+        wget http://hostilefork.com/media/shared/r3bootstraps/r3-linux-x64-0a654c6
+        chmod +x r3-linux-x64-0a654c6
+        r3make=$(pwd)/r3-linux-x64-0a654c6
         echo "So now R3MAKE is $r3make"
         echo "R3MAKE=$r3make" >> $GITHUB_ENV  # pass to next step
 
@@ -208,15 +212,16 @@ jobs:
         cd build
 
         "$R3MAKE" ../make.r \
-            config="../configs/$CONFIG_FILE" \
-            target=makefile \
-            standard=$STANDARD \
-            os_id=$OS_ID \
-            debug=$DEBUG \
-            optimize=$OPTIMIZE \
-            git_commit="{$GIT_COMMIT}" \
-            rigorous=no \
-            static=no \
+            config: "../configs/$CONFIG_FILE" \
+            target: makefile \
+            compiler: $COMPILER \
+            standard: $STANDARD \
+            os-id: $OS_ID \
+            debug: $DEBUG \
+            optimize: $OPTIMIZE \
+            git-commit: "-[$GIT_COMMIT]-" \
+            rigorous: no \
+            static: no \
             extensions="$EXTENSIONS"
 
 

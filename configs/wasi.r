@@ -71,7 +71,7 @@ debug-wasi-extension: 'no
 ; Note: anything other than -O0 will strip debug symbols in wasi-sdk:
 ; https://bugs.llvm.org/show_bug.cgi?id=45602
 ;
-optimize: if yes? debug-wasi-extension [0] else ["s"]
+optimize: if yes? debug-wasi-extension [0] else ['s]
 
 
 ; 1. Filesystem and Networking extensions are based on libuv, which has more

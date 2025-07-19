@@ -103,7 +103,9 @@ compiler: 'emcc
 ; overrides this "s" optimization.  (It won't override `-Oz` which is supposed
 ; to be a more extreme size optimization, but seems about the same.)
 ;
-optimize: "s"
+; 1. https://rebol.metaeducation.com/t/the-word-vs-text-representation-gap/2513
+;
+optimize: 's  ; currently optimization levels are WORD! or INTEGER! [1]
 
 ; Not all functions are supported by all runtimes.  Consult the roadmap to
 ; see which engines support what:
