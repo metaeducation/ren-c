@@ -33,6 +33,12 @@ Rebol [
         operations, like ADAPT, CHAIN, SPECIALIZE, and ENCLOSE.
     ]--
     notes: --[
+      * One reason more features aren't folded into the bootstrap EXE is that
+        it needs to be stable with respect to its own "preboot" executable.
+        So the choices of how much to fast-forward its design are balanced
+        against wanting it to still be buildable/debuggable with an even
+        older executable when the need comes up (it does on occasion).
+
       * When running under the bootstrap EXE, this shim does not use EXPORT
         via the %import-shim.r method--it modifies the user context directly.
         Under the new EXE (which has a real IMPORT) it has to do EXPORT for
@@ -231,13 +237,13 @@ for-each [alias] [
 function3: ~#[FUNCTION slated for synonym of FUNC, so no FUNCTION3]#~
 
 
-=== "BINARY! => BLOB!" ===
-
-blob!: binary!
-blob?: binary?/
-
-
 === "ISSUE! => RUNE!" ===
+
+; Historically #a and #"a" were different things, with the first being an
+; ISSUE! and the second being a CHAR!.  In modern Ren-C, ISSUE! and CHAR! were
+; unified into RUNE!, so #a is a RUNE! of a single character.  This merger
+; is not scheduled to be grafted into bootstrap, but we hackily use the
+; imperfect mapping of ISSUE! => RUNE! in places where #xxx values are meant.
 
 rune!: issue3!
 rune?: issue3?/
@@ -245,14 +251,20 @@ rune?: issue3?/
 
 === "TRY TO UNIFY SPACE AND BLANK TESTING" ===
 
-; There's only one literal for (_) and (#" ") in modern Ren_C, so that might
-; confuse matters in bootstrap.  Try saying either is a space.
+; "BLANK" used to be a separate datatype for _, which is now the RUNE! for
+; a literal SPACE character (so only one literal for _ and #" ")
+;
+; https://rebol.metaeducation.com/t/reified-unreassignable-nothingness/2457
+;
+; Bootstrap needs BLANK! to interop with its bootstrap EXE ("preboot"), so it
+; won't be merging the types.  Try to get away with saying either BLANK! or
+; #" " is a SPACE? for the test...hopefully good enough to get by.
 
 space?: func3 [x] [
     return (x = space) or (x = _)
 ]
 
-blank?: ~#[No BLANK? in Bootstrap, Use SPACE?]#~
+blank: blank?: ~#[No BLANK/BLANK? ~()~ in Bootstrap, Use SPACE/SPACE?]#~
 
 
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
@@ -587,20 +599,16 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
         ]
 
         product: lift eval pos.1  ; can't SET-WORD! of VOID in bootstrap
-        if void? unlift product [
-            change3:part pos void 1
-            continue
+
+        if antiform? unlift product [
+            if void? unlift product [
+                change3:part pos void 1
+                continue
+            ]
+            panic:blame [mold product "antiform compose found"] $return
         ]
+
         product: unlift product
-        if okay? :product [  ; e.g. compose [(print "HI")]
-            panic:blame "~okay~ antiform compose found" $return
-        ]
-        if null? :product [  ; e.g. compose [(print "HI")]
-            panic:blame "~null~ antiform compose found" $return
-        ]
-        if trash? :product [  ; e.g. compose [(print "HI")]
-            panic:blame "~ antiform compose found" $return
-        ]
         all [
             block? :product
             #splice! = first product
