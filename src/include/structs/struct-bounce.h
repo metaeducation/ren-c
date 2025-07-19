@@ -37,6 +37,13 @@ typedef Byte WildTwo[2];
 
 //=//// BOUNCE ////////////////////////////////////////////////////////////=//
 //
+// 0. In order for you to be able to polymorphically return NEEDFUL_RESULT_0
+//    to return types that are pointers, integers, enums etc. in C++, there
+//    has to be a class to handle Result() and NEEDFUL_RESULT_0.  If that
+//    class is returned to a Bounce, you also need a class.  It may be that
+//    a C++ compiler can be configured to be as lenient as C, but not all
+//    necessarily can.
+//
 // 1. I thought that if it was `struct Bounce { RebolBounce b; }` that it
 //    would be able to do checks on the types it received while being
 //    compatible with a void* in the dispatchers using %rebol.h.  So these
@@ -61,7 +68,7 @@ typedef Byte WildTwo[2];
 //    OUT slot, because when the action code calls the dispatcher it checks
 //    for equality to that pointer first.  Use `return COPY(cell)`.
 //
-#if NO_CPLUSPLUS_11 || NO_RUNTIME_CHECKS
+#if NO_CPLUSPLUS_11 /* || NO_RUNTIME_CHECKS */  // must see Result0Struct [0]
     typedef RebolBounce Bounce;
 #else
     struct NEEDFUL_NODISCARD Bounce {
@@ -79,8 +86,10 @@ typedef Byte WildTwo[2];
 
         explicit Bounce(WildTwo* wildtwo) : b {wildtwo} {}
 
-        explicit Bounce(int z) : b {nullptr}
-          { assert(z == 0); }  // only 0 allowed, for Result(Bounce) from 0
+        explicit Bounce(int z) : b {nullptr} {
+          assert(z == 0);  // only 0 allowed, for Result(Bounce) from 0
+          UNUSED(z);
+        }
 
         Bounce(const char* utf8) : b {utf8} {}
 
