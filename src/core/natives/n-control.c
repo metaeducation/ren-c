@@ -1087,7 +1087,7 @@ DECLARE_NATIVE(SWITCH)
     Drop_Level(SUBLEVEL);
 
     if (Not_Cell_Erased(SPARE)) {  // something counts as fallout [1]
-        Assert_Cell_Stable(SPARE);
+        possibly(Not_Cell_Stable(SPARE));
         Move_Atom(OUT, SPARE);
         return BRANCHED(OUT);
     }
