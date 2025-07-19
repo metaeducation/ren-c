@@ -131,6 +131,7 @@ leaders: [
     quasar?
     NUL?
     tripwire?
+    blank?
 
     tweak*  ; REAL tweak* (overwrites bootstrap) uses NULL?, SPACE?
 
