@@ -426,7 +426,14 @@ jobs:
               ]
           ]
           for-each 'url list [
-              let [_ filename]: split-path url
+              ; !!! temporary, SPLIT-PATH in old executable reversed the
+              ; arguments and assumed filename was the primary return.
+              ; Once the new executable is deployed for the action, the
+              ; new rule will be used.
+              ;
+              ;   let [_ filename]: split-path url  ; new rule
+              ;
+              let [filename _]: split-path url
               write filename (read url)
           ]
 
