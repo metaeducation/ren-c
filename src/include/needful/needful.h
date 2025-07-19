@@ -729,7 +729,7 @@ typedef enum {
 #elif defined(_MSC_VER)
     #define NEEDFUL_NODISCARD _Check_return_
 #else
-    #define NEEDFUL_NODISCARD  ** C++ overloads may redefine to [[nodiscard]]
+    #define NEEDFUL_NODISCARD  /* C++ overload may define as [[nodiscard]] */
 #endif
 
 
