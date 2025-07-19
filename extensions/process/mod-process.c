@@ -341,6 +341,7 @@ DECLARE_NATIVE(TERMINATE)
 
   #else
 
+    UNUSED(ARG(PID));
     return fail ("terminate is not implemented for this platform");
 
   #endif
