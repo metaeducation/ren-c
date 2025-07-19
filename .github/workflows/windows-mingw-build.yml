@@ -244,7 +244,7 @@ jobs:
     #
     - name: Optional Download of Prep Files Before They Can Cause Build Failure
       if: false  # Change this to true to download a file
-      uses: actions/upload-artifact@v2  # See README: Trusted Actions
+      uses: actions/upload-artifact@v4  # See README: Trusted Actions
       with:
         name: tmp-internals.h
         path: build/prep/include/tmp-internals.h

@@ -282,7 +282,7 @@ jobs:
     #
     - name: Optional Download of Prep Files Before They Can Cause Build Failure
       if: false  # Change this to true to download a file
-      uses: actions/upload-artifact@v2  # See README: Trusted Actions
+      uses: actions/upload-artifact@v4  # See README: Trusted Actions
       with:
         name: tmp-internals.h
         path: build/prep/include/tmp-internals.h
@@ -380,19 +380,19 @@ jobs:
   #
   #===========================================================================#
 
-    - uses: actions/upload-artifact@master
+    - uses: actions/upload-artifact@v4
       with:
         name: r3
         path: build/r3
         retention-days: 1
 
-    - uses: actions/upload-artifact@master
+    - uses: actions/upload-artifact@v4
       with:
         name: tcc-encap.zip
         path: build/tcc-encap.zip
         retention-days: 1
 
-    - uses: actions/upload-artifact@master
+    - uses: actions/upload-artifact@v4
       with:
         name: rebol-server.apk
         path: build/rebol-server.apk
@@ -655,7 +655,7 @@ jobs:
     # `success()` is implicit, e.g. `if: true` will still only run if the
     # previous steps didn't fail.
     #
-    - uses: actions/upload-artifact@master
+    - uses: actions/upload-artifact@v4
       if: always()  # not the same as "if true", see Note: above
       with:
         name: screen.png
