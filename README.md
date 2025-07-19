@@ -1,19 +1,25 @@
-## Bootstrap Branch Of Ren-C: **...THAT YOU SHOULD PROBABLY IGNORE**
+## R3BOOT: Bootstrap Ren-C Branch: **...THAT YOU SHOULD PROBABLY IGNORE**
 
-*There's almost no reason you should be looking at this.*
+*There's almost no reason you should be looking at this.*  See main branch:
 
-What it is, is a stripped down mess of an ancient version of the executable.
-Its sole use is to do some code generation in the build process for making
+  https://github.com/metaeducation/ren-c
+
+This is a stripped down mess of an ancient version of the executable.  Its
+sole use is to do some code generation in the build process for building the
 modern executables.
 
-The reasons why such an old snapshot is used mostly comes down to *speed*.
+One key reason why such an old snapshot is used mostly comes down to *speed*.
 At time of writing, the main branch of Ren-C is much slower...due to its
 focus on getting design points correct over premature optimization.  (Also
 some things that make it "slower", e.g. being stackless, makes it viable
 in places like the web browser--where it would require intrusive code
 generation that would slow it down otherwise.)
 
-Major features in the main branch will never be ported back to this one.
+This R3BOOT codebase is also simpler.  Using it as a "trusty baseline" while
+experimenting on the main branch means it's (theoretically) less likely to
+lead to tripping on its problems, while trying to implement new behaviors.
+
+Major features in the main branch will *NEVER* be ported back to this one.
 As a partial list just to give the idea:
 
 **UTF-8 Everywhere**
@@ -59,3 +65,9 @@ You must turn it off, e.g. with an environment variable:
 
 (Modern Ren-C is "stackless", and does not use techniques beyond the C standard
 to try and guess about what addresses are getting near a stack overflow.)
+
+## License
+
+License is now completely muddy, because this project copies wholesale from a
+LGPL codebase into an Apache2 one.  Don't copy things out of this code anyway,
+what are you, crazy?  :-)

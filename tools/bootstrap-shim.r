@@ -5,18 +5,20 @@ Rebol [
         "Ren-C" branch @ https://github.com/metaeducation/ren-c
 
         Copyright 2012-2018 Rebol Open Source Contributors
+        (Patched in 2024/2025 to more closely match main branch conventions)
         REBOL is a trademark of REBOL Technologies
     }
-    license: {
-        Licensed under the Apache License, Version 2.0
-        See: http://www.apache.org/licenses/LICENSE-2.0
-    }
     purpose: {
-        Ren-C "officially" supports two executables for doing a bootstrap
-        build.  One is a frozen "stable" version (`8994d23`) which was
-        committed circa Dec-2018:
+        This is the bootstrap shim for the bootstrap executable: e.g. it's
+        what makes the "preboot" executable (even more out of date than the
+        R3BOOT (R3B) we're building) compatible enough to build the bootstrap
+        executable's sources.
 
-        https://github.com/metaeducation/ren-c/commit/dcc4cd03796ba2a422310b535cf01d2d11e545af
+        As with mainline, this is done with "official" support for only two
+        executables.  One is a frozen "stable" version (`8994d23`) which was
+        committed circa Dec-2018.  This is R3PREBOOT (R3PB):
+
+        https://github.com/metaeducation/ren-c/commit/8994d234e8a8be2962a4045dc5b4ff4805d8ad61
 
         The only other executable that is guaranteed to work is the *current*
         build.  This is ensured by doing a two-step build in the continuous
@@ -46,13 +48,13 @@ Rebol [
     notes: {
      A. Some routines in r3-8994d23 treat //NULL as opt out (e.g. APPEND,
         COMPOSE) while others treat BLANK! like an opt out (e.g. FIND,
-        TO-WORD).  These have been consolidated to take NOTHING to opt out in
-        modern Ren-C, and MAYBE is consolidated to just taking ~null~ and
-        making NOTHING.
+        TO-WORD).  These have been consolidated to take VOID to opt out in
+        modern Ren-C, and OPT is consolidated to just taking ~null~ and
+        making VOID.
 
         BLANK! acts as ~null~ in the bootstrap case.  We can shim some places,
         but others we can't (e.g. GROUP!s in path dispatch of r3-8994d23 only
-        take BLANK!).  The MAYBE+ will act like MAYBE in the new executable,
+        take BLANK!).  The OPT+ will act like OPT in the new executable,
         but in the old executable passes through blanks.
     }
 ]
@@ -60,23 +62,24 @@ Rebol [
 read: lib/read: adapt 'lib/read [
     ;
     ; !!! This can be useful in build 8994d23 to get better error messages
-    ; about where a bad read is reading from (fixed in R3C and later)
+    ; about where a bad read is reading from (fixed in R3BOOT and later)
     ;
     ; if not port? source [print ["READING:" mold source "from" what-dir]]
 ]
 
 
-; The snapshotted Ren-C existed right before <opt-out> was legal to mark an
-; argument as meaning a function returns null if that argument is blank.
-; See if this causes an error, and if so assume it's the old Ren-C, not a
-; new one...?
+; R3PREBOOT was snapshotted right before <opt-out> was legal to mark an
+; argument as meaning a function returns null if that argument is blank (void
+; in the modern world).
+;
+; See if <opt-out> causes an error, and if so assume it's R3PREBOOT.
 ;
 ; What this really means is that we are only catering the shim code to the
 ; snapshot.  (It would be possible to rig up shim code for pretty much any
 ; specific other version if push came to shove, but it would be work for no
 ; obvious reward.)
 ;
-trap [  ; in even older bootstrap executable, this means SYS.UTIL/RESCUE
+trap [  ; in even older bootstrap executable, this means SYS.UTIL/RECOVER
     func [i [<opt-out> integer!]] [...]
 ] else [
     opt+: :opt  ; see [A]
