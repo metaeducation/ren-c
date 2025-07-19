@@ -547,8 +547,8 @@
 // switching from signed to unsigned char, this cast does *only* that.
 //
 
-#define s_cast(bytes)   u_cast(char*, ensure(unsigned char*, (bytes)))
-#define b_cast(chars)   u_cast(unsigned char*, ensure(char*, (chars)))
+#define s_cast(bytes)   cast(char*, ensure(unsigned char*, (bytes)))
+#define b_cast(chars)   cast(unsigned char*, ensure(char*, (chars)))
 
 
 //=//// CONST PROPAGATION TOOLS ///////////////////////////////////////////=//
