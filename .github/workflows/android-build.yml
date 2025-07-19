@@ -82,7 +82,7 @@ jobs:
         # of jobs split out a pipeline so each build job feeds to its own
         # separate test job.
         #
-        #- os: ubuntu-20.04
+        #- os: ubuntu-22.04
           #
           # !!! versions prior to r16 only offered a gcc-based toolchain
           # circa 2021, this is completely deprecated, however it was being
@@ -103,7 +103,7 @@ jobs:
         #  os-id: 0.13.2
         #  config-file: android-cross-compiled.r  # Build ARM with x64 compiler
 
-        - os: ubuntu-20.04
+        - os: ubuntu-22.04
           #
           # versions since r18 are entirely clang-based
           # leaving off last letter means get latest patch version (e.g. r21e)

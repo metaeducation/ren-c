@@ -55,7 +55,7 @@ jobs:
 
     # https://github.com/actions/virtual-environments#available-environments
     #
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
 
     # See README: Build Matrix

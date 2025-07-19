@@ -276,13 +276,13 @@ is that this expression is evaluated explicitly in GitHub's ${{ }} syntax.
 So using the syntax will silently cause undesirable behavor:
 
     step: Demonstrate Incorrect Use of IF Statement
-    if: ${{ matrix.os }} == 'ubuntu-20.04'
+    if: ${{ matrix.os }} == 'ubuntu-22.04'
     run: echo "This always runs, regardless of what matrix.os is :-("
 
 To avoid this frustration, don't use ${{ }} in the expressions:
 
     step: Demonstrate Incorrect Use of IF Statement
-    if: matrix.os == 'ubuntu-20.04'
+    if: matrix.os == 'ubuntu-22.04'
     run: echo "This runs only for the specified condition."
 
 For documentation of the list of variables and operators available:
