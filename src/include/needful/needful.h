@@ -672,7 +672,7 @@ typedef enum {
     struct GlobalScopeNoopTrick  /* https://stackoverflow.com/q/53923706 */
 
 #define NEEDFUL_STATIC_ASSERT(cond) \
-    STATIC_IGNORE(cond)  /* C version is noop [2] */
+    STATIC_IGNORE(cond)  /* C version is noop [1] */
 
 #define NEEDFUL_STATIC_FAIL(msg) \
     typedef int static_fail_##msg[-1]  /* message has to be a C identifier */

@@ -25,11 +25,14 @@
 #if !defined(NDEBUG)
     template<typename T>
     struct ProbeTypeHelper {
-        static_assert(sizeof(T) == 0, "See compiler errors for probed name");
+        static_assert(sizeof(T) == 0, "See sizeof() error for probed type");
     };
 
     #define PROBE_DECLTYPE(expr) \
-        (needful::ProbeTypeHelper<decltype(expr)>())
+        (needful::ProbeTypeHelper<decltype(expr)>{})
+
+    #define PROBE_CTYPE(...) /* workaround for Templated<T1,T2> arguments */ \
+        (needful::ProbeTypeHelper<__VA_ARGS__>{})
 #endif
 
 

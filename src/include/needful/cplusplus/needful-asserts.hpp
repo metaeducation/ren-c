@@ -26,18 +26,24 @@
     // noops on structs.  But the C++17 way works on structs.
 #endif
 
+// 1. We use __VA_ARGS__ here to avoid the need for double-parenthesization
+//    at the callsite, e.g. STATIC_ASSERT((std::is_same<T, U>::value)), which
+//    is what you'd have to do otherwise if you used templated stuff that
+//    has commas in it that the preprocessor would misinterpret.
+//
+
 #undef STATIC_ASSERT
-#define STATIC_ASSERT(cond) \
-    static_assert((cond), #cond) // callsite has semicolon, see C trick
+#define STATIC_ASSERT(...) /* variadic for [1] */ \
+    static_assert((__VA_ARGS__), #__VA_ARGS__) // callsite has semicolon
 
 #undef STATIC_ASSERT_DECLTYPE_BOOL
-#define STATIC_ASSERT_DECLTYPE_BOOL(expr) \
-    static_assert(std::is_convertible<decltype((expr)), bool>::value, \
+#define STATIC_ASSERT_DECLTYPE_BOOL(...) /* variadic for [1] */ \
+    static_assert(std::is_convertible<decltype((__VA_ARGS__)), bool>::value, \
         "expression must be convertible to bool")
 
 #undef STATIC_ASSERT_DECLTYPE_VALID
-#define STATIC_ASSERT_DECLTYPE_VALID(expr) \
-    static_assert(std::is_same<decltype((void)(expr)), void>::value, "")
+#define STATIC_ASSERT_DECLTYPE_VALID(...) /* variadic for [1] */ \
+    static_assert(std::is_same<decltype((__VA_ARGS__)(expr)), void>::value, "")
 
 
 #undef STATIC_FAIL

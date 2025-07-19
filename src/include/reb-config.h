@@ -81,12 +81,10 @@
 // in %needful-asserts.h as well.  Allow the redundant definition (Needful
 // checks to see if it's already defined).
 //
-// Note: STATIC_ASSERT((std::is_same<T, U>::value)) is a common pattern,
-// and needs double parentheses for the < and > to work with the macro.
 
 #if CPLUSPLUS_11
-    #define STATIC_ASSERT(cond) \
-        static_assert((cond), #cond) // callsite has semicolon, see C trick
+    #define STATIC_ASSERT(...) /* variadic to support Template<X,Y>::Z */ \
+        static_assert((__VA_ARGS__), #__VA_ARGS__) // callsite has semicolon
 #else
     #define STATIC_ASSERT(cond) \
         struct GlobalScopeNoopTrick // https://stackoverflow.com/q/53923706
