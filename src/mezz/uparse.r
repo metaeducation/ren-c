@@ -1094,7 +1094,7 @@ default-combinators: make map! [
                 pending: glom pending quote result  ; quoteds target COLLECT
             ]
             splice? ^result [
-                for-each 'item unanti result [
+                for-each 'item unsplice result [
                     pending: glom pending quote item  ; quoteds target COLLECT
                 ]
             ]

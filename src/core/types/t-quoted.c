@@ -642,6 +642,45 @@ DECLARE_NATIVE(UNRUN)
 }
 
 
+//
+//  disarm: native [
+//
+//  "Give back a warning! for error! input"
+//
+//      return: [warning!]
+//      ^error [<opt-out> error!]
+//  ]
+//
+DECLARE_NATIVE(DISARM)
+{
+    INCLUDE_PARAMS_OF_DISARM;
+
+    Atom* error = Atom_ARG(ERROR);
+    LIFT_BYTE(error) = NOQUOTE_2;
+    return COPY(error);
+}
+
+
+//
+//  unsplice: native [
+//
+//  "Give back a block! for splice! input"
+//
+//      return: [block!]  ; BLOCK! seems more generically desired than GROUP!
+//      splice [<opt-out> splice!]
+//  ]
+//
+DECLARE_NATIVE(UNSPLICE)
+{
+    INCLUDE_PARAMS_OF_UNSPLICE;
+
+    Value* splice = ARG(SPLICE);
+    LIFT_BYTE(splice) = NOQUOTE_2;
+    KIND_BYTE(splice) = TYPE_BLOCK;
+    return COPY(splice);
+}
+
+
 // We want OPT and ? to be intrinsics, so the strictness is not controlled
 // with a refinement.  Share the code.
 //
