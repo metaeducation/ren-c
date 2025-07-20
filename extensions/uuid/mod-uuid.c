@@ -70,8 +70,8 @@ DECLARE_NATIVE(GENERATE)
 
   #if TO_WINDOWS
 
-    Value* binary = rebUninitializedBinary_internal(16);
-    unsigned char* bp = rebBinaryHead_internal(binary);
+    Value* binary = rebUninitializedBlob_internal(16);
+    unsigned char* bp = rebBlobHead_internal(binary);
 
     UUID uuid;  // uuid.data* is little endian, string form is big endian
     switch (UuidCreate(&uuid)) {
@@ -128,8 +128,8 @@ DECLARE_NATIVE(GENERATE)
 
   #elif TO_LINUX || TO_HAIKU
 
-    Value* binary = rebUninitializedBinary_internal(16);
-    unsigned char* bp = rebBinaryHead_internal(binary);
+    Value* binary = rebUninitializedBlob_internal(16);
+    unsigned char* bp = rebBlobHead_internal(binary);
 
     uuid_t uuid;
     uuid_generate(uuid);

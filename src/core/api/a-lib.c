@@ -689,14 +689,14 @@ RebolValue* API_rebDecimal(double dec)
 
 
 //
-//  rebSizedBinary: API
+//  rebSizedBlob: API
 //
-// The name "rebBinary()" is reserved for use in languages who have some
+// The name "rebBlob()" is reserved for use in languages who have some
 // concept of data which can serve as a single argument because it knows its
 // own length.  C doesn't have this for raw byte buffers, but JavaScript has
 // things like Int8Array.
 //
-RebolValue* API_rebSizedBinary(const void* bytes, size_t size)
+RebolValue* API_rebSizedBlob(const void* bytes, size_t size)
 {
     ENTER_API;
 
@@ -709,7 +709,7 @@ RebolValue* API_rebSizedBinary(const void* bytes, size_t size)
 
 
 //
-//  rebUninitializedBinary_internal: API
+//  rebUninitializedBlob_internal: API
 //
 // !!! This is a dicey construction routine that users shouldn't have access
 // to, because it gives the internal pointer of the binary out.  The reason
@@ -718,7 +718,7 @@ RebolValue* API_rebSizedBinary(const void* bytes, size_t size)
 //
 // When large amounts of data come back from file reads/etc. the caller
 // already has one copy of it.  We don't want to extract it into a temporary
-// malloc'd buffer just to be able to pass it to reb.Binary() to make yet
+// malloc'd buffer just to be able to pass it to reb.Blob() to make yet
 // *another* copy.
 //
 // Note: It might be interesting to have a concept of "external" memory by
@@ -728,7 +728,7 @@ RebolValue* API_rebSizedBinary(const void* bytes, size_t size)
 //
 // https://stackoverflow.com/a/43325166
 //
-RebolValue* API_rebUninitializedBinary_internal(size_t size)
+RebolValue* API_rebUninitializedBlob_internal(size_t size)
 {
     ENTER_API;
 
@@ -745,18 +745,18 @@ RebolValue* API_rebUninitializedBinary_internal(size_t size)
 
 
 //
-//  rebBinaryHead_internal: API
+//  rebBlobHead_internal: API
 //
-// Complementary "evil" routine to rebUninitializedBinary().  Should not
+// Complementary "evil" routine to rebUninitializedBlob().  Should not
 // be generally used, as passing out raw pointers to binaries can have them
 // get relocated out from under the caller.  If pointers are going to be
 // given out in this fashion, there has to be some kind of locking semantics.
 //
-// (Note: This could be a second return value from rebUninitializedBinary(),
+// (Note: This could be a second return value from rebUninitializedBlob(),
 // but that would involve pointers-to-pointers which are awkward in
 // emscripten and probably cheaper to make two direct WASM calls.
 //
-unsigned char* API_rebBinaryHead_internal(const RebolValue* binary)
+unsigned char* API_rebBlobHead_internal(const RebolValue* binary)
 {
     ENTER_API;
 
@@ -765,9 +765,9 @@ unsigned char* API_rebBinaryHead_internal(const RebolValue* binary)
 
 
 //
-//  rebBinaryAt_internal: API
+//  rebBlobAt_internal: API
 //
-unsigned char* API_rebBinaryAt_internal(const RebolValue* binary)
+unsigned char* API_rebBlobAt_internal(const RebolValue* binary)
 {
     ENTER_API;
 
@@ -776,9 +776,9 @@ unsigned char* API_rebBinaryAt_internal(const RebolValue* binary)
 
 
 //
-//  rebBinarySizeAt_internal: API
+//  rebBlobSizeAt_internal: API
 //
-unsigned int API_rebBinarySizeAt_internal(const RebolValue* binary)
+unsigned int API_rebBlobSizeAt_internal(const RebolValue* binary)
 {
     ENTER_API;
 

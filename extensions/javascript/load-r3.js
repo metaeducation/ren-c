@@ -610,7 +610,7 @@ let load_rebol_scripts = function(defer) {
                     checkStatus(response)
                     return response.arrayBuffer()
                   }).then(function(buffer) {
-                    return reb.Value("as text!", reb.R(reb.Binary(buffer)))
+                    return reb.Value("as text!", reb.R(reb.Blob(buffer)))
                   })
                 })
 

@@ -395,7 +395,7 @@ static int Mpi_From_Binary(mbedtls_mpi* X, const Value* binary)
 // Opposite direction for making a BLOB! from an MPI.  Naming convention
 // suggests it's an API handle and you're responsible for releasing it.
 //
-static Value* rebBinaryFromMpi(const mbedtls_mpi* X)
+static Value* rebBlobFromMpi(const mbedtls_mpi* X)
 {
     size_t size = mbedtls_mpi_size(X);
 
@@ -574,8 +574,8 @@ DECLARE_NATIVE(RSA_GENERATE_KEYPAIR)
     //    (1) P, Q missing.
     //    (2) D and potentially N missing.
 
-    Value* n = rebBinaryFromMpi(&N);
-    Value* e = rebBinaryFromMpi(&E);
+    Value* n = rebBlobFromMpi(&N);
+    Value* e = rebBlobFromMpi(&E);
 
     public_key = rebValue("make object! [",
         "padding:", padding_spec,
@@ -590,13 +590,13 @@ DECLARE_NATIVE(RSA_GENERATE_KEYPAIR)
         "n:", n,
         "e:", e,
 
-        "d:", rebR(rebBinaryFromMpi(&D)),
-        "p:", rebR(rebBinaryFromMpi(&P)),
-        "q:", rebR(rebBinaryFromMpi(&Q)),
+        "d:", rebR(rebBlobFromMpi(&D)),
+        "p:", rebR(rebBlobFromMpi(&P)),
+        "q:", rebR(rebBlobFromMpi(&Q)),
 
-        "dp:", rebR(rebBinaryFromMpi(&DP)),
-        "dq:", rebR(rebBinaryFromMpi(&DQ)),
-        "qinv:", rebR(rebBinaryFromMpi(&QP)),  // many call this qinv, not QP
+        "dp:", rebR(rebBlobFromMpi(&DP)),
+        "dq:", rebR(rebBlobFromMpi(&DQ)),
+        "qinv:", rebR(rebBlobFromMpi(&QP)),  // many call this qinv, not QP
     "]");
 
     rebRelease(padding_spec);

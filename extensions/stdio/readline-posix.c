@@ -633,7 +633,7 @@ Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
             ++t->cp;
         }
 
-        Value* char_bin = rebSizedBinary(encoded, encoded_size);
+        Value* char_bin = rebSizedBlob(encoded, encoded_size);
         if (not buffered) {
             e = rebValue("make rune!", char_bin);
         }

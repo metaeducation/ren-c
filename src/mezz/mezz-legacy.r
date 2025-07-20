@@ -16,8 +16,6 @@ Rebol [
     ]--
 ]
 
-binary!: blob!
-
 loop: ~#[Short word LOOP is reserved for a generalized looping dialect:
         https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878]#~
 

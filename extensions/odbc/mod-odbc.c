@@ -1564,7 +1564,7 @@ Value* ODBC_Column_To_Rebol_Value(
       case SQL_C_BINARY:
         if (allocated)
             return rebRepossess(unwrap allocated, len);
-        return rebSizedBinary(col->buffer, len);
+        return rebSizedBlob(col->buffer, len);
 
     // There's no guarantee that CHAR fields contain valid UTF-8, but we
     // currently only support that.
@@ -1590,7 +1590,7 @@ Value* ODBC_Column_To_Rebol_Value(
             // !!! This is a slow way to do it; but optimize when needed.
             // (Should there be rebSizedTextLatin1() ?)
             //
-            Value* binary = rebSizedBinary(
+            Value* binary = rebSizedBlob(
                 cast(unsigned char*, col->buffer),
                 len
             );

@@ -593,7 +593,7 @@ e-cwrap/emit ---[
         setValue(reb.END + 1, 0, 'i8')  /* 0x00 */
     }
 
-    reb.Binary = function(array) {  /* how about `reb.Binary([1, 2, 3])` ? */
+    reb.Blob = function(array) {  /* how about `reb.Blob([1, 2, 3])` ? */
         let view = null
         if (array instanceof ArrayBuffer)
             view = new Int8Array(array)  /* Int8Array.from() gives 0 length */
@@ -602,10 +602,10 @@ e-cwrap/emit ---[
         else if (array instanceof Uint8Array)
             view = array
         else
-            throw Error("Unknown array type in reb.Binary " + typeof array)
+            throw Error("Unknown array type in reb.Blob " + typeof array)
 
-        let binary = reb.m._API_rebUninitializedBinary_internal(view.length)
-        let head = reb.m._API_rebBinaryHead_internal(binary)
+        let binary = reb.m._API_rebUninitializedBlob_internal(view.length)
+        let head = reb.m._API_rebBlobHead_internal(binary)
         Module.writeArrayToMemory(view, head)  /* w/Int8Array.set() on HEAP8 */
 
         return binary
@@ -617,8 +617,8 @@ e-cwrap/emit ---[
      * https://stackoverflow.com/a/53605865
      */
     reb.Bytes = function(binary) {
-        let ptr = reb.m._API_rebBinaryAt_internal(binary)
-        let size = reb.m._API_rebBinarySizeAt_internal(binary)
+        let ptr = reb.m._API_rebBlobAt_internal(binary)
+        let size = reb.m._API_rebBlobSizeAt_internal(binary)
 
         var view = new Uint8Array(reb.m.HEAPU8.buffer, ptr, size)
 
