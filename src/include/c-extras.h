@@ -379,10 +379,10 @@
     #define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__ ((no_sanitize_address))
 
     #define Poison_Memory_If_Sanitize(reg, mem_size) \
-        ASAN_POISON_MEMORY_IF_SANITIZE_REGION(reg, mem_size)  // one thread at a time [1]
+        ASAN_POISON_MEMORY_REGION(reg, mem_size)  // one thread at a time [1]
 
     #define Unpoison_Memory_If_Sanitize(reg, mem_size) \
-        ASAN_UNPOISON_MEMORY_IF_SANITIZE_REGION(reg, mem_size)  // one thread at a time [1]
+        ASAN_UNPOISON_MEMORY_REGION(reg, mem_size)  // one thread at a time [1]
 #else
     #define ATTRIBUTE_NO_SANITIZE_ADDRESS  // cheap approaches possible [2]
 
