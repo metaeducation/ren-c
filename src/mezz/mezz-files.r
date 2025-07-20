@@ -188,11 +188,11 @@ ask: func [
     question "Prompt to user, datatype to request, or dialect block"
         [block! text! datatype!]
     :hide "mask input with * (Rebol2 feature, not yet implemented)"
-    ; !!! What about /MULTILINE ?
+    ; !!! What about :MULTILINE ?
 ][
     if hide [
         panic [
-            "ASK/HIDE not yet implemented:"
+            "ASK:HIDE not yet implemented:"
             https://github.com/rebol/rebol-issues/issues/476
         ]
     ]
@@ -239,7 +239,7 @@ ask: func [
             continue
         ]
 
-        return (to type line except e -> [
+        return (make type line except e -> [  ; MAKE is more flexible than TO
             e.file: null  ; scrub for light printing of error [3]
             e.line: null
             e.where: null

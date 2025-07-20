@@ -112,8 +112,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
     if (Any_Utf8(arg)) {  // !!! odd historical behavior [1]
         Sink(Element) out = OUT;
 
-        require (
-          Transcode_One(out, TYPE_0, arg)  // not bad make (?)
+        trap (  // (try make integer! "4chan") => null
+          Transcode_One(out, TYPE_0, arg)
         );
         if (Is_Integer(out))
             return OUT;
