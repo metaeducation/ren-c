@@ -811,8 +811,8 @@ append app-config/ldflags switch user-config/static [
     'yes [
         compose [
             <gcc:-static-libgcc>
-            (if cfg-cplusplus [<gcc:-static-libstdc++>])
-            (if cfg-sanitize [<gcc:-static-libasan>])
+            (when cfg-cplusplus [<gcc:-static-libstdc++>])
+            (when cfg-sanitize [<gcc:-static-libasan>])
         ]
     ]
 
