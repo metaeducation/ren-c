@@ -430,7 +430,7 @@ source: func [
 
         word! path! [
             name: arg
-            if action? (f: get arg else [
+            if action? (^f: get arg else [
                 print [name "is not set to a value"]
                 return ~
             ]) [
