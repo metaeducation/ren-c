@@ -260,6 +260,7 @@
 %parse/parse.just.test.r
 %parse/parse.let.test.r
 %parse/parse.literal.test.r
+%parse/parse.match.test.r
 %parse/parse.maybe.test.r
 %parse/parse.measure.test.r
 %parse/parse.meta-xxx.test.r

@@ -8,19 +8,18 @@
     source [any-string? blob!]
     values [map! object! block!]
     :case
-    :escape [word! blob! block! any-string?/ char?/]
-]
-bind construct [
-    delimiter-types: [word! blob! char?/ any-string?/]
-    keyword-types: [integer! word! blob! char?/ any-string?/]
+    :escape [word! blob! block! any-string? char?]
+] bind construct [
+    delimiter-types: [word! blob! char? any-string?]
+    keyword-types: [integer! word! blob! char? any-string?]
 ][
     let case_REWORD: case
-    case: get $lib/case
+    case: lib.case/
 
     let out: make (type of source) length of source
 
-    let prefix: void  ; initialize with no-op rules
-    let suffix: void
+    let prefix: null
+    let suffix: null
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
@@ -30,9 +29,9 @@ bind construct [
 
         block? escape [
             parse escape [
-                prefix: [_ (void) | any (delimiter-types)]
-                suffix: [_ (void) | any (delimiter-types)]
-            ] else [
+                prefix: [_ (null) | match (delimiter-types)]
+                suffix: [_ (null) | match (delimiter-types)]
+            ] except [
                 panic ["Invalid :ESCAPE delimiter block" escape]
             ]
         ]
@@ -40,8 +39,8 @@ bind construct [
         prefix: ensure delimiter-types escape
     ]
 
-    if match [integer! word!] prefix [prefix: to-text prefix]
-    if match [integer! word!] suffix [suffix: to-text suffix]
+    if match [integer! word!] opt prefix [prefix: to-text prefix]
+    if match [integer! word!] opt suffix [suffix: to-text suffix]
 
     if block? values [
         values: to map! values
@@ -71,19 +70,21 @@ bind construct [
                     keyword
                 ])
 
-                (suffix)  ; vaporize if suffix is void
+                (opt suffix)  ; vaporize if suffix is null
 
-                (envelop '() quote keyword)  ; make rule evaluate to keyword
+                just (keyword)  ; make rule synthesize keyword
             ]
         ]
     ]
 
+    prefix: default [[]]  ; default to no-op
+
     let rule: [
         let a: <here>  ; Begin marking text to copy verbatim to output
         opt some [
-            to prefix  ; seek to prefix (may be void, this could be a no-op)
+            to prefix  ; seek to prefix (may be [], this could be a no-op)
             let b: <here>  ; End marking text to copy verbatim to output
-            prefix  ; consume prefix (if no-op, may not be at start of match)
+            prefix  ; consume prefix (if [], may not be at start of match)
             ||
             [let keyword-match: any (keyword-suffix-rules), (
                 append:part out a measure a b  ; output before prefix

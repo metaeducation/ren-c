@@ -172,8 +172,8 @@ bind construct [
 
     let out: make (type of source) length of source
 
-    let prefix: void
-    let suffix: void
+    let prefix: null
+    let suffix: null
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
@@ -201,8 +201,8 @@ bind construct [
     ;     >> parse "1 1 1" [some ['1 [space | <end>]]]
     ;     == 1
     ;
-    if match [integer! word!] prefix [prefix: to-text prefix]
-    if match [integer! word!] suffix [suffix: to-text suffix]
+    if match [integer! word!] opt prefix [prefix: to-text prefix]
+    if match [integer! word!] opt suffix [suffix: to-text suffix]
 
     ; TO MAP! will create a map with no duplicates from the input if it
     ; is a BLOCK! (though differing cases of the same key will be preserved).
@@ -236,7 +236,7 @@ bind construct [
     let keyword-match: null  ; variable that gets set by rule
     let any-keyword-suffix-rule: inside [] collect [
         for-each [keyword value] values [
-            if error? parse :[keyword] keyword-types [
+            if error? parse reduce [keyword] keyword-types [
                 panic ["Invalid keyword type:" keyword]
             ]
 
@@ -247,7 +247,7 @@ bind construct [
                     keyword
                 ])
 
-                (<*> suffix)  ; vaporizes if void no-op rule
+                (<*> opt suffix)
 
                 (keyword-match: '(<*> keyword))
             ]
@@ -257,12 +257,14 @@ bind construct [
         keep 'veto  ; add failure if no match, instead of removing last |
     ]
 
+    prefix: default [[]]  ; default prefix to no-op rule
+
     let rule: [
         let a: <here>  ; Begin marking text to copy verbatim to output
         opt some [
-            to prefix  ; seek to prefix (may be void, this could be a no-op)
+            to prefix  ; seek to prefix (may be [], this could be a no-op)
             let b: <here>  ; End marking text to copy verbatim to output
-            prefix  ; consume prefix (if void, may not be at start of match)
+            prefix  ; consume prefix (if [], may not be at start of match)
             [
                 [
                     any-keyword-suffix-rule (
@@ -270,7 +272,7 @@ bind construct [
 
                         let v: apply select/ [
                             values keyword-match
-                            :case case_REWORD
+                            case: case_REWORD
                         ]
                         append out switch:type v [
                             frame! [
@@ -291,7 +293,7 @@ bind construct [
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    apply parse3/ [source rule :case case_REWORD]  ; should succeed
+    apply parse3/ [source rule case: case_REWORD]  ; should succeed
     return out
 ]
 

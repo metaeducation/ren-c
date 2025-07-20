@@ -1937,14 +1937,27 @@ default-combinators: make map! [
     'match combinator [
         return: "Element if it matches the match rule" [element?]
         input [any-series?]
-        value [frame!]
+        @value [frame! block! group!]
         <local> item
     ][
+        if group? value [
+            match [frame! block!] (value: trap eval value) else [
+                panic ["GROUP! must evaluate to BLOCK! or FRAME! in MATCH"]
+            ]
+        ]
+
         item: trap input.1
 
-        if run value item [
-            input: next input
-            return item
+        either block? value [
+            if match value item [
+                input: next input
+                return item
+            ]
+        ][
+            if run value item [
+                input: next input
+                return item
+            ]
         ]
 
         return fail "MATCH didn't match type of current input position item"
@@ -2781,8 +2794,11 @@ parsify: func [
 
     case [
         match [tuple! word!] r [  ; non-"keyword" WORD! (no literal lookup)
-            if null? value: get r [
-                panic make warning! [type: 'script, id: 'bad-antiform]
+            ^value: get r else [
+                panic ["Null while fetching" mold r]
+            ]
+            if action? ^value [
+                panic compose "ACTION! fetched, use /(mold r) if intentional"
             ]
 
             if comb: match frame! value [  ; variable held a combinator [4]
