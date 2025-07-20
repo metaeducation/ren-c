@@ -37,17 +37,13 @@ bind construct [
 
     let val-to-text: func [return: [text!] ^val [any-stable?]] [
         return case [
-            void? val ["; void"]
-            quasi? val [unspaced [mold val space space "; anti"]]
-
-            (elide val: unquote val)
-
+            antiform? ^val [unspaced [mold lift ^val _ _ "; anti"]]
             object? val [unspaced ["make object! [" (summarize-obj val) "]"]]
         ] else [
             let trunc
             append (
                 [_ trunc]: mold:limit val system.options.dump-size
-            ) if trunc ["..."]
+            ) when trunc ["..."]
         ]
     ]
 
@@ -58,7 +54,7 @@ bind construct [
                 let trunc
                 print unspaced [
                     [_ trunc]: mold:limit item system.options.dump-size
-                    if trunc ["..."]
+                    when trunc ["..."]
                 ]
             ]
 
