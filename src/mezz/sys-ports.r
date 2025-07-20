@@ -228,6 +228,7 @@ make-scheme: func [
 
     ; If actor is block build a non-contextual actor object:
     if block? scheme.actor [
+        scheme.actor: inside def scheme.actor  ; in future, scheme.$actor
         let actor: make object! (length of scheme.actor) / 4
         for-each [name op args body] scheme.actor [
             assert [
