@@ -455,7 +455,7 @@ Result(bool) Equal_Values(const Value* s, const Value* t, bool strict)
         return false;  // one is a custom type, the other is not, so not equal
 
     if (
-        (unwrap s_heart) != (unwrap t_heart)
+        unwrap s_heart != unwrap t_heart
         and not (Any_Number_Type(s_heart) and Any_Number_Type(t_heart))
     ){
         return false;
@@ -524,7 +524,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
         return false;  // one is a custom type, the other is not, so not equal
 
     if (
-        (unwrap s_heart) != (unwrap t_heart)
+        unwrap s_heart != unwrap t_heart
         and not (Any_Number_Type(s_heart) and Any_Number_Type(t_heart))
     ){
         return false;

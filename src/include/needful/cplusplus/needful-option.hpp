@@ -180,16 +180,36 @@ struct Result0InitHelper<OptionWrapper<U>> {
 //    if (foo)
 //        Some_Function(g_unwrap_helper << foo)
 //
-
-// Global const classes used by `unwrap` and `maybe` in the C++ Option(),
-// designed to appear on the left-hand side of an << operator.
+// 1. It might seem tempting to make the unwrap operator precedence something
+//    prefix that's very high, like `~`.  This way you could write things
+//    like (unwrap foo / 10) and it would be clear that the unwrap should
+//    happen before the division (as you can't divide a wrapped Option(T)).
+//
+//    But interoperability with Result(T) means that postfix extraction of
+//    results should ideally be higher precedence than maybe or unwrap:
+//
+//       trap(Foo* foo = maybe Some_Thing())
+//
+//    We have this expand out into:
+//
+//       Foo* foo = maybe_helper << Some_Thing() % result_extractor;
+//       /* more expansion of trap macro */
+//
+//    If the result extractor wasn't higher precedence, maybe_helper would
+//    get a Result(Option(T)) and have to re-wrap that as a Result(T), which
+//    makes wasteful extra objects.  It's also semantically questionable: the
+//    result is conceptually on the "outside", and should extract first.
+//
+//    By choosing `<<` as the operator, at least it's higher precedence than
+//    equality, so you can write (unwrap foo == 10) or (10 == unwrap foo) and
+//    it should work as expected.
 //
 
 struct UnwrapHelper {};
 struct MaybeHelper {};
 
 template<typename T>
-T operator<<(
+T operator<<(  // lower precedence than % [1]
     const UnwrapHelper& left,
     const OptionWrapper<T>& option
 ){
@@ -199,7 +219,7 @@ T operator<<(
 }
 
 template<typename T>
-T operator<<(
+T operator<<(  // lower precedence than % [1]
     const MaybeHelper& left,
     const OptionWrapper<T>& option
 ){
@@ -212,7 +232,9 @@ constexpr MaybeHelper g_maybe_helper = {};
 
 
 #undef needful_unwrap
-#define needful_unwrap  needful::g_unwrap_helper <<
+#define needful_unwrap \
+    needful::g_unwrap_helper <<  // lower precedence than % [1]
 
 #undef needful_maybe
-#define needful_maybe  needful::g_maybe_helper <<
+#define needful_maybe \
+    needful::g_maybe_helper <<  // lower precedence than % [1]

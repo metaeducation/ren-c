@@ -231,7 +231,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
         const Source* a = Cell_Array(e);
         Option(Heart) mirror = Mirror_Of(a);
         Option(Heart) h = Heart_Of(e);
-        if (not mirror or ((unwrap mirror) == (unwrap h))) {
+        if (not mirror or (unwrap mirror == unwrap h)) {
             MIRROR_BYTE(a) = unwrap Heart_Of(e);  // remember what kind it is
             KIND_BYTE(e) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
             e->header.bits |= flag;

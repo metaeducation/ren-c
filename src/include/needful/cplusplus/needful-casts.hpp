@@ -542,9 +542,16 @@ struct UpcastHelper {
 //
 //       trap (Derived* derived = downcast(base_ptr));
 //
-// 4. Modulus is chosen as the infix operator to overload because it's not
-//    something you would be using on pointers, which tend to be what you'd
-//    be putting into a downcast helper...and the precedence is favorable.
+// 4. Left shift is used as the operator, because we want something that is
+//    lower precedence than the postfix operator used to extract Result(T).
+//    This way you can write:
+//
+//        trap(Foo* foo = nocast Some_Thing())
+//
+//    ...and it will be expanded to:
+//
+//        Foo* foo = downcast_maker << Some_Thing() % result_extractor;
+//       /* more expansion of trap macro */
 //
 
 #define NEEDFUL_DEFINE_DOWNCAST_HELPERS(BaseName, hookability) /* ugh [1] */ \
@@ -565,7 +572,7 @@ struct UpcastHelper {
     struct BaseName##Maker { \
         template<typename T> \
         BaseName##Holder<remove_reference_t<T>> \
-        operator%(const T& value) const { /* modulus [3] */ \
+        operator<<(const T& value) const { /* << lower than % [4] */ \
             return BaseName##Holder<T>{value}; \
         } \
     }; \
@@ -579,11 +586,11 @@ NEEDFUL_DEFINE_DOWNCAST_HELPERS(UnhookableDowncast, unhookable);
 
 #undef needful_hookable_downcast
 #define needful_hookable_downcast \
-    needful::g_HookableDowncast_maker %  // modulus [3]
+    needful::g_HookableDowncast_maker <<  // << lower than % [4]
 
 #undef needful_unhookable_downcast
 #define needful_unhookable_downcast \
-    needful::g_UnhookableDowncast_maker %  // modulus [3]
+    needful::g_UnhookableDowncast_maker <<  // << lower than % [4]
 
 
 //=//// NON-POINTER TO POINTER CAST ////////////////////////////////////////=//
