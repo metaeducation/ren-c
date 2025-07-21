@@ -375,6 +375,13 @@ Bounce Yielder_Dispatcher(Level* const L)
   //    might ask if the third call to G should yield [a b c], or be like a
   //    function and yield trash (~), or just be considered an end state.
   //    End state makes the most sense by far.
+  //
+  // 4. If you just YIELD normally, it doesn't use the throw mechanism, as it
+  //    doesn't want to destroy the evaluation stack.  It saves the stack as
+  //    a "plug".  But if you use YIELD:FINAL, it does use throw, since if it
+  //    saved the stack it would just have to throw it away.  It also doesn't
+  //    save the stack when you YIELD an ERROR!...only the DONE error is
+  //    considered a valid yield state, all other errors elevate to panics.
 
     Value* body = Details_Element_At(details, IDX_YIELDER_BODY);
     assert(Is_Block(body));  // clean up details for GC [2]
@@ -395,18 +402,15 @@ Bounce Yielder_Dispatcher(Level* const L)
         return THROWN;
     }
 
-    const Value* label = VAL_THROWN_LABEL(L);
+    const Value* label = VAL_THROWN_LABEL(L);  // YIELD:FINAL, YIELD ERROR! [4]
     if (
         Is_Frame(label)
         and Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_YIELD))
         and Frame_Coupling(label) == Level_Varlist(L)
     ){
         CATCH_THROWN(OUT, L);
-        if (not Is_Error(OUT)) {  // THROW:FINAL value
+        if (not Is_Error(OUT)) {  // YIELD:FINAL value
             Init_Space(original_frame);
-            assume (
-              Unliftify_Undecayed(OUT)  // this is last value
-            );
             return OUT;  // done
         }
         if (Is_Error_Done_Signal(Cell_Error(OUT))) {
@@ -570,7 +574,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
 //
 //    But the usefulness of having a slightly shorter way of saying that is
 //    limited, compared to having visibility of the RETURN of any enclosing
-//    function to use inside of yielders and generators.  So instead YIELD
+//    function to use inside of yielders and generators.
 //
 //    Instead YIELD offers a :FINAL refinement, which can be specialized
 //    if you really want to.
@@ -623,11 +627,11 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
 
   //=//// IF YIELD:FINAL OR RAISED ERROR, THROW YIELD'S ARGUMENT //////////=//
 
-    // If we are doing a YIELD with no intent to resume, then we can just use
-    // a conventional BOUNCE_THROWN mechanic, which destroys the stack levels
-    // as it climbs up the trampoline.  So that works for either YIELD:FINAL
-    // of one value, YIELD DONE, or YIELD of any other error antiform which the
-    // yielder will elevate to an abrupt panic.
+  // If we are doing a YIELD with no intent to resume, then we can just use
+  // a conventional BOUNCE_THROWN mechanic, which destroys the stack levels
+  // as it climbs up the trampoline.  So that works for either YIELD:FINAL
+  // of one value, YIELD DONE, or YIELD of any other error antiform which the
+  // yielder will elevate to an abrupt panic.
 
     if (Is_Error(atom) or Bool_ARG(FINAL)) {  // not resumable, throw
         Value* spare = Init_Action(
@@ -642,18 +646,18 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
 
   //=//// PLAIN YIELD MUST "UNPLUG STACK" FOR LATER RESUMPTION ////////////=//
 
-    // 1. Instead of destroying the stack with a throw, we unplug stack Levels
-    //    into a HANDLE! that is a "plug" structure.  Once that plug has been
-    //    formed, the Yielder's Level will be back at the top of the stack to
-    //    return the yielded value.  Future calls to the Yielder can then put
-    //    the Levels back to where this YIELD is at the top again.
-    //
-    // 2. The way the Trampoline works at the moment, it has the notion of
-    //    a Level that was in effect when it called the Executor...and then
-    //    even if you rearrange the stack so that Level isn't on the stack
-    //    at all any more (as this Yield won't be), it still checks the
-    //    Level it called with for its state byte, which can't be STATE_0.
-    //    There could be a different BOUNCE_XXX that doesn't check that...
+  // 1. Instead of destroying the stack with a throw, we unplug stack Levels
+  //    into a HANDLE! that is a "plug" structure.  Once that plug has been
+  //    formed, the Yielder's Level will be back at the top of the stack to
+  //    return the yielded value.  Future calls to the Yielder can then put
+  //    the Levels back to where this YIELD is at the top again.
+  //
+  // 2. The way the Trampoline works at the moment, it has the notion of a
+  //    Level that was in effect when it called the Executor...and then even
+  //    if you rearrange the stack so that Level isn't on the stack at all
+  //    any more (as this Yield won't be), it still checks the Level it called
+  //    with for its state byte, which can't be STATE_0.  There could be a
+  //    different BOUNCE_XXX that doesn't check that...
 
     Unplug_Stack(plug, yielder_level, yield_level);  // preserve stack [1]
     assert(yielder_level == TOP_LEVEL);
