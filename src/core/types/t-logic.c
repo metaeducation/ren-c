@@ -28,24 +28,34 @@
 //
 //  null?: native:intrinsic [
 //
-//  "Tells you if the argument is a ~null~ antiform (branch inhibitor)"
+//  "Tells you if the argument is a light ~null~ antiform (branch inhibitor)"
 //
 //      return: [logic?]
-//      value
+//      ^value "Use DECAY if testing heavy null (e.g. PACK! containing null)"
+//           [any-stable? pack!]
 //  ]
 //
 DECLARE_NATIVE(NULL_Q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
-    DECLARE_VALUE (v);
-    require (
-      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
-    );
-    if (bounce)
-        return unwrap bounce;
+    const Atom* atom = Intrinsic_Atom_ARG(LEVEL);
 
-    return LOGIC(Is_Nulled(v));
+    if (not Is_Pack(atom))
+        return LOGIC(Is_Light_Null(atom));
+
+    DECLARE_ATOM (decayed);
+    Copy_Cell(decayed, atom);
+    trap (
+        Decay_If_Unstable(decayed)
+    );
+
+    if (Is_Light_Null(decayed))  // e.g. oriinal first pack element was null
+        return fail (
+            "Heavy null detected by NULL?, use NULL? DECAY if intentional"
+       );
+
+    return LOGIC(false);
 }
 
 

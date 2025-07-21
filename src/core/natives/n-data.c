@@ -1411,6 +1411,25 @@ DECLARE_NATIVE(HEAVY)
 
 
 //
+//  heavy-null?: native:intrinsic [
+//
+//  "Determine if argument is the heavy form of NULL, ~[~null~]~ antiform"
+//
+//      return: [logic?]
+//      ^value [any-value?]
+//  ]
+//
+DECLARE_NATIVE(HEAVY_NULL_Q)
+{
+    INCLUDE_PARAMS_OF_HEAVY_NULL_Q;
+
+    const Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+
+    return LOGIC(Is_Heavy_Null(atom));
+}
+
+
+//
 //  light: native:intrinsic [
 //
 //  "Make the light form of NULL (passes through all other values)"

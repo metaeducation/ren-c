@@ -75,3 +75,23 @@
     ~illegal-keyword~ !! (if ok ^[~asdf~])
     (''~asdf~ = if ok ^['~asdf~])
 ]
+
+; If your type constraint on return is NULL?, that doesn't accept heavy
+; nulls (the NULL? test actually gives an ERROR! value back).  Typechecking
+; interprets definitional errors as a failure to check, so this means the
+; heavy null will decay in that case.
+[
+    (error? null? heavy null)
+    (
+        foo: func [return: [null?]] [
+            return heavy null
+        ]
+        null? foo
+    )
+    (
+        foo: func [return: [any-value?]] [
+            return heavy null
+        ]
+        heavy-null? foo
+    )
+]

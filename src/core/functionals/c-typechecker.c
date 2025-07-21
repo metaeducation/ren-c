@@ -414,7 +414,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
         if (bounce == nullptr) {
             if (g_failure) {  // was NEEDFUL_RESULT_0 (fail/panic)
-                panic (Needful_Test_And_Clear_Failure());
+                Needful_Test_And_Clear_Failure();  // counts as test failed
             }
             goto test_failed;  // was just `return nullptr`
         }
@@ -477,6 +477,9 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         panic (Error_No_Catch_For_Throw(sub));
 
     Drop_Level(sub);
+
+    if (Is_Error(SCRATCH))
+        goto test_failed;  // e.g. see NULL? for its ERROR! on heavy null
 
     Value* scratch = Known_Stable(SCRATCH);
 
