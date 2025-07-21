@@ -59,23 +59,23 @@ description-of: func [
     return: [null? text!]
     v [<opt-out> any-stable?]
 ][
-    if action? :v [
-        v: unrun v
-    ]
-    return (switch:type :v [
-        any-list?/ [spaced ["list of length:" length of v]]
+    return switch:type ^v [
+        any-list?/ [
+            spaced ["list of length:" length of v]
+        ]
         datatype! [
             mold v
         ]
+        action!
         frame! [
-            if let adjunct: adjunct-of :v [
+            if let adjunct: adjunct of ^v [
                 copy opt adjunct.description
             ] else [null]
         ]
         object! [mold words of v]
         parameter! [mold v]
         port! [mold reduce [v.spec.title v.spec.ref]]
-    ] else [null])
+    ]
 ]
 
 
