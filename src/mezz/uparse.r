@@ -2460,7 +2460,9 @@ default-combinators: make map! [
 
                 rules: sublimit else [tail of rules]
             ] else [
-                f: make frame! [{_} rules]: parsify state rules
+                f: make frame! [{_} rules]: parsify state rules except e -> [
+                    panic e  ; rule WORD! was null, no combinator for type...
+                ]
                 f.1: pos  ; PARSIFY specialized STATE in, so input is 1st
             ]
 
@@ -2776,7 +2778,9 @@ parsify: func [
     r: rules.1
 
     if comma? r [  ; block combinator consumes the legal commas [1]
-        panic "COMMA! can only be run between PARSE steps, not during them"
+        return fail [
+            "COMMA! can only be run between PARSE steps, not during them"
+        ]
     ]
     rules: my next
 
@@ -2795,10 +2799,15 @@ parsify: func [
     case [
         match [tuple! word!] r [  ; non-"keyword" WORD! (no literal lookup)
             ^value: get r else [
-                panic ["Null while fetching" mold r]
+                return fail ["Null while fetching" mold r]
+            ]
+            if trash? ^value [
+                return fail ["Trash while fetching" mold r]
             ]
             if action? ^value [
-                panic compose "ACTION! fetched, use /(mold r) if intentional"
+                return fail (
+                    compose "ACTION! fetched, use /(mold r) if intentional"
+                )
             ]
 
             if comb: match frame! value [  ; variable held a combinator [4]
@@ -2807,7 +2816,7 @@ parsify: func [
                 ]
 
                 let name: uppercase to text! r
-                panic [
+                return fail [
                     name "is not a COMBINATOR ACTION!"
                     "For non-combinator actions in PARSE, use"
                         unspaced [name "/"]
@@ -2819,10 +2828,12 @@ parsify: func [
 
         (path? r) and (space? first r) [  ; "action combinator" [5]
             if not frame? let gotten: unrun get resolve r [
-                panic "In UPARSE PATH starting in / must be action or frame"
+                return fail "PARSE PATH starting in / must be action or frame"
             ]
             if not comb: select state.combinators action! [
-                panic "No action! combinator, can't use PATH starting with /"
+                return fail (
+                    "No action! combinator, can't use PATH starting with /"
+                )
             ]
 
             comb: unrun adapt (augment comb inside [] collect [
@@ -2880,7 +2891,9 @@ parsify: func [
         ]]
         select state.combinators (type of r)  ; datatypes dispatch meta
     ] [
-        panic ["Unhandled type in PARSIFY:" to word! type of r "-" mold r]
+        return fail [
+            "Unhandled type in PARSIFY:" to word! type of r "-" mold r
+        ]
     ]
 
     return combinatorize:value comb rules state r
