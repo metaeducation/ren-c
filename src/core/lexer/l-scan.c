@@ -2150,9 +2150,6 @@ static Result(Zero) Flush_Pending_On_End(ScanState* S) {
 static Bounce Scanner_Executor_Core(Level* const L) {
     USE_LEVEL_SHORTHANDS (L);
 
-    if (THROWING)
-        return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
-
   #if RUNTIME_CHECKS
     char scan_mode = LEVEL_STATE_BYTE(L);  // to see in C debug watchlist
     if (scan_mode == '/' or scan_mode == ':' or scan_mode == '.')
@@ -3110,6 +3107,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     possibly(Get_Scan_Executor_Flag(L, NEWLINE_PENDING));  // may be true [1]
 
     return VOID;
+
 }}
 
 
@@ -3128,6 +3126,9 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 //
 Bounce Scanner_Executor(Level* level_)
 {
+    if (THROWING)
+        return THROWN;  // no state to cleanup (just data stack, auto-cleaned)
+
     Bounce b = Scanner_Executor_Core(level_);
     if (u_cast(const void*, b) != nullptr) {
         if (u_cast(const void*, b) == level_->out) {
