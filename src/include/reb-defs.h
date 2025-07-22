@@ -195,7 +195,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
     };
   }
 
-    INLINE uintptr_t operator<<(  // see definition of Option() for explanation
+    INLINE uintptr_t operator+(  // see definition of Option() for explanation
         const UnwrapHelper&,
         const OptionWrapper<Index>& option
     ){
@@ -203,7 +203,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
         return option.o;
     }
 
-    INLINE uintptr_t operator<<(  // see definition of Option() for explanation
+    INLINE uintptr_t operator+(  // see definition of Option() for explanation
         const OptHelper&,
         const OptionWrapper<Index>& option
     ){

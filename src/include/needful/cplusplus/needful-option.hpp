@@ -182,7 +182,7 @@ struct Result0InitHelper<OptionWrapper<U>> {
 //
 // 1. It might seem tempting to make the unwrap operator precedence something
 //    prefix that's very high, like `~`.  This way you could write things
-//    like (unwrap foo / 10) and it would be clear that the unwrap should
+//    like (unwrap num / 10) and it would be clear that the unwrap should
 //    happen before the division (as you can't divide a wrapped Option(T)).
 //
 //    But interoperability with Result(T) means that postfix extraction of
@@ -192,7 +192,7 @@ struct Result0InitHelper<OptionWrapper<U>> {
 //
 //    We have this expand out into:
 //
-//       Foo* foo = opt_helper << Some_Thing() % result_extractor;
+//       Foo* foo = opt_helper + Some_Thing() % result_extractor;
 //       /* more expansion of trap macro */
 //
 //    If the result extractor wasn't higher precedence, maybe_helper would
@@ -200,9 +200,13 @@ struct Result0InitHelper<OptionWrapper<U>> {
 //    makes wasteful extra objects.  It's also semantically questionable: the
 //    result is conceptually on the "outside", and should extract first.
 //
-//    By choosing `<<` as the operator, at least it's higher precedence than
+//    By choosing `+` as the operator, at least it's higher precedence than
 //    equality, so you can write (unwrap foo == 10) or (10 == unwrap foo) and
-//    it should work as expected.
+//    it should work as expected.  Using `<<` might seem "more clear", but
+//    due to shift operators frequently being overloaded for stream code
+//    that likely intends low precedence than comparison, compilers like Clang
+//    throw in warnings if it sees a comparison with a shift operator, and
+//    makes you parenthesize the expression.  To avoid that, we use `+`.
 //
 // 2. The operator for giving you back the raw (possibly null or 0) value
 //    from a wrapped option is called `opt`.  It's a name with some flaws,
@@ -216,7 +220,7 @@ struct UnwrapHelper {};
 struct OptHelper {};
 
 template<typename T>
-T operator<<(  // lower precedence than % [1]
+T operator+(  // lower precedence than % [1]
     const UnwrapHelper& left,
     const OptionWrapper<T>& option
 ){
@@ -226,7 +230,7 @@ T operator<<(  // lower precedence than % [1]
 }
 
 template<typename T>
-T operator<<(  // lower precedence than % [1]
+T operator+(  // lower precedence than % [1]
     const OptHelper& left,
     const OptionWrapper<T>& option
 ){
@@ -240,8 +244,8 @@ constexpr OptHelper g_opt_helper = {};
 
 #undef needful_unwrap
 #define needful_unwrap \
-    needful::g_unwrap_helper <<  // lower precedence than % [1]
+    needful::g_unwrap_helper +  // lower precedence than % [1]
 
 #undef needful_opt  // imperfect name for raw extract, but oh well [2]
 #define needful_opt \
-    needful::g_opt_helper <<  // lower precedence than % [1]
+    needful::g_opt_helper +  // lower precedence than % [1]

@@ -814,7 +814,7 @@ typedef enum {
     #define none                    needful_none
 
     #define unwrap                  needful_unwrap
-    #define opt                   needful_opt
+    #define opt                     needful_opt
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_RESULT_SHORTHANDS)
