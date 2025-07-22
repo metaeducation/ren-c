@@ -784,7 +784,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
     Element* v = cast(Element*, ARG_N(1));
     assert(Any_String(v) or Any_Utf8(v));  // UTF-8 delegates, but immutable
 
-    switch (maybe id) {
+    switch (opt id) {
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 
@@ -1485,7 +1485,7 @@ void Verify_Strand_Bookmarks_Debug(const Strand* s) {
     if (Is_Strand_Symbol(s))
         return;  // no bookmarks for symbols
 
-    BookmarkList* book = maybe Link_Bookmarks(s);
+    BookmarkList* book = opt Link_Bookmarks(s);
     if (not book)
         return;  // no bookmarks
 

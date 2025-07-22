@@ -303,7 +303,7 @@ static Result(Zero) Push_Keys_And_Params_Core(
         bool local = false;
         bool is_returner = false;
         if (type == TYPE_CHAIN) {
-            switch (maybe Try_Get_Sequence_Singleheart(item)) {
+            switch (opt Try_Get_Sequence_Singleheart(item)) {
               case LEADING_SPACE_AND(WORD): {
                 refinement = true;
                 symbol = Cell_Refinement_Symbol(item);
@@ -771,9 +771,9 @@ Details* Make_Dispatch_Details(
     //
     Array* a = Make_Array_Core(
         STUB_MASK_DETAILS | flags,  // don't add BASE_FLAG_MANAGED
-        (maybe details_max) + 1  // if max is 0, then only Phase_Archetype()
+        (opt details_max) + 1  // if max is 0, then only Phase_Archetype()
     );
-    Set_Flex_Len(a, (maybe details_max) + 1);
+    Set_Flex_Len(a, (opt details_max) + 1);
 
     assert(Heart_Of(exemplar) == TYPE_FRAME);
     assert(

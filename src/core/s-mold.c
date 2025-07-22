@@ -337,7 +337,7 @@ void Form_Array_At(
         const Element* item = Array_At(array, index + n);
         Value* wval = nullptr;
         if (context and (Is_Word(item) or Is_Get_Word(item))) {
-            Slot *wslot = maybe Select_Symbol_In_Context(
+            Slot *wslot = opt Select_Symbol_In_Context(
                 Varlist_Archetype(unwrap context),
                 Word_Symbol(item)
             );

@@ -324,7 +324,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
 REBLEN Milliseconds_From_Value(const Value* v) {
     REBINT msec;
 
-    switch (maybe Type_Of(v)) {
+    switch (opt Type_Of(v)) {
     case TYPE_INTEGER:
         msec = 1000 * Int32(v);
         break;

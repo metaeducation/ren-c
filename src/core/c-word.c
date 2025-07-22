@@ -370,7 +370,7 @@ Result(const Symbol*) Intern_Utf8_Managed_Core(  // implicitly managed [1]
         Tweak_Link_Next_Synonym(synonym, cast(Symbol*, b));
 
         assert(SECOND_UINT16(&b->info) == SYM_0);
-        SET_SECOND_UINT16(&b->info, maybe Symbol_Id(synonym));  // same id [2]
+        SET_SECOND_UINT16(&b->info, opt Symbol_Id(synonym));  // same id [2]
     }
 
     Tweak_Misc_Hitch(b, b);  // circular list of module vars and bind info [3]

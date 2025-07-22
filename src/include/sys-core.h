@@ -204,7 +204,7 @@ typedef RebolHandleCleaner HandleCleaner;
   #if NEEDFUL_OPTION_USES_WRAPPER
     using needful::OptionWrapper;
     using needful::UnwrapHelper;
-    using needful::MaybeHelper;
+    using needful::OptHelper;
   #endif
 
   #if NEEDFUL_SINK_USES_WRAPPER
@@ -724,8 +724,8 @@ INLINE Error* Cell_Error(const Cell* c);
 // 1. The `name` argument is taken as uppercase.  This helps use token pasting
 //    to get the functions SYM_XXX name via SYM_##name.
 //
-// 2. Because there are macros for things like `maybe`, trying to reuse the
-//    NATIVE_CFUNC() macro inside DECLARE_NATIVE() would expand maybe before
+// 2. Because there are macros for things like `unwrap`, trying to reuse the
+//    NATIVE_CFUNC() macro inside DECLARE_NATIVE() would expand unwrap before
 //    passing it to the token paste.  It's easiest just to repeat `N_##name`
 //
 // 3. Forward definitions of DECLARE_NATIVE() for all the core natives.  This

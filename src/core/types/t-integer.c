@@ -220,7 +220,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
         else {
             // Decimal or other numeric second argument:
             REBLEN n = 0; // use to flag special case
-            switch (maybe id) {
+            switch (opt id) {
             // Anything added to an integer is same as adding the integer:
             case SYM_ADD: {
                 // Swap parameter order:
@@ -258,7 +258,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
     else
         arg = 0xDECAFBAD; // wasteful, but avoid maybe unassigned warning
 
-    switch (maybe id) {
+    switch (opt id) {
       case SYM_ADD: {
         REBI64 anum;
         if (Add_I64_Overflows(&anum, num, arg))

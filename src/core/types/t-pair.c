@@ -200,7 +200,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Pair)
     Value* x2 = nullptr;
     Value* y2 = nullptr;
 
-    switch (maybe id) {
+    switch (opt id) {
       case SYM_ADD:
       case SYM_SUBTRACT:
       case SYM_DIVIDE:

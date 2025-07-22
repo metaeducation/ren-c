@@ -506,7 +506,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
         VarList* categories = Cell_Varlist(Get_System(SYS_CATALOG, CAT_ERRORS));
 
         // Find correct category for TYPE: (if any)
-        Slot* category = maybe Select_Symbol_In_Context(
+        Slot* category = opt Select_Symbol_In_Context(
             Varlist_Archetype(categories),
             Word_Symbol(type)
         );
@@ -515,7 +515,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
 
             // Find correct message for ID: (if any)
 
-            Slot* correct_message = maybe Select_Symbol_In_Context(
+            Slot* correct_message = opt Select_Symbol_In_Context(
                 Known_Element(Slot_Hack(category)),
                 Word_Symbol(&vars->id)
             );

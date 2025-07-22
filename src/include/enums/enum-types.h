@@ -324,19 +324,19 @@
     #if defined(_MSC_VER)
         ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
         INLINE bool operator==(const Option(Type)& a, T b)
-          { return u_cast(Byte, maybe a) == u_cast(Byte, b); }
+          { return u_cast(Byte, opt a) == u_cast(Byte, b); }
 
         ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
         INLINE bool operator==(T a, const Option(Type)& b)
-          { return u_cast(Byte, a) == u_cast(Byte, maybe b); }
+          { return u_cast(Byte, a) == u_cast(Byte, opt b); }
 
         ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
         INLINE bool operator!=(const Option(Type)& a, T b)
-          {  return u_cast(Byte, maybe a) != u_cast(Byte, b); }
+          {  return u_cast(Byte, opt a) != u_cast(Byte, b); }
 
         ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
         INLINE bool operator!=(T a, const Option(Type)& b)
-          {  return u_cast(Byte, a) != u_cast(Byte, maybe b); }
+          {  return u_cast(Byte, a) != u_cast(Byte, opt b); }
     #endif
   #endif
 #endif

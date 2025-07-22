@@ -119,7 +119,7 @@ INLINE Element* Copy_Kind_Byte(Element* out, const Element* in) {
 //=//// SIGIL-TO-CHARACTER CONVERSION /////////////////////////////////////=//
 
 INLINE Option(char) Char_For_Sigil(Option(Sigil) sigil) {
-    switch (maybe sigil) {
+    switch (opt sigil) {
       case SIGIL_META:  return '^';
       case SIGIL_PIN:   return '@';
       case SIGIL_TIE:   return '$';

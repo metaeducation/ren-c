@@ -151,7 +151,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 
         Details* details = Ensure_Frame_Details(spare_actor);
         Dispatcher* dispatcher = Details_Dispatcher(details);
-        Bounce b = maybe Irreducible_Bounce(
+        Bounce b = opt Irreducible_Bounce(
             LEVEL,
             Apply_Cfunc(dispatcher, LEVEL)
         );
@@ -251,7 +251,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Url)
     Element* url = cast(Element*, ARG_N(1));
     assert(Is_Url(url));
 
-    switch (maybe id) {
+    switch (opt id) {
       case SYM_READ:
       case SYM_WRITE:
       case SYM_QUERY:

@@ -161,7 +161,7 @@ REBINT Find_Max_Bit(const Value* val)
 {
     REBLEN maxi = 0;
 
-    switch (maybe Type_Of(val)) {
+    switch (opt Type_Of(val)) {
 
     case TYPE_INTEGER:
         maxi = Int32s(val, 0);
@@ -353,7 +353,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
             else
                 Set_Bit(bset, c, set);
         }
-        else switch (maybe Type_Of(item)) {
+        else switch (opt Type_Of(item)) {
         case TYPE_RUNE: {
             if (not Is_Rune_And_Is_Char(item)) {  // no special handling for hyphen
                 Set_Bits(bset, item, set);
@@ -470,7 +470,7 @@ bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
     const Element* item = List_At(&tail, val);
     for (; item != tail; item++) {
 
-        switch (maybe Type_Of(item)) {
+        switch (opt Type_Of(item)) {
 
         case TYPE_RUNE: {
             if (not Is_Rune_And_Is_Char(item)) {
@@ -572,7 +572,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
     Element* v = cast(Element*, ARG_N(1));
     assert(Is_Bitset(v));
 
-    switch (maybe id) {
+    switch (opt id) {
 
     // Add AND, OR, XOR
 

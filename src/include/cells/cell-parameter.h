@@ -237,7 +237,7 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* c) {
 // intrinsic optimization.  Yet it's common--especially unused refinements,
 // so just fold it into a flag.
 //
-// This flag not being set doesn't mean nulls aren't ok (some unoptimized
+// This flag not being set doesn't mean nulls aren't ok (some non-optimized
 // typechecker might accept nulls).
 //
 #define PARAMETER_FLAG_NULL_DEFINITELY_OK \
@@ -318,7 +318,7 @@ INLINE Option(const Strand*) Parameter_Strand(const Cell* param) {
 
 INLINE void Set_Parameter_Strand(Cell* param, Option(const Strand*) string) {
     assert(Heart_Of(param) == TYPE_PARAMETER);
-    CELL_PARAMETER_EXTRA_STRAND(param) = m_cast(Strand*, maybe string);
+    CELL_PARAMETER_EXTRA_STRAND(param) = m_cast(Strand*, opt string);
 }
 
 

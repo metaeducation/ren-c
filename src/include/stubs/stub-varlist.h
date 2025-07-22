@@ -56,7 +56,7 @@ INLINE void Tweak_Misc_Varlist_Adjunct_Raw(
     Option(VarList*) adjunct
 ){
     assert(Is_Stub_Varlist(varlist));
-    MISC_VARLIST_ADJUNCT(varlist) = maybe adjunct;
+    MISC_VARLIST_ADJUNCT(varlist) = opt adjunct;
     if (adjunct)
         Set_Stub_Flag(varlist, MISC_NEEDS_MARK);
     else
@@ -170,7 +170,7 @@ INLINE Option(VarList*) Frame_Coupling(const Value* c) {
 
 INLINE void Tweak_Frame_Coupling(Value* c, Option(VarList*) coupling) {
     assert(Heart_Of(c) == TYPE_FRAME);
-    CELL_FRAME_PAYLOAD_2_COUPLING(c) = maybe coupling;
+    CELL_FRAME_PAYLOAD_2_COUPLING(c) = opt coupling;
     if (coupling)
         Clear_Cell_Flag(c, DONT_MARK_PAYLOAD_2);
     else
@@ -334,7 +334,7 @@ INLINE Option(Level*) Misc_Runlevel(Stub* varlist) {
 INLINE void Tweak_Misc_Runlevel(Stub* varlist, Option(Level*) L) {
     assert(Is_Stub_Varlist(varlist));
     possibly(CTX_TYPE(varlist) == TYPE_FRAME);  // may not be fully formed yet
-    MISC_VARLIST_RUNLEVEL(varlist) = maybe L;
+    MISC_VARLIST_RUNLEVEL(varlist) = opt L;
     assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
 
 }
@@ -344,7 +344,7 @@ INLINE Level* Level_Of_Varlist_If_Running(VarList* varlist) {
     if (Get_Stub_Flag(varlist, MISC_NEEDS_MARK))
         return nullptr;  // Stub.misc is Misc_Varlist_Adjunct(), not Level*
 
-    Level* L = maybe Misc_Runlevel(varlist);
+    Level* L = opt Misc_Runlevel(varlist);
     if (not L)
         return nullptr;
 

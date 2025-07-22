@@ -161,7 +161,7 @@ Bounce Call_Core(Level* level_) {
         UNUSED(mode);
         goto null_input_buffer;
     }
-    else switch (maybe Type_Of(ARG(INPUT))) {
+    else switch (opt Type_Of(ARG(INPUT))) {
       case TYPE_TEXT: {
         inbuf_size = rebSpellInto(nullptr, 0, ARG(INPUT));
         inbuf = rebAllocN(char, inbuf_size);

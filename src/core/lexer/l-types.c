@@ -642,7 +642,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
 
     REBINT num;
 
-    if (not (ep = maybe Try_Grab_Int(&num, cp)))  // Day or 4-digit year
+    if (not (ep = opt Try_Grab_Int(&num, cp)))  // Day or 4-digit year
         return nullptr;
     if (num < 0)
         return nullptr;
@@ -682,7 +682,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
 
     Byte sep = *cp++;
 
-    const Byte *ep_num = maybe Try_Grab_Int(&num, cp);
+    const Byte *ep_num = opt Try_Grab_Int(&num, cp);
 
     if (ep_num) {  // month was a number
         if (num < 0)
@@ -714,7 +714,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
     if (*cp++ != sep)
         return nullptr;
 
-    ep = maybe Try_Grab_Int(&num, cp);  // Year or day (if year was first)
+    ep = opt Try_Grab_Int(&num, cp);  // Year or day (if year was first)
     if (not ep or *cp == '-' or num < 0)
         return nullptr;
 
@@ -775,7 +775,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
             goto end_date;
 
         Option(Length) time_len = 0;  // !!! not used/required by time scan?
-        if (not (cp = maybe Try_Scan_Time_To_Stack(cp, time_len)))
+        if (not (cp = opt Try_Scan_Time_To_Stack(cp, time_len)))
             return nullptr;
 
         if (
@@ -799,7 +799,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
         if (cp >= end)
             goto end_date;
 
-        if (not (ep = maybe Try_Grab_Int(&num, cp + 1)))
+        if (not (ep = opt Try_Grab_Int(&num, cp + 1)))
             return nullptr;
 
         if (*ep != ':') {
@@ -818,7 +818,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
             tz = num * (60 / ZONE_MINS);
 
             if (*ep == ':') {
-                ep = maybe Try_Grab_Int(&num, ep + 1);
+                ep = opt Try_Grab_Int(&num, ep + 1);
                 if (not ep or num % ZONE_MINS != 0)
                     return nullptr;
 
@@ -885,7 +885,7 @@ Result(const Byte*) Scan_Email_To_Stack(const Byte* cp, REBLEN len)
                 return fail ("Email must have at least 2 characters after %");
 
             Byte decoded;
-            if (not (cp = maybe Try_Scan_Hex2(&decoded, cp + 1)))
+            if (not (cp = opt Try_Scan_Hex2(&decoded, cp + 1)))
                 return fail ("Coudn't Scan_Hex() in email address");
 
             up = Write_Codepoint(up, decoded);
@@ -1094,7 +1094,7 @@ Option(const Byte*) Try_Scan_Pair_To_Stack(
     const Byte* bp = cp;
 
     REBINT x;
-    if (not (cp = maybe Try_Grab_Int(&x, cp)))
+    if (not (cp = opt Try_Grab_Int(&x, cp)))
         return nullptr;
     if (*cp != 'x' and *cp != 'X')
         return nullptr;
@@ -1102,7 +1102,7 @@ Option(const Byte*) Try_Scan_Pair_To_Stack(
     cp++;
 
     REBINT y;
-    if (not (cp = maybe Try_Grab_Int(&y, cp)))
+    if (not (cp = opt Try_Grab_Int(&y, cp)))
         return nullptr;
 
     if (len > cp - bp)  // !!! scanner checks if not precisely equal...
@@ -1125,7 +1125,7 @@ Option(const Byte*) Try_Scan_Binary_To_Stack(
     REBINT base = 16;
 
     if (*cp != '#') {
-        const Byte* ep = maybe Try_Grab_Int(&base, cp);
+        const Byte* ep = opt Try_Grab_Int(&base, cp);
         if (not ep or *ep != '#')
             return nullptr;
         len -= ep - cp;
@@ -1138,11 +1138,11 @@ Option(const Byte*) Try_Scan_Binary_To_Stack(
 
     len -= 2;
 
-    Binary* decoded = maybe Decode_Enbased_Utf8_As_Binary(&cp, len, base, '}');
+    Binary* decoded = opt Decode_Enbased_Utf8_As_Binary(&cp, len, base, '}');
     if (not decoded)
         return nullptr;
 
-    cp = maybe Skip_To_Byte(cp, cp + len, '}');
+    cp = opt Skip_To_Byte(cp, cp + len, '}');
     if (not cp) {
         Free_Unmanaged_Flex(decoded);
         return nullptr;

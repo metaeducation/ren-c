@@ -373,7 +373,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
   // being the Typechecker_Dispatcher().  This means it's one of 255 built-in
   // type checks, such as ANY-WORD? or INTEGER? or INTEGER!.
 
-    Details* details = maybe Try_Frame_Details(test);
+    Details* details = opt Try_Frame_Details(test);
     if (not details)
         goto non_intrinsic_dispatch;
 
@@ -540,7 +540,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
     bool match_all;
 
     if (Heart_Of(tests) == TYPE_PARAMETER) {  // usually antiform
-        const Array* array = maybe Parameter_Spec(tests);
+        const Array* array = opt Parameter_Spec(tests);
         if (array == nullptr)
             return true;  // implicitly all is permitted
         item = Array_Head(array);
@@ -548,7 +548,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         derived = SPECIFIED;
         match_all = false;
     }
-    else switch (maybe Type_Of(tests)) {
+    else switch (opt Type_Of(tests)) {
       case TYPE_DATATYPE:
         return Is_Cell_Stable(v) and (Type_Of(v) == Datatype_Type(tests));
 
@@ -737,7 +737,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         goto test_failed;
     }
 
-    switch (maybe Type_Of_Unchecked(test)) {
+    switch (opt Type_Of_Unchecked(test)) {
       case TYPE_PARAMETER: {
         if (Typecheck_Atom_In_Spare_Uses_Scratch(L, test, SPECIFIED))
             goto test_succeeded;
@@ -915,7 +915,7 @@ bool Typecheck_Coerce(
 
 } do_optimized_checks_signaled_by_bytes: {
 
-    const Array* spec = maybe Parameter_Spec(param);
+    const Array* spec = opt Parameter_Spec(param);
     const TypesetByte* optimized = spec->misc.at_least_4;
     const TypesetByte* optimized_tail
         = optimized + sizeof(spec->misc.at_least_4);
@@ -1127,7 +1127,7 @@ DECLARE_NATIVE(MATCH)
             return fail (Error_Type_Of_Null_Raw());  // for TRY TYPE OF [1]
     }
 
-    switch (maybe Type_Of(test)) {
+    switch (opt Type_Of(test)) {
       case TYPE_ACTION:
         if (not Typecheck_Spare_With_Predicate_Uses_Scratch(
             LEVEL, test, Frame_Label(test)

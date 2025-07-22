@@ -464,7 +464,7 @@ DECLARE_NATIVE(REFRAMER)
 
     if (Bool_ARG(PARAMETER)) {
         const Symbol* symbol = Word_Symbol(ARG(PARAMETER));
-        param_index = maybe Try_Get_Binder_Index(binder, symbol);
+        param_index = opt Try_Get_Binder_Index(binder, symbol);
         if (param_index == 0) {
             Destruct_Binder(binder);
             panic (Error_No_Arg(label, symbol));

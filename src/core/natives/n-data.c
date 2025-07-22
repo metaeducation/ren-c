@@ -893,7 +893,7 @@ DECLARE_NATIVE(RESOLVE)
 
     if (Is_Path(source)) {  // !!! For now: (resolve '/a:) -> a
         SingleHeart single;
-        if (not (single = maybe Try_Get_Sequence_Singleheart(source)))
+        if (not (single = opt Try_Get_Sequence_Singleheart(source)))
             panic (source);
 
         if (
@@ -920,7 +920,7 @@ DECLARE_NATIVE(RESOLVE)
             panic (source);
     }
 
-    SingleHeart single = maybe Try_Get_Sequence_Singleheart(source);
+    SingleHeart single = opt Try_Get_Sequence_Singleheart(source);
     if (single == NOT_SINGLEHEART_0) {
         // fall through
     }
@@ -993,11 +993,11 @@ DECLARE_NATIVE(PROXY_EXPORTS)
 
         bool strict = true;
 
-        const Slot* src = maybe Sea_Slot(source, symbol, strict);
+        const Slot* src = opt Sea_Slot(source, symbol, strict);
         if (not src)
             panic (v);  // panic if unset value, also?
 
-        Slot* dest = maybe Sea_Slot(where, symbol, strict);
+        Slot* dest = opt Sea_Slot(where, symbol, strict);
         if (dest) {
             // Fail if found?
             require (

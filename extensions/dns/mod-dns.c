@@ -167,7 +167,7 @@ DECLARE_NATIVE(DNS_ACTOR)
     VarList* ctx = Cell_Varlist(port);
     Value* spec = Slot_Hack(Varlist_Slot(ctx, STD_PORT_SPEC));
 
-    switch (maybe Symbol_Id(verb)) {
+    switch (opt Symbol_Id(verb)) {
       case SYM_OPEN_Q:
         return "panic -[DNS 'ports' don't support OPEN?, only READ]-";
 

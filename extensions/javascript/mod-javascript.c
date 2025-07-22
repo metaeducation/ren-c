@@ -615,7 +615,7 @@ EXTERN_C void API_rebResolveNative_internal(
 
     TRACE("reb.ResolveNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
-    Bounce bounce = maybe Irreducible_Bounce(  // proxies API handles, etc
+    Bounce bounce = opt Irreducible_Bounce(  // proxies API handles, etc
         L,
         Bounce_From_Bounce_Id(bounce_id)
     );

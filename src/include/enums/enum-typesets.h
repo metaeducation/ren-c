@@ -47,7 +47,7 @@
 // indicators in the LIFT_BYTE() do not affect it.
 
 #define Heart_Implies_Extra_Needs_Mark(opt_heart) \
-    ((maybe opt_heart) >= TYPE_VARARGS)
+    ((opt opt_heart) >= TYPE_VARARGS)
 
 
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
@@ -64,7 +64,7 @@
 //    accomplished in the core code with a single comparison.
 
 #define Is_Bindable_Heart(opt_heart) /* assume Option(Heart) [1] */ \
-    (ensure(Heart, (maybe opt_heart)) >= TYPE_COMMA)  // only one test [2]
+    (ensure(Heart, (opt opt_heart)) >= TYPE_COMMA)  // only one test [2]
 
 #define Is_Cell_Bindable(elem) \
     Is_Bindable_Heart(Unchecked_Heart_Of(ensure(Element*, (elem))))

@@ -337,7 +337,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
   // usermode function that calls a native, or a native that calls a usermode
   // function, etc. etc.
 
-    Slot* shutdown_slot = maybe Sea_Slot(
+    Slot* shutdown_slot = opt Sea_Slot(
        Cell_Module_Sea(extension),
        CANON(SHUTDOWN_P),
        true
@@ -356,7 +356,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
   // stuff that happens whether the extension author wrote a SHUTDOWN*
   // function or not.
 
-    Slot* unregister_slot = maybe Sea_Slot(
+    Slot* unregister_slot = opt Sea_Slot(
        Cell_Module_Sea(extension),
        CANON(UNREGISTER_EXTENSION_P),
        true

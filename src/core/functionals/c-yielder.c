@@ -603,7 +603,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
 
     Level* yield_level = LEVEL;  // ...make synonyms more obvious
 
-    VarList* yielder_context = maybe Level_Coupling(yield_level);
+    VarList* yielder_context = opt Level_Coupling(yield_level);
     if (not yielder_context)
         panic ("Must have yielder to jump to");
 

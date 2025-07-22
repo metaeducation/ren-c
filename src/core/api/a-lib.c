@@ -1149,7 +1149,7 @@ static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
 ){
     trap (
       Feed* feed = Make_Variadic_Feed(
-        p, u_cast(va_list*, maybe vaptr),  // can't cast() va_list*!
+        p, u_cast(va_list*, opt vaptr),  // can't cast() va_list*!
         FEED_MASK_DEFAULT
     ));
 
@@ -1763,7 +1763,7 @@ intptr_t API_rebUnbox(
     if (Is_Logic(v)) {
         return Cell_Logic(v) ? 1 : 0;
     }
-    else switch (maybe Type_Of(v)) {
+    else switch (opt Type_Of(v)) {
       case TYPE_INTEGER:
         return VAL_INT64(v);
 
@@ -2008,7 +2008,7 @@ RebolHandleCleaner* API_rebExtractHandleCleaner(
     if (Type_Of(v) != TYPE_HANDLE)
         panic ("rebUnboxHandleCleaner() called on non-HANDLE!");
 
-    return maybe Cell_Handle_Cleaner(v);
+    return opt Cell_Handle_Cleaner(v);
 }
 
 
@@ -3141,7 +3141,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
         Cell_Handle_Cfunc(cfunc_handle)
     );
 
-    Bounce b = maybe Irreducible_Bounce(
+    Bounce b = opt Irreducible_Bounce(
         L,
         x_cast(Bounce, Apply_Cfunc(*cfunc, context))
     );

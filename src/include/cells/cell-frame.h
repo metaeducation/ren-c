@@ -191,9 +191,9 @@ INLINE Element* Init_Frame_Unchecked_Untracked(
     );
     CELL_FRAME_PAYLOAD_1_PHASE(out) = phase;
     CELL_FRAME_EXTRA_LENS_OR_LABEL(out) = m_cast(  // no flag
-        Stub*, maybe lens_or_label
+        Stub*, opt lens_or_label
     );
-    CELL_FRAME_PAYLOAD_2_COUPLING(out) = maybe coupling;  // flag sync above
+    CELL_FRAME_PAYLOAD_2_COUPLING(out) = opt coupling;  // flag sync above
     return out;
 }
 
@@ -283,7 +283,7 @@ INLINE Option(InfixMode) Frame_Infix_Mode(const Value* c) {
 
 INLINE void Tweak_Frame_Infix_Mode(Value* c, Option(InfixMode) mode) {
     assert(Heart_Of(c) == TYPE_FRAME);
-    Set_Cell_Crumb(c, maybe mode);
+    Set_Cell_Crumb(c, opt mode);
 }
 
 INLINE bool Is_Frame_Infix(const Value* c) {  // faster than != PREFIX_0

@@ -153,7 +153,7 @@ Bounce Func_Dispatcher(Level* const L)
     STATE = ST_FUNC_BODY_EXECUTING;
 
     Context* binding = u_cast(ParamList*, L->varlist);
-    Context* coupling = maybe Level_Coupling(L);
+    Context* coupling = opt Level_Coupling(L);
     if (coupling) {
         Let* let = Make_Let_Variable(CANON(DOT_1), binding);
         Init_Object(
@@ -602,7 +602,7 @@ bool Typecheck_Coerce_Return(
     // But it's actually faster to just determine if any type is surprising.
     // The information might come in handy somewhere.
 
-    const Array* spec = maybe Parameter_Spec(param);
+    const Array* spec = opt Parameter_Spec(param);
     if (not spec)
         return true;
 

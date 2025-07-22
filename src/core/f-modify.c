@@ -580,7 +580,7 @@ Result(REBLEN) Modify_String_Or_Blob(
         ));
 
         if (Is_Stub_Strand(dst_flex)) {
-            book = maybe Link_Bookmarks(cast(Strand*, dst_flex));
+            book = opt Link_Bookmarks(cast(Strand*, dst_flex));
 
             if (book and BOOKMARK_INDEX(book) > dst_idx) {  // only INSERT
                 BOOKMARK_INDEX(book) += src_len_total;
@@ -616,7 +616,7 @@ Result(REBLEN) Modify_String_Or_Blob(
 
             // Note: above functions may update the bookmarks --^
             //
-            book = maybe Link_Bookmarks(dst_str);
+            book = opt Link_Bookmarks(dst_str);
         }
         else {
             dst_len_at = Series_Len_At(dst);
@@ -717,7 +717,7 @@ Result(REBLEN) Modify_String_Or_Blob(
         // good a cache as any to be relevant for the next operation.
         //
         if (Is_Stub_Strand(dst_flex)) {
-            book = maybe Link_Bookmarks(cast(Strand*, dst_flex));
+            book = opt Link_Bookmarks(cast(Strand*, dst_flex));
 
             if (book and BOOKMARK_INDEX(book) > dst_idx) {
                 BOOKMARK_INDEX(book) = dst_idx;

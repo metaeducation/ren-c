@@ -354,7 +354,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     //    would be a burden for the Executor to have to clear the flag between
     //    generating the error blame and returning, so just clear flag here.
 
-    bounce = maybe Irreducible_Bounce(TOP_LEVEL, bounce);
+    bounce = opt Irreducible_Bounce(TOP_LEVEL, bounce);
 
     if (bounce == BOUNCE_THROWN) {
         assert(Is_Throwing_Panic(TOP_LEVEL));

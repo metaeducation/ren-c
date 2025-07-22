@@ -1007,7 +1007,7 @@ Bounce Action_Executor(Level* L)
     Details* details = Ensure_Level_Details(L);  // guaranteed Details [1]
     Dispatcher* dispatcher = Details_Dispatcher(details);
 
-    Bounce b = maybe Irreducible_Bounce(L, Apply_Cfunc(dispatcher, L));
+    Bounce b = opt Irreducible_Bounce(L, Apply_Cfunc(dispatcher, L));
     if (not b)
         goto check_output;  // consolidated return result into OUT cell
 

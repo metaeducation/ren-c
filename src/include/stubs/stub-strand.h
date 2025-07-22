@@ -72,7 +72,7 @@ INLINE Option(BookmarkList*) Link_Bookmarks(const Strand* s) {
 
 INLINE void Tweak_Link_Bookmarks(const Strand* s, Option(BookmarkList*) book) {
     assert(Is_Stub_Non_Symbol(s));
-    LINK_STRAND_BOOKMARKS(s) = maybe book;
+    LINK_STRAND_BOOKMARKS(s) = opt book;
 }
 
 
@@ -312,7 +312,7 @@ INLINE BookmarkList* Alloc_BookmarkList(void) {
 
 INLINE void Free_Bookmarks_Maybe_Null(const Strand* str) {
     assert(not Is_Strand_Symbol(str));
-    BookmarkList* book = maybe Link_Bookmarks(str);
+    BookmarkList* book = opt Link_Bookmarks(str);
     if (book) {
         GC_Kill_Flex(book);
         Tweak_Link_Bookmarks(str, nullptr);
@@ -321,7 +321,7 @@ INLINE void Free_Bookmarks_Maybe_Null(const Strand* str) {
 
 #if RUNTIME_CHECKS
     INLINE void Check_Bookmarks_Debug(const Strand* s) {
-        BookmarkList* book = maybe Link_Bookmarks(s);
+        BookmarkList* book = opt Link_Bookmarks(s);
         if (not book)
             return;
 
@@ -429,7 +429,7 @@ INLINE Result(Zero) Set_Char_At(Strand* s, REBLEN n, Codepoint c) {
         // dealing with.  Only update bookmark if it's an offset *after*
         // that character position...
         //
-        BookmarkList* book = maybe Link_Bookmarks(s);
+        BookmarkList* book = opt Link_Bookmarks(s);
         if (book and BOOKMARK_OFFSET(book) > cp_offset)
             BOOKMARK_OFFSET(book) += delta;
     }

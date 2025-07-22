@@ -51,7 +51,7 @@ void Bind_Values_Inner_Loop(
           if (Is_Stub_Sea(context)) {
             SeaOfVars* sea = cast(SeaOfVars*, context);
             bool strict = true;
-            Patch* patch = maybe Sea_Patch(sea, symbol, strict);
+            Patch* patch = opt Sea_Patch(sea, symbol, strict);
             if (patch) {
                 Tweak_Cell_Binding(v, sea);
                 Tweak_Word_Stub(v, patch);
@@ -70,7 +70,7 @@ void Bind_Values_Inner_Loop(
             assert(Is_Stub_Varlist(context));
             VarList* varlist = cast(VarList*, context);
 
-            REBINT n = maybe Try_Get_Binder_Index(binder, symbol);
+            REBINT n = opt Try_Get_Binder_Index(binder, symbol);
             if (n > 0) {
                 //
                 // A binder index of 0 should clearly not be bound.  But
@@ -312,7 +312,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
   //    FRAME!.  Lensing with Details would incorrectly give full visibility,
   //    so Lens with the ParamList.
 
-    next = maybe Link_Inherit_Bind(c);  // save so we can update `c`
+    next = opt Link_Inherit_Bind(c);  // save so we can update `c`
 
     if (flavor == FLAVOR_USE) {
         if (  // some USEs only affect SET-WORD!s
@@ -353,7 +353,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
     if (flavor == FLAVOR_SEA) {
         SeaOfVars* sea = cast(SeaOfVars*, c);
         bool strict = true;
-        Patch* patch = maybe Sea_Patch(sea, symbol, strict);
+        Patch* patch = opt Sea_Patch(sea, symbol, strict);
         if (patch) {
             Init_Module(out, sea);
             Tweak_Word_Stub(wordlike, patch);
@@ -622,7 +622,7 @@ DECLARE_NATIVE(LET)
         goto handle_word_or_set_word;
     }
 
-    symbol = maybe Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, vars));
+    symbol = opt Try_Get_Settable_Word_Symbol(nullptr, cast(Element*, vars));
     if (symbol) {
         Set_Level_Flag(L, LET_IS_SETTING);
         goto handle_word_or_set_word;
@@ -733,7 +733,7 @@ DECLARE_NATIVE(LET)
         if (Is_Path(temp)) {
             Option(SingleHeart) singleheart;
             switch (
-                maybe (singleheart = Try_Get_Sequence_Singleheart(temp))
+                opt (singleheart = Try_Get_Sequence_Singleheart(temp))
             ){
               case LEADING_SPACE_AND(WORD):
                 goto wordlike;
@@ -745,7 +745,7 @@ DECLARE_NATIVE(LET)
             panic ("LET only supports /WORD for paths for now...");
         }
 
-        switch (maybe Heart_Of(temp)) {  // permit quasi
+        switch (opt Heart_Of(temp)) {  // permit quasi
           case TYPE_RUNE:  // is multi-return opt for dialect, passthru
             Derelativize(PUSH(), temp, temp_binding);
             break;

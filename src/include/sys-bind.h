@@ -161,7 +161,7 @@ INLINE Option(Stump*) Link_Stump_Next(const Stump* stump) {
 INLINE void Tweak_Link_Stump_Next(Stump* stump, Option(Stump*) next) {
     assert(Is_Stub_Stump(stump));
     assert(next == nullptr or Is_Stub_Stump(unwrap next));
-    LINK_STUMP_NEXT(stump) = maybe next;
+    LINK_STUMP_NEXT(stump) = opt next;
 }
 
 INLINE void Construct_Binder_Core(Binder* binder) {

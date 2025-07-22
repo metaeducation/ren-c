@@ -36,13 +36,13 @@ REBINT CT_Parameter(const Element* a, const Element* b, bool strict)
     assert(Heart_Of(b) == TYPE_PARAMETER);
 
     if (Parameter_Spec(a) != Parameter_Spec(b)) {
-        if ((maybe Parameter_Spec(a)) > (maybe Parameter_Spec(b)))
+        if ((opt Parameter_Spec(a)) > (opt Parameter_Spec(b)))
             return 1;
         return -1;
     }
 
     if (Parameter_Strand(a) != Parameter_Strand(b)) {
-        if ((maybe Parameter_Strand(a)) > (maybe Parameter_Strand(b)))
+        if ((opt Parameter_Strand(a)) > (opt Parameter_Strand(b)))
             return 1;
         return -1;
     }
@@ -278,7 +278,7 @@ Result(Zero) Set_Parameter_Spec(
             Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
         }
         else if (type == TYPE_ACTION) {
-            Details* details = maybe Try_Frame_Details(lookup);
+            Details* details = opt Try_Frame_Details(lookup);
             if (
                 details
                 and Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
@@ -463,7 +463,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
   handle_pick: { /////////////////////////////////////////////////////////////
 
-    switch (maybe Word_Id(picker)) {
+    switch (opt Word_Id(picker)) {
       case SYM_TEXT: {
         Option(const Strand*) string = Parameter_Strand(param);
         if (not string)
@@ -519,7 +519,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
     Element* poke = Known_Element(dual);
 
-    switch (maybe Word_Id(picker)) {
+    switch (opt Word_Id(picker)) {
       case SYM_TEXT: {
         if (not Is_Text(poke))
             panic (poke);

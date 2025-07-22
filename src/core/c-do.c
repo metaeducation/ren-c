@@ -186,7 +186,7 @@ bool Pushed_Continuation(
             assert(false);
         }
     }
-    else switch (maybe Type_Of(branch)) {
+    else switch (opt Type_Of(branch)) {
       case TYPE_QUOTED:
         Unquotify(Derelativize(out, cast(Element*, branch), binding));
         goto just_use_out;

@@ -678,7 +678,7 @@ DECLARE_NATIVE(JOIN)
 
             Drop_Mold(mo);
         }
-        else switch (maybe Type_Of(at)) {
+        else switch (opt Type_Of(at)) {
           case TYPE_INTEGER:
             require (
               Expand_Flex_Tail_And_Update_Used(buf, 1)
@@ -786,7 +786,7 @@ DECLARE_NATIVE(DEBASE)
     else
         base = 64;
 
-    Binary* decoded = maybe Decode_Enbased_Utf8_As_Binary(&bp, size, base, 0);
+    Binary* decoded = opt Decode_Enbased_Utf8_As_Binary(&bp, size, base, 0);
     if (not decoded)
         panic (Error_Invalid_Data_Raw(ARG(VALUE)));
 

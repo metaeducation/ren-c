@@ -625,18 +625,18 @@ INLINE Option(Heart) Heart_Of_Fundamental(const Cell* c) {
 INLINE Heart Heart_Of_Builtin(const Cell* c) {
     Option(Heart) heart = Heart_Of(c);
     assert(heart != TYPE_0);
-    return maybe heart;  // faster than unwrap, we already checked for 0
+    return opt heart;  // faster than unwrap, we already checked for 0
 }
 
 INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
     assert(LIFT_BYTE_RAW(c) == NOQUOTE_2);
     Option(Heart) heart = Heart_Of(c);
     assert(heart != TYPE_0);
-    return maybe heart;  // faster than unwrap, we already checked for 0
+    return opt heart;  // faster than unwrap, we already checked for 0
 }
 
 #define Heart_Of_Is_0(cell) \
-    (TYPE_0 == maybe Heart_Of(cell))
+    (TYPE_0 == opt Heart_Of(cell))
 
 INLINE bool Type_Of_Is_0(const Cell* cell) {
     return Heart_Of_Is_0(cell) and LIFT_BYTE_RAW(cell) == NOQUOTE_2;
@@ -941,7 +941,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
         Element* x = ensure(Element*, c);
         USED(x);
         assert(Is_Cell_Bindable(c));
-        c->extra.base = maybe binding;
+        c->extra.base = opt binding;
         if (binding)
             Assert_Cell_Binding_Valid(c);
     }

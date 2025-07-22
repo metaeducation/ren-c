@@ -1298,7 +1298,7 @@ Result(Zero) Get_Any_Word_Maybe_Trash(
 ){
     assert(Any_Word(word));
 
-    switch (maybe Sigil_Of(word)) {
+    switch (opt Sigil_Of(word)) {
       case SIGIL_0:
         break;
 

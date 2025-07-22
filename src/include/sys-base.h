@@ -266,7 +266,7 @@ INLINE Result(void*) Raw_Pooled_Alloc(PoolId pool_id)
 INLINE void Raw_Pooled_Free(PoolId pool_id, void* p)
 {
   #if DEBUG_MONITOR_FLEX
-    if (p == maybe g_mem.monitoring) {
+    if (p == opt g_mem.monitoring) {
         printf("Freeing Flex %p on TICK %" PRIu64 "\n", p, TICK);
         fflush(stdout);
     }

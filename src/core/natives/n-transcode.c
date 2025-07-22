@@ -299,7 +299,7 @@ DECLARE_NATIVE(TRANSCODE)
             Set_Source_Flag(a, NEWLINE_AT_TAIL);
 
         MISC_SOURCE_LINE(a) = transcode->line;
-        Tweak_Link_Filename(a, maybe transcode->file);
+        Tweak_Link_Filename(a, opt transcode->file);
 
         Init_Block(OUT, a);
     }

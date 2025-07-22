@@ -148,7 +148,7 @@ DECLARE_NATIVE(PICK)
 
 } dispatch_generic: { ////////////////////////////////////////////////////////
 
-    Bounce bounce = maybe Irreducible_Bounce(
+    Bounce bounce = opt Irreducible_Bounce(
         LEVEL,
         Dispatch_Generic(TWEAK_P, location, LEVEL)
     );
@@ -352,7 +352,7 @@ DECLARE_NATIVE(POKE)
     // 1. Though the POKE frame is slightly larger than that for TWEAK*, its
     //    memory layout is compatible with TWEAK*, and can be reused.
 
-    Bounce bounce = maybe Irreducible_Bounce(
+    Bounce bounce = opt Irreducible_Bounce(
         LEVEL,
         Dispatch_Generic(TWEAK_P, location, LEVEL)
     );

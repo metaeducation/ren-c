@@ -97,7 +97,7 @@ Option(const Byte*) Try_Scan_Time_To_Stack(
     //    MM:SS.DD    as part1:part2.part4
 
     REBINT part1;
-    if (not (cp = maybe Try_Grab_Int(&part1, cp)))
+    if (not (cp = opt Try_Grab_Int(&part1, cp)))
         return nullptr;
     if (part1 < 0 or part1 > MAX_HOUR)
         return nullptr;
@@ -106,7 +106,7 @@ Option(const Byte*) Try_Scan_Time_To_Stack(
         return nullptr;
 
     REBINT part2;
-    if (not (cp = maybe Try_Grab_Int(&part2, cp)))
+    if (not (cp = opt Try_Grab_Int(&part2, cp)))
         return nullptr;
     if (part2 < 0)
         return nullptr;
@@ -114,7 +114,7 @@ Option(const Byte*) Try_Scan_Time_To_Stack(
     REBINT part3 = -1;
     if (*cp == ':') {  // optional seconds
         ++cp;
-        if (not (cp = maybe Try_Grab_Int(&part3, cp)))
+        if (not (cp = opt Try_Grab_Int(&part3, cp)))
             return nullptr;
         if (part3 < 0)
             return nullptr;
@@ -287,7 +287,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 
     Element* arg = Element_ARG(DEF);
 
-    switch (maybe Type_Of(arg)) {
+    switch (opt Type_Of(arg)) {
       case TYPE_INTEGER:  // interpret as seconds
         if (VAL_INT64(arg) < -MAX_SECONDS or VAL_INT64(arg) > MAX_SECONDS)
             panic (Error_Out_Of_Range(arg));
@@ -410,7 +410,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
         if (heart == TYPE_TIME) {     // handle TIME - TIME cases
             REBI64 secs2 = VAL_NANO(arg);
 
-            switch (maybe id) {
+            switch (opt id) {
               case SYM_ADD:
                 secs = Add_Max(TYPE_TIME, secs, secs2, MAX_TIME);
                 return Init_Time_Nanoseconds(OUT, secs);
@@ -440,7 +440,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
         else if (heart == TYPE_INTEGER) {     // handle TIME - INTEGER cases
             REBI64 num = VAL_INT64(arg);
 
-            switch (maybe id) {
+            switch (opt id) {
               case SYM_ADD:
                 secs = Add_Max(TYPE_TIME, secs, num * SEC_SEC, MAX_TIME);
                 return Init_Time_Nanoseconds(OUT, secs);
@@ -469,7 +469,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
         else if (heart == TYPE_DECIMAL) {     // handle TIME - DECIMAL cases
             REBDEC dec = VAL_DECIMAL(arg);
 
-            switch (maybe id) {
+            switch (opt id) {
               case SYM_ADD:
                 secs = Add_Max(
                     TYPE_TIME,
@@ -518,7 +518,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
     }
     else {
         // unary actions
-        switch (maybe id) {
+        switch (opt id) {
           case SYM_ODD_Q:
             return LOGIC((SECS_FROM_NANO(secs) & 1) != 0);
 
@@ -551,7 +551,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Time)
 
     REBINT i;
     if (Is_Word(picker)) {
-        switch (maybe Word_Id(picker)) {
+        switch (opt Word_Id(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;

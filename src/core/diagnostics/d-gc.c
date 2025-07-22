@@ -96,7 +96,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     // Since this is debug-only, it's not as important any more.  But it
     // still can speed things up to go in order.
     //
-    switch (maybe heart) {
+    switch (opt heart) {
       case TYPE_0_constexpr:
         if (Is_Cell_Erased(v)) {  // legal if Mark_Maybe_Erased() was called
             NOOP;
@@ -221,7 +221,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Base_Marked(s));
 
         if (not Is_Strand_Symbol(s)) {
-            BookmarkList* book = maybe Link_Bookmarks(s);
+            BookmarkList* book = opt Link_Bookmarks(s);
             if (book) {
                 assert(Flex_Used(book) == 1);  // just one for now
                 //

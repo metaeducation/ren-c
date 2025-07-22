@@ -117,7 +117,7 @@ uint32_t Hash_Cell(const Cell* cell)
 
     uint32_t hash;
 
-    switch (maybe heart) {
+    switch (opt heart) {
       case TYPE_0_constexpr:  // custom datatype
         hash = 0;  // improve
         break;

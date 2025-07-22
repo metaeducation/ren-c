@@ -248,7 +248,7 @@ DECLARE_NATIVE(INLINE)
 
   initial_entry: { ///////////////////////////////////////////////////////////
 
-    Element* code = maybe Optional_Element_ARG(CODE);
+    Element* code = opt Optional_Element_ARG(CODE);
     if (not code)
         return VOID;  // do nothing, just return invisibly
 

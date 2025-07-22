@@ -351,7 +351,7 @@ struct NEEDFUL_NODISCARD ResultWrapper<Zero> {
 //    to extract the result before it would get picked up by things like
 //    `nocast` or `maybe` or `unwrap`, which use << at lower-precedence:
 //
-//       trap (Foo* foo = maybe Some_Function())
+//       trap (Foo* foo = opt Some_Function())
 //
 //    This expands to:
 //

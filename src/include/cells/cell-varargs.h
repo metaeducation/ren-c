@@ -65,7 +65,7 @@ INLINE Phase* Extract_Cell_Varargs_Phase(const Cell* c) {
 
 INLINE void Tweak_Cell_Varargs_Phase(Cell* c, Option(Phase*) phase) {
     assert(Heart_Of(c) == TYPE_VARARGS);
-    CELL_VARARGS_PAYLOAD_2_PHASE(c) = maybe phase;
+    CELL_VARARGS_PAYLOAD_2_PHASE(c) = opt phase;
     if (phase)
         Clear_Cell_Flag(c, DONT_MARK_PAYLOAD_2);
     else

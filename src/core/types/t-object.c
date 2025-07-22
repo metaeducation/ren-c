@@ -135,7 +135,7 @@ void Init_Evars(EVARS *e, const Element* v) {
 
             e->slot = Varlist_Slots_Head(varlist) - 1;
 
-            Phase* lens = maybe Frame_Lens(v);
+            Phase* lens = opt Frame_Lens(v);
             if (not lens) {  // unlensed, only inputs visible [1]
                 e->lens_mode = LENS_MODE_INPUTS;
                 lens = Frame_Phase(v);
@@ -1073,7 +1073,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
     //
     assert(not Is_Port(context));
 
-    switch (maybe id) {
+    switch (opt id) {
 
     //=//// PROTECT* ///////////////////////////////////////////////////////=//
 
@@ -1232,19 +1232,19 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         if (not Is_Word(picker))
             panic (PARAM(PICKER));
         symbol = Word_Symbol(picker);
-        slot = maybe Sea_Slot(Cell_Module_Sea(context), symbol, strict);
+        slot = opt Sea_Slot(Cell_Module_Sea(context), symbol, strict);
     }
     else if (Is_Let(context)) {
         if (not Is_Word(picker))
             panic (PARAM(PICKER));  // allow (let var: 10, var.1) ?
         symbol = Word_Symbol(picker);
-        slot = maybe Lookup_Let_Slot(Cell_Let(context), symbol, strict);
+        slot = opt Lookup_Let_Slot(Cell_Let(context), symbol, strict);
     }
     else if (Is_Integer(picker)) {
         if (not Is_Frame(context))
             panic (PARAM(PICKER));  // only FRAME!s pick by index atm
 
-        Phase* lens = maybe Frame_Lens(context);
+        Phase* lens = opt Frame_Lens(context);
         if (not lens)
             lens = Frame_Phase(context);
         else if (Is_Stub_Details(lens))  // all values visible
@@ -1349,7 +1349,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
 } handle_named_signal: { /////////////////////////////////////////////////////
 
-    switch (maybe Word_Id(dual)) {
+    switch (opt Word_Id(dual)) {
       case SYM_PROTECT:
         Set_Cell_Flag(slot, PROTECTED);
         break;
@@ -1823,8 +1823,8 @@ REBINT CT_Frame(const Element* a, const Element* b, bool strict)
     if (a_details != b_details)
         return a_details > b_details ? 1 : -1;
 
-    VarList* a_coupling = maybe Frame_Coupling(a);
-    VarList* b_coupling = maybe Frame_Coupling(b);
+    VarList* a_coupling = opt Frame_Coupling(a);
+    VarList* b_coupling = opt Frame_Coupling(b);
 
     if (a_coupling != b_coupling)
         return a_coupling > b_coupling ? 1 : -1;

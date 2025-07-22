@@ -147,7 +147,7 @@ INLINE Option(InfixMode) Get_Level_Infix_Mode(Level* L) {
 
 INLINE void Set_Level_Infix_Mode(Level* L, Option(InfixMode) mode) {
     assert(Is_Action_Level(L));
-    Set_Level_Crumb(L, maybe mode);
+    Set_Level_Crumb(L, opt mode);
 }
 
 INLINE bool Is_Level_Infix(Level* L) {  // a bit faster than != PREFIX_0
@@ -516,7 +516,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     // !!! TBD: the relevant file and line update when L->feed->array changes
     //
     L->file = File_UTF8_Of_Level(L);
-    L->line = maybe Line_Number_Of_Level(L);
+    L->line = opt Line_Number_Of_Level(L);
   #endif
 
     L->prior = TOP_LEVEL;

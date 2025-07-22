@@ -104,7 +104,7 @@ INLINE void Tweak_Misc_Feedstub_Pending(
     Option(const Cell*) pending
 ){
     assert(Stub_Flavor(stub) == FLAVOR_FEED);
-    stub->misc.base = m_cast(Cell*, maybe pending);  // extracted as const
+    stub->misc.base = m_cast(Cell*, opt pending);  // extracted as const
 }
 
 INLINE Option(Stub*) Link_Feedstub_Splice(Stub* stub) {
@@ -117,7 +117,7 @@ INLINE void Tweak_Link_Feedstub_Splice(
     Option(Stub*) splice
 ){
     assert(Stub_Flavor(stub) == FLAVOR_FEED);
-    stub->link.base = maybe splice;
+    stub->link.base = opt splice;
 }
 
 #define FEED_SPLICE(feed) \
@@ -385,7 +385,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Panic(Feed* feed)
         //
         Context* binding = Feed_Binding(feed);
         require (
-          Source* reified = maybe Try_Scan_Variadic_Feed_Utf8_Managed(feed)
+          Source* reified = opt Try_Scan_Variadic_Feed_Utf8_Managed(feed)
         );
 
         if (not reified) {  // rebValue("", ...) [1]
@@ -500,7 +500,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
             // Instead we do the drop in Free_Feed(), though drops on splices
             // happen here.  It's not perfect, but holds need systemic review.
             //
-            Stub* splice = maybe FEED_SPLICE(feed);
+            Stub* splice = opt FEED_SPLICE(feed);
             if (splice) {  // one or more additional splices to go
                 if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // see note above
                     assert(Get_Flex_Info(Feed_Array(feed), HOLD));

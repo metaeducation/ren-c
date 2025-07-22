@@ -97,22 +97,22 @@ Option(ErrorValue*) Trap_Update_Environment_Variable(
     Option(const Value*) value
 ){
   #if RUNTIME_CHECKS
-    rebElide("ensure [null? text!] @", maybe value);
+    rebElide("ensure [null? text!] @", opt value);
   #endif
 
     Option(ErrorValue*) e = nullptr;
 
     WCHAR* key_wide = rebSpellWide(rebQ(key));
-    Option(WCHAR*) val_wide = rebSpellWideOpt(maybe value);
+    Option(WCHAR*) val_wide = rebSpellWideOpt(opt value);
 
     if (not SetEnvironmentVariable(
         key_wide,
-        maybe val_wide  // null means unset the environment variable
+        opt val_wide  // null means unset the environment variable
     )){
         e = rebError_OS(GetLastError());
     }
 
-    rebFreeOpt(maybe val_wide);
+    rebFreeOpt(opt val_wide);
     rebFree(key_wide);
 
     return e;

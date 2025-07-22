@@ -152,7 +152,7 @@ Byte* Compress_Alloc_Core(
     if (not envelope) {
         window_bits = window_bits_zlib_raw;
     }
-    else switch (maybe envelope) {
+    else switch (opt envelope) {
       case SYM_ZLIB:
         window_bits = window_bits_zlib;
         break;
@@ -273,7 +273,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
     if (not envelope) {
         window_bits = window_bits_zlib_raw;
     }
-    else switch (maybe envelope) {
+    else switch (opt envelope) {
       case SYM_ZLIB:
         window_bits = window_bits_zlib;
         break;
@@ -420,7 +420,7 @@ DECLARE_NATIVE(CHECKSUM_CORE)
     const Byte* data = Cell_Bytes_Limit_At(&size, ARG(DATA), &len);
 
     uLong crc;  // Note: zlib.h defines "crc32" as "z_crc32"
-    switch (maybe Word_Id(ARG(METHOD))) {
+    switch (opt Word_Id(ARG(METHOD))) {
       case SYM_CRC32:
         crc = crc32_z(0L, data, size);
         break;
@@ -476,7 +476,7 @@ DECLARE_NATIVE(DEFLATE)
         envelope = SYM_0;
     else {
         envelope = Word_Id(ARG(ENVELOPE));
-        switch (maybe envelope) {
+        switch (opt envelope) {
           case SYM_ZLIB:
           case SYM_GZIP:
             break;
@@ -552,7 +552,7 @@ DECLARE_NATIVE(INFLATE)
         envelope = SYM_0;
     else {
         envelope = Word_Id(ARG(ENVELOPE));
-        switch (maybe envelope) {
+        switch (opt envelope) {
           case SYM_ZLIB:
           case SYM_GZIP:
           case SYM_DETECT:

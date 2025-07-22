@@ -564,7 +564,7 @@ static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
 
         // Check for identifiers
         for (c = 0; c <= MAX_ESC; c++) {
-            cp = maybe Try_Diff_Bytes_Uncased(
+            cp = opt Try_Diff_Bytes_Uncased(
                 bp, b_cast(g_escape_info[c].name)
             );
             if (cp and *cp == ')') {
@@ -689,7 +689,7 @@ static Result(const Byte*) Scan_String_Into_Mold_Core(
             return fail (Error_Missing(S, right)); }
 
           case '^':
-            if (not (cp = maybe Try_Scan_UTF8_Char_Escapable(&c, cp)))
+            if (not (cp = opt Try_Scan_UTF8_Char_Escapable(&c, cp)))
                 return fail ("Bad character literal in string");
             --cp;  // unlike Back_Scan_XXX, no compensation for ++cp later
             break;
@@ -877,7 +877,7 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
 
         if (token == TOKEN_FILE and c == '%') {
             Byte decoded;
-            if (not (cp = maybe Try_Scan_Hex2(&decoded, cp + 1)))
+            if (not (cp = opt Try_Scan_Hex2(&decoded, cp + 1)))
                 return fail ("Bad Hex Encoded Character");
             c = decoded;
             if (Is_Utf8_Lead_Byte(c))
@@ -892,7 +892,7 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
         // !!! Rebol encoding is up in the air as to if it will be kept.
 
         if (c == '^') {  // Accept ^X encoded char:
-            if (not (cp = maybe Try_Scan_UTF8_Char_Escapable(&c, cp)))
+            if (not (cp = opt Try_Scan_UTF8_Char_Escapable(&c, cp)))
                 return fail ("Bad caret encoded literal in string");
             goto check_for_invalid_unicode;
         }
@@ -2038,7 +2038,7 @@ void Init_Transcode(
 ){
     transcode->file = file;
 
-    transcode->at = maybe bp;
+    transcode->at = opt bp;
     transcode->line_head = transcode->at;
     transcode->line = line;
 }
@@ -2821,7 +2821,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     // Tag array with line where the beginning bracket/group/etc. was found
     //
     MISC_SOURCE_LINE(a) = transcode->line;
-    Tweak_Link_Filename(a, maybe transcode->file);
+    Tweak_Link_Filename(a, opt transcode->file);
 
     Init_Any_List(PUSH(), heart, a);
 
@@ -3046,7 +3046,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     ){
         Source* a = cast(Source*, SERIESLIKE_PAYLOAD_1_BASE(TOP));
         MISC_SOURCE_LINE(a) = transcode->line;
-        Tweak_Link_Filename(a, maybe transcode->file);
+        Tweak_Link_Filename(a, opt transcode->file);
     }
 
     if (transcode->at == nullptr)  // reached e.g. with a/'
@@ -3074,7 +3074,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     Drop_Level(SUBLEVEL);
 
     MISC_SOURCE_LINE(array) = transcode->line;
-    Tweak_Link_Filename(array, maybe transcode->file);
+    Tweak_Link_Filename(array, opt transcode->file);
 
     DECLARE_ELEMENT (temp);
     Init_Block(temp, array);
@@ -3215,7 +3215,7 @@ Source* Scan_UTF8_Managed(
     /* Set_Source_Flag(a, NEWLINE_AT_TAIL); */  // what heuristics for this?
 
     MISC_SOURCE_LINE(a) = 1;
-    Tweak_Link_Filename(a, maybe file);
+    Tweak_Link_Filename(a, opt file);
 
     return a;
 }

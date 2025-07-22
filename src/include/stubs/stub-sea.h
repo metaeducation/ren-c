@@ -63,7 +63,7 @@ INLINE void Tweak_Misc_Sea_Adjunct(
     Option(VarList*) adjunct
 ){
     assert(Is_Stub_Sea(sea));
-    MISC_SEA_ADJUNCT(sea) = maybe adjunct;
+    MISC_SEA_ADJUNCT(sea) = opt adjunct;
     if (adjunct)
         Set_Stub_Flag(sea, MISC_NEEDS_MARK);
     else
@@ -85,10 +85,10 @@ INLINE Option(Patch*) Sea_Patch(
     if (sea == g_lib_context) {
         Option(SymId) id = Symbol_Id(sym);
         if (id and cast(int, id) <= MAX_SYM_LIB_PREMADE) {
-            if (INFO_PATCH_SEA(&g_lib_patches[maybe id]) == nullptr)  // [1]
+            if (INFO_PATCH_SEA(&g_lib_patches[opt id]) == nullptr)  // [1]
                 return nullptr;
 
-            return &g_lib_patches[maybe id];
+            return &g_lib_patches[opt id];
         }
     }
     else if (sea == g_datatypes_context) {
@@ -125,7 +125,7 @@ INLINE Option(Patch*) Sea_Patch(
 }
 
 INLINE Option(Slot*) Sea_Slot(SeaOfVars* sea, const Symbol* sym, bool strict) {
-    Patch* patch = maybe Sea_Patch(sea, sym, strict);
+    Patch* patch = opt Sea_Patch(sea, sym, strict);
     if (not patch)
         return nullptr;
     return u_cast(Slot*, Stub_Cell(patch));

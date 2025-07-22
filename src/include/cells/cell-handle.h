@@ -65,7 +65,7 @@ INLINE void Tweak_Handle_Cleaner(
 ){
     assert(Stub_Flavor(handle_stub) == FLAVOR_HANDLE);
     assert(Get_Stub_Flag(handle_stub, CLEANS_UP_BEFORE_GC_DECAY));
-    MISC_HANDLE_CLEANER(handle_stub) = f_cast(CFunction*, maybe cleaner);
+    MISC_HANDLE_CLEANER(handle_stub) = f_cast(CFunction*, opt cleaner);
 }
 
 

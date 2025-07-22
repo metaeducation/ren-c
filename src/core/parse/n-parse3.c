@@ -318,7 +318,7 @@ static bool Subparse_Throws(
         return true;
     }
 
-    b = maybe Irreducible_Bounce(L, b);
+    b = opt Irreducible_Bounce(L, b);
 
     Drop_Level(L);
 
@@ -570,7 +570,7 @@ static Result(REBIXO) Parse_One_Rule(
         }
         panic ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
     }
-    else switch (maybe Type_Of(rule)) {  // same behaviors for all P_INPUT
+    else switch (opt Type_Of(rule)) {  // same behaviors for all P_INPUT
       case TYPE_INTEGER:
         panic ("Non-rule-count INTEGER! in PARSE must be literal, use QUOTE");
 
@@ -634,7 +634,7 @@ static Result(REBIXO) Parse_One_Rule(
 
             rule = Known_Element(SPARE);  // fall through to direct match
         }
-        else switch (maybe Type_Of(rule)) {
+        else switch (opt Type_Of(rule)) {
           case TYPE_FRAME: {  // want to run a type constraint...
             Copy_Cell(SPARE, item);
             if (Typecheck_Spare_With_Predicate_Uses_Scratch(
@@ -720,7 +720,7 @@ static Result(REBIXO) Parse_One_Rule(
                 return END_FLAG;
             return index + len;
         }
-        else switch (maybe Type_Of(rule)) {
+        else switch (opt Type_Of(rule)) {
           case TYPE_BITSET: {
             //
             // Check current char/byte against character set, advance matches
@@ -1456,7 +1456,7 @@ DECLARE_NATIVE(SUBPARSE)
             if (cast(int, cmd) >= MIN_SYM_PARSE3_MATCH)
                 goto skip_pre_rule;
 
-            switch (maybe cmd) {
+            switch (opt cmd) {
               case SYM_SOME:
                 assert(
                     (mincount == 1 or mincount == 0)  // could be OPT SOME
@@ -1906,7 +1906,7 @@ DECLARE_NATIVE(SUBPARSE)
 
         panic ("PARSE3 only supports ~okay~ quasiforms/antiforms");
     }
-    else switch (maybe Type_Of(rule)) {
+    else switch (opt Type_Of(rule)) {
       case TYPE_INTEGER:  // Specify repeat count
         panic (
             "[1 2 rule] now illegal https://forum.rebol.info/t/1578/6"
@@ -1939,7 +1939,7 @@ DECLARE_NATIVE(SUBPARSE)
         if (Is_Word(rule)) {
             Option(SymId) cmd = VAL_CMD(rule);
 
-            switch (maybe cmd) {
+            switch (opt cmd) {
               case SYM_SKIP:
                 panic ("Use ONE instead of SKIP in PARSE3");
 

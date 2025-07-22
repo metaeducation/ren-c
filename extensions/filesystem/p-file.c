@@ -124,7 +124,7 @@ DECLARE_NATIVE(FILE_ACTOR)
     // operation is something like a RENAME that does not require a port to be
     // open, then this capturing of the specification is all the setup needed.
     //
-    FileReq* file = maybe Filereq_Of_Port(port);
+    FileReq* file = opt Filereq_Of_Port(port);
     if (file) {
       #if !defined(NDEBUG)
         //
@@ -168,7 +168,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         file->offset = FILEOFFSET_UNKNOWN;
     }
 
-    switch (maybe Symbol_Id(verb)) {
+    switch (opt Symbol_Id(verb)) {
 
       case SYM_OFFSET_OF:
         return Init_Integer(OUT, file->offset);

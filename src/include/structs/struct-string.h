@@ -188,7 +188,7 @@ typedef struct BookmarkStruct Bookmark;
         SymbolOrValueHolder(const Value* v) : p (v) {}
 
       #if NEEDFUL_OPTION_USES_WRAPPER  // Option(const Symbol*) <> const Symbol*
-        SymbolOrValueHolder(Option(const Symbol*)& s) : p (maybe s) {}
+        SymbolOrValueHolder(Option(const Symbol*)& s) : p (opt s) {}
       #endif
 
       #if NEEDFUL_SINK_USES_WRAPPER

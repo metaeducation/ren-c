@@ -85,7 +85,7 @@ DECLARE_NATIVE(DIR_ACTOR)
 
     Slot* state_slot = Varlist_Slot(ctx, STD_PORT_STATE);
 
-    FileReq* dir = maybe Filereq_Of_Port(port);
+    FileReq* dir = opt Filereq_Of_Port(port);
     if (not dir) {
         DECLARE_VALUE (dir_path);
         require (
@@ -118,7 +118,7 @@ DECLARE_NATIVE(DIR_ACTOR)
 
     Option(SymId) id = Symbol_Id(verb);
 
-    switch (maybe id) {
+    switch (opt id) {
 
         // !!! Previously the directory synchronously read all the entries
         // on OPEN.  That method is being rethought.

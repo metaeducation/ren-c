@@ -66,7 +66,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
             panic (arg);  // valid even for UTF-8
         for (alen = 0; alen < size; alen++) {
             Byte decoded;
-            if (not (ap = maybe Try_Scan_Hex2(&decoded, ap)))
+            if (not (ap = opt Try_Scan_Hex2(&decoded, ap)))
                 panic (arg);
             *vp++ = decoded;
         }
@@ -99,7 +99,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
     Element* sequence = cast(Element*, ARG_N(1));
     Length len = Sequence_Len(sequence);
 
-    switch (maybe id) {
+    switch (opt id) {
       case SYM_ADD:
       case SYM_SUBTRACT:
       case SYM_DIVIDE:
@@ -189,7 +189,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
         if (ap)
             a = *ap++;
 
-        switch (maybe id) {
+        switch (opt id) {
           case SYM_ADD: v += a; break;
 
           case SYM_SUBTRACT: v -= a; break;

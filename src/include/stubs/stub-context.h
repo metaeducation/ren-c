@@ -38,7 +38,7 @@ INLINE Option(Context*) Link_Inherit_Bind_Raw(Stub* context) {
 }
 
 INLINE void Tweak_Link_Inherit_Bind_Raw(Stub* context, Option(Context*) next) {
-    LINK_CONTEXT_INHERIT_BIND(context) = maybe next;
+    LINK_CONTEXT_INHERIT_BIND(context) = opt next;
 
     if (not next)
         Clear_Stub_Flag(context, LINK_NEEDS_MARK);

@@ -141,7 +141,7 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 
 INLINE void Tweak_Frame_Lens_Or_Label(Cell* c, Option(const Stub*) f) {
     assert(Heart_Of(c) == TYPE_FRAME);
-    CELL_FRAME_EXTRA_LENS_OR_LABEL(c) = m_cast(Stub*, maybe f);  // no flag
+    CELL_FRAME_EXTRA_LENS_OR_LABEL(c) = m_cast(Stub*, opt f);  // no flag
 }
 
 INLINE ParamList* Phase_Paramlist_Core(Phase* p) {
@@ -273,7 +273,7 @@ INLINE void Tweak_Misc_Details_Adjunct(
     Option(VarList*) adjunct
 ){
     assert(Is_Stub_Details(details));
-    MISC_DETAILS_ADJUNCT(details) = maybe adjunct;
+    MISC_DETAILS_ADJUNCT(details) = opt adjunct;
     if (adjunct)
         Set_Stub_Flag(details, MISC_NEEDS_MARK);
     else

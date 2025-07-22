@@ -198,7 +198,7 @@ DECLARE_NATIVE(REORDER)
             goto cleanup_binder;
         }
 
-        REBINT index = maybe Try_Get_Binder_Index(binder, symbol);
+        REBINT index = opt Try_Get_Binder_Index(binder, symbol);
         if (index <= 0) {
             error = Error_Bad_Parameter_Raw(item);
             goto cleanup_binder;

@@ -163,7 +163,7 @@ static void Startup_Lib(void)
     assert(Link_Inherit_Bind(lib) == nullptr);
     Tweak_Link_Inherit_Bind(lib, g_datatypes_context);
 
-    assert(Is_Stub_Erased(&g_lib_patches[maybe SYM_0]));  // leave invalid
+    assert(Is_Stub_Erased(&g_lib_patches[opt SYM_0]));  // leave invalid
 
     for (SymId16 id = 1; id <= MAX_SYM_LIB_PREMADE; ++id) {
         Patch* patch = &g_lib_patches[id];

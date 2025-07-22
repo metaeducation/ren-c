@@ -163,10 +163,10 @@ struct Result0InitHelper<OptionWrapper<U>> {
 };
 
 
-//=/// UNWRAP AND MAYBE HELPER CLASSES ///////////////////////////////////=//
+//=/// UNWRAP AND OPT HELPER CLASSES //////////////////////////////////////=//
 //
 // To avoid needing parentheses and give a "keyword" look to the `unwrap`
-// and `maybe` operators the C++ definition makes them put a global variable
+// and `opt` operators the C++ definition makes them put a global variable
 // on the left of an output stream operator.  The variable holds a dummy
 // class which only implements the extraction.
 //
@@ -186,13 +186,13 @@ struct Result0InitHelper<OptionWrapper<U>> {
 //    happen before the division (as you can't divide a wrapped Option(T)).
 //
 //    But interoperability with Result(T) means that postfix extraction of
-//    results should ideally be higher precedence than maybe or unwrap:
+//    results should ideally be higher precedence than opt or unwrap:
 //
-//       trap(Foo* foo = maybe Some_Thing())
+//       trap(Foo* foo = opt Some_Thing())
 //
 //    We have this expand out into:
 //
-//       Foo* foo = maybe_helper << Some_Thing() % result_extractor;
+//       Foo* foo = opt_helper << Some_Thing() % result_extractor;
 //       /* more expansion of trap macro */
 //
 //    If the result extractor wasn't higher precedence, maybe_helper would
@@ -204,9 +204,16 @@ struct Result0InitHelper<OptionWrapper<U>> {
 //    equality, so you can write (unwrap foo == 10) or (10 == unwrap foo) and
 //    it should work as expected.
 //
+// 2. The operator for giving you back the raw (possibly null or 0) value
+//    from a wrapped option is called `opt`.  It's a name with some flaws,
+//    because it sort of sounds like something that would create an Option
+//    from a raw pointer, vs creating a raw pointer from an Option.  However,
+//    on balance it seems to be the best name (it was once called `maybe`,
+//    but in the context of the system Needful was designed for, that means
+//    something completely different now.)
 
 struct UnwrapHelper {};
-struct MaybeHelper {};
+struct OptHelper {};
 
 template<typename T>
 T operator<<(  // lower precedence than % [1]
@@ -220,7 +227,7 @@ T operator<<(  // lower precedence than % [1]
 
 template<typename T>
 T operator<<(  // lower precedence than % [1]
-    const MaybeHelper& left,
+    const OptHelper& left,
     const OptionWrapper<T>& option
 ){
     UNUSED(left);
@@ -228,13 +235,13 @@ T operator<<(  // lower precedence than % [1]
 }
 
 constexpr UnwrapHelper g_unwrap_helper = {};
-constexpr MaybeHelper g_maybe_helper = {};
+constexpr OptHelper g_opt_helper = {};
 
 
 #undef needful_unwrap
 #define needful_unwrap \
     needful::g_unwrap_helper <<  // lower precedence than % [1]
 
-#undef needful_maybe
-#define needful_maybe \
-    needful::g_maybe_helper <<  // lower precedence than % [1]
+#undef needful_opt  // imperfect name for raw extract, but oh well [2]
+#define needful_opt \
+    needful::g_opt_helper <<  // lower precedence than % [1]

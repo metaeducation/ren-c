@@ -388,7 +388,7 @@ DECLARE_NATIVE(CRASH)
     }
 
     Crash_Core(
-        p, tick, File_UTF8_Of_Level(level_), maybe Line_Number_Of_Level(level_)
+        p, tick, File_UTF8_Of_Level(level_), opt Line_Number_Of_Level(level_)
     );
 }
 
