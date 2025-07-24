@@ -361,11 +361,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         if (not arg) {
             // not necessarily a no-op (e.g. CHANGE can erase)
         }
-        else if (Is_Splice(unwrap arg)) {
-            // tolerate splices
+        else if (Is_Antiform(unwrap arg))
+        {
+            assert(Is_Splice(unwrap arg));  // typecheck shouldn't pass others
         }
-        else
-            panic (PARAM(VALUE));
 
         require (
           SERIES_INDEX_UNBOUNDED(v) = Modify_String_Or_Blob(
