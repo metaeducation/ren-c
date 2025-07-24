@@ -5,6 +5,8 @@ struct MyWrapper {
 
 inline void test_needful_const()
 {
+    STATIC_ASSERT(std::is_same<int, int>::value);  // test embedded <,>
+
     // Test fundamental types
     STATIC_ASSERT_SAME(needful_constify_t(int), int);
     STATIC_ASSERT_SAME(needful_unconstify_t(const int), int);

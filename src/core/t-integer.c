@@ -403,7 +403,7 @@ REBTYPE(Integer)
         else {
             // Decimal or other numeric second argument:
             REBLEN n = 0; // use to flag special case
-            switch (maybe Word_Id(verb)) {
+            switch (opt Word_Id(verb)) {
             // Anything added to an integer is same as adding the integer:
             case SYM_ADD:
             case SYM_MULTIPLY: {
@@ -444,7 +444,7 @@ REBTYPE(Integer)
     else
         arg = 0xDECAFBAD; // wasteful, but avoid maybe unassigned warning
 
-    switch (maybe sym) {
+    switch (opt sym) {
 
     case SYM_COPY:
         Copy_Cell(OUT, val);

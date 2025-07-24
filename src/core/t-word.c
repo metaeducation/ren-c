@@ -239,7 +239,7 @@ REBTYPE(Word)
     Value* val = D_ARG(1);
     assert(Any_Word(val));
 
-    switch (maybe Word_Id(verb)) {
+    switch (opt Word_Id(verb)) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -247,7 +247,7 @@ REBTYPE(Word)
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
-        switch (maybe property) {
+        switch (opt property) {
         case SYM_LENGTH: {
             Symbol* symbol = Word_Symbol(val);
             const Byte *bp = b_cast(Symbol_Head(symbol));

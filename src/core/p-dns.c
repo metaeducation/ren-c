@@ -47,7 +47,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
 
     REBLEN len;
 
-    switch (maybe Word_Id(verb)) {
+    switch (opt Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -56,7 +56,7 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
-        switch (maybe property) {
+        switch (opt property) {
         case SYM_OPEN_Q:
             return Init_Logic(OUT, did (sock->flags & RRF_OPEN));
 

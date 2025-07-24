@@ -328,7 +328,7 @@ enable_if_t<  // For arrays: decay to pointer
         and not std::is_enum<To>::value,
     ResultType
 >
-Hookable_Cast_Helper(const FromRef& from) {
+Hookable_Cast_Helper(const FromRef & from) {
     using ConstTo = needful_constify_t(To);
 
   #if NEEDFUL_CAST_CALLS_HOOKS
@@ -542,9 +542,9 @@ struct UpcastHelper {
 //
 //       trap (Derived* derived = downcast(base_ptr));
 //
-// 4. Modulus is chosen as the infix operator to overload because it's not
-//    something you would be using on pointers, which tend to be what you'd
-//    be putting into a downcast helper...and the precedence is favorable.
+// 4. See remarks in Option(T) about why + is used here to combine better
+//    with the % used by Result(T) extraction, and why << is avoided due to
+//    some compilers issuing warnings.  The same issues apply to downcast.
 //
 
 #define NEEDFUL_DEFINE_DOWNCAST_HELPERS(BaseName, hookability) /* ugh [1] */ \
@@ -565,7 +565,7 @@ struct UpcastHelper {
     struct BaseName##Maker { \
         template<typename T> \
         BaseName##Holder<remove_reference_t<T>> \
-        operator%(const T& value) const { /* modulus [3] */ \
+        operator+(const T& value) const { /* << lower than % [4] */ \
             return BaseName##Holder<T>{value}; \
         } \
     }; \
@@ -579,11 +579,11 @@ NEEDFUL_DEFINE_DOWNCAST_HELPERS(UnhookableDowncast, unhookable);
 
 #undef needful_hookable_downcast
 #define needful_hookable_downcast \
-    needful::g_HookableDowncast_maker %  // modulus [3]
+    needful::g_HookableDowncast_maker +  // + lower than % [4]
 
 #undef needful_unhookable_downcast
 #define needful_unhookable_downcast \
-    needful::g_UnhookableDowncast_maker %  // modulus [3]
+    needful::g_UnhookableDowncast_maker +  // + lower than % [4]
 
 
 //=//// NON-POINTER TO POINTER CAST ////////////////////////////////////////=//

@@ -679,7 +679,7 @@ static Option(Error*) Trap_Scan_String_Push_Mold(
             return Error_Missing(S, right); }
 
           case '^':
-            if (not (cp = maybe Try_Scan_UTF8_Char_Escapable(&c, cp)))
+            if (not (cp = opt Try_Scan_UTF8_Char_Escapable(&c, cp)))
                 return Error_User("Bad character literal in string");
             --cp;  // unlike Back_Scan_XXX, no compensation for ++cp later
             break;
@@ -891,7 +891,7 @@ const Byte *Scan_Item_Push_Mold(
         else if (c == '^') { // Accept ^X encoded char:
             if (bp + 1 == ep)
                 return nullptr; // error if nothing follows ^
-            if (nullptr == (bp = maybe Try_Scan_UTF8_Char_Escapable(&c, bp)))
+            if (nullptr == (bp = opt Try_Scan_UTF8_Char_Escapable(&c, bp)))
                 return nullptr;
             if (opt_term == '\0' and IS_WHITE(c))
                 break;
@@ -1572,7 +1572,7 @@ static Option(Error*) Trap_Locate_Token_May_Push_Mold(
             if (*cp == '"') { /* CHAR #"C" */
                 Ucs2Unit dummy;
                 cp++;
-                cp = maybe Try_Scan_UTF8_Char_Escapable(&dummy, cp);
+                cp = opt Try_Scan_UTF8_Char_Escapable(&dummy, cp);
                 if (cp != nullptr and *cp == '"') {
                     S->end = cp + 1;
                     return LOCATED(TOKEN_CHAR);
@@ -2677,7 +2677,7 @@ Option(Error*) Scan_To_Stack(ScanState* S) {
         // Tag array with line where the beginning slash was found
         //
         MISC(a).line = captured_line;
-        LINK(a).file = maybe ss->file;
+        LINK(a).file = opt ss->file;
         Set_Array_Flag(a, HAS_FILE_LINE);
 
         assert(not Is_Get_Word(Array_Head(a)));
@@ -2814,7 +2814,7 @@ static Option(Error*) Trap_Scan_Array(Array** out, ScanState* S, Byte mode)
     // Tag array with line where the beginning bracket/group/etc. was found
     //
     MISC(a).line = ss->line;
-    LINK(a).file = maybe ss->file;
+    LINK(a).file = opt ss->file;
     Set_Array_Flag(a, HAS_FILE_LINE);
 
     *out = a;
@@ -2851,7 +2851,7 @@ Array* Scan_UTF8_Managed(
     );
 
     MISC(a).line = transcode.line;
-    LINK(a).file = maybe transcode.file;
+    LINK(a).file = opt transcode.file;
     Set_Array_Flag(a, HAS_FILE_LINE);
 
     return a;
@@ -3051,7 +3051,7 @@ DECLARE_NATIVE(TRANSCODE)
             | (scan.newline_pending ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0)
     );
     MISC(a).line = transcode.line;
-    LINK(a).file = maybe transcode.file;
+    LINK(a).file = opt transcode.file;
     Set_Array_Flag(a, HAS_FILE_LINE);
 
     return Init_Block(OUT, a);

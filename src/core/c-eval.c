@@ -1403,7 +1403,7 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_WORD:
-        switch (maybe Word_Id(current)) {  // quasiform simulation
+        switch (opt Word_Id(current)) {  // quasiform simulation
           case SYM__TVOID_T:
             Init_Void(L->out);
             goto post_switch;

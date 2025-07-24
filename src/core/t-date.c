@@ -594,7 +594,7 @@ void Pick_Or_Poke_Date(
         assert(opt_out != nullptr);
         Erase_Cell(opt_out);
 
-        switch (maybe sym) {
+        switch (opt sym) {
         case SYM_YEAR:
             Init_Integer(opt_out, VAL_YEAR(v));
             break;
@@ -716,7 +716,7 @@ void Pick_Or_Poke_Date(
         REBI64 secs = Get_Cell_Flag(v, DATE_HAS_TIME) ? VAL_NANO(v) : 0;
         REBINT tz = Get_Cell_Flag(v, DATE_HAS_ZONE) ? VAL_ZONE(v) : 0;
 
-        switch (maybe sym) {
+        switch (opt sym) {
         case SYM_YEAR:
             year = Int_From_Date_Arg(opt_poke);
             break;
@@ -948,7 +948,7 @@ REBTYPE(Date)
         }
     }
     else {
-        switch (maybe sym) {
+        switch (opt sym) {
         case SYM_EVEN_Q:
             return Init_Logic(OUT, ((~day) & 1) == 0);
 

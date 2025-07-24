@@ -188,7 +188,7 @@ Value* Meta_Quotify(Value* v)
 Value* Meta_Unquotify(Value* v)
 {
     if (Is_Word(v)) {
-        switch (maybe Word_Id(v)) {
+        switch (opt Word_Id(v)) {
           case SYM__TVOID_T:
             return Init_Void(v);
           case SYM__TOKAY_T:

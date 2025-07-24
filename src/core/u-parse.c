@@ -156,7 +156,7 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 // see if they're really the best option.
 //
 INLINE Option(SymId) VAL_CMD(const Cell* v) {
-    SymId sym = maybe Word_Id(v);
+    SymId sym = opt Word_Id(v);
     if (sym >= SYM_SET and sym <= SYM_END)
         return sym;
     return SYM_0;
@@ -1230,7 +1230,7 @@ DECLARE_NATIVE(SUBPARSE)
         // If word, set-word, or get-word, process it:
         if (Type_Of(rule) >= TYPE_WORD and Type_Of(rule) <= TYPE_GET_WORD) {
 
-            SymId cmd = maybe VAL_CMD(rule);
+            SymId cmd = opt VAL_CMD(rule);
             if (cmd) {
                 if (not Is_Word(rule)) // Command but not WORD! (COPY:, :THRU)
                     panic (Error_Parse_Command(L));
@@ -1825,7 +1825,7 @@ DECLARE_NATIVE(SUBPARSE)
             if (Is_Word(rule)) {
                 Option(SymId) cmd = VAL_CMD(rule);
 
-                switch (maybe cmd) {
+                switch (opt cmd) {
                 case SYM_SKIP:
                     if (not (P_FLAGS & PF_REDBOL))
                         panic ("Use ONE instead of SKIP outside PARSE2");
@@ -2180,7 +2180,7 @@ DECLARE_NATIVE(SUBPARSE)
                         panic (Error_Parse_End());
 
                     if (Is_Word(P_RULE)) { // check for ONLY flag
-                        SymId cmd = maybe VAL_CMD(P_RULE);
+                        SymId cmd = opt VAL_CMD(P_RULE);
                         if (cmd) {
                             switch (cmd) {
                               case SYM_ONLY:

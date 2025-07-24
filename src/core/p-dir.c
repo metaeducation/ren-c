@@ -159,7 +159,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
     dir.devreq.port_ctx = ctx;
     dir.devreq.device = RDI_FILE;
 
-    switch (maybe Word_Id(verb)) {
+    switch (opt Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -167,7 +167,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         UNUSED(ARG(VALUE)); // implicitly supplied as `port`
         Option(SymId) property = Word_Id(ARG(PROPERTY));
 
-        switch (maybe property) {
+        switch (opt property) {
         case SYM_LENGTH: {
             REBLEN len = Is_Block(state) ? VAL_ARRAY_LEN_AT(state) : 0;
             return Init_Integer(OUT, len); }

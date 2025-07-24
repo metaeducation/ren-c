@@ -102,7 +102,7 @@ static Bounce Transport_Actor(
 
     if (not (sock->flags & RRF_OPEN)) {
 
-        switch (maybe Word_Id(verb)) { // Ordered by frequency
+        switch (opt Word_Id(verb)) { // Ordered by frequency
 
         case SYM_REFLECT: {
             INCLUDE_PARAMS_OF_REFLECT;
@@ -111,7 +111,7 @@ static Bounce Transport_Actor(
             Option(SymId) property = Word_Id(ARG(PROPERTY));
             assert(property != SYM_0);
 
-            switch (maybe property) {
+            switch (opt property) {
             case SYM_OPEN_Q:
                 return LOGIC(false);
 
@@ -204,7 +204,7 @@ static Bounce Transport_Actor(
 
   open_socket_actions:;
 
-    switch (maybe Word_Id(verb)) { // Ordered by frequency
+    switch (opt Word_Id(verb)) { // Ordered by frequency
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -213,7 +213,7 @@ static Bounce Transport_Actor(
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
-        switch (maybe property) {
+        switch (opt property) {
         case SYM_LENGTH: {
             Value* port_data = Varlist_Slot(ctx, STD_PORT_DATA);
             return Init_Integer(

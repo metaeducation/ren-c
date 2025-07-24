@@ -771,7 +771,7 @@ REBTYPE(List)
     Specifier* specifier = VAL_SPECIFIER(list);
 
     Option(SymId) sym = Word_Id(verb);
-    switch (maybe sym) {
+    switch (opt sym) {
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 

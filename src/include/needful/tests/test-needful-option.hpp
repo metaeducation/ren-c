@@ -27,11 +27,11 @@ inline void test_needful_option()
     STATIC_ASSERT(not needful_is_convertible_v(decltype(oi1), int));
 
     STATIC_ASSERT_SAME(decltype(unwrap(oi1)), int);
-    STATIC_ASSERT_SAME(decltype(maybe(oi1)), int);
+    STATIC_ASSERT_SAME(decltype(opt(oi1)), int);
 
     int v1 = unwrap oi1; // Should succeed
     assert(v1 == 42);
-    int v2 = maybe oi2; // Should be nullptr or equivalent
+    int v2 = opt oi2; // Should be nullptr or equivalent
     assert(v2 == 0);
 
     // Test with enum types
@@ -45,7 +45,7 @@ inline void test_needful_option()
     STATIC_ASSERT((not needful_is_convertible_v(decltype(oe1), MyEnum)));
 
     STATIC_ASSERT_SAME(decltype(unwrap oe1), MyEnum);
-    STATIC_ASSERT_SAME(decltype(maybe oe1), MyEnum);
+    STATIC_ASSERT_SAME(decltype(opt oe1), MyEnum);
 
     // Test with pointer types
     Option(const char*) op1 = "abc";
@@ -59,7 +59,7 @@ inline void test_needful_option()
     STATIC_ASSERT((not needful_is_convertible_v(decltype(op1), const char*)));
 
     STATIC_ASSERT_SAME(decltype(unwrap op1), const char*);
-    STATIC_ASSERT_SAME(decltype(maybe op1), const char*);
+    STATIC_ASSERT_SAME(decltype(opt op1), const char*);
 
     // Test with template wrapper types
     Option(MyWrapper<int>) ow1 = MyWrapper<int>{456};

@@ -384,7 +384,7 @@ REBTYPE(Decimal)
                 type = TYPE_DECIMAL;
             }
 
-            switch (maybe sym) {
+            switch (opt sym) {
 
             case SYM_ADD:
                 d1 += d2;
@@ -434,7 +434,7 @@ REBTYPE(Decimal)
     type = Type_Of(val);
 
     // unary actions
-    switch (maybe sym) {
+    switch (opt sym) {
 
     case SYM_COPY:
         Copy_Cell(OUT, val);

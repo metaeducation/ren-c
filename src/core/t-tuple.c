@@ -375,7 +375,7 @@ REBTYPE(Tuple)
             if (ap)
                 a = (REBINT) *ap++;
 
-            switch (maybe Word_Id(verb)) {
+            switch (opt Word_Id(verb)) {
             case SYM_ADD: v += a; break;
 
             case SYM_SUBTRACT: v -= a; break;
@@ -455,7 +455,7 @@ REBTYPE(Tuple)
         RETURN (value);
     }
 
-    switch (maybe sym) {
+    switch (opt sym) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -464,7 +464,7 @@ REBTYPE(Tuple)
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
-        switch (maybe property) {
+        switch (opt property) {
         case SYM_LENGTH:
             return Init_Integer(OUT, MAX(len, 3));
 

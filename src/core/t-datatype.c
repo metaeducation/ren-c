@@ -88,7 +88,7 @@ REBTYPE(Datatype)
     Value* arg = D_ARG(2);
     Type type = Datatype_Type(value);
 
-    switch (maybe Word_Id(verb)) {
+    switch (opt Word_Id(verb)) {
 
     case SYM_REFLECT: {
         Option(SymId) sym = Word_Id(arg);

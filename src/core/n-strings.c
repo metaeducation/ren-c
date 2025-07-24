@@ -179,7 +179,7 @@ DECLARE_NATIVE(CHECKSUM)
 
     SymId sym;
     if (Bool_ARG(METHOD)) {
-        sym = maybe Word_Id(ARG(WORD));
+        sym = opt Word_Id(ARG(WORD));
         if (not sym) // not in %words.r, no SYM_XXX constant
             panic (Error_Invalid(ARG(WORD)));
     }
@@ -347,7 +347,7 @@ DECLARE_NATIVE(DEFLATE)
         envelope = CANON(NONE);  // Note: nullptr is gzip (for bootstrap)
     else {
         envelope = Word_Symbol(ARG(FORMAT));
-        switch (maybe Symbol_Id(envelope)) {
+        switch (opt Symbol_Id(envelope)) {
           case SYM_ZLIB:
           case SYM_GZIP:
             break;
@@ -411,7 +411,7 @@ DECLARE_NATIVE(INFLATE)
     if (not Bool_ARG(ENVELOPE))
         envelope = CANON(NONE);  // Note: nullptr is gzip (for bootstrap)
     else {
-        switch (maybe Word_Id(ARG(FORMAT))) {
+        switch (opt Word_Id(ARG(FORMAT))) {
           case SYM_ZLIB:
           case SYM_GZIP:
           case SYM_DETECT:

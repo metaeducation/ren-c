@@ -385,7 +385,7 @@ REBTYPE(Typeset)
     Value* val = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
-    switch (maybe Word_Id(verb)) {
+    switch (opt Word_Id(verb)) {
 
     case SYM_FIND:
         if (not Is_Datatype(arg))

@@ -41,7 +41,7 @@ static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
     VarList* ctx = Cell_Varlist(port);
     REBREQ *req = Ensure_Port_State(port, RDI_STDIO);
 
-    switch (maybe Word_Id(verb)) {
+    switch (opt Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -49,7 +49,7 @@ static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
         UNUSED(ARG(VALUE)); // implied by `port`
         Option(SymId) property = Word_Id(ARG(PROPERTY));
 
-        switch (maybe property) {
+        switch (opt property) {
         case SYM_OPEN_Q:
             return Init_Logic(OUT, did (req->flags & RRF_OPEN));
 

@@ -62,7 +62,7 @@
 **     Option(char*) s2 = abc;          // legal
 **
 **     char* s3 = unwrap xxx;           // ! runtime error (if debug build) !
-**     char* s4 = maybe xxx;            // gets nullptr out
+**     char* s4 = opt xxx;            // gets nullptr out
 **
 ** It leverages the natural boolean coercibility of the contained type.  So
 ** you can use it with things like pointers, integers or enums...anywhere the
@@ -72,6 +72,13 @@
 ** enforcement that you don't pass an Option() to a function that expects the
 ** wrapped type without first unwrapping it.  You can also choose to have a
 ** runtime check that `unwrap` never happens on a zero-containing Option().
+**
+** (Since you can't stop raw pointers from being null, in theory a better
+** choice would be a NonZero(T) wrapper to point out when pointers were not
+** optional and assume unwrapped pointers could always be null.  In practice
+** the relative rarity of optional states would make this much more of a
+** headache, look a lot worse, and provide minimal extra benefit over the
+** more familiar Option(T) approach.)
 */
 
 #define NeedfulOption(T)  T
@@ -79,7 +86,7 @@
 #define needful_none  0  /* C++ definition limits assignments to Option(T) */
 
 #define needful_unwrap
-#define needful_maybe
+#define needful_opt
 
 
 /****[[ Result(T): MULTIPLEXED ERROR AND RETURN RESULT ]]*********************
@@ -621,7 +628,7 @@ typedef enum {
     #define Corrupt_If_Needful(var)  NEEDFUL_NOOP
     #define Assert_Corrupted_If_Needful(ptr)  NEEDFUL_NOOP
 #else
-    // STATIC_ASSERT(! DEBUG_STATIC_ANALYZING);  /* [1] */
+    /* STATIC_ASSERT(! DEBUG_STATIC_ANALYZING); */  /* [1] */
 
     #include <string.h>  /* for memset */
 
@@ -672,7 +679,7 @@ typedef enum {
     struct GlobalScopeNoopTrick  /* https://stackoverflow.com/q/53923706 */
 
 #define NEEDFUL_STATIC_ASSERT(cond) \
-    STATIC_IGNORE(cond)  /* C version is noop [2] */
+    STATIC_IGNORE(cond)  /* C version is noop [1] */
 
 #define NEEDFUL_STATIC_FAIL(msg) \
     typedef int static_fail_##msg[-1]  /* message has to be a C identifier */
@@ -729,7 +736,7 @@ typedef enum {
 #elif defined(_MSC_VER)
     #define NEEDFUL_NODISCARD _Check_return_
 #else
-    #define NEEDFUL_NODISCARD  ** C++ overloads may redefine to [[nodiscard]]
+    #define NEEDFUL_NODISCARD  /* C++ overload may define as [[nodiscard]] */
 #endif
 
 
@@ -807,7 +814,7 @@ typedef enum {
     #define none                    needful_none
 
     #define unwrap                  needful_unwrap
-    #define maybe                   needful_maybe
+    #define opt                     needful_opt
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_RESULT_SHORTHANDS)

@@ -347,7 +347,18 @@ struct NEEDFUL_NODISCARD ResultWrapper<Zero> {
 
 //=//// RESULT EXTRACTOR //////////////////////////////////////////////////=//
 //
-// 1. The error is a bit opaque if you write:
+// 1. The choice of % for the result extractor has the goal of being able
+//    to extract the result before it would get picked up by things like
+//    `nocast` or `maybe` or `unwrap`, which use << at lower-precedence:
+//
+//       trap (Foo* foo = opt Some_Function())
+//
+//    This expands to:
+//
+//       Foo* foo = maybe_helper << Some_Function() % result_extractor;
+//       /* more expansion of trap macro */
+//
+// 2. The error is a bit opaque if you write:
 //
 //        trap (
 //           Some_Function();
@@ -363,37 +374,21 @@ struct NEEDFUL_NODISCARD ResultWrapper<Zero> {
 struct ResultExtractor {};
 
 template<typename T>
-inline T operator>>(
+inline T operator%(  // % high postfix precedence desired [1]
     const ResultWrapper<T>& result,
     const ResultExtractor&
 ){
     return result.r;
 }
 
-inline void operator>>(
+inline void operator%(  // % high postfix precedence desired [1]
     const ResultWrapper<ZeroStruct>&,
     const ResultExtractor&
 ){
-}
-
-template<typename T>
-inline UnhookableDowncastHolder<T> operator>>(
-    const UnhookableDowncastHolder<ResultWrapper<T>>& down,
-    const ResultExtractor&
-){
-    return UnhookableDowncastHolder<T> {down.f.r};
-}
-
-template<typename T>
-inline HookableDowncastHolder<T> operator>>(
-    const HookableDowncastHolder<ResultWrapper<T>>& down,
-    const ResultExtractor&
-){
-    return HookableDowncastHolder<T> {down.f.r};
 }
 
 static constexpr ResultExtractor g_result_extractor{};
 
 #undef needful_postfix_extract_result
 #define needful_postfix_extract_result \
-    /* ; <-- ERROR? DON'T PUT SEMICOLON! [1] */ >> needful::g_result_extractor
+    /* ; <-- ERROR? DON'T PUT SEMICOLON! [2] */ % needful::g_result_extractor

@@ -98,16 +98,20 @@ struct ConstifyHelper<T, TopLevel, enable_if_t<HasWrappedType<T>::value>>
 //
 // So we have special handling for types where constness is irrelevant.
 //
+// 1. If you ask about decltype("abc"), then sometimes that will ask about
+//    a const char [] array, for which the constness is relevant, though
+//    it is not directly a pointer.
+//
 
 template<typename T>
 struct IsConstIrrelevant : std::integral_constant<
     bool,
-    not std::is_pointer<T>::value
+    not std::is_pointer<T>::value  // note: must decay for arrays [1]
     and not HasWrappedType<T>::value
 > {};
 
 #define needful_is_const_irrelevant(T) \
-    needful::IsConstIrrelevant<needful::remove_reference_t<T>>::value
+    needful::IsConstIrrelevant<needful::decay_t<T>>::value  // decay [1]
 
 
 //=/// IsConstlikeType: SMART-POINTER EXTENSIBLE CONSTNESS CHECK //////////=//

@@ -535,7 +535,7 @@ REBTYPE(Logic)
     bool b1 = VAL_LOGIC(D_ARG(1));
     bool b2;
 
-    switch (maybe Word_Id(verb)) {
+    switch (opt Word_Id(verb)) {
 
     case SYM_INTERSECT:
         b2 = Math_Arg_For_Logic(D_ARG(2));

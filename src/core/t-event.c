@@ -70,7 +70,7 @@ REBINT Cmp_Event(const Cell* t1, const Cell* t2)
 //
 static bool Set_Event_Var(Value* event, const Value* word, const Value* val)
 {
-    switch (maybe Word_Id(word)) {
+    switch (opt Word_Id(word)) {
     case SYM_TYPE: {
         if (!Is_Word(val) && !Is_Lit_Word(val))
             return false;
@@ -144,7 +144,7 @@ void Set_Event_Vars(Value* evt, Cell* blk, Specifier* specifier)
 //
 static Value* Get_Event_Var(Cell* out, const Cell* v, Symbol* name)
 {
-    switch (maybe Symbol_Id(name)) {
+    switch (opt Symbol_Id(name)) {
     case SYM_TYPE: {
         if (VAL_EVENT_TYPE(v) == 0)
             return Init_Blank(out);

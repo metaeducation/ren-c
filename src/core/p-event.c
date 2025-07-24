@@ -149,7 +149,7 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
     if (!Is_Block(state))
         Init_Block(state, Make_Array(EVENTS_CHUNK - 1));
 
-    switch (maybe Word_Id(verb)) {
+    switch (opt Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -158,7 +158,7 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
-        switch (maybe property) {
+        switch (opt property) {
         case SYM_LENGTH:
             return Init_Integer(OUT, VAL_LEN_HEAD(state));
 

@@ -327,7 +327,7 @@ Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
         // words in C switch statements, the synonym inherits that number.
         //
         SET_SECOND_UINT16(&intern->header, 0);
-        SET_SECOND_UINT16(&intern->header, maybe Symbol_Id(canon));
+        SET_SECOND_UINT16(&intern->header, opt Symbol_Id(canon));
     }
 
   #if RUNTIME_CHECKS

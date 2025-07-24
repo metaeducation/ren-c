@@ -366,7 +366,7 @@ void Pick_Time(Value* out, const Value* value, const Value* picker)
 {
     REBINT i;
     if (Is_Word(picker)) {
-        switch (maybe Word_Id(picker)) {
+        switch (opt Word_Id(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
@@ -411,7 +411,7 @@ void Poke_Time_Immediate(
 ) {
     REBINT i;
     if (Is_Word(picker)) {
-        switch (maybe Word_Id(picker)) {
+        switch (opt Word_Id(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
@@ -519,7 +519,7 @@ REBTYPE(Time)
         if (type == TYPE_TIME) {     // handle TIME - TIME cases
             REBI64 secs2 = VAL_NANO(arg);
 
-            switch (maybe sym) {
+            switch (opt sym) {
             case SYM_ADD:
                 secs = Add_Max(TYPE_TIME, secs, secs2, MAX_TIME);
                 goto fixTime;
@@ -549,7 +549,7 @@ REBTYPE(Time)
         else if (type == TYPE_INTEGER) {     // handle TIME - INTEGER cases
             REBI64 num = VAL_INT64(arg);
 
-            switch (maybe Word_Id(verb)) {
+            switch (opt Word_Id(verb)) {
             case SYM_ADD:
                 secs = Add_Max(TYPE_TIME, secs, num * SEC_SEC, MAX_TIME);
                 goto fixTime;
@@ -584,7 +584,7 @@ REBTYPE(Time)
         else if (type == TYPE_DECIMAL) {     // handle TIME - DECIMAL cases
             REBDEC dec = VAL_DECIMAL(arg);
 
-            switch (maybe Word_Id(verb)) {
+            switch (opt Word_Id(verb)) {
             case SYM_ADD:
                 secs = Add_Max(
                     TYPE_TIME,
@@ -632,7 +632,7 @@ REBTYPE(Time)
     }
     else {
         // unary actions
-        switch (maybe sym) {
+        switch (opt sym) {
 
         case SYM_ODD_Q:
             return Init_Logic(OUT, (SECS_FROM_NANO(secs) & 1) != 0);

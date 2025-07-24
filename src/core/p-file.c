@@ -277,7 +277,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
     // !!! R3-Alpha never implemented quite a number of operations on files,
     // including FLUSH, POKE, etc.
 
-    switch (maybe Word_Id(verb)) {
+    switch (opt Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -286,7 +286,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != SYM_0);
 
-        switch (maybe property) {
+        switch (opt property) {
         case SYM_INDEX:
             return Init_Integer(OUT, file->index + 1);;
 

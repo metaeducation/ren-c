@@ -1152,7 +1152,7 @@ REBTYPE(String)
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
 
     Option(SymId) sym = Word_Id(verb);
-    switch (maybe sym) {
+    switch (opt sym) {
       case SYM_APPEND:
       case SYM_INSERT:
       case SYM_CHANGE: {
