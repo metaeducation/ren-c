@@ -1989,20 +1989,27 @@ DECLARE_NATIVE(CONSTRUCT)
 
 } continue_processing_spec: {  ////////////////////////////////////////////////
 
-    if (Is_Level_At_End(SUBLEVEL)) {
-        Drop_Level(SUBLEVEL);
-        return OUT;
+    const Element* at = nullptr;  // quiet static analyzer
+
+    attempt {  // skip COMMA! items, if present
+        if (Is_Level_At_End(SUBLEVEL)) {
+            Drop_Level(SUBLEVEL);
+            return OUT;
+        }
+        at = At_Level(SUBLEVEL);
+        if (Is_Comma(at)) {
+            Fetch_Next_In_Feed(SUBLEVEL->feed);
+            again;
+        }
     }
-
-    VarList* varlist = Cell_Varlist(OUT);
-
-    const Element* at = At_Level(SUBLEVEL);
 
     Option(const Symbol*) symbol = Try_Get_Settable_Word_Symbol(nullptr, at);
     if (not symbol) {  // not /foo: or foo:
         STATE = ST_CONSTRUCT_EVAL_STEP;  // plain evaluation
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
+
+    VarList* varlist = Cell_Varlist(OUT);
 
     do {  // keep pushing SET-WORD!s so `construct [a: b: 1]` works
         Option(Index) index = Find_Symbol_In_Context(
