@@ -32,7 +32,7 @@ libraries: switch platform-config.os-base [
 ]
 
 ldflags: switch platform-config.os-base [
-    'OSX [
+    'MacOS [
         ["-framework CoreFoundation"]
     ]
 ]

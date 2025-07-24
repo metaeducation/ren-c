@@ -231,7 +231,7 @@ emscripten: make posix [
 ]
 
 osx: make posix [
-    name: 'OSX
+    name: 'MacOS
     dll-suffix: ".dylib"  ; !!! This was .dyn - but no one uses that
 ]
 

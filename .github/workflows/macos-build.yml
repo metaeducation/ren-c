@@ -161,7 +161,7 @@ jobs:
     # that uses it for testing ODBC more rigorous.
     #
     - name: Get ODBC if Needed
-      if: (env.OS_ID == '0.4.40') && (env.DEBUG == 'normal')
+      if: (env.OS_ID == '0.2.40') && (env.DEBUG == 'normal')
       run: |
         # When brew updates automatically, it generates an unsightly amount of
         # output if it does so during a `brew install`.  So redirect the

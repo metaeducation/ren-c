@@ -9,7 +9,11 @@ options: [
 
 use-librebol: 'yes  ; ODBC is a great example of not depending on %sys-core.h !
 
-includes: []
+includes: switch platform-config.os-base [
+    'MacOS [
+        [%/opt/homebrew/include/]  ; needed for Apple Silicon builds
+    ]
+]
 
 sources: [
     mod-odbc.c [
@@ -36,6 +40,9 @@ sources: [
 libraries: switch platform-config.os-base [
     'Windows [
         [%odbc32]
+    ]
+    'MacOS [
+        [%odbc]
     ]
 ] else [
     ; On some systems (32-bit Ubuntu 12.04), odbc requires ltdl
