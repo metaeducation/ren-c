@@ -8,6 +8,9 @@
 
 #include <CoreFoundation/CFUUID.h>
 
+#include "needful/needful.h"
+#include "c-extras.h"
+
 extern void Get_Sixteen_Uuid_Bytes(unsigned char buf[16]);
 
 void Get_Sixteen_Uuid_Bytes(unsigned char buf[16])

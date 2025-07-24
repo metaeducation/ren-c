@@ -3,11 +3,10 @@ Rebol []
 name: 'UUID
 source: %uuid/mod-uuid.c
 includes: reduce [
-    join repo-dir %extensions/uuid/libuuid/
-    %prep/extensions/uuid ;for %tmp-extensions-uuid-init.inc
+    %prep/extensions/uuid  ; for %tmp-extensions-uuid-init.inc
 ]
 depends: switch system-config/os-base [
-    'Linux [
+    'linux [
         [
             %uuid/libuuid/gen_uuid.c
             %uuid/libuuid/unpack.c
@@ -15,18 +14,18 @@ depends: switch system-config/os-base [
             %uuid/libuuid/randutils.c
         ]
     ]
-    'OSX [
-        join repo-dir %extensions/uuid/uuid-mac.c
+    'osx [
+        [%uuid/uuid-mac.c]
     ]
 ]
 
 libraries: switch system-config/os-base [
-    'Windows [
+    'windows [
         [%rpcrt4]
     ]
 ]
 ldflags: switch system-config/os-base [
-    'OSX [
+    'osx [
         ["-framework CoreFoundation"]
     ]
 ]

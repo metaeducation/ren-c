@@ -43,7 +43,7 @@
     //
     extern void Get_Sixteen_Uuid_Bytes(unsigned char buf[16]);
 #else
-    #include <uuid.h>
+    #include "libuuid/uuid.h"
 #endif
 
 #include "sys-core.h"
