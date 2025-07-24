@@ -610,24 +610,24 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
     else {
         DECLARE_ELEMENT (param_word);
         switch ((pclass = Parameter_Class(param))) {
-          case PARAMCLASS_NORMAL:
+          case PARAMCLASS_NORMAL: {
             Init_Word(param_word, Key_Symbol(key));
-            break;
+            break; }
 
-          case PARAMCLASS_JUST:
+          case PARAMCLASS_JUST: {
             Quotify(Init_Word(param_word, Key_Symbol(key)));
-            break;
+            break; }
 
-          case PARAMCLASS_THE:
+          case PARAMCLASS_THE: {
             Pinify(Init_Word(param_word, Key_Symbol(key)));
-            break;
+            break; }
 
-          case PARAMCLASS_SOFT:
+          case PARAMCLASS_SOFT: {
             require (
               Getify(Init_Word(param_word, Key_Symbol(key)))
             );
             Quotify(param_word);
-            break;
+            break; }
 
           default:
             crash (NULL);

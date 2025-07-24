@@ -1094,19 +1094,19 @@ Bounce Stepper_Executor(Level* L)
         }
         goto handle_generic_set; }
 
-      case TRAILING_SPACE_AND(TUPLE):  // a.b.c: is a set tuple
+      case TRAILING_SPACE_AND(TUPLE): {  // a.b.c: is a set tuple
         assume (
           Unsingleheart_Sequence(CURRENT)
         );
         assert(Is_Tuple(CURRENT));
-        goto handle_generic_set;
+        goto handle_generic_set; }
 
-      case TRAILING_SPACE_AND(BLOCK):  // [a b]: multi-return assign
+      case TRAILING_SPACE_AND(BLOCK): {  // [a b]: multi-return assign
         assume (
           Unsingleheart_Sequence(CURRENT)
         );
         STATE = ST_STEPPER_SET_BLOCK;
-        goto handle_set_block;
+        goto handle_set_block; }
 
       case TRAILING_SPACE_AND(GROUP): {  // (xxx): -- generic retrigger set
         assume (
@@ -1125,21 +1125,21 @@ Bounce Stepper_Executor(Level* L)
         STATE = ST_STEPPER_SET_GROUP;
         return CONTINUE_SUBLEVEL(sub); }
 
-      case LEADING_SPACE_AND(WORD):  // :FOO, refinement, error on eval?
+      case LEADING_SPACE_AND(WORD): {  // :FOO, refinement, error on eval?
         assume (
           Unsingleheart_Sequence(CURRENT)
         );
         STATE = ST_STEPPER_GET_WORD;
-        panic (":WORD! meaning is likely to become TRY WORD!");
+        panic (":WORD! meaning is likely to become TRY WORD!"); }
 
-      case LEADING_SPACE_AND(TUPLE):  // :a.b.c -- what will this do?
+      case LEADING_SPACE_AND(TUPLE): {  // :a.b.c -- what will this do?
         assume (
           Unsingleheart_Sequence(CURRENT)
         );
         STATE = ST_STEPPER_GET_TUPLE;
-        panic (":TUPLE! meaning is likely to become TRY TUPLE!");
+        panic (":TUPLE! meaning is likely to become TRY TUPLE!"); }
 
-      case LEADING_SPACE_AND(BLOCK):  // !!! :[a b] reduces, not great...
+      case LEADING_SPACE_AND(BLOCK): {  // !!! :[a b] reduces, not great...
         assume (
           Unsingleheart_Sequence(CURRENT)
         );
@@ -1150,13 +1150,13 @@ Bounce Stepper_Executor(Level* L)
         )){
             goto return_thrown;
         }
-        goto lookahead;
+        goto lookahead; }
 
-      case LEADING_SPACE_AND(GROUP):
+      case LEADING_SPACE_AND(GROUP): {
         assume (
           Unsingleheart_Sequence(CURRENT)
         );
-        panic ("GET-GROUP! has no evaluator meaning at this time");
+        panic ("GET-GROUP! has no evaluator meaning at this time"); }
 
       default:  // it's just something like :1 or <tag>:
         panic ("No current evaluation for things like :1 or <tag>:");
@@ -1334,12 +1334,12 @@ Bounce Stepper_Executor(Level* L)
         slash_at_tail = Is_Space(spare);
     }
     else switch (unwrap single) {
-      case LEADING_SPACE_AND(WORD):
+      case LEADING_SPACE_AND(WORD): {
         assume (
           Unsingleheart_Sequence(CURRENT)
         );
         Set_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD);
-        goto handle_word_where_action_lookups_are_active;
+        goto handle_word_where_action_lookups_are_active; }
 
       case LEADING_SPACE_AND(CHAIN): {  // /abc: or /?:?:?
         assume (
@@ -1347,19 +1347,19 @@ Bounce Stepper_Executor(Level* L)
         );
 
         switch (opt Try_Get_Sequence_Singleheart(CURRENT)) {
-          case TRAILING_SPACE_AND(WORD):  // /abc: is set actions only
+          case TRAILING_SPACE_AND(WORD): {  // /abc: is set actions only
             assume (
               Unsingleheart_Sequence(CURRENT)
             );
             Set_Cell_Flag(CURRENT, SCRATCH_VAR_NOTE_ONLY_ACTION);
-            goto handle_generic_set;
+            goto handle_generic_set; }
 
-          case TRAILING_SPACE_AND(TUPLE):  // /a.b.c: is set actions only
+          case TRAILING_SPACE_AND(TUPLE): {  // /a.b.c: is set actions only
             assume (
               Unsingleheart_Sequence(CURRENT)
             );
             Set_Cell_Flag(CURRENT, SCRATCH_VAR_NOTE_ONLY_ACTION);
-            goto handle_generic_set;
+            goto handle_generic_set; }
 
           default:
             panic ("/a:b:c will guarantee a function call, in time");

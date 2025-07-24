@@ -679,12 +679,12 @@ DECLARE_NATIVE(JOIN)
             Drop_Mold(mo);
         }
         else switch (opt Type_Of(at)) {
-          case TYPE_INTEGER:
+          case TYPE_INTEGER: {
             require (
               Expand_Flex_Tail_And_Update_Used(buf, 1)
             );
             *Binary_At(buf, used) = cast(Byte, VAL_UINT8(at));  // can panic()
-            break;
+            break; }
 
           case TYPE_BLOB: {
             Size size;

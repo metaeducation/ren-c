@@ -89,6 +89,38 @@
 #define needful_opt
 
 
+/****[[ SCOPE_GUARD: PROTECT FROM UNSAFE MACRO USAGES ]]**********************
+**
+** Macros that expand into multiple statements can be dangerous if used in
+** a context where a single statement is expected.  This is typically handled
+** in C/C++ with a `do { ... } while (0)` construct, but trickier macros may
+** not be able to do their work inside a block.
+**
+** This SCOPE_GUARD is a trick which makes an unused variable with a unique
+** name, that will cause a compile error if used in something like the branch
+** slot of an `if` statement.
+**
+** 1. There is an issue in macro expansions that was seen in Clang 15, which
+**    makes the scope guard more aggressive than it needs to be (e.g. not
+**    allowing use in a switch case statement without braces).
+*/
+
+#define NEEDFUL_NOOP  ((void)0)
+
+#if defined(NDEBUG)
+    #define NEEDFUL_SCOPE_GUARD  NEEDFUL_NOOP
+#else
+    #define NEEDFUL_PASTE2(a, b)  a##b
+    #define NEEDFUL_PASTE1(a, b)  NEEDFUL_PASTE2(a, b)
+
+    #define NEEDFUL_UNIQUE_NAME(base)  NEEDFUL_PASTE1(base, __LINE__)
+
+    #define NEEDFUL_SCOPE_GUARD /* Clang v15 has some trouble [1] */ \
+        int NEEDFUL_UNIQUE_NAME(_statement_must_be_in_braces_); \
+        NEEDFUL_UNUSED(NEEDFUL_UNIQUE_NAME(_statement_must_be_in_braces_))
+#endif
+
+
 /****[[ Result(T): MULTIPLEXED ERROR AND RETURN RESULT ]]*********************
 **
 ** These macros provide a C/C++-compatible mechanism for propagating and
@@ -189,21 +221,6 @@
 #define NeedfulResult(T)  T
 
 #define NEEDFUL_RESULT_0  0  /* in C, likely must disable warnings [A] */
-
-#define NEEDFUL_NOOP  ((void)0)
-
-#if defined(NDEBUG)
-    #define NEEDFUL_SCOPE_GUARD  NEEDFUL_NOOP
-#else
-    #define NEEDFUL_PASTE2(a, b)  a##b
-    #define NEEDFUL_PASTE1(a, b)  NEEDFUL_PASTE2(a, b)
-
-    #define NEEDFUL_UNIQUE_NAME(base)  NEEDFUL_PASTE1(base, __LINE__)
-
-    #define NEEDFUL_SCOPE_GUARD \
-        int NEEDFUL_UNIQUE_NAME(_statement_must_be_in_braces_); \
-        NEEDFUL_UNUSED(NEEDFUL_UNIQUE_NAME(_statement_must_be_in_braces_))
-#endif
 
 #define needful_fail(...) \
     (Needful_Assert_Not_Failing(), \

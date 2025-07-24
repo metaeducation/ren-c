@@ -407,12 +407,12 @@ void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
           case TYPE_QUASIFORM:
             panic (Error_Bad_Value(val));
 
-          case TYPE_INTEGER:
+          case TYPE_INTEGER: {
             require (
               Expand_Flex_Tail_And_Update_Used(buf, 1)
             );
             *Binary_At(buf, tail) = cast(Byte, VAL_UINT8(val));  // can panic()
-            break;
+            break; }
 
           case TYPE_BLOB: {
             Size size;

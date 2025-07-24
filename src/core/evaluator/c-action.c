@@ -483,28 +483,28 @@ Bounce Action_Executor(Level* L)
                 Erase_Cell(OUT);
             }
             else switch (pclass) {
-              case PARAMCLASS_NORMAL:
+              case PARAMCLASS_NORMAL: {
                 require (
                   Decay_If_Unstable(OUT)
                 );
                 Move_Atom(ARG, OUT);
-                break;
+                break; }
 
               case PARAMCLASS_META: {
                 Move_Atom(ARG, OUT);
                 break; }
 
-              case PARAMCLASS_JUST:
+              case PARAMCLASS_JUST: {
                 assert(Not_Antiform(OUT));
                 Move_Atom(ARG, OUT);
-                break;
+                break; }
 
-              case PARAMCLASS_THE:
+              case PARAMCLASS_THE: {
                 assert(Not_Antiform(OUT));
                 Move_Atom(ARG, OUT);
-                break;
+                break; }
 
-              case PARAMCLASS_SOFT:
+              case PARAMCLASS_SOFT: {
                 /*assert(Not_Antiform(OUT));*/
                 if (Is_Antiform(OUT))  // !!! Fix this
                     panic ("Unexpected antiform on left of soft escape");
@@ -521,7 +521,7 @@ Bounce Action_Executor(Level* L)
                 }
                 else
                     Move_Atom(ARG, OUT);
-                break;
+                break; }
 
               default:
                 assert(false);
