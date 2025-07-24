@@ -79,6 +79,24 @@
 // just in general there's no cross-platform assurances about how linking
 // works, so this provides the most flexibility.)
 //
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// A. As much as possible, we try to avoid crossing C code stacks with
+//    exception-like behavior.  But if it has to happen, it should use the
+//    model of the language (e.g. C++ or JavaScript if needed).  This implies
+//    that the throwing/longjmp-ing should happen in "rebol.h" or equivalent,
+//    not from inside the API implementations... so all the APIs that run code
+//    should be formulated e.g. as:
+//
+//        Value* error = rebRecoverUnboxLogic(&result, ...);
+//
+//    Then, rebUnboxLogic() can be a macro that does the right thing for the
+//    language in terms of raising the right kind of exception (or terminating
+//     the process, etc.)
+//
+//    For the moment, this is not done and we just use the internal exception
+//    model to cross client stacks.
+//
 
 #define REBOL_LEVEL_SHORTHAND_MACROS 0  // we include Windows.h for errors
 #include "sys-core.h"
@@ -638,7 +656,7 @@ RebolValue* API_rebChar(uint32_t codepoint)
 
     Value* v = Alloc_Value();
     Init_Single_Codepoint_Rune(v, codepoint) except (Error* e) {
-        rebRelease(v);
+        Free_Value(v);  // rebRelease() would test cell validity
         panic (e);
     }
     return v;
@@ -1195,41 +1213,6 @@ static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
 }
 
 
-// !!! As much as possible, we try to avoid crossing C code stacks with
-// exception-like behavior.  But if it has to happen, it should use the model
-// of the language (e.g. C++ or JavaScript if needed).  This implies that the
-// throwing/longjmp-ing should happen in "rebol.h" or its equivalent, not
-// from inside the API implementations... so all the APIs that run code should
-// be formulated e.g. as:
-//
-//     Value* error = rebTrapUnboxLogic(&result, ...);
-//
-// Then, rebUnboxLogic() can be a macro that does the right thing for the
-// language in terms of raising the right kind of exception (or terminating
-// the process, etc.)
-//
-// For the moment, this is not done... and we just use the internal exception
-// model to cross client stacks.  This is not necessarily the right choice for
-// API clients.
-//
-static void Run_Valist_And_Call_Va_End_May_Panic(
-    Sink(Value) out,
-    Flags run_flags,
-    RebolContext* binding,
-    const void* p,
-    void* vaptr
-){
-    Run_Valist_And_Call_Va_End(
-        out,
-        run_flags,
-        binding,
-        p, vaptr
-    ) except (Error* e) {
-        panic (e);
-    }
-}
-
-
 //
 //  rebRunCoreThrows_internal: API
 //
@@ -1311,7 +1294,12 @@ RebolValue* API_rebValue(
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        Free_Value(v);  // rebRelease() would test cell validity
+        panic (e);
+    }
 
     if (Is_Nulled(v)) {
         Free_Value(v);
@@ -1418,7 +1406,12 @@ RebolValue* API_rebLift(
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
     Flags flags = RUN_VA_FLAG_LIFT_RESULT;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        Free_Value(v);  // rebRelease() would test cell validity
+        panic (e);
+    }
 
     assert(not Is_Nulled(v));  // lift operations cannot produce NULL
 
@@ -1443,7 +1436,12 @@ RebolValue* API_rebEnrescue(
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
     Flags flags = RUN_VA_FLAG_LIFT_RESULT;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        Free_Value(v);  // rebRelease() would test cell validity
+        panic (e);
+    }
 
     assert(not Is_Nulled(v));  // lift operations cannot produce NULL
 
@@ -1473,7 +1471,12 @@ RebolValue* API_rebRescue2(
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
     Flags flags = RUN_VA_FLAG_LIFT_RESULT;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        Free_Value(v);  // rebRelease() would test cell validity
+        panic (e);
+    }
 
     assert(Any_Lifted(v));
 
@@ -1593,7 +1596,12 @@ RebolValue* API_rebQuote(
     Value* v = Alloc_Value();
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        Free_Value(v);  // rebRelease() would test cell validity
+        panic (e);
+    }
 
     if (Is_Antiform(v))
         panic ("rebQuote() called on expression that returned an antiform");
@@ -1620,7 +1628,13 @@ void API_rebElide(
     DECLARE_VALUE (discarded);
 
     Flags flags = RUN_VA_FLAG_LIFT_RESULT;  // discarding, allow void/etc.
-    Run_Valist_And_Call_Va_End_May_Panic(discarded, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        discarded, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
+    if (Is_Error(discarded))  // don't allow errors (despite lift)
+        panic (Cell_Error(discarded));
 }
 
 
@@ -1664,7 +1678,11 @@ void API_rebJumps(
     DECLARE_VALUE (dummy);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(dummy, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        dummy, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     // Note: If we just `panic()` here, then while MSVC compiles %a-lib.c at
     // higher optimization levels it can conclude that API_rebJumps() never
@@ -1701,7 +1719,11 @@ bool API_rebDid(
     DECLARE_VALUE (eval);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(eval, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        eval, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     bool cond = Test_Conditional(eval) except (Error* e) {
         panic (e);
@@ -1758,7 +1780,11 @@ intptr_t API_rebUnbox(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (Is_Logic(v)) {
         return Cell_Logic(v) ? 1 : 0;
@@ -1795,7 +1821,11 @@ bool API_rebUnboxLogic(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (not Is_Logic(v))
         panic ("rebUnboxLogic() called on non-LOGIC!");
@@ -1816,7 +1846,11 @@ bool API_rebUnboxBoolean(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (not Is_Boolean(v))
         panic ("rebUnboxBoolean() called on non-[true false]!");
@@ -1837,7 +1871,11 @@ bool API_rebUnboxYesNo(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (not Is_YesNo(v))
         panic ("rebUnboxYesNo() called on non-[yes no]!");
@@ -1858,7 +1896,11 @@ bool API_rebUnboxOnOff(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (not Is_OnOff(v))
         panic ("rebUnboxOnOff() called on non-[on off]!");
@@ -1881,7 +1923,11 @@ int32_t API_rebUnboxInteger(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (not Is_Integer(v))
         panic ("rebUnboxInteger() called on non-INTEGER!");
@@ -1906,7 +1952,11 @@ int64_t API_rebUnboxInteger64(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (not Is_Integer(v))
         panic ("rebUnboxInteger() called on non-INTEGER!");
@@ -1927,7 +1977,11 @@ double API_rebUnboxDecimal(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (Is_Decimal(v))
         return VAL_DECIMAL(v);
@@ -1956,7 +2010,11 @@ uint32_t API_rebUnboxChar(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (not Is_Rune_And_Is_Char(v))
         panic ("rebUnboxChar() called on non-CHAR");  // API error [1]
@@ -1978,7 +2036,11 @@ void* API_rebUnboxHandleCData(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (Type_Of(v) != TYPE_HANDLE)
         panic ("rebUnboxHandleCData() called on non-HANDLE!");
@@ -2003,7 +2065,11 @@ RebolHandleCleaner* API_rebExtractHandleCleaner(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (Type_Of(v) != TYPE_HANDLE)
         panic ("rebUnboxHandleCleaner() called on non-HANDLE!");
@@ -2059,7 +2125,11 @@ size_t API_rebSpellInto(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     return Spell_Into(buf, buf_size, v);
 }
@@ -2083,7 +2153,11 @@ char* API_rebSpellOpt(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (Is_Nulled(v))
         return nullptr;
@@ -2188,7 +2262,11 @@ unsigned int API_rebSpellIntoWide(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     return Spell_Into_Wide(buf, buf_chars, v);
 }
@@ -2209,7 +2287,11 @@ REBWCHAR* API_rebSpellWideOpt(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (Is_Nulled(v))
         return nullptr;
@@ -2263,7 +2345,11 @@ size_t API_rebBytesInto(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     Size bsize = buf_size;  // see `Size`: we use signed sizes internally
 
@@ -2301,7 +2387,11 @@ unsigned char* API_rebBytesOpt(  // unsigned char, no Byte required by API
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (Is_Nulled(v)) {
         *size_out = 0;
@@ -2361,7 +2451,11 @@ const unsigned char* API_rebLockBytes(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (not Any_Bytes_Type(Type_Of(v)))
         panic ("rebLockBytes() only works with types with byte storage");
@@ -2397,7 +2491,11 @@ unsigned char* API_rebLockMutableBytes(
     DECLARE_VALUE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
-    Run_Valist_And_Call_Va_End_May_Panic(v, flags, binding, p, vaptr);
+    Run_Valist_And_Call_Va_End(
+        v, flags, binding, p, vaptr
+    ) except (Error* e) {
+        panic (e);
+    }
 
     if (not Any_Bytes_Type(Type_Of(v)))
         panic ("rebLockBytes() only works with types with byte storage");
