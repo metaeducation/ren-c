@@ -146,17 +146,6 @@ shutdown*
 ; identifiers.  However, symbol numbers are hypothesized to be expandable
 ; via a pre-published dictionary of strings, committed to as a registry.
 
-
-#open
-#close
-#connect
-#accept  ; was R3 parse keyword
-#read
-#write
-wrote
-lookup
-
-ready
 #time
 
 #show

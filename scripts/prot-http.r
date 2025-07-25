@@ -450,7 +450,6 @@ do-redirect: func [
     ;
     close port.state.connection
     open port.state.connection
-    connect port.state.connection
 
     ; !!! The original code for DO-REQUEST would return the information for
     ; the request, while clearing out the port data.  This would leave nothing
@@ -710,7 +709,6 @@ sys.util/make-scheme [
             ]
             conn.locals: port
             open conn
-            connect conn
             port.state.mode: <ready>
 
             return port

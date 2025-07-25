@@ -1978,11 +1978,6 @@ sys.util/make-scheme [
 
             conn.locals: port
             open conn
-            return port
-        ]
-
-        connect: func [port [port!]] [
-            connect port.state.connection
 
             tls-init port.state
 
