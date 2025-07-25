@@ -214,6 +214,9 @@ INLINE bool Is_Word_With_Id(const Value* v, SymId id) {
 // implementation of the "unset due to end" behavior.
 //
 
+#define Is_Dual(cell) \
+    (LIFT_BYTE(ensure(Slot*, (cell))) == DUAL_0)
+
 #define Is_Dual_Word_Unset_Signal(dual) \
     Is_Word_With_Id((dual), SYM__PUNSET_P)
 
@@ -228,6 +231,8 @@ INLINE Slot* Init_Dual_Unset(Cell* slot) {
 
 INLINE bool Is_Dual_Unset(const Cell* cell) {
     if (LIFT_BYTE(cell) != DUAL_0)
+        return false;
+    if (KIND_BYTE(cell) != TYPE_WORD)
         return false;
     return Word_Id(cell) == SYM__PUNSET_P;
 }

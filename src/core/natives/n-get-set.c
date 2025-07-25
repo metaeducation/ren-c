@@ -601,6 +601,14 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             return Error_User("Unset variable");
         }
 
+        if (Is_Frame(Known_Stable(SPARE))) {
+            Value* result = rebValue(Known_Stable(SPARE));
+            Copy_Cell(SPARE, result);
+            Liftify(SPARE);
+            rebRelease(result);
+            continue;
+        }
+
         e = Error_User("TWEAK* (dual protocol) gave unknown state for PICK");
         Drop_Level(sub);
         goto return_error;
@@ -1350,7 +1358,7 @@ Result(Value*) Get_Word(
 //          [<opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
 //      dual "Ordinary GET or SET with lifted value (unlifts), else dual"
-//          [null? tripwire? space? quasiform! quoted!]
+//          [null? frame! word! quasiform! quoted!]
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //  ]

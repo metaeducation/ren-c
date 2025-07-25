@@ -314,7 +314,7 @@ bind construct [
 ][
     let data-start: data  ; may not be at head
 
-    let index: accessor does [
+    let index: getter [
         1 + (index of data-start) - (index of data)
     ]  ; effective index
 
@@ -1864,7 +1864,7 @@ sys.util/make-scheme [
                 min-version: null
                 max-version: null
                 version: null
-                ver-bytes: accessor does [
+                ver-bytes: getter [
                     select version-to-bytes version else [
                         panic ["version has no byte sequence:" version]
                     ]
@@ -1880,13 +1880,13 @@ sys.util/make-scheme [
                 suite: null
 
                 ; !!! Doesn't appear to be used
-                cipher-suite: accessor does [first find suite word?/]
+                cipher-suite: getter [first find suite word?/]
 
-                key-method: accessor does [first find suite tag?/]
+                key-method: getter [first find suite tag?/]
 
-                hashspec: accessor does [find suite rune?/]
-                hash-method: accessor does [to word! first hashspec]
-                hash-size: accessor does [
+                hashspec: getter [find suite rune?/]
+                hash-method: getter [to word! first hashspec]
+                hash-size: getter [
                     select (ensure block! second hashspec) 'size
                 ]
 
@@ -1904,22 +1904,22 @@ sys.util/make-scheme [
                 ;
                 ; https://tools.ietf.org/html/rfc5289
                 ;
-                prf-method: accessor does [
+                prf-method: getter [
                     either hash-method = 'sha384 ['sha384] ['sha256]
                 ]
-                hmac-method: accessor does [
+                hmac-method: getter [
                     either hash-method = 'sha384 ['sha384] ['sha256]
                 ]
 
-                cryptspec: accessor does [find suite word?:pinned/]
-                crypt-method: accessor does [first cryptspec]
-                crypt-size: accessor does [
+                cryptspec: getter [find suite word?:pinned/]
+                crypt-method: getter [first cryptspec]
+                crypt-size: getter [
                     select (ensure block! second cryptspec) 'size
                 ]
-                block-size: accessor does [
+                block-size: getter [
                     try select (ensure block! second cryptspec) 'block
                 ]
-                iv-size: accessor does [
+                iv-size: getter [
                     try select (ensure block! second cryptspec) 'iv
                 ]
 

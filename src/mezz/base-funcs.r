@@ -521,17 +521,20 @@ eval-all: func [
 /method: cascade [function/ uncouple/]
 
 
-; It's a bit odd that `foo: accessor does [...]` will evaluate to nothing.
-; But the other option would be to call the accessor to synthesize its value
-; (or to provide the prior value of the variable?)  It seems wasteful to
-; call the accessor when 99 times out of 100 the value would be discarded.
+; !!! This is an interim implementation of GETTER that returns nothing.  The
+; other concept of it would be to return a PACK! with "sub-band" content
+; which represented the TWEAK* representation of a getter.
 ;
-/accessor: infix func [
+; (Note it would be wasteful to call the getter, when 99 times out of 100
+; the value would be discarded--so whatever is done here should avoid that.)
+;
+/getter: infix func [
     return: []
-    var [set-word?]
-    action [action!]
+    @var [set-word? set-run-word?]
+    action [block! action!]
 ][
-    set-accessor var action/
+    if block? ^action [action: does action]
+    tweak var unrun action/
 ]
 
 

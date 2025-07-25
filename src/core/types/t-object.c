@@ -903,9 +903,15 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         Mold_Element(mo, set_word);
         Append_Codepoint(mo->strand, ' ');
 
-        if (Is_Dual_Unset(evars.slot)) {
+        if (Is_Dual(evars.slot)) {
+            if (Is_Dual_Unset(evars.slot)) {
+                require (
+                  Append_Ascii(mo->strand, "~[]~  ; antiform")  // !!! rethink
+                );
+                continue;
+            }
             require (
-              Append_Ascii(mo->strand, "\\~\\  ; unset")  // !!! rethink
+              Append_Ascii(mo->strand, "??? ; dual cell")  // !!! rethink
             );
             continue;
         }
@@ -1297,6 +1303,9 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         if (Is_Dual_Word_Unset_Signal(dual))
             goto handle_poke;
 
+        if (Is_Frame(dual))
+            goto handle_poke;
+
         if (Is_Dual_Word_Named_Signal(dual))
             goto handle_named_signal;
 
@@ -1311,7 +1320,10 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     if (LIFT_BYTE(OUT) == DUAL_0) {  // return as nonquoted/nonquasi thing
         LIFT_BYTE(OUT) = NOQUOTE_2;
-        assert(Is_Dual_Word_Unset_Signal(Known_Stable(OUT)));
+        assert(
+            Is_Dual_Word_Unset_Signal(Known_Stable(OUT))
+            or Is_Frame(Known_Stable(OUT))
+        );
         return OUT;  // not lifted, so not a "normal" state
     }
 
@@ -1329,7 +1341,12 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
-    assert(Any_Lifted(dual) or Is_Dual_Word_Unset_Signal(dual));  // more!
+    assert(
+        Any_Lifted(dual)
+        or Is_Dual_Word_Unset_Signal(dual)
+        or Is_Frame(dual)
+        // more!
+    );
 
     if (Get_Cell_Flag(slot, PROTECTED))  // POKE, must check PROTECT status
         panic (Error_Protected_Key(symbol));
