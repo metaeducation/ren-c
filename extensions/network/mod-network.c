@@ -104,8 +104,34 @@ static void Get_Local_IP(SOCKREQ *sock)
 }
 
 
+uv_timer_t wait_timer;
+
+void wait_timer_callback(uv_timer_t* handle) {
+    assert(handle->data != nullptr);
+    handle->data = nullptr;
+}
+
+
+uv_timer_t halt_poll_timer;
+
+void halt_poll_timer_callback(uv_timer_t* handle) {
+    //
+    // Doesn't actually do anything, just breaks the UV_RUN_ONCE loop
+    // every half a second.  Theoretically we could do this with uv_signal_t
+    // for SIGINT and a callback like:
+    //
+    //     void signal_callback(uv_signal_t* handle, int signum) {
+    //         Set_Trampoline_Flag(HALT);
+    //     }
+    //
+    // But that seems to only work on Linux and not Windows.
+    //
+    UNUSED(handle);
+}
+
+
 //
-//  Open_Socket: C
+//  Trap_Open_Socket: C
 //
 // Setup a socket with the specified protocol and bind it to the related
 // transport service.
@@ -116,7 +142,7 @@ static void Get_Local_IP(SOCKREQ *sock)
 // After usage:
 //     Close_Socket() - to free OS allocations
 //
-Value* Open_Socket(const Value* port)
+Value* Trap_Open_Socket(const Value* port)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
     assert(sock->stream == nullptr);
@@ -180,17 +206,159 @@ Value* Close_Socket(const Value* port)
 }
 
 
+// This libuv callback is triggered when a Trap_Connect_Socket_Else_Close()
+// connection has been made...or a panic happens.
 //
-//  Lookup_Socket_Synchronously: C
+// The callback will only be invoked when the libuv event loop is being run.
 //
-// !!! R3-Alpha would use asynchronous DNS API on Windows, but that API
-// was not supported by IPv6, and developers are encouraged to use normal
-// socket APIs with their own threads.  Now that we use libuv, there is again
-// the ability to specify a callback and do asynchronous lookup.  But this
-// would have to be fit in with a client understanding for how to request a
-// LOOKUP event, and when it had to be waited on.  For now it's synchronous.
+static void on_connect(uv_connect_t *req, int status) {
+    Reb_Connect_Request *rebreq = cast(Reb_Connect_Request*, req);
+    const Value* port = Varlist_Archetype(rebreq->port_ctx);
+    SOCKREQ *sock = Sock_Of_Port(port);
+
+    if (status < 0) {
+        rebreq->result = rebError_UV(status);
+    }
+    else {
+        sock->stream = req->handle;
+
+        Get_Local_IP(sock);
+        rebreq->result = rebSpace();
+    }
+}
+
+
 //
-Value* Lookup_Socket_Synchronously(
+//  Trap_Connect_Socket_Else_Close: C
+//
+// Helper function that attempts to connect a socket to a specific IP address
+// with an optional timeout.
+//
+// Closing the socket seems to be the only *effective* way to synchronously
+// cancel the connection attempt if it is still pending.  If we tried to use
+// uv_cancel() and then wait, it will wait too long.  If we don't wait, then
+// that leaves pending on_connect() callbacks hanging...which creates issues
+// in the current design.
+//
+// Returns:
+//   nullptr on success
+//   error Value* on failure
+//   timeout Value* if timeout_ms > 0 and connection times out
+//
+static Value* Trap_Connect_Socket_Else_Close(
+    const Value* port,
+    Option(uint32_t) timeout_ms  // 0 = no timeout
+){
+    SOCKREQ *sock = Sock_Of_Port(port);
+    assert(not (sock->modes & RST_LISTEN));
+
+    struct sockaddr_in sa;
+    Set_Addr(&sa, sock->remote_ip, sock->remote_port_number);
+
+    // !!! For some reason the on_connect() callback cannot be passed as
+    // nullptr to get a synchronous connection.
+    //
+    Reb_Connect_Request *rebreq = rebAlloc(Reb_Connect_Request);
+    rebreq->port_ctx = Cell_Varlist(port);
+    rebreq->result = nullptr;
+
+    int r = uv_tcp_connect(
+        &rebreq->req, &sock->tcp, cast(struct sockaddr *, &sa), on_connect
+    );
+
+    if (r < 0) {  // the *request* failed (didn't even try to connect)
+        rebFree(rebreq);
+        return rebError_UV(r);
+    }
+
+    // Set up timeout if requested
+    uv_timer_t connect_timer;
+    uv_timer_t* timer_ptr = nullptr;
+    if (timeout_ms) {
+        timer_ptr = &connect_timer;
+        uv_timer_init(uv_default_loop(), timer_ptr);
+        timer_ptr->data = timer_ptr;  // will be nulled on timeout
+        uv_timer_start(timer_ptr, wait_timer_callback, opt timeout_ms, 0);
+    }
+
+    // Wait for either connection or timeout
+    while (rebreq->result == nullptr &&
+           (timer_ptr == nullptr || timer_ptr->data != nullptr)) {
+        uv_run(uv_default_loop(), UV_RUN_ONCE);
+    }
+
+    // Clean up timer if used
+    if (timer_ptr != nullptr) {
+        uv_timer_stop(timer_ptr);
+        uv_close(cast(uv_handle_t*, timer_ptr), nullptr);
+        uv_run(uv_default_loop(), UV_RUN_NOWAIT);  // cleanup timer
+    }
+
+    Value* result;
+    if (rebreq->result != nullptr) {  // on_connect() ran (success or failure)
+        result = Is_Space(rebreq->result) ? nullptr : rebreq->result;
+        if (result == nullptr)
+            rebRelease(rebreq->result);  // success case
+    }
+    else {  // timeout occurred - close socket to force callback completion
+        uv_close(cast(uv_handle_t*, &sock->tcp), nullptr);
+
+        while (rebreq->result == nullptr)  // must wait for on_connect()
+            uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+
+        if (Is_Space(rebreq->result)) {  // connect succeded before close
+            rebRelease(rebreq->result);
+            // Don't call Close_Sock_If_Needed() - uv_close() already in flight
+            sock->stream = nullptr;
+            sock->modes = 0;
+            // !!! without a uv_run() this may leave dangling socket, how can
+            // we fix that?
+        }
+        else {
+            // Connection failed (expected case when close beats connect)
+            assert(Is_Error(rebreq->result));
+            rebRelease(rebreq->result);  // ignore the error, we're timing out
+        }
+
+        result = rebValue("make warning! -[Connection timeout]-");
+    }
+
+    rebFree(rebreq);
+    return result;
+}
+
+
+//
+//  Trap_Open_And_Connect_Socket_For_Hostname: C
+//
+// Combines DNS lookup with connection attempts, trying multiple IP addresses
+// with timeouts.
+//
+// For each IP address returned by DNS:
+//
+//  * Create a fresh socket
+//  * Attempt connection with 2.5 second timeout
+//  * If it fails, try the next IP address
+//  * If all IPs fail, return error
+//
+// This consolidated function replaces the old three-step process (lookup,
+// open, connect).  It has to be done in a unified manner, because it's simply
+// essential in modern networking to try multiple addresses, or the code will
+// fail to connect to many services that have multiple IPs.  At one point
+// example.com transitioned to being one such service, causing the old code to
+// fail to connect about half the time to the arbitrary address chosen during
+// a separate open().  Hence it had to be changed to this approach folding
+// together lookup, open, and connect.
+//
+// 1. R3-Alpha would use asynchronous DNS API on Windows.  But that API
+//    was not supported by IPv6, and developers are encouraged to use normal
+//    socket APIs with their own threads.  Now that we use libuv, there is
+//    again the ability to specify a callback and do asynchronous lookup.  But
+//    this would have to be fit in with a client understanding for how to
+//    request a LOOKUP event, and when it had to be waited on.  For now it's
+//    synchronous.
+//
+Value* Trap_Open_And_Connect_Socket_For_Hostname(  // synchronous [1]
     const Value* port,
     const Value* hostname
 ){
@@ -219,7 +387,7 @@ Value* Lookup_Socket_Synchronously(
     //
     struct addrinfo hints;
     Mem_Fill(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;  // should only return IPv4 addresses
+    hints.ai_family = AF_INET;  // IPv4 addresses only for now
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = 0;
@@ -227,6 +395,10 @@ Value* Lookup_Socket_Synchronously(
     // This is a replacement for:
     //
     //     HOSTENT *host = gethostbyname(s_cast(hostname_utf8));
+    //
+    // gethostbyname() is long since deprecated: it's IPv4 only, assumes DNS
+    // resolves to one name you can trust to answer you instead of trying
+    // multiple, and isn't thread safe either.
     //
     uv_getaddrinfo_t req;
     int r = uv_getaddrinfo(
@@ -243,104 +415,43 @@ Value* Lookup_Socket_Synchronously(
     if (r != 0)
         return rebError_UV(r);
 
-    // This assert used to check that ai_addrlen for an IPv4 address was 16,
-    // but it appears on HaikuOS it was 32.  Changed assert, still works.  :-/
+    struct addrinfo *addr_info = req.addrinfo;  // DNS may give many addresses
+
+    // This assert used to check ai_addrlen for an IPv4 address was 16, but on
+    // HaikuOS it was 32.  Changed assert, still works.  :-/
     //
     // https://stackoverflow.com/q/31343855/
     //
     assert(req.addrinfo->ai_addrlen >= 16);
 
-    // Synchronously fill in the port's remote_ip with the answer to looking
-    // up the hostname.
-    //
-    // This is a replacement for:
-    //
-    //      memcpy(&sock->remote_ip, *host->h_addr_list, 4);
-    //
-    struct sockaddr_in *sa = cast(struct sockaddr_in*, req.addrinfo->ai_addr);
-    assert(sizeof(sa->sin_addr) == 4);
-    memcpy(&sock->remote_ip, &sa->sin_addr, 4);
+    for (struct addrinfo *ai = addr_info; ai != nullptr; ai = ai->ai_next) {
+        if (ai->ai_family != AF_INET)
+            continue;  // Skip non-IPv4 addresses
 
-    uv_freeaddrinfo(req.addrinfo);  // have to free it
+        struct sockaddr_in *sa = cast(struct sockaddr_in*, ai->ai_addr);
 
-    // !!! Theoretically this is where we'd know whether it's an IPv6 address
-    // or an IPv4 address.  This is still transitional IPv4 code, though.
+        memcpy(&sock->remote_ip, &sa->sin_addr, 4);  // store for QUERY
 
-    return nullptr;
-}
+        Value* open_error = Trap_Open_Socket(port);  // sock for this attempt
+        if (open_error) {
+            rebRelease(open_error);
+            continue;  // try next IP
+        }
 
+        Option(uint32_t) timeout_ms = 2500;  // 2.5 seconds
+        Value* connect_error = Trap_Connect_Socket_Else_Close(port, timeout_ms);
+        if (connect_error == nullptr) {  // success!
+            uv_freeaddrinfo(addr_info);
+            return nullptr;
+        }
 
-// This libuv callback is triggered when a Request_Connect_Socket()
-// connection has been made...or a panic happens.
-//
-// The callback will only be invoked when the libuv event loop is being run.
-//
-static void on_connect(uv_connect_t *req, int status) {
-    Reb_Connect_Request *rebreq = cast(Reb_Connect_Request*, req);
-    const Value* port = Varlist_Archetype(rebreq->port_ctx);
-    SOCKREQ *sock = Sock_Of_Port(port);
-
-    if (status < 0) {
-        rebreq->result = rebError_UV(status);
-    }
-    else {
-        sock->stream = req->handle;
-
-        Get_Local_IP(sock);
-        rebreq->result = rebSpace();
-    }
-}
-
-
-//
-//  Request_Connect_Socket: C
-//
-// Connect a socket to a service.
-// Only required for connection-based protocols (e.g. not UDP).
-// The IP address must already be resolved before calling.
-//
-// This function is asynchronous. It will return immediately.
-// You can call this function again to check the pending connection.
-//
-// Before usage:
-//     Open_Socket() -- to allocate the socket
-//
-Value* Request_Connect_Socket(const Value* port)
-{
-    SOCKREQ *sock = Sock_Of_Port(port);
-    assert(not (sock->modes & RST_LISTEN));
-
-    struct sockaddr_in sa;
-
-    Set_Addr(&sa, sock->remote_ip, sock->remote_port_number);
-
-    // !!! For some reason the on_connect() callback cannot be passed as
-    // nullptr to get a synchronous connection.
-    //
-    Reb_Connect_Request *rebreq = rebAlloc(Reb_Connect_Request);
-    rebreq->port_ctx = Cell_Varlist(port);  // !!! keepalive as API handle?
-    rebreq->result = nullptr;
-
-    int r = uv_tcp_connect(
-        &rebreq->req, &sock->tcp, cast(struct sockaddr *, &sa), on_connect
-    );
-
-    if (r < 0) {  // the *request* failed (didn't even try to connect)
-        Close_Socket(port);
-        return rebError_UV(r);
+        rebRelease(connect_error);  // connection failed for this IP, try next
     }
 
-    do {
-        uv_run(uv_default_loop(), UV_RUN_ONCE);
-    } while (rebreq->result == nullptr);
+    uv_freeaddrinfo(addr_info);
 
-    if (not Is_Space(rebreq->result))
-        panic (rebreq->result);
-    rebRelease(rebreq->result);
-
-    rebFree(rebreq);
-
-    return nullptr;
+    // All IPs failed, return a generic connection failure message
+    return rebValue("make warning! -[Connection failed to all IP addresses]-");
 }
 
 
@@ -411,7 +522,7 @@ void on_new_connection(uv_stream_t *server, int status) {
 // Setup a listening TCP socket.
 //
 // Before usage:
-//     Open_Socket();
+//     Trap_Open_Socket();
 //     Set local_port to desired port number.
 //
 // Use this instead of Connect_Socket().
@@ -427,18 +538,18 @@ Value* Start_Listening_On_Socket(const Value* port)
 
     assert(sock->stream != nullptr);  // must be open
 
-  setup_address_range_and_port: { /////////////////////////////////////////////
+  setup_address_range_and_port: {
 
     struct sockaddr_in sa;
     Set_Addr(&sa, INADDR_ANY, sock->local_port_number);
 
-  bind_socket: { /////////////////////////////////////////////////////////////
+  bind_socket: {
 
     int r = uv_tcp_bind(&sock->tcp, cast(struct sockaddr*, &sa), 0);
     if (r < 0)
         return rebError_UV(r);
 
-} listen_on_socket: { ////////////////////////////////////////////////////////
+} listen_on_socket: {
 
     sock->tcp.data = Cell_Varlist(port);
     int r = uv_listen(
@@ -742,47 +853,59 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
                     "local-id field of PORT! spec must be NULL or INTEGER!"
                 );
 
+
+            if (Is_Nulled(arg)) {  // No host, must be a LISTEN socket:
+                sock->local_port_number =
+                    Is_Integer(port_id) ? VAL_INT32(port_id) : 8000;
+
+                Value* open_error = Trap_Open_Socket(port);
+                if (open_error)
+                    panic (open_error);
+
+                Value* listen_error = Start_Listening_On_Socket(port);
+                if (listen_error)
+                    panic (listen_error);
+
+                return COPY(port);
+            }
+
             // !!! R3-Alpha would open the socket using `socket()` call, and
             // then do a DNS lookup afterward if necessary.  But the right
             // way to do it is to look up the DNS first and find out what kind
             // of socket to create (e.g. IPv4 vs IPv6, for instance).
 
-            bool listen;
             if (Is_Text(arg)) {
-                listen = false;
                 sock->remote_port_number =
                     Is_Integer(port_id) ? VAL_INT32(port_id) : 80;
 
-                // Note: sets remote_ip field
-                //
-                Value* lookup_error = Lookup_Socket_Synchronously(port, arg);
-                if (lookup_error)
-                    panic (lookup_error);
+                // Combined DNS lookup + connect with retry across multiple IPs
+                Value* connect_error = Trap_Open_And_Connect_Socket_For_Hostname(
+                    port, arg
+                );
+                if (connect_error)
+                    panic (connect_error);
             }
             else if (Is_Tuple(arg)) {  // Host IP specified:
-                listen = false;
                 sock->remote_port_number =
                     Is_Integer(port_id) ? VAL_INT32(port_id) : 80;
 
                 Get_Tuple_Bytes(&sock->remote_ip, arg, 4);
-            }
-            else if (Is_Nulled(arg)) {  // No host, must be a LISTEN socket:
-                listen = true;
-                sock->local_port_number =
-                    Is_Integer(port_id) ? VAL_INT32(port_id) : 8000;
+
+                // For direct IP, still need to open socket and connect
+                Value* open_error = Trap_Open_Socket(port);
+                if (open_error)
+                    panic (open_error);
+
+                // UDP is connectionless so it will not add to the connectors.
+                if (sock->transport != TRANSPORT_UDP) {
+                    Option(uint32_t) timeout_ms = 0;  // no timeout
+                    Value* errval = Trap_Connect_Socket_Else_Close(port, timeout_ms);
+                    if (errval != nullptr)
+                        panic (errval);
+                }
             }
             else
                 panic (Error_On_Port(SYM_INVALID_SPEC, port, -10));
-
-            Value* open_error = Open_Socket(port);
-            if (open_error)
-                panic (open_error);
-
-            if (listen) {
-                Value* listen_error = Start_Listening_On_Socket(port);
-                if (listen_error)
-                    panic (listen_error);
-            }
 
             return COPY(port); }
 
@@ -980,19 +1103,6 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         }
         return COPY(port); }
 
-      case SYM_CONNECT: {
-        //
-        // CONNECT may happen synchronously, or asynchronously...so this may
-        // add to Net_Connectors.
-        //
-        // UDP is connectionless so it will not add to the connectors.
-        //
-        Value* errval = Request_Connect_Socket(port);
-        if (errval != nullptr)
-            panic (errval);
-
-        return COPY(port); }
-
       default:
         break;
     }
@@ -1026,32 +1136,6 @@ DECLARE_NATIVE(TCP_ACTOR)
 DECLARE_NATIVE(UDP_ACTOR)
 {
     return Transport_Actor(level_, TRANSPORT_UDP);
-}
-
-
-uv_timer_t wait_timer;
-
-void wait_timer_callback(uv_timer_t* handle) {
-    assert(handle->data != nullptr);
-    handle->data = nullptr;
-}
-
-
-uv_timer_t halt_poll_timer;
-
-void halt_poll_timer_callback(uv_timer_t* handle) {
-    //
-    // Doesn't actually do anything, just breaks the UV_RUN_ONCE loop
-    // every half a second.  Theoretically we could do this with uv_signal_t
-    // for SIGINT and a callback like:
-    //
-    //     void signal_callback(uv_signal_t* handle, int signum) {
-    //         Set_Trampoline_Flag(HALT);
-    //     }
-    //
-    // But that seems to only work on Linux and not Windows.
-    //
-    UNUSED(handle);
 }
 
 
@@ -1123,6 +1207,10 @@ DECLARE_NATIVE(SHUTDOWN_P)
   #if TO_WINDOWS
     WSACleanup();  // have to call as libuv does not
   #endif
+
+    // Stop timers before closing them to avoid "resource busy" errors
+    uv_timer_stop(&wait_timer);
+    uv_timer_stop(&halt_poll_timer);
 
     uv_close(cast(uv_handle_t*, &wait_timer), nullptr);  // no callback
     uv_close(cast(uv_handle_t*, &halt_poll_timer), nullptr);

@@ -77,22 +77,6 @@ DECLARE_NATIVE(OPEN)
 
 
 //
-//  connect: native:generic [
-//
-//  "Connects a port (used to be 'second open step')"
-//
-//      return: [port!]
-//      spec [port!]
-//  ]
-//
-DECLARE_NATIVE(CONNECT)
-{
-    Element* port = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(port, LEVEL, CANON(CONNECT));
-}
-
-
-//
 //  close: native:generic [
 //
 //  "Closes a port, library, etc."
