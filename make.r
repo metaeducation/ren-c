@@ -1431,7 +1431,7 @@ libr3-core: make rebmake.object-library-class [
         ]
     ]]
     append depends spread map-each 'w file-base.generated [
-        gen-obj w %prep/core/ (<no-options> [])
+        gen-obj w %prep/ (<no-options> [])
     ]
 ]
 
@@ -1478,7 +1478,7 @@ pthread: make rebmake.ext-dynamic-class [
 ; !!! This is an inelegant "interim" hack which gives subfolders for the obj
 ; files that have paths in them in %file-base.r
 
-folders: copy [%objs/ %objs/main/]
+folders: copy [%objs/ %objs/core/ %objs/main/]
 
 add-new-obj-folders: func [
     return: []
@@ -1512,8 +1512,8 @@ add-new-obj-folders: func [
 
 
 for-each [category entries] file-base [
-    if find [generated made] category [
-        continue  ; these categories are taken care of elsewhere
+    if category = 'generated  [
+        continue  ; taken care of elsewhere
     ]
     let dir
     if match [tuple! path!] entries [  ; main.c

@@ -99,19 +99,38 @@ write-if-changed (join output-dir %main/tmp-main-startup.r) buf
 
 
 e: make-emitter "r3 console executable embedded Rebol code bundle" (
-    join output-dir %main/tmp-main-startup.inc
+    join output-dir %main/tmp-main-startup.h
 )
 
 compressed: gzip buf
 
 e/emit [compressed --[
+    extern const unsigned int g_main_startup_size;
+
     /*
      * Gzip compression of host initialization code
      * Originally $<length of buf> bytes
      */
-    #define MAIN_STARTUP_SIZE $<length of compressed>
+    extern const unsigned char g_main_startup_code[];
+]--]
 
-    const unsigned char Main_Startup_Code[MAIN_STARTUP_SIZE] = {
+e/write-emitted
+
+
+e: make-emitter "r3 console executable embedded Rebol code bundle" (
+    join output-dir %main/tmp-main-startup.c
+)
+
+e/emit [compressed --[
+    #include "tmp-main-startup.h"
+
+    /*
+     * Size is a constant with storage vs. using a #define, so that relinking
+     * is enough to sync up the referencing sites.
+     */
+    const unsigned int g_main_startup_size = $<length of compressed>;
+
+    const unsigned char g_main_startup_code[$<length of compressed>] = {
     $<Binary-To-C:Indent Compressed 4>
     };
 ]--]

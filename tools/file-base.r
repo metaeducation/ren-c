@@ -233,22 +233,13 @@ core: [
 ; Files created by the make-boot process
 ;
 generated: [
-    tmp-boot-block.c
-    tmp-typesets.c
-    tmp-builtin-extension-table.c
-    tmp-rebol-api-table.c
-    tmp-generic-tables.c
-]
+    %core/tmp-boot-block.c
+    %core/tmp-typesets.c
+    %core/tmp-builtin-extension-table.c
+    %core/tmp-rebol-api-table.c
+    %core/tmp-generic-tables.c
 
-made: [
-    make-boot.r                 core/tmp-boot-block.c
-    make-extension-table.r      core/tmp-builtin-extension-table.c
-    make-librebol.r             core/tmp-rebol-api-table.c
-
-    make-headers.r              include/tmp-internals.h
-
-    make-host-init.r            include/host-init.h
-    make-librebol.r             include/rebol.h
+    %main/tmp-main-startup.c
 ]
 
 main: 'main.c

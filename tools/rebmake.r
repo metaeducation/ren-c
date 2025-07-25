@@ -841,16 +841,20 @@ cl: make compiler-class [
                 ]
             ]
             if O [
-                keep unspaced ["/O" O]
+                if O = 0 [  ; MSVC doesn't do /O0, it's /Od
+                    keep "/Od"
+                ] else [
+                    keep unspaced ["/O" O]
+                ]
             ]
-            if not null? g [
+            if g [
                 case [
                     off? g []
                     any [
                         on? g  ; only on and off are passed in...
                         integer? g  ; doesn't map to a CL option
                     ][
-                        keep "/Od /Zi"
+                        keep "/Zi"
                     ]
 
                     panic ["unrecognized debug option:" g]
