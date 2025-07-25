@@ -293,7 +293,13 @@ void Do_After_Action_Checks_Debug(Level* level_) {
         heeded (Corrupt_Cell_If_Needful(SPARE));
         heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
-        if (not Typecheck_Coerce_Return(LEVEL, param, OUT)) {
+        bool check = Typecheck_Coerce_Return(
+            LEVEL, param, OUT
+        ) except (Error* e) {
+            assert(!"'Raw' native code did not decay/panic value correctly!");
+            crash (e);
+        }
+        if (not check) {
             assert(!"'Raw' native code violated return type contract!\n");
             crash (Error_Bad_Return_Type(LEVEL, OUT, param));
         }

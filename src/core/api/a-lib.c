@@ -3267,7 +3267,10 @@ Bounce Api_Function_Dispatcher(Level* const L)
     heeded (Corrupt_Cell_If_Needful(Level_Spare(L)));
     heeded (Corrupt_Cell_If_Needful(Level_Scratch(L)));
 
-    if (not Typecheck_Coerce_Return(L, param, L->out))
+    require(
+      bool check = Typecheck_Coerce_Return(L, param, L->out)
+    );
+    if (not check)
         panic (Error_Bad_Return_Type(L, L->out, param));
 
     return L->out;

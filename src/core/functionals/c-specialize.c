@@ -316,7 +316,10 @@ bool Specialize_Action_Throws(
         heeded (Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
         heeded (Corrupt_Cell_If_Needful(Level_Spare(TOP_LEVEL)));
 
-        if (not Typecheck_Coerce(TOP_LEVEL, param, arg, false))
+        require (
+          bool check = Typecheck_Coerce(TOP_LEVEL, param, arg, false)
+        );
+        if (not check)
             panic (Error_Arg_Type(label, key, param, arg));
 
         Mark_Typechecked(arg);

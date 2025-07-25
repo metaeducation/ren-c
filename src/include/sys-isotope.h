@@ -139,53 +139,6 @@ INLINE Result(Element*) Coerce_To_Quasiform(Need(Element*) v) {
 }
 
 
-// Some packs (e.g. those with lifted unstable antiforms in them) can't be
-// decayed automatically.  They must be explicitly unpacked.
-//
-// Type checking has to be aware of this, and know that such packs shouldn't
-// return errors.
-//
-// 1. It is very atypical to allow unstable antiforms in a pack.  But if you
-//    do, then they could be masking an arbitrary amount of things like
-//    errors (e.g. errors in a PACK!)  The limited use cases for unstable
-//    antiforms in packs must unpack them, and not just allow them to drop
-//    into non-existence just because they weren't requested in an unpack.
-//
-// 2. An antiform block that contains non-lifted Elements *could* have those
-//    Elements convey a "dual representation".  e.g. a FRAME! could be
-//    interpreted as "be the accessor function for what you assign to".
-//    That's a novel concept, but better to use SET:DUAL and GET:DUAL and
-//    avoid the overhead of a PACK! to weirdly encode the idea.
-//
-INLINE bool Is_Pack_Undecayable(Atom* pack)
-{
-    assert(Is_Pack(pack));
-
-    const Element* tail;
-    const Element* at = List_At(&tail, pack);
-
-    if (at == tail)  // Is_Void() empty pack... not decayable
-        return true;
-
-    for (; at != tail; ++at) {  // all pack elements get checked [1]
-        if (LIFT_BYTE(at) >= ONEQUOTE_NONQUASI_4)
-            continue;  // most common case, lifted normal Elements
-
-        if (LIFT_BYTE(at) == QUASIFORM_3) {
-            if (Is_Stable_Antiform_Kind_Byte(u_cast(KindByte, Heart_Of(at))))
-                continue;  // lifted stable antiform, decayable
-
-            return true;  // lifted unstable antiform... not decayable
-        }
-
-        assert(LIFT_BYTE(at) == NOQUOTE_2);
-        return true;  // today we consider this corrupt [2]
-    }
-
-    return false;
-}
-
-
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unlift'd
 //
@@ -206,12 +159,38 @@ INLINE Result(Value*) Decay_If_Unstable(Need(Atom*) v) {
         return u_cast(Value*, v);
 
     if (Is_Pack(v)) {  // iterate until result is not multi-return [1]
-        if (Is_Pack_Undecayable(v))
-            return fail ("Undecayable pack in Decay_If_Unstable()");
+        const Element* tail;
+        const Element* first = List_At(&tail, v);
 
-        const Element* pack_at = List_At(nullptr, v);
-        Sink(Element) sink = v;
-        Copy_Cell(sink, pack_at);  // Note: no antiform binding (PACK!)
+        if (first == tail)
+            return fail ("Empty PACK! cannot decay to single value");
+
+        for (const Element* at = first; at != tail; ++at) {
+            if (not Any_Lifted(at))
+                return fail ("Non-lifted element in PACK!");
+
+            if (Is_Lifted_Error(at))
+                return fail (Cell_Error(at));
+
+            if (not Is_Lifted_Pack(at))
+                continue;
+
+            if (Is_Lifted_Void(at))
+                continue;  // voids can't decay, but allow if not first
+
+            Copy_Cell(v, at);
+            assume (
+              Unliftify_Undecayed(v)
+            );
+            trap (
+              Decay_If_Unstable(v)
+            );
+        }
+
+        if (Is_Lifted_Pack(first))
+            return fail ("PACK! cannot decay PACK! in first slot");
+
+        Copy_Cell(v, first);  // Note: no antiform binding (PACK!)
         require (
           Unliftify_Undecayed(v)
         );

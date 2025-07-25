@@ -1806,9 +1806,21 @@ Bounce Stepper_Executor(Level* L)
 
     assert(LIFT_BYTE(var) == NOQUOTE_2);
 
-    if (pack_at_lifted == pack_tail) {
-        if (not is_optional)
-            panic ("Not enough values for required multi-return");
+    if (pack_at_lifted == pack_tail) {  // no more multi-return values
+        if (not is_optional) {
+            if (circled == stackindex_var)
+                panic ("Circled item has no multi-return value to use");
+
+            Init_Dual_Word_Unset_Signal(OUT);
+            heeded (Corrupt_Cell_If_Needful(SPARE));
+            Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
+                LEVEL,
+                NO_STEPS
+            );
+            if (e)
+                panic (unwrap e);
+            goto skip_circled_check;  // we checked it wasn't circled
+        }
 
         // match typical input of lift which will be Unliftify'd
         // (special handling ^WORD! below will actually use plain null to
@@ -1853,10 +1865,16 @@ Bounce Stepper_Executor(Level* L)
     else
         assert(false);
 
-} circled_check: { // Note: no circling passes through the original OUT
+    goto circled_check;
+
+} circled_check: { ///////////////////////////////////////////////////////////
+
+  // Note: no circling passes through the original PACK!
 
     if (circled == stackindex_var)
         Copy_Cell(TOP_ATOM, OUT);
+
+} skip_circled_check: { //////////////////////////////////////////////////////
 
     ++stackindex_var;
     ++pack_at_lifted;

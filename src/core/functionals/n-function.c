@@ -255,7 +255,10 @@ Bounce Func_Dispatcher(Level* const L)
     heeded (Corrupt_Cell_If_Needful(SPARE));
     heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
-    if (not Typecheck_Coerce_Return(L, param, OUT))
+    require (
+      bool check = Typecheck_Coerce_Return(L, param, OUT)
+    );
+    if (not check)
         panic (
             "End of function without a RETURN, but ~ not in RETURN: spec"
         );
@@ -557,7 +560,7 @@ DECLARE_NATIVE(UNWIND)
 //
 //  Typecheck_Coerce_Return: C
 //
-bool Typecheck_Coerce_Return(
+Result(bool) Typecheck_Coerce_Return(
     Level* L,  // Level whose spare/scratch used (not necessarily return level)
     const Element* param,  // parameter for the RETURN (may be quoted)
     Atom* atom  // coercion needs mutability
@@ -588,7 +591,10 @@ bool Typecheck_Coerce_Return(
     if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(atom))
         return true;  // kind of common... necessary?
 
-    if (not Typecheck_Coerce(L, param, atom, true))
+    trap (
+      bool check = Typecheck_Coerce(L, param, atom, true)
+    );
+    if (not check)
         return false;
 
   determine_if_result_is_surprising: { ///////////////////////////////////////
@@ -716,7 +722,10 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
         heeded (Corrupt_Cell_If_Needful(SPARE));
         heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
-        if (not Typecheck_Coerce_Return(LEVEL, param, atom))  // do it now [2]
+        require (
+          bool check = Typecheck_Coerce_Return(LEVEL, param, atom)
+        );
+        if (not check)  // do it now [2]
             panic (Error_Bad_Return_Type(target_level, atom, param));
 
         DECLARE_VALUE (label);

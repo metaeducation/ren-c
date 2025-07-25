@@ -919,7 +919,10 @@ Bounce Action_Executor(Level* L)
         heeded (Corrupt_Cell_If_Needful(SPARE));
         heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
-        if (not Typecheck_Coerce(L, param, ARG, false)) {
+        require (
+          bool check = Typecheck_Coerce(L, param, ARG, false)
+        );
+        if (not check) {
             require (
               Value* arg = Decay_If_Unstable(ARG)
             );

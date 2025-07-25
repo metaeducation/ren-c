@@ -467,7 +467,10 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     heeded (Corrupt_Cell_If_Needful(Level_Spare(sub)));
     heeded (Corrupt_Cell_If_Needful(Level_Scratch(sub)));
 
-    if (not Typecheck_Coerce(sub, param, arg, false)) {
+    require (
+      bool check = Typecheck_Coerce(sub, param, arg, false)
+    );
+    if (not check) {
         Drop_Action(sub);
         Drop_Level(sub);
         goto test_failed;
@@ -831,7 +834,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 //    like (foo: func [...] mutable [...]) ?  This seems bad, because the
 //    contract of the function hasn't been "tweaked" with reskinning.
 //
-bool Typecheck_Coerce(
+Result(bool) Typecheck_Coerce(
     Level* const L,
     const Element* param,
     Atom* atom,  // need mutability for coercion
@@ -951,15 +954,12 @@ bool Typecheck_Coerce(
         if (Is_Error(atom))
             goto return_false;
 
-        if (Is_Pack(atom) and Is_Pack_Undecayable(atom))
-            goto return_false;  // don't decay undecayable packs
-
         if (Is_Ghost(atom))
             goto return_false;  // comma antiforms
 
         if (Is_Antiform(atom) and Is_Antiform_Unstable(atom)) {
-            assume (
-              Decay_If_Unstable(atom)  // !!! shouldn't error (!?)
+            trap (
+              Decay_If_Unstable(atom)
             );
             assert(not coerced);  // should only decay once...
             coerced = true;

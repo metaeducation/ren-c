@@ -838,7 +838,11 @@ Bounce JavaScript_Dispatcher(Level* const L)
     heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
     bool is_return = true;
-    if (not Typecheck_Coerce(L, param, OUT, is_return))
+
+    require (
+        bool check = Typecheck_Coerce(L, param, OUT, is_return)
+    );
+    if (not check)
         panic (Error_Bad_Return_Type(L, OUT, param));
 
     return OUT;
