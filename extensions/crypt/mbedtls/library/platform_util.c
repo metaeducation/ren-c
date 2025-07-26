@@ -34,6 +34,7 @@
 #include <string.h>
 
 #if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN  // trim headers, and avoids warning 4668 if /Wall
 #include <windows.h>
 #endif
 
