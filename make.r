@@ -389,7 +389,21 @@ gen-obj: func [
     ; https://stackoverflow.com/a/4001759
     ;
     ; For the moment we still use /Wall and omit any errors triggered in MS's
-    ; own headers
+    ; own headers.  If you want to avoid warning 4668 in Windows headers do:
+    ;
+    ;   #if defined(_MSC_VER)
+    ;       #pragma warning(disable : 4668)  // allow #if of undefined things
+    ;   #endif
+    ;   #include <SomeDisgracefulWindowsHeader.h>
+    ;   #include "library-header-including-windows-headers.h"
+    ;   #if defined(_MSC_VER)
+    ;      #pragma warning(error : 4668)   // disallow #if of undefined things
+    ;   #endif
+    ;
+    ; Alternately if it's just <windows.h>, these warnings go away with:
+    ;
+    ;   #define WIN32_LEAN_AND_MEAN
+    ;   #include <windows.h>
     ;
     append flags spread switch rigorous [
         'yes [
