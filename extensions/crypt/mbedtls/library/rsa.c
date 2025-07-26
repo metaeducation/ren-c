@@ -38,7 +38,10 @@
 #include "mbedtls/error.h"
 #include "constant_time_internal.h"
 #include "mbedtls/constant_time.h"
+
+#if defined(MBEDTLS_PSA_CRYPTO_CLIENT)
 #include "md_psa.h"
+#endif
 
 #include <string.h>
 
