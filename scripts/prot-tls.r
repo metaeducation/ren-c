@@ -174,7 +174,7 @@ cipher-suites: compose [
 
 debug: (comment [print/] noop/)
 
-; !!! There was a /SECURE refinement to RANDOM, which implemented the
+; !!! There was a :SECURE refinement to RANDOM, which implemented the
 ; following after generating the REBI64 into a tmp variable:
 ;
 ;     Byte srcbuf[20], dstbuf[20];
@@ -212,15 +212,16 @@ emit: func [
         return ~
     ]
 
-    while [code] [
+    while [not tail? code] [
         if set-word? code.1 [  ; set the word to the binary at current position
-            add-let-binding (binding of $return) to word! code.1 (tail ctx.msg)
+            let word: unchain code.1
+            add-let-binding (binding of $return) word (tail of ctx.msg)
             code: my next
         ]
         else [
             let result
             if [code ^result]: evaluate:step code [
-                if void? ^result [continue]  ; invisible
+                if ghost? ^result [continue]  ; invisible
                 append ctx.msg ensure blob! ^result
             ]
         ]
@@ -423,7 +424,7 @@ make-state-updater: func [
         new [tag! rune!]
     ][
         let old: ensure [null? rune! tag!] ctx.mode
-        debug [mold old unspaced ["=" direction "=>"] mold new]
+        debug compose "(mold reify old) =(direction)=> (mold new)"
 
         let legal
         all [old, not find (legal: select transitions old) new] then [
@@ -474,7 +475,7 @@ client-hello: func [
         ]
         block? version [
             parse version [decimal! decimal!] except [
-                panic "BLOCK! /VERSION must be two DECIMAL! (min ver, max ver)"
+                panic "BLOCK! :VERSION must be two DECIMAL! (min ver, max ver)"
             ]
             pack version
         ]
@@ -509,7 +510,7 @@ client-hello: func [
     ; } Random;
     ;
     let epoch: 1-Jan-1970/0:00+0:00
-    ctx.client-random: to-4bin to-integer difference now:precise epoch
+    ctx.client-random: to-4bin make integer! difference now:precise epoch
     randomize now:time:precise
     repeat 28 [append ctx.client-random (random-between 0 255)]
 
@@ -1626,7 +1627,7 @@ do-commands: func [
     tls-port [port!]
     commands [block!]
 ][
-    ctx: tls-port.state
+    let ctx: tls-port.state
     clear ctx.msg
 
     parse commands [
@@ -1634,7 +1635,7 @@ do-commands: func [
             let cmd: ahead one
             [
                 '<client-hello> (
-                    client-hello/version ctx [1.0 1.2]  ; min/max versioning
+                    client-hello:version ctx [1.0 1.2]  ; min/max versioning
                 )
                 | '<client-key-exchange> (
                     client-key-exchange ctx
@@ -1729,7 +1730,7 @@ tls-read-data: func [
                 "READING FINISHED"
                 length of head of ctx.data-buffer
                 index of data
-                same? tail of ctx.data-buffer data
+                boolean same? tail of ctx.data-buffer data
             ]
             clear ctx.data-buffer
             return okay
@@ -1746,7 +1747,7 @@ perform-read: func [
     return: []
     port [port!]
 ][
-    debug ["READ" open? port.state.connection]
+    debug ["READ open is" boolean open? port.state.connection]
     read port.state.connection  ; read some data from the TCP port
     insist [
         check-response port  ; see if it was enough, if not it asks for more
@@ -1792,7 +1793,10 @@ check-response: func [
         ]
     ]
 
-    debug ["data complete?:" is-complete "application?:" is-application]
+    debug [
+        "data complete?:" boolean is-complete
+        "application?:" boolean is-application
+    ]
 
     if yes? is-application [
         ; Done regardless?
