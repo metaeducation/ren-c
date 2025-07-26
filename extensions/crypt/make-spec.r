@@ -27,38 +27,61 @@ includes: [
 
 sources: [mod-crypt.c]
 
-depends: [
+depends: collect [  ; add common options and path prefix to files in list
+    let common: [
+        #no-c++
+
+        ; mbedTLS claims that there's some reason why they can't avoid making
+        ; this warning in GCC:
+        ;
+        ; https://github.com/Mbed-TLS/mbedtls/issues/6910
+        ;
+        <gcc:-Wno-redundant-decls>
+    ]
+
+    keep spread compose [tf_snprintf.c (common)]  ; not in mbedtls/library dir
+
+    let file  ; no LET in PARSE3, have to put LETs outside
+    let block
+
+  parse3 [  ; files in %mbedtls/library using `common` switches
     ;
-    ; The oid.c dependency in RSA is contingent on #define MBEDTLS_PKCS1_V15
-    ; padding implementation.
+    ; Modern trends move away from RSA for key exchange (ECDHE is faster, and
+    ; has smaller keys).  Also not used for bulk encryption (AES is standard).
     ;
-    mbedtls/library/rsa.c [#no-c++]
-    mbedtls/library/rsa_alt_helpers.c [#no-c++]
-    mbedtls/library/oid.c [#no-c++]
-    tf_snprintf.c [#no-c++]
+    ; However, RSA is still used for certificate signing (PKI infrastructure
+    ; is heavily RSA-based) and digital signatures (widespread tooling).
+    ;
+    rsa.c
+    rsa_alt_helpers.c
+    oid.c  ; dependency contingent on `#define MBEDTLS_PKCS1_V15` padding
+    asn1parse.c  ; !!! ASN1 PARSING SHOULD NOT BE REQUIRED TO USE RSA!
+    asn1write.c  ; !!! should not be needed
 
     ; If you're using a platform that mbedTLS has been designed for,
     ; you can take the standard settings of what "malloc" and "free"
     ; and "printf" are supposed to be.  (Hopefully it won't actually
     ; use printf in release code...)
     ;
-    mbedtls/library/platform.c [#no-c++]
-    mbedtls/library/platform_util.c [#no-c++]
+    platform.c
+    platform_util.c
 
-    ; The current plan is to embed the bignum implementation into Rebol itself
-    ; to power its INTEGER! type (when the integers exceed the cell size).
-    ; So it should be shareable across the various crypto that uses it.
+    ; Bignums are required for modern cryptography, and mbedTLS has its own
+    ; relatively light implementation.  (Once it was planned to share this
+    ; code with INTEGER! to implement BigNums, but use of mbedTLS in the
+    ; future given their 4.0 divergence is in question.)
     ;
-    mbedtls/library/bignum.c [#no-c++]
-    mbedtls/library/constant_time.c [#no-c++]
+    bignum.c
+    bignum_core.c
+    constant_time.c
 
     ; Generic message digest and cipher abstraction layers (write code to one
     ; C interface, get all the digests and ciphers adapted to it for "free",
     ; as well as be able to list and query which ones were built in by name)
     ;
-    mbedtls/library/md.c [#no-c++]
-    mbedtls/library/cipher.c [#no-c++]
-    mbedtls/library/cipher_wrap.c [#no-c++]
+    md.c
+    cipher.c [<msc:/wd4389>]  ; signed/unsigned equality testing
+    cipher_wrap.c
 
     ; MESSAGE DIGESTS
     ;
@@ -67,16 +90,15 @@ depends: [
     ; support (the generic MD wrapper handles them).  RC4 was once also
     ; included "just because it was there", but mbedTLS 3 dropped it.
     ;
-    mbedtls/library/sha256.c [#no-c++]
-    mbedtls/library/sha512.c [#no-c++]
-    mbedtls/library/ripemd160.c [#no-c++]  ; used by BitCoin :-/
-    mbedtls/library/md5.c [#no-c++]  ; !!! weak
-    mbedtls/library/sha1.c [#no-c++]  ; !!! weak
+    sha256.c
+    sha512.c
+    ripemd160.c  ; used by BitCoin :-/
+    md5.c  ; !!! weak
+    sha1.c  ; !!! weak
 
     ; BLOCK CIPHERS
     ;
-    mbedtls/library/aes.c [
-        #no-c++
+    aes.c [
         <msc:/analyze->  ; trips up static analyzer
     ]
 
@@ -85,27 +107,49 @@ depends: [
     ; to replace the %dh.h and %dh.c code, however.  Separate extensions for
     ; each crypto again would be preferable.
     ;
-    mbedtls/library/dhm.c [#no-c++]
+    dhm.c [#no-c++]
 
-    mbedtls/library/ecdh.c [
-        #no-c++
-
+    ecdh.c [
         <msc:/wd4065>  ; switch contains `default` but no case labels
         ; ^-- (triggered when MBEDTLS_ECDH_LEGACY_CONTEXT is disabled)
     ]
-    mbedtls/library/ecp.c [#no-c++]  ; also needed for ECDHE
-    mbedtls/library/ecp_curves.c [
-        #no-c++
-
+    ecp.c  ; also needed for ECDHE
+    ecp_curves.c [
         <msc:/wd4127>  ; conditional expression is constant
+        <msc:/wd4388>  ; signed/unsigned mismatch
         <msc:/analyze->  ; trips up static analyzer
      ]  ; also needed for ECDHE
+
+    ; Galois Counter Mode frequently has hardware acceleration, making it
+    ; a common choice in TLS 1.2 implementations, supplanting legacy CBC.
+    ;
+    gcm.c [
+        <msc:/wd4065>  ; switch contains 'default' but no 'case' labels
+    ]
+
+    ; ChaCha20-Poly1305 offers excellent performance in software-only
+    ; implementations, particularly advantageous on platforms lacking AES
+    ; hardware acceleration or when facing potential cache-timing attacks on
+    ; AES implementations.  It has gained significant traction and is becoming
+    ; increasingly prevalent in protocols like TLS 1.3 as a strong alternative
+    ; to AES-GCM.
+    ;
+    chacha20.c
+    poly1305.c
+    chachapoly.c
 
     ; !!! This is required unless you enable MBEDTLS_ECP_NO_INTERNAL_RNG,
     ; which menacingly refers to opportunities for side channel attacks.
     ;
-    mbedtls/library/hmac_drbg.c [#no-c++]
-]
+    hmac_drbg.c
+] [
+  some [
+    file: [tuple! | path!], block: try block! (
+        keep join %mbedtls/library/ to file! file
+        keep append (copy common) (spread opt block)
+    )
+  ]
+] ]  ; end COLLECT
 
 libraries: switch platform-config.os-base [
     'Windows [

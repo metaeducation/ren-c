@@ -44,6 +44,10 @@
 
 #include "reb-config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "mbedtls/rsa.h"
 
 // mbedTLS has separate functions for each message digest (SHA256, MD5, etc)
@@ -62,6 +66,10 @@
 // See file %tf_snprintf.c for why we need mbedtls_platform_set_snprintf()
 //
 #include "mbedtls/platform.h"
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
 
 #if TO_WINDOWS
     #undef _WIN32_WINNT  // https://forum.rebol.info/t/326/4
