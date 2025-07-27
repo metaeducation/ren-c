@@ -305,6 +305,8 @@ struct JumpStruct {
         NOOP
 
     #define ON_ABRUPT_PANIC(decl) \
+        NOOP; \
+        decl; \
       on_abrupt_panic: /* impossible jump here to avoid unreachable warning */ \
         assert(!"ON_ABRUPT_PANIC() reached w/PANIC_JUST_ABORTS=1"); \
         /* must have code for fallthrough after the abrupt panic block [6] */

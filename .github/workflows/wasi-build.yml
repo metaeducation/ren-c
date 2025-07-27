@@ -146,21 +146,24 @@ jobs:
     #
     - name: Get the Wasi-Sdk from GitHub Release
       run: |
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-20/wasi-sdk-20.0-linux.tar.gz
-        tar xf wasi-sdk-20.0-linux.tar.gz
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-20/wasi-sysroot-20.0.tar.gz
-        tar xf wasi-sysroot-20.0.tar.gz
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sdk-25.0-x86_64-linux.tar.gz
+        tar xf wasi-sdk-25.0-x86_64-linux.tar.gz
+        mv wasi-sdk-25.0-x86_64-linux wasi-sdk
+
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sysroot-25.0.tar.gz
+        tar xf wasi-sysroot-25.0.tar.gz
+        mv wasi-sysroot-25.0 wasi-sysroot
 
 
     # Everything in makefiles tends to be rigged up a bit hackily, and it's no
-    # exception here...the hardcoded environment variables WASI_CLANG and
-    # WASI_SYSROOT are looked up by %wasi.r in order to know where you put the
-    # non-native toolchain.
+    # exception here...the hardcoded environment variables WASI_CLANG_DIR and
+    # WASI_SYSROOT_DIR are looked up by %wasi.r in order to know where you put
+    # the non-native toolchain.
     #
     - name: Set Compiler and Sysroot Environment Variables Used By %wasi.r
       run: |
-        echo "WASI_CLANG=$(pwd)/wasi-sdk-20.0/bin/clang" >> $GITHUB_ENV
-        echo "WASI_SYSROOT=$(pwd)/wasi-sysroot" >> $GITHUB_ENV
+        echo "WASI_SDK_DIR=$(pwd)/wasi-sdk/" >> $GITHUB_ENV
+        echo "WASI_SYSROOT_DIR=$(pwd)/wasi-sysroot/" >> $GITHUB_ENV
 
 
     # Show a little bit of sanity check information
@@ -168,8 +171,8 @@ jobs:
     - name: Output System Information
       run: |
         echo "Current directory is: $(pwd)"
-        echo "WASI-SDK/clang version check:"
-        wasi-sdk-20.0/bin/clang -v
+        echo "WASI_SDK_DIR/bin/clang version check:"
+        "${WASI_SDK_DIR}/bin/clang" -v
 
 
   #====# BUILD STEPS #=======================================================#
@@ -189,7 +192,6 @@ jobs:
         "$R3MAKE" ../make.r \
             config: "../configs/$CONFIG_FILE" \
             target: makefile \
-            compiler: clang \
             standard: gnu99 \
             os-id: $OS_ID \
             debug: none \
@@ -279,7 +281,8 @@ jobs:
 
     - name: Install WasmEdge Runtime
       run: |
-        curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash
+        curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh -o install.sh
+        bash install.sh > /dev/null  # suppress download "animation"
 
 
   #====# INSTALL REN-C #=====================================================#
@@ -310,7 +313,7 @@ jobs:
         source /home/runner/.wasmedge/env
         cd build
         wasmedge r3.wasm --do \
-          "print ['** parse {Hello, Cloud} [thru space across to <end>] '**]"
+          "print ['** parse -[Hello, Cloud]- [thru space across to <end>] '**]"
 
 
     # The command `--dir x:.` tells WasmEdge to allow file access to the
@@ -324,8 +327,8 @@ jobs:
         source /home/runner/.wasmedge/env
         cd build
         wasmedge --dir x:. r3.wasm --do \
-          "print {Begin}, basic-write %x/test.txt {Test}, print {End}"
+          "print -[Begin]-, basic-write %x/test.txt -[Test]-, print -[End]-"
         wasmedge --dir x:. r3.wasm  --do \
-          "either {Test} = as text! basic-read %x/test.txt [print {Yay}] [panic]"
+          "either -[Test]- = as text! basic-read %x/test.txt [print -[Yay]-] [panic]"
         r3 --do \
-          "if {Test} = as text! read %test.txt [print {Verified}] else [panic]"
+          "if 'Test = as word! read %test.txt [print ['Verified]] else [panic]"
