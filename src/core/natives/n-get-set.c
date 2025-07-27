@@ -1555,3 +1555,32 @@ DECLARE_NATIVE(GET)
     );
     return OUT;
 }
+
+
+//
+//  defined?: native [
+//
+//  "Check to see if a variable is defined (unset is considered defined)"
+//
+//      return: [logic?]
+//      target [word! tuple! path!]
+//  ]
+//
+DECLARE_NATIVE(DEFINED_Q)
+//
+// !!! Exactly what the scope of "not defined" here is a bit unclear: should
+// something like (defined? $(1).foo) panic, or should it quietly consider
+// picking a field out of an INTEGER! to count as "undefined?"
+{
+    INCLUDE_PARAMS_OF_DEFINED_Q;
+
+    Get_Var_Maybe_Trash(
+        OUT, NO_STEPS, Element_ARG(TARGET), SPECIFIED
+    ) except (Error* e) {
+        UNUSED(e);
+        return LOGIC(false);
+    }
+
+    possibly(Is_Error(OUT));  // (get $obj.^field) can be defined as an ERROR!
+    return LOGIC(true);
+}
