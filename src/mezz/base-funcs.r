@@ -124,7 +124,7 @@ redescribe: func [
 )
 
 /unset?: redescribe [
-    "Determine if a variable is truly unset (tweaked to a dual tripwire)"
+    "Determine if a variable is truly unset (tweaked to dual WORD! *unset*)"
 ](
     cascade [
         specialize tweak/ [dual: null]
@@ -144,21 +144,7 @@ redescribe: func [
     cascade [get:any/ vacancy?/]
 )
 
-defined?: func [
-    "Determine if a variable has a binding and is not unset"
-    return: [logic?]
-    var [word! path! tuple!]
-][
-    return not rescue [get var]
-]
-
-undefined?: func [
-    "Determine if a variable does not have a binding or is unset"
-    return: [logic?]
-    var [word! path! tuple!]
-][
-    return did rescue [get var]
-]
+undefined?: cascade [defined?/ not/]
 
 unspecialized?: func [
     "Determine if a variable looks up to a PARAMETER!"
