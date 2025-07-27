@@ -36,7 +36,7 @@
 //          let msg = "READY!"
 //          console.log(
 //              reb.Spell("spaced [",
-//                  {reb.Xxx() API functions are now...}", reb.T(msg),
+//                  -[reb.Xxx() API functions are now...]-", reb.T(msg),
 //              "]")
 //          )
 //      </script>
@@ -342,7 +342,7 @@ for (let i = 0; i < js_args.length; i++) {
         if (a[0] == 'git_commit') {
             git_commit = a[1]
         } else
-            reb_args += a[0] + ": {" + a[1] + "} "
+            reb_args += a[0] + ": ---[" + a[1] + "]--- "  // ---[string]---
     }
     else
         throw Error("URL switches either ?switch or ?key=bar, separate by &")
