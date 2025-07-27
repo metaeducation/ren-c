@@ -43,22 +43,31 @@ Rebol [
 
 os-id: default [0.16.4]
 
-wasi-clang: to file! (get-env 'WASI_CLANG else [
+wasi-sdk-dir: to file! (get-env 'WASI_SDK_DIR else [
     panic [
-        "WASI_CLANG not set, should be to clang executable installed e.g. from"
+        "WASI_SDK_DIR not set, should be to SDK directory installed e.g. from"
         https://github.com/WebAssembly/wasi-sdk/releases
     ]
 ])
+if #"/" != last wasi-sdk-dir [
+    panic ["WASI_SDK_DIR should end in slash:" mold wasi-sdk-dir]
+]
 
-wasi-sysroot: to file! (get-env 'WASI_SYSROOT else [
+wasi-sysroot-dir: to file! (get-env 'WASI_SYSROOT_DIR else [
     panic [
-        "WASI_SYSROOT not set, should be to path installed e.g. from"
+        "WASI_SYSROOT_DIR not set, should be to path installed e.g. from"
         https://github.com/WebAssembly/wasi-sdk/releases
     ]
 ])
+if #"/" != last wasi-sysroot-dir [
+    panic ["WASI_SYSROOT_DIR should end in slash:" mold wasi-sysroot-dir]
+]
 
 compiler: 'clang
-compiler-path: %wasi-clang
+compiler-path: join wasi-sdk-dir %bin/clang
+
+stripper: 'strip
+stripper-path: join wasi-sdk-dir %bin/strip
 
 ; Historically, checked builds of Emscripten did not include asserts of the
 ; whole codebase...trusting the desktop builds to test that.  The only part
@@ -123,7 +132,7 @@ extensions: to map! compose [
 ; Note environment variable EMCC_DEBUG for diagnostic output
 
 cflags: compose [
-    "--sysroot ${WASI_SYSROOT}"
+    "--sysroot ${WASI_SYSROOT_DIR}"
 
     ; "wasm lacks signal support; to enable minimal signal emulation..."
     ; also needs to link with `-lwasi-emulated-signal`
@@ -133,6 +142,12 @@ cflags: compose [
     ;
     "-D_WASI_EMULATED_SIGNAL"
 
+    ; even still in 2025 with Wasi SDK v. 25, the exception handling support
+    ; is not quite yet turnkey...at time of writing, it lacks "libunwind".
+    ; some have gotten it working, but the distributed files are incomplete:
+    ;
+    ; https://github.com/WebAssembly/wasi-sdk/issues/334#issuecomment-3026978340
+    ;
     "-DPANIC_JUST_ABORTS=1"  ; no exceptions or setjmp()/longjmp()
 
     (? if yes? debug-wasi-extension [spread [

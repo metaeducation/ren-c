@@ -236,7 +236,7 @@ DECLARE_NATIVE(READ_LINE)
 //    own memory management since we're constructing a TEXT! anyway.
 //
 // 5. READ-LINE is textual, and enforces the rules of Ren-C TEXT!.  So there
-//    should be no CR.  It may be that the /RAW mode permits reading CR, but
+//    should be no CR.  It may be that the :RAW mode permits reading CR, but
 //    it also may be that READ-STDIN should be used for BLOB! instead.  Ren-C
 //    wants to stamp CR out of all the files it can.
 {
@@ -273,6 +273,8 @@ DECLARE_NATIVE(READ_LINE)
     }
     else  // we have a smart console but aren't using it (redirected to file?)
         goto read_from_stdin;
+  #else
+    UNUSED(Make_Escape_Error);
   #endif
 
   read_from_stdin: { //////////////////////////////////////////////////////=//
@@ -458,6 +460,8 @@ DECLARE_NATIVE(READ_CHAR)
     }
     else  // we have a smart console but aren't using it (redirected to file?)
         goto read_from_stdin;
+  #else
+    UNUSED(raw);  // raw mode not supported without smart console
   #endif
 
   read_from_stdin: {  /////////////////////////////////////////////////////=//
