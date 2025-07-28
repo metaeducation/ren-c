@@ -812,9 +812,9 @@ e-bootblock/emit [compressed --[
      * Size is a constant with storage vs. using a #define, so that relinking
      * is enough to sync up the referencing sites.
      */
-    const Size Symbol_Names_Compressed_Size = $<length of compressed>;
+    const Size g_symbol_names_compressed_size = $<length of compressed>;
 
-    const Byte Symbol_Names_Compressed[$<length of compressed>] = {
+    const Byte g_symbol_names_compressed[$<length of compressed>] = {
     $<Binary-To-C:Indent Compressed 4>
     };
 ]--]
@@ -876,9 +876,9 @@ e-bootblock/emit [compressed --[
      * Size is a constant with storage vs. using a #define, so that relinking
      * is enough to sync up the referencing sites.
      */
-    const Size Boot_Block_Compressed_Size = $<length of compressed>;
+    const Size g_boot_block_compressed_size = $<length of compressed>;
 
-    const Byte Boot_Block_Compressed[$<length of compressed>] = {
+    const Byte g_boot_block_compressed[$<length of compressed>] = {
         $<Binary-To-C:Indent Compressed 4>
     };
 ]--]
@@ -905,14 +905,14 @@ e-boot/emit [fields --[
     /*
      * Symbols in SYM_XXX order, separated by newline characters, compressed.
      */
-    EXTERN_C const Size Symbol_Names_Compressed_Size;
-    EXTERN_C const Byte Symbol_Names_Compressed[];
+    EXTERN_C const Size g_symbol_names_compressed_size;
+    EXTERN_C const Byte g_symbol_names_compressed[];
 
     /*
      * Compressed data of the native specifications, uncompressed during boot.
      */
-    EXTERN_C const Size Boot_Block_Compressed_Size;
-    EXTERN_C const Byte Boot_Block_Compressed[];
+    EXTERN_C const Size g_boot_block_compressed_size;
+    EXTERN_C const Byte g_boot_block_compressed[];
 
     /*
      * Raw C function pointers for natives, take Level* and return Bounce.

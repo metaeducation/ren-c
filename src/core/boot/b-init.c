@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -56,37 +56,25 @@
 //
 //  Check_Basics: C
 //
-// 1. Initially these checks were #if RUNTIME_CHECKS only.  However, they are
-//    so foundational that it's probably worth getting a coherent crash in any
-//    build where these tests don't work.
+// Initially these checks were #if RUNTIME_CHECKS only.  However, they are
+// so foundational that it's probably worth getting a coherent crash in any
+// build where these tests don't work.
 //
-// 2. The system is designed with the intent that a cell is 4x(32-bit) on
-//    32-bit platforms and 4x(64-bit) on 64-bit platforms.  It's a critical
-//    performance point.  For the moment we consider it to be essential
-//    enough that the system that it refuses to run if not true.
-//
-//    But if someone is in an odd situation with a larger sized cell--and
-//    it's an even multiple of ALIGN_SIZE--it may still work.  For instance:
-//    the DEBUG_TRACK_EXTEND_CELLS mode doubles the cell size to carry the
-//    file, line, and tick of their initialization (or last Touch_Cell()).
-//    Define UNUSUAL_CELL_SIZE to bypass this check.
-//
-// 3. Stub historically placed the `info` bits exactly after `content` so
-//    they could do double-duty as an array terminator when the content was a
-//    singular Cell and enumerated as an Array.  But arrays are now
-//    enumerated according to their stored length, and only have termination
-//    if DEBUG_POISON_FLEX_TAILS.  But the phenomenon still has some leverage
-//    by ensuring the BASE_FLAG_CELL bit is clear in the info field--which
-//    helps catch a few stray reads or writes.
-//
-// 4. See the %sys-base.h file for an explanation of what these are, and
-//    why having them work is fundamental to the API.
-//
-static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
+static void Check_Basics(void)
 {
-    Size cell_size = sizeof(Cell);  // in variable avoids warning
+  check_cell_size: {  // define UNUSUAL_CELL_SIZE to bypass this check!
 
-   //=//// CHECK CELL SIZE [2] ////////////////////////////////////////////=//
+  // The system is designed with the intent that a cell is 4x(32-bit) on
+  // 32-bit platforms and 4x(64-bit) on 64-bit platforms.  It's a critical
+  // performance point.  For the moment we consider it to be essential enough
+  // that the system that it refuses to run if not true.
+  //
+  // But if someone is in an odd situation with a larger sized cell--and it's
+  // an even multiple of ALIGN_SIZE--it may still work.  For instance: the
+  // DEBUG_TRACK_EXTEND_CELLS mode doubles the cell size to carry the file,
+  // line, and tick of their initialization (or last Touch_Cell()).
+
+    Size cell_size = sizeof(Cell);  // in variable avoids warning
 
   #if UNUSUAL_CELL_SIZE  // e.g. if DEBUG_TRACK_EXTEND_CELLS
     if (cell_size % ALIGN_SIZE != 0)
@@ -105,13 +93,24 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
     UNUSED(stub_size);
   #endif
 
-   //=//// CHECK STUB INFO PLACEMENT (non-essential) [3] //////////////////=//
+} check_stub_info_placement: {  // (non-essential)
+
+  // Stub historically placed the `info` bits exactly after `content` so
+  // they could do double-duty as an array terminator when the content was a
+  // singular Cell and enumerated as an Array.  But arrays are now
+  // enumerated according to their stored length, and only have termination
+  // if DEBUG_POISON_FLEX_TAILS.  But the phenomenon still has some leverage
+  // by ensuring the BASE_FLAG_CELL bit is clear in the info field--which
+  // helps catch a few stray reads or writes.
 
     Size offset = offsetof(Stub, info);  // variable avoids warning
     if (offset - offsetof(Stub, content) != sizeof(Cell))
         crash ("bad structure alignment for internal array termination");
 
-   //=//// CHECK BYTE-ORDERING SENSITIVE FLAGS [4] ////////////////////////=//
+} check_byte_ordering_sensitive_flags: {
+
+  // See the %sys-base.h file for an explanation of what these are, and why
+  // having them work is fundamental to the system.
 
     Flags flags
         = FLAG_LEFT_BIT(5) | FLAG_SECOND_BYTE(21) | FLAG_SECOND_UINT16(1975);
@@ -125,30 +124,7 @@ static void Check_Basics(void)  // included even if NO_RUNTIME_CHECKS [1]
       #endif
         crash ("Bad composed integer assignment for byte-ordering macro.");
     }
-}
-
-
-#if !defined(OS_STACK_GROWS_UP) && !defined(OS_STACK_GROWS_DOWN)
-    //
-    // This is a naive guess with no guarantees.  If there *is* a "real"
-    // answer, it would be fairly nuts:
-    //
-    // http://stackoverflow.com/a/33222085/211160
-    //
-    // Prefer using a build configuration #define, if possible (although
-    // emscripten doesn't necessarily guarantee up or down):
-    //
-    // https://github.com/kripken/emscripten/issues/5410
-    //
-    bool Guess_If_Stack_Grows_Up(int *p) {
-        int i;
-        if (not p)
-            return Guess_If_Stack_Grows_Up(&i);  // RECURSION: avoids inlining
-        if (p < &i)  // !!! this comparison is undefined behavior
-            return true;  // upward
-        return false;  // downward
-    }
-#endif
+}}
 
 
 //
@@ -603,33 +579,32 @@ void Startup_Core(void)
 
 } startup_api: {
 
-    // The API contains functionality for memory allocation, decompression,
-    // and other things needed to generate Lib.  So it has to be initialized
-    // first...but you can't call any variadic APIs until Lib is available
-    // to do binding.
+  // The API contains functionality for memory allocation, decompression, and
+  // other things needed to generate LIB.  So it has to be initialized first,
+  // but you can't call any variadic APIs until LIB is available for binding.
 
     Startup_Api();
 
 } startup_interning_and_builtin_symbols: {
 
-    // The build process makes a list of Symbol ID numbers (SymId) which
-    // are given fixed values.  e.g. SYM_LENGTH for the word `length` has an
-    // integer enum value you can use in a C switch() statement.  Stubs for
-    // these built-in symbols are constructed in a global array and stay
-    // valid for the duration of the program.
+  // The build process makes a list of Symbol ID numbers (SymId) which are
+  // given fixed values.  e.g. SYM_LENGTH for the word `length` has an integer
+  // enum value you can use in a C switch() statement.  Stubs for these
+  // built-in symbols are constructed in a global array and stay valid for
+  // the duration of the program.
 
     Startup_Interning();
 
     Startup_Builtin_Symbols(  // requires API for allocations in decompress
-        Symbol_Names_Compressed,
-        Symbol_Names_Compressed_Size
+        g_symbol_names_compressed,
+        g_symbol_names_compressed_size
     );
 
 } startup_datatypes: {
 
-    // Builtin datatypes no longer live in LIB, but in SYS.CONTEXTS.DATATYPES
-    // which is inherited by LIB.  This is also where extension datatypes are
-    // put, so that the module Patch can serve as the canon ExtraHeart.
+  // Builtin datatypes no longer live in LIB, but in SYS.CONTEXTS.DATATYPES
+  // which is inherited by LIB.  This is also where extension datatypes are
+  // put, so that the module Patch can serve as the canon ExtraHeart.
 
     Startup_Datatypes();
 
@@ -638,20 +613,20 @@ void Startup_Core(void)
 
 } startup_lib: {
 
-    // For many of the built-in symbols, we know there will be variables in
-    // the Lib module for them.  e.g. since FOR-EACH is in the list of native
-    // functions, we know Startup_Natives() will run (for-each: native [...])
-    // during the boot.
-    //
-    // Since we know that, variables for the built-in symbols are constructed
-    // in a global array.  This array is quickly indexable by the symbol ID,
-    // so that core code can do lookups like Lib_Var(APPEND) to beeline to
-    // the address of that library variable as a compile-time constant.
-    //
-    // After Startup_Lib(), all the builtin library variables will exist, but
-    // they will be unset.  Startup_Natives() and Startup_Generics() can
-    // take their existence for granted, without having to walk their init
-    // code to collect the variables before running it.
+  // For many of the built-in symbols, we know there will be variables in
+  // the Lib module for them.  e.g. since FOR-EACH is in the list of native
+  // functions, we know Startup_Natives() will run (for-each: native [...])
+  // during the boot.
+  //
+  // Since we know that, variables for the built-in symbols are constructed
+  // in a global array.  This array is quickly indexable by the symbol ID,
+  // so that core code can do lookups like Lib_Var(APPEND) to beeline to the
+  // address of that library variable as a compile-time constant.
+  //
+  // After Startup_Lib(), all the builtin library variables will exist, but
+  // they will be unset.  Startup_Natives() and Startup_Generics() can take
+  // their existence for granted, without having to walk their init code to
+  // collect the variables before running it.
 
     Startup_Lib();
 
@@ -660,19 +635,19 @@ void Startup_Core(void)
 
 } initialize_core_api_binding: {
 
-    // If you call a librebol API function from an arbitrary point in the
-    // core, it will do its lookups in the lib context.
-    //
-    // (We have to cast it because API RebolContext* is a typedef of void*.)
+  // If you call a librebol API function from an arbitrary point in the core,
+  // it will do its lookups in the lib context.
+  //
+  // (We have to cast it because API RebolContext* is a typedef of void*.)
 
     ensure_nullptr(librebol_binding) = cast(RebolContext*, g_lib_context);
 
 } create_global_objects: {
 
-    // The API is one means by which variables can be made whose lifetime is
-    // indefinite until program shutdown.  In R3-Alpha this was done with
-    // boot code that laid out some fixed structure arrays, but it's more
-    // general to do it this way.
+  // The API is one means by which variables can be made whose lifetime is
+  // indefinite until program shutdown.  In R3-Alpha this was done with boot
+  // code that laid out some fixed structure arrays, but it's more general to
+  // do it this way.
 
     Init_Root_Vars();  // States that can't (or aren't) held in Lib variables
     Init_Action_Spec_Tags();  // Note: requires mold buffer be initialized
@@ -683,18 +658,17 @@ void Startup_Core(void)
 
 } load_boot_block: {
 
-    // 1. The %make-boot.r process takes all the various definitions and
-    //    mezzanine code and packs it into one compressed string in
-    //    %tmp-boot-block.c which gets embedded into the executable.  This
-    //    includes the type list, word list, error message templates, system
-    //    object, mezzanines, etc.
+  // 1. %make-boot.r takes all the various definitions and mezzanine code and
+  //    packs it into one compressed string in %tmp-boot-block.c which gets
+  //    embedded into the executable.  This includes the type list, word list,
+  //    error message templates, system object, mezzanines, etc.
 
     Size utf8_size;
     const int max = -1;  // trust size in gzip data
     Byte* utf8 = Decompress_Alloc_Core(
         &utf8_size,
-        Boot_Block_Compressed,  // from %tmp-boot-block.c [1]
-        Boot_Block_Compressed_Size,
+        g_boot_block_compressed,  // from %tmp-boot-block.c [1]
+        g_boot_block_compressed_size,
         max,
         SYM_GZIP
     );
@@ -727,10 +701,10 @@ void Startup_Core(void)
 
  register_builtin_dispatchers: {
 
-    // We need to be able to navigate from dispatcher to querier.  It would
-    // be too costly to store queriers in stubs, and we'd have to double
-    // dereference the dispatcher to get one function to imply another
-    // without a global sidestructure of some kind.
+  // We need to be able to navigate from dispatcher to querier.  It would be
+  // too costly to store queriers in stubs, and we'd double dereference the
+  // dispatcher to get one function to imply another without a global
+  // sidestructure of some kind.
 
     Register_Dispatcher(&Func_Dispatcher, &Func_Details_Querier);
     Register_Dispatcher(&Adapter_Dispatcher, &Adapter_Details_Querier);
@@ -758,15 +732,15 @@ void Startup_Core(void)
 
 } startup_type_predicates: {
 
-    // Startup_Type_Predicates() uses symbols, data stack, and adds words
-    // to lib--not available until this point in time.
-    //
+  // Startup_Type_Predicates() uses symbols, data stack, adds words to lib.
+  // Not possible until this point in time.
+
     Startup_Type_Predicates();
 
 } startup_natives: {
 
-    // boot->natives is from the automatically gathered list of natives found
-    // by scanning comments in the C sources for `native: ...` declarations.
+  // boot->natives is from the automatically gathered list of natives found
+  // by scanning comments in the C sources for `native: ...` declarations.
 
     Startup_Action_Adjunct_Shim();  // make the shim for the action spec
 
@@ -780,19 +754,19 @@ void Startup_Core(void)
 
 } startup_constants: {  // like NULL, SPACE, etc.
 
-    // Before any code can start running (even simple bootstrap code), some
-    // basic words need to be defined.  For instance: You can't run %sysobj.r
-    // unless `null` and `okay` have been added to the g_lib_context--they'd be
-    // undefined.  And while analyzing the function specs during the
-    // definition of natives, things like the <opt-out> tag are needed as a
-    // basis for comparison to see if a usage matches that.
-    //
-    // These may be used in the system object definition.  At one time code
-    // manually added definitions like NULL to LIB, but having it expressed
-    // as simply (null: ~null~) in usermode code is clearer.
-    //
-    // Note that errors are not initialized yet (they are accessed through
-    // the system object).  So this code should stay pretty simple.
+  // Before any code can start running (even simple bootstrap code), some
+  // basic words need to be defined.  For instance: You can't run %sysobj.r
+  // unless `null` and `okay` have been added to the g_lib_context--they'd be
+  // undefined.  And while analyzing the function specs during the definition
+  // of natives, things like the <opt-out> tag are needed as a basis for
+  // comparison to see if a usage matches that.
+  //
+  // These may be used in the system object definition.  At one time code
+  // manually added definitions like NULL to LIB, but having it expressed as
+  // simply (null: ~null~) in usermode code is clearer.
+  //
+  // Note that errors are not initialized yet (they are accessed through the
+  // system object).  So this code should stay pretty simple.
 
     rebElide(
         "wrap*", g_lib_module, rebQ(&boot->constants),
@@ -806,7 +780,11 @@ void Startup_Core(void)
 
 } startup_errors: {
 
-    // 1. boot->errors is the error definition list from %errors.r
+  // 1. boot->errors is the error definition list from %errors.r
+  //
+  // 2. Pre-make the stack overflow error (so it doesn't need to be made
+  //    during a stack overflow).  Error creation machinery depends heavily
+  //    on the system object, so this can't be done until now.
 
     VarList* errors_catalog = Startup_Errors(&boot->errors);  // %errors.r [1]
     Push_Lifeguard(errors_catalog);
@@ -824,29 +802,22 @@ void Startup_Core(void)
     panic ("mid boot panic");  // if RUNTIME_CHECKS assert, else crash
   #endif
 
-    // Pre-make the stack overflow error (so it doesn't need to be made
-    // during a stack overflow).  Error creation machinery depends heavily
-    // on the system object being initialized, so this can't be done until
-    // now.
+    Startup_Stackoverflow();  // can't create *during* a stack overflow [2]
 
-    Startup_Stackoverflow();
-
-    // Pre-make UTF-8 decoding errors so that UTF-8 failures aren't slow
-    //
-    Startup_Utf8_Errors();
+    Startup_Utf8_Errors();  // pre-make so UTF-8 failures aren't slow
 
     Startup_Yielder_Errors();
     Startup_Reduce_Errors();
 
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
-} initialize_lib: { // SYSTEM.CONTEXTS.LIB
+} initialize_lib: {  // SYSTEM.CONTEXTS.LIB
 
-    // The basic model for bootstrap is that the "user context" is the
-    // default area for new code evaluation.  It starts out as a copy of an
-    // initial state set up in the lib context.  When native routines or other
-    // content gets overwritten in the user context, it can be borrowed back
-    // from `system.contexts.lib` (aliased as "lib" in the user context).
+  // The basic model for bootstrap is that the "user context" is the default
+  // area for new code evaluation.  It starts out as a copy of an initial
+  // state set up in the lib context.  When native routines or other content
+  // gets overwritten in the user context, it can be borrowed back from
+  // `system.contexts.lib` (aliased as "lib" in the user context).
 
     Copy_Cell(
         Slot_Init_Hack(Get_System(SYS_CONTEXTS, CTX_DATATYPES)),
@@ -867,32 +838,32 @@ void Startup_Core(void)
 
 } update_boot_phase: {  // Note: error handling initialized
 
-    // By this point, the g_lib_context contains basic definitions for things
-    // like null, space, the natives, and the generics.  `system` is set up.
-    //
-    // There is theoretically some level of error recovery that could be done
-    // here.  e.g. the evaluator works, it just doesn't have many functions you
-    // would expect.  How bad it is depends on whether base and sys ran, so
-    // perhaps only errors running "mezz" should be tolerated.  But the
-    // console may-or-may-not run.
-    //
-    // For now, assume any panic in code running doing boot is fatal.
-    //
-    // (Handling of Ctrl-C is an issue...if halt cannot be handled cleanly,
-    // it should be set up so that the user isn't even *able* to request a
-    // halt at this boot phase.)
+  // By this point, the g_lib_context contains basic definitions for things
+  // like null, space, the natives, and the generics.  `system` is set up.
+  //
+  // There is theoretically some level of error recovery that could be done
+  // here.  e.g. the evaluator works, it just doesn't have many functions you
+  // would expect.  How bad it is depends on whether base and sys ran, so
+  // perhaps only errors running "mezz" should be tolerated.  But the
+  // console may-or-may-not run.
+  //
+  // For now, assume any panic in code running doing boot is fatal.
+  //
+  // (Handling of Ctrl-C is an issue...if halt cannot be handled cleanly, it
+  // should be set up so that the user isn't even *able* to request a halt at
+  // this boot phase.)
 
     PG_Boot_Phase = BOOT_MEZZ;
 
 } startup_base: {
 
-    // The code in "base" is the lowest level of initialization written as
-    // Rebol code.  This is where things like `+` being an infix form of ADD is
-    // set up, or FIRST being a specialization of PICK.  It also has wrappers
-    // for more basic natives that handle aspects that are easier to write in
-    // usermode than in C.
-    //
-    // 1. Create actual variables for top-level SET-WORD!s only.
+  // The code in "base" is the lowest level of initialization written as
+  // Rebol code.  This is where things like `+` being an infix form of ADD is
+  // set up, or FIRST being a specialization of PICK.  It also has wrappers
+  // for more basic natives that handle aspects that are easier to write in
+  // usermode than in C.
+  //
+  // 1. Create actual variables for top-level SET-WORD!s only.
 
     rebElide(
         "wrap*", g_lib_module, rebQ(&boot->base),  // top-level variables [1]
@@ -901,20 +872,20 @@ void Startup_Core(void)
 
 } startup_sys_util: {
 
-    // The SYSTEM.UTIL context contains supporting Rebol code for implementing
-    // "system" features.  It is lower-level than the LIB context, but has
-    // natives, generics, and the definitions from Startup_Base() available.
-    //
-    // (Note: The SYSTEM.UTIL context was renamed from just "SYS" to avoid
-    //  being confused with "the system object", which is a different thing.
-    //  Better was to say SYS was just an abbreviation for SYSTEM.)
-    //
-    // 1. The scan of the boot block interned everything to g_lib_context, but
-    //    we want to overwrite that with the g_sys_util_context here.
-    //
-    // 2. SYS contains the implementation of the module machinery itself, so
-    //    we don't have MODULE or EXPORT available.  Do the exports manually,
-    //    and then import the results to lib.
+  // The SYSTEM.UTIL context contains supporting Rebol code for implementing
+  // "system" features.  It is lower-level than the LIB context, but has
+  // natives, generics, and the definitions from Startup_Base() available.
+  //
+  // (Note: The SYSTEM.UTIL context was renamed from just "SYS" to avoid
+  //  being confused with "the system object", which is a different thing.
+  //  Better was to say SYS was just an abbreviation for SYSTEM.)
+  //
+  // 1. The scan of the boot block interned everything to g_lib_context, but
+  //    we want to overwrite that with the g_sys_util_context here.
+  //
+  // 2. SYS contains the implementation of the module machinery itself, so
+  //    we don't have MODULE or EXPORT available.  Do the exports manually,
+  //    and then import the results to lib.
 
     SeaOfVars* util = Alloc_Sea_Core(BASE_FLAG_MANAGED);
     Tweak_Link_Inherit_Bind(util, g_lib_context);
@@ -939,42 +910,42 @@ void Startup_Core(void)
 
 } protect_system_object: {
 
-    // !!! It was a stated goal at one point that it should be possible to
-    // protect the entire system object and still run the interpreter.  That
-    // was commented out in R3-Alpha
-    //
-    //    comment [if get $lib/secure [protect-system-object]]
+  // !!! It was a stated goal at one point that it should be possible to
+  // protect the entire system object and still run the interpreter.  That
+  // was commented out in R3-Alpha
+  //
+  //    comment [if get $lib/secure [protect-system-object]]
 
 } startup_mezzanine: {
 
-    rebElide(
-        // (It's not necessarily the greatest idea to have LIB be this
-        // flexible.  But as it's not hardened from mutations altogether then
-        // prohibiting it doesn't offer any real security...and only causes
-        // headaches when trying to do something weird.)
+  // (It's not necessarily the greatest idea to have LIB be this flexible.
+  // But as it's not hardened from mutations altogether then prohibiting it
+  // doesn't offer any real security...and only causes headaches when trying
+  // to do something weird.)
+  //
+  // 1. Create actual variables for top-level SET-WORD!s only.
 
-        // Create actual variables for top-level SET-WORD!s only, and run.
-        //
-        "wrap*", g_lib_module, rebQ(&boot->mezz),
+    rebElide(
+        "wrap*", g_lib_module, rebQ(&boot->mezz),  // top-level variables [1]
         "evaluate inside", g_lib_module, rebQ(&boot->mezz)
     );
 
 } make_user_context: {
 
-    // None of the above code should have needed the "user" context, which is
-    // purely application-space.  We probably shouldn't even create it during
-    // boot at all.  But at the moment, code like JS-NATIVE or TCC natives
-    // need to bind the code they run somewhere.  It's also where API called
-    // code runs if called from something like an int main() after boot.
-    //
-    // Doing this as a proper module creation gives us IMPORT and INTERN (as
-    // well as EXPORT...?  When do you export from the user context?)
-    //
-    // rebElide() here runs in the g_lib_context by default, which means the
-    // block we are passing evaluatively as the module body will evaluate
-    // and carry the lib context.  This achieves the desired inheritance,
-    // because when we say EVAL INSIDE SYSTEM.CONTEXTS.USER CODE we want the
-    // code to find definitions in user as well as in lib.
+  // None of the above code should have needed the "user" context, which is
+  // purely application-space.  We probably shouldn't even create it during
+  // boot at all.  But at the moment, code like JS-NATIVE or TCC natives
+  // need to bind the code they run somewhere.  It's also where API called
+  // code runs if called from something like an int main() after boot.
+  //
+  // Doing this as a proper module creation gives us IMPORT and INTERN (as
+  // well as EXPORT...?  When do you export from the user context?)
+  //
+  // rebElide() here runs in the g_lib_context by default, which means the
+  // block we are passing evaluatively as the module body will evaluate
+  // and carry the lib context.  This achieves the desired inheritance,
+  // because when we say EVAL INSIDE SYSTEM.CONTEXTS.USER CODE we want the
+  // code to find definitions in user as well as in lib.
 
     rebElide(
         "system.contexts.user: module [Name: User] []"
@@ -992,10 +963,10 @@ void Startup_Core(void)
 
 } startup_extension_loader: {
 
-    // We don't actually load any extensions during the core startup.  The
-    // builtin extensions can be selectively loaded in whatever order the
-    // API client wants (they may not want to load all extensions that are
-    // built in that were available all the time).
+  // We don't actually load any extensions during the core startup.  The
+  // builtin extensions can be selectively loaded in whatever order the API
+  // client wants (they may not want to load all extensions that are built in
+  // that were available all the time).
 
     Startup_Extension_Loader();
 
@@ -1038,10 +1009,9 @@ void Shutdown_Core(bool clean)
 
   shutdown_extensions: {
 
-    // Shutting down extensions is currently considered semantically mandatory,
-    // as it may flush writes to files (filesystem extension) or do other
-    // work.  If you really want to do a true "unclean shutdown" you can always
-    // call exit().
+  // Shutting down extensions is currently considered semantically mandatory,
+  // as it may flush writes to files (filesystem extension) or do other work.
+  // If you really want to do a true "unclean shutdown" you can call exit().
 
     Shutdown_Extension_Loader();
 
@@ -1098,10 +1068,10 @@ void Shutdown_Core(bool clean)
 
 } shutdown_lib_and_datatypes: {
 
-    // The lib module and datatypes module both have premade stubs that are
-    // not subject to garbage collection.  This means that after all the
-    // managed Stubs are released, Shutdown_Datatypes() and Shutdown_Lib()
-    // have to manually free the premade stubs.
+  // The lib module and datatypes module both have premade stubs that are not
+  // subject to garbage collection.  This means that after all the managed
+  // Stubs are released, Shutdown_Datatypes() and Shutdown_Lib() have to
+  // manually free the premade stubs.
 
     Shutdown_Lib();
     Shutdown_Datatypes();
@@ -1117,7 +1087,9 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Trampoline();  // all API calls (e.g. rebRelease()) before this
 
-//=//// ALL MANAGED STUBS MUST HAVE THE KEEPALIVE REFERENCES GONE NOW /////=//
+} shutdown_after_keepalive_refs_to_managed_stubs_gone: {
+
+  // ALL MANAGED STUBS HAVE THEIR KEEPALIVE REFERENCES GONE NOW!
 
     assert(Is_Cell_Erased(&g_ts.thrown_arg));
     assert(Is_Cell_Erased(&g_ts.thrown_label));
@@ -1134,8 +1106,10 @@ void Shutdown_Core(bool clean)
 
     Shutdown_GC();
 
-    // Shutting down the memory manager must be done after all the Free_Mem
-    // calls have been made to balance their Alloc_Mem calls.
-    //
+} shutdown_memory_pools: {
+
+  // Shutting down the memory manager must be done after all the Free_Memory()
+  // calls have been made to balance their Alloc_On_Heap() calls.
+
     Shutdown_Pools();
 }}
