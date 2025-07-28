@@ -240,7 +240,7 @@ DECLARE_NATIVE(CHECKSUM)
 // introduces the question of signedness, which was inconsistent.  Moving to
 // where checksum is always a BLOB! is probably what should be done.
 //
-// !!! There was a :SECURE option which wasn't used for anything.
+// !!! There was a :SECURE option which took no args, not clear what it did.
 //
 // !!! There was a :PART feature which was removed when %sys-core.h dependency
 // was removed, for simplicity.  Generic "slice" functionality is under
@@ -255,32 +255,6 @@ DECLARE_NATIVE(CHECKSUM)
 //    Init_Integer(OUT, Hash_Bytes(data, len) % sum);
 //
 // As nothing used it, it's not clear what this was for.  Currently removed.
-//
-// 1. Turn the method into a string and look it up in the table that mbedTLS
-//    builds in when you `#include "md.h"`.  How many entries are in this
-//    table depend on the config settings (see %mbedtls-rebol-config.h)
-//
-// 2. See %crc24-unused.c for explanation; all internal fast hashes now
-//    use zlib's crc32_z(), since it is a sunk cost.  Would be:
-//
-//        uint32_t crc24 = Compute_CRC24(data, size);
-//        return rebValue("encode [LE + 3]", crc24);
-//
-// 3. The interpreter uses zlib (e.g. to unpack the embedded boot code) and
-//    so its hashes are a sunk cost, whether you build with any crypt
-//    extension or ont.  CRC32 is typically an unsigned 32-bit number and uses
-//    the full range of values.  Yet R3-Alpha chose to export this as a signed
-//    integer via CHECKSUM, presumably to generate a value that could be used
-//    by Rebol2, as it only had 32-bit signed INTEGER!.
-//
-// 4. ADLER32 is a hash available in zlib which is a sunk cost, so it was
-//    exposed by Saphirion.  That happened after 64-bit integers were added,
-//    and did not convert the unsigned result of the adler calculation to a
-//    signed integer.
-//
-// 5. !!! This was an "Internet TCP 16-bit checksum" that was initially a
-//    refinement (presumably because adding table entries was a pain).  It
-//    does not seem to be used?
 {
     INCLUDE_PARAMS_OF_CHECKSUM;
 
@@ -290,34 +264,19 @@ DECLARE_NATIVE(CHECKSUM)
     size_t size;
     const Byte* data = rebLockBytes(&size, "data");
 
-    char* method_utf8 = rebSpell("uppercase to text! method");  //  [1]
+    char* method_utf8 = rebSpell("uppercase to text! method");
+
+  lookup_checksum_in_mbedtls_table: {
+
+  // We turn the method into a string and look it up in the table that mbedTLS
+  // builds in when you `#include "md.h"`.  How many entries are in this
+  // table depend on the config settings (see %mbedtls-rebol-config.h)
+
     const mbedtls_md_info_t* info = mbedtls_md_info_from_string(method_utf8);
-    if (info)
-        goto found_tls_info;  // otherwise, we look up some internal hashes
+    if (not info)
+        goto lookup_non_mbedtls_hash;  // fallthru to some internal hashes
 
-    if (0 == strcmp(method_utf8, "CRC24")) {  // prefer CRC32 (sunk cost) [2]
-        error = rebValue("make warning! [",
-            "-[CRC24 removed: speak up if CRC32 and ADLER32 won't suffice]-",
-        "]");
-    }
-    if (0 == strcmp(method_utf8, "CRC32")) {  // internals need for gzip [3]
-        uint32_t crc = crc32_z(0L, data, size);
-        result = rebValue("encode [LE + 4]", rebI(crc));
-    }
-    else if (0 == strcmp(method_utf8, "ADLER32")) {  // included with zlib [4]
-        uint32_t adler = z_adler32(1L, data, size);  // Note the 1L (!)
-        result = rebValue("encode [LE + 4]", rebI(adler));
-    }
-    else if (0 == strcmp(method_utf8, "TCP")) {  // !!! not used? [5]
-        int ipc = Compute_IPC(data, size);
-        result = rebValue("encode [LE + 2]", rebI(ipc));
-    }
-    else
-        error = rebValue("make warning! [-[Unknown CHECKSUM method:]- method]");
-
-    goto return_result_or_panic;
-
-  found_tls_info: { //////////////////////////////////////////////////////////
+  found_checksum_in_mbedtls_table: {
 
     int hmac = rebDid("key") ? 1 : 0;  // !!! int, but seems to be a boolean?
 
@@ -351,6 +310,72 @@ DECLARE_NATIVE(CHECKSUM)
   cleanup: ///////////////////////////////////////////////////////////////////
 
     mbedtls_md_free(&ctx);
+    goto return_result_or_panic;
+
+}} lookup_non_mbedtls_hash: //////////////////////////////////////////////////
+
+  // Some hashes aren't available in mbedTLS, or are just sunk costs that we
+  // have from including other libraries.
+
+  handle_if_crc32: {
+
+  // The interpreter uses zlib (e.g. to unpack the embedded boot code) and
+  // so its hashes are a sunk cost, whether you build with any crypt extension
+  // or not.  CRC32 is typically an unsigned 32-bit number using the full
+  // range of values.  Yet R3-Alpha exported this as a signed integer via
+  // CHECKSUM, presumably to generate a value that usable by Rebol2, as it
+  // only had 32-bit signed INTEGER!.
+
+    if (0 == strcmp(method_utf8, "CRC32")) {
+        uint32_t crc = crc32_z(0L, data, size);
+        result = rebValue("encode [LE + 4]", rebI(crc));
+        goto return_result_or_panic;
+    }
+
+} handle_if_adler32: {
+
+  // ADLER32 is a hash available in zlib which is a sunk cost, so it was
+  // exposed by Saphirion.  That happened after 64-bit integers were added,
+  // and did not convert the unsigned result of the adler calculation to a
+  // signed integer.
+
+    if (0 == strcmp(method_utf8, "ADLER32")) {
+        uint32_t adler = z_adler32(1L, data, size);  // Note the 1L (!)
+        result = rebValue("encode [LE + 4]", rebI(adler));
+        goto return_result_or_panic;
+    }
+
+} handle_if_tcp: {
+
+  // !!! This was an "Internet TCP 16-bit checksum" that was initially a
+  // refinement (presumably because adding table entries was a pain).  It
+  // does not seem to be used?
+
+    if (0 == strcmp(method_utf8, "TCP")) {
+        int ipc = Compute_IPC(data, size);
+        result = rebValue("encode [LE + 2]", rebI(ipc));
+        goto return_result_or_panic;
+    }
+
+} handle_if_crc24: {
+
+  // See %crc24-unused.c for explanation; all internal fast hashes now use
+  // zlib's crc32_z(), since it is a sunk cost.  Would be:
+  //
+  //    uint32_t crc24 = Compute_CRC24(data, size);
+  //    return rebValue("encode [LE + 3]", crc24);
+
+    if (0 == strcmp(method_utf8, "CRC24")) {  // prefer CRC32 (sunk cost) [2]
+        error = rebValue("make warning! [",
+            "-[CRC24 removed: speak up if CRC32 and ADLER32 won't suffice]-",
+        "]");
+        goto return_result_or_panic;
+    }
+
+} no_builtin_checksum_found: {
+
+    error = rebValue("make warning! [-[Unknown CHECKSUM method:]- method]");
+    goto return_result_or_panic;
 
 } return_result_or_panic: { //////////////////////////////////////////////////
 
