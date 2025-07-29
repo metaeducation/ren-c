@@ -566,7 +566,7 @@ console*: func [
                 assert [empty? instruction]
                 state
             ]
-            meta-group! [  ; means "resume instruction"
+            group?:meta/ [  ; means "resume instruction"
                 state
             ]
             handle! [  ; means "evaluator hook request" (handle is the hook)

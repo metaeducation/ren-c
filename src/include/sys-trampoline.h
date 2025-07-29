@@ -42,7 +42,7 @@
 // regardless of how deep a debug stack might be.  The trampoline will only
 // react to it when the top level doesn't have LEVEL_FLAG_UNINTERRUPTIBLE set.
 // Clients of the API can choose to react to interruption outside of the
-// evaluator by asking for rebWasHaltRequested().
+// evaluator by asking for rebTestAndClearHaltRequested().
 //
 #define TRAMPOLINE_FLAG_HALT \
     FLAG_LEFT_BIT(1)

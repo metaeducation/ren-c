@@ -82,7 +82,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
 //    characters, or not having LF turned into CR LF sequences).
 //
 // 2. The Write_IO() function does not currently test for halts.  So data is
-//    broken up into small batches, and rebWasHaltRequested() gets called by
+//    broken up into small batches, and rebTestAndClearHaltRequested() gets called by
 //    this loop.  There may well be a better way to go about this, but at least
 //    a very long write can be canceled with this.
 //
@@ -104,7 +104,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
         //
         // Yield to signals processing for cancellation requests.
         //
-        if (rebWasHaltRequested())  // the test clears halt request
+        if (rebTestAndClearHaltRequested())
             return "halt";
 
         REBLEN part;
@@ -185,7 +185,7 @@ DECLARE_NATIVE(READ_STDIN)
     REBLEN i = 0;
     while (Binary_Len(b) < max) {  // inefficient, read one byte at a time
         if (Read_Stdin_Byte_Interrupted(&eof, Binary_At(b, i))) {  // Ctrl-C
-            if (rebWasHaltRequested())
+            if (rebTestAndClearHaltRequested())
                 return "halt";
             return rebDelegate("panic", Make_Non_Halt_Error("READ-STDIN"));
         }
@@ -287,7 +287,7 @@ DECLARE_NATIVE(READ_LINE)
     while (true) {  // No getline() in C standard, implement ourselves [4]
         bool eof;
         if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
-            if (rebWasHaltRequested())
+            if (rebTestAndClearHaltRequested())
                 return "halt";  // [1]
 
             return rebDelegate("panic", Make_Non_Halt_Error("READ-LINE"));
@@ -311,7 +311,7 @@ DECLARE_NATIVE(READ_LINE)
             Size size = 1;  // we add to size as we count trailing bytes
             while (trail != 0) {
                 if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
-                    if (rebWasHaltRequested())
+                    if (rebTestAndClearHaltRequested())
                         return "halt";  // [1]
 
                     return rebDelegate(
@@ -471,7 +471,7 @@ DECLARE_NATIVE(READ_CHAR)
     Byte encoded[UNI_ENCODED_MAX];
 
     if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
-        if (rebWasHaltRequested())
+        if (rebTestAndClearHaltRequested())
             return "halt";
 
         return rebDelegate("panic", Make_Non_Halt_Error("READ-CHAR"));
@@ -488,7 +488,7 @@ DECLARE_NATIVE(READ_CHAR)
         Size size = 1;  // we add to size as we count trailing bytes
         while (trail != 0) {
             if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
-                if (rebWasHaltRequested())
+                if (rebTestAndClearHaltRequested())
                     return "halt";
 
                 return rebDelegate("panic", Make_Non_Halt_Error("READ-CHAR"));

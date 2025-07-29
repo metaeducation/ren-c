@@ -2570,7 +2570,7 @@ void API_rebRequestHalt(void)
 
 
 //
-//  rebWasHaltRequested: API
+//  rebTestAndClearHaltRequested: API
 //
 // Returns whether or not the halting signal is set, but clears it if set.
 // Hence the question it answers is "was it halting" (previous to this call),
@@ -2580,7 +2580,7 @@ void API_rebRequestHalt(void)
 // and bears the burden for propagating the signal up to something that does
 // a HALT later--or it will be lost.
 //
-bool API_rebWasHaltRequested(void)
+bool API_rebTestAndClearHaltRequested(void)
 {
     ENTER_API;
 

@@ -227,7 +227,7 @@ void Enable_Ctrl_C(void)
 //          was-ctrl-c-enabled
 //          can-recover
 //          code
-//          result'  ; intentionally result', to discern PANIC from ERROR! [1]
+//          result'  ; intentionally lifted, to discern PANIC from ERROR! [1]
 //          state
 //  ]
 //
