@@ -365,7 +365,7 @@ IMPLEMENT_GENERIC(NEGATE, Is_Integer)
 {
     INCLUDE_PARAMS_OF_NEGATE;
 
-    REBI64 num = VAL_INT64(Element_ARG(NUMBER));
+    REBI64 num = VAL_INT64(Element_ARG(VALUE));
 
     if (num == INT64_MIN)
         return fail (Error_Overflow_Raw());
@@ -389,7 +389,7 @@ IMPLEMENT_GENERIC(EVEN_Q, Is_Integer)
 {
     INCLUDE_PARAMS_OF_EVEN_Q;
 
-    REBI64 num = VAL_INT64(Element_ARG(NUMBER));
+    REBI64 num = VAL_INT64(Element_ARG(VALUE));
 
     if (num & 1)
         return LOGIC(false);

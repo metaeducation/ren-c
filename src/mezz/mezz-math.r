@@ -63,11 +63,11 @@ pow: infix power/
 
 sign-of: func [
     "Returns sign of number as 1, 0, or -1 (to use as multiplier)."
-    number [any-number? money! time!]
+    value [any-number? money! time!]
 ][
     return case [
-        positive? number [1]
-        negative? number [-1]
+        positive? value [1]
+        negative? value [-1]
     ] else [0]
 ]
 

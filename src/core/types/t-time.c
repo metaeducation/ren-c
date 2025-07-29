@@ -635,7 +635,7 @@ IMPLEMENT_GENERIC(NEGATE, Is_Time)
 {
     INCLUDE_PARAMS_OF_NEGATE;
 
-    REBI64 secs = VAL_NANO(Element_ARG(NUMBER));
+    REBI64 secs = VAL_NANO(Element_ARG(VALUE));
 
     secs = -secs;
     return Init_Time_Nanoseconds(OUT, secs);
@@ -658,7 +658,7 @@ IMPLEMENT_GENERIC(EVEN_Q, Is_Time)
 {
     INCLUDE_PARAMS_OF_EVEN_Q;
 
-    REBI64 secs = VAL_NANO(Element_ARG(NUMBER));
+    REBI64 secs = VAL_NANO(Element_ARG(VALUE));
 
     return LOGIC((SECS_FROM_NANO(secs) & 1) == 0);
 }

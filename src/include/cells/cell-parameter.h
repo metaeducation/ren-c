@@ -345,15 +345,15 @@ INLINE bool Is_Specialized(const Param* p) {
 // need to be checked again.  This bit encodes that knowledge in a way that
 // any new overwriting will signal need for another check:
 //
-//    >> /bad-negate: adapt negate/ [number: to text! number]
+//    >> /bad-negate: adapt negate/ [value: to text! value]
 //
 //    >> bad-negate 1020
-//    ** Error: Internal phase disallows TEXT! for its `number` argument
+//    ** Error: Internal phase disallows TEXT! for its `value` argument
 //
-// If you hadn't overwritten `number`, then it would still have CELL_FLAG_NOTE
+// If you hadn't overwritten `value`, then it would still have CELL_FLAG_NOTE
 // and not run type checking again:
 //
-//    good-negate: adapt negate/ [print "not modifying number, no check"]
+//    good-negate: adapt negate/ [print "not modifying value, no check"]
 //
 
 #define CELL_FLAG_PARAM_NOTE_TYPECHECKED  CELL_FLAG_NOTE

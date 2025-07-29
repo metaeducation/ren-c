@@ -113,15 +113,15 @@ DECLARE_NATIVE(LOGIC_Q)
 //  "Produces ~null~ antiform for 0, or ~okay~ antiform for all other integers"
 //
 //      return: [logic?]
-//      number [integer!]
+//      value [integer!]
 //  ]
 //
 DECLARE_NATIVE(LOGICAL)
 {
     INCLUDE_PARAMS_OF_LOGICAL;
 
-    Element* n = Element_ARG(NUMBER);
-    return LOGIC(VAL_INT64(n) != 0);
+    Element* v = Element_ARG(VALUE);
+    return LOGIC(VAL_INT64(v) != 0);
 }
 
 

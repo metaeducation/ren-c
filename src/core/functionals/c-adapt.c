@@ -34,10 +34,10 @@
 // "adaptee", as failure to do so could pass bad bit patterns to natives
 // and lead to crashes.
 //
-//    >> /bad-negate: adapt negate/ [number: to text! number]
+//    >> /bad-negate: adapt negate/ [value: to text! value]
 //
 //    >> bad-negate 1020
-//    ** Error: Internal phase disallows TEXT! for its `number` argument
+//    ** Error: Internal phase disallows TEXT! for its `value` argument
 //
 // More complete control of execution and manipulating the return result is
 // possible with the ENCLOSE operation, but at a greater performance cost.

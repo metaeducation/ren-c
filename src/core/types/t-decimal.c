@@ -566,7 +566,7 @@ IMPLEMENT_GENERIC(NEGATE, Any_Float)
 {
     INCLUDE_PARAMS_OF_NEGATE;
 
-    Element* val = Element_ARG(NUMBER);
+    Element* val = Element_ARG(VALUE);
     REBDEC d = VAL_DECIMAL(val);
     Heart heart = Heart_Of_Builtin_Fundamental(val);
 

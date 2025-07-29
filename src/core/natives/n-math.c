@@ -49,13 +49,13 @@
 //  "Changes the sign of a number (see COMPLEMENT for inversion of sets)"
 //
 //      return: [any-number? pair! money! time!]
-//      number [any-number? pair! money! time!]
+//      value [any-number? pair! money! time!]
 //  ]
 //
 DECLARE_NATIVE(NEGATE)
 {
-    Element* number = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(NEGATE, number, LEVEL);
+    Element* v = cast(Element*, ARG_N(1));
+    return Dispatch_Generic(NEGATE, v, LEVEL);
 }
 
 
@@ -236,14 +236,14 @@ DECLARE_NATIVE(REMAINDER)
 //  "Returns the first number raised to the second number"
 //
 //      return: [any-number?]
-//      number [any-number?]
+//      value [any-number?]
 //      exponent [any-number?]
 //  ]
 //
 DECLARE_NATIVE(POWER)
 {
-    Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, CANON(POWER));
+    Element* v = cast(Element*, ARG_N(1));
+    return Run_Generic_Dispatch(v, LEVEL, CANON(POWER));
 }
 
 
@@ -315,7 +315,7 @@ DECLARE_NATIVE(ROUND)
 //  "Returns OKAY if the number is even"
 //
 //      return: [logic?]
-//      number [integer! time!]
+//      value [integer! time!]
 //  ]
 //
 DECLARE_NATIVE(EVEN_Q)  // Note: ODD? is defined as NOT EVEN?
@@ -325,8 +325,8 @@ DECLARE_NATIVE(EVEN_Q)  // Note: ODD? is defined as NOT EVEN?
 //
 //   https://rebol.metaeducation.com/t/odd-defined-in-terms-of-even/2521
 {
-    Element* number = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(EVEN_Q, number, LEVEL);
+    Element* v = cast(Element*, ARG_N(1));
+    return Dispatch_Generic(EVEN_Q, v, LEVEL);
 }
 
 
