@@ -472,10 +472,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
 
     // unary actions
     switch (opt id) {
-      case SYM_NEGATE:
-        d1 = -d1;
-        return Init_Decimal_Or_Percent(OUT, heart, d1);
-
       case SYM_ABSOLUTE:
         if (d1 < 0) d1 = -d1;
         return Init_Decimal_Or_Percent(OUT, heart, d1);
@@ -573,6 +569,19 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
     }
 
     panic (UNHANDLED);
+}
+
+
+IMPLEMENT_GENERIC(NEGATE, Any_Float)
+{
+    INCLUDE_PARAMS_OF_NEGATE;
+
+    Element* val = Element_ARG(NUMBER);
+    REBDEC d = VAL_DECIMAL(val);
+    Heart heart = Heart_Of_Builtin_Fundamental(val);
+
+    d = -d;
+    return Init_Decimal_Or_Percent(OUT, heart, d);
 }
 
 

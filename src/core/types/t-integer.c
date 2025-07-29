@@ -301,11 +301,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
       case SYM_BITWISE_AND_NOT:
         return Init_Integer(OUT, num & ~arg);
 
-      case SYM_NEGATE:
-        if (num == INT64_MIN)
-            return fail (Error_Overflow_Raw());
-        return Init_Integer(OUT, -num);
-
       case SYM_BITWISE_NOT:
         return Init_Integer(OUT, ~num);
 
@@ -368,6 +363,18 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
         return COPY(val);
 
     panic (UNHANDLED);
+}
+
+
+IMPLEMENT_GENERIC(NEGATE, Is_Integer)
+{
+    INCLUDE_PARAMS_OF_NEGATE;
+
+    REBI64 num = VAL_INT64(Element_ARG(NUMBER));
+
+    if (num == INT64_MIN)
+        return fail (Error_Overflow_Raw());
+    return Init_Integer(OUT, -num);
 }
 
 

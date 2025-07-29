@@ -519,10 +519,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
     else {
         // unary actions
         switch (opt id) {
-          case SYM_NEGATE:
-            secs = -secs;
-            return Init_Time_Nanoseconds(OUT, secs);
-
           case SYM_ABSOLUTE:
             if (secs < 0) secs = -secs;
             return Init_Time_Nanoseconds(OUT, secs);
@@ -644,6 +640,17 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Time)
 
     return WRITEBACK(Copy_Cell(OUT, time));  // caller must update time bits
 }}
+
+
+IMPLEMENT_GENERIC(NEGATE, Is_Time)
+{
+    INCLUDE_PARAMS_OF_NEGATE;
+
+    REBI64 secs = VAL_NANO(Element_ARG(NUMBER));
+
+    secs = -secs;
+    return Init_Time_Nanoseconds(OUT, secs);
+}
 
 
 IMPLEMENT_GENERIC(EVEN_Q, Is_Time)

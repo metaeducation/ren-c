@@ -55,7 +55,7 @@
 DECLARE_NATIVE(NEGATE)
 {
     Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, CANON(NEGATE));
+    return Dispatch_Generic(NEGATE, number, LEVEL);
 }
 
 
