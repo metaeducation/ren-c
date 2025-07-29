@@ -480,18 +480,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         if (d1 < 0) d1 = -d1;
         return Init_Decimal_Or_Percent(OUT, heart, d1);
 
-      case SYM_EVEN_Q:
-        d1 = fabs(fmod(d1, 2.0));
-        if (d1 < 0.5 || d1 >= 1.5)
-            return LOGIC(true);
-        return LOGIC(false);
-
-      case SYM_ODD_Q:
-        d1 = fabs(fmod(d1, 2.0));
-        if (d1 < 0.5 || d1 >= 1.5)
-            return LOGIC(false);
-        return LOGIC(true);
-
       default:
         break;
     }

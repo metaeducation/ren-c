@@ -310,34 +310,23 @@ DECLARE_NATIVE(ROUND)
 
 
 //
-//  odd?: native:generic [
-//
-//  "Returns OKAY if the number is odd"
-//
-//      return: [logic?]
-//      number [any-number? char? date! money! time! pair!]
-//  ]
-//
-DECLARE_NATIVE(ODD_Q)
-{
-    Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, CANON(ODD_Q));
-}
-
-
-//
 //  even?: native:generic [
 //
 //  "Returns OKAY if the number is even"
 //
 //      return: [logic?]
-//      number [any-number? char? date! money! time! pair!]
+//      number [integer! time!]
 //  ]
 //
-DECLARE_NATIVE(EVEN_Q)
+DECLARE_NATIVE(EVEN_Q)  // Note: ODD? is defined as NOT EVEN?
+//
+// Narrowed considerably from historical types, but left as a generic as a
+// placeholder for further thought:
+//
+//   https://rebol.metaeducation.com/t/odd-defined-in-terms-of-even/2521
 {
     Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, CANON(EVEN_Q));
+    return Dispatch_Generic(EVEN_Q, number, LEVEL);
 }
 
 

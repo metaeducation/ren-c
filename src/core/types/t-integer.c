@@ -314,14 +314,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
             return fail (Error_Overflow_Raw());
         return Init_Integer(OUT, num < 0 ? -num : num);
 
-      case SYM_EVEN_Q:
-        num = ~num;
-        // falls through
-      case SYM_ODD_Q:
-        if (num & 1)
-            return LOGIC(true);
-        return LOGIC(false);
-
       default:
         break;
     }
@@ -376,6 +368,18 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
         return COPY(val);
 
     panic (UNHANDLED);
+}
+
+
+IMPLEMENT_GENERIC(EVEN_Q, Is_Integer)
+{
+    INCLUDE_PARAMS_OF_EVEN_Q;
+
+    REBI64 num = VAL_INT64(Element_ARG(NUMBER));
+
+    if (num & 1)
+        return LOGIC(false);
+    return LOGIC(true);
 }
 
 

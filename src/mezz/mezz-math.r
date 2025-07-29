@@ -13,6 +13,10 @@ Rebol [
 
 pi: 3.14159265358979323846
 
+odd?: redescribe ["Returns OKAY if the number is odd"] (
+    cascade [even?/ not/]
+)
+
 
 ; Shorthands for radian forms of trig functions, first introduced by Red.
 ; http://www.red-lang.org/2014/08/043-floating-point-support.html

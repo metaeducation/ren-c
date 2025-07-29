@@ -214,7 +214,6 @@
 %math/negate.test.r
 %math/negativeq.test.r
 %math/not.test.r
-%math/oddq.test.r
 %math/positiveq.test.r
 %math/power.test.r
 %math/random.test.r

@@ -750,18 +750,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
             }
         }
     }
-    else {
-        switch (opt id) {
-          case SYM_EVEN_Q:
-            return LOGIC(((~day) & 1) == 0);
-
-          case SYM_ODD_Q:
-            return LOGIC((day & 1) == 0);
-
-          default:
-            break;
-        }
-    }
 
     panic (UNHANDLED);
 
