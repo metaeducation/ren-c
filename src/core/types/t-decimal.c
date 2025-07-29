@@ -470,16 +470,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
 
     heart = Heart_Of_Builtin_Fundamental(val);
 
-    // unary actions
-    switch (opt id) {
-      case SYM_ABSOLUTE:
-        if (d1 < 0) d1 = -d1;
-        return Init_Decimal_Or_Percent(OUT, heart, d1);
-
-      default:
-        break;
-    }
-
     panic (UNHANDLED);
 }
 
@@ -581,6 +571,20 @@ IMPLEMENT_GENERIC(NEGATE, Any_Float)
     Heart heart = Heart_Of_Builtin_Fundamental(val);
 
     d = -d;
+    return Init_Decimal_Or_Percent(OUT, heart, d);
+}
+
+
+IMPLEMENT_GENERIC(ABSOLUTE, Any_Float)
+{
+    INCLUDE_PARAMS_OF_ABSOLUTE;
+
+    Element* val = Element_ARG(VALUE);
+    REBDEC d = VAL_DECIMAL(val);
+    Heart heart = Heart_Of_Builtin_Fundamental(val);
+
+    if (d < 0)
+        d = -d;
     return Init_Decimal_Or_Percent(OUT, heart, d);
 }
 

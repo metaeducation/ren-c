@@ -304,11 +304,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
       case SYM_BITWISE_NOT:
         return Init_Integer(OUT, ~num);
 
-      case SYM_ABSOLUTE:
-        if (num == INT64_MIN)
-            return fail (Error_Overflow_Raw());
-        return Init_Integer(OUT, num < 0 ? -num : num);
-
       default:
         break;
     }
@@ -375,6 +370,18 @@ IMPLEMENT_GENERIC(NEGATE, Is_Integer)
     if (num == INT64_MIN)
         return fail (Error_Overflow_Raw());
     return Init_Integer(OUT, -num);
+}
+
+
+IMPLEMENT_GENERIC(ABSOLUTE, Is_Integer)
+{
+    INCLUDE_PARAMS_OF_ABSOLUTE;
+
+    REBI64 num = VAL_INT64(Element_ARG(VALUE));
+
+    if (num == INT64_MIN)
+        return fail (Error_Overflow_Raw());
+    return Init_Integer(OUT, num < 0 ? -num : num);
 }
 
 

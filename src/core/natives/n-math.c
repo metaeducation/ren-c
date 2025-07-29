@@ -258,8 +258,8 @@ DECLARE_NATIVE(POWER)
 //
 DECLARE_NATIVE(ABSOLUTE)
 {
-    Element* e = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e, LEVEL, CANON(ABSOLUTE));
+    Element* v = cast(Element*, ARG_N(1));
+    return Dispatch_Generic(ABSOLUTE, v, LEVEL);
 }
 
 

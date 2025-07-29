@@ -516,17 +516,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
         }
         panic (Error_Math_Args(TYPE_TIME, verb));
     }
-    else {
-        // unary actions
-        switch (opt id) {
-          case SYM_ABSOLUTE:
-            if (secs < 0) secs = -secs;
-            return Init_Time_Nanoseconds(OUT, secs);
-
-          default:
-            break;
-        }
-    }
 
     panic (UNHANDLED);
 }
@@ -649,6 +638,18 @@ IMPLEMENT_GENERIC(NEGATE, Is_Time)
     REBI64 secs = VAL_NANO(Element_ARG(NUMBER));
 
     secs = -secs;
+    return Init_Time_Nanoseconds(OUT, secs);
+}
+
+
+IMPLEMENT_GENERIC(ABSOLUTE, Is_Time)
+{
+    INCLUDE_PARAMS_OF_ABSOLUTE;
+
+    REBI64 secs = VAL_NANO(Element_ARG(VALUE));
+
+    if (secs < 0)
+        secs = -secs;
     return Init_Time_Nanoseconds(OUT, secs);
 }
 
