@@ -598,7 +598,7 @@ bind construct [
     if not block? code [  ; review assumption of lib here (header guided?)
         code: inside lib transcode:file:line code file line
     ]
-    let [mod ^product']: module:into hdr code into
+    ignore let [mod ^product]: module:into hdr code into
 
     ensure module! mod
 
@@ -613,7 +613,7 @@ bind construct [
 
     importing-remotely: old-importing-remotely
 
-    return pack* [mod 'executed ^product']  ; PACK* tolerates errors
+    return pack* [mod 'executed ^product]  ; PACK* tolerates errors
 ]
 
 

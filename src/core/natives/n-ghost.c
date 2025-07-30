@@ -106,16 +106,32 @@ DECLARE_NATIVE(COMMENT)
 //
 //  elide: native:intrinsic [
 //
-//  "Argument is evaluated, but its result discarded (see also COMMENT)"
+//  "Argument evaluated, result discarded (not ERROR! or undecayable packs)"
 //
 //      return: [ghost!]
-//      ^discarded "Evaluation to discard, (elide elide print -[x]-) is legal"
-//          [any-value?]
+//      ^discarded [any-stable? void? ghost!]
 //  ]
 //
 DECLARE_NATIVE(ELIDE)
 {
     INCLUDE_PARAMS_OF_ELIDE;  // no ARG(DISCARDED), parameter is intrinsic
+
+    return Init_Unsurprising_Ghost(OUT);
+}
+
+
+//
+//  ignore: native:intrinsic [
+//
+//  "Argument evaluated, result discarded (even ERROR! and undecayable packs)"
+//
+//      return: [ghost!]
+//      ^discarded [any-value?]
+//  ]
+//
+DECLARE_NATIVE(IGNORE)
+{
+    INCLUDE_PARAMS_OF_IGNORE;  // no ARG(DISCARDED), parameter is intrinsic
 
     return Init_Unsurprising_Ghost(OUT);
 }

@@ -103,24 +103,6 @@ make-quit: lambda [
 ;    it probably means the module was not successfully made and you should
 ;    be getting an error.  This needs to be rethought.
 ;
-; 2. !!! Should non-Modules be prohibited from having exports?  Or just
-;    `type: script` be prohibited?  It could be the most flexible answer is
-;    that IMPORT works on anything that has a list of exports, which would let
-;    people design new kinds like `type: supermodule`, but such ideas have not
-;    been mapped out.
-;
-; 3. We add importing and exporting as specializations of lower-level IMPORT*
-;    and EXPORT* functions.  (Those are still available if you ever want to
-;    specify a "where".)
-;
-;    If you don't want these added, there could be a refinement to MODULE that
-;    would omit them.  But since MODULE is not that complex to write,
-;    probably better to have such cases use MAKE MODULE! instead of MODULE.
-;
-; 4. We add a QUIT slot to the module (alongside like IMPORT* and EXPORT*), and
-;    fill it in with a custom THROW word to catch it.  If we don't catch it,
-;    the result is just set to be TRASH.
-;
 module: func [
     "Creates a new module (used by both IMPORT and DO)"
 
@@ -149,6 +131,13 @@ module: func [
         spec: construct:with (pin spec) system.standard.header  ; see def.
     ]
 
+  ;----
+  ; 1. !!! Should non-Modules be prohibited from having exports?  Or just
+  ;    `type: script` be prohibited?  It could be the most flexible answer is
+  ;    that IMPORT works on anything that has a list of exports, which allows
+  ;    designing new kinds like `type: supermodule`, but such ideas have not
+  ;    been mapped out.
+
     if spec [  ; validate the important fields of the header, if there is one
         for-each [$var $types] [  ; need bound to GET, use $
             spec.name [null? word!]
@@ -164,15 +153,24 @@ module: func [
         all [
             spec.type = 'module
             not has spec 'exports
-        ] then [  ; default to having exports block if it's a module [2]
+        ] then [  ; default to having exports block if it's a module [1]
             extend spec [exports: make block! 10]
         ]
 
         set-adjunct mod spec
     ]
 
+  ;----
+  ; 1. Add importing and exporting as specializations of lower-level IMPORT*
+  ;    and EXPORT* functions.  (Those are still available if you ever want to
+  ;    specify a "where".)
+  ;
+  ;    If you don't want these, there could be a refinement to MODULE that
+  ;    would omit them.  But since MODULE is not that complex to write,
+  ;    probably better to have such cases use MAKE MODULE! instead of MODULE.
+
     set extend mod 'import cascade [
-        specialize sys.util.import*/ [  ; specialize low-level [3]
+        specialize sys.util.import*/ [  ; specialize low-level [1]
             where: mod
         ]
         decay/  ; don't want body evaluative result
@@ -190,28 +188,28 @@ module: func [
 
     if object? opt mixin [body: bind mixin body]
 
-    rescue [  ; !!! currently `then x -> [...] except e -> [...]` is broken
-        catch* 'quit [  ; fill in definitional QUIT slot in module [4]
-            set (extend mod 'quit) make-quit quit/
+  ;----
+  ; 1. We add a QUIT slot to the module (alongside IMPORT* and EXPORT*), and
+  ;    fill it in with a custom THROW word to catch it.  MAKE-QUIT gives us a
+  ;    function that interprets non-zero integers e.g. (quit 1) as ERROR!
+  ;
+  ; 2. If there's no explicit QUIT call in the body code, we act as if TRASH!
+  ;    was the result.  That's also what MAKE-QUIT has (quit 0) do.
+  ;
+  ;    !!! We might consider having this run the module's QUIT with 0 instead,
+  ;    so that an ADAPT'ed QUIT would always get a quit signal.  But this has
+  ;    not been done with RETURN for FUNCTION, so it's a controversial idea.
 
-            wrap* mod body  ; add top-level declarations to module
-            body: bindable body  ; MOD inherited body's binding, we rebind
-            eval inside mod body  ; ignore body result, only QUIT returns value
-            quit ~  ; this is the "THROW" to the customized CATCH* above
-        ]
-        then ^arg-to-quit -> [  ; !!! should THEN with ^META get errors?
-            ^product: ^arg-to-quit  ; meta convention used for product
-        ]
-    ] then error -> [
-        ^product: fail error
+    ignore ^product: catch [  ; IGNORE stops ERROR! results becoming a panic
+        set (extend mod 'quit) make-quit throw/  ; module's QUIT [1]
+
+        wrap* mod body  ; add top-level declarations to module
+        body: bindable body  ; MOD inherited body's binding, we rebind
+        eval inside mod body  ; ignore body result, only QUIT returns value
+        throw ~  ; parallel behavior to if body had done (quit 0)
     ]
 
-    mod.quit: func [value] [
-        panic // [
-            "Module finished init, no QUIT (do you want SYS.UTIL/EXIT?)"
-            blame: $value
-        ]
-    ]
+    mod.quit: ~#[Module finished init, no QUIT (do you want SYS.UTIL/EXIT?)]#~
 
     return pack* [mod ^product]  ; pack* for ERROR! antiform tolerance
 ]
@@ -255,8 +253,7 @@ module: func [
 do: func [
     "Execution facility for Rebol or other Languages/Dialects (see also: EVAL)"
 
-    return: "Evaluative product, or error"
-        [any-stable? error!]
+    return: [any-value?]
     source "Files interpreted based on extension, dialects based on 'kind'"
         [
             <opt-out>  ; opts out of the DO, returns null
@@ -270,5 +267,5 @@ do: func [
     :args "Args passed as system.script.args to a script (normally a string)"
         [element?]
 ][
-    return [_ _ {_}]: import*:args void source args
+    return [_ _ {^}]: import*:args void source args
 ]
