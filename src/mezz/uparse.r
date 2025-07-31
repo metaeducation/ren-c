@@ -249,13 +249,16 @@ bind construct [
 ; It should be possible to find out if something is a combinator in a more
 ; rigorous way than this.  But just check the parameters for now.
 ;
+; !!! Used to check for INPUT and STATE, but then combinators were allowed
+; to call their inputs whatever they wanted, so just checks STATE.
+;
 combinator?: func [
     "Crude test to try and determine if an ACTION! is a combinator"
     return: [logic?]
     frame [<unrun> frame!]
     <local> keys
 ][
-    return did all [has frame 'input, has frame 'state]
+    return did all [has frame 'state]
 ]
 
 negatable-parser?: func [
