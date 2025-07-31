@@ -779,10 +779,10 @@ DECLARE_NATIVE(NOQUOTE)
     INCLUDE_PARAMS_OF_NOQUOTE;
 
     require (
-      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(OUT, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(OUT, LEVEL)
     );
-    if (b)
-        return unwrap b;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     LIFT_BYTE(OUT) = NOQUOTE_2;
     return OUT;

@@ -74,10 +74,10 @@ DECLARE_NATIVE(OKAY_Q)
 
     DECLARE_VALUE (v);
     require (
-      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+      Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
-    if (bounce)
-        return unwrap bounce;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     return LOGIC(Is_Okay(v));
 }
@@ -98,10 +98,10 @@ DECLARE_NATIVE(LOGIC_Q)
 
     DECLARE_VALUE (v);
     require (
-      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+      Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
-    if (bounce)
-        return unwrap bounce;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     return LOGIC(Is_Logic(v));
 }
@@ -140,10 +140,10 @@ DECLARE_NATIVE(BOOLEAN_Q)
 
     DECLARE_ELEMENT (e);
     require (
-      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
     );
-    if (b)
-        return unwrap b;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     return LOGIC(Is_Boolean(e));
 }
@@ -164,10 +164,10 @@ DECLARE_NATIVE(ONOFF_Q)
 
     DECLARE_ELEMENT (e);
     require (
-      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
     );
-    if (b)
-        return unwrap b;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     return LOGIC(Is_OnOff(e));
 }
@@ -188,10 +188,10 @@ DECLARE_NATIVE(YESNO_Q)
 
     DECLARE_ELEMENT (e);
     require (
-      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
     );
-    if (b)
-        return unwrap b;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     return LOGIC(Is_YesNo(e));
 }
@@ -447,10 +447,10 @@ DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
 
     DECLARE_VALUE (v);
     require (
-      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+      Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
-    if (bounce)
-        return unwrap bounce;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     require (
       bool cond = Test_Conditional(v)
@@ -474,10 +474,10 @@ DECLARE_NATIVE(TO_LOGIC)
 
     DECLARE_VALUE (v);
     require (
-      Option(Bounce) bounce = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+      Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
-    if (bounce)
-        return unwrap bounce;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     require (
       bool cond = Test_Conditional(v)

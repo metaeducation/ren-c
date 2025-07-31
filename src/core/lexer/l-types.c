@@ -128,10 +128,10 @@ DECLARE_NATIVE(SIGIL_Q)
 
     DECLARE_ELEMENT (e);
     require (
-      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
     );
-    if (b)
-        return unwrap b;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     return LOGIC(Any_Sigiled_Space(e));
 }

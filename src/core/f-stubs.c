@@ -632,10 +632,10 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
 
     DECLARE_ELEMENT (e);
     require (
-      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
     );
-    if (b)
-        return unwrap b;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     attempt {
         if (Any_Plain(e))
@@ -717,10 +717,10 @@ static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
 
     DECLARE_ELEMENT (e);
     require (
-      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
     );
-    if (b)
-        return unwrap b;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     if (Sigil_Of(e) != sigil)
         return fail ("Trying to remove Sigil from value without that Sigil");
@@ -792,10 +792,10 @@ DECLARE_NATIVE(PLAIN)
 
     DECLARE_ELEMENT (e);
     require (
-      Option(Bounce) b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
     );
-    if (b)
-        return unwrap b;
+    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
+        return b;
 
     return COPY(Plainify(e));
 }

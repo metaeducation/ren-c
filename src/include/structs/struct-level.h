@@ -161,9 +161,16 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
     FLAG_LEFT_BIT(18)
 
 
-//=//// LEVEL_FLAG_19 /////////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_RUNNING_TYPECHECK //////////////////////////////////////=//
 //
-#define LEVEL_FLAG_19 \
+// This flag was introduced to use with LEVEL_FLAG_DISPATCHING_INTRINSIC, in
+// order to deal with the fact that intrinsics are responsible for their own
+// argument typechecking...but if they themselves are being run as a typecheck
+// then they should not panic() when the types don't pass.  This means they
+// should return LOGIC(false) instead of panicing...but if called in a non
+// typecheck context they should do the panic.
+//
+#define LEVEL_FLAG_RUNNING_TYPECHECK \
     FLAG_LEFT_BIT(19)
 
 

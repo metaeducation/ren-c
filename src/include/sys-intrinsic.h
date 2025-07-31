@@ -127,61 +127,90 @@ INLINE Atom* Intrinsic_Atom_ARG(Level* L) {
     u_cast(const Atom*, Intrinsic_Atom_ARG(L))
 
 
-// 1. The <opt-out> parameter convention has to be handled by the intrinsic,
-//    so we test for void here.
+//=//// INTRINSIC FUNCTION ARGUMENT PROCESSING HELPERS ////////////////////=//
 //
-// 2. While nullptr typically is handled as a dispatcher result meaning
-//    Init_Nulled(OUT), the caller checks the return result of this routine
-//    and considers nullptr to mean that the Element was successfully
-//    extracted.  So if we actually want to return a null cell, we use
-//    `return Init_Nulled(OUT)` here.
+// If an intrinsic function is dispatched as an intrinsic, then it has to take
+// on its own typechecking for its argument.  This includes handling the
+// <opt-out> convention.
 //
-INLINE Result(Option(Bounce)) Bounce_Opt_Out_Element_Intrinsic(
+// 1. We can't return an Option(Bounce) here, because the nullptr signal has
+//    to be used in typechecking to return a falsey result without overwriting
+//    the OUT cell.  Any bounce value that doesn't ovewrite OUT and isn't
+//    returned by the checker could be used here...and since the only bounce
+//    value it does return at the moment is `nullptr` we use BOUNCE_OKAY.
+//
+// 2. There's an unusual situation arising due to the fact that we're doing
+//    the typecheck "inside the function call": we *might* or *might not* want
+//    to execute a panic() if the typecheck fails.  The case where we do not
+//    is when we've dispatched an intrinsic to do a typecheck, and it's
+//    enough to just return nullptr as if the typecheck didn't succeed.
+//
+
+#define BOUNCE_GOOD_INTRINSIC_ARG  BOUNCE_OKAY  // doesn't write OUT [1]
+
+
+INLINE Result(Bounce) Bounce_Opt_Out_Element_Intrinsic(  // <opt-out> handling
     Sink(Element) elem_out,
     Level* L  // writing OUT and SPARE is allowed in this helper
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
         Copy_Cell(elem_out, Known_Element(Level_Arg(L, 1)));  // was checked
-        return nullptr;
+        return BOUNCE_GOOD_INTRINSIC_ARG;
     }
 
     const Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
-    if (Is_Error(atom_arg))
+    if (Is_Error(atom_arg)) {
+        if (Get_Level_Flag(L, RUNNING_TYPECHECK))
+            return BOUNCE_NULLPTR;  // [2]
         return fail (Cell_Error(atom_arg));
+    }
 
-    if (Is_Void(atom_arg))  // do PARAMETER_FLAG_OPT_OUT [1]
-        return Init_Nulled(L->out);  // !!! overwrites out, illegal [2]
+    if (Is_Void(atom_arg))  // handle PARAMETER_FLAG_OPT_OUT
+        return BOUNCE_NULLPTR;
 
     Init(Atom) atom_out = u_cast(Atom*, elem_out);
     Copy_Cell(atom_out, atom_arg);
-    trap (
-      Decay_If_Unstable(atom_out)
-    );
-    if (Is_Antiform(atom_out))
-        return fail (Error_Bad_Intrinsic_Arg_1(L));
 
-    return nullptr;
+    Decay_If_Unstable(atom_out) except (Error* e) {
+        if (Get_Level_Flag(L, RUNNING_TYPECHECK))
+            return BOUNCE_NULLPTR;  // [2]
+        return fail (e);
+    }
+
+    if (Is_Antiform(atom_out)) {
+        if (Get_Level_Flag(L, RUNNING_TYPECHECK))
+            return BOUNCE_NULLPTR;  // [2]
+        return fail (Error_Bad_Intrinsic_Arg_1(L));
+    }
+
+    return BOUNCE_GOOD_INTRINSIC_ARG;
 }
 
-INLINE Result(Option(Bounce)) Bounce_Decay_Value_Intrinsic(
+INLINE Result(Bounce) Bounce_Decay_Value_Intrinsic(
     Sink(Value) val_out,
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
         Copy_Cell(val_out, Known_Stable(Level_Arg(L, 1)));  // was checked
-        return nullptr;
+        return BOUNCE_GOOD_INTRINSIC_ARG;
     }
 
     const Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
-    if (Is_Error(atom_arg))
+    if (Is_Error(atom_arg)) {
+        if (Get_Level_Flag(L, RUNNING_TYPECHECK))
+            return BOUNCE_NULLPTR;  // [2]
         return fail (Cell_Error(atom_arg));
+    }
 
     Init(Atom) atom_out = u_cast(Atom*, val_out);
     Copy_Cell(atom_out, atom_arg);
-    trap (
-      Decay_If_Unstable(atom_out)
-    );
-    return nullptr;
+
+    Decay_If_Unstable(atom_out) except (Error* e) {
+        if (Get_Level_Flag(L, RUNNING_TYPECHECK))
+            return BOUNCE_NULLPTR;  // [2]
+        return fail (e);
+    }
+    return BOUNCE_GOOD_INTRINSIC_ARG;
 }
