@@ -703,7 +703,7 @@ cc: make compiler-class [
             #entry [
                 '~null~
             ]
-            (elide dump dep)
+            (dump dep)
             panic "unrecognized dependency"
         ]
     ]
@@ -981,7 +981,7 @@ cl: make compiler-class [
             #entry [
                 '~null~
             ]
-            (elide dump dep)
+            (dump dep)
             panic "unrecognized dependency"
         ]
     ]
@@ -1107,11 +1107,11 @@ object-file-class: make object! [
             target: .output
             depends: append (copy any [.depends []]) .source
             commands: reduce [.compile // [
-                I: opt parent.includes
-                D: opt parent.definitions
-                F: opt parent.cflags
-                O: opt parent.optimization
-                g: opt parent.debug
+                I: parent.includes
+                D: parent.definitions
+                F: parent.cflags
+                O: parent.optimization
+                g: parent.debug
                 PIC: any [PIC, parent.class = #dynamic-library]
             ]]
         ]
@@ -1516,7 +1516,7 @@ makefile: make generator-class [
                 #dynamic-extension #static-extension [
                     ; nothing to do
                 ]
-                (elide dump dep)
+                (dump dep)
                 panic ["unrecognized project type:" dep.class]
             ]
         ]
@@ -1608,7 +1608,7 @@ export execution: make generator-class [
                     call:shell cmd
                 ]
             ]
-            (elide dump target)
+            (dump target)
             panic "Unrecognized target class"
         ]
     ]
@@ -1675,7 +1675,7 @@ export execution: make generator-class [
                     ./run dep
                 ]
             ]
-            (elide dump project)
+            (dump project)
             panic ["unrecognized project type:" project.class]
         ]
     ]

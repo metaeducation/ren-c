@@ -1511,7 +1511,7 @@ add-new-obj-folders: func [
             #object-library [
                 lib: lib.depends
             ]
-            (elide dump lib)
+            (dump lib)
             panic ["unexpected class"]
         ]
 
