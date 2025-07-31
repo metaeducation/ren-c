@@ -1297,12 +1297,16 @@ DECLARE_NATIVE(CATCH_P)  // specialized to plain CATCH w/ NAME="THROW" in boot
 
     STATE = ST_CATCH_RUNNING_CODE;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // not caught by default
-    return CONTINUE_BRANCH(OUT, ARG(BLOCK));
+    return CONTINUE_BRANCH(OUT, block);
 
 } code_result_in_out: {  //////////////////////////////////////////////////////
 
-    if (not THROWING)
+    if (not THROWING) {
+        require (
+          Elide_Unless_Error_Including_In_Packs(OUT)
+        );
         return NULLED;  // no throw means just return null (pure, for ELSE)
+    }
 
     const Value* label = VAL_THROWN_LABEL(LEVEL);
     if (not Any_Context(label))

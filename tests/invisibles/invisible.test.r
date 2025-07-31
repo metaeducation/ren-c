@@ -1,95 +1,5 @@
 ; COMMENT is fully invisible.
-;
-; https://trello.com/c/dWQnsspG
 
-(1 = eval [comment "a" 1])
-(1 = eval [1 comment "a"])
-(void? comment "a")
-(void? (comment "a"))
-
-('~,~ = (lift comment "a"))
-((quote '~,~) = lift (lift comment "a"))
-
-('~,~ = lift eval [comment "a"])
-((quote '~,~) = lift (lift eval [comment "a"]))
-
-; !!! At one time, comment mechanics allowed comments to be infix such that
-; they ran as part of the previous evaluation.  This is no longer the case,
-; as invisible mechanics no longer permit interstitials--which helps make
-; the evaluator more sane, without losing the primary advantages of invisibles.
-;
-; https://forum.rebol.info/t/1582
-
-~no-value~ !! (
-    [pos val]: evaluate:step [
-        1 + comment "a" comment "b" 2 * 3 panic "too far"
-    ]
-)
-(
-    [pos val]: evaluate:step [
-        1 comment "a" + comment "b" 2 * 3 panic "too far"
-    ]
-    all [
-        val = 1
-        pos = [comment "a" + comment "b" 2 * 3 panic "too far"]
-    ]
-)
-(
-    [pos val]: evaluate:step [
-        1 comment "a" comment "b" + 2 * 3 panic "too far"
-    ]
-    all [
-        val = 1
-        pos = [comment "a" comment "b" + 2 * 3 panic "too far"]
-    ]
-)
-
-(
-    1 = eval [elide "a" 1]
-)
-(
-    1 = eval [1 elide "a"]
-)
-(
-    '~,~ = ^ eval [elide "a"]
-)
-(ghost? elide "a")
-('~,~ = ^ elide "a")
-
-
-~no-value~ !! (
-    evaluate evaluate [1 elide "a" + elide "b" 2 * 3 panic "too far"]
-)
-(
-    code: [1 elide "a" elide "b" + 2 * 3 panic "too far"]
-    pos: evaluate:step code
-    pos: evaluate:step pos
-    pos = [elide "b" + 2 * 3 panic "too far"]
-)
-(
-    [pos val]: evaluate:step [
-        1 + 2 * 3 elide "a" elide "b" panic "too far"
-    ]
-    all [
-        val = 9
-        pos = [elide "a" elide "b" panic "too far"]
-    ]
-)
-
-
-(
-    y: ~
-    x: ~
-    x: 1 + 2 * 3
-    elide (y: :x)
-
-    all [x = 9, y = 9]
-)
-~no-value~ !! (
-    y: ~
-    x: ~
-    x: 1 + elide (y: 10) 2 * 3  ; non-interstitial, no longer legal
-)
 
 ; ONCE-BAR was an experiment created to see if it could be done, and was
 ; thought about putting in the box.  Notationally it was || to correspond as
@@ -138,27 +48,12 @@
     3 = eval [1 + 2 ||| 10 + 20, 100 + 200]
 )
 
-; !!! There used to be some concept that these void-returning things could
-; appear like an "end" to functions.  But rules for reification have changed,
-; in that there are no "pure invisibles".  So saying that it's an <end> is
-; questionable.  Review when there's enough time in priorities to think on it.
-;
-;     (not error? rescue [reeval (lambda [x [<end>]] []) ||| 1 2 3])
-;     (warning? rescue [reeval (lambda [x [null?]] []) ||| 1 2 3])
-
-(
-    [3 11] = reduce [1 + 2 elide 3 + 4 5 + 6]
-)
-
-
 ; Test expression barrier invisibility
 
 (
     3 = (1 + 2,)  ; COMMA! barrier
 )(
     3 = (1 + 2 ||)  ; usermode expression barrier
-)(
-    3 = (1 + 2 comment "invisible")
 )
 
 ; Non-variadic
@@ -322,39 +217,10 @@
 ('~[]~ = lift (if ok [] else [<else>]))
 ('~[]~ = lift (if ok [comment <true-branch>] else [<else>]))
 
-(1 = all [1 elide <vaporize>])
-(1 = any [1 elide <vaporize>])
-([1] = reduce [1 elide <vaporize>])
-
 (304 = (1000 + 20 (** foo <baz> (bar)) 300 + 4))
 (304 = (1000 + 20 ** (
     foo <baz> (bar)
 ) 300 + 4))
-
-
-; REEVAL has been tuned to be able to act invisibly if the thing being
-; reevaluated turns out to be invisible.
-;
-(integer? (reeval the (comment "this group vaporizes") 1020))
-
-(<before> = (<before> reeval :comment "erase me"))
-(
-    x: <before>
-    all [
-        10 = (
-            10 reeval :elide x: <after>
-        )
-        x = <after>
-    ]
-)
-
-
-; !!! Tests of invisibles interacting with functions should be in the file
-; where those functions are defined, when test file structure gets improved.
-;
-(null? spaced [])
-(null? spaced [comment "hi"])
-(null? spaced [()])
 
 
 ; GROUP!s "vaporize" if they are empty or invisible, but can't be used as
@@ -409,10 +275,6 @@
 ]
 
 ((lift void) = lift void)
-
-~no-value~ !! (
-    1 + 2 (comment "stale") + 3
-)
 
 (
     num-runs: 0

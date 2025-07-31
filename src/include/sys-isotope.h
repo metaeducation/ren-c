@@ -139,69 +139,107 @@ INLINE Result(Element*) Coerce_To_Quasiform(Need(Element*) v) {
 }
 
 
-// When you're sure that the value isn't going to be consumed by a multireturn
-// then use this to get the first value unlift'd
+//=//// ELIDING AND DECAYING UNSTABLE ANTIFORMS ///////////////////////////=//
 //
-// 1. We fall through in case result is pack or error (should this iterate?)
+// Decay is the process of producing a stable value from an unstable one.  It
+// is not legal to decay an unstable antiform into another unstable antiform,
+// and it's too risky to let ERROR!s inside PACK!s be silently discarded...
+// so they have to be elevated to panics.
 //
-// 2. If the first element in a pack is a pack, we could decay that.  Maybe
-//    we should, but my general feeling is that you should probably have to
-//    unpack more granularly, e.g. ([[a b] c]: packed-pack), and it would just
-//    create confusion to decay things automatically.  Experience may dictate
-//    that decaying automatically here is better, wait and see.
+// "Elision" is more permissive than decay, because you're not actually trying
+// to extract a value if the antiform is a PACK! or GHOST! (or a PACK! with
+// a PACK! in the first slot, which must be unpacked vs. auto-decaying).  So
+// you only need to be concerned about sweeping any ERROR!s under the rug.
 //
-// 3. If there's an antiform error in the non-primary slot of a pack, we don't
-//    want to just silently discard it.  The best way to make sure no packs
-//    are hiding errors is to recursively decay.
+// The concern about searching for embedded ERROR!s is shared between the
+// decay and elide routines, so they are implemented using a common function.
 //
-INLINE Result(Value*) Decay_If_Unstable(Need(Atom*) v) {
+
+#define Decay_If_Unstable(v) \
+    Decay_Or_Elide_Core((v), true)
+
+#define Elide_Unless_Error_Including_In_Packs(v) \
+    Decay_Or_Elide_Core((v), false)
+
+INLINE Result(Value*) Decay_Or_Elide_Core(
+    Need(Atom*) v,
+    bool want_value  // ELIDE is more permissive, doesn't want the value
+){
     if (Not_Antiform(v))
-        return u_cast(Value*, v);
+        goto finished;
 
-    if (Is_Pack(v)) {  // iterate until result is not multi-return [1]
-        const Element* tail;
-        const Element* first = List_At(&tail, v);
+    if (not Is_Pack(v)) {
+        if (want_value and Is_Ghost(v))
+            return fail (Error_No_Value_Raw());  // distinct error from void?
 
-        if (first == tail)
-            return fail ("Empty PACK! cannot decay to single value");
+        if (Is_Error(v))
+            return fail (Cell_Error(v));
 
-        for (const Element* at = first; at != tail; ++at) {
-            if (not Any_Lifted(at))
-                return fail ("Non-lifted element in PACK!");
+        goto finished;
+    }
 
-            if (Is_Lifted_Error(at))
-                return fail (Cell_Error(at));
+  handle_pack: {  // iterate until result is not a pack
 
-            if (not Is_Lifted_Pack(at))
-                continue;
+  // 1. If there's an antiform error in the non-primary slot of a pack, we
+  //    don't want to just silently discard it.  The best way to make sure no
+  //    packs are hiding errors is to recursively decay.
+  //
+  // 2. If the first element in a pack is a pack, we could decay that.  Maybe
+  //    we should, but my general feeling is that you should probably have to
+  //    unpack more granularly, e.g. ([[a b] c]: packed-pack), and it just
+  //    creates confusion to decay things automatically.  Experience may
+  //    dictate that decaying automatically here is better, wait and see.
 
-            if (Is_Lifted_Void(at))
-                continue;  // voids can't decay, but allow if not first
+    const Element* tail;
+    const Element* first = List_At(&tail, v);
 
-            Copy_Cell(v, at);
-            assume (
-              Unliftify_Undecayed(v)
-            );
-            trap (
-              Decay_If_Unstable(v)
-            );
-        }
+    if (want_value and first == tail)
+        return fail ("Empty PACK! cannot decay to single value");
 
-        if (Is_Lifted_Pack(first))
+    for (const Element* at = first; at != tail; ++at) {
+        if (not Any_Lifted(at))
+            return fail ("Non-lifted element in PACK!");
+
+        if (Is_Lifted_Error(at))
+            return fail (Cell_Error(at));
+
+        if (not Is_Lifted_Pack(at))
+            continue;
+
+        Copy_Cell(v, at);
+        assume (
+            Unliftify_Undecayed(v)
+        );
+        trap (  /// elide recursively to look for hidden ERROR! [1]
+            Elide_Unless_Error_Including_In_Packs(v)
+        );
+    }
+
+    if (want_value) {
+        if (Is_Lifted_Pack(first))  // don't decay first slot [2]
             return fail ("PACK! cannot decay PACK! in first slot");
 
         Copy_Cell(v, first);  // Note: no antiform binding (PACK!)
-        require (
-          Unliftify_Undecayed(v)
+        assume (  // Any_Lifted() already checked for all pack items
+            Unliftify_Undecayed(v)
         );
-        return u_cast(Value*, v);
     }
 
-    if (Is_Ghost(v))
-        return fail (Error_No_Value_Raw());  // distinct error from void?
+    goto finished;
 
-    if (Is_Error(v))
-        return fail (Cell_Error(v));
+} finished: { ////////////////////////////////////////////////////////////////
+
+  #if NEEDFUL_DOES_CORRUPTIONS
+    if (not want_value)
+       Corrupt_Cell_If_Needful(v);
+  #endif
 
     return u_cast(Value*, v);
+}}
+
+INLINE Result(Value*) Unliftify_Decayed(Value* v) {
+    trap (
+      Atom *atom = Unliftify_Undecayed(cast(Atom*, v))
+    );
+    return Decay_If_Unstable(atom);
 }

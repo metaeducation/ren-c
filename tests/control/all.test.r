@@ -405,3 +405,5 @@
 ]
 
 ((spread [d e]) = all [1 < 2, 3 < 4, spread [d e]])
+
+(1 = all [1 elide <vaporize>])

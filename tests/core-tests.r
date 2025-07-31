@@ -157,7 +157,6 @@
 %functions/generator.test.r
 %functions/hijack.test.r
 %functions/infix.test.r
-%functions/invisible.test.r
 %functions/let.test.r
 %functions/literal.test.r
 %functions/macro.test.r
@@ -174,6 +173,10 @@
 %functions/typechecker.test.r
 %functions/unwind.test.r
 %functions/yielder.test.r
+
+%invisibles/comment.test.r
+%invisibles/elide.test.r
+%invisibles/invisible.test.r
 
 %loops/attempt.test.r
 %loops/break.test.r

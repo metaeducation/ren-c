@@ -355,12 +355,3 @@ INLINE Value* Unliftify_Known_Stable(Need(Value*) val) {
     Assert_Cell_Stable(val);
     return val;
 }
-
-INLINE Result(Value*) Decay_If_Unstable(Need(Atom*) v);
-
-INLINE Result(Value*) Unliftify_Decayed(Value* v) {
-    trap (
-      Atom *atom = Unliftify_Undecayed(cast(Atom*, v))
-    );
-    return Decay_If_Unstable(atom);
-}

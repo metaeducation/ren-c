@@ -106,15 +106,21 @@ DECLARE_NATIVE(COMMENT)
 //
 //  elide: native:intrinsic [
 //
-//  "Argument evaluated, result discarded (not ERROR! or undecayable packs)"
+//  "Argument evaluated, result discarded (not ERROR!, or packs with ERROR!s)"
 //
 //      return: [ghost!]
-//      ^discarded [any-stable? void? ghost!]
+//      ^discarded [any-stable? pack! ghost!]
 //  ]
 //
 DECLARE_NATIVE(ELIDE)
 {
     INCLUDE_PARAMS_OF_ELIDE;  // no ARG(DISCARDED), parameter is intrinsic
+
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+
+    require (
+      Elide_Unless_Error_Including_In_Packs(atom)
+    );
 
     return Init_Unsurprising_Ghost(OUT);
 }

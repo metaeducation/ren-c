@@ -392,7 +392,7 @@
 ("this is why" = (any:predicate [1 null 2] :not then ["this is why"]))
 
 (10 = any [(10 elide "stale")])
-
+(1 = any [1 elide <vaporize>])
 
 [
     (

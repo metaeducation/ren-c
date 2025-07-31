@@ -115,3 +115,7 @@
 ; @(spread []) should vanish
 ;
 ("ab" = unspaced ["a" @(spread []) "b"])
+
+(null? spaced [])
+(null? spaced [comment "hi"])
+(null? spaced [()])

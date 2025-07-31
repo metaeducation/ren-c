@@ -100,3 +100,26 @@
     b-value: 1
     1 = reeval :a-value
 )
+
+(integer? (reeval the (comment "this group vaporizes") 1020))
+
+(<before> = (<before> reeval comment/ "erase me"))
+
+
+; !!! There used to be some concept that GHOST!-returning things could
+; appear like an "end" to functions.  But rules for reification have changed,
+; in that there are no "pure invisibles".  So saying that it's an <end> is
+; questionable.  Review when there's enough time in priorities to think on it.
+;
+;     (not error? rescue [reeval (lambda [x [<end>]] []) ||| 1 2 3])
+;     (warning? rescue [reeval (lambda [x [null?]] []) ||| 1 2 3])
+
+(
+    x: <before>
+    all [
+        10 = (
+            10 reeval elide/ x: <after>
+        )
+        x = <after>
+    ]
+)

@@ -695,6 +695,10 @@ INLINE Error* Cell_Error(const Cell* c);
 
 #include "cells/cell-sequence.h"  // needs Derelativize()
 
+//=//// ISOTOPE COERCION AND DECAY ////////////////////////////////////////=//
+
+#include "sys-isotope.h"
+
 //=//// EVALUATOR SERVICES ////////////////////////////////////////////////=//
 
 #include "sys-lib.h"
@@ -707,11 +711,6 @@ INLINE Error* Cell_Error(const Cell* c);
 
 #include "sys-eval.h"  // low-level single-step evaluation API
 #include "sys-continuation.h"
-
-
-//=//// ISOTOPE COERCION AND DECAY ////////////////////////////////////////=//
-
-#include "sys-isotope.h"  // needs cell definitions, Drop_Level()
 
 
 //=//// NATIVES ////////////////////////////////////////////////////////////=//

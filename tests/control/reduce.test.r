@@ -53,6 +53,9 @@
     ([304 1020] = reduce [300 + 4 1000 + 20 comment <AE>])
 ]
 
+([3 11] = reduce [1 + 2 elide 3 + 4 5 + 6])
+([1] = reduce [1 elide <vaporize>])
+
 
 ~bad-antiform~ !! (
     reduce [null]
