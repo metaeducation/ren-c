@@ -15,8 +15,8 @@
     null? f
 )
 (
-    f: does [:abs]
-    :abs = f
+    f: does [abs/]
+    abs/ = f
 )
 (
     a-value: #{}
@@ -92,13 +92,13 @@
 )
 (
     a-value: first ['a/b]
-    f: does [:a-value]
-    :a-value = f
+    f: does [a-value]
+    a-value = f
 )
 (
     a-value: first ['a]
-    f: does [:a-value]
-    :a-value = f
+    f: does [a-value]
+    a-value = f
 )
 (
     f: does ['true]
@@ -113,8 +113,8 @@
     $1 = f
 )
 (
-    f: does [:append]
-    same? :append f
+    f: does [append/]
+    same? append/ f
 )
 (
     f: does [_]
@@ -122,13 +122,13 @@
 )
 (
     a-value: make object! []
-    f: does [:a-value]
-    same? :a-value f
+    f: does [a-value]
+    same? a-value f
 )
 (
     a-value: first [()]
-    f: does [:a-value]
-    same? :a-value f
+    f: does [a-value]
+    same? a-value f
 )
 (
     f: does [+/]
@@ -140,12 +140,12 @@
 )
 (
     a-value: 'a/b
-    f: does [:a-value]
-    :a-value = f
+    f: does [a-value]
+    a-value = f
 )
 (
     a-value: make port! http://
-    f: does [:a-value]
+    f: does [a-value]
     port? f
 )
 (
@@ -154,18 +154,18 @@
 )
 (
     a-value: first [a.b:]
-    f: does [:a-value]
-    :a-value = f
+    f: does [a-value]
+    a-value = f
 )
 (
     a-value: first [a:]
-    f: does [:a-value]
-    :a-value = all [:a-value]
+    f: does [a-value]
+    a-value = all [a-value]
 )
 (
     a-value: ""
-    f: does [:a-value]
-    same? :a-value f
+    f: does [a-value]
+    same? a-value f
 )
 (
     a-value: to tag! ""

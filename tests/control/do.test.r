@@ -89,7 +89,7 @@
     a-value: as blob! "Rebol [] 1 + 1"
     eval a-value  ; strings/binaries not handled by EVAL
 )
-(:abs = eval [:abs])
+(abs/ = eval [abs/])
 (
     a-value: #{}
     same? a-value eval reduce [a-value]
@@ -117,11 +117,11 @@
 )
 (
     a-value: does []
-    same? :a-value eval [:a-value]
+    same? a-value/ eval [a-value/]
 )
 (
-    a-value: first [:a-value]
-    :a-value = eval reduce [:a-value]
+    a-value: first [^a-value]
+    a-value = eval reduce [a-value]
 )
 (NUL = eval [NUL])
 
@@ -130,47 +130,47 @@
 (#a = eval [#a])
 (
     a-value: first ['a/b]
-    :a-value = eval [:a-value]
+    a-value = eval [a-value]
 )
 (
     a-value: first ['a]
-    :a-value = eval [:a-value]
+    a-value = eval [a-value]
 )
 ('true = eval ['true])
 ('false = eval ['false])
 
-(same? :append eval [:append])
+(same? append/ eval [append/])
 (null? eval [~null~])
 (
     a-value: make object! []
-    same? :a-value eval reduce [:a-value]
+    same? a-value eval reduce [a-value]
 )
 (
     a-value: first [()]
-    same? :a-value eval [:a-value]
+    same? a-value eval [a-value]
 )
 (same? +/ eval [+/])
 (0x0 = eval [0x0])
 (
     a-value: 'a/b
-    :a-value = eval [:a-value]
+    a-value = eval [a-value]
 )
 (
     a-value: make port! http://
-    port? eval reduce [:a-value]
+    port? eval reduce [a-value]
 )
 ('/a = eval ['/a])
 (
     a-value: first [a.b:]
-    :a-value = eval [:a-value]
+    a-value = eval [a-value]
 )
 (
     a-value: first [a:]
-    :a-value = eval [:a-value]
+    a-value = eval [a-value]
 )
 (
     a-value: ""
-    same? :a-value eval reduce [:a-value]
+    same? a-value eval reduce [a-value]
 )
 (
     a-value: to tag! ""
@@ -189,11 +189,11 @@
 
 (
     a-value: first [(2)]
-    2 = eval as block! :a-value
+    2 = eval as block! a-value
 )
 (
     a-value: "Rebol [] 1"
-    trash? do :a-value
+    trash? do a-value
 )
 (trash? do "Rebol []")
 (trash? do "Rebol [] 1")

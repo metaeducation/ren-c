@@ -233,7 +233,7 @@
 
         (make varargs! [var args])
         (make object! [obj: "ect"])
-        (make frame! unrun :append)
+        (make frame! append/)
         (make warning! "error")
         (port: open http://example.com)
         ~quasiword~

@@ -4,16 +4,16 @@
 (chain! = type of first [a:])
 ; set-word is active
 (
-    a: :abs
-    equal? :a :abs
+    a: abs/
+    equal? a/ abs/
 )
 (
     a: #{}
-    equal? :a #{}
+    equal? a #{}
 )
 (
     a: charset ""
-    equal? :a charset ""
+    equal? a charset ""
 )
 (
     a: []
@@ -21,7 +21,7 @@
 )
 (
     a: frame!
-    equal? :a frame!
+    equal? a frame!
 )
 [#1817 (
     a: to map! []
@@ -50,6 +50,6 @@
     x: 1020
     all [
         2 = (x: comment "Hi" 2)
-        void? :x
+        unset? $x
     ]
 )]

@@ -3,8 +3,8 @@
 (null = not okay)
 (okay = not null)
 
-(null = not :append)
-(null = not :abs)
+(null = not append/)
+(null = not abs/)
 (null = not func [] [])
 
 (null = not type of +/)
@@ -35,7 +35,7 @@
         ()
         a/b
         (make port! http://)
-        /refinement
+        /run-word
         a.b:
         a:
         ""

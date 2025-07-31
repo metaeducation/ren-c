@@ -1,9 +1,9 @@
 ; functions/comparison/strict-equalq.r
-(equal? :abs :abs)
+(equal? abs/ abs/)
 ; reflexivity test for native
-(equal? :all :all)
+(equal? all/ all/)
 ; reflexivity test for infix
-(equal? :+ :+)
+(equal? +/ +/)
 ; reflexivity test for action
 (
     a-value: func [] []

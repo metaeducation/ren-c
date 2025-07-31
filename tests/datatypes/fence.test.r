@@ -4,6 +4,10 @@
 ; local environments to do something else, by defining fence!-EVAL:
 
 (
+    data: [
+        The Sharp Gray @Fork "Quantum Leaped" Over The Lazy @Red
+    ]
+
     fence!-EVAL: lambda [rule [fence!]] [
         rule: as block! rule
         parse data [accept [rule, elide data: <here>]]

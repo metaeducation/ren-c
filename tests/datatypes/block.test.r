@@ -49,8 +49,8 @@
     ]
 
     all [
-        [1 2 3 4 5] = make block! :make-one-thru-five
-        [1 2 3 4 5] = make block! :make-one-thru-five
+        [1 2 3 4 5] = make block! make-one-thru-five/
+        [1 2 3 4 5] = make block! make-one-thru-five/
     ]
 )
 

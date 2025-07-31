@@ -15,7 +15,7 @@
     ;
     ; NOTE: Variadics are not handled at this time.
     ;
-    ; 1. If what gets passed in is something like :append, then we don't wants
+    ; 1. If what gets passed in is something like append/ then we don't want
     ;    to be modifying that directly.  We make a copy.  This *should* be
     ;    done with just `copy frame`, but that is residually a lightweight
     ;    way to make a Details identity that resists hijacking.
@@ -25,7 +25,7 @@
     ;    right spot in the evaluation order.  (e.g. GET $APPEND:DUP returns a
     ;    function where DUP is a plain WORD! parameter in the third spot).
     ;
-    ; 3. If the user does (pointfree :append [_ [d e]]) then the blank signals
+    ; 3. If the user does (pointfree append/ [_ [d e]]) then the blank signals
     ;    an unspecialized slot.  So that would be like writing:
     ;
     ;        specialize append/ [value: [d e]]  ; leave series unspecialized
@@ -91,7 +91,7 @@
     ;
     ;      pointfree [append _ [d e]]
     ;      =>
-    ;      pointfree* :append [_ [d e]]
+    ;      pointfree* append/ [_ [d e]]
     ;
     /pointfree: specialize (adapt pointfree*/ [
         frame: (match frame! any [  ; no SET-WORD! namecache

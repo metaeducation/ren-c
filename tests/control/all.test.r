@@ -39,7 +39,7 @@
 )
 
 ; one value
-(:abs = all [:abs])
+(abs/ = all [abs/])
 (
     a-value: #{}
     same? a-value all [a-value]
@@ -70,11 +70,11 @@
 )
 (
     a-value: does []
-    same? :a-value all [:a-value]
+    same? a-value all [a-value]
 )
 (
     a-value: first [:a]
-    :a-value = all [:a-value]
+    a-value = all [a-value]
 )
 (NUL = all [NUL])
 
@@ -83,45 +83,45 @@
 (#a = all [#a])
 (
     a-value: first ['a/b]
-    :a-value = all [:a-value]
+    a-value = all [a-value]
 )
 (
     a-value: first ['a]
-    :a-value = all [:a-value]
+    a-value = all [a-value]
 )
 (okay = all [okay])
 (null? all [null])
-(same? :append all [:append])
+(same? append/ all [append/])
 
 (null? all [~null~])
 (_ = all [_])
 
 (
     a-value: make object! []
-    same? :a-value all [:a-value]
+    same? a-value all [a-value]
 )
 (
     a-value: first [()]
-    same? :a-value all [:a-value]
+    same? a-value all [a-value]
 )
 (same? +/ all [+/])
 (0x0 = all [0x0])
 (
     a-value: 'a/b
-    :a-value = all [:a-value]
+    a-value = all [a-value]
 )
 (
     a-value: make port! http://
-    port? all [:a-value]
+    port? all [a-value]
 )
 ('/a = all ['/a])
 (
     a-value: first [a.b:]
-    :a-value = all [:a-value]
+    a-value = all [a-value]
 )
 (
     a-value: first [a:]
-    :a-value = all [:a-value]
+    a-value = all [a-value]
 )
 (
     a-value: ""
@@ -136,7 +136,7 @@
 (null? all [null])
 ('a = all ['a])
 ; two values
-(:abs = all [okay :abs])
+(abs/ = all [okay abs/])
 (
     a-value: #{}
     same? a-value all [okay a-value]
@@ -167,7 +167,7 @@
 )
 (
     a-value: does []
-    same? :a-value all [okay :a-value]
+    same? a-value/ all [okay a-value/]
 )
 (
     a-value: first [:a]
@@ -180,11 +180,11 @@
 (#a = all [okay #a])
 (
     a-value: first ['a/b]
-    :a-value = all [okay :a-value]
+    a-value = all [okay a-value]
 )
 (
     a-value: first ['a]
-    :a-value = all [okay :a-value]
+    a-value = all [okay a-value]
 )
 (same? append/ all [okay append/])
 
@@ -193,30 +193,30 @@
 
 (
     a-value: make object! []
-    same? :a-value all [okay :a-value]
+    same? a-value all [okay a-value]
 )
 (
     a-value: first [()]
-    same? :a-value all [okay :a-value]
+    same? a-value all [okay a-value]
 )
 (same? +/ all [okay +/])
 (0x0 = all [okay 0x0])
 (
     a-value: 'a/b
-    :a-value = all [okay :a-value]
+    a-value = all [okay a-value]
 )
 (
     a-value: make port! http://
-    port? all [okay :a-value]
+    port? all [okay a-value]
 )
 ('/a = all [okay '/a])
 (
     a-value: first [a.b:]
-    :a-value = all [okay :a-value]
+    a-value = all [okay a-value]
 )
 (
     a-value: first [a:]
-    :a-value = all [okay :a-value]
+    a-value = all [okay a-value]
 )
 (
     a-value: ""
@@ -230,7 +230,7 @@
 (0.0.0 = all [okay 0.0.0])
 (null? all [1020 null])
 ('a = all [okay 'a])
-(okay = all [:abs okay])
+(okay = all [abs/ okay])
 (
     a-value: #{}
     okay = all [a-value okay]
@@ -261,11 +261,11 @@
 )
 (
     a-value: does []
-    okay = all [:a-value okay]
+    okay = all [a-value/ okay]
 )
 (
     a-value: first [:a]
-    okay = all [:a-value okay]
+    okay = all [a-value/ okay]
 )
 (okay = all [NUL okay])
 
@@ -274,48 +274,48 @@
 (okay = all [#a okay])
 (
     a-value: first ['a/b]
-    okay = all [:a-value okay]
+    okay = all [a-value okay]
 )
 (
     a-value: first ['a]
-    okay = all [:a-value okay]
+    okay = all [a-value okay]
 )
 (okay = all [okay okay])
 (null? all [null okay])
 (null? all [okay null])
 
-(okay = all [:append okay])
+(okay = all [append/ okay])
 (okay = all [_ okay])
 (
     a-value: make object! []
-    okay = all [:a-value okay]
+    okay = all [a-value okay]
 )
 (
     a-value: first [()]
-    okay = all [:a-value okay]
+    okay = all [a-value okay]
 )
 (okay = all [+/ okay])
 (okay = all [0x0 okay])
 (
     a-value: 'a/b
-    okay = all [:a-value okay]
+    okay = all [a-value okay]
 )
 (
     a-value: make port! http://
-    okay = all [:a-value okay]
+    okay = all [a-value okay]
 )
 (okay = all ['/a okay])
 (
     a-value: first [a.b:]
-    okay = all [:a-value okay]
+    okay = all [a-value okay]
 )
 (
     a-value: first [a:]
-    okay = all [:a-value okay]
+    okay = all [a-value okay]
 )
 (
     a-value: ""
-    okay = all [:a-value okay]
+    okay = all [a-value okay]
 )
 (
     a-value: to tag! ""

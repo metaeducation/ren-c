@@ -33,8 +33,7 @@
     (null = find void 304)
     (null = select void 304)
 
-    ~bad-pick~ !! (pick void 304)
-    (null = try pick void 304)
+    (null = pick void 304)
 
     (_ = copy _)  ; do NOT want opt-out of copy
 ]

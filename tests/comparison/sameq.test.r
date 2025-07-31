@@ -1,10 +1,10 @@
 ; functions/comparison/sameq.r
 ; reflexivity test for action
-(same? :abs :abs)
+(same? abs/ abs/)
 ; reflexivity test for native
-(same? :all :all)
+(same? all/ all/)
 ; reflexivity test for infix
-(same? :+ :+)
+(same? +/ +/)
 ; reflexivity test for action
 (
     a-value: func [] []
@@ -96,9 +96,9 @@
     (
         a-value: first [a/b]
         b-value: ~
-        parse as block! :a-value [b-value: <here>, to <end>]
-        equal? as block! :a-value :b-value
-        not same? as block! :a-value :b-value  ; !!! as makes new array, review
+        parse as block! a-value [b-value: <here>, to <end>]
+        equal? as block! a-value b-value
+        not same? as block! a-value b-value  ; !!! as makes new array, review
     )
 ]
 

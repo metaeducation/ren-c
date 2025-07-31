@@ -104,15 +104,15 @@
     ~unspecified-arg~ !! (foo)
 ]
 
-; ~()~ antiforms were VOID for a short time, but void is now its own thing
 [
     (did foo: func [return: [any-stable?]] [return ~()~])
 
+    (blank? foo)
     (not void? foo)
-    ('~()~ = ^ foo)
+    ('~()~ = lift foo)
 
-    ('~()~ = ^ applique :foo [])
-    ('~()~ = ^ eval :foo)
+    (blank? applique foo/ [])
+    (blank? eval foo/)
 ]
 
 

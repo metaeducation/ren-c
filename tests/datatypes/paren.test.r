@@ -11,7 +11,7 @@
 ; parens are active
 (
     a-value: first [(1)]
-    1 = eval reduce [:a-value]
+    1 = eval reduce [a-value]
 )
 ; finite recursion
 (

@@ -8,43 +8,43 @@
 (1 = abs -1)
 (
     a-value: #{}
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 (
     a-value: charset ""
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 (
     a-value: []
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 (
     a-value: integer!
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 (
     a-value: 1/Jan/0000
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 (
     a-value: 0.0
-    :a-value = a-value
+    ^a-value = a-value
 )
 (
     a-value: 1.0
-    :a-value = a-value
+    ^a-value = a-value
 )
 (
     a-value: me@here.com
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 (
     warning? a-value: rescue [1 / 0]
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 (
     a-value: %""
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 ; functions are word-active
 (
@@ -53,39 +53,39 @@
 )
 (
     a-value: first [:a]
-    :a-value = a-value
+    ^a-value = a-value
 )
 (
     a-value: NUL
-    :a-value = a-value
+    ^a-value = a-value
 )
 (
     a-value: 0
-    :a-value = a-value
+    ^a-value = a-value
 )
 (
     a-value: 1
-    :a-value = a-value
+    ^a-value = a-value
 )
 (
     a-value: null
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 ; lit-paths aren't word-active
 (
     a-value: first ['a/b]
-    a-value = :a-value
+    a-value = ^a-value
 )
 ; lit-words aren't word-active
 (
     a-value: first ['a]
-    a-value = :a-value
+    a-value = ^a-value
 )
 (:okay = okay)
 (:null = null)
 (
     a-value: $1
-    :a-value = a-value
+    ^a-value = a-value
 )
 ; natives are word-active
 (frame! = type of unrun :reduce)
@@ -93,11 +93,11 @@
 ; library test?
 (
     a-value: make object! []
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 (
     a-value: first [()]
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 (
     a-value: +/
@@ -105,11 +105,11 @@
 )
 (
     a-value: 0x0
-    :a-value = a-value
+    ^a-value = a-value
 )
 (
     a-value: 'a/b
-    :a-value = a-value
+    ^a-value = a-value
 )
 (
     a-value: make port! http://
@@ -117,32 +117,32 @@
 )
 (
     a-value: '/a
-    :a-value = a-value
+    ^a-value = a-value
 )
 ; routine test?
 (
     a-value: first [a.b:]
-    :a-value = a-value
+    ^a-value = a-value
 )
 (
     a-value: first [a:]
-    :a-value = a-value
+    ^a-value = a-value
 )
 (
     a-value: ""
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 (
     a-value: to tag! ""
-    same? a-value a-value
+    same? ^a-value a-value
 )
 (
     a-value: 0:00
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 (
     a-value: 0.0.0
-    same? :a-value a-value
+    same? ^a-value a-value
 )
 ~bad-word-get~ !! (
     a-value: ~#bad~
@@ -154,7 +154,7 @@
 )
 (
     a-value: 'a
-    :a-value = a-value
+    ^a-value = a-value
 )
 
 [#1461 #1478 (

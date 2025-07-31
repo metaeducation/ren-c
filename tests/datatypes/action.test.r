@@ -19,8 +19,7 @@
 
     (
         new-name: append/
-        old-name: ~
-        set $old-name append/
+        ^old-name: append/
         all [
             'new-name = label of new-name/
             'append = label of old-name/
@@ -28,9 +27,8 @@
     )
 
     (
-        no-set-word: ~
-        set $no-set-word func [] []
-        null = label of no-set-word/
+        ^anonymous: func [] []
+        null = label of anonymous/
     )
 
     (

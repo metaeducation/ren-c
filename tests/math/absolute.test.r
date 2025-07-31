@@ -1,5 +1,5 @@
 ; functions/math/absolute.r
-(:abs = :absolute)
+(abs/ = absolute/)
 (0 = abs 0)
 (1 = abs 1)
 (1 = abs -1)

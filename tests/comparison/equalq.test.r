@@ -1,12 +1,12 @@
 ; functions/comparison/equalq.r
 ; reflexivity test for native
-(lax-equal? :abs :abs)
-(not lax-equal? :abs :add)
-(lax-equal? :all :all)
-(not lax-equal? :all :any)
+(lax-equal? abs/ abs/)
+(not lax-equal? abs/ add/)
+(lax-equal? all/ all/)
+(not lax-equal? all/ any/)
 ; reflexivity test for infix
-(lax-equal? :+ :+)
-(not lax-equal? :+ :-)
+(lax-equal? +/ +/)
+(not lax-equal? +/ -/)
 ; reflexivity test for action
 (lax-equal? a-value: func [] [] a-value/)
 ; No structural equivalence for action
@@ -125,7 +125,7 @@
 (
     a-value: 'a/b
     b-value: [a b]
-    lax-equal? lax-equal? :a-value :b-value lax-equal? :b-value :a-value
+    lax-equal? lax-equal? a-value b-value lax-equal? b-value a-value
 )
 ; block! vs. lit-path?
 (not lax-equal? [a b] first ['a/b])
@@ -133,7 +133,7 @@
 (
     a-value: first ['a/b]
     b-value: [a b]
-    lax-equal? lax-equal? :a-value :b-value lax-equal? :b-value :a-value
+    lax-equal? lax-equal? a-value b-value lax-equal? b-value a-value
 )
 ; block! vs. set-tuple!
 (not lax-equal? [a b] first [a.b:])
@@ -141,7 +141,7 @@
 (
     a-value: first [a.b:]
     b-value: [a b]
-    lax-equal? lax-equal? :a-value :b-value lax-equal? :b-value :a-value
+    lax-equal? lax-equal? a-value b-value lax-equal? b-value a-value
 )
 ; block! vs. get-tuple!
 (not lax-equal? [a b] first [:a.b])
@@ -149,7 +149,7 @@
 (
     a-value: first [:a.b]
     b-value: [a b]
-    lax-equal? lax-equal? :a-value :b-value lax-equal? :b-value :a-value
+    lax-equal? lax-equal? a-value b-value lax-equal? b-value a-value
 )
 (lax-equal? decimal! decimal!)
 (not lax-equal? decimal! integer!)

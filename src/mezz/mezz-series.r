@@ -78,7 +78,7 @@ array: func [
     block: make block! size
     case [
         rest [
-            repeat size [append block (array:initial rest :initial)]
+            repeat size [append block (array:initial rest ^initial)]
         ]
         action? ^initial [
             repeat size [append block initial]  ; Called every time

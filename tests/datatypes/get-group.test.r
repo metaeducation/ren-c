@@ -37,7 +37,7 @@
 ; panic on errors, and you need to use SYS.UTIL/RESCUE.
 [
     (
-        e: unquasi ^ (1 + 2 fail "handled")
+        e: disarm (1 + 2 fail "handled")
         e.message = "handled"
     )
     (
