@@ -39,7 +39,7 @@
     ; vars list too, but this is a first step.)
     ;
     block: if match [@block!] block [
-        map-each 'item block [quote item]  ; should REDUCE do this for @[...] ?
+        map-each 'item unpin block [quote item]
     ]
     else [
         reduce:predicate block lift/
@@ -48,7 +48,7 @@
     let ^result: void
     for-each [val'] block [
         if void? ^result [
-            result: either space? vars.1 [lift void] [val']
+            ^result: either space? vars.1 [void] [unlift val']
         ]
         if tail? vars [
             panic "Too many values for vars in PACK (use <...> if on purpose)"
@@ -109,13 +109,13 @@
 
 (
     a: <before>
-    '~null~ = [a]: pack-old pin reduce:predicate [null] :reify
+    '~null~ = [a]: pack-old pin reduce:predicate [null] reify/
     '~null~ = a
 )
 (
     a: <a-before>
     b: <b-before>
-    2 = [a b]: pack-old pin reduce:predicate [2 null] :reify
+    2 = [a b]: pack-old pin reduce:predicate [2 null] reify/
     a = 2
     '~null~ = b
 )

@@ -55,22 +55,25 @@
 )
 
 
-; non-:UNBOUNDED (returns NULL if out of bounds)
+; non-:UNBOUNDED (returns ERROR! if out of bounds)
 (
     blk: []
     same? blk skip blk 0
 )
 (
     blk: []
-    null? skip blk 2147483647
+    e: rescue [skip blk 2147483647]
+    e.id = 'index-out-of-range
 )
 (
     blk: []
-    null? skip blk -1
+    e: rescue [skip blk -1]
+    e.id = 'index-out-of-range
 )
 (
     blk: []
-    null? skip blk -2147483648
+    e: rescue [skip blk -2147483648]
+    e.id = 'index-out-of-range
 )
 (
     blk: next [1 2 3]
@@ -86,25 +89,31 @@
 )
 (
     blk: next [1 2 3]
-    null? skip blk 2147483647
+    e: rescue [skip blk 2147483647]
+    e.id = 'index-out-of-range
 )
 (
     blk: at [1 2 3] 3
-    null? skip blk 2147483646
+    e: rescue [skip blk 2147483646]
+    e.id = 'index-out-of-range
 )
 (
     blk: at [1 2 3] 4
-    null? skip blk 2147483645
+    e: rescue [skip blk 2147483645]
+    e.id = 'index-out-of-range
 )
 (
     blk: [1 2 3]
-    null? skip blk -1
+    e: rescue [skip blk -1]
+    e.id = 'index-out-of-range
 )
 (
     blk: [1 2 3]
-    null? skip blk -2147483647
+    e: rescue [skip blk -2147483647]
+    e.id = 'index-out-of-range
 )
 (
     blk: next [1 2 3]
-    null? skip blk -2147483648
+    e: rescue [skip blk -2147483648]
+    e.id = 'index-out-of-range
 )
