@@ -40,7 +40,7 @@
 ; out empty fields.  Use VOID for emptiness.
 ;
 ("**some****stuff**" = delimit "**" [-[]- "some" -[]- "stuff" -[]-])
-("some**stuff" = delimit "**" [void "some" void "stuff" void])
+("some**stuff" = delimit "**" [^void "some" ^void "stuff" ^void])
 
 [
     (
@@ -52,13 +52,13 @@
 ]
 
 [
-    ("Hello World" = spaced ["Hello" void "World"])
+    ("Hello World" = spaced ["Hello" ^void "World"])
     ("Hello World" = spaced ["Hello" if null ["Cruel"] "World"])
     ("Hello World" = spaced compose ["Hello" (if null ["Cruel"]) "World"])
 
-    ("HelloWorld" = unspaced ["Hello" void "World"])
+    ("HelloWorld" = unspaced ["Hello" ^void "World"])
     (
-        f: make frame! func [] [return ghost]
+        f: make frame! func [] [return ^ghost]
         "HelloWorld" = unspaced ["Hello" eval f "World"]
     )
 
@@ -82,8 +82,8 @@
     (",a,b,c," = delimit:head:tail "," ["a" "b" "c"])
     (",a," = delimit:head:tail "," "a")
 
-    (null = delimit:head:tail "," [void])
-    (null = delimit:head:tail "," void)
+    (null = delimit:head:tail "," [^void])
+    (null = delimit:head:tail "," ^void)
 ]
 
 ; BLOCK!s to subvert delimiting (works one level deep)

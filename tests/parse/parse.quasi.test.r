@@ -17,35 +17,36 @@
     ~bad-antiform~ !! ('b = parse [a b] ['a @[(null)] 'b])
 ]
 
+; !!! Review VOID behavior
 [
     ('b = parse [a b] ['a ~[]~ 'b])
     ('b = parse [a b] ['a @void 'b])
     ('b = parse [a b] ['a @lib.void 'b])
-    ('b = parse [a b] ['a @(void) 'b])
-    ('b = parse [a b] ['a @[(void)] 'b])
+    ('b = parse [a b] ['a @(^void) 'b])
+    ('b = parse [a b] ['a @[(^void)] 'b])
 
-    (void = parse [a b] ['a 'b ~[]~])
-    (void = parse [a b] ['a 'b @void])
-    (void = parse [a b] ['a 'b @lib.void])
-    (void = parse [a b] ['a 'b @(void)])
-    (void = parse [a b] ['a 'b @[(void)]])
+    (^void = parse [a b] ['a 'b ~[]~])
+    (^void = parse [a b] ['a 'b @void])
+    (^void = parse [a b] ['a 'b @lib.void])
+    (^void = parse [a b] ['a 'b @(^void)])
+    (^void = parse [a b] ['a 'b @[(^void)]])
 ]
 
-; Note: variables cannot contain nihil [1]
+; !!! Review GHOST behavior
 [
-    ('b = parse [a b] ['a ~[]~ 'b])
-    ; (parse [a b] ['a nihil 'b])  ; [1]
-    ; ('b = parse [a b] ['a @nihil 'b])  ; [1]
-    ; ('b = parse [a b] ['a @lib.nihil 'b])  ; [1]
-    ('b = parse [a b] ['a @(~[]~) 'b])
-    ('b = parse [a b] ['a @[(~[]~)] 'b])
+    ('b = parse [a b] ['a ~,~ 'b])
+    ; (parse [a b] ['a ^ghost 'b])  ; [1]
+    ; ('b = parse [a b] ['a @ghost 'b])  ; [1]
+    ; ('b = parse [a b] ['a @lib.ghost 'b])  ; [1]
+    ('b = parse [a b] ['a @(~,~) 'b])
+    ('b = parse [a b] ['a @[(~,~)] 'b])
 
-    ('b = parse [a b] ['a 'b ~[]~])
-    ; (parse [a b] ['a 'b nihil])  ; [1]
-    ; ('b = parse [a b] ['a 'b @nihil])  ; [1]
-    ; ('b = parse [a b] ['a 'b @lib.nihil])  ; [1]
-    ('b = parse [a b] ['a 'b @(~[]~)])
-    ('b = parse [a b] ['a 'b @[(~[]~)]])
+    ('b = parse [a b] ['a 'b ~,~])
+    ; (parse [a b] ['a 'b ^ghost])  ; [1]
+    ; ('b = parse [a b] ['a 'b @ghost])  ; [1]
+    ; ('b = parse [a b] ['a 'b @lib.ghost])  ; [1]
+    ('b = parse [a b] ['a 'b @(~,~)])
+    ('b = parse [a b] ['a 'b @[(~,~)]])
 ]
 
 [

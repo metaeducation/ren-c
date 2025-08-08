@@ -42,7 +42,7 @@
 [https://github.com/metaeducation/ren-c/issues/876 (
     x: 1020
     all [
-        void? (null, x: (void))
+        void? (null, x: (^void))
         void? x
     ]
 )

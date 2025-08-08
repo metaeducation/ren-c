@@ -94,38 +94,38 @@
     ~???~ !! (() else [okay])  ; should VOID with infix look like no value?
     ~???~ !! (1000 + 20 () then [panic ~#unreachable~])
 
-    (void else [okay])
-    (1020 = (1000 + 20 elide-if-void (void then [panic ~#unreachable~])))
+    (^void then [okay])
+    (1020 = (1000 + 20 elide-if-void (^void else [panic ~#unreachable~])))
 
-    ((void) else [okay])
-    (void? (1000 + 20 ((void) then [panic ~#unreachable~])))
+    ((^void) then [okay])
+    (void? (1000 + 20 ((^void) else [panic ~#unreachable~])))
 
-    (eval [] else [okay])
-    (void? eval [] then [panic ~#unreachable~])
+    (eval [] then [okay])
+    (void? eval [] else [panic ~#unreachable~])
 ]
 
 [
-    (foo: func [] [return void], ok)
-    (foo else [okay])
-    (1020 = (1000 + 20 elide-if-void (foo then [panic ~#unreachable~])))
+    (foo: func [] [return ^void], ok)
+    (foo then [okay])
+    (1020 = (1000 + 20 elide-if-void (foo else [panic ~#unreachable~])))
 ]
 
 [
     (foo: lambda [] [if null [panic ~#unreachable~]], ok)
     (foo else [okay])
-    (void? (1000 + 20 foo then [panic ~#unreachable~]))
+    (nulld? (1000 + 20 foo then [panic ~#unreachable~]))
 ]
 
 [
     (foo: lambda [] [], ok)
-    (foo else [okay])
-    (1020 = (1000 + 20 elide-if-void (foo then [panic ~#unreachable~])))
+    (foo then [okay])
+    (1020 = (1000 + 20 elide-if-void (foo else [panic ~#unreachable~])))
 ]
 
 ; https://forum.rebol.info/t/2176
 [
-    (null = (null else (void)))
-    (void = (void else (void)))
+    (null = (null else (^void)))
+    (^void = (^void else (^void)))
 
-    (3 = (if ok [1 + 2] then (void)))
+    (3 = (if ok [1 + 2] then (^void)))
 ]

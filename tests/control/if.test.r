@@ -11,8 +11,8 @@
 )
 (1 = if ok [1])
 
-((lift void) = ^ if null [])
-('~[]~ = ^ if ok [])
+((lift null) = lift if null [])
+('~[]~ = lift if ok [])
 
 (warning? if ok [rescue [1 / 0]])
 ; RETURN stops the evaluation
@@ -61,7 +61,7 @@
 (if first ['a/b] [okay])
 (if first ['a] [okay])
 (if ok [okay])
-((lift void) = ^ if null [okay])
+((lift null) = lift if null [okay])
 (if (specialize of/ [property: 'type]) [okay])
 (okay = if space [okay])
 (if make object! [] [okay])
@@ -105,8 +105,8 @@
 )
 (1 = if false? 'false [1])
 
-((lift void) = ^ if not okay [1])
-('~[~null~]~ = ^ if no? 'no [null])
+((lift null) = lift if not okay [1])
+('~[~null~]~ = lift if no? 'no [null])
 
 (warning? if off? 'off [rescue [1 / 0]])
 

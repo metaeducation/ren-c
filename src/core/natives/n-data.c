@@ -1325,16 +1325,24 @@ DECLARE_NATIVE(TRIPWIRE_Q)
 
 
 //
-//  tripwire: native [  ; native:intrinsic currently needs at least 1 argument
+//  noop: native [  ; native:intrinsic currently needs at least 1 argument
 //
 //  "Returns antiform SPACE (aka TRIPWIRE)"
 //
 //      return: []
 //  ]
 //
-DECLARE_NATIVE(TRIPWIRE)
+DECLARE_NATIVE(NOOP)  // lack of a hyphen common, e.g. jQuery.noop
+//
+// What a NOOP returns could be debated, but tripwire is chosen as TRIPWIRE is
+// a non-function, so that (^tripwire) will produce it.  While (^void) or ~[]~
+// is needed to make void, you can also produce it with just plain ().  GHOST!
+// has no particularly clean way to make it other than (^ghost) or ~,~.  But
+// vanishing functions are weird, and the desire to mark someplace as "this
+// branch intentionally left blank" with a noop is a more normal response, so
+// NIHIL is used to make GHOST!
 {
-    INCLUDE_PARAMS_OF_TRIPWIRE;
+    INCLUDE_PARAMS_OF_NOOP;
 
     return Init_Tripwire(OUT);
 }

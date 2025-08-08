@@ -8,7 +8,7 @@
 
 ('b = parse [a b] ['a ~[]~ 'b])
 (
-    ^var: void
+    ^var: ^void
     'b = parse [a b] ['a ^var 'b]
 )
 
@@ -16,7 +16,7 @@
 
 (void? parse [a b] ['a 'b ~[]~])
 (
-    ^var: void
+    ^var: ^void
     void? parse [a b] ['a 'b ^var]
 )
 (
@@ -28,7 +28,7 @@
 )
 (
     test: ~
-    ^var: void
+    ^var: ^void
     all [
        'b = parse [a b] ['a ^test: [^var] 'b]
         void? ^test
@@ -50,7 +50,7 @@
 
 (
     c-rule: if null [[some 'c]]
-    void = parse [a b] ['a 'b c-rule]
+    ^void = parse [a b] ['a 'b c-rule]
 )
 (
     c-rule: if ok [[some 'c]]
@@ -64,7 +64,7 @@
 
 (
     c-rule: null
-    void = parse [a b] ['a 'b :(opt c-rule)]
+    ^void = parse [a b] ['a 'b :(opt c-rule)]
 )
 (
     c-rule: [some 'c]

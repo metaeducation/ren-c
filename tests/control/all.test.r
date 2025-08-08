@@ -6,7 +6,7 @@
 ; a kind of "non-vote", as a void.
 [
     (void? all [])
-    ((lift void) = lift all [])
+    ((lift ^void) = lift all [])
 
     ~bad-void~ !! (if all [] [<safety>])
 
@@ -20,7 +20,7 @@
     (
         x: <overwritten>
         all [
-            void? x: all [void void]
+            void? x: all [^void ^void]
             void? x
         ]
     )
@@ -391,7 +391,7 @@
 
 ; ALL returns void when contents completely erase
 [
-    ("A" = all ["A", all [comment "hi", void, eval []]])
+    ("A" = all ["A", all [comment "hi", ^void, eval []]])
 ]
 
 ; When used with @ blocks, ALL will treat the block as already reduced

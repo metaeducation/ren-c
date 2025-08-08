@@ -85,14 +85,14 @@
 (
     x: ~, y: 10
     all [
-        <result> = parse "a" [x: y: (void) "a" (<result>)]
+        <result> = parse "a" [x: y: (^void) "a" (<result>)]
         void? x
         void? y
     ]
 )(
     obj: make object! [x: ~, y: 10]
     all [
-        <result> = parse "a" [obj.x: obj.y: (void) "a" (<result>)]
+        <result> = parse "a" [obj.x: obj.y: (^void) "a" (<result>)]
         void? obj.x
         void? obj.y
     ]

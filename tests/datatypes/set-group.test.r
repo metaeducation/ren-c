@@ -57,7 +57,7 @@
 
 ; VOID is legal in a SET-GROUP!, which helps in some interesting cases
 ;
-(3 = (void): 1 + 2)
+(3 = (^void): 1 + 2)
 
 ; Example of an interesting use of the void case
 [
@@ -97,9 +97,9 @@
 ; Tricks are done in EXPORT to allow you to optionally export things.  This
 ; is used by Redbol at time of writing.
 [
-    (10 = (void): 10)
+    (10 = (^void): 10)
     (
-        import module [type: module] [export ten: export (void): 10]
+        import module [type: module] [export ten: export (^void): 10]
         ten = 10
     )
 ]

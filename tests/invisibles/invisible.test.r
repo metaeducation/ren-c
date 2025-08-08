@@ -274,7 +274,7 @@
     )
 ]
 
-((lift void) = lift void)
+((lift ^void) = lift ^void)
 
 (
     num-runs: 0
@@ -287,7 +287,7 @@
     all [
         "Hello World." = add-period "Hello World"
         num-runs = 1
-        null = add-period void  ; shouldn't run ADD-PERIOD body
+        null = add-period ^void  ; shouldn't run ADD-PERIOD body
         num-runs = 1
     ]
 )

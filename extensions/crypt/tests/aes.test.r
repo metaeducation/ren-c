@@ -5,9 +5,9 @@
         let bin: as blob! data
         let bin-len: length of bin
         let key-128: #{01020304050607080910111213141516}
-        let e: aes-key key-128 void
+        let e: aes-key key-128 ^void
         let encrypted: aes-stream e as blob! data
-        let d: aes-key:decrypt key-128 void
+        let d: aes-key:decrypt key-128 ^void
         let decrypted: aes-stream d encrypted
         return all [
             bin = copy:part decrypted bin-len

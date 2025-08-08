@@ -11,13 +11,13 @@
 ; Preserve one element rule vs. tolerate vaporization.
 ;
 ([~null~ *] = compose [(reify null) * (opt null)])
-([~[]~ *] = compose [(lift void) * (void)])
+([~[]~ *] = compose [(lift ^void) * (^void)])
 
 ; Voids vaporize regardless of form.
 
 ([*] = compose [(comment "single") * ((comment "spliced"))])
-([* <ok>] = compose [(void) * <ok>])
-([<ok> *] = compose [<ok> * ((void))])
+([* <ok>] = compose [(^void) * <ok>])
+([<ok> *] = compose [<ok> * ((^void))])
 
 
 ~bad-antiform~ !! (
@@ -205,7 +205,7 @@
 ; antiforms besides splices are not legal in compose, but you can reify them
 [
     ([<a> ~null~ <b>] = compose // [
-        [<a> (if ok [void]) <b>]
+        [<a> (if ok [^void]) <b>]
         predicate: cascade [eval/ reify/]
     ])
     ([<a>] = compose [<a> (~()~)])  ; "BLANK"
@@ -257,12 +257,12 @@
     (
         ; kind of lame
         condition: 1 = 2
-        [a c] = compose [a (either condition ['b] [log "skipping" void]) c]
+        [a c] = compose [a (either condition ['b] [log "skipping" ^void]) c]
     )
     (
         ; clearer but still lame
         condition: 1 = 2
-        [a c] = compose [a (either condition ['b] [log "skipping", void]) c]
+        [a c] = compose [a (either condition ['b] [log "skipping", ^void]) c]
     )
     (
         ; best rhythm
@@ -275,17 +275,17 @@
 [
     ~conflated-sequence~ !! (compose $(space)/(space))
     ~conflated-sequence~ !! (compose $(space).(space))
-    ~conflated-sequence~ !! (compose $(void).(void))
+    ~conflated-sequence~ !! (compose $(^void).(^void))
 
     (the / = compose:conflate $(space)/(space))
     (the . = compose:conflate $(space).(space))
-    (null? compose:conflate $(void).(void))
+    (null? compose:conflate $(^void).(^void))
 
-    (_ = compose:conflate $(void).(_))
-    (_ = compose:conflate $(_).(void))
-    ('a = compose:conflate $(void).('a))
-    ('a = compose:conflate $('a).(void))
-    (@a = compose:conflate the @('a).(void))
+    (_ = compose:conflate $(^void).(_))
+    (_ = compose:conflate $(_).(^void))
+    ('a = compose:conflate $(^void).('a))
+    ('a = compose:conflate $('a).(^void))
+    (@a = compose:conflate the @('a).(^void))
 ]
 
 (
@@ -307,8 +307,8 @@
 ("a 3 b 30 c" = compose2 @() "a (1 + 2) b (10 + 20) c")
 ("3 a b c 30" = compose2 @() "(1 + 2) a b c (10 + 20)")
 
-("abc" = compose2 @() "a(if 1 > 2 ['x])b(void)c")
-("abc" = compose2 @() "(if 1 > 2 ['x])abc(void)")
+("abc" = compose2 @() "a(if 1 > 2 ['x])b(^void)c")
+("abc" = compose2 @() "(if 1 > 2 ['x])abc(^void)")
 
 (
     null = compose2 @() "(veto)abc"

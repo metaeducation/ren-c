@@ -27,12 +27,12 @@
     x = 1020
 )
 
-; (x: maybe void) can't work today, but eventually (^x: maybe void) should
-; be able to work so that if a branching construct produces void it can
+; (x: maybe ^void) can't work today, but eventually (^x: maybe ^void) should
+; be able to work so that if a branching construct produces ^void it can
 ; write to a meta-variable.
 ;
 ~???~ !! (
     x: 304
-    x: maybe void
+    x: maybe ^void
     okay  ; unreachable
 )

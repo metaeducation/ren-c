@@ -29,7 +29,7 @@ assert: func [
     ; ASSERT has no default implementation, but can be HIJACKed by a debug
     ; mode with a custom validation or output routine.
     ;
-    return ghost
+    return ^ghost
 ]
 
 steal: lambda [
@@ -74,7 +74,7 @@ yield: ~#[YIELD used when no generator or yielder is providing it]#~
 bind construct [
     logging: 'off
 ][
-    if visibility [logging: visibility, return ghost]
+    if visibility [logging: visibility, return ^ghost]
 
     if on? logging [
         print form collect [
@@ -84,7 +84,7 @@ bind construct [
     ] else [
         insist [equal? '=== take remarks]
     ]
-    return ghost
+    return ^ghost
 ]
 
 what-dir: func [  ; This can be HIJACK'd by a "smarter" version
@@ -486,7 +486,7 @@ eval-all: func [
         [any-stable? <variadic>]
 ][
     eval expressions
-    return ghost
+    return ^ghost
 ]
 
 

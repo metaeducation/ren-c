@@ -13,7 +13,7 @@
 ; ONE.  This ties in a bit with its uses of "match an item literally here"
 ; e.g. @var, but when the var is missing it makes some sense to match with
 ; basically whatever is there.  (However this is probably not a great idea
-; to make @(void) a synonym for @, but rather to opt out of the match...)
+; to make @(^void) a synonym for @, but rather to opt out of the match...)
 
 (
     res: ~

@@ -377,7 +377,7 @@ default-combinators: make map! [
         <local> ^result remainder
     ][
         [^result remainder]: parser input except e -> [
-            return void  ; succeed w/void on parse fail, don't advance input
+            return ^void  ; succeed w/void on parse fail, don't advance input
         ]
         input: remainder  ; advance input
         return ^result  ; return successful parser result
@@ -482,7 +482,7 @@ default-combinators: make map! [
     ][
         append state.loops binding of $return
 
-        ^result: void
+        ^result: ^void
 
         cycle [
             [^ input]: condition-parser input except [
@@ -494,7 +494,7 @@ default-combinators: make map! [
             ; if it fails we disregard the result
             ;
             [^result input]: body-parser input except [
-                ^result: void
+                ^result: ^void
                 continue
             ]
         ]
@@ -512,7 +512,7 @@ default-combinators: make map! [
     ][
         append state.loops binding of $return
 
-        ^result: void
+        ^result: ^void
 
         cycle [
             [^ input]: condition-parser input except [
@@ -521,7 +521,7 @@ default-combinators: make map! [
                 ; but if it fails we disregard the result
                 ;
                 [^result input]: body-parser input except [
-                    ^result: void
+                    ^result: ^void
                     continue
                 ]
                 continue
@@ -542,7 +542,7 @@ default-combinators: make map! [
     ][
         append state.loops binding of $return
 
-        ^result: void
+        ^result: ^void
 
         cycle [
             [^result input]: parser input except [
@@ -875,10 +875,10 @@ default-combinators: make map! [
             if negated [
                 return fail "PARSE position at <end> (but parser negated)"
             ]
-            return ghost
+            return ^ghost
         ]
         if negated [
-            return ghost
+            return ^ghost
         ]
         return fail "PARSE position not at <end>"
     ]
@@ -1480,7 +1480,7 @@ default-combinators: make map! [
     ][
         if tail? value [
             pending: blank
-            return ghost
+            return ^ghost
         ]
 
         if <delay> = first value [
@@ -1488,7 +1488,7 @@ default-combinators: make map! [
                 panic "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
             ]
             pending: reduce [next value]  ; GROUP! signals delayed groups
-            return ghost  ; act invisible
+            return ^ghost  ; act invisible
         ]
 
         pending: blank
@@ -1503,10 +1503,10 @@ default-combinators: make map! [
                 panic ^result  ; all other error antiforms escalate to panics
             ]
             void? ^result [  ; void is an interesting synthesized value...
-                return void  ; but it wouldn't DECAY, so handle specially
+                return ^void  ; but it wouldn't DECAY, so handle specially
             ]
             ghost? ^result [  ; allow (elide print "HI") to vanish
-                return ghost
+                return ^ghost
             ]
         ]
 
@@ -1574,7 +1574,7 @@ default-combinators: make map! [
         ]
 
         if (void? ^r) or (ghost? ^r) [
-            return ghost
+            return ^ghost
         ]
 
         r: decay ^r  ; packs can't act as rules, decay them
@@ -1736,7 +1736,7 @@ default-combinators: make map! [
         return: [~[]~]
         input [any-series?]
     ][
-        return void
+        return ^void
     ]
 
     keyword! combinator [
@@ -1821,7 +1821,7 @@ default-combinators: make map! [
         switch:type ^times [
             rune! [
                 if ^times = _ [  ; should space be tolerated if void is?
-                    return void  ; `[repeat (_) rule]` is a no-op
+                    return ^void  ; `[repeat (_) rule]` is a no-op
                 ]
 
                 if ^times <> # [
@@ -1835,7 +1835,7 @@ default-combinators: make map! [
             block! block?:pinned/ [
                 parse ^times [
                     '_ '_ <end> (
-                        return void  ; `[repeat ([_ _]) rule]` is a no-op
+                        return ^void  ; `[repeat ([_ _]) rule]` is a no-op
                     )
                     |
                     min: [integer! | '_ (0)]
@@ -1852,7 +1852,7 @@ default-combinators: make map! [
 
         append state.loops binding of $return
 
-        ^result: void  ; [repeat (0) one] is void
+        ^result: ^void  ; [repeat (0) one] is void
 
         count-up 'i max [  ; will count infinitely if max is #
             ;
@@ -2044,7 +2044,7 @@ default-combinators: make map! [
                 [^result input pending]: trap comb state input value
 
                 if void? ^result [
-                    return void
+                    return ^void
                 ]
                 ^result: decay ^result
             ]
@@ -2076,7 +2076,7 @@ default-combinators: make map! [
         parser [action!]
     ][
         [^ input]: trap parser input
-        return ghost
+        return ^ghost
     ]
 
     'comment combinator [
@@ -2085,7 +2085,7 @@ default-combinators: make map! [
         input [any-series?]
         'ignored [block! text! tag! rune!]
     ][
-        return ghost
+        return ^ghost
     ]
 
     'skip combinator [
@@ -2232,7 +2232,7 @@ default-combinators: make map! [
 
             void?/ [
                 pending: blank  ; not delegating to combinator with pending
-                return void  ; yield void
+                return ^void  ; yield void
             ]
 
             okay?/ [
@@ -2306,7 +2306,7 @@ default-combinators: make map! [
             block: unpin block  ; should be able to enumerate regardless..
             pending: blank  ; not running any rules, won't add to pending
             if tail? block [
-                return void  ; empty literal blocks match at any location
+                return ^void  ; empty literal blocks match at any location
             ]
             if not tail? input [
                 for-each 'item block [
@@ -2375,7 +2375,7 @@ default-combinators: make map! [
 
         pending: blank  ; can become GLOM'd into a BLOCK!
 
-        ^result: ghost  ; default result is invisible
+        ^result: ^ghost  ; default result is invisible
 
         old-env: state.env
         /return: adapt return/ [state.env: old-env]
@@ -2484,7 +2484,7 @@ default-combinators: make map! [
                 ]
                 pending: glom pending spread subpending
             ] else [
-                ^result: ghost  ; reset, e.g. `[veto |]`
+                ^result: ^ghost  ; reset, e.g. `[veto |]`
 
                 if pending <> blank [
                     free pending  ; proactively release memory

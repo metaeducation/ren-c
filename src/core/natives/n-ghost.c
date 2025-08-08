@@ -31,17 +31,16 @@
 
 
 //
-//  ghost: native [
+//  nihil: native [
 //
-//  "Generate a GHOST!, synonym for (lambda [] [])"
+//  "Generate GHOST! (unsurprising, so not a synonym for ~,~ quasi evaluation)"
 //
-//      return: "Unstable COMMA! antiform (~,~) for vanishing intent"
-//          [ghost!]
+//      return: [ghost!]
 //  ]
 //
-DECLARE_NATIVE(GHOST)
+DECLARE_NATIVE(NIHIL)
 {
-    INCLUDE_PARAMS_OF_GHOST;
+    INCLUDE_PARAMS_OF_NIHIL;
 
     return Init_Unsurprising_Ghost(OUT);
 }

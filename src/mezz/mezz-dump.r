@@ -94,7 +94,7 @@ bind construct [
     ] else [
         dump-one value
     ]
-    return ghost
+    return ^ghost
 ]
 
 contains-newline: func [return: [logic?] pos [block! group!]] [
@@ -171,7 +171,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
                 off [d' #off]
                 #else [d' (value)]
             ]
-            return ghost
+            return ^ghost
         ]
     ]
     return set name d/
@@ -276,8 +276,8 @@ summarize-obj: func [
         all [
             any-list? value
             contains-newline value
-            return ghost
+            return ^ghost
         ]
     ]
-    return ghost
+    return ^ghost
 ]

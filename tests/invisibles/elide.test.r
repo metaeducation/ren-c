@@ -18,7 +18,7 @@
 (1 = eval [elide "a" 1])
 (1 = eval [1 elide "a"])
 
-(ghost? elide void)
+(ghost? elide ^void)
 (ghost? elide pack [1 2 3])
 (ghost? elide pack [pack [1 2] 3])
 (ghost? elide pack [3 pack [1 2]])
@@ -68,4 +68,3 @@
     x: ~
     x: 1 + elide (y: 10) 2 * 3  ; non-interstitial, no longer legal
 )
-

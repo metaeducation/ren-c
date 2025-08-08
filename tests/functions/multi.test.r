@@ -64,7 +64,7 @@
     )(
         a: b: c: null
         all [
-            <z-result> = [a b {(void)}]: test 1020
+            <z-result> = [a b {(^void)}]: test 1020
             a = 304
             b = <y-result>
             c = null
@@ -88,7 +88,7 @@
     ]
 )(
     all wrap [
-        'abc = [rest {(void)}]: transcode:next "abc def"
+        'abc = [rest {(^void)}]: transcode:next "abc def"
         rest = " def"
     ]
 )(

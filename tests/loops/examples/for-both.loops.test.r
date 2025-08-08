@@ -58,14 +58,14 @@
     ; (the result "drops out" the bottom of lambdas, and there is no RETURN
     ; definition in effect).
     ;
-    ; ^-- Note that this uses META:LITE.  The reason is that it wants to leave
+    ; ^-- Note that this uses LIFT:LITE.  The reason is that it wants to leave
     ; voids and nulls as-is, to serve as the signal for breaking or opting out
     ; of contributing to the final loop result:
     ;
-    ;     >> lift void
+    ;     >> lift ^void
     ;     == ~[]~
     ;
-    ;     >> lift:lite void
+    ;     >> lift:lite ^void
     ;     == ~[]~  ; anti
     ;
 

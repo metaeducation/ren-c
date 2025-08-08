@@ -240,7 +240,7 @@
 [
     (void? for-each 'x [] [panic])
     (void? for-each 'x blank [panic])
-    (null? for-each 'x void [panic])
+    (null? for-each 'x ^void [panic])
 
     ~expect-arg~ !! (for-each 'x '~ [panic])
     ~unspecified-arg~ !! (for-each 'x ~ [panic])

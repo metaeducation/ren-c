@@ -24,6 +24,6 @@
 
 (
     x: 'false
-    ^(lift void) then [x: 'true]
+    (unlift lift ^void) then [x: 'true]
     true? x
 )

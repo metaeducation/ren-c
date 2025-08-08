@@ -7,7 +7,7 @@
 
 ~???~ !! (parse "a" [seek (null) "a"])  ; null seeks are errors
 
-("a" = parse "a" [seek (void) "a"])  ; void seeks are no-ops
+("a" = parse "a" [seek (^void) "a"])  ; void seeks are no-ops
 
 (
     pos: ~

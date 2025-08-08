@@ -31,7 +31,7 @@
         'a = parse [a a a] ['a inline (1 = 1) elide some 'a]
     )
     (
-        void = parse [a a a] ['a inline (void) elide some 'a]
+        ^void = parse [a a a] ['a inline (^void) elide some 'a]
     )
     (
         'a = parse [a a a] ['a inline (comment "hi") elide some 'a]

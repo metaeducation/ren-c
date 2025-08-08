@@ -52,9 +52,8 @@ null: ~null~
 ok: okay: ~okay~
 ok?: okay?/
 
-noop: tripwire/  ; lack of a hyphen has wide precedent, e.g. jQuery.noop
-
-void: lambda [] [~[]~]
+^void: ~[]~  ; once a function returning VOID, but this is more legitimate
+^ghost: ~,~  ; once a function returning GHOST!, but this is more legitimate
 
 ; These should be aliases for things like system.ports.input and such, but
 ; for now just to make the syntax of things look better we define them.

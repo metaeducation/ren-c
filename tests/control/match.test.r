@@ -27,9 +27,9 @@
     ~bad-antiform~ !! (match [null?] null)
     ('~null~ = match:lift [null?] null)
 
-    (null = match [integer!] void)
-    ~???~ !! (match [void?] void)
-    (null = match:lift [void?] void)  ; acts as void-in-null-out ATM.
+    (null = match [integer!] ^void)
+    ~???~ !! (match [void?] ^void)
+    (null = match:lift [void?] ^void)  ; acts as void-in-null-out ATM.
 
     ('true = match [boolean?] 'true)
     ('false = match [boolean?] 'false)

@@ -55,8 +55,8 @@
 )
 
 
-(10 = set void 10)
-(null = get void)
+(10 = set ^void 10)
+(null = get ^void)
 
 (
     ^e: set $x fail 'test

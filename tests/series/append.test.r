@@ -58,7 +58,7 @@
         assert [b = [<xx>]]
         append b 'z
     )
-    ([] = blockify void)
+    ([] = blockify ^void)
     ([] = blockify [])
 ]
 
@@ -118,7 +118,7 @@
 
     ([a b c '[3 d e]] = append [a b c] lift compose [(1 + 2) d e])
 
-    ([a b c ~[]~] = append [a b c] lift void)
+    ([a b c ~[]~] = append [a b c] lift ^void)
 
     (
         [a b c ~null~] = append [a b c] lift null
@@ -162,7 +162,7 @@
 
 ; Appending to a void returns null
 [
-    (null = append void "abc")
+    (null = append ^void "abc")
 ]
 
 [

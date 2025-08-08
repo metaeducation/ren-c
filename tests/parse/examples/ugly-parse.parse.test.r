@@ -31,11 +31,11 @@
             ^r = okay  ; like [:(1 = 1)]
             ghost? ^r  ; like [:(comment "hi")]
         ] then [
-            return ghost
+            return ^ghost
         ]
 
         if void? ^r [  ; like [:(if 1 = 0 [...])]
-            return void  ; couldn't produce void at all if vaporized
+            return ^void  ; couldn't produce void at all if vaporized
         ]
 
         r: ^r  ; only needed as ^META to check for VOID
@@ -60,7 +60,7 @@
         @group [group!]
     ][
         eval group
-        return ghost
+        return ^ghost
     ]
 
     /ugly-parse: specialize parse/ [combinators: ugly-combinators]

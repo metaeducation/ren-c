@@ -42,8 +42,8 @@
 (
     x: <overwritten>
     all [
-        (lift void) = ^ x: eval []
-        void? ^(lift x)
+        (lift void) = lift x: eval []
+        void? unlift x
     ]
 )
 (
@@ -63,10 +63,10 @@
 
     (void? foo)
 
-    ((lift void) = lift applique foo/ [])
+    ((lift ^void) = lift applique foo/ [])
     (void? applique foo/ [])
 
-    ((lift void) = lift eval foo/)
+    ((lift ^void) = lift eval foo/)
     (void? eval foo/)
 
     (void? eval foo/)
@@ -88,10 +88,10 @@
 
 ; Explicit return of VOID
 [
-    (did foo: func [return: [any-stable?]] [return void])
+    (did foo: func [return: [any-stable?]] [return ^void])
 
     (void? foo)
-    ((lift void) = lift foo)
+    ((lift ^void) = lift foo)
 
     (void? (1 + 2 foo))
 ]
@@ -197,8 +197,8 @@
     (
         a: 1020
         all [
-            void? a: (void)
-            void? a
+            void? ^a: (^void)
+            void? ^a
         ]
     )
     (all [
@@ -235,7 +235,7 @@
 ; Other types receive a quoting level
 [
     (null = lift:lite null)
-    (void = lift:lite void)
+    (^void = lift:lite ^void)
     (okay = lift:lite okay)
 
     (['1 '2] = lift:lite pack [1 2])
@@ -247,7 +247,7 @@
 ; UNMETA:LITE works on keywords, but not other "antiform" forms as a trick
 ; lift forms are plain forms, not quasiforms
 [
-    (void? unlift:lite void)
+    (void? unlift:lite ^void)
     (null? unlift:lite null)
     (okay? unlift:lite okay)
 

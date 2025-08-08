@@ -9,14 +9,14 @@
     (ghost? (1 + 2 unlift lift eval []))
 
     (''30 = ^ (10 + 20 eval []))
-    ((lift void) = ^ (10 + 20 eval [void]))
+    ((lift ^void) = ^ (10 + 20 eval [^void]))
     (''30 = ^ (10 + 20 eval [comment "hi"]))
     (''30 = ^ (10 + 20 eval make frame! func [] [return ~,~]))
 
     (else? eval [null])
     ('~[~null~]~ = ^ eval [if okay [null]])
-    ((lift void) = ^ eval [if null [<a>]])
-    ((lift void) = ^ eval [10 + 20 if null [<a>]])
+    ((lift ^void) = ^ eval [if null [<a>]])
+    ((lift ^void) = ^ eval [10 + 20 if null [<a>]])
 
     (all [
         let x: ~
@@ -32,7 +32,7 @@
 
     ('~,~ = (10 + 20 lift (eval [])))
     ('~,~ = (10 + 20 lift (eval [comment "hi"])))
-    ((lift void) = (10 + 20 lift (eval make frame! lambda [] [void])))
+    ((lift ^void) = (10 + 20 lift (eval make frame! lambda [] [^void])))
     (null = ^(lift eval [null]))
     ('~[~null~]~ = lift (eval [if okay [null]]))
 
@@ -47,7 +47,7 @@
     ('~,~ = ^ eval [])
     ('~,~ = ^ eval [comment "hi"])
     ('~,~ = ^ eval make frame! func [] [return ~,~])
-    ((lift void) = ^ eval [void])
+    ((lift ^void) = ^ eval [^void])
 
     ((lift null) = ^ eval [null])
     (null = ^(lift eval [null]))
@@ -72,7 +72,7 @@
 
     (
         y: <overwritten>
-        x: (1 + 2 y: (void eval [comment "HI"]))
+        x: (1 + 2 y: (^void eval [comment "HI"]))
         all [
             void? x
             void? y
@@ -178,7 +178,7 @@
 )
 (0:00 = eval [0:00])
 (0.0.0 = eval [0.0.0])
-((lift void) = ^ eval [()])
+((lift ^void) = ^ eval [()])
 ('a = eval ['a])
 
 ; !!! Currently, EVAL of an ERROR! is like FAIL; it is not definitional,

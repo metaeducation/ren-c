@@ -51,7 +51,7 @@
     (1020 = (heavy null then [1020] else [304]))
 
     ((lift null) = lift light heavy null)
-    ((lift void) = lift light heavy void)
+    ((lift ^void) = lift light heavy ^void)
 ]
 
 ; Conditionals return NULL on failure, and ~[~null~]~ antiform on a branch that
@@ -64,13 +64,13 @@
     ~illegal-keyword~ !! (if ok [~asdf~])  ; not all keywords legal
     (''~asdf~ = ^ if ok ['~asdf~])  ; but okay as quasiforms
 
-    ((lift void) <> ^ ~()~)
-    (not (lift void) = first [~()~])
-    (not (lift void) = void)
+    ((lift ^void) <> lift ~()~)
+    (not (lift ^void) = first [~()~])
+    (not (lift ^void) = ^void)
 
     ('~null~ = if ok ^[null])
     ('~[~null~]~ = if ok ^[heavy null])
-    ((lift void) = if ok ^[])
+    ((lift ^void) = if ok ^[])
 
     ~illegal-keyword~ !! (if ok ^[~asdf~])
     (''~asdf~ = if ok ^['~asdf~])

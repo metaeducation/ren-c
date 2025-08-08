@@ -185,5 +185,5 @@
 
 ; You can opt out of the series input with a void
 (
-    null = remove-each 'x void [okay]
+    null = remove-each 'x ^void [okay]
 )

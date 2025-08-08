@@ -182,7 +182,7 @@
 )
 (
     f: does [()]
-    (lift void) = ^ f
+    (lift ^void) = lift f
 )
 (
     f: does ['a]
