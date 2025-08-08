@@ -108,7 +108,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
             ]
         ] then [return okay]
 
-        pos: next pos
+        pos: try next pos
     ]
     return null
 ]

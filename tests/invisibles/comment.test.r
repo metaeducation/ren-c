@@ -53,3 +53,45 @@
 ~no-value~ !! (
     1 + 2 (comment "stale") + 3
 )
+
+~no-value~ !! (
+    x: <overwritten>
+    (<kept> x: ())
+)
+~no-value~ !! (
+    x: <overwritten>
+    (<kept> x: comment "hi")
+)
+~need-non-end~ !! (
+    x: <overwritten>
+    (<kept> x:,)
+)
+
+~no-value~ !! (
+    obj: make object! [x: <overwritten>]
+    (<kept> obj.x: comment "hi")
+)
+~no-value~ !! (
+    obj: make object! [x: <overwritten>]
+    (<kept> obj.x: ())
+)
+~need-non-end~ !! (
+    obj: make object! [x: <overwritten>]
+    (<kept> obj.x:,)
+)
+
+('~[]~ = lift (if ok [] else [<else>]))
+('~[]~ = lift (if ok [comment <true-branch>] else [<else>]))
+
+
+; GROUP!s "vaporize" if they are empty or invisible, but can't be used as
+; inputs to infix.
+;
+; https://forum.rebol.info/t/permissive-group-invisibility/1153
+;
+~no-value~ !! (
+    () 1 + () 2 = () 3
+)
+~no-value~ !! (
+    (comment "one") 1 + (comment "two") 2 = (comment "three") 3
+)

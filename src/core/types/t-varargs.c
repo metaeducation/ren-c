@@ -338,7 +338,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
   type_check_and_return:;
 
-    if (Is_Cell_Erased(out))
+    if (Is_Ghost(out))
         return false;
 
     require (

@@ -174,9 +174,13 @@
 %functions/unwind.test.r
 %functions/yielder.test.r
 
+%invisibles/bar-bar.test.r
+%invisibles/bar-bar-bar.test.r
 %invisibles/comment.test.r
 %invisibles/elide.test.r
 %invisibles/invisible.test.r
+%invisibles/once-bar.test.r
+%invisibles/star-star.test.r
 
 %loops/attempt.test.r
 %loops/break.test.r
