@@ -282,19 +282,11 @@ Bounce Stepper_Executor(Level* L)
 
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         Set_Level_Flag(L, DISPATCHING_INTRINSIC);  // level_ is not its Level
-        Bounce bounce = Apply_Cfunc(dispatcher, L);
-        if (bounce == nullptr) {
-            if (g_failure)  // was NEEDFUL_RESULT_0 (fail/panic)
-                return NEEDFUL_RESULT_0;
-            Init_Nulled(OUT);  // was `return nullptr`
-        }
-        else if (bounce == BOUNCE_OKAY)
-            Init_Okay(OUT);
-        else {
-            assert(bounce == L->out);
-            if (Is_Error(OUT))
-                panic (Cell_Error(OUT));
-        }
+        dont(Set_Level_Flag(L, RUNNING_TYPECHECK));  // want panic if bad args
+
+        Option(Bounce) b = Irreducible_Bounce(L, Apply_Cfunc(dispatcher, L));
+        if (b)  // can't BOUNCE_CONTINUE etc. from an intrinsic dispatch
+            panic ("Intrinsic dispatcher returned Irreducible Bounce");
 
         Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
         goto lookahead; }
