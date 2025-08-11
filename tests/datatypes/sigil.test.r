@@ -126,3 +126,17 @@
     )
     ~need-non-end~ !! (@)
 ]
+
+; Not all types can carry Sigils
+(
+    for-each 'item compose [
+        12-Dec-2012
+        ,
+        (make object! [x: 10])
+    ][
+        assert [meta item except e -> [e.id = 'bad-sigil]]
+        assert [pin item except e -> [e.id = 'bad-sigil]]
+        assert [tie item except e -> [e.id = 'bad-sigil]]
+    ]
+    ok
+)

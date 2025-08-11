@@ -134,6 +134,8 @@ script: [
     bad-sequence-item:  ["Value is not a valid" :arg1 "element:" :arg2]
     bad-sequence-head:  ["Value is not a valid sequence head:" :arg2]
 
+    bad-sigil:          ["Value can't carry a Sigil [$ @ ^^]:" :arg1]
+
     cant-decorate-type: ["Cannot apply `:` or `^` decoration to:" :arg1]
 
     action-with-dotted: "ACTION! used with dotted sequence access form"

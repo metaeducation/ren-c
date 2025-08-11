@@ -86,7 +86,21 @@ INLINE Option(Sigil) Sigil_Of(const Element* e)
 
 //=//// SIGIL MODIFICATION ////////////////////////////////////////////////=//
 //
-// 1. Sigilizing is assumed to only work on cells that do not already have a
+// 1. Not all values can be sigilized.  Consider something like:
+//
+//        (dollar: '$, at: '@, caret: '^)
+//
+//    When you think about what's intended there, you realize `$,` shouldn't
+//    be a sigilized COMMA!, because then `'$,` would be a quoted sigilized
+//    COMMA!.  The user's intent was clear.  This is a disproof of the idea
+//    that all types should allow Sigils.  Rather than create a separate
+//    typeset for "Sigilable" values, we piggy-back on "Sequencable", which
+//    seems to cover the use cases (and formally makes RUNE! a sequencable
+//    type, since it needs to carry sigils, meaning #/# is a PATH! vs. a
+//    RUNE! with a slash and pound sign in it).  The cases must be expanded
+//    to account for sequences themselves, which aren't in sequencable ATM.
+//
+// 2. Sigilizing is assumed to only work on cells that do not already have a
 //    Sigil.  This is because you might otherwise expect e.g. LIFT of @foo
 //    to give you ^@foo.  Also, the Sigilize() function would be paying to
 //    mask out bits a lot of time when it's not needed.  So if you really
@@ -94,15 +108,32 @@ INLINE Option(Sigil) Sigil_Of(const Element* e)
 //    writing e.e. `Metafy(Plainify(elem))`.
 //
 
+INLINE bool Any_Sigilable_Type(Option(Type) t)  // build on sequencable [1]
+  { return Any_Sequence_Type(t) or Any_Sequencable_Type(t); }
+
+#define Any_Sigilable(cell) \
+    Any_Sigilable_Type(Type_Of(cell))
+
 INLINE Element* Sigilize(Element* elem, Sigil sigil) {
-    assert(Unlifted_Cell_Has_Sigil(SIGIL_0, elem));  // no quotes/quasiforms
+    assert(Unlifted_Cell_Has_Sigil(SIGIL_0, elem));  // no quotes/quasi [2]
+    assert(Any_Sigilable(elem));
     elem->header.bits |= FLAG_SIGIL(sigil);
     return elem;
 }
 
 INLINE Element* Plainify(Element* elem) {
     assert(LIFT_BYTE(elem) == NOQUOTE_2);  // no quotes/quasiforms
+
+  #if RUNTIME_CHECKS
+    bool had_sigil = did (elem->header.bits & CELL_MASK_SIGIL);
+  #endif
+
     elem->header.bits &= (~ CELL_MASK_SIGIL);
+
+  #if RUNTIME_CHECKS
+    assert(not had_sigil or Any_Sigilable(elem));
+  #endif
+
     return elem;
 }
 

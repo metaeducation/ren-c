@@ -651,6 +651,10 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
             "Trying to add Sigil to already metaform/tied/pinned value"
         );
     }
+    then {
+        if (not Any_Sigilable(e))
+            return fail (Error_Bad_Sigil_Raw(e));
+    }
 
     return COPY(Sigilize(e, sigil));
 }
