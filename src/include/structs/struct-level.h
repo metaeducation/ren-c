@@ -262,9 +262,6 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
 // they have to be defined before the Level structure itself.
 //
 
-struct LevelStruct;
-typedef struct LevelStruct Level;
-
 #include "executors/exec-eval.h"
 #include "executors/exec-action.h"
 #include "executors/exec-scan.h"

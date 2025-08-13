@@ -995,7 +995,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Rune)
         );
 
         Init_Single_Codepoint_Rune(OUT, c) except (Error* e) {
-            dont(Free_Unmanaged_Flex(e));  // errors are prealloc'd
+            dont(Free_Unmanaged_Flex(Varlist_Array(e)));  // errors prealloc'd
             UNUSED(e);
             again;
         }

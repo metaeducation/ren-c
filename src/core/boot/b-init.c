@@ -1051,7 +1051,7 @@ void Shutdown_Core(bool clean)
 
 } shutdown_core_api_binding: {
 
-    assert(librebol_binding == g_lib_context);
+    assert(cast(Context*, librebol_binding) == g_lib_context);
     librebol_binding = nullptr;
 
 } free_api_handles_protecting_lib_and_datatypes: {

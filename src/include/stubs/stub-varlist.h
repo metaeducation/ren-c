@@ -323,20 +323,20 @@ INLINE Fixed(Slot*) Varlist_Fixed_Slots(Sink(const Slot*) tail, VarList* v) {
 // The Stub.misc field of frames which can be tied to levels can be a Level*,
 // instead of an "adjunct" object.
 //
+// 1. The VarList may not be fully formed yet, use u_cast()
 
 INLINE Option(Level*) Misc_Runlevel(Stub* varlist) {
     assert(Is_Stub_Varlist(varlist));
-    assert(CTX_TYPE(u_cast(VarList*, varlist)) == TYPE_FRAME);
+    assert(CTX_TYPE(u_cast(VarList*, varlist)) == TYPE_FRAME);  // [1]
     assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
     return cast(Level*, MISC_VARLIST_RUNLEVEL(varlist));
 }
 
 INLINE void Tweak_Misc_Runlevel(Stub* varlist, Option(Level*) L) {
     assert(Is_Stub_Varlist(varlist));
-    possibly(CTX_TYPE(varlist) == TYPE_FRAME);  // may not be fully formed yet
+    possibly(CTX_TYPE(u_cast(VarList*, varlist)) == TYPE_FRAME);  // [1]
     MISC_VARLIST_RUNLEVEL(varlist) = opt L;
     assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
-
 }
 
 INLINE Level* Level_Of_Varlist_If_Running(VarList* varlist) {

@@ -68,7 +68,7 @@
 
 //=//// TYPE TRAIT ALIAS SHIMS (FOR C++11 COMPATIBILITY) //////////////////=//
 //
-// Needful is supposed to be work in C++11, so we don't use the C++14/C++17
+// Needful is supposed to work in C++11, so we don't use the C++14/17/20
 // type trait aliases.  But the language is fully capable of supporting them
 // as a feature--they're just weren't in the standard library.
 //
@@ -110,8 +110,25 @@ using enable_if_t = typename std::enable_if<B, T>::type;
 template<bool B, typename T, typename F>  // C++14
 using conditional_t = typename std::conditional<B, T, F>::type;
 
-#define needful_is_convertible_v(From,To) /* HACK, best we can do [1] */ \
+#define needful_is_convertible_v(From,To) /* macro HACK [1] */ \
     std::is_convertible<From, To>::value
+
+#define needful_is_constructible_v(From,To) /* macro HACK [1] */ \
+    std::is_constructible<From, To>::value
+
+template<typename From, typename To>
+class is_explicitly_convertible {  // C++20
+    template<typename F, typename T>
+    static auto test(int) ->
+        decltype(static_cast<T>(std::declval<F>()), std::true_type{});
+    template<typename, typename>
+    static std::false_type test(...);
+  public:
+    static constexpr bool value = decltype(test<From, To>(0))::value;
+};
+
+#define needful_is_explicitly_convertible_v(From,To) /* macro HACK [1] */ \
+    needful::is_explicitly_convertible<From, To>::value
 
 
 // 2. AlwaysFalse<T> is a template that always yields false, but is dependent

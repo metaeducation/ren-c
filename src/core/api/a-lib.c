@@ -996,7 +996,7 @@ const RebolBaseInternal* API_rebArgR(
     if (vaptr) {
         name = cast(char*, p);
         p2 = va_arg(
-            *u_cast(va_list*, vaptr),  // can't cast() va_list*!
+            *v_cast(va_list*, vaptr),
             const void*
         );
     }
@@ -1167,8 +1167,7 @@ static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
 ){
     trap (
       Feed* feed = Make_Variadic_Feed(
-        p, u_cast(va_list*, opt vaptr),  // can't cast() va_list*!
-        FEED_MASK_DEFAULT
+        p, v_cast(va_list*, opt vaptr), FEED_MASK_DEFAULT
     ));
 
     if (binding == nullptr) {
@@ -1241,8 +1240,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
 ){
     require (
       Feed* feed = Make_Variadic_Feed(
-        p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
-        FEED_MASK_DEFAULT
+        p, v_cast(va_list*, vaptr), FEED_MASK_DEFAULT
     ));
 
     if (binding == nullptr) {
@@ -1325,8 +1323,7 @@ RebolValue* API_rebTranscodeInto(
 
     require (
       Feed* feed = Make_Variadic_Feed(
-        p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
-        FEED_MASK_DEFAULT
+        p, v_cast(va_list*, vaptr), FEED_MASK_DEFAULT
     ));
     Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Panic(feed);
@@ -3335,8 +3332,7 @@ RebolValue* API_rebFunctionFlipped(
 ){
     require (
       Feed* feed = Make_Variadic_Feed(
-        p, u_cast(va_list*, vaptr),  // can't cast() va_list*!
-        FEED_MASK_DEFAULT
+        p, v_cast(va_list*, vaptr), FEED_MASK_DEFAULT
     ));
     Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Panic(feed);
