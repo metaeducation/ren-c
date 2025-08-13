@@ -110,7 +110,7 @@ struct IsConstIrrelevant : std::integral_constant<
     and not HasWrappedType<T>::value
 > {};
 
-#define needful_is_const_irrelevant(T) \
+#define needful_is_const_irrelevant_v(T) \
     needful::IsConstIrrelevant<needful::decay_t<T>>::value  // decay [1]
 
 
@@ -129,7 +129,7 @@ struct IsConstlike {
         = std::is_same<T, needful_constify_t(T)>::value;
 };
 
-#define needful_is_constlike(T) \
+#define needful_is_constlike_v(T) \
     needful::IsConstlike<needful::remove_reference_t<T>>::value
 
 
@@ -144,10 +144,10 @@ struct IsConstlike {
 template<typename From, typename To>
 struct MirrorConstHelper {
     using type = conditional_t<
-        needful_is_const_irrelevant(From),
+        needful_is_const_irrelevant_v(From),
         To,  // leave as-is for const-irrelevant types
         conditional_t<
-            needful_is_constlike(From),  // mirror constness otherwise
+            needful_is_constlike_v(From),  // mirror constness otherwise
             needful_constify_t(To),
             needful_unconstify_t(To)
         >
@@ -167,11 +167,12 @@ struct MirrorConstHelper {
 template<typename From, typename To>
 struct MergeConstHelper {
     using type = conditional_t<
-        not needful_is_const_irrelevant(From) and needful_is_constlike(From),
+        not needful_is_const_irrelevant_v(From)
+            and needful_is_constlike_v(From),
         needful_constify_t(To),
         To  // don't unconstify (see needful_mirror_const_t() for that)
     >;
 };
 
-#define needful_merge_const(From, To) \
+#define needful_merge_const_t(From, To) \
     typename needful::MergeConstHelper<From, To>::type

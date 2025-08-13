@@ -14,6 +14,23 @@
 //=/////////////////////////////////////////////////////////////////////////=//
 //
 
+
+//=//// COMPILE-TIME-ONLY DUMMY CLASS INSTANTIATION ///////////////////////=//
+//
+// The standard guarantees that if a struct/class has no members and only a
+// trivial (defaulted) constructor/destructor, then creating an instance
+// (even as a temporary) is a pure compile-time operation.
+//
+// We take advantage of this to create dummy instances of types whose sole
+// job is to do static assertions, without bringing in runtime cost.  This
+// macro documents that we're doing that.
+//
+// 1. Clang complains if you don't cast to void to mark as "used".
+//
+#define NEEDFUL_DUMMY_INSTANCE(...) \
+    static_cast<void>(__VA_ARGS__{})  /* void cast clang workaround [1] */
+
+
 //=//// DUMP TYPE NAME FOR DEBUGGING //////////////////////////////////////=//
 //
 // Somehow, despite decades of C++ development, there is no standard way to
@@ -28,11 +45,11 @@
         static_assert(sizeof(T) == 0, "See sizeof() error for probed type");
     };
 
-    #define PROBE_DECLTYPE(expr) \
-        (needful::ProbeTypeHelper<decltype(expr)>{})
+    #define PROBE_DECLTYPE(...) \
+        NEEDFUL_DUMMY_INSTANCE(needful::ProbeTypeHelper<decltype(__VA_ARGS__)>)
 
-    #define PROBE_CTYPE(...) /* workaround for Templated<T1,T2> arguments */ \
-        (needful::ProbeTypeHelper<__VA_ARGS__>{})
+    #define PROBE_CTYPE(...) \
+        NEEDFUL_DUMMY_INSTANCE(needful::ProbeTypeHelper<__VA_ARGS__>)
 #endif
 
 
@@ -131,13 +148,27 @@ class is_explicitly_convertible {  // C++20
     needful::is_explicitly_convertible<From, To>::value
 
 
-// 2. AlwaysFalse<T> is a template that always yields false, but is dependent
-//    on T.  This works around the problem of static_assert()s inside of
-//    SFINAE'd functions, which would fail even if the SFINAE conditions
-//    were not met:
+//=//// is_function_pointer TRAIT /////////////////////////////////////////=//
 //
-//        static_assert(false, "Always fails, even if not SFINAE'd");
-//        static_assert(always_false<T>::value, "Only fails if SFINAE'd");
+// The C++ standard defines std::is_function<> but has no equivalent test
+// for function pointers.  Define a helper in the needful namespace.
+//
+
+template<typename T>
+struct is_function_pointer : std::false_type {};
+
+template<typename Ret, typename... Args>
+struct is_function_pointer<Ret (*)(Args...)> : std::true_type {};
+
+
+//=//// AlwaysFalse TRAIT /////////////////////////////////////////////////=//
+//
+// AlwaysFalse<T> is a template that always yields false, but is dependent
+// on T.  This works around the problem of static_assert()s inside of SFINAE'd
+// functions, which would fail even if the SFINAE conditions were not met:
+//
+//    static_assert(false, "Always fails, even if not SFINAE'd");
+//    static_assert(AlwaysFalse<T>::value, "Only fails if SFINAE'd");
 //
 
 template<typename T>  // T is ignored, just here to make it a template

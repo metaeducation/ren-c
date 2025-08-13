@@ -62,13 +62,21 @@
 
 #include "sys-core.h"
 
+// cast hooks only run in debug builds, but even so we avoid the cast hooks in
+// this particular file for speed... cast() means unhooked cast.
+//
+#undef cast
+#define cast  needful_lenient_unhookable_cast
+
+// it's not possible to recover from a panic in the middle of GC.  we can't
+// stop an external function from calling panic, but we can prevent use of
+// it directly in this file.  avoid calling functions outside of m-gc.c here!
+//
 #undef panic
 #define panic \
     STATIC_FAIL(dont_use_panic_in_this_file_use_crash_or_assert)
 
 #include "sys-int-funcs.h"
-
-#include "needful/cast-hooks-off.h"  // want cast() macros to be fast here
 
 #if RUNTIME_CHECKS
     static bool in_mark = false; // needs to be per-GC thread
