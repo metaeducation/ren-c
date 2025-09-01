@@ -1086,6 +1086,69 @@ DECLARE_NATIVE(TYPECHECKER)
 
 
 //
+//  typecheck: native [
+//
+//  "Perform same typechecking that arguments for functions go through"
+//
+//      return: "If ERROR! that doesn't pass the check, then that ERROR!"
+//          [logic? error!]  ; returns error vs. panic [1]
+//      test [block! datatype! parameter! action!]
+//      ^value [any-value?]
+//      :meta "Don't pre-decay argument (match ^META argument mode)"
+//  ]
+//
+DECLARE_NATIVE(TYPECHECK)
+//
+// 1. The reason a :META typecheck that fails with ERROR! returns the error
+//    is to avoid a separate :RELAX switch to say you don't want to panic
+//    if an error fails the typecheck.  You just TRY the TYPECHECK.  It may
+//    be that :RELAX is a better idea, but trying this idea first...since
+//    it's strictly more powerful.
+{
+    INCLUDE_PARAMS_OF_TYPECHECK;
+
+    Value* test = ARG(TEST);
+
+    heeded (Copy_Cell(SPARE, Atom_ARG(VALUE)));
+
+    if (not Bool_ARG(META)) {  // decay before typecheck if not ^META
+      require(
+        Decay_If_Unstable(SPARE)  // or return definitional error to match [1]?
+      );
+    }
+
+    switch (opt Type_Of(test)) {
+      case TYPE_ACTION:
+        if (Typecheck_Spare_With_Predicate_Uses_Scratch(
+            LEVEL, test, Frame_Label(test)
+        )){
+            return LOGIC(true);
+        }
+        break;
+
+        // fall through
+      case TYPE_PARAMETER:
+      case TYPE_BLOCK:
+      case TYPE_DATATYPE:
+        if (Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, test, SPECIFIED))
+            return LOGIC(true);
+        break;
+
+      default:
+        assert(false);  // all test types should be accounted for in switch
+        panic (PARAM(TEST));
+    }
+
+    if (Is_Error(SPARE)) {
+        assert(Bool_ARG(META));  // otherwise would have pre-decay'd, PANIC
+        return COPY(SPARE);  // panic would require a :RELAX option [1]
+    }
+
+    return LOGIC(false);
+}
+
+
+//
 //  match: native [
 //
 //  "Check value using the same typechecking that functions use for parameters"
@@ -1093,9 +1156,7 @@ DECLARE_NATIVE(TYPECHECKER)
 //      return: "Input if it matched, NULL if it did not"
 //          [any-stable?]
 //      test [block! datatype! parameter! action!]
-//      value "If not :LIFT, NULL values illegal (null return is no match)"
-//          [<opt-out> any-stable?]
-//      :lift "Return the result lifted (allows checks on NULL)"
+//      value [<opt-out> any-stable?]
 //  ]
 //
 DECLARE_NATIVE(MATCH)
@@ -1106,17 +1167,9 @@ DECLARE_NATIVE(MATCH)
 //   https://forum.rebol.info/t/time-to-meet-your-match-dialect/1009/5
 //
 // 1. Passing in NULL for value creates a problem, because it conflates the
-//    "didn't match" signal with the "did match" signal.  To solve this problem
-//    requires MATCH:LIFT
-//
-//        >> match:lift [null? integer!] 10
-//        == '10
-//
-//        >> match:lift [null? integer!] null
-//        == ~null~
-//
-//        >> match:lift [null? integer!] <some-tag>
-//        == ~null~  ; anti
+//    "didn't match" signal with the "did match" signal.  You probably want
+//    TYPECHECK if are trying to do such conflations, but if it's what you
+//    really want use OPT and void will come back as a a null
 {
     INCLUDE_PARAMS_OF_MATCH;
 
@@ -1124,10 +1177,8 @@ DECLARE_NATIVE(MATCH)
 
     Value* spare = Copy_Cell(SPARE, ARG(VALUE));
 
-    if (not Bool_ARG(LIFT)) {
-        if (Is_Nulled(spare))
-            return fail (Error_Type_Of_Null_Raw());  // for TRY TYPE OF [1]
-    }
+    if (Is_Nulled(spare))
+        return fail (Error_Type_Of_Null_Raw());  // for TRY TYPE OF [1]
 
     switch (opt Type_Of(test)) {
       case TYPE_ACTION:
@@ -1154,9 +1205,6 @@ DECLARE_NATIVE(MATCH)
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
 
     Copy_Cell(OUT, spare);
-
-    if (Bool_ARG(LIFT))
-        Liftify(OUT);
 
     return OUT;
 }

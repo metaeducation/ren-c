@@ -279,8 +279,8 @@ specialized?: func [
 /ensure: redescribe [
     "Pass through value if it matches test, otherwise trigger a FAIL"
 ](
-    enclose match:lift/ lambda [f] [
-        eval f else [  ; :META allows any value, must UNMETA
+    enclose typecheck/ lambda [f] [
+        eval f else [
             ; !!! Can't use FAIL:BLAME until we can implicate the callsite.
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
@@ -303,7 +303,6 @@ specialized?: func [
 ](
     enclose match/ func [f] [
         eval f then [return null]
-        if f.lift [return lift f.value]
         return f.value
     ]
 )
@@ -311,7 +310,7 @@ specialized?: func [
 /prohibit: redescribe [
     "Pass through value if it *doesn't* match test, else panic"
 ](
-    enclose match:lift/ lambda [f] [
+    enclose typecheck/ lambda [f] [
         eval f then [
             ; !!! Can't use FAIL:BLAME until we can implicate the callsite.
             ;

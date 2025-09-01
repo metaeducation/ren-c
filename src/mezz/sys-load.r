@@ -143,7 +143,7 @@ bind construct [
         return fail "bad-header"
     ]
 
-    if not match:lift [null? block!] hdr.options [
+    if not typecheck [null? block!] hdr.options [
         return fail "bad-header"
     ]
 
@@ -162,7 +162,7 @@ bind construct [
         end: tail of data
     ]
 
-    if only [  ; when it's /ONLY, decompression is not performed
+    if only [  ; when it's :ONLY, decompression is not performed
         body: rest
         final: end
         return [hdr body line final]

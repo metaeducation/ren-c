@@ -111,6 +111,7 @@
 %control/reduce.test.r
 %control/reeval.test.r
 %control/switch.test.r
+%control/typecheck.test.r
 %control/unless.test.r
 %control/wait.test.r
 %control/quit.test.r

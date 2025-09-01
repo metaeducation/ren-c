@@ -145,8 +145,8 @@ module: func [
             spec.version [null? tuple!]
             spec.options [null? block!]
         ][
-            if not (match:lift types get var) [
-                panic ["Module" var "must be" mold types "not" @(reify get var)]
+            if not typecheck types get var [
+                panic ["Module" @var "must be" @types "not" @(reify get var)]
             ]
         ]
 
