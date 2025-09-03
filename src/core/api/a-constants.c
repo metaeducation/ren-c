@@ -120,19 +120,3 @@ const char * const g_token_names[] = {
     "end-of-script",
     nullptr
 };
-
-
-// !!! (R)ebol (M)essages
-//
-// The goal should be that any non-debug-build only strings mentioned from C
-// that can be seen in the course of normal operation should go through some
-// abstraction.  Ultimately that would permit internationalization, and the
-// benefit of not needing to ship a release build binary with a string-based
-// format dialect.
-//
-const char RM_ERROR_LABEL[] = "Error: ";
-const char RM_BAD_ERROR_FORMAT[] = "(improperly formatted error)";
-const char RM_ERROR_WHERE[] = "** Where: ";
-const char RM_ERROR_NEAR[] = "** Near: ";
-const char RM_ERROR_FILE[] = "** File: ";
-const char RM_ERROR_LINE[] = "** Line: ";

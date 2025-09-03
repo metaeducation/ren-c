@@ -1361,38 +1361,12 @@ void Shutdown_Utf8_Errors(void)
 }
 
 
-// !!! Though molding has a general facility for a "limit" of the overall
-// mold length, this only limits the length a particular value can contribute
-// to the mold.  It was only used in error molding and was kept working
-// without a general review of such a facility.  Review.
+// Historical FORM of an ERROR! was very verbose and included formatting
+// aspects, such as the inclusion of `**` in the message, and multiple lines
+// with the WHERE and NEAR information, etc.  The FORM has been reduced to
+// just handling the message portion, with the rest done in usermode by
+// the console (PRINT-PANIC, PRINT-ERROR)
 //
-static void Mold_Element_Limit(Molder* mo, Element* v, REBLEN limit)
-{
-    Strand* str = mo->strand;
-
-    REBLEN start_len = Strand_Len(str);
-    Size start_size = Strand_Size(str);
-
-    Mold_Element(mo, v);  // Note: can't cache pointer into `str` across this
-
-    REBLEN end_len = Strand_Len(str);
-
-    if (end_len - start_len > limit) {
-        Utf8(const*) at = cast(Utf8(const*),
-            cast(Byte*, Strand_Head(str)) + start_size
-        );
-        REBLEN n = 0;
-        for (; n < limit; ++n)
-            at = Skip_Codepoint(at);
-
-        Term_Strand_Len_Size(str, start_len + limit, at - Strand_Head(str));
-        Free_Bookmarks_Maybe_Null(str);
-
-        require (Append_Ascii(str, "..."));
-    }
-}
-
-
 IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
@@ -1410,35 +1384,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
 
     Error* error = Cell_Error(v);
     ERROR_VARS *vars = ERR_VARS(error);
-
-    DECLARE_VALUE (type);
-    require (Read_Slot(type, &vars->type));
-
     DECLARE_VALUE (message);
     require (Read_Slot(message, &vars->message));
-
-    DECLARE_VALUE (where);
-    require (Read_Slot(where, &vars->where));
-
-    DECLARE_VALUE (nearest);
-    require (Read_Slot(nearest, &vars->nearest));
-
-    DECLARE_VALUE (file);
-    require (Read_Slot(file, &vars->file));
-
-    DECLARE_VALUE (line);
-    require (Read_Slot(line, &vars->line));
-
-    // Form: ** <type> Error:
-    //
-    require (Append_Ascii(mo->strand, "** "));
-    if (Is_Word(type)) {  // has a <type>
-        Append_Spelling(mo->strand, Word_Symbol(type));
-        Append_Codepoint(mo->strand, ' ');
-    }
-    else
-        assert(Is_Nulled(type));  // no <type>
-    require (Append_Ascii(mo->strand, RM_ERROR_LABEL));  // "Error:"
 
     // Append: error message ARG1, ARG2, etc.
     if (Is_Block(message)) {
@@ -1448,72 +1395,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     else if (Is_Text(message))
         Form_Element(mo, cast(Element*, message));
     else {
-        require (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
-    }
-
-    // Form: ** Where: function
-    if (
-        not Is_Nulled(where)
-        and not (Is_Block(where) and Series_Len_At(where) == 0)
-    ){
-        if (Is_Block(where)) {
-            Append_Codepoint(mo->strand, '\n');
-            require (Append_Ascii(mo->strand, RM_ERROR_WHERE));
-            Mold_Element(mo, cast(Element*, where));  // want {fence} shown
-        }
-        else {
-            require (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
-        }
-    }
-
-    // Form: ** Near: location
-    if (not Is_Nulled(nearest)) {
-        Append_Codepoint(mo->strand, '\n');
-        require (Append_Ascii(mo->strand, RM_ERROR_NEAR));
-
-        if (Is_Text(nearest)) {
-            //
-            // !!! The scanner puts strings into the near information in order
-            // to say where the file and line of the scan problem was.  This
-            // seems better expressed as an explicit argument to the scanner
-            // error, because otherwise it obscures the LOAD call where the
-            // scanner was invoked.  Review.
-            //
-            Append_Any_Utf8(mo->strand, nearest);
-        }
-        else if (Any_List(nearest) or Is_Path(nearest))
-            Mold_Element_Limit(mo, cast(Element*, nearest), 60);
-        else {
-            require (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
-        }
-    }
-
-    // Form: ** File: filename
-    //
-    // !!! In order to conserve space in the system, filenames are interned.
-    // Although interned strings are GC'd when no longer referenced, they can
-    // only be used in ANY-WORD? values at the moment, so the filename is
-    // not a FILE!.
-    //
-    if (not Is_Nulled(file)) {
-        Append_Codepoint(mo->strand, '\n');
-        require (Append_Ascii(mo->strand, RM_ERROR_FILE));
-        if (Is_File(file))
-            Form_Element(mo, cast(Element*, file));
-        else {
-            require (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
-        }
-    }
-
-    // Form: ** Line: line-number
-    if (not Is_Nulled(line)) {
-        Append_Codepoint(mo->strand, '\n');
-        require (Append_Ascii(mo->strand, RM_ERROR_LINE));
-        if (Is_Integer(line))
-            Form_Element(mo, cast(Element*, line));
-        else {
-            require (Append_Ascii(mo->strand, RM_BAD_ERROR_FORMAT));
-        }
+        require (Append_Ascii(mo->strand, "(improperly formatted error)"));
     }
 
     return TRIPWIRE;

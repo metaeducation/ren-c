@@ -1492,6 +1492,30 @@ DECLARE_NATIVE(DECAY)
 
 
 //
+//  decayable?: native:intrinsic [
+//
+//  "Answer if a value is decayable"
+//
+//      return: [logic?]
+//      ^value  ; constrain to PACK? (extra typecheck work for intrinsic...)
+//  ]
+//
+DECLARE_NATIVE(DECAYABLE_Q)
+{
+    INCLUDE_PARAMS_OF_DECAYABLE_Q;
+
+    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+
+    Decay_If_Unstable(atom) except (Error* e) {
+        UNUSED(e);
+        return LOGIC(false);
+    }
+
+    return LOGIC(true);
+}
+
+
+//
 //  reify: native:intrinsic [
 //
 //  "Make antiforms into their quasiforms, quote all other values"

@@ -93,7 +93,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Fundamental)  // catch-all for ExtraHeart*
 //
 //  "Converts value to a REBOL-readable string"
 //
-//      return: "null if input is void, if truncated returns integer /LIMIT "
+//      return: "null if input is void, if truncated returns integer :LIMIT "
 //          [null? ~[text! [null? integer!]]~]
 //      value [<opt-out> element? splice!]
 //      :flat "No indentation"

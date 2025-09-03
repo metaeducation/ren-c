@@ -116,24 +116,25 @@ export console!: make object! [
         ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-value?]
     ][
-        try ^last-result: ^v  ; don't decay, suppress ERROR! propagation
+        ignore ^last-result: ^v  ; don't decay, suppress ERROR! propagation
 
-        === FORM ERROR IF RAISED ===
+        === HANDLE ERROR! FIRST ===
 
-        ; The console knows the difference between an error returned as
-        ; a result, and a panic.  It's worth thinking about how to present
-        ; this nuance in the display...but for now we just form it, because
-        ; it looks ugly to show the molded antiform object.
+        ; Typical type checks (e.g. INTEGER?, GHOST? and such) will fail on
+        ; ERROR!, so test for these first.
+        ;
+        ; Note that this is a definitional error...not a panic/exception, so
+        ; PRINT-ERROR is distinct from PRINT-PANIC.
 
         if error? ^v [
-            print form unanti ^v
+            print-error disarm ^v
             return ~
         ]
 
         === GHOSTS! ===
 
         if ghost? ^v [
-            print unspaced [result _ "~,~" _ _ ";" _ "anti (ghost)"]
+            print unspaced [result _ "\~,~\" _ _ ";" _ "antiform (ghost!)"]
             return ~
         ]
 
@@ -147,32 +148,24 @@ export console!: make object! [
         ; 0-length packs (~[]~ antiform, a.k.a. "void") mold like antiforms.
 
         if pack? ^v [
-            v: unanti ^v
-            if 0 = length of v [  ; mold like a regular antiform, for now
-                print unspaced [result _ "~[]~" _ _ ";" _ "anti (void)"]
-                return ~
-            ]
-
-            any [  ; cannot decay packs automatically with unstable antiforms
-                void? unlift v.1
-                ghost? unlift v.1
-                error? unlift v.1
-            ] then [
-                print "; undecayable pack"
-                print unspaced [result _ mold quasi v _ _ ";" _ "anti"]
-                return ~
-            ]
-
-            for-each 'item v [
-                any [quoted? item, quasi? item] else [
-                    print "!!! MALFORMED PARAMETER PACK, NOT QUOTED/QUASI !!!"
-                    print mold quasi v
-                    return ~
+            if void? ^v [  ; mold like a regular antiform, for now
+                print unspaced [
+                    result _ --[\~[]~\  ; antiform (pack!) "void"]--
                 ]
+                return ~
             ]
 
-            print ["; first in pack of length" length of v]
-            ^v: unlift first v  ; items in pack are LIFT'ed
+            if not decayable? ^v [
+                print "; undecayable pack"
+                v: unanti ^v
+                print unspaced [
+                    result _ "\" mold quasi v "\" _ _ ";" _ "antiform (pack!)"
+                ]
+                return ~
+            ]
+
+            print ["; first in pack of length" length of unanti ^v]
+            v: decay ^v
         ]
 
         === PRINT NO OUTPUT FOR TRASH! (antiform RUNE!) ===
@@ -217,8 +210,18 @@ export console!: make object! [
             ;     >> first [~something~]
             ;     == ~something~
             ;
+            let name: switch type of unanti ^v [
+                ; error and ghost handled above
+                group! ["splice"]
+                group! ["datatype"]
+                frame! ["action"]
+                word! ["keyword"]
+            ] else ["unknown"]
+
             v: lift ^v  ; turn antiform into quasiform
-            print unspaced [result _ mold v _ _ ";" _ "anti"]
+            print unspaced [
+                result _ "\" mold v "\" _ _ ";" _ "antiform (" name "!)"
+            ]
             return ~
         ]
 
@@ -232,7 +235,7 @@ export console!: make object! [
                 ; but if we didn't special case it here, the error would seem
                 ; to be in the console code itself.
                 ;
-                print-error make warning! "Series data unavailable due to FREE"
+                print-panic make warning! "Series data unavailable due to FREE"
             ]
 
             port? v [
@@ -261,10 +264,38 @@ export console!: make object! [
     print-warning: method [return: [] s] [print [warning reduce s]]
 
     print-error: method [return: [] e [warning!]] [
+        comment [  ; MOLD is more informative, but messy
+            v: unanti ^v
+            print unspaced [
+                result _ "\" mold quasi v "\" _ _ ";" _ "antiform (error!)"
+            ]
+        ]
+        print ["** Error:" form e]
+        if try e.id [
+            print ["** Id:" mold e.id]
+        ]
+    ]
+
+    print-panic: method [return: [] e [warning!]] [
         if e.file = 'tmp-boot.r [
             e.file: e.line: null  ; errors in console showed this, junk
         ]
-        print form e
+        print ["** PANIC:" form e]
+        if try e.id [
+            print ["** Id:" mold e.id]
+        ]
+        if try e.where [
+            print ["** Where:" mold e.where]
+        ]
+        if try e.near [
+            print ["** Near:" mold e.near]
+        ]
+        if try e.file [
+            print ["** File:" mold e.file]
+        ]
+        if try e.line [
+            print ["** Line:" mold e.line]
+        ]
     ]
 
     print-halted: method [return: []] [
@@ -419,7 +450,7 @@ bind construct [
     ; hook to save the last error printed.  Also inform people of the
     ; existence of the WHY function on the first error delivery.
     ;
-    /proto-skin.print-error: adapt proto-skin.print-error/ [
+    /proto-skin.print-panic: adapt proto-skin.print-panic/ [
         if not system.state.last-error [
             system.console/print-info "Info: use WHY for error information"
         ]
@@ -672,20 +703,20 @@ console*: func [
             e: make warning! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
             e.near: result.near
             e.where: result.where
-            emit [system.console/print-error (<*> e)]
+            emit [system.console/print-panic (<*> e)]
             return <prompt>
         ]
         return result.arg1
     ]
 
-    if warning? result [  ; all other errors
+    if warning? result [  ; all other panics
         ;
-        ; Errors can occur during MAIN-STARTUP, before the system.CONSOLE has
+        ; Panics can occur during MAIN-STARTUP, before the system.CONSOLE has
         ; a chance to be initialized (it may *never* be initialized if the
         ; interpreter is being called non-interactively from the shell).
         ;
         if object? opt system.console [
-            emit [system.console/print-error (<*> result)]
+            emit [system.console/print-panic (<*> result)]
         ] else [
             emit [print [(<*> form result)]]
         ]
@@ -823,7 +854,7 @@ console*: func [
         ; Could be an unclosed double quote (unclosed tag?) which more input
         ; on a new line cannot legally close ATM
         ;
-        emit [system.console/print-error (<*> error)]
+        emit [system.console/print-panic (<*> error)]
         return <prompt>
     ]
 
