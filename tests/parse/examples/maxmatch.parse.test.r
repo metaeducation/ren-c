@@ -24,25 +24,26 @@
         pos [any-series?]
         parser1 [action!]
         parser2 [action!]
-        <local> error1 error2 result1' result2' remainder1 remainder2
+        <local> warning1 warning2 ^result1 ^result2 remainder1 remainder2
     ][
-        error1: rescue [[^result1' remainder1]: parser1 pos]
-        error2: rescue [[^result2' remainder2]: parser2 pos]
-        if error2 [  ; parser2 didn't succeed
-            if error1 [
-                return fail error1  ; neither succeeded
+        ; Use RESCUE instead of packs with error for MAXMATCH-D
+        warning1: rescue [[^result1 remainder1]: parser1 pos]
+        warning2: rescue [[^result2 remainder2]: parser2 pos]
+        if warning2 [  ; parser2 didn't succeed
+            if warning1 [
+                return fail warning1  ; neither succeeded
             ]
         ] else [  ; parser2 succeeded
             any [
-                error1
+                warning1
                 (index of remainder1) < (index of remainder2)
             ] then [
                 pos: remainder2
-                return ^result2'
+                return ^result2
             ]
         ]
         pos: remainder1
-        return ^result1'
+        return ^result1
     ]
     ok
 )
@@ -203,28 +204,33 @@
         parser1 [action!]
         parser2 [action!]
         <local>
-            error1 error2 result1' result2'
+            ^result1 ^result2
             remainder1 remainder2 pending1 pending2
     ][
-        error1: rescue [[^result1' remainder1 pending1]: parser1 pos]
-        error2: rescue [[^result2' remainder2 pending2]: parser2 pos]
-        if error2 [  ; parser2 didn't succeed
-            if error1 [
-                return fail error1  ; neither succeeded
+        ; use packs with error instead of RESCUE in MAXMATCH-C
+        ignore [^result1 remainder1 pending1]: parser1 pos except e -> [
+            pack [fail e]
+        ]
+        ignore [^result2 remainder2 pending2]: parser2 pos except e -> [
+            pack [fail e]
+        ]
+        if error? ^result2 [  ; parser2 didn't succeed
+            if error? ^result1 [
+                return ^result1  ; neither succeeded
             ]
         ] else [  ; parser2 succeeded
             any [
-                error1
+                error? ^result1
                 (index of remainder1) < (index of remainder2)
             ] then [
                 pos: remainder2
                 pending: pending2
-                return ^result2'
+                return ^result2
             ]
         ]
         pos: remainder1
         pending: pending1
-        return ^result1'
+        return ^result1
     ]
     ok
 )

@@ -186,12 +186,13 @@ Bounce Evaluator_Executor(Level* const L)
 
     Move_Atom(PRIMED, OUT);  // make current result the preserved one
 
-    if (Is_Error(PRIMED)) {  // panic if error seen before last step [2]
-        dont(Try_Is_Level_At_End_Optimization(L));  // (fail x,) must error
-        if (not Is_Feed_At_End(L->feed))
-            panic (Cell_Error(PRIMED));
+    dont(Try_Is_Level_At_End_Optimization(L));  // (fail x,) must error
+    if (Is_Feed_At_End(L->feed))
         goto finished;
-    }
+
+    require (  // panic if error seen before last step [2]
+      Elide_Unless_Error_Including_In_Packs(PRIMED)
+    );
 
     goto start_new_step;
 

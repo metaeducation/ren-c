@@ -205,7 +205,7 @@ INLINE Element* Init_Relative_Block_At(
 //      == <b>
 //
 
-INLINE Atom* Init_Pack_Untracked(Init(Atom) out, Source* a) {
+INLINE Atom* Init_Pack_Untracked(Init(Atom) out, const Source* a) {
     Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, a, 0, SPECIFIED);
     Unstably_Antiformize_Unbound_Fundamental(out);
     assert(Is_Pack(out));

@@ -1869,7 +1869,8 @@ Bounce Stepper_Executor(Level* L)
 } skip_circled_check: { //////////////////////////////////////////////////////
 
     ++stackindex_var;
-    ++pack_at_lifted;
+    if (pack_at_lifted != pack_tail)
+        ++pack_at_lifted;
     goto next_pack_item;
 
 } set_block_finalize_and_drop_stack: {

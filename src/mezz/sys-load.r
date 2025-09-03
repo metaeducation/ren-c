@@ -613,7 +613,7 @@ bind construct [
 
     importing-remotely: old-importing-remotely
 
-    return pack* [mod 'executed ^product]  ; PACK* tolerates errors
+    return pack [mod 'executed ^product]  ; ERROR! antiform is legal product
 ]
 
 

@@ -182,27 +182,26 @@
     ])
 ]
 
-; Errors are not supported in the default PACK.
+; ELIDE (or multi-step evals) will not ignore packs containing ERROR!
 [
+    (
+        pack? pack [1 / 0]
+    )
     ~zero-divide~ !! (
         pack [1 / 0]
     )
     ~zero-divide~ !! (
-        [^e]: pack [1 / 0]
+        pack [1 / 0] 1 + 2
     )
-]
-
-; You must use PACK* to get errors
-[
-    (
-        pack? pack* [1 / 0]
+    ~zero-divide~ !! (
+        [^e]: pack [1 / 0] 1 + 2
     )
     (
         all wrap [
-            [{^e} n]: pack* [1 / 0, 1 + 0]
+            ignore [^e n]: pack [1 / 0, 1 + 0]
             n = 1
             error? ^e
-            'zero-divide = (unquasi e).id
+            'zero-divide = (unanti ^e).id
         ]
     )
 ]

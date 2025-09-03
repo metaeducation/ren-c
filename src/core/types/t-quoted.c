@@ -254,30 +254,6 @@ DECLARE_NATIVE(LIFT)
 
 
 //
-//  lift-require: native:intrinsic [
-//
-//  "antiforms -> quasiforms, adds a quote to rest, panic on error"
-//
-//      return: [quoted! quasiform!]
-//      ^value [any-value?]
-//  ]
-//
-DECLARE_NATIVE(LIFT_REQUIRE)  // synonym for LIFT REQUIRE
-//
-// This is currently used by PACK as the constraint passed to REDUCE.
-{
-    INCLUDE_PARAMS_OF_LIFT_REQUIRE;
-
-    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
-
-    if (Is_Error(atom))
-        panic (Cell_Error(atom));
-
-    return COPY(Liftify(atom));
-}
-
-
-//
 //  unlift: native:intrinsic [
 //
 //  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
@@ -472,19 +448,35 @@ DECLARE_NATIVE(SPREAD)
 }
 
 
-// 1. In REDUCE, :PREDICATE functions are offered things like nihil and void
-//    if they can accept them (which META can).  But COMMA! antiforms that
-//    result from evaluating commas are -not- offered to any predicates.  This
-//    is by design, so we get:
 //
-//        >> pack [1 + 2, comment "hi", if null [1020]]
-//        == ~[3 ~[]~ ']~
+//  pack: native [
 //
-INLINE bool Pack_Native_Core_Throws(
-    Sink(Atom) out,
-    const Value* block,
-    const Value* predicate
-){
+//  "Create a pack of arguments from a list"
+//
+//      return: [pack!]
+//      block "Reduce if plain BLOCK!, don't if @BLOCK!"
+//          [<opt-out> block! @block!]
+//  ]
+//
+DECLARE_NATIVE(PACK)
+//
+// 1. In REDUCE, :PREDICATE functions are offered things like ghost and void
+//    if they can accept them (which LIFT can).  But source-level COMMA! are
+//    -not- offered to any predicates.  This is by design, so we get:
+//
+//        >> pack [1 + 2, comment "hi", opt null]
+//        == \~['3 ~,~ ~[]~]~\  ; antiform (pack!)
+//
+// 2. Using LIFT as a predicate means error antiforms are tolerated; it is
+//    expected that you IGNORE (vs. ELIDE) a PACK which contains errors, as
+//    ordinary elisions (such as in multi-step evaluations) will complain:
+//
+//        https://rebol.metaeducation.com/t/2206
+{
+    INCLUDE_PARAMS_OF_PACK;
+
+    Element* block = Element_ARG(BLOCK);
+
     if (Is_Pinned_Form_Of(BLOCK, block)) {  // pack @[1 + 2] -> ~['1 '+ '2']~
         const Element* tail;
         const Element* at = List_At(&tail, block);
@@ -497,80 +489,20 @@ INLINE bool Pack_Native_Core_Throws(
         for (; at != tail; ++at, ++dest)
             Copy_Lifted_Cell(dest, at);
 
-        Init_Pack(out, a);
-        return false;
+        return Init_Pack(OUT, a);
     }
 
     assert(Is_Block(block));
 
     if (rebRunThrows(
-        u_cast(Init(Value), out),
-        CANON(QUASI), "reduce:predicate",  // commas excluded by :PREDICATE [1]
-            rebQ(block), rebQ(predicate)
+        u_cast(Init(Value), SPARE),
+        "reduce:predicate",  // commas excluded by :PREDICATE [1]
+            rebQ(block), rebQ(LIB(LIFT))  // fail ok [2]
     )){
-        return true;
+        return THROWN;
     }
 
-    require (
-      Unliftify_Undecayed(out)
-    );
-    return false;
-}
-
-
-//
-//  pack: native [
-//
-//  "Create a pack of arguments from a list, no errors (see PACK*)"
-//
-//      return: "Antiform of BLOCK!"
-//          [pack!]
-//      block "Reduce if plain BLOCK!, don't if @BLOCK!"
-//          [<opt-out> block! @block!]
-//  ]
-//
-DECLARE_NATIVE(PACK)
-//
-// 1. Using LIFT-REQUIRE as a predicate means error antiforms aren't tolerated
-//    in PACK.  You have to use PACK*, which uses unconstrained LIFT.
-//
-//        https://forum.rebol.info/t/2206
-{
-    INCLUDE_PARAMS_OF_PACK;
-
-    Element* block = Element_ARG(BLOCK);
-
-    if (Pack_Native_Core_Throws(OUT, block, LIB(LIFT_REQUIRE)))  // no fail [1]
-        return THROWN;
-    return OUT;
-}
-
-
-//
-//  pack*: native [
-//
-//  "Create a pack of arguments from a list, error antiforms okay"
-//
-//      return: "Antiform of BLOCK!"
-//          [pack!]
-//      block "Reduce if plain BLOCK!, don't if @BLOCK!"
-//          [<opt-out> block! @block!]
-//  ]
-//
-DECLARE_NATIVE(PACK_P)
-//
-// 1. Using the predicate LIFT means that errors will be tolerated by PACK*,
-//    whereas PACK uses LIFT-REQUIRE by default.
-//
-//        https://forum.rebol.info/t/2206
-{
-    INCLUDE_PARAMS_OF_PACK_P;
-
-    Element* block = Element_ARG(BLOCK);
-
-    if (Pack_Native_Core_Throws(OUT, block, LIB(LIFT)))  // fail ok [1]
-        return THROWN;
-    return OUT;
+    return Init_Pack(OUT, Cell_Array(Known_Stable(SPARE)));
 }
 
 

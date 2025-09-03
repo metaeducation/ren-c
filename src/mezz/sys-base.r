@@ -211,7 +211,7 @@ module: func [
 
     mod.quit: ~#[Module finished init, no QUIT (do you want SYS.UTIL/EXIT?)]#~
 
-    return pack* [mod ^product]  ; pack* for ERROR! antiform tolerance
+    return pack [mod ^product]  ; ERROR! antiform is legal product
 ]
 
 

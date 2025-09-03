@@ -219,6 +219,11 @@ INLINE Result(Value*) Decay_Or_Elide_Core(
         if (Is_Lifted_Pack(first))  // don't decay first slot [2]
             return fail ("PACK! cannot decay PACK! in first slot");
 
+        if (Is_Lifted_Ghost(first))
+            return fail ("PACK! cannot decay GHOST! in first slot");
+
+        assert(not Is_Lifted_Error(first));  // we ruled these out already
+
         Copy_Cell(v, first);  // Note: no antiform binding (PACK!)
         assume (  // Any_Lifted() already checked for all pack items
             Unliftify_Undecayed(v)
