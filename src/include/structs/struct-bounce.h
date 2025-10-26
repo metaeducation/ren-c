@@ -80,7 +80,9 @@ typedef Byte WildTwo[2];
 
         Bounce(const nullptr_t&) : b {nullptr} {}
 
-        Bounce(Result0Struct&&) : b {nullptr} {}
+        Bounce(const Result0Struct&) : b {nullptr} {}  // want to accept `fail`
+
+        Bounce(const Nocast0Struct&) : b {nullptr} {}  // Result(T) uses this
 
         Bounce(const Cell* cell) : b {cell} {}  // either API cell or OUT [2]
 
@@ -99,15 +101,6 @@ typedef Byte WildTwo[2];
         explicit operator const char*() const
           { return u_cast(const char*, b); }
     };
-
-  #if NEEDFUL_OPTION_USES_WRAPPER
-  namespace needful {
-    template<>
-    struct OptionNoneInitHelper<Bounce> {
-        static Bounce init() { return Bounce {nullptr}; }
-    };
-  }
-  #endif
 #endif
 
 

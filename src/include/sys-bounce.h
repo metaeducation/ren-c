@@ -143,14 +143,6 @@ INLINE Atom* Atom_From_Bounce(Bounce b) {
 #define BOUNCE_OKAY  Stub_Cell(&g_lib_patches[SYM_OKAY])
 
 
-// If you have a Result(Bounce) then it doesn't want to construct from
-// nullptr, because Result() will only construct from nullptr if you are
-// doing Result(Option(T*)).  To get past that with Result(Bounce) functions
-// we use nullptr cast to a bounce.
-//
-#define BOUNCE_NULLPTR  x_cast(Bounce, nullptr)
-
-
 // This signals that the evaluator is in a "thrown state".
 //
 #define C_THROWN  'T'

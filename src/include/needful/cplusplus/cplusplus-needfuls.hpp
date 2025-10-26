@@ -42,20 +42,23 @@
 #endif
 
 
-//=//// <type_traits> IS THE *POWER-TOOL* FOR COMPILE-TIME ANALYSIS! /////=//
+//=//// <utility> FOR std::forward() //////////////////////////////////////=//
 //
-// For the uninitiated: <type_traits> is what enables most of the magic that
-// Needful does.  It's a library of queries you can perform at compile-time,
-// and guide the behavior of things from the answers:
+// <type_traits> is already included by needful.h to implement the nocast
+// facility, required for C++ builds (even with NEEDFUL_NO_ENHANCEMENTS).
+// For the uninitiated: type traits enables most of the magic that Needful
+// does...it's a library of queries you can perform at compile-time, and guide
+// the behavior of things from the answers:
 //
 //      https://en.cppreference.com/w/cpp/header/type_traits.html
 //
 // It's a powerful static-analysis tool that comes built into the compiler
 // you already have!
 //
+// However we also need <utility> here for std::forward().
+//
 
-#include <type_traits>
-#include <utility>  // for std::forward()
+#include <utility>
 
 
 //=//// <stdint.h> FOR MAKING POINTERS FROM INTEGERS //////////////////////=//

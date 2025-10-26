@@ -162,25 +162,25 @@ INLINE Result(Bounce) Bounce_Opt_Out_Element_Intrinsic(  // <opt-out> handling
 
     if (Is_Error(atom_arg)) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
-            return BOUNCE_NULLPTR;  // [2]
+            return nullptr;  // [2]
         return fail (Cell_Error(atom_arg));
     }
 
     if (Is_Void(atom_arg))  // handle PARAMETER_FLAG_OPT_OUT
-        return BOUNCE_NULLPTR;
+        return nullptr;
 
     Init(Atom) atom_out = u_cast(Atom*, elem_out);
     Copy_Cell(atom_out, atom_arg);
 
     Decay_If_Unstable(atom_out) except (Error* e) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
-            return BOUNCE_NULLPTR;  // [2]
+            return nullptr;  // [2]
         return fail (e);
     }
 
     if (Is_Antiform(atom_out)) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
-            return BOUNCE_NULLPTR;  // [2]
+            return nullptr;  // [2]
         return fail (Error_Bad_Intrinsic_Arg_1(L));
     }
 
@@ -200,7 +200,7 @@ INLINE Result(Bounce) Bounce_Decay_Value_Intrinsic(
 
     if (Is_Error(atom_arg)) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
-            return BOUNCE_NULLPTR;  // [2]
+            return nullptr;  // [2]
         return fail (Cell_Error(atom_arg));
     }
 
@@ -209,7 +209,7 @@ INLINE Result(Bounce) Bounce_Decay_Value_Intrinsic(
 
     Decay_If_Unstable(atom_out) except (Error* e) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
-            return BOUNCE_NULLPTR;  // [2]
+            return nullptr;  // [2]
         return fail (e);
     }
     return BOUNCE_GOOD_INTRINSIC_ARG;

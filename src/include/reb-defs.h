@@ -147,7 +147,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 //
 // The Index type is not allowed to be 0 unless it is an Optional(Index).
 //
-// 1. Due to the fact that Optional(Index) is just `Index` when not using the
+// 1. Due to the fact that Option(Index) is just `Index` when not using the
 //    NEEDFUL_OPTION_USES_WRAPPER switch, we cannot enforce Index's "never 0"
 //    property without that switch.
 

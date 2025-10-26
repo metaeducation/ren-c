@@ -119,7 +119,7 @@
             h = cast(HeartEnum, id);
         }
 
-        Heart (Result0Struct&&)  // for return fail with Result(Heart)
+        Heart (const Nocast0Struct&)  // for return fail with Result(Heart)
             : h (cast(HeartEnum, 0))  // (also used by Option(Heart) = none)
           {}
 
@@ -152,7 +152,7 @@
             t = cast(TypeEnum, id);
         }
 
-        Type (Result0Struct&&)  // for return fail with Result(Type)
+        Type (const Nocast0Struct&)  // for return fail with Result(Type)
           : t (cast(TypeEnum, 0))  // (also used by Option(Type) = none)
         {}
 

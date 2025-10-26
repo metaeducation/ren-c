@@ -57,10 +57,10 @@
 //     Option(SomeEnum) baz = 0;          /* compile-time error */
 //
 
-struct NoneStruct {};
+struct Option0Struct {};
 
 #undef needful_none
-#define needful_none  needful::NoneStruct{}  // instantiate {} none instance
+#define needful_none  needful::Option0Struct{}  // instantiate {} none instance
 
 
 //=//// OPTION WRAPPER ////////////////////////////////////////////////////=//
@@ -84,11 +84,6 @@ struct NoneStruct {};
 //
 
 template<typename T>
-struct OptionNoneInitHelper {
-    static T init() { return needful_xtreme_cast(T, 0); }
-};
-
-template<typename T>
 struct OptionWrapper {
     NEEDFUL_DECLARE_WRAPPED_FIELD (T, o);
 
@@ -96,10 +91,10 @@ struct OptionWrapper {
 
     OptionWrapper () = default;  // garbage, or 0 if global [2]
 
-    OptionWrapper(Result0Struct&&) = delete;  // only for Result(T)
+    OptionWrapper(Nocast0Struct&&) = delete;  // only for Result(T)
 
-    OptionWrapper(NoneStruct&&)
-        : o {OptionNoneInitHelper<T>::init()}
+    OptionWrapper(Option0Struct&&)
+        : o {needful_nocast_0}
       {}
 
     template <
@@ -180,20 +175,6 @@ struct IsOptionWrapper<OptionWrapper<X>> : std::true_type {};
 
 #undef NeedfulOption
 #define NeedfulOption(T)  needful::OptionWrapper<T>
-
-
-
-//=//// RESULT0 INIT HELPER //////////////////////////////////////////////=//
-//
-// We don't want to force Option(T) to be constructible from 0, so when a
-// Result(Option(T)) is constructed from NEEDFUL_RESULT_0, have that be
-// done via a NoneStruct{}.
-//
-
-template<typename U>
-struct Result0InitHelper<OptionWrapper<U>> {
-    static OptionWrapper<U> init() { return NoneStruct{}; }
-};
 
 
 //=/// UNWRAP AND OPT HELPER CLASSES //////////////////////////////////////=//

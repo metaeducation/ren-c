@@ -218,18 +218,13 @@ struct OptionWrapper;
 //
 
 template<typename T>
-struct Result0InitHelper {
-    static T init() { return x_cast(T, 0); }
-};
-
-template<typename T>
 struct NEEDFUL_NODISCARD ResultWrapper {
     NEEDFUL_DECLARE_WRAPPED_FIELD (T, r);
 
     ResultWrapper() = delete;
 
     ResultWrapper(Result0Struct&&)  // how failures are returned [1]
-      : r {Result0InitHelper<T>::init()}
+      : r {needful_nocast_0}
         {}
 
     ResultWrapper(const std::nullptr_t&)  // usually no `return nullptr;` [2]
