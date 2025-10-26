@@ -16,33 +16,42 @@
 ** Needful is a header-only library, containing various definitions for
 ** constructs that will behave in more "interesting" ways when built as C++.
 **
-** In order to convince you of Needful's completely non-invasive and light
-** nature in C builds, it's written with all the C #defines up front in this
-** one file--you can see just how trivial they are.  Adding it to a C project
-** is a very low-impact proposition... you only have to add *one* file to
-** your project to get it to compile with Needful.
+****[[ NOTES ]]***************************************************************
 **
-** The C++ definitions are optionally included at the end of the file.  They
-** will #undef the simple definitions, #define them as more complex ones.
-** This is what gives the powerful compile-time checks.  You can enlist in
-** the Needful project separately in your continuous integration or whatever
-** build system you have, and the extra files will only be included when you
-** ask to build with the extra features enabled.
+** A. When built in C language mode, the Result() and Option() types rely on
+**    the polymorphic construction from 0 for enums, pointers and integers.
+**    Though legal, GCC and Clang give warnings about such conversions if they
+**    produce a pointer -AND- come from a compound expression:
 **
-****[[ SERIOUSLY, FOLKS... ]]*************************************************
+**     SomeEnum Make_Enum(...) { return 0; }  // no warning
+**     Something* Make_Pointer(...) { return 0; }  // no warning
 **
-** It only requires one file to build, and helps document your code even
-** if you don't have the additional C++ files on hand.  But if you -do- build
-** with the C++ redefinitions, you get insanely powerful validation...with no
-** extra tools needed but the compiler you already have.
+**     SomeEnum Make_Enum(...) { return (..., 0); }  // no warning
+**     Something* Make_Pointer(...) { return (..., 0); }  // GCC + Clang warn
 **
-** What have you got to lose?  :-)
+**   If you want to use Result(Something*) in C builds, `return fail (...);`
+**   requires the compound construction from 0, and Option(Something*) may
+**   need this if you conditionally produce `none`.  Needful disables the
+**   warning for convenience, so you don't need `-Wno-int-conversion`.  But
+**   don't worry: the C++ enhanced build will catch any mistakes.
+**
+**   (C++ is more strict than C about what can be converted from 0, and would
+**   have errors--not warnings.  Tools like `nocast` are used to work around
+**   this if just using the skeletal file, with more targeted behavior
+**   in the enhanced definitions.)
 */
 
 
 #ifndef NEEDFUL_H  /* "include guard" allows multiple #includes */
 #define NEEDFUL_H
 
+
+
+#if !defined(NEEDFUL_DISABLE_INT_WARNING) || NEEDFUL_DISABLE_INT_WARNING
+  #if !defined(__cplusplus) && (defined(__GNUC__) || defined(__clang__))
+    #pragma GCC diagnostic ignored "-Wint-conversion"  /* See [A] above */
+  #endif
+#endif
 
 /***[[ Option(T): EXPLICITLY DISENGAGE-ABLE TYPE ]]***************************
 **

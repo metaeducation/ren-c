@@ -362,18 +362,6 @@ gen-obj: func [
 
     append flags <msc:/FC>  ; absolute paths for error messages
 
-    ; It's legal in the C language for a 0 integer literal to act as NULL.
-    ; GCC warns about this, but we leverage it in the C build for polymorphism
-    ; in terms of how the fail() macro works.  See NEEDFUL_RESULT_0 for
-    ; how this is worked around in C++...but the only thing we can do in the C
-    ; build to get the desired polymorphism is disable the warning.
-    ;
-    if no? cplusplus [
-        append flags spread [
-            <gcc:-Wno-int-conversion>
-        ]
-    ]
-
     ; The `rigorous: 'yes` setting in the config turns the warnings up to where
     ; they are considered errors.  However, there are a *lot* of warnings
     ; when you turn things all the way up...and not all of them are relevant.
