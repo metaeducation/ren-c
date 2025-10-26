@@ -324,11 +324,13 @@
 **    and it also is briefer to read at the callsite.
 */
 
-#define needful_rigid_ensure(T,expr)  (expr)
+#define needful_rigid_ensure(T,expr) \
+    needful_xtreme_cast(T,expr)
 
-#define needful_lenient_ensure(T,expr)  (expr)  /* const passthru const [1] */
+#define needful_lenient_ensure(T,expr) /* const passthru const [1] */ \
+    needful_xtreme_cast(T,expr)
 
-#define needful_ensure_any(TLIST,expr)  (expr)
+#define needful_ensure_any(TLIST,expr)  (expr)  /* doesn't change type */
 
 #define needful_ensure_lvalue(variable)  (*&variable)
 
