@@ -78,7 +78,7 @@
 // See the definition of Phase for more information.
 //
 
-#if CPLUSPLUS_11
+#if NEEDFUL_CPP_ENHANCEMENTS
 namespace needful {
     template<typename From>
     struct IsConvertibleAsserter<From, const Phase*> {

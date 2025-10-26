@@ -645,6 +645,28 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+// You *can* do a C++ build of Ren-C without needful.h's enhancements.  But
+// mostly just to prove you could: most of the reason to build with C++ is to
+// get the compile-time checks that Needful provides.  And some other C++
+// features layer on top of Needful, and writing versions of them which are
+// conditional on NEEDFUL_CPP_ENHANCEMENTS being off would be a hassle.
+//
+// However, it may be desirable to turn off some of the more expensive parts
+// of needful in some situations.
+//
+#if !defined(NEEDFUL_CPP_ENHANCEMENTS)
+    #define NEEDFUL_CPP_ENHANCEMENTS  CPLUSPLUS_11
+#endif
+
+#if (! NEEDFUL_CPP_ENHANCEMENTS)
+    #define CHECK_CELL_SUBCLASSES  0
+    #define DEBUG_EXTRA_HEART_CHECKS  0
+    #define DEBUG_EXTANT_STACK_POINTERS  0
+    #define USE_BOUNCE_STRUCT  0
+    #define DEBUG_CHECK_CASTS  0
+#endif
+
+
 // The cell subclasses [Element Value Atom] help to quarantine antiforms and
 // unstable antiforms into slots that should have them.  I couldn't figure
 // out a clean way to get the compile-time errors I wanted without adding
@@ -657,7 +679,16 @@ Special internal defines used by RT, not Host-Kit developers:
   #else
     #define CHECK_CELL_SUBCLASSES 0
   #endif
-    #define DONT_CHECK_CELL_SUBCLASSES (! CHECK_CELL_SUBCLASSES)
+#endif
+
+#define DONT_CHECK_CELL_SUBCLASSES (! CHECK_CELL_SUBCLASSES)
+
+
+// "Bounce" internally to the system in natives can be done with a struct (and
+// must be if you want to construct it from Result0Struct from needful).
+//
+#if !defined(USE_BOUNCE_STRUCT)
+    #define USE_BOUNCE_STRUCT  CPLUSPLUS_11
 #endif
 
 
@@ -669,7 +700,7 @@ Special internal defines used by RT, not Host-Kit developers:
     #define NEEDFUL_SINK_USES_WRAPPER CHECK_CELL_SUBCLASSES
 #else
     #if (! NEEDFUL_SINK_USES_WRAPPER) && CHECK_CELL_SUBCLASSES
-        #error "NEEDFUL_SINK_USES_WRAPPER muts be enabled for CHECK_CELL_SUBCLASSES"
+        #error "NEEDFUL_SINK_USES_WRAPPER needed for CHECK_CELL_SUBCLASSES"
     #endif
 #endif
 
@@ -792,18 +823,13 @@ Special internal defines used by RT, not Host-Kit developers:
 // you'd expect things to be slow anyway.)
 //
 #if !defined(DEBUG_CHECK_CASTS)
-  #if defined(__SANITIZE_ADDRESS__) && CPLUSPLUS_11
+  #if defined(__SANITIZE_ADDRESS__) && NEEDFUL_CPP_ENHANCEMENTS
     #define DEBUG_CHECK_CASTS  RUNTIME_CHECKS
   #else
     #define DEBUG_CHECK_CASTS  0  // requires C++
   #endif
 #endif
-#if DEBUG_CHECK_CASTS
-  #if NO_CPLUSPLUS_11
-    #error "DEBUG_CHECK_CASTS requires C++11 (or later)"
-    #include <stophere>  // https://stackoverflow.com/a/45661130
-  #endif
-
+#if DEBUG_CHECK_CASTS  // !!! just use NEEDFUL_CAST_CALLS_HOOKS ?
   #define NEEDFUL_CAST_CALLS_HOOKS  1
 #else
   #define NEEDFUL_CAST_CALLS_HOOKS  0
@@ -833,8 +859,8 @@ Special internal defines used by RT, not Host-Kit developers:
 // null when it shouldn't be.  Add it to the sanitized build.
 //
 #if !defined(NEEDFUL_OPTION_USES_WRAPPER)
-  #if defined(__SANITIZE_ADDRESS__)
-    #define NEEDFUL_OPTION_USES_WRAPPER  (RUNTIME_CHECKS && CPLUSPLUS_11)
+  #if defined(__SANITIZE_ADDRESS__) && NEEDFUL_CPP_ENHANCEMENTS
+    #define NEEDFUL_OPTION_USES_WRAPPER  RUNTIME_CHECKS
   #else
     #define NEEDFUL_OPTION_USES_WRAPPER  0
   #endif

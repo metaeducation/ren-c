@@ -2,6 +2,17 @@
 #define C_EXTRAS_H
 
 
+//=//// MAKE REQUIREMENT OF NEEDFUL.H EXPLICIT ////////////////////////////=//
+//
+// Currently c-extras.h assumes you are also using needful.h
+//
+// Note that needful includes <type-traits> if __cplusplus is defined.
+//
+#if !defined(NEEDFUL_H_INCLUDED)
+    #error "c-extras.h requires needful.h to be included first"
+#endif
+
+
 //=//// STDINT.H AND STDBOOL.H ////////////////////////////////////////////=//
 //
 // Ren-C assumes the availability of <stdint.h> and <stdbool.h>
@@ -434,8 +445,10 @@
 //
 // https://stackoverflow.com/questions/50667501/
 //
-// But what we can do is make a function that takes the duplicated arguments
-// and compares them with each other.
+// But what we can do is make a debug-build function that takes the duplicated
+// arguments and compares them.  This might seem "dumb" but it can catch
+// mistakes where people write things like MIN(x, y++), and because it always
+// evaluates both arguments twice it will notice even if x is smaller!
 //
 // 1. It is common for MIN and MAX to be defined in C to macros; and equally
 //    common to assume that undefining them and redefining them to something
@@ -444,8 +457,7 @@
 // 2. As mentioned above, no magic exists at time of writing that can help
 //    enforce T1 and T2 didn't arise from potential-side-effect expressions.
 //    `consteval` in C++20 can force compile-time evaluation, but that would
-//    only allow MIN(10, 20).  Putting this here in case some future trickery
-//    comes along.
+//    only allow MIN(10, 20).  It's unlikely that C++ will ever solve this.
 //
 // 3. In order to make it as similar to the C as possible, we make MIN and
 //    MAX macros so they can be #undef'd or redefined (as opposed to just
@@ -568,7 +580,7 @@
 //
 //    Member* Get_Member(Object *ptr) { ... }
 //
-// Needful provides a way to use a single name and avoid code duplication.
+// Here we provide a way to use a single name and avoid code duplication.
 // It's a little tricky, but looks like this:
 //
 //     MUTABLE_IF_C(Member*) Get_Member(CONST_IF_C(Object*) ptr_) {
@@ -601,8 +613,17 @@
 //    Since that would error, provide a generalized mechanism for optionally
 //    slipping decorators before the template<> definition.
 //
+#if NEEDFUL_CPP_ENHANCEMENTS  // requires needful_mirror_const_t
+    #define MUTABLE_IF_C(ReturnType, ...) \
+        template<typename T> \
+        __VA_ARGS__ needful_mirror_const_t(T, ReturnType)
 
-#if NO_CPLUSPLUS_11
+    #define CONST_IF_C(ParamType) /* !!! static_assert ParamType somehow? */ \
+        T&&  // universal reference to arg
+
+    #define CONSTABLE(ParamType) \
+        needful_mirror_const_t(T, ParamType)
+#else
     #define CONST_IF_C(param_type) \
         const param_type  // Note: use cast() macros instead, if you can [1]
 
@@ -610,19 +631,6 @@
         __VA_ARGS__ return_type  // __VA_ARGS__ needed for INLINE etc. [2]
 
     #define CONSTABLE(param_type)  param_type  // use m_cast() on assignment
-#else
-    #undef MUTABLE_IF_C
-    #define MUTABLE_IF_C(ReturnType, ...) \
-        template<typename T> \
-        __VA_ARGS__ needful_mirror_const_t(T, ReturnType)
-
-    #undef CONST_IF_C
-    #define CONST_IF_C(ParamType) /* !!! static_assert ParamType somehow? */ \
-        T&&  // universal reference to arg
-
-    #undef CONSTABLE
-    #define CONSTABLE(ParamType) \
-        needful_mirror_const_t(T, ParamType)
 #endif
 
 

@@ -197,17 +197,20 @@ typedef RebolHandleCleaner HandleCleaner;
 
 #include "needful/needful.h"
 
-#if CPLUSPLUS_11
-    using needful::Result0Struct;
-    using needful::ResultWrapper;
+#if NEEDFUL_CPP_ENHANCEMENTS
+    using needful::Nocast0Struct;  // to implement concept of "zeroness"
 
-  #if NEEDFUL_OPTION_USES_WRAPPER
+  #if NEEDFUL_RESULT_USES_WRAPPER
+    using needful::Result0Struct;  // so Bounce can accept `fail` properly
+  #endif
+
+  #if NEEDFUL_OPTION_USES_WRAPPER  // for implementing Option(Index)
     using needful::OptionWrapper;
     using needful::UnwrapHelper;
     using needful::OptHelper;
   #endif
 
-  #if NEEDFUL_SINK_USES_WRAPPER
+  #if NEEDFUL_SINK_USES_WRAPPER  // for implementing SymbolOrValueHolder
     using needful::SinkWrapper;
     using needful::InitWrapper;
     using needful::NeedWrapper;

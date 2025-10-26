@@ -1,6 +1,6 @@
 /*
 **  file: %needful.h
-**  summary: "Trivial C macros that have powerful features in C++11 or higher"
+**  summary: "C macros that offer powerful features in C++11 or higher"
 **  homepage: <needful homepage TBD>
 **
 ******************************************************************************
@@ -13,8 +13,26 @@
 **
 ******************************************************************************
 **
-** Needful is a header-only library, containing various definitions for
-** constructs that will behave in more "interesting" ways when built as C++.
+** Needful is a header-only library, containing various definitions for C
+** constructs that can behave in more "interesting" ways when built as C++.
+**
+** To help convince you of Needful's "light" nature in C builds, it's written
+** with all the C #defines up front in this one file--you can see how simple
+** they (mostly) are.  Adding it to a C project is a low-impact proposition...
+** you only have to add *one* file to your project, and it can be built in
+** either C or C++ mode, standalone.
+**
+** But if you `#define NEEDFUL_CPP_ENHANCEMENTS 1` (and have the additional
+** files implementing the enhancements in Needful's directory) then they'll be
+** included at the end of the file.  This will #undef the simple definitions,
+** and #define them as more complex ones.  This is what gives the powerful
+** compile-time checks.  You can enlist in the Needful project separately in
+** your continuous integration or whatever build system you have, and the extra
+** files will only be included when you ask to build with the extra features.
+**
+** It helps document your code even if you just use the one `needful.h` file.
+** But when you do build with the C++ enhancements, you get powerful checks,
+** with no extra tools needed but the compiler you already have.
 **
 ****[[ NOTES ]]***************************************************************
 **
@@ -41,11 +59,8 @@
 **   in the enhanced definitions.)
 */
 
-
-#ifndef NEEDFUL_H  /* "include guard" allows multiple #includes */
-#define NEEDFUL_H
-
-
+#ifndef NEEDFUL_H_INCLUDED  /* "include guard" allows multiple #includes */
+#define NEEDFUL_H_INCLUDED
 
 #if !defined(NEEDFUL_DISABLE_INT_WARNING) || NEEDFUL_DISABLE_INT_WARNING
   #if !defined(__cplusplus) && (defined(__GNUC__) || defined(__clang__))
@@ -991,8 +1006,47 @@ typedef enum {
 ** given above, and redefine them with actual machinery to give them teeth!
 */
 
-#if defined(__cplusplus)
+#if !defined(NEEDFUL_CPP_ENHANCEMENTS)
+    #define NEEDFUL_CPP_ENHANCEMENTS  0  // Note: can still be compiled as C++
+#endif
+
+#if !defined(NEEDFUL_OPTION_USES_WRAPPER)
+  #define NEEDFUL_OPTION_USES_WRAPPER  NEEDFUL_CPP_ENHANCEMENTS
+#endif
+
+#if !defined(NEEDFUL_RESULT_USES_WRAPPER)
+  #define NEEDFUL_RESULT_USES_WRAPPER  NEEDFUL_CPP_ENHANCEMENTS
+#endif
+
+#if !defined(NEEDFUL_SINK_USES_WRAPPER)
+  #define NEEDFUL_SINK_USES_WRAPPER  NEEDFUL_CPP_ENHANCEMENTS
+#endif
+
+#if !defined(NEEDFUL_CAST_CALLS_HOOKS)
+  #define NEEDFUL_CAST_CALLS_HOOKS  NEEDFUL_CPP_ENHANCEMENTS
+#endif
+
+#if NEEDFUL_CPP_ENHANCEMENTS
+    #if !defined(__cplusplus)
+        #error "NEEDFUL_CPP_ENHANCEMENTS requires building your code as C++"
+    #elif (__cplusplus < 201103L) && (!defined(_MSC_VER) || _MSC_VER < 1900)
+        #error "NEEDFUL_CPP_ENHANCEMENTS requires C++11 or later"
+    #endif
+
     #include "cplusplus/cplusplus-needfuls.hpp"
+#else
+    #if NEEDFUL_OPTION_USES_WRAPPER
+        #error "NEEDFUL_OPTION_USES_WRAPPER requires NEEDFUL_CPP_ENHANCEMENTS"
+    #endif
+    #if NEEDFUL_RESULT_USES_WRAPPER
+        #error "NEEDFUL_RESULT_USES_WRAPPER requires NEEDFUL_CPP_ENHANCEMENTS"
+    #endif
+    #if NEEDFUL_SINK_USES_WRAPPER
+        #error "NEEDFUL_SINK_USES_WRAPPER requires NEEDFUL_CPP_ENHANCEMENTS"
+    #endif
+    #if NEEDFUL_CAST_CALLS_HOOKS
+        #error "NEEDFUL_CAST_CALLS_HOOKS requires NEEDFUL_CPP_ENHANCEMENTS"
+    #endif
 #endif
 
 
@@ -1002,8 +1056,8 @@ typedef enum {
 ** a separate build step to do so, just to start getting the tests written.
 */
 
-#if defined(__cplusplus) && !defined(NDEBUG)
+#if NEEDFUL_CPP_ENHANCEMENTS && !defined(NDEBUG)
     #include "tests/all-needful-tests.hpp"
 #endif
 
-#endif  /* !defined(NEEDFUL_H) */
+#endif  /* !defined(NEEDFUL_H_INCLUDED) */

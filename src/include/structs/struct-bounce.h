@@ -68,7 +68,7 @@ typedef Byte WildTwo[2];
 //    OUT slot, because when the action code calls the dispatcher it checks
 //    for equality to that pointer first.  Use `return COPY(cell)`.
 //
-#if NO_CPLUSPLUS_11 /* || NO_RUNTIME_CHECKS */  // must see Result0Struct [0]
+#if (! USE_BOUNCE_STRUCT)  // must see Result0Struct [0]
     typedef RebolBounce Bounce;
 #else
     struct NEEDFUL_NODISCARD Bounce {

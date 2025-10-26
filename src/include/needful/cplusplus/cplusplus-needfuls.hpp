@@ -33,7 +33,7 @@
 //
 
 
-#if !defined(NEEDFUL_H)
+#if !defined(NEEDFUL_H_INCLUDED)
     #error "You must include needful.h before cplusplus-needfuls.hpp"
 #endif
 
@@ -127,34 +127,6 @@
 #endif
 
 
-//=//// NEEDFUL_OPTION_USES_WRAPPER ///////////////////////////////////////=//
-//
-// Off by default.  Review configuration strategy.
-//
-
-#if !defined(NEEDFUL_OPTION_USES_WRAPPER)
-  #define NEEDFUL_OPTION_USES_WRAPPER  0
-#endif
-
-
-//=//// NEEDFUL_SINK_USES_WRAPPER /////////////////////////////////////////=//
-//
-// Off by default.  Review configuration strategy.
-
-#if !defined(NEEDFUL_SINK_USES_WRAPPER)
-  #define NEEDFUL_SINK_USES_WRAPPER  0
-#endif
-
-
-//=//// NEEDFUL_CAST_CALLS_HOOKS //////////////////////////////////////////=//
-//
-// Off by default.  Review configuration strategy.
-
-#if !defined(NEEDFUL_CAST_CALLS_HOOKS)
-  #define NEEDFUL_CAST_CALLS_HOOKS  0
-#endif
-
-
 //=//// INCLUDE THE NEEDFUL OVERRIDES /////////////////////////////////////=//
 //
 // 1. It's technically most correct to scope things with `::needful::`, which
@@ -181,10 +153,12 @@ namespace needful {  //=//// BEGIN `needful::` NAMESPACE //////////////////=//
     #include "needful-corruption.hpp"
   #endif
 
-    #include "needful-result.hpp"
-
   #if NEEDFUL_OPTION_USES_WRAPPER
     #include "needful-option.hpp"
+  #endif
+
+  #if NEEDFUL_RESULT_USES_WRAPPER
+    #include "needful-result.hpp"
   #endif
 
   #if NEEDFUL_SINK_USES_WRAPPER
