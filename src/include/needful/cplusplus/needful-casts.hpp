@@ -567,7 +567,7 @@ struct UpcastHelper {
     struct BaseName##Maker { \
         template<typename T> \
         BaseName##Holder<remove_reference_t<T>> \
-        operator+(const T& value) const { /* << lower than % [4] */ \
+        operator+(const T& value) const { /* + lower than % [4] */ \
             return BaseName##Holder<T>{value}; \
         } \
     }; \

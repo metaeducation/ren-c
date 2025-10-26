@@ -627,7 +627,7 @@ INLINE Result(Feed*) Prep_Feed_Common(
     Flags flags
 ){
    trap (
-     Feed* feed = nocast preallocated
+     Feed* feed = u_downcast preallocated
    );
 
   #if TRAMPOLINE_COUNTS_TICKS

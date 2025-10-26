@@ -1133,7 +1133,7 @@ Result(Zero) Push_Action(
     Set_Action_Level_Label(L, Frame_Label_Deep(frame));
 
     require (
-      Flex* s = nocast Prep_Stub(
+      Flex* s = u_downcast Prep_Stub(
         STUB_MASK_LEVEL_VARLIST
             | FLEX_FLAG_FIXED_SIZE,  // FRAME!s don't expand ATM
             // not managed by default, see Force_Level_Varlist_Managed()

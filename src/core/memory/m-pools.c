@@ -448,7 +448,7 @@ Result(Zero) Fill_Pool(Pool* pool)
     REBLEN mem_size = pool->wide * num_units + sizeof(Segment);
 
     trap (
-      Segment* seg = nocast Raw_Heap_Alloc(mem_size)
+      Segment* seg = u_downcast Raw_Heap_Alloc(mem_size)
     );
     seg->size = mem_size;
     seg->next = pool->segments;
@@ -587,7 +587,7 @@ Base* Try_Find_Containing_Base_Debug(const void *p)
 Pairing* Alloc_Pairing(Flags flags) {
     assert(flags == 0 or flags == BASE_FLAG_MANAGED);
     require (
-      Pairing* p = nocast Raw_Pooled_Alloc(PAIR_POOL)  // 2x cell size
+      Pairing* p = u_downcast Raw_Pooled_Alloc(PAIR_POOL)  // 2x cell size
     );
     Pairing_First(p)->header.bits = CELL_MASK_UNREADABLE | flags;
     Pairing_Second(p)->header.bits = CELL_MASK_UNREADABLE;

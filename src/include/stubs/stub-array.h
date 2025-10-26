@@ -161,7 +161,7 @@ INLINE Array* Make_Array_Core_Into(
   #endif
 
     require (
-      Array* a = nocast Make_Flex_Into(flags, pre, capacity)
+      Array* a = u_downcast Make_Flex_Into(flags, pre, capacity)
     );
     assert(Stub_Holds_Cells(a));  // flavor should have been an array flavor
 
@@ -209,7 +209,7 @@ INLINE Source* Alloc_Singular(Flags flags) {
     assert(Flavor_From_Flags(flags) == FLAVOR_SOURCE);
     assert(not (flags & STUB_FLAG_DYNAMIC));
     require (
-      Source* a = nocast Make_Flex_Into(
+      Source* a = u_downcast Make_Flex_Into(
         flags | FLEX_FLAG_FIXED_SIZE,
         Alloc_Stub(),
         1

@@ -546,7 +546,7 @@ INLINE Result(Map*) Copy_Map(const Map* map, bool deeply) {
     // its own copy so new map's hashes will reflect its own mutations)
     //
     trap (
-      HashList* hashlist = nocast Copy_Flex_Core(
+      HashList* hashlist = u_downcast Copy_Flex_Core(
         FLEX_FLAGS_NONE | FLAG_FLAVOR(FLAVOR_HASHLIST),  // !!! No BASE_FLAG_MANAGED?
         MAP_HASHLIST(map)
     ));

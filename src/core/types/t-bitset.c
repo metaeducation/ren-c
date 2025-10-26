@@ -703,7 +703,7 @@ IMPLEMENT_GENERIC(COPY, Is_Bitset)
         panic (Error_Bad_Refines_Raw());
 
     require (
-      Binary* copy = nocast Copy_Flex_Core(BASE_FLAG_MANAGED, bits)
+      Binary* copy = u_downcast Copy_Flex_Core(BASE_FLAG_MANAGED, bits)
     );
     INIT_BITS_NOT(copy, BITS_NOT(bits));
 
@@ -739,7 +739,10 @@ IMPLEMENT_GENERIC(COMPLEMENT, Is_Bitset)
     Element* bset = Element_ARG(VALUE);
 
     require (
-      Binary* copy = nocast Copy_Flex_Core(BASE_FLAG_MANAGED, VAL_BITSET(bset))
+      Binary* copy = u_downcast Copy_Flex_Core(
+        BASE_FLAG_MANAGED,
+        VAL_BITSET(bset)
+      )
     );
     INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(bset)));
     return Init_Bitset(OUT, copy);

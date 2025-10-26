@@ -52,7 +52,7 @@ VarList* Alloc_Varlist_Core(Flags flags, Heart heart, REBLEN capacity)
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);
 
     require (
-      KeyList* keylist = nocast Make_Flex(
+      KeyList* keylist = u_downcast Make_Flex(
         STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,  // always shareable
         capacity  // no terminator
     ));
@@ -131,7 +131,7 @@ KeyList* Keylist_Of_Expanded_Varlist(VarList* varlist, REBLEN delta)
 
     if (Get_Flavor_Flag(KEYLIST, k, SHARED)) {  // need new keylist [1]
         require (
-          KeyList* k_copy = nocast Copy_Flex_At_Len_Extra(
+          KeyList* k_copy = u_downcast Copy_Flex_At_Len_Extra(
             STUB_MASK_KEYLIST,
             k,
             0,
@@ -201,7 +201,7 @@ Init(Slot) Append_To_Sea_Core(
     }
     else {
         require (
-          patch = nocast Make_Untracked_Stub(STUB_MASK_PATCH)
+          patch = u_downcast Make_Untracked_Stub(STUB_MASK_PATCH)
         );
     }
 
@@ -799,7 +799,7 @@ VarList* Make_Varlist_Detect_Managed(
     }
     else {  // new keys, need new keylist
         require (
-          KeyList* keylist = nocast Make_Flex(
+          KeyList* keylist = u_downcast Make_Flex(
             STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
             len  // no terminator, 0-based
         ));

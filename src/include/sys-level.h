@@ -586,7 +586,7 @@ INLINE Result(Level*) Prep_Level_Core(
     Flags flags
 ){
     trap (
-      Level* L = nocast preallocated
+      Level* L = u_downcast preallocated
     );
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE;
 

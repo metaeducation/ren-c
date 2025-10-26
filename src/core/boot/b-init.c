@@ -306,7 +306,7 @@ static void Init_Root_Vars(void)
     Tweak_Link_Inherit_Bind_Raw(a, nullptr);
 
     require (
-      KeyList* keylist = nocast Make_Flex(
+      KeyList* keylist = u_downcast Make_Flex(
         STUB_MASK_KEYLIST | BASE_FLAG_MANAGED,
         len  // no terminator, 0-based
     ));

@@ -38,7 +38,7 @@ Result(Strand*) Make_Strand_Core(Flags flags, Size encoded_capacity)
     assert(Flavor_From_Flags(flags) == FLAVOR_NONSYMBOL);
 
     trap (
-      Strand* str = nocast Make_Flex(
+      Strand* str = u_downcast Make_Flex(
         STUB_MASK_STRAND | flags,
         encoded_capacity + 1  // + 1 makes room for '\0' terminator
     ));

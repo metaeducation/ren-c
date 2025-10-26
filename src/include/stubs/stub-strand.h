@@ -300,7 +300,7 @@ INLINE void Term_Strand_Len_Size(Strand* s, Length len, Size used) {
 
 INLINE BookmarkList* Alloc_BookmarkList(void) {
     require (
-      BookmarkList* books = nocast Make_Flex(
+      BookmarkList* books = u_downcast Make_Flex(
         FLAG_FLAVOR(FLAVOR_BOOKMARKLIST)
             | BASE_FLAG_MANAGED,  // lie to be untracked
         1
@@ -501,7 +501,7 @@ INLINE Result(Binary*) Copy_Binary_At_Len(
     REBLEN index,
     REBLEN len
 ){
-    return nocast Copy_Flex_At_Len_Extra(
+    return u_downcast Copy_Flex_At_Len_Extra(
         FLAG_FLAVOR(FLAVOR_BINARY) | FLEX_FLAGS_NONE,
         b,
         index,

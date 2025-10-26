@@ -188,7 +188,7 @@ unsigned char* API_rebAllocBytes(size_t size)
     ENTER_API;
 
     require (
-      Binary* b = nocast Make_Flex(
+      Binary* b = u_downcast Make_Flex(
         FLAG_FLAVOR(FLAVOR_BINARY)  // rebRepossess() only creates BLOB! ATM
             | BASE_FLAG_ROOT  // indicate this originated from the API
             | STUB_FLAG_DYNAMIC  // rebRepossess() needs bias field

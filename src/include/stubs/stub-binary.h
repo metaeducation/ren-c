@@ -76,7 +76,7 @@ INLINE Binary* Make_Binary_Core(Flags flags, Size capacity)
     assert(Flavor_From_Flags(flags) == 0);  // shouldn't pass in a flavor
 
     require (
-      Binary* b = nocast Make_Flex(
+      Binary* b = u_downcast Make_Flex(
         FLAG_FLAVOR(FLAVOR_BINARY) | flags,
         capacity + 1
     ));

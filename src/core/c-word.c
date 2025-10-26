@@ -279,7 +279,7 @@ Result(const Symbol*) Intern_Utf8_Managed_Core(  // implicitly managed [1]
 } new_interning: { ///////////////////////////////////////////////////////////
 
     trap (
-      Binary* b = nocast Make_Flex_Into(
+      Binary* b = u_downcast Make_Flex_Into(
         STUB_MASK_SYMBOL
             | SYMBOL_FLAG_ALL_ASCII,  // removed below if non-ascii found
         preallocated ? unwrap preallocated : Alloc_Stub(),

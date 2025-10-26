@@ -248,7 +248,7 @@ INLINE Result(Stub*) Prep_Stub(Flags flags, Result(void*) preallocated) {
     assert(not (flags & BASE_FLAG_CELL));
 
     trap (
-      Stub *s = nocast preallocated
+      Stub *s = u_downcast preallocated
     );
     s->header.bits = flags | BASE_FLAG_BASE;  // #1
 

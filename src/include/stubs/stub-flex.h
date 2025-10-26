@@ -565,7 +565,7 @@ INLINE Result(Flex*) Make_Flex_Into(
     }
 
     assume (
-      Flex* s = nocast Prep_Stub(flags, pre)
+      Flex* s = u_downcast Prep_Stub(flags, pre)
     );
 
     if (
