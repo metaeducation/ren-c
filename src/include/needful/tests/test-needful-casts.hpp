@@ -88,3 +88,20 @@ inline void test_cast_macro_commas()
 
 #undef SINGLE_ARG_MACRO
 #undef OUTER_MACRO
+
+
+inline void test_mutability_cast()
+{
+    struct Base {};
+    struct Derived : Base {};
+
+    const Derived* cd = nullptr;
+    Base* b = needful_mutable_cast(Base*, cd);
+    UNUSED(b);
+
+    /*  // this should not work, test suite should make sure of that
+    const Base* cb = nullptr;
+    Derived* d = needful_mutable_cast(Derived*, cb);
+    UNUSED(d);
+    */
+}

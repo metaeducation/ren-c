@@ -140,24 +140,23 @@ struct ValistPointerCastHelper {
 // because even constexpr functions have cost in debug builds.  If the type
 // you are casting is not a wrapper, it should be able to do its work
 // entirely at compile-time...even in debug builds!  This is accomplished
-// by static casting the wrapper type to its extracted type, then running a
+// by needful_upcast-ing the wrapper type to its extracted type, then running a
 // const_cast on that type, then static casting again to the target type.
 // This can be made to work for both pointers and wrapped pointers.
 //
-// 1. Attempts to make m_cast() arity-1 and auto-detect the target type were
-//    tried, with the C version just casting to void*.  But this winds up
-//    requiring C++-specific code to leak into %needful.h - because the C
-//    version of m_cast() that creates void* would no longer be legal in C++.
-//    This goes against the design principle of Needful to have a baseline of
-//    building with a single header file of C-only definitions.
+// 1. It's possible for m_cast() to be arity-1 and auto-detect the type, with
+//    the C version just casting to void*.  That would drop all type checking
+//    in the C build (bad), and would require pulling some pretty big C++
+//    mechanics into the needful.h header for it to compile.  The compromise
+//    of making it arity-2 but able to do an arbitrary upcast is a good middle
+//    ground that makes it more useful.
 //
 
 #undef needful_mutable_cast
-#define needful_mutable_cast(T,expr) /* Note: not arity-1 on purpose! */ \
-    (static_cast<T>( \
-        const_cast< \
-            needful_unconstify_t(needful_unwrapped_type(T)) \
-        >(static_cast<needful_constify_t(needful_unwrapped_type(T))>(expr))))
+#define needful_mutable_cast(T,expr) /* not arity-1 on purpose! [1] */ \
+    (static_cast<T>(const_cast< \
+        needful_unconstify_t(needful_unwrapped_type(T)) \
+    >(needful_upcast(needful_constify_t(needful_unwrapped_type(T)), (expr)))))
 
 
 //=//// h_cast(): HOOKABLE CAST, IDEALLY cast() = h_cast() [A] ////////////=//

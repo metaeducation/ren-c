@@ -567,10 +567,34 @@ void Needful_Panic_Abruptly(const char* error) {
 #define needful_rigid_unhookable_cast(T,expr)       ((T)(expr))
 
 
-/****[[ m_cast(): MUTABILITY CASTS ]]*****************************************
+/****[[ m_cast(): MUTABILITY CAST ]]******************************************
+**
+** The mutable cast removes constness from a type.  It's another case where
+** a C++ compiler will not allow you to do what C allows with a parentheses
+** cast, so this macro has to be conditional on __cplusplus.
+**
+** m_cast() is friendlier than C++'s const_cast<> in that you can use it to
+** cast away constness along with casting to any needful_upcast()-able type.
+** So you can do things like:
+**
+**     const Derived* d = ...;
+**     Base* b = m_cast(Base*, d);
+**
+** The enhanced version in C++ builds enforces the Base/Derived relationship,
+** while this crude version just matches the C semaantics and does not.
+**
+** If using NEEDFUL_CPP_ENHANCEMENTS, the mutable cast can work on "wrapped"
+** types as well, removing constness through the wrapper.  See the enhanced
+** feature NEEDFUL_DECLARE_WRAPPED_FIELD() for more details.
 */
 
-#define needful_mutable_cast(T,expr)                ((T)(expr))
+#if !defined(__cplusplus)
+    #define needful_mutable_cast(T,expr) \
+        ((T)(expr))  // C allows const to be cast away via parentheses
+#else
+    #define needful_mutable_cast(T,expr) \
+        const_cast<T>((const T)(expr))
+#endif
 
 
 /****[[ p_cast(), i_cast(), f_cast(): NARROWED CASTS ]]***********************
