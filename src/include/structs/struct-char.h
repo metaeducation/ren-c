@@ -106,7 +106,7 @@
         NEEDFUL_DECLARE_WRAPPED_FIELD (const Byte*, p);  // maybe mutable [0]
 
         ValidatedUtf8 () = default;
-        ValidatedUtf8 (nullptr_t n) : p (n) {}
+        ValidatedUtf8 (std::nullptr_t) : p (nullptr) {}
 
         explicit ValidatedUtf8 (const Byte* p)  // [1]
             : p (p) {}
@@ -159,8 +159,8 @@
         NEEDFUL_OVERRIDE_WRAPPED_FIELD_TYPE (Byte*);
 
         ValidatedUtf8 () = default;
-        ValidatedUtf8 (nullptr_t n)
-            : ValidatedUtf8<const Byte*>(n) {}
+        ValidatedUtf8 (std::nullptr_t)
+            : ValidatedUtf8<const Byte*>(nullptr) {}
 
         explicit ValidatedUtf8 (Byte* bp)  // [1]
             : ValidatedUtf8<const Byte*> (bp) {}

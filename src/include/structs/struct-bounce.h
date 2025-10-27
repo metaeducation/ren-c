@@ -37,13 +37,6 @@ typedef Byte WildTwo[2];
 
 //=//// BOUNCE ////////////////////////////////////////////////////////////=//
 //
-// 0. In order for you to be able to polymorphically return NEEDFUL_RESULT_0
-//    to return types that are pointers, integers, enums etc. in C++, there
-//    has to be a class to handle Result() and NEEDFUL_RESULT_0.  If that
-//    class is returned to a Bounce, you also need a class.  It may be that
-//    a C++ compiler can be configured to be as lenient as C, but not all
-//    necessarily can.
-//
 // 1. I thought that if it was `struct Bounce { RebolBounce b; }` that it
 //    would be able to do checks on the types it received while being
 //    compatible with a void* in the dispatchers using %rebol.h.  So these
@@ -68,7 +61,7 @@ typedef Byte WildTwo[2];
 //    OUT slot, because when the action code calls the dispatcher it checks
 //    for equality to that pointer first.  Use `return COPY(cell)`.
 //
-#if (! USE_BOUNCE_STRUCT)  // must see Result0Struct [0]
+#if (! CPLUSPLUS_11)
     typedef RebolBounce Bounce;
 #else
     struct NEEDFUL_NODISCARD Bounce {
@@ -78,11 +71,15 @@ typedef Byte WildTwo[2];
 
         explicit Bounce(const void* p) : b {p} {}
 
-        Bounce(const nullptr_t&) : b {nullptr} {}
+        Bounce(std::nullptr_t) : b {nullptr} {}
 
-        Bounce(const Result0Struct&) : b {nullptr} {}  // want to accept `fail`
+      #if NEEDFUL_RESULT_USES_WRAPPER
+        Bounce(Result0Struct) : b {nullptr} {}  // want to accept `fail`
+      #endif
 
-        Bounce(const Nocast0Struct&) : b {nullptr} {}  // Result(T) uses this
+      #if NEEDFUL_CPP_ENHANCEMENTS
+        Bounce(Nocast0Struct) : b {nullptr} {}  // Result(T) uses this
+      #endif
 
         Bounce(const Cell* cell) : b {cell} {}  // either API cell or OUT [2]
 

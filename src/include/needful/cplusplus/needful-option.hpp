@@ -91,9 +91,7 @@ struct OptionWrapper {
 
     OptionWrapper () = default;  // garbage, or 0 if global [2]
 
-    OptionWrapper(Nocast0Struct&&) = delete;  // only for Result(T)
-
-    OptionWrapper(Option0Struct&&)
+    OptionWrapper(Option0Struct)
         : o {needful_nocast_0}
       {}
 
@@ -170,9 +168,6 @@ bool operator!=(L left, const OptionWrapper<R>& right)
     };
 #endif
 
-template<typename X>
-struct IsOptionWrapper<OptionWrapper<X>> : std::true_type {};
-
 #undef NeedfulOption
 #define NeedfulOption(T)  needful::OptionWrapper<T>
 
@@ -231,7 +226,7 @@ struct OptHelper {};
 
 template<typename T>
 T operator+(  // lower precedence than % [1]
-    const UnwrapHelper&,
+    UnwrapHelper,
     const OptionWrapper<T>& option
 ){
     assert(option.o);  // non-null or non-zero
@@ -240,7 +235,7 @@ T operator+(  // lower precedence than % [1]
 
 template<typename T>
 T operator+(  // lower precedence than % [1]
-    const OptHelper&,
+    OptHelper,
     const OptionWrapper<T>& option
 ){
     return option.o;

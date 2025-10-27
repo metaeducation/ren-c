@@ -6,7 +6,7 @@ struct MyWrapper {
 
     MyWrapper(const T& init) : value {init} {}
 
-    MyWrapper(Nocast0Struct&&) : value {0} {}  // Initialize to zero for "none"
+    MyWrapper(Nocast0Struct) : value {0} {}  // Initialize to zero for "none"
 
     explicit operator bool() const {
         return value != 0;  // T needs a zero value representing "none"

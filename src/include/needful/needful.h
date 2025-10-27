@@ -107,11 +107,6 @@
 **
 ** 1. The choice of `+` as the operator to use is intentional due to wanting
 **    something with lower precedence than `%` (used in Result and Optional)
-**
-** 2. In debug builds, the `needful_nocast 0` form is made more efficient by
-**    using a pre-made instance of the proxy cast object, rather than making
-**    a new one each time.  The compiler optimizes it all away in release
-**    builds, but debug builds often do not...so it's worth special-casing.
 **/
 #ifndef __cplusplus
     #define needful_nocast
@@ -186,14 +181,15 @@
     #define needful_nocast_0  0  /* may need warning disablement [A] */
 #else
   namespace needful {
-    struct Nocast0Struct : public NocastHolder<int> {
-        constexpr Nocast0Struct() : NocastHolder<int>{0} {}
+    struct Nocast0Struct {
+        template<class To>
+        constexpr operator To() const {
+            return NocastConvert<To, int>::Do_It(0);  // literal 0, no member
+        }
     };
-
-    constexpr Nocast0Struct g_nocast_zero{};
   }
 
-    #define needful_nocast_0  needful::g_nocast_zero  // faster in debug [2]
+    #define needful_nocast_0  needful::Nocast0Struct{}
 #endif
 
 

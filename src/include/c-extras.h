@@ -221,7 +221,6 @@
     // is defined as `using nullptr_t = decltype(nullptr);` in <cstddef>
     //
     #include <cstddef>
-    using std::nullptr_t;
 #endif
 
 

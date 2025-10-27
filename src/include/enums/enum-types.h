@@ -112,14 +112,14 @@
         HeartEnum h;  // an "enum class" in MSVC (members are HeartEnum::XXX)
 
         Heart () = default;
-        Heart (HeartEnum heart) : h (cast(HeartEnum, heart)) {}
+        Heart (HeartEnum heart) : h (heart) {}
         explicit Heart (Byte byte) : h (cast(HeartEnum, byte)) {}
         explicit Heart (SymId id) {
             assert(id <= cast(Byte, MAX_HEART));
             h = cast(HeartEnum, id);
         }
 
-        Heart (const Nocast0Struct&)  // for return fail with Result(Heart)
+        Heart (Nocast0Struct)  // for return fail with Result(Heart)
             : h (cast(HeartEnum, 0))  // (also used by Option(Heart) = none)
           {}
 
@@ -152,7 +152,7 @@
             t = cast(TypeEnum, id);
         }
 
-        Type (const Nocast0Struct&)  // for return fail with Result(Type)
+        Type (Nocast0Struct)  // for return fail with Result(Type)
           : t (cast(TypeEnum, 0))  // (also used by Option(Type) = none)
         {}
 

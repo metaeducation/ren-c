@@ -196,7 +196,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
   }
 
     INLINE uintptr_t operator+(  // see definition of Option() for explanation
-        const UnwrapHelper&,
+        UnwrapHelper,
         const OptionWrapper<Index>& option
     ){
         assert(option.o != 0);
@@ -204,7 +204,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
     }
 
     INLINE uintptr_t operator+(  // see definition of Option() for explanation
-        const OptHelper&,
+        OptHelper,
         const OptionWrapper<Index>& option
     ){
         return option.o;

@@ -662,7 +662,6 @@ Special internal defines used by RT, not Host-Kit developers:
     #define CHECK_CELL_SUBCLASSES  0
     #define DEBUG_EXTRA_HEART_CHECKS  0
     #define DEBUG_EXTANT_STACK_POINTERS  0
-    #define USE_BOUNCE_STRUCT  0
     #define DEBUG_CHECK_CASTS  0
 #endif
 
@@ -682,14 +681,6 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 #define DONT_CHECK_CELL_SUBCLASSES (! CHECK_CELL_SUBCLASSES)
-
-
-// "Bounce" internally to the system in natives can be done with a struct (and
-// must be if you want to construct it from Result0Struct from needful).
-//
-#if !defined(USE_BOUNCE_STRUCT)
-    #define USE_BOUNCE_STRUCT  CPLUSPLUS_11
-#endif
 
 
 // Sinks are a feature which lets you mark a parameter as being output on an

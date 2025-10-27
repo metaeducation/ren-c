@@ -150,7 +150,7 @@ struct SinkWrapper {
     {
     }
 
-    SinkWrapper(const Nocast0Struct&)  // for Result(Sink(Element))
+    SinkWrapper(Nocast0Struct)  // for Result(Sink(Element))
         : p {nullptr},
         corruption_pending {false}
     {
