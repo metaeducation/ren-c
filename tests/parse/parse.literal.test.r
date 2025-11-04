@@ -13,7 +13,7 @@
     ('wb = parse [wb] [literal wb])
     (123 = parse [123] [lit 123])
     (3 = parse [3 3] [repeat 2 literal 3])
-    ('_ = parse [_] [lit _])
+    (_ = parse [_] [lit _])
     ('some = parse [some] [literal some])
 ]
 

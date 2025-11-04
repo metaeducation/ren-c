@@ -25,14 +25,14 @@
 )
 
 ~parse-mismatch~ !! (parse [x] ['x space])
-('_ = parse [x _] ['x _])
+(_ = parse [x _] ['x _])
 ('x = parse [x] [opt space 'x <end>])
 
 ~parse-mismatch~ !! (parse [] [space space space])
 
-~parse-mismatch~ !! (parse [x <y> "z"] ['_ '_ '_])
-(_ = parse [_ _ _] ['_ '_ '_])
+~parse-mismatch~ !! (parse [x <y> "z"] [_ _ _])
 (_ = parse [_ _ _] [_ _ _])
+(_ = parse [_ _ _] [' ' '])
 
 [
     ~parse-mismatch~ !! (parse "" [_])

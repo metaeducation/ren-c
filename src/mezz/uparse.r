@@ -1834,12 +1834,12 @@ default-combinators: make map! [
             ]
             block! block?:pinned/ [
                 parse ^times [
-                    '_ '_ <end> (
+                    _ _ <end> (
                         return ^void  ; `[repeat ([_ _]) rule]` is a no-op
                     )
                     |
-                    min: [integer! | '_ (0)]
-                    max: [integer! | '_ (min) | '#]  ; space means max = min
+                    min: [integer! | _ (0)]
+                    max: [integer! | _ (min) | '#]  ; space means max = min
                 ]
             ]
         ] else [

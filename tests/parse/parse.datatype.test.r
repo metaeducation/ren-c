@@ -110,7 +110,7 @@
 ]
 
 [https://github.com/red/red/issues/4678
-    ('_ = parse as blob! "_" [_])
+    (_ = parse as blob! " " [_])
 
     ~parse-mismatch~ !! (parse as blob! "#(" [_])
     ~parse-mismatch~ !! (parse as blob! "(" [_])
@@ -120,7 +120,7 @@
 ; QUOTED! needs to be recognized
 [
     ((the 'x) = parse ['x] [quoted!])
-    ((the '[]) = parse ['''_ ''() '[]] [repeat 3 quoted!])
+    ((the '[]) = parse [''' ''() '[]] [repeat 3 quoted!])
 ]
 
 [https://github.com/red/red/issues/4863

@@ -36,7 +36,11 @@
 )
 (
     blk: [_ 3]
-    3 = eval [blk.('_)]
+    3 = eval [blk.(_)]
+)
+(
+    blk: [_ 3]
+    3 = eval [blk.(')]
 )
 (
     blk: [space 3]

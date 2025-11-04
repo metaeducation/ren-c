@@ -31,7 +31,7 @@
 )
 ([~false~] = compose [('~false~)])
 
-([_ * _] = compose [('_) * ('_)])
+([_ * _] = compose [(_) * (')])
 ([a * 'a] = compose [(the a) * (the 'a)])
 ([1020 * 304] = compose [(1020) * ((304))])
 ([@ae * @ae] = compose [(@ae) * ((@ae))])

@@ -5,7 +5,8 @@
 (not space? 1)
 (rune! = type of space)
 
-(space = '_)
+(space = _)
+(space = ')
 
 (null? to opt null 1)  ; TO's universal protocol for space 1st argument
 

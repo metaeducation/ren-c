@@ -15,8 +15,8 @@
 [
     ("a  c" = unspaced ["a" _ comment <b> _ "c"])
     ("a  c" = spaced ["a" space comment <b> space "c"])
-    ("a c" = spaced ["a" opt null comment <b> (null else '_) "c"])
-    ("a c" = unspaced ["a" opt null comment <b> (null else '_) "c"])
+    ("a c" = spaced ["a" opt null comment <b> (null else [_]) "c"])
+    ("a c" = unspaced ["a" opt null comment <b> (null else ') "c"])
 ]
 
 ; RUNE! does not space

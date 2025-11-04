@@ -438,6 +438,10 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
 //
 // Mold or form any reified value to string series tail.
 //
+// 1. There's a complex story for why quoted space renders as just the quotes:
+//
+//     https://rebol.metaeducation.com/t/why-decorated space-vanishes/2550/
+//
 void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
 {
     // Mold hooks take a noquote cell and not a Cell*, so they expect any
@@ -455,6 +459,17 @@ void Mold_Or_Form_Element(Molder* mo, const Element* e, bool form)
     REBLEN i;
     for (i = 0; i < Quotes_Of(e); ++i)
         Append_Codepoint(mo->strand, '\'');
+
+    if (
+        Quotes_Of(e) > 0
+        and Is_Space_With_Lift_Sigil(
+            LIFT_BYTE(e),  // passing e's actual lift means irrelevant for test
+            SIGIL_0,
+            e
+        )
+    ){
+        return;  // a quoted space renders as just the quotes [1]
+    }
 
     Mold_Or_Form_Cell_Ignore_Quotes(mo, e, form);
 }

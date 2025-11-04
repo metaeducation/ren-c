@@ -150,7 +150,7 @@
 
 ; low level "KIND"
 [
-    (quoted! = type of the '_)
+    (quoted! = type of the ')
     (quoted! = type of the 'foo)
 ]
 
@@ -183,9 +183,9 @@
 
 ; All escaped values are truthy, regardless of what it is they are escaping
 
-(did the '_)
+(did the ')
 (did the '~false~)
-(did the ''''''''_)
+(did the '''''''')
 (did the ''''''''~false~)
 
 

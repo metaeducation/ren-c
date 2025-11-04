@@ -2104,9 +2104,8 @@ static void Apply_Quotes_If_Pending(Element* e, ScanState* S) {
 // delimiter but have seen only sigils and quotes.  So "[~]" or "[$]" would be
 // produced here when it sees the "]".
 //
-// 1. At one time, ' was a SIGIL!, and the answer to (sigil of first ['foo]).
-//    It has been reclaimed as an illegal state, so it might be used for
-//    other out of band purposes in the scanner, such as line continuation.
+// At one time, things like lone apostrophes ''' were illegal, but that is
+// now considered a quoted form of the SPACE value.
 //
 static Result(Zero) Flush_Pending_On_End(ScanState* S) {
     attempt {
@@ -2119,15 +2118,14 @@ static Result(Zero) Flush_Pending_On_End(ScanState* S) {
             Init_Quasar(PUSH());
             S->quasi_pending = false;
         }
+        else if (S->num_quotes_pending) {  // "']" or "''']"
+            Init_Space(PUSH());
+        }
         else
             break;  // didn't push anything
     }
     then {
         Apply_Quotes_If_Pending(TOP_ELEMENT, S);
-    }
-    else {
-        if (S->num_quotes_pending)  // "']" or "''']" are illegal [1]
-            return fail (Error_Syntax(S, TOKEN_APOSTROPHE));
     }
     return zero;
 }
@@ -2220,7 +2218,16 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
 } case TOKEN_UNDERSCORE: { ///////////////////////////////////////////////////
 
+  // `_` standalone becomes a SPACE value, but `_a_` and `a_b` remain words.
+  //
+  // 1. Quoted/sigiled/quasiforms do not have the underscore in rendering.
+  //
+  //    https://rebol.metaeducation.com/t/why-decorated space-vanishes/2550/
+
     assert(*S->begin == '_' and len == 1);
+    if (S->quasi_pending or S->sigil_pending or S->num_quotes_pending)
+        return fail (Error_Syntax(S, token));  // no ~_~ or $_ or '_ [1]
+
     Init_Space(PUSH());
     goto lookahead;
 

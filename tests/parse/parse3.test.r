@@ -152,14 +152,14 @@
     )
 
     ~parse3-incomplete~ !!(
-        parse3 [x <y> "z"] ['_ '_ '_]
+        parse3 [x <y> "z"] [' ' ']
     )
     (
-        parse3 [_ _ _] ['_ '_ '_]
+        parse3 [_ _ _] [' ' ']
         ok
     )
     (
-        q-space: quote '_
+        q-space: quote quote _
         parse3 [_ _ _] [q-space q-space q-space]
         ok
     )
