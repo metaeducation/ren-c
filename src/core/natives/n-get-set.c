@@ -986,6 +986,8 @@ Result(Value*) Get_Chain_Push_Refinements(
     const Element* chain,
     Context* context
 ){
+    UNUSED(spare);  // !!! was used for GROUP!-in-CHAIN, feature removed
+
     assert(not Try_Get_Sequence_Singleheart(chain));  // don't use w/these
 
     const Element* tail;
@@ -1041,32 +1043,11 @@ Result(Value*) Get_Chain_Push_Refinements(
     for (; at != head - 1; --at) {
         assert(not Is_Space(at));  // no internal blanks
 
-        const Value* item = at;
-        if (Is_Group(at)) {
-            Sink(Atom) atom_spare = u_cast(Atom*, spare);
-            if (Eval_Value_Throws(
-                atom_spare,
-                cast(Element*, at),
-                Derive_Binding(derived, at)
-            )){
-                panic (Error_No_Catch_For_Throw(TOP_LEVEL));
-            }
-            if (Is_Void(atom_spare))
-                continue;  // just skip it (voids are ignored, NULLs error)
-
-            require (
-              item = Decay_If_Unstable(atom_spare)
-            );
-
-            if (Is_Antiform(item))
-                return fail (Error_Bad_Antiform(item));
-        }
-
-        if (Is_Word(item)) {
-            Init_Pushed_Refinement(PUSH(), Word_Symbol(item));
+        if (Is_Word(at)) {
+            Init_Pushed_Refinement(PUSH(), Word_Symbol(at));
         }
         else
-            panic (item);
+            panic (at);  // non-WORD! being considered for "dialected calls"
     }
 
     return out;
