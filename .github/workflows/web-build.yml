@@ -435,7 +435,14 @@ jobs:
               ;   let [_ filename]: split-path url  ; new rule
               ;
               let [filename _]: split-path url
-              write filename (read url)
+
+              ; !!! Old EXE is having trouble reading modern crypto URLs
+              ; so download via wget instead of Rebol read.
+              ;
+              comment [
+                  write filename (read url)
+              ]
+              call [wget -O (filename) (url)]
           ]
 
 
