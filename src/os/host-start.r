@@ -652,12 +652,12 @@ host-start: function [
         o/resources
         not find opt o/suppress %user.reb
         elide (loud-print ["Checking for user.reb file in" o/resources])
-        exists? o/resources/user.reb
+        exists? join o/resources %user.reb
     ] then [
         sys/util/rescue [
-            do o/resources/user.reb
-            append o/loaded o/resources/user.reb
-            loud-print ["Finished evaluating script:" o/resources/user.reb]
+            do join o/resources %user.reb
+            append o/loaded join o/resources %user.reb
+            loud-print ["Finished evaluating script:" join o/resources %user.reb]
         ] then arrow e [
             die/error "Error found in user.reb script" e
         ]
