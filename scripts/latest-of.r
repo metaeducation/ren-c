@@ -14,7 +14,7 @@ Rebol [
         We generate a URL of the latest "greenlit" binary on S3 for a given
         platform.  In order to be greenlit a binary is only tested for very
         basic operation; starting up and shutting down successfully, and being
-        able to do a successful HTTPS read.  Further testing is the
+        able to do a successful HTTP read.  Further testing is the
         responsibility of the committers at this time.
     ]--
 

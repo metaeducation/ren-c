@@ -347,10 +347,13 @@ jobs:
         fi
 
 
-    - name: HTTPS Read Test (If This Works, A Lot Of Things Are Working)
+    # Note: HTTPS no longer works due to missing cipher suites, and due to
+    # the web build being a priority that work is not being pursued.
+    #
+    - name: HTTP Read Test (If This Works, A Lot Of Things Are Working)
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
       run: |
-        print "== Hello From R3 HTTPS Read Test! =="
+        print "== Hello From R3 HTTP Read Test! =="
         header: parse as text! read https://example.com [
             thru '<h1> accept across to '</h1>
         ]

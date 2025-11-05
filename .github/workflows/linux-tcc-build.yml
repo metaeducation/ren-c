@@ -339,9 +339,12 @@ jobs:
         "$R3TWO" --do "print {Hello, Bootstrapped World!}"
 
 
-    - name: HTTPS Read Test (If This Works, A Lot Of Things Are Working)
+    # Note: HTTP no longer works due to missing cipher suites, and due to
+    # the web build being a priority that work is not being pursued.
+    #
+    - name: HTTP Read Test (If This Works, A Lot Of Things Are Working)
       run: |
-        "$R3TWO" --do "either find to-text read https://example.com {<h1>Example Domain</h1>} [0] [1]"
+        "$R3TWO" --do "either find to-text read http://example.com {<h1>Example Domain</h1>} [0] [1]"
 
 
     - name: Fibonnacci Test (Build a New Native From String of C Code)
