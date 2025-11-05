@@ -184,7 +184,7 @@ jobs:
 
     - name: Stop the build early if the R3MAKE is no good
       run: |
-        "$R3MAKE" --do "print {R3MAKE is Working}"
+        "$R3MAKE" --do "print -[R3MAKE is Working]-"
 
 
     # MinGW appens to include the libraries for ODBC, since those are present

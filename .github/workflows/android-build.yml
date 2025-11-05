@@ -183,7 +183,7 @@ jobs:
 
     - name: Stop the build early if the R3MAKE is no good
       run: |
-        "$R3MAKE" --do "print {R3MAKE is Working}"
+        "$R3MAKE" --do "print -[R3MAKE is Working]-"
 
     # Building for Android requires having a compiler that can build for ARM,
     # as well as support for the "Bionic" OS (distinct from the Linux that this

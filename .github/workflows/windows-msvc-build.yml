@@ -56,7 +56,7 @@ jobs:
 
     # https://github.com/actions/virtual-environments#available-environments
     #
-    runs-on: windows-2019  # oldest non-deprecated version
+    runs-on: windows-2022  # oldest non-deprecated version
 
 
     # See README: Build Matrix
@@ -162,12 +162,12 @@ jobs:
       run: |
         # curl https://s3.amazonaws.com/r3bootstraps/r3-windows-x86-8994d23.exe -o r3make.exe
         curl http://hostilefork.com/media/shared/r3bootstraps/r3-windows-x86-0a654c6.exe -o r3make.exe
-        echo "R3MAKE=$(pwd)\r3make.exe" >> $GITHUB_ENV  # pass to next step
+        echo "R3MAKE=$(pwd)/r3make.exe" >> $GITHUB_ENV  # pass to next step
 
 
     - name: Stop the build early if the R3MAKE is no good
       run: |
-        "$R3MAKE" --do "print {R3MAKE is Working}"
+        "$R3MAKE" --do "print -[R3MAKE is Working]-"
 
 
     # By default you can't call MSVC Compilation from the command line.  Use
