@@ -37,7 +37,7 @@ Rebol [
             ; turned into their text equivalents.  This lets you write code in
             ; the CALL block that looks a bit more like a shell invocation.
             ;
-            let pattern: inside command '()
+            let pattern: inside command '@()  ; @ means use binding, temporary
             map-each 'arg compose2 pattern command [
                 switch:type arg [
                     text! [arg]  ; pass through as is
