@@ -19,16 +19,28 @@
 //    current language standard.  So if you're compiling with --std=c++11 it
 //    would say it has the attribute, but error when [[nodiscard]] is used.
 //
-// 2. There may be a definition in GCC/Clang/MSVC even in C code that can be
-//    used for NEEDFUL_NODISCARD.  But note these definitions only work on
+// 2. There are possible definition in GCC/Clang/MSVC even in C code that can
+//    be used for NEEDFUL_NODISCARD.  But note these definitions only work on
 //    functions, not types.  The C++17 way works on structs as well (though
-//    not on typedefs).
+//    not on typedefs).  So in the past, needful.h did this:
+//
+//        #if defined(__GNUC__) || defined(__clang__)
+//            #define NEEDFUL_NODISCARD  __attribute__((warn_unused_result))
+//        #elif defined(_MSC_VER)
+//            #define NEEDFUL_NODISCARD  _Check_return_
+//        #else
+//            #define NEEDFUL_NODISCARD
+//        #endif
+//
+//    The reason that ide was scrapped is because if you use them on structs
+//    (the principal use case for NEEDFUL_NODISCARD in Needful) you can get an
+//    "attribute has no effect" warning.  So it's a no-op unless using C++17.
 //
 #if __cplusplus >= 201703L  // C++17 or higher, can't check attribute [1]
     #undef NEEDFUL_NODISCARD
     #define NEEDFUL_NODISCARD  [[nodiscard]]  // the C++17 way (best!)
 #else
-    // leave NEEDFUL_NODISCARD defined however needful.h defined it [2]
+    // leave NEEDFUL_NODISCARD as a no-op [2]
 #endif
 
 

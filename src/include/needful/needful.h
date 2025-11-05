@@ -983,22 +983,14 @@ typedef enum {
 
 /****[[ NODISCARD shim ]]*****************************************************
 **
-** [[nodiscard]] is a C++17 feature, but some compilers offer it as something
-** you can use in C code as well.  It's useful enough in terms of warning
-** of unused results that a macro is offered to generalize it.
-**
-** (The pre-[[nodiscard]] hacks only work on functions, not types.  They
-** can be applied to structs, but will have no effect.  [[nodiscard]] from
-** C++17 works on types as well as functions, so it is more powerful.)
+** If you are using a C++17 compiler or higher, this will be redefined by the
+** C++ enhancements as `[[nodiscard]]`.  It's very important for noticing
+** that you haven't handled a Result(T) return value from a function with
+** some kind of `trap`/`require`/`except`/`assume`/`rescue`.  This also helps
+** catch things like writing `fail(...)` instead of `return fail (...)`.
 */
 
-#if defined(__GNUC__) || defined(__clang__)
-    #define NEEDFUL_NODISCARD  __attribute__((warn_unused_result))
-#elif defined(_MSC_VER)
-    #define NEEDFUL_NODISCARD _Check_return_
-#else
-    #define NEEDFUL_NODISCARD  /* C++ overload may define as [[nodiscard]] */
-#endif
+#define NEEDFUL_NODISCARD  /* default to no-op in C or pre-C++17 */
 
 
 /*****************************************************************************
