@@ -51,3 +51,17 @@ libraries: switch platform-config.os-base [
         %odbc (? if yes? user-config.odbc-requires-ltdl [%ltdl])
     ]
 ]
+
+; Assuming you install ODBC on a Mac using "homebrew", the "System Integrity
+; Protection" model prevents Apple Silicon M1/M2/etc. versions of macOS from
+; allowing it to install libraries in /usr/local ... so you have to tell it
+; where the homebrew install directory is.
+;
+; (If you're on an Intel Mac and the directory doesn't exist because homebrew
+; installed directly to /usr/local, the switch *should* be harmless.)
+;
+ldflags: switch platform-config.os-base [
+    'MacOS [
+        ["-L/opt/homebrew/lib"]  ; needed for Intel Macs
+    ]
+]

@@ -160,18 +160,34 @@ jobs:
     # The ODBC executable is built with debug included, to make the workflow
     # that uses it for testing ODBC more rigorous.
     #
+    # 1. When brew updates automatically, it generates an unsightly amount of
+    #    output if it does so during a `brew install`.  So redirect the
+    #    hundreds of lines to /dev/null to shorten the log.
+    #
+    #    https://github.com/Homebrew/legacy-homebrew/issues/35662
+    #
+    # 2. On Intel Macs, homebrew installs things to /usr/local where they'll
+    #    be found automatically.  But M1/M2 Macs enforce "System Integrity
+    #    Protection (SIP)" and hence homebrew has to use /opt/homebrew
+    #
+    #    AI suggested this as a non-intrusive solution:
+    #
+    #      echo "LDFLAGS=-L$(brew --prefix unixodbc)/lib" >> $GITHUB_ENV
+    #      echo "CPPFLAGS=-I$(brew --prefix unixodbc)/include" >> $GITHUB_ENV
+    #
+    #    That didn't work, so the make spec for the ODBC extension adds
+    #    "-L/opt/homebrew/lib" directly, which seems to work...and should be
+    #    harmless on Intel Macs if the directory does not exist.
+    #
     - name: Get ODBC if Needed
       if: (env.OS_ID == '0.2.40') && (env.DEBUG == 'normal')
       run: |
-        # When brew updates automatically, it generates an unsightly amount of
-        # output if it does so during a `brew install`.  So redirect the
-        # hundreds of lines to /dev/null to shorten the log.
-        #
-        # https://github.com/Homebrew/legacy-homebrew/issues/35662
-        #
-        brew update > /dev/null
+        brew update > /dev/null  # [1]
 
         brew install unixodbc
+
+        echo "Brew installed unixodbc at"
+        echo $(realpath $(brew --prefix unixodbc))  # [2]
 
 
     # Show a little bit of sanity check information.
