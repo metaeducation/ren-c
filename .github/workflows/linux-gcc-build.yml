@@ -442,13 +442,13 @@ jobs:
       if: github.ref == 'refs/heads/master'
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
       run: |
-        latest-of: do %scripts/latest-of.r
+        /latest-of: do %scripts/latest-of.r
 
         os-id: to tuple! get-env 'OS_ID
-        variation: if "-debug" = get-env 'VARIATION ['debug] else ['release]
+        variation: if "-debug" = get-env 'VARIATION ['checked] else ['release]
         r3-url-lastpart: get-env 'R3_URL_LASTPART
 
-        url: latest-of/variant os-id variation
+        url: latest-of:variant os-id variation
         parse (as text! url) [thru r3-url-lastpart] except [
             panic ["!!! LATEST-OF Gave Mismatched URL:" url]
         ]

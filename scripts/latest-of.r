@@ -22,9 +22,11 @@ Rebol [
         ; Currently this is not implemented as a module; but script isolation
         ; means the only way you can get a function out is as a return result
         ; of the script.  We are reviewing the packaging options as the module
-        ; system matures.
+        ; system matures.  (Note a leading slash is needed to show you know
+        ; you're getting an ACTION! back from DO, which does not *always*
+        ; return an ACTION!...)
 
-        >> latest-of: do @latest-of
+        >> /latest-of: do @latest-of
 
         ; An invocation with no arguments (or a void argument) will assume you
         ; want the latest version of the currently running interpreter.
@@ -69,7 +71,7 @@ Rebol [
         done in a spread to serve the development process itself, not any
         particular use case.
 
-        So right now the only choice you have is debug or release.  Depending
+        So right now the only choice you have is checked or release.  Depending
         on platform that may get you some features and not others.  ¯\_(ツ)_/¯
 
         Learn to read workflows and get involved if you have strong feelings!
@@ -123,6 +125,7 @@ warning: --[
 s3root: https://metaeducation.s3.amazonaws.com/travis-builds/  ; sees updates
 cloudroot: https://dd498l1ilnrxu.cloudfront.net/travis-builds/  ; perma-cached
 
+is-web-build: system.version.4 = 16
 
 latest-of: func [
     "INTERNAL USE ONLY!  Link to unstable S3 CI build of the interpreter"
@@ -132,7 +135,7 @@ latest-of: func [
     os "https://github.com/metaeducation/ren-c/blob/master/tools/platforms.r"
         [<end> <opt> tuple!]
     :variant "Note: Stakeholders are asked to use checked builds, for now"
-        ['checked 'release]
+        [~(checked release)~]
     :commit "Link for specific commit number (defaults to latest commit)"
         [text!]
     :verbose "Print file size, commit, hash information"
@@ -156,7 +159,7 @@ latest-of: func [
     ; https://stackoverflow.com/a/38241481
     ; https://stackoverflow.com/q/1741933
     ;
-    if (not os) and (system.version.4 = 16) [  ; web build
+    if (not os) and is-web-build [
         let platform: js-eval --[
             /* <begin JavaScript code> */
             var userAgent = window.navigator.userAgent
@@ -214,7 +217,7 @@ latest-of: func [
         ; better detection...)
         ;
         variant: default [
-            if undefined? $test-librebol ['release] else ['debug]
+            if undefined? $test-librebol ['release] else ['checked]
         ]
         join tuple! [0 system.version.4 system.version.5]
     ]
@@ -228,7 +231,7 @@ latest-of: func [
     let extension: if (find [0.3.1 0.3.40] os) [".exe"] else [null]
     let suffix: switch variant [
         'release [null]
-        'checked ["debug"]  ; !!! GitHub action needs updating to change
+        'checked ["-debug"]  ; !!! GitHub action needs updating to change
         panic @variant
     ]
 
@@ -238,19 +241,27 @@ latest-of: func [
     ; file called %last-deploy.short-hash is updated in the build directory.
     ; This what we use by default if an explicit commit is not provided.
     ;
-    ; Because this file is overwritten to reflect where to find the latest
-    ; binary, we do -not- want to get this file from cloudfront.  Use S3, so
-    ; we get the latest data that was written at that location--not a cache.
-    ; (Invalidating cloudfront caches is possible, but you get charged for it.)
+    ; 1. Current interpreter may or may not have a commit built into it.
+    ;    If it has one, the short hash is `copy:part system.commit 7`
     ;
-    ; Note: Current interpreter may or may not have a commit built into it.
-    ; If it has one, the short hash is `copy:part system.commit 7`
+    ; 2. Because this file is overwritten to reflect where to find the latest
+    ;    binary, we do -not- want to get this file from cloudfront.  Use S3, so
+    ;    we get the latest data that was written at that location--not a cache.
+    ;    (Invalidating cloudfront caches is possible, but they charge for it.)
 
-    commit: default [
-        let last-deploy: to url! unspaced [
-            s3root os %/last-deploy.short-hash  ; don't use cloudfront, use S3!
+    if not commit [  ; [1]
+        let last-deploy: join url! [
+            s3root @os %/last-deploy.short-hash  ; S3, not cloudfront [2]
         ]
-        trim:tail as text! read last-deploy
+        if is-web-build [
+            commit: as text! read last-deploy  ; use web build READ
+        ] else [
+            print ["TLS ciphers out of date :-( using CALL of curl vs. READ"]
+            print ["Fetching last deployment from:" last-deploy]
+            commit: ""
+            call:output [curl -s (last-deploy)] commit  ; -s means content only
+        ]
+        trim:tail commit
     ]
 
 
@@ -265,14 +276,28 @@ latest-of: func [
         "r3-" commit (opt suffix) (opt extension)
     ]
     let url: to url! unspaced [
-        cloudroot os "/" filename  ; cached cloudfront is okay for the binary
+        cloudroot @os "/" filename  ; cached cloudfront is okay for the binary
     ]
 
-    if verbose [
-        print ["Verifying:" url]
-    ]
+    print ["Verifying:" url]  ; INFO? on bad file or curl with --fail errors
 
-    let info: info? url  ; If this fails, the build is not available
+    let info
+
+    if is-web-build [
+        info: info? url  ; If this fails, the build is not available
+    ] else [
+        let headers: copy ""
+        call:output [curl --fail -sI (url)] headers  ; asks for failure
+        info: parse headers [gather [  ; note: case-insensitive
+            some [
+                "Content-Length:" _ emit size: integer!
+                |
+                "Last-Modified:" _ emit date: across to newline
+                |
+                thru newline
+            ]
+        ]]
+    ]
 
     if verbose [
         print ["File size:" (round:to divide info.size 1000000 0.01) "Mb"]
@@ -281,3 +306,5 @@ latest-of: func [
 
     return url
 ]
+
+quit:value latest-of/  ; not a module... QUIT must be used to leak out a result
