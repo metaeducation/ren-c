@@ -183,11 +183,6 @@ struct NEEDFUL_NODISCARD Result0Struct {  // [[nodiscard]] is good [1]
 template<typename T>
 struct OptionWrapper;
 
-#if NEEDFUL_OPTION_USES_WRAPPER
-    template<typename>
-    struct IsOptionWrapper : std::false_type {};
-#endif
-
 
 //=//// RESULT WRAPPER ////////////////////////////////////////////////////=//
 //
@@ -218,30 +213,14 @@ struct OptionWrapper;
 //
 
 template<typename T>
-struct Result0InitHelper {
-    static T init() { return x_cast(T, 0); }
-};
-
-template<typename T>
 struct NEEDFUL_NODISCARD ResultWrapper {
     NEEDFUL_DECLARE_WRAPPED_FIELD (T, r);
 
     ResultWrapper() = delete;
 
-    ResultWrapper(Result0Struct&&)  // how failures are returned [1]
-      : r {Result0InitHelper<T>::init()}
+    ResultWrapper(Result0Struct)  // how failures are returned [1]
+      : r {needful_nocast_0}
         {}
-
-    ResultWrapper(const std::nullptr_t&)  // usually no `return nullptr;` [2]
-        : r (nullptr)
-    {
-      #if NEEDFUL_OPTION_USES_WRAPPER
-        static_assert(
-            IsOptionWrapper<T>::value,
-            "Use Result(Option(T*)) if `return nullptr`; is not a mistake"
-        );
-      #endif
-    }
 
     template <
         typename U,
@@ -337,11 +316,11 @@ struct ZeroStruct {};
 #define needful_zero  needful::ZeroStruct{}  // instantiate {} zero instance
 
 template<>
-struct NEEDFUL_NODISCARD ResultWrapper<Zero> {
+struct NEEDFUL_NODISCARD ResultWrapper<ZeroStruct> {
     ResultWrapper() = delete;
 
-    ResultWrapper(Result0Struct&&) {}
-    ResultWrapper(Zero&&) {}
+    ResultWrapper(Result0Struct) {}
+    ResultWrapper(ZeroStruct) {}
 };
 
 
@@ -376,14 +355,14 @@ struct ResultExtractor {};
 template<typename T>
 inline T operator%(  // % high postfix precedence desired [1]
     const ResultWrapper<T>& result,
-    const ResultExtractor&
+    ResultExtractor
 ){
     return result.r;
 }
 
 inline void operator%(  // % high postfix precedence desired [1]
     const ResultWrapper<ZeroStruct>&,
-    const ResultExtractor&
+    ResultExtractor
 ){
 }
 

@@ -287,6 +287,20 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 #endif
 
 
+// You *can* do a C++ build of Ren-C without needful.h's enhancements.  But
+// mostly just to prove you could: most of the reason to build with C++ is to
+// get the compile-time checks that Needful provides.  And some other C++
+// features layer on top of Needful, and writing versions of them which are
+// conditional on NEEDFUL_CPP_ENHANCEMENTS being off would be a hassle.
+//
+// However, it may be desirable to turn off some of the more expensive parts
+// of needful in some situations.
+//
+#if !defined(NEEDFUL_CPP_ENHANCEMENTS)
+    #define NEEDFUL_CPP_ENHANCEMENTS  CPLUSPLUS_11
+#endif
+
+
 //=//// FEATURE TESTING AND ATTRIBUTE MACROS //////////////////////////////=//
 //
 // Feature testing macros __has_builtin() and __has_feature() were originally
@@ -485,7 +499,7 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
   #if defined(__SANITIZE_ADDRESS__)
     #define NEEDFUL_OPTION_USES_WRAPPER  (RUNTIME_CHECKS && CPLUSPLUS_11)
   #else
-    #define NEEDFUL_OPTION_USES_WRAPPER  0
+    #define NEEDFUL_OPTION_USES_WRAPPER  NEEDFUL_CPP_ENHANCEMENTS
   #endif
 #endif
 

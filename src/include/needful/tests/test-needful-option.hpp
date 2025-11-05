@@ -6,9 +6,7 @@ struct MyWrapper {
 
     MyWrapper(const T& init) : value {init} {}
 
-    MyWrapper(NoneStruct&&) : value {0} {}  // Initialize to zero for "none"
-
-    MyWrapper(Result0Struct&&) : value {0} {}  // need overload
+    MyWrapper(Nocast0Struct) : value {0} {}  // Initialize to zero for "none"
 
     explicit operator bool() const {
         return value != 0;  // T needs a zero value representing "none"
@@ -42,7 +40,11 @@ inline void test_needful_option()
     assert(not oe2);
 
     // MyEnum direct = oe1;  /* illegal */
-    STATIC_ASSERT((not needful_is_convertible_v(decltype(oe1), MyEnum)));
+    STATIC_ASSERT(not needful_is_convertible_v(decltype(oe1), MyEnum));
+
+    // constructible to bool (explicit), not convertible to bool
+    STATIC_ASSERT(not needful_is_convertible_v(decltype(oe1), bool));
+    STATIC_ASSERT(needful_is_constructible_v(decltype(oe1), bool));
 
     STATIC_ASSERT_SAME(decltype(unwrap oe1), MyEnum);
     STATIC_ASSERT_SAME(decltype(opt oe1), MyEnum);
@@ -56,7 +58,11 @@ inline void test_needful_option()
     assert(not op3);
 
     // char* direct = op1;  /* illegal */
-    STATIC_ASSERT((not needful_is_convertible_v(decltype(op1), const char*)));
+    STATIC_ASSERT(not needful_is_convertible_v(decltype(op1), const char*));
+
+    // constructible to bool (explicit), not convertible to bool
+    STATIC_ASSERT(not needful_is_convertible_v(decltype(op1), bool));
+    STATIC_ASSERT(needful_is_constructible_v(decltype(op1), bool));
 
     STATIC_ASSERT_SAME(decltype(unwrap op1), const char*);
     STATIC_ASSERT_SAME(decltype(opt op1), const char*);

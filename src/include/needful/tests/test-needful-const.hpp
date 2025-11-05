@@ -41,28 +41,28 @@ inline void test_needful_const()
     );
 
     STATIC_ASSERT_SAME(
-        needful_merge_const(MyWrapper<const int*>, char*), const char*
+        needful_merge_const_t(MyWrapper<const int*>, char*), const char*
     );
     STATIC_ASSERT_SAME(
-        needful_merge_const(MyWrapper<int*>, char*), char*
+        needful_merge_const_t(MyWrapper<int*>, char*), char*
     );
     STATIC_ASSERT_SAME(
-        needful_merge_const(MyWrapper<int*>, const char*), const char*
+        needful_merge_const_t(MyWrapper<int*>, const char*), const char*
     );
     STATIC_ASSERT_SAME(
-        needful_merge_const(MyWrapper<const int*>, const char*), const char*
+        needful_merge_const_t(MyWrapper<const int*>, const char*), const char*
     );
 
     STATIC_ASSERT_SAME(
-        needful_merge_const(const int*, char*), const char*
+        needful_merge_const_t(const int*, char*), const char*
     );
     STATIC_ASSERT_SAME(
-        needful_merge_const(int*, char*), char*
+        needful_merge_const_t(int*, char*), char*
     );
     STATIC_ASSERT_SAME(
-        needful_merge_const(int*, const char*), const char*
+        needful_merge_const_t(int*, const char*), const char*
     );
     STATIC_ASSERT_SAME(
-        needful_merge_const(const int*, const char*), const char*
+        needful_merge_const_t(const int*, const char*), const char*
     );
 }

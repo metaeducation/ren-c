@@ -33,7 +33,7 @@
 //
 
 
-#if !defined(NEEDFUL_H)
+#if !defined(NEEDFUL_H_INCLUDED)
     #error "You must include needful.h before cplusplus-needfuls.hpp"
 #endif
 
@@ -42,20 +42,23 @@
 #endif
 
 
-//=//// <type_traits> IS THE *POWER-TOOL* FOR COMPILE-TIME ANALYSIS! /////=//
+//=//// <utility> FOR std::forward() //////////////////////////////////////=//
 //
-// For the uninitiated: <type_traits> is what enables most of the magic that
-// Needful does.  It's a library of queries you can perform at compile-time,
-// and guide the behavior of things from the answers:
+// <type_traits> is already included by needful.h to implement the nocast
+// facility, required for C++ builds (even with NEEDFUL_NO_ENHANCEMENTS).
+// For the uninitiated: type traits enables most of the magic that Needful
+// does...it's a library of queries you can perform at compile-time, and guide
+// the behavior of things from the answers:
 //
 //      https://en.cppreference.com/w/cpp/header/type_traits.html
 //
 // It's a powerful static-analysis tool that comes built into the compiler
 // you already have!
 //
+// However we also need <utility> here for std::forward().
+//
 
-#include <type_traits>
-#include <utility>  // for std::forward()
+#include <utility>
 
 
 //=//// <stdint.h> FOR MAKING POINTERS FROM INTEGERS //////////////////////=//
@@ -127,34 +130,6 @@
 #endif
 
 
-//=//// NEEDFUL_OPTION_USES_WRAPPER ///////////////////////////////////////=//
-//
-// Off by default.  Review configuration strategy.
-//
-
-#if !defined(NEEDFUL_OPTION_USES_WRAPPER)
-  #define NEEDFUL_OPTION_USES_WRAPPER  0
-#endif
-
-
-//=//// NEEDFUL_SINK_USES_WRAPPER /////////////////////////////////////////=//
-//
-// Off by default.  Review configuration strategy.
-
-#if !defined(NEEDFUL_SINK_USES_WRAPPER)
-  #define NEEDFUL_SINK_USES_WRAPPER  0
-#endif
-
-
-//=//// NEEDFUL_CAST_CALLS_HOOKS //////////////////////////////////////////=//
-//
-// Off by default.  Review configuration strategy.
-
-#if !defined(NEEDFUL_CAST_CALLS_HOOKS)
-  #define NEEDFUL_CAST_CALLS_HOOKS  0
-#endif
-
-
 //=//// INCLUDE THE NEEDFUL OVERRIDES /////////////////////////////////////=//
 //
 // 1. It's technically most correct to scope things with `::needful::`, which
@@ -165,9 +140,9 @@
 
 namespace needful {  //=//// BEGIN `needful::` NAMESPACE //////////////////=//
 
-    #include "needful-asserts.hpp"
-
     #include "needful-utilities.hpp"
+
+    #include "needful-asserts.hpp"
 
     #include "needful-ensure.hpp"
 
@@ -181,10 +156,12 @@ namespace needful {  //=//// BEGIN `needful::` NAMESPACE //////////////////=//
     #include "needful-corruption.hpp"
   #endif
 
-    #include "needful-result.hpp"
-
   #if NEEDFUL_OPTION_USES_WRAPPER
     #include "needful-option.hpp"
+  #endif
+
+  #if NEEDFUL_RESULT_USES_WRAPPER
+    #include "needful-result.hpp"
   #endif
 
   #if NEEDFUL_SINK_USES_WRAPPER

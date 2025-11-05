@@ -3,7 +3,7 @@
 //  summary: "Optional Wrapper Trick for C's Boolean Coercible Types"
 //  homepage: <needful homepage TBD>
 //
-//=/////////////////////////////////////////////////////////////////////////=//
+//=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2015-2025 hostilefork.com
 //
@@ -11,23 +11,56 @@
 //
 // https://en.wikipedia.org/wiki/MIT_License
 //
-//=/////////////////////////////////////////////////////////////////////////=//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// See %needful.h for an overview of Option(T).
+//
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// A. Since in C you can't stop raw pointers from being null, NonZero(T) may
+//    seem better than Option(T).  That would mark when pointers were *not*
+//    optional...and assume unwrapped pointers were nullable.  But in practice
+//    the relative rarity of optional states would make this much more of a
+//    headache, look a lot worse, and provide minimal extra benefit over the
+//    more familiar Option(T) approach.
+//
+//    The tradeoff is made to live with ambiguity that some raw pointers are
+//    nullable.  Hopefully these are at the edges of the code only, for
+//    interfacing with libraries that don't use Needful.  Another place it
+//    can be useful is a convenience pattern which *immediately* checks the
+//    null case of an optional extraction, like:
+//
+//        Foo* foo = opt Some_Optional_Foo(...);
+//        if (! foo)
+//           return Some_Missing_Foo_Error(...);
+//
+//        Use_Foo(foo);  // don't have to unwrap an Option(Foo)
+//        Use_Foo_Again(foo);  // used again, no unwrap needed
 //
 
-//=//// none: OPTIONAL DISENGAGED STATE ///////////////////////////////////=//
+
+//=//// none: DISENGAGED SENTINEL /////////////////////////////////////////=//
 //
-// NoneStruct instances are a specific narrowed type used to construct an
-// Option(T) for arbitrary T in the disengaged state.
+// `none` constructs an Option(T) in the disengaged state.
 //
-//     Option(SomeEnum) foo = nullptr;  /* compile-time error */
-//     Option(SomeEnum) bar = 0;  /* compile-time error */
-//     Option(SomeEnum) baz = none;  /* OK */
+// If you use this with an Option(T*), then nullptr is equivalent to `none`.
+//
+//     Option(char*) foo = none;         /* OK */
+//     Option(char*) bar = nullptr;      /* also OK */
+//     Option(char*) baz = 0;            /* compile-time error */
+//
+// If you use it with an enum, be sure the enum was declared with a 0 value
+// that is not otherwise valid for the enum:
+//
+//     Option(SomeEnum) foo = none;       /* OK */
+//     Option(SomeEnum) bar = nullptr;    /* compile-time error */
+//     Option(SomeEnum) baz = 0;          /* compile-time error */
 //
 
-struct NoneStruct {};
+struct Option0Struct {};
 
 #undef needful_none
-#define needful_none  needful::NoneStruct{}  // instantiate {} none instance
+#define needful_none  needful::Option0Struct{}  // instantiate {} none instance
 
 
 //=//// OPTION WRAPPER ////////////////////////////////////////////////////=//
@@ -51,11 +84,6 @@ struct NoneStruct {};
 //
 
 template<typename T>
-struct OptionNoneInitHelper {
-    static T init() { return needful_xtreme_cast(T, 0); }
-};
-
-template<typename T>
 struct OptionWrapper {
     NEEDFUL_DECLARE_WRAPPED_FIELD (T, o);
 
@@ -63,10 +91,8 @@ struct OptionWrapper {
 
     OptionWrapper () = default;  // garbage, or 0 if global [2]
 
-    OptionWrapper(Result0Struct&&) = delete;  // only for Result(T)
-
-    OptionWrapper(NoneStruct&&)
-        : o {OptionNoneInitHelper<T>::init()}
+    OptionWrapper(Option0Struct)
+        : o {needful_nocast_0}
       {}
 
     template <
@@ -142,25 +168,8 @@ bool operator!=(L left, const OptionWrapper<R>& right)
     };
 #endif
 
-template<typename X>
-struct IsOptionWrapper<OptionWrapper<X>> : std::true_type {};
-
 #undef NeedfulOption
 #define NeedfulOption(T)  needful::OptionWrapper<T>
-
-
-
-//=//// RESULT0 INIT HELPER //////////////////////////////////////////////=//
-//
-// We don't want to force Option(T) to be constructible from 0, so when a
-// Result(Option(T)) is constructed from NEEDFUL_RESULT_0, have that be
-// done via a NoneStruct{}.
-//
-
-template<typename U>
-struct Result0InitHelper<OptionWrapper<U>> {
-    static OptionWrapper<U> init() { return NoneStruct{}; }
-};
 
 
 //=/// UNWRAP AND OPT HELPER CLASSES //////////////////////////////////////=//
@@ -200,13 +209,8 @@ struct Result0InitHelper<OptionWrapper<U>> {
 //    makes wasteful extra objects.  It's also semantically questionable: the
 //    result is conceptually on the "outside", and should extract first.
 //
-//    By choosing `+` as the operator, at least it's higher precedence than
-//    equality, so you can write (unwrap foo == 10) or (10 == unwrap foo) and
-//    it should work as expected.  Using `<<` might seem "more clear", but
-//    due to shift operators frequently being overloaded for stream code
-//    that likely intends low precedence than comparison, compilers like Clang
-//    throw in warnings if it sees a comparison with a shift operator, and
-//    makes you parenthesize the expression.  To avoid that, we use `+`.
+//    We use `+` (higher precedence than `==`) so `(unwrap foo == 10)` reads
+//    cleanly. `<<` would trigger "overloaded shift vs comparison" warnings.
 //
 // 2. The operator for giving you back the raw (possibly null or 0) value
 //    from a wrapped option is called `opt`.  It's a name with some flaws,
@@ -214,27 +218,26 @@ struct Result0InitHelper<OptionWrapper<U>> {
 //    from a raw pointer, vs creating a raw pointer from an Option.  However,
 //    on balance it seems to be the best name (it was once called `maybe`,
 //    but in the context of the system Needful was designed for, that means
-//    something completely different now.)
+//    something completely different now.)  See also: [A] at top of file.
+//
 
 struct UnwrapHelper {};
 struct OptHelper {};
 
 template<typename T>
 T operator+(  // lower precedence than % [1]
-    const UnwrapHelper& left,
+    UnwrapHelper,
     const OptionWrapper<T>& option
 ){
-    UNUSED(left);
-    assert(option.o);  // non-null pointers or int/enum checks != 0
+    assert(option.o);  // non-null or non-zero
     return option.o;
 }
 
 template<typename T>
 T operator+(  // lower precedence than % [1]
-    const OptHelper& left,
+    OptHelper,
     const OptionWrapper<T>& option
 ){
-    UNUSED(left);
     return option.o;
 }
 

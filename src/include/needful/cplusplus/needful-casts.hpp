@@ -18,12 +18,6 @@
 //  http://blog.hostilefork.com/c-casts-for-the-masses/
 //
 //
-// C. The C preprocessor doesn't know about templates, so it parses things
-//    like FOO(something<a,b>) as taking "something<a" and "b>".  This is a
-//    headache for implementing the macros, but also if a macro produces a
-//    comma and gets passed to another macro.  To work around it, we wrap
-//    the product of the macro containing commas in parentheses.
-//
 // D. The casts are implemented with a static method of a templated struct vs.
 //    just as a templated function.  This is because partial specialization of
 //    function templates is not legal in C++ due to the fact that functions can
@@ -50,19 +44,6 @@
 //        struct CastHook<Foo<X>, Y*>  // note no reference on Foo<X>
 //          { static void Validate_Bits(Foo<X>& foo) { ... } }
 //
-// F. By default, most of the cast() are defined to use the runtime validation
-//    hooks.  However, it's possible to easily turn them off...so that a
-//    macro like cast() would not run validation.  Simply do an #include:
-//
-//       #include "needful/cast-hooks-off.h"
-//
-//    This can be used in performance-critical code, where you don't want to
-//    have the overhead of the runtime cast validation...and don't want to
-//    decorate all your casts with "u_" to say they are unchecked.  You can
-//    turn the cast runtime back on with:
-//
-//       #include "needful/cast-hooks-on.h"
-//
 
 
 //=//// x_cast(): XTREME CAST (AKA WHAT PARENTHESES WOULD DO) /////////////=//
@@ -73,6 +54,59 @@
 //
 
 /* no need to override the C definition from %needful.h here */
+
+
+//=//// VA_LIST POINTER CAST //////////////////////////////////////////////=//
+//
+// 1. `const va_list*` MAY be illegal, and va_list COULD possibly be any type
+//    (including fundamentals like `char`), the generic machinery behind
+//    cast() could be screwed up if you ever use va_list* with it.  We warn
+//    you to use v_cast() if possible--but it's not always possible to warn,
+//    since it might look like a completely mundane type.  :-(
+//
+//    (Good argument for building your code with more than one compiler...)
+//
+
+template<typename From, typename To>
+struct ValistCastBlocker {  // non-valist-casts use to stop valist casts [1]
+  #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
+    static_assert(
+        (  // v-- we can't warn you about va_list* cast() if this is true
+            std::is_pointer<va_list>::value
+            and std::is_fundamental<remove_pointer_t<va_list>>::value
+        )
+        or (  // v-- but if it's a struct or something we can warn you
+            not std::is_same<From, va_list*>::value
+            and not std::is_same<To, va_list*>::value
+        ),
+        "only legal va_list casts are v_cast() mutable va_list* <-> void*"
+    );
+  #endif
+};
+
+template<typename From, typename To>
+struct ValistPointerCastHelper {
+    using FromDecayed = decay_t<From>;
+    using ToDecayed = decay_t<To>;
+
+  #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
+    static_assert(
+        (std::is_same<FromDecayed, va_list*>::value
+            and std::is_same<ToDecayed, void*>::value)
+        or (std::is_same<FromDecayed, void*>::value
+            and std::is_same<ToDecayed, va_list*>::value),
+        "v_cast() can only convert va_list* <-> void*"
+    );
+  #endif
+
+    using type = ToDecayed;
+};
+
+#undef needful_valist_cast
+#define needful_valist_cast(T,expr) \
+    (reinterpret_cast< \
+        needful::ValistPointerCastHelper<decltype(expr),T>::type \
+    >(expr))
 
 
 //=//// u_cast(): UNHOOKABLE CONST-PRESERVING CAST ////////////////////////=//
@@ -90,8 +124,9 @@
 //
 
 #undef needful_lenient_unhookable_cast
-#define needful_lenient_unhookable_cast(T,expr) /* outer parens [C] */ \
-    needful_xtreme_cast(needful_merge_const(decltype(expr), T), (expr))
+#define needful_lenient_unhookable_cast(T,expr) \
+    (NEEDFUL_DUMMY_INSTANCE(needful::ValistCastBlocker<decltype(expr), T>), \
+        needful_xtreme_cast(needful_merge_const_t(decltype(expr), T), (expr)))
 
 
 
@@ -105,24 +140,23 @@
 // because even constexpr functions have cost in debug builds.  If the type
 // you are casting is not a wrapper, it should be able to do its work
 // entirely at compile-time...even in debug builds!  This is accomplished
-// by static casting the wrapper type to its extracted type, then running a
+// by needful_upcast-ing the wrapper type to its extracted type, then running a
 // const_cast on that type, then static casting again to the target type.
 // This can be made to work for both pointers and wrapped pointers.
 //
-// 1. Attempts to make m_cast() arity-1 and auto-detect the target type were
-//    tried, with the C version just casting to void*.  But this winds up
-//    requiring C++-specific code to leak into %needful.h - because the C
-//    version of m_cast() that creates void* would no longer be legal in C++.
-//    This goes against the design principle of Needful to have a baseline of
-//    building with a single header file of C-only definitions.
+// 1. It's possible for m_cast() to be arity-1 and auto-detect the type, with
+//    the C version just casting to void*.  That would drop all type checking
+//    in the C build (bad), and would require pulling some pretty big C++
+//    mechanics into the needful.h header for it to compile.  The compromise
+//    of making it arity-2 but able to do an arbitrary upcast is a good middle
+//    ground that makes it more useful.
 //
 
 #undef needful_mutable_cast
-#define needful_mutable_cast(T,expr) /* Note: not arity-1 on purpose! */ \
-    (static_cast<T>( \
-        const_cast< \
-            needful_unconstify_t(needful_unwrapped_type(T)) \
-        >(static_cast<needful_constify_t(needful_unwrapped_type(T))>(expr))))
+#define needful_mutable_cast(T,expr) /* not arity-1 on purpose! [1] */ \
+    (static_cast<T>(const_cast< \
+        needful_unconstify_t(needful_unwrapped_type(T)) \
+    >(needful_upcast(needful_constify_t(needful_unwrapped_type(T)), (expr)))))
 
 
 //=//// h_cast(): HOOKABLE CAST, IDEALLY cast() = h_cast() [A] ////////////=//
@@ -253,12 +287,6 @@ struct IsResultWrapper : std::false_type {};
 template<typename T>
 struct ResultWrapper;
 
-template<typename T>
-struct is_function_pointer : std::false_type {};
-
-template<typename Ret, typename... Args>
-struct is_function_pointer<Ret (*)(Args...)> : std::true_type {};
-
 
 template<typename V, typename T>
 struct CastHook {  // object template for partial specialization [2]
@@ -318,7 +346,7 @@ Hookable_Cast_Helper(const From& from) {
 template<
     typename To,
     typename FromRef,
-    typename ResultType = needful_merge_const(  // lenient cast
+    typename ResultType = needful_merge_const_t(  // lenient cast
         remove_reference_t<FromRef>, To
     )
 >
@@ -334,7 +362,7 @@ Hookable_Cast_Helper(const FromRef & from) {
   #if NEEDFUL_CAST_CALLS_HOOKS
     using From = decay_t<FromRef>;
     using ConstFrom = needful_constify_t(From);
-    CastHook<ConstFrom, ConstTo>::Validate_Bits(std::forward<FromRef>(from));
+    CastHook<ConstFrom, ConstTo>::Validate_Bits(from);
   #endif
 
     return needful_mutable_cast(
@@ -346,7 +374,7 @@ Hookable_Cast_Helper(const FromRef & from) {
 template<
     typename To,
     typename FromRef,
-    typename ResultType = needful_merge_const(  // lenient cast
+    typename ResultType = needful_merge_const_t(  // lenient cast
         remove_reference_t<FromRef>, To
     )
 >
@@ -368,20 +396,6 @@ Hookable_Cast_Helper(FromRef&& from)
         "Use f_cast() for function pointer casts"
     );
 
-    #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
-    static_assert(
-        (   // v-- we can't warn you about va_list* cast() if this is true
-            std::is_pointer<va_list>::value
-            and std::is_fundamental<remove_pointer_t<va_list>>::value
-        )
-        or (  // v-- but if it's a struct or something we can warn you
-            not std::is_same<From, va_list*>::value
-            and not std::is_same<To, va_list*>::value
-        ),
-        "can't cast va_list*!  u_cast() mutable va_list* <-> void* only"
-    );  // read [B] at top of file for more information
-    #endif
-
   #if NEEDFUL_CAST_CALLS_HOOKS
     using ConstFrom = needful_constify_t(From);
     CastHook<ConstFrom, ConstTo>::Validate_Bits(std::forward<FromRef>(from));
@@ -397,7 +411,7 @@ Hookable_Cast_Helper(FromRef&& from)
 template<
     typename To,
     typename FromWrapperRef,
-    typename ResultType = ResultWrapper<needful_merge_const(  // lenient cast
+    typename ResultType = ResultWrapper<needful_merge_const_t(  // lenient cast
         remove_reference_t<FromWrapperRef>, To
     )>
 >
@@ -416,20 +430,6 @@ Hookable_Cast_Helper(const FromWrapperRef& from_wrapper)
         "Use f_cast() for function pointer casts"
     );
 
-    #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
-    static_assert(
-        (   // v-- we can't warn you about va_list* cast() if this is true
-            std::is_pointer<va_list>::value
-            and std::is_fundamental<remove_pointer_t<va_list>>::value
-        )
-        or (  // v-- but if it's a struct or something we can warn you
-            not std::is_same<From, va_list*>::value
-            and not std::is_same<To, va_list*>::value
-        ),
-        "can't cast va_list*!  u_cast() mutable va_list* <-> void* only"
-    );  // read [B] at top of file for more information
-    #endif
-
   #if NEEDFUL_CAST_CALLS_HOOKS
     using ConstFrom = needful_constify_t(From);
     CastHook<ConstFrom, ConstTo>::Validate_Bits(from_wrapper.r);
@@ -442,8 +442,9 @@ Hookable_Cast_Helper(const FromWrapperRef& from_wrapper)
 }
 
 #undef needful_lenient_hookable_cast
-#define needful_lenient_hookable_cast(T,expr) /* outer parens [C] */ \
-    (needful::Hookable_Cast_Helper<T>(expr))  // func: universal refs [3]
+#define needful_lenient_hookable_cast(T,expr) \
+    (NEEDFUL_DUMMY_INSTANCE(needful::ValistCastBlocker<decltype(expr), T>), \
+        needful::Hookable_Cast_Helper<T>(expr))  // func: universal refs [3]
 
 
 //=//// RIGID CAST FORMS /////////////////////////////////////////////////=//
@@ -463,28 +464,28 @@ template<typename From, typename To>
 struct RigidCastAsserter {
     static_assert(
         not (
-            not needful_is_constlike(To)
-            and needful_is_constlike(From)
+            not needful_is_constlike_v(To)
+            and needful_is_constlike_v(From)
         ),
         "rigid_hookable_cast() won't pass thru constness on mutable casts"
     );
 };
 
 #undef needful_rigid_hookable_cast
-#define needful_rigid_hookable_cast(T,expr) /* outer parens [C] */ \
-    (NEEDFUL_USED((needful::RigidCastAsserter< /* USED() for clang */ \
+#define needful_rigid_hookable_cast(T,expr) \
+    (NEEDFUL_DUMMY_INSTANCE(needful::RigidCastAsserter< \
         needful::remove_reference_t<decltype(expr)>, \
         T \
-    >{})), \
+    >), \
     needful_lenient_hookable_cast(T, (expr)))
 
 #undef needful_rigid_unhookable_cast
-#define needful_rigid_unhookable_cast(T,expr) /* outer parens [C] */ \
-    (NEEDFUL_USED((needful::RigidCastAsserter< /* USED() for clang */ \
+#define needful_rigid_unhookable_cast(T,expr) \
+    (NEEDFUL_DUMMY_INSTANCE(needful::RigidCastAsserter< \
         needful::remove_reference_t<decltype(expr)>, \
         T \
-    >{})), \
-    Needful_Lenient_Unhookable_Cast(T, (expr)))
+    >), \
+    needful_lenient_unhookable_cast(T, (expr)))
 
 
 //=//// upcast(): CAST THAT WOULD BE SAFE FOR PLAIN ASSIGNMENT ///////////=//
@@ -565,7 +566,7 @@ struct UpcastHelper {
     struct BaseName##Maker { \
         template<typename T> \
         BaseName##Holder<remove_reference_t<T>> \
-        operator+(const T& value) const { /* << lower than % [4] */ \
+        operator+(const T& value) const { /* + lower than % [4] */ \
             return BaseName##Holder<T>{value}; \
         } \
     }; \
@@ -647,7 +648,7 @@ struct FunctionPointerCastHelper {
 
     static_assert(
         is_function_pointer<FromDecayed>::value
-        and is_function_pointer<ToDecayed>::value,
+            and is_function_pointer<ToDecayed>::value,
         "f_cast() requires both source and target to be function pointers"
     );
 

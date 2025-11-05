@@ -150,6 +150,12 @@ struct SinkWrapper {
     {
     }
 
+    SinkWrapper(Nocast0Struct)  // for Result(Sink(Element))
+        : p {nullptr},
+        corruption_pending {false}
+    {
+    }
+
     template<typename U, IfSinkConvertible<U>* = nullptr>
     SinkWrapper(U* u) {
         this->p = static_cast<T*>(u);

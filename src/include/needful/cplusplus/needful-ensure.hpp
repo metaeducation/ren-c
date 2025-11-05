@@ -96,15 +96,7 @@ struct IsConvertibleAny<T>
 
 
 //=//// TYPE ENSURING HELPER //////////////////////////////////////////////=//
-//
-// 1. The first iteration of IsConvertibleAsserter would actually instantiate
-//    the struct, e.g. `IsConvertibleAsserter<...>{}`, which can have some
-//    runtime cost.  You might think of just referring to a constexpr bool
-//    member, but the compiler might decide that didn't require making an
-//    instance of the struct...and skip the static_assert().  It seems that
-//    the sizeof() trick on a type member that's dependent on the instance
-//    is the best portable way to force instantiation with a guarantee of
-//    no runtime cost in any builds--debug or otherwise.
+
 
 template<typename From, typename First, typename... Rest>
 struct IsConvertibleAsserter {
@@ -112,32 +104,31 @@ struct IsConvertibleAsserter {
         needful::IsConvertibleAny<From, First, Rest...>::value,
         "ensure() failed"
     );
-    using type = First;  // forces template instantion, no runtime cost [1]
 };
 
 #undef needful_rigid_ensure
 #define needful_rigid_ensure(T,expr) \
-    (NEEDFUL_USED(sizeof(typename needful::IsConvertibleAsserter< \
+    (NEEDFUL_DUMMY_INSTANCE(needful::IsConvertibleAsserter< \
         needful::remove_reference_t<decltype(expr)>, \
         T \
-    >::type)), \
-    x_cast(T, (expr)))
+    >), \
+    needful_xtreme_cast(T, (expr)))
 
 #undef needful_lenient_ensure
 #define needful_lenient_ensure(T,expr) \
-    (NEEDFUL_USED(sizeof(typename needful::IsConvertibleAsserter< \
+    (NEEDFUL_DUMMY_INSTANCE(needful::IsConvertibleAsserter< \
         needful::remove_reference_t<decltype(expr)>, \
         needful_constify_t(T) /* loosen to matching constified T too */ \
-    >::type)), \
-    x_cast(needful_merge_const(decltype(expr), T), (expr)))
+    >), \
+    needful_xtreme_cast(needful_merge_const_t(decltype(expr), T), (expr)))
 
 
 #undef needful_ensure_any
 #define needful_ensure_any(TLIST,expr) \
-    (NEEDFUL_USED(sizeof(typename needful::IsConvertibleAsserter< \
+    (NEEDFUL_DUMMY_INSTANCE(needful::IsConvertibleAsserter< \
         needful::remove_reference_t<decltype(expr)>, \
         NEEDFUL_UNPARENTHESIZE TLIST \
-    >::type)), \
+    >), \
     (expr))
 
 
