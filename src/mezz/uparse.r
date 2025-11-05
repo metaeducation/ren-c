@@ -1750,7 +1750,7 @@ default-combinators: make map! [
             panic make warning! [type: 'script, id: 'bad-antiform]
           ]
           ~okay~ [
-            return ghost  ; let okay just act as a "guard", no influence
+            return ^ghost  ; let okay just act as a "guard", no influence
           ]
         ]
         panic ["Unknown keyword" mold lift value]
@@ -2098,13 +2098,13 @@ default-combinators: make map! [
         [^result _]: trap parser input
 
         if space? ^result [
-            return ghost
+            return ^ghost
         ]
         if not integer? ^result [
             panic "SKIP expects INTEGER! amount to skip"
         ]
         input: trap skip input ^result  ; out of bounds is just match failure
-        return ghost
+        return ^ghost
     ]
 
     'one combinator [  ; historically used "SKIP" for this

@@ -170,7 +170,7 @@ INLINE Result(Value*) Decay_Or_Elide_Core(
 
     if (not Is_Pack(v)) {
         if (want_value and Is_Ghost(v))
-            return fail (Error_No_Value_Raw());  // distinct error from void?
+            return fail ("Cannot decay GHOST! to a value");
 
         if (Is_Error(v))
             return fail (Cell_Error(v));

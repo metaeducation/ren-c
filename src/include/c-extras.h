@@ -246,7 +246,7 @@
     // legitimate compilers define them, they're even in the C++98 standard!
   #endif
 #else
-    // is646.h has been defined since the C90 standard of C.  But TCC doesn't
+    // iso646.h has been defined since the C90 standard of C.  But TCC doesn't
     // ship with it, and maybe other C's don't either.  The issue isn't so
     // much the file, as it is agreeing on the 11 macros, just define them.
     //

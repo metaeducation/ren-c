@@ -52,8 +52,10 @@ null: ~null~
 ok: okay: ~okay~
 ok?: okay?/
 
-^void: ~[]~  ; once a function returning VOID, but this is more legitimate
-^ghost: ~,~  ; once a function returning GHOST!, but this is more legitimate
+; https://rebol.metaeducation.com/t/why-caret-to-use-void-vs-just-void/2526
+^void: ~[]~
+^ghost: ~,~
+^tripwire: ~
 
 ; These should be aliases for things like system.ports.input and such, but
 ; for now just to make the syntax of things look better we define them.
