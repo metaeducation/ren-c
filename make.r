@@ -930,7 +930,7 @@ extension-names: map-each 'x extension-names [
 
 ; Collected here so they can be used with `--help targets`
 
-targets: [
+target-branches: [
     'clean [
         rebmake.execution/run make rebmake.solution-class [
             depends: reduce [
@@ -989,7 +989,7 @@ targets: [
 ]
 
 target-names: make block! 16
-for-each 'x targets [
+for-each 'x target-branches [
     if lit-word? x [
         append target-names (noquote x)
         append target-names '|
@@ -1650,7 +1650,7 @@ sort:compare extensions func [a b] [return a.sequence < b.sequence]
 ; (which is broken down more fundamentally and they can understand)
 
 builtin-ext-objlibs: copy []  ; #object-library for each built in extension
-dynamic-ext-objlibs: copy []  ; #object-library for each built in extension
+dynamic-ext-objlibs: copy []  ; #object-library for each dynamic extension
 
 dynamic-libs: copy []  ; #dynamic-library for each DLL
 
@@ -1795,8 +1795,11 @@ for-each 'ext extensions [
             depends: compose [
                 (ext-objlib)  ; !!! Pulls in in all of extensions deps?
                 ;
-                ; (app) all dynamic extensions depend on r3, but app not ready
-                ; so the dependency is added at a later phase below
+                ; At one time (app) was a dependency, as dynamic extensions
+                ; reqiured an import library on Windows.  With conversion to
+                ; the RebolApiTableStruct this is no longer an issue, so no
+                ; r3.lib is generated and isn't needed (though only librebol
+                ; extensions can be loaded dynamically, not core API ones)
                 ;
                 (opt spread app-config.libraries)
                 (opt spread ext-objlib.libraries)
@@ -1845,7 +1848,7 @@ for-each 'ext extensions [
 ]
 
 
-=== "RUN THE MAKE (INVOKE COMPILER WITH CALL -OR- GENERATE MAKEFILE" ===
+=== "RUN THE MAKE (INVOKE COMPILER WITH CALL -OR- GENERATE MAKEFILE)" ===
 
 ; Here we run MAKE which will not do the actual compilation if you ask the
 ; TARGET to be a makefile.  It only runs the compilation if you are using
@@ -2000,13 +2003,6 @@ app: make rebmake.application-class [
     definitions: app-config.definitions
 ]
 
-; Now that app is created, make it a dependency of all the dynamic libs
-; See `accept` method handling of #application for pulling in import lib
-;
-for-each 'proj dynamic-libs [
-    append proj.depends app
-]
-
 library: make rebmake.dynamic-library-class [
     name: 'libr3
     output: %libr3  ; no suffix
@@ -2101,8 +2097,17 @@ solution: make rebmake.solution-class [
 
 target: user-config.target
 if not block? target [target: reduce [target]]
+
+; 1. In order to keep the list of targets from getting out of sync with the
+;    help, the code for the actual rebmake calls was moved into branches used
+;    by the switch statement.  It's a very "Rebolish" thing to have done, but
+;    maybe there are better ideas.  Anyway, this is where all the generating
+;    happens due to those calls in the switch branches.
+;
 for-each 't target [
-    switch t targets else [
+    switch t (
+        target-branches  ; weirdly defined at top of file [1]
+     ) else [
         panic [
             newline
             newline
