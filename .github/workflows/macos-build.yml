@@ -267,7 +267,7 @@ jobs:
 
     - name: Quick Smoke Test (Print A Message And Quit)
       run: |
-        "$R3BUILT" --do "print {hi}"
+        "$R3BUILT" --do "print -[hi]-"
 
     # Note: HTTPS no longer works due to missing cipher suites, and due to
     # the web build being a priority that work is not being pursued.

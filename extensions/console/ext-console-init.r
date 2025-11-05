@@ -571,9 +571,8 @@ console*: func [
                 emit [halt]
                 emit [panic "^^-- Shouldn't get here, due to HALT"]
             ]
-            <die> [
-                emit [quit 1]  ; bash exit code for any generic error
-                emit [panic "^^-- Shouldn't get here, due to QUIT"]
+            <die> [  ; run emitted code, *then* die
+                emit #die-when-done
             ]
             <bad> [
                 emit #no-unskin-if-error
@@ -642,6 +641,10 @@ console*: func [
                 accept (~)
             ]
         ]
+    ]
+
+    if find directives #die-when-done [
+        return 1  ; just tell C to exit with status code 1... now
     ]
 
     if find directives #start-console [
@@ -718,7 +721,7 @@ console*: func [
         if object? opt system.console [
             emit [system.console/print-panic (<*> result)]
         ] else [
-            emit [print [(<*> form result)]]
+            emit [console!/print-panic (<*> result)]  ; fallback to default
         ]
         if find directives #die-if-error [
             return <die>

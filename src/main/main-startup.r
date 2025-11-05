@@ -270,31 +270,13 @@ bind construct [
                 emit [panic ~#unreachable~]
             ]
             <start-console> [
-                ; Done actually via #start-console, but we return something
+                emit #start-console
             ]
         ] then [
             run return-to-c instruction
         ]
 
-        return-to-c switch:type state [
-            integer! [  ; just tells the calling C loop to exit() process
-                if not empty? instruction [
-                    print mold instruction
-                ]
-                assert [empty? instruction]
-                state
-            ]
-            datatype! [  ; type assertion, how to enforce this?
-                emit spaced ["^^-- Result should be" to word! state]
-                instruction
-            ]
-            group! [  ; means "submit user code"
-                assert [empty? instruction]
-                state
-            ]
-        ] else [
-            emit [panic ["Bad console instruction:" (<*> mold state)]]
-        ]
+        panic "Internal Error: Invalid RETURN in MAIN-STARTUP"
     ]
 
     system.product: 'core
@@ -776,8 +758,6 @@ bind construct [
     if 'yes = quit-when-done [  ; can be null, YES? would complain...
         return <quit>  ; quits after instructions done
     ]
-
-    emit #start-console
 
     return <start-console>
 ]

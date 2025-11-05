@@ -285,7 +285,7 @@ jobs:
 
     - name: Basic Smoke Test (Print A Message And Quit)
       run: |
-        "$R3BUILT" --do "print {hi}"
+        "$R3BUILT" --do "print -[hi]-"
 
 
     - name: Test Rebmake HELP functionality

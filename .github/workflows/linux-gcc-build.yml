@@ -266,7 +266,7 @@ jobs:
 
     - name: Basic Smoke Test (Print A Message And Quit)
       run: |
-        "$R3BUILT" --do "print {hi}"
+        "$R3BUILT" --do "print -[hi]-"
 
 
     # Besides just testing success cases, it's important to make sure panics
