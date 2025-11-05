@@ -55,7 +55,7 @@ static Bounce Clipboard_Actor(
 ){
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
-    switch (Word_Id(verb)) {
+    switch (opt Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -64,7 +64,7 @@ static Bounce Clipboard_Actor(
         Option(SymId) property = Word_Id(ARG(PROPERTY));
         assert(property != 0);
 
-        switch (property) {
+        switch (opt property) {
         case SYM_OPEN_Q:
             return Init_Logic(OUT, true); // !!! need "port state"?  :-/
 

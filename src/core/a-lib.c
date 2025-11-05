@@ -1748,7 +1748,12 @@ RebolValue* API_rebError_OS(int errnum)
         Value* message = rebTextWide(lpMsgBuf);
         LocalFree(lpMsgBuf);
 
-        error = Make_Error_Managed(SYM_0, SYM_0, message, END_BASE);
+        error = Make_Error_Managed(
+            u_cast(int, SYM_0),
+            u_cast(int, SYM_0),
+            message,
+            END_BASE
+        );
     }
   #else
     // strerror() is not thread-safe, but strerror_r is. Unfortunately, at

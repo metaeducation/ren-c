@@ -190,17 +190,6 @@ native-list: load join output-dir %boot/tmp-natives.r
 
 e-funcs/emit [{
     /*
-     * When building as C++, the linkage on these functions should be done
-     * without "name mangling" so that library clients will not notice a
-     * difference between a C++ build and a C build.
-     *
-     * http://stackoverflow.com/q/1041866/
-     */
-    #ifdef __cplusplus
-    extern "C" ^{
-    #endif
-
-    /*
      * NATIVE PROTOTYPES
      *
      * DECLARE_NATIVE is a macro which expands such that DECLARE_NATIVE(PARSE)
@@ -259,12 +248,6 @@ for-each item file-base/core [
     process file
 ]
 
-
-e-funcs/emit {
-    #ifdef __cplusplus
-    ^}
-    #endif
-}
 
 e-funcs/write-emitted
 

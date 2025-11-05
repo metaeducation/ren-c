@@ -166,7 +166,7 @@ INLINE int LVL_LINE(Level* L) {
     cast(Value*, &(L)->spare)
 
 #define LVL_PHASE_OR_DUMMY(L) \
-    L->rootvar->payload.any_context.phase
+    (L)->rootvar->payload.any_context.phase
 
 #if NO_RUNTIME_CHECKS or !defined(__cplusplus)
     #define Level_Phase(L) \

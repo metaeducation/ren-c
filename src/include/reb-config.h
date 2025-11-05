@@ -300,6 +300,19 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
     #define NEEDFUL_CPP_ENHANCEMENTS  CPLUSPLUS_11
 #endif
 
+#if NEEDFUL_CPP_ENHANCEMENTS
+    #define NEEDFUL_CAST_CALLS_HOOKS  0  // R3C has its own DEBUG_CHECK_CASTS
+
+    // Option(TYPE*) is a poor-man's implementation of optionals that lets you
+    // mark when a pointer is supposed to be passable as a nullptr.  It has some
+    // runtime costs because it will assert if you unwrap the pointer and it is
+    // null when it shouldn't be.
+    //
+    #if !defined(NEEDFUL_OPTION_USES_WRAPPER)
+        #define NEEDFUL_OPTION_USES_WRAPPER  RUNTIME_CHECKS
+    #endif
+#endif
+
 
 //=//// FEATURE TESTING AND ATTRIBUTE MACROS //////////////////////////////=//
 //
@@ -490,18 +503,6 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
     #define UNUSUAL_CELL_SIZE 0
 #endif
 
-// Option(TYPE*) is a poor-man's implementation of optionals that lets you
-// mark when a pointer is supposed to be passable as a nullptr.  It has some
-// runtime costs because it will assert if you unwrap the pointer and it is
-// null when it shouldn't be.  Add it to the sanitized build.
-//
-#if !defined(NEEDFUL_OPTION_USES_WRAPPER)
-  #if defined(__SANITIZE_ADDRESS__)
-    #define NEEDFUL_OPTION_USES_WRAPPER  (RUNTIME_CHECKS && CPLUSPLUS_11)
-  #else
-    #define NEEDFUL_OPTION_USES_WRAPPER  NEEDFUL_CPP_ENHANCEMENTS
-  #endif
-#endif
 
 #if !defined(DEBUG_DTOA)
     #define DEBUG_DTOA  RUNTIME_CHECKS
