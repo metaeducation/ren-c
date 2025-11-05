@@ -140,11 +140,13 @@ if os = 'Windows [
         ;
         %dbghelp
 
-        ; These are listed in libuv's makefile, but it seems like you can
-        ; build without mentioning them.  Leave them out for now.
+        ; CoTaskMemFree() in uv__kill()
         ;
-        ; %ole32
-        ; %shell32
+        %ole32
+
+        ; SHGetKnownFolderPath() in uv__kill()
+        ;
+        %shell32
     ]
 
     ; 1. Without disabling this, you likely get:
