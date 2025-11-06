@@ -85,14 +85,14 @@ platforms: [
     0.2.3 _ "mac-misc"
         ; was: "Macintosh, FAT PPC, 68K"
 
-    0.2.4 osx-ppc/MacOS "osx-ppc"
+    0.2.4 macos-ppc/macOS "macos-ppc"
         #SGD #BEN #LLC <NCM> /HID /DYN %M
         ; originally targeted OS X 10.2
 
-    0.2.5 osx-x86/MacOS "osx-x86"
+    0.2.5 macos-x86/macOS "macos-x86"
         #SGD #LEN #LLC #NSER <NCM> <NPS> <ARC> /HID /ARC /DYN %M
 
-    0.2.40 osx-x64/MacOS _
+    0.2.40 macos-x64/macOS "macos-x64"  ; overlaps apple silicon now
         #SGD #LEN #LLC #NSER <NCM> <NPS> /HID /DYN %M
 
     Windows: 3

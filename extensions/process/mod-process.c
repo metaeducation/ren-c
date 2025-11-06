@@ -60,7 +60,7 @@
     //
     // https://stackoverflow.com/a/31347357/211160
     //
-    #if TO_OSX || TO_OPENBSD_X64
+    #if TO_MACOS || TO_OPENBSD_X64
         extern char **environ;
     #endif
 
@@ -252,7 +252,7 @@ DECLARE_NATIVE(SLEEP)
 }
 
 
-#if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
+#if TO_LINUX || TO_ANDROID || TO_POSIX || TO_MACOS || TO_HAIKU
 static Bounce Delegate_Kill_Process(pid_t pid, int signal)
 {
     if (kill(pid, signal) >= 0)
@@ -329,7 +329,7 @@ DECLARE_NATIVE(TERMINATE)
         return Delegate_Panic_Terminate_Failed(err);
     }
 
-  #elif TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
+  #elif TO_LINUX || TO_ANDROID || TO_POSIX || TO_MACOS || TO_HAIKU
 
     if (getpid() == VAL_INT32(ARG(PID))) {  // signal not reliable for this
         panic (

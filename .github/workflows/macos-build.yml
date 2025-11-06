@@ -3,7 +3,7 @@
 #
 #=============================================================================#
 #
-# This does MacOS builds on GitHub's Ubuntu container, using clang.
+# This does macOS builds on GitHub's Ubuntu container, using clang.
 #
 #====# PLEASE READ THE README #===============================================#
 #
@@ -14,7 +14,7 @@
 # https://github.com/metaeducation/ren-c/blob/master/.github/workflows/README.md
 #
 
-name: MacOS Clang
+name: macOS Clang
 
 
 # See README: When To Trigger Builds
@@ -85,7 +85,7 @@ jobs:
           variation: "-debug"  # !!! Maybe -debug-odbc ?
           checked: true
 
-        # MacOS has fully deprecated 32-bit targets...we'll assume that the
+        # macOS has fully deprecated 32-bit targets...we'll assume that the
         # Windows/Linux/ARM 32-bit variants cover testing of 32-bit enough.
 
 
@@ -160,9 +160,9 @@ jobs:
         echo "But that executable won't run on GitHub for some reason"
         # "$r3make" --do "print {TESTING 1 2 3}"  # NOT WORKING, dunno why
         cd prebuilt
-        wget http://hostilefork.com/media/shared/r3bootstraps/r3-osx-arm64-0a654c6
-        chmod +x r3-osx-arm64-0a654c6
-        r3make=$(pwd)/r3-osx-arm64-0a654c6
+        wget http://hostilefork.com/media/shared/r3bootstraps/r3-macos-arm64-0a654c6
+        chmod +x r3-macos-arm64-0a654c6
+        r3make=$(pwd)/r3-macos-arm64-0a654c6
         echo "So now R3MAKE is $r3make"
         echo "R3MAKE=$r3make" >> $GITHUB_ENV  # pass to next step
 
@@ -268,7 +268,7 @@ jobs:
     # See README: Ren-C Code As Step
     #
     # Note: /usr/local/bin is where you put custom executables, but it's not
-    # in the path on MacOS by default:
+    # in the path on macOS by default:
     #
     # https://dani.gg/en/467-add-usr-local-bin-to-system-path-variable-on-mac-os/
     #

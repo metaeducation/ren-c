@@ -10,7 +10,7 @@ options: [
 use-librebol: 'yes  ; ODBC is a great example of not depending on %sys-core.h !
 
 includes: switch platform-config.os-base [
-    'MacOS [
+    'macOS [
         [%/opt/homebrew/include/]  ; needed for Apple Silicon builds
     ]
 ]
@@ -41,7 +41,7 @@ libraries: switch platform-config.os-base [
     'Windows [
         [%odbc32]
     ]
-    'MacOS [
+    'macOS [
         [%odbc]
     ]
 ] else [
@@ -61,7 +61,7 @@ libraries: switch platform-config.os-base [
 ; installed directly to /usr/local, the switch *should* be harmless.)
 ;
 ldflags: switch platform-config.os-base [
-    'MacOS [
+    'macOS [
         ["-L/opt/homebrew/lib"]  ; needed for Intel Macs
     ]
 ]

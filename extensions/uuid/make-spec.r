@@ -3,7 +3,7 @@ Rebol [
     notes: "See %extensions/README.md for the format and fields of this file"
 ]
 
-use-librebol: 'yes  ; can't use %sys-core.h with MacOS UUID APIs, conflicts
+use-librebol: 'yes  ; can't use %sys-core.h with macOS UUID APIs, conflicts
 
 includes: [
     %libuuid/
@@ -32,7 +32,7 @@ libraries: switch platform-config.os-base [
 ]
 
 ldflags: switch platform-config.os-base [
-    'MacOS [
+    'macOS [
         ["-framework CoreFoundation"]
     ]
 ]

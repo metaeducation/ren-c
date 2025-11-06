@@ -89,7 +89,7 @@ jobs:
           # used at the time of the 2019 demo.  When migrating to GitHub
           # actions it seemed to make sense to get what was already working
           # going vs. going headfirst into a new toolchain at a very new NDK
-          # version on a completely different platform for emulation (MacOS).
+          # version on a completely different platform for emulation (macOS).
           # So this old version was made to work first.  It doesn't make that
           # much sense priority-wise to worry about such an "old" SDK, but
           # as long as it's not too much trouble to keep working it adds to
@@ -292,7 +292,7 @@ jobs:
         cd build
         make -j 2  # Linux GitHub Runners have 2 cores, use 2 jobs
 
-    # !!! Unfortunately, the MacOS bootstrap executable seems to be creating
+    # !!! Unfortunately, the macOS bootstrap executable seems to be creating
     # corrupt zip files.  The problem is sorted out in newer builds, but we
     # don't have a newer bootstrap build at time of writing.  Since it's just
     # creating a zip file in a fairly easy way, we punt on calling the script
@@ -554,7 +554,7 @@ jobs:
     # as they are.  They are broken out to make it easier to reuse if the
     # emulator is invoked multiple times.
     #
-    # We only do the test on the MacOS version, because the Linux version
+    # We only do the test on the macOS version, because the Linux version
     # has no HAXM acceleration on GitHub.  It boots extremely slowly, and
     # once you wait for it to boot (about 7x as long) it doesn't seem to work:
     #

@@ -33,7 +33,7 @@
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
     #include <rpc.h>  // for UuidCreate()
-#elif TO_OSX
+#elif TO_MACOS
     //
     // CoreFoundation has definitions that conflict with %sys-core.h, so the
     // UUID extension was the first to be librebol-based, that defines the
@@ -99,7 +99,7 @@ DECLARE_NATIVE(GENERATE)
 
     return binary;
 
-  #elif TO_OSX
+  #elif TO_MACOS
 
     CFUUIDRef newId = CFUUIDCreate(NULL);
     CFUUIDBytes bytes = CFUUIDGetUUIDBytes(newId);

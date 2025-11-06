@@ -230,8 +230,8 @@ emscripten: make posix [
     dll-suffix: ".js"  ; !!! We want libr3.js for "main" lib, but .so for rest
 ]
 
-osx: make posix [
-    name: 'MacOS
+macos: make posix [
+    name: 'macOS
     dll-suffix: ".dylib"  ; !!! This was .dyn - but no one uses that
 ]
 
@@ -303,8 +303,8 @@ set-target-platform: func [
         'Windows [
             target-platform: windows
         ]
-        'MacOS [
-            target-platform: osx
+        'macOS [
+            target-platform: macos
         ]
         'Emscripten [
             target-platform: emscripten
@@ -1562,7 +1562,7 @@ export execution: make generator-class [
         'Windows [windows]
         'Linux [linux]
         'Haiku [haiku]
-        'MacOS [osx]
+        'macOS [macos]
         'Android [android]
     ] else [
         print [

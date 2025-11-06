@@ -1,7 +1,7 @@
 ## DIRECTORY FOR DOWNLOADING PRE-BUILT BOOTSTRAP REBOL EXECUTABLES TO
 
 By convention, this `prebuilt` directory is where Rebol executables are kept
-which are able to do the configuration and C code generation to do a 
+which are able to do the configuration and C code generation to do a
 bootstrap build.
 
 Important to realize about the bootstrapping strategy is that there are only
@@ -27,7 +27,7 @@ https://s3.amazonaws.com/r3bootstraps/r3-linux-x64-8994d23
 WINDOWS:
 https://s3.amazonaws.com/r3bootstraps/r3-windows-x86-8994d23.exe
 
-OS X:
+MACOS:
 https://s3.amazonaws.com/r3bootstraps/r3-osx-x64-8994d23-debug
 *(Note: There was some reason the release build that had been generated for
 OS X wasn't used--it was compiled with unwanted dependencies, or somesuch.

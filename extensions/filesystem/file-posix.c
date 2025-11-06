@@ -889,7 +889,7 @@ Value* Get_Current_Exec(void)
 #endif
 
 
-#if TO_OSX
+#if TO_MACOS
 
     // !!! Note: intentionally not using libuv here, in case this is to be
     // extracted for a lighter build!
@@ -970,7 +970,7 @@ Value* Get_Current_Exec(void)
         return result;
     }
 
-#else  // not TO_OSX and not TO_WINDOWS
+#else  // not TO_MACOS and not TO_WINDOWS
 
     // !!! Note: intentionally not using libuv here, in case this is to be
     // extracted for a lighter build!

@@ -197,7 +197,7 @@ elif [[ $OS_ID = 0.13.2 ]]; then  #arm-android5
         # Note: substitute `linux-x86_64` -> `darwin-x86_64` here.  But main
         # issue is that TCC build files detect you are on OS X host and try
         # to use clang.  If this way old gcc branch is not switched to build
-        # on MacOS then it can't be tested by the container...that may not
+        # on macOS then it can't be tested by the container...that may not
         # matter, as building an linking it on Linux is likely good enough if
         # the more modern version tests.  (This older build is only done to
         # measure how much dependency creep we are getting.)

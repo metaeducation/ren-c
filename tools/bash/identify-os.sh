@@ -26,7 +26,7 @@ identify_os() {
             esac
         ;;
         *openbsd*) echo "openbsd";;
-        *darwin*)  echo "osx";;
+        *darwin*)  echo "macos";;
         *)         echo "none";;
     esac
 }

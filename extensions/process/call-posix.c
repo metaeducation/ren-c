@@ -40,7 +40,7 @@
 //
 // https://stackoverflow.com/a/31347357/211160
 //
-#if TO_OSX || TO_OPENBSD_X64
+#if TO_MACOS || TO_OPENBSD_X64
     extern char **environ;
 #endif
 

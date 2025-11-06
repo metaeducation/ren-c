@@ -234,20 +234,20 @@ Special internal defines used by RT, not Host-Kit developers:
 
 //=//// APPLE //////////////////////////////////////////////////////////////=//
 
-#if !defined(TO_OSX_PPC)
-    #define TO_OSX_PPC 0
+#if !defined(TO_MACOS_PPC)
+    #define TO_MACOS_PPC 0
 #endif
 
-#if !defined(TO_OSX_X86)
-    #define TO_OSX_X86 0
+#if !defined(TO_MACOS_X86)
+    #define TO_MACOS_X86 0
 #endif
 
-#if !defined(TO_OSX_X64)
-    #define TO_OSX_X64 0
+#if !defined(TO_MACOS_X64)  // !!! currently overlaps with Apple Silicon
+    #define TO_MACOS_X64 0
 #endif
 
-#if !defined(TO_OSX)
-    #define TO_OSX 0
+#if !defined(TO_MACOS)
+    #define TO_MACOS  0
 #endif
 
 

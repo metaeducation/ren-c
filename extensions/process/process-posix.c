@@ -3,11 +3,11 @@
 // look in the native specs for what platforms the native should be enabled under.
 // For simplicity that feature has been taken out at the moment.
 
-#if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
+#if TO_LINUX || TO_ANDROID || TO_POSIX || TO_MACOS || TO_HAIKU
 static Bounce Delegate_Kill_Process(pid_t pid, int signal);
 #endif
 
-#if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
+#if TO_LINUX || TO_ANDROID || TO_POSIX || TO_MACOS || TO_HAIKU
 
 //
 //  get-pid: native [
@@ -239,4 +239,4 @@ DECLARE_NATIVE(SEND_SIGNAL)
     return Delegate_Kill_Process(pid, signal);
 }
 
-#endif  // TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU
+#endif  // TO_LINUX || TO_ANDROID || TO_POSIX || TO_MACOS || TO_HAIKU

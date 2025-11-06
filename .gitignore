@@ -37,7 +37,7 @@
 #
 # It can be convenient if you are doing multiple builds of the same Rebol
 # codebase for different platforms to put them in separate build
-# directories (such as build-win32 or build-osx-x64) so they don't erase
+# directories (such as build-win32 or build-macos-x64) so they don't erase
 # each other's state
 #
 build/*
