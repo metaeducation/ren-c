@@ -65,29 +65,38 @@ jobs:
       matrix:
        include:
 
-         - os-id: 0.3.40  # 64-bit Target (built on this 64-bit platform)
-           config-file: vs2019-x64.r
-           standard: c99
-           debug: none
-           optimize: 2
-           extensions: "UUID * View -"  # View requires C99, disable it
-           variation: ""
+        - os-id: 0.3.40  # 64-bit Target (built on this 64-bit platform)
+          config-file: vs2019-x64.r
+          standard: c99
+          debug: none
+          optimize: 2
+          variation: ""
+          extensions: >  # View disabled, why?
+            Library +
+            UUID *
+            View -
 
-         - os-id: 0.3.40  # 64-bit Target (built on this 64-bit platform)
-           config-file: vs2019-x64.r
-           standard: c99
-           debug: normal
-           optimize: 0
-           extensions: "UUID * ODBC +"  # View requires C99, disable it
-           variation: "-debug"
+        - os-id: 0.3.40  # 64-bit Target (built on this 64-bit platform)
+          config-file: vs2019-x64.r
+          standard: c99
+          debug: normal
+          optimize: 0
+          variation: "-debug"
+          extensions: >
+            Library +
+            UUID *
+            ODBC +
 
-         - os-id: 0.3.1  # 32-bit Target (built on this 64-bit platform)
-           config-file: vs2019-x86.r
-           standard: c++17  # c++11 is "default", no option for it
-           debug: normal
-           optimize: 0
-           extensions: "UUID * ODBC +"
-           variation: "-debug"
+        - os-id: 0.3.1  # 32-bit Target (built on this 64-bit platform)
+          config-file: vs2019-x86.r
+          standard: c++17  # c++11 is "default", no option for it
+          debug: normal
+          optimize: 0
+          variation: "-debug"
+          extensions: >
+            Library +
+            UUID *
+            ODBC +
 
 
     # See README: Environment Variables
@@ -151,6 +160,16 @@ jobs:
         git_commit_short="$(git show --format="%h" --no-patch)"
         echo "GIT_COMMIT=$git_commit" >> $GITHUB_ENV
         echo "GIT_COMMIT_SHORT=$git_commit_short" >> $GITHUB_ENV
+
+
+    # Many pieces of functionality have been broken out into separate repos.
+    # Currently they need to be in the `extensions/` folder to be found.
+    #
+    - name: Clone Extensions From Separate Repositories
+      run: |
+        cd extensions
+
+        git clone https://github.com/metaeducation/ren-c-library/ library --depth 1
 
 
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#
@@ -362,13 +381,12 @@ jobs:
 
 
     - name: Test UUID Extension Built As DLL
-      if: false  # See https://github.com/metaeducation/ren-c-library/
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
       run: |
         print "== Hello From R3 DLL Test! =="
         mod-uuid: load-extension join what-dir %build/r3-uuid.dll
         print "== UUID Extension Loaded =="
-        uuid: mod-uuid.generate
+        uuid: mod-uuid/generate
         assert [16 = length of uuid]
         print ["Succeeded:" uuid]
 

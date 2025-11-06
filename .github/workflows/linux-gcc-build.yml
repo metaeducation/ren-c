@@ -67,32 +67,39 @@ jobs:
       matrix:
        include:
 
-         - os-id: 0.4.40  # 64-bit Target (built on this 64-bit platform)
-           config-file: generic.r
-           compiler: gcc
-           standard: gnu99  # used for sigjmp_buf (signal safety)
-           debug: none
-           optimize: 2
-           extensions: ""
-           variation: ""
+        - os-id: 0.4.40  # 64-bit Target (built on this 64-bit platform)
+          config-file: generic.r
+          compiler: gcc
+          standard: gnu99  # used for sigjmp_buf (signal safety)
+          debug: none
+          optimize: 2
+          variation: ""
+          extensions: >
+            Library +
+            UUID *
 
-         - os-id: 0.4.40  # 64-bit Target (built on this 64-bit platform)
-           config-file: generic.r
-           compiler: gcc
-           standard: gnu99  # used for sigjmp_buf (signal safety)
-           debug: normal
-           optimize: g
-           extensions: "ODBC +"
-           variation: "-debug"  # !!! Maybe -debug-odbc ?
+        - os-id: 0.4.40  # 64-bit Target (built on this 64-bit platform)
+          config-file: generic.r
+          compiler: gcc
+          standard: gnu99  # used for sigjmp_buf (signal safety)
+          debug: normal
+          optimize: g
+          variation: "-debug"  # !!! Maybe -debug-odbc ?
+          extensions: >
+            Library +
+            UUID *
+            ODBC +
 
-         - os-id: 0.4.4  # 32-bit Target (built on this 64-bit platform)
-           config-file: generic.r
-           compiler: g++
-           standard: c++17  # c++11 is "default", no option for it
-           debug: normal
-           optimize: g
-           extensions: ""  # TBD: ODBC for 32-bit?
-           variation: ""
+        - os-id: 0.4.4  # 32-bit Target (built on this 64-bit platform)
+          config-file: generic.r
+          compiler: g++
+          standard: c++17  # c++11 is "default", no option for it
+          debug: normal
+          optimize: g
+          variation: ""
+          extensions: >  # TBD: ODBC for 32-bit?
+            Library +
+            UUID *
 
 
     # See README: Environment Variables
@@ -141,6 +148,16 @@ jobs:
         git_commit_short="$(git show --format="%h" --no-patch)"
         echo "GIT_COMMIT=$git_commit" >> $GITHUB_ENV
         echo "GIT_COMMIT_SHORT=$git_commit_short" >> $GITHUB_ENV
+
+
+    # Many pieces of functionality have been broken out into separate repos.
+    # Currently they need to be in the `extensions/` folder to be found.
+    #
+    - name: Clone Extensions From Separate Repositories
+      run: |
+        cd extensions
+
+        git clone https://github.com/metaeducation/ren-c-library/ library --depth 1
 
 
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#
@@ -384,6 +401,17 @@ jobs:
         ]
         assert [header = "Example Domain"]
         print ["Succeeded:" header]
+
+
+    - name: Test UUID Extension Built As DLL
+      shell: r3built --fragment {0}  # See README: Ren-C Code As Step
+      run: |
+        print "== Hello From R3 DLL Test! =="
+        mod-uuid: load-extension join what-dir %build/libr3-uuid.so
+        print "== UUID Extension Loaded =="
+        uuid: mod-uuid/generate
+        assert [16 = length of uuid]
+        print ["Succeeded:" uuid]
 
 
   #====# DEPLOY STEPS #=======================================================#

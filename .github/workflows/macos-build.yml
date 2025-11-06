@@ -60,25 +60,30 @@ jobs:
       matrix:
        include:
 
-         - os-id: 0.2.40  # 64-bit Target (built on this 64-bit platform)
-           config-file: generic.r
-           compiler: clang
-           standard: gnu99  # used for sigjmp_buf (signal safety)
-           debug: none
-           optimize: 2
-           extensions: "UUID *"
-           variation: ""
-           checked: false
+        - os-id: 0.2.40  # 64-bit Target (built on this 64-bit platform)
+          config-file: generic.r
+          compiler: clang
+          standard: gnu99  # used for sigjmp_buf (signal safety)
+          debug: none
+          optimize: 2
+          extensions: >
+            Library +
+            UUID *
+          variation: ""
+          checked: false
 
-         - os-id: 0.2.40  # 64-bit Target (built on this 64-bit platform)
-           config-file: generic.r
-           compiler: clang
-           standard: gnu99  # used for sigjmp_buf (signal safety)
-           debug: normal
-           optimize: 0
-           extensions: "UUID * ODBC +"
-           variation: "-debug"  # !!! Maybe -debug-odbc ?
-           checked: true
+        - os-id: 0.2.40  # 64-bit Target (built on this 64-bit platform)
+          config-file: generic.r
+          compiler: clang
+          standard: gnu99  # used for sigjmp_buf (signal safety)
+          debug: normal
+          optimize: 0
+          extensions: >
+            Library +
+            UUID *
+            ODBC +
+          variation: "-debug"  # !!! Maybe -debug-odbc ?
+          checked: true
 
         # MacOS has fully deprecated 32-bit targets...we'll assume that the
         # Windows/Linux/ARM 32-bit variants cover testing of 32-bit enough.
@@ -131,6 +136,16 @@ jobs:
         git_commit_short="$(git show --format="%h" --no-patch)"
         echo "GIT_COMMIT=$git_commit" >> $GITHUB_ENV
         echo "GIT_COMMIT_SHORT=$git_commit_short" >> $GITHUB_ENV
+
+
+    # Many pieces of functionality have been broken out into separate repos.
+    # Currently they need to be in the `extensions/` folder to be found.
+    #
+    - name: Clone Extensions From Separate Repositories
+      run: |
+        cd extensions
+
+        git clone https://github.com/metaeducation/ren-c-library/ library --depth 1
 
 
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#
@@ -284,13 +299,12 @@ jobs:
 
 
     - name: Test UUID Extension Built As DLL
-      if: false  # See https://github.com/metaeducation/ren-c-library/
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
       run: |
         print "== Hello From R3 DLL Test! =="
         mod-uuid: load-extension join what-dir %build/libr3-uuid.dylib
         print "== UUID Extension Loaded =="
-        uuid: mod-uuid.generate
+        uuid: mod-uuid/generate
         assert [16 = length of uuid]
         print ["Succeeded:" uuid]
 
