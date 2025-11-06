@@ -76,7 +76,7 @@ jobs:
           config-file: generic.r
           compiler: clang
           standard: gnu99  # used for sigjmp_buf (signal safety)
-          debug: normal
+          debug: asserts
           optimize: 0
           extensions: >
             Library +
@@ -195,7 +195,7 @@ jobs:
     #    harmless on Intel Macs if the directory does not exist.
     #
     - name: Get ODBC if Needed
-      if: (env.OS_ID == '0.2.40') && (env.DEBUG == 'normal')
+      if: contains(env.EXTENSIONS, 'ODBC +')
       run: |
         brew update > /dev/null  # [1]
 
@@ -310,6 +310,21 @@ jobs:
 
 
   #====# UPLOAD STEP #========================================================#
+
+
+    # On macOS, even if you compile an executable without "-g" debug info,
+    # it's a bit bigger than it needs to be becase of symbol tables and
+    # metadata used for linking, stack traces, and dynamic loading.  Make it
+    # a bit smaller an upload by stripping it.
+    #
+    # Note: You cannot strip code that uses macOS APIs, e.g. libr3-uuid.dylib
+    # or it errors: "symbols referenced by indirect symbol table entries that
+    # can't be stripped" (_CFRelease, _CFUUIDCreate, _CFUUIDGetUUIDBytes)
+    #
+    - name: Strip The Executable For Smaller Upload Size
+      if: true  # disable and use `debug: normal` in matrix to keep info
+      run: |
+        strip "$R3BUILT"
 
 
     # This action configures the AWS keys stored in GitHub's "Secrets" for

@@ -66,9 +66,6 @@ if #"/" != last wasi-sysroot-dir [
 compiler: 'clang
 compiler-path: join wasi-sdk-dir %bin/clang
 
-stripper: 'strip
-stripper-path: join wasi-sdk-dir %bin/strip
-
 ; Historically, checked builds of Emscripten did not include asserts of the
 ; whole codebase...trusting the desktop builds to test that.  The only part
 ; that had asserts on was the JavaScript extension, which the desktop builds

@@ -11,9 +11,6 @@ standard: default ['c++]
 compiler: 'gcc
 compiler-path: %x86_64-w64-mingw32-g++
 
-stripper: 'strip
-stripper-path: %x86_64-w64-mingw32-strip
-
 ; When using <stdint.h> with some older compilers, these definitions are
 ; needed, otherwise you won't get INT32_MAX or UINT64_C() etc.
 ;

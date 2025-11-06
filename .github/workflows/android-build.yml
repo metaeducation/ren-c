@@ -98,7 +98,7 @@ jobs:
           #
         #  ndk-revision: r13  # released Oct 2016
         #  standard: c99
-        #  debug: normal
+        #  debug: asserts
         #  extensions: "TCC +"
         #  os-id: 0.13.2
         #  config-file: android-cross-compiled.r  # Build ARM with x64 compiler
@@ -110,7 +110,7 @@ jobs:
           #
           ndk-revision: r21  # released Jan 2021
           standard: c99
-          debug: normal
+          debug: asserts
           extensions: "TCC +"
           os-id: 0.13.2
           config-file: android-cross-compiled.r  # Build ARM with x64 compiler

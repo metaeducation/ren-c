@@ -1190,14 +1190,6 @@ rebmake.default-compiler: pick rebmake (any [
 ]
 rebmake.default-compiler/check opt user-config.compiler-path
 
-rebmake.default-stripper: pick rebmake (any [
-    user-config.stripper
-    'strip
-]) else [
-    panic ["Unknown stripper type in configuration:" mold user-config.stripper]
-]
-rebmake.default-stripper/check opt user-config.stripper-path
-
 
 === "GENERATE OVERALL APPLICATION CONFIGURATION" ===
 
@@ -1804,14 +1796,6 @@ for-each 'ext extensions [
                 (opt spread app-config.libraries)
                 (opt spread ext-objlib.libraries)
             ]
-            post-build-commands: all [
-                off? cfg-symbols
-                reduce [
-                    make rebmake.cmd-strip-class [
-                        file: join output opt rebmake.target-platform.dll-suffix
-                    ]
-                ]
-            ]
 
             ldflags: compose [
                 (opt spread ext.ldflags)
@@ -1984,15 +1968,6 @@ app: make rebmake.application-class [
         (spread app-config.libraries)
         (main)
     ]
-    post-build-commands: either on? cfg-symbols [
-        null
-    ][
-        reduce [
-            make rebmake.cmd-strip-class [
-                file: join output opt rebmake.target-platform.exe-suffix
-            ]
-        ]
-    ]
 
     searches: app-config.searches
     ldflags: app-config.ldflags
@@ -2056,23 +2031,6 @@ clean: make rebmake.entry-class [
     ]
 ]
 
-check: make rebmake.entry-class [
-    target: 'check  ; phony target
-
-    depends: append (copy dynamic-libs) app
-
-    commands: collect [
-        keep make rebmake.cmd-strip-class [
-            file: join app.output opt rebmake.target-platform.exe-suffix
-        ]
-        for-each 's dynamic-libs [
-            keep make rebmake.cmd-strip-class [
-                file: join s.output opt rebmake.target-platform.dll-suffix
-            ]
-        ]
-    ]
-]
-
 solution: make rebmake.solution-class [
     name: 'app
 
@@ -2087,8 +2045,7 @@ solution: make rebmake.solution-class [
         app
         library
         dynamic-libs
-        dynamic-ext-objlibs  ; !!! Necessary?
-        check
+        dynamic-ext-objlibs  ; !!! Necessary? (seems implicit...?)
         clean
     ]
 

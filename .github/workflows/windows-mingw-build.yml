@@ -104,7 +104,7 @@ jobs:
          - os-id: 0.3.1  # 32-bit Target (built on this 64-bit platform)
            config-file: mingw-x86.r
            standard: c99
-           debug: normal
+           debug: asserts
            optimize: 0
            extensions: "Network - Filesystem - Process - Locale - DNS -"
            variation: ""  # ^-- Note

@@ -73,7 +73,7 @@ jobs:
 
          - os-id: 0.4.40  # 64-bit Linux (can run executable on this container)
            config-file: tcc.r
-           debug: normal
+           debug: asserts
 
 
     # See README: Environment Variables

@@ -82,7 +82,7 @@ jobs:
           config-file: generic.r
           compiler: gcc
           standard: gnu99  # used for sigjmp_buf (signal safety)
-          debug: normal
+          debug: asserts
           optimize: g
           variation: "-debug"  # !!! Maybe -debug-odbc ?
           extensions: >
@@ -94,7 +94,7 @@ jobs:
           config-file: generic.r
           compiler: g++
           standard: c++17  # c++11 is "default", no option for it
-          debug: normal
+          debug: asserts
           optimize: g
           variation: ""
           extensions: >  # TBD: ODBC for 32-bit?
@@ -415,6 +415,17 @@ jobs:
 
 
   #====# DEPLOY STEPS #=======================================================#
+
+
+    # On Linux, even if you compile an executable without "-g" debug info,
+    # it's a bit bigger than it needs to be becase of symbol tables and
+    # metadata used for linking, stack traces, and dynamic loading.  Make it
+    # a bit smaller an upload by stripping it.
+    #
+    - name: Strip The Executable For Smaller Upload Size
+      if: true  # disable and use `debug: normal` in matrix to keep info
+      run: |
+        strip "$R3BUILT"
 
 
     # This action configures the AWS keys stored in GitHub's "Secrets" for

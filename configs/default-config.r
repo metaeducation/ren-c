@@ -36,9 +36,6 @@ rebol-tool: null  ; fallback value if system.options.boot unavailable
 compiler: null  ; e.g. g++ clang etc. default to cc if not set
 compiler-path: null  ; will use compiler name as default if not overridden
 
-stripper: null  ; will use strip if nothing is set
-stripper-path: null
-
 debug: 'none  ; [none asserts symbols sanitize]
 
 ; one of 'no', 1, 2 or 4

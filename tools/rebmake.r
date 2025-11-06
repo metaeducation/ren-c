@@ -49,7 +49,6 @@ if not find (words of import/) 'into [  ; See %import-shim.r
 import <bootstrap-shim.r>
 
 default-compiler: null
-default-stripper: null
 
 target-platform: null
 
@@ -167,7 +166,6 @@ platform-class: make object! [
 
     gen-cmd-create: ~
     gen-cmd-delete: ~
-    gen-cmd-strip: ~
 ]
 
 unknown-platform: make platform-class [
@@ -197,18 +195,6 @@ posix: make platform-class [
         cmd [object!]
     ][
         return spaced ["rm -fr" cmd.file]
-    ]
-
-    gen-cmd-strip: method [
-        return: [text!]
-        cmd [object!]
-    ][
-        if let tool: any [get $cmd.strip, get $default-stripper] [
-            let b: ensure block! tool/commands cmd.file opt cmd.options
-            assert [1 = length of b]
-            return b.1
-        ]
-        return ""
     ]
 ]
 
@@ -272,14 +258,6 @@ windows: make platform-class [
         ][
             spaced ["if exist" f "del /Q" f]
         ]
-    ]
-
-    gen-cmd-strip: method [
-        return: [text!]
-        cmd [object!]
-    ][
-        print "Note: STRIP command not implemented for MSVC"
-        return ""
     ]
 ]
 
@@ -988,50 +966,6 @@ cl: make compiler-class [
 ]
 
 
-strip-class: make object! [
-    class: #strip
-    name: null
-    id: null  ; flag prefix
-    exec-file: null
-    options: null
-    commands: method [
-        return: [block!]
-        target [file!]
-        params [<opt> block! any-string?]
-    ][
-        return reduce [spaced collect [
-            keep any [(file-to-local:pass opt .exec-file) "strip"]
-            params: default [options]
-            switch try type-of params [  ; switch:type not in bootstrap
-                null [noop]
-                block! [
-                    for-each 'flag params [
-                        keep filter-flag flag .id
-                    ]
-                ]
-                text! [
-                    keep params
-                ]
-                panic
-            ]
-            keep file-to-local target
-        ]]
-    ]
-    check: does [
-        ...  ; overridden
-    ]
-]
-
-strip: make strip-class [
-    id: ["gcc" "gnu"]
-    check: method [
-        return: []
-        exec [<opt> file! text!]
-    ][
-        .exec-file: exec: default ["strip"]
-    ]
-]
-
 ; includes/definitions/cflags will be inherited from its immediately ancester
 object-file-class: make object! [
     class: #object-file
@@ -1144,13 +1078,6 @@ cmd-delete-class: make object! [
     file: ~
 ]
 
-cmd-strip-class: make object! [
-    class: #cmd-strip
-    file: ~
-    options: null
-    strip: null
-]
-
 generator-class: make object! [
     class: #generator
 
@@ -1158,7 +1085,6 @@ generator-class: make object! [
 
     gen-cmd-create: null
     gen-cmd-delete: null
-    gen-cmd-strip: null
 
     gen-cmd: method [
         return: [text!]
@@ -1178,14 +1104,6 @@ generator-class: make object! [
                     get $.gen-cmd-delete
                     get $target-platform/gen-cmd-delete
                 ][
-                    cmd
-                ]
-            ]
-            #cmd-strip [
-                apply any [
-                    get $.gen-cmd-strip
-                    get $target-platform/gen-cmd-strip
-                ] compose [
                     cmd
                 ]
             ]
@@ -1209,7 +1127,7 @@ generator-class: make object! [
         if object? cmd [
             assert [
                 find [
-                    #cmd-create #cmd-delete #cmd-strip
+                    #cmd-create #cmd-delete
                 ] cmd.class
             ]
             cmd: ./gen-cmd cmd
@@ -1368,7 +1286,6 @@ makefile: make generator-class [
     ;
     /gen-cmd-create: get $posix.gen-cmd-create
     /gen-cmd-delete: get $posix.gen-cmd-delete
-    /gen-cmd-strip: get $posix.gen-cmd-strip
 
     gen-rule: method [
         return: "Possibly multi-line text for rule, with extra newline @ end"
@@ -1544,7 +1461,6 @@ nmake: make makefile [
     ; reset them, so they will be chosen by the target platform
     gen-cmd-create: null
     gen-cmd-delete: null
-    gen-cmd-strip: null
 ]
 
 ; For mingw-make on Windows
@@ -1552,7 +1468,6 @@ mingw-make: make makefile [
     ; reset them, so they will be chosen by the target platform
     gen-cmd-create: null
     gen-cmd-delete: null
-    gen-cmd-strip: null
 ]
 
 ; Execute the command to generate the target directly
@@ -1573,9 +1488,8 @@ export execution: make generator-class [
 
     ; these GETs are null tolerant
     ;
-    gen-cmd-create: get $host.gen-cmd-create
-    gen-cmd-delete: get $host.gen-cmd-delete
-    gen-cmd-strip: get $host.gen-cmd-strip
+    /gen-cmd-create: get $host.gen-cmd-create
+    /gen-cmd-delete: get $host.gen-cmd-delete
 
     run-target: method [
         return: []
