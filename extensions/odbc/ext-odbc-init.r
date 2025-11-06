@@ -163,15 +163,16 @@ sqlform: func [
         integer! word! [as text! value]
         tuple! [mold value]
 
-        ; !!! We need to express literal SQL somehow.  Things like 'T' might be
-        ; legal SQL but it's a bad pun to have that be a QUOTED? WORD! named
-        ; {T'}.  The only answers we have are to either use full on string
-        ; interpolation and escape Rebol variables into it (not yet available)
-        ; or to make it so a string in SQL is double-stringed, e.g. -["foo"]-.
+        ; !!! Rather than use string interpolation, we turn WORD!s into SQL
+        ; text...but that can't cover everything.  Using TEXT! for that
+        ; literal SQL has the problem that it looks like it has quotes around
+        ; it, however the quotes don't appear in the SQL.  So you have to
+        ; double escape to get quotes:
         ;
-        ; We *could* make it so that this is done via some special operator,
-        ; like ^(-['T']-) to say "I want this to be spliced in the statement.
-        ; Then "foo" and -[foo]- could be treated as SQL strings.  Review.
+        ;     -["this will be quoted in the generated SQL"]-
+        ;     "this is literal SQL, with no quotes"
+        ;
+        ; Better ideas welcome.  But that's just the dialect state for now.
         ;
         text! [value]
 
@@ -197,11 +198,11 @@ sqlform: func [
             "?"
         ]
 
-        word?:metaform/ [
+        word?:tied/ [  ; $var
             try as text! get:groups value
         ]
 
-        group?:metaform/ [
+        group?:tied/ [  ; $(...)
             let ^product: eval as block! plain value
             if not void? ^product [
                 as text! ^product
@@ -220,7 +221,7 @@ odbc-execute: func [
     "Run a query in the ODBC extension using the Rebol SQL query dialect"
 
     statement [port!]
-    query "SQL text, or block that runs SPACED with ^^(...) as parameters"
+    query "SQL text, or block that runs SPACED with $(...) as parameters"
         [text! block!]
     :parameters "Explicit parameters (used if SQL string contains `?`)"
         [block!]

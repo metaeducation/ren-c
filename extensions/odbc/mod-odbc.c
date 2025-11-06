@@ -27,7 +27,7 @@
 //
 // The driver is made to handle queries which look like:
 //
-//     ["select * from tables where (name = ?) and (age = ?)" {Brian} 49]
+//     ["select * from tables where (name = ?) and (age = ?)" -[Brian]- 50]
 //
 // The ? notation for substitution points is what is known as a "parameterized
 // query".  The reason it is supported at the driver level (instead of making
@@ -38,7 +38,7 @@
 // An experimental SQL dialect is implemented in the usermode portion of the
 // extension, which allows you to write your SQL as a BLOCK! of words and
 // other symbols, forming the words as text, turning GROUP!s into parentheses
-// and doing parameterized variable subsitutions with ^WORD!s.  So if you
+// and doing parameterized variable subsitutions with @WORD!s.  So if you
 // were to write the Rebol code:
 //
 //     fptitle: "Title"
@@ -47,7 +47,7 @@
 //
 //     sql-execute [
 //         INSERT INTO fps (title, fname, surname)
-//         VALUES (^fptitle, ^fpinits, ^fpname)
+//         VALUES (@fptitle, @fpinits, @fpname)
 //     ]
 //
 // What gets passed to the driver will look like:
@@ -57,7 +57,7 @@
 //        "Title" "Inits" "Name"
 //     ]
 //
-// (Again, this is experimental, and the choice of ^WORD! is not final.)
+// (Again, this is experimental, and the choice of @WORD! is not final.)
 //
 
 #include "reb-config.h"
