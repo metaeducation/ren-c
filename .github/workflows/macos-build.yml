@@ -65,25 +65,25 @@ jobs:
           compiler: clang
           standard: gnu99  # used for sigjmp_buf (signal safety)
           debug: none
+          variation: ""
           optimize: 2
+          checked: false
           extensions: >
             Library +
             UUID *
-          variation: ""
-          checked: false
 
         - os-id: 0.2.40  # 64-bit Target (built on this 64-bit platform)
           config-file: generic.r
           compiler: clang
           standard: gnu99  # used for sigjmp_buf (signal safety)
           debug: asserts
+          variation: "-debug"  # !!! Maybe -debug-odbc ?
           optimize: 0
+          checked: true
           extensions: >
             Library +
             UUID *
             ODBC +
-          variation: "-debug"  # !!! Maybe -debug-odbc ?
-          checked: true
 
         # macOS has fully deprecated 32-bit targets...we'll assume that the
         # Windows/Linux/ARM 32-bit variants cover testing of 32-bit enough.
@@ -201,8 +201,14 @@ jobs:
 
         brew install unixodbc
 
-        echo "Brew installed unixodbc at"
+        echo "Brew installed unixodbc at:"
         echo $(realpath $(brew --prefix unixodbc))  # [2]
+
+        echo "Header file directory is:"
+        echo $(realpath "$(brew --prefix unixodbc)/include")
+
+        echo "Static library location is:"
+        echo $(realpath "$(brew --prefix unixodbc)/lib/libodbc.a")
 
 
     # Show a little bit of sanity check information.

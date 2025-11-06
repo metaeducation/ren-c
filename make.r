@@ -1330,9 +1330,12 @@ append app-config.ldflags spread switch user-config.static [
     ]
     'yes [
         compose [
-            <gcc:-static-libgcc>
-            (? if yes? cfg-cplusplus [<gcc:-static-libstdc++>])
-            (? if on? cfg-sanitize [<gcc:-static-libasan>])
+            <gnu:-static-libgcc>
+            (? if yes? cfg-cplusplus [<gnu:-static-libstdc++>])
+            (? if on? cfg-sanitize [
+                <gnu:-static-libasan>
+                <clang:-static-libsan>  ; only works with asan despite no 'a'
+            ])
         ]
     ]
 
