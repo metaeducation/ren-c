@@ -49,9 +49,9 @@ export odbc-statement-of: func [
     ; and picking in ways that has to be sorted out.  So it's now a
     ; separate function.
 
-    statement: make statement-prototype []
+    let statement: make statement-prototype []
 
-    database: statement.database: port.locals
+    let database: statement.database: port.locals
 
     open-statement database statement
 
@@ -80,8 +80,8 @@ sys.util/make-scheme [
 
             let spec
             port.locals: open-connection case [
-                text? spec: select port.spec 'target [spec]
-                text? spec: select port.spec 'host [unspaced ["dsn=" spec]]
+                text? opt spec: select port.spec 'target [spec]
+                text? opt spec: select port.spec 'host [unspaced ["dsn=" spec]]
 
                 cause-error 'access 'invalid-spec port.spec
             ]
@@ -149,8 +149,8 @@ sys.util/make-scheme [
 sqlform: func [
     "Helper for producing SQL string from SQL dialect"
 
-    return: "Formed SQL string with ? in parameter spots"
-        [text! rune!]  ; rune will not have spaces around it when rendered
+    return: "Formed SQL string with ? in parameter spots, $GROUP! may vaporize"
+        [null? text! rune!]  ; rune won't have spaces around it when rendered
 
     parameters "Parameter block being gathered"
         [block!]
@@ -175,14 +175,14 @@ sqlform: func [
         ;
         text! [value]
 
-        group! [  ; recurse so that nested @var get added to parameters
+        group! [  ; recurse so that nested $var get added to parameters
             spaced collect [
                 keep "("
                 for-next 'pos value [
                     if new-line? pos [keep newline]
-                    keep sqlform parameters inside value :pos.1
+                    keep opt sqlform parameters inside value pos.1
                 ]
-                if new-line? tail value [keep newline]
+                if new-line? tail of value [keep newline]
                 keep ")"
             ]
         ]
@@ -198,17 +198,12 @@ sqlform: func [
         ]
 
         word?:metaform/ [
-            any [
-                try as text! get:groups value
-                ""
-            ]
+            try as text! get:groups value
         ]
 
         group?:metaform/ [
-            let ^product: eval as block! value
-            if void? ^product [
-                ""
-            ] else [
+            let ^product: eval as block! plain value
+            if not void? ^product [
                 as text! ^product
             ]
         ]
@@ -235,13 +230,13 @@ odbc-execute: func [
 
     if block? query [
         query: spaced collect [
-            let is-first: 'true
+            let is-first: okay
             for-next 'pos query [
-                if false? is-first [
+                if not is-first [
                     if new-line? pos [keep newline]
                 ]
-                is-first: 'false
-                keep sqlform parameters inside query :pos.1
+                is-first: null
+                keep opt sqlform parameters inside query pos.1
             ]
         ]
     ]

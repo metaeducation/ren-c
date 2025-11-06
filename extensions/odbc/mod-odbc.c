@@ -1555,7 +1555,7 @@ Value* ODBC_Column_To_Rebol_Value(
                 stamp->hour * 3600 + stamp->minute * 60 + stamp->second
             ),  // seconds
             rebI(fraction),  // billionths of a second (nanoseconds)
-            rebQ(nullptr),  // timezone (null)
+            "^void",  // timezone (none)  !!! better API way to make voids?
         ")"); }
 
     // SQL_BINARY, SQL_VARBINARY, and SQL_LONGVARBINARY were all requested
