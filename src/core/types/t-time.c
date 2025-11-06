@@ -303,6 +303,12 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
         }
         return Init_Time_Nanoseconds(OUT, DEC_TO_SECS(VAL_DECIMAL(arg)));
 
+      case TYPE_TEXT: { // "hh:mm:ss"
+        trap (
+          Transcode_One(OUT, TYPE_TIME, arg)
+        );
+        return OUT; }
+
       case TYPE_BLOCK: { // [hh mm ss]
         const Element* tail;
         const Element* item = List_At(&tail, arg);

@@ -339,17 +339,27 @@ jobs:
         fi
 
 
+    # We check to be sure the produced EXE reports the same time that the
+    # UNIX `date` command does.
+    #
+    # 1. Because the two times are (by necessity) captured at different
+    #    moments, we don't bother checking that the seconds line up (this is
+    #    more about making sure the coarse time and time zones are consistent
+    #    with the system).  But still, freak cases can happen where you catch
+    #    it on something like a minute turnover.  Address this just by doing
+    #    the process twice, and assume it's diminishingly rare to fail twice.
+    #
+    # 2. Research is ongoing into the difference between MAKE and TO.  One
+    #    idea of TO is that it is reversible, e.g. ("0" <=> 0) for converting
+    #    text to an integer.  But if you allow ("00" => 0) then it's not
+    #    reversible.  So a theory is that TO would not allow leading zeros,
+    #    while MAKE might be more forgiving.  This needs more thought, but
+    #    debug builds will panic if a TO transform doesn't reverse.
+    #
     - name: Check Time Matches
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
       run: |
-        ; Because the two times are (by necessity) captured at different
-        ; moments, we don't bother checking that the seconds line up (this is
-        ; more about making sure the coarse time and time zones are consistent
-        ; with the system).  But still, freak cases can happen where you catch
-        ; it on something like a minute turnover.  Address this just by doing
-        ; the process twice, and assume it's diminishingly rare to fail twice.
-        ;
-        repeat 2 [
+        repeat 2 [  ; try twice to gloss over freak minute rollovers [1]
           let r3time: now
           print ["R3 Time reported as:" r3time]
 
@@ -363,12 +373,12 @@ jobs:
           let time
           let zone
 
-          parse unixtime [
-              year: between <here> "-" (year: to integer! year)
-              month: between <here> "-" (month: to integer! month)
-              day: between <here> "T" (day: to integer! day)
-              time: across to ["-" | "+"] (time: to time! time)
-              zone: between <here> newline (zone: to time! zone)
+          parse unixtime [  ; use MAKE, not TO [2]
+              year: between <here> "-" (year: make integer! year)
+              month: between <here> "-" (month: make integer! month)
+              day: between <here> "T" (day: make integer! day)
+              time: across to ["-" | "+"] (time: make time! time)
+              zone: between <here> newline (zone: make time! zone)
           ]
 
           all [
