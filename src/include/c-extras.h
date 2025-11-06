@@ -422,6 +422,7 @@
 #elif defined(__MINGW32__) || defined(__MINGW64__)
     #define FINITE isfinite // With --std==c++98 MinGW still has isfinite
 #elif defined(_WIN32)  // 32-bit or 64-bit windows
+    #include <float.h> // Ensure _finite is declared
     #define FINITE _finite // The usual answer for Windows
 #else
     #define FINITE finite // The usual answer for POSIX
