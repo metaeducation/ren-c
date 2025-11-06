@@ -40,6 +40,8 @@ Rebol [
     ]--
 ]
 
+os-id: default [0.16.1]  ; 0.16.2 was "pthread" version, no longer supported
+
 host: #web  ; #web, or #node (not recently tested)
 
 ; When browsers run code, it's required that you yield control and return
@@ -87,8 +89,6 @@ abrupt-panic-model: #uses-try-catch  ; works in Firefox and Chrome
 ;
 top: 'library
 
-os-id: default [0.16.1]  ; 0.16.2 was "pthread" version, no longer supported
-
 ; emcc is actually clang, but we have to have special knowledge of it inside
 ; rebmake to know how to do DLLs as SIDE_MODULE, etc.
 ;
@@ -113,23 +113,8 @@ optimize: 's  ; currently optimization levels are WORD! or INTEGER! [1]
 ; https://webassembly.org/roadmap/
 ;
 extensions: to map! compose [
-    Clipboard -
-    Crypt -
     Console +
-    Debugger -
-    DNS -
-    Filesystem -
     JavaScript +
-    Locale -
-    Network -
-    ODBC -
-    Process -
-    Stdio -
-    TCC -
-    Time -
-    UUID -
-    UTF -
-    View -
 ]
 
 

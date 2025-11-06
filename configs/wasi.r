@@ -102,23 +102,11 @@ optimize: if yes? debug-wasi-extension [0] else ['s]
 ;      https://github.com/second-state/wasmedge-quickjs
 ;
 extensions: to map! compose [
-    Clipboard -
-    Crypt -
     Console +
-    Debugger -
-    DNS -
-    Filesystem -  ; libuv-based [1]
-    JavaScript -  ; emscripten only (embed QuickJS? [2])
-    Locale -
-    Network -  ; libuv-based [1]
-    ODBC -
-    Process -  ; no pipe2, separate out Call extension?
     Stdio +
-    TCC -
-    Time -  ; no sys/wait
-    UUID -
-    UTF -
-    View -
+    Filesystem -  ; libuv-based [1]
+    Network -  ; libuv-based [1]
+    JavaScript -  ; emscripten only (embed QuickJS? [2])
 ]
 
 
