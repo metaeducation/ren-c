@@ -237,7 +237,7 @@ jobs:
             debug: $DEBUG \
             optimize: $OPTIMIZE \
             git-commit: "-[$GIT_COMMIT]-" \
-            rigorous: no \
+            rigorous: yes \
             static: no \
             extensions: "$EXTENSIONS"
 

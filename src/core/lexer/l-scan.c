@@ -128,11 +128,29 @@ INLINE bool Scanner_Mode_Matches(Level* L, Byte mode) {
 }
 
 INLINE Sigil Sigil_From_Token(Token t) {
-    assert(t != cast(int, SIGIL_0));
-    assert(t <= cast(int, MAX_SIGIL));
+    assert(cast(int, t) != cast(int, SIGIL_0));
+    assert(cast(int, t) <= cast(int, MAX_SIGIL));
     return cast(Sigil, t);
 }
 
+// Make a merged Byte from class and value parts.  Using this macro and casting
+// avoids warnings you'd get from things like `LEX_DELIMIT|LEX_DELIMIT_END`
+// such as MSVC C5287: "operands are different enum types".
+//
+#define Lexmap_Byte(lexclass,lexvalue) \
+    (cast(Byte, (lexclass)) | cast(Byte, (lexvalue)))
+
+// control chars = spaces
+//
+#define LEX_DEFAULT  Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_SPACE)
+
+// In UTF8 C0, C1, F5, and FF are invalid.  Ostensibly set to default because
+// it's not necessary to use a bit for a special designation, since they
+// should not occur.
+//
+// !!! If a bit is free, should it be used for errors in the checked build?
+//
+#define LEX_UTFE  LEX_DEFAULT
 
 //
 // Maps each character to its lexical attributes, using
@@ -142,7 +160,7 @@ INLINE Sigil Sigil_From_Token(Token t) {
 //
 const Byte g_lex_map[256] =
 {
-    /* 00 EOF */    LEX_DELIMIT|LEX_DELIMIT_END,
+    /* 00 EOF */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_END),
     /* 01     */    LEX_DEFAULT,
     /* 02     */    LEX_DEFAULT,
     /* 03     */    LEX_DEFAULT,
@@ -152,10 +170,10 @@ const Byte g_lex_map[256] =
     /* 07     */    LEX_DEFAULT,
     /* 08 BS  */    LEX_DEFAULT,
     /* 09 TAB */    LEX_DEFAULT,
-    /* 0A LF  */    LEX_DELIMIT|LEX_DELIMIT_LINEFEED,
+    /* 0A LF  */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_LINEFEED),
     /* 0B     */    LEX_DEFAULT,
     /* 0C PG  */    LEX_DEFAULT,
-    /* 0D CR  */    LEX_DELIMIT|LEX_DELIMIT_RETURN,
+    /* 0D CR  */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_RETURN),
     /* 0E     */    LEX_DEFAULT,
     /* 0F     */    LEX_DEFAULT,
 
@@ -176,47 +194,46 @@ const Byte g_lex_map[256] =
     /* 1E     */    LEX_DEFAULT,
     /* 1F     */    LEX_DEFAULT,
 
-    /* 20     */    LEX_DELIMIT|LEX_DELIMIT_SPACE,
+    /* 20     */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_SPACE),
     /* 21 !   */    LEX_WORD,
-    /* 22 "   */    LEX_DELIMIT|LEX_DELIMIT_DOUBLE_QUOTE,
-    /* 23 #   */    LEX_SPECIAL|LEX_SPECIAL_POUND,
-    /* 24 $   */    LEX_SPECIAL|LEX_SPECIAL_DOLLAR,
-    /* 25 %   */    LEX_SPECIAL|LEX_SPECIAL_PERCENT,
+    /* 22 "   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_DOUBLE_QUOTE),
+    /* 23 #   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_POUND),
+    /* 24 $   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_DOLLAR),
+    /* 25 %   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_PERCENT),
     /* 26 &   */    LEX_WORD,
-    /* 27 '   */    LEX_SPECIAL|LEX_SPECIAL_APOSTROPHE,
-    /* 28 (   */    LEX_DELIMIT|LEX_DELIMIT_LEFT_PAREN,
-    /* 29 )   */    LEX_DELIMIT|LEX_DELIMIT_RIGHT_PAREN,
+    /* 27 '   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_APOSTROPHE),
+    /* 28 (   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_LEFT_PAREN),
+    /* 29 )   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_RIGHT_PAREN),
     /* 2A *   */    LEX_WORD,
-    /* 2B +   */    LEX_SPECIAL|LEX_SPECIAL_PLUS,
-    /* 2C ,   */    LEX_DELIMIT|LEX_DELIMIT_COMMA,
-    /* 2D -   */    LEX_SPECIAL|LEX_SPECIAL_MINUS,
-    /* 2E .   */    LEX_DELIMIT|LEX_DELIMIT_PERIOD,
-    /* 2F /   */    LEX_DELIMIT|LEX_DELIMIT_SLASH,
-
-    /* 30 0   */    LEX_NUMBER|0,
-    /* 31 1   */    LEX_NUMBER|1,
-    /* 32 2   */    LEX_NUMBER|2,
-    /* 33 3   */    LEX_NUMBER|3,
-    /* 34 4   */    LEX_NUMBER|4,
-    /* 35 5   */    LEX_NUMBER|5,
-    /* 36 6   */    LEX_NUMBER|6,
-    /* 37 7   */    LEX_NUMBER|7,
-    /* 38 8   */    LEX_NUMBER|8,
-    /* 39 9   */    LEX_NUMBER|9,
-    /* 3A :   */    LEX_DELIMIT|LEX_DELIMIT_COLON,
-    /* 3B ;   */    LEX_SPECIAL|LEX_SPECIAL_SEMICOLON,
-    /* 3C <   */    LEX_SPECIAL|LEX_SPECIAL_LESSER,
+    /* 2B +   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_PLUS),
+    /* 2C ,   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_COMMA),
+    /* 2D -   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_MINUS),
+    /* 2E .   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_PERIOD),
+    /* 2F /   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_SLASH),
+    /* 30 0   */    Lexmap_Byte(LEX_NUMBER, 0),
+    /* 31 1   */    Lexmap_Byte(LEX_NUMBER, 1),
+    /* 32 2   */    Lexmap_Byte(LEX_NUMBER, 2),
+    /* 33 3   */    Lexmap_Byte(LEX_NUMBER, 3),
+    /* 34 4   */    Lexmap_Byte(LEX_NUMBER, 4),
+    /* 35 5   */    Lexmap_Byte(LEX_NUMBER, 5),
+    /* 36 6   */    Lexmap_Byte(LEX_NUMBER, 6),
+    /* 37 7   */    Lexmap_Byte(LEX_NUMBER, 7),
+    /* 38 8   */    Lexmap_Byte(LEX_NUMBER, 8),
+    /* 39 9   */    Lexmap_Byte(LEX_NUMBER, 9),
+    /* 3A :   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_COLON),
+    /* 3B ;   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_SEMICOLON),
+    /* 3C <   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_LESSER),
     /* 3D =   */    LEX_WORD,
-    /* 3E >   */    LEX_SPECIAL|LEX_SPECIAL_GREATER,
+    /* 3E >   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_GREATER),
     /* 3F ?   */    LEX_WORD,
 
-    /* 40 @   */    LEX_SPECIAL|LEX_SPECIAL_AT,
-    /* 41 A   */    LEX_WORD|10,
-    /* 42 B   */    LEX_WORD|11,
-    /* 43 C   */    LEX_WORD|12,
-    /* 44 D   */    LEX_WORD|13,
-    /* 45 E   */    LEX_WORD|14,
-    /* 46 F   */    LEX_WORD|15,
+    /* 40 @   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_AT),
+    /* 41 A   */    Lexmap_Byte(LEX_WORD, 10),
+    /* 42 B   */    Lexmap_Byte(LEX_WORD, 11),
+    /* 43 C   */    Lexmap_Byte(LEX_WORD, 12),
+    /* 44 D   */    Lexmap_Byte(LEX_WORD, 13),
+    /* 45 E   */    Lexmap_Byte(LEX_WORD, 14),
+    /* 46 F   */    Lexmap_Byte(LEX_WORD, 15),
     /* 47 G   */    LEX_WORD,
     /* 48 H   */    LEX_WORD,
     /* 49 I   */    LEX_WORD,
@@ -238,19 +255,19 @@ const Byte g_lex_map[256] =
     /* 58 X   */    LEX_WORD,
     /* 59 Y   */    LEX_WORD,
     /* 5A Z   */    LEX_WORD,
-    /* 5B [   */    LEX_DELIMIT|LEX_DELIMIT_LEFT_BRACKET,
-    /* 5C \   */    LEX_SPECIAL|LEX_SPECIAL_BACKSLASH,
-    /* 5D ]   */    LEX_DELIMIT|LEX_DELIMIT_RIGHT_BRACKET,
+    /* 5B [   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_LEFT_BRACKET),
+    /* 5C \   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_BACKSLASH),
+    /* 5D ]   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_RIGHT_BRACKET),
     /* 5E ^   */    LEX_WORD,
-    /* 5F _   */    LEX_SPECIAL|LEX_SPECIAL_UNDERSCORE,
+    /* 5F _   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_UNDERSCORE),
 
     /* 60 `   */    LEX_WORD,
-    /* 61 a   */    LEX_WORD|10,
-    /* 62 b   */    LEX_WORD|11,
-    /* 63 c   */    LEX_WORD|12,
-    /* 64 d   */    LEX_WORD|13,
-    /* 65 e   */    LEX_WORD|14,
-    /* 66 f   */    LEX_WORD|15,
+    /* 61 a   */    Lexmap_Byte(LEX_WORD, 10),
+    /* 62 b   */    Lexmap_Byte(LEX_WORD, 11),
+    /* 63 c   */    Lexmap_Byte(LEX_WORD, 12),
+    /* 64 d   */    Lexmap_Byte(LEX_WORD, 13),
+    /* 65 e   */    Lexmap_Byte(LEX_WORD, 14),
+    /* 66 f   */    Lexmap_Byte(LEX_WORD, 15),
     /* 67 g   */    LEX_WORD,
     /* 68 h   */    LEX_WORD,
     /* 69 i   */    LEX_WORD,
@@ -272,10 +289,10 @@ const Byte g_lex_map[256] =
     /* 78 x   */    LEX_WORD,
     /* 79 y   */    LEX_WORD,
     /* 7A z   */    LEX_WORD,
-    /* 7B {   */    LEX_DELIMIT|LEX_DELIMIT_LEFT_BRACE,
-    /* 7C |   */    LEX_SPECIAL|LEX_SPECIAL_BAR,
-    /* 7D }   */    LEX_DELIMIT|LEX_DELIMIT_RIGHT_BRACE,
-    /* 7E ~   */    LEX_DELIMIT|LEX_DELIMIT_TILDE,
+    /* 7B {   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_LEFT_BRACE),
+    /* 7C |   */    Lexmap_Byte(LEX_SPECIAL, LEX_SPECIAL_BAR),
+    /* 7D }   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_RIGHT_BRACE),
+    /* 7E ~   */    Lexmap_Byte(LEX_DELIMIT, LEX_DELIMIT_TILDE),
     /* 7F DEL */    LEX_DEFAULT,
 
     // Odd Control Chars

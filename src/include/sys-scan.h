@@ -28,7 +28,7 @@
 // There is an optimization in place where the tokens for sigils align with
 // the sigil value, making it easy to get a sigil from a token.
 //
-enum TokenEnum {
+typedef enum {
     TOKEN_0 = 0,
     TOKEN_CARET = 1,  // SIGIL_META
     TOKEN_AT = 2,  // SIGIL_PIN
@@ -67,8 +67,7 @@ enum TokenEnum {
     TOKEN_CONSTRUCT,
     TOKEN_END,
     MAX_TOKEN = TOKEN_END
-};
-typedef enum TokenEnum Token;
+} Token;
 
 STATIC_ASSERT(TOKEN_CARET == cast(int, SIGIL_META));
 STATIC_ASSERT(TOKEN_AT == cast(int, SIGIL_PIN));
@@ -97,22 +96,21 @@ STATIC_ASSERT(TOKEN_DOLLAR == cast(int, SIGIL_TIE));
 //    yet-another-runtime cost when inlines aren't optimized out...instead
 //    just do it in release/optimized builds.
 
-extern const Byte g_lex_map[256];  // declared in %l-scan.c
+typedef Byte LexByte;
+extern const LexByte g_lex_map[256];  // declared in %l-scan.c
 
-typedef Byte Lex;
 
 #define LEX_SHIFT   5                   // shift for encoding classes
 #define LEX_CLASS   (3 << LEX_SHIFT)    // class bit field
 #define LEX_VALUE   (0x1F)              // value bit field
 
-enum LexClassEnum {  // encoded in LEX_CLASS field, order is important [1]
+typedef enum {  // encoded in LEX_CLASS field, order is important [1]
     LEX_CLASS_DELIMIT = 0,
     LEX_CLASS_SPECIAL,
     LEX_CLASS_WORD,
     LEX_CLASS_NUMBER
-};
+} LexClass;
 STATIC_ASSERT(LEX_CLASS_NUMBER < 4);
-typedef enum LexClassEnum LexClass;
 
 #define Get_Lex_Class(b) \
     cast(LexClass, Lex_Of(b) >> LEX_SHIFT)
@@ -135,7 +133,7 @@ enum LexClassMasksEnum {  // using an enum helps catch incorrect uses [2]
     }
 #else  // ensure Byte when optimizing, it's "free" [3]
     template<typename B>
-    INLINE Lex Lex_Of(B b) {
+    INLINE LexByte Lex_Of(B b) {
         static_assert(std::is_same<B,Byte>::value, "Lex_Of() not Byte");
         return g_lex_map[b];
     }
@@ -152,7 +150,7 @@ enum LexClassMasksEnum {  // using an enum helps catch incorrect uses [2]
 //
 // Delimiting Chars (encoded in the LEX_VALUE field)
 //
-enum LexDelimitEnum {
+typedef enum {
     LEX_DELIMIT_SPACE,              // 20 space
     LEX_DELIMIT_END,                // 00 null terminator, end of input
     LEX_DELIMIT_LINEFEED,           // 0A line-feed
@@ -184,9 +182,8 @@ enum LexDelimitEnum {
     LEX_DELIMIT_TILDE,              // 7E ~ - used only by quasiforms
 
     MAX_LEX_DELIMIT = LEX_DELIMIT_TILDE
-};
+} LexDelimit;
 STATIC_ASSERT(MAX_LEX_DELIMIT < 16);
-typedef enum LexDelimitEnum LexDelimit;
 
 #define Get_Lex_Delimit(b) \
     cast(LexDelimit, Get_Lex_Value(LEX_CLASS_DELIMIT, (b)))
@@ -224,7 +221,7 @@ STATIC_ASSERT(LEX_DELIMIT == 0 and LEX_DELIMIT_SPACE == 0);
 //
 //  Special Chars (encoded in the LEX_VALUE field)
 //
-enum LexSpecialEnum {               // The order is important!
+typedef enum {               // The order is important!
 
     LEX_SPECIAL_AT,                 // 40 @ - email
     LEX_SPECIAL_PERCENT,            // 25 % - file name
@@ -248,9 +245,8 @@ enum LexSpecialEnum {               // The order is important!
     LEX_SPECIAL_UTF8_ERROR,  // !!! This wasn't actually used e.g. by UTFE
 
     MAX_LEX_SPECIAL = LEX_SPECIAL_UTF8_ERROR
-};
+} LexSpecial;
 STATIC_ASSERT(MAX_LEX_SPECIAL < 16);
-typedef enum LexSpecialEnum LexSpecial;
 
 #define Get_Lex_Special(b) \
     cast(LexSpecial, Get_Lex_Value(LEX_CLASS_SPECIAL, (b)))
@@ -259,16 +255,6 @@ typedef enum LexSpecialEnum LexSpecial;
 #define Get_Lex_Number(b) \
     Get_Lex_Value(LEX_CLASS_NUMBER, (b))
 
-
-#define LEX_DEFAULT (LEX_DELIMIT|LEX_DELIMIT_SPACE)  // control chars = spaces
-
-// In UTF8 C0, C1, F5, and FF are invalid.  Ostensibly set to default because
-// it's not necessary to use a bit for a special designation, since they
-// should not occur.
-//
-// !!! If a bit is free, should it be used for errors in the checked build?
-//
-#define LEX_UTFE LEX_DEFAULT
 
 //
 // Characters not allowed in Words
@@ -289,7 +275,7 @@ typedef enum LexSpecialEnum LexSpecial;
 // Note, this function relies on LEX_WORD lex values having a LEX_VALUE
 // field of zero, except for hex values.
 //
-INLINE bool Try_Get_Lex_Hexdigit_Helper(Sink(Byte) nibble, Lex lex) {
+INLINE bool Try_Get_Lex_Hexdigit_Helper(Sink(Byte) nibble, LexByte lex) {
     if (not (lex >= LEX_WORD))  // inlining of Is_Lex_Word_Or_Number()
         return false;
     Byte value = lex & LEX_VALUE;

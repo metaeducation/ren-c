@@ -182,7 +182,7 @@ static Binary* Decode_Base2(const Byte* *src, REBLEN len, Byte delim)
         if (delim && *cp == delim)
             break;
 
-        Lex lex = Lex_Of(*cp);
+        LexByte lex = Lex_Of(*cp);
 
         if (lex >= LEX_NUMBER) {
             if (*cp == '0')
