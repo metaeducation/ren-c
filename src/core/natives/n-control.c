@@ -1152,7 +1152,7 @@ DECLARE_NATIVE(DEFAULT)
   //
   // 3. TRASH!, BLANK, and NULL are considered "defaultable".  VOID can't be
   //    stored in variables directly, but it might be that metavariables such
-  //    as (^x: void, ^x: default [1020]) should be willing to overwrite the
+  //    as (^x: ^void, ^x: default [1020]) should be willing to overwrite the
   //    void state.  Review.
 
     Element* steps = u_cast(Element*, SCRATCH);  // avoid double-eval [1]

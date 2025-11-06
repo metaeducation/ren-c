@@ -267,6 +267,14 @@ space?: func3 [x] [
 blank: blank?: ~#[No BLANK/BLANK? ~()~ in Bootstrap, Use SPACE/SPACE?]#~
 
 
+=== "ADD CARET TO VOID" ===
+
+; https://rebol.metaeducation.com/t/why-is-there-a-caret-to-use-void/2526
+
+^void: void/
+void: ~#[Use a caret if you want to refer to void, eventually can use ()]#~
+
+
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
 
 ; Even if you see you are using the COLLECT3 version of COLLECT, it's easy
@@ -424,7 +432,7 @@ spread: func3 [
 ][
     return case [
         null? :x [return null]
-        void? :x [return void]
+        void? :x [return ^void]
         <else> [reduce [#splice! x]]
     ]
 ]
@@ -602,7 +610,7 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
 
         if antiform? unlift product [
             if void? unlift product [
-                change3:part pos void 1
+                change3:part pos ^void 1
                 continue
             ]
             panic:blame [mold product "antiform compose found"] $return
@@ -1047,18 +1055,18 @@ blockify: func3 [x] [
 
 assert [[a b c d e] = append [a b c] spread [d e]]
 assert [[a b c [d e]] = append [a b c] [d e]]
-assert [[a b c] = append [a b c] void]
-assert [null = append void [d e]]
+assert [[a b c] = append [a b c] ^void]
+assert [null = append ^void [d e]]
 
 assert [[d e a b c] = head of insert [a b c] spread [d e]]
 assert [[[d e] a b c] = head of insert [a b c] [d e]]
-assert [[a b c] = head of insert [a b c] void]
-assert [null = insert void [d e]]
+assert [[a b c] = head of insert [a b c] ^void]
+assert [null = insert ^void [d e]]
 
 assert [[d e c] = head of change [a b c] spread [d e]]
 assert [[[d e] b c] = head of change [a b c] [d e]]
-assert [[a b c] = head of change [a b c] void]
-assert [null = change void [d e]]
+assert [[a b c] = head of change [a b c] ^void]
+assert [null = change ^void [d e]]
 
 === "END ENCLOSURE THAT AVOIDED OVERWRITING TOP-LEVEL DECLS" ===
 

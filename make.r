@@ -849,7 +849,7 @@ for-each 'entry read extension-dir [
         continue
     ]
 
-    user-config.extensions.(ext-name): void  ; remove
+    user-config.extensions.(ext-name): ^void  ; remove
 
     switch mode [
         '- [
@@ -1135,7 +1135,7 @@ help: func [
 ][
     if not topic [
         print help-object.usage
-        return
+        return ~
     ]
     topic: to-word topic
     print newline
@@ -1143,14 +1143,14 @@ help: func [
         for-each [topic msg] help-object [
             print msg
         ]
-        return
+        return ~
     ]
     let msg: select help-object topic
     if not msg [
         print ["Unknown topic:" topic]
         print newline
         print help-object.usage
-        return
+        return ~
     ]
     print msg
 ]
@@ -1160,7 +1160,7 @@ help: func [
 if commands [
     iterate (pin $commands) [
         if find ["-h" "-help" "--help"] commands.1 [
-            if second commands [  ; bootstrap commands.2 errors if null
+            if try second commands [  ; bootstrap commands.2 errors if null
                 help:topic second commands
             ] else [
                 help

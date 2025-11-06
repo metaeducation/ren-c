@@ -334,7 +334,7 @@ export /extract-generic-implementations: func [
                     replace name "_" "-"
 
                     replace type* "_" "-"
-                    replace type* "is-" void
+                    replace type* "is-" ^void
 
                     keep make generic-info! compose [
                         name: (name)
