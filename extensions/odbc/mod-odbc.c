@@ -660,14 +660,14 @@ SQLRETURN ODBC_BindParameter(
         sql_type = SQL_INTEGER;
         p->buffer_size = sizeof(SQLUINTEGER);
         p->buffer = rebAllocN(char, p->buffer_size);
-        *cast(SQLUINTEGER*, p->buffer) = rebUnboxInteger(v);
+        *cast(SQLUINTEGER*, p->buffer) = rebUnboxInteger64(v);  // headroom
         break; }
 
       case SQL_C_LONG: {  // signed INTEGER! in 32-bit negative range
         sql_type = SQL_INTEGER;
         p->buffer_size = sizeof(SQLINTEGER);  // use signed insertion
         p->buffer = rebAllocN(char, p->buffer_size);
-        *cast(SQLINTEGER*, p->buffer) = rebUnboxInteger(v);
+        *cast(SQLINTEGER*, p->buffer) = rebUnboxInteger(v);  // signed 32-bit
         break; }
 
       case SQL_C_UBIGINT: {  // unsigned INTEGER! above 32-bit positive range
@@ -1483,7 +1483,7 @@ Value* ODBC_Column_To_Rebol_Value(
         return rebInteger(*cast(SQLINTEGER*, col->buffer));
 
       case SQL_C_ULONG:  // signed: -2[31]..2[31] - 1
-        return rebInteger(*cast(SQLUINTEGER*, col->buffer));
+        return rebInteger64(*cast(SQLUINTEGER*, col->buffer));  // headroom
 
     // Special exception made for big integers, where seemingly MySQL
     // would not properly map smaller types into big integers if all

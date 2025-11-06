@@ -1956,7 +1956,7 @@ int64_t API_rebUnboxInteger64(
     }
 
     if (not Is_Integer(v))
-        panic ("rebUnboxInteger() called on non-INTEGER!");
+        panic ("rebUnboxInteger64() called on non-INTEGER!");
 
     return VAL_INT64(v);
 }
