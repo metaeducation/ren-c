@@ -239,6 +239,22 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 }}
 
 
+// Copy is a "new generic"; in order to make `copy port` delegate to the port
+// actor for things like the old ODBC scheme, it has to bridge here.
+//
+IMPLEMENT_GENERIC(COPY, Is_Port)
+{
+    INCLUDE_PARAMS_OF_COPY;
+
+    USED(ARG(VALUE));  // arguments passed through via level_
+    USED(ARG(PART));
+    USED(ARG(DEEP));
+
+    level_->u.action.label = Canon_Symbol(SYM_COPY);  // !!! Level_Verb() hack
+    return GENERIC_CFUNC(OLDGENERIC, Is_Port)(level_);
+}
+
+
 // The idea for dispatching a URL! is that it will dispatch to port schemes.
 // So it translates the request to open the port, then retriggers the action
 // on that port, then closes the port.
