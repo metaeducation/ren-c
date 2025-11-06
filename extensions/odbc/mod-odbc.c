@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2010-2011 Christian Ensel
-// Copyright 2017-2024 Ren-C Open Source Contributors
+// Copyright 2017-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -30,34 +30,7 @@
 //     ["select * from tables where (name = ?) and (age = ?)" -[Brian]- 50]
 //
 // The ? notation for substitution points is what is known as a "parameterized
-// query".  The reason it is supported at the driver level (instead of making
-// the usermode Rebol code merge into a single string) is to make it easier to
-// defend against SQL injection attacks.  This way, the scheme code does not
-// need to worry about doing SQL-syntax-aware string escaping.
-//
-// An experimental SQL dialect is implemented in the usermode portion of the
-// extension, which allows you to write your SQL as a BLOCK! of words and
-// other symbols, forming the words as text, turning GROUP!s into parentheses
-// and doing parameterized variable subsitutions with @WORD!s.  So if you
-// were to write the Rebol code:
-//
-//     fptitle: "Title"
-//     fpinits: "Inits"
-//     fpname: "Name"
-//
-//     sql-execute [
-//         INSERT INTO fps (title, fname, surname)
-//         VALUES (@fptitle, @fpinits, @fpname)
-//     ]
-//
-// What gets passed to the driver will look like:
-//
-//     [
-//        -[INSERT INTO fps (title, fname, surname) VALUES (?, ?, ?)]-
-//        "Title" "Inits" "Name"
-//     ]
-//
-// (Again, this is experimental, and the choice of @WORD! is not final.)
+// query".  See the README.md regarding the dialect built on top of this.
 //
 
 #include "reb-config.h"

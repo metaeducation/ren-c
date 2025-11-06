@@ -158,10 +158,23 @@ sqlform: func [
         [element?]
 ][
     return switch:type value [
+        block! [  ; recursive behavior (kicks off the process, $[] reuses...)
+            spaced collect [
+                let is-first: okay
+                for-next 'pos value [
+                    if not is-first [
+                        if new-line? pos [keep newline]
+                    ]
+                    is-first: null
+                    keep opt sqlform parameters inside value pos.1
+                ]
+            ]
+        ]
+
         comma! [join #"," space]  ; avoid spacing before the comma
 
-        integer! word! [as text! value]
-        tuple! [mold value]
+        integer! [form value]
+        word! [as text! value]
 
         ; !!! Rather than use string interpolation, we turn WORD!s into SQL
         ; text...but that can't cover everything.  Using TEXT! for that
@@ -188,24 +201,49 @@ sqlform: func [
             ]
         ]
 
-        word?:pinned/ [
-            append parameters get:groups value
-            "?"
-        ]
-
-        group?:pinned/ [
-            append parameters eval as block! value
-            "?"
-        ]
-
         word?:tied/ [  ; $var
-            try as text! get:groups value
+            append parameters get untie value
+            "?"
         ]
 
-        group?:tied/ [  ; $(...)
-            let ^product: eval as block! plain value
-            if not void? ^product [
-                as text! ^product
+        group?:tied/ [  ; $(expr)
+            append parameters eval untie value
+            "?"
+        ]
+
+        block?:tied/ [  ; $[expr] ... splice *non* text (where ? won't work)
+            value: untie value
+            let safe: okay
+            if <!> = try first value [
+                value: next value
+                safe: null
+            ]
+            let ^product: eval value
+            if void? ^product [
+                return null
+            ]
+            if safe and (text? product) [
+                panic [
+                    "$[expr] disallows TEXT! to protect against SQL injection"
+                    "You can use LOAD-ed data: BLOCK!s will be formed as SQL"
+                    "and things like WORD! and INTEGER! work.  If you are able"
+                    "to, you should favor the $var or $(expr) tools which use"
+                    "parameterized query and splits out the data, leaving a ?"
+                    "in the spot for the driver...avoiding confusing data for"
+                    "code, and that will support strings.  But only limited"
+                    "spots accept this.  If you're SURE you know what you are"
+                    "doing and want to splice a string, use $[<!> expr] to"
+                    "indicate you are aware of the risks."
+                ]
+            ]
+            switch type of product [
+                text! [product]
+                word! [as text! product]
+                integer! [form product]
+                block! [sqlform parameters product]
+                group! [sqlform parameters product]
+            ] else [
+                panic ["Bad type in $[expr] usage"]
             ]
         ]
     ]
@@ -230,16 +268,7 @@ odbc-execute: func [
     parameters: default [copy []]
 
     if block? query [
-        query: spaced collect [
-            let is-first: okay
-            for-next 'pos query [
-                if not is-first [
-                    if new-line? pos [keep newline]
-                ]
-                is-first: null
-                keep opt sqlform parameters inside query pos.1
-            ]
-        ]
+        query: sqlform parameters query
     ]
 
     if verbose [
