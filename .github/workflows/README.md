@@ -15,6 +15,7 @@ There's a bit of ambiguity in how GitHub uses the term "Action".  Our terms:
 
 * **GitHub Runner** - The virtual machine hosted by Azure that runs workflows.
 
+
 ## About GitHub Runners
 
 At time of writing, GitHub runners offer 2 cores on Windows and Linux hosts,
@@ -24,6 +25,7 @@ More information about the runners--including what software is available
 preinstalled--is here:
 
 https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+
 
 ## IMPORTANT - Minimize GitHub-Specific Syntax
 
@@ -40,6 +42,7 @@ Hence don't use special things like ${{ github.syntax }} where possible.
 Instead, capture these into plain old $ENVIRONMENT_VARIABLES.  And isolate any
 GitHub-specific features into their own step.  All build matrix variables
 should be proxied into environment variables at the start of the sript.
+
 
 ## !!! IMPORTANT - Untrusted Actions, Use Audited Hash !!!
 
@@ -72,6 +75,7 @@ given at least a cursory inspection each time that commit is updated.
 
 YCombinator thread: https://news.ycombinator.com/item?id=21844805
 
+
 ## Trusted Actions
 
 GitHub has verified accounts that host Actions, for entities like Microsoft,
@@ -80,7 +84,8 @@ Amazon, or specifically the GitHub service itself.
 We'll assume that it's okay to use those actions by tag, without any commit
 hash or need for extra review.
 
-# When To Trigger Builds
+
+## When To Trigger Builds
 
 We try to keep the builds somewhat reined in...to stay on the good side of
 GitHub and not exceed any quotas.  (If for no other reason, it's good to
@@ -108,6 +113,7 @@ Note that we could also use `if` conditions to control this, e.g.
     if: contains(github.event.head_commit.message, 'TCC')
 
 This could be done at the whole job level, or on individual steps.
+
 
 ## Using The Strict Erroring Bash Shell
 
@@ -151,7 +157,8 @@ https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#
 Be sure to preserve the `-e` setting if customizing the bash command further,
 and when using alternative shells consider how to make them error as well.
 
-# Ren-C Code As Step
+
+## Ren-C Code As Step
 
 Because GitHub CI lets you customize the shell, we can actually make the `run:`
 portion be Ren-C code.  This lets you cleanly span code across many lines, and
@@ -186,6 +193,7 @@ Most likely because that is the location where the main `shell:` is, and this
 is being inherited by `step:`/`shell:`.  Until that is fixed, you have to copy
 any shell program you want to use to that location.
 
+
 ## Checkout Action
 
 The checkout action checks-out your repository under $GITHUB_WORKSPACE
@@ -200,6 +208,7 @@ Note: This strangely starts you up in a directory like:
 
 The parent directory appears to contain the same files.  It's not clear
 why it's done this way...but presumably it's on purpose.
+
 
 ## Jobs
 
@@ -218,6 +227,7 @@ be on your own servers (e.g. AWS), or GitHub offers its own file services
 in the form of what are called "Artifacts":
 
 https://docs.github.com/en/actions/guides/storing-workflow-data-as-artifacts
+
 
 ## Steps
 
@@ -241,6 +251,7 @@ A step that only contains `uses:` is a means of running reusable code published
 in a separate repository (a "GitHub Action").  Please see notes above regarding
 cautions about that.  Also, always link to the repository for a used action in
 a comment so that the options (if any) are at hand.
+
 
 ## Environment Variables
 
@@ -269,6 +280,7 @@ a deprecated method:
 
 https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/
 
+
 ## If Statements
 
 You can control whether a step runs with an if statement.  Important to know
@@ -288,6 +300,7 @@ To avoid this frustration, don't use ${{ }} in the expressions:
 For documentation of the list of variables and operators available:
 
 https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions
+
 
 ## Build Matrix
 
@@ -318,6 +331,7 @@ tying too much of the process to run only on GitHub CI, it's best to capture
 them into environment variables.
 
 https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#using-environment-variables-in-a-matrix
+
 
 ## Portably Capturing Git Hashes
 
@@ -351,6 +365,23 @@ diagnostic code changes the hash!
 The ergonomics need improvement.  For now, the commit needs to be passed in
 dash-brackets or escaped quotes to be received as a string.
 
+
+## Divert mandb To No-Op
+
+There's a large amount of latency if you use `apt install` where it is
+"updating mandb triggers" (which relates to the "man" manual pages).
+
+The following makes a huge difference:
+
+    sudo dpkg-divert --local --rename --add /usr/bin/mandb
+    echo -e '#!/bin/sh\nexit 0' | sudo tee /usr/bin/mandb > /dev/null
+    sudo chmod +x /usr/bin/mandb
+
+You could also just uninstall mandb.  But according to AI, just making it a
+no-op is less disruptive (e.g. things won't reinstall it or say it's missing
+as a dependency).
+
+
 ## YAML >- To Make One Line From Many
 
 This operator is useful if you're writing something that is getting too long
@@ -364,6 +395,7 @@ This produces `this is my very very very long string`.  If you want a newline
 at the end, then use `>` instead of `>-`
 
 https://stackoverflow.com/a/21699210
+
 
 ## Further Research
 

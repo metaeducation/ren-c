@@ -126,6 +126,16 @@ jobs:
     #
     steps:  # (no indentatation needed below; so indent the minimum!)
 
+  #====# ACCELERATE APT INSTALL #============================================#
+
+    # See README: Divert mandb To No-Op
+    #
+    - name: Divert mandb to No-Op (speeds up apt significantly)
+      run: |
+        sudo dpkg-divert --local --rename --add /usr/bin/mandb
+        echo -e '#!/bin/sh\nexit 0' | sudo tee /usr/bin/mandb > /dev/null
+        sudo chmod +x /usr/bin/mandb
+
 
   #====# CHECKOUT STEPS #=====================================================#
 
