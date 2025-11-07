@@ -427,14 +427,7 @@ jobs:
               ]
           ]
           for-each 'url list [
-              ; !!! temporary, SPLIT-PATH in old executable reversed the
-              ; arguments and assumed filename was the primary return.
-              ; Once the new executable is deployed for the action, the
-              ; new rule will be used.
-              ;
-              ;   let [_ filename]: split-path url  ; new rule
-              ;
-              let [filename _]: split-path url
+              let [_ filename]: split-path url
 
               ; !!! Old EXE is having trouble reading modern crypto URLs
               ; so download via wget instead of Rebol read.
