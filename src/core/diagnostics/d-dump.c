@@ -103,12 +103,12 @@ void Dump_Info(void)
 
 
 //
-//  Dump_Stack: C
+//  Dump_Interpreter_Stack: C
 //
 // Simple debug routine to list the function names on the stack and what the
 // current feed value is.
 //
-void Dump_Stack(Level* L)
+void Dump_Interpreter_Stack(Level* L)
 {
     if (L == nullptr)
         L = TOP_LEVEL;
@@ -131,7 +131,7 @@ void Dump_Stack(Level* L)
         opt Line_Number_Of_Level(L)
     );
 
-    Dump_Stack(L->prior);
+    Dump_Interpreter_Stack(L->prior);
 }
 
 

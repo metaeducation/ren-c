@@ -449,6 +449,16 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+//=//// UNIXLIKE (VERY SKETCHY) BACKTRACE HEADER AVAILABILITY //////////////=//
+//
+// A very poor-man's implementation of a backtrace capability is provided by
+// backtrace() in <execinfo.h> on certain Unixlike platforms.
+//
+// See notes in %d-backtrace.c about why this is a sketchy feature!
+//
+#define HAVE_EXECINFO_H_AVAILABLE \
+    (TO_LINUX || TO_MACOS || TO_FREEBSD || TO_ANDROID)
+
 
 //=//// CONTROL TICK COUNTING IN THE TRAMPOLINE ///////////////////////////=//
 //

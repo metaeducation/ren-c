@@ -90,6 +90,9 @@ core: [
     c-word.c
 
     diagnostics/ -> [
+        d-backtrace.c [
+            <msc:/wd4668>  ; undefined winioctl.h defines, defaulting to 0
+        ]
         d-crash.c
         d-dump.c
         d-eval.c

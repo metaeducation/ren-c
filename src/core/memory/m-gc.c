@@ -1095,7 +1095,7 @@ REBLEN Fill_Sweeplist(Flex* sweeplist)
 //
 void Emergency_Shutdown_Gc_Debug(void)
 {
-    printf("!!! Emergency Shutdown of GC to try and allow Probe() to work");
+    printf("!!! Emergency Shutdown of GC to try and allow Probe() to work\n");
     g_gc.disabled = true;  // stop further GCs
 
     if (not g_gc.recycling)

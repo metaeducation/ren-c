@@ -98,7 +98,7 @@
 //    model to cross client stacks.
 //
 
-#define REBOL_LEVEL_SHORTHAND_MACROS 0  // we include Windows.h for errors
+#define REBOL_LEVEL_SHORTHAND_MACROS  0  // we include Windows.h for errors
 #include "sys-core.h"
 
 static bool g_api_initialized = false;

@@ -72,6 +72,19 @@
 #endif
 
 
+// Because dereferencing pointers in sensitive situations can crash, we don't
+// want output buffered...make sure we see as much as we can before a crash.
+//
+#if RUNTIME_CHECKS || DEBUG_FANCY_CRASH
+    #define Printf_Stderr(...) do { \
+        fprintf(stderr, __VA_ARGS__); \
+        fflush(stderr); /* stderr not necessarily unbuffered in all cases */ \
+    } while (0)
+#else
+    #define Printf_Stderr(...)  NOOP
+#endif
+
+
 #if DEBUG_FANCY_CRASH
     #define crash(p) \
         Crash_Core((p), TICK, __FILE__, __LINE__)

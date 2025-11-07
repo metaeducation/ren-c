@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -21,6 +21,18 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// Abnormal termination of Rebol.  The checked build is designed to present
+// as much diagnostic information as it can on the passed-in pointer, which
+// includes where a Flex* was allocated or freed.  Or if a Value* is
+// passed in it tries to say what tick it was initialized on and what Array
+// it lives in.  If the pointer is a simple UTF-8 string pointer, then that
+// is delivered as a message.
+//
+// This can be triggered via the macros crash() and crash_at(), which are
+// unsalvageable situations in the core code.  It can also be triggered by
+// the CRASH native, and since it can be hijacked that offers hookability for
+// "recoverable" forms of CRASH.
+//
 
 #include "sys-core.h"
 
@@ -28,10 +40,6 @@
 // Size of crash buffers
 #define PANIC_BUF_SIZE 512
 
-#ifdef HAVE_EXECINFO_AVAILABLE
-    #include <execinfo.h>
-    #include <unistd.h>  // STDERR_FILENO
-#endif
 
 // Recursive crash() can generate a very large spew of output until the stack
 // overflows.  Stop reentrant crashes (though it would be good to find the
@@ -42,13 +50,57 @@ static bool g_already_crashing = false;
 
 #if DEBUG_FANCY_CRASH
 
-// Because dereferencing pointers in sensitive situations can crash, we don't
-// want output buffered...make sure we see as much as we can before a crash.
+// Rather than simply calling abort(), we try to get as much diagnostic info
+// as possible.  This includes stack traces if available...or breaking into a
+// C integrated debugger if one is attached.
 //
-#define Printf_Stderr(...) do { \
-    fprintf(stderr, __VA_ARGS__); \
-    fflush(stderr); \
-} while (0)
+static ATTRIBUTE_NO_RETURN void Crash_Of_Last_Resort(void)
+{
+    Printf_Stderr("\n\n=== !!! Crash_Of_Last_Resort() !!! ===\n");
+
+  print_stack_trace: {
+
+  // 1. Emscripten actually gives an informative stack trace through a plain
+  //    abort()...BUT you have to build with `-g` and `-s ASSERTIONS=1`.
+  //
+  // 2. If Address Sanitizer is enabled, it's preferable to dereference a bad
+  //    pointer to crash.  This should trigger ASAN to print out a useful stack
+  //    trace with symbols and line numbers of each frame.
+  //
+  // 3. A crappier stack trace may be possible even without ASAN.  But see the
+  //    caveats in the comments on HAVE_EXECINFO_H_AVAILABLE about how bad an
+  //    idea it is to build without `-fvisibility=hidden` to get this feature
+  //    on Unix-like systems.
+
+  #if TO_EMSCRIPTEN
+    Printf_Stderr("Emscripten build: just abort() to get the stack trace...");
+    abort();  // shows trace in checked build [1]
+  #elif defined(__SANITIZE_ADDRESS__)
+    Printf_Stderr("Dereferencing bad pointer for a backtrace from ASAN...\n");
+    volatile int *bad_ptr = p_cast(int*, 0x1);
+    *bad_ptr = 42;  // crash, but get a good stack trace [2]
+    Printf_Stderr("...dereference didn't crash, likely no trace showed.\n\n");
+  #else
+    Print_C_Stack_Trace_If_Available();  // try crappier stack trace [3]
+  #endif
+
+} try_breaking_into_c_debugger: {
+
+  // There's no easy way to detect if you're running under a debugger, but if
+  // you are then a debug_break() call should get you the ability to inspect
+  // the stack and variables at this point.
+
+  #if RUNTIME_CHECKS
+    Printf_Stderr("Trying a debug_break() to hook up to a C debugger...\n");
+    debug_break();  // see %debug_break.h
+    Printf_Stderr("...but debug_break() didn't terminate in crash()\n\n");
+  #endif
+
+} give_up_and_abort: {
+
+    Printf_Stderr("Oh well.  We give up.  Just calling abort()\n");
+    abort();
+}}
 
 
 //
@@ -69,7 +121,7 @@ ATTRIBUTE_NO_RETURN void Crash_With_Stub_Debug(const Stub* s)
         Printf_Stderr("managed");
     else
         Printf_Stderr("unmanaged");
-    Printf_Stderr(" Stub");
+    Printf_Stderr(" Stub\n");
 
   #if DEBUG_STUB_ORIGINS
     #if TRAMPOLINE_COUNTS_TICKS
@@ -96,7 +148,7 @@ ATTRIBUTE_NO_RETURN void Crash_With_Stub_Debug(const Stub* s)
     Printf_Stderr("DEBUG_STUB_ORIGINS not enabled, no more info");
   #endif
 
-    abort();
+    Crash_Of_Last_Resort();
 }
 
 
@@ -149,7 +201,7 @@ ATTRIBUTE_NO_RETURN void Crash_With_Cell_Debug(const Cell* c) {
             Crash_With_Stub_Debug(cast(Stub*, CELL_PAYLOAD_2(c)));
         }
         Printf_Stderr("No payload1 or payload2 for further info, aborting\n");
-        abort();
+        Crash_Of_Last_Resort();
     }
 
     if (Is_Base_A_Stub(containing))
@@ -168,23 +220,20 @@ ATTRIBUTE_NO_RETURN void Crash_With_Cell_Debug(const Cell* c) {
     Crash_With_Cell_Debug(c + 1);
 }
 
+#else  // e.g. (! DEBUG_FANCY_CRASH)
+
+static ATTRIBUTE_NO_RETURN void Crash_Of_Last_Resort(void) {
+    abort();
+}
+
 #endif  // DEBUG_FANCY_CRASH
 
 
 //
 //  Crash_Core: C
 //
-// Abnormal termination of Rebol.  The checked build is designed to present
-// as much diagnostic information as it can on the passed-in pointer, which
-// includes where a Flex* was allocated or freed.  Or if a Value* is
-// passed in it tries to say what tick it was initialized on and what Array
-// it lives in.  If the pointer is a simple UTF-8 string pointer, then that
-// is delivered as a message.
-//
-// This can be triggered via the macros crash() and crash_at(), which are
-// unsalvageable situations in the core code.  It can also be triggered by
-// the PANIC native, and since it can be hijacked that offers hookability for
-// "recoverable" forms of PANIC.
+// Main entry point for crash handling.  Detects what kind of pointer was
+// passed to crash() or crash_at().
 //
 // coverity[+kill]
 //
@@ -195,15 +244,14 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
     int line
 ){
   #if RUNTIME_CHECKS
+    fflush(stdout);  // release builds don't use <stdio.h>, but debug ones do
+
     Emergency_Shutdown_Gc_Debug();
   #endif
 
   #if DEBUG_FANCY_CRASH
     Printf_Stderr("C Source File %s, Line %d, Pointer %p\n", file, line, p);
     Printf_Stderr("At evaluator tick: %lu\n", cast(unsigned long, tick));
-
-    fflush(stdout);  // release builds don't use <stdio.h>, but debug ones do
-    fflush(stderr);  // ...so be helpful and flush any lingering debug output
   #else
     UNUSED(tick);
     UNUSED(file);
@@ -214,7 +262,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
       #if DEBUG_FANCY_CRASH
         Printf_Stderr("!!! RECURSIVE PANIC, EXITING BEFORE IT GOES NUTS !!!\n");
       #endif
-        abort();
+        Crash_Of_Last_Resort();
     }
     g_already_crashing = true;
 
@@ -223,24 +271,24 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
     char buf[PANIC_BUF_SIZE + 1];
     buf[0] = '\0';
 
-  #if RUNTIME_CHECKS && 0
+  #if RUNTIME_CHECKS && 0  // disabled unless a need arises
     //
-    // These are currently disabled, because they generate too much junk.
-    // Address Sanitizer gives a reasonable idea of the stack.
+    // Showing the interpreter stack used to be kind of superfluous, because
+    // you could tell what was going on from the C stack.  But now that things
+    // are stackless and using the trampoline, it's more useful.  Review.
     //
     Dump_Info();
-    Dump_Stack(TOP_LEVEL, 0);
+    Dump_Interpreter_Stack(TOP_LEVEL, 0);
   #endif
 
-  #if RUNTIME_CHECKS && defined(HAVE_EXECINFO_AVAILABLE)
-    void *backtrace_buf[1024];
-    int n_backtrace = backtrace(  // GNU extension (but valgrind is better)
-        backtrace_buf,
-        sizeof(backtrace_buf) / sizeof(backtrace_buf[0])
-    );
-    fputs("Backtrace:\n", stderr);
-    backtrace_symbols_fd(backtrace_buf, n_backtrace, STDERR_FILENO);
-    fflush(stdout);
+  #if DEBUG_FANCY_CRASH && 0  // disabled unless a need arises
+    //
+    // See remarks in %d-backtrace.c about why HAVE_EXECINFO_H_AVAILABLE is
+    // a bad idea, due to needing to turn of -fvisibility=hidden.  Generally
+    // on Unixlike systems, you should use Address Sanitizer or Valgrind to
+    // get better stack traces.  See Crash_Of_Last_Resort() for more details.
+    //
+    Print_C_Stack_Trace_If_Available();
   #endif
 
     strncat(buf, g_crash_directions, PANIC_BUF_SIZE - 0);
@@ -322,20 +370,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
     UNUSED(buf);
   #endif
 
-  #if RUNTIME_CHECKS
-    //
-    // Note: Emscripten actually gives a more informative stack trace in
-    // its checked build through plain exit().  It has DEBUG_FANCY_CRASH but
-    // also defines NDEBUG to turn off RUNTIME_CHECKS.
-    //
-    debug_break();  // try to hook up to a C debugger - see %debug_break.h
-  #endif
-
-  #if DEBUG_FANCY_CRASH
-    Printf_Stderr("debug_break() didn't terminate in crash()\n");
-  #endif
-
-    abort();
+    Crash_Of_Last_Resort();
 }
 
 
