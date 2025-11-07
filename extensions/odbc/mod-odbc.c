@@ -788,14 +788,24 @@ SQLRETURN ODBC_BindParameter(
         p->length = p->column_size = cast(SQLSMALLINT, 2 * num_wchars_no_term);
         break; }
 
+    // 1. For VARBINARY columns, column_size should indicate the maximum
+    //    column capacity, not necessarily the data size. Some ODBC drivers
+    //    (notably MySQL/MariaDB) fail when column_size is 0, even for empty
+    //    binaries. Use at least 1 to cue variable-length binary.
+    //
+    //    (Failure to do so gets corrupt results with the MySQL ODBC driver,
+    //    and "String data, right-truncated" with MariaDB driver.)
+
       case SQL_C_BINARY: {  // BLOB!
         size_t size;
         unsigned char *bytes = rebBytes(&size, v);
 
         sql_type = SQL_VARBINARY;
         p->buffer = bytes;
-        p->buffer_size = size;  // sizeof(char) guaranteed to be 1
-        p->length = p->column_size = p->buffer_size;
+        p->buffer_size = size * sizeof(char);  // note: sizeof(char) always one
+        p->length = size;
+
+        p->column_size = (size == 0) ? 1 : size;  // can't be zero, see [1]
         break; }
 
       default:
