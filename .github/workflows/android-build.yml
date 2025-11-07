@@ -185,7 +185,7 @@ jobs:
         echo "OS is ${{ matrix.os }}"
         repo_dir=$(pwd)/
         cd prebuilt
-        wget http://hostilefork.com/media/shared/github/r3-linux-8994d23-patched
+        wget --quiet http://hostilefork.com/media/shared/github/r3-linux-8994d23-patched
         chmod +x r3-linux-8994d23-patched
         r3make=$(pwd)/r3-linux-8994d23-patched
         echo "R3MAKE is set to $r3make"

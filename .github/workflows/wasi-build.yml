@@ -135,7 +135,7 @@ jobs:
         echo "But that executable won't run on GitHub for some reason"
         # "$r3make" --do "print {TESTING 1 2 3}"  # NOT WORKING, dunno why
         cd prebuilt
-        wget http://hostilefork.com/media/shared/r3bootstraps/r3-linux-x64-0a654c6
+        wget --quiet http://hostilefork.com/media/shared/r3bootstraps/r3-linux-x64-0a654c6
         chmod +x r3-linux-x64-0a654c6
         r3make=$(pwd)/r3-linux-x64-0a654c6
         echo "So now R3MAKE is $r3make"
@@ -155,11 +155,11 @@ jobs:
     #
     - name: Get the Wasi-Sdk from GitHub Release
       run: |
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sdk-25.0-x86_64-linux.tar.gz
+        wget --quiet https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sdk-25.0-x86_64-linux.tar.gz
         tar xf wasi-sdk-25.0-x86_64-linux.tar.gz
         mv wasi-sdk-25.0-x86_64-linux wasi-sdk
 
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sysroot-25.0.tar.gz
+        wget --quiet https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sysroot-25.0.tar.gz
         tar xf wasi-sysroot-25.0.tar.gz
         mv wasi-sysroot-25.0 wasi-sysroot
 
