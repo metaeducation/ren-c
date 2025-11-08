@@ -36,7 +36,7 @@
 # https://github.com/metaeducation/ren-c/blob/master/.github/workflows/README.md
 #
 
-name: Windows MinGW
+name: Build Windows on Linux
 
 
 # See README: When To Trigger Builds
@@ -234,14 +234,112 @@ jobs:
         make -j 2  # Linux GitHub Runners have 2 cores, use 2 jobs
 
 
-  #====# NO TEST OR DEPLOYMENT #==============================================#
+  #====# UPLOAD ARTIFACTS FOR TESTING #=======================================#
 
-    # We currently don't deploy or test the executables, trusting the MSVC
-    # build which is already on a Windows container to do it.  Also, this
-    # lacks filesystem and network functions due to missing libuv dependencies.
+    # Upload the built executables so the Windows test job can download them
     #
-    # It would be possible to create another job specific to the testing, that
-    # would run in a Windows container...but really, this is already a bit of
-    # a stretch as being important given how many higher priority builds are
-    # being made.  If someone has a good reason to be dependent upon MinGW
-    # then they can worry about taking this further.
+    - name: Upload Built Executable as Artifact
+      uses: actions/upload-artifact@v4  # See README: Trusted Actions
+      with:
+        name: ${{ matrix.config-file }}-output  # e.g. mingw-x86.r-output.zip
+        path: build/r3*
+        retention-days: 1  # Only need for the test job
+
+
+
+#====# TEST LINUX-BUILT EXES ON ACTUAL WINDOWS #==============================#
+#
+# This is a second entry under the `jobs:` list, which makes Windows runner
+# to download the artifacts built under the cross compiler and test them.
+#
+# See notes at top of file regarding why these builds are not deployed to S3,
+# but rather just used as a proof-of-concept of compilation flexibility.
+#
+# ...ALSO, since no Filesystem/Network/Process extension is in the MinGW
+# build, this demonstrates what happens when you run without those things,
+# and makes sure it still basically works.
+#
+#=============================================================================#
+
+  windows-mingw-test:
+    runs-on: windows-latest
+    needs: windows-mingw-build
+
+    strategy:
+      matrix:
+        config-file: [mingw-x64.r, mingw-x86.r]
+
+    defaults:
+      run:
+        shell: bash  # See README: Use Bash Shell On All Platforms
+
+    steps:
+
+    - name: Download Built Executable
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ matrix.config-file }}-output  # e.g. mingw-x86.r-output.zip
+        path: ./
+
+
+    - name: Extract and Set R3BUILT
+      run: |
+        echo "Downloaded files:"
+        ls -la
+
+        # The artifact is a ZIP file, need to extract it
+        if ls *.zip 1> /dev/null 2>&1; then
+          echo "Found ZIP file, extracting..."
+          unzip -q *.zip
+          echo "Files after extraction:"
+          ls -la
+        fi
+
+        # Find the executable and set R3BUILT environment variable
+        if [ -f "r3.exe" ]; then
+          echo "R3BUILT=./r3.exe" >> $GITHUB_ENV
+          echo "Found executable: r3.exe"
+        elif [ -f "r3" ]; then
+          echo "R3BUILT=./r3" >> $GITHUB_ENV
+          echo "Found executable: r3"
+        else
+          echo "ERROR: No R3 executable found!"
+          echo "Available files:"
+          ls -la
+          exit 1
+        fi
+
+
+    - name: Basic Smoke Test (Print A Message And Quit)
+      run: |
+        "$R3BUILT" --do "print -[MinGW build is working!]-"
+
+
+    - name: Show Build Date
+      run: |
+        "$R3BUILT" --do "print [-[Build info:]- system.build]"
+
+
+    - name: Show Version/Platform Information
+      run: |
+        "$R3BUILT" --do "print [-[Version:]- @system.version]"
+
+
+    - name: Test Basic Arithmetic
+      run: |
+        "$R3BUILT" --do "print [-[Math test:]- 2 + 2]"
+
+
+    - name: Test String Operations
+      run: |
+        "$R3BUILT" --do "print [-[String test:]- uppercase -[hello world]-]"
+
+
+    - name: Test Basic Control Structures
+      run: |
+        "$R3BUILT" --do "repeat 3 [print -[counting to three...]-]"
+
+
+    - name: Test Clean Exit
+      run: |
+        "$R3BUILT" --do "print -[All tests passed!]- quit 0"
