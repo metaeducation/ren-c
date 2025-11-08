@@ -352,15 +352,16 @@ bind construct [
         "Return HOME path (e.g. $HOME on *nix)"
         return: [null? element? file!]
     ][
-        let /get-env: if select system.modules 'Environment [
-            system.modules.Environment.get-env/
-        ] else [
-            loud-print [
-                "Interpreter not built with GET-ENV, can't detect HOME dir" LF
-                "(Build with Environment extension enabled to address this)"
-            ]
+        if not select system.modules 'Filesystem [
+            loud-print ["No Filesystem extension, can't detect HOME dir"]
             return null
         ]
+        if not select system.modules 'Environment [
+            loud-print ["No Environment extension, can't detect HOME dir"]
+            return null
+        ]
+
+        let /get-env: system.modules.Environment.get-env/
 
         return to-dir opt any [
             get-env 'HOME
