@@ -59,7 +59,7 @@
     #include <unistd.h>  // STDERR_FILENO
   #endif
 
-  #if TO_WINDOWS
+  #if defined(_MSC_VER)  // MSVC compiler on windows, honors this #pragma
     #include <windows.h>
     #include <dbghelp.h>
     #pragma comment(lib, "dbghelp.lib")
@@ -90,7 +90,7 @@ void Print_C_Stack_Trace_If_Available(void)
 #else
     Printf_Stderr("\n=== BEGIN Print_C_Stack_Trace_If_Available() ===\n\n");
 
-  #if TO_WINDOWS
+  #if defined(_MSC_VER)  // included dbghelp.lib via #pragma above
 
     void* stack[64];
     HANDLE process = GetCurrentProcess();
