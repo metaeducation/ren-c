@@ -196,4 +196,4 @@ can easily help contribute to enhancing it.
 
 
 
-[100]: https://raw.githubusercontent.com/metaeducation/ren-c/master/docs/ren-c-logo.png
+[100]: https://raw.githubusercontent.com/metaeducation/ren-c/master/ren-c-logo.png
