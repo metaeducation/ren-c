@@ -24,7 +24,7 @@ and 3 cores on Mac.  Builds should exploit that parallelism where possible.
 More information about the runners--including what software is available
 preinstalled--is here:
 
-https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+<https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners>
 
 
 ## IMPORTANT - Minimize GitHub-Specific Syntax
@@ -32,7 +32,7 @@ https://docs.github.com/en/actions/using-github-hosted-runners/about-github-host
 At time of writing, GitHub CI is excellent.  However, our initial service
 provider (Travis CI) had been excellent at one time, and then became terrible:
 
-https://forum.rebol.info/t/goodbye-travis-but-its-not-all-despair/1421
+<https://forum.rebol.info/t/goodbye-travis-but-its-not-all-despair/1421>
 
 So while working with GitHub CI, always keep in mind the question of how
 easy switching to another service would be.  Wherever possible, make sure that
@@ -94,19 +94,15 @@ exercise restraint to conserve planetary energy.)
 It's set to be possible to trigger any workflow at any time manually (unclear
 why anyone would ever *not* enable that feature):
 
-https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
+<https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/>
 
 Then, in order to make it easy to debug problems, each workflow names a branch
 that it will respond to that no other workflow does.  You can push to the
 branch with that name while working out problems in that workflow...which can
 be a process that takes many, many commits.
 
-Pull requests to master are fairly rare at this point in time.  So that is used
-as a trigger to do a "kitchen sink" build of all the workflows.  That's costly
-but infrequent, and happens often enough to keep less critical builds working.
-
-Pushes to master do a couple of builds unconditionally--such as the web build
-and the Windows builds.
+Pull requests to master are fairly rare at this point in time.  So that is
+used to trigger the "main" builds (Web, Windows, macOS, Linux).
 
 Note that we could also use `if` conditions to control this, e.g.
 
@@ -121,13 +117,13 @@ GitHub CI fortunately has bash on the Windows Server containers.  While there
 might be some theoretical benefit to PowerShell (the default), having
 cross-platform code it just makes more sense to keep all the files as bash.
 
-https://ae1020.github.io/thoughts-on-bash-style/
+<https://ae1020.github.io/thoughts-on-bash-style/>
 
 USING BASH ON WINDOWS TAMPERS WITH THE PATH.  This causes strange effects like
 there being visibility of GNU's symlink tool /usr/bin/link that is found
 instead of the MS compiler's LINK.EXE
 
-https://github.com/ilammy/msvc-dev-cmd/issues/25
+<https://github.com/ilammy/msvc-dev-cmd/issues/25>
 
 For this project, it's considered worth it to work around such issues when they
 come up...for the sake of consistency across the scripts.
@@ -152,7 +148,7 @@ It acts like:
 
     bash --noprofile --norc -eo pipefail {0}
 
-https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#using-a-specific-shell
+<https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#using-a-specific-shell>
 
 Be sure to preserve the `-e` setting if customizing the bash command further,
 and when using alternative shells consider how to make them error as well.
@@ -183,11 +179,11 @@ the `--fragment` option was added.  We do not want actual distributed scripts
 that make it beyond one individual's use to be carrying CR LF in them, so this
 helps tie the tolerances together with this ad hoc nature.
 
-https://forum.rebol.info/t/using-ren-c-as-the-shell-in-github-ci/1547
+<https://forum.rebol.info/t/using-ren-c-as-the-shell-in-github-ci/1547>
 
 On Windows, it seems the shell path is unconditionally prepended with:
 
-  C:/Program Files/Git/usr/bin/
+    C:/Program Files/Git/usr/bin/
 
 Most likely because that is the location where the main `shell:` is, and this
 is being inherited by `step:`/`shell:`.  Until that is fixed, you have to copy
@@ -198,13 +194,13 @@ any shell program you want to use to that location.
 
 The checkout action checks-out your repository under $GITHUB_WORKSPACE
 
-https://github.com/actions/checkout
+<https://github.com/actions/checkout>
 
 It defaults to checking out at a --depth of 1, which is usually fine.
 
 Note: This strangely starts you up in a directory like:
 
-   /home/runner/work/ren-c/ren-c
+    /home/runner/work/ren-c/ren-c
 
 The parent directory appears to contain the same files.  It's not clear
 why it's done this way...but presumably it's on purpose.
@@ -226,7 +222,7 @@ build job saved its products somewhere the test job could get them.  This can
 be on your own servers (e.g. AWS), or GitHub offers its own file services
 in the form of what are called "Artifacts":
 
-https://docs.github.com/en/actions/guides/storing-workflow-data-as-artifacts
+<https://docs.github.com/en/actions/guides/storing-workflow-data-as-artifacts>
 
 
 ## Steps
@@ -238,8 +234,9 @@ If a step fails, then the default behavior is for the subsequent steps to not
 run, though this can be overridden with an `if:` property, which is granular
 3nough to allow running only if particular other steps have completed:
 
-https://docs.github.com/en/free-pro-team@latest/actions/reference/context-and-expression-syntax-for-github-actions#job-status-check-functions
-https://stackoverflow.com/a/61832535
+<https://docs.github.com/en/free-pro-team@latest/actions/reference/context-and-expression-syntax-for-github-actions#job-status-check-functions>
+
+<https://stackoverflow.com/a/61832535>
 
 Each step has its own isolated environment variables, but it is possible to
 export state seen by future steps (see `Environment Variables` below).
@@ -273,12 +270,12 @@ you need to do this:
 
 It will be available in the ensuing steps (though not the current one).
 
-https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables
+<https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables>
 
 Note: If you see files advocating for a syntax like `::set-env::` that is
 a deprecated method:
 
-https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/
+<https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/>
 
 
 ## If Statements
@@ -299,7 +296,7 @@ To avoid this frustration, don't use ${{ }} in the expressions:
 
 For documentation of the list of variables and operators available:
 
-https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions
+<https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions>
 
 
 ## Build Matrix
@@ -330,7 +327,7 @@ That means they have to be accessed with ${{ var1 }} syntax.  In order to avoid
 tying too much of the process to run only on GitHub CI, it's best to capture
 them into environment variables.
 
-https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#using-environment-variables-in-a-matrix
+<https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#using-environment-variables-in-a-matrix>
 
 
 ## Portably Capturing Git Hashes
@@ -339,7 +336,7 @@ While GitHub CI may offer this, good to have it done in an agnostic fashion so
 the script is more portable.  First we capture temporarily into lowercase
 environment variables that are only visible within the step:
 
-http://stackoverflow.com/a/42549385
+<http://stackoverflow.com/a/42549385>
 
     git_commit="$(git show --format="%H" --no-patch)"
     git_commit_short="$(git show --format="%h" --no-patch)"
@@ -394,7 +391,7 @@ to be on one line...but adding newlines to it would break things:
 This produces `this is my very very very long string`.  If you want a newline
 at the end, then use `>` instead of `>-`
 
-https://stackoverflow.com/a/21699210
+<https://stackoverflow.com/a/21699210>
 
 
 ## Further Research
@@ -402,8 +399,8 @@ https://stackoverflow.com/a/21699210
 When considering whether to host our own runners or use GitHub CI, the most
 interesting alternative to try at time of writing seemed to be Drone CI:
 
-https://www.drone.io/
+<https://www.drone.io/>
 
 This tool for skipping actions looked interesting:
 
-https://github.com/fkirc/skip-duplicate-actions
+<https://github.com/fkirc/skip-duplicate-actions>
