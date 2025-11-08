@@ -143,7 +143,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     );
 
     int sum = rebUnboxInteger(
-        "let sum-plus-1000: @", action,
+        "let /sum-plus-1000: @", action,
         "sum-plus-1000 5 15"
     );
 
@@ -173,7 +173,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     });
 
     int sum = rebUnboxInteger(
-        "let sum-plus-1000: @", action,
+        "let /sum-plus-1000: @", action,
         "sum-plus-1000 5 15"
     );
     Set_Cell_Flag(Init_Integer(PUSH(), 7), NEWLINE_BEFORE);
