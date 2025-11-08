@@ -41,18 +41,11 @@ on:
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 
-# Standardize to use bash on all platforms.
-#
-# See README: Using The Strict Erroring Bash Shell
-#
 defaults:
   run:
-    shell: bash
+    shell: bash  # See README: Use Bash Shell On All Platforms
 
 
-# Each "Job" runs in its own VM, and a workflow run is made up of one or more
-# jobs that can run sequentially or in parallel.
-#
 # See README: Jobs
 #
 # The `build-r3-and-apk` job is done on a Linux Machine, because .APK making
@@ -128,22 +121,9 @@ jobs:
     #
     runs-on: ${{ matrix.os }}
 
-    # Steps are a sequence of tasks that will be executed within a single VM
-    # as part of the job.
-    #
     # See README: Steps
     #
     steps:  # (no indentatation needed below; so indent the minimum!)
-
-  #====# ACCELERATE APT INSTALL #============================================#
-
-    # See README: Divert mandb To No-Op
-    #
-    - name: Divert mandb to No-Op (speeds up apt significantly)
-      run: |
-        sudo dpkg-divert --local --rename --add /usr/bin/mandb
-        echo -e '#!/bin/sh\nexit 0' | sudo tee /usr/bin/mandb > /dev/null
-        sudo chmod +x /usr/bin/mandb
 
 
   #====# CHECKOUT STEPS #=====================================================#
@@ -154,20 +134,17 @@ jobs:
     #
     - uses: actions/checkout@v4  # See README: Trusted Actions
 
-    # The full commit is passed to make to build into the binary, and the
-    # abbreviated commit is used to name the executable.
+    # Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT
     #
-    # See README: Portably Capturing Git Hashes
-    #
-    - name: Grab Git Hash and Short Hash Into Environment Variables
-      run: |
-        git_commit="$(git show --format="%H" --no-patch)"
-        git_commit_short="$(git show --format="%h" --no-patch)"
-        echo "GIT_COMMIT=$git_commit" >> $GITHUB_ENV
-        echo "GIT_COMMIT_SHORT=$git_commit_short" >> $GITHUB_ENV
+    - uses: ./.github/actions/capture-git-hashes
 
 
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#
+
+    # See README: Speedup `apt install` by Diverting mandb to No-Op
+    #
+    - uses: ./.github/actions/divert-mandb
+
 
     # !!! Ideally this would use the same step that clients can use to build
     # the system with `make.sh`.  Unfortunately, something about the GitHub
@@ -188,9 +165,11 @@ jobs:
         echo "R3MAKE is set to $r3make"
         echo "R3MAKE=$r3make" >> $GITHUB_ENV  # pass to next step
 
+
     - name: Stop the build early if the R3MAKE is no good
       run: |
         "$R3MAKE" --do "print -[R3MAKE is Working]-"
+
 
     # Building for Android requires having a compiler that can build for ARM,
     # as well as support for the "Bionic" OS (distinct from the Linux that this
@@ -214,6 +193,7 @@ jobs:
       with:
         ndk-version: ${{ matrix.ndk-revision }}
 
+
     # To find out where the `setup-ndk` action installed the NDK, you have to
     # look at the output variables for that step.
     #
@@ -229,15 +209,17 @@ jobs:
       run: |
         echo "ANDROID_NDK_ROOT=${{ steps.setup-ndk.outputs.ndk-path }}" >> $GITHUB_ENV
 
+
     # Once we have the cross compiler, build the TCC library for ARM if this
     # build is using the TCC extension.  (`sudo apt install libtcc-dev` would
     # give us something doubly incorrect...an x86_64 library for building
-    # strings of Ccode into x86_64 machine code.)
+    # strings of code into x86_64 machine code.)
     #
     - name: Cross-Compile libtcc.a if Making an R3 That Can Compile C Code
       run: |
         source extensions/tcc/tools/build-libtcc-helper.sh
         echo "CONFIG_TCCDIR=$(pwd)/tcc" >> $GITHUB_ENV
+
 
     # Show a little bit of sanity check information.
     #
@@ -275,15 +257,18 @@ jobs:
             static: no \
             extensions: "$EXTENSIONS"
 
+
     - name: Create Folders For Build Products (Compiler Won't Create Them)
       run: |
         cd build
         make folders
 
+
     - name: Prep the Build By Making Various Auto-Generated .h and .c Files
       run: |
         cd build
         make prep
+
 
     # https://github.com/actions/upload-artifact
     #
@@ -294,10 +279,12 @@ jobs:
         name: tmp-internals.h
         path: build/prep/include/tmp-internals.h
 
+
     - name: Cross-Compile and Link the C Files to into an ARM-Based R3
       run: |
         cd build
         make -j 2  # Linux GitHub Runners have 2 cores, use 2 jobs
+
 
     # !!! Unfortunately, the macOS bootstrap executable seems to be creating
     # corrupt zip files.  The problem is sorted out in newer builds, but we
@@ -337,14 +324,18 @@ jobs:
       run: |
         sudo apt install dalvik-exchange
 
+
     - name: Install Standalone Eclipse Java Compiler
       run: sudo apt install ecj
+
 
     - name: Install Android Asset Packaging Tool (AAPT)
       run: sudo apt install aapt
 
+
     - name: Install ZipAlign
       run: sudo apt install zipalign
+
 
     # Note: jarsigner is already installed on Ubuntu containers.  You can get
     # a message about `Can't open /usr/lib/java-wrappers/java-wrappers.sh`
@@ -354,8 +345,10 @@ jobs:
     - name: Ensure Jarsigner is Installed
       run: jarsigner -help
 
+
     - name: Install Android APK Signer
       run: sudo apt install apksigner
+
 
     # We don't use `--recurse-submodules` here because we want to get the
     # latest versions of the ReplPad and the http server.  The submodules were
@@ -369,6 +362,7 @@ jobs:
         git clone https://github.com/metaeducation/rebol-httpd --depth 1
         rm -rf r3-console
         git clone https://github.com/hostilefork/replpad-js r3-console --depth 1
+
 
     # The build.bash script will package with an r3 file in its own directory,
     # otherwise it downloads one.
@@ -393,11 +387,13 @@ jobs:
         path: build/r3
         retention-days: 1
 
+
     - uses: actions/upload-artifact@v4
       with:
         name: tcc-encap.zip
         path: build/tcc-encap.zip
         retention-days: 1
+
 
     - uses: actions/upload-artifact@v4
       with:
@@ -521,15 +517,18 @@ jobs:
     - name: Make Directories So Paths Match On Both Jobs
       run: mkdir build
 
+
     - uses: actions/download-artifact@master
       with:
         name: r3
         path: build/
 
+
     - uses: actions/download-artifact@master
       with:
         name: tcc-encap.zip
         path: build/
+
 
     - uses: actions/download-artifact@master
       with:

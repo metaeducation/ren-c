@@ -35,18 +35,11 @@ on:
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 
-# Standardize to use bash on all platforms.
-#
-# See README: Using The Strict Erroring Bash Shell
-#
 defaults:
   run:
-    shell: bash
+    shell: bash  # See README: Use Bash Shell On All Platforms
 
 
-# Each "Job" runs in its own VM, and a workflow run is made up of one or more
-# jobs that can run sequentially or in parallel.
-#
 # See README: Jobs
 #
 jobs:
@@ -77,23 +70,9 @@ jobs:
       CONFIG_FILE: ${{ matrix.config-file }}
 
 
-    # Steps are a sequence of tasks that will be executed within a single VM
-    # as part of the job.
-    #
     # See README: Steps
     #
     steps:  # (no indentatation needed below; so indent the minimum!)
-
-
-  #====# ACCELERATE APT INSTALL #============================================#
-
-    # See README: Divert mandb To No-Op
-    #
-    - name: Divert mandb to No-Op (speeds up apt significantly)
-      run: |
-        sudo dpkg-divert --local --rename --add /usr/bin/mandb
-        echo -e '#!/bin/sh\nexit 0' | sudo tee /usr/bin/mandb > /dev/null
-        sudo chmod +x /usr/bin/mandb
 
 
   #====# CHECKOUT STEPS #=====================================================#
@@ -105,20 +84,17 @@ jobs:
     - uses: actions/checkout@v4  # See README: Trusted Actions
 
 
-    # The full commit is passed to make to build into the binary, and the
-    # abbreviated commit is used to name the executable.
+    # Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT
     #
-    # See README: Portably Capturing Git Hashes
-    #
-    - name: Grab Git Hash and Short Hash Into Environment Variables
-      run: |
-        git_commit="$(git show --format="%H" --no-patch)"
-        git_commit_short="$(git show --format="%h" --no-patch)"
-        echo "GIT_COMMIT=$git_commit" >> $GITHUB_ENV
-        echo "GIT_COMMIT_SHORT=$git_commit_short" >> $GITHUB_ENV
+    - uses: ./.github/actions/capture-git-hashes
 
 
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#
+
+    # See README: Speedup `apt install` by Diverting mandb to No-Op
+    #
+    - uses: ./.github/actions/divert-mandb
+
 
     # !!! Ideally this would use the same step that clients can use to build
     # the system with `make.sh`.  Unfortunately, something about the GitHub
@@ -135,7 +111,7 @@ jobs:
         echo "But that executable won't run on GitHub for some reason"
         # "$r3make" --do "print {TESTING 1 2 3}"  # NOT WORKING, dunno why
         cd prebuilt
-        wget --qiuet http://hostilefork.com/media/shared/r3bootstraps/r3-linux-x64-0a654c6
+        wget --quiet http://hostilefork.com/media/shared/r3bootstraps/r3-linux-x64-0a654c6
         chmod +x r3-linux-x64-0a654c6
         r3make=$(pwd)/r3-linux-x64-0a654c6
         echo "So now R3MAKE is $r3make"
@@ -170,7 +146,6 @@ jobs:
 
 
   #====# BUILD STEPS #========================================================#
-
 
   # !!! optimization is currently hardcoded in the web build config files as
   # `s`.  Review if `z` would be better (it cannot be passed in the options
@@ -258,18 +233,9 @@ jobs:
     # So either we write one giant monolithic step, or every subsequent step
     # has to be qualified with an `if: github.ref == 'refs/heads/master'`.
     # Though the latter is not *ideal*, it's good enough for government work.
-    #
-    # Note: Steps will be stopped by default if any fail, but you can turn
-    # a step back on with an `if: failure()` condition.
 
 
-    # This action configures the AWS keys stored in GitHub's "Secrets" for
-    # the repository so that `aws s3` allows us to do uploads, without needing
-    # to publish any passwords publicly:
-    #
-    # https://github.com/aws-actions/configure-aws-credentials
-    #
-    # See README: Trusted Actions
+    # See README: Using configure-aws-credentials (can't factor this out!)
     #
     - name: Configure AWS Credentials
       if: github.ref == 'refs/heads/master'  # see notes on DEPLOY STEPS

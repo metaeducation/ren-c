@@ -35,18 +35,11 @@ on:
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 
-# Standardize to use bash on all platforms.
-#
-# See README: Using The Strict Erroring Bash Shell
-#
 defaults:
   run:
-    shell: bash
+    shell: bash  # See README: Use Bash Shell On All Platforms
 
 
-# Each "Job" runs in its own VM, and a workflow run is made up of one or more
-# jobs that can run sequentially or in parallel.
-#
 # See README: Jobs
 #
 jobs:
@@ -113,16 +106,12 @@ jobs:
       VARIATION: ${{ matrix.variation }}
 
 
-    # Steps are a sequence of tasks that will be executed within a single VM
-    # as part of the job.
-    #
     # See README: Steps
     #
     steps:  # (no indentatation needed below; so indent the minimum!)
 
 
   #====# CHECKOUT STEPS #=====================================================#
-
 
     # GitHub CI checkout on Windows auto translates LF to CR/LF in files:
     #
@@ -147,17 +136,9 @@ jobs:
     - uses: actions/checkout@v4  # See README: Trusted Actions
 
 
-    # The full commit is passed to make to build into the binary, and the
-    # abbreviated commit is used to name the executable.
+    # Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT
     #
-    # See README: Portably Capturing Git Hashes
-    #
-    - name: Grab Git Hash and Short Hash Into Environment Variables
-      run: |
-        git_commit="$(git show --format="%H" --no-patch)"
-        git_commit_short="$(git show --format="%h" --no-patch)"
-        echo "GIT_COMMIT=$git_commit" >> $GITHUB_ENV
-        echo "GIT_COMMIT_SHORT=$git_commit_short" >> $GITHUB_ENV
+    - uses: ./.github/actions/capture-git-hashes
 
 
     # Many pieces of functionality have been broken out into separate repos.
@@ -171,7 +152,6 @@ jobs:
 
 
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#
-
 
     # !!! See if fetch_prebuilt could adapt to working with Windows bash (?)
     #
@@ -208,6 +188,7 @@ jobs:
       run: |
         mv /usr/bin/link.exe /usr/bin/gnu-link
 
+
     # GitHub Runners offer 2 CPU cores...a slight bit of parallelism.  If you
     # pass multiple files to CL.EXE at a time to compile, you can use /MP to
     # exploit that.  But there is no parallelism in NMAKE itself, and our
@@ -237,7 +218,6 @@ jobs:
 
 
   #====# BUILD STEPS #========================================================#
-
 
     # See README: -[Dashed Strings]- For %make.r String Parameters
     #
@@ -299,7 +279,6 @@ jobs:
 
   #====# TESTING STEPS #======================================================#
 
-
     - name: Basic Smoke Test (Print A Message And Quit)
       run: |
         "$R3BUILT" --do "print -[hi]-"
@@ -330,6 +309,7 @@ jobs:
           exit 1
         fi
 
+
     - name: PANIC Test (from running a script)
       run: |
         set +e  # so nonzero exit codes won't immediately terminate step
@@ -341,6 +321,7 @@ jobs:
           exit 1
         fi
 
+
     - name: QUIT Test (from code on command line)
       run: |
         set +e  # so nonzero exit codes won't immediately terminate step
@@ -351,6 +332,7 @@ jobs:
           echo "Expected Exit Status 3, But Got $?"
           exit 1
         fi
+
 
     - name: QUIT Test (from running a script)
       run: |
@@ -391,14 +373,7 @@ jobs:
 
   #====# DEPLOY STEPS #=======================================================#
 
-
-    # This action configures the AWS keys stored in GitHub's "Secrets" for
-    # the repository so that `aws s3` allows us to do uploads, without needing
-    # to publish any passwords publicly:
-    #
-    # https://github.com/aws-actions/configure-aws-credentials
-    #
-    # See README: Trusted Actions
+    # See README: Using configure-aws-credentials (can't factor this out!)
     #
     - name: Configure AWS Credentials
       if: github.ref == 'refs/heads/master'  # see notes on DEPLOY STEPS

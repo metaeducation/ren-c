@@ -7,11 +7,18 @@ There's a bit of ambiguity in how GitHub uses the term "Action".  Our terms:
 
 * **GitHub CI** - The service as a whole.
 
+* **GitHub Workflow** - A process documented in a .yml file for performing
+  tasks on a source repository.  This directory (./github/workflows) contains
+  several workflows which GitHub automatically scans for to make available
+  to run from the site's UI.
+
 * **GitHub Action** - A reusable component, typically written in Node.js, that
   can be run as a step with the `uses:` tag.
 
-* **GitHub Workflow** - A process documented in a .yml file for performing
-  tasks on a source repository.  This directory contains several workflows.
+* **GitHub Composite Action** - A fragment of GitHub Workflow code which can
+  be reused as a "Step" across multiple .yml files.  These are referenced by
+  `uses:` statements and can point to any file location.  But by convention
+  this project stores them in the ./github/actions directory.
 
 * **GitHub Runner** - The virtual machine hosted by Azure that runs workflows.
 
@@ -85,6 +92,22 @@ We'll assume that it's okay to use those actions by tag, without any commit
 hash or need for extra review.
 
 
+## Using configure-aws-credentials (can't factor this out!)
+
+This action configures the AWS keys stored in GitHub's "Secrets" for the
+repository so that `aws s3` allows us to do uploads, without needing to
+publish any passwords publicly:
+
+<https://github.com/aws-actions/configure-aws-credentials>
+
+The secrets are configured in the GitHub repository settings and accessed via
+`${{ secrets.METAEDUCATION_AWS_ACCESS_KEY }}` and similar.
+
+Note that GitHub Secrets aren't visible from composite actions, so there's
+no point in trying to factor this step out.  The only useful factoring that
+could be done is not repeating this comment over and over!
+
+
 ## When To Trigger Builds
 
 We try to keep the builds somewhat reined in...to stay on the good side of
@@ -111,11 +134,25 @@ Note that we could also use `if` conditions to control this, e.g.
 This could be done at the whole job level, or on individual steps.
 
 
-## Using The Strict Erroring Bash Shell
+## Use Bash Shell On All Platforms
 
-GitHub CI fortunately has bash on the Windows Server containers.  While there
-might be some theoretical benefit to PowerShell (the default), having
-cross-platform code it just makes more sense to keep all the files as bash.
+GitHub CI has bash on all containers, including Windows Server.  When used as
+`shell: bash` it is configured as strict-erroring (`-e`):
+
+    bash --noprofile --norc -eo pipefail {0}
+
+<https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#using-a-specific-shell>
+
+If ever configuring bash always use `-e`, because the default behavior will
+continue even if running something that returns an error code:
+
+    $ bash -c "cd asdfasdf; echo 'got here despite error'"
+    bash: line 0: cd: asdfasdf: No such file or directory
+    got here despite error
+
+Since bash is available on Windows we use it.  While there might be some
+theoretical benefit to PowerShell (the default), having cross-platform code it
+just makes more sense to keep all the files as bash.
 
 <https://ae1020.github.io/thoughts-on-bash-style/>
 
@@ -128,30 +165,9 @@ instead of the MS compiler's LINK.EXE
 For this project, it's considered worth it to work around such issues when they
 come up...for the sake of consistency across the scripts.
 
-By default, bash does not speak up when an error happens in the middle of
-lines of shell code.  So the only error you would get from a long `run` code
-for a step would be if the last line had a nonzero exit code (or if something
-explicitly called exit(1) at an earlier time).
-
-    $ bash -e -c "cd asdfasdf; echo 'got here despite error'"
-    bash: line 0: cd: asdfasdf: No such file or directory
-    got here despite error
-
-Fortunately, there's a `-e` feature which overrides this behavior, and stops
-on the first error:
-
-    $ bash -e -c "cd asdfasdf; echo 'will not get here'"
-    bash: line 0: cd: asdfasdf: No such file or directory
-
-This is enabled by default in GitHub CI when you use the `shell: bash` option.
-It acts like:
-
-    bash --noprofile --norc -eo pipefail {0}
-
-<https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#using-a-specific-shell>
-
-Be sure to preserve the `-e` setting if customizing the bash command further,
-and when using alternative shells consider how to make them error as well.
+You can globally set a shell in a workflow file's `defaults:` section, but
+unfortunately not for all steps in a composite action.  So any composite
+actions will have to set `shell: bash` on every step.
 
 
 ## Ren-C Code As Step
@@ -329,23 +345,7 @@ them into environment variables.
 
 <https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#using-environment-variables-in-a-matrix>
 
-
-## Portably Capturing Git Hashes
-
-While GitHub CI may offer this, good to have it done in an agnostic fashion so
-the script is more portable.  First we capture temporarily into lowercase
-environment variables that are only visible within the step:
-
-<http://stackoverflow.com/a/42549385>
-
-    git_commit="$(git show --format="%H" --no-patch)"
-    git_commit_short="$(git show --format="%h" --no-patch)"
-
-Next we export those into uppercase environment variables that are visible in
-the next steps:
-
-    echo "GIT_COMMIT=$git_commit" >> $GITHUB_ENV
-    echo "GIT_COMMIT_SHORT=$git_commit_short" >> $GITHUB_ENV
+For example, see .github/actions/capture-git-hashes
 
 
 ## -[Dashed Strings]- For %make.r String Parameters
@@ -363,20 +363,90 @@ The ergonomics need improvement.  For now, the commit needs to be passed in
 dash-brackets or escaped quotes to be received as a string.
 
 
-## Divert mandb To No-Op
+## Speedup `apt install` by Diverting mandb to No-Op
 
 There's a large amount of latency if you use `apt install` where it is
 "updating mandb triggers" (which relates to the "man" manual pages).
 
-The following makes a huge difference:
-
-    sudo dpkg-divert --local --rename --add /usr/bin/mandb
-    echo -e '#!/bin/sh\nexit 0' | sudo tee /usr/bin/mandb > /dev/null
-    sudo chmod +x /usr/bin/mandb
-
 You could also just uninstall mandb.  But according to AI, just making it a
 no-op is less disruptive (e.g. things won't reinstall it or say it's missing
-as a dependency).
+as a dependency).  So do:
+
+    - uses: ./.github/actions/divert-mandb
+
+**IMPORTANT: Do this BEFORE any `apt install` or `apt update` commands!**
+
+
+## Cache Dependencies When Possible
+
+GitHub Actions offers built-in caching that can dramatically speed up builds
+that repeatedly install the same dependencies.  Consider using `actions/cache`
+for things like:
+
+* Downloaded toolchains (e.g., NDK, wasi-sdk)
+* Package manager caches (e.g., Homebrew on macOS)
+* Build artifacts that rarely change
+
+Example for caching Homebrew:
+
+    - uses: actions/cache@v4
+      with:
+        path: ~/Library/Caches/Homebrew
+        key: ${{ runner.os }}-brew-${{ hashFiles('**/Brewfile') }}
+        restore-keys: ${{ runner.os }}-brew-
+
+However, be cautious with caching toolchains.  Outdated cached versions might
+hide important compatibility issues.
+
+
+## Skip apt update When Not Needed
+
+The `apt update` command can take 10-20 seconds.  If you're installing packages
+that are part of the base Ubuntu image, you often don't need to update the
+package index first.  Consider skipping it unless:
+
+* You need the latest package version
+* A package install fails due to missing dependencies
+
+Most Ubuntu runners are updated weekly, so their package indexes are relatively
+fresh.
+
+
+## Use Concurrency to Cancel Outdated Runs
+
+If you push multiple commits rapidly, you might want to cancel in-progress
+runs for outdated commits:
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+This is especially useful for pull request workflows where you're iterating
+quickly.
+
+
+## You Can Stop One Matrix Failure From Canceling All Jobs
+
+By default, GitHub Actions will cancel remaining matrix jobs when one fails.
+This saves runner minutes when early failure indicates a fundamental problem
+affecting all builds.
+
+But there's a setting to override this:
+
+    strategy:
+      fail-fast: false  # continue running all jobs despite failures
+      matrix:
+        ...
+
+Setting to `false` helps identify whether a problem affects all configurations
+or just specific ones.
+
+
+## Steps Can Be Run Even After a Failure
+
+If any steps fail the default behavior is for all subsequent steps to be
+disabled.  But you can turn a subsequent step back on using an `if: failure()`
+condition.
 
 
 ## YAML >- To Make One Line From Many

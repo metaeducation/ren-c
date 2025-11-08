@@ -37,18 +37,11 @@ on:
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 
-# Standardize to use bash on all platforms.
-#
-# See README: Using The Strict Erroring Bash Shell
-#
 defaults:
   run:
-    shell: bash
+    shell: bash  # See README: Use Bash Shell On All Platforms
 
 
-# Each "Job" runs in its own VM, and a workflow run is made up of one or more
-# jobs that can run sequentially or in parallel.
-#
 # See README: Jobs
 #
 jobs:
@@ -85,22 +78,9 @@ jobs:
       DEBUG: ${{ matrix.debug }}
 
 
-    # Steps are a sequence of tasks that will be executed within a single VM
-    # as part of the job.
-    #
     # See README: Steps
     #
     steps:  # (no indentatation needed below; so indent the minimum!)
-
-  #====# ACCELERATE APT INSTALL #============================================#
-
-    # See README: Divert mandb To No-Op
-    #
-    - name: Divert mandb to No-Op (speeds up apt significantly)
-      run: |
-        sudo dpkg-divert --local --rename --add /usr/bin/mandb
-        echo -e '#!/bin/sh\nexit 0' | sudo tee /usr/bin/mandb > /dev/null
-        sudo chmod +x /usr/bin/mandb
 
 
   #====# CHECKOUT STEPS #=====================================================#
@@ -112,20 +92,16 @@ jobs:
     - uses: actions/checkout@v4  # See README: Trusted Actions
 
 
-    # The full commit is passed to make to build into the binary, and the
-    # abbreviated commit is used to name the executable.
+    # Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT
     #
-    # See README: Portably Capturing Git Hashes
-    #
-    - name: Grab Git Hash and Short Hash Into Environment Variables
-      run: |
-        git_commit="$(git show --format="%H" --no-patch)"
-        git_commit_short="$(git show --format="%h" --no-patch)"
-        echo "GIT_COMMIT=$git_commit" >> $GITHUB_ENV
-        echo "GIT_COMMIT_SHORT=$git_commit_short" >> $GITHUB_ENV
+    - uses: ./.github/actions/capture-git-hashes
 
 
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#
+
+    # See README: Speedup `apt install` by Diverting mandb to No-Op
+    #
+    - uses: ./.github/actions/divert-mandb
 
 
     # !!! Ideally this would use the same step that clients can use to build
@@ -187,23 +163,17 @@ jobs:
 
   #====# BUILD STEPS #========================================================#
 
-
     # See README: -[Dashed Strings]- For %make.r String Parameters
+    #
+    # We use a makefile target here because the bootstrap process itself
+    # enforces using the no-makefile form.  So we just exercise more code by
+    # doing this, even though it's a little more long winded.
     #
     - name: Generate Makefile for a TCC-Built R3 Including the TCC Extension
       run: |
         mkdir build
         cd build
 
-        # We use a makefile target here because the bootstrap process itself
-        # enforces using the no-makefile form.  So we just exercise more code
-        # by doing this, even though it's a little more long winded.
-        #
-        # NOTE: The GIT_COMMIT must be in {} not just "" that the shell might
-        # get rid of.  Or you get weird bugs when the hex starts with numbers
-        # and doesn't make a WORD!.  Frustrating to debug because each
-        # diagnostic changes the hash to maybe a WORD!
-        #
         "$R3MAKE" ../make.r \
             config: "../configs/$CONFIG_FILE" \
             target: makefile \
@@ -258,7 +228,6 @@ jobs:
   # and the source code that the `git` executable had been used to cloned.
   #
   #===========================================================================#
-
 
     - name: Delete Ren-C Source Cloned With Git (let Bootstrap EXE Fetch It)
       run: |

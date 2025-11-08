@@ -1,0 +1,27 @@
+# We want the full git commit hash to be passed in and built with the binaries.
+# The abbreviated commit is used to name executables and other artifacts.
+#
+# While GitHub CI offers hashes, good to have it done in an agnostic fashion so
+# the script is more portable.
+#
+# 1. First we capture temporarily into lowercase environment variables that
+#    are only visible within the step:
+#
+#    http://stackoverflow.com/a/42549385
+#
+# 2. Next we export those into uppercase environment variables that are visible
+#    in the subsequent steps by appending to the special GITHUB_ENV file.
+#
+name: 'Get Git Commit Hashes'
+description: 'Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT'
+runs:
+  using: "composite"
+  steps:
+    - name: Grab GIT_COMMIT and GIT_COMMIT_SHORT Environment Variables
+      shell: bash  # See README: Use Bash Shell On All Platforms
+      run: |
+        git_commit="$(git show --format="%H" --no-patch)"  # [1]
+        git_commit_short="$(git show --format="%h" --no-patch)"
+
+        echo "GIT_COMMIT=$git_commit" >> $GITHUB_ENV  # [2]
+        echo "GIT_COMMIT_SHORT=$git_commit_short" >> $GITHUB_ENV
