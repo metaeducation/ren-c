@@ -114,18 +114,29 @@
 //
 // Not all clients necessarily want to #include <stdarg.h> ... it may not
 // be available on the platform or could cause problems if included in some
-// codebases.  Default to including it since it offers protections people may
-// not be aware are necessary, but allow it to be turned off.
+// codebases.  Default to including it since it offers va_list protections
+// people may not be aware are necessary, but allow it to be turned off.
+//
+// 1. MinGW defines va_list with `__attribute__((...))` and that leads to
+//    warnings when mixed with template code.  You would have to use the
+//    disablement `-Wignored-attributes`.  AI suggested trying to decay the
+//    types but that just caused problems with other compilers, so the
+//    easiest thing to do is just leave v_cast() as plain cast on MinGW.
+//
+//    *BUT* notice: this is actually a validation of why v_cast() exists in
+//    the first place, and why it's good for you to be narrowed into your
+//    casting of it by error messages given by other compilers!
 //
 
 #if !defined(NEEDFUL_DONT_INCLUDE_STDARG_H)
-    #define NEEDFUL_DONT_INCLUDE_STDARG_H  0
-#else
-    STATIC_ASSERT(NEEDFUL_DONT_INCLUDE_STDARG_H == 1 or
-                NEEDFUL_DONT_INCLUDE_STDARG_H == 0);
+  #if defined(__MINGW32__) || defined(__MINGW64__)
+    #define NEEDFUL_DONT_INCLUDE_STDARG_H  1  // avoid warnings [1]
+  #else
+    #define NEEDFUL_DONT_INCLUDE_STDARG_H  0  // safety by default!
+  #endif
 #endif
 
-#if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // may not want to include it... [3]
+#if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // may not want to include it...
     #include <stdarg.h>  // ...but helps cast() catch bad va_list usages
 #endif
 

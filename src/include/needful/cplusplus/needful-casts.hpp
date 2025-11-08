@@ -66,47 +66,49 @@
 //
 //    (Good argument for building your code with more than one compiler...)
 //
+#if NEEDFUL_DONT_INCLUDE_STDARG_H
+    template<typename From, typename To>
+    struct ValistCastBlocker {};  // no-op
 
-template<typename From, typename To>
-struct ValistCastBlocker {  // non-valist-casts use to stop valist casts [1]
-  #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
-    static_assert(
-        (  // v-- we can't warn you about va_list* cast() if this is true
-            std::is_pointer<va_list>::value
-            and std::is_fundamental<remove_pointer_t<va_list>>::value
-        )
-        or (  // v-- but if it's a struct or something we can warn you
-            not std::is_same<From, va_list*>::value
-            and not std::is_same<To, va_list*>::value
-        ),
-        "only legal va_list casts are v_cast() mutable va_list* <-> void*"
-    );
-  #endif
-};
+    // leave needful_valist_cast() as plain cast
+#else
+    template<typename From, typename To>
+    struct ValistCastBlocker {  // non-valist-casts stop valist casts [1]
+        static_assert(
+            (  // v-- we can't warn you about va_list* cast() if this is true
+                std::is_pointer<va_list>::value
+                and std::is_fundamental<remove_pointer_t<va_list>>::value
+            )
+            or (  // v-- but if it's a struct or something we can warn you
+                not std::is_same<From, va_list*>::value
+                and not std::is_same<To, va_list*>::value
+            ),
+            "only legal va_list casts are v_cast() mutable va_list* <-> void*"
+        );
+    };
 
-template<typename From, typename To>
-struct ValistPointerCastHelper {
-    using FromDecayed = decay_t<From>;
-    using ToDecayed = decay_t<To>;
+    template<typename From, typename To>
+    struct ValistPointerCastHelper {
+        using FromDecayed = decay_t<From>;
+        using ToDecayed = decay_t<To>;
 
-  #if (! NEEDFUL_DONT_INCLUDE_STDARG_H)  // included by default for check
-    static_assert(
-        (std::is_same<FromDecayed, va_list*>::value
-            and std::is_same<ToDecayed, void*>::value)
-        or (std::is_same<FromDecayed, void*>::value
-            and std::is_same<ToDecayed, va_list*>::value),
-        "v_cast() can only convert va_list* <-> void*"
-    );
-  #endif
+        static_assert(
+            (std::is_same<FromDecayed, va_list*>::value
+                and std::is_same<ToDecayed, void*>::value)
+            or (std::is_same<FromDecayed, void*>::value
+                and std::is_same<ToDecayed, va_list*>::value),
+            "v_cast() can only convert va_list* <-> void*"
+        );
 
-    using type = ToDecayed;
-};
+        using type = ToDecayed;
+    };
 
-#undef needful_valist_cast
-#define needful_valist_cast(T,expr) \
-    (reinterpret_cast< \
-        needful::ValistPointerCastHelper<decltype(expr),T>::type \
-    >(expr))
+    #undef needful_valist_cast
+    #define needful_valist_cast(T,expr) \
+        (reinterpret_cast< \
+            needful::ValistPointerCastHelper<decltype(expr),T>::type \
+        >(expr))
+#endif
 
 
 //=//// u_cast(): UNHOOKABLE CONST-PRESERVING CAST ////////////////////////=//
