@@ -140,11 +140,9 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
         Environment_Conflates_Empty_Strings_As_Absent(env)
         and Series_Len_At(unwrap value) == 0
     ){
+        rebRelease(value);
         return DUAL_SIGNAL_NULL_ABSENT;
     }
-
-    if (not value)
-        return DUAL_SIGNAL_NULL_ABSENT;
 
     return DUAL_LIFTED(unwrap value);
 

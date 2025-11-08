@@ -85,7 +85,7 @@ Option(ErrorValue*) Trap_Update_Environment_Variable(
 ){
     Option(ErrorValue*) e = nullptr;
 
-    char* key_utf8 = rebSpell(key);
+    char* key_utf8 = rebSpell(rebQ(key));
 
     if (not value) {
       #ifdef unsetenv  // use unsetenv() if available [1]
