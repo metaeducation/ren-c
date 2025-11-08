@@ -396,14 +396,12 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     Copy_Dequoted_Cell(element, cell);
     Option(Sigil) sigil = Sigil_Of(element);
     Plainify(element);  // can't have Sigil and dispatch to mold
-    Quotify(element);
 
     DECLARE_ELEMENT (molder);
     Init_Handle_Cdata(molder, mo, 1);
 
     DECLARE_VALUE (formval);
     Init_Logic(formval, form);
-    Liftify(formval);
 
     bool tildes = NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
         and (LIFT_BYTE(cell) & QUASI_BIT);
@@ -423,7 +421,41 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
             Append_Codepoint(mo->strand, '~');
     }
     else {
-        rebElide(CANON(MOLDIFY), element, molder, formval);
+      // We want to do an equivalent of:
+      //
+      //     rebElide(CANON(MOLDIFY), element, molder, formval);
+      //
+      // But that would require doing lookup of MOLDIFY, meaning you could
+      // not PROBE() during a word lookup without risking infinite recursion.
+      // Do a lighter-weight manual frame build and call instead.
+
+      require (
+        Level* sub = Make_End_Level(
+            &Action_Executor, LEVEL_MASK_NONE
+        )
+      );
+      require (
+        Push_Action(sub, LIB(MOLDIFY), PREFIX_0)
+      );
+        Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
+
+        Level* const level_ = sub;
+        INCLUDE_PARAMS_OF_MOLDIFY;
+
+        Copy_Cell(Erase_ARG(VALUE), element);
+        Copy_Cell(Erase_ARG(MOLDER), molder);
+        Copy_Cell(Erase_ARG(FORM), formval);
+
+        DECLARE_ATOM (out);
+        Push_Level_Erase_Out_If_State_0(out, sub);
+        UNUSED(out);  // information was written to molder
+
+        bool threw = Trampoline_With_Top_As_Root_Throws();
+        if (threw)  // don't want to return casual error you can TRY from
+            panic (Error_No_Catch_For_Throw(sub));
+
+        unnecessary(Drop_Action(sub));  // !! action dropped, should it be?
+        Drop_Level(sub);
 
         if (tildes)
             Append_Codepoint(mo->strand, '~');
