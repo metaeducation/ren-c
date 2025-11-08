@@ -33,14 +33,11 @@ name: Android Build
 #
 on:
   push:
-    branches: [
-      #master,
-      android  # pushing to android won't build other workflows, use to debug
-    ]
+    branches:
+      - android
   pull_request:
-    branches: [
-      master
-    ]
+    branches:
+      - android
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 

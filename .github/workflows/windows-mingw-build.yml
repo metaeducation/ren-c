@@ -43,15 +43,11 @@ name: Windows MinGW
 #
 on:
   push:
-    branches: [
-      # master,
-      mingw,  # pushing to mingw won't build other workflows, use to debug
-      windows  # pushing to windows builds this and msvc, use to debug
-    ]
+    branches:
+      - mingw
   pull_request:
-    branches: [
-      master
-    ]
+    branches:
+      - mingw
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 

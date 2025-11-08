@@ -26,13 +26,11 @@ name: WebAssembly WASI
 #
 on:
   push:
-    branches: [
-      wasi
-    ]
+    branches:
+      - wasi
   pull_request:
-    branches: [
-      wasi
-    ]
+    branches:
+      - wasi
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 

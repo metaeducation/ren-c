@@ -26,14 +26,12 @@ name: Emscripten Web
 #
 on:
   push:
-    branches: [
-      master,  # The web build is top priority, needs to always be checked!
-      web  # pushing to web won't build other workflows, use to debug
-    ]
+    branches:
+      - web
   pull_request:
-    branches: [
-      master
-    ]
+    branches:
+      - master
+      - web
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 

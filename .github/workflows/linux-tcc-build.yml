@@ -29,14 +29,11 @@ name: Linux TCC
 #
 on:
   push:
-    branches: [
-      #master,
-      tcc  # pushing to tcc won't build other workflows, use to debug
-    ]
+    branches:
+      - tcc
   pull_request:
-    branches: [
-      master
-    ]
+    branches:
+      - tcc
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 

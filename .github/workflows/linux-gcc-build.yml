@@ -21,14 +21,12 @@ name: Linux GCC
 #
 on:
   push:
-    branches: [
-      # master,
-      linux  # pushing to linux won't build other workflows, use to debug
-    ]
+    branches:
+      - linux
   pull_request:
-    branches: [
-      master
-    ]
+    branches:
+      - master
+      - linux
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 

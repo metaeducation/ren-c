@@ -26,14 +26,12 @@ name: Windows MSVC
 #
 on:
   push:
-    branches: [
-      msvc,  # pushing to msvc won't build other workflows, use to debug
-      windows  # pushing to windows builds this and mingw, use to debug
-    ]
+    branches:
+      - windows
   pull_request:
-    branches: [
-      master
-    ]
+    branches:
+      - master
+      - windows
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 

@@ -21,14 +21,12 @@ name: macOS Clang
 #
 on:
   push:
-    branches: [
-      # master,
-      macos  # pushing to macos won't build other workflows, use to debug
-    ]
+    branches:
+      - macos
   pull_request:
-    branches: [
-      master
-    ]
+    branches:
+      - master
+      - macos
   workflow_dispatch:  # Allows running this workflow manually from Actions tab
 
 
