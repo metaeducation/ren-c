@@ -12,8 +12,7 @@
 # 2. Next we export those into uppercase environment variables that are visible
 #    in the subsequent steps by appending to the special GITHUB_ENV file.
 #
-name: 'Get Git Commit Hashes'
-description: 'Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT'
+name: 'Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT'
 runs:
   using: "composite"
   steps:

@@ -112,9 +112,8 @@ jobs:
     - uses: actions/checkout@v4  # See README: Trusted Actions
 
 
-    # Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT
-    #
-    - uses: ./.github/actions/capture-git-hashes
+    - name: Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT
+      uses: ./.github/actions/capture-git-hashes
 
 
     # Many pieces of functionality have been broken out into separate repos.

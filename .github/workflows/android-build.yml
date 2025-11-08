@@ -134,16 +134,15 @@ jobs:
     #
     - uses: actions/checkout@v4  # See README: Trusted Actions
 
-    # Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT
-    #
-    - uses: ./.github/actions/capture-git-hashes
+
+    - name: Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT
+      uses: ./.github/actions/capture-git-hashes
 
 
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#
 
-    # See README: Speedup `apt install` by Diverting mandb to No-Op
-    #
-    - uses: ./.github/actions/divert-mandb
+    - name: Speedup `apt install` by Diverting mandb To No-Op  # See README
+      uses: ./.github/actions/divert-mandb
 
 
     # !!! Ideally this would use the same step that clients can use to build
