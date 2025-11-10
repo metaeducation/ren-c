@@ -1068,8 +1068,24 @@ void Describe_ODBC_Results(
             col->buffer_size = sizeof(unsigned char);
             break;
 
+          // You should be able to request an UNSIGNED TINYINT as a SQL_C_ULONG
+          // but this is broken in MySQL's ODBC driver (at least as of 9.5.0).
+          // A stored `255` comes back as `4294967295` when the buffer is cast
+          // to a `SQLUINTEGER`.  (The MariaDB driver behaves correctly.)  Use
+          // the exact type instead as a workaround.
+          //
+          case SQL_TINYINT: {
+            if (col->is_unsigned) {
+                col->c_type = SQL_C_UTINYINT;
+                col->buffer_size = sizeof(unsigned char);
+            }
+            else {
+                col->c_type = SQL_C_SLONG;  // just use signed int
+                col->buffer_size = sizeof(SQLINTEGER);
+            }
+            break; }
+
           case SQL_SMALLINT:
-          case SQL_TINYINT:
           case SQL_INTEGER:
             if (col->is_unsigned) {
                 col->c_type = SQL_C_ULONG;
@@ -1457,6 +1473,9 @@ Value* ODBC_Column_To_Rebol_Value(
         if (*cast(unsigned char*, col->buffer))
             return rebValue("'true");  // can't append antiform to block :-(
         return rebValue("'false");
+
+       case SQL_C_UTINYINT:  // unsigned: 0..255
+        return rebInteger(*cast(unsigned char*, col->buffer));
 
     // ODBC was asked at SQLGetData time to give back *most* integer
     // types as SQL_C_SLONG or SQL_C_ULONG, regardless of actual size
