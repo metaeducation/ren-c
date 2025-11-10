@@ -82,7 +82,8 @@ typedef RebolValue Value;
 // However, you cannot pass in a nullptr for the buffer.  So DUMMY_BUFFER is
 // used instead.
 //
-char DUMMY_BUFFER[1];
+#define DUMMY_BUFFER_SIZE  1
+char g_dummy_buffer[DUMMY_BUFFER_SIZE];
 
 
 //
@@ -789,12 +790,7 @@ SQLRETURN ODBC_BindParameter(
         break; }
 
     // 1. For VARBINARY columns, column_size should indicate the maximum
-    //    column capacity, not necessarily the data size. Some ODBC drivers
-    //    (notably MySQL/MariaDB) fail when column_size is 0, even for empty
-    //    binaries. Use at least 1 to cue variable-length binary.
-    //
-    //    (Failure to do so gets corrupt results with the MySQL ODBC driver,
-    //    and "String data, right-truncated" with MariaDB driver.)
+    //    column capacity, not necessarily the data size.
 
       case SQL_C_BINARY: {  // BLOB!
         size_t size;
@@ -802,10 +798,10 @@ SQLRETURN ODBC_BindParameter(
 
         sql_type = SQL_VARBINARY;
         p->buffer = bytes;
-        p->buffer_size = size * sizeof(char);  // note: sizeof(char) always one
+        p->buffer_size = size * sizeof(char);
         p->length = size;
 
-        p->column_size = (size == 0) ? 1 : size;  // can't be zero, see [1]
+        p->column_size = size;  // see [1]
         break; }
 
       default:
@@ -1663,7 +1659,7 @@ DECLARE_NATIVE(COPY_ODBC)
     );
 
     SQLLEN row = 0;
-    while (row != num_rows) {
+    for (; row != num_rows; row = (num_rows == -1) ? 0 : row + 1) {
 
         // This SQLFetch operation "fetches" the next row.  If we were using
         // column binding, it would be writing data into the memory buffers
@@ -1728,7 +1724,7 @@ DECLARE_NATIVE(COPY_ODBC)
                 hstmt,
                 column_index,
                 col->c_type,
-                col->buffer ? col->buffer : DUMMY_BUFFER,  // can't be null
+                col->buffer ? col->buffer : g_dummy_buffer,  // can't be null
                 col->buffer_size,  // zero if null
                 &len
             );
@@ -1756,19 +1752,22 @@ DECLARE_NATIVE(COPY_ODBC)
                 assert(len != SQL_NO_TOTAL);
                 assert(col->buffer == nullptr);
                 allocated = rebAllocBytes(len + 1);  // can be rebRepossess()'d
-                SQLLEN len_check;
-                rc = SQLGetData(
-                    hstmt,
-                    column_index,
-                    col->c_type,
-                    unwrap allocated,
-                    len,  // amount of space in buffer
-                    &len_check
-                );
-                if (rc != SQL_SUCCESS)
-                    return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
 
-                assert(len_check == len);
+                if (len != 0) {  // MariaDB ODBC won't let you call with 0 len
+                    SQLLEN len_check;
+                    rc = SQLGetData(
+                        hstmt,
+                        column_index,
+                        col->c_type,
+                        unwrap allocated,
+                        len,  // amount of space in buffer
+                        &len_check
+                    );
+                    if (rc != SQL_SUCCESS)
+                        return rebDelegate("panic", Error_ODBC_Stmt(hstmt));
+
+                    assert(len_check == len);
+                }
                 break;
 
               case SQL_NO_DATA:
@@ -1791,7 +1790,6 @@ DECLARE_NATIVE(COPY_ODBC)
         }
 
         rebElide("append", results, rebR(record));
-        ++row;
     }
 
   no_more_data:
