@@ -47,6 +47,7 @@
 //          [<opt-out> any-stable?]
 //      :type "Test a concrete type, (integer?:type integer!) passes"
 //      :quoted
+//      :quasiform
 //      :tied
 //      :pinned
 //      :metaform
@@ -65,6 +66,7 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
     /* UNUSED(ARG(VALUE))); */  // it's an intrinsic, no first param defined
     UNUSED(ARG(TYPE));
     UNUSED(ARG(QUOTED));
+    UNUSED(ARG(QUASIFORM));
     UNUSED(ARG(TIED));
     UNUSED(ARG(PINNED));
     UNUSED(ARG(METAFORM));
@@ -122,12 +124,20 @@ Bounce Typechecker_Dispatcher(Level* const L)
         }
         else {
             if (Bool_ARG(QUOTED)) {
-                if (Is_Antiform(v))
+                if (Is_Antiform(v) or Quotes_Of(cast(Element*, v)) == 0)
                     return LOGIC(false);
-                type = Type_Of_Unquoted(cast(Element*, v));
+                Dequotify(cast(Element*, v));
             }
-            else
+
+            type = Type_Of(v);
+
+            if (Bool_ARG(QUASIFORM)) {
+                if (type != TYPE_QUASIFORM)
+                    return LOGIC(false);
+
+                Unquasify(cast(Element*, v));
                 type = Type_Of(v);
+            }
 
             if (Bool_ARG(TIED)) {
                 if (Bool_ARG(PINNED) or Bool_ARG(METAFORM))
@@ -234,14 +244,15 @@ bool Typechecker_Details_Querier(
 //
 Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     DECLARE_ELEMENT (spec);  // simple spec [2]
-    Source* spec_array = Make_Source_Managed(6);
-    Set_Flex_Len(spec_array, 6);
+    Source* spec_array = Make_Source_Managed(7);
+    Set_Flex_Len(spec_array, 7);
     Metafy(Init_Word(Array_At(spec_array, 0), CANON(VALUE)));
     Init_Get_Word(Array_At(spec_array, 1), CANON(TYPE));
     Init_Get_Word(Array_At(spec_array, 2), CANON(QUOTED));
-    Init_Get_Word(Array_At(spec_array, 3), CANON(TIED));
-    Init_Get_Word(Array_At(spec_array, 4), CANON(PINNED));
-    Init_Get_Word(Array_At(spec_array, 5), CANON(METAFORM));
+    Init_Get_Word(Array_At(spec_array, 3), CANON(QUASIFORM));
+    Init_Get_Word(Array_At(spec_array, 4), CANON(TIED));
+    Init_Get_Word(Array_At(spec_array, 5), CANON(PINNED));
+    Init_Get_Word(Array_At(spec_array, 6), CANON(METAFORM));
     Init_Block(spec, spec_array);
 
     VarList* adjunct;

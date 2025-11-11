@@ -10,6 +10,11 @@
     ]
 )
 
+(word?:quasiform first [~abc~])
+(not word?:quasiform first [~[a b c]~])
+(not word?:quasiform first [~@a~])
+(word?:pinned:quasiform first [~@a~])
+
 ; quasiforms are reified values and hence conditionally truthy
 ;
 (did first [~()~])
