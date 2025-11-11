@@ -782,7 +782,7 @@ Value* Query_File_Or_Directory(const Value* port)
 
     bool is_dir = S_ISDIR(req.statbuf.st_mode);
     if (is_dir != file->is_dir)
-        return rebValue("make warning! {Directory/File flag mismatch}");
+        return rebValue("make warning! --[Directory/File flag mismatch]--");
 
     // !!! R3-Alpha would do this "to be consistent on all systems".  But it
     // seems better to just make the size null, unless there is some info
