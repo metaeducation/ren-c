@@ -1,3 +1,8 @@
+#
+# File: %capture-git-hashes/action.yml
+#
+#=============================================================================#
+#
 # We want the full git commit hash to be passed in and built with the binaries.
 # The abbreviated commit is used to name executables and other artifacts.
 #
@@ -12,9 +17,10 @@
 # 2. Next we export those into uppercase environment variables that are visible
 #    in the subsequent steps by appending to the special GITHUB_ENV file.
 #
-name: 'Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT'
+
+name: Portably Capture GIT_COMMIT and GIT_COMMIT_SHORT
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Grab GIT_COMMIT and GIT_COMMIT_SHORT Environment Variables
       shell: bash  # See README: Use Bash Shell On All Platforms

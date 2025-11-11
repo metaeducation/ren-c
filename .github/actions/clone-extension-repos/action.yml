@@ -1,0 +1,98 @@
+#
+# File: %clone-extension-repos/action.yml
+#
+#=============================================================================#
+#
+# This composite action clones extension repositories from separate GitHub
+# repos based on the EXTENSIONS environment variable.
+#
+# The EXTENSIONS variable should be formatted as pairs of:
+#   ExtensionName +|-|*
+#
+# Where:
+#   + = builtin extension
+#   * = extension as DLL
+#   - = disabled extension (skipped)
+#
+# Example:
+#   Library +
+#   UUID *
+#   ODBC +
+#   View -
+#
+# These extensions are applied as a delta to whatever the default extensions
+# are in the config file you are using.  (See README.md in %configs/ directory)
+#
+
+name: Clone Extension Repositories based on $EXTENSIONS variable
+
+runs:
+  using: composite
+  steps:
+
+    - name: Clone Extensions From Separate Repositories
+      shell: bash
+      run: |
+        cd extensions
+
+        # Map extension names to their GitHub repository URLs
+        # Usage: get_repo_url "Library" => "https://github.com/metaeducation/ren-c-library/"
+        #
+        declare -A extension_urls=(
+          ["bmp"]="https://github.com/metaeducation/ren-c-bmp"
+          ["deci"]="https://github.com/hostilefork/ren-c-deci"  # 64-bit only!
+          ["gif"]="https://github.com/metaeducation/ren-c-gif"
+          ["image"]="https://github.com/metaeducation/ren-c-image"
+          ["jpg"]="https://github.com/metaeducation/ren-c-jpeg"
+          ["library"]="https://github.com/metaeducation/ren-c-library/"
+          ["locale"]=""  # Built-in, no external repo
+          ["odbc"]="https://github.com/metaeducation/rebol-odbc/"
+          ["png"]="https://github.com/metaeducation/ren-c-png"
+          ["serial"]="https://github.com/metaeducation/rebol-serial"
+          ["utf"]=""  # Built-in, no external repo
+          ["uuid"]=""  # Built-in, no external repo
+          ["vector"]="https://github.com/metaeducation/ren-c-vector"
+          ["view"]=""  # Built-in, no external repo
+        )
+
+        # Parse EXTENSIONS variable: odd-numbered words are extension names,
+        # even-numbered words are + (builtin) or * (as DLL) or - (disabled)
+        #
+        echo "Processing EXTENSIONS: $EXTENSIONS"
+
+        # Convert multi-line EXTENSIONS to single line and split into array
+        extensions_flat=$(echo "$EXTENSIONS" | tr '\n' ' ')
+        read -ra words <<< "$extensions_flat"
+
+        # Process pairs: extension name (odd position) and marker (even position)
+        for ((i=0; i<${#words[@]}; i+=2)); do
+          ext_name="${words[i]}"
+          marker="${words[i+1]}"
+
+          # Convert to lowercase for URL lookup
+          ext_lower=$(echo "$ext_name" | tr '[:upper:]' '[:lower:]')
+
+          echo "Extension: $ext_name ($ext_lower) - Marker: $marker"
+
+          # Skip if disabled or if no URL mapping exists
+          if [ "$marker" = "-" ]; then
+            echo "  Skipping $ext_name (disabled)"
+            continue
+          fi
+
+          # Get the repository URL for this extension
+          repo_url="${extension_urls[$ext_lower]}"
+
+          if [ -n "$repo_url" ]; then
+            echo "  Cloning $ext_name from $repo_url"
+            git clone "$repo_url" "$ext_lower" --depth 1
+          else
+            echo "  No external repo for $ext_name (built-in or not mapped)"
+          fi
+        done
+
+
+    - name: List Contents of the Extensions Directory
+      shell: bash
+      run: |
+        ls -la extensions

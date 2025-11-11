@@ -88,6 +88,19 @@ jobs:
             Library +
             UUID *
             ODBC +
+            Clipboard +
+            View +
+            Image +
+            PNG +
+            JPG +
+            BMP +
+            GIF +
+            Serial +
+            UTF +
+            Locale +
+            Vector +
+          # ^-- we're not using 32-bit builds much, so not a problem to make
+          # them fat to test more extensions.
 
 
     # See README: Environment Variables
@@ -113,20 +126,10 @@ jobs:
 
   #====# CHECKOUT STEPS #=====================================================#
 
-    # GitHub CI checkout on Windows auto translates LF to CR/LF in files:
-    #
-    # https://github.com/actions/checkout/issues/135
-    #
-    # However, Ren-C is taking the long view on this and prohibiting CR/LF in
-    # source by default.
-    #
-    # https://forum.rebol.info/t/newlina-non-grata/1207
-    # https://forum.rebol.info/t/1264
+    # https://github.com/metaeducation/git-disable-autocrlf-action/
     #
     - name: Disable LF to CRLF Auto Translation In Git
-      run: |
-        git config --global core.autocrlf false
-        git config --global core.eol lf
+      uses: metaeducation/git-disable-autocrlf-action@v1  # Trusted Action
 
 
     # https://github.com/actions/checkout
@@ -140,15 +143,8 @@ jobs:
       uses: ./.github/actions/capture-git-hashes
 
 
-    # Many pieces of functionality have been broken out into separate repos.
-    # Currently they need to be in the `extensions/` folder to be found.
-    #
-    - name: Clone Extensions From Separate Repositories
-      run: |
-        cd extensions
-
-        git clone https://github.com/metaeducation/ren-c-library/ library --depth 1
-        git clone https://github.com/metaeducation/rebol-odbc/ odbc --depth 1
+    - name: Clone $EXTENSIONS From Separate Repositories
+      uses: ./.github/actions/clone-extension-repos
 
 
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#

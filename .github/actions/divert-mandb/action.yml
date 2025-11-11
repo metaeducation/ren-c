@@ -1,8 +1,14 @@
+#
+# File: %divert-mandb/action.yml
+#
+#=============================================================================#
+#
 # See README: Speedup `apt install` by Diverting mandb to No-Op
 #
-name: 'Divert mandb to No-Op'
+
+name: Divert mandb to No-Op
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Divert mandb to No-Op (speeds up apt significantly)
       shell: bash  # See README: Use Bash Shell On All Platforms

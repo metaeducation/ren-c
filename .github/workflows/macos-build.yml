@@ -116,15 +116,8 @@ jobs:
       uses: ./.github/actions/capture-git-hashes
 
 
-    # Many pieces of functionality have been broken out into separate repos.
-    # Currently they need to be in the `extensions/` folder to be found.
-    #
-    - name: Clone Extensions From Separate Repositories
-      run: |
-        cd extensions
-
-        git clone https://github.com/metaeducation/ren-c-library/ library --depth 1
-        git clone https://github.com/metaeducation/rebol-odbc/ odbc --depth 1
+    - name: Clone $EXTENSIONS From Separate Repositories
+      uses: ./.github/actions/clone-extension-repos
 
 
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#
