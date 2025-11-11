@@ -209,15 +209,17 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         UNUSED(PARAM(PART));
         UNUSED(PARAM(SEEK));
 
-        if (Is_Light_Null(OUT))
-            return nullptr;  // !!! `read dns://` returns nullptr on failure
+        trap (
+          Value* out = Decay_If_Unstable(OUT)
+        );
 
-        Element* out = Known_Element(OUT);
+        if (Is_Nulled(out))
+            return nullptr;  // !!! `read dns://` returns nullptr on failure
 
         if ((Bool_ARG(STRING) or Bool_ARG(LINES)) and not Is_Text(out)) {
             if (not Is_Blob(out))
                 panic (
-                    "READ :STRING or :LINES used on a non-BLOB!/STRING! read"
+                    "READ :STRING or :LINES used on a non-BLOB!/TEXT! read"
                 );
 
             Size size;
@@ -226,11 +228,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
             Init_Text(OUT, decoded);
         }
 
-        if (Bool_ARG(LINES)) { // caller wants a BLOCK! of STRING!s, not one string
+        if (Bool_ARG(LINES)) { // caller wants BLOCK! of STRING!s, not one
             assert(Is_Text(out));
 
             DECLARE_ELEMENT (temp);
-            Move_Cell(temp, out);
+            Move_Cell(temp, Known_Element(out));
             Init_Block(OUT, Split_Lines(temp));
         }
     }
