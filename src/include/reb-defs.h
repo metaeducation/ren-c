@@ -383,3 +383,10 @@ enum {
     COLLECT_TOLERATE_PREBOUND = 1 << 6  // don't error if set words prebound
 };
 typedef Flags CollectFlags;
+
+
+typedef enum {
+    LOOP_INTERRUPT_BREAK = 1,
+    LOOP_INTERRUPT_AGAIN,
+    LOOP_INTERRUPT_CONTINUE
+} LoopInterrupt;

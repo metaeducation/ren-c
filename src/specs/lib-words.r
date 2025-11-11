@@ -146,6 +146,7 @@ across  ; SYM_ACROSS checked as part of SET-WORD!'s code
 ; definitional forms as DEFINITIONAL-RETURN, DEFINITIONAL-BREAK, ...
 #return
 #break
+again
 yield
 continue
 stop

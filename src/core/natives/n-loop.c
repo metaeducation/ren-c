@@ -27,7 +27,7 @@
 
 
 //
-//  Try_Catch_Break_Or_Continue: C
+//  Throw_Was_Loop_Interrupt: C
 //
 // Determines if a thrown value is either a break or continue.  If so, `val`
 // is mutated to become the throw's argument.  For BREAK this is NULL, and
@@ -36,18 +36,20 @@
 //
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
-bool Try_Catch_Break_Or_Continue(
+bool Throw_Was_Loop_Interrupt(
     Sink(Atom) out,
     Level* loop_level,
-    bool* breaking
+    Sink(Option(LoopInterrupt)) interrupt
 ){
     const Value* label = VAL_THROWN_LABEL(loop_level);
 
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
     //
-    if (not Is_Frame(label))
+    if (not Is_Frame(label)) {
+        *interrupt = none;
         return false;
+    }
 
     if (
         Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_BREAK))
@@ -55,7 +57,17 @@ bool Try_Catch_Break_Or_Continue(
     ){
         CATCH_THROWN(out, loop_level);
         Init_Unreadable(out);  // caller must interpret breaking flag
-        *breaking = true;
+        *interrupt = LOOP_INTERRUPT_BREAK;
+        return true;
+    }
+
+    if (
+        Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_AGAIN))
+        and Frame_Coupling(label) == Level_Varlist(loop_level)
+    ){
+        CATCH_THROWN(out, loop_level);
+        Init_Unreadable(out);  // caller must interpret breaking flag
+        *interrupt = LOOP_INTERRUPT_AGAIN;
         return true;
     }
 
@@ -66,11 +78,12 @@ bool Try_Catch_Break_Or_Continue(
         CATCH_THROWN(out, loop_level);
         if (not Is_Void(out))  // nihil signals no argument to CONTINUE
             Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable :WITH
-        *breaking = false;
+        *interrupt = LOOP_INTERRUPT_CONTINUE;
         return true;
     }
 
-    return false; // caller should let all other thrown values bubble up
+    *interrupt = none;
+    return false;  // caller should let all other thrown values bubble up
 }
 
 
@@ -86,7 +99,7 @@ DECLARE_NATIVE(DEFINITIONAL_BREAK)
 //
 // BREAK is implemented via a thrown signal that bubbles up through the stack.
 // It uses the value of its own native function as the name of the throw,
-// like `throw/name null :break`.
+// like `throw:name null break/`.
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_BREAK;
 
@@ -111,6 +124,42 @@ DECLARE_NATIVE(DEFINITIONAL_BREAK)
 
 
 //
+//  definitional-again: native [
+//
+//  "Re-run a loop without advancing its loop variables"
+//
+//      return: [<divergent>]
+//  ]
+//
+DECLARE_NATIVE(DEFINITIONAL_AGAIN)
+//
+// AGAIN is implemented via a thrown signal that bubbles up through the stack.
+// It uses the value of its own native function as the name of the throw,
+// like `throw:name null again/`.
+{
+    INCLUDE_PARAMS_OF_DEFINITIONAL_AGAIN;
+
+    Level* again_level = LEVEL;  // Level of this AGAIN call
+
+    Option(VarList*) coupling = Level_Coupling(again_level);
+    if (not coupling)
+        panic (Error_Archetype_Invoked_Raw());
+
+    Level* loop_level = Level_Of_Varlist_May_Panic(unwrap coupling);
+
+    Element* label = Init_Frame(
+        SPARE,
+        Frame_Phase(LIB(DEFINITIONAL_AGAIN)),
+        CANON(AGAIN),
+        loop_level->varlist
+    );
+
+    Init_Thrown_With_Label(LEVEL, LIB(NULL), label);
+    return BOUNCE_THROWN;
+}
+
+
+//
 //  definitional-continue: native [
 //
 //  "Throws control back to top of loop for next iteration"
@@ -124,7 +173,7 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 //
 // CONTINUE is implemented via a thrown signal that bubbles up through the
 // stack.  It uses the value of its own native function as the name of the
-// throw, like `throw/name value :continue`.
+// throw, like `throw:name value continue/`.
 //
 // 1. How CONTINUE with no argument acts is up to the loop construct to
 //    interpret.  e.g. MAP-EACH, it acts like CONTINUE:WITH ~()~.  We throw
@@ -159,9 +208,9 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 
 
 //
-//  Add_Definitional_Break_Continue: C
+//  Add_Definitional_Break_Again_Continue: C
 //
-void Add_Definitional_Break_Continue(
+void Add_Definitional_Break_Again_Continue(
     Element* body,
     Level* loop_level
 ){
@@ -171,7 +220,7 @@ void Add_Definitional_Break_Continue(
     Init_Action(
         Stub_Cell(let_continue),
         Frame_Phase(LIB(DEFINITIONAL_CONTINUE)),
-        CANON(CONTINUE),  // relabel (the CONTINUE in lib is a dummy action)
+        CANON(CONTINUE),  // relabel (the CONTINUE in lib is trash)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to continue
     );
 
@@ -179,11 +228,19 @@ void Add_Definitional_Break_Continue(
     Init_Action(
         Stub_Cell(let_break),
         Frame_Phase(LIB(DEFINITIONAL_BREAK)),
-        CANON(BREAK),  // relabel (the BREAK in lib is a dummy action)
+        CANON(BREAK),  // relabel (the BREAK in lib is trash)
         Varlist_Of_Level_Force_Managed(loop_level)  // what to break
     );
 
-    Tweak_Cell_Binding(body, let_break);  // extend chain
+    Let* let_again = Make_Let_Variable(CANON(AGAIN), let_break);
+    Init_Action(
+        Stub_Cell(let_again),
+        Frame_Phase(LIB(DEFINITIONAL_AGAIN)),
+        CANON(AGAIN),  // relabel (the AGAIN in lib is trash)
+        Varlist_Of_Level_Force_Managed(loop_level)  // what to break
+    );
+
+    Tweak_Cell_Binding(body, let_again);  // extend chain
 }
 
 
@@ -216,14 +273,24 @@ static Bounce Loop_Series_Common(
     //
     REBINT s = Series_Index(start);
     if (s == end) {
-        if (Eval_Branch_Throws(OUT, body)) {
-            bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
-                return THROWN;
+        Option(LoopInterrupt) interrupt = none;
+        do {
+            if (Eval_Branch_Throws(OUT, body)) {
+                if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
+                    return THROWN;
 
-            if (breaking)
-                return NULLED;
-        }
+                switch (unwrap interrupt) {
+                  case LOOP_INTERRUPT_BREAK:
+                    return BREAKING_NULL;
+
+                  case LOOP_INTERRUPT_AGAIN:
+                    break;  // will keep calling Eval_Branch_Throws()
+
+                  case LOOP_INTERRUPT_CONTINUE:
+                    break;
+                }
+            }
+        } while (interrupt == LOOP_INTERRUPT_AGAIN);
         return OUT;
     }
 
@@ -241,12 +308,20 @@ static Bounce Loop_Series_Common(
             : *state >= end
     ){
         if (Eval_Branch_Throws(OUT, body)) {
-            bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
+            Option(LoopInterrupt) interrupt;
+            if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
                 return THROWN;
 
-            if (breaking)
+            switch (unwrap interrupt) {
+              case LOOP_INTERRUPT_BREAK:
                 return BREAKING_NULL;
+
+              case LOOP_INTERRUPT_AGAIN:
+                continue;
+
+              case LOOP_INTERRUPT_CONTINUE:
+                break;
+            }
         }
 
         if (
@@ -295,14 +370,25 @@ static Bounce Loop_Integer_Common(
     // Run only once if start is equal to end...edge case.
     //
     if (start == end) {
-        if (Eval_Branch_Throws(OUT, body)) {
-            bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
-                return THROWN;
+        Option(LoopInterrupt) interrupt = none;
+        do {
+            if (Eval_Branch_Throws(OUT, body)) {
+                if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
+                    return THROWN;
 
-            if (breaking)
-                return BREAKING_NULL;
-        }
+                switch (interrupt) {
+                  case LOOP_INTERRUPT_BREAK:
+                    return BREAKING_NULL;
+
+                  case LOOP_INTERRUPT_AGAIN:
+                    break;  // will keep calling Eval_Branch_Throws()
+
+                  case LOOP_INTERRUPT_CONTINUE:
+                    break;
+                }
+            }
+        } while (interrupt == LOOP_INTERRUPT_AGAIN);
+
         return LOOPED(OUT);
     }
 
@@ -315,14 +401,24 @@ static Bounce Loop_Integer_Common(
         return BREAKING_NULL;  // avoid infinite loops !!! void, or null?
 
     while (counting_up ? *state <= end : *state >= end) {
-        if (Eval_Branch_Throws(OUT, body)) {
-            bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
-                return THROWN;
+        Option(LoopInterrupt) interrupt = none;
+        do {
+            if (Eval_Branch_Throws(OUT, body)) {
+                if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
+                    return THROWN;
 
-            if (breaking)
-                return BREAKING_NULL;
-        }
+                switch (unwrap interrupt) {
+                  case LOOP_INTERRUPT_BREAK:
+                    return BREAKING_NULL;
+
+                  case LOOP_INTERRUPT_AGAIN:
+                    break;  // will keep calling Eval_Branch_Throws()
+
+                  case LOOP_INTERRUPT_CONTINUE:
+                    break;
+                }
+            }
+        } while (interrupt == LOOP_INTERRUPT_AGAIN);
 
         if (not Is_Integer(var))
             panic (Error_Invalid_Type_Raw(Datatype_Of(var)));
@@ -380,14 +476,25 @@ static Bounce Loop_Number_Common(
     // Run only once if start is equal to end...edge case.
     //
     if (s == e) {
-        if (Eval_Branch_Throws(OUT, body)) {
-            bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
-                return THROWN;
+        Option(LoopInterrupt) interrupt = none;
+        do {
+            if (Eval_Branch_Throws(OUT, body)) {
+                if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
+                    return THROWN;
 
-            if (breaking)
-                return BREAKING_NULL;
-        }
+                switch (unwrap interrupt) {
+                  case LOOP_INTERRUPT_BREAK:
+                    return BREAKING_NULL;
+
+                  case LOOP_INTERRUPT_AGAIN:
+                    break;  // will keep calling Eval_Branch_Throws()
+
+                  case LOOP_INTERRUPT_CONTINUE:
+                    break;
+                }
+            }
+        } while (interrupt == LOOP_INTERRUPT_AGAIN);
+
         return LOOPED(OUT);
     }
 
@@ -399,12 +506,20 @@ static Bounce Loop_Number_Common(
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Eval_Branch_Throws(OUT, body)) {
-            bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
+            LoopInterrupt interrupt;
+            if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
                 return THROWN;
 
-            if (breaking)
+            switch (unwrap interrupt) {
+              case LOOP_INTERRUPT_BREAK:
                 return BREAKING_NULL;
+
+              case LOOP_INTERRUPT_AGAIN:
+                continue;
+
+              case LOOP_INTERRUPT_CONTINUE:
+                break;
+            }
         }
 
         if (not Is_Decimal(var))
@@ -451,7 +566,7 @@ DECLARE_NATIVE(CFOR)
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
-        Add_Definitional_Break_Continue(body, level_);
+        Add_Definitional_Break_Again_Continue(body, level_);
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
     Value* var = Slot_Hack(slot);
@@ -540,7 +655,7 @@ DECLARE_NATIVE(FOR_SKIP)
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
-        Add_Definitional_Break_Continue(body, level_);
+        Add_Definitional_Break_Again_Continue(body, level_);
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
 
@@ -574,14 +689,24 @@ DECLARE_NATIVE(FOR_SKIP)
           Write_Loop_Slot_May_Bind(slot, spare, body)
         );
 
-        if (Eval_Branch_Throws(OUT, ARG(BODY))) {
-            bool breaking;
-            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
-                return THROWN;
+        Option(LoopInterrupt) interrupt = none;
+        do {
+            if (Eval_Branch_Throws(OUT, ARG(BODY))) {
+                if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
+                    return THROWN;
 
-            if (breaking)
-                return BREAKING_NULL;
-        }
+                switch (unwrap interrupt) {
+                  case LOOP_INTERRUPT_BREAK:
+                    return BREAKING_NULL;
+
+                  case LOOP_INTERRUPT_AGAIN:
+                    break;
+
+                  case LOOP_INTERRUPT_CONTINUE:
+                    break;
+                }
+            }
+        } while (interrupt == LOOP_INTERRUPT_AGAIN);
 
         // Modifications to var are allowed, to another ANY-SERIES? value.
         //
@@ -700,7 +825,7 @@ DECLARE_NATIVE(CYCLE)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body)) {
-        Add_Definitional_Break_Continue(body, level_);
+        Add_Definitional_Break_Again_Continue(body, level_);
         Add_Definitional_Stop(body, level_);
     }
 
@@ -731,10 +856,18 @@ DECLARE_NATIVE(CYCLE)
     //    probably no good reason to do that, so right now we stick with the
     //    usual branch policies.  Review if a good use case shows up.
 
-    bool breaking;
-    if (Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking)) {
-        if (breaking)
+    Option(LoopInterrupt) interrupt;
+    if (Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt)) {
+        switch (unwrap interrupt) {
+          case LOOP_INTERRUPT_BREAK:
             return BREAKING_NULL;
+
+          case LOOP_INTERRUPT_AGAIN:
+            break;  // plain again
+
+          case LOOP_INTERRUPT_CONTINUE:
+            break;  // again and continue are same
+        }
 
         return CONTINUE(OUT, body);  // plain continue
     }
@@ -1167,7 +1300,7 @@ DECLARE_NATIVE(FOR_EACH)
     Remember_Cell_Is_Lifeguard(Init_Object(vars, varlist));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
-        Add_Definitional_Break_Continue(body, level_);
+        Add_Definitional_Break_Again_Continue(body, level_);
 
     iterator = Init_Loop_Each_May_Alias_Data(LOCAL(ITERATOR), data);
     STATE = ST_FOR_EACH_INITIALIZED_ITERATOR;
@@ -1201,17 +1334,29 @@ DECLARE_NATIVE(FOR_EACH)
     if (done)
         goto finalize_for_each;
 
+} invoke_body: {
+
     STATE = ST_FOR_EACH_RUNNING_BODY;
     return CONTINUE_BRANCH(OUT, body);
 
 } body_result_in_spare_or_threw: {  //////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
+        Option(LoopInterrupt) interrupt;
+        if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
             goto finalize_for_each;
 
-        if (breaking)
+        switch (unwrap interrupt) {
+          case LOOP_INTERRUPT_BREAK:
+            breaking = true;
             goto finalize_for_each;
+
+          case LOOP_INTERRUPT_AGAIN:
+            goto invoke_body;
+
+          case LOOP_INTERRUPT_CONTINUE:
+            break;
+        }
     }
 
     goto next_iteration;
@@ -1279,7 +1424,7 @@ DECLARE_NATIVE(EVERY)
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
-        Add_Definitional_Break_Continue(body, level_);
+        Add_Definitional_Break_Again_Continue(body, level_);
 
     iterator = Init_Loop_Each_May_Alias_Data(LOCAL(ITERATOR), data);
     STATE = ST_EVERY_INITIALIZED_ITERATOR;
@@ -1302,7 +1447,7 @@ DECLARE_NATIVE(EVERY)
       default: assert(false);
     }
 
-} next_iteration: {  /////////////////////////////////////////////////////////
+} next_iteration: {
 
     heeded (Corrupt_Cell_If_Needful(SPARE));
     heeded (Corrupt_Cell_If_Needful(SCRATCH));
@@ -1312,6 +1457,8 @@ DECLARE_NATIVE(EVERY)
     );
     if (done)
         goto finalize_every;
+
+} invoke_body: {
 
     STATE = ST_EVERY_RUNNING_BODY;
     return CONTINUE(SPARE, body);
@@ -1329,13 +1476,20 @@ DECLARE_NATIVE(EVERY)
     //    down if we try to keep old values, or return void.
 
     if (THROWING) {
-        bool breaking;
-        if (not Try_Catch_Break_Or_Continue(SPARE, LEVEL, &breaking))
+        Option(LoopInterrupt) interrupt;
+        if (not Throw_Was_Loop_Interrupt(SPARE, LEVEL, &interrupt))
             goto finalize_every;
 
-        if (breaking) {
+        switch (unwrap interrupt) {
+          case LOOP_INTERRUPT_BREAK:
             Init_Nulled(OUT);
             goto finalize_every;
+
+          case LOOP_INTERRUPT_AGAIN:
+            goto invoke_body;
+
+          case LOOP_INTERRUPT_CONTINUE:
+            break;
         }
     }
 
@@ -1434,7 +1588,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
     if (Is_Block(body))
-        Add_Definitional_Break_Continue(body, level_);
+        Add_Definitional_Break_Again_Continue(body, level_);
 
     REBLEN start = Series_Index(data);
 
@@ -1498,14 +1652,23 @@ DECLARE_NATIVE(REMOVE_EACH)
     //    is semantically easiest to say BREAK goes along with "no effect".
 
         if (Eval_Any_List_At_Throws(OUT, body, SPECIFIED)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking)) {
+            Option(LoopInterrupt) interrupt;
+            if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt)) {
                 threw = true;
                 goto finalize_remove_each;
             }
 
-            if (breaking) {  // break semantics are no-op [1]
+            switch (unwrap interrupt) {
+              case LOOP_INTERRUPT_BREAK:
+                breaking = true;  // break semantics are no-op [1]
                 assert(start < len);
                 goto finalize_remove_each;
+
+              case LOOP_INTERRUPT_AGAIN:
+                goto invoke_loop_body;
+
+              case LOOP_INTERRUPT_CONTINUE:
+                break;
             }
         }
 
@@ -1819,7 +1982,7 @@ DECLARE_NATIVE(MAP)
         return Init_Block(OUT, Make_Source(0));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
-        Add_Definitional_Break_Continue(body, level_);
+        Add_Definitional_Break_Again_Continue(body, level_);
 
     if (Is_Action(data)) {
         // treat as a generator
@@ -1877,6 +2040,8 @@ DECLARE_NATIVE(MAP)
     if (done)
         goto finalize_map;
 
+} invoke_loop_body: {
+
     STATE = ST_MAP_RUNNING_BODY;
     return CONTINUE(SPARE, body);  // body may be ^BLOCK!
 
@@ -1890,13 +2055,20 @@ DECLARE_NATIVE(MAP)
     //        map-each 'x [1 2 3] [opt if even? x [x * 10]] => [20]
 
     if (THROWING) {
-        bool breaking;
-        if (not Try_Catch_Break_Or_Continue(SPARE, LEVEL, &breaking))
+        Option(LoopInterrupt) interrupt;
+        if (not Throw_Was_Loop_Interrupt(SPARE, LEVEL, &interrupt))
             goto finalize_map;
 
-        if (breaking) {
+        switch (unwrap interrupt) {
+          case LOOP_INTERRUPT_BREAK:
             Init_Nulled(OUT);
             goto finalize_map;
+
+          case LOOP_INTERRUPT_AGAIN:
+            goto invoke_loop_body;
+
+          case LOOP_INTERRUPT_CONTINUE:
+            break;
         }
     }
 
@@ -2004,7 +2176,7 @@ DECLARE_NATIVE(REPEAT)
     }
 
     if (Is_Block(body))
-        Add_Definitional_Break_Continue(body, level_);
+        Add_Definitional_Break_Again_Continue(body, level_);
 
     STATE = ST_REPEAT_EVALUATING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // catch break/continue
@@ -2013,12 +2185,20 @@ DECLARE_NATIVE(REPEAT)
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
     if (THROWING) {
-        bool breaking;
-        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
+        Option(LoopInterrupt) interrupt;
+        if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
             return THROWN;
 
-        if (breaking)
+        switch (unwrap interrupt) {
+          case LOOP_INTERRUPT_BREAK:
             return BREAKING_NULL;
+
+          case LOOP_INTERRUPT_AGAIN:
+            goto invoke_loop_body;
+
+          case LOOP_INTERRUPT_CONTINUE:
+            break;
+        }
     }
 
     if (Is_Logic(count)) {
@@ -2030,6 +2210,8 @@ DECLARE_NATIVE(REPEAT)
         return LOOPED(OUT);
 
     mutable_VAL_INT64(index) += 1;
+
+} invoke_loop_body: { ////////////////////////////////////////////////////////
 
     assert(STATE == ST_REPEAT_EVALUATING_BODY);
     assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
@@ -2101,7 +2283,7 @@ DECLARE_NATIVE(FOR)
         return VOID;
 
     if (Is_Block(body))
-        Add_Definitional_Break_Continue(body, level_);
+        Add_Definitional_Break_Again_Continue(body, level_);
 
     require (
       VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
@@ -2123,12 +2305,20 @@ DECLARE_NATIVE(FOR)
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
     if (THROWING) {
-        bool breaking;
-        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
+        Option(LoopInterrupt) interrupt;
+        if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
             return THROWN;
 
-        if (breaking)
+        switch (unwrap interrupt) {
+          case LOOP_INTERRUPT_BREAK:
             return BREAKING_NULL;
+
+          case LOOP_INTERRUPT_AGAIN:
+            goto invoke_loop_body;
+
+          case LOOP_INTERRUPT_CONTINUE:
+            break;
+        }
     }
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(Cell_Varlist(vars), 1);
@@ -2151,9 +2341,11 @@ DECLARE_NATIVE(FOR)
       Write_Loop_Slot_May_Bind(slot, spare, body)
     );
 
+} invoke_loop_body: { ////////////////////////////////////////////////////////
+
     assert(STATE == ST_FOR_RUNNING_BODY);
     assert(Get_Executor_Flag(ACTION, LEVEL, DISPATCHER_CATCHES));
-    return CONTINUE_BRANCH(OUT, body, spare);
+    return CONTINUE_BRANCH(OUT, body, SPARE);
 }}
 
 
@@ -2192,7 +2384,7 @@ DECLARE_NATIVE(INSIST)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Block(body))
-        Add_Definitional_Break_Continue(body, level_);
+        Add_Definitional_Break_Again_Continue(body, level_);
 
     STATE = ST_INSIST_EVALUATING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for BREAK, CONTINUE, etc.
@@ -2225,12 +2417,20 @@ DECLARE_NATIVE(INSIST)
     //    be considered truthy.
 
     if (THROWING) {
-        bool breaking;
-        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
+        Option(LoopInterrupt) interrupt;
+        if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
             return THROWN;
 
-        if (breaking)
+        switch (unwrap interrupt) {
+          case LOOP_INTERRUPT_BREAK:
             return BREAKING_NULL;
+
+          case LOOP_INTERRUPT_AGAIN:
+            goto loop_again;
+
+          case LOOP_INTERRUPT_CONTINUE:
+            break;
+        }
 
         // continue acts like body evaluated to its argument [1]
     }
@@ -2295,7 +2495,7 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
     STATE = ST_WHILE_OR_UNTIL_EVALUATING_CONDITION;  // set before catching
 
     if (Is_Block(body))
-        Add_Definitional_Break_Continue(body, LEVEL);  // no condition bind [1]
+        Add_Definitional_Break_Again_Continue(body, LEVEL);  // no condition bind [1]
     else
         assert(Is_Frame(body));
 
@@ -2325,6 +2525,8 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
             goto return_out;  // truthy condition => last body result
     }
 
+} invoke_loop_body: {
+
     STATE = ST_WHILE_OR_UNTIL_EVALUATING_BODY;  // body result => OUT
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for break/continue
     return CONTINUE_BRANCH(OUT, body, SPARE);
@@ -2332,12 +2534,20 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
 } body_eval_in_out: { ////////////////////////////////////////////////////////
 
     if (THROWING) {
-        bool breaking;
-        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
+        Option(LoopInterrupt) interrupt;
+        if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
             return THROWN;
 
-        if (breaking)
+        switch (unwrap interrupt) {
+          case LOOP_INTERRUPT_BREAK:
             return BREAKING_NULL;
+
+          case LOOP_INTERRUPT_AGAIN:
+            goto invoke_loop_body;
+
+          case LOOP_INTERRUPT_CONTINUE:
+            break;
+        }
     }
 
     Disable_Dispatcher_Catching_Of_Throws(LEVEL);

@@ -49,6 +49,8 @@ return: ~#[RETURN used when no function generator is providing it]#~
 
 continue: ~#[CONTINUE used when no loop is providing it]#~
 
+continue: ~#[AGAIN used when no loop is providing it]#~
+
 break: ~#[BREAK used when no loop is providing it]#~
 
 stop: ~#[STOP used when no loop is providing it]#~

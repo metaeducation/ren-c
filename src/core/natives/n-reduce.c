@@ -319,7 +319,7 @@ DECLARE_NATIVE(REDUCE_EACH)
         panic ("REDUCE-EACH only supports one variable for now");
 
     assert(Is_Block(body));
-    Add_Definitional_Break_Continue(body, level_);
+    Add_Definitional_Break_Again_Continue(body, level_);
 
     Executor* executor;
     if (Is_Pinned_Form_Of(BLOCK, block))
@@ -362,7 +362,7 @@ DECLARE_NATIVE(REDUCE_EACH)
       Write_Loop_Slot_May_Bind_Or_Decay(slot, SPARE, block)
     );
 
-} next_reduce_each: {
+} invoke_loop_body: {
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // pass through sublevel
 
@@ -373,11 +373,21 @@ DECLARE_NATIVE(REDUCE_EACH)
 } body_result_in_out: { //////////////////////////////////////////////////////
 
     if (THROWING) {
-        if (not Try_Catch_Break_Or_Continue(OUT, LEVEL, &breaking))
+        Option(LoopInterrupt) interrupt;
+        if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
             goto finished;
 
-        if (breaking)
+        switch (unwrap interrupt) {
+          case LOOP_INTERRUPT_BREAK:
+            breaking = true;
             goto finished;
+
+          case LOOP_INTERRUPT_AGAIN:
+            goto invoke_loop_body;
+
+          case LOOP_INTERRUPT_CONTINUE:
+            break;
+        }
     }
 
     Disable_Dispatcher_Catching_Of_Throws(LEVEL);
