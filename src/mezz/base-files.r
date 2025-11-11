@@ -31,8 +31,8 @@ info?: func [
     if only [return 'file]
     return make object! [
         name: target
-        size: t.2
-        date: t.3
+        size: degrade t.2
+        date: degrade t.3
         type: 'url
     ]
 ]

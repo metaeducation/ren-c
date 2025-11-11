@@ -253,14 +253,7 @@ latest-of: func [
         let last-deploy: join url! [
             s3root @os %/last-deploy.short-hash  ; S3, not cloudfront [2]
         ]
-        if is-web-build [
-            commit: as text! read last-deploy  ; use web build READ
-        ] else [
-            print ["TLS ciphers out of date :-( using CALL of curl vs. READ"]
-            print ["Fetching last deployment from:" last-deploy]
-            commit: ""
-            call:output [curl -s (last-deploy)] commit  ; -s means content only
-        ]
+        commit: as text! read last-deploy
         trim:tail commit
     ]
 
@@ -279,25 +272,9 @@ latest-of: func [
         cloudroot @os "/" filename  ; cached cloudfront is okay for the binary
     ]
 
-    print ["Verifying:" url]  ; INFO? on bad file or curl with --fail errors
+    print ["Verifying:" url]
 
-    let info
-
-    if is-web-build [
-        info: info? url  ; If this fails, the build is not available
-    ] else [
-        let headers: copy ""
-        call:output [curl --fail -sI (url)] headers  ; asks for failure
-        info: parse headers [gather [  ; note: case-insensitive
-            some [
-                "Content-Length:" _ emit size: integer!
-                |
-                "Last-Modified:" _ emit date: across to newline
-                |
-                thru newline
-            ]
-        ]]
-    ]
+    let info: info? url  ; If this fails, the build is not available
 
     if verbose [
         print ["File size:" (round:to divide info.size 1000000 0.01) "Mb"]

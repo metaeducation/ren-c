@@ -400,14 +400,7 @@ jobs:
           ]
           for-each 'url list [
               let [_ filename]: split-path url
-
-              ; !!! Old EXE is having trouble reading modern crypto URLs
-              ; so download via wget instead of Rebol read.
-              ;
-              comment [
-                  write filename (read url)
-              ]
-              call [wget --quiet -O (filename) (url)]
+              write filename (read url)
           ]
 
 

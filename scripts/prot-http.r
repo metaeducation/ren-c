@@ -763,10 +763,113 @@ sys.util/make-scheme [
     ]
 ]
 
-sys.util/make-scheme:with [
+
+make-curl-command: lambda [spec [object!] "comes from port.spec"] [
+    ensure url! spec.ref
+    ensure [null? block!] spec.headers
+    ensure [null? word!] spec.method
+
+    spaced [
+        "curl"
+        -[--user-agent "Rebol/3.0"]-
+        "--silent"  ; suppress progress meter
+        "--show-error"  ; shows errors even in silent mode
+        "--location"  ; follow redirects
+        "--max-redirs 10"
+        "--max-time" spec.timeout
+        "--fail-with-body"  ; error exit code on 400+ status, still give body
+
+        ; This is how you would get metadata back at the tail of the response.
+        ; It would need to be parsed out.  Here's a list of what you can get:
+        ;
+        ;  https://everything.curl.dev/usingcurl/verbose/writeout.html
+        ;
+        comment [
+            -[--write-out '\n{\"status\":%{http_code}}']-  ; metadata in JSON
+        ]
+
+        when spec.method [spaced ["-X" spec.method]]
+        when spec.headers [
+            spread collect [
+                for-each [k v] spec.headers [
+                    keep "-H" keep unspaced ["'" k ":" _ v "'"]
+                ]
+            ]
+        ]
+        "--url" unspaced [-["]- spec.ref -["]-]
+    ]
+]
+
+; HTTPS used to be done with a TLS scheme which wrapped the HTTP protocol
+; (MAKE-SCHEME:WITH ... 'http).
+;
+; Maintenance of that code became prohibitive, and it wasn't really "secure"
+; because it didn't interoperate with the certificates anyway.  With focus
+; being on the web version, switching to a curl-based interface using CALL
+; was just the pragmatic thing to do.
+;
+sys.util/make-scheme [
     name: 'https
     title: "Secure HyperText Transport Protocol v1.1"
-    spec: make spec [
-        port-id: 443
+
+    spec: make system.standard.port-spec-net [
+        path: %/
+        method: 'GET  ; curl heeds case ('get will fail)
+        headers: []
+        content: null
+        timeout: 15
+        debug: null
+        follow: 'redirect
+        port-id: 443  ; overridden ID will still be present in port.spec.ref
     ]
-] 'http
+
+    actor: [
+        read: func [
+            return: [blob!]
+            port [port!]
+            :lines
+            :string
+        ][
+            let data: make blob! 32000
+            let errors: make text! 1000
+
+            let command: make-curl-command port.spec
+
+            call:shell:output:error command data errors except [
+                panic errors
+            ]
+
+            if lines or string [
+                ; handled by READ native, post-processes blob at the moment
+            ]
+            return data
+        ]
+
+        write: func [
+            port [port!]
+            value
+            <local> data
+        ][
+            if value = [HEAD] [  ; used by INFO?
+                let headers: copy ""
+                call:output [curl --fail -sI (port.spec.ref)] headers
+                let info: parse headers [gather [  ; note: case-insensitive
+                    some [
+                        "Content-Length:" _ emit size: integer!
+                        |
+                        "Last-Modified:" _ emit date: across to newline
+                        |
+                        thru newline
+                    ]
+                ]]
+                return reduce [
+                    to file! port.spec.path
+                    reify try info.size
+                    reify try info.date
+                ]
+            ]
+
+            panic "WRITE with curl for https only implements [HEAD] right now"
+        ]
+    ]
+]

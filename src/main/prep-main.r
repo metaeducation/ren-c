@@ -56,10 +56,10 @@ for-each 'file reduce [
     ; (unlike the encap and compression code itself.)  But they represent
     ; another level of "bootstrap" for those who want to run scripts off the
     ; web, so they make sense to build into the executable.
-    ;
-    ; Note that these depend on the crypto extension being initialized to run.
 
-    %scripts/prot-tls.r  ; TLS (a.k.a. the "S" in HTTPS)
+    comment [  ; outdated TLS/ciphers, so we just CALL curl from %prot-http.r
+        %scripts/prot-tls.r  ; TLS (a.k.a. the "S" in HTTPS)
+    ]
     %scripts/prot-http.r  ; HTTP Client (HTTPS if used with TLS)
 
     %src/main/main-startup.r
