@@ -730,11 +730,11 @@ e-symids/emit [syms-cscape --[
      * potential bugs like `Word_Id(a) == Word_Id(b)` are mitigated
      * by preventing such comparisons.
      */
-    enum SymIdEnum {
+    typedef enum {
         SYM_0_constexpr,  /* SYM_0 defined as Option(SymId) for safety */
 
         $(Sym-Enum-Items),
-    };
+    } SymId;
 
     /*
      * These definitions are derived from markers added during the symbol

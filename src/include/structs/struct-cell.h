@@ -200,14 +200,13 @@ typedef Byte KindByte;  // help document when Byte is Heart + Sigil [1]
 // used for the "Sigil".  This can be [$ @ ^] or nothing.
 //
 
-enum SigilEnum {
+typedef enum {
     SIGIL_0 = 0,
     SIGIL_META = 1,     // ^
     SIGIL_PIN = 2,      // @
     SIGIL_TIE = 3,      // $
     MAX_SIGIL = SIGIL_TIE
-};
-typedef enum SigilEnum Sigil;
+} Sigil;
 
 #define FLAG_SIGIL_CRUMB(crumb) \
     FLAG_KIND_BYTE((crumb) << KIND_SIGIL_SHIFT)

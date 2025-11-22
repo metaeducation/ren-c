@@ -172,7 +172,7 @@ typedef struct PoolStruct {
 
 typedef Offset PoolId;
 
-enum PoolSpecEnum {
+enum {
     MEM_TINY_POOL = 0,
     MEM_SMALL_POOLS = MEM_TINY_POOL + 16,
     MEM_MID_POOLS = MEM_SMALL_POOLS + 4,

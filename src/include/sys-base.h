@@ -123,16 +123,14 @@ typedef Byte BaseByte;
 // make this routine able to work.
 //
 
-enum PointerDetectEnum {
+typedef enum {
     DETECTED_AS_UTF8 = 1,
     DETECTED_AS_CELL,
     DETECTED_AS_STUB,
     DETECTED_AS_END,  // a rebEND signal (Note: has char* alignment!)
     DETECTED_AS_FREE,
     DETECTED_AS_WILD  // arbitrary out-of-band purposes
-};
-
-typedef enum PointerDetectEnum PointerDetect;
+} PointerDetect;
 
 INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
 {

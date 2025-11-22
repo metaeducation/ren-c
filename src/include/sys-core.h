@@ -301,13 +301,12 @@ typedef struct LevelStruct Level;  // forward declaration for Level
 // lot of inconvenience for C code, needing to wrap up state...so this does
 // it with an enumeration struct.
 
-enum LensModeEnum {
+typedef enum {
     LENS_MODE_INPUTS,
     LENS_MODE_PARTIALS,
     LENS_MODE_ALL_UNSEALED
     // Note: viewing ALL including sealed could expose duplicate keys, illegal!
-};
-typedef enum LensModeEnum LensMode;
+} LensMode;
 
 struct Reb_Enum_Vars {
     const Key* key;

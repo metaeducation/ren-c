@@ -39,8 +39,6 @@
 
 #include "tmp-symid.h"  // enum built by %make-boot.r
 
-typedef enum SymIdEnum SymId;
-
 typedef uint_fast16_t SymId16;  // 16 bits for SymId in symbol header
 
 #define SYM_0  u_cast(Option(SymId), none)
