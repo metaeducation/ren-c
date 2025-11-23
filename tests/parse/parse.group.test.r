@@ -23,3 +23,13 @@
 )
 
 ('z = parse [x z] ['x (assert [okay]) 'z])
+
+; It's legal to use a GROUP! fetched by WORD!
+(
+    group-ran: null
+    rule: $(group-ran: okay)
+    all [
+        parse [] [rule]
+        group-ran
+    ]
+)

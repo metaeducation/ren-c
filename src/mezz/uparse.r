@@ -2245,6 +2245,13 @@ default-combinators: make map! [
                 rule-end: tail of ^r
             ]
 
+            ; GROUP!s are also accepted as rules, and looked up via combinator.
+            ;
+            group! [
+                rule-start: null  ; !!! what to do here?
+                rule-end: null
+            ]
+
             ; These types are accepted literally (though they do run through
             ; the combinator looked up to, which ultimately may not mean
             ; that they are literal... should there be a special "literal"
