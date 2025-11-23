@@ -1030,6 +1030,39 @@ default-combinators: make map! [
         return ^result
     ]
 
+    'into combinator [
+        "Arity-1 variation of SUBPARSE (presumes current position as input)"
+        return: "Result of the subparser"
+            [any-stable? pack!]
+        input [any-list?]
+        subparser [action!]
+        :match "Return input on match, not synthesized value"
+        :relax "Don't have to match input completely, just don't mismatch"
+        <local> subseries subremainder ^result
+    ][
+        subseries: trap input.1
+        input: next input
+
+        case [
+            any-series? subseries []
+            any-sequence? subseries [subseries: as block! subseries]
+            return fail "Need SERIES! or SEQUENCE! input for use with INTO"
+        ]
+
+        ; If the entirety of the item at the list is matched by the
+        ; supplied parser rule, then we advance past the item.
+        ;
+        [^result subremainder]: trap subparser subseries
+
+        if (not relax) and (not tail? subremainder) [
+            return fail "SUBPARSE succeeded, but didn't complete subseries"
+        ]
+        if match [
+            return subseries
+        ]
+        return ^result
+    ]
+
     === COLLECT AND KEEP ===
 
     ; The COLLECT feature was first added by Red.  However, it did not use
