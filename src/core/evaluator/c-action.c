@@ -147,15 +147,12 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
     //    it would backed by an API cell form holding an unstable value,
     //    which is currently not legal.  Some rules and tightening would
     //    be needed, so for now we do `rebContinue("pack [...]")`
-    //
-    // 2. If a native does `return rebValue("lambda [x] [x]")` that should
-    //    count as an "unsurprising" function result.  Preserve the flag.
 
     if (Is_Bounce_An_Atom(b)) {  // Cell pointer (must be Api cell)
         Atom* atom = Atom_From_Bounce(b);
         assert(Is_Atom_Api_Value(atom));
         Assert_Cell_Stable(atom);  // API cells always stable, for now [1]
-        Copy_Cell_Core(OUT, atom, CELL_MASK_THROW);  // keep unsurprising [2]
+        Copy_Cell(OUT, atom);
         Release_Api_Value_If_Unmanaged(Known_Stable(atom));
         return nullptr;
     }

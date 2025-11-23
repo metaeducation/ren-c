@@ -238,11 +238,11 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
 
     if (LIFT_BYTE(v) == ANTIFORM_1) {
         Assert_Cell_Stable(v);
-        Liftify(u_cast(Atom*, Copy_Cell_Core(out, v, CELL_MASK_THROW)));
+        Copy_Lifted_Cell(out, v);
         Set_Cell_Flag(out, FEED_NOTE_META);  // @ turns back [2]
     }
     else
-        Copy_Cell_Core(out, cast(Element*, v), CELL_MASK_THROW);
+        Copy_Cell(out, cast(Element*, v));
 
     return out;
 }

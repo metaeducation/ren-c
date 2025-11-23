@@ -33,13 +33,12 @@
     ('~,~ = (10 + 20 lift (eval [])))
     ('~,~ = (10 + 20 lift (eval [comment "hi"])))
     ((lift ^void) = (10 + 20 lift (eval make frame! lambda [] [^void])))
-    (null = ^(lift eval [null]))
+    ('~null~ = (lift eval [null]))
     ('~[~null~]~ = lift (eval [if okay [null]]))
 
     (30 = (10 + 20 eval []))
     (30 = (10 + 20 eval [comment "hi"]))
     (30 = (10 + 20 eval make frame! func [] [return ~,~]))
-    (null = ^(lift eval [null]))
     ('~[~null~]~ = ^ eval [heavy null])
     ('~[~null~]~ = ^ eval [if okay [null]])
 
@@ -50,7 +49,6 @@
     ((lift ^void) = ^ eval [^void])
 
     ((lift null) = ^ eval [null])
-    (null = ^(lift eval [null]))
     ((lift null) = ^ (eval [null]))
     ((lift null) = lift eval [null])
 

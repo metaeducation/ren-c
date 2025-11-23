@@ -1202,7 +1202,6 @@ DECLARE_NATIVE(DEFAULT)
         assert(false);  // shouldn't be able to happen (steps is pinned)
         panic (e);
     }
-    Clear_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);
     return OUT;
 }}
 

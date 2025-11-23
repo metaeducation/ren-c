@@ -89,7 +89,7 @@
 
 ; ^ is APPROVE
 
-    (x: ^ either null [append/] [insert/])
+    (3 = (1 + 2 ^ eval []))
 
     ~need-non-end~ !! (^)
 

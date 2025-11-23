@@ -7,9 +7,9 @@
 [
     ('~,~ = lift ())
     ('~,~ = lift (comment "hi"))
-    (void? ^(lift ^void))
+    (void? unlift (lift ^void))
 
-    (void? ^(lift opt ^void))
+    (void? unlift (lift opt ^void))
     ((lift ^void) = ^ (opt ^void))
     ~no-value~ !! (opt comment "hi")
 
@@ -20,7 +20,7 @@
 
 ((the '10) = lift (10 comment "hi"))
 
-(null = ^(lift null))
+(null = unlift (lift null))
 ('~[~null~]~ = lift (if ok [null]))
 
 ((the '1020) = lift (1000 + 20))

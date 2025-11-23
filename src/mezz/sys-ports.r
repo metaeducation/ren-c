@@ -113,7 +113,7 @@ make-port*: func [
     port.scheme: scheme
 
     ; Defaults:
-    port.actor: ^ try scheme.actor  ; avoid evaluation
+    port.actor: try scheme.actor  ; avoid evaluation
     port.spec.ref: default [spec]
     port.spec.title: default [scheme.title]
     port: make port! ensure object! port  ; !!! kludge for the moment

@@ -291,7 +291,13 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         Liftify(value_arg);
 
         if (Is_Lifted_Action(Known_Stable(value_arg))) {
-            if (Not_Cell_Flag(TOP, OUT_HINT_UNSURPRISING))
+            //
+            // !!! SURPRISING ACTION ASSIGNMENT DETECTION WOULD GO HERE !!!
+            // Current concept is that actions-in-a-pack would be how the
+            // "unsurprising" bit is encoded.  This is the last gasp of that
+            // particular form of safety--if that doesn't work, I give up.
+            //
+            if (false)
                 return Error_Surprising_Action_Raw(picker_arg);
 
             if (Is_Word(picker_arg)) {
@@ -512,7 +518,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     stackindex_top = TOP_INDEX;  // capture "top of stack" before push
 
-    Copy_Cell_Core(PUSH(), Known_Stable(OUT), CELL_MASK_THROW);
+    Copy_Cell(PUSH(), Known_Stable(OUT));
 
   poke_again: { //////////////////////////////////////////////////////////////
 
@@ -637,7 +643,9 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             e = Error_User("/word: and /obj.field: assignments need ACTION!");
             goto return_error;
         }
-        Set_Cell_Flag(TOP, OUT_HINT_UNSURPRISING);
+
+        // THIS IS WHERE WE WOULD TELL TWEAK NOT TO COMPLAIN IF THE ACTION
+        // IS NOT IN A PACK, see Error_Surprising_Action_Raw()
     }
 
     // This may be the first time we do an update, or it may be a writeback
@@ -1355,7 +1363,7 @@ DECLARE_NATIVE(TWEAK)
 
     Value* dual = ARG(DUAL);
 
-    Copy_Cell_Core(OUT, dual, CELL_MASK_THROW);
+    Copy_Cell(OUT, dual);
 
     if (Is_Nulled(ARG(TARGET)))
         return OUT;   // same for SET as [10 = (void): 10]

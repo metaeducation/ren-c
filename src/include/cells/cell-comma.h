@@ -74,23 +74,12 @@ INLINE Element* Init_Comma_Untracked(Init(Element) out) {
 // evaluation can be preserved.
 //
 
-INLINE Atom* Init_Ghost_Untracked(Init(Atom) out, bool surprising) {
+INLINE Atom* Init_Ghost_Untracked(Init(Atom) out) {
     Init_Comma_Untracked(out);
     Unstably_Antiformize_Unbound_Fundamental(out);
     assert(Is_Ghost(out));
-    if (not surprising)
-        Set_Cell_Flag(out, OUT_HINT_UNSURPRISING);
     return out;
 }
 
-#define Init_Surprising_Ghost(out) \
-    TRACK(Init_Ghost_Untracked((out), true))
-
-#define Init_Unsurprising_Ghost(out) \
-    TRACK(Init_Ghost_Untracked((out), false))
-
-INLINE Atom* UNSURPRISING(Atom* atom) {
-    assert(Is_Ghost(atom) or Is_Action(Known_Stable(atom)));
-    Set_Cell_Flag(atom, OUT_HINT_UNSURPRISING);
-    return atom;
-}
+#define Init_Ghost(out) \
+    TRACK(Init_Ghost_Untracked(out))

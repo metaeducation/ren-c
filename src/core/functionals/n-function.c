@@ -594,74 +594,9 @@ Result(bool) Typecheck_Coerce_Return(
     trap (
       bool check = Typecheck_Coerce(L, param, atom, true)
     );
-    if (not check)
-        return false;
 
-  determine_if_result_is_surprising: { ///////////////////////////////////////
-
-    // If a function returns a value but doesn't always return a value of
-    // that type, we consider it "surprising"...in particular we are concerned
-    // with "surprising ghosts" or "surprising functions":
-    //
-    //   https://rebol.metaeducation.com/t/leaky-ghosts/2437
-    //
-    // But it's actually faster to just determine if any type is surprising.
-    // The information might come in handy somewhere.
-
-    const Array* spec = opt Parameter_Spec(param);
-    if (not spec)
-        return true;
-
-    const TypesetByte* optimized = spec->misc.at_least_4;
-
-    if (
-        optimized[0] != 0 and optimized[1] == 0  // > 1 type "surprising"
-        and Not_Parameter_Flag(param, INCOMPLETE_OPTIMIZATION)  // more in spec
-        and optimized[0] == u_cast(Byte, Type_Of(atom))
-        and Type_Of(atom) != TYPE_PACK  // all PACK! are potentially surprising
-    ){
-      #if RUNTIME_CHECKS
-        Phase* phase = Level_Phase(L);
-        assert(Is_Stub_Details(phase));
-        Details* details = u_cast(Details*, phase);
-        if (
-            Get_Details_Flag(details, RAW_NATIVE)
-            and Not_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
-            and (Is_Possibly_Unstable_Atom_Action(atom) or Is_Ghost(atom))
-            and (phase != Frame_Phase(LIB(DEFINITIONAL_RETURN)))
-            and (phase != Frame_Phase(LIB(DEFINITIONAL_YIELD)))
-            and (phase != Frame_Phase(LIB(LET)))  // review
-            and (phase != Frame_Phase(LIB(SET)))  // review
-        ){
-            assert(!"NATIVE relies on typechecking for UNSURPRISING flag");
-        }
-      #endif
-
-        Set_Cell_Flag(atom, OUT_HINT_UNSURPRISING);
-    }
-    else {
-      #if RUNTIME_CHECKS
-        Phase* phase = Level_Phase(L);
-        assert(Is_Stub_Details(phase));
-        Details* details = u_cast(Details*, phase);
-        if (
-            Get_Details_Flag(details, RAW_NATIVE)
-            and Get_Cell_Flag(atom, OUT_HINT_UNSURPRISING)
-            and (Is_Possibly_Unstable_Atom_Action(atom) or Is_Ghost(atom))
-            and (phase != Frame_Phase(LIB(DEFINITIONAL_RETURN)))
-            and (phase != Frame_Phase(LIB(DEFINITIONAL_YIELD)))
-            and (phase != Frame_Phase(LIB(LET)))  // review
-            and (phase != Frame_Phase(LIB(SET)))  // review
-        ){
-            assert(!"NATIVE relies on typechecking for SURPRISING flag");
-        }
-      #endif
-
-        Clear_Cell_Flag(atom, OUT_HINT_UNSURPRISING);
-    }
-
-    return true;
-}}
+    return check;
+}
 
 
 //

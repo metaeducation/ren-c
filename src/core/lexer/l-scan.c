@@ -1284,7 +1284,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             if (not e)
                 goto get_next_variadic_pointer;
 
-            Copy_Cell_Core(PUSH(), unwrap e, CELL_MASK_THROW);
+            Copy_Cell(PUSH(), unwrap e);
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);

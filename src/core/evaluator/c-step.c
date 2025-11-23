@@ -344,7 +344,7 @@ Bounce Stepper_Executor(Level* L)
     Force_Blit_Cell(  // Lookback clears it
         L_current_gotten_raw, L_next_gotten_raw
     );
-    Copy_Cell_Core(CURRENT, L_next, CELL_MASK_THROW);
+    Copy_Cell(CURRENT, L_next);
     Fetch_Next_In_Feed(L->feed);
 
 
@@ -534,24 +534,12 @@ Bounce Stepper_Executor(Level* L)
     // 1. Not all quasiforms have legal antiforms.  For instance: while all
     //    WORD!s have quasiforms, only a few are allowed to become antiform
     //    keywords (e.g. ~null~ and ~okay~)
-    //
-    // 2. !!! We don't really want generic quasiforms of frames to act as
-    //    "unsurprising antiforms", because that means that going through
-    //    any lift indirection would subvert the surprising bit.  e.g.
-    //
-    //        make object! compose [x: (lift some-random-thing)]
-    //
-    //    If quasiforms are de-facto unsurprising, that doesn't really catch
-    //    any of the intended surprises.  More thinking is needed on this,
-    //    but the change was made to work on other things while thinking.
 
-    Copy_Cell_Core(OUT, CURRENT, CELL_MASK_THROW);
+    Copy_Cell(OUT, CURRENT);
 
     require (  // may be illegal [1]
       Coerce_To_Antiform(OUT)
     );
-
-    Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // !!! hack [2]
 
     STATE = cast(StepperState, TYPE_QUASIFORM);  // can't leave STATE_0
     goto lookahead;
@@ -804,15 +792,11 @@ Bounce Stepper_Executor(Level* L)
 } case TYPE_RUNE: { //// META RUNE! /////////////////////////////////////////
 
     if (Is_Metaform_Space(CURRENT))
-        goto handle_action_approval_sigil;  // special handling for lone ^
+        goto handle_caret_sigil;  // special handling for lone ^
 
     panic ("Don't know what ^RUNE! is going to do yet (besides ^)");
 
-} handle_action_approval_sigil: {  //// "APPROVE" Meta Space Sigil (^) ///////
-
-    // [^] is used to turn "surprising actions" into "unsurprising actions".
-    //
-    // See CELL_FLAG_OUT_HINT_UNSURPRISING for more details.
+} handle_caret_sigil: {  //// Meta Space Sigil (^) ///////////////////////////
 
     Level* right = Maybe_Rightward_Continuation_Needed(L);
     if (not right)
@@ -823,20 +807,10 @@ Bounce Stepper_Executor(Level* L)
 
 } approval_rightside_dual_in_out: {
 
-    // 1. It does not also turn "surprising ghosts" into "unsurprising ghosts",
-    //    because that would conflate the functionality to where if you used ^
-    //    you could either be saying "I approve this as an action" or "I want
-    //    to allow the entire structure of this code to be disrupted".  Ghosts
-    //    are the lower-priority feature, so they are not affected by the ^.
-    //
-    //    (Possibly ^ should turn surprising ghosts into voids, but it should
-    //    definitely not turn surprising ghosts into unsurprising ghosts.)
-
     require (
         Value* out = Decay_If_Unstable(OUT)
     );
-    if (Is_Action(out))  // don't do ghosts, just actions [1]
-        Set_Cell_Flag(out, OUT_HINT_UNSURPRISING);  // see flag notes
+    UNUSED(out);  // !!! REVIEW behavior
     goto lookahead;
 
 
@@ -1216,31 +1190,19 @@ Bounce Stepper_Executor(Level* L)
     ));
 
     Atom* primed = Evaluator_Primed_Cell(sub);
-    Init_Unsurprising_Ghost(primed);  // want to vaporize if all ghosts [1]
+    Init_Ghost(primed);  // want to vaporize if all ghosts [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return CONTINUE_SUBLEVEL(sub);
 
 } group_or_meta_group_result_in_out: {
 
-    // 1. As a mitigation of making people write (x: ^ ^arg), we allow for
-    //    you to instead write (x: ^(arg)) and it will assume the ^.  This
-    //    is maybe a bit random but it makes the code look better.
-
     if (Is_Group(CURRENT))
         goto lookahead;  // not decayed, result is good
 
     assert(Is_Meta_Form_Of(GROUP, CURRENT));
 
-    if (not Any_Lifted(OUT))
-        panic ("^GROUP! can only UNLIFT quoted/quasiforms");
-
-    require (
-      Unliftify_Undecayed(OUT)  // GHOST! legal, ACTION! legal...
-    );
-    Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // just lifted approve [1]
-    goto lookahead;
-
+    panic ("^(...) behavior is likely to act like ^ (...), in time");
 
 } case TYPE_TUPLE: { //// TUPLE! [ a.  b.c.d  .e ] ///////////////////////////
 
@@ -1277,9 +1239,6 @@ Bounce Stepper_Executor(Level* L)
       Get_Var_In_Scratch_To_Out(L, GROUPS_OK)
     );
     possibly(Not_Cell_Stable(OUT));  // last step or unmeta'd item [1]
-
-    if (Is_Possibly_Unstable_Atom_Action(OUT))
-        assert(Not_Cell_Flag(OUT, OUT_HINT_UNSURPRISING));
 
     goto lookahead;
 
@@ -1410,7 +1369,7 @@ Bounce Stepper_Executor(Level* L)
             }
             Move_Atom(OUT, SPARE);
         }
-        Set_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);  // foo/ is always ACTION!
+        UNSURPRISING(OUT);  // foo/ is always ACTION!
         goto lookahead;
     }
 

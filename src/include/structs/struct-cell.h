@@ -322,8 +322,6 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 // running out of bits (in 32-bit builds) and competing purposes for bits
 // on the evaluative output cell required this to be taken.
 //
-// * See CELL_FLAG_OUT_HINT_UNSURPRISING
-//
 #define CELL_FLAG_HINT \
     FLAG_LEFT_BIT(26)
 

@@ -1185,7 +1185,7 @@ static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
         return fail (e);
     }
 
-    Init_Unsurprising_Ghost(Evaluator_Primed_Cell(L));
+    Init_Ghost(Evaluator_Primed_Cell(L));
 
     if (run_flags & RUN_VA_FLAG_INTERRUPTIBLE)
         L->flags.bits &= (~ LEVEL_FLAG_UNINTERRUPTIBLE);
@@ -1382,7 +1382,7 @@ void API_rebPushContinuation_internal(
     require (
       Level* L = Make_Level_At(&Evaluator_Executor, block, flags)
     );
-    Init_Unsurprising_Ghost(Evaluator_Primed_Cell(L));
+    Init_Ghost(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(u_cast(Atom*, out), L);
 }
 
@@ -2637,7 +2637,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
         }
 
         Value* v = Alloc_Value();
-        Copy_Cell_Core(v, at, CELL_MASK_THROW);
+        Copy_Cell(v, at);
         stub = Compact_Stub_From_Cell(v);
         Set_Flavor_Flag(API, stub, RELEASE);
         break; }

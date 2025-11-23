@@ -111,7 +111,7 @@ Bounce Lambda_Dispatcher(Level* const L)
       Level* sub = Make_Level_At_Core(
         &Evaluator_Executor, spare_rebound, SPECIFIED, flags
     ));
-    Init_Unsurprising_Ghost(Evaluator_Primed_Cell(sub));  // allow vanish [1]
+    Init_Ghost(Evaluator_Primed_Cell(sub));  // allow vanish [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 

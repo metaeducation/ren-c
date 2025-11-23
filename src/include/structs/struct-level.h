@@ -74,12 +74,9 @@ STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == BASE_FLAG_UNREADABLE);
 STATIC_ASSERT(LEVEL_FLAG_4_IS_TRUE == BASE_FLAG_CELL);
 
 
-//=//// LEVEL_FLAG_FORCE_SURPRISING ///////////////////////////////////////=//
+//=//// LEVEL_FLAG_5 //////////////////////////////////////////////////////=//
 //
-// When you DELEGATE to a level to do work, you don't get a chance to clear
-// the unsurprising flag on the output cell.  This makes the trampoline do it.
-//
-#define LEVEL_FLAG_FORCE_SURPRISING \
+#define LEVEL_FLAG_5 \
     FLAG_LEFT_BIT(5)
 
 

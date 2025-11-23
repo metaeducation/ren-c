@@ -537,9 +537,7 @@ DECLARE_NATIVE(PACK_Q)
 DECLARE_NATIVE(RUNS)
 //
 // This is mostly a type-checked synonym for `anti`, with the exception that
-// it sets the "unsurprising" flag on the result.  This means you can directly
-// assign the result of RUNS e.g. (x: runs frame) and not be required to say
-// (x: ^ runs frame)
+// the result is made "UNSURPRISING".
 {
     INCLUDE_PARAMS_OF_RUNS;
 

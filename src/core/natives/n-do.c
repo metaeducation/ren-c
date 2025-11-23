@@ -67,7 +67,6 @@ DECLARE_NATIVE(REEVAL)
     if (Trampoline_Throws(OUT, sub))  // review: rewrite stackless
         return THROWN;
 
-    Clear_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);
     return OUT;
 }
 
@@ -357,7 +356,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    (We can't count on the RETURN: type check to do this, because
     //    natives do not run typechecking in release builds.)
 
-    Flags flags = LEVEL_FLAG_FORCE_SURPRISING;
+    Flags flags = LEVEL_MASK_NONE;
 
     require (
       Level* sub = Make_Level_At(
@@ -366,7 +365,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         flags
     ));
     if (not Bool_ARG(STEP))
-        Init_Surprising_Ghost(Evaluator_Primed_Cell(sub));  // don't vanish [2]
+        Init_Ghost(Evaluator_Primed_Cell(sub));  // don't vanish [2]
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     if (not Bool_ARG(STEP))  // plain evaluation to end, maybe void/ghost

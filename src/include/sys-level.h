@@ -753,13 +753,6 @@ INLINE Bounce Native_Thrown_Result(Level* L) {
     return BOUNCE_THROWN;
 }
 
-
-// 1. Typically the function typechecking machinery will notice when a function
-//    returns a GHOST! and always returns a GHOST!...setting the flag for
-//    CELL_FLAG_OUT_HINT_UNSURPRISING.  But if running as a native, then in
-//    release builds returns are not typechecked.  We assume all natives
-//    that return GHOST are doing so "unsurprisingly".  See flag notes.
-//
 INLINE Bounce Native_Ghost_Result_Untracked(
     Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_
@@ -767,8 +760,7 @@ INLINE Bounce Native_Ghost_Result_Untracked(
     assert(out == level_->out);
     UNUSED(out);
     assert(not THROWING);
-    bool surprising = false;  // no return typecheck to set unsurprising [1]
-    return Init_Ghost_Untracked(level_->out, surprising);
+    return Init_Ghost_Untracked(level_->out);
 }
 
 INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
@@ -806,7 +798,6 @@ INLINE Bounce Native_Branched_Result(Level* level_, Atom* atom) {
     assert(atom == level_->out);  // wouldn't be zero cost if we supported copy
     if (Is_Light_Null(atom))
         Init_Heavy_Null(atom);  // box up for THEN reactivity [2]
-    Clear_Cell_Flag(atom, OUT_HINT_UNSURPRISING);  // all branches surprise
     return level_->out;
 }
 

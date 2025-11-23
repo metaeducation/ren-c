@@ -656,7 +656,7 @@ export*: func [
                 when word [  ; no "attached" state, must append word to get IN
                     extend where word  ; maybe bound e.g. WHAT-DIR
                 ]
-            ): ^ ^args
+            ): ^args
             elide if word [append exports word]
         )
     ]

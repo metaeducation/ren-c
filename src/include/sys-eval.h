@@ -219,7 +219,7 @@ INLINE bool Eval_Branch_Throws(
 ){
     if (not Pushed_Continuation(
         out,
-        LEVEL_FLAG_FORCE_HEAVY_NULLS | LEVEL_FLAG_FORCE_SURPRISING,
+        LEVEL_FLAG_FORCE_HEAVY_NULLS,
         SPECIFIED, branch,
         nullptr
     )){

@@ -48,12 +48,6 @@
 //    able to use a Cell in the Level structure for its holding of the last
 //    result, and actually just passes through to the Stepper_Executor().
 //
-// B. !!! A debugger that was giving insights into the steps would show the
-//    steps being meta-values, and giving a "trash" to indicate the end of
-//    the stepping.  As a UI concern for the debugger, this might be a little
-//    bit confusing for people to wonder why the steps are always ^META.
-//    The debugger might want to customize the display based on the executor.
-//
 
 #include "sys-core.h"
 
@@ -146,10 +140,8 @@ Bounce Evaluator_Executor(Level* const L)
 
 } step_done_with_dual_in_out: {  /////////////////////////////////////////////
 
-    // 1. See CELL_FLAG_OUT_HINT_UNSURPRISING for a full explanation of this.
-    //    But what's going on is that if a function doesn't return GHOST!
-    //    all the time, it gets flagged as "surprising"... you need to use
-    //    the `^` to get the GHOST! out of it.
+    // 1. Note that unless a function is declared as GHOSTABLE, any GHOST! it
+    //    tries to return will be converted to a VOID for safety.
     //
     // 2. An idea was tried once where the error wasn't panicked until a step
     //    was shown to be non-invisible.  This would allow invisible
@@ -176,13 +168,8 @@ Bounce Evaluator_Executor(Level* const L)
     if (Is_Endlike_Unset(OUT))  // the "official" way to detect reaching end
         goto finished;
 
-    if (Is_Ghost(OUT)) { // something like an ELIDE or COMMENT
-        if (Get_Cell_Flag(OUT, OUT_HINT_UNSURPRISING))
-            goto start_new_step;  // leave previous result as-is in PRIMED
-
-        Init_Surprising_Ghost(PRIMED);  // (use ^ to be "UNAFRAID") [1]
-        goto start_new_step;
-    }
+    if (Is_Ghost(OUT)) // something like an ELIDE or COMMENT [1]
+        goto start_new_step;  // leave previous result as-is in PRIMED
 
     Move_Atom(PRIMED, OUT);  // make current result the preserved one
 

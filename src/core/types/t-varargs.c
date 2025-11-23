@@ -33,7 +33,7 @@ INLINE void Init_For_Vararg_End(Atom* out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
         Init_Logic(out, true);
     else
-        Init_Surprising_Ghost(out);
+        Init_Ghost(out);
 }
 
 
@@ -448,7 +448,6 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
         }
         if (Is_Ghost(OUT))
             return fail (Error_Nothing_To_Take_Raw());
-        Clear_Cell_Flag(OUT, OUT_HINT_UNSURPRISING);
         return OUT;
     }
 

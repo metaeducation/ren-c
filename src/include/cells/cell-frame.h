@@ -267,6 +267,15 @@ INLINE Value* Deactivate_If_Action(Need(Value*) v) {
     return v;
 }
 
+// !!! The concept of UNSURPRISING is being evolved to where it is likely to
+// be actions in packs.
+//
+INLINE Atom* UNSURPRISING(Atom* atom) {
+    assert(Is_Action(Known_Stable(atom)));
+    assert(not Is_Pack(atom));  // TBD, making sure pack creation is visible
+    return atom;
+}
+
 
 //=//// CELL INFIX MODE ///////////////////////////////////////////////////=//
 //
