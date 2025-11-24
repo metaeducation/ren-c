@@ -101,10 +101,19 @@ int tcc_set_lib_path_i(TCCState *s, const char *path)
 
 
 enum {
-    IDX_TCC_NATIVE_CONTEXT = 1,
-    IDX_TCC_NATIVE_LINKNAME,  // auto-generated if unspecified
-    IDX_TCC_NATIVE_SOURCE,  // textual source code
-    IDX_TCC_NATIVE_STATE,  // will be a SPACE until COMPILE happens
+    IDX_TCC_PRENATIVE_CONTEXT = 1,
+    IDX_TCC_PRENATIVE_LINKNAME,  // auto-generated if unspecified
+    IDX_TCC_PRENATIVE_SOURCE,  // textual source code
+    IDX_TCC_PRENATIVE_STATE,  // will be a SPACE until COMPILE happens
+    MAX_IDX_TCC_PRENATIVE = IDX_TCC_PRENATIVE_STATE
+};
+
+// While TCC natives use the Api_Function_Dispatcher(), they need to hold a
+// reference to the TCCState that was used to compile them so long as the
+// CFunction is expected to run.  This is stored in a special extra slot.
+//
+enum {
+    IDX_TCC_NATIVE_STATE = MAX_IDX_API_ACTION + 1,
     MAX_IDX_TCC_NATIVE = IDX_TCC_NATIVE_STATE
 };
 
@@ -337,34 +346,37 @@ DECLARE_NATIVE(MAKE_NATIVE)
         BASE_FLAG_MANAGED | DETAILS_FLAG_OWNS_PARAMLIST,
         Phase_Archetype(paramlist),
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
-        MAX_IDX_TCC_NATIVE  // details len [source module linkname tcc_state]
+        MAX_IDX_TCC_PRENATIVE  // details len [source module linkname tcc_state]
     );
 
     // !!! Natives on the stack can specify where APIs like rebValue() should
     // look for bindings.  For the moment, set user natives to use the user
     // context...it could be a parameter of some kind (?)
     //
-    Copy_Cell(Details_At(details, IDX_TCC_NATIVE_CONTEXT), g_user_module);
+    Copy_Cell(Details_At(details, IDX_TCC_PRENATIVE_CONTEXT), g_user_module);
 
     if (Is_Flex_Frozen(Cell_Strand(source)))  // don't have to copy if frozen
-        Copy_Cell(Details_At(details, IDX_TCC_NATIVE_SOURCE), source);
+        Copy_Cell(Details_At(details, IDX_TCC_PRENATIVE_SOURCE), source);
     else {
         require (
           Strand* copy = Copy_String_At(source)  // might change
         );
-        Init_Text(Details_At(details, IDX_TCC_NATIVE_SOURCE), copy);
+        Init_Text(Details_At(details, IDX_TCC_PRENATIVE_SOURCE), copy);
     }
 
     if (Bool_ARG(LINKNAME)) {
         Value* linkname = ARG(LINKNAME);
 
         if (Is_Flex_Frozen(Cell_Strand(linkname)))
-            Copy_Cell(Details_At(details, IDX_TCC_NATIVE_LINKNAME), linkname);
+            Copy_Cell(
+                Details_At(details, IDX_TCC_PRENATIVE_LINKNAME),
+                linkname
+            );
         else {
             require (
               Strand* copy = Copy_String_At(linkname)  // might change
             );
-            Init_Text(Details_At(details, IDX_TCC_NATIVE_LINKNAME), copy);
+            Init_Text(Details_At(details, IDX_TCC_PRENATIVE_LINKNAME), copy);
         }
     }
     else {
@@ -376,11 +388,11 @@ DECLARE_NATIVE(MAKE_NATIVE)
             "unspaced [-[N_]- as text! to-hex", rebI(heapaddr), "]"
         );
 
-        Copy_Cell(Details_At(details, IDX_TCC_NATIVE_LINKNAME), linkname);
+        Copy_Cell(Details_At(details, IDX_TCC_PRENATIVE_LINKNAME), linkname);
         rebRelease(linkname);
     }
 
-    Init_Space(Details_At(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet
+    Init_Space(Details_At(details, IDX_TCC_PRENATIVE_STATE));  // no state, yet
 
     assert(Misc_Phase_Adjunct(details) == nullptr);
     Tweak_Misc_Phase_Adjunct(details, adjunct);
@@ -545,8 +557,10 @@ DECLARE_NATIVE(COMPILE_P)
                 Copy_Cell(PUSH(), item);
 
                 Details* details = cast(Details*, phase);
-                Value* source = Details_At(details, IDX_TCC_NATIVE_SOURCE);
-                Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
+                Value* source = Details_At(details, IDX_TCC_PRENATIVE_SOURCE);
+                Value* linkname = Details_At(
+                    details, IDX_TCC_PRENATIVE_LINKNAME
+                );
 
                 // !!! Review: how to choose LIBREBOL_BINDING_NAME when doing
                 // TCC natives?  It includes "rebol.h".
@@ -695,7 +709,7 @@ DECLARE_NATIVE(COMPILE_P)
         Details* details_tcc = Ensure_Frame_Details(TOP);  // stack live
         assert(Details_Dispatcher(details_tcc) == &Pending_Native_Dispatcher);
 
-        Value* linkname = Details_At(details_tcc, IDX_TCC_NATIVE_LINKNAME);
+        Value* linkname = Details_At(details_tcc, IDX_TCC_PRENATIVE_LINKNAME);
 
         char *name_utf8 = rebSpell("ensure text!", linkname);
         void *sym = tcc_get_symbol(state, name_utf8);
@@ -717,7 +731,7 @@ DECLARE_NATIVE(COMPILE_P)
                 | DETAILS_FLAG_OWNS_PARAMLIST,
             Phase_Archetype(details_tcc),  // reuse paramlist
             &Api_Function_Dispatcher,
-            MAX_IDX_API_ACTION
+            MAX_IDX_TCC_NATIVE
         );
 
         Init_Handle_Cfunc(
@@ -727,6 +741,10 @@ DECLARE_NATIVE(COMPILE_P)
         Element* block = Init_Block(
             Details_At(details_api, IDX_API_ACTION_BINDING_BLOCK),
             g_empty_array
+        );
+        Copy_Cell(
+            Details_At(details_api, IDX_TCC_NATIVE_STATE),
+            handle  // hold reference to TCCState live via HANDLE!
         );
         Tweak_Cell_Binding(block, g_user_context);  // !!! MAKE-NATIVE capture?
 
