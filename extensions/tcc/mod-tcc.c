@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2016 Atronix Engineering
-// Copyright 2016-2019 Ren-C Open Source Contributors
+// Copyright 2016-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -62,9 +62,13 @@
 #if defined(TCC_RELOCATE_AUTO)
     #define tcc_relocate_auto(s) \
         tcc_relocate((s), TCC_RELOCATE_AUTO)
+
+    #define LIBTCC_IS_PROBABLY_FROM_BEFORE_2024  1  // see uses below
 #else
     #define tcc_relocate_auto(s) \
         tcc_relocate(s)
+
+    #define LIBTCC_IS_PROBABLY_FROM_BEFORE_2024  0
 #endif
 
 
@@ -122,32 +126,34 @@ enum {
 // compile.  The current logic just returns one error, but if more than one
 // is given they could be batched up.
 //
+// 1. When `tcc_set_error_func()` is called, you can pass it a value that
+//    it will pass back.  We pass g_empty_block to test it (and explain it).
+//    Note that since the compilation can be delayed after MAKE-NATIVE exits,
+//    pointers to local variables should not be used here.
+//
+// 2. TCC added a warning for potential missing returns.  But `_Noreturn`
+//    support didn't come until after the warning.  And they haven't bumped the
+//    version reported by __TINYC__ since 2017...so you can't tell when you
+//    can use _Noreturn or not.  Rather than force you to disable all warnings,
+//    we filter out this one.
+//
 static void Error_Reporting_Hook(
     void *opaque,
     const char *msg_utf8
 ){
-    // When `tcc_set_error_func()` is called, you can pass it a value that
-    // it will pass back.  We pass g_empty_block to test it (and explain it).
-    // Note that since the compilation can be delayed after MAKE-NATIVE exits,
-    // pointers to local variables should not be used here.
-    //
-    assert(cast(Value*, opaque) == g_empty_block);
+    assert(cast(Value*, opaque) == g_empty_block);  // test callback arg [1]
     UNUSED(opaque);
 
     Value* message = rebText(msg_utf8);
 
-    // TCC added a warning for potential missing returns.  But their checking
-    // is not great, and also at time of writing in 2022 they haven't bumped
-    // the version reported by __TINYC__ since 2017...so you can't tell when
-    // you can use _Noreturn or not.  Rather than force you to disable all
-    // warnings, we filter out this one.
-    //
+  #if LIBTCC_IS_PROBABLY_FROM_BEFORE_2024  // suppress no value warning [2]
     if (rebDid(
         "find", message, "-[warning: function might return no value]-"
     )){
         rebRelease(message);
         return;
     }
+  #endif
 
     rebJumps ("panic [",
         "-[TCC errors/warnings, '-w' to stop warnings:]-", rebR(message),
