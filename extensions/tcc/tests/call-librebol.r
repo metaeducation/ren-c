@@ -31,7 +31,7 @@ Rebol [
 
 
 CONFIG_TCCDIR: switch length of system.options.args [
-    0 []
+    0 [null]
     1 [local-to-file first system.options.args]
     panic "call-librebol.r takes an optional CONFIG_TCCDIR as an argument."
 ]
@@ -40,11 +40,11 @@ CONFIG_TCCDIR: switch length of system.options.args [
 call-librebol: make-native [
     "Show It's Possible to Call libRebol without GNU toolchain installed"
     n [integer!]
-]{
+] --[
     int n = rebUnboxInteger("n");
     rebElide("print [-[Hello, libRebol World:]-", rebI(n), "]");
     return rebInteger(n + 20);
-}
+]--
 
 
 compilables: [
@@ -61,7 +61,7 @@ opts: compose [
     ; but you can also do it here for convenience.  Lack of a trailing
     ; slash is tolerated as that is CONFIG_TCCDIR convention in TCC.
     ;
-    (? if CONFIG_TCCDIR [spread compose [
+    (when CONFIG_TCCDIR [spread compose [
         runtime-path (CONFIG_TCCDIR)  ; e.g. %/home/hostilefork/Projects/tcc
     ]])
 ]
@@ -77,10 +77,10 @@ opts: compose [
 ; (and its limited encapped headers for implementing intrinsics, as well
 ; as its small runtime library for those intrinsics).
 ;
-; So we use the /nostdlib option
+; So we use the :nostdlib option
 ;
-compile/inspect/settings/nostdlib compilables opts  ; print out for verbose info
-compile/settings/nostdlib compilables opts  ; does the actual compilation
+compile:inspect:settings:nostdlib compilables opts  ; print out for verbose info
+compile:settings:nostdlib compilables opts  ; does the actual compilation
 
 print "COMPILE SUCCEEDED"
 

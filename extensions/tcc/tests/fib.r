@@ -34,11 +34,12 @@ c-fib: make-native [
 
 rebol-fib: func [
     n [integer!]
+    <local> i0 i1 t
 ][
     if n < 0 [return -1]
     if n <= 1 [return n]
-    let i0: 0
-    let i1: 1
+    i0: 0
+    i1: 1
     while [n > 1] [
         t: i1
         i1: i0 + i1
@@ -81,17 +82,22 @@ opts: [
     options --[-DSTDIO_INCLUDE=\"stdio.h\"]--
 ]
 
-compile/inspect/settings compilables opts  ; print out for verbose info
-compile/settings compilables opts  ; does the actual compilation
+compile:inspect:settings compilables opts  ; print out for verbose info
+compile:settings compilables opts  ; does the actual compilation
 
-print ["c-fib 30:" c: c-fib 30]
-print ["rebol-fib 30:" r: rebol-fib 30]
+c: c-fib 30
+print ["c-fib 30:" c]
+
+r: rebol-fib 30
+print ["rebol-fib 30:" r]
 
 assert [c = r]
 
 if not find system.options.args "nobench" [
-    n: 10000
-    print ["=== Running benchmark," n "iterations ==="]
+    let n: 10000
+
+    print newline
+    print compose "=== Running benchmark, (n) iterations ==="
     print "(If interpreter built used RUNTIME_CHECKS, this metric is affected)"
 
     c: delta-time [
@@ -101,7 +107,7 @@ if not find system.options.args "nobench" [
         repeat n [rebol-fib 30]
     ]
 
-    print ["C time:" c]
-    print ["Rebol time:" r]
-    print ["Improvement:" unspaced [to integer! (r / c) "x"]]
+    print compose "C time: (c)"
+    print compose "Rebol time: (r)"
+    print compose "Improvement: (round r / c)x"
 ]

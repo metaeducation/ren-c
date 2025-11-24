@@ -30,7 +30,7 @@ write %hello-tcc.c trim:auto --[
     }
 ]--
 
-/c99-logged: enclose c99/ function [f [frame!]] [
+c99-logged: enclose c99/ function [f [frame!]] [
     ; f.runtime: "..."  ; set this to override CONFIG_TCCDIR
 
     let fdebug: copy f
@@ -41,8 +41,8 @@ write %hello-tcc.c trim:auto --[
 ]
 
 print "== ONE STEP COMPILATION (direct to executable) =="
-c99-logged "hello-tcc.c -o -DMAIN=main hello-tcc-onestep"
+c99-logged "hello-tcc.c -o hello-tcc-onestep"
 
 print "== TWO STEP COMPILATION (`.o` file, then make executable from that) =="
-c99-logged "hello-tcc.c -c -o hello-tcc-renamed.o -DMAIN=main"
+c99-logged "hello-tcc.c -c -o hello-tcc-renamed.o"
 c99-logged "hello-tcc-renamed.o -o hello-tcc-twostep"

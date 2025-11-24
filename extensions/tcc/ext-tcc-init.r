@@ -105,7 +105,7 @@ compile: func [
         let arg: b.1
         b: next b
 
-        if block? var [  ; at present, this always means multiple paths
+        if block? opt var [  ; at present, this always means multiple paths
             for-each 'item compose [(arg)] [
                 switch:type item [
                     text! []
@@ -164,8 +164,8 @@ compile: func [
         ; !!! Guessing is probably a good idea in the long term, but in the
         ; short term it just creates unpredictability.  Avoid for now.
         ;
-        ; match exists? %/usr/lib.x86_64-linux-gnu/tcc/
-        ; match exists? %/usr/local/lib.tcc/
+        ; if exists? %/usr/lib.x86_64-linux-gnu/tcc/ [...]
+        ; if exists? %/usr/local/lib/tcc/ [...]
     ]]
 
     if not config.runtime-path [
@@ -317,12 +317,14 @@ compile: func [
     let use-librebol: null
 
     compilables: map-each 'item compilables [
-        if match [word! tuple!] :item [item: get inside compilables item]
+        if match [word! tuple!] item [  ; block can't hold antiforms...
+            item: get inside compilables item  ; ...but might fetch one
+        ]
 
-        switch:type item [
-            frame! [
+        switch:type ^item [
+            action! frame! [
                 use-librebol: okay
-                item
+                unanti ^item
             ]
             text! [
                 item
@@ -381,7 +383,7 @@ compile: func [
             ; Needs to go before the librebol inclusion that was put at the
             ; head of the compilables above!
             ;
-            insert compilables trim:auto mutable "#define LIBREBOL_NO_STDLIB"
+            insert compilables "#define LIBREBOL_NO_STDLIB  1"
 
             ; TCC adds -lc (by calling `tcc_add_library_err(s1, "c");`) by
             ; default during link, unless you override it with this switch.
@@ -482,13 +484,12 @@ c99: func [
     let outtype: null  ; default will be EXE (also overridden if `-c` or `-E`)
 
     let settings: collect [
-        let option-no-arg-rule: [option: across to [space | <end>] (
+        let option-no-arg-rule: [let option: across to [space | <end>] (
             keep spread compose [options (option)]
         )]
 
-        let option
         let option-with-arg-rule: [
-            opt space option: across to [space | <end>] (
+            opt space let option: across to [space | <end>] (
                 ;
                 ; If you do something like `option --[-DSTDIO_H="stdio.h"]--,
                 ; TCC seems to process it like `-DSTDIO_H=stdio.h` which won't
@@ -578,15 +579,13 @@ c99: func [
         ]
 
         parse:case command [some [rule [some space | <end>]]] except [
+            let trunc: ~
             panic [
-                elide trunc: ~
                 "Could not parse C99 command line at:"
-                append [_ trunc]: (mold:limit last-pos 40) if trunc ["..."]
+                append [_ trunc]: (mold:limit last-pos 40) when trunc ["..."]
             ]
         ]
     ]
-
-    print ["Outtype is" mold reify outtype]
 
     if not outtype [  ; no -c or -E, so assume EXE
         append settings spread compose [output-type EXE]
@@ -666,13 +665,10 @@ bootstrap: func [
     ; make.r will notice we are in the same directory as itself, and so it
     ; will make a %build/ subdirectory to do the building in.
     ;
-    let status: lib/call [
+    call [
         (system.options.boot) make.r
             "config=configs/bootstrap.r"
-            (? if options [spread system.options.args])
-    ]
-    if status != 0 [
-        panic ["BOOTSTRAP command failed with exit status:" status]
+            (when options [spread system.options.args])
     ]
 ]
 

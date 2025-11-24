@@ -1325,7 +1325,7 @@ get-encap: func [
     ; head tuple support is still pending...use GROUP!
     ;
     let block: copy []
-    lib/unzip/quiet block compressed-data
+    unzip:quiet block compressed-data
     return block
 ]
 
