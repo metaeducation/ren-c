@@ -367,7 +367,7 @@ DECLARE_NATIVE(JOIN)
         goto next_mold_step;
     }
 
-    if (Is_Pinned(item)) {  // fetch and mold
+    if (Is_Pinned(item) and not Is_Pinned_Space(item)) {  // fetch and mold
         Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
         Option(Heart) item_heart = Heart_Of(item);
