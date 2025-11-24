@@ -221,7 +221,7 @@ parse3 file-base.core [some [
     ]
     |
     name: [tuple! | path! | file!] options: try block! (
-        handle-item name () opt options
+        handle-item name ^void opt options
     )
 ]]
 
