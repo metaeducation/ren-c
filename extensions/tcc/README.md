@@ -54,6 +54,20 @@ typically installed in a directory with a name like:
 
 So that is the directory CONFIG_TCCDIR must be set to.
 
+> **WARNING:** TCC apt packages tend to be old, because TCC development has
+> no "official" leadership.  Building a more recent version from source, e.g.
+> the "mob" branch is likely going to be necessary for most purposes.
+>
+> `make install` puts things into `/usr/local/lib/tcc/`
+>
+>     $ sudo make install
+>     -> /usr/local/bin : tcc
+>     -> /usr/local/lib/tcc : libtcc1.a runmain.o bt-exe.o bt-log.o bcheck.o
+>     -> /usr/local/lib/tcc/include : ./include/*.h ./tcclib.h
+>     -> /usr/local/lib : libtcc.a
+>     -> /usr/local/include : ./libtcc.h
+>     -> /usr/local/share/man/man1 : tcc.1
+
 On Windows, there are many more needed includes and `.def` files.  These are
 found in the TCC source package under the %win32 directory, in %include/ and
 %lib/ directories.  If you built TCC yourself, this should be where you set

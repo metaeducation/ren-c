@@ -598,16 +598,21 @@ e-lib/emit [ver --[
  *    the version reported by __TINYC__ since 2017, so there's no easy
  *    detection of the availability (and TCC apt packages can be old).
  *    So use newer TCCs in C11 mode or do `-DATTRIBUTE_NO_RETURN=_Noreturn`
+ *
+ *    Another thing to be aware of with TCC is that at time of writing it
+ *    does not honor `__attribute__ ((__noreturn__))` which is on functions
+ *    like `longjmp()` or `exit()` in GNU headers.  To avoid warnings, you will
+ *    have to wrap these in `_Noreturn` inline functions for TCC.
  */
 #if !defined(ATTRIBUTE_NO_RETURN)
     #if defined(__clang__) || GCC_VERSION_AT_LEAST(2, 5)
-        #define ATTRIBUTE_NO_RETURN __attribute__ ((noreturn))
+        #define ATTRIBUTE_NO_RETURN  __attribute__ ((noreturn))
     #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
-        #define ATTRIBUTE_NO_RETURN _Noreturn
+        #define ATTRIBUTE_NO_RETURN  _Noreturn
     #elif defined(__TINYC__)
-        #define ATTRIBUTE_NO_RETURN  /* _Noreturn unreliable [1] */
+        #define ATTRIBUTE_NO_RETURN  /* _Noreturn unreliable before C11 [1] */
     #elif defined(_MSC_VER)
-        #define ATTRIBUTE_NO_RETURN __declspec(noreturn)
+        #define ATTRIBUTE_NO_RETURN  __declspec(noreturn)
     #else
         #define ATTRIBUTE_NO_RETURN
     #endif
@@ -633,19 +638,34 @@ e-lib/emit [ver --[
  *         DEAD_END; // our warning-suppression macro for applicable compilers
  *     }
  *
- * DEAD_END is just a no-op in compilers that don't have the feature of
- * suppressing the warning--which can often mean they don't have the warning
- * in the first place.
+ * 1. The TinyC compiler got __builtin_unreachable() circa 2024, but does not
+ *    have `__has_builtin(x)` is defined as zero.  Use compiling in C11 mode
+ *    under TCC as a "probable" presence of __builtin_unreachable().
  *
+ * 2. We default to abort() if you didn't ask not to include <stdlib.h>.  Do
+ *    `#define DEAD_END` previous to including rebol.h if you do want stdlib
+ *    inclusion but don't want abort() calls at DEAD_END spots.
  */
 #if !defined(DEAD_END)
+  #if defined(__TINYC__)  /* __has_builtin(x) is zero [1] */
+    #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+        #define DEAD_END  __builtin_unreachable()
+    #endif
+  #else
     #if __has_builtin(__builtin_unreachable) || GCC_VERSION_AT_LEAST(4, 5)
         #define DEAD_END  __builtin_unreachable()
     #elif defined(_MSC_VER)
         #define DEAD_END  __assume(0)
-    #else
-        #define DEAD_END
     #endif
+  #endif
+
+  #if !defined(DEAD_END)
+    #if LIBREBOL_NO_STDLIB
+       #define DEAD_END
+    #else
+       #define DEAD_END  abort()  /* predefine DEAD_END if not desired [2] */
+    #endif
+  #endif
 #endif
 
 

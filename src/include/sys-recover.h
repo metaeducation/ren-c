@@ -215,6 +215,14 @@ struct JumpStruct {
 //    testing if the jump error state is null, and the compiler doesn't know
 //    you can never fall through with a non-null error state if the block
 //    being rescued doesn't return.
+//
+// 7. While relatively-modern branches of TinyC support the C11 `_Noreturn`
+//    keyword, they do not support the GCC `__attribute__ ((__noreturn__))`
+//    which is used by functions like longjmp() in <setjmp.h>, leading to
+//    spurious warnings about control reaching the end of a non-void function.
+//    It does not heed redefinitions of the interface with _Noreturn, so an
+//    inline wrapper is used instead.
+//
 
 #if PANIC_USES_LONGJMP
 
@@ -226,10 +234,22 @@ struct JumpStruct {
         #define LONG_JUMP(s,v)  __builtin_longjmp((s), (v))
     #elif HAS_POSIX_SIGNAL  // [2]
         #define SET_JUMP(s)     sigsetjmp((s), 1)
+
+      #if defined(__TINYC__)  // [7]
+        _Noreturn INLINE void LONG_JUMP(sigjmp_buf s, int v)
+          { siglongjmp(s, v); }
+      #else
         #define LONG_JUMP(s,v)  siglongjmp((s), (v))
+      #endif
     #else
         #define SET_JUMP(s)     setjmp(s)
+
+      #if defined(__TINYC__)  // [7]
+        _Noreturn INLINE void LONG_JUMP(jmp_buf s, int v)
+          { longjmp(s, v); }
+      #else
         #define LONG_JUMP(s,v)  longjmp((s), (v))
+      #endif
     #endif
 
     #define RECOVER_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED \

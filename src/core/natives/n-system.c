@@ -63,6 +63,10 @@ DECLARE_NATIVE(EXIT)  // moved to SYS.UTIL/EXIT by boot code, for safety
         exit(status);
 
     exit(status);  // !!! Clean shutdown interop with trampoline TBD
+
+  #if defined(__TINYC__)
+    DEAD_END;  // TCC doesn't recognize GCC's no return attribute on exit()
+  #endif
 }
 
 

@@ -286,7 +286,8 @@ gen-obj: func [
         ]
         'gnu89 'c99 'gnu99 'c11 [
             reduce [
-                to tag! unspaced ["gnu:--std=" standard]
+                to tag! unspaced ["gnu:-std=" standard]
+                to tag! unspaced ["tcc:-std=" standard]
                 ;
                 ; Note: MSVC does not have any conformance to C99 or C11 at
                 ; time of writing, and will complain about /std:c99 ... it only
