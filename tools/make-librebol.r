@@ -550,13 +550,14 @@ e-lib/emit [ver --[
  * Include <stdlib.h>, <stdbool.h>, <stdint.h> or shim appropriately.
  */
 
-#if LIBREBOL_NO_STDLIB
+#if LIBREBOL_NO_STDINT
     /*
      * This file won't compile without definitions for uintptr_t and bool,
      * so make those as a minimum.  They have to be binary compatible with
      * how the interpreter was compiled...these are just guesses.
      */
-    #define int64_t  long long  /* used for integers */
+    #define int32_t  int  /* used for 32-bit integers */
+    #define int64_t  long long  /* used for 64-bit integers */
     #define uint32_t  unsigned int  /* used for codepoint (use int?) */
     #define uintptr_t  unsigned int  /* used for ticks */
     #define bool  _Bool  /* actually part of C99 compiler */
