@@ -54,15 +54,15 @@ import <native-emitters.r>  ; scans C source for native specs, emits macros
 === "PROCESS COMMAND-LINE ARGUMENTS TO %prep-extension.r" ===
 
 args: parse-args system.script.args  ; either from command line or DO:ARGS
-platform-config: configure-platform opt args.OS_ID
+platform-config: configure-platform select args 'OS_ID
 
-mod: ensure text! args.MODULE  ; overwrites MOD as MODULO, but that's okay!
+mod: ensure text! select args 'MODULE  ; overwrites MOD(ULO), but that's okay!
 
-ext-src-dir: to file! args.DIRECTORY
+ext-src-dir: to file! select args 'DIRECTORY
 
-sources: ensure block! transcode:one args.SOURCES
+sources: ensure block! transcode:one select args 'SOURCES
 
-use-librebol: switch args.USE_LIBRebol [
+use-librebol: switch select args 'USE_LIBREBOL [
     "no" ['no]
     "yes" ['yes]
     panic "%prep-extension.r needs USE_LIBREBOL as yes or no"

@@ -36,15 +36,14 @@ import <platforms.r>
 change-dir join repo-dir %src/specs/
 
 args: parse-args system.script.args  ; either from command line or DO:ARGS
-platform-config: configure-platform opt args.OS_ID
+platform-config: configure-platform select args 'OS_ID
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
-git-commit: ~
-if args.GIT_COMMIT = "unknown" [
+git-commit: select args 'GIT_COMMIT
+if git-commit = "unknown" [
     git-commit: null
 ] else [
-    git-commit: args.GIT_COMMIT
     if (length of git-commit) != (length of first-rebol-commit) [
         panic [
             "GIT_COMMIT should be a full hash, e.g." first-rebol-commit newline
