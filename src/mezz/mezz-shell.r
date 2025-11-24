@@ -48,7 +48,7 @@ more: lambda [
     'file "Accepts %file and also just words (as file names)"
         [file! word! path! text!]
 ][
-    print deline to-text read switch:type file [
+    print deline read:string switch:type file [
         file! [file]
         text! [local-to-file file]
         word! path! [to-file file]

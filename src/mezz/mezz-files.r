@@ -439,7 +439,7 @@ detab-file: func [
     return: []
     filename [file!]
 ][
-    write filename detab to text! read filename
+    write filename detab read:string filename
 ]
 
 ; temporary location

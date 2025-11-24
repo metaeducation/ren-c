@@ -107,7 +107,7 @@
     )
 
     ('illegal-cr = pick rescue [read:string %enlined.tmp] 'id)
-    ('illegal-cr = pick rescue [to text! read %enlined.tmp] 'id)
+    ('illegal-cr = pick rescue [decode 'UTF-8 read %enlined.tmp] 'id)
     ("a^M^/b" = as text! read %enlined.tmp)
     ("a^/b" = deline read %enlined.tmp)
 ]

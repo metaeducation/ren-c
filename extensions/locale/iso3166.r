@@ -49,7 +49,7 @@ parse3 cnt [
     <end>
 ]
 
-init-code: to text! read init
+init-code: read:string init
 space: charset " ^-^M^/"
 iso-3166-table-count: find mold iso-3166-table #"["
 parse3 init-code [

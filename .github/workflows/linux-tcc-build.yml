@@ -342,7 +342,7 @@ jobs:
     #
     - name: HTTP Read Test (If This Works, A Lot Of Things Are Working)
       run: |
-        "$R3TWO" --do "either find to-text read http://example.com -[<h1>Example Domain</h1>]- [0] [1]"
+        "$R3TWO" --do "either find read:string http://example.com -[<h1>Example Domain</h1>]- [0] [1]"
 
 
     - name: Fibonnacci Test (Build a New Native From String of C Code)

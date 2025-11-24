@@ -155,7 +155,7 @@ files: compose [
 ]
 
 for-each [file fix] files [
-    data: to-text read url: join ROOT file
+    data: read:string url: join ROOT file
     split-path3:file file $filename
     target: join %libuuid/ filename
 
