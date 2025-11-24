@@ -657,8 +657,11 @@ bootstrap: func [
     ; best way to do that would be a .ZIP file via the encap facility.  Since
     ; that hasn't been done, use fetching from a web build as a proxy for it.
     ;
-    unzip:quiet %./tccencap/ https://metaeducation.s3.amazonaws.com/travis-builds/0.4.40/r3-06ac629-debug-cpp-tcc-encap.zip
-    set-env "CONFIG_TCCDIR" file-to-local compose %(what-dir)/tccencap/
+    ; !!! Temporarily leave CONFIG_TCCDIR as it is...we didn't uninstall TCC.
+    ; This particular zip file is outdated, would need a new one.
+    ;
+    ; unzip:quiet %./tccencap/ https://metaeducation.s3.amazonaws.com/travis-builds/0.4.40/r3-06ac629-debug-cpp-tcc-encap.zip
+    ; set-env "CONFIG_TCCDIR" file-to-local compose %(what-dir)/tccencap/
 
     cd ren-c-master
 

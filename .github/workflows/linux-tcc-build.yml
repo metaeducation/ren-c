@@ -58,11 +58,11 @@ jobs:
        include:
 
          - os-id: 0.4.40  # 64-bit Linux (can run executable on this container)
-           config-file: tcc.r
+           config-file: generic.r
            debug: none
 
          - os-id: 0.4.40  # 64-bit Linux (can run executable on this container)
-           config-file: tcc.r
+           config-file: generic.r
            debug: asserts
 
 
@@ -135,19 +135,34 @@ jobs:
     #
     # https://github.com/metaeducation/ren-c/blob/master/extensions/tcc/README.md
     #
-    - name: Install TinyC (tcc) and its LibC Helper Includes and Lib
+    # 1. !!! NOTE: the tcc package in Ubuntu 22.04 is version 0.9.27, which
+    #    lacks C11 support for <stdatomic.h> needed by libuv to build Ren-C
+    #    with filesystem support.  So we have to get a more recent version and
+    #    build it ourselves.
+    #
+    - name: Use APT to Intall TinyC (tcc) and its LibC Helper Includes and Lib
+      if: false  # no <stdatomic.h> included, see [1]
       run: |
         sudo apt install tcc libtcc-dev
 
-
-    # Knowing the magic path here to set CONFIG_TCCDIR is really something
-    # that could change arbitrarily based on how the packages install.  But
-    # this seems to be right on 64-bit Ubuntu for the versions we've tried.
-    # (Building TCC from source could obviously put the files somewhere else.)
-    #
-    - name: Set CONFIG_TCCDIR During First Phase To Use Ubuntu's TCC Files
-      run: |
         echo "CONFIG_TCCDIR=/usr/lib/x86_64-linux-gnu/tcc/" >> $GITHUB_ENV
+
+
+    # Unlike the APT-installed version, this will have C11 support for things
+    # like <stdatomic.h>, as well as `_Noreturn` and `__builtin_unreachable()`
+    #
+    - name: Build Newer TinyC (tcc) from "mob" Sources
+      if: true  # if Debian ever updates tcc package, can use APT again
+      run: |
+        git clone https://repo.or.cz/tinycc.git --depth 1
+        cd tinycc
+        ./configure
+        make -j 2
+
+        sudo make install  # puts tcc in /usr/local/bin by default
+        echo "/usr/local/bin" >> $GITHUB_PATH
+
+        echo "CONFIG_TCCDIR=/usr/local/lib/tcc/" >> $GITHUB_ENV
 
 
     # Show a little bit of sanity check information
@@ -176,7 +191,7 @@ jobs:
             config: "../configs/$CONFIG_FILE" \
             target: makefile \
             compiler: tcc \
-            standard: c \
+            standard: c11 \
             os-id: $OS_ID \
             debug: $DEBUG \
             git-commit: "-[$GIT_COMMIT]-" \
@@ -243,6 +258,7 @@ jobs:
     # could continue on indefinitely...
     #
     - name: Uninstall Prebuilt R3, TinyC, GCC, wget, etc. (Mimic Clean System)
+      if: false  # didn't install TCC via apt, also we depend on curl now :-(
       run: |
         sudo apt remove tcc gcc clang wget curl
 
@@ -262,7 +278,7 @@ jobs:
     #
     - name: Use R3 We Built to Download Source Over HTTPS, Unzip, and Compile!
       run: |
-        ./r3-with-tcc --do "bootstrap/cheat/options" \
+        ./r3-with-tcc --do "bootstrap:cheat:options" \
             -- debug=$DEBUG extensions="TCC +"
         echo "R3TWO=$(pwd)/ren-c-master/build/r3" >> $GITHUB_ENV
 
@@ -281,6 +297,16 @@ jobs:
     # Long-term, this would be handled behind-the-scenes so the user would
     # not have to see it.
     #
+    # 1. !!! The tccencap is not yet built during the build of R3ONE, and the
+    #    .zip file we were using is out of date.  So for now, just use the
+    #    CONFIG_TCCDIR that was set when we built the mob branch of tcc.
+    #
+    - name: Set CONFIG_TCCDIR For Test Phase
+      if: false   # !!! Ideal would encap made during build of R3ONE [1]
+      run: |
+        echo "CONFIG_TCCDIR=$(pwd)/tccencap/" >> $GITHUB_ENV
+
+
     # Also, in order to build user natives, one of the headers used by the
     # process needs to be `rebol.h`.  We don't use a fixed version in the
     # `tccencap` that BOOTSTRAP from the web, because we'd like an up to the
@@ -299,9 +325,8 @@ jobs:
     # But given priorities, there are not enough Rebol dev resources to
     # develop and maintain a separate fork of TCC for that.
     #
-    - name: Set CONFIG_TCCDIR and LIBREBOL_INCLUDE_DIR for Test Phase
+    - name: Set LIBREBOL_INCLUDE_DIR For Test Phase
       run: |
-        echo "CONFIG_TCCDIR=$(pwd)/tccencap/" >> $GITHUB_ENV
         echo "LIBREBOL_INCLUDE_DIR=$(pwd)/ren-c-master/build/prep/include/" >> $GITHUB_ENV
 
 
@@ -309,7 +334,7 @@ jobs:
 
     - name: Basic Smoke Test (Print A Message And Quit)
       run: |
-        "$R3TWO" --do "print {Hello, Bootstrapped World!}"
+        "$R3TWO" --do "print -[Hello, Bootstrapped World!]-"
 
 
     # Note: HTTP no longer works due to missing cipher suites, and due to
@@ -317,7 +342,7 @@ jobs:
     #
     - name: HTTP Read Test (If This Works, A Lot Of Things Are Working)
       run: |
-        "$R3TWO" --do "either find to-text read http://example.com {<h1>Example Domain</h1>} [0] [1]"
+        "$R3TWO" --do "either find to-text read http://example.com -[<h1>Example Domain</h1>]- [0] [1]"
 
 
     - name: Fibonnacci Test (Build a New Native From String of C Code)
