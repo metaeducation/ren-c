@@ -484,13 +484,17 @@ DECLARE_NATIVE(COMPILE_P)
     int output_type = rebUnboxInteger(
         "switch pick", config, "'output-type [",
             "'memory [", rebI(TCC_OUTPUT_MEMORY), "]",  // no tcc_relocate()!
-            "'exe [", rebI(TCC_OUTPUT_EXE), "]",
-            "'dll [", rebI(TCC_OUTPUT_DLL), "]",
-            "'obj [", rebI(TCC_OUTPUT_OBJ), "]",
+            "'EXE [", rebI(TCC_OUTPUT_EXE), "]",
+            "'DLL [", rebI(TCC_OUTPUT_DLL), "]",
+            "'OBJ [", rebI(TCC_OUTPUT_OBJ), "]",
             "'preprocess [", rebI(TCC_OUTPUT_PREPROCESS), "]",
             "-1",
         "]"
     );
+    if (output_type == -1)
+        return rebDelegate("panic [",
+            "-[TCC unrecognized output type]- pick", config, "'output-type",
+        "]");
 
     if (tcc_set_output_type(state, output_type) < 0)
         return rebDelegate("panic [",
@@ -510,7 +514,7 @@ DECLARE_NATIVE(COMPILE_P)
         for (; item != tail; ++item) {
             if (not Is_Text(item))
                 panic (
-                    "If COMPILE*/FILES, compilables must be TEXT! paths"
+                    "If COMPILE*:FILES, compilables must be TEXT! paths"
                 );
 
             char *filename_utf8 = rebSpell(item);
@@ -520,7 +524,9 @@ DECLARE_NATIVE(COMPILE_P)
 
         if (Bool_ARG(INSPECT)) {  // nothing to show, besides the file list
             Drop_Lifeguard(handle);
-            return rebText(":INSPECT => <file list>");
+            return rebValue(
+                "spaced [--[:INSPECT (files) =>]-- mold", compilables, "]"
+            );
         }
     }
     else {
