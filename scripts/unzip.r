@@ -217,7 +217,7 @@ zip: func [
     :verbose "Lists files while compressing"
     :only "Include the root source directory"
 ][
-    let info: if not verbose [:elide] else [:print]
+    let info: if not verbose [elide/] else [print/]
 
     if match [file! url!] where [
         where: open:write:new where  ; !!! /NEW is needed (should it be?)
@@ -319,7 +319,7 @@ unzip: func [
     :quiet "Don't lists files while decompressing"
 ][
     let num-errors: 0
-    let info: all [quiet, not verbose] then [:elide] else [:print]
+    let info: all [quiet, not verbose] then [elide/] else [print/]
     if not block? where [
         where: my dirize
         if not exists? where [make-dir:deep where]
@@ -588,13 +588,16 @@ unzip: func [
                 ][
                     ; make directory and/or write file
                     either #"/" = last name [
-                        if not exists? compose %(where)/(name) [
-                            make-dir:deep compose %(where)/(name)
+                        if not exists? compose %(where)/(name)/ [
+                            make-dir:deep compose %(where)/(name)/
                         ]
                     ][
                         let [path file]: split-path name
-                        if not exists? compose %(where)/(path) [
-                            make-dir:deep compose %(where)/(path)
+                        all [
+                            path
+                            not exists? compose %(where)/(path)/
+                        ] then [
+                            make-dir:deep compose %(where)/(path)/
                         ]
                         if uncompressed-data [
                             write compose %(where)/(name) uncompressed-data
