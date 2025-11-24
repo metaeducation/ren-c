@@ -45,23 +45,39 @@
 #include "libtcc.h"
 
 
+// tcc_relocate() underwent a breaking API change to add a second parameter in
+// September 2012, to provide a custom memory buffer, with the ability to pass
+// in a special TCC_RELOCATE_AUTO constant to get the old behavior:
+//
+// https://repo.or.cz/tinycc.git/commitdiff/ca38792df17fc5c8d2bb6757c512101610420f1e
+//
+// This was later undone in 2024, going back to a single parameter--based on
+// the idea that the TCCState itself contains enough information:
+//
+// https://repo.or.cz/tinycc.git/commitdiff/b671fc0594625eb5ac147ec83be6d0c1fc1a6ad5
+//
+// For the sake of supporting multiple libtcc versions, we use the presence of
+// the TCC_RELOCATE_AUTO macro to determine which version of the API to call.
+//
 #if defined(TCC_RELOCATE_AUTO)
     #define tcc_relocate_auto(s) \
         tcc_relocate((s), TCC_RELOCATE_AUTO)
 #else
-    // The tcc_relocate() API had an incompatible change in September 2012.
-    // It added a parameter to allow you to provide a custom memory buffer.
-    //
-    // https://repo.or.cz/tinycc.git/commitdiff/ca38792df17fc5c8d2bb6757c512101610420f1e
-    //
     #define tcc_relocate_auto(s) \
         tcc_relocate(s)
+#endif
 
-    // Use the missing TCC_RELOCATE_AUTO as a signal that the libtcc also
-    // probably doesn't have tcc_set_options(), added in February 2013:
-    //
-    // https://repo.or.cz/tinycc.git?a=commit;h=05108a3b0a8eff70739b253b8995999b1861f9f2
-    //
+
+// tcc_set_options() was added in February 2013:
+//
+// https://repo.or.cz/tinycc.git?a=commit;h=05108a3b0a8eff70739b253b8995999b1861f9f2
+//
+// At one time, the missing TCC_RELOCATE_AUTO macro was used to detect older
+// libtcc versions that also lacked tcc_set_options().  But the 2024 change
+// removed TCC_RELOCATE_AUTO again :-/ so that won't work.  If for some reason
+// you're building with a very old libtcc, define this.
+//
+#ifdef TCC_EXTENSION_NO_OPTIONS
     void tcc_set_options(TCCState *s, const char *str) {
         UNUSED(s);
         UNUSED(str);
@@ -75,11 +91,12 @@
     }
 #endif
 
+
 typedef int (*TCC_CSTR_API)(TCCState *, const char *);
 int tcc_set_options_i(TCCState *s, const char *str)
-    { tcc_set_options(s, str); return 0; } // make into a TCC_CSTR_API
+  { tcc_set_options(s, str); return 0; }  // make into a TCC_CSTR_API
 int tcc_set_lib_path_i(TCCState *s, const char *path)
-    { tcc_set_lib_path(s, path); return 0; } // make into a TCC_CSTR_API
+  { tcc_set_lib_path(s, path); return 0; }  // make into a TCC_CSTR_API
 
 
 
