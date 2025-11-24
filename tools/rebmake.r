@@ -67,11 +67,15 @@ ends-with?: func [
     s [any-string?]
     suffix [<opt> any-string?]
 ][
-    return any [
+    any [
         not suffix
         empty? suffix
-        suffix ?= (skip tail of s negate length of suffix)  ; ?= lax compare
+    ] then [
+        return null
     ]
+    s: as text! s
+    suffix: as text! suffix
+    return suffix ?= (skip tail of s negate length of suffix)  ; ?= lax compare
 ]
 
 filter-flag: func [
