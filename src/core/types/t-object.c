@@ -1502,7 +1502,7 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
     const Element* frame = Element_ARG(VALUE);
 
     if (Bool_ARG(DEEP))
-        panic ("COPY/DEEP on FRAME! not implemented");
+        panic ("COPY:DEEP on FRAME! not implemented");
 
     if (Bool_ARG(PART))
         panic (Error_Bad_Refines_Raw());
@@ -1514,11 +1514,10 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
         nullptr  // no placeholder, use parameters
     );
 
-    ParamList* lens = Phase_Paramlist(Frame_Phase(frame));
     return Init_Lensed_Frame(
         OUT,
         copy,
-        lens,
+        Frame_Lens(frame),
         Frame_Coupling(frame)
     );
 }
