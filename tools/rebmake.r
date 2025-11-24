@@ -539,14 +539,8 @@ cc: make compiler-class [
                     ;
                     flg: replace copy flg -["]- -[\"]-
 
-                    ; Note: bootstrap executable hangs on:
-                    ;
-                    ;     keep unspaced [
-                    ;         "-D" (filter-flag flg id else [continue])
-                    ;     ]
-                    ;
-                    if flg: filter-flag flg .id [
-                        keep unspaced ["-D" flg]
+                    keep unspaced [
+                       "-D" (filter-flag flg .id else [continue])
                     ]
                 ]
             ]
@@ -807,12 +801,6 @@ cl: make compiler-class [
                     ;
                     flg: replace copy flg -["]- -[\"]-
 
-                    ; Note: bootstrap executable hangs on:
-                    ;
-                    ;     keep unspaced [
-                    ;         "/D" (filter-flag flg id else [continue])
-                    ;     ]
-                    ;
                     if flg: filter-flag flg .id [
                         keep unspaced ["/D" flg]
                     ]
