@@ -136,6 +136,8 @@
 
 %examples/circled.test.r
 %examples/flow.test.r
+%examples/giulio-generate.test.r
+%examples/giulio-read-file.test.r
 %examples/n-queens.test.r
 %examples/prime-factors.test.r
 %examples/sudoku-solver.test.r
