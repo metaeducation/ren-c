@@ -124,17 +124,17 @@
 ]
 
 [https://github.com/red/red/issues/4863
-    ('word = parse to-blob "word" [word!])
-    ('word = parse to-blob "   word" [word!])
+    ('word = parse as blob! "word" [word!])
+    ('word = parse as blob! "   word" [word!])
 
-    (123 = parse to-blob "123" [integer!])
-    ~parse-mismatch~ !! (parse to-blob "123.456" [integer!])
-    (123 = parse to-blob "    123" [integer!])
+    (123 = parse as blob! "123" [integer!])
+    ~parse-mismatch~ !! (parse as blob! "123.456" [integer!])
+    (123 = parse as blob! "    123" [integer!])
 
-    ([hello 123 world] = parse to-blob "hello 123 world" [
+    ([hello 123 world] = parse as blob! "hello 123 world" [
         collect [keep word!, keep integer!, keep word!]
     ])
-    ([hello 123 world] = parse to-blob "hello 123 world" [
+    ([hello 123 world] = parse as blob! "hello 123 world" [
         collect [keep word!, space, keep integer!, space, keep word!]
     ])
 ]

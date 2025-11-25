@@ -515,7 +515,7 @@ static Error* Error_Missing(ScanState* S, Byte wanted) {
 //
 // Advances the cp to just past the last position.
 //
-// test: to-integer load to-blob mold to-char 1234
+// test: codepoint of transcode:one as blob! mold make rune! 1234
 //
 static Option(const Byte*) Try_Scan_UTF8_Char_Escapable(
     Init(Codepoint) out,

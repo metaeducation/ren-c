@@ -51,7 +51,7 @@
 
 ; #1986
 ((to-text #{61CEB263}) = dehex "a%CE%b2c")
-(#{61CEB263} = to-blob dehex "a%CE%B2c")
+(#{61CEB263} = as blob! dehex "a%CE%B2c")
 
 [
     https://github.com/metaeducation/ren-c/issues/1003

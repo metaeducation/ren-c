@@ -466,7 +466,7 @@ elf-format: context [
             ;
             (insert
                 (skip executable string-section-offset + string-section-size)
-                (join (to-blob encap-section-name) #{00})
+                (join (as blob! encap-section-name) #{00})
             )
 
             ; We added a section (so another section header to account for),

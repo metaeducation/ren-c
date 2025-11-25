@@ -3,7 +3,7 @@
 [
     (
         test-file: %fixtures/crlf.txt
-        write test-file to-blob {a^Mb^/c^M^/^/d^/^M^/e^/^/f}
+        write test-file as blob! --[a^Mb^/c^M^/^/d^/^M^/e^/^/f]--
         ok
     )
 
@@ -17,7 +17,7 @@
         lines: collect [
             for-each 'l read-lines/binary test-file [keep l]
         ]
-        lines = map-each 'l [{a^Mb} {c} {} {d} {} {e} {} {f}] [to-blob l]
+        lines = map-each 'l [{a^Mb} {c} {} {d} {} {e} {} {f}] [as blob! l]
     )
     ( { READ-LINES/DELIMITER }
         eol: "^M^/"

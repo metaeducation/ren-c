@@ -593,7 +593,7 @@
 
 [
     (
-        bincat: to-blob -[C😺T]-
+        bincat: as blob! -[C😺T]-
         bincat = #{43F09F98BA54}
     )
 
@@ -613,12 +613,12 @@
 ]
 
 (
-    test: to-blob -[The C😺T Test]-
+    test: as blob! -[The C😺T Test]-
     x: ~
     parse3 test [to -[c😺t]- x: across to space to <end>]
     all [
         x = #{43F09F98BA54}
-        "C😺T" = to-text x
+        "C😺T" = as text! x
     ]
 )
 

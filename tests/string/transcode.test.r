@@ -103,3 +103,5 @@
     ('scan-invalid = pick rescue [transcode "^^2022"] 'id)  ; escaped
     ('scan-invalid = pick rescue [transcode "@2022"] 'id)
 ]
+
+(1234 = codepoint of transcode:one as blob! mold make rune! 1234)
