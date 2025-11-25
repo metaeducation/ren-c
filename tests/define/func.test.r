@@ -28,7 +28,7 @@
             let m: adjunct-of f
             keep reify all [m, m.description]
 
-            let keep-param: lambda [k [word! 'return:] p [parameter!]] [
+            let keep-param: lambda [k [word! ~(return:)~] p [parameter!]] [
                 keep reduce [k (reify p.spec) (reify p.text)]
             ]
             keep-param 'return: (return of f)
@@ -99,7 +99,4 @@
     ('~jojo~ = baz '~jojo~)
     ('~(mojo jojo)~ = baz lift spread [mojo jojo])
     ~expect-arg~ !! (baz lift spread [jojo mojo])
-
-    (~(a b c)~ = mumble ~(a b c)~)
-    ~expect-arg~ !! (mumble ~(a b c d)~)
 ]

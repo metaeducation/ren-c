@@ -33,7 +33,7 @@
         int-spec 10
     )
     (
-        invis-spec: func [return: [~,~ integer!] x] [
+        invis-spec: func [return: [ghost! integer!] x] [
             return ~,~
         ]
         <test> = (<test> invis-spec 10)

@@ -153,7 +153,7 @@ DECLARE_NATIVE(BINDABLE_Q)
 //
 //  "Get the binding of a value (binding is a loooong work in progress...)"
 //
-//      return: [null? any-context? 'let]
+//      return: [null? any-context?]
 //      value [<opt-out> fundamental?]
 //  ]
 //
