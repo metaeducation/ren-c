@@ -478,7 +478,7 @@
         f: ["a" #a http://a a@a.com <a>]
         g: a/b/(c: 'd/e/f)/(b.d: [:f.g h/i])
     ]
-    b-value: construct compose $(<*>) @[
+    b-value: construct compose2 $(<*>) @[
         a: 1.0 b: $1 c: 100% d: 0.01
         e: [/a a 'a :a a: #"A" (<*> next #{0000})]
         f: [#a <A> http://A a@A.com "A"]

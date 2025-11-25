@@ -31,9 +31,9 @@
 
 
 //
-//  nihil: native [
+//  nihil: ghostable native [
 //
-//  "Generate GHOST! (unsurprising, so not a synonym for ~,~ quasi evaluation)"
+//  "Generate GHOST! (arity-0 COMMENT)"
 //
 //      return: [ghost!]
 //  ]

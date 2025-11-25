@@ -272,7 +272,7 @@ Bounce Composer_Executor(Level* const L)
     bool conflate;
     Value* predicate;
 
-  extract_arguments_from_original_compose_call: { ////////////////////////////
+  extract_arguments_from_original_compose_call: {
 
   // There's a Level for each "recursion" that processes the :DEEP blocks in a
   // COMPOSE.  (These don't recurse as C functions, the levels are stacklessly
@@ -294,7 +294,7 @@ Bounce Composer_Executor(Level* const L)
 
     assert(Is_Nulled(predicate) or Is_Frame(predicate));
 
-} jump_to_label_for_state: { /////////////////////////////////////////////////
+} jump_to_label_for_state: {
 
     USE_LEVEL_SHORTHANDS (L);  // defines level_ as L now that args extracted
 
@@ -375,15 +375,13 @@ Bounce Composer_Executor(Level* const L)
             goto handle_next_item;  // compose [(void)] => []
         }
 
-      push_antiform_incorporating_lift_byte: {
+        Init_Space(PUSH());
+        LIFT_BYTE(TOP_ELEMENT) = list_lift_byte;
+        if (sigil)
+            Sigilize(TOP_ELEMENT, unwrap sigil);  // ^ or @ or $
 
-        if (list_lift_byte & QUASI_BIT)
-            panic ("Can't COMPOSE antiforms into ~(...)~ slots");
-
-        Copy_Lifted_Cell(PUSH(), OUT);
-        LIFT_BYTE(OUT) = list_lift_byte;
         goto handle_next_item;
-    }}
+    }
 
     if (Is_Error(OUT)) {
         if (Is_Error_Veto_Signal(Cell_Error(OUT))) {
@@ -398,8 +396,17 @@ Bounce Composer_Executor(Level* const L)
     );
 
     if (Is_Antiform(out)) {
-        if (list_lift_byte != NOQUOTE_2)
-            goto push_antiform_incorporating_lift_byte;
+        if (sigil)
+            panic ("Cannot apply sigils to antiforms in COMPOSE'd slots");
+
+        if (list_lift_byte != NOQUOTE_2) {
+            if (list_lift_byte & QUASI_BIT)
+                panic ("Can't COMPOSE antiforms into ~(...)~ slots");
+
+            Copy_Lifted_Cell(PUSH(), OUT);
+            LIFT_BYTE(TOP) = list_lift_byte;
+            goto handle_next_item;
+        }
 
         if (Is_Splice(out))
             goto push_out_spliced;
@@ -461,14 +468,17 @@ Bounce Composer_Executor(Level* const L)
   //    >> compose [(spread [a b]) merges]
   //    == [a b merges]
   //
-  // 1. There's not any technical reason why we couldn't allow you to compose
-  //     a quoted splice, applying the quote to each item:
+  // 1. Although QUOTE typically doesn't work with antiforms, the power user
+  //    feature of quoting composition slots lifts the decayed result:
   //
-  //        >> compose [a '(spread [b 'c]) d]
-  //        == [a 'b ''c d]
+  //        >> compose [a: ~null~ b: '(spread [c 'd])]
+  //        == [a: ~null~ b: ~(c 'd)~]
   //
-  //    But how often would that be useful, vs. it being a mistake?  Err on
-  //    the side of caution and don't allow it for now.
+  //    This is far more useful than something like distributing the quotes
+  //    across the spliced items, which would be very odd:
+  //
+  //        >> compose [a: ~null~ b: '(spread [c 'd])]
+  //        == [a: ~null~ b: 'c ''d]
   //
   // 2. Only proxy newline flag from template on *first* value spliced in,
   //    where it may have its own newline flag.  Not necessarily obvious,
@@ -486,9 +496,8 @@ Bounce Composer_Executor(Level* const L)
   //           ]
 
     assert(Is_Splice(out));
-
-    if (list_lift_byte != NOQUOTE_2 or sigil)  // [1]
-        return fail ("Quoted COMPOSE slots are not distributed over splices");
+    assert(list_lift_byte == NOQUOTE_2);  // quotes make quasiforms above [1]
+    assert(not sigil);  // should've errored on any non-VOID/GHOST! antiform
 
     const Element* push_tail;
     const Element* push = List_At(&push_tail, out);

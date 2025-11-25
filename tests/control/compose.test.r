@@ -133,16 +133,21 @@
 )
 
 
-; While some proposals for COMPOSE handling of QUOTED! would knock one quote
-; level off a group, protecting groups from composition is better done with
-; labeled compose...saving it for quoting composed material.
-
+; Compose grafts quotes onto things, additively
+;
 ([3 '3 ''3] = compose [(1 + 2) '(1 + 2) ''(1 + 2)])
-~???~ !! (compose ['(? if null [<cant-vanish-with-quote>])])
+([' '' '''] = compose ['(comment "it") ''(comment "is") '''(comment "legal")])
+(['''''''] = compose ['''''''(when null [<a>])])
+([''''] = compose [''(the '')])
 
 ; Quoting should be preserved by deep composition
 
 ([a ''[b 3 c] d] = compose:deep [a ''[b (1 + 2) c] d])
+
+
+; Decorating voids or comments grafts decorations onto SPACE
+;
+([@ $ ^ ' ~] = compose [@(nihil) $(^void) ^() '(elide 1) ~(~[]~)~])
 
 
 ; COMPOSE no longer tries to convert set-forms
@@ -232,17 +237,19 @@
     ])
 ]
 
-; More tests of crazy quoting depths
-[
-    ~???~ !! (compose ['''''''(if null [<a>])])
-]
-
 ; You can apply quasiforms just like other quoting levels, but the value
 ; must not be already quoted.
 [
     ([1 ~[2]~ 3] = compose [1 ~([2])~ 3])
     ([1 ''~[2]~ 3] = compose [1 ''~([2])~ 3])
     ~???~ !! (compose [1 ''~(quote [2])~ 3])
+]
+
+; SIGIL! is not legal on antiforms:
+[
+    ~???~ !! (compose [@(spread [a b])])
+    ~???~ !! (compose [^(okay)])
+    ~???~ !! (compose [$(~)])
 ]
 
 ; We allow the reduced case of `eval []` or `eval [comment "hi"]` to be VOID,
