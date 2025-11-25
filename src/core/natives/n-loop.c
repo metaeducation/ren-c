@@ -1032,24 +1032,23 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
 
         if (Is_Action(les->data)) {
             Value* generated = rebLift(rebRUN(les->data));
+            Value* spare = Copy_Cell(SPARE, generated);
+            rebRelease(generated);
+
             if (not (
-                Is_Lifted_Error(generated)
-                and Is_Error_Done_Signal(Cell_Error(generated))
+                Is_Lifted_Error(spare)
+                and Is_Error_Done_Signal(Cell_Error(spare))
             )) {
-                Unliftify_Decayed(generated) except (Error* e) {
-                    rebRelease(generated);
+                Value* decayed = Unliftify_Decayed(spare) except (Error* e) {
                     return fail (e);
                 };
                 Write_Loop_Slot_May_Bind(
-                    slot, generated, les->data
+                    slot, decayed, les->data
                 ) except (Error* e) {
-                    rebRelease(generated);
                     return fail (e);
                 }
-                rebRelease(generated);
             }
             else {
-                rebRelease(generated);
                 les->more_data = false;  // any remaining vars must be unset
                 if (slot == Varlist_Slots_Head(vars_ctx)) {
                     //

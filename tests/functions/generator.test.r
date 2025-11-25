@@ -297,3 +297,9 @@
         done? g
     ]
 )
+
+; Make sure enumeration handles nulls (quirk of API-based implementation had
+; a problem with this).
+(
+    [~null~] = map-each 'x generator [yield null] [reify x]
+)
