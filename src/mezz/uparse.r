@@ -2079,7 +2079,7 @@ default-combinators: make map! [
                 ]
                 ^result: decay ^result
             ]
-            word? value [
+            match [tuple! word!] value [
                 ^result: get value
                 pending: blank  ; no pending, only "subpending"
             ]
@@ -3094,9 +3094,9 @@ parse*: func [
     return pack [^synthesized pending]
 ]
 
-parse: (comment [redescribe [  ; redescribe not working at the moment (?)
+parse: redescribe [
     "Process input in the parse dialect, definitional error on failure"
-] ]
+](
     enclose parse*/ func [f] [
         let [^synthesized pending]: trap eval-free f
 

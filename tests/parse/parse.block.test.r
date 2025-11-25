@@ -161,4 +161,11 @@
 
 ; Recursion should work
 ;
-(1020 = rule: ["a" (print "Found an A") [ahead "a" rule | accept (1020)]])
+(
+    count: 0
+    rule: ["a" (count: count + 1) [ahead "a" rule | accept (1020)]]
+    all [
+        1020 = parse "aaaaab" rule
+        count = 5
+    ]
+)
