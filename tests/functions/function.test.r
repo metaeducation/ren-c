@@ -191,7 +191,7 @@
 ; two-function return tests
 (
     g: func [return: [integer!] f [action!]] [f [return 1] 2]
-    1 = g :eval
+    1 = g eval/
 )
 ; BREAK out of a function
 (
@@ -261,7 +261,7 @@
 ; Argument passing of "hard literal arguments"
 [
     (
-        hard: func ['x] [return :x]
+        hard: func ['x] [return x]
         ok
     )
 
@@ -273,7 +273,7 @@
     (the (10 + 20) = hard (10 + 20))
     (
         o: context [f: 10]
-        the :o.f = hard :o.f
+        (the :o.f) = hard :o.f
     )
 ]
 
@@ -282,12 +282,12 @@
     (
         got: null
 
-        soft: func [@(x) <with> got] [got: :x, return 1000]
+        soft: func [@(x) <with> got] [got: ^x, return 1000]
         Lsoft: infix soft/
 
         test: lambda [expr [block!]] [
             got: '~junk~
-            compose [(eval expr), (:got)]
+            compose [(eval expr), (^got)]
         ]
         ok
     )
@@ -449,12 +449,14 @@
 )]
 
 (
-    foo: lambda [^arg [null? ghost! <end> void? integer!]] [:arg]
+    foo: lambda [^arg [null? ghost! <end> void? integer!]] [
+        either unset? $arg [<unset>] [lift ^arg]
+    ]
     all [
         (the '1020) = (foo 1020)
         '~,~ = (foo comment "HI")
         (lift null) = (foo any [1 > 2, 3 > 4])
-        trash? (foo)
+        <unset> = (foo)
     ]
 )
 

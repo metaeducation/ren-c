@@ -2,9 +2,6 @@
 (get-word? first [:a])
 (not get-word? 1)
 (chain! = type of first [:a])
-~not-bound~ !! (
-    eval make block! ":a"  ; context-less get-word
-)
 
 ; R3-Alpha and Red permit GET-WORD! access to subvert unsetness.  Rebol2 did
 ; not permit this.  At one point Ren-C limited GET-WORD! use to functions, but
@@ -20,7 +17,7 @@
 )
 (
     a: ~
-    trash? :a
+    trash? ^a
 )
 
 [#1477

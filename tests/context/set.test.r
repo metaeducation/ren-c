@@ -2,14 +2,14 @@
 [#1763
     (
         a: <before>
-        '~null~ = [a]: pack pin reduce:predicate [null] :reify
+        '~null~ = [a]: pack pin reduce:predicate [null] reify/
         '~null~ = a
     )
 ]
 (
     a: <a-before>
     b: <b-before>
-    2 = [a b]: pack pin reduce:predicate [2 null] :reify
+    2 = [a b]: pack pin reduce:predicate [2 null] reify/
     a = 2
     '~null~ = b
 )

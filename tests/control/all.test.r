@@ -265,7 +265,7 @@
 )
 (
     a-value: first [:a]
-    okay = all [a-value/ okay]
+    okay = all [a-value okay]
 )
 (okay = all [NUL okay])
 

@@ -2,5 +2,5 @@
 
 [#49 (
     f: func [] []
-    not same? body of :f body of :f
+    not same? body of f/ body of f/
 )]

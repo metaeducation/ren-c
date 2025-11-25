@@ -95,8 +95,8 @@
 [
     (did branch: does [if nbreak = n [break] n: n + 1])
 
-    (nbreak: ('...), n: 0, void? repeat 0 :branch)
-    (nbreak: ('...), n: 0, 3 = repeat 3 :branch)
+    (nbreak: ('...), n: 0, void? repeat 0 branch/)
+    (nbreak: ('...), n: 0, 3 = repeat 3 branch/)
 ]
 
 ; If body never runs it's void, which acts invisibly in ANY/ALL

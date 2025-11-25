@@ -313,7 +313,7 @@
 (1 = eval [eval [1]])
 (1 = do "Rebol [] quit:value eval [1]")
 (1 = 1)
-(3 = reeval unrun :reeval unrun :add 1 2)
+(3 = reeval unrun reeval/ unrun add/ 1 2)
 ; infinite recursion for block
 (
     <deep-enough> = catch wrap [

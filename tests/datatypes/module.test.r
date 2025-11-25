@@ -96,7 +96,7 @@
 
 ; Overwrite a lib definition but make a helper that runs code in lib
 (
-    eval-before: :eval
+    eval-before: eval/
     import m: module [exports: [test]] [
         throw: ~  ; needs to be provided, no archetypal throw
         eval: func [source] [throw <override>]
@@ -113,7 +113,7 @@
     all [
         3 = test
         <override> = catch [
-            m.throw: :throw
+            m.throw: throw/
             m/eval [1 + 2]
         ]
         eval/ = eval-before/

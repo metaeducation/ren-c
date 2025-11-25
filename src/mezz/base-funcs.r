@@ -242,14 +242,14 @@ specialized?: func [
     "Assert that the left hand side--when fully evaluated--IS the right"
 ](
     lambda [left [any-stable?] right [any-stable?]] [
-        if :left != :right [
+        if ^left != ^right [
             panic:blame make warning! [
                 type: 'script
                 id: 'assertion-failure
                 arg1: compose [(:left) is (:right)]
             ] $return
         ]
-        :left  ; choose left in case binding or case matters somehow
+        ^left  ; choose left in case binding or case matters somehow
     ]
 )
 

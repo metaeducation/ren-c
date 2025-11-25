@@ -50,7 +50,7 @@
     sys.util/recover [panic make warning! ""] then [okay]
 )
 #rescue (
-    rescue [1 / 0] then (:warning?)
+    rescue [1 / 0] then (warning?/)
 )
 #rescue (
     rescue [1 / 0] then e -> [warning? e]

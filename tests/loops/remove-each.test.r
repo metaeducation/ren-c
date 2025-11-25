@@ -81,7 +81,7 @@
     block: copy [1 2 3 4 5]
     remove-each [a b] block [
         if a = 5 [
-            was-b-null: to-yesno null? :b
+            was-b-null: to-yesno null? b
         ]
         continue
     ]
@@ -177,7 +177,7 @@
     binary: copy #{0102030405}
     remove-each [a b] binary [
         if a = 5 [
-            true? b-was-null: boolean null? :b
+            true? b-was-null: boolean null? b
         ]
     ]
     true? b-was-null

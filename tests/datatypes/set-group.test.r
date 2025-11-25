@@ -80,10 +80,10 @@
 
     (
         test: lambda [x] [x + 1000]
-        wrapper: returnproxy :test
+        wrapper: returnproxy test/
 
         y: ~
-        f: make frame! unrun :wrapper
+        f: make frame! unrun wrapper/
         f.x: 20
         f.return: $y
 

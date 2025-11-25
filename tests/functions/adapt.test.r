@@ -47,7 +47,7 @@
 ; interface.
 (
     y: <outside>
-    test: func [x <local> y] [return :y]
+    test: func [x <local> y] [return ^y]
     adapted: adapt test/ [assert [y = <outside>]]
     trash? adapted 10
 )

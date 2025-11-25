@@ -9,30 +9,30 @@
 
 ; the "result" of break should not be assignable
 [#1515
-    (a: 1, repeat 1 [a: break], :a = 1)
+    (a: 1, repeat 1 [a: break], a = 1)
 ]
 [#1515
-    (a: 1, repeat 1 [set $a break], :a = 1)
+    (a: 1, repeat 1 [set $a break], a = 1)
 ]
 [#1515
-    (a: 1, repeat 1 [set:any $a break], :a = 1)
+    (a: 1, repeat 1 [set:any $a break], a = 1)
 ]
 
 ; the "result" of break should not be passable to functions
 [#1509
-    (a: 1, repeat 1 [a: warning? break], :a = 1)
+    (a: 1, repeat 1 [a: warning? break], a = 1)
 ]
 [#1509
-    (a: 1, repeat 1 [a: type of break], :a = 1)
+    (a: 1, repeat 1 [a: type of break], a = 1)
 ]
 [#1509
-    (foo: func [x y] [9], a: 1, repeat 1 [a: foo break 5], :a = 1)
+    (foo: func [x y] [9], a: 1, repeat 1 [a: foo break 5], a = 1)
 ]
 [#1509
-    (foo: func [x y] [9], a: 1, repeat 1 [a: foo 5 break], :a = 1)
+    (foo: func [x y] [9], a: 1, repeat 1 [a: foo 5 break], a = 1)
 ]
 [#1509
-    (foo: func [x y] [9], a: 1, repeat 1 [a: foo break break], :a = 1)
+    (foo: func [x y] [9], a: 1, repeat 1 [a: foo break break], a = 1)
 ]
 
 ; check that BREAK is evaluated (and not CONTINUE):

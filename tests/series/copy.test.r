@@ -34,7 +34,7 @@
 
 [#2043 (
     f: func [] []
-    warning? rescue [copy :f]
+    warning? rescue [copy f/]
     ok
 )]
 

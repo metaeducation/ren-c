@@ -22,7 +22,7 @@ utrim: func [
     :with "Same as :ALL but removes specific characters"
         [char? text! blob! integer! block! bitset!]
 ][
-    let all_TRIM: :all
+    let all_TRIM: all
     all: get $lib/all
 
     ; ACTION!s in the new object will still refer to fields in the original
@@ -59,7 +59,7 @@ utrim: func [
             rule: blank
 
             if none [head tail] [
-                head: tail: okay  ; plain utrim => utrim/HEAD/TAIL
+                head: tail: okay  ; plain utrim => UTRIM:HEAD:TAIL
             ]
         ]
 
@@ -148,7 +148,7 @@ utrim: func [
     let indent: #  ; by default, remove all indentation (opt in to the REPEAT)
     if auto [
         parse-thru series [
-            ; Don't count empty lines, (e.g. utrim/auto {^/^/^/    asdf})
+            ; Don't count empty lines, (e.g. utrim:auto {^/^/^/    asdf})
             opt remove [some LF]
 
             indent: measure opt some rule  ; length of spaces and tabs
@@ -170,7 +170,7 @@ utrim: func [
         ]
     ]
 
-    ; While trimming with /TAIL takes out any number of newlines, plain utrim
+    ; While trimming with :TAIL takes out any number of newlines, plain utrim
     ; in R3-Alpha and Red leaves at most one newline at the end.
     ;
     parse series [

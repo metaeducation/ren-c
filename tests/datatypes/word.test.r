@@ -81,15 +81,15 @@
     a-value: first ['a]
     a-value = ^a-value
 )
-(:okay = okay)
-(:null = null)
+(^okay = okay)
+(^null = null)
 (
     a-value: $1
     ^a-value = a-value
 )
 ; natives are word-active
-(frame! = type of unrun :reduce)
-(:space = space)
+(frame! = type of unrun reduce/)
+(^space = space)
 ; library test?
 (
     a-value: make object! []

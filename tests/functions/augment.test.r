@@ -23,7 +23,7 @@
     1020 = sum 1000 20
 )(
     /mix: adapt augment (x -> [x]) [y :sub] [
-        x: reeval (either sub [:subtract] [:add]) x y
+        x: reeval (either sub [subtract/] [add/]) x y
     ]
     all [
         1020 = mix 1000 20

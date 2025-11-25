@@ -57,7 +57,7 @@
 ; zero repetition block test
 (
     success: 'true
-    cfor 'i b: [1] tail of :b -1 [success: 'false]
+    cfor 'i b: [1] tail of b -1 [success: 'false]
     true? success
 )
 ; Test that return stops the loop

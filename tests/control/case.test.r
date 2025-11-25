@@ -141,9 +141,9 @@
 
 ; New feature for specifying predicates
 
-(<a> = case:predicate [1 = 2 [<a>]] :not)
-(<b> = case:predicate [1 [<a>] 2 [<b>]] :even?)
-(<b> = case:predicate [1 = 1 [<a>]] :not else [<b>])
+(<a> = case:predicate [1 = 2 [<a>]] not/)
+(<b> = case:predicate [1 [<a>] 2 [<b>]] even?/)
+(<b> = case:predicate [1 = 1 [<a>]] not/ else [<b>])
 
 ~bad-branch-type~ !! (case [okay #bad])
 

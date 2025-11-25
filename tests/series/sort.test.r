@@ -32,11 +32,11 @@
 [#1152 ; SORT not stable (order not preserved)
     (equal? [1 9 1 5 1 7] sort:skip:compare [1 9 1 5 1 7] 2 1)
 ]
-([1 2 3] = sort:compare [1 3 2] :<)
-([3 2 1] = sort:compare [1 3 2] :>)
+([1 2 3] = sort:compare [1 3 2] get $<)
+([3 2 1] = sort:compare [1 3 2] get $>)
 
 [#1516 ; SORT:COMPARE ignores the typespec of its function argument
-    ~bad-antiform~ !! (sort:compare reduce [1 2 _] :>)
+    ~bad-antiform~ !! (sort:compare reduce [1 2 _] get $>)
 ]
 
 ; String sorting is temporarily only available for UTF-8 strings which are all

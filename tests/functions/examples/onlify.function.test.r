@@ -71,7 +71,7 @@ ok)
 
     all [
         , r = aopd3 copy [a b c] [d e]
-        , r = applique :aopd3 [series: copy [a b c] value: [d e]]
+        , r = applique aopd3/ [series: copy [a b c] value: [d e]]
     ]
 )
 

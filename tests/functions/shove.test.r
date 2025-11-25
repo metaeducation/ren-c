@@ -62,11 +62,11 @@
     ])
     (all wrap [
         [(panic 'x) 1020] = block: ((panic 'x) ->- left-lit-bound 1020)
-        :panic = get inside block.1 block.1.1
+        panic/ = get inside block.1 block.1.1
     ])
     (all wrap [
         [(panic 'x) 304] = block: ((panic 'x) ->- right-lit-bound 304)
-        :panic = get inside block.1 block.1.1
+        panic/ = get inside block.1 block.1.1
     ])
 ]
 
@@ -162,7 +162,7 @@
 ; PATH! cannot be directly quoted left, must use ->-
 [
     (
-        left-the: infix :the
+        left-the: infix the/
         o: make object! [i: 10 f: does [20]]
         ok
     )
@@ -187,7 +187,7 @@
 (7 = (add 1 2 ->- lib/* 3))
 
 (7 = (add 1 2 ->- multiply 3))
-(7 = (add 1 2 ->- (:multiply) 3))
+(7 = (add 1 2 ->- (multiply/) 3))
 
 ~expect-arg~ !! (10 ->- lib/= 5 + 5)
 (10 ->- = (5 + 5))

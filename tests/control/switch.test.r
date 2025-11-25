@@ -43,7 +43,7 @@
 
 ; New feature for specifying comparison functions
 
-(<yep> = switch:predicate 10 [20 [<nope>] 5 [<yep>]] :greater?)
+(<yep> = switch:predicate 10 [20 [<nope>] 5 [<yep>]] greater?/)
 
 ; New feature for doing typeset matches
 [

@@ -464,11 +464,11 @@
         f: ["a" #a http://a a@a.com <a>]
         g: a/b/(c: 'd/e/f)/(b.d: [:f.g h/i])
     ]
-    test: :lax-equal?
+    test: lax-equal?/
     lax-equal?
         test a-value b-value
         not null? for-each [w v] a-value [
-            if not test :v select b-value w [break]
+            if not test v select b-value w [break]
             ok
         ]
 )(
@@ -484,11 +484,11 @@
         f: [#a <A> http://A a@A.com "A"]
         g: a/b/(c: 'd/e/f)/(b.d: [:f.g h/i])
     ]
-    test: :lax-equal?
+    test: lax-equal?/
     lax-equal?
         test a-value b-value
         not null? for-each [w v] a-value [
-            if not test :v select b-value w [break]
+            if not test v select b-value w [break]
             ok
         ]
 )]
