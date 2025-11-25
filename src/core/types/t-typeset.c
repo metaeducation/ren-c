@@ -229,8 +229,7 @@ Result(Zero) Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_CONST;
             }
             else if (0 == CT_Utf8(item, g_tag_unrun, strict)) {
-                // !!! Currently just commentary, degrading happens due
-                // to type checking.  Review this.
+                *flags |= PARAMETER_FLAG_UNRUN;
             }
             else if (0 == CT_Utf8(item, g_tag_divergent, strict)) {
                 //

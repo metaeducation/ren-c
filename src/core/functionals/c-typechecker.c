@@ -957,7 +957,10 @@ Result(bool) Typecheck_Coerce(
 
       do_coercion:
 
-        if (Is_Possibly_Unstable_Atom_Action(atom)) {
+        if (
+            Is_Possibly_Unstable_Atom_Action(atom)
+            and Get_Parameter_Flag(param, UNRUN)
+        ){
             LIFT_BYTE(atom) = NOQUOTE_2;
             possibly(coerced);  // this may be a coercion after decay...
             coerced = true;

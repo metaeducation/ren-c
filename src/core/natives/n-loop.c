@@ -1900,7 +1900,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
-//          [<opt-out> blank? any-series? any-sequence? any-context?]
+//          [<opt-out> blank? action! any-series? any-sequence? any-context?]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
 //      <local> iterator
@@ -1926,7 +1926,8 @@ DECLARE_NATIVE(MAP_EACH)
     if (Is_Blank(ARG(DATA)))  // should have same result as empty list
         return Init_Block(OUT, Make_Source_Managed(0));
 
-    Quotify(Element_ARG(DATA));  // dialect, in theory [1]
+    if (not Is_Action(ARG(DATA)))
+        Quotify(Element_ARG(DATA));  // dialect, in theory [1]
 
     const Value* map_action = LIB(MAP);
     Details* details = Ensure_Frame_Details(map_action);
@@ -1949,9 +1950,9 @@ DECLARE_NATIVE(MAP_EACH)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
-//          [<opt-out> blank? quoted! action!]
-//      @(body) "Block to evaluate each time"
-//          [<const> block! ^block!]
+//          [<opt> blank? quoted! action!]
+//      body "Block to evaluate each time"
+//          [<const> block!]
 //      <local> iterator
 //  ]
 //
