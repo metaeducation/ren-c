@@ -44,8 +44,8 @@
     ('~[~null~]~ = lift heavy null)
 
     (x: heavy 10, 10 = x)
-    (x: heavy null, (lift null) = ^ x)
-    (x: heavy null, (lift null) = ^ :x)
+    (x: heavy null, (lift null) = ^x)
+    (^x: heavy null, (lift heavy null) = ^x)
 
     (304 = (null then [1020] else [304]))
     (1020 = (heavy null then [1020] else [304]))
@@ -57,23 +57,16 @@
 ; Conditionals return NULL on failure, and ~[~null~]~ antiform on a branch that
 ; executes and evaluates to either NULL or ~[~null~]~ antiform.
 [
-    ('~[~null~]~ = ^ if ok [null])
-    ('~[~null~]~ = ^ if ok [heavy null])
-    ('~[]~ = ^ if ok [])
+    ('~[~null~]~ = lift if ok [null])
+    ('~[~null~]~ = lift if ok [heavy null])
+    ('~,~ = lift if ok [])
 
     ~illegal-keyword~ !! (if ok [~asdf~])  ; not all keywords legal
-    (''~asdf~ = ^ if ok ['~asdf~])  ; but okay as quasiforms
+    (''~asdf~ = lift if ok ['~asdf~])  ; but okay as quasiforms
 
     ((lift ^void) <> lift ~()~)
     (not (lift ^void) = first [~()~])
     (not (lift ^void) = ^void)
-
-    ('~null~ = if ok ^[null])
-    ('~[~null~]~ = if ok ^[heavy null])
-    ((lift ^void) = if ok ^[])
-
-    ~illegal-keyword~ !! (if ok ^[~asdf~])
-    (''~asdf~ = if ok ^['~asdf~])
 ]
 
 ; If your type constraint on return is NULL?, that doesn't accept heavy

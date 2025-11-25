@@ -41,7 +41,7 @@ lib: system.contexts.lib  ; alias for faster access
 
 eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
 
-probe: func [
+probe: func [  ; note: do not want GHOSTABLE, else `1 + 2 probe eval []` is 3
     "Debug print a molded value and returns that same value"
 
     return: "Same as the input value"
@@ -150,14 +150,14 @@ nand: infix cascade [and/ not/]
 ?!=: infix lax-not-equal?/
 
 
-elide-if-void: func [
+elide-if-void: ghostable func [
     "Argument is evaluative, but discarded if void"
 
     return: [any-value?]
     ^value "Evaluation product to be ignored"
         [any-value?]  ; ghost! is passed through
 ][
-    if '~[]~ = value [return ^ghost]
+    if void? ^value [return ^ghost]
     return ^value
 ]
 

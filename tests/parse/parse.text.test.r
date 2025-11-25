@@ -91,7 +91,7 @@
     test: to-blob -[The C😺T Test]-
     all [
         let x: ~
-        #{43F09F98BA54} = parse test [to -[c😺t]- x: across to space to <end>]
+        #{43F09F98BA54} = parse test [to -[c😺t]- x: across to space ^ to <end>]
         x = #{43F09F98BA54}
         "C😺T" = to-text x
     ]
@@ -159,7 +159,7 @@
         res: ~
         all [
             "dolor" = parse str [
-                thru "ipsum" one res: across to #" " to <end>
+                thru "ipsum" one res: across to _ ^ to <end>
             ]
             res = "dolor"
         ]
@@ -167,7 +167,7 @@
     (
         res: ~
         all [
-            "sum dolor sit amet." = parse str [thru #p res: <here> to <end>]
+            "sum dolor sit amet." = parse str [thru #p res: <here> ^ to <end>]
             9 = index of res
         ]
     )

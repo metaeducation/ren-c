@@ -74,9 +74,14 @@ STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == BASE_FLAG_UNREADABLE);
 STATIC_ASSERT(LEVEL_FLAG_4_IS_TRUE == BASE_FLAG_CELL);
 
 
-//=//// LEVEL_FLAG_5 //////////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_AFRAID_OF_GHOSTS ///////////////////////////////////////=//
 //
-#define LEVEL_FLAG_5 \
+// This marks levels that want to avoid the production of GHOST! antiforms.
+// The flag is inherited by pushed levels, but if a function is specifically
+// marked as GHOSTABLE then it will override the level's preference...and
+// there's also a special operator to make arbitrary evaluations ghostable.
+//
+#define LEVEL_FLAG_AFRAID_OF_GHOSTS \
     FLAG_LEFT_BIT(5)
 
 

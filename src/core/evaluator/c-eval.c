@@ -48,6 +48,32 @@
 //    able to use a Cell in the Level structure for its holding of the last
 //    result, and actually just passes through to the Stepper_Executor().
 //
+// B. There are effectively two different ways to model multi-step evaluation
+//    in terms of how GHOST! (the ~,~ antiform) is treated.  One is a sort of
+//    regimented approach where the idea is that you want the aggregate
+//    evaluation of a BLOCK! to be something that is comprised of distinct
+//    EVAL:STEP calls, which handle GHOST! in an identical way on each step.
+//    The other modality is more based around the idea of things like an
+//    inline GROUP!, which prioritizes the idea that `expr` and `(expr)` will
+//    behave equivalently.
+//
+//    This manifests in terms of if you pass in LEVEL_FLAG_AFRAID_OF_GHOSTS
+//    at the beginning of the evaluation.  If you don't, then the evaluator
+//    only becomes "afraid" of ghosts (voidifying the non-GHOSTABLE cases)
+//    once it sees a non-GHOST! result.
+//
+//        ghost? eval [comment "hi"]    ; => ~okay~
+//        ghost? (eval [comment "hi"])  ; => should also be ~okay~
+//
+//    But if you start afraid, then all are identically afraid, e.g.:
+//
+//        eval:step [eval [comment "hi"]]    ; => void, not GHOST!
+//        eval:step [^ eval [comment "hi"]]  ; => GHOST!
+//
+//    This divergence of evaluator styles is a natural outcome of the needs
+//    of EVAL-the-function and GROUP!-the-syntax-tool.  They are different
+//    by necessity.
+//
 
 #include "sys-core.h"
 
@@ -69,8 +95,18 @@ static bool Using_Sublevel_For_Stepping(Level* L) {  // see [A]
 //
 // 1. *Before* a level is created for Evaluator_Executor(), the creator should
 //    set the "primed" value for what they want as a result if there
-//    are no non-invisible evaluations.  Right now the only two things
-//    requested are VOID and GHOST, so we can test for those.
+//    are no non-invisible evaluations.  Theoretically any preloaded value is
+//    possible (and we may want to expose that as a feature e.g. in EVAL).
+//    But for now, GHOST! is the presumed initial value at all callsites.
+//
+//    (Note: The reason preloading was initially offered to clients was to
+//    allow a choice of VOID vs. GHOST!, so that contexts where vaporization
+//    would be "risky" could avoid ghosts.  A systemic and powerful way of
+//    controlling vaporization arose from LEVEL_FLAG_AFRAID_OF_GHOSTS which
+//    gives a best-of-both-worlds approach: allowing multi-step evaluation
+//    contexts to convert ghosts to voids in steps for functions that are
+//    not intrinically "GHOSTABLE", with an operator to override the ghost
+//    suppression.  But preloading is kept as it may be useful later.)
 //
 Bounce Evaluator_Executor(Level* const L)
 {
@@ -87,7 +123,8 @@ Bounce Evaluator_Executor(Level* const L)
     switch (STATE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
         assert(Not_Level_Flag(L, TRAMPOLINE_KEEPALIVE));
-        assert(Is_Void(PRIMED) or Is_Ghost(PRIMED));  // primed [1]
+        possibly(Get_Level_Flag(L, AFRAID_OF_GHOSTS));  // GROUP! unafraid [B]
+        assert(Is_Ghost(PRIMED));  // all cases GHOST! at the moment [1]
         goto initial_entry;
 
       default:
@@ -106,6 +143,7 @@ Bounce Evaluator_Executor(Level* const L)
             &Stepper_Executor,
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+                | (L->flags.bits & LEVEL_FLAG_AFRAID_OF_GHOSTS)  // see [B]
         ));
         Push_Level_Erase_Out_If_State_0(OUT, sub);
         STATE = ST_EVALUATOR_STEPPING;
@@ -140,44 +178,53 @@ Bounce Evaluator_Executor(Level* const L)
 
 } step_done_with_dual_in_out: {  /////////////////////////////////////////////
 
-    // 1. Note that unless a function is declared as GHOSTABLE, any GHOST! it
-    //    tries to return will be converted to a VOID for safety.
-    //
-    // 2. An idea was tried once where the error wasn't panicked until a step
-    //    was shown to be non-invisible.  This would allow invisible
-    //    evaluations to come after an error and still fall out:
-    //
-    //        >> error? (fail "some error" comment "invisible")
-    //        == ~true~  ; anti
-    //
-    //    However, this means you have to wait until you know if the next
-    //    evaluation is invisible to panic.  This means things don't stop
-    //    running soon enough:
-    //
-    //        >> data: []
-    //
-    //        >> take [] append data 'a
-    //        ** Error: Can't take from empty block
-    //
-    //        >> data
-    //        == [a]
-    //
-    //    That's a bad enough outcome that the feature of being able to put
-    //    invisible material after the error has to be sacrificed.
+  // 1. Note that unless a function is declared as GHOSTABLE, any GHOST! it
+  //    tries to return will be converted to a VOID for safety when in an
+  //    evaluation step marked by LEVEL_FLAG_AFRAID_OF_GHOSTS.  You have to
+  //    override this explicitly with the `^` operator when you actually want
+  //    a ghost...whether it's from a non-ghostable function or just a
+  //    quasiform or ^META variable fetch.
+  //
+  // 2. It may seem desirable to allow invisible evaluations to come after
+  //    an ERROR!, permitting things like:
+  //
+  //        >> error? (fail "some error" comment "invisible")
+  //        == \~okay~\  ; anti
+  //
+  //    But consider:
+  //
+  //        >> data: []
+  //
+  //        >> take [] append data 'a
+  //        ** Error: Can't take from empty block
+  //
+  //        >> data
+  //        == [a]
+  //
+  //    You can't wait until you know if the next evaluation is invisible to
+  //    escalate ERROR! to panic.  Things don't stop running soon enough.
 
     if (Is_Endlike_Unset(OUT))  // the "official" way to detect reaching end
         goto finished;
 
-    if (Is_Ghost(OUT)) // something like an ELIDE or COMMENT [1]
+    if (Is_Ghost(OUT)) // ELIDE, COMMENT, ~,~ or ^GHOST-VAR etc. [1]
         goto start_new_step;  // leave previous result as-is in PRIMED
 
     Move_Atom(PRIMED, OUT);  // make current result the preserved one
+
+    if (Using_Sublevel_For_Stepping(L)) {  // always unafraid now, see [B]
+        possibly(Get_Level_Flag(SUBLEVEL, AFRAID_OF_GHOSTS));
+        Set_Level_Flag(SUBLEVEL, AFRAID_OF_GHOSTS);
+    } else{
+        possibly(Get_Level_Flag(L, AFRAID_OF_GHOSTS));
+        Set_Level_Flag(L, AFRAID_OF_GHOSTS);
+    }
 
     dont(Try_Is_Level_At_End_Optimization(L));  // (fail x,) must error
     if (Is_Feed_At_End(L->feed))
         goto finished;
 
-    require (  // panic if error seen before last step [2]
+    require (  // panic if error seen before final step [2]
       Elide_Unless_Error_Including_In_Packs(PRIMED)
     );
 

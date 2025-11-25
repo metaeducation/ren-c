@@ -91,10 +91,10 @@
 
 (
     "c" = parse "baaabccc" [
-        subparse [between "b" "b"] ["a" to <end>], "c", to <end>
+        subparse [between "b" "b"] ["a" to <end>], "c", ^ to <end>
     ]
 )(
-    "a" = parse "aaabccc" [subparse [across to "b"] [some "a"], to <end>]
+    "a" = parse "aaabccc" [subparse [across to "b"] [some "a"], ^ to <end>]
 )]
 
 

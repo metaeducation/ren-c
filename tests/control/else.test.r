@@ -77,22 +77,22 @@
 
 ; Although branches can be triggered by heavy null, if functions ask to
 ; receive the value it is decayed, so they do not have to be ^META.  But if
-; they *are* lifted then the true state is passed through.
+; they *are* ^META then the true state is passed through.
 [
-    (~[~null~]~ then x -> [x = null])
-    (~[~null~]~ then ^x -> [x = the ~[~null~]~])
-    ('~[~null~]~ then x -> [x = the ~[~null~]~])
-    ('~[~null~]~ then ^x -> [x = the '~[~null~]~])
+    (~[~null~]~ then x -> [(lift ^x) = '~null~])
+    (~[~null~]~ then ^x -> [(lift ^x) = '~[~null~]~])
+    ('~[~null~]~ then x -> [^x = '~[~null~]~])
+    ('~[~null~]~ then ^x -> [^x = '~[~null~]~])
 
-    (catch [~[~null~]~ also x -> [throw (x = null)]])
-    (catch [~[~null~]~ also ^x -> [throw (x = the ~[~null~]~)]])
-    (catch ['~null~ also ^x -> [throw (x = the '~null~)]])
+    (catch [~[~null~]~ also x -> [throw ((lift ^x) = '~null~)]])
+    (catch [~[~null~]~ also ^x -> [throw ((lift ^x) = '~[~null~]~)]])
+    (catch ['~null~ also ^x -> [throw (^x = '~null~)]])
 ]
 
 [
     ~no-arg~ !! (else [~unused~])
-    ~???~ !! (() else [okay])  ; should VOID with infix look like no value?
-    ~???~ !! (1000 + 20 () then [panic ~#unreachable~])
+    (() then [okay])  ; GHOST! with THEN is legal...
+    (1000 + 20 () then [okay])
 
     (^void then [okay])
     (1020 = (1000 + 20 elide-if-void (^void else [panic ~#unreachable~])))
@@ -101,7 +101,7 @@
     (void? (1000 + 20 ((^void) else [panic ~#unreachable~])))
 
     (eval [] then [okay])
-    (void? eval [] else [panic ~#unreachable~])
+    (ghost? eval [] else [panic ~#unreachable~])
 ]
 
 [
@@ -113,7 +113,7 @@
 [
     (foo: lambda [] [if null [panic ~#unreachable~]], ok)
     (foo else [okay])
-    (nulld? (1000 + 20 foo then [panic ~#unreachable~]))
+    (null? (1000 + 20 foo then [panic ~#unreachable~]))
 ]
 
 [

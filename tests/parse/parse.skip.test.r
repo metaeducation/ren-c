@@ -9,4 +9,4 @@
 ;
 
 ("Much more literate!" = parse [a b "Much more literate!"] [skip 2, text!])
-("SKIP returns void!!!" = parse ["SKIP returns void!!!" a b] [text!, skip 2])
+("SKIP returns ghost!!!" = parse ["SKIP returns ghost!!!" a b] [text!, skip 2])

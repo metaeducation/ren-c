@@ -144,8 +144,10 @@
 // distinct, this should be revisited.
 
 
-#define Make_Action_Sublevel(parent) \
-    Make_Level(&Action_Executor, (parent)->feed, LEVEL_MASK_NONE)
+#define Make_Action_Sublevel(action) \
+    Make_Level(&Action_Executor, L->feed, \
+      Get_Cell_Flag(action, WEIRD_GHOSTABLE) ? LEVEL_MASK_NONE \
+        : (L->flags.bits & LEVEL_FLAG_AFRAID_OF_GHOSTS))
 
 
 // When a SET-BLOCK! is being processed for multi-returns, it may encounter
@@ -287,6 +289,14 @@ Bounce Stepper_Executor(Level* L)
         Option(Bounce) b = Irreducible_Bounce(L, Apply_Cfunc(dispatcher, L));
         if (b)  // can't BOUNCE_CONTINUE etc. from an intrinsic dispatch
             panic ("Intrinsic dispatcher returned Irreducible Bounce");
+
+        if (
+            Get_Level_Flag(L, AFRAID_OF_GHOSTS)
+            and Not_Cell_Flag(CURRENT, WEIRD_GHOSTABLE)
+            and Is_Ghost(OUT)
+        ){
+            Init_Void(OUT);  // usually done in action dispatcher
+        }
 
         Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
         goto lookahead; }
@@ -478,7 +488,7 @@ Bounce Stepper_Executor(Level* L)
 } right_hand_literal_infix_wins: { ///////////////////////////////////////////
 
     require (
-      Level* sub = Make_Action_Sublevel(L)
+      Level* sub = Make_Action_Sublevel(L_current_gotten_raw)
     );
     require (
       Push_Action(sub, L_current_gotten_raw, infix_mode)
@@ -534,12 +544,25 @@ Bounce Stepper_Executor(Level* L)
     // 1. Not all quasiforms have legal antiforms.  For instance: while all
     //    WORD!s have quasiforms, only a few are allowed to become antiform
     //    keywords (e.g. ~null~ and ~okay~)
+    //
+    // 2. If we are in a step of a sequential series of evaluations, then
+    //    it is risky to allow GHOST! to vanish, e.g.:
+    //
+    //        eval compose [some stuff (lift ^var)]  ; var incidentally GHOST!
+    //
+    //    It's a fine line. If you had composed in code like `comment "hi"`
+    //    that would be one thing, but synthesizing a lifted value from an
+    //    arbitrary expression feels less specific.  Use ^ operator if you
+    //    really want vaporization: `[some stuff ^ (lift ^var)]`
 
     Copy_Cell(OUT, CURRENT);
 
     require (  // may be illegal [1]
       Coerce_To_Antiform(OUT)
     );
+
+    if (Get_Level_Flag(L, AFRAID_OF_GHOSTS) and Is_Ghost(OUT))
+        Init_Void(OUT);  // help avoid accidental vanishing [2]
 
     STATE = cast(StepperState, TYPE_QUASIFORM);  // can't leave STATE_0
     goto lookahead;
@@ -693,12 +716,21 @@ Bounce Stepper_Executor(Level* L)
   case TYPE_WORD: { //// META WORD! ^XXX /////////////////////////////////////
 
     // A META-WORD! gives you the undecayed representation of the variable
+    //
+    // 1. We don't want situations like `^x: (<expr> ^y)` to assign <expr>
+    //    to x just because y incidentally held a GHOST!.  You need to be
+    //    explicit with `^x: (<expr> ^ ^y)` to get that behavior, which
+    //    would bypass the LEVEL_FLAG_AFRAID_OF_GHOSTS which sequential
+    //    evaluations in Evaluator_Executor() use by default.
 
     require (
       Get_Any_Word_Maybe_Trash(OUT, CURRENT, L_binding)
     );
 
     possibly(Not_Cell_Stable(OUT) or Is_Trash(Known_Stable(OUT)));
+
+    if (Get_Level_Flag(L, AFRAID_OF_GHOSTS) and Is_Ghost(OUT))
+        Init_Void(OUT);  // help avoid accidental vanishing [1]
 
     goto lookahead;
 
@@ -807,10 +839,8 @@ Bounce Stepper_Executor(Level* L)
 
 } approval_rightside_dual_in_out: {
 
-    require (
-        Value* out = Decay_If_Unstable(OUT)
-    );
-    UNUSED(out);  // !!! REVIEW behavior
+    // !!! Did all the work just by making a not-afraid of ghosts step?
+
     goto lookahead;
 
 
@@ -872,7 +902,7 @@ Bounce Stepper_Executor(Level* L)
     Option(InfixMode) infix_mode = Frame_Infix_Mode(CURRENT);
 
     require (
-      Level* sub = Make_Action_Sublevel(L)
+      Level* sub = Make_Action_Sublevel(CURRENT)
     );
     assert(Is_Cell_Erased(OUT));  // so nothing on left [1]
     require (
@@ -978,12 +1008,8 @@ Bounce Stepper_Executor(Level* L)
         and Not_Level_At_End(L)  // can't do <end>, fallthru to error
         and not SPORADICALLY(10)  // checked builds sometimes bypass
     ){
-        Init_Frame(
-            CURRENT,
-            details,
-            Frame_Label_Deep(out),
-            Frame_Coupling(out)
-        );
+        Copy_Plain_Cell(CURRENT, out);
+
         Param* param = Phase_Param(details, 1);
         Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
@@ -1018,7 +1044,7 @@ Bounce Stepper_Executor(Level* L)
   #endif
 
     require (
-      Level* sub = Make_Action_Sublevel(L)
+      Level* sub = Make_Action_Sublevel(out)
     );
     require (
       Push_Action(sub, out, infix_mode)  // before OUT erased
@@ -1084,9 +1110,9 @@ Bounce Stepper_Executor(Level* L)
             &Evaluator_Executor,
             CURRENT,
             L_binding,
-            LEVEL_MASK_NONE
+            LEVEL_MASK_NONE | (not LEVEL_FLAG_AFRAID_OF_GHOSTS)
         ));
-        Init_Void(Evaluator_Primed_Cell(sub));
+        Init_Ghost(Evaluator_Primed_Cell(sub));
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
         STATE = ST_STEPPER_SET_GROUP;
         return CONTINUE_SUBLEVEL(sub); }
@@ -1148,7 +1174,7 @@ Bounce Stepper_Executor(Level* L)
     Value* out = cast(Value*, OUT);
 
     require (
-      Level* sub = Make_Action_Sublevel(L)
+      Level* sub = Make_Action_Sublevel(out)
     );
     sub->baseline.stack_base = STACK_BASE;  // refinements
 
@@ -1165,21 +1191,16 @@ Bounce Stepper_Executor(Level* L)
     // Groups simply evaluate their contents, and can evaluate to GHOST! if
     // the contents completely disappear.
     //
-    // 1. If you say just `()` then that creates an "unsurprising ghost":
-    //
-    //        >> eval [1 + 2 ()])
-    //        == 3
-    //
-    //    If more unsurprising ghosts vaporize in the Evaluator_Executor(),
-    //    the result that will fall out is that original unsurprising ghost:
-    //
-    //        >> 1 + 2 (elide "we all vanish" comment "unsurprisingly")
-    //        we all vanish
-    //        == 3
+    // 1. For an explanation of starting this particular Evaluator_Executor()
+    //    as being unafraid of ghosts, see notes at the top of %c-eval.c
+    //    Simply put, we want `expr` and `(expr)` to behave similarly, and
+    //    the constraints forcing `eval [expr] to be different from `expr`
+    //    w.r.t. GHOST! don't apply to inline groups.
 
     Invalidate_Gotten(L_next_gotten_raw);  // arbitrary code changes variables
 
-    Flags flags = LEVEL_MASK_NONE;
+    Flags flags = LEVEL_MASK_NONE
+        | (not LEVEL_FLAG_AFRAID_OF_GHOSTS);  // group semantics, not EVAL [1]
 
     require (
       Level* sub = Make_Level_At_Inherit_Const(
@@ -2148,7 +2169,7 @@ Bounce Stepper_Executor(Level* L)
     // into the new function's frame.
 
     require (
-      Level* sub = Make_Action_Sublevel(L)
+      Level* sub = Make_Action_Sublevel(L_next_gotten_raw)
     );
     require (
       Push_Action(sub, L_next_gotten_raw, infix_mode)

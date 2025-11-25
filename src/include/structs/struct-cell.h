@@ -308,12 +308,14 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 
 //=//// CELL_FLAG_WEIRD ///////////////////////////////////////////////////=//
 //
-// The "Weird" flag is another non-sticky flag.  It was once introduced to
-// track the dual states of lots, but that's now handled by DUAL_0.  So it's
-// just another free flag, but the name is kind of useful.
+// The "Weird" flag is another sticky flag.  It probably is going to wind up
+// being CELL_FLAG_TYPE_SPECIFIC_C, as it's needed to track "ghostability"
+// of functions.
 //
 #define CELL_FLAG_WEIRD \
     FLAG_LEFT_BIT(25)
+
+#define CELL_FLAG_WEIRD_GHOSTABLE  CELL_FLAG_WEIRD
 
 
 //=//// CELL_FLAG_HINT ////////////////////////////////////////////////////=//

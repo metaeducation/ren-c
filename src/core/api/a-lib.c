@@ -1179,7 +1179,9 @@ static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     Tweak_Feed_Binding(feed, u_cast(Context*, binding));
 
     Level* L = Make_Level(
-        &Evaluator_Executor, feed, LEVEL_MASK_NONE
+        &Evaluator_Executor,
+        feed,
+        LEVEL_MASK_NONE | (not LEVEL_FLAG_AFRAID_OF_GHOSTS)  // !!! correct?
     ) except (Error* e) {
         Free_Feed(feed);
         return fail (e);

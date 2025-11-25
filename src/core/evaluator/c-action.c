@@ -1056,6 +1056,9 @@ Bounce Action_Executor(Level* L)
     if (not Is_Error(OUT))  // !!! Should there be an R_FAIL ?
         assert(STACK_BASE == TOP_INDEX);
 
+    if (Get_Level_Flag(L, AFRAID_OF_GHOSTS) and Is_Ghost(OUT))
+        Init_Void(OUT);
+
 } skip_output_check: {  //////////////////////////////////////////////////////
 
   // This is where things get jumped to if you pass a <opt-out> argument a

@@ -985,8 +985,8 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 //    Template magic lets an overload exclude itself to break the contention.
 
 #define CELL_MASK_COPY \
-    ~(CELL_MASK_PERSIST |  CELL_FLAG_PROTECTED \
-        | CELL_FLAG_NOTE | CELL_FLAG_HINT | CELL_FLAG_WEIRD)
+    ~(CELL_MASK_PERSIST | CELL_FLAG_PROTECTED \
+        | CELL_FLAG_NOTE | CELL_FLAG_HINT)
 
 #define CELL_MASK_ALL  ~cast(Flags, 0)  // use with caution!
 
@@ -1086,6 +1086,12 @@ INLINE Cell* Copy_Cell_Untracked(
 
 #define Copy_Lifted_Cell(out,v) \
     cast(Element*, Liftify(Copy_Cell(u_cast(Atom*, (out)), (v))))
+
+INLINE Element* Copy_Plain_Cell(Init(Element) out, const Atom* v) {
+    Copy_Cell(u_cast(Atom*, (out)), v);
+    LIFT_BYTE(out) = NOQUOTE_2;
+    return out;
+}
 
 
 //=//// CELL MOVEMENT //////////////////////////////////////////////////////=//

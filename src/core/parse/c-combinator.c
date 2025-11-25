@@ -800,9 +800,11 @@ DECLARE_NATIVE(COMBINATORIZE)
 {
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
-    Phase* phase = Frame_Phase(ARG(COMBINATOR));
-    Option(const Symbol*) label = Frame_Label_Deep(ARG(COMBINATOR));
-    Option(VarList*) coupling = Frame_Coupling(ARG(COMBINATOR));
+    Value* combinator = ARG(COMBINATOR);
+
+    Phase* phase = Frame_Phase(combinator);
+    Option(const Symbol*) label = Frame_Label_Deep(combinator);
+    Option(VarList*) coupling = Frame_Coupling(combinator);
 
     Value* rule_start = Copy_Cell(LOCAL(RULE_START), ARG(RULES));
     if (Series_Index(rule_start) > 0)
@@ -819,7 +821,7 @@ DECLARE_NATIVE(COMBINATORIZE)
         panic ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
     ParamList* paramlist = Make_Varlist_For_Action(
-        ARG(COMBINATOR),
+        combinator,
         TOP_INDEX,
         nullptr,
         nullptr  // leave unspecialized slots with parameter! antiforms
@@ -852,8 +854,9 @@ DECLARE_NATIVE(COMBINATORIZE)
     Source* pack = Make_Source_Managed(2);
     Set_Flex_Len(pack, 2);
 
-    Init_Frame(Array_At(pack, 0), paramlist, label, coupling);
-    Quasify_Isotopic_Fundamental(Array_At(pack, 0));
+    Element* frame = Init_Frame(Array_At(pack, 0), paramlist, label, coupling);
+    Copy_Ghostability(frame, combinator);
+    Quasify_Isotopic_Fundamental(frame);
 
     Copy_Lifted_Cell(Array_At(pack, 1), ARG(RULES));  // advanced by param hook
 

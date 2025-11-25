@@ -385,7 +385,7 @@ https://github.com/metaeducation/ren-c/issues/935
 
     (all [
         let x
-        ["aaa"] = parse "aaabbb" [x: collect [keep across to "b"] to <end>]
+        ["aaa"] = parse "aaabbb" [x: collect [keep across to "b"] ^ to <end>]
         x = ["aaa"]
     ])
 

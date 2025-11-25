@@ -54,7 +54,7 @@
     ; DISCARD is different from ELIDE when GROUP! acts like a GET-GROUP!,
     ; because we want to suppress the triggering of the generated rule
     ;
-    ugly-combinators.discard: combinator [
+    ugly-combinators.discard: ghostable combinator [
         return: "Don't return anything" [ghost!]
         input [any-series?]
         @group [group!]
@@ -63,7 +63,7 @@
         return ^ghost
     ]
 
-    /ugly-parse: specialize parse/ [combinators: ugly-combinators]
+    ugly-parse: specialize parse/ [combinators: ugly-combinators]
 
     ok
 )

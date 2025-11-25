@@ -29,3 +29,21 @@
     (10 = parse:relax "aaa" ["a" (10)])
     ~parse-mismatch~ !! (10 = parse:relax "aaa" ["b" (10)])
 ]
+
+; PARSE can return GHOST!, but it's not "intrinsically ghostable" so you need
+; an operator to manifest its vanishing nature.
+[
+    (
+        let result
+        all [
+            ghost? ^result: parse "" []
+            ghost? ^result
+        ]
+    )
+
+    (void? (1 + 2 parse "" []))
+    (3 = (1 + 2 ^ parse "" []))
+
+    (void? (1 + 2 parse [] []))
+    (3 = (1 + 2 ^ parse [] []))
+]

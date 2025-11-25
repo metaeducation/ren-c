@@ -10,8 +10,8 @@
 (1 = either okay [1] [2])
 (2 = either null [1] [2])
 
-('~[~null~]~ = ^ either okay [null] [1])
-('~[~null~]~ = ^ either null [1] [null])
+('~[~null~]~ = lift either okay [null] [1])
+('~[~null~]~ = lift either null [1] [null])
 
 (warning? either okay [rescue [1 / 0]] [])
 (warning? either null [] [rescue [1 / 0]])

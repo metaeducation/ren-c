@@ -165,13 +165,14 @@ INLINE bool Eval_Any_List_At_Core_Throws(
         context,
         flags
     ));
-    Init_Void(Evaluator_Primed_Cell(L));
+    Init_Ghost(Evaluator_Primed_Cell(L));
 
     return Trampoline_Throws(out, L);
 }
 
 #define Eval_Any_List_At_Throws(out,list,binding) \
-    Eval_Any_List_At_Core_Throws(out, LEVEL_MASK_NONE, (list), (binding))
+    Eval_Any_List_At_Core_Throws(out, LEVEL_FLAG_AFRAID_OF_GHOSTS, \
+        (list), (binding))
 
 
 // !!! This is a non-stackless invocation of the evaluator that evaluates a

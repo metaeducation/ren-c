@@ -2,26 +2,28 @@
 
 [
     (ghost? eval [])
+    (ghost? (eval []))
     ('~,~ = lift eval [])
 
-    (ghost? (eval []))
-    (ghost? (1 + 2 eval []))
-    (ghost? (1 + 2 unlift lift eval []))
+    (void? (1 + 2 eval []))
+    (3 = (1 + 2 ^ eval []))
+    (void? (1 + 2 unlift lift eval []))
+    (3 = (1 + 2 ^ unlift lift eval []))
 
-    (''30 = ^ (10 + 20 eval []))
-    ((lift ^void) = ^ (10 + 20 eval [^void]))
-    (''30 = ^ (10 + 20 eval [comment "hi"]))
-    (''30 = ^ (10 + 20 eval make frame! func [] [return ~,~]))
+    (30 = (10 + 20 ^ eval []))
+    ((lift ^void) = lift (10 + 20 eval [^void]))
+    (''30 = lift (10 + 20 ^ eval [comment "hi"]))
+    (''30 = lift (10 + 20 ^ eval make frame! func [] [return ~,~]))
 
     (else? eval [null])
-    ('~[~null~]~ = ^ eval [if okay [null]])
-    ((lift ^void) = ^ eval [if null [<a>]])
-    ((lift ^void) = ^ eval [10 + 20 if null [<a>]])
+    ('~[~null~]~ = lift eval [if okay [null]])
+    ((lift null) = lift eval [if null [<a>]])
+    ((lift null) = lift eval [10 + 20 if null [<a>]])
 
     (all [
         let x: ~
         ghost? ^x: comment "HI" comment "HI"  ; not eval'd in same step
-        x = '~,~
+        ghost? ^x
     ])
 
     (all [
@@ -31,42 +33,59 @@
     ])
 
     ('~,~ = (10 + 20 lift (eval [])))
-    ('~,~ = (10 + 20 lift (eval [comment "hi"])))
+    ('~,~ = (10 + 20 lift (^ eval [comment "hi"])))
     ((lift ^void) = (10 + 20 lift (eval make frame! lambda [] [^void])))
     ('~null~ = (lift eval [null]))
     ('~[~null~]~ = lift (eval [if okay [null]]))
 
-    (30 = (10 + 20 eval []))
-    (30 = (10 + 20 eval [comment "hi"]))
-    (30 = (10 + 20 eval make frame! func [] [return ~,~]))
-    ('~[~null~]~ = ^ eval [heavy null])
-    ('~[~null~]~ = ^ eval [if okay [null]])
-
-    ; Try standalone ^ operator so long as we're at it.
-    ('~,~ = ^ eval [])
-    ('~,~ = ^ eval [comment "hi"])
-    ('~,~ = ^ eval make frame! func [] [return ~,~])
-    ((lift ^void) = ^ eval [^void])
-
-    ((lift null) = ^ eval [null])
-    ((lift null) = ^ (eval [null]))
-    ((lift null) = lift eval [null])
-
-    ('~[~null~]~ = ^ eval [heavy null])
-    ('~[~null~]~ = lift (eval [heavy null]))
-    ('~[~null~]~ = ^ (eval [heavy null]))
+    (30 = (10 + 20 ^ eval []))
+    (30 = (10 + 20 ^ eval [comment "hi"]))
+    (30 = (10 + 20 ^ eval make frame! func [] [return ~,~]))
     ('~[~null~]~ = lift eval [heavy null])
+    ('~[~null~]~ = lift eval [if okay [null]])
 
-    ('~[~null~]~ = ^ eval [if ok [null]])
+    (ghost? ^ eval [])
+    (ghost? ^ eval [comment "hi"])
+    (ghost? ^ eval make frame! func [] [return ~,~])
+    ((lift ^void) = lift eval [^void])
+
+    ((lift null) = lift eval [null])
+    ((lift null) = lift (eval [null]))
+
+    (heavy-null? eval [heavy null])
+    ('~[~null~]~ = lift (eval [heavy null]))
+    (heavy-null? (eval [if ok [null]]))
 ]
 
 
-[
-    (''3 = ^ (1 + 2 eval [comment "HI"]))
-    ('~,~ = ^ eval [comment "HI"])
+; https://forum.rebol.info/t/what-should-do-do/1426
+;
+(
+    x: <overwritten>
+    all [
+        (lift ^ghost) = lift x: eval []
+        ghost? unlift x
+    ]
+)
+(
+    x: 10
+    all [
+        '~,~ = x: lift eval []
+        ghost? unlift x
+    ]
+)
+(
+    x: 10
+    10 = (x ^ eval [])
+)
 
-    (3 = (1 + 2 eval [comment "HI"]))
-    (void? eval [comment "HI"])
+
+[
+    (''3 = lift (1 + 2 ^ eval [comment "HI"]))
+    ('~,~ = lift eval [comment "HI"])
+
+    (void? (1 + 2 eval [comment "HI"]))
+    (ghost? eval [comment "HI"])
 
     (
         y: <overwritten>
@@ -176,7 +195,7 @@
 )
 (0:00 = eval [0:00])
 (0.0.0 = eval [0.0.0])
-((lift ^void) = ^ eval [()])
+(ghost? ^ eval [()])
 ('a = eval ['a])
 
 ; !!! Currently, EVAL of an ERROR! is like FAIL; it is not definitional,

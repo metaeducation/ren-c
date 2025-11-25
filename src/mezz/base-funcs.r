@@ -17,7 +17,7 @@ Rebol [
     ]--
 ]
 
-assert: func [
+assert: ghostable func [
     "Ensure conditions are branch triggers if hooked by debugging"
 
     return: [ghost!]

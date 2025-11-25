@@ -261,10 +261,11 @@ DECLARE_NATIVE(SHOVE)
 //          [any-value?]  ; :STEP changes primary return product [1]
 //      source [
 //          <opt-out>  ; useful for `evaluate opt ...` scenarios
-//          any-list? get-group? set-group? get-block? set-block?  ; code
+//          block!  ; always "afraid of ghosts" semantics, stepping legal
+//          group!  ; must eval to end, only afraid of ghosts after value seen
 //          <unrun> frame!  ; invoke the frame (no arguments, see RUN)
 //          warning!  ; panic on the error
-//          varargs!  ; simulates as if frame! or block! is being executed
+//          varargs!  ; simulates as if block! is being executed
 //      ]
 //      :step "Do one step of evaluation (return null position if at tail)"
 //  ]
@@ -284,13 +285,12 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 //    an ERROR! would have to panic anyway, so it might as well use the one
 //    it is given.
 //
-// 3. It might seem that since EVAL [] is VOID, that EVAL:STEP [] should make
-//    a VOID.  But in practice, there's a dummy step at the end of every
+// 3. It might seem that since EVAL [] has an answer (GHOST! or VOID depending
+//    on if you use the ^ operator), that EVAL:STEP [] should also have an
+//    answer.  But in practice, there's a dummy step at the end of every
 //    enumeration, e.g. EVAL [1 + 2 10 + 20] goes through three steps, where
-//    the third step is over [].  If we were to say that "step" produced
-//    anything, it would be GHOST...because that step does not contribute to
-//    the output (the result is 30).  But we want to distinguish the case of
-//    a step that produced a GHOST from hitting the end, via nullptr.
+//    the third step is a termination signal with no synthesized product.
+//    The null return value signals this termination.
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
@@ -306,14 +306,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
       case ST_EVALUATE_INITIAL_ENTRY: {
         Remember_Cell_Is_Lifeguard(source);  // may be only reference!
 
-        if (Is_Chain(source)) {  // e.g. :(...) or [...]:
-            assume (
-              Unsingleheart_Sequence(source)
-            );
-            assert(Any_List(source));
-            goto initial_entry_list;
-        }
-        if (Any_List(source))
+        if (Is_Block(source) or Is_Group(source))
             goto initial_entry_list;
 
         if (Is_Frame(source))
@@ -338,25 +331,46 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
   initial_entry_list: {  /////////////////////////////////////////////////////
 
-    // 1. !!! Right now all EVALUATE calls treat ANY-LIST? the same.  (e.g.
-    //    ^[1 + 2] just does the same thing as [1 + 2] and gives 3, not '3
-    //    or any other variation.  Should lists vary their behavior?  It
-    //    has been considered to make GROUP!s be ghostable and BLOCK!s not
-    //    so that it's guided by the type, but that's likely not useful.
-    //
-    // 2. EVAL can return any result, including GHOST!.  We don't want to be
-    //    too casual about ghosts vanishing, e.g.:
-    //
-    //        ^result: (mode: <processing> eval code)
-    //
-    //    If that EVAL returns a GHOST!, we wouldn't want result to get the
-    //    <processing> tag as its value.  Hence the ghosts that EVAL returns
-    //    must be "surprising" so Evaluator_Executor() doesn't erase them.
-    //
-    //    (We can't count on the RETURN: type check to do this, because
-    //    natives do not run typechecking in release builds.)
+  // 1. EVAL effectively has two modes of operation:
+  //
+  //    * "transparent" mode like how GROUP! works, where `(expr)` and `expr`
+  //      behave the same, at the cost of having distinct behavior for all
+  //      steps producing GHOST! up until the first non-GHOST! value.  (No
+  //      need to use the `^` operator in those initial steps.)
+  //
+  //    * "regimented" mode like how `eval block` is expected to work, where
+  //      every step has the same "afraid of ghosts" behavior, even before
+  //      the first non-GHOST! value is seen.  This enables simulating the
+  //      answer of a full EVAL using just sequential EVAL:STEP calls, and
+  //      just throwing away any ghosts.
+  //
+  //    To understand why these are different, consider:
+  //
+  //        eval:step [eval [comment "hi"] ...]    ; must make VOID
+  //        eval:step [^ eval [comment "hi"] ...]  ; must make GHOST!
+  //
+  //    By contrast, you wouldn't want `ghost? (eval [comment "hi"])` to be
+  //    false.  It needs the same answer as `ghost? eval [comment "hi"]` which
+  //    is true.  Merely parenthesizing a single expression isn't expected to
+  //    change what it produces.
+  //
+  //    We could ignore the datatype of the input list and use a refinement
+  //    to allow you to use either mode with any list type.  But that would
+  //    require coming up with a name...and also wouldn't draw attention to
+  //    the *reason* the modes are distinct, and specially fit to their types.
+  //    This increases the odds that people will use the right evaluation.
 
     Flags flags = LEVEL_MASK_NONE;
+
+    if (Is_Block(source))
+        flags |= LEVEL_FLAG_AFRAID_OF_GHOSTS;  // for EVAL:STEP consistency [1]
+    else {
+        assert(Is_Group(source));
+        if (Bool_ARG(STEP))
+            panic (
+                ":STEP only BLOCK!s in EVALUATE (use AS BLOCK! if intentional)"
+            );
+    }
 
     require (
       Level* sub = Make_Level_At(
@@ -365,7 +379,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         flags
     ));
     if (not Bool_ARG(STEP))
-        Init_Ghost(Evaluator_Primed_Cell(sub));  // don't vanish [2]
+        Init_Ghost(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     if (not Bool_ARG(STEP))  // plain evaluation to end, maybe void/ghost

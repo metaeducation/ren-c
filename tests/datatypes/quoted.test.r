@@ -124,7 +124,8 @@
 
 (void? ~[]~)
 (void? ^void)
-(void? eval [])
+(void? eval [^void])
+(void? (eval [^void]))
 (void? eval [~[]~])
 (void? eval [, ~[]~,])
 (void? eval [1 + 2, ^void])

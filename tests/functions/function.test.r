@@ -182,7 +182,7 @@
 )
 (
     f: does [()]
-    (lift ^void) = lift f
+    (lift ^ghost) = lift f
 )
 (
     f: does ['a]

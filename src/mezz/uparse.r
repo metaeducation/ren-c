@@ -121,7 +121,6 @@ bind construct [
     ]
 ][
     let autopipe: ~
-    let ghostable: ~  ; need to UNGHOST return result if no GHOST! return
     let input-name: ~  ; whatever they called INPUT
 
     let ^action: func compose [  ; ^action to not store ACTION as label
@@ -138,7 +137,6 @@ bind construct [
                 pack [ensure text! spec.2, ensure block! spec.3]
                 elide spec: my skip 3
             ]
-            ghostable: did find types 'ghost!
             spread compose:deep [
                 return: (opt description)
                     [~[(types) any-series? [blank? block!]]~]
@@ -215,9 +213,9 @@ bind construct [
 
         return: lambda [^value] compose2:deep '{} [  ; already composing w/()
             {unrun return/} pack [
-                {? if not ghostable ['unghost]} (^value except e -> [
+                ^value except e -> [
                     {unrun return/} fail e
-                ])
+                ]
                 {input-name}
                 pending  ; can't change PENDING name at this time
             ]
@@ -306,7 +304,7 @@ default-combinators: make map! [
 
     'not combinator [
         "If the parser argument is negatable, invoke it in the negated sense"
-        return: [any-stable? pack!]
+        return: [any-value?]
         input [any-series?]
         parser [action!]
         :negated
@@ -356,7 +354,7 @@ default-combinators: make map! [
     'try combinator [
         "If parser fails, succeed and return NULL; don't advance input"
         return: "PARSER's result if it succeeds, otherwise NULL"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         parser [action!]
         <local> ^result remainder
@@ -371,7 +369,7 @@ default-combinators: make map! [
     'optional combinator [
         "If parser fails, succeed and return VOID; don't advance input"
         return: "PARSER's result if it succeeds, otherwise VOID"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         parser [action!]
         <local> ^result remainder
@@ -402,7 +400,7 @@ default-combinators: make map! [
     'ahead combinator [
         "Leave the parse position at the same location, but fail if no match"
         return: "parser result if success, NULL if failure"
-            [any-stable? pack! ~#not~]
+            [any-value? ~#not~]
         input [any-series?]
         parser [action!]
         :negated
@@ -419,7 +417,7 @@ default-combinators: make map! [
     'further combinator [
         "Pass through the result only if the input was advanced by the rule"
         return: "parser result if it succeeded and advanced input, else NULL"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         parser [action!]
         <local> ^result pos
@@ -451,7 +449,7 @@ default-combinators: make map! [
     'some combinator [
         "Run the parser argument in a loop, requiring at least one match"
         return: "Result of last successful match"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         parser [action!]
         <local> ^result
@@ -474,7 +472,7 @@ default-combinators: make map! [
     'while combinator [
         "Run the body parser in a loop, for as long as condition matches"
         return: "Result of last body parser (or void if body never ran)"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         condition-parser [action!]
         body-parser [action!]
@@ -504,7 +502,7 @@ default-combinators: make map! [
     'until combinator [
         "Run the body parser in a loop, until the condition matches"
         return: "Result of last body parser (or void if body never ran)"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         condition-parser [action!]
         body-parser [action!]
@@ -535,7 +533,7 @@ default-combinators: make map! [
     'cycle combinator [
         "Run the body parser continuously in a loop until BREAK or STOP"
         return: "Result of last body parser (or void if body never matched)"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         parser [action!]
         <local> ^result
@@ -757,7 +755,7 @@ default-combinators: make map! [
     'to combinator [
         "Match up TO a certain rule (result position before succeeding rule)"
         return: "The rule's product"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         parser [action!]
         <local> ^result
@@ -779,7 +777,7 @@ default-combinators: make map! [
     'thru combinator [
         "Match up THRU a certain rule (result position after succeeding rule)"
         return: "The rule's product"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         parser [action!]
         <local> ^result remainder
@@ -865,7 +863,7 @@ default-combinators: make map! [
         return input
     ]
 
-    <end> combinator [
+    <end> ghostable combinator [
         "Only match if the input is at the end"
         return: [ghost!]
         input [any-series?]
@@ -984,7 +982,7 @@ default-combinators: make map! [
     'subparse combinator [
         "Recursion into other data with a rule, result of rule if match"
         return: "Result of the subparser"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         parser [action!]  ; !!! Easier expression of value-bearing parser?
         subparser [action!]
@@ -1033,7 +1031,7 @@ default-combinators: make map! [
     'into combinator [
         "Arity-1 variation of SUBPARSE (presumes current position as input)"
         return: "Result of the subparser"
-            [any-stable? pack!]
+            [any-value?]
         input [any-list?]
         subparser [action!]
         :match "Return input on match, not synthesized value"
@@ -1103,7 +1101,7 @@ default-combinators: make map! [
 
     'keep combinator [
         return: "The kept value (same as input)"
-            [any-stable?]
+            [null? element? splice!]
         input [any-series?]
         :pending [blank? block!]
         parser [action!]
@@ -1503,7 +1501,7 @@ default-combinators: make map! [
     ; counts as a phase).  This is done using the <delay> tag (may not be
     ; the best name).
 
-    group! combinator [
+    group! ghostable combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
             [any-value?]
         input [any-series?]
@@ -1546,9 +1544,9 @@ default-combinators: make map! [
         return decay ^result
     ]
 
-    'phase combinator [
+    'phase ghostable combinator [
         return: "Result of the parser evaluation"
-            [any-stable? pack! ghost!]
+            [any-value?]
         input [any-series?]
         :pending [blank? block!]
         parser [action!]
@@ -1595,7 +1593,7 @@ default-combinators: make map! [
 
     'inline combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [any-stable? pack! ghost!]
+            [any-value?]
         input [any-series?]
         :pending [blank? block!]   ; we retrigger combinator; it may KEEP, etc.
 
@@ -1840,7 +1838,7 @@ default-combinators: make map! [
 
     'repeat combinator [
         return: "Last parser result"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         times-parser [action!]
         parser [action!]
@@ -1854,7 +1852,7 @@ default-combinators: make map! [
         switch:type ^times [
             rune! [
                 if ^times = _ [  ; should space be tolerated if void is?
-                    return ^void  ; `[repeat (_) rule]` is a no-op
+                    return ^ghost  ; `[repeat (_) rule]` is a no-op
                 ]
 
                 if ^times <> # [
@@ -1868,7 +1866,7 @@ default-combinators: make map! [
             block! block?:pinned/ [
                 parse ^times [
                     _ _ <end> (
-                        return ^void  ; `[repeat ([_ _]) rule]` is a no-op
+                        return ^ghost  ; `[repeat ([_ _]) rule]` is a no-op
                     )
                     |
                     min: [integer! | _ (0)]
@@ -1885,7 +1883,7 @@ default-combinators: make map! [
 
         append state.loops binding of $return
 
-        ^result: ^void  ; [repeat (0) one] is void
+        ^result: ^ghost  ; [repeat (0) one] is void, but ^ can unvoidify it
 
         count-up 'i max [  ; will count infinitely if max is #
             ;
@@ -2102,7 +2100,7 @@ default-combinators: make map! [
 
     === INVISIBLE COMBINATORS ===
 
-    'elide combinator [
+    'elide ghostable combinator [
         "Transform a result-bearing combinator into one that has no result"
         return: [ghost!]
         input [any-series?]
@@ -2112,7 +2110,7 @@ default-combinators: make map! [
         return ^ghost
     ]
 
-    'comment combinator [
+    'comment ghostable combinator [
         "Comment out an arbitrary amount of PARSE material"
         return: [ghost!]
         input [any-series?]
@@ -2121,7 +2119,7 @@ default-combinators: make map! [
         return ^ghost
     ]
 
-    'skip combinator [
+    'skip ghostable combinator [
         "Skip an integral number of items"
         return: [ghost!]
         input [any-series?]
@@ -2177,7 +2175,7 @@ default-combinators: make map! [
     action! combinator [
         "Run an ordinary action with parse rule products as its arguments"
         return: "The return value of the action"
-            [any-stable? pack! ghost!]
+            [any-value?]
         input [any-series?]
         :pending [blank? block!]
         value [frame!]
@@ -2226,7 +2224,7 @@ default-combinators: make map! [
 
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [any-stable? pack! ghost!]
+            [any-value?]
         input [any-series?]
         :pending [blank? block!]
         value [word! tuple!]
@@ -2321,7 +2319,7 @@ default-combinators: make map! [
 
     'any combinator [
         return: "Last result value"
-            [any-stable? pack!]
+            [any-value?]
         input [any-series?]
         :pending [blank? block!]
         @arg "Acts as rules if WORD!/BLOCK!, pinned acts inert"
@@ -2398,16 +2396,16 @@ default-combinators: make map! [
     ; function...rather than being able to build a small function for each
     ; step that could short circuit before the others were needed.)
 
-    block! (block-combinator: combinator [
+    block! (block-combinator: ghostable combinator [
         return: "Last result value"
-            [any-stable? pack! ghost!]
+            [any-value?]
         input [any-series?]
         :pending [blank? block!]
         value [block!]
         :limit "Limit of how far to consider (used by ... recursion)"
             [block!]
         :thru "Keep trying rule until end of block"
-        <local> rules pos ^result f sublimit subpending temp old-env
+        <local> rules pos ^result f sublimit subpending temp old-env can-vanish
     ][
         rules: value  ; alias for clarity
         limit: default [tail of rules]
@@ -2473,6 +2471,11 @@ default-combinators: make map! [
                 continue
             ]
 
+            can-vanish: if rules.1 = '^ [
+                rules: next rules
+                okay
+            ]
+
             ; Do one "Parse Step".  This involves turning whatever is at the
             ; next parse position into an ACTION!, then running it.
             ;
@@ -2509,6 +2512,8 @@ default-combinators: make map! [
                 f.1: pos  ; PARSIFY specialized STATE in, so input is 1st
             ]
 
+            can-vanish: default [ghostable? f]
+
             if not error? ^temp: eval f [
                 [^temp pos subpending]: ^temp
                 if unset? $pos [
@@ -2519,8 +2524,12 @@ default-combinators: make map! [
                     print mold:limit rules 200
                     panic "Combinator did not set pending"
                 ]
-                if not ghost? ^temp [  ; overwrite only if was visible
-                    ^result: ^temp
+                either ghost? ^temp [
+                    if not can-vanish [
+                        if not ghost? ^result [^result: ^void]
+                    ]
+                ][
+                    ^result: ^temp  ; overwrite only if not ghost
                 ]
                 pending: glom pending spread subpending
             ] else [
@@ -2979,7 +2988,7 @@ parse*: func [
     "Process as much of the input as parse rules consume (see also PARSE)"
 
     return: "Synthesized value from last match rule, and any pending values"
-        [~[[any-stable? pack!] [blank? block!]]~ error!]
+        [~[any-value? [blank? block!]]~ error!]
     input "Input data"
         [<opt-out> any-series? url! any-sequence?]
     rules "Block of parse rules"
@@ -3041,7 +3050,7 @@ parse*: func [
     ; effect.  So it's necessary to need to have some way to get at that
     ; information.  For now, we use the FRAME! of the parse itself as the
     ; way that data is threaded...as it gives access to not just the
-    ; combinators, but also the /VERBOSE or other settings...we can add more.
+    ; combinators, but also the :VERBOSE or other settings...we can add more.
     ;
     let state: binding of $return
 
@@ -3082,10 +3091,7 @@ parse*: func [
         ]
     ]
 
-    return pack [
-        unghost ^synthesized  ; combinators can vaporize, but PARSE shouldn't
-        pending
-    ]
+    return pack [^synthesized pending]
 ]
 
 parse: (comment [redescribe [  ; redescribe not working at the moment (?)

@@ -1,4 +1,4 @@
-; %parse-block.test.r
+; %parse.block.test.r
 ;
 ; BLOCK! is the fundamental rule category of UPARSE, but it's also a combinator.
 ; This means it can be overridden and hooked.
@@ -10,22 +10,28 @@
 ; pending list...the entire group must succeed
 
 
-; Empty block rules vaporize
+; Empty block rules vaporize, but only if literally in source (the WORD!
+; combinator is not GHOSTABLE even though the BLOCK! combinator is.)
+;
+('b = parse [a b] ['a 'b []])
 (
     var: []
-    'b = parse [a b] ['a 'b var]
+    void? parse [a b] ['a 'b var]
 )
-('b = parse [a b] ['a 'b inline (if ok '[])])
+(
+    var: []
+    'b = parse [a b] ['a 'b ^ var]
+)
 
 
 ; No-op rule of empty block should always match.
 [
-    (void? parse "" [])
-    (void? parse "" [[]])
-    (void? parse "" [[[]]])
+    (ghost? parse "" [])
+    (ghost? parse "" [[]])
+    (ghost? parse "" [[[]]])
 
-    (void? parse [] [])
-    (void? parse [] [[[]]])
+    (ghost? parse [] [])
+    (ghost? parse [] [[[]]])
 
     ~parse-incomplete~ !! (parse [x] [])
     ~parse-incomplete~ !! (parse [x] [[[]]])
@@ -84,7 +90,7 @@
     (
         x: ~
         all [
-            void = parse [1] [x: [integer! opt text!]]
+            void? parse [1] [x: [integer! opt text!]]
             x = null
         ]
     )

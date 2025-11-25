@@ -1038,8 +1038,7 @@ DECLARE_NATIVE(INFIX_Q)
 //
 //  "For functions that gets 1st argument from left, e.g (/+: infix get $add)"
 //
-//      return: "Antiform action"
-//          [action!]
+//      return: [action!]
 //      action [<unrun> frame!]
 //      :off "Give back a non-infix version of the passed in function"
 //      :defer "Allow one full expression on the left to evaluate"
@@ -1069,6 +1068,51 @@ DECLARE_NATIVE(INFIX)
         Tweak_Frame_Infix_Mode(out, INFIX_TIGHT);
 
     return UNSURPRISING(OUT);
+}
+
+
+//
+//  ghostable: native [
+//
+//  "Make a function's invocations not default to turn GHOST! results to VOID"
+//
+//      return: [action! frame!]
+//      action [action! frame!]
+//      :off "Give back non-ghostable version of the passed in function"
+//  ]
+//
+DECLARE_NATIVE(GHOSTABLE)
+{
+    INCLUDE_PARAMS_OF_GHOSTABLE;
+
+    Value* out = Copy_Cell(OUT, ARG(ACTION));
+
+    if (Bool_ARG(OFF))
+        Clear_Cell_Flag(out, WEIRD_GHOSTABLE);
+    else
+        Set_Cell_Flag(out, WEIRD_GHOSTABLE);
+
+    if (Is_Action(out))
+        return UNSURPRISING(OUT);
+
+    return OUT;
+}
+
+
+//
+//  ghostable?: native [
+//
+//  "Return whether a function naturally suppresses GHOST! to VOID conversion"
+//
+//      return: [logic?]
+//      action [<unrun> frame!]
+//  ]
+//
+DECLARE_NATIVE(GHOSTABLE_Q)
+{
+    INCLUDE_PARAMS_OF_GHOSTABLE_Q;
+
+    return LOGIC(Get_Cell_Flag(ARG(ACTION), WEIRD_GHOSTABLE));
 }
 
 

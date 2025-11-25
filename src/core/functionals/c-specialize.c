@@ -397,6 +397,7 @@ bool Specialize_Action_Throws(
     Actionify(out);
 
     Tweak_Frame_Infix_Mode(out, infix_mode);
+    Copy_Ghostability(out, specializee);
 
     return false;  // code block did not throw
 }
@@ -462,6 +463,7 @@ DECLARE_NATIVE(SPECIALIZE)
     Actionify(out);
 
     Tweak_Frame_Infix_Mode(out, infix_mode);
+    Copy_Ghostability(out, specializee);
 
     return UNSURPRISING(OUT);
 }}

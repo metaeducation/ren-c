@@ -17,7 +17,7 @@
     ]
 
     all [
-        void? n-add 10 20
+        null? n-add 10 20
         25 = n-add 20 20
     ]
 )
@@ -33,8 +33,8 @@
         return ~,~
     ]
     all [
-        304 = (304 outer)
-        void? outer
+        304 = (304 ^ outer)
+        ghost? outer
         var = 1020
     ]
 )(
@@ -52,15 +52,15 @@
     ]
 )(
     var: #before
-    inner: func [return: [~,~]] [
+    inner: func [return: [ghost!]] [
         var: 1020
         return ~,~
     ]
-    /outer: enclose inner/ func [return: [ghost! any-stable?] f] [
+    outer: enclose inner/ func [return: [ghost! any-stable?] f] [
         return eval-free f  ; now try unquoting
     ]
     all [
-        '~,~ = ^(outer)
+        '~,~ = lift (outer)
         var = 1020
     ]
 )]

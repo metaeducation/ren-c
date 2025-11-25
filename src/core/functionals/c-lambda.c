@@ -105,7 +105,8 @@ Bounce Lambda_Dispatcher(Level* const L)
     Element* spare_rebound = Copy_Cell(SPARE, block);
     Tweak_Cell_Binding(spare_rebound, L->varlist);
 
-    Flags flags = LEVEL_MASK_NONE;
+    Flags flags = LEVEL_MASK_NONE
+        | (not LEVEL_FLAG_AFRAID_OF_GHOSTS);  // allow vanish [1]
 
     require (
       Level* sub = Make_Level_At_Core(

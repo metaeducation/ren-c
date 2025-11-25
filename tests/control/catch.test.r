@@ -13,7 +13,7 @@
 (null? catch [()])
 (warning? catch [throw rescue [1 / 0]])
 (1 = catch [throw 1])
-((the '~()~) = ^ catch [throw eval ['~()~]])
+((the '~()~) = lift catch [throw eval ['~()~]])
 (warning? first catch [throw reduce [rescue [1 / 0]]])
 (1 = catch [throw 1])
 

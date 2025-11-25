@@ -100,9 +100,9 @@ DECLARE_NATIVE(ENRECOVER)
       Level* L = Make_Level_At(
         &Evaluator_Executor,
         code,
-        LEVEL_MASK_NONE
+        LEVEL_FLAG_AFRAID_OF_GHOSTS  // EVAL-like semantics?
     ));
-    Init_Void(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
+    Init_Ghost(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 

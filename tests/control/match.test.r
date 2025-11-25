@@ -32,7 +32,7 @@
     ('true = match [boolean?] 'true)
     ('false = match [boolean?] 'false)
 
-    (''~preserved~ = ^ match quasi-word?/ '~preserved~)
+    (''~preserved~ = lift match quasi-word?/ '~preserved~)
 ]
 
 [

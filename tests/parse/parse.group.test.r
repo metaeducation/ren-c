@@ -1,4 +1,4 @@
-; %parse-group.test.r
+; %parse.group.test.r
 ;
 ; GROUP! are value-bearing rules that do not advance the input and get their
 ; argument literally from a EVAL evaluation.  They always succeed.
@@ -33,3 +33,18 @@
         group-ran
     ]
 )
+
+; GROUP! rules can vanish, but not when referenced via variable without ^
+[
+    ('b = parse [a b] ['a 'b (comment "vanish!")])
+
+    (
+        rule: $(comment "vanish!")
+        void? parse [a b] ['a 'b rule]
+    )
+
+    (
+        rule: $(comment "vanish!")
+        'b = parse [a b] ['a 'b ^ rule]
+    )
+]

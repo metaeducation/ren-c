@@ -33,11 +33,11 @@
     ~parse-mismatch~ !! (parse "a" [to #a <end>])
     (#b = parse "ab" [to #a repeat 2 one])
     (#a = parse "a" [to #a one])
-    (#a = parse "aaab" [to #a to <end>])
+    (#a = parse "aaab" [to #a ^ to <end>])
     ~parse-incomplete~ !! (parse "a" [to [#a]])
     ~parse-mismatch~ !! (parse "a" [to [#a] <end>])
     (#a = parse "a" [to [#a] one])
-    (#a = parse "aaab" [to [#a] to <end>])
+    (#a = parse "aaab" [to [#a] ^ to <end>])
     (#b = parse "ab" [to [#a] repeat 2 one])
     (#c = parse "zzabc" [to [#c | #b | #a] repeat 3 one])
     (#c = parse "zzabc" [to [#a | #b | #c] repeat 3 one])
@@ -52,7 +52,7 @@
 [(
     void? parse "abc" [to <end>]
 )(
-    void? parse "abc" [elide to <end>]
+    ghost? parse "abc" [elide to <end>]
 )(
     "b" = parse "aaabbb" [thru "b" elide to <end>]
 )(
@@ -91,14 +91,14 @@
     ~parse-mismatch~ !! (parse #{0A} [to #{0A} <end>])
     (10 = parse #{0A} [to #{0A} one])
     (11 = parse #{0A0B} [to #{0A} repeat 2 one])
-    (#{0A} = parse #{0A0A0A0B} [to #{0A} to <end>])
+    (#{0A} = parse #{0A0A0A0B} [to #{0A} ^ to <end>])
     ~parse-incomplete~ !! (parse #{0A} [to [#{0A}]])
     ~parse-mismatch~ !! (parse #{0A} [to [#{0A}] <end>])
     (10 = parse #{0A} [to [#{0A}] one])
     (11 = parse #{0A0B} [to [#{0A}] repeat 2 one])
     (12 = parse #{99990A0B0C} [to [#"^L" | #{0B} | #{0A}] repeat 3 one])
     (12 = parse #{99990A0B0C} [to [#{0A} | #{0B} | #"^L"] repeat 3 one])
-    (#{0A} = parse #{0A0A0A0B} [to [#{0A}] to <end>])
+    (#{0A} = parse #{0A0A0A0B} [to [#{0A}] ^ to <end>])
     ~parse-mismatch~ !! (parse #{} [to #{0A}])
     ~parse-mismatch~ !! (parse #{} [to #"^/"])
     ~parse-mismatch~ !! (parse #{} [to [#{0A}]])
@@ -106,8 +106,8 @@
 ]
 
 [https://github.com/red/red/issues/3427
-    ("23" = parse:part %234 ["23" to [<end>]] 3)
-    ("23" = parse:part %234 ["23" to <end>] 3)
+    ("23" = parse:part %234 ["23" ^ to [<end>]] 3)
+    ("23" = parse:part %234 ["23" ^ to <end>] 3)
     (
         count-up 'i 4 [
             assert ["1" = parse:part "12" ["1" to [<end>]] i]

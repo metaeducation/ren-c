@@ -1,6 +1,6 @@
 ; The ^GROUP! type is new and needs testing.
 
-(meta-group! = type of '^(a b c))
+(metaform! = type of '^(a b c))
 
 ; Vanishing stuff via ghosts (empty packs) can only be observed via meta
 ; operations.  You cannot pass a ghost antiform to `=`
@@ -10,11 +10,11 @@
     (void? unlift (lift ^void))
 
     (void? unlift (lift opt ^void))
-    ((lift ^void) = ^ (opt ^void))
+    ((lift ^void) = lift (opt ^void))
     ~no-value~ !! (opt comment "hi")
 
-    ('~,~ = ^ ())
-    ('~,~ = ^ (comment "hi"))
+    ('~,~ = lift ())
+    ('~,~ = lift (comment "hi"))
     ((lift ^void) = lift (^void))
 ]
 

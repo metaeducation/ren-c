@@ -153,10 +153,11 @@ Bounce The_Group_Branch_Executor(Level* const L)
       Level* sub = Make_Level(
         &Evaluator_Executor,
         LEVEL->feed,
-        LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
-            & (~ LEVEL_FLAG_FORCE_HEAVY_NULLS)  // take off branch flag [1]
+        (LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
+            & (~ LEVEL_FLAG_FORCE_HEAVY_NULLS))  // take off branch flag [1]
+            | (not LEVEL_FLAG_AFRAID_OF_GHOSTS)  // voids same as ghosts here
     ));
-    Init_Void(Evaluator_Primed_Cell(sub));
+    Init_Ghost(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(branch, sub);  // branch GC-protected [2]
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
@@ -793,7 +794,7 @@ DECLARE_NATIVE(CASE)
         Level_Binding(SUBLEVEL),
         LEVEL_MASK_NONE
     ));
-    Init_Void(Evaluator_Primed_Cell(sub));
+    Init_Ghost(Evaluator_Primed_Cell(sub));
 
     STATE = ST_CASE_EVALUATING_GROUP_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;

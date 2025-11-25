@@ -85,7 +85,7 @@ DECLARE_NATIVE(GHOST_OR_VOID_Q)
 
 
 //
-//  comment: native:intrinsic [
+//  comment: ghostable native:intrinsic [
 //
 //  "Skip one element ahead, doing no evaluation (see also ELIDE)"
 //
@@ -103,7 +103,7 @@ DECLARE_NATIVE(COMMENT)
 
 
 //
-//  elide: native:intrinsic [
+//  elide: ghostable native:intrinsic [
 //
 //  "Argument evaluated, result discarded (not ERROR!, or packs with ERROR!s)"
 //

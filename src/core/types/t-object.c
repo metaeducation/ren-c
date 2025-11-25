@@ -468,6 +468,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
     ParamList* lens = Phase_Paramlist(Frame_Phase(arg));
     Init_Lensed_Frame(OUT, exemplar, lens, coupling);
 
+    Copy_Ghostability(OUT, arg);
+
     return OUT;
 }
 

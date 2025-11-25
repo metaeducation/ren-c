@@ -1,11 +1,4 @@
 ; %parse-meta-xxx.test.r
 
-; ^BLOCK! runs a rule, but unlifts the result.
-
-[
-    (all  [
-        let synthesized
-        (the '3) = parse "" [synthesized: ^[(lift 1 + 2)]]
-        (the '3) = synthesized
-    ])
-]
+; There is no behavior defined yet for ^BLOCK!.
+; It would probably be influenced by whatever ^GROUP! does.

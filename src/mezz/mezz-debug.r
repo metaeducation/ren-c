@@ -11,7 +11,7 @@ Rebol [
     ]--
 ]
 
-verify: func [
+verify: ghostable func [
     "Verify all the conditions in the passed-in block are conditionally true"
 
     return: [ghost!]

@@ -67,19 +67,13 @@
     (void? parse "" [repeat 0 one])
 
     (void? parse "a" ["a" repeat (0) "b"])
-    (void? parse "a" ["a" ^[lift repeat (0) "b"]])
 
-    ("a" = parse "a" ["a" /elide-if-void repeat 0 "b"])
+    ("a" = parse "a" ["a" ^ repeat 0 "b"])
+    ("a" = parse "a" ["a" ^ [repeat 0 "b"]])
     (
-        x: ~
-        all [
-            ??? = parse "a" ["a" x: ^[repeat 0 "b"]]
-            ??? = x
-        ]
+        rule: [repeat 0 "b"]
+        "a" = parse "a" ["a" ^ rule]
     )
-
-    ("a" = parse "a" ["a" /elide-if-void repeat 0 "b"])
-    ("a" = parse "a" ["a" /elide-if-void [repeat 0 "b"]])
 ]
 
 [

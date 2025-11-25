@@ -159,14 +159,14 @@
     (
         res: ~
         all [
-            #{BABE} = parse bin [thru #{CAFE} one res: across to NUL to <end>]
+            #{BABE} = parse bin [thru #{CAFE} one res: across to NUL ^ to <end>]
             res = #{BABE}
         ]
     )
     (
         res: ~
         all [
-            #{00DEADBEEF00} = parse bin [thru #{BABE} res: <here> to <end>]
+            #{00DEADBEEF00} = parse bin [thru #{BABE} res: <here> ^ to <end>]
             9 = index of res
         ]
     )

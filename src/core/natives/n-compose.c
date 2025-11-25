@@ -369,7 +369,7 @@ Bounce Composer_Executor(Level* const L)
     LiftByte list_lift_byte = LIFT_BYTE(At_Level(L));
     Option(Sigil) sigil = Sigil_Of(At_Level(L));
 
-    if (Is_Void(OUT)) {
+    if (Is_Ghost_Or_Void(OUT)) {
         if (not sigil and list_lift_byte == NOQUOTE_2) {
             L->u.compose.changed = true;
             goto handle_next_item;  // compose [(void)] => []

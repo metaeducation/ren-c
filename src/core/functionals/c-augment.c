@@ -121,8 +121,8 @@ DECLARE_NATIVE(AUGMENT)
   // Hence we don't need a new Details, and can get away with patching the
   // augmentee's action information (phase and coupling) into the paramlist.
 
-    Phase* prior = Frame_Phase(ARG(ORIGINAL));
-    Option(VarList*) prior_coupling = Frame_Coupling(ARG(ORIGINAL));
+    Phase* prior = Frame_Phase(original);
+    Option(VarList*) prior_coupling = Frame_Coupling(original);
 
     require (  // checks for duplicates
       ParamList* paramlist = Pop_Paramlist(STACK_BASE, prior, prior_coupling)
@@ -132,5 +132,7 @@ DECLARE_NATIVE(AUGMENT)
     Tweak_Misc_Phase_Adjunct(paramlist, adjunct);
 
     Init_Action(OUT, paramlist, label, coupling);
+    Copy_Ghostability(OUT, original);
+
     return UNSURPRISING(OUT);
 }}

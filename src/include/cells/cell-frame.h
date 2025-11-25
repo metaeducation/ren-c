@@ -299,3 +299,14 @@ INLINE bool Is_Frame_Infix(const Value* c) {  // faster than != PREFIX_0
     assert(Heart_Of(c) == TYPE_FRAME);
     return did (c->header.bits & CELL_MASK_CRUMB);
 }
+
+
+INLINE void Copy_Ghostability(Atom* to, const Value* from) {
+    assert(Is_Action(u_cast(Value*, to)) or Is_Frame(u_cast(Value*, to)));
+    assert(Is_Action(from) or Is_Frame(from));
+
+    if (Get_Cell_Flag(from, WEIRD_GHOSTABLE))
+        Set_Cell_Flag(to, WEIRD_GHOSTABLE);
+    else
+        Clear_Cell_Flag(to, WEIRD_GHOSTABLE);
+}

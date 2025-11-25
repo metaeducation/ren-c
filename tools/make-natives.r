@@ -138,6 +138,7 @@ leaders: [
     antiform?  ; needs to accept unstable antiforms, overwrites auto-gen case
     void?  ; same
     infix
+    ghostable
 
     any-word?  ; Not clear what future of this is (any-sigil'd word)
 

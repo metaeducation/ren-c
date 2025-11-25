@@ -221,6 +221,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             and g_ts.unwind_level == L  // may be inaccessible [2]
         ){
             CATCH_THROWN(L->out, L);
+
+            if (Get_Level_Flag(L, AFRAID_OF_GHOSTS) and Is_Ghost(L->out))
+                Init_Void(L->out);  // prevent ghost from vanishing
+
             goto result_in_out;
         }
 

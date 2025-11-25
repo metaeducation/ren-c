@@ -104,7 +104,7 @@
     "a" = parse "a" ["a" elide opt some cset]
 )(
     cset: charset [# - #"^(FE)"]
-    null = parse "a" ["a" opt some cset]
+    void? parse "a" ["a" opt some cset]
 )(
     cset: charset [# - #"^(FF)"]
     "a" = parse "a" ["a" elide opt some cset]

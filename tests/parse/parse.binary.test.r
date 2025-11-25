@@ -5,7 +5,7 @@
 
 ; General BLOB! matching
 [
-    (void? parse #{} [])
+    (ghost? parse #{} [])
 
     (#{0A} = parse #{0A} [#{0A}])
     (#"^/" = parse #{0A} [#"^/"])

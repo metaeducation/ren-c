@@ -41,59 +41,38 @@
 )
 
 
-; https://forum.rebol.info/t/what-should-do-do/1426
-;
-(void? eval [])
-(
-    x: <overwritten>
-    all [
-        (lift void) = lift x: eval []
-        void? unlift x
-    ]
-)
-(
-    x: 10
-    all [
-        '~,~ = x: lift eval []
-        ghost? unlift x
-    ]
-)
-(
-    x: 10
-    10 = (x eval [])
-)
-
 [
     (foo: lambda [] [], ok)
 
-    (void? foo)
+    (ghost? foo)
+    (ghost? (foo))
 
-    ((lift ^void) = lift applique foo/ [])
-    (void? applique foo/ [])
+    ((lift ^ghost) = lift applique foo/ [])
+    (ghost? applique foo/ [])
+    (ghost? (applique foo/ []))
 
-    ((lift ^void) = lift eval foo/)
-    (void? eval foo/)
-
-    (void? eval foo/)
+    ((lift ^ghost) = lift eval foo/)
+    (ghost? eval foo/)
+    (ghost? (eval foo/))
 ]
 
 [
     (foo: func [] [], ok)
 
-    (trash? foo)
+    (tripwire? foo)
 
-    ((lift trash) = lift applique foo/ [])
-    (trash? applique foo/ [])
+    ((lift ^tripwire) = lift applique foo/ [])
+    (tripwire? applique foo/ [])
 
-    ((lift trash) = lift eval foo/)
-    (trash? eval foo/)
+    ((lift ^tripwire) = lift eval foo/)
+    (tripwire? eval foo/)
 
-    ((lift trash) = lift eval foo/)
+    ((lift ^tripwire) = lift eval foo/)
 ]
 
 ; Explicit return of VOID
 [
-    (did foo: func [return: [any-stable?]] [return ^void])
+    (did foo: func [return: [any-value?]] [return ^void])
 
     (void? foo)
     ((lift ^void) = lift foo)
@@ -104,7 +83,7 @@
 ; Not providing an argument is an error (too easy to pick up random arguments
 ; from another line if 0-arity were allowed)
 [
-    (did foo: func [return: [any-stable?] x] [])
+    (did foo: func [return: [any-value?] x] [])
 
     ~unspecified-arg~ !! (foo)
 ]
@@ -123,26 +102,17 @@
 
 [(
     foo: func [return: []] []
-    (lift trash) = lift foo
+    (lift ^tripwire) = lift foo
 )(
     data: [a b c]
     f: func [return: []] [append data spread [1 2 3]]
-    (lift trash) = lift f
+    (lift ^tripwire) = lift f
 )]
 
-; locals are unset before they are assigned
+; locals are unset (not in-band of values) before they are assigned
 (
-    f: func [<local> loc] [return get:any $loc]
-    trash? f
-)(
-    f: func [<local> loc] [return reify get:any $loc]
-    f = '~
-)(
-    f: func [<local> loc] [return ^loc]
-    f = '~
-)(
-    f: lambda [<local> loc] [^loc]
-    f = '~
+    f: func [<local> loc] [return unset? $loc]
+    f
 )
 
 
@@ -207,7 +177,7 @@
         ]
     )
     (all [
-        void? ()  ; empty groups make nihil
+        ghost? ()  ; empty groups make ghosts
         3 = (1 + 2 ())
     ])
     ~no-value~ !! (
