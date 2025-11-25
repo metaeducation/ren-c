@@ -25,7 +25,7 @@
 (
     for-each-sigil 'sig [
         assert [sigil? sig]
-        assert [sigil! = type of sig]
+        assert [space? plain sig]
     ]
     ok
 )
@@ -33,8 +33,7 @@
 ; MOLD and FORM
 (
     for-each-sigil 'sig [
-        assert [(mold sig) = to text! sig]
-        assert [(form sig) = to text! sig]
+        assert [(mold sig) = (form sig)]
     ]
     ok
 )
@@ -49,7 +48,7 @@
 
 ; TRANSCODE
 (
-    let roundtrip: cascade [unspaced/ transcode:one/]
+    roundtrip: cascade [unspaced/ transcode:one/]
 
     for-each-sigil 'sig [
         assert [(quote sig) = roundtrip [-[']- mold sig]]
@@ -58,10 +57,7 @@
         assert [sig = second roundtrip ["[" "<t>" _ mold sig _ "]"]]
         assert [sig = first roundtrip ["[" mold sig _ "<t>" "]"]]
         assert [sig = first roundtrip ["[" _ mold sig space "<t>]"]]
-        assert [
-            let e: rescue [roundtrip ["~" mold sig "~"]]
-            e.id = 'scan-invalid  ; quasi/anti forms of sigil are illegal ATM
-        ]
+        assert [(quasi sig) = roundtrip ["~" mold sig "~"]]
     ]
     ok
 )
@@ -69,7 +65,7 @@
 
 ; Test SIGIL OF for each bindable type
 ;
-; !!! UPDATE: now legal on *all* datatypes
+; !!! UPDATE: now legal on *all* datatypes that can appear in sequences
 (
     for-each [sigil items] [
         ~null~  [  word    tu.p.le    pa/th    [bl o ck]    (gr o up)  ]
@@ -140,3 +136,15 @@
     ]
     ok
 )
+
+; Limited reversible TO conversions hacked in as a demo of intent:
+;
+; https://rebol.metaeducation.com/t/embracing-a-useless-definition-of-to/2325/3
+[
+    ('a = to word! @a)
+    (@a = to pinned! 'a)
+    (1 = to integer! '^1)
+    ('^1 = to metaform! 1)
+    (_ = to rune! '$)
+    ('$ = to tied! _)
+]

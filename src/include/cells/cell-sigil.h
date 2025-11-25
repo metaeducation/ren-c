@@ -111,6 +111,9 @@ INLINE Option(Sigil) Sigil_Of(const Element* e)
 INLINE bool Any_Sigilable_Type(Option(Type) t)  // build on sequencable [1]
   { return Any_Sequence_Type(t) or Any_Sequencable_Type(t); }
 
+INLINE bool Any_Sigiled_Type(Option(Type) t)
+  { return t == TYPE_METAFORM or t == TYPE_PINNED or t == TYPE_TIED; }
+
 #define Any_Sigilable(cell) \
     Any_Sigilable_Type(Type_Of(cell))
 
@@ -155,5 +158,15 @@ INLINE Option(char) Char_For_Sigil(Option(Sigil) sigil) {
       case SIGIL_PIN:   return '@';
       case SIGIL_TIE:   return '$';
       default:          return '\0';
+    }
+}
+
+INLINE Sigil Sigil_For_Type(Type type) {
+    switch (type) {
+      case TYPE_METAFORM:  return SIGIL_META;
+      case TYPE_PINNED:    return SIGIL_PIN;
+      case TYPE_TIED:      return SIGIL_TIE;
+      default:
+        crash (nullptr);
     }
 }

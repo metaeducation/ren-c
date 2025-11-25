@@ -302,20 +302,14 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 //  "Converts to a specified datatype, copying any underying data"
 //
 //      return: "ELEMENT converted to TYPE (copied if same type as ELEMENT)"
-//          [plain?]
+//          [element?]
 //      type [<opt-out> datatype!]
-//      value [<opt-out> plain? datatype!]
+//      value [<opt-out> element? datatype!]
 //  ]
 //
 DECLARE_NATIVE(TO)
 {
     INCLUDE_PARAMS_OF_TO;
-
-    Option(Type) to = Datatype_Type(ARG(TYPE));
-    if (not to)
-        panic ("TO doesn't work with extension types");
-    if (MAX_HEART < unwrap to)
-        panic ("TO can't produce quoted/quasiform/antiform");
 
     if (Is_Datatype(ARG(VALUE))) {  // do same coercions as WORD!
         Value* datatype = ARG(VALUE);
@@ -326,6 +320,70 @@ DECLARE_NATIVE(TO)
         SymId id = Symbol_Id_From_Type(unwrap type);
         Init_Word(ARG(VALUE), Canon_Symbol(id));
     }
+
+    Element* value = Element_ARG(VALUE);
+
+    Option(Type) to = Datatype_Type(ARG(TYPE));
+    if (not to)
+        panic ("TO doesn't work with extension types");
+
+    if (to > MAX_TYPE_FUNDAMENTAL)  // !!! is quoted applicable, or dumb?
+        panic ("TO can't produce antiforms or quoteds");
+
+  handle_sigil_cases: {
+
+  // 1. TO for a sigilized type can't carry more than one decorator.  Though
+  //    @<foo> may be lexically legal, if you TO WORD! that and get `foo` you
+  //    lost information--it's effectively a "composite type".  So you can
+  //    only do things like `@foo <=> foo` or `@foo <=> <foo>` etc.
+  //
+  // 2. We do only the most limited handling as a proof of concept here.  To
+  //    do it correctly would require delegating to the ordinary TO handling
+  //    logic and then getting control back to add the Sigil on (if we want
+  //    continuations to be working in the TO handlers).  This would give us
+  //    things like:
+  //
+  //        >> to tag! '$
+  //        == <>  ; not <$>
+  //
+  //        >> to tied! <>
+  //        == $  ; not $<>
+
+    Option(Sigil) sigil = Sigil_Of(value);
+    if (sigil) {  // to or from a sigiled form [1]
+        switch (Heart_Of(value)) {
+          case TYPE_INTEGER:
+          case TYPE_WORD:
+          case TYPE_RUNE:
+            break;
+
+          default:
+            panic ("Only non-compound types can be TO converted from Sigil");
+        }
+        Plainify(value);
+    }
+
+    if (Any_Sigiled_Type(to)) {  // limited handling for adding Sigils [2]
+        switch (Heart_Of(value)) {
+          case TYPE_INTEGER:
+          case TYPE_WORD:
+            break;
+
+          case TYPE_RUNE:
+            if (not Is_Space(value))  // #a <=> $a <=> <a> <=> [a], eventually
+                panic ("SPACE is the only RUNE! converting TO Sigil ATM");
+            break;
+
+          default:
+            panic ("Only [INTEGER! WORD! space-RUNE!] convert TO Sigil ATM");
+        }
+        Sigilize(value, Sigil_For_Type(unwrap to));
+        return COPY(value);
+    }
+
+} handle_non_sigil_cases: {
+
+    assert(Any_Plain(value));
 
     Element* e = Element_ARG(VALUE);
 
@@ -345,7 +403,7 @@ DECLARE_NATIVE(TO)
     Set_Level_Flag(LEVEL, CHECKING_TO);
     return Downshift_For_To_Or_As_Checker(LEVEL);
   #endif
-}
+}}
 
 
 //
