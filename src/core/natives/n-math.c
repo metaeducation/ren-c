@@ -1029,6 +1029,8 @@ DECLARE_NATIVE(SAME_Q)
         );
     }
 
+    Liftify(v1);
+    Liftify(v2);
     return rebDelegate(CANON(EQUAL_Q), v1, v2);
 }
 
