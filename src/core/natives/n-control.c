@@ -334,6 +334,9 @@ DECLARE_NATIVE(THEN)
     Atom* atom = Atom_ARG(VALUE);
     Value* branch = ARG(BRANCH);
 
+    if (Is_Error(atom))
+        return COPY(atom);
+
     if (Is_Light_Null(atom))
         return NULLED;
 
@@ -359,6 +362,9 @@ DECLARE_NATIVE(ELSE)
 
     Atom* atom = Atom_ARG(VALUE);
     Value* branch = ARG(BRANCH);
+
+    if (Is_Error(atom))
+        return COPY(atom);
 
     if (not Is_Light_Null(atom))
         return COPY(atom);
@@ -403,6 +409,9 @@ DECLARE_NATIVE(ALSO)
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
+
+    if (Is_Error(atom))
+        return COPY(atom);
 
     if (Is_Light_Null(atom))
         return NULLED;
