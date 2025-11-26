@@ -36,11 +36,16 @@
     b: 20
     all [space = [a b]: pack @[_ _], space? a, space? b]
 )
-~???~ !! (
+(
     a: 10
     b: 20
     c: 30
-    [a b c]: pack [null 99]  ; too few values in pack
+    did all [
+        '~[~null~ '99]~ = lift [a b c]: pack [null 99]  ; too few values
+        a = null
+        b = 99
+        unset? $c
+    ]
 )
 (
     a: 10

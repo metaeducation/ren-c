@@ -29,7 +29,7 @@
     ])
 
     (all wrap [
-        304 = [g # h]: test 1020
+        304 = [g _ h]: test 1020
         g = 304
         h = <z-result>
     ])

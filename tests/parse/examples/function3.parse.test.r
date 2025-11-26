@@ -46,10 +46,10 @@
 
     parse spec [opt some [
         inline (if var '[  ; so long as we haven't reached any <local> or <with> etc.
-            var: [
-                set-word?/ | get-word?/ | any-word?/ | refinement?/
-                | quoted!
-                | the-group!  ; new soft-literal format
+            var: match [
+                set-word? get-word? any-word? refinement?
+                quoted!
+                @group!  ; new soft-literal format
             ] (
                 append new-spec var
             )

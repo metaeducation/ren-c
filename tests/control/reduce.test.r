@@ -94,7 +94,7 @@
     1 + 2 ^void 100 + 200
 ] lift/)
 
-([-3 -300] = reduce:predicate [1 + 2 if null [10 + 20] 100 + 200] negate/)
+([-3 -300] = reduce:predicate [1 + 2 when null [10 + 20] 100 + 200] negate/)
 ([3 300] = reduce:predicate [1 + 2 if null [10 + 20] 100 + 200] opt/)
 
 ([3 ~null~ 300] = reduce:predicate [1 + 2 if ok [null] 100 + 200] reify/)

@@ -30,14 +30,13 @@
     tracked-word!-combinator: unrun enclose default-combinators.(word!)/ func [
         return: [null? pack!]
         f [frame!]
-        <local> result' remainder subpending
-    ]
-    bind construct [indent: 0] [
+        <local> result remainder subpending
+    ] bind construct [indent: 0] [
         let input: f.input  ; save to use after EVAL F
         let name: f.value
 
         indent: me + 1
-        [^result' remainder subpending]: eval f except e -> [
+        [^result remainder subpending]: eval f except e -> [
             indent: me - 1
             return fail e
         ]
@@ -45,7 +44,7 @@
 
         let consumed: copy:part input remainder
 
-        if space? subpending [subpending: copy []]
+        if blank? subpending [subpending: copy []]
 
         ; GROUP!s in the pending list are deferred until the parse finishes
         ; (or reaches a PHASE boundary).  We don't know if this rule will
@@ -64,7 +63,7 @@
             ])
         ]
 
-        return pack [unlift result', remainder, subpending]
+        return pack [^result, remainder, subpending]
     ]
 
     tracked-combinators: copy default-combinators
