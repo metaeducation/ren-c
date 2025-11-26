@@ -1006,7 +1006,7 @@ DECLARE_NATIVE(ADD_USE_OBJECT) {
 //    we don't know if it's going to be aliased as that same sequence type
 //    again...but is that worth testing if it's a sequence here?
 //
-Result(Zero) Clonify_And_Bind_Relative(
+Result(None) Clonify_And_Bind_Relative(
     Element* v,
     Flags flags,
     bool deeply,
@@ -1096,7 +1096,7 @@ Result(Zero) Clonify_And_Bind_Relative(
         v->header.bits |= (flags & ARRAY_FLAG_CONST_SHALLOW);
     }
 
-    return zero;
+    return none;
 }
 
 
@@ -1416,13 +1416,13 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 // It accomplishes this by putting a word into the "variable" slot, and having
 // a flag to indicate a dereference is necessary.
 //
-Result(Zero) Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
+Result(None) Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
 {
     if (LIFT_BYTE(slot) != DUAL_0) {
         const Value* var = Slot_Hack(slot);
 
         Copy_Cell(out, var);
-        return zero;
+        return none;
     }
 
   handle_dual_slot: {
@@ -1444,28 +1444,28 @@ Result(Zero) Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
     if (rebRunThrows(out_value, CANON(GET), temp))
         return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-    return zero;
+    return none;
 }}
 
 
 //
 //  Read_Slot: C
 //
-Result(Zero) Read_Slot(Sink(Value) out, const Slot* slot) {
+Result(None) Read_Slot(Sink(Value) out, const Slot* slot) {
     Sink(Atom) atom_out = u_cast(Atom*, out);
     trap (
       Read_Slot_Meta(atom_out, slot)
     );
     if (Not_Cell_Stable(atom_out))
         return fail ("Cannot read unstable slot with Read_Slot()");
-    return zero;  // out is Known_Stable()
+    return none;  // out is Known_Stable()
 }
 
 
 //
 //  Write_Slot: C
 //
-Result(Zero) Write_Slot(Slot* slot, const Atom* write)
+Result(None) Write_Slot(Slot* slot, const Atom* write)
 {
     Flags persist = (slot->header.bits & CELL_MASK_PERSIST_SLOT);
 
@@ -1483,12 +1483,12 @@ Result(Zero) Write_Slot(Slot* slot, const Atom* write)
     Copy_Cell(var, write);
 
     slot->header.bits |= persist;  // preserve persist bits
-    return zero;
+    return none;
 
 } handle_dual_slot: { ////////////////////////////////////////////////////////
 
     if (Is_Blackhole_Slot(slot))  // e.g. `for-each _ [1 2 3] [...]`
-        return zero;  // toss it
+        return none;  // toss it
 
     assert(Is_Cell_Stable(write));
 
@@ -1504,14 +1504,14 @@ Result(Zero) Write_Slot(Slot* slot, const Atom* write)
     rebElide(CANON(SET), temp, rebQ(u_cast(Value*, write)));
 
     unnecessary(slot->header.bits |= persist);  // didn't write actual slot
-    return zero;
+    return none;
 }}
 
 
 //
 //  Write_Loop_Slot_May_Bind_Or_Decay: C
 //
-Result(Zero) Write_Loop_Slot_May_Bind_Or_Decay(
+Result(None) Write_Loop_Slot_May_Bind_Or_Decay(
     Slot* slot,
     Option(Atom*) write,
     const Value* container
@@ -1561,7 +1561,7 @@ Result(Zero) Write_Loop_Slot_May_Bind_Or_Decay(
 //
 //  Write_Loop_Slot_May_Bind: C
 //
-Result(Zero) Write_Loop_Slot_May_Bind(
+Result(None) Write_Loop_Slot_May_Bind(
     Slot* slot,
     Option(Value*) write,
     const Value* container

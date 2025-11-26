@@ -126,7 +126,7 @@ void Shutdown_Typesets(void)
 //    get the integer typecheck... but if WORD! is unbound then it would act
 //    as a WORD! typecheck.)
 //
-Result(Zero) Set_Parameter_Spec(
+Result(None) Set_Parameter_Spec(
     Element* param,  // target should be GC safe [1]
     const Element* spec,
     Context* spec_binding
@@ -327,7 +327,7 @@ Result(Zero) Set_Parameter_Spec(
 
     assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));
 
-    return zero;
+    return none;
 }}
 
 

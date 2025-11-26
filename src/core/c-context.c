@@ -431,7 +431,7 @@ void Collect_Context_Keys(
 //
 //      https://github.com/rebol/rebol-issues/issues/2276
 //
-static Result(Zero) Collect_Inner_Loop(
+static Result(None) Collect_Inner_Loop(
     Collector *cl,
     CollectFlags flags,
     const Element* head,
@@ -512,7 +512,7 @@ static Result(Zero) Collect_Inner_Loop(
         );
     }
 
-    return zero;
+    return none;
 }
 
 
@@ -522,7 +522,7 @@ static Result(Zero) Collect_Inner_Loop(
 // This exposes the functionality of WRAP* so it can be used by the boot
 // process on LIB before natives can be called.
 //
-Result(Zero) Wrap_Extend_Core(
+Result(None) Wrap_Extend_Core(
     Context* context,
     const Element* list,
     CollectFlags flags
@@ -547,7 +547,7 @@ Result(Zero) Wrap_Extend_Core(
     }
 
     Destruct_Collector(cl);
-    return zero;
+    return none;
 }
 
 

@@ -221,11 +221,30 @@
 ** enforcement that you don't pass an Option() to a function that expects the
 ** wrapped type without first unwrapping it.  You can also choose to add a
 ** runtime check that `unwrap` never happens on a zero-containing Option().
+**
+** 1. A `None` datatype is defined, which is conceptually like Option(void);
+**    it is a unit type that can only be constructed from `none`.  It can
+**    be used e.g. with Result(None) where Result(void) would become only
+**    void in C builds, prohibiting things like `return fail (...);`.
+**    You can't pass any parameter to the `return` of a function that has a
+**    void return type (e.g. `return void;` is illegal)
+**
+**    Proposals to change this have been rejected, e.g. this from 2015:
+**
+**    https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0146r0.html
+**
+**    To make it work in C, it's just an enum with a single zero value.  But
+**    the C++ version is more complex.
 */
 
-#define NeedfulOption(T)  T
+typedef enum {
+    NEEDFUL_NONE_ENUM_0 = 0
+} NeedfulNoneEnum;
 
+#define NeedfulNone  NeedfulNoneEnum  /* metaprogramming void surrogate [1] */
 #define needful_none  needful_nocast_0  /* unique type if C++ enhanced */
+
+#define NeedfulOption(T)  T
 
 #define needful_unwrap
 #define needful_opt
@@ -785,41 +804,6 @@ void Needful_Panic_Abruptly(const char* error) {
     { run_again_ = true; continue; }
 
 
-/****[[ ZERO TYPE (RETURN-ABLE `void` SURROGATE) ]]***************************
-**
-** When using wrappers like Result(T) to do their magic, void can't be used
-** as something that is able to be constructed from 0 when trying to do
-** something like `return fail (...);`  Result(void) would just be void in
-** a C build, and you can't pass any parameter to the `return` of a function
-** that has a void return type (not even void itself, as `return void;`)
-**
-** Proposals to change this have been rejected, e.g. this from 2015:
-**
-**   https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0146r0.html
-**
-** So instead of Result(void) we use Result(Zero).  This is like what Rust
-** would call the "unit type" (which they write as `()`).
-**
-** To make it work in C, it's just an enum with a single zero value.  But
-** the C++ version is more complex.
-**
-** 1. The name "Zero" is chosen because "Nothing" is too close to "None"
-**    which is being used for the `Option()` type's disengaged state.
-**
-** 2. There is no way the C++ enhancements can statically assert at
-**    compile-time that a Zero is only being constructed from the 0 literal.
-**    Because of this, you have to say `return zero` instead of `return 0`
-**    when using the Zero type to pass the C++ static analysis.
-*/
-
-typedef enum {
-    NEEDFUL_ZERO_ENUM_0 = 0  /* use lowercase for the constant [1] */
-} NeedfulZeroEnum;
-
-#define NeedfulZero  NeedfulZeroEnum
-#define needful_zero  NEEDFUL_ZERO_ENUM_0  /* use instead of 0 literal [2] */
-
-
 /****[[ NEEDFUL_DOES_CORRUPTIONS + CORRUPTION SEED/DOSE ]]********************
 **
 ** See Corrupt_If_Needful() for more information.
@@ -1045,9 +1029,10 @@ typedef enum {
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_OPTION_SHORTHANDS)
-    #define Option /* (T) */        NeedfulOption
+    #define None                    NeedfulNone
     #define none                    needful_none
 
+    #define Option /* (T) */        NeedfulOption
     #define unwrap /* ... */        needful_unwrap
     #define opt /* ... */           needful_opt
 #endif
@@ -1090,11 +1075,6 @@ typedef enum {
     #define whilst /* (cond) {body} */      needful_whilst
     #define then /* {branch} */             needful_then
     #define again                           needful_again
-#endif
-
-#if !defined(NEEDFUL_DONT_DEFINE_ZERO_SHORTHANDS)
-    #define Zero                    NeedfulZero
-    #define zero                    needful_zero
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)

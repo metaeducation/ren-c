@@ -143,7 +143,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 // version of what would be evaluated to.  So in the case of NULL, it will be
 // a single quote of nothing.
 //
-Result(Zero) Init_Invokable_From_Feed(
+Result(None) Init_Invokable_From_Feed(
     Sink(Value) out,
     Option(const Element*) first,  // override first value, vs. At_Feed(feed)
     Feed* feed,
@@ -155,7 +155,7 @@ Result(Zero) Init_Invokable_From_Feed(
     // needs review.
     //
     if (v == nullptr)  // no first, and feed was at end
-        return zero;
+        return none;
 
     if (Is_Group(v))  // `requote (append [a b c] #d, <can't-work>)`
         panic ("Actions made with REFRAMER cannot work with GROUP!s");
@@ -175,7 +175,7 @@ Result(Zero) Init_Invokable_From_Feed(
 
     if (not Is_Action(out)) {
         Quotify(Known_Element(out));
-        return zero;
+        return none;
     }
 
     // !!! Process_Action_Throws() calls Drop_Action() and loses the phase.
@@ -221,7 +221,7 @@ Result(Zero) Init_Invokable_From_Feed(
     ParamList* lens = Phase_Paramlist(Frame_Phase(action));
     Init_Lensed_Frame(out, varlist, lens, coupling);
 
-    return zero;
+    return none;
 }
 
 
@@ -234,7 +234,7 @@ Result(Zero) Init_Invokable_From_Feed(
 // that has to follow the rules of MAKE FRAME!...e.g. returning a frame.
 // This converts QUOTED?s into frames for the identity function.
 //
-Result(Zero) Init_Frame_From_Feed(
+Result(None) Init_Frame_From_Feed(
     Sink(Value) out,
     const Element* first,
     Feed* feed,
@@ -244,7 +244,7 @@ Result(Zero) Init_Frame_From_Feed(
       Init_Invokable_From_Feed(out, first, feed, error_on_deferred)
     );
     if (Is_Frame(out))
-        return zero;
+        return none;
 
     assert(Is_Quoted(out));
     ParamList* exemplar = Make_Varlist_For_Action(
@@ -262,7 +262,7 @@ Result(Zero) Init_Frame_From_Feed(
     //
     Option(const Symbol*) label = nullptr;
     Init_Frame(out, exemplar, label, NONMETHOD);
-    return zero;
+    return none;
 }
 
 

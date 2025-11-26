@@ -541,7 +541,7 @@ static REBDEC Trig_Value(
 //
 //  Arc_Trans: C
 //
-static Result(Zero) Arc_Trans(
+static Result(None) Arc_Trans(
     Sink(Value) out,
     const Value* value,
     bool radians,
@@ -564,7 +564,7 @@ static Result(Zero) Arc_Trans(
         dval = dval * 180.0 / PI; // to degrees
 
     Init_Decimal(out, dval);
-    return zero;
+    return none;
 }
 
 

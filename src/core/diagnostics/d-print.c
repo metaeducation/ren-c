@@ -104,7 +104,7 @@ void Form_Hex_Esc(Molder* mo, Byte b)
 //
 // Convert 32 bit RGBA to xxxxxx format.
 //
-Result(Zero) Form_RGBA(Molder* mo, const Byte* dp)
+Result(None) Form_RGBA(Molder* mo, const Byte* dp)
 {
     REBLEN len_old = Strand_Len(mo->strand);
     Size used_old = Strand_Size(mo->strand);
@@ -126,7 +126,7 @@ Result(Zero) Form_RGBA(Molder* mo, const Byte* dp)
     bp[8] = '\0';
 
     Term_Strand_Len_Size(mo->strand, len_old + 8, used_old + 8);
-    return zero;
+    return none;
 }
 
 

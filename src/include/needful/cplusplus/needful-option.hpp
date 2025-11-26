@@ -57,10 +57,13 @@
 //     Option(SomeEnum) baz = 0;          /* compile-time error */
 //
 
-struct Option0Struct {};
+struct NoneStruct {};
+
+#undef NeedfulNone
+#define NeedfulNone  needful::NoneStruct
 
 #undef needful_none
-#define needful_none  needful::Option0Struct{}  // instantiate {} none instance
+#define needful_none  needful::NoneStruct{}  // instantiate {} none instance
 
 
 //=//// OPTION WRAPPER ////////////////////////////////////////////////////=//
@@ -91,7 +94,7 @@ struct OptionWrapper {
 
     OptionWrapper () = default;  // garbage, or 0 if global [2]
 
-    OptionWrapper(Option0Struct)
+    OptionWrapper(NoneStruct)
         : o {needful_nocast_0}
       {}
 

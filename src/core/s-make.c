@@ -261,7 +261,7 @@ void Append_Any_Utf8_Limit(
 //
 // Append an integer string.
 //
-Result(Zero) Append_Int(Strand* dst, REBINT num)
+Result(None) Append_Int(Strand* dst, REBINT num)
 {
     Byte buf[32];
     Form_Int(buf, num);
@@ -269,7 +269,7 @@ Result(Zero) Append_Int(Strand* dst, REBINT num)
     trap (
       Append_Ascii(dst, s_cast(buf))
     );
-    return zero;
+    return none;
 }
 
 
@@ -278,7 +278,7 @@ Result(Zero) Append_Int(Strand* dst, REBINT num)
 //
 // Append an integer string.
 //
-Result(Zero) Append_Int_Pad(Strand* dst, REBINT num, REBINT digs)
+Result(None) Append_Int_Pad(Strand* dst, REBINT num, REBINT digs)
 {
     Byte buf[32];
     if (digs > 0)
@@ -289,7 +289,7 @@ Result(Zero) Append_Int_Pad(Strand* dst, REBINT num, REBINT digs)
     trap (
       Append_Ascii(dst, s_cast(buf))
     );
-    return zero;
+    return none;
 }
 
 

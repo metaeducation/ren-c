@@ -169,21 +169,6 @@ struct NEEDFUL_NODISCARD Result0Struct {  // [[nodiscard]] is good [1]
 #define NEEDFUL_RESULT_0  needful::Result0Struct{}
 
 
-//=//// DETECT OPTION WRAPPER TRAIT //////////////////////////////////////=//
-//
-// Result(T) in particular wants to disable you from saying `return nullptr;`
-// unless you specifically are using `Result(Option(T*))`.  This keeps you
-// from mistakenly returning a nullptr to indicate failure, when you need
-// to use `return fail(...)` to do so.
-//
-// This can only be tested for if you're using the OptionWrapper<T> type,
-// so you don't get the check if you aren't doing a build with it.
-//
-
-template<typename T>
-struct OptionWrapper;
-
-
 //=//// RESULT WRAPPER ////////////////////////////////////////////////////=//
 //
 // The Result type is trickery that mimics something like Rust's Result<T, E>
@@ -196,20 +181,6 @@ struct OptionWrapper;
 //    than allow Result to be constructed from any integer in the C++
 //    checked build, it's narrowly constructible from Result0Struct,
 //    which is what `return fail(...)` returns.
-//
-// 2. It's important that functions that particpate in the Result(T) error
-//    handling system don't return `nullptr` as a way of signaling failure.
-//    Not going through `return fail(...)` is a mistake, since it skips
-//    setting the global error state.  But since the error state is separate
-//    from the return value, zerolike states can be legal returns...so we
-//    allow it IF your return type is Result(Option(T*)) vs. Result(T*).
-//
-// 3. Attempts to generalize the construction of ResultWrapper<T> to wrappers
-//    that are able to produce ResultWrapper<T> by means of conversion
-//    operators seemed to fail.  DowncastHolder is a good example of what
-//    didn't work and had to be overridden explicitly.  Someone who knows
-//    more than me can look into this and see if it can generalize so that
-//    DowncastHolder need not be mentioned explicitly here.
 //
 
 template<typename T>
@@ -261,24 +232,6 @@ struct NEEDFUL_NODISCARD ResultWrapper {
     explicit ResultWrapper (const ResultWrapper<X>& result)
         : r {needful_xtreme_cast(T, result.r)}
     {}
-
-    template<
-        typename X,
-        typename = enable_if_t<needful_is_convertible_v(T, X)>
-    >
-    ResultWrapper (const UnhookableDowncastHolder<X> down)  // generalize? [3]
-        : r {needful_xtreme_cast(T, down.f)}
-    {
-    }
-
-    template<
-        typename X,
-        typename = enable_if_t<needful_is_convertible_v(T, X)>
-    >
-    ResultWrapper (const HookableDowncastHolder<X> down)  // generalize? [3]
-        : r {needful_lenient_hookable_cast(T, down.f)}
-    {
-    }
 };
 
 #undef NeedfulResult
@@ -287,41 +240,6 @@ struct NEEDFUL_NODISCARD ResultWrapper {
 
 template<typename X>
 struct IsResultWrapper<ResultWrapper<X>> : std::true_type {};
-
-
-//=//// ZERO (METAPROGRAMMING SURROGATE FOR LAME `void`) //////////////////=//
-//
-// 1. This could be called ZERO in all caps to be more consistent with
-//    enum naming, but the enum is just an implementation detail.  This is
-//    not like the all-caps TRASH or VOID that suggest Rebol types, it's
-//    specifically an implementation detail in C.  Lowercase seems better.
-//
-// 2. When building as C++, when a `fail` produces NEEDFUL_RESULT_0
-//    the ResultWrapper<> will typically try to construct its contents with
-//    a cast to zero.  Rather than make the Zero type support this generic
-//    methodology, we make a specialization of ResultWrapper<Zero>.
-//
-//    Besides stopping constructions of Zero from random integers, having a
-//    specialization may make it more efficient--if only in debug builds.
-//    Less code should be generated since the ResultWrapper<Zero> is a
-//    completely empty class with no `Zero` member.
-//
-
-struct ZeroStruct {};
-
-#undef NeedfulZero
-#define NeedfulZero  needful::ZeroStruct  // type in caps, instance lower [1]
-
-#undef needful_zero
-#define needful_zero  needful::ZeroStruct{}  // instantiate {} zero instance
-
-template<>
-struct NEEDFUL_NODISCARD ResultWrapper<ZeroStruct> {
-    ResultWrapper() = delete;
-
-    ResultWrapper(Result0Struct) {}
-    ResultWrapper(ZeroStruct) {}
-};
 
 
 //=//// RESULT EXTRACTOR //////////////////////////////////////////////////=//
@@ -358,12 +276,6 @@ inline T operator%(  // % high postfix precedence desired [1]
     ResultExtractor
 ){
     return result.r;
-}
-
-inline void operator%(  // % high postfix precedence desired [1]
-    const ResultWrapper<ZeroStruct>&,
-    ResultExtractor
-){
 }
 
 static constexpr ResultExtractor g_result_extractor{};

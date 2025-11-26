@@ -525,7 +525,7 @@ INLINE void Set_Flex_Len(Flex* f, Length len) {
 
 // Optimized expand when at tail (but, does not reterminate)
 //
-INLINE Result(Zero) Expand_Flex_Tail_And_Update_Used(Flex* f, REBLEN delta) {
+INLINE Result(None) Expand_Flex_Tail_And_Update_Used(Flex* f, REBLEN delta) {
     if (Flex_Fits(f, delta))
         Set_Flex_Used(f, Flex_Used(f) + delta);  // no termination implied
     else {
@@ -533,7 +533,7 @@ INLINE Result(Zero) Expand_Flex_Tail_And_Update_Used(Flex* f, REBLEN delta) {
           Expand_Flex_At_Index_And_Update_Used(f, Flex_Used(f), delta)
         );
     }
-    return zero;
+    return none;
 }
 
 

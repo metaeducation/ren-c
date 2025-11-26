@@ -767,7 +767,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
 //
 //  Set_Var_In_Scratch_To_Out: C
 //
-Result(Zero) Set_Var_In_Scratch_To_Out(
+Result(None) Set_Var_In_Scratch_To_Out(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
@@ -782,14 +782,14 @@ Result(Zero) Set_Var_In_Scratch_To_Out(
     if (e)
         return fail (unwrap e);
 
-    return zero;
+    return none;
 }
 
 
 //
 //  Get_Var_In_Scratch_To_Out: C
 //
-Result(Zero) Get_Var_In_Scratch_To_Out(
+Result(None) Get_Var_In_Scratch_To_Out(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
@@ -803,7 +803,7 @@ Result(Zero) Get_Var_In_Scratch_To_Out(
         return fail (unwrap e);
 
     if (Is_Error(OUT))  // !!! weird can't pick case
-        return zero;
+        return none;
 
     if (Is_Dual_Word_Unset_Signal(Known_Stable(OUT)))
         return fail (Error_Unset_Variable_Raw(Known_Element(SCRATCH)));
@@ -811,7 +811,7 @@ Result(Zero) Get_Var_In_Scratch_To_Out(
     require (
       Unliftify_Undecayed(OUT)  // not unstable if wasn't ^META [1]
     );
-    return zero;
+    return none;
 }
 
 
@@ -820,7 +820,7 @@ Result(Zero) Get_Var_In_Scratch_To_Out(
 //
 // Convenience wrapper for getting tuples that errors on trash.
 //
-Result(Zero) Get_Tuple_Maybe_Trash(
+Result(None) Get_Tuple_Maybe_Trash(
     Sink(Value) out,
     Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
@@ -851,7 +851,7 @@ Result(Zero) Get_Tuple_Maybe_Trash(
     require (
       Decay_If_Unstable(atom_out)
     );
-    return zero;
+    return none;
 }
 
 
@@ -867,7 +867,7 @@ Result(Zero) Get_Tuple_Maybe_Trash(
 //    this function, and then let the Action_Executor() use the refinements
 //    on the stack directly.  That avoids making an intermediate action.
 //
-Result(Zero) Get_Var_Maybe_Trash(
+Result(None) Get_Var_Maybe_Trash(
     Sink(Atom) out,
     Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* var,
@@ -930,7 +930,7 @@ Result(Zero) Get_Var_Maybe_Trash(
         if (steps_out and steps_out != GROUPS_OK)
             Init_Quasar(unwrap steps_out);  // !!! What to return?
 
-        return zero;
+        return none;
     }
 
     require (
@@ -954,7 +954,7 @@ Result(Zero) Get_Var_Maybe_Trash(
     if (error)
         return fail (unwrap error);
 
-    return zero;
+    return none;
 }
 
 
@@ -1072,7 +1072,7 @@ Result(Value*) Get_Chain_Push_Refinements(
 // implemented yet.  Right now a PATH! can only have two parts: a left side
 // (a WORD! or a TUPLE!) and a right side (a WORD! or a CHAIN!)
 //
-Result(Zero) Get_Path_Push_Refinements(Level* level_)
+Result(None) Get_Path_Push_Refinements(Level* level_)
 {
   #if NEEDFUL_DOES_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
     assert(Not_Cell_Readable(SPARE));
@@ -1281,14 +1281,14 @@ Result(Zero) Get_Path_Push_Refinements(Level* level_)
     if (e)
         return fail (unwrap e);
 
-    return zero;
+    return none;
 }}
 
 
 //
 //  Get_Any_Word_Maybe_Trash: C
 //
-Result(Zero) Get_Any_Word_Maybe_Trash(
+Result(None) Get_Any_Word_Maybe_Trash(
     Sink(Atom) out,
     const Element* word,  // heeds Sigil (^WORD! will UNLIFT)
     Context* context

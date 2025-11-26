@@ -48,7 +48,7 @@
 //             ; nulls that triggered the branch would have been heavy forms?
 //         ]
 //
-Result(Zero) Prep_Action_Level(
+Result(None) Prep_Action_Level(
     Level* L,
     const Value* action,
     Option(const Atom*) with
@@ -87,7 +87,7 @@ Result(Zero) Prep_Action_Level(
         break;
     } while (0);
 
-    return zero;
+    return none;
 }
 
 

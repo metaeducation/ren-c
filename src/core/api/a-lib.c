@@ -1158,7 +1158,7 @@ RebolValue* API_rebArg(
 //    Note that if vaptr is not null, then if p is null it actually means
 //    that it intends to represent a nulled cell as the first va_list item.
 //
-static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
+static Result(None) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     Sink(Value) out,
     Flags run_flags,  // RUN_VA_FLAG_INTERRUPTIBLE, etc.
     RebolContext* binding,
@@ -1210,7 +1210,7 @@ static Result(Zero) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
         );
     }
 
-    return zero;
+    return none;
 }
 
 

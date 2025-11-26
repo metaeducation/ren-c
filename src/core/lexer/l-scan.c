@@ -2124,7 +2124,7 @@ static void Apply_Quotes_If_Pending(Element* e, ScanState* S) {
 // At one time, things like lone apostrophes ''' were illegal, but that is
 // now considered a quoted form of the SPACE value.
 //
-static Result(Zero) Flush_Pending_On_End(ScanState* S) {
+static Result(None) Flush_Pending_On_End(ScanState* S) {
     attempt {
         if (S->sigil_pending) {  // e.g. "$]" or "''$]"
             assert(not S->quasi_pending);
@@ -2144,7 +2144,7 @@ static Result(Zero) Flush_Pending_On_End(ScanState* S) {
     then {
         Apply_Quotes_If_Pending(TOP_ELEMENT, S);
     }
-    return zero;
+    return none;
 }
 
 

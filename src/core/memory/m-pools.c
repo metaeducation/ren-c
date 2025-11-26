@@ -442,7 +442,7 @@ void Shutdown_Pools(void)
 // the size and units specified when the pool header was created.  The nodes
 // of the pool are linked to the free list.
 //
-Result(Zero) Fill_Pool(Pool* pool)
+Result(None) Fill_Pool(Pool* pool)
 {
     REBLEN num_units = pool->num_units_per_segment;
     REBLEN mem_size = pool->wide * num_units + sizeof(Segment);
@@ -482,7 +482,7 @@ Result(Zero) Fill_Pool(Pool* pool)
     }
 
     pool->last = unit;
-    return zero;
+    return none;
 }
 
 
@@ -720,7 +720,7 @@ static void Free_Unbiased_Flex_Data(char *unbiased, Size total)
 // can be relocated in memory.  Only store if you are certain the Flex is
 // set to not be resizable and you control the lifetime of the Flex.
 //
-Result(Zero) Expand_Flex_At_Index_And_Update_Used(
+Result(None) Expand_Flex_At_Index_And_Update_Used(
     Flex* f,
     REBLEN index,
     REBLEN delta
@@ -732,7 +732,7 @@ Result(Zero) Expand_Flex_At_Index_And_Update_Used(
         return fail (Error_Index_Out_Of_Range_Raw());  // 2GB max
 
     if (delta == 0)
-        return zero;
+        return none;
 
     REBLEN used_old = Flex_Used(f);
 
@@ -764,7 +764,7 @@ Result(Zero) Expand_Flex_At_Index_And_Update_Used(
         }
       #endif
         Assert_Flex_Term_If_Needed(f);
-        return zero;
+        return none;
     }
 
     // Width adjusted variables:
@@ -808,7 +808,7 @@ Result(Zero) Expand_Flex_At_Index_And_Update_Used(
             }
         }
       #endif
-        return zero;
+        return none;
     }
 
 //=//// INSUFFICIENT CAPACITY, NEW ALLOCATION REQUIRED ////////////////////=//
@@ -914,7 +914,7 @@ Result(Zero) Expand_Flex_At_Index_And_Update_Used(
     assert(Not_Base_Marked(f));
     Term_Flex_If_Necessary(f);  // code will not copy terminator over
 
-    return zero;
+    return none;
 }
 
 
@@ -1006,7 +1006,7 @@ DECLARE_NATIVE(SWAP_CONTENTS)
 // Reallocate a Flex as a given maximum size.  Content in the retained
 // portion of the length will be preserved if BASE_FLAG_BASE is passed in.
 //
-Result(Zero) Remake_Flex(Flex* f, REBLEN units, Flags flags)
+Result(None) Remake_Flex(Flex* f, REBLEN units, Flags flags)
 {
     // !!! This routine is being scaled back in terms of what it's allowed to
     // do for the moment; so the method of passing in flags is a bit strange.
@@ -1083,7 +1083,7 @@ Result(Zero) Remake_Flex(Flex* f, REBLEN units, Flags flags)
     if (was_dynamic)
         Free_Unbiased_Flex_Data(data_old - (wide * bias_old), size_old);
 
-    return zero;
+    return none;
 }
 
 

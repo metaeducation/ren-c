@@ -1114,7 +1114,7 @@ Bounce Action_Executor(Level* L)
 // GC have to be sensitive to how far fulfillment has progressed, to avoid
 // marking uninitialized memory.
 //
-Result(Zero) Push_Action(
+Result(None) Push_Action(
     Level* L,
     const Value* frame,
     Option(InfixMode) infix_mode
@@ -1195,7 +1195,7 @@ Result(Zero) Push_Action(
     ARG = L->rootvar + 1;
 
     Begin_Action(L, infix_mode);
-    return zero;
+    return none;
 }
 
 

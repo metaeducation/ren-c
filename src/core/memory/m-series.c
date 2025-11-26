@@ -57,14 +57,14 @@
 //    feature in the future again.  So since Set_Flex_Bias() uses bit masks
 //    on an existing value, clear out the whole value for starters.
 //
-Result(Zero) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
+Result(None) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
     assert(Get_Stub_Flag(s, DYNAMIC));  // once set, never shrinks [1]
 
     Byte wide = Flex_Wide(s);
     assert(wide != 0);
 
     if (cast(REBU64, capacity) * wide > INT32_MAX)  // R3-Alpha said "too big"
-        return zero;
+        return none;
 
     Size size;  // size of allocation, possibly bigger than we need [2]
 
@@ -114,7 +114,7 @@ Result(Zero) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
         Set_Trampoline_Flag(RECYCLE);  // queue it to run on next evaluation
 
     assert(Flex_Total(s) <= size);  // irregular widths won't use all space
-    return zero;
+    return none;
 }
 
 
@@ -123,7 +123,7 @@ Result(Zero) Flex_Data_Alloc(Flex* s, REBLEN capacity) {
 //
 // Extend a series at its end without affecting its tail index.
 //
-Result(Zero) Extend_Flex_If_Necessary_But_Dont_Change_Used(
+Result(None) Extend_Flex_If_Necessary_But_Dont_Change_Used(
   Flex* f,
   REBLEN delta
 ){
@@ -132,7 +132,7 @@ Result(Zero) Extend_Flex_If_Necessary_But_Dont_Change_Used(
       Expand_Flex_Tail_And_Update_Used(f, delta)
     );
     Set_Flex_Len(f, used_old);
-    return zero;
+    return none;
 }
 
 
