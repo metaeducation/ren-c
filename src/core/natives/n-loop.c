@@ -627,7 +627,7 @@ DECLARE_NATIVE(CFOR)
 //      word "Variable set to each position in the series at skip distance"
 //          [word! @word? _]
 //      series "The series to iterate over"
-//          [<opt-out> blank? any-series?]
+//          [<opt> blank? any-series?]
 //      skip "Number of positions to skip each time"
 //          [<opt-out> integer!]
 //      body "Code to evaluate each time"
@@ -638,7 +638,7 @@ DECLARE_NATIVE(FOR_SKIP)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
-    if (Is_Blank(ARG(SERIES)))
+    if (Is_Blank(ARG(SERIES)) or Is_Nulled(ARG(SERIES)))
         return VOID;
 
     Element* word = Element_ARG(WORD);
@@ -1255,10 +1255,10 @@ void Shutdown_Loop_Each(Value* iterator)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
-//          [<opt-out> blank? any-series? any-context? map! any-sequence?
+//          [<opt> blank? any-series? any-context? map! any-sequence?
 //           action!]  ; action support experimental, e.g. generators
 //      body "Block to evaluate each time"
-//          [<const> block! ^block!]
+//          [<const> block!]
 //      <local> iterator
 //  ]
 //
@@ -1289,7 +1289,7 @@ DECLARE_NATIVE(FOR_EACH)
     //    even in the code of this dispatcher, we need to clean up the
     //    iterator state.
 
-    if (Is_Blank(data))  // same response as to empty series
+    if (Is_Blank(data) or Is_Nulled(data))  // same response as to empty series
         return VOID;
 
     require (
@@ -1387,8 +1387,8 @@ DECLARE_NATIVE(FOR_EACH)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
-//          [<opt-out> blank? any-series? any-context? map! action!]
-//      body [<const> block! ^block!]
+//          [<opt> blank? any-series? any-context? map! action!]
+//      body [<const> block!]
 //          "Block to evaluate each time"
 //      <local> iterator
 //  ]
@@ -1414,7 +1414,7 @@ DECLARE_NATIVE(EVERY)
 
   initial_entry: {
 
-    if (Is_Blank(data))  // same response as to empty series
+    if (Is_Blank(data) or Is_Nulled(data))  // same response as to empty series
         return VOID;
 
     require (
@@ -1536,7 +1536,7 @@ DECLARE_NATIVE(EVERY)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (modified)"
-//          [<opt-out> blank? any-series?]
+//          [<opt> blank? any-series?]
 //      body "Block to evaluate (return TRUE to remove)"
 //          [<const> block!]
 //  ]
@@ -1557,7 +1557,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     Count removals = 0;
 
-    if (Is_Blank(ARG(DATA))) {
+    if (Is_Blank(ARG(DATA)) or Is_Nulled(ARG(DATA))) {
         Init_Blank(OUT);
         goto return_pack;
     }
@@ -1922,7 +1922,7 @@ DECLARE_NATIVE(MAP_EACH)
     UNUSED(PARAM(BODY));
     UNUSED(LOCAL(ITERATOR));
 
-    if (Is_Blank(ARG(DATA)))  // should have same result as empty list
+    if (Is_Blank(ARG(DATA)) or Is_Nulled(ARG(DATA)))  // same as empty list
         return Init_Block(OUT, Make_Source_Managed(0));
 
     if (not Is_Action(ARG(DATA)))
@@ -1978,7 +1978,7 @@ DECLARE_NATIVE(MAP)
 
     assert(Is_Cell_Erased(OUT));  // output only written in MAP if BREAK hit
 
-    if (Is_Blank(data))  // same response as to empty series
+    if (Is_Blank(data) or Is_Nulled(data))  // same response as to empty series
         return Init_Block(OUT, Make_Source(0));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
@@ -2130,7 +2130,7 @@ DECLARE_NATIVE(MAP)
 //      return: "Last body result, or null if BREAK"
 //          [any-stable?]
 //      count "Repetitions (true loops infinitely, false doesn't run)"
-//          [<opt-out> any-number? logic?]
+//          [<opt> any-number? logic?]
 //      body "Block to evaluate or action to run"
 //          [<unrun> <const> block! frame!]
 //  ]
@@ -2161,6 +2161,9 @@ DECLARE_NATIVE(REPEAT)
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
+
+    if (Is_Nulled(count))
+        return VOID;  // treat <opt> void input as "don't run"
 
     if (Is_Logic(count)) {
         if (Cell_Logic(count) == false)
