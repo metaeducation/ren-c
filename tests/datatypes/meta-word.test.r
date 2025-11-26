@@ -5,4 +5,4 @@
 (metaform! = type of '^foo)
 
 (x: 10, (the '10) = lift x)
-(^x: lift null, null = x)
+(^x: null, null = x)

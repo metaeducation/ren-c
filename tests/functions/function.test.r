@@ -445,7 +445,7 @@
         use [x] [return ~]
         42
     ]
-    (lift trash) = lift f
+    (lift ^tripwire) = lift f
 )]
 
 (

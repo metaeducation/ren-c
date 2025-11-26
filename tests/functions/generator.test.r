@@ -178,7 +178,7 @@
     /c: cascade [
         generator [yield 1 yield 2 yield 3]
 
-        func [^x] [return either done? unlift x [done] [(unlift x) + 10]]
+        func [^x] [return either done? ^x [done] [x + 10]]
     ]
     all [
         c = 11

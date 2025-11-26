@@ -12,7 +12,7 @@
 (1 = if ok [1])
 
 ((lift null) = lift if null [])
-('~[]~ = lift if ok [])
+('~,~ = lift if ok [])
 
 (warning? if ok [rescue [1 / 0]])
 ; RETURN stops the evaluation
@@ -82,8 +82,8 @@
 
 ; recursive behaviour
 
-('~[]~ = lift if ok [if null [1]])
-(void? if ok [2 if null [1]])
+('~[~null~]~ = lift if ok [if null [1]])
+(heavy-null? if ok [2 if null [1]])
 (1 = if ok [if ok [1]])
 
 ; infinite recursion
