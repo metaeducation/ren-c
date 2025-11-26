@@ -1,5 +1,5 @@
 //
-//  file: %needful-wrapping.h
+//  file: %needful-wrapping.hpp
 //  summary: "Helpers for wrapped type detection and rewrapping"
 //  homepage: <needful homepage TBD>
 //

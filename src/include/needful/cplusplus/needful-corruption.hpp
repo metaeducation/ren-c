@@ -1,5 +1,5 @@
 //
-//  file: %needful-corruption.h
+//  file: %needful-corruption.hpp
 //  summary: "Helpers for deliberately corrupting memory in debug builds"
 //  homepage: <needful homepage TBD>
 //

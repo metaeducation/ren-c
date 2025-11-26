@@ -1,5 +1,5 @@
 //
-//  file: %needful-ensure.h
+//  file: %needful-ensure.hpp
 //  summary: "Type ensuring helpers that use C++ type_traits"
 //  homepage: <needful homepage TBD>
 //

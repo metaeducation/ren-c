@@ -1,5 +1,5 @@
 //
-//  file: %needful-casts.h
+//  file: %needful-casts.hpp
 //  summary: "Cast macros with added features when built as C++11 or higher"
 //  homepage: <needful homepage TBD>
 //

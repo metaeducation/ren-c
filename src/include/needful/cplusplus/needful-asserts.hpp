@@ -1,5 +1,5 @@
 //
-//  file: %needful-asserts.h
+//  file: %needful-asserts.hpp
 //  summary: "Assertions and commentary macros for C and C++""
 //  homepage: <needful homepage TBD>
 //

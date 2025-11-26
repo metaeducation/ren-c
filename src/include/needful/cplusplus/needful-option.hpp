@@ -1,5 +1,5 @@
 //
-//  file: %needful-option.h
+//  file: %needful-option.hpp
 //  summary: "Optional Wrapper Trick for C's Boolean Coercible Types"
 //  homepage: <needful homepage TBD>
 //

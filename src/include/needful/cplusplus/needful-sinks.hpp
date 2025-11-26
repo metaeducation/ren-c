@@ -1,5 +1,5 @@
 //
-//  file: %needful-sinks.h
+//  file: %needful-sinks.hpp
 //  summary: "Contravariant type checking and corruption of output parameters"
 //  homepage: <needful homepage TBD>
 //

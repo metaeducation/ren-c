@@ -1,5 +1,5 @@
 //
-//  file: %needful-utilities.h
+//  file: %needful-utilities.hpp
 //  summary: "Utility macros for C++11 and higher"
 //  homepage: <needful homepage TBD>
 //
