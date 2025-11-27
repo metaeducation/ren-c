@@ -6,9 +6,9 @@
 (
 whitespace: [some [space | newline]]
 
-suit-order: [♣ ♦ ♥ ♠]
-direction-order: [N E S W]
-rank-order: [2 3 4 5 6 7 8 9 T J Q K A]
+suit-order: '[♣ ♦ ♥ ♠]
+direction-order: '[N E S W]
+rank-order: '[2 3 4 5 6 7 8 9 T J Q K A]
 
 one-hand-rule: [
     let suit: ('♣)

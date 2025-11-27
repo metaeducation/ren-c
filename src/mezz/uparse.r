@@ -1217,9 +1217,7 @@ default-combinators: make map! [
         if set-group? target [
             if not match [
                 any-word? set-word? get-word?
-            ] (target: eval target) [
-                probe target
-                probe type of target
+            ] (target: eval unchain target) [
                 panic [
                     "GROUP! from EMIT (...): must produce an ANY-WORD?, not"
                     @target
