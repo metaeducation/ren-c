@@ -2,6 +2,13 @@
 ;
 ; Multiple return values are based on unstable BLOCK! antiforms (PACK!).
 
+; Assigning empty block passes things through undisturbed
+[
+    (10 = []: 10)
+    (~['10 '20]~ = []: pack [10 20])
+    (error? []: fail "HI")
+]
+
 [
     (test: func [x] [
         return pack [304 <y-result> <z-result>]

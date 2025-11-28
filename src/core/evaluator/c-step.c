@@ -1526,13 +1526,15 @@ Bounce Stepper_Executor(Level* L)
     // the overall result of the expression (defaults to passing through the
     // entire pack).
     //
-    // 1. Empty SET-BLOCK! are not supported, although it could be argued
-    //    that an empty set-block could receive a VOID (~[]~) pack.
+    // 1. Empty SET-BLOCK follows the same rules as any other block receiving
+    //    more values than it wants: it ignores the extra values, and passes
+    //    through the original assignment.  That's technically *all* potential
+    //    states that might come up on the right hand side--including ERROR!
+    //    The behavior naturally "falls out" of the implementation.
 
     assert(STATE == ST_STEPPER_SET_BLOCK and Is_Block(CURRENT));
 
-    if (Series_Len_At(CURRENT) == 0)  // not supported [1]
-        panic ("SET-BLOCK! must not be empty for now.");
+    possibly(Series_Len_At(CURRENT) == 0);  // pass through everything [1]
 
     const Element* tail;
     const Element* check = List_At(&tail, CURRENT);
