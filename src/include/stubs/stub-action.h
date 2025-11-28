@@ -237,6 +237,10 @@ enum {
     MAX_IDX_TYPECHECKER = IDX_TYPECHECKER_TYPESET_BYTE
 };
 
+enum {
+    IDX_ARROW_BODY = 1,  // note this doesn't use IDX_INTERPRETED_BODY (why?)
+    MAX_IDX_ARROW = IDX_ARROW_BODY
+};
 
 INLINE const Symbol* Key_Symbol(const Key* key)
   { return *key; }

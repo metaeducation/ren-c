@@ -71,3 +71,24 @@
     x: (-> [1 + 2])
     3 = x
 )
+
+; Lambdas have type checking, but no RETURN word.  Use []: to give hint of
+; what is missing.
+[(
+    foo: lambda [[]: [integer!]] [1020]
+    1020 = foo
+)
+~bad-return-type~ !! (
+    foo: lambda [[]: [tag!]] [304]
+    foo
+)]
+
+; With lambdas, []: [] doesn't discard result, it typechecks it as trash
+[(
+    foo: lambda [[]: []] [~]
+    tripwire? foo
+)
+~bad-return-type~ !! (
+    foo: lambda [[]: []] [1020]
+    foo
+)]

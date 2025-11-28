@@ -77,11 +77,6 @@
 
 #include "sys-core.h"
 
-enum {
-    IDX_ARROW_BODY = 1,  // note this doesn't use IDX_INTERPRETED_BODY
-    MAX_IDX_ARROW = IDX_ARROW_BODY
-};
-
 
 //
 //  Arrow_Dispatcher: C

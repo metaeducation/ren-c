@@ -61,10 +61,12 @@ static void Force_Adjunct(VarList* *adjunct_out) {
 //
 static Result(None) Push_Keys_And_Params_Core(
     VarList* *adjunct,
-    Level* L,
+    Level* const L,
     Flags flags,
-    Option(SymId) returner  // e.g. SYM_RETURN or SYM_YIELD
+    Option(SymId) returner  // e.g. SYM_RETURN, SYM_YIELD, SYM_DUMMY1 ([]:)
 ){
+    USE_LEVEL_SHORTHANDS (L);
+
     StackIndex base = L->baseline.stack_base;
 
     if (returner) {
@@ -258,25 +260,20 @@ static Result(None) Push_Keys_And_Params_Core(
             if (mode != SPEC_MODE_PUSHED)  // must come after parameter [1]
                 return fail (Error_Bad_Func_Def_Raw(item));
 
-            DECLARE_ELEMENT (param);  // we'll call GET, which uses the stack
-            Copy_Cell(param, TOP_ELEMENT);
+            Element* spare = Copy_Cell(SPARE, TOP_ELEMENT);  // GET moves stack
 
-            if (Parameter_Spec(param))  // `func [x [integer!] [integer!]]`
+            if (Parameter_Spec(spare))  // `func [x [integer!] [integer!]]`
                 return fail (Error_Bad_Func_Def_Raw(item));  // too many blocks
 
             Context* derived = Derive_Binding(Level_Binding(L), item);
-            Push_Lifeguard(param);
             Option(Error*) e = rescue (
-                Set_Parameter_Spec(param, item, derived)
+                Set_Parameter_Spec(spare, item, derived)
             );
-            Drop_Lifeguard(param);
 
             if (e)
                 return fail (unwrap e);
 
-            Copy_Cell(TOP_ELEMENT, param);  // put modification back on stack
-
-            Copy_Cell(TOP_ELEMENT, param);  // put modification back on stack
+            Copy_Cell(TOP_ELEMENT, spare);  // put modification back on stack
 
             continue;
         }
@@ -323,6 +320,24 @@ static Result(None) Push_Keys_And_Params_Core(
                 // used to create dummy variables in mid-spec.  Review.
                 //
                 mode = SPEC_MODE_DEFAULT;
+                break; }
+
+              case TRAILING_SPACE_AND(BLOCK): {
+                Element* spare = Copy_Cell(SPARE, item);
+                trap (
+                  Unsingleheart_Sequence(spare)
+                );
+                if (
+                    returner != SYM_DUMMY1  // used by LAMBDA (hack)
+                    or Series_Len_At(spare) != 0
+                ){
+                    return fail (
+                        "SET-BLOCK! result spec only allowed as []: in LAMBDA"
+                    );
+                }
+                symbol = CANON(DUMMY1);
+                pclass = PARAMCLASS_NORMAL;
+                is_returner = true;
                 break; }
 
               case TRAILING_SPACE_AND(WORD):
@@ -388,6 +403,10 @@ static Result(None) Push_Keys_And_Params_Core(
             and Symbol_Id(symbol) == unwrap returner
             and not is_returner
         ){
+            if (SYM_DUMMY1 == unwrap returner)
+                return fail (
+                    "DUMMY1 is a reserved arg name in LAMBDA due to a hack :-("
+                );
             if (SYM_RETURN == unwrap returner)
                 return fail (
                     "Generator provides RETURN:, use LAMBDA if not desired"
@@ -426,10 +445,12 @@ static Result(None) Push_Keys_And_Params_Core(
                     LIFT_BYTE(param) == ONEQUOTE_NONQUASI_4
                     and Heart_Of(param) == TYPE_PARAMETER
                 );
+                if (SYM_DUMMY1 == unwrap returner)
+                    return fail ("Duplicate []: in lambda spec");
                 if (SYM_RETURN == unwrap returner)
                     return fail ("Duplicate RETURN: in function spec");
                 assert(SYM_YIELD == unwrap returner);
-                return fail ("Duplicate YIELD: in function spec");
+                return fail ("Duplicate YIELD: in yielder spec");
             }
         }
         else {  // Pushing description values for a new named element...
@@ -461,7 +482,7 @@ static Result(None) Push_Keys_And_Params_Core(
         }
     }
 
-    if (returner) {  // default RETURN: or YIELD: to unconstrained if not seen
+    if (returner) {  // make RETURN: or YIELD: or []: unconstrained if not seen
         assert(
             Word_Id(Data_Stack_At(Element, base + 1))
             == unwrap returner
@@ -682,7 +703,7 @@ Result(ParamList*) Make_Paramlist_Managed(
     Sink(VarList*) adjunct,
     const Element* spec,
     Flags flags,  // flags may be modified to carry additional information
-    Option(SymId) returner  // e.g. SYM_YIELD or SYM_RETURN
+    Option(SymId) returner  // e.g. SYM_YIELD, SYM_RETURN, or SYM_DUMMY1 ([]:)
 ){
     StackIndex base = TOP_INDEX;
 
@@ -712,7 +733,8 @@ Result(ParamList*) Make_Paramlist_Managed(
 //  Pop_Unpopped_Return: C
 //
 // If you use MKF_DONT_POP_RETURN, the return won't be part of the paramlist
-// but left on the stack.  Natives put this in the Details array.
+// but left on the stack.  Natives put this in the Details array, as does
+// LAMBDA because it doesn't have a definitional returning concept.
 //
 void Pop_Unpopped_Return(Sink(Element) out, StackIndex base)
 {
@@ -724,7 +746,7 @@ void Pop_Unpopped_Return(Sink(Element) out, StackIndex base)
     LIFT_BYTE(TOP) = NOQUOTE_2;
     Copy_Cell(out, TOP_ELEMENT);
     DROP();
-    assert(Word_Id(TOP) == SYM_RETURN);
+    assert(Word_Id(TOP) == SYM_RETURN or Word_Id(TOP) == SYM_DUMMY1);
     DROP();
 
     UNUSED(base);

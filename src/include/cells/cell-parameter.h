@@ -485,7 +485,7 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
 
 
 INLINE bool Is_Parameter_Unconstrained(const Cell* param) {
-    return Parameter_Spec(param) == nullptr;  // e.g. `[/refine]`
+    return Parameter_Spec(param) == nullptr;  // e.g. `[:refine]`
 }
 
 

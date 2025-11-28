@@ -60,7 +60,8 @@
 
 enum {
     IDX_LAMBDA_BODY = IDX_INTERPRETED_BODY,
-    MAX_IDX_LAMBDA = IDX_LAMBDA_BODY
+    IDX_LAMBDA_RESULT_PARAM,  // specified in interface by `[]: [<typespec>]`
+    MAX_IDX_LAMBDA = IDX_LAMBDA_RESULT_PARAM
 };
 
 
@@ -92,8 +93,32 @@ Bounce Lambda_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
+    enum {
+        ST_LAMBDA_INITIAL_ENTRY = STATE_0,
+        ST_LAMBDA_BODY_EXECUTING
+    };
+
     Details* details = Ensure_Level_Details(L);
-    assert(Details_Max(details) == MAX_IDX_LAMBDA);
+
+    Option(const Element*) result_param;
+
+    if (Details_Max(details) == MAX_IDX_ARROW)
+        result_param = nullptr;
+    else {
+        assert(Details_Max(details) == MAX_IDX_LAMBDA);
+        result_param = cast(Element*,
+            Details_At(details, IDX_LAMBDA_RESULT_PARAM)
+        );
+        assert(Is_Parameter(result_param));
+    }
+
+    switch (STATE) {
+      case ST_LAMBDA_INITIAL_ENTRY: goto initial_entry;
+      case ST_LAMBDA_BODY_EXECUTING: goto body_finished;
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
 
     const Element* block = cast(Element*, Details_At(details, IDX_LAMBDA_BODY));
     assert(Is_Block(block));
@@ -116,8 +141,25 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    return BOUNCE_DELEGATE;
-}
+    if (not result_param or Is_Parameter_Unconstrained(result_param))
+        return BOUNCE_DELEGATE;  // no typecheck callback needed
+
+    STATE = ST_LAMBDA_BODY_EXECUTING;
+    return CONTINUE_SUBLEVEL(sub);
+
+} body_finished: { ///////////////////////////////////////////////////////////
+
+    assert(STATE == ST_LAMBDA_BODY_EXECUTING);
+    assert(not Is_Parameter_Unconstrained(unwrap result_param));
+
+    require (
+      bool check = Typecheck_Coerce_Return(LEVEL, unwrap result_param, OUT)
+    );
+    if (not check)  // do it now [2]
+        panic (Error_Bad_Return_Type(L, OUT, unwrap result_param));
+
+    return OUT;
+}}
 
 
 //
@@ -132,12 +174,11 @@ bool Lambda_Details_Querier(
     assert(Details_Max(details) == MAX_IDX_LAMBDA);
 
     switch (property) {
-      case SYM_RETURN_OF:
-        Init_Unconstrained_Parameter(
-            out,
-            FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
-        );
-        return true;
+      case SYM_RETURN_OF: {
+        Value* param = Details_At(details, IDX_LAMBDA_RESULT_PARAM);
+        assert(Is_Parameter(param));
+        Copy_Cell(out, param);
+        return true; }
 
       case SYM_BODY_OF: {
         Copy_Cell(out, Details_At(details, IDX_LAMBDA_BODY));
@@ -165,6 +206,17 @@ bool Lambda_Details_Querier(
 //  ]
 //
 DECLARE_NATIVE(LAMBDA)
+//
+// 1. The idea of LAMBDA being able to have a type constraint in its spec was
+//    held hostage for a while to not knowing what to call the word for it.
+//    Functions do [return: [<typespsec>], yielders do [yield: [<typespec>],
+//    but it would be deceptive to call it RETURN: in a lambda since it
+//    doesn't actually define a RETURN.
+//
+//    Eventually using an empty SET-BLOCK as [[]: [<typespec>]] was chosen.
+//    It's weird, but the empty block shows what's missing that you would
+//    otherwise expect there, as a word for what the returnlike construct is.
+//    But there isn't one...so the empty block stands in for it.
 {
     INCLUDE_PARAMS_OF_LAMBDA;
 
@@ -175,10 +227,15 @@ DECLARE_NATIVE(LAMBDA)
       Details* details = Make_Interpreted_Action(
         spec,
         body,
-        SYM_0,  // no RETURN: in the paramlist
+        SYM_DUMMY1,  // cue look for []: in the paramlist for return spec [1]
         &Lambda_Dispatcher,
         MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
     ));
+
+    Pop_Unpopped_Return(  // SYM_DUMMY1 parameter was not popped
+        Details_At(details, IDX_LAMBDA_RESULT_PARAM),
+        STACK_BASE
+      );
 
     Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
     return UNSURPRISING(OUT);

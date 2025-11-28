@@ -359,7 +359,7 @@ bool Func_Details_Querier(
 Result(Details*) Make_Interpreted_Action(
     const Element* spec,
     const Element* body,
-    Option(SymId) returner,  // SYM_RETURN, SYM_YIELD, SYM_0 ...
+    Option(SymId) returner,  // SYM_RETURN, SYM_YIELD, SYM_DUMMY1 ([]:)
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
@@ -370,7 +370,7 @@ Result(Details*) Make_Interpreted_Action(
     ParamList* paramlist = Make_Paramlist_Managed(
         &adjunct,
         spec,
-        MKF_MASK_NONE,
+        returner == SYM_DUMMY1 ? MKF_DONT_POP_RETURN : MKF_MASK_NONE,
         returner
     ) except (Error* e) {
         panic (e);
