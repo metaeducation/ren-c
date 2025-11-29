@@ -64,3 +64,42 @@
     (#b = parse "ab" [one [one]])
     (#b = parse "ab" [[one] [one]])
 ]
+
+; There are TWO, THREE, etc. and they give splices as long as there's enough
+; material.  You don't have to use the product if you don't want it, hence
+; e.g. TWO can be a shorthand for SKIP 2
+[
+    ('a = parse [a] [one])
+    (~(a a)~ = parse [a a] [two])
+    (~(a a a)~ = parse [a a a] [three])
+    (~(a a a a)~ = parse [a a a a] [four])
+    (~(a a a a a)~ = parse [a a a a a] [five])
+
+    ~parse-mismatch~ !! (parse [] [three])
+    ~parse-mismatch~ !! (parse [a] [three])
+    ~parse-mismatch~ !! (parse [a a] [three])
+]
+
+[
+    (#a = parse "a" [one])
+    ("aa" = parse "aa" [two])
+    ("aaa" = parse "aaa" [three])
+    ("aaaa" = parse "aaaa" [four])
+    ("aaaaa" = parse "aaaaa" [five])
+
+    ~parse-mismatch~ !! (parse "" [three])
+    ~parse-mismatch~ !! (parse "a" [three])
+    ~parse-mismatch~ !! (parse "aa" [three])
+]
+
+[
+    (10 = parse #{0A} [one])
+    (#{0A0A} = parse #{0A0A} [two])
+    (#{0A0A0A} = parse #{0A0A0A} [three])
+    (#{0A0A0A0A} = parse #{0A0A0A0A} [four])
+    (#{0A0A0A0A0A} = parse #{0A0A0A0A0A} [five])
+
+    ~parse-mismatch~ !! (parse #{} [three])
+    ~parse-mismatch~ !! (parse #{0A} [three])
+    ~parse-mismatch~ !! (parse #{0A0A} [three])
+]

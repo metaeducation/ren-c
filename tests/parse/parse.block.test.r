@@ -145,7 +145,7 @@
     (
         res: ~
         all [
-            'b = parse [a a b] [<next> res: ['a | 'b] one]
+            'b = parse [a a b] [next res: ['a | 'b] one]
             res = 'a
         ]
     )

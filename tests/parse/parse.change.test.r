@@ -19,7 +19,7 @@
         ")" = parse str [
             "("
             change [to ")"] spread collect [
-                some ["a" keep ("A") | <next>]
+                some ["a" keep ("A") | next]
             ]
             ")"
         ]
@@ -132,7 +132,7 @@
         digit: charset [1 - 9]
         all wrap [
             '~#change~ = lift parse bin: #{010A020B03} [
-                some [change digit (#{00}) | <next>]
+                some [change digit (#{00}) | next]
             ]
             bin = #{000A000B00}
         ]

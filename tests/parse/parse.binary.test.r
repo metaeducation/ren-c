@@ -146,7 +146,7 @@
 
     ~parse-mismatch~ !! (parse #{0A0A0B0B} [some #{0A} some #"^L"])
 
-    (#"^L" = parse #{0B0A0A0A0C} [<next> some [#{0A}] #"^L"])
+    (#"^L" = parse #{0B0A0A0A0C} [next some [#{0A}] #"^L"])
 ]
 
 
@@ -220,14 +220,14 @@
         wa: [#{0A}]
         res: ~
         all [
-            11 = parse #{0A0A0B} [<next> res: #{0A} one]
+            11 = parse #{0A0A0B} [next res: #{0A} one]
             res = #{0A}
         ]
     )
     (
         res: ~
         all [
-            11 = parse #{0A0A0B} [<next> res: [#{0A} | #{0B}] one]
+            11 = parse #{0A0A0B} [next res: [#{0A} | #{0B}] one]
             res = #{0A}
         ]
     )
@@ -241,7 +241,7 @@
     (
         res: ~
         all [
-            #"^L" = parse #{0B0A0A0A0C} [<next> res: some #{0A} #"^L"]
+            #"^L" = parse #{0B0A0A0A0C} [next res: some #{0A} #"^L"]
             res = #{0A}
         ]
     )
@@ -249,7 +249,7 @@
         wa: [#{0A}]
         res: ~
         all [
-            #"^L" = parse #{0B0A0A0A0C} [<next> res: some wa #"^L"]
+            #"^L" = parse #{0B0A0A0A0C} [next res: some wa #"^L"]
             res = #{0A}
         ]
     )

@@ -29,7 +29,7 @@
         #a = parse "a" [optional wa]
     )
     (#a = parse "a" [opt one])
-    (#c = parse "abc" [<next> opt #b one])
+    (#c = parse "abc" [next opt #b one])
 ]
 
 [

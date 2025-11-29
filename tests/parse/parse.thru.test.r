@@ -54,7 +54,7 @@
 
 [#1457
     (#a = parse "a" compose [thru (charset "a")])
-    ~parse-mismatch~ !! (parse "a" compose [thru (charset "a") <next>])
+    ~parse-mismatch~ !! (parse "a" compose [thru (charset "a") next])
 ]
 
 [#2141 (
@@ -97,7 +97,7 @@
     res: ~
     all [
         'b = parse [1 "hello" a 1 2 3 b] [
-            thru "hello" <next> res: across to 'b one
+            thru "hello" next res: across to 'b one
         ]
         res = [1 2 3]
     ]
@@ -109,12 +109,12 @@
     (#a = parse "a" [thru #a <end>])
     ~parse-mismatch~ !! (parse "a" [thru #a one])
     (#b = parse "ab" [thru #a one])
-    (#a = parse "aaba" [<next> thru #a repeat 2 one])
+    (#a = parse "aaba" [next thru #a repeat 2 one])
     (#a = parse "a" [thru [#a]])
     (#a = parse "a" [thru [#a] <end>])
     ~parse-mismatch~ !! (parse "a" [thru [#a] one])
     (#b = parse "ab" [thru [#a] one])
-    (#a = parse "aaba" [<next> thru [#a] repeat 2 one])
+    (#a = parse "aaba" [next thru [#a] repeat 2 one])
     (#c = parse "zzabc" [thru [#c | #b | #a] repeat 2 one])
     (#c = parse "zzabc" [thru [#a | #b | #c] repeat 2 one])
     (#c = parse "bbaaac" [thru repeat 3 #a #c])
@@ -140,7 +140,7 @@
     (#{0A} = parse #{0A} [thru #{0A} <end>])
     ~parse-mismatch~ !! (parse #{0A} [thru #{0A} one])
     (11 = parse #{0A0B} [thru #{0A} one])
-    (10 = parse #{0A0A0B0A} [<next> thru #{0A} repeat 2 one])
+    (10 = parse #{0A0A0B0A} [next thru #{0A} repeat 2 one])
     (#{0A} = parse #{0A} [thru [#{0A}]])
     (#{0A} = parse #{0A} [thru [#{0A}] <end>])
     ~parse-mismatch~ !! (parse #{0A} [thru [#{0A}] one])

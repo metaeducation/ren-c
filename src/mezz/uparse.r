@@ -274,6 +274,7 @@ set-combinator-input: lambda [f input] [
 ]
 
 block-combinator: ~  ; need in variable for recursion implementing "..."
+span-combinator: ~  ; for doing TWO, THREE, FOUR, FIVE...
 
 ; !!! We use a MAP! here instead of an OBJECT! because if it were MAKE OBJECT!
 ; then the parse keywords would override the Rebol functions (so you couldn't
@@ -2117,27 +2118,28 @@ default-combinators: make map! [
         return ^ghost
     ]
 
-    'skip ghostable combinator [
+    'skip combinator [
         "Skip an integral number of items"
-        return: [ghost!]
+        return: "Input position after the skip"
+            [any-series?]
         input [any-series?]
         parser [action!]
         <local> ^result
     ][
         [^result _]: trap parser input
 
-        if space? ^result [
-            return ^ghost
+        if void? ^result [  ; e.g. `skip (opt num)` when num is null
+            return input
         ]
         if not integer? ^result [
             panic "SKIP expects INTEGER! amount to skip"
         ]
-        input: trap skip input ^result  ; out of bounds is just match failure
-        return ^ghost
+
+        return input: trap skip input ^result  ; out of bounds fails match
     ]
 
-    'one combinator [  ; historically used "SKIP" for this
-        "Match one series item in input, succeeding so long as it's not at END"
+    'one combinator [
+        "Match any one series item in input"
         return: "One element of series input"
             [element?]
         input [any-series?]
@@ -2148,14 +2150,38 @@ default-combinators: make map! [
         return item
     ]
 
-    <next> combinator [  ; historically used "SKIP" for this, also
+    elide span-combinator: combinator [
+        "Match any N series items in input"
+        return: "Two elements of series input (SPLICE! if input is list)"
+            [splice! any-string? blob!]
+        input [any-series?]
+        count
+        <local> result
+    ][
+        result: copy:part input count  ; should this sematic be COPY:RELAX ?
+        if count <> length of result [
+            return fail "Insufficient items in series for span capture"
+        ]
+        input: skip input count
+
+        if any-list? input [
+            return spread result  ; want a SPLICE! in this case
+        ]
+        return result
+    ]
+
+    'two specialize span-combinator [count: 2]
+    'three specialize span-combinator [count: 3]
+    'four specialize span-combinator [count: 4]
+    'five specialize span-combinator [count: 5]  ; is five enough?  too much?
+
+    'next combinator [
         "Give next position in input, succeeding so long as it's not at END"
-        return: "One element of series input"
+        return: "Input position after skipping one item"
             [element?]
         input [any-series?]
     ][
-        input: trap next input  ; match fail if out of bounds, tail is legal
-        return input
+        return input: trap next input  ; match fail if out of bounds
     ]
 
     === ACTION! COMBINATOR ===

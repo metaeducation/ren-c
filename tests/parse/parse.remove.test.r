@@ -17,7 +17,7 @@
 
 (all wrap [
     '~#remove~ = lift parse text: "a ^/ " [
-        some [newline remove [to <end>] | "a" [remove [to newline]] | <next>]
+        some [newline remove [to <end>] | "a" [remove [to newline]] | next]
     ]
     text = "a^/"
 ])
@@ -76,13 +76,13 @@
     (
         str: "hello world"
         all [
-            "world" = parse str [remove "hello" <next> "world"]
+            "world" = parse str [remove "hello" next "world"]
             str = " world"
         ]
     )
     (all [
         let s
-        '~#remove~ = lift parse s: " t e s t " [some [remove ws | <next>]]
+        '~#remove~ = lift parse s: " t e s t " [some [remove ws | next]]
         s = "test"
     ])
     (all [
@@ -135,13 +135,13 @@
     (
         bin: #{DEAD00BEEF}
         all [
-            #{BEEF} = parse bin [remove #{DEAD} <next> #{BEEF}]
+            #{BEEF} = parse bin [remove #{DEAD} next #{BEEF}]
             bin = #{00BEEF}
         ]
     )
     (all wrap [
         ws: make bitset! [" ^- ^/^M" #{00}]
-        '~#remove~ = lift parse s: #{00DE00AD00} [some [remove ws | <next>]]
+        '~#remove~ = lift parse s: #{00DE00AD00} [some [remove ws | next]]
         s = #{DEAD}
     ])
     (all wrap [

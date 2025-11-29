@@ -9,7 +9,7 @@
         ][
             rule: complement charset dlm
             return parse series [collect opt some [
-                keep value: across some rule | <next>
+                keep value: across some rule | next
             ]]
         ]
         ok

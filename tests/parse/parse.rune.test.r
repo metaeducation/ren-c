@@ -113,14 +113,14 @@
     (
         res: ~
         all [
-            #b = parse "aab" [<next> res: #a one]
+            #b = parse "aab" [next res: #a one]
             res = #a
         ]
     )
     (
         res: ~
         all [
-            #b = parse "aab" [<next> res: [#a | #b] one]
+            #b = parse "aab" [next res: [#a | #b] one]
             res = #a
         ]
     )
@@ -134,14 +134,14 @@
     (
         res: ~
         all [
-            #c = parse "baaac" [<next> res: some #a #c]
+            #c = parse "baaac" [next res: some #a #c]
             res = #a
         ]
     )
     (
         res: ~
         all [
-            #c = parse "baaac" [<next> res: some wa #c]
+            #c = parse "baaac" [next res: some wa #c]
             res = #a
         ]
     )

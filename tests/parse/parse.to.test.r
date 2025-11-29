@@ -13,7 +13,7 @@
     ('a = parse [a] [to 'a one])
     ('b = parse [a b] [to 'b one])
     ('b = parse [a a a b] [to 'b one])
-    ('a = parse [a a b a] [<next> to 'b repeat 2 one])
+    ('a = parse [a a b a] [next to 'b repeat 2 one])
     ~parse-incomplete~ !! (parse [a] [to ['a]])
     ~parse-mismatch~ !! (parse [a] [to ['a] <end>])
     ('a = parse [a] [to ['a] one])

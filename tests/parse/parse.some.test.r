@@ -64,7 +64,7 @@
     (
         res: ~
         all [
-            'c = parse [b a a a c] [<next> res: some 'a 'c]
+            'c = parse [b a a a c] [next res: some 'a 'c]
             res = 'a
         ]
     )
@@ -72,7 +72,7 @@
         res: ~
         wa: ['a]
         all [
-            'c = parse [b a a a c] [<next> res: some wa 'c]
+            'c = parse [b a a a c] [next res: some wa 'c]
             res = 'a
         ]
     )
@@ -92,7 +92,7 @@
 
     ~parse-mismatch~ !! (parse [a a b b] [some 'a some 'c])
 
-    ('c = parse [b a a a c] [<next> some ['a] 'c])
+    ('c = parse [b a a a c] [next some ['a] 'c])
 ]
 
 [
@@ -160,7 +160,7 @@
     try parse "a" [opt some [
         (
             i: i + 1
-            j: if i = 2 [[<end> <next>]]
+            j: if i = 2 [[<end> next]]
         )
         j
     ]]

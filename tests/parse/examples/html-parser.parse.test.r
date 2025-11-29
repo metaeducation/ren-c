@@ -26,7 +26,7 @@
                 |
                 "</" thru ">" stop
                 |
-                "<" name: across to ">" <next>
+                "<" name: across to ">" next
                 keep (transcode:one name) opt keep rule
                 |
                 str: across to "<" keep (str)

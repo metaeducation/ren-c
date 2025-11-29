@@ -35,7 +35,7 @@
         blk = [1]
     ])
     (all wrap [
-        'a = parse blk: [a a] [<next> insert (the b) one]
+        'a = parse blk: [a a] [next insert (the b) one]
         blk = [a b a]
     ])
     (all wrap [
@@ -89,7 +89,7 @@
         str = "1"
     ])
     (all wrap [
-        #a = parse str: "aa" [<next> insert (#b) one]
+        #a = parse str: "aa" [next insert (#b) one]
         str = "aba"
     ])
     (all wrap [
@@ -102,7 +102,7 @@
     (all wrap [
         p: ~
         '~#remove~ = lift parse str: "test" [
-            some [<next> p: <here> insert (#_)] seek (p) remove one
+            some [next p: <here> insert (#_)] seek (p) remove one
         ]
         str = "t_e_s_t"
     ])
@@ -115,7 +115,7 @@
         bin = #{01}
     ])
     (all wrap [
-        10 = parse bin: #{0A0A} [<next> insert (#{0B}) one]
+        10 = parse bin: #{0A0A} [next insert (#{0B}) one]
         bin = #{0A0B0A}
     ])
     (all wrap [
@@ -128,7 +128,7 @@
     (all wrap [
         p: ~
         '~#remove~ = lift parse bin: #{DEADBEEF} [
-            some [<next> p: <here> insert (NUL)] seek (p) remove one
+            some [next p: <here> insert (NUL)] seek (p) remove one
         ]
         bin = #{DE00AD00BE00EF}
     ])

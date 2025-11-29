@@ -43,13 +43,13 @@
 
 [#1240
     ('~#not~ = lift parse "" [not ahead "a"])
-    ('~#not~ = lift parse "" [not ahead <next>])
+    ('~#not~ = lift parse "" [not ahead next])
     ('~#not~ = lift parse "" [not ahead veto])
 ]
 
 [
     ~parse-mismatch~ !! (parse [] [not <end>])
-    ~parse-mismatch~ !! (parse [a] [not ahead <next>])
+    ~parse-mismatch~ !! (parse [a] [not ahead next])
     ~parse-mismatch~ !! (parse [a] [not ahead one one])
 
     ('a = parse [a] [not 'b])
@@ -66,7 +66,7 @@
 [
     ~parse-mismatch~ !! (parse "" [not <end>])
     ~parse-mismatch~ !! (parse "a" [not ahead one])
-    ~parse-mismatch~ !! (parse "a" [not ahead <next> <next>])
+    ~parse-mismatch~ !! (parse "a" [not ahead next next])
 
     (#a = parse "a" [not #b])
     (#a = parse "a" [not ahead [#b] #a])
@@ -82,7 +82,7 @@
 [
     ~parse-mismatch~ !! (parse #{} [not <end>])
     ~parse-mismatch~ !! (parse #{0A} [not ahead one])
-    ~parse-mismatch~ !! (parse #{0A} [not ahead <next> one])
+    ~parse-mismatch~ !! (parse #{0A} [not ahead next one])
 
     (#{0A} = parse #{0A} [not ahead #{0B} #{0A}])
     (#{0A} = parse #{0A} [not ahead [#{0B}] #{0A}])

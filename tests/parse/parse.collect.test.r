@@ -44,7 +44,7 @@
             collect [some [
                 keep [v: digit, elide cond (even? transcode:one as text! v)]
                 |
-                <next>
+                next
             ]]
         ]
     )
@@ -55,7 +55,7 @@
             collect [some [
                 keep [v: digit, elide cond (even? v)]
                 |
-                <next>
+                next
             ]]
         ]
     )
@@ -89,13 +89,13 @@
     (
         alpha: charset [#a - #z]
         ["abc" "def"] = parse "abc|def" [
-            collect [some [keep across some alpha | <next>]]
+            collect [some [keep across some alpha | next]]
         ]
     )
     (
         digit: charset [0 - 9]
         [#{010203} #{040506}] = parse #{01020311040506} [
-            collect [some [keep across some digit | <next>]]
+            collect [some [keep across some digit | next]]
         ]
     )
 ]
@@ -406,19 +406,19 @@ https://github.com/metaeducation/ren-c/issues/935
     (
         v: ~
         [2] = parse [1 2 3] [
-            collect [some [keep [v: integer! elide cond (even? v)] | <next>]]
+            collect [some [keep [v: integer! elide cond (even? v)] | next]]
         ]
     )
     (
         [3 4 8] = parse [a 3 4 t "test" 8] [
-            collect [some [keep integer! | <next>]]
+            collect [some [keep integer! | next]]
         ]
     )
     (
         list: ~
         all [
             [3 4 8] = parse [a 3 4 t "test" 8] [
-                list: collect [some [keep integer! | <next>]]
+                list: collect [some [keep integer! | next]]
             ]
             list = [3 4 8]
         ]
@@ -428,13 +428,13 @@ https://github.com/metaeducation/ren-c/issues/935
 ; Note difference between KEEP ACROSS SOME and KEEP SOME.
 [
     (
-        [[b b b]] = parse [a b b b] [collect [<next>, keep across some 'b]]
+        [[b b b]] = parse [a b b b] [collect [next, keep across some 'b]]
     )
     (
-        [b b b] = parse [a b b b] [collect [<next>, keep spread across some 'b]]
+        [b b b] = parse [a b b b] [collect [next, keep spread across some 'b]]
     )
     (
-        [b] = parse [a b b b] [collect [<next>, keep some 'b]]
+        [b] = parse [a b b b] [collect [next, keep some 'b]]
     )
 ]
 
@@ -519,10 +519,10 @@ https://github.com/metaeducation/ren-c/issues/935
                     | p: <here>, block!, seek (p), subparse any-series?/ [
                         keep collect [opt some [
                             keep integer! keep ('+)
-                            | <next> keep (foo '-)
+                            | next keep (foo '-)
                         ]]
                     ]
-                    | <next>
+                    | next
                 ]
             ]
         ]

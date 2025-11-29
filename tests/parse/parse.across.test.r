@@ -94,14 +94,14 @@
     (
         res: ~
         all [
-            'b = parse [a a b] [<next> res: across 'a one]
+            'b = parse [a a b] [next res: across 'a one]
             res = [a]
         ]
     )
     (
         res: ~
         all [
-            'b = parse [a a b] [<next> res: across ['a | 'b] one]
+            'b = parse [a a b] [next res: across ['a | 'b] one]
             res = [a]
         ]
     )
@@ -337,14 +337,14 @@
     (
         res: ~
         all [
-            #b = parse "aab" [<next> res: across #a one]
+            #b = parse "aab" [next res: across #a one]
             res = "a"
         ]
     )
     (
         res: ~
         all [
-            #b = parse "aab" [<next> res: across [#a | #b] one]
+            #b = parse "aab" [next res: across [#a | #b] one]
             res = "a"
         ]
     )
@@ -572,14 +572,14 @@
     (
         res: ~
         all [
-            11 = parse #{0A0A0B} [<next> res: across #{0A} one]
+            11 = parse #{0A0A0B} [next res: across #{0A} one]
             res = #{0A}
         ]
     )
     (
         res: ~
         all [
-            11 = parse #{0A0A0B} [<next> res: across [#{0A} | #{0B}] one]
+            11 = parse #{0A0A0B} [next res: across [#{0A} | #{0B}] one]
             res = #{0A}
         ]
     )
