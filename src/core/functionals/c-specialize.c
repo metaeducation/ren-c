@@ -411,8 +411,8 @@ bool Specialize_Action_Throws(
 //
 //  "Create a new action through partial or full specialization of another"
 //
-//      return: [action!]
-//      operation [<unrun> frame!]
+//      return: [action! frame!]
+//      operation [action! frame!]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 ref: refine1]"
 //          [block!]
 //      :relax "Don't worry about too many arguments to the SPECIALIZE"
@@ -455,16 +455,19 @@ DECLARE_NATIVE(SPECIALIZE)
 
 } finished_filling_frame: { //////////////////////////////////////////////////
 
-    Element* specializee = Element_ARG(OPERATION);
+    Value* specializee = ARG(OPERATION);
 
     Option(InfixMode) infix_mode = Frame_Infix_Mode(specializee);
 
     Value* out = Copy_Cell(OUT, Element_LOCAL(FRAME));
-    Actionify(out);
 
     Tweak_Frame_Infix_Mode(out, infix_mode);
     Copy_Ghostability(out, specializee);
 
+    if (Is_Frame(specializee))
+        return OUT;
+
+    Actionify(out);
     return UNSURPRISING(OUT);
 }}
 

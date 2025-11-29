@@ -663,7 +663,9 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_APPLY;
 
-    Element* op = Element_ARG(OPERATION);
+    Value* op = ARG(OPERATION);
+    assert(Is_Action(op) or Is_Frame(op));
+
     Element* args = Element_ARG(ARGS);
 
     Element* frame;
