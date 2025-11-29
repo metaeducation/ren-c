@@ -453,7 +453,7 @@ if 'Windows <> first system.platform [
     "zu" "Zulu" ]
 
     hijack locale/ func [
-        return: [null? text!]
+        return: [<null> text!]
         type [word!]
         <local> env-lang lang territory letter
     ][

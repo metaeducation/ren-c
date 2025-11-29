@@ -313,7 +313,7 @@ export console!: make object! [
         "Receives line input, parse and transform, send back to CONSOLE eval"
 
         return: "~escape~ if canceled, null on no input, else line of text"
-            [null? text! ~(~escape~)~]
+            [<null> text! ~(~escape~)~]
     ][
         return read-line stdin except ['~escape~]
     ]

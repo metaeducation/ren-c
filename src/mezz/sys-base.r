@@ -140,10 +140,10 @@ module: func [
 
     if spec [  ; validate the important fields of the header, if there is one
         for-each [$var $types] [  ; need bound to GET, use $
-            spec.name [null? word!]
+            spec.name [<null> word!]
             spec.type [word!]  ; `script` default from system.standard.header
-            spec.version [null? tuple!]
-            spec.options [null? block!]
+            spec.version [<null> tuple!]
+            spec.options [<null> block!]
         ][
             if not typecheck types get var [
                 panic ["Module" @var "must be" @types "not" @(reify get var)]

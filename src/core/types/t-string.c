@@ -335,7 +335,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
 //
 //  "Variant of TO TEXT! with option to tolerate invisible codepoints"
 //
-//      return: [null? text!]
+//      return: [<null> text!]
 //      value [<opt-out> element?]
 //      :relax "Allow invisible codepoints like CR when converting BLOB!"
 //  ]

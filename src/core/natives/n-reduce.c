@@ -91,7 +91,7 @@ DECLARE_NATIVE(VETO_Q)
 //  "Evaluates expressions, keeping each result (EVAL only gives last result)"
 //
 //      return: "New list or value (or null if VETO encountered)"
-//          [null? element?]
+//          [<null> element?]
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
 //          [<opt-out> element?]
 //      :predicate "Applied after evaluation, default is IDENTITY"

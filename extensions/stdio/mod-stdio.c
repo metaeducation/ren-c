@@ -144,7 +144,7 @@ static Value* Make_Non_Halt_Error(const char* name) {
 //  "Read binary data from standard input"
 //
 //      return: "Null if no more input is available, returns error on escape"
-//          [null? blob! error!]
+//          [<null> blob! error!]
 //      size "Maximum size of input to read"
 //          [integer!]
 //  ]
@@ -205,7 +205,7 @@ DECLARE_NATIVE(READ_STDIN)
 //  "Read a line from standard input, with smart line editing if available"
 //
 //      return: "Null if no more input is available, error antiform on escape"
-//          [null? text! error!]
+//          [<null> text! error!]
 //      source "Where to read from (stdin currently only place supported)"
 //          [~(@stdin)~]
 //      :raw "Include the newline, and allow reaching end of file with no line"
@@ -363,7 +363,7 @@ DECLARE_NATIVE(READ_LINE)
 //  "Inputs a single character from the input"
 //
 //      return: "Null if end of file, error if escape or timeout"
-//          [null? char? word! error!]
+//          [<null> char? word! error!]
 //      source "Where to read from (stdin currently only place supported)"
 //          [~(@stdin)~]
 //      :raw "Return keys like Up, Ctrl-A, or ESCAPE literally"

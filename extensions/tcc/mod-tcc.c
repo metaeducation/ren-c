@@ -192,7 +192,7 @@ static void Process_Text_Helper(
     const char *label
 ){
     Value* text = rebValue(
-        "ensure [null? text!] select", config, "as word!", rebT(label)
+        "ensure [<null> text!] select", config, "as word!", rebT(label)
     );
 
     if (text) {
@@ -414,7 +414,7 @@ DECLARE_NATIVE(MAKE_NATIVE)
 //  "INTERNAL USE ONLY: Expects arguments to be fully vetted by COMPILE"
 //
 //      return: "No return value, unless :INSPECT is used to see result"
-//          [null? text!]
+//          [<null> text!]
 //      compilables [block!] "Should be just TEXT! and user native ACTION!s"
 //      config [object!] "Vetted and simplified form of /OPTIONS block"
 //      :inspect "Return the C source code as text, but don't compile it"

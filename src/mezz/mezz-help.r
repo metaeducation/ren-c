@@ -22,7 +22,7 @@ spec-of: func [
 
     return collect [
         if adjunct [
-            keep:line ? ensure [null? text!] select adjunct 'description
+            keep:line ? ensure [<null> text!] select adjunct 'description
         ]
 
         let r-param: return of action
@@ -56,7 +56,7 @@ decorated-words-of: func [
 description-of: func [
     "One-line summary of a value's purpose"
 
-    return: [null? text!]
+    return: [<null> text!]
     v [<opt-out> any-stable?]
 ][
     return switch:type ^v [

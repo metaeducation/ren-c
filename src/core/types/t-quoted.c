@@ -260,7 +260,7 @@ DECLARE_NATIVE(LIFT)
 //
 //      return: [any-value?]
 //      ^value "Can be plain or antiform like NULL or VOID if :LITE"
-//          [null? void? element? quoted! quasiform!]
+//          [<null> <void> element? quoted! quasiform!]
 //      :lite "Pass thru NULL and VOID antiforms as-is"
 //  ]
 //
@@ -407,8 +407,8 @@ DECLARE_NATIVE(UNANTI)
 //  "Make block arguments splice"
 //
 //      return: "Antiform of GROUP! or unquoted value (passthru void)"
-//          [void? null? element? splice!]
-//      ^value [void? null? blank? any-list? quasiform!]  ; see [1] [2]
+//          [<void> <null> element? splice!]
+//      ^value [<void> <null> blank? any-list? quasiform!]  ; see [1] [2]
 //  ]
 //
 DECLARE_NATIVE(SPREAD)

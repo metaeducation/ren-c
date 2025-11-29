@@ -40,7 +40,7 @@ transcode-header: func [
     "Try to match a data blob! as being a script, fail if not"
 
     return: "Null, or the ~[header rest line]~"
-        [~[[null? block!] [null? blob!] [integer!]]~ error!]
+        [~[[<null> block!] [<null> blob!] [integer!]]~ error!]
 
     data [blob!]
     :file [file! url!]
@@ -99,7 +99,7 @@ load-header: func [
     "Loads script header object and body binary (not loaded)"
 
     return: "header OBJECT! if present, ~[hdr body line final]~"
-        [~[[null? object!] [blob! text!] [null? integer!] blob!]~]
+        [~[[<null> object!] [blob! text!] [<null> integer!] blob!]~]
     source "Source code (text! will be UTF-8 encoded)"
         [blob! text!]
     :file "Where source is being loaded from"
@@ -143,7 +143,7 @@ bind construct [
         return fail "bad-header"
     ]
 
-    if not typecheck [null? block!] hdr.options [
+    if not typecheck [<null> block!] hdr.options [
         return fail "bad-header"
     ]
 
@@ -214,7 +214,7 @@ bind construct [
     final: ensure [blob! text!] end
 
     ensure object! hdr
-    ensure [null? block! _] hdr.options
+    ensure [<null> block! _] hdr.options
 
     return pack [hdr body line final]
 ]
@@ -224,7 +224,7 @@ load: func [
     "Loads code or data from a file, URL, text string, or binary"
 
     return: "BLOCK! if Rebol code (or codec value) plus optional header"
-        [null? ~[element? [null? object!]]~]
+        [<null> ~[element? [<null> object!]]~]
     source "Source of the information being loaded"
         [<opt-out> file! url! tag! @word! text! blob!]
     :type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
@@ -280,7 +280,7 @@ load: func [
 
     if word? opt header [cause-error 'syntax header source]
 
-    ensure [null? object!] header
+    ensure [<null> object!] header
     ensure [blob! block! text!] data
 
     ; Convert code to block
@@ -319,7 +319,7 @@ load: func [
 ; this routine as well.
 
 adjust-url-for-raw: func [
-    return: [null? url!]
+    return: [<null> url!]
     url [<opt-out> url!]
 ][
     let text: to text! url  ; URL! is immutable, must copy to mutate in parse
@@ -525,7 +525,7 @@ bind construct [
         return pack [cached 'cached]
     ]
 
-    ensure [null? object!] hdr
+    ensure [<null> object!] hdr
 
     let is-module: to-yesno all [hdr, 'module = select hdr 'type]
 

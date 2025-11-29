@@ -111,7 +111,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.]--
 backtrace*: func [
     "Backtrace to find a specific FRAME!, or other queried property."
 
-    return: [null? block! frame!]
+    return: [<null> block! frame!]
         "Null if printing, if specific level a frame! else block"
     start [frame!]
         "Where to consider the trace point as starting from"

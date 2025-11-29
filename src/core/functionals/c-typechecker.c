@@ -609,20 +609,22 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
   check_spare_against_test_in_item: { ////////////////////////////////////////
 
-    // 1. Some elements in the parameter specification array are accounted
-    //    for in type checking by flags or optimization bytes.  There is no
-    //    need to check those here...just cehck the things that don't have
-    //    the PARAMSPEC_SPOKEN_FOR flag set.
-    //
-    // 2. We need [~word!~] to be a typecheck that matches a QUASI-WORD, and
-    //    ['integer!] to typecheck QUOTED-INTEGER, and [''~any-series?~] to
-    //    check DOUBLE_QUOTED-QUASI-ANY-SERIES?... etc.  Because we don't want
-    //    to make an infinite number of type constraint functions to cover
-    //    every combination.
-    //
-    //    This pretty much ties our hands on the meaning of quasiform or
-    //    quoted WORD!s in the type spec.  But non-WORD!s can have more
-    //    flexible interpretations...
+  // 1. Some elements in the parameter specification array are accounted for
+  // in type checking by flags or optimization bytes.  There is no need to
+  // check those here, just check things that don't have PARAMSPEC_SPOKEN_FOR.
+  //
+  // 2. [~word!~] matches QUASI-WORD? and ['integer!] matches QUOTED-INTEGER?
+  //    and [''~any-series?~] matches DOUBLE_QUOTED-QUASI-ANY-SERIES?... etc.
+  //    Because we don't want to make an infinite number of type constraint
+  //    functions to cover every combination.  This pretty much ties our hands
+  //    on the meaning of quasiform or quoted WORD!s in the type spec.
+  //
+  // 3. While TAG! will have PARAMSPEC_SPOKEN_FOR in a PARAMETER!, it does not
+  //    in a plain BLOCK! used with TYPECHECK.  TYPECHECK could pay to convert
+  //    BLOCK! to PARAMETER! but it's cheaper if we are willing to process a
+  //    block on the fly.  This handles <null> and <void> tags but it should
+  //    probably have behavior for <opt> and other parameter spec tags, though
+  //    it's tricky given that typecheck can't mutate the incoming value.
 
     Option(Sigil) sigil = SIGIL_0;  // added then removed if non-zero
     LiftByte lift_byte = LIFT_BYTE(SPARE);  // adjusted if test quoted/quasi
@@ -645,29 +647,39 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         goto test_failed;
     }
 
+    if (Is_Tag(item)) {  // if BLOCK!, support <null> and <void> [3]
+        if (0 == CT_Utf8(item, g_tag_null, true)) {
+            if (Is_Cell_Stable(SPARE) and Is_Nulled(cast(Value*, SPARE)))
+                goto test_succeeded;
+            goto test_failed;
+        }
+        if (0 == CT_Utf8(item, g_tag_void, true)) {
+            if (Is_Void(SPARE))
+                goto test_succeeded;
+            goto test_failed;
+        }
+    }
+
     panic (item);
 
   handle_non_word_quasiform: { ///////////////////////////////////////////////
 
-    // 1. ~[integer! word!]~ is a typecheck that matches a 2-element PACK!
-    //    containing an integer and a word.  It's recursive, so you can
-    //    have packs that contain packs, etc.
-    //
-    // 2. Because people might build a type spec block by composing, they
-    //    might wind up REIFY'ing an antiform DATATYPE! directly into the
-    //    spec, something like:
-    //
-    //        type: word!
-    //        compose [return: [integer! (reify type)] ...]
-    //
-    //    If this happens, they'll get a quasiform FENCE!.  So the friendliest
-    //    choice of interpretation of that is as the DATATYPE! it represents.
-    //
-    // 3. Because 'XXX! is now matching quoted things of type XXX!, an old
-    //    behavior of matching e.g. ['true 'false] against the words true
-    //    and false is no longer valid.  Quasiform group seems like a decent
-    //    choice, and [~(true false)~] actually looks kind of good.  It will
-    //    match any of the single items in the group literally.
+  // 1. ~[integer! word!]~ is a typecheck that matches a 2-element PACK! with
+  //    an integer and a word.  It's recursive, packs can contain packs, etc.
+  //
+  // 2. Because people might build a type spec block by composing, they might
+  //    REIFY an antiform DATATYPE! directly into the spec, something like:
+  //
+  //        type: word!
+  //        compose [return: [integer! (reify type)] ...]
+  //
+  //    If this happens, they'll get a quasiform FENCE!.  So the friendliest
+  //    choice of interpretation of that is as the DATATYPE! it represents.
+  //
+  // 3. When 'XXX! began matching quoted things of type XXX!, ['true 'false]
+  //    stopped being how to match against literal words true and false.
+  //    Quasiform group of [~(true false)~] actually looks kind of good; it
+  //    will match any of the single items in the group literally.
 
     if (Heart_Of(item) == TYPE_BLOCK) {  // typecheck pack [1]
         if (not Is_Pack(v))
@@ -1079,7 +1091,7 @@ DECLARE_NATIVE(TYPECHECKER)
 //
 // Compare with MATCHER:
 //
-//    >> t: typechecker [null? integer!]
+//    >> t: typechecker [<null> integer!]
 //
 //    >> t 1020
 //    == ~okay~  ; anti
@@ -1239,7 +1251,7 @@ DECLARE_NATIVE(MATCHER)
 //
 // Compare with TYPECHECKER
 //
-//    >> m: matcher [null? integer!]
+//    >> m: matcher [<null> integer!]
 //
 //    >> m 1020
 //    == 1020
@@ -1249,9 +1261,6 @@ DECLARE_NATIVE(MATCHER)
 //
 //    >> m null
 //    ** Script Error: non-NULL value required
-//
-//    >> m:lift null
-//    == ~null~
 {
     INCLUDE_PARAMS_OF_MATCHER;
 

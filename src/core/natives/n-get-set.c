@@ -1347,7 +1347,7 @@ Result(Value*) Get_Word(
 //          [<opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
 //      dual "Ordinary GET or SET with lifted value (unlifts), else dual"
-//          [null? frame! word! quasiform! quoted!]
+//          [<null> frame! word! quasiform! quoted!]  ; <opt> instead of null?
 //      :any "Do not error on unset words"
 //      :groups "Allow GROUP! Evaluations"
 //  ]

@@ -257,7 +257,7 @@ DECLARE_NATIVE(SORT)
 //  "Returns the series forward or backward from the current position"
 //
 //      return: "Input skipped by offset, or null if out of bounds"
-//          [null? any-series? port!]
+//          [<null> any-series? port!]
 //      series [<opt-out> any-series? port!]
 //      offset [any-number? logic? pair!]
 //      :unbounded "Return out of bounds series if before tail or after head"
@@ -285,7 +285,7 @@ DECLARE_NATIVE(SKIP)
 //  "Returns the series at the specified index"
 //
 //      return: "Input at the given index, not clipped to head/tail by default"
-//          [null? any-series? port!]
+//          [<null> any-series? port!]
 //      series [<opt-out> any-series? port!]
 //      index [any-number? logic? pair!]
 //      :bounded "Return null if index is before tail or after head"
@@ -304,7 +304,7 @@ DECLARE_NATIVE(AT)
 //  "Searches for the position where a matching value is found"
 //
 //      return: "position found and tail of find, else null"
-//          [null? ~[any-series? any-series?]~]
+//          [<null> ~[any-series? any-series?]~]
 //      series [<opt-out> any-series?]
 //      pattern "What to find, if an action call as a predicate on each item"
 //          [<opt-out> element? splice! action! datatype!]

@@ -187,7 +187,7 @@ summarize-obj: func [
     "Returns a block of information about an object or port"
 
     return: "Block of short lines (fitting in roughly 80 columns)"
-        [null? block!]
+        [<null> block!]
     obj [object! port! module!]
     :pattern "Include only fields that match a string or datatype"
         [text! datatype!]

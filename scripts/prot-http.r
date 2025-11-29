@@ -458,7 +458,7 @@ do-redirect: func [
     ; the original scheme code, and were grafted on afterwards.)
     ;
     let data: trap do-request port
-    assert [null? port.data]
+    assert [<null> port.data]
     port.data: data
 ]
 
@@ -766,8 +766,8 @@ sys.util/make-scheme [
 
 make-curl-command: lambda [spec [object!] "comes from port.spec"] [
     ensure url! spec.ref
-    ensure [null? block!] spec.headers
-    ensure [null? word!] spec.method
+    ensure [<null> block!] spec.headers
+    ensure [<null> word!] spec.method
 
     spaced [
         "curl"

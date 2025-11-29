@@ -28,7 +28,7 @@
     stack: ~
 
     tracked-word!-combinator: unrun enclose default-combinators.(word!)/ func [
-        return: [null? pack!]
+        return: [<null> pack!]
         f [frame!]
         <local> result remainder subpending
     ] bind construct [indent: 0] [

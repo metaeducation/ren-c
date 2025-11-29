@@ -18,59 +18,59 @@
 [
     (
         left-normal: infix /right-normal: (
-            func [return: [null? word!] x [word!]] [return x]
+            func [return: [<null> word!] x [word!]] [return x]
         )
         left-normal*: infix /right-normal*: (
-            func [return: [null? word!] x [word! <end>]] [return x]
+            func [return: [<null> word!] x [word! <end>]] [return x]
         )
 
         left-defer: infix:defer left-normal/
         left-defer*: infix:defer left-normal/
 
         left-soft: infix /right-soft: (
-            func [return: [null? word!] @(x) [word!]] [return x]
+            func [return: [<null> word!] @(x) [word!]] [return x]
         )
         left-soft*: infix /right-soft*: (
-            func [return: [null? word!] @(x) [word! <end>]] [return x]
+            func [return: [<null> word!] @(x) [word! <end>]] [return x]
         )
 
         left-hard: infix /right-hard: (
-            func [return: [null? word!] 'x [word!]] [return x]
+            func [return: [<null> word!] 'x [word!]] [return x]
         )
         left-hard*: infix /right-hard*: (
-            func [return: [null? word!] 'x [word! <end>]] [return x]
+            func [return: [<null> word!] 'x [word! <end>]] [return x]
         )
 
         ok
     )
 
     ~no-arg~ !! (right-normal ||)
-    (null? eval [right-normal* ||])
-    (null? eval [right-normal*])
+    (<null> eval [right-normal* ||])
+    (<null> eval [right-normal*])
 
     ~no-arg~ !! (|| left-normal)
-    (null? eval [|| left-normal*])
-    (null? eval [left-normal*])
+    (<null> eval [|| left-normal*])
+    (<null> eval [left-normal*])
 
     ~no-arg~ !! (|| left-defer)
-    (null? eval [|| left-defer*])
-    (null? eval [left-defer*])
+    (<null> eval [|| left-defer*])
+    (<null> eval [left-defer*])
 
     ('|| = eval [right-soft ||])
     ('|| = eval [right-soft* ||])
-    (null? eval [right-soft*])
+    (<null> eval [right-soft*])
 
     ~no-arg~ !! (eval [|| left-soft])
-    (null? eval [|| left-soft*])
-    (null? eval [left-soft*])
+    (<null> eval [|| left-soft*])
+    (<null> eval [left-soft*])
 
     ('|| = eval [right-hard ||])
     ('|| = eval [right-hard* ||])
-    (null? eval [right-hard*])
+    (<null> eval [right-hard*])
 
     ~no-arg~ !! (eval [|| left-hard])
-    (null? eval [|| left-hard*])
-    (null? eval [left-hard*])
+    (<null> eval [|| left-hard*])
+    (<null> eval [left-hard*])
 ]
 
 
@@ -78,11 +78,11 @@
 [
     (
         left-normal: infix /right-normal:
-            func [return: [null? word!] x [word! <variadic>]] [
+            func [return: [<null> word!] x [word! <variadic>]] [
                 return take x
             ]
         left-normal*: infix /right-normal*:
-            func [return: [null? word!] x [word! <variadic> <end>]] [
+            func [return: [<null> word!] x [word! <variadic> <end>]] [
                 return try take x
             ]
 
@@ -90,20 +90,20 @@
         left-defer*: infix:defer left-normal/
 
         left-soft: infix /right-soft:
-            func [return: [null? word!] @(x) [word! <variadic>]] [
+            func [return: [<null> word!] @(x) [word! <variadic>]] [
                 return take x
             ]
         left-soft*: infix /right-soft*:
-            func [return: [null? word!] @(x) [word! <variadic> <end>]] [
+            func [return: [<null> word!] @(x) [word! <variadic> <end>]] [
                 return try take x
             ]
 
         left-hard: infix /right-hard:
-            func [return: [null? word!] 'x [word! <variadic>]] [
+            func [return: [<null> word!] 'x [word! <variadic>]] [
                 return take x
             ]
         left-hard*: infix /right-hard*:
-            func [return: [null? word!] 'x [word! <variadic> <end>]] [
+            func [return: [<null> word!] 'x [word! <variadic> <end>]] [
                 return try take x
             ]
 
@@ -118,30 +118,30 @@
     ~nothing-to-take~ !! (eval [right-normal ||])
     ~nothing-to-take~ !! (eval [|| left-normal])
 
-    (null? eval [right-normal* ||])
-    (null? eval [right-normal*])
+    (<null> eval [right-normal* ||])
+    (<null> eval [right-normal*])
 
-    (null? eval [|| left-normal*])
-    (null? eval [left-normal*])
+    (<null> eval [|| left-normal*])
+    (<null> eval [left-normal*])
 
     ~nothing-to-take~ !! (eval [|| left-defer])
-    (null? eval [|| left-defer*])
-    (null? eval [left-defer*])
+    (<null> eval [|| left-defer*])
+    (<null> eval [left-defer*])
 
     ('|| = eval [right-soft ||])
     ('|| = eval [right-soft* ||])
-    (null? eval [right-soft*])
+    (<null> eval [right-soft*])
 
     ~nothing-to-take~ !! (eval [|| left-soft])
-    (null? eval [|| left-soft*])
-    (null? eval [left-soft*])
+    (<null> eval [|| left-soft*])
+    (<null> eval [left-soft*])
 
     ~nothing-to-take~ !! (eval [right-hard])
     ('|| = eval [right-hard ||])
     ('|| = eval [right-hard* ||])
-    (null? eval [right-hard*])
+    (<null> eval [right-hard*])
 
     ~nothing-to-take~ !! (eval [|| left-hard])
-    (null? eval [|| left-hard*])
-    (null? eval [left-hard*])
+    (<null> eval [|| left-hard*])
+    (<null> eval [left-hard*])
 ]

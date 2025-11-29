@@ -237,6 +237,12 @@ Result(None) Set_Parameter_Spec(
                 // functions.  Review what the best notation or functionality
                 // concept is.
             }
+            else if (0 == CT_Utf8(item, g_tag_null, strict)) {
+                *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
+            }
+            else if (0 == CT_Utf8(item, g_tag_void, strict)) {
+                *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
+            }
             else {
                 panic (item);
             }

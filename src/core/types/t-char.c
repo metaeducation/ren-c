@@ -1029,7 +1029,7 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
 //
 //  "Get the singular codepoint that an RUNE! or BINARY! correspond to"
 //
-//      return: [null? integer!]
+//      return: [<null> integer!]
 //      value [<opt-out> fundamental?]
 //  ]
 //

@@ -585,7 +585,7 @@ Result(Element*) Unsingleheart_Sequence(Element* out)
 //
 //  "If possible, convert a value to a SET-XXX! representation"
 //
-//      return: [null? any-set-value? set-word?]
+//      return: [<null> any-set-value? set-word?]
 //      value [<opt-out> element?]
 //  ]
 //
@@ -606,7 +606,7 @@ DECLARE_NATIVE(SETIFY)
 //
 //  "If possible, convert a value to a GET-XXX! representation"
 //
-//      return: [null? any-get-value? get-word?]
+//      return: [<null> any-get-value? get-word?]
 //      value [<opt-out> element?]
 //  ]
 //
@@ -739,7 +739,7 @@ static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
 //  "Convert ^XXX metaform representation to plain XXX"
 //
 //      return: "Error if value not metaform"
-//          [null? plain? error!]
+//          [<null> plain? error!]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -755,7 +755,7 @@ DECLARE_NATIVE(UNMETA)
 //  "Convert @XXX pinned representation to plain XXX"
 //
 //      return: "Error if value not pinned"
-//          [null? plain? error!]
+//          [<null> plain? error!]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -771,7 +771,7 @@ DECLARE_NATIVE(UNPIN)
 //  "Convert ^XXX tied representation to plain XXX"
 //
 //      return: "Error if value not tied"
-//          [null? plain? error!]
+//          [<null> plain? error!]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -786,7 +786,7 @@ DECLARE_NATIVE(UNTIE)
 //
 //  "Convert a value into its plain representation"
 //
-//      return: [null? plain?]
+//      return: [<null> plain?]
 //      value [<opt-out> element?]
 //  ]
 //
@@ -810,7 +810,7 @@ DECLARE_NATIVE(PLAIN)
 //
 //  "Remove CHAIN!, e.g. leading colon or trailing colon from an element"
 //
-//      return: [null? element?]
+//      return: [<null> element?]
 //      chain [<opt-out> chain!]
 //  ]
 //
@@ -831,7 +831,7 @@ DECLARE_NATIVE(UNCHAIN)
 //
 //  "Remove PATH!, e.g. leading slash or trailing slash from an element"
 //
-//      return: [null? element?]
+//      return: [<null> element?]
 //      path [<opt-out> path!]
 //  ]
 //
@@ -852,7 +852,7 @@ DECLARE_NATIVE(UNPATH)
 //
 //  "Remove TUPLE!, e.g. leading dot or trailing dot from a tuple"
 //
-//      return: [null? element?]
+//      return: [<null> element?]
 //      tuple [<opt-out> tuple!]
 //  ]
 //

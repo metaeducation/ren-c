@@ -384,7 +384,7 @@ default-combinators: make map! [
     'spread combinator [
         "Return antiform group for list arguments"
         return: "Splice antiform if input is list"
-            [null? void? element? splice!]
+            [<null> <void> element? splice!]
         input [any-series?]
         parser [action!]
         <local> ^result
@@ -1101,7 +1101,7 @@ default-combinators: make map! [
 
     'keep combinator [
         return: "The kept value (same as input)"
-            [null? element? splice!]
+            [<null> element? splice!]
         input [any-series?]
         :pending [blank? block!]
         parser [action!]

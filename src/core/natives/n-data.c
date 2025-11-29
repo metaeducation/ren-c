@@ -153,7 +153,7 @@ DECLARE_NATIVE(BINDABLE_Q)
 //
 //  "Get the binding of a value (binding is a loooong work in progress...)"
 //
-//      return: [null? any-context?]
+//      return: [<null> any-context?]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -173,7 +173,7 @@ DECLARE_NATIVE(BINDING_OF)
 //
 //  "Returns a view of the input bound virtually to the context"
 //
-//      return: [null? any-stable?]
+//      return: [<null> any-stable?]
 //      where [any-context? any-list? any-sequence?]
 //      value [<opt-out> element?]  ; QUOTED? support?
 //  ]
@@ -205,7 +205,7 @@ DECLARE_NATIVE(INSIDE)
 //
 //  "Add definitions from context to environment of value"
 //
-//      return: [null? any-stable?]
+//      return: [<null> any-stable?]
 //      definitions [word! any-context?]
 //      value [<opt-out> any-list?]  ; QUOTED? support?
 //  ]
@@ -241,7 +241,7 @@ DECLARE_NATIVE(OVERBIND)
 //  "Returns a word bound into the context, if it's available, else null"
 //
 //      return: "Preserves Sigil ('@foo = has obj '@foo)"
-//          [null? any-word?]
+//          [<null> any-word?]
 //      context [any-context?]
 //      value [<opt-out> any-word?]  ; QUOTED? support?
 //  ]
@@ -282,7 +282,7 @@ DECLARE_NATIVE(HAS)
 //
 //  "Remove a virtual binding from a value"
 //
-//      return: [null? any-word? any-list?]
+//      return: [<null> any-word? any-list?]
 //      context "If integer, then removes that number of virtual bindings"
 //          [integer! any-context?]
 //      value [<const> <opt-out> any-word? any-list?]  ; QUOTED? support?

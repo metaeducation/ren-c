@@ -108,7 +108,7 @@ DECLARE_NATIVE(LATIN1_Q)
 //  "Join elements to produce a new value"
 //
 //      return: "Null if no base element and no material in rest to join"
-//          [null? any-utf8? any-list? any-sequence? blob!]
+//          [<null> any-utf8? any-list? any-sequence? blob!]
 //      base [datatype! any-utf8? any-list? any-sequence? blob!]
 //      rest "Plain [...] blocks reduced, @[...] block items used as is"
 //          [<opt> block! @block! any-utf8? blob! integer!]
@@ -1450,7 +1450,7 @@ DECLARE_NATIVE(TO_HEX)
 //  "Checks UTF-8 encoding"
 //
 //      return: "NULL if correct, otherwise position in binary of the error"
-//          [null? blob!]
+//          [<null> blob!]
 //      data [blob!]
 //  ]
 //

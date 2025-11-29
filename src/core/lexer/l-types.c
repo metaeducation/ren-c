@@ -55,7 +55,7 @@ DECLARE_NATIVE(TYPE_OF)
 //
 //  "Give back a cell's heart (e.g. HEART OF ~FOO~ or ''FOO is WORD!)"
 //
-//      return: [null? datatype!]
+//      return: [<null> datatype!]
 //      value "Antiforms not accepted, use (heart of lift value) if needed"
 //          [<opt-out> element?]
 //  ]
@@ -79,7 +79,7 @@ DECLARE_NATIVE(HEART_OF)
 //
 //  "Return how many quote levels are on a value (quasiforms have 0 quotes)"
 //
-//      return: [null? integer!]
+//      return: [<null> integer!]
 //      value [<opt-out> element?]
 //  ]
 //
@@ -96,7 +96,7 @@ DECLARE_NATIVE(QUOTES_OF)
 //
 //  "Get the SIGIL! on a value, e.g. $WORD has the $ sigil, WORD has none"
 //
-//      return: [null? sigil?]
+//      return: [<null> sigil?]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -142,7 +142,7 @@ DECLARE_NATIVE(SIGIL_Q)
 //
 //  "Get the length (in series units, e.g. codepoints) of series or other type"
 //
-//      return: [null? integer!]
+//      return: [<null> integer!]
 //      value [<opt-out> plain?]  ; not quoted/quasi/sigil'd [1]
 //  ]
 //
@@ -165,7 +165,7 @@ DECLARE_NATIVE(LENGTH_OF)
 //
 //  "Get the size (in bytes, e.g. UTF-encoded bytes) of series or other type"
 //
-//      return: [null? integer!]
+//      return: [<null> integer!]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -195,7 +195,7 @@ DECLARE_NATIVE(SIZE_OF)
 //
 //  "Get the index of a series type"
 //
-//      return: [null? integer!]
+//      return: [<null> integer!]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -215,7 +215,7 @@ DECLARE_NATIVE(INDEX_OF)
 //
 //  "Get the offset of a series type or port (zero-based?)"
 //
-//      return: [null? integer!]
+//      return: [<null> integer!]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -232,7 +232,7 @@ DECLARE_NATIVE(OFFSET_OF)
 //
 //  "Get the memory address of a type's data (low-level, beware!)"
 //
-//      return: [null? integer!]
+//      return: [<null> integer!]
 //      value [<opt-out> <unrun> fundamental?]
 //  ]
 //

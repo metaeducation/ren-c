@@ -127,7 +127,7 @@ encode: func [
 encoding-of: func [
     "Returns the media codec name for given binary data. (identify)"
 
-    return: [null? word!]
+    return: [<null> word!]
     data [blob!]
 ][
     for-each [name codec] system.codecs [

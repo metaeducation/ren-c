@@ -338,7 +338,7 @@ bind construct [
         "Convert string path to absolute dir! path"
 
         return: "Null if not found"
-            [null? file!]
+            [<null> file!]
         dir [<opt-out> text!]
     ][
         return all [
@@ -350,7 +350,7 @@ bind construct [
 
     let get-home-path: func [
         "Return HOME path (e.g. $HOME on *nix)"
-        return: [null? element? file!]
+        return: [<null> element? file!]
     ][
         if not select system.modules 'Filesystem [
             loud-print ["No Filesystem extension, can't detect HOME dir"]
@@ -375,7 +375,7 @@ bind construct [
 
     let get-resources-path: func [
         "Return platform specific resources path"
-        return: [null? file!]
+        return: [<null> file!]
     ][
         ; lives under systems.options.home
 

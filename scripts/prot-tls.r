@@ -273,7 +273,7 @@ make-tls-error: lambda [
 parse-asn: func [
     "Create a legible Rebol-structured BLOCK! from an ASN.1 BLOB! encoding"
 
-    return: [null? block!]
+    return: [<null> block!]
     data [blob!]
 ]
 bind construct [
@@ -423,7 +423,7 @@ make-state-updater: func [
         ctx [object!]
         new [tag! rune!]
     ][
-        let old: ensure [null? rune! tag!] ctx.mode
+        let old: ensure [<null> rune! tag!] ctx.mode
         debug compose "(mold reify old) =(direction)=> (mold new)"
 
         let legal
@@ -1823,7 +1823,7 @@ sys.util/make-scheme [
         ]
 
         write: func [
-            return: [null? port!]
+            return: [<null> port!]
             port [port!]
             value [any-stable?]
         ][
@@ -2044,7 +2044,7 @@ sys.util/make-scheme [
             return if port.data [copy port.data]
         ]
 
-        query: func [return: [null? object!] port [port!]] [
+        query: func [return: [<null> object!] port [port!]] [
             return all [port.state, query port.state.connection]
         ]
     ]

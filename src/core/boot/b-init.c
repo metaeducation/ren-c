@@ -224,7 +224,9 @@ static Element* Make_Locked_Tag(const char *utf8) { // helper
 //
 // FUNC and PROC search for these tags, like ~null~ and <local>.  They are
 // natives and run during bootstrap, so these string comparisons are
-// needed.
+// needed.  (We can't just compare against UTF-8 strings like CANON(WITH)
+// because at present, tags are series and have positions, and we need to
+// weigh the position of the tag we're comparing to.)
 //
 // !!! These should be created by Rebol, specified in the %specs/ directory,
 // along with most of the other random literals boot is creating right now.
@@ -240,6 +242,8 @@ static void Init_Action_Spec_Tags(void)
     ensure_nullptr(g_tag_const) = Make_Locked_Tag("const");
     ensure_nullptr(g_tag_divergent) = Make_Locked_Tag("divergent");
     ensure_nullptr(g_tag_unrun) = Make_Locked_Tag("unrun");
+    ensure_nullptr(g_tag_null) = Make_Locked_Tag("null");
+    ensure_nullptr(g_tag_void) = Make_Locked_Tag("void");
 
     ensure_nullptr(g_tag_here) = Make_Locked_Tag("here");  // used by PARSE
 }
@@ -255,6 +259,8 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&g_tag_const);
     rebReleaseAndNull(&g_tag_divergent);
     rebReleaseAndNull(&g_tag_unrun);
+    rebReleaseAndNull(&g_tag_null);
+    rebReleaseAndNull(&g_tag_void);
 
     rebReleaseAndNull(&g_tag_here);  // used by PARSE
 }

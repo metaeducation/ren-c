@@ -365,7 +365,7 @@ DECLARE_NATIVE(ERROR_Q)
 //
 //  "Sets the WHERE, NEAR, FILE, and LINE fields of an error"
 //
-//      return: [null?]
+//      return: []
 //      error [warning!]
 //      location [frame! any-word?]
 //  ]
@@ -397,5 +397,5 @@ DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
     Error* error = Cell_Error(ARG(ERROR));
     Set_Location_Of_Error(error, where);
 
-    return NULLED;
+    return TRIPWIRE;
 }

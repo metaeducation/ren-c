@@ -177,7 +177,7 @@ DECLARE_NATIVE(WRITE)
 //
 //  "Returns information about a port, file, or URL"
 //
-//      return: [null? object!]
+//      return: [<null> object!]
 //      target [port! file! url! block!]
 //  ]
 //

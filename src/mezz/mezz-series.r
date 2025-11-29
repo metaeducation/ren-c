@@ -52,7 +52,7 @@ last?: single?: lambda [
 array: func [
     "Makes and initializes a block of a given size"
 
-    return: [null? block!]
+    return: [<null> block!]
     size "Size or block of sizes for each dimension"
         [<opt-out> integer! block!]
     :initial "Initial value (will be called each time if action)"
@@ -382,7 +382,7 @@ collect*: func [
     "Evaluate body, and return block of values collected via keep function"
 
     return: "Result block, or null if no KEEPs (prevent nulls with KEEP [])"
-        [null? block!]
+        [<null> block!]
     body "Block to evaluate"
         [<opt-out> block!]
 ][
@@ -490,7 +490,7 @@ printf: func [
 split: func [
     "Split series in pieces: fixed/variable size, fixed number, or delimited"
 
-    return: [null? block!]
+    return: [<null> block!]
     series "The series to split"
         [<opt-out> any-series?]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
