@@ -1411,7 +1411,7 @@ IMPLEMENT_GENERIC(LENGTH_OF, Any_Context)
 //  "Get the keys of a context or map (should be KEYS-OF)"
 //
 //      return: [<null> block!]
-//      value [<opt-out> fundamental?]
+//      value [<opt-out> <unrun> fundamental?]
 //  ]
 //
 DECLARE_NATIVE(WORDS_OF)

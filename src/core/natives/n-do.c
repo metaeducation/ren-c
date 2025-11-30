@@ -41,7 +41,7 @@
 //
 //      return: [any-value?]
 //      value "BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns..."
-//          [element?]
+//          [<unrun> element?]
 //      expressions "Depending on VALUE, more expressions may be consumed"
 //          [<opt> element? <variadic>]
 //  ]
