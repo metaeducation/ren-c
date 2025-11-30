@@ -109,7 +109,7 @@ Bounce Lambda_Dispatcher(Level* const L)
         result_param = cast(Element*,
             Details_At(details, IDX_LAMBDA_RESULT_PARAM)
         );
-        assert(Is_Parameter(result_param));
+        assert(Is_Parameter(result_param) or Is_Quasar(result_param));
     }
 
     switch (STATE) {
@@ -143,8 +143,12 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    if (not result_param or Is_Parameter_Unconstrained(result_param))
+    if (not result_param)
         return BOUNCE_DELEGATE;  // no typecheck callback needed
+
+    if (not Is_Quasar(result_param))
+        if (Is_Parameter_Unconstrained(result_param))
+            return BOUNCE_DELEGATE;  // also no typecheck needed
 
     STATE = ST_LAMBDA_BODY_EXECUTING;
     return CONTINUE_SUBLEVEL(sub);
@@ -152,6 +156,14 @@ Bounce Lambda_Dispatcher(Level* const L)
 } body_finished: { ///////////////////////////////////////////////////////////
 
     assert(STATE == ST_LAMBDA_BODY_EXECUTING);
+
+    if (Is_Quasar(result_param)) {
+        trap (
+          Elide_Unless_Error_Including_In_Packs(OUT)  // turn ERROR! to PANIC
+        );
+        return TRIPWIRE;  // it's a PROCEDURE, just give TRASH!
+    }
+
     assert(not Is_Parameter_Unconstrained(unwrap result_param));
 
     require (
@@ -178,8 +190,14 @@ bool Lambda_Details_Querier(
     switch (property) {
       case SYM_RETURN_OF: {
         Value* param = Details_At(details, IDX_LAMBDA_RESULT_PARAM);
-        assert(Is_Parameter(param));
-        Copy_Cell(out, param);
+        if (Is_Quasar(param)) {
+            Value* arbitrary = rebValue("return of @", LIB(RANDOMIZE));
+            Copy_Cell(out, arbitrary);
+            rebRelease(arbitrary);
+        }
+        else
+            Copy_Cell(out, param);
+        assert(Is_Parameter(out));
         return true; }
 
       case SYM_BODY_OF: {
@@ -238,6 +256,43 @@ DECLARE_NATIVE(LAMBDA)
         Details_At(details, IDX_LAMBDA_RESULT_PARAM),
         STACK_BASE
       );
+
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
+    return UNSURPRISING(OUT);
+}
+
+
+//
+//  procedure: native [
+//
+//  "Variation of LAMBDA that will always return TRASH!"
+//
+//      return: [action!]
+//      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
+//          [block!]
+//      body "Code implementing the procedure"
+//          [block!]
+//  ]
+//
+DECLARE_NATIVE(PROCEDURE)
+{
+    INCLUDE_PARAMS_OF_PROCEDURE;
+
+    Element* spec = Element_ARG(SPEC);
+    Element* body = Element_ARG(BODY);
+
+    Option(SymId) no_returner = none;  // don't allow []: or RETURN:
+
+    require (
+      Details* details = Make_Interpreted_Action(
+        spec,
+        body,
+        no_returner,
+        &Lambda_Dispatcher,
+        MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
+    ));
+
+    Init_Quasar(Details_At(details, IDX_LAMBDA_RESULT_PARAM));  // no return
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return UNSURPRISING(OUT);
