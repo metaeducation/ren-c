@@ -77,8 +77,7 @@
         subparse group! expression | any-number?/ | word!
     ]
 
-    emit-node: func [
-        return: []
+    emit-node: proc [
         output [block!]
         node [object! any-number? word!]
     ][

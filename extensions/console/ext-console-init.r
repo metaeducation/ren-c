@@ -86,9 +86,8 @@ export console!: make object! [
   HELP    - For starting information
   ABOUT   - Information about your Rebol]--
 
-    print-greeting: func [
+    print-greeting: proc [
         "Adds live elements to static greeting content (build #, version)"
-        return: []
         <.>
     ][
         boot-print [
@@ -100,7 +99,7 @@ export console!: make object! [
         boot-print greeting
     ]
 
-    print-prompt: func [return: [] <.>] [
+    print-prompt: proc [<.>] [
         ;
         ; Note: See example override in skin in the Debugger extension, which
         ; adds the stack "level" number and "current" function name.
@@ -112,8 +111,7 @@ export console!: make object! [
         write stdout space
     ]
 
-    print-result: func [
-        return: []
+    print-result: proc [
         ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-value?]
         <.>
@@ -261,11 +259,13 @@ export console!: make object! [
             ]
             print [result (molded)]
         ]
+
+        return ~
     ]
 
-    print-warning: func [return: [] s <.>] [print [warning reduce s]]
+    print-warning: proc [s <.>] [print [warning reduce s]]
 
-    print-error: func [return: [] e [warning!] <.>] [
+    print-error: proc [e [warning!] <.>] [
         comment [  ; MOLD is more informative, but messy
             v: unanti ^v
             print unspaced [
@@ -278,7 +278,7 @@ export console!: make object! [
         ]
     ]
 
-    print-panic: func [return: [] e [warning!] <.>] [
+    print-panic: proc [e [warning!] <.>] [
         if e.file = 'tmp-boot.r [
             e.file: e.line: null  ; errors in console showed this, junk
         ]
@@ -300,14 +300,14 @@ export console!: make object! [
         ]
     ]
 
-    print-halted: func [return: [] <.>] [
+    print-halted: proc [<.>] [
         print newline  ; interrupts happen anytime, clearer to start newline
         print "[interrupted by Ctrl-C or HALT instruction]"
     ]
 
-    print-info: func [return: [] s <.>] [print [info reduce s]]
+    print-info: proc [s <.>] [print [info reduce s]]
 
-    print-gap: func [return: [] <.>] [print newline]
+    print-gap: proc [<.>] [print newline]
 
     === BEHAVIOR (can be overridden) ===
 
@@ -380,9 +380,8 @@ export console!: make object! [
 
     === HELPERS (could be overridden!) ===
 
-    add-shortcut: func [
+    add-shortcut: proc [
         "Add/Change console shortcut"
-        return: []
         name [word!] "Shortcut name"
         block [block!] "Command(s) expanded to"
         <.>
@@ -392,10 +391,9 @@ export console!: make object! [
 ]
 
 
-start-console: func [
+start-console: proc [
     "Called when a REPL is desired after command-line processing, vs quitting"
 
-    return: []
     :skin "Custom skin (e.g. derived from MAKE CONSOLE!) or file"
         [file! object!]
 ]
@@ -530,10 +528,9 @@ console*: func [
 
     let instruction: copy []
 
-    let emit: func [
+    let emit: proc [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
-        return: []
         item "RUNE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! rune! text!]
         <with> instruction
@@ -921,9 +918,8 @@ console*: func [
 ; means these will be seen by scripts, e.g. `do "why"` will work.
 ;
 
-export why: func [
+export why: proc [
     "Explain the last error in more detail."
-    return: []
     'err [<end> word! path! warning!] "Optional error value"
 ][
     let err: default [system.state.last-error]
@@ -942,12 +938,11 @@ export why: func [
 ]
 
 
-export upgrade: func [
+export upgrade: proc [
     "Check for newer versions."
-    return: []
 ][
     ; Should this be a console-detected command, like Q, or is it meaningful
     ; to define this as a function you could call from code?
     ;
-    do <upgrade>
+    do @upgrade
 ]

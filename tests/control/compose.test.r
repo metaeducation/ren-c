@@ -258,7 +258,7 @@
     (
         condition: 1 = 2
         messages: []
-        log: func [msg] [append messages msg]
+        log: proc [msg] [append messages msg]
         ok
     )
     (

@@ -12,7 +12,7 @@
 ; to close themselves.
 (
     stuff: []
-    log: func [x] [
+    log: proc [x] [
         if block? x [x: compose2 inside x '@() x]
         append stuff x
     ]

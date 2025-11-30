@@ -3232,4 +3232,5 @@ using: func [
     obj [<opt-out> object!]
 ][
     add-use-object (binding of $obj) obj
+    return ~
 ]

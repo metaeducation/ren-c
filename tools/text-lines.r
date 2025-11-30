@@ -80,10 +80,9 @@ encode-lines: func [
     return text
 ]
 
-for-each-line: func [
+for-each-line: proc [
     "Iterate over text lines"
 
-    return: []
     var "Word set to metadata for each line"
         [word!]
     text "Text with lines"

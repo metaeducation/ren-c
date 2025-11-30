@@ -20,8 +20,7 @@ import %test-parsing.r
 
 log-file: ~
 
-log: func [
-    return: []
+log: proc [
     report [block!]
 ][
     write:append log-file unspaced report
@@ -109,6 +108,7 @@ run-single-test: func [
         test-failures: me + 1
         log reduce [space -["failed, ]- message -["]- newline]
     ]
+    return ~
 ]
 
 run-test-cluster: func [
@@ -178,6 +178,8 @@ run-test-cluster: func [
             run-single-test inside isolate group opt expected-id
         )
     ]]
+
+    return ~
 ]
 
 

@@ -107,7 +107,7 @@
 ;
 ([3 300] = reduce* [1 + 2 null 100 + 200])
 
-~bad-antiform~ !! (reduce:predicate [1 + 2 3 + 4] func [x] [x * 10])
+~bad-antiform~ !! (reduce:predicate [1 + 2 3 + 4] lambda [x] [x * 10])
 ([30 70] = reduce:predicate [1 + 2 3 + 4] func [x] [return x * 10])
 
 ([~okay~ ~null~] = reduce:predicate [2 + 2 3 + 4] cascade [even?/ reify/])

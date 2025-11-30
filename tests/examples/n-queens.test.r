@@ -83,7 +83,7 @@
     ]
 
     ; Function for recursion
-    add-queen: func [n [integer!]
+    add-queen: proc [n [integer!]
         solution [block!]
         free-places [block!]
     ][

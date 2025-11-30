@@ -352,6 +352,7 @@ list-dir: func [
     all [text? l, not empty? l] then [print l]
 
     change-dir save-dir
+    return ~
 ]
 
 
@@ -433,17 +434,16 @@ to-relative-file: func [
 ;
 ; http://www.rebol.com/r3/docs/concepts/scripts-style.html#section-4
 ;
-detab-file: func [
+detab-file: proc [
     "detabs a disk file"
 
-    return: []
     filename [file!]
 ][
     write filename detab read:string filename
 ]
 
 ; temporary location
-set-net: func [
+set-net: proc [
     "sets the system.user.identity email smtp pop3 esmtp-usr esmtp-pass fqdn"
 
     bl [block!]

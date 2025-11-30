@@ -15,8 +15,7 @@ Rebol [
 
 import %test-parsing.r
 
-log-filter: func [
-    return: []
+log-filter: proc [
     source-log [file!]
 ][
     ; if the source log is r_2_7_8_3_1_1DEF65_002052.log

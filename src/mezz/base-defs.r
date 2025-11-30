@@ -293,15 +293,15 @@ print: func [
 
     write stdout (opt spaced line) then [
         write stdout newline
-    ] else [
-        return null
+        return ~
     ]
+
+    return null
 ]
 
-echo: func [
+echo: proc [
     "Freeform output of text, with @WORD, @TU.P.LE, and @(GR O UP) as escapes"
 
-    return: []
     @args "If a BLOCK!, then just that block's contents--else to end of line"
         [element? <variadic>]
     <local> line

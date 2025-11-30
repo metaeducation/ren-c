@@ -228,32 +228,17 @@ Bounce Func_Dispatcher(Level* const L)
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 
-  // 1. If no RETURN is used, the result is TRASH, and typechecking is
-  //    performed to make sure TRASH? was a legitimate return.  This has a
-  //    little bit of a negative side that if someone is to hook the RETURN
-  //    function, it won't be called in these "fallout" cases.  It's deemed
-  //    too ugly to slip in a "hidden" call to RETURN for this case, and too
-  //    big a hassle to force people to put RETURN ~ or RETURN at the end.
-  //    So this is the compromise chosen...at the moment.
+  // 1. If no RETURN is used, we panic and the function call fails.  This is
+  //    an attempt to enforce that if you hooked RETURN, then the hooked
+  //    return has to be used--you can't let a value fall out and bypass
+  //    calling the return.
+  //
+  //    (It may be that we prohibit THROW across a FUNC boundary, as a further
+  //    way of guaranteeing that a hooked RETURN is called if it exists.  This
+  //    would mean people writing custom loop generators would have to use
+  //    LAMBDA instead of FUNC.)
 
-    Init_Tripwire(OUT);  // TRASH, regardless of body result [1]
-
-    const Element* param = Quoted_Returner_Of_Paramlist(
-        Phase_Paramlist(details), SYM_RETURN
-    );
-
-    heeded (Corrupt_Cell_If_Needful(SPARE));
-    heeded (Corrupt_Cell_If_Needful(SCRATCH));
-
-    require (
-      bool check = Typecheck_Coerce_Return(L, param, OUT)
-    );
-    if (not check)
-        panic (
-            "End of function without a RETURN, but ~ not in RETURN: spec"
-        );
-
-    return OUT;
+    panic ("End of FUNCTION reached without calling RETURN (see LAMBDA)");
 }}
 
 

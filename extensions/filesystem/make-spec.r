@@ -400,7 +400,7 @@ if os = 'QNX [
 uv-depends: []
 
 ; extend uv-depends...
-reeval func [:name :options] [
+reeval proc [:name :options] [
     parse3 uv-sources [
         some [
             name: [tuple! | path!] options: try block! (
@@ -419,7 +419,7 @@ reeval func [:name :options] [
 ]
 
 ; extend uv-depends...
-reeval func [:name :options] [
+reeval proc [:name :options] [
     parse3 [
         fs-poll.c
         idna.c

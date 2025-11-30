@@ -507,6 +507,7 @@ cc: make compiler-class [
             ]
         ]
       ]
+      return ~
     ]
 
     compile: func [
@@ -1261,6 +1262,7 @@ generator-class: make object! [
         ]
 
         project.basename: basename
+        return ~
     ]
 
     setup-outputs: func [

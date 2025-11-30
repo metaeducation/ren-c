@@ -111,10 +111,9 @@ whitelisted: [
 ]
 
 
-log-emit: func [
+log-emit: proc [
     "Append a COMPOSE'd block to a log block, clearing any new-line flags"
 
-    return: []
     log [block!]
     label [tag!]
     body [block!]
@@ -275,6 +274,7 @@ export analyse: context [
                         ]
                     ]
                 ]
+                return ~
             ]
 
             /proto-parser.emit-proto: emit-proto/

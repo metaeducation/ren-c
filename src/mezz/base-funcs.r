@@ -506,8 +506,7 @@ eval-all: func [
 ; (Note it would be wasteful to call the getter, when 99 times out of 100
 ; the value would be discarded--so whatever is done here should avoid that.)
 ;
-/getter: infix func [
-    return: []
+/getter: infix proc [
     @var [set-word? set-run-word?]
     action [block! action!]
 ][

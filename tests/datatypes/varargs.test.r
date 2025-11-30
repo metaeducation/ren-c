@@ -169,8 +169,7 @@
 ; order to quote top-level words.  It's done more efficiently now, but this
 ; tests a pretty weird piece of functionality...so preserved here.
 (
-    run func [
-        return: []
+    run proc [
         @set-words [<variadic> set-word? tag!]
         <local>
             set-word type-name tester meta

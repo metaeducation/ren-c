@@ -177,9 +177,10 @@ emit-proto: func [
         proto: (ensure text! proto)
         is-variadic: (reify is-variadic)
     ]
+    return ~
 ]
 
-process: func [return: [] file] [
+process: proc [ file] [
     proto-parser.file: file
     proto-parser.emit-proto: emit-proto/
     proto-parser/process as text! read file

@@ -311,8 +311,7 @@ export propercase-of: func [
     return propercase form string
 ]
 
-export write-if-changed: func [
-    return: []
+export write-if-changed: proc [
     dest [file!]
     content [text!]
 ][

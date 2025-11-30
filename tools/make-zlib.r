@@ -52,8 +52,7 @@ path-zlib: https://raw.githubusercontent.com/madler/zlib/master/
 ; Disable #include "foo.h" style inclusions (but not #include <foo.h> style)
 ; Optionally will inline a list of files at the inclusion point
 ;
-disable-user-includes: func [
-    return: []
+disable-user-includes: proc [
     lines [block!] "Block of strings"
     :inline [block!] "Block of filenames to inline if seen"
     :stdio "Disable stdio.h"

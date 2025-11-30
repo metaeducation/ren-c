@@ -78,7 +78,7 @@ export proto-parser: context [
 
     count: ~
 
-    process: func [return: [] text] [
+    process: proc [text] [
         parse3 text grammar.rule
 
         emit-fileheader: ~
@@ -265,9 +265,8 @@ export proto-parser: context [
     ]
 ]
 
-export rewrite-if-directives: func [
+export rewrite-if-directives: proc [
     "Bottom up rewrite conditional directives to remove unnecessary sections"
-    return: []
     position
 ][
     insist [

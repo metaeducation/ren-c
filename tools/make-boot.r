@@ -342,10 +342,9 @@ ob: make object! boot-sysobj
 
 /c-debug-break: get $lib.c-debug-break
 
-make-obj-defs: func [
+make-obj-defs: proc [
     "Given a Rebol OBJECT!, write C structs that can access its raw variables"
 
-    return: []
     e "The emitter to write definitions to"
         [object!]
     obj

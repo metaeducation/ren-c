@@ -59,7 +59,11 @@
 [
     (foo: func [] [], ok)
 
-    (tripwire? foo)
+    ~???~ !! (foo)  ; no return
+]
+
+[
+    (foo: func [] [return ~], ok)
 
     ((lift ^tripwire) = lift applique foo/ [])
     (tripwire? applique foo/ [])
@@ -101,11 +105,11 @@
 
 
 [(
-    foo: func [return: []] []
+    foo: proc [] []
     (lift ^tripwire) = lift foo
 )(
     data: [a b c]
-    f: func [return: []] [append data spread [1 2 3]]
+    f: func [return: []] [append data spread [1 2 3] return ~]
     (lift ^tripwire) = lift f
 )]
 

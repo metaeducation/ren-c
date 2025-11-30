@@ -79,9 +79,7 @@ description-of: func [
 ]
 
 
-print-general-help: func [
-    return: []
-][
+print-general-help: proc [] [
     print trim:auto copy --[
         You are in a Rebol terminal.  QUIT or Ctrl-C should let you exit.
 
@@ -110,12 +108,10 @@ print-general-help: func [
 
         Try HELP HELP for assistance on use of the help facility.
     ]--
-    return ~
 ]
 
 
-help-action: func [
-    return: []
+help-action: proc [
     frame [<unrun> frame!]
     :name [word! tuple! path!]
 ][
@@ -532,7 +528,7 @@ what: func [
 ]
 
 
-bugs: func [return: []] [
+bugs: proc [
     "View bug database."
 ][
     browse https://github.com/metaeducation/ren-c/issues
@@ -581,4 +577,5 @@ require-commit: func [
             ]
         ]
     ]
+    return ~
 ]

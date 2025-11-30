@@ -57,12 +57,11 @@ comment [
 ]
 
 
-; The legacy PRIN construct is replaced by WRITE-STDOUT SPACED and similar
+; The legacy PRIN construct is replaced by WRITE STDOUT SPACED and similar
 ;
-prin: func [
+prin: proc [
     "Print without implicit line break, blocks are SPACED."
 
-    return: []
     value [<opt> element?]
 ][
     write stdout switch:type value [

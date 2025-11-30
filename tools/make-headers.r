@@ -111,10 +111,11 @@ emit-proto: func [
     e-funcs/emit [proto proto-parser.file --[
         RL_API $<Proto>; /* $<proto-parser.file> */
     ]--]
+
+    return ~
 ]
 
-process-conditional: func [
-    return: []
+process-conditional: proc [
     directive
     dir-position
     emitter [object!]
@@ -134,7 +135,7 @@ process-conditional: func [
     ]
 ]
 
-emit-directive: func [return: [] directive] [
+emit-directive: proc [directive] [
     process-conditional directive proto-parser.parse-position e-funcs
 ]
 
@@ -206,6 +207,7 @@ handle-item: func [
     proto-parser.file: to file! unspaced [opt subdir, file]
     proto-parser.emit-directive: emit-directive/
     proto-parser/process (as text! read proto-parser.file)
+    return ~
 ]
 
 name: null
@@ -247,7 +249,7 @@ sys-globals-parser: context [
     id: null
     data: ~
 
-    process: func [return: [] text] [
+    process: proc [text] [
         parse3 text grammar.rule  ; Review: no END (return result unused?)
     ]
 

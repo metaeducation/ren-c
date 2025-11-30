@@ -868,7 +868,6 @@ modernize-action: func3 [
         (tryers)
         (proxiers)
         (as group! body)  ; compose3 does not splice groups--just blocks
-        return ~  ; functions now default to returning nothing
     ]
     return reduce [new-spec new-body reify methodized]
 ]
@@ -882,13 +881,30 @@ lambda: adapt lambda3/ [
     ]
 ]
 
+; This is weird because METHOD's implementation is weird in the bootstrap
+; executable: it left quotes to get the archetypal object to bind to from a
+; SET-WORD!.  That's all different now, but if we see `<.>` in the spec we
+; need the inheritance behavior, and so we have to opportunistically capture
+; SET-WORD! on the left.  If we do capture it, we're responsible for the
+; assignment...whether there was a `<*>` in the spec or not!
+;
 func-core: lambda3 [
-    :member [<skip> set-word3! set-path3!]
+    :member [<skip> set-word3!]
     spec
     body
-    :term [block!]
+    /must-return
+    <local> gen
 ][
-    set [spec body methodized] modernize-action spec (append3 copy body term)
+    gen: either must-return [
+        body: append3 copy body [  ; splices
+            panic:blame "FUNCTION did not have a RETURN" $return
+        ]
+        func3/  ; want definitional return
+    ][
+        lambda3/  ; don't want definitional return for PROCEDURE
+    ]
+    set [spec body methodized] modernize-action spec body
+
     either degrade methodized [
         if not member [
             panic "bootstrap requires WORD! on left to use <*>"
@@ -896,19 +912,20 @@ func-core: lambda3 [
         context: binding of member else [
             panic [target "must be bound to an ANY-CONTEXT! to use <*>"]
         ]
-        set member bind3 (func3 spec bind3 copy:deep body context) context
+        assert [object? context]  ; can't use with FRAME!
+        set member bind3 (gen spec bind3 copy:deep body context) context
     ][
-        either member [
-            set member func3 spec body
+        either member [  ; we consumed the SET-XXX!, so we must manually set
+            set member gen spec body
         ][
-            func3 spec body
+            gen spec body  ; no SET-XXX! on left so just generate
         ]
     ]
 ]
 
-func: infix specialize func-core/ [term: []]  ; default is return trash
+func: infix specialize func-core/ [must-return: okay]
 
-proc: infix specialize func-core/ [term: []]  ; default is return trash
+proc: infix specialize func-core/ [must-return: null]
 
 function: ~#[FUNCTION deprecated (will be FUNC synonym, eventually)]#~
 

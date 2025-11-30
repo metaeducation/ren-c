@@ -46,8 +46,7 @@ log-file-prefix: join %r collect [
 
 === TEST RUNNER FUNCTION ===
 
-run-tests: func [
-    return: []
+run-tests: proc [
     file [file!]
 ][
     print ["=== Running Tests implied by" mold file "==="]

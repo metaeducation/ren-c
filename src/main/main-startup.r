@@ -97,9 +97,8 @@ boot-banner: [
     *
 ]
 
-about: func [
+about: proc [
     "Information about REBOL"
-    return: []
 ][
     print make-banner boot-banner
 ]
@@ -113,9 +112,8 @@ about: func [
 ; like an ordinary ACTION!, and all the proxying is handled for the user.
 ; Work done on the dialect here could be shared in common.
 ;
-usage: func [
+usage: proc [
     "Prints command-line arguments."
-    return: []
 ][
 ;       --cgi (-c)       Load CGI utiliy module and modes
 ;       --version tuple  Script must be this version or greater
@@ -162,16 +160,14 @@ usage: func [
     ]--
 ]
 
-license: func [
+license: proc [
     "Prints the REBOL/core license agreement."
-    return: []
 ][
     print system.license
 ]
 
-host-script-pre-load: func [
+host-script-pre-load: proc [
     "Code registered as a hook when a module or script are loaded"
-    return: []
     is-module [yesno?]
     hdr "Header object (missing for DO of BLOB! with no header)"
         [<opt> object!]
@@ -225,10 +221,9 @@ bind construct [
 
     let instruction: copy '[]  ; quote for no binding, want console binding [1]
 
-    let emit: func [
+    let emit: proc [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
-        return: []
         item "RUNE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! rune! text!]
         <with> instruction

@@ -1478,8 +1478,7 @@ pthread: make rebmake.ext-dynamic-class [
 
 folders: copy [%objs/ %objs/core/ %objs/main/]
 
-add-new-obj-folders: func [
-    return: []
+add-new-obj-folders: proc [
     objs
     folders
     <local>
@@ -1545,8 +1544,7 @@ print ["SKIPPED (-) EXTENSIONS:" mold skipped-extensions, newline]
 
 print ["UNMENTIONED EXTENSIONS:" mold unmentioned-extensions, newline]
 
-add-project-flags: func [
-    return: []
+add-project-flags: proc [
     project [object!]
     :I "includes" [block!]
     :D "definitions" [block!]

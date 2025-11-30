@@ -39,10 +39,9 @@ Rebol [
 ]
 
 
-compile: func [
+compile: proc [
     "Compiles one or more native functions at the same time, with options"
 
-    return: []
     compilables "Functions from MAKE-NATIVE, TEXT! strings of code, ..."
     :settings [block!] --[
         The block supports the following dialect:
@@ -634,7 +633,6 @@ c99: func [
 
 bootstrap: func [
     "Download Rebol sources from GitHub and build using TCC"
-    return: []
     :options "Use system.options.ARGS to get additional make.r options"
     :cheat "Use CALL to do the download and unzip vs. internal (faster)"
 ][

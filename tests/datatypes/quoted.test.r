@@ -41,7 +41,7 @@
 )(
     x: 10
     y: null
-    foo: func [<local> x] [
+    foo: proc [<local> x] [
         set $x: 20
         set $y x
     ]
@@ -58,7 +58,7 @@
 )(
     x: 10
     y: null
-    foo: func [return: [] <local> x] [
+    foo: proc [<local> x] [
         set unquote the 'x: 20
         set unquote the 'y x
     ]
@@ -75,8 +75,7 @@
 )(
     x: 10
     y: null
-    foo: func [
-        return: []
+    foo: proc [
         <local> x
     ][
         set noquote the '''''''x: 20  ; x is local assignment

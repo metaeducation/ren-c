@@ -322,6 +322,7 @@ move: func [
     insert either to [at head of source offset] [
         lib/skip source offset
     ] either any-list? source [spread part] [part]
+    return ~
 ]
 
 
@@ -477,9 +478,8 @@ format: func [
 ]
 
 
-printf: func [
+printf: proc [
     "Formatted print."
-    return: []
     fmt "Format"
     val "Value or block of values"
 ][
@@ -645,10 +645,11 @@ find-all: func [
 ][
     verify [any-series? orig: get series]
     while [any [
-        , set series find get series value
-        , (set series orig, false)  ; reset series and break loop
+        set series find get series value
+        (set series orig, null)  ; reset series and break loop
     ]][
         eval body
         series: next series
     ]
+    return ~
 ]

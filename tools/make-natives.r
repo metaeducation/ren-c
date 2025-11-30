@@ -86,8 +86,7 @@ generics: copy []
 output-buffer: make text! 20000
 
 
-gather-natives: func [
-    return: []
+gather-natives: proc [
     dir
 ][
     let files: read dir

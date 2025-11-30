@@ -200,7 +200,7 @@ version-to-bytes: [
 bytes-to-version: reverse copy version-to-bytes
 
 
-emit: func [
+emit: proc [
     "Emits binary data, optionally marking positions with SET-WORD!"
 
     return: []
@@ -226,6 +226,7 @@ emit: func [
             ]
         ]
     ]
+    return ~
 ]
 
 ; Network formats generally use big-endian byte ordering.  The concept seems
@@ -418,8 +419,7 @@ make-state-updater: func [
         ]
     ]
 
-    return func [
-        return: []  ; !!! Should it have a return?
+    return proc [  ; !!! Should it have a return?
         ctx [object!]
         new [tag! rune!]
     ][
@@ -461,8 +461,7 @@ update-write-state: make-state-updater 'write [
 
 === TLS PROTOCOL CODE ===
 
-client-hello: func [
-    return: []
+client-hello: proc [
     ctx [object!]
     :version "TLS version to request (block is [lowest highest] allowed)"
         [decimal! block!]
@@ -671,8 +670,7 @@ client-hello: func [
 ]
 
 
-client-key-exchange: func [
-    return: []
+client-key-exchange: proc [
     ctx [object!]
 ][
     let [key-data key-len]
@@ -780,8 +778,7 @@ client-key-exchange: func [
 ]
 
 
-change-cipher-spec: func [
-    return: []
+change-cipher-spec: proc [
     ctx [object!]
 ][
     emit ctx [
@@ -809,8 +806,7 @@ encrypted-handshake-msg: func [
 ]
 
 
-application-data: func [
-    return: []
+application-data: proc [
     ctx [object!]
     unencrypted [blob! text!]
 ][
@@ -824,8 +820,7 @@ application-data: func [
 ]
 
 
-alert-close-notify: func [
-    return: []
+alert-close-notify: proc [
     ctx [object!]
 ][
     let encrypted: encrypt-data ctx #{0100} ; close notify
@@ -1674,14 +1669,14 @@ do-commands: func [
         ; Note: Even if state is <finished>, it seems to still want to READ.
     ]
     perform-read tls-port
+    return ~
 ]
 
 
 === TLS SCHEME ===
 
 
-tls-init: func [
-    return: []
+tls-init: proc [
     ctx [object!]
 ][
     ctx.seq-num-r: 0
@@ -1743,8 +1738,7 @@ tls-read-data: func [
 ]
 
 
-perform-read: func [
-    return: []
+perform-read: proc [
     port [port!]
 ][
     debug ["READ open is" boolean open? port.state.connection]

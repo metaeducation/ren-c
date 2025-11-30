@@ -166,10 +166,9 @@ do-request: func [
 ; if a no-redirect keyword is found in the write dialect after 'headers then
 ; 302 redirects will not be followed
 ;
-parse-write-dialect: func [
+parse-write-dialect: proc [
     "Sets PORT.SPEC fields: DEBUG, FOLLOW, METHOD, PATH, HEADERS, CONTENT"
 
-    return: []
     port [port!]
     block [block!]
 ][
@@ -186,7 +185,7 @@ parse-write-dialect: func [
 ]
 
 check-response: func [
-    return: []
+    return: [trash! error!]
     port [port!]
 ][
     let state: port.state
@@ -384,6 +383,7 @@ check-response: func [
             return fail make-http-error "HTTP response version not supported"
         ]
     ]
+    return ~
 ]
 
 
@@ -396,8 +396,7 @@ http-response-headers: context [
     Last-Modified: null
 ]
 
-do-redirect: func [
-    return: []
+do-redirect: proc [
     port [port!]
     new-uri [url! text! file!]
     headers
@@ -462,9 +461,8 @@ do-redirect: func [
     port.data: data
 ]
 
-read-body: func [
+read-body: proc [
     "Based on the information in the HTTP headers, read body into PORT.DATA"
-    return: []
     port [port!]
 ][
     let state: port.state
