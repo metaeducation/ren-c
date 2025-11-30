@@ -142,7 +142,7 @@ Result(Details*) Make_Native_Dispatch_Details(
     //
     if (native_type == NATIVE_COMBINATOR) {
         DECLARE_ELEMENT (native);
-        Init_Frame(native, details, ANONYMOUS, NONMETHOD);
+        Init_Frame(native, details, ANONYMOUS, UNCOUPLED);
         details = Make_Dispatch_Details(
             BASE_FLAG_MANAGED,  // *not* a native, calls one...
             native,
@@ -225,7 +225,7 @@ static Bounce Native_Native_Core(Level* level_)
             f_cast(Dispatcher*, cfunc)
         ));
 
-        Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
+        Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     }
 
     return UNSURPRISING(OUT);
@@ -581,7 +581,7 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
         Sink_Lib_Var(id),
         details,
         Canon_Symbol(id),  // label
-        NONMETHOD  // coupling
+        UNCOUPLED  // coupling
     );
 
     assert(cast(Details*, Frame_Phase(Lib_Var(id))) == details);  // make sure

@@ -302,7 +302,7 @@ DECLARE_NATIVE(CASCADE_P)  // see extended CASCADE in %base-defs.r
         pipeline
     );
 
-    Init_Action(OUT, details, Frame_Label_Deep(first), NONMETHOD);
+    Init_Action(OUT, details, Frame_Label_Deep(first), UNCOUPLED);
 
     return UNSURPRISING(OUT);
 }

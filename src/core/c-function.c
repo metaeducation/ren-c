@@ -29,7 +29,8 @@ typedef enum {
     SPEC_MODE_DEFAULT,  // waiting, words seen will be arguments
     SPEC_MODE_PUSHED,  // argument pushed, information can be augmented
     SPEC_MODE_LOCAL,  // words are locals
-    SPEC_MODE_WITH  // words are "extern"
+    SPEC_MODE_WITH,  // words are "extern"
+    SPEC_MODE_COUPLING
 } SpecMode;
 
 
@@ -61,11 +62,14 @@ static void Force_Adjunct(VarList* *adjunct_out) {
 //
 static Result(None) Push_Keys_And_Params_Core(
     VarList* *adjunct,
+    Element* methodization,
     Level* const L,
     Flags flags,
     Option(SymId) returner  // e.g. SYM_RETURN, SYM_YIELD, SYM_DUMMY1 ([]:)
 ){
     USE_LEVEL_SHORTHANDS (L);
+
+    assert(Is_Quasar(methodization) or Is_Parameter(methodization));
 
     StackIndex base = L->baseline.stack_base;
 
@@ -98,7 +102,18 @@ static Result(None) Push_Keys_And_Params_Core(
         bool strict = false;
         if (Is_Tag(item)) {
             flags |= MKF_PARAMETER_SEEN;  // don't look for description after
-            if (0 == CT_Utf8(item, g_tag_with, strict)) {
+            if (0 == CT_Utf8(item, g_tag_dot_1, strict)) {
+                if (not Is_Quasar(methodization))
+                    return fail ("Duplicate <.> in spec");
+
+                mode = SPEC_MODE_COUPLING;
+                Init_Unconstrained_Parameter(
+                    methodization,
+                    FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
+                );
+                continue;
+            }
+            else if (0 == CT_Utf8(item, g_tag_with, strict)) {
                 mode = SPEC_MODE_WITH;
                 continue;
             }
@@ -257,23 +272,34 @@ static Result(None) Push_Keys_And_Params_Core(
     //    to check the type of an imported value at time of calling.
 
         if (Is_Block(item)) {
-            if (mode != SPEC_MODE_PUSHED)  // must come after parameter [1]
+            Element* temp;  // GET moves stack
+
+            if (mode == SPEC_MODE_PUSHED) {  // must come after parameter [1]
+                temp = Copy_Cell(SPARE, TOP_ELEMENT);
+            }
+            else if (mode == SPEC_MODE_COUPLING) {
+                temp = methodization;
+            }
+            else
                 return fail (Error_Bad_Func_Def_Raw(item));
 
-            Element* spare = Copy_Cell(SPARE, TOP_ELEMENT);  // GET moves stack
-
-            if (Parameter_Spec(spare))  // `func [x [integer!] [integer!]]`
+            if (Parameter_Spec(temp))  // `func [x [integer!] [integer!]]`
                 return fail (Error_Bad_Func_Def_Raw(item));  // too many blocks
 
             Context* derived = Derive_Binding(Level_Binding(L), item);
             Option(Error*) e = rescue (
-                Set_Parameter_Spec(spare, item, derived)
+                Set_Parameter_Spec(temp, item, derived)
             );
 
             if (e)
                 return fail (unwrap e);
 
-            Copy_Cell(TOP_ELEMENT, spare);  // put modification back on stack
+            if (mode == SPEC_MODE_PUSHED)
+                Copy_Cell(TOP_ELEMENT, temp);  // update modification on stack
+            else {
+                assert(mode == SPEC_MODE_COUPLING);
+                mode = SPEC_MODE_PUSHED;
+            }
 
             continue;
         }
@@ -428,6 +454,9 @@ static Result(None) Push_Keys_And_Params_Core(
         if (mode == SPEC_MODE_WITH)
             continue;
 
+        if (mode == SPEC_MODE_COUPLING)
+            mode = SPEC_MODE_PUSHED;
+
         flags |= MKF_PARAMETER_SEEN;  // don't look for description after
 
         OnStack(Value*) param;
@@ -441,10 +470,7 @@ static Result(None) Push_Keys_And_Params_Core(
             );
             param = Data_Stack_At(Value, base + 2);
             if (Is_Cell_Readable(param)) {
-                assert(
-                    LIFT_BYTE(param) == ONEQUOTE_NONQUASI_4
-                    and Heart_Of(param) == TYPE_PARAMETER
-                );
+                Assert_Quotified_Parameter(param);
                 if (SYM_DUMMY1 == unwrap returner)
                     return fail ("Duplicate []: in lambda spec");
                 if (SYM_RETURN == unwrap returner)
@@ -487,7 +513,7 @@ static Result(None) Push_Keys_And_Params_Core(
             Word_Id(Data_Stack_At(Element, base + 1))
             == unwrap returner
         );
-        OnStack(Value*) param_1 = Data_Stack_At(Value, base + 2);
+        OnStack(Element*) param_1 = Data_Stack_At(Element, base + 2);
         if (Not_Cell_Readable(param_1)) {
             Init_Unconstrained_Parameter(  // return anything by default
                 param_1,
@@ -496,7 +522,7 @@ static Result(None) Push_Keys_And_Params_Core(
         }
         else
             assert(Is_Parameter(param_1));
-        LIFT_BYTE(param_1) = ONEQUOTE_NONQUASI_4;  // quoted parameter
+        Quotify_Parameter_Local(param_1);
     }
 
     if (*adjunct)
@@ -514,6 +540,7 @@ static Result(None) Push_Keys_And_Params_Core(
 //
 Result(None) Push_Keys_And_Params(
     VarList* *adjunct,
+    Element* methodization,
     const Element* spec,
     Flags flags,
     Option(SymId) returner  // e.g. SYM_RETURN or SYM_YIELD
@@ -525,7 +552,9 @@ Result(None) Push_Keys_And_Params(
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     ));
 
-    Push_Keys_And_Params_Core(adjunct, L, flags, returner) except (Error* e) {
+    Push_Keys_And_Params_Core(
+        adjunct, methodization, L, flags, returner
+    ) except (Error* e) {
         Drop_Data_Stack_To(L->baseline.stack_base);
         Drop_Level(L);
         return fail (e);
@@ -548,10 +577,11 @@ Result(None) Push_Keys_And_Params(
 //
 Result(ParamList*) Pop_Paramlist(
     StackIndex base,
+    Option(const Element*) methodization,
     Option(Phase*) prior,
     Option(VarList*) prior_coupling
 ){
-    Count num_params = (TOP_INDEX - base) / 2;
+    Count num_params = (TOP_INDEX - base) / 2 + (methodization ? 1 : 0);
 
     require (
       KeyList* keylist = u_downcast Make_Flex(
@@ -563,7 +593,7 @@ Result(ParamList*) Pop_Paramlist(
 
     Array* paramlist = Make_Array_Core(
         STUB_MASK_PARAMLIST,
-        num_params + 1
+        num_params + 1  // +1 for rootvar
     );
     Set_Flex_Len(paramlist, num_params + 1);
 
@@ -586,11 +616,23 @@ Result(ParamList*) Pop_Paramlist(
             rootvar,
             u_cast(Phase*, paramlist),
             ANONYMOUS,
-            NONMETHOD
+            UNCOUPLED
         );
 
     Value* param = 1 + rootvar;
     Key* key = Flex_Head(Key, keylist);
+
+    if (methodization) {  // put dot first if applicable (find it fastest...)
+        *key = CANON(DOT_1);
+        Copy_Cell(param, unwrap methodization);
+        assert(Is_Parameter(param));
+        Quotify_Parameter_Local(Known_Element(param));
+        Set_Cell_Flag(param, PARAM_NOTE_TYPECHECKED);
+        ++key;
+        ++param;
+
+        Set_Flavor_Flag(VARLIST, paramlist, METHODIZED);
+    }
 
     StackIndex stackindex = base + 1;  // empty stack base would be 0, bad cell
     for (; stackindex <= TOP_INDEX; stackindex += 2) {
@@ -643,6 +685,7 @@ Result(ParamList*) Pop_Paramlist(
         ++key;
         ++param;
     }
+
     assert(param == Array_Tail(paramlist));
 
     Manage_Stub(paramlist);
@@ -705,27 +748,43 @@ Result(ParamList*) Make_Paramlist_Managed(
     Flags flags,  // flags may be modified to carry additional information
     Option(SymId) returner  // e.g. SYM_YIELD, SYM_RETURN, or SYM_DUMMY1 ([]:)
 ){
-    StackIndex base = TOP_INDEX;
+    Element* methodization = Init_Quasar(PUSH());
+
+    StackIndex base = TOP_INDEX;  // note we have to pop the methodization too
 
     // The process is broken up into phases so that the spec analysis code
     // can be reused in AUGMENT.
     //
     *adjunct = nullptr;
 
-    Push_Keys_And_Params(adjunct, spec, flags, returner) except (Error* e) {
+    Push_Keys_And_Params(
+        adjunct, methodization, spec, flags, returner
+    ) except (Error* e) {
         return fail (e);
     }
 
     Option(Phase*) prior = nullptr;
     Option(VarList*) prior_coupling = nullptr;
 
-    if (flags & MKF_DONT_POP_RETURN) {
+    if (flags & MKF_DONT_POP_RETURN) {  // will have to pop methodization too
         assert(returner);
         assert(TOP_INDEX - base >= 2);
         base += 2;
     }
 
-    return Pop_Paramlist(base, prior, prior_coupling);
+    trap (
+      ParamList* paramlist = Pop_Paramlist(
+        base,
+        Is_Quasar(methodization) ? nullptr : methodization,
+        prior,
+        prior_coupling
+      )
+    );
+
+    if (not (flags & MKF_DONT_POP_RETURN))
+        DROP();  // pop methodization (wasn't popped in Pop_Paramlist)
+
+    return paramlist;
 }
 
 
@@ -738,16 +797,17 @@ Result(ParamList*) Make_Paramlist_Managed(
 //
 void Pop_Unpopped_Return(Sink(Element) out, StackIndex base)
 {
-    assert(TOP_INDEX == base + 2);
-    assert(
-        Heart_Of(TOP) == TYPE_PARAMETER
-        and LIFT_BYTE(TOP) == ONEQUOTE_NONQUASI_4
-    );
-    LIFT_BYTE(TOP) = NOQUOTE_2;
+    assert(TOP_INDEX == base + 3);
+
     Copy_Cell(out, TOP_ELEMENT);
+    Unquotify_Parameter_Local(out);;
     DROP();
+
     assert(Word_Id(TOP) == SYM_RETURN or Word_Id(TOP) == SYM_DUMMY1);
     DROP();
+
+    assert(Is_Quasar(TOP_ELEMENT) or Is_Parameter(TOP_ELEMENT));
+    DROP();  // pop methodization storage cell
 
     UNUSED(base);
 }
@@ -786,7 +846,11 @@ Details* Make_Dispatch_Details(
             | DETAILS_FLAG_API_CONTINUATIONS_OK
             | DETAILS_FLAG_RAW_NATIVE
             | DETAILS_FLAG_OWNS_PARAMLIST
+            | DETAILS_FLAG_METHODIZED  // inherit from exemplar
     ))));
+
+    if (Get_Flavor_Flag(VARLIST, Cell_Varlist(exemplar), METHODIZED))
+        flags |= DETAILS_FLAG_METHODIZED;
 
     // "details" for an action is an array of cells which can be anything
     // the dispatcher understands it to be, by contract.
@@ -915,7 +979,7 @@ DetailsQuerier* Details_Querier(Details *details) {
 //  "Associate an ACTION! with OBJECT! to use for `.field` member references"
 //
 //      return: [action! frame!]
-//      action [action! frame!]
+//      frame [action! frame!]
 //      coupling [<opt> object! frame!]
 //  ]
 //
@@ -926,10 +990,13 @@ DECLARE_NATIVE(COUPLE)
 {
     INCLUDE_PARAMS_OF_COUPLE;
 
-    Value* action_or_frame = ARG(ACTION);  // could also be a FRAME!
-    Value* coupling = ARG(COUPLING);
+    Value* action_or_frame = ARG(FRAME);  // could also be a ACTION!
 
-    assert(Heart_Of(action_or_frame) == TYPE_FRAME);
+    Details* details = Phase_Details(Frame_Phase(action_or_frame));
+    if (Not_Details_Flag(details, METHODIZED))
+        return fail ("FRAME! is not methodized, cannot COUPLE it");
+
+    Value* coupling = ARG(COUPLING);
 
     if (Is_Nulled(coupling))
         Tweak_Frame_Coupling(action_or_frame, nullptr);

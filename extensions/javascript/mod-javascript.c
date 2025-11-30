@@ -787,6 +787,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
 
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
+    Inject_Methodization_If_Any(L);
 
     heapaddr_t frame_id = Frame_Id_For_Level(L);
 
@@ -1105,7 +1106,7 @@ DECLARE_NATIVE(JS_NATIVE)
     assert(Misc_Phase_Adjunct(details) == nullptr);
     Tweak_Misc_Phase_Adjunct(details, adjunct);
 
-    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return UNSURPRISING(OUT);
 }
 

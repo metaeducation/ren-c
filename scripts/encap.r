@@ -234,12 +234,13 @@ elf-format: context [
     ;    So we alias what we're comparing to BINARY! instead of aliasing the
     ;    section as TEXT! (avoiding the validation is more performant anyway)
     ;
-    find-section: method [
+    find-section: func [
         return: "The index of the section header with encap (sh_xxx vars set)"
             [<null> integer!]
         name [text!]
         section-headers [blob!]
         string-section [blob!]
+        <.>
     ][
         let index: 0
         parse3 section-headers [
@@ -260,13 +261,14 @@ elf-format: context [
         return null
     ]
 
-    update-offsets: method [
+    update-offsets: func [
         "Adjust headers to account for insertion or removal of data @ offset"
 
         return: []
         executable [blob!]
         offset [integer!]
         delta [integer!]
+        <.>
     ][
         assert [e_phoff < offset]  ; program headers are before any changes
 
@@ -296,11 +298,12 @@ elf-format: context [
         ]
     ]
 
-    update-embedding: method [
+    update-embedding: func [
         return: []
         executable "Executable to mutate to either add or update an embedding"
             [blob!]
         embedding [blob!]
+        <.>
     ][
         ; Up front, let's check to see if the executable has data past the
         ; tail or not--which indicates some other app added data using the
@@ -492,9 +495,10 @@ elf-format: context [
         ]
     ]
 
-    get-embedding: method [
+    get-embedding: func [
         return: [<null> blob!]
         file [file!]
+        <.>
     ][
         let header-data: read:part file 64  ; 64-bit size, 32-bit is smaller
 
@@ -1171,11 +1175,12 @@ generic-format: context [
     signature: as blob! "ENCAP000"
     sig-length: length of signature
 
-    update-embedding: method [
+    update-embedding: func [
         return: []
         executable "Executable to mutate to either add or update an embedding"
             [blob!]
         embedding [blob!]
+        <.>
     ][
         let embed-size: length of embedding
 
@@ -1215,9 +1220,10 @@ generic-format: context [
         append executable signature
     ]
 
-    get-embedding: method [
+    get-embedding: func [
         return: [<null> blob!]
         file [file!]
+        <.>
     ][
         let info: query file
 

@@ -149,6 +149,10 @@ sys.util/recover [
     ]
     export load: ~#[Use LOAD3 in Bootstrap (no multi-returns for header)]#~
 
+    export method: lambda [spec body] [  ; no METHOD in modern Ren-C, just <.>
+        func (join spec [<.>]) body
+    ]
+
     quit 0
 ]
 
@@ -711,9 +715,11 @@ modernize-action: func3 [
     return: [block!]
     spec [block!]
     body [block!]
-    <local> last-refine-word tryers proxiers proxy w types new-spec new-body
+    <local>
+    last-refine-word tryers proxiers proxy w types new-spec new-body methodized
 ][
     last-refine-word: null
+    methodized: null
 
     tryers: copy []
     proxiers: copy []
@@ -735,6 +741,11 @@ modernize-action: func3 [
             ]
 
             if tag? spec.1 [
+                if <.> = spec.1 [
+                    methodized: okay
+                    spec: my next
+                    continue
+                ]
                 last-refine-word: null
                 keep3:only spec.1
                 spec: my next
@@ -837,6 +848,10 @@ modernize-action: func3 [
                 continue
             ]
 
+            if <.> = spec.1 [
+                continue
+            ]
+
             keep3:only spec.1
             spec: my next
         ]
@@ -855,16 +870,47 @@ modernize-action: func3 [
         (as group! body)  ; compose3 does not splice groups--just blocks
         return ~  ; functions now default to returning nothing
     ]
-    return reduce [new-spec new-body]
+    return reduce [new-spec new-body reify methodized]
 ]
 
-lambda: adapt lambda3/ [set [spec body] modernize-action spec body]
+lambda: adapt lambda3/ [
+    use [methodized] [
+        set [spec body methodized] modernize-action spec body
+        if degrade methodized [
+            panic "Don't methodize LAMBDA (can't do []: in bootstrap shim)"
+        ]
+    ]
+]
 
-func: adapt func3/ [set [spec body] modernize-action spec body]
+func-core: lambda3 [
+    :member [<skip> set-word3! set-path3!]
+    spec
+    body
+    :term [block!]
+][
+    set [spec body methodized] modernize-action spec (append3 copy body term)
+    either degrade methodized [
+        if not member [
+            panic "bootstrap requires WORD! on left to use <*>"
+        ]
+        context: binding of member else [
+            panic [target "must be bound to an ANY-CONTEXT! to use <*>"]
+        ]
+        set member bind3 (func3 spec bind3 copy:deep body context) context
+    ][
+        either member [
+            set member func3 spec body
+        ][
+            func3 spec body
+        ]
+    ]
+]
+
+func: infix specialize func-core/ [term: []]  ; default is return trash
+
+proc: infix specialize func-core/ [term: []]  ; default is return trash
 
 function: ~#[FUNCTION deprecated (will be FUNC synonym, eventually)]#~
-
-method: infix adapt $lib3.meth/ [set [spec body] modernize-action spec body]
 
 
 === "FUNCTION APPLICATION" ===

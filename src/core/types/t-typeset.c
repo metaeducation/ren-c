@@ -73,7 +73,7 @@ void Startup_Type_Predicates(void)
 
         Details* details = Make_Typechecker(typeset_byte);
 
-        Init_Action(Sink_Lib_Var(id), details, Canon_Symbol(id), NONMETHOD);
+        Init_Action(Sink_Lib_Var(id), details, Canon_Symbol(id), UNCOUPLED);
         assert(Ensure_Frame_Details(Lib_Var(id)));
     }
 

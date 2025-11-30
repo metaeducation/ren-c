@@ -112,9 +112,11 @@
 #endif
 
 
-//=//// VARLIST_FLAG_24 ///////////////////////////////////////////////////=//
+//=//// VARLIST_FLAG_METHODIZED ///////////////////////////////////////////=//
 //
-#define VARLIST_FLAG_24 \
+// This flag is set on a varlist if it encounters a <.> in the function spec.
+//
+#define VARLIST_FLAG_METHODIZED \
     STUB_SUBCLASS_FLAG_24
 
 

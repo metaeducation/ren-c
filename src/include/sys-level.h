@@ -966,25 +966,49 @@ INLINE void Disable_Dispatcher_Catching_Of_Throws(Level* L)
 
 
 // Shared code for putting a definitional RETURN or YIELD into the first slot
-// of a Level's frame.
+// (or second slot) of a Level's frame.
 //
 INLINE void Inject_Definitional_Returner(
     Level* L,
     const Value* definitional,  // LIB(DEFINITIONAL_RETURN), or YIELD
-    SymId returner  // SYM_YIELD, SYM_RETURN
+    SymId id  // SYM_YIELD, SYM_RETURN
 ){
-    assert(Key_Id(Phase_Keys_Head(Ensure_Level_Details(L))) == returner);
+    Details* details = Ensure_Level_Details(L);
+
+    Index slot_num = Get_Details_Flag(details, METHODIZED) ? 2 : 1;
+
+    assert(Key_Id(Varlist_Key(L->varlist, slot_num)) == id);
     assert(Is_Base_Managed(L->varlist));
 
-    Atom* cell = Level_Arg(L, 1);  // should start out specialized
-    assert(
-        LIFT_BYTE(cell) == ONEQUOTE_NONQUASI_4
-        and Heart_Of(cell) == TYPE_PARAMETER
-    );
+    Atom* returner = Level_Arg(L, slot_num);  // should start out specialized
+    Assert_Quotified_Parameter(returner);
+
     Init_Action(
-        cell,
+        returner,
         Frame_Phase(definitional),  // DEFINITIONAL-RETURN or YIELD
-        Canon_Symbol(returner),  // relabel as plain RETURN or YIELD
+        Canon_Symbol(id),  // relabel as plain RETURN or YIELD
         L->varlist  // so knows where to RETURN/YIELD from
     );
+}
+
+// If DETAILS_FLAG_METHODIZED is set, we need to initialize the `.` slot in
+// the frame with the coupling object.  It will always be the first frame
+// slot if it's there, because Pop_Paramlist() ensures that.
+//
+INLINE void Inject_Methodization_If_Any(Level* L)
+{
+    Details* details = Ensure_Level_Details(L);
+
+    if (Not_Details_Flag(details, METHODIZED))
+        return;
+
+    assert(Key_Id(Phase_Keys_Head(L->varlist)) == SYM_DOT_1);
+
+    Atom* methodization = Level_Args_Head(L);
+
+    Context* coupling = opt Level_Coupling(L);
+
+    // !!! TBD: apply typecheck of methodization against coupled object
+
+    Init_Object(methodization, cast(VarList*, coupling));
 }

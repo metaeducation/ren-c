@@ -129,18 +129,17 @@ Bounce Func_Dispatcher(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. Originally, this Dispatcher did not ask to receive throws.  The
-    //    DEFINITIONAL-RETURN function did all the work (it has to do type
-    //    checking to deliver good errors) and then used a generic UNWIND
-    //    supported by the Trampoline.
-    //
-    //    But realizations about redo mechanics meant that the Dispatchers
-    //    had to be complicit.  This eliminated generic REDO, so now it's
-    //    a specific aspect of RETURN:RUN's relationship to Func_Dispatcher()
-    //    and needs to be caught here.  That could mean that it's better to
-    //    give up the generic UNWIND and fold plain RETURN catching in with
-    //    RETURN:RUN catching, but that would require multiplexing the signal
-    //    of whether to :RUN or not into the thrown value.
+  // 1. Originally this Dispatcher didn't process throws.  DEFINITIONAL-RETURN
+  //    did all the work (it has to do type checking to deliver good errors)
+  //    and then used a generic UNWIND supported by the Trampoline.
+  //
+  //    But redo mechanics meant that Dispatchers had to be complicit.  This
+  //    eliminated generic REDO, so now it's a specific aspect of RETURN:RUN's
+  //    relationship to Func_Dispatcher() and needs to be caught here.
+  //
+  //    (That could mean that it's better to give up the generic UNWIND and
+  //    fold plain RETURN catching in with RETURN:RUN catching, but that needs
+  //    multiplexing the signal of whether to :RUN into the thrown value.)
 
     Element* body = Details_Element_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and Series_Index(body) == 0);
@@ -149,22 +148,13 @@ Bounce Func_Dispatcher(Level* const L)
     Force_Level_Varlist_Managed(L);
 
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
-
-    STATE = ST_FUNC_BODY_EXECUTING;
+    Inject_Methodization_If_Any(L);
 
     Context* binding = u_cast(ParamList*, L->varlist);
-    Context* coupling = opt Level_Coupling(L);
-    if (coupling) {
-        Let* let = Make_Let_Variable(CANON(DOT_1), binding);
-        Init_Object(
-            Slot_Init_Hack(Let_Slot(let)),
-            cast(VarList*, coupling)
-        );
-        binding = let;
-    }
-
     Element* spare = Copy_Cell(SPARE, body);
     Tweak_Cell_Binding(spare, binding);
+
+    STATE = ST_FUNC_BODY_EXECUTING;
 
     Enable_Dispatcher_Catching_Of_Throws(L);  // for RETURN:RUN, not RETURN [1]
 
@@ -172,15 +162,15 @@ Bounce Func_Dispatcher(Level* const L)
 
 } redo_with_current_frame_values: { //////////////////////////////////////////
 
-    // This will trigger a call back to the evaluator with the same VarList.
-    // We will re-enter this dispatcher in the ST_FUNC_INITIAL_ENTRY state.
-    //
-    // 1. Because tail calls might use existing arguments and locals when
-    //    calculating the new call's locals and args, we can only avoid
-    //    allocating new memory for the args and locals if we reuse the frame
-    //    "as is"--assuming the values of the variables have been loaded with
-    //    what the recursion expects.  We still have to reset specialized
-    //    values back (including locals) to what a fresh call would have.
+  // This will trigger a call back to the evaluator with the same VarList.
+  // We will re-enter this dispatcher in the ST_FUNC_INITIAL_ENTRY state.
+  //
+  // 1. Because tail calls might use existing arguments and locals when
+  //    calculating the new call's locals and args, we only avoid allocating
+  //    new memory for the args and locals if we reuse the frame "as is",
+  //    assuming the values of the variables have been loaded with what the
+  //    recursion expects.  We still have to reset specialized values back
+  //    to what a fresh call would have.
 
     possibly(Link_Inherit_Bind(L->varlist) == nullptr);  // maybe assigned null
     Tweak_Link_Inherit_Bind(L->varlist, nullptr);  // re-entry sets back
@@ -212,9 +202,9 @@ Bounce Func_Dispatcher(Level* const L)
 
 } reuse_level_to_run_frame_in_out: { /////////////////////////////////////////
 
-    // This form of REDO allocates a new VarList, but reuses the Level.  It
-    // will gather new arguments from the callsite (the callsite's feed was
-    // captured and reassigned as L's feed before the throw of the REDO).
+  // This form of REDO allocates a new VarList, but reuses the Level.  It will
+  // gather new arguments from the callsite (the callsite's feed was captured
+  // and reassigned as L's feed before the throw of the REDO).
 
     Drop_Action(L);
 
@@ -238,13 +228,13 @@ Bounce Func_Dispatcher(Level* const L)
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 
-    // 1. If no RETURN is used, the result is TRASH, and typechecking is
-    //    performed to make sure TRASH? was a legitimate return.  This has a
-    //    little bit of a negative side that if someone is to hook the RETURN
-    //    function, it won't be called in these "fallout" cases.  It's deemed
-    //    too ugly to slip in a "hidden" call to RETURN for this case, and too
-    //    big a hassle to force people to put RETURN ~ or RETURN at the end.
-    //    So this is the compromise chosen...at the moment.
+  // 1. If no RETURN is used, the result is TRASH, and typechecking is
+  //    performed to make sure TRASH? was a legitimate return.  This has a
+  //    little bit of a negative side that if someone is to hook the RETURN
+  //    function, it won't be called in these "fallout" cases.  It's deemed
+  //    too ugly to slip in a "hidden" call to RETURN for this case, and too
+  //    big a hassle to force people to put RETURN ~ or RETURN at the end.
+  //    So this is the compromise chosen...at the moment.
 
     Init_Tripwire(OUT);  // TRASH, regardless of body result [1]
 
@@ -446,7 +436,7 @@ DECLARE_NATIVE(FUNCTION)
         MAX_IDX_FUNC  // archetype and one array slot (will be filled)
     ));
 
-    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return UNSURPRISING(OUT);
 }
 

@@ -109,6 +109,7 @@ PVAR Element* g_tag_divergent;  // marks divergent functions
 PVAR Element* g_tag_unrun;  // parameters that degrade antiform actions
 PVAR Element* g_tag_null;  // nicer looking way to say NULL?
 PVAR Element* g_tag_void;  // nicer looking way to say VOID?
+PVAR Element* g_tag_dot_1;  // <.> used for methodized functions
 
 PVAR Element* g_tag_here;  // https://forum.rebol.info/t/1558/5
 

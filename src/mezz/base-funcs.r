@@ -499,15 +499,6 @@ eval-all: func [
 <|: infix:postpone eval-all/
 
 
-; METHOD is a near-synonym for FUNCTION, with the difference that it marks the
-; produced action as being "uncoupled".  This means that when TUPLE! dispatch
-; occurs, it will poke a pointer to the object that the function was
-; dispatched from into the action's cell.  This enables the `.field` notation,
-; which looks up the coupling in the virtual bind chain.
-;
-/method: cascade [function/ uncouple/]
-
-
 ; !!! This is an interim implementation of GETTER that returns nothing.  The
 ; other concept of it would be to return a PACK! with "sub-band" content
 ; which represented the TWEAK* representation of a getter.

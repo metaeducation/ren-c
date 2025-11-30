@@ -244,6 +244,7 @@ static void Init_Action_Spec_Tags(void)
     ensure_nullptr(g_tag_unrun) = Make_Locked_Tag("unrun");
     ensure_nullptr(g_tag_null) = Make_Locked_Tag("null");
     ensure_nullptr(g_tag_void) = Make_Locked_Tag("void");
+    ensure_nullptr(g_tag_dot_1) = Make_Locked_Tag(".");
 
     ensure_nullptr(g_tag_here) = Make_Locked_Tag("here");  // used by PARSE
 }
@@ -261,6 +262,7 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&g_tag_unrun);
     rebReleaseAndNull(&g_tag_null);
     rebReleaseAndNull(&g_tag_void);
+    rebReleaseAndNull(&g_tag_dot_1);
 
     rebReleaseAndNull(&g_tag_here);  // used by PARSE
 }

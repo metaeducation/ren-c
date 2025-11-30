@@ -291,7 +291,7 @@ DECLARE_NATIVE(COMBINATOR)
         relativized
     );
 
-    return Init_Frame(OUT, details, ANONYMOUS, NONMETHOD);
+    return Init_Frame(OUT, details, ANONYMOUS, UNCOUPLED);
 }
 
 
@@ -341,7 +341,7 @@ void Push_Parser_Sublevel(
     Copy_Cell(Slot_Init_Hack(input_slot), input);
 
     DECLARE_ELEMENT (temp);  // can't overwrite spare
-    Init_Frame(temp, ctx, ANONYMOUS, NONMETHOD);
+    Init_Frame(temp, ctx, ANONYMOUS, UNCOUPLED);
 
     bool pushed = Pushed_Continuation(
         out,
@@ -528,7 +528,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
     require (
       Sink(Element) loop_last = Alloc_Tail_Array(loops)
     );
-    Init_Frame(loop_last, Level_Varlist(level_), CANON(SOME), NONMETHOD);
+    Init_Frame(loop_last, Level_Varlist(level_), CANON(SOME), UNCOUPLED);
 
     Push_Parser_Sublevel(OUT, remainder, parser, input);
 

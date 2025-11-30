@@ -211,7 +211,7 @@ DECLARE_NATIVE(ADAPT)
     );
     Tweak_Cell_Binding(rebound, List_Binding(prelude));
 
-    Init_Action(OUT, details, Frame_Label_Deep(adaptee), NONMETHOD);
+    Init_Action(OUT, details, Frame_Label_Deep(adaptee), UNCOUPLED);
     Copy_Ghostability(OUT, adaptee);
 
     return UNSURPRISING(OUT);

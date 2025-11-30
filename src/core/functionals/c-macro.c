@@ -116,6 +116,7 @@ Bounce Macro_Dispatcher(Level* const L)
     // can't unwind a macro frame to make it return an arbitrary result.
     //
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
+    Inject_Methodization_If_Any(L);
 
     Element* body_in_spare = Copy_Cell(SPARE, body);
     Tweak_Cell_Binding(body_in_spare, L->varlist);
@@ -208,7 +209,7 @@ DECLARE_NATIVE(MACRO)
         MAX_IDX_MACRO  // details capacity, just body slot (and archetype)
     ));
 
-    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return UNSURPRISING(OUT);
 }
 

@@ -52,14 +52,23 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Parameters do not store the symbol for the parameter.  Those symbols
-//   are in a separate series called a keylist.  The separation is due to
-//   wanting to make common code paths for FRAME! and OBJECT!, where an
-//   object only uses a compressed keylist with no PARAMETER! cells.
+// 1. Parameters do not store the symbol for the parameter.  Those symbols
+//    are in a separate series called a keylist.  The separation is due to
+//    wanting to make common code paths for FRAME! and OBJECT!, where an
+//    object only uses a compressed keylist with no PARAMETER! cells.
 //
-//   (R3-Alpha used a full WORD!-sized cell to describe each field of an
-//   object, but Ren-C only uses a single pointer-to-symbol.)
+//    (R3-Alpha used a full WORD!-sized cell to describe each field of an
+//    object, but Ren-C only uses a single pointer-to-symbol.)
 //
+// 2. We don't want to have a ton of parameter classes exposed to the user;
+//    the fewer the better.  So features like PARAMCLASS_RETURN were pared
+//    back, instead considering the fact that something like FUNC fills a
+//    frame slot to RETURN to be an implementation detail of FUNC itself,
+//    and the slot is a generic PARAMCLASS_LOCAL as far as the user would see.
+//    This reduces the number of bits needed to encode the class, leaving
+//    more room for PARAMETER_FLAG_XXX.
+
+/* DONT(#define CELL_PARAMETER_SYMBOL() ...) */  // [1]
 
 #define CELL_PARAMETER_PAYLOAD_1_SPEC(c)    CELL_PAYLOAD_1(c)
 #define CELL_PARAMETER_EXTRA_STRAND(c)  CELL_EXTRA(c)

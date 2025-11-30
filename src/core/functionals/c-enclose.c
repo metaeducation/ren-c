@@ -239,6 +239,6 @@ DECLARE_NATIVE(ENCLOSE)
 
     Copy_Cell(Details_At(details, IDX_ENCLOSER_OUTER), outer);
 
-    Init_Action(OUT, details, Frame_Label(inner), NONMETHOD);
+    Init_Action(OUT, details, Frame_Label(inner), UNCOUPLED);
     return UNSURPRISING(OUT);
 }

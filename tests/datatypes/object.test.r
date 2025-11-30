@@ -130,14 +130,14 @@
 
     o2/b = 10
 )(
-    o1: make object! [a: 10 b: method [] [let f: lambda [] [.a] return f]]
+    o1: make object! [a: 10 b: func [<.>] [let f: lambda [] [.a] return f]]
     o2: make o1 [a: 20]
 
     o2/b = 20
 )
 
 (
-    o-big: construct inside [] collect [
+    o-big: construct $ collect [
         count-up 'n 256 [
             ;
             ; var-1: 1
@@ -151,14 +151,13 @@
         ]
         count-up 'n 256 [
             ;
-            ; fun-1: method [] [.var-1]
-            ; fun-2: method [] [.var-1 + .var-2]
+            ; fun-1: lambda [<.>] [.var-1]
+            ; fun-2: lambda [<.>] [.var-1 + .var-2]
             ; ...
-            ; fun-256: method [] [.var-1 + .var-2 ... + .var-256]
+            ; fun-256: lambda [<.>] [.var-1 + .var-2 ... + .var-256]
             ;
             keep spread compose [
-                (join 'meth- [n]): method [] (collect [
-                    keep 'return
+                (join 'meth- [n]): lambda [] (collect [
                     count-up 'i n [
                         keep spread compose [
                             .(join 'var- [i]) (if i <> n ['+])
@@ -210,7 +209,7 @@
 (
     obj: construct [
         x: 10
-        foo: method [] [
+        foo: func [<.>] [
             let helper: does [.]  ; . looks in frame binding for coupling
             return helper
         ]

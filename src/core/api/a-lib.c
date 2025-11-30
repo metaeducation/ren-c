@@ -3219,6 +3219,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
     Add_Link_Inherit_Bind_Raw(L->varlist, List_Binding(holder));  // [1]
 
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
+    Inject_Methodization_If_Any(L);
 
     goto run_cfunction;
 
@@ -3392,7 +3393,7 @@ RebolValue* API_rebFunctionFlipped(
     assert(Misc_Details_Adjunct(details) == nullptr);
     Tweak_Misc_Details_Adjunct(details, adjunct);
 
-    return Init_Action(Alloc_Value(), details, ANONYMOUS, NONMETHOD);
+    return Init_Action(Alloc_Value(), details, ANONYMOUS, UNCOUPLED);
 }
 
 

@@ -98,6 +98,6 @@ DECLARE_NATIVE(DOES)
 
     const Symbol* label = CANON(EVALUATE);  // !!! Better answer?
 
-    Init_Action(OUT, exemplar, label, NONMETHOD);
+    Init_Action(OUT, exemplar, label, UNCOUPLED);
     return UNSURPRISING(OUT);
 }

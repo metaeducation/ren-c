@@ -86,9 +86,10 @@ export console!: make object! [
   HELP    - For starting information
   ABOUT   - Information about your Rebol]--
 
-    print-greeting: method [
+    print-greeting: func [
         "Adds live elements to static greeting content (build #, version)"
         return: []
+        <.>
     ][
         boot-print [
             "Rebol 3 (Ren-C branch)"
@@ -99,7 +100,7 @@ export console!: make object! [
         boot-print greeting
     ]
 
-    print-prompt: method [return: []] [
+    print-prompt: func [return: [] <.>] [
         ;
         ; Note: See example override in skin in the Debugger extension, which
         ; adds the stack "level" number and "current" function name.
@@ -111,10 +112,11 @@ export console!: make object! [
         write stdout space
     ]
 
-    print-result: method [
+    print-result: func [
         return: []
         ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-value?]
+        <.>
     ][
         ignore ^last-result: ^v  ; don't decay, suppress ERROR! propagation
 
@@ -261,9 +263,9 @@ export console!: make object! [
         ]
     ]
 
-    print-warning: method [return: [] s] [print [warning reduce s]]
+    print-warning: func [return: [] s <.>] [print [warning reduce s]]
 
-    print-error: method [return: [] e [warning!]] [
+    print-error: func [return: [] e [warning!] <.>] [
         comment [  ; MOLD is more informative, but messy
             v: unanti ^v
             print unspaced [
@@ -276,7 +278,7 @@ export console!: make object! [
         ]
     ]
 
-    print-panic: method [return: [] e [warning!]] [
+    print-panic: func [return: [] e [warning!] <.>] [
         if e.file = 'tmp-boot.r [
             e.file: e.line: null  ; errors in console showed this, junk
         ]
@@ -298,22 +300,23 @@ export console!: make object! [
         ]
     ]
 
-    print-halted: method [return: []] [
+    print-halted: func [return: [] <.>] [
         print newline  ; interrupts happen anytime, clearer to start newline
         print "[interrupted by Ctrl-C or HALT instruction]"
     ]
 
-    print-info: method [return: [] s] [print [info reduce s]]
+    print-info: func [return: [] s <.>] [print [info reduce s]]
 
-    print-gap: method [return: []] [print newline]
+    print-gap: func [return: [] <.>] [print newline]
 
     === BEHAVIOR (can be overridden) ===
 
-    input-hook: method [
+    input-hook: func [
         "Receives line input, parse and transform, send back to CONSOLE eval"
 
         return: "~escape~ if canceled, null on no input, else line of text"
             [<null> text! ~(~escape~)~]
+        <.>
     ][
         return read-line stdin except ['~escape~]
     ]
@@ -345,10 +348,11 @@ export console!: make object! [
     ;    whatever binding was on the block.  Leave it open for now, as these
     ;    unbound block cases aren't the only ones to consider.
     ;
-    dialect-hook: method [
+    dialect-hook: func [
         "Receives full code block, bind and process, send back to CONSOLE eval"
         return: [block!]
         b [block!]
+        <.>
     ][
         wrap* system.contexts.user b  ; expand w/top-level set-word [1]
         return inside system.contexts.user b  ; two operations for now [2]
@@ -376,11 +380,12 @@ export console!: make object! [
 
     === HELPERS (could be overridden!) ===
 
-    add-shortcut: method [
+    add-shortcut: func [
         "Add/Change console shortcut"
         return: []
         name [word!] "Shortcut name"
         block [block!] "Command(s) expanded to"
+        <.>
     ][
         set (extend shortcuts name) block
     ]

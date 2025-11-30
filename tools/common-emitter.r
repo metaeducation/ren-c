@@ -351,12 +351,12 @@ export make-emitter: func [
         file: (file)  ; need COMPOSE1 for bootstrap
         title: (title)
 
-        emit: method [
+        emit: proc [
             "Write data to the emitter using CSCAPE templating (see HELP)"
 
-            return: []
             template "Adds newline if BLOCK! (use EMIT CSCAPE [...] to avoid)"
                 [text! block! char?]
+            <.>
         ][
             case [  ; no switch:type in bootstrap
                 text? template [
@@ -378,9 +378,9 @@ export make-emitter: func [
             ]
         ]
 
-        write-emitted: method [
-            return: []
+        write-emitted: proc [
             :tabbed
+            <.>
         ][
             if newline != last .buf-emit [
                 probe skip (tail of .buf-emit) -100

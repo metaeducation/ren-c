@@ -183,9 +183,10 @@ posix: make platform-class [
     obj-suffix: ".o"
     archive-suffix: ".a"
 
-    gen-cmd-create: method [
+    gen-cmd-create: func [
         return: [text!]
         cmd [object!]
+        <.>
     ][
         return either dir? cmd.file [
             spaced ["mkdir -p" cmd.file]
@@ -194,9 +195,10 @@ posix: make platform-class [
         ]
     ]
 
-    gen-cmd-delete: method [
+    gen-cmd-delete: func [
         return: [text!]
         cmd [object!]
+        <.>
     ][
         return spaced ["rm -fr" cmd.file]
     ]
@@ -233,9 +235,10 @@ windows: make platform-class [
     obj-suffix: ".obj"
     archive-suffix: ".lib"
 
-    gen-cmd-create: method [
+    gen-cmd-create: func [
         return: [text!]
         cmd [object!]
+        <.>
     ][
         let f: file-to-local cmd.file
         if #"\" = last f [remove back tail of f]
@@ -246,9 +249,10 @@ windows: make platform-class [
         ]
     ]
 
-    gen-cmd-delete: method [
+    gen-cmd-delete: func [
         return: [text!]
         cmd [object!]
+        <.>
     ][
         let f: file-to-local cmd.file
         if #"\" = last f [remove back tail of f]
@@ -265,8 +269,7 @@ windows: make platform-class [
     ]
 ]
 
-set-target-platform: func [
-    return: []
+set-target-platform: proc [
     platform
 ][
     switch platform [
@@ -352,9 +355,10 @@ application-class: make project-class [
     searches: null
     ldflags: null
 
-    command: method [
+    command: func [
         return: [text!]
         <with> default-compiler
+        <.>
     ][
         let cc: any [.compiler, default-compiler]
         return cc.link // [
@@ -373,10 +377,11 @@ dynamic-library-class: make project-class [
     searches: null
     ldflags: null
 
-    command: method [
+    command: func [
         return: [text!]
         <with>
         default-compiler
+        <.>
     ][
         let cc: any [.compiler, default-compiler]
         return cc.link // [
@@ -404,32 +409,34 @@ compiler-class: make object! [
     version: null
     exec-file: null
 
-    check: method [
+    check: proc [
         "Check if the compiler is available"
-        return: []
         exec -[Executable path (can be text!, e.g. "r3 --do c99 --")]-
             [<opt> file! text!]
+        <.>
     ][
         panic ~#[archetype check invoked]#~
     ]
 
-    compile: method [
+    compile: func [
         return: [text!]
         output [file!]
         source [file!]
         includes [file! block!]
         definitions [text! tag! block!]
         cflags [text! tag! block!]
+        <.>
     ][
         panic ~#[archetype compile invoked]#~
     ]
 
-    link: method [
+    link: func [
         return: [null? block!]
         output [file!]
         depends [<opt> block!]
         searches [<opt> block!]
         ldflags [<opt> block! any-string?]
+        <.>
     ][
         panic ~#[archetype link invoked]#~
     ]
@@ -441,10 +448,11 @@ cc: make compiler-class [
     id: null
     exec-file: %cc
 
-    check: method [
-        "Assigns .exec-file, extracts the compiler version"
+    check: func [
         return: []
+        "Assigns .exec-file, extracts the compiler version"
         exec [<opt> file! text!]
+        <.>
     ][
         .exec-file: any [exec, .exec-file]
 
@@ -501,7 +509,7 @@ cc: make compiler-class [
       ]
     ]
 
-    compile: method [
+    compile: func [
         return: [text!]
         output [file!]
         source [file!]
@@ -512,6 +520,7 @@ cc: make compiler-class [
         :g "debug" [onoff?]
         :PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         :E "only preprocessing"
+        <.>
     ][
         return spaced collect [
             keep any [
@@ -590,7 +599,7 @@ cc: make compiler-class [
         ]
     ]
 
-    link: link-backup: method [  ; !!! hacky inheritance mechanism
+    link: link-backup: func [  ; !!! hacky inheritance mechanism
         return: [text!]
         output [file!]
         depends [<opt> block!]
@@ -598,6 +607,7 @@ cc: make compiler-class [
         ldflags [<opt> block! any-string?]
         :dynamic
         :debug
+        <.>
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -637,9 +647,10 @@ cc: make compiler-class [
         ]
     ]
 
-    accept: method [
+    accept: func [
         return: [null? text!]
         dep [object!]
+        <.>
     ][
         return degrade switch dep.class [
             #object-file [
@@ -725,7 +736,7 @@ emcc: make gcc [
     id: ["gcc" "clang"]
     exec-file: %emcc
 
-    link: method [
+    link: func [
         return: [text!]
         output [file!]
         depends [<opt> block!]
@@ -733,6 +744,7 @@ emcc: make gcc [
         ldflags [<opt> block! any-string?]
         :dynamic
         :debug
+        <.>
     ][
         ; custom link behavior could go here
 
@@ -750,17 +762,17 @@ cl: make compiler-class [
     id: "msc" ; match all flags like <msc:XXX>
     exec-file: %cl.exe
 
-    check: method [
+    check: proc [
         "Assigns .exec-file, extracts the compiler version"
-        return: []
         exec [<opt> file! text!]
+        <.>
     ][
         .exec-file: any [exec, .exec-file]
 
         ; TBD: extract version
     ]
 
-    compile: method [
+    compile: func [
         return: [text!]
         output [file!]
         source
@@ -772,6 +784,7 @@ cl: make compiler-class [
         :PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         ; Note: PIC is ignored for this Microsoft CL compiler handler
         :E "only preprocessing"
+        <.>
     ][
         return spaced collect [
             keep any [(file-to-local:pass opt .exec-file) "cl"]
@@ -853,7 +866,7 @@ cl: make compiler-class [
         ]
     ]
 
-    link: method [
+    link: func [
         return: [text!]
         output [file!]
         depends [<opt> block!]
@@ -861,6 +874,7 @@ cl: make compiler-class [
         ldflags [<opt> block! any-string?]
         :dynamic
         :debug
+        <.>
     ][
         let suffix: either dynamic [
             target-platform.dll-suffix
@@ -912,9 +926,10 @@ cl: make compiler-class [
         ]
     ]
 
-    accept: method [
+    accept: func [
         return: [null? text!]
         dep [object!]
+        <.>
     ][
         return degrade switch dep.class [
             #object-file [
@@ -973,7 +988,7 @@ object-file-class: make object! [
     generated: 'no
     depends: null
 
-    compile: method [
+    compile: func [
         return: [text!]
         :I "extra includes" [block!]
         :D "extra definitions" [block!]
@@ -982,6 +997,7 @@ object-file-class: make object! [
         :g "dbg" [word! integer!]
         :PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         :E "only preprocessing"
+        <.>
     ][
         let cc: any [compiler, default-compiler]
 
@@ -1015,10 +1031,11 @@ object-file-class: make object! [
         ]
     ]
 
-    gen-entries: method [
+    gen-entries: func [
         return: [object!]
         parent [object!]
         :PIC "https://en.wikipedia.org/wiki/Position-independent_code"
+        <.>
     ][
         assert [
             find [
@@ -1078,9 +1095,10 @@ generator-class: make object! [
     gen-cmd-create: null
     gen-cmd-delete: null
 
-    gen-cmd: method [
+    gen-cmd: func [
         return: [text!]
         cmd [object!]
+        <.>
     ][
         return switch cmd.class [
             #cmd-create [
@@ -1104,11 +1122,12 @@ generator-class: make object! [
         ]
     ]
 
-    do-substitutions: method [
+    do-substitutions: func [
         "Substitute variables (recursively) in the command with its value"
 
         return: [null? object! any-string?]
         cmd [object! any-string?]
+        <.>
     ][
         ; !!! These were previously static, but bootstrap executable's non
         ; gathering function form could not handle statics.
@@ -1151,9 +1170,9 @@ generator-class: make object! [
         return cmd
     ]
 
-    prepare: method [
-        return: []
+    prepare: proc [
         solution [object!]
+        <.>
     ][
         if find words-of solution 'output [
             ./setup-outputs solution
@@ -1172,10 +1191,10 @@ generator-class: make object! [
         ]
     ]
 
-    flip-flag: method [
-        return: []
+    flip-flag: proc [
         project [object!]
         to [yesno?]
+        <.>
     ][
         all [
             find words-of project 'generated
@@ -1190,9 +1209,10 @@ generator-class: make object! [
         ]
     ]
 
-    setup-output: method [
+    setup-output: func [
         return: []
         project [object!]
+        <.>
     ][
         assert [project.class]
         let suffix: switch project.class [
@@ -1243,10 +1263,11 @@ generator-class: make object! [
         project.basename: basename
     ]
 
-    setup-outputs: method [
+    setup-outputs: func [
         "Set the output and implib for the project tree"
         return: []
         project [object!]
+        <.>
     ][
         ;print ["Setting outputs for:"]
         ;dump project
@@ -1266,7 +1287,10 @@ generator-class: make object! [
             #object-file [
                 ./setup-output project
             ]
-        ] else [return ~]
+        ] else [
+            ; !!! can this happen?  non-exhaustive list?
+        ]
+        return ~
     ]
 ]
 
@@ -1279,10 +1303,11 @@ makefile: make generator-class [
     /gen-cmd-create: get $posix.gen-cmd-create
     /gen-cmd-delete: get $posix.gen-cmd-delete
 
-    gen-rule: method [
+    gen-rule: func [
         return: "Possibly multi-line text for rule, with extra newline @ end"
             [text!]
         entry [object!]
+        <.>
     ][
         return delimit:tail newline collect [switch entry.class [
 
@@ -1362,11 +1387,11 @@ makefile: make generator-class [
         ; to the caller to decide to add the spacing line or not
     ]
 
-    emit: method [
-        return: []
+    emit: proc [
         buf [text!]
         project [object!]
         :parent [object!]  ; !!! Not heeded?
+        <.>
     ][
         for-each 'dep project.depends [
             if not object? dep [continue]
@@ -1431,10 +1456,10 @@ makefile: make generator-class [
         ]
     ]
 
-    generate: method [
-        return: []
+    generate: proc [
         output [file!]
         solution [object!]
+        <.>
     ][
         let buf: make text! 2048
         assert [solution.class = #solution]
@@ -1483,11 +1508,12 @@ export execution: make generator-class [
     /gen-cmd-create: get $host.gen-cmd-create
     /gen-cmd-delete: get $host.gen-cmd-delete
 
-    run-target: method [
+    run-target: func [
         return: []
         target [object!]
         :cwd "change working directory"  ; !!! Not heeded (?)
             [file!]
+        <.>
     ][
         switch target.class [
             #variable [
@@ -1517,10 +1543,10 @@ export execution: make generator-class [
             (dump target)
             panic "Unrecognized target class"
         ]
+        return ~
     ]
 
-    run: method [
-        return: []
+    run: proc [
         project [object!]
         :parent "parent project"
             [object!]

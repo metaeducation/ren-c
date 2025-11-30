@@ -1132,11 +1132,14 @@ Result(None) Push_Action(
 
     Set_Action_Level_Label(L, Frame_Label_Deep(frame));
 
+    STATIC_ASSERT(DETAILS_FLAG_METHODIZED == VARLIST_FLAG_METHODIZED);
+
     require (
       Flex* s = u_downcast Prep_Stub(
         STUB_MASK_LEVEL_VARLIST
-            | FLEX_FLAG_FIXED_SIZE,  // FRAME!s don't expand ATM
+            | FLEX_FLAG_FIXED_SIZE  // FRAME!s don't expand ATM
             // not managed by default, see Force_Level_Varlist_Managed()
+            | (phase->header.bits & DETAILS_FLAG_METHODIZED),
         Alloc_Stub()
     ));
     Tweak_Misc_Runlevel(s, L);  // maps varlist back to L

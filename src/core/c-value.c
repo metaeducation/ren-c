@@ -219,7 +219,7 @@ void* Probe_Core_Debug(
             ){
                 Set_Base_Managed_Bit(varlist);
             }
-            Init_Frame(elem, cast(ParamList*, varlist), ANONYMOUS, NONMETHOD);
+            Init_Frame(elem, cast(ParamList*, varlist), ANONYMOUS, UNCOUPLED);
         }
         else
             Init_Context_Cell(elem, CTX_TYPE(varlist), varlist);
@@ -232,7 +232,7 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Details", file, line);
         DECLARE_ELEMENT (frame);
         Details* details = cast(Details*, m_cast(void*, p));
-        Init_Frame(frame, details, ANONYMOUS, NONMETHOD);
+        Init_Frame(frame, details, ANONYMOUS, UNCOUPLED);
         Push_Lifeguard(frame);
 
         DECLARE_ELEMENT (molder);

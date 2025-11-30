@@ -1616,8 +1616,8 @@ DECLARE_NATIVE(BODY_OF)  // !!! should this be SOURCE-OF ?
 //
 //  "Get what object a FRAME! or ACTION? uses to looks up .XXX references"
 //
-//      return: "Returns TRASH if uncoupled, ~null~ if non-method"
-//          [trash? null? object!]
+//      return: "ERROR! if non-method, null if method but uncoupled"
+//          [<null> object! error!]
 //      frame [<unrun> frame!]
 //  ]
 //
@@ -1626,13 +1626,15 @@ DECLARE_NATIVE(COUPLING_OF)
     INCLUDE_PARAMS_OF_COUPLING_OF;
 
     Element* frame = Element_ARG(FRAME);
+
+    Details* details = Phase_Details(Frame_Phase(frame));
+    if (Not_Details_Flag(details, METHODIZED))
+        return fail ("FRAME! is not methodized, no COUPLING OF is applicable");
+
     Option(VarList*) coupling = Frame_Coupling(frame);
 
-    if (not coupling)  // NONMETHOD
+    if (not coupling)  // UNCOUPLED
         return NULLED;
-
-    if (UNCOUPLED == unwrap coupling)
-        return TRIPWIRE;
 
     return COPY(Varlist_Archetype(unwrap coupling));
 }

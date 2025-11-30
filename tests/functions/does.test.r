@@ -57,7 +57,7 @@
 (
     o1: make object! [
         a: 10
-        b: method [] [return if ok [.a]]
+        b: func [<.>] [return if ok [.a]]
     ]
     o2: make o1 [a: 20]
 
@@ -65,7 +65,7 @@
 )(
     o1: construct [
         a: 10
-        b: method [] [let f: does [.a] return f]
+        b: lambda [<.>] [let f: does [.a] f]
     ]
     o2: make o1 [a: 20]
 
@@ -73,7 +73,7 @@
 )(
     o1: construct [
         a: 10
-        b: method [] [let f: lambda [] [.a] return f]
+        b: func [<.>] [let f: lambda [] [.a] return f]
     ]
     o2: make o1 [a: 20]
 
@@ -85,13 +85,13 @@
     ]
     o2: make o1 [a: 20]
 
-    o2/b = 10  ; need METHOD to get the member selection
+    o2/b = 10  ; need <.> in spec to get the member selection, use lambda [<.>]
 )
 
 (
     o1: construct [
         a: 10
-        b: method [] [let f: lambda [] [.a: 30] return f]
+        b: func [<.>] [let f: lambda [] [.a: 30] return f]
     ]
     o2: make o1 [a: 20]
 

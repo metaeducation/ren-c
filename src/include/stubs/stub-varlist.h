@@ -148,20 +148,16 @@ INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
 // This is a largely unexplored feature, but is used in REDO scenarios where
 // a running frame gets re-executed.  More study is needed.
 //
-// 1. The way that a FRAME! cell made by METHOD gets connected with an object
-//    is when the TUPLE! dispatch happens.  (foo: method [...]) is uncoupled
-//    until the moment that you say (obj.foo), at which point the returned
-//    action gets OBJ's pointer poked into the result.  But not all functions
-//    have this happen: it would stow arbitrary unintentional data in
-//    non-methods just because they were accessed from an object--and worse,
-//    it would create contention where meanings of member words as `.member`
-//    would be looked up in helper functions.  So only intentionally
-//    uncoupled functions--not functions with mere couplings of NULL--are
-//    processed by TUPLE! to embed the pointer.
+// 1. The way that a FRAME! gets connected with an object when TUPLE! dispatch
+//    happens.  (foo: func [<.> ...] [...]) is uncoupled until the moment that
+//    you say (obj.foo), at which point the returned ACTION! gets OBJ's pointer
+//    poked into the result.
+//
+//    BUT not all functions have this happen: you don't want arbitrary data
+//    stowed in non-methods just because they were accessed from an object.
+//    See DETAILS_FLAG_METHODIZED for controlling this behavior.
 
-#define UNCOUPLED  g_empty_varlist  // instruct TUPLE! processing to couple [1]
-
-#define NONMETHOD  u_cast(Option(VarList*), nullptr)  // nonmethods not coupled
+#define UNCOUPLED  u_cast(Option(VarList*), nullptr)  // not all can couple [1]
 
 INLINE Option(VarList*) Frame_Coupling(const Value* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
@@ -403,26 +399,54 @@ INLINE void Deep_Freeze_Context(VarList* c) {
     Is_Source_Frozen_Deep(Varlist_Array(c))
 
 
-//=////////////////////////////////////////////////////////////////////////=//
+//=//// QUOTING TRICK TO STORE PARAMETER! IN A "LOCAL" ////////////////////=//
+//
+// There's a minor compression used by FUNC and YIELDER which stores the type
+// information for RETURN as a quoted PARAMETER! in the archetypal paramlist
+// slot that defines the cell where the DEFINITIONAL-RETURN will be put in
+// the instantiation.  (A similar tactic is used for a method's implicit `.`)
+//
+// But we can't put a plain PARAMETER! in these slots, or it would think that
+// these were not Is_Specialized() and try to gather an argument from the
+// callsite using the type information encoded in the parameter.  To work
+// around this, we quote the parameter, so that it's seen as a specialized
+// value.  Just means we have to unquote it later.
+//
+
+INLINE void Quotify_Parameter_Local(Element* param) {
+    assert(Is_Parameter(param));
+    LIFT_BYTE(param) = ONEQUOTE_NONQUASI_4;
+}
+
+INLINE void Assert_Quotified_Parameter(const Atom* param) {
+    assert(
+        LIFT_BYTE(param) == ONEQUOTE_NONQUASI_4
+        and Heart_Of(param) == TYPE_PARAMETER
+    );
+    UNUSED(param);
+}
+
+INLINE void Unquotify_Parameter_Local(Element* param) {
+    Assert_Quotified_Parameter(param);
+    LIFT_BYTE(param) = NOQUOTE_2;
+}
 
 INLINE const Element* Quoted_Returner_Of_Paramlist(
     ParamList* paramlist,
     SymId returner
 ){
-    assert(Key_Id(Varlist_Keys_Head(paramlist)) == returner);
+    Index slot_num = Get_Flavor_Flag(
+        VARLIST,
+        Varlist_Array(paramlist),
+        METHODIZED
+    ) ? 2 : 1;
+    assert(Key_Id(Varlist_Key(paramlist, slot_num)) == returner);
     UNUSED(returner);
-    Value* param = Slot_Hack(Varlist_Slots_Head(paramlist));
-    assert(
-        LIFT_BYTE(param) == ONEQUOTE_NONQUASI_4
-        and Heart_Of(param) == TYPE_PARAMETER
-    );
+    Value* param = Slot_Hack(Varlist_Slot(paramlist, slot_num));
+    Assert_Quotified_Parameter(param);
     return cast(Element*, param);
 }
 
-// There's a minor compression used by FUNC and YIELDER which stores the type
-// information for RETURN as a quoted PARAMETER! in the paramlist slot that
-// defines the cell where the DEFINITIONAL-RETURN is put.
-//
 INLINE void Extract_Paramlist_Returner(
     Sink(Element) out,
     ParamList* paramlist,
@@ -430,5 +454,5 @@ INLINE void Extract_Paramlist_Returner(
 ){
     const Element* param = Quoted_Returner_Of_Paramlist(paramlist, returner);
     Copy_Cell(out, param);
-    LIFT_BYTE(out) = NOQUOTE_2;
+    Unquotify_Parameter_Local(out);
 }

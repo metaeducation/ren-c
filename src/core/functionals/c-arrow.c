@@ -162,6 +162,8 @@ DECLARE_NATIVE(ARROW)
 
     bool optimizable = true;
 
+    Element* methodization = Init_Quasar(SCRATCH);
+
   //=//// TRY TO OPTIMIZE FOR SIMPLE CASES ////////////////////////////////=//
 
     const Element* item_tail;
@@ -245,6 +247,7 @@ DECLARE_NATIVE(ARROW)
         require (
           Push_Keys_And_Params(
             &adjunct,
+            methodization,
             spec,
             MKF_MASK_NONE,
             SYM_0  // no returner
@@ -257,7 +260,12 @@ DECLARE_NATIVE(ARROW)
     Option(VarList*) prior_coupling = nullptr;
 
     require (
-      ParamList* paramlist = Pop_Paramlist(STACK_BASE, prior, prior_coupling)
+      ParamList* paramlist = Pop_Paramlist(
+          STACK_BASE,
+          Is_Quasar(methodization) ? nullptr : methodization,
+          prior,
+          prior_coupling
+      )
     );
 
     Details* details = Make_Dispatch_Details(
@@ -272,6 +280,6 @@ DECLARE_NATIVE(ARROW)
 
     Copy_Cell(Details_At(details, IDX_ARROW_BODY), body);
 
-    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return UNSURPRISING(OUT);
 }

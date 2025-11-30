@@ -127,6 +127,8 @@ Bounce Lambda_Dispatcher(Level* const L)
     Add_Link_Inherit_Bind(L->varlist, List_Binding(block));
     Force_Level_Varlist_Managed(L);
 
+    Inject_Methodization_If_Any(L);
+
     Element* spare_rebound = Copy_Cell(SPARE, block);
     Tweak_Cell_Binding(spare_rebound, L->varlist);
 
@@ -237,6 +239,6 @@ DECLARE_NATIVE(LAMBDA)
         STACK_BASE
       );
 
-    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return UNSURPRISING(OUT);
 }

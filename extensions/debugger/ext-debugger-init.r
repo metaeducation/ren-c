@@ -45,7 +45,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.]--
     focus-frame: null
     focus-index: null
 
-    print-greeting: method [return: []] [
+    print-greeting: func [return: [] <.>] [
         ;
         ; We override in order to avoid printing out the redundant Rebol
         ; version information (and to print the greeting only once, which
@@ -82,10 +82,11 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.]--
         write stdout space
     ]
 
-    dialect-hook: method [
+    dialect-hook: func [
         "Receives code block, parse and transform, send back to CONSOLE eval"
         return: [block!]
         b [block!]
+        <.>
     ][
         if empty? b [
             print-info "Interpreting empty input as STEP"

@@ -405,7 +405,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
             lens = cast(Phase*, Phase_Details(cast(ParamList*, vlist)));
         }
         Init_Lensed_Frame(
-            out, cast(ParamList*, vlist), lens, NONMETHOD
+            out, cast(ParamList*, vlist), lens, UNCOUPLED
         );
     }
     else {

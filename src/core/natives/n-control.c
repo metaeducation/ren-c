@@ -1353,7 +1353,7 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
         panic (Error_Archetype_Invoked_Raw());
 
     Element* label = Init_Frame(
-        SCRATCH, cast(ParamList*, unwrap coupling), ANONYMOUS, NONMETHOD
+        SCRATCH, cast(ParamList*, unwrap coupling), ANONYMOUS, UNCOUPLED
     );
     Init_Thrown_With_Label(LEVEL, atom, label);
     return BOUNCE_THROWN;

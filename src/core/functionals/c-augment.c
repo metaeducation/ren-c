@@ -83,6 +83,8 @@ DECLARE_NATIVE(AUGMENT)
 
     VarList* adjunct = nullptr;
 
+    Element* methodization = Init_Quasar(SCRATCH);
+
   copy_augmentee_parameters: {
 
   // We reuse the process from Make_Paramlist_Managed(), which pushes WORD!
@@ -110,6 +112,7 @@ DECLARE_NATIVE(AUGMENT)
     require (
       Push_Keys_And_Params(
         &adjunct,
+        methodization,
         spec,
         MKF_PARAMETER_SEEN,  // don't assume description string
         SYM_0  // if original had no return, we don't add
@@ -125,7 +128,12 @@ DECLARE_NATIVE(AUGMENT)
     Option(VarList*) prior_coupling = Frame_Coupling(original);
 
     require (  // checks for duplicates
-      ParamList* paramlist = Pop_Paramlist(STACK_BASE, prior, prior_coupling)
+      ParamList* paramlist = Pop_Paramlist(
+        STACK_BASE,
+        Is_Quasar(methodization) ? nullptr : methodization,
+        prior,
+        prior_coupling
+      )
     );
 
     assert(Misc_Phase_Adjunct(paramlist) == nullptr);

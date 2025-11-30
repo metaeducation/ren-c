@@ -50,10 +50,19 @@
 #endif
 
 
-//=//// DETAILS_FLAG_24 ///////////////////////////////////////////////////=//
+//=//// DETAILS_FLAG_METHODIZED ///////////////////////////////////////////=//
 //
-#define DETAILS_FLAG_24 \
+// Only methodized actions get a "self" argument passed to it.  On functions
+// that support both method and non-method calling conventions, whether this
+// flag gets set is determined by the presence of a <.> tag in the spec.
+//
+// 1. We could take advantage of this in some kind of optimization, though
+//    currently do not do so.
+//
+#define DETAILS_FLAG_METHODIZED \
     STUB_SUBCLASS_FLAG_24
+
+STATIC_ASSERT(DETAILS_FLAG_METHODIZED == VARLIST_FLAG_METHODIZED);  // same [1]
 
 
 //=//// DETAILS_FLAG_25 ///////////////////////////////////////////////////=//
@@ -330,5 +339,9 @@ typedef enum {
     //     >> foo get:any $asdfasfasdf
     //     a is ~
     //
-    PARAMCLASS_META
+    PARAMCLASS_META,
+
+    PARAMCLASS_MAX = PARAMCLASS_META
 } ParamClass;
+
+STATIC_ASSERT(PARAMCLASS_MAX < 8);  // full byte, but later might chew out bits

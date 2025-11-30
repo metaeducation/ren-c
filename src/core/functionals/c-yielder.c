@@ -220,9 +220,10 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     assert(Is_Nulled(original_frame));  // each call needs [1]
     Force_Level_Varlist_Managed(L);
-    Init_Frame(original_frame, Level_Varlist(L), Level_Label(L), NONMETHOD);
+    Init_Frame(original_frame, Level_Varlist(L), Level_Label(L), UNCOUPLED);
 
     Inject_Definitional_Returner(L, LIB(DEFINITIONAL_YIELD), SYM_YIELD);
+    Inject_Methodization_If_Any(L);
 
     Element* body = Details_Element_At(details, IDX_YIELDER_BODY);
     assert(Is_Block(body));  // can mutate (only one call)
@@ -524,7 +525,7 @@ DECLARE_NATIVE(YIELDER)
     Init_Nulled(Details_At(details, IDX_YIELDER_PLUG));
     Init_Nulled(Details_At(details, IDX_YIELDER_YIELDED_LIFTED));
 
-    Init_Action(OUT, details, ANONYMOUS, NONMETHOD);
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return UNSURPRISING(OUT);
 }
 

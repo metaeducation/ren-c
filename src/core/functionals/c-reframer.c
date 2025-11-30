@@ -261,7 +261,7 @@ Result(None) Init_Frame_From_Feed(
     // the identity alias?
     //
     Option(const Symbol*) label = nullptr;
-    Init_Frame(out, exemplar, label, NONMETHOD);
+    Init_Frame(out, exemplar, label, UNCOUPLED);
     return none;
 }
 
@@ -395,7 +395,7 @@ Details* Alloc_Action_From_Exemplar(
     }
 
     DECLARE_ELEMENT (elem);
-    Init_Frame(elem, paramlist, ANONYMOUS, NONMETHOD);
+    Init_Frame(elem, paramlist, ANONYMOUS, UNCOUPLED);
 
     Details* details = Make_Dispatch_Details(
         BASE_FLAG_MANAGED,
@@ -500,6 +500,6 @@ DECLARE_NATIVE(REFRAMER)
     Copy_Cell(Details_At(details, IDX_REFRAMER_SHIM), Element_ARG(SHIM));
     Init_Integer(Details_At(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 
-    Init_Action(OUT, details, label, NONMETHOD);
+    Init_Action(OUT, details, label, UNCOUPLED);
     return UNSURPRISING(OUT);
 }
