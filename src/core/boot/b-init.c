@@ -238,7 +238,6 @@ static void Init_Action_Spec_Tags(void)
     ensure_nullptr(g_tag_end) = Make_Locked_Tag("end");
     ensure_nullptr(g_tag_opt_out) = Make_Locked_Tag("opt-out");
     ensure_nullptr(g_tag_opt) = Make_Locked_Tag("opt");
-    ensure_nullptr(g_tag_local) = Make_Locked_Tag("local");
     ensure_nullptr(g_tag_const) = Make_Locked_Tag("const");
     ensure_nullptr(g_tag_divergent) = Make_Locked_Tag("divergent");
     ensure_nullptr(g_tag_unrun) = Make_Locked_Tag("unrun");
@@ -256,7 +255,6 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&g_tag_end);
     rebReleaseAndNull(&g_tag_opt_out);
     rebReleaseAndNull(&g_tag_opt);
-    rebReleaseAndNull(&g_tag_local);
     rebReleaseAndNull(&g_tag_const);
     rebReleaseAndNull(&g_tag_divergent);
     rebReleaseAndNull(&g_tag_unrun);

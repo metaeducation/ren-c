@@ -3,7 +3,7 @@
 ; https://forum.rebol.info/t/the-circled-dialect-example-of-the-form/1849
 
 [
-    (circled: lambda [block [block!] <local> result] [
+    (circled: lambda [block [block!] {result}] [
         parse block [
             result: try thru subparse group! [
                 one <end> | (panic "Circled Items Must Be Singular")

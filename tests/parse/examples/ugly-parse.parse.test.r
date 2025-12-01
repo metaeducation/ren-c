@@ -17,7 +17,7 @@
         input [any-series?]
         :pending [blank? block!]   ; we retrigger combinator; it may KEEP, etc.
         value [group?]
-        <local> r comb
+        {r comb}
     ][
         ^r: eval value except e -> [panic e]  ; can't return fail
 

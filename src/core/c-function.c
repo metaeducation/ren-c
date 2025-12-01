@@ -28,7 +28,6 @@
 typedef enum {
     SPEC_MODE_DEFAULT,  // waiting, words seen will be arguments
     SPEC_MODE_PUSHED,  // argument pushed, information can be augmented
-    SPEC_MODE_LOCAL,  // words are locals
     SPEC_MODE_WITH,  // words are "extern"
     SPEC_MODE_COUPLING
 } SpecMode;
@@ -41,6 +40,89 @@ static void Force_Adjunct(VarList* *adjunct_out) {
     *adjunct_out = Copy_Varlist_Shallow_Managed(
         Cell_Varlist(Root_Action_Adjunct)
     );
+}
+
+
+// This code should be shared with CONSTRUCT, for building an object on the
+// stack...and share features with that dialect.
+//
+static Result(None) Push_Keys_And_Params_For_Fence(
+    Level* const L,
+    const Element* fence
+){
+    USE_LEVEL_SHORTHANDS (L);
+
+    assert(Is_Fence(fence));
+
+    require (
+      Level* sub = Make_Level_At(&Stepper_Executor, fence, LEVEL_MASK_NONE)
+    );
+    Push_Level_Erase_Out_If_State_0(SPARE, sub);
+
+    while (Not_Level_At_End(sub)) {
+        const Element* item = At_Level(sub);
+
+        const Symbol* symbol;
+        bool must_be_action;
+        bool meta = false;
+        Option(SingleHeart) singleheart;
+
+        if (Is_Word(item) or (meta = Is_Meta_Form_Of(WORD, item))) {
+            symbol = Word_Symbol(item);
+            must_be_action = false;
+        }
+        else if (
+            Is_Path(item)
+            and (singleheart = Try_Get_Sequence_Singleheart(item))
+            and (
+                singleheart == LEADING_SPACE_AND(WORD)
+                /* or (meta = (singleheart == LEADING_SPACE_AND(META_WORD))) */
+            )
+        ){
+            symbol = Word_Symbol(item);
+            must_be_action = true;
+            panic ("SET-WORD! local temporarily not supported");
+        }
+        else
+            return fail (item);
+
+        Init_Word(PUSH(), symbol);
+
+        Fetch_Next_In_Feed(sub->feed);
+
+        if (Is_Level_At_End(sub) or not Is_Group(At_Level(sub))) {
+            if (meta)
+                Init_Unset_Due_To_End(PUSH());
+            else
+                Init_Nulled(PUSH());
+            continue;
+        }
+
+        if (Trampoline_With_Top_As_Root_Throws()) {  // run the group
+            Drop_Level_Unbalanced(sub);
+            return fail (Error_No_Catch_For_Throw(sub));
+        }
+
+        if (meta) {
+            if (Is_Error(OUT))  // don't want to quietly store errors
+                return fail (Cell_Error(OUT));
+
+            Move_Atom(PUSH(), SPARE);
+        }
+        else {
+            require (
+              Value* decayed = Decay_If_Unstable(SPARE)
+            );
+
+            if (must_be_action and not Is_Action(decayed))
+                return fail ("Assignment using /FOO must be an action");
+
+            Move_Cell(PUSH(), decayed);
+        }
+    }
+
+    Drop_Level_Unbalanced(sub);  // we pushed values
+    return none;
 }
 
 
@@ -117,10 +199,6 @@ static Result(None) Push_Keys_And_Params_Core(
                 mode = SPEC_MODE_WITH;
                 continue;
             }
-            else if (0 == CT_Utf8(item, g_tag_local, strict)) {
-                mode = SPEC_MODE_LOCAL;
-                continue;
-            }
             else
                 return fail (item);
         }
@@ -147,69 +225,6 @@ static Result(None) Push_Keys_And_Params_Core(
             dummy, item, Level_Binding(L)
         ));
         continue;
-    }
-
-  //=//// ALLOW <local> WITH PLAIN WORD, POSSIBLE GROUP! INITIALIZER //////=//
-
-    // The higher-level function generator that implemented <local> default
-    // was removed, but this means that it can actually be done efficiently
-    // because the frame cells can be set with the value.
-
-    if (mode == SPEC_MODE_LOCAL) {
-        const Symbol* symbol;
-        bool must_be_action;
-        bool meta = false;
-        Option(SingleHeart) singleheart;
-        if (Is_Word(item) or (meta = Is_Meta_Form_Of(WORD, item))) {
-            symbol = Word_Symbol(item);
-            must_be_action = false;
-        }
-        else if (
-            Is_Path(item)
-            and (singleheart = Try_Get_Sequence_Singleheart(item))
-            and (
-                singleheart == LEADING_SPACE_AND(WORD)
-                /* or (meta = (singleheart == LEADING_SPACE_AND(META_WORD))) */
-            )
-        ){
-            symbol = Word_Symbol(item);
-            must_be_action = true;
-        }
-        else
-            return fail (item);
-
-        Init_Word(PUSH(), symbol);
-
-        Fetch_Next_In_Feed(L->feed);
-
-        if (Is_Level_At_End(L)) {  // default initializer for local
-            Init_Unset_Due_To_End(PUSH());
-            break;
-        }
-
-        if (not Is_Group(At_Level(L))) {
-            Init_Unset_Due_To_End(PUSH());
-            goto loop_dont_fetch_next;
-        }
-
-        if (Trampoline_With_Top_As_Root_Throws())  // run the group
-            return fail (Error_No_Catch_For_Throw(L));
-
-        if (not meta) {
-            require (
-              Value* decayed = Decay_If_Unstable(eval)
-            );
-
-            if (must_be_action and not Is_Action(decayed))
-                return fail ("Assignment using /FOO must be an action");
-        }
-
-        Move_Cell(PUSH(), cast(Value*, eval));
-
-        if (Is_Level_At_End(L))
-            break;
-
-        goto loop_dont_fetch_next;
     }
 
   //=//// TEXT! FOR FUNCTION DESCRIPTION OR PARAMETER NOTE ////////////////=//
@@ -304,6 +319,16 @@ static Result(None) Push_Keys_And_Params_Core(
             continue;
         }
 
+  //=//// LOCALS IN FENCE! (OBJECT CREATION DIALECT) //////////////////////=//
+
+        if (Is_Fence(item)) {
+            Element* spare = Derelativize(SPARE, item, Level_Binding(L));
+            trap (
+              Push_Keys_And_Params_For_Fence(L, spare)
+            );
+            continue;
+        }
+
   //=//// ANY-WORD? PARAMETERS THEMSELVES /////////////////////////////////=//
 
         bool quoted = false;  // single quoting level used as signal in spec
@@ -323,7 +348,6 @@ static Result(None) Push_Keys_And_Params_Core(
         ParamClass pclass = PARAMCLASS_0;  // error if not changed
 
         bool refinement = false;  // paths with blanks at head are refinements
-        bool local = false;
         bool is_returner = false;
         if (type == TYPE_CHAIN) {
             switch (opt Try_Get_Sequence_Singleheart(item)) {
@@ -416,12 +440,9 @@ static Result(None) Push_Keys_And_Params_Core(
         if (pclass == PARAMCLASS_0)  // didn't match
             return fail (Error_Bad_Func_Def_Raw(item));
 
-        if (mode == SPEC_MODE_LOCAL or mode == SPEC_MODE_WITH) {
+        if (mode == SPEC_MODE_WITH) {
             if (pclass != PARAMCLASS_NORMAL)
                 return fail (Error_Bad_Func_Def_Raw(item));
-
-            if (mode == SPEC_MODE_LOCAL)
-                local = true;
         }
 
         if (
@@ -486,11 +507,7 @@ static Result(None) Push_Keys_And_Params_Core(
 
         // Non-annotated arguments allow all parameter types.
 
-        if (local) {
-            Init_Unset_Due_To_End(u_cast(Atom*, param));
-            assert(mode == SPEC_MODE_LOCAL);
-        }
-        else if (refinement) {
+        if (refinement) {
             Init_Unconstrained_Parameter(
                 param,
                 FLAG_PARAMCLASS_BYTE(pclass)

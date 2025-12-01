@@ -56,14 +56,15 @@ disable-user-includes: proc [
     lines [block!] "Block of strings"
     :inline [block!] "Block of filenames to inline if seen"
     :stdio "Disable stdio.h"
-    <local> name line-iter line pos
 ]
 bind construct [
     open-include: charset -["<]-
     close-include: charset -[">]-
 ][
+    let [name line-iter line pos]
+
     let include-rule: compose [
-        (? if stdio [
+        (when stdio [
             [open-include name: across "stdio.h" close-include |]
         ])
         -["]- name: across to -["]-

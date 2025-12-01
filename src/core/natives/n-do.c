@@ -586,7 +586,7 @@ DECLARE_NATIVE(EVAL_FREE)
 //      operation [<unrun> frame!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
-//      <local> frame  ; GC-safe cell for frame
+//      {frame}  ; GC-safe cell for frame
 //  ]
 //
 DECLARE_NATIVE(APPLIQUE)
@@ -954,7 +954,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 //      args "Arguments and Refinements, e.g. [arg1 arg2 ref: refine1]"
 //          [block!]
 //      :relax "Don't worry about too many arguments to the APPLY"
-//      <local> frame index iterator  ; update // native if this changes [1]
+//      {frame index iterator}  ; update `//` native if this changes [1]
 //  ]
 //
 DECLARE_NATIVE(APPLY)
@@ -996,7 +996,7 @@ DECLARE_NATIVE(APPLY)
 //      args "Arguments and Refinements, e.g. [arg1 arg2 :ref refine1]"
 //          [block!]
 //      :relax "Don't worry about too many arguments to the APPLY"
-//      <local> frame index iterator ; need frame compatibility with APPLY [1]
+//      {frame index iterator}  ; need frame compatibility with APPLY [1]
 //  ]
 //
 DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)

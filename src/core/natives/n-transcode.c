@@ -88,7 +88,7 @@ Result(Element*) Transcode_One(
 //          [file! url!]
 //      :line "Line number for start of scan, word variable will be updated"
 //          [integer! any-word?]
-//      <local> buffer
+//      {buffer}
 //  ]
 //
 DECLARE_NATIVE(TRANSCODE)

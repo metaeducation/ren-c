@@ -22,7 +22,7 @@
 
         right [any-stable? <variadic>]
         'lookahead [element? <variadic>]
-        <local> look
+        {look}
     ][
         take right  ; returned value
 

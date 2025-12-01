@@ -558,8 +558,10 @@ console*: func [
 
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! datatype! ^group! handle!]
-        <with> instruction
-        <local> /return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
+        ; <with> instruction
+        {
+            return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
+        }
     ][
         switch state [
             <prompt> [
@@ -598,7 +600,7 @@ console*: func [
                 assert [empty? instruction]
                 state
             ]
-            group?:meta/ [  ; means "resume instruction"
+            group?:metaform/ [  ; means "resume instruction"
                 state
             ]
             handle! [  ; means "evaluator hook request" (handle is the hook)

@@ -171,8 +171,8 @@
 (
     run proc [
         @set-words [<variadic> set-word? tag!]
-        <local>
-            set-word type-name tester meta
+
+        {set-word type-name tester meta}
     ][
         while [<end> != set-word: take set-words] [
             type-name: parse as text! unchain set-word [

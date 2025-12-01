@@ -40,7 +40,7 @@ digit: charset [#"0" - #"9"]
 alpha: charset [#"a" - #"z" #"A" - #"Z"]
 idate-to-date: lambda [
     idate [text!]
-    <local> day month year time zone
+    {day month year time zone}
 ][
     parse idate [
         skip 5
@@ -79,7 +79,7 @@ make-http-request: func [
         [block!]
     content "Content-Length is created automatically"
         [<opt> text! blob!]
-    <local> result
+    {result}
 ][
     ; The HTTP 1.1 protocol requires a `Host:` header.  Simple logic used
     ; here is to fall back to requesting 1.0 only if there is no Host.
@@ -400,7 +400,7 @@ do-redirect: proc [
     port [port!]
     new-uri [url! text! file!]
     headers
-    <local> spec state
+    {spec state}
 ][
     spec: port.spec
     state: port.state
@@ -610,9 +610,8 @@ sys.util/make-scheme [
             port [port!]
             :lines
             :string
-            <local> data
+            {need-close ('no) data}
         ][
-            let need-close: 'no
             if port.state [
                 if not open? port [
                     cause-error 'Access 'not-open port.spec.ref
@@ -647,7 +646,7 @@ sys.util/make-scheme [
         write: func [
             port [port!]
             value
-            <local> data
+            {need-close ('no) data}
         ][
             if not match [block! blob! text!] value [
                 value: form value
@@ -660,7 +659,6 @@ sys.util/make-scheme [
                     value
                 ]
             ]
-            let need-close: 'no
             if port.state [
                 if not open? port [
                     cause-error 'Access 'not-open port.spec.ref
@@ -686,7 +684,7 @@ sys.util/make-scheme [
 
         open: func [
             port [port!]
-            <local> conn
+            {conn}
         ][
             if port.state [return port]
             if not port.spec.host [
@@ -751,7 +749,7 @@ sys.util/make-scheme [
 
         query: lambda [
             port [port!]
-            <local> error state
+            {error state}
         ][
             all [
                 state: port.state
@@ -846,7 +844,7 @@ sys.util/make-scheme [
         write: func [
             port [port!]
             value
-            <local> data
+            {data}
         ][
             if value = [HEAD] [  ; used by INFO?
                 let headers: copy ""

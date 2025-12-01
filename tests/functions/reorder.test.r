@@ -97,7 +97,7 @@
 ; Weird demo taking advantage of the ignored parameters with a reversing
 ; macro, to implement something along the lines of Haskell FLIP.
 [
-    (flip: macro ['name [word!] <local> frame] [
+    (flip: macro ['name [word!] {frame}] [
         frame: unrun ensure [action!] get name
         reduce [reorder frame (reverse words of frame)]
     ]

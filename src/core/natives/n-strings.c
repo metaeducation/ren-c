@@ -115,7 +115,7 @@ DECLARE_NATIVE(LATIN1_Q)
 //      :with [element? splice!]
 //      :head "Include delimiter at head of a non-NULL result"
 //      :tail "Include delimiter at tail of a non-NULL result"
-//      <local> original-index
+//      {original-index}
 //  ]
 //
 DECLARE_NATIVE(JOIN)

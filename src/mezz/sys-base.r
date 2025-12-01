@@ -116,8 +116,10 @@ module: func [
         [object!]
     :into "Add data to existing MODULE! context (vs making a new one)"
         [module!]
-    <local>
-        mod ^product  ; note: overwrites MODULO shorthand in this function
+    {
+        mod  ; note: overwrites MODULO shorthand in this function
+        ^product
+    }
 ][
     mod: any [
         into

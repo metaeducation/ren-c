@@ -105,7 +105,7 @@ make-dir: func [
     return: [file! url!]
     path [file! url!]
     :deep "Create subdirectories too"
-    <local> dirs end created
+    {dirs end created}
 ][
     path: dirize path  ; append slash (if needed)
     assert [dir? path]
@@ -153,7 +153,7 @@ make-dir: func [
 delete-dir: func [
     "Deletes a directory including all files and subdirectories"
     dir [file! url!]
-    <local> files
+    {files}
 ][
     if all [
         dir? dir
@@ -200,7 +200,7 @@ split-path: func [  ; :FILE used in bootstrap vs. multi-return
 
     target [file! url!]
     :relax "Allow filenames to be . and .."
-    <local> directory filename
+    {directory filename}
 ][
     parse3 as text! target [
         directory: across opt some thru "/"

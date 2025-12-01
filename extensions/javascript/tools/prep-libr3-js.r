@@ -939,9 +939,8 @@ e-cwrap/write-emitted
 json-collect: func [
     return: [text!]
     body [block!]
-    <local> results  ; !!! CSCAPE does not work with LET right now
 ][
-    results: collect compose [
+    let results: collect compose [
         keep: adapt keep/ [  ; Emscripten prefixes functions w/underscore
             if text? value [
                 value: unspaced [-["_]- value -["]-]  ; bootstrap semantics

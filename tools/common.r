@@ -398,10 +398,6 @@ export stripload: func [
             |
             [ahead [opt some space ";"]] comment-or-space-rule
             |
-            "^^{"  ; (actually `^{`) escaped brace, never count
-            |
-            "^^}"  ; (actually `^}`) escaped brace, never count
-            |
             -[^^"]-  ; (actually `^"`) escaped quote, never count
             |
             "-[" (if <Q> != try last pushed [append pushed <B>])

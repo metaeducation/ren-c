@@ -103,7 +103,6 @@ PVAR Element* g_tag_variadic;  // marks variadic argument <variadic>
 PVAR Element* g_tag_end;  // marks endable argument (NULL if at end of input)
 PVAR Element* g_tag_opt_out;  // passing void makes action a noop
 PVAR Element* g_tag_opt;  // passing void turns argument into a null
-PVAR Element* g_tag_local; // marks beginning of a list of "pure locals"
 PVAR Element* g_tag_const; // pass a CONST version of the input argument
 PVAR Element* g_tag_divergent;  // marks divergent functions
 PVAR Element* g_tag_unrun;  // parameters that degrade antiform actions

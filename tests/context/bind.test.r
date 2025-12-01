@@ -17,7 +17,7 @@
 ; BIND works 'as expected' in function body
 [#1549 (
     b1: [self]
-    f: lambda [<local> b2] [
+    f: lambda [{b2}] [
         let b2: [self]
         same? first b2 first bind (binding of $b2) copy b1
     ]
@@ -32,7 +32,7 @@
     ]
 )]
 [#892 #216
-    (y: 'x reeval unrun lambda [<local> x] [x: okay get bind (binding of $x) y])
+    (y: 'x reeval unrun lambda [{x}] [x: okay get bind (binding of $x) y])
 ]
 
 [#2086 (

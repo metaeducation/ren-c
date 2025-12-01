@@ -416,7 +416,7 @@ bool Specialize_Action_Throws(
 //      args "Arguments and Refinements, e.g. [arg1 arg2 ref: refine1]"
 //          [block!]
 //      :relax "Don't worry about too many arguments to the SPECIALIZE"
-//      <local> frame index iterator  ; update // native if this changes [1]
+//      {frame index iterator}  ; update `//` native if this changes [1]
 //  ]
 //
 DECLARE_NATIVE(SPECIALIZE)

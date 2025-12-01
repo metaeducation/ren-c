@@ -15,9 +15,10 @@
         [block!]
     body "The body block of the function"
         [<const> block!]
-    <local>
+    {
         new-spec var loc other
         new-body defaulters statics
+    }
 ][
     ; The lower-level FUNC is implemented as a native, and this wrapper
     ; does a fast shortcut to check to see if the spec has no tags...and if

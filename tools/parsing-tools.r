@@ -56,8 +56,8 @@ export parsing-at: func [
     code "Code to evaluate. Should Return next input position, or null"  ; [1]
         [block!]
     :end "Drop the default tail check (allows evaluation at the tail)"  ; [2]
-    <local> code-group obj
 ][
+    let [code-group obj]
     use [instruction position] [  ; vars need to outlive this function call
         obj: construct compose [(setify var) ~]  ; make variable [3]
         code: overbind obj code  ; make variable visible to code

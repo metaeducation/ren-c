@@ -143,7 +143,7 @@
         "Turn sequences into lists for validation testing"
 
         value [element?]
-        <local> mtype
+        {mtype}
     ]
     bind construct [
         mapping: reduce [

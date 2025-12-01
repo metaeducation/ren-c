@@ -37,7 +37,7 @@
         frame [<unrun> frame!]
         block "Invocation by example (SPACE slots are unspecialized)"
             [block!]
-        <local> e
+        {e}
     ][
         frame: copy frame  ; don't mutate incoming frame [1]
 

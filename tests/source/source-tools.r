@@ -161,7 +161,7 @@ export analyse: context [
                 [block!]
             file [file!]
             data [blob!]
-            <local> position  ; used sketchily in rules, no LET in parse :-/
+            {position}  ; used sketchily in rules, no LET in parse :-/
         ][
             let analysis: analyse/text file data
             let emit: specialize log-emit/ [log: analysis]
@@ -307,7 +307,7 @@ export analyse: context [
             "Facts about the text file (inconsistent line endings, etc)"
         file [file!]
         data
-        <local> position last-pos line-ending alt-ending  ; no PARSE let :-/
+        {position last-pos line-ending alt-ending}  ; use PARSE let?  :-/
     ][
         let analysis: copy []
         let emit: specialize log-emit/ [log: analysis]

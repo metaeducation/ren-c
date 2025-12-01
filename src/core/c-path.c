@@ -116,7 +116,7 @@ Result(Element*) Init_Any_Sequence_At_Listlike(
 //      location [<opt-out> <unrun> plain?]  ; can't pick sigil'd/quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<opt-out> any-stable?]
-//      <local> dual  ; slot in position of DUAL for TWEAK*
+//      {dual}  ; slot in position of DUAL for TWEAK*
 //  ]
 //
 DECLARE_NATIVE(PICK)
@@ -302,7 +302,7 @@ DECLARE_NATIVE(TWEAK_P_BOOTSTRAP)
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<opt-out> any-stable?]
 //      ^value [any-stable? error! <void>]
-//      <local> store
+//      {store}
 //  ]
 //
 DECLARE_NATIVE(POKE)

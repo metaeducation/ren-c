@@ -57,8 +57,9 @@ array: func [
         [<opt-out> integer! block!]
     :initial "Initial value (will be called each time if action)"
         [element? action!]
-    <local> rest (null) block
+    {rest block}  ; rest: null
 ][
+    rest: null
     initial: default ['~]  ; if not specified, array will be all quasars
     if block? size [
         rest: next size else [
@@ -107,7 +108,7 @@ replace: func [
     :one "Replace one (or zero) occurrences"
     :case "Case-sensitive replacement"  ; !!! Note this aliases CASE native!
 
-    <local> ^value pos tail  ; !!! Aliases TAIL native (should use TAIL OF)
+    {^value pos tail}  ; !!! Aliases TAIL native (should use TAIL OF)
 ][
     if not pattern [return target]  ; could fall thru, but optimize...
 

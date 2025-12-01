@@ -113,7 +113,7 @@
 [#145 (
     test-block: [a b c d e f]
     f: func [
-        <local> buff
+        {buff}
     ][
         buff: copy ""
         for-each 'val test-block [

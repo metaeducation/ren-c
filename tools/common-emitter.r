@@ -54,8 +54,9 @@ export cscape: func [
         [text! file!]
     template "${Expr} case as-is, ${expr} lowercased, ${EXPR} is uppercased"
         [text! file! block!]
-    <local> col start finish prefix suffix expr mode pattern void-marker
 ][
+    let [col start finish prefix suffix expr mode pattern void-marker]
+
     if match [text! file!] template [
         template: reduce [template]
     ]

@@ -10,7 +10,7 @@ switch2: func [
     value [any-stable?]
     cases [block!]
     :multi
-    <local> more found ^result condition branch
+    {more found ^result condition branch}
 ][
     found: null
     ^result: ^void

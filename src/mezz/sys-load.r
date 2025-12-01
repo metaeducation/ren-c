@@ -45,10 +45,9 @@ transcode-header: func [
     data [blob!]
     :file [file! url!]
 
-    <local> key hdr rest line
+    {line (1) key hdr rest}
 ][
-    line: 1
-    [rest :key]: trap transcode:next // [  ; "REBOL"
+    [rest key]: trap transcode:next // [  ; "REBOL"
         data
         file: file
         line: $line
@@ -107,14 +106,12 @@ load-header: func [
     :only "Only process header, don't decompress body"
     :required "Script header is required"
 
-    <local> body line final
+    {data hdr rest line body final end binary}
 ]
-bind construct [
+bind {
     non-ws: make bitset! [not 1 - 32]
-][
-    line: 1
-
-    let data: as blob! source  ; if it's not UTF-8, decoding provides error
+} [
+    data: as blob! source  ; if it's not UTF-8, decoding provides error
 
     ; The TRANSCODE function convention is that the LINE OF is the line number
     ; of the *end* of the transcoding so far, (to sync line numbering across
@@ -122,7 +119,7 @@ bind construct [
 
     === TRY TO MATCH PATTERN OF "Rebol [...]" ===
 
-    let [hdr rest 'line]: transcode-header:file data file except e -> [
+    [hdr rest line]: transcode-header:file data file except e -> [
         return fail e  ; TRANSCODE choked, wasn't valid at all
     ]
 
@@ -153,13 +150,13 @@ bind construct [
 
     if 10 = try rest.1 [rest: next rest, line: me + 1]  ; skip LF
 
-    let end
-    all [
+    end: all [
         let tmp: select hdr 'length
         integer? tmp
-        elide end: skip rest tmp
+    ] then [
+        skip rest tmp
     ] else [
-        end: tail of data
+        tail of data
     ]
 
     if only [  ; when it's :ONLY, decompression is not performed
@@ -230,7 +227,7 @@ load: func [
     :type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
 
-    <local> header file line data
+    {header file line data}
 ][
     if match [file! url! tag! @word!] source [
         source: clean-path source
@@ -627,8 +624,8 @@ export*: func [
     @what [set-word? set-run-word? set-group? group? block!]
     args "(export x: ...) for single or (export [...]) for words list"
         [any-stable? <variadic>]
-    <local>
-        hdr exports val word types items
+
+    {hdr exports val word types items}
 ][
     hdr: adjunct-of where
     exports: ensure block! select hdr 'exports

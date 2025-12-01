@@ -29,9 +29,8 @@
 //            return: "The sum" [integer!]
 //            x "First Value" [integer!]
 //            y "Second Value" [integer!]
-//            <local> sum
 //        ][
-//            sum: x + y
+//            let sum: x + y
 //            repeat 2 [print ["The sum is" sum]]
 //            return sum
 //        ]

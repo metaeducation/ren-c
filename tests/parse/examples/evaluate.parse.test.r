@@ -23,7 +23,7 @@
         return: "Saved as secondary result"
             [~[block! block!]~]
         input [block!]
-        <local> mode value saved
+        {mode value saved}
     ][
         saved: copy []
 

@@ -113,12 +113,16 @@
     (lift ^tripwire) = lift f
 )]
 
-; locals are unset (not in-band of values) before they are assigned
-(
-    f: func [<local> loc] [return unset? $loc]
-    f
-)
+; LOCAL null, ^LOCAL unset, and ~LOCAL~ trash
+[
+    (local: 100, true)
 
+    (reeval lambda [{local}] [null? local])
+    (reeval lambda [{^local}] [unset? $local])
+    ; (reeval lambda [{~local~}] [trash? ^local])  ; TBD
+
+    (local = 100)
+]
 
 ; Genuine unbound words exist (e.g. product of MAKE WORD!) but there are also
 ; words that are attached to a context, but have no definition in that context

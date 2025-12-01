@@ -19,7 +19,7 @@
     ]
     output: null
 
-    form-grid: func [grid [block!] <local> text] [
+    form-grid: func [grid [block!] {text}] [
         text: copy ""
         count-up 'i 81 [
             append text grid.(i)
@@ -49,7 +49,7 @@
         y
         x
         n
-        <local> x0 y0
+        {x0 y0}
     ][
         count-up 'i 9 [
             if n = input.(9 * (y - 1) + i) [

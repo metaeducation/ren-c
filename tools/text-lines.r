@@ -89,9 +89,8 @@ for-each-line: proc [
         [text!]
     body "Block to evaluate each time"
         [block!]
-    <local> obj
 ][
-    obj: construct compose [(setify var) ~]  ; make variable
+    let obj: construct compose [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 

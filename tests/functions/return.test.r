@@ -83,7 +83,7 @@
 
 ; RETURN:RUN with current values of frame arguments
 (
-    foo: func [return: [tag!] n <local> clear-me] [
+    foo: func [return: [tag!] n {clear-me}] [
         assert [unset? $clear-me]
         if n = 0 [
             return <success>
@@ -99,7 +99,7 @@
 ; RETURN:RUN with a new call (doesn't reuse arg cells, because it needs the
 ; old values while calculating the new ones)
 (
-    foo: func [return: [tag!] n <local> clear-me] [
+    foo: func [return: [tag!] n {clear-me}] [
         assert [unset? $clear-me]
         if n = 0 [
            return <success>

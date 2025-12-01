@@ -190,7 +190,7 @@ each: quote/
 requote: reframer func [
     "Remove Quoting Levels From First Argument and Re-Apply to Result"
     f [frame!]
-    <local> num-quotes
+    {num-quotes}
 ][
     num-quotes: quotes of (f.1 except [
         panic ["REQUOTE must have an argument to process"]
@@ -244,7 +244,7 @@ newlined: specialize delimit/ [delimiter: newline, tail: ok]
 
 an: lambda [
     "Prepends the correct 'a' or 'an' to a string, based on leading character"
-    value <local> s
+    value {s}
 ][
     if null? value [panic @value]
     head of insert (s: form value) either (find "aeiou" s.1) ["an "] ["a "]
@@ -304,7 +304,7 @@ echo: proc [
 
     @args "If a BLOCK!, then just that block's contents--else to end of line"
         [element? <variadic>]
-    <local> line
+    {line}
 ][
     line: if block? first args [take args] else [
         collect [

@@ -24,7 +24,7 @@
         pos [any-series?]
         parser1 [action!]
         parser2 [action!]
-        <local> warning1 warning2 ^result1 ^result2 remainder1 remainder2
+        {warning1 warning2 ^result1 ^result2 remainder1 remainder2}
     ][
         ; Use RESCUE instead of packs with error for MAXMATCH-D
         warning1: rescue [[^result1 remainder1]: parser1 pos]
@@ -203,9 +203,10 @@
         :pending [blank? block!]
         parser1 [action!]
         parser2 [action!]
-        <local>
+        {
             ^result1 ^result2
             remainder1 remainder2 pending1 pending2
+        }
     ][
         ; use packs with error instead of RESCUE in MAXMATCH-C
         ignore [^result1 remainder1 pending1]: parser1 pos except e -> [

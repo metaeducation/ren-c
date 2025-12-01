@@ -261,9 +261,10 @@ export do-recover: func [
     flags [block!] "which flags to accept"
     code-checksum [<opt> blob!]
     log-file-prefix [file!]
-    <local>
+    {
         interpreter last-vector value position next-position
         test-sources test-checksum
+    }
 ][
     allowed-flags: flags
     successes: test-failures: crashes: dialect-failures: skipped: 0

@@ -21,7 +21,7 @@
             [any-branch?]
         :predicate "Test for what's considered empty (default is null + void)"
             [<unrun> frame!]
-        <local> steps
+        {steps}
     ][
         unlift (
             (non:lift [vacant?] [steps {_}]: get:steps target) else [

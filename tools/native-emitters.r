@@ -62,8 +62,9 @@ export extract-native-protos: func [
     return: "Returns block of NATIVE-INFO! objects"
         [block!]
     c-source-file [file!]
-    <local> proto name exported native-type
 ][
+    let [proto name exported native-type]
+
     assert [not dir? c-source-file]
     return collect [
         parse3 read:string c-source-file [opt some [
@@ -125,6 +126,9 @@ export emit-include-params-macro: func [
 ][
     let symbols: copy []
     let native-name: ~
+
+    proto: stripload proto  ; remove comments
+
     parse3:match proto [
         opt some newline  ; stripload preserves newlines
         opt ["export" space] [
@@ -148,6 +152,25 @@ export emit-include-params-macro: func [
     ; will both work.
     ;
     replace spec "@" -[]-
+
+    ; The bootstrap executable loads {...} as a text string.  We use them
+    ; for FENCE! and locals list.  But all we want here are the words.  If we
+    ; find a genuine locals-looking FENCE! at the tail of the spec, remove
+    ; the braces around it so we just have the words.
+    ;
+    let pos: find-last spec "}"
+    if pos [
+        if parse3 next pos [
+            opt some [space | newline] "]" accept (okay)
+            | accept (null)
+        ][
+            take pos
+            take find-reverse pos "{"
+        ] else [
+            ; This happens if you have "{}" or other braces in strings in
+            ; the spec.  If some locals aren't showing up check here why.
+        ]
+    ]
 
     spec: transcode:one spec
 
@@ -303,8 +326,9 @@ export extract-generic-implementations: func [
     return: "Returns block of GENERIC-INFO! objects"
         [block!]
     c-source-file [file!]
-    <local> name proper-type name* type*
 ][
+    let [name proper-type name* type*]
+
     assert [not dir? c-source-file]
     return collect [
         parse3 read:string c-source-file [some [

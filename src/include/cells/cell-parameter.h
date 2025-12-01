@@ -33,7 +33,7 @@
 //         'qarg [word!]       ; PARAMCLASS_QUOTED
 //         earg [<end> time!]  ; PARAMCLASS_NORMAL + PARAMETER_FLAG_ENDABLE
 //         :refine [tag!]      ; PARAMCLASS_NORMAL + PARAMETER_FLAG_REFINEMENT
-//         <local> loc         ; not a PARAMETER!, specialized to ~ antiform
+//         {loc}               ; not PARAMETER!, specialized to null antiform
 //     ][
 //        ...
 //     ]

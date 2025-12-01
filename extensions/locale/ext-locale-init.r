@@ -455,10 +455,9 @@ if 'Windows <> first system.platform [
     hijack locale/ func [
         return: [<null> text!]
         type [word!]
-        <local> env-lang lang territory letter
+        {env-lang lang territory letter}
     ][
         env-lang: get-env "LANG" else [return null]  ; e.g. "en_US.UTF-8"
-        territory: null
 
         letter: charset [#"a" - #"z" #"A" - #"Z"]
         parse env-lang [

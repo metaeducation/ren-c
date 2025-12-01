@@ -43,7 +43,7 @@
         foo: func [
             return: [frame!]
             public
-            <local> private
+            {private}
         ][
             private: 304
             return binding of $public  ; frame as seen from interior
@@ -150,7 +150,7 @@
         foo: func [
             return: [frame!]
             public
-            <local> private
+            {private}
         ][
             private: 304
             return binding of $public  ; return FRAME! with the internal view

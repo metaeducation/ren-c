@@ -34,12 +34,10 @@ c-fib: make-native [
 
 rebol-fib: func [
     n [integer!]
-    <local> i0 i1 t
+    {i0 (0) i1 (1) t}
 ][
     if n < 0 [return -1]
     if n <= 1 [return n]
-    i0: 0
-    i1: 1
     while [n > 1] [
         t: i1
         i1: i0 + i1

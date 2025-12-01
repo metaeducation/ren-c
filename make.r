@@ -1481,11 +1481,8 @@ folders: copy [%objs/ %objs/core/ %objs/main/]
 add-new-obj-folders: proc [
     objs
     folders
-    <local>
-    lib
-    obj
-    dir
 ][
+    let [lib obj dir]
     for-each 'lib objs [
         switch lib.class [
             #object-file [

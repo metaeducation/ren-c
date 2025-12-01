@@ -78,7 +78,7 @@ trim: func [
         [char? text! blob! integer! block! bitset!]
 ][
     let all_TRIM: all
-    all: lib/all/
+    all: lib.all/
 
     ; ACTION!s in the new object will still refer to fields in the original
     ; object.  That was true in R3-Alpha as well.  Fixing this would require
@@ -165,7 +165,7 @@ trim: func [
         panic "Unsupported type passed to TRIM"
     ]
 
-    ; /ALL just removes all whitespace entirely.  No subtlety needed.
+    ; :ALL just removes all whitespace entirely.  No subtlety needed.
     ;
     if all_TRIM [
         parse3 series [opt some [remove rule | one | <end> break]]
@@ -186,7 +186,7 @@ trim: func [
 
     assert [any-string? series]
 
-    ; /LINES collapses all runs of whitespace down to just one space character
+    ; :LINES collapses all runs of whitespace down to just one space character
     ; with leading and trailing whitespace removed.
     ;
     if lines [
@@ -231,7 +231,7 @@ trim: func [
         ]]
     ]
 
-    ; While trimming with /TAIL takes out any number of newlines, plain TRIM
+    ; While trimming with :TAIL takes out any number of newlines, plain TRIM
     ; in R3-Alpha and Red leaves at most one newline at the end.
     ;
     parse3 series [

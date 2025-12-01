@@ -6,7 +6,7 @@
     flow: func [
         block [block!]
         :placeholder [element?]
-        <local> flow-result
+        {flow-result}
     ][
         placeholder: default [_]
         block: copy block

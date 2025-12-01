@@ -222,13 +222,14 @@ void Enable_Ctrl_C(void)
 //      :resumable "Allow RESUME instruction (will return a ^GROUP!)"
 //      :skin "File containing console skin, or MAKE CONSOLE! derived object"
 //          [file! object!]
-//      <local>
+//      {
 //          old-console
 //          was-ctrl-c-enabled
 //          can-recover
 //          code
 //          result'  ; intentionally lifted, to discern PANIC from ERROR! [1]
 //          state
+//      }
 //  ]
 //
 DECLARE_NATIVE(CONSOLE)
@@ -250,7 +251,7 @@ DECLARE_NATIVE(CONSOLE)
     INCLUDE_PARAMS_OF_CONSOLE;
 
     switch (rebUnboxInteger("case [",
-        "unset? $state [0]",  // initial entry
+        "not state [0]",  // initial entry
         "state = 'running-request [1]",
         "panic -[Invalid CONSOLE state]-",
     "]")){

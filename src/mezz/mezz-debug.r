@@ -19,7 +19,7 @@ verify: ghostable func [
         [block!]
     :handler "Optional code to run if the assertion fails, receives condition"
         [<unrun> block! frame!]
-    <local> pos result
+    {pos result}
 ][
     while [[{pos} ^result]: evaluate:step conditions else [return ^ghost]] [
         all [
@@ -91,7 +91,7 @@ delta-time: func [
 delta-profile: func [
     "Delta-profile of running a specific block"
     block [block!]
-    <local> start end
+    {start end}
 ][
     start: values of stats:profile
     eval block

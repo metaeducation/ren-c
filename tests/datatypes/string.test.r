@@ -210,7 +210,7 @@
 (
     randomize "Deterministic!"
 
-    random-string: func [n <local> len str] [
+    random-string: func [n {len str}] [
         str: copy ""
         len: random n
         repeat len [

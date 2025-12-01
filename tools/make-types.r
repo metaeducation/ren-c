@@ -60,18 +60,20 @@ for-each-datatype: proc [
         [word!]
     body "Block to evaluate each time"
         [block!]
-    <local>
-    name* description*
-    antiname* antidescription*
-    typesets* heart* cellmask*
-    completed* running* unstable* decorated pos
-    obj
 ][
-    obj: construct compose [(setify var) ~]  ; make variable
+    let obj: construct compose [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
-    heart*: 1  ; 0 is reserved
+    let heart*: 1  ; 0 is reserved
+
+    let [  ; no LET in PARSE3
+        name* description*
+        antiname* antidescription*
+        typesets* cellmask*
+        completed* running* unstable* decorated pos
+    ]
+
     parse3:match type-table [some [
         [opt some tag! <end> accept (okay)]
         |
@@ -159,17 +161,17 @@ for-each-typerange: proc [
         [word!]
     body "Block to evaluate each time"
         [block!]
-    <local> name* heart* any-name!* stack types* starting
-    obj
 ][
-    obj: construct compose [(setify var) ~]  ; make variable
+    let obj: construct compose [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
-    stack: copy []
-    types*: _  ; will be put in a block, can't be null
+    let stack: copy []
+    let types*: _  ; will be put in a block, can't be null
 
-    heart*: 1  ; 0 is reserved
+    let [name* any-name!* starting]
+
+    let heart*: 1  ; 0 is reserved
     cycle [  ; need to be in loop for BREAK to work
         parse3:match type-table [some [not <end>
             opt some [name*: tag! (

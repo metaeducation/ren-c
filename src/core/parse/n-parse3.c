@@ -1243,7 +1243,7 @@ static Result(None) Handle_Seek_Rule_Dont_Update_Begin(
 //      return: [<null> integer!]
 //      input [any-series? any-list? quoted!]
 //      flags [integer!]
-//      <local> position num-quotes save lookback
+//      {position num-quotes save lookback}
 //  ]
 //
 DECLARE_NATIVE(SUBPARSE)

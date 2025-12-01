@@ -431,7 +431,7 @@ count-up: func [
     var [word!]
     limit [<opt-out> integer! rune!]
     body [block!]
-    <local> start end ^result
+    {start end ^result}
 ][
     ; REPEAT in UPARSE wanted to try out some cutting-edge ideas about
     ; "opting in" to counting loops, e.g. `count-up 'i _` opts out and doesn't

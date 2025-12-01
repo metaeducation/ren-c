@@ -134,7 +134,7 @@
 (
     e-generator: func [body [block!]] [
         let g: generator [
-            yield: enclose yield/ func [f [frame!] <local> temp] [
+            yield: enclose yield/ func [f [frame!] {temp}] [
                 if null? f.^value [
                     f.^value: done
                 ]

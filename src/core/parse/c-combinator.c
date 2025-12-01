@@ -363,7 +363,7 @@ void Push_Parser_Sublevel(
 //      return: "PARSER's result if it succeeds, otherwise NULL"
 //          [any-stable?]
 //      parser [action!]
-//      <local> remainder  ; !!! no longer separate output, review
+//      {remainder}  ; !!! no longer separate output, review
 //  ]
 //
 DECLARE_NATIVE(OPT_COMBINATOR)
@@ -416,7 +416,7 @@ DECLARE_NATIVE(OPT_COMBINATOR)
 //      return: "The rule series matched against (not input value)"
 //          [<null> text!]
 //      value [text!]
-//      <local> remainder  ; !!! no longer separate output, review
+//      {remainder}  ; !!! no longer separate output, review
 //  ]
 //
 DECLARE_NATIVE(TEXT_X_COMBINATOR)
@@ -484,7 +484,7 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
 //      return: "Result of last successful match"
 //          [any-stable?]
 //      parser [action!]
-//      <local> remainder  ; !!! no longer separate output, review
+//      {remainder}  ; !!! no longer separate output, review
 //  ]
 //
 DECLARE_NATIVE(SOME_COMBINATOR)
@@ -572,7 +572,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
 //      return: "parser result if it succeeded and advanced input, else NULL"
 //          [any-stable?]
 //      parser [action!]
-//      <local> remainder  ; !!! no longer separate output, review
+//      {remainder}  ; !!! no longer separate output, review
 //  ]
 //
 DECLARE_NATIVE(FURTHER_COMBINATOR)
@@ -775,7 +775,7 @@ static bool Combinator_Param_Hook(
 //      state "Parse State" [frame!]
 //      :value "Initiating value (if datatype)" [element?]
 //      :path "Invoking Path" [path!]
-//      <local> rule-start rule-end  ; RULE-END needed to make SYM_RULE_END
+//      {rule-start rule-end}  ; RULE-END needed to make SYM_RULE_END
 //  ]
 //
 DECLARE_NATIVE(COMBINATORIZE)

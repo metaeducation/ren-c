@@ -451,7 +451,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
 //          block! set-block? set-group?]
 //      @expression "Optional Expression to assign"
 //          [<variadic> element?]  ; fake variadic [1]
-//      <local> bindings-holder  ; workaround [2]
+//      {bindings-holder}  ; workaround [2]
 //  ]
 //
 DECLARE_NATIVE(LET)

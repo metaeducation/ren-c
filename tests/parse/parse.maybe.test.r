@@ -11,7 +11,7 @@
 ;        return: "PARSER's result if it succeeds w/non-NULL, otherwise vanish"
 ;            [any-stable?]
 ;        parser [action!]
-;        <local> result'
+;        {result'}
 ;    ][
 ;        [^result' remainder]: parser input except [
 ;            remainder: input  ; succeed on parser fail but don't advance input

@@ -29,7 +29,7 @@ register-codec: func [
     identify? [<opt> <unrun> frame!]
     decode [<opt> <unrun> frame!]
     encode [<opt> <unrun> frame!]
-    <local> codec
+    {codec}
 ][
     if not block? suffixes [suffixes: reduce [suffixes]]
 

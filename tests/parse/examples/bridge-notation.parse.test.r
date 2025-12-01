@@ -31,7 +31,7 @@ pbn-to-hands: func [
 
     return: [object!]
     pbn [text!]
-    <local> start direction
+    {start direction}
 ][
     let hands: parse pbn [gather [
         opt whitespace  ; We allow leading whitespace, good idea?

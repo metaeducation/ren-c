@@ -405,10 +405,12 @@ make-state-updater: func [
     direction [~(read write)~]
     transdialect "dialected mapping from state to legal next states"
         [block!]
-    <local> transitions state-rule left right
+    {
+        state-rule ([tag! | rune!])
+        transitions left right
+    }
 ][
     transitions: to map! []  ; transformed dialect that always maps to BLOCK!
-    state-rule: [tag! | rune!]
     parse transdialect [
         some [
             left: state-rule '-> right: [

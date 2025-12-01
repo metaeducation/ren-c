@@ -1,7 +1,7 @@
 ; frame.test.r
 
 (
-    foo: func [return: [block!] arg <local> local frame] [
+    foo: func [return: [block!] arg {local frame}] [
        local: 10
        frame: binding of $return
        return words of frame

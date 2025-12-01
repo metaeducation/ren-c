@@ -464,9 +464,8 @@ export for-each-platform: func [
     var [word!]
     body "Body of code to run for each platform"
         [block!]
-    <local> obj
 ][
-    obj: construct compose [(setify var) ~]  ; make variable
+    let obj: construct compose [(setify var) ~]  ; make variable
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 

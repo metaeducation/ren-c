@@ -1259,7 +1259,7 @@ void Shutdown_Loop_Each(Value* iterator)
 //           action!]  ; action support experimental, e.g. generators
 //      body "Block to evaluate each time"
 //          [<const> block!]
-//      <local> iterator
+//      {iterator}
 //  ]
 //
 DECLARE_NATIVE(FOR_EACH)
@@ -1390,7 +1390,7 @@ DECLARE_NATIVE(FOR_EACH)
 //          [<opt> blank? any-series? any-context? map! action!]
 //      body [<const> block!]
 //          "Block to evaluate each time"
-//      <local> iterator
+//      {iterator}
 //  ]
 //
 DECLARE_NATIVE(EVERY)
@@ -1902,7 +1902,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //          [<opt-out> blank? action! any-series? any-sequence? any-context?]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
-//      <local> iterator
+//      {iterator}
 //  ]
 //
 DECLARE_NATIVE(MAP_EACH)
@@ -1952,7 +1952,7 @@ DECLARE_NATIVE(MAP_EACH)
 //          [<opt> blank? quoted! action!]
 //      body "Block to evaluate each time"
 //          [<const> block!]
-//      <local> iterator
+//      {iterator}
 //  ]
 //
 DECLARE_NATIVE(MAP)

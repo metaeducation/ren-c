@@ -6,14 +6,11 @@
     (for-parallel: func [
         return: [any-value?]
         vars [block!]
-        ^blk1 [~[]~ any-list?]
-        ^blk2 [~[]~ any-list?]
+        blk1 [<opt> any-list?]
+        blk2 [<opt> any-list?]
         body [block!]
-        <local> context
+        {context}
     ][
-        blk1: any [^blk1 null]  ; turn voids to null or unlift
-        blk2: any [^blk2 null]  ; "
-
         [vars context]: wrap:set compose vars
         body: overbind context body
         return while [(not empty? opt blk1) or (not empty? opt blk2)] [
@@ -31,7 +28,7 @@
         ]
     ], ok)
 
-    (^void = for-parallel [x y] [] [] [panic])
+    (void? for-parallel [x y] [] [] [panic])
     ([1 2] = collect [for-parallel [x y] [] [1 2] [keep opt x, keep y]])
     ([a b] = collect [for-parallel [x y] [a b] [] [keep x, keep opt y]])
 

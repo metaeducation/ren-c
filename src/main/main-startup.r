@@ -252,8 +252,10 @@ bind construct [
         return: [<divergent>]
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! datatype!]
-        <with> instruction
-        <local> /return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
+        ; <with> instruction
+        {
+            return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
+        }
     ][
         switch state [
             <die> [

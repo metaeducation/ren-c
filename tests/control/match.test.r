@@ -92,7 +92,7 @@
 ; Here we see the demo done with a reframer to make MATCH+ as a proof of
 ; concept of how it would be done if you wanted it.
 [
-    (match+: reframer func [f [frame!] <local> p] [
+    (match+: reframer func [f [frame!] {p}] [
         p: f.(first words of f)  ; get the first parameter
         eval f except [return null]
         return p  ; evaluate to parameter if operation succeeds

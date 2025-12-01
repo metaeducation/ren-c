@@ -78,11 +78,13 @@ for-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
 emit-proto: func [
     return: []
     proto [text!]
-    <local>
+][
+    let [
         identifier-chars
         pos param
         header name return-type paramlist is-variadic
-][
+    ]
+
     identifier-chars: charset [
         #"A" - #"Z"
         #"a" - #"z"
