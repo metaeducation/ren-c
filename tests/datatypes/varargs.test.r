@@ -199,3 +199,28 @@
         usermode-tuple? 'a.b.c
     ]
 )
+
+; This was another example of a top-level-word thing that isn't needed anymore
+; since adding to modules "Sea of Words" is efficient.
+(
+    run lambda [@terms [tag! set-word? <variadic>]] [
+        let n: 1
+        let w
+        while [<end> != w: take terms] [
+            w: resolve w
+            set w redescribe reduce [
+                spaced ["Returns the" w "value of a series"]
+            ](
+                specialize pick/ [picker: n]
+            )
+            n: n + 1
+        ]
+    ]
+        ; Variadic function so these can be at top-level, module collects
+        ;
+        first': second': third': fourth': fifth':
+        sixth': seventh': eighth': ninth': tenth':
+        <end>
+
+    'b = second' [a b c]
+)

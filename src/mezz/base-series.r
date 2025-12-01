@@ -16,24 +16,19 @@ Rebol [
     ]--
 ]
 
-run lambda [@terms [tag! set-word? <variadic>]] [
-    let n: 1
-    let w
-    while [<end> != w: take terms] [
-        w: resolve w
-        set w redescribe reduce [
-            spaced ["Returns the" w "value of a series"]
+use [n] [  ; define FIRST, SECOND, THIRD etc. as specializations of PICK
+    n: 1
+    for-each 'term [
+        first second third fourth fifth sixth seventh eighth ninth tenth
+    ][
+        set (extend lib term) redescribe reduce [
+            spaced ["Returns the" term "value of a series"]
         ](
             specialize pick/ [picker: n]
         )
         n: n + 1
     ]
 ]
-    ; Variadic function so these can be at top-level, module collects
-    ;
-    first: second: third: fourth: fifth:
-    sixth: seventh: eighth: ninth: tenth:
-    <end>
 
 last: redescribe [
     "Returns the last value of a series"
