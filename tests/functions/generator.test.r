@@ -30,7 +30,7 @@
         ]
     ]
     all wrap [
-        action? /result: gmaker
+        action? result: gmaker
         done? result
         done? result
         data = [1 2 3]
@@ -110,7 +110,7 @@
 ; ENCLOSE compatibility
 (
     g: generator [
-        let /yy: enclose yield/ func [f] [
+        let yy: enclose yield/ func [f] [
             f.^value: f.^value * 10
             return 1 + eval-free f
         ]
@@ -149,7 +149,7 @@
 
     a: b: c: d: e: ~
 
-    /g: e-generator [
+    g: e-generator [
         ^a: yield done
         b: yield 1
         ^c: yield done
@@ -175,7 +175,7 @@
 
 ; Simple CASCADE test
 (
-    /c: cascade [
+    c: cascade [
         generator [yield 1 yield 2 yield 3]
 
         func [^x] [return either done? ^x [done] [x + 10]]
@@ -256,7 +256,7 @@
 ;[
 ;    (
 ;        twenty: func [] [return 20]
-;        obj: make object! [sub: make object! [x: 10 /f: twenty/]]
+;        obj: make object! [sub: make object! [x: 10 f: twenty/]]
 ;        get-obj: func [] [obj]
 ;        true
 ;    )

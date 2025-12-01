@@ -14,7 +14,7 @@
     ('~baddie~ = if ok [~baddie~] then ^x -> [x])
 
     (
-        /tester: ^x -> [if x = '~()~ [<void>] else [<nonvoid>]]
+        tester: ^x -> [if x = '~()~ [<void>] else [<nonvoid>]]
         <void> = tester comment "this should work"
     )
 

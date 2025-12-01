@@ -18,7 +18,7 @@
     f1.value: <d>
     f1.part: f1.dup: f1.line: null
 
-    /mirror: reframer lambda [f [frame!]] [f]
+    mirror: reframer lambda [f [frame!]] [f]
     f2: mirror append [a b c] <d>
     f1 = f2
 )

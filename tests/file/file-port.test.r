@@ -230,7 +230,7 @@
     buffer: copy #{}
     pos: buffer
 
-    /fuzzwrite: adapt write/ [
+    fuzzwrite: adapt write/ [
       comment [
         print [
             "Writing"

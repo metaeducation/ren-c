@@ -59,13 +59,13 @@
 //       TRANSCODING!  ; ... infinite loop
 //
 //   The problem there is that the adaptation performs its printout and then
-//   falls through to the original LOAD, which is now the hijacked version
-//   that has the adaptation.
+//   falls through to the original TRANSCODE, that is now the hijacked version
+//   with the adaptation.
 //
 //   Working around this problem requires saving the old function (which is
 //   returned under a new identity from HIJACK):
 //
-//       >> /old-transcode: hijack transcode/ void
+//       >> old-transcode: hijack transcode/ void
 //
 //       >> hijack transcode/ (adapt old-transcode/ [print "LOADING!"])
 //

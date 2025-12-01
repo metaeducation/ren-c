@@ -407,7 +407,7 @@ import*: func [
 bind construct [
     importing-remotely: 'no
 ][
-    /return: adapt return/ [  ; make sure all return paths actually import vars
+    return: adapt return/ [  ; make sure all return paths actually import vars
         ;
         ; Note: `atom` below is the argument to RETURN.  It is a ^META
         ; parameter so should be a quoted pack containing a module.  We don't

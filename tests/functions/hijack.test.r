@@ -27,10 +27,10 @@
     )
 
     (
-        /old-three: three/
-        /three: adapt three/ []  ; so OLD-THREE not hijacked by THREE hijack
+        old-three: three/
+        three: adapt three/ []  ; so OLD-THREE not hijacked by THREE hijack
 
-        /two-30: specialize three/ [z: 30]
+        two-30: specialize three/ [z: 30]
         60 = (two-30 10 20)
     )
 
@@ -53,7 +53,7 @@
     (240000 = (two-30:available 10 20 40))
 
     (
-        /one-20: specialize two-30/ [y: 20]
+        one-20: specialize two-30/ [y: 20]
 
         hijack three/ func [q r s] [
             return q - r - s

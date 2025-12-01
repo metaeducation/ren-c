@@ -167,7 +167,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
 
     // 1. Allowing a void branch can be useful, consider:
     //
-    //        /switch-d: enclose (augment switch/ [
+    //        switch-d: enclose (augment switch/ [
     //            :default "Default case if no others are found"
     //            [block!]
     //        ]) lambda [f [frame!]] [

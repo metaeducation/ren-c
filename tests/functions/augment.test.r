@@ -17,12 +17,12 @@
 
 ; Tests with ADAPT
 (
-    /sum: adapt augment (func [x] [return x]) [y] [
+    sum: adapt augment (func [x] [return x]) [y] [
         x: x + y
     ]
     1020 = sum 1000 20
 )(
-    /mix: adapt augment (x -> [x]) [y :sub] [
+    mix: adapt augment (x -> [x]) [y :sub] [
         x: reeval (either sub [subtract/] [add/]) x y
     ]
     all [
@@ -34,7 +34,7 @@
 
 ; Tests with ENCLOSE
 [
-    (/switch-d: enclose (augment switch/ [
+    (switch-d: enclose (augment switch/ [
         :default "Default case if no others are found"
             [block!]
     ]) lambda [f [frame!]] [

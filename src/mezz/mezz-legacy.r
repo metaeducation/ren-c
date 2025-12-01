@@ -41,7 +41,7 @@ rejoin: ~#[REJOIN replaced by UNSPACED + JOIN https://forum.rebol.info/t/248]#~
 ; ability to tolerate a spec of `[a:]` by transforming it to `[a: none].
 ; Ren-C hasn't decided yet, but will likely support `construct [a: b: c:]`
 ;
-/context: specialize make/ [type: object!]
+context: specialize make/ [type: object!]
 
 
 ; !!! These cases still linger as question mark routines that don't return
@@ -79,10 +79,10 @@ prin: proc [
 ; permanence.  It also is unique among loop constructs by supporting a value
 ; return via STOP, since it has no "normal" loop termination condition.
 ;
-/forever: cycle/
+forever: cycle/
 
 
-/find: adapt (augment find/ [:reverse :last]) [
+find: adapt (augment find/ [:reverse :last]) [
     if reverse or last [
         panic:blame [
             ":REVERSE and :LAST on FIND have been deprecated.  Use FIND-LAST"

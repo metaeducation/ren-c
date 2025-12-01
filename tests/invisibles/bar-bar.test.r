@@ -17,27 +17,27 @@
 ; Non-variadic
 [
     (
-        left-normal: infix /right-normal: (
+        left-normal: infix right-normal: (
             func [return: [<null> word!] x [word!]] [return x]
         )
-        left-normal*: infix /right-normal*: (
+        left-normal*: infix right-normal*: (
             func [return: [<null> word!] x [word! <end>]] [return x]
         )
 
         left-defer: infix:defer left-normal/
         left-defer*: infix:defer left-normal/
 
-        left-soft: infix /right-soft: (
+        left-soft: infix right-soft: (
             func [return: [<null> word!] @(x) [word!]] [return x]
         )
-        left-soft*: infix /right-soft*: (
+        left-soft*: infix right-soft*: (
             func [return: [<null> word!] @(x) [word! <end>]] [return x]
         )
 
-        left-hard: infix /right-hard: (
+        left-hard: infix right-hard: (
             func [return: [<null> word!] 'x [word!]] [return x]
         )
-        left-hard*: infix /right-hard*: (
+        left-hard*: infix right-hard*: (
             func [return: [<null> word!] 'x [word! <end>]] [return x]
         )
 
@@ -77,11 +77,11 @@
 ; Variadic
 [
     (
-        left-normal: infix /right-normal:
+        left-normal: infix right-normal:
             func [return: [<null> word!] x [word! <variadic>]] [
                 return take x
             ]
-        left-normal*: infix /right-normal*:
+        left-normal*: infix right-normal*:
             func [return: [<null> word!] x [word! <variadic> <end>]] [
                 return try take x
             ]
@@ -89,20 +89,20 @@
         left-defer: infix:defer left-normal/
         left-defer*: infix:defer left-normal/
 
-        left-soft: infix /right-soft:
+        left-soft: infix right-soft:
             func [return: [<null> word!] @(x) [word! <variadic>]] [
                 return take x
             ]
-        left-soft*: infix /right-soft*:
+        left-soft*: infix right-soft*:
             func [return: [<null> word!] @(x) [word! <variadic> <end>]] [
                 return try take x
             ]
 
-        left-hard: infix /right-hard:
+        left-hard: infix right-hard:
             func [return: [<null> word!] 'x [word! <variadic>]] [
                 return take x
             ]
-        left-hard*: infix /right-hard*:
+        left-hard*: infix right-hard*:
             func [return: [<null> word!] 'x [word! <variadic> <end>]] [
                 return try take x
             ]

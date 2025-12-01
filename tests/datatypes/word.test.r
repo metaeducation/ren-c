@@ -171,7 +171,7 @@
 
         -[-<=>-]- -[-<>-]- -[>=<]-
     ] wrap [
-        /assert: specialize lib.assert/ [
+        assert: specialize lib.assert/ [
             handler: [echo Failure on: @str]
         ]
 

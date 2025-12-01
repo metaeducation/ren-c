@@ -340,7 +340,7 @@ c-debug-break: ~#[C-DEBUG-BREAK applies in non-bootstrap %sysobj.r only]#~
 
 ob: make object! boot-sysobj
 
-/c-debug-break: get $lib.c-debug-break
+c-debug-break: get $lib.c-debug-break
 
 make-obj-defs: proc [
     "Given a Rebol OBJECT!, write C structs that can access its raw variables"

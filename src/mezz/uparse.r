@@ -198,7 +198,7 @@ bind construct [
                     ; rigged so that their results append to an aggregator in
                     ; the order they are run (if they succeed).
                     ;
-                    /f.(key): enclose (augment ^val [:modded]) func [
+                    f.(key): enclose (augment ^val [:modded]) func [
                         f2
                         <local> ^result remainder subpending
                     ][
@@ -1304,7 +1304,7 @@ default-combinators: make map! [
         case [
             any-list? input [
                 item: trap input.1
-                /neq?: either state.case [not-equal?/] [lax-not-equal?/]
+                neq?: either state.case [not-equal?/] [lax-not-equal?/]
                 if neq? item value [
                     return fail "Value at parse position does not match TEXT!"
                 ]
@@ -1704,7 +1704,7 @@ default-combinators: make map! [
             item: trap input.1
             input: next input
 
-            /eq?: either state.case [equal?/] [lax-equal?/]
+            eq?: either state.case [equal?/] [lax-equal?/]
             if eq? item unquote value [
                 if negated [
                     return fail "Negated QUOTED! parser matched item"
@@ -1803,7 +1803,7 @@ default-combinators: make map! [
             panic "Splice combinators only match ANY-LIST? input"
         ]
 
-        /neq?: either state.case [not-equal?/] [lax-not-equal?/]
+        neq?: either state.case [not-equal?/] [lax-not-equal?/]
         for-each 'item unanti value [
             if neq? input.1 item [
                 return fail [
@@ -2440,7 +2440,7 @@ default-combinators: make map! [
         ^result: ^ghost  ; default result is invisible
 
         old-env: state.env
-        /return: adapt return/ [state.env: old-env]
+        return: adapt return/ [state.env: old-env]
         state.env: rules  ; currently using blocks as surrogate for environment
 
         until [same? rules limit] [
@@ -3134,7 +3134,7 @@ parse: redescribe [
 ; We do not implement PARSE-MATCH by rewriting the rules to [(rules) <input>]
 ; to avoid dependence on the definition of the <input> combinator.
 ;
-/parse-match: redescribe [
+parse-match: redescribe [
     "Process input using PARSE, return input on success or null on mismatch"
 ](
     enclose parse/ func [f] [
@@ -3146,7 +3146,7 @@ parse: redescribe [
 ; Due to the layering it's hard to write PARSE-THRU without using the ACCEPT
 ; and <here> combinators as they are defined.
 ;
-/parse-thru: redescribe [
+parse-thru: redescribe [
     "Process input using PARSE, return how far reached or null on mismatch"
 ](
     cascade [
@@ -3213,11 +3213,11 @@ parse-furthest-hook: func [
     return ^result
 ]
 
-/parse-furthest: adapt augment parse/ [
+parse-furthest: adapt augment parse/ [
     var "Variable to hold furthest position reached"
         [word! tuple!]
 ][
-    /hook: specialize parse-furthest-hook/ compose [var: '(var)]
+    hook: specialize parse-furthest-hook/ compose [var: '(var)]
     set var input
 ]
 

@@ -309,7 +309,7 @@ backtrace: proc [
 ; message.  (By using ADAPT you won't see both BREAKPOINT and BREAKPOINT* on
 ; the stack during BACKTRACE...it uses only one frame.)
 ;
-/breakpoint: adapt breakpoint*/ [
+breakpoint: adapt breakpoint*/ [
     system.console/print-info "BREAKPOINT hit"
 ]
 
@@ -324,7 +324,7 @@ backtrace: proc [
 ; thin air by using INTERRUPT, which is like a breakpoint but that the
 ; backtrace mechanics can choose not to show.
 ;
-/interrupt: adapt breakpoint*/ [
+interrupt: adapt breakpoint*/ [
     ;
     ; !!! INTERRUPT doesn't currently print anything; it's assumed that
     ; changing the prompt would be enough (though a status bar message would
@@ -355,7 +355,7 @@ locals: proc [] [
 ]
 
 
-/debug-console: adapt console/ [
+debug-console: adapt console/ [
     resumable: 'yes
 
     ; The debug skin is made as a global object, so changes to the skin will

@@ -72,7 +72,7 @@ verify: ghostable func [
 ; override a system-wide assert in this way should be examined, and perhaps
 ; copies of the function made at layer boundaries.
 ;
-/native-assert: hijack assert/ verify/
+native-assert: hijack assert/ verify/
 
 
 delta-time: func [

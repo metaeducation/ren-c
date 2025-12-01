@@ -183,12 +183,10 @@ DECLARE_NATIVE(RESUME)
 // When the BREAKPOINT native gets control back from CONSOLE, it evaluates
 // a given expression.
 //
-// !!! Initially, this supported /AT:
+// !!! Initially, this supported :AT
 //
-//      /at
-//          "Return from another call up stack besides the breakpoint"
-//      level [frame! integer!]
-//          "Stack level to target in unwinding (can be BACKTRACE #)"
+//      :at "Return from another call up stack besides the breakpoint"
+//          [frame! integer!]
 //
 // While an interesting feature, it's not currently a priority.  (It can be
 // accomplished with something like `resume [unwind ...]`)

@@ -8,7 +8,7 @@ Rebol [
 
 ; Move the default filters to usermode code, instead of a hardcoded C literal
 ;
-/request-file: adapt request-file*/ [
+request-file: adapt request-file*/ [
     ;
     ; !!! What notation should be used to indicate the default filter?
     ; Perhaps put in a GROUP!?

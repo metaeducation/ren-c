@@ -42,12 +42,12 @@
 // fields out of a function with a certain name, and then augment the
 // function with another field of the exact same name:
 //
-//     >> /ap10: specialize append/ [value: 10]
+//     >> ap10: specialize append/ [value: 10]
 //
-//     >> /ap10aug: augment ap10/ [value: make parameter! [any-element?]]
+//     >> ap10aug: augment ap10/ [value: make parameter! [any-element?]]
 //     ; whoa, now the frame has two fields named `value`!
 //
-//     >> /ap10plus: enclose ap10plus/ [append series value]
+//     >> ap10plus: enclose ap10plus/ [append series value]
 //
 //     >> ap10plus [a b c] 10 20
 //     == [a b c 10 20]

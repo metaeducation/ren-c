@@ -113,7 +113,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
     return null
 ]
 
-/dump-to-newline: adapt dump/ [
+dump-to-newline: adapt dump/ [
     if not tail? extra [
         ;
         ; Mutate VARARGS! into a BLOCK!, with passed-in value at the head
@@ -130,7 +130,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
     ]
 ]
 
-/dumps: infix func [
+dumps: infix func [
     "Fast generator for dumping function that uses assigned name for prefix"
 
     return: [action!]
@@ -142,7 +142,7 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
 ][
     let d
     if rune? value [
-        /d: specialize dump-to-newline/ [prefix: as text! unchain name]
+        d: specialize dump-to-newline/ [prefix: as text! unchain name]
         if value <> #off [d #on]  ; note: d hard quotes its argument
     ] else [
         ; Make it easy to declare and dump a variable at the same time.
@@ -161,8 +161,8 @@ contains-newline: func [return: [logic?] pos [block! group!]] [
         ; so SHOVE (>-) would be used, but it doesn't work yet...review.)
         ;
         d: func [return: [ghost!] :on :off] bind construct [
-            /d': (
-                let /d'': specialize dump/ [prefix: (as text! name)]
+            d': (
+                let d'': specialize dump/ [prefix: (as text! name)]
                 d'' #on
             )
         ] compose:deep [

@@ -15,7 +15,7 @@ Rebol [
 ; Help try to avoid introducing CR into strings, and subvert the default
 ; checking on output that text does not contain CR bytes.
 ;
-/write-enlined: redescribe [
+write-enlined: redescribe [
     "Write out a TEXT! with its LF sequences translated to CR LF"
 ](
     adapt write/ [

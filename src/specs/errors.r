@@ -217,10 +217,10 @@ script: [
 
     no-return:          "block did not return a value"
 
-    ; !!! Consider enhancements which would allow suppressing the /NAME in the
+    ; !!! Consider enhancements which would allow suppressing the :NAME in the
     ; rendering if not present.
     ;
-    no-catch:           ["No CATCH for THROW of" :arg1 "with /NAME:" :arg2]
+    no-catch:           ["No CATCH for THROW of" :arg1 "with NAME:" :arg2]
 
     bad-bad:            [:arg1 "error:" :arg2]
 

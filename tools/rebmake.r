@@ -1302,8 +1302,8 @@ makefile: make generator-class [
     ; by default makefiles are for POSIX platform
     ; these GETs are null-tolerant
     ;
-    /gen-cmd-create: get $posix.gen-cmd-create
-    /gen-cmd-delete: get $posix.gen-cmd-delete
+    gen-cmd-create: get $posix.gen-cmd-create
+    gen-cmd-delete: get $posix.gen-cmd-delete
 
     gen-rule: func [
         return: "Possibly multi-line text for rule, with extra newline @ end"
@@ -1507,8 +1507,8 @@ export execution: make generator-class [
 
     ; these GETs are null tolerant
     ;
-    /gen-cmd-create: get $host.gen-cmd-create
-    /gen-cmd-delete: get $host.gen-cmd-delete
+    gen-cmd-create: get $host.gen-cmd-create
+    gen-cmd-delete: get $host.gen-cmd-delete
 
     run-target: func [
         return: []

@@ -237,11 +237,11 @@ emit: proc [
 ; !!! These shorthands cover what's needed and are chosen to clearly separate
 ; the number of bytes from the number being encoded (both integers).
 ;
-/to-1bin: specialize encode/ [type: [BE + 1]]
-/to-2bin: specialize encode/ [type: [BE + 2]]
-/to-3bin: specialize encode/ [type: [BE + 3]]
-/to-4bin: specialize encode/ [type: [BE + 4]]
-/to-8bin: specialize encode/ [type: [BE + 8]]
+to-1bin: specialize encode/ [type: [BE + 1]]
+to-2bin: specialize encode/ [type: [BE + 2]]
+to-3bin: specialize encode/ [type: [BE + 3]]
+to-4bin: specialize encode/ [type: [BE + 4]]
+to-8bin: specialize encode/ [type: [BE + 8]]
 
 make-tls-error: lambda [
     message [text! block!]
@@ -997,7 +997,7 @@ bind construct [
 ]
 
 
-/grab: infix func [
+grab: infix func [
     "Extracts N bytes from a BLOB!, and also updates its position"
 
     return: "BLOB! (or INTEGER! if GRAB-INT enclosure is used)"
@@ -1019,7 +1019,7 @@ bind construct [
     return set left result  ; must manually assign if SET-WORD! overridden
 ]
 
-/grab-int: infix enclose grab/ lambda [f [frame!]] [
+grab-int: infix enclose grab/ lambda [f [frame!]] [
     set f.left (decode [BE +] eval copy f)
 ]
 

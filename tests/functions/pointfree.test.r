@@ -93,7 +93,7 @@
     ;      =>
     ;      pointfree* append/ [_ [d e]]
     ;
-    /pointfree: specialize (adapt pointfree*/ [
+    pointfree: specialize (adapt pointfree*/ [
         frame: (match frame! any [  ; no SET-WORD! namecache
             if match [word! chain! path!] block.1 [
                 unrun get:any inside block block.1
@@ -134,32 +134,32 @@
 )
 
     (
-        /apde: pointfree* append/ [_ [d e]]
+        apde: pointfree* append/ [_ [d e]]
         [a b c [d e]] = apde [a b c]
     )
 
     (
-        /apde: pointfree [append _ [d e]]
+        apde: pointfree [append _ [d e]]
         [a b c [d e]] = apde [a b c]
     )
 
     (
-        /apde: (pf append _ [d e])
+        apde: (pf append _ [d e])
         [a b c [d e]] = apde [a b c]
     )
 
     (
-        /apabc: pointfree* append/ [[a b c]]
+        apabc: pointfree* append/ [[a b c]]
         [a b c [d e]] = apabc [d e]
     )
 
     (
-        /apabc: pointfree [append [a b c]]
+        apabc: pointfree [append [a b c]]
         [a b c [d e]] = apabc [d e]
     )
 
     (
-        /apabc: (pf append [a b c])
+        apabc: (pf append [a b c])
         [a b c [d e]] = apabc [d e]
     )
 
@@ -168,7 +168,7 @@
     )
 
     (
-        /ap1twice: (pf append:dup _ 1 2)
+        ap1twice: (pf append:dup _ 1 2)
         [a b c 1 1] = ap1twice [a b c]
     )
 

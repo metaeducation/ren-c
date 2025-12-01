@@ -1,7 +1,7 @@
 ; better-than-nothing ENCLOSE tests
 
 (
-    /e-multiply: enclose multiply/ lambda [f [frame!]] [
+    e-multiply: enclose multiply/ lambda [f [frame!]] [
         let diff: abs (f.value1 - f.value2)
         diff + eval-free f
     ]
@@ -9,7 +9,7 @@
     73 = e-multiply 7 10
 )
 (
-    /n-add: enclose add/ lambda [f [frame!]] [
+    n-add: enclose add/ lambda [f [frame!]] [
         if 10 <> f.value1 [
             f.value1: 5
             eval-free f
@@ -66,7 +66,7 @@
 )]
 
 (
-    /wrapped: enclose (
+    wrapped: enclose (
         func [in] [return pack [~, in + 1]]
     ) f -> wrap [
         x: f.in
@@ -77,7 +77,7 @@
 )
 
 ~expired-frame~ !! (
-    /wrapped: enclose (
+    wrapped: enclose (
         func [in] [return pack [~, in + 1]]
     ) f -> [
         let x: f.in

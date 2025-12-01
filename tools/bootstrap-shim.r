@@ -97,7 +97,7 @@ sys.util/recover [
 
     export parse: ~#[Use PARSE3 in Bootstrap Code, not PARSE]#~
 
-    export /split-path3: enclose (
+    export split-path3: enclose (
         augment split-path/ [:file [any-word? tuple!]]
     ) f -> [
         let results: lift:lite eval f  ; no [...]: in bootstrap load of file
@@ -106,7 +106,7 @@ sys.util/recover [
     ]
     export split-path: ~#[Use SPLIT-PATH3 in Bootstrap (no multi-return)]#~
 
-    export /transcode: enclose (
+    export transcode: enclose (
         augment lib.transcode/ [:next3 [word!] "set to transcoded value"]
     ) func [f] [
         if not f.next3 [
@@ -125,7 +125,7 @@ sys.util/recover [
 
     export unless: ~#[Don't use UNLESS in Bootstrap, definition in flux]#~
 
-    export /bind: augment bind/ [
+    export bind: augment bind/ [
         :copy3  ; modern BIND is non-mutating, but bootstrap EXE needs :COPY
     ]
 

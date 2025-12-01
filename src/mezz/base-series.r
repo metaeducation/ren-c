@@ -16,7 +16,7 @@ Rebol [
     ]--
 ]
 
-run lambda [@terms [tag! set-run-word? <variadic>]] [
+run lambda [@terms [tag! set-word? <variadic>]] [
     let n: 1
     let w
     while [<end> != w: take terms] [
@@ -31,8 +31,8 @@ run lambda [@terms [tag! set-run-word? <variadic>]] [
 ]
     ; Variadic function so these can be at top-level, module collects
     ;
-    /first: /second: /third: /fourth: /fifth:
-    /sixth: /seventh: /eighth: /ninth: /tenth:
+    first: second: third: fourth: fifth:
+    sixth: seventh: eighth: ninth: tenth:
     <end>
 
 last: redescribe [

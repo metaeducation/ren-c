@@ -148,7 +148,7 @@
         return:run <redo>  ; should redo INNER, not outer
     ]
 
-    /outer: adapt inner/ [
+    outer: adapt inner/ [
         if n = 0 [
             panic "inner phase should have been run by redo"
         ]

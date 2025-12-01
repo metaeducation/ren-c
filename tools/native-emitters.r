@@ -130,7 +130,7 @@ export emit-include-params-macro: func [
         opt ["export" space] [
             native-name: across some "/" ":"  ; e.g. //:
             |
-            native-name: across to ":" one  ; everything else is /foo:
+            native-name: across to ":" one  ; everything else is foo:
         ]
         accept (okay)
     ] else [
@@ -299,7 +299,7 @@ generic-info!: make object! [
 ; reused, e.g. GROUP! and BLOCK! both used the same function).  Ren-C takes
 ; a step toward finer granularity by building tables of many functions.
 ;
-export /extract-generic-implementations: func [
+export extract-generic-implementations: func [
     return: "Returns block of GENERIC-INFO! objects"
         [block!]
     c-source-file [file!]

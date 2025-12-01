@@ -369,7 +369,7 @@ INLINE bool Is_Specialized(const Param* p) {
 // need to be checked again.  This bit encodes that knowledge in a way that
 // any new overwriting will signal need for another check:
 //
-//    >> /bad-negate: adapt negate/ [value: to text! value]
+//    >> bad-negate: adapt negate/ [value: to text! value]
 //
 //    >> bad-negate 1020
 //    ** Error: Internal phase disallows TEXT! for its `value` argument

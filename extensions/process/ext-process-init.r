@@ -10,7 +10,7 @@ Rebol [
 ; amount of C code that CALL has to run.  So things like transforming any
 ; FILE! into local paths are done here.
 ;
-/call*: adapt call-internal*/ [
+call*: adapt call-internal*/ [
     command: switch:type command [
         text! [
             ; A TEXT! is passed through as-is, and will be interpreted by
@@ -81,7 +81,7 @@ Rebol [
 ;    It also means things like (call:shell "dir") won't put `== 0` after the
 ;    result when shown in the terminal.
 ;
-/call: enclose (
+call: enclose (
     augment (specialize call*/ [wait: ok]) [
         :relax "If exit code is non-zero, return the integer vs. raising error"
     ]

@@ -111,7 +111,7 @@ export console!: make object! [
         write stdout space
     ]
 
-    print-result: proc [
+    print-result: func [
         ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-value?]
         <.>
@@ -453,7 +453,7 @@ bind construct [
     ; hook to save the last error printed.  Also inform people of the
     ; existence of the WHY function on the first error delivery.
     ;
-    /proto-skin.print-panic: adapt proto-skin.print-panic/ [
+    proto-skin.print-panic: adapt proto-skin.print-panic/ [
         if not system.state.last-error [
             system.console/print-info "Info: use WHY for error information"
         ]

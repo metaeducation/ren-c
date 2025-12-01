@@ -356,7 +356,7 @@ bind construct [
             return null
         ]
 
-        let /get-env: system.modules.Environment.get-env/
+        let get-env: system.modules.Environment.get-env/
 
         return to-dir opt any [
             get-env 'HOME

@@ -164,7 +164,7 @@ export analyse: context [
             <local> position  ; used sketchily in rules, no LET in parse :-/
         ][
             let analysis: analyse/text file data
-            let /emit: specialize log-emit/ [log: analysis]
+            let emit: specialize log-emit/ [log: analysis]
 
             data: as text! data
 
@@ -277,7 +277,7 @@ export analyse: context [
                 return ~
             ]
 
-            /proto-parser.emit-proto: emit-proto/
+            proto-parser.emit-proto: emit-proto/
             proto-parser/process data
 
             if non-std-func-space [
@@ -310,7 +310,7 @@ export analyse: context [
         <local> position last-pos line-ending alt-ending  ; no PARSE let :-/
     ][
         let analysis: copy []
-        let /emit: specialize log-emit/ [log: analysis]
+        let emit: specialize log-emit/ [log: analysis]
 
         data: read compose %(repo-dir)/(file)
 

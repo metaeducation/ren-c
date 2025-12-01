@@ -388,7 +388,7 @@ collect*: func [
         [<opt-out> block!]
 ][
     let out: null
-    let /keep: specialize (  ; SPECIALIZE to hide series argument
+    let keep: specialize (  ; SPECIALIZE to hide series argument
         enclose append/ lambda [  ; Derive from APPEND for :LINE :DUP
             f [frame!]
             <with> out
@@ -414,7 +414,7 @@ collect*: func [
 ; Classic version of COLLECT which returns an empty block if nothing is
 ; collected, as opposed to the NULL that COLLECT* returns.
 ;
-/collect: redescribe [
+collect: redescribe [
     "Evaluate body, and return block of values collected via KEEP function"
 ] cascade [
     collect*/

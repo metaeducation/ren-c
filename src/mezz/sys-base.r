@@ -31,8 +31,8 @@ script-pre-load-hook: ~
 
 ; NOTE: we are in SYS context here!
 
-/enrecover: lib.enrecover/
-/recover: enclose enrecover/ lambda [f] [
+enrecover: lib.enrecover/
+recover: enclose enrecover/ lambda [f] [
     match warning! eval-free f
 ]
 

@@ -63,13 +63,13 @@ probe: func [  ; note: do not want GHOSTABLE, else `1 + 2 probe eval []` is 3
 
 compose: specialize compose2/ [pattern: '()]  ; use template binding if not @()
 
-/branched?: then?/  ; alias, maybe more catchy?
+branched?: then?/  ; alias, maybe more catchy?
 
 
 ; It's easier to pre-process CASCADE's block in usermode, which also offers a
 ; lower-level version CASCADE* that just takes a block of frames.
 ;
-/cascade: adapt cascade*/ [
+cascade: adapt cascade*/ [
     pipeline: reduce:predicate pipeline unrun/
 ]
 
@@ -96,26 +96,26 @@ nand: infix cascade [and/ not/]
 ;
 ; Note that `/` is rather trickily not a PATH!, but a decayed form as a WORD!
 
-/+: infix add/
-/-: infix subtract/
-/*: infix multiply/
++: infix add/
+-: infix subtract/
+*: infix multiply/
 /: infix divide/
 
 
 ; SET OPERATORS
 
-/not+: bitwise-not/
-/and+: infix bitwise-and/
-/or+: infix bitwise-or/
-/xor+: infix bitwise-xor/
-/and-not+: infix bitwise-and-not/
+not+: bitwise-not/
+and+: infix bitwise-and/
+or+: infix bitwise-or/
+xor+: infix bitwise-xor/
+and-not+: infix bitwise-and-not/
 
 
 ; Equality variants (note: bootstrap needs to REDESCRIBE)
 
-/not-equal?: cascade [equal?/ not/] ; should optimize for intrinsics
-/lax-equal?: equal?:relax/
-/lax-not-equal?: cascade [lax-equal?/ not/]
+not-equal?: cascade [equal?/ not/] ; should optimize for intrinsics
+lax-equal?: equal?:relax/
+lax-not-equal?: cascade [lax-equal?/ not/]
 
 
 ; COMPARISON OPERATORS
@@ -142,8 +142,8 @@ nand: infix cascade [and/ not/]
 ; being unused as a result.  Compromise `=>` just to reinforce what is lost
 ; by not retraining: https://forum.rebol.info/t/349/11
 ;
-/equal-or-greater?: greater-or-equal?/
-/lesser-or-equal?: equal-or-lesser?/
+equal-or-greater?: greater-or-equal?/
+lesser-or-equal?: equal-or-lesser?/
 =>: infix equal-or-greater?/
 <=: infix lesser-or-equal?/
 
@@ -187,7 +187,7 @@ each: quote/
 
 ; REQUOTE is helpful when functions do not accept QUOTED! values.
 ;
-/requote: reframer func [
+requote: reframer func [
     "Remove Quoting Levels From First Argument and Re-Apply to Result"
     f [frame!]
     <local> num-quotes
@@ -226,8 +226,8 @@ each: quote/
 ; specializations they don't fit easily into the NEXT OF SERIES model--this
 ; is a problem which hasn't been addressed.
 ;
-/next: specialize skip/ [offset: 1]
-/back: specialize skip/ [offset: -1]
+next: specialize skip/ [offset: 1]
+back: specialize skip/ [offset: -1]
 
 ; Function synonyms
 
@@ -238,9 +238,9 @@ abs: absolute/
 delimit: lambda [delimiter line :head :tail] [
     join // [text! line with: delimiter head: head tail: tail]
 ]
-/unspaced: specialize delimit/ [delimiter: null]
-/spaced: specialize delimit/ [delimiter: space]
-/newlined: specialize delimit/ [delimiter: newline, tail: ok]
+unspaced: specialize delimit/ [delimiter: null]
+spaced: specialize delimit/ [delimiter: space]
+newlined: specialize delimit/ [delimiter: newline, tail: ok]
 
 an: lambda [
     "Prepends the correct 'a' or 'an' to a string, based on leading character"

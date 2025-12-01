@@ -49,8 +49,8 @@ ok)
     ([a b c ^d/e] = append:only [a b c] '^d/e)
 
 (
-    /append-123: specialize append:only/ [value: [1 2 3]]
-    /append-123-twice: specialize append-123/ [dup: 2]
+    append-123: specialize append:only/ [value: [1 2 3]]
+    append-123-twice: specialize append-123/ [dup: 2]
     [a b c [1 2 3] [1 2 3]] = append-123-twice copy [a b c]
 )
 
@@ -62,7 +62,7 @@ ok)
 )
 
 (
-    /aopd3: specialize append:only/ [
+    aopd3: specialize append:only/ [
         dup: 3
         part: 1
     ]
@@ -82,7 +82,7 @@ ok)
         [specialize append:only:only/ []]
         [specialize append:asdf/ []]
         [
-            /apo: specialize append:only/ []
+            apo: specialize append:only/ []
             specialize apo:only/ []
         ]
     ][

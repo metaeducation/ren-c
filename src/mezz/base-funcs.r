@@ -61,7 +61,7 @@ quit: ~#[QUIT used when no (DO IMPORT CONSOLE) is providing it]#~
 
 yield: ~#[YIELD used when no generator or yielder is providing it]#~
 
-/catch: specialize catch*/ [name: 'throw]
+catch: specialize catch*/ [name: 'throw]
 
 
 ; Simple "divider-style" thing for remarks.  At a certain verbosity level,
@@ -119,13 +119,13 @@ redescribe: func [
 ]
 
 
-/unset: redescribe [
+unset: redescribe [
     "Put variable into a dual state that prohibits any form of GET on it"
 ](
     specialize tweak/ [dual: '*unset*]
 )
 
-/unset?: redescribe [
+unset?: redescribe [
     "Determine if a variable is truly unset (tweaked to dual WORD! *unset*)"
 ](
     cascade [
@@ -134,13 +134,13 @@ redescribe: func [
     ]
 )
 
-/set?: redescribe [
+set?: redescribe [
     "Determine if a variable can give back a value"
 ](
     cascade [unset?/ not?/]
 )
 
-/vacant?: redescribe [
+vacant?: redescribe [
     "Determine if a variable would be considered empty for purposes of DEFAULT"
 ](
     cascade [get:any/ vacancy?/]
@@ -201,7 +201,7 @@ specialized?: func [
 ; code with SHOVE, but are currently done using macro due to unfinished binding
 ; semantics in SHOVE pertaining to fetched values.
 
-/me: infix redescribe [
+me: infix redescribe [
     "Update variable using it as the left hand argument to an infix operator"
 ](
     macro [@left [set-word? set-tuple?] @right [word! path! chain!]] [
@@ -209,7 +209,7 @@ specialized?: func [
     ]
 )
 
-/my: infix redescribe [
+my: infix redescribe [
     "Update variable using it as the first argument to a prefix operator"
 ](
     macro [@left [set-word? set-tuple?] @right [word! path! chain!]] [
@@ -217,7 +217,7 @@ specialized?: func [
     ]
 )
 
-/so: infix:postpone func [
+so: infix:postpone func [
     "Postfix assertion which stops running if left expression is inhibitor"
 
     return: [any-stable?]
@@ -238,7 +238,7 @@ specialized?: func [
 ]
 
 
-/was: infix:postpone redescribe [
+was: infix:postpone redescribe [
     "Assert that the left hand side--when fully evaluated--IS the right"
 ](
     lambda [left [any-stable?] right [any-stable?]] [
@@ -254,31 +254,31 @@ specialized?: func [
 )
 
 
-/zdeflate: redescribe [
+zdeflate: redescribe [
     "Deflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB"
 ](
     specialize deflate/ [envelope: 'zlib]
 )
 
-/zinflate: redescribe [
+zinflate: redescribe [
     "Inflates data with zlib envelope: https://en.wikipedia.org/wiki/ZLIB"
 ](
     specialize inflate/ [envelope: 'zlib]
 )
 
-/gzip: redescribe [
+gzip: redescribe [
     "Deflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip"
 ](
     specialize deflate/ [envelope: 'gzip]
 )
 
-/gunzip: redescribe [
+gunzip: redescribe [
     "Inflates data with gzip envelope: https://en.wikipedia.org/wiki/Gzip"
 ](
     specialize inflate/ [envelope: 'gzip]  ; What about GZIP-BADSIZE?
 )
 
-/ensure: redescribe [
+ensure: redescribe [
     "Pass through value if it matches test, otherwise trigger a FAIL"
 ](
     enclose typecheck/ lambda [f] [
@@ -300,7 +300,7 @@ specialized?: func [
 ; if you give back NULL ("it passed, it wasn't an integer") this conflates
 ; with the failure signal.  You need to use
 ;
-/non: redescribe [
+non: redescribe [
     "Pass through value if it *doesn't* match test, else null"
 ](
     enclose match/ func [f] [
@@ -309,7 +309,7 @@ specialized?: func [
     ]
 )
 
-/prohibit: redescribe [
+prohibit: redescribe [
     "Pass through value if it *doesn't* match test, else panic"
 ](
     enclose typecheck/ lambda [f] [
@@ -328,8 +328,8 @@ specialized?: func [
 )
 
 
-/oneshot: specialize n-shot/ [n: 1]
-/upshot: specialize n-shot/ [n: -1]
+oneshot: specialize n-shot/ [n: 1]
+upshot: specialize n-shot/ [n: -1]
 
 ;
 ; !!! The /REVERSE and /LAST refinements of FIND and SELECT caused a lot of
@@ -337,13 +337,13 @@ specialized?: func [
 ; the combinatorics in the C code.  If needed, they could be made for SELECT.
 ;
 
-/find-reverse: redescribe [
+find-reverse: redescribe [
     "Variant of FIND that uses a /SKIP of -1"
 ](
     specialize find/ [skip: -1]
 )
 
-/find-last: redescribe [
+find-last: redescribe [
     "Variant of FIND that uses a /SKIP of -1 and seeks the TAIL of a series"
 ](
     adapt find-reverse/ [
@@ -369,25 +369,25 @@ rescue: func [
     return match warning! enrescue code
 ]
 
-/reduce*: redescribe [
+reduce*: redescribe [
     "REDUCE a block but vaporize NULL Expressions"
 ](
     specialize reduce/ [predicate: opt/]
 )
 
-/for-next: redescribe [
+for-next: redescribe [
     "Evaluates a block for each position until the end, using NEXT to skip"
 ](
     specialize for-skip/ [skip: 1]
 )
 
-/for-back: redescribe [
+for-back: redescribe [
     "Evaluates a block for each position until the start, using BACK to skip"
 ](
     specialize for-skip/ [skip: -1]
 )
 
-/iterate-skip: redescribe [
+iterate-skip: redescribe [
     "Variant of FOR-SKIP that directly modifies a series variable in a word"
 ](
     specialize enclose for-skip/ func [f] [
@@ -412,13 +412,13 @@ rescue: func [
     ]
 )
 
-/iterate: iterate-next: redescribe [
+iterate: iterate-next: redescribe [
     "Variant of FOR-NEXT that directly modifies a series variable in a word"
 ](
     specialize iterate-skip/ [skip: 1]
 )
 
-/iterate-back: redescribe [
+iterate-back: redescribe [
     "Variant of FOR-BACK that directly modifies a series variable in a word"
 ](
     specialize iterate-skip/ [skip: -1]
@@ -460,7 +460,7 @@ count-up: func [
     ]
 ]
 
-/count-down: redescribe [
+count-down: redescribe [
     "Loop the body, setting a word from the end value given down to 1"
 ](
     specialize adapt cfor/ [
@@ -473,7 +473,7 @@ count-up: func [
 )
 
 
-/lock-of: redescribe [
+lock-of: redescribe [
     "If value is already locked, return it...otherwise CLONE it and LOCK it."
 ](
     cascade [specialize copy/ [deep: ok], freeze/]
@@ -506,7 +506,7 @@ eval-all: func [
 ; (Note it would be wasteful to call the getter, when 99 times out of 100
 ; the value would be discarded--so whatever is done here should avoid that.)
 ;
-/getter: infix proc [
+getter: infix proc [
     @var [set-word? set-run-word?]
     action [block! action!]
 ][

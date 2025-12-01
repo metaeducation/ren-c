@@ -941,7 +941,7 @@ Bounce Action_Executor(Level* L)
   //    are only scratch space for the Dispatcher while it is running).
   //
   // 2. This happens if you have something intending to act as infix but
-  //    that does not consume arguments, e.g. (/x: infix func [] []).  An
+  //    that does not consume arguments, e.g. (x: infix func [] []).  An
   //    infix function with no arguments might sound dumb, but it allows
   //    a 0-arity function to run in the same evaluation step as the left
   //    hand side.  This is how expression work (see `|:`)
@@ -1070,7 +1070,7 @@ Bounce Action_Executor(Level* L)
   // 1. !!! This used to assert rather than panic, but it turns out this can
   //    actually happen:
   //
-  //      >> /left-soft: infix func ['x [word!]] [return x]
+  //      >> left-soft: infix func ['x [word!]] [return x]
   //      >> (|| left-soft)
   //
   //    The LEFT-SOFT looked back, and would have been able to take the ||
@@ -1081,8 +1081,8 @@ Bounce Action_Executor(Level* L)
   // 2. Want to keep this flag between an operation and an ensuing infix in
   //    the same level, so can't clear in Drop_Action(), e.g. due to:
   //
-  //      /left-the: infix the/
-  //      o: make object! [/f: does [1]]
+  //      left-the: infix the/
+  //      o: make object! [f: does [1]]
   //      o.f left-the  ; want error suggesting -> here, need flag for that
 
     if (STATE == ST_ACTION_FULFILLING_INFIX_FROM_OUT)  // [1]
