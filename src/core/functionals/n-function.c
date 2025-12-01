@@ -400,8 +400,7 @@ Result(Details*) Make_Interpreted_Action(
 //      return: [action!]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
-//      body "Code implementing function (if no RETURN, evaluates to TRASH!)"
-//          [block!]
+//      body [block!]
 //  ]
 //
 DECLARE_NATIVE(FUNCTION)

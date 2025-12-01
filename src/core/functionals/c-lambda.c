@@ -70,8 +70,6 @@ enum {
 //
 // This runs very much like function dispatch, but there's no RETURN.  So
 // the result of the call will just be whatever the body evaluates to.
-// (Note that FUNCTION's result is forced to TRASH! if no RETURN is called
-// before the end of the body block is reached.)
 //
 // 1. We prime the result with GHOST!, because lambdas are willing to vanish
 //    if their bodies fully vaporize with no non-ghost values seen:
@@ -79,15 +77,20 @@ enum {
 //        test1: lambda [] []
 //        test2: lambda [] [comment "no body"]
 //
-//        >> 1 + 2 test1
-//        == 3
+//        >> ghost? test1
+//        == \~okay~\  ; antiform
 //
-//        >> 1 + 2 test2
-//        == 3
+//        >> ghost? test2
+//        == \~okay~\  ; antiform
 //
-//    It's an "unsurprising" ghost, hence you don't see ~,~ antiforms as
-//    the result as a precaution.  The lambda will vanish if the code would
-//    have vanished as a GROUP! in the evaluator.
+//    Do note that this will often appear as VOID in multi-step opeations if
+//    you do not make the lambda GHOSTABLE.
+//
+//    https://rebol.metaeducation.com/t/comment-vanishes-but-not-if-eval/2563
+//
+// 2. PROCEDURE and DIVERGER are similar except for what happens when the
+//    body finishes, so they share this dispatcher and just detect the mode
+//    based on special signals where the PARAMETER! for a LAMBDA would be.
 //
 Bounce Lambda_Dispatcher(Level* const L)
 {
@@ -95,7 +98,9 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     enum {
         ST_LAMBDA_INITIAL_ENTRY = STATE_0,
-        ST_LAMBDA_BODY_EXECUTING
+        ST_LAMBDA_LAMBDA_EXECUTING,
+        ST_LAMBDA_PROCEDURE_EXECUTING,  // PROCEDURE shares this dispatcher [2]
+        ST_LAMBDA_DIVERGER_EXECUTING  // DIVERGER shares this dispatcher [2]
     };
 
     Details* details = Ensure_Level_Details(L);
@@ -109,12 +114,13 @@ Bounce Lambda_Dispatcher(Level* const L)
         result_param = cast(Element*,
             Details_At(details, IDX_LAMBDA_RESULT_PARAM)
         );
-        assert(Is_Parameter(result_param) or Is_Quasar(result_param));
     }
 
     switch (STATE) {
       case ST_LAMBDA_INITIAL_ENTRY: goto initial_entry;
-      case ST_LAMBDA_BODY_EXECUTING: goto body_finished;
+      case ST_LAMBDA_LAMBDA_EXECUTING: goto lambda_finished;
+      case ST_LAMBDA_PROCEDURE_EXECUTING: goto procedure_finished;
+      case ST_LAMBDA_DIVERGER_EXECUTING: goto diverger_finished;
       default: assert(false);
     }
 
@@ -144,25 +150,26 @@ Bounce Lambda_Dispatcher(Level* const L)
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     if (not result_param)
-        return BOUNCE_DELEGATE;  // no typecheck callback needed
-
-    if (not Is_Quasar(result_param))
-        if (Is_Parameter_Unconstrained(result_param))
-            return BOUNCE_DELEGATE;  // also no typecheck needed
-
-    STATE = ST_LAMBDA_BODY_EXECUTING;
-    return CONTINUE_SUBLEVEL(sub);
-
-} body_finished: { ///////////////////////////////////////////////////////////
-
-    assert(STATE == ST_LAMBDA_BODY_EXECUTING);
+        return BOUNCE_DELEGATE;  // no typecheck callback needed (ARROW)
 
     if (Is_Quasar(result_param)) {
-        trap (
-          Elide_Unless_Error_Including_In_Packs(OUT)  // turn ERROR! to PANIC
-        );
-        return TRIPWIRE;  // it's a PROCEDURE, just give TRASH!
+        STATE = ST_LAMBDA_PROCEDURE_EXECUTING;
+        return CONTINUE_SUBLEVEL(sub);
     }
+
+    if (Is_Space(result_param)) {
+        STATE = ST_LAMBDA_DIVERGER_EXECUTING;
+        return CONTINUE_SUBLEVEL(sub);
+    }
+
+    STATE = ST_LAMBDA_LAMBDA_EXECUTING;
+
+    if (Is_Parameter_Unconstrained(result_param))
+        return BOUNCE_DELEGATE;  // also no typecheck needed
+
+    return CONTINUE_SUBLEVEL(sub);
+
+} lambda_finished: { /////////////////////////////////////////////////////////
 
     assert(not Is_Parameter_Unconstrained(unwrap result_param));
 
@@ -173,6 +180,17 @@ Bounce Lambda_Dispatcher(Level* const L)
         panic (Error_Bad_Return_Type(L, OUT, unwrap result_param));
 
     return OUT;
+
+} procedure_finished: { //////////////////////////////////////////////////////
+
+    trap (
+      Elide_Unless_Error_Including_In_Packs(OUT)  // turn ERROR! to PANIC
+    );
+    return TRIPWIRE;
+
+} diverger_finished: { ///////////////////////////////////////////////////////
+
+    panic ("DIVERGER reached end of body without THROW or PANIC");
 }}
 
 
@@ -190,8 +208,13 @@ bool Lambda_Details_Querier(
     switch (property) {
       case SYM_RETURN_OF: {
         Value* param = Details_At(details, IDX_LAMBDA_RESULT_PARAM);
-        if (Is_Quasar(param)) {
+        if (Is_Quasar(param)) {  // [] PARAMETER!
             Value* arbitrary = rebValue("return of @", LIB(RANDOMIZE));
+            Copy_Cell(out, arbitrary);
+            rebRelease(arbitrary);
+        }
+        else if (Is_Space(param)) {  // [<divergent>] PARAMETER!
+            Value* arbitrary = rebValue("return of @", LIB(CRASH));
             Copy_Cell(out, arbitrary);
             rebRelease(arbitrary);
         }
@@ -221,8 +244,7 @@ bool Lambda_Details_Querier(
 //      return: [action!]
 //      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
 //          [block!]
-//      body "Code implementing the lambda"
-//          [block!]
+//      body [block!]
 //  ]
 //
 DECLARE_NATIVE(LAMBDA)
@@ -270,8 +292,7 @@ DECLARE_NATIVE(LAMBDA)
 //      return: [action!]
 //      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
 //          [block!]
-//      body "Code implementing the procedure"
-//          [block!]
+//      body [block!]
 //  ]
 //
 DECLARE_NATIVE(PROCEDURE)
@@ -293,6 +314,42 @@ DECLARE_NATIVE(PROCEDURE)
     ));
 
     Init_Quasar(Details_At(details, IDX_LAMBDA_RESULT_PARAM));  // no return
+
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
+    return UNSURPRISING(OUT);
+}
+
+
+//
+//  diverger: native [
+//
+//  "Declares divergent function (will PANIC if it reaches the end of body)"
+//
+//      return: [action!]
+//      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
+//          [block!]
+//      body [block!]
+//  ]
+//
+DECLARE_NATIVE(DIVERGER)
+{
+    INCLUDE_PARAMS_OF_DIVERGER;
+
+    Element* spec = Element_ARG(SPEC);
+    Element* body = Element_ARG(BODY);
+
+    Option(SymId) no_returner = none;  // don't allow []: or RETURN:
+
+    require (
+      Details* details = Make_Interpreted_Action(
+        spec,
+        body,
+        no_returner,
+        &Lambda_Dispatcher,
+        MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
+    ));
+
+    Init_Space(Details_At(details, IDX_LAMBDA_RESULT_PARAM));  // panic signal
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return UNSURPRISING(OUT);

@@ -245,10 +245,9 @@ main-startup: func [
         ]
     ]
 
-    return: func [
+    return: diverger [
         "Hooked RETURN function which finalizes any gathered EMIT lines"
 
-        return: [<divergent>]
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! datatype!]
         ; <with> instruction
@@ -271,8 +270,6 @@ main-startup: func [
         ] then [
             run return-to-c instruction
         ]
-
-        panic "Internal Error: Invalid RETURN in MAIN-STARTUP"
     ]
 
     system.product: 'core
@@ -426,9 +423,8 @@ main-startup: func [
         o.bin: null
     ]
 
-    let param-missing: func [
+    let param-missing: diverger [
         "Take --option argv and then check if param arg is present, else die"
-        return: [<divergent>]
         option [text!] "Name of command-line option (switch) used"
     ][
         die [option "parameter missing"]

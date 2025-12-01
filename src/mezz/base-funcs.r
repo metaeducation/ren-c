@@ -536,7 +536,7 @@ cause-error: func [
 fail: func [
     "Return unstable ERROR! antiform state (RESCUE, EXCEPT, TRY can intercept)"
 
-    return: [<divergent>]
+    return: [error!]
     reason "ERROR! value, ID, URL, message text, or failure spec"
         [
             <end>  ; non-specific failure
