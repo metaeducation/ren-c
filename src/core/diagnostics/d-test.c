@@ -113,8 +113,10 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 } macro_test: { //////////////////////////////////////////////////////////////
 
     Set_Cell_Flag(Init_Integer(PUSH(), 3), NEWLINE_BEFORE);
-    Value* macro = rebValue("macro [x] [[append x first]]");
-    Value* mtest1 = rebValue(rebRUN(macro), "[1 2 3]", "[d e f]");
+    Value* macro = rebStable(
+        "inliner [x] [spread compose [append (x) first]]"
+    );
+    Value* mtest1 = rebStable(rebRUN(macro), "[1 2 3]", "[d e f]");
     Copy_Cell(PUSH(), mtest1);  // ^-- see NOTICE
     rebRelease(mtest1);
 

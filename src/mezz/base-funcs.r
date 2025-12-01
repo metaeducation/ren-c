@@ -198,22 +198,22 @@ specialized?: lambda [
 
 ; The -- and ++ operators were deemed too "C-like", so ME was created to allow
 ; `some-var: me + 1` or `some-var: me / 2` in a generic way.  Once they shared
-; code with SHOVE, but are currently done using macro due to unfinished binding
+; code with SHOVE, but currently done using inliner due to unfinished binding
 ; semantics in SHOVE pertaining to fetched values.
 
 me: infix redescribe [
     "Update variable using it as the left hand argument to an infix operator"
 ](
-    macro [@left [set-word? set-tuple?] @right [word! path! chain!]] [
-        :[left, unchain left, right]
+    inliner [@left [set-word? set-tuple?] @right [word! path! chain!]] [
+        spread reduce [left, unchain left, right]
     ]
 )
 
 my: infix redescribe [
     "Update variable using it as the first argument to a prefix operator"
 ](
-    macro [@left [set-word? set-tuple?] @right [word! path! chain!]] [
-        :[left, right, unchain left]
+    inliner [@left [set-word? set-tuple?] @right [word! path! chain!]] [
+        spread reduce [left, right, unchain left]
     ]
 )
 

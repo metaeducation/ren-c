@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2020 Ren-C Open Source Contributors
+// Copyright 2020-2025 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -19,32 +19,31 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// MACRO is an unusual function dispatcher that does surgery directly on the
+// INLINER is an unusual function dispatcher that does surgery directly on the
 // feed of instructions being processed.  This makes it easy to build partial
 // functions based on expressing them how you would write them:
 //
-//     >> m: macro [x] [return [append x first]]
+//     >> i: inliner [x] [spread compose [append (x) first]]
 //
-//     >> m [a b c] [1 2 3]
-//     == [a b c 1]  ; e.g. `<<append [a b c] first>> [1 2 3]`
+//     >> i [a b c] [1 2 3]
+//     == [a b c 1]  ; e.g. `append [a b c] first [1 2 3]`
 //
-// Using macros can be expedient, though as with "macros" in any language
+// Using inliners can be expedient, though as with "macros" in any language
 // they don't mesh as well with other language features as formally specified
-// functions do.  For instance, you can see above that the macro spec has
+// functions do.  For instance, you can see above that the inliner spec has
 // a single parameter, but the invocation gives the effect of having two.
 //
 
 #include "sys-core.h"
 
 enum {
-    IDX_MACRO_BODY = IDX_INTERPRETED_BODY,
-    MAX_IDX_MACRO = IDX_MACRO_BODY
+    IDX_INLINER_BODY = IDX_INTERPRETED_BODY,
+    MAX_IDX_INLINER = IDX_INLINER_BODY
 };
 
 
 //
 //  Splice_Block_Into_Feed: C
-//
 //
 // 1. The mechanics for taking and releasing holds on arrays needs work, but
 //    this effectively releases the hold on the code array while the splice is
@@ -60,6 +59,9 @@ enum {
 //    to be preserved as the first thing to get when the saved splice happens.
 //
 void Splice_Block_Into_Feed(Feed* feed, const Element* splice) {
+    assert(not Cell_Binding(splice));  // splices not bound
+    Context* feed_binding = Feed_Binding(feed);  // persist binding
+
     if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // !!! holds need work [1]
         assert(Get_Flex_Info(Feed_Array(feed), HOLD));
         Clear_Flex_Info(Feed_Array(feed), HOLD);
@@ -79,6 +81,8 @@ void Splice_Block_Into_Feed(Feed* feed, const Element* splice) {
 
     feed->p = List_Item_At(splice);
     Copy_Cell(Feed_Data(feed), splice);
+    Tweak_Cell_Binding(Feed_Data(feed), feed_binding);
+
     ++SERIES_INDEX_UNBOUNDED(Feed_Data(feed));
 
     Tweak_Misc_Feedstub_Pending(&feed->singular, nullptr);
@@ -94,59 +98,80 @@ void Splice_Block_Into_Feed(Feed* feed, const Element* splice) {
 
 
 //
-//  Macro_Dispatcher: C
+//  Splice_Element_Into_Feed: C
 //
-Bounce Macro_Dispatcher(Level* const L)
+// This could be done more efficiently, but just turn it into a block.
+//
+void Splice_Element_Into_Feed(Feed* feed, const Element* element) {
+    Source* a = Alloc_Singular(STUB_MASK_UNMANAGED_SOURCE);
+    Copy_Cell(Stub_Cell(a), element);
+
+    DECLARE_ELEMENT (temp);
+    Init_Block(temp, a);
+    Splice_Block_Into_Feed(feed, temp);
+}
+
+
+//
+//  Inliner_Dispatcher: C
+//
+Bounce Inliner_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
+
+    enum {
+        ST_INLINER_INITIAL_ENTRY = STATE_0,
+        ST_INLINER_RUNNING_BODY
+    };
+
+    switch (STATE) {
+      case ST_INLINER_INITIAL_ENTRY: goto initial_entry;
+      case ST_INLINER_RUNNING_BODY: goto body_result_in_out;
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
 
     Details* details = Ensure_Level_Details(L);
     Element* body = cast(Element*, Details_At(details, IDX_DETAILS_1));
     assert(Is_Block(body) and Series_Index(body) == 0);
 
-    assert(Key_Id(Phase_Keys_Head(details)) == SYM_RETURN);
-
     Add_Link_Inherit_Bind(L->varlist, List_Binding(body));
     Force_Level_Varlist_Managed(L);
 
-    // !!! Using this form of RETURN is based on UNWIND, which means we must
-    // catch UNWIND ourselves to process that return.  This is probably not
-    // a good idea, and if macro wants a RETURN that it processes it should
-    // use a different form of return.  Because under this model, UNWIND
-    // can't unwind a macro frame to make it return an arbitrary result.
-    //
-    Inject_Definitional_Returner(L, LIB(DEFINITIONAL_RETURN), SYM_RETURN);
     Inject_Methodization_If_Any(L);
 
     Element* body_in_spare = Copy_Cell(SPARE, body);
     Tweak_Cell_Binding(body_in_spare, L->varlist);
 
-    // Must catch RETURN ourselves, as letting it bubble up to generic UNWIND
-    // handling would return a BLOCK! instead of splice it.
-    //
-    if (Eval_Any_List_At_Throws(OUT, body_in_spare, SPECIFIED)) {
-        const Value* label = VAL_THROWN_LABEL(L);
-        if (
-            Is_Frame(label)  // catch UNWIND here [2]
-            and Frame_Phase(label) == Frame_Phase(LIB(UNWIND))
-            and g_ts.unwind_level == L
-        ){
-            CATCH_THROWN(OUT, L);
-        }
-        else
-            return THROWN;  // we didn't catch the throw
-    }
+    STATE = ST_INLINER_RUNNING_BODY;
+    return CONTINUE(OUT, body_in_spare);
+
+} body_result_in_out: { //////////////////////////////////////////////////////
+
+  // 1. Generating a void should do the same thing as an empty splice, and
+  //    continue running as a single step...not return in its own step.
 
     if (Is_Void(OUT))
-        return OUT;
+        goto continue_evaluating;  // MACRO never returns directly [1]
 
     require (
       Value* out = Decay_If_Unstable(OUT)
     );
-    if (not Is_Block(out))
-        panic ("MACRO must return VOID or BLOCK! for the moment");
+    if (Is_Splice(out)) {
+        LIFT_BYTE(out) = NOQUOTE_2;
+        KIND_BYTE(out) = TYPE_BLOCK;
+        Splice_Block_Into_Feed(L->feed, Known_Element(out));
+        goto continue_evaluating;
+    }
 
-    Splice_Block_Into_Feed(L->feed, Known_Element(out));
+    if (Is_Antiform(out))
+        panic ("MACRO body must return VOID, ANY-ELEMENT?, or SPLICE!");
+
+    Splice_Element_Into_Feed(L->feed, Known_Element(out));
+    goto continue_evaluating;
+
+} continue_evaluating: {  ////////////////////////////////////////////////////
 
     require (
       Level* sub = Make_Level(&Stepper_Executor, L->feed, LEVEL_MASK_NONE)
@@ -154,23 +179,26 @@ Bounce Macro_Dispatcher(Level* const L)
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
     return DELEGATE_SUBLEVEL(sub);
-}
+}}
 
 
 //
-//  Macro_Details_Querier: C
+//  Inliner_Details_Querier: C
 //
-bool Macro_Details_Querier(
+bool Inliner_Details_Querier(
     Sink(Value) out,
     Details* details,
     SymId property
 ){
-    assert(Details_Dispatcher(details) == &Macro_Dispatcher);
-    assert(Details_Max(details) == MAX_IDX_MACRO);
+    assert(Details_Dispatcher(details) == &Inliner_Dispatcher);
+    assert(Details_Max(details) == MAX_IDX_INLINER);
+    UNUSED(details);
 
     switch (property) {
       case SYM_RETURN_OF: {
-        Extract_Paramlist_Returner(out, Phase_Paramlist(details), SYM_RETURN);
+        Value* arbitrary = rebValue("return of @", LIB(RANDOMIZE));
+        Copy_Cell(out, arbitrary);
+        rebRelease(arbitrary);
         return true; }
 
       default:
@@ -182,31 +210,32 @@ bool Macro_Details_Querier(
 
 
 //
-//  macro: native [
+//  inliner: native [
 //
 //  "Makes function that generates code to splice into the execution stream"
 //
 //      return: [action!]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
-//      body "Code implementing the macro--use RETURN to yield a result"
-//          [block!]
+//      body [block!]
 //  ]
 //
-DECLARE_NATIVE(MACRO)
+DECLARE_NATIVE(INLINER)
 {
-    INCLUDE_PARAMS_OF_MACRO;
+    INCLUDE_PARAMS_OF_INLINER;
 
     Element* spec = Element_ARG(SPEC);
     Element* body = Element_ARG(BODY);
+
+    Option(SymId) no_returner = none;
 
     require (
       Details* details = Make_Interpreted_Action(
         spec,
         body,
-        SYM_RETURN,
-        &Macro_Dispatcher,
-        MAX_IDX_MACRO  // details capacity, just body slot (and archetype)
+        no_returner,
+        &Inliner_Dispatcher,
+        MAX_IDX_INLINER  // details capacity, just body slot (and archetype)
     ));
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
@@ -228,51 +257,30 @@ DECLARE_NATIVE(INLINE)
 {
     INCLUDE_PARAMS_OF_INLINE;
 
-    enum {
-        ST_INLINE_INITIAL_ENTRY = STATE_0,
-        ST_INLINE_REEVALUATING
-    };
+    if (Is_Nulled(ARG(CODE)))
+        goto continue_evaluating;
 
-    switch (STATE) {
-      case ST_INLINE_INITIAL_ENTRY:
-        goto initial_entry;
+  didnt_opt_out: {
 
-      case ST_INLINE_REEVALUATING: {  // stepper uses dual protocol
-        require (
-          Unliftify_Undecayed(OUT)
-        );
-        return OUT; }
-
-      default:
-        assert(false);
-    }
-
-  initial_entry: { ///////////////////////////////////////////////////////////
-
-    Element* code = opt Optional_Element_ARG(CODE);
-    if (not code)
-        return VOID;  // do nothing, just return invisibly
+    Element* code = Element_ARG(CODE);
 
     if (Is_Quoted(code)) {
-        //
-        // This could probably be done more efficiently, but for now just
-        // turn it into a block.
-        //
-        Source* a = Alloc_Singular(STUB_MASK_UNMANAGED_SOURCE);
-        Unquotify(Copy_Cell(Stub_Cell(a), code));
-        Init_Block(code, a);
-        Splice_Block_Into_Feed(level_->feed, code);
+        Unquotify(code);
+        Splice_Element_Into_Feed(level_->feed, code);
     }
     else {
         assert(Is_Block(code));
+        Tweak_Cell_Binding(code, UNBOUND);
         Splice_Block_Into_Feed(level_->feed, code);
     }
+    goto continue_evaluating;
+
+} continue_evaluating: {  /////////////////////////////////////////////////////
 
     require (
       Level* sub = Make_Level(&Stepper_Executor, level_->feed, LEVEL_MASK_NONE)
     );
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    STATE = ST_INLINE_REEVALUATING;
-    return CONTINUE_SUBLEVEL(sub);
+    return DELEGATE_SUBLEVEL(sub);
 }}

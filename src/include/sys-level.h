@@ -708,7 +708,7 @@ INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
     return Known_Element(arg);
 }
 
-#define Optional_Element_ARG(name) /* Note: can only be called ONCE! */ \
+#define Optional_Element_ARG(name) \
     Optional_Element_Level_Arg(level_, param_##name##_)
 
 #define LOCAL(name) /* alias for ARG() when slot is <local> */ \
