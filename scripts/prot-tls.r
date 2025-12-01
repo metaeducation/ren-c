@@ -901,7 +901,7 @@ encrypt-data: func [
     ; Message Authentication Code
     ; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
     ;
-    let MAC: checksum/key ctx.hash-method join blob! [
+    let MAC: checksum:key ctx.hash-method join blob! [
         to-8bin ctx.seq-num-w               ; sequence number (64-bit int)
         type                                ; msg type
         ctx.ver-bytes                       ; version
@@ -1445,7 +1445,7 @@ bind construct [
                 let skip-amount: either yes? ctx.is-encrypted [
                     let mac: copy:part skip data len + 4 ctx.hash-size
 
-                    let mac-check: checksum/key ctx.hash-method join blob! [
+                    let mac-check: checksum:key ctx.hash-method join blob! [
                         to-8bin ctx.seq-num-r   ; 64-bit sequence number
                         #{16}                   ; msg type
                         ctx.ver-bytes           ; version
@@ -1480,7 +1480,7 @@ bind construct [
             ]
             let len: length of msg-obj.content
             let mac: copy:part skip data len ctx.hash-size
-            let mac-check: checksum/key ctx.hash-method join blob! [
+            let mac-check: checksum:key ctx.hash-method join blob! [
                 to-8bin ctx.seq-num-r   ; sequence number (64-bit int in R3)
                 #{17}                   ; msg type
                 ctx.ver-bytes           ; version
@@ -1558,15 +1558,15 @@ prf: func [
         let p-md5: copy #{}
         let a: seed  ; A(0)
         while [output-length > length of p-md5] [
-            a: checksum/key 'md5 a s-1 ; A(n)
-            append p-md5 checksum/key 'md5 (join a seed) 'md5 s-1
+            a: checksum:key 'md5 a s-1 ; A(n)
+            append p-md5 checksum:key 'md5 (join a seed) 'md5 s-1
         ]
 
         let p-sha1: copy #{}
         let a: seed  ; A(0)
         while [output-length > length of p-sha1] [
-            a: checksum/key 'sha1 a s-2 ; A(n)
-            append p-sha1 checksum/key 'sha1 (join a seed) s-2
+            a: checksum:key 'sha1 a s-2 ; A(n)
+            append p-sha1 checksum:key 'sha1 (join a seed) s-2
         ]
         return (
             (copy:part p-md5 output-length)
@@ -1579,8 +1579,8 @@ prf: func [
     let p-shaX: copy #{}  ; P_SHA256, P_SHA384..whichever
     let a: seed  ; A(0)
     while [output-length > length of p-shaX] [
-        a: checksum/key ctx.prf-method a secret
-        append p-shaX checksum/key ctx.prf-method (join a seed) secret
+        a: checksum:key ctx.prf-method a secret
+        append p-shaX checksum:key ctx.prf-method (join a seed) secret
     ]
     take:last:part p-shaX ((length of p-shaX) - output-length)
     return p-shaX
