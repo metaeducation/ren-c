@@ -258,7 +258,7 @@ for-each-api [
         to-text var
     ]
 
-    let return-keyword: if return-type != "void" ["return "] else [null]
+    let return-keyword: if return-type != "void" ["return "]
 
     append variadic-api-c-helpers cscape [:api --[
         $<Opt Attributes>

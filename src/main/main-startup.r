@@ -205,10 +205,9 @@ main-startup: func [
     return: [any-stable?] "!!! Narrow down return type?"
     argv "Raw command line argument block received by main() as TEXT!s"
         [block!]
-]
-bind construct [
+] bind {
     o: system.options  ; shorthand since options are often read or written
-][
+} [
     ; We hook the RETURN function so that it actually returns an instruction
     ; that the code can build up from multiple EMIT statements.
     ;
@@ -331,14 +330,13 @@ bind construct [
         return <die>
     ]
 
-    let to-dir: func [
-        "Convert string path to absolute dir! path"
+    let to-dir: lambda [
+        "Convert string path to absolute dir! path, null if not found"
 
-        return: "Null if not found"
-            [<null> file!]
+        []: [<null> file!]
         dir [<opt-out> text!]
     ][
-        return all [
+        all [
             not empty? dir
             exists? dir: clean-path:dir local-to-file dir
             dir
@@ -370,9 +368,9 @@ bind construct [
         ]
     ]
 
-    let get-resources-path: func [
+    let get-resources-path: lambda [
         "Return platform specific resources path"
-        return: [<null> file!]
+        []: [<null> file!]
     ][
         ; lives under systems.options.home
 
@@ -382,7 +380,7 @@ bind construct [
             %.rebol/  ; default *nix (covers Linux, MacOS (OS X) and Unix)
         ]
 
-        return if exists? path [path] else [null]
+        if exists? path [path]
     ]
 
     ; Set system.users.home (users HOME directory)

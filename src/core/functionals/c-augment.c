@@ -22,7 +22,7 @@
 // AUGMENT is designed to create a version of a function with an expanded
 // frame, adding new parameters.  It does so without affecting the execution:
 //
-//     >> foo-x: func [x [integer!]] [print ["x is" x]]
+//     >> foo-x: proc [x [integer!]] [print ["x is" x]]
 //     >> foo-xy: augment foo-x/ [y [integer!]]
 //
 //     >> foo-x 10

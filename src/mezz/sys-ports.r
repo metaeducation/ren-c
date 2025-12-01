@@ -196,12 +196,12 @@ make-port*: func [
     ; list of fields but breaks them down differently and uses different names.
     ; That should be reviewed.
     ;
-    decode-url: func [  ; this function is bound in sys.util/*parse-url
+    decode-url: lambda [  ; this function is bound in sys.util/*parse-url
         "Decode a URL according to rules of sys.util/*parse-url"
-        return: [object!]
+        []: [object!]
         url [url! text!]
     ][
-        return parse as text! url [gather rules] except [
+        parse url [gather rules] except [
             panic ["Could not decode URL to an object:" url]
         ]
     ]

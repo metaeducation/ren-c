@@ -251,14 +251,14 @@ an: lambda [
 ]
 
 
-empty?: func [
+empty?: lambda [
     "OKAY if blank or void, if empty, or if index is at or beyond its tail"
-    return: [logic?]
+    []: [logic?]
     container [
         <opt> blank? any-series? any-sequence? object! port! bitset! map!
     ]
 ][
-    return any [
+    any [
         null? container  ; e.g. input was void
         blank? container
         0 = length of container  ; sequences always have > 0 length, not empty

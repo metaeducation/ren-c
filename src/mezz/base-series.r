@@ -47,16 +47,15 @@ last: redescribe [
 ; CHARSET was moved from "Mezzanine" because it is called by TRIM which is
 ; in "Base" - see TRIM.
 ;
-charset: func [
+charset: lambda [
     "Makes a bitset of chars for the parse function"
 
-    return: [bitset!]
+    []: [bitset!]
     chars [text! block! blob! char? integer!]
     :length "Preallocate this many bits (must be > 0)"
         [integer!]
 ][
-    let init: either length [length] [[]]
-    return append make bitset! init chars
+    append make bitset! any [length []] chars
 ]
 
 

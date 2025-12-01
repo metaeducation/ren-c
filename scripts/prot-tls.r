@@ -276,8 +276,7 @@ parse-asn: func [
 
     return: [<null> block!]
     data [blob!]
-]
-bind construct [
+] bind {
     universal-tags: [
         <eoc>
         <boolean>
@@ -313,7 +312,7 @@ bind construct [
     ]
 
     class-types: [@universal @application @context-specific @private]
-][
+} [
     let data-start: data  ; may not be at head
 
     let index: getter [
@@ -976,19 +975,18 @@ decrypt-data: func [
 ]
 
 
-parse-protocol: func [
-    return: [object!]
+parse-protocol: lambda [
+    []: [object!]
     data [blob!]
-]
-bind construct [
+] bind {
     protocol-types: [
         20 <change-cipher-spec>
         21 #alert
         22 #handshake
         23 #application
     ]
-][
-    return make object! [
+} [
+    make object! [
         type: select protocol-types data.1 else [
             panic ["unknown/invalid protocol type:" data.1]
         ]
@@ -999,10 +997,10 @@ bind construct [
 ]
 
 
-grab: infix func [
+grab: infix lambda [
     "Extracts N bytes from a BLOB!, and also updates its position"
 
-    return: "BLOB! (or INTEGER! if GRAB-INT enclosure is used)"
+    []: "BLOB! (or INTEGER! if GRAB-INT enclosure is used)"
         [blob! integer!]
     @left "Needs variable name for assignment (to deliver errors)"
         [set-word?]
@@ -1018,7 +1016,7 @@ grab: infix func [
         panic ["Expected" n "bytes for" as word! left "but received" actual]
     ]
     set var skip data n  ; update variable to point past what was taken
-    return set left result  ; must manually assign if SET-WORD! overridden
+    set left result  ; must manually assign if SET-WORD! overridden
 ]
 
 grab-int: infix enclose grab/ lambda [f [frame!]] [
@@ -1604,12 +1602,12 @@ make-key-block: func [
 ]
 
 
-make-master-secret: func [
-    return: [blob!]
+make-master-secret: lambda [
+    []: [blob!]
     ctx [object!]
     pre-master-secret [blob!]
 ][
-    return ctx.master-secret: applique :prf [
+    ctx.master-secret: prf // [
         ctx: ctx
         secret: pre-master-secret
         label: "master secret"
@@ -1993,14 +1991,14 @@ sys.util/make-scheme [
             return port
         ]
 
-        open?: func [port [port!]] [
-            return all [port.state, open? port.state.connection]
+        open?: lambda [port [port!]] [
+            all [port.state, open? port.state.connection]
         ]
 
-        length-of: func [port [port!]] [
+        length-of: lambda [port [port!]] [
             ; actor is not an object!, so this isn't a recursive call
             ;
-            return either port.data [length of port.data] [0]
+            either port.data [length of port.data] [0]
         ]
 
         close: func [return: [port!] port [port!]] [
@@ -2036,12 +2034,18 @@ sys.util/make-scheme [
             return port
         ]
 
-        copy: func [port [port!]] [
-            return if port.data [copy port.data]
+        copy: lambda [
+            []: [<null> blob!]
+            port [port!]
+        ][
+            if port.data [copy port.data]
         ]
 
-        query: func [return: [<null> object!] port [port!]] [
-            return all [port.state, query port.state.connection]
+        query: lambda [
+            []: [<null> object!]
+            port [port!]
+        ][
+            all [port.state, query port.state.connection]
         ]
     ]
 ]

@@ -69,45 +69,47 @@ to-ishort: specialize encode/ [type: [LE + 2]]  ; Little endian 2-byte + int
 
 to-long: specialize encode/ [type: [BE + 4]]  ; Big endian 4-byte + int
 
-to-msdos-time: func [
+to-msdos-time: lambda [
     "Converts to a MS-DOS time"
-    return: [blob!]
+    []: [blob!]
     time [time!] "AnyValue to convert"
 ][
-    return to-ishort (time.hour * 2048)
+    to-ishort (time.hour * 2048)
         or+ (time.minute * 32)
         or+ round:down time.second / 2
 ]
 
-to-msdos-date: func [
+to-msdos-date: lambda [
     "Converts to a MS-DOS date"
-    return: [blob!]
+    []: [blob!]
     date [date!]
 ][
-    return to-ishort 512 * (max 0 date.year - 1980)
+    to-ishort 512 * (max 0 date.year - 1980)
         or+ (date.month * 32) or+ date.day
 ]
 
-get-msdos-time: func [
+get-msdos-time: lambda [
     "Converts from a MS-DOS time"
-    return: [time!]
+    []: [time!]
     binary [blob!]
+    {i}
 ][
-    let i: decode [LE + 2] binary
-    return make time! reduce [
+    i: decode [LE + 2] binary
+    make time! reduce [
         63488 and+ i / 2048
         2016 and+ i / 32
         31 and+ i * 2
     ]
 ]
 
-get-msdos-date: func [
+get-msdos-date: lambda [
     "Converts from a MS-DOS date"
-    return: [date!]
+    []: [date!]
     binary [blob!]
+    {i}
 ][
-    let i: decode [LE + 2] binary
-    return make date! reduce [
+    i: decode [LE + 2] binary
+    make date! reduce [
         65024 and+ i / 512 + 1980
         480 and+ i / 32
         31 and+ i

@@ -228,7 +228,7 @@ latest-of: func [
         panic ["First digit of OS specification tuple must be 0:" os]
     ]
 
-    let extension: if (find [0.3.1 0.3.40] os) [".exe"] else [null]
+    let extension: if (find [0.3.1 0.3.40] os) [".exe"]
     let suffix: switch variant [
         'release [null]
         'checked ["-debug"]  ; !!! GitHub action needs updating to change

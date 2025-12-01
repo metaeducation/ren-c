@@ -1046,7 +1046,7 @@ void Term_Insert(STD_TERM *t, const Value* v) {
         Value* v_no_tab = rebValue(
             "if find", v, "tab [",
                 "replace copy", v, "tab", "--[    ]--",
-            "] else [null]"
+            "]"
         );
 
         size_t encoded_size;

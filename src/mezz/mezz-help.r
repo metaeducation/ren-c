@@ -53,13 +53,13 @@ decorated-words-of: func [
     ]
 ]
 
-description-of: func [
+description-of: lambda [
     "One-line summary of a value's purpose"
 
-    return: [<null> text!]
+    []: [<null> text!]
     v [<opt-out> any-stable?]
 ][
-    return switch:type ^v [
+    switch:type ^v [
         any-list?/ [
             spaced ["list of length:" length of v]
         ]
@@ -70,7 +70,7 @@ description-of: func [
         frame! [
             if let adjunct: adjunct of ^v [
                 copy opt adjunct.description
-            ] else [null]
+            ]
         ]
         object! [mold words of v]
         parameter! [mold v]

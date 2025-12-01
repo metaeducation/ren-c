@@ -1,7 +1,7 @@
 ; AES streaming cipher tests
 
 [
-    (test: func [data check] [
+    (test: lambda [data check] [
         let bin: as blob! data
         let bin-len: length of bin
         let key-128: #{01020304050607080910111213141516}
@@ -9,7 +9,7 @@
         let encrypted: aes-stream e as blob! data
         let d: aes-key:decrypt key-128 ^void
         let decrypted: aes-stream d encrypted
-        return all [
+        all [
             bin = copy:part decrypted bin-len
             check = encrypted
         ]

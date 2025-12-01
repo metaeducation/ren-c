@@ -710,12 +710,12 @@ sys.util/make-scheme [
             return port
         ]
 
-        open?: func [port [port!]] [
-            return all [port.state, open? port.state.connection]
+        open?: lambda [port [port!]] [
+            all [port.state, open? port.state.connection]
         ]
 
-        length-of: func [port [port!]] [
-            return if port.data [length of port.data] else [0]
+        length-of: lambda [port [port!]] [
+            if port.data [length of port.data] else [0]
         ]
 
         close: func [

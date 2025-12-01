@@ -142,19 +142,20 @@
 
 ; CONTINUE and BREAK are definitional
 (
-    implemented-with-loops: func [body [block!]] [
-        let sum: 0
-        let result
+    implemented-with-loops: lambda [
+        body [block!]
+        {sum (0) result}
+    ][
         while [result: eval body] [
             sum: sum + result
         ]
-        return sum
+        sum
     ]
     counter: 0
     null = while [okay] [
         assert [(1 + 2 + 3) = implemented-with-loops [
             counter: counter + 1
-            if counter <= 3 [counter] else [null]
+            if counter <= 3 [counter]
         ]]
         implemented-with-loops [
             if counter < 10 [break]

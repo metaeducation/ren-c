@@ -148,20 +148,20 @@ vacant?: redescribe [
 
 undefined?: cascade [defined?/ not/]
 
-unspecialized?: func [
+unspecialized?: lambda [
     "Determine if a variable looks up to a PARAMETER!"
-    return: [logic?]
+    []: [logic?]
     var [word! tuple!]
 ][
-    return parameter? get:any var
+    parameter? get:any var
 ]
 
-specialized?: func [
+specialized?: lambda [
     "Determine if a variable doesn't look up to a PARAMETER!"
-    return: [logic?]
+    []: [logic?]
     var [word! tuple!]
 ][
-    return not parameter? get:any var
+    not parameter? get:any var
 ]
 
 

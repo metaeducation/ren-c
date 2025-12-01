@@ -58,45 +58,46 @@ exists?: func [
 ; See size-of native for the hacked in code.
 
 
-modified?: func [
+modified?: lambda [
     "Returns the last modified date of a file"
-    return: [<null> date!]
+    []: [<null> date!]
     target [file! url!]
 ][
-    return all [
+    all [
         info: info? target
         info.date
     ]
 ]
 
-suffix-of: func [
+suffix-of: lambda [
     "Return the file suffix of a filename or url, else null"
-    return: [<null> file!]
+    []: [<null> file!]
     path [file! url! text!]
 ][
     path: as text! path
-    return all [
+    all [
         let pos: find-last path "."
         not find pos "/"
         to file! pos
     ]
 ]
 
-dir?: func [
+dir?: lambda [
     "Returns TRUE if the file or url ends with a slash (or backslash)"
-    return: [logic?]
+    []: [logic?]
     target [file! url!]
 ][
-    return did find "/\" last target
+    did find "/\" last target
 ]
 
-dirize: func [
+dirize: lambda [
     "Returns a copy (always) of the path as a directory (ending slash)"
+    []: [file! text! url!]
     path [file! text! url!]
 ][
     path: copy path
     if slash <> last path [append path slash]
-    return path
+    path
 ]
 
 make-dir: func [
@@ -150,16 +151,16 @@ make-dir: func [
     return path
 ]
 
-delete-dir: func [
+delete-dir: proc [
     "Deletes a directory including all files and subdirectories"
     dir [file! url!]
     {files}
 ][
-    if all [
+    all [
         dir? dir
         dir: dirize dir
         files: try load dir
-    ] [
+    ] then [
         for-each 'file files [delete-dir (join dir file)]
     ]
     sys.util/recover [
@@ -183,20 +184,20 @@ script?: func [
     ]
 ]
 
-file-type?: func [
+file-type?: lambda [
     "Return the identifying word for a specific file type (or null)"
-    return: [<null> word!]
+    []: [<null> word!]
     file [file! url!]
 ][
-    return all [
+    all [
         let pos: find system.options.file-types opt suffix-of file
         first opt find pos word?/
     ]
 ]
 
-split-path: func [  ; :FILE used in bootstrap vs. multi-return
+split-path: lambda [  ; :FILE used in bootstrap vs. multi-return
     "Splits and returns ~[directory filename]~ (either may be null)"
-    return: [~[[<null> file! url!] [<null> file! url!]]~]
+    []: [~[[<null> file! url!] [<null> file! url!]]~]
 
     target [file! url!]
     :relax "Allow filenames to be . and .."
@@ -221,5 +222,5 @@ split-path: func [  ; :FILE used in bootstrap vs. multi-return
             panic ". and .. are invalid filenames"
         ]
     ]
-    return pack [directory filename]
+    pack [directory filename]
 ]
