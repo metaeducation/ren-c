@@ -188,6 +188,11 @@ Result(None) Set_Parameter_Spec(
         *flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
     }
     else for (; item != tail; ++item, ++dest) {
+        if (Is_Text(item)) {  // TEXT! literals just ignored (kept for HELP)
+            Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
+            continue;
+        }
+
         if (Is_Space(item)) {
             *flags |= PARAMETER_FLAG_SPACE_DEFINITELY_OK;
             Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);

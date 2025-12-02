@@ -233,7 +233,6 @@ static Element* Make_Locked_Tag(const char *utf8) { // helper
 //
 static void Init_Action_Spec_Tags(void)
 {
-    ensure_nullptr(g_tag_with) = Make_Locked_Tag("with");
     ensure_nullptr(g_tag_variadic) = Make_Locked_Tag("variadic");
     ensure_nullptr(g_tag_end) = Make_Locked_Tag("end");
     ensure_nullptr(g_tag_opt_out) = Make_Locked_Tag("opt-out");
@@ -250,7 +249,6 @@ static void Init_Action_Spec_Tags(void)
 
 static void Shutdown_Action_Spec_Tags(void)
 {
-    rebReleaseAndNull(&g_tag_with);
     rebReleaseAndNull(&g_tag_variadic);
     rebReleaseAndNull(&g_tag_end);
     rebReleaseAndNull(&g_tag_opt_out);

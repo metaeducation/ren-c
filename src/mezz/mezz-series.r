@@ -380,19 +380,19 @@ alter: func [
 ]
 
 
-collect*: func [
+collect*: lambda [
     "Evaluate body, and return block of values collected via keep function"
 
-    return: "Result block, or null if no KEEPs (prevent nulls with KEEP [])"
-        [<null> block!]
-    body "Block to evaluate"
-        [<opt-out> block!]
+    []: [
+        block!
+        <null> "or null if no KEEPs, prevent nulls with (keep ~()~)"
+    ]
+    body [<opt-out> block!]
+    {out}
 ][
-    let out: null
     let keep: specialize (  ; SPECIALIZE to hide series argument
         enclose append/ lambda [  ; Derive from APPEND for :LINE :DUP
             f [frame!]
-            <with> out
         ][
             decay either void? f.value [  ; DECAY, we want pure null
                 null  ; void in, null out (should it pass through the void?)
@@ -408,7 +408,7 @@ collect*: func [
 
     eval bind @keep body  ; discard result (should it be secondary return?)
 
-    return out  ; might be null if no KEEPs that kept anything yet
+    out
 ]
 
 

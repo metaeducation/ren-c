@@ -23,6 +23,10 @@ ROOT: https://raw.githubusercontent.com/karelzak/util-linux/master/
 
 mkdir %libuuid
 
+[.]: {
+    exclude-headers: ~  ; set differently in each routine
+}
+
 add-config-h: [
     to "/*" thru "*/"
     thru "^/"
@@ -36,7 +40,7 @@ comment-out-includes: [
     [
         [
             some space [
-                exclude-headers
+                .exclude-headers
             ] (insert pos -[//]- pos: skip pos 2)
             | one
         ] (pos: skip pos 8)
@@ -47,7 +51,7 @@ comment-out-includes: [
 fix-randutils-c: func [
     text [text!]
 ][
-    exclude-headers: [
+    .exclude-headers: [
         -["c.h"]-
     ]
 
@@ -79,9 +83,8 @@ fix-randutils-c: func [
 
 fix-gen_uuid-c: func [
     text [text!]
-    <with> exclude-headers comment-out-includes add-config-h space
 ][
-    exclude-headers: [
+    .exclude-headers: [
         -["all-io.h"]-
         | -["c.h"]-
         | -["strutils.h"]-

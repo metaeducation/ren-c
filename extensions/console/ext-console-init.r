@@ -506,6 +506,7 @@ console*: func [
         [yesno?]
     skin "Console skin to use if the console has to be launched"
         [<opt> object! file!]
+    {.}
 ][
     === HANDLE EXIT CODE ===
 
@@ -526,26 +527,27 @@ console*: func [
     ; blocks is made easier by collaboration between EMIT and a hooked version
     ; of the underlying RETURN of this function.
 
-    let instruction: copy []
+    [.]: {
+        instruction: copy []
+    }
 
     let emit: proc [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
         item "RUNE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! rune! text!]
-        <with> instruction
     ][
         switch:type item [
             rune! [
-                if not empty? instruction [append:line instruction ',]
-                insert instruction item
+                if not empty? .instruction [append:line .instruction ',]
+                insert .instruction item
             ]
             text! [
-                append:line instruction spread compose [comment (item)]
+                append:line .instruction spread compose [comment (item)]
             ]
             block! [
-                if not empty? instruction [append:line instruction ',]
-                append:line instruction spread (  ; use item's tip binding
+                if not empty? .instruction [append:line .instruction ',]
+                append:line .instruction spread (  ; use item's tip binding
                     compose2:deep inside item '@(<*>) item
                 )
             ]
@@ -558,7 +560,6 @@ console*: func [
 
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! datatype! ^group! handle!]
-        ; <with> instruction
         {
             return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
         }
@@ -584,20 +585,20 @@ console*: func [
                 emit [panic ["Bad REPL continuation:" (<*> result)]]
             ]
         ] then [
-            return-to-c instruction
+            return-to-c .instruction
         ]
 
         return-to-c switch:type state [
             integer! [  ; just tells the calling C loop to exit() process
-                assert [empty? instruction]
+                assert [empty? .instruction]
                 state
             ]
             datatype! [  ; type assertion, how to enforce this?
                 emit spaced ["^-- Result should be" to word! state]
-                instruction
+                .instruction
             ]
             group! [  ; means "submit user code"
-                assert [empty? instruction]
+                assert [empty? .instruction]
                 state
             ]
             group?:metaform/ [  ; means "resume instruction"

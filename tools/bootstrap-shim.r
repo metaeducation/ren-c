@@ -573,7 +573,6 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
     keeper: specialize (  ; SPECIALIZE to remove series argument
         enclose 'append func3 [  ; gets :LINE, :DUP
             f [frame!]
-            <with> out
         ][
             if not f.value [  ; APPEND's value is <opt> so this means null in
                 return null  ; VOID-in-NULL-out: doesn't "count" as collected
@@ -589,7 +588,7 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
         series: <replaced>
     ]
 
-    reeval lambda3 [keep [action!] <with> return] body keeper/
+    reeval lambda3 [keep [action!]] body keeper/
 
     return out
 ]

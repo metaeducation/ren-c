@@ -181,63 +181,48 @@ host-script-pre-load: proc [
     ]
 ]
 
-; !!! This file is bound into lib, along with adding its top-level SET-WORD!s
-; to lib.  Due to the way the lib and user contexts work, these functions
-; from the Process and Filesystem extensions would not be bound, because
-; they are loaded after the code has started running:
-;
-; https://forum.rebol.info/t/the-real-story-about-user-and-lib-contexts/764
-;
-; We could use them via `lib/<whatever>`, but then each callsite would have to
-; document the issue.  So we make them SET-WORD!s added to lib up front, so
-; the lib modification gets picked up.
-;
-; NOTE: We depend on...
-;
-; [get-current-exec file-to-local local-to-file what-dir change-dir]
-;
-; These are implicitly picked up from LIB but would need to be done different
 
-
+; We hook the RETURN function so that it actually returns an instruction
+; that the code can build up from multiple EMIT statements.
+;
+;  1. Each module or script gets its own QUIT, and every console instruction
+;     execution also gets its own quit.  If we didn't use quoting to leave
+;     the instruction unbound, then QUIT would bind to the main-startup's
+;     QUIT...which is not available after the module initialization has
+;     finished running.  Leaving it unbound means that the console engine
+;     (which processes these instructions) will supply it.
+;
 main-startup: func [
     "Usermode command-line processing: handles args, security, scripts"
 
     return: [any-stable?] "!!! Narrow down return type?"
     argv "Raw command line argument block received by main() as TEXT!s"
         [block!]
+    {.}  ; local dot, not method
 ] bind {
     o: system.options  ; shorthand since options are often read or written
 } [
-    ; We hook the RETURN function so that it actually returns an instruction
-    ; that the code can build up from multiple EMIT statements.
-    ;
-    ; 1. Each module or script gets its own QUIT, and every console instruction
-    ;    execution also gets its own quit.  If we didn't use quoting to leave
-    ;    the instruction unbound, then QUIT would bind to the main-startup's
-    ;    QUIT...which is not available after the module initialization has
-    ;    finished running.  Leaving it unbound means that the console engine
-    ;    (which processes these instructions) will supply it.
-
-    let instruction: copy '[]  ; quote for no binding, want console binding [1]
+    [.]: {
+        instruction: copy '[]  ; quote for no binding, want console binding [1]
+    }
 
     let emit: proc [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
         item "RUNE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! rune! text!]
-        <with> instruction
-    ][
+    ] [
         switch:type item [
             rune! [
-                if not empty? instruction [append:line instruction ',]
-                insert instruction item
+                if not empty? .instruction [append:line .instruction ',]
+                insert .instruction item
             ]
             text! [
-                append:line instruction spread compose [comment (item)]
+                append:line .instruction spread compose [comment (item)]
             ]
             block! [
-                if not empty? instruction [append:line instruction ',]
-                append:line instruction spread (  ; use item's tip binding
+                if not empty? .instruction [append:line .instruction ',]
+                append:line .instruction spread (  ; use item's tip binding
                     compose2:deep inside item '@(<*>) item
                 )
             ]
@@ -250,7 +235,6 @@ main-startup: func [
 
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! datatype!]
-        ; <with> instruction
         {
             return-to-c (return/)  ; capture HOST-CONSOLE's RETURN
         }
@@ -268,7 +252,7 @@ main-startup: func [
                 emit #start-console
             ]
         ] then [
-            run return-to-c instruction
+            run return-to-c .instruction
         ]
     ]
 

@@ -282,7 +282,7 @@
     (
         got: null
 
-        soft: func [@(x) <with> got] [got: ^x, return 1000]
+        soft: func [@(x)] [got: ^x, return 1000]
         Lsoft: infix soft/
 
         test: lambda [expr [block!]] [
@@ -403,12 +403,10 @@
 
     f: func [
         :count [integer!]
-        <in> o1 o1.o2
-        <with> outer
     ]
-    bind construct [
+    bind o1 bind o2 bind {
         static: 10 + n
-    ][
+    }[
         count: default [2]
         let data: reduce [count x y outer static]
         return case [

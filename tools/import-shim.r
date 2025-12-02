@@ -162,15 +162,14 @@ rewrite-source-for-bootstrap-exe: lib3/func [
 ;
 ;    rebmake: import <tools/rebmake.r>
 ;
-wrap-module: 'no
+.wrap-module: 'no
 
 replace3: default [replace/]
 
 old-do: lib3.do/
 do: lib3/enclose lib3.do/ lib3/func [
     f [frame!]
-    <local> old-system-script file
-    <with> wrap-module result
+    <local> old-system-script file result
 ][
     old-system-script: system.script
 
@@ -204,20 +203,20 @@ do: lib3/enclose lib3.do/ lib3/func [
         replace3:one f.source unspaced [newline "]"] unspaced lib3/compose [
             newline
             "]" newline
-            (when yes? wrap-module ["make object! ["]) newline
+            (when yes? .wrap-module ["make object! ["]) newline
         ]
-        if yes? wrap-module [
+        if yes? .wrap-module [
             lib3/append f.source newline
             lib3/append f.source ("]  ; end wrapping MAKE OBJECT!")
         ]
-        wrap-module: 'no  ; only wrap one level of DO
+        .wrap-module: 'no  ; only wrap one level of DO
     ]
     result: lift eval f
     system.script: old-system-script
     return unlift result
 ]
 
-already-imported: to map! []  ; avoid importing things twice
+.already-imported: to map! []  ; avoid importing things twice
 
 
 ; see header notes: `exports` broken
@@ -238,7 +237,6 @@ import: infix lib3/func [
     ;
     <local> ret dir full-script-dir full-script-path old-dir code
             script-filename
-    <with> wrap-module already-imported
 ][
     if into [
         panic ":INTO not actually available, just makes IMPORT look modern"
@@ -257,7 +255,7 @@ import: infix lib3/func [
 
     full-script-path: join full-script-dir script-filename
 
-    if ret: select already-imported full-script-path [
+    if ret: select .already-imported full-script-path [
         ; print ["ALREADY IMPORTED:" full-script-path]
         return ret
     ]
@@ -269,10 +267,10 @@ import: infix lib3/func [
     ret: #quit
     catch:quit [
         ret: if :set-word [
-            wrap-module: 'yes
+            .wrap-module: 'yes
             set set-word do script-filename
         ] else [
-            assert [no? wrap-module]
+            assert [no? .wrap-module]
             do script-filename
             #imported
         ]
@@ -280,7 +278,7 @@ import: infix lib3/func [
 
     change-dir old-dir
 
-    already-imported.(full-script-path): ret
+    .already-imported.(full-script-path): ret
     return ret
 ]
 

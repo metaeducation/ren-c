@@ -357,7 +357,6 @@ application-class: make project-class [
 
     command: func [
         return: [text!]
-        <with> default-compiler
         <.>
     ][
         let cc: any [.compiler, default-compiler]
@@ -379,8 +378,6 @@ dynamic-library-class: make project-class [
 
     command: func [
         return: [text!]
-        <with>
-        default-compiler
         <.>
     ][
         let cc: any [.compiler, default-compiler]

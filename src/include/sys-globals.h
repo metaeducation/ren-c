@@ -98,7 +98,6 @@ PVAR Flex* g_dispatcher_table;
 // by the same mechanism they use.  This means they can be initialized at
 // the appropriate moment during the boot, one at a time.
 
-PVAR Element* g_tag_with;  // documents external variables used by function
 PVAR Element* g_tag_variadic;  // marks variadic argument <variadic>
 PVAR Element* g_tag_end;  // marks endable argument (NULL if at end of input)
 PVAR Element* g_tag_opt_out;  // passing void makes action a noop

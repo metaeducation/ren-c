@@ -28,7 +28,6 @@
 typedef enum {
     SPEC_MODE_DEFAULT,  // waiting, words seen will be arguments
     SPEC_MODE_PUSHED,  // argument pushed, information can be augmented
-    SPEC_MODE_WITH,  // words are "extern"
     SPEC_MODE_COUPLING
 } SpecMode;
 
@@ -179,7 +178,7 @@ static Result(None) Push_Keys_And_Params_Core(
 
         const Element* item = At_Level(L);
 
-  //=//// TOP-LEVEL SPEC TAGS LIKE <local>, <with> etc. ///////////////////=//
+  //=//// TOP-LEVEL SPEC TAGS LIKE <local>, <.> etc. //////////////////////=//
 
         bool strict = false;
         if (Is_Tag(item)) {
@@ -195,43 +194,11 @@ static Result(None) Push_Keys_And_Params_Core(
                 );
                 continue;
             }
-            else if (0 == CT_Utf8(item, g_tag_with, strict)) {
-                mode = SPEC_MODE_WITH;
-                continue;
-            }
             else
                 return fail (item);
         }
 
-  //=//// CHECK BINDING FOR <with> WORD!s /////////////////////////////////=//
-
-    // The higher-level function generator that implemented <static> and <in>
-    // was removed, in favor of BIND operations on the body as a more generic
-    // answer that could apply in arbitrary situations.  But there were some
-    // cases of <with> hanging around that were non-useless, though they were
-    // only comments.
-    //
-    // 1. Enforce that they're at least WORD!s that are bound.
-
-    if (mode == SPEC_MODE_WITH) {
-        if (not Is_Word(item))
-            return fail (
-                "<with> must be followed by WORD!s in FUNCTION spec"
-            );
-
-        DECLARE_ATOM (dummy);  // don't care about the actual value [1]
-        trap (
-          Get_Any_Word_Maybe_Trash(
-            dummy, item, Level_Binding(L)
-        ));
-        continue;
-    }
-
   //=//// TEXT! FOR FUNCTION DESCRIPTION OR PARAMETER NOTE ////////////////=//
-
-    // 1. Consider `[<with> some-extern "description of that extern"]` to be
-    //    purely commentary for the implementation (there's nowhere to put
-    //    the information for <with> or <local>)
 
         if (Is_Text(item)) {
             if (not (flags & MKF_PARAMETER_SEEN)) {
@@ -282,9 +249,6 @@ static Result(None) Push_Keys_And_Params_Core(
     //    Even if you *could* give locals a type, it could only be given a
     //    meaning if it were used to check assignments during the function.
     //    There's currently no mechanism for doing that.
-    //
-    //    You can't say `<with> y [integer!]` either...though it might be nice
-    //    to check the type of an imported value at time of calling.
 
         if (Is_Block(item)) {
             Element* temp;  // GET moves stack
@@ -440,11 +404,6 @@ static Result(None) Push_Keys_And_Params_Core(
         if (pclass == PARAMCLASS_0)  // didn't match
             return fail (Error_Bad_Func_Def_Raw(item));
 
-        if (mode == SPEC_MODE_WITH) {
-            if (pclass != PARAMCLASS_NORMAL)
-                return fail (Error_Bad_Func_Def_Raw(item));
-        }
-
         if (
             returner
             and Symbol_Id(symbol) == unwrap returner
@@ -463,17 +422,6 @@ static Result(None) Push_Keys_And_Params_Core(
                 "Generator provides YIELD:, can't have YIELD parameter"
             );
         }
-
-        // Because FUNC does not do any locals gathering by default, the main
-        // purpose of tolerating <with> is for instructing it not to do the
-        // definitional returns.  However, it also makes changing between
-        // FUNC and FUNCTION more fluid.
-        //
-        // !!! If you write something like `func [x <with> x] [...]` that
-        // should be sanity checked with an error...TBD.
-        //
-        if (mode == SPEC_MODE_WITH)
-            continue;
 
         if (mode == SPEC_MODE_COUPLING)
             mode = SPEC_MODE_PUSHED;

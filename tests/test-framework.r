@@ -18,31 +18,28 @@ Rebol [
 
 import %test-parsing.r
 
-log-file: ~
+[.]: {
+    log-file: ~
 
+    ; counters
+    ;
+    skipped: ~
+    test-failures: ~
+    crashes: ~
+    dialect-failures: ~
+    successes: ~
+
+    allowed-flags: ~
+}
+
+; By default we echo the log to the screen also.  This should be an option.
+;
 log: proc [
     report [block!]
 ][
-    write:append log-file unspaced report
-
-    ; By default we echo the log to the screen also.  This should be an option.
-    ;
+    write:append .log-file unspaced report
     write stdout unspaced report
 ]
-
-; counters
-;
-skipped: ~
-test-failures: ~
-crashes: ~
-dialect-failures: ~
-successes: ~
-
-allowed-flags: ~
-
-test-block: ~
-
-error: ~
 
 run-single-test: func [
     "Run code and write the success or failure to the log file"
@@ -63,7 +60,7 @@ run-single-test: func [
         expected-id
         (all [not result.id, expected-id = '???]) or (result.id = expected-id)
     ] then [
-        successes: me + 1
+        .successes: me + 1
         log reduce [_ -["correct failure:"]- _ @(quasi expected-id) newline]
         return ~
     ]
@@ -87,7 +84,7 @@ run-single-test: func [
         (elide if pack? ^result [result: first unquasi result])
 
         result = '~okay~ [
-            successes: me + 1
+            .successes: me + 1
             log reduce [_ -["succeeded"]- newline]
             return ~
         ]
@@ -105,7 +102,7 @@ run-single-test: func [
             spaced ["was" (to word! type of result) ", not true or false"]
         ]
     ] then message -> [
-        test-failures: me + 1
+        .test-failures: me + 1
         log reduce [space -["failed, ]- message -["]- newline]
     ]
     return ~
@@ -116,10 +113,9 @@ run-test-cluster: func [
     flags [block!]
     cluster "Block of GROUP!s to be run together in a common isolated context"
         [block!]
-    <with> test-failures successes skipped
 ][
-    if not empty? exclude flags allowed-flags [
-        skipped: me + 1
+    if not empty? exclude flags .allowed-flags [
+        .skipped: me + 1
         log [space -["skipped"]- newline]
         return ~
     ]
@@ -217,7 +213,7 @@ process-tests: func [
                 |
             'dialect value: text! (  ; bad parse of test file itself
                 log [value]
-                set $dialect-failures (dialect-failures + 1)
+                .dialect-failures: me + 1
             )
                 |
             'collect-tests body: block! (
@@ -266,8 +262,8 @@ export do-recover: func [
         test-sources test-checksum
     }
 ][
-    allowed-flags: flags
-    successes: test-failures: crashes: dialect-failures: skipped: 0
+    .allowed-flags: flags
+    .successes: .test-failures: .crashes: .dialect-failures: .skipped: 0
 
     === CALCULATE TEST CHECKSUM ===
 
@@ -280,7 +276,7 @@ export do-recover: func [
 
     === GENERATE NAME FOR LOG FILE FROM INTERPRETER AND TEST CHECKSUMS ===
 
-    log-file: clean-path join log-file-prefix [
+    .log-file: clean-path join log-file-prefix [
         if code-checksum ["_"]
         if code-checksum [copy:part (skip mold code-checksum 2) 6]
         "_"
@@ -297,16 +293,16 @@ export do-recover: func [
     ; it would be helpful in automated runs so a long-running test session
     ; does not become useless just because one crash happened.
 
-    if exists? log-file [delete log-file]
+    if exists? .log-file [delete .log-file]
 
     === COLLECT THE TESTS TO RUN (SOME MAY BE COMPLETED IF RECOVERING) ===
 
-    if not exists? log-file [
+    if not exists? .log-file [
         print "new log"
         test-sources: collect-tests file
     ]
     else [
-        parse3 read log-file [
+        parse3 read .log-file [
             (last-vector: null)
             opt some [
                 opt some whitespace
@@ -323,14 +319,14 @@ export do-recover: func [
                     ; dialect failure?
                     some whitespace
                     -["]- thru -["]-
-                    (dialect-failures: dialect-failures + 1)
+                    (.dialect-failures: me + 1)
                         |
                     last-vector: across ["(" test-source-rule ")"]
                     opt some whitespace
                     [
                         <end> (
                             ; crash found
-                            crashes: crashes + 1
+                            .crashes: me + 1
                             log [-[ "crashed"^/]-]
                         )
                             |
@@ -339,16 +335,16 @@ export do-recover: func [
                         (
                             parse3 value [
                                 "succeeded" <end>
-                                (successes: me + 1)
+                                (.successes: me + 1)
                                     |
                                 "failed" opt ["," to <end>]  ; error msg
-                                (test-failures: me + 1)
+                                (.test-failures: me + 1)
                                     |
                                 "crashed" <end>
-                                (crashes: me + 1)
+                                (.crashes: me + 1)
                                     |
                                 "skipped" <end>
-                                (skipped: me + 1)
+                                (.skipped: me + 1)
                                     |
                                 (panic "invalid test result")
                             ]
@@ -360,10 +356,10 @@ export do-recover: func [
                     (last-vector: null)
                 ]
                     |
-                (panic [
+                panic [
                     "Log file parse problem, see"
                     mold:limit as text! position 240
-                ])
+                ]
             ]
             <end>
         ] except [
@@ -375,11 +371,11 @@ export do-recover: func [
         print [
             "recovering at:"
             (
-                successes
-                + test-failures
-                + crashes
-                + dialect-failures
-                + skipped
+                .successes
+                + .test-failures
+                + .crashes
+                + .dialect-failures
+                + .skipped
             )
         ]
     ]
@@ -390,7 +386,7 @@ export do-recover: func [
         if summary [
             set summary "testing already complete"
         ]
-        return log-file
+        return .log-file
     ]
 
     let summary
@@ -400,21 +396,21 @@ export do-recover: func [
             "code-checksum:" @code-checksum LF
             "test-checksum:" @test-checksum LF
             "Total:" (
-                successes
-                + test-failures
-                + crashes
-                + dialect-failures
-                + skipped
+                .successes
+                + .test-failures
+                + .crashes
+                + .dialect-failures
+                + .skipped
             ) LF
-            "Succeeded:" successes LF
-            "Failing Tests:" test-failures LF
-            "Crashes:" crashes LF
-            "Failures in Test Dialect Usage:" dialect-failures LF
-            "Skipped:" skipped LF
+            "Succeeded:" .successes LF
+            "Failing Tests:" .test-failures LF
+            "Crashes:" .crashes LF
+            "Failures in Test Dialect Usage:" .dialect-failures LF
+            "Skipped:" .skipped LF
         ]
 
         log [summary]
     ]
 
-    return pack [log-file summary]
+    return pack [.log-file summary]
 ]
