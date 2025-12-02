@@ -18,7 +18,7 @@
 
 (
     x: ~
-    3 = parse [3 3 3] [x: cond (1 + 2) some inline (quote x) | (panic "boo")]
+    3 = parse [3 3 3] [x: cond (1 + 2) some inline (quote x) | panic "boo"]
 )(
     x: <untouched>
     <untouched> = parse [3 3 3] [x: cond (even? 1 + 2) | some '3 (x)]

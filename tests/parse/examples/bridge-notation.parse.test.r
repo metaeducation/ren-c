@@ -23,7 +23,7 @@ one-hand-rule: [
         )
     ]]
     |
-    (panic "Invalid Hand information in PBN")
+    panic "Invalid Hand information in PBN"
 ]
 
 pbn-to-hands: func [
@@ -38,11 +38,11 @@ pbn-to-hands: func [
 
         [
             start: any @direction-order
-            | (panic "PBN must start with N, E, S, or W")
+            | panic "PBN must start with N, E, S, or W"
         ]
         direction: (start)
 
-        [":" | (panic "PBN second character must be `:`")]
+        [":" | panic "PBN second character must be `:`"]
 
         [repeat 4 [
             emit (direction): one-hand-rule (  ; e.g. [emit N: ...]
@@ -53,7 +53,7 @@ pbn-to-hands: func [
             opt whitespace  ; Is more than one space between hands ok?
         ]
         |
-        (panic "PBN must have 4 hand definitions")]
+        panic "PBN must have 4 hand definitions"]
     ]]
 
     assert [direction = start]  ; skipping around should have cycled

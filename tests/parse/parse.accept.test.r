@@ -20,7 +20,7 @@
                 emit x: collect some ["a", keep (<a>)]
                 emit y: collect some ["b", keep (<b>)]
             ]
-            (panic "unreachable")
+            panic "unreachable"
         ]
         result.x = [<a> <a> <a>]
         result.y = [<b> <b> <b>]

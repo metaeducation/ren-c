@@ -2610,19 +2610,19 @@ default-combinators: make map! [
     ; syntax errors in the rules.  Because it's a rule.  So by default it will
     ; complain about the location where you are in the input.
     ;
-    ; It lets you take an @[...] block, because a plain [...] block would be
-    ; processed as a rule.  For the moment it quotes it for convenience.
+    ; It takes a plain [...] block quoted, because it's not very likely you
+    ; would want to pass a rule to PANIC.
 
     'panic combinator [
         return: [<divergent>]
         input [any-series?]
-        'reason [@block!]
+        'reason [block! text!]
         {e}
     ][
         e: make warning! [
             type: 'User
             id: 'parse
-            message: to text! reason
+            message: spaced reason
         ]
         set-location-of-error e binding of $reason
         e.near: mold:limit input 80

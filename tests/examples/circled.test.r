@@ -6,9 +6,9 @@
     (circled: lambda [block [block!] {result}] [
         parse block [
             result: try thru subparse group! [
-                one <end> | (panic "Circled Items Must Be Singular")
+                one <end> | panic "Circled Items Must Be Singular"
             ]
-            opt [thru group! (panic "Only One Circle")]
+            opt [thru group! panic "Only One Circle"]
             accept (result)
         ]
     ], ok)
