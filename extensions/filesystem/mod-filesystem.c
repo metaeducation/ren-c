@@ -493,10 +493,9 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
 //
 //  export file-to-local: native [
 //
-//  "Converts a Rebol FILE! path to TEXT! of the local system file path"
+//  "Converts FILE! to the local system representation (e.g. backslash on Win)"
 //
-//      return: "A TEXT! like \foo\bar is not a 'natural' FILE! %\foo\bar"
-//          [text!]
+//      return: [text!]
 //      path "Path to convert (by default, only FILE! for type safety)"
 //          [<opt-out> file! text!]
 //      :pass "Convert FILE!s, but pass thru TEXT!, assuming it's local"
@@ -505,6 +504,9 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
 //  ]
 //
 DECLARE_NATIVE(FILE_TO_LOCAL)
+//
+// Note that a TEXT! like \foo\bar is not a 'natural' FILE! %\foo\bar
+//
 {
     INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 

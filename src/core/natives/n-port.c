@@ -97,13 +97,15 @@ DECLARE_NATIVE(CLOSE)
 //
 //  "Read from a file, URL, or other port"
 //
-//      return: "null on (some) failures (REVIEW port model!)" [
-//          null? blob!  ; should all READ return a BLOB!?
-//          text!  ; READ:STRING returned TEXT!
-//          block!  ; READ:LINES returned BLOCK!
-//          port!  ; asynchronous READ on PORT!s returned the PORT!
-//          tuple!  ; READ:DNS returned tuple!
-//          quasi?  ; !!! If READ is Ctrl-C'd in nonhaltable API calls, ATM
+//      ; mostly crazy invariants from R3-Alpha's READ
+//      return: [
+//          <null> "null returned on (some) failures"
+//          blob! "!!! should all READ return a BLOB!"
+//          text! "READ:STRING returned TEXT!"
+//          block! "READ:LINES returned BLOCK!"
+//          port! "asynchronous READ on PORT!s returned the PORT!"
+//          tuple! "READ:DNS returned tuple!"
+//          ~(~halt~)~ "!!! If READ is Ctrl-C'd in nonhaltable API calls"
 //      ]
 //      source [port! file! url! block!]
 //      :part "Partial read a given number of units (source relative)"
@@ -111,7 +113,7 @@ DECLARE_NATIVE(CLOSE)
 //      :seek "Read from a specific position (source relative)"
 //          [any-number?]
 //      :string "Convert UTF and line terminators to standard text string"
-//      :lines "Convert to block of strings (implies /string)"
+//      :lines "Convert to block of strings (implies :string)"
 //  ]
 //
 DECLARE_NATIVE(READ)
@@ -191,16 +193,19 @@ DECLARE_NATIVE(QUERY)
 //
 //  modify: native:generic [
 //
-//  "Change mode or control for port or file"
+//  "Change mode or control for port or file, and return success status"  ; [1]
 //
-//      return: "TRUE if successful, FALSE if unsuccessful (!!! REVIEW)"
-//          [logic?]
+//      return: [logic?]
 //      target [port! file!]
 //      field [<opt-out> word!]
 //      value
 //  ]
 //
 DECLARE_NATIVE(MODIFY)
+//
+// 1. !!! To the extent this is going to influence anything which would be
+//    kept, failure should be returning an ERROR! to say what happened, and
+//    let people TRY that or display it, not returning a logic.
 {
     Element* target = cast(Element*, ARG_N(1));
     return Run_Generic_Dispatch(target, LEVEL, CANON(MODIFY));

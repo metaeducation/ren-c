@@ -72,10 +72,9 @@ sign-of: func [
 ]
 
 extreme-of: func [
-    "Finds the value with a property in a series that is the most extreme"
+    "Finds position of value with most extreme property in a series"
 
-    return: "Position where the extreme value was found"
-        [any-series?]
+    return: [any-series?]
     series [any-series?]
     comparator "Comparator to use, e.g. LESSER? for MINIMUM-OF"
         [<unrun> frame!]

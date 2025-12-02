@@ -1303,8 +1303,8 @@ makefile: make generator-class [
     gen-cmd-delete: get $posix.gen-cmd-delete
 
     gen-rule: func [
-        return: "Possibly multi-line text for rule, with extra newline @ end"
-            [text!]
+        "Return possibly multi-line text for rule, with extra newline at end"
+        return: [text!]
         entry [object!]
         <.>
     ][

@@ -48,12 +48,28 @@ import <platforms.r>  ; for BOOT-VERSION
 ; 3. These can be combined, so that $<xxx, > will delimit with ", "
 ;
 export cscape: func [
-    "Escape Rebol expressions in templated C source, returns new string"
+    --[
+        Escape Rebol expressions in templated C source, returns new string
 
-    return: "${} TO-C-NAME, $<> UNSPACED, $[]/$() DELIMIT closed/open"
-        [text! file!]
-    template "${Expr} case as-is, ${expr} lowercased, ${EXPR} is uppercased"
-        [text! file! block!]
+        ${} TO-C-NAME
+        $<> UNSPACED
+
+        Code inside the fence/group is lowercased before running, but the
+        casing used in the source is heeded for case of the substitution:
+
+        ${Expr} case as-is
+        ${expr} lowercased
+        ${EXPR} is uppercased
+
+        Delimiting takes what's on the beginning and end of line where the
+        substitution happens and repeats it, e.g.
+
+        $() DELIMIT
+        $[] DELIMIT:TAIL - includes what's after the $[] on last line too
+    ]--
+
+    return: [text! file!]
+    template [text! file! block!]
 ][
     let [col start finish prefix suffix expr mode pattern void-marker]
 

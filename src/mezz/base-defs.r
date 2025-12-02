@@ -45,8 +45,7 @@ eval: evaluate/  ; shorthands should be synonyms, too confusing otherwise
 probe: func [  ; note: do not want GHOSTABLE, else `1 + 2 probe eval []` is 3
     "Debug print a molded value and returns that same value"
 
-    return: "Same as the input value"
-        [any-value?]
+    return: [any-value?]
     ^value [any-value?]
 ][
     ; Remember this is early in the boot, so many things not defined.
@@ -267,10 +266,9 @@ empty?: lambda [
 
 
 print: func [
-    "Output SPACED text with newline (evaluating elements if BLOCK!)"
+    "Output SPACED text with newline, return NULL if line has no output"
 
-    return: "Returns null if line outputs nothing, e.g. print [void]"
-        [trash? null?]
+    return: [trash! null?]
     line "Line of text or block, [] has NO output, CHAR! newline allowed"
         [<opt-out> char? text! block! @any-element?]
 ][

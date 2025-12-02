@@ -238,14 +238,11 @@ DECLARE_NATIVE(ARROW)
         );
     }
 
-    VarList* adjunct = nullptr;
-
   //=//// IF NOT OPTIMIZABLE, USE THE FULL PARAMLIST PROCESS //////////////=//
 
     if (not optimizable) {
         require (
           Push_Keys_And_Params(
-            &adjunct,
             methodization,
             spec,
             MKF_MASK_NONE,
@@ -273,9 +270,6 @@ DECLARE_NATIVE(ARROW)
         &Lambda_Dispatcher,
         MAX_IDX_ARROW
     );
-
-    assert(Misc_Phase_Adjunct(details) == nullptr);
-    Tweak_Misc_Phase_Adjunct(details, adjunct);
 
     Copy_Cell(Details_At(details, IDX_ARROW_BODY), body);
 

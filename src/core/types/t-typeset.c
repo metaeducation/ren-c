@@ -152,6 +152,19 @@ Result(None) Set_Parameter_Spec(
   // (This could be more efficient by doing a memcpy and then adjusting the
   // binding on the second walk, but just trying to keep the spec array from
   // getting GC'd in the middle of a first walk for now.)
+  //
+  // 1. It is now possible for people to write type specs with strings in
+  //    them, such as:
+  //
+  //       func [
+  //           return: [
+  //               block! "list of records as [person name age]"
+  //               integer! "count of entries if :COUNT-ONLY used"
+  //               ...
+  //           ]
+  //       ]
+  //
+  //    Stripping out the newline markers makes this unreadable; keep them.
 
     const Element* tail;
     const Element* item = List_At(&tail, spec);
@@ -168,7 +181,7 @@ Result(None) Set_Parameter_Spec(
     Element* dest = Array_Head(copy);
     for (; item != tail; ++item, ++dest) {
         Derelativize(dest, item, spec_binding);
-        Clear_Cell_Flag(dest, NEWLINE_BEFORE);
+        dont(Clear_Cell_Flag(dest, NEWLINE_BEFORE));  // assume significant [1]
     }
 
 } process_parameter_spec: {

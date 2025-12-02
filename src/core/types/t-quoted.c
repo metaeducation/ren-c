@@ -47,8 +47,10 @@
 //
 //  "Returns value passed in without evaluation, but with binding"
 //
-//      return: "Input value, verbatim--unless /SOFT and soft quoted type"
-//          [any-stable?]
+//      return: [
+//          element? "if not :SOFT, input value verbatim"
+//          any-stable?  "if :SOFT and input is evaluated"
+//      ]
 //      @value [element?]
 //      :soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-TUPLE!"
 //  ]
@@ -82,8 +84,7 @@ DECLARE_NATIVE(THE)
 //
 //  "Returns value passed in without evaluation, and no additional binding"
 //
-//      return: "Input value, verbatim"
-//          [any-stable?]
+//      return: [element?]
 //      'value [element?]
 //  ]
 //
@@ -103,9 +104,12 @@ DECLARE_NATIVE(JUST)
 //
 //  "Constructs a quoted form of the evaluated argument"
 //
-//      return: "Quoted value (if depth = 0, may not be quoted)"
-//          [element?]
-//      value [element?]
+//      return: [
+//          quoted!     "will be quoted unless depth = 0"
+//          element?    "if depth = 0, may give a non-quoted result"
+//          <null>      "if input is void"
+//      ]
+//      value [<opt-out> element?]
 //      :depth "Number of quoting levels to apply (default 1)"
 //          [integer!]
 //  ]
@@ -157,12 +161,10 @@ DECLARE_NATIVE(UNQUOTE)
 //
 //  quasi: native [
 //
-//  "Constructs a quasi form of the evaluated argument (if legal)"
+//  "Constructs quasiform of VALUE (if legal for type, otherwise error)"
 //
-//      return: "Raises an error if type cannot make the quasiform"
-//          [quasiform! error!]
-//      value "Any non-QUOTED! value for which quasiforms are legal"
-//          [fundamental? quasiform!]
+//      return: [quasiform! error!]
+//      value [fundamental? quasiform!]
 //      :pass "If input is already a quasiform, then pass it trhough"
 //  ]
 //
@@ -215,8 +217,10 @@ DECLARE_NATIVE(UNQUASI)
 //
 //  "antiforms -> quasiforms, adds a quote to rest"
 //
-//      return: "Keywords and plain forms if :LITE"
-//          [quoted! quasiform! keyword! element? warning!]
+//      return: [
+//          quoted! quasiform! "lifted forms"
+//          keyword! element? warning!  "Keywords and plain forms if :LITE"
+//      ]
 //      ^value [any-value?]
 //      :lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
 //  ]
@@ -404,11 +408,18 @@ DECLARE_NATIVE(UNANTI)
 //
 //  spread: native [
 //
-//  "Make block arguments splice"
+//  "Turn lists into SPLICE! antiforms"
 //
-//      return: "Antiform of GROUP! or unquoted value (passthru void)"
-//          [<void> <null> element? splice!]
-//      ^value [<void> <null> blank? any-list? quasiform!]  ; see [1] [2]
+//      return: [
+//          splice! "note that splices carry no bindings"
+//          <void> <null> "void and null pass through"
+//      ]
+//      ^value [
+//          any-list? "plain lists become splices"
+//          blank? "empty splices pass through as empty splice"  ; [1]
+//          quasiform! "automatic DEGRADE quasiform lists to splice"  ; [2]
+//          <void> <null> "void and null pass through"
+//      ]
 //  ]
 //
 DECLARE_NATIVE(SPREAD)
@@ -416,14 +427,14 @@ DECLARE_NATIVE(SPREAD)
 // SPREAD is chosen as the verb instead of SPLICE, because SPLICE! is the
 // "noun" for a group antiform representing a splice.
 //
-// 1. Generally speaking, functions are not supposed to conflate quasiforms
+// 1. BLANK? is considered EMPTY? and hence legal to use with spread, though
+//    it is already a splice.  This may suggest in general that spreading a
+//    splice should be a no-op, but more investigation is needed.
+//
+// 2. Generally speaking, functions are not supposed to conflate quasiforms
 //    with their antiforms.  But it seems like being willing to DEGRADE a
 //    ~[]~ or a ~null~ here instead of erroring helps more than it hurts.
 //    Should it turn out to be bad for some reason, this might be dropped.
-//
-// 2. BLANK? is considered EMPTY? and hence legal to use with spread, though
-//    it is already a splice.  This may suggest in general that spreading a
-//    splice should be a no-op, but more investigation is needed.
 {
     INCLUDE_PARAMS_OF_SPREAD;
 

@@ -18,28 +18,25 @@ rm: ~#[Use DELETE, not RM (Rebol REMOVE is different, shell dialect coming)]#~
 
 mkdir: make-dir/
 
-cd: func [
-    "Change directory (shell shortcut function)."
+cd: lambda [
+    "CHANGE-DIR convenience (literal argument), returns directory after change"
 
-    return: "The directory after the change"
-        [file! url!]
-    'path [<end> file! word! path! tuple! text!]
-        "Accepts %file, :variables and just words (as dirs)"
+    []: [file! url!]
+    'path [
+        <end> "CD with no argument just returns current directory"
+        text! "Local filesystem convention (backslashes on Windows)"
+        file! "Translated to local filesystem convention"
+        word! path! tuple! "Converted TO FILE!"
+    ]
 ][
-    switch:type path [
-        null?/ []
-        file! [change-dir path]
-        text! [
-            ; !!! LOCAL-TO-FILE lives in the filesystem extension, and does
-            ; not get bound due to an ordering problem.  Hence it needs the
-            ; lib. prefix.  Review.
-            ;
-            change-dir lib/local-to-file path
-        ]
-        tuple! word! path! [change-dir to-file path]
+    change-dir switch:type all [set? $path, path] [  ; :PATH someday will work
+        null?/ [^void]
+        file! [path]
+        text! [local-to-file path]  ; LOCAL-TO-FILE is in filesystem extension
+        tuple! word! path! [to-file path]
     ]
 
-    return what-dir
+    what-dir
 ]
 
 more: lambda [

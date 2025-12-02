@@ -38,7 +38,7 @@ import <bootstrap-shim.r>
 ;    in fact, the WORD parameter for the input position is often POSITION!)
 ;    Hence binding has to be careful here.
 ;
-; 2. The /END feature is not used by bootstrap.
+; 2. The :END feature is not used by bootstrap.
 ;
 ; 3. The passed in code we received should be already bound in the caller's
 ;    context.  But we want to make a variable visible to it that PARSING-AT
@@ -47,10 +47,9 @@ import <bootstrap-shim.r>
 ;    to "overbind" the variable to.
 ;
 export parsing-at: func [
-    "Make rule that evaluates a block for next input position, fails otherwise"
+    "Make PARSE rule evaluating CODE for next input position, fails otherwise"
 
-    return: "PARSE rule block"
-        [block!]
+    return: [block!]
     var "Word set to input position (will be local)"
         [word!]
     code "Code to evaluate. Should Return next input position, or null"  ; [1]

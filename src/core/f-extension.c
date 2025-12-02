@@ -57,10 +57,9 @@ void Shutdown_Extension_Loader(void)
 //
 //  builtin-extensions: native [
 //
-//  "Gets the list of (uninitialized) builtin extensions for the executable"
+//  "Gets list of extension specifications ('collations') in the executable"
 //
-//      return: "Block of extension specifications ('collations')"
-//          [block!]
+//      return: [block!]
 //  ]
 //
 DECLARE_NATIVE(BUILTIN_EXTENSIONS)

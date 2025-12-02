@@ -3133,14 +3133,25 @@ RebolValue* API_rebError_OS(int errnum)  // see also macro rebPanic_OS()
 //
 //  api-transient: native [
 //
-//  "Produce an API handle pointer (returned via INTEGER!) for a value"
+//  "Produce INTEGER! heap address of a rebUnmanage()'d API handle for VALUE"
 //
-//      return: "Heap address of the autoreleasing (rebR()) API handle"
-//          [integer!]
+//      return: [integer!]
 //      value [any-stable?]
 //  ]
 //
 DECLARE_NATIVE(API_TRANSIENT)
+//
+// 1. Regarding adddresses in WASM:
+//
+//   "In wasm32, address operands and offset attributes have type i32"
+//   "In wasm64, address operands and offsets have type i64"
+//
+//   "Note that the value types i32 and i64 are not inherently signed or
+//    unsigned. The interpretation of these types is determined by
+//    individual operators."
+//
+//    Well, which is it?  :-/  R3-Alpha integers were signed 64-bit, Ren-C is
+//    targeting arbitrary precision...use signed as status quo for now.
 {
     INCLUDE_PARAMS_OF_API_TRANSIENT;
 
@@ -3149,19 +3160,7 @@ DECLARE_NATIVE(API_TRANSIENT)
     Stub* stub = Compact_Stub_From_Cell(v);
     Set_Flavor_Flag(API, stub, RELEASE);
 
-    // Regarding adddresses in WASM:
-    //
-    // "In wasm32, address operands and offset attributes have type i32"
-    // "In wasm64, address operands and offsets have type i64"
-    //
-    // "Note that the value types i32 and i64 are not inherently signed or
-    //  unsigned. The interpretation of these types is determined by
-    //  individual operators."
-    //
-    // :-/  Well, which is it?  R3-Alpha integers were signed 64-bit, Ren-C is
-    // targeting arbitrary precision...use signed as status quo for now.
-    //
-    return Init_Integer(level_->out, i_cast(intptr_t, stub));
+    return Init_Integer(level_->out, i_cast(intptr_t, stub));  // intptr_t [1]
 }
 
 
@@ -3360,9 +3359,7 @@ RebolValue* API_rebFunctionFlipped(
     else
         Tweak_Cell_Binding(spec, g_lib_context);  // !!! needs module isolation
 
-    VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed(
-        &adjunct,
         spec,
         MKF_MASK_NONE,
         SYM_RETURN  // has return for type checking and continuation use
@@ -3389,9 +3386,6 @@ RebolValue* API_rebFunctionFlipped(
         g_empty_array
     );
     Tweak_Cell_Binding(holder, Cell_Binding(spec));
-
-    assert(Misc_Details_Adjunct(details) == nullptr);
-    Tweak_Misc_Details_Adjunct(details, adjunct);
 
     return Init_Action(Alloc_Value(), details, ANONYMOUS, UNCOUPLED);
 }

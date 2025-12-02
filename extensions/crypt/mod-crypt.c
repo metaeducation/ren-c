@@ -219,26 +219,26 @@ uint32_t Compute_IPC(const Byte* data, size_t size)
 //
 //  export checksum: native [
 //
-//  "Computes a checksum, CRC, or hash"
+//  "Computes a checksum, CRC, or hash of data. TEXT! interpreted as UTF-8"
 //
-//      return: "Warning: likely to be changed to always be BLOB!"
-//          [blob! integer!]  ; see note below
-//      method "Method name"
-//          [word!]
-//      data "Input data to digest (TEXT! is interpreted as UTF-8 bytes)"
-//          [blob! text!]
+//      return: [
+//          blob!
+//          integer! "Warning: likely to be changed to always be BLOB!" ; [1]
+//      ]
+//      method [word!]
+//      data [blob! text!]
 //      :key "Returns keyed HMAC value"
 //          [blob! text!]
 //  ]
 //
 DECLARE_NATIVE(CHECKSUM)
 //
-// !!! The return value of this function was initially integers, and expanded
-// to be either INTEGER! or BLOB!.  Allowing integer results gives some
-// potential performance benefits over a binary with the same number of bits,
-// although if a binary conversion is then done then it costs more.  Also, it
-// introduces the question of signedness, which was inconsistent.  Moving to
-// where checksum is always a BLOB! is probably what should be done.
+// 1. The return value of this function was initially integers, and expanded
+//    to be either INTEGER! or BLOB!.  Allowing integer results gives some
+//    potential performance benefit over a binary with the same number of bits,
+//    though if a binary conversion is then done then it costs more.  Also, it
+//    introduces the question of signedness, which was inconsistent.  Moving
+//    to where checksum is always a BLOB! is probably what should be done.
 //
 // !!! There was a :SECURE option which took no args, not clear what it did.
 //
@@ -512,8 +512,9 @@ void Get_Padding_And_Hash_From_Spec(
 //
 //  "Generate a public and private key for encoding at most NUM-BITS of data"
 //
-//      return: "RSA ~[public private]~ key objects object"
-//          [~[object! object!]~]
+//      return: [
+//          ~[object! object!]~ "RSA [public private] key objects in pack"
+//      ]
 //      num-bits "How much data this key can encrypt (less when not [raw])"
 //          [integer!]
 //      :padding "Pad method and hash, [raw] [pkcs1-v15 #sha512] [pkcs1-v21]"
@@ -545,18 +546,27 @@ DECLARE_NATIVE(RSA_GENERATE_KEYPAIR)
 
   begin_code_requiring_cleanup: { // see [C] /////////////////////////////////
 
+  // 1. "CRT" components relate to a "Chinese Remainder Theorem" measure for
+  //    increasing the speed of decryption with RSA.  They are optional, but
+  //    considered a best practice when working with larger key sizes.
+  //
+  //      https://iacr.org/archive/ches2008/51540128/51540128.pdf
+  //
+  // 2. We don't use the padding values during generation, but make sure they
+  //    validate together (e.g. not using deprecated hash with spec version).
+
     struct mbedtls_rsa_context ctx;
     mbedtls_rsa_init(&ctx);
 
-    // Public components
-    //
+  // Public components //
+
     mbedtls_mpi N;
     mbedtls_mpi E;
     mbedtls_mpi_init(&N);
     mbedtls_mpi_init(&E);
 
-    // Private components
-    //
+  // Private components //
+
     mbedtls_mpi D;
     mbedtls_mpi P;
     mbedtls_mpi Q;
@@ -564,12 +574,8 @@ DECLARE_NATIVE(RSA_GENERATE_KEYPAIR)
     mbedtls_mpi_init(&P);
     mbedtls_mpi_init(&Q);
 
-    // "CRT" components: these relate to a "Chinese Remainder Theorem" measure
-    // for increasing the speed of decryption with RSA.  They are optional, but
-    // considered a best practice when working with larger key sizes.
-    //
-    // https://iacr.org/archive/ches2008/51540128/51540128.pdf
-    //
+  // Chinese Remainder Theorem components [1] //
+
     mbedtls_mpi DP;
     mbedtls_mpi DQ;
     mbedtls_mpi QP;
@@ -577,10 +583,7 @@ DECLARE_NATIVE(RSA_GENERATE_KEYPAIR)
     mbedtls_mpi_init(&DQ);
     mbedtls_mpi_init(&QP);
 
-    // We don't use the padding values during generation, but make sure they
-    // validate together (e.g. not using deprecated hash with spec version).
-    //
-    if (padding != MBEDTLS_RSA_RAW_HACK) {
+    if (padding != MBEDTLS_RSA_RAW_HACK) {  // make sure padding validates [2]
         IF_NOT_0(cleanup, error, mbedtls_rsa_set_padding(
             &ctx,
             padding,
@@ -602,10 +605,10 @@ DECLARE_NATIVE(RSA_GENERATE_KEYPAIR)
 
   generate_rsa_keypair: { ////////////////////////////////////////////////////
 
-    // "The following incomplete parameter sets for private keys are supported"
-    //
-    //    (1) P, Q missing.
-    //    (2) D and potentially N missing.
+  // "The following incomplete parameter sets for private keys are supported"
+  //
+  //    (1) P, Q missing.
+  //    (2) D and potentially N missing.
 
     Value* n = rebBlobFromMpi(&N);
     Value* e = rebBlobFromMpi(&E);
@@ -664,9 +667,10 @@ DECLARE_NATIVE(RSA_GENERATE_KEYPAIR)
 //
 //  "Encrypt a *small* amount of data using the expensive RSA algorithm"
 //
-//      return: "Deterministic if padding is [raw], randomly blinded otherwise"
-//          [blob!]
-//      data "Exactly key size if [raw], else less than key size minus overhead"
+//      return: [
+//          blob! "Deterministic if padding [raw], randomly blinded otherwise"
+//      ]
+//      data "Exactly keysize if [raw], else less than keysize minus overhead"
 //          [blob!]
 //      public-key [object!]
 //  ]
@@ -702,21 +706,23 @@ DECLARE_NATIVE(RSA_ENCRYPT)
     struct mbedtls_rsa_context ctx;
     mbedtls_rsa_init(&ctx);
 
-    // Public components (always used)
-    //
+  // Public components (always used)
+
     mbedtls_mpi N;
     mbedtls_mpi E;
     mbedtls_mpi_init(&N);
     mbedtls_mpi_init(&E);
 
-    // Translate BLOB! public components to mbedtls BigNums
-    //
+  translate_public_components_to_mbedtls_bignums: {
+
     IF_NOT_0(cleanup, error, Mpi_From_Binary(&N, n));
     IF_NOT_0(cleanup, error, Mpi_From_Binary(&E, e));
 
-    // "To setup an RSA public key, precisely N and E must have been imported"
-    // This is all you need for encrypting.
-    //
+} setup_rsa_context: {
+
+  // "To setup an RSA public key, precisely N and E must have been imported"
+  // This is all you need for encrypting.
+
     IF_NOT_0(cleanup, error, mbedtls_rsa_import(
         &ctx,
         &N,  // N, The RSA modulus
@@ -728,7 +734,7 @@ DECLARE_NATIVE(RSA_ENCRYPT)
 
     IF_NOT_0(cleanup, error, mbedtls_rsa_complete(&ctx));
 
-  perform_encryption: { //////////////////////////////////////////////////////
+} perform_encryption: { //////////////////////////////////////////////////////
 
     size_t plaintext_size;
     const Byte* plaintext = rebLockBytes(&plaintext_size, "data");
@@ -796,8 +802,9 @@ DECLARE_NATIVE(RSA_ENCRYPT)
 //
 //  "Decrypt a *small* amount of data using the RSA algorithm"
 //
-//      return: "Decrypted data (will never be larger than the key size)"
-//          [blob!]
+//      return: [
+//          blob! "Decrypted data (will never be larger than the key size)"
+//      ]
 //      data "RSA encrypted information (must be equal to key size)"
 //          [blob!]
 //      private-key [object!]
@@ -828,11 +835,13 @@ DECLARE_NATIVE(RSA_DECRYPT)
     Value* p = rebValue("match blob! private-key.p");
     Value* q = rebValue("match blob! private-key.q");
 
-    // "The following incomplete parameter sets for private keys are supported"
-    //
-    //    (1) P, Q missing.
-    //    (2) D and potentially N missing.
-    //
+  ensure_valid_private_key_fields: {
+
+  // "The following incomplete parameter sets for private keys are supported"
+  //
+  //    (1) P, Q missing.
+  //    (2) D and potentially N missing.
+
     if (n and e and d and p and q) {
         // all fields present
     }
@@ -846,6 +855,8 @@ DECLARE_NATIVE(RSA_DECRYPT)
     }
     else
         return "panic -[Missing field combination in private key not allowed]-";
+
+} check_for_chinese_remainder_speedup: {
 
     Value* dp = rebValue("match blob! private-key.dp");
     Value* dq = rebValue("match blob! private-key.dq");
@@ -870,15 +881,15 @@ DECLARE_NATIVE(RSA_DECRYPT)
     struct mbedtls_rsa_context ctx;
     mbedtls_rsa_init(&ctx);
 
-    // Public components (always needed)
-    //
+  // Public components (always needed) //
+
     mbedtls_mpi N;
     mbedtls_mpi E;
     mbedtls_mpi_init(&N);
     mbedtls_mpi_init(&E);
 
-    // Private components (only used when decrypting)
-    //
+  // Private components (only used when decrypting) //
+
     mbedtls_mpi D;
     mbedtls_mpi P;
     mbedtls_mpi Q;
@@ -886,8 +897,8 @@ DECLARE_NATIVE(RSA_DECRYPT)
     mbedtls_mpi_init(&P);
     mbedtls_mpi_init(&Q);
 
-    // Chinese Remainder Theorem (CRT) components: optional, speed up decrypt
-    //
+  // Chinese Remainder Theorem (CRT) components: optional, speed up decrypt //
+
     mbedtls_mpi DP;
     mbedtls_mpi DQ;
     mbedtls_mpi QP;
@@ -903,8 +914,17 @@ DECLARE_NATIVE(RSA_DECRYPT)
         MBEDTLS_MD_SHA256
     ));
 
-    // Translate BLOB! public components to mbedtls BigNums
-    //
+  translate_public_components_to_mbedtls_bignums: {
+
+  // 1. These can be deduced from the private key components, but that has
+  //    some associated cost.  It appears that mbedTLS no longer has an API
+  //    for importing these components (though it can export them).
+  //
+  //    * Should we argue for an API for this?
+  //    * Should we just check that the deduction in mbedtls_rsa_complete()
+  //      gives the same values?
+  //    * Or should we just drop them from our object altogether?
+
     if (n)
         IF_NOT_0(cleanup, error, Mpi_From_Binary(&N, n));
     IF_NOT_0(cleanup, error, Mpi_From_Binary(&E, e));
@@ -925,22 +945,15 @@ DECLARE_NATIVE(RSA_DECRYPT)
         &E  // E, The public exponent (always required)
     ));
 
-    if (chinese_remainder_speedup) {
+    if (chinese_remainder_speedup) {  // deducible from private key, slower [1]
         IF_NOT_0(cleanup, error, Mpi_From_Binary(&DP, dp));
         IF_NOT_0(cleanup, error, Mpi_From_Binary(&DQ, dq));
         IF_NOT_0(cleanup, error, Mpi_From_Binary(&QP, qinv));
-
-        // !!! These can be deduced from the private key components, but that
-        // has some associated cost.  It appears that mbedTLS no longer has an
-        // API for importing these components (though it can export them).
-        // Should we argue for an API for this?  Or just check that the
-        // deduction process in mbedtls_rsa_complete() gives the same values?
-        // Or drop them from our object altogether?
     }
 
     IF_NOT_0(cleanup, error, mbedtls_rsa_complete(&ctx));
 
-  perform_decryption: { //////////////////////////////////////////////////////
+} perform_decryption: { //////////////////////////////////////////////////////
 
     size_t key_size = mbedtls_rsa_get_len(&ctx);
     assert(encrypted_size == key_size);
@@ -1016,16 +1029,15 @@ DECLARE_NATIVE(RSA_DECRYPT)
     rebUnlockBytes(encrypted);
 
     return result;
-}}}
+}}}}
 
 
 //
 //  export dh-generate-keypair: native [
 //
-//  "Generate a new Diffie-Hellman private/public key pair"
+//  "Generate Diffie-Hellman object with [MODULUS PRIVATE-KEY PUBLIC-KEY]"
 //
-//      return: "Diffie-Hellman object with [MODULUS PRIVATE-KEY PUBLIC-KEY]"
-//          [object!]
+//      return: [object!]
 //      modulus "Public 'p', best if https://en.wikipedia.org/wiki/Safe_prime"
 //          [blob!]
 //      base "Public 'g', generator, less than modulus and usually prime"
@@ -1103,22 +1115,22 @@ DECLARE_NATIVE(DH_GENERATE_KEYPAIR)
 
   try_again_even_if_poor_primes: { ///////////////////////////////////////////
 
-    // 1. mbedTLS will notify you if it discovers the base and modulus you
-    //    were using is unsafe w.r.t. this attack:
-    //
-    //    http://www.cl.cam.ac.uk/~rja14/Papers/psandqs.pdf
-    //    http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2005-2643
-    //
-    //    It can't generically notice a-priori for large base and modulus if
-    //    such properties will be exposed.  So you only get this error if it
-    //    runs the randomized secret calculation and happens across a worrying
-    //    result.  If you get such an error it means you should be skeptical
-    //    of using those numbers...and choose something more attack-resistant.
-    //
-    // 2. Checking for safe primes should probably be done by default, but
-    //    here's some code using a probabilistic test after failure.  It can
-    //    be kept here for future consideration.  Rounds chosen to scale to
-    //    get 2^-80 chance of error for 4096 bits.
+  // 1. mbedTLS will notify you if it discovers the base and modulus you were
+  //    using is unsafe w.r.t. this attack:
+  //
+  //      http://www.cl.cam.ac.uk/~rja14/Papers/psandqs.pdf
+  //      http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2005-2643
+  //
+  //    It can't generically notice a-priori for large base and modulus if
+  //    such properties will be exposed.  So you only get this error if it
+  //    runs the randomized secret calculation and happens across a worrying
+  //    result.  If you get such an error it means you should be skeptical
+  //    of using those numbers...and choose something more attack-resistant.
+  //
+  // 2. Checking for safe primes should probably be done by default, but
+  //    here's some code using a probabilistic test after failure.  It can be
+  //    kept here for future consideration.  Rounds chosen to scale to get
+  //    2^-80 chance of error for 4096 bits.
 
     int ret = mbedtls_dhm_make_public(
         &ctx,
@@ -1189,13 +1201,13 @@ DECLARE_NATIVE(DH_GENERATE_KEYPAIR)
 
 } extract_private_key: { /////////////////////////////////////////////////////
 
-    // The "make_public" routine expects to be giving back a public key as
-    // bytes, so it takes that buffer for output.  But it keeps the private
-    // key in the context...so we have to extract that separately.
-    //
-    // We actually want to expose the private key vs. keep it locked up in
-    // a C structure context (we dispose the context and make new ones if
-    // we need them).  So extract it into a binary.
+  // The "make_public" routine expects to be giving back a public key as
+  // bytes, so it takes that buffer for output.  But it keeps the private key
+  // in the context...so we have to extract that separately.
+  //
+  // We actually want to expose the private key vs. keep it locked up in a C
+  // structure context (we dispose the context and make new ones if we need
+  // them).  So extract it into a binary.
 
     IF_NOT_0(cleanup, error, mbedtls_dhm_get_value(
         &ctx,
@@ -1237,8 +1249,9 @@ DECLARE_NATIVE(DH_GENERATE_KEYPAIR)
 //
 //  "Compute secret from a private/public key pair and the peer's public key"
 //
-//      return: "Negotiated shared secret (same size as public/private keys)"
-//          [blob!]
+//      return: [
+//          blob! "Negotiated shared secret (same size as public/private keys)"
+//      ]
 //      obj "The Diffie-Hellman key object"
 //          [object!]
 //      peer-key "Peer's public key"
@@ -1310,20 +1323,20 @@ DECLARE_NATIVE(DH_COMPUTE_SECRET)
 
 } compute_dh_secret: { ///////////////////////////////////////////////////////
 
-    // 1. See remarks on DH-GENERATE-KEYPAIR for why this check is performed
-    //    unless :INSECURE is used.  Note that we deliberately don't allow
-    //    the cases of detectably sketchy private keys to pass by even with
-    //    :INSECURE set.  Instead, a new attempt is made.  So the only way
-    //    this happens is if the peer came from a less checked implementation.
-    //
-    //    (There is no way to "try again" with unmodified mbedTLS code with a
-    //    suspect key to make a shared secret--it's not randomization, it's a
-    //    calculation.  Adding :INSECURE would require changing mbedTLS itself
-    //    to participate in decoding insecure keys.)
-    //
-    // 2. !!! The multiple precision number system affords leading zeros, and
-    //    can optimize them out.  So 7 could be #{0007} or #{07}.  We could
-    //    pad the secret if we wanted to, but there's no obvious reason
+  // 1. See remarks on DH-GENERATE-KEYPAIR for why this check is performed
+  //    unless :INSECURE is used.  Note that we deliberately don't allow
+  //    the cases of detectably sketchy private keys to pass by even with
+  //    :INSECURE set.  Instead, a new attempt is made.  So the only way this
+  //    happens is if the peer came from a less checked implementation.
+  //
+  //    (There is no way to "try again" with unmodified mbedTLS code with a
+  //    suspect key to make a shared secret--it's not randomization, it's a
+  //    calculation.  Adding :INSECURE would require changing mbedTLS itself
+  //    to participate in decoding insecure keys.)
+  //
+  // 2. !!! The multiple precision number system affords leading zeros, and
+  //    can optimize them out.  So 7 could be #{0007} or #{07}.  We could
+  //    pad the secret if we wanted to, but there's no obvious reason
 
     size_t k_size = mbedtls_dhm_get_len(&ctx);  // same size as modulus/etc.
     Byte* k_buffer = rebAllocN(Byte, k_size);  // shared key
@@ -1386,10 +1399,9 @@ static void Aes_Ctx_Handle_Cleaner(void* p, size_t length)
 //
 //  export aes-key: native [
 //
-//  "Set up context for encrypting/decrypting AES data"
+//  "Set up stream cipher context handle for encrypting/decrypting AES data"
 //
-//      return: "Stream cipher context handle"
-//          [handle!]
+//      return: [handle!]
 //      key [blob!]
 //      iv "Optional initialization vector"
 //          [<opt> blob!]
@@ -1420,8 +1432,8 @@ DECLARE_NATIVE(AES_KEY)
 
   setup_cipher: { ////////////////////////////////////////////////////////////
 
-    // 1. Default padding is PKCS7, but TLS won't work unless you use zeros.
-    //    (Shown also by the %ssl_tls.c for mbedTLS, see AES CBC ciphers.)
+  // 1. Default padding is PKCS7, but TLS won't work unless you use zeros.
+  //    (Shown also by the %ssl_tls.c for mbedTLS, see AES CBC ciphers.)
 
     struct mbedtls_cipher_context_t* ctx
         = rebAlloc(struct mbedtls_cipher_context_t);
@@ -1482,10 +1494,9 @@ DECLARE_NATIVE(AES_KEY)
 //
 //  export aes-stream: native [
 //
-//  "Encrypt/decrypt data using AES algorithm"
+//  "Encrypt/Decrypt data using AES algorithm (result is NULL for zero length)"
 //
-//      return: "Encrypted/decrypted data (null if zero length)"
-//          [<null> blob!]
+//      return: [<null> blob!]
 //      ctx "Stream cipher context"
 //          [handle!]
 //      data [blob!]
@@ -1511,13 +1522,12 @@ DECLARE_NATIVE(AES_STREAM)
 
   encrypt_or_decrypt: { //////////////////////////////////////////////////////
 
-    // 1. !!! Saphir's AES code worked with zero-padded chunks, so you always
-    //    got a multiple of 16 bytes out.  That doesn't seem optimal for a
-    //    "streaming cipher" because for the output to be useful, your input
-    //    has to be pre-chunked; you should be able to add one byte at a time
-    //    if you want.  The code is kept compatible just to excise the old
-    //    AES implementation--but this needs to change, maybe to a PORT! model
-    //    of some kind.
+  // 1. !!! Saphir's AES code worked with zero-padded chunks, so you always
+  //    got a multiple of 16 bytes out.  That doesn't seem optimal for a
+  //    "streaming cipher" because for the output to be useful, your input has
+  //    to be pre-chunked; you should be able to add one byte at a time if you
+  //    want.  The code is kept compatible just to excise the old AES
+  //    implementation--but this needs to change, maybe to a PORT! model. :-/
 
     struct mbedtls_cipher_context_t *ctx
         = rebUnboxHandle(struct mbedtls_cipher_context_t*, "ctx");
@@ -1586,10 +1596,9 @@ static const struct mbedtls_ecp_curve_info* Ecp_Curve_Info_From_Name(
 //
 //  export ecc-generate-keypair: native [
 //
-//  "Generates an uncompressed secp256r1 key"
+//  "secp256r1 uncompressed with PUBLIC.X, PUBLIC.Y, and PRIVATE key members"
 //
-//      return: "object with PUBLIC/X, PUBLIC/Y, and PRIVATE key members"
-//          [object!]
+//      return: [object!]
 //      group "Elliptic curve group [CURVE25519 SECP256R1 ...]"  ; [1]
 //          [word!]
 //  ]
@@ -1612,13 +1621,13 @@ DECLARE_NATIVE(ECC_GENERATE_KEYPAIR)
 
   begin_code_requiring_cleanup: { // see [C] /////////////////////////////////
 
-    // 1. A change in mbedTLS ecdh code means there's a context variable in
-    //    the context (ctx.ctx) when not using MBEDTLS_ECDH_LEGACY_CONTEXT
-    //
-    // 2. !!! The mbedtls 3.0 transition has not established a way to get at
-    //    the private fields via functions.  They cheat via MBEDTLS_PRIVATE:
-    //
-    //      https://github.com/Mbed-TLS/mbedtls/issues/5016
+  // 1. A change in mbedTLS ecdh code means there's a context variable in the
+  //    context (ctx.ctx) when not using MBEDTLS_ECDH_LEGACY_CONTEXT
+  //
+  // 2. !!! The mbedtls 3.0 transition has not established a way to get at the
+  //    private fields via functions.  They cheat via MBEDTLS_PRIVATE:
+  //
+  //      https://github.com/Mbed-TLS/mbedtls/issues/5016
 
     struct mbedtls_ecdh_context ctx;
     mbedtls_ecdh_init(&ctx);  // legacy context variable ctx.ctx [2]
@@ -1677,8 +1686,10 @@ DECLARE_NATIVE(ECC_GENERATE_KEYPAIR)
 
 //
 //  export ecdh-shared-secret: native [
-//      return: "secret"
-//          [blob!]
+//
+//  "Compute ECDH shared secret from private key and peer's public key"
+//
+//      return: [blob!]
 //      group "Elliptic curve group [CURVE25519 SECP256R1 ...]"
 //          [word!]
 //      private-key "32-byte private key"
@@ -1718,13 +1729,13 @@ DECLARE_NATIVE(ECDH_SHARED_SECRET)
 
   begin_code_requiring_cleanup: { // see [C] /////////////////////////////////
 
-    // 1. A change in mbedTLS ecdh code means there's a context variable in
-    //    the context (ctx.ctx) when not using MBEDTLS_ECDH_LEGACY_CONTEXT
-    //
-    // 2. !!! The mbedtls 3.0 transition has not established a way to get at
-    //    the private fields via functions.  They cheat via MBEDTLS_PRIVATE:
-    //
-    //      https://github.com/Mbed-TLS/mbedtls/issues/5016
+  // 1. A change in mbedTLS ecdh code means there's a context variable in the
+  //    context (ctx.ctx) when not using MBEDTLS_ECDH_LEGACY_CONTEXT
+  //
+  // 2. !!! The mbedtls 3.0 transition has not established a way to get at
+  //    the private fields via functions.  They cheat via MBEDTLS_PRIVATE:
+  //
+  //      https://github.com/Mbed-TLS/mbedtls/issues/5016
 
     struct mbedtls_ecdh_context ctx;
     mbedtls_ecdh_init(&ctx);  // legacy context variable ctx.ctx [1]

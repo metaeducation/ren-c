@@ -1236,9 +1236,18 @@ DECLARE_NATIVE(SHUTDOWN_P)
 //
 //  "Waits for a duration, port, or both"
 //
-//      return: "NULL if timeout, PORT! that awoke or BLOCK! of ports if :ALL"
-//          [<null> port! block!]
-//      value [<opt> any-number? time! port! block!]
+//      return: [
+//          <null>      "timeout"
+//          port!       "port that awoke"
+//          block!      "block of ports that awoke if :ALL"
+//      ]
+//      value [
+//          <opt>       "wait indefinitely if none given"
+//          any-number? "milliseconds to wait"
+//          time!       "time to wait"
+//          port!       "port to wait on"
+//          block!      "block of ports to wait on"
+//      ]
 //  ]
 //
 DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code

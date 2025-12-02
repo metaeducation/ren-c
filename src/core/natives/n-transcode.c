@@ -78,8 +78,13 @@ Result(Element*) Transcode_One(
 //
 //  "Translates UTF-8 source (from a text or binary) to Rebol elements"
 //
-//      return: "Transcoded elements block, or ~[remainder element]~ if :NEXT"
-//          [<null> block! ~[[text! blob!] element?]~ element?]
+//      return: [
+//          block!                      "Transcoded elements block"
+//          ~[[text! blob!] element?]~  "[remainder element] if :NEXT"
+//          <null>                      "if :NEXT but no more elements"
+//          element?                    "if :ONE used"
+//          error!                      "scanner error if encountered"
+//      ]
 //      source "If BINARY!, must be UTF-8 encoded"
 //          [any-utf8? blob!]
 //      :next "Translate one element and give back next position"

@@ -665,10 +665,9 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
 //
 //  "Convert a value to its ^XXX metaform representation"
 //
-//      return: "Error if already metaform/tied/pinned and not :FORCE"
-//          [error! ^plain?]
+//      return: [error! ^plain?]
 //      value [<opt-out> fundamental?]
-//      :force "Apply lift, even if already metaform/tied/pinned"
+//      :force "Meta without erroring, even if already metaform/tied/pinned"
 //  ]
 //
 DECLARE_NATIVE(META)
@@ -682,10 +681,9 @@ DECLARE_NATIVE(META)
 //
 //  "Convert a value to its @XXX pinned representation"
 //
-//      return: "Error if already metaform/tied/pinned and not :FORCE"
-//          [error! @plain?]
+//      return: [error! @plain?]
 //      value [<opt-out> fundamental?]
-//      :force "Apply pin, even if already metaform/tied/pinned"
+//      :force "Pin without erroring, even if already metaform/tied/pinned"
 //  ]
 //
 DECLARE_NATIVE(PIN)
@@ -699,10 +697,9 @@ DECLARE_NATIVE(PIN)
 //
 //  "Convert a value to its $XXX tied representation"
 //
-//      return: "Error if already metaform/tied/pinned and not :FORCE"
-//          [error! $plain?]
+//      return: [error! $plain?]
 //      value [<opt-out> fundamental?]
-//      :force "Apply tie, even if already metaform/tied/pinned"
+//      :force "Tie without erroring, even if already metaform/tied/pinned"
 //  ]
 //
 DECLARE_NATIVE(TIE)
@@ -736,10 +733,9 @@ static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
 //
 //  unmeta: native:intrinsic [
 //
-//  "Convert ^XXX metaform representation to plain XXX"
+//  "Convert ^XXX to plain XXX, error if not metaform"
 //
-//      return: "Error if value not metaform"
-//          [<null> plain? error!]
+//      return: [<null> plain? error!]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -752,10 +748,9 @@ DECLARE_NATIVE(UNMETA)
 //
 //  unpin: native:intrinsic [
 //
-//  "Convert @XXX pinned representation to plain XXX"
+//  "Convert @XXX to plain XXX, error if not pinned"
 //
-//      return: "Error if value not pinned"
-//          [<null> plain? error!]
+//      return: [<null> plain? error!]
 //      value [<opt-out> fundamental?]
 //  ]
 //
@@ -768,10 +763,9 @@ DECLARE_NATIVE(UNPIN)
 //
 //  untie: native:intrinsic [
 //
-//  "Convert ^XXX tied representation to plain XXX"
+//  "Convert $XXX to plain XXX, error if not tied"
 //
-//      return: "Error if value not tied"
-//          [<null> plain? error!]
+//      return: [<null> plain? error!]
 //      value [<opt-out> fundamental?]
 //  ]
 //

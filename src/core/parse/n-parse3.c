@@ -2450,44 +2450,60 @@ DECLARE_NATIVE(SUBPARSE)
 //
 //  parse3: native [
 //
-//  "Parse series according to grammar rules"
+//  "Parse series according to grammar rules (limited compatibility version)"
 //
-//      return: "Parse product (return value may be what's passed to ACCEPT)"
-//          [any-stable?]
-//
-//      input "Input series to parse"
-//          [<opt-out> any-series? any-sequence? any-utf8?]
-//      rules "Rules to parse by"
-//          [<opt-out> block!]
+//      return: [
+//          any-value?  "synthesized rule product (only works for ACCEPT)"
+//          trash!      "non-ACCEPT 'success' result for PARSE3"
+//          error!      "parse failure"
+//          any-series? "if :MATCH used, original input if successful"
+//          <null>      "if :MATCH used and unsuccessful"
+//      ]
+//      input [<opt-out> any-series? any-sequence? any-utf8?]
+//      rules [<opt-out> block!]
 //      :case "Uses case-sensitive comparison"
 //      :match "Return PARSE input instead of synthesized result"
 //      :relax "Don't require reaching the tail of the input for success"
 //  ]
 //
 DECLARE_NATIVE(PARSE3)
-//
-// https://forum.rebol.info/t/1084
-//
-// 1. The mechanics of PARSE actually require the input to be a series, since
-//    it stores the "current" parse position as the index in that series cell.
-//    But it's nice to be able to say (parse #aaabbb [some "a" some "b"])
-//    instead of (parse as text! #aaabbb [some "a" some "b"]), or to be
-//    able to parse sequences.  So we implicitly alias non-series types as
-//    series in order to make the input more flexible.
 {
     INCLUDE_PARAMS_OF_PARSE3;
 
     Element* input = Element_ARG(INPUT);
     Element* rules = Element_ARG(RULES);
 
-    if (Any_Sequence(input)) {  // needs index [1]
+    Element* scratch_original_input;
+
+  force_input_to_be_series: {
+
+  // Mechanics of PARSE actually require the input to be a series, since it
+  // stores the current parse position as the index in that series cell.
+  // But it's nice to be able to say (parse #aaabbb [some "a" some "b"])
+  // instead of (parse as text! #aaabbb [some "a" some "b"]), or to be
+  // able to parse sequences.  So we implicitly alias non-series types as
+  // series in order to make the input more flexible.
+  //
+  // BUT we save the original input for use with :MATCH, so that we give
+  // back the original datatype.
+  //
+  // NOTE: This means things like ACROSS won't preserve the input type (and
+  // in general, won't be able to.)  It likely should be that the <input>
+  // combinator has a way of giving back the actual original input:
+  //
+  //   https://rebol.metaeducation.com/t/parse-preserving-input-type/1084
+
+    scratch_original_input = Copy_Cell(SCRATCH, input);
+
+    if (Any_Sequence(input)) {
         Blockify_Any_Sequence(input);
     }
-    else if (Any_Utf8(input) and not Any_Series(input)) {  // needs index [1]
-        Textify_Any_Utf8(input);  // <input> won't preserve input type :-/
+    else if (Any_Utf8(input) and not Any_Series(input)) {
+        Textify_Any_Utf8(input);
     }
-
     assert(Any_Series(input));
+
+} call_subparse_on_topmost_rule_block: {
 
     require (
       Level* sub = Make_Level_At(
@@ -2521,6 +2537,8 @@ DECLARE_NATIVE(PARSE3)
         return THROWN;
     }
 
+} interpret_subparse_results_as_success_or_failure: {
+
     if (Is_Light_Null(OUT)) {  // a match failed (but may be at end of input)
         if (Bool_ARG(MATCH))
             return NULLED;
@@ -2538,10 +2556,10 @@ DECLARE_NATIVE(PARSE3)
     }
 
     if (Bool_ARG(MATCH))
-        return COPY(ARG(INPUT));
+        return COPY(scratch_original_input);
 
     return TRIPWIRE;  // no synthesized result in PARSE3 unless ACCEPT
-}
+}}
 
 
 //

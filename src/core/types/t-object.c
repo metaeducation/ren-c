@@ -1530,12 +1530,13 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
 //
 //  "Get the unspecialized PARAMETER! descriptions for a FRAME! or ACTION?"
 //
-//      return: "Frame with lens showing only PARAMETER! values"
-//          [frame!]
+//      return: [frame!]
 //      frame [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(PARAMETERS_OF)
+//
+// Returns frame with lens showing only PARAMETER! values.
 {
     INCLUDE_PARAMS_OF_PARAMETERS_OF;
 
@@ -1555,8 +1556,7 @@ DECLARE_NATIVE(PARAMETERS_OF)
 //
 //  "Get the return parameter specification of a frame"
 //
-//      return: "May be unconstrained (spec: ~null~) or divergent (spec: [])"
-//          [parameter!]  ; always returns parameter!, not null [1]
+//      return: [parameter!]  ; always returns parameter!, not null [1]
 //      frame [<unrun> frame!]
 //  ]
 //
@@ -1616,8 +1616,11 @@ DECLARE_NATIVE(BODY_OF)  // !!! should this be SOURCE-OF ?
 //
 //  "Get what object a FRAME! or ACTION? uses to looks up .XXX references"
 //
-//      return: "ERROR! if non-method, null if method but uncoupled"
-//          [<null> object! error!]
+//      return: [
+//          object! "if method (declared with <.> in spec)"
+//          <null>  "if method but uncoupled"
+//          error!  "if non-method"
+//      ]
 //      frame [<unrun> frame!]
 //  ]
 //

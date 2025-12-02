@@ -320,10 +320,9 @@ static bool Pending_Native_Details_Querier(
 //
 //  export make-native: native [
 //
-//  "Create an ACTION! which is compiled from a C source TEXT!"
+//  "Make ACTION! from C source, compiled on-demand or by COMPILE function"
 //
-//      return: "Function value, will be compiled on demand or by COMPILE"
-//          [action!]
+//      return: [action!]
 //      spec "Rebol parameter definitions (similar to FUNCTION's spec)"
 //          [block!]
 //      source "C source of the native implementation"
@@ -339,10 +338,8 @@ DECLARE_NATIVE(MAKE_NATIVE)
     Element* spec = Element_ARG(SPEC);
     Element* source = Element_ARG(SOURCE);
 
-    VarList* adjunct;
     require (
       ParamList* paramlist = Make_Paramlist_Managed(
-        &adjunct,
         spec,
         MKF_MASK_NONE,
         SYM_RETURN  // want return
@@ -400,9 +397,6 @@ DECLARE_NATIVE(MAKE_NATIVE)
 
     Init_Space(Details_At(details, IDX_TCC_PRENATIVE_STATE));  // no state, yet
 
-    assert(Misc_Phase_Adjunct(details) == nullptr);
-    Tweak_Misc_Phase_Adjunct(details, adjunct);
-
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return UNSURPRISING(OUT);
 }
@@ -413,10 +407,12 @@ DECLARE_NATIVE(MAKE_NATIVE)
 //
 //  "INTERNAL USE ONLY: Expects arguments to be fully vetted by COMPILE"
 //
-//      return: "No return value, unless :INSPECT is used to see result"
-//          [<null> text!]
+//      return: [
+//          <null>
+//          text! "C source text if :INSPECT was requested"
+//      ]
 //      compilables [block!] "Should be just TEXT! and user native ACTION!s"
-//      config [object!] "Vetted and simplified form of /OPTIONS block"
+//      config [object!] "Vetted and simplified form of :OPTIONS block"
 //      :inspect "Return the C source code as text, but don't compile it"
 //      :librebol "Connect symbols to running EXE libRebol (rebValue(), etc.)"
 //      :files "COMPILABLES is a list of TEXT! specifying local filenames"

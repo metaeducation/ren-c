@@ -240,10 +240,10 @@ DECLARE_NATIVE(OVERBIND)
 //
 //  "Returns a word bound into the context, if it's available, else null"
 //
-//      return: "Preserves Sigil ('@foo = has obj '@foo)"
-//          [<null> any-word?]
+//      return: [<null> any-word?]
 //      context [any-context?]
-//      value [<opt-out> any-word?]  ; QUOTED? support?
+//      value "Can carry Sigil, is preserved ('@foo = has obj '@foo)"
+//          [<opt-out> any-word?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(HAS)
@@ -945,9 +945,9 @@ DECLARE_NATIVE(RESOLVE)
 //
 //  "Copy context by setting values in the target from those in the source"
 //
-//      return: "Same as the target module"
-//          [module!]
-//      where [<opt-out> module!] "(modified)"
+//      return: [module!]
+//      where "(modified), will also be return result"
+//          [<opt-out> module!]
 //      source [<opt-out> module!]
 //      exports "Which words to export from the source"
 //          [<opt-out> block!]
@@ -1173,9 +1173,9 @@ DECLARE_NATIVE(FREE)
 //
 //  "Tells if data has been released with FREE"
 //
-//      return: "Returns false if value wouldn't be FREEable (e.g. LOGIC!)"
-//          [logic?]
-//      value [<opt-out> any-stable?]
+//      return: [logic?]
+//      value "Returns false if value wouldn't be FREEable (e.g. WORD!)"
+//          [<opt-out> any-stable?]
 //  ]
 //
 DECLARE_NATIVE(FREE_Q)

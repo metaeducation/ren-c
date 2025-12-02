@@ -55,7 +55,7 @@
     ; because we want to suppress the triggering of the generated rule
     ;
     ugly-combinators.discard: ghostable combinator [
-        return: "Don't return anything" [ghost!]
+        return: [ghost!]
         input [any-series?]
         @group [group!]
     ][

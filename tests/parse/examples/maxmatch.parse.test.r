@@ -17,13 +17,14 @@
 ; pending list of accrued items at all.
 [(
     maxmatch-D: combinator [  ; "(D)efault"
-        "Match maximum of two rules, keeping side effects of both if match"
+        "Result of the longest match (favors first parser if equal)"
 
-        return: "Result of the longest match (favors first parser if equal)"
-           [any-stable? pack!]
+        return: [any-stable? pack!]
         pos [any-series?]
-        parser1 [action!]
-        parser2 [action!]
+        parser1 "Pending contributions kept if successful, even if not max"
+            [action!]
+        parser2 "Pending contributions kept if successful, even if not max"
+            [action!]
         {warning1 warning2 ^result1 ^result2 remainder1 remainder2}
     ][
         ; Use RESCUE instead of packs with error for MAXMATCH-D
@@ -195,14 +196,15 @@
 ; that are called.
 [(
     maxmatch-C: combinator [  ; "(C)ustom"
-        "Match maximum of two rules, keeping side effects of both if match"
+        "Result of the longest match (favors first parser if equal)"
 
-        return: "Result of the longest match (favors first parser if equal)"
-           [any-stable? pack!]
+        return: [any-stable? pack!]
         pos [any-series?]
         :pending [blank? block!]
-        parser1 [action!]
-        parser2 [action!]
+        parser1 "Pending contributions rolled back if not max, even on success"
+            [action!]
+        parser2 "Pending contributions rolled back if not max, even on success"
+            [action!]
         {
             ^result1 ^result2
             remainder1 remainder2 pending1 pending2

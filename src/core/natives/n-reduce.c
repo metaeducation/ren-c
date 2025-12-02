@@ -90,9 +90,8 @@ DECLARE_NATIVE(VETO_Q)
 //
 //  "Evaluates expressions, keeping each result (EVAL only gives last result)"
 //
-//      return: "New list or value (or null if VETO encountered)"
-//          [<null> element?]
-//      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
+//      return: [<null> element?]
+//      value "Lists evaluate each item, single values evaluate"
 //          [<opt-out> element?]
 //      :predicate "Applied after evaluation, default is IDENTITY"
 //          [<unrun> frame!]
@@ -130,11 +129,11 @@ DECLARE_NATIVE(REDUCE)
 
   initial_entry_non_list: {  /////////////////////////////////////////////////
 
-    // It's not completely clear what the semantics of non-block REDUCE should
-    // be, but right now single value REDUCE does a REEVALUATE with no
-    // arguments.  This is a variant of REEVAL with an END feed.
-    //
-    // (R3-Alpha, would return the input, e.g. `reduce ':foo` => :foo)
+  // It's not completely clear what the semantics of non-block REDUCE should
+  // be, single value REDUCE currently does a REEVALUATE with no arguments.
+  // This is a variant of REEVAL with an END feed.
+  //
+  // (R3-Alpha, would return the input, e.g. `reduce ':foo` => :foo)
 
     if (Any_Inert(v))
         return COPY(v);  // save time if it's something like a TEXT!
@@ -164,10 +163,10 @@ DECLARE_NATIVE(REDUCE)
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
 
-    // 1. We want the output newline status to mirror newlines of the start
-    //    of the eval positions.  But when the evaluation callback happens,
-    //    we won't have the starting value anymore.  Cache the newline flag on
-    //    the ARG(VALUE) cell, as newline flags on ARG()s are available.
+  // 1. We want the output newline status to mirror newlines of the start
+  //    of the eval positions.  But when the evaluation callback happens, we
+  //    won't have the starting value anymore.  Cache the newline flag on
+  //    the ARG(VALUE) cell, as newline flags on ARG()s are available.
 
     if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
         goto finished;
@@ -205,11 +204,11 @@ DECLARE_NATIVE(REDUCE)
 
 } process_out: {  ////////////////////////////////////////////////////////////
 
-    // 3. The sublevel that is pushed to run reduce evaluations uses the data
-    //    stack position captured in BASELINE to tell things like whether a
-    //    function dispatch has pushed refinements, etc.  When the REDUCE
-    //    underneath it pushes a value to the data stack, that level must be
-    //    informed the stack element is "not for it" before the next call.
+  // 1. The sublevel that is pushed to run reduce evaluations uses the data
+  //    stack position captured in BASELINE to tell things like whether a
+  //    function dispatch has pushed refinements, etc.  When the REDUCE
+  //    underneath it pushes a value to the data stack, that level must be
+  //    informed the stack element is "not for it" before the next call.
 
     if (Is_Ghost_Or_Void(SPARE))
         goto next_reduce_step;  // void results are skipped by reduce
@@ -226,7 +225,7 @@ DECLARE_NATIVE(REDUCE)
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
             Copy_Cell(PUSH(), at);  // Note: no binding on antiform SPLICE!
-            SUBLEVEL->baseline.stack_base += 1;  // [3]
+            SUBLEVEL->baseline.stack_base += 1;  // [1]
             if (newline) {
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // [2]
                 newline = false;
@@ -268,16 +267,19 @@ DECLARE_NATIVE(REDUCE)
 //
 //  reduce-each: native [
 //
-//  "Evaluates expressions, keeping each result (EVAL only gives last result)"
+//  "Evaluates expressions, passing each result to body (antiforms handled)"
 //
-//      return: "Last body result"
-//          [any-value?]
+//      return: [
+//          any-value?      "last body result"
+//          <null>          "if BREAK encountered"
+//          ~[<null>]~      "if body result was null"
+//          <void>          "if body never ran"
+//      ]
 //      vars "Variable to receive each reduced value (multiple TBD)"
 //          [_ word! @word! block!]
 //      block "Input block of expressions (@[...] acts like FOR-EACH)"
 //          [block! @block!]
-//      body "Code to run on each step"
-//          [block!]
+//      body [block!]
 //  ]
 //
 DECLARE_NATIVE(REDUCE_EACH)
@@ -305,8 +307,8 @@ DECLARE_NATIVE(REDUCE_EACH)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. This current REDUCE-EACH only works with one variable; it should be
-    //    able to take a block of variables.
+  // 1. This current REDUCE-EACH only works with one variable; it should be
+  //    able to take a block of variables.
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 

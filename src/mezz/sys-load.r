@@ -39,21 +39,24 @@ Rebol [
 transcode-header: func [
     "Try to match a data blob! as being a script, fail if not"
 
-    return: "Null, or the ~[header rest line]~"
-        [~[[<null> block!] [<null> blob!] [integer!]]~ error!]
+    return: [
+        ~[[<null> block!] [<null> blob!] [integer!]]~
+        "[header rest line]"
 
+        error! "Missing `Rebol [...]` at start of data"
+    ]
     data [blob!]
     :file [file! url!]
 
     {line (1) key hdr rest}
 ][
-    [rest key]: trap transcode:next // [  ; "REBOL"
+    [rest key]: trap transcode:next // [  ; "Rebol"
         data
         file: file
         line: $line
     ]
     if not rest [
-        return pack [null null line]  ; !!! rethink interface, impure null
+        return pack [null null line]  ; !!! rethink interface (impure null)
     ]
     [rest :hdr]: trap transcode:next // [  ; BLOCK!
         rest
@@ -97,8 +100,10 @@ transcode-header: func [
 load-header: func [
     "Loads script header object and body binary (not loaded)"
 
-    return: "header OBJECT! if present, ~[hdr body line final]~"
-        [~[[<null> object!] [blob! text!] [<null> integer!] blob!]~]
+    return: [
+        ~[[<null> object!] [blob! text!] [<null> integer!] blob!]~
+        "header OBJECT! if present [hdr body line final], and next position"
+    ]
     source "Source code (text! will be UTF-8 encoded)"
         [blob! text!]
     :file "Where source is being loaded from"
@@ -217,11 +222,29 @@ bind {
 ]
 
 
+; 1. !!! R3-Alpha's READ is nebulous, comment said "can be string, binary,
+;    block".  Current leaning is that READ always be a binary protocol, and
+;    that LOAD would be higher level--and be based on decoding BLOB! or some
+;    higher level method that never goes through a binary.
+;
+; 2. Pursuant to [1]: `read %./` would return a BLOCK! of directory contents,
+;    and LOAD was expected to return that block.  Do that for compatibility
+;    with the tests until more work is done.
+;
+; 3. !!! Once this would bind code to user context, now we're thinking of
+;    code being unbound by default.  Should LOAD be binding?  Here we give it
+;    its own module which inherits from lib.  Ultimately you should be able
+;    to load modules using completely different baselines.
+;
 load: func [
     "Loads code or data from a file, URL, text string, or binary"
 
-    return: "BLOCK! if Rebol code (or codec value) plus optional header"
-        [<null> ~[element? [<null> object!]]~]
+    return: [
+        ~[element? [<null> object!]]~
+        "BLOCK! if Rebol code (or codec value) plus optional header"
+
+        <null>
+    ]
     source "Source of the information being loaded"
         [<opt-out> file! url! tag! @word! text! blob!]
     :type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
@@ -235,19 +258,9 @@ load: func [
         file: ensure [file! url!] source
         type: default [file-type? source else ['rebol]]  ; !!! rebol default?
 
-        data: read source
+        data: read source  ; not always binary [1]
 
-        if block? data [
-            ;
-            ; !!! R3-Alpha's READ is nebulous, comment said "can be string,
-            ; binary, block".  Current leaning is that READ always be a
-            ; binary protocol, and that LOAD would be higher level--and be
-            ; based on decoding BLOB! or some higher level method that
-            ; never goes through a binary.  In any case, `read %./` would
-            ; return a BLOCK! of directory contents, and LOAD was expected
-            ; to return that block...do that for now, for compatibility with
-            ; the tests until more work is done.
-            ;
+        if block? data [  ; e.g. (read %some-dir/) gives block [2]
             header: null
             return pack [data header]
         ]
@@ -280,9 +293,7 @@ load: func [
     ensure [<null> object!] header
     ensure [blob! block! text!] data
 
-    ; Convert code to block
-
-    if not block? data [
+    if not block? data [  ; Convert code to block
         assert [match [blob! text!] data]  ; UTF-8
 
         data: trap transcode:file:line data file $line
@@ -292,11 +303,7 @@ load: func [
         ]
     ]
 
-    ; !!! Once this would bind code to user context, now we're thinking of
-    ; code being unbound by default.  Should LOAD be binding?  Here we give it
-    ; its own module which inherits from lib.
-
-    let mod: make module! inside system.contexts.lib '[]
+    let mod: make module! inside system.contexts.lib '[]  ; inherit lib [3]
 
     return pack [(inside mod data) header]
 ]
@@ -380,11 +387,13 @@ adjust-url-for-raw: func [
 import*: func [
     "Imports a module; locate, load, make, and setup its bindings"
 
-    return: "Loaded module and evaluative product (if execution needed)"
-        [
-            ~[module! ~(cached registered nameless)~]~
-            ~[module! ~(executed)~ any-value?]~
-        ]
+    return: [
+        ~[module! ~(executed)~ any-value?]~
+        "Loaded module and evaluative product (if not previously loaded)"
+
+        ~[module! ~(cached registered nameless)~]~
+        "Previously loaded module"
+    ]
     where "Where to put exported definitions from SOURCE"
         [<opt> module!]
     source [
@@ -615,10 +624,9 @@ bind construct [
 
 
 export*: func [
-    "Add words to module's (exports: []) list"
+    "Add words to module's (exports: []) list, return value if assigned"
 
-    return: "Evaluated expression if used with SET-WORD!"
-        [any-stable?]
+    return: [any-stable?]
     where "Specialized for each module via EXPORT"
         [module!]
     @what [set-word? set-run-word? set-group? group? block!]

@@ -22,19 +22,18 @@ Rebol [
         Typically the declarations wind up looking like this:
 
         //
-        //  native-name: native [
+        //  native-name*: native [
         //
-        //  "Description of native would go here"
+        //  "Description of native would go here"  ; description of RETURN [1]
         //
-        //      return: "Return description here"
-        //          [integer!]
+        //      return: [integer! "Strings are legal in typespecs"]
         //      argument "Argument description here"
         //          [text!]
         //      :refinement "Refinement description here"
         //  ]
         //
-        DECLARE_NATIVE(NATIVE_NAME) {
-            INCLUDE_PARAMS_OF_NATIVE_NAME;
+        DECLARE_NATIVE(NATIVE_NAME_P) {  ; C name may be adjusted [2]
+            INCLUDE_PARAMS_OF_NATIVE_NAME_P;
 
             if (Bool_ARG(REFINEMENT)) {
                  int i = VAL_INT32(ARG(ARGUMENT));
@@ -43,9 +42,19 @@ Rebol [
             return OUT;
         }
 
-        (Note that the C name of the native may need to be different from the
-        Rebol native; e.g. above the `-` cannot be part of a name in C, so
-        it gets converted to `_`.  See TO-C-NAME for the logic of this.)
+     1. In order to have a PARAMETER! where the description can be put, the
+        parameter you get back from (return-of some-func/) is what is called
+        the primary "DESCRIPTION" of the function.  This means you can't have
+        a distinct description of the return parameter.  If you want to put
+        in more details they can be put in the type spec itself, allowing you
+        to annotate the individual meanings of each type in the spec.
+
+     2. Note the C name of the native may need to be different from the Rebol
+        native; e.g. above the `-` cannot be part of a name in C, so it gets
+        converted to `_`, and the `*` can't be either so it is converted to
+        `_P`.  See TO-C-NAME for the transformation code.
+
+        ---------------------------------------------------------------------
 
         In order for these specification blocks to be loaded along with the
         function when the interpreter is built, a step in the build has to
@@ -165,6 +174,8 @@ leaders: [
     any-get-value?
     set-run-word?
     refinement?
+
+    heavy-null?  ; used for clearer documentation in IF
 ]
 leader-protos: to map! []
 

@@ -235,8 +235,8 @@ elf-format: context [
     ;    section as TEXT! (avoiding the validation is more performant anyway)
     ;
     find-section: func [
-        return: "The index of the section header with encap (sh_xxx vars set)"
-            [<null> integer!]
+        "Returns the index of the section header with encap (sh_xxx vars set)"
+        return: [<null> integer!]
         name [text!]
         section-headers [blob!]
         string-section [blob!]
@@ -1240,8 +1240,8 @@ generic-format: context [
 
 
 encap: func [
-    return: "Path location of the resulting output"
-        [file!]
+    "Returns path location of the resulting output"
+    return: [file!]
     spec "Single script to embed, directory to zip with main.r, or dialect"
         [file! block!]
     :rebol "Path to a Rebol to encap instead of using the current one"
@@ -1302,8 +1302,8 @@ encap: func [
 
 
 get-encap: func [
-    return: "NULL if no encapping found, unzipped BLOCK! results if found"
-        [<null> block!]
+    "Returns NULL if no encapping found, unzipped BLOCK! results if found"
+    return: [<null> block!]
     rebol-path "The executable to search for the encap information in"
         [file!]
 ][

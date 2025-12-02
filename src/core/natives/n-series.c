@@ -30,9 +30,10 @@
 //
 //  "Inserts element(s); for series, returns just past the insert"
 //
-//      return: "Just past the insert"
-//          [any-series? port! map! object! bitset! port!
-//          integer!]  ; !!! INSERT returns INTEGER! in ODBC, review this
+//      return: [
+//          <null> any-series? port! map! object! bitset! port!
+//          integer!  "!!! INSERT returns INTEGER! in ODBC, review this"
+//      ]
 //      series "At position (modified)"
 //          [<opt-out> any-series? port! map! object! bitset! port!]
 //      value "What to insert (antiform groups will splice, e.g. SPREAD)"
@@ -256,10 +257,11 @@ DECLARE_NATIVE(SORT)
 //
 //  "Returns the series forward or backward from the current position"
 //
-//      return: "Input skipped by offset, or null if out of bounds"
+//      return:
 //          [<null> any-series? port!]
 //      series [<opt-out> any-series? port!]
-//      offset [any-number? logic? pair!]
+//      offset "Input skipped by offset, default to null if out of bounds"
+//          [any-number? logic? pair!]
 //      :unbounded "Return out of bounds series if before tail or after head"
 //  ]
 //
@@ -284,10 +286,10 @@ DECLARE_NATIVE(SKIP)
 //
 //  "Returns the series at the specified index"
 //
-//      return: "Input at the given index, not clipped to head/tail by default"
-//          [<null> any-series? port!]
+//      return: [<null> any-series? port!]
 //      series [<opt-out> any-series? port!]
-//      index [any-number? logic? pair!]
+//      index "Seeks to given index, not clipped to head/tail by default"
+//          [any-number? logic? pair!]
 //      :bounded "Return null if index is before tail or after head"
 //  ]
 //
@@ -303,8 +305,12 @@ DECLARE_NATIVE(AT)
 //
 //  "Searches for the position where a matching value is found"
 //
-//      return: "position found and tail of find, else null"
-//          [<null> ~[any-series? any-series?]~]
+//      return: [
+//          ~[any-series? any-series?]~
+//          "position found and tail of find"
+//
+//          <null> "if not found"
+//      ]
 //      series [<opt-out> any-series?]
 //      pattern "What to find, if an action call as a predicate on each item"
 //          [<opt-out> element? splice! action! datatype!]

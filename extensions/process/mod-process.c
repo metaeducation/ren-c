@@ -88,10 +88,14 @@
 //
 //  "Run another program by spawning a new process"
 //
-//      return: "If :WAIT, the forked process ID, else exit code"
-//          [integer!]
-//      command "OS-local command line, block with arguments, executable file"
-//          [text! block! file!]
+//      return: [
+//          integer!  "If :WAIT, the forked process ID, else exit code"
+//      ]
+//      command [
+//          text!     "OS-local command line"
+//          block!    "block with arguments"
+//          file!     "executable file"
+//      ]
 //      :wait "Wait for command to terminate before returning"
 //      :console "Runs command with I/O redirected to console"
 //      :shell "Forces command to be run from shell"
@@ -107,7 +111,7 @@
 DECLARE_NATIVE(CALL_INTERNAL_P)
 //
 // !!! Parameter usage may require WAIT mode even if not explicitly requested.
-// /WAIT should be default, with /ASYNC (or otherwise) as exception!
+// :WAIT should be default, with :ASYNC (or otherwise) as exception!
 {
     return Call_Core(level_);
 }
@@ -116,10 +120,9 @@ DECLARE_NATIVE(CALL_INTERNAL_P)
 //
 //  export get-os-browsers: native [
 //
-//  "Ask the OS or registry what command(s) to use for starting a browser"
+//  "Gets block of strings from OS, %1 should be substituted with the string"
 //
-//      return: "Block of strings, %1 should be substituted with the string"
-//          [block!]
+//      return: [block!]
 //  ]
 //
 DECLARE_NATIVE(GET_OS_BROWSERS)

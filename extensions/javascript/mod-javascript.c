@@ -926,10 +926,8 @@ DECLARE_NATIVE(JS_NATIVE)
     Element* spec = Element_ARG(SPEC);
     Element* source = Element_ARG(SOURCE);
 
-    VarList* adjunct;
     require (
       ParamList* paramlist = Make_Paramlist_Managed(
-        &adjunct,
         spec,
         MKF_MASK_NONE,
         SYM_RETURN  // want return
@@ -968,37 +966,36 @@ DECLARE_NATIVE(JS_NATIVE)
 
   //=//// MAKE ASCII SOURCE FOR JAVASCRIPT FUNCTION ///////////////////////=//
 
-    // 1. A JS-AWAITER can only be triggered from Rebol on the worker thread
-    //    as part of a rebPromise().  Making it an async function means it
-    //    will return an ES6 Promise, and allows use of the AWAIT JavaScript
-    //    feature in the body:
-    //
-    //      https://javascript.info/async-await
-    //
-    //    Using plain return within an async function returns a fulfilled
-    //    promise while using AWAIT causes the execution to pause and return
-    //    a pending promise.  When that promise is fulfilled it will jump back
-    //    in and pick up code on the line after that AWAIT.
-    //
-    // 2. We do not try to auto-translate the Rebol arguments into JS args.
-    //    That would make calling it more complex, and introduce several
-    //    issues of mapping Rebol names to legal JavaScript identifiers.
-    //
-    //    Instead, the function receives an updated `reb` API interface, that
-    //    is intended to "shadow" the global `reb` interface and override it
-    //    during the body of the function.  This local `reb` has a binding
-    //    for the JS-NATIVE's frame, such that when reb.Value("argname")
-    //    is called, this reb passes that binding through to API_rebValue(),
-    //    and the argument can be resolved this way.
-    //
-    //     !!! There should be some customization here where if the interface
-    //     was imported via another name than `reb`, it would be used here.
-    //
-    // 3. WebAssembly cannot hold onto JavaScript objects directly.  So we
-    //    need to store the created function somewhere we can find it later
-    //    when it's time to invoke it.  This is done by making a table that
-    //    maps a numeric ID (that we *can* hold onto) to the corresponding
-    //    JavaScript function entity.
+  // 1. A JS-AWAITER can only be triggered from Rebol on the worker thread
+  //    as part of a rebPromise().  Making it an async function means it
+  //    will return an ES6 Promise, and allows use of the AWAIT JavaScript
+  //    feature in the body:
+  //
+  //      https://javascript.info/async-await
+  //
+  //    Using plain return within an async function returns a fulfilled
+  //    promise while using AWAIT causes the execution to pause and return
+  //    a pending promise.  When that promise is fulfilled it will jump back
+  //    in and pick up code on the line after that AWAIT.
+  //
+  // 2. We do not try to auto-translate the Rebol arguments into JS args. That
+  //    would make calling it more complex, and introduce several issues of
+  //    mapping Rebol names to legal JavaScript identifiers.
+  //
+  //    Instead, the function receives an updated `reb` API interface, that
+  //    is intended to "shadow" the global `reb` interface and override it
+  //    during the body of the function.  This local `reb` has a binding for
+  //    the JS-NATIVE's frame, such that when reb.Value("argname") is called,
+  //    this reb passes that binding through to API_rebValue(), and the
+  //    argument can be resolved this way.
+  //
+  //    !!! There should be some customization here where if the interface was
+  //    imported via another name than `reb`, it would be used here.
+  //
+  // 3. WebAssembly cannot hold onto JavaScript objects directly.  So we store
+  //    the created function somewhere we can find it later when it's time to
+  //    invoke it.  We make a table that maps a numeric ID (that we *can* hold
+  //    onto) to the corresponding JavaScript function entity.
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
@@ -1103,9 +1100,6 @@ DECLARE_NATIVE(JS_NATIVE)
         &Js_Object_Handle_Cleaner
     );
 
-    assert(Misc_Phase_Adjunct(details) == nullptr);
-    Tweak_Misc_Phase_Adjunct(details, adjunct);
-
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return UNSURPRISING(OUT);
 }
@@ -1114,11 +1108,10 @@ DECLARE_NATIVE(JS_NATIVE)
 //
 //  export js-eval*: native [
 //
-//  "Evaluate textual JavaScript code"
+//  "Evaluate JavaScript code, give back types reb.Box() supports, else TRASH!"
 //
-//      return: "Only supports types that reb.Box() supports, else gives trash"
-//          [trash? null? logic? integer! text!]
-//      source "JavaScript code as a text string" [text!]
+//      return: [trash! <null> logic? integer! text!]
+//      source [text!]
 //      :local "Evaluate in local scope (as opposed to global)"
 //  ]
 //

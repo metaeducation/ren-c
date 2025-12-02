@@ -313,22 +313,23 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 //
 //  make-char: native [
 //
-//  "Codepoint from integer, e.g. make-char 65 -> #A (see also TO-CHAR)"
+//  "RUNE! from INTEGER! codepoint, see also TO RUNE! (to rune! 1 -> #1)"
 //
-//      return: "Can also be NUL as binary BLOB!, make char! 0 -> #{00}"
-//          [char? NUL?]
+//      return: [
+//          char?  "(make-char 65 -> #A) (make-char 49 -> #1)"
+//          NUL?   "(make char! 0 -> #{00})"
+//      ]
 //      codepoint [integer!]
 //  ]
 //
 DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
 //
-// Note: Consideration was given to (make-char [1 + 2] -> #3) as a way to
-// get an assured single-character result from a mold.  (to-char mold 1 + 2)
-// does the same thing, so it's probably not necessary.
-//
 // This was once called CODEPOINT-TO-CHAR, which is more explicit, but not
 // in the spirit of brevity of the original Rebol (make char! 65 -> #"A").
-// It's nice to have Ren-C be strictly better, as (make-char 65 -> #A)
+//
+// !!! It seems that MAKE RUNE! could be used and having it interpet as
+// codepoints wouldn't be a problem, because the visual interpretation of
+// integer is covered by TO.
 {
     INCLUDE_PARAMS_OF_MAKE_CHAR;
 
@@ -347,10 +348,12 @@ DECLARE_NATIVE(MAKE_CHAR)  // Note: currently synonym for (NUL + codepoint)
 //
 //  to-char: native [
 //
-//  "Character representation, e.g. to-char 1 -> #1 (see also MAKE-CHAR)"
+//  "Character representation, see also MAKE-CHAR"
 //
-//      return: "Will be #{00} NUL BLOB! representation if input is #{00}"
-//          [char?]
+//      return: [
+//          char? "(to-char 1 -> #1)"
+//          NUL?  "Will be #{00} NUL BLOB! representation if input is #{00}"
+//      ]
 //      value [char? any-utf8? blob!]
 //  ]
 //
@@ -367,6 +370,10 @@ DECLARE_NATIVE(TO_CHAR)
 // Note: Because CHAR? always fits in a cell (unless it's the #{00} blob which
 // is locked and global), there's no point to AS-CHAR, since no series nodes
 // will ever be synthesized for the result.
+//
+// !!! This could probably be TO RUNE! but it would be too broad, e.g. you
+// wouldn't be guaranteed it was a single character.  Perhaps TO-CHAR could
+// just be TO RUNE! with an ERROR! raised if it generated more than one?
 {
     INCLUDE_PARAMS_OF_TO_CHAR;
 

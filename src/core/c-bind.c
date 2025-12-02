@@ -442,15 +442,21 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
 //
 //  let: native [
 //
-//  "Dynamically add a new binding into the stream of evaluation"
+//  "Dynamically add new variables into the stream of evaluation"
 //
-//      return: "Expression result if SET form, else gives the new vars"
-//          [any-stable?]  ; should vanish if (let x), give var if (let $x)
+//      return: [
+//          any-stable?  "Expression result if (let x: <expr>)"
+//          word!        "the new variable if (let $x)"
+//          ghost!       "vanishes if (let x)"
+//      ]
 //      'vars "Variable(s) to create"  ; can't soft quote due to DEFAULT
-//          [word! ^word! set-word? ^set-word? set-run-word? group!
-//          block! set-block? set-group?]
+//          [
+//              word! ^word! group! block!
+//              set-word? ^set-word? set-run-word? set-block? set-group?
+//          ]
 //      @expression "Optional Expression to assign"
 //          [<variadic> element?]  ; fake variadic [1]
+//
 //      {bindings-holder}  ; workaround [2]
 //  ]
 //

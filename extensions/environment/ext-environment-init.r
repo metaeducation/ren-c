@@ -23,8 +23,7 @@ export env: environment
 export get-env: func [
     "Returns the value of an OS environment variable (for current process)"
 
-    return: "String the variable was set to, or null if not set"
-        [<null> text!]
+    return: [<null> text!]
     variable "Name of variable to get (case-insensitive in Windows)"
         [<opt-out> text! word!]
 ][
@@ -34,8 +33,7 @@ export get-env: func [
 export set-env: func [
     "Sets value of operating system environment variable for current process"
 
-    return: "Returns same value passed in, or null if variable was unset"
-        [<null> text!]
+    return: [<null> text!]
     variable "Variable to set (case-insensitive in Windows)"
         [<opt-out> text! word!]
     value "Value to set the variable to, or void to unset it"

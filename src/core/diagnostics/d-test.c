@@ -65,8 +65,10 @@
 //
 //  "libRebol tests (ultimately should build as separate EXEs)"
 //
-//      return: "Block of test numbers and failures"
-//          [text! block!]
+//      return: [
+//          block!  "Block of test numbers and failures"
+//          text!   "Message if INCLUDE_TEST_LIBREBOL_NATIVE not defined"
+//      ]
 //      value "Argument that may be useful for ad hoc tests"
 //          [any-stable?]
 //  ]
@@ -78,7 +80,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     Value* v = ARG(VALUE);
     USED(v);
 
-  start: { ///////////////////////////////////////////////////////////////////
+  start: {
 
   #if (! INCLUDE_TEST_LIBREBOL_NATIVE)
     return Init_Text(  // text! vs. failing to distinguish from test failure
@@ -93,14 +95,14 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     // call, because API calls can move the stack.  This doesn't always make
     // an assert since argument order can vary across compilers.
 
-} simple_add_test: { /////////////////////////////////////////////////////////
+} simple_add_test: {
 
     Set_Cell_Flag(Init_Integer(PUSH(), 1), NEWLINE_BEFORE);
     int i = rebUnboxInteger("1 +", rebI(2));
 
     Init_Boolean(PUSH(), i == 3);  // ^-- see NOTICE
 
-} api_transient_test: { //////////////////////////////////////////////////////
+} api_transient_test: {
 
     Set_Cell_Flag(Init_Integer(PUSH(), 2), NEWLINE_BEFORE);
     intptr_t getter = rebUnboxInteger64("api-transient -[Hello]-");
@@ -110,7 +112,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 
     Init_Boolean(PUSH(), equal);  // ^-- see NOTICE
 
-} macro_test: { //////////////////////////////////////////////////////////////
+} macro_test: {
 
     Set_Cell_Flag(Init_Integer(PUSH(), 3), NEWLINE_BEFORE);
     Value* macro = rebStable(
@@ -129,14 +131,14 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 
     rebRelease(macro);
 
-} null_splicing_test: { //////////////////////////////////////////////////////
+} null_splicing_test: {
 
     Set_Cell_Flag(Init_Integer(PUSH(), 5), NEWLINE_BEFORE);
     bool is_null = rebUnboxLogic("null? @", nullptr);
 
     Init_Boolean(PUSH(), is_null);
 
-} define_function_test: { ////////////////////////////////////////////////////
+} define_function_test: {
 
     Set_Cell_Flag(Init_Integer(PUSH(), 6), NEWLINE_BEFORE);
     Value* action = rebFunction(
@@ -152,7 +154,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     rebRelease(action);
     Init_Integer(PUSH(), sum);
 
-} define_cpp_function_test: { ////////////////////////////////////////////////
+} define_cpp_function_test: {
 
   #if NO_CPLUSPLUS_11
     Set_Cell_Flag(Init_Integer(PUSH(), 7), NEWLINE_BEFORE);
@@ -191,7 +193,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     rebRelease(action);
   #endif
 
-} empty_variadic_test: { /////////////////////////////////////////////////////
+} empty_variadic_test: {
 
     Set_Cell_Flag(Init_Integer(PUSH(), 9), NEWLINE_BEFORE);
 
@@ -200,7 +202,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     Copy_Cell(PUSH(), noop);
     rebRelease(noop);
 
-} finish: { //////////////////////////////////////////////////////////////////
+} finish: {
 
     return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));
 

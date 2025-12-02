@@ -93,10 +93,9 @@ DECLARE_NATIVE(GET_EGID)
 //
 //  set-uid: native [
 //
-//  "Set real user ID of the process"
+//  "Set real user ID of the process, return same ID as input"
 //
-//      return: "Same ID as input"
-//          [integer!]
+//      return: [integer!]
 //      uid "The effective user ID"
 //          [integer!]
 //  ]
@@ -124,10 +123,9 @@ DECLARE_NATIVE(SET_UID)
 //
 //  set-euid: native [
 //
-//  "Get effective user ID of the process"
+//  "Get effective user ID of the process, return same ID as input"
 //
-//      return: "Same ID as input"
-//          [integer!]
+//      return: [integer!]
 //      euid "The effective user ID"
 //          [integer!]
 //  ]
@@ -155,10 +153,9 @@ DECLARE_NATIVE(SET_EUID)
 //
 //  set-gid: native [
 //
-//  "Set real group ID of the process"
+//  "Set real group ID of the process, return same ID as input"
 //
-//      return: "Same ID as input"
-//          [integer!]
+//      return: [integer!]
 //      gid "The effective group ID"
 //          [integer!]
 //  ]
@@ -186,10 +183,9 @@ DECLARE_NATIVE(SET_GID)
 //
 //  set-egid: native [
 //
-//  "Get effective group ID of the process"
+//  "Get effective group ID of the process, return same ID as input"
 //
-//      return: "Same ID as input"
-//          [integer!]
+//      return: [integer!]
 //      egid "The effective group ID"
 //          [integer!]
 //  ]

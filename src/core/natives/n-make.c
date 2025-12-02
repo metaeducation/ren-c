@@ -79,10 +79,9 @@ Bounce Copy_Quoter_Executor(Level* level_)
 //
 //  copy: native:generic [
 //
-//  "Copies a series, object, or other value"
+//  "Copies a series, object, or other value; return value of same type"
 //
-//      return: "Return type will match the input type"
-//          [any-stable?]
+//      return: [any-stable?]
 //      value "If an ANY-SERIES?, it is only copied from its current position"
 //          [<opt-out> element?]
 //      :part "Limits to a given length or position"
@@ -299,10 +298,9 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 //
 //  to: native:generic [
 //
-//  "Converts to a specified datatype, copying any underying data"
+//  "Reversibly convert VALUE to TYPE (copied if TYPE is already VALUE's type)"
 //
-//      return: "ELEMENT converted to TYPE (copied if same type as ELEMENT)"
-//          [element?]
+//      return: [element?]
 //      type [<opt-out> datatype!]
 //      value [<opt-out> element? datatype!]
 //  ]

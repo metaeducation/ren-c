@@ -32,9 +32,9 @@
 //
 //  "Give back the type of a value (all quoted values return QUOTED!)"
 //
-//      return: "TYPE-OF null returns an error, use TRY if meant"
-//          [datatype! error!]
-//      value [any-stable?]
+//      return: [datatype! error!]
+//      value "TYPE OF NULL gives an ERROR!, say TRY TYPE OF NULL if meant"
+//          [<null> any-stable?]
 //  ]
 //
 DECLARE_NATIVE(TYPE_OF)

@@ -359,26 +359,39 @@ export relative-to-path: func [
 ]
 
 
+; Removing spacing and comments from a Rebol file is not exactly trivial
+; without LOAD.  But not impossible...and any tough cases in the mezzanine
+; can be dealt with by hand.
+;
+; Note: This also removes newlines, which may not ultimately be desirable.
+; The line numbering information, if preserved, could help correlate with
+; lines in the original files.  That would require preserving some info
+; about the file of origin, though.
+;
+; 1. :GATHER is a dodgy substitute for finding "top-level declarations"
+;    because it only finds things that look like SET-WORD! that are at the
+;    beginning of a line.  However, if we required the file to be LOAD-able
+;    by a bootstrap Rebol, that would create a dependency that would make
+;    it hard to use new scanner constructs in the mezzanine.
+;
+;    Currently this is only used by the SYS context in order to generate top
+;    #define constants for easy access to the functions there.
+;
 export stripload: func [
     "Get an equivalent to MOLD:FLAT (plus no comments) without using LOAD"
 
-    return: "contents, w/o comments or indentation"
-        [text!]
+    return: [text!]
     source "Code to process without LOAD (avoids bootstrap scan differences)"
         [text! file!]
     :header "<output> Request the header as text"  ; no packs in bootstrap
         [word! path!]
-    :gather "Collect what look like top-level declarations into variable"
+    :gather "Collect toplevel declarations into variable"  ; flaky! see [1]
         [word!]
 ][
-    ; Removing spacing and comments from a Rebol file is not exactly trivial
-    ; without LOAD.  But not impossible...and any tough cases in the mezzanine
-    ; can be dealt with by hand.
-    ;
-    ; Note: This also removes newlines, which may not ultimately be desirable.
-    ; The line numbering information, if preserved, could help correlate with
-    ; lines in the original files.  That would require preserving some info
-    ; about the file of origin, though.
+    let panic: proc [reason] [
+        print mold source
+        lib/panic:blame reason $source
+    ]
 
     let pushed: copy []  ; <Q>uoted or <B>raced string delimiter stack
 
@@ -427,16 +440,7 @@ export stripload: func [
         file: source
     ]
 
-    ; This is a somewhat dodgy substitute for finding "top-level declarations"
-    ; because it only finds things that look like SET-WORD! that are at the
-    ; beginning of a line.  However, if we required the file to be LOAD-able
-    ; by a bootstrap Rebol, that would create a dependency that would make
-    ; it hard to use new scanner constructs in the mezzanine.
-    ;
-    ; Currently this is only used by the SYS context in order to generate top
-    ; #define constants for easy access to the functions there.
-    ;
-    if gather [
+    if gather [  ; dodgy top-level detection [1]
         append (ensure block! get gather) spread collect [
             for-next 't text [
                 let newline-pos: find t newline else [tail of text]
@@ -475,20 +479,20 @@ export stripload: func [
 
     if header [
         if not let hdr: copy:part (next find text "[") (find text "^/]") [
-            panic ["Couldn't locate header in STRIPLOAD of" file]
+            panic "Couldn't locate header in STRIPLOAD"
         ]
         parse3:match hdr rule else [
-            panic ["STRIPLOAD failed to munge header of" file]
+            panic "STRIPLOAD failed to munge header"
         ]
         set header hdr
     ]
 
     parse3:match contents rule else [
-        panic ["STRIPLOAD failed to munge contents of" file]
+        panic "STRIPLOAD failed to munge contents"
     ]
 
     if not empty? pushed [
-        panic ["String delimiter stack imbalance while parsing" file]
+        panic "STRIPLOAD string delimiter stack imbalance"
     ]
 
     return contents

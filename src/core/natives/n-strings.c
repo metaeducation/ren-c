@@ -107,9 +107,9 @@ DECLARE_NATIVE(LATIN1_Q)
 //
 //  "Join elements to produce a new value"
 //
-//      return: "Null if no base element and no material in rest to join"
-//          [<null> any-utf8? any-list? any-sequence? blob!]
-//      base [datatype! any-utf8? any-list? any-sequence? blob!]
+//      return: [<null> any-utf8? any-list? any-sequence? blob!]
+//      base "If no base element and no material in rest to join, gives NULL"
+//          [datatype! any-utf8? any-list? any-sequence? blob!]
 //      rest "Plain [...] blocks reduced, @[...] block items used as is"
 //          [<opt> block! @block! any-utf8? blob! integer!]
 //      :with [element? splice!]
@@ -849,10 +849,11 @@ DECLARE_NATIVE(ENBASE)
 //
 //  "Converts string to use URL-style hex encoding (%XX)"
 //
-//      return: "See http://en.wikipedia.org/wiki/Percent-encoding"
-//          [any-string?]
+//      return: [
+//          any-string? "See http://en.wikipedia.org/wiki/Percent-encoding"
+//      ]
 //      string "String to encode, all non-ASCII or illegal URL bytes encoded"
-//          [any-string?]
+//          [<opt-out> any-string?]
 //  ]
 //
 DECLARE_NATIVE(ENHEX)
@@ -923,8 +924,7 @@ DECLARE_NATIVE(ENHEX)
 //
 //  "Converts URL-style encoded strings, %XX is interpreted as UTF-8 byte"
 //
-//      return: "Decoded string, with the same string type as the input"
-//          [any-string?]
+//      return: [any-string?]
 //      string "See http://en.wikipedia.org/wiki/Percent-encoding"
 //          [any-string?]
 //      :blob "Give result as a binary BLOB!, permits %00 encodings"  ; [1]
@@ -1447,10 +1447,9 @@ DECLARE_NATIVE(TO_HEX)
 //
 //  invalid-utf8?: native [
 //
-//  "Checks UTF-8 encoding"
+//  "Checks UTF-8 encoding; if invalid gives position in binary of the error"
 //
-//      return: "NULL if correct, otherwise position in binary of the error"
-//          [<null> blob!]
+//      return: [<null> blob!]
 //      data [blob!]
 //  ]
 //

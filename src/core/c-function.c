@@ -25,23 +25,6 @@
 #include "sys-core.h"
 
 
-typedef enum {
-    SPEC_MODE_DEFAULT,  // waiting, words seen will be arguments
-    SPEC_MODE_PUSHED,  // argument pushed, information can be augmented
-    SPEC_MODE_COUPLING
-} SpecMode;
-
-
-static void Force_Adjunct(VarList* *adjunct_out) {
-    if (*adjunct_out)
-        return;
-
-    *adjunct_out = Copy_Varlist_Shallow_Managed(
-        Cell_Varlist(Root_Action_Adjunct)
-    );
-}
-
-
 // This code should be shared with CONSTRUCT, for building an object on the
 // stack...and share features with that dialect.
 //
@@ -131,63 +114,77 @@ static Result(None) Push_Keys_And_Params_For_Fence(
 // function could reuse the logic for function spec analysis.  It may not
 // be broken out in a particularly elegant way, but it's a start.
 //
-// 1. Definitional RETURN slots must have their argument value fulfilled with
-//    an ACTION! specific to the action called on *every instantiation*.
-//    They are marked with special parameter classes to avoid needing to
-//    separately do canon comparison of their symbols to find them.
-//
-//    Note: Since RETURN's typeset holds types that need to be checked at
-//    the end of the function run, it is moved to a predictable location:
-//    first slot of the paramlist.  Initially it was the last slot...but this
-//    enables adding more arguments/refinements/locals in derived functions.
-//
 static Result(None) Push_Keys_And_Params_Core(
-    VarList* *adjunct,
     Element* methodization,
     Level* const L,
     Flags flags,
-    Option(SymId) returner  // e.g. SYM_RETURN, SYM_YIELD, SYM_DUMMY1 ([]:)
+    Option(SymId) returner_id  // e.g. SYM_RETURN, SYM_YIELD, SYM_DUMMY1 ([]:)
 ){
     USE_LEVEL_SHORTHANDS (L);
 
     assert(Is_Quasar(methodization) or Is_Parameter(methodization));
 
-    StackIndex base = L->baseline.stack_base;
+    bool augment_initial_entry;
+    bool seen_returner = false;
+    Element* returner;
 
-    if (returner) {
-        Init_Word(PUSH(), Canon_Symbol(unwrap returner));  // top of stack
-        Init_Unreadable(PUSH());  // becomes parameter (explicitly or implicit)
+  push_returner_if_not_augmenting: {
+
+  // Not all functions have a RETURN or YIELD parameter slot.  But we always
+  // have a slot at the head of the pushed parameters where we can put a
+  // description for the function as a whole.  If the caller wants to handle
+  // the return parameter in some special way vs. popping it into the
+  // paramlist, they can use MKF_DONT_POP_RETURN.
+  //
+  // Since the returner typeset holds types that need to be checked at the
+  // end of the function run, it is moved to a predictable location:
+  // first slot of the paramlist.  (Initially it was the last slot...but this
+  // enables adding more arguments/refinements/locals in derived functions).
+
+    if (flags & MKF_AUGMENTING) {
+        augment_initial_entry = true;
+        returner = nullptr;
+    }
+    else {
+        augment_initial_entry = false;
+
+        if (returner_id)
+            Init_Word(PUSH(), Canon_Symbol(unwrap returner_id));
+        else
+            Init_Word(PUSH(), Canon_Symbol(SYM_DUMMY1));
+
+        returner = Init_Unconstrained_Parameter(
+            PUSH(),
+            FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
+        );
     }
 
-    SpecMode mode = SPEC_MODE_DEFAULT;
+} do_more_stuff: {
 
     Atom* eval = Level_Lifetime_Atom(L);
     Push_Level_Erase_Out_If_State_0(eval, L);
 
-    if (*adjunct) {
-        assert(flags & MKF_PARAMETER_SEEN);
-        assert(Is_Stub_Varlist(*adjunct));
-        Push_Lifeguard(*adjunct);  // need to guard (we do evals :-/)
-    }
-    else  // may push guard during enumeration, has to be after Level push
-        assert(*adjunct == nullptr);
-
-    for (; Not_Level_At_End(L); Fetch_Next_In_Feed(L->feed)) {
-
-      loop_dont_fetch_next: ;
-
+    for (
+        ;
+        Not_Level_At_End(L);
+        Fetch_Next_In_Feed(L->feed), augment_initial_entry = false
+    ){
         const Element* item = At_Level(L);
 
-  //=//// TOP-LEVEL SPEC TAGS LIKE <local>, <.> etc. //////////////////////=//
+  //=//// TOP-LEVEL SPEC TAGS (only <.> at the moment) ////////////////////=//
 
         bool strict = false;
         if (Is_Tag(item)) {
-            flags |= MKF_PARAMETER_SEEN;  // don't look for description after
+            if (augment_initial_entry) {
+                return fail (
+                    "Augmentation cannot add methodization via <.>"
+                );
+            }
+
             if (0 == CT_Utf8(item, g_tag_dot_1, strict)) {
                 if (not Is_Quasar(methodization))
                     return fail ("Duplicate <.> in spec");
 
-                mode = SPEC_MODE_COUPLING;
                 Init_Unconstrained_Parameter(
                     methodization,
                     FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
@@ -201,66 +198,31 @@ static Result(None) Push_Keys_And_Params_Core(
   //=//// TEXT! FOR FUNCTION DESCRIPTION OR PARAMETER NOTE ////////////////=//
 
         if (Is_Text(item)) {
-            if (not (flags & MKF_PARAMETER_SEEN)) {
-                assert(mode != SPEC_MODE_PUSHED);  // none seen, none pushed!
-                // no keys seen yet, act as overall description
-
-                assert(not *adjunct);
-                Force_Adjunct(adjunct);
-
-                require (
-                  Strand* strand = Copy_String_At(item)
+            if (augment_initial_entry) {
+                return fail (
+                    "Function description not allowed in AUGMENT spec"
                 );
-                Manage_Stub(strand);
-                Freeze_Flex(strand);
-                Init_Text(
-                    Slot_Hack(
-                        Varlist_Slot(*adjunct, STD_ACTION_ADJUNCT_DESCRIPTION)
-                    ),
-                    strand
-                );
-                Push_Lifeguard(*adjunct);
-            }
-            else {
-                // act as description for current parameter
-                assert(mode == SPEC_MODE_PUSHED);
-
-                if (Parameter_Strand(TOP_ELEMENT))
-                    return fail (Error_Bad_Func_Def_Raw(item));
-
-                require (
-                  Strand* strand = Copy_String_At(item)
-                );
-                Manage_Stub(strand);
-                Freeze_Flex(strand);
-                Set_Parameter_Strand(TOP_ELEMENT, strand);
             }
 
+            require (
+                Strand* strand = Copy_String_At(item)
+            );
+            Manage_Stub(strand);
+            Freeze_Flex(strand);
+            Set_Parameter_Strand(TOP_ELEMENT, strand);
             continue;
         }
 
   //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) //////=//
 
-    // 1. We disallow `func [[integer!]]`, but also `<local> x [integer!]`,
-    //    because locals are hidden from the interface, and hidden values
-    //    (notably specialized-out values) use the `param` slot for the value,
-    //    not type information.  So local has `~` antiform.
-    //
-    //    Even if you *could* give locals a type, it could only be given a
-    //    meaning if it were used to check assignments during the function.
-    //    There's currently no mechanism for doing that.
-
         if (Is_Block(item)) {
-            Element* temp;  // GET moves stack
+            if (augment_initial_entry) {
+                return fail (
+                    "Function return spec block not allowed in AUGMENT spec"
+                );
+            }
 
-            if (mode == SPEC_MODE_PUSHED) {  // must come after parameter [1]
-                temp = Copy_Cell(SPARE, TOP_ELEMENT);
-            }
-            else if (mode == SPEC_MODE_COUPLING) {
-                temp = methodization;
-            }
-            else
-                return fail (Error_Bad_Func_Def_Raw(item));
+            Element* temp = Copy_Cell(SPARE, TOP_ELEMENT);  // GET moves stack
 
             if (Parameter_Spec(temp))  // `func [x [integer!] [integer!]]`
                 return fail (Error_Bad_Func_Def_Raw(item));  // too many blocks
@@ -273,13 +235,7 @@ static Result(None) Push_Keys_And_Params_Core(
             if (e)
                 return fail (unwrap e);
 
-            if (mode == SPEC_MODE_PUSHED)
-                Copy_Cell(TOP_ELEMENT, temp);  // update modification on stack
-            else {
-                assert(mode == SPEC_MODE_COUPLING);
-                mode = SPEC_MODE_PUSHED;
-            }
-
+            Copy_Cell(TOP_ELEMENT, temp);  // update modification on stack
             continue;
         }
 
@@ -328,12 +284,6 @@ static Result(None) Push_Keys_And_Params_Core(
                     else
                         pclass = PARAMCLASS_NORMAL;
                 }
-
-                // !!! There's currently the ability to shift to
-                // parameter mode via [<local> x :foo y].  This is
-                // used to create dummy variables in mid-spec.  Review.
-                //
-                mode = SPEC_MODE_DEFAULT;
                 break; }
 
               case TRAILING_SPACE_AND(BLOCK): {
@@ -342,7 +292,7 @@ static Result(None) Push_Keys_And_Params_Core(
                   Unsingleheart_Sequence(spare)
                 );
                 if (
-                    returner != SYM_DUMMY1  // used by LAMBDA (hack)
+                    returner_id != SYM_DUMMY1  // used by LAMBDA (hack)
                     or Series_Len_At(spare) != 0
                 ){
                     return fail (
@@ -355,11 +305,11 @@ static Result(None) Push_Keys_And_Params_Core(
                 break; }
 
               case TRAILING_SPACE_AND(WORD):
-                if (not returner)
+                if (not returner_id)
                     return fail (
                         "SET-WORD in spec but no RETURN or YIELD in effect"
                     );
-                if (not quoted and Word_Id(item) == unwrap returner) {
+                if (not quoted and Word_Id(item) == unwrap returner_id) {
                     symbol = Word_Symbol(item);
                     pclass = PARAMCLASS_NORMAL;
                     is_returner = true;
@@ -405,96 +355,66 @@ static Result(None) Push_Keys_And_Params_Core(
             return fail (Error_Bad_Func_Def_Raw(item));
 
         if (
-            returner
-            and Symbol_Id(symbol) == unwrap returner
+            returner_id
+            and Symbol_Id(symbol) == unwrap returner_id
             and not is_returner
         ){
-            if (SYM_DUMMY1 == unwrap returner)
+            if (SYM_DUMMY1 == unwrap returner_id)
                 return fail (
                     "DUMMY1 is a reserved arg name in LAMBDA due to a hack :-("
                 );
-            if (SYM_RETURN == unwrap returner)
+            if (SYM_RETURN == unwrap returner_id)
                 return fail (
                     "Generator provides RETURN:, use LAMBDA if not desired"
                 );
-            assert(SYM_YIELD == unwrap returner);
+            assert(SYM_YIELD == unwrap returner_id);
             return fail (
                 "Generator provides YIELD:, can't have YIELD parameter"
             );
         }
 
-        if (mode == SPEC_MODE_COUPLING)
-            mode = SPEC_MODE_PUSHED;
-
-        flags |= MKF_PARAMETER_SEEN;  // don't look for description after
-
-        OnStack(Value*) param;
         if (
-            returner
-            and Symbol_Id(symbol) == unwrap returner
+            returner_id
+            and Symbol_Id(symbol) == unwrap returner_id
         ){
-            assert(
-                Word_Id(Data_Stack_At(Element, base + 1))
-                == unwrap returner
-            );
-            param = Data_Stack_At(Value, base + 2);
-            if (Is_Cell_Readable(param)) {
-                Assert_Quotified_Parameter(param);
-                if (SYM_DUMMY1 == unwrap returner)
+            if (seen_returner) {
+                if (SYM_DUMMY1 == unwrap returner_id)
                     return fail ("Duplicate []: in lambda spec");
-                if (SYM_RETURN == unwrap returner)
+                if (SYM_RETURN == unwrap returner_id)
                     return fail ("Duplicate RETURN: in function spec");
-                assert(SYM_YIELD == unwrap returner);
+                assert(SYM_YIELD == unwrap returner_id);
                 return fail ("Duplicate YIELD: in yielder spec");
             }
-        }
-        else {  // Pushing description values for a new named element...
-            Init_Word(PUSH(), symbol);  // duplicates caught when popping
-            param = u_cast(Value*, PUSH());
+            continue;
         }
 
-        // Non-annotated arguments allow all parameter types.
+        // Pushing description values for a new named element...
+
+        Init_Word(PUSH(), symbol);  // duplicates caught when popping
 
         if (refinement) {
             Init_Unconstrained_Parameter(
-                param,
+                PUSH(),
                 FLAG_PARAMCLASS_BYTE(pclass)
                     | PARAMETER_FLAG_REFINEMENT  // must preserve if type block
                     | PARAMETER_FLAG_NULL_DEFINITELY_OK  // need if refinement
             );
-            mode = SPEC_MODE_PUSHED;
         }
         else {
             Init_Unconstrained_Parameter(
-                param,
+                PUSH(),
                 FLAG_PARAMCLASS_BYTE(pclass)
             );
-            mode = SPEC_MODE_PUSHED;
         }
+
+        // Non-annotated arguments allow all parameter types.
     }
 
-    if (returner) {  // make RETURN: or YIELD: or []: unconstrained if not seen
-        assert(
-            Word_Id(Data_Stack_At(Element, base + 1))
-            == unwrap returner
-        );
-        OnStack(Element*) param_1 = Data_Stack_At(Element, base + 2);
-        if (Not_Cell_Readable(param_1)) {
-            Init_Unconstrained_Parameter(  // return anything by default
-                param_1,
-                FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
-            );
-        }
-        else
-            assert(Is_Parameter(param_1));
-        Quotify_Parameter_Local(param_1);
-    }
-
-    if (*adjunct)
-        Drop_Lifeguard(*adjunct);
+    if (returner)  // plain parameter would gather arg, trick is to quote it
+        Quotify_Parameter_Local(returner);
 
     return none;
-}
+}}
 
 
 //
@@ -504,7 +424,6 @@ static Result(None) Push_Keys_And_Params_Core(
 // balance the stack.
 //
 Result(None) Push_Keys_And_Params(
-    VarList* *adjunct,
     Element* methodization,
     const Element* spec,
     Flags flags,
@@ -518,7 +437,7 @@ Result(None) Push_Keys_And_Params(
     ));
 
     Push_Keys_And_Params_Core(
-        adjunct, methodization, L, flags, returner
+        methodization, L, flags, returner
     ) except (Error* e) {
         Drop_Data_Stack_To(L->baseline.stack_base);
         Drop_Level(L);
@@ -680,35 +599,23 @@ Result(ParamList*) Pop_Paramlist(
 //
 // Check function spec of the form:
 //
-//     ["description" arg "notes" [type! type2! ...] /ref ...]
+//     ["description" arg "notes" [type! type2! ...] :ref ...]
 //
 // !!! The spec language was not formalized in R3-Alpha.  Strings were left
 // in and it was HELP's job (and any other clients) to make sense of it, e.g.:
 //
-//     [foo [type!] {doc string :-)}]
-//     [foo {doc string :-/} [type!]]
-//     [foo {doc string1 :-/} {doc string2 :-(} [type!]]
+//     [foo [type!] "doc string :-)"]
+//     [foo "doc string :-/" [type!]]
+//     [foo "doc string1 :-/" "doc string2 :-(" [type!]]
 //
-// Ren-C breaks this into two parts: one is the mechanical understanding of
-// FUNC and LAMBDA for parameters in the evaluator.  Then it is the job
-// of a generator to tag the resulting function with an adjunct object" with
-// any descriptions.  As a proxy for the work of a usermode generator, this
-// routine tries to fill in FUNCTION-META (see %sysobj.r) as well as to
-// produce a paramlist suitable for the function.
+// Ren-C centralizes the processing, and clients can use FRAME! access to
+// pick out the parameters and descriptions.  So although the spec could use
+// some formalization, at least only one place has to worry about it.
 //
-// Note a "true local" (indicated by a set-word) is considered to be tacit
-// approval of wanting a definitional return by the generator.  This helps
-// because Red's model for specifying returns uses a SET-WORD!
-//
-//     func [return: [integer!] "returns an integer"]
-//
-// In Ren-C's case it just means you want a local called return, but the
-// generator will be "initializing it with a definitional return" for you.
-// You don't have to use it if you don't want to...and may overwrite the
-// variable.
+// 1. The process is broken up into phases so that the spec analysis code can
+//    be reused in AUGMENT.
 //
 Result(ParamList*) Make_Paramlist_Managed(
-    Sink(VarList*) adjunct,
     const Element* spec,
     Flags flags,  // flags may be modified to carry additional information
     Option(SymId) returner  // e.g. SYM_YIELD, SYM_RETURN, or SYM_DUMMY1 ([]:)
@@ -717,13 +624,8 @@ Result(ParamList*) Make_Paramlist_Managed(
 
     StackIndex base = TOP_INDEX;  // note we have to pop the methodization too
 
-    // The process is broken up into phases so that the spec analysis code
-    // can be reused in AUGMENT.
-    //
-    *adjunct = nullptr;
-
-    Push_Keys_And_Params(
-        adjunct, methodization, spec, flags, returner
+    Push_Keys_And_Params(  // separate Push() phase [1]
+        methodization, spec, flags, returner
     ) except (Error* e) {
         return fail (e);
     }
@@ -732,13 +634,12 @@ Result(ParamList*) Make_Paramlist_Managed(
     Option(VarList*) prior_coupling = nullptr;
 
     if (flags & MKF_DONT_POP_RETURN) {  // will have to pop methodization too
-        assert(returner);
         assert(TOP_INDEX - base >= 2);
         base += 2;
     }
 
     trap (
-      ParamList* paramlist = Pop_Paramlist(
+      ParamList* paramlist = Pop_Paramlist(  // separate Pop() phase [1]
         base,
         Is_Quasar(methodization) ? nullptr : methodization,
         prior,

@@ -105,10 +105,8 @@ Result(Details*) Make_Native_Dispatch_Details(
 
     StackIndex base = TOP_INDEX;
 
-    VarList* adjunct;
     require (
       ParamList* paramlist = Make_Paramlist_Managed(
-        &adjunct,
         spec,
         MKF_DONT_POP_RETURN,  // we put it in Details, not ParamList
         SYM_RETURN  // native RETURN: types checked only if RUNTIME_CHECKS
@@ -156,12 +154,6 @@ Result(Details*) Make_Native_Dispatch_Details(
         //
         Copy_Cell(Details_At(details, IDX_COMBINATOR_BODY), native);
     }
-
-    // We want the adjunct information on the wrapped version if it's a
-    // NATIVE-COMBINATOR.
-    //
-    assert(Misc_Phase_Adjunct(details) == nullptr);
-    Tweak_Misc_Phase_Adjunct(details, adjunct);
 
     // Some features are not supported by intrinsics on their first argument,
     // because it would make them too complicated.
@@ -473,7 +465,7 @@ Bounce Delegate_Operation_With_Part(
 //
 //  "Generic aggregator for the old-style generic dispatch"
 //
-//      return: [] "Not actually used"
+//      return: [<divergent>]
 //  ]
 //
 DECLARE_NATIVE(OLDGENERIC)
@@ -497,39 +489,6 @@ Bounce Run_Generic_Dispatch(
 ){
     L->u.action.label = verb;  // !!! hack for Level_Verb() for now
     return Dispatch_Generic(OLDGENERIC, cue, L);
-}
-
-
-//
-//  Startup_Action_Adjunct_Shim: C
-//
-// Make_Paramlist_Managed() needs the object archetype ACTION-ADJUNCT from
-// %sysobj.r, to have the keylist to use in generating the info used by HELP
-// for the natives.  However, natives themselves are used in order to run the
-// object construction in %sysobj.r
-//
-// To break this Catch-22, this code builds a field-compatible version of
-// ACTION-ADJUNCT.  After %sysobj.r is loaded, an assert checks to make sure
-// that this manual construction actually matches the definition in the file.
-//
-void Startup_Action_Adjunct_Shim(void) {
-    SymId field_syms[1] = {
-        SYM_DESCRIPTION
-    };
-    VarList* adjunct = Alloc_Varlist_Core(BASE_FLAG_MANAGED, TYPE_OBJECT, 2);
-    REBLEN i = 1;
-    for (; i != 2; ++i)
-        Init_Nulled(Append_Context(adjunct, Canon_Symbol(field_syms[i - 1])));
-
-    Root_Action_Adjunct = Init_Object(Alloc_Value(), adjunct);
-    Force_Value_Frozen_Deep(Root_Action_Adjunct);
-}
-
-//
-//  Shutdown_Action_Adjunct_Shim: C
-//
-void Shutdown_Action_Adjunct_Shim(void) {
-    rebRelease(Root_Action_Adjunct);
 }
 
 

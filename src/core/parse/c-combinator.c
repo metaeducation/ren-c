@@ -141,41 +141,10 @@ bool Combinator_Details_Querier(
 //
 //  Expanded_Combinator_Spec: C
 //
-// The original usermode version of this was:
+// Add implicit STATE and INPUT fields to NATIVE:COMBINATOR spec.
 //
-//     compose [
-//         ; Get the text description if given
-//
-//         (when text? spec.1 [spec.1, elide spec: my next])
-//
-//         ; Get the RETURN: definition if there is one, otherwise add one
-//         ; so that we are sure that we know the position/order of the
-//         ; arguments.
-//
-//         (if set-word? spec.1 [
-//             assert [spec.1 = 'return:]
-//             assert [text? spec.2]
-//             assert [block? spec.3]
-//
-//             reduce [spec.1 spec.2 spec.3]
-//             elide spec: my skip 3
-//         ] else [
-//             [return: [any-stable?]],
-//         ])
-//
-//         remainder: [<null> any-series?]
-//
-//         state [frame!]
-//         input [any-series?]
-//
-//         (spread spec)  ; arguments the combinator takes, if any.
-//      ]
-//
-// !!! Optimizing it was at first considered unnecessary because the speed
-// at which combinators were created wasn't that important.  However, at the
-// time of setting up native combinators there is no COMPOSE function available
-// and the rebValue("...") function won't work, so it had to be hacked up as
-// a handcoded routine.  Review.
+// !!! INPUT is no longer implicit on combinators so you can name the input
+// whatever you want.  Review.
 //
 Source* Expanded_Combinator_Spec(const Element* original)
 {
@@ -185,25 +154,19 @@ Source* Expanded_Combinator_Spec(const Element* original)
     const Element* item = List_At(&tail, original);
     Context* binding = List_Binding(original);
 
-    if (Is_Text(item)) {
-        Derelativize(PUSH(), item, binding);  // {combinator description}
-        if (item == tail)
-            panic ("too few combinator args");
-        ++item;
-    }
-    Derelativize(PUSH(), item, binding);  // return:
-    if (item == tail)
-        panic ("too few combinator args");
+    assert(Is_Text(item));  // "combinator description"
+    Derelativize(PUSH(), item, binding);
+    assert(item != tail);
     ++item;
-    if (Is_Text(item)) {
-        Derelativize(PUSH(), item, binding);  // "return description"
-        if (item == tail)
-            panic ("too few combinator args");
-    }
+
+    assert(Is_Set_Word(item) and Word_Id(item) == SYM_RETURN);  // return:
+    Derelativize(PUSH(), item, binding);
+    assert(item != tail);
     ++item;
-    Derelativize(PUSH(), item, binding);  // [return type block]
-    if (item == tail)
-        panic ("too few combinator args");
+
+    assert(Is_Block(item));  // [return type block]
+    Derelativize(PUSH(), item, binding);
+    assert(item != tail);
     ++item;
 
     const Byte utf8[] =
@@ -258,10 +221,8 @@ DECLARE_NATIVE(COMBINATOR)
     Sink(Element) expanded_spec = SCRATCH;
     Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
-    VarList* adjunct;
     require (
       ParamList* paramlist = Make_Paramlist_Managed(
-        &adjunct,
         expanded_spec,
         MKF_MASK_NONE,
         SYM_RETURN  // want RETURN:
@@ -358,10 +319,9 @@ void Push_Parser_Sublevel(
 //
 //  opt-combinator: native:combinator [
 //
-//  "If supplied parser fails, succeed anyway without advancing the input"
+//  "If parser fails, succeed and return VOID without advancing the input"
 //
-//      return: "PARSER's result if it succeeds, otherwise NULL"
-//          [any-stable?]
+//      return: [<void> any-stable?]
 //      parser [action!]
 //      {remainder}  ; !!! no longer separate output, review
 //  ]
@@ -413,8 +373,7 @@ DECLARE_NATIVE(OPT_COMBINATOR)
 //
 //  "Match a TEXT! value as a list item or at current position of bin/string"
 //
-//      return: "The rule series matched against (not input value)"
-//          [<null> text!]
+//      return: [text!]
 //      value [text!]
 //      {remainder}  ; !!! no longer separate output, review
 //  ]
@@ -479,10 +438,9 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
 //
 //  some-combinator: native:combinator [
 //
-//  "Must run at least one match"
+//  "Must run at least one match, return result of last parser call"
 //
-//      return: "Result of last successful match"
-//          [any-stable?]
+//      return: [any-stable?]
 //      parser [action!]
 //      {remainder}  ; !!! no longer separate output, review
 //  ]
@@ -569,8 +527,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
 //
 //  "Pass through the result only if the input was advanced by the rule"
 //
-//      return: "parser result if it succeeded and advanced input, else NULL"
-//          [any-stable?]
+//      return: [any-stable?]
 //      parser [action!]
 //      {remainder}  ; !!! no longer separate output, review
 //  ]
@@ -767,8 +724,9 @@ static bool Combinator_Param_Hook(
 //
 //  "Analyze combinator parameters in rules to produce a specialized parser"
 //
-//      return: "Parser function and advanced position in rules"
-//          [~[action! block!]~]
+//      return: [
+//          ~[action! block!]~ "Parser function and advanced position in rules"
+//      ]
 //      combinator "Parser combinator taking input, but also other parameters"
 //          [frame!]
 //      rules [block!]

@@ -251,8 +251,9 @@ process-tests: func [
 export do-recover: func [
     "Executes tests in the FILE and recovers from crash"
 
-    return: "The log file that was generated, and textual summary of results"
-        [~[file! text!]~]
+    return: [
+        ~[file! text!]~  "log file, and textual summary of results"
+    ]
     file [file!] "test file"
     flags [block!] "which flags to accept"
     code-checksum [<opt> blob!]

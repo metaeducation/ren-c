@@ -385,7 +385,7 @@ collect*: lambda [
 
     []: [
         block!
-        <null> "or null if no KEEPs, prevent nulls with (keep ~()~)"
+        <null> "if no KEEPs, prevent nulls with (keep ~()~)"
     ]
     body [<opt-out> block!]
     {out}

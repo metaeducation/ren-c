@@ -1341,8 +1341,10 @@ Result(Value*) Get_Word(
 //
 //  "Low-level variable setter, that can assign within the dual band"
 //
-//      return: "Same value as input (error passthru even it skips the assign)"
-//          [any-stable?]
+//      return: [
+//          any-stable? "Same value as input"
+//          error!      "Passthru even if it skips the assign"
+//      ]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
@@ -1448,8 +1450,10 @@ DECLARE_NATIVE(TWEAK)
 //
 //  "Sets a variable to specified value (for dual band states, see TWEAK)"
 //
-//      return: "Same value as input (error passthru even it skips the assign)"
-//          [any-stable?]
+//      return: [
+//          any-stable?  "Same value as input"
+//          error!       "Passthru even it skips the assign"
+//      ]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<opt> any-word? tuple! group!
 //          any-get-value? any-set-value? @block!]
@@ -1498,8 +1502,10 @@ DECLARE_NATIVE(SET)
 //
 //  "Gets a variable (for dual band states, see TWEAK)"
 //
-//      return: "Same value as input (error passthru even it skips the assign)"
-//          [any-stable?]
+//      return: [
+//          any-stable?  "Same value as input"
+//          error!       "Passthru passthru even it skips the assign"
+//      ]
 //      target "Word or tuple or path, or calculated sequence steps (from GET)"
 //          [<opt-out> any-word? tuple! path! group!
 //          any-get-value? any-set-value? @block!]

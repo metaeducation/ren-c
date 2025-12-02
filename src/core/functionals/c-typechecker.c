@@ -41,8 +41,7 @@
 //
 //  "For internal use (builds parameters and return slot)"
 //
-//      return: "Whether the type matched"
-//          [logic?]
+//      return: [logic?]
 //      value "Value to test"
 //          [<opt-out> any-stable?]
 //      :type "Test a concrete type, (integer?:type integer!) passes"
@@ -255,16 +254,17 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     Init_Get_Word(Array_At(spec_array, 6), CANON(METAFORM));
     Init_Block(spec, spec_array);
 
-    VarList* adjunct;
+    StackIndex base = TOP_INDEX;
+
     assume (
       ParamList* paramlist = Make_Paramlist_Managed(
-        &adjunct,
         spec,
-        MKF_MASK_NONE,
+        MKF_DONT_POP_RETURN,  // no RETURN: in spec (always logic)
         SYM_0  // return type for all typecheckers is the same [3]
     ));
 
-    assert(adjunct == nullptr);
+    DECLARE_ELEMENT (discard);
+    Pop_Unpopped_Return(discard, base);  // no typespec, no description
 
     Details* details = Make_Dispatch_Details(
         BASE_FLAG_MANAGED | DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC,
@@ -1114,10 +1114,9 @@ DECLARE_NATIVE(TYPECHECKER)
 //
 //  typecheck: native [
 //
-//  "Perform same typechecking that arguments for functions go through"
+//  "Same typechecking as function arguments"
 //
-//      return: "If ERROR! that doesn't pass the check, then that ERROR!"
-//          [logic? error!]  ; returns error vs. panic [1]
+//      return: [logic? error!]  ; returns error vs. panic [1]
 //      test [block! datatype! parameter! action!]
 //      ^value [any-value?]
 //      :meta "Don't pre-decay argument (match ^META argument mode)"
@@ -1177,20 +1176,15 @@ DECLARE_NATIVE(TYPECHECK)
 //
 //  match: native [
 //
-//  "Check value using the same typechecking that functions use for parameters"
+//  "Same typechecking as function arguments, but return value on success"
 //
-//      return: "Input if it matched, NULL if it did not"
-//          [any-stable?]
+//      return: [<null> any-stable?]
 //      test [block! datatype! parameter! action!]
-//      value [<opt-out> any-stable?]
+//      value "Won't pass thru NULL (use TYPECHECK for a LOGIC? answer)"
+//          [<opt-out> any-stable?]
 //  ]
 //
 DECLARE_NATIVE(MATCH)
-//
-// Note: Ambitious ideas for the "MATCH dialect" are on hold, and this function
-// just does some fairly simple matching:
-//
-//   https://forum.rebol.info/t/time-to-meet-your-match-dialect/1009/5
 //
 // 1. Passing in NULL for value creates a problem, because it conflates the
 //    "didn't match" signal with the "did match" signal.  You probably want
@@ -1202,9 +1196,7 @@ DECLARE_NATIVE(MATCH)
     Value* test = ARG(TEST);
 
     Value* spare = Copy_Cell(SPARE, ARG(VALUE));
-
-    if (Is_Nulled(spare))
-        return fail (Error_Type_Of_Null_Raw());  // for TRY TYPE OF [1]
+    assert(not Is_Nulled(spare));  // <opt-out> args should prohibit NULL
 
     switch (opt Type_Of(test)) {
       case TYPE_ACTION:
@@ -1215,7 +1207,6 @@ DECLARE_NATIVE(MATCH)
         }
         break;
 
-        // fall through
       case TYPE_PARAMETER:
       case TYPE_BLOCK:
       case TYPE_DATATYPE:
@@ -1228,11 +1219,7 @@ DECLARE_NATIVE(MATCH)
         panic (PARAM(TEST));
     }
 
-    //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
-
-    Copy_Cell(OUT, spare);
-
-    return OUT;
+    return COPY(spare);  // test matched, return input value
 }
 
 

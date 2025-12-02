@@ -412,8 +412,10 @@ DECLARE_NATIVE(RANDOM_BETWEEN)
 //
 //  "Picks an arbitrary member out of a collection (see also SHUFFLE, RANDOM)"
 //
-//      return: "Error if collection empty (use TRY RANDOM-PICK to get NULL)"
-//          [element? error!]
+//      return: [
+//          element?
+//          error! "if collection was empty (use TRY RANDOM-PICK to get NULL)"
+//      ]
 //      collection [fundamental?]
 //      :secure "Old refinement from R3-Alpha: Review"
 //  ]

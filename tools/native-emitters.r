@@ -59,8 +59,8 @@ native-info!: make object! [
 ; as a text string.
 ;
 export extract-native-protos: func [
-    return: "Returns block of NATIVE-INFO! objects"
-        [block!]
+    "Returns block of NATIVE-INFO! objects"
+    return: [block!]
     c-source-file [file!]
 ][
     let [proto name exported native-type]
@@ -108,24 +108,87 @@ export extract-native-protos: func [
 ]
 
 
+; The bootstrap executable loads {...} as a text string.  In function specs
+; we use FENCE! for locals list.  But all we want here are the words.  If we
+; find a genuine locals-looking FENCE! at the tail of the spec, remove
+; the braces around it so we just have the words.
+;
+textually-splice-last-fence: proc [
+    spec [text!]
+][
+    let pos: find-last spec "}"
+    if pos [
+        if parse3 next pos [
+
+            opt some [space | newline] "]" accept (okay)
+            | accept (null)
+        ][
+            take pos
+            take find-reverse pos "{"
+        ] else [
+            ; This happens if you have "{}" or other braces in strings in
+            ; the spec.  If some locals aren't showing up check here why.
+        ]
+    ]
+]
+
+
+; EMIT-INCLUDE-PARAMS-MACRO
+;
 ; This routine has to deal with differences between specs the bootstrap EXE
 ; can load and what the modern Ren-C can load.  The easiest way to do this is
 ; to take in the textual spec, "massage" it in a way that doesn't destroy the
-; information being captured, and then LOAD it.
+; information being captured, and then TRANSCODE it.
+;
+;  1. We used stripload to get the function specs, so it has @output form
+;     parameters.  The bootstrap executable thinks that's an illegal email.
+;     So to process these, we replace the @ with nothing
+;
+;  2. All natives *should* specify a `return:`, because it's important to
+;     document what the return types are (and HELP should show it).  But only
+;     CHECK_RAW_NATIVE_RETURNS builds actually *type check* the result; the C
+;     code is trusted otherwise to do the correct thing.
+;
+;     Natives store their return type specification in their Details, not in
+;     their ParamList (the way a FUNC does), because there is no need for
+;     instances of natives to have a RETURN function slot.
+;
+;     (There are two exceptions: The NATIVE native itelf and TWEAK, in
+;     versions used during system boot.)
+;
+;  3. NATIVE:COMBINATOR instances have implicit parameters just like usermode
+;     COMBINATORs do.  We want those implicit parameters in ARG() macro list
+;     so the native bodies see them (again, just as the usermode combinators
+;     can use `state` and `input` in their body code)
+;
+;  4. We need `Set_Flex_Info(level_varlist, HOLD)` here because native code
+;     trusts that type checking has ensured it won't get bits in its argument
+;     slots that the C won't recognize.  Usermode code that gets its hands on
+;     a native's FRAME! (e.g. for debug viewing) can't be allowed to change
+;     the frame values to other bit patterns out from under the C or it could
+;     result in a crash.  The native itself doesn't care because it's not
+;     using ordinary variable assignment.
+;
+;     !!! This prevents API use inside natives which is binding-based.  That
+;     is an inconvenience, and if a native wants to do it for expedience then
+;     it needs to clear this bit itself (and set it back when done).
 ;
 export emit-include-params-macro: func [
-    "Emit macros for a native's parameters"
+    "Return block of symbols for macros that access a native's parameters"
 
-    return: "Block of symbols for arguments"
-        [block!]
+    return: [block!]
     e "where to emit (see %common-emitters.r)"
         [object!]
     proto [text!]
     :extension "extension name (not currently in use)"
         [text!]
 ][
-    let symbols: copy []
-    let native-name: ~
+    let native-name: "<unknown>"
+
+    let panic: proc [reason] [
+        print mold proto
+        lib/panic:blame [native-name spaced reason] $e
+    ]
 
     proto: stripload proto  ; remove comments
 
@@ -142,104 +205,54 @@ export emit-include-params-macro: func [
     ]
     let spec: copy find proto "["  ; make copy (we'll corrupt it)
 
-    replace spec "^^" -[]-
+    replace spec "^^" -[]-  ; ^WORD! decoration not important here
+    replace spec "@" -[]-  ; @WORD! would be invalid EMAIL! [1]
 
-    ; We used stripload to get the function specs, so it has @output form
-    ; parameters.  The bootstrap executable thinks that's an illegal email.
-    ; So to process these, we replace the @ with nothing
-    ;
-    ; !!! Review replacing with / when specs are changed, so /(...) and /xxx
-    ; will both work.
-    ;
-    replace spec "@" -[]-
-
-    ; The bootstrap executable loads {...} as a text string.  We use them
-    ; for FENCE! and locals list.  But all we want here are the words.  If we
-    ; find a genuine locals-looking FENCE! at the tail of the spec, remove
-    ; the braces around it so we just have the words.
-    ;
-    let pos: find-last spec "}"
-    if pos [
-        if parse3 next pos [
-            opt some [space | newline] "]" accept (okay)
-            | accept (null)
-        ][
-            take pos
-            take find-reverse pos "{"
-        ] else [
-            ; This happens if you have "{}" or other braces in strings in
-            ; the spec.  If some locals aren't showing up check here why.
-        ]
-    ]
+    textually-splice-last-fence spec  ; bootstrap loads {...} locals as TEXT!
 
     spec: transcode:one spec
 
-    let paramlist
-    if not find proto "native:combinator" [
-        paramlist: spec
-    ]
-    else [
-        ; NATIVE:COMBINATOR instances have implicit parameters just
-        ; like usermode COMBINATORs do.  We want those implicit
-        ; parameters in the ARG() macro list so the native bodies
-        ; see them (again, just as the usermode combinators can use
-        ; `state` and `input` and `remainder` in their body code)
-        ;
-        paramlist: collect [  ; no PARSE COLLECT in bootstrap exe :-(
-            assert [text? spec.1]
-            keep spec.1
-            spec: my next
+    let paramlist: collect [  ; no PARSE COLLECT in bootstrap exe :-(
+        if not text? spec.1 [
+            panic "NATIVE IS MISSING DESCRIPTION"
+        ]
+        spec: my next
 
-            assert [spec.1 = the return:]
-            keep spec.1
-            spec: my next
+        any [  ; (almost) all natives should have `RETURN: [<typespec>]`  ; [2]
+            (the return:) <> spec.1
+            not block? spec.2
+            text? opt try spec.3
+        ] then [
+            any [
+                native-name = "native-bootstrap"
+                native-name = "tweak*-bootstrap"
+            ] else [
+                panic [
+                    "has a bad RETURN: [<typespec>] specification" newline
+                    "Note no string text for RETURN is allowed!" newline
+                    "(Main description stored in RETURN PARAMETER!)" newline
+                    "You can put strings *inside* the typespec instead!"
+                ]
+            ]
+        ] else [
+            spec: my skip 2
+        ]
 
-            assert [text? spec.1]  ; description
-            keep spec.1
-            spec: my next
-
-            assert [block? spec.1]  ; type spec
-            keep spec.1
-            spec: my next
-
+        if find proto "native:combinator" [  ; implicit combinator params [3]
             keep spread [
                 state [frame!]
                 input [any-series?]
             ]
-
-            keep spread spec
         ]
+
+        keep spread spec
     ]
 
     let is-intrinsic: did find proto "native:intrinsic"
 
+    let symbols: copy []
     let n: 1
     let items: collect [
-        ;
-        ; All natives *should* specify a `return:`, because it's important
-        ; to document what the return types are (and HELP should show it).
-        ; However, only CHECK_RAW_NATIVE_RETURNS builds actually *type check*
-        ; the result; the C code is trusted otherwise to do the correct thing.
-        ;
-        ; Natives store their return type specification in their Details,
-        ; not in their ParamList (the way a FUNC does), because there is no
-        ; need for instances of natives to have a RETURN function slot.
-        ;
-        while [all [
-            not tail? paramlist
-            text? paramlist.1
-        ]][
-            paramlist: next paramlist
-        ]
-        all [
-            (the return:) <> paramlist.1
-            native-name != "native-bootstrap"
-            native-name != "tweak*-bootstrap"
-        ] then [
-            panic [native-name "does not have a RETURN: specification"]
-        ]
-        paramlist: next paramlist
-
         for-each 'item paramlist [
             if group? item [
                 item: first item
@@ -264,22 +277,10 @@ export emit-include-params-macro: func [
         ]
     ]
 
-    ; We need `Set_Flex_Info(level_varlist, HOLD)` here because native code
-    ; trusts that type checking has ensured it won't get bits in its argument
-    ; slots that the C won't recognize.  Usermode code that gets its hands on
-    ; a native's FRAME! (e.g. for debug viewing) can't be allowed to change
-    ; the frame values to other bit patterns out from under the C or it could
-    ; result in a crash.  The native itself doesn't care because it's not
-    ; using ordinary variable assignment.
-    ;
-    ; !!! This prevents API use inside natives which is binding-based.  That
-    ; is an inconvenience, and if a native wants to do it for expedience then
-    ; it needs to clear this bit itself (and set it back when done).
-    ;
     let varlist-hold: if is-intrinsic [
         [
             -[if (Not_Level_Flag(level_, DISPATCHING_INTRINSIC))]-
-            -[    Set_Flex_Info(Varlist_Array(level_->varlist), HOLD);]-
+            -[    Set_Flex_Info(Varlist_Array(level_->varlist), HOLD);]-  ; [4]
         ]
     ] else [
         [-[Set_Flex_Info(Varlist_Array(level_->varlist), HOLD);]-]
@@ -323,8 +324,8 @@ generic-info!: make object! [
 ; a step toward finer granularity by building tables of many functions.
 ;
 export extract-generic-implementations: func [
-    return: "Returns block of GENERIC-INFO! objects"
-        [block!]
+    "Returns block of GENERIC-INFO! objects"
+    return: [block!]
     c-source-file [file!]
 ][
     let [name proper-type name* type*]

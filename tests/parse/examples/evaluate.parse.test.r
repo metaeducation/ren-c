@@ -8,8 +8,7 @@
 [
     (parse-evaluate: combinator [
         "Run the evaluator one step to advance input, and produce a result"
-        return: "Result of one evaluation step"
-            [any-stable?]
+        return: [any-stable?]
         input [any-series?]
     ][
         return [input {^}]: evaluate:step input else [
@@ -20,8 +19,7 @@
 
 (
     keeper-saver: func [
-        return: "Saved as secondary result"
-            [~[block! block!]~]
+        return: [~[block! block!]~]
         input [block!]
         {mode value saved}
     ][

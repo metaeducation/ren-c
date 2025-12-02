@@ -464,26 +464,6 @@ static void Init_System_Object(
     if (not Is_Quasi_Word_With_Id(result_value, SYM_END))
         crash (result_value);
 
-    // Startup_Action_Adjunct_Shim() made Root_Action_Adjunct as bootstrap hack
-    // since it needed to make function adjunct information for natives before
-    // %sysobj.r's code could run using those natives.  But make sure what it
-    // made is actually identical to the definition in %sysobj.r.
-    //
-    DECLARE_VALUE (check);
-    assume (
-      Read_Slot(
-        check,
-        Get_System(SYS_STANDARD, STD_ACTION_ADJUNCT)
-    ));
-    assert(
-        0 == CT_Context(
-            Known_Element(check),
-            Root_Action_Adjunct,
-            true  // "strict equality"
-        )
-    );
-    UNUSED(check);
-
     // Store pointer to errors catalog (for GC protection)
     //
     Init_Object(
@@ -745,8 +725,6 @@ void Startup_Core(void)
 
   // boot->natives is from the automatically gathered list of natives found
   // by scanning comments in the C sources for `native: ...` declarations.
-
-    Startup_Action_Adjunct_Shim();  // make the shim for the action spec
 
     Startup_Natives(&boot->natives);
 
@@ -1041,8 +1019,6 @@ void Shutdown_Core(bool clean)
     Shutdown_Typesets();
 
     Shutdown_Natives();
-
-    Shutdown_Action_Adjunct_Shim();
 
     rebReleaseAndNull(&g_sys_util_module);
     g_sys_util_context = nullptr;

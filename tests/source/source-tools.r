@@ -155,10 +155,9 @@ export analyse: context [
     source: context [
 
         c: func [
-            "Analyse a C file at the C preprocessing token level"
+            "Return token-level facts about a C file (too-long lines, etc.)"
 
-            return: "Facts about the file (lines that are too long, etc)"
-                [block!]
+            return: [block!]
             file [file!]
             data [blob!]
             {position}  ; used sketchily in rules, no LET in parse :-/

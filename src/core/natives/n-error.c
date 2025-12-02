@@ -54,11 +54,10 @@ DECLARE_NATIVE(TRY)
 //
 //  enrecover: native [
 //
-//  "Sandbox code to intercept failures at ANY depth (including typos)"
+//  "Sandbox code to intercept failures; ERROR! -> WARNING! else lifted result"
 //
-//      return: "WARNING! if result is ERROR!, else ^META of the result"
-//          [warning! quoted! quasiform!]
-//      code "Code to sandbox and monitor"
+//      return: [warning! quoted! quasiform!]
+//      code "Code to sandbox, intercept errors at any depth (including typos)"
 //          [<unrun> frame! any-list?]
 //      :relax "Allow non-erroring premature exits (THROW, RETURN, etc.)"
 //  ]
@@ -138,11 +137,10 @@ DECLARE_NATIVE(ENRECOVER)
 //
 //  enrescue: native [
 //
-//  "Tries to EVAL a block, trapping error antiforms"
+//  "Catch top-level EVAL step errors, ERROR! -> WARNING! else lifted result"
 //
-//      return: "WARNING! if antiform error, else the ^META of the result"
-//          [warning! quasiform! quoted!]
-//      code "Code to execute and monitor"
+//      return: [warning! quasiform! quoted!]
+//      code "Code to execute in steps, returning WARNING! if any ERROR occurs"
 //          [block! frame!]
 //  ]
 //
@@ -244,14 +242,11 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 //
 //  except: infix:defer native [
 //
-//  "Analogue to something like a THEN which traps definitional errors"
+//  "If LEFT is ERROR! then run BRANCH and return the result, else return LEFT"
 //
-//      return: "Non-failure input, or product of processing failure"
-//          [any-value?]  ; [1]
-//      ^value "<deferred argument> Run branch if this is ERROR! antiform"
-//          [any-value?]
-//      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
-//          [<unrun> any-branch?]
+//      return: [any-value?]  ; [1]
+//      ^left [any-value?]
+//      @(branch) [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(EXCEPT)
@@ -268,7 +263,7 @@ DECLARE_NATIVE(EXCEPT)
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Atom* atom = Atom_ARG(VALUE);
+    Atom* atom = Atom_ARG(LEFT);
     Value* branch = ARG(BRANCH);
 
     if (not Is_Error(atom))
@@ -286,9 +281,8 @@ DECLARE_NATIVE(EXCEPT)
 //
 //  "If passed an ERROR! antiform, tunnel it to RETURN in scope, else passthru"
 //
-//      return: "Anything that wasn't an ERROR! antiform"
-//          [any-value?]  ; [1]
-//      ^value [any-value?]
+//      return: [any-value?]
+//      ^value [any-value? error!]
 //  ]
 //
 DECLARE_NATIVE(TRAP)
@@ -323,9 +317,8 @@ DECLARE_NATIVE(TRAP)
 //
 //  "If passed an ERROR! antiform, panic on it, otherwise passthru"
 //
-//      return: "Anything that wasn't an ERROR! antiform"
-//          [any-value?]
-//      ^value [any-value?]
+//      return: [any-value?]
+//      ^value [any-value? error!]
 //  ]
 //
 DECLARE_NATIVE(REQUIRE)

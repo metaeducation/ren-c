@@ -26,7 +26,7 @@
 //
 //     >> print-sum-twice: func [
 //            "Prints the sum of two integers, and return the sum"
-//            return: "The sum" [integer!]
+//            return: [integer!]
 //            x "First Value" [integer!]
 //            y "Second Value" [integer!]
 //        ][
@@ -340,9 +340,7 @@ Result(Details*) Make_Interpreted_Action(
     assert(Is_Block(spec) and Is_Block(body));
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
-    VarList* adjunct;
     ParamList* paramlist = Make_Paramlist_Managed(
-        &adjunct,
         spec,
         returner == SYM_DUMMY1 ? MKF_DONT_POP_RETURN : MKF_MASK_NONE,
         returner
@@ -356,9 +354,6 @@ Result(Details*) Make_Interpreted_Action(
         dispatcher,
         details_capacity  // we fill in details[0], caller fills any extra
     );
-
-    assert(Misc_Phase_Adjunct(details) == nullptr);
-    Tweak_Misc_Phase_Adjunct(details, adjunct);
 
     Source* copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action

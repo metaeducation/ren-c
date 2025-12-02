@@ -588,12 +588,15 @@ Bounce Composer_Executor(Level* const L)
 //
 //  "Evaluates only contents of GROUP!-delimited expressions in the argument"
 //
-//      return: "Strange types if :CONFLATE, like ('~)/('~) => ~/~ WORD!"
-//      [
-//          any-list? any-sequence?
-//          any-word?  ; passed through as-is, or :CONFLATE can produce
+//      return: [
+//          any-list?
+//          any-sequence?
 //          any-utf8?
-//          null? ~word!~ space? quasar?  ; :CONFLATE can produce these
+//          any-word?       "passed through as-is, or :CONFLATE can produce"
+//          space?          ":CONFLATE can make, e.g. ().(_) => _"
+//          quasar?         ":CONFLATE can make, e.g. ('~):() => ~"
+//          ~word!~         ":CONFLATE can make, e.g. ('~)/('~) => ~/~"
+//          <null>
 //      ]
 //      pattern "Pass @ANY-LIST? (e.g. @{{}}) to use the pattern's binding"
 //          [any-list? @any-list?]

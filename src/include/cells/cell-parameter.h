@@ -28,7 +28,7 @@
 // So for example, for the paramlist generated from the following spec:
 //
 //     foo: func [
-//         return: [integer!]  ; specialized to plain PARAMETER! (not antiform)
+//         return: [integer!]  ; specialized to quoted PARAMETER! (trick!)
 //         arg [<opt> block!]  ; PARAMCLASS_NORMAL
 //         'qarg [word!]       ; PARAMCLASS_QUOTED
 //         earg [<end> time!]  ; PARAMCLASS_NORMAL + PARAMETER_FLAG_ENDABLE

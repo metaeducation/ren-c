@@ -99,9 +99,11 @@ sym-table: copy []
 ; subject to reordering.
 ;
 add-sym: func [
-    "Add SYM_XXX or <PLACEHOLDER> signal to enumeration (order may adjust)"
-    return: "position of an already existing symbol if found"
-        [null? block!]
+    --[
+        Add SYM_XXX or <PLACEHOLDER> signal to enumeration (order may adjust)
+        Return position of an already existing symbol if found
+    ]--
+    return: [null? block!]
     item "If TAG!, then the / in </FOO> means mark *before* last added symbol"
         [word! text! tag! block!]
     :relax "tolerate an already-added symbol"

@@ -715,15 +715,24 @@ modernize-action: func3 [
     spec [block!]
     body [block!]
     <local>
+    let  ; can't use: causes stack overflow here
+    panic  ; redefine to dump spec if panic in this function
     last-refine-word tryers proxiers proxy w types new-spec new-body methodized
 ][
+    let: lib/does [panic "Can't use LET inside of MODERNIZE-ACTION"]
+
+    panic: func3 [reason] [  ; PROC doesn't exist yet
+        print mold spec
+        lib/panic:blame reason $spec
+    ]
+
     last-refine-word: null
     methodized: null
 
     tryers: copy []
     proxiers: copy []
 
-    new-spec: collect3 [  ; Note: offers KEEP/ONLY
+    new-spec: collect3 [  ; Note: offers KEEP3:ONLY
         while [text? spec.1] [
             keep3 spec.1
             spec: my next
@@ -731,6 +740,9 @@ modernize-action: func3 [
         ]
         until [tail? spec] [
             if spec.1 = the return: [
+                if not block? spec.2 [
+                    panic "RETURN must be followed by BLOCK! (not TEXT!)"
+                ]
                 if spec.2 = [] [
                     keep3 [return: [trash!]]
                     spec: my next
@@ -751,8 +763,8 @@ modernize-action: func3 [
                 continue
             ]
 
-            if refinement3? spec.1 [  ; old /REFINEMENT
-                panic:blame ["Old refinement in spec:" mold spec] $spec
+            if refinement3? spec.1 [
+                panic "Old /REFINEMENT in spec"
             ]
 
             if refinement? spec.1 [  ; new :REFINEMENT
@@ -815,9 +827,7 @@ modernize-action: func3 [
                 ]
 
                 if last-refine-word [
-                    panic:blame [
-                        "Refinements now *are* the arguments:" mold head spec
-                    ] $spec
+                    panic "Refinements now *are* the arguments"
                 ]
 
                 ; Feed through any TEXT!s following the ANY-WORD!

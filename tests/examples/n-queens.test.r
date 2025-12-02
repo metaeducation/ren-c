@@ -137,8 +137,12 @@
     ; Function for main solution
 
     solve-n-queens: func [
-        return: "The number of solutions, and solutions (if requested)"
-            [integer! ~[integer! block!]~]
+        return: [
+            ~[integer! block!]~
+            "The number of solutions, and solutions"
+
+            integer! "Just the number of solutions if :COUNTONLY"
+        ]
         n "The number queens on to place the board of size nxn"
             [integer!]
         :countonly "Only print the number of solutions found"

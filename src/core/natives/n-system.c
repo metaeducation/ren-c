@@ -75,8 +75,10 @@ DECLARE_NATIVE(EXIT)  // moved to SYS.UTIL/EXIT by boot code, for safety
 //
 //  "Recycles unused memory"
 //
-//      return: "Number of Stubs/Pairings recycled (if applicable)"
-//          [<null> integer!]
+//      return: [
+//          integer!  "Number of Stubs/Pairings recycled (if applicable)"
+//          trash!    "if recycling disabled or not requested"
+//      ]
 //      :off "Disable auto-recycling"
 //      :on "Enable auto-recycling"
 //      :ballast "Trigger for auto-recycle (memory used)"
@@ -92,7 +94,7 @@ DECLARE_NATIVE(RECYCLE)
 
     if (Bool_ARG(OFF)) {
         g_gc.disabled = true;
-        return NULLED;
+        return TRIPWIRE;
     }
 
     if (Bool_ARG(ON)) {
@@ -111,7 +113,7 @@ DECLARE_NATIVE(RECYCLE)
     }
 
     if (g_gc.disabled)
-        return NULLED;  // don't give misleading "0", since no recycle ran
+        return TRIPWIRE;  // don't give misleading "0", since no recycle ran
 
     REBLEN count;
 
@@ -285,11 +287,11 @@ DECLARE_NATIVE(C_DEBUG_TICK)
 
 
 //
-//  c-debug-break: native [
+//  c-debug-break: ghostable native [
 //
 //  "Break at next evaluation point (only use when running under C debugger)"
 //
-//      return: [ghost!] "Invisible"
+//      return: [ghost!]
 //  ]
 //
 DECLARE_NATIVE(C_DEBUG_BREAK)

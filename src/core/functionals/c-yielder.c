@@ -489,8 +489,9 @@ bool Yielder_Details_Querier(
 //
 //  yielder: native [
 //
-//      return: "Action that can be called repeatedly until it yields NULL"
-//          [action!]
+//  "Produce generator function that can be called multiple times until DONE"
+//
+//      return: [action!]
 //      spec "Arguments passed in to each call for the generator"
 //          [block!]
 //      body "Code containing YIELD statements"
@@ -533,8 +534,9 @@ DECLARE_NATIVE(YIELDER)
 //
 //  generator: native [
 //
-//      return: "Arity-0 action you can call repeatedly until it yields NULL"
-//          [action!]
+//  "Make arity-0 action you can call repeatedly until it yields DONE"
+//
+//      return: [action!]
 //      :spec [] "internal use only"
 //      body "Code containing YIELD statements"
 //          [block!]
@@ -557,9 +559,8 @@ DECLARE_NATIVE(GENERATOR)  // could also be made in LIB with SPECIALIZE
 //
 //  "Function used with GENERATOR and YIELDER to emit results"
 //
-//      return: "Same value given as input is returned when YIELD resumes"
-//          [any-value?]
-//      ^value "Value to yield or the DONE error antiform to signal completion"
+//      return: [any-value?]
+//      ^value "Value to yield (will be return value on re-entry) or DONE"
 //          [any-value?]
 //      :final "Yield, but also signal the yielder or generator is done"
 //  ]

@@ -68,10 +68,9 @@ DECLARE_NATIVE(CONST_Q) {
 //
 //  mutable: native [
 //
-//  "Return value whose access allows mutation to its argument (if unlocked)"
+//  "Return reference with mutable access to its argument (if not LOCK-ed)"
 //
-//      return: "Same as input -- no errors are given if locked or immediate"
-//          [<null> element?]
+//      return: [<null> element?]
 //      value "Argument to change access to (if such access can be granted)"
 //          [<opt-out> element?]  ; !!! affect INTEGER! when it's a bignum?
 //  ]

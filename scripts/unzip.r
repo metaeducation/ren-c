@@ -119,8 +119,9 @@ get-msdos-date: lambda [
 zip-entry: func [
     "Compresses a file"
 
-    return: "local header and central directory entry"
-        [~[blob! blob!]~]
+    return: [
+        ~[blob! blob!]~ "local header and central directory entry"
+    ]
     name "Name of file"
         [file!]
     date "Modification date of file"
@@ -209,8 +210,9 @@ to-path-file: func [
 zip: func [
     "Build zip archive from a file or dialected data specification block"
 
-    return: "Number of entries in archive"
-        [integer!]
+    return: [
+        integer! "Number of entries in archive"
+    ]
     where "Where to build the archive (allows series in-memory)"
         [file! url! blob! text!]
     source "Files to archive (only STORE and DEFLATE supported)"
@@ -311,8 +313,10 @@ zip: func [
 unzip: func [
     "Decompresses a zip archive to a directory or a block"
 
-    return: "If `where` was a block, then position after archive insertion"
-        [trash? block!]
+    return: [
+        trash!
+        block! "If WHERE was a block, position after archive insertion"
+    ]
     where "Where to decompress it"
         [file! block!]
     source "Archive to decompress (only STORE and DEFLATE supported)"

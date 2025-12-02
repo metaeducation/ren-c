@@ -108,8 +108,10 @@ make-http-request: func [
 do-request: func [
     "Synchronously process an HTTP request on a port"
 
-    return: "Result of the request (BLOCK! for HEAD requests, BLOB! read...)"
-        [blob! block!]
+    return: [
+        blob!   "BLOB! for READ, etc."
+        block!  "BLOCK! for HEAD requests, etc."
+    ]
     port [port!]
 ][
     let spec: port.spec

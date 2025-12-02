@@ -462,8 +462,9 @@ compile: proc [
 c99: func [
     "http://pubs.opengroup.org/onlinepubs/9699919799/utilities/c99.html"
 
-    return: "Exit status code (try to match gcc/tcc)"
-        [integer!]
+    return: [
+        integer! "Exit status code (try to match gcc/tcc)"
+    ]
     command "POSIX c99 invocation string (system.options.args if <end>)"
         [<end> block! text!]
     :inspect

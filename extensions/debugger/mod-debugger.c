@@ -141,7 +141,6 @@ DECLARE_NATIVE(BREAKPOINT_P)
 //  "Pause in the debugger before running the provided code"
 //
 //      return: [any-stable?]
-//          "Result of the code evaluation, or RESUME:WITH value if override"
 //      @code [group!]  ; or LIT-WORD! name or BLOCK! for dialect
 //          "Run the given code if breakpoint does not override"
 //  ]
@@ -170,7 +169,7 @@ DECLARE_NATIVE(PAUSE)
 //  "Resume after a breakpoint, can evaluate code in the breaking context"
 //
 //      return: [<divergent>]
-//      expression "Evalue the given code as return value from BREAKPOINT"
+//      expression "Evaluate the given code as return value from BREAKPOINT"
 //          [<end> block!]
 //  ]
 //

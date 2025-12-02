@@ -183,8 +183,10 @@ clean-path: func [
 ask: func [
     "Ask the user for input"
 
-    return: "Null if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
-        [any-stable?]
+    return: [
+        any-stable?
+        <null> "if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
+    ]
     question "Prompt to user, datatype to request, or dialect block"
         [block! text! datatype!]
     :hide "mask input with * (Rebol2 feature, not yet implemented)"

@@ -622,16 +622,15 @@ DECLARE_NATIVE(CFOR)
 //
 //  "Evaluates a block for periodic values in a series"
 //
-//      return: "Last body result, or null if BREAK"
-//          [any-stable?]
-//      word "Variable set to each position in the series at skip distance"
-//          [word! @word? _]
-//      series "The series to iterate over"
-//          [<opt> blank? any-series?]
-//      skip "Number of positions to skip each time"
-//          [<opt-out> integer!]
-//      body "Code to evaluate each time"
-//          [<const> any-branch?]
+//      return: [
+//          any-stable?     "last body result"
+//          <null>          "if BREAK encountered"
+//          ~[<null>]~      "if body result was NULL"
+//      ]
+//      word [word! @word! _]
+//      series [<opt> blank? any-series?]
+//      skip [<opt-out> integer!]
+//      body [<const> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(FOR_SKIP)
@@ -797,11 +796,10 @@ void Add_Definitional_Stop(
 //
 //  cycle: native [
 //
-//  "Evaluates a block endlessly, until a BREAK or a STOP is hit"
+//  "Evaluate branch endlessly until BREAK gives NULL or a STOP gives a result"
 //
-//      return: "Null if BREAK, or non-null value passed to STOP"
-//          [any-stable?]
-//      body "Block or action to evaluate each time"
+//      return: [<null> any-stable?]
+//      body "Code to evaluate each time"
 //          [<const> any-branch?]
 //  ]
 //
@@ -1250,14 +1248,18 @@ void Shutdown_Loop_Each(Value* iterator)
 //
 //  "Evaluates a block for each value(s) in a series"
 //
-//      return: "Last body result, or null if BREAK"
-//          [any-stable?]
+//      return: [
+//          any-stable?     "last body result"
+//          <null>          "if BREAK encountered"
+//          ~[<null>]~      "if body result was null"
+//          <void>          "if body never ran"
+//      ]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
 //          [<opt> blank? any-series? any-context? map! any-sequence?
 //           action!]  ; action support experimental, e.g. generators
-//      body "Block to evaluate each time"
+//      body "Code to evaluate each time, if BREAK encountered returns NULL"
 //          [<const> block!]
 //      {iterator}
 //  ]
@@ -1382,14 +1384,16 @@ DECLARE_NATIVE(FOR_EACH)
 //
 //  "Iterate and return null if any previous body evaluations were falsey"
 //
-//      return: "null on BREAK, void on empty, null or the last non-null value"
-//          [any-stable?]
+//      return: [
+//          any-stable?     "last body result"
+//          <null>          "if any body eval was NULL, or BREAK encountered"
+//          ~[<null>]~      "if body result was NULL"
+//          <void>          "if body never ran"
+//      ]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
-//      data "The series to traverse"
-//          [<opt> blank? any-series? any-context? map! action!]
+//      data [<opt> blank? any-series? any-context? map! action!]
 //      body [<const> block!]
-//          "Block to evaluate each time"
 //      {iterator}
 //  ]
 //
@@ -1529,15 +1533,14 @@ DECLARE_NATIVE(EVERY)
 //
 //  remove-each: native [
 //
-//  "Removes values for each block that returns true"
+//  "Removes values for each body evaluation that's not null, modifies input"
 //
-//      return: "Modified Input"
-//          [<null> ~[[blank? any-series?] integer!]~]
+//      return: [<null> ~[[blank? any-series?] integer!]~]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (modified)"
 //          [<opt> blank? any-series?]
-//      body "Block to evaluate (return TRUE to remove)"
+//      body "Block to evaluate each time, return NULL if BREAK hit"
 //          [<const> block!]
 //  ]
 //
@@ -1894,8 +1897,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //
 //  "Evaluate a block for each value(s) in a series and collect as a block"
 //
-//      return: "Collected block"
-//          [<null> block!]
+//      return: [<null> block!]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
@@ -1944,8 +1946,7 @@ DECLARE_NATIVE(MAP_EACH)
 //
 //  "Evaluate a block for each value(s) in a series and collect as a block"
 //
-//      return: "Collected block"
-//          [<null> block!]
+//      return: [<null> block!]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
@@ -2127,11 +2128,15 @@ DECLARE_NATIVE(MAP)
 //
 //  "Evaluates a block a specified number of times"
 //
-//      return: "Last body result, or null if BREAK"
-//          [any-stable?]
+//      return: [
+//          any-stable?     "last body result"
+//          <null>          "if BREAK encountered"
+//          ~[<null>]~      "if body result was null"
+//          <void>          "if body never ran"
+//      ]
 //      count "Repetitions (true loops infinitely, false doesn't run)"
 //          [<opt> any-number? logic?]
-//      body "Block to evaluate or action to run"
+//      body "Code to evaluate each time, if BREAK encountered returns NULL"
 //          [<unrun> <const> block! frame!]
 //  ]
 //
@@ -2227,8 +2232,12 @@ DECLARE_NATIVE(REPEAT)
 //
 //  "Evaluates a branch a number of times or over a series, return last result"
 //
-//      return: "Last body result, or NULL if BREAK"
-//          [any-stable?]
+//      return: [
+//          any-stable?     "last body result"
+//          <null>          "if BREAK encountered"
+//          ~[<null>]~      "if body result was null"
+//          <void>          "if body never ran"
+//      ]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      value "Maximum number or series to traverse"
@@ -2355,11 +2364,11 @@ DECLARE_NATIVE(FOR)
 //
 //  insist: native [
 //
-//  "Evaluates the body until it produces a conditionally true value"
+//  "Evaluates the body until it produces a non-NULL (and non-VOID) value"
 //
-//      return: "Last body result, or null if a BREAK occurred"
-//          [any-stable?]
-//      body [<const> block!]
+//      return: [<null> any-stable?]
+//      body "If BREAK encountered, returns NULL"
+//          [<const> block!]
 //  ]
 //
 DECLARE_NATIVE(INSIST)
@@ -2374,14 +2383,9 @@ DECLARE_NATIVE(INSIST)
     };
 
     switch (STATE) {
-      case ST_INSIST_INITIAL_ENTRY:
-        goto initial_entry;
-
-      case ST_INSIST_EVALUATING_BODY:
-        goto body_result_in_out;
-
-      default:
-        assert(false);
+      case ST_INSIST_INITIAL_ENTRY: goto initial_entry;
+      case ST_INSIST_EVALUATING_BODY: goto body_result_in_out;
+      default: assert(false);
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -2391,6 +2395,7 @@ DECLARE_NATIVE(INSIST)
 
     STATE = ST_INSIST_EVALUATING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for BREAK, CONTINUE, etc.
+    goto loop_again;
 
 } loop_again: { /////////////////////////////////////////////////////////////
 
@@ -2400,24 +2405,23 @@ DECLARE_NATIVE(INSIST)
 
 } body_result_in_out: {  /////////////////////////////////////////////////////
 
-    // 1. When CONTINUE has an argument, it acts like the loop body evaluated
-    //    to that argument.  But INSIST's condition and body are the same, so
-    //    CONTINUE:WITH OKAY will stop the INSIST and return OKAY, while
-    //    CONTINUE:WITH 10 will stop and return 10, etc.
-    //
-    // 2. Due to body_result_in_out:[1], we want CONTINUE (or CONTINUE VOID)
-    //    to keep the loop running.  For parity between what continue does
-    //    with an argument and what the loop does if the body evaluates to
-    //    that argument, it suggests tolerating a void body result as intent
-    //    to continue the loop also.
-    //
-    // 3. Being willing to tolerate a GHOST is a little more questionable.
-    //    For now, don't allow it...though it may wind up being useful.
-    //
-    // 4. Today we don't test undecayed values for truthiness or falseyness.
-    //    Hence INSIST cannot return something like a pack...it must be META'd
-    //    and the result UNMETA'd.  That would mean all pack quasiforms would
-    //    be considered truthy.
+  // 1. When CONTINUE has an argument, it acts like the loop body evaluated
+  //    to that argument.  But INSIST's condition and body are the same, so
+  //    CONTINUE:WITH OKAY will stop the INSIST and return OKAY, while
+  //    CONTINUE:WITH 10 will stop and return 10, etc.
+  //
+  // 2. Due to body_result_in_out:[1], we want CONTINUE (or CONTINUE VOID)
+  //    to keep the loop running.  For parity between what continue does with
+  //    an argument and what the loop does if the body evaluates to that
+  //    argument, it suggests a void body result be intent to continue.
+  //
+  // 3. Being willing to tolerate a GHOST is a little more questionable.
+  //    For now, don't allow it...though it may wind up being useful.
+  //
+  // 4. Today we don't test undecayed values for truthiness or falseyness.
+  //    Hence INSIST cannot return something like a pack...it must be META'd
+  //    and the result UNMETA'd.  That would mean all pack quasiforms would
+  //    be considered truthy.
 
     if (THROWING) {
         Option(LoopInterrupt) interrupt;
@@ -2570,10 +2574,10 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
 //
 //  "So long as a condition is truthy, evaluate the body"
 //
-//      return: "VOID if body never run, NULL if BREAK, else last body result"
-//          [any-stable?]
+//      return: [<null> any-stable?]
 //      condition [<unrun> <const> block! frame!]  ; literals not allowed, [1]
-//      body [<unrun> <const> block! frame!]
+//      body "If BREAK is encountered in body, return NULL"
+//          [<unrun> <const> block! frame!]
 //  ]
 //
 DECLARE_NATIVE(WHILE)
@@ -2600,10 +2604,10 @@ DECLARE_NATIVE(WHILE)
 //
 //  "So long as a condition is falsey, evaluate the body"
 //
-//      return: "VOID if body never run, NULL if BREAK, else last body result"
-//          [any-stable?]
+//      return: [<null> any-stable?]
 //      condition [<unrun> <const> block! frame!]  ; literals not allowed, [1]
-//      body [<unrun> <const> block! frame!]
+//      body "if BREAK is encountered in body, return NULL"
+//          [<unrun> <const> block! frame!]
 //  ]
 //
 DECLARE_NATIVE(UNTIL)

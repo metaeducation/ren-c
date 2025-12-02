@@ -257,15 +257,17 @@ DECLARE_NATIVE(SHOVE)
 //
 //  "Run a list through the evaluator iteratively, or take a single step"
 //
-//      return: "Evaluation product, or ~[position product]~ pack if :STEP"
-//          [any-value?]  ; :STEP changes primary return product [1]
+//      return: [
+//          any-value?              "Evaluation product"
+//          ~[block! any-value?]~   "[position product] pack if :STEP"  ; [1]
+//      ]
 //      source [
-//          <opt-out>  ; useful for `evaluate opt ...` scenarios
-//          block!  ; always "afraid of ghosts" semantics, stepping legal
-//          group!  ; must eval to end, only afraid of ghosts after value seen
-//          <unrun> frame!  ; invoke the frame (no arguments, see RUN)
-//          warning!  ; panic on the error
-//          varargs!  ; simulates as if block! is being executed
+//          <opt-out>  "useful for `evaluate opt ...` scenarios"
+//          block!  "always 'afraid of ghosts' semantics, :STEP ok"
+//          group!  "must eval to end, only afraid of ghosts after value seen"
+//          <unrun> frame!  "invoke the frame (no arguments, see RUN)"
+//          warning!  "panic on the error (prefer PANIC)"
+//          varargs!  "simulates as if BLOCK! is being executed"
 //      ]
 //      :step "Do one step of evaluation (return null position if at tail)"
 //  ]
@@ -274,7 +276,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 //
 // 1. When operating stepwise, the primary result shifts to be the position,
 //    to be more useful for knowing if there are more steps to take.  It also
-//    helps prevent misunderstandings if the first value of a multi-return
+//    helps prevent misunderstandings when the first value of a multi-return
 //    cannot itself be a multi-return pack:
 //
 //      https://forum.rebol.info/t/re-imagining-eval-next/767

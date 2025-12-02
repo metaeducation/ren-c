@@ -215,8 +215,9 @@ void Enable_Ctrl_C(void)
 //
 //  "Runs customizable Read-Eval-Print Loop, may 'provoke' code before input"
 //
-//      return: "Exit code, RESUME instruction, or handle to evaluator hook"
-//          [integer! ^group! handle!]
+//      return: [
+//          integer! "Exit code: 0 for clean exit, non-zero for errors"
+//      ]
 //      :provoke "Block must return a console state, group is cancellable"
 //          [block! group!]
 //      :resumable "Allow RESUME instruction (will return a ^GROUP!)"
@@ -387,11 +388,6 @@ DECLARE_NATIVE(CONSOLE)
 
     if (rebUnboxLogic("integer? code"))
         goto finished;  // if HOST-CONSOLE returns INTEGER! it means exit code
-
-    if (rebDid("match [^group! handle!] code")) {
-        rebElide("assert [resumable]");
-        goto finished;
-    }
 
     Enable_Ctrl_C();  // add hook that will call rebRequestHalt() on Ctrl-C
 

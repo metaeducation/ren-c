@@ -592,8 +592,9 @@ DECLARE_NATIVE(WRAP_P)
 //
 //  "Bind code in context made from top-level set-words from a block"
 //
-//      return: "List with added binding, and context created for variables"
-//          [~[any-list? object!]~]
+//      return: [
+//          ~[any-list? object!]~ "List with new binding, and created context"
+//      ]
 //      list [<opt-out> any-list?]
 //      :deep "Look for assigning constructs deeply"
 //      :set "Use semantics for WRAP of a SET-BLOCK for list argument"

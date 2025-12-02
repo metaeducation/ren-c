@@ -109,10 +109,9 @@ Result(Element*) Init_Any_Sequence_At_Listlike(
 //
 //  pick: native [
 //
-//  "Perform a path picking operation, same as `:(location).(picker)`"
+//  "Perform a path picking operation; same code as `(location).(picker)`"
 //
-//      return: "Picked value, or null if picker can't fulfill the request"
-//          [any-stable?]
+//      return: [<null> any-stable?]
 //      location [<opt-out> <unrun> plain?]  ; can't pick sigil'd/quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<opt-out> any-stable?]
@@ -218,8 +217,10 @@ static Bounce Tweak_P_Native_Core(Level* level_)
 //
 //  "Implementation detail of PICK and POKE, also underlies SET and GET"
 //
-//      return: "DUAL PROTOCOL: null means no writeback, lifted null is null"
-//          [<null> word! frame! quoted! quasiform!]
+//      return: [
+//          <null> "no writeback needed"
+//          word! frame! quoted! quasiform!
+//      ]
 //      location [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker [<opt-out> element?]
 //      dual "DUAL PROTOCOL: action is accessor, lifted action is action"
@@ -293,15 +294,15 @@ DECLARE_NATIVE(TWEAK_P_BOOTSTRAP)
 //
 //  poke: native [
 //
-//  "Perform a path poking operation, same as `(location).(picker): value`"
+//  "Poke a tuple as in `(location).(picker): value`, but returns value"
 //
-//      return: "Input value, or propagated error (no assignment on errors)"
-//          [any-stable? error!]
+//      return: [any-value? error!]
 //      location "(modified)"
 //          [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<opt-out> any-stable?]
-//      ^value [any-stable? error! <void>]
+//      ^value "ERROR! will be piped through without doing the poke"
+//          [<void> any-stable? error!]
 //      {store}
 //  ]
 //

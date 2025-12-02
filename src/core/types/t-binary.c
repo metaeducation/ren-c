@@ -98,8 +98,9 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Blob)
 //  encode-IEEE-754: native [
 //      "Encode a decimal as binary blob according to the IEEE-754 standard"
 //
-//      return: "Default return is double format (64 bits, 53-bit precision)"
-//          [blob!]
+//      return: [
+//          blob! "Default return is double format (64 bits, 53-bit precision)"
+//      ]
 //      arg [decimal!]  ; REVIEW: ~NaN~, ~inf~ as antiforms
 //      options "[single] -> Use single format (32 bits, 24-bit precision)"
 //          [block!]
@@ -1222,8 +1223,10 @@ DECLARE_NATIVE(DECODE_INTEGER)
 //
 //  "Do big-endian math on a binary blob with an integer"
 //
-//      return: "Same number of bytes as original, error on overflow"
-//          [blob! error!]
+//      return: [
+//          blob!   "Same number of bytes as original"
+//          error!  "error on overflow"
+//      ]
 //      blob [blob!]
 //      delta "Can be positive or negative"
 //          [integer!]

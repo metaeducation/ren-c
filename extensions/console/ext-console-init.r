@@ -314,8 +314,11 @@ export console!: make object! [
     input-hook: func [
         "Receives line input, parse and transform, send back to CONSOLE eval"
 
-        return: "~escape~ if canceled, null on no input, else line of text"
-            [<null> text! ~(~escape~)~]
+        return: [
+            text!           "one line of text"
+            <null>          "signal no input available"
+            ~(~escape~)~    "signal cancellation"
+        ]
         <.>
     ][
         return read-line stdin except ['~escape~]
@@ -496,14 +499,24 @@ bind construct [
 console*: func [
     "Rebol ACTION! that is called from C in a loop to implement the console"
 
-    return: "Code for C caller to sandbox, exit status, RESUME code, or hook"
-        [block! group! integer! ^group! handle!]  ; RETURN is hooked below!
-    prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
+    ; Note: RETURN is hooked below with a dialected version
+    return: [
+        integer!    "Signal to quit to OS, and return as an exit status value"
+        block!      "Haltable code for C to sandbox (on user's behalf)"
+        group!      "Haltable code for C to sandbox (on console's behalf)"
+    ]
+
+    prior "Code that last CONSOLE* call asked to eval (none if first call)"
         [<opt> block! group!]
-    result "^META result from PRIOR eval, non-quoted error, or exit code #"
-        [<opt> warning! quoted! quasiform! integer!]
+    result [
+        quasiform!
+        quoted!     "^META result from PRIOR eval"
+        warning!    "Plain form of ERROR! (if eval recovered from PANIC)"
+        integer!    "Exit code (indicating the eval ran the CONSOLE's QUIT)"
+        <opt>       "no result for a previous request if first call"
+    ]
     resumable "Is the RESUME function allowed to exit this console"
-        [yesno?]
+        [~(yes no)~]
     skin "Console skin to use if the console has to be launched"
         [<opt> object! file!]
     {.}
@@ -513,7 +526,7 @@ console*: func [
     ; We could do some sort of handling or cleanup here if we wanted to.
     ; Note that for simplicity's sake, the QUIT supplied by the CONSOLE to
     ; the user context only returns integer exit codes (otherwise we'd have
-    ; to add a parameter for what the QUIT/VALUE was--or multiplex it into
+    ; to add a parameter for what the QUIT:VALUE was--or multiplex it into
     ; the result--making this code more complicated for little point.)
 
     if integer? opt result [  ; QUIT for console only returns exit statuses
@@ -599,12 +612,6 @@ console*: func [
             ]
             group! [  ; means "submit user code"
                 assert [empty? .instruction]
-                state
-            ]
-            group?:metaform/ [  ; means "resume instruction"
-                state
-            ]
-            handle! [  ; means "evaluator hook request" (handle is the hook)
                 state
             ]
         ] else [

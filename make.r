@@ -228,8 +228,8 @@ to-obj-path: func [
 ]
 
 gen-obj: func [
-    return: "Rebmake specification object for OBJ"
-        [object!]
+    "Make rebmake specification object for .OBJ file"
+    return: [object!]
     name "single file representation (bootstrap says file/c for file.c)"
         [file! path! tuple!]
     dir "subdirectory (if applicable)"

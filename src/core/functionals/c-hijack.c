@@ -286,12 +286,11 @@ DECLARE_NATIVE(UNIMPLEMENTED)
 //
 //  hijack: native [
 //
-//  "Cause all existing references to a frame to invoke another frame"
+//  "Make victim references run another frame, return new identity for victim"
 //
-//      return: "New identity for calling victim"
-//          [action!]  ; must return ACTION!-only for "unsurprisingness"
+//      return: [action! frame!]
 //      victim "Frame whose inherited instances are to be affected"
-//          [<unrun> frame!]
+//          [action! frame!]
 //      hijacker "The frame to run in its place (void to leave TBD)"
 //          [<opt> <unrun> frame!]
 //  ]
@@ -312,10 +311,8 @@ DECLARE_NATIVE(HIJACK)
 //    not working--and the "Archetype" cell was no longer representing an
 //    instance of the action.  A 2-cell array works and is cleaner.
 //
-// 3. If a function carries something like a description, that seems to apply
-//    both to the hijacker and the original function being returned under
-//    a new identity.  It's not totally understood what ADJUNCT is or is not
-//    for, so this just assigns a shared copy.
+// 3. It's not totally understood what ADJUNCT is or is not for, so this just
+//    assigns a shared copy.
 {
     INCLUDE_PARAMS_OF_HIJACK;
 
@@ -359,12 +356,14 @@ DECLARE_NATIVE(HIJACK)
     assert(CELL_FRAME_PAYLOAD_1_PHASE(victim_archetype) == victim);
     CELL_FRAME_PAYLOAD_1_PHASE(victim_archetype) = proxy;  // adjust for swap
 
+    Value* out;
+
     if (victim_unimplemented) {
         assert(Get_Cell_Flag(LIB(UNIMPLEMENTED), PROTECTED));
-        Copy_Cell(OUT, LIB(UNIMPLEMENTED));
+        out = Copy_Plain_Cell(OUT, LIB(UNIMPLEMENTED));
     }
     else {
-        Init_Action(
+        out = Init_Frame(
             OUT,
             proxy,  // after Swap_Stub_Content(), new identity for victim
             Frame_Label(ARG(VICTIM)),
@@ -372,5 +371,9 @@ DECLARE_NATIVE(HIJACK)
         );
     }
 
+    if (Is_Frame(ARG(VICTIM)))
+        return OUT;
+
+    Actionify(out);
     return UNSURPRISING(OUT);
 }

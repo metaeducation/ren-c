@@ -379,8 +379,10 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
 //
 //  "Built-in checksums from zlib (see CHECKSUM in Crypt extension for more)"
 //
-//      return: "Little-endian format of 4-byte CRC-32"
-//          [blob!]  ; binary return avoids signedness issues [1]
+//      ; binary return avoids signedness issues [1]
+//      return: [
+//          blob! "Little-endian format of 4-byte CRC-32"
+//      ]
 //      method [~(adler32 crc32)~]
 //      data "Data to encode (using UTF-8 if TEXT!)"
 //          [blob! text!]

@@ -12,11 +12,10 @@ Rebol [
     ]--
 ]
 
-dump: func [
+dump: ghostable func [
     "Show the name of a value or expressions with the value (See Also: --)"
 
-    return: "Doesn't return anything, not even void (so like a COMMENT)"
-        [ghost!]
+    return: [ghost!]
     @(value) [any-stable?]
     @extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
         [element? <variadic>]
@@ -184,10 +183,9 @@ dumps: infix func [
 ; (as part of a general help review)
 ;
 summarize-obj: func [
-    "Returns a block of information about an object or port"
+    "Block of short lines (roughly 80 columns) about an object or port"
 
-    return: "Block of short lines (fitting in roughly 80 columns)"
-        [<null> block!]
+    return: [<null> block!]
     obj [object! port! module!]
     :pattern "Include only fields that match a string or datatype"
         [text! datatype!]

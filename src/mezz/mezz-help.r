@@ -147,34 +147,32 @@ help-action: proc [
         print [_ _ _ _ name @(spread deco-args) @(spread deco-refinements)]
     ]
 
-    let adjunct: adjunct-of frame
     print newline
 
+    ; !!! Note that an action can have an ordinary parameter named RETURN.
+    ; If it does then it will be listed in the arguments.  RETURN OF works
+    ; on all functions, and the `text` of the PARAMETER! is treated as the
+    ; description of the function on the whole.
+    ;
+    let return-param: return of frame
+
     print "DESCRIPTION:"
-    print [_ _ _ _ (any [select opt adjunct 'description, "(undocumented)"])]
+    print [_ _ _ _ (any [return-param.text, "(undocumented)"])]
 
     let print-args: [list :indent-words] -> [
         for-each 'key list [
             let param: select frame key
-            print [_ _ _ _ @(decorate-parameter param key) @(opt param.spec)]
+            print [_ _ _ _ @(decorate-parameter param key) @(? param.spec)]
             if param.text [
                 print [_ _ _ _ _ _ _ _ param.text]
             ]
         ]
     ]
 
-    ; !!! Note that an action can have an ordinary parameter named RETURN.
-    ; If it does then it will be listed in the arguments.
-    ;
-    let return-param: return of frame
-
     if return-param [
         print newline
         print [
-            "RETURNS:" (any [mold ? return-param.spec, "(undocumented)"])
-        ]
-        if return-param.text [
-            print [_ _ _ _ return-param.text]
+            "RETURNS:" (any [mold opt return-param.spec, "(undocumented)"])
         ]
     ]
 

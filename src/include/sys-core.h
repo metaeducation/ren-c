@@ -543,11 +543,10 @@ enum Boot_Levels {
 enum {
     MKF_DONT_POP_RETURN = 1 << 1,  // leave RETURN parameter on stack (natives)
 
-    // These flags are set during the process of spec analysis.  It helps
-    // avoid the inefficiency of creating documentation frames on functions
-    // that don't have any.
+    // This indicates that if a text description is seen on entry, it should
+    // not be treated as a function description but as an error.
     //
-    MKF_PARAMETER_SEEN = 1 << 2  // text will be description until this
+    MKF_AUGMENTING = 1 << 2
 };
 
 #define MKF_MASK_NONE 0 // no special handling

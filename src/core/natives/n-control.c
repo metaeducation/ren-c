@@ -139,12 +139,12 @@ Bounce The_Group_Branch_Executor(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. The Trampoline has some sanity checking asserts that try to stop you
-    //    from making mistakes.  Because this does something weird to use the
-    //    OUT cell as `with` the LEVEL_FLAG_FORCE_HEAVY_NULLS was taken off at
-    //    the callsite.
-    //
-    // 2. For as long as the evaluator is running, its out cell is GC-safe.
+  // 1. The Trampoline has some sanity checking asserts that try to stop you
+  //    from making mistakes.  Because this does something weird to use the
+  //    OUT cell as `with` the LEVEL_FLAG_FORCE_HEAVY_NULLS was taken off at
+  //    the callsite.
+  //
+  // 2. For as long as the evaluator is running, its out cell is GC-safe.
 
     if (Is_Cell_Erased(with))
         Init_Nulled(with);
@@ -165,14 +165,14 @@ Bounce The_Group_Branch_Executor(Level* const L)
 
 } group_result_in_branch: {  /////////////////////////////////////////////////
 
-    // 1. Allowing a void branch can be useful, consider:
-    //
-    //        switch-d: enclose (augment switch/ [
-    //            :default "Default case if no others are found"
-    //            [block!]
-    //        ]) lambda [f [frame!]] [
-    //            eval f else (opt f.default)
-    //        ]
+  // 1. Allowing a void branch can be useful, consider:
+  //
+  //        switch-d: enclose (augment switch/ [
+  //            :default "Default case if no others are found"
+  //            [block!]
+  //        ]) lambda [f [frame!]] [
+  //            eval f else (opt f.default)
+  //        ]
 
     assert(Is_Level_At_End(L));
 
@@ -193,13 +193,11 @@ Bounce The_Group_Branch_Executor(Level* const L)
 //
 //  if: native [
 //
-//  "If CONDITION is not NULL, execute branch, otherwise return NULL"
+//  "If CONDITION is not NULL, execute BRANCH, otherwise return NULL"
 //
-//      return: "will be a PACK! containing NULL if branch evaluates to NULL"
-//          [any-value?]
+//      return: [any-value? heavy-null?]
 //      condition [any-stable?]
-//      @(branch) "If arity-1 ACTION!, receives the evaluated condition"
-//          [any-branch?]
+//      @(branch) [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(IF)
@@ -222,13 +220,11 @@ DECLARE_NATIVE(IF)
 //
 //  when: native [
 //
-//  "When CONDITION is not NULL, execute branch, otherwise return VOID"
+//  "When CONDITION is not NULL, execute BRANCH, otherwise return VOID"
 //
-//      return: "will be a PACK! containing NULL if branch evaluates to NULL"
-//          [any-value?]
+//      return: [any-value? <void>]
 //      condition [any-stable?]
-//      @(branch) "If arity-1 ACTION!, receives the evaluated condition"
-//          [any-branch?]
+//      @(branch) [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(WHEN)
@@ -251,15 +247,12 @@ DECLARE_NATIVE(WHEN)
 //
 //  either: native [
 //
-//  "Choose a branch to execute, based on whether CONDITION is NULL"
+//  "When CONDITION is NULL, run NULL-BRANCH, else run NON-NULL-BRANCH"
 //
-//      return: "will be a PACK! containing NULL if branch evaluates to NULL"
-//          [any-value?]
+//      return: [any-value? heavy-null?]
 //      condition [any-stable?]
-//      @(okay-branch) "If arity-1 ACTION!, receives the evaluated condition"
-//          [any-branch?]
-//      @(null-branch)
-//          [any-branch?]
+//      @(non-null-branch) [<unrun> any-branch?]
+//      @(null-branch) [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(EITHER)
@@ -272,7 +265,7 @@ DECLARE_NATIVE(EITHER)
       bool cond = Test_Conditional(condition)
     );
 
-    Value* branch = cond ? ARG(OKAY_BRANCH) : ARG(NULL_BRANCH);
+    Value* branch = cond ? ARG(NON_NULL_BRANCH) : ARG(NULL_BRANCH);
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
 }
@@ -315,23 +308,21 @@ DECLARE_NATIVE(ELSE_Q)
 
 
 //
-//  then: infix:defer native [
+//  then: infix:defer native [  ; NOTE - INFIX:DEFER
 //
-//  "If input is null, return null, otherwise evaluate the branch"
+//  "If LEFT is NULL, return NULL, otherwise return BRANCH evaluation"
 //
-//      return: "null if input is null, or branch result"
-//          [any-value?]
-//      ^value "<deferred argument> Run branch if this is not null"
-//          [any-value?]
-//      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
-//          [<unrun> any-branch?]
+//      return: [any-value?]
+//      ^left "Note: only NULL not in a PACK! will trigger branch evaluation"
+//          [<null> any-value?]
+//      @(branch) [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(THEN)
 {
     INCLUDE_PARAMS_OF_THEN;
 
-    Atom* atom = Atom_ARG(VALUE);
+    Atom* atom = Atom_ARG(LEFT);
     Value* branch = ARG(BRANCH);
 
     if (Is_Error(atom))
@@ -345,14 +336,13 @@ DECLARE_NATIVE(THEN)
 
 
 //
-//  else: infix:defer native [
+//  else: infix:defer native [  ; NOTE - INFIX:DEFER
 //
-//  "If input is not null, return that value, otherwise evaluate the branch"
+//  "If LEFT is NULL, return BRANCH evaluation, otherwise return LEFT"
 //
-//      return: "Input value if not null, or branch result"
-//          [any-value?]
-//      ^value "<deferred argument> Run branch if this is null"
-//          [any-value?]
+//      return: [any-value?]
+//      ^left "Note: only NULL not in a PACK! will suppress branch evaluation"
+//          [<null> any-value?]
 //      @(branch) [<unrun> any-branch?]
 //  ]
 //
@@ -360,7 +350,7 @@ DECLARE_NATIVE(ELSE)
 {
     INCLUDE_PARAMS_OF_ELSE;
 
-    Atom* atom = Atom_ARG(VALUE);
+    Atom* atom = Atom_ARG(LEFT);
     Value* branch = ARG(BRANCH);
 
     if (Is_Error(atom))
@@ -374,23 +364,21 @@ DECLARE_NATIVE(ELSE)
 
 
 //
-//  also: infix:defer native [
+//  also: infix:defer native [  ; NOTE - INFIX:DEFER
 //
-//  "For non-null input, evaluate and discard branch (like a pass-thru THEN)"
+//  "If LEFT is NULL, return NULL, otherwise evaluate BRANCH but return LEFT"
 //
-//      return: "The same value as input, regardless of if branch runs"
-//          [any-value?]
-//      ^value "<deferred argument> Run branch if this is not null"
-//          [any-value?]
-//      @(branch) "If arity-1 ACTION!, receives value that triggered branch"
-//          [<unrun> any-branch?]
+//      return: [any-value?]
+//      ^left "Note: only NULL not in a PACK! will trigger branch evaluation"
+//          [<null> any-value?]
+//      @(branch) [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(ALSO)
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    Atom* atom = Atom_ARG(VALUE);
+    Atom* atom = Atom_ARG(LEFT);
     Value* branch = ARG(BRANCH);
 
     enum {
@@ -617,8 +605,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 //
 //  "Short-circuiting variant of AND, using a block of expressions as input"
 //
-//      return: "Product of last passing evaluation if all truthy, else null"
-//          [any-stable?]
+//      return: [<null> <void> any-stable?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! @block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
@@ -636,8 +623,7 @@ DECLARE_NATIVE(ALL)
 //
 //  "Short-circuiting version of OR, using a block of expressions as input"
 //
-//      return: "First passing evaluative result, or null if none pass"
-//          [any-stable?]
+//      return: [<null> <void> any-stable?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! @block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
@@ -655,8 +641,7 @@ DECLARE_NATIVE(ANY)
 //
 //  "Short-circuiting shorthand for NOT ALL"
 //
-//      return: "First passing evaluative result, or null if none pass"
-//          [any-stable?]
+//      return: [<null> <void> any-stable?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! @block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
@@ -672,10 +657,9 @@ DECLARE_NATIVE(NONE)
 //
 //  case: native [
 //
-//  "Evaluates each condition, and when true, evaluates what follows it"
+//  "Evaluates each condition, and when non-NULL, evaluates what follows it"
 //
-//      return: "Last matched case evaluation, or null if no cases matched"
-//          [any-stable?]
+//      return: [any-stable? heavy-null?]
 //      cases "Conditions followed by branches"
 //          [block!]
 //      :all "Do not stop after finding first logically true case"
@@ -890,8 +874,7 @@ DECLARE_NATIVE(CASE)
 //
 //  "Selects a choice and evaluates the block that follows it"
 //
-//      return: "Last case evaluation, or null if no cases matched"
-//          [any-stable?]
+//      return: [any-stable? heavy-null?]
 //      value [any-stable?]
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
@@ -1112,14 +1095,12 @@ DECLARE_NATIVE(SWITCH)
 //
 //  default: infix native [
 //
-//  "Set word or path to a calculated value if it is not set"
+//  "If TARGET is [NULL TRASH BLANK] (or unset), set it to BRANCH eval result"
 //
-//      return: "Former value or branch result"
-//          [any-stable?]
+//      return: [any-stable?]
 //      @target "Word or path which might be set (or not)"
-//          [set-run-word? set-group? set-word? set-tuple?]  ; to left
-//      @(branch) "If target needs default, this is evaluated and stored there"
-//          [any-branch?]
+//          [set-run-word? set-group? set-word? set-tuple?]  ; on left
+//      @(branch) [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(DEFAULT)
@@ -1219,10 +1200,9 @@ DECLARE_NATIVE(DEFAULT)
 //
 //  maybe: infix native [
 //
-//  "If the right hand side is not NULL, overwrite the left hand side"
+//  "If right side VALUE is not NULL, update the left hand TARGET with it"
 //
-//      return: "Former value or branch result"
-//          [any-stable?]
+//      return: [any-stable?]
 //      @target "Word or tuple which might be set (or not)"
 //          [set-group? set-word? set-tuple?]  ; should do set-block!, etc [1]
 //      ^value "Quantity used to overwrite the left if not null"
@@ -1259,9 +1239,8 @@ DECLARE_NATIVE(MAYBE)
 //
 //  "Catches a throw from a block and returns its value"
 //
-//      return: "Thrown value"
-//          [any-stable?]
-//      name "Name of the THROW construct to use"
+//      return: [any-value?]
+//      name "Name of the THROW construct to define in the block of code"
 //          [word!]
 //      block "Block to evaluate"
 //          [block!]

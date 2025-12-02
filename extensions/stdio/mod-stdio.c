@@ -46,6 +46,8 @@ extern bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out);
 //
 //  startup*: native [  ; Note: DO NOT EXPORT!
 //
+//  "Startup the STDIO extension"
+//
 //      return: []
 //  ]
 //
@@ -143,8 +145,11 @@ static Value* Make_Non_Halt_Error(const char* name) {
 //
 //  "Read binary data from standard input"
 //
-//      return: "Null if no more input is available, returns error on escape"
-//          [<null> blob! error!]
+//      return: [
+//          blob!
+//          <null>  "no more input available"
+//          error!  "Cancellation (e.g. ESCAPE or Ctrl-C)"
+//      ]
 //      size "Maximum size of input to read"
 //          [integer!]
 //  ]
@@ -195,7 +200,7 @@ DECLARE_NATIVE(READ_STDIN)
     }
     Term_Binary_Len(b, i);
 
-    return Init_Blob(OUT, b);;
+    return Init_Blob(OUT, b);
 }}
 
 
@@ -204,8 +209,11 @@ DECLARE_NATIVE(READ_STDIN)
 //
 //  "Read a line from standard input, with smart line editing if available"
 //
-//      return: "Null if no more input is available, error antiform on escape"
-//          [<null> text! error!]
+//      return: [
+//          text!
+//          <null>  "no more input available"
+//          error!  "Cancellation (e.g. ESCAPE or Ctrl-C)"
+//      ]
 //      source "Where to read from (stdin currently only place supported)"
 //          [~(@stdin)~]
 //      :raw "Include the newline, and allow reaching end of file with no line"
@@ -362,8 +370,12 @@ DECLARE_NATIVE(READ_LINE)
 //
 //  "Inputs a single character from the input"
 //
-//      return: "Null if end of file, error if escape or timeout"
-//          [<null> char? word! error!]
+//      return: [
+//          char?       "a Unicode codepoint was read"
+//          word!       "virtual key name"
+//          <null>      "end of file"
+//          error!      "ESCAPE pressed (if not :RAW) or timeout"
+//      ]
 //      source "Where to read from (stdin currently only place supported)"
 //          [~(@stdin)~]
 //      :raw "Return keys like Up, Ctrl-A, or ESCAPE literally"
@@ -374,7 +386,7 @@ DECLARE_NATIVE(READ_LINE)
 DECLARE_NATIVE(READ_CHAR)
 //
 // Note: There is no EOF signal here as in READ-LINE.  Because READ-LINE in
-// /RAW mode needed to distinguish between termination due to newline and
+// :RAW mode needed to distinguish between termination due to newline and
 // termination due to end of file.  Here, it's only a single character.  Hence
 // NULL is sufficient to signal the caller is to treat it as no more input
 // available... that's EOF.

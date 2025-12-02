@@ -81,8 +81,6 @@ DECLARE_NATIVE(AUGMENT)
 
     Phase* augmentee = Frame_Phase(original);
 
-    VarList* adjunct = nullptr;
-
     Element* methodization = Init_Quasar(SCRATCH);
 
   copy_augmentee_parameters: {
@@ -111,10 +109,9 @@ DECLARE_NATIVE(AUGMENT)
 
     require (
       Push_Keys_And_Params(
-        &adjunct,
         methodization,
         spec,
-        MKF_PARAMETER_SEEN,  // don't assume description string
+        MKF_AUGMENTING,  // TEXT! or BLOCK! at head of spec not meaningful
         SYM_0  // if original had no return, we don't add
     ));
 
@@ -135,9 +132,6 @@ DECLARE_NATIVE(AUGMENT)
         prior_coupling
       )
     );
-
-    assert(Misc_Phase_Adjunct(paramlist) == nullptr);
-    Tweak_Misc_Phase_Adjunct(paramlist, adjunct);
 
     Init_Action(OUT, paramlist, label, coupling);
     Copy_Ghostability(OUT, original);

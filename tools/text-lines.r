@@ -107,10 +107,9 @@ for-each-line: proc [
 ]
 
 lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
-    "Return the line numbers of lines exceeding line-length"
+    "Return the line #s of lines exceeding line-length, null if no lines"
 
-    return: "Returns null if no lines (is this better than returning []?)"
-        [null? block!]
+    return: [null? block!]
     line-length [integer!]
     text [text!]
 ] [
@@ -139,17 +138,18 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
         one, to <end>, eol: <here>
         count-line-rule
     ] else [
-        return null
+        return null  ; better than returning empty block?
     ]
 
     return line-list
 ]
 
 text-line-of: func [
-    "Returns line number of position within text"
-
-    return: "Line 0 does not exist, no counting is performed for empty text"
-        [null? integer!]
+    --[
+        Returns line number of position within text
+        Line 0 does not exist, no counting is performed for empty text
+    ]--
+    return: [null? integer!]
     position "Position (newline is considered the last character of a line)"
         [text! blob!]
 ] [

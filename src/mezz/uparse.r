@@ -54,12 +54,31 @@ Rebol [
     ]--
 
     notes: --[
-      * This implementation will be *extremely* slow for the foreseeable
+
+     A. This implementation will be *extremely* slow for the foreseeable
         future.  But since it is built on usermode facilities, optimizations
         that are applied to it will bring systemic benefits.  Ultimately the
         goal is to merge this architecture in with the "messier" C code...
         hopefully preserving enough of the hackability while leveraging
         low-level optimizations where possible.
+
+     B. One of the important mechanisms empowering UPARSE is the "pending"
+        strategy, which enables rollback.  All the combinators share in the
+        "glommed" together list of pending items and pick out the ones that
+        are relevant to them:
+
+        * COLLECT uses QUOTED! items to inexpensively mark the things it has
+          put together for collection.
+
+        * GATHER uses FENCE! to make pairs of a WORD! field name and a lifted
+          value for what will be assigned to the object field.
+
+        * PHASE uses GROUP! to hold items that it's saving for pending
+          execution in the event that no rollback occurs.
+
+        The combinator set that you use has to agree on who-owns-what parts.
+        So if you use something other than DEFAULT-COMBINATORS, you should
+        be sure they are compatible.
     ]--
 ]
 
@@ -353,8 +372,7 @@ default-combinators: make map! [
 
     'try combinator [
         "If parser fails, succeed and return NULL; don't advance input"
-        return: "PARSER's result if it succeeds, otherwise NULL"
-            [any-value?]
+        return: [any-value?]
         input [any-series?]
         parser [action!]
         {^result remainder}
@@ -368,8 +386,7 @@ default-combinators: make map! [
 
     'optional combinator [
         "If parser fails, succeed and return VOID; don't advance input"
-        return: "PARSER's result if it succeeds, otherwise VOID"
-            [any-value?]
+        return: [any-value?]
         input [any-series?]
         parser [action!]
         {^result remainder}
@@ -382,9 +399,8 @@ default-combinators: make map! [
     ]
 
     'spread combinator [
-        "Return antiform group for list arguments"
-        return: "Splice antiform if input is list"
-            [<null> <void> element? splice!]
+        "Return splice antiform group for list arguments"
+        return: [<null> <void> element? splice!]
         input [any-series?]
         parser [action!]
         {^result}
@@ -399,8 +415,7 @@ default-combinators: make map! [
 
     'ahead combinator [
         "Leave the parse position at the same location, but fail if no match"
-        return: "parser result if success, NULL if failure"
-            [any-value? ~#not~]
+        return: [any-value? ~#not~]
         input [any-series?]
         parser [action!]
         :negated
@@ -416,8 +431,7 @@ default-combinators: make map! [
 
     'further combinator [
         "Pass through the result only if the input was advanced by the rule"
-        return: "parser result if it succeeded and advanced input, else NULL"
-            [any-value?]
+        return: [any-value?]
         input [any-series?]
         parser [action!]
         {^result pos}
@@ -447,9 +461,8 @@ default-combinators: make map! [
     ; https://forum.rebol.info/t/1581/2
 
     'some combinator [
-        "Run the parser argument in a loop, requiring at least one match"
-        return: "Result of last successful match"
-            [any-value?]
+        "Run parser in a loop, require at least one match; return last result"
+        return: [any-value?]
         input [any-series?]
         parser [action!]
         {^result}
@@ -470,9 +483,8 @@ default-combinators: make map! [
     ]
 
     'while combinator [
-        "Run the body parser in a loop, for as long as condition matches"
-        return: "Result of last body parser (or void if body never ran)"
-            [any-value?]
+        "Run parser in a loop as long as condition matches; return last result"
+        return: [any-value?]
         input [any-series?]
         condition-parser [action!]
         body-parser [action!]
@@ -500,9 +512,8 @@ default-combinators: make map! [
     ]
 
     'until combinator [
-        "Run the body parser in a loop, until the condition matches"
-        return: "Result of last body parser (or void if body never ran)"
-            [any-value?]
+        "Run parser in a loop, until condition matches; return last result"
+        return: [any-value?]
         input [any-series?]
         condition-parser [action!]
         body-parser [action!]
@@ -531,9 +542,8 @@ default-combinators: make map! [
     ]
 
     'cycle combinator [
-        "Run the body parser continuously in a loop until BREAK or STOP"
-        return: "Result of last body parser (or void if body never matched)"
-            [any-value?]
+        "Run parser continuously in a loop until return STOP result (or BREAK)"
+        return: [any-value?]
         input [any-series?]
         parser [action!]
         {^result}
@@ -552,9 +562,8 @@ default-combinators: make map! [
     ]
 
     'tally combinator [
-        "Iterate a rule and count the number of times it matches"
-        return: "Number of matches (can be 0)"
-            [integer!]
+        "Iterate a rule and count the number of times it matches (can be 0)"
+        return: [integer!]
         input [any-series?]
         parser [action!]
         {count}
@@ -661,31 +670,25 @@ default-combinators: make map! [
     ;     == 6
 
     <index> combinator [
-        "Get the current series index of the PARSE operation"
-        return: "The INDEX OF the parse position"
-            [integer!]
+        "Synthesize the current series INDEX OF of the PARSE operation"
+        return: [integer!]
         input [any-series?]
     ][
         return index of input
     ]
 
     'measure combinator [
-        "Get the length of a matched portion of content"
-        return: "Length in series units"
-            [integer!]
+        "Synthesize the length of a matched portion of content in series units"
+        return: [integer!]
         input [any-series?]
         parser [action!]
         {start end remainder}
     ][
-        [^ remainder]: trap parser input
-
-        end: index of remainder
         start: index of input
+        [^ remainder]: trap parser input
+        end: index of remainder
 
-        ; Because parse operations can SEEK, this can potentially create
-        ; issues.  We currently fail if the index is before (return negative?)
-        ;
-        if start > end [
+        if start > end [  ; calling parser may SEEK before our start position
             panic "Can't MEASURE region if rules SEEK'd before the INPUT"
         ]
 
@@ -753,9 +756,8 @@ default-combinators: make map! [
     === SEEKING KEYWORDS ===
 
     'to combinator [
-        "Match up TO a certain rule (result position before succeeding rule)"
-        return: "The rule's product"
-            [any-value?]
+        "Match up TO position before parser success; return parser's result"
+        return: [any-value?]
         input [any-series?]
         parser [action!]
         {^result}
@@ -775,9 +777,8 @@ default-combinators: make map! [
     ]
 
     'thru combinator [
-        "Match up THRU a certain rule (result position after succeeding rule)"
-        return: "The rule's product"
-            [any-value?]
+        "Match up THRU position after parser success; return parser's result"
+        return: [any-value?]
         input [any-series?]
         parser [action!]
         {^result remainder}
@@ -797,8 +798,8 @@ default-combinators: make map! [
     ]
 
     'seek combinator [
-        return: "seeked position"
-            [any-series?]
+        "SEEK to another position in INPUT, synthesize that series position"
+        return: [any-series?]
         input [any-series?]
         parser [action!]
         {where remainder}
@@ -824,8 +825,8 @@ default-combinators: make map! [
     ]
 
     'between combinator [
-        return: "Copy of content between the left and right parsers"
-            [any-series?]
+        "Synthesize a copy of INPUT after LEFT parser and before RIGHT"
+        return: [any-series?]
         input [any-series?]
         parser-left [action!]
         parser-right [action!]
@@ -855,9 +856,8 @@ default-combinators: make map! [
     ; with the user variables in wordspace.
 
     <here> combinator [
-        "Get the current parse input position, without advancing input"
-        return: "parse position"
-            [any-series?]
+        "Synthesize the current INPUT position, without advancing INPUT"
+        return: [any-series?]
         input [any-series?]
     ][
         return input
@@ -882,18 +882,16 @@ default-combinators: make map! [
     ]
 
     <input> combinator [
-        "Get the original input of the PARSE operation"
-        return: "parse position"
-            [any-series?]
+        "Get original INPUT series position passed to this PARSE operation"
+        return: [any-series?]
         input [any-series?]
     ][
         return state.input
     ]
 
     <subinput> combinator [
-        "Get the input of the SUBPARSE operation"
-        return: "parse position"
-            [any-series?]
+        "Get original INPUT series position passed to this SUBPARSE operation"
+        return: [any-series?]
         input [any-series?]
     ][
         return head of input  ; !!! What if SUBPARSE series not at head?
@@ -908,9 +906,8 @@ default-combinators: make map! [
     ; being different things, which is not intuitive.
 
     'across combinator [
-        "Copy from the current parse position through a rule"
-        return: "Copied series"
-            [any-series?]
+        "Synthesize copied series from current parse position through a rule"
+        return: [any-series?]
         input [any-series?]
         parser [action!]
         {start}
@@ -981,8 +978,7 @@ default-combinators: make map! [
 
     'subparse combinator [
         "Recursion into other data with a rule, result of rule if match"
-        return: "Result of the subparser"
-            [any-value?]
+        return: [any-value?]
         input [any-series?]
         parser [action!]  ; !!! Easier expression of value-bearing parser?
         subparser [action!]
@@ -1030,8 +1026,7 @@ default-combinators: make map! [
 
     'into combinator [
         "Arity-1 variation of SUBPARSE (presumes current position as input)"
-        return: "Result of the subparser"
-            [any-value?]
+        return: [any-value?]
         input [any-list?]
         subparser [action!]
         :match "Return input on match, not synthesized value"
@@ -1072,8 +1067,8 @@ default-combinators: make map! [
     ; and remove it.
 
     'collect combinator [
-        return: "Block of collected values"
-            [block!]
+        "Return a block of collected values from usage of the KEEP combinator"
+        return: [block!]
         input [any-series?]
         :pending [blank? block!]
         parser [action!]
@@ -1100,8 +1095,8 @@ default-combinators: make map! [
     ]
 
     'keep combinator [
-        return: "The kept value (same as input)"
-            [<null> element? splice!]
+        "Keep PARSER's synthesized result to add to enclosing COLLECT parse"
+        return: [<null> element? splice!]
         input [any-series?]
         :pending [blank? block!]
         parser [action!]
@@ -1147,8 +1142,8 @@ default-combinators: make map! [
     ; ACCUMULATE gives you that pattern more easily and efficiently.
 
     'accumulate combinator [
-        return: "Block of collected values"
-            [block!]
+        "Accumulate values, synonym for [collect [opt some keep ...]]"
+        return: [block!]
         input [any-series?]
         parser [action!]
         {collected}
@@ -1180,10 +1175,16 @@ default-combinators: make map! [
     ;
     ; The idea is interesting enough that it suggests being able to EMIT with
     ; no GATHER in effect, and then have the RETURN GATHER semantic.
+    ;
+    ; 1. It would be possible to UNBIND any word bindings in EMIT, but a
+    ;    conservative policy is taken to think stray bindings could indicate
+    ;    a mistake, and so the caller is asked to do the unbind:
+    ;
+    ;    https://rebol.metaeducation.com/t/set-word-binding-in-make-object/2127
 
     'gather combinator [
-        return: "The gathered object"
-            [object!]
+        "GATHER an object from EMIT combinator calls in the passed-in parser"
+        return: [object!]
         input [any-series?]
         :pending [blank? block!]
         parser [action!]
@@ -1191,14 +1192,11 @@ default-combinators: make map! [
     ][
         [^ input pending]: trap parser input
 
-        ; Currently we assume that all the BLOCK! items in the pending are
-        ; intended for GATHER.
-
         obj: make object! collect [
             remove-each 'item pending [
-                if block? item [keep spread item, okay]
-            ] else [
-                ; should it error or fail if pending was space ?
+                if fence? item [  ; default combinators GATHER owns FENCE! [B]
+                    keep spread item, okay
+                ]
             ]
         ]
 
@@ -1206,8 +1204,8 @@ default-combinators: make map! [
     ]
 
     'emit combinator [
-        return: "The emitted value"
-            [any-stable?]
+        "Emit object field for GATHER with name and value; synthesize value"
+        return: [any-stable?]
         input [any-series?]
         :pending [blank? block!]
         @target [set-word? set-group?]
@@ -1224,10 +1222,7 @@ default-combinators: make map! [
                 ]
             ]
 
-            ; !!! MAKE OBJECT! fails if any top-level SET-WORD! have bindings.
-            ; Revisit if that rule changes and this becomes unnecessary.
-            ;
-            if binding of target: resolve target [
+            if binding of target: resolve target [  ; current rule, see [1]
                 panic ["EMIT can't use bound words for object keys:" target]
             ]
             target: setify target
@@ -1237,10 +1232,8 @@ default-combinators: make map! [
 
         [^result input pending]: trap parser input
 
-        ; We lift the result.  This lets us emit antiforms, since the MAKE
-        ; OBJECT! evaluates.
-        ;
-        pending: glom pending reduce [target lift require ^result]
+        result: lift require ^result  ; lift arbitrary result to put in block
+        pending: glom pending reduce ${target result}  ; use FENCE!, see [B]
         return ^result
     ]
 
@@ -1254,8 +1247,8 @@ default-combinators: make map! [
     ; !!! SET-PATH! support will be very narrow, for assigning functions.
 
     '*: combinator [
-        return: "The set value"
-            [any-stable?]
+        "Synthesizes the SET-XXX value it matches"
+        return: [any-stable?]
         input [any-series?]
         value [set-word? set-tuple? set-group?]
         parser "If assignment, failed parser means target will be unchanged"
@@ -1277,8 +1270,8 @@ default-combinators: make map! [
         input [any-series?]
     ][
         panic [
-            "The SET keyword in UPARSE is done with SET-WORD!, and if SET does"
-            "come back it would be done differently:"
+            "The SET keyword in UPARSE is done with SET-WORD!, and /SET will"
+            "work if you just want to call the SET function directly."
             https://forum.rebol.info/t/1139
         ]
     ]
@@ -1291,11 +1284,12 @@ default-combinators: make map! [
     ; !!! We presume that it's value-bearing, and gives back the value it
     ; matched against.  If you don't want it, you have to ELIDE it.  Note this
     ; value is the rule in the string and binary case, but the item in the
-    ; data in the block case.
+    ; data in the block case.  We don't want to copy on a simple match as it
+    ; may not be used, so these all need to return pre-existing cells.
 
     text! combinator [
-        return: "The rule series matched against (not input value)"
-            [text!]
+        "Match TEXT! and return the rule matched against"
+        return: [text!]
         input [any-series?]
         value [text!]
         {neq? item}
@@ -1310,10 +1304,6 @@ default-combinators: make map! [
                 input: next input
                 return item
             ]
-
-            ; for both of these cases, we have to use value as the result,
-            ; since there's no unique item to capture.  Should we copy it?
-
             any-string? input [
                 [_ input]: find // [
                     input value
@@ -1346,8 +1336,8 @@ default-combinators: make map! [
     ; strings.  It matches case-sensitively.
 
     rune! combinator [
-        return: "The token matched against (not input value)"
-            [rune!]
+        "Match RUNE! and return rule rune matched against"
+        return: [rune!]
         input [any-series?]
         value [rune!]
         :negated
@@ -1422,8 +1412,8 @@ default-combinators: make map! [
     ; then not be able to set a string position.  So we don't do that.
 
     blob! combinator [
-        return: "The binary matched against (not input value)"
-            [blob!]
+        "Match BLOB! and return rule blob matched against"
+        return: [blob!]
         input [any-series?]
         value [blob!]
         {item}
@@ -1457,8 +1447,8 @@ default-combinators: make map! [
     ; INSIDE on unbound material.
 
     'let combinator [
-        return: "Result of the LET if assignment, else bound word"
-            [any-stable?]
+        "Create new binding, return result of the LET if assignment"
+        return: [any-stable?]
         input [any-series?]
         'vars [set-word?]
         parser [action!]
@@ -1473,12 +1463,12 @@ default-combinators: make map! [
 
     === IN COMBINATOR ===
 
-    ; Propagates the binding from <input> onto a value.
-    ; Should be <in> but TAG! combinators can't take arguments yet.
+    ; Propagates the binding from <input> onto a value.  This idea is being
+    ; felt out, but might become $rule or [$ rule]
 
     '*in* combinator [
-        return: "Argument binding gotten INSIDE the current input"
-            [any-stable?]
+        "Get argument binding gotten INSIDE the current input"
+        return: [any-stable?]
         input [any-series?]
         parser [action!]
         {^result}
@@ -1500,8 +1490,8 @@ default-combinators: make map! [
     ; the best name).
 
     group! ghostable combinator [
-        return: "Result of evaluating the group (invisible if <delay>)"
-            [any-value?]
+        "Synthesize result of evaluating the group (invisible if <delay>)"
+        return: [any-value?]
         input [any-series?]
         :pending [blank? block!]
         value [any-list?]  ; allow any array to use this "EVAL combinator"
@@ -1543,8 +1533,8 @@ default-combinators: make map! [
     ]
 
     'phase ghostable combinator [
-        return: "Result of the parser evaluation"
-            [any-value?]
+        "Make a phase for capturing <delay> groups "
+        return: [any-value?]
         input [any-series?]
         :pending [blank? block!]
         parser [action!]
@@ -1552,10 +1542,11 @@ default-combinators: make map! [
     ][
         [^result input pending]: trap parser input
 
-        ; Run GROUP!s in order, removing them as one goes
-        ;
         remove-each 'item pending [
-            if group? item [eval item, okay]
+            if group? item [  ; PHASE owns GROUP! in default combinators [A]
+                eval item
+                okay
+            ]
         ]
 
         return ^result
@@ -1590,8 +1581,8 @@ default-combinators: make map! [
     ;    datatype combinator takes arguments.
 
     'inline combinator [
-        return: "Result of running combinator from fetching the WORD!"
-            [any-value?]
+        "Synthesizes result of running combinator from evaluating the parser"
+        return: [any-value?]
         input [any-series?]
         :pending [blank? block!]   ; we retrigger combinator; it may KEEP, etc.
 
@@ -1630,16 +1621,6 @@ default-combinators: make map! [
 
     === GET-BLOCK! COMBINATOR ===
 
-    ; If the GET-BLOCK! combinator were going to have a meaning, it would likely
-    ; have to be "run this block as a rule, and use the synthesized product
-    ; as a rule"
-    ;
-    ;     >> parse "aaabbb" [:[some "a" ([some "b"])]
-    ;     == "b"
-    ;
-    ; It's hard offhand to think of great uses for that, but that isn't to say
-    ; that they don't exist.
-
     ; !!! No current meaning, has to be part of ':* at this time
 
     === BITSET! COMBINATOR ===
@@ -1650,8 +1631,8 @@ default-combinators: make map! [
     ; viewed, e.g. being able to do INTO BLOB! on a TEXT! (?)
 
     bitset! combinator [
-        return: "The matched input value"
-            [char? integer!]
+        "Synthesizes the matched input value"
+        return: [char? integer!]
         input [any-series?]
         value [bitset!]
         {item}
@@ -1692,8 +1673,8 @@ default-combinators: make map! [
     ;     == (b c)
 
     quoted! combinator [
-        return: "The matched value"
-            [element?]
+        "Returns the matched value (e.g. without the quote)"
+        return: [element?]
         input [any-series?]
         value [quoted!]
         :negated
@@ -1736,16 +1717,17 @@ default-combinators: make map! [
 
     === LITERAL! COMBINATOR ===
 
+    ; Though generic quoting exists, being able to say [lit ''x] instead
+    ; of ['''x] may be clarifying when trying to match ''x (for instance)
+
     'literal combinator [  ; shorthanded as LIT
-        return: "Literal value" [element?]
+        "Synthesize literal value"
+        return: [element?]
         input [any-series?]
         :pending [blank? block!]
         'value [element?]
         {comb}
     ][
-        ; Though generic quoting exists, being able to say [lit ''x] instead
-        ; of ['''x] may be clarifying when trying to match ''x (for instance)
-
         comb: state.combinators.(quoted!)
         return [{_} input pending]: run comb state input (lift value)
     ]
@@ -1760,7 +1742,7 @@ default-combinators: make map! [
     ; Whether it evaluates the contents or does as-is, ~[]~ would still mean
     ; "synthesize a void" either way.  We introduce it here to bridge
     ; compatibility with old tests that matched stable void keywords.
-    ;
+
     '~[]~ combinator [
         return: [~[]~]
         input [any-series?]
@@ -1826,8 +1808,8 @@ default-combinators: make map! [
     ; Note that REPEAT allows the use of SPACE to opt out of an iteration.
 
     integer! combinator [
-        return: "Just the INTEGER! (see REPEAT for repeating rules)"
-            [integer!]
+        "Synthesize just the INTEGER! (see REPEAT for repeating rules)"
+        return: [integer!]
         input [any-series?]
         value [integer!]
     ][
@@ -1835,11 +1817,12 @@ default-combinators: make map! [
     ]
 
     'repeat combinator [
-        return: "Last parser result"
-            [any-value?]
+        "Calling PARSER the number of times the TIMES-PARSER synthesizes"
+        return: [any-value?]
         input [any-series?]
         times-parser [action!]
-        parser [action!]
+        parser "Last parser result is the overall result"
+            [action!]
         {^times min max ^result}
     ][
         [^times input]: trap times-parser input
@@ -1924,8 +1907,8 @@ default-combinators: make map! [
     ;
 
     datatype! combinator [
-        return: "Matched or synthesized value"
-            [element?]
+        "Synthesize matched value"
+        return: [element?]
         input [any-series?]
         value [datatype!]
         :negated
@@ -1967,7 +1950,8 @@ default-combinators: make map! [
     === MATCH COMBINATOR ===
 
     'match combinator [
-        return: "Element if it matches the match rule" [element?]
+        "Match a series element against the same rules used for function args"
+        return: [element?]
         input [any-series?]
         @value [frame! block! group!]
         {item}
@@ -2000,7 +1984,8 @@ default-combinators: make map! [
     ; The JUST combinator gives you "just the value", without matching it.
 
     'just combinator [
-        return: "Quoted form of literal value (not matched)" [element?]
+        "Synthesize quoted form of literal value (not matched against INPUT)"
+        return: [element?]
         input [any-series?]
         'value [element?]
     ][
@@ -2008,7 +1993,8 @@ default-combinators: make map! [
     ]
 
     'the combinator [
-        return: "Quoted form of literal value (not matched)" [element?]
+        "Synthesize quoted form of literal value (not matched against INPUT)"
+        return: [element?]
         input [any-series?]
         @value [element?]
     ][
@@ -2118,9 +2104,8 @@ default-combinators: make map! [
     ]
 
     'skip combinator [
-        "Skip an integral number of items"
-        return: "Input position after the skip"
-            [any-series?]
+        "Skip integral number of items, and synthesize position after the skip"
+        return: [any-series?]
         input [any-series?]
         parser [action!]
         {^result}
@@ -2139,8 +2124,7 @@ default-combinators: make map! [
 
     'one combinator [
         "Match any one series item in input"
-        return: "One element of series input"
-            [element?]
+        return: [element?]
         input [any-series?]
         {item}
     ][
@@ -2150,9 +2134,8 @@ default-combinators: make map! [
     ]
 
     elide span-combinator: combinator [
-        "Match any N series items in input"
-        return: "Two elements of series input (SPLICE! if input is list)"
-            [splice! any-string? blob!]
+        "Match any N series items in input, make SPLICE! if input is list"
+        return: [splice! any-string? blob!]
         input [any-series?]
         count [integer!]
         {result}
@@ -2175,9 +2158,8 @@ default-combinators: make map! [
     'five specialize span-combinator [count: 5]  ; is five enough?  too much?
 
     'next combinator [
-        "Give next position in input, succeeding so long as it's not at END"
-        return: "Input position after skipping one item"
-            [element?]
+        "Advance input to next position so long as not <END>, return position"
+        return: [element?]
         input [any-series?]
     ][
         return input: trap next input  ; match fail if out of bounds
@@ -2197,8 +2179,7 @@ default-combinators: make map! [
 
     action! combinator [
         "Run an ordinary action with parse rule products as its arguments"
-        return: "The return value of the action"
-            [any-value?]
+        return: [any-value?]
         input [any-series?]
         :pending [blank? block!]
         value [frame!]
@@ -2244,68 +2225,70 @@ default-combinators: make map! [
     ; rules--or be a "variadic" combinator.
     ;
     ; The operation is basically the same for TUPLE!, so the same code is used.
+    ;
+    ; 1. !!! `rule-start` and `rule-end` are part of the debugging story, and
+    ;    it's worked out for the BLOCK! combinator.  But relevant support
+    ;    for the WORD! combinator hasn't been thought out yet.  Review.
+    ;
+    ; 2. These types are accepted literally--though they do run through the
+    ;    combinator looked up to, which ultimately may not mean that they are
+    ;    literal.  :-/
+    ;
+    ;    (Should there be a special "literal" mapped-to-value so that if you
+    ;    rephrase them to active combinators the word lookup won't work?)
+    ;
+    ; 3. You can traditionally use `rule: []` as a way of getting a "no op"
+    ;    rule that matches at any position.  But that only works if you use
+    ;    the rule as a plain word, not as a literal match...because `@rule`
+    ;    would match an empty block literally.  Empty splice (blank) is a
+    ;    nice way to have a rule that opts out of either case.  Unlike
+    ;    matching QUOTED! where mistaken interpretations might happen, a
+    ;    splice is a splice so it seems like it should be allowed.
+    ;
+    ; 4. !!! We don't need to call COMBINATORIZE because we can't handle
+    ;    arguments here, but this should have better errors if the datatype
+    ;    combinator takes arguments.
 
     word! combinator [
-        return: "Result of running combinator from fetching the WORD!"
-            [any-value?]
+        "Run some set of combinators allowed from fetching WORD!, unghostably"
+        return: [any-value?]
         input [any-series?]
         :pending [blank? block!]
         value [word! tuple!]
         {^r comb rule-start rule-end}
     ][
-        rule-start: null
+        rule-start: null  ; !!! currently not handled [1]
         rule-end: null
 
-        switch:type ^r: get value [
-            ;
-            ; BLOCK!s are accepted as rules, and looked up via combinator.
-            ; Most common case, make them first to shortcut earlier.
-            ;
-            block! [
+        switch:type r: get value [
+            block! [  ; block rules accepted to look up from word! (of course)
                 rule-start: ^r
                 rule-end: tail of ^r
             ]
 
-            ; GROUP!s are also accepted as rules, and looked up via combinator.
-            ;
-            group! [
-                rule-start: null  ; !!! what to do here?
+            group! [  ; group rules also accepted from word lookup
+                rule-start: null  ; !!! what to do here? [1]
                 rule-end: null
             ]
 
-            ; These types are accepted literally (though they do run through
-            ; the combinator looked up to, which ultimately may not mean
-            ; that they are literal... should there be a special "literal"
-            ; mapped-to-value so that if you rephrase them to active
-            ; combinators the word lookup won't work?)
-            ;
-            text! []
-            blob! []
-            rune! []
+            text! blob! rune! []  ; inert string/binary data ok to match [2]
 
-            ; Datatypes looked up by words (e.g. TAG!) are legal as rules
-            ;
-            datatype! []
+            datatype! []  ; Redbol has allowed words to lookup datatypes
 
-            ; Bitsets were also legal as rules without decoration
-            ;
-            bitset! []
+            bitset! []  ; bitsets also legal to lookup
 
-            void?/ [
-                pending: blank  ; not delegating to combinator with pending
-                return ^void  ; yield void
-            ]
+            splice! []  ; e.g. ~()~ opts out of both `rule` and `@item` [3]
 
             okay?/ [
-                panic "WORD! fetches cannot be ~okay~ in UPARSE (see WHEN)"
+                panic "WORD! fetches cannot be ~okay~ in UPARSE (see COND)"
             ]
 
             null?/ [
-                panic "WORD! fetches cannot be ~null~ in UPARSE (see WHEN)"
+                panic "WORD! fetches cannot be ~null~ in UPARSE (see COND)"
             ]
 
             panic [
-                "WORD! can't look up to active combinator, unless BLOCK!."
+                "WORD! can't look up active combinators, unless BLOCK!/GROUP!."
                 "If literal match is meant, use" unspaced ["@" value]
             ]
         ]
@@ -2314,13 +2297,7 @@ default-combinators: make map! [
             panic ["Unhandled type in WORD! combinator:" to word! type of ^r]
         ]
 
-        ; !!! We don't need to call COMBINATORIZE because we can't handle
-        ; arguments here, but this should have better errors if the datatype
-        ; combinator takes arguments.
-        ;
-        ; !!! REVIEW: handle `rule-start` and `rule-end` ?
-        ;
-        return [{^} input pending]: run comb state input ^r
+        return [{^} input pending]: run comb state input ^r  ; no args [4]
     ]
 
     === NEW-STYLE ANY COMBINATOR ===
@@ -2341,8 +2318,8 @@ default-combinators: make map! [
     ; the block combinator, syntax is `any (alternates)` not `any alternates`.
 
     'any combinator [
-        return: "Last result value"
-            [any-value?]
+        "Handle BLOCK! of rules as if each item in the block is an alternate"
+        return: [any-value?]
         input [any-series?]
         :pending [blank? block!]
         @arg "Acts as rules if WORD!/BLOCK!, pinned acts inert"
@@ -2388,14 +2365,11 @@ default-combinators: make map! [
             panic ["The ANY combinator requires a BLOCK! of alternates"]
         ]
 
-        until [tail? block] [
-            ;
-            ; Turn next alternative into a parser ACTION!, and run it.
-            ; We take the first parser that succeeds.
-            ;
-            let [/parser 'block]: parsify state block  ; /parser for surprising
+        until [tail? block] [  ; turn each alternative into parser and run it
+            let [/parser 'block]: parsify state block
+
             return [{^result} input pending]: parser input except [
-                continue
+                continue  ; we keep going until one of the parsers match
             ]
         ]
 
@@ -2420,11 +2394,12 @@ default-combinators: make map! [
     ; step that could short circuit before the others were needed.)
 
     block! (block-combinator: ghostable combinator [
-        return: "Last result value"
-            [any-value?]
+        "Sequence parse rules together, and return any alternate that matches"
+        return: [any-value?]
         input [any-series?]
         :pending [blank? block!]
-        value [block!]
+        value "Rules in sequence, with `|` and `||` separating alternates"
+            [block!]
         :limit "Limit of how far to consider (used by ... recursion)"
             [block!]
         :thru "Keep trying rule until end of block"
@@ -2668,15 +2643,18 @@ comment [
 
 comment [combinatorize: func [
 
-    "Analyze combinator parameters in rules to produce a specialized parser"
+    "Specialize arity-N combinator to build arity-1 parser just taking INPUT"
 
-    return: "Parser function taking only input, and advanced rules position"
-        [~[action! block!]~]
-    combinator "Parser combinator taking input, but also other parameters"
-        [frame!]
+    return: [
+        ~[action! block!]~  "Parser function, and advanced rules position"
+    ]
+
+    combinator [frame!]
     rules [block!]
-    state "Parse State" [frame!]
-    :value "Initiating value (if datatype)" [element?]
+    state [frame!]
+    :value "Initiating value (if datatype)"
+        [element?]
+
     {r f rule-start}
 ][
     rule-start: back rules  ; value may not be set if WORD! dispatch
@@ -2840,14 +2818,17 @@ comment [combinatorize: func [
 ;    answer of calling the types *: and :* depending.  Better answer needed.
 ;
 parsify: func [
-    "Transform one step's worth of rules into a parser combinator action"
+    "Transform one step's worth of rules into a parser action"
 
-    return: "Parser action for a full rule, advanced rules position"
-        [~[action! block!]~]
+    return: [
+        ~[action! block!]~  "Arity-1 parser, and advanced rules position"
+    ]
+
     state "Parse state"
         [frame!]
     rules "Parse rules to (partially) convert to a combinator action"
         [block!]
+
     {r comb value}
 ][
     r: rules.1
@@ -3010,8 +2991,12 @@ parsify: func [
 parse*: func [
     "Process as much of the input as parse rules consume (see also PARSE)"
 
-    return: "Synthesized value from last match rule, and any pending values"
-        [~[any-value? [blank? block!]]~ error!]
+    return: [
+        ~[any-value? [blank? block!]]~
+        "Synthesized value from last match rule, and any pending values"
+
+        error! "error if no match"
+    ]
     input "Input data"
         [<opt-out> any-series? url! any-sequence?]
     rules "Block of parse rules"

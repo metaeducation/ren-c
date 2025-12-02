@@ -175,21 +175,6 @@ standard: make object! [  ; can't CONSTRUCT, dependency of MAKE on prior fields
         ~  ; if you don't call RETURN, the result is a ~ antiform (trash)
     ]
 
-    ; !!! The %sysobj.r initialization currently runs natives (notably the
-    ; natives for making objects, and here using COMMENT because it can).
-    ; This means that if the ACTION-ADJUNCT information is going to be produced
-    ; from a spec block for natives, it wouldn't be available while the
-    ; natives are getting initialized.
-    ;
-    ; It may be desirable to sort out this dependency by using a construction
-    ; syntax and making this a MAP! or OBJECT! literal.  In the meantime,
-    ; the archetypal context has to be created "by hand" for natives to use,
-    ; with this archetype used by the REDESCRIBE Mezzanine.
-    ;
-    action-adjunct: construct [
-        description: null
-    ]
-
     ; !!! This is the template used for all errors, to which extra fields are
     ; added if the error has parameters.  It likely makes sense to put this
     ; information into the ADJUNCT-OF of the error, so that parameterizing the
