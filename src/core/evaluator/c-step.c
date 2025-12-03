@@ -923,30 +923,19 @@ Bounce Stepper_Executor(Level* L)
 
 } case TYPE_WORD: { //// WORD! ///////////////////////////////////////////////
 
-    // A plain word tries to fetch its value through its binding.  It panics
-    // if the word is unbound (or if the binding is to a variable which is
-    // set, but to the antiform of space e.g. TRASH).  Should the word
-    // look up to an antiform FRAME!, then that "Action" will be invoked.
-    //
-    // NOTE: The usual dispatch of infix functions is *not* via a TYPE_WORD in
-    // this switch, it's by some code at the `lookahead:` label.  You only see
-    // infix here when there was nothing to the left, so cases like `(+ 1 2)`
-    // or in "stale" left hand situations like `10 comment "hi" + 20`.
-    //
-    // 1. When dispatching infix and you have something on the left, you
-    //    want to push the level *after* the flag for infixness has been
-    //    set...to avoid overwriting the output cell that's the left hand
-    //    side input.  But in this case we don't have a left input, even
-    //    though we're doing infix.  So pushing *before* we set the flags
-    //    means the FLAG_STATE_BYTE() will be 0, and we get clearing.
+  // A plain word tries to fetch its value through its binding.  It panics if
+  // the word is unbound (or if bound to a variable which holds TRASH!).  If
+  // it looks up to an antiform FRAME!, then that "Action" will be invoked.
+  //
+  // NOTE: The usual dispatch of infix functions is *not* via a TYPE_WORD in
+  // this switch, it's by some code at the `lookahead:` label.  You only see
+  // infix here when there was nothing to the left, so cases like `(+ 1 2)`
 
 } handle_word_where_action_lookups_are_active: {
 
-    // 1. Even though we intend to panic on trash, we want to use a lower
-    //    level function that doesn't check for trash...because we want to
-    //    push the trash check *after* we check for it being an action.
-    //    This is because error cases are uncommon compared to successful
-    //    lookups, and we don't want to pay for the trash check on success.
+    // 1. If we're just going to panic on a TRASH! access, there's no reason
+    //    to check for it first.  See if it's an ACTION!, in which case run
+    //    it and we don't pay for the trash check.
 
     assert(not Sigil_Of(CURRENT));
 
@@ -963,7 +952,7 @@ Bounce Stepper_Executor(Level* L)
     assert(Is_Cell_Stable(OUT));  // plain WORD! pick, ERROR! is only antiform
     Value* out = cast(Value*, OUT);
 
-    if (Is_Action(out))
+    if (Is_Action(out))  // check first [1]
         goto run_action_in_out;
 
     if (Get_Cell_Flag(CURRENT, CURRENT_NOTE_RUN_WORD)) {
@@ -979,7 +968,34 @@ Bounce Stepper_Executor(Level* L)
 
 } run_action_in_out: {
 
-    Value* out = cast(Value*, OUT);
+  // 1. For C-DEBUG-BREAK, it's not that helpful to *actually* dispatch to an
+  //    action called C-DEBUG-BREAK, because we want to debug the callsite,
+  //    not the guts of that function.  So if a word looks up to C-DEBUG-BREAK
+  //    we notice that here.  Then we just jump direct to the next expression,
+  //    which allows you to break in the middle of things, like:
+  //
+  //        1 + c-debug-break 2
+  //
+  // 2. When dispatching infix and you have something on the left, you want to
+  //    push the level *after* the flag for infixness has been set...to avoid
+  //    overwriting the output cell that's the left hand side input.  But in
+  //    this case we don't have a left input, even though we're doing infix.
+  //    So pushing *before* we set the flags means the FLAG_STATE_BYTE() will
+  //    be 0, and we get clearing.
+
+   Value* out = cast(Value*, OUT);
+
+#if INCLUDE_C_DEBUG_BREAK_NATIVE && RUNTIME_CHECKS
+  if (
+      not Is_Trash(Mutable_Lib_Var(SYM_C_DEBUG_BREAK))  // unset in boot
+      and Frame_Phase(LIB(C_DEBUG_BREAK)) == Frame_Phase(out)
+  ){
+      debug_break();  // <---------------------------------- C-DEBUG-BREAK [1]
+      Erase_Cell(OUT);  // start_new_expression requires OUT erased
+      goto start_new_expression;
+  }
+#endif
+
     Option(InfixMode) infix_mode = Frame_Infix_Mode(out);
 
     if (infix_mode) {
@@ -1047,7 +1063,7 @@ Bounce Stepper_Executor(Level* L)
       Level* sub = Make_Action_Sublevel(out)
     );
     require (
-      Push_Action(sub, out, infix_mode)  // before OUT erased
+      Push_Action(sub, out, infix_mode)  // before OUT erased [2]
     );
     Erase_Cell(OUT);  // want OUT clear, even if infix_mode sets state nonzero
     Push_Level_Erase_Out_If_State_0(OUT, sub);

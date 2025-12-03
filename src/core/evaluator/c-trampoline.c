@@ -118,25 +118,25 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Level* L = TOP_LEVEL;  // Current level changes, and isn't always top...
 
-    // 1. The Just_Use_Out_Executor() exists vs. using something like nullptr
-    //    for the executor just to make it more obvously intentional that a
-    //    passthru is intended.  (Review in light of use of nonzero for GC
-    //    and bookkeeping purposes; could STATE of 255 mean Just_Use_Out?)
-    //
-    // 2. The rule for Levels that are continuations/delegations is that they
-    //    cannot be in STATE_0.  But an additional constraint is that if a
-    //    Level is in STATE_0 that its output cell is erased.  It's something
-    //    that helps avoid leaking values into an evaluation, and also makes
-    //    sure that Executors and Dispatchers write something to the output
-    //    before returning it.  Plus, it gives Executors and Dispatchers a
-    //    reliable test for whether they've written the output or not--which
-    //    can be a useful implicit "flag".  So there's a lot of benefits.
-    //
-    //    (At one point the Trampoline itself did an Erase_Cell() here, but
-    //    that meant every trampoline bounce in the release build would have
-    //    to test the state byte...and sometimes cells were getting doubly
-    //    erased.  So the responsbility was shifted to Push_Level() and
-    //    cases that reuse levels, e.g. Reset_Evaluator_Erase_Out())
+  // 1. The Just_Use_Out_Executor() exists vs. using something like nullptr
+  //    for the executor just to make it more obvously intentional that a
+  //    passthru is intended.  (Review in light of use of nonzero for GC and
+  //    bookkeeping purposes; could STATE of 255 mean Just_Use_Out?)
+  //
+  // 2. The rule for Levels that are continuations/delegations is that they
+  //    cannot be in STATE_0.  But an additional constraint is that if a
+  //    Level is in STATE_0 that its output cell is erased.  It's something
+  //    that helps avoid leaking values into an evaluation, and also makes
+  //    sure that Executors and Dispatchers write something to the output
+  //    before returning it.  Plus, it gives Executors and Dispatchers a
+  //    reliable test for whether they've written the output or not--which can
+  //    be a useful implicit "flag".  So there's a lot of benefits.
+  //
+  //    (At one point the Trampoline itself did an Erase_Cell() here, but that
+  //    meant every trampoline bounce in the release build would have to test
+  //    the state byte...and sometimes cells were getting doubly erased.  So
+  //    the responsbility was shifted to Push_Level() and cases that reuse
+  //    levels, e.g. Reset_Evaluator_Erase_Out())
 
   bounce_on_trampoline_skip_just_use_out:
 
@@ -248,22 +248,22 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
   //=//// PROCESS SIGNALS (RECYCLE, HALT, ETC.) ///////////////////////////=//
 
-    // Doing signals covers several things that may cause interruptions:
-    //
-    //  * Running the garbage collector
-    //  * Noticing when a HALT was requested
-    //  * (future?) Allowing a break into an interactive debugger
-    //
-    // 1. We could increment total_eval_cycles here so it's always up-to-date.
-    //    But we keep a micro-optimization from R3-Alpha where we only adjust
-    //    one counter (the `eval_countdown`) each time through the loop.  Then
-    //    we reconcile total_eval_cycles in Do_Signals_Throws() only when the
-    //    countdown reaches zero.
-    //
-    // 2. Garbage collection has to be *after* the Level's Executor is run,
-    //    and not before.  This is for several reasons, but one is that code
-    //    may depend on the Level being on the stack to guard its OUT slot,
-    //    on a Cell that would otherwise not be guarded.
+  // Doing signals covers several things that may cause interruptions:
+  //
+  //  * Running the garbage collector
+  //  * Noticing when a HALT was requested
+  //  * (future?) Allowing a break into an interactive debugger
+  //
+  // 1. We could increment total_eval_cycles here so it's always up-to-date.
+  //    But we keep a micro-optimization from R3-Alpha where we only adjust
+  //    one counter (the `eval_countdown`) each time through the loop.  Then
+  //    we reconcile total_eval_cycles in Do_Signals_Throws() only when the
+  //    countdown reaches zero.
+  //
+  // 2. Garbage collection has to be *after* the Level's Executor is run, and
+  //    not before.  This is for several reasons, but one is that code may
+  //    depend on the Level being on the stack to guard its OUT slot, on a
+  //    Cell that would otherwise not be guarded.
 
     Update_Tick_If_Enabled();  // Do_Signals_Throws() expects tick in sync
 
@@ -304,7 +304,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     }
 
   //=//// HANDLE CONTINUATIONS ////////////////////////////////////////////=//
-  //
+
   // 1. It's legal for a level to implement itself in terms of another level
   //    that is compatible.  This could have a separate signal, but for now
   //    it's done as BOUNCE_CONTINUE.  Since that delegation may be to an

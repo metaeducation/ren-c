@@ -296,30 +296,19 @@ DECLARE_NATIVE(C_DEBUG_TICK)
 //
 DECLARE_NATIVE(C_DEBUG_BREAK)
 //
-// 1. If we are counting ticks, we can put off actually breaking until the
-//    trampoline is right about to run the next step.  For instance with:
-//
-//        print c-debug-break mold value
-//
-//    Queue it so the break happens right before the MOLD.
-//
-// 2. In performant builds without TRAMPOLINE_COUNTS_TICKS but that still have
-//    debugging information (e.g. callgrind builds) then C-DEBUG-BREAK can
-//    still be useful.  Break right here in this native call...you'll have to
-//    step up out into the evaluator stack manually to get to the next step.
+// 1. We usually want to debug the callsite--not the C-DEBUG-BREAK function.
+//    Hence the evaluator stepper should usually catch the C-DEBUG-BREAK call
+//    and not actually dispatch it, breaking in the evaluator loop.  We still
+//    keep a debug break here, in case the function is run through some other
+//    means (like an APPLY).  You shouldn't usually be breaking here, though.
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
-  #if (INCLUDE_C_DEBUG_BREAK_NATIVE)
-    #if TRAMPOLINE_COUNTS_TICKS
-        g_break_at_tick = g_tick + 1;  // queue break for next step [1]
-        return Init_Ghost(OUT);
-     #else
+  #if INCLUDE_C_DEBUG_BREAK_NATIVE
       #if RUNTIME_CHECKS
-        debug_break();  // break right here, now [2]
+        debug_break();  // usually we break in the evaluator, not here [1]
       #endif
         return Init_Ghost(OUT);
-      #endif
   #else
       panic (Error_Checked_Build_Only_Raw());
   #endif
