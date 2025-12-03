@@ -491,7 +491,7 @@ bool Yielder_Details_Querier(
 //
 //  "Produce generator function that can be called multiple times until DONE"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      spec "Arguments passed in to each call for the generator"
 //          [block!]
 //      body "Code containing YIELD statements"
@@ -527,7 +527,7 @@ DECLARE_NATIVE(YIELDER)
     Init_Nulled(Details_At(details, IDX_YIELDER_YIELDED_LIFTED));
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }
 
 

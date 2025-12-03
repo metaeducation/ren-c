@@ -52,7 +52,7 @@
 //
 //  "Make action that will EVAL a BLOCK!"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      source [block!]  ; allow other types? [1]
 //  ]
 //
@@ -99,5 +99,5 @@ DECLARE_NATIVE(DOES)
     const Symbol* label = CANON(EVALUATE);  // !!! Better answer?
 
     Init_Action(OUT, exemplar, label, UNCOUPLED);
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }

@@ -910,7 +910,7 @@ bool Javascript_Details_Querier(
 //
 //  "Create ACTION! from textual JavaScript code"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      spec "Function specification (similar to the one used by FUNCTION)"
 //          [block!]
 //      source "JavaScript code as a text string" [text!]
@@ -1101,7 +1101,7 @@ DECLARE_NATIVE(JS_NATIVE)
     );
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }
 
 

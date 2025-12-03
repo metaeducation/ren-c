@@ -112,7 +112,7 @@ bool Reorderer_Details_Querier(
 //
 //  "Create variation of a frame with its parameters reordered"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      original [<unrun> frame!]
 //      ordering "Parameter WORD!s, all required parameters must be mentioned"
 //          [block!]
@@ -266,5 +266,5 @@ DECLARE_NATIVE(REORDER)
     Drop_Data_Stack_To(STACK_BASE);  // !!! None of this works ATM.
 
     Init_Action(OUT, details, label, UNCOUPLED);
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }}

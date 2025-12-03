@@ -991,6 +991,14 @@ Result(bool) Typecheck_Coerce(
             );
             assert(not coerced);  // should only decay once...
             coerced = true;
+
+            if (
+                Is_Possibly_Unstable_Atom_Action(atom)
+                and Get_Parameter_Flag(param, UNRUN)
+            ){
+                LIFT_BYTE(atom) = NOQUOTE_2;
+            }
+
             goto typecheck_again;
         }
     }
@@ -1083,7 +1091,7 @@ Result(Value*) Init_Typechecker(
 //
 //  "Make a function for checking types (generated function gives LOGIC!)"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      types [datatype! block!]
 //  ]
 //
@@ -1107,7 +1115,7 @@ DECLARE_NATIVE(TYPECHECKER)
     require (
       Init_Typechecker(OUT, ARG(TYPES))
     );
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }
 
 
@@ -1228,7 +1236,7 @@ DECLARE_NATIVE(MATCH)
 //
 //  "Make a specialization of the MATCH function for a fixed type argument"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      test [block! datatype! parameter! action!]
 //  ]
 //
@@ -1263,5 +1271,5 @@ DECLARE_NATIVE(MATCHER)
     if (Specialize_Action_Throws(OUT, LIB(MATCH), block_in_spare, STACK_BASE))
         return THROWN;
 
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }

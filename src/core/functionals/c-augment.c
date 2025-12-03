@@ -62,9 +62,9 @@
 //
 //  "Create an action variant that acts the same, but has added parameters"
 //
-//      return: [action!]
+//      return: [~[action!]~ frame!]
 //      original "Frame whose implementation is to be augmented"
-//          [<unrun> frame!]
+//          [action! frame!]
 //      spec "Spec dialect for words to add to the derived function"
 //          [block!]
 //  ]
@@ -73,8 +73,8 @@ DECLARE_NATIVE(AUGMENT)
 {
     INCLUDE_PARAMS_OF_AUGMENT;
 
+    Value* original = ARG(ORIGINAL);
     Element* spec = Element_ARG(SPEC);
-    Element* original = Element_ARG(ORIGINAL);
 
     Option(const Symbol*) label = Frame_Label_Deep(original);
     Option(VarList*) coupling = Frame_Coupling(original);
@@ -133,8 +133,12 @@ DECLARE_NATIVE(AUGMENT)
       )
     );
 
-    Init_Action(OUT, paramlist, label, coupling);
-    Copy_Ghostability(OUT, original);
+    Value* out = Init_Frame(OUT, paramlist, label, coupling);
+    Copy_Ghostability(out, original);
 
-    return UNSURPRISING(OUT);
+    if (Is_Frame(original))
+        return OUT;
+
+    Actionify(out);
+    return Packify_Action(OUT);
 }}

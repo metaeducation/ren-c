@@ -108,11 +108,11 @@ change-dir: func [  ; This can be HIJACK'd by a "smarter" version
 redescribe: func [
     "Mutate action description with new title and/or new argument notes"
 
-    return: [action!]
+    return: [~[action!]~ frame!]
     spec "Either a string description, or a spec block"
         [block!]
     action "(modified) Action whose description is to be updated"
-        [<unrun> frame!]
+        [<unrun> frame!]  ; should be active or inactive based on input
 ][
     ; !!! This needs to be completely rethought
     return runs action
@@ -292,7 +292,7 @@ ensure: redescribe [
                     (mold reify try type of f.value) else ["VOID"]
             ]
         ]
-        f.value
+        f.^value
     ]
 )
 

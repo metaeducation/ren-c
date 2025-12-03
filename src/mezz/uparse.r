@@ -128,7 +128,7 @@ combinator: func [
     body [block!]
 ]
 bind construct [
-    ^wrapper: lambda [  ; ^wrapper to not store WRAPPER as label
+    wrapper: unrun lambda [  ; unrun to not store WRAPPER as label
         "Enclosing function for hooking all combinators"
         f [frame!]
     ][
@@ -142,7 +142,7 @@ bind construct [
     let autopipe: ~
     let input-name: ~  ; whatever they called INPUT
 
-    let ^action: func compose [  ; ^action to not store ACTION as label
+    let comb: unrun func compose [  ; unrun to not store COMB as label
         ; Get the text description if given
         (? if text? spec.1 [spec.1, elide spec: my next])
 
@@ -257,9 +257,9 @@ bind construct [
     ; Enclosing with the wrapper permits us to inject behavior before and
     ; after each combinator is executed.
     ;
-    return unrun enclose augment action/ [
+    return enclose augment comb [
         :rule-start [block!] :rule-end [block!]
-    ] wrapper/  ; returns plain ACTION!
+    ] wrapper  ; returns plain FRAME! (combinators not evaluator active)
 ]
 
 

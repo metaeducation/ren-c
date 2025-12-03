@@ -241,7 +241,7 @@ bool Lambda_Details_Querier(
 //
 //  "Make an anonymous function that doesn't define a local RETURN"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
 //          [block!]
 //      body [block!]
@@ -280,7 +280,7 @@ DECLARE_NATIVE(LAMBDA)
       );
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }
 
 
@@ -289,7 +289,7 @@ DECLARE_NATIVE(LAMBDA)
 //
 //  "Variation of LAMBDA that will always return TRASH!"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
 //          [block!]
 //      body [block!]
@@ -316,7 +316,7 @@ DECLARE_NATIVE(PROCEDURE)
     Init_Quasar(Details_At(details, IDX_LAMBDA_RESULT_PARAM));  // no return
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }
 
 
@@ -325,7 +325,7 @@ DECLARE_NATIVE(PROCEDURE)
 //
 //  "Declares divergent function (will PANIC if it reaches the end of body)"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
 //          [block!]
 //      body [block!]
@@ -352,5 +352,5 @@ DECLARE_NATIVE(DIVERGER)
     Init_Space(Details_At(details, IDX_LAMBDA_RESULT_PARAM));  // panic signal
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }

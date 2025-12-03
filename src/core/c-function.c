@@ -706,6 +706,12 @@ Details* Make_Dispatch_Details(
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     Option(Index) details_max  // 1-based max index desired for Phase_Details
 ){
+    assert(Heart_Of(exemplar) == TYPE_FRAME);
+    assert(
+        LIFT_BYTE(exemplar) == NOQUOTE_2
+        or LIFT_BYTE(exemplar) == ANTIFORM_1  // allow action antiform
+    );
+
     assert(0 == (flags & (~ (  // make sure no stray flags passed in
         BASE_FLAG_MANAGED
             | DETAILS_FLAG_CAN_DISPATCH_AS_INTRINSIC
@@ -727,11 +733,6 @@ Details* Make_Dispatch_Details(
     );
     Set_Flex_Len(a, (opt details_max) + 1);
 
-    assert(Heart_Of(exemplar) == TYPE_FRAME);
-    assert(
-        LIFT_BYTE(exemplar) == NOQUOTE_2
-        or LIFT_BYTE(exemplar) == ANTIFORM_1  // allow action antiform
-    );
     Cell* rootvar = Array_Head(a);
     Copy_Cell(rootvar, exemplar);
     LIFT_BYTE(rootvar) = NOQUOTE_2;  // canonize action antiforms to FRAME!
@@ -880,7 +881,7 @@ DECLARE_NATIVE(COUPLE)
 //
 //  "Disassociate an ACTION from OBJECT!"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      action [<unrun> frame!]
 //  ]
 //
@@ -895,5 +896,5 @@ DECLARE_NATIVE(UNCOUPLE)
     Tweak_Frame_Coupling(action_or_frame, UNCOUPLED);
 
     Actionify(Copy_Cell(OUT, action_or_frame));
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }

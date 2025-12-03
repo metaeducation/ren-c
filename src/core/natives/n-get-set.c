@@ -291,6 +291,9 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         require (
           Unliftify_Undecayed(value_arg)
         );
+        bool was_singular_pack = (
+            Is_Pack(value_arg) and Series_Len_At(value_arg) == 1
+        );
         Decay_If_Unstable(value_arg) except (Error* e) {
             return e;
         };
@@ -303,8 +306,12 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
             // "unsurprising" bit is encoded.  This is the last gasp of that
             // particular form of safety--if that doesn't work, I give up.
             //
-            if (false)
+            if (
+                not was_singular_pack
+                and Not_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION)
+            ){
                 return Error_Surprising_Action_Raw(picker_arg);
+            }
 
             if (Is_Word(picker_arg)) {
                 Update_Frame_Cell_Label(  // !!! is this a good idea?
@@ -312,10 +319,19 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
                 );
             }
         }
+        else {
+            if (Get_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION)) {
+                return Error_User(
+                    "/word: and /obj.field: assignments need ACTION!"
+                );
+            }
+        }
     }
     then {  // not quoted...
         Plainify(Known_Element(picker_arg));  // drop any sigils
     }
+
+    Clear_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION);  // consider *once*
 
     Corrupt_Cell_If_Needful(TOP);  // shouldn't use past this point
 
@@ -354,6 +370,11 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     assert(LEVEL == TOP_LEVEL);
     possibly(Get_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION));
+    bool only_action = Get_Cell_Flag(
+        SCRATCH,
+        SCRATCH_VAR_NOTE_ONLY_ACTION
+    );
+    USED(only_action);
 
   #if NEEDFUL_DOES_CORRUPTIONS  // confirm caller pre-corrupted spare [1]
     assert(Not_Cell_Readable(SPARE));
@@ -640,18 +661,6 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         assert(Is_Nulled(TOP));
         Copy_Cell(OUT, spare_location_dual);
         goto return_success;
-    }
-
-    if (Get_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION)) {
-        Clear_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION);  // consider *once*
-
-        if (not Is_Lifted_Action(TOP)) {
-            e = Error_User("/word: and /obj.field: assignments need ACTION!");
-            goto return_error;
-        }
-
-        // THIS IS WHERE WE WOULD TELL TWEAK NOT TO COMPLAIN IF THE ACTION
-        // IS NOT IN A PACK, see Error_Surprising_Action_Raw()
     }
 
     // This may be the first time we do an update, or it may be a writeback

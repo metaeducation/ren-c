@@ -1038,8 +1038,8 @@ DECLARE_NATIVE(INFIX_Q)
 //
 //  "For functions that gets 1st argument from left, e.g (/+: infix get $add)"
 //
-//      return: [action!]
-//      action [<unrun> frame!]
+//      return: [~[action!]~ frame!]
+//      action [action! frame!]
 //      :off "Give back a non-infix version of the passed in function"
 //      :defer "Allow one full expression on the left to evaluate"
 //      :postpone "Allow arbitrary numbers of expressions on left to evaluate"
@@ -1049,7 +1049,7 @@ DECLARE_NATIVE(INFIX)
 {
     INCLUDE_PARAMS_OF_INFIX;
 
-    Value* out = Actionify(Copy_Cell(OUT, ARG(ACTION)));
+    Value* out = Copy_Cell(OUT, ARG(ACTION));
 
     if (Bool_ARG(OFF)) {
         if (Bool_ARG(DEFER) or Bool_ARG(POSTPONE))
@@ -1067,7 +1067,10 @@ DECLARE_NATIVE(INFIX)
     else
         Tweak_Frame_Infix_Mode(out, INFIX_TIGHT);
 
-    return UNSURPRISING(OUT);
+    if (Is_Frame(out))
+        return OUT;
+
+    return Packify_Action(OUT);
 }
 
 
@@ -1076,7 +1079,7 @@ DECLARE_NATIVE(INFIX)
 //
 //  "Make a function's invocations not default to turn GHOST! results to VOID"
 //
-//      return: [action! frame!]
+//      return: [~[action!]~ frame!]
 //      action [action! frame!]
 //      :off "Give back non-ghostable version of the passed in function"
 //  ]
@@ -1093,7 +1096,7 @@ DECLARE_NATIVE(GHOSTABLE)
         Set_Cell_Flag(out, WEIRD_GHOSTABLE);
 
     if (Is_Action(out))
-        return UNSURPRISING(OUT);
+        return Packify_Action(OUT);
 
     return OUT;
 }

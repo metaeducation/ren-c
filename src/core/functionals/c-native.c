@@ -220,7 +220,7 @@ static Bounce Native_Native_Core(Level* level_)
         Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     }
 
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }
 
 
@@ -229,7 +229,7 @@ static Bounce Native_Native_Core(Level* level_)
 //
 //  "(Internal Function) Create a native, using compiled C code"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      spec [block!]
 //      :combinator "This native is an implementation of a PARSE keyword"
 //      :intrinsic "This native can be called without building a frame"

@@ -267,13 +267,40 @@ INLINE Value* Deactivate_If_Action(Need(Value*) v) {
     return v;
 }
 
-// !!! The concept of UNSURPRISING is being evolved to where it is likely to
-// be actions in packs.
+
+//=//// PACK!ed ACTIONS FOR SAFE SET-WORD ASSIGNMENTS /////////////////////=//
 //
-INLINE Atom* UNSURPRISING(Atom* atom) {
+// Traditionally Redbol was very permissive about SET-WORD being able to
+// assign active functions.  It was easy to write code that thinks it's just
+// assigning an inert variable when, it's assigning something that will invoke
+// a function if referenced.
+//
+//     rebol2>> foo: get $bar
+//
+//     rebol2>> if foo [print "my secret"]
+//     MUHAHAHA I AM WHAT WAS STORED IN BAR AND I TRICKED YOU!
+//     I see your BLOCK! it was my PARAMETER!  [print "my secret"]
+//
+// Writing "safe" code created a sort of "pox" where :GET-WORD access had to
+// be used to dodge the default function-calling behavior of WORD! access, in
+// case a variable might wind up holding an active function.
+//
+// Ren-C's has one level of safety with word-active ACTION!s as antiforms,
+// so you won't accidentally find them while enumerating over lists.  But it
+// adds another level of safety by making SET-WORD assignments require any
+// action assigns to come from a PACK! containing the action.  This unstable
+// state isn't returned by things like PICK, but comes back from generators...
+// and you can turn any ACTION! into an ACTION-PACK! using the RUNS native.
+//
+// This means the "approval" state for purposes of SET-WORD assigns is
+// persistable with LIFT, and can be manipulated consciously in usermode.
+//
+
+INLINE Atom* Packify_Action(Atom* atom) {  // put ACTION! in a PACK! [1]
     assert(Is_Action(Known_Stable(atom)));
-    assert(not Is_Pack(atom));  // TBD, making sure pack creation is visible
-    return atom;
+    Source *a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
+    Copy_Lifted_Cell(Stub_Cell(a), atom);
+    return Init_Pack(atom, a);
 }
 
 
@@ -301,8 +328,14 @@ INLINE bool Is_Frame_Infix(const Value* c) {  // faster than != PREFIX_0
 }
 
 
-INLINE void Copy_Ghostability(Atom* to, const Value* from) {
-    assert(Is_Action(u_cast(Value*, to)) or Is_Frame(u_cast(Value*, to)));
+//=//// CELL GHOSTABILITY /////////////////////////////////////////////////=//
+//
+// See CELL_FLAG_WEIRD_GHOSTABLE.  When you derive one function from another,
+// you generally want to mirror its ghostable status.
+//
+
+INLINE void Copy_Ghostability(Value* to, const Value* from) {
+    assert(Is_Action(to) or Is_Frame(to));
     assert(Is_Action(from) or Is_Frame(from));
 
     if (Get_Cell_Flag(from, WEIRD_GHOSTABLE))

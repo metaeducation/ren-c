@@ -413,7 +413,7 @@ Details* Alloc_Action_From_Exemplar(
 //
 //  "Make a function that manipulates an invocation at the callsite"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      shim "The action that has a FRAME! (or QUOTED?) argument to supply"
 //          [<unrun> frame!]
 //      :parameter "Shim parameter receiving the frame--defaults to last"
@@ -501,5 +501,5 @@ DECLARE_NATIVE(REFRAMER)
     Init_Integer(Details_At(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 
     Init_Action(OUT, details, label, UNCOUPLED);
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }

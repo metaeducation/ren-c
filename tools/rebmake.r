@@ -1297,10 +1297,9 @@ makefile: make generator-class [
     is-nmake: 'no  ; Generating for Microsoft nmake
 
     ; by default makefiles are for POSIX platform
-    ; these GETs are null-tolerant
     ;
-    gen-cmd-create: get $posix.gen-cmd-create
-    gen-cmd-delete: get $posix.gen-cmd-delete
+    gen-cmd-create: posix.gen-cmd-create/
+    gen-cmd-delete: posix.gen-cmd-delete/
 
     gen-rule: func [
         "Return possibly multi-line text for rule, with extra newline at end"
@@ -1502,10 +1501,8 @@ export execution: make generator-class [
         posix
     ]
 
-    ; these GETs are null tolerant
-    ;
-    gen-cmd-create: get $host.gen-cmd-create
-    gen-cmd-delete: get $host.gen-cmd-delete
+    gen-cmd-create: host.gen-cmd-create/
+    gen-cmd-delete: host.gen-cmd-delete/
 
     run-target: func [
         return: []

@@ -31,8 +31,8 @@
 //
 //  "Suppress escalation to PANIC from ERROR!s, by returning NULL"
 //
-//      return: [any-stable?]
-//      ^value [any-value?]  ; e.g. TRY on a pack returns the pack
+//      return: [<null> any-value?]
+//      ^value [any-value? error!]  ; e.g. TRY on a pack returns the pack
 //  ]
 //
 DECLARE_NATIVE(TRY)

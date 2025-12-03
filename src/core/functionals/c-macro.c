@@ -214,7 +214,7 @@ bool Inliner_Details_Querier(
 //
 //  "Makes function that generates code to splice into the execution stream"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
 //      body [block!]
@@ -239,7 +239,7 @@ DECLARE_NATIVE(INLINER)
     ));
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }
 
 

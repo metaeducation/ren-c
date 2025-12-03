@@ -146,7 +146,7 @@ bool Arrow_Details_Querier(
 //
 //  "Makes an anonymous function that doesn't copy its body, can unpack args"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      spec "Names of arguments"
 //          [_ word! 'word! ^word! refinement? block!]
 //      body [<const> block!]
@@ -274,5 +274,5 @@ DECLARE_NATIVE(ARROW)
     Copy_Cell(Details_At(details, IDX_ARROW_BODY), body);
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }

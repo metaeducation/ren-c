@@ -539,28 +539,27 @@ DECLARE_NATIVE(PACK_Q)
 //
 //  runs: native [
 //
-//  "Make frames run when fetched through word access"
+//  "Turn frame or action into antiform in PACK!, allows SET-WORD! assignment"
 //
-//      return: [action!]
-//      frame [frame! action!]  ; !!! is allowing already action! a good idea?
+//      return: [~[action!]~]
+//      frame [frame! action!]
 //  ]
 //
 DECLARE_NATIVE(RUNS)
 //
-// This is mostly a type-checked synonym for `anti`, with the exception that
-// the result is made "UNSURPRISING".
+// See definition of Packify_Action() macro for more information.
 {
     INCLUDE_PARAMS_OF_RUNS;
 
     Value* frame = ARG(FRAME);
 
     if (Is_Action(frame))
-        return UNSURPRISING(Copy_Cell(OUT, frame));
+        return Packify_Action(Copy_Cell(OUT, frame));
 
     Stably_Antiformize_Unbound_Fundamental(frame);
     assert(Is_Action(frame));
 
-    return UNSURPRISING(Copy_Cell(OUT, frame));
+    return Packify_Action(Copy_Cell(OUT, frame));
 }
 
 

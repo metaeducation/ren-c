@@ -392,7 +392,7 @@ Result(Details*) Make_Interpreted_Action(
 //
 //  "Generates an ACTION! with RETURN capability"
 //
-//      return: [action!]
+//      return: [~[action!]~]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
 //      body [block!]
@@ -415,7 +415,7 @@ DECLARE_NATIVE(FUNCTION)
     ));
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
-    return UNSURPRISING(OUT);
+    return Packify_Action(OUT);
 }
 
 

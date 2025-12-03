@@ -212,9 +212,9 @@ bool Encloser_Details_Querier(
 //
 //  "Wrap code around a frame with access to its instance and return value"
 //
-//      return: [action!]
+//      return: [~[action!]~ frame!]
 //      inner "Frame to be copied, then passed to OUTER"
-//          [<unrun> frame!]
+//          [action! frame!]
 //      outer "Gets a FRAME! for INNER before invocation, can EVAL it (or not)"
 //          [<unrun> frame!]
 //  ]
@@ -227,7 +227,7 @@ DECLARE_NATIVE(ENCLOSE)
 {
     INCLUDE_PARAMS_OF_ENCLOSE;
 
-    Element* inner = Element_ARG(INNER);
+    Value* inner = ARG(INNER);
     Element* outer = Element_ARG(OUTER);
 
     Details* details = Make_Dispatch_Details(
@@ -239,6 +239,11 @@ DECLARE_NATIVE(ENCLOSE)
 
     Copy_Cell(Details_At(details, IDX_ENCLOSER_OUTER), outer);
 
-    Init_Action(OUT, details, Frame_Label(inner), UNCOUPLED);
-    return UNSURPRISING(OUT);
+    Value* out = Init_Frame(OUT, details, Frame_Label(inner), UNCOUPLED);
+
+    if (Is_Frame(inner))
+        return OUT;
+
+    Actionify(out);
+    return Packify_Action(OUT);
 }

@@ -168,9 +168,9 @@ bool Adapter_Details_Querier(
 //
 //  "Create a variant of an action that preprocesses its arguments"
 //
-//      return: [action!]
+//      return: [~[action!]~ frame!]
 //      original "Code to be run after the prelude is complete"
-//          [<unrun> frame!]
+//          [action! frame!]
 //      prelude "Code to run in constructed frame before adaptee runs"
 //          [block!]
 //  ]
@@ -211,8 +211,12 @@ DECLARE_NATIVE(ADAPT)
     );
     Tweak_Cell_Binding(rebound, List_Binding(prelude));
 
-    Init_Action(OUT, details, Frame_Label_Deep(adaptee), UNCOUPLED);
-    Copy_Ghostability(OUT, adaptee);
+    Value* out = Init_Frame(OUT, details, Frame_Label_Deep(adaptee), UNCOUPLED);
+    Copy_Ghostability(out, adaptee);
 
-    return UNSURPRISING(OUT);
+    if (Is_Frame(adaptee))
+        return OUT;
+
+    Actionify(out);
+    return Packify_Action(OUT);
 }

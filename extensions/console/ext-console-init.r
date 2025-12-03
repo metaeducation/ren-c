@@ -164,8 +164,19 @@ export console!: make object! [
                 return ~
             ]
 
-            print ["; first in pack of length" length of unanti ^v]
-            v: decay ^v
+            let len: length of unanti ^v
+
+            ^v: decay ^v  ; meta-assign allows ACTION! assignment
+
+            if (len = 1) and (action? ^v) [  ; SET-WORD assignable action pack
+                print unspaced [
+                    "\~[" (mold lift ^v) "]~\"
+                        _ --[; antiform (pack!) "action-pack"]--
+                ]
+                return ~
+            ]
+
+            print ["; first in pack of length" len]
         ]
 
         === PRINT NO OUTPUT FOR TRASH! (antiform RUNE!) ===

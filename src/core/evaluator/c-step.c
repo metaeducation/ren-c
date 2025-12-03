@@ -1406,7 +1406,7 @@ Bounce Stepper_Executor(Level* L)
             }
             Move_Atom(OUT, SPARE);
         }
-        UNSURPRISING(OUT);  // foo/ is always ACTION!
+        Packify_Action(OUT);  // foo/ is always ACTION!
         goto lookahead;
     }
 
