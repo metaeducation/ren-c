@@ -177,7 +177,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 typedef Byte KindByte;  // help document when Byte is Heart + Sigil [1]
 
-#define KIND_BYTE_RAW(cell) /* don't go through HeartHolder() [2] */ \
+#define KIND_BYTE_RAW(cell) /* don't go through KindHolder() [2] */ \
     SECOND_BYTE(&(cell)->header.bits)
 
 #define FLAG_KIND_BYTE(byte) \

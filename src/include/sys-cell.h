@@ -555,23 +555,23 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 
 //=//// HOOKABLE KIND_BYTE() ACCESSOR ////////////////////////////////////=//
 //
-// This has to be defined after `Cell` is fully defined.
+// It can often be helpful to inject code to when the KIND_BYTE() is being
+// assigned.  This mechanism also intercepts reads of the KIND_BYTE() too,
+// which is done pervasively.  It slows down the code in checked builds by
+// a noticeable amount, so we don't put it in all checked builds...only
+// special situations.
 //
-// 1. It can often be helpful to inject code to when the KIND_BYTE() is being
-//    assigned.  This mechanism also intercepts reads of the KIND_BYTE() too,
-//    which is done pervasively.  It slows down the code in checked builds by
-//    a noticeable amount, so we don't put it in all checked builds...only
-//    special situations.
-//
+// 1. We don't bother with const correctness in this debugging aid, as the
+//    regular build will enforce that.  Cast away constness for simplicity.
 
 #if (! DEBUG_HOOK_KIND_BYTE)
     #define KIND_BYTE(cell) \
         KIND_BYTE_RAW(cell)
 #else
-    struct HeartHolder {  // class for intercepting heart assignments [1]
+    struct KindHolder {  // class for intercepting heart assignments
         Cell* cell;
 
-        HeartHolder(const Cell* cell)
+        KindHolder(const Cell* cell)
             : cell (const_cast<Cell*>(cell))
           {}
 
@@ -583,10 +583,10 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
             KIND_BYTE_RAW(cell) = right;
         }
 
-        void operator=(const HeartHolder& right)  // must write explicitly
+        void operator=(const KindHolder& right)  // must write explicitly
           { *this = u_cast(KindByte, right); }
 
-        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum, HeartHolder, Heart)
+        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum, KindHolder, Heart)
         void operator=(T right)
           { *this = u_cast(KindByte, right); }  // inherit operator= checks
 
@@ -595,20 +595,20 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
           { return u_cast(T, u_cast(Byte, *this)); }
     };
 
-    INLINE bool operator==(const HeartHolder& holder, HeartEnum h)
+    INLINE bool operator==(const KindHolder& holder, HeartEnum h)
       { return KIND_BYTE_RAW(holder.cell) == cast(Byte, h); }
 
-    INLINE bool operator==(HeartEnum h, const HeartHolder& holder)
+    INLINE bool operator==(HeartEnum h, const KindHolder& holder)
       { return cast(Byte, h) == KIND_BYTE_RAW(holder.cell); }
 
-    INLINE bool operator!=(const HeartHolder& holder, HeartEnum h)
+    INLINE bool operator!=(const KindHolder& holder, HeartEnum h)
       { return KIND_BYTE_RAW(holder.cell) != cast(Byte, h); }
 
-    INLINE bool operator!=(HeartEnum h, const HeartHolder& holder)
+    INLINE bool operator!=(HeartEnum h, const KindHolder& holder)
       { return cast(Byte, h) != KIND_BYTE_RAW(holder.cell); }
 
     #define KIND_BYTE(cell) \
-        HeartHolder{cell}
+        KindHolder{cell}
 #endif
 
 #define Unchecked_Heart_Of(c) \
@@ -652,17 +652,8 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 // This mechanism captures manipulations of the LIFT_BYTE() to be sure the
 // bad forms don't get made.
 //
-// 1. The `Slot` can be using "dual representation" to store its cell, based
-//    on the LIFT_BYTE() being DUAL_0.
-//    bigger by 2 than what the actual representation is.  This requires
-//    care to handle, so a Slot must knowingly check the flag and use the
-//    LIFT_BYTE_RAW() when dealing with Slots.
-//
-// 2. When LiftHolder() was changed to take a const Cell* instead of a
-//    const Cell*&, this caused gcc to ambiguously try to invoke the default
-//    copy constructor when doing (LIFT_BYTE(OnStack(Cell*)) = NOQUOTE_2) or
-//    similar with wrapper classes.  Doesn't happen in MSVC.  Deleting the
-//    default copy constructor seemed to fix it.
+// 1. We don't bother with const correctness in this debugging aid, as the
+//    regular build will enforce that.  Cast away constness for simplicity.
 
 #if (! DEBUG_HOOK_LIFT_BYTE)
     #define LIFT_BYTE(cell) \
@@ -671,11 +662,10 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
     struct LiftHolder {  // class for intercepting lift assignments
         Cell* cell;
 
-        LiftHolder(const Cell* cell)
-            : cell (const_cast<Cell*>(cell))
-          {}
-
-        LiftHolder(const LiftHolder&) = delete;  // avoid gcc ambiguities [2]
+        template<typename T>
+        LiftHolder(T&& wrapper)
+            : cell (m_cast(Cell*, std::forward<T>(wrapper)))
+        {}       // ^-- m_cast const Cell* for simplicity [1]
 
         operator LiftByte() const {  // implicit cast, add read checks here
             return LIFT_BYTE_RAW(cell);
