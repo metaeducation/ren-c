@@ -630,8 +630,8 @@ export*: func [
     where "Specialized for each module via EXPORT"
         [module!]
     @what [set-word? set-run-word? set-group? group? block!]
-    args "(export x: ...) for single or (export [...]) for words list"
-        [any-stable? <variadic>]
+    ^args "(export x: ...) for single or (export [...]) for words list"
+        [any-value? <variadic>]
 
     {hdr exports val word types items}
 ][

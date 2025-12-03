@@ -296,7 +296,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         // evaluation.
         //
         switch (pclass) {
-        case PARAMCLASS_NORMAL: {
+          case PARAMCLASS_NORMAL:
+          case PARAMCLASS_META: {
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
             require (
@@ -304,17 +305,23 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             );
             if (Trampoline_Throws(out, sub))  // !!! Stackful, should yield!
                 return true;
+
+            if (pclass != PARAMCLASS_META) {
+                require (
+                  Decay_If_Unstable(out)
+                );
+            }
             break; }
 
-        case PARAMCLASS_JUST:
+          case PARAMCLASS_JUST:
             Just_Next_In_Feed(out, L->feed);
             break;
 
-        case PARAMCLASS_THE:
+          case PARAMCLASS_THE:
             The_Next_In_Feed(out, L->feed);
             break;
 
-        case PARAMCLASS_SOFT:
+          case PARAMCLASS_SOFT:
             if (Is_Soft_Escapable_Group(At_Level(L))) {
                 if (Eval_Any_List_At_Throws(
                     out,
@@ -324,12 +331,16 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                     return true;
                 }
                 Fetch_Next_In_Feed(L->feed);
+
+              require (
+                Decay_If_Unstable(out)
+              );
             }
             else // not a soft-"exception" case, quote ordinarily
                 The_Next_In_Feed(out, L->feed);
             break;
 
-        default:
+          default:
             panic ("Invalid variadic parameter class");
         }
     }
@@ -341,16 +352,14 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     if (Is_Ghost(out))
         return false;
 
-    require (
-      Value* out_value = Decay_If_Unstable(out)
-    );
-
     if (op == VARARG_OP_TAIL_Q) {
-        assert(Is_Logic(out_value));
+        Value* stable = Known_Stable(out);
+        assert(Is_Logic(stable));
+        UNUSED(stable);
         return false;
     }
 
-    if (param and not Is_Trash(out_value)) {
+    if (param) {
         heeded (Corrupt_Cell_If_Needful(Level_Spare(TOP_LEVEL)));
         heeded (Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
 
