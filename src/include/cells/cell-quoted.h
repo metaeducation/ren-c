@@ -124,18 +124,19 @@ INLINE Count Noquotify(Element* elem) {
 
 
 //=//// ANTIFORMS /////////////////////////////////////////////////////////=//
-
+//
 // Antiforms are foundational in covering edge cases in representation which
 // plague Rebol2 and Red.  They enable shifting into a "non-literal" domain,
 // where whatever "weird" condition the antiform was attempting to capture can
 // be handled without worrying about conflating with more literal usages.
+//
 // A good example is addressing the splicing intent for blocks:
 //
 //     >> append [a b c] [d e]
 //     == [a b c [d e]]
 //
 //     >> ~(d e)~
-//     == ~(d e)~  ; anti (this connotes a "splice")
+//     == \~(d e)~\  ; antiform (splice!)
 //
 //     >> append [a b c] ~(d e)~
 //     == [a b c d e]
@@ -143,22 +144,19 @@ INLINE Count Noquotify(Element* elem) {
 //     >> append [a b c] '~(d e)~
 //     == [a b c ~(d e)~]
 //
-// As demonstrated, the reified QUASIFORM! and the "ghostly" ANTIFORM! work
+// As demonstrated, the reified QUASIFORM! and the non-reified ANTIFORM! work
 // in concert to solve the problem.
 //
-// * A special parameter convention must be used to receive unstable antiforms.
-//   Code that isn't expecting such strange circumstances can error if they
-//   happen, while more sensitive code can be adapted to cleanly handle the
-//   intents that they care about.
+// 1. Each antiform gets a synthetic TYPE_XXX enum value, and these states are
+//    all numerically greater than the TYPE_XXX for non-antiforms.  However,
+//    calculating the synthetic type and then seeing if it's a large value
+//    is slower than just checking the LIFT_BYTE() for ANTIFORM_1.  So even
+//    though the range-based Any_Antiform() macro was auto-generated with
+//    other enum checks from %types.r, C code should prefer Is_Antiform().
 //
-// Unstable antiforms like packs (block antiforms), error antiforms, and object
-// antiforms aren't just not allowed in blocks, they can't be in variables.
 
 INLINE bool Is_Antiform(const Atom* a)
   { return LIFT_BYTE(Ensure_Readable(a)) == ANTIFORM_1; }
-
-INLINE bool Is_Lifted_Antiform(const Atom* a)
-  { return LIFT_BYTE(Ensure_Readable(a)) == QUASIFORM_3; }
 
 #if CHECK_CELL_SUBCLASSES
     INLINE bool Is_Antiform(const Element* elem) = delete;
@@ -166,15 +164,44 @@ INLINE bool Is_Lifted_Antiform(const Atom* a)
 
 #define Not_Antiform(a) (not Is_Antiform(a))
 
-#undef Any_Antiform  // range-based check useful for typesets, but slower
+#undef Any_Antiform  // Is_Antiform() faster than auto-generated macro [1]
+
+INLINE bool Is_Lifted_Antiform(const Atom* a)
+  { return LIFT_BYTE(Ensure_Readable(a)) == QUASIFORM_3; }
+
+
+//=//// UNSTABLE ANTIFORMS ////////////////////////////////////////////////=//
+//
+// Unstable antiforms like PACK!, ERROR!, and GHOST! antiforms aren't just
+// not allowed in blocks, they can't be in stored in "normal" variables
+// (only ^META variables can hold them).  They will either decay to stable
+// forms or cause errors in decay.
+//
+// The ^META parameter convention must be used to get unstable antiforms.
+// Code that isn't expecting such strange circumstances can error if they
+// happen, while more sensitive code can be adapted to cleanly handle the
+// intents that they care about.
+//
+// 1. There's enough checking in the system that ANTIFORM_1 cells do not have
+//    sigils that double-checking it here would just waste CPU cycles.  We
+//    can assume the KIND_BYTE() gives the same answer as Heart_Of() and
+//    dodge the modulus to drop the sigil.
+//
+// 2. It's possible to look for one of 3 patterns in masked header bits to
+//    identify unstable antiforms.  But you don't have to do the mask or
+//    compare if the LIFT_BYTE() isn't ANTIFORM_1.  This should be tested for
+//    performance to see whether the branch helps or hurts.  I'd assume that
+//    it helps, but branch impact can be counterintuitive sometimes.
+//
 
 INLINE bool Is_Antiform_Unstable(const Atom* a) {
-    // Assume Is_Antiform() checked Ensure_Readable()
+    unnecessary(Ensure_Readable(a));  // assume Is_Antiform() checked readable
     assert(LIFT_BYTE(a) == ANTIFORM_1);
+    impossible(0 != (a->header.bits & CELL_MASK_SIGIL));  // kind = heart [1]
     return (
-        Heart_Of(a) == TYPE_BLOCK  // Is_Pack()
-        or Heart_Of(a) == TYPE_WARNING  // Is_Error()
-        or Heart_Of(a) == TYPE_COMMA  // Is_Ghost()
+        KIND_BYTE(a) == TYPE_BLOCK  // Is_Pack()
+        or KIND_BYTE(a) == TYPE_WARNING  // Is_Error()
+        or KIND_BYTE(a) == TYPE_COMMA  // Is_Ghost()
     );
 }
 
@@ -182,16 +209,26 @@ INLINE bool Is_Antiform_Unstable(const Atom* a) {
     (not Is_Antiform_Unstable(a))
 
 INLINE bool Not_Cell_Stable(Need(const Atom*) a) {
+    possibly(not Is_Antiform(a));  // this is a general check for any Atom
+
     Assert_Cell_Readable(a);
     assert(LIFT_BYTE_RAW(a) != DUAL_0);
+
+  #if defined(NO_BRANCH_UNSTABLE_ANTIFORM_CHECK)  // !!! TBD: measure speed [2]
+    impossible(  // [1]
+        LIFT_BYTE_RAW(a) == ANTIFORM_1 and (a->header.bits & CELL_MASK_SIGIL)
+    );
+  #else
     if (LIFT_BYTE_RAW(a) != ANTIFORM_1)
         return false;
-    assert(not (a->header.bits & CELL_MASK_SIGIL));
-    uintptr_t masked = a->header.bits & CELL_MASK_HEART_AND_SIGIL;
+    impossible(0 != (a->header.bits & CELL_MASK_SIGIL));  // [1]
+  #endif
+
+    uintptr_t masked = a->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT;
     return (
-        masked == FLAG_HEART(TYPE_WARNING)
-        or masked == FLAG_HEART(TYPE_COMMA)
-        or masked == FLAG_HEART(TYPE_BLOCK)
+        masked == (FLAG_HEART(TYPE_WARNING) | FLAG_LIFT_BYTE(ANTIFORM_1))
+        or masked == (FLAG_HEART(TYPE_COMMA) | FLAG_LIFT_BYTE(ANTIFORM_1))
+        or masked == (FLAG_HEART(TYPE_BLOCK) | FLAG_LIFT_BYTE(ANTIFORM_1))
     );
 }
 
