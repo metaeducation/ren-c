@@ -427,7 +427,7 @@ bind construct [
         ;
         assert [pack? ^value]
         if where [
-            let mod: ensure module! value  ; decaying fetch
+            let mod: ensure module! decay ^value
             let exports: select (opt adjunct-of mod) 'exports
             proxy-exports where mod (opt exports)
         ]

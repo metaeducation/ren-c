@@ -185,7 +185,13 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     assert(sub == TOP_LEVEL);
     unnecessary(Drop_Action(sub));  // !! action is dropped, should it be?
 
-    UNUSED(picker_was_meta);  // !!! caller checks picker on stack for metaform
+    if (
+        not picker_was_meta
+        and Is_Quasiform(SPARE)
+        and not Is_Stable_Antiform_Kind_Byte(KIND_BYTE(SPARE))
+    ){
+        return Error_User("PICK result cannot be unstable unless metaform");
+    }
 
     return SUCCESS;
 }}

@@ -949,7 +949,7 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Error(OUT))  // e.g. couldn't pick word as field from binding
         panic (Cell_Error(OUT));  // don't conflate with action result
 
-    assert(Is_Cell_Stable(OUT));  // plain WORD! pick, ERROR! is only antiform
+    assert(Is_Cell_Stable(OUT));  // plain WORD! pick, ERROR! is only unstable
     Value* out = cast(Value*, OUT);
 
     if (Is_Action(out))  // check first [1]
