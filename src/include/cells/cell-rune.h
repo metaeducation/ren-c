@@ -279,10 +279,17 @@ INLINE Result(Element*) Init_Single_Codepoint_Rune_Untracked(
 #define Init_Sigiled_Space(out,sigil) \
     Sigilize(Init_Space(out), sigil)
 
-INLINE bool Any_Sigiled_Space(const Element* elem) {
-    if (LIFT_BYTE(elem) != NOQUOTE_2 or not Sigil_Of(elem))
+#define Is_Space_Underlying(v) \
+    (Ensure_Readable(v)->header.bits & ( \
+        CELL_MASK_HEART_NO_SIGIL | CELL_FLAG_RUNE_IS_SPACE \
+    )) == ( \
+        FLAG_HEART(TYPE_RUNE) | CELL_FLAG_RUNE_IS_SPACE \
+    )
+
+INLINE bool Any_Sigiled_Space(const Element* e) {
+    if (LIFT_BYTE(e) != NOQUOTE_2 or not Sigil_Of(e))
         return false;
-    return First_Byte_Of_Rune_If_Single_Char(elem) == ' ';
+    return Is_Space_Underlying(e);
 }
 
 INLINE bool Is_Space_With_Lift_Sigil(

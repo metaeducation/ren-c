@@ -200,7 +200,7 @@ Result(REBLEN) Modify_Array(
     if (flags & AM_LINE) {
         //
         // !!! Testing this heuristic: if someone adds a line to a list
-        // with the /LINE flag explicitly, force the head element to have a
+        // with the :LINE flag explicitly, force the head element to have a
         // newline.  This allows `x: copy [] | append:line x [a b c]` to give
         // a more common result.  The head line can be removed easily.
         //

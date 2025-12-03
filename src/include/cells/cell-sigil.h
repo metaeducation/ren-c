@@ -79,8 +79,15 @@
     Cell_Has_Lift_Sigil_Heart(NOQUOTE_2, SIGIL_TIE, TYPE_##heartname, (v))
 
 
-INLINE Option(Sigil) Sigil_Of(const Element* e)
-  { return u_cast(Sigil, KIND_BYTE_RAW(e) >> KIND_SIGIL_SHIFT); }
+INLINE Option(Sigil) Sigil_Of(const Element* e) {
+    assert(LIFT_BYTE(e) == NOQUOTE_2);
+    return u_cast(Sigil, KIND_BYTE_RAW(e) >> KIND_SIGIL_SHIFT);
+}
+
+INLINE Option(Sigil) Underlying_Sigil_Of(const Element* e) {
+    possibly(LIFT_BYTE(e) != NOQUOTE_2);
+    return u_cast(Sigil, KIND_BYTE_RAW(e) >> KIND_SIGIL_SHIFT);
+}
 
 
 

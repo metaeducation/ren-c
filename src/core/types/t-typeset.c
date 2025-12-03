@@ -268,10 +268,19 @@ Result(None) Set_Parameter_Spec(
             continue;
         }
 
-        Option(Sigil) sigil = Sigil_Of(item);
-        if (sigil) {  // !!! no sigil optimization yet (ever?)
+        if (LIFT_BYTE(item) != NOQUOTE_2) {  // [~word!~ 'word! ''~block!~]...
             *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-            continue;
+            continue;  // no optimization strategy yet
+        }
+
+        if (Sigil_Of(item)) {  // [@integer! ^word! '''~tuple!~]...
+            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+            continue;  // no optimization strategy yet
+        }
+
+        if (Any_Sequence(item)) {  // [word!: .block! word!/group!.integer!]
+            // won't optimize crazy cases, but need to optimize SET-WORD etc.
+            panic ("No support for sequences in parameter spec...yet!");
         }
 
         DECLARE_VALUE (lookup);
@@ -445,22 +454,304 @@ Element* Decorate_According_To_Parameter(
 
 
 //
-//  decorate-parameter: native [
+//  Undecorate_Element: C
+//
+// There's a bit of a question when asking what the "decoration" of a sequence
+// is when it's like [.:foo] or [/:foo] or [.:/foo]
+//
+// We're willing to add a decoration to anything that will take it, so you
+// can graft a slash onto the front of a CHAIN!.  But if you ask afterward
+// what the decoration was, does it think that's `/` or `/:`?
+//
+// This isn't the most pressing question, so for now we just do something
+// sort of random...and we'll see what usage patterns emerge.
+//
+void Undecorate_Element(Element* e)
+{
+    Noquotify(e);
+    Plainify(e);
+
+    if (not Any_Sequence(e))
+        return;
+
+    DECLARE_ELEMENT(temp);
+    Copy_Sequence_At(temp, e, 0);
+
+    if (
+        Is_Space(temp)  // .foo :foo /foo
+        or (
+            Is_Word(temp) and (  // composite decoration weirdness :-(  [1]
+                Word_Id(temp) == SYM_COLON_1  // (:/foo) "decoration" is colon
+                or Word_Id(temp) == SYM_DOT_1  // (.:foo) "decoration" is dot
+                // (/:foo) would be leading space, no lone slash in sequences!
+            )
+        )
+    ) {
+        Context* binding = Cell_Binding(e);
+
+        StackIndex base = TOP_INDEX;
+        Length len = Sequence_Len(e);
+        if (Sequence_Len(e) == 2) {  // just make second element result
+            Copy_Cell(temp, e);
+            Copy_Sequence_At(e, temp, 1);
+        }
+        else {
+            for (Length i = 1; i < len; i++)
+                Copy_Sequence_At(PUSH(), e, i);
+            assume (  // anything that could be in a sequence works outside
+              Pop_Sequence_Or_Conflation(e, Heart_Of(e), base)
+            );
+        }
+        Tweak_Cell_Binding(e, binding);  // preserve original binding
+    }
+}
+
+
+//
+//  Decorate_Element: C
+//
+Result(None) Decorate_Element(const Element* decoration, Element* element)
+{
+    Option(Count) quotes_to_add = Quotes_Of(decoration);
+    Option(Sigil) sigil_to_add = Underlying_Sigil_Of(decoration);
+    Option(Heart) sequence_to_add = none;
+
+    if (Is_Space_Underlying(decoration))
+        goto finalize_decorations;  // not a sequence, just sigilize + quote
+
+    if (Heart_Of(decoration) == TYPE_WORD) {
+        switch (unwrap Word_Id(decoration)) {
+          case SYM_DOT_1:
+            sequence_to_add = TYPE_TUPLE;
+            break;
+
+          case SYM_COLON_1:
+            sequence_to_add = TYPE_CHAIN;
+            break;
+
+          case SYM_SLASH_1:
+            sequence_to_add = TYPE_PATH;
+            break;
+
+          default:
+            panic ("DECORATE to make sequences only supports [. : /] WORD!s");
+        }
+        goto finalize_decorations;
+    }
+
+    if (Is_Parameter(decoration)) {
+        Decorate_According_To_Parameter(element, decoration);
+        goto finalize_decorations;
+    }
+
+    panic ("Unrecognized decoration in DECORATE");
+
+  finalize_decorations: {  ///////////////////////////////////////////////////
+
+  // 1. If we're trying to do something like adding a visual leading dot to a
+  //    sequence, we're actually adding a space and making a TUPLE!.  If it
+  //    was already a tuple, then we need to itemwise copy the existing tuple
+  //    elements, as we cannot put a tuple-in-a-tuple.
+  //
+  //        >> decorate '. 'a:b
+  //        == .a:b  ; easy we just push a space and the CHAIN!, then pop
+  //
+  //        >> decorate '. 'a.1.2.3
+  //        == .a.1.2.3  ; harder: have to incorporate existing tuple items
+
+    if (sequence_to_add) {
+        Context* binding = Cell_Binding(element);
+
+        StackIndex base = TOP_INDEX;
+        Init_Space(PUSH());  // try to make sequence with leading space
+
+        if (Heart_Of(element) != unwrap sequence_to_add) {  // push one item
+            Copy_Cell(PUSH(), element);
+            Tweak_Cell_Binding(TOP_ELEMENT, UNBOUND);  // we'll proxy binding
+        }
+        else {  // trickier case: push N items and merge [1]
+            Length len = Sequence_Len(element);
+            for (Length i = 0; i < len; i++)
+                Copy_Sequence_At(PUSH(), element, i);
+        }
+
+        trap (  // note that this may fail; propagate error if so
+          Pop_Sequence_Or_Conflation(element, sequence_to_add, base)
+        );
+
+        Tweak_Cell_Binding(element, binding);  // preserve original binding
+    }
+
+    if (sigil_to_add) {
+        assert(not Sigil_Of(element));  // took PLAIN? in the type spec
+        if (not Any_Sigilable(element))
+            return fail ("DECORATE cannot apply Sigils to this type");
+
+        Sigilize(element, unwrap sigil_to_add);
+    }
+
+    if (quotes_to_add)
+        Quotify_Depth(element, unwrap quotes_to_add);
+
+    return none;
+}}
+
+
+//
+//  decorate: native [
 //
 //  "Based on the parameter type, this gives you e.g. @(foo) or :foo or 'foo"
 //
 //      return: [element?]
-//      parameter [parameter!]
-//      value [element?]
+//      decoration [  ; TBD: create DECORATION? type constraint
+//          <opt> "give back value as-is"
+//          ~(@ ^ $ ~)~ "sigils on SPACE character act as proxy for sigilizing"
+//          ~(. : /)~ "words as proxies for leading-blank sequence decoration"
+//          ~(^. ^: ^/)~ "meta-word proxies"
+//          ~(@. @: @/)~ "pinned-word proxies"
+//          ~($. $: $/)~ "tied-word proxies"
+//          quoted! "allows things like [' '' ''' '@ ''^ ''$] etc."
+//          parameter! "apply parameter decoration rules as in spec dialect"
+//          error! "if decoration is invalid for the value"
+//      ]
+//      value [<opt-out> plain?]
 //  ]
 //
-DECLARE_NATIVE(DECORATE_PARAMETER)
+DECLARE_NATIVE(DECORATE)
 {
-    INCLUDE_PARAMS_OF_DECORATE_PARAMETER;
+    INCLUDE_PARAMS_OF_DECORATE;
 
     Element* element = Element_ARG(VALUE);
-    Element* param = Element_ARG(PARAMETER);
-    return COPY(Decorate_According_To_Parameter(element, param));
+
+    if (Is_Nulled(ARG(DECORATION)))
+        return COPY(element);
+
+    Element* decoration = Element_ARG(DECORATION);
+
+    trap (
+      Decorate_Element(decoration, element)
+    );
+
+    return COPY(element);
+}
+
+
+//
+//  redecorate: native [
+//
+//  "Based on the parameter type, this gives you e.g. @(foo) or :foo or 'foo"
+//
+//      return: [element?]
+//      decoration [  ; TBD: create DECORATION? type constraint
+//          <opt> "give back value as-is"
+//          ~(@ ^ $ ~)~ "sigils on SPACE character act as proxy for sigilizing"
+//          ~(. : /)~ "words as proxies for leading-blank sequence decoration"
+//          ~(^. ^: ^/)~ "meta-word proxies"
+//          ~(@. @: @/)~ "pinned-word proxies"
+//          ~($. $: $/)~ "tied-word proxies"
+//          quoted! "allows things like [' '' ''' '@ ''^ ''$] etc."
+//          parameter! "apply parameter decoration rules as in spec dialect"
+//          error! "if decoration is invalid for the value"
+//      ]
+//      value [<opt-out> element?]
+//  ]
+//
+DECLARE_NATIVE(REDECORATE)
+{
+    INCLUDE_PARAMS_OF_REDECORATE;
+
+    Element* e = Element_ARG(VALUE);
+
+    if (Is_Nulled(ARG(DECORATION)))
+        return COPY(e);
+
+    Element* decoration = Element_ARG(DECORATION);
+
+    Undecorate_Element(e);
+    trap (
+      Decorate_Element(decoration, e)
+    );
+
+    return COPY(e);
+}
+
+
+//
+//  decoration-of: native [
+//
+//  "Give back the decoration of a value as per DECORATE"
+//
+//      return: [
+//          ~(@ ^ $ ~)~ "sigils on SPACE character act as proxy for sigils"
+//          ~(. : /)~ "words as proxies for leading-blank sequences"
+//          quoted! "quotes are in decoration, like [' '' ''' '@ ''^ ''$] etc."
+//          <null> "if none of the above decorations are present"
+//      ]
+//      value [<opt-out> element?]
+//  ]
+//
+DECLARE_NATIVE(DECORATION_OF)
+{
+    INCLUDE_PARAMS_OF_DECORATION_OF;
+
+    Element* element = Element_ARG(VALUE);
+
+    Option(Count) quotes = Quotes_Of(element);
+    Noquotify(element);
+
+    Option(Sigil) sigil = Sigil_Of(element);
+    Plainify(element);
+
+    Element* out;
+    switch (Heart_Of(element)) {
+      case TYPE_TUPLE:
+        out = Init_Word(OUT, CANON(DOT_1));
+        break;
+
+      case TYPE_CHAIN:
+        out = Init_Word(OUT, CANON(COLON_1));
+        break;
+
+      case TYPE_PATH:
+        out = Init_Word(OUT, CANON(SLASH_1));
+        break;
+
+      default:
+        if (not quotes and not sigil)
+            return nullptr;  // no decoration
+
+        out = Init_Space(OUT);  // need space to put decorations on
+        break;
+    }
+
+    if (sigil)
+        Sigilize(out, unwrap sigil);
+
+    if (quotes)
+        Quotify_Depth(out, unwrap quotes);
+
+    return OUT;
+}
+
+
+//
+//  undecorate: native [
+//
+//  "Remove decorations (Sigils, Quotes, leading-space sequences) from VALUE"
+//
+//      return: [<null> plain?]
+//      value [<opt-out> element?]
+//  ]
+//
+DECLARE_NATIVE(UNDECORATE)
+{
+    INCLUDE_PARAMS_OF_UNDECORATE;
+
+    Element* e = Element_ARG(VALUE);
+
+    Undecorate_Element(e);
+
+    return COPY(e);
 }
 
 

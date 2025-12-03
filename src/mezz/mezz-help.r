@@ -11,45 +11,13 @@ Rebol [
     ]--
 ]
 
-
-spec-of: func [
-    "Generate a block which could be used as a 'spec block' from an action"
-
-    return: [block!]
-    action [<unrun> frame!]
-][
-    let adjunct: match object! opt adjunct-of action
-
-    return collect [
-        if adjunct [
-            keep:line ? ensure [<null> text!] select adjunct 'description
-        ]
-
-        let r-param: return of action
-
-        if r-param and (r-param.spec or r-param.text) [
-            keep spread compose [
-                return: (? r-param.spec)
-                    (? r-param.text)
-            ]
-        ]
-
-        for-each [key param] (parameters of action) [
-            keep spread compose [
-                (decorate-parameter param key) (? param.spec)
-                    (? param.text)
-            ]
-        ]
-    ]
-]
-
 decorated-words-of: func [
     "Get the decorated parameters as a block (useful for testing)"
     return: [block!]
     frame [<unrun> frame!]
 ][
     return map-each [key param] (parameters of frame) [
-        decorate-parameter param key
+        decorate param key
     ]
 ]
 
@@ -132,10 +100,10 @@ help-action: proc [
     for-each [key param] (parameters of frame) [
         if param.optional [
             append refinements key
-            append deco-refinements decorate-parameter param key
+            append deco-refinements decorate param key
         ] else [
             append args key
-            append deco-args decorate-parameter param key
+            append deco-args decorate param key
         ]
     ]
 
@@ -162,7 +130,7 @@ help-action: proc [
     let print-args: [list :indent-words] -> [
         for-each 'key list [
             let param: select frame key
-            print [_ _ _ _ @(decorate-parameter param key) @(? param.spec)]
+            print [_ _ _ _ @(decorate param key) @(? param.spec)]
             if param.text [
                 print [_ _ _ _ _ _ _ _ param.text]
             ]
@@ -450,12 +418,26 @@ source: func [
         return ~
     ]
 
-    ; ACTION!
-    ; The system doesn't preserve the literal spec, so it must be rebuilt
-    ; from combining the the ADJUNCT-OF information.
+    let r-param: return of f
+    let spec: collect [
+        keep:line (? r-param.text)
+
+        if r-param and (r-param.spec) [
+            keep spread compose [
+                (? r-param.spec)
+            ]
+        ]
+
+        for-each [key param] f [
+            keep spread compose [
+                (decorate param key) (? param.spec)
+                    (? param.text)
+            ]
+        ]
+    ]
 
     write stdout unspaced [
-        mold name ":" _ "lambda" _ mold spec-of f
+        mold name ":" _ "lambda" _ mold spec
     ]
 
     ; While all interfaces as far as invocation is concerned has been unified

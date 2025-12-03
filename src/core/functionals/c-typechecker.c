@@ -125,7 +125,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
             if (Bool_ARG(QUOTED)) {
                 if (Is_Antiform(v) or Quotes_Of(cast(Element*, v)) == 0)
                     return LOGIC(false);
-                Dequotify(cast(Element*, v));
+                Noquotify(cast(Element*, v));
             }
 
             type = Type_Of(v);

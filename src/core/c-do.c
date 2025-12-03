@@ -169,24 +169,7 @@ bool Pushed_Continuation(
 
   switch_on_sigil: {
 
-    Option(Sigil) sigil = Sigil_Of(cast(Element*, branch));
-    if (sigil) {
-        switch (unwrap sigil) {
-          case SIGIL_META:
-            break;  // define behavior!
-
-          case SIGIL_PIN:
-            break;
-
-          case SIGIL_TIE:
-            Plainify(Derelativize(out, cast(Element*, branch), binding));
-            goto just_use_out;
-
-          default:
-            assert(false);
-        }
-    }
-    else switch (opt Type_Of(branch)) {
+    switch (opt Type_Of(branch)) {
       case TYPE_QUOTED:
         Unquotify(Derelativize(out, cast(Element*, branch), binding));
         goto just_use_out;
@@ -204,6 +187,16 @@ bool Pushed_Continuation(
               Unliftify_Undecayed(out)
             );
         }
+        goto just_use_out;
+
+      case TYPE_METAFORM:
+        break;  // define behavior!
+
+      case TYPE_PINNED:
+        break;
+
+      case TYPE_TIED:
+        Plainify(Derelativize(out, cast(Element*, branch), binding));
         goto just_use_out;
 
       case TYPE_BLOCK: {

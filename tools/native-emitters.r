@@ -140,9 +140,9 @@ textually-splice-last-fence: proc [
 ; to take in the textual spec, "massage" it in a way that doesn't destroy the
 ; information being captured, and then TRANSCODE it.
 ;
-;  1. We used stripload to get the function specs, so it has @output form
-;     parameters.  The bootstrap executable thinks that's an illegal email.
-;     So to process these, we replace the @ with nothing
+;  1. Currently we do not need the information from $XXX or @XXX or ^XXX when
+;     processing parameters to make the include macros.  So we just strip
+;     those characters out.
 ;
 ;  2. All natives *should* specify a `return:`, because it's important to
 ;     document what the return types are (and HELP should show it).  But only
@@ -205,8 +205,9 @@ export emit-include-params-macro: func [
     ]
     let spec: copy find proto "["  ; make copy (we'll corrupt it)
 
-    replace spec "^^" -[]-  ; ^WORD! decoration not important here
     replace spec "@" -[]-  ; @WORD! would be invalid EMAIL! [1]
+    replace spec "$" -[]-  ; $WORD! would be invalid MONEY! [1]
+    replace spec "^^" -[]-  ; ^WORD! would just be invalid [1]
 
     textually-splice-last-fence spec  ; bootstrap loads {...} locals as TEXT!
 

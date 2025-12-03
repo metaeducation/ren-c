@@ -1170,7 +1170,7 @@ static Result(None) Handle_Mark_Rule(
     }
     Erase_Cell(OUT);
 
-    Dequotify(Element_ARG(POSITION));  // go back to 0 quote level
+    Noquotify(Element_ARG(POSITION));  // go back to 0 quote level
 
     return none;
 }
@@ -1291,7 +1291,7 @@ DECLARE_NATIVE(SUBPARSE)
     //
     assert(Is_Trash(ARG(NUM_QUOTES)));
     Init_Integer(ARG(NUM_QUOTES), Quotes_Of(Element_ARG(INPUT)));
-    Dequotify(Element_ARG(INPUT));
+    Noquotify(Element_ARG(INPUT));
 
     // Make sure index position is not past END
     if (SERIES_INDEX_UNBOUNDED(ARG(INPUT)) > Series_Len_Head(ARG(INPUT)))

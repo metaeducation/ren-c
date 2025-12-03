@@ -14,9 +14,6 @@
     (repeat 1 [words of continue] ok)
 ]
 (repeat 1 [values of continue] ok)
-[#1945
-    (repeat 1 [spec-of continue] ok)
-]
 ; continue should not be caught by try
 (a: 1 repeat 1 [a: warning? rescue [continue]] a = 1)
 

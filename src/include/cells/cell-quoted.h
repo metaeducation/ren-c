@@ -113,7 +113,7 @@ INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
 #define Quotify(elem)      Quotify_Depth((elem), 1)
 #define Unquotify(elem)    Unquotify_Depth((elem), 1)
 
-INLINE Count Dequotify(Element* elem) {
+INLINE Count Noquotify(Element* elem) {
     Count depth = Quotes_Of(elem);
     if (LIFT_BYTE_RAW(elem) & QUASI_BIT)
         LIFT_BYTE_RAW(elem) = QUASIFORM_3;  // already quasi

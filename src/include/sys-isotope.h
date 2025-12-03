@@ -54,7 +54,7 @@
 INLINE Result(Atom*) Coerce_To_Antiform(Need(Atom*) atom) {
     Element* elem = Known_Element(atom);  // guaranteed element on input (?)
 
-    if (Sigil_Of(elem))
+    if (Underlying_Sigil_Of(elem))
         return fail (Error_User("Cells with sigils cannot become antiforms"));
 
     Option(Heart) heart = Heart_Of(atom);

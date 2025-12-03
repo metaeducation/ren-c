@@ -118,8 +118,12 @@ INLINE Result(None) Check_Sequence_Element(
     Option(Heart) h = Heart_Of(e);
 
     if (is_head) {  // note quasiforms legal, even at head [1]
-        if (Is_Quoted(e) or Sigil_Of(e))  // $a.b => $[a b], not [$a b]
+        if (
+            Is_Quoted(e)  // 'foo:bar has quote on foo:bar, not foo
+            or Underlying_Sigil_Of(e)  // $a.b => $[a b], not [$a b]
+        ){
             return fail (Error_Bad_Sequence_Head_Raw(e));
+        }
     }
 
     if (h == TYPE_PATH)  // path can't put be put in path, tuple, or chain

@@ -38,10 +38,6 @@
 
 (reeval reify func [return: [integer!]] [values of return 1020] ok)
 
-[#1945
-    (run func [return: [integer!]] [spec-of return 1020] ok)
-]
-
 ; return should not be caught by RESCUE
 (
     a: 1 reeval reify func [return: [integer!]] [a: warning? rescue [return 2]]
@@ -74,9 +70,7 @@
     (trash? reeval noquasi reify func [return: []] [words of return ~])
 ]
 (trash? run func [return: []] [values of return ~])
-[#1945
-    (trash? run func [return: []] [spec-of return ~])
-]
+
 
 
 ; === TAIL CALLS ===
