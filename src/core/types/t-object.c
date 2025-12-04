@@ -466,9 +466,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
     );
 
     ParamList* lens = Phase_Paramlist(Frame_Phase(arg));
-    Init_Lensed_Frame(OUT, exemplar, lens, coupling);
+    Element* out = Init_Lensed_Frame(OUT, exemplar, lens, coupling);
 
-    Copy_Ghostability(OUT, arg);
+    Copy_Ghostability(out, arg);
 
     return OUT;
 }
@@ -1379,6 +1379,10 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
       case SYM_HIDE:
         Set_Cell_Flag(slot, VAR_MARKED_HIDDEN);
+        break;
+
+      case SYM_REMOVE:
+        Init_Dual_Unset(slot);
         break;
 
       default:

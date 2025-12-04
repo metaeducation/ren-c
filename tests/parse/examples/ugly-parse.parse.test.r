@@ -31,7 +31,7 @@
             ^r = okay  ; like [:(1 = 1)]
             ghost? ^r  ; like [:(comment "hi")]
         ] then [
-            return ^ghost
+            return ()
         ]
 
         if void? ^r [  ; like [:(if 1 = 0 [...])]

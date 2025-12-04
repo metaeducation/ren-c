@@ -29,7 +29,7 @@ assert: ghostable func [
     ; ASSERT has no default implementation, but can be HIJACKed by a debug
     ; mode with a custom validation or output routine.
     ;
-    return ^ghost
+    return ()
 ]
 
 steal: lambda [
@@ -76,7 +76,7 @@ catch: specialize catch*/ [name: 'throw]
 bind construct [
     logging: 'off
 ][
-    if visibility [logging: visibility, return ^ghost]
+    if visibility [logging: visibility, return ()]
 
     if on? logging [
         print form collect [
@@ -86,7 +86,7 @@ bind construct [
     ] else [
         insist [equal? '=== take remarks]
     ]
-    return ^ghost
+    return ()
 ]
 
 what-dir: func [  ; This can be HIJACK'd by a "smarter" version
@@ -487,7 +487,7 @@ eval-all: func [
         [any-stable? <variadic>]
 ][
     eval expressions
-    return ^ghost
+    return ()
 ]
 
 

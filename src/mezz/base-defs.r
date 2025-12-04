@@ -157,14 +157,14 @@ elide-if-void: ghostable func [
     ^value "Evaluation product to be ignored"
         [any-value?]  ; ghost! is passed through
 ][
-    if void? ^value [return ^ghost]
+    if void? ^value [return ()]
     return ^value
 ]
 
 ; COMMA! is the new expression barrier.  But `||` is included as a way to
 ; make comma antiforms to show how to create custom barrier-like constructs.
 ;
-||: func [] [return ^ghost]
+||: func [] [return ()]
 
 |||: func [
     "Inertly consumes all subsequent data, evaluating to previous result"
@@ -173,7 +173,7 @@ elide-if-void: ghostable func [
     'omit [element? <variadic>]
 ][
     insist [null? try take omit]
-    return ^ghost
+    return ()
 ]
 
 

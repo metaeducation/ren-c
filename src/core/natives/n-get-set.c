@@ -282,7 +282,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
             continue;  // dual signal, do not lift dual
         }
 
-        if (Is_Lifted_Void(TOP)) {
+        if (Is_Lifted_Void(TOP) or Is_Lifted_Ghost(TOP)) {
             Init_Dual_Word_Remove_Signal(value_arg);
             continue;  // do not lift dual signal
         }

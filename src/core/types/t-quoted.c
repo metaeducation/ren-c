@@ -569,7 +569,7 @@ DECLARE_NATIVE(RUNS)
 //  "Give back a frame! for action! input"
 //
 //      return: [frame!]
-//      action [<opt-out> frame! action!]
+//      action [<opt-out> <unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(UNRUN)
@@ -638,14 +638,15 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
 
   decay_if_unstable: {
 
-    Copy_Cell(OUT, atom);
+    Copy_Cell(OUT, atom);  // we pass through original, but test decayed form
+
     require (
-      Value* out = Decay_If_Unstable(OUT)
+      Value* decayed = Decay_If_Unstable(atom)
     );
-    if (Is_Nulled(out))
+    if (Is_Nulled(decayed))
         goto opting_out;
 
-    return out;
+    return OUT;
 
 } opting_out: { //////////////////////////////////////////////////////////////
 
@@ -659,11 +660,10 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
 //
 //  optional: native:intrinsic [
 //
-//  "If argument is null, make it VOID (or VETO), else passthru"
+//  "If argument is NULL, make it VOID (or VETO), else passthru"
 //
-//      return: [any-value?]
-//      ^value "Decayed if pack"
-//          [<opt-out> any-value?]
+//      return: [any-value? <void> error!]
+//      ^value [<opt-out> any-value?]
 //      :veto "If true, then return VETO instead of VOID"
 //  ]
 //

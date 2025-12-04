@@ -873,10 +873,10 @@ default-combinators: make map! [
             if negated [
                 return fail "PARSE position at <end> (but parser negated)"
             ]
-            return ^ghost
+            return ()
         ]
         if negated [
-            return ^ghost
+            return ()
         ]
         return fail "PARSE position not at <end>"
     ]
@@ -1499,7 +1499,7 @@ default-combinators: make map! [
     ][
         if tail? value [
             pending: blank
-            return ^ghost
+            return ()
         ]
 
         if <delay> = first value [
@@ -1507,7 +1507,7 @@ default-combinators: make map! [
                 panic "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
             ]
             pending: reduce [next value]  ; GROUP! signals delayed groups
-            return ^ghost  ; act invisible
+            return ()  ; act invisible
         ]
 
         pending: blank
@@ -1525,7 +1525,7 @@ default-combinators: make map! [
                 return ^void  ; but it wouldn't DECAY, so handle specially
             ]
             ghost? ^result [  ; allow (elide print "HI") to vanish
-                return ^ghost
+                return ()
             ]
         ]
 
@@ -1594,7 +1594,7 @@ default-combinators: make map! [
         ]
 
         if (void? ^r) or (ghost? ^r) [
-            return ^ghost
+            return ^r
         ]
 
         r: decay ^r  ; packs can't act as rules, decay them
@@ -1756,15 +1756,7 @@ default-combinators: make map! [
         value [keyword!]
         {comb neq?}
     ][
-        switch value [
-          ~null~ [
-            panic make warning! [type: 'script, id: 'bad-antiform]
-          ]
-          ~okay~ [
-            return ^ghost  ; let okay just act as a "guard", no influence
-          ]
-        ]
-        panic ["Unknown keyword" mold lift value]
+        panic "~okay~ /~null~ antiforms not legal as rules, use COND(ITIONAL)"
     ]
 
     splice! combinator [
@@ -1833,7 +1825,7 @@ default-combinators: make map! [
         switch:type ^times [
             rune! [
                 if ^times = _ [  ; should space be tolerated if void is?
-                    return ^ghost  ; `[repeat (_) rule]` is a no-op
+                    return ()  ; `[repeat (_) rule]` is a no-op
                 ]
 
                 if ^times <> # [
@@ -1847,7 +1839,7 @@ default-combinators: make map! [
             block! block?:pinned/ [
                 parse ^times [
                     _ _ <end> (
-                        return ^ghost  ; `[repeat ([_ _]) rule]` is a no-op
+                        return ()  ; `[repeat ([_ _]) rule]` is a no-op
                     )
                     |
                     min: [integer! | _ (0)]
@@ -1864,7 +1856,7 @@ default-combinators: make map! [
 
         append state.loops binding of $return
 
-        ^result: ^ghost  ; [repeat (0) one] is void, but ^ can unvoidify it
+        ^result: ()  ; [repeat (0) one] is void, but ^ can unvoidify it
 
         count-up 'i max [  ; will count infinitely if max is #
             ;
@@ -2091,7 +2083,7 @@ default-combinators: make map! [
         parser [action!]
     ][
         [^ input]: trap parser input
-        return ^ghost
+        return ()
     ]
 
     'comment ghostable combinator [
@@ -2100,7 +2092,7 @@ default-combinators: make map! [
         input [any-series?]
         'ignored [block! text! tag! rune!]
     ][
-        return ^ghost
+        return ()
     ]
 
     'skip combinator [
@@ -2411,7 +2403,7 @@ default-combinators: make map! [
 
         pending: blank  ; can become GLOM'd into a BLOCK!
 
-        ^result: ^ghost  ; default result is invisible
+        ^result: ()  ; default result is invisible
 
         old-env: state.env
         return: adapt return/ [state.env: old-env]
@@ -2531,7 +2523,7 @@ default-combinators: make map! [
                 ]
                 pending: glom pending spread subpending
             ] else [
-                ^result: ^ghost  ; reset, e.g. `[veto |]`
+                ^result: ()  ; reset, e.g. `[veto |]`
 
                 if pending <> blank [
                     free pending  ; proactively release memory
