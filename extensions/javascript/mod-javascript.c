@@ -1208,7 +1208,7 @@ DECLARE_NATIVE(STARTUP_P)
 
     Register_Dispatcher(&JavaScript_Dispatcher, &Javascript_Details_Querier);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
@@ -1227,7 +1227,7 @@ DECLARE_NATIVE(JS_TRACE)
 
   #if DEBUG_JAVASCRIPT_EXTENSION
     g_probe_panics = PG_JS_Trace = Cell_Logic(ARG(ENABLE));
-    return TRIPWIRE;
+    return TRASH;
   #else
     panic (
         "JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r"

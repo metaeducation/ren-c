@@ -144,7 +144,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Word)
 
     Append_Spelling(mo->strand, Word_Symbol(v));
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

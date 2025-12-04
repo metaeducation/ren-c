@@ -975,7 +975,7 @@ DECLARE_NATIVE(ADD_USE_OBJECT) {
 
     Tweak_Cell_Binding(Feed_Data(L->feed), use);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

@@ -464,3 +464,9 @@
         to-the-limit: lambda [everybody [integer! fhqwhgads?]] []
     )
 ]
+
+; Trash value returned has label of function
+(
+    some-name: func [return: []] [return ~]
+    #some-name = unanti some-name
+)

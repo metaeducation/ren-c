@@ -753,14 +753,44 @@ INLINE Bounce Native_Thrown_Result(Level* L) {
     return BOUNCE_THROWN;
 }
 
-INLINE Bounce Native_Ghost_Result_Untracked(
-    Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
+
+// Dispatchers like Lambda_Dispatcher() etc. have their own knowledge of
+// whether they are `return: []` or not, based on where they keep the return
+// information.  So they can't use the `return TRASH;` idiom.
+//
+INLINE Value* Init_Trash_Named_From_Level(Sink(Value) out, Level* level_) {
+    Option(const Symbol*) label = Level_Label(level_);
+    if (label) {
+        Init_Utf8_Non_String_From_Strand(out, TYPE_RUNE, label);
+        Stably_Antiformize_Unbound_Fundamental(out);
+    }
+    else
+        Init_Tripwire_Untracked(out);
+    return out;
+}
+
+
+// Functions that `return: []` actually make a TRASH! with the label of the
+// level that produced it.  This is usually done in typechecking, but natives
+// don't run typechecks in the release build...so the `return TRASH;` has to
+// do it.
+//
+// 1. If you say `return: [trash!]` then type checking doesn't distort the
+//    contents of the trash, so we don't want natives using `return TRASH;`
+//    to have the behavior on accident.
+//
+INLINE Atom* Native_Trash_Result_Untracked(
     Level* level_
 ){
-    assert(out == level_->out);
-    UNUSED(out);
     assert(not THROWING);
-    return Init_Ghost_Untracked(level_->out);
+
+  #if RUNTIME_CHECKS
+    Details* details = Ensure_Level_Details(level_);
+    Value* param = Details_At(details, IDX_RAW_NATIVE_RETURN);
+    assert(Is_Parameter_Spec_Empty(param));  // not for `return: [trash!]` [1]
+  #endif
+
+    return Init_Trash_Named_From_Level(level_->out, level_);
 }
 
 INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
@@ -882,10 +912,10 @@ INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
     #define VOID        x_cast(Bounce, Init_Void(OUT))
-    #define TRIPWIRE    x_cast(Bounce, Init_Tripwire(OUT))
+    #define GHOST       x_cast(Bounce, Init_Ghost(OUT))
     #define NULLED      x_cast(Bounce, Init_Nulled(OUT))  // nontrivial [1]
 
-    #undef GHOST        // must specify whether it's "surprising" or not
+    #define TRASH       TRACK(Native_Trash_Result_Untracked(level_))
     #define THROWN      Native_Thrown_Result(level_)
     #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
     #define UNLIFT(v)   Native_Unlift_Result(level_, (v))

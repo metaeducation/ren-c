@@ -108,7 +108,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
     Init_Blob(v, bset);
     Init_Nulled(ARG(FORM));  // form = false
     Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Blob)(LEVEL);
-    assert(bounce == TRIPWIRE);  // !!! generically it could BOUNCE_CONTINUE...
+    assert(Is_Possibly_Unstable_Atom_Trash(Atom_From_Bounce(bounce)));
+    // !!! generically it could BOUNCE_CONTINUE...
     UNUSED(bounce);
 
     if (BITS_NOT(bset))
@@ -116,7 +117,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
 
     End_Non_Lexical_Mold(mo);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

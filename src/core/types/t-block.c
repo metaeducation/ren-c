@@ -501,7 +501,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
         Option(VarList*) context = nullptr;
         bool relax = false;
         Form_Array_At(mo, Cell_Array(v), Series_Index(v), context, relax);
-        return TRIPWIRE;
+        return TRASH;
     }
 
     const char *sep;
@@ -521,7 +521,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
 
     Mold_Array_At(mo, Cell_Array(v), Series_Index(v), sep);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

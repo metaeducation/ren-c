@@ -42,7 +42,7 @@ DECLARE_NATIVE(NIHIL)
 {
     INCLUDE_PARAMS_OF_NIHIL;
 
-    return Init_Ghost(OUT);
+    return GHOST;
 }
 
 
@@ -98,7 +98,7 @@ DECLARE_NATIVE(COMMENT)
 {
     INCLUDE_PARAMS_OF_COMMENT;  // no ARG(SKIPPED), parameter is intrinsic
 
-    return Init_Ghost(OUT);
+    return GHOST;
 }
 
 
@@ -121,7 +121,7 @@ DECLARE_NATIVE(ELIDE)
       Elide_Unless_Error_Including_In_Packs(atom)
     );
 
-    return Init_Ghost(OUT);
+    return GHOST;
 }
 
 
@@ -138,7 +138,7 @@ DECLARE_NATIVE(IGNORE)
 {
     INCLUDE_PARAMS_OF_IGNORE;  // no ARG(DISCARDED), parameter is intrinsic
 
-    return Init_Ghost(OUT);
+    return GHOST;
 }
 
 

@@ -264,11 +264,16 @@ empty?: lambda [
     ]
 ]
 
+; 1. The facility for auto-naming TRASH! only happens if spec has [return: ~]
+;    Since this returns null in addition to trash, we do it ourselves.
 
 print: func [
     "Output SPACED text with newline, return NULL if line has no output"
 
-    return: [trash! null?]
+    return: [
+        trash! "result invisible in the console when there was output"
+        <null> "if the input was <opt-out>, e.g. void passed vs. empty string"
+    ]
     line "Line of text or block, [] has NO output, CHAR! newline allowed"
         [<opt-out> char? text! block! @any-element?]
 ][
@@ -277,21 +282,21 @@ print: func [
             panic "PRINT only allows CHAR! of newline (see WRITE-STDOUT)"
         ]
         write stdout line
-        return ~
+        return ~#print~  ; [1]
     ]
 
     if pinned? line [
-        line: plain line
-        if block? line [
-            line: mold spread line  ; better than FORM-ing (what is FORM?)
+        line: unpin line
+        line: either block? line [
+            mold spread line  ; better than FORM-ing (what is FORM?)
         ] else [
-            line: reduce [line]  ; in block, let SPACED handle molding logic
+            reduce [line]  ; in block, let SPACED handle molding logic
         ]
     ]
 
     write stdout (opt spaced line) then [
         write stdout newline
-        return ~
+        return ~#print~  ; [1]
     ]
 
     return null

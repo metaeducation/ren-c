@@ -382,5 +382,5 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
         OS_CLOSE_LIBRARY(Cell_Library_Fd(lib));
     */
 
-   return TRIPWIRE;
+   return TRASH;
 }}

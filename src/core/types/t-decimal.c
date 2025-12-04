@@ -347,7 +347,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
         );
     }
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
@@ -600,7 +600,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Any_Float)
     assert(sizeof(d) == sizeof(i));
     memcpy(&i, &d, sizeof(d));  // use IEEE bits (is there a better way?)
     Set_Random(i);
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

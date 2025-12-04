@@ -231,7 +231,7 @@ DECLARE_NATIVE(FUZZ)
         assert(Is_Percent(ARG(FACTOR)));
         g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(FACTOR));
     }
-    return TRIPWIRE;
+    return TRASH;
   #else
     UNUSED(ARG(FACTOR));
     panic ("FUZZ is only availble in RUNTIME_CHECKS builds");

@@ -712,5 +712,5 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
         }
     }
 
-    return TRIPWIRE;
+    return TRASH;
 }

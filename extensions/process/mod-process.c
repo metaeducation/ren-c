@@ -251,7 +251,7 @@ DECLARE_NATIVE(SLEEP)
     usleep(msec * 1000);
   #endif
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
@@ -319,7 +319,7 @@ DECLARE_NATIVE(TERMINATE)
 
     if (TerminateProcess(ph, 0)) {
         CloseHandle(ph);
-        return TRIPWIRE;
+        return TRASH;
     }
 
     err = GetLastError();

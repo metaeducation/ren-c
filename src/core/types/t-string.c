@@ -614,7 +614,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Url)
     UNUSED(form);
     Append_Any_Utf8(mo->strand, v);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
@@ -629,7 +629,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Email)
     UNUSED(form);
     Append_Any_Utf8(mo->strand, v);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
@@ -645,7 +645,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Money)
     Append_Codepoint(mo->strand, '$');
     Append_Any_Utf8(mo->strand, v);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
@@ -710,7 +710,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 
     if (form) {  // TAG! is not an exception--forms without delimiters [1]
         Append_Any_Utf8(buf, v);
-        return TRIPWIRE;
+        return TRASH;
     }
 
     switch (heart) {
@@ -736,7 +736,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
         crash (v);
     }
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

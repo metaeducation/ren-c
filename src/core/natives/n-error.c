@@ -390,5 +390,5 @@ DECLARE_NATIVE(SET_LOCATION_OF_ERROR)
     Error* error = Cell_Error(ARG(ERROR));
     Set_Location_Of_Error(error, where);
 
-    return TRIPWIRE;
+    return TRASH;
 }

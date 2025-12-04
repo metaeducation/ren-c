@@ -699,7 +699,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
 
     End_Non_Lexical_Mold(mo);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

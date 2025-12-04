@@ -1398,5 +1398,5 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
         require (Append_Ascii(mo->strand, "(improperly formatted error)"));
     }
 
-    return TRIPWIRE;
+    return TRASH;
 }

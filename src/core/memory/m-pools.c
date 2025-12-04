@@ -996,7 +996,7 @@ DECLARE_NATIVE(SWAP_CONTENTS)
     Flex* f2 = Cell_Flex_Ensure_Mutable(ARG(SERIES2));
     Swap_Stub_Content(f1, f2);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

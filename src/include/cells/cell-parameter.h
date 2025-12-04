@@ -497,6 +497,13 @@ INLINE bool Is_Parameter_Unconstrained(const Cell* param) {
     return Parameter_Spec(param) == nullptr;  // e.g. `[:refine]`
 }
 
+INLINE bool Is_Parameter_Spec_Empty(const Cell* param) {
+    Option(const Source*) spec = Parameter_Spec(param);
+    if (not spec)
+        return false;
+    return Array_Len(unwrap spec) == 0;  // e.g. `[]`
+}
+
 
 // When it came to literal parameters that could be escaped, R3-Alpha and Red
 // consider GROUP!, GET-WORD!, and GET-PATH! to be things that at the callsite

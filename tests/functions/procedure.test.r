@@ -8,6 +8,7 @@
     p: procedure [x] [y: x + 20]
     all [
         trash? p 1000
+        #p = unanti p 1000  ; name of action becomes trash label
         y = 1020
     ]
 )

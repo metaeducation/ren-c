@@ -83,7 +83,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Fundamental)  // catch-all for ExtraHeart*
     Mold_Or_Form_Cell_Ignore_Quotes(mo, g_empty_block, false);
     End_Non_Lexical_Mold(mo);
 
-    return TRIPWIRE;  // no return value
+    return TRASH;  // no return value
 }
 
 
@@ -184,7 +184,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
         assert(Is_Blob(v));
         PROBE(v);
     }
-    return TRIPWIRE;
+    return TRASH;
   #endif
 }
 
@@ -431,6 +431,6 @@ DECLARE_NATIVE(BASIC_WRITE)
     fwrite(data, size, 1, f);
     fclose(f);
 
-    return TRIPWIRE;
+    return TRASH;
   #endif
 }

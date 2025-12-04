@@ -676,7 +676,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
         require (
           Append_Ascii(mo->strand, "...]")
         );
-        return TRIPWIRE;
+        return TRASH;
     }
 
     Push_Pointer_To_Flex(g_mold.stack, m);
@@ -725,7 +725,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 
     Drop_Pointer_From_Flex(g_mold.stack, m);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

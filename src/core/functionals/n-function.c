@@ -631,6 +631,13 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
         if (not check)  // do it now [2]
             panic (Error_Bad_Return_Type(target_level, atom, param));
 
+        if (
+            Is_Possibly_Unstable_Atom_Trash(atom)
+            and Is_Parameter_Spec_Empty(param)
+        ){
+            Init_Trash_Named_From_Level(atom, target_level);
+        }
+
         DECLARE_VALUE (label);
         Copy_Cell(label, LIB(UNWIND)); // see Make_Thrown_Unwind_Value
         g_ts.unwind_level = target_level;

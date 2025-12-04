@@ -139,7 +139,7 @@ DECLARE_NATIVE(CALLGRIND)
       default:
         panic ("Currently CALLGRIND only supports ON and OFF");
     }
-    return TRIPWIRE;
+    return TRASH;
   #else
     UNUSED(ARG(INSTRUCTION));
     panic ("Executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");

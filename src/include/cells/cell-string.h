@@ -169,7 +169,7 @@ INLINE Size String_Byte_Offset_For_Index(const Cell* cell, REBLEN index)
 // Declaring as inline with type signature ensures you use a Strand* to
 // initialize.
 
-INLINE Element* Init_Any_String_At(
+INLINE Element* Init_Any_String_At_Untracked(
     Init(Element) out,
     Heart heart,
     const Strand* s,
@@ -178,8 +178,14 @@ INLINE Element* Init_Any_String_At(
     return Init_Series_At_Core(out, heart, s, index, UNBOUND);
 }
 
+#define Init_Any_String_At(out,heart,s,index) \
+    TRACK(Init_Any_String_At_Untracked((out), (heart), (s), (index)))
+
+#define Init_Any_String_Untracked(out,heart,s) \
+    Init_Any_String_At_Untracked((out), (heart), (s), 0)
+
 #define Init_Any_String(out,heart,s) \
-    Init_Any_String_At((out), (heart), (s), 0)
+    TRACK(Init_Any_String_Untracked((out), (heart), (s)))
 
 #define Init_Text(v,s)      Init_Any_String((v), TYPE_TEXT, (s))
 #define Init_File(v,s)      Init_Any_String((v), TYPE_FILE, (s))

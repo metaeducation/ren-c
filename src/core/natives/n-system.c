@@ -94,7 +94,7 @@ DECLARE_NATIVE(RECYCLE)
 
     if (Bool_ARG(OFF)) {
         g_gc.disabled = true;
-        return TRIPWIRE;
+        return TRASH;
     }
 
     if (Bool_ARG(ON)) {
@@ -113,7 +113,7 @@ DECLARE_NATIVE(RECYCLE)
     }
 
     if (g_gc.disabled)
-        return TRIPWIRE;  // don't give misleading "0", since no recycle ran
+        return TRASH;  // don't give misleading "0", since no recycle ran
 
     REBLEN count;
 
@@ -189,7 +189,7 @@ DECLARE_NATIVE(LIMIT_USAGE)
     else
         panic (PARAM(FIELD));
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
@@ -301,6 +301,12 @@ DECLARE_NATIVE(C_DEBUG_BREAK)
 //    and not actually dispatch it, breaking in the evaluator loop.  We still
 //    keep a debug break here, in case the function is run through some other
 //    means (like an APPLY).  You shouldn't usually be breaking here, though.
+//
+// 2. Any function that returns a value will interfere with an evaluation
+//    stream; the only way something like (10 + c-debug-break 20) could work
+//    would be if this function took over evaluation and continued the Level
+//    without returning.  But with the trick in [1] we don't need to do any
+//    of that, because we're basically never actually running this native.
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
@@ -308,7 +314,7 @@ DECLARE_NATIVE(C_DEBUG_BREAK)
       #if RUNTIME_CHECKS
         debug_break();  // usually we break in the evaluator, not here [1]
       #endif
-        return Init_Ghost(OUT);
+        return GHOST;  // Note: [1] does (10 + c-debug-break 20), not this [2]
   #else
       panic (Error_Checked_Build_Only_Raw());
   #endif

@@ -48,7 +48,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Comma)
     else
         Append_Codepoint(mo->strand, ',');
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

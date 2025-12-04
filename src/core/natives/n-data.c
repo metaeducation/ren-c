@@ -1167,7 +1167,7 @@ DECLARE_NATIVE(FREE)
 
     Flex* f = Cell_Flex_Ensure_Mutable(v);
     Diminish_Stub(f);
-    return TRIPWIRE; // !!! Could return freed value
+    return TRASH; // !!! Could return freed value
 }
 
 
@@ -1374,24 +1374,21 @@ DECLARE_NATIVE(TRIPWIRE_Q)
 //
 //  noop: native [  ; native:intrinsic currently needs at least 1 argument
 //
-//  "Returns antiform SPACE (aka TRIPWIRE)"
+//  "Returns TRASH! (alternative to [] branches returning GHOST!/VOID)"  ; [1]
 //
 //      return: []
 //  ]
 //
 DECLARE_NATIVE(NOOP)  // lack of a hyphen common, e.g. jQuery.noop
 //
-// What a NOOP returns could be debated, but tripwire is chosen as TRIPWIRE is
-// a non-function, so that (^tripwire) will produce it.  While (^void) or ~[]~
-// is needed to make void, you can also produce it with just plain ().  GHOST!
-// has no particularly clean way to make it other than (^ghost) or ~,~.  But
-// vanishing functions are weird, and the desire to mark someplace as "this
-// branch intentionally left blank" with a noop is a more normal response, so
-// NIHIL is used to make GHOST!
+// 1. Using something like `switch [x [noop] ...]` vs `switch [x [] ...]` is
+//    precisely to avoid the default void behavior of the branch, and generate
+//    something more "problematic" that won't just opt out of whatever uses
+//    the result of the switch.
 {
     INCLUDE_PARAMS_OF_NOOP;
 
-    return Init_Tripwire(OUT);
+    return TRASH;
 }
 
 

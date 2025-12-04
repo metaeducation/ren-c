@@ -186,7 +186,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     trap (
       Elide_Unless_Error_Including_In_Packs(OUT)  // turn ERROR! to PANIC
     );
-    return TRIPWIRE;
+    return Init_Trash_Named_From_Level(OUT, L);
 
 } diverger_finished: { ///////////////////////////////////////////////////////
 

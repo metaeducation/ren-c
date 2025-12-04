@@ -466,7 +466,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
 
     if (form) {
         Append_Any_Utf8_Limit(mo->strand, v, UNLIMITED);
-        return TRIPWIRE;
+        return TRASH;
     }
 
     Length len;
@@ -546,7 +546,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
 
 } finished: { ///////////////////////////////////////////////////////////////
 
-    return TRIPWIRE;  // MOLDIFY should return TRIPWIRE
+    return TRASH;  // MOLDIFY should return TRASH
 }}
 
 
@@ -976,7 +976,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Any_Utf8)
     Size utf8_size;
     Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, any_utf8);
     Set_Random(crc32_z(0L, utf8, utf8_size));
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

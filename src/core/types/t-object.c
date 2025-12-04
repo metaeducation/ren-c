@@ -844,7 +844,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             Append_Codepoint(s, ']');
             End_Non_Lexical_Mold(mo);
         }
-        return TRIPWIRE;
+        return TRASH;
     }
     Push_Pointer_To_Flex(g_mold.stack, c);
 
@@ -883,7 +883,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             Trim_Tail(mo, '\n');
 
         Drop_Pointer_From_Flex(g_mold.stack, c);
-        return TRIPWIRE;
+        return TRASH;
     }
 
     // Otherwise we are molding
@@ -944,7 +944,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
 
     Drop_Pointer_From_Flex(g_mold.stack, c);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
@@ -974,7 +974,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
             Append_Codepoint(s, ']');
             End_Non_Lexical_Mold(mo);
         }
-        return TRIPWIRE;
+        return TRASH;
     }
     Push_Pointer_To_Flex(g_mold.stack, let);
 
@@ -992,7 +992,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
         Mold_Element(mo, Known_Element(var));
 
         Drop_Pointer_From_Flex(g_mold.stack, let);
-        return TRIPWIRE;
+        return TRASH;
     }
 
     // Otherwise we are molding
@@ -1029,7 +1029,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
 
     Drop_Pointer_From_Flex(g_mold.stack, let);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
@@ -1922,7 +1922,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
     Append_Codepoint(mo->strand, ']');
     End_Non_Lexical_Mold(mo);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 

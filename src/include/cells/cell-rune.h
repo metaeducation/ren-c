@@ -199,6 +199,21 @@ INLINE Element* Init_Utf8_Non_String(
 #define Init_Rune(out,utf8,size,len) \
     Init_Utf8_Non_String((out), TYPE_RUNE, (utf8), (size), (len))
 
+INLINE Element* Init_Utf8_Non_String_From_Strand(
+    Init(Element) out,
+    Heart heart,
+    const Strand* strand
+){
+    assert(Is_Flex_Frozen(strand));
+
+    Utf8(const*) utf8 = Strand_Head(strand);
+    Length len = Strand_Len(strand);
+    Size size = Strand_Size(strand);;
+    if (Try_Init_Small_Utf8_Untracked(out, heart, utf8, len, size))
+        return out;
+
+    return Init_Any_String(out, heart, strand);
+}
 
 // If you know that a codepoint is good (e.g. it came from an ANY-STRING?)
 // this routine can be used.

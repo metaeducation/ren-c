@@ -156,7 +156,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
         require (
           Append_Ascii(mo->strand, "?date?")
         );
-        return TRIPWIRE;
+        return TRASH;
     }
 
     // Date bits are stored in canon UTC form.  But for rendering, the year
@@ -186,7 +186,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
     if (Does_Date_Have_Time(v)) {
         Append_Codepoint(mo->strand, '/');
         Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // Bool_ARG(FORM)?
-        assert(bounce == TRIPWIRE);  // !!! generically might BOUNCE_CONTINUE
+        assert(Is_Possibly_Unstable_Atom_Trash(Atom_From_Bounce(bounce)));
+        // !!! generically might BOUNCE_CONTINUE
         UNUSED(bounce);
 
         if (zone != NO_DATE_ZONE) {
@@ -210,7 +211,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
         }
     }
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
@@ -1133,7 +1134,7 @@ IMPLEMENT_GENERIC(RANDOMIZE, Is_Date)
         + (cast(REBI64, Julian_Date(date)) << 32)
         + nano
     );
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
