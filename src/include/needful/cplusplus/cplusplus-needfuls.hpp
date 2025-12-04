@@ -155,7 +155,7 @@ namespace needful {  //=//// BEGIN `needful::` NAMESPACE //////////////////=//
 
     #include "needful-asserts.hpp"
 
-    #include "needful-ensure.hpp"
+    #include "needful-known.hpp"
 
     #include "needful-wrapping.hpp"
 

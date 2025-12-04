@@ -58,7 +58,7 @@ INLINE void Tweak_Link_Inherit_Bind_Raw(Stub* context, Option(Context*) next) {
 }
 
 #define Tweak_Link_Inherit_Bind(context, next) \
-    Tweak_Link_Inherit_Bind_Raw(ensure(Context*, (context)), next)
+    Tweak_Link_Inherit_Bind_Raw(known(Context*, (context)), next)
 
 INLINE void Add_Link_Inherit_Bind_Raw(Stub* context, Option(Context*) next) {
     assert(LINK_CONTEXT_INHERIT_BIND(context) == nullptr);
@@ -66,7 +66,7 @@ INLINE void Add_Link_Inherit_Bind_Raw(Stub* context, Option(Context*) next) {
 }
 
 #define Add_Link_Inherit_Bind(context,next) \
-    Add_Link_Inherit_Bind_Raw(ensure(Context*, (context)), next)
+    Add_Link_Inherit_Bind_Raw(known(Context*, (context)), next)
 
 
 // !!! Need better mechanism for getting context types.

@@ -195,7 +195,7 @@ INLINE bool Is_Strand_All_Ascii(const Strand* str) {
     return Flex_Used(str) == MISC_STRAND_NUM_CODEPOINTS(str);
 }
 
-#define Strand_Utf8(s)      Flex_Head(char, ensure(Strand*, s))
+#define Strand_Utf8(s)      Flex_Head(char, known(Strand*, s))
 #define Strand_Head(s)      cast(Utf8(*), Flex_Head(Byte, s))
 #define Strand_Tail(s)      cast(Utf8(*), Flex_Tail(Byte, s))
 
@@ -206,10 +206,10 @@ MUTABLE_IF_C(Utf8(*), INLINE) Strand_At(CONST_IF_C(Strand*) s_, REBLEN at)
 }
 
 #define Strand_Size(s) \
-    Flex_Used(ensure(Strand*, s))  // encoded byte size, not codepoints
+    Flex_Used(known(Strand*, s))  // encoded byte size, not codepoints
 
 #define String_Dynamic_Size(s) \
-    Flex_Dynamic_Used(ensure(Strand*, s))
+    Flex_Dynamic_Used(known(Strand*, s))
 
 INLINE Length Strand_Len(const Strand* s) {
     if (not Is_Strand_Symbol(s)) {

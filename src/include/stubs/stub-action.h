@@ -68,10 +68,10 @@
 
 
 
-//=//// MAKE ensure(Phase*, ...) WORK /////////////////////////////////////=//
+//=//// MAKE known(Phase*, ...) WORK /////////////////////////////////////=//
 //
 // Phase can be either ParamList or Details, but those types aren't on the
-// same inheritance chain.  This means the usual ensure() won't work.  BUT
+// same inheritance chain.  This means the usual known() won't work.  BUT
 // Needful allows you to overload it... so we can make a version that can
 // do the validation.  (The C build just thinks these are all Stub*, anyway.)
 //
@@ -87,9 +87,9 @@ namespace needful {
                 From,
                 ParamList*, Details*, Phase*
             >::value,
-            "ensure() failed: Phase* only converts from ParamList* or Details*"
+            "known() failed: Phase* only converts from ParamList* or Details*"
         );
-        typedef Phase* type;  // e.g. ensure(Phase*, details) -> Phase*
+        typedef Phase* type;  // e.g. known(Phase*, details) -> Phase*
     };
 
   #if NEEDFUL_OPTION_USES_WRAPPER
@@ -100,9 +100,9 @@ namespace needful {
                 From,
                 Option(ParamList*), Option(Details*), Option(Phase*)
             >::value,
-            "ensure() failed: Phase* only converts from ParamList* or Details*"
+            "known() failed: Phase* only converts from ParamList* or Details*"
         );
-        typedef Phase* type;  // e.g. ensure(Phase*, details) -> Phase*
+        typedef Phase* type;  // e.g. known(Phase*, details) -> Phase*
     };
   #endif
 }
@@ -112,7 +112,7 @@ namespace needful {
 // For performance, all Details and VarList stubs are STUB_FLAG_DYNAMIC.
 //
 #define Phase_Archetype(phase) \
-    Flex_Head_Dynamic(Element, ensure(Phase*, (phase)))
+    Flex_Head_Dynamic(Element, known(Phase*, (phase)))
 
 INLINE Details* Phase_Details_Core(Phase* p) {
     while (not Is_Stub_Details(p)) {
@@ -122,7 +122,7 @@ INLINE Details* Phase_Details_Core(Phase* p) {
 }
 
 #define Phase_Details(p) \
-    Phase_Details_Core(ensure(Phase*, (p)))
+    Phase_Details_Core(known(Phase*, (p)))
 
 
 INLINE bool Is_Frame_Details(const Cell* v) {
@@ -151,7 +151,7 @@ INLINE ParamList* Phase_Paramlist_Core(Phase* p) {
 }
 
 #define Phase_Paramlist(p) \
-    Phase_Paramlist_Core(ensure(Phase*, (p)))
+    Phase_Paramlist_Core(known(Phase*, (p)))
 
 
 // More optimized version of Bonus_Keylist(Phase_Paramlist(a)),
@@ -172,7 +172,7 @@ INLINE Param* Phase_Params_Head_Core(Phase* p) {
 }
 
 #define Phase_Params_Head(p) \
-    Phase_Params_Head_Core(ensure(Phase*, (p)))
+    Phase_Params_Head_Core(known(Phase*, (p)))
 
 INLINE Dispatcher* Details_Dispatcher(Details* details)
   { return f_cast(Dispatcher*, LINK_DETAILS_DISPATCHER(details)); }
@@ -346,18 +346,18 @@ INLINE bool Action_Is_Derived_From(Phase* derived, Phase* base) {
 
 
 #define Set_Details_Flag(p,name) \
-    Set_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
+    Set_Flavor_Flag(DETAILS, known(Details*, (p)), name)
 
 #define Get_Details_Flag(p,name) \
-    Get_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
+    Get_Flavor_Flag(DETAILS, known(Details*, (p)), name)
 
 #define Clear_Details_Flag(p,name) \
-    Clear_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
+    Clear_Flavor_Flag(DETAILS, known(Details*, (p)), name)
 
 #define Not_Details_Flag(p,name) \
-    Not_Flavor_Flag(DETAILS, ensure(Details*, (p)), name)
+    Not_Flavor_Flag(DETAILS, known(Details*, (p)), name)
 
 
 
 #define First_Unspecialized_Param(key_out,phase) \
-    First_Unspecialized_Param_Core((key_out), ensure(Phase*, (phase)))
+    First_Unspecialized_Param_Core((key_out), known(Phase*, (phase)))

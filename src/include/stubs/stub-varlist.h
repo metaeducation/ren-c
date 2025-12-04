@@ -64,7 +64,7 @@ INLINE void Tweak_Misc_Varlist_Adjunct_Raw(
 }
 
 #define Tweak_Misc_Varlist_Adjunct(varlist, adjunct) \
-    Tweak_Misc_Varlist_Adjunct_Raw(ensure(VarList*, (varlist)), adjunct)
+    Tweak_Misc_Varlist_Adjunct_Raw(known(VarList*, (varlist)), adjunct)
 
 INLINE void Tweak_Misc_Phase_Adjunct_Core(
     Phase* a,
@@ -83,10 +83,10 @@ INLINE Option(VarList*) Misc_Phase_Adjunct_Core(Phase* a) {
 }
 
 #define Misc_Phase_Adjunct(p) \
-    Misc_Phase_Adjunct_Core(ensure(Phase*, (p)))
+    Misc_Phase_Adjunct_Core(known(Phase*, (p)))
 
 #define Tweak_Misc_Phase_Adjunct(p, adjunct) \
-    Tweak_Misc_Phase_Adjunct_Core(ensure(Phase*, (p)), adjunct)
+    Tweak_Misc_Phase_Adjunct_Core(known(Phase*, (p)), adjunct)
 
 
 #define CELL_CONTEXT_VARLIST(c)  CELL_PAYLOAD_1(c)

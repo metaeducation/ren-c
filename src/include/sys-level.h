@@ -283,7 +283,7 @@ INLINE void Tweak_Level_Phase_Core(Level* L, Phase* phase) {
 }
 
 #define Tweak_Level_Phase(L,phase) \
-    Tweak_Level_Phase_Core(L, ensure(Phase*, (phase)))
+    Tweak_Level_Phase_Core(L, known(Phase*, (phase)))
 
 INLINE void Tweak_Level_Coupling(Level* L, Option(VarList*) coupling)
   { Tweak_Frame_Coupling(L->rootvar, coupling); }  // also fast
@@ -307,7 +307,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define LEVEL_STATE_BYTE(L) \
-        SECOND_BYTE(ensure(Level*, L))
+        SECOND_BYTE(known(Level*, L))
 #else
     INLINE Byte& LEVEL_STATE_BYTE(Level* L) {
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));

@@ -86,10 +86,10 @@ INLINE void Erase_Stub(Stub* s) {
 //    data, and so we we cast away constness.
 
 #define Get_Stub_Flag(s,name) \
-    ((ensure(Stub*, (s))->header.bits & STUB_FLAG_##name) != 0)
+    ((known(Stub*, (s))->header.bits & STUB_FLAG_##name) != 0)
 
 #define Not_Stub_Flag(s,name) \
-    ((ensure(Stub*, (s))->header.bits & STUB_FLAG_##name) == 0)
+    ((known(Stub*, (s))->header.bits & STUB_FLAG_##name) == 0)
 
 #define Set_Stub_Flag(s,name) \
     (m_cast(Stub*, (s))->header.bits |= STUB_FLAG_##name)  // m_cast() [1]

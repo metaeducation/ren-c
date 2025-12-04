@@ -909,7 +909,7 @@ void Init_Char_Cases(void)
   init_whitespace_table: {
 
     require (
-      ensure_nullptr(g_white_chars) = Alloc_N_On_Heap(Byte, 34)
+      known_nullptr(g_white_chars) = Alloc_N_On_Heap(Byte, 34)
     );
     memset(g_white_chars, 1, 33); // All white chars: NL, CR, BS, etc...
     g_white_chars[cast(Byte, ' ')] = 3; // space
@@ -919,11 +919,11 @@ void Init_Char_Cases(void)
 } init_casing_tables: {
 
     require (
-      ensure_nullptr(g_upper_cases) = Alloc_N_On_Heap(
+      known_nullptr(g_upper_cases) = Alloc_N_On_Heap(
         Codepoint, NUM_UNICODE_CASES
     ));
     require (
-      ensure_nullptr(g_lower_cases) = Alloc_N_On_Heap(
+      known_nullptr(g_lower_cases) = Alloc_N_On_Heap(
         Codepoint, NUM_UNICODE_CASES
     ));
 

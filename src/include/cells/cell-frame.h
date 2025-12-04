@@ -214,15 +214,15 @@ INLINE Element* Init_Frame_Untracked(
 
 #define Init_Frame_Unchecked(out,identity,label,coupling) \
     TRACK(Init_Frame_Unchecked_Untracked( \
-        (out), ensure(Phase*, (identity)), (label), (coupling)))
+        (out), known(Phase*, (identity)), (label), (coupling)))
 
 #define Init_Frame(out,identity,label,coupling) \
-    TRACK(Init_Frame_Untracked((out), ensure(Phase*, (identity)), \
-        ensure(Option(const Symbol*), (label)), (coupling)))
+    TRACK(Init_Frame_Untracked((out), known(Phase*, (identity)), \
+        known(Option(const Symbol*), (label)), (coupling)))
 
 #define Init_Lensed_Frame(out,identity,lens,coupling) \
-    TRACK(Init_Frame_Untracked((out), ensure(Phase*, (identity)), \
-        ensure(Option(Phase*), (lens)), (coupling)))
+    TRACK(Init_Frame_Untracked((out), known(Phase*, (identity)), \
+        known(Option(Phase*), (lens)), (coupling)))
 
 
 //=//// ACTIONS (FRAME! Antiforms) ////////////////////////////////////////=//
@@ -258,7 +258,7 @@ INLINE Stable* Actionify(Need(Stable*) val) {
 
 #define Init_Action(out,a,label,coupling) \
     Actionify(cast(Stable*, Init_Frame( \
-        ensure(Sink(Stable), (out)), (a), (label), (coupling)) \
+        known(Sink(Stable), (out)), (a), (label), (coupling)) \
     ))  // note that antiform frames can't have lenses, only labels!
 
 INLINE Stable* Deactivate_If_Action(Need(Stable*) v) {

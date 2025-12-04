@@ -235,7 +235,7 @@ INLINE Cell* Force_Poison_Cell_Untracked(Cell* c) {  // for random bits [3]
     TRACK(Force_Poison_Cell_Untracked(c))
 
 #define Is_Cell_Poisoned(c)  /* non-poison state not always readable [4] */ \
-    (ensure(Cell*, (c))->header.bits == CELL_MASK_POISON)
+    (known(Cell*, (c))->header.bits == CELL_MASK_POISON)
 
 
 //=//// CELL "ERASING" ////////////////////////////////////////////////////=//
@@ -280,7 +280,7 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
     TRACK(Force_Erase_Cell_Untracked(c))
 
 #define Is_Cell_Erased(c) /* initable, not read/writable */ \
-    (ensure(Cell*, (c))->header.bits == CELL_MASK_ERASED_0)
+    (known(Cell*, (c))->header.bits == CELL_MASK_ERASED_0)
 
 #define Not_Cell_Erased(c)  (not Is_Cell_Erased(c))
 
@@ -480,10 +480,10 @@ STATIC_ASSERT(not (CELL_MASK_PERSIST & CELL_FLAG_NOTE));
     ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) == 0)
 
 #define Get_Cell_Flag_Unchecked(c,name) \
-    ((ensure(Cell*, (c))->header.bits & CELL_FLAG_##name) != 0)
+    ((known(Cell*, (c))->header.bits & CELL_FLAG_##name) != 0)
 
 #define Not_Cell_Flag_Unchecked(c,name) \
-    ((ensure(Cell*, (c))->header.bits & CELL_FLAG_##name) == 0)
+    ((known(Cell*, (c))->header.bits & CELL_FLAG_##name) == 0)
 
 #define Set_Cell_Flag(c,name) /* cast away const [1] */ \
     m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
@@ -928,7 +928,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 #else
     INLINE void Tweak_Cell_Binding(Element* c, Option(Context*) binding) {
         Assert_Cell_Writable(c);
-        Element* x = ensure(Element*, c);
+        Element* x = known(Element*, c);
         USED(x);
         assert(Is_Cell_Bindable(c));
         c->extra.base = opt binding;

@@ -215,7 +215,7 @@ INLINE bool Is_Word_With_Id(const Stable* v, SymId id) {
 //
 
 #define Is_Dual(cell) \
-    (LIFT_BYTE(ensure(Slot*, (cell))) == DUAL_0)
+    (LIFT_BYTE(known(Slot*, (cell))) == DUAL_0)
 
 #define Is_Dual_Word_Unset_Signal(dual) \
     Is_Word_With_Id((dual), SYM__PUNSET_P)

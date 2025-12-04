@@ -58,13 +58,13 @@
 // the callsite if you expect the data to be valid or not, and use Element*
 // or Sink/Init(Element) as appropriate.
 
-#define Array_At(a,n)           Flex_At(Element, ensure(Array*, (a)), (n))
-#define Array_Head(a)           Flex_Head(Element, ensure(Array*, (a)))
-#define Array_Tail(a)           Flex_Tail(Element, ensure(Array*, (a)))
-#define Array_Last(a)           Flex_Last(Element, ensure(Array*, (a)))
+#define Array_At(a,n)           Flex_At(Element, known(Array*, (a)), (n))
+#define Array_Head(a)           Flex_Head(Element, known(Array*, (a)))
+#define Array_Tail(a)           Flex_Tail(Element, known(Array*, (a)))
+#define Array_Last(a)           Flex_Last(Element, known(Array*, (a)))
 
 #define Array_Len(a) \
-    Flex_Used(ensure(Array*, (a)))
+    Flex_Used(known(Array*, (a)))
 
 
 // See Ensure_Readable(), Ensure_Writable() and related functions for an

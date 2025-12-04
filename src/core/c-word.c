@@ -493,7 +493,7 @@ void Startup_Interning(void)
   #endif
 
     require (
-      ensure_nullptr(g_symbols.by_hash) = Make_Flex(
+      known_nullptr(g_symbols.by_hash) = Make_Flex(
         FLAG_FLAVOR(FLAVOR_CANONTABLE) | FLEX_FLAG_POWER_OF_2,
         n
     ));

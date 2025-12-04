@@ -184,7 +184,7 @@ typedef Byte KindByte;  // help document when Byte is Heart + Sigil [1]
     FLAG_SECOND_BYTE(byte)
 
 #define FLAG_HEART(heart) \
-    FLAG_KIND_BYTE(u_cast(KindByte, ensure(HeartEnum, (heart))))
+    FLAG_KIND_BYTE(u_cast(KindByte, known(HeartEnum, (heart))))
 
 #define MOD_HEART_64  64  /* 64 fundamental types, 2 bit crumb for Sigil */
 #define CELL_MASK_HEART_NO_SIGIL  FLAG_SECOND_BYTE(MOD_HEART_64 - 1)
@@ -212,7 +212,7 @@ typedef enum {
     FLAG_KIND_BYTE((crumb) << KIND_SIGIL_SHIFT)
 
 #define FLAG_SIGIL(sigil) \
-    FLAG_SIGIL_CRUMB(u_cast(Byte, ensure(Option(Sigil), (sigil))))
+    FLAG_SIGIL_CRUMB(u_cast(Byte, known(Option(Sigil), (sigil))))
 
 #define CELL_MASK_SIGIL  FLAG_SIGIL_CRUMB(3)  // 0b11 << KIND_SIGIL_SHIFT
 

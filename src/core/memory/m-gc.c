@@ -1526,7 +1526,7 @@ void Startup_GC(void)
     // managed, then sneak the flag off.
     //
     require (
-      ensure_nullptr(g_gc.manuals) = Make_Flex(
+      known_nullptr(g_gc.manuals) = Make_Flex(
         FLAG_FLAVOR(FLAVOR_FLEXLIST) | BASE_FLAG_MANAGED,  // lie!
         15
     ));
@@ -1535,7 +1535,7 @@ void Startup_GC(void)
     // Flexes and Cells protected from GC.  Holds base pointers.
     //
     require (
-      ensure_nullptr(g_gc.guarded) = Make_Flex(
+      known_nullptr(g_gc.guarded) = Make_Flex(
         FLAG_FLAVOR(FLAVOR_NODELIST),
         15
     ));
@@ -1544,7 +1544,7 @@ void Startup_GC(void)
     // nested structures don't cause the C stack to overflow.
     //
     require (
-      ensure_nullptr(g_gc.mark_stack) = Make_Flex(
+      known_nullptr(g_gc.mark_stack) = Make_Flex(
         FLAG_FLAVOR(FLAVOR_NODELIST),
         100
     ));

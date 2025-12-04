@@ -114,16 +114,16 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
 //    data, and so we we cast away constness.
 
 #define Get_Flex_Flag(f,name) \
-    ((ensure(Flex*, (f))->header.bits & FLEX_FLAG_##name) != 0)
+    ((known(Flex*, (f))->header.bits & FLEX_FLAG_##name) != 0)
 
 #define Not_Flex_Flag(f,name) \
-    ((ensure(Flex*, (f))->header.bits & FLEX_FLAG_##name) == 0)
+    ((known(Flex*, (f))->header.bits & FLEX_FLAG_##name) == 0)
 
 #define Set_Flex_Flag(f,name) \
-    (m_cast(Flex*, ensure(Flex*, (f)))->header.bits |= FLEX_FLAG_##name)
+    (m_cast(Flex*, known(Flex*, (f)))->header.bits |= FLEX_FLAG_##name)
 
 #define Clear_Flex_Flag(f,name) \
-    (m_cast(Flex*, ensure(Flex*, (f)))->header.bits &= (~ FLEX_FLAG_##name))
+    (m_cast(Flex*, known(Flex*, (f)))->header.bits &= (~ FLEX_FLAG_##name))
 
 
 //=//// FLEX "INFO" BITS (or INODE) ///////////////////////////////////////=//
@@ -143,7 +143,7 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
 //
 #if NO_CPLUSPLUS_11
     #define FLEX_INFO(f) \
-        m_cast(Flex*, ensure(Flex*, (f)))->info.flags  // [1]
+        m_cast(Flex*, known(Flex*, (f)))->info.flags  // [1]
 #else
     INLINE uintptr_t &FLEX_INFO(const Flex* f) {
         assert(Not_Stub_Flag(f, INFO_NEEDS_MARK));  // [2]

@@ -64,10 +64,10 @@
 //    accomplished in the core code with a single comparison.
 
 #define Is_Bindable_Heart(opt_heart) /* assume Option(Heart) [1] */ \
-    (ensure(Heart, (opt opt_heart)) >= TYPE_COMMA)  // only one test [2]
+    (known(Heart, (opt opt_heart)) >= TYPE_COMMA)  // only one test [2]
 
 #define Is_Cell_Bindable(elem) \
-    Is_Bindable_Heart(Unchecked_Heart_Of(ensure(Element*, (elem))))
+    Is_Bindable_Heart(Unchecked_Heart_Of(known(Element*, (elem))))
 
 
 //=//// MISC /////////////////////////////////////////////////////////////=//

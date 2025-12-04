@@ -772,7 +772,7 @@ void Startup_Mold(Size encoded_capacity)
     );
 
     require (
-      ensure_nullptr(g_mold.buffer) = Make_Strand_Core(
+      known_nullptr(g_mold.buffer) = Make_Strand_Core(
         STUB_MASK_STRAND
             | (not BASE_FLAG_MANAGED)
             | STUB_FLAG_DYNAMIC,

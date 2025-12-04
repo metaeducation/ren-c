@@ -214,12 +214,12 @@ typedef struct {
 // The Needful library gives us a tool for building compile-time typecheckers
 // that check for a match against a list of arbitrary types:
 //
-//     ensure_any((Phase*, Details*, ParamList*), expression)
+//     known_any((Phase*, Details*, ParamList*), expression)
 //
-// Beyond that, it actually lets you specialize arity-1 ensure(), so that
+// Beyond that, it actually lets you specialize arity-1 known(), so that
 // you can make the check against that list the semantics of:
 //
-//     ensure(Phase*, expression)
+//     known(Phase*, expression)
 //
 // So we rely on this--although it forces us to write macros to interface
 // with functions that take Phase* in order to get them to take Details* or

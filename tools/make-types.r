@@ -275,7 +275,7 @@ for-each-datatype 't [
     e-types/emit [propercase-of t --[
         #define Is_${propercase-of T.name}(value) \
             Cell_Has_Lift_Heart_No_Sigil(NOQUOTE_2, TYPE_$<T.NAME>, \
-                ensure(Stable*, (value)))
+                known(Stable*, (value)))
     ]--]
 ]
 
@@ -365,12 +365,12 @@ for-each-datatype 't [
     e-types/emit [t proper-name --[
         #define Is_$<Proper-Name>(cell) \
             Cell_Has_Lift_Heart_No_Sigil(ANTIFORM_1, TYPE_$<T.NAME>, \
-                ensure($<Need>*, (cell)))
+                known($<Need>*, (cell)))
 
 
         #define Is_Lifted_$<Proper-Name>(cell) \
             Cell_Has_Lift_Heart_No_Sigil(QUASIFORM_3, TYPE_$<T.NAME>, \
-                ensure(Stable*, (cell)))
+                known(Stable*, (cell)))
 
         #define Is_Quasi_$<Propercase-Of T.Name>(cell) \
             Is_Lifted_$<Proper-Name>(cell)  /* alternative */
@@ -389,7 +389,7 @@ for-each-datatype 't [
     e-types/emit [t proper-name --[
         #define Is_Possibly_Unstable_Value_$<Proper-Name>(atom) \
             Cell_Has_Lift_Heart_No_Sigil(ANTIFORM_1, TYPE_$<T.NAME>, \
-                ensure(Value*, (atom)))
+                known(Value*, (atom)))
     ]--]
 ]
 

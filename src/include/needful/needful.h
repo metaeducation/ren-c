@@ -473,7 +473,7 @@ void Needful_Panic_Abruptly(const char* error) {
 #define NeedfulNeed(TP)  TP  /* Need(TP) inspired Needful's name [1] */
 
 
-/****[[ ensure(T,expr): CHEAP COMPILE-TIME MACRO TYPE ASSURANCE ]]************
+/****[[ known(T,expr): CHEAP COMPILE-TIME MACRO TYPE ASSURANCE ]]************
 **
 ** Macros do not have type checking, which makes them dangerous.  So it is
 ** considered better to use inline functions if something is conceptually
@@ -494,33 +494,37 @@ void Needful_Panic_Abruptly(const char* error) {
 ** you have to split your definition so that it's part macro, part inline
 ** function.  This can lead code to being less clear.
 **
-** ensure() is a simple tool whose C++ override addresses all three points:
+** known() is a simple tool whose C++ override addresses all three points:
 **
 **      int* ptr = ...;
-**      void *p = ensure(int*, ptr);  // succeeds at compile-time
+**      void *p = known(int*, ptr);  // succeeds at compile-time
 **
 **      char* ptr = ...;
-**      void *p = ensure(int*, ptr);   // fails at compile-time
+**      void *p = known(int*, ptr);   // fails at compile-time
 **
 ** It does not cost anything at runtime--even in debug builds--because it
 ** doesn't rely on a function template in the C++ override.
 **
-** 1. The Rigid form of Ensure will error if you try to pass a const pointer
+** 1. The Rigid form of known() will error if you try to pass a const pointer
 **    in when a non-const pointer was specified.  But the lenient form will
 **    match as a const pointer, and pass through the const pointer.  This
 **    turns out to be more useful in most cases than enforcing mutability,
 **    and it also is briefer to read at the callsite.
+**
+** 2. Originally this was named "ensure", but that word has other connotations
+**    related to something that is not zero cost (e.g. runtime checks needed)
+**    where as constructs named "known" suggests that you *just know*.
 */
 
-#define needful_rigid_ensure(T,expr) \
+#define needful_rigid_known(T,expr) \
     needful_xtreme_cast(T,expr)
 
-#define needful_lenient_ensure(T,expr) /* const passthru const [1] */ \
+#define needful_lenient_known(T,expr) /* const passthru const [1] */ \
     needful_xtreme_cast(T,expr)
 
-#define needful_ensure_any(TLIST,expr)  (expr)  /* doesn't change type */
+#define needful_known_any(TLIST,expr)  (expr)  /* doesn't change type */
 
-#define needful_ensure_lvalue(variable)  (*&variable)
+#define needful_known_lvalue(variable)  (*&variable)
 
 
 /****[[ ENABLEABLE: Argument Type Subsetting ]]*******************************
@@ -941,7 +945,8 @@ void Needful_Panic_Abruptly(const char* error) {
 **
 ** `unnecessary()` and `dont()` aren't boolean-constrained, and help document
 ** lines of code that are not needed (or would actively break things), while
-** ensuring the expressions are up-to-date as valid for the compiler.
+** ensuring the expressions are up-to-date and valid.  `cant()` is for things
+** you might like to do, but some current limitation prevents it.
 **
 ** `heeded()` marks things that look stray or like they have no effect, but
 ** their side-effect is intentional (perhaps only in debug builds, that check
@@ -998,11 +1003,11 @@ void Needful_Panic_Abruptly(const char* error) {
 **    define that here, because it's open ended as to what you'd use for
 **    your error value type.
 **
-** 2. The lenient form of ensure() is quite useful for writing polymorphic
+** 2. The lenient form of known() is quite useful for writing polymorphic
 **    macros which are const-in => const-out and mutable-in => mutable-out.
 **    This tends to be more useful than wanting to enforce that only mutable
 **    pointers can be passed into a macro (the bulk of macros are reading
-**    operations, anyway).  So lenient defaults to the short name `ensure()`.
+**    operations, anyway).  So lenient defaults to the short name `known()`.
 */
 
 #if !defined(NEEDFUL_DONT_DEFINE_CAST_SHORTHANDS)
@@ -1059,14 +1064,14 @@ void Needful_Panic_Abruptly(const char* error) {
     #define Need /* (TP) */         NeedfulNeed
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_ENSURE_SHORTHANDS)
-    #define rigid_ensure /* (T,expr) */           needful_rigid_ensure
-    #define lenient_ensure /* (T,expr) */         needful_lenient_ensure
+#if !defined(NEEDFUL_DONT_DEFINE_KNOWN_SHORTHANDS)
+    #define rigid_known /* (T,expr) */           needful_rigid_known
+    #define lenient_known /* (T,expr) */         needful_lenient_known
 
-    #define ensure /* (T,expr) */ /* [2] */       needful_lenient_ensure
-    #define ensure_any /* ((T1,T2,...),expr) */   needful_ensure_any
+    #define known /* (T,expr) */ /* [2] */       needful_lenient_known
+    #define known_any /* ((T1,T2,...),expr) */   needful_known_any
 
-    #define ensure_lvalue /* (var) */             needful_ensure_lvalue
+    #define known_lvalue /* (var) */             needful_known_lvalue
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_LOOP_SHORTHANDS)

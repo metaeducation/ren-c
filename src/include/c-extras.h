@@ -500,25 +500,25 @@
 #endif
 
 
-//=//// ensure_nullptr() //////////////////////////////////////////////////=//
+//=//// known_nullptr() //////////////////////////////////////////////////=//
 //
-// At one time, ensure_nullptr(p) was implemented as ensure(nullptr, p).
-// However, this forced ensure() to use a function template in order to be
+// At one time, known_nullptr(p) was implemented as known(nullptr, p).
+// However, this forced known() to use a function template in order to be
 // able to have runtime code ensuring the nullness of a pointer.  That meant
-// some overhead in debug builds, and ensure() wanted to be a compile-time
-// only check... even in debug builds.  So ensure_nullptr() became its own
+// some overhead in debug builds, and known() wanted to be a compile-time
+// only check... even in debug builds.  So known_nullptr() became its own
 // separate construct.
 //
 #if NO_CPLUSPLUS_11 || NO_RUNTIME_CHECKS
-    #define ensure_nullptr(expr)  (expr)
+    #define known_nullptr(expr)  (expr)
 #else
     template<typename T>
-    INLINE T*& Ensure_Nullptr(T*& v) {
+    INLINE T*& KNOWN_NULLPTR(T*& v) {
         assert(v == nullptr);
         return v;
     }
 
-    #define ensure_nullptr  Ensure_Nullptr
+    #define known_nullptr  KNOWN_NULLPTR
 #endif
 
 
@@ -559,8 +559,8 @@
 // switching from signed to unsigned char, this cast does *only* that.
 //
 
-#define s_cast(bytes)   cast(char*, ensure(unsigned char*, (bytes)))
-#define b_cast(chars)   cast(unsigned char*, ensure(char*, (chars)))
+#define s_cast(bytes)   cast(char*, known(unsigned char*, (bytes)))
+#define b_cast(chars)   cast(unsigned char*, known(char*, (chars)))
 
 
 //=//// CONST PROPAGATION TOOLS ///////////////////////////////////////////=//

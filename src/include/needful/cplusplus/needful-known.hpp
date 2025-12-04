@@ -1,6 +1,6 @@
 //
-//  file: %needful-ensure.hpp
-//  summary: "Type ensuring helpers that use C++ type_traits"
+//  file: %needful-known.hpp
+//  summary: "Compile-time only type assurance helpers using C++ type_traits"
 //  homepage: <needful homepage TBD>
 //
 //=/////////////////////////////////////////////////////////////////////////=//
@@ -102,20 +102,20 @@ template<typename From, typename First, typename... Rest>
 struct IsConvertibleAsserter {
     static_assert(
         needful::IsConvertibleAny<From, First, Rest...>::value,
-        "ensure() failed"
+        "known() failed"
     );
 };
 
-#undef needful_rigid_ensure
-#define needful_rigid_ensure(T,expr) \
+#undef needful_rigid_known
+#define needful_rigid_known(T,expr) \
     (NEEDFUL_DUMMY_INSTANCE(needful::IsConvertibleAsserter< \
         needful::remove_reference_t<decltype(expr)>, \
         T \
     >), \
     needful_xtreme_cast(T, (expr)))
 
-#undef needful_lenient_ensure
-#define needful_lenient_ensure(T,expr) \
+#undef needful_lenient_known
+#define needful_lenient_known(T,expr) \
     (NEEDFUL_DUMMY_INSTANCE(needful::IsConvertibleAsserter< \
         needful::remove_reference_t<decltype(expr)>, \
         needful_constify_t(T) /* loosen to matching constified T too */ \
@@ -123,8 +123,8 @@ struct IsConvertibleAsserter {
     needful_xtreme_cast(needful_merge_const_t(decltype(expr), T), (expr)))
 
 
-#undef needful_ensure_any
-#define needful_ensure_any(TLIST,expr) \
+#undef needful_known_any
+#define needful_known_any(TLIST,expr) \
     (NEEDFUL_DUMMY_INSTANCE(needful::IsConvertibleAsserter< \
         needful::remove_reference_t<decltype(expr)>, \
         NEEDFUL_UNPARENTHESIZE TLIST \

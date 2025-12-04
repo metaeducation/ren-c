@@ -142,16 +142,16 @@ STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
 
 
 #define Get_Feed_Flag(f,name) \
-    ((ensure(Feed*, (f))->flags.bits & FEED_FLAG_##name) != 0)
+    ((known(Feed*, (f))->flags.bits & FEED_FLAG_##name) != 0)
 
 #define Not_Feed_Flag(f,name) \
-    ((ensure(Feed*, (f))->flags.bits & FEED_FLAG_##name) == 0)
+    ((known(Feed*, (f))->flags.bits & FEED_FLAG_##name) == 0)
 
 #define Set_Feed_Flag(f,name) \
-    (ensure(Feed*, (f))->flags.bits |= FEED_FLAG_##name)
+    (known(Feed*, (f))->flags.bits |= FEED_FLAG_##name)
 
 #define Clear_Feed_Flag(f,name) \
-    ensure(Feed*, (f))->flags.bits &= ~FEED_FLAG_##name
+    known(Feed*, (f))->flags.bits &= ~FEED_FLAG_##name
 
 
 #define CORRUPT_INDEX ((REBLEN)(-3))

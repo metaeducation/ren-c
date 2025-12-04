@@ -92,7 +92,7 @@ void Startup_Datatypes(void)
         assert(Datatype_Type(datatype) == type);  // sanity check
     }
 
-    ensure_nullptr(g_datatypes_context) = datatypes;
+    known_nullptr(g_datatypes_context) = datatypes;
 }
 
 

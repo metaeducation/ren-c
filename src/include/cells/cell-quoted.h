@@ -76,7 +76,7 @@ INLINE Count Quotes_From_Lift_Byte(LiftByte lift_byte) {
     (LIFT_BYTE(Ensure_Readable(cell)) >= ONEQUOTE_NONQUASI_4)
 
 #define Any_Fundamental(v) \
-    (LIFT_BYTE(Ensure_Readable(ensure(Stable*, (v)))) == NOQUOTE_2)
+    (LIFT_BYTE(Ensure_Readable(known(Stable*, (v)))) == NOQUOTE_2)
 
 
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.

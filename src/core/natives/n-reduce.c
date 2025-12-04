@@ -30,7 +30,7 @@
 //
 void Startup_Reduce_Errors(void)
 {
-    ensure_nullptr(g_error_veto) = Init_Warning(
+    known_nullptr(g_error_veto) = Init_Warning(
         Alloc_Value(),
         Error_Veto_Raw()
     );

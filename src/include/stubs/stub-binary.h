@@ -56,7 +56,7 @@
 #define Binary_Last(b)        Flex_Last(Byte, (b))
 
 #define Binary_Len(b) \
-    Flex_Used(ensure(Binary*, (b)))
+    Flex_Used(known(Binary*, (b)))
 
 #define Term_Binary(b) \
     (*Binary_Tail(b) = '\0')

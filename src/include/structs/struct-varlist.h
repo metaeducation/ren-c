@@ -185,7 +185,7 @@
 
 
 #define Varlist_Array(ctx) \
-    u_cast(Array*, ensure(VarList*, ctx))  // performance critical, u_cast()
+    u_cast(Array*, known(VarList*, ctx))  // performance critical, u_cast()
 
 
 //=//// ERROR VARLIST SUBLCASS ////////////////////////////////////////////=//
