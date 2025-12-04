@@ -160,7 +160,7 @@ DECLARE_NATIVE(DUMP)
     if (Is_Word(v)) {
         printf("=> ");
 
-        Value* spare = Get_Word(
+        Stable* spare = Get_Word(
             SPARE, v, SPECIFIED
         ) except (Error* e) {
             printf("!!! ERROR FETCHING WORD FOR DUMP !!!");

@@ -111,7 +111,7 @@ DECLARE_NATIVE(MUTABLE_Q) {
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Value(const Value* v, Flags flags)
+void Protect_Value(const Stable* v, Flags flags)
 {
     if (Is_Antiform(v))
         return;
@@ -154,8 +154,8 @@ void Protect_Flex(const Flex* f, REBLEN index, Flags flags)
 
     Flip_Stub_To_Black(f);  // recursion protection
 
-    const Value* val_tail = Flex_Tail(Value, cast(Array*, f));
-    const Value* val = Flex_At(Value, cast(Array*, f), index);
+    const Stable* val_tail = Flex_Tail(Stable, cast(Array*, f));
+    const Stable* val = Flex_At(Stable, cast(Array*, f), index);
     for (; val != val_tail; val++)
         Protect_Value(val, flags);
 }
@@ -208,7 +208,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 
     UNUSED(PARAM(HIDE)); // unused here, but processed in caller
 
-    Value* value = ARG(VALUE);
+    Stable* value = ARG(VALUE);
     assert(not Any_Word(value) and not Is_Tuple(value));
 
     // flags has PROT_SET bit (set or not)
@@ -225,11 +225,11 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
             panic ("WORDS not currently implemented in PROTECT");
 
         if (Bool_ARG(VALUES)) {
-            const Value* slot;
+            const Stable* slot;
             const Element* tail;
             const Element* item = List_At(&tail, block);
 
-            DECLARE_VALUE (safe);
+            DECLARE_STABLE (safe);
 
             for (; item != tail; ++item) {
                 if (Is_Word(item)) {
@@ -243,9 +243,9 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     slot = safe;
                 }
 
-                Protect_Value(m_cast(Value*, slot), flags);
+                Protect_Value(m_cast(Stable*, slot), flags);
                 if (flags & PROT_DEEP)
-                    Uncolor(m_cast(Value*, slot));
+                    Uncolor(m_cast(Stable*, slot));
             }
             return COPY(ARG(VALUE));
         }
@@ -440,7 +440,7 @@ DECLARE_NATIVE(LOCKED_Q)
 // that would prevent *them* from later mutating it.
 //
 void Force_Value_Frozen_Core(
-    const Value* v,
+    const Stable* v,
     bool deep,
     Option(Flex*) locker
 ){

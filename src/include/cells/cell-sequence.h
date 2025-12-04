@@ -339,7 +339,7 @@ INLINE Result(Element*) Init_Any_Sequence_Bytes(
 INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
     Init(Element) out,
     Heart heart,
-    const Value* head,  // NOTE: Can't use PUSH() or evaluation
+    const Stable* head,  // NOTE: Can't use PUSH() or evaluation
     REBLEN len
 ){
     assert(Any_Sequence_Type(heart));
@@ -360,7 +360,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
 
     Byte* bp = out->payload.at_least_8 + 1;
 
-    const Value* item = head;
+    const Stable* item = head;
     REBLEN n;
     for (n = 0; n < len; ++n, ++item, ++bp) {
         if (not Is_Integer(item))
@@ -565,8 +565,8 @@ INLINE Result(Element*) Pop_Sequence(
 // to the WORD! '.' -- this could be extended to allow more blanks to get words
 // like `///` if that were deemed interesting.
 //
-INLINE Result(Value*) Pop_Sequence_Or_Element_Or_Nulled(
-    Init(Value) out,
+INLINE Result(Stable*) Pop_Sequence_Or_Element_Or_Nulled(
+    Init(Stable) out,
     Heart sequence_heart,
     StackIndex base
 ){
@@ -862,7 +862,7 @@ INLINE bool Is_Get_Word_Cell(const Cell* c) {
     );
 }
 
-INLINE bool Is_Get_Word(const Value* v)
+INLINE bool Is_Get_Word(const Stable* v)
   { return LIFT_BYTE(v) == NOQUOTE_2 and Is_Get_Word_Cell(v); }
 
 INLINE bool Is_Set_Word_Cell(const Cell* c) {
@@ -872,7 +872,7 @@ INLINE bool Is_Set_Word_Cell(const Cell* c) {
     );
 }
 
-INLINE bool Is_Set_Word(const Value* v)
+INLINE bool Is_Set_Word(const Stable* v)
   { return LIFT_BYTE(v) == NOQUOTE_2 and Is_Set_Word_Cell(v); }
 
 
@@ -909,7 +909,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
     return Word_Symbol(temp);
 }
 
-INLINE bool Is_Set_Run_Word(const Value* v) {
+INLINE bool Is_Set_Run_Word(const Stable* v) {
     if (not Is_Path(v))
         return false;
 
@@ -926,7 +926,7 @@ INLINE bool Is_Get_Tuple_Cell(const Cell* c) {
     );
 }
 
-INLINE bool Is_Get_Tuple(const Value* v)
+INLINE bool Is_Get_Tuple(const Stable* v)
   { return LIFT_BYTE(v) == NOQUOTE_2 and Is_Get_Tuple_Cell(v); }
 
 INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
@@ -936,7 +936,7 @@ INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
     );
 }
 
-INLINE bool Is_Set_Tuple(const Value* v)
+INLINE bool Is_Set_Tuple(const Stable* v)
   { return LIFT_BYTE(v) == NOQUOTE_2 and Is_Set_Tuple_Cell(v); }
 
 
@@ -949,7 +949,7 @@ INLINE bool Is_Get_Block_Cell(const Cell* c) {
     );
 }
 
-INLINE bool Is_Get_Block(const Value* v)
+INLINE bool Is_Get_Block(const Stable* v)
   { return LIFT_BYTE(v) == NOQUOTE_2 and Is_Get_Block_Cell(v); }
 
 INLINE bool Is_Set_Block_Cell(const Cell* c) {
@@ -959,7 +959,7 @@ INLINE bool Is_Set_Block_Cell(const Cell* c) {
     );
 }
 
-INLINE bool Is_Set_Block(const Value* v)
+INLINE bool Is_Set_Block(const Stable* v)
   { return LIFT_BYTE(v) == NOQUOTE_2 and Is_Set_Block_Cell(v); }
 
 
@@ -972,7 +972,7 @@ INLINE bool Is_Get_Group_Cell(const Cell* c) {
     );
 }
 
-INLINE bool Is_Get_Group(const Value* v)
+INLINE bool Is_Get_Group(const Stable* v)
   { return LIFT_BYTE(v) == NOQUOTE_2 and Is_Get_Group_Cell(v); }
 
 INLINE bool Is_Set_Group_Cell(const Cell* c) {
@@ -982,11 +982,11 @@ INLINE bool Is_Set_Group_Cell(const Cell* c) {
     );
 }
 
-INLINE bool Is_Set_Group(const Value* v)
+INLINE bool Is_Set_Group(const Stable* v)
   { return LIFT_BYTE(v) == NOQUOTE_2 and Is_Set_Group_Cell(v); }
 
 
-INLINE bool Any_Set_Value(const Value* v) {  // !!! optimize?
+INLINE bool Any_Set_Value(const Stable* v) {  // !!! optimize?
     Option(SingleHeart) single;
     return (
         LIFT_BYTE(v) == NOQUOTE_2
@@ -996,7 +996,7 @@ INLINE bool Any_Set_Value(const Value* v) {  // !!! optimize?
     );
 }
 
-INLINE bool Any_Get_Value(const Value* v) {  // !!! optimize?
+INLINE bool Any_Get_Value(const Stable* v) {  // !!! optimize?
     Option(SingleHeart) single;
     return (
         LIFT_BYTE(v) == NOQUOTE_2

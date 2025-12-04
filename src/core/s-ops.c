@@ -69,9 +69,9 @@ void Trim_Tail(Molder* mo, Byte ascii)
 // Common code for string case handling.
 //
 void Change_Case(
-    Sink(Value) out,
-    Value* val, // !!! Not const--uses Partial(), may change index, review
-    const Value* part,
+    Sink(Stable) out,
+    Stable* val, // !!! Not const--uses Partial(), may change index, review
+    const Stable* part,
     bool upper
 ){
     if (Is_Rune_And_Is_Char(val)) {

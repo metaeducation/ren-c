@@ -74,7 +74,7 @@ INLINE Element* Init_Comma_Untracked(Init(Element) out) {
 // evaluation can be preserved.
 //
 
-INLINE Atom* Init_Ghost_Untracked(Init(Atom) out) {
+INLINE Value* Init_Ghost_Untracked(Init(Value) out) {
     Init_Comma_Untracked(out);
     Unstably_Antiformize_Unbound_Fundamental(out);
     assert(Is_Ghost(out));

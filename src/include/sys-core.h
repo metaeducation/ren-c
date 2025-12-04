@@ -23,7 +23,7 @@
 // This is the main include file used in the implementation of the system.
 //
 // * It defines all the data types and structures used by the auto-generated
-//   function prototypes.  Includes the obvious REBINT, Value*, Flex*.
+//   function prototypes.  Includes the obvious REBINT, Stable*, Flex*.
 //   It also includes any enumerated type parameters to functions which are
 //   shared between various C files.
 //
@@ -82,7 +82,7 @@
 //
 // Historically, Rebol source did not include the external library, because it
 // was assumed the core would never want to use the less-privileged and higher
-// overhead API.  However, libRebol now operates on Value* directly (though
+// overhead API.  However, libRebol now operates on Stable* directly (though
 // opaque to clients).  It has many conveniences, and is the preferred way to
 // work with isolated values that need indefinite duration.
 //
@@ -107,6 +107,8 @@
 
 typedef RebolValue Value;
 typedef RebolHandleCleaner HandleCleaner;
+
+#define Api(T) T  // mark types coming from the API
 
 
 //=//// STANDARD DEPENDENCIES FOR CORE ////////////////////////////////////=//
@@ -439,8 +441,8 @@ typedef struct {
 typedef struct {
     Array* array;
     StackIndex index;
-    Value* movable_top;
-    const Value* movable_tail;
+    Stable* movable_top;
+    const Stable* movable_tail;
 
   #if DEBUG_EXTANT_STACK_POINTERS
     Count num_refs_extant;  // # of Data_Stack_At()/TOP refs extant
@@ -453,8 +455,8 @@ typedef struct {
 
     Jump* jump_list;  // Saved state for RECOVER_SCOPE
 
-    Atom thrown_arg;
-    Value thrown_label;
+    Value thrown_arg;
+    Stable thrown_label;
     Level* unwind_level;
 
     Flags signal_flags;  // signal flags (Rebol signals, not unix ones!)
@@ -630,6 +632,10 @@ INLINE Error* Cell_Error(const Cell* c);
 #include "stubs/stub-binary.h"  // Binary_At(), etc. used by strings
 #include "sys-utf8.h"
 
+//=//// API HANDLES ///////////////////////////////////////////////////////=//
+
+#include "stubs/stub-api.h"  // requires Is_Cell_Stable() to be defined
+
 #include "stubs/stub-strand.h"  // SymId needed for typesets
 
 #include "stubs/stub-context.h"  // needs actions for FRAME! contexts
@@ -640,15 +646,9 @@ INLINE Error* Cell_Error(const Cell* c);
 #include "stubs/stub-map.h"
 
 
-
 //=//// GENERAL CELL SERVICES THAT NEED SERIES DEFINED ////////////////////=//
 
 #include "sys-protect.h"
-
-
-//=//// API HANDLES ///////////////////////////////////////////////////////=//
-
-#include "stubs/stub-api.h"  // requires Is_Cell_Stable() to be defined
 
 
 //=//// CELL ACCESSOR FUNCTIONS ///////////////////////////////////////////=//

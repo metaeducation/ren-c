@@ -14,14 +14,14 @@
 //=/////////////////////////////////////////////////////////////////////////=//
 //
 // If CHECK_CELL_SUBCLASSES is enabled, the inheritance heirarchy has
-// Atom at the base, with Element at the top.  Since what Elements can contain
+// Value at the base, with Element at the top.  Since what Elements can contain
 // is more constrained than what Atoms can contain, this means you can pass
-// Element* to a parameter taking an Atom*, but not vice-versa.
+// Element* to a parameter taking an Value*, but not vice-versa.
 //
 // However, when you have a Sink(Element) parameter instead of an Element*,
 // the checking needs to be reversed.  You are -writing- an Element, so
-// the receiving caller can pass an Atom* and it will be okay.  But if you
-// were using Sink(Atom), then passing an Element* would not be okay, as
+// the receiving caller can pass an Value* and it will be okay.  But if you
+// were using Sink(Value), then passing an Element* would not be okay, as
 // after the initialization the Element could hold invalid states.
 //
 // We use "SFINAE" to selectively enable the upside-down hierarchy, based

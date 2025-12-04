@@ -21,7 +21,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // This provides some convenience routines that require more definitions than
-// are available when %struct-base.h is being processed.  (e.g. Value*,
+// are available when %struct-base.h is being processed.  (e.g. Stable*,
 // Flex*, Level*...)
 //
 // See %struct-base.h for what a "Base" means in this context.

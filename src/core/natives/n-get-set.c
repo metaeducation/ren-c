@@ -71,7 +71,7 @@
 // be applicable to other antiforms also (SPLICE!, maybe?)  But probably too
 // risky to let you do it with ERROR!, and misleading to do it with PACK!.
 //
-static Option(Error*) Trap_Adjust_Lifted_Antiform_For_Tweak(Atom* spare)
+static Option(Error*) Trap_Adjust_Lifted_Antiform_For_Tweak(Value* spare)
 {
     assert(Is_Quasiform(spare));
     if (Heart_Of(spare) == TYPE_FRAME) {  // e.g. (append.series)
@@ -118,7 +118,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     bool picker_was_meta;
 
     Element* location_arg;
-    Value* picker_arg;
+    Stable* picker_arg;
     Element* dual_arg;
 
   proxy_arguments_to_frame_dont_panic_in_this_scope: {
@@ -137,7 +137,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
     picker_arg = Copy_Cell(
         Force_Erase_Cell(Level_Arg(sub, 2)),
-        Data_Stack_At(Value, picker_index)
+        Data_Stack_At(Stable, picker_index)
     );
 
     dual_arg = Init_Dual_Nulled_Pick_Signal(
@@ -205,7 +205,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
     if (Is_Quasiform(SPARE))
         return Error_User("TWEAK* cannot be used on antiforms");
 
-    Atom* spare_location_dual = SPARE;
+    Value* spare_location_dual = SPARE;
 
     require (
       Push_Action(sub, LIB(TWEAK_P), PREFIX_0)
@@ -213,8 +213,8 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
 
     Element* location_arg;
-    Value* picker_arg;
-    Atom* value_arg;
+    Stable* picker_arg;
+    Value* value_arg;
 
   proxy_arguments_to_frame_dont_panic_in_this_scope: {
 
@@ -237,7 +237,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         Data_Stack_At(Element, picker_index)
     );
 
-    value_arg = u_cast(Atom*, Force_Erase_Cell(Level_Arg(sub, 3)));
+    value_arg = u_cast(Value*, Force_Erase_Cell(Level_Arg(sub, 3)));
 
     Push_Level_Erase_Out_If_State_0(SPARE, sub);  // SPARE becomes writeback
 
@@ -366,7 +366,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     bool groups_ok
 ){
-    Value* out = Known_Stable(OUT);
+    Stable* out = Known_Stable(OUT);
 
     assert(LEVEL == TOP_LEVEL);
     possibly(Get_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION));
@@ -382,7 +382,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     Flags flags = LEVEL_MASK_NONE;  // reused, top level, no keepalive needed
 
-    Sink(Atom) spare_location_dual = SPARE;
+    Sink(Value) spare_location_dual = SPARE;
 
     StackIndex base = TOP_INDEX;
     StackIndex stackindex_top;
@@ -514,7 +514,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             goto finalize_and_return;
         }
 
-        Value* spare_picker = Decay_If_Unstable(SPARE) except (e) {
+        Stable* spare_picker = Decay_If_Unstable(SPARE) except (e) {
             goto return_error;
         }
 
@@ -635,7 +635,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         }
 
         if (Is_Frame(Known_Stable(SPARE))) {
-            Value* result = rebValue(Known_Stable(SPARE));
+            Api(Stable*) result = rebStable(Known_Stable(SPARE));
             Copy_Cell(SPARE, result);
             Liftify(SPARE);
             rebRelease(result);
@@ -687,7 +687,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     if (e)
         goto return_error;
 
-    Value* spare_writeback_dual = Known_Stable(SPARE);
+    Stable* spare_writeback_dual = Known_Stable(SPARE);
 
     // Subsequent updates become pokes, regardless of initial updater function
 
@@ -702,7 +702,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     }
 
     Assert_Cell_Stable(spare_writeback_dual);
-    Copy_Cell(Data_Stack_At(Atom, TOP_INDEX), spare_writeback_dual);
+    Copy_Cell(Data_Stack_At(Value, TOP_INDEX), spare_writeback_dual);
 
     --stackindex_top;
 
@@ -836,7 +836,7 @@ Result(None) Get_Var_In_Scratch_To_Out(
 // Convenience wrapper for getting tuples that errors on trash.
 //
 Result(None) Get_Tuple_Maybe_Trash(
-    Sink(Value) out,
+    Sink(Stable) out,
     Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* tuple,
     Context* context
@@ -847,7 +847,7 @@ Result(None) Get_Tuple_Maybe_Trash(
         LEVEL_MASK_NONE | FLAG_STATE_BYTE(1) // rule for trampoline
     ));
 
-    Sink(Atom) atom_out = u_cast(Atom*, out);
+    Sink(Value) atom_out = u_cast(Value*, out);
     Push_Level_Erase_Out_If_State_0(atom_out, level_);
 
     heeded (Derelativize(SCRATCH, tuple, context));
@@ -883,7 +883,7 @@ Result(None) Get_Tuple_Maybe_Trash(
 //    on the stack directly.  That avoids making an intermediate action.
 //
 Result(None) Get_Var_Maybe_Trash(
-    Sink(Atom) out,
+    Sink(Value) out,
     Option(Element*) steps_out,  // if NULL, then GROUP!s not legal
     const Element* var,
     Context* context
@@ -894,7 +894,7 @@ Result(None) Get_Var_Maybe_Trash(
     if (Is_Chain(var) or Is_Path(var)) {
         StackIndex base = TOP_INDEX;
 
-        DECLARE_ATOM (safe);
+        DECLARE_VALUE (safe);
         Push_Lifeguard(safe);
 
         Option(Error*) error;
@@ -930,7 +930,7 @@ Result(None) Get_Var_Maybe_Trash(
         assert(Is_Action(Known_Stable(out)));
 
         if (TOP_INDEX != base) {
-            DECLARE_VALUE (action);
+            DECLARE_STABLE (action);
             Move_Cell(action, Known_Stable(out));
             Deactivate_If_Action(action);
 
@@ -978,13 +978,13 @@ Result(None) Get_Var_Maybe_Trash(
 //
 // May generate specializations for paths.  See Get_Var_Maybe_Trash()
 //
-Result(Value*) Get_Var(
-    Sink(Value) out,
+Result(Stable*) Get_Var(
+    Sink(Stable) out,
     Option(Element*) steps_out,  // if nullptr, then GROUP!s not legal
     const Element* var,
     Context* context
 ){
-    Sink(Atom) atom_out = u_cast(Atom*, out);
+    Sink(Value) atom_out = u_cast(Value*, out);
 
     trap (
       Get_Var_Maybe_Trash(atom_out, steps_out, var, context)
@@ -1003,9 +1003,9 @@ Result(Value*) Get_Var(
 //
 //  Get_Chain_Push_Refinements: C
 //
-Result(Value*) Get_Chain_Push_Refinements(
-    Sink(Value) out,
-    Sink(Value) spare,
+Result(Stable*) Get_Chain_Push_Refinements(
+    Sink(Stable) out,
+    Sink(Stable) spare,
     const Element* chain,
     Context* context
 ){
@@ -1020,7 +1020,7 @@ Result(Value*) Get_Chain_Push_Refinements(
 
     // The first item must resolve to an action.
 
-    Atom* atom_out = u_cast(Atom*, out);
+    Value* atom_out = u_cast(Value*, out);
 
     if (Is_Group(head)) {  // historical Rebol didn't allow group at head
         if (Eval_Value_Throws(atom_out, head, derived))
@@ -1145,7 +1145,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
         assert(not Is_Space(at));  // two blanks would be `/` as WORD!
     }
 
-    Sink(Value) spare_left = SPARE;
+    Sink(Stable) spare_left = SPARE;
     if (Is_Group(at)) {
         if (Eval_Value_Throws(SPARE, at, binding)) {
             e = Error_No_Catch_For_Throw(TOP_LEVEL);
@@ -1174,7 +1174,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
             goto return_error;
         }
         Get_Chain_Push_Refinements(
-            u_cast(Init(Value), OUT),
+            u_cast(Init(Stable), OUT),
             SPARE,
             cast(Element*, at),
             Derive_Binding(binding, at)
@@ -1211,7 +1211,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
   handle_context_on_left_of_at: {
 
     if (Is_Chain(at)) {  // lib/append:dup
-        Sink(Value) out = OUT;
+        Sink(Stable) out = OUT;
 
         Get_Chain_Push_Refinements(
             out,
@@ -1252,7 +1252,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
 
 }} ensure_out_is_action: { ///////////////////////////////////////////////////
 
-    Value* out = Known_Stable(OUT);
+    Stable* out = Known_Stable(OUT);
 
     if (Is_Action(out))
         goto return_success;
@@ -1304,7 +1304,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
 //  Get_Any_Word_Maybe_Trash: C
 //
 Result(None) Get_Any_Word_Maybe_Trash(
-    Sink(Atom) out,
+    Sink(Value) out,
     const Element* word,  // heeds Sigil (^WORD! will UNLIFT)
     Context* context
 ){
@@ -1329,14 +1329,14 @@ Result(None) Get_Any_Word_Maybe_Trash(
 //
 //  Get_Word: C
 //
-Result(Value*) Get_Word(
-    Sink(Value) out,
+Result(Stable*) Get_Word(
+    Sink(Stable) out,
     const Element* word,
     Context* context
 ){
     assert(Is_Word(word));  // no sigil, can't give back unstable form
 
-    Sink(Atom) atom_out = u_cast(Atom*, out);
+    Sink(Value) atom_out = u_cast(Value*, out);
 
     trap (
       Get_Any_Word_Maybe_Trash(atom_out, word, context)
@@ -1378,7 +1378,7 @@ DECLARE_NATIVE(TWEAK)
         ST_TWEAK_TWEAKING  // trampoline rule: OUT must be erased if STATE_0
     };
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
 
     Copy_Cell(OUT, dual);
 
@@ -1412,7 +1412,7 @@ DECLARE_NATIVE(TWEAK)
         return OUT;
 
     require (
-      Value* spare = Decay_If_Unstable(SPARE)
+      Stable* spare = Decay_If_Unstable(SPARE)
     );
 
     if (not (
@@ -1495,7 +1495,7 @@ DECLARE_NATIVE(SET)
     USED(ARG(ANY));
     USED(ARG(GROUPS));
 
-    Atom* dual = Atom_ARG(DUAL);
+    Value* dual = Atom_ARG(DUAL);
     Liftify(dual);
 
     Option(Bounce) b = Irreducible_Bounce(

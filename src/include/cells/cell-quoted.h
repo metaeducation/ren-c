@@ -76,7 +76,7 @@ INLINE Count Quotes_From_Lift_Byte(LiftByte lift_byte) {
     (LIFT_BYTE(Ensure_Readable(cell)) >= ONEQUOTE_NONQUASI_4)
 
 #define Any_Fundamental(v) \
-    (LIFT_BYTE(Ensure_Readable(ensure(Value*, (v)))) == NOQUOTE_2)
+    (LIFT_BYTE(Ensure_Readable(ensure(Stable*, (v)))) == NOQUOTE_2)
 
 
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.
@@ -155,7 +155,7 @@ INLINE Count Noquotify(Element* elem) {
 //    other enum checks from %types.r, C code should prefer Is_Antiform().
 //
 
-INLINE bool Is_Antiform(const Atom* a)
+INLINE bool Is_Antiform(const Value* a)
   { return LIFT_BYTE(Ensure_Readable(a)) == ANTIFORM_1; }
 
 #if CHECK_CELL_SUBCLASSES
@@ -166,7 +166,7 @@ INLINE bool Is_Antiform(const Atom* a)
 
 #undef Any_Antiform  // Is_Antiform() faster than auto-generated macro [1]
 
-INLINE bool Is_Lifted_Antiform(const Atom* a)
+INLINE bool Is_Lifted_Antiform(const Value* a)
   { return LIFT_BYTE(Ensure_Readable(a)) == QUASIFORM_3; }
 
 
@@ -194,7 +194,7 @@ INLINE bool Is_Lifted_Antiform(const Atom* a)
 //    it helps, but branch impact can be counterintuitive sometimes.
 //
 
-INLINE bool Is_Antiform_Unstable(const Atom* a) {
+INLINE bool Is_Antiform_Unstable(const Value* a) {
     unnecessary(Ensure_Readable(a));  // assume Is_Antiform() checked readable
     assert(LIFT_BYTE(a) == ANTIFORM_1);
     impossible(0 != (a->header.bits & CELL_MASK_SIGIL));  // kind = heart [1]
@@ -208,8 +208,8 @@ INLINE bool Is_Antiform_Unstable(const Atom* a) {
 #define Is_Antiform_Stable(a) \
     (not Is_Antiform_Unstable(a))
 
-INLINE bool Not_Cell_Stable(Need(const Atom*) a) {
-    possibly(not Is_Antiform(a));  // this is a general check for any Atom
+INLINE bool Not_Cell_Stable(Need(const Value*) a) {
+    possibly(not Is_Antiform(a));  // this is a general check for any Value
 
     Assert_Cell_Readable(a);
     assert(LIFT_BYTE_RAW(a) != DUAL_0);
@@ -236,16 +236,24 @@ INLINE bool Not_Cell_Stable(Need(const Atom*) a) {
 
 #if NO_RUNTIME_CHECKS
     #define Assert_Cell_Stable(c)  NOOP
-    #define Known_Stable(a)  u_cast(Value*, (a))
+    #define Known_Stable(a)  u_cast(Stable*, (a))
 #else
     #define Assert_Cell_Stable(c) \
-        assert(Is_Cell_Stable(cast(const Atom*, (c))));
+        assert(Is_Cell_Stable(cast(const Value*, (c))));
 
-    INLINE Value* Known_Stable(Atom* atom) {
-        assert(Is_Cell_Stable(atom));
-        return u_cast(Value*, atom);
+    MUTABLE_IF_C(Stable*, INLINE) Known_Stable(CONST_IF_C(Value*) v_) {
+        CONSTABLE(Value*) v = m_cast(Value*, v_);
+        assert(Is_Cell_Stable(v));
+        return u_cast(Stable*, v);
     }
 #endif
+
+MUTABLE_IF_C(Result(Stable*), INLINE) Ensure_Stable(CONST_IF_C(Value*) v_) {
+    CONSTABLE(Value*) v = m_cast(Value*, v_);
+    if (Not_Cell_Stable(v))
+        return fail ("Value is an unstable antiform");
+    return u_cast(Stable*, v);
+}
 
 
 //=//// ENSURE THINGS ARE ELEMENTS ////////////////////////////////////////=//
@@ -255,8 +263,8 @@ INLINE bool Not_Cell_Stable(Need(const Atom*) a) {
 // Ensure_Element() when you are not sure and want to panic if not.
 //
 
-MUTABLE_IF_C(Option(Element*), INLINE) As_Element(CONST_IF_C(Value*) v_) {
-    CONSTABLE(Value*) v = m_cast(Value*, Ensure_Readable(v_));
+MUTABLE_IF_C(Option(Element*), INLINE) As_Element(CONST_IF_C(Stable*) v_) {
+    CONSTABLE(Stable*) v = m_cast(Stable*, Ensure_Readable(v_));
     if (Is_Antiform(v))
         return nullptr;
     return u_cast(Element*, v);
@@ -266,15 +274,15 @@ MUTABLE_IF_C(Option(Element*), INLINE) As_Element(CONST_IF_C(Value*) v_) {
     #define Known_Element(cell) \
         cast(Element*, (cell))
 #else
-    MUTABLE_IF_C(Element*, INLINE) Known_Element(CONST_IF_C(Atom*) cell) {
-        CONSTABLE(Atom*) a = m_cast(Atom*, cell);
+    MUTABLE_IF_C(Element*, INLINE) Known_Element(CONST_IF_C(Value*) cell) {
+        CONSTABLE(Value*) a = m_cast(Value*, cell);
         assert(LIFT_BYTE(a) != ANTIFORM_1);
         return cast(Element*, a);
     }
 #endif
 
-MUTABLE_IF_C(Element*, INLINE) Ensure_Element(CONST_IF_C(Atom*) cell) {
-    CONSTABLE(Atom*) a = m_cast(Atom*, cell);
+MUTABLE_IF_C(Element*, INLINE) Ensure_Element(CONST_IF_C(Value*) cell) {
+    CONSTABLE(Value*) a = m_cast(Value*, cell);
     if (LIFT_BYTE(a) == ANTIFORM_1)
         panic (Error_Bad_Antiform(a));
     return cast(Element*, a);
@@ -295,7 +303,7 @@ MUTABLE_IF_C(Element*, INLINE) Ensure_Element(CONST_IF_C(Atom*) cell) {
 //   operations in the ^META domain to easily use functions like ALL and ANY
 //   on the lifted values.  (See the FOR-BOTH example.)
 
-INLINE Result(Atom*) Coerce_To_Antiform(Need(Atom*) atom);
+INLINE Result(Value*) Coerce_To_Antiform(Need(Value*) atom);
 INLINE Result(Element*) Coerce_To_Quasiform(Need(Element*) v);
 
 #define Is_Quasiform(v) \
@@ -314,7 +322,7 @@ INLINE Element* Quasify_Isotopic_Fundamental(Element* elem) {
     return elem;
 }
 
-INLINE Value* Stably_Antiformize_Unbound_Fundamental(Need(Value*) v) {
+INLINE Stable* Stably_Antiformize_Unbound_Fundamental(Need(Stable*) v) {
     assert(Any_Isotopic(v));
     assert(LIFT_BYTE(v) == NOQUOTE_2);
     assert(Is_Stable_Antiform_Kind_Byte(KIND_BYTE(v)));
@@ -324,7 +332,7 @@ INLINE Value* Stably_Antiformize_Unbound_Fundamental(Need(Value*) v) {
     return v;
 }
 
-INLINE Atom* Unstably_Antiformize_Unbound_Fundamental(Need(Atom*) atom) {
+INLINE Value* Unstably_Antiformize_Unbound_Fundamental(Need(Value*) atom) {
     assert(Any_Isotopic(atom));
     assert(LIFT_BYTE(atom) == NOQUOTE_2);
     assert(not Is_Stable_Antiform_Kind_Byte(KIND_BYTE(atom)));
@@ -334,13 +342,13 @@ INLINE Atom* Unstably_Antiformize_Unbound_Fundamental(Need(Atom*) atom) {
     return atom;
 }
 
-INLINE Element* Quasify_Antiform(Need(Value*) v) {
+INLINE Element* Quasify_Antiform(Need(Stable*) v) {
     assert(Is_Antiform(v));
     LIFT_BYTE_RAW(v) = QUASIFORM_3;  // all antiforms can be quasi
     return u_cast(Element*, v);
 }
 
-INLINE Element* Reify(Atom* v) {
+INLINE Element* Reify(Value* v) {
     if (LIFT_BYTE(v) == ANTIFORM_1)
         LIFT_BYTE_RAW(v) = QUASIFORM_3;  // all antiforms can be quasi
     return cast(Element*, v);
@@ -367,7 +375,7 @@ INLINE Element* Reify(Atom* v) {
 #define Not_Lifted(v) \
     (LIFT_BYTE(Ensure_Readable(v)) < QUASIFORM_3)  // anti or fundamental
 
-INLINE Element* Liftify(Atom* atom) {
+INLINE Element* Liftify(Value* atom) {
     if (LIFT_BYTE_RAW(atom) == ANTIFORM_1) {
         LIFT_BYTE_RAW(atom) = QUASIFORM_3;  // anti means quasi valid
         return cast(Element*, atom);
@@ -375,7 +383,7 @@ INLINE Element* Liftify(Atom* atom) {
     return Quotify(cast(Element*, atom));  // a non-antiform winds up quoted
 }
 
-INLINE Result(Atom*) Unliftify_Undecayed(Need(Atom*) atom) {
+INLINE Result(Value*) Unliftify_Undecayed(Need(Value*) atom) {
     if (LIFT_BYTE_RAW(atom) == QUASIFORM_3) {
         trap (
           Coerce_To_Antiform(atom)
@@ -385,9 +393,9 @@ INLINE Result(Atom*) Unliftify_Undecayed(Need(Atom*) atom) {
     return Unquotify(cast(Element*, atom));  // asserts that it's quoted
 }
 
-INLINE Value* Unliftify_Known_Stable(Need(Value*) val) {
+INLINE Stable* Unliftify_Known_Stable(Need(Stable*) val) {
     assume (
-      Unliftify_Undecayed(cast(Atom*, val))
+      Unliftify_Undecayed(cast(Value*, val))
     );
     Assert_Cell_Stable(val);
     return val;

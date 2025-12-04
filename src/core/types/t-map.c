@@ -107,7 +107,7 @@ Result(Map*) Make_Map(REBLEN capacity)
 REBINT Find_Key_Hashed(
     Array* array,  // not always a pairlist, may group by amounts other than 2
     HashList* hashlist,
-    const Value* key,  // !!! assumes ++key finds the values
+    const Stable* key,  // !!! assumes ++key finds the values
     REBLEN wide,  // how much to group by (2 for MAP! and PairList arrays)
     bool strict,
     Byte mode
@@ -144,7 +144,7 @@ REBINT Find_Key_Hashed(
 
     REBLEN n;
     while ((n = indexes[slot]) != 0) {
-        Value* k = Flex_At(Value, array, (n - 1) * wide); // stored key
+        Stable* k = Flex_At(Stable, array, (n - 1) * wide); // stored key
 
         attempt {
             require (
@@ -190,13 +190,13 @@ REBINT Find_Key_Hashed(
         assert(mode == 0);
         slot = zombie_slot;
         Copy_Cell(
-            u_cast(Value*, Array_At(array, (indexes[slot] - 1) * wide)),
+            u_cast(Stable*, Array_At(array, (indexes[slot] - 1) * wide)),
             key
         );
     }
 
     if (mode > 1) { // append new value to the target array
-        const Value* src = key;
+        const Stable* src = key;
         indexes[slot] = (Array_Len(array) / wide) + 1;
 
         REBLEN index;
@@ -224,7 +224,7 @@ void Rehash_Map(Map* map)
     REBLEN *hashes = Flex_Head(REBLEN, hashlist);
     PairList* pairlist = MAP_PAIRLIST(map);
 
-    Value* key = Array_Head(pairlist);
+    Stable* key = Array_Head(pairlist);
     REBLEN n;
 
     for (n = 0; n < Array_Len(pairlist); n += 2, key += 2) {
@@ -280,7 +280,7 @@ void Expand_Hashlist(HashList* hashlist)
 //
 Option(Index) Find_Map_Entry(
     Map* map,
-    const Value* key,
+    const Stable* key,
     bool strict
 ) {
     HashList* hashlist = MAP_HASHLIST(map);
@@ -316,8 +316,8 @@ Option(Index) Find_Map_Entry(
 //
 Option(Index) Update_Map_Entry(
     Map* map,
-    const Value* key,
-    Option(const Value*) val,  // nullptr (not nulled cell) is remove
+    const Stable* key,
+    Option(const Stable*) val,  // nullptr (not nulled cell) is remove
     bool strict
 ){
     Force_Value_Frozen_Deep_Blame(key, MAP_PAIRLIST(map));  // freeze [1]
@@ -340,7 +340,7 @@ Option(Index) Update_Map_Entry(
     REBLEN n = indexes[slot];
 
     if (n) {  // found, must set or overwrite the value
-        Value* at = Flex_At(Value, pairlist, ((n - 1) * 2) + 1);
+        Stable* at = Flex_At(Stable, pairlist, ((n - 1) * 2) + 1);
         if (not val)  // remove
             Init_Zombie(at);
         else
@@ -468,7 +468,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
         goto reduce_key;  // try again...
 
     require (
-      Value* key = Decay_If_Unstable(SPARE)
+      Stable* key = Decay_If_Unstable(SPARE)
     );
     if (Is_Nulled(key) or Is_Trash(key))
         panic ("Null or trash can't be used as key in MAP!");
@@ -492,7 +492,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
         goto reduce_value;  // try again...
 
     require (
-      Value* val = Decay_If_Unstable(SPARE)
+      Stable* val = Decay_If_Unstable(SPARE)
     );
     if (Is_Nulled(val) or Is_Trash(val))
         panic ("Null or trash can't be used as value in MAP!");
@@ -562,11 +562,11 @@ INLINE Result(Map*) Copy_Map(const Map* map, bool deeply) {
     assert(Array_Len(copy) % 2 == 0); // should be [key value key value]...
 
     const Cell* tail = Array_Tail(copy);
-    Value* key = Array_Head(copy);  // keys/vals specified
+    Stable* key = Array_Head(copy);  // keys/vals specified
     for (; key != tail; key += 2) {
         assert(Is_Value_Frozen_Deep(key));  // immutable key
 
-        Value* v = key + 1;
+        Stable* v = key + 1;
         assert(v != tail);
         if (Is_Zombie(v))
             continue;
@@ -634,8 +634,8 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
 
   count_entries: {
 
-    const Value* mval_tail = Flex_Tail(Value, MAP_PAIRLIST(map));
-    const Value* mval = Flex_Head(Value, MAP_PAIRLIST(map));
+    const Stable* mval_tail = Flex_Tail(Stable, MAP_PAIRLIST(map));
+    const Stable* mval = Flex_Head(Stable, MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Zombie(mval + 1))
             ++count;
@@ -647,8 +647,8 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
 
     VarList* c = Alloc_Varlist(TYPE_OBJECT, count);
 
-    const Value* mval_tail = Flex_Tail(Value, MAP_PAIRLIST(map));
-    const Value* mval = Flex_Head(Value, MAP_PAIRLIST(map));
+    const Stable* mval_tail = Flex_Tail(Stable, MAP_PAIRLIST(map));
+    const Stable* mval = Flex_Head(Stable, MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Zombie(mval + 1)) {
@@ -691,8 +691,8 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
     //
     mo->indent++;
 
-    const Value* tail = Flex_Tail(Value, MAP_PAIRLIST(m));
-    const Value* key = Flex_Head(Value, MAP_PAIRLIST(m));
+    const Stable* tail = Flex_Tail(Stable, MAP_PAIRLIST(m));
+    const Stable* key = Flex_Head(Stable, MAP_PAIRLIST(m));
     for (; key != tail; key += 2) {  // note value slot must not be END
         assert(key + 1 != tail);
         if (Is_Zombie(key + 1))
@@ -869,14 +869,14 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
 
     Element* map = Element_ARG(LOCATION);
 
-    const Value* picker = ARG(PICKER);
+    const Stable* picker = ARG(PICKER);
     assert(not Is_Keyword(picker) and not Is_Trash(picker));
 
     bool strict = false;  // case-preserving [1]
 
-    Option(Value*) poke;
+    Option(Stable*) poke;
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;

@@ -69,7 +69,7 @@ INLINE void Tweak_Handle_Cleaner(
 }
 
 
-INLINE bool Is_Handle_Cfunc(const Value* v) {
+INLINE bool Is_Handle_Cfunc(const Stable* v) {
     assert(Unchecked_Heart_Of(v) == TYPE_HANDLE);
     return CELL_HANDLE_LENGTH_U(v) == 0;
 }
@@ -87,21 +87,21 @@ MUTABLE_IF_C(Cell*, INLINE) Extract_Cell_Handle_Canon(CONST_IF_C(Cell*) cell)
     );
 }
 
-INLINE uintptr_t Cell_Handle_Len(const Value* v) {
+INLINE uintptr_t Cell_Handle_Len(const Stable* v) {
     assert(not Is_Handle_Cfunc(v));
     const Cell* canon = Extract_Cell_Handle_Canon(v);
     assert(Get_Cell_Flag(canon, DONT_MARK_PAYLOAD_2));
     return CELL_HANDLE_LENGTH_U(canon);
 }
 
-INLINE void* Cell_Handle_Void_Pointer(const Value* v) {
+INLINE void* Cell_Handle_Void_Pointer(const Stable* v) {
     assert(not Is_Handle_Cfunc(v));
     const Cell* canon = Extract_Cell_Handle_Canon(v);
     assert(Get_Cell_Flag(canon, DONT_MARK_PAYLOAD_2));
     return CELL_HANDLE_CDATA_P(canon);
 }
 
-INLINE const Base* Cell_Handle_Base(const Value* v) {
+INLINE const Base* Cell_Handle_Base(const Stable* v) {
     assert(not Is_Handle_Cfunc(v));
     const Cell* canon = Extract_Cell_Handle_Canon(v);
     assert(Not_Cell_Flag(canon, DONT_MARK_PAYLOAD_2));
@@ -111,12 +111,12 @@ INLINE const Base* Cell_Handle_Base(const Value* v) {
 #define Cell_Handle_Pointer(T, v) \
     cast(T*, Cell_Handle_Void_Pointer(v))
 
-INLINE CFunction* Cell_Handle_Cfunc(const Value* v) {
+INLINE CFunction* Cell_Handle_Cfunc(const Stable* v) {
     assert(Is_Handle_Cfunc(v));
     return CELL_HANDLE_CFUNC_P(Extract_Cell_Handle_Canon(v));
 }
 
-INLINE Option(HandleCleaner*) Cell_Handle_Cleaner(const Value* v) {
+INLINE Option(HandleCleaner*) Cell_Handle_Cleaner(const Stable* v) {
     assert(Unchecked_Heart_Of(v) == TYPE_HANDLE);
     if (not Cell_Payload_1_Needs_Mark(v))
         return nullptr;
@@ -124,16 +124,16 @@ INLINE Option(HandleCleaner*) Cell_Handle_Cleaner(const Value* v) {
     return Handle_Cleaner(stub);
 }
 
-INLINE void Tweak_Handle_Len(Value* v, uintptr_t length)
+INLINE void Tweak_Handle_Len(Stable* v, uintptr_t length)
   { CELL_HANDLE_LENGTH_U(Extract_Cell_Handle_Canon(v)) = length; }
 
-INLINE void Tweak_Handle_Cdata(Value* v, void *cdata) {
+INLINE void Tweak_Handle_Cdata(Stable* v, void *cdata) {
     Cell* canon = Extract_Cell_Handle_Canon(v);
     assert(CELL_HANDLE_LENGTH_U(canon) != 0);
     CELL_HANDLE_CDATA_P(canon) = cdata;
 }
 
-INLINE void Tweak_Handle_Cfunc(Value* v, CFunction* cfunc) {
+INLINE void Tweak_Handle_Cfunc(Stable* v, CFunction* cfunc) {
     assert(Is_Handle_Cfunc(v));
     Cell* canon = Extract_Cell_Handle_Canon(v);
     assert(CELL_HANDLE_LENGTH_U(canon) == 0);

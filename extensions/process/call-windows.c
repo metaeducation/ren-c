@@ -73,7 +73,7 @@ static bool Try_Init_Startupinfo_Sink(
     Sink(HANDLE) hwrite,  // set to match hsink unless it doesn't need closing
     Sink(HANDLE) hread,  // write may have read side if pipe captures variables
     DWORD std_handle_id,  // e.g. STD_OUTPUT_HANDLE, STD_ERROR_HANDLE
-    const Value* arg  // argument e.g. :OUTPUT or :ERROR for behavior
+    const Stable* arg  // argument e.g. :OUTPUT or :ERROR for behavior
 ){
     SECURITY_ATTRIBUTES sa;
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -252,7 +252,7 @@ Bounce Call_Core(Level* level_) {
         //
         // https://github.com/rebol/rebol-issues/issues/2225
 
-        Value* text = rebValue("argv-block-to-command*", ARG(COMMAND));
+        Api(Stable*) text = rebStable("argv-block-to-command*", ARG(COMMAND));
         Copy_Cell(ARG(COMMAND), text);
         rebRelease(text);
         goto text_command;

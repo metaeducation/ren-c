@@ -50,8 +50,8 @@
 //
 Result(None) Prep_Action_Level(
     Level* L,
-    const Value* action,
-    Option(const Atom*) with
+    const Stable* action,
+    Option(const Value*) with
 ){
     trap (
       Push_Action(L, action, PREFIX_0)
@@ -59,7 +59,7 @@ Result(None) Prep_Action_Level(
 
     const Key* key = L->u.action.key;
     const Param* param = L->u.action.param;
-    Atom* arg = L->u.action.arg;
+    Value* arg = L->u.action.arg;
     for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
         if (Is_Specialized(param))
             Blit_Param_Drop_Mark(arg, param);
@@ -95,10 +95,10 @@ Result(None) Prep_Action_Level(
 //  Push_Frame_Continuation: C
 //
 void Push_Frame_Continuation(
-    Init(Atom) out,
+    Init(Value) out,
     Flags flags,
-    const Value* frame,  // may be antiform
-    Option(const Atom*) with
+    const Stable* frame,  // may be antiform
+    Option(const Value*) with
 ){
     require (
       Level* L = Make_End_Level(
@@ -123,17 +123,17 @@ void Push_Frame_Continuation(
 //    kinds of types branching permits.
 //
 bool Pushed_Continuation(
-    Need(Atom*) out,  // not Sink (would corrupt, but with can be same as out)
+    Need(Value*) out,  // not Sink (would corrupt, but with can be same as out)
     Flags flags,  // LEVEL_FLAG_FORCE_HEAVY_NULLS, etc. for pushed levels
     Context* binding,  // before branch forces non-empty variadic call
-    const Value* branch,  // *cannot* be the same as out
-    Option(const Atom*) with  // can be same as out or not GC-safe, may copy
+    const Stable* branch,  // *cannot* be the same as out
+    Option(const Value*) with  // can be same as out or not GC-safe, may copy
 ){
-    assert(u_cast(const Atom*, branch) != out);
+    assert(u_cast(const Value*, branch) != out);
     assert(
         not with
         or (unwrap with) == out
-        or not Is_Atom_Api_Value(unwrap with)
+        or not Is_Api_Value(unwrap with)
     );
 
     if (Is_Action(branch))  // antiform frames are legal
@@ -225,7 +225,7 @@ bool Pushed_Continuation(
 
         const Key* key = L->u.action.key;
         const Param* param = L->u.action.param;
-        Atom* arg = L->u.action.arg;
+        Value* arg = L->u.action.arg;
         for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
             if (Is_Specialized(param))
                 Blit_Param_Drop_Mark(arg, param);

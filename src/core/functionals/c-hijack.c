@@ -101,7 +101,7 @@ enum {
 //     mfoo: func [a :b c] [...]  =>  bar: func [:b d e] [...]
 //                     foo:b 1 2  =>  bar:b 1 2
 //
-void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
+void Push_Redo_Action_Level(Value* out, Level* L1, const Stable* run)
 {
     Source* normals = Make_Source(Level_Num_Args(L1));  // max, e.g. no refines
 
@@ -185,7 +185,7 @@ Bounce Unimplemented_Dispatcher(Level* const L)
 //  Unimplemented_Details_Querier: C
 //
 bool Unimplemented_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -211,7 +211,7 @@ Bounce Hijacker_Dispatcher(Level* const L)
 
     Details* details = Ensure_Level_Details(L);
 
-    Value* hijacker_frame = Details_At(details, IDX_HIJACKER_FRAME);
+    Stable* hijacker_frame = Details_At(details, IDX_HIJACKER_FRAME);
 
     Phase* hijacker = Frame_Phase(hijacker_frame);
     Option(VarList*) hijacker_coupling = Frame_Coupling(hijacker_frame);
@@ -250,14 +250,14 @@ Bounce Hijacker_Dispatcher(Level* const L)
 // content, like (comment "this is a hijacking!")
 //
 bool Hijacker_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Hijacker_Dispatcher);
     assert(Details_Max(details) == MAX_IDX_HIJACKER);
 
-    Value* hijacker = Details_At(details, IDX_HIJACKER_FRAME);
+    Stable* hijacker = Details_At(details, IDX_HIJACKER_FRAME);
 
     Details* hijacker_details = Phase_Details(Frame_Phase(hijacker));
     DetailsQuerier* querier = Details_Querier(hijacker_details);
@@ -356,7 +356,7 @@ DECLARE_NATIVE(HIJACK)
     assert(CELL_FRAME_PAYLOAD_1_PHASE(victim_archetype) == victim);
     CELL_FRAME_PAYLOAD_1_PHASE(victim_archetype) = proxy;  // adjust for swap
 
-    Value* out;
+    Stable* out;
 
     if (victim_unimplemented) {
         assert(Get_Cell_Flag(LIB(UNIMPLEMENTED), PROTECTED));

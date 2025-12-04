@@ -113,7 +113,7 @@ Bounce Arrow_Dispatcher(Level* const L)
 //  Arrow_Details_Querier: C
 //
 bool Arrow_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){

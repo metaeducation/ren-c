@@ -26,7 +26,7 @@
 // the cast.  While this doesn't seem too profound since attempts to read
 // the Cell would trigger failures anyway even without the casts...it does
 // help with locality.  Also makes sure that locations are accurately labeled
-// as to whether they have a valid Element/Value/Atom or are Sink()/Init().
+// as to whether they have a valid Element/Value/Value or are Sink()/Init().
 //
 // Another big benefit is that casts to Element can enusre that no antiforms
 // are in the cell, and casts to Value don't hold unstable antiforms.  This
@@ -52,17 +52,17 @@
 // conversions from these types.
 //
 DECLARE_C_TYPE_LIST(g_convertible_to_cell,
-    Cell, Atom, Element, Value, Slot,
+    Cell, Slot, Value, Stable, Element,
     Pairing,  // same size as Stub, holds two Cells
     char,  // some memory blobs use char* for debuggers to read UTF-8 easier
     Base, Byte, void
 );
 
 
-//=//// cast(Atom*, ...) //////////////////////////////////////////////////=//
+//=//// cast(Value*, ...) //////////////////////////////////////////////////=//
 
 template<typename F>  // [A]
-struct CastHook<const F*, const Atom*> {  // both must be const [B]
+struct CastHook<const F*, const Value*> {  // both must be const [B]
   static void Validate_Bits(const F* p) {
     STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
 
@@ -73,10 +73,10 @@ struct CastHook<const F*, const Atom*> {  // both must be const [B]
 };
 
 
-//=//// cast(Value*, ...) //////////////////////////////////////////////////=//
+//=//// cast(Stable*, ...) //////////////////////////////////////////////////=//
 
 template<typename F>  // [A]
-struct CastHook<const F*, const Value*> {  // both must be const [B]
+struct CastHook<const F*, const Stable*> {  // both must be const [B]
   static void Validate_Bits(const F* p) {
     STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
 

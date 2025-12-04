@@ -86,12 +86,12 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
         // system.standard.port is made with CONTEXT and not with MAKE PORT!
         //
         VarList* context = Copy_Varlist_Shallow_Managed(Cell_Varlist(arg));
-        Value* rootvar = Rootvar_Of_Varlist(context);
+        Stable* rootvar = Rootvar_Of_Varlist(context);
         KIND_BYTE(rootvar) = TYPE_PORT;
         return Init_Port(OUT, context);
     }
 
-    Sink(Value) out = OUT;
+    Sink(Stable) out = OUT;
     if (rebRunThrows(
         out,  // <-- output cell
         "sys.util/make-port*", rebQ(arg)
@@ -136,7 +136,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 
     VarList* ctx = Cell_Varlist(port);
 
-    Sink(Value) spare_actor = SPARE;
+    Sink(Stable) spare_actor = SPARE;
 
     require (
       Read_Slot(
@@ -174,7 +174,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         Known_Element(spare_actor), verb, strict
     );
 
-    Sink(Value) scratch_action = SCRATCH;
+    Sink(Stable) scratch_action = SCRATCH;
     if (not index)
         Init_Nulled(scratch_action);
     else {
@@ -210,7 +210,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         UNUSED(PARAM(SEEK));
 
         trap (
-          Value* out = Decay_If_Unstable(OUT)
+          Stable* out = Decay_If_Unstable(OUT)
         );
 
         if (Is_Nulled(out))
@@ -289,7 +289,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Url)
         panic ("URL! must be used with IO annotation if intentional");
     }
 
-    Value* port = rebValue("make port!", url);
+    Api(Stable*) port = rebStable("make port!", url);
     assert(Is_Port(port));
 
     // The frame was built for the verb we want to apply, so tweak it so that
@@ -319,19 +319,19 @@ IMPLEMENT_GENERIC(TO, Url)
 //
 //  Get_Port_Path_From_Spec: C
 //
-// Previously the FileReq would store a pointer to a Value* that was the path,
+// Previously the FileReq would store a pointer to a Stable* that was the path,
 // which was assumed to live in the spec somewhere.  Object Slots are now
 // abstracted, so you don't use direct pointers like that.  Instead this
 // reads the path from the port spec each time its needed...which should
 // still work because it was extracted and assigned once anyway.
 //
-Result(Option(Value*)) Get_Port_Path_From_Spec(
-    Sink(Value) out,
-    const Value* port
+Result(Option(Stable*)) Get_Port_Path_From_Spec(
+    Sink(Stable) out,
+    const Stable* port
 ){
     VarList* ctx = Cell_Varlist(port);
 
-    DECLARE_VALUE (spec);
+    DECLARE_STABLE (spec);
     require (
       Read_Slot(spec, Varlist_Slot(ctx, STD_PORT_SPEC))
     );

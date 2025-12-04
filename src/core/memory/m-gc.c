@@ -457,7 +457,7 @@ static void Propagate_All_GC_Marks(void)
                 if (flavor < MIN_FLAVOR_ANTIFORMS_OK)
                     crash (v);  // antiforms not legal in many array types
 
-                dont(assert(not Is_Antiform_Unstable(cast(Atom*, v))));
+                dont(assert(not Is_Antiform_Unstable(cast(Value*, v))));
             }
           #endif
 
@@ -475,7 +475,7 @@ static void Propagate_All_GC_Marks(void)
 //  Reify_Variadic_Feed_As_Array_Feed: C
 //
 // For performance and memory usage reasons, a variadic C function call that
-// wants to invoke the evaluator with just a comma-delimited list of Value*
+// wants to invoke the evaluator with just a comma-delimited list of Stable*
 // does not need to make an Array to hold them.  Fetch_Next_In_Feed() is
 // written to use the va_list traversal as an alternative.
 //
@@ -669,16 +669,16 @@ static void Mark_Root_Stubs(void)
 //
 static void Mark_Data_Stack(void)
 {
-    const Value* head = Flex_Head(Value, g_ds.array);  // unstable allowed
+    const Stable* head = Flex_Head(Stable, g_ds.array);  // unstable allowed
     assert(Is_Cell_Poisoned(head));  // Data_Stack_At(0) deliberately invalid
 
-    Value* stackval = g_ds.movable_top;
+    Stable* stackval = g_ds.movable_top;
     for (; stackval != head; --stackval)  // stop before Data_Stack_At(0)
         Queue_Mark_Cell_Deep(stackval);
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
     stackval = g_ds.movable_top + 1;
-    for (; stackval != Flex_Tail(Value, g_ds.array); ++stackval)
+    for (; stackval != Flex_Tail(Stable, g_ds.array); ++stackval)
         assert(Is_Cell_Poisoned(stackval));
   #endif
 
@@ -695,7 +695,7 @@ static void Mark_Data_Stack(void)
 // 1. For efficiency, the system allows ranges of places that cells will be
 //    put to be memset() to 0.  The Init_XXX() routines will then make sure
 //    the BASE_FLAG_BASE and BASE_FLAG_CELL are OR'd onto it.  If you GC Guard
-//    a cell made with DECLARE_ATOM()/DECLARE_VALUE()/DECLARE_ELEMENT() it
+//    a cell made with DECLARE_VALUE()/DECLARE_STABLE()/DECLARE_ELEMENT() it
 //    will be in the erased state, and even if you put the NODE and CELL
 //    bits on it, the evaluator may transitionally Erase_Cell() on it.
 //
@@ -849,7 +849,7 @@ static void Mark_Level(Level* L) {
         key_tail = L->u.action.key + 1;  // don't mark uninitialized bits [3]
     }
 
-    Atom* arg = Level_Args_Head(L);
+    Value* arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg) {  // key_tail may be truncated [3]
         if (Is_Cell_Erased(arg)) {
             assert(

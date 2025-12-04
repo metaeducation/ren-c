@@ -52,17 +52,20 @@ DECLARE_NATIVE(NOW)
 {
     INCLUDE_PARAMS_OF_NOW;
 
-    RebolValue* timestamp = Get_Current_Datetime_Value();
+    Value* timestamp = Get_Current_Datetime_Value();
+    Copy_Cell(OUT, timestamp);
+    rebRelease(timestamp);
+
+    trap (
+        Stable* out = Decay_If_Unstable(OUT)
+    );
 
     // However OS-level date and time is plugged into the system, it needs to
     // have enough granularity to give back date, time, and time zone.
-    //
-    assert(Is_Date(timestamp));
-    assert(Does_Date_Have_Time(timestamp));
-    assert(Does_Date_Have_Zone(timestamp));
 
-    Value* out = Copy_Cell(OUT, timestamp);
-    rebRelease(timestamp);
+    assert(Is_Date(out));
+    assert(Does_Date_Have_Time(out));
+    assert(Does_Date_Have_Zone(out));
 
     if (not Bool_ARG(PRECISE)) {
         //

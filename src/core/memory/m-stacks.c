@@ -49,7 +49,7 @@ void Startup_Data_Stack(Length capacity)
     g_ds.movable_tail = Array_Tail(g_ds.array);  // signals PUSH() out of space
 
     g_ds.index = 1;
-    g_ds.movable_top = Flex_At(Value, g_ds.array, g_ds.index);
+    g_ds.movable_top = Flex_At(Stable, g_ds.array, g_ds.index);
 
 } expand_stack: { ////////////////////////////////////////////////////////////
 
@@ -115,7 +115,7 @@ void Shutdown_Feeds(void) {
 //
 // WARNING: This will invalidate any extant pointers to REBVALs living in
 // the stack.  It is for this reason that stack access should be done by
-// StackIndex "data stack indices" and not by Value* across *any* operation
+// StackIndex "data stack indices" and not by Stable* across *any* operation
 // which could do a push or pop.  (Currently stable w.r.t. pop but there may
 // be compaction at some point.)
 //
@@ -128,9 +128,9 @@ void Expand_Data_Stack_May_Panic(REBLEN amount)
     REBLEN len_old = Array_Len(g_ds.array);
 
     assert(len_old == g_ds.index);  // only request expansion when tail hit
-    assert(g_ds.movable_top == Flex_Tail(Value, g_ds.array));
+    assert(g_ds.movable_top == Flex_Tail(Stable, g_ds.array));
     assert(
-        g_ds.movable_top - Flex_Head(Value, g_ds.array)
+        g_ds.movable_top - Flex_Head(Stable, g_ds.array)
         == cast(int, len_old)
     );
 
@@ -143,20 +143,20 @@ void Expand_Data_Stack_May_Panic(REBLEN amount)
     require (
       Extend_Flex_If_Necessary_But_Dont_Change_Used(g_ds.array, amount)
     );
-    g_ds.movable_top = Flex_At(Value, g_ds.array, g_ds.index);  // needs update
+    g_ds.movable_top = Flex_At(Stable, g_ds.array, g_ds.index);  // needs update
 
     REBLEN len_new = len_old + amount;
     Set_Flex_Len(g_ds.array, len_new);
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
-    Value* poison = g_ds.movable_top;
+    Stable* poison = g_ds.movable_top;
     REBLEN n;
     for (n = len_old; n < len_new; ++n, ++poison)
         Force_Poison_Cell(poison);
-    assert(poison == Flex_Tail(Value, g_ds.array));
+    assert(poison == Flex_Tail(Stable, g_ds.array));
   #endif
 
-    g_ds.movable_tail = Flex_Tail(Value, g_ds.array);  // next expansion point
+    g_ds.movable_tail = Flex_Tail(Stable, g_ds.array);  // next expansion point
 }
 
 
@@ -179,8 +179,8 @@ Array* Pop_Stack_Values_Core(Flags flags, StackIndex base) {
     Array* a = Make_Array_Core(flags, len);
     Set_Flex_Len(a, len);
 
-    Value* src = Data_Stack_At(Value, base + 1);  // moving, not const!
-    Value* dest = Flex_Head(Value, a);
+    Stable* src = Data_Stack_At(Stable, base + 1);  // moving, not const!
+    Stable* dest = Flex_Head(Stable, a);
 
   #if NO_RUNTIME_CHECKS  // Stack cells lack CELL_MASK_PERSIST, can memcpy()
     STATIC_ASSERT(! DEBUG_POISON_DROPPED_STACK_CELLS);

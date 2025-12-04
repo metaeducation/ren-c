@@ -147,7 +147,7 @@ INLINE Element* Init_Word_Bound_Untracked(
 // longer a fundamental type, since a sigilized word is e.g. METAFORM!.  This
 // is a placeholder to try and get things compiling.
 //
-INLINE bool Any_Word(const Value* v)
+INLINE bool Any_Word(const Stable* v)
   { return Any_Fundamental(v) and Heart_Of(v) == TYPE_WORD; }
 
 
@@ -167,7 +167,7 @@ INLINE Result(const Symbol*) Intern_Unsized_Managed(const char *utf8)
 // !!! The quick check that was here was undermined by words no longer always
 // storing their symbols in the word; this will likely have to hit a keylist.
 //
-INLINE bool Is_Bar(const Value* v) {
+INLINE bool Is_Bar(const Stable* v) {
     return (
         Heart_Of(v) == TYPE_WORD
         and LIFT_BYTE(v) == NOQUOTE_2
@@ -175,7 +175,7 @@ INLINE bool Is_Bar(const Value* v) {
     );
 }
 
-INLINE bool Is_Bar_Bar(const Atom* v) {
+INLINE bool Is_Bar_Bar(const Value* v) {
     return (
         Heart_Of(v) == TYPE_WORD
         and LIFT_BYTE(v) == NOQUOTE_2
@@ -183,21 +183,21 @@ INLINE bool Is_Bar_Bar(const Atom* v) {
     );
 }
 
-INLINE bool Is_Anti_Word_With_Id(const Value* v, SymId id) {
+INLINE bool Is_Anti_Word_With_Id(const Stable* v, SymId id) {
     assert(id != SYM_0_constexpr);
     if (not Is_Keyword(v))
         return false;
     return id == Word_Id(v);
 }
 
-INLINE bool Is_Quasi_Word_With_Id(const Value* v, SymId id) {
+INLINE bool Is_Quasi_Word_With_Id(const Stable* v, SymId id) {
     assert(id != SYM_0_constexpr);
     if (not Is_Quasi_Word(v))
         return false;
     return id == Word_Id(v);
 }
 
-INLINE bool Is_Word_With_Id(const Value* v, SymId id) {
+INLINE bool Is_Word_With_Id(const Stable* v, SymId id) {
     assert(id != SYM_0_constexpr);
     if (not Is_Word(v))
         return false;
@@ -237,7 +237,7 @@ INLINE bool Is_Dual_Unset(const Cell* cell) {
     return Word_Id(cell) == SYM__PUNSET_P;
 }
 
-INLINE Atom* Init_Unset_Due_To_End(Init(Atom) out) {
+INLINE Value* Init_Unset_Due_To_End(Init(Value) out) {
     Init_Dual_Word_Unset_Signal(out);
     LIFT_BYTE(out) = DUAL_0;
     return out;

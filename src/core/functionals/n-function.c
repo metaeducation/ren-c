@@ -102,7 +102,7 @@ Bounce Func_Dispatcher(Level* const L)
 
     if (THROWING) {  // might be a RETURN:RUN targeting this Level
         assert(STATE == ST_FUNC_BODY_EXECUTING);
-        const Value* label = VAL_THROWN_LABEL(L);
+        const Stable* label = VAL_THROWN_LABEL(L);
         if (
             not Is_Frame(label)
             or Frame_Phase(label) != Frame_Phase(LIB(DEFINITIONAL_REDO))
@@ -180,7 +180,7 @@ Bounce Func_Dispatcher(Level* const L)
     L->u.action.key_tail = key_tail;
     Param* param = Phase_Params_Head(details);
     L->u.action.param = param;
-    Atom* arg = Level_Args_Head(L);
+    Value* arg = Level_Args_Head(L);
     L->u.action.arg = arg;
     for (; key != key_tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param)) {  // must reset [1]
@@ -207,7 +207,7 @@ Bounce Func_Dispatcher(Level* const L)
 
     Drop_Action(L);
 
-    Value* out = cast(Value*, OUT);
+    Stable* out = cast(Stable*, OUT);
 
     Restart_Action_Level(L);
     require (
@@ -245,7 +245,7 @@ Bounce Func_Dispatcher(Level* const L)
 //  Func_Details_Querier: C
 //
 bool Func_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -279,7 +279,7 @@ bool Func_Details_Querier(
 
         Slot* std_func_body_slot = Get_System(SYS_STANDARD, STD_FUNC_BODY);
 
-        DECLARE_VALUE (example);
+        DECLARE_STABLE (example);
         require (
           Read_Slot(example, std_func_body_slot)
         );
@@ -381,7 +381,7 @@ Result(Details*) Make_Interpreted_Action(
     Tweak_Cell_Binding(rebound, List_Binding(body));
 
     if (Get_Cell_Flag(body, CONST))  // capture mutability flag [2]
-        Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need Value*
+        Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need Stable*
 
     return details;
 }
@@ -430,11 +430,11 @@ DECLARE_NATIVE(FUNCTION)
 //
 Bounce Init_Thrown_Unwind_Value(
     Level* level_,
-    const Value* seek, // FRAME!, ACTION! (or INTEGER! relative to frame)
-    const Atom* value,
+    const Stable* seek, // FRAME!, ACTION! (or INTEGER! relative to frame)
+    const Value* value,
     Level* target // required if level is INTEGER! or ACTION!
 ) {
-    DECLARE_VALUE (label);
+    DECLARE_STABLE (label);
     Copy_Cell(label, LIB(UNWIND));
 
     if (Is_Frame(seek) and Is_Frame_On_Stack(Cell_Varlist(seek))) {
@@ -518,8 +518,8 @@ DECLARE_NATIVE(UNWIND)
 {
     INCLUDE_PARAMS_OF_UNWIND;
 
-    Value* level = ARG(LEVEL);
-    Atom* result = Atom_ARG(RESULT);
+    Stable* level = ARG(LEVEL);
+    Value* result = Atom_ARG(RESULT);
 
     return Init_Thrown_Unwind_Value(LEVEL, level, result, level_);
 }
@@ -531,7 +531,7 @@ DECLARE_NATIVE(UNWIND)
 Result(bool) Typecheck_Coerce_Return(
     Level* L,  // Level whose spare/scratch used (not necessarily return level)
     const Element* param,  // parameter for the RETURN (may be quoted)
-    Atom* atom  // coercion needs mutability
+    Value* atom  // coercion needs mutability
 ){
   #if NEEDFUL_DOES_CORRUPTIONS
     assert(Not_Cell_Readable(Level_Scratch(L)));
@@ -551,7 +551,7 @@ Result(bool) Typecheck_Coerce_Return(
 
     if (
         Get_Parameter_Flag(param, TRASH_DEFINITELY_OK)
-        and Is_Possibly_Unstable_Atom_Trash(atom)
+        and Is_Possibly_Unstable_Value_Trash(atom)
     ){
         return true;  // common case, make fast
     }
@@ -604,7 +604,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]
 
-    Atom* atom = Atom_ARG(VALUE);
+    Value* atom = Atom_ARG(VALUE);
 
     Level* return_level = LEVEL;  // Level of this RETURN call
 
@@ -632,13 +632,13 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
             panic (Error_Bad_Return_Type(target_level, atom, param));
 
         if (
-            Is_Possibly_Unstable_Atom_Trash(atom)
+            Is_Possibly_Unstable_Value_Trash(atom)
             and Is_Parameter_Spec_Empty(param)
         ){
             Init_Trash_Named_From_Level(atom, target_level);
         }
 
-        DECLARE_VALUE (label);
+        DECLARE_STABLE (label);
         Copy_Cell(label, LIB(UNWIND)); // see Make_Thrown_Unwind_Value
         g_ts.unwind_level = target_level;
 
@@ -656,10 +656,10 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     //   https://en.wikipedia.org/wiki/Tail_call
     //
 
-    const Value* gather_args;
+    const Stable* gather_args;
 
     require (
-      Value* v = Decay_If_Unstable(atom)
+      Stable* v = Decay_If_Unstable(atom)
     );
     if (
         Is_Tag(v)
@@ -680,7 +680,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     // of the frame.  Use DEFINITIONAL-REDO as the throw label that Eval_Core()
     // will identify for that behavior.
     //
-    Value* spare = Copy_Cell(SPARE, LIB(DEFINITIONAL_REDO));
+    Stable* spare = Copy_Cell(SPARE, LIB(DEFINITIONAL_REDO));
     Tweak_Frame_Coupling(  // comment said "may have changed"?
         spare,
         Varlist_Of_Level_Force_Managed(target_level)

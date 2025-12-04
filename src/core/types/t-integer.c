@@ -144,7 +144,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
 // Unsigned makes more sense as these would be hexes likely typed in by users,
 // who rarely do 2s-complement math in their head.
 //
-void Hex_String_To_Integer(Value* out, const Element* value)  // !!! UNUSED
+void Hex_String_To_Integer(Stable* out, const Element* value)  // !!! UNUSED
 {
     Size utf8_size;
     Utf8(const*) bp = Cell_Utf8_Size_At(&utf8_size, value);

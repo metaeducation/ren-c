@@ -165,7 +165,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
         //
         StackIndex base = TOP_INDEX;
         while (true) {
-            Value* generated = rebValue(arg);
+            Api(Stable*) generated = rebStable(arg);
             if (not generated)
                 break;
             Copy_Cell(PUSH(), generated);
@@ -209,7 +209,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
                 param = Phase_Param(phase, CELL_VARARGS_SIGNED_PARAM_INDEX(arg));
 
             Init_Nulled(SPARE);
-            if (Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
+            if (Typecheck_Value_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
                 return fail (Error_Null_Vararg_List_Raw());
         }
 
@@ -229,7 +229,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
                 break;
 
             require (
-              Value* out = Decay_If_Unstable(OUT)
+              Stable* out = Decay_If_Unstable(OUT)
             );
             if (Is_Antiform(out))
                 panic (Error_Bad_Antiform_Raw(out));
@@ -260,7 +260,7 @@ REBINT Find_In_Array(
     const Array* array,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
-    const Value* pattern,
+    const Stable* pattern,
     Flags flags, // see AM_FIND_XXX
     REBINT skip // skip factor
 ){
@@ -415,7 +415,7 @@ void Shuffle_Array(Array* arr, REBLEN idx, bool secure)
 
 static REBINT Try_Get_Array_Index_From_Picker(
     const Element* v,
-    const Value* picker
+    const Stable* picker
 ){
     REBINT n;
 
@@ -472,7 +472,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
 bool Try_Pick_Block(
     Sink(Element) out,
     const Element* block,
-    const Value* picker
+    const Stable* picker
 ){
     REBINT n = Get_Num_From_Arg(picker);
     n += Series_Index(block) - 1;
@@ -542,7 +542,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         INCLUDE_PARAMS_OF_FIND; // must be same as select
         UNUSED(PARAM(SERIES));
 
-        Value* pattern = ARG(PATTERN);  // SELECT takes antiforms literally
+        Stable* pattern = ARG(PATTERN);  // SELECT takes antiforms literally
 
         if (Is_Antiform(pattern) and not Is_Splice(pattern)) {
             if (id == SYM_SELECT)
@@ -626,7 +626,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         INCLUDE_PARAMS_OF_INSERT;
         USED(PARAM(SERIES));
 
-        Option(const Value*) arg = Is_Undone_Opt_Nulled(ARG(VALUE))
+        Option(const Stable*) arg = Is_Undone_Opt_Nulled(ARG(VALUE))
             ? nullptr
             : ARG(VALUE);
 
@@ -688,7 +688,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         INCLUDE_PARAMS_OF_SWAP;
         UNUSED(ARG(SERIES1));
 
-        Value* arg = ARG(SERIES2);
+        Stable* arg = ARG(SERIES2);
         if (not Any_List(arg))
             panic (PARAM(SERIES2));
 
@@ -732,7 +732,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         // are going to read the ARG_N(1) slot *implicitly* regardless of
         // what value points to.
         //
-        const Value* made = rebValue("make port! @", ARG_N(1));
+        Api(const Stable*) made = rebStable("make port! @", ARG_N(1));
         assert(Is_Port(made));
         Copy_Cell(ARG_N(1), made);
         rebRelease(made);
@@ -963,7 +963,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* series = Element_ARG(LOCATION);
-    const Value* picker = Element_ARG(PICKER);
+    const Stable* picker = Element_ARG(PICKER);
 
     REBINT n;
     if (Any_List(series))
@@ -978,9 +978,9 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
     if (n >= Series_Len_Head(series))
         return DUAL_SIGNAL_NULL_ABSENT;
 
-    Value* poke;
+    Stable* poke;
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
@@ -1311,7 +1311,7 @@ typedef struct {
     bool cased;
     bool reverse;
     REBLEN offset;
-    const Value* comparator;
+    const Stable* comparator;
 } SortInfo;
 
 
@@ -1322,12 +1322,12 @@ static int Qsort_Values_Callback(void *state, const void *p1, const void *p2)
 {
     SortInfo* info = cast(SortInfo*, state);
 
-    const Element* v1 = Known_Element(cast(Atom*, p1));
-    const Element* v2 = Known_Element(cast(Atom*, p2));
+    const Element* v1 = Known_Element(cast(Value*, p1));
+    const Element* v2 = Known_Element(cast(Value*, p2));
     possibly(info->cased);  // !!! not applicable in LESSER? comparisons
     bool strict = false;
 
-    DECLARE_VALUE (result);
+    DECLARE_STABLE (result);
     if (rebRunThrows(
         result,  // <-- output cell
         rebRUN(info->comparator),
@@ -1365,7 +1365,7 @@ IMPLEMENT_GENERIC(SORT, Any_List)
     info.reverse = Bool_ARG(REVERSE);
     UNUSED(Bool_ARG(ALL));  // !!! not used?
 
-    Value* cmp = ARG(COMPARE);  // null if no :COMPARE
+    Stable* cmp = ARG(COMPARE);  // null if no :COMPARE
     Deactivate_If_Action(cmp);
     if (Is_Frame(cmp)) {
         info.comparator = cmp;
@@ -1491,8 +1491,8 @@ DECLARE_NATIVE(ENVELOP)
 {
     INCLUDE_PARAMS_OF_ENVELOP;
 
-    Value* example = ARG(EXAMPLE);
-    const Value* content = ARG(CONTENT);
+    Stable* example = ARG(EXAMPLE);
+    const Stable* content = ARG(CONTENT);
 
     Element* copy;
 
@@ -1563,8 +1563,8 @@ DECLARE_NATIVE(GLOM)
 {
     INCLUDE_PARAMS_OF_GLOM;
 
-    Value* accumulator = ARG(ACCUMULATOR);  // may not be at head [1]
-    Value* value = ARG(VALUE);  // may not be at head [1]
+    Stable* accumulator = ARG(ACCUMULATOR);  // may not be at head [1]
+    Stable* value = ARG(VALUE);  // may not be at head [1]
 
     if (Is_Nulled(value) or Is_Blank(value))
         return COPY(accumulator);

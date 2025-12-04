@@ -123,13 +123,13 @@ INLINE Option(Details*) Try_Frame_Details(const Cell* c) {
 // you'd be storing something that wouldn't be stored otherwise, so it would
 // stop being "cheap".
 
-INLINE void Tweak_Frame_Lens(Value* v, Phase* lens) {
+INLINE void Tweak_Frame_Lens(Stable* v, Phase* lens) {
     assert(Heart_Of(v) == TYPE_FRAME);  // may be protected (e.g. archetype)
     assert(Is_Stub_Varlist(lens) or Is_Stub_Details(lens));
     Tweak_Frame_Lens_Or_Label(v, lens);
 }
 
-INLINE Option(Phase*) Frame_Lens(const Value* c) {
+INLINE Option(Phase*) Frame_Lens(const Stable* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
     Flex* f = cast(Flex*, CELL_FRAME_EXTRA_LENS_OR_LABEL(c));
     if (not f or Is_Stub_Symbol(f))
@@ -138,7 +138,7 @@ INLINE Option(Phase*) Frame_Lens(const Value* c) {
     return cast(Phase*, f);
 }
 
-INLINE Option(const Symbol*) Frame_Label(const Value* c) {
+INLINE Option(const Symbol*) Frame_Label(const Stable* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
     Flex* f = cast(Flex*, CELL_FRAME_EXTRA_LENS_OR_LABEL(c));
     if (not f)
@@ -150,14 +150,14 @@ INLINE Option(const Symbol*) Frame_Label(const Value* c) {
     return cast(Symbol*, f);
 }
 
-INLINE Option(const Symbol*) Frame_Label_Deep(const Value* c) {
+INLINE Option(const Symbol*) Frame_Label_Deep(const Stable* c) {
     Option(const Symbol*) label = Frame_Label(c);
     if (label)
         return label;
     return Frame_Label(Phase_Archetype(Frame_Phase(c)));
 }
 
-INLINE void Update_Frame_Cell_Label(Value* c, Option(const Symbol*) label) {
+INLINE void Update_Frame_Cell_Label(Stable* c, Option(const Symbol*) label) {
     assert(Heart_Of(c) == TYPE_FRAME);
     Assert_Cell_Writable(c);  // archetype R/O
     Tweak_Frame_Lens_Or_Label(c, label);
@@ -249,7 +249,7 @@ INLINE Element* Init_Frame_Untracked(
 //     == [1 <even> 3 <even> 5]  ; no actual EVEN? antiforms can be in block
 //
 
-INLINE Value* Actionify(Need(Value*) val) {
+INLINE Stable* Actionify(Need(Stable*) val) {
     assert(Is_Frame(val) and LIFT_BYTE(val) == NOQUOTE_2);
     Stably_Antiformize_Unbound_Fundamental(val);
     assert(Is_Action(val));
@@ -257,11 +257,11 @@ INLINE Value* Actionify(Need(Value*) val) {
 }
 
 #define Init_Action(out,a,label,coupling) \
-    Actionify(cast(Value*, Init_Frame( \
-        ensure(Sink(Value), (out)), (a), (label), (coupling)) \
+    Actionify(cast(Stable*, Init_Frame( \
+        ensure(Sink(Stable), (out)), (a), (label), (coupling)) \
     ))  // note that antiform frames can't have lenses, only labels!
 
-INLINE Value* Deactivate_If_Action(Need(Value*) v) {
+INLINE Stable* Deactivate_If_Action(Need(Stable*) v) {
     if (Is_Action(v))
         LIFT_BYTE(v) = NOQUOTE_2;
     return v;
@@ -296,7 +296,7 @@ INLINE Value* Deactivate_If_Action(Need(Value*) v) {
 // persistable with LIFT, and can be manipulated consciously in usermode.
 //
 
-INLINE Atom* Packify_Action(Atom* atom) {  // put ACTION! in a PACK! [1]
+INLINE Value* Packify_Action(Value* atom) {  // put ACTION! in a PACK! [1]
     assert(Is_Action(Known_Stable(atom)));
     Source *a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
     Copy_Lifted_Cell(Stub_Cell(a), atom);
@@ -312,17 +312,17 @@ INLINE Atom* Packify_Action(Atom* atom) {  // put ACTION! in a PACK! [1]
 // checked quickly by the evaluator.
 //
 
-INLINE Option(InfixMode) Frame_Infix_Mode(const Value* c) {
+INLINE Option(InfixMode) Frame_Infix_Mode(const Stable* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
     return u_cast(InfixMode, Get_Cell_Crumb(c));
 }
 
-INLINE void Tweak_Frame_Infix_Mode(Value* c, Option(InfixMode) mode) {
+INLINE void Tweak_Frame_Infix_Mode(Stable* c, Option(InfixMode) mode) {
     assert(Heart_Of(c) == TYPE_FRAME);
     Set_Cell_Crumb(c, opt mode);
 }
 
-INLINE bool Is_Frame_Infix(const Value* c) {  // faster than != PREFIX_0
+INLINE bool Is_Frame_Infix(const Stable* c) {  // faster than != PREFIX_0
     assert(Heart_Of(c) == TYPE_FRAME);
     return did (c->header.bits & CELL_MASK_CRUMB);
 }
@@ -334,7 +334,7 @@ INLINE bool Is_Frame_Infix(const Value* c) {  // faster than != PREFIX_0
 // you generally want to mirror its ghostable status.
 //
 
-INLINE void Copy_Ghostability(Value* to, const Value* from) {
+INLINE void Copy_Ghostability(Stable* to, const Stable* from) {
     assert(Is_Action(to) or Is_Frame(to));
     assert(Is_Action(from) or Is_Frame(from));
 

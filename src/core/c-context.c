@@ -678,7 +678,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
     //    `function [/test /test] []` calls COLLECT-WORDS and tries to ignore
     //    both tests.  Debug build counts the number (overkill, tests binder).
 
-    Value* ignore = ARG(IGNORE);
+    Stable* ignore = ARG(IGNORE);
 
     if (Is_Block(ignore)) {  // avoid panic in mid-collect [1]
         const Element* check_tail;
@@ -836,7 +836,7 @@ VarList* Make_Varlist_Detect_Managed(
     //    doing the instantiation and what the thing is.  Better ideas are
     //    hopefully coming down the pipe, but this is what R3-Alpha did.  :-/
 
-    Value* var = Flex_Head(Value, a);
+    Stable* var = Flex_Head(Stable, a);
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);  // rootvar
     ++var;
 
@@ -845,7 +845,7 @@ VarList* Make_Varlist_Detect_Managed(
         Init_Tripwire(var);  // need all slots valid before Read_Slot() call?
 
     if (parent) {
-        Atom* dest = Flex_At(Atom, a, 1);
+        Value* dest = Flex_At(Value, a, 1);
         const Slot* src_tail;
         Slot* src = Varlist_Slots(&src_tail, unwrap parent);
         for (; src != src_tail; ++dest, ++src) {
@@ -1015,7 +1015,7 @@ Option(Slot*) Select_Symbol_In_Context(
 //
 // !!! All instances of this should be reviewed...
 //
-Slot* Obj_Slot(Value* value, Index index)
+Slot* Obj_Slot(Stable* value, Index index)
 {
     VarList* context = Cell_Varlist(value);
 
@@ -1060,7 +1060,7 @@ void Assert_Varlist_Core(VarList* varlist)
     if ((a->header.bits & STUB_MASK_VARLIST) != STUB_MASK_VARLIST)
         crash (varlist);
 
-    Value* rootvar = Rootvar_Of_Varlist(varlist);
+    Stable* rootvar = Rootvar_Of_Varlist(varlist);
     if (not Any_Context(rootvar) or Cell_Varlist(rootvar) != varlist)
         crash (rootvar);
 

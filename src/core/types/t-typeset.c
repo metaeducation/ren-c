@@ -283,7 +283,7 @@ Result(None) Set_Parameter_Spec(
             panic ("No support for sequences in parameter spec...yet!");
         }
 
-        DECLARE_VALUE (lookup);
+        DECLARE_STABLE (lookup);
 
         if (Is_Word(item)) {  // allow abstraction [3]
             require (
@@ -330,7 +330,7 @@ Result(None) Set_Parameter_Spec(
 
                     assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
 
-                    Value* index = Details_At(
+                    Stable* index = Details_At(
                         details, IDX_TYPECHECKER_TYPESET_BYTE
                     );
                     *optimized = VAL_UINT8(index);
@@ -761,11 +761,11 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
     Element* param = Element_ARG(LOCATION);
 
-    const Value* picker = ARG(PICKER);
+    const Stable* picker = ARG(PICKER);
     if (not Is_Word(picker))
         panic (picker);
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;

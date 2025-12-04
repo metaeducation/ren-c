@@ -440,7 +440,7 @@ IMPLEMENT_GENERIC(EXCLUDE, Any_Series)
 // Test to see if two values are equal.  Quoting level is heeded, and values
 // at distinct quoting levels are not considered equal.
 //
-Result(bool) Equal_Values(const Value* s, const Value* t, bool strict)
+Result(bool) Equal_Values(const Stable* s, const Stable* t, bool strict)
 {
     if (LIFT_BYTE(s) != LIFT_BYTE(t))
         return false;
@@ -484,7 +484,7 @@ Result(bool) Equal_Values(const Value* s, const Value* t, bool strict)
     Copy_Lifted_Cell(Erase_ARG(VALUE2), t);
     Init_Logic(Erase_ARG(RELAX), relax);
 
-    DECLARE_ATOM (atom_out);
+    DECLARE_VALUE (atom_out);
 
     bool threw = Trampoline_Throws(atom_out, L);
     if (threw)
@@ -494,7 +494,7 @@ Result(bool) Equal_Values(const Value* s, const Value* t, bool strict)
         return false;
 
     require (
-      Value* out = Decay_If_Unstable(atom_out)
+      Stable* out = Decay_If_Unstable(atom_out)
     );
     return Cell_Logic(out);
 }
@@ -506,7 +506,7 @@ Result(bool) Equal_Values(const Value* s, const Value* t, bool strict)
 // This dispatches to the LESSER? implementation.  It may not be able to
 // compare the types, e.g. ("A" < 1) is an error, so you get a bool.
 //
-bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
+bool Try_Lesser_Value(Sink(bool) lesser, const Stable* s, const Stable* t)
 {
     if (LIFT_BYTE(s) == ANTIFORM_1 or LIFT_BYTE(t) == ANTIFORM_1)
         return false;  // can't do less than on antiforms
@@ -550,7 +550,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
     Copy_Cell(Erase_ARG(VALUE1), s);
     Copy_Cell(Erase_ARG(VALUE2), t);
 
-    DECLARE_ATOM (atom_out);
+    DECLARE_VALUE (atom_out);
 
     bool threw = Trampoline_Throws(atom_out, L);
     if (threw)
@@ -560,7 +560,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Value* s, const Value* t)
         return false;
 
     require (
-      Value* out = Decay_If_Unstable(atom_out)
+      Stable* out = Decay_If_Unstable(atom_out)
     );
     *lesser = Cell_Logic(out);
     return true;

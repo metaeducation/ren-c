@@ -131,7 +131,7 @@ DECLARE_NATIVE(PICK)
     INCLUDE_PARAMS_OF_PICK;
 
     Element* location = Element_ARG(LOCATION);
-    Value* picker = ARG(PICKER);
+    Stable* picker = ARG(PICKER);
 
     if (Get_Level_Flag(LEVEL, PICK_NOT_INITIAL_ENTRY))
         goto dispatch_generic;
@@ -165,7 +165,7 @@ DECLARE_NATIVE(PICK)
     if (Is_Error(OUT))
         return OUT;
 
-    Value* dual = Known_Stable(OUT);
+    Stable* dual = Known_Stable(OUT);
 
     if (Is_Action(dual))
         panic ("TWEAK* delegation machinery not done yet");
@@ -311,8 +311,8 @@ DECLARE_NATIVE(POKE)
     INCLUDE_PARAMS_OF_POKE;
 
     Element* location = Element_ARG(LOCATION);
-    Value* picker = ARG(PICKER);
-    Atom* atom = Atom_ARG(VALUE);
+    Stable* picker = ARG(PICKER);
+    Value* atom = Atom_ARG(VALUE);
 
     if (Get_Level_Flag(LEVEL, POKE_NOT_INITIAL_ENTRY))
         goto dispatch_generic;
@@ -337,7 +337,7 @@ DECLARE_NATIVE(POKE)
 
     Copy_Cell(Atom_ARG(STORE), atom);  // save value to return [1]
 
-    Value* dual = ARG(VALUE);  // same slot (TWEAK* reuses this frame!) [2]
+    Stable* dual = ARG(VALUE);  // same slot (TWEAK* reuses this frame!) [2]
 
     if (Is_Void(atom)) {
         Init_Dual_Word_Remove_Signal(dual);  // signal to TWEAK*
@@ -361,7 +361,7 @@ DECLARE_NATIVE(POKE)
     if (bounce)
         return bounce;  // we will get a callback (if not error/etc.)
 
-    Value* writeback = Known_Stable(OUT);
+    Stable* writeback = Known_Stable(OUT);
 
     if (not Is_Nulled(writeback))  // see TWEAK* for meaning of non-null
         panic (

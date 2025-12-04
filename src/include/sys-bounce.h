@@ -55,7 +55,7 @@ INLINE void Erase_Bounce_Wild(WildTwo out) {
     out[1] = 0;
 }
 
-INLINE bool Is_Bounce_An_Atom(Bounce b) {
+INLINE bool Is_Bounce_A_Cell(Bounce b) {
     const void* p = cast(const void*, b);
     return (
         FIRST_BYTE(p) & (BASE_BYTEMASK_0x80_NODE | BASE_BYTEMASK_0x08_CELL)
@@ -74,9 +74,9 @@ INLINE char Bounce_Type(Bounce b) {
     return SECOND_BYTE(p);
 }
 
-INLINE Atom* Atom_From_Bounce(Bounce b) {
-    assert(Is_Bounce_An_Atom(b));
-    return cast(Atom*, m_cast(void*, b));
+INLINE Value* Value_From_Bounce(Bounce b) {
+    assert(Is_Bounce_A_Cell(b));
+    return cast(Value*, m_cast(void*, b));
 }
 
 

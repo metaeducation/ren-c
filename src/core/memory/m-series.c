@@ -345,7 +345,7 @@ void Remove_Any_Series_Len(Element* v, REBLEN index, REBINT len)
         // modifications of binaries that are aliases of strings do not make
         // invalid UTF-8.  Factor better...but don't repeat that work here.
         //
-        DECLARE_VALUE (temp);
+        DECLARE_STABLE (temp);
         Init_Series_At(
             temp,
             Heart_Of_Builtin_Fundamental(v),

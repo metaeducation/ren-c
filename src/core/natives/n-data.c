@@ -140,7 +140,7 @@ DECLARE_NATIVE(BINDABLE_Q)
 {
     INCLUDE_PARAMS_OF_BINDABLE_Q;
 
-    Value* v = ARG(VALUE);
+    Stable* v = ARG(VALUE);
     if (Is_Antiform(v))
         return fail ("ANTIFORM! values are not bindable");  // caller can TRY
 
@@ -795,7 +795,7 @@ DECLARE_NATIVE(ANY_INERT_Q)
 {
     INCLUDE_PARAMS_OF_ANY_INERT_Q;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
     require (
       Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
@@ -1049,7 +1049,7 @@ DECLARE_NATIVE(INFIX)
 {
     INCLUDE_PARAMS_OF_INFIX;
 
-    Value* out = Copy_Cell(OUT, ARG(ACTION));
+    Stable* out = Copy_Cell(OUT, ARG(ACTION));
 
     if (Bool_ARG(OFF)) {
         if (Bool_ARG(DEFER) or Bool_ARG(POSTPONE))
@@ -1088,7 +1088,7 @@ DECLARE_NATIVE(GHOSTABLE)
 {
     INCLUDE_PARAMS_OF_GHOSTABLE;
 
-    Value* out = Copy_Cell(OUT, ARG(ACTION));
+    Stable* out = Copy_Cell(OUT, ARG(ACTION));
 
     if (Bool_ARG(OFF))
         Clear_Cell_Flag(out, WEIRD_GHOSTABLE);
@@ -1138,7 +1138,7 @@ DECLARE_NATIVE(IDENTITY)  // sample uses: https://stackoverflow.com/q/3136338
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* atom = Intrinsic_Atom_ARG(LEVEL);
 
     return COPY(atom);
 }
@@ -1157,7 +1157,7 @@ DECLARE_NATIVE(FREE)
 {
     INCLUDE_PARAMS_OF_FREE;
 
-    Value* v = ARG(MEMORY);
+    Stable* v = ARG(MEMORY);
 
     if (Any_Context(v) or Is_Handle(v))
         panic ("FREE only implemented for ANY-SERIES? at the moment");
@@ -1193,7 +1193,7 @@ DECLARE_NATIVE(FREE_Q)
 {
     INCLUDE_PARAMS_OF_FREE_Q;
 
-    Value* v = ARG(VALUE);
+    Stable* v = ARG(VALUE);
 
     if (Is_Nulled(v))
         return LOGIC(false);
@@ -1248,7 +1248,7 @@ DECLARE_NATIVE(ANY_STABLE_Q)
 {
     INCLUDE_PARAMS_OF_ANY_STABLE_Q;
 
-    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
     return LOGIC(Is_Cell_Stable(atom));
 }
@@ -1293,7 +1293,7 @@ DECLARE_NATIVE(ANY_WORD_Q)
 {
     INCLUDE_PARAMS_OF_ANY_WORD_Q;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
     require (
       Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
@@ -1317,7 +1317,7 @@ DECLARE_NATIVE(VOID_Q)
 {
     INCLUDE_PARAMS_OF_VOID_Q;
 
-    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
     return LOGIC(Is_Void(atom));
 }
@@ -1336,7 +1336,7 @@ DECLARE_NATIVE(BLANK_Q)
 {
     INCLUDE_PARAMS_OF_BLANK_Q;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
     require (
       Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
@@ -1360,7 +1360,7 @@ DECLARE_NATIVE(TRIPWIRE_Q)
 {
     INCLUDE_PARAMS_OF_TRIPWIRE_Q;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
     require (
       Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
@@ -1453,7 +1453,7 @@ DECLARE_NATIVE(HEAVY)
 {
     INCLUDE_PARAMS_OF_HEAVY;
 
-    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* atom = Intrinsic_Atom_ARG(LEVEL);
 
     if (Is_Light_Null(atom))
         return Init_Heavy_Null(OUT);
@@ -1475,7 +1475,7 @@ DECLARE_NATIVE(HEAVY_NULL_Q)
 {
     INCLUDE_PARAMS_OF_HEAVY_NULL_Q;
 
-    const Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    const Value* atom = Intrinsic_Atom_ARG(LEVEL);
 
     return LOGIC(Is_Heavy_Null(atom));
 }
@@ -1494,7 +1494,7 @@ DECLARE_NATIVE(LIGHT)
 {
     INCLUDE_PARAMS_OF_LIGHT;
 
-    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* atom = Intrinsic_Atom_ARG(LEVEL);
 
     if (not Is_Pack(atom))
         return COPY(atom);
@@ -1548,7 +1548,7 @@ DECLARE_NATIVE(DECAYABLE_Q)
 {
     INCLUDE_PARAMS_OF_DECAYABLE_Q;
 
-    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* atom = Intrinsic_Atom_ARG(LEVEL);
 
     Decay_If_Unstable(atom) except (Error* e) {
         UNUSED(e);
@@ -1588,7 +1588,7 @@ DECLARE_NATIVE(REIFY)
     if (b != BOUNCE_GOOD_INTRINSIC_ARG)
         return b;
 
-    Assert_Cell_Stable(OUT);  // Value* should always be stable
+    Assert_Cell_Stable(OUT);  // Stable* should always be stable
     return Reify(OUT);
 }
 
@@ -1657,7 +1657,7 @@ DECLARE_NATIVE(NOANTIFORM)
 {
     INCLUDE_PARAMS_OF_NOANTIFORM;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
     require (
       Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );

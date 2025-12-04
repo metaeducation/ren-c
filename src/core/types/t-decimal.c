@@ -164,7 +164,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         Push_Lifeguard(numerator);  // might be GROUP!, so (1.2)/4
         Push_Lifeguard(denominator);
 
-        Value* quotient = rebValue("divide", numerator, denominator);
+        Api(Stable*) quotient = rebStable("divide", numerator, denominator);
 
         Drop_Lifeguard(denominator);
         Drop_Lifeguard(numerator);
@@ -628,7 +628,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Float)
     Heart heart = Heart_Of_Builtin_Fundamental(Element_ARG(VALUE1));
     REBDEC d1 = VAL_DECIMAL(Element_ARG(VALUE1));
 
-    Value* v2 = ARG(VALUE2);
+    Stable* v2 = ARG(VALUE2);
     REBDEC d2;
     if (Is_Integer(v2))
         d2 = cast(REBDEC, VAL_INT64(v2));

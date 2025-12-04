@@ -141,7 +141,7 @@ static void Error_Reporting_Hook(
     void *opaque,
     const char *msg_utf8
 ){
-    assert(cast(Value*, opaque) == g_empty_block);  // test callback arg [1]
+    assert(cast(Stable*, opaque) == g_empty_block);  // test callback arg [1]
     UNUSED(opaque);
 
     Value* message = rebText(msg_utf8);
@@ -171,7 +171,7 @@ static void Error_Reporting_Hook(
 static void Process_Text_Helper_Core(
     TCC_CSTR_API some_tcc_api,
     TCCState *state,
-    const Value* text,
+    const Stable* text,
     const char *label
 ){
     assert(Is_Text(text));
@@ -188,10 +188,10 @@ static void Process_Text_Helper_Core(
 static void Process_Text_Helper(
     TCC_CSTR_API some_tcc_api,
     TCCState *state,
-    const Value* config,
+    const Stable* config,
     const char *label
 ){
-    Value* text = rebValue(
+    Api(Stable*) text = rebStable(
         "ensure [<null> text!] select", config, "as word!", rebT(label)
     );
 
@@ -210,10 +210,10 @@ static void Process_Text_Helper(
 static void Process_Block_Helper(
     TCC_CSTR_API some_tcc_api,
     TCCState *state,
-    const Value* config,
+    const Stable* config,
     const char *label
 ){
-    Value* block = rebValue(
+    Api(Stable*) block = rebStable(
         "ensure block! select", config, "as word!", rebT(label)
     );
 
@@ -295,7 +295,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
 //  Pending_Native_Details_Querier: C
 //
 static bool Pending_Native_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -368,7 +368,7 @@ DECLARE_NATIVE(MAKE_NATIVE)
     }
 
     if (Bool_ARG(LINKNAME)) {
-        Value* linkname = ARG(LINKNAME);
+        Stable* linkname = ARG(LINKNAME);
 
         if (Is_Flex_Frozen(Cell_Strand(linkname)))
             Copy_Cell(
@@ -387,7 +387,7 @@ DECLARE_NATIVE(MAKE_NATIVE)
         // paramlist pointer.  Just "N_" followed by the hexadecimal value.
 
         intptr_t heapaddr = i_cast(intptr_t, details);
-        Value* linkname = rebValue(
+        Api(Stable*) linkname = rebStable(
             "unspaced [-[N_]- as text! to-hex", rebI(heapaddr), "]"
         );
 
@@ -456,7 +456,7 @@ DECLARE_NATIVE(COMPILE_P)
 
   //=//// SET UP OPTIONS FOR THE TCC STATE FROM CONFIG ////////////////////=//
 
-    Value* config = ARG(CONFIG);
+    Stable* config = ARG(CONFIG);
 
     // Sets options (same syntax as the TCC command line, minus commands like
     // displaying the version or showing the TCC tool's help)
@@ -506,7 +506,7 @@ DECLARE_NATIVE(COMPILE_P)
 
   //=//// SPECIFY USER NATIVES (OR DISK FILES) TO COMPILE /////////////////=//
 
-    Value* compilables = ARG(COMPILABLES);
+    Stable* compilables = ARG(COMPILABLES);
 
     assert(TOP_INDEX == STACK_BASE);  // natives are pushed to the stack
 
@@ -565,8 +565,8 @@ DECLARE_NATIVE(COMPILE_P)
                 Copy_Cell(PUSH(), item);
 
                 Details* details = cast(Details*, phase);
-                Value* source = Details_At(details, IDX_TCC_PRENATIVE_SOURCE);
-                Value* linkname = Details_At(
+                Stable* source = Details_At(details, IDX_TCC_PRENATIVE_SOURCE);
+                Stable* linkname = Details_At(
                     details, IDX_TCC_PRENATIVE_LINKNAME
                 );
 
@@ -670,7 +670,7 @@ DECLARE_NATIVE(COMPILE_P)
     // the build configuration for Rebol as a lib seems to force it, at least
     // on linux.  If you add a prototype like:
     //
-    //    int Probe_Core_Debug(const Value* v, char* file, int line);
+    //    int Probe_Core_Debug(const Stable* v, char* file, int line);
     //
     // ...and then try calling it from your user native, it finds the internal
     // symbol.  Messing with -fvisibility="hidden" and other switches doesn't
@@ -717,7 +717,7 @@ DECLARE_NATIVE(COMPILE_P)
         Details* details_tcc = Ensure_Frame_Details(TOP);  // stack live
         assert(Details_Dispatcher(details_tcc) == &Pending_Native_Dispatcher);
 
-        Value* linkname = Details_At(details_tcc, IDX_TCC_PRENATIVE_LINKNAME);
+        Stable* linkname = Details_At(details_tcc, IDX_TCC_PRENATIVE_LINKNAME);
 
         char *name_utf8 = rebSpell("ensure text!", linkname);
         void *sym = tcc_get_symbol(state, name_utf8);

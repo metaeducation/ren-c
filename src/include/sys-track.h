@@ -32,8 +32,8 @@
 // same Cell* you passed in in terms of the type.  So if it was a Cell* it
 // will come back a Cell*, etc.
 //
-// (In the C build, Cell*, Value*, Element, OnStack(Element*), etc. are all
-// just Cell* pointers.)
+// (In the C build, Value*, Stable*, Element*, OnStack(Element*), etc. are
+// all just Cell* pointers.)
 //
 // 1. It's currently possible to enable or disable tick counting in the
 //    Trampoline.  This is because while tick counting is very useful even

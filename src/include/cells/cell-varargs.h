@@ -96,7 +96,7 @@ INLINE Element* Init_Varargs_Untyped_Normal(Init(Element) out, Level* L) {
 
 INLINE Element* Init_Varargs_Untyped_Infix(
     Init(Element) out,
-    Option(const Value*) left
+    Option(const Stable*) left
 ){
     Stub* feed;
     if (not left)

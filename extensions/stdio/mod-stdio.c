@@ -93,10 +93,10 @@ DECLARE_NATIVE(WRITE_STDOUT)
 {
     INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
-    Value* v = ARG(VALUE);
+    Stable* v = ARG(VALUE);
 
     if (Is_Rune(v)) {  // [3]
-        Value *alias = rebValue("as text!", v);
+        Stable* alias = rebStable("as text!", v);
         Copy_Cell(v, alias);
         rebRelease(alias);
     }

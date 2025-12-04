@@ -34,7 +34,7 @@ Result(REBLEN) Modify_Array(
     Source* dst_arr,  // target
     REBLEN dst_idx,  // position
     SymId op,  // INSERT, APPEND, CHANGE
-    Option(const Value*) opt_src,  // source
+    Option(const Stable*) opt_src,  // source
     REBLEN flags,  // AM_PART, AM_LINE
     REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
     REBINT dups  // dup count of how many times to insert the src content
@@ -45,7 +45,7 @@ Result(REBLEN) Modify_Array(
 
     const Element* src_rel;
 
-    const Value* src_val;
+    const Stable* src_val;
     if (op == SYM_CHANGE and not opt_src) {
         src_val = LIB(BLANK);  // CHANGE to void acts same as with empty splice
         if (not (flags & AM_PART)) {
@@ -245,9 +245,9 @@ static Error* Error_Bad_Utf8_Bin_Edit(Error* cause) {
 // FLEX_FLAG_IS_STRING on the Flex, we must know if dst is a BLOB!.
 //
 Result(REBLEN) Modify_String_Or_Blob(
-    Value* dst,  // ANY-STRING? or BLOB! value to modify
+    Stable* dst,  // ANY-STRING? or BLOB! value to modify
     SymId op,  // SYM_APPEND @ tail, SYM_INSERT or SYM_CHANGE @ index
-    Option(const Value*) opt_src,  // argument with content to inject
+    Option(const Stable*) opt_src,  // argument with content to inject
     Flags flags,  // AM_PART, AM_LINE
     REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
     REBINT dups  // dup count of how many times to insert the src content
@@ -283,7 +283,7 @@ Result(REBLEN) Modify_String_Or_Blob(
         dst_len_old = Strand_Len(cast(Strand*, dst_flex));
     }
 
-    const Value* src;
+    const Stable* src;
     if (not opt_src) {  // void is no-op, unless CHANGE, where it means delete
         if (op == SYM_APPEND)
             return 0;  // APPEND returns index at head

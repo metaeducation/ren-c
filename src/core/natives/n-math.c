@@ -439,7 +439,7 @@ DECLARE_NATIVE(RANDOM_PICK)
     if (Try_Dispatch_Generic(&bounce, RANDOM_PICK, collection, LEVEL))
         return bounce;
 
-    const Value* datatype = Datatype_Of_Builtin_Fundamental(collection);
+    const Stable* datatype = Datatype_Of_Builtin_Fundamental(collection);
     if (not Handles_Generic(LENGTH_OF, datatype))
         panic (UNHANDLED);
 
@@ -491,7 +491,7 @@ DECLARE_NATIVE(SHUFFLE_OF)
     if (Try_Dispatch_Generic(&bounce, SHUFFLE_OF, elem, LEVEL))
         return bounce;
 
-    const Value* datatype = Datatype_Of_Fundamental(elem);
+    const Stable* datatype = Datatype_Of_Fundamental(elem);
     if (
         not Handles_Generic(SHUFFLE, datatype)
         or not Handles_Generic(COPY, datatype)
@@ -511,7 +511,7 @@ DECLARE_NATIVE(SHUFFLE_OF)
 // if necessary.  Clip ranges for correct REBOL behavior.
 //
 static REBDEC Trig_Value(
-    const Value* value,
+    const Stable* value,
     bool radians,
     SymId which
 ){
@@ -544,8 +544,8 @@ static REBDEC Trig_Value(
 //  Arc_Trans: C
 //
 static Result(None) Arc_Trans(
-    Sink(Value) out,
-    const Value* value,
+    Sink(Stable) out,
+    const Stable* value,
     bool radians,
     SymId which
 ){
@@ -818,7 +818,7 @@ DECLARE_NATIVE(VACANCY_Q)
 {
     INCLUDE_PARAMS_OF_VACANCY_Q;
 
-    Value* v = ARG(VALUE);
+    Stable* v = ARG(VALUE);
 
     return LOGIC(Is_Trash(v) or Is_Nulled(v) or Is_Blank(v));
 }

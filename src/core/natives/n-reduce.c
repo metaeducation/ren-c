@@ -76,7 +76,7 @@ DECLARE_NATIVE(VETO_Q)
 {
     INCLUDE_PARAMS_OF_VETO_Q;
 
-    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
     if (not Is_Error(atom))
         return LOGIC(false);
@@ -102,7 +102,7 @@ DECLARE_NATIVE(REDUCE)
     INCLUDE_PARAMS_OF_REDUCE;
 
     Element* v = Element_ARG(VALUE);  // newline flag leveraged [2]
-    Value* predicate = ARG(PREDICATE);
+    Stable* predicate = ARG(PREDICATE);
 
     enum {
         ST_REDUCE_INITIAL_ENTRY = STATE_0,
@@ -193,7 +193,7 @@ DECLARE_NATIVE(REDUCE)
             nullptr,
             Frame_Phase(predicate)
         );
-        if (not Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
+        if (not Typecheck_Value_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
             goto next_reduce_step;  // not accepted, so skip it
     }
 
@@ -217,7 +217,7 @@ DECLARE_NATIVE(REDUCE)
         goto vetoed;
 
     require (
-      Value* spare = Decay_If_Unstable(SPARE)
+      Stable* spare = Decay_If_Unstable(SPARE)
     );
     if (Is_Splice(spare)) {
         const Element* tail;

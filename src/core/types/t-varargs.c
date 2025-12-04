@@ -29,7 +29,7 @@
 #include "sys-core.h"
 
 
-INLINE void Init_For_Vararg_End(Atom* out, enum Reb_Vararg_Op op) {
+INLINE void Init_For_Vararg_End(Value* out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
         Init_Logic(out, true);
     else
@@ -44,7 +44,7 @@ INLINE void Init_For_Vararg_End(Atom* out, enum Reb_Vararg_Op op) {
 // unit ahead.
 //
 INLINE bool Vararg_Op_If_No_Advance_Handled(
-    Atom* out,
+    Value* out,
     enum Reb_Vararg_Op op,
     Option(const Element*) opt_look, // the first value in the varargs input
     Context* binding,
@@ -75,7 +75,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         // Look ahead, and if actively bound see if it's to an infix function
         // and the rules apply.
 
-        Sink(Value) out_value = out;
+        Sink(Stable) out_value = out;
         Option(Error*) e;
         Get_Word(out_value, look, binding) except (e) {
             // !!! this code tolerated with `not e`, review right answer
@@ -141,7 +141,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
 // If an evaluation is involved, then a thrown value is possibly returned.
 //
 bool Do_Vararg_Op_Maybe_End_Throws_Core(
-    Sink(Atom) out,
+    Sink(Value) out,
     enum Reb_Vararg_Op op,
     const Cell* vararg,
     ParamClass pclass  // PARAMCLASS_0 to use vararg's class
@@ -353,7 +353,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         return false;
 
     if (op == VARARG_OP_TAIL_Q) {
-        Value* stable = Known_Stable(out);
+        Stable* stable = Known_Stable(out);
         assert(Is_Logic(stable));
         UNUSED(stable);
         return false;
@@ -377,7 +377,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 panic (out);
 
             panic (Error_Phase_Arg_Type(
-                unwrap vararg_level, key, param, cast(const Value*, out))
+                unwrap vararg_level, key, param, cast(const Stable*, out))
             );
         }
     }
@@ -481,7 +481,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
             break;
 
         require (
-          Value* out = Decay_If_Unstable(OUT)
+          Stable* out = Decay_If_Unstable(OUT)
         );
         if (Is_Antiform(out))
             panic (Error_Bad_Antiform_Raw(out));
@@ -498,12 +498,12 @@ IMPLEMENT_GENERIC(TWEAK_P, Varargs)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     const Element* varargs = Element_ARG(LOCATION);
-    const Value* picker = Element_ARG(PICKER);
+    const Stable* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
         panic (picker);
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
@@ -720,7 +720,7 @@ DECLARE_NATIVE(VARIADIC_Q)
 
     const Key* key_tail;
     const Key* key = Phase_Keys(&key_tail, phase);
-    const Value* param = Phase_Params_Head(phase);
+    const Stable* param = Phase_Params_Head(phase);
     for (; key != key_tail; ++param, ++key) {
         if (Get_Parameter_Flag(param, VARIADIC))
             return LOGIC(true);

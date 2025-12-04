@@ -128,7 +128,7 @@ void Begin_Non_Lexical_Mold(Molder* mo, const Element* v)
       Append_Ascii(mo->strand, "&[")
     );
 
-    const Value* datatype = Datatype_Of(v);
+    const Stable* datatype = Datatype_Of(v);
     const Element* word = List_Item_At(datatype);
     const Symbol* type_name = Word_Symbol(word);;
     Append_Spelling(mo->strand, type_name);  // includes the "!"
@@ -335,7 +335,7 @@ void Form_Array_At(
     for (n = 0; n < len;) {
         DECLARE_ELEMENT (safe);
         const Element* item = Array_At(array, index + n);
-        Value* wval = nullptr;
+        Stable* wval = nullptr;
         if (context and (Is_Word(item) or Is_Get_Word(item))) {
             Slot *wslot = opt Select_Symbol_In_Context(
                 Varlist_Archetype(unwrap context),
@@ -400,7 +400,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     DECLARE_ELEMENT (molder);
     Init_Handle_Cdata(molder, mo, 1);
 
-    DECLARE_VALUE (formval);
+    DECLARE_STABLE (formval);
     Init_Logic(formval, form);
 
     bool tildes = NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
@@ -446,7 +446,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
         Copy_Cell(Erase_ARG(MOLDER), molder);
         Copy_Cell(Erase_ARG(FORM), formval);
 
-        DECLARE_ATOM (out);
+        DECLARE_VALUE (out);
         Push_Level_Erase_Out_If_State_0(out, sub);
         UNUSED(out);  // information was written to molder
 

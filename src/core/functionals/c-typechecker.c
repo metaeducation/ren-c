@@ -86,7 +86,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
     if (Is_Void(atom))
         return LOGIC(false);  // opt-out of the typecheck (null fails)
@@ -94,10 +94,10 @@ Bounce Typechecker_Dispatcher(Level* const L)
     Details* details = Level_Intrinsic_Details(L);
     assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
 
-    DECLARE_ATOM (temp);  // can't overwrite scratch if error can be raised
+    DECLARE_VALUE (temp);  // can't overwrite scratch if error can be raised
     Copy_Cell(temp, atom);
     require (
-      Value* v = Decay_If_Unstable(temp)
+      Stable* v = Decay_If_Unstable(temp)
     );
 
     Option(Type) type = Type_Of(v);
@@ -194,7 +194,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
 //  Typechecker_Details_Querier: C
 //
 bool Typechecker_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -204,7 +204,7 @@ bool Typechecker_Details_Querier(
 
     switch (property) {
       case SYM_RETURN_OF: {
-        const Value* archetype = LIB(TYPECHECKER_ARCHETYPE);
+        const Stable* archetype = LIB(TYPECHECKER_ARCHETYPE);
         Details* archetype_details = Ensure_Frame_Details(archetype);
         return Raw_Native_Details_Querier(
             out, archetype_details, SYM_RETURN_OF
@@ -304,7 +304,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 ){
     USE_LEVEL_SHORTHANDS (L);
 
-    const Atom* pack = SPARE;
+    const Value* pack = SPARE;
 
     assert(Is_Quasi_Block(types));  // could relax this to any list
     assert(Is_Pack(pack));  // could relax this also to any list
@@ -324,7 +324,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
     bool result = true;
 
     assert(TOP_INDEX == L->baseline.stack_base);
-    Move_Atom(PUSH(), SPARE);  // need somewhere to save spare [1]
+    Move_Value(PUSH(), SPARE);  // need somewhere to save spare [1]
     ++L->baseline.stack_base;  // typecheck functions should not see that push
     assert(TOP_INDEX == L->baseline.stack_base);
 
@@ -335,7 +335,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
         assume (
           Unliftify_Undecayed(SPARE)
         );
-        if (not Typecheck_Atom_In_Spare_Uses_Scratch(
+        if (not Typecheck_Value_In_Spare_Uses_Scratch(
             L, types_at, types_binding
         )){
             result = false;
@@ -347,7 +347,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
     assert(TOP_INDEX == L->baseline.stack_base);
     --L->baseline.stack_base;
-    Move_Atom(SPARE, TOP_ATOM);  // restore pack to the SPARE [1]
+    Move_Value(SPARE, TOP_ATOM);  // restore pack to the SPARE [1]
     DROP();
     assert(Is_Pack(SPARE));
 
@@ -364,7 +364,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 //
 bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     Level* const L,
-    const Value* test,
+    const Stable* test,
     Option(const Symbol*) label
 ){
     USE_LEVEL_SHORTHANDS (L);
@@ -376,7 +376,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     assert(test != SCRATCH);
     assert(test != SPARE);
 
-    const Atom* v = SPARE;
+    const Value* v = SPARE;
 
   try_builtin_typeset_checker_dispatch: {
 
@@ -458,7 +458,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
     const Key* key = sub->u.action.key;
     const Param* param = sub->u.action.param;
-    Atom* arg = sub->u.action.arg;
+    Value* arg = sub->u.action.arg;
     for (; key != sub->u.action.key_tail; ++key, ++param, ++arg) {
         if (Is_Specialized(param))
             Blit_Param_Drop_Mark(arg, param);
@@ -497,7 +497,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     if (Is_Error(SCRATCH))
         goto test_failed;  // e.g. see NULL? for its ERROR! on heavy null
 
-    Value* scratch = Known_Stable(SCRATCH);
+    Stable* scratch = Known_Stable(SCRATCH);
 
     if (not Is_Logic(scratch))  // sub wasn't limited to intrinsics
         panic (Error_No_Logic_Typecheck(label));
@@ -528,7 +528,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
 
 //
-//  Typecheck_Atom_In_Spare_Uses_Scratch: C
+//  Typecheck_Value_In_Spare_Uses_Scratch: C
 //
 // Ren-C has eliminated the concept of TYPESET!, instead gaining behaviors
 // for TYPE-BLOCK! and TYPE-GROUP!.
@@ -537,16 +537,16 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 //    support it, so (match [antiform?] frame.unspecialized-arg) is illegal.
 //    Review where a check for prohibiting this might be put.
 //
-bool Typecheck_Atom_In_Spare_Uses_Scratch(
+bool Typecheck_Value_In_Spare_Uses_Scratch(
     Level* const L,
-    const Value* tests,  // PARAMETER!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!...
+    const Stable* tests,  // PARAMETER!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!...
     Context* tests_binding
 ){
     USE_LEVEL_SHORTHANDS (L);
 
     assert(tests != SCRATCH);
 
-    const Atom* v = SPARE;
+    const Value* v = SPARE;
 
     bool result;
 
@@ -601,7 +601,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         panic ("Bad test passed to Typecheck_Value");
     }
 
-    DECLARE_VALUE (test);
+    DECLARE_STABLE (test);
     Push_Lifeguard(test);
 
     if (item == tail)
@@ -642,14 +642,14 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
         goto handle_non_word_quoted;
 
     if (Is_Space(item)) {
-        if (Is_Cell_Stable(SPARE) and Is_Space(cast(Value*, SPARE)))
+        if (Is_Cell_Stable(SPARE) and Is_Space(cast(Stable*, SPARE)))
             goto test_succeeded;
         goto test_failed;
     }
 
     if (Is_Tag(item)) {  // if BLOCK!, support <null> and <void> [3]
         if (0 == CT_Utf8(item, g_tag_null, true)) {
-            if (Is_Cell_Stable(SPARE) and Is_Nulled(cast(Value*, SPARE)))
+            if (Is_Cell_Stable(SPARE) and Is_Nulled(cast(Stable*, SPARE)))
                 goto test_succeeded;
             goto test_failed;
         }
@@ -767,7 +767,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 
     switch (opt Type_Of_Unchecked(test)) {
       case TYPE_PARAMETER: {
-        if (Typecheck_Atom_In_Spare_Uses_Scratch(L, test, SPECIFIED))
+        if (Typecheck_Value_In_Spare_Uses_Scratch(L, test, SPECIFIED))
             goto test_succeeded;
         goto test_failed; }
 
@@ -862,7 +862,7 @@ bool Typecheck_Atom_In_Spare_Uses_Scratch(
 Result(bool) Typecheck_Coerce(
     Level* const L,
     const Element* param,
-    Atom* atom,  // need mutability for coercion
+    Value* atom,  // need mutability for coercion
     bool is_return
 ){
     USE_LEVEL_SHORTHANDS (L);
@@ -915,7 +915,7 @@ Result(bool) Typecheck_Coerce(
 
         if (
             Get_Parameter_Flag(param, TRASH_DEFINITELY_OK)
-            and Is_Possibly_Unstable_Atom_Trash(atom)
+            and Is_Possibly_Unstable_Value_Trash(atom)
         ){
             goto return_true;
         }
@@ -930,7 +930,7 @@ Result(bool) Typecheck_Coerce(
     if (Is_Parameter_Unconstrained(param)) {
         if (Get_Parameter_Flag(param, REFINEMENT)) {  // no-arg refinement
             assert(not Is_Light_Null(atom));  // NULL_DEFINITELY_OK handles
-            if (Is_Possibly_Unstable_Atom_Okay(atom))
+            if (Is_Possibly_Unstable_Value_Okay(atom))
                 goto return_true;
             goto return_false;
         }
@@ -938,7 +938,7 @@ Result(bool) Typecheck_Coerce(
     }
 
     if (Get_Parameter_Flag(param, SPACE_DEFINITELY_OK))
-        if (Is_Cell_Stable(atom) and Is_Space(u_cast(Value*, atom)))
+        if (Is_Cell_Stable(atom) and Is_Space(u_cast(Stable*, atom)))
             goto return_true;
 
 } do_optimized_checks_signaled_by_bytes: {
@@ -959,7 +959,7 @@ Result(bool) Typecheck_Coerce(
 
     if (Get_Parameter_Flag(param, INCOMPLETE_OPTIMIZATION)) {
         Copy_Cell(SPARE, atom);
-        if (Typecheck_Atom_In_Spare_Uses_Scratch(L, param, SPECIFIED))
+        if (Typecheck_Value_In_Spare_Uses_Scratch(L, param, SPECIFIED))
             goto return_true;
     }
 
@@ -970,7 +970,7 @@ Result(bool) Typecheck_Coerce(
       do_coercion:
 
         if (
-            Is_Possibly_Unstable_Atom_Action(atom)
+            Is_Possibly_Unstable_Value_Action(atom)
             and Get_Parameter_Flag(param, UNRUN)
         ){
             LIFT_BYTE(atom) = NOQUOTE_2;
@@ -993,7 +993,7 @@ Result(bool) Typecheck_Coerce(
             coerced = true;
 
             if (
-                Is_Possibly_Unstable_Atom_Action(atom)
+                Is_Possibly_Unstable_Value_Action(atom)
                 and Get_Parameter_Flag(param, UNRUN)
             ){
                 LIFT_BYTE(atom) = NOQUOTE_2;
@@ -1032,9 +1032,9 @@ Result(bool) Typecheck_Coerce(
 //
 // Give back an action antiform which can act as a checker for a datatype.
 //
-Result(Value*) Init_Typechecker(
-    Init(Value) out,
-    const Value* datatype_or_block
+Result(Stable*) Init_Typechecker(
+    Init(Stable) out,
+    const Stable* datatype_or_block
 ){
     possibly(out == datatype_or_block);
 
@@ -1140,7 +1140,7 @@ DECLARE_NATIVE(TYPECHECK)
 {
     INCLUDE_PARAMS_OF_TYPECHECK;
 
-    Value* test = ARG(TEST);
+    Stable* test = ARG(TEST);
 
     heeded (Copy_Cell(SPARE, Atom_ARG(VALUE)));
 
@@ -1163,7 +1163,7 @@ DECLARE_NATIVE(TYPECHECK)
       case TYPE_PARAMETER:
       case TYPE_BLOCK:
       case TYPE_DATATYPE:
-        if (Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, test, SPECIFIED))
+        if (Typecheck_Value_In_Spare_Uses_Scratch(LEVEL, test, SPECIFIED))
             return LOGIC(true);
         break;
 
@@ -1201,9 +1201,9 @@ DECLARE_NATIVE(MATCH)
 {
     INCLUDE_PARAMS_OF_MATCH;
 
-    Value* test = ARG(TEST);
+    Stable* test = ARG(TEST);
 
-    Value* spare = Copy_Cell(SPARE, ARG(VALUE));
+    Stable* spare = Copy_Cell(SPARE, ARG(VALUE));
     assert(not Is_Nulled(spare));  // <opt-out> args should prohibit NULL
 
     switch (opt Type_Of(test)) {
@@ -1218,7 +1218,7 @@ DECLARE_NATIVE(MATCH)
       case TYPE_PARAMETER:
       case TYPE_BLOCK:
       case TYPE_DATATYPE:
-        if (not Typecheck_Atom_In_Spare_Uses_Scratch(LEVEL, test, SPECIFIED))
+        if (not Typecheck_Value_In_Spare_Uses_Scratch(LEVEL, test, SPECIFIED))
             return nullptr;
         break;
 
@@ -1259,7 +1259,7 @@ DECLARE_NATIVE(MATCHER)
 {
     INCLUDE_PARAMS_OF_MATCHER;
 
-    Value* test = ARG(TEST);
+    Stable* test = ARG(TEST);
 
     Source* a = Make_Source_Managed(2);
     Set_Flex_Len(a, 2);

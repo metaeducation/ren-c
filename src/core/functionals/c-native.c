@@ -40,13 +40,13 @@
 // have per-Dispatcher Details Queriers.
 //
 bool Raw_Native_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
     switch (property) {
       case SYM_RETURN_OF: {
-        Value* param = Details_At(details, IDX_RAW_NATIVE_RETURN);
+        Stable* param = Details_At(details, IDX_RAW_NATIVE_RETURN);
         assert(Is_Parameter(param));
         Copy_Cell(out, param);
         return true; }
@@ -201,11 +201,11 @@ static Bounce Native_Native_Core(Level* level_)
 
     if (g_current_uses_librebol) {
         UNUSED(native_type);  // !!! no :INTRINSIC, but what about :COMBINATOR?
-        Value* action = rebFunctionCore(
+        Stable* action = Known_Stable_Api(rebFunctionCore(
             cast(RebolContext*, g_currently_loading_module),
             spec,
             f_cast(RebolActionCFunction*, cfunc)
-        );
+        ));
         Copy_Cell(OUT, action);
         rebRelease(action);
     }
@@ -271,7 +271,7 @@ void Register_Generics(const ExtraGenericTable* generics)
     for (; entry->table != nullptr; ++entry) {
         assert(entry->ext_info->ext_heart == nullptr);
         entry->ext_info->ext_heart = Datatype_Extra_Heart(
-            *entry->datatype_ptr
+            Known_Stable(*entry->datatype_ptr)
         );
 
         assert(entry->ext_info->next == nullptr);
@@ -297,7 +297,7 @@ void Unregister_Generics(const ExtraGenericTable* generics)
     const ExtraGenericTable* entry = generics;
     for (; entry->table != nullptr; ++entry) {
         assert(entry->ext_info->ext_heart == Datatype_Extra_Heart(
-            *entry->datatype_ptr
+            Known_Stable(*entry->datatype_ptr)
         ));
         assert(Stub_Flavor(entry->ext_info->ext_heart) == FLAVOR_PATCH);
         entry->ext_info->ext_heart = nullptr;  // null out datatype [1]
@@ -363,7 +363,7 @@ bool Try_Dispatch_Generic_Core(
     Sink(Bounce) bounce,
     SymId symid,
     const GenericTable* table,
-    const Value* datatype,  // no quoted/quasi/anti [1]
+    const Stable* datatype,  // no quoted/quasi/anti [1]
     Level* const L
 ){
     Option(Heart) heart = Datatype_Heart(datatype);
@@ -571,7 +571,7 @@ void Startup_Natives(const Element* boot_natives)
     assert(Series_Index(boot_natives) == 0);  // should be head, sanity check
     assert(Cell_Binding(boot_natives) == UNBOUND);
 
-    DECLARE_ATOM (dual_step);
+    DECLARE_VALUE (dual_step);
     require (
       Level* L = Make_Level_At_Core(
         &Evaluator_Executor,

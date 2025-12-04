@@ -52,7 +52,7 @@
 // this is not implemented.
 //
 bool Do_Breakpoint_Throws(
-    Sink(Atom) out,
+    Sink(Value) out,
     bool interrupted,  // Ctrl-C (as opposed to a BREAKPOINT)
     const Value* paused
 ){
@@ -128,7 +128,7 @@ DECLARE_NATIVE(BREAKPOINT_P)
     // return *either* a value or no-value...if breakpoint were variadic, it
     // could splice in a value in place of what comes after it.
     //
-    if (not Is_Quasi_Word(u_cast(Value*, SPARE)))
+    if (not Is_Quasi_Word(u_cast(Stable*, SPARE)))
         panic ("BREAKPOINT invisible, can't RESUME:WITH code (use PAUSE)");
 
     return TRASH;
@@ -199,7 +199,7 @@ DECLARE_NATIVE(RESUME)
     // We throw with /NAME as identity of the RESUME function.  (Note: there
     // is no NATIVE() variant for extensions yet.  Extract from current level.)
     //
-    DECLARE_VALUE (resume);
+    DECLARE_STABLE (resume);
     Init_Frame(
         resume,
         Level_Phase(LEVEL),

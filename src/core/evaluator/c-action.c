@@ -82,7 +82,7 @@
 //
 //  Irreducible_Bounce: C
 //
-// This tries to simplify a bounce to get it to be just an Atom content in
+// This tries to simplify a bounce to get it to be just an Value content in
 // the OUT cell, if possible.  Not all bounces can be simplified, but when
 // they can be this can save when delegating code, on needing to call a cycle
 // of trampoline.
@@ -138,22 +138,11 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
 
   copy_api_cell_to_out_and_release_it: {
 
-    // 1. As of yet, no API functions have been exported which return an
-    //    unstable Atom directly.  If it did, it would have to return it as
-    //    a RebolBounce* not a Value*.  There's no particular reason why
-    //    we couldn't offer a `rebPack()` function that did give back a
-    //    pack, solely intended to use in the form `return rebPack(...)`,
-    //    but it hasn't yet happened...because even if it returned a Bounce
-    //    it would backed by an API cell form holding an unstable value,
-    //    which is currently not legal.  Some rules and tightening would
-    //    be needed, so for now we do `rebContinue("pack [...]")`
-
-    if (Is_Bounce_An_Atom(b)) {  // Cell pointer (must be Api cell)
-        Atom* atom = Atom_From_Bounce(b);
-        assert(Is_Atom_Api_Value(atom));
-        Assert_Cell_Stable(atom);  // API cells always stable, for now [1]
-        Copy_Cell(OUT, atom);
-        Release_Api_Value_If_Unmanaged(Known_Stable(atom));
+    if (Is_Bounce_A_Cell(b)) {  // must be Api Value
+        Api(Value*) v = Value_From_Bounce(b);
+        assert(Is_Api_Value(v));
+        Copy_Cell(OUT, v);
+        Release_Api_Value_If_Unmanaged(v);
         return nullptr;
     }
 
@@ -363,7 +352,7 @@ Bounce Action_Executor(Level* L)
                 possibly(  // need to use u_cast() due to this possibility
                     ARG == Level_Args_Head(L) and Is_Cell_Poisoned(ARG)
                 );
-                REBLEN offset = ARG - u_cast(Atom*, Level_Args_Head(L));
+                REBLEN offset = ARG - u_cast(Value*, Level_Args_Head(L));
                 Tweak_Word_Index(ordered, offset + 1);
                 if (Is_Stub_Details(L->u.action.original))  // !!!
                     Tweak_Cell_Relative_Binding(
@@ -474,7 +463,7 @@ Bounce Action_Executor(Level* L)
 
             if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // non-empty is ok [4]
                 require (
-                  Value* out = Decay_If_Unstable(OUT)  // !!! ^META?
+                  Stable* out = Decay_If_Unstable(OUT)  // !!! ^META?
                 );
                 Init_Varargs_Untyped_Infix(ARG, out);
                 Erase_Cell(OUT);
@@ -484,21 +473,21 @@ Bounce Action_Executor(Level* L)
                 require (
                   Decay_If_Unstable(OUT)
                 );
-                Move_Atom(ARG, OUT);
+                Move_Value(ARG, OUT);
                 break; }
 
               case PARAMCLASS_META: {
-                Move_Atom(ARG, OUT);
+                Move_Value(ARG, OUT);
                 break; }
 
               case PARAMCLASS_JUST: {
                 assert(Not_Antiform(OUT));
-                Move_Atom(ARG, OUT);
+                Move_Value(ARG, OUT);
                 break; }
 
               case PARAMCLASS_THE: {
                 assert(Not_Antiform(OUT));
-                Move_Atom(ARG, OUT);
+                Move_Value(ARG, OUT);
                 break; }
 
               case PARAMCLASS_SOFT: {
@@ -517,7 +506,7 @@ Bounce Action_Executor(Level* L)
                     Erase_Cell(OUT);
                 }
                 else
-                    Move_Atom(ARG, OUT);
+                    Move_Value(ARG, OUT);
                 break; }
 
               default:
@@ -772,7 +761,7 @@ Bounce Action_Executor(Level* L)
         // But +1 is okay, because we want the slots after the refinement.
         //
         REBINT offset =
-            VAL_WORD_INDEX(TOP) - (ARG - cast(Atom*, Level_Args_Head(L))) - 1;
+            VAL_WORD_INDEX(TOP) - (ARG - cast(Value*, Level_Args_Head(L))) - 1;
         KEY += offset;
         ARG += offset;
         PARAM += offset;
@@ -864,7 +853,7 @@ Bounce Action_Executor(Level* L)
         while (Is_Specialized(param)) {
             Element* archetype = Phase_Archetype(phase);
             phase = Frame_Phase(archetype);
-            param = Phase_Param(phase, ARG - cast(Atom*, L->rootvar));
+            param = Phase_Param(phase, ARG - cast(Value*, L->rootvar));
         }
 
         if (Is_Endlike_Unset(ARG)) {  // special state, DUAL_0
@@ -896,7 +885,7 @@ Bounce Action_Executor(Level* L)
                 or not Is_Varargs(Known_Stable(ARG))
             ){
                 require (
-                  Value* arg = Decay_If_Unstable(ARG)
+                  Stable* arg = Decay_If_Unstable(ARG)
                 );
                 panic (Error_Not_Varargs(L, KEY, param, arg));
             }
@@ -921,7 +910,7 @@ Bounce Action_Executor(Level* L)
         );
         if (not check) {
             require (
-              Value* arg = Decay_If_Unstable(ARG)
+              Stable* arg = Decay_If_Unstable(ARG)
             );
             panic (Error_Phase_Arg_Type(L, KEY, param, arg));
         }
@@ -1116,7 +1105,7 @@ Bounce Action_Executor(Level* L)
 //
 Result(None) Push_Action(
     Level* L,
-    const Value* frame,
+    const Stable* frame,
     Option(InfixMode) infix_mode
 ){
     assert(L->executor == &Action_Executor);

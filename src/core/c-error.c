@@ -65,11 +65,11 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
         return cast(Error*, f); }
 
       case DETECTED_AS_CELL: {
-        const Atom* atom = cast(Atom*, p);
+        const Value* atom = cast(Value*, p);
         assert(Is_Cell_Stable(atom));  // !!! Should unstable args be allowed?
         UNUSED(atom);
 
-        const Value* v = cast(Value*, p);
+        const Stable* v = cast(Stable*, p);
 
         if (Is_Base_Root_Bit_Set(v)) {  // API handles must be errors [1]
             Error* error;
@@ -80,7 +80,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
                 assert(!"panic() given API handle that is not an ERROR!");
                 error = Error_Bad_Value(v);
             }
-            rebRelease(m_cast(Value*, v));  // released even if we didn't
+            rebRelease(m_cast(Stable*, v));  // released even if we didn't
             return error;
         }
 
@@ -122,7 +122,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 // parameter name and value as being implicated as a problem.  This only
 // works for the current topmost stack level.
 //
-// Passing an arbitrary Value* will give a generic "Invalid Arg" error.
+// Passing an arbitrary Stable* will give a generic "Invalid Arg" error.
 //
 // Note: Over the long term, one does not want to hard-code error strings in
 // the executable.  That makes them more difficult to hook with translations,
@@ -260,7 +260,7 @@ REBLEN Stack_Depth(void)
 //
 // If the message is not found, return nullptr.
 //
-const Value* Find_Error_For_Sym(SymId id)
+const Stable* Find_Error_For_Sym(SymId id)
 {
     const Symbol* canon = Canon_Symbol(id);
 
@@ -273,7 +273,7 @@ const Value* Find_Error_For_Sym(SymId id)
         Index n = 1;
         for (; n <= Varlist_Len(category); ++n) {
             if (Are_Synonyms(Key_Symbol(Varlist_Key(category, n)), canon)) {
-                Value* message = Slot_Hack(Varlist_Slot(category, n));
+                Stable* message = Slot_Hack(Varlist_Slot(category, n));
                 assert(Is_Block(message) or Is_Text(message));
                 return message;
             }
@@ -347,7 +347,7 @@ void Set_Location_Of_Error(
     Level* L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
         if (Get_Level_Flag(L, DISPATCHING_INTRINSIC)) {  // [1]
-            Value* frame = Known_Stable(Level_Scratch(L));
+            Stable* frame = Known_Stable(Level_Scratch(L));
             possibly(Is_Action(frame));
             Option(const Symbol*) label = Frame_Label_Deep(frame);
             if (label)
@@ -375,7 +375,7 @@ void Set_Location_Of_Error(
     }
     Init_Block(Slot_Init_Hack(&vars->where), Pop_Source_From_Stack(base));
 
-    DECLARE_VALUE (nearest);
+    DECLARE_STABLE (nearest);
     require (Read_Slot(nearest, &vars->nearest));
 
     if (Is_Nulled(nearest))  // don't override scanner data [4]
@@ -480,13 +480,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
     else
         return fail (arg);
 
-    DECLARE_VALUE (id);
+    DECLARE_STABLE (id);
     require (Read_Slot(id, &vars->id));
 
-    DECLARE_VALUE (type);
+    DECLARE_STABLE (type);
     require (Read_Slot(type, &vars->type));
 
-    DECLARE_VALUE (message);
+    DECLARE_STABLE (message);
     require (Read_Slot(message, &vars->message));
 
     // Validate the error contents, and reconcile message template and ID
@@ -615,13 +615,13 @@ Error* Make_Error_Managed_Vaptr(
 
     VarList* root_varlist = Cell_Varlist(Get_System(SYS_STANDARD, STD_ERROR));
 
-    DECLARE_VALUE (id_value);
-    DECLARE_VALUE (type);
-    const Value* message;  // Stack values ("movable") are allowed
+    DECLARE_STABLE (id_value);
+    DECLARE_STABLE (type);
+    const Stable* message;  // Stack values ("movable") are allowed
     if (not id) {
         Init_Nulled(id_value);
         Init_Nulled(type);
-        message = va_arg(*vaptr, const Value*);
+        message = va_arg(*vaptr, const Stable*);
     }
     else {
         assert(cat_id != SYM_0);
@@ -685,11 +685,11 @@ Error* Make_Error_Managed_Vaptr(
             else switch (Detect_Rebol_Pointer(p)) {
               case DETECTED_AS_END :
                 assert(!"Not enough arguments in Make_Error_Managed()");
-                Init_Unset_Due_To_End(u_cast(Atom*, u_cast(Cell*, slot)));
+                Init_Unset_Due_To_End(u_cast(Value*, u_cast(Cell*, slot)));
                 break;
 
               case DETECTED_AS_CELL: {
-                Copy_Cell(slot, cast(Value*, p));
+                Copy_Cell(slot, cast(Stable*, p));
                 break; }
 
               case DETECTED_AS_STUB: {  // let symbols act as words
@@ -723,7 +723,7 @@ Error* Make_Error_Managed_Vaptr(
 //
 //  Make_Error_Managed_Raw: C
 //
-// This variadic function takes a number of Value* arguments appropriate for
+// This variadic function takes a number of Stable* arguments appropriate for
 // the error category and ID passed.  It is commonly used with panic():
 //
 //     panic (Make_Error_Managed(SYM_CATEGORY, SYM_SOMETHING, arg1, arg2, ...));
@@ -744,7 +744,7 @@ Error* Make_Error_Managed_Vaptr(
 Error* Make_Error_Managed_Raw(
     int opt_cat_id,  // va_list is weird about enums...
     int opt_id,  // ...note that va_arg(va, enum_type) is illegal!
-    ... /* Value* arg1, Value* arg2, ... */
+    ... /* Stable* arg1, Stable* arg2, ... */
 ){
     va_list va;
 
@@ -769,7 +769,7 @@ Error* Make_Error_Managed_Raw(
 // without any error template in %errors.r)
 //
 Error* Error_User(const char *utf8) {
-    DECLARE_ATOM (message);
+    DECLARE_VALUE (message);
     Init_Text(message, Make_Strand_UTF8(utf8));
     return Make_Error_Managed(SYM_0, SYM_0, message, rebEND);
 }
@@ -798,7 +798,7 @@ Error* Error_Need_Non_End(const Element* target) {
 //
 Error* Error_Bad_Word_Get(
     const Element* target,
-    const Value* trash
+    const Stable* trash
 ){
     assert(Is_Trash(trash));
 
@@ -860,7 +860,7 @@ Error* Error_Not_Varargs(
     Level* L,
     const Key* key,
     const Param* param,
-    const Value* arg
+    const Stable* arg
 ){
     assert(Get_Parameter_Flag(param, VARIADIC));
     assert(not Is_Varargs(arg));
@@ -869,7 +869,7 @@ Error* Error_Not_Varargs(
     // VARARGS! when fulfilled in a frame directly, not INTEGER!) then
     // an "honest" parameter has to be made to give the error.
     //
-    DECLARE_ATOM (honest_param);
+    DECLARE_VALUE (honest_param);
     Init_Unconstrained_Parameter(
         honest_param,
         FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
@@ -898,8 +898,8 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 
     const Symbol* param_symbol = Key_Symbol(Phase_Key(Level_Phase(L), index));
 
-    Atom* atom_arg = Level_Arg(L, index);
-    Value *arg = Decay_If_Unstable(atom_arg) except (Error* e) {
+    Value* atom_arg = Level_Arg(L, index);
+    Stable* arg = Decay_If_Unstable(atom_arg) except (Error* e) {
         return e;
     }
     return Error_Invalid_Arg_Raw(label, param_symbol, arg);
@@ -916,7 +916,7 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 {
     assert(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // valid otherwise [1]
-    Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
+    Value* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
     Details* details = Level_Intrinsic_Details(L);
     Option(const Symbol*) label = Level_Intrinsic_Label(L);
@@ -927,7 +927,7 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 
     const Symbol* param_symbol = Key_Symbol(Phase_Key(details, 1));
 
-    Value* arg = Decay_If_Unstable(atom_arg) except (Error* e) {
+    Stable* arg = Decay_If_Unstable(atom_arg) except (Error* e) {
         return e;
     }
     return Error_Invalid_Arg_Raw(label, param_symbol, arg);
@@ -945,7 +945,7 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 // distinguished from `panic (some_context)` meaning that the context iss for
 // an actual intended error.
 //
-Error* Error_Bad_Value(const Value* value)
+Error* Error_Bad_Value(const Stable* value)
 {
     if (Is_Antiform(value))
         return Error_Bad_Antiform(value);
@@ -967,10 +967,10 @@ Error* Error_Bad_Null(const Element* target) {
 //
 Error* Error_No_Catch_For_Throw(Level* level_)
 {
-    DECLARE_VALUE (label);
+    DECLARE_STABLE (label);
     Copy_Cell(label, VAL_THROWN_LABEL(level_));
 
-    DECLARE_ATOM (arg);
+    DECLARE_VALUE (arg);
     CATCH_THROWN(arg, level_);
 
     if (Is_Warning(label)) {  // what would have been panic()
@@ -978,7 +978,7 @@ Error* Error_No_Catch_For_Throw(Level* level_)
         return Cell_Error(label);
     }
 
-    Value* stable_arg = Decay_If_Unstable(arg) except (Error* e) {
+    Stable* stable_arg = Decay_If_Unstable(arg) except (Error* e) {
         return e;
     }
     return Error_No_Catch_Raw(stable_arg, label);
@@ -1004,7 +1004,7 @@ Error* Error_Invalid_Type(Type type)
 // status is supposed to be ignored).  Copy_Dequoted_Cell() is defined
 // after %cell-integer.h, so we handle the issue here.
 //
-Error* Error_Out_Of_Range(const Value* arg)
+Error* Error_Out_Of_Range(const Stable* arg)
 {
     DECLARE_ELEMENT (unquoted);
     Copy_Dequoted_Cell(unquoted, arg);
@@ -1033,7 +1033,7 @@ Error* Error_Math_Args(Type type, const Symbol* verb)
 //
 //  Error_Cannot_Use: C
 //
-Error* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
+Error* Error_Cannot_Use(const Symbol* verb, const Stable* first_arg)
 {
     return Error_Cannot_Use_Raw(verb, Datatype_Of(first_arg));
 }
@@ -1042,7 +1042,7 @@ Error* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
 //
 //  Error_Unexpected_Type: C
 //
-Error* Error_Unexpected_Type(Type expected, const Value* actual)
+Error* Error_Unexpected_Type(Type expected, const Stable* actual)
 {
     assert(expected <= MAX_TYPE);
     assert(Is_Datatype(actual));
@@ -1065,7 +1065,7 @@ Error* Error_Arg_Type(
     Option(const Symbol*) label,  // function's name
     const Key* key,
     const Param* param,
-    const Value* arg
+    const Stable* arg
 ){
     if (Parameter_Class(param) == PARAMCLASS_META and Is_Lifted_Error(arg))
         return Cell_Error(arg);
@@ -1100,7 +1100,7 @@ Error* Error_Phase_Arg_Type(
     Level* L,
     const Key* key,
     const Param* param,
-    const Value* arg
+    const Stable* arg
 ){
     if (Level_Phase(L) == L->u.action.original)  // not an internal phase
         return Error_Arg_Type(Level_Label(L), key, param, arg);
@@ -1112,7 +1112,7 @@ Error* Error_Phase_Arg_Type(
 
     ERROR_VARS* vars = ERR_VARS(error);
 
-    DECLARE_VALUE (id);
+    DECLARE_STABLE (id);
     require (Read_Slot(id, &vars->id));
 
     assert(Is_Word(id));
@@ -1158,7 +1158,7 @@ Error* Error_Bad_Argless_Refine(const Key* key)
 //
 //  Error_Bad_Return_Type: C
 //
-Error* Error_Bad_Return_Type(Level* L, Atom* atom, const Element* param) {
+Error* Error_Bad_Return_Type(Level* L, Value* atom, const Element* param) {
     Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
 
     Option(const Source*) array = Parameter_Spec(param);
@@ -1181,7 +1181,7 @@ Error* Error_Bad_Make(Type type, const Element* spec)
 //
 //  Error_On_Port: C
 //
-Error* Error_On_Port(SymId id, Value* port, REBINT err_code)
+Error* Error_On_Port(SymId id, Stable* port, REBINT err_code)
 {
     VarList* ctx = Cell_Varlist(port);
     Slot* spec = Varlist_Slot(ctx, STD_PORT_SPEC);
@@ -1190,7 +1190,7 @@ Error* Error_On_Port(SymId id, Value* port, REBINT err_code)
     if (Is_Space(Slot_Hack(val)))
         val = Varlist_Slot(Cell_Varlist(spec), STD_PORT_SPEC_HEAD_TITLE);  // less
 
-    DECLARE_ATOM (err_code_value);
+    DECLARE_VALUE (err_code_value);
     Init_Integer(err_code_value, err_code);
 
     return Make_Error_Managed(SYM_ACCESS, id, val, err_code_value, rebEND);
@@ -1200,7 +1200,7 @@ Error* Error_On_Port(SymId id, Value* port, REBINT err_code)
 //
 //  Error_Bad_Antiform: C
 //
-Error* Error_Bad_Antiform(const Atom* anti) {
+Error* Error_Bad_Antiform(const Value* anti) {
     assert(Is_Antiform(anti));
 
     DECLARE_ELEMENT (reified);
@@ -1250,7 +1250,9 @@ VarList* Startup_Errors(const Element* boot_errors)
 
     assert(Series_Index(boot_errors) == 0);
 
-    Value* catalog_val = rebValue(CANON(CONSTRUCT), CANON(PIN), boot_errors);
+    Api(Stable*) catalog_val = rebStable(
+        CANON(CONSTRUCT), CANON(PIN), boot_errors
+    );
     VarList* catalog = Cell_Varlist(catalog_val);
 
     // Morph blocks into objects for all error categories.
@@ -1259,7 +1261,7 @@ VarList* Startup_Errors(const Element* boot_errors)
     Slot* category = Varlist_Slots(&category_tail, catalog);
     for (; category != category_tail; ++category) {
         assert(Is_Block(Slot_Hack(category)));
-        Value* error = rebValue(
+        Api(Stable*) error = rebStable(
             CANON(CONSTRUCT), CANON(PIN), Slot_Hack(category)
         );
         Copy_Cell(Slot_Init_Hack(category), error);  // actually an OBJECT! :-/
@@ -1384,7 +1386,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
 
     Error* error = Cell_Error(v);
     ERROR_VARS *vars = ERR_VARS(error);
-    DECLARE_VALUE (message);
+    DECLARE_STABLE (message);
     require (Read_Slot(message, &vars->message));
 
     // Append: error message ARG1, ARG2, etc.

@@ -108,7 +108,7 @@ DECLARE_NATIVE(MOLD)
 {
     INCLUDE_PARAMS_OF_MOLD;
 
-    Value* v = ARG(VALUE);
+    Stable* v = ARG(VALUE);
 
     DECLARE_MOLDER (mo);
     if (Bool_ARG(FLAT))
@@ -164,7 +164,7 @@ DECLARE_NATIVE(WRITE_STDOUT)
 {
     INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
-    Value* v = ARG(VALUE);
+    Stable* v = ARG(VALUE);
 
   #if (! DEBUG_HAS_PROBE)
     UNUSED(v);
@@ -210,7 +210,7 @@ DECLARE_NATIVE(NEW_LINE)
 
     bool mark = Cell_Yes(ARG(MARK));
 
-    Value* pos = ARG(POSITION);
+    Stable* pos = ARG(POSITION);
     const Element* tail;
     Element* item = List_At_Ensure_Mutable(&tail, pos);
     Source* a = Cell_Array_Known_Mutable(pos);  // need if setting flag at tail
@@ -266,7 +266,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
 {
     INCLUDE_PARAMS_OF_NEW_LINE_Q;
 
-    Value* pos = ARG(POSITION);
+    Stable* pos = ARG(POSITION);
 
     const Source* arr;
     const Element* item;
@@ -282,7 +282,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
                 // process of using string components which *might* have
                 // newlines.  Review edge cases, like:
                 //
-                //    Value* new_line_q = rebValue(":new-line?");
+                //    Stable* new_line_q = rebValue(":new-line?");
                 //    bool case_one = rebUnboxLogic("new-line?", "[\n]");
                 //    bool case_two = rebUnboxLogic(new_line_q, "[\n]");
                 //
@@ -324,7 +324,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
 //
 // Note that this routine is used by the SLEEP extension, as well as by WAIT.
 //
-REBLEN Milliseconds_From_Value(const Value* v) {
+REBLEN Milliseconds_From_Value(const Stable* v) {
     REBINT msec;
 
     switch (opt Type_Of(v)) {

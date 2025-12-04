@@ -311,7 +311,7 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     // a nested level is running might expose intermediate bad states.  The
     // argument cells can be used to hold other fully formed cells.)
     //
-    Atom spare;
+    Value spare;
 
     // A second GC-safe cell is available, but with a particular purpose in
     // the evaluator.  It stores a copy of the current cell being evaluated.
@@ -328,7 +328,7 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     // LEVEL_FLAG_DISPATCHING_INTRINSIC then scratch must hold the cell of
     // the intrinsic being run.
     //
-    Atom scratch;  // raw vs. derived class due to union/destructor combo
+    Value scratch;  // raw vs. derived class due to union/destructor combo
 
     // Each executor subclass can store specialized information in the level.
     // We place it here up top where we've been careful to make sure the
@@ -369,7 +369,7 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     // it is used as an intermediate free location to do calculations en route
     // to a final result, due to being GC-safe during function evaluation.
     //
-    Atom* out;
+    Value* out;
 
     // The varlist is where arguments for FRAME! are kept.  Though it is
     // ultimately usable as an ordinary Varlist_Array() for a FRAME! value, it

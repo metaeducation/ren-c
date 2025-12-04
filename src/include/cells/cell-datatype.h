@@ -104,14 +104,14 @@ INLINE RebolValue* Register_Datatype(const char* name)  // return "holder" [1]
         const Symbol* symbol = Intern_Utf8_Managed(b_cast(name), size)
     );
 
-    RebolValue* result = Alloc_Value();
+    Api(Value*) result = Alloc_Value();
 
     Option(Patch*) patch = Sea_Patch(g_datatypes_context, symbol, true);
     if (patch) {
-        Value* datatype = cast(Value*, Stub_Cell(unwrap patch));
+        Stable* datatype = cast(Stable*, Stub_Cell(unwrap patch));
         assert(Is_Datatype(datatype));
         Copy_Cell(result, datatype);
-        return rebUnmanage(result);  // "forward" registrations [2]
+        return rebUnmanage(result);  // forward registrations [2]
     }
 
     Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
@@ -119,7 +119,7 @@ INLINE RebolValue* Register_Datatype(const char* name)  // return "holder" [1]
     Freeze_Source_Deep(a);
 
     Init(Slot) slot = Append_Context(g_datatypes_context, symbol);
-    Value* datatype = Init_Fence(slot, a);
+    Stable* datatype = Init_Fence(slot, a);
     Stably_Antiformize_Unbound_Fundamental(datatype);
     assert(Is_Datatype(datatype));
 
@@ -129,7 +129,7 @@ INLINE RebolValue* Register_Datatype(const char* name)  // return "holder" [1]
 
 INLINE void Unregister_Datatype(RebolValue* datatype_holder)
 {
-    assert(Is_Datatype(datatype_holder));
+    assert(Is_Datatype(Known_Stable(datatype_holder)));
     rebRelease(datatype_holder);
 }
 
@@ -155,7 +155,7 @@ INLINE SymId Symbol_Id_From_Type(Type type) {
 }
 
 
-INLINE Option(SymId) Datatype_Id(const Value* v) {
+INLINE Option(SymId) Datatype_Id(const Stable* v) {
     assert(Is_Datatype(v));
     if (Series_Len_At(v) != 1)
         panic ("Type blocks only allowed one element for now");
@@ -169,13 +169,13 @@ INLINE Option(SymId) Datatype_Id(const Value* v) {
 //    antiform is what canonizes the fence's array to one that has the
 //    DATATYPE_BYTE() set.  So you can only ask this of antiforms.
 //
-INLINE Option(Type) Datatype_Type(const Value* v) {
+INLINE Option(Type) Datatype_Type(const Stable* v) {
     assert(Is_Datatype(v));  // only works on antiform [1]
     return u_cast(Option(Type), DATATYPE_BYTE(Cell_Array(v)));
 }
 
 #if RUNTIME_CHECKS
-    INLINE Option(Type) Datatype_Type_Slow_Debug(const Value* v) {
+    INLINE Option(Type) Datatype_Type_Slow_Debug(const Stable* v) {
         Option(SymId) id = Datatype_Id(v);
         if (id and Is_Symbol_Id_Of_Builtin_Type(unwrap id))
             return Type_From_Symbol_Id(unwrap id);
@@ -183,13 +183,13 @@ INLINE Option(Type) Datatype_Type(const Value* v) {
     }
 #endif
 
-INLINE Option(Heart) Datatype_Heart(const Value* v) {
+INLINE Option(Heart) Datatype_Heart(const Stable* v) {
     Byte type_byte_or_0 = u_cast(Byte, Datatype_Type(v));
     assert(type_byte_or_0 <= cast(Byte, MAX_HEART));  // no QUOTE/QUASI/ANTI
     return u_cast(Option(Heart), type_byte_or_0);
 }
 
-INLINE Heart Datatype_Builtin_Heart(const Value* v) {
+INLINE Heart Datatype_Builtin_Heart(const Stable* v) {
     Option(Type) type = Datatype_Type(v);
     assert(type);
     Byte type_byte = u_cast(Byte, type);
@@ -197,7 +197,7 @@ INLINE Heart Datatype_Builtin_Heart(const Value* v) {
     return u_cast(HeartEnum, type_byte);
 }
 
-INLINE const ExtraHeart* Datatype_Extra_Heart(const Value* v) {
+INLINE const ExtraHeart* Datatype_Extra_Heart(const Stable* v) {
     assert(Is_Datatype(v));
 
     const Symbol* s = Word_Symbol(List_Item_At(v));
@@ -213,12 +213,12 @@ INLINE const ExtraHeart* Cell_Extra_Heart(const Cell* v) {
 }
 
 
-INLINE Value* Init_Extended_Datatype_Untracked(
-    Init(Value) out,
+INLINE Stable* Init_Extended_Datatype_Untracked(
+    Init(Stable) out,
     const ExtraHeart* ext_heart
 ){
     assert(Is_Stub_Patch(ext_heart));
-    const Value* datatype = cast(Value*, Stub_Cell(ext_heart));
+    const Stable* datatype = cast(Stable*, Stub_Cell(ext_heart));
     assert(Is_Datatype(datatype));
     return Copy_Cell(out, datatype);
 }

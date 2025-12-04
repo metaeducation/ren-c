@@ -275,7 +275,7 @@ for-each-datatype 't [
     e-types/emit [propercase-of t --[
         #define Is_${propercase-of T.name}(value) \
             Cell_Has_Lift_Heart_No_Sigil(NOQUOTE_2, TYPE_$<T.NAME>, \
-                ensure(Value*, (value)))
+                ensure(Stable*, (value)))
     ]--]
 ]
 
@@ -355,7 +355,7 @@ for-each [ts-name types] sparse-typesets [
 for-each-datatype 't [
     if not t.antiname [continue]  ; no special name for antiform form
 
-    let need: either yes? t.unstable ["Atom"] ["Value"]
+    let need: either yes? t.unstable ["Value"] ["Stable"]
 
     let proper-name: propercase-of t.antiname
 
@@ -370,7 +370,7 @@ for-each-datatype 't [
 
         #define Is_Lifted_$<Proper-Name>(cell) \
             Cell_Has_Lift_Heart_No_Sigil(QUASIFORM_3, TYPE_$<T.NAME>, \
-                ensure(Value*, (cell)))
+                ensure(Stable*, (cell)))
 
         #define Is_Quasi_$<Propercase-Of T.Name>(cell) \
             Is_Lifted_$<Proper-Name>(cell)  /* alternative */
@@ -378,18 +378,18 @@ for-each-datatype 't [
 
     if yes? t.unstable [continue]
 
-    ; Usually we don't want people testing Atom* directly to see if it's any
+    ; Usually we don't want people testing Value* directly to see if it's any
     ; stable type (antiform or otherwise) because it might be a PACK! or an
     ; ERROR! and need to decay.  But occasionally code is checking return
-    ; types and has special reasons to see if an Atom is an ACTION! or a
+    ; types and has special reasons to see if an Value is an ACTION! or a
     ; TRASH!, etc.  Allow the test, but throw in a speedbump by naming them
-    ; Is_Possibly_Unstable_Atom_Action() instead of just Is_Action(), to
+    ; Is_Possibly_Unstable_Value_Action() instead of just Is_Action(), to
     ; provoke some thought from testing casually.
     ;
     e-types/emit [t proper-name --[
-        #define Is_Possibly_Unstable_Atom_$<Proper-Name>(atom) \
+        #define Is_Possibly_Unstable_Value_$<Proper-Name>(atom) \
             Cell_Has_Lift_Heart_No_Sigil(ANTIFORM_1, TYPE_$<T.NAME>, \
-                ensure(Atom*, (atom)))
+                ensure(Value*, (atom)))
     ]--]
 ]
 

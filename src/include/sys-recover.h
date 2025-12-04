@@ -381,7 +381,7 @@ struct JumpStruct {
         static_assert(
             std::is_same<T, Error>::value
             or std::is_same<T, const char>::value
-            or std::is_base_of<const Value, T>::value
+            or std::is_base_of<const Stable, T>::value
             or std::is_base_of<Cell, T>::value,
             "Derive_Error_From_Pointer() works on: Error*, Cell*, const char*"
         );

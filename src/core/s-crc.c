@@ -366,7 +366,7 @@ Result(HashList*) Make_Hashlist(REBLEN len)
 //
 // Note: hash array contents (indexes) are 1-based!
 //
-Result(HashList*) Hash_Block(const Value* block, REBLEN skip, bool cased)
+Result(HashList*) Hash_Block(const Stable* block, REBLEN skip, bool cased)
 {
     trap (
       HashList* hashlist = Make_Hashlist(Series_Len_At(block))  // ints

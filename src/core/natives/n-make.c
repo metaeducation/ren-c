@@ -42,10 +42,10 @@ DECLARE_NATIVE(MAKE)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Value* type = ARG(TYPE);  // !!! may not be datatype, but parent context
+    Stable* type = ARG(TYPE);  // !!! may not be datatype, but parent context
     USED(ARG(DEF));  // delegated to generic
 
-    const Value* datatype;
+    const Stable* datatype;
     if (Is_Datatype(type)) {
         datatype = type;
     }
@@ -169,7 +169,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     Element* spare_input = cast(Element*, Level_Spare(L));
     Heart from = Heart_Of_Builtin_Fundamental(spare_input);
 
-    Atom* scratch_reverse_atom = Level_Scratch(L);
+    Value* scratch_reverse_atom = Level_Scratch(L);
 
     if (Get_Cell_Flag(Level_Spare(L), SPARE_NOTE_REVERSE_CHECKING))
         goto ensure_results_equal;
@@ -193,7 +193,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     }
 
     require (  // should packs be legal?
-      Value* out = Decay_If_Unstable(OUT)
+      Stable* out = Decay_If_Unstable(OUT)
     );
 
     if (Heart_Of_Fundamental(out) != to_or_as)
@@ -241,7 +241,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
         panic (Cell_Error(scratch_reverse_atom));
 
     require (
-      Value* scratch_reverse = Decay_If_Unstable(scratch_reverse_atom)
+      Stable* scratch_reverse = Decay_If_Unstable(scratch_reverse_atom)
     );
 
     if (to_or_as == TYPE_MAP) {  // doesn't preserve order requirement :-/
@@ -273,7 +273,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 
     Option(const Symbol*) label = Level_Label(level_);
 
-    Value* datatype = ARG(TYPE);
+    Stable* datatype = ARG(TYPE);
     STATE = cast(Byte, Datatype_Builtin_Heart(datatype));  // might alter
     Copy_Cell(SPARE, ARG(VALUE));  // may alter ELEMENT too, save in SPARE
 
@@ -310,7 +310,7 @@ DECLARE_NATIVE(TO)
     INCLUDE_PARAMS_OF_TO;
 
     if (Is_Datatype(ARG(VALUE))) {  // do same coercions as WORD!
-        Value* datatype = ARG(VALUE);
+        Stable* datatype = ARG(VALUE);
         Option(Type) type = Datatype_Type(datatype);
         if (not type)
             panic ("TO doesn't work with extension types");

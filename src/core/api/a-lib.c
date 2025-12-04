@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -88,7 +88,7 @@
 //    not from inside the API implementations... so all the APIs that run code
 //    should be formulated e.g. as:
 //
-//        Value* error = rebRecoverUnboxLogic(&result, ...);
+//        Stable* error = rebRecoverUnboxLogic(&result, ...);
 //
 //    Then, rebUnboxLogic() can be a macro that does the right thing for the
 //    language in terms of raising the right kind of exception (or terminating
@@ -108,7 +108,7 @@ static bool g_api_initialized = false;
 // are Is_Api_Value() mustn't be nulled.  nullptr is the only currency exposed
 // to the clients of the API for NULL.
 //
-INLINE const RebolValue* NULLIFY_NULLED(const Value* value) {
+INLINE const RebolValue* NULLIFY_NULLED(const Stable* value) {
     if (Is_Nulled(value))
         return nullptr;
     return value;
@@ -562,7 +562,7 @@ uintptr_t API_rebTick(void)
 //
 // * Routines with full written out names like `rebInteger()` return API
 //   handles which must be rebRelease()'d.  Shorter versions like rebI() don't
-//   return Value* but are designed for transient use when evaluating, e.g.
+//   return Stable* but are designed for transient use when evaluating, e.g.
 //   `rebElide("print [", rebI(count), "]");` does not need to rebRelease()
 //   the count variable because the evaluator frees it immediately after use.
 //
@@ -778,7 +778,7 @@ unsigned char* API_rebBlobHead_internal(const RebolValue* binary)
 {
     ENTER_API;
 
-    return Binary_Head(Cell_Binary_Known_Mutable(binary));
+    return Binary_Head(Cell_Binary_Known_Mutable(Known_Stable(binary)));
 }
 
 
@@ -789,7 +789,7 @@ unsigned char* API_rebBlobAt_internal(const RebolValue* binary)
 {
     ENTER_API;
 
-    return Blob_At_Known_Mutable(binary);
+    return Blob_At_Known_Mutable(Known_Stable(binary));
 }
 
 
@@ -913,12 +913,15 @@ void API_rebModifyHandleCData(
 ){
     ENTER_API;
 
-    if (not Is_Handle(v))
+    require (
+      Stable* h = Ensure_Stable(v)
+    );
+    if (not Is_Handle(h))
         panic ("rebModifyHandleCData() called on non-HANDLE!");
 
-    assert(Cell_Payload_1_Needs_Mark(v));  // api only sees managed handles
+    assert(Cell_Payload_1_Needs_Mark(h));  // api only sees managed handles
 
-    Tweak_Handle_Cdata(v, data);
+    Tweak_Handle_Cdata(h, data);
 }
 
 
@@ -928,12 +931,15 @@ void API_rebModifyHandleCData(
 void API_rebModifyHandleLength(RebolValue* v, size_t length) {
     ENTER_API;
 
-    if (not Is_Handle(v))
+    require (
+      Stable* h = Ensure_Stable(v)
+    );
+    if (not Is_Handle(h))
         panic ("rebModifyHandleLength() called on non-HANDLE!");
 
-    assert(Cell_Payload_1_Needs_Mark(v));  // api only sees managed handles
+    assert(Cell_Payload_1_Needs_Mark(h));  // api only sees managed handles
 
-    Tweak_Handle_Len(v, length);
+    Tweak_Handle_Len(h, length);
 }
 
 
@@ -946,10 +952,13 @@ void API_rebModifyHandleCleaner(
 ){
     ENTER_API;
 
-    if (not Is_Handle(v))
+    require (
+      Stable* h = Ensure_Stable(v)
+    );
+    if (not Is_Handle(h))
         panic ("rebModifyHandleCleaner() called on non-HANDLE!");
 
-    Stub* stub = Extract_Cell_Handle_Stub(v);  // api only sees managed handles
+    Stub* stub = Extract_Cell_Handle_Stub(h);  // api only sees managed handles
     Tweak_Handle_Cleaner(
         stub,
         opt_cleaner ? opt_cleaner : nullptr
@@ -962,10 +971,10 @@ void API_rebModifyHandleCleaner(
 //
 // This is the version of getting an argument that does not require a release.
 // However, it is more optimal than `rebR(rebArg(...))`, because how it works
-// is by returning the actual Value* to the argument in the frame.  It's not
+// is by returning the actual Stable* to the argument in the frame.  It's not
 // good to have client code having those as handles--however--as they do not
 // follow the normal rules for lifetime, so rebArg() should be used if the
-// client really requires a Value*.
+// client really requires a Stable*.
 //
 // !!! When code is being used to look up arguments of a function, exactly
 // how that will work is being considered:
@@ -1016,7 +1025,7 @@ const RebolBaseInternal* API_rebArgR(
 
     const Key* tail;
     const Key* key = Phase_Keys(&tail, phase);
-    Atom* arg = Level_Args_Head(L);
+    Value* arg = Level_Args_Head(L);
     for (; key != tail; ++key, ++arg) {
         if (Are_Synonyms(Key_Symbol(key), symbol)) {
             if (Not_Cell_Stable(arg))
@@ -1048,8 +1057,8 @@ RebolValue* API_rebArg(
     if (not argR)
         return nullptr;
 
-    const Value* arg = cast(Value*, argR);  // sneaky, but we know!
-    return Copy_Cell(Alloc_Value(), arg);  // don't give Value* arg directly
+    const Stable* arg = cast(Stable*, argR);  // sneaky, but we know!
+    return Copy_Cell(Alloc_Value(), arg);  // don't give Stable* arg directly
 }
 
 
@@ -1058,7 +1067,7 @@ RebolValue* API_rebArg(
 // The libRebol API evaluative routines are all variadic, and call the
 // evaluator on multiple pointers.  Each pointer may be:
 //
-// - a Value*
+// - a Stable*
 // - a UTF-8 string to be scanned as one or more values in the sequence
 // - a Stub* that represents an "API instruction"
 //
@@ -1159,7 +1168,7 @@ RebolValue* API_rebArg(
 //    that it intends to represent a nulled cell as the first va_list item.
 //
 static Result(None) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
-    Sink(Value) out,
+    Sink(Stable) out,
     Flags run_flags,  // RUN_VA_FLAG_INTERRUPTIBLE, etc.
     RebolContext* binding,
     const void* p,  // null vaptr means void* array [2] else first param [3]
@@ -1194,7 +1203,7 @@ static Result(None) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     else
         L->flags.bits |= LEVEL_FLAG_UNINTERRUPTIBLE;
 
-    Sink(Atom) atom_out = u_cast(Atom*, out);
+    Sink(Value) atom_out = u_cast(Value*, out);
     Push_Level_Dont_Inherit_Interruptibility(atom_out, L);
     bool threw = Trampoline_With_Top_As_Root_Throws();
     Drop_Level(L);
@@ -1253,7 +1262,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
     assert(Is_Base_Managed(binding));
     Tweak_Feed_Binding(feed, cast(Context*, binding));
 
-    Sink(Atom) atom_out = u_cast(Atom*, out);
+    Sink(Value) atom_out = u_cast(Value*, out);
     require (
       Level* L = Make_Level(&Stepper_Executor, feed, flags)
     );
@@ -1283,7 +1292,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
 //
 //  rebValue: API
 //
-// Most basic evaluator that returns a Value*, which must be rebRelease()'d.
+// Most basic evaluator that returns a Stable*, which must be rebRelease()'d.
 //
 RebolValue* API_rebValue(
     RebolContext* binding,
@@ -1301,7 +1310,7 @@ RebolValue* API_rebValue(
         panic (e);
     }
 
-    if (Is_Nulled(v)) {
+    if (Is_Light_Null(v)) {
         Free_Value(v);
         return nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
     }
@@ -1352,7 +1361,7 @@ RebolValue* API_rebTranscodeInto(
 //
 // 1. We don't call `rebTranscodeInto()` here, because that would package
 //    up an arbitrary number of variadic parameters that are meant to
-//    be things like Value* and UTF8.  But we have exactly 3 parameters
+//    be things like Stable* and UTF8.  But we have exactly 3 parameters
 //    in hand, and want to pass them directly to the implementation routine,
 //    as they're encodings of variadic parameters--not the actual parameters!
 //
@@ -1385,7 +1394,7 @@ void API_rebPushContinuation_internal(
       Level* L = Make_Level_At(&Evaluator_Executor, block, flags)
     );
     Init_Ghost(Evaluator_Primed_Cell(L));
-    Push_Level_Erase_Out_If_State_0(u_cast(Atom*, out), L);
+    Push_Level_Erase_Out_If_State_0(u_cast(Value*, out), L);
 }
 
 
@@ -1412,7 +1421,7 @@ RebolValue* API_rebLift(
         panic (e);
     }
 
-    assert(not Is_Nulled(v));  // lift operations cannot produce NULL
+    assert(not Is_Light_Null(v));  // lift operations cannot produce NULL
 
     Set_Base_Root_Bit(v);
     return v;  // caller must rebRelease()
@@ -1442,9 +1451,9 @@ RebolValue* API_rebEnrescue(
         panic (e);
     }
 
-    assert(not Is_Nulled(v));  // lift operations cannot produce NULL
+    assert(not Is_Light_Null(v));  // lift operations cannot produce NULL
 
-    if (Is_Lifted_Error(v))
+    if (Cell_Has_Lift_Heart_No_Sigil(QUASIFORM_3, TYPE_WARNING, v))  // lifted
         LIFT_BYTE(v) = NOQUOTE_2;  // plain error
     else
         assert(LIFT_BYTE(v) > NOQUOTE_2);
@@ -1479,7 +1488,7 @@ RebolValue* API_rebRescue2(
 
     assert(Any_Lifted(v));
 
-    if (Is_Lifted_Error(v)) {
+    if (Cell_Has_Lift_Heart_No_Sigil(QUASIFORM_3, TYPE_WARNING, v)) { // lifted
         LIFT_BYTE(v) = NOQUOTE_2;  // plain error
         return v;  // caller must rebRelease();
     }
@@ -1490,11 +1499,11 @@ RebolValue* API_rebRescue2(
         return nullptr;
     }
 
-    Unliftify_Undecayed(cast(Atom*, v)) except (Error* e) {
+    Unliftify_Undecayed(v) except (Error* e) {
         panic (e);
     };
 
-    Decay_If_Unstable(cast(Atom*, v)) except (Error* e) {
+    Decay_If_Unstable(v) except (Error* e) {
         panic (e);
     }
 
@@ -1530,7 +1539,7 @@ RebolValue* API_rebRecover(
         return v;
     }
 
-    Decay_If_Unstable(cast(Atom*, v)) except (Error* e) {
+    Decay_If_Unstable(v) except (Error* e) {
         panic (e);
     }
 
@@ -1566,7 +1575,7 @@ RebolValue* API_rebRecoverInterruptible(
         return v;
     }
 
-    Decay_If_Unstable(cast(Atom*, v)) except (Error* e) {
+    Decay_If_Unstable(v) except (Error* e) {
         panic (e);
     }
     Set_Base_Root_Bit(v);
@@ -1624,7 +1633,7 @@ void API_rebElide(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (discarded);
+    DECLARE_STABLE (discarded);
 
     Flags flags = RUN_VA_FLAG_LIFT_RESULT;  // discarding, allow void/etc.
     Run_Valist_And_Call_Va_End(
@@ -1674,7 +1683,7 @@ void API_rebJumps(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (dummy);
+    DECLARE_STABLE (dummy);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1715,7 +1724,7 @@ bool API_rebDid(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (eval);
+    DECLARE_STABLE (eval);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1776,7 +1785,7 @@ intptr_t API_rebUnbox(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1817,7 +1826,7 @@ bool API_rebUnboxLogic(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1842,7 +1851,7 @@ bool API_rebUnboxBoolean(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1867,7 +1876,7 @@ bool API_rebUnboxYesNo(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1892,7 +1901,7 @@ bool API_rebUnboxOnOff(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1919,7 +1928,7 @@ int32_t API_rebUnboxInteger(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1948,7 +1957,7 @@ int64_t API_rebUnboxInteger64(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -1973,7 +1982,7 @@ double API_rebUnboxDecimal(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2006,7 +2015,7 @@ uint32_t API_rebUnboxChar(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2032,7 +2041,7 @@ void* API_rebUnboxHandleCData(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2061,7 +2070,7 @@ RebolHandleCleaner* API_rebExtractHandleCleaner(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2082,7 +2091,7 @@ RebolHandleCleaner* API_rebExtractHandleCleaner(
 static Size Spell_Into(
     char* buf,
     Size buf_size,  // number of bytes
-    const Value* v
+    const Stable* v
 ){
     if (not Any_Utf8(v))
         panic ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
@@ -2121,7 +2130,7 @@ size_t API_rebSpellInto(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2149,7 +2158,7 @@ char* API_rebSpellOpt(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2193,7 +2202,7 @@ char* API_rebSpell(
 static unsigned int Spell_Into_Wide(
     REBWCHAR* buf,
     unsigned int buf_wchars,  // chars buf can hold (not including terminator)
-    const Value* v
+    const Stable* v
 ){
     if (not Any_Utf8(v))
         panic ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
@@ -2258,7 +2267,7 @@ unsigned int API_rebSpellIntoWide(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2283,7 +2292,7 @@ REBWCHAR* API_rebSpellWideOpt(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2341,7 +2350,7 @@ size_t API_rebBytesInto(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2383,7 +2392,7 @@ unsigned char* API_rebBytesOpt(  // unsigned char, no Byte required by API
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2447,7 +2456,7 @@ const unsigned char* API_rebLockBytes(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2487,7 +2496,7 @@ unsigned char* API_rebLockMutableBytes(
 ){
     ENTER_API;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
 
     Flags flags = RUN_VA_MASK_NONE;
     Run_Valist_And_Call_Va_End(
@@ -2632,7 +2641,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
         break; }
 
       case DETECTED_AS_CELL: {
-        const Value* at = cast(const Value*, p);
+        const Stable* at = cast(const Stable*, p);
         if (Is_Nulled(at)) {
             assert(not Is_Api_Value(at));  // only internals use nulled cells
             return cast(RebolBaseInternal*, g_quasi_null);
@@ -2648,7 +2657,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
         panic ("Unknown pointer");
     }
 
-    Value* v = u_cast(Value*, Stub_Cell(stub));
+    Stable* v = u_cast(Stable*, Stub_Cell(stub));
     Liftify(v);
     return cast(RebolBaseInternal*, stub);  // C needs cast
 }
@@ -2734,13 +2743,16 @@ RebolBaseInternal* API_rebINLINE(const RebolValue* v)
     ENTER_API;
 
     require (
-      Stub* s = Make_Untracked_Stub(FLAG_FLAVOR(FLAVOR_INSTRUCTION_SPLICE))
+      const Stable* i = Ensure_Stable(v)
     );
 
-    if (not (Is_Block(v) or Is_Quoted(v) or Is_Space(v)))
+    if (not (Is_Block(i) or Is_Quoted(i) or Is_Space(i)))
         panic ("rebINLINE() requires argument to be a BLOCK!/QUOTED?/SPACE");
 
-    Copy_Cell(Stub_Cell(s), v);
+    require (
+      Stub* s = Make_Untracked_Stub(FLAG_FLAVOR(FLAVOR_INSTRUCTION_SPLICE))
+    );
+    Copy_Cell(Stub_Cell(s), i);
 
     return cast(RebolBaseInternal*, s);  // cast needed in C
 }
@@ -2749,7 +2761,7 @@ RebolBaseInternal* API_rebINLINE(const RebolValue* v)
 //
 //  rebRUN: API
 //
-// If a Value* holds an action, this will convert it to a regular FRAME!
+// If a Stable* holds an action, this will convert it to a regular FRAME!
 // so that it runs inline.  If it were ^META'd then it would produce a
 // quasi-action, that would just evaluate to an antiform.  Something like a
 // rebREIFY would also work, but it would not do type checking.
@@ -2762,18 +2774,18 @@ RebolBaseInternal* API_rebRUN(const void* p)
         panic ("rebRUN() received nullptr");
 
     Stub* stub;
-    Value* v;
+    Stable* v;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, cast(Stub*, p));
-        v = cast(Value*, Stub_Cell(stub));
+        v = cast(Stable*, Stub_Cell(stub));
         if (Not_Flavor_Flag(API, stub, RELEASE))
             panic ("Can't quote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
-        const Value* at = cast(const Value*, p);
+        const Stable* at = cast(const Stable*, p);
         if (Is_Nulled(at))
             panic ("rebRUN() received null cell");
 
@@ -2990,7 +3002,7 @@ Error* Error_OS(int errnum) {
         error = Error_User("FormatMessage() gave no error description");
     }
     else {
-        Value* message = rebTextWide(lpMsgBuf);
+        Api(Stable*) message = Known_Stable_Api(rebTextWide(lpMsgBuf));
         LocalFree(lpMsgBuf);
 
         error = Make_Error_Managed(SYM_0, SYM_0, message, rebEND);
@@ -3233,7 +3245,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
 
     RebolContext* context = cast(RebolContext*, L->varlist);  // [1]
 
-    Value* cfunc_handle = Details_At(details, IDX_API_ACTION_CFUNC);
+    Stable* cfunc_handle = Details_At(details, IDX_API_ACTION_CFUNC);
     RebolActionCFunction* cfunc = f_cast(RebolActionCFunction*,
         Cell_Handle_Cfunc(cfunc_handle)
     );
@@ -3280,7 +3292,7 @@ Bounce Api_Function_Dispatcher(Level* const L)
 //  Api_Function_Details_Querier: C
 //
 bool Api_Function_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -3307,16 +3319,16 @@ bool Api_Function_Details_Querier(
 // This version of rebFunction() has its arguments "flipped" (in the Haskell
 // sense of "flip")...it takes the CFunction first, then the spec:
 //
-//    Value* a = rebFunction("[-[I'm a Spec]- arg [text!]", &F_Impl);
+//    Stable* a = rebFunction("[-[I'm a Spec]- arg [text!]", &F_Impl);
 //
-//    Value* b = rebFlipFunction(&F_Impl, "[-[I'm A Spec]- arg [text!]]");
+//    Stable* b = rebFlipFunction(&F_Impl, "[-[I'm A Spec]- arg [text!]]");
 //
 // The reason for the existence of the flipped form is that it is variadic,
 // so you can make the spec from composed values:
 //
-//    Value* description = rebValue("-[I'm A Spec]-");
+//    Stable* description = rebValue("-[I'm A Spec]-");
 //
-//    Value* c = rebFlipFunction(&F_Impl, "[", description, "arg [text!]]");
+//    Stable* c = rebFlipFunction(&F_Impl, "[", description, "arg [text!]]");
 //
 // 1. Due to technical limitations of the variadic machinery, the C function
 //    pointer can't be the last item in the va_list--it has to be the first
@@ -3395,7 +3407,7 @@ RebolValue* API_rebFunctionFlipped(
 //  rebFunction: API
 //
 // Version of rebFunc() that isn't variadic, but takes the spec as a single
-// item (UTF-8, Value*, Instruction*).  This way it can swap the order of
+// item (UTF-8, Stable*, Instruction*).  This way it can swap the order of
 // the parameters so that the CFunction is in the final spot and still
 // gets typechecked.  This can give a more pleasing ordering in some
 // situations (e.g. C++ lambdas as second arg).
@@ -3446,7 +3458,7 @@ static void Panic_If_Top_Level_Not_Continuable(void) {
 // executing the `return`) an interpreter stack level for the native remains
 // in effect, so it will show up in stack traces if there's an error.
 //
-// rebDelegate() can be used to work around the inability of Value* to store
+// rebDelegate() can be used to work around the inability of Stable* to store
 // unstable isotopes.  So if a native based on the librebol API wants to
 // return something like an error or a pack, it must use rebDelegate().
 //

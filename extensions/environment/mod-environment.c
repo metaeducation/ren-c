@@ -101,14 +101,14 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* env = Element_ARG(LOCATION);
-    Value* picker = ARG(PICKER);
+    Stable* picker = ARG(PICKER);
 
     if (not Is_Word(picker) and not Is_Text(picker))
         panic ("ENVIRONMENT! picker must be WORD! or TEXT!");
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
 
-    Option(const Value*) poke;  // set to nullptr if removing
+    Option(const Stable*) poke;  // set to nullptr if removing
 
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))

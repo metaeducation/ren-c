@@ -234,7 +234,7 @@ DECLARE_NATIVE(LIFT)
 {
     INCLUDE_PARAMS_OF_LIFT;
 
-    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* atom = Intrinsic_Atom_ARG(LEVEL);
 
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))  // intrinsic shortcut
         return COPY(Liftify(atom));
@@ -272,7 +272,7 @@ DECLARE_NATIVE(UNLIFT)
 {
     INCLUDE_PARAMS_OF_UNLIFT;
 
-    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* atom = Intrinsic_Atom_ARG(LEVEL);
 
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {  // intrinsic shortcut
         if (not Any_Lifted(atom))
@@ -337,7 +337,7 @@ DECLARE_NATIVE(ANTIFORM_Q)
 {
     INCLUDE_PARAMS_OF_ANTIFORM_Q;
 
-    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))  // intrinsic shortcut
         return LOGIC(Is_Antiform(atom));
@@ -346,7 +346,7 @@ DECLARE_NATIVE(ANTIFORM_Q)
         return LOGIC(Is_Antiform(atom));
 
     require (  // mutable [1]
-      Value* datatype = Decay_If_Unstable(m_cast(Atom*, atom))
+      Stable* datatype = Decay_If_Unstable(m_cast(Value*, atom))
     );
 
     if (not Is_Datatype(datatype))
@@ -398,7 +398,7 @@ DECLARE_NATIVE(UNANTI)
 {
     INCLUDE_PARAMS_OF_UNANTI;
 
-    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* atom = Intrinsic_Atom_ARG(LEVEL);
     LIFT_BYTE(atom) = NOQUOTE_2;  // turn to plain form
 
     return COPY(Known_Element(atom));
@@ -441,7 +441,7 @@ DECLARE_NATIVE(SPREAD)
     if (Is_Void(Atom_ARG(VALUE)))
         return VOID;  // void is a no-op, so just pass it through
 
-    Value* v = ARG(VALUE);
+    Stable* v = ARG(VALUE);
 
     if (Is_Nulled(v))
         return NULLED;
@@ -506,7 +506,7 @@ DECLARE_NATIVE(PACK)
     assert(Is_Block(block));
 
     if (rebRunThrows(
-        u_cast(Init(Value), SPARE),
+        u_cast(Init(Stable), SPARE),
         "reduce:predicate",  // commas excluded by :PREDICATE [1]
             rebQ(block), rebQ(LIB(LIFT))  // fail ok [2]
     )){
@@ -530,7 +530,7 @@ DECLARE_NATIVE(PACK_Q)
 {
     INCLUDE_PARAMS_OF_PACK_Q;
 
-    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
     return LOGIC(Is_Pack(atom));
 }
@@ -551,7 +551,7 @@ DECLARE_NATIVE(RUNS)
 {
     INCLUDE_PARAMS_OF_RUNS;
 
-    Value* frame = ARG(FRAME);
+    Stable* frame = ARG(FRAME);
 
     if (Is_Action(frame))
         return Packify_Action(Copy_Cell(OUT, frame));
@@ -576,7 +576,7 @@ DECLARE_NATIVE(UNRUN)
 {
     INCLUDE_PARAMS_OF_UNRUN;
 
-    Value* action = ARG(ACTION);  // may or may not be antiform
+    Stable* action = ARG(ACTION);  // may or may not be antiform
     LIFT_BYTE(action) = NOQUOTE_2;  // now it's known to not be antiform
     return COPY(action);
 }
@@ -595,7 +595,7 @@ DECLARE_NATIVE(DISARM)
 {
     INCLUDE_PARAMS_OF_DISARM;
 
-    Atom* error = Atom_ARG(ERROR);
+    Value* error = Atom_ARG(ERROR);
     LIFT_BYTE(error) = NOQUOTE_2;
     return COPY(error);
 }
@@ -614,7 +614,7 @@ DECLARE_NATIVE(UNSPLICE)
 {
     INCLUDE_PARAMS_OF_UNSPLICE;
 
-    Value* splice = ARG(SPLICE);
+    Stable* splice = ARG(SPLICE);
     LIFT_BYTE(splice) = NOQUOTE_2;
     KIND_BYTE(splice) = TYPE_BLOCK;
     return COPY(splice);
@@ -625,7 +625,7 @@ DECLARE_NATIVE(UNSPLICE)
 // with a refinement.  Share the code.
 //
 static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
-    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* atom = Intrinsic_Atom_ARG(LEVEL);
 
     if (Is_Error(atom))
         return COPY(atom);  // will pass thru vetos, and other errors
@@ -641,7 +641,7 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
     Copy_Cell(OUT, atom);  // we pass through original, but test decayed form
 
     require (
-      Value* decayed = Decay_If_Unstable(atom)
+      Stable* decayed = Decay_If_Unstable(atom)
     );
     if (Is_Nulled(decayed))
         goto opting_out;

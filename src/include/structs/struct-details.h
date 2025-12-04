@@ -181,7 +181,7 @@ typedef enum {
 //
 
 typedef bool (DetailsQuerier)(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 );

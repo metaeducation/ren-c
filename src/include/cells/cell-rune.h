@@ -83,7 +83,7 @@ INLINE bool Rune_Is_Single_Codepoint(const Cell* cell) {
     return Get_Cell_Flag(cell, RUNE_ONE_CODEPOINT);
 }
 
-INLINE bool Is_Rune_And_Is_Char(const Value* v) {
+INLINE bool Is_Rune_And_Is_Char(const Stable* v) {
     return (
         (Ensure_Readable(v)->header.bits & (
             CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_RUNE_ONE_CODEPOINT
@@ -310,7 +310,7 @@ INLINE bool Any_Sigiled_Space(const Element* e) {
 INLINE bool Is_Space_With_Lift_Sigil(
     LiftByte lift,
     Option(Sigil) sigil,
-    const Value* v
+    const Stable* v
 ){
     return (
         (Ensure_Readable(v)->header.bits & (
@@ -373,10 +373,10 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
 //  * Quick way to unset variables, simply `(var: ~)`
 //
 
-INLINE bool Is_Tripwire(Need(const Value*) v)  // don't allow Element*
+INLINE bool Is_Tripwire(Need(const Stable*) v)  // don't allow Element*
  { return Is_Space_With_Lift_Sigil(ANTIFORM_1, SIGIL_0, v); }
 
-INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
+INLINE Stable* Init_Tripwire_Untracked(Init(Stable) out) {
     Init_Char_Unchecked_Untracked(out, ' ');  // use space as the base
     Stably_Antiformize_Unbound_Fundamental(out);
     assert(Is_Tripwire(out));

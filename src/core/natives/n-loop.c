@@ -37,11 +37,11 @@
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
 bool Throw_Was_Loop_Interrupt(
-    Sink(Atom) out,
+    Sink(Value) out,
     Level* loop_level,
     Sink(Option(LoopInterrupt)) interrupt
 ){
-    const Value* label = VAL_THROWN_LABEL(loop_level);
+    const Stable* label = VAL_THROWN_LABEL(loop_level);
 
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
@@ -181,7 +181,7 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
 
-    Atom* with = SCRATCH;
+    Value* with = SCRATCH;
     if (not Bool_ARG(WITH))
         Init_Void(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
     else
@@ -249,9 +249,9 @@ void Add_Definitional_Break_Again_Continue(
 //
 static Bounce Loop_Series_Common(
     Level* level_,
-    Value* var, // Must not be movable from context expansion, see #2274
-    const Value* body,
-    Value* start,
+    Stable* var, // Must not be movable from context expansion, see #2274
+    const Stable* body,
+    Stable* start,
     REBINT end,
     REBINT bump
 ){
@@ -353,8 +353,8 @@ static Bounce Loop_Series_Common(
 //
 static Bounce Loop_Integer_Common(
     Level* level_,
-    Value* var,  // Must not be movable from context expansion, see #2274
-    const Value* body,
+    Stable* var,  // Must not be movable from context expansion, see #2274
+    const Stable* body,
     REBI64 start,
     REBI64 end,
     REBI64 bump
@@ -436,11 +436,11 @@ static Bounce Loop_Integer_Common(
 //
 static Bounce Loop_Number_Common(
     Level* level_,
-    Value* var,  // Must not be movable from context expansion, see #2274
-    const Value* body,
-    Value* start,
-    Value* end,
-    Value* bump
+    Stable* var,  // Must not be movable from context expansion, see #2274
+    const Stable* body,
+    Stable* start,
+    Stable* end,
+    Stable* bump
 ){
     REBDEC s;
     if (Is_Integer(start))
@@ -569,7 +569,7 @@ DECLARE_NATIVE(CFOR)
         Add_Definitional_Break_Again_Continue(body, level_);
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
-    Value* var = Slot_Hack(slot);
+    Stable* var = Slot_Hack(slot);
 
     if (
         Is_Integer(ARG(START))
@@ -658,7 +658,7 @@ DECLARE_NATIVE(FOR_SKIP)
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
 
-    Value* spare = Copy_Cell(SPARE, series);
+    Stable* spare = Copy_Cell(SPARE, series);
 
     // Starting location when past end with negative skip:
     //
@@ -744,7 +744,7 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_STOP;
 
-    Atom* with = SCRATCH;
+    Value* with = SCRATCH;
     if (not Bool_ARG(WITH))
         Init_Void(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
     else
@@ -870,7 +870,7 @@ DECLARE_NATIVE(CYCLE)
         return CONTINUE(OUT, body);  // plain continue
     }
 
-    const Value* label = VAL_THROWN_LABEL(LEVEL);
+    const Stable* label = VAL_THROWN_LABEL(LEVEL);
     if (
         Is_Frame(label)
         and Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_STOP))
@@ -896,7 +896,7 @@ struct Reb_Enum_Series {
 typedef struct Reb_Enum_Series ESER;
 
 typedef struct {
-    Value* data;  // possibly API handle if converted from sequence
+    Stable* data;  // possibly API handle if converted from sequence
     const Flex* flex;  // Flex being enumerated (if applicable)
     union {
         EVARS evars;
@@ -918,7 +918,7 @@ typedef struct {
 //    this would break the invariant that sequences that could be optimized
 //    are optimized).
 //
-Element* Init_Loop_Each_May_Alias_Data(Sink(Element) iterator, Value* data)
+Element* Init_Loop_Each_May_Alias_Data(Sink(Element) iterator, Stable* data)
 {
     assert(not Is_Api_Value(data));  // used to be cue to free, but not now
 
@@ -1029,15 +1029,15 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
         }
 
         if (Is_Action(les->data)) {
-            Value* generated = rebLift(rebRUN(les->data));
-            Value* spare = Copy_Cell(SPARE, generated);
+            Stable* generated = Known_Stable(rebLift(rebRUN(les->data)));
+            Stable* spare = Copy_Cell(SPARE, generated);
             rebRelease(generated);
 
             if (not (
                 Is_Lifted_Error(spare)
                 and Is_Error_Done_Signal(Cell_Error(spare))
             )) {
-                Value* decayed = Unliftify_Decayed(spare) except (Error* e) {
+                Stable* decayed = Unliftify_Decayed(spare) except (Error* e) {
                     return fail (e);
                 };
                 Write_Loop_Slot_May_Bind(
@@ -1117,7 +1117,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                     slot->header.bits |= persist;  // preserve persist flags
                 }
                 else {
-                    Sink(Value) spare_val = SPARE;
+                    Sink(Stable) spare_val = SPARE;
                     trap (
                       Read_Slot(spare_val, les->u.evars.slot)
                     );
@@ -1137,8 +1137,8 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
         if (heart == TYPE_MAP) {
             assert(les->u.eser.index % 2 == 0);  // should be on key slot
 
-            const Value* key;
-            const Value* val;
+            const Stable* key;
+            const Stable* val;
             while (true) {  // pass over the unused map slots
                 key = (
                     Array_At(cast(Array*, les->flex), les->u.eser.index)
@@ -1156,7 +1156,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                     return true;  // done
             } while (Is_Zombie(val));
 
-            Value* spare_key = Copy_Cell(SPARE, key);
+            Stable* spare_key = Copy_Cell(SPARE, key);
             trap (
               Write_Loop_Slot_May_Bind(slot, spare_key, les->data)
             );
@@ -1170,7 +1170,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 // Want keys and values (`for-each 'key val map [...]`)
                 //
                 ++slot;
-                Value* spare_val = Copy_Cell(SPARE, val);
+                Stable* spare_val = Copy_Cell(SPARE, val);
                 trap (
                   Write_Loop_Slot_May_Bind(slot, spare_val, les->data)
                 );
@@ -1228,7 +1228,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
 //
 // Cleanups that need to be done despite error, throw, etc.
 //
-void Shutdown_Loop_Each(Value* iterator)
+void Shutdown_Loop_Each(Stable* iterator)
 {
     LoopEachState *les = Cell_Handle_Pointer(LoopEachState, iterator);
 
@@ -1269,7 +1269,7 @@ DECLARE_NATIVE(FOR_EACH)
     INCLUDE_PARAMS_OF_FOR_EACH;
 
     Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
-    Value* data = ARG(DATA);
+    Stable* data = ARG(DATA);
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
     Element* iterator;  // holds Loop_Each_State, all paths must cleanup!
@@ -1402,10 +1402,10 @@ DECLARE_NATIVE(EVERY)
     INCLUDE_PARAMS_OF_EVERY;
 
     Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
-    Value* data = ARG(DATA);
+    Stable* data = ARG(DATA);
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
-    Value* iterator;  // holds Loop_Each_State, all paths must cleanup!
+    Stable* iterator;  // holds Loop_Each_State, all paths must cleanup!
 
     enum {
         ST_EVERY_INITIAL_ENTRY = STATE_0,
@@ -1502,7 +1502,7 @@ DECLARE_NATIVE(EVERY)
     }
 
     require (
-      Value* spare = Decay_If_Unstable(SPARE)
+      Stable* spare = Decay_If_Unstable(SPARE)
     );
     require (
       bool cond = Test_Conditional(spare)
@@ -1511,7 +1511,7 @@ DECLARE_NATIVE(EVERY)
         Init_Nulled(OUT);
     }
     else if (Is_Cell_Erased(OUT) or not Is_Light_Null(OUT)) {
-        Move_Atom(OUT, SPARE);
+        Move_Value(OUT, SPARE);
     }
 
     goto next_iteration;
@@ -1618,7 +1618,7 @@ DECLARE_NATIVE(REMOVE_EACH)
         const Slot* slot_tail;
         Fixed(Slot*) slot = Varlist_Fixed_Slots(&slot_tail, varlist);
         for (; slot != slot_tail; ++slot) {
-            Value* var = Slot_Hack(slot);
+            Stable* var = Slot_Hack(slot);
             if (index == len) {
                 Init_Nulled(var);  // Y on 2nd step of remove-each [x y] "abc"
                 continue;  // the `for` loop setting variables
@@ -1694,7 +1694,7 @@ DECLARE_NATIVE(REMOVE_EACH)
       decay_out: {
 
         require (
-          Value* out = Decay_If_Unstable(OUT)
+          Stable* out = Decay_If_Unstable(OUT)
         );
         if (Is_Okay(out)) {  // pure logic required [1]
             keep = false;  // okay is remove
@@ -1930,7 +1930,7 @@ DECLARE_NATIVE(MAP_EACH)
     if (not Is_Action(ARG(DATA)))
         Quotify(Element_ARG(DATA));  // dialect, in theory [1]
 
-    const Value* map_action = LIB(MAP);
+    const Stable* map_action = LIB(MAP);
     Details* details = Ensure_Frame_Details(map_action);
 
     Tweak_Level_Phase(LEVEL, details);
@@ -1961,10 +1961,10 @@ DECLARE_NATIVE(MAP)
     INCLUDE_PARAMS_OF_MAP;
 
     Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
-    Value* data = ARG(DATA);  // action invokes, frame enumerates
+    Stable* data = ARG(DATA);  // action invokes, frame enumerates
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
-    Value* iterator;  // holds Loop_Each_State, all paths must cleanup!
+    Stable* iterator;  // holds Loop_Each_State, all paths must cleanup!
 
     enum {
         ST_MAP_INITIAL_ENTRY = STATE_0,
@@ -2082,7 +2082,7 @@ DECLARE_NATIVE(MAP)
     }
 
     require (
-      Value* spare = Decay_If_Unstable(SPARE)
+      Stable* spare = Decay_If_Unstable(SPARE)
     );
     if (Is_Splice(spare)) {
         const Element* tail;
@@ -2149,10 +2149,10 @@ DECLARE_NATIVE(REPEAT)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    Value* count = ARG(COUNT);
+    Stable* count = ARG(COUNT);
     Element* body = Element_ARG(BODY);
 
-    Value* index = u_cast(Value*, SPARE);  // current index, erased on entry
+    Stable* index = u_cast(Stable*, SPARE);  // current index, erased on entry
 
     enum {
         ST_REPEAT_INITIAL_ENTRY = STATE_0,
@@ -2303,7 +2303,7 @@ DECLARE_NATIVE(FOR)
     assert(Varlist_Len(varlist) == 1);
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
-    Value* spare_one = Init_Integer(SPARE, 1);
+    Stable* spare_one = Init_Integer(SPARE, 1);
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
     require (
@@ -2335,7 +2335,7 @@ DECLARE_NATIVE(FOR)
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(Cell_Varlist(vars), 1);
 
-    Sink(Value) spare = SPARE;
+    Sink(Stable) spare = SPARE;
     require (
       Read_Slot(spare, slot)
     );
@@ -2449,7 +2449,7 @@ DECLARE_NATIVE(INSIST)
         panic ("Body of INSIST must not return GHOST");  // tolerate? [3]
 
     require (  // decay for truth test [4]
-      Value* out = Decay_If_Unstable(OUT)
+      Stable* out = Decay_If_Unstable(OUT)
     );
     require (
       bool cond = Test_Conditional(out)
@@ -2517,7 +2517,7 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
         goto return_out;
 
     require (
-      Value* spare = Decay_If_Unstable(SPARE)
+      Stable* spare = Decay_If_Unstable(SPARE)
     );
     require (
       bool cond = Test_Conditional(spare)

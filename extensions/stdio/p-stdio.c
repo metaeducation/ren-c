@@ -88,7 +88,7 @@ Value* Read_Line(STD_TERM *t)
     while (line == nullptr) {
         const bool buffered = true;
         Value* e = Try_Get_One_Console_Event(t, buffered, 0);
-        // (^-- it's an ANY-STABLE!, not a R3-Alpha-style EVENT!)
+        // (^-- Note: not a R3-Alpha-style EVENT!)
 
         if (e == nullptr) {
             rebJumps(
@@ -303,7 +303,7 @@ Value* Read_Line(STD_TERM *t)
 //
 DECLARE_NATIVE(STDIO_ACTOR)
 {
-    Value* port = ARG_N(1);
+    Stable* port = ARG_N(1);
     const Symbol* verb = Level_Verb(LEVEL);
 
     VarList* ctx = Cell_Varlist(port);
@@ -361,7 +361,7 @@ DECLARE_NATIVE(STDIO_ACTOR)
 
         const Size readbuf_size = 30 * 1024;  // may back off to smaller size
 
-        Value* data = Slot_Hack(Varlist_Slot(ctx, STD_PORT_DATA));
+        Stable* data = Slot_Hack(Varlist_Slot(ctx, STD_PORT_DATA));
         if (not Is_Blob(data)) {
             Init_Blob(data, Make_Binary(readbuf_size));
         }

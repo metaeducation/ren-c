@@ -71,7 +71,7 @@
 INLINE void Force_Location_Of_Error(Error* error, Level* L) {
     ERROR_VARS *vars = ERR_VARS(error);
 
-    DECLARE_VALUE (where);
+    DECLARE_STABLE (where);
     require (
       Read_Slot(where, &vars->where)
     );
@@ -94,7 +94,7 @@ INLINE void Force_Location_Of_Error(Error* error, Level* L) {
 #define Init_Warning(v,c) \
     Init_Context_Cell((v), TYPE_WARNING, (c))
 
-INLINE Atom* Failify(Need(Atom*) atom) {  // WARNING! => ERROR!
+INLINE Value* Failify(Need(Value*) atom) {  // WARNING! => ERROR!
     assert(Heart_Of(atom) == TYPE_WARNING and LIFT_BYTE(atom) == NOQUOTE_2);
     Force_Location_Of_Error(Cell_Error(atom), TOP_LEVEL);  // ideally a noop
     Unstably_Antiformize_Unbound_Fundamental(atom);
@@ -136,7 +136,7 @@ INLINE Atom* Failify(Need(Atom*) atom) {  // WARNING! => ERROR!
 INLINE bool Is_Error_Veto_Signal(Error* error) {
     ERROR_VARS *vars = ERR_VARS(error);
 
-    DECLARE_VALUE (id);
+    DECLARE_STABLE (id);
     require (
       Read_Slot(id, &vars->id)
     );
@@ -170,7 +170,7 @@ INLINE bool Is_Error_Veto_Signal(Error* error) {
 INLINE bool Is_Error_Done_Signal(Error* error) {
     ERROR_VARS *vars = ERR_VARS(error);
 
-    DECLARE_VALUE (id);
+    DECLARE_STABLE (id);
     require (
       Read_Slot(id, &vars->id)
     );

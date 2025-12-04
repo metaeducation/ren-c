@@ -112,7 +112,7 @@ INLINE bool Last_In_Mold_Is_Slash(Molder* mo) {
 // volume when no root slash was provided.  It was an odd case to support
 // the MSDOS convention of `c:file`.  That is not done here.
 //
-Strand* To_REBOL_Path(const Value* string, Flags flags)
+Strand* To_REBOL_Path(const Stable* string, Flags flags)
 {
     assert(Is_Text(string));
 
@@ -190,8 +190,8 @@ Strand* To_REBOL_Path(const Value* string, Flags flags)
 }
 
 
-extern bool Set_Current_Dir_Value(const Value* path);
-extern Value* Get_Current_Dir_Value(void);
+extern bool Set_Current_Dir_Value(const Stable* path);
+extern Stable* Get_Current_Dir_Value(void);
 
 
 enum {
@@ -211,7 +211,7 @@ enum {
 // Implementation routine of To_Local_Path which leaves the path in the mold
 // buffer (e.g. for further appending or just counting the number of bytes)
 //
-void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
+void Mold_File_To_Local(Molder* mo, const Stable* file, Flags flags) {
     assert(Is_File(file));
 
     Length len;
@@ -274,7 +274,7 @@ void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
         // use REB_FILETOLOCAL_FULL as that would recurse (we assume a fully
         // qualified path was returned by Get_Current_Dir_Value())
         //
-        Value* lpath = Get_Current_Dir_Value();
+        Stable* lpath = Get_Current_Dir_Value();
         Mold_File_To_Local(mo, lpath, REB_FILETOLOCAL_0);
         rebRelease(lpath);
     }
@@ -447,7 +447,7 @@ void Mold_File_To_Local(Molder* mo, const Value* file, Flags flags) {
 // Convert Rebol-format filename to a local-format filename.  This is the
 // opposite operation of To_REBOL_Path.
 //
-Strand* To_Local_Path(const Value* file, Flags flags) {
+Strand* To_Local_Path(const Stable* file, Flags flags) {
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
@@ -472,7 +472,7 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
 {
     INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
 
-    Value* path = ARG(PATH);
+    Stable* path = ARG(PATH);
     if (Is_File(path)) {
         if (not Bool_ARG(PASS))
             return "panic -[LOCAL-TO-FILE needs :PASS to passthru FILE!]-";
@@ -510,7 +510,7 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
 {
     INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 
-    Value* path = ARG(PATH);
+    Stable* path = ARG(PATH);
     if (Is_Text(path)) {
         if (not Bool_ARG(PASS))
             return "-[FILE-TO-LOCAL needs :PASS to passthru STRING!]-";
@@ -545,7 +545,7 @@ DECLARE_NATIVE(WHAT_DIR)
 {
     INCLUDE_PARAMS_OF_WHAT_DIR;
 
-    Sink(Value) spare_current_path = SPARE;
+    Sink(Stable) spare_current_path = SPARE;
     require (
       Read_Slot(
         spare_current_path,
@@ -562,7 +562,7 @@ DECLARE_NATIVE(WHAT_DIR)
         // code was already here and it would be more compatible.  But
         // reconsider the duplication.
 
-        Value* refresh = Get_Current_Dir_Value();
+        Stable* refresh = Get_Current_Dir_Value();
         Copy_Cell(spare_current_path, refresh);
         require (
           Write_Slot(
@@ -598,8 +598,8 @@ DECLARE_NATIVE(CHANGE_DIR)
 {
     INCLUDE_PARAMS_OF_CHANGE_DIR;
 
-    Value* arg = ARG(PATH);
-    Value* current_path = Slot_Hack(
+    Stable* arg = ARG(PATH);
+    Stable* current_path = Slot_Hack(
         Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH)
     );
 
@@ -625,7 +625,7 @@ DECLARE_NATIVE(CHANGE_DIR)
 }
 
 
-extern Value* Get_Current_Exec(void);
+extern Stable* Get_Current_Exec(void);
 
 //
 //  export get-current-exec: native [

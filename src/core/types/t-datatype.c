@@ -77,7 +77,7 @@ void Startup_Datatypes(void)
         Tweak_Misc_Hitch(symbol, patch);  // ...but now it has one!
         Tweak_Misc_Hitch(patch, symbol);  // link back for singly-linked-list
 
-        Sink(Value) datatype = Stub_Cell(patch);
+        Sink(Stable) datatype = Stub_Cell(patch);
         Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
         Init_Word(Stub_Cell(a), Canon_Symbol(Symbol_Id_From_Type(type)));
         DATATYPE_BYTE(a) = u_cast(Byte, type);

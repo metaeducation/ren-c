@@ -327,8 +327,8 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
             goto finished;
 
         bool lesser;
-        DECLARE_VALUE (v1);
-        DECLARE_VALUE (v2);
+        DECLARE_STABLE (v1);
+        DECLARE_STABLE (v2);
         require (
           Read_Slot(v1, e1.slot)
         );
@@ -499,7 +499,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    Value* type = ARG(TYPE);  // may be antiform datatype
+    Stable* type = ARG(TYPE);  // may be antiform datatype
     Element* arg = Element_ARG(DEF);
 
     if (Is_Object(type)) {
@@ -524,7 +524,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             Tweak_Cell_Binding(arg, use);  // def is GC-safe, use will be too
             Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // keeps derived alive
 
-            DECLARE_ATOM (dummy);
+            DECLARE_VALUE (dummy);
             if (Eval_Any_List_At_Throws(dummy, arg, SPECIFIED))
                 return BOUNCE_THROWN;
 
@@ -603,7 +603,7 @@ DECLARE_NATIVE(ADJUNCT_OF)
 {
     INCLUDE_PARAMS_OF_ADJUNCT_OF;
 
-    Value* v = ARG(VALUE);
+    Stable* v = ARG(VALUE);
 
     Option(VarList*) adjunct;
     if (Is_Frame(v)) {
@@ -640,7 +640,7 @@ DECLARE_NATIVE(SET_ADJUNCT)
 {
     INCLUDE_PARAMS_OF_SET_ADJUNCT;
 
-    Value* adjunct = ARG(ADJUNCT);
+    Stable* adjunct = ARG(ADJUNCT);
 
     Option(VarList*) ctx;
     if (Any_Context(adjunct)) {
@@ -654,7 +654,7 @@ DECLARE_NATIVE(SET_ADJUNCT)
         ctx = nullptr;
     }
 
-    Value* v = ARG(VALUE);
+    Stable* v = ARG(VALUE);
 
     if (Is_Frame(v)) {
         Tweak_Misc_Phase_Adjunct(Frame_Phase(v), ctx);
@@ -740,7 +740,7 @@ VarList* Copy_Varlist_Extra_Managed(
     );
     Set_Flex_Len(varlist, Varlist_Len(original) + 1);
 
-    Value* dest = Flex_Head(Value, varlist);
+    Stable* dest = Flex_Head(Stable, varlist);
 
     // The type information and fields in the rootvar (at head of the varlist)
     // get filled in with a copy, but the varlist needs to be updated in the
@@ -862,7 +862,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
               Append_Ascii(mo->strand, ": ")
             );
 
-            DECLARE_ATOM (var);
+            DECLARE_VALUE (var);
             require (
               Read_Slot_Meta(var, evars.slot)
             );
@@ -918,7 +918,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
             continue;
         }
 
-        DECLARE_ATOM (var);
+        DECLARE_VALUE (var);
         require (
           Read_Slot_Meta(var, evars.slot)
         );
@@ -979,7 +979,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
     Push_Pointer_To_Flex(g_mold.stack, let);
 
     const Symbol* spelling = Let_Symbol(let);
-    const Value* var = Slot_Hack(Let_Slot(let));
+    const Stable* var = Slot_Hack(Let_Slot(let));
 
     if (form) {
         Append_Spelling(mo->strand, spelling);
@@ -1138,7 +1138,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
             panic (Error_Bad_Refines_Raw());
 
-        Value* pattern = ARG(VALUE);
+        Stable* pattern = ARG(VALUE);
         if (Is_Antiform(pattern))
             panic (pattern);
 
@@ -1194,7 +1194,7 @@ IMPLEMENT_GENERIC(TO, Any_Context)
 
         VarList* v = cast(VarList*, c);
         VarList* copy = Copy_Varlist_Shallow_Managed(v);  // !!! copy [1]
-        Value* rootvar = Rootvar_Of_Varlist(copy);
+        Stable* rootvar = Rootvar_Of_Varlist(copy);
         KIND_BYTE(rootvar) = TYPE_PORT;
         return Init_Port(OUT, copy);
     }
@@ -1231,7 +1231,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     Element* context = Element_ARG(LOCATION);
     possibly(Is_Port(context));
 
-    const Value* picker = ARG(PICKER);
+    const Stable* picker = ARG(PICKER);
     const Symbol* symbol;
 
     bool strict = false;
@@ -1297,7 +1297,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     if (not slot)
         return DUAL_SIGNAL_NULL_ABSENT;
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
@@ -1318,7 +1318,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
   handle_pick: { /////////////////////////////////////////////////////////////
 
-    Copy_Cell(OUT, u_cast(Atom*, slot));
+    Copy_Cell(OUT, u_cast(Value*, slot));
 
     if (LIFT_BYTE(OUT) == DUAL_0) {  // return as nonquoted/nonquasi thing
         LIFT_BYTE(OUT) = NOQUOTE_2;
@@ -1332,10 +1332,10 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     if (  // !!! BUGGY, new system needed
         KIND_BYTE(OUT) == TYPE_FRAME
         and LIFT_BYTE_RAW(OUT) == ANTIFORM_1
-        and Frame_Coupling(u_cast(Value*, OUT)) == UNCOUPLED
+        and Frame_Coupling(u_cast(Stable*, OUT)) == UNCOUPLED
     ){
         Context* c = Cell_Context(context);
-        Tweak_Frame_Coupling(u_cast(Value*, OUT), cast(VarList*, c));
+        Tweak_Frame_Coupling(u_cast(Stable*, OUT), cast(VarList*, c));
     }
 
     Liftify(OUT);  // lift the cell to indicate "normal" state
@@ -1353,11 +1353,11 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     if (Get_Cell_Flag(slot, PROTECTED))  // POKE, must check PROTECT status
         panic (Error_Protected_Key(symbol));
 
-    Copy_Cell(m_cast(Value*, u_cast(Value*, slot)), dual);
+    Copy_Cell(m_cast(Stable*, u_cast(Stable*, slot)), dual);
 
     if (Any_Lifted(dual)) {  // don't antagonize...yet [1]
         require (
-          Unliftify_Undecayed(m_cast(Atom*, u_cast(Atom*, slot)))
+          Unliftify_Undecayed(m_cast(Value*, u_cast(Value*, slot)))
         );
         return NO_WRITEBACK_NEEDED;
     }
@@ -2074,7 +2074,7 @@ DECLARE_NATIVE(CONSTRUCT)
 } eval_set_step_dual_in_spare: {  ////////////////////////////////////////////
 
     require (
-      Value* spare = Decay_If_Unstable(SPARE)
+      Stable* spare = Decay_If_Unstable(SPARE)
     );
 
     VarList* varlist = Cell_Varlist(OUT);

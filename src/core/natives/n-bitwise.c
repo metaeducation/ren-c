@@ -57,7 +57,7 @@ DECLARE_NATIVE(BITWISE_NOT)
 }
 
 
-INLINE bool Math_Arg_For_Logic(Value* arg)
+INLINE bool Math_Arg_For_Logic(Stable* arg)
 {
     if (Is_Logic(arg))
         return Cell_Logic(arg);
@@ -193,7 +193,7 @@ DECLARE_NATIVE(SHIFT)
     INCLUDE_PARAMS_OF_SHIFT;
 
     REBI64 b = VAL_INT64(ARG(BITS));
-    Value* a = ARG(VALUE);
+    Stable* a = ARG(VALUE);
 
     if (b < 0) {
         REBU64 c = - cast(REBU64, b); // defined, see note on #pragma above

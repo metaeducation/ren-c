@@ -281,10 +281,10 @@ static void Reverse_Strand(Strand* str, REBLEN index, Length len)
             Append_Codepoint(mo->strand, c);
         }
 
-        DECLARE_VALUE (temp);
+        DECLARE_STABLE (temp);
         Init_Text(temp, Pop_Molded_Strand(mo));
 
-        DECLARE_VALUE (string);  // !!! Temp value, string type is irrelevant
+        DECLARE_STABLE (string);  // !!! Temp value, string type is irrelevant
         Init_Any_String_At(string, TYPE_TEXT, str, index);
         require(
           Modify_String_Or_Blob(  // :PART to overwrite reversed portion
@@ -749,7 +749,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 bool Try_Get_Series_Index_From_Picker(
     REBINT *out,
     const Element* v,
-    const Value* picker
+    const Stable* picker
 ){
     if (not (Is_Integer(picker) or Is_Decimal(picker)))  // !!! why DECIMAL! ?
         panic (Error_Bad_Pick_Raw(picker));
@@ -823,7 +823,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PARAM(SERIES));
 
-        Option(const Value*) arg = Is_Undone_Opt_Nulled(ARG(VALUE))
+        Option(const Stable*) arg = Is_Undone_Opt_Nulled(ARG(VALUE))
             ? nullptr
             : ARG(VALUE);
 
@@ -966,7 +966,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
     //-- Special actions:
 
       case SYM_SWAP: {
-        Value* arg = ARG_N(2);
+        Stable* arg = ARG_N(2);
 
         if (Type_Of(v) != Type_Of(arg))
             panic (Error_Not_Same_Type_Raw());
@@ -994,7 +994,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         // Let the port system try the action, e.g. OPEN %foo.txt
         //
         if ((Is_File(v) or Is_Url(v))) {
-            const Value* made = rebValue("make port! @", ARG_N(1));
+            Api(const Stable*) made = rebStable("make port! @", ARG_N(1));
             assert(Is_Port(made));
             Copy_Cell(ARG_N(1), made);
             rebRelease(made);
@@ -1360,7 +1360,7 @@ IMPLEMENT_GENERIC(SORT, Any_String)
 DECLARE_NATIVE(ENCODE_UTF_8) {
     INCLUDE_PARAMS_OF_ENCODE_UTF_8;
 
-    Value* arg = ARG(ARG);
+    Stable* arg = ARG(ARG);
 
     if (Series_Len_At(ARG(OPTIONS)))
         panic ("UTF-8 Encoder Options not Designed Yet");

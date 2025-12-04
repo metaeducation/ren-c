@@ -63,7 +63,7 @@
 //   called "Is_Nulled()" instead of "Is_Null()".
 //
 // * We ensure that non-quoted, non-quasi NULL isn't written into an Element*
-//   e.g. for a BLOCK!... must be a Value*, e.g. a context variable or
+//   e.g. for a BLOCK!... must be a Stable*, e.g. a context variable or
 //   frame output.
 //
 
@@ -74,7 +74,7 @@
 //
 #define CELL_FLAG_KEYWORD_IS_NULL  CELL_FLAG_TYPE_SPECIFIC_A
 
-INLINE bool Is_Light_Null(Need(const Atom*) a) {
+INLINE bool Is_Light_Null(Need(const Value*) a) {
     return (
         (Ensure_Readable(a)->header.bits & (
             CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_KEYWORD_IS_NULL
@@ -86,7 +86,7 @@ INLINE bool Is_Light_Null(Need(const Atom*) a) {
     );
 }
 
-INLINE bool Is_Nulled(Need(const Value*) v) {
+INLINE bool Is_Nulled(Need(const Stable*) v) {
     return (
         (Ensure_Readable(v)->header.bits & (
             CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_KEYWORD_IS_NULL
@@ -154,7 +154,7 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 #define Init_Heavy_Null(out) \
     Init_Pack((out), g_1_quasi_null_array)
 
-INLINE bool Is_Heavy_Null(const Atom* v) {
+INLINE bool Is_Heavy_Null(const Value* v) {
     if (not Is_Pack(v))
         return false;
     const Element* tail;
@@ -162,7 +162,7 @@ INLINE bool Is_Heavy_Null(const Atom* v) {
     return (tail == at + 1) and Is_Lifted_Null(at);
 }
 
-INLINE bool Is_Lifted_Heavy_Null(const Value* v) {
+INLINE bool Is_Lifted_Heavy_Null(const Stable* v) {
     if (not Is_Lifted_Pack(v))
         return false;
     const Element* tail;

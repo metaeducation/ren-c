@@ -59,7 +59,7 @@
 //
 void Dump_Level_Location(Level* L)
 {
-    DECLARE_ATOM (dump);
+    DECLARE_VALUE (dump);
 
     if (
         L->executor == &Stepper_Executor  // looks ahead by one
@@ -181,7 +181,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
         //
         // !!! This is totally dicey, and likely to break.
 
-        DECLARE_VALUE (check);
+        DECLARE_STABLE (check);
         assume (
           Get_Word(check, L_next, L_binding)
         );
@@ -223,9 +223,9 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
 // These fields are required upon initialization:
 //
 //     L->out
-//     Atom pointer to which the evaluation's result should be written.
+//     Value pointer to which the evaluation's result should be written.
 //     Should be to writable memory in a cell that lives above this call to
-//     the evalutor in stable memory (not user-visible, e.g. DECLARE_ATOM
+//     the evalutor in stable memory (not user-visible, e.g. DECLARE_VALUE
 //     or the parent's L->spare).  This can't point into an array whose memory
 //     may move during arbitrary evaluation, and that includes cells on the
 //     expandable data stack.  It also usually can't write a function argument

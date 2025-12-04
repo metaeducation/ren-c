@@ -144,7 +144,7 @@ INLINE const Element* At_Feed(Feed* feed) {
         feed->p == &feed->fetched  // CELL_FLAG_NOTE may have other meaning!
         and Get_Cell_Flag(elem, FEED_NOTE_META)  // ...if not in this location
     ){
-        DECLARE_VALUE (temp);
+        DECLARE_STABLE (temp);
         Copy_Cell(temp, elem);
         Unliftify_Known_Stable(temp);
         panic (Error_Bad_Antiform(temp));
@@ -231,7 +231,7 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
 //
 INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
     Sink(Element) out,
-    const Value* v
+    const Stable* v
 ){
     if (Is_Nulled(v))
         assert(not Is_Api_Value(v));  // only internals can be nulled [1]
@@ -303,11 +303,11 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         // vs. putting it in fetched/MARKED_TEMPORARY...but that makes
         // this more convoluted.  Review.
 
-        Value* single = Known_Stable(Stub_Cell(inst1));
+        Stable* single = Known_Stable(Stub_Cell(inst1));
         feed->p = single;
         feed->p = Copy_Reified_Variadic_Feed_Cell(
             &feed->fetched,
-            cast(Value*, feed->p)
+            cast(Stable*, feed->p)
         );
         rebRelease(single);  // *is* the instruction
         break; }
@@ -340,7 +340,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
 }
 
 
-// Ordinary Rebol internals deal with Value* that are resident in arrays.
+// Ordinary Rebol internals deal with Stable* that are resident in arrays.
 // But a va_list can contain UTF-8 string components or special instructions
 //
 INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Panic(Feed* feed)

@@ -84,8 +84,8 @@ enum {
 //    and handed out for other purposes.  Caller's choice.
 //
 Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
-    Sink(Value) out,
-    Value* action,
+    Sink(Stable) out,
+    Stable* action,
     Feed* feed,
     StackIndex base,
     bool error_on_deferred
@@ -97,7 +97,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
         LEVEL_MASK_NONE  // FULFILL_ONLY added after Push_Action()
     ));
     L->baseline.stack_base = base;  // incorporate refinements
-    Push_Level_Erase_Out_If_State_0(u_cast(Atom*, out), L);
+    Push_Level_Erase_Out_If_State_0(u_cast(Value*, out), L);
 
     if (error_on_deferred)  // can't deal with ELSE/THEN [1]
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_INFIX;
@@ -144,7 +144,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 // a single quote of nothing.
 //
 Result(None) Init_Invokable_From_Feed(
-    Sink(Value) out,
+    Sink(Stable) out,
     Option(const Element*) first,  // override first value, vs. At_Feed(feed)
     Feed* feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
@@ -182,7 +182,7 @@ Result(None) Init_Invokable_From_Feed(
     // It probably shouldn't, but since it does we need the action afterward
     // to put the phase back.
     //
-    DECLARE_VALUE (action);
+    DECLARE_STABLE (action);
     Move_Cell(action, out);
     Push_Lifeguard(action);
 
@@ -235,7 +235,7 @@ Result(None) Init_Invokable_From_Feed(
 // This converts QUOTED?s into frames for the identity function.
 //
 Result(None) Init_Frame_From_Feed(
-    Sink(Value) out,
+    Sink(Stable) out,
     const Element* first,
     Feed* feed,
     bool error_on_deferred
@@ -254,7 +254,7 @@ Result(None) Init_Frame_From_Feed(
         nullptr  // leave unspecialized slots with parameter! antiforms
     );
 
-    Value* var = Slot_Hack(Varlist_Slot(exemplar, 2));
+    Stable* var = Slot_Hack(Varlist_Slot(exemplar, 2));
     Unquotify(Copy_Cell(var, cast(Element*, out)));
 
     // Should we save the WORD! from a variable access to use as the name of
@@ -286,10 +286,10 @@ Bounce Reframer_Dispatcher(Level* const L)
     Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == MAX_IDX_REFRAMER);
 
-    Value* shim = Details_At(details, IDX_REFRAMER_SHIM);
+    Stable* shim = Details_At(details, IDX_REFRAMER_SHIM);
     assert(Is_Frame(shim));
 
-    Value* param_index = Details_At(details, IDX_REFRAMER_PARAM_INDEX);
+    Stable* param_index = Details_At(details, IDX_REFRAMER_PARAM_INDEX);
     assert(Is_Integer(param_index));
 
     // First run ahead and make the frame we want from the feed.
@@ -302,7 +302,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     // invisibility.  So the frame's spare cell is used.
     //
     bool error_on_deferred = true;
-    Sink(Value) spare = SPARE;
+    Sink(Stable) spare = SPARE;
 
     require (
       Init_Invokable_From_Feed(
@@ -312,7 +312,7 @@ Bounce Reframer_Dispatcher(Level* const L)
         error_on_deferred
     ));
 
-    Atom* arg = Level_Arg(L, VAL_INT32(param_index));
+    Value* arg = Level_Arg(L, VAL_INT32(param_index));
     Move_Cell(arg, spare);
 
     Tweak_Level_Phase(L, Frame_Phase(shim));
@@ -326,7 +326,7 @@ Bounce Reframer_Dispatcher(Level* const L)
 //  Reframer_Details_Querier: C
 //
 bool Reframer_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -366,7 +366,7 @@ Details* Alloc_Action_From_Exemplar(
     const Key* tail;
     const Key* key = Phase_Keys(&tail, unspecialized);
     const Param* param = Phase_Params_Head(unspecialized);
-    Value* arg = Slot_Hack(Varlist_Slots_Head(paramlist));
+    Stable* arg = Slot_Hack(Varlist_Slots_Head(paramlist));
     for (; key != tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param))
             continue;
@@ -482,7 +482,7 @@ DECLARE_NATIVE(REFRAMER)
 
     Destruct_Binder(binder);
 
-    Value* var = Slot_Hack(
+    Stable* var = Slot_Hack(
         Varlist_Slot(exemplar, param_index)  // "specialize" slot [2]
     );
     assert(Is_Parameter(var));

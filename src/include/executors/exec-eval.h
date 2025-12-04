@@ -131,9 +131,9 @@ typedef struct {
     // Level that knows it's only requesting a single step could write
     // some value there if it needed to.)
     //
-    Atom primed;
+    Value primed;
 
-    Value current_gotten;  // costs a Cell... worth it?!
+    Stable current_gotten;  // costs a Cell... worth it?!
 
     // The error reporting machinery doesn't want where `index` is right now,
     // but where it was at the beginning of a single EVALUATE step.

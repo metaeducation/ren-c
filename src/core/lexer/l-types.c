@@ -41,7 +41,7 @@ DECLARE_NATIVE(TYPE_OF)
 {
     INCLUDE_PARAMS_OF_TYPE_OF;
 
-    Value* v = ARG(VALUE);
+    Stable* v = ARG(VALUE);
 
     if (Is_Nulled(v))
         return fail (Error_Type_Of_Null_Raw());  // caller can TRY if meant
@@ -364,7 +364,7 @@ DECLARE_NATIVE(OF)
     Element* prop_of = Init_Word(SCRATCH, sym_of);
 
     require (
-      Value* spare_action = Get_Word(
+      Stable* spare_action = Get_Word(
         SPARE,
         prop_of,
         Feed_Binding(LEVEL->feed)
@@ -1179,7 +1179,7 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
 
     Source* result = Make_Source_Managed(10);  // Guess at size (data stack?)
 
-    Value* header = ARG(HEADER);
+    Stable* header = ARG(HEADER);
     Size size;
     const Byte* cp = Cell_Bytes_At(&size, header);
     UNUSED(size);  // !!! Review semantics

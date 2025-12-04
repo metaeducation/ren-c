@@ -218,14 +218,14 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 // 1. Stub_Cell() is a critical function, and asserts can slow down the
 //    debug build significantly here.  Only do what's essential.
 
-MUTABLE_IF_C(Atom*, INLINE) Stub_Cell(CONST_IF_C(Stub*) stub)
+MUTABLE_IF_C(Value*, INLINE) Stub_Cell(CONST_IF_C(Stub*) stub)
 {
     CONSTABLE(Stub*) s = m_cast(Stub*, stub);
 
     assert(Is_Base_Readable(s) and Not_Stub_Flag(s, DYNAMIC));
     dont(assert(Stub_Holds_Cells(s)));  // not worth the cost [1]
 
-    return u_cast(Atom*, &s->content.fixed.cell);
+    return u_cast(Value*, &s->content.fixed.cell);
 }
 
 INLINE Stub* Compact_Stub_From_Cell(const Cell* v) {

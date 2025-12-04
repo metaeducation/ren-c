@@ -97,27 +97,31 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
 //
 //  Write_IO: C
 //
-// This write routine takes a Value* that is either a BLOB! or a TEXT!.
+// This write routine takes a Stable* that is either a BLOB! or a TEXT!.
 // Length is in conceptual units (codepoints for TEXT!, bytes for BLOB!)
 //
 void Write_IO(const Value* data, REBLEN len)
 {
-    assert(Is_Text(data) or Is_Blob(data));
+    require (
+      const Stable *v = Ensure_Stable(data)
+    );
+
+    assert(Is_Text(v) or Is_Blob(v));
 
     if (STDOUT_FILENO < 0)
         return;  // !!! This used to do nothing (?)
 
   #if defined(REBOL_SMART_CONSOLE)
     if (Term_IO) {
-        if (Is_Rune_And_Is_Char(data)) {
+        if (Is_Rune_And_Is_Char(v)) {
             assert(len == 1);
-            Term_Insert(Term_IO, data);
+            Term_Insert(Term_IO, v);
         }
-        else if (Is_Text(data)) {
-            if (rebUnbox("length of", data) == len)
-                Term_Insert(Term_IO, data);
+        else if (Is_Text(v)) {
+            if (rebUnbox("length of", v) == len)
+                Term_Insert(Term_IO, v);
             else {
-                Value* part = rebValue("copy:part", data, rebI(len));
+                Api(Stable*) part = rebStable("copy:part", v, rebI(len));
                 Term_Insert(Term_IO, part);
                 rebRelease(part);
             }
@@ -130,8 +134,8 @@ void Write_IO(const Value* data, REBLEN len)
             //
             bool ok = true;
 
-            const Byte* tail = Binary_Tail(Cell_Binary(data));
-            const Byte* bp = Blob_At(data);
+            const Byte* tail = Binary_Tail(Cell_Binary(v));
+            const Byte* bp = Blob_At(v);
             for (; bp != tail; ++bp) {
                 char digits[2];
                 digits[0] = g_hex_digits[*bp / 16];
@@ -154,13 +158,13 @@ void Write_IO(const Value* data, REBLEN len)
     {
         const Byte* bp;
         Size size;
-        if (Is_Blob(data)) {
-            bp = Blob_At(data);
+        if (Is_Blob(v)) {
+            bp = Blob_At(v);
             size = len;
         }
         else {
             REBLEN len_check;
-            bp = Cell_Utf8_Len_Size_At_Limit(&len_check, &size, data, &len);
+            bp = Cell_Utf8_Len_Size_At_Limit(&len_check, &size, v, &len);
             assert(len_check == len);
             UNUSED(len_check);
         }

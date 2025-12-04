@@ -61,12 +61,12 @@
 #include "file-req.h"
 
 
-extern Value* Query_File_Or_Directory(const Value* port);
-extern Value* Create_Directory(const Value* port);
-extern Value* Delete_File_Or_Directory(const Value* port);
-extern Value* Rename_File_Or_Directory(const Value* port, const Value* to);
+extern Stable* Query_File_Or_Directory(const Stable* port);
+extern Stable* Create_Directory(const Stable* port);
+extern Stable* Delete_File_Or_Directory(const Stable* port);
+extern Stable* Rename_File_Or_Directory(const Stable* port, const Stable* to);
 
-Value* Try_Read_Directory_Entry(FileReq* dir, Value* dir_path);
+Stable* Try_Read_Directory_Entry(FileReq* dir, Stable* dir_path);
 
 
 //
@@ -79,7 +79,7 @@ Value* Try_Read_Directory_Entry(FileReq* dir, Value* dir_path);
 //
 DECLARE_NATIVE(DIR_ACTOR)
 {
-    Value* port = ARG_N(1);
+    Stable* port = ARG_N(1);
     const Symbol* verb = Level_Verb(LEVEL);
     VarList* ctx = Cell_Varlist(port);
 
@@ -87,7 +87,7 @@ DECLARE_NATIVE(DIR_ACTOR)
 
     FileReq* dir = opt Filereq_Of_Port(port);
     if (not dir) {
-        DECLARE_VALUE (dir_path);
+        DECLARE_STABLE (dir_path);
         require (
           Get_Port_Path_From_Spec(dir_path, port)
         );
@@ -145,14 +145,14 @@ DECLARE_NATIVE(DIR_ACTOR)
         if (Bool_ARG(PART) or Bool_ARG(SEEK) or Bool_ARG(STRING) or Bool_ARG(LINES))
             panic (Error_Bad_Refines_Raw());
 
-        DECLARE_VALUE (dir_path);
+        DECLARE_STABLE (dir_path);
         require (
           Get_Port_Path_From_Spec(dir_path, port)
         );
 
         assert(TOP_INDEX == STACK_BASE);
         while (true) {
-            Value* result = Try_Read_Directory_Entry(dir, dir_path);
+            Stable* result = Try_Read_Directory_Entry(dir, dir_path);
             if (result == nullptr)
                 break;
 
@@ -173,7 +173,7 @@ DECLARE_NATIVE(DIR_ACTOR)
     //=//// CREATE /////////////////////////////////////////////////////////=//
 
       case SYM_CREATE: {
-        DECLARE_VALUE (dir_path);
+        DECLARE_STABLE (dir_path);
         require (
           Get_Port_Path_From_Spec(dir_path, port)
         );
@@ -181,7 +181,7 @@ DECLARE_NATIVE(DIR_ACTOR)
         /*if (Is_Block(state))  // !!! what?
             panic (Error_Already_Open_Raw(dir_path));*/
 
-        Value* error = Create_Directory(port);
+        Stable* error = Create_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
             panic (Error_No_Create_Raw(dir_path));  // higher level error
@@ -195,12 +195,12 @@ DECLARE_NATIVE(DIR_ACTOR)
         INCLUDE_PARAMS_OF_RENAME;
         UNUSED(ARG(FROM));  // already have as port parameter
 
-        DECLARE_VALUE (dir_path);
+        DECLARE_STABLE (dir_path);
         require (
           Get_Port_Path_From_Spec(dir_path, port)
         );
 
-        Value* error = Rename_File_Or_Directory(port, ARG(TO));
+        Stable* error = Rename_File_Or_Directory(port, ARG(TO));
         if (error) {
             rebRelease(error);  // !!! throws away details
             panic (Error_No_Rename_Raw(dir_path));  // higher level error
@@ -213,12 +213,12 @@ DECLARE_NATIVE(DIR_ACTOR)
     //=//// DELETE /////////////////////////////////////////////////////////=//
 
       case SYM_DELETE: {
-        DECLARE_VALUE (dir_path);
+        DECLARE_STABLE (dir_path);
         require (
           Get_Port_Path_From_Spec(dir_path, port)
         );
 
-        Value* error = Delete_File_Or_Directory(port);
+        Stable* error = Delete_File_Or_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
             panic (Error_No_Delete_Raw(dir_path));  // higher level error
@@ -239,7 +239,7 @@ DECLARE_NATIVE(DIR_ACTOR)
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        DECLARE_VALUE (dir_path);
+        DECLARE_STABLE (dir_path);
         require (
           Get_Port_Path_From_Spec(dir_path, port)
         );
@@ -250,7 +250,7 @@ DECLARE_NATIVE(DIR_ACTOR)
             panic (Error_Bad_Refines_Raw());
 
         if (Bool_ARG(NEW)) {
-            Value* error = Create_Directory(port);
+            Stable* error = Create_Directory(port);
             if (error) {
                 rebRelease(error);  // !!! throws away details
                 panic (Error_No_Create_Raw(dir_path));  // hi-level error
@@ -274,7 +274,7 @@ DECLARE_NATIVE(DIR_ACTOR)
     // give back that something is a directory.
 
       case SYM_QUERY: {
-        Value* info = Query_File_Or_Directory(port);
+        Stable* info = Query_File_Or_Directory(port);
         if (Is_Warning(info)) {
             rebRelease(info);  // !!! R3-Alpha threw out error, returns null
             return nullptr;

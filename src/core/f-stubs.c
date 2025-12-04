@@ -32,7 +32,7 @@
 // Allow multiple types. Throw error if not valid.
 // Note that the result is one-based.
 //
-REBINT Get_Num_From_Arg(const Value* val)
+REBINT Get_Num_From_Arg(const Stable* val)
 {
     REBINT n;
 
@@ -73,7 +73,7 @@ REBINT Float_Int16(REBD32 f)
 //
 //  Int32: C
 //
-REBINT Int32(const Value* val)
+REBINT Int32(const Stable* val)
 {
     if (Is_Decimal(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
@@ -103,7 +103,7 @@ out_of_range:
 //     1: >  0
 //    -1: <  0
 //
-REBINT Int32s(const Value* val, REBINT sign)
+REBINT Int32s(const Stable* val, REBINT sign)
 {
     REBINT n;
 
@@ -139,7 +139,7 @@ out_of_range:
 //
 //  Int64: C
 //
-REBI64 Int64(const Value* val)
+REBI64 Int64(const Stable* val)
 {
     if (Is_Integer(val))
         return VAL_INT64(val);
@@ -153,7 +153,7 @@ REBI64 Int64(const Value* val)
 //
 //  Dec64: C
 //
-REBDEC Dec64(const Value* val)
+REBDEC Dec64(const Stable* val)
 {
     if (Is_Decimal(val) or Is_Percent(val))
         return VAL_DECIMAL(val);
@@ -173,7 +173,7 @@ REBDEC Dec64(const Value* val)
 //     1: >  0
 //    -1: <  0
 //
-REBI64 Int64s(const Value* val, REBINT sign)
+REBI64 Int64s(const Stable* val, REBINT sign)
 {
     REBI64 n;
     if (Is_Decimal(val)) {
@@ -204,11 +204,11 @@ REBI64 Int64s(const Value* val, REBINT sign)
 // Returns the specified datatype Value from the LIB context.
 // The datatypes are all at the head of the LIB context.
 //
-const Value* Datatype_From_Type(Type type)
+const Stable* Datatype_From_Type(Type type)
 {
     assert(type <= MAX_TYPE);
     Patch* patch = &g_datatype_patches[cast(Byte, type)];
-    const Value* datatype = cast(Value*, Stub_Cell(patch));
+    const Stable* datatype = cast(Stable*, Stub_Cell(patch));
     assert(Is_Datatype(datatype));
     return datatype;
 }
@@ -220,7 +220,7 @@ const Value* Datatype_From_Type(Type type)
 // Returns the datatype value for the given value.
 // The datatypes are all at the head of the context.
 //
-const Value* Datatype_Of(const Atom* value)
+const Stable* Datatype_Of(const Value* value)
 {
     Option(Type) type = Type_Of(value);
     if (type)
@@ -229,7 +229,7 @@ const Value* Datatype_Of(const Atom* value)
     const ExtraHeart* ext_heart = Cell_Extra_Heart(value);
     assert(Is_Stub_Patch(ext_heart));
 
-    const Value* datatype = cast(Value*, Stub_Cell(ext_heart));
+    const Stable* datatype = cast(Stable*, Stub_Cell(ext_heart));
     assert(Is_Datatype(datatype));
     return datatype;
 }
@@ -238,7 +238,7 @@ const Value* Datatype_Of(const Atom* value)
 //
 //  Datatype_Of_Fundamental: C
 //
-const Value* Datatype_Of_Fundamental(const Element* value)
+const Stable* Datatype_Of_Fundamental(const Element* value)
 {
     assert(Any_Fundamental(value));
     return Datatype_Of(value);
@@ -248,7 +248,7 @@ const Value* Datatype_Of_Fundamental(const Element* value)
 //
 //  Datatype_Of_Builtin_Fundamental: C
 //
-const Value* Datatype_Of_Builtin_Fundamental(const Element* value)
+const Stable* Datatype_Of_Builtin_Fundamental(const Element* value)
 {
     assert(Any_Fundamental(value));
 
@@ -281,7 +281,7 @@ Slot* Get_System(REBLEN i1, REBLEN i2)
     if (i2 == 0)
         return obj_slot;
 
-    DECLARE_VALUE (obj);
+    DECLARE_STABLE (obj);
     require (
       Read_Slot(obj, obj_slot)
     );
@@ -328,7 +328,7 @@ void Extra_Init_Context_Cell_Checks_Debug(
     else
         assert((varlist->header.bits & STUB_MASK_VARLIST) == STUB_MASK_VARLIST);
 
-    const Value* archetype = Varlist_Archetype(varlist);
+    const Stable* archetype = Varlist_Archetype(varlist);
     assert(Cell_Varlist(archetype) == varlist);
 
     // Currently only FRAME! uses the extra field, in order to capture the
@@ -388,8 +388,8 @@ void Extra_Init_Frame_Checks_Debug(Phase* phase) {
 // position, so that a positive length for the partial region is returned.
 //
 REBLEN Part_Len_May_Modify_Index(
-    Value* series,  // ANY-SERIES? value whose index may be modified
-    const Value* part  // :PART (number, position in value, or nulled cell)
+    Stable* series,  // ANY-SERIES? value whose index may be modified
+    const Stable* part  // :PART (number, position in value, or nulled cell)
 ){
     assert(Is_Rune(series) or Any_Series(series));
 
@@ -460,7 +460,7 @@ REBLEN Part_Len_May_Modify_Index(
 // Simple variation that instead of returning the length, returns the absolute
 // tail position in the series of the partial sequence.
 //
-REBLEN Part_Tail_May_Modify_Index(Value* series, const Value* limit)
+REBLEN Part_Tail_May_Modify_Index(Stable* series, const Stable* limit)
 {
     REBLEN len = Part_Len_May_Modify_Index(series, limit);
     return len + Series_Index(series); // uses the possibly-updated index
@@ -482,7 +482,7 @@ REBLEN Part_Tail_May_Modify_Index(Value* series, const Value* limit)
 //
 // https://github.com/rebol/rebol-issues/issues/1570
 //
-REBLEN Part_Limit_Append_Insert(const Value* part) {
+REBLEN Part_Limit_Append_Insert(const Stable* part) {
     if (Is_Nulled(part))
         return UINT32_MAX;  // treat as no limit
 

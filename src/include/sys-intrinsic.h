@@ -83,7 +83,7 @@
 //    return it non-const here, and trust the PROTECTED flag to catch bad
 //    writes at runtime in the debug build.
 //
-INLINE Atom* Level_Dispatching_Intrinsic_Atom_Arg(Level* L) {
+INLINE Value* Level_Dispatching_Intrinsic_Atom_Arg(Level* L) {
     assert(Get_Level_Flag(L, DISPATCHING_INTRINSIC));
 
     possibly(Get_Cell_Flag(Level_Spare(L), PROTECTED));  // if typechecker [1]
@@ -94,7 +94,7 @@ INLINE Details* Level_Intrinsic_Details(Level* L) {
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
         return Ensure_Level_Details(L);
 
-    Value* frame = Known_Stable(Level_Scratch(L));
+    Stable* frame = Known_Stable(Level_Scratch(L));
     possibly(Is_Antiform(frame));  // LIFT_BYTE() is not canonized
     return Ensure_Frame_Details(frame);
 }
@@ -103,7 +103,7 @@ INLINE Option(const Symbol*) Level_Intrinsic_Label(Level* L) {
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
         return Try_Get_Action_Level_Label(L);
 
-    Value* frame = Known_Stable(Level_Scratch(L));
+    Stable* frame = Known_Stable(Level_Scratch(L));
     possibly(Is_Antiform(frame));  // LIFT_BYTE() is not canonized
     return Frame_Label_Deep(frame);
 }
@@ -116,7 +116,7 @@ INLINE Option(const Symbol*) Level_Intrinsic_Label(Level* L) {
 //
 // !!! Make this a macro that can't be accidentally used w/non-intrinsic.
 //
-INLINE Atom* Intrinsic_Atom_ARG(Level* L) {
+INLINE Value* Intrinsic_Atom_ARG(Level* L) {
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC))
         return Level_Spare(L);
 
@@ -124,7 +124,7 @@ INLINE Atom* Intrinsic_Atom_ARG(Level* L) {
 }
 
 #define Intrinsic_Typechecker_Atom_ARG(L) \
-    u_cast(const Atom*, Intrinsic_Atom_ARG(L))
+    u_cast(const Value*, Intrinsic_Atom_ARG(L))
 
 
 //=//// INTRINSIC FUNCTION ARGUMENT PROCESSING HELPERS ////////////////////=//
@@ -158,7 +158,7 @@ INLINE Result(Bounce) Bounce_Opt_Out_Element_Intrinsic(  // <opt-out> handling
         return BOUNCE_GOOD_INTRINSIC_ARG;
     }
 
-    const Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
+    const Value* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
     if (Is_Error(atom_arg)) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
@@ -169,7 +169,7 @@ INLINE Result(Bounce) Bounce_Opt_Out_Element_Intrinsic(  // <opt-out> handling
     if (Is_Void(atom_arg))  // handle PARAMETER_FLAG_OPT_OUT
         return nullptr;
 
-    Init(Atom) atom_out = u_cast(Atom*, elem_out);
+    Init(Value) atom_out = u_cast(Value*, elem_out);
     Copy_Cell(atom_out, atom_arg);
 
     Decay_If_Unstable(atom_out) except (Error* e) {
@@ -188,7 +188,7 @@ INLINE Result(Bounce) Bounce_Opt_Out_Element_Intrinsic(  // <opt-out> handling
 }
 
 INLINE Result(Bounce) Bounce_Decay_Value_Intrinsic(
-    Sink(Value) val_out,
+    Sink(Stable) val_out,
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
@@ -196,7 +196,7 @@ INLINE Result(Bounce) Bounce_Decay_Value_Intrinsic(
         return BOUNCE_GOOD_INTRINSIC_ARG;
     }
 
-    const Atom* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
+    const Value* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
 
     if (Is_Error(atom_arg)) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
@@ -204,7 +204,7 @@ INLINE Result(Bounce) Bounce_Decay_Value_Intrinsic(
         return fail (Cell_Error(atom_arg));
     }
 
-    Init(Atom) atom_out = u_cast(Atom*, val_out);
+    Init(Value) atom_out = u_cast(Value*, val_out);
     Copy_Cell(atom_out, atom_arg);
 
     Decay_If_Unstable(atom_out) except (Error* e) {

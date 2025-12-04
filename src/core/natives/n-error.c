@@ -39,7 +39,7 @@ DECLARE_NATIVE(TRY)
 {
     INCLUDE_PARAMS_OF_TRY;
 
-    Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* atom = Intrinsic_Atom_ARG(LEVEL);
 
     if (Is_Void(atom) or Is_Light_Null(atom))
         return NULLED;
@@ -213,7 +213,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 
     if (Is_Error(SPARE)) {
         Drop_Level(SUBLEVEL);
-        Move_Atom(OUT, SPARE);
+        Move_Value(OUT, SPARE);
         LIFT_BYTE(OUT) = NOQUOTE_2;  // change antiform error to plain
         return BRANCHED(OUT);
     }
@@ -224,7 +224,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
     }
 
     if (not Is_Ghost_Or_Void(SPARE))
-        Move_Atom(OUT, SPARE);
+        Move_Value(OUT, SPARE);
 
     if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
         goto finished;
@@ -263,8 +263,8 @@ DECLARE_NATIVE(EXCEPT)
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Atom* atom = Atom_ARG(LEFT);
-    Value* branch = ARG(BRANCH);
+    Value* atom = Atom_ARG(LEFT);
+    Stable* branch = ARG(BRANCH);
 
     if (not Is_Error(atom))
         return COPY(atom);  // pass thru any non-errors
@@ -289,7 +289,7 @@ DECLARE_NATIVE(TRAP)
 {
     INCLUDE_PARAMS_OF_TRAP;
 
-    Atom* atom = Atom_ARG(VALUE);
+    Value* atom = Atom_ARG(VALUE);
 
     if (not Is_Error(atom))
         return COPY(atom);  // pass thru any non-errors
@@ -297,7 +297,7 @@ DECLARE_NATIVE(TRAP)
     Element* return_word = Init_Word(SCRATCH, CANON(RETURN));
 
     require (
-      Value* spare_action = Get_Word(
+      Stable* spare_action = Get_Word(
         SPARE,
         return_word,
         Feed_Binding(LEVEL->feed)
@@ -325,7 +325,7 @@ DECLARE_NATIVE(REQUIRE)
 {
     INCLUDE_PARAMS_OF_REQUIRE;
 
-    Atom* atom = Atom_ARG(VALUE);
+    Value* atom = Atom_ARG(VALUE);
 
     if (not Is_Error(atom))
         return COPY(atom);  // pass thru any non-errors
@@ -347,7 +347,7 @@ DECLARE_NATIVE(ERROR_Q)
 {
     INCLUDE_PARAMS_OF_ERROR_Q;
 
-    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
     return LOGIC(Is_Error(atom));
 }

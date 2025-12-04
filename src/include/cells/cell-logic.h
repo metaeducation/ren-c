@@ -68,7 +68,7 @@
 // conflate with dialected meanings.
 //
 
-INLINE bool Is_Logic(Need(const Value*) v) {
+INLINE bool Is_Logic(Need(const Stable*) v) {
     Assert_Cell_Readable(v);
     if (LIFT_BYTE(v) != ANTIFORM_1 or Heart_Of(v) != TYPE_WORD)
         return false;
@@ -79,8 +79,8 @@ INLINE bool Is_Logic(Need(const Value*) v) {
 #define Is_Okay(v) \
     Is_Anti_Word_With_Id((v), SYM_OKAY)
 
-INLINE bool Is_Possibly_Unstable_Atom_Okay(Atom* atom) {  // typecheck only!
-    if (not Is_Possibly_Unstable_Atom_Keyword(atom))
+INLINE bool Is_Possibly_Unstable_Value_Okay(Value* atom) {  // typecheck only!
+    if (not Is_Possibly_Unstable_Value_Keyword(atom))
         return false;
     return Word_Id(atom) == SYM_OKAY;
 }
@@ -91,7 +91,7 @@ INLINE bool Is_Possibly_Unstable_Atom_Okay(Atom* atom) {  // typecheck only!
         FLAG_LIFT_BYTE(ANTIFORM_1), \
         CANON(OKAY)))  // okay is valid KEYWORD! symbol
 
-INLINE Value* Init_Logic_Untracked(Init(Value) out, bool logic) {
+INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
     return Init_Word_Untracked(
         out,
         FLAG_LIFT_BYTE(ANTIFORM_1) | (logic ? 0 : CELL_FLAG_KEYWORD_IS_NULL),
@@ -102,7 +102,7 @@ INLINE Value* Init_Logic_Untracked(Init(Value) out, bool logic) {
 #define Init_Logic(out,flag) \
     TRACK(Init_Logic_Untracked((out), (flag)))
 
-INLINE bool Cell_Logic(Need(const Value*) v) {
+INLINE bool Cell_Logic(Need(const Stable*) v) {
     assert(Is_Antiform(v));
     assert(Heart_Of(v) == TYPE_WORD);
     SymId id = unwrap Word_Id(v);
@@ -164,7 +164,7 @@ INLINE bool Cell_Logic(Need(const Value*) v) {
 #define Is_True(out)        Is_Word_With_Id((out), SYM_TRUE)
 #define Is_False(out)       Is_Word_With_Id((out), SYM_FALSE)
 
-INLINE bool Is_Boolean(const Value* v) {
+INLINE bool Is_Boolean(const Stable* v) {
     Assert_Cell_Readable(v);
 
     if (LIFT_BYTE(v) != NOQUOTE_2 or Heart_Of(v) != TYPE_WORD)
@@ -177,7 +177,7 @@ INLINE bool Is_Boolean(const Value* v) {
 #define Init_Boolean(out,flag) \
     Init_Word((out), (flag) ? CANON(TRUE) : CANON(FALSE))
 
-INLINE bool Cell_True(Need(const Value*) v) {  // corresponds to TRUE?
+INLINE bool Cell_True(Need(const Stable*) v) {  // corresponds to TRUE?
     assert(Is_Word(v));
     Option(SymId) id = Word_Id(v);
     if (id == SYM_TRUE)
@@ -192,7 +192,7 @@ INLINE bool Cell_True(Need(const Value*) v) {  // corresponds to TRUE?
 
 //=//// [ON OFF] WORDS ////////////////////////////////////////////////////=//
 
-INLINE bool Is_OnOff(const Value* v) {
+INLINE bool Is_OnOff(const Stable* v) {
     Assert_Cell_Readable(v);
     if (LIFT_BYTE(v) != NOQUOTE_2 or Heart_Of(v) != TYPE_WORD)
         return false;
@@ -203,7 +203,7 @@ INLINE bool Is_OnOff(const Value* v) {
 #define Init_OnOff(out,flag) \
     Init_Word((out), (flag) ? CANON(ON) : CANON(OFF))
 
-INLINE bool Cell_On(const Value* v) {  // corresponds to ON?
+INLINE bool Cell_On(const Stable* v) {  // corresponds to ON?
     assert(Is_Word(v));
     Option(SymId) id = Word_Id(v);
     if (id == SYM_ON)
@@ -218,7 +218,7 @@ INLINE bool Cell_On(const Value* v) {  // corresponds to ON?
 
 //=//// [YES NO] WORDS ////////////////////////////////////////////////////=//
 
-INLINE bool Is_YesNo(const Value* v) {
+INLINE bool Is_YesNo(const Stable* v) {
     Assert_Cell_Readable(v);
     if (LIFT_BYTE(v) != NOQUOTE_2 or Heart_Of(v) != TYPE_WORD)
         return false;
@@ -229,7 +229,7 @@ INLINE bool Is_YesNo(const Value* v) {
 #define Init_YesNo(out,flag) \
     Init_Word((out), (flag) ? CANON(YES) : CANON(NO))
 
-INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
+INLINE bool Cell_Yes(const Stable* v) {  // corresponds to YES?
     assert(Is_Word(v));
     Option(SymId) id = Word_Id(v);
     if (id == SYM_YES)
@@ -267,7 +267,7 @@ INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
 //    not particularly coherent to try and argue voids are true or false,
 //    and creates ambiguity to gain a relatively unimportant feature.
 //
-//    !!! Should this enforce Value* passed, and disallow Element*, since
+//    !!! Should this enforce Stable* passed, and disallow Element*, since
 //    the builtin conditional never considers elements to be falsey?
 //
 // 2. There used to be a ~void~ antiform as "stable void", but the role has
@@ -283,7 +283,7 @@ INLINE bool Cell_Yes(const Value* v) {  // corresponds to YES?
 //    to be useful.  So trash is truthy now.
 //
 INLINE Result(bool) Test_Conditional(
-    const Value* v  // Not Atom*, has to be stable... no VOID [1]
+    const Stable* v  // Not Value*, has to be stable... no VOID [1]
 ){
     Assert_Cell_Readable(v);
 

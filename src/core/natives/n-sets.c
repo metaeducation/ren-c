@@ -54,8 +54,8 @@
 // `skip` is the record size.
 //
 Flex* Make_Set_Operation_Flex(
-    const Value* val1,
-    const Value* val2,
+    const Stable* val1,
+    const Stable* val2,
     Flags flags,
     bool cased,
     REBLEN skip
@@ -186,7 +186,7 @@ Flex* Make_Set_Operation_Flex(
             if ((flags & SOP_FLAG_BOTH) == 0)
                 break;  // don't need to iterate over second series
 
-            const Value* temp = val1;
+            const Stable* temp = val1;
             val1 = val2;
             val2 = temp;
         } while (true);
@@ -214,7 +214,7 @@ Flex* Make_Set_Operation_Flex(
             //
             const Strand* str = Cell_Strand(val1);
 
-            DECLARE_VALUE (iter);
+            DECLARE_STABLE (iter);
             Copy_Cell(iter, val1);
 
             // Iterate over first series
@@ -271,7 +271,7 @@ Flex* Make_Set_Operation_Flex(
             if ((flags & SOP_FLAG_BOTH) == 0)
                 break;  // don't need to iterate over second series
 
-            const Value* temp = val1;
+            const Stable* temp = val1;
             val1 = val2;
             val2 = temp;
         } while (true);
@@ -295,7 +295,7 @@ Flex* Make_Set_Operation_Flex(
 
             // Iterate over first series
             //
-            DECLARE_VALUE (iter);
+            DECLARE_STABLE (iter);
             Copy_Cell(iter, val1);
 
             for (
@@ -360,7 +360,7 @@ Flex* Make_Set_Operation_Flex(
             if ((flags & SOP_FLAG_BOTH) == 0)
                 break;  // don't need to iterate over the second series
 
-            const Value* temp = val1;
+            const Stable* temp = val1;
             val1 = val2;
             val2 = temp;
         } while (true);

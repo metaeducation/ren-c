@@ -236,7 +236,7 @@ INLINE Option(SymId) VAL_CMD(const Cell* v) {
 //
 static bool Subparse_Throws(
     bool *interrupted_out,
-    Sink(Atom) out,
+    Sink(Value) out,
     const Element* input,
     Context* input_binding,
     Level* const L,
@@ -299,7 +299,7 @@ static bool Subparse_Throws(
         // or not found.  This returns the interrupted flag which is still
         // ignored by most callers, but makes that fact more apparent.
         //
-        const Value* label = VAL_THROWN_LABEL(LEVEL);
+        const Stable* label = VAL_THROWN_LABEL(LEVEL);
         if (Is_Frame(label)) {
             if (Frame_Phase(label) == Frame_Phase(LIB(PARSE_REJECT))) {
                 CATCH_THROWN(out, LEVEL);
@@ -375,7 +375,7 @@ static Result(Option(SymId)) Get_Parse_Value(
 ){
     assert(out != rule);
 
-    Value* out_value = u_cast(Value*, out);  // defuses Sink() behavior [1]
+    Stable* out_value = u_cast(Stable*, out);  // defuses Sink() behavior [1]
 
     if (Is_Word(rule)) {
         Option(SymId) id = Word_Id(rule);
@@ -417,7 +417,7 @@ static Result(Option(SymId)) Get_Parse_Value(
         if (Is_Logic(out_value) or Is_Splice(out_value))
             Quasify_Antiform(out_value);
         else if (Is_Datatype(out)) {  // convert to functions for now
-            DECLARE_VALUE (checker);
+            DECLARE_STABLE (checker);
             require (
               Init_Typechecker(checker, out)
             );
@@ -465,7 +465,7 @@ bool Process_Group_For_Parse_Throws(
         ? SPECIFIED
         : Derive_Binding(P_RULE_BINDING, group);
 
-    DECLARE_ATOM (eval);
+    DECLARE_VALUE (eval);
     Flags flags = LEVEL_MASK_NONE;
     if (Eval_Element_Core_Throws(eval, flags, group, derived))
         return true;
@@ -591,7 +591,7 @@ static Result(REBIXO) Parse_One_Rule(
             LEVEL_MASK_NONE
         ));
 
-        DECLARE_ATOM (subresult);
+        DECLARE_VALUE (subresult);
         bool interrupted;
         if (Subparse_Throws(
             &interrupted,
@@ -647,7 +647,7 @@ static Result(REBIXO) Parse_One_Rule(
           case TYPE_PARAMETER: {
             assert(rule != SPARE);
             Copy_Cell(SPARE, item);
-            if (Typecheck_Atom_In_Spare_Uses_Scratch(
+            if (Typecheck_Value_In_Spare_Uses_Scratch(
                 LEVEL, rule, P_RULE_BINDING
             )){
                 return pos + 1;  // type was in typeset
@@ -1064,7 +1064,7 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
         // other considerations for how non-block rules act with array input?
         //
         Flags find_flags = (P_FLAGS & AM_FIND_CASE);
-        DECLARE_VALUE (temp);
+        DECLARE_STABLE (temp);
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
             Unquotify(Derelativize(temp, rule, P_RULE_BINDING));
         }
@@ -1160,8 +1160,8 @@ static Result(None) Handle_Mark_Rule(
     // !!! Assume we might not be able to corrupt SPARE (rule may be
     // in SPARE?)
     //
-    Sink(Value) out = OUT;
-    DECLARE_ATOM (temp);
+    Sink(Stable) out = OUT;
+    DECLARE_VALUE (temp);
     if (rebRunThrows(
         out,  // <-- output cell
         CANON(SET), quoted_set_or_copy_word, ARG(POSITION)
@@ -1504,7 +1504,7 @@ DECLARE_NATIVE(SUBPARSE)
                 }
 
                 require (
-                  Value* out = Decay_If_Unstable(OUT)
+                  Stable* out = Decay_If_Unstable(OUT)
                 );
                 if (Is_Integer(out)) {
                     mincount = Int32s(out, 0);
@@ -1617,7 +1617,7 @@ DECLARE_NATIVE(SUBPARSE)
                 if (not Is_Group(P_RULE))
                     panic (Error_Parse3_Rule());
 
-                DECLARE_ATOM (eval);
+                DECLARE_VALUE (eval);
                 Flags flags = LEVEL_MASK_NONE;
                 if (Eval_Any_List_At_Core_Throws(  // note: might GC
                     eval,
@@ -1657,7 +1657,7 @@ DECLARE_NATIVE(SUBPARSE)
                 if (not Is_Group(P_RULE))
                     panic (Error_Parse3_Rule());
 
-                DECLARE_ATOM (eval);
+                DECLARE_VALUE (eval);
                 if (Eval_Any_List_At_Throws(  // note: might GC
                     eval,
                     P_RULE,
@@ -1669,7 +1669,7 @@ DECLARE_NATIVE(SUBPARSE)
                 FETCH_NEXT_RULE(L);
 
                 require (
-                  Value* condition = Decay_If_Unstable(eval)
+                  Stable* condition = Decay_If_Unstable(eval)
                 );
                 require (
                   bool cond = Test_Conditional(condition)
@@ -1687,7 +1687,7 @@ DECLARE_NATIVE(SUBPARSE)
                 //
                 FETCH_NEXT_RULE(L);
 
-                DECLARE_ATOM (thrown_arg);
+                DECLARE_VALUE (thrown_arg);
                 if (Is_Tag(P_RULE)) {
                     if (rebUnboxLogic(P_RULE, "= <here>"))
                         Copy_Cell(thrown_arg, ARG(POSITION));
@@ -1710,7 +1710,7 @@ DECLARE_NATIVE(SUBPARSE)
                 // to just say the current rule succeeded...it climbs
                 // up and affects an enclosing parse loop.
                 //
-                DECLARE_ATOM (thrown_arg);
+                DECLARE_VALUE (thrown_arg);
                 Init_Integer(thrown_arg, P_POS);
 
                 Init_Thrown_With_Label(LEVEL, thrown_arg, LIB(PARSE_BREAK));
@@ -1810,11 +1810,11 @@ DECLARE_NATIVE(SUBPARSE)
     }
     else if (Is_Tuple(rule)) {
         require (
-          Value* spare = Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING)
+          Stable* spare = Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING)
         );
         if (Is_Datatype(spare)) {
             require (
-              Init_Typechecker(u_cast(Value*, P_SAVE), spare)
+              Init_Typechecker(u_cast(Stable*, P_SAVE), spare)
             );
             LIFT_BYTE(spare) = NOQUOTE_2;
             assert(Is_Frame(spare));
@@ -1827,7 +1827,7 @@ DECLARE_NATIVE(SUBPARSE)
     }
     else if (Is_Path(rule)) {
         require (
-          Value* spare = Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING)
+          Stable* spare = Get_Var(SPARE, NO_STEPS, rule, P_RULE_BINDING)
         );
 
         if (not Is_Action(spare))
@@ -2076,7 +2076,7 @@ DECLARE_NATIVE(SUBPARSE)
                 }
 
                 if (Is_Api_Value(into))
-                    rebRelease(m_cast(Value*, into));  // !!! or use SPARE?
+                    rebRelease(m_cast(Stable*, into));  // !!! or use SPARE?
 
                 Erase_Cell(OUT);  // restore invariant
                 break; }
@@ -2116,7 +2116,7 @@ DECLARE_NATIVE(SUBPARSE)
             if (Is_Light_Null(SPARE))
                 i = END_FLAG;
             else {
-                Value* spare = Known_Element(SPARE);
+                Stable* spare = Known_Element(SPARE);
                 assert(Is_Integer(spare));
                 i = VAL_INT32(spare);
             }
@@ -2250,7 +2250,7 @@ DECLARE_NATIVE(SUBPARSE)
                 else {
                     assert(Any_String_Type(P_HEART));
 
-                    DECLARE_ATOM (begin_val);
+                    DECLARE_VALUE (begin_val);
                     Init_Series_At(begin_val, P_HEART, P_INPUT, begin);
 
                     // Rebol2 behavior of always "netural" TEXT!.  Avoids
@@ -2336,7 +2336,7 @@ DECLARE_NATIVE(SUBPARSE)
                 if (not Is_Group(rule))
                     panic ("Splicing (...) only in PARSE3's CHANGE or INSERT");
 
-                DECLARE_VALUE (evaluated);
+                DECLARE_STABLE (evaluated);
                 Context* derived = Derive_Binding(
                     P_RULE_BINDING,
                     rule
@@ -2344,7 +2344,7 @@ DECLARE_NATIVE(SUBPARSE)
 
               perform_evaluation: {
 
-                Atom* atom_evaluated = evaluated;
+                Value* atom_evaluated = evaluated;
                 if (Eval_Any_List_At_Throws(
                     atom_evaluated,
                     rule,
@@ -2526,7 +2526,7 @@ DECLARE_NATIVE(PARSE3)
         // Any PARSE-specific THROWs (where a PARSE directive jumped the
         // stack) should be handled here.  ACCEPT is one example.
 
-        const Value* label = VAL_THROWN_LABEL(LEVEL);
+        const Stable* label = VAL_THROWN_LABEL(LEVEL);
         if (Is_Frame(label)) {
             if (Frame_Phase(label) == Frame_Phase(LIB(PARSE_ACCEPT))) {
                 CATCH_THROWN(OUT, LEVEL);

@@ -850,18 +850,18 @@ Result(const Byte*) Scan_Utf8_Item_Into_Mold(
 
             Level* scan = Make_Scan_Level(&transcode, TG_End_Feed, flags);
 
-            DECLARE_ATOM (discard);
+            DECLARE_VALUE (discard);
             Push_Level_Erase_Out_If_State_0(discard, scan);
             bool threw = Trampoline_With_Top_As_Root_Throws();
             Drop_Data_Stack_To(scan->baseline.stack_base);  // !!! new mode?
             Drop_Level(scan);
 
             if (threw) {
-                DECLARE_VALUE (label);
+                DECLARE_STABLE (label);
                 Copy_Cell(label, VAL_THROWN_LABEL(TOP_LEVEL));
                 assert(Is_Warning(label));
 
-                DECLARE_ATOM (arg);
+                DECLARE_VALUE (arg);
                 CATCH_THROWN(arg, TOP_LEVEL);
 
                 return fail (Cell_Error(label));
@@ -1240,7 +1240,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
 
     // This supports scanning of variadic material, e.g. C code like:
     //
-    //     Value* some_value = rebInteger(3);
+    //     Stable* some_value = rebInteger(3);
     //     rebElide("print [{The value is}", some_value, "]");
     //
     // We scan one string component at a time, pushing the appropriate items.
@@ -1271,7 +1271,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
           case DETECTED_AS_CELL: {
             Copy_Reified_Variadic_Feed_Cell(
                 PUSH(),
-                cast(Value*, L->feed->p)
+                cast(Stable*, L->feed->p)
             );
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
@@ -2952,7 +2952,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
             Pop_Source_From_Stack(stackindex_path_head - 1)
         );
         Pinify(items);  // don't want to evaluate
-        Value* email = rebValue("as email! delimit -[.]-", items);
+        Api(Stable*) email = rebStable("as email! delimit -[.]-", items);
 
         Element* scratch = Copy_Cell(SCRATCH, Known_Element(email));
         rebRelease(email);
@@ -3179,7 +3179,7 @@ Bounce Scanner_Executor(Level* level_)
 
     ERROR_VARS *vars = ERR_VARS(error);
 
-    DECLARE_VALUE (nearest);
+    DECLARE_STABLE (nearest);
     require (
       Read_Slot(nearest, &vars->nearest)
     );
@@ -3379,7 +3379,7 @@ Result(Option(Source*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
     Flags flags = FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
     Level* L = Make_Scan_Level(transcode, feed, flags);
 
-    DECLARE_ATOM (temp);
+    DECLARE_VALUE (temp);
     Push_Level_Erase_Out_If_State_0(temp, L);
     if (Trampoline_With_Top_As_Root_Throws())
         return fail (Error_No_Catch_For_Throw(L));

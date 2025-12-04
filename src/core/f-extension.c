@@ -90,15 +90,17 @@ DECLARE_NATIVE(BUILTIN_EXTENSIONS)
     for (i = 0; i != g_num_builtin_extensions; ++i) {
         ExtensionCollator* collator = g_builtin_collators[i];
 
-        Value* details = (*collator)(nullptr);  // don't pass g_librebol [1]
-        assert(Is_Block(details));
-        assert(Series_Len_At(details) == MAX_COLLATOR + 1);
+        Api(Element*) block = Known_Element(
+            Apply_Cfunc(collator, nullptr)  // don't pass g_librebol [1]
+        );
+        assert(Is_Block(block));
+        assert(Series_Len_At(block) == MAX_COLLATOR + 1);
 
         require (
           Sink(Element) cell = Alloc_Tail_Array(list)
         );
-        Copy_Cell(cell, Ensure_Element(details));
-        rebRelease(details);
+        Copy_Cell(cell, block);
+        rebRelease(block);
     }
     return Init_Block(OUT, list);
 }
@@ -146,9 +148,9 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     else {  // It's a DLL, must locate and call its RX_Collate() function
         assert(Is_File(ARG(WHERE)));
 
-        Value* library = rebValue("make library!", ARG(WHERE));
+        Api(Stable*) library = rebStable("make library!", ARG(WHERE));
 
-        Value* collated_block = rebValue(
+        Api(Stable*) collated_block = rebStable(
             "run-library-collator", library, "-[RX_Collate]-"
         );
 
@@ -207,7 +209,9 @@ DECLARE_NATIVE(LOAD_EXTENSION)
     // a Binary Flex (e.g. a rebAlloc() product).  Get the BLOB! back so
     // we can pass it to import as a TEXT!.
     //
-    Value* script = rebRepossess(script_utf8, script_size);
+    Api(Stable*) script = Known_Stable_Api(
+        rebRepossess(script_utf8, script_size)
+    );
 
     // The rebRepossess() function gives us back a BLOB!.  But we happen to
     // know that the data is actually valid UTF-8.  The scanner does not
@@ -295,7 +299,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
 {
     INCLUDE_PARAMS_OF_UNLOAD_EXTENSION;
 
-    Value* extension = ARG(EXTENSION);
+    Stable* extension = ARG(EXTENSION);
 
   remove_from_loaded_extensions_list: {
 
@@ -304,7 +308,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
   // "unload_extension 'all" walk a copy of the array here in the native or
   // some other optimization.  Review.
 
-    Value* pos = rebValue(CANON(FIND), "system.extensions", extension);
+    Api(Stable*) pos = rebStable(CANON(FIND), "system.extensions", extension);
 
     if (not pos)
         panic ("Could not find extension in loaded extensions list");
@@ -342,7 +346,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
        true
    );
    if (shutdown_slot) {
-        Sink(Value) spare_shutdown = SPARE;
+        Sink(Stable) spare_shutdown = SPARE;
         require (
           Read_Slot(spare_shutdown, shutdown_slot)
         );
@@ -361,7 +365,7 @@ DECLARE_NATIVE(UNLOAD_EXTENSION)
        true
    );
    if (unregister_slot) {
-        Sink(Value) spare_unregister = SPARE;
+        Sink(Stable) spare_unregister = SPARE;
         require (
           Read_Slot(spare_unregister, unregister_slot)
         );

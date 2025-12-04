@@ -200,7 +200,7 @@ Bounce Call_Core(Level* level_) {
     int argc;
     char **argv;
 
-    Value* command = ARG(COMMAND);
+    Stable* command = ARG(COMMAND);
 
     if (Bool_ARG(SHELL)) {
 
@@ -286,14 +286,14 @@ Bounce Call_Core(Level* level_) {
         // up above.)
         //
         if (Is_Text(command)) {
-            Value* parsed = rebValue("parse-command-to-argv*", command);
+            Api(Stable*) parsed = rebStable("parse-command-to-argv*", command);
             Copy_Cell(command, parsed);
             rebRelease(parsed);
         }
         else if (not Is_Block(command))
             panic (PARAM(COMMAND));
 
-        const Value* block = ARG(COMMAND);
+        const Stable* block = ARG(COMMAND);
         argc = Series_Len_At(block);
         assert(argc != 0);  // usermode layer checks this
         argv = rebAllocN(char*, (argc + 1));

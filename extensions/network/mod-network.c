@@ -67,7 +67,7 @@
 #include "tmp-paramlists.h"  // !!! for INCLUDE_PARAMS_OF_OPEN, etc.
 
 #include "reb-net.h"
-extern Value* rebError_UV(int err);
+extern Stable* rebError_UV(int err);
 
 
 #define NET_BUF_SIZE 32*1024
@@ -142,7 +142,7 @@ void halt_poll_timer_callback(uv_timer_t* handle) {
 // After usage:
 //     Close_Socket() - to free OS allocations
 //
-Value* Trap_Open_Socket(const Value* port)
+Stable* Trap_Open_Socket(const Stable* port)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
     assert(sock->stream == nullptr);
@@ -193,11 +193,11 @@ static void Sockreq_Handle_Cleaner(void* p, size_t length) {
 //
 //  Close_Socket: C
 //
-Value* Close_Socket(const Value* port)
+Stable* Close_Socket(const Stable* port)
 {
     SOCKREQ* sock = Sock_Of_Port(port);
 
-    Value* error = nullptr;
+    Stable* error = nullptr;
 
     // Note: R3-Alpha allowed closing closed sockets
     Close_Sock_If_Needed(sock);
@@ -213,7 +213,7 @@ Value* Close_Socket(const Value* port)
 //
 static void on_connect(uv_connect_t *req, int status) {
     Reb_Connect_Request *rebreq = cast(Reb_Connect_Request*, req);
-    const Value* port = Varlist_Archetype(rebreq->port_ctx);
+    const Stable* port = Varlist_Archetype(rebreq->port_ctx);
     SOCKREQ *sock = Sock_Of_Port(port);
 
     if (status < 0) {
@@ -223,7 +223,7 @@ static void on_connect(uv_connect_t *req, int status) {
         sock->stream = req->handle;
 
         Get_Local_IP(sock);
-        rebreq->result = rebSpace();
+        rebreq->result = Known_Stable_Api(rebSpace());
     }
 }
 
@@ -242,11 +242,11 @@ static void on_connect(uv_connect_t *req, int status) {
 //
 // Returns:
 //   nullptr on success
-//   error Value* on failure
-//   timeout Value* if timeout_ms > 0 and connection times out
+//   error Stable* on failure
+//   timeout Stable* if timeout_ms > 0 and connection times out
 //
-static Value* Trap_Connect_Socket_Else_Close(
-    const Value* port,
+static Stable* Trap_Connect_Socket_Else_Close(
+    const Stable* port,
     Option(uint32_t) timeout_ms  // 0 = no timeout
 ){
     SOCKREQ *sock = Sock_Of_Port(port);
@@ -295,7 +295,7 @@ static Value* Trap_Connect_Socket_Else_Close(
         uv_run(uv_default_loop(), UV_RUN_NOWAIT);  // cleanup timer
     }
 
-    Value* result;
+    Stable* result;
     if (rebreq->result != nullptr) {  // on_connect() ran (success or failure)
         result = Is_Space(rebreq->result) ? nullptr : rebreq->result;
         if (result == nullptr)
@@ -326,7 +326,7 @@ static Value* Trap_Connect_Socket_Else_Close(
         sock->stream = nullptr;
         sock->modes = 0;
 
-        result = rebValue("make warning! -[Connection timeout]-");
+        result = rebStable("make warning! -[Connection timeout]-");
     }
 
     rebFree(rebreq);
@@ -364,9 +364,9 @@ static Value* Trap_Connect_Socket_Else_Close(
 //    request a LOOKUP event, and when it had to be waited on.  For now it's
 //    synchronous.
 //
-Value* Trap_Open_And_Connect_Socket_For_Hostname(  // synchronous [1]
-    const Value* port,
-    const Value* hostname
+Stable* Trap_Open_And_Connect_Socket_For_Hostname(  // synchronous [1]
+    const Stable* port,
+    const Stable* hostname
 ){
     SOCKREQ *sock = Sock_Of_Port(port);
 
@@ -438,14 +438,14 @@ Value* Trap_Open_And_Connect_Socket_For_Hostname(  // synchronous [1]
 
         memcpy(&sock->remote_ip, &sa->sin_addr, 4);  // store for QUERY
 
-        Value* open_error = Trap_Open_Socket(port);  // sock for this attempt
+        Stable* open_error = Trap_Open_Socket(port);  // sock for this attempt
         if (open_error) {
             rebRelease(open_error);
             continue;  // try next IP
         }
 
         Option(uint32_t) timeout_ms = 2500;  // 2.5 seconds
-        Value* connect_error = Trap_Connect_Socket_Else_Close(port, timeout_ms);
+        Stable* connect_error = Trap_Connect_Socket_Else_Close(port, timeout_ms);
         if (connect_error == nullptr) {  // success!
             uv_freeaddrinfo(addr_info);
             return nullptr;
@@ -457,7 +457,9 @@ Value* Trap_Open_And_Connect_Socket_For_Hostname(  // synchronous [1]
     uv_freeaddrinfo(addr_info);
 
     // All IPs failed, return a generic connection failure message
-    return rebValue("make warning! -[Connection failed to all IP addresses]-");
+    return Known_Stable(
+        rebValue("make warning! -[Connection failed to all IP addresses]-")
+    );
 }
 
 
@@ -466,7 +468,7 @@ Value* Trap_Open_And_Connect_Socket_For_Hostname(  // synchronous [1]
 //
 void on_new_connection(uv_stream_t *server, int status) {
     VarList* listener_port_ctx = cast(VarList*, server->data);
-    const Value* listening_port = Varlist_Archetype(listener_port_ctx);
+    const Stable* listening_port = Varlist_Archetype(listener_port_ctx);
     SOCKREQ *listening_sock = Sock_Of_Port(listening_port);
     UNUSED(listening_sock);
 
@@ -484,7 +486,7 @@ void on_new_connection(uv_stream_t *server, int status) {
         Slot_Init_Hack(Varlist_Slot(client, STD_PORT_DATA))  // "be sure" (?)
     );
 
-    Value* c_state = Slot_Hack(Varlist_Slot(client, STD_PORT_STATE));
+    Stable* c_state = Slot_Hack(Varlist_Slot(client, STD_PORT_STATE));
     require (
       SOCKREQ* sock = Alloc_On_Heap(SOCKREQ)
     );
@@ -537,7 +539,7 @@ void on_new_connection(uv_stream_t *server, int status) {
 // bind() command to operate on different types, there is a tcp_t vs. udp_t
 // for the socket itself.
 //
-Value* Start_Listening_On_Socket(const Value* port)
+Stable* Start_Listening_On_Socket(const Stable* port)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
     sock->modes |= RST_LISTEN;
@@ -608,7 +610,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
     Reb_Read_Request *rebreq = cast(Reb_Read_Request*, handle->data);
 
     VarList* port_ctx = rebreq->port_ctx;
-    Value* port_data = Slot_Hack(Varlist_Slot(port_ctx, STD_PORT_DATA));
+    Stable* port_data = Slot_Hack(Varlist_Slot(port_ctx, STD_PORT_DATA));
 
     Size bufsize;
     if (rebreq->length == UNLIMITED)  // read maximum amount possible
@@ -675,7 +677,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
     Reb_Read_Request* rebreq = cast(Reb_Read_Request*, stream->data);
     VarList* port_ctx = rebreq->port_ctx;
 
-    Value* port_data = Slot_Hack(Varlist_Slot(port_ctx, STD_PORT_DATA));
+    Stable* port_data = Slot_Hack(Varlist_Slot(port_ctx, STD_PORT_DATA));
 
     if (Is_Nulled(port_data))
         assert(nread <= 0);  // can happen, e.g. "connection reset by peer" [1]
@@ -755,7 +757,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
     uv_read_stop(stream);  // stop on each read, no result to check [4]
     stream->data = nullptr;
 
-    rebreq->result = rebSpace();
+    rebreq->result = Known_Stable_Api(rebSpace());
 }}
 
 
@@ -769,7 +771,7 @@ void on_write_finished(uv_write_t *req, int status)
         rebreq->result = rebError_UV(status);
     }
     else {
-        rebreq->result = rebSpace();
+        rebreq->result = Known_Stable_Api(rebSpace());
     }
 
     // !!! We could more proactively free memory early for the GC here if
@@ -782,7 +784,7 @@ void on_write_finished(uv_write_t *req, int status)
 // Shared code between UDP and TCP handling
 //
 static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
-    Value* port = ARG_N(1);
+    Stable* port = ARG_N(1);
     const Symbol* verb = Level_Verb(LEVEL);
 
     if (transport == TRANSPORT_UDP)  // disabled for now
@@ -791,7 +793,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         );
 
     VarList* ctx = Cell_Varlist(port);
-    Value* spec = Slot_Hack(Varlist_Slot(ctx, STD_PORT_SPEC));
+    Stable* spec = Slot_Hack(Varlist_Slot(ctx, STD_PORT_SPEC));
 
     // If a transfer is in progress, the port_data is a BLOB!.  Its index
     // represents how much of the transfer has finished.  The data starts
@@ -800,11 +802,11 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
     // being written...and text was allowed (even though it might be wide
     // characters, a likely oversight from the addition of unicode).
     //
-    Value* port_data = Slot_Hack(Varlist_Slot(ctx, STD_PORT_DATA));
+    Stable* port_data = Slot_Hack(Varlist_Slot(ctx, STD_PORT_DATA));
     assert(Is_Blob(port_data) or Is_Nulled(port_data));
 
     SOCKREQ *sock;
-    Value* state = Slot_Hack(Varlist_Slot(ctx, STD_PORT_STATE));
+    Stable* state = Slot_Hack(Varlist_Slot(ctx, STD_PORT_STATE));
     if (Is_Handle(state)) {
         sock = Sock_Of_Port(port);
         assert(sock->transport == transport);
@@ -837,8 +839,8 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
             return Init_False(OUT);
 
           case SYM_OPEN: {
-            Value* arg = Slot_Hack(Obj_Slot(spec, STD_PORT_SPEC_NET_HOST));
-            Value* port_id = Slot_Hack(
+            Stable* arg = Slot_Hack(Obj_Slot(spec, STD_PORT_SPEC_NET_HOST));
+            Stable* port_id = Slot_Hack(
                 Obj_Slot(spec, STD_PORT_SPEC_NET_PORT_ID)
             );
 
@@ -847,7 +849,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
             // what the port ID of originating messages is.  So local_port
             // must be set before the OS_Do_Device() call.
             //
-            Value* local_id = Slot_Hack(
+            Stable* local_id = Slot_Hack(
                 Obj_Slot(spec, STD_PORT_SPEC_NET_LOCAL_ID)
             );
             if (Is_Nulled(local_id))
@@ -864,11 +866,11 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
                 sock->local_port_number =
                     Is_Integer(port_id) ? VAL_INT32(port_id) : 8000;
 
-                Value* open_error = Trap_Open_Socket(port);
+                Stable* open_error = Trap_Open_Socket(port);
                 if (open_error)
                     panic (open_error);
 
-                Value* listen_error = Start_Listening_On_Socket(port);
+                Stable* listen_error = Start_Listening_On_Socket(port);
                 if (listen_error)
                     panic (listen_error);
 
@@ -885,7 +887,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
                     Is_Integer(port_id) ? VAL_INT32(port_id) : 80;
 
                 // Combined DNS lookup + connect with retry across multiple IPs
-                Value* connect_error = Trap_Open_And_Connect_Socket_For_Hostname(
+                Stable* connect_error = Trap_Open_And_Connect_Socket_For_Hostname(
                     port, arg
                 );
                 if (connect_error)
@@ -898,14 +900,14 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
                 Get_Tuple_Bytes(&sock->remote_ip, arg, 4);
 
                 // For direct IP, still need to open socket and connect
-                Value* open_error = Trap_Open_Socket(port);
+                Stable* open_error = Trap_Open_Socket(port);
                 if (open_error)
                     panic (open_error);
 
                 // UDP is connectionless so it will not add to the connectors.
                 if (sock->transport != TRANSPORT_UDP) {
                     Option(uint32_t) timeout_ms = 0;  // no timeout
-                    Value* errval = Trap_Connect_Socket_Else_Close(port, timeout_ms);
+                    Stable* errval = Trap_Connect_Socket_Else_Close(port, timeout_ms);
                     if (errval != nullptr)
                         panic (errval);
                 }
@@ -1015,7 +1017,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         // that point (always UTF-8 bytes)...but the port model needs a top
         // to bottom review of what types are accepted where and why.
         //
-        Value* data = ARG(DATA);
+        Stable* data = ARG(DATA);
 
         // When we get the callback we'll get the libuv req pointer, which is
         // the same pointer as the rebreq (first struct member).
@@ -1042,7 +1044,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         // !!! If you FREEZE the data then a copy is not necessary, review
         // this as an angle on efficiency.
         //
-        rebreq->binary = rebValue(
+        rebreq->binary = rebStable(
             "as blob! copy:part", data, rebQ(ARG(PART))
         );
         rebUnmanage(rebreq->binary);  // otherwise would be seen as a leak
@@ -1071,7 +1073,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         // !!! There are bigger plans for a QUERY dialect (like PARSE).  This
         // old behavior of getting the IP addresses is for legacy only.
 
-        Value* result = rebValue(
+        Stable* result = rebStable(
             "copy ensure object! (@", port, ").scheme.info"
         );  // shallow copy
 
@@ -1103,7 +1105,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 
       case SYM_CLOSE: {
         if (sock->stream) {  // allows close of closed socket (?)
-            Value* errval = Close_Socket(port);
+            Stable* errval = Close_Socket(port);
             if (errval)
                 panic (errval);
         }
@@ -1259,7 +1261,7 @@ DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
     INCLUDE_PARAMS_OF_WAIT_P;
 
     REBLEN timeout = 0;  // in milliseconds
-    Value* ports = nullptr;
+    Stable* ports = nullptr;
 
     Option(const Element*) val;
     if (not Is_Block(ARG(VALUE)))

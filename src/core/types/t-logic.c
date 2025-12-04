@@ -39,12 +39,12 @@ DECLARE_NATIVE(NULL_Q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
-    const Atom* atom = Intrinsic_Atom_ARG(LEVEL);
+    const Value* atom = Intrinsic_Atom_ARG(LEVEL);
 
     if (not Is_Pack(atom))
         return LOGIC(Is_Light_Null(atom));
 
-    DECLARE_ATOM (decayed);
+    DECLARE_VALUE (decayed);
     Copy_Cell(decayed, atom);
     trap (
         Decay_If_Unstable(decayed)
@@ -72,7 +72,7 @@ DECLARE_NATIVE(OKAY_Q)
 {
     INCLUDE_PARAMS_OF_OKAY_Q;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
     require (
       Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
@@ -96,7 +96,7 @@ DECLARE_NATIVE(LOGIC_Q)
 {
     INCLUDE_PARAMS_OF_LOGIC_Q;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
     require (
       Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
@@ -445,7 +445,7 @@ DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_NOT_1;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
     require (
       Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
@@ -472,7 +472,7 @@ DECLARE_NATIVE(TO_LOGIC)
 {
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
-    DECLARE_VALUE (v);
+    DECLARE_STABLE (v);
     require (
       Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
     );
@@ -501,7 +501,7 @@ INLINE Result(bool) Eval_Logic_Op_Right_Side(Level* level_)
     USED(ARG(LEFT));  // caller examines
     Element* right = Element_ARG(RIGHT);
 
-    Value* synthesized;
+    Stable* synthesized;
     if (Is_Group(right)) {
         if (Eval_Any_List_At_Throws(SPARE, right, SPECIFIED))
             panic (Error_No_Catch_For_Throw(level_));
@@ -514,7 +514,7 @@ INLINE Result(bool) Eval_Logic_Op_Right_Side(Level* level_)
         assert(Is_Word(right) or Is_Tuple(right));
 
         require (
-          Value* spare = Get_Var(SPARE, NO_STEPS, right, SPECIFIED)
+          Stable* spare = Get_Var(SPARE, NO_STEPS, right, SPECIFIED)
         );
         if (Is_Action(spare))
             panic (
@@ -638,8 +638,8 @@ DECLARE_NATIVE(UNLESS)
 {
     INCLUDE_PARAMS_OF_UNLESS;
 
-    Value* left = ARG(LEFT);
-    Atom* right = Atom_ARG(RIGHT);
+    Stable* left = ARG(LEFT);
+    Value* right = Atom_ARG(RIGHT);
 
     if (Is_Ghost(right))
         panic ("UNLESS can't be used with GHOST! antiform");

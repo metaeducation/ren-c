@@ -59,7 +59,7 @@ enum {
 //    frame and drop it, when in reality we're changing the executor and
 //    everything.  This is clearly voodoo but maybe it can be formalized.
 //
-Level* Push_Downshifted_Level(Atom* out, Level* L) {
+Level* Push_Downshifted_Level(Value* out, Level* L) {
     assert(L->executor == &Action_Executor);
 
     Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH;
@@ -228,7 +228,7 @@ Bounce Cascader_Executor(Level* const L)
 //  Cascader_Details_Querier: C
 //
 bool Cascader_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -284,7 +284,7 @@ DECLARE_NATIVE(CASCADE_P)  // see extended CASCADE in %base-defs.r
     const Element* check = first;
     for (; check != tail; ++check) {  // validate pipeline is all FRAME! [1]
         if (not Is_Frame(check)) {
-            DECLARE_ATOM (specific);
+            DECLARE_VALUE (specific);
             Derelativize(specific, check, List_Binding(pipeline));
             panic (specific);
         }

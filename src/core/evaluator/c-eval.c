@@ -78,7 +78,7 @@
 #include "sys-core.h"
 
 
-#define PRIMED  cast(Atom*, &L->u.eval.primed)
+#define PRIMED  cast(Value*, &L->u.eval.primed)
 
 
 static bool Using_Sublevel_For_Stepping(Level* L) {  // see [A]
@@ -210,7 +210,7 @@ Bounce Evaluator_Executor(Level* const L)
     if (Is_Ghost(OUT)) // ELIDE, COMMENT, ~,~ or ^GHOST-VAR etc. [1]
         goto start_new_step;  // leave previous result as-is in PRIMED
 
-    Move_Atom(PRIMED, OUT);  // make current result the preserved one
+    Move_Value(PRIMED, OUT);  // make current result the preserved one
 
     if (Using_Sublevel_For_Stepping(L)) {  // always unafraid now, see [B]
         possibly(Get_Level_Flag(SUBLEVEL, AFRAID_OF_GHOSTS));
@@ -235,7 +235,7 @@ Bounce Evaluator_Executor(Level* const L)
     if (Using_Sublevel_For_Stepping(L))
         Drop_Level(SUBLEVEL);
 
-    Move_Atom(OUT, PRIMED);
+    Move_Value(OUT, PRIMED);
     return OUT;
 }}
 

@@ -36,7 +36,7 @@
 
 
 #define Stable_Unchecked(atom) \
-    m_cast(Value*, ensure(Atom*, (atom)))
+    m_cast(Stable*, ensure(Value*, (atom)))
 
 
 //=//// EXTANT STACK POINTERS /////////////////////////////////////////////=//
@@ -45,9 +45,9 @@
 //
 // Even with this definition, the intersecting needs of DEBUG_CHECK_CASTS and
 // DEBUG_EXTANT_STACK_POINTERS means there will be some cases where distinct
-// overloads of Value* vs. Element* vs Cell* will wind up being ambiguous.
-// For instance, VAL_DECIMAL(OnStack(Value*)) can't tell which checked overload
-// to use.  Then you have to cast, e.g. VAL_DECIMAL(cast(Value*, stackval)).
+// overloads of Stable* vs. Element* vs Cell* will wind up being ambiguous.
+// For instance, VAL_DECIMAL(OnStack(Stable*)) can't tell which checked overload
+// to use.  Then you have to cast, e.g. VAL_DECIMAL(cast(Stable*, stackval)).
 //
 #if (! DEBUG_EXTANT_STACK_POINTERS)
     #define OnStack(TP) TP

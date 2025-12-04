@@ -222,10 +222,10 @@ INLINE Option(LineNumber) Line_Number_Of_Level(Level* L) {
     ((L)->varlist->content.dynamic.used - 1)  // minus rootvar
 
 #define Level_Spare(L) \
-    u_cast(Atom*, &(L)->spare)
+    u_cast(Value*, &(L)->spare)
 
 #define Level_Scratch(L) \
-    u_cast(Atom*, &(L->scratch))
+    u_cast(Value*, &(L->scratch))
 
 INLINE Element* Evaluator_Level_Current(Level* L) {
     assert(L->executor == &Stepper_Executor);
@@ -321,17 +321,17 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 // 1-based indexing into the arglist (0 slot is for FRAME! value)
 
 #define Level_Args_Head(L) \
-    (u_cast(Atom*, (L)->rootvar) + 1)
+    (u_cast(Value*, (L)->rootvar) + 1)
 
 #if NO_RUNTIME_CHECKS
     #define Level_Arg(L,n) \
-        (u_cast(Atom*, (L)->rootvar) + (n))
+        (u_cast(Value*, (L)->rootvar) + (n))
 #else
-    INLINE Atom* Level_Arg(Level* L, REBLEN n) {
+    INLINE Value* Level_Arg(Level* L, REBLEN n) {
         assert(n != 0 and n <= Level_Num_Args(L));
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
-        possibly(Is_Endlike_Unset(u_cast(Atom*, L->rootvar) + n));
-        return u_cast(Atom*, L->rootvar) + n;  // 1-indexed
+        possibly(Is_Endlike_Unset(u_cast(Value*, L->rootvar) + n));
+        return u_cast(Value*, L->rootvar) + n;  // 1-indexed
     }
 #endif
 
@@ -456,12 +456,12 @@ INLINE void Free_Level_Internal(Level* L) {
     Raw_Pooled_Free(LEVEL_POOL, L);
 }
 
-// 1. Push_Level() takes an Atom* for the output.  It is a Need() and not a
+// 1. Push_Level() takes an Value* for the output.  It is a Need() and not a
 //    Sink() because we may not want to corrupt the cell we are given (e.g.
 //    if we're pushing a level to do infix processing on an already calculated
 //    result).
 //
-//    Taking an Atom* is important, as we don't want to evaluate into variables
+//    Taking an Value* is important, as we don't want to evaluate into variables
 //    or array slots.  Not only can they have their memory moved during an
 //    evaluation, but we don't want unstable antiforms being put into variables
 //    (or any antiforms being put in array cells).
@@ -488,7 +488,7 @@ INLINE void Free_Level_Internal(Level* L) {
 //    interruptibility is not.
 //
 INLINE void Push_Level_Dont_Inherit_Interruptibility(
-    Need(Atom*) out,  // prohibits passing Element or Value as output [1]
+    Need(Value*) out,  // prohibits passing Element or Value as output [1]
     Level* L
 ){
     assert(not TOP_LEVEL or Not_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC));
@@ -499,7 +499,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
         assert(
             Is_Cell_Erased(L->out)
             or Not_Cell_Readable(L->out)
-            or not Is_Atom_Api_Value(L->out)
+            or not Is_Api_Value(L->out)
         );
   #endif
 
@@ -526,7 +526,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
 }
 
 INLINE void Push_Level_Erase_Out_If_State_0(  // inherits uninterruptibility [4]
-    Need(Atom*) out,  // prohibits passing `unstable` Cell* for output [1]
+    Need(Value*) out,  // prohibits passing `unstable` Cell* for output [1]
     Level* L
 ){
     Push_Level_Dont_Inherit_Interruptibility(out, L);
@@ -702,7 +702,7 @@ INLINE Result(Level*) Prep_Level_Core(
 
 INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 {
-    Value* arg = Known_Stable(Level_Arg(L, n));
+    Stable* arg = Known_Stable(Level_Arg(L, n));
     if (Is_Nulled(arg))
         return nullptr;
     return Known_Element(arg);
@@ -758,7 +758,7 @@ INLINE Bounce Native_Thrown_Result(Level* L) {
 // whether they are `return: []` or not, based on where they keep the return
 // information.  So they can't use the `return TRASH;` idiom.
 //
-INLINE Value* Init_Trash_Named_From_Level(Sink(Value) out, Level* level_) {
+INLINE Stable* Init_Trash_Named_From_Level(Sink(Stable) out, Level* level_) {
     Option(const Symbol*) label = Level_Label(level_);
     if (label) {
         Init_Utf8_Non_String_From_Strand(out, TYPE_RUNE, label);
@@ -779,14 +779,14 @@ INLINE Value* Init_Trash_Named_From_Level(Sink(Value) out, Level* level_) {
 //    contents of the trash, so we don't want natives using `return TRASH;`
 //    to have the behavior on accident.
 //
-INLINE Atom* Native_Trash_Result_Untracked(
+INLINE Value* Native_Trash_Result_Untracked(
     Level* level_
 ){
     assert(not THROWING);
 
   #if RUNTIME_CHECKS
     Details* details = Ensure_Level_Details(level_);
-    Value* param = Details_At(details, IDX_RAW_NATIVE_RETURN);
+    Stable* param = Details_At(details, IDX_RAW_NATIVE_RETURN);
     assert(Is_Parameter_Spec_Empty(param));  // not for `return: [trash!]` [1]
   #endif
 
@@ -797,7 +797,7 @@ INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
     assert(not THROWING);
     Copy_Cell(level_->out, v);
     require (
-      Atom* atom = Unliftify_Undecayed(level_->out)
+      Value* atom = Unliftify_Undecayed(level_->out)
     );
     return atom;
 }
@@ -812,19 +812,19 @@ INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
 // arbitrary local variable, which would be dead after the return.
 //
 INLINE Bounce Native_Copy_Result_Untracked(
-    Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
+    Value* out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_,
-    const Atom* v
+    const Value* v
 ){
     assert(out == level_->out);
     UNUSED(out);
     assert(v != level_->out);   // Copy_Cell() would fail; don't tolerate
-    assert(not Is_Atom_Api_Value(v));  // too easy to not release()
+    assert(not Is_Api_Value(v));  // too easy to not release()
     Copy_Cell_Untracked(level_->out, v, CELL_MASK_COPY);
     return level_->out;
 }
 
-INLINE Bounce Native_Branched_Result(Level* level_, Atom* atom) {
+INLINE Bounce Native_Branched_Result(Level* level_, Value* atom) {
     assert(atom == level_->out);  // wouldn't be zero cost if we supported copy
     if (Is_Light_Null(atom))
         Init_Heavy_Null(atom);  // box up for THEN reactivity [2]
@@ -861,7 +861,7 @@ INLINE Bounce Native_Branched_Result(Level* level_, Atom* atom) {
 // So instead, TRASH is produced for VOID if the body ever ran.  This can be
 // worked around with meta-result protocols if it's truly needed.
 //
-INLINE Bounce Native_Looped_Result(Level* level_, Atom* atom) {
+INLINE Bounce Native_Looped_Result(Level* level_, Value* atom) {
     assert(atom == level_->out);  // wouldn't be zero cost if we supported copy
     if (Is_Light_Null(atom))
         Init_Heavy_Null_Untracked(atom);  // distinguish from null for BREAK
@@ -1000,7 +1000,7 @@ INLINE void Disable_Dispatcher_Catching_Of_Throws(Level* L)
 //
 INLINE void Inject_Definitional_Returner(
     Level* L,
-    const Value* definitional,  // LIB(DEFINITIONAL_RETURN), or YIELD
+    const Stable* definitional,  // LIB(DEFINITIONAL_RETURN), or YIELD
     SymId id  // SYM_YIELD, SYM_RETURN
 ){
     Details* details = Ensure_Level_Details(L);
@@ -1010,7 +1010,7 @@ INLINE void Inject_Definitional_Returner(
     assert(Key_Id(Varlist_Key(L->varlist, slot_num)) == id);
     assert(Is_Base_Managed(L->varlist));
 
-    Atom* returner = Level_Arg(L, slot_num);  // should start out specialized
+    Value* returner = Level_Arg(L, slot_num);  // should start out specialized
     Assert_Quotified_Parameter(returner);
 
     Init_Action(
@@ -1034,7 +1034,7 @@ INLINE void Inject_Methodization_If_Any(Level* L)
 
     assert(Key_Id(Phase_Keys_Head(L->varlist)) == SYM_DOT_1);
 
-    Atom* methodization = Level_Args_Head(L);
+    Value* methodization = Level_Args_Head(L);
 
     Context* coupling = opt Level_Coupling(L);
 

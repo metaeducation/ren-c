@@ -156,7 +156,7 @@ Bounce Inliner_Dispatcher(Level* const L)
         goto continue_evaluating;  // MACRO never returns directly [1]
 
     require (
-      Value* out = Decay_If_Unstable(OUT)
+      Stable* out = Decay_If_Unstable(OUT)
     );
     if (Is_Splice(out)) {
         LIFT_BYTE(out) = NOQUOTE_2;
@@ -186,7 +186,7 @@ Bounce Inliner_Dispatcher(Level* const L)
 //  Inliner_Details_Querier: C
 //
 bool Inliner_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -196,7 +196,7 @@ bool Inliner_Details_Querier(
 
     switch (property) {
       case SYM_RETURN_OF: {
-        Value* arbitrary = rebValue("return of @", LIB(RANDOMIZE));
+        Api(Stable*) arbitrary = rebStable("return of @", LIB(RANDOMIZE));
         Copy_Cell(out, arbitrary);
         rebRelease(arbitrary);
         return true; }

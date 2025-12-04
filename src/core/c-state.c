@@ -109,8 +109,8 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 #define DATASTACK_FLAG_HAS_SPARE            STUB_SUBCLASS_FLAG_26
 #define DATASTACK_FLAG_HAS_SCRATCH          STUB_SUBCLASS_FLAG_27
 
-#define SPARE_PROXY     m_cast(Atom*, LIB(SPACE))
-#define SCRATCH_PROXY   m_cast(Atom*, LIB(NULL))
+#define SPARE_PROXY     m_cast(Value*, LIB(SPACE))
+#define SCRATCH_PROXY   m_cast(Value*, LIB(NULL))
 
 #define PLUG_SUSPENDED_LEVEL(plug)   (plug)->link.p
 
@@ -125,7 +125,7 @@ INLINE void Tweak_Plug_Suspended_Level(Array* plug, Level* L)
 // actually not super uncommon for them not to need state...so there's a
 // compressed form that just holds the Level directly.
 //
-static Level* Level_Of_Plug(const Value* plug) {
+static Level* Level_Of_Plug(const Stable* plug) {
     if (Handle_Holds_Base(plug)) {
         const Array* a = cast(Array*, Cell_Handle_Base(plug));
         assert(Stub_Flavor(a) == FLAVOR_DATASTACK);
@@ -184,7 +184,7 @@ static void Plug_Handle_Cleaner(void* p, size_t length) {
 // cell managed by the caller.  This is referred to as a "plug".
 //
 void Unplug_Stack(
-    Value* plug,  // cell where global state differentials can be stored
+    Stable* plug,  // cell where global state differentials can be stored
     Level* base,  // base level to unplug relative to
     Level* L  // level to unplug (currently can only unplug topmost level)
 ){
@@ -326,7 +326,7 @@ void Unplug_Stack(
 //    of that sublevel to match the output of the current level (see assert in
 //    Unplug_Stack() proving sublevel had same L->out).
 //
-void Replug_Stack(Level* base, Value* plug) {
+void Replug_Stack(Level* base, Stable* plug) {
     assert(base == TOP_LEVEL);  // currently can only plug atop topmost frame
 
     Level* L = Level_Of_Plug(plug);
@@ -359,7 +359,7 @@ void Replug_Stack(Level* base, Value* plug) {
     Array* array = m_cast(Array*, u_cast(Array*, Cell_Handle_Base(plug)));
     assert(Stub_Flavor(array) == FLAVOR_DATASTACK);
 
-    Value* item = Flex_Tail(Value, array);
+    Stable* item = Flex_Tail(Stable, array);
 
     if (Get_Flavor_Flag(DATASTACK, array, HAS_MOLD)) {  // restore mold
         --item;
@@ -397,7 +397,7 @@ void Replug_Stack(Level* base, Value* plug) {
         Erase_Cell(&base->spare);
 
     if (Get_Flavor_Flag(DATASTACK, array, HAS_PUSHED_CELLS)) {
-        Value* stacked = Flex_Head(Value, array);
+        Stable* stacked = Flex_Head(Stable, array);
         for (; stacked != item; ++stacked)
             Move_Cell(PUSH(), stacked);
     }

@@ -198,10 +198,10 @@ INLINE Array* Details_Array(Details* details) {
 // array, you must know it is dynamic.  So we can take advantage of that for
 // better performance.
 //
-INLINE Value* Details_At(Details* details, Index idx) {
+INLINE Stable* Details_At(Details* details, Index idx) {
     Array* a = Details_Array(details);
     assert(idx != 0 and idx < Array_Len(a));
-    return Flex_Head_Dynamic(Value, a) + idx;
+    return Flex_Head_Dynamic(Stable, a) + idx;
 }
 
 #define Details_Element_At(details,idx) \

@@ -79,7 +79,7 @@ enum {
 Bounce Combinator_Dispatcher(Level* L)
 {
     Details* details = Ensure_Level_Details(L);
-    Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
+    Stable* body = Details_At(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;
     if (Is_Frame(body)) {  // NATIVE-COMBINATOR
@@ -98,7 +98,7 @@ Bounce Combinator_Dispatcher(Level* L)
     if (b == BOUNCE_THROWN)
         return b;
 
-    Atom* r = Atom_From_Bounce(b);
+    Value* r = Value_From_Bounce(b);
 
     if (r == nullptr or Is_Light_Null(r))
         return r;  // did not advance, don't update furthest
@@ -114,7 +114,7 @@ Bounce Combinator_Dispatcher(Level* L)
 //  Combinator_Details_Querier: C
 //
 bool Combinator_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -123,7 +123,7 @@ bool Combinator_Details_Querier(
 
     switch (property) {
       case SYM_RETURN_OF: {
-        Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
+        Stable* body = Details_At(details, IDX_DETAILS_1);  // code to run
         assert(Is_Frame(body));  // takes 1 arg (a FRAME!)
 
         Details* body_details = Phase_Details(Frame_Phase(body));
@@ -261,7 +261,7 @@ DECLARE_NATIVE(COMBINATOR)
 //
 // This service routine does a faster version of something like:
 //
-//     Value* result = rebValue("apply", rebQ(ARG(PARSER)), "[",
+//     Api(Stable*) result = rebStable("apply", rebQ(ARG(PARSER)), "[",
 //         ":input", rebQ(ARG(INPUT)),  // quote avoids becoming const
 //         ":remainder @", ARG(REMAINDER),
 //     "]");
@@ -271,10 +271,10 @@ DECLARE_NATIVE(COMBINATOR)
 // in the right order in the frame.
 //
 void Push_Parser_Sublevel(
-    Atom* out,
-    const Value* remainder,
-    const Value* parser,
-    const Value* input
+    Value* out,
+    const Stable* remainder,
+    const Stable* parser,
+    const Stable* input
 ){
     assert(Any_Series(input));
     assert(Is_Frame(parser));
@@ -330,10 +330,10 @@ DECLARE_NATIVE(OPT_COMBINATOR)
 {
     INCLUDE_PARAMS_OF_OPT_COMBINATOR;
 
-    Value* remainder = ARG(REMAINDER);  // output (combinator implicit)
+    Stable* remainder = ARG(REMAINDER);  // output (combinator implicit)
 
-    Value* input = ARG(INPUT);  // combinator implicit
-    Value* parser = ARG(PARSER);
+    Stable* input = ARG(INPUT);  // combinator implicit
+    Stable* parser = ARG(PARSER);
     UNUSED(ARG(STATE));  // combinator implicit
 
     enum {
@@ -449,11 +449,11 @@ DECLARE_NATIVE(SOME_COMBINATOR)
 {
     INCLUDE_PARAMS_OF_SOME_COMBINATOR;
 
-    Value* remainder = ARG(REMAINDER);
-    Value* parser = ARG(PARSER);
-    Value* input = ARG(INPUT);
+    Stable* remainder = ARG(REMAINDER);
+    Stable* parser = ARG(PARSER);
+    Stable* input = ARG(INPUT);
 
-    Value* state = ARG(STATE);
+    Stable* state = ARG(STATE);
     Source* loops = Cell_Array_Ensure_Mutable(
         Slot_Hack(Varlist_Slot(Cell_Varlist(state), IDX_UPARSE_PARAM_LOOPS))
     );
@@ -517,7 +517,7 @@ DECLARE_NATIVE(SOME_COMBINATOR)
         return OUT;  // return previous successful parser result
     }
 
-    Move_Atom(OUT, SPARE);  // update last successful result
+    Move_Value(OUT, SPARE);  // update last successful result
     goto call_parser_again;
 }}
 
@@ -536,9 +536,9 @@ DECLARE_NATIVE(FURTHER_COMBINATOR)
 {
     INCLUDE_PARAMS_OF_FURTHER_COMBINATOR;
 
-    Value* remainder = ARG(REMAINDER);
-    Value* input = ARG(INPUT);
-    Value* parser = ARG(PARSER);
+    Stable* remainder = ARG(REMAINDER);
+    Stable* input = ARG(INPUT);
+    Stable* parser = ARG(PARSER);
     UNUSED(ARG(STATE));
 
     enum {
@@ -580,7 +580,7 @@ DECLARE_NATIVE(FURTHER_COMBINATOR)
 struct CombinatorParamStateStruct {
     VarList* ctx;
     Level* level_;
-    Value* rule_end;
+    Stable* rule_end;
 };
 typedef struct CombinatorParamStateStruct CombinatorParamState;
 
@@ -617,7 +617,7 @@ static bool Combinator_Param_Hook(
         return true;  // keep iterating the parameters.
     }
 
-    Value* var = Slot_Hack(Varlist_Slots_Head(s->ctx) + offset);
+    Stable* var = Slot_Hack(Varlist_Slots_Head(s->ctx) + offset);
 
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
         Copy_Cell(var, ARG(STATE));
@@ -663,7 +663,7 @@ static bool Combinator_Param_Hook(
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
                 panic ("Too few parameters for combinator");  // !!! Error_No_Arg
-            Init_Unset_Due_To_End(u_cast(Atom*, var));
+            Init_Unset_Due_To_End(u_cast(Value*, var));
         }
         else {
             if (Parameter_Class(param) == PARAMCLASS_THE)
@@ -688,7 +688,7 @@ static bool Combinator_Param_Hook(
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
                 panic ("Too few parameters for combinator");  // !!! Error_No_Arg
-            Init_Unset_Due_To_End(u_cast(Atom*, var));
+            Init_Unset_Due_To_End(u_cast(Value*, var));
         }
         else {
             // !!! Getting more than one value back from a libRebol API is not
@@ -696,10 +696,10 @@ static bool Combinator_Param_Hook(
             // write to native frame variables, so hack in a temporary here.
             // (could be done much more efficiently another way!)
 
-            if (rebRunThrows(u_cast(Sink(Value), SPARE), "let temp"))
+            if (rebRunThrows(u_cast(Sink(Stable), SPARE), "let temp"))
                 assert(!"LET failed");
             Element* temp = cast(Element*, SPARE);
-            Value* parser = rebValue(
+            Api(Stable*) parser = rebStable(
                 "[_", temp, "]: parsify", rebQ(ARG(STATE)), ARG(RULES)
             );
             require (
@@ -758,13 +758,13 @@ DECLARE_NATIVE(COMBINATORIZE)
 {
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
-    Value* combinator = ARG(COMBINATOR);
+    Stable* combinator = ARG(COMBINATOR);
 
     Phase* phase = Frame_Phase(combinator);
     Option(const Symbol*) label = Frame_Label_Deep(combinator);
     Option(VarList*) coupling = Frame_Coupling(combinator);
 
-    Value* rule_start = Copy_Cell(LOCAL(RULE_START), ARG(RULES));
+    Stable* rule_start = Copy_Cell(LOCAL(RULE_START), ARG(RULES));
     if (Series_Index(rule_start) > 0)
         SERIES_INDEX_UNBOUNDED(rule_start) -= 1;
 

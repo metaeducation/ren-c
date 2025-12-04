@@ -127,7 +127,7 @@ bool Try_Match_For_Compose(
 //    so long as it is passed in the `main_level` member.
 //
 static void Push_Composer_Level(
-    Atom* out,
+    Value* out,
     Level* main_level,
     const Element* list_or_seq,  // may be quasi or quoted
     Context* context
@@ -193,12 +193,12 @@ static void Push_Composer_Level(
 //        >> compose:deep [a ''~[(1 + 2)]~ b]
 //        == [a ''~[3]~ b]
 //
-static Result(Value*) Finalize_Composer_Level(
+static Result(Stable*) Finalize_Composer_Level(
     Level* L,
     const Element* composee,  // special handling if the output is a sequence
     bool conflate
 ){
-    Value* out = Known_Stable(L->out);
+    Stable* out = Known_Stable(L->out);
 
     if (Is_Nulled(out)) {  // a composed slot evaluated to VETO error antiform
         Drop_Data_Stack_To(L->baseline.stack_base);
@@ -270,7 +270,7 @@ Bounce Composer_Executor(Level* const L)
     bool deep;
     Element* pattern;
     bool conflate;
-    Value* predicate;
+    Stable* predicate;
 
   extract_arguments_from_original_compose_call: {
 
@@ -392,7 +392,7 @@ Bounce Composer_Executor(Level* const L)
     }
 
     require (
-      Value* out = Decay_If_Unstable(OUT)
+      Stable* out = Decay_If_Unstable(OUT)
     );
 
     if (Is_Antiform(out)) {
@@ -542,7 +542,7 @@ Bounce Composer_Executor(Level* const L)
     }
 
     Option(Error*) e;
-    Value* out = Finalize_Composer_Level(
+    Stable* out = Finalize_Composer_Level(
         SUBLEVEL, At_Level(L), conflate
     ) except (e) {
         // need to drop level before panic
@@ -958,7 +958,7 @@ DECLARE_NATIVE(COMPOSE2)
         panic (Cell_Error(OUT));
     }
 
-    const Value* result;
+    const Stable* result;
     if (Is_Void(OUT))
         result = LIB(BLANK);  // void is translated to blank splice
     else {
@@ -969,7 +969,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     StackIndex triples = VAL_INT32(Known_Element(SCRATCH));
     assert(Is_Block(Data_Stack_At(Element, triples + 1)));  // evaluated code
-    Copy_Cell(Data_Stack_At(Value, triples + 1), result);  // replace w/eval
+    Copy_Cell(Data_Stack_At(Stable, triples + 1), result);  // replace w/eval
 
     triples += 3;  // skip to next set of 3
     if (triples <= TOP_INDEX) {
@@ -995,7 +995,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     for (; triples < TOP_INDEX; triples += 3) {
         Offset start_offset = VAL_INT32(Data_Stack_At(Element, triples));
-        Value* eval = Data_Stack_At(Value, triples + 1);
+        Stable* eval = Data_Stack_At(Stable, triples + 1);
         Offset end_offset = VAL_INT32(Data_Stack_At(Element, triples + 2));
 
         Append_UTF8_May_Panic(

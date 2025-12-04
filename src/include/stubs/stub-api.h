@@ -1,6 +1,6 @@
 //
 //  file: %stub-api.h
-//  summary: "Definitions for allocating Value* API handles"
+//  summary: "Definitions for allocating Stable* API handles"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
@@ -72,15 +72,6 @@ INLINE bool Is_Api_Value(const Value* v) {
     return Is_Base_Root_Bit_Set(v);
 }
 
-INLINE bool Is_Atom_Api_Value(const Atom* atom) {
-    Assert_Cell_Readable(atom);
-    if (Is_Base_Root_Bit_Set(atom)) {
-        assert(Is_Cell_Stable(atom));
-        return true;
-    }
-    return false;
-}
-
 // 1. The head of the list isn't null, but points at the level, so that
 //    API freeing operations can update the head of the list in the level
 //    when given only the base pointer.
@@ -131,6 +122,15 @@ INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
 }
 
 
+INLINE Api(Stable*) Known_Stable_Api(Api(Value*) v) {
+    if (v == nullptr)
+        return nullptr;
+    return Known_Stable(v);
+}
+
+#define rebStable(...)  Known_Stable_Api(rebValue(__VA_ARGS__))
+
+
 // 1. We are introducing the containing base for this cell to the GC and can't
 //    leave it uninitialized.  e.g. if `Do_Eval_Into(Alloc_Value(), ...)`
 //    is used, there might be a recycle during the evaluation that sees it.
@@ -140,7 +140,7 @@ INLINE void Disconnect_Api_Handle_From_Level(Stub* stub)
 //    be responsible for marking the base live, freeing the base in case
 //    of a panic() that interrupts the level, and reporting any leaks.
 //
-// 3. Giving the cell itself BASE_FLAG_ROOT lets a Value* be discerned as
+// 3. Giving the cell itself BASE_FLAG_ROOT lets a Stable* be discerned as
 //    either a "public" API handle or not.  We don't want evaluation targets
 //    to have this flag, because it's legal for the Level's ->out cell to be
 //    erased--not legal for API values.  So if an evaluation is done into an
@@ -194,12 +194,8 @@ INLINE void Free_Value(Value* v)
 // so the dispatcher can write things like `return rebValue(...);` and not
 // encounter a leak.
 //
-// !!! There is no protocol in place yet for the external API to throw,
-// so that is something to think about.  At the moment, only L->out can
-// hold thrown returns, and these API handles are elsewhere.
-//
-INLINE void Release_Api_Value_If_Unmanaged(const Value* r) {
-    assert(Is_Base_Root_Bit_Set(r));
-    if (Not_Base_Managed(r))
-        rebRelease(r);
+INLINE void Release_Api_Value_If_Unmanaged(const Value* v) {
+    assert(Is_Base_Root_Bit_Set(v));
+    if (Not_Base_Managed(v))
+        rebRelease(v);
 }

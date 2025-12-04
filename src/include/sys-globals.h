@@ -65,7 +65,7 @@ PVAR Codepoint* g_lower_cases;
 // `tripwire` (they'd get an error on trash access)...so it's a function.
 //
 
-PVAR Value PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
+PVAR Stable PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
 
 // These are special return values that can be checked easily by pointer.  They
 // are turned into a `Bounce` (which is a `Base*` at time of writing).
@@ -116,12 +116,12 @@ PVAR Element* g_empty_blob; // read-only #{}
 PVAR Element* g_empty_block; // read-only []
 PVAR Element* g_empty_object;
 PVAR Element* g_quasi_null;  // ~null~ quasiform
-PVAR Value* g_tripwire;  // ~ antiform (LIB(TRIPWIRE) is a function)
+PVAR Stable* g_tripwire;  // ~ antiform (LIB(TRIPWIRE) is a function)
 PVAR Source* g_empty_array; // optimization of Cell_Array(g_empty_block)
 PVAR VarList* g_empty_varlist;
 PVAR Source* g_1_quasi_null_array;  // used by heavy nulls ~[~null~]~
 
-PVAR Value* g_lifted_heavy_null;  // keeps g_1_quasi_null_array alive
+PVAR Stable* g_lifted_heavy_null;  // keeps g_1_quasi_null_array alive
 
 PVAR Element* Root_Feed_Null_Substitute;  // flagged with FEED_NOTE_META
 
@@ -129,18 +129,18 @@ PVAR Stub PG_Inaccessible_Stub;  // GC canonizes all inaccessible stubs to this
 
 PVAR Element* Root_Action_Adjunct;
 
-PVAR Value* g_error_stack_overflow;  // made in advance, avoids extra calls
-PVAR Value* g_error_no_memory;  // also must be made in advance
+PVAR Stable* g_error_stack_overflow;  // made in advance, avoids extra calls
+PVAR Stable* g_error_no_memory;  // also must be made in advance
 
-PVAR Value* g_error_utf8_too_short;
-PVAR Value* g_error_utf8_trail_bad_bit;
-PVAR Value* g_error_overlong_utf8;
-PVAR Value* g_error_codepoint_too_high;
-PVAR Value* g_error_no_utf8_surrogates;
-PVAR Value* g_error_illegal_zero_byte;
+PVAR Stable* g_error_utf8_too_short;
+PVAR Stable* g_error_utf8_trail_bad_bit;
+PVAR Stable* g_error_overlong_utf8;
+PVAR Stable* g_error_codepoint_too_high;
+PVAR Stable* g_error_no_utf8_surrogates;
+PVAR Stable* g_error_illegal_zero_byte;
 
-PVAR Value* g_error_done;
-PVAR Value* g_error_veto;
+PVAR Stable* g_error_done;
+PVAR Stable* g_error_veto;
 
 PVAR Cell g_erased_cell;  // target of bottommost level, always erased cell
 

@@ -632,7 +632,7 @@ void Unregister_Symbol(RebolValue* word, SymId16 id16)
 {
     assert(id16 != 0);
 
-    assert(Is_Word(word));
+    assert(Is_Word(Known_Stable(word)));
     assert(Word_Id(word) == cast(SymId, id16));  // unnecessary?
     UNUSED(id16);
 

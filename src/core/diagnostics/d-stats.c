@@ -71,7 +71,7 @@ DECLARE_NATIVE(STATS)
 
   #if RUNTIME_CHECKS
     if (Bool_ARG(POOL)) {
-        Value* pool_id = ARG(POOL);
+        Stable* pool_id = ARG(POOL);
         Dump_All_Flex_In_Pool(VAL_INT32(pool_id));
         return NULLED;
     }

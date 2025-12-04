@@ -32,7 +32,7 @@
 // such as that used by crash():
 //
 //     Cell* cell = ...;
-//     crash (cell);  // can tell this is a Cell (Atom, Element, Value)
+//     crash (cell);  // can tell this is a Cell (Value, Element, Value)
 //
 //     Stub* stub = ...;
 //     crash (stub)  // can tell this is a Stub (Flex, String, Array, Binary)
@@ -242,7 +242,7 @@ STATIC_ASSERT(not (END_SIGNAL_BYTE & BASE_BYTEMASK_0x08_CELL));
 //   https://en.cppreference.com/w/cpp/language/ebo
 //
 // In plain C builds, there's no such thing as "base classes".  So the only
-// way to make a function that can accept either a Flex* or a Value* without
+// way to make a function that can accept either a Stub* or a Cell* without
 // knowing which is to use a `void*`.  So the Base is defined as `void`, and
 // the C++ build is trusted to do the more strict type checking.
 //
@@ -369,7 +369,7 @@ STATIC_ASSERT(not (END_SIGNAL_BYTE & BASE_BYTEMASK_0x08_CELL));
 // this is achieved.
 //
 // This control allows the leftmost byte of a Rebol header (the one you'd
-// get by casting Value* to an unsigned char*) to always start with the bit
+// get by casting Cell* to an unsigned char*) to always start with the bit
 // pattern `10`.  This pattern corresponds to what UTF-8 calls "continuation
 // bytes", which may never legally start a UTF-8 string:
 //

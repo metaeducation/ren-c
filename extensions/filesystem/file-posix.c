@@ -77,8 +77,8 @@
 // !!! libuv has the advantage of standardizing error names across platforms,
 // but they're all new error numbers.  Do strings for now.
 //
-Value* rebError_UV(int err) {
-     return rebValue("make warning!", rebT(uv_strerror(err)));
+Stable* rebError_UV(int err) {
+     return rebStable("make warning!", rebT(uv_strerror(err)));
 }
 
 
@@ -88,7 +88,7 @@ Value* rebError_UV(int err) {
 // If the file size hasn't been queried (because it wasn't needed) then do
 // an fstat() to get the information.
 //
-Value* Get_File_Size_Cacheable(uint64_t *size, const Value* port)
+Stable* Get_File_Size_Cacheable(uint64_t *size, const Stable* port)
 {
     FileReq* file = unwrap Filereq_Of_Port(port);
 
@@ -120,7 +120,7 @@ Value* Get_File_Size_Cacheable(uint64_t *size, const Value* port)
 // The processing of these can be done in the OS (if supported) or by a
 // separate filter operation during the read."  How does libuv handle this?
 //
-Value* Try_Read_Directory_Entry(FileReq* dir, Value* dir_path)
+Stable* Try_Read_Directory_Entry(FileReq* dir, Stable* dir_path)
 {
     assert(dir->is_dir);
 
@@ -186,7 +186,7 @@ Value* Try_Read_Directory_Entry(FileReq* dir, Value* dir_path)
     //
     bool is_dir = (dirent.type == UV_DIRENT_DIR);
 
-    Value* path = rebValue(
+    Api(Stable*) path = rebStable(
         "local-to-file // [",
             "path:", rebT(dirent.name),
             "dir:", rebQ(rebL(is_dir)),
@@ -260,12 +260,12 @@ int Extract_Access_Mode_From_Flags(int flags) {
 //
 // !!! Does libuv gloss over the slash/backslash issues?
 //
-Value* Open_File(const Value* port, int flags)
+Stable* Open_File(const Stable* port, int flags)
 {
     FileReq* file = unwrap Filereq_Of_Port(port);
 
     if (file->id != FILEHANDLE_NONE)
-        return rebValue("make warning! {File is already open}");
+        return rebStable("make warning! {File is already open}");
 
     // "Posix file names should be compatible with REBOL file paths"
 
@@ -286,7 +286,7 @@ Value* Open_File(const Value* port, int flags)
         }
     }
 
-    DECLARE_VALUE (file_path);
+    DECLARE_STABLE (file_path);
     require (
       Get_Port_Path_From_Spec(file_path, port)
     );
@@ -322,7 +322,7 @@ Value* Open_File(const Value* port, int flags)
 //
 // Closes a previously opened file.
 //
-Value* Close_File(const Value* port)
+Stable* Close_File(const Stable* port)
 {
     FileReq* file = unwrap Filereq_Of_Port(port);
 
@@ -345,7 +345,7 @@ Value* Close_File(const Value* port)
 //
 //  Read_File: C
 //
-Value* Read_File(const Value* port, size_t length)
+Stable* Read_File(const Stable* port, size_t length)
 {
     FileReq* file = unwrap Filereq_Of_Port(port);
 
@@ -383,14 +383,14 @@ Value* Read_File(const Value* port, size_t length)
     // probably be something the GC does when it notices oversized series
     // just as a general cleanup task.
     //
-    return rebRepossess(buffer, num_bytes_read);
+    return Known_Stable_Api(rebRepossess(buffer, num_bytes_read));
 }
 
 
 //
 //  Write_File: C
 //
-Value* Write_File(const Value* port, const Value* value, REBLEN limit)
+Stable* Write_File(const Stable* port, const Stable* value, REBLEN limit)
 {
     FileReq* file = unwrap Filereq_Of_Port(port);
 
@@ -430,7 +430,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
     }
     else {
         if (not Is_Blob(value))
-            return rebValue("make warning! {RUNE!, TEXT!, BLOB! for WRITE}");
+            return rebStable("make warning! -[[RUNE! TEXT! BLOB!] for WRITE]-");
 
         data = Blob_At(value);
         size = limit;
@@ -476,7 +476,7 @@ Value* Write_File(const Value* port, const Value* value, REBLEN limit)
 //
 //  Truncate_File: C
 //
-Value* Truncate_File(const Value* port)
+Stable* Truncate_File(const Stable* port)
 {
     FileReq* file = unwrap Filereq_Of_Port(port);
     assert(file->id != FILEHANDLE_NONE);
@@ -495,13 +495,13 @@ Value* Truncate_File(const Value* port)
 //
 //  Create_Directory: C
 //
-Value* Create_Directory(const Value* port)
+Stable* Create_Directory(const Stable* port)
 {
     FileReq* dir = unwrap Filereq_Of_Port(port);
     assert(dir->is_dir);
     UNUSED(dir);
 
-    DECLARE_VALUE (dir_path);
+    DECLARE_STABLE (dir_path);
     require (
       Get_Port_Path_From_Spec(dir_path, port)
     );
@@ -530,11 +530,11 @@ Value* Create_Directory(const Value* port)
 //
 // Note: Directories must be empty to succeed
 //
-Value* Delete_File_Or_Directory(const Value* port)
+Stable* Delete_File_Or_Directory(const Stable* port)
 {
     FileReq* file = unwrap Filereq_Of_Port(port);
 
-    DECLARE_VALUE (file_path);
+    DECLARE_STABLE (file_path);
     require (
       Get_Port_Path_From_Spec(file_path, port)
     );
@@ -564,12 +564,12 @@ Value* Delete_File_Or_Directory(const Value* port)
 //
 //  Rename_File_Or_Directory: C
 //
-Value* Rename_File_Or_Directory(const Value* port, const Value* to)
+Stable* Rename_File_Or_Directory(const Stable* port, const Stable* to)
 {
     FileReq* file = unwrap Filereq_Of_Port(port);
     UNUSED(file);  // was once needed for path
 
-    DECLARE_VALUE (file_path);
+    DECLARE_STABLE (file_path);
     require (
       Get_Port_Path_From_Spec(file_path, port)
     );
@@ -625,7 +625,7 @@ Value* Rename_File_Or_Directory(const Value* port, const Value* to)
     //
     // Convert file.time to REBOL date/time format.  Time zone is UTC.
     //
-    Value* File_Time_To_Rebol(uv_timespec_t uvtime)
+    Api(Stable*) File_Time_To_Rebol(uv_timespec_t uvtime)
     {
         SYSTEMTIME stime;
         TIME_ZONE_INFORMATION tzone;
@@ -636,7 +636,7 @@ Value* Rename_File_Or_Directory(const Value* port, const Value* to)
         FILETIME filetime = LibuvTimeToFileTime(uvtime);
         FileTimeToSystemTime(&filetime, &stime);
 
-        return rebValue("ensure date! (make-date-ymdsnz",
+        return rebStable("ensure date! (make-date-ymdsnz",
             rebI(stime.wYear),  // year
             rebI(stime.wMonth),  // month
             rebI(stime.wDay),  // day
@@ -708,7 +708,7 @@ Value* Rename_File_Or_Directory(const Value* port, const Value* to)
     // Convert file.time to REBOL date/time format.
     // Time zone is UTC.
     //
-    Value* File_Time_To_Rebol(uv_timespec_t uvtime)
+    Api(Stable*) File_Time_To_Rebol(uv_timespec_t uvtime)
     {
         time_t stime;
 
@@ -732,7 +732,7 @@ Value* Rename_File_Or_Directory(const Value* port, const Value* to)
 
         int zone = Get_Timezone(&utc_tm);
 
-        return rebValue("ensure date! (make-date-ymdsnz",
+        return rebStable("ensure date! (make-date-ymdsnz",
             rebI(utc_tm.tm_year + 1900),  // year
             rebI(utc_tm.tm_mon + 1),  // month
             rebI(utc_tm.tm_mday),  // day
@@ -753,11 +753,11 @@ Value* Rename_File_Or_Directory(const Value* port, const Value* to)
 //
 // Obtain information about a file.  Produces a STD_FILE_INFO object.
 //
-Value* Query_File_Or_Directory(const Value* port)
+Stable* Query_File_Or_Directory(const Stable* port)
 {
     FileReq* file = unwrap Filereq_Of_Port(port);
 
-    DECLARE_VALUE (file_path);
+    DECLARE_STABLE (file_path);
     require (
       Get_Port_Path_From_Spec(file_path, port)
     );
@@ -782,7 +782,7 @@ Value* Query_File_Or_Directory(const Value* port)
 
     bool is_dir = S_ISDIR(req.statbuf.st_mode);
     if (is_dir != file->is_dir)
-        return rebValue("make warning! --[Directory/File flag mismatch]--");
+        return rebStable("make warning! --[Directory/File flag mismatch]--");
 
     // !!! R3-Alpha would do this "to be consistent on all systems".  But it
     // seems better to just make the size null, unless there is some info
@@ -793,9 +793,9 @@ Value* Query_File_Or_Directory(const Value* port)
 
     // Note: time is in local format and must be converted
     //
-    Value* timestamp = File_Time_To_Rebol(req.statbuf.st_mtim);
+    Stable* timestamp = File_Time_To_Rebol(req.statbuf.st_mtim);
 
-    return rebValue(
+    return rebStable(
         "make ensure object! (", port , ").scheme.info [",
             "name:", file_path,
             "size:", is_dir ? rebQ(nullptr) : rebI(req.statbuf.st_size),
@@ -811,7 +811,7 @@ Value* Query_File_Or_Directory(const Value* port)
 //
 // Result is a FILE! API Handle, must be freed with rebRelease()
 //
-Value* Get_Current_Dir_Value(void)
+Stable* Get_Current_Dir_Value(void)
 {
     char *path_utf8 = rebAllocN(char, PATH_MAX);
 
@@ -827,7 +827,7 @@ Value* Get_Current_Dir_Value(void)
     // "On Unix the path no longer ends in a slash"...the /DIR option should
     // make it end in a slash for the result.
 
-    Value* result = rebValue("local-to-file:dir", rebT(path_utf8));
+    Api(Stable*) result = rebStable("local-to-file:dir", rebT(path_utf8));
 
     rebFree(path_utf8);
     return result;
@@ -839,7 +839,7 @@ Value* Get_Current_Dir_Value(void)
 //
 // Set the current directory to local path. Return FALSE on failure.
 //
-bool Set_Current_Dir_Value(const Value* path)
+bool Set_Current_Dir_Value(const Stable* path)
 {
     char *path_utf8 = rebSpell("file-to-local:full", path);
 
@@ -867,7 +867,7 @@ bool Set_Current_Dir_Value(const Value* path)
 //
 // Note: You must call uv_setup_args() before calling this function!
 //
-Value* Get_Current_Exec(void)
+Stable* Get_Current_Exec(void)
 {
     char *path_utf8 = rebAllocN(char, PATH_MAX);
 
@@ -880,7 +880,7 @@ Value* Get_Current_Exec(void)
     }
     assert(size == strsize(path_utf8));  // does it give correct size?
 
-    Value* result = rebValue(
+    Api(Stable*) result = rebStable(
         "local-to-file", rebT(path_utf8)  // just return unresolved path
     );
     rebFree(path_utf8);
@@ -903,7 +903,7 @@ Value* Get_Current_Exec(void)
     //
     //  Get_Current_Exec: C
     //
-    Value* Get_Current_Exec(void)
+    Stable* Get_Current_Exec(void)
     {
         uint32_t path_size = 1024;
 
@@ -928,7 +928,7 @@ Value* Get_Current_Exec(void)
 
         char *resolved_path_utf8 = realpath(path_utf8, NULL);
         if (resolved_path_utf8) {
-            Value* result = rebValue(
+            Api(Stable*) result = rebStable(
                 "local-to-file", rebT(resolved_path_utf8)
             );
             rebFree(path_utf8);
@@ -936,7 +936,7 @@ Value* Get_Current_Exec(void)
             return result;
         }
 
-        Value* result = rebValue(
+        Api(Stable*) result = rebStable(
             "local-to-file", rebT(path_utf8)  // just return unresolved path
         );
         rebFree(path_utf8);
@@ -951,7 +951,7 @@ Value* Get_Current_Exec(void)
     //
     //  Get_Current_Exec: C
     //
-    Value* Get_Current_Exec(void)
+    Stable* Get_Current_Exec(void)
     {
         WCHAR *path = rebAllocN(WCHAR, MAX_PATH);
 
@@ -962,7 +962,7 @@ Value* Get_Current_Exec(void)
         }
         path[r] = '\0';  // May not be NULL-terminated if buffer not big enough
 
-        Value* result = rebValue(
+        Api(Stable*) result = rebStable(
             "local-to-file", rebR(rebTextWide(path))
         );
         rebFree(path);
@@ -985,7 +985,7 @@ Value* Get_Current_Exec(void)
     //
     // https://stackoverflow.com/questions/1023306/
     //
-    Value* Get_Current_Exec(void)
+    Stable* Get_Current_Exec(void)
     {
       #if !defined(PROC_EXEC_PATH) && !defined(HAVE_PROC_PATHNAME)
         return nullptr;
@@ -1023,7 +1023,7 @@ Value* Get_Current_Exec(void)
 
         path_utf8[r] = '\0';
 
-        Value* result = rebValue("local-to-file", rebT(path_utf8));
+        Api(Stable*) result = rebStable("local-to-file", rebT(path_utf8));
         rebFree(path_utf8);
         return result;
       #endif

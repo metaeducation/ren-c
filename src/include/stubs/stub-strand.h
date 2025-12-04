@@ -459,7 +459,7 @@ INLINE REBLEN Num_Codepoints_For_Bytes(
 //=//// STRAND CREATION HELPERS ///////////////////////////////////////////=//
 //
 // Note that most clients should be using the rebStringXXX() APIs for this
-// and generate Value*.  Note also that these routines may panic() if the
+// and generate Stable*.  Note also that these routines may panic() if the
 // data they are given is not UTF-8.
 
 #define Make_Strand(encoded_capacity) \
@@ -525,10 +525,10 @@ INLINE Error* Error_Illegal_Cr(const Byte* at, const Byte* start)
         back = Step_Back_Codepoint(back);
         ++back_len;
     }
-    Value* str = rebSizedText(
+    Api(Stable*) str = Known_Stable_Api(rebSizedText(
         cast(char*, back),
         at - cast(Byte*, back) + 1  // include CR (escaped, e.g. ^M)
-    );
+    ));
     Error* error = Error_Illegal_Cr_Raw(str);
     rebRelease(str);
     return error;

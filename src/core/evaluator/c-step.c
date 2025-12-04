@@ -463,11 +463,11 @@ Bounce Stepper_Executor(Level* L)
             or Type_Of_Unchecked(OUT) == TYPE_PATH
         )
     ){  // exemption: put OUT back in CURRENT and CURRENT back in feed [2]
-        Move_Atom(&L->feed->fetched, CURRENT);
+        Move_Value(&L->feed->fetched, CURRENT);
         L->feed->p = &L->feed->fetched;
         Force_Blit_Cell(&L->feed->gotten, L_current_gotten_raw);
 
-        Move_Atom(CURRENT, cast(Element*, OUT));
+        Move_Value(CURRENT, cast(Element*, OUT));
         Invalidate_Gotten(L_current_gotten_raw);
 
         Set_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);
@@ -803,10 +803,10 @@ Bounce Stepper_Executor(Level* L)
     Element* spare = Init_Word(SPARE, CANON(PACK));
     dont(Quotify(Known_Element(SPARE)));  // want to run word
 
-    Value* temp = rebLift_helper(
+    Api(Stable*) temp = Known_Stable(rebLift_helper(
         cast(RebolContext*, Level_Binding(L)),
         spare, out, rebEND
-    );
+    ));
     Copy_Cell(OUT, temp);
     rebRelease(temp);
 
@@ -950,7 +950,7 @@ Bounce Stepper_Executor(Level* L)
         panic (Cell_Error(OUT));  // don't conflate with action result
 
     assert(Is_Cell_Stable(OUT));  // plain WORD! pick, ERROR! is only unstable
-    Value* out = cast(Value*, OUT);
+    Stable* out = cast(Stable*, OUT);
 
     if (Is_Action(out))  // check first [1]
         goto run_action_in_out;
@@ -983,7 +983,7 @@ Bounce Stepper_Executor(Level* L)
   //    So pushing *before* we set the flags means the FLAG_STATE_BYTE() will
   //    be 0, and we get clearing.
 
-   Value* out = cast(Value*, OUT);
+   Stable* out = cast(Stable*, OUT);
 
 #if INCLUDE_C_DEBUG_BREAK_NATIVE && RUNTIME_CHECKS
   if (
@@ -1153,7 +1153,7 @@ Bounce Stepper_Executor(Level* L)
         );
         Bind_If_Unbound(CURRENT, L_binding);
         if (rebRunThrows(
-            u_cast(Sink(Value), OUT),  // <-- output, API won't make atoms
+            u_cast(Sink(Stable), OUT),  // <-- output, API won't make atoms
             CANON(REDUCE), CURRENT
         )){
             goto return_thrown;
@@ -1171,7 +1171,7 @@ Bounce Stepper_Executor(Level* L)
     }
 
     require (
-      Value* out = Get_Chain_Push_Refinements(
+      Stable* out = Get_Chain_Push_Refinements(
         OUT,  // where to write action
         SPARE,  // temporary GC-safe scratch space
         CURRENT,
@@ -1187,7 +1187,7 @@ Bounce Stepper_Executor(Level* L)
 
 } handle_action_in_out_with_refinements_pushed: {
 
-    Value* out = cast(Value*, OUT);
+    Stable* out = cast(Stable*, OUT);
 
     require (
       Level* sub = Make_Action_Sublevel(out)
@@ -1226,7 +1226,7 @@ Bounce Stepper_Executor(Level* L)
         flags
     ));
 
-    Atom* primed = Evaluator_Primed_Cell(sub);
+    Value* primed = Evaluator_Primed_Cell(sub);
     Init_Ghost(primed);  // want to vaporize if all ghosts [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
@@ -1394,7 +1394,7 @@ Bounce Stepper_Executor(Level* L)
         panic (e);  // don't FAIL, PANIC [1]
     }
 
-    Value* out = Known_Stable(OUT);
+    Stable* out = Known_Stable(OUT);
     assert(Is_Action(out));
 
     if (slash_at_tail) {  // do not run action, just return it [3]
@@ -1404,7 +1404,7 @@ Bounce Stepper_Executor(Level* L)
             )){
                 goto return_thrown;
             }
-            Move_Atom(OUT, SPARE);
+            Move_Value(OUT, SPARE);
         }
         Packify_Action(OUT);  // foo/ is always ACTION!
         goto lookahead;
@@ -1672,7 +1672,7 @@ Bounce Stepper_Executor(Level* L)
         }
         else {
             require (
-              Value* spare = Decay_If_Unstable(SPARE)
+              Stable* spare = Decay_If_Unstable(SPARE)
             );
             if (Is_Antiform(spare))
                 panic (Error_Bad_Antiform(spare));
@@ -1883,7 +1883,7 @@ Bounce Stepper_Executor(Level* L)
     if (pack_array)
         Drop_Lifeguard(pack_array);
 
-    Move_Atom(OUT, TOP_ATOM);  // restore OUT (or circled) from stack [1]
+    Move_Value(OUT, TOP_ATOM);  // restore OUT (or circled) from stack [1]
 
 }} set_block_drop_stack_and_continue: {
 
@@ -1914,7 +1914,7 @@ Bounce Stepper_Executor(Level* L)
     Element* spare = Init_Word(SPARE, CANON(FENCE_X_EVAL));
     dont(Quotify(Known_Element(SPARE)));  // want to run word
 
-    Value* temp = rebValue_helper(  // passing binding explicitly, use helper
+    Api(Value*) temp = rebValue_helper(  // pass binding explicitly to helper
         cast(RebolContext*, Level_Binding(L)),
         spare, out,
         rebEND  // must pass END explicitly to helper
@@ -2020,7 +2020,7 @@ Bounce Stepper_Executor(Level* L)
             }
         }
         else {
-            DECLARE_VALUE (check);
+            DECLARE_STABLE (check);
             assume (
               Get_Word(check, L_next, Feed_Binding(L->feed))
             );

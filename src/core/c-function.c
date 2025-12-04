@@ -89,11 +89,11 @@ static Result(None) Push_Keys_And_Params_For_Fence(
             if (Is_Error(OUT))  // don't want to quietly store errors
                 return fail (Cell_Error(OUT));
 
-            Move_Atom(PUSH(), SPARE);
+            Move_Value(PUSH(), SPARE);
         }
         else {
             require (
-              Value* decayed = Decay_If_Unstable(SPARE)
+              Stable* decayed = Decay_If_Unstable(SPARE)
             );
 
             if (must_be_action and not Is_Action(decayed))
@@ -161,7 +161,7 @@ static Result(None) Push_Keys_And_Params_Core(
 
 } do_more_stuff: {
 
-    Atom* eval = Level_Lifetime_Atom(L);
+    Value* eval = Level_Lifetime_Value(L);
     Push_Level_Erase_Out_If_State_0(eval, L);
 
     for (
@@ -492,7 +492,7 @@ Result(ParamList*) Pop_Paramlist(
 
     const Symbol* duplicate = nullptr;
 
-    Value* rootvar = Flex_Head(Value, paramlist);
+    Stable* rootvar = Flex_Head(Stable, paramlist);
     if (prior)
         Init_Frame(rootvar, unwrap prior, ANONYMOUS, prior_coupling);
     else
@@ -503,7 +503,7 @@ Result(ParamList*) Pop_Paramlist(
             UNCOUPLED
         );
 
-    Value* param = 1 + rootvar;
+    Stable* param = 1 + rootvar;
     Key* key = Flex_Head(Key, keylist);
 
     if (methodization) {  // put dot first if applicable (find it fastest...)
@@ -531,7 +531,7 @@ Result(ParamList*) Pop_Paramlist(
         //
         bool hidden;
         if (Get_Cell_Flag(slot, STACK_NOTE_SEALED)) {
-            assert(Is_Specialized(cast(Param*, cast(Value*, slot))));
+            assert(Is_Specialized(cast(Param*, cast(Stable*, slot))));
 
             // !!! This flag was being set on an uninitialized param, with the
             // remark "survives copy over".  But the copy puts the flag on
@@ -702,7 +702,7 @@ void Pop_Unpopped_Return(Sink(Element) out, StackIndex base)
 //
 Details* Make_Dispatch_Details(
     Flags flags,
-    const Value* exemplar,  // FRAME! "interface" is keyword in MSVC :-(
+    const Stable* exemplar,  // FRAME! "interface" is keyword in MSVC :-(
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     Option(Index) details_max  // 1-based max index desired for Phase_Details
 ){
@@ -857,13 +857,13 @@ DECLARE_NATIVE(COUPLE)
 {
     INCLUDE_PARAMS_OF_COUPLE;
 
-    Value* action_or_frame = ARG(FRAME);  // could also be a ACTION!
+    Stable* action_or_frame = ARG(FRAME);  // could also be a ACTION!
 
     Details* details = Phase_Details(Frame_Phase(action_or_frame));
     if (Not_Details_Flag(details, METHODIZED))
         return fail ("FRAME! is not methodized, cannot COUPLE it");
 
-    Value* coupling = ARG(COUPLING);
+    Stable* coupling = ARG(COUPLING);
 
     if (Is_Nulled(coupling))
         Tweak_Frame_Coupling(action_or_frame, nullptr);
@@ -889,7 +889,7 @@ DECLARE_NATIVE(UNCOUPLE)
 {
     INCLUDE_PARAMS_OF_UNCOUPLE;
 
-    Value* action_or_frame = ARG(ACTION);  // could also be a FRAME!
+    Stable* action_or_frame = ARG(ACTION);  // could also be a FRAME!
 
     assert(Heart_Of(action_or_frame) == TYPE_FRAME);
 

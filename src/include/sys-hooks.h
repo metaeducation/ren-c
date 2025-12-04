@@ -73,7 +73,7 @@ typedef struct {  // pairs builtins and extensions to pass together
 typedef struct {  // passed to Register_Generics() for extension types
     GenericTable* table;
     ExtraGenericInfo* ext_info;
-    RebolValue** datatype_ptr;  // plain pointer in ExtraGenericInfo [1]
+    Api(Value*)* datatype_ptr;  // plain pointer in ExtraGenericInfo [1]
 } ExtraGenericTable;
 
 

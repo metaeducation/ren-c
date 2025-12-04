@@ -98,7 +98,7 @@ Source* Copy_Source_At_Max_Shallow(
 //
 Array* Copy_Values_Len_Extra_Shallow_Core(
     Flags flags,
-    const Value* head,
+    const Stable* head,
     REBLEN len,
     REBLEN extra
 ){
@@ -106,8 +106,8 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
     Set_Flex_Len(a, len);
 
     REBLEN count = 0;
-    const Value* src = head;
-    Value* dest = Flex_Head(Value, a);
+    const Stable* src = head;
+    Stable* dest = Flex_Head(Stable, a);
     for (; count < len; ++count, ++src, ++dest) {
         if (Is_Antiform(src))
             assert(Is_Stub_Varlist(a));  // usually not legal
@@ -206,7 +206,7 @@ void Uncolor_Array(const Array* a)
 //
 // Clear the recursion markers for Flex and Object trees.
 //
-void Uncolor(const Value* v)
+void Uncolor(const Stable* v)
 {
     if (Is_Antiform(v))
         return;

@@ -94,10 +94,10 @@ INLINE Option(VarList*) Misc_Phase_Adjunct_Core(Phase* a) {
 
 //=//// CONTEXT ARCHETYPE VALUE CELL (ROOTVAR)  ///////////////////////////=//
 //
-// A Value* must contain enough information to find what is needed to define
+// A Stable* must contain enough information to find what is needed to define
 // a context.  That fact is leveraged by the notion of keeping the information
 // in the context itself as the [0] element of the varlist.  This means it is
-// always on hand when a Value* is needed, so you can do things like:
+// always on hand when a Stable* is needed, so you can do things like:
 //
 //     VarList* c = ...;
 //     rebElide("print [pick", Varlist_Archetype(c), "'field]");
@@ -159,12 +159,12 @@ INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
 
 #define UNCOUPLED  u_cast(Option(VarList*), nullptr)  // not all can couple [1]
 
-INLINE Option(VarList*) Frame_Coupling(const Value* c) {
+INLINE Option(VarList*) Frame_Coupling(const Stable* c) {
     assert(Heart_Of(c) == TYPE_FRAME);
     return cast(VarList*, CELL_FRAME_PAYLOAD_2_COUPLING(c));
 }
 
-INLINE void Tweak_Frame_Coupling(Value* c, Option(VarList*) coupling) {
+INLINE void Tweak_Frame_Coupling(Stable* c, Option(VarList*) coupling) {
     assert(Heart_Of(c) == TYPE_FRAME);
     CELL_FRAME_PAYLOAD_2_COUPLING(c) = opt coupling;
     if (coupling)
@@ -238,8 +238,8 @@ INLINE void Tweak_Bonus_Keylist_Unique(Stub* s, KeyList *keylist) {
 // hand is just a VarList*.  THIS DOES NOT ACCOUNT FOR PHASE...so there can
 // actually be a difference between these two expressions for FRAME!s:
 //
-//     Value* x = VAL_CONTEXT_KEYS_HEAD(context);  // accounts for phase
-//     Value* y = Varlist_Keys_Head(Cell_Varlist(context), n);  // no phase
+//     Stable* x = VAL_CONTEXT_KEYS_HEAD(context);  // accounts for phase
+//     Stable* y = Varlist_Keys_Head(Cell_Varlist(context), n);  // no phase
 //
 // Context's "length" does not count the [0] cell of either the varlist or
 // the keylist arrays.  Hence it must subtract 1.  STUB_MASK_VARLIST
@@ -271,19 +271,19 @@ INLINE Fixed(Slot*) Varlist_Fixed_Slot(VarList* c, Index n) {  // 1-based
 //=//// TRANSITIONAL HACK FOR SLOT=>VALUE //////////////////////////////////=//
 //
 // This is a temporary workaround.  Ultimately slots should only be converted
-// to Value* directly in a narrow set of cases, when dual representation is
+// to Stable* directly in a narrow set of cases, when dual representation is
 // not a possibility.
 
 INLINE Init(Slot) Slot_Init_Hack(Slot* slot) {
     return u_cast(Init(Slot), slot);
 }
 
-MUTABLE_IF_C(Value*, INLINE) Slot_Hack(
+MUTABLE_IF_C(Stable*, INLINE) Slot_Hack(
     CONST_IF_C(Slot*) slot
 ){
     CONSTABLE(Slot*) s = m_cast(Slot*, slot);
     assert(LIFT_BYTE(s) != DUAL_0);
-    return u_cast(Value*, s);
+    return u_cast(Stable*, s);
 }
 
 
@@ -418,7 +418,7 @@ INLINE void Quotify_Parameter_Local(Element* param) {
     LIFT_BYTE(param) = ONEQUOTE_NONQUASI_4;
 }
 
-INLINE void Assert_Quotified_Parameter(const Atom* param) {
+INLINE void Assert_Quotified_Parameter(const Value* param) {
     assert(
         LIFT_BYTE(param) == ONEQUOTE_NONQUASI_4
         and Heart_Of(param) == TYPE_PARAMETER
@@ -442,7 +442,7 @@ INLINE const Element* Quoted_Returner_Of_Paramlist(
     ) ? 2 : 1;
     assert(Key_Id(Varlist_Key(paramlist, slot_num)) == returner);
     UNUSED(returner);
-    Value* param = Slot_Hack(Varlist_Slot(paramlist, slot_num));
+    Stable* param = Slot_Hack(Varlist_Slot(paramlist, slot_num));
     Assert_Quotified_Parameter(param);
     return cast(Element*, param);
 }

@@ -38,23 +38,23 @@
 // SYM_0, indicating the name has no SymId abbreviation at all).
 //
 
-INLINE Value* Mutable_Lib_Var(SymId id) {
+INLINE Stable* Mutable_Lib_Var(SymId id) {
     assert(id <= MAX_SYM_LIB_PREMADE);
-    Value* slot = cast(Value*, Stub_Cell(&g_lib_patches[id]));
+    Stable* slot = cast(Stable*, Stub_Cell(&g_lib_patches[id]));
     assert(Not_Cell_Flag(slot, PROTECTED));
     return slot;
 }
 
-INLINE const Value* Lib_Var(SymId id) {
+INLINE const Stable* Lib_Var(SymId id) {
     assert(id <= MAX_SYM_LIB_PREMADE);
-    Value* slot = cast(Value*, Stub_Cell(&g_lib_patches[id]));
+    Stable* slot = cast(Stable*, Stub_Cell(&g_lib_patches[id]));
     assert(not Is_Dual_Unset(slot));
     return slot;
 }
 
-INLINE Sink(Value) Sink_Lib_Var(SymId id) {
+INLINE Sink(Stable) Sink_Lib_Var(SymId id) {
     assert(id <= MAX_SYM_LIB_PREMADE);
-    return cast(Value*, Stub_Cell(&g_lib_patches[id]));
+    return cast(Stable*, Stub_Cell(&g_lib_patches[id]));
 }
 
 #define LIB(name)  Lib_Var(SYM_##name)

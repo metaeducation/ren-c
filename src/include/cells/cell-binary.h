@@ -61,7 +61,7 @@ INLINE const Byte* Blob_Size_At(Option(Sink(Size)) size_at, const Cell* cell)
 //
 INLINE const Byte* Cell_Bytes_Limit_At(
     Size* size_out,
-    const Value* cell,
+    const Stable* cell,
     Option(const Length*) limit_in
 ){
     Option(Heart) heart = Heart_Of(cell);
@@ -127,7 +127,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
 // call it on #{00}
 //
 
-INLINE bool Is_Blob_And_Is_Zero(const Value* v) {
+INLINE bool Is_Blob_And_Is_Zero(const Stable* v) {
     if (Heart_Of(v) != TYPE_BLOB)
         return false;
 

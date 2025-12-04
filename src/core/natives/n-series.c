@@ -213,7 +213,7 @@ DECLARE_NATIVE(REVERSE_OF)
     if (Try_Dispatch_Generic(&bounce, REVERSE_OF, elem, LEVEL))
         return bounce;
 
-    const Value* datatype = Datatype_Of_Fundamental(elem);
+    const Stable* datatype = Datatype_Of_Fundamental(elem);
     if (
         not Handles_Generic(REVERSE, datatype)
         or not Handles_Generic(COPY, datatype)

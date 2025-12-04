@@ -77,7 +77,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
     Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == MAX_IDX_REORDERER);
 
-    Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
+    Stable* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
     Tweak_Level_Phase(L, Frame_Phase(reorderee));
     Tweak_Level_Coupling(L, Frame_Coupling(reorderee));
@@ -92,14 +92,14 @@ Bounce Reorderer_Dispatcher(Level* L) {
 // All questions are forwarded to the reorderee.
 //
 bool Reorderer_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
     assert(Details_Dispatcher(details) == &Reorderer_Dispatcher);
     assert(Details_Max(details) == MAX_IDX_REORDERER);
 
-    Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
+    Stable* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
     Details* reorderee_details = Phase_Details(Frame_Phase(reorderee));
     DetailsQuerier* querier = Details_Querier(reorderee_details);
@@ -209,7 +209,7 @@ DECLARE_NATIVE(REORDER)
         if (ignore)
             continue;
 
-        const Value* param = Phase_Param(reorderee, index);
+        const Stable* param = Phase_Param(reorderee, index);
         if (Get_Parameter_Flag(param, REFINEMENT) and Is_Parameter_Unconstrained(param)) {
             error = Error_User("Can't reorder refinements with no argument");
             goto cleanup_binder;

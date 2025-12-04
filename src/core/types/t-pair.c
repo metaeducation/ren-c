@@ -112,9 +112,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
 //  Min_Max_Pair: C
 //
 void Min_Max_Pair(
-    Sink(Value) out,
-    const Value* a,
-    const Value* b,
+    Sink(Stable) out,
+    const Stable* a,
+    const Stable* b,
     bool maxed
 ){
     REBI64 x;
@@ -153,7 +153,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Pair)
 
 REBINT Index_From_Picker_For_Pair(
     const Element* pair,
-    const Value* picker
+    const Stable* picker
 ){
     UNUSED(pair); // Might the picker be pair-sensitive?
 
@@ -194,11 +194,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Pair)
     Option(SymId) id = Symbol_Id(Level_Verb(LEVEL));
 
     Element* v = cast(Element*, ARG_N(1));
-    Value* x1 = Cell_Pair_First(v);
-    Value* y1 = Cell_Pair_Second(v);
+    Stable* x1 = Cell_Pair_First(v);
+    Stable* y1 = Cell_Pair_Second(v);
 
-    Value* x2 = nullptr;
-    Value* y2 = nullptr;
+    Stable* x2 = nullptr;
+    Stable* y2 = nullptr;
 
     switch (opt id) {
       case SYM_ADD:
@@ -221,7 +221,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Pair)
     // mechanical trick vs. the standard DO, because the frame thinks it is
     // already running...and the check for that would be subverted.
 
-    Value* frame = Init_Frame(
+    Stable* frame = Init_Frame(
         OUT,
         Varlist_Of_Level_Force_Managed(level_),
         Level_Label(level_),
@@ -231,12 +231,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Pair)
     Copy_Cell(ARG_N(1), x1);
     if (x2)
         Copy_Cell(ARG_N(2), x2);  // use extracted arg x instead of pair arg
-    Value* x_frame = rebValue(CANON(COPY), rebQ(frame));
+    Api(Stable*) x_frame = rebStable(CANON(COPY), rebQ(frame));
 
     Copy_Cell(ARG_N(1), y1);
     if (y2)
         Copy_Cell(ARG_N(2), y2);  // use extracted arg y instead of pair arg
-    Value* y_frame = rebValue(CANON(COPY), rebQ(frame));
+    Api(Stable*) y_frame = rebStable(CANON(COPY), rebQ(frame));
 
     return rebValue(
         "make pair! reduce [",
@@ -297,10 +297,10 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Pair)
 
     Element* pair = Element_ARG(LOCATION);
 
-    const Value* picker = ARG(PICKER);
+    const Stable* picker = ARG(PICKER);
     REBINT n = Index_From_Picker_For_Pair(pair, picker);
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
@@ -315,7 +315,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Pair)
     if (n != 1 and n != 2)
         return DUAL_SIGNAL_NULL_ABSENT;
 
-    Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
+    Stable* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
     return DUAL_LIFTED(Copy_Cell(OUT, which));
 
 } handle_poke: { /////////////////////////////////////////////////////////////
@@ -330,7 +330,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Pair)
     if (not Is_Integer(poke))
         panic (PARAM(DUAL));
 
-    Value* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
+    Stable* which = (n == 1) ? Cell_Pair_First(pair) : Cell_Pair_Second(pair);
     Copy_Cell(which, poke);
 
     return NO_WRITEBACK_NEEDED;  // PAIR! is two independent cells in Ren-C
@@ -357,14 +357,14 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Value* pair1 = ARG(VALUE1);
-    Value* v2 = ARG(VALUE2);
+    Stable* pair1 = ARG(VALUE1);
+    Stable* v2 = ARG(VALUE2);
 
     if (not Is_Integer(v2))
         panic (PARAM(VALUE2));
 
     return rebDelegate(CANON(MAKE), CANON(PAIR_X), "[",
-        CANON(MULTIPLY), v2, cast(Value*, Cell_Pair_First(pair1)),  // !!! [1]
-        CANON(MULTIPLY), v2, cast(Value*, Cell_Pair_Second(pair1)),
+        CANON(MULTIPLY), v2, cast(Stable*, Cell_Pair_First(pair1)),  // !!! [1]
+        CANON(MULTIPLY), v2, cast(Stable*, Cell_Pair_Second(pair1)),
     "]");
 }

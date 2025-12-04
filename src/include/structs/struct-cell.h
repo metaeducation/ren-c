@@ -729,15 +729,15 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 // elements of blocks, groups, paths, and tuples.  We also want to prevent
 // unstable antiforms from being the values of variables.  To make it easier
 // to do this, the C++ build offers the ability to make `Element` that
-// can't hold any antiforms, `Value` that can hold stable antiforms, and
-// `Atom` that can hold anything--including unstable isotopes.
+// can't hold any antiforms, `Stable*` that can hold stable antiforms, and
+// `Value` that can hold anything--including unstable isotopes.
 //
-// * Class Hierarchy: Atom as base, Value derived, Element derived
+// * Class Hierarchy: Value as base, Stable* derived, Element derived
 //   (upside-down for compile-time error preferences--we want passing an
-//   Atom to a routine that expects only Element to not compile)
+//   Value to a routine that expects only Element to not compile)
 //
-// * Primary Goal: Prevent passing Atoms/Values to Element-only routines,
-//   or Atoms to Value-only routines.
+// * Primary Goal: Prevent passing Atoms/Stables to Element-only routines,
+//   or Atoms to Stable*-only routines.
 //
 // * Secondary Goal: Prevent things like passing Element cells to writing
 //   routines that may potentially produce antiforms in that cell.
@@ -759,12 +759,12 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 //
 #if DONT_CHECK_CELL_SUBCLASSES
     typedef struct RebolValueStruct Cell;
-    typedef struct RebolValueStruct Atom;
+    typedef struct RebolValueStruct Stable;
     typedef struct RebolValueStruct Element;
 #else
-    struct Atom : public Cell {};  // can hold unstable antiforms
-    struct RebolValueStruct : public Atom {};  // can't hold unstable antiforms
-    struct Element : public RebolValueStruct {};  // can't hold any antiforms
+    struct RebolValueStruct : public Cell {};  // can hold unstable antiforms
+    struct Stable : public RebolValueStruct {};  // can't hold unstable antiforms
+    struct Element : public Stable {};  // can't hold any antiforms
 #endif
 
 
@@ -786,7 +786,7 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 //
 // There is one exception: an Init(Slot) e.g. what you get from adding a
 // fresh variable to a context, is able to be initialized by any routine
-// that could do an Init(Atom/Value/Element).
+// that could do an Init(Value/Stable*/Element).
 //
 
 #if DONT_CHECK_CELL_SUBCLASSES
@@ -797,10 +797,10 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
   #if NEEDFUL_SINK_USES_WRAPPER
   namespace needful {
     template<>
-    struct AllowSinkConversion<Slot, Atom> : std::true_type {};
+    struct AllowSinkConversion<Slot, Value> : std::true_type {};
 
     template<>
-    struct AllowSinkConversion<Slot, Value> : std::true_type {};
+    struct AllowSinkConversion<Slot, Stable> : std::true_type {};
 
     template<>
     struct AllowSinkConversion<Slot, Element> : std::true_type {};
@@ -818,8 +818,8 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 #if CPLUSPLUS_11
     static_assert(
         std::is_standard_layout<Cell>::value
-            and std::is_standard_layout<Atom>::value
             and std::is_standard_layout<Value>::value
+            and std::is_standard_layout<Stable*>::value
             and std::is_standard_layout<Element>::value
             and std::is_standard_layout<Slot>::value,
         "C++ Cells must match C Cells: http://stackoverflow.com/a/7189821/"

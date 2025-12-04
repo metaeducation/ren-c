@@ -373,7 +373,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 
 #if NEEDFUL_USES_CORRUPT_HELPER
   //
-  // We don't actually want things like Sink(Value) to set a cell's bits to
+  // We don't actually want things like Sink(Stable) to set a cell's bits to
   // a corrupt pattern, as we need to be able to call Init_Xxx() routines
   // and can't do that on garbage.  But we don't want to Erase_Cell() either
   // because that would lose header bits like whether the cell is an API
@@ -707,7 +707,7 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 // (Instead of Type_Of(), use Heart_Of() if you wish to know that the cell
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 
-INLINE Option(Type) Type_Of_Unchecked(const Atom* atom) {
+INLINE Option(Type) Type_Of_Unchecked(const Value* atom) {
     switch (LIFT_BYTE(atom)) {
       case 1:  // ANTIFORM_1 (not constant in some debug builds)
         return cast(TypeEnum,
@@ -952,8 +952,8 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 // Because you cannot assign cells to one another (e.g. `*dest = *src`), a
 // function is used.  This provides an opportunity to check things like moving
 // data into protected locations, and to mask out bits that should not be
-// propagated.  We can also enforce that you can't copy an Atom into a Value
-// or Element, and that you can't copy a Value into an Element...keeping
+// propagated.  We can also enforce that you can't copy an Value into a Stable
+// or Element, and that you can't copy a Stable into an Element...keeping
 // antiforms and unstable antiforms out of places they should not be.
 //
 // Interface designed to line up with Derelativize()
@@ -970,8 +970,8 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 //
 // 3. These overloads are the best I could come up with...but they conflict
 //    if written naively.  The variant for (Init(Element), const Element*)
-//    will compete with one as (Init(Value), const Value*) when the second
-//    argument is Element*, since Element can be passed where Value is taken.
+//    will compete with one as (Init(Stable), const Stable*) when the second
+//    argument is Element*, since Element can be passed where Stable is taken.
 //    Template magic lets an overload exclude itself to break the contention.
 
 #define CELL_MASK_COPY \
@@ -1042,27 +1042,27 @@ INLINE Cell* Copy_Cell_Untracked(
         return out;
     }
 
-    template<  // avoid conflict when Element* coerces to Value* [3]
+    template<  // avoid conflict when Element* coerces to Stable* [3]
         typename T,
         typename std::enable_if<
-            std::is_convertible<T, const Value*>::value
+            std::is_convertible<T, const Stable*>::value
             and not std::is_convertible<T, const Element*>::value
         >::type* = nullptr
     >
-    INLINE Value* Copy_Cell_Overload(Init(Value) out, const T& v) {
+    INLINE Stable* Copy_Cell_Overload(Init(Stable) out, const T& v) {
         Copy_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
 
-    template<  // avoid conflict when Element*/Value* coerces to Atom* [3]
+    template<  // avoid conflict when Element*/Stable* coerces to Value* [3]
         typename T,
         typename std::enable_if<
-            std::is_convertible<T, const Atom*>::value
-            and not std::is_convertible<T, const Value*>::value
+            std::is_convertible<T, const Value*>::value
+            and not std::is_convertible<T, const Stable*>::value
             and not std::is_convertible<T, const Element*>::value
         >::type* = nullptr
     >
-    INLINE Atom* Copy_Cell_Overload(Init(Atom) out, const T& v) {
+    INLINE Value* Copy_Cell_Overload(Init(Value) out, const T& v) {
         Copy_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
@@ -1075,10 +1075,10 @@ INLINE Cell* Copy_Cell_Untracked(
     Copy_Cell_Untracked(TRACK(out), (v), (copy_mask))
 
 #define Copy_Lifted_Cell(out,v) \
-    cast(Element*, Liftify(Copy_Cell(u_cast(Atom*, (out)), (v))))
+    cast(Element*, Liftify(Copy_Cell(u_cast(Value*, (out)), (v))))
 
-INLINE Element* Copy_Plain_Cell(Init(Element) out, const Atom* v) {
-    Copy_Cell(u_cast(Atom*, (out)), v);
+INLINE Element* Copy_Plain_Cell(Init(Element) out, const Value* v) {
+    Copy_Cell(u_cast(Value*, (out)), v);
     LIFT_BYTE(out) = NOQUOTE_2;
     return out;
 }
@@ -1088,7 +1088,7 @@ INLINE Element* Copy_Plain_Cell(Init(Element) out, const Atom* v) {
 //
 // Cell movement is distinct from cell copying, because it invalidates the
 // old location (which must be mutable).  The old location is erased if it's
-// an Atom and can legally hold CELL_MASK_ERASED_0 for GC, or it's set
+// an Value and can legally hold CELL_MASK_ERASED_0 for GC, or it's set
 // to be quasar (quasiform SPACE) if it can't hold that state.
 //
 // Currently the advantage to moving vs. copying is that if the old location
@@ -1131,14 +1131,14 @@ INLINE Cell* Move_Cell_Untracked(
         return out;
     }
 
-    template<  // avoid overload conflict when Element* coerces to Value* [3]
+    template<  // avoid overload conflict when Element* coerces to Stable* [3]
         typename T,
         typename std::enable_if<
-            std::is_convertible<T,Value*>::value
+            std::is_convertible<T,Stable*>::value
             && !std::is_convertible<T,Element*>::value
         >::type* = nullptr
     >
-    INLINE Value* Move_Cell_Overload(Init(Value) out, const T& v) {
+    INLINE Stable* Move_Cell_Overload(Init(Stable) out, const T& v) {
         Move_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
@@ -1153,9 +1153,9 @@ INLINE Cell* Move_Cell_Untracked(
 #define Move_Lifted_Cell(out,v) \
     cast(Element*, Liftify(Move_Cell_Core((out), (v), CELL_MASK_COPY)))
 
-INLINE Atom* Move_Atom_Untracked(
-    Atom* out,
-    Atom* a
+INLINE Value* Move_Atom_Untracked(
+    Value* out,
+    Value* a
 ){
     Assert_Cell_Header_Overwritable(out);  // atoms can't have persistent bits
     Assert_Cell_Header_Overwritable(a);  // atoms can't have persistent bits
@@ -1184,7 +1184,7 @@ INLINE Atom* Move_Atom_Untracked(
     return out;
 }
 
-#define Move_Atom(out,a) \
+#define Move_Value(out,a) \
     Move_Atom_Untracked(TRACK(out), (a))
 
 #define Move_Lifted_Atom(out,a) \
@@ -1226,7 +1226,7 @@ INLINE Cell* Blit_Cell_Untracked(Cell* out, const Cell* c) {
 //
 // (See CELL_FLAG_CONST for more information.)
 
-INLINE Atom* Inherit_Const(Atom* out, const Cell* influencer) {
+INLINE Value* Inherit_Const(Value* out, const Cell* influencer) {
     out->header.bits |= (influencer->header.bits & CELL_FLAG_CONST);
     return out;
 }
@@ -1234,7 +1234,7 @@ INLINE Atom* Inherit_Const(Atom* out, const Cell* influencer) {
 #define Trust_Const(value) \
     (value)  // just a marking to say the const is accounted for already
 
-INLINE Value* Constify(Value* v) {
+INLINE Stable* Constify(Stable* v) {
     Set_Cell_Flag(v, CONST);
     return v;
 }
@@ -1281,14 +1281,14 @@ INLINE Value* Constify(Value* v) {
 //   the outermost scope of a function, vs. inside a loop.
 //
 
-#define DECLARE_ATOM(name) \
-    Atom name##_atom; \
-    Atom* const name = TRACK(&name##_atom); \
+#define DECLARE_VALUE(name) \
+    Value name##_atom; \
+    Value* const name = TRACK(&name##_atom); \
     Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
-#define DECLARE_VALUE(name) \
-    Value name##_value; \
-    Value* const name = TRACK(&name##_value); \
+#define DECLARE_STABLE(name) \
+    Stable name##_value; \
+    Stable* const name = TRACK(&name##_value); \
     Force_Erase_Cell_Untracked(name)  // single assignment of 0 to header
 
 #define DECLARE_ELEMENT(name) \
@@ -1300,13 +1300,18 @@ INLINE Value* Constify(Value* v) {
 //=//// rebReleaseAndNull overload ////////////////////////////////////////=//
 //
 // rebReleaseAndNull is in the API, but because the API doesn't make
-// distinctions between Element and Value the double pointer trips it up
+// distinctions between Element and Stable the double pointer trips it up
 // in the C++ build.  Add an overload.
 //
 #if CHECK_CELL_SUBCLASSES
-    static inline void rebReleaseAndNull(Element** e) {
-        rebRelease(*e);
-        *e = nullptr;
+    static inline void rebReleaseAndNull(Stable** v) {
+        rebRelease(*v);
+        *v = nullptr;
+    }
+
+    static inline void rebReleaseAndNull(Element** v) {
+        rebRelease(*v);
+        *v = nullptr;
     }
 #endif
 
@@ -1315,26 +1320,19 @@ INLINE Value* Constify(Value* v) {
 //
 // C doesn't have any type checking of variadic parameters, but when compiling
 // with C++ we can recursively break down the variadics and do typechecking
-// (as well as do interesting type conversions).  Here we just enable Sink()
-// and Need() for Element* and Value* (it's not legal to pass unstable
-// antiforms, e.g. Atom*, to the API)
+// (as well as do interesting type conversions).  Here we enable Sink() and
+// Need() to handle Cell subclasses.
 //
 // Note that a similar converter should NOT be made for OnStack(...), as you
 // should not be passing values on the data stack to API functions.
 //
 
 #if NEEDFUL_SINK_USES_WRAPPER
-    inline const void* to_rebarg(const Sink(Value)& val)
+    template<typename T>
+    inline const void* to_rebarg(const Sink(T)& val)
         { return u_cast(Value*, val); }
 
-    inline const void* to_rebarg(const Need(Value*)& val)
+    template<typename T>
+    inline const void* to_rebarg(const Need(T)& val)
         { return u_cast(Value*, val); }
-
-  #if CHECK_CELL_SUBCLASSES
-    inline const void* to_rebarg(const Sink(Element)& val)
-        { return u_cast(Value*, val); }
-
-    inline const void* to_rebarg(const Need(Element*)& val)
-        { return u_cast(Value*, val); }
-  #endif
 #endif

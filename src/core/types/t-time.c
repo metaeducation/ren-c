@@ -532,7 +532,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Time)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* time = Element_ARG(LOCATION);
-    const Value* picker = ARG(PICKER);
+    const Stable* picker = ARG(PICKER);
 
     REBINT i;
     if (Is_Word(picker)) {
@@ -552,7 +552,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Time)
     REB_TIMEF tf;
     Split_Time(VAL_NANO(time), &tf); // loses sign
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
@@ -699,7 +699,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Time)
     INCLUDE_PARAMS_OF_MULTIPLY;
 
     REBI64 secs = VAL_NANO(ARG(VALUE1));  // guaranteed to be a time
-    Value* v2 = ARG(VALUE2);
+    Stable* v2 = ARG(VALUE2);
 
     if (Is_Integer(v2)) {
         secs *= VAL_INT64(v2);
@@ -732,7 +732,7 @@ IMPLEMENT_GENERIC(ROUND, Is_Time)
         return Init_Time_Nanoseconds(OUT, secs);
     }
 
-    Value* to = ARG(TO);
+    Stable* to = ARG(TO);
     if (Is_Time(to)) {
         secs = Round_Int(secs, level_, VAL_NANO(to));
         return Init_Time_Nanoseconds(OUT, secs);

@@ -69,9 +69,9 @@ struct Reb_Sock_Port_State {
 
 typedef struct Reb_Sock_Port_State SOCKREQ;
 
-INLINE SOCKREQ *Sock_Of_Port(const Value* port)
+INLINE SOCKREQ *Sock_Of_Port(const Stable* port)
 {
-    Value* state = Slot_Hack(Varlist_Slot(Cell_Varlist(port), STD_PORT_STATE));
+    Stable* state = Slot_Hack(Varlist_Slot(Cell_Varlist(port), STD_PORT_STATE));
     return Cell_Handle_Pointer(SOCKREQ, state);
 }
 
@@ -80,8 +80,8 @@ typedef struct {
     uv_write_t req;  // make first member of struct so we can cast the address
 
     VarList* port_ctx;
-    Value* binary;
-    Value* result;
+    Stable* binary;
+    Stable* result;
 } Reb_Write_Request;
 
 
@@ -92,7 +92,7 @@ typedef struct {
     uv_connect_t req;  // make first member of struct so we can cast the address
 
     VarList* port_ctx;
-    Value* result;
+    Stable* result;
 } Reb_Connect_Request;
 
 
@@ -107,6 +107,6 @@ typedef struct {
     // prevents multiple in-flight reads and is a design flaw, but translating
     // the R3-Alpha code for now just as a first step.
 
-    Value* result;
+    Stable* result;
 
 } Reb_Read_Request;

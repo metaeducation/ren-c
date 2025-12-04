@@ -115,8 +115,8 @@ Bounce The_Group_Branch_Executor(Level* const L)
     if (THROWING)
         return THROWN;
 
-    Need(Value*) with = Known_Stable(SPARE);  // passed to branch if run [1]
-    Atom* branch = SCRATCH;  // GC-safe if eval target
+    Need(Stable*) with = Known_Stable(SPARE);  // passed to branch if run [1]
+    Value* branch = SCRATCH;  // GC-safe if eval target
 
     enum {
         ST_GROUP_BRANCH_INITIAL_ENTRY = STATE_0,
@@ -186,7 +186,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
         panic (Error_Bad_Branch_Type_Raw());  // stop recursions (good?)
 
     STATE = ST_GROUP_BRANCH_RUNNING_BRANCH;
-    return CONTINUE(OUT, cast(Value*, branch), with);
+    return CONTINUE(OUT, cast(Stable*, branch), with);
 }}
 
 
@@ -204,8 +204,8 @@ DECLARE_NATIVE(IF)
 {
     INCLUDE_PARAMS_OF_IF;
 
-    Value* condition = ARG(CONDITION);
-    Value* branch = ARG(BRANCH);
+    Stable* condition = ARG(CONDITION);
+    Stable* branch = ARG(BRANCH);
 
     require (
       bool cond = Test_Conditional(condition)
@@ -231,8 +231,8 @@ DECLARE_NATIVE(WHEN)
 {
     INCLUDE_PARAMS_OF_WHEN;
 
-    Value* condition = ARG(CONDITION);
-    Value* branch = ARG(BRANCH);
+    Stable* condition = ARG(CONDITION);
+    Stable* branch = ARG(BRANCH);
 
     require (
       bool cond = Test_Conditional(condition)
@@ -259,13 +259,13 @@ DECLARE_NATIVE(EITHER)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
-    Value* condition = ARG(CONDITION);
+    Stable* condition = ARG(CONDITION);
 
     require (
       bool cond = Test_Conditional(condition)
     );
 
-    Value* branch = cond ? ARG(NON_NULL_BRANCH) : ARG(NULL_BRANCH);
+    Stable* branch = cond ? ARG(NON_NULL_BRANCH) : ARG(NULL_BRANCH);
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
 }
@@ -284,7 +284,7 @@ DECLARE_NATIVE(THEN_Q)
 {
     INCLUDE_PARAMS_OF_THEN_Q;
 
-    Atom* atom = Atom_ARG(VALUE);
+    Value* atom = Atom_ARG(VALUE);
     return LOGIC(not Is_Light_Null(atom));
 }
 
@@ -302,7 +302,7 @@ DECLARE_NATIVE(ELSE_Q)
 {
     INCLUDE_PARAMS_OF_ELSE_Q;
 
-    Atom* atom = Atom_ARG(VALUE);
+    Value* atom = Atom_ARG(VALUE);
     return LOGIC(Is_Light_Null(atom));
 }
 
@@ -322,8 +322,8 @@ DECLARE_NATIVE(THEN)
 {
     INCLUDE_PARAMS_OF_THEN;
 
-    Atom* atom = Atom_ARG(LEFT);
-    Value* branch = ARG(BRANCH);
+    Value* atom = Atom_ARG(LEFT);
+    Stable* branch = ARG(BRANCH);
 
     if (Is_Error(atom))
         return COPY(atom);
@@ -350,8 +350,8 @@ DECLARE_NATIVE(ELSE)
 {
     INCLUDE_PARAMS_OF_ELSE;
 
-    Atom* atom = Atom_ARG(LEFT);
-    Value* branch = ARG(BRANCH);
+    Value* atom = Atom_ARG(LEFT);
+    Stable* branch = ARG(BRANCH);
 
     if (Is_Error(atom))
         return COPY(atom);
@@ -378,8 +378,8 @@ DECLARE_NATIVE(ALSO)
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    Atom* atom = Atom_ARG(LEFT);
-    Value* branch = ARG(BRANCH);
+    Value* atom = Atom_ARG(LEFT);
+    Stable* branch = ARG(BRANCH);
 
     enum {
         ST_ALSO_INITIAL_ENTRY = STATE_0,
@@ -433,9 +433,9 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     INCLUDE_PARAMS_OF_ALL;
 
     Element* block = Element_ARG(BLOCK);
-    Value* predicate = ARG(PREDICATE);
+    Stable* predicate = ARG(PREDICATE);
 
-    Value* condition;  // will be found in OUT or SCRATCH
+    Stable* condition;  // will be found in OUT or SCRATCH
 
     enum {
         ST_ANY_ALL_NONE_INITIAL_ENTRY = STATE_0,
@@ -485,7 +485,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     Set_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST);
 
     require (
-      Value* spare = Decay_If_Unstable(SPARE)
+      Stable* spare = Decay_If_Unstable(SPARE)
     );
 
     if (not Is_Nulled(predicate))
@@ -540,7 +540,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
       case NATIVE_IS_ALL:
         if (not cond)
             goto return_null;  // failed ALL clause returns null
-        Move_Atom(OUT, SPARE);  // leaves SPARE as fresh...good for next step
+        Move_Value(OUT, SPARE);  // leaves SPARE as fresh...good for next step
         break;
 
       case NATIVE_IS_NONE:
@@ -590,7 +590,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 } return_spare: { ////////////////////////////////////////////////////////////
 
     Drop_Level(SUBLEVEL);
-    Move_Atom(OUT, SPARE);
+    Move_Value(OUT, SPARE);
     return BRANCHED(OUT);
 
 } return_null: { /////////////////////////////////////////////////////////////
@@ -672,7 +672,7 @@ DECLARE_NATIVE(CASE)
     INCLUDE_PARAMS_OF_CASE;
 
     Element* cases = Element_ARG(CASES);
-    Value* predicate = ARG(PREDICATE);
+    Stable* predicate = ARG(PREDICATE);
 
     enum {
         ST_CASE_INITIAL_ENTRY = STATE_0,
@@ -802,10 +802,10 @@ DECLARE_NATIVE(CASE)
     //        ** Script Error: if does not allow tag! for its branch...
 
     require (
-      Value* branch = Decay_If_Unstable(SCRATCH)
+      Stable* branch = Decay_If_Unstable(SCRATCH)
     );
     require (
-      Value* spare = Decay_If_Unstable(SPARE)
+      Stable* spare = Decay_If_Unstable(SPARE)
     );
     require (
       bool cond = Test_Conditional(spare)
@@ -858,7 +858,7 @@ DECLARE_NATIVE(CASE)
     Drop_Level(SUBLEVEL);
 
     if (Not_Cell_Erased(SPARE)) {  // prioritize fallout result [1]
-        Move_Atom(OUT, SPARE);
+        Move_Value(OUT, SPARE);
         return BRANCHED(OUT);
     }
 
@@ -888,9 +888,9 @@ DECLARE_NATIVE(SWITCH)
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
-    Value* left = ARG(VALUE);
+    Stable* left = ARG(VALUE);
     Element* cases = Element_ARG(CASES);
-    Value* predicate = ARG(PREDICATE);
+    Stable* predicate = ARG(PREDICATE);
 
     enum {
         ST_SWITCH_INITIAL_ENTRY = STATE_0,
@@ -1007,7 +1007,7 @@ DECLARE_NATIVE(SWITCH)
         goto reached_end;  // nothing left, so drop frame and return
 
     require (  // predicate decays?
-      Value* spare = Decay_If_Unstable(SPARE)
+      Stable* spare = Decay_If_Unstable(SPARE)
     );
 
     if (Bool_ARG(TYPE)) {
@@ -1015,7 +1015,7 @@ DECLARE_NATIVE(SWITCH)
             panic ("switch:type conditions must be DATATYPE! or ACTION!");
 
         Copy_Cell(Level_Spare(SUBLEVEL), left);  // spare of the *sublevel!*
-        if (not Typecheck_Atom_In_Spare_Uses_Scratch(  // *sublevel*'s SPARE!
+        if (not Typecheck_Value_In_Spare_Uses_Scratch(  // *sublevel*'s SPARE!
             SUBLEVEL, spare, SPECIFIED
         )){
             goto next_switch_step;
@@ -1024,7 +1024,7 @@ DECLARE_NATIVE(SWITCH)
     else {
         assert(not Is_Nulled(predicate));
 
-        Sink(Value) scratch = SCRATCH;
+        Sink(Stable) scratch = SCRATCH;
         if (rebRunThrows(
             scratch,  // <-- output cell
             predicate,
@@ -1081,7 +1081,7 @@ DECLARE_NATIVE(SWITCH)
 
     if (Not_Cell_Erased(SPARE)) {  // something counts as fallout [1]
         possibly(Not_Cell_Stable(SPARE));
-        Move_Atom(OUT, SPARE);
+        Move_Value(OUT, SPARE);
         return BRANCHED(OUT);
     }
 
@@ -1113,7 +1113,7 @@ DECLARE_NATIVE(DEFAULT)
     INCLUDE_PARAMS_OF_DEFAULT;
 
     Element* target = Element_ARG(TARGET);
-    Value* branch = ARG(BRANCH);
+    Stable* branch = ARG(BRANCH);
 
     enum {
         ST_DEFAULT_INITIAL_ENTRY = STATE_0,
@@ -1175,7 +1175,7 @@ DECLARE_NATIVE(DEFAULT)
           Unliftify_Undecayed(OUT)
         );
         require (  // may need decay [2]
-          Value* out = Decay_If_Unstable(OUT)
+          Stable* out = Decay_If_Unstable(OUT)
         );
         if (not (Is_Trash(out) or Is_Nulled(out) or Is_Blank(out)))
             return OUT;  // consider it a "value" [3]
@@ -1218,7 +1218,7 @@ DECLARE_NATIVE(MAYBE)
     INCLUDE_PARAMS_OF_MAYBE;
 
     Element* target = Element_ARG(TARGET);
-    Atom* atom = Atom_ARG(VALUE);
+    Value* atom = Atom_ARG(VALUE);
 
     if (Is_Error(atom))
         return COPY(atom);  // pass through but don't assign anything
@@ -1296,7 +1296,7 @@ DECLARE_NATIVE(CATCH_P)  // specialized to plain CATCH w/ NAME="THROW" in boot
         return NULLED;  // no throw means just return null (pure, for ELSE)
     }
 
-    const Value* label = VAL_THROWN_LABEL(LEVEL);
+    const Stable* label = VAL_THROWN_LABEL(LEVEL);
     if (not Any_Context(label))
         return THROWN;  // not a context throw, not from DEFINITIONAL-THROW
 
@@ -1323,7 +1323,7 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_THROW;
 
-    Atom* atom = Atom_ARG(VALUE);
+    Value* atom = Atom_ARG(VALUE);
 
     Level* throw_level = LEVEL;  // Level of this RETURN call
 

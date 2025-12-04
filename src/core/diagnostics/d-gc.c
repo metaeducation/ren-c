@@ -252,7 +252,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // that is consistent with the details itself.  That is no longer true
         // (by design), see HIJACK and COPY of actions for why.
         //
-        Value* archetype = Phase_Archetype(details);
+        Stable* archetype = Phase_Archetype(details);
         assert(Is_Frame(archetype));
         break; }
 
@@ -296,7 +296,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             assert(Is_Base_Marked(v->payload.split.two.base));  // lens/label
         }
 
-        const Value* archetype = Varlist_Archetype(context);
+        const Stable* archetype = Varlist_Archetype(context);
         possibly(Cell_Varlist(archetype) == context);  // no longer a rule
         assert(CTX_TYPE(context) == heart);  // but this still is
         UNUSED(archetype);
@@ -332,7 +332,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         if (LIFT_BYTE(v) == ANTIFORM_1) {
             if (heart == TYPE_FENCE) {
-                const Value* value = cast(Value*, v);
+                const Stable* value = cast(Stable*, v);
                 assert(
                     Datatype_Type(value)
                     == Datatype_Type_Slow_Debug(value)
@@ -415,7 +415,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         assert(Is_Stub_Varlist(arch_phase) or Is_Stub_Details(arch_phase));
     }
     else if (Is_Stub_Varlist(a)) {
-        const Value* archetype = Varlist_Archetype(
+        const Stable* archetype = Varlist_Archetype(
             cast(VarList*, m_cast(Array*, a))
         );
 

@@ -454,12 +454,12 @@ static void Init_System_Object(
 
     // Evaluate the block (will eval CONTEXTs within).
     //
-    DECLARE_ATOM (result);
+    DECLARE_VALUE (result);
     if (Eval_Any_List_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
         crash (result);
 
     require (
-      Value* result_value = Decay_If_Unstable(result)
+      Stable* result_value = Decay_If_Unstable(result)
     );
     if (not Is_Quasi_Word_With_Id(result_value, SYM_END))
         crash (result_value);
@@ -490,7 +490,7 @@ static void Init_System_Object(
     VarList* varlist = Cell_Varlist(u_cast(Element*, std_error_slot));
     KIND_BYTE(std_error_slot) = TYPE_WARNING;
 
-    Value* rootvar = Rootvar_Of_Varlist(varlist);
+    Stable* rootvar = Rootvar_Of_Varlist(varlist);
     assert(Get_Cell_Flag(rootvar, PROTECTED));
     KIND_BYTE(rootvar) = TYPE_WARNING;
 }}
@@ -809,7 +809,7 @@ void Startup_Core(void)
         Slot_Init_Hack(Get_System(SYS_CONTEXTS, CTX_LIB)),
         g_lib_module
     );
-    RebolValue* trash = rebValue(
+    Api(Stable*) trash = rebStable(
         "~#[SYS.CONTEXTS.USER unavailable: Mezzanine Startup not finished]#~"
     );
     Copy_Cell(
@@ -933,7 +933,7 @@ void Startup_Core(void)
         "system.contexts.user: module [Name: User] []"
     );
 
-    Sink(Value) user = Alloc_Value();
+    Sink(Stable) user = Alloc_Value();
     assume (
       Read_Slot(user, Get_System(SYS_CONTEXTS, CTX_USER))
     );

@@ -390,7 +390,7 @@ Strand* Append_UTF8_May_Panic(
 // currently has to maintain valid UTF-8 data.  It may be that the buffers
 // should be unified.
 //
-void Join_Binary_In_Byte_Buf(const Value* blk, REBINT limit)
+void Join_Binary_In_Byte_Buf(const Stable* blk, REBINT limit)
 {
     Binary* buf = BYTE_BUF;
 

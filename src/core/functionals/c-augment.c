@@ -73,7 +73,7 @@ DECLARE_NATIVE(AUGMENT)
 {
     INCLUDE_PARAMS_OF_AUGMENT;
 
-    Value* original = ARG(ORIGINAL);
+    Stable* original = ARG(ORIGINAL);
     Element* spec = Element_ARG(SPEC);
 
     Option(const Symbol*) label = Frame_Label_Deep(original);
@@ -133,7 +133,7 @@ DECLARE_NATIVE(AUGMENT)
       )
     );
 
-    Value* out = Init_Frame(OUT, paramlist, label, coupling);
+    Stable* out = Init_Frame(OUT, paramlist, label, coupling);
     Copy_Ghostability(out, original);
 
     if (Is_Frame(original))

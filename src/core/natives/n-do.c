@@ -122,7 +122,7 @@ DECLARE_NATIVE(SHOVE)
   //
   //    Is that useful enough to bother supporting?
 
-    Value* shovee = ARG(RIGHT); // reuse variadic arg cell for the shoved-into
+    Stable* shovee = ARG(RIGHT); // reuse variadic arg cell for the shoved-into
     Option(const Symbol*) label = nullptr;
 
     const Element* right = At_Level(L);
@@ -131,7 +131,7 @@ DECLARE_NATIVE(SHOVE)
         or Is_Path(right) or Is_Chain(right)
     ){
         require (
-          Value* out = Get_Var(
+          Stable* out = Get_Var(
             OUT,  // can't eval directly into arg slot
             NO_STEPS,
             At_Level(L),
@@ -145,7 +145,7 @@ DECLARE_NATIVE(SHOVE)
             return THROWN;
 
         require (
-          Value* decayed = Decay_If_Unstable(OUT)
+          Stable* decayed = Decay_If_Unstable(OUT)
         );
         Move_Cell(shovee, decayed);
     }
@@ -406,7 +406,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     if (Not_Base_Readable(CELL_FRAME_PAYLOAD_1_PHASE(source)))
         panic (Error_Series_Data_Freed_Raw());
 
-    Option(const Atom*) with = nullptr;
+    Option(const Value*) with = nullptr;
     Push_Frame_Continuation(
         OUT,
         LEVEL_MASK_NONE,
@@ -510,7 +510,7 @@ DECLARE_NATIVE(EVAL_FREE)
 {
     INCLUDE_PARAMS_OF_EVAL_FREE;
 
-    Value* frame = ARG(FRAME);
+    Stable* frame = ARG(FRAME);
 
     enum {
         ST_EVAL_FREE_INITIAL_ENTRY = STATE_0,
@@ -665,15 +665,15 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_APPLY;
 
-    Value* op = ARG(OPERATION);
+    Stable* op = ARG(OPERATION);
     assert(Is_Action(op) or Is_Frame(op));
 
     Element* args = Element_ARG(ARGS);
 
     Element* frame;
-    Value* iterator;  // HANDLE! or NULLED (once initialized)
+    Stable* iterator;  // HANDLE! or NULLED (once initialized)
 
-    Atom* var;  // may come from evars iterator or found by index
+    Value* var;  // may come from evars iterator or found by index
     Param* param;  // (same)
 
     if (STATE != ST_FRAME_FILLER_INITIAL_ENTRY)
@@ -809,15 +809,15 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     if (not index)
         panic (Error_Bad_Parameter_Raw(at));
 
-    var = u_cast(Atom*,
+    var = u_cast(Value*,
         u_cast(Cell*, Varlist_Slot(Cell_Varlist(frame), unwrap index))
     );
     param = Phase_Param(Frame_Phase(op), unwrap index);
 
-    if (not Is_Parameter(u_cast(Value*, var)))
+    if (not Is_Parameter(u_cast(Stable*, var)))
         panic (Error_Bad_Parameter_Raw(at));
 
-    Sink(Value) lookback = SCRATCH;  // for error
+    Sink(Stable) lookback = SCRATCH;  // for error
     Copy_Cell(lookback, At_Level(L));
     Fetch_Next_In_Feed(L->feed);
     at = Try_At_Level(L);
@@ -889,7 +889,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     REBLEN index = VAL_UINT32(ARG(INDEX));
 
-    var = u_cast(Atom*,
+    var = u_cast(Value*,
         u_cast(Cell*, Varlist_Slot(Cell_Varlist(frame), index))
     );
     param = Phase_Param(Frame_Phase(op), index);
@@ -900,7 +900,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
 
-    var = u_cast(Atom*, u_cast(Cell*, e->slot));
+    var = u_cast(Value*, u_cast(Cell*, e->slot));
     param = e->param;
 
     goto copy_dual_spare_to_var_in_frame;
@@ -910,9 +910,9 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     possibly(param == var);  // don't overwrite until meta test done
 
     if (/* param and */ Parameter_Class(param) != PARAMCLASS_META)
-        Move_Atom(var, SPARE);
+        Move_Value(var, SPARE);
     else {
-        Move_Atom(var, SPARE);
+        Move_Value(var, SPARE);
         require (
           Decay_If_Unstable(var)
         );
@@ -1024,7 +1024,7 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
     STATE = ST__S_S_GETTING_OPERATION;  // will be necessary in the future...
 
     require (
-      Value* spare = Get_Var(SPARE, GROUPS_OK, operation, SPECIFIED)
+      Stable* spare = Get_Var(SPARE, GROUPS_OK, operation, SPECIFIED)
     );
 
     if (not Is_Action(spare) and not Is_Frame(spare))
@@ -1083,7 +1083,7 @@ DECLARE_NATIVE(RUN)
 {
     INCLUDE_PARAMS_OF_RUN;
 
-    Value* action = ARG(FRAME);
+    Stable* action = ARG(FRAME);
     UNUSED(ARG(ARGS));  // uses internal mechanisms to act variadic
 
     require (

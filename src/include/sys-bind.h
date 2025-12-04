@@ -334,7 +334,7 @@ INLINE void Unbind_Any_Word(Element* v) {
     Tweak_Cell_Binding(v, UNBOUND);
 }
 
-INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
+INLINE Context* VAL_WORD_CONTEXT(const Stable* v) {
     assert(IS_WORD_BOUND(v));
     Context* binding = Cell_Binding(v);
     if (Is_Stub_Patch(binding)) {
@@ -392,14 +392,14 @@ INLINE Context* Derive_Binding(
 //
 // BINDING CONVENIENCE MACROS
 //
-// WARNING: Don't pass these routines something like a singular Value* (such
+// WARNING: Don't pass these routines something like a singular Stable* (such
 // as a TYPE_BLOCK) which you wish to have bound.  You must pass its *contents*
 // as an array...as the plural "values" in the name implies!
 //
 // So don't do this:
 //
-//     Value* block = ARG(BLOCK);
-//     Value* something = ARG(NEXT_ARG_AFTER_BLOCK);
+//     Stable* block = ARG(BLOCK);
+//     Stable* something = ARG(NEXT_ARG_AFTER_BLOCK);
 //     Bind_Values_Deep(block, context);
 //
 // What will happen is that the block will be treated as an array of values

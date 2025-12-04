@@ -86,7 +86,7 @@ INLINE const Element* List_At(
     return at;
 }
 
-INLINE const Element* List_Item_At(const Value* v) {
+INLINE const Element* List_Item_At(const Stable* v) {
     const Element* tail;
     const Element* item = List_At(&tail, v);
     assert(item != tail);  // should be a valid value
@@ -205,7 +205,7 @@ INLINE Element* Init_Relative_Block_At(
 //      == <b>
 //
 
-INLINE Atom* Init_Pack_Untracked(Init(Atom) out, const Source* a) {
+INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
     Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, a, 0, SPECIFIED);
     Unstably_Antiformize_Unbound_Fundamental(out);
     assert(Is_Pack(out));
@@ -237,7 +237,7 @@ INLINE Atom* Init_Pack_Untracked(Init(Atom) out, const Source* a) {
 //    == [a b c d e]
 //
 
-INLINE Value* Splicify(Need(Value*) val) {
+INLINE Stable* Splicify(Need(Stable*) val) {
     assert(Any_List(val) and LIFT_BYTE(val) == NOQUOTE_2);
     KIND_BYTE(val) = TYPE_GROUP;  // splice drops knowledge of list type
     Tweak_Cell_Binding(u_cast(Element*, val), UNBOUND);
@@ -246,7 +246,7 @@ INLINE Value* Splicify(Need(Value*) val) {
     return val;
 }
 
-INLINE Value* Init_Splice_Untracked(Init(Value) out, Source* a) {
+INLINE Stable* Init_Splice_Untracked(Init(Stable) out, Source* a) {
     Init_Group(out, a);
     Stably_Antiformize_Unbound_Fundamental(out);
     assert(Is_Splice(out));
@@ -256,7 +256,7 @@ INLINE Value* Init_Splice_Untracked(Init(Value) out, Source* a) {
 #define Init_Splice(out,a) \
     TRACK(Init_Splice_Untracked((out), (a)))
 
-INLINE bool Is_Blank(const Value* v) {
+INLINE bool Is_Blank(const Stable* v) {
     if (not Is_Splice(v))
         return false;
     const Element* tail;

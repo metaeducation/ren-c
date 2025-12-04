@@ -169,43 +169,43 @@ typedef struct BookmarkStruct Bookmark;
 
 //=//// SYMBOL OR VALUE CONVENIENCE CLASS /////////////////////////////////=//
 //
-// When you make a call to make errors, you can pass a Symbol* or a Value*.
+// When you make a call to make errors, you can pass a Symbol* or a Stable*.
 // In the C++ build we simply accept either and make it possible to extract
 // as a void* suitable for passing to variadics, which then can use
 // Detect_Rebol_Pointer() to figure out what it is.
 //
 #if NO_CPLUSPLUS_11
-    #define SymbolOrValue(const_star) \
+    #define SymbolOrStable(const_star) \
         void const_star
 
-    #define Extract_SoV(sov) \
-        (sov)
+    #define Extract_Symbol_Or_Stable(sos) \
+        (sos)
 #else
-    struct SymbolOrValueHolder {
+    struct SymbolOrStableHolder {
         const void* p;
 
-        SymbolOrValueHolder(const Symbol* s) : p (s) {}
-        SymbolOrValueHolder(const Value* v) : p (v) {}
+        SymbolOrStableHolder(const Symbol* s) : p (s) {}
+        SymbolOrStableHolder(const Stable* v) : p (v) {}
 
       #if NEEDFUL_OPTION_USES_WRAPPER  // Option(const Symbol*) <> const Symbol*
-        SymbolOrValueHolder(Option(const Symbol*)& s) : p (opt s) {}
+        SymbolOrStableHolder(Option(const Symbol*)& s) : p (opt s) {}
       #endif
 
       #if NEEDFUL_SINK_USES_WRAPPER
-        SymbolOrValueHolder(const NeedWrapper<Value*>& v) : p (v.p) {}
-        SymbolOrValueHolder(const SinkWrapper<Value*>& v) : p (v.p) {}
-        SymbolOrValueHolder(const InitWrapper<Value*>& v) : p (v.p) {}
+        SymbolOrStableHolder(const NeedWrapper<Stable*>& v) : p (v.p) {}
+        SymbolOrStableHolder(const SinkWrapper<Stable*>& v) : p (v.p) {}
+        SymbolOrStableHolder(const InitWrapper<Stable*>& v) : p (v.p) {}
         #if CHECK_CELL_SUBCLASSES
-            SymbolOrValueHolder(const NeedWrapper<Element*>& e) : p (e.p) {}
-            SymbolOrValueHolder(const SinkWrapper<Element*>& e) : p (e.p) {}
-            SymbolOrValueHolder(const InitWrapper<Element*>& e) : p (e.p) {}
+            SymbolOrStableHolder(const NeedWrapper<Element*>& e) : p (e.p) {}
+            SymbolOrStableHolder(const SinkWrapper<Element*>& e) : p (e.p) {}
+            SymbolOrStableHolder(const InitWrapper<Element*>& e) : p (e.p) {}
         #endif
       #endif
     };
 
-    #define SymbolOrValue(const_star) \
-        SymbolOrValueHolder
+    #define SymbolOrStable(const_star) \
+        SymbolOrStableHolder
 
-    #define Extract_SoV(sov) \
-        (sov).p
+    #define Extract_Symbol_Or_Stable(sos) \
+        (sos).p
 #endif

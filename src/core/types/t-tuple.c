@@ -146,7 +146,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Sequence)
     REBINT a;
     REBDEC dec;
 
-    Value* arg = ARG_N(2);
+    Stable* arg = ARG_N(2);
 
     if (Is_Integer(arg)) {
         dec = -207.6382;  // unused but avoid maybe uninitialized warning
@@ -460,7 +460,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
 
     Element* seq = Element_ARG(VALUE);
     bool deep = Bool_ARG(DEEP);
-    Value* part = ARG(PART);
+    Stable* part = ARG(PART);
 
     if (not deep or Is_Cell_Wordlike(seq)) {  // wordlike is /A or :B etc
         if (part)
@@ -484,7 +484,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     if (trivial_copy)  // something like a/1/foo
         return COPY(seq);
 
-    Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
+    Stable* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 
     Liftify(datatype);
     Quotify(seq);
@@ -502,7 +502,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Sequence)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     const Element* seq = Element_ARG(LOCATION);
-    const Value* picker = ARG(PICKER);
+    const Stable* picker = ARG(PICKER);
 
     REBINT n;
     if (Is_Integer(picker) or Is_Decimal(picker)) { // #2312
@@ -511,7 +511,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Sequence)
     else
         panic (picker);
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
@@ -544,9 +544,9 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Sequence)
     INCLUDE_PARAMS_OF_REVERSE_OF;
 
     Element* seq = Element_ARG(VALUE);
-    Value* part = ARG(PART);
+    Stable* part = ARG(PART);
 
-    Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
+    Stable* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 
     return Delegate_Operation_With_Part(
         SYM_REVERSE, SYM_BLOCK_X,
@@ -605,12 +605,12 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Sequence)
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
     Element* seq = Element_ARG(VALUE);
-    Value* part = ARG(PART);
+    Stable* part = ARG(PART);
 
     if (Bool_ARG(SECURE) or Bool_ARG(PART))
         panic (Error_Bad_Refines_Raw());
 
-    Value* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
+    Stable* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 
     return Delegate_Operation_With_Part(
         SYM_SHUFFLE, SYM_BLOCK_X,
@@ -633,10 +633,10 @@ IMPLEMENT_GENERIC(MULTIPLY, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_MULTIPLY;
 
-    Value* seq1 = ARG(VALUE1);  // dispatch is on first argument
+    Stable* seq1 = ARG(VALUE1);  // dispatch is on first argument
     assert(Any_Sequence(seq1));
 
-    Value* arg2 = ARG(VALUE2);
+    Stable* arg2 = ARG(VALUE2);
     if (not Is_Integer(arg2))
         panic (PARAM(VALUE2));  // formerly supported decimal/percent
 

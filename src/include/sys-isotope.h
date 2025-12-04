@@ -46,12 +46,12 @@
 //    allowed to be antiform "keywords".  Other words are reserved for future
 //    usage, though dialects can use quasi words however they want.
 //
-// 1. The convention here is that you have to pass an Atom in, because at
-//    the end of the operation you'll have either a Value* or an Atom*.
+// 1. The convention here is that you have to pass an Value in, because at
+//    the end of the operation you'll have either a Stable* or an Value*.
 //    If you were allowed to pass in an Element*, then you'd have an invalid
 //    Element at the callsite when the operation completed.
 //
-INLINE Result(Atom*) Coerce_To_Antiform(Need(Atom*) atom) {
+INLINE Result(Value*) Coerce_To_Antiform(Need(Value*) atom) {
     Element* elem = Known_Element(atom);  // guaranteed element on input (?)
 
     if (Underlying_Sigil_Of(elem))
@@ -161,8 +161,8 @@ INLINE Result(Element*) Coerce_To_Quasiform(Need(Element*) v) {
 #define Elide_Unless_Error_Including_In_Packs(v) \
     Decay_Or_Elide_Core((v), false)
 
-INLINE Result(Value*) Decay_Or_Elide_Core(
-    Need(Atom*) v,
+INLINE Result(Stable*) Decay_Or_Elide_Core(
+    Need(Value*) v,
     bool want_value  // ELIDE is more permissive, doesn't want the value
 ){
     if (Not_Antiform(v))
@@ -239,12 +239,12 @@ INLINE Result(Value*) Decay_Or_Elide_Core(
        Corrupt_Cell_If_Needful(v);
   #endif
 
-    return u_cast(Value*, v);
+    return u_cast(Stable*, v);
 }}
 
-INLINE Result(Value*) Unliftify_Decayed(Value* v) {
+INLINE Result(Stable*) Unliftify_Decayed(Stable* v) {
     trap (
-      Atom *atom = Unliftify_Undecayed(cast(Atom*, v))
+      Value *atom = Unliftify_Undecayed(cast(Value*, v))
     );
     return Decay_If_Unstable(atom);
 }

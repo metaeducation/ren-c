@@ -47,7 +47,7 @@
 INLINE Bounce Dispatch_Generic_Core(
     SymId symid,
     GenericTable* table,
-    const Value* datatype,  // no quoted/quasi/anti [1]
+    const Stable* datatype,  // no quoted/quasi/anti [1]
     Level* level_
 ){
     Bounce bounce;
@@ -86,7 +86,7 @@ INLINE Option(Dispatcher*) Get_Builtin_Generic_Dispatcher(
 
 INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
     const GenericTable* table,
-    const Value* datatype
+    const Stable* datatype
 ){
     Option(Heart) heart = Datatype_Builtin_Heart(datatype);
     if (not heart)

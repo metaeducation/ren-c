@@ -23,7 +23,7 @@
 //
 // Abnormal termination of Rebol.  The checked build is designed to present
 // as much diagnostic information as it can on the passed-in pointer, which
-// includes where a Flex* was allocated or freed.  Or if a Value* is
+// includes where a Flex* was allocated or freed.  Or if a Stable* is
 // passed in it tries to say what tick it was initialized on and what Array
 // it lives in.  If the pointer is a simple UTF-8 string pointer, then that
 // is delivered as a message.
@@ -238,7 +238,7 @@ static ATTRIBUTE_NO_RETURN void Crash_Of_Last_Resort(void) {
 // coverity[+kill]
 //
 ATTRIBUTE_NO_RETURN void Crash_Core(
-    const void *p,  // Flex*, Value*, or UTF-8 char*
+    const void *p,  // Flex*, Stable*, or UTF-8 char*
     Tick tick,
     const char *file, // UTF8
     int line
@@ -393,7 +393,7 @@ DECLARE_NATIVE(CRASH)
 {
     INCLUDE_PARAMS_OF_CRASH;
 
-    Value* info = ARG(INFO);
+    Stable* info = ARG(INFO);
 
   #if TRAMPOLINE_COUNTS_TICKS
     Tick tick = level_->tick;  // use Level's tick instead of g_tick
@@ -404,7 +404,7 @@ DECLARE_NATIVE(CRASH)
     const void *p;
 
     if (Is_Pinned_Form_Of(WORD, info)) {  // interpret as value to diagnose
-        Value* fetched = rebValue(CANON(GET), rebQ(info));
+        Api(Stable*) fetched = rebStable(CANON(GET), rebQ(info));
         Copy_Cell(info, fetched);
         rebRelease(fetched);
         p = info;
@@ -441,7 +441,7 @@ DECLARE_NATIVE(FAIL_P)
 {
     INCLUDE_PARAMS_OF_FAIL_P;
 
-    Value* v = ARG(REASON);
+    Stable* v = ARG(REASON);
 
     Copy_Cell(OUT, v);
     return Failify(OUT);
@@ -462,8 +462,8 @@ DECLARE_NATIVE(PANIC)
 {
     INCLUDE_PARAMS_OF_PANIC;
 
-    Value* reason = ARG(REASON);
-    Value* blame = ARG(BLAME);
+    Stable* reason = ARG(REASON);
+    Stable* blame = ARG(BLAME);
 
   #if NO_RUNTIME_CHECKS
     UNUSED(blame);

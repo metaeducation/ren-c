@@ -382,11 +382,11 @@ INLINE bool Is_Specialized(const Param* p) {
 
 #define CELL_FLAG_PARAM_NOTE_TYPECHECKED  CELL_FLAG_NOTE
 
-INLINE bool Is_Typechecked(const Atom* arg) {
+INLINE bool Is_Typechecked(const Value* arg) {
     return Get_Cell_Flag(arg, PARAM_NOTE_TYPECHECKED);
 }
 
-INLINE void Mark_Typechecked(const Atom* arg) {
+INLINE void Mark_Typechecked(const Value* arg) {
     Set_Cell_Flag(arg, PARAM_NOTE_TYPECHECKED);
 }
 

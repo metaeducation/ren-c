@@ -183,7 +183,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 //  Encloser_Details_Querier: C
 //
 bool Encloser_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -227,7 +227,7 @@ DECLARE_NATIVE(ENCLOSE)
 {
     INCLUDE_PARAMS_OF_ENCLOSE;
 
-    Value* inner = ARG(INNER);
+    Stable* inner = ARG(INNER);
     Element* outer = Element_ARG(OUTER);
 
     Details* details = Make_Dispatch_Details(
@@ -239,7 +239,7 @@ DECLARE_NATIVE(ENCLOSE)
 
     Copy_Cell(Details_At(details, IDX_ENCLOSER_OUTER), outer);
 
-    Value* out = Init_Frame(OUT, details, Frame_Label(inner), UNCOUPLED);
+    Stable* out = Init_Frame(OUT, details, Frame_Label(inner), UNCOUPLED);
 
     if (Is_Frame(inner))
         return OUT;

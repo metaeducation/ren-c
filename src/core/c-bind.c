@@ -130,7 +130,7 @@ void Bind_Values_Inner_Loop(
 void Bind_Values_Core(
     Element* head,
     const Element* tail,
-    const Value* context,
+    const Stable* context,
     Option(SymId) add_midstream_types,
     Flags flags // see %sys-core.h for BIND_DEEP, etc.
 ){
@@ -923,14 +923,14 @@ DECLARE_NATIVE(ADD_LET_BINDING)
 
     Let* let = Make_Let_Variable(Word_Symbol(ARG(WORD)), parent);
 
-    Atom* atom = Atom_ARG(VALUE);
+    Value* atom = Atom_ARG(VALUE);
     if (Is_Meta_Form_Of(WORD, word)) {
         Copy_Cell(Stub_Cell(let), atom);  // don't decay
     }
     else {
         assert(Is_Word(word));
         require (
-          Value* value = Decay_If_Unstable(atom)
+          Stable* value = Decay_If_Unstable(atom)
         );
         Copy_Cell(Stub_Cell(let), value);
     }
@@ -1114,7 +1114,7 @@ Result(None) Clonify_And_Bind_Relative(
 // that words can be found in the function's frame.
 //
 Source* Copy_And_Bind_Relative_Deep_Managed(
-    const Value* body,
+    const Stable* body,
     Details* relative,
     LensMode lens_mode
 ){
@@ -1215,7 +1215,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     // build the preprocessing would most easily be done in usermode.
     //
     if (Is_Group(spec)) {
-        DECLARE_ATOM (temp);
+        DECLARE_VALUE (temp);
         if (Eval_Any_List_At_Throws(temp, spec, SPECIFIED))
             return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         require (
@@ -1318,7 +1318,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             symbol = Word_Symbol(item);
 
             if (Try_Add_Binder_Index(binder, symbol, index)) {
-                Value* var = Init_Tripwire(Append_Context(varlist, symbol));
+                Stable* var = Init_Tripwire(Append_Context(varlist, symbol));
                 if (Is_Meta_Form_Of(WORD, item))
                     Set_Cell_Flag(var, LOOP_SLOT_ROOT_META);
                 else if (Is_Tied_Form_Of(WORD, item))
@@ -1422,10 +1422,10 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 // It accomplishes this by putting a word into the "variable" slot, and having
 // a flag to indicate a dereference is necessary.
 //
-Result(None) Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
+Result(None) Read_Slot_Meta(Sink(Value) out, const Slot* slot)
 {
     if (LIFT_BYTE(slot) != DUAL_0) {
-        const Value* var = Slot_Hack(slot);
+        const Stable* var = Slot_Hack(slot);
 
         Copy_Cell(out, var);
         return none;
@@ -1446,7 +1446,7 @@ Result(None) Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
     LIFT_BYTE(temp) = ONEQUOTE_NONQUASI_4;
     unnecessary(Push_Lifeguard(temp));  // slot protects it.
 
-    Sink(Value) out_value = u_cast(Value*, out);
+    Sink(Stable) out_value = u_cast(Stable*, out);
     if (rebRunThrows(out_value, CANON(GET), temp))
         return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
@@ -1457,8 +1457,8 @@ Result(None) Read_Slot_Meta(Sink(Atom) out, const Slot* slot)
 //
 //  Read_Slot: C
 //
-Result(None) Read_Slot(Sink(Value) out, const Slot* slot) {
-    Sink(Atom) atom_out = u_cast(Atom*, out);
+Result(None) Read_Slot(Sink(Stable) out, const Slot* slot) {
+    Sink(Value) atom_out = u_cast(Value*, out);
     trap (
       Read_Slot_Meta(atom_out, slot)
     );
@@ -1471,7 +1471,7 @@ Result(None) Read_Slot(Sink(Value) out, const Slot* slot) {
 //
 //  Write_Slot: C
 //
-Result(None) Write_Slot(Slot* slot, const Atom* write)
+Result(None) Write_Slot(Slot* slot, const Value* write)
 {
     Flags persist = (slot->header.bits & CELL_MASK_PERSIST_SLOT);
 
@@ -1484,7 +1484,7 @@ Result(None) Write_Slot(Slot* slot, const Atom* write)
 
   handle_non_weird: {
 
-    Atom* var = u_cast(Atom*, slot);
+    Value* var = u_cast(Value*, slot);
 
     Copy_Cell(var, write);
 
@@ -1507,7 +1507,7 @@ Result(None) Write_Slot(Slot* slot, const Atom* write)
     LIFT_BYTE(temp) = ONEQUOTE_NONQUASI_4;
     unnecessary(Push_Lifeguard(temp));  // slot protects it.
 
-    rebElide(CANON(SET), temp, rebQ(u_cast(Value*, write)));
+    rebElide(CANON(SET), temp, rebQ(u_cast(Stable*, write)));
 
     unnecessary(slot->header.bits |= persist);  // didn't write actual slot
     return none;
@@ -1519,8 +1519,8 @@ Result(None) Write_Slot(Slot* slot, const Atom* write)
 //
 Result(None) Write_Loop_Slot_May_Bind_Or_Decay(
     Slot* slot,
-    Option(Atom*) write,
-    const Value* container
+    Option(Value*) write,
+    const Stable* container
 ){
     if (not write)
         return Write_Slot(slot, LIB(NULL));
@@ -1569,8 +1569,8 @@ Result(None) Write_Loop_Slot_May_Bind_Or_Decay(
 //
 Result(None) Write_Loop_Slot_May_Bind(
     Slot* slot,
-    Option(Value*) write,
-    const Value* container
+    Option(Stable*) write,
+    const Stable* container
 ){
     return Write_Loop_Slot_May_Bind_Or_Decay(slot, write, container);
 }
@@ -1581,7 +1581,7 @@ Result(None) Write_Loop_Slot_May_Bind(
 //
 //  Assert_Cell_Binding_Valid_Core: C
 //
-void Assert_Cell_Binding_Valid_Core(const Value* cell)
+void Assert_Cell_Binding_Valid_Core(const Stable* cell)
 {
     Option(Heart) heart = Unchecked_Heart_Of(cell);
     assert(Is_Bindable_Heart(heart));

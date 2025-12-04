@@ -51,10 +51,10 @@ INLINE void Probe_Print_Helper(
 }
 
 
-INLINE void Probe_Molded_Value(Molder* mo, const Value* v)
+INLINE void Probe_Molded_Value(Molder* mo, const Stable* v)
 {
     if (Is_Antiform(v)) {
-        DECLARE_VALUE (temp);
+        DECLARE_STABLE (temp);
         Copy_Cell(temp, v);
         Element* elem = Quasify_Antiform(temp);
         Mold_Element(mo, elem);
@@ -76,7 +76,7 @@ void Probe_Cell_Print_Helper(
 ){
     Probe_Print_Helper(p, expr, "Value", file, line);
 
-    const Atom* atom = cast(Atom*, p);
+    const Value* atom = cast(Value*, p);
 
     if (Is_Cell_Poisoned(atom)) {
         require (

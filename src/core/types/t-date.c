@@ -186,7 +186,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
     if (Does_Date_Have_Time(v)) {
         Append_Codepoint(mo->strand, '/');
         Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // Bool_ARG(FORM)?
-        assert(Is_Possibly_Unstable_Atom_Trash(Atom_From_Bounce(bounce)));
+        assert(Is_Possibly_Unstable_Value_Trash(Value_From_Bounce(bounce)));
         // !!! generically might BOUNCE_CONTINUE
         UNUSED(bounce);
 
@@ -259,7 +259,7 @@ REBLEN Julian_Date(const Cell* date)
 //
 // Calculate the (signed) difference in days between two dates.
 //
-REBINT Days_Between_Dates(const Value* a_in, const Value* b_in)
+REBINT Days_Between_Dates(const Stable* a_in, const Stable* b_in)
 {
     if (Does_Date_Have_Time(a_in) != Does_Date_Have_Time(b_in))
         panic (Error_Invalid_Compare_Raw(a_in, b_in));
@@ -267,8 +267,8 @@ REBINT Days_Between_Dates(const Value* a_in, const Value* b_in)
     if (Does_Date_Have_Zone(a_in) != Does_Date_Have_Zone(b_in))
         panic (Error_Invalid_Compare_Raw(a_in, b_in));
 
-    DECLARE_VALUE (a);
-    DECLARE_VALUE (b);
+    DECLARE_STABLE (a);
+    DECLARE_STABLE (b);
     Copy_Cell(a, a_in);
     Copy_Cell(b, b_in);
 
@@ -293,7 +293,7 @@ REBINT Days_Between_Dates(const Value* a_in, const Value* b_in)
     }
 
     if (sign == -1) {
-        DECLARE_VALUE (tmp);
+        DECLARE_STABLE (tmp);
         Copy_Cell(tmp, a);
         Copy_Cell(a, b);
         Copy_Cell(b, tmp);
@@ -328,9 +328,9 @@ REBINT Days_Between_Dates(const Value* a_in, const Value* b_in)
 //
 // Return the day of the week for a specific date.
 //
-REBLEN Week_Day(const Value* date)
+REBLEN Week_Day(const Stable* date)
 {
-    DECLARE_VALUE (year1);
+    DECLARE_STABLE (year1);
     Copy_Cell(year1, date);
     VAL_YEAR(year1) = 0;
     VAL_MONTH(year1) = 1;
@@ -519,10 +519,10 @@ void Adjust_Date_UTC(Cell* d)
 //
 // Called by DIFFERENCE function.
 //
-Value* Time_Between_Dates(
-    Sink(Value) out,
-    const Value* d1,
-    const Value* d2
+Stable* Time_Between_Dates(
+    Sink(Stable) out,
+    const Stable* d1,
+    const Stable* d2
 ){
     // DIFFERENCE is supposed to calculate a time difference, and dates without
     // time components will lead to misleading answers for that.  The user is
@@ -677,7 +677,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
 }}
 
 
-static REBINT Int_From_Date_Arg(const Value* poke) {
+static REBINT Int_From_Date_Arg(const Stable* poke) {
     if (Is_Integer(poke) or Is_Decimal(poke))
         return Int32s(poke, 0);
 
@@ -778,7 +778,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     Element* date = Element_ARG(LOCATION);
-    const Value* picker = Element_ARG(PICKER);
+    const Stable* picker = Element_ARG(PICKER);
 
     Option(SymId) sym;
     if (Is_Word(picker)) {
@@ -826,7 +826,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
         ? VAL_ZONE(date)
         : NO_DATE_ZONE;
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
 
  dispatch_pick_or_poke: {
 
@@ -950,7 +950,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
     // The modifications are done to the time zone adjusted fields, and
     // then the time is fixed back.
 
-    Value* poke = Unliftify_Known_Stable(dual);
+    Stable* poke = Unliftify_Known_Stable(dual);
 
     switch (opt sym) {
       case SYM_YEAR:
@@ -1029,7 +1029,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
         //
         // (It could also be an error if the time zones don't line up)
 
-        DECLARE_ATOM (poke_adjusted);
+        DECLARE_VALUE (poke_adjusted);
         Copy_Cell(poke_adjusted, poke);
         Fold_Zone_Into_Date(poke_adjusted);
         assert(not Does_Date_Have_Zone(poke_adjusted));
@@ -1186,8 +1186,8 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Date)
 {
     INCLUDE_PARAMS_OF_DIFFERENCE;
 
-    Value* val1 = ARG(VALUE1);
-    Value* val2 = ARG(VALUE2);
+    Stable* val1 = ARG(VALUE1);
+    Stable* val2 = ARG(VALUE2);
 
     if (Bool_ARG(CASE))
         panic (Error_Bad_Refines_Raw());

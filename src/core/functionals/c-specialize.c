@@ -58,10 +58,10 @@
 // frame if needed.
 //
 ParamList* Make_Varlist_For_Action_Push_Partials(
-    const Value* action,  // need ->binding, so can't just be a Phase*
+    const Stable* action,  // need ->binding, so can't just be a Phase*
     StackIndex lowest_stackindex,  // caller can add refinements
     Option(Binder*) binder,
-    Option(const Value*) placeholder
+    Option(const Stable*) placeholder
 ){
     StackIndex highest_stackindex = TOP_INDEX;
 
@@ -74,7 +74,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
     Tweak_Bonus_Keylist_Shared(a, Phase_Keylist(phase));
 
     assert(Is_Action(action) or Is_Frame(action));  // tolerate either?
-    Value* rootvar = Flex_Head_Dynamic(Element, a);
+    Stable* rootvar = Flex_Head_Dynamic(Element, a);
     Copy_Cell(rootvar, action);
     LIFT_BYTE(rootvar) = NOQUOTE_2;  // make sure it's a plain FRAME!
     Protect_Rootvar_If_Debug(rootvar);
@@ -175,10 +175,10 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 // and not absolute.
 //
 ParamList* Make_Varlist_For_Action(
-    const Value* action, // need ->binding, so can't just be a Phase*
+    const Stable* action, // need ->binding, so can't just be a Phase*
     StackIndex lowest_stackindex,
     Option(Binder*) binder,
-    Option(const Value*) placeholder
+    Option(const Stable*) placeholder
 ){
     ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(
         action,
@@ -207,8 +207,8 @@ ParamList* Make_Varlist_For_Action(
 // has :DUP at TOP, and :PART under it.  List stops at lowest_stackindex.
 //
 bool Specialize_Action_Throws(
-    Sink(Value) out,
-    const Value* specializee,
+    Sink(Stable) out,
+    const Stable* specializee,
     Option(Element*) def,  // !!! REVIEW: binding modified directly, not copied
     StackIndex lowest_stackindex
 ){
@@ -259,7 +259,7 @@ bool Specialize_Action_Throws(
         Destruct_Binder_Core(binder);
 
         bool threw = Eval_Any_List_At_Throws(
-            u_cast(Atom*, out),  // use as temporary output
+            u_cast(Value*, out),  // use as temporary output
             unwrap def,
             SPECIFIED
         );
@@ -305,7 +305,7 @@ bool Specialize_Action_Throws(
             continue;
         }
 
-        Value* arg = Slot_Hack(slot);
+        Stable* arg = Slot_Hack(slot);
 
         // !!! If argument was previously specialized, should have been type
         // checked already... don't type check again (?)
@@ -362,7 +362,7 @@ bool Specialize_Action_Throws(
                 panic (Error_Bad_Parameter_Raw(ordered));
             }
 
-            Value* ordered_slot = Slot_Hack(
+            Stable* ordered_slot = Slot_Hack(
                 Varlist_Slot(exemplar, VAL_WORD_INDEX(ordered))
             );
             if (not Is_Specialized(cast(Param*, ordered_slot))) {
@@ -455,11 +455,11 @@ DECLARE_NATIVE(SPECIALIZE)
 
 } finished_filling_frame: { //////////////////////////////////////////////////
 
-    Value* specializee = ARG(OPERATION);
+    Stable* specializee = ARG(OPERATION);
 
     Option(InfixMode) infix_mode = Frame_Infix_Mode(specializee);
 
-    Value* out = Copy_Cell(OUT, Element_LOCAL(FRAME));
+    Stable* out = Copy_Cell(OUT, Element_LOCAL(FRAME));
 
     Tweak_Frame_Infix_Mode(out, infix_mode);
     Copy_Ghostability(out, specializee);
@@ -555,7 +555,7 @@ const Param* Last_Unspecialized_Param(Sink(const Key*) key_out, Phase* act)
 //
 // Helper built on First_Unspecialized_Param(), can also give you the param.
 //
-Atom* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
+Value* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
 {
     Phase* phase = Level_Phase(L);
     const Param* param = First_Unspecialized_Param(nullptr, phase);

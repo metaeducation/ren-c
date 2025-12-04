@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// All THROWN values have two parts: the Atom arg being thrown and a Value
+// All THROWN values have two parts: the Value arg being thrown and a Value
 // indicating the "label" of the throw.
 //
 // You cannot fit both values into a single value's bits of course.  One way
@@ -63,7 +63,7 @@ INLINE bool Is_Throwing(Level* level_) {
 
 #define THROWING Is_Throwing(level_)
 
-INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
+INLINE const Stable* VAL_THROWN_LABEL(Level* level_) {
     UNUSED(level_);
     assert(not Is_Cell_Erased(&g_ts.thrown_label));
     return &g_ts.thrown_label;
@@ -75,8 +75,8 @@ INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
 
 INLINE void Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Level* L,
-    const Atom* arg,
-    const Value* label
+    const Value* arg,
+    const Stable* label
 ){
     possibly(label == L->out);
     possibly(arg == L->out);
@@ -105,12 +105,12 @@ INLINE void Init_Thrown_Panic(Level* L, Error* error) {
 }
 
 INLINE void CATCH_THROWN(
-    Atom* arg_out,
+    Value* arg_out,
     Level* L
 ){
     assert(Is_Throwing(L));
 
-    Move_Atom(arg_out, &g_ts.thrown_arg);
+    Move_Value(arg_out, &g_ts.thrown_arg);
 
     Erase_Cell(&g_ts.thrown_label);
 

@@ -85,7 +85,7 @@
 // * Needed to close the socket on the success path
 // * Called gethostname() for no obvious reason
 //
-static void Get_Local_Ip_Via_Google_DNS_May_Panic(Sink(Value) out)
+static void Get_Local_Ip_Via_Google_DNS_May_Panic(Sink(Stable) out)
 {
     const char* target_name = "8.8.8.8";  // Google's DNS server IP
     const char* target_port = "53";  // DNS port
@@ -161,11 +161,11 @@ static void Get_Local_Ip_Via_Google_DNS_May_Panic(Sink(Value) out)
 //
 DECLARE_NATIVE(DNS_ACTOR)
 {
-    Value* port = ARG_N(1);
+    Stable* port = ARG_N(1);
     const Symbol* verb = Level_Verb(LEVEL);
 
     VarList* ctx = Cell_Varlist(port);
-    Value* spec = Slot_Hack(Varlist_Slot(ctx, STD_PORT_SPEC));
+    Stable* spec = Slot_Hack(Varlist_Slot(ctx, STD_PORT_SPEC));
 
     switch (opt Symbol_Id(verb)) {
       case SYM_OPEN_Q:
@@ -181,7 +181,7 @@ DECLARE_NATIVE(DNS_ACTOR)
         UNUSED(PARAM(STRING)); // handled in dispatcher
         UNUSED(PARAM(LINES)); // handled in dispatcher
 
-        Value* host = Slot_Hack(Obj_Slot(spec, STD_PORT_SPEC_NET_HOST));
+        Stable* host = Slot_Hack(Obj_Slot(spec, STD_PORT_SPEC_NET_HOST));
 
         if (Is_Nulled(host)) {
             //
@@ -225,7 +225,7 @@ DECLARE_NATIVE(DNS_ACTOR)
             // ...else fall through to error handling...
         }
         else if (Is_Text(host)) {
-            Value* tuple = rebValue(
+            Api(Stable*) tuple = rebStable(
                 "match tuple! first transcode", host
             );  // W3C says non-IP hosts can't end with number in tuple
             if (tuple) {

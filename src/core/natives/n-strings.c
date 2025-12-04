@@ -25,7 +25,7 @@
 #include "sys-core.h"
 
 
-static bool Check_Char_Range(const Value* val, Codepoint limit)
+static bool Check_Char_Range(const Stable* val, Codepoint limit)
 {
     if (Is_Rune_And_Is_Char(val))
         return Rune_Known_Single_Codepoint(val) <= limit;
@@ -356,7 +356,7 @@ DECLARE_NATIVE(JOIN)
         Derelativize(SPARE, item, Level_Binding(sub));
         Fetch_Next_In_Feed(sub->feed);
 
-        Value* unspaced = rebValue(CANON(UNSPACED), rebQ(SPARE));
+        Api(Stable*) unspaced = rebStable(CANON(UNSPACED), rebQ(SPARE));
         if (unspaced == nullptr)  // vaporized, allow it
             goto next_mold_step;
 
@@ -429,7 +429,7 @@ DECLARE_NATIVE(JOIN)
         goto vetoed;
 
     require (
-      Value* spare = Decay_If_Unstable(SPARE)  // [1]
+      Stable* spare = Decay_If_Unstable(SPARE)  // [1]
     );
 
     if (Is_Splice(spare)) {  // only allow splice for mold, for now
@@ -489,7 +489,7 @@ DECLARE_NATIVE(JOIN)
         goto vetoed;
 
     require (
-      Value* spare = Decay_If_Unstable(SPARE)
+      Stable* spare = Decay_If_Unstable(SPARE)
     );
 
     if (Is_Splice(spare)) {
@@ -571,8 +571,8 @@ DECLARE_NATIVE(JOIN)
     StackIndex tail = TOP_INDEX + 1;
 
     for (; at != tail; ++at) {
-        bool mold = Get_Cell_Flag(Data_Stack_At(Value, at), STACK_NOTE_MOLD);
-        Value* v = Copy_Cell(SPARE, Data_Stack_At(Value, at));
+        bool mold = Get_Cell_Flag(Data_Stack_At(Stable, at), STACK_NOTE_MOLD);
+        Stable* v = Copy_Cell(SPARE, Data_Stack_At(Stable, at));
 
         if (mold) {
             assert(NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD));
@@ -655,8 +655,8 @@ DECLARE_NATIVE(JOIN)
 
   iterate_stack: {
 
-    OnStack(Value*) at = Data_Stack_At(Value, STACK_BASE + 1);
-    OnStack(Value*) tail = Data_Stack_At(Value, TOP_INDEX + 1);
+    OnStack(Stable*) at = Data_Stack_At(Stable, STACK_BASE + 1);
+    OnStack(Stable*) tail = Data_Stack_At(Stable, TOP_INDEX + 1);
 
     for (; at != tail; ++at) {
         if (Get_Cell_Flag(at, STACK_NOTE_MOLD)) {
@@ -1047,7 +1047,7 @@ DECLARE_NATIVE(DELINE)
     // AS TEXT! verifies the UTF-8 validity of a BLOB!, and checks for any
     // embedded '\0' bytes, illegal in texts...without copying the input.
     //
-    Value* input = rebValue("as text!", ARG(INPUT));
+    Api(Stable*) input = rebStable("as text!", ARG(INPUT));
 
     if (Bool_ARG(LINES)) {
         Init_Block(OUT, Split_Lines(cast(Element*, input)));
@@ -1468,7 +1468,7 @@ DECLARE_NATIVE(INVALID_UTF8_Q)
 {
     INCLUDE_PARAMS_OF_INVALID_UTF8_Q;
 
-    Value* arg = ARG(DATA);
+    Stable* arg = ARG(DATA);
 
     Size size;
     const Byte* utf8 = Blob_Size_At(&size, arg);

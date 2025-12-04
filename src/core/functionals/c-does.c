@@ -78,7 +78,7 @@ DECLARE_NATIVE(DOES)
 {
     INCLUDE_PARAMS_OF_DOES;
 
-    Value* source = ARG(SOURCE);
+    Stable* source = ARG(SOURCE);
 
     if (Is_Block(source))
         return rebDelegate(CANON(LAMBDA), g_empty_block, source);

@@ -51,7 +51,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
 // could track whether it's "open" or not, but the details of what is needed
 // depends on the development of a coherent port model.
 {
-    Value* port = ARG_N(1);
+    Stable* port = ARG_N(1);
     const Symbol* verb = Level_Verb(LEVEL);
 
     switch (opt Symbol_Id(verb)) {
@@ -96,7 +96,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
             return "panic -[Couldn't GlobalLock() UCS2 clipboard data]-";
         }
 
-        Value* str = rebTextWide(wide);
+        Api(Stable*) str = Known_Stable_Api(rebTextWide(wide));
 
         GlobalUnlock(h);
         CloseClipboard();
@@ -110,7 +110,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         if (Bool_ARG(APPEND) or Bool_ARG(LINES))
             panic (Error_Bad_Refines_Raw());
 
-        Value* data = ARG(DATA);
+        Stable* data = ARG(DATA);
 
         // !!! Traditionally the currency of READ and WRITE is binary data.
         // R3-Alpha had a behavior of ostensibly taking string or binary, but

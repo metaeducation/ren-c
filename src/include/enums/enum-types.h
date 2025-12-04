@@ -384,7 +384,7 @@ INLINE Heart Heart_Of_Singleheart(SingleHeart single) {
 }
 
 // This needs to be defined prior to the %cast-cells.h file, so that it can
-// make sure you don't cast an unstable antiform to a Value*.  This is before
+// make sure you don't cast an unstable antiform to a Stable*.  This is before
 // the inclusion of Option() so it doesn't use Heart_Of(), which is good
 // for efficiency even if it looks a bit weird.
 //

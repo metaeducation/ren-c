@@ -54,10 +54,10 @@ Result(Element*) Transcode_One(
 ){
     assert(Any_Utf8(any_utf8));  // use rebQ(), as SIGIL!, WORD!, evaluative
     Value* result;
-    RebolValue* warning = rebRescue2(
+    Api(Stable*) warning = Known_Stable_Api(rebRescue2(
         &result,
         "transcode:one as text!", rebQ(any_utf8)
-    );
+    ));
     if (warning) {
         Error* error = Cell_Error(warning);
         rebRelease(warning);
@@ -150,7 +150,7 @@ DECLARE_NATIVE(TRANSCODE)
     else
         file = ANONYMOUS;
 
-    Sink(Value) scratch_line_number = SCRATCH;  // use as scratch space
+    Sink(Stable) scratch_line_number = SCRATCH;  // use as scratch space
     if (Any_Word(ARG(LINE))) {
         require (
           Get_Var(

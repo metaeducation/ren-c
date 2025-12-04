@@ -73,14 +73,14 @@ typedef struct {
     uv_dir_t *handle;  // stored during directory enumeration
     uv_file id;  // an int, FILEHANDLE_NONE means not open
 
-    // !!! A pointer to a Value* was originally found in the port spec and
+    // !!! A pointer to a Stable* was originally found in the port spec and
     // pointed to here.  That hinged on the lifetime of the value being the
     // same as the lifetime of the filereq.  However, direct pointers into
     // objects are not used now, since object slots may be abstracted to
     // be getters or typechecked/etc.  So you should instead read the path
     // each time.
     //
-    /* Value* path; */
+    /* Stable* path; */
 
     // !!! To the extent Ren-C can provide any value in this space at all,
     // one thing it can do is make sure it is unambiguous that all directories
@@ -102,11 +102,11 @@ typedef struct {
     uint64_t offset;
 } FileReq;
 
-INLINE Option(FileReq*) Filereq_Of_Port(const Value* port)
+INLINE Option(FileReq*) Filereq_Of_Port(const Stable* port)
 {
     VarList* ctx = Cell_Varlist(port);
     Slot* state_slot = Varlist_Slot(ctx, STD_PORT_STATE);
-    DECLARE_VALUE (state);
+    DECLARE_STABLE (state);
     require (
       Read_Slot(state, state_slot)
     );

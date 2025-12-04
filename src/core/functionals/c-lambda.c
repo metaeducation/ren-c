@@ -198,7 +198,7 @@ Bounce Lambda_Dispatcher(Level* const L)
 //  Lambda_Details_Querier: C
 //
 bool Lambda_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -207,14 +207,14 @@ bool Lambda_Details_Querier(
 
     switch (property) {
       case SYM_RETURN_OF: {
-        Value* param = Details_At(details, IDX_LAMBDA_RESULT_PARAM);
+        Stable* param = Details_At(details, IDX_LAMBDA_RESULT_PARAM);
         if (Is_Quasar(param)) {  // [] PARAMETER!
-            Value* arbitrary = rebValue("return of @", LIB(RANDOMIZE));
+            Api(Stable*) arbitrary = rebStable("return of @", LIB(RANDOMIZE));
             Copy_Cell(out, arbitrary);
             rebRelease(arbitrary);
         }
         else if (Is_Space(param)) {  // [<divergent>] PARAMETER!
-            Value* arbitrary = rebValue("return of @", LIB(CRASH));
+            Api(Stable*) arbitrary = rebStable("return of @", LIB(CRASH));
             Copy_Cell(out, arbitrary);
             rebRelease(arbitrary);
         }

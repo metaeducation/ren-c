@@ -59,12 +59,12 @@ Bounce Downshot_Dispatcher(Level* const L)  // runs until count is reached
     Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == MAX_IDX_ONESHOT);
 
-    Value* n = Details_At(details, IDX_ONESHOT_COUNTER);
+    Stable* n = Details_At(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) == 0)
         return NULLED;  // always return null once 0 is reached
     mutable_VAL_INT64(n) -= 1;
 
-    Value* code = Known_Stable(Level_Arg(L, 1));
+    Stable* code = Known_Stable(Level_Arg(L, 1));
     return DELEGATE_BRANCH(OUT, code);
 }
 
@@ -79,13 +79,13 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
     Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == MAX_IDX_ONESHOT);
 
-    Value* n = Details_At(details, IDX_ONESHOT_COUNTER);
+    Stable* n = Details_At(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) < 0) {
         mutable_VAL_INT64(n) += 1;
         return NULLED;  // return null until 0 is reached
     }
 
-    Value* code = Known_Stable(Level_Arg(L, 1));
+    Stable* code = Known_Stable(Level_Arg(L, 1));
     return DELEGATE_BRANCH(OUT, code);
 }
 
@@ -93,7 +93,7 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
 //  Oneshot_Details_Querier: C
 //
 bool Oneshot_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){

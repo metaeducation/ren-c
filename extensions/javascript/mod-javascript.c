@@ -247,11 +247,11 @@ INLINE Level* Level_From_Frame_Id(heapaddr_t id) {
     return Level_Of_Varlist_May_Panic(varlist);  // should still be valid...
 }
 
-INLINE Value* Value_From_Value_Id(heapaddr_t id) {
+INLINE Stable* Value_From_Value_Id(heapaddr_t id) {
     if (id == 0)
         return nullptr;
 
-    Value* v = cast(Value*, Pointer_From_Heapaddr(id));
+    Stable* v = cast(Stable*, Pointer_From_Heapaddr(id));
     assert(not Is_Nulled(v));  // API speaks in nullptr only
     return v;
 }
@@ -407,7 +407,7 @@ EXTERN_C intptr_t API_rebPromise(
     // for granted the resolve() function created on return from this helper
     // already exists.
 
-    DECLARE_VALUE (block);
+    DECLARE_STABLE (block);
     API_rebTranscodeInto(binding, block, p, vaptr);
 
     Array* code = Cell_Array_Ensure_Mutable(block);
@@ -476,7 +476,7 @@ void RunPromise(void)
     );
 
     Push_Level_Dont_Inherit_Interruptibility(  // you can HALT inside a promise
-        cast(Atom*, Alloc_Value_Core(CELL_MASK_ERASED_0)),  // don't set root
+        cast(Value*, Alloc_Value_Core(CELL_MASK_ERASED_0)),  // don't set root
         L
     );
     goto run_promise;
@@ -489,7 +489,7 @@ void RunPromise(void)
         return;  // the setTimeout() on resolve/reject will queue us back
     }
 
-    Value* metaresult;
+    Stable* metaresult;
     if (r == BOUNCE_THROWN) {
         assert(Is_Throwing(TOP_LEVEL));
         Error* error = Error_No_Catch_For_Throw(TOP_LEVEL);
@@ -528,7 +528,7 @@ void RunPromise(void)
             // But what if it doesn't pay attention to it and release it?
             // It could cause leaks.
             //
-            Value* result = rebValue("unlift", rebQ(metaresult));
+            Api(Stable*) result = rebStable("unlift", rebQ(metaresult));
             Free_Value(metaresult);
             rebUnmanage(result);
 
@@ -551,7 +551,7 @@ void RunPromise(void)
 
         assert(info->state == PROMISE_STATE_REJECTED);
 
-        Value* result = nullptr;  // !!! What was this supposed to be?
+        Stable* result = nullptr;  // !!! What was this supposed to be?
 
         // Note: Expired, can't use VAL_CONTEXT
         //
@@ -602,7 +602,7 @@ EXTERN_C void API_rebIdle_internal(void)  // NO user JS code on stack!
 
 // Initially this was rebSignalResolveNative() and not rebResolveNative()
 // The reason was that the empterpreter build had the Ren-C interpreter
-// suspended, and there was no way to build a Value* to pass through to it.
+// suspended, and there was no way to build a Stable* to pass through to it.
 // So the result was stored as a function in a table to generate the value.
 // Now it pokes the result directly into the frame's output slot.
 //
@@ -658,7 +658,7 @@ EXTERN_C void API_rebRejectNative_internal(
 
     TRACE("reb.RejectNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
-    Value* error = Value_From_Value_Id(error_id);
+    Stable* error = Value_From_Value_Id(error_id);
 
     if (error == nullptr) {  // Signals halt...not normal error [3]
         TRACE("JavaScript_Dispatcher() => throwing a halt");
@@ -780,7 +780,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
 
     heapaddr_t native_id = Native_Id_For_Details(Ensure_Level_Details(L));
 
-    Value* inherit = Details_At(details, IDX_JS_NATIVE_CONTEXT);
+    Stable* inherit = Details_At(details, IDX_JS_NATIVE_CONTEXT);
     assert(Is_Module(inherit));  // !!! review what to support here
     assert(not Link_Inherit_Bind(L->varlist));
     Tweak_Link_Inherit_Bind(L->varlist, Cell_Context(inherit));
@@ -883,7 +883,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
 //  Javascript_Details_Querier: C
 //
 bool Javascript_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -1076,7 +1076,7 @@ DECLARE_NATIVE(JS_NATIVE)
         js,  /* JS code registering the function body (the `$0` parameter) */
         source
     );
-    Value* errval = cast(Value*, Pointer_From_Heapaddr(error_addr));
+    Stable* errval = cast(Stable*, Pointer_From_Heapaddr(error_addr));
     if (errval) {
         Error* e = Cell_Error(errval);
         unnecessary(rebRelease(errval));  // panic releases
@@ -1126,7 +1126,7 @@ DECLARE_NATIVE(JS_EVAL_P)
 {
     INCLUDE_PARAMS_OF_JS_EVAL_P;
 
-    Value* source = ARG(SOURCE);
+    Stable* source = ARG(SOURCE);
 
     const char *utf8 = cast(char*, Cell_Utf8_At(source));
     heapaddr_t addr;
@@ -1165,13 +1165,13 @@ DECLARE_NATIVE(JS_EVAL_P)
             Heapaddr_From_Pointer(source)
         );
     }
-    Value* value = Value_From_Value_Id(addr);
+    Stable* value = Value_From_Value_Id(addr);
     if (not value or not Is_Warning(value))
         return value;  // evaluator takes ownership of handle
 
   handle_error: {
 
-    Value* errval = Value_From_Value_Id(addr);
+    Stable* errval = Value_From_Value_Id(addr);
     Error* e = Cell_Error(errval);
     rebRelease(errval);
     panic (e);

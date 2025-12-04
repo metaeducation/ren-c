@@ -128,7 +128,7 @@ Bounce Adapter_Dispatcher(Level* const L)
     //    may have put invalid types in parameter slots.  So it needs to be
     //    typechecked before executing.
 
-    Value* adaptee = Phase_Archetype(details);
+    Stable* adaptee = Phase_Archetype(details);
 
     Tweak_Level_Phase(L, Frame_Phase(adaptee));
     Tweak_Level_Coupling(L, Frame_Coupling(adaptee));
@@ -141,7 +141,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 //  Adapter_Details_Querier: C
 //
 bool Adapter_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -150,7 +150,7 @@ bool Adapter_Details_Querier(
 
     switch (property) {
       case SYM_RETURN_OF: {
-        Value* adaptee = Phase_Archetype(details);
+        Stable* adaptee = Phase_Archetype(details);
         Details* adaptee_details = Phase_Details(Frame_Phase(adaptee));
         DetailsQuerier* querier = Details_Querier(adaptee_details);
         return (*querier)(out, adaptee_details, SYM_RETURN_OF); }
@@ -189,7 +189,7 @@ DECLARE_NATIVE(ADAPT)
 {
     INCLUDE_PARAMS_OF_ADAPT;
 
-    Value* adaptee = ARG(ORIGINAL);
+    Stable* adaptee = ARG(ORIGINAL);
     Element* prelude = Element_ARG(PRELUDE);
 
     Details* details = Make_Dispatch_Details(
@@ -211,7 +211,7 @@ DECLARE_NATIVE(ADAPT)
     );
     Tweak_Cell_Binding(rebound, List_Binding(prelude));
 
-    Value* out = Init_Frame(OUT, details, Frame_Label_Deep(adaptee), UNCOUPLED);
+    Stable* out = Init_Frame(OUT, details, Frame_Label_Deep(adaptee), UNCOUPLED);
     Copy_Ghostability(out, adaptee);
 
     if (Is_Frame(adaptee))

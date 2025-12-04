@@ -440,7 +440,7 @@ DECLARE_NATIVE(NUL_Q)
 // will probably limit it to INTEGER! only).
 //
 static Result(REBI64) Get_Math_Arg_For_Char(
-    Value* arg,
+    Stable* arg,
     const Symbol* verb
 ){
     switch (opt Type_Of(arg)) {
@@ -875,8 +875,8 @@ Result(Element*) Alias_Any_Utf8_As(
         // have to validate the email or URL.  Build on top of logic in
         // the TO routine to do that, even though it copies the String.
         //
-        const Value* datatype_as = Datatype_From_Type(as);
-        Value* result = rebValue(CANON(TO), rebQ(datatype_as), rebQ(v));
+        const Stable* datatype_as = Datatype_From_Type(as);
+        Api(Stable*) result = rebStable(CANON(TO), rebQ(datatype_as), rebQ(v));
         Copy_Cell(out, Known_Element(result));
         rebRelease(result);
         return out;
@@ -909,14 +909,14 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Rune)
     INCLUDE_PARAMS_OF_TWEAK_P;
 
     const Element* rune = Element_ARG(LOCATION);
-    const Value* picker = Element_ARG(PICKER);
+    const Stable* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
         panic (PARAM(PICKER));
 
     REBI64 n = VAL_INT64(picker);
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
@@ -954,9 +954,9 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Utf8)
     INCLUDE_PARAMS_OF_REVERSE_OF;
 
     Element* any_utf8 = Element_ARG(VALUE);
-    Value* part = ARG(PART);
+    Stable* part = ARG(PART);
 
-    Value* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
+    Stable* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
 
     return Delegate_Operation_With_Part(
         SYM_REVERSE, SYM_TEXT_X,
@@ -1017,12 +1017,12 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
     Element* any_utf8 = Element_ARG(VALUE);
-    Value* part = ARG(PART);
+    Stable* part = ARG(PART);
 
     if (Bool_ARG(SECURE))
         panic (Error_Bad_Refines_Raw());
 
-    Value* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
+    Stable* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
 
     return Delegate_Operation_With_Part(
         SYM_SHUFFLE, SYM_TEXT_X,

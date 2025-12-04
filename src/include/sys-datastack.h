@@ -50,8 +50,8 @@
 //
 //=// NOTES ///////////////////////////////////////////////////////////////=//
 //
-// * Do not store the result of a PUSH() directly into a Value* variable.
-//   Instead, use the OnStack(Value*) type, which makes sure that you don't try
+// * Do not store the result of a PUSH() directly into a Stable* variable.
+//   Instead, use the OnStack(Stable*) type, which makes sure that you don't try
 //   to hold a pointer into the stack across another push or an evaluation.
 //
 // * The data stack is limited in size, and this means code that uses it may
@@ -66,8 +66,8 @@
 //   memory-pooled levels and stacklessness (see %c-trampoline.c)
 //
 
-// The result of PUSH() and TOP is not Value*, but OnStack(Value*).  In an
-// unchecked build this is just a Value*, but with DEBUG_EXTANT_STACK_POINTERS
+// The result of PUSH() and TOP is not Stable*, but OnStack(Stable*).  In an
+// unchecked build this is just a Stable*, but with DEBUG_EXTANT_STACK_POINTERS
 // it becomes a checked C++ wrapper class...which keeps track of how many
 // such stack values are extant.  If the number is not zero, then you will
 // get an assert if you try to PUSH() or DROP(), as well as if you
@@ -188,13 +188,13 @@
 // TOP is the most recently pushed item.
 //
 #define TOP \
-    cast(OnStack(Value*), cast(Value*, g_ds.movable_top))  // assume valid
+    cast(OnStack(Stable*), cast(Stable*, g_ds.movable_top))  // assume valid
 
 #define TOP_ELEMENT \
     cast(OnStack(Element*), cast(Element*, g_ds.movable_top))  // assume valid
 
 #define TOP_ATOM \
-    cast(OnStack(Atom*), cast(Atom*, g_ds.movable_top))  // assume valid
+    cast(OnStack(Value*), cast(Value*, g_ds.movable_top))  // assume valid
 
 
 // 1. Use the fact that the data stack is always dynamic to avoid having to
@@ -248,7 +248,7 @@ INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
 
 // Note: g_ds.movable_top is just TOP, but accessing TOP asserts on ENDs
 //
-INLINE OnStack(Atom*) PUSH(void) {
+INLINE OnStack(Value*) PUSH(void) {
     Assert_No_DataStack_Pointers_Extant();
 
     ++g_ds.index;
@@ -261,7 +261,7 @@ INLINE OnStack(Atom*) PUSH(void) {
   #endif
 
     Erase_Cell(g_ds.movable_top);
-    return u_cast(Atom*, g_ds.movable_top);  // must u_cast(), erased
+    return u_cast(Value*, g_ds.movable_top);  // must u_cast(), erased
 }
 
 

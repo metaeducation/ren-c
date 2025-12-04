@@ -676,7 +676,7 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
-// The cell subclasses [Element Value Atom] help to quarantine antiforms and
+// The cell subclasses [Element Value Value] help to quarantine antiforms and
 // unstable antiforms into slots that should have them.  I couldn't figure
 // out a clean way to get the compile-time errors I wanted without adding
 // runtime cost via wrapper classes...so they are only used in checked builds
@@ -749,7 +749,7 @@ Special internal defines used by RT, not Host-Kit developers:
 
 // Each PUSH() on the data stack can potentially move all the pointers on the
 // stack.  Hence there is a debug setting for managing these pointers in a
-// special C++ container called OnStack(Value*).  This counts to see how many
+// special C++ container called OnStack(Stable*).  This counts to see how many
 // stack pointers the user has in local variables, and if that number is not
 // zero then it asserts when a push or pop is requested, or upon evaluation.
 //

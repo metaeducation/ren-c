@@ -214,7 +214,7 @@ DECLARE_NATIVE(CHECK)  // !!! Review the necessity of this (hasn't been used)
     INCLUDE_PARAMS_OF_CHECK;
 
   #if RUNTIME_CHECKS
-    Value* value = ARG(VALUE);
+    Stable* value = ARG(VALUE);
 
     Check_Memory_Debug();  // if memory is bad, all other bets are off
 

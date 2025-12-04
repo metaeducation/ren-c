@@ -108,7 +108,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
     Init_Blob(v, bset);
     Init_Nulled(ARG(FORM));  // form = false
     Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Blob)(LEVEL);
-    assert(Is_Possibly_Unstable_Atom_Trash(Atom_From_Bounce(bounce)));
+    assert(Is_Possibly_Unstable_Value_Trash(Value_From_Bounce(bounce)));
     // !!! generically it could BOUNCE_CONTINUE...
     UNUSED(bounce);
 
@@ -158,7 +158,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Bitset)
 // Return integer number for the maximum bit number defined by
 // the value. Used to determine how much space to allocate.
 //
-REBINT Find_Max_Bit(const Value* val)
+REBINT Find_Max_Bit(const Stable* val)
 {
     REBLEN maxi = 0;
 
@@ -432,7 +432,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
 // Check bits indicated by strings and chars and ranges.
 // If uncased is true, try to match either upper or lower case.
 //
-bool Check_Bits(const Binary* bset, const Value* val, bool uncased)
+bool Check_Bits(const Binary* bset, const Stable* val, bool uncased)
 {
     if (Is_Rune_And_Is_Char(val))
         return Check_Bit(bset, Rune_Known_Single_Codepoint(val), uncased);
@@ -656,7 +656,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Bitset)
 
     const Element* picker = Element_ARG(PICKER);
 
-    Value* dual = ARG(DUAL);
+    Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
@@ -674,7 +674,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Bitset)
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
-    Value* poke = Unliftify_Known_Stable(dual);  // ~null~/~okay~ antiforms
+    Stable* poke = Unliftify_Known_Stable(dual);  // ~null~/~okay~ antiforms
 
     if (not Is_Logic(poke))
         panic (Error_Bad_Value_Raw(poke));
@@ -811,7 +811,7 @@ IMPLEMENT_GENERIC(INTERSECT, Is_Bitset)
     if (e)
         return fail (unwrap e);
 
-    Value* processed = rebValue(CANON(BITWISE_AND), blob1, blob2);
+    Api(Stable*) processed = rebStable(CANON(BITWISE_AND), blob1, blob2);
 
     Binary* bits_out = Cell_Binary_Known_Mutable(processed);
     rebRelease(processed);
@@ -832,7 +832,7 @@ IMPLEMENT_GENERIC(UNION, Is_Bitset)
     if (e)
         return fail (unwrap e);
 
-    Value* processed = rebValue(CANON(BITWISE_OR), blob1, blob2);
+    Api(Stable*) processed = rebStable(CANON(BITWISE_OR), blob1, blob2);
 
     Binary* bits_out = Cell_Binary_Known_Mutable(processed);
     rebRelease(processed);
@@ -853,7 +853,7 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Bitset)
     if (e)
         return fail (unwrap e);
 
-    Value* processed = rebValue(CANON(BITWISE_XOR), blob1, blob2);
+    Api(Stable*) processed = rebStable(CANON(BITWISE_XOR), blob1, blob2);
 
     Binary* bits_out = Cell_Binary_Known_Mutable(processed);
     rebRelease(processed);
@@ -881,7 +881,7 @@ IMPLEMENT_GENERIC(EXCLUDE, Is_Bitset)
     const Symbol* operation =   // use UNION semantics if negated
         negated_result ? CANON(BITWISE_OR) : CANON(BITWISE_AND_NOT);
 
-    Value* processed = rebValue(operation, blob1, blob2);
+    Api(Stable*) processed = rebStable(operation, blob1, blob2);
 
     Binary* bits_out = Cell_Binary_Known_Mutable(processed);
     rebRelease(processed);

@@ -82,22 +82,22 @@
 #include "file-req.h"
 
 
-extern Value* Get_File_Size_Cacheable(uint64_t *size, const Value* port);
-extern Value* Open_File(const Value* port, int flags);
-extern Value* Close_File(const Value* port);
-extern Value* Read_File(const Value* port, size_t length);
-extern Value* Write_File(const Value* port, const Value* data, REBLEN length);
-extern Value* Query_File_Or_Directory(const Value* port);
-extern Value* Create_File(const Value* port);
-extern Value* Delete_File_Or_Directory(const Value* port);
-extern Value* Rename_File_Or_Directory(const Value* port, const Value* to);
-extern Value* Truncate_File(const Value* port);
+extern Stable* Get_File_Size_Cacheable(uint64_t *size, const Stable* port);
+extern Stable* Open_File(const Stable* port, int flags);
+extern Stable* Close_File(const Stable* port);
+extern Stable* Read_File(const Stable* port, size_t length);
+extern Stable* Write_File(const Stable* port, const Stable* data, REBLEN length);
+extern Stable* Query_File_Or_Directory(const Stable* port);
+extern Stable* Create_File(const Stable* port);
+extern Stable* Delete_File_Or_Directory(const Stable* port);
+extern Stable* Rename_File_Or_Directory(const Stable* port, const Stable* to);
+extern Stable* Truncate_File(const Stable* port);
 
 
-INLINE uint64_t File_Size_Cacheable_May_Panic(const Value* port)
+INLINE uint64_t File_Size_Cacheable_May_Panic(const Stable* port)
 {
     uint64_t size;
-    Value* error = Get_File_Size_Cacheable(&size, port);
+    Stable* error = Get_File_Size_Cacheable(&size, port);
     if (error)
         panic (error);
     return size;
@@ -114,7 +114,7 @@ INLINE uint64_t File_Size_Cacheable_May_Panic(const Value* port)
 //
 DECLARE_NATIVE(FILE_ACTOR)
 {
-    Value* port = ARG_N(1);
+    Stable* port = ARG_N(1);
     const Symbol* verb = Level_Verb(LEVEL);
 
     VarList* ctx = Cell_Varlist(port);
@@ -143,7 +143,7 @@ DECLARE_NATIVE(FILE_ACTOR)
       #endif
     }
     else {
-        DECLARE_VALUE (file_path);
+        DECLARE_STABLE (file_path);
         require (
           Get_Port_Path_From_Spec(file_path, port)
         );
@@ -214,7 +214,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         // Handle the READ %file shortcut case, where the FILE! has been
         // converted into a PORT! but has not been opened yet.
 
-        DECLARE_VALUE (file_path);
+        DECLARE_STABLE (file_path);
         require (
           Get_Port_Path_From_Spec(file_path, port)
         );
@@ -223,7 +223,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (file->id != FILEHANDLE_NONE)
             opened_temporarily = false; // was already open
         else {
-            Value* open_error = Open_File(port, UV_FS_O_RDONLY);
+            Stable* open_error = Open_File(port, UV_FS_O_RDONLY);
 
             if (open_error != nullptr)
                 panic (Error_Cannot_Open_Raw(file_path, open_error));
@@ -231,7 +231,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             opened_temporarily = true;
         }
 
-        Value* result;
+        Stable* result;
 
      handle_read: {
 
@@ -260,7 +260,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (file->offset > file_size) {
             result = Init_Warning(
                 Alloc_Value(),
-                Error_Out_Of_Range(rebValue(rebI(file->offset)))
+                Error_Out_Of_Range(rebStable(rebI(file->offset)))
             );
             goto cleanup_read;
         }
@@ -280,7 +280,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (Bool_ARG(PART)) {
             int64_t limit = VAL_INT64(ARG(PART));
             if (limit < 0) {
-                result = rebValue(
+                result = rebStable(
                     "make warning! {Negative :PART passed to READ of file}"
                 );
                 goto cleanup_read;
@@ -294,7 +294,7 @@ DECLARE_NATIVE(FILE_ACTOR)
     } cleanup_read: {
 
         if (opened_temporarily) {
-            Value* close_error = Close_File(port);
+            Stable* close_error = Close_File(port);
             if (result and Is_Warning(result))
                 panic (result);
             if (close_error)
@@ -340,12 +340,12 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (Bool_ARG(SEEK) and Bool_ARG(APPEND))
             panic (Error_Bad_Refines_Raw());
 
-        Value* data = ARG(DATA);  // binary, string, or block
+        Stable* data = ARG(DATA);  // binary, string, or block
 
         // Handle the WRITE %file shortcut case, where the FILE! is converted
         // to a PORT! but it hasn't been opened yet.
 
-        DECLARE_VALUE (file_path);
+        DECLARE_STABLE (file_path);
         require (
           Get_Port_Path_From_Spec(file_path, port)
         );
@@ -376,14 +376,14 @@ DECLARE_NATIVE(FILE_ACTOR)
             else
                 flags |= UV_FS_O_WRONLY | UV_FS_O_CREAT | UV_FS_O_TRUNC;
 
-            Value* open_error = Open_File(port, flags);
+            Stable* open_error = Open_File(port, flags);
             if (open_error != nullptr)
                 panic (Error_Cannot_Open_Raw(file_path, open_error));
 
             opened_temporarily = true;
         }
 
-        Value* result;
+        Stable* result;
 
       handle_write: {
 
@@ -407,7 +407,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             if (Bool_ARG(SEEK)) {
                 int64_t seek = VAL_INT64(ARG(SEEK));
                 if (seek <= 0)
-                    result = rebValue(
+                    result = rebStable(
                         "make warning! {Negative :PART passed to READ of file}"
                     );
                 file->offset = seek;
@@ -419,7 +419,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             if (file->offset > file_size) {
                 result = Init_Warning(
                     Alloc_Value(),
-                    Error_Out_Of_Range(rebValue(rebI(file->offset)))
+                    Error_Out_Of_Range(rebStable(rebI(file->offset)))
                 );
                 goto cleanup_write;
            }
@@ -457,7 +457,7 @@ DECLARE_NATIVE(FILE_ACTOR)
     } cleanup_write: {
 
         if (opened_temporarily) {
-            Value* close_error = Close_File(port);
+            Stable* close_error = Close_File(port);
             if (result)
                 panic (result);
             if (close_error)
@@ -488,7 +488,7 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         UNUSED(PARAM(SPEC));
 
-        DECLARE_VALUE (file_path);
+        DECLARE_STABLE (file_path);
         require (
           Get_Port_Path_From_Spec(file_path, port)
         );
@@ -515,7 +515,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         else
             flags |= UV_FS_O_RDWR;
 
-        Value* error = Open_File(port, flags);
+        Stable* error = Open_File(port, flags);
         if (error != nullptr)
             panic (Error_Cannot_Open_Raw(file_path, error));
 
@@ -551,7 +551,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             // a good idea or should it return an warning?
         }
         else {
-            Value* error = Close_File(port);
+            Stable* error = Close_File(port);
             assert(file->id == FILEHANDLE_NONE);
             if (error)
                 panic (error);
@@ -568,12 +568,12 @@ DECLARE_NATIVE(FILE_ACTOR)
         UNUSED(PARAM(PORT));
 
         if (file->id != FILEHANDLE_NONE) {
-            Value* error = Close_File(port);
+            Stable* error = Close_File(port);
             if (error)
                 panic (error);
         }
 
-        Value* error = Delete_File_Or_Directory(port);
+        Stable* error = Delete_File_Or_Directory(port);
         if (error)
             panic (error);
 
@@ -593,7 +593,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         INCLUDE_PARAMS_OF_RENAME;
         UNUSED(ARG(FROM));  // implicitly same as `port`
 
-        DECLARE_VALUE (file_path);
+        DECLARE_STABLE (file_path);
         require (
           Get_Port_Path_From_Spec(file_path, port)
         );
@@ -606,17 +606,17 @@ DECLARE_NATIVE(FILE_ACTOR)
             flags = file->flags;
             index = file->offset;
 
-            Value* close_error = Close_File(port);
+            Stable* close_error = Close_File(port);
             if (close_error)
                 panic (close_error);
 
             closed_temporarily = true;
         }
 
-        Value* rename_error = Rename_File_Or_Directory(port, ARG(TO));
+        Stable* rename_error = Rename_File_Or_Directory(port, ARG(TO));
 
         if (closed_temporarily) {
-            Value* open_error = Open_File(port, flags);
+            Stable* open_error = Open_File(port, flags);
             if (rename_error) {
                 rebRelease(rename_error);  // Note: FAIL would cleanup
                 panic (Error_No_Rename_Raw(file_path));
@@ -663,7 +663,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         INCLUDE_PARAMS_OF_QUERY;
         UNUSED(PARAM(TARGET));
 
-        Value* info = Query_File_Or_Directory(port);
+        Stable* info = Query_File_Or_Directory(port);
         if (Is_Warning(info)) {
             rebRelease(info);  // !!! R3-Alpha just returned "none"
             return nullptr;
@@ -698,7 +698,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             // for ports since they all share the index.
             //
             return fail (
-                Error_Out_Of_Range(rebValue(rebI(offset + file->offset)))
+                Error_Out_Of_Range(rebStable(rebI(offset + file->offset)))
             );
         }
 
@@ -716,17 +716,17 @@ DECLARE_NATIVE(FILE_ACTOR)
       case SYM_CLEAR: {
         bool opened_temporarily = false;
         if (file->id == FILEHANDLE_NONE) {
-            Value* open_error = Open_File(port, UV_FS_O_WRONLY);
+            Stable* open_error = Open_File(port, UV_FS_O_WRONLY);
             if (open_error)
                 panic (open_error);
 
             opened_temporarily = true;
         }
 
-        Value* truncate_error = Truncate_File(port);
+        Stable* truncate_error = Truncate_File(port);
 
         if (opened_temporarily) {
-            Value* close_error = Close_File(port);
+            Stable* close_error = Close_File(port);
             if (close_error)
                 panic (close_error);
         }

@@ -82,7 +82,7 @@ DECLARE_NATIVE(DONE_Q)
 {
     INCLUDE_PARAMS_OF_DONE_Q;
 
-    const Atom* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
 
     if (not Is_Error(atom))
         return LOGIC(false);
@@ -169,9 +169,9 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     Details* details = Ensure_Level_Details(L);
 
-    Value* original_frame = Details_At(details, IDX_YIELDER_ORIGINAL_FRAME);
-    Value* plug = Details_At(details, IDX_YIELDER_PLUG);
-    Value* yielded_lifted = Details_At(details, IDX_YIELDER_YIELDED_LIFTED);
+    Stable* original_frame = Details_At(details, IDX_YIELDER_ORIGINAL_FRAME);
+    Stable* plug = Details_At(details, IDX_YIELDER_PLUG);
+    Stable* yielded_lifted = Details_At(details, IDX_YIELDER_YIELDED_LIFTED);
 
     switch (STATE) {  // Can't use STATE byte for "mode" (see ST_YIELDER enum)
       case ST_YIELDER_INVOKED: {
@@ -304,12 +304,12 @@ Bounce Yielder_Dispatcher(Level* const L)
     const Key* key_tail;  // move this yielder call frame into old varlist [1]
     const Key* key = Varlist_Keys(&key_tail, original_varlist);
     Param* param = Phase_Params_Head(Level_Phase(L));
-    Atom* dest = Slot_Hack(Varlist_Slots_Head(original_varlist));
-    Atom* src = Level_Args_Head(L);
+    Value* dest = Slot_Hack(Varlist_Slots_Head(original_varlist));
+    Value* src = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++param, ++dest, ++src) {
         if (Is_Specialized(param))
             continue;  // don't overwrite locals (including definitional YIELD)
-        Move_Atom(dest, src);  // all arguments/refinements are fair game
+        Move_Value(dest, src);  // all arguments/refinements are fair game
     }
 
     if (Not_Base_Managed(L->varlist))  // don't need it [2]
@@ -384,7 +384,7 @@ Bounce Yielder_Dispatcher(Level* const L)
   //    save the stack when you YIELD an ERROR!...only the DONE error is
   //    considered a valid yield state, all other errors elevate to panics.
 
-    Value* body = Details_Element_At(details, IDX_YIELDER_BODY);
+    Stable* body = Details_Element_At(details, IDX_YIELDER_BODY);
     assert(Is_Block(body));  // clean up details for GC [2]
     Init_Nulled(body);
 
@@ -403,7 +403,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         return THROWN;
     }
 
-    const Value* label = VAL_THROWN_LABEL(L);  // YIELD:FINAL, YIELD ERROR! [4]
+    const Stable* label = VAL_THROWN_LABEL(L);  // YIELD:FINAL, YIELD ERROR! [4]
     if (
         Is_Frame(label)
         and Frame_Phase(label) == Frame_Phase(LIB(DEFINITIONAL_YIELD))
@@ -459,7 +459,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 //  Yielder_Details_Querier: C
 //
 bool Yielder_Details_Querier(
-    Sink(Value) out,
+    Sink(Stable) out,
     Details* details,
     SymId property
 ){
@@ -599,7 +599,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
       default: assert(false);
     }
 
-    Atom* atom = Atom_ARG(VALUE);
+    Value* atom = Atom_ARG(VALUE);
 
   //=//// EXTRACT YIELDER FROM DEFINITIONAL YIELD'S CELL ///////////////////=//
 
@@ -619,10 +619,10 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     Details* yielder_details = Ensure_Level_Details(yielder_level);
     assert(Details_Dispatcher(yielder_details) == &Yielder_Dispatcher);
 
-    Value* plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
+    Stable* plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
     assert(Is_Nulled(plug));
 
-    Value* yielded_lifted = Details_At(
+    Stable* yielded_lifted = Details_At(
         yielder_details, IDX_YIELDER_YIELDED_LIFTED
     );
     assert(Is_Nulled(yielded_lifted));
@@ -636,7 +636,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
   // yielder will elevate to an abrupt panic.
 
     if (Is_Error(atom) or Bool_ARG(FINAL)) {  // not resumable, throw
-        Value* spare = Init_Action(
+        Stable* spare = Init_Action(
             SPARE,  // use as label for throw
             Frame_Phase(LIB(DEFINITIONAL_YIELD)),
             CANON(YIELD),

@@ -38,9 +38,9 @@
 //
 //=//// NOTES ////////////////////////////////////////////////////////////=//
 //
- // * Ren-C can run the evaluator across an Array*-style input based on index.
+// * Ren-C can run the evaluator across an Array*-style input based on index.
 //   It can also enumerate through C's `va_list`, providing the ability to
-//   pass pointers as Value* to comma-separated input at the source level.
+//   pass pointers as Element* to comma-separated input at the source level.
 //
 //   To provide even greater flexibility, it allows the very first element's
 //   pointer in an evaluation to come from an arbitrary source.  It doesn't
@@ -56,7 +56,7 @@
 // See Evaluator_Executor().  This helps document the places where the primed
 // result is being loaded.
 //
-INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
+INLINE Sink(Value) Evaluator_Primed_Cell(Level* L) {
     assert(L->executor == &Evaluator_Executor);
     Force_Erase_Cell_Untracked(&L->u.eval.primed);
     return &L->u.eval.primed;
@@ -66,7 +66,7 @@ INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
 // output for a stepper that has a lifetime at least as long as the Level.
 // e.g. this is illegal:
 //
-//      DECLARE_ATOM (result);  // stack-declared Cell
+//      DECLARE_VALUE (result);  // stack-declared Cell
 //      Level* L = Make_Level_At(
 //          &Stepper_Executor, spec, LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
 //      );
@@ -76,11 +76,11 @@ INLINE Sink(Atom) Evaluator_Primed_Cell(Level* L) {
 // Simply put, when the Trampoline gets control after a longjmp() or throw, the
 // Level's L->out pointer will be corrupt...the stack-declared result is gone.
 //
-// Instead of DECLARE_ATOM, use Level_Lifetime_Atom(L).  This takes advantage
+// Instead of DECLARE_VALUE, use Level_Lifetime_Value(L).  This takes advantage
 // of the fact that there's a cell's worth of spare space which a stepper
 // that is not called by Evaluator_Executor() does not use.
 //
-INLINE Sink(Atom) Level_Lifetime_Atom(Level* L) {
+INLINE Sink(Value) Level_Lifetime_Value(Level* L) {
     assert(L->executor == &Stepper_Executor);
     Force_Erase_Cell_Untracked(&L->u.eval.primed);
     return &L->u.eval.primed;
@@ -131,7 +131,7 @@ INLINE Result(Element*) Refinify_Pushed_Refinement(Element* e) {
 // evaluation step.  Callsites that use it should be rewritten to yield to
 // the trampoline.
 //
-INLINE bool Eval_Step_Throws(Init(Atom) out, Level* L) {
+INLINE bool Eval_Step_Throws(Init(Value) out, Level* L) {
     assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
 
     assert(
@@ -153,7 +153,7 @@ INLINE bool Eval_Step_Throws(Init(Atom) out, Level* L) {
 // trampoline.
 //
 INLINE bool Eval_Any_List_At_Core_Throws(
-    Init(Atom) out,
+    Init(Value) out,
     Flags flags,
     const Element* list,
     Context* context
@@ -180,7 +180,7 @@ INLINE bool Eval_Any_List_At_Core_Throws(
 // trampoline.
 //
 INLINE bool Eval_Element_Core_Throws(
-    Init(Atom) out,
+    Init(Value) out,
     Flags flags,
     const Element* value,  // e.g. a BLOCK! here would just evaluate to itself!
     Context* context
@@ -215,8 +215,8 @@ INLINE bool Eval_Element_Core_Throws(
 // trampoline.
 //
 INLINE bool Eval_Branch_Throws(
-    Atom* out,
-    const Value* branch
+    Value* out,
+    const Stable* branch
 ){
     if (not Pushed_Continuation(
         out,

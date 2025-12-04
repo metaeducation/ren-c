@@ -77,7 +77,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 {
     INCLUDE_PARAMS_OF_TEST_LIBREBOL;
 
-    Value* v = ARG(VALUE);
+    Stable* v = ARG(VALUE);
     USED(v);
 
   start: {
@@ -115,17 +115,19 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 } macro_test: {
 
     Set_Cell_Flag(Init_Integer(PUSH(), 3), NEWLINE_BEFORE);
-    Value* macro = rebStable(
+    Api(Stable*) macro = rebStable(
         "inliner [x] [spread compose [append (x) first]]"
     );
-    Value* mtest1 = rebStable(rebRUN(macro), "[1 2 3]", "[d e f]");
+    Api(Stable*) mtest1 = rebStable(rebRUN(macro), "[1 2 3]", "[d e f]");
     Copy_Cell(PUSH(), mtest1);  // ^-- see NOTICE
     rebRelease(mtest1);
 
     Set_Cell_Flag(Init_Integer(PUSH(), 4), NEWLINE_BEFORE);
-    Value* numbers = rebValue("[1 2 3]");
-    Value* letters = rebValue("[d e f]");
-    Value* mtest2 = rebValue(rebRUN(macro), rebR(numbers), rebR(letters));
+    Api(Stable*) numbers = rebStable("[1 2 3]");
+    Api(Stable*) letters = rebStable("[d e f]");
+    Api(Stable*) mtest2 = rebStable(
+        rebRUN(macro), rebR(numbers), rebR(letters)
+    );
     Copy_Cell(PUSH(), mtest2);  // ^-- see NOTICE
     rebRelease(mtest2);
 
@@ -141,10 +143,10 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 } define_function_test: {
 
     Set_Cell_Flag(Init_Integer(PUSH(), 6), NEWLINE_BEFORE);
-    Value* action = rebFunction(
+    Api(Stable*) action = Known_Stable_Api(rebFunction(
         Sum_Plus_1000_Spec,
         &Sum_Plus_1000_Impl
-    );
+    ));
 
     int sum = rebUnboxInteger(
         "let /sum-plus-1000: @", action,
@@ -161,11 +163,11 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     Init_Integer(PUSH(), 1020);  // fake success result
 
     Set_Cell_Flag(Init_Integer(PUSH(), 8), NEWLINE_BEFORE);
-    RebolValue* result_type = rebValue("[integer!]");  // another fake success
+    Api(Stable*) result_type = rebStable("[integer!]");  // fake success
     Copy_Cell(PUSH(), result_type);
     rebRelease(result_type);
   #else
-    Value* action = rebFunction(R"([
+    Api(Stable*) action = Known_Stable_Api(rebFunction(R"([
         -[Demonstration native that shadows ASSERT and ADD (C++ version)]-
         return: [integer!]
         assert [integer!]
@@ -174,7 +176,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     [](RebolContext* librebol_binding) -> RebolBounce {
         int thousand = Subroutine();
         return rebValue("add + assert +", rebI(thousand));
-    });
+    }));
 
     int sum = rebUnboxInteger(
         "let /sum-plus-1000: @", action,
@@ -197,7 +199,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 
     Set_Cell_Flag(Init_Integer(PUSH(), 9), NEWLINE_BEFORE);
 
-    Value* noop = rebLift("");
+    Stable* noop = Known_Stable(rebLift(""));
     assert(Is_Lifted_Ghost(noop));
     Copy_Cell(PUSH(), noop);
     rebRelease(noop);

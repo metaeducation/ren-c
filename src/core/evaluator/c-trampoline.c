@@ -214,7 +214,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         /*assert(not Is_Pointer_Corrupt_Debug(L->executor));
         Corrupt_If_Needful(L->executor);*/
 
-        const Value* label = VAL_THROWN_LABEL(L);  // unwind [1]
+        const Stable* label = VAL_THROWN_LABEL(L);  // unwind [1]
         if (
             Is_Frame(label)
             and Frame_Phase(label) == Frame_Phase(LIB(UNWIND))
@@ -455,7 +455,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 //
 //  Trampoline_Throws: C
 //
-bool Trampoline_Throws(Need(Atom*) out, Level* root)
+bool Trampoline_Throws(Need(Value*) out, Level* root)
 {
     Push_Level_Erase_Out_If_State_0(out, root);
     bool threw = Trampoline_With_Top_As_Root_Throws();
@@ -513,7 +513,7 @@ void Startup_Trampoline(void)
         LEVEL_FLAG_UNINTERRUPTIBLE  // can't interrupt while initializing [2]
     ));
     Push_Level_Dont_Inherit_Interruptibility(  // to attach API handles to [3]
-        u_cast(Atom*, &g_erased_cell),
+        u_cast(Value*, &g_erased_cell),
         L
     );
 

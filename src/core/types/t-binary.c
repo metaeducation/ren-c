@@ -109,7 +109,7 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Blob)
 DECLARE_NATIVE(ENCODE_IEEE_754) {
     INCLUDE_PARAMS_OF_ENCODE_IEEE_754;
 
-    Value* arg = ARG(ARG);
+    Stable* arg = ARG(ARG);
 
     if (Series_Len_At(ARG(OPTIONS)))
         panic ("IEEE-754 single precision not currently supported");
@@ -295,7 +295,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
 static Result(Element*) Copy_Blob_Part_At_May_Modify_Index(
     Sink(Element) out,
     Element* blob,  // may modify index
-    const Value* part
+    const Stable* part
 ){
     Length len = Part_Len_May_Modify_Index(blob, part);
     trap (
@@ -322,7 +322,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         INCLUDE_PARAMS_OF_INSERT;  // compatible frame with APPEND, CHANGE
         UNUSED(PARAM(SERIES));  // covered by `v`
 
-        Option(const Value*) arg = Is_Undone_Opt_Nulled(ARG(VALUE))
+        Option(const Stable*) arg = Is_Undone_Opt_Nulled(ARG(VALUE))
             ? nullptr
             : ARG(VALUE);
 
@@ -456,7 +456,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_BITWISE_OR:
       case SYM_BITWISE_XOR:
       case SYM_BITWISE_AND_NOT: {
-        Value* arg = ARG_N(2);
+        Stable* arg = ARG_N(2);
         if (not Is_Blob(arg))
             panic (Error_Not_Related_Raw(verb, Datatype_Of(arg)));
 
@@ -526,7 +526,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
     //-- Special actions:
 
       case SYM_SWAP: {
-        Value* arg = ARG_N(2);
+        Stable* arg = ARG_N(2);
 
         if (Type_Of(v) != Type_Of(arg))
             panic (Error_Not_Same_Type_Raw());
@@ -576,7 +576,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
     }
 
     if (to == TYPE_BLOB) {
-        const Value* part = LIB(NULL);  // no :PART, copy to end
+        const Stable* part = LIB(NULL);  // no :PART, copy to end
         require (
           Copy_Blob_Part_At_May_Modify_Index(OUT, v, part)
         );
@@ -1006,7 +1006,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
 
     bool little = Bool_ARG(LE);
 
-    Value* options = ARG(OPTIONS);
+    Stable* options = ARG(OPTIONS);
     if (Series_Len_At(options) != 2)
         panic ("ENCODE-INTEER needs length 2 options for now");
 
@@ -1110,7 +1110,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
     Size bin_size;
     const Byte* bin_data = Blob_Size_At(&bin_size, ARG(BINARY));
 
-    Value* options = ARG(OPTIONS);
+    Stable* options = ARG(OPTIONS);
 
     REBLEN arity = Series_Len_At(options);
     if (arity != 1 and arity != 2)

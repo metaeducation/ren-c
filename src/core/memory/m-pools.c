@@ -1136,7 +1136,7 @@ Stub* Diminish_Stub(Stub* s)
         break; }
 
       case FLAVOR_HANDLE: {  // managed HANDLE! has FLAVOR_HANDLE Stub
-        RebolValue* v = cast(RebolValue*, Stub_Cell(s));
+        Api(Stable*) v = cast(Stable*, Stub_Cell(s));
         assert(Type_Of(v) == TYPE_HANDLE);
         Option(HandleCleaner*) cleaner = Handle_Cleaner(s);
         if (cleaner)  // can't call librebol API during GC [2]
