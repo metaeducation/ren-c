@@ -97,13 +97,13 @@ array: func [
 replace: func [
     "Replaces a search value with the replace value within the target series"
 
-    return: [any-series?]
+    return: [<null> any-series?]
     target "Series to replace within (modified)"
-        [any-series?]
+        [<opt-out> any-series?]
     pattern "Value to be replaced (converted if necessary)"
         [<opt> element? splice!]
-    ^replacement "Value to replace with (called each time if action)"
-        [void? element? splice! action!]
+    replacement "Value to replace with (called each time if action)"
+        [<opt> <unrun> element? splice! frame!]
 
     :one "Replace one (or zero) occurrences"
     :case "Case-sensitive replacement"  ; !!! Note this aliases CASE native!
@@ -119,10 +119,10 @@ replace: func [
 
     while [[pos :tail]: find // [
         pos
-        ^pattern
+        opt pattern
         case: case_REPLACE
     ]][
-        if action? ^replacement [
+        if frame? opt replacement [
             ;
             ; If arity-0 action, pos and tail discarded
             ; If arity-1 action, pos will be argument to replacement
@@ -131,12 +131,12 @@ replace: func [
             ; They are passed as const so that the replacing function answers
             ; merely by providing the replacement.
             ;
-            ^value: apply:relax ^replacement [const pos, const tail]
+            value: apply:relax replacement [const pos, const tail]
         ] else [
-            ^value: ^replacement  ; might be void
+            value: replacement
         ]
 
-        pos: change:part pos ^value tail
+        pos: change:part pos (opt value) tail
 
         if one [break]
     ]

@@ -544,7 +544,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 
         Value* pattern = ARG(PATTERN);  // SELECT takes antiforms literally
 
-        if (Is_Antiform(pattern)) {
+        if (Is_Antiform(pattern) and not Is_Splice(pattern)) {
             if (id == SYM_SELECT)
                 panic ("Cannot SELECT with antiforms on lists");
 
