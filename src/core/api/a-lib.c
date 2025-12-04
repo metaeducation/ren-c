@@ -1111,17 +1111,6 @@ RebolValue* API_rebArg(
 #define RUN_VA_MASK_NONE  0
 
 
-//=//// RUN_VA_FLAG_LIFT_RESULT ///////////////////////////////////////////=//
-//
-// Originally the trampoline offered lifted results as a service.  New idea
-// is that the stepper evaluator uses the lifted protocol all the time (and
-// will return non-lifted trash if it's at the evaluation end, as a special
-// signal).  For simplification the trampoline thus will not offer lifted
-// results, but we simulate the flag here for the APIs.
-//
-#define RUN_VA_FLAG_LIFT_RESULT  FLAG_LEFT_BIT(0)
-
-
 //=//// RUN_VA_FLAG_INTERRUPTIBLE /////////////////////////////////////////=//
 //
 // Interruptibility means that TRAMPOLINE_FLAG_HALT will be heeded when the
@@ -1131,7 +1120,7 @@ RebolValue* API_rebArg(
 // return.  So only a few functions that are specifically designed to give
 // back errors react, e.g. rebEntrapInterruptible()
 //
-#define RUN_VA_FLAG_INTERRUPTIBLE  FLAG_LEFT_BIT(1)
+#define RUN_VA_FLAG_INTERRUPTIBLE  FLAG_LEFT_BIT(0)
 
 
 //
@@ -1167,8 +1156,8 @@ RebolValue* API_rebArg(
 //    Note that if vaptr is not null, then if p is null it actually means
 //    that it intends to represent a nulled cell as the first va_list item.
 //
-static Result(None) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
-    Sink(Stable) out,
+static Result(None) Undecayed_Run_Valist_And_Call_Va_End(  // va_end()s [1]
+    Sink(Value) out,
     Flags run_flags,  // RUN_VA_FLAG_INTERRUPTIBLE, etc.
     RebolContext* binding,
     const void* p,  // null vaptr means void* array [2] else first param [3]
@@ -1203,25 +1192,36 @@ static Result(None) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
     else
         L->flags.bits |= LEVEL_FLAG_UNINTERRUPTIBLE;
 
-    Sink(Value) atom_out = u_cast(Value*, out);
-    Push_Level_Dont_Inherit_Interruptibility(atom_out, L);
+    Push_Level_Dont_Inherit_Interruptibility(out, L);
     bool threw = Trampoline_With_Top_As_Root_Throws();
     Drop_Level(L);
 
     if (threw)
         return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-    if (run_flags & RUN_VA_FLAG_LIFT_RESULT)
-        Liftify(atom_out);
-    else {
-        require (
-          Decay_If_Unstable(atom_out)
-        );
-    }
-
     return none;
 }
 
+
+static Result(None) Run_Valist_And_Call_Va_End(  // va_end() handled [1]
+    Sink(Stable) out,
+    Flags run_flags,  // RUN_VA_FLAG_INTERRUPTIBLE, etc.
+    RebolContext* binding,
+    const void* p,  // null vaptr means void* array [2] else first param [3]
+    Option(void*) vaptr  // guides interpretation of p [4]
+){
+    Value* out_value = u_cast(Value*, out);  // temporarily hold unstable cells
+    trap (
+      Undecayed_Run_Valist_And_Call_Va_End(
+        out_value, run_flags, binding, p, vaptr
+      )
+    );
+
+    trap (
+        Decay_If_Unstable(out_value)
+    );
+    return none;
+}
 
 //
 //  rebRunCoreThrows_internal: API
@@ -1399,13 +1399,12 @@ void API_rebPushContinuation_internal(
 
 
 //
-//  rebLift: API
+//  rebUndecayed: API
 //
-// Builds in a LIFT operation to rebValue; shorthand that's more efficient.
+// By default rebValue() will decay unstable antiforms.  This will give you
+// back undecayed PACK! or GHOST! or ERROR! values.
 //
-//     rebLift(...) => rebValue("lift", ...")
-//
-RebolValue* API_rebLift(
+RebolValue* API_rebUndecayed(
     RebolContext* binding,
     const void* p, void* vaptr
 ){
@@ -1413,15 +1412,18 @@ RebolValue* API_rebLift(
 
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
-    Flags flags = RUN_VA_FLAG_LIFT_RESULT;
-    Run_Valist_And_Call_Va_End(
+    Flags flags = RUN_VA_MASK_NONE;
+    Undecayed_Run_Valist_And_Call_Va_End(
         v, flags, binding, p, vaptr
     ) except (Error* e) {
         Free_Value(v);  // rebRelease() would test cell validity
         panic (e);
     }
 
-    assert(not Is_Light_Null(v));  // lift operations cannot produce NULL
+    if (Is_Light_Null(v)) {
+        Free_Value(v);
+        return nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
+    }
 
     Set_Base_Root_Bit(v);
     return v;  // caller must rebRelease()
@@ -1443,14 +1445,15 @@ RebolValue* API_rebEnrescue(
 
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
-    Flags flags = RUN_VA_FLAG_LIFT_RESULT;
-    Run_Valist_And_Call_Va_End(
+    Flags flags = RUN_VA_MASK_NONE;
+    Undecayed_Run_Valist_And_Call_Va_End(
         v, flags, binding, p, vaptr
     ) except (Error* e) {
         Free_Value(v);  // rebRelease() would test cell validity
         panic (e);
     }
 
+    Liftify(v);
     assert(not Is_Light_Null(v));  // lift operations cannot produce NULL
 
     if (Cell_Has_Lift_Heart_No_Sigil(QUASIFORM_3, TYPE_WARNING, v))  // lifted
@@ -1478,15 +1481,15 @@ RebolValue* API_rebRescue2(
 
     Value* v = Alloc_Value_Core(CELL_MASK_ERASED_0);
 
-    Flags flags = RUN_VA_FLAG_LIFT_RESULT;
-    Run_Valist_And_Call_Va_End(
+    Flags flags = RUN_VA_MASK_NONE;
+    Undecayed_Run_Valist_And_Call_Va_End(
         v, flags, binding, p, vaptr
     ) except (Error* e) {
         Free_Value(v);  // rebRelease() would test cell validity
         panic (e);
     }
 
-    assert(Any_Lifted(v));
+    Liftify(v);
 
     if (Cell_Has_Lift_Heart_No_Sigil(QUASIFORM_3, TYPE_WARNING, v)) { // lifted
         LIFT_BYTE(v) = NOQUOTE_2;  // plain error
@@ -1624,8 +1627,8 @@ RebolValue* API_rebQuote(
 // Variant of rebValue() which assumes you don't need the result.  This saves on
 // allocating an API handle, or the caller needing to manage its lifetime.
 //
-// Also means that if the product is something like a ~[]~ antiform ("nihil")
-// that is not an issue.
+// 1. Same semantics as ELIDE for things it won't ignore (ERROR!, or PACK!
+//    with ERROR!s inside it...)
 //
 void API_rebElide(
     RebolContext* binding,
@@ -1633,16 +1636,18 @@ void API_rebElide(
 ){
     ENTER_API;
 
-    DECLARE_STABLE (discarded);
+    DECLARE_VALUE (discarded);
 
-    Flags flags = RUN_VA_FLAG_LIFT_RESULT;  // discarding, allow void/etc.
-    Run_Valist_And_Call_Va_End(
+    Flags flags = RUN_VA_MASK_NONE;
+    Undecayed_Run_Valist_And_Call_Va_End(
         discarded, flags, binding, p, vaptr
     ) except (Error* e) {
         panic (e);
     }
-    if (Is_Error(discarded))  // don't allow errors (despite lift)
-        panic (Cell_Error(discarded));
+
+    require (  // reuse semantics of ELIDE w.r.t. ERROR!s, packs
+      Elide_Unless_Error_Including_In_Packs(discarded)
+    );
 }
 
 

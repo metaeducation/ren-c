@@ -199,9 +199,9 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 
     Set_Cell_Flag(Init_Integer(PUSH(), 9), NEWLINE_BEFORE);
 
-    Stable* noop = Known_Stable(rebLift(""));
-    assert(Is_Lifted_Ghost(noop));
-    Copy_Cell(PUSH(), noop);
+    Value* noop = rebUndecayed("");
+    assert(Is_Ghost(noop));
+    Copy_Lifted_Cell(PUSH(), noop);
     rebRelease(noop);
 
 } finish: {

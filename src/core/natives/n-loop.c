@@ -1029,19 +1029,19 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
         }
 
         if (Is_Action(les->data)) {
-            Stable* generated = Known_Stable(rebLift(rebRUN(les->data)));
-            Stable* spare = Copy_Cell(SPARE, generated);
+            Value* generated = rebUndecayed(rebRUN(les->data));
+            if (not generated)
+                Init_Nulled(SPARE);
+            else
+                Copy_Cell(SPARE, generated);  // need mutable, non-nulled cell
             rebRelease(generated);
 
             if (not (
-                Is_Lifted_Error(spare)
-                and Is_Error_Done_Signal(Cell_Error(spare))
+                Is_Error(SPARE)
+                and Is_Error_Done_Signal(Cell_Error(SPARE))
             )) {
-                Stable* decayed = Unliftify_Decayed(spare) except (Error* e) {
-                    return fail (e);
-                };
-                Write_Loop_Slot_May_Bind(
-                    slot, decayed, les->data
+                Write_Loop_Slot_May_Bind_Or_Decay(
+                    slot, SPARE, les->data
                 ) except (Error* e) {
                     return fail (e);
                 }

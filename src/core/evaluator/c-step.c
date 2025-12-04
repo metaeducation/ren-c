@@ -803,16 +803,13 @@ Bounce Stepper_Executor(Level* L)
     Element* spare = Init_Word(SPARE, CANON(PACK));
     dont(Quotify(Known_Element(SPARE)));  // want to run word
 
-    Api(Stable*) temp = Known_Stable(rebLift_helper(
+    Api(Value*) temp = rebUndecayed_helper(
         cast(RebolContext*, Level_Binding(L)),
         spare, out, rebEND
-    ));
+    );
     Copy_Cell(OUT, temp);
     rebRelease(temp);
 
-    assume (
-      Unliftify_Undecayed(OUT)
-    );
     goto lookahead;
 
 
