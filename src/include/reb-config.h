@@ -513,8 +513,12 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_BALANCE_STATE  RUNTIME_CHECKS
 #endif
 
+// This is very frustrating when debugging, but should be tested in some
+// configurations.  Should use its own tick and not throw off the determinstic
+// ticks.
+//
 #if !defined(ALLOW_SPORADICALLY_NON_DETERMINISTIC)
-    #define ALLOW_SPORADICALLY_NON_DETERMINISTIC RUNTIME_CHECKS
+    #define ALLOW_SPORADICALLY_NON_DETERMINISTIC  0
 #endif
 
 // See debugbreak.h and DECLARE_NATIVE(C_DEBUG_BREAK)...useful!
