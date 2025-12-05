@@ -204,6 +204,11 @@ static Result(None) Push_Keys_And_Params_Core(
                 );
             }
 
+            if (not Is_Parameter(TOP_ELEMENT))
+                return fail (
+                    "Text strings must describe parameters, not locals"
+                );
+
             require (
                 Strand* strand = Copy_String_At(item)
             );

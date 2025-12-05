@@ -693,21 +693,23 @@ INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
     return Known_Element(arg);
 }
 
+#define PARAM_INDEX(name) \
+    (param_##name##_)
+
 #define Optional_Element_ARG(name) \
-    Optional_Element_Level_Arg(level_, param_##name##_)
+    Optional_Element_Level_Arg(level_, PARAM_INDEX(name))
 
 #define LOCAL(name) /* alias for ARG() when slot is <local> */ \
-    Level_Arg(level_, (param_##name##_))  // initialized to unset state!
+    Level_Arg(level_, PARAM_INDEX(name))  // initialized to unset state!
 
 #define Element_LOCAL(name) \
-    Known_Element(Level_Arg(level_, (param_##name##_)))
+    Known_Element(Level_Arg(level_, PARAM_INDEX(name)))
 
 #define Value_LOCAL(name) \
-    Known_Stable(Level_Arg(level_, (param_##name##_)))
+    Known_Stable(Level_Arg(level_, PARAM_INDEX(name)))
 
 #define PARAM(name) \
-    Phase_Param(Level_Phase(level_), (param_##name##_))  // a TYPESET!
-
+    Phase_Param(Level_Phase(level_), PARAM_INDEX(name))  // a TYPESET!
 
 #define ARG_N(n) \
     Known_Stable(Level_Arg(level_, (n)))
