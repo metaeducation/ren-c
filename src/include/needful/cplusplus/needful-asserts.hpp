@@ -39,10 +39,13 @@
 #if __cplusplus >= 201703L  // C++17 or higher, can't check attribute [1]
     #undef NEEDFUL_NODISCARD
     #define NEEDFUL_NODISCARD  [[nodiscard]]  // the C++17 way (best!)
+#elif defined(_MSC_VER) && _MSVC_LANG >= 201703L
+    #undef NEEDFUL_NODISCARD
+    #define NEEDFUL_NODISCARD  [[nodiscard]]  // the C++17 way (best!)
 #else
     // leave NEEDFUL_NODISCARD as a no-op [2]
-#endif
 
+#endif
 
 // 1. We use __VA_ARGS__ here to avoid the need for double-parenthesization
 //    at the callsite, e.g. STATIC_ASSERT((std::is_same<T, U>::value)), which
