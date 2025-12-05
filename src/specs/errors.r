@@ -167,7 +167,6 @@ script: [
 
     invalid-arg:        [:arg1 "has an invalid" :arg2 "argument:" :arg3]
     no-arg:             [:arg1 "is missing its" :arg2 "argument"]
-    unspecified-arg:    [:arg1 "has" :arg2 "unspecified (~ antiform)"]
 
     unset-variable:     ["Unset variable:" :arg1]
 

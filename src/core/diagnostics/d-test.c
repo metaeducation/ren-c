@@ -70,14 +70,14 @@
 //          text!   "Message if INCLUDE_TEST_LIBREBOL_NATIVE not defined"
 //      ]
 //      value "Argument that may be useful for ad hoc tests"
-//          [any-stable?]
+//          [<end> any-value?]
 //  ]
 //
 DECLARE_NATIVE(TEST_LIBREBOL)
 {
     INCLUDE_PARAMS_OF_TEST_LIBREBOL;
 
-    Stable* v = ARG(VALUE);
+    Value* v = Atom_ARG(VALUE);
     USED(v);
 
   start: {

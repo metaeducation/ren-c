@@ -203,7 +203,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 return true;
             }
 
-            if (Is_Endlike_Unset(out) or Is_Feed_At_End(L_temp->feed)) {
+            if (Is_Level_At_End(L_temp)) {
                 Poison_Cell(shared);
             }
             else {

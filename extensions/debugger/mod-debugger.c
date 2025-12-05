@@ -177,7 +177,7 @@ DECLARE_NATIVE(RESUME)
 //
 // The CONSOLE makes a wall to prevent arbitrary THROWs and FAILs from ending
 // a level of interactive inspection.  But RESUME is special, (with a throw
-// /NAME of the RESUME native) to signal an end to the interactive session.
+// :NAME of the RESUME native) to signal an end to the interactive session.
 //
 // When the BREAKPOINT native gets control back from CONSOLE, it evaluates
 // a given expression.
@@ -196,7 +196,7 @@ DECLARE_NATIVE(RESUME)
     assert(Is_Block(expr));
     Metafy(expr);
 
-    // We throw with /NAME as identity of the RESUME function.  (Note: there
+    // We throw with :NAME as identity of the RESUME function.  (Note: there
     // is no NATIVE() variant for extensions yet.  Extract from current level.)
     //
     DECLARE_STABLE (resume);

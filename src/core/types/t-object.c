@@ -906,12 +906,6 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         Append_Codepoint(mo->strand, ' ');
 
         if (Is_Dual(evars.slot)) {
-            if (Is_Dual_Unset(evars.slot)) {
-                require (
-                  Append_Ascii(mo->strand, "~[]~  ; antiform")  // !!! rethink
-                );
-                continue;
-            }
             require (
               Append_Ascii(mo->strand, "??? ; dual cell")  // !!! rethink
             );
@@ -924,9 +918,16 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         );
 
         if (Is_Antiform(var)) {
-            Liftify(var);  // will become quasi...
-            Mold_Element(mo, Known_Element(var));  // ...molds as `~xxx~`
-            UNUSED(var);
+            if (Is_Ghost(var)) {
+              require (
+                Append_Ascii(mo->strand, "()")  // looks better than ~,~
+              );
+            }
+            else {
+                Liftify(var);  // will become quasi...
+                Mold_Element(mo, Known_Element(var));  // ...molds as `~xxx~`
+                UNUSED(var);
+            }
         }
         else {
             Element* elem = Known_Element(var);
@@ -1302,9 +1303,6 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        if (Is_Dual_Word_Unset_Signal(dual))
-            goto handle_poke;
-
         if (Is_Frame(dual))
             goto handle_poke;
 
@@ -1322,10 +1320,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     if (LIFT_BYTE(OUT) == DUAL_0) {  // return as nonquoted/nonquasi thing
         LIFT_BYTE(OUT) = NOQUOTE_2;
-        assert(
-            Is_Dual_Word_Unset_Signal(Known_Stable(OUT))
-            or Is_Frame(Known_Stable(OUT))
-        );
+        assert(Is_Frame(Known_Stable(OUT)));
         return OUT;  // not lifted, so not a "normal" state
     }
 
@@ -1345,7 +1340,6 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     assert(
         Any_Lifted(dual)
-        or Is_Dual_Word_Unset_Signal(dual)
         or Is_Frame(dual)
         // more!
     );
@@ -1379,10 +1373,6 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
       case SYM_HIDE:
         Set_Cell_Flag(slot, VAR_MARKED_HIDDEN);
-        break;
-
-      case SYM_REMOVE:
-        Init_Dual_Unset(slot);
         break;
 
       default:
@@ -1970,7 +1960,7 @@ DECLARE_NATIVE(CONSTRUCT)
         goto continue_processing_spec;
 
       case ST_CONSTRUCT_EVAL_SET_STEP:
-        goto eval_set_step_dual_in_spare;
+        goto eval_set_step_result_in_spare;
 
       default: assert(false);
     }
@@ -2071,7 +2061,7 @@ DECLARE_NATIVE(CONSTRUCT)
     STATE = ST_CONSTRUCT_EVAL_SET_STEP;
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} eval_set_step_dual_in_spare: {  ////////////////////////////////////////////
+} eval_set_step_result_in_spare: {  //////////////////////////////////////////
 
     require (
       Stable* spare = Decay_If_Unstable(SPARE)

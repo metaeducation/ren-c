@@ -233,7 +233,7 @@ Result(None) Set_Parameter_Spec(
             }
             else if (0 == CT_Utf8(item, g_tag_end, strict)) {
                 *flags |= PARAMETER_FLAG_ENDABLE;
-                *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
+                *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
             }
             else if (0 == CT_Utf8(item, g_tag_opt_out, strict)) {
                 *flags |= PARAMETER_FLAG_OPT_OUT;

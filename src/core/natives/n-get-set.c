@@ -252,12 +252,10 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
                     "PICK with keyword or trash picker never allowed"
                 );
 
-            if (Is_Lifted_Void(TOP)) {  // don't know if it was ^META :-(
-                Init_Dual_Word_Remove_Signal(value_arg);
-                break;
-            }
-
             Copy_Cell(value_arg, TOP_ELEMENT);
+            if (Is_Lifted_Ghost_Or_Void(TOP)) // don't know if it was ^META :-(
+                break;  // remove signal
+
             require (
               Unliftify_Undecayed(value_arg)
             );
@@ -282,9 +280,10 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
             continue;  // dual signal, do not lift dual
         }
 
-        if (Is_Lifted_Void(TOP) or Is_Lifted_Ghost(TOP)) {
-            Init_Dual_Word_Remove_Signal(value_arg);
-            continue;  // do not lift dual signal
+        if (Is_Lifted_Ghost_Or_Void(TOP)) {  // (x: ~[]~) or (x: ())
+            Init_Ghost_For_End(value_arg);  // both act like (^x: ())
+            Liftify(value_arg);
+            continue;
         }
 
         Copy_Cell(value_arg, TOP_ELEMENT);
@@ -622,18 +621,6 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             goto return_error;
         }
 
-        if (Is_Dual_Word_Unset_Signal(Known_Stable(SPARE))) {
-            if (
-                stackindex == limit - 1
-                and Is_Dual_Nulled_Pick_Signal(out)
-            ){
-                break;  // let tweak return the unset signal
-            }
-
-            Drop_Level(sub);
-            return Error_User("Unset variable");
-        }
-
         if (Is_Frame(Known_Stable(SPARE))) {
             Api(Stable*) result = rebStable(Known_Stable(SPARE));
             Copy_Cell(SPARE, result);
@@ -819,9 +806,6 @@ Result(None) Get_Var_In_Scratch_To_Out(
 
     if (Is_Error(OUT))  // !!! weird can't pick case
         return none;
-
-    if (Is_Dual_Word_Unset_Signal(Known_Stable(OUT)))
-        return fail (Error_Unset_Variable_Raw(Known_Element(SCRATCH)));
 
     require (
       Unliftify_Undecayed(OUT)  // not unstable if wasn't ^META [1]

@@ -66,17 +66,17 @@
 
 ; We want commas to usually act as END for non-meta parameters.
 (
-    foo: func [x [<end> integer!]] [return x]
+    foo: func [x [<end> integer!]] [return ^x]
     all [
-        null = (foo,)
+        void? (foo,)
         10 = (foo 10)
     ]
 )(
-    bar: func [x [<end> integer!] y [<end> integer!]] [return pack [x y]]
+    bar: func [x [<end> integer!] y [<end> integer!]] [return pack [^x ^y]]
     all [
-        1020 = ([a b]: bar, 1020)
-        a = null
-        b = null
+        1020 = eval wrap [[^a ^b]: bar, 1020]
+        unset? $a
+        unset? $b
     ]
 )
 

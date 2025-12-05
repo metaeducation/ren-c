@@ -114,15 +114,17 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        if (Is_Dual_Word_Remove_Signal(dual)) {
-            poke = nullptr;
-            goto update_environment;
-        }
-
         panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
-    poke = Unliftify_Known_Stable(dual);
+    if (Is_Lifted_Ghost_Or_Void(dual)) {
+        poke = nullptr;
+        goto update_environment;
+    }
+
+    trap (
+      poke = Unliftify_Decayed(dual)
+    );
 
     goto handle_poke;
 

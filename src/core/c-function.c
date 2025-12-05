@@ -74,7 +74,7 @@ static Result(None) Push_Keys_And_Params_For_Fence(
 
         if (Is_Level_At_End(sub) or not Is_Group(At_Level(sub))) {
             if (meta)
-                Init_Unset_Due_To_End(PUSH());
+                Init_Ghost(PUSH());
             else
                 Init_Nulled(PUSH());
             continue;

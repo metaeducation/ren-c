@@ -319,13 +319,13 @@ DECLARE_NATIVE(POKE)
 
   initial_entry: {
 
-    // 1. We don't want to limit the TWEAK* function from changing value, and
-    //    also want it to have full use of SPARE, SCRATCH, and OUT.  So POKE
-    //    has a slightly larger frame where it stores the value in a local.
-    //
-    // 2. We produce the DUAL argument in the same frame.  However, we don't
-    //    have a way to produce the dual ACTION! to indicate an accessor.
-    //    Should there be a POKE:DUAL, or just a SET:DUAL?
+  // 1. We don't want to limit the TWEAK* function from changing value, and
+  //    also want it to have full use of SPARE, SCRATCH, and OUT.  So POKE
+  //    has a slightly larger frame where it stores the value in a local.
+  //
+  // 2. We produce the DUAL argument in the same frame.  However, we don't
+  //    have a way to produce the dual ACTION! to indicate an accessor.
+  //    Should there be a POKE:DUAL, or just a SET:DUAL?
 
     if (Is_Keyword(picker) or Is_Trash(picker))
         panic ("PICK with keyword or trash picker never allowed");
@@ -339,19 +339,14 @@ DECLARE_NATIVE(POKE)
 
     Stable* dual = ARG(VALUE);  // same slot (TWEAK* reuses this frame!) [2]
 
-    if (Is_Void(atom)) {
-        Init_Dual_Word_Remove_Signal(dual);  // signal to TWEAK*
-    }
-    else {
-        Liftify(dual);  // TWEAK* expects QUOTED!/QUASIFORM! for literal DUAL
-    }
+    Liftify(dual);  // TWEAK* expects QUOTED!/QUASIFORM! for literal DUAL
 
     goto dispatch_generic;
 
 } dispatch_generic: { ////////////////////////////////////////////////////////
 
-    // 1. Though the POKE frame is slightly larger than that for TWEAK*, its
-    //    memory layout is compatible with TWEAK*, and can be reused.
+  // 1. Though the POKE frame is slightly larger than that for TWEAK*, its
+  //    memory layout is compatible with TWEAK*, and can be reused.
 
     Bounce bounce = opt Irreducible_Bounce(
         LEVEL,

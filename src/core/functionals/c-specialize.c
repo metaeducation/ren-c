@@ -106,10 +106,10 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
                 if (Get_Parameter_Flag(param, REFINEMENT))
                     Init_Nulled(Slot_Init_Hack(arg));
                 else
-                    Init_Dual_Unset(Slot_Init_Hack(arg));
+                    Init_Tripwire(Slot_Init_Hack(arg));
             }
             else if (placeholder == g_quasi_null) {
-                Init_Dual_Unset(Slot_Init_Hack(arg));
+                Init_Tripwire(Slot_Init_Hack(arg));
             }
             else {
                 assert(placeholder == nullptr);
@@ -289,13 +289,15 @@ bool Specialize_Action_Throws(
     Option(InfixMode) infix_mode = Frame_Infix_Mode(specializee);
 
     for (; key != tail; ++key, ++param, ++slot) {
+        Stable* arg = Slot_Hack(slot);
+
         if (Is_Specialized(param)) {  // was specialized in underlying phase
-            if (not Is_Dual_Unset(slot))
-                assert(not Is_Parameter(Slot_Hack(slot)));  // couldn't change
+            if (not Is_Trash(arg))
+                assert(not Is_Parameter(arg));  // couldn't change
             continue;
         }
 
-        if (Is_Dual_Unset(slot)) {  // no assignments in specialization
+        if (Is_Trash(arg)) {  // no assignments in specialization
           #if DEBUG_POISON_UNINITIALIZED_CELLS
             Poison_Cell(slot);
           #endif
@@ -304,8 +306,6 @@ bool Specialize_Action_Throws(
                 first_param = false;  // leave infix as is
             continue;
         }
-
-        Stable* arg = Slot_Hack(slot);
 
         // !!! If argument was previously specialized, should have been type
         // checked already... don't type check again (?)

@@ -253,7 +253,7 @@ Let* Make_Let_Variable(
     );
 
     Init(Slot) slot = Slot_Init_Hack(u_cast(Slot*, Stub_Cell(let)));
-    Init_Dual_Unset(slot);
+    Init_Tripwire(slot);
 
     Tweak_Link_Inherit_Bind_Raw(let, inherit);  // linked list [1]
     Corrupt_Unused_Field(let->misc.corrupt);  // not currently used
@@ -1475,12 +1475,8 @@ Result(None) Write_Slot(Slot* slot, const Value* write)
 {
     Flags persist = (slot->header.bits & CELL_MASK_PERSIST_SLOT);
 
-    if (LIFT_BYTE(slot) == DUAL_0) {
-        if (Is_Dual_Unset(slot))
-            goto handle_non_weird;  // can be overwritten
-
+    if (LIFT_BYTE(slot) == DUAL_0)
         goto handle_dual_slot;
-    }
 
   handle_non_weird: {
 

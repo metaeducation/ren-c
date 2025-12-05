@@ -330,7 +330,6 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
     INLINE Value* Level_Arg(Level* L, REBLEN n) {
         assert(n != 0 and n <= Level_Num_Args(L));
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
-        possibly(Is_Endlike_Unset(u_cast(Value*, L->rootvar) + n));
         return u_cast(Value*, L->rootvar) + n;  // 1-indexed
     }
 #endif
@@ -341,20 +340,6 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 #define Is_Level_At_End(L)          Is_Feed_At_End((L)->feed)
 #define Not_Level_At_End(L)         Not_Feed_At_End((L)->feed)
 
-// When evaluative contexts ask "Is_Level_At_End()" and see [], they might
-// think that is the end of the level.  But [, , ,] would be an end of the
-// level after an evaluation step with no result (e.g. Is_Endlike_Unset()
-// coming back from Stepper_Executor()).  So you don't want to get
-// lulled into a false sense of security that [] is the only way a level ends.
-//
-// Additionally, if you skip a call into the stepper because you see [] then
-// in the general case you're not providing visibility of a step into a list
-// that is concretely *there*, albeit empty.  The person debugging may want
-// to know about it.  So this test will return false in debug mode, and
-// in RUNTIME_CHECKS mode it will sporadically return false as well.
-//
-#define Try_Is_Level_At_End_Optimization(L) \
-    (In_Debug_Mode(32) ? false : Is_Feed_At_End((L)->feed))
 
 INLINE ParamList* Varlist_Of_Level_Maybe_Unmanaged(Level* L) {
     assert(Is_Level_Dispatching(L));
@@ -753,17 +738,14 @@ INLINE Bounce Native_Thrown_Result(Level* L) {
     return BOUNCE_THROWN;
 }
 
-
 // Dispatchers like Lambda_Dispatcher() etc. have their own knowledge of
 // whether they are `return: []` or not, based on where they keep the return
 // information.  So they can't use the `return TRASH;` idiom.
 //
 INLINE Stable* Init_Trash_Named_From_Level(Sink(Stable) out, Level* level_) {
     Option(const Symbol*) label = Level_Label(level_);
-    if (label) {
-        Init_Utf8_Non_String_From_Strand(out, TYPE_RUNE, label);
-        Stably_Antiformize_Unbound_Fundamental(out);
-    }
+    if (label)
+        Init_Labeled_Trash(out, unwrap label);
     else
         Init_Tripwire_Untracked(out);
     return out;

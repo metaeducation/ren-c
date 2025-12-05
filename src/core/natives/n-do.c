@@ -321,12 +321,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         panic (Cell_Error(source)); }  // would panic anyway [2]
 
       case ST_EVALUATE_SINGLE_STEPPING:
-        if (Is_Endlike_Unset(OUT)) {
-            Drop_Level(SUBLEVEL);
-            return NULLED;  // no result, not even GHOST [3]
-        }
-        goto single_step_dual_in_out;
-
+        goto single_step_result_in_out;
 
       default: assert(false);
     }
@@ -388,6 +383,11 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         return DELEGATE_SUBLEVEL(sub);
 
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
+
+    if (Is_Level_At_End(sub)) {
+        Drop_Level(sub);
+        return NULLED;
+    }
 
     STATE = ST_EVALUATE_SINGLE_STEPPING;
     return CONTINUE_SUBLEVEL(sub);
@@ -460,19 +460,19 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 
-} single_step_dual_in_out: {  ////////////////////////////////////////////////
+} single_step_result_in_out: {  //////////////////////////////////////////////
 
-    // 1. There may have been a LET statement in the code.  If there was, we
-    //    have to incorporate the binding it added into the reported state
-    //    *somehow*.  Right now we add it to the block we give back...this
-    //    gives rise to questionable properties, such as if the user goes
-    //    backward in the block and were to evaluate it again:
-    //
-    //      https://forum.rebol.info/t/1496
-    //
-    //    Right now we can politely ask "don't do that".  But better would
-    //    probably be to make EVALUATE return something with more limited
-    //    privileges... more like a FRAME!/VARARGS!.
+  // 1. There may have been a LET statement in the code.  If there was, we
+  //    have to incorporate the binding it added into the reported state
+  //    *somehow*.  Right now we add it to the block we give back...this gives
+  //    rise to questionable properties, such as if the user goes backward in
+  //    the block and were to evaluate it again:
+  //
+  //      https://forum.rebol.info/t/1496
+  //
+  //    Right now we can politely ask "don't do that".  But better would
+  //    probably be to make EVALUATE return something with more limited
+  //    privileges... more like a FRAME!/VARARGS!.
 
     assert(Bool_ARG(STEP));
 
@@ -744,7 +744,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
       case ST_FRAME_FILLER_LABELED_EVAL_STEP:
         if (THROWING)
             goto finalize_maybe_throwing;
-        goto labeled_step_dual_in_spare;
+        goto labeled_step_result_in_spare;
 
       case ST_FRAME_FILLER_UNLABELED_EVAL_STEP:
         if (THROWING)
@@ -753,7 +753,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
             assert(Bool_ARG(RELAX));
             goto handle_next_item;
         }
-        goto unlabeled_step_dual_in_spare;
+        goto unlabeled_step_result_in_spare;
 
       default : assert(false);
     }
@@ -885,7 +885,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} labeled_step_dual_in_spare: {  /////////////////////////////////////////////
+} labeled_step_result_in_spare: {  ///////////////////////////////////////////
 
     REBLEN index = VAL_UINT32(ARG(INDEX));
 
@@ -894,28 +894,32 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     );
     param = Phase_Param(Frame_Phase(op), index);
 
-    goto copy_dual_spare_to_var_in_frame;
+    goto copy_spare_to_var_in_frame;
 
-} unlabeled_step_dual_in_spare: {  ///////////////////////////////////////////
+} unlabeled_step_result_in_spare: {  /////////////////////////////////////////
 
     EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
 
     var = u_cast(Value*, u_cast(Cell*, e->slot));
     param = e->param;
 
-    goto copy_dual_spare_to_var_in_frame;
+    goto copy_spare_to_var_in_frame;
 
-} copy_dual_spare_to_var_in_frame: {  ////////////////////////////////////////
+} copy_spare_to_var_in_frame: {  /////////////////////////////////////////////
 
     possibly(param == var);  // don't overwrite until meta test done
 
     if (/* param and */ Parameter_Class(param) != PARAMCLASS_META)
         Move_Value(var, SPARE);
     else {
-        Move_Value(var, SPARE);
-        require (
-          Decay_If_Unstable(var)
-        );
+        if (Is_Ghost_Or_Void(SPARE))
+            Init_Ghost(var);
+        else {
+            Move_Value(var, SPARE);
+            require (
+              Decay_If_Unstable(var)
+            );
+        }
     }
 
     goto handle_next_item;

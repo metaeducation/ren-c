@@ -219,7 +219,7 @@ DECLARE_NATIVE(JOIN)
         goto mold_step_result_in_spare;
 
       case ST_JOIN_STACK_STEPPING:
-        goto stack_step_dual_in_spare;
+        goto stack_step_result_in_spare;
 
       case ST_JOIN_EVALUATING_THE_GROUP:
         if (Is_Pinned_Form_Of(BLOCK, unwrap rest))
@@ -477,10 +477,7 @@ DECLARE_NATIVE(JOIN)
 
     return CONTINUE_SUBLEVEL(sub);
 
-} stack_step_dual_in_spare: { ////////////////////////////////////////////////
-
-    if (Is_Endlike_Unset(SPARE))
-        goto finish_stack_join;
+} stack_step_result_in_spare: { //////////////////////////////////////////////
 
     if (Is_Ghost_Or_Void(SPARE))
         goto next_stack_step;  // vaporize

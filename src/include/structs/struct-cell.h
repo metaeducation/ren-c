@@ -770,7 +770,7 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
     typedef struct RebolValueStruct Element;
 #else
     struct RebolValueStruct : public Cell {};  // can hold unstable antiforms
-    struct Stable : public RebolValueStruct {};  // can't hold unstable antiforms
+    struct Stable : public RebolValueStruct {};  // can't hold unstable forms
     struct Element : public Stable {};  // can't hold any antiforms
 #endif
 

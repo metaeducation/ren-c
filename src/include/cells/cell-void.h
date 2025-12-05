@@ -63,3 +63,7 @@ INLINE bool Is_Lifted_Void(const Stable* v) {
 INLINE bool Is_Ghost_Or_Void(Need(const Value*) v) {
     return Is_Ghost(v) or Is_Void(v);
 }
+
+INLINE bool Is_Lifted_Ghost_Or_Void(Need(const Stable*) v) {
+    return Is_Lifted_Ghost(v) or Is_Lifted_Void(v);
+}

@@ -120,13 +120,12 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* c) {
 // missing (e.g. `eval [+ 5]`) or an ordinary argument hit the end (e.g. the
 // trick used for `>> help` when the arity is 1 usually as `>> help foo`)
 //
-// ~null~ is used to represent the end state in all parameter types.  In the
-// case of quoted arguments, this is unambiguous--as there can be no nulls
-// in the input array to quote.  In the meta parameter case it's also not
-// ambiguous, as all other meta parameter types are either quoted or quasi.
-// With normal parameters it will collide with if the parameter can take
-// nulls... but we assume anyone bothered by that would switch to using a
-// meta parameter.
+// For non-endability, error parity is kept with GROUP!s, such that the same
+// error is given for `eval [1 +,]` and `(1 +,)`.
+//
+// GHOST! is used to represent the end state in all parameter types.  This
+// can be a conflation when dealing with ^META parameters that take GHOST!,
+// but this is fairly rare.
 //
 #define PARAMETER_FLAG_ENDABLE \
     FLAG_LEFT_BIT(9)

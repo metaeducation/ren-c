@@ -122,22 +122,19 @@ redescribe: func [
 unset: redescribe [
     "Put variable into a dual state that prohibits any form of GET on it"
 ](
-    specialize tweak/ [dual: '*unset*]
+    specialize set/ [value: ()]
 )
 
 unset?: redescribe [
-    "Determine if a variable is truly unset (tweaked to dual WORD! *unset*)"
+    "Determine if a variable holds a VOID antiform"
 ](
-    cascade [
-        specialize tweak/ [dual: null]
-        specialize equal?/ [value2: '*unset*]
-    ]
+    cascade [meta/ get/ ghost?/]
 )
 
 set?: redescribe [
-    "Determine if a variable can give back a value"
+    "Determine if a variable holds something other than a GHOST! antiform"
 ](
-    cascade [unset?/ not?/]
+    cascade [unset?/ not/]
 )
 
 vacant?: redescribe [

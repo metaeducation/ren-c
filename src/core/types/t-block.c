@@ -985,11 +985,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        if (not Is_Dual_Word_Remove_Signal(dual))
-            panic (Error_Bad_Poke_Dual_Raw(dual));
-
-        poke = nullptr;  // nullptr for removal in Modify_Xxx() atm
-        goto call_modify;
+        panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
     goto handle_poke;
@@ -1015,7 +1011,15 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
-    poke = Unliftify_Known_Stable(dual);
+    if (Is_Lifted_Ghost_Or_Void(dual)) {
+        poke = nullptr;  // nullptr for removal in Modify_Xxx() atm
+        goto call_modify;
+    }
+
+    trap (
+        poke = Unliftify_Decayed(dual)
+    );
+
     if (Is_Antiform(poke) and not Is_Splice(poke))
         panic (PARAM(DUAL));
 

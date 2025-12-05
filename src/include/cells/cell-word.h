@@ -217,35 +217,6 @@ INLINE bool Is_Word_With_Id(const Stable* v, SymId id) {
 #define Is_Dual(cell) \
     (LIFT_BYTE(known(Slot*, (cell))) == DUAL_0)
 
-#define Is_Dual_Word_Unset_Signal(dual) \
-    Is_Word_With_Id((dual), SYM__PUNSET_P)
-
-#define Init_Dual_Word_Unset_Signal(dual) \
-    Init_Word((dual), CANON(_PUNSET_P))
-
-INLINE Slot* Init_Dual_Unset(Cell* slot) {
-    Init_Dual_Word_Unset_Signal(slot);
-    LIFT_BYTE(slot) = DUAL_0;
-    return u_cast(Slot*, slot);
-}
-
-INLINE bool Is_Dual_Unset(const Cell* cell) {
-    if (LIFT_BYTE(cell) != DUAL_0)
-        return false;
-    if (KIND_BYTE(cell) != TYPE_WORD)
-        return false;
-    return Word_Id(cell) == SYM__PUNSET_P;
-}
-
-INLINE Value* Init_Unset_Due_To_End(Init(Value) out) {
-    Init_Dual_Word_Unset_Signal(out);
-    LIFT_BYTE(out) = DUAL_0;
-    return out;
-}
-
-#define Is_Endlike_Unset(cell) \
-    Is_Dual_Unset(cell)
-
 
 //=//// *BLACKHOLE* DUAL SIGNAL ///////////////////////////////////////////-//
 //

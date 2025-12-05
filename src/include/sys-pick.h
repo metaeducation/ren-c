@@ -127,8 +127,5 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 #define Is_Dual_Nulled_Pick_Signal(dual)  Is_Nulled(dual)
 #define Init_Dual_Nulled_Pick_Signal(dual)  Init_Nulled(dual)
 
-#define Is_Dual_Word_Remove_Signal(dual)  Is_Word_With_Id((dual), SYM_REMOVE)
-#define Init_Dual_Word_Remove_Signal(dual)  Init_Word((dual), CANON(REMOVE))
-
 
 #define Is_Dual_Word_Named_Signal(dual)  Is_Word(dual)

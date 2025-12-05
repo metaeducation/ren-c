@@ -874,9 +874,6 @@ Result(bool) Typecheck_Coerce(
 
     assert(atom != SCRATCH and atom != SPARE);
 
-    if (Is_Dual_Unset(atom))
-        return Get_Parameter_Flag(param, ENDABLE);
-
     if (Get_Parameter_Flag(param, OPT_OUT))
         assert(not Is_Void(atom));  // should have bypassed this check
 
@@ -895,9 +892,12 @@ Result(bool) Typecheck_Coerce(
         //
         // same as PARAMCLASS_META
     }
-    else {
-        if (Not_Cell_Stable(atom))
-            goto do_coercion;
+    else if (Not_Cell_Stable(atom)) {
+        if (Is_Void(atom)) {  // non-^META endable parameters can be void
+            if (Get_Parameter_Flag(param, ENDABLE))
+                goto return_true;
+        }
+        goto do_coercion;
     }
 
   typecheck_again: {
@@ -1016,7 +1016,11 @@ Result(bool) Typecheck_Coerce(
 } return_result: { ///////////////////////////////////////////////////////////
 
     if ((result == true) and Not_Cell_Stable(atom))
-        assert(is_return or Parameter_Class(param) == PARAMCLASS_META);
+        assert(
+            is_return
+            or Parameter_Class(param) == PARAMCLASS_META
+            or Get_Parameter_Flag(param, ENDABLE)
+        );
 
   #if RUNTIME_CHECKS  // always corrupt to emphasize that we *could* have [1]
     Init_Unreadable(SPARE);

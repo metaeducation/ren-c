@@ -83,3 +83,44 @@ INLINE Value* Init_Ghost_Untracked(Init(Value) out) {
 
 #define Init_Ghost(out) \
     TRACK(Init_Ghost_Untracked(out))
+
+
+//=//// GHOST is Used To Signal <end> Reached /////////////////////////////=//
+//
+// Unstable antiforms stored in variables is where the sidewalk ends as far
+// as it comes to the idea of "truly unset".  Hence, if you want to signal
+// an <end> was reached by the evaluator, GHOST is pretty much the limit of
+// how good it can get.
+//
+// If you have a ^META parameter, and the next evaluation is an actual GHOST,
+// it will conflate with the ghost produced by an `<end>`.  We could prohibit
+// ^META parameters from being <end>-able and close that loophole, or leave
+// it open and just accept the conflation.
+//
+// This usage of GHOST! applies in other places, such as when a PACK! has
+// too few values, as this is more useful than erroring in the moment:
+//
+//     >> [a b c]: pack [1 2]
+//     == \~['1 '2]~\  ; antiform
+//
+//     >> a
+//     == 1
+//
+//     >> b
+//     == 2
+//
+//     >> ghost? ^c
+//     == \~okay~\  ; antiform
+//
+// Trash would be another possible choice (and able to store a message, like
+// ~#PACK-TOO-SHORT~).  But the mechanics of the system are geared toward
+// graceful handling of GHOST! with <opt> and null inter-convertibility, which
+// aren't properties that one generally wants for TRASH!...that's designed to
+// throw a deliberate informative wrench into things, to let you know why
+// a variable has been "poisoned".  You shouldn't really be manipulating or
+// querying TRASH!, just overwriting it (assuming it's not a protected variable
+// that is intended to stay trash for a reason...)
+//
+
+#define Init_Ghost_For_End(out) \
+    Init_Ghost(out)

@@ -390,6 +390,13 @@ INLINE Stable* Init_Tripwire_Untracked(Init(Stable) out) {
     Init_Quasar(out)
 
 
+INLINE Stable* Init_Labeled_Trash(Init(Stable) out, const Symbol* label) {
+    Init_Utf8_Non_String_From_Strand(out, TYPE_RUNE, label);
+    Stably_Antiformize_Unbound_Fundamental(out);
+    return out;
+}
+
+
 //=//// GENERIC UTF-8 ACCESSORS //////////////////////////////////////////=//
 //
 // Analogous to Cell_Bytes_At(), this allows you to get read-only UTF-8 data

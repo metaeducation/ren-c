@@ -685,7 +685,7 @@ Error* Make_Error_Managed_Vaptr(
             else switch (Detect_Rebol_Pointer(p)) {
               case DETECTED_AS_END :
                 assert(!"Not enough arguments in Make_Error_Managed()");
-                Init_Unset_Due_To_End(u_cast(Value*, u_cast(Cell*, slot)));
+                Init_Ghost_For_End(u_cast(Value*, u_cast(Cell*, slot)));
                 break;
 
               case DETECTED_AS_CELL: {
@@ -837,19 +837,6 @@ Error* Error_Bad_Func_Def(const Element* spec, const Element* body)
 Error* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 {
     return Error_No_Arg_Raw(label, symbol);
-}
-
-
-//
-//  Error_Unspecified_Arg: C
-//
-Error* Error_Unspecified_Arg(Level* L) {
-    assert(Is_Endlike_Unset(L->u.action.arg));
-
-    const Symbol* param_symbol = Key_Symbol(L->u.action.key);
-
-    Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
-    return Error_Unspecified_Arg_Raw(label, param_symbol);
 }
 
 

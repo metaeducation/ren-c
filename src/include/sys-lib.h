@@ -48,7 +48,7 @@ INLINE Stable* Mutable_Lib_Var(SymId id) {
 INLINE const Stable* Lib_Var(SymId id) {
     assert(id <= MAX_SYM_LIB_PREMADE);
     Stable* slot = cast(Stable*, Stub_Cell(&g_lib_patches[id]));
-    assert(not Is_Dual_Unset(slot));
+    assert(not Is_Trash(slot));
     return slot;
 }
 

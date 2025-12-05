@@ -445,7 +445,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     switch (STATE) {
       case ST_ANY_ALL_NONE_INITIAL_ENTRY: goto initial_entry;
-      case ST_ANY_ALL_NONE_EVAL_STEP: goto eval_step_dual_in_spare;
+      case ST_ANY_ALL_NONE_EVAL_STEP: goto eval_step_result_in_spare;
       case ST_ANY_ALL_NONE_PREDICATE: goto predicate_result_in_scratch;
       default: assert(false);
     }
@@ -468,13 +468,13 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     );
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
+    if (Is_Level_At_End(sub))
+        goto reached_end;
+
     STATE = ST_ANY_ALL_NONE_EVAL_STEP;
     return CONTINUE_SUBLEVEL(sub);
 
-} eval_step_dual_in_spare: {  ////////////////////////////////////////////////
-
-    if (Is_Endlike_Unset(SPARE))
-        goto reached_end;
+} eval_step_result_in_spare: {  //////////////////////////////////////////////
 
     if (Is_Ghost_Or_Void(SPARE)) {  // no vote...ignore and continue
         assert(STATE == ST_ANY_ALL_NONE_EVAL_STEP);
@@ -549,7 +549,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
         break;
     }
 
-    if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
+    if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
 
     assert(STATE == ST_ANY_ALL_NONE_EVAL_STEP);
@@ -684,7 +684,7 @@ DECLARE_NATIVE(CASE)
 
     switch (STATE) {
       case ST_CASE_INITIAL_ENTRY: goto initial_entry;
-      case ST_CASE_CONDITION_EVAL_STEP: goto condition_dual_in_spare;
+      case ST_CASE_CONDITION_EVAL_STEP: goto condition_result_in_spare;
       case ST_CASE_RUNNING_PREDICATE: goto predicate_result_in_spare;
       case ST_CASE_EVALUATING_GROUP_BRANCH:
         goto handle_processed_branch_in_scratch;
@@ -723,7 +723,7 @@ DECLARE_NATIVE(CASE)
 
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // one step to pass predicate [1]
 
-} condition_dual_in_spare: {  ////////////////////////////////////////////////
+} condition_result_in_spare: {  //////////////////////////////////////////////
 
     if (Is_Ghost(SPARE))  // skip over things like ELIDE, but not voids!
         goto handle_next_clause;
@@ -903,7 +903,7 @@ DECLARE_NATIVE(SWITCH)
         goto initial_entry;
 
       case ST_SWITCH_EVALUATING_RIGHT:
-        goto right_dual_in_spare;
+        goto right_result_in_spare;
 
       case ST_SWITCH_RUNNING_BRANCH:
         if (not Bool_ARG(ALL)) {
@@ -975,7 +975,7 @@ DECLARE_NATIVE(SWITCH)
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);  // no direct predicate call [1]
 
-} right_dual_in_spare: {  ////////////////////////////////////////////////////
+} right_result_in_spare: {  //////////////////////////////////////////////////
 
     // 1. At one point the value was allowed to corrupt during comparison, due
     //    to the idea equality was transitive.  So if it changes 0.01 to 1% in
@@ -1095,7 +1095,7 @@ DECLARE_NATIVE(SWITCH)
 //
 //  default: infix native [
 //
-//  "If TARGET is [NULL TRASH BLANK] (or unset), set it to BRANCH eval result"
+//  "If TARGET is [NULL TRASH BLANK], set it to BRANCH eval result"
 //
 //      return: [any-stable?]
 //      @target "Word or path which might be set (or not)"
@@ -1170,12 +1170,13 @@ DECLARE_NATIVE(DEFAULT)
     if (Is_Error(OUT))
         panic (Cell_Error(OUT));
 
-    if (not Is_Dual_Word_Unset_Signal(Known_Stable(OUT))) {
-        require (
-          Unliftify_Undecayed(OUT)
-        );
+    require (
+        Unliftify_Undecayed(OUT)
+    );
+
+    if (not Is_Ghost(OUT)) {  // should void count?  GHOST! is "unset"
         require (  // may need decay [2]
-          Stable* out = Decay_If_Unstable(OUT)
+            Stable* out = Decay_If_Unstable(OUT)
         );
         if (not (Is_Trash(out) or Is_Nulled(out) or Is_Blank(out)))
             return OUT;  // consider it a "value" [3]

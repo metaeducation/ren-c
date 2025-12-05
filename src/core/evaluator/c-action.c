@@ -217,6 +217,20 @@ bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
 
 
 //
+//  Handle_Barrier_Hit: C
+//
+Result(None) Handle_Barrier_Hit(Sink(Value) out, Level* L) {
+    assert(Is_Action_Level(L));
+
+    if (Not_Parameter_Flag(PARAM, ENDABLE))
+        return fail (Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
+
+    Init_Ghost_For_End(out);
+    return none;
+}
+
+
+//
 //  Action_Executor: C
 //
 Bounce Action_Executor(Level* L)
@@ -433,7 +447,9 @@ Bounce Action_Executor(Level* L)
     //    first-cut approximation by unbinding.
 
         if (STATE == ST_ACTION_BARRIER_HIT) {
-            Init_Unset_Due_To_End(ARG);
+            require (
+              Handle_Barrier_Hit(ARG, L)
+            );
             goto continue_fulfilling;
         }
 
@@ -454,10 +470,9 @@ Bounce Action_Executor(Level* L)
                     goto continue_fulfilling;
                 }
 
-                if (Not_Parameter_Flag(PARAM, ENDABLE))
-                    panic (Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
-
-                Init_Unset_Due_To_End(ARG);
+                require (
+                    Handle_Barrier_Hit(ARG, L)
+                );
                 goto continue_fulfilling;
             }
 
@@ -594,7 +609,9 @@ Bounce Action_Executor(Level* L)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (Is_Level_At_End(L)) {
-            Init_Unset_Due_To_End(ARG);
+            require (
+              Handle_Barrier_Hit(ARG, L)
+            );
             goto continue_fulfilling;
         }
 
@@ -842,11 +859,8 @@ Bounce Action_Executor(Level* L)
     PARAM = Phase_Params_Head(Level_Phase(L));
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
-        if (Is_Typechecked(ARG)) {
-            if (LIFT_BYTE(ARG) == DUAL_0)
-                assert(Is_Endlike_Unset(ARG));  // locals, <end>-ables
+        if (Is_Typechecked(ARG))
             continue;
-        }
 
         Phase* phase = Level_Phase(L);
         const Param* param = PARAM;
@@ -854,12 +868,6 @@ Bounce Action_Executor(Level* L)
             Element* archetype = Phase_Archetype(phase);
             phase = Frame_Phase(archetype);
             param = Phase_Param(phase, ARG - cast(Value*, L->rootvar));
-        }
-
-        if (Is_Endlike_Unset(ARG)) {  // special state, DUAL_0
-            if (Get_Parameter_Flag(param, ENDABLE))  // !!! "<unset>?
-                continue;
-            panic (Error_Unspecified_Arg(L));
         }
 
         assert(LIFT_BYTE(ARG) != DUAL_0);  // not a tripwire

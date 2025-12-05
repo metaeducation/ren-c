@@ -221,8 +221,7 @@ Bounce Inert_Stepper_Executor(Level* L)
     assert(STATE == ST_INERT_STEPPER_INITIAL_ENTRY);
     STATE = ST_INERT_STEPPER_FINISHED;  // can't leave as STATE_0
 
-    if (Is_Feed_At_End(L->feed))
-        return Init_Unset_Due_To_End(OUT);
+    assert(Not_Level_At_End(L));
 
     Derelativize(OUT, At_Feed(L->feed), Feed_Binding(L->feed));
     Fetch_Next_In_Feed(L->feed);
@@ -277,7 +276,7 @@ Bounce Stepper_Executor(Level* L)
         goto look_ahead_for_left_literal_infix; }
 
     #if (! DEBUG_DISABLE_INTRINSICS)
-      intrinsic_dual_arg_in_spare:
+      intrinsic_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
         Details* details = Ensure_Frame_Details(CURRENT);
         Dispatcher* dispatcher = Details_Dispatcher(details);
@@ -309,19 +308,19 @@ Bounce Stepper_Executor(Level* L)
         goto set_group_result_in_spare;
 
       case ST_STEPPER_GENERIC_SET:
-        goto generic_set_rightside_dual_in_out;
+        goto generic_set_rightside_in_out;
 
       case ST_STEPPER_SET_BLOCK:
-        goto set_block_rightside_dual_in_out;
+        goto set_block_rightside_in_out;
 
       case TYPE_FRAME:
         goto lookahead;
 
       case ST_STEPPER_TIE_EVALUATING_RIGHT_SIDE:
-        goto tie_rightside_dual_in_out;
+        goto tie_rightside_in_out;
 
       case ST_STEPPER_APPROVE_EVALUATING_RIGHT_SIDE:
-        goto approval_rightside_dual_in_out;
+        goto approval_rightside_in_out;
 
     #if RUNTIME_CHECKS
       case ST_STEPPER_FINISHED_DEBUG:
@@ -342,14 +341,16 @@ Bounce Stepper_Executor(Level* L)
 
     Sync_Feed_At_Cell_Or_End_May_Panic(L->feed);
 
-    Update_Expression_Start(L);  // !!! See Level_Array_Index() for caveats
-
-    if (Is_Feed_At_End(L->feed)) {
-        assert(Is_Cell_Erased(OUT));
-        Init_Unset_Due_To_End(OUT);
-        STATE = ST_STEPPER_NONZERO_STATE;
-        goto finished;
+  #if RUNTIME_CHECKS
+    if (Is_Level_At_End(L)) {
+        Where_Core_Debug(L);
+        debug_break();
     }
+  #endif
+
+    assert(Not_Level_At_End(L));
+
+    Update_Expression_Start(L);  // !!! See Level_Array_Index() for caveats
 
     Force_Blit_Cell(  // Lookback clears it
         L_current_gotten_raw, L_next_gotten_raw
@@ -705,12 +706,12 @@ Bounce Stepper_Executor(Level* L)
 
     Level* right = Maybe_Rightward_Continuation_Needed(L);
     if (not right)
-        goto tie_rightside_dual_in_out;
+        goto tie_rightside_in_out;
 
     STATE = ST_STEPPER_TIE_EVALUATING_RIGHT_SIDE;
     return CONTINUE_SUBLEVEL(right);
 
-} tie_rightside_dual_in_out: {
+} tie_rightside_in_out: {
 
     if (Is_Antiform(OUT))
         panic ("$ operator cannot bind antiforms");
@@ -853,12 +854,12 @@ Bounce Stepper_Executor(Level* L)
 
     Level* right = Maybe_Rightward_Continuation_Needed(L);
     if (not right)
-        goto approval_rightside_dual_in_out;
+        goto approval_rightside_in_out;
 
     STATE = ST_STEPPER_APPROVE_EVALUATING_RIGHT_SIDE;
     return CONTINUE_SUBLEVEL(right);
 
-} approval_rightside_dual_in_out: {
+} approval_rightside_in_out: {
 
     // !!! Did all the work just by making a not-afraid of ghosts step?
 
@@ -892,17 +893,45 @@ Bounce Stepper_Executor(Level* L)
 
   case TYPE_COMMA: { //// COMMA! , ///////////////////////////////////////////
 
-    // A comma is a lightweight looking expression barrier.  Though it acts
-    // something like COMMENT or ELIDE, it does not evaluate to a "ghost"
-    // state.  It just errors on evaluations that aren't interstitial, or
-    // gets skipped over otherwise.
-    //
-    //   https://forum.rebol.info/t/1387/6
+  // A comma is a lightweight looking expression barrier.  It errors on
+  // evaluations that aren't interstitial, or gets skipped over otherwise.
+  //
+  //   https://forum.rebol.info/t/1387/6
+  //
+  // 1. We depend on EVAL:STEP only returning NULL when it's given the tail
+  //    of a block, to indicate no synthesized value (not even GHOST!).  If
+  //    we "just skipped" commas in this case, we'd have to create some
+  //    other notion of how to detect Is_Level_At_End() that counted commas
+  //    *before* asking for an evaluation.
+  //
+  //    So there's no getting around the fact that [,] produces GHOST!.
+  //
+  // 2. The cleanest model of COMMA! behavior would be for it to always step
+  //    over it and produce a GHOST! on each step over a comma.  But this
+  //    risks being costly enough that people might avoid using commas even
+  //    if they liked the visual separation.  For now, exercise both options:
+  //    a high-performance "just skip it", and a slower "debug" mode.
 
-    if (Get_Eval_Executor_Flag(L, FULFILLING_ARG))
-        panic (Error_Expression_Barrier_Raw());
+    if (Get_Eval_Executor_Flag(L, FULFILLING_ARG)) {
+        require (
+          Handle_Barrier_Hit(OUT, L->prior)
+        );
+        goto finished;
+    }
 
+    if (Is_Level_At_End(L)) {  // [,] always has to make a GHOST! [1]
+        Init_Ghost(OUT);
+        goto finished;
+    }
+
+    if (In_Debug_Mode(64)) {  // simulate GHOST! generation, sometimes [2]
+        Init_Ghost(OUT);
+        goto finished;
+    }
+
+    Erase_Cell(OUT);  // just skip to next expression
     goto start_new_expression;
+
 
 
 } case TYPE_FRAME: { //// FRAME! /////////////////////////////////////////////
@@ -1059,11 +1088,11 @@ Bounce Stepper_Executor(Level* L)
 
           case PARAMCLASS_JUST:
             Just_Next_In_Feed(SPARE, L->feed);
-            goto intrinsic_dual_arg_in_spare;
+            goto intrinsic_arg_in_spare;
 
           case PARAMCLASS_THE:
             The_Next_In_Feed(SPARE, L->feed);
-            goto intrinsic_dual_arg_in_spare;
+            goto intrinsic_arg_in_spare;
 
           default:
             panic ("Unsupported Intrinsic parameter convention");
@@ -1477,14 +1506,11 @@ Bounce Stepper_Executor(Level* L)
 
     Level* right = Maybe_Rightward_Continuation_Needed(L);
     if (not right)
-        goto generic_set_rightside_dual_in_out;
+        goto generic_set_rightside_in_out;
 
     return CONTINUE_SUBLEVEL(right);
 
-} generic_set_rightside_dual_in_out: {
-
-    if (Is_Endlike_Unset(OUT))
-        panic (Error_Need_Non_End_Raw(CURRENT));
+} generic_set_rightside_in_out: {
 
     if (Is_Lifted_Void(CURRENT))  // e.g. `(void): ...`  !!! use space var!
         goto lookahead;  // pass through everything
@@ -1743,11 +1769,11 @@ Bounce Stepper_Executor(Level* L)
 
     Level* sub = Maybe_Rightward_Continuation_Needed(L);
     if (not sub)
-        goto set_block_rightside_dual_in_out;
+        goto set_block_rightside_in_out;
 
     return CONTINUE_SUBLEVEL(sub);
 
-}} set_block_rightside_dual_in_out: {
+}} set_block_rightside_in_out: {
 
     // 1. On errors we don't assign variables, yet pass the error through.
     //    That permits code like this to work:
@@ -1822,14 +1848,12 @@ Bounce Stepper_Executor(Level* L)
             if (circled == stackindex_var)
                 panic ("Circled item has no multi-return value to use");
 
-            Init_Dual_Word_Unset_Signal(OUT);
+            Init_Ghost_For_End(OUT);
+
             heeded (Corrupt_Cell_If_Needful(SPARE));
-            Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
-                LEVEL,
-                NO_STEPS
+            require (
+              Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS)
             );
-            if (e)
-                panic (unwrap e);
             goto skip_circled_check;  // we checked it wasn't circled
         }
 

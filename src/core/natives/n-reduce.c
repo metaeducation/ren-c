@@ -117,9 +117,7 @@ DECLARE_NATIVE(REDUCE)
         goto initial_entry_non_list;  // semantics in question [1]
 
       case ST_REDUCE_EVAL_STEP:
-        if (Is_Endlike_Unset(SPARE))
-            goto finished;
-        goto reduce_step_dual_in_spare;
+        goto reduce_step_result_in_spare;
 
       case ST_REDUCE_RUNNING_PREDICATE:
         goto process_out;
@@ -159,6 +157,10 @@ DECLARE_NATIVE(REDUCE)
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
     ));
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
+
+    if (Is_Level_At_End(sub))
+        goto finished;
+
     goto next_reduce_step;
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
@@ -168,22 +170,17 @@ DECLARE_NATIVE(REDUCE)
   //    won't have the starting value anymore.  Cache the newline flag on
   //    the ARG(VALUE) cell, as newline flags on ARG()s are available.
 
-    if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
-        goto finished;
-
-    if (not Is_Feed_At_End(SUBLEVEL->feed)) {
-        if (Get_Cell_Flag(At_Feed(SUBLEVEL->feed), NEWLINE_BEFORE))
-            Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag [1]
-        else
-            Clear_Cell_Flag(v, NEWLINE_BEFORE);
-    }
+    if (Get_Cell_Flag(At_Level(SUBLEVEL), NEWLINE_BEFORE))
+        Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag [1]
+    else
+        Clear_Cell_Flag(v, NEWLINE_BEFORE);
 
     SUBLEVEL->executor = &Stepper_Executor;
     STATE = ST_REDUCE_EVAL_STEP;
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} reduce_step_dual_in_spare: { ///////////////////////////////////////////////
+} reduce_step_result_in_spare: { /////////////////////////////////////////////
 
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
@@ -241,6 +238,9 @@ DECLARE_NATIVE(REDUCE)
         if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // [2]
             Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     }
+
+    if (Is_Level_At_End(SUBLEVEL))
+        goto finished;
 
     goto next_reduce_step;
 
@@ -300,7 +300,7 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     switch (STATE) {
       case ST_REDUCE_EACH_INITIAL_ENTRY: goto initial_entry;
-      case ST_REDUCE_EACH_REDUCING_STEP: goto reduce_step_dual_in_spare;
+      case ST_REDUCE_EACH_REDUCING_STEP: goto reduce_step_result_in_spare;
       case ST_REDUCE_EACH_RUNNING_BODY: goto body_result_in_out;
       default : assert(false);
     }
@@ -338,7 +338,7 @@ DECLARE_NATIVE(REDUCE_EACH)
 
 } reduce_next: { ////////////////////////////////////////////////////////////
 
-    if (Is_Feed_At_End(SUBLEVEL->feed))
+    if (Is_Level_At_End(SUBLEVEL))
         goto finished;
 
     if (Is_Pinned_Form_Of(BLOCK, block))  // undo &Just_Use_Out_Executor
@@ -350,12 +350,9 @@ DECLARE_NATIVE(REDUCE_EACH)
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} reduce_step_dual_in_spare: {  //////////////////////////////////////////////
+} reduce_step_result_in_spare: {  ////////////////////////////////////////////
 
     Slot* slot = Varlist_Slot(Cell_Varlist(vars), 1);
-
-    if (Is_Endlike_Unset(SPARE))
-        goto finished;
 
     if (Is_Ghost(SPARE) and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META))
         goto reduce_next;  // skip ghost unless meta?

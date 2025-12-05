@@ -663,7 +663,7 @@ static bool Combinator_Param_Hook(
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
                 panic ("Too few parameters for combinator");  // !!! Error_No_Arg
-            Init_Unset_Due_To_End(u_cast(Value*, var));
+            Init_Ghost_For_End(u_cast(Value*, var));
         }
         else {
             if (Parameter_Class(param) == PARAMCLASS_THE)
@@ -688,7 +688,7 @@ static bool Combinator_Param_Hook(
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
                 panic ("Too few parameters for combinator");  // !!! Error_No_Arg
-            Init_Unset_Due_To_End(u_cast(Value*, var));
+            Init_Ghost_For_End(u_cast(Value*, var));
         }
         else {
             // !!! Getting more than one value back from a libRebol API is not

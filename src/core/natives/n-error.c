@@ -162,7 +162,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 
     switch (STATE) {
       case ST_ENRESCUE_INITIAL_ENTRY: goto initial_entry;
-      case ST_ENRESCUE_EVAL_STEPPING: goto eval_step_dual_in_spare;
+      case ST_ENRESCUE_EVAL_STEPPING: goto eval_result_in_spare;
       case ST_ENRESCUE_RUNNING_FRAME: goto eval_result_in_spare;
       default: assert(false);
     }
@@ -184,6 +184,10 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
             flags
         ));
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
+
+        if (Is_Level_At_End(sub))
+            goto finished;
+
         STATE = ST_ENRESCUE_EVAL_STEPPING;
         unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // [1]
         return CONTINUE_SUBLEVEL(sub);
@@ -204,11 +208,6 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
     unnecessary(Enable_Dispatcher_Catching_Of_Throws(LEVEL));  // [1]
     return CONTINUE_SUBLEVEL(sub);
 
-} eval_step_dual_in_spare: {  ////////////////////////////////////////////////
-
-    if (Is_Endlike_Unset(SPARE))
-        goto finished;
-
 } eval_result_in_spare: {  ///////////////////////////////////////////////////
 
     if (Is_Error(SPARE)) {
@@ -226,7 +225,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
     if (not Is_Ghost_Or_Void(SPARE))
         Move_Value(OUT, SPARE);
 
-    if (Try_Is_Level_At_End_Optimization(SUBLEVEL))
+    if (Is_Level_At_End(SUBLEVEL))
         goto finished;
 
     Reset_Evaluator_Erase_Out(SUBLEVEL);

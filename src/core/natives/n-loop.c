@@ -1109,22 +1109,13 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
 
                 // Want keys and values (`for-each 'key val obj [...]`)
                 //
-                if (Is_Dual_Unset(les->u.evars.slot)) {
-                    Flags persist = (
-                        slot->header.bits & CELL_MASK_PERSIST_SLOT
-                    );
-                    Init_Dual_Unset(slot);  // !!! hack!
-                    slot->header.bits |= persist;  // preserve persist flags
-                }
-                else {
-                    Sink(Stable) spare_val = SPARE;
-                    trap (
-                      Read_Slot(spare_val, les->u.evars.slot)
-                    );
-                    trap (
-                      Write_Loop_Slot_May_Bind(slot, spare_val, les->data)
-                    );
-                }
+                Sink(Stable) spare_val = SPARE;
+                trap (
+                    Read_Slot(spare_val, les->u.evars.slot)
+                );
+                trap (
+                    Write_Loop_Slot_May_Bind(slot, spare_val, les->data)
+                );
             }
             else
                 panic ("Loop enumeration of contexts must be 1 or 2 vars");

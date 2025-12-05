@@ -419,8 +419,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
     switch (STATE) {
       case ST_MAKE_MAP_INITIAL_ENTRY: goto initial_entry;
-      case ST_MAKE_MAP_EVAL_STEP_KEY: goto key_step_dual_in_out;
-      case ST_MAKE_MAP_EVAL_STEP_VALUE: goto value_step_dual_in_out;
+      case ST_MAKE_MAP_EVAL_STEP_KEY: goto key_step_result_in_out;
+      case ST_MAKE_MAP_EVAL_STEP_VALUE: goto value_step_result_in_out;
       default: assert(false);
     }
 
@@ -449,6 +449,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
       Level* sub = Make_Level_At(executor, arg, flags)
     );
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
+    if (Is_Level_At_End(sub))
+        goto finished;
 
 } reduce_key: { /////////////////////////////////////////////////////////////
 
@@ -459,10 +461,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} key_step_dual_in_out: { ////////////////////////////////////////////////////
-
-    if (Is_Endlike_Unset(SPARE))  // no more key, not a problem, done
-        goto finished;
+} key_step_result_in_out: { //////////////////////////////////////////////////
 
     if (Is_Ghost(SPARE))
         goto reduce_key;  // try again...
@@ -477,16 +476,16 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
     goto reduce_value;
 
-} reduce_value: { ///////////////////////////////////////////////////////////
+} reduce_value: { ////////////////////////////////////////////////////////////
+
+    if (Is_Level_At_End(SUBLEVEL))  // no value for key, that's an error
+        panic ("Key without value terminating MAKE MAP!");
 
     STATE = ST_MAKE_MAP_EVAL_STEP_VALUE;
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 
-} value_step_dual_in_out: { //////////////////////////////////////////////////
-
-    if (Is_Endlike_Unset(SPARE))  // no value for key, that's an error
-        panic ("Key without value terminating MAKE MAP!");
+} value_step_result_in_out: { ////////////////////////////////////////////////
 
     if (Is_Ghost(SPARE))
         goto reduce_value;  // try again...
@@ -881,17 +880,19 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
         if (Is_Dual_Nulled_Pick_Signal(dual))
             goto handle_pick;
 
-        if (Is_Dual_Word_Remove_Signal(dual)) {
-            poke = nullptr;  // remove signal
-            goto handle_poke;
-        }
-
         panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
-    Unliftify_Known_Stable(dual);
+    if (Is_Lifted_Ghost_Or_Void(dual)) {
+        poke = nullptr;  // remove signal
+        goto handle_poke;
+    }
 
-    if (Is_Nulled(dual) or Is_Trash(dual))
+    trap (
+      Unliftify_Decayed(dual)
+    );
+
+    if (Is_Keyword(dual))  // ~null~ is bad, but... ~okay~ ? ~NaN~ ?
         panic (Error_Bad_Antiform(dual));
 
     poke = dual;

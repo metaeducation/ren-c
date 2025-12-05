@@ -89,6 +89,14 @@ static bool Using_Sublevel_For_Stepping(Level* L) {  // see [A]
     return true;
 }
 
+static Level* Level_For_Stepping(Level* L) {  // see [A]
+    if (L == TOP_LEVEL)
+        return L;
+    assert(TOP_LEVEL->prior == L);
+    assert(TOP_LEVEL->executor == &Stepper_Executor);
+    return TOP_LEVEL;
+}
+
 
 //
 //  Evaluator_Executor: C
@@ -127,15 +135,17 @@ Bounce Evaluator_Executor(Level* const L)
         assert(Is_Ghost(PRIMED));  // all cases GHOST! at the moment [1]
         goto initial_entry;
 
-      default:
+      default:  // if using same level as Stepper, it takes all other states
         if (Using_Sublevel_For_Stepping(L)) {
             assert(STATE == ST_EVALUATOR_STEPPING);
-            goto step_done_with_dual_in_out;
+            goto step_done_with_result_in_out;
         }
         goto call_stepper_executor_directly;  // callback on behalf of stepper
     }
 
   initial_entry: {  //////////////////////////////////////////////////////////
+
+    Sync_Feed_At_Cell_Or_End_May_Panic(L->feed);
 
     if (In_Debug_Mode(64)) {
         require (
@@ -146,16 +156,20 @@ Bounce Evaluator_Executor(Level* const L)
                 | (L->flags.bits & LEVEL_FLAG_AFRAID_OF_GHOSTS)  // see [B]
         ));
         Push_Level_Erase_Out_If_State_0(OUT, sub);
+
+        if (Is_Level_At_End(sub))
+            goto finished;
+
         STATE = ST_EVALUATOR_STEPPING;
         return CONTINUE_SUBLEVEL(sub);  // executors *must* catch
     }
 
+    if (Is_Level_At_End(L))
+        goto finished;
+
     goto call_stepper_executor_directly;
 
 } start_new_step: {  /////////////////////////////////////////////////////////
-
-    if (Try_Is_Level_At_End_Optimization(L))
-        goto finished;
 
     if (Using_Sublevel_For_Stepping(L)) {
         Reset_Evaluator_Erase_Out(SUBLEVEL);
@@ -172,11 +186,11 @@ Bounce Evaluator_Executor(Level* const L)
     Bounce bounce = Stepper_Executor(L);
 
     if (bounce == OUT)  // completed step, possibly reached end of feed
-        goto step_done_with_dual_in_out;
+        goto step_done_with_result_in_out;
 
     return bounce;  // requesting a continuation on behalf of the stepper
 
-} step_done_with_dual_in_out: {  /////////////////////////////////////////////
+} step_done_with_result_in_out: {  ///////////////////////////////////////////
 
   // 1. Note that unless a function is declared as GHOSTABLE, any GHOST! it
   //    tries to return will be converted to a VOID for safety when in an
@@ -204,24 +218,21 @@ Bounce Evaluator_Executor(Level* const L)
   //    You can't wait until you know if the next evaluation is invisible to
   //    escalate ERROR! to panic.  Things don't stop running soon enough.
 
-    if (Is_Endlike_Unset(OUT))  // the "official" way to detect reaching end
-        goto finished;
+    Level* step_level = Level_For_Stepping(L);
 
-    if (Is_Ghost(OUT)) // ELIDE, COMMENT, ~,~ or ^GHOST-VAR etc. [1]
+    if (Is_Ghost(OUT)) {  // ELIDE, COMMENT, ~,~ or ^GHOST-VAR etc. [1]
+        if (Is_Level_At_End(step_level))
+            goto finished;
+
         goto start_new_step;  // leave previous result as-is in PRIMED
+    }
+
+    possibly(Get_Level_Flag(step_level, AFRAID_OF_GHOSTS));
+    Set_Level_Flag(step_level, AFRAID_OF_GHOSTS);  // always unafraid now [B]
 
     Move_Value(PRIMED, OUT);  // make current result the preserved one
 
-    if (Using_Sublevel_For_Stepping(L)) {  // always unafraid now, see [B]
-        possibly(Get_Level_Flag(SUBLEVEL, AFRAID_OF_GHOSTS));
-        Set_Level_Flag(SUBLEVEL, AFRAID_OF_GHOSTS);
-    } else{
-        possibly(Get_Level_Flag(L, AFRAID_OF_GHOSTS));
-        Set_Level_Flag(L, AFRAID_OF_GHOSTS);
-    }
-
-    dont(Try_Is_Level_At_End_Optimization(L));  // (fail x,) must error
-    if (Is_Feed_At_End(L->feed))
+    if (Is_Level_At_End(step_level))
         goto finished;
 
     require (  // panic if error seen before final step [2]

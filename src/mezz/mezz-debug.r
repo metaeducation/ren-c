@@ -23,7 +23,7 @@ verify: ghostable func [
 ][
     while [[{pos} ^result]: evaluate:step conditions else [return ()]] [
         all [
-            not void? ^result
+            not ghost-or-void? ^result
             not ^result
 
             if handler [  ; may or may-not take two arguments
