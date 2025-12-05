@@ -354,6 +354,11 @@ Bounce Stepper_Executor(Level* L)
     Force_Blit_Cell(  // Lookback clears it
         L_current_gotten_raw, L_next_gotten_raw
     );
+
+    if (Get_Cell_Flag(L_next, FEED_HINT_ANTIFORM)) {
+        assert(Is_Quasiform(L_next));
+        panic ("Antiform passed in through API, must use @ or ^ operators");
+    }
     Copy_Cell(CURRENT, L_next);
     Fetch_Next_In_Feed(L->feed);
 
@@ -507,10 +512,10 @@ Bounce Stepper_Executor(Level* L)
           case SIGIL_0:
             goto handle_plain;
 
-          case SIGIL_META:  // ^ lifts the value
+          case SIGIL_META:  // ^ allows unstable antiforms to fetch
             goto handle_any_metaform;
 
-          case SIGIL_PIN:  // @ pins the value
+          case SIGIL_PIN:  // @ gives back the the value "as is"
             goto handle_any_pinned;
 
           case SIGIL_TIE:  // $ ties the value
@@ -608,38 +613,42 @@ Bounce Stepper_Executor(Level* L)
 
 } handle_pin_sigil: {  //// "PIN" Pinned Space Sigil (@) /////////////////////
 
-    // @ acts like THE (literal, but bound):
-    //
-    //     >> abc: 10
-    //
-    //     >> word: @ abc
-    //     == abc
-    //
-    //     >> get word
-    //     == 10
-    //
-    // 2. There's a twist, that @ can actually handle antiforms if they are
-    //    coming in via an API feed.  This is a convenience so you can write:
-    //
-    //        rebElide("append block opt @", value_might_be_null);
-    //
-    //     ...instead of:
-    //
-    //        rebElide("append block opt", rebQ(value_might_be_null));
-    //
-    //    If you consider the API to be equivalent to TRANSCODE-ing the
-    //    given material into a BLOCK! and then EVAL-ing it, then this is
-    //    creating an impossible situation of having an antiform in the
-    //    block.  But the narrow exception limited to seeing such a sequence
-    //    in the evaluator is considered worth it:
-    //
-    //      https://forum.rebol.info/t/why-isnt-a-precise-synonym-for-the/2215
-    //
-    // 3. We know all feed items with FEED_NOTE_META were synthesized in the
-    //    feed and so it should be safe to tweak the flag.  Doing so lets us
-    //    use The_Next_In_Feed() and Just_Next_In_Feed() which use At_Feed()
-    //    that will error on FEED_NOTE_META to prevent the suspended-animation
-    //    antiforms from being seen by any other part of the code.
+  // @ acts like JUST (literal, don't add binding):
+  //
+  //     >> abc: 10
+  //
+  //     >> word: @ abc
+  //     == abc
+  //
+  //     >> get word
+  //     ** PANIC: word is not bound
+  //
+  // The reason @ doesn't bind (when the other @xxx types do) is that the key
+  // need in the API is for an "as is" operator, and it works for that.  Note
+  // another difference is that the other types result in a value with the
+  // @ Sigil on them, but this one gives you type as it was.
+  //
+  // 2. There's a twist, that @ can actually handle stable antiforms if they
+  //    come in via an API feed.  This is a convenience so you can write:
+  //
+  //        rebElide("append block opt @", value_might_be_null);
+  //
+  //     ...instead of:
+  //
+  //        rebElide("append block opt", rebQ(value_might_be_null));
+  //
+  //    If you consider the API to be equivalent to TRANSCODE-ing the given
+  //    material into a BLOCK! and then EVAL-ing it, then this is creating an
+  //    impossible situation of having an antiform in the block.  But the
+  //    narrow exception in the evaluator is considered worth it:
+  //
+  //      https://forum.rebol.info/t/why-isnt-a-precise-synonym-for-the/2215
+  //
+  // 3. We know all feed items w/FEED_HINT_ANTIFORM were synthesized in the
+  //    feed and so it should be safe to tweak the flag.  Doing so lets us
+  //    use The_Next_In_Feed() and Just_Next_In_Feed() which use At_Feed()
+  //    that will error on FEED_HINT_ANTIFORM to prevent suspended-animation
+  //    antiforms from being seen by any other part of the code.
 
     if (Is_Feed_At_End(L->feed))  // no literal to take as argument
         panic (Error_Need_Non_End(CURRENT));
@@ -647,13 +656,17 @@ Bounce Stepper_Executor(Level* L)
     assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
     const Element* elem = cast(Element*, L->feed->p);
 
-    bool antiform = Get_Cell_Flag(elem, FEED_NOTE_META);  // [2]
-    Clear_Cell_Flag(m_cast(Element*, elem), FEED_NOTE_META);  // [3]
+    bool antiform = Get_Cell_Flag(elem, FEED_HINT_ANTIFORM);  // [2]
+    Clear_Cell_Flag(m_cast(Element*, elem), FEED_HINT_ANTIFORM);  // [3]
 
-    The_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
+    Just_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
 
-    if (antiform)  // exception [2]
-        Unliftify_Known_Stable(Known_Stable(L->out));
+    if (antiform) {  // exception [2]
+        Undecayed_Antiformize_Unbound_Quasiform(L->out);  // we lifted, it's ok
+        trap (
+          Decay_If_Unstable(L->out)  // use ^ instead if you want unstable
+        );
+    }
 
     goto lookahead;
 
@@ -826,6 +839,17 @@ Bounce Stepper_Executor(Level* L)
     panic ("Don't know what ^RUNE! is going to do yet (besides ^)");
 
 } handle_caret_sigil: {  //// Meta Space Sigil (^) ///////////////////////////
+
+    if (Is_Feed_At_End(L->feed))  // no literal to take as argument
+        panic (Error_Need_Non_End(CURRENT));
+
+    if (Get_Cell_Flag(L_next, FEED_HINT_ANTIFORM)) {
+        Copy_Cell(OUT, L_next);
+        Undecayed_Antiformize_Unbound_Quasiform(OUT);  // all antiforms legal
+
+        Fetch_Next_In_Feed(L->feed);
+        goto lookahead;
+    }
 
     Level* right = Maybe_Rightward_Continuation_Needed(L);
     if (not right)

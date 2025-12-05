@@ -324,8 +324,16 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 // running out of bits (in 32-bit builds) and competing purposes for bits
 // on the evaluative output cell required this to be taken.
 //
+// Its original purpose has disappeared, but it came back as CELL_FLAG_NOTE
+// was being used for typechecking cells, and that was sticky in frames,
+// with the frame cells being passed directly to APIs.  So it could not be
+// used to indicate antiform API splices in the feed as well, as a typechecked
+// value pointer passed directly would just get used.
+//
 #define CELL_FLAG_HINT \
     FLAG_LEFT_BIT(26)
+
+#define CELL_FLAG_FEED_HINT_ANTIFORM  CELL_FLAG_HINT
 
 
 //=//// CELL_FLAG_PROTECTED ///////////////////////////////////////////////=//
@@ -362,7 +370,6 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 
 #define CELL_FLAG_NOTE_REMOVE  CELL_FLAG_NOTE
 #define CELL_FLAG_STACK_NOTE_SEALED  CELL_FLAG_NOTE
-#define CELL_FLAG_FEED_NOTE_META  CELL_FLAG_NOTE
 
 // !!! These two should likely be unified, review the mechanics
 #define CELL_FLAG_SCRATCH_VAR_NOTE_ONLY_ACTION  CELL_FLAG_NOTE

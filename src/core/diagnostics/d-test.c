@@ -204,6 +204,18 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     Copy_Lifted_Cell(PUSH(), noop);
     rebRelease(noop);
 
+} unstable_antiform_test: {
+
+    Set_Cell_Flag(Init_Integer(PUSH(), 10), NEWLINE_BEFORE);
+
+    Value* pack = rebUndecayed("pack [1 2]");
+    Value* first = rebValue("@", pack);  // should decay automatically
+    Value* second = rebValue("[_ {_}]: ^ ", pack);  // no decay, circled result
+    Value* block = rebValue("reduce [", rebR(first), rebR(second), "]");
+    rebRelease(pack);
+    Copy_Cell(PUSH(), block);  // ^-- see NOTICE
+    rebRelease(block);
+
 } finish: {
 
     return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));

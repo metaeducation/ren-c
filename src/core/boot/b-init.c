@@ -344,7 +344,7 @@ static void Init_Root_Vars(void)
 } make_other_things: {
 
     known_nullptr(Root_Feed_Null_Substitute) = Init_Quasi_Null(Alloc_Value());
-    Set_Cell_Flag(Root_Feed_Null_Substitute, FEED_NOTE_META);
+    Set_Cell_Flag(Root_Feed_Null_Substitute, FEED_HINT_ANTIFORM);
     Protect_Cell(Root_Feed_Null_Substitute);
 
     require (

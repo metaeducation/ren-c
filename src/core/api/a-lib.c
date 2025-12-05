@@ -58,7 +58,7 @@
 // ("{abc", "def", "ghi}") and get the TEXT! {abcdefghi}.  On that note,
 // ("a", "/", "b") produces `a / b` and not the PATH! `a/b`.
 //
-//==//// EXPORT NOTES /////////////////////////////////////////////////////=//
+//==//// EXPORTED SYMBOLS /////////////////////////////////////////////////=//
 //
 // Each exported routine here has a name API_rebXxxYyy.  This is a name by
 // which it can be called internally from the codebase like any other function
@@ -88,7 +88,7 @@
 //    not from inside the API implementations... so all the APIs that run code
 //    should be formulated e.g. as:
 //
-//        Stable* error = rebRecoverUnboxLogic(&result, ...);
+//        Value* error = rebRecoverUnboxLogic(&result, ...);
 //
 //    Then, rebUnboxLogic() can be a macro that does the right thing for the
 //    language in terms of raising the right kind of exception (or terminating
@@ -97,6 +97,30 @@
 //    For the moment, this is not done and we just use the internal exception
 //    model to cross client stacks.
 //
+// B. The API once limited RebolValue* to only Stable values, but it now can
+//    also represent unstable antiforms.  But it's biased to stability, e.g.
+//    `rebValue()` will decay its result (and panic if it's an ERROR!), so
+//    you have to use `rebUndecayed()` to specifically request unstable forms
+//    as output.
+//
+//    On the input side, you also need special handling.  For instance, this
+//    won't work:
+//
+//        Value* v = rebVoid();
+//        assert(rebUnboxLogic("void?", v));  // would PANIC on the void
+//
+//    That's because the API is not willing to decay values that come from API
+//    handles by default, just as it won't decay a WORD! holding an antiform
+//    by default.  With a WORD! you could use a ^META word, e.g. `^word` for
+//    the unstable antiform undecayed.  C needs another answer.
+//
+//    One way is using the magic of the META SPACE RUNE (^), immediately
+//    preceding the value you wish to splice as-is.  So this works:
+//
+//        Value* v = rebVoid();
+//        assert(rebUnboxLogic("void? ^", v));  // assertion would succeed
+//
+
 
 #define REBOL_LEVEL_SHORTHAND_MACROS  0  // we include Windows.h for errors
 #include "sys-core.h"
@@ -108,8 +132,8 @@ static bool g_api_initialized = false;
 // are Is_Api_Value() mustn't be nulled.  nullptr is the only currency exposed
 // to the clients of the API for NULL.
 //
-INLINE const RebolValue* NULLIFY_NULLED(const Stable* value) {
-    if (Is_Nulled(value))
+INLINE const Value* Nullptr_If_Nulled(const Value* value) {
+    if (Is_Light_Null(value))
         return nullptr;
     return value;
 }
@@ -162,26 +186,40 @@ INLINE const RebolValue* NULLIFY_NULLED(const Stable* value) {
 //
 //  rebAllocBytes: API
 //
-// * Unlike something like malloc(), this will panic() instead of return null
-//   if an allocation cannot be fulfilled.
+//  * Unlike something like malloc(), this will panic() instead of return null
+//    if an allocation cannot be fulfilled.
 //
-// * Like plain malloc(), if size is zero, the implementation just has to
-//   return something that free() will take.  A backing Flex is added in
-//   this case vs. returning null, in order to avoid null handling in other
-//   routines (e.g. rebRepossess() or handle lifetime control functions).
+//  * Like plain malloc(), if size is zero, the implementation just has to
+//    return something that free() will take.  A backing Flex is added in
+//    this case vs. returning null, in order to avoid null handling in other
+//    routines (e.g. rebRepossess() or handle lifetime control functions).
 //
-// * Because of the above points, null is *never* returned.
+//  * Because of the above points, null is *never* returned.
 //
-// * In order to make it possible to rebRepossess() the memory as a BLOB!
-//   that is then safe to alias as TEXT!, it always has an extra 0 byte at
-//   the end of the data area.
+//  * It tries to be like malloc() by giving back a pointer "suitably aligned
+//    for the size of any fundamental type".  See notes on ALIGN_SIZE.
 //
-// * It tries to be like malloc() by giving back a pointer "suitably aligned
-//   for the size of any fundamental type".  See notes on ALIGN_SIZE.
+//    !!! rebAllocBytesAligned() could exist to take an alignment, which could
+//    save on wasted bytes when ALIGN_SIZE > sizeof(Flex*)...or work with
+//    "weird" large fundamental types needing more alignment than ALIGN_SIZE.
 //
-// !!! rebAllocBytesAligned() could exist to take an alignment, which could
-// save on wasted bytes when ALIGN_SIZE > sizeof(Flex*)...or work with
-// "weird" large fundamental types that need more alignment than ALIGN_SIZE.
+//////////////////////////////////////////////////////////////////////////////
+//
+// 1. In order to make it possible to rebRepossess() the memory as a BLOB!
+//    that is then safe to alias as TEXT!, it always has an extra 0 byte at
+//    the end of the data area.
+//
+// 2. !!! The data is uninitialized, and if it is turned into a BLOB! via
+//    rebRepossess() before all bytes are assigned initialized, it could be
+//    worse than just random data...MOLDing such a binary and reading those
+//    bytes could be bad (due to, for instance, "trap representations"):
+//
+//      https://stackoverflow.com/a/37184840
+//
+//    It may be that rebAlloc() and rebRealloc() should initialize with 0
+//    to defend against that, but that has a cost.  For now we make no such
+//    promise--and leave it uninitialized so that address sanitizer notices
+//    when bytes are used that haven't been assigned.
 //
 unsigned char* API_rebAllocBytes(size_t size)
 {
@@ -195,7 +233,7 @@ unsigned char* API_rebAllocBytes(size_t size)
             | FLEX_FLAG_DONT_RELOCATE,  // direct data pointer handed back
         ALIGN_SIZE  // stores Binary* (must be at least big enough for void*)
             + size  // for the actual data capacity (may be 0, see notes)
-            + 1  // for termination (AS TEXT! of rebRepossess(), see notes)
+            + 1  // for termination (AS TEXT! of rebRepossess()), see [1]
     ));
 
     Byte* ptr = Binary_Head(b) + ALIGN_SIZE;
@@ -204,19 +242,7 @@ unsigned char* API_rebAllocBytes(size_t size)
     *pb = b;  // save self in bytes that appear immediately before the data
     Poison_Memory_If_Sanitize(pb, sizeof(Binary*));  // catch underruns
 
-    // !!! The data is uninitialized, and if it is turned into a BLOB! via
-    // rebRepossess() before all bytes are assigned initialized, it could be
-    // worse than just random data...MOLDing such a binary and reading those
-    // bytes could be bad (due to, for instance, "trap representations"):
-    //
-    // https://stackoverflow.com/a/37184840
-    //
-    // It may be that rebAlloc() and rebRealloc() should initialize with 0
-    // to defend against that, but that has a cost.  For now we make no such
-    // promise--and leave it uninitialized so that address sanitizer notices
-    // when bytes are used that haven't been assigned.
-    //
-    Term_Binary_Len(b, ALIGN_SIZE + size);
+    Term_Binary_Len(b, ALIGN_SIZE + size);  // !!! uninitialized, see [2]
 
     return ptr;
 }
@@ -573,6 +599,17 @@ uintptr_t API_rebTick(void)
 //
 // See notes in %rebol.h about why NOT to use ordinary `#define NULL 0` !
 // But C++ nullptr (or shim) should be used instead if available.
+
+
+//
+//  rebVoid: API
+//
+RebolValue* API_rebVoid(void)  // unstable antiform [B]
+{
+    ENTER_API;
+
+    return Init_Void(Alloc_Value());
+}
 
 
 //
@@ -1032,7 +1069,7 @@ const RebolBaseInternal* API_rebArgR(
                 panic ("rebArg() called on non-stable argument");
             return cast(
                 RebolBaseInternal*,
-                NULLIFY_NULLED(Known_Stable(arg))
+                Nullptr_If_Nulled(arg)
             );
         }
     }
@@ -1294,6 +1331,8 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
 //
 // Most basic evaluator that returns a Stable*, which must be rebRelease()'d.
 //
+// Decays unstable antiforms automatically (see [B]), see also rebUndecayed().
+//
 RebolValue* API_rebValue(
     RebolContext* binding,
     const void* p, void* vaptr
@@ -1312,7 +1351,7 @@ RebolValue* API_rebValue(
 
     if (Is_Light_Null(v)) {
         Free_Value(v);
-        return nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
+        return nullptr;  // No NULLED cells in API, see Nullptr_If_Nulled()
     }
 
     Set_Base_Root_Bit(v);
@@ -1404,6 +1443,9 @@ void API_rebPushContinuation_internal(
 // By default rebValue() will decay unstable antiforms.  This will give you
 // back undecayed PACK! or GHOST! or ERROR! values.
 //
+// If you get an unstable value back and want to use it with the API, then
+// it has to be spliced in using the `^` operator.  See [B].
+//
 RebolValue* API_rebUndecayed(
     RebolContext* binding,
     const void* p, void* vaptr
@@ -1422,7 +1464,7 @@ RebolValue* API_rebUndecayed(
 
     if (Is_Light_Null(v)) {
         Free_Value(v);
-        return nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
+        return nullptr;  // No NULLED cells in API, see Nullptr_If_Nulled()
     }
 
     Set_Base_Root_Bit(v);
@@ -1498,7 +1540,7 @@ RebolValue* API_rebRescue2(
 
     if (Is_Lifted_Null(v)) {
         Free_Value(v);
-        *value = nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
+        *value = nullptr;  // No NULLED cells in API, see Nullptr_If_Nulled()
         return nullptr;
     }
 
@@ -2810,7 +2852,6 @@ RebolBaseInternal* API_rebRUN(const void* p)
 
     return cast(RebolBaseInternal*, stub);  // cast needed in C
 }
-
 
 
 //

@@ -322,6 +322,15 @@ INLINE Element* Quasify_Isotopic_Fundamental(Element* elem) {
     return elem;
 }
 
+INLINE Value* Undecayed_Antiformize_Unbound_Quasiform(Need(Value*) v) {
+    assert(Any_Isotopic_Type(Heart_Of(v)));
+    assert(LIFT_BYTE(v) == QUASIFORM_3);
+    if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
+        assert(not Cell_Binding(v));
+    LIFT_BYTE_RAW(v) = ANTIFORM_1;
+    return v;
+}
+
 INLINE Stable* Stably_Antiformize_Unbound_Fundamental(Need(Stable*) v) {
     assert(Any_Isotopic(v));
     assert(LIFT_BYTE(v) == NOQUOTE_2);

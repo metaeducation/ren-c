@@ -1257,7 +1257,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
     while (not transcode->at) {
         if (L->feed->p == nullptr) {  // API null, can't be in feed...
             Init_Quasi_Null(PUSH());  // ...so use a quasi null
-            Set_Cell_Flag(TOP, FEED_NOTE_META);
+            Set_Cell_Flag(TOP, FEED_HINT_ANTIFORM);
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -3356,12 +3356,13 @@ Option(const Byte*) Try_Scan_Rune_To_Stack(const Byte* cp, Size size)
 //
 Result(Option(Source*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
 //
-// 1. We want to preserve CELL_FLAG_FEED_NOTE_META.  This tells us when what
-//    the feed sees as an quasiform was really originally intended as an
+// 1. We want to preserve CELL_FLAG_FEED_HINT_ANTIFORM.  This tells us when
+//    what the feed sees as an quasiform was really originally intended as an
 //    antiform.  The Feed_At() mechanics will typically error on these, but
-//    under evaluation the evaluator's treatment of @ will reconstitute the
-//    antiform.  (There are various dangers to this, which have not been
-//    fully vetted, but the idea is pretty important.)
+//    under evaluation the @ operator will reconstitute stable antiforms, and
+//    the ^ operators will reconstitute unstable antiforms too.  (There are
+//    various dangers to this, which have not been fully vetted, but the idea
+//    is pretty important.)
 {
     assert(Detect_Rebol_Pointer(feed->p) == DETECTED_AS_UTF8);
 
