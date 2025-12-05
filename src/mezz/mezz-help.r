@@ -325,7 +325,7 @@ help: func [
         ]
 
         word! tuple! path! [
-            let ^value: get:any topic except e -> [
+            let ^value: get meta topic except e -> [
                 print form e  ; not bound, etc.
                 return ~
             ]

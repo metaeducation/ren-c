@@ -1612,7 +1612,7 @@ DECLARE_NATIVE(NOQUASI)
     if (b != BOUNCE_GOOD_INTRINSIC_ARG)
         return b;
 
-    if (Is_Quasiform(OUT))
+    if (LIFT_BYTE(OUT) == QUASIFORM_3)
         LIFT_BYTE(OUT) = NOQUOTE_2;
     return OUT;
 }

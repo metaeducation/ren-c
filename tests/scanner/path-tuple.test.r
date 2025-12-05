@@ -155,7 +155,7 @@
             fence! meta-fence!
         ]
     ][
-        mtype: select:skip:case mapping (type of get:any $value) 2
+        mtype: select:skip:case mapping (type of get meta $value) 2
         if mtype [
             value: to mtype collect [
                 count-up 'index (length of value) [
@@ -163,7 +163,7 @@
                 ]
             ]
         ]
-        return get:any $value
+        return get meta $value
     ]
 
 

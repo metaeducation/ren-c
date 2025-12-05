@@ -1327,7 +1327,7 @@ DECLARE_NATIVE(SUBPARSE)
     //
     assert((P_FLAGS & PF_STATE_MASK) == 0);
 
-    const Element* quoted_set_or_copy_word = nullptr;
+    Element* quoted_set_or_copy_word = nullptr;
 
     REBINT mincount = 1;  // min pattern count
     REBINT maxcount = 1;  // max pattern count
@@ -1563,9 +1563,16 @@ DECLARE_NATIVE(SUBPARSE)
                     goto handle_set;
                 }
 
-                quoted_set_or_copy_word = Quotify(Derelativize(
+                quoted_set_or_copy_word = Derelativize(
                     LOCAL(LOOKBACK), P_RULE, P_RULE_BINDING
-                ));
+                );
+                if (Is_Chain(quoted_set_or_copy_word)) {
+                    assume (
+                        Unsingleheart_Sequence(quoted_set_or_copy_word)
+                    );
+                }
+                Quotify(quoted_set_or_copy_word);
+
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
@@ -1838,9 +1845,13 @@ DECLARE_NATIVE(SUBPARSE)
     }
     else if (Is_Set_Tuple(rule)) {
       handle_set:
-        quoted_set_or_copy_word = Quotify(
-            Derelativize(LOCAL(LOOKBACK), rule, P_RULE_BINDING)
+        quoted_set_or_copy_word = Derelativize(
+            LOCAL(LOOKBACK), rule, P_RULE_BINDING
         );
+        assume (
+            Unsingleheart_Sequence(quoted_set_or_copy_word)
+        );
+        Quotify(quoted_set_or_copy_word);
         FETCH_NEXT_RULE(L);
 
         if (Is_Word(P_RULE) and Word_Id(P_RULE) == SYM_ACROSS) {

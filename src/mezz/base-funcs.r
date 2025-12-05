@@ -126,7 +126,7 @@ unset: redescribe [
 )
 
 unset?: redescribe [
-    "Determine if a variable holds a VOID antiform"
+    "Determine if a variable holds a GHOST! antiform"
 ](
     cascade [meta/ get/ ghost?/]
 )
@@ -140,7 +140,7 @@ set?: redescribe [
 vacant?: redescribe [
     "Determine if a variable would be considered empty for purposes of DEFAULT"
 ](
-    cascade [get:any/ vacancy?/]
+    cascade [meta/ get/ vacancy?/]
 )
 
 undefined?: cascade [defined?/ not/]
@@ -150,7 +150,7 @@ unspecialized?: lambda [
     []: [logic?]
     var [word! tuple!]
 ][
-    parameter? get:any var
+    try parameter? get meta var
 ]
 
 specialized?: lambda [
@@ -158,7 +158,7 @@ specialized?: lambda [
     []: [logic?]
     var [word! tuple!]
 ][
-    not parameter? get:any var
+    not try parameter? get meta var
 ]
 
 
@@ -223,7 +223,7 @@ so: infix:postpone func [
     feed "Needs value to return as result e.g. (x: even? 4 so 10 + 20)"
         [<end> any-stable? <variadic>]
 ][
-    if not get:any $condition [
+    if not condition [
         panic:blame make warning! [
             type: 'script
             id: 'assertion-failure
@@ -289,7 +289,7 @@ ensure: redescribe [
                     (mold reify try type of f.value) else ["VOID"]
             ]
         ]
-        f.^value
+        ^f.value
     ]
 )
 
@@ -387,10 +387,10 @@ for-back: redescribe [
 iterate-skip: redescribe [
     "Variant of FOR-SKIP that directly modifies a series variable in a word"
 ](
-    specialize enclose for-skip/ func [f] [
-        if space? let word: f.word [return null]
+    specialize enclose for-skip/ func [f {word}] [
+        if space? f.word [return null]
         assert [match [@word!] f.word]
-        f.series: get word
+        f.series: get word: unpin f.word
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
@@ -547,8 +547,8 @@ fail: func [
     :blame "Point to variable or parameter to blame"
         [word! frame!]
 ][
-    if trash? get:any $reason [
-        reason: as text! lift:lite reason  ; antiform tag! ~#unreachable~
+    if trash? ^reason [
+        reason: as text! unanti reason  ; antiform tag! ~#unreachable~
     ]
     all [warning? reason, not blame] then [
         return fail* reason  ; fast shortcut

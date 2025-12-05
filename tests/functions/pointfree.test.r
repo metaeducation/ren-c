@@ -96,7 +96,7 @@
     pointfree: specialize (adapt pointfree*/ [
         frame: (match frame! any [  ; no SET-WORD! namecache
             if match [word! chain! path!] block.1 [
-                unrun get:any inside block block.1
+                unrun get meta inside block block.1
             ]
         ]) else [
             panic "POINTFREE requires FRAME! argument at head of block"

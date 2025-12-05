@@ -765,14 +765,13 @@ Bounce Stepper_Executor(Level* L)
     // Consistent with GET-WORD!, a GET-TUPLE! won't allow nothing access on
     // the plain (unfriendly) forms.
     //
-    // 1. It's possible for (^obj.^lifted-error) to give back an ERROR! due
+    // 1. It's possible for (^obj.lifted-error) to give back an ERROR! due
     //    to the field being a lifted error, or (^obj.missing-field) to give
     //    an ERROR! due to the field being absent.
 
-    Plainify(CURRENT);  // remove the ^ sigil
-
     heeded (Bind_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
+    assert(Is_Metaform(CURRENT));
 
     require (
       Get_Var_In_Scratch_To_Out(L, GROUPS_OK)
@@ -1132,44 +1131,28 @@ Bounce Stepper_Executor(Level* L)
     //    only that is currently broken.  When we convert a SET-WORD to a
     //    WORD! to do the assign, that feature is lost.
 
-    switch (opt Try_Get_Sequence_Singleheart(CURRENT)) {
+    Option(SingleHeart) singleheart = Try_Get_Sequence_Singleheart(CURRENT);
+    if (singleheart) {
+        assume (
+          Unsingleheart_Sequence_Preserve_Sigil(CURRENT)
+        );
+    }
+    switch (opt singleheart) {
       case NOT_SINGLEHEART_0:
         break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
 
       case TRAILING_SPACE_AND(WORD): {  // FOO: or ^FOO:
         Bind_If_Unbound(CURRENT, L_binding);
-        if (Is_Metaform(CURRENT)) {  // ^foo: -> ^foo
-            Plainify(CURRENT);
-            assume (
-              Unsingleheart_Sequence(CURRENT)
-            );
-            Metafy(CURRENT);
-        }
-        else {
-            assume (
-              Unsingleheart_Sequence(CURRENT)  // foo: -> foo
-            );
-        }
         goto handle_generic_set; }
 
       case TRAILING_SPACE_AND(TUPLE): {  // a.b.c: is a set tuple
-        assume (
-          Unsingleheart_Sequence(CURRENT)
-        );
-        assert(Is_Tuple(CURRENT));
         goto handle_generic_set; }
 
       case TRAILING_SPACE_AND(BLOCK): {  // [a b]: multi-return assign
-        assume (
-          Unsingleheart_Sequence(CURRENT)
-        );
         STATE = ST_STEPPER_SET_BLOCK;
         goto handle_set_block; }
 
       case TRAILING_SPACE_AND(GROUP): {  // (xxx): -- generic retrigger set
-        assume (
-          Unsingleheart_Sequence(CURRENT)
-        );
         Invalidate_Gotten(L_next_gotten_raw);  // arbitrary code changes
         require (
           Level* sub = Make_Level_At_Inherit_Const(
@@ -1184,23 +1167,14 @@ Bounce Stepper_Executor(Level* L)
         return CONTINUE_SUBLEVEL(sub); }
 
       case LEADING_SPACE_AND(WORD): {  // :FOO, refinement, error on eval?
-        assume (
-          Unsingleheart_Sequence(CURRENT)
-        );
         STATE = ST_STEPPER_GET_WORD;
         panic (":WORD! meaning is likely to become TRY WORD!"); }
 
       case LEADING_SPACE_AND(TUPLE): {  // :a.b.c -- what will this do?
-        assume (
-          Unsingleheart_Sequence(CURRENT)
-        );
         STATE = ST_STEPPER_GET_TUPLE;
         panic (":TUPLE! meaning is likely to become TRY TUPLE!"); }
 
       case LEADING_SPACE_AND(BLOCK): {  // !!! :[a b] reduces, not great...
-        assume (
-          Unsingleheart_Sequence(CURRENT)
-        );
         Bind_If_Unbound(CURRENT, L_binding);
         if (rebRunThrows(
             u_cast(Sink(Stable), OUT),  // <-- output, API won't make atoms
@@ -1211,9 +1185,6 @@ Bounce Stepper_Executor(Level* L)
         goto lookahead; }
 
       case LEADING_SPACE_AND(GROUP): {
-        assume (
-          Unsingleheart_Sequence(CURRENT)
-        );
         panic ("GET-GROUP! has no evaluator meaning at this time"); }
 
       default:  // it's just something like :1 or <tag>:
@@ -1306,8 +1277,8 @@ Bounce Stepper_Executor(Level* L)
     // WORD! and GET-WORD!, and will error...directing you use GET:ANY if
     // fetching nothing is what you actually intended.
     //
-    // 1. Cases like (obj.^lifted-error) and (obj.missing-field) will return
-    //    an ERROR! antiform, and (obj.^lifted-pack) can return a PACK!, etc.
+    // 1. Cases like (^obj.lifted-error) and (obj.missing-field) will return
+    //    an ERROR! antiform, and (^obj.lifted-pack) can return a PACK!, etc.
 
     Element* spare = Copy_Sequence_At(SPARE, CURRENT, 0);
     bool blank_at_head = Is_Space(spare);
@@ -1499,7 +1470,7 @@ Bounce Stepper_Executor(Level* L)
 
     assert(
         Is_Word(CURRENT) or Is_Meta_Form_Of(WORD, CURRENT)
-        or Is_Tuple(CURRENT)
+        or Is_Tuple(CURRENT) or Is_Meta_Form_Of(TUPLE, CURRENT)
         or Is_Lifted_Void(CURRENT)
     );
     STATE = ST_STEPPER_GENERIC_SET;

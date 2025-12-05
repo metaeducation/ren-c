@@ -203,10 +203,10 @@ summarize-obj: func [
     let wild: to-logic find opt (match text! opt pattern) "*"
 
     return collect [
-        for-each [word val] obj [
+        for-each [word ^val] obj [
             if unset? $val [continue]  ; don't consider unset fields
 
-            let type: type of noantiform get:any $val
+            let type: type of noantiform ^val
 
             let str: if type = object! [
                 spaced [word, form words of val]
@@ -231,7 +231,7 @@ summarize-obj: func [
                 panic @pattern
             ]
 
-            let desc: description-of noantiform get:any $val
+            let desc: description-of noantiform ^val
             if desc [
                 if 48 < length of desc [
                     desc: append copy:part desc 45 "..."

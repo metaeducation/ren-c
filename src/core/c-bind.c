@@ -1443,6 +1443,7 @@ Result(None) Read_Slot_Meta(Sink(Value) out, const Slot* slot)
     LIFT_BYTE(temp) = NOQUOTE_2;
     assert(Is_Pinned_Form_Of(WORD, temp));  // alias
   #endif
+    KIND_BYTE(temp) = TYPE_WORD;
     LIFT_BYTE(temp) = ONEQUOTE_NONQUASI_4;
     unnecessary(Push_Lifeguard(temp));  // slot protects it.
 
@@ -1500,6 +1501,7 @@ Result(None) Write_Slot(Slot* slot, const Value* write)
     LIFT_BYTE(temp) = NOQUOTE_2;
     assert(Is_Pinned_Form_Of(WORD, temp));
   #endif
+    KIND_BYTE(temp) = TYPE_WORD;
     LIFT_BYTE(temp) = ONEQUOTE_NONQUASI_4;
     unnecessary(Push_Lifeguard(temp));  // slot protects it.
 

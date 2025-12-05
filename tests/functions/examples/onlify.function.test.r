@@ -18,7 +18,7 @@ onlify: func [
         ]
     ) compose:deep [
         all [not only, any-list? series, any-list? (param)] then [
-            set:any $(param) spread (param)
+            set unchain $(param) spread (param)
         ]
         ; ...fall through to normal handling
     ]

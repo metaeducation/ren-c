@@ -2704,7 +2704,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
         panic ("Unknown pointer");
     }
 
-    Stable* v = u_cast(Stable*, Stub_Cell(stub));
+    Value* v = u_cast(Value*, Stub_Cell(stub));
     Liftify(v);
     return cast(RebolBaseInternal*, stub);  // C needs cast
 }
@@ -2744,11 +2744,13 @@ RebolBaseInternal* API_rebUNQUOTING(const void* p)
         panic ("Unknown pointer");
     }
 
-    Cell* v = Stub_Cell(stub);
-    if (not Is_Quoted(v))
+    Value* v = u_cast(Value*, Stub_Cell(stub));
+    if (not Any_Lifted(v))
         panic ("rebUNQUOTING()/rebU() can only unquote QUOTED? values");
 
-    Unquotify(cast(Element*, v));
+    require (
+        Unliftify_Undecayed(v)
+    );
     return cast(RebolBaseInternal*, stub);  // cast needed in C
 }
 

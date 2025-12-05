@@ -132,7 +132,7 @@
 ; would demand some kind of prior declaration of intent to use the name).
 ;
 (
-    e: sys.util/recover [get:any $asiieiajiaosdfbjakbsjxbjkchasdf]
+    e: sys.util/recover [get meta $asiieiajiaosdfbjakbsjxbjkchasdf]
     all [
         e.id = 'not-bound
         e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf

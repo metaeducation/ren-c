@@ -1107,14 +1107,13 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
             else if (Varlist_Len(vars_ctx) == 2) {
                 ++slot;
 
-                // Want keys and values (`for-each 'key val obj [...]`)
+                // Want keys and values (`for-each [key val] obj [...]`)
                 //
-                Sink(Stable) spare_val = SPARE;
                 trap (
-                    Read_Slot(spare_val, les->u.evars.slot)
+                    Read_Slot_Meta(SPARE, les->u.evars.slot)
                 );
-                trap (
-                    Write_Loop_Slot_May_Bind(slot, spare_val, les->data)
+                trap (  // heeds LOOP_SLOT_ROOT_META, errors if unstable w/o
+                    Write_Loop_Slot_May_Bind_Or_Decay(slot, SPARE, les->data)
                 );
             }
             else

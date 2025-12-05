@@ -43,24 +43,38 @@
 //         >> try obj.b
 //         == ~null~  ; antiform
 //
-//     However, the rules change with meta-representation, to where the only
-//     way to get an ERROR! back in that case is if the field exists and holds
-//     a lifted representation of an ERROR!.
+//    However, the rules change with meta-representation, to where the only
+//    way to get an ERROR! back in that case is if the field exists and holds
+//    a lifted representation of an ERROR!.
 //
-//     (!!! It's not clear if the convenience of the raised error on a normal
-//     TUPLE!-type assignment is a good idea or not.  This depends on how
-//     often generalized variable fetching is performed where you don't know
-//     if the variable is meta-represented or not, and might have different
-//     meanings for unlifting an ERROR! vs. a missing field.  The convenience
-//     of allowing TRY existed before meta-representation unlifting, so this
-//     is an open question that arose.)
+//    (!!! It's not clear if the convenience of the raised error on a normal
+//    TUPLE!-type assignment is a good idea or not.  This depends on how
+//    often generalized variable fetching is performed where you don't know
+//    if the variable is meta-represented or not, and might have different
+//    meanings for unlifting an ERROR! vs. a missing field.  The convenience
+//    of allowing TRY existed before meta-representation unlifting, so this
+//    is an open question that arose.)
 //
-//     In the case of an assignment, the only way to get it to return a
-//     raised ERROR! will be if the value being assigned was an ERROR!.  In
-//     the case of a regular assignment the assignment itself will not be
-//     performed and the error just passed through.  In a meta-assignment,
-//     the assignment will be performed and the ERROR! passed through in its
-//     unlifted form.
+//    In the case of an assignment, the only way to get it to return a
+//    raised ERROR! will be if the value being assigned was an ERROR!.  In
+//    the case of a regular assignment the assignment itself will not be
+//    performed and the error just passed through.  In a meta-assignment,
+//    the assignment will be performed and the ERROR! passed through in its
+//    unlifted form.
+//
+//  B. For convenience, assignments via WORD!: and TUPLE!: will pass thru
+//     ERROR!, and skip the assign.  You only get the assignment of the error
+//     antiform if you use ^WORD!: or ^TUPLE!: to indicate meta-assignment.
+//
+//     This raises questions about what should happen here:
+//
+//         >> eval [try (print "printing" $word): fail "what happens?"]
+//         ; does the message print or not?
+//         == ~null~  ; antiform
+//
+//     The same issues apply whether you are in the evaluator or the native.
+//     It would seem that left-to-right evaluation order would make people
+//     think that it would print first, so that's the direction we're going.
 //
 
 #include "sys-core.h"
@@ -73,7 +87,7 @@
 //
 static Option(Error*) Trap_Adjust_Lifted_Antiform_For_Tweak(Value* spare)
 {
-    assert(Is_Quasiform(spare));
+    assert(Is_Lifted_Antiform(spare));
     if (Heart_Of(spare) == TYPE_FRAME) {  // e.g. (append.series)
         LIFT_BYTE_RAW(spare) = ONEQUOTE_NONQUASI_4;
         return SUCCESS;
@@ -104,7 +118,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     Level* sub,  // will Push_Level() if not already pushed
     StackIndex picker_index
 ){
-    if (Is_Quasiform(SPARE)) {  // lifted antiform
+    if (Is_Lifted_Antiform(SPARE)) {
         Option(Error*) e = Trap_Adjust_Lifted_Antiform_For_Tweak(SPARE);
         if (e)
             return e;  // don't panic, caller will handle
@@ -114,8 +128,6 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
       Push_Action(sub, LIB(TWEAK_P), PREFIX_0)
     );
     Set_Executor_Flag(ACTION, sub, IN_DISPATCH);
-
-    bool picker_was_meta;
 
     Element* location_arg;
     Stable* picker_arg;
@@ -128,7 +140,7 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
   // cannot panic() while an allocated-but-not-pushed Level is extant.
   // So everything in this section must succeed.
 
-    assert(Is_Quoted(SPARE));  // don't support ACTION!s in dual yet...
+    assert(Is_Possibly_Unstable_Value_Quoted(SPARE));
     location_arg = Copy_Cell(
         Force_Erase_Cell(Level_Arg(sub, 1)),
         Known_Element(SPARE)
@@ -154,7 +166,6 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
     if (Any_Lifted(picker_arg)) {  // literal x.'y or x.('y) => 'y
         Unliftify_Known_Stable(picker_arg);
-        picker_was_meta = false;
 
         if (Is_Keyword(picker_arg) or Is_Trash(picker_arg))
             return Error_User(
@@ -163,12 +174,10 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     }
     else {
         Element* pick_instruction = Known_Element(picker_arg);
-        if (Is_Metaform(pick_instruction))
-            picker_was_meta = true;  // assume pick product is meta, unlift
-        else
-            picker_was_meta = false;
-
-        Plainify(pick_instruction);  // drop any sigil (frame cell, not stack)
+        if (Sigil_Of(pick_instruction))
+            return Error_User(
+                "PICK instruction cannot have sigil for variable access"
+            );
     }
 
 } call_pick_p: {
@@ -185,14 +194,6 @@ static Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     assert(sub == TOP_LEVEL);
     unnecessary(Drop_Action(sub));  // !! action is dropped, should it be?
 
-    if (
-        not picker_was_meta
-        and Is_Quasiform(SPARE)
-        and not Is_Stable_Antiform_Kind_Byte(KIND_BYTE(SPARE))
-    ){
-        return Error_User("PICK result cannot be unstable unless metaform");
-    }
-
     return SUCCESS;
 }}
 
@@ -202,7 +203,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
     Level* sub,
     StackIndex picker_index
 ){
-    if (Is_Quasiform(SPARE))
+    if (Is_Lifted_Antiform(SPARE))
         return Error_User("TWEAK* cannot be used on antiforms");
 
     Value* spare_location_dual = SPARE;
@@ -225,7 +226,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
   // 1. GET:STEPS returns @var for steps of var.  But is (get @var) same as
   //    (get $var) ?
 
-    assert(Is_Quoted(spare_location_dual));
+    assert(Is_Possibly_Unstable_Value_Quoted(spare_location_dual));
     location_arg = Copy_Cell(
         Force_Erase_Cell(Level_Arg(sub, 1)),
         Known_Element(spare_location_dual)
@@ -243,7 +244,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
 } adjust_frame_arguments_now_that_its_safe_to_panic: {
 
-    attempt {  // v-- how to handle cases like x.^(...) and know it's ^META?
+    attempt {  // v-- how to handle cases like ^x.(...) and know it's ^META?
         if (Any_Lifted(picker_arg)) {  // literal x.'y or x.('y) => 'y
             Unliftify_Known_Stable(picker_arg);
 
@@ -268,7 +269,9 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
         Element* picker_instruction = Known_Element(picker_arg);
         Option(Sigil) picker_sigil = Sigil_Of(picker_instruction);
-        if (picker_sigil == SIGIL_META) {
+        UNUSED(picker_sigil);  // ideas on the table for this...
+
+        if (SIGIL_META == Underlying_Sigil_Of(Known_Element(SCRATCH))) {
             Copy_Cell(value_arg, TOP_ELEMENT);  // don't decay
             continue;
         }
@@ -388,20 +391,20 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     Option(Error*) e = SUCCESS;  // for common exit path on error
 
+    Element* scratch_var = Known_Element(SCRATCH);
+
   #if RUNTIME_CHECKS
-    Protect_Cell(SCRATCH);  // (common exit path undoes this protect)
+    Protect_Cell(scratch_var);  // (common exit path undoes this protect)
     if (not Is_Dual_Nulled_Pick_Signal(out))
         Protect_Cell(OUT);
   #endif
 
   dispatch_based_on_scratch_var_type: {
 
-    Element* scratch_var = Known_Element(SCRATCH);
-
-    if (Any_Word(scratch_var))
+    if (Is_Word(scratch_var) or Is_Meta_Form_Of(WORD, scratch_var))
         goto handle_scratch_var_as_wordlike;
 
-    if (Any_Sequence(scratch_var))
+    if (Is_Tuple(scratch_var) or Is_Meta_Form_Of(TUPLE, scratch_var))
         goto handle_scratch_var_as_sequence;
 
     if (Is_Pinned_Form_Of(BLOCK, scratch_var))
@@ -421,6 +424,22 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Liftify(TOP);  // dual protocol, lift (?)
 
     Copy_Cell(PUSH(), scratch_var);  // save var for steps + error messages
+    switch (unwrap Underlying_Sigil_Of(TOP_ELEMENT)) {
+      case SIGIL_0:
+        break;
+
+      case SIGIL_META:
+        TOP->header.bits &= (~ CELL_MASK_SIGIL);
+        break;
+
+      case SIGIL_PIN:
+      case SIGIL_TIE:
+        e = Error_User(
+            "PICK instruction only understands ^META sigil, for now..."
+        );
+        goto return_error;
+    }
+
     unnecessary(Liftify(TOP));  // if ^x, not literally ^x ... meta-variable
 
     goto set_from_steps_on_stack;
@@ -588,17 +607,11 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         }
 
         if (Any_Lifted(SPARE)) {  // most common answer--successful pick
+            if (Is_Metaform(scratch_var))
+                continue;  // all meta picks are as-is
 
-            if (not Is_Metaform(Data_Stack_At(Element, stackindex))) {
-                require (
-                  Unliftify_Undecayed(SPARE)  // review unlift + lift
-                );
-                Decay_If_Unstable(SPARE) except (e) {
-                    Drop_Level(sub);
-                    goto return_error;
-                }
-                Liftify(SPARE);  // need lifted for dual protocol (review)
-            }
+            if (Is_Lifted_Unstable_Antiform(SPARE))
+                panic ("Unexpected unstable in non-meta pick");
 
             continue;
         }
@@ -637,6 +650,14 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Drop_Level(sub);
 
 }} check_for_updater: {
+
+    if (
+        not Is_Metaform(scratch_var)
+        and Is_Lifted_Antiform(spare_location_dual)
+        and not Is_Stable_Antiform_Kind_Byte(spare_location_dual)
+    ){
+        return Error_User("PICK result cannot be unstable unless metaform");
+    }
 
     // 1. SPARE was picked via dual protocol.  At the moment of the PICK,
     //    the picker may have been ^META, in which case we wouldn't want to
@@ -718,7 +739,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Corrupt_Cell_If_Needful(SPARE);
 
   #if RUNTIME_CHECKS
-    Unprotect_Cell(SCRATCH);
+    Unprotect_Cell(scratch_var);
     if (Get_Cell_Flag(OUT, PROTECTED))
         Unprotect_Cell(OUT);
   #endif
@@ -1341,21 +1362,31 @@ Result(Stable*) Get_Word(
 //  "Low-level variable setter, that can assign within the dual band"
 //
 //      return: [
-//          any-stable? "Same value as input"
+//          <null> frame! word! quasiform! quoted!
 //          error!      "Passthru even if it skips the assign"
 //      ]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [<opt> any-word? tuple! group!
-//          any-get-value? any-set-value? @block!]
+//          [
+//              <opt-out>
+//              word! tuple!
+//              ^word! ^tuple!
+//              @block!
+//          ]
 //      dual "Ordinary GET or SET with lifted value (unlifts), else dual"
-//          [<null> frame! word! quasiform! quoted!]  ; <opt> instead of null?
-//      :any "Do not error on unset words"
+//          [
+//              <opt> "act as a raw GET of the dual state"
+//              frame! "set to store a GETTER/SETTER function in dual band"
+//              word! "special instructions (e.g. PROTECT, UNPROTECT)"
+//              quasiform! quoted! "store unlifted values as a normal SET"
+//          ]
 //      :groups "Allow GROUP! Evaluations"
+//      :steps "Return evaluation steps for reproducible access"
 //  ]
 //
 DECLARE_NATIVE(TWEAK)
 {
     INCLUDE_PARAMS_OF_TWEAK;
+    UNUSED(ARG(STEPS));  // TBD
 
     enum {
         ST_TWEAK_INITIAL_ENTRY = STATE_0,
@@ -1371,56 +1402,11 @@ DECLARE_NATIVE(TWEAK)
 
     Element* target = Element_ARG(TARGET);
 
-    if (Is_Chain(target)) { // GET-WORD, SET-WORD, SET-GROUP, etc.
-        assume (
-          Unsingleheart_Sequence(target)
-        );
-    }
-
-    if (not Is_Group(target))  // !!! maybe SET-GROUP!, but GET-GROUP!?
-        goto call_generic_tweak;
-
-  process_group_target: {
-
-   // !!! At the moment, the generic Set_Var() mechanics aren't written to
-   // handle GROUP!s.  But it probably should, since it handles groups that
-   // are nested under TUPLE! and such.  Review.
-
-    if (not Bool_ARG(GROUPS))
-        panic (Error_Bad_Get_Group_Raw(target));
-
-    if (Eval_Any_List_At_Throws(SPARE, target, SPECIFIED))
-        panic (Error_No_Catch_For_Throw(LEVEL));
-
-    if (Is_Void(SPARE))
-        return OUT;
-
-    require (
-      Stable* spare = Decay_If_Unstable(SPARE)
-    );
-
-    if (not (
-        Any_Word(spare)
-        or Any_Sequence(spare)
-        or Is_Pinned_Form_Of(BLOCK, spare)
-    )){
-        panic (spare);
-    }
-
-    Copy_Cell(target, Known_Element(spare));  // update ARG(TARGET)
-
-} call_generic_tweak: { //////////////////////////////////////////////////////
-
     Option(Element*) steps;
     if (Bool_ARG(GROUPS))
         steps = GROUPS_OK;
     else
         steps = NO_STEPS;  // no GROUP! evals
-
-    if (not Bool_ARG(ANY)) {
-        // !!! The only SET prohibitions will be on antiform actions, TBD
-        // (more general filtering available via accessors)
-    }
 
     STATE = ST_TWEAK_TWEAKING;  // we'll be setting out to something not erased
 
@@ -1431,7 +1417,7 @@ DECLARE_NATIVE(TWEAK)
     if (e)
         panic (unwrap e);
 
-} return_value_even_if_we_dont_assign: {
+  return_value_even_if_we_dont_assign: {
 
   // We want parity between (set $x expression) and (x: expression).  It's
   // very useful that you can write (e: rescue [x: expression]) and in the case
@@ -1444,22 +1430,82 @@ DECLARE_NATIVE(TWEAK)
 }}
 
 
+// TWEAK handles GROUP!s inside of a TUPLE! if you ask it to.  But it doesn't
+// work at the higher level of `set $(first [word1 word2]) value`...it's a
+// narrower function for handling single WORD!/TUPLE! targets.  Higher-level
+// behaviors like SET of a BLOCK! are layered on top of it, and that includes
+// abstracting the operation to getting or setting of a GROUP! target.
+//
+static Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
+{
+    INCLUDE_PARAMS_OF_GET;  // TARGET types must be compatible with SET
+
+    Element* target = Element_ARG(TARGET);
+    assert(Is_Group(target));
+
+    USED(ARG(GROUPS));
+    USED(ARG(STEPS));
+
+   // !!! At the moment, the generic Set_Var() mechanics aren't written to
+   // handle GROUP!s.  But it probably should, since it handles groups that
+   // are nested under TUPLE! and such.  Review.
+
+    if (Eval_Any_List_At_Throws(OUT, target, SPECIFIED))
+        panic (Error_No_Catch_For_Throw(LEVEL));
+
+    if (Is_Ghost_Or_Void(OUT))
+        return true;
+
+    require (
+      Stable* out = Decay_If_Unstable(OUT)
+    );
+
+    if (Is_Group(out))
+        return fail ("GROUP! result from SET/GET of GROUP! target not legal");
+
+    const Stable* action = Lib_Var(id);  // different TARGETS legal for GET/SET
+    ParamList* paramlist = Phase_Paramlist(Frame_Phase(action));
+    Param* param = Phase_Param(paramlist, PARAM_INDEX(TARGET));
+
+    heeded (Corrupt_Cell_If_Needful(SCRATCH));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+
+    require (
+      bool check = Typecheck_Coerce(LEVEL, param, out, false)
+    );
+
+    if (not check)
+        return fail (out);
+
+    Copy_Cell(target, Known_Element(out));  // update ARG(TARGET)
+    Corrupt_Cell_If_Needful(OUT);
+
+    return false;
+}
+
+
 //
 //  set: native [
 //
 //  "Sets a variable to specified value (for dual band states, see TWEAK)"
 //
 //      return: [
-//          any-stable?  "Same value as input"
-//          error!       "Passthru even it skips the assign"
+//          any-value?   "Same value as input (not decayed)"
+//          <null>       "If VALUE is NULL, or if <opt-out> of target "
+//          error!       "Passed thru from input if not a meta-assign"
 //      ]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [<opt> any-word? tuple! group!
-//          any-get-value? any-set-value? @block!]
-//      ^value "Will be decayed if not assigned to metavariables"
-//          [any-value?]  ; should take PACK! [1]
-//      :any "Do not error on unset words"
+//          [
+//              <opt-out>
+//              word! tuple!
+//              ^word! ^tuple!
+//              group! "If :GROUPS, retrigger SET based on evaluated value"
+//              @block!
+//          ]
+//      ^value "Will be decayed if TARGET not BLOCK! or metavariables"
+//          [any-value? error!]
 //      :groups "Allow GROUP! Evaluations"
+//      :steps "Return evaluation steps for reproducible access"
 //  ]
 //
 DECLARE_NATIVE(SET)
@@ -1474,13 +1520,29 @@ DECLARE_NATIVE(SET)
 {
     INCLUDE_PARAMS_OF_TWEAK;  // !!! must have compatible frame
 
-    USED(ARG(TARGET));
-    // is actually ARG(DUAL) in TWEAK, need to lift it
-    USED(ARG(ANY));
-    USED(ARG(GROUPS));
+    Element* target = Element_ARG(TARGET);
 
-    Value* dual = Atom_ARG(DUAL);
-    Liftify(dual);
+    Value* v = Atom_ARG(DUAL);  // not a dual yet (we have to lift it...)
+
+    bool groups_ok = Bool_ARG(GROUPS);
+
+    USED(ARG(STEPS));  // TWEAK heeds this
+
+    if (Is_Group(target)) {  // Group before error passthru [B]
+        if (not groups_ok)
+            return fail ("SET of GROUP! target without :GROUPS not allowed");
+
+        require (
+          bool vanished = Recalculate_Group_Arg_Vanishes(LEVEL, SYM_SET)
+        );
+        if (vanished)
+            return NULLED;
+    }
+
+    if (Is_Error(v) and not Is_Metaform(target))
+        return COPY(v);  // error passthru [B]
+
+    Value* dual = Liftify(v);
 
     Option(Bounce) b = Irreducible_Bounce(
         LEVEL,
@@ -1502,15 +1564,22 @@ DECLARE_NATIVE(SET)
 //  "Gets a variable (for dual band states, see TWEAK)"
 //
 //      return: [
-//          any-stable?  "Same value as input"
-//          error!       "Passthru passthru even it skips the assign"
+//          any-value?             "will be decayed if not ^META input"
+//          ~[@block! any-value?]~ "Give :STEPS as well as the result value"
+//          error!                 "Passthru even it skips the assign"
 //      ]
 //      target "Word or tuple or path, or calculated sequence steps (from GET)"
-//          [<opt-out> any-word? tuple! path! group!
-//          any-get-value? any-set-value? @block!]
-//      :dual-ignore "!!! Just for frame compatibility !!!"  ; dummy [1]
-//      :any "Do not error on unset words"
+//          [
+//              <opt-out>
+//              word! tuple!   "Unstable fetches error"
+//              ^word! ^tuple! "Do not decay unstable antiform results"
+//              path!   "Specialize action specified by path"
+//              group!  "If :GROUPS, retrigger GET based on evaluated value"
+//              @block!
+//          ]
+//      {dual-ignore}  ; for frame compatibility with TWEAK [1]
 //      :groups "Allow GROUP! Evaluations"
+//      :steps "Return evaluation steps for reproducible access"
 //  ]
 //
 DECLARE_NATIVE(GET)
@@ -1518,18 +1587,33 @@ DECLARE_NATIVE(GET)
 // GET is really just a version of TWEAK that passes null, and unlifts the
 // return result.
 //
-// 1. Something has to be picked for placeholder slots or locals in the
-//    frame, so you can make dummy slots but not show them on the interface
-//    of the function.  Once upon a time this would be like `.dual` but that
-//    was removed.  Several instances of this exist and need an answer.
+// 1. GET delegates to TWEAK which reuses the same Level; put locals wherever
+//    TWEAK has parameters or locals that GET doesn't have.
+//
+// 2. Conveniently, FRAME! locals default to NULL, so the DUAL parameter is
+//    the right signal for GET to pass to TWEAK to mean GET.
 {
-    INCLUDE_PARAMS_OF_TWEAK;  // !!! must have compatible frame
+    INCLUDE_PARAMS_OF_TWEAK;  // !!! must have compatible frame [1]
 
-    USED(ARG(TARGET));
-    assert(Is_Nulled(ARG(DUAL)));  // "value" slot
+    Element* target = Element_ARG(TARGET);
+
+    assert(Is_Nulled(ARG(DUAL)));  // "value" slot (SET uses, GET does not) [2]
     USED(ARG(DUAL));
-    USED(ARG(ANY));
-    USED(ARG(GROUPS));
+
+    bool groups_ok = Bool_ARG(GROUPS);
+
+    USED(ARG(STEPS));  // TWEAK heeds this
+
+    if (Is_Group(target)) {
+        if (not groups_ok)
+            return fail ("GET of GROUP! target without :GROUPS not allowed");
+
+        require (
+          bool vanished = Recalculate_Group_Arg_Vanishes(LEVEL, SYM_GET)
+        );
+        if (vanished)
+            return NULLED;
+    }
 
     Option(Bounce) b = Irreducible_Bounce(
         LEVEL,
@@ -1542,7 +1626,7 @@ DECLARE_NATIVE(GET)
         return OUT;  // weird can't pick case, see [A]
 
     if (not Any_Lifted(OUT))
-        panic ("GET of UNSET or other weird state (see TWEAK)");
+        panic ("GET of DUAL_0 state, code to resolve this not in GET yet");
 
     require (
       Unliftify_Undecayed(OUT)
@@ -1575,6 +1659,6 @@ DECLARE_NATIVE(DEFINED_Q)
         return LOGIC(false);
     }
 
-    possibly(Is_Error(OUT));  // (get $obj.^field) can be defined as an ERROR!
+    possibly(Is_Error(OUT));  // (get meta $obj.field) can be defined as ERROR!
     return LOGIC(true);
 }

@@ -26,7 +26,7 @@
 ]
 
 (a: 1 reeval reify func [return: [integer!]] [set $a return 2] a = 1)
-(a: 1 run func [return: [integer!]] [set:any $a return 2] a = 1)
+(a: 1 run func [return: [integer!]] [set $a return 2] a = 1)
 
 [#1509 ; the "result" of return should not be passable to functions
     (a: 1 reeval reify func [return: [integer!]] [a: warning? return 2] a = 1)
@@ -60,7 +60,7 @@
     a = 1
 )]
 (a: 1 reeval reify func [return: []] [set $a return ~] a = 1)
-(a: 1 reeval reify func [return: []] [set:any $a return ~] a = 1)
+(a: 1 reeval reify func [return: []] [set $a return ~] a = 1)
 [#1509 (  ; the "result" of a return should not be passable to functions
     a: 1
     run func [return: []] [a: warning? return ~]

@@ -929,7 +929,7 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 // a more specific error would often be more useful.
 //
 // The behavior of `panic (some_value)` generates this error, as it can be
-// distinguished from `panic (some_context)` meaning that the context iss for
+// distinguished from `panic (some_context)` meaning that the context is for
 // an actual intended error.
 //
 Error* Error_Bad_Value(const Stable* value)

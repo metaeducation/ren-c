@@ -530,15 +530,18 @@ int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 // Evolve a cell containing a sequence that's just an element and a SPACE into
 // the element alone, e.g. `a:` -> `a` or `:[a b]` -> `[a b]`
 //
-Result(Element*) Unsingleheart_Sequence(Element* out)
+Result(Element*) Unsingleheart_Sequence(Element* seq)
 {
-    assert(Any_Sequence_Type(Heart_Of(out)));
-    if (not Sequence_Has_Pointer(out))
+    assert(Any_Sequence_Type(Heart_Of(seq)));
+    assert(not Sigil_Of(seq));
+    assert(LIFT_BYTE(seq) == NOQUOTE_2);
+
+    if (not Sequence_Has_Pointer(seq))
         goto report_error;  // compressed bytes don't encode blanks
 
   extract_payload_1: {
 
-    const Base* payload1 = CELL_PAYLOAD_1(out);
+    const Base* payload1 = CELL_PAYLOAD_1(seq);
 
   test_for_pairing_sequence: {
 
@@ -546,12 +549,12 @@ Result(Element*) Unsingleheart_Sequence(Element* out)
         const Pairing* pairing = cast(Pairing*, payload1);
         if (Is_Space(Pairing_First(pairing))) {
             assert(not Is_Space(Pairing_Second(pairing)));
-            Derelativize(out, Pairing_Second(pairing), Cell_Binding(out));
-            return out;
+            Derelativize(seq, Pairing_Second(pairing), Cell_Binding(seq));
+            return seq;
         }
         if (Is_Space(Pairing_Second(pairing))) {
-            Derelativize(out, Pairing_First(pairing), Cell_Binding(out));
-            return out;
+            Derelativize(seq, Pairing_First(pairing), Cell_Binding(seq));
+            return seq;
         }
         goto report_error;
     }
@@ -560,16 +563,16 @@ Result(Element*) Unsingleheart_Sequence(Element* out)
 
     const Flex* f = cast(Flex*, payload1);
     if (Is_Stub_Symbol(f)) {
-        KIND_BYTE(out) = TYPE_WORD;
-        Clear_Cell_Flag(out, LEADING_SPACE);  // !!! necessary?
-        return out;
+        KIND_BYTE(seq) = TYPE_WORD;
+        Clear_Cell_Flag(seq, LEADING_SPACE);  // !!! necessary?
+        return seq;
     }
 
     Option(Heart) mirror = Mirror_Of(cast(Source*, f));
     if (mirror) {  // no length 2 sequence arrays unless mirror
-        KIND_BYTE(out) = unwrap mirror;
-        Clear_Cell_Flag(out, LEADING_SPACE);  // !!! necessary
-        return out;
+        KIND_BYTE(seq) = unwrap mirror;
+        Clear_Cell_Flag(seq, LEADING_SPACE);  // !!! necessary
+        return seq;
     }
 
 }} report_error: { ///////////////////////////////////////////////////////////
@@ -578,6 +581,21 @@ Result(Element*) Unsingleheart_Sequence(Element* out)
         "UNCHAIN/UNPATH/UNTUPLE only on length 2 chains (when 1 item is SPACE)"
     );
 }}
+
+
+//
+//  Unsingleheart_Sequence_Preserve_Sigil: C
+//
+Result(Element*) Unsingleheart_Sequence_Preserve_Sigil(Element* seq) {
+    Option(Sigil) sigil = Sigil_Of(seq);
+    Plainify(seq);
+    trap (
+      Unsingleheart_Sequence(seq)
+    );
+    if (sigil)
+        Sigilize(seq, sigil);
+    return seq;
+}
 
 
 //

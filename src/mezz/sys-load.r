@@ -669,7 +669,7 @@ export*: func [
     items: what
 
     until [tail? items] [
-        ^val: get:any inside items word: match word! items.1 else [
+        ^val: get meta inside items word: match word! items.1 else [
             panic ["EXPORT only accepts WORD! or WORD! [typeset], not" ^items.1]
         ]
         ; !!! notation for exporting antiforms?

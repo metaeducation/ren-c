@@ -150,7 +150,7 @@
 )
 (
     a-value: ~#bad~
-    (lift get:any $a-value) = '~#bad~
+    (lift get meta $a-value) = '~#bad~
 )
 (
     a-value: 'a

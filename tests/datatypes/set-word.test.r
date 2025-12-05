@@ -53,3 +53,34 @@
         unset? $x
     ]
 )]
+
+(
+    name: 10
+    all [
+        20 = set:groups $($name) 20
+        20 = name
+    ]
+)
+(
+    obj: make object! [field: ~]
+    all [
+        '~['10 '20]~ = lift set:groups $($obj.field) pack [10 20]
+        (the '10) = lift ^obj.field
+    ]
+)
+(
+    obj: make object! [field: ~]
+    all [
+        '~['10 '20]~ = lift set:groups $(meta $obj.field) pack [10 20]
+        '~['10 '20]~ = lift ^obj.field
+    ]
+)
+~???~ !! (
+    name: 10
+    code: $($($name))
+    set:groups $(code) 1020
+)
+(null? set:groups $() 100)
+(null? set:groups () pack [10 20])
+(null? set:groups ^void ~)
+(null? set:groups (^void) ())

@@ -121,3 +121,35 @@
   ]
   ok
 )]
+
+; GET of a GROUP! can handle everything except producing another group.
+
+(
+    name: 10
+    10 = get:groups $($name)
+)
+(
+    obj: make object! [field: pack [10 20]]  ; decayed assign
+    (the '10) = lift get:groups $($obj.field)  ; plain get
+)
+(
+    obj: make object! [field: pack [10 20]]  ; decayed assign
+    (the '10) = lift get:groups $(meta $obj.field)  ; meta get
+)
+(
+    obj: make object! [^field: pack [10 20]]  ; meta assign
+    '~['10 '20]~ = lift get:groups $(meta $obj.field)  ; meta get
+)
+~???~ !! (
+    obj: make object! [^field: pack [10 20]]  ; meta assign
+    '~['10 '20]~ = lift get:groups $($obj.field)  ; plain get
+)
+~???~ !! (
+    name: 10
+    code: $($($name))
+    get:groups $(code)
+)
+(null? get:groups $())
+(null? get:groups ())
+(null? get:groups ^void)
+(null? get:groups (^void))

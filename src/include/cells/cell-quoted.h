@@ -69,11 +69,14 @@ INLINE Count Quotes_From_Lift_Byte(LiftByte lift_byte) {
     return (lift_byte - NOQUOTE_2) >> 1;
 }
 
-#define Is_Unquoted(cell) \
-    (LIFT_BYTE(Ensure_Readable(cell)) == NOQUOTE_2)
+#define Is_Unquoted(v) \
+    (LIFT_BYTE(Ensure_Readable(known(Stable*, (v)))) == NOQUOTE_2)
 
-#define Is_Quoted(cell) \
-    (LIFT_BYTE(Ensure_Readable(cell)) >= ONEQUOTE_NONQUASI_4)
+#define Is_Possibly_Unstable_Value_Quoted(v) \
+    (LIFT_BYTE(Ensure_Readable(v)) >= ONEQUOTE_NONQUASI_4)
+
+#define Is_Quoted(v) \
+    Is_Possibly_Unstable_Value_Quoted(known(Stable*, (v)))
 
 #define Any_Fundamental(v) \
     (LIFT_BYTE(Ensure_Readable(known(Stable*, (v)))) == NOQUOTE_2)
@@ -155,19 +158,22 @@ INLINE Count Noquotify(Element* elem) {
 //    other enum checks from %types.r, C code should prefer Is_Antiform().
 //
 
-INLINE bool Is_Antiform(const Value* a)
-  { return LIFT_BYTE(Ensure_Readable(a)) == ANTIFORM_1; }
-
 #if CHECK_CELL_SUBCLASSES
-    INLINE bool Is_Antiform(const Element* elem) = delete;
+    INLINE bool Is_Antiform(const Value* v)
+      { return LIFT_BYTE(Ensure_Readable(v)) == ANTIFORM_1; }
+
+    INLINE bool Is_Antiform(const Element* v) = delete;
+#else
+    #define Is_Antiform(v) \
+        (LIFT_BYTE(Ensure_Readable(v)) == ANTIFORM_1)
 #endif
 
-#define Not_Antiform(a) (not Is_Antiform(a))
+#define Not_Antiform(v) (not Is_Antiform(v))
 
 #undef Any_Antiform  // Is_Antiform() faster than auto-generated macro [1]
 
-INLINE bool Is_Lifted_Antiform(const Value* a)
-  { return LIFT_BYTE(Ensure_Readable(a)) == QUASIFORM_3; }
+#define Is_Lifted_Antiform(v) \
+    (LIFT_BYTE(Ensure_Readable(v)) == QUASIFORM_3)
 
 
 //=//// UNSTABLE ANTIFORMS ////////////////////////////////////////////////=//
@@ -198,6 +204,18 @@ INLINE bool Is_Antiform_Unstable(const Value* a) {
     unnecessary(Ensure_Readable(a));  // assume Is_Antiform() checked readable
     assert(LIFT_BYTE(a) == ANTIFORM_1);
     impossible(0 != (a->header.bits & CELL_MASK_SIGIL));  // kind = heart [1]
+    return (
+        KIND_BYTE(a) == TYPE_BLOCK  // Is_Pack()
+        or KIND_BYTE(a) == TYPE_WARNING  // Is_Error()
+        or KIND_BYTE(a) == TYPE_COMMA  // Is_Ghost()
+    );
+}
+
+INLINE bool Is_Lifted_Unstable_Antiform(const Value* a) {
+    unnecessary(Ensure_Readable(a));  // assume Is_Antiform() checked readable
+    if (LIFT_BYTE(a) != QUASIFORM_3)
+        return false;
+    possibly(0 != (a->header.bits & CELL_MASK_SIGIL));  // we're testing [1]
     return (
         KIND_BYTE(a) == TYPE_BLOCK  // Is_Pack()
         or KIND_BYTE(a) == TYPE_WARNING  // Is_Error()
@@ -307,7 +325,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Need(Value*) atom);
 INLINE Result(Element*) Coerce_To_Quasiform(Need(Element*) v);
 
 #define Is_Quasiform(v) \
-    (LIFT_BYTE(Ensure_Readable(v)) == QUASIFORM_3)
+    (LIFT_BYTE(Ensure_Readable(known(Stable*, v))) == QUASIFORM_3)
 
 INLINE Element* Unquasify(Element* elem) {
     assert(LIFT_BYTE(elem) == QUASIFORM_3);

@@ -107,8 +107,8 @@ INLINE bool Is_Nulled(Need(const Stable*) v) {
 #define Init_Quasi_Null(out) \
     Init_Quasi_Word((out), CANON(NULL))
 
-INLINE bool Is_Quasi_Null(const Cell* v) {
-    if (not Is_Quasiform(v))
+INLINE bool Is_Lifted_Null(const Value* v) {
+    if (LIFT_BYTE(v) != QUASIFORM_3)
         return false;
     if (Heart_Of(v) != TYPE_WORD)
         return false;
@@ -118,8 +118,8 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 #define Init_Lifted_Null(out) \
     Init_Quasi_Null(out)
 
-#define Is_Lifted_Null(v) \
-    Is_Quasi_Null(v)
+#define Is_Quasi_Null(v) \
+    Is_Lifted_Null(known(Stable*, (v)))  // subtle distinction of question...
 
 #define Is_Undone_Opt_Nulled(v)  Is_Nulled(v)
 

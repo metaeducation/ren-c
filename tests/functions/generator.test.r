@@ -111,7 +111,7 @@
 (
     g: generator [
         let yy: enclose yield/ func [f] [
-            f.^value: f.^value * 10
+            ^f.value: ^f.value * 10
             return 1 + eval-free f
         ]
         yy yy yy 10
@@ -135,8 +135,8 @@
     e-generator: func [body [block!]] [
         let g: generator [
             yield: enclose yield/ func [f [frame!] {temp}] [
-                if null? f.^value [
-                    f.^value: done
+                if null? ^f.value [
+                    ^f.value: done
                 ]
                 return unlift eval-free f
             ]

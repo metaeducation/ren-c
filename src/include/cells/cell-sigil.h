@@ -108,7 +108,7 @@ INLINE Option(Sigil) Underlying_Sigil_Of(const Element* e) {
 //    to account for sequences themselves, which aren't in sequencable ATM.
 //
 // 2. Sigilizing is assumed to only work on cells that do not already have a
-//    Sigil.  This is because you might otherwise expect e.g. LIFT of @foo
+//    Sigil.  This is because you might otherwise expect e.g. META of @foo
 //    to give you ^@foo.  Also, the Sigilize() function would be paying to
 //    mask out bits a lot of time when it's not needed.  So if you really
 //    intend to sigilize a plain form, make that clear at the callsite by

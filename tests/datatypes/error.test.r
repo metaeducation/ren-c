@@ -16,7 +16,7 @@
 ;
 (a: 1 warning? rescue [a: 1 / 0] a = 1)
 (a: 1 warning? rescue [set $a 1 / 0] a = 1)
-(a: 1 warning? rescue [set:any $a 1 / 0] a = 1)
+(a: 1 warning? rescue [set $a 1 / 0] a = 1)
 
 [#2190
     ~zero-divide~ !! (

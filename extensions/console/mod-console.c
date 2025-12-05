@@ -281,7 +281,7 @@ DECLARE_NATIVE(CONSOLE)
   //    as basic startup cannot meaningfully be halted.  The system would be
   //    in an incomplete state.)
 
-    rebElide("^old-console: system.^console");  // !!! for debug [1]
+    rebElide("^old-console: ^system.console");  // !!! for debug [1]
 
     rebElide(
         "if skin [system.console: null]",  // !!! needed for now
@@ -420,7 +420,7 @@ DECLARE_NATIVE(CONSOLE)
   //      http://stackoverflow.com/q/1101957/
 
     if (rebUnboxLogic(
-        "system.^console: ^old-console",
+        "^system.console: ^old-console",
         "was-ctrl-c-enabled"
     )){
         Enable_Ctrl_C();

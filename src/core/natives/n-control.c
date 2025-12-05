@@ -1098,8 +1098,12 @@ DECLARE_NATIVE(SWITCH)
 //  "If TARGET is [NULL TRASH BLANK], set it to BRANCH eval result"
 //
 //      return: [any-stable?]
-//      @target "Word or path which might be set (or not)"
-//          [set-run-word? set-group? set-word? set-tuple?]  ; on left
+//      @target "Word or path which might be set (or not)"  ; on left
+//          [
+//              set-word? set-tuple? ^set-word? ^set-tuple?
+//              set-run-word?  ; meta form meaningless?
+//              ; set-group? ^set-group?  ; TBD...
+//          ]
 //      @(branch) [<unrun> any-branch?]
 //  ]
 //
@@ -1149,29 +1153,32 @@ DECLARE_NATIVE(DEFAULT)
     Element* steps = u_cast(Element*, SCRATCH);  // avoid double-eval [1]
     STATE = ST_DEFAULT_GETTING_TARGET;  // can't leave at STATE_0
 
+    bool slashed = false;
     if (Is_Set_Run_Word(target)) {
         assume (
-          Unsingleheart_Sequence(target)
+          Unsingleheart_Sequence(target)  // make it into a plain set-word
         );
+        slashed = true;  // so we put the slash back on
     }
 
+    Option(Sigil) sigil = Sigil_Of(target);
+    assert(not sigil or sigil == SIGIL_META);
     assume (
-      Unsingleheart_Sequence(target)
+      Unsingleheart_Sequence_Preserve_Sigil(target)
     );
-    heeded (Copy_Cell(SCRATCH, target));
-    heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    heeded (Init_Dual_Nulled_Pick_Signal(OUT));
+    Element* scratch_var = Copy_Cell(SCRATCH, target);
+    Plainify(scratch_var);
+    Sigilize(scratch_var, SIGIL_META);  // for the fetch, always use ^META
 
-    Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(level_, steps);
-    if (e)
-        panic (unwrap e);
-
-    if (Is_Error(OUT))
-        panic (Cell_Error(OUT));
+    if (slashed) { assume (
+        Blank_Head_Or_Tail_Sequencify(  // put slash back for the write
+            target, TYPE_PATH, CELL_FLAG_LEADING_SPACE
+        )
+    );}
 
     require (
-        Unliftify_Undecayed(OUT)
+        Get_Var_In_Scratch_To_Out(level_, steps)
     );
 
     if (not Is_Ghost(OUT)) {  // should void count?  GHOST! is "unset"
@@ -1187,8 +1194,11 @@ DECLARE_NATIVE(DEFAULT)
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
-    assert(Is_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
-    heeded (Corrupt_Cell_If_Needful(SPARE));
+    // !!! TBD: "steps"
+  /* assert(Is_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
+     heeded (Corrupt_Cell_If_Needful(SPARE)); */
+
+    Copy_Cell(SCRATCH, target);  // we want the slash and meta as given
 
     Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS) except (Error* e) {
         assert(false);  // shouldn't be able to happen (steps is pinned)
@@ -1224,10 +1234,13 @@ DECLARE_NATIVE(MAYBE)
     if (Is_Error(atom))
         return COPY(atom);  // pass through but don't assign anything
 
+    assume (
+        Unsingleheart_Sequence(target)  // drop the colon off the end
+    );
     Element* quoted_target = Quotify(target);
 
     if (Is_Light_Null(atom))
-        return rebDelegate("get:any", quoted_target);
+        return rebDelegate("get meta", quoted_target);
 
     Element* lifted_atom = Liftify(atom);
 

@@ -252,12 +252,12 @@
     ] wrap [
         e1: e2: equal1: equal2: ~
 
-        lit-item: quote get:any $item
+        lit-item: quote get meta $item
 
         comment "Just testing for crashes; discards mold result"
         mold :lit-item
 
-        (e1: rescue [equal1: equal? get:any $item get:any $item]) also [
+        (e1: rescue [equal1: equal? get meta $item get meta $item]) also [
             e1.where: e1.near: null
         ]
         (e2: rescue [equal2: :lit-item = :lit-item]) also [
@@ -266,7 +266,7 @@
         if e1 [e1.line: null]  ; ignore line difference (file should be same)
         if e2 [e2.line: null]
         if :e1 != :e2 [
-            print mold type of get:any $item
+            print mold type of get meta $item
             print mold e1
             print mold e2
             panic "no error parity"
@@ -284,7 +284,7 @@
     x: ~
     all [
         quasi? x: '~()~
-        quasi? get:any $x
+        quasi? get meta $x
     ]
 )
 
