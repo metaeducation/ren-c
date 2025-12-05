@@ -140,6 +140,10 @@ void Where_Core_Debug(Level* L) {
     SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
     mo->limit = 40 * 20;  // 20 lines of length 40, or so?
     Push_Mold(mo);
+    if (index > Array_Len(Feed_Array(L->feed))) {
+        printf("BUGGY FEED INDEX WHEN AT END: Look into it\n");
+        index = Array_Len(Feed_Array(L->feed));
+    }
     Mold_Array_At(mo, Feed_Array(L->feed), index, "[]");
     Throttle_Mold(mo);
     printf("Where(At):\n");
