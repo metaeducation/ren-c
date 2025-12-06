@@ -556,7 +556,7 @@ Result(None) Wrap_Extend_Core(
 //
 //  "Expand context with top-level set-words from a block"
 //
-//      return: []
+//      return: ~
 //      context [any-context?]
 //      list [<opt-out> any-list?]
 //  ]

@@ -1152,7 +1152,7 @@ DECLARE_NATIVE(UDP_ACTOR)
 //
 //  "Initialize Network Extension (e.g. call WSAStartup() on Windows)"
 //
-//      return: []
+//      return: ~
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
@@ -1195,7 +1195,7 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Shutdown Network Extension"
 //
-//      return: []
+//      return: ~
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)

@@ -53,7 +53,7 @@
 //
 //  "Enables and disables evaluation tracing and backtrace"
 //
-//      return: []
+//      return: ~
 //      mode [integer! logic?]
 //      :function "Traces functions only (less output)"
 //  ]

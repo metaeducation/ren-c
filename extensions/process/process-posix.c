@@ -216,7 +216,7 @@ DECLARE_NATIVE(SET_EGID)
 //
 //  "Send signal to a process"
 //
-//      return: []  ; !!! might this return pid or signal (?)
+//      return: ~  ; !!! might this return pid or signal (?)
 //      pid "The process ID"
 //          [integer!]
 //      signal "The signal number"

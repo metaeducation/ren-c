@@ -741,7 +741,7 @@ INLINE Bounce Native_Thrown_Result(Level* L) {
 }
 
 // Dispatchers like Lambda_Dispatcher() etc. have their own knowledge of
-// whether they are `return: []` or not, based on where they keep the return
+// whether they are `return: ~` or not, based on where they keep the return
 // information.  So they can't use the `return TRASH;` idiom.
 //
 INLINE Stable* Init_Trash_Named_From_Level(Sink(Stable) out, Level* level_) {
@@ -754,7 +754,7 @@ INLINE Stable* Init_Trash_Named_From_Level(Sink(Stable) out, Level* level_) {
 }
 
 
-// Functions that `return: []` actually make a TRASH! with the label of the
+// Functions that `return: ~` actually make a TRASH! with the label of the
 // level that produced it.  This is usually done in typechecking, but natives
 // don't run typechecks in the release build...so the `return TRASH;` has to
 // do it.
@@ -770,8 +770,8 @@ INLINE Value* Native_Trash_Result_Untracked(
 
   #if RUNTIME_CHECKS
     Details* details = Ensure_Level_Details(level_);
-    Stable* param = Details_At(details, IDX_RAW_NATIVE_RETURN);
-    assert(Is_Parameter_Spec_Empty(param));  // not for `return: [trash!]` [1]
+    Element* param = Known_Element(Details_At(details, IDX_RAW_NATIVE_RETURN));
+    assert(Get_Parameter_Flag(param, AUTO_TRASH));  // only `return: ~` [1]
   #endif
 
     return Init_Trash_Named_From_Level(level_->out, level_);

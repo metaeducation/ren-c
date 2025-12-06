@@ -203,7 +203,7 @@ bytes-to-version: reverse copy version-to-bytes
 emit: proc [
     "Emits binary data, optionally marking positions with SET-WORD!"
 
-    return: []
+    return: ~
     ctx [object!]
     code [block! blob!]
 ][
@@ -792,7 +792,7 @@ change-cipher-spec: proc [
 
 
 encrypted-handshake-msg: func [
-    return: []
+    return: ~
     ctx [object!]
     unencrypted [blob!]
 ][
@@ -1618,7 +1618,7 @@ make-master-secret: lambda [
 
 
 do-commands: func [
-    return: []  ; some paths returned LOGIC!, others none...was unused
+    return: ~  ; some paths returned LOGIC!, others none...was unused
     tls-port [port!]
     commands [block!]
 ][

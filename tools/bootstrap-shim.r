@@ -749,14 +749,14 @@ modernize-action: func3 [
         ]
         until [tail? spec] [
             if spec.1 = the return: [
-                if not block? spec.2 [
-                    panic "RETURN must be followed by BLOCK! (not TEXT!)"
-                ]
-                if spec.2 = [] [
+                if spec.2 = '~ [
                     keep3 [return: [trash!]]
                     spec: my next
                     spec: my next
                     continue
+                ]
+                if not block? spec.2 [
+                    panic "RETURN must be followed by BLOCK! (not TEXT!)"
                 ]
             ]
 

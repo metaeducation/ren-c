@@ -109,7 +109,7 @@
     (lift ^tripwire) = lift foo
 )(
     data: [a b c]
-    f: func [return: []] [append data spread [1 2 3] return ~]
+    f: func [return: ~] [append data spread [1 2 3] return ~]
     (lift ^tripwire) = lift f
 )]
 

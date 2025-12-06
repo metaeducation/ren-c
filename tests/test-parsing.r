@@ -191,7 +191,7 @@ export collect-tests: func [
 ]
 
 export collect-logs: func [
-    return: []
+    return: ~
     collected-logs "collect the logged results here (modified)"
         [block!]
     log-file [file!]

@@ -971,7 +971,7 @@ void Swap_Stub_Content(Stub* a, Stub* b)
 //
 //  "Low-level operation for swapping the underlying data for two series"
 //
-//      return: []
+//      return: ~
 //      series1 [any-series?]
 //      series2 [any-series?]
 //  ]

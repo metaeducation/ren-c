@@ -1149,7 +1149,7 @@ DECLARE_NATIVE(IDENTITY)  // sample uses: https://stackoverflow.com/q/3136338
 //
 //  "Releases the underlying data of a value so it can no longer be accessed"
 //
-//      return: []
+//      return: ~
 //      memory [<opt-out> any-series? any-context? handle!]
 //  ]
 //
@@ -1376,7 +1376,7 @@ DECLARE_NATIVE(TRIPWIRE_Q)
 //
 //  "Returns TRASH! (alternative to [] branches returning GHOST!/VOID)"  ; [1]
 //
-//      return: []
+//      return: ~
 //  ]
 //
 DECLARE_NATIVE(NOOP)  // lack of a hyphen common, e.g. jQuery.noop

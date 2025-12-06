@@ -335,7 +335,7 @@ DECLARE_NATIVE(EVEN_Q)  // Note: ODD? is defined as NOT EVEN?
 //
 //  "Seed random number generator"
 //
-//      return: []
+//      return: ~
 //      seed "Pass e.g. NOW:TIME:PRECISE for nondeterminism"
 //          [plain?]
 //  ]

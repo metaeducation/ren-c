@@ -221,7 +221,7 @@ export emit-include-params-macro: func [
 
         any [  ; (almost) all natives should have `RETURN: [<typespec>]`  ; [2]
             (the return:) <> spec.1
-            not block? spec.2
+            (not block? spec.2) and (spec.2 <> '~)
             text? opt try spec.3
         ] then [
             any [

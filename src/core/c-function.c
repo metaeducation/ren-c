@@ -45,13 +45,24 @@ static Result(None) Push_Keys_And_Params_For_Fence(
         const Element* item = At_Level(sub);
 
         const Symbol* symbol;
-        bool must_be_action;
+        bool must_be_action = false;
         bool meta = false;
+        SymId initializer;
+
         Option(SingleHeart) singleheart;
 
-        if (Is_Word(item) or (meta = Is_Meta_Form_Of(WORD, item))) {
+        if (Is_Word(item)) {
             symbol = Word_Symbol(item);
-            must_be_action = false;
+            initializer = SYM_NULL;
+        }
+        else if (Is_Meta_Form_Of(WORD, item)) {
+            symbol = Word_Symbol(item);
+            initializer = SYM_GHOST;
+            meta = true;
+        }
+        else if (Is_Quasi_Word(item)) {
+            symbol = Word_Symbol(item);
+            initializer = SYM_TRIPWIRE;
         }
         else if (
             Is_Path(item)
@@ -62,8 +73,8 @@ static Result(None) Push_Keys_And_Params_For_Fence(
             )
         ){
             symbol = Word_Symbol(item);
+            initializer = SYM_GHOST;  // null is *bad* for "optional actions"
             must_be_action = true;
-            panic ("SET-WORD! local temporarily not supported");
         }
         else
             return fail (item);
@@ -72,11 +83,16 @@ static Result(None) Push_Keys_And_Params_For_Fence(
 
         Fetch_Next_In_Feed(sub->feed);
 
-        if (Is_Level_At_End(sub) or not Is_Group(At_Level(sub))) {
-            if (meta)
-                Init_Ghost(PUSH());
-            else
-                Init_Nulled(PUSH());
+        if (
+            Is_Level_At_End(sub)
+            or not Is_Group(At_Level(sub))
+        ) {
+            switch (initializer) {
+              case SYM_NULL: Init_Nulled(PUSH()); break;
+              case SYM_GHOST: Init_Ghost(PUSH()); break;
+              case SYM_TRIPWIRE: Init_Tripwire(PUSH()); break;
+              default: assert(false);
+            }
             continue;
         }
 
@@ -126,7 +142,7 @@ static Result(None) Push_Keys_And_Params_Core(
 
     bool augment_initial_entry;
     bool seen_returner = false;
-    Element* returner;
+    StackIndex returner_index;
 
   push_returner_if_not_augmenting: {
 
@@ -143,7 +159,7 @@ static Result(None) Push_Keys_And_Params_Core(
 
     if (flags & MKF_AUGMENTING) {
         augment_initial_entry = true;
-        returner = nullptr;
+        returner_index = 0;
     }
     else {
         augment_initial_entry = false;
@@ -153,10 +169,11 @@ static Result(None) Push_Keys_And_Params_Core(
         else
             Init_Word(PUSH(), Canon_Symbol(SYM_DUMMY1));
 
-        returner = Init_Unconstrained_Parameter(
+        Init_Unconstrained_Parameter(
             PUSH(),
             FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
         );
+        returner_index = TOP_INDEX;
     }
 
 } do_more_stuff: {
@@ -215,6 +232,29 @@ static Result(None) Push_Keys_And_Params_Core(
             Manage_Stub(strand);
             Freeze_Flex(strand);
             Set_Parameter_Strand(TOP_ELEMENT, strand);
+            continue;
+        }
+
+  //=//// QUASAR (~) TO SAY YOU WANT AUTO-NAMED TRASH! ////////////////////=//
+
+        if (Is_Quasar(item)) {
+            if (augment_initial_entry)
+                return fail (
+                    "Function return indicator not allowed in AUGMENT spec"
+                );
+
+            if (TOP_INDEX != returner_index)
+                return fail (
+                    "Quasar (~) must be used to indicate function return spec"
+                );
+
+            if (Parameter_Spec(TOP_ELEMENT))  // `func [return: [integer!] ~]`
+                return fail (Error_Bad_Func_Def_Raw(item));
+
+            const Strand* notes = opt Parameter_Strand(TOP_ELEMENT);
+            Copy_Cell(TOP_ELEMENT, g_auto_trash_param);
+            Set_Parameter_Strand(TOP_ELEMENT, notes);
+
             continue;
         }
 
@@ -415,8 +455,8 @@ static Result(None) Push_Keys_And_Params_Core(
         // Non-annotated arguments allow all parameter types.
     }
 
-    if (returner)  // plain parameter would gather arg, trick is to quote it
-        Quotify_Parameter_Local(returner);
+    if (returner_index)  // plain param would gather arg, trick is to quote it
+        Quotify_Parameter_Local(Data_Stack_At(Element, returner_index));
 
     return none;
 }}

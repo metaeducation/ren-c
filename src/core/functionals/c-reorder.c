@@ -210,7 +210,10 @@ DECLARE_NATIVE(REORDER)
             continue;
 
         const Stable* param = Phase_Param(reorderee, index);
-        if (Get_Parameter_Flag(param, REFINEMENT) and Is_Parameter_Unconstrained(param)) {
+        if (
+            Get_Parameter_Flag(param, REFINEMENT)
+            and Is_Parameter_Unconstrained(param)
+        ){
             error = Error_User("Can't reorder refinements with no argument");
             goto cleanup_binder;
         }

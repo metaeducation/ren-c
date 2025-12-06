@@ -1131,7 +1131,7 @@ topic: spec: ~  ; avoid leaks (FWIW)
 
 
 help: func [
-    return: []
+    return: ~
     :topic [text!]
 ][
     if not topic [

@@ -144,7 +144,7 @@ void Dump_Interpreter_Stack(Level* L)
 //
 //  "Temporary debug dump"
 //
-//      return: []
+//      return: ~
 //      @value [word!]
 //  ]
 //

@@ -67,33 +67,33 @@
 //    and the slot is a generic PARAMCLASS_LOCAL as far as the user would see.
 //    This reduces the number of bits needed to encode the class, leaving
 //    more room for PARAMETER_FLAG_XXX.
+//
+// 3. const-correctness with PARAMETER! cells is not particularly compelling,
+//    as they are created in one place and then only read from elsewhere.
+//    The OnStack() type has trouble with overloads of const vs. non-const,
+//    so just ignore the constness for practicality.
 
 /* DONT(#define CELL_PARAMETER_SYMBOL() ...) */  // [1]
 
-#define CELL_PARAMETER_PAYLOAD_1_SPEC(c)    CELL_PAYLOAD_1(c)
+#define CELL_PARAMETER_PAYLOAD_1_SPEC(c)  CELL_PAYLOAD_1(c)
 #define CELL_PARAMETER_EXTRA_STRAND(c)  CELL_EXTRA(c)
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define CELL_PARAMETER_PAYLOAD_2_FLAGS(c)  (c)->payload.split.two.flags
 #else
-    INLINE const uintptr_t& CELL_PARAMETER_PAYLOAD_2_FLAGS(const Cell* c) {
-        assert(Unchecked_Heart_Of(c) == TYPE_PARAMETER);
-        return c->payload.split.two.flags;
-    }
-
-    INLINE uintptr_t& CELL_PARAMETER_PAYLOAD_2_FLAGS(Cell* c) {
-        assert(Unchecked_Heart_Of(c) == TYPE_PARAMETER);
-        return c->payload.split.two.flags;
+    INLINE uintptr_t& CELL_PARAMETER_PAYLOAD_2_FLAGS(const Cell* v) {
+        assert(Unchecked_Heart_Of(v) == TYPE_PARAMETER);
+        return m_cast(Cell*, v)->payload.split.two.flags;  // mutable [3]
     }
 #endif
 
 #define PARAMCLASS_BYTE(c)  FIRST_BYTE(&CELL_PARAMETER_PAYLOAD_2_FLAGS(c))
-#define FLAG_PARAMCLASS_BYTE(b)     FLAG_FIRST_BYTE(b)
+#define FLAG_PARAMCLASS_BYTE(b)  FLAG_FIRST_BYTE(b)
 
-INLINE Option(const Source*) Parameter_Spec(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_PARAMETER);
+INLINE Option(const Source*) Parameter_Spec(const Cell* v) {
+    assert(Heart_Of(v) == TYPE_PARAMETER);
 
-    const Base* base = CELL_PARAMETER_PAYLOAD_1_SPEC(c);
+    const Base* base = CELL_PARAMETER_PAYLOAD_1_SPEC(v);
     if (base != nullptr and Not_Base_Readable(base))
         panic (Error_Series_Data_Freed_Raw());
 
@@ -312,7 +312,25 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* c) {
     FLAG_LEFT_BIT(22)
 
 
-#define PARAMETER_FLAG_23           FLAG_LEFT_BIT(23)
+//=//// PARAMETER_FLAG_AUTO_TRASH /////////////////////////////////////////=//
+//
+// There's a lighter notation than `return: [trash!]` to say that you return
+// TRASH!, and that's [return ~].  (At one time this was [return: []] but that
+// makes too much sense for meaning a function that can't return any type at
+// all, e.g. a divergent function.)
+//
+// As far as clients of the function are concerned, `return: ~` will show them
+// `return: [trash!]` if they ask for RETURN OF.  However, the mechanics of
+// functions that were declared with the ~ syntax is that they automatically
+// put the name of the function into any TRASH! they return--to help with
+// debugging.  This flag guides that behavior in the various dispatchers.
+//
+// (Since natives are their own dispatchers, the only way to get them to run
+// common code is through macros, so `return TRASH;` does the embedding of the
+// name through code in the TRASH macro.)
+//
+#define PARAMETER_FLAG_AUTO_TRASH \
+    FLAG_LEFT_BIT(23)
 
 
 #define Get_Parameter_Flag(v,name) \
@@ -329,19 +347,19 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* c) {
 
 
 
-INLINE ParamClass Parameter_Class(const Cell* param) {
-    assert(Heart_Of(param) == TYPE_PARAMETER);
-    return cast(ParamClass, PARAMCLASS_BYTE(param));
+INLINE ParamClass Parameter_Class(const Cell* v) {
+    assert(Heart_Of(v) == TYPE_PARAMETER);
+    return cast(ParamClass, PARAMCLASS_BYTE(v));
 }
 
-INLINE Option(const Strand*) Parameter_Strand(const Cell* param) {
-    assert(Heart_Of(param) == TYPE_PARAMETER);
-    return cast(const Strand*, CELL_PARAMETER_EXTRA_STRAND(param));
+INLINE Option(const Strand*) Parameter_Strand(const Cell* v) {
+    assert(Heart_Of(v) == TYPE_PARAMETER);
+    return cast(const Strand*, CELL_PARAMETER_EXTRA_STRAND(v));
 }
 
-INLINE void Set_Parameter_Strand(Cell* param, Option(const Strand*) string) {
-    assert(Heart_Of(param) == TYPE_PARAMETER);
-    CELL_PARAMETER_EXTRA_STRAND(param) = m_cast(Strand*, opt string);
+INLINE void Set_Parameter_Strand(Cell* v, Option(const Strand*) s) {
+    assert(Heart_Of(v) == TYPE_PARAMETER);
+    CELL_PARAMETER_EXTRA_STRAND(v) = m_cast(Strand*, opt s);
 }
 
 
@@ -492,15 +510,15 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     TRACK(Init_Unconstrained_Parameter_Untracked((out), (param_flags)))
 
 
-INLINE bool Is_Parameter_Unconstrained(const Cell* param) {
-    return Parameter_Spec(param) == nullptr;  // e.g. `[:refine]`
+INLINE bool Is_Parameter_Unconstrained(const Cell* v) {
+    return Parameter_Spec(v) == nullptr;  // e.g. `[:refine]`
 }
 
-INLINE bool Is_Parameter_Spec_Empty(const Cell* param) {
-    Option(const Source*) spec = Parameter_Spec(param);
+INLINE bool Is_Parameter_Divergent(const Cell* v) {
+    Option(const Source*) spec = Parameter_Spec(v);
     if (not spec)
         return false;
-    return Array_Len(unwrap spec) == 0;  // e.g. `[]`
+    return Array_Len(unwrap spec) == 0;  // e.g. `[]`, no legal return types
 }
 
 

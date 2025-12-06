@@ -161,7 +161,7 @@ help-action: proc [
 help-value: func [
     "Give non-dialected help for an atom with any datatype"
 
-    return: []
+    return: ~
     ^value [any-value?]
     :name [word! tuple! path!]
 ][
@@ -261,7 +261,7 @@ help: func [
         help object!
         help datatype!]--
 
-    return: []
+    return: ~
     @topic "WORD! to explain, or other HELP target (if no args, general help)"
         [<end> element?]
     :web "Open web browser to related documentation."
@@ -374,7 +374,7 @@ help: func [
 source: func [
     "Prints the source code for an ACTION! (if available)"
 
-    return: []
+    return: ~
     @arg [<unrun> word! path! frame! tag!]
 ][
     let name
@@ -520,7 +520,7 @@ bugs: proc [
 require-commit: func [
     "checks current commit against required commit"
 
-    return: []
+    return: ~
     commit [text!]
 ][
     let c: select system.script.header 'commit else [return ~]

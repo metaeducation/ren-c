@@ -54,7 +54,7 @@ e-funcs: make-emitter "Internal API" (
 prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 
 emit-proto: func [
-    return: []
+    return: ~
     proto [text!]
 ][
     any [
@@ -183,7 +183,7 @@ e-funcs/emit [--[
 ;
 handle-item: func [
     "Handle a single item in %file-base.r"
-    return: []
+    return: ~
     name [path! tuple! file!]  ; bootstrap EXE loads [foo.c] as [foo/c]
     dir [<opt> file!]
     options [<opt> block!]

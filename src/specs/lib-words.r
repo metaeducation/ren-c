@@ -28,6 +28,8 @@ Rebol [
 ]
 
 void
+ghost
+tripwire
 quasar
 null
 okay

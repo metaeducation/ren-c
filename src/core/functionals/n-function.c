@@ -633,7 +633,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 
         if (
             Is_Possibly_Unstable_Value_Trash(atom)
-            and Is_Parameter_Spec_Empty(param)
+            and Get_Parameter_Flag(param, AUTO_TRASH)
         ){
             Init_Trash_Named_From_Level(atom, target_level);
         }

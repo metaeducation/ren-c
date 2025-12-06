@@ -48,7 +48,7 @@ extern bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out);
 //
 //  "Startup the STDIO extension"
 //
-//      return: []
+//      return: ~
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
@@ -71,7 +71,7 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Write text or raw BLOB! to stdout (for control codes / CGI)"  ; [1]
 //
-//      return: []
+//      return: ~
 //      value [<opt-out> text! char? blob!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
@@ -527,7 +527,7 @@ DECLARE_NATIVE(READ_CHAR)
 //
 //  "Shut down the stdio and terminal devices, called on extension unload"
 //
-//      return: []
+//      return: ~
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)

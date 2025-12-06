@@ -76,7 +76,7 @@ for-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
 ]
 
 emit-proto: func [
-    return: []
+    return: ~
     proto [text!]
 ][
     let [
@@ -855,7 +855,7 @@ typedef const void* RebolBounce;
  *
  *     Value* action = rebFunction(R"(
  *         -[Another way to do functions]-
- *         return: []
+ *         return: ~
  *         message [text!]
  *     ])",
  *     [](Context* binding) {

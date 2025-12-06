@@ -199,7 +199,7 @@ export analyse: context [
 
             let non-std-func-space: null
 
-            let emit-proto: func [return: [] proto] [
+            let emit-proto: func [return: ~ proto] [
                 if not block? proto-parser.data [return ~]
 
                 eval overbind c-parser-extension [

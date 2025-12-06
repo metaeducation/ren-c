@@ -439,7 +439,7 @@
 )
 
 [#539 https://github.com/metaeducation/ren-c/issues/755 (
-    f: func [return: []] [
+    f: func [return: ~] [
         use [x] [return ~]
         42
     ]
@@ -467,6 +467,6 @@
 
 ; Trash value returned has label of function
 (
-    some-name: func [return: []] [return ~]
+    some-name: func [return: ~] [return ~]
     #some-name = unanti some-name
 )

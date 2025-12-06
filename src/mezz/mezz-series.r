@@ -302,7 +302,7 @@ bind construct [
 move: func [
     "Move a value or span of values in a series"
 
-    return: []  ; !!! Define return value?
+    return: ~  ; !!! Define return value?
     source "Source series (modified)"
         [any-series?]
     offset "Offset to move by, or index to move to"
@@ -637,7 +637,7 @@ split: func [
 find-all: func [
     "Find all occurrences of a value within a series (allows modification)."
 
-    return: []
+    return: ~
     'series "Variable for block, string, or other series"
         [word!]
     value

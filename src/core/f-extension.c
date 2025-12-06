@@ -291,7 +291,7 @@ static Bounce Unloaded_Dispatcher(Level* level_)
 //
 //  "Unload an extension (calls module's SHUTDOWN* if it exists)"
 //
-//      return: []
+//      return: ~
 //      extension [module!]
 //  ]
 //

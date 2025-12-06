@@ -50,7 +50,7 @@ DECLARE_NATIVE(FORM)
 //
 //  "Stopgap concept for methodizing mold using new generics"
 //
-//      return: []  ; returning a string would be too slow to compound
+//      return: ~  ; returning a string would be too slow to compound
 //      value [fundamental?]
 //      molder "Settings for the mold, including in progress series"
 //          [handle!]
@@ -150,7 +150,7 @@ DECLARE_NATIVE(MOLD)
 //
 //  "Boot-only implementation of WRITE-STDOUT (HIJACK'd by STDIO module)"
 //
-//      return: []
+//      return: ~
 //      value [<opt-out> text! char? blob!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
@@ -405,7 +405,7 @@ DECLARE_NATIVE(BASIC_READ)
 //
 //  "Very simplistic function for writing files, provided for WASI"
 //
-//       return: []
+//       return: ~
 //       file [file!]
 //       data [blob! text!]
 //  ]

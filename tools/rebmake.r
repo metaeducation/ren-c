@@ -446,7 +446,7 @@ cc: make compiler-class [
     exec-file: %cc
 
     check: func [
-        return: []
+        return: ~
         "Assigns .exec-file, extracts the compiler version"
         exec [<opt> file! text!]
         <.>
@@ -1208,7 +1208,7 @@ generator-class: make object! [
     ]
 
     setup-output: func [
-        return: []
+        return: ~
         project [object!]
         <.>
     ][
@@ -1264,7 +1264,7 @@ generator-class: make object! [
 
     setup-outputs: func [
         "Set the output and implib for the project tree"
-        return: []
+        return: ~
         project [object!]
         <.>
     ][
@@ -1505,7 +1505,7 @@ export execution: make generator-class [
     gen-cmd-delete: host.gen-cmd-delete/
 
     run-target: func [
-        return: []
+        return: ~
         target [object!]
         :cwd "change working directory"  ; !!! Not heeded (?)
             [file!]

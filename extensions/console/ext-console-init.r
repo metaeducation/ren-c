@@ -200,7 +200,7 @@ export console!: make object! [
         ; the most succinct state of trash is antiform space (TRIPWIRE, whose
         ; quasiform looks like a single tilde `~`).  Right now we don't show
         ; any trash, regardless of whether it contains a label or not (esp.
-        ; functions that `return: []` give back trash with their symbol, as
+        ; functions that [return: ~] give back trash with their symbol, as
         ; a debugging aid for knowing where trashes came from).
 
         if trash? ^v [

@@ -161,7 +161,7 @@ argv-block-to-command*: func [
 browse: func [
     "Open web browser to a URL or local file."
 
-    return: []
+    return: ~
     location [<opt-out> url! file!]
 ][
     print "Opening web browser..."

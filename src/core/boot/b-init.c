@@ -245,10 +245,50 @@ static void Init_Action_Spec_Tags(void)
     known_nullptr(g_tag_dot_1) = Make_Locked_Tag(".");
 
     known_nullptr(g_tag_here) = Make_Locked_Tag("here");  // used by PARSE
-}
+
+  initialize_auto_trash_param: {
+
+  // This is a bit of a tricky bootstrap issue because Set_Parameter_Spec()
+  // that does spec analysis to fill in a PARAMETER! dpends on Get_Word(),
+  // which in turn depends on the TWEAK mechanics, and that hasn't been
+  // initialized yet.
+  //
+  // Build the [trash!] parameter spec array manually--zeroing out the
+  // optimization bytes, and indicating that it checks for trash and doesn't
+  // need to walk the array to look up types when checking.
+
+    Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
+    Element* w = Init_Word(Stub_Cell(a), CANON(TRASH_X));
+
+    DECLARE_ELEMENT (spec);
+    Init_Block(spec, a);
+
+    Element* param = Init_Unconstrained_Parameter(
+        Alloc_Value(),
+        FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
+    );
+    CELL_PARAMETER_PAYLOAD_1_SPEC(param) = a;  // should GC protect array
+    Clear_Cell_Flag(param, DONT_MARK_PAYLOAD_1);  // sync flag
+
+    TypesetByte* optimized = a->misc.at_least_4;
+    TypesetByte* optimized_tail = optimized + sizeof(uintptr_t);
+    UNUSED(optimized_tail);
+    Mem_Fill(optimized, 0, sizeof(uintptr_t));
+
+    Set_Parameter_Flag(param, TRASH_DEFINITELY_OK);
+    Set_Cell_Flag(w, PARAMSPEC_SPOKEN_FOR);
+
+    Set_Parameter_Flag(param, AUTO_TRASH);
+
+    Freeze_Source_Shallow(a);
+
+    known_nullptr(g_auto_trash_param) = param;
+}}
 
 static void Shutdown_Action_Spec_Tags(void)
 {
+    rebReleaseAndNull(&g_auto_trash_param);
+
     rebReleaseAndNull(&g_tag_variadic);
     rebReleaseAndNull(&g_tag_end);
     rebReleaseAndNull(&g_tag_opt_out);
