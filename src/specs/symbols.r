@@ -26,6 +26,11 @@ Rebol [
     ]--
 ]
 
+; === BEDROCK NATIVES ===
+
+native-bedrock
+tweak*-bedrock
+
 ; === DUAL SIGNALS ===
 
 *unset*  ; "pure unset", (^var) can read TRASH!, but not pure unset
@@ -91,12 +96,6 @@ julian
 yearday
 #zone
 utc
-
-
-; === CHECKSUM (CORE) ===
-
-crc32
-adler32
 
 
 ; === CODEC ===

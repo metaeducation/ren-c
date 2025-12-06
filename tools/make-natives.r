@@ -123,8 +123,10 @@ gather-natives join src-dir %core/
 ; the evaluator to do the other `xxx: native:yyy [...]` evaluations.
 
 leaders: [
-    native-bootstrap
-    tweak*-bootstrap
+    native-bedrock
+    tweak*-bedrock
+
+    c-debug-break
 
     native  ; REAL native (overwrites bootstrap)
 

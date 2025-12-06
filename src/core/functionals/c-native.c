@@ -169,14 +169,19 @@ Result(Details*) Make_Native_Dispatch_Details(
 }
 
 
-// The NATIVE native has two entry points: one with no typechecking (used in
-// bootstrapping, when TWEAK* is not available to look up the words in the
-// type specs) and another that is overwritten into that slot after the
-// boot is complete.
 //
-// (TWEAK* also has this dual nature.)
+//  native: native [
 //
-static Bounce Native_Native_Core(Level* level_)
+//  "(Internal Function) Create a native, using compiled C code"
+//
+//      return: [~[action!]~]
+//      spec [block!]
+//      :combinator "This native is an implementation of a PARSE keyword"
+//      :intrinsic "This native can be called without building a frame"
+//      :generic "This native delegates to type-specific code"
+//  ]
+//
+DECLARE_NATIVE(NATIVE)
 {
     INCLUDE_PARAMS_OF_NATIVE;
 
@@ -225,25 +230,7 @@ static Bounce Native_Native_Core(Level* level_)
 
 
 //
-//  native: native [
-//
-//  "(Internal Function) Create a native, using compiled C code"
-//
-//      return: [~[action!]~]
-//      spec [block!]
-//      :combinator "This native is an implementation of a PARSE keyword"
-//      :intrinsic "This native can be called without building a frame"
-//      :generic "This native delegates to type-specific code"
-//  ]
-//
-DECLARE_NATIVE(NATIVE)
-{
-    return Native_Native_Core(LEVEL);
-}
-
-
-//
-//  native-bootstrap: native [
+//  native-bedrock: native [
 //
 //  "(Bootstrap Variation) Version of NATIVE with no typechecking"
 //
@@ -253,9 +240,18 @@ DECLARE_NATIVE(NATIVE)
 //      :generic
 //  ]
 //
-DECLARE_NATIVE(NATIVE_BOOTSTRAP)
+DECLARE_NATIVE(NATIVE_BEDROCK)
+//
+// This variation of NATIVE has no typechecking.  During bootstrap it is put
+// in LIB(NATIVE) to use while TWEAK* is unavailable to look up the words in
+// type specs.  Once TWEAK* is available, LIB(NATIVE) is overwritten by the
+// typechecked version defined in DECLARE_NATIVE(NATIVE).
+//
+// 1. To minimize visibility of the trick, there is no LIB(NATIVE_BEDROCK)
 {
-    return Native_Native_Core(LEVEL);
+    STATIC_ASSERT(SYM_NATIVE_BEDROCK > MAX_SYM_LIB_PREMADE);  // [1]
+
+    return Apply_Cfunc(NATIVE_CFUNC(NATIVE), LEVEL);
 }
 
 
@@ -494,44 +490,42 @@ Bounce Run_Generic_Dispatch(
 
 // Create a native in the library without using the evaluator.
 //
-// 1. Used with `native:` and `tweak*`
-//
 static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
 {
-    assert(Is_Set_Word(At_Level(L)));  // limited set [1]
-    assert(
-        Symbol_Id(unwrap Try_Get_Settable_Word_Symbol(nullptr, At_Level(L)))
-        == id
-    );
-    Fetch_Next_In_Feed(L->feed);
+  skip_to_spec_block: {
 
-    NativeType native_type;
-    if (id == SYM_TWEAK_P_BOOTSTRAP) {
-        id = SYM_TWEAK_P;  // update the ID we write to
-        assert(Is_Word(At_Level(L)));  // native [...]
-        assert(Word_Id(At_Level(L)) == SYM_NATIVE);  // native [...]
-        native_type = NATIVE_NORMAL;  // genericness only in prep for TWEAK*
-    }
-    else {
-        assert(id == SYM_NATIVE_BOOTSTRAP);
-        id = SYM_NATIVE;  // update the ID we write to
-        assert(Is_Word(At_Level(L)));
-        assert(Word_Id(At_Level(L)) == SYM_NATIVE);  // native [...]
-        native_type = NATIVE_NORMAL;
+    assert(Is_Set_Word(At_Level(L)));
+
+    switch (id) {
+      case SYM_NATIVE:  // native-bedrock: native [...]
+        assert(Word_Id(At_Level(L)) == SYM_NATIVE_BEDROCK);
+        break;
+
+      case SYM_TWEAK_P:  // tweak*-bedrock: native [...]
+        assert(Word_Id(At_Level(L)) == SYM_TWEAK_P_BEDROCK);
+        break;
+
+      default:
+        assert(false);
     }
 
     Fetch_Next_In_Feed(L->feed);
+    assert(Word_Id(At_Level(L)) == SYM_NATIVE);
 
+    Fetch_Next_In_Feed(L->feed);
     assert(Is_Block(At_Level(L)));
+
+} make_native: {
+
     DECLARE_ELEMENT (spec);
     Derelativize(spec, At_Level(L), g_lib_context);
-    Fetch_Next_In_Feed(L->feed);;
+    Fetch_Next_In_Feed(L->feed);
+
+    Dispatcher* dispatcher = f_cast(Dispatcher*, *g_native_cfunc_pos);
 
     assume (
       Details* details = Make_Native_Dispatch_Details(
-        spec,
-        native_type,
-        f_cast(Dispatcher*, *g_native_cfunc_pos)
+        spec, NATIVE_NORMAL, dispatcher
     ));
 
     ++g_native_cfunc_pos;
@@ -543,8 +537,8 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
         UNCOUPLED  // coupling
     );
 
-    assert(cast(Details*, Frame_Phase(Lib_Var(id))) == details);  // make sure
-}
+    assert(cast(Details*, Frame_Phase(Lib_Var(id))) == details);
+}}
 
 
 //
@@ -555,14 +549,9 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
 // e.g. (native: native ["A function that creates natives" ...]), so of course
 // that has to be manually constructed.
 //
-// But further than that, we also need to do a manual construction of the
-// TWEAK* native, e.g. (tweak*: native ["A function that tweaks" ...]) would
-// have trouble since TWEAK* is used to implement SET-WORD assignments in the
-// general case.  Hence we write into the library slots directly just to
-// get the ball rolling.
-//
-// 1. See Startup_Lib() for how all the declarations in LIB for the natives
-//    are made in a pre-pass (no need to walk and look for set-words etc.)
+// 1. See Startup_Lib() for how all the variables up to MAX_SYM_LIB_PREMADE
+//    are created in advance to hold the natives (no need to walk and look for
+//    SET-WORD, etc.)
 //
 void Startup_Natives(const Element* boot_natives)
 {
@@ -585,15 +574,15 @@ void Startup_Natives(const Element* boot_natives)
 
   setup_native_dispatcher_enumeration: {
 
-    // When we call NATIVE it doesn't take any parameter to say what the
-    // Dispatcher* is.  It's assumed there is some global state, which it
-    // advances and gets the next Dispatcher* from that global state.
-    //
-    // This isn't particularly elegant, but something is going to be weird
-    // about it one way or another. Fabricating a HANDLE! to pass to NATIVE as
-    // a second parameter would be a possibility, but that comes with its own
-    // set of problems...like how to inject that HANDLE! into the stream
-    // of evaluation when all we have are (foo: native [...]) statements.
+  // There's no parameter to NATIVE saying what the Dispatcher* is.  It's
+  // assumed there is some global state set up, which each call to NATIVE
+  // advances and gets the next Dispatcher* from that global state.
+  //
+  // This isn't particularly elegant, but something is going to be weird
+  // about it one way or another.  Fabricating a HANDLE! to pass to NATIVE as
+  // a second parameter would be a possibility, but that comes with its own
+  // set of problems: how would you inject that HANDLE! into the stream
+  // of evaluation when all we have are (foo: native [...]) statements?
 
     assert(g_native_cfunc_pos == nullptr);
     g_native_cfunc_pos = u_cast(
@@ -607,41 +596,32 @@ void Startup_Natives(const Element* boot_natives)
 
 } make_bedrock_natives_by_hand: {
 
-    // Eval can't run `native: native [...]` or `tweak*: native [...]`
-    //
-    // TWEAK* is fundamental to interpreter operation for SET and GET
-    // operations.  NATIVE is fundamental to making natives themselves.
-    //
-    // So they're pushed up to the front of the boot block and "made by hand",
-    // e.g. not by running evaluation.  (This reordering to put them at the
-    // head is done in %make-natives.r)
+  // Eval can't run `native: native [...]` or `tweak*: native [...]`
+  //
+  // Obviously there's a bootstrapping problem with NATIVE.  As for TWEAK*,
+  // you can't run a SET-WORD assignment unless TWEAK* exists, because TWEAK*
+  // is fundamental to interpreter operation for SET and GET operations
+  //
+  // So they're pushed up to the front of the boot block and "made by hand",
+  // e.g. not by running evaluation.  (This reordering to put them at the
+  // head is done in %make-natives.r)
 
-    Make_Native_In_Lib_By_Hand(L, SYM_NATIVE_BOOTSTRAP);
-    Make_Native_In_Lib_By_Hand(L, SYM_TWEAK_P_BOOTSTRAP);
+    Make_Native_In_Lib_By_Hand(L, SYM_NATIVE);  // -> NATIVE-BEDROCK
+    Make_Native_In_Lib_By_Hand(L, SYM_TWEAK_P);  // -> TWEAK*-BEDROCK
 
 } make_other_natives: {
 
-    // For the rest of the natives, we can actually use the evaluator to
-    // execute the NATIVE invocations.  This defers to refinement processing
-    // of chains to handle things like NATIVE:COMBINATOR and NATIVE:INTRINSIC.
-    // It also means natives could take more arguments if they wanted to,
-    // without having to write special code to handle it.
+  // For the rest of the natives, we can actually use the evaluator to
+  // execute the NATIVE invocations.  This defers to refinement processing
+  // of chains to handle things like NATIVE:COMBINATOR and NATIVE:INTRINSIC.
+  // It also means natives could take more arguments if they wanted to,
+  // without having to write special code to handle it.
 
     bool threw = Trampoline_With_Top_As_Root_Throws();
     assert(not threw);
     UNUSED(threw);
 
     assert(Is_Okay(Known_Stable(L->out)));
-
-} forget_bootstrap_native_and_tweak: {
-
-    // During the make_other_natives evaluation, the NATIVE and TWEAK* lib
-    // variables were overwritten with the typechecked versions.  Get rid of
-    // the bootstrap versions that were made by hand, so that they don't
-    // cause confusion.
-
-    Init_Tripwire(Sink_Lib_Var(SYM_NATIVE_BOOTSTRAP));
-    Init_Tripwire(Sink_Lib_Var(SYM_TWEAK_P_BOOTSTRAP));
 
 } finished: {
 

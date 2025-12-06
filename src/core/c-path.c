@@ -190,28 +190,6 @@ DECLARE_NATIVE(PICK)
 }}
 
 
-// Because TWEAK* is fundamental to getting and setting all WORD!s, bootstrap
-// needs it to be able to be established before it can look up words that
-// are in type specs.  So it has two variations: bootstrap-tweak* and tweak*.
-//
-// (The NATIVE native also has this dual nature.)
-//
-static Bounce Tweak_P_Native_Core(Level* level_)
-{
-    INCLUDE_PARAMS_OF_TWEAK_P;  // TWEAK* must be frame compatible w/PICK+POKE
-
-    Element* location = Element_ARG(LOCATION);
-    USED(ARG(PICKER));
-    USED(ARG(DUAL));
-
-    // more ARG(...) may be in this location if POKE called us, reusing frame
-
-    possibly(Get_Level_Flag(LEVEL, MISCELLANEOUS));  // reserved for POKE's use
-
-    return Dispatch_Generic(TWEAK_P, location, LEVEL);
-}
-
-
 //
 //  tweak*: native:generic [  ; can call directly, but 99.9% want PICK/POKE
 //
@@ -264,12 +242,22 @@ DECLARE_NATIVE(TWEAK_P)
 // from a PICK that actually returns an ACTION! as the value (e.g. if an
 // OBJECT! had an ACTION! as a field).  Hence, TWEAK* uses the dual protocol.
 {
-    return Tweak_P_Native_Core(LEVEL);
+    INCLUDE_PARAMS_OF_TWEAK_P;  // TWEAK* must be frame compatible w/PICK+POKE
+
+    Element* location = Element_ARG(LOCATION);
+    USED(ARG(PICKER));
+    USED(ARG(DUAL));
+
+    // more ARG(...) may be in this location if POKE called us, reusing frame
+
+    possibly(Get_Level_Flag(LEVEL, MISCELLANEOUS));  // reserved for POKE's use
+
+    return Dispatch_Generic(TWEAK_P, location, LEVEL);
 }
 
 
 //
-//  tweak*-bootstrap: native [  ; don't put :GENERIC (covered by TWEAK*)
+//  tweak*-bedrock: native [  ; don't put :GENERIC (covered by TWEAK*)
 //
 //  "(Bootstrap Variation of TWEAK*, before type spec lookups work)"
 //
@@ -278,9 +266,18 @@ DECLARE_NATIVE(TWEAK_P)
 //      dual
 //  ]
 //
-DECLARE_NATIVE(TWEAK_P_BOOTSTRAP)
+DECLARE_NATIVE(TWEAK_P_BEDROCK)
+//
+// This variation of TWEAK* has no typechecking.  During bootstrap it is put
+// in LIB(TWEAK_P) to use while TWEAK* is unavailable to look up the words in
+// type specs.  Once TWEAK* is available, LIB(TWEAK_P) is overwritten by the
+// typechecked version defined in DECLARE_NATIVE(TWEAK_P).
+//
+// 1. To minimize visibility of the trick, there is no LIB(TWEAK_P_BEDROCK)
 {
-    return Tweak_P_Native_Core(LEVEL);
+    STATIC_ASSERT(SYM_TWEAK_P_BEDROCK > MAX_SYM_LIB_PREMADE);  // [1]
+
+    return Apply_Cfunc(NATIVE_CFUNC(TWEAK_P), LEVEL);
 }
 
 

@@ -225,8 +225,8 @@ export emit-include-params-macro: func [
             text? opt try spec.3
         ] then [
             any [
-                native-name = "native-bootstrap"
-                native-name = "tweak*-bootstrap"
+                native-name = "native-bedrock"
+                native-name = "tweak*-bedrock"
             ] else [
                 panic [
                     "has a bad RETURN: [<typespec>] specification" newline

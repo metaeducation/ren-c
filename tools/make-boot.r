@@ -236,6 +236,11 @@ for-each 'term load3 %lib-words.r [
 ; quickly just by indexing into a table.  An aspect of optimizations related
 ; to that is that the SYM_XXX values for the names of the natives index into
 ; a fixed block.  We put them after the ordered words in lib.
+;
+; 1. NATIVE-BOOTSTRAP and TWEAK*-BOOTSTRAP are initial values of /LIB.NATIVE
+;    and /LIB.TWEAK*, that get overwritten with the typechecked versions of
+;    NATIVE and TWEAK* shortly afterward.  We don't need LIB slots for the
+;    bootstrap versions: they are useless once overwritten.
 
 add-sym:placeholder <MIN_SYM_NATIVE>
 
@@ -245,9 +250,16 @@ boot-natives: stripload:gather (
     join prep-dir %specs/tmp-natives.r
 ) $native-names
 
+skip-syms: 0
+assert [native-names.1 = 'native-bedrock]  ; don't make lib var [1]
+skip-syms: me + 1
+assert [native-names.2 = 'tweak*-bedrock]  ; don't make lib var [1]
+skip-syms: me + 1
+
 insert boot-natives "["
 append boot-natives "]"
-for-each 'name native-names [
+
+for-each 'name (skip native-names skip-syms) [
     let pos: add-sym:relax name
     if not pos [  ; not a duplicate
         continue
@@ -569,14 +581,26 @@ for-each 'item sys-toplevel [
 ]
 
 
+=== "SYMBOL IDS (NOT BUILT-IN, BUT USABLE IN SWITCH() STATEMENTS)" ===
+
+add-sym:placeholder </MAX_SYM_BUILTIN>
+
+add-sym:placeholder <MIN_SYM_ENUM_ONLY>
+
+for-each 'item load3 %symbol-ids.r [
+    switch type of item [
+        word! [add-sym item]
+        panic ["bad %symbol-ids.r item:" mold item]
+    ]
+]
+
+
 === "EXTENSION SYMBOLS (NOT BUILT-IN, BUT USABLE IN SWITCH() STATEMENTS)" ===
 
 ; The extension words are reserved IDs which are intended to (someday) be set
 ; in stone.  The core executable doesn't ship with the strings embedded or
 ; pay for the cost of pre-creating them (so this list could get large... up
 ; to 65535 at present), and not be a problem.
-
-add-sym:placeholder </MAX_SYM_BUILTIN>
 
 add-sym:placeholder <MIN_SYM_EXTENDED>
 
@@ -591,11 +615,13 @@ for-each 'item load3 %ext-words.r [
                 panic ["Expected symbol for" item "from [native type]"]
             ]
         ]
-        panic ["bad %symbols.r item:" mold item]
+        panic ["bad %ext-words.r item:" mold item]
     ]
 ]
 
 add-sym:placeholder </MAX_SYM_EXTENDED>
+
+add-sym:placeholder </MAX_SYM_ENUM_ONLY>
 
 
 === "EMIT SYMBOLS AND PRUNE SPECIAL SIGNALS FROM sym-table" ===
@@ -607,6 +633,7 @@ lib-syms-max: ~
 sym-enum-items: copy []
 placeholder-define-items: copy []
 
+emitting-enum-only-syms: null
 emitting-extension-syms: null
 
 e-ext-symids: make-emitter "Extension SymId Commitment Table" (
@@ -632,6 +659,15 @@ for-next 'pos sym-table [
         append placeholder-define-items cscape [
             -[#define $<DEFINITION>  $<symid + delta>]-
         ]
+
+        switch definition [
+            "MIN_SYM_ENUM_ONLY" [
+                emitting-enum-only-syms: okay  ; not in compressed table
+            ]
+            "MIN_SYM_EXTENDED" [
+                emitting-extension-syms: okay  ; numbers only, no symbol
+            ]
+        ]
     ]
 
     if tail? pos [
@@ -639,11 +675,8 @@ for-next 'pos sym-table [
     ]
 
     if block? pos.1 [
-        if emitting-extension-syms [
-            e-ext-symids/emit newline
-        ] else [
-            emitting-extension-syms: okay
-        ]
+        assert [emitting-extension-syms]
+        e-ext-symids/emit newline
         e-ext-symids/emit spaced [";" form pos.1 newline]
         take pos
         pos: back pos  ; so for-next gets us back to this position
@@ -668,13 +701,16 @@ for-next 'pos sym-table [
         e-ext-symids/emit [symid name
             --[$<name> $<symid>]--
         ]
-        take pos  ; remove so it's not put in the builtin compressed strings
-        pos: back pos  ; so for-next gets us back to this position
     ]
     else [
         append sym-enum-items cscape [symid name
             --[/* $<Name> */  SYM_${FORM NAME} = $<symid>]--
         ]
+    ]
+
+    if emitting-enum-only-syms [
+        take pos  ; remove so it's not put in the builtin compressed strings
+        pos: back pos  ; so for-next gets us back to this position
     ]
 
     symid: symid + 1
