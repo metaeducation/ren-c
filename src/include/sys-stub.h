@@ -223,7 +223,7 @@ MUTABLE_IF_C(Value*, INLINE) Stub_Cell(CONST_IF_C(Stub*) stub)
     CONSTABLE(Stub*) s = m_cast(Stub*, stub);
 
     assert(Is_Base_Readable(s) and Not_Stub_Flag(s, DYNAMIC));
-    dont(assert(Stub_Holds_Cells(s)));  // not worth the cost [1]
+    impossible(not Stub_Holds_Cells(s));  // assert not worth the cost [1]
 
     return u_cast(Value*, &s->content.fixed.cell);
 }

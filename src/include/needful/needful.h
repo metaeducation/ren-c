@@ -960,6 +960,7 @@ void Needful_Panic_Abruptly(const char* error) {
 
 #define needful_unnecessary /* (expr) */  NEEDFUL_STATIC_ASSERT_DECLTYPE_VALID
 #define needful_dont /* (expr) */         NEEDFUL_STATIC_ASSERT_DECLTYPE_VALID
+#define needful_cant /* (expr) */         NEEDFUL_STATIC_ASSERT_DECLTYPE_VALID
 #define needful_heeded /* (expr) */       NEEDFUL_PASSTHRU
 
 #define NEEDFUL_POSSIBLY /* (cond) */        NEEDFUL_STATIC_IGNORE
@@ -967,6 +968,7 @@ void Needful_Panic_Abruptly(const char* error) {
 
 #define NEEDFUL_UNNECESSARY /* (expr) */     NEEDFUL_STATIC_IGNORE
 #define NEEDFUL_DONT /* (expr) */            NEEDFUL_STATIC_IGNORE
+#define NEEDFUL_CANT /* (expr) */            NEEDFUL_STATIC_IGNORE
 /* NEEDFUL_HEEDED makes no sense in global scope, right? */
 
 
@@ -1088,6 +1090,7 @@ void Needful_Panic_Abruptly(const char* error) {
 
     #define unnecessary /* (expr) */  needful_unnecessary
     #define dont /* (expr) */         needful_dont
+    #define cant /* (expr) */         needful_cant
     #define heeded /* (expr) */       needful_heeded
 
     #define POSSIBLY /* (cond) */        NEEDFUL_POSSIBLY
@@ -1095,6 +1098,7 @@ void Needful_Panic_Abruptly(const char* error) {
 
     #define UNNECESSARY /* (expr) */     NEEDFUL_UNNECESSARY
     #define DONT /* (expr) */            NEEDFUL_DONT
+    #define CANT /* (expr) */            NEEDFUL_CANT
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_STATIC_ASSERT_SHORTHANDS)

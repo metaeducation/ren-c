@@ -236,7 +236,7 @@
         OptionWrapper(SuccessSentinel) : o {nullptr} {}
 
         OptionWrapper(Error* ptr) : o {ptr} {
-            dont(assert(o != nullptr));  // except() macro uses null assign
+            possibly(o == nullptr);  // except() macro uses null assign
         }
 
         OptionWrapper(std::nullptr_t) = delete;  // explicitly disallow

@@ -293,7 +293,7 @@ MUTABLE_IF_C(Byte*, INLINE) Flex_Data(CONST_IF_C(Flex*) flex)
 {
     CONSTABLE(Flex*) f = m_cast(Flex*, flex);
 
-    dont(assert(Is_Base_Readable(flex)));  // assert is slow, assume valid [1]
+    impossible(not Is_Base_Readable(flex));  // slow assert, assume valid [1]
     return Get_Stub_Flag(f, DYNAMIC)  // inlined in Flex_Data_At() [2]
         ? u_cast(Byte*, f->content.dynamic.data)
         : u_cast(Byte*, &f->content);
