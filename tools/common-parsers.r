@@ -65,9 +65,9 @@ export proto-parser: context [
     unsorted-buffer: ~
     file: ~
 
-    emit-fileheader: ~
-    emit-proto: ~
-    emit-directive: ~
+    emit-fileheader: ^void
+    emit-proto: ^void
+    emit-directive: ^void
 
     parse-position: ~
     notes: ~
@@ -82,9 +82,9 @@ export proto-parser: context [
     process: proc [text] [
         parse3 text grammar.rule
 
-        emit-fileheader: ~
-        emit-proto: ~
-        emit-directive: ~
+        emit-fileheader: ^void
+        emit-proto: ^void
+        emit-directive: ^void
     ]
 
     grammar: context bind:copy3 c-lexical.grammar [

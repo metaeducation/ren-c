@@ -275,7 +275,16 @@ blank: blank?: ~#[No BLANK/BLANK? ~()~ in Bootstrap, Use SPACE/SPACE?]#~
 
 ; https://rebol.metaeducation.com/t/why-is-there-a-caret-to-use-void/2526
 
-^void: void/
+; While void can be assigned to plain SET-WORD! it can't in the current
+; iteration of the bootstrap exe (needs adjusting!)  We mimic the behavior
+; of assigning void producing the "unset" state (trash for bootstrap, but
+; ghost for modern Ren-C), this bridges the gap for now.
+
+^void: infix lambda3 [:left [<skip> set-word3!]] [
+    if left [set:any left ~]  ; set set-words to trash (unset concept)
+    ~void~  ; otehrwise
+]
+
 void: ~#[Use a caret if you want to refer to void, eventually can use ()]#~
 
 
