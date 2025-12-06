@@ -1017,14 +1017,39 @@ Bounce Stepper_Executor(Level* L)
 
 } run_action_in_out: {
 
-  // 1. For C-DEBUG-BREAK, it's not that helpful to *actually* dispatch to an
-  //    action called C-DEBUG-BREAK, because we want to debug the callsite,
-  //    not the guts of that function.  So if a word looks up to C-DEBUG-BREAK
-  //    we notice that here.  Then we just jump direct to the next expression,
-  //    which allows you to break in the middle of things, like:
+  // For C-DEBUG-BREAK, it's not that helpful to *actually* dispatch to an
+  // action called C-DEBUG-BREAK (because we want to debug the callsite, not
+  // the guts of that function).  So if a word looks up to C-DEBUG-BREAK we
+  // notice that here, so you get the break right where you want it.
+  //
+  // Afterwards, we just jump direct to the next expression.  This allows you
+  // to break in the middle of things, like:
   //
   //        1 + c-debug-break 2
   //
+  // (This only catches eval steps: if you use APPLY to call C-DEBUG-BREAK
+  // or if you ADAPT it etc. you'll get the debug_break() inside the call.)
+
+#if INCLUDE_C_DEBUG_BREAK_NATIVE && RUNTIME_CHECKS
+
+  if (Frame_Phase(OUT) == Frame_Phase(LIB(C_DEBUG_BREAK))) {
+    // -----------------------------------------------------------------------
+      debug_break();  // <-- C_DEBUG_BREAK lands here
+    // -----------------------------------------------------------------------
+
+      if (Is_Level_At_End(L)) {
+          Init_Ghost(OUT);  // cue Evaluator_Executor() to keep last result
+          goto finished;
+      }
+
+      Erase_Cell(OUT);
+      goto start_new_expression;  // requires that OUT be erased
+  }
+
+#endif
+
+} run_non_debug_break_action: {
+
   // 2. When dispatching infix and you have something on the left, you want to
   //    push the level *after* the flag for infixness has been set...to avoid
   //    overwriting the output cell that's the left hand side input.  But in
@@ -1033,17 +1058,6 @@ Bounce Stepper_Executor(Level* L)
   //    be 0, and we get clearing.
 
    Stable* out = cast(Stable*, OUT);
-
-#if INCLUDE_C_DEBUG_BREAK_NATIVE && RUNTIME_CHECKS
-  if (
-      not Is_Trash(Mutable_Lib_Var(SYM_C_DEBUG_BREAK))  // unset in boot
-      and Frame_Phase(LIB(C_DEBUG_BREAK)) == Frame_Phase(out)
-  ){
-      debug_break();  // <---------------------------------- C-DEBUG-BREAK [1]
-      Erase_Cell(OUT);  // start_new_expression requires OUT erased
-      goto start_new_expression;
-  }
-#endif
 
     Option(InfixMode) infix_mode = Frame_Infix_Mode(out);
 

@@ -505,6 +505,12 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
         assert(Word_Id(At_Level(L)) == SYM_TWEAK_P_BEDROCK);
         break;
 
+      case SYM_C_DEBUG_BREAK:  // c-debug-break: ghostable  native [...]
+        assert(Word_Id(At_Level(L)) == SYM_C_DEBUG_BREAK);
+        Fetch_Next_In_Feed(L->feed);
+        assert(Word_Id(At_Level(L)) == SYM_GHOSTABLE);
+        break;
+
       default:
         assert(false);
     }
@@ -608,6 +614,14 @@ void Startup_Natives(const Element* boot_natives)
 
     Make_Native_In_Lib_By_Hand(L, SYM_NATIVE);  // -> NATIVE-BEDROCK
     Make_Native_In_Lib_By_Hand(L, SYM_TWEAK_P);  // -> TWEAK*-BEDROCK
+
+} make_c_debug_break_native_by_hand: {
+
+  // The reason to build C-DEBUG-BREAK by hand is so so that the evaluator can
+  // take for granted that `Frame_Phase(LIB(C_DEBUG_BREAK))` will always be
+  // valid, in order to do its "interception" trick to bypass normal dispatch.
+
+    Make_Native_In_Lib_By_Hand(L, SYM_C_DEBUG_BREAK);
 
 } make_other_natives: {
 
