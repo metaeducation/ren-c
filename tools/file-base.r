@@ -175,6 +175,7 @@ core: [
         n-strings.c
         n-system.c
         n-transcode.c
+        n-tweak.c
     ]
 
     parse/ -> [
