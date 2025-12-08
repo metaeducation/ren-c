@@ -42,29 +42,9 @@
 
 
 //
-//  Do_Signals_Throws: C
+//  Reconcile_Ticks: C
 //
-// !!! R3-Alpha's evaluator loop had a countdown (eval_countdown) which was
-// decremented on every step.  When this counter reached zero, it would call
-// this routine to process any "signals"...which could be requests for
-// garbage collection, network-related, Ctrl-C being hit, etc.
-//
-// It also would check the eval_signals mask to see if it was non-zero on
-// every step.  If it was, then it would always call this routine--regardless
-// of the eval_countdown.
-//
-// While a broader review of how signals would work in Ren-C is pending, it
-// seems best to avoid checking two things each step.  So only eval_countdown
-// is checked, and places that set eval_signals set eval_countdown it to 1.
-// Then if the eval_signals are not cleared by the end of this routine,
-// it resets the eval_countdown to 1 rather than giving it the full
-// EVAL_DOSE of counts until next call.  Same outcome, but cheaper.
-//
-// Currently the ability of a signal to THROW comes from the processing of
-// breakpoints.  The RESUME instruction is able to execute code with /DO,
-// and that code may escape from a debug interrupt signal (like Ctrl-C).
-//
-bool Do_Signals_Throws(Level* L)
+void Reconcile_Ticks(void)
 {
     if (g_ts.eval_countdown >= 0) {  // natural countdown or invocation
         //
@@ -100,6 +80,35 @@ bool Do_Signals_Throws(Level* L)
   #endif
 
     g_ts.eval_countdown = g_ts.eval_dose;
+}
+
+
+//
+//  Do_Signals_Throws: C
+//
+// !!! R3-Alpha's evaluator loop had a countdown (eval_countdown) which was
+// decremented on every step.  When this counter reached zero, it would call
+// this routine to process any "signals"...which could be requests for
+// garbage collection, network-related, Ctrl-C being hit, etc.
+//
+// It also would check the eval_signals mask to see if it was non-zero on
+// every step.  If it was, then it would always call this routine--regardless
+// of the eval_countdown.
+//
+// While a broader review of how signals would work in Ren-C is pending, it
+// seems best to avoid checking two things each step.  So only eval_countdown
+// is checked, and places that set eval_signals set eval_countdown it to 1.
+// Then if the eval_signals are not cleared by the end of this routine,
+// it resets the eval_countdown to 1 rather than giving it the full
+// EVAL_DOSE of counts until next call.  Same outcome, but cheaper.
+//
+// Currently the ability of a signal to THROW comes from the processing of
+// breakpoints.  The RESUME instruction is able to execute code with /DO,
+// and that code may escape from a debug interrupt signal (like Ctrl-C).
+//
+bool Do_Signals_Throws(Level* L)
+{
+    Reconcile_Ticks();
 
     bool thrown = false;
 

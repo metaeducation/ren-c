@@ -37,24 +37,49 @@
 // dynamic Stubs, for any SymId that is not found in the static array (or
 // SYM_0, indicating the name has no SymId abbreviation at all).
 //
+//=//// NOTES ////////////////////////////////////////////////////////////=//
+//
+// A. The C code is literally depending on the LIB(<symbol>) slots to do work,
+//    e.g. it calls LIB(SET) to get the SET function, and calls it.  If the
+//    user were to redefine what LIB/SET was, this would break things.
+//    This isn't that different from the Mezzanine depending on what SET is.
+//    For this reason, LIB should probably have its fixed definitions frozen
+//    after boot.  For the moment that is not done, just because being able
+//    to hook and redefine things is useful during development.  It could
+//    be a command-line option of some kind to freeze or not...
+//
 
-INLINE Stable* Mutable_Lib_Var(SymId id) {
+INLINE const Value* Lib_Value(SymId id) {
     assert(id <= MAX_SYM_LIB_PREMADE);
-    Stable* slot = cast(Stable*, Stub_Cell(&g_lib_patches[id]));
-    assert(Not_Cell_Flag(slot, PROTECTED));
-    return slot;
+    Value* v = cast(Value*, Stub_Cell(&g_lib_patches[id]));
+    if (id != SYM_TRIPWIRE)
+        assert(not Is_Possibly_Unstable_Value_Trash(v));
+    cant(assert(Get_Cell_Flag(v, PROTECTED)));  // LIB not protected yet [A]
+    return v;
 }
 
-INLINE const Stable* Lib_Var(SymId id) {
+#define Lib_Stable(id)  Known_Stable(Lib_Value(id))
+
+INLINE Value* Mutable_Lib_Value(SymId id) {  // writing LIB is risky [A]
     assert(id <= MAX_SYM_LIB_PREMADE);
-    Stable* slot = cast(Stable*, Stub_Cell(&g_lib_patches[id]));
-    assert(not Is_Trash(slot));
-    return slot;
+    Value* v = cast(Value*, Stub_Cell(&g_lib_patches[id]));
+    assert(Not_Cell_Flag(v, PROTECTED));
+    return v;
 }
 
-INLINE Sink(Stable) Sink_Lib_Var(SymId id) {
+#define Mutable_Lib_Stable(id)  Known_Stable(Mutable_Lib_Value(id))
+
+INLINE Sink(Value) Sink_Lib_Value(SymId id) {
     assert(id <= MAX_SYM_LIB_PREMADE);
-    return cast(Stable*, Stub_Cell(&g_lib_patches[id]));
+    Value* v = cast(Value*, Stub_Cell(&g_lib_patches[id]));
+    assert(Is_Possibly_Unstable_Value_Trash(v));
+    assert(Not_Cell_Flag(v, PROTECTED));
+    return v;
 }
 
-#define LIB(name)  Lib_Var(SYM_##name)
+#define LIB(name)  Lib_Stable(SYM_##name)
+#define Sink_LIB(name)  Sink_Lib_Value(SYM_##name)
+#define Mutable_LIB(name)  Mutable_Lib_Stable(SYM_##name)
+
+#define Protect_LIB(name) /* careful: preprocessor NULL could become SYM_0 */ \
+    Protect_Cell(Mutable_Lib_Stable(SYM_##name))  // PROTECT more things [A]

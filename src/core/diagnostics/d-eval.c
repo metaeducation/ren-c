@@ -161,6 +161,7 @@ void Where_Core_Debug(Level* L) {
     Drop_Mold(mo);
 
   #if TRAMPOLINE_COUNTS_TICKS
+    Reconcile_Ticks();
     g_tick = saved_tick;
     g_ts.total_eval_cycles = saved_tick;
     g_break_at_tick = saved_break_at_tick;

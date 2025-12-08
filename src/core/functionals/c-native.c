@@ -537,13 +537,13 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
     ++g_native_cfunc_pos;
 
     Init_Action(
-        Sink_Lib_Var(id),
+        Sink_Lib_Value(id),
         details,
         Canon_Symbol(id),  // label
         UNCOUPLED  // coupling
     );
 
-    assert(cast(Details*, Frame_Phase(Lib_Var(id))) == details);
+    assert(cast(Details*, Frame_Phase(Lib_Stable(id))) == details);
 }}
 
 

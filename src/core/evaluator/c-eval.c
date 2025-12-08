@@ -259,5 +259,5 @@ Bounce Evaluator_Executor(Level* const L)
 //
 void Startup_Evaluator(void)
 {
-    Copy_Cell(Sink_Lib_Var(SYM_FENCE_X_EVAL), LIB(CONSTRUCT));
+    Copy_Cell(Sink_LIB(FENCE_X_EVAL), LIB(CONSTRUCT));
 }

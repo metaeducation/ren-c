@@ -58,7 +58,7 @@ REBINT CT_Parameter(const Element* a, const Element* b, bool strict)
 //  Startup_Type_Predicates: C
 //
 // Functions like ANY-SERIES? leverage the g_typesets[] table, to do type
-// checking in a very efficient away, using intrinsics.  They have to be
+// checking in a very efficient way, using intrinsics.  They have to be
 // defined before the natives try to form their parameter lists so they can be
 // queried for which TypesetByte to cache in the parameter.
 //
@@ -73,16 +73,16 @@ void Startup_Type_Predicates(void)
 
         Details* details = Make_Typechecker(typeset_byte);
 
-        Init_Action(Sink_Lib_Var(id), details, Canon_Symbol(id), UNCOUPLED);
-        assert(Ensure_Frame_Details(Lib_Var(id)));
+        Init_Action(Sink_Lib_Value(id), details, Canon_Symbol(id), UNCOUPLED);
+        assert(Ensure_Frame_Details(Lib_Stable(id)));
     }
 
     // Shorthands used in native specs, so have to be available in boot
     //
-    Copy_Cell(Mutable_Lib_Var(SYM_PLAIN_Q), LIB(ANY_PLAIN_Q));
-    Copy_Cell(Mutable_Lib_Var(SYM_FUNDAMENTAL_Q), LIB(ANY_FUNDAMENTAL_Q));
-    Copy_Cell(Mutable_Lib_Var(SYM_ELEMENT_Q), LIB(ANY_ELEMENT_Q));
-    Copy_Cell(Mutable_Lib_Var(SYM_QUASI_Q), LIB(QUASIFORM_Q));
+    Copy_Cell(Sink_LIB(PLAIN_Q), LIB(ANY_PLAIN_Q));
+    Copy_Cell(Sink_LIB(FUNDAMENTAL_Q), LIB(ANY_FUNDAMENTAL_Q));
+    Copy_Cell(Sink_LIB(ELEMENT_Q), LIB(ANY_ELEMENT_Q));
+    Copy_Cell(Sink_LIB(QUASI_Q), LIB(QUASIFORM_Q));
 }
 
 

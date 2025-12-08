@@ -212,7 +212,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     level_->executor = &Action_Executor;  // Drop_Action() nulled it
     SymId id = Get_Level_Flag(L, CHECKING_TO) ? SYM_TO : SYM_AS;
     require (
-      Push_Action(level_, Lib_Var(id), PREFIX_0)
+      Push_Action(level_, Lib_Stable(id), PREFIX_0)
     );
     Set_Executor_Flag(ACTION, level_, IN_DISPATCH);
 
@@ -286,7 +286,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
 
     SymId id = Get_Level_Flag(level_, CHECKING_TO) ? SYM_TO : SYM_AS;
 
-    sub->u.action.original = Frame_Phase(Lib_Var(id));
+    sub->u.action.original = Frame_Phase(Lib_Stable(id));
     Set_Action_Level_Label(sub, label);
 
     return BOUNCE_DOWNSHIFTED;  // avoids trampoline, action executor updates L

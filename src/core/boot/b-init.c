@@ -480,8 +480,8 @@ static void Init_System_Object(
     // UTIL in SYSTEM, and then abbreviate SYS as a synonym for SYSTEM.
     // Hence the utilities are available as SYS.UTIL
     //
-    Init_Object(Sink_Lib_Var(SYM_SYSTEM), system);
-    Init_Object(Sink_Lib_Var(SYM_SYS), system);
+    Init_Object(Sink_LIB(SYSTEM), system);
+    Init_Object(Sink_LIB(SYS), system);
 
     require (
       Use* use = Alloc_Use_Inherits(List_Binding(boot_sysobj_spec))
@@ -768,7 +768,7 @@ void Startup_Core(void)
 
     Startup_Natives(&boot->natives);
 
-    Protect_Cell(Mutable_Lib_Var(SYM_UNIMPLEMENTED));  // can't hijack it
+    Protect_LIB(UNIMPLEMENTED);  // can't hijack it
 
 } startup_evaluator: {
 
@@ -795,10 +795,10 @@ void Startup_Core(void)
         "evaluate inside", g_lib_module, rebQ(&boot->constants)
     );
 
-    Protect_Cell(Mutable_Lib_Var(SYM_NULL));
-    Protect_Cell(Mutable_Lib_Var(SYM_SPACE));
-    Protect_Cell(Mutable_Lib_Var(SYM_QUASAR));
-    Protect_Cell(Mutable_Lib_Var(SYM_NUL));
+    Protect_LIB(NULL);
+    Protect_LIB(SPACE);
+    Protect_LIB(QUASAR);
+    Protect_LIB(NUL);
 
 } startup_errors: {
 

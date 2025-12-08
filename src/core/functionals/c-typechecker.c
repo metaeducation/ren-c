@@ -1051,7 +1051,7 @@ Result(Stable*) Init_Typechecker(
         SymId16 id16 = cast(SymId16, type_byte) + MIN_SYM_TYPESETS - 1;
         assert(id16 == type_byte);  // MIN_SYM_TYPESETS should be 1
 
-        Copy_Cell(out, Lib_Var(cast(SymId, id16)));
+        Copy_Cell(out, Lib_Stable(cast(SymId, id16)));
         assert(Ensure_Frame_Details(out));  // need TypesetByte
 
         return out;

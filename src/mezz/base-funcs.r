@@ -73,9 +73,9 @@ catch: specialize catch*/ [name: 'throw]
     'remarks [element? <variadic>]
     :visibility [onoff?]
 ]
-bind construct [
+bind {
     logging: 'off
-][
+} [
     if visibility [logging: visibility, return ()]
 
     if on? logging [
@@ -84,7 +84,9 @@ bind construct [
             insist [equal? '=== keep take remarks]  ; prints tail `===`
         ]
     ] else [
-        insist [equal? '=== take remarks]
+        insist [
+            equal? '=== take remarks
+        ]
     ]
     return ()
 ]

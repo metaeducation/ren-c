@@ -658,6 +658,10 @@ Result(Stable*) Get_Var(
 // behaviors like SET of a BLOCK! are layered on top of it, and that includes
 // abstracting the operation to getting or setting of a GROUP! target.
 //
+// 1. We check what the GROUP! synthesized against the actual RETURN: [...]
+//    parameterization of GET or SET.  So long as a GROUP! didn't synthesize
+//    another GROUP!, we allow any other thing from that list.
+//
 static Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
 {
     INCLUDE_PARAMS_OF_GET;  // TARGET types must be compatible with SET
@@ -685,7 +689,7 @@ static Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
     if (Is_Group(out))
         return fail ("GROUP! result from SET/GET of GROUP! target not legal");
 
-    const Stable* action = Lib_Var(id);  // different TARGETS legal for GET/SET
+    const Stable* action = Lib_Stable(id);  // different TARGETS for GET/SET
     ParamList* paramlist = Phase_Paramlist(Frame_Phase(action));
     Param* param = Phase_Param(paramlist, PARAM_INDEX(TARGET));
 

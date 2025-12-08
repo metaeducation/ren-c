@@ -403,6 +403,7 @@ void* Probe_Core_Debug(
         Set_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
 
   #if TRAMPOLINE_COUNTS_TICKS
+    Reconcile_Ticks();
     g_tick = saved_tick;
     g_ts.total_eval_cycles = saved_tick;
     g_break_at_tick = saved_break_at_tick;
