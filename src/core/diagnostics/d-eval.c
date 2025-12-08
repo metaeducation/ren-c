@@ -110,6 +110,10 @@ void Dump_Level_Location(Level* L)
     }
 }
 
+#if TRAMPOLINE_COUNTS_TICKS
+    extern Tick g_break_at_tick;
+#endif
+
 
 //
 //  Where_Core_Debug: C
@@ -117,6 +121,12 @@ void Dump_Level_Location(Level* L)
 // !!! This should be merged with Dump_Level_Location()
 //
 void Where_Core_Debug(Level* L) {
+  #if TRAMPOLINE_COUNTS_TICKS
+    Tick saved_tick = g_tick;
+    Tick saved_break_at_tick = g_break_at_tick;
+    g_break_at_tick = 0;  // prevent breaking during the probe
+  #endif
+
     if (FEED_IS_VARIADIC(L->feed))
         Reify_Variadic_Feed_As_Array_Feed(L->feed, false);
 
@@ -149,6 +159,12 @@ void Where_Core_Debug(Level* L) {
     printf("Where(At):\n");
     printf("%s\n\n", Binary_At(mo->strand, mo->base.size));
     Drop_Mold(mo);
+
+  #if TRAMPOLINE_COUNTS_TICKS
+    g_tick = saved_tick;
+    g_ts.total_eval_cycles = saved_tick;
+    g_break_at_tick = saved_break_at_tick;
+  #endif
 }
 
 

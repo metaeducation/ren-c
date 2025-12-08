@@ -104,6 +104,9 @@ void Probe_Cell_Print_Helper(
         Mold_Element(mo, cast(const Element*, atom));
 }
 
+#if TRAMPOLINE_COUNTS_TICKS
+    extern Tick g_break_at_tick;
+#endif
 
 //
 //  Probe_Core_Debug: C
@@ -121,6 +124,12 @@ void* Probe_Core_Debug(
     Option(const char*) file,
     Option(LineNumber) line
 ){
+  #if TRAMPOLINE_COUNTS_TICKS
+    Tick saved_tick = g_tick;
+    Tick saved_break_at_tick = g_break_at_tick;
+    g_break_at_tick = 0;  // prevent breaking during the probe
+  #endif
+
     bool top_was_intrinsic = Get_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
     Clear_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
 
@@ -392,6 +401,12 @@ void* Probe_Core_Debug(
 
     if (top_was_intrinsic)
         Set_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
+
+  #if TRAMPOLINE_COUNTS_TICKS
+    g_tick = saved_tick;
+    g_ts.total_eval_cycles = saved_tick;
+    g_break_at_tick = saved_break_at_tick;
+  #endif
 
     return m_cast(void*, p);  // must cast back to const if source was const
 }}
