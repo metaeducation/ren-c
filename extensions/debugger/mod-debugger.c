@@ -194,7 +194,7 @@ DECLARE_NATIVE(RESUME)
 
     Element* expr = Element_ARG(EXPRESSION);
     assert(Is_Block(expr));
-    Metafy(expr);
+    Metafy_Cell(expr);
 
     // We throw with :NAME as identity of the RESUME function.  (Note: there
     // is no NATIVE() variant for extensions yet.  Extract from current level.)

@@ -203,7 +203,7 @@ DECLARE_NATIVE(HEAD_Q)
     INCLUDE_PARAMS_OF_HEAD_Q;
 
     Element* elem = Element_ARG(VALUE);
-    Plainify(elem);  // (head? @[a b c]) -> ~okay~
+    Clear_Cell_Sigil(elem);  // (head? @[a b c]) -> ~okay~
 
     return Dispatch_Generic(HEAD_Q, elem, LEVEL);
 }
@@ -223,7 +223,7 @@ DECLARE_NATIVE(TAIL_Q)
     INCLUDE_PARAMS_OF_TAIL_Q;
 
     Element* elem = Element_ARG(VALUE);
-    Plainify(elem);  // (tail? @[]) -> ~okay~
+    Clear_Cell_Sigil(elem);  // (tail? @[]) -> ~okay~
 
     return Dispatch_Generic(TAIL_Q, elem, LEVEL);
 }
@@ -243,7 +243,7 @@ DECLARE_NATIVE(PAST_Q)
     INCLUDE_PARAMS_OF_PAST_Q;
 
     Element* elem = Element_ARG(VALUE);
-    Plainify(elem);  // (past? next of @[]) -> ~okay~
+    Clear_Cell_Sigil(elem);  // (past? next of @[]) -> ~okay~
 
     return Dispatch_Generic(PAST_Q, elem, LEVEL);
 }

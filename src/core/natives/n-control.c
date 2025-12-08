@@ -1168,8 +1168,8 @@ DECLARE_NATIVE(DEFAULT)
     );
 
     Element* scratch_var = Copy_Cell(SCRATCH, target);
-    Plainify(scratch_var);
-    Sigilize(scratch_var, SIGIL_META);  // for the fetch, always use ^META
+    Clear_Cell_Sigil(scratch_var);
+    Add_Cell_Sigil(scratch_var, SIGIL_META);  // for the fetch, always use ^META
 
     if (slashed) { assume (
         Blank_Head_Or_Tail_Sequencify(  // put slash back for the write

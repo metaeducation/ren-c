@@ -373,7 +373,7 @@ DECLARE_NATIVE(JOIN)
         Option(Heart) item_heart = Heart_Of(item);
         if (item_heart == TYPE_WORD or item_heart == TYPE_TUPLE) {
             Element* subscratch = Copy_Cell(Level_Scratch(sub), item);
-            Plainify(subscratch);
+            Clear_Cell_Sigil(subscratch);
             Bind_If_Unbound(subscratch, Level_Binding(sub));
             heeded (Corrupt_Cell_If_Needful(Level_Spare(sub)));
             assert(sub->out == SPARE);

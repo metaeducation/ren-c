@@ -245,7 +245,7 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
     DECLARE_ELEMENT (spec);  // simple spec [2]
     Source* spec_array = Make_Source_Managed(7);
     Set_Flex_Len(spec_array, 7);
-    Metafy(Init_Word(Array_At(spec_array, 0), CANON(VALUE)));
+    Metafy_Cell(Init_Word(Array_At(spec_array, 0), CANON(VALUE)));
     Init_Get_Word(Array_At(spec_array, 1), CANON(TYPE));
     Init_Get_Word(Array_At(spec_array, 2), CANON(QUOTED));
     Init_Get_Word(Array_At(spec_array, 3), CANON(QUASIFORM));
@@ -745,7 +745,7 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
             goto test_failed;
         }
 
-        Plainify(Known_Element(SPARE));  // make plain, will re-sigilize
+        Clear_Cell_Sigil(Known_Element(SPARE));  // make plain, will re-sigilize
     }
 
     Option(const Symbol*) label = Word_Symbol(item);
@@ -791,7 +791,7 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
 } test_succeeded: {
 
     if (sigil)
-        Sigilize(Known_Element(SPARE), unwrap sigil);
+        Add_Cell_Sigil(Known_Element(SPARE), unwrap sigil);
 
     LIFT_BYTE(SPARE) = lift_byte;  // restore quote level
 
@@ -804,7 +804,7 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
 } test_failed: {
 
     if (sigil)
-        Sigilize(Known_Element(SPARE), unwrap sigil);
+        Add_Cell_Sigil(Known_Element(SPARE), unwrap sigil);
 
     LIFT_BYTE(SPARE) = lift_byte;  // restore quote level
 

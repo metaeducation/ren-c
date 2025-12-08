@@ -358,7 +358,7 @@ DECLARE_NATIVE(TO)
           default:
             panic ("Only non-compound types can be TO converted from Sigil");
         }
-        Plainify(value);
+        Clear_Cell_Sigil(value);
     }
 
     if (Any_Sigiled_Type(to)) {  // limited handling for adding Sigils [2]
@@ -375,7 +375,7 @@ DECLARE_NATIVE(TO)
           default:
             panic ("Only [INTEGER! WORD! space-RUNE!] convert TO Sigil ATM");
         }
-        Sigilize(value, Sigil_For_Type(unwrap to));
+        Add_Cell_Sigil(value, Sigil_For_Type(unwrap to));
         return COPY(value);
     }
 

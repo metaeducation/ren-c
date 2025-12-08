@@ -885,8 +885,8 @@ DECLARE_NATIVE(EQUAL_Q)
     if (Sigil_Of(v1) != Sigil_Of(v2))
         return LOGIC(false);
 
-    Plainify(v1);
-    Plainify(v2);
+    Clear_Cell_Sigil(v1);
+    Clear_Cell_Sigil(v2);
 
     if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
         if (not relax)

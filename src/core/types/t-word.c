@@ -183,7 +183,7 @@ Result(Element*) Alias_Any_Word_As(
 ){
     if (as == TYPE_WORD) {
         Copy_Cell(out, word);
-        Plainify(out);
+        Clear_Cell_Sigil(out);
         return out;
     }
 

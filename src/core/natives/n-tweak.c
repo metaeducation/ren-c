@@ -283,7 +283,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         }
     }
     then {  // not quoted...
-        Plainify(Known_Element(picker_arg));  // drop any sigils
+        Clear_Cell_Sigil(Known_Element(picker_arg));  // drop any sigils
     }
 
     Clear_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION);  // consider *once*
@@ -734,7 +734,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
     else
         Init_Block(unwrap steps_out, Pop_Source_From_Stack(base));
 
-    Pinify(unwrap steps_out);  // steps are @[bl o ck] or @word
+    Pinify_Cell(unwrap steps_out);  // steps are @[bl o ck] or @word
 
     return SUCCESS;
 }

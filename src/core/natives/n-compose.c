@@ -378,7 +378,7 @@ Bounce Composer_Executor(Level* const L)
         Init_Space(PUSH());
         LIFT_BYTE(TOP_ELEMENT) = list_lift_byte;
         if (sigil)
-            Sigilize(TOP_ELEMENT, unwrap sigil);  // ^ or @ or $
+            Add_Cell_Sigil(TOP_ELEMENT, unwrap sigil);  // ^ or @ or $
 
         goto handle_next_item;
     }
@@ -437,7 +437,7 @@ Bounce Composer_Executor(Level* const L)
         if (Sigil_Of(TOP_ELEMENT))
             panic ("COMPOSE cannot sigilize items already sigilized");
 
-        Sigilize(TOP_ELEMENT, unwrap sigil);  // ^ or @ or $
+        Add_Cell_Sigil(TOP_ELEMENT, unwrap sigil);  // ^ or @ or $
     }
 
     if (list_lift_byte & QUASI_BIT) {
@@ -650,7 +650,7 @@ DECLARE_NATIVE(COMPOSE2)
   initial_entry: { ///////////////////////////////////////////////////////////
 
     if (Is_Pinned(pattern)) {  // @() means use pattern's binding
-        Plainify(pattern);  // drop the @ from the pattern for processing
+        Clear_Cell_Sigil(pattern);  // drop the @ from the pattern for processing
         if (Cell_Binding(pattern) == nullptr)
             panic ("@... patterns must have bindings");
     }

@@ -395,7 +395,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     DECLARE_ELEMENT (element);
     Copy_Dequoted_Cell(element, cell);
     Option(Sigil) sigil = Sigil_Of(element);
-    Plainify(element);  // can't have Sigil and dispatch to mold
+    Clear_Cell_Sigil(element);  // can't have Sigil and dispatch to mold
 
     DECLARE_ELEMENT (molder);
     Init_Handle_Cdata(molder, mo, 1);

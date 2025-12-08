@@ -588,12 +588,12 @@ Result(Element*) Unsingleheart_Sequence(Element* seq)
 //
 Result(Element*) Unsingleheart_Sequence_Preserve_Sigil(Element* seq) {
     Option(Sigil) sigil = Sigil_Of(seq);
-    Plainify(seq);
+    Clear_Cell_Sigil(seq);
     trap (
       Unsingleheart_Sequence(seq)
     );
     if (sigil)
-        Sigilize(seq, sigil);
+        Add_Cell_Sigil(seq, sigil);
     return seq;
 }
 
@@ -661,7 +661,7 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
 
         if (Not_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))
             if (Bool_ARG(FORCE)) {
-                Plainify(e);
+                Clear_Cell_Sigil(e);
                 continue;
             }
 
@@ -674,7 +674,7 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
             return fail (Error_Bad_Sigil_Raw(e));
     }
 
-    return COPY(Sigilize(e, sigil));
+    return COPY(Add_Cell_Sigil(e, sigil));
 }
 
 
@@ -744,7 +744,7 @@ static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
     if (Sigil_Of(e) != sigil)
         return fail ("Trying to remove Sigil from value without that Sigil");
 
-    return COPY(Plainify(e));
+    return COPY(Clear_Cell_Sigil(e));
 }
 
 
@@ -813,7 +813,7 @@ DECLARE_NATIVE(PLAIN)
     if (b != BOUNCE_GOOD_INTRINSIC_ARG)
         return b;
 
-    return COPY(Plainify(e));
+    return COPY(Clear_Cell_Sigil(e));
 }
 
 

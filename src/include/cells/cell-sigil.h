@@ -89,6 +89,13 @@ INLINE Option(Sigil) Underlying_Sigil_Of(const Element* e) {
     return u_cast(Sigil, KIND_BYTE_RAW(e) >> KIND_SIGIL_SHIFT);
 }
 
+INLINE KindByte Kind_From_Sigil_And_Heart(Option(Sigil) sigil, HeartEnum heart)
+{
+    return (
+        u_cast(KindByte, heart)
+        | (u_cast(KindByte, unwrap sigil) << KIND_SIGIL_SHIFT)
+    );
+}
 
 
 //=//// SIGIL MODIFICATION ////////////////////////////////////////////////=//
@@ -109,10 +116,10 @@ INLINE Option(Sigil) Underlying_Sigil_Of(const Element* e) {
 //
 // 2. Sigilizing is assumed to only work on cells that do not already have a
 //    Sigil.  This is because you might otherwise expect e.g. META of @foo
-//    to give you ^@foo.  Also, the Sigilize() function would be paying to
+//    to give you ^@foo.  Also, the Add_Cell_Sigil() function would be paying to
 //    mask out bits a lot of time when it's not needed.  So if you really
 //    intend to sigilize a plain form, make that clear at the callsite by
-//    writing e.e. `Metafy(Plainify(elem))`.
+//    writing e.e. `Metafy_Cell(Clear_Cell_Sigil(elem))`.
 //
 
 INLINE bool Any_Sigilable_Type(Option(Type) t)  // build on sequencable [1]
@@ -124,14 +131,14 @@ INLINE bool Any_Sigiled_Type(Option(Type) t)
 #define Any_Sigilable(cell) \
     Any_Sigilable_Type(Type_Of(cell))
 
-INLINE Element* Sigilize(Element* elem, Sigil sigil) {
+INLINE Element* Add_Cell_Sigil(Element* elem, Sigil sigil) {
     assert(Unlifted_Cell_Has_Sigil(SIGIL_0, elem));  // no quotes/quasi [2]
     assert(Any_Sigilable(elem));
     elem->header.bits |= FLAG_SIGIL(sigil);
     return elem;
 }
 
-INLINE Element* Plainify(Element* elem) {
+INLINE Element* Clear_Cell_Sigil(Element* elem) {
     assert(LIFT_BYTE(elem) == NOQUOTE_2);  // no quotes/quasiforms
 
   #if RUNTIME_CHECKS
@@ -147,9 +154,9 @@ INLINE Element* Plainify(Element* elem) {
     return elem;
 }
 
-#define Metafy(elem)  Sigilize((elem), SIGIL_META)
-#define Pinify(elem)  Sigilize((elem), SIGIL_PIN)
-#define Tieify(elem)  Sigilize((elem), SIGIL_TIE)
+#define Metafy_Cell(elem)  Add_Cell_Sigil((elem), SIGIL_META)
+#define Pinify_Cell(elem)  Add_Cell_Sigil((elem), SIGIL_PIN)
+#define Tieify_Cell(elem)  Add_Cell_Sigil((elem), SIGIL_TIE)
 
 INLINE Element* Copy_Kind_Byte(Element* out, const Element* in) {
     KIND_BYTE(out) = KIND_BYTE(in);
@@ -161,10 +168,12 @@ INLINE Element* Copy_Kind_Byte(Element* out, const Element* in) {
 
 INLINE Option(char) Char_For_Sigil(Option(Sigil) sigil) {
     switch (opt sigil) {
+      case SIGIL_0:     return '\0';
       case SIGIL_META:  return '^';
       case SIGIL_PIN:   return '@';
       case SIGIL_TIE:   return '$';
-      default:          return '\0';
+      default:  // compiler warns if there's no `default`
+        crash (nullptr);
     }
 }
 

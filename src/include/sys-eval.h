@@ -106,7 +106,7 @@ INLINE void Reset_Evaluator_Erase_Out(Level* L) {
 }
 
 #define Init_Pushed_Refinement(out,symbol) \
-    Pinify(Init_Word((out), (symbol)))
+    Pinify_Cell(Init_Word((out), (symbol)))
 
 INLINE Element* Init_Pushable_Refinement_Bound(
     Sink(Element) out,
@@ -114,7 +114,7 @@ INLINE Element* Init_Pushable_Refinement_Bound(
     Context* context,
     REBLEN index
 ){
-    Pinify(Init_Word_Bound(out, symbol, context));
+    Pinify_Cell(Init_Word_Bound(out, symbol, context));
     CELL_WORD_INDEX_I32(out) = index;
     return out;
 }
@@ -123,7 +123,7 @@ INLINE Element* Init_Pushable_Refinement_Bound(
 
 INLINE Result(Element*) Refinify_Pushed_Refinement(Element* e) {
     assert(Is_Pushed_Refinement(e));
-    return Refinify(Plainify(e));
+    return Refinify(Clear_Cell_Sigil(e));
 }
 
 

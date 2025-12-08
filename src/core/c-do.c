@@ -196,7 +196,7 @@ bool Pushed_Continuation(
         break;
 
       case TYPE_TIED:
-        Plainify(Derelativize(out, cast(Element*, branch), binding));
+        Clear_Cell_Sigil(Derelativize(out, cast(Element*, branch), binding));
         goto just_use_out;
 
       case TYPE_BLOCK: {

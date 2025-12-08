@@ -292,7 +292,7 @@ INLINE Result(Element*) Init_Single_Codepoint_Rune_Untracked(
     Init_Char_Unchecked((out), ' ')
 
 #define Init_Sigiled_Space(out,sigil) \
-    Sigilize(Init_Space(out), sigil)
+    Add_Cell_Sigil(Init_Space(out), sigil)
 
 #define Is_Space_Underlying(v) \
     (Ensure_Readable(v)->header.bits & ( \

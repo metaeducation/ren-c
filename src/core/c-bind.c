@@ -659,7 +659,7 @@ DECLARE_NATIVE(LET)
             assert(Heart_Of(vars) == TYPE_CHAIN);
     }
     if (Is_Metaform(vars))
-        Metafy(where);
+        Metafy_Cell(where);
 
     Corrupt_If_Needful(vars);  // if in spare, we may have overwritten
 

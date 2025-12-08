@@ -696,7 +696,7 @@ Bounce Stepper_Executor(Level* L)
         goto handle_tie_sigil;  // special handling for lone $
 
     Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-    Plainify(u_cast(Element*, OUT));  // remove the $ Sigil
+    Clear_Cell_Sigil(u_cast(Element*, OUT));  // remove the $
     goto lookahead;
 
 } handle_tie_sigil: {  //// "TIE" Tied Space Sigil ($) ///////////////////////
@@ -1710,10 +1710,10 @@ Bounce Stepper_Executor(Level* L)
                 panic (Error_Bad_Antiform(spare));
 
             if (Is_Pinned_Form_Of(GROUP, CURRENT)) {
-                Pinify(Known_Element(spare));  // add @ decoration
+                Pinify_Cell(Known_Element(spare));  // add @ decoration
             }
             else if (Is_Meta_Form_Of(GROUP, CURRENT)) {
-                Metafy(Known_Element(spare));  // add ^ decoration
+                Metafy_Cell(Known_Element(spare));  // add ^ decoration
             }
             else
                 assert(Is_Group(CURRENT));

@@ -2102,7 +2102,7 @@ static void Apply_Sigil_If_Pending(Element* e, ScanState* S) {
     if (S->sigil_pending) {
         assert(not Sigil_Of(e));
 
-        Sigilize(e, unwrap S->sigil_pending);
+        Add_Cell_Sigil(e, unwrap S->sigil_pending);
         S->sigil_pending = SIGIL_0;
     }
 }
@@ -2951,7 +2951,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
             SPARE,
             Pop_Source_From_Stack(stackindex_path_head - 1)
         );
-        Pinify(items);  // don't want to evaluate
+        Pinify_Cell(items);  // don't want to evaluate
         Api(Stable*) email = rebStable("as email! delimit -[.]-", items);
 
         Element* scratch = Copy_Cell(SCRATCH, Known_Element(email));

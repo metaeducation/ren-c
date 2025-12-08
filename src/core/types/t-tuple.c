@@ -284,14 +284,14 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
         Source* a = Make_Source_Managed(1);
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), seq);
-        Plainify(Array_Head(a));  // to block! @a.b.c -> [a.b.c]
+        Clear_Cell_Sigil(Array_Head(a));  // to block! @a.b.c -> [a.b.c]
         return Init_Any_List(OUT, to, a);
     }
 
     if (Any_Utf8_Type(to) and to != TYPE_WORD) {
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
-        Plainify(seq);  // to text! @a.b.c -> "a.b.c"
+        Clear_Cell_Sigil(seq);  // to text! @a.b.c -> "a.b.c"
         Form_Element(mo, seq);
         const Strand* s = Pop_Molded_Strand(mo);
         if (not Any_String_Type(to))

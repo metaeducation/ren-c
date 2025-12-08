@@ -162,7 +162,7 @@ DECLARE_NATIVE(BINDING_OF)
     INCLUDE_PARAMS_OF_BINDING_OF;
 
     Element* elem = Element_ARG(VALUE);
-    Plainify(elem);  // drop [@ $ ^] sigils
+    Clear_Cell_Sigil(elem);  // drop [@ $ ^] sigils
 
     return Dispatch_Generic(BINDING_OF, elem, LEVEL);
 }

@@ -427,13 +427,13 @@ Element* Decorate_According_To_Parameter(
         break;
 
       case PARAMCLASS_META:
-        Metafy(e);
+        Metafy_Cell(e);
         break;
 
       case PARAMCLASS_SOFT: {
         Source *a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
         Move_Cell(Stub_Cell(a), e);
-        Pinify(Init_Group(e, a));
+        Pinify_Cell(Init_Group(e, a));
         break; }
 
       case PARAMCLASS_JUST:
@@ -441,7 +441,7 @@ Element* Decorate_According_To_Parameter(
         break;
 
       case PARAMCLASS_THE:
-        Pinify(e);
+        Pinify_Cell(e);
         break;
 
       default:
@@ -469,7 +469,7 @@ Element* Decorate_According_To_Parameter(
 void Undecorate_Element(Element* e)
 {
     Noquotify(e);
-    Plainify(e);
+    Clear_Cell_Sigil(e);
 
     if (not Any_Sequence(e))
         return;
@@ -587,7 +587,7 @@ Result(None) Decorate_Element(const Element* decoration, Element* element)
         if (not Any_Sigilable(element))
             return fail ("DECORATE cannot apply Sigils to this type");
 
-        Sigilize(element, unwrap sigil_to_add);
+        Add_Cell_Sigil(element, unwrap sigil_to_add);
     }
 
     if (quotes_to_add)
@@ -700,7 +700,7 @@ DECLARE_NATIVE(DECORATION_OF)
     Noquotify(element);
 
     Option(Sigil) sigil = Sigil_Of(element);
-    Plainify(element);
+    Clear_Cell_Sigil(element);
 
     Element* out;
     switch (Heart_Of(element)) {
@@ -725,7 +725,7 @@ DECLARE_NATIVE(DECORATION_OF)
     }
 
     if (sigil)
-        Sigilize(out, unwrap sigil);
+        Add_Cell_Sigil(out, unwrap sigil);
 
     if (quotes)
         Quotify_Depth(out, unwrap quotes);
