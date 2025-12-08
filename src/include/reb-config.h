@@ -688,13 +688,13 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 #if !defined(CHECK_CELL_SUBCLASSES)
    #if RUNTIME_CHECKS && CPLUSPLUS_11
-    #define CHECK_CELL_SUBCLASSES 1
+    #define CHECK_CELL_SUBCLASSES  1
   #else
-    #define CHECK_CELL_SUBCLASSES 0
+    #define CHECK_CELL_SUBCLASSES  0
   #endif
 #endif
 
-#define DONT_CHECK_CELL_SUBCLASSES (! CHECK_CELL_SUBCLASSES)
+#define DONT_CHECK_CELL_SUBCLASSES  (! CHECK_CELL_SUBCLASSES)
 
 
 // Sinks are a feature which lets you mark a parameter as being output on an
@@ -702,7 +702,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // actually crucial to CHECK_CELL_SUBCLASSES working.
 //
 #if !defined(NEEDFUL_SINK_USES_WRAPPER)
-    #define NEEDFUL_SINK_USES_WRAPPER CHECK_CELL_SUBCLASSES
+    #define NEEDFUL_SINK_USES_WRAPPER  CHECK_CELL_SUBCLASSES
 #else
     #if (! NEEDFUL_SINK_USES_WRAPPER) && CHECK_CELL_SUBCLASSES
         #error "NEEDFUL_SINK_USES_WRAPPER needed for CHECK_CELL_SUBCLASSES"
@@ -734,9 +734,9 @@ Special internal defines used by RT, not Host-Kit developers:
 // invalid cell sizes with this on)
 //
 #if defined(ENDIAN_LITTLE) && TO_LINUX_X64
-    #define DEBUG_USE_BITFIELD_HEADER_PUNS 1
+    #define DEBUG_USE_BITFIELD_HEADER_PUNS  1
 #else
-    #define DEBUG_USE_BITFIELD_HEADER_PUNS 0
+    #define DEBUG_USE_BITFIELD_HEADER_PUNS  0
 #endif
 
 #if !defined(DEBUG_ENABLE_ALWAYS_MALLOC)
@@ -759,9 +759,9 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 #if !defined(DEBUG_EXTANT_STACK_POINTERS)
   #if CPLUSPLUS_11 && RUNTIME_CHECKS
-    #define DEBUG_EXTANT_STACK_POINTERS 1
+    #define DEBUG_EXTANT_STACK_POINTERS  1
   #else
-    #define DEBUG_EXTANT_STACK_POINTERS 0
+    #define DEBUG_EXTANT_STACK_POINTERS  0
   #endif
 #endif
 
@@ -915,18 +915,18 @@ Special internal defines used by RT, not Host-Kit developers:
 
 #if !defined(DEBUG_CHECK_ENDS)
   #if defined(__SANITIZE_ADDRESS__)
-    #define DEBUG_CHECK_ENDS 0  // *not* when sanitized
+    #define DEBUG_CHECK_ENDS  0  // *not* when sanitized
   #else
-    #define DEBUG_CHECK_ENDS (CPLUSPLUS_11 && RUNTIME_CHECKS) ? 1 : 0
+    #define DEBUG_CHECK_ENDS  (CPLUSPLUS_11 && RUNTIME_CHECKS) ? 1 : 0
   #endif
 #endif
 
 #if !defined(DEBUG_TRACK_EXTEND_CELLS)
-    #define DEBUG_TRACK_EXTEND_CELLS 0
+    #define DEBUG_TRACK_EXTEND_CELLS  0
 #endif
 
 #if !defined(DEBUG_TRACK_COPY_PRESERVES)
-    #define DEBUG_TRACK_COPY_PRESERVES 0
+    #define DEBUG_TRACK_COPY_PRESERVES  0
 #endif
 
 #if DEBUG_TRACK_COPY_PRESERVES
@@ -1024,11 +1024,11 @@ Special internal defines used by RT, not Host-Kit developers:
 // switch does a printf of the __FILE__ and __LINE__ of panic() callsites.
 //
 #if !defined(DEBUG_PRINTF_PANIC_LOCATIONS)
-    #define DEBUG_PRINTF_PANIC_LOCATIONS 0
+    #define DEBUG_PRINTF_PANIC_LOCATIONS  0
 #endif
 
 #if !defined(DEBUG_VIRTUAL_BINDING)
-    #define DEBUG_VIRTUAL_BINDING 0
+    #define DEBUG_VIRTUAL_BINDING  0
 #endif
 
 // The third-party "dtoa.c" file was sensitive to whether DEBUG was #ifdef'd.
@@ -1040,7 +1040,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // reverted, if that were important.
 //
 #if !defined(DEBUG_DTOA)
-    #define DEBUG_DTOA 0
+    #define DEBUG_DTOA  0
 #endif
 
 

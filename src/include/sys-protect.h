@@ -33,19 +33,37 @@
 //   requires you to consciously use a routine that checks the Flex at
 //   runtime before it will give you back a plain `Flex*` from which you can
 //   get non-const `Cell*`.  See CONST_IF_C() for why this is only done in
-///  the C++ build.
+//  the C++ build.
 //
 
 
-INLINE void Protect_Cell(Cell* c) {
-    assert(Not_Cell_Flag(c, PROTECTED));
-    Set_Cell_Flag(c, PROTECTED);
-}
+#if CHECK_CELL_SUBCLASSES
+    template<class T>
+    INLINE T* Protect_Cell(T* c) {
+        assert(Not_Cell_Flag(c, PROTECTED));
+        Set_Cell_Flag(c, PROTECTED);
+        return c;
+    }
 
-INLINE void Unprotect_Cell(Cell* c) {
-    assert(Get_Cell_Flag(c, PROTECTED));
-    Clear_Cell_Flag(c, PROTECTED);
-}
+    template<class T>
+    INLINE T* Unprotect_Cell(T* c) {
+        assert(Get_Cell_Flag(c, PROTECTED));
+        Clear_Cell_Flag(c, PROTECTED);
+        return c;
+    }
+#else
+    INLINE Cell* Protect_Cell(Cell* c) {
+        assert(Not_Cell_Flag(c, PROTECTED));
+        Set_Cell_Flag(c, PROTECTED);
+        return c;
+    }
+
+    INLINE Cell* Unprotect_Cell(Cell* c) {
+        assert(Get_Cell_Flag(c, PROTECTED));
+        Clear_Cell_Flag(c, PROTECTED);
+        return c;
+    }
+#endif
 
 
 // There are some functions that set the output cell to protected to make

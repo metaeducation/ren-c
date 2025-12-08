@@ -947,6 +947,8 @@ void Startup_Core(void)
   //
   // 1. Create actual variables for top-level SET-WORD!s only.
 
+    Startup_Parse3();
+
     rebElide(
         "wrap*", g_lib_module, rebQ(&boot->mezz),  // top-level variables [1]
         "evaluate inside", g_lib_module, rebQ(&boot->mezz)
@@ -1049,6 +1051,8 @@ void Shutdown_Core(bool clean)
         return;
 
     PG_Boot_Phase = BOOT_START_0;
+
+    Shutdown_Parse3();
 
     Shutdown_Data_Stack();
 

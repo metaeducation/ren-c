@@ -71,6 +71,15 @@
 #include "sys-core.h"
 
 
+// PARSE3 was not designed to synthesize arbitrary results.  It may be
+// grafted on to do so, but for now it just returns TRASH! if the parse is
+// successful--as a stand-in for the real return value that would be there.
+//
+// In order to make this more informative, it uses a verbose TRASH! value.
+//
+Value* g_trash_parse3_success;
+
+
 // !!! R3-Alpha would frequently conflate indexes and flags, which could be
 // confusing in the evaluator and led to many THROWN values being overlooked.
 // To deal with this, a REBIXO datatype (Index-OR-a-flag) was introduced.  It
@@ -268,7 +277,13 @@ static bool Subparse_Throws(
     assert((flags & PF_STATE_MASK) == 0);  // no "parse state" flags allowed
     Init_Integer(Erase_ARG(FLAGS), flags);
 
-    // Locals in frame would be unset on entry if called by action dispatch.
+    // There is no fixed policy on what locals in frames have to be; the
+    // original frame can capture any values, they just won't depend on the
+    // call--each new frame gets a copy of the locals from the parent.
+    //
+    // This is what you would get with:
+    //
+    //     {~num_quotes~ ~position~ ~save~ ~lookback~}
     //
     Init_Tripwire(Erase_ARG(NUM_QUOTES));
     Init_Tripwire(Erase_ARG(POSITION));
@@ -2569,7 +2584,8 @@ DECLARE_NATIVE(PARSE3)
     if (Bool_ARG(MATCH))
         return COPY(scratch_original_input);
 
-    return Init_Tripwire(OUT);  // no PARSE3 synthesized result unless ACCEPT
+    Copy_Cell(OUT, g_trash_parse3_success);  // trash result unless ACCEPT
+    return OUT;
 }}
 
 
@@ -2627,4 +2643,24 @@ DECLARE_NATIVE(PARSE_REJECT)
     INCLUDE_PARAMS_OF_PARSE_REJECT;
 
     panic ("PARSE-REJECT is for internal PARSE use only");
+}
+
+
+//
+//  Startup_Parse3: C
+//
+void Startup_Parse3(void)
+{
+    known_nullptr(g_trash_parse3_success) = Protect_Cell(rebValue(
+        "~#[PARSE3 success, so no ERROR! (no other result unless ACCEPT)]#~"
+    ));
+}
+
+
+//
+//  Shutdown_Parse3: C
+//
+void Shutdown_Parse3(void)
+{
+    rebReleaseAndNull(&g_trash_parse3_success);
 }

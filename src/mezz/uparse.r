@@ -615,7 +615,7 @@ default-combinators: make map! [
         f/return ^result
     ]
 
-   === ACCEPT KEYWORD ===
+    === ACCEPT KEYWORD ===
 
     ; ACCEPT is like R3-Alpha's RETURN keyword, but with the name adjusted to
     ; help distinguish it from the overall return of a function (as well as cue
