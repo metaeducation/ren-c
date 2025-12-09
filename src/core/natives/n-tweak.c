@@ -321,6 +321,8 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     bool groups_ok
 ){
+    assert(OUT != SCRATCH and OUT != SPARE);
+
     Stable* out = Known_Stable(OUT);
 
     assert(LEVEL == TOP_LEVEL);
@@ -348,8 +350,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
   #if RUNTIME_CHECKS
     Protect_Cell(scratch_var);  // (common exit path undoes this protect)
-    if (not Is_Dual_Nulled_Pick_Signal(out))
-        Protect_Cell(OUT);
+    Protect_Cell(OUT);
   #endif
 
   dispatch_based_on_scratch_var_type: {
@@ -482,7 +483,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         if (Eval_Any_List_At_Throws(SPARE, at, at_binding)) {
             Drop_Data_Stack_To(base);
             e = Error_No_Catch_For_Throw(TOP_LEVEL);
-            goto finalize_and_return;
+            goto return_error;
         }
 
         Stable* spare_picker = Decay_If_Unstable(SPARE) except (e) {
@@ -576,6 +577,10 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
                 stackindex == limit - 1
                 and not Is_Metaform(Data_Stack_At(Element, stackindex))
             ){
+              #if RUNTIME_CHECKS
+                Unprotect_Cell(OUT);
+              #endif
+
                 Init_Warning(OUT, unwrap e);
                 Failify(OUT);  // signal bad pick distinct from panics
 
@@ -620,6 +625,9 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     if (Is_Dual_Nulled_Pick_Signal(out)) {
         assert(Is_Nulled(TOP));
+      #if RUNTIME_CHECKS
+        Unprotect_Cell(OUT);
+      #endif
         Copy_Cell(OUT, spare_location_dual);
         goto return_success;
     }
@@ -652,8 +660,12 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     // Subsequent updates become pokes, regardless of initial updater function
 
-    if (Is_Dual_Nulled_No_Writeback_Signal(spare_writeback_dual))
+    if (Is_Dual_Nulled_No_Writeback_Signal(spare_writeback_dual)) {
+      #if RUNTIME_CHECKS
+        Unprotect_Cell(OUT);
+      #endif
         goto return_success;
+    }
 
     if (stackindex_top == base + 1) {
         e = Error_User(
@@ -672,6 +684,11 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 }}} return_error: { ///////////////////////////////////////////////////////////
 
     assert(e);
+  #if RUNTIME_CHECKS
+    Unprotect_Cell(OUT);
+  #endif
+    Corrupt_Cell_If_Needful(OUT);
+
     Drop_Data_Stack_To(base);
     goto finalize_and_return;
 
@@ -693,8 +710,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
   #if RUNTIME_CHECKS
     Unprotect_Cell(scratch_var);
-    if (Get_Cell_Flag(OUT, PROTECTED))
-        Unprotect_Cell(OUT);
+    assert(not (OUT->header.bits & CELL_FLAG_PROTECTED));
   #endif
 
     return e;

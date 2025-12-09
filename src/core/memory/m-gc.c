@@ -667,6 +667,11 @@ static void Mark_Root_Stubs(void)
 // it only marks the live cells--not all the way to the tail.  The unused
 // cells can just have garbage unless DEBUG_POISON_DROPPED_STACK_CELLS.
 //
+// 1. Erased cells are allowed because the data stack may be used as a temp
+//    location to write cells with Blit_Cell() which may have come from
+//    places like SCRATCH or OUT... if the cell is a problem then you would
+//    find out when popping it.
+//
 static void Mark_Data_Stack(void)
 {
     const Stable* head = Flex_Head(Stable, g_ds.array);  // unstable allowed
@@ -674,7 +679,7 @@ static void Mark_Data_Stack(void)
 
     Stable* stackval = g_ds.movable_top;
     for (; stackval != head; --stackval)  // stop before Data_Stack_At(0)
-        Queue_Mark_Cell_Deep(stackval);
+        Queue_Mark_Maybe_Erased_Cell_Deep(stackval);  // allow erasure [1]
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
     stackval = g_ds.movable_top + 1;

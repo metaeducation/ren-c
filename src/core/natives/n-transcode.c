@@ -150,11 +150,11 @@ DECLARE_NATIVE(TRANSCODE)
     else
         file = ANONYMOUS;
 
-    Sink(Stable) scratch_line_number = SCRATCH;  // use as scratch space
+    Sink(Stable) line_number_out = OUT;  // use as scratch space
     if (Any_Word(ARG(LINE))) {
         require (
           Get_Var(
-            scratch_line_number,
+            line_number_out,
             NO_STEPS,
             Element_ARG(LINE),
             SPECIFIED
@@ -162,13 +162,13 @@ DECLARE_NATIVE(TRANSCODE)
         // null not allowed, must be integer
     }
     else if (Is_Nulled(ARG(LINE)))  // not provided
-        Init_Integer(scratch_line_number, 1);
+        Init_Integer(line_number_out, 1);
     else
-        Copy_Cell(scratch_line_number, ARG(LINE));
+        Copy_Cell(line_number_out, ARG(LINE));
 
     LineNumber start_line;
-    if (Is_Integer(scratch_line_number)) {
-        start_line = VAL_INT32(scratch_line_number);
+    if (Is_Integer(line_number_out)) {
+        start_line = VAL_INT32(line_number_out);
         if (start_line <= 0)
             panic (PARAM(LINE));  // definitional?
     }

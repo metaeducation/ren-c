@@ -243,6 +243,8 @@ Bounce Inert_Stepper_Executor(Level* L)
 //
 Bounce Stepper_Executor(Level* L)
 {
+    assert(OUT != &L->feed->gotten);
+
     if (THROWING)
         return THROWN;  // no state to clean up
 
@@ -405,22 +407,42 @@ Bounce Stepper_Executor(Level* L)
 
     switch (KIND_BYTE_RAW(L_next)) {  // ignore Sigil
       case TYPE_WORD: {
-        Get_Word(
-            L_next_gotten_raw,
-            L_next,
-            Feed_Binding(L->feed)  // L_binding breaks here [2]
-        ) except (Error* e) {
+        Copy_Cell(PUSH(), CURRENT);
+
+        heeded (Copy_Cell(CURRENT, L_next));  // v-- L_binding bad here [2]
+        Bind_If_Unbound(CURRENT, Feed_Binding(L->feed));
+        Metafy_Cell(Known_Element(CURRENT));  // need for unstable lookup
+        heeded (Corrupt_Cell_If_Needful(SPARE));
+
+        StateByte saved_state = STATE;
+        STATE = 1;
+
+        Error* e;
+        Get_Var_In_Scratch_To_Out(L, NO_STEPS) except (e) {
+            // don't care (will hit on next step if we care)
+        }
+        STATE = saved_state;
+        Copy_Cell(&L->scratch, TOP);
+        DROP();
+
+        if (e) {
             Erase_Cell(L_next_gotten_raw);
-            UNUSED(e);  // don't care (will hit on next step if we care)
+            Erase_Cell(OUT);
             goto give_up_backward_quote_priority;
         }
+
+        Copy_Cell(L_next_gotten_raw, OUT);
+        Erase_Cell(OUT);
+
         if (
-            not Is_Action(L_next_gotten_raw)
-            or not (infix_mode = Frame_Infix_Mode(L_next_gotten_raw))
+            not Is_Possibly_Unstable_Value_Action(L_next_gotten_raw)
+            or not (
+                infix_mode = Frame_Infix_Mode(Known_Stable(L_next_gotten_raw))
+            )
         ){
             goto give_up_backward_quote_priority;
         }
-        infixed = Frame_Phase(L_next_gotten_raw);
+        infixed = Frame_Phase(Known_Stable(L_next_gotten_raw));
         break; }
 
       case TYPE_CHAIN:
@@ -737,8 +759,12 @@ Bounce Stepper_Executor(Level* L)
     //    would bypass the LEVEL_FLAG_AFRAID_OF_GHOSTS which sequential
     //    evaluations in Evaluator_Executor() use by default.
 
+    heeded (CURRENT);
+    Bind_If_Unbound(CURRENT, L_binding);
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+
     require (
-      Get_Any_Word_Maybe_Trash(OUT, CURRENT, L_binding)
+      Get_Var_In_Scratch_To_Out(L, NO_STEPS)
     );
 
     possibly(Not_Cell_Stable(OUT) or Is_Trash(Known_Stable(OUT)));
@@ -1208,7 +1234,6 @@ Bounce Stepper_Executor(Level* L)
     require (
       Stable* out = Get_Chain_Push_Refinements(
         OUT,  // where to write action
-        SPARE,  // temporary GC-safe scratch space
         CURRENT,
         L_binding
     ));
@@ -1455,32 +1480,30 @@ Bounce Stepper_Executor(Level* L)
 
 }} handle_generic_set: { /////////////////////////////////////////////////////
 
-    // Right side is evaluated into `out`, and then copied to the variable.
-    //
-    // !!! The evaluation ordering is dictated by the fact that there isn't a
-    // separate "evaluate path to target location" and "set target' step.
-    // This is because some targets of assignments (e.g. gob.size.x:) do not
-    // correspond to a cell that can be returned; the path operation "encodes
-    // as it goes" and requires the value to set as a parameter.  Yet it is
-    // counterintuitive given the "left-to-right" nature of the language:
-    //
-    //     >> foo: make object! [[bar][bar: 10]]
-    //
-    //     >> foo.(print "left" 'bar): (print "right" 20)
-    //     right
-    //     left
-    //     == 20
-    //
-    // 1. Running functions flushes the L_next_gotten cache.  But a plain
-    //    assignment can cause trouble too:
-    //
-    //        >> x: <before> x: 1 x
-    //                            ^-- x value was cached in infix lookahead
-    //
-    //    It used to not be a problem, when variables didn't just pop into
-    //    existence.  Reconsidered in light of "emergence".  Review.
-    //
-    // * Antiform assignments are allowed: https://forum.rebol.info/t/895/4
+  // Right side is evaluated into `out`, and then copied to the variable.
+  //
+  // !!! The evaluation ordering is dictated by the fact that there isn't a
+  // separate "evaluate tuple to target location" and "set target' step.  This
+  // is because some assignment targets (e.g. gob.size.x:) do not correspond
+  // to a cell that can be returned; the tuple operation "encodes as it goes"
+  // and requires the value to set as a parameter.  It is counterintuitive
+  // given the "left-to-right" nature of the language:
+  //
+  //     >> foo: make object! [[bar][bar: 10]]
+  //
+  //     >> foo.(print "left" 'bar): (print "right" 20)
+  //     right
+  //     left
+  //     == 20
+  //
+  // 1. Running functions flushes the L_next_gotten cache.  Plain assignment
+  //    can cause trouble too:
+  //
+  //        >> x: <before> x: 1 x
+  //                            ^-- x value was cached in infix lookahead
+  //
+  //    It used to not be a problem, when variables didn't just pop into
+  //    existence.  Reconsidered in light of "emergence".  Review.
 
     assert(
         Is_Word(CURRENT) or Is_Meta_Form_Of(WORD, CURRENT)
@@ -2040,25 +2063,48 @@ Bounce Stepper_Executor(Level* L)
     }
 
     switch (opt Type_Of_Unchecked(L_next)) {
-      case TYPE_WORD:  // only WORD! does infix now (TBD: CHAIN!) [2]
+      case TYPE_WORD: {  // only WORD! does infix now (TBD: CHAIN!) [2]
+        Copy_Cell(PUSH(), OUT);  // save out if infix wants it...
+
+        heeded (Copy_Cell(CURRENT, L_next));  // v-- L_binding bad here [2]
+        Bind_If_Unbound(CURRENT, Feed_Binding(L->feed));
+        Metafy_Cell(Known_Element(CURRENT));  // need for unstable lookup
+        heeded (Corrupt_Cell_If_Needful(SPARE));
+
+        StateByte saved_state = STATE;
+        STATE = 1;
+
         if (not L_next_gotten) {
-            Get_Word(
-                L_next_gotten_raw, L_next, Feed_Binding(L->feed)
-            ) except (Error* e) {
+            Corrupt_Cell_If_Needful(OUT);
+
+            Error* e;
+            Get_Var_In_Scratch_To_Out(L, NO_STEPS) except (e) {
                 Erase_Cell(L_next_gotten_raw);
-                UNUSED(e);
             }
+            if (not e)
+                Copy_Cell(L_next_gotten_raw, OUT);
         }
         else {
-            DECLARE_STABLE (check);
+          #if RUNTIME_CHECKS
             assume (
-              Get_Word(check, L_next, Feed_Binding(L->feed))
+                Get_Var_In_Scratch_To_Out(L, NO_STEPS)
             );
             assert(
-                memcmp(check, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
+                memcmp(OUT, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
             );
+          #endif
         }
-        break;  // need to check for lookahead
+
+        STATE = saved_state;
+        Corrupt_If_Needful(L->scratch);
+        Copy_Cell(OUT, TOP);
+        DROP();
+        break; }  // need to check for lookahead
+
+      case TYPE_CHAIN:
+        if (Try_Get_Sequence_Singleheart(L_next))
+            break;  // foo: or :foo, not a function call
+        break;  // !!! Review, infix chains should be possible!
 
       case TYPE_FRAME:
         Copy_Cell(L_next_gotten_raw, L_next);
@@ -2076,10 +2122,13 @@ Bounce Stepper_Executor(Level* L)
     if (
         not L_next_gotten
         or (
-            not (Is_Word(L_next) and Is_Action(L_next_gotten_raw))
+            not (
+                Is_Word(L_next)
+                and Is_Possibly_Unstable_Value_Action(L_next_gotten_raw)
+            )
             and not Is_Frame(L_next)
         )
-        or not (infix_mode = Frame_Infix_Mode(L_next_gotten_raw))
+        or not (infix_mode = Frame_Infix_Mode(Known_Stable(L_next_gotten_raw)))
     ){
       lookback_quote_too_late: // run as if starting new expression
 
@@ -2220,7 +2269,7 @@ Bounce Stepper_Executor(Level* L)
       Level* sub = Make_Action_Sublevel(L_next_gotten_raw)
     );
     require (
-      Push_Action(sub, L_next_gotten_raw, infix_mode)
+      Push_Action(sub, Known_Stable(L_next_gotten_raw), infix_mode)
     );
     Fetch_Next_In_Feed(L->feed);
 

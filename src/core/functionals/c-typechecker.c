@@ -641,9 +641,14 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
     if (Is_Quoted(item))
         goto handle_non_word_quoted;
 
-    if (Is_Space(item)) {
-        if (Is_Cell_Stable(SPARE) and Is_Space(cast(Stable*, SPARE)))
+    if (Any_Sigiled_Space(item)) {
+        if (
+            not Is_Antiform(SPARE)
+            and Any_Sigiled_Space(Known_Element(SPARE))
+            and Sigil_Of(item) == Sigil_Of(Known_Element(SPARE))
+        ){
             goto test_succeeded;
+        }
         goto test_failed;
     }
 

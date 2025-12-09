@@ -363,13 +363,13 @@ Special internal defines used by RT, not Host-Kit developers:
 //
 #if !defined(RUNTIME_CHECKS)
     #if defined(NDEBUG)
-        #define RUNTIME_CHECKS 0
+        #define RUNTIME_CHECKS  0
     #else
-        #define RUNTIME_CHECKS 1
+        #define RUNTIME_CHECKS  1
     #endif
 #endif
 #if !defined(NO_RUNTIME_CHECKS)
-    #define NO_RUNTIME_CHECKS (! RUNTIME_CHECKS)
+    #define NO_RUNTIME_CHECKS  (! RUNTIME_CHECKS)
 #endif
 
 
@@ -671,6 +671,8 @@ Special internal defines used by RT, not Host-Kit developers:
 #if !defined(NEEDFUL_CPP_ENHANCEMENTS)
     #define NEEDFUL_CPP_ENHANCEMENTS  CPLUSPLUS_11
 #endif
+
+#define NEEDFUL_DOES_CORRUPTIONS  RUNTIME_CHECKS
 
 #if (! NEEDFUL_CPP_ENHANCEMENTS)
     #define CHECK_CELL_SUBCLASSES  0

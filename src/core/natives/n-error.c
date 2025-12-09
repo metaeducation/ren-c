@@ -288,26 +288,27 @@ DECLARE_NATIVE(TRAP)
 {
     INCLUDE_PARAMS_OF_TRAP;
 
-    Value* atom = Atom_ARG(VALUE);
+    Value* v = Atom_ARG(VALUE);
 
-    if (not Is_Error(atom))
-        return COPY(atom);  // pass thru any non-errors
+    if (not Is_Error(v))
+        return COPY(v);  // pass thru any non-errors
 
     Element* return_word = Init_Word(SCRATCH, CANON(RETURN));
+    Bind_If_Unbound(return_word, Feed_Binding(LEVEL->feed));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+
+    STATE = 1;
 
     require (
-      Stable* spare_action = Get_Word(
-        SPARE,
-        return_word,
-        Feed_Binding(LEVEL->feed)
-    ));
+      Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS)
+    );
 
-    if (not Is_Action(spare_action))
+    if (not Is_Possibly_Unstable_Value_Action(OUT))
         panic ("TRAP can't find RETURN in scope to tunnel ERROR! to");
 
-    Element* lifted_atom = Liftify(atom);
+    Element* lifted_error = Liftify(v);
 
-    return rebDelegate(rebRUN(spare_action), lifted_atom);
+    return rebDelegate(rebRUN(Known_Stable(OUT)), lifted_error);
 }
 
 

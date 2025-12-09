@@ -1160,6 +1160,8 @@ INLINE Value* Move_Atom_Untracked(
     Assert_Cell_Header_Overwritable(out);  // atoms can't have persistent bits
     Assert_Cell_Header_Overwritable(a);  // atoms can't have persistent bits
 
+    Assert_Cell_Readable(a);
+
   #if DEBUG_TRACK_EXTEND_CELLS
     assert(out->tick == TICK);  // should TRACK(out) before call, not after
   #endif

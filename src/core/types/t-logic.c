@@ -494,37 +494,39 @@ DECLARE_NATIVE(TO_LOGIC)
 // This scales the idea back to a very simple concept of a literal GROUP!,
 // WORD!, or TUPLE!.
 //
-INLINE Result(bool) Eval_Logic_Op_Right_Side(Level* level_)
-{
+INLINE Result(bool) Eval_Logic_Op_Right_Side_Uses_Scratch_And_Out(
+    Level* level_
+){
     INCLUDE_PARAMS_OF_AND_1;  // should be same as OR and XOR
 
     USED(ARG(LEFT));  // caller examines
     Element* right = Element_ARG(RIGHT);
 
-    Stable* synthesized;
     if (Is_Group(right)) {
-        if (Eval_Any_List_At_Throws(SPARE, right, SPECIFIED))
+        if (Eval_Any_List_At_Throws(OUT, right, SPECIFIED))
             panic (Error_No_Catch_For_Throw(level_));
-
-        require (
-          synthesized = Decay_If_Unstable(SPARE)
-        );
     }
     else {
-        assert(Is_Word(right) or Is_Tuple(right));
+        heeded (Copy_Cell(SCRATCH, right));
+        heeded (Corrupt_Cell_If_Needful(SPARE));
+
+        assert(STATE == STATE_0);
+        STATE = 1;
 
         require (
-          Stable* spare = Get_Var(SPARE, NO_STEPS, right, SPECIFIED)
+          Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS)
         );
-        if (Is_Action(spare))
+        if (Is_Word(right) and Is_Action(Known_Stable(OUT)))
             panic (
                 "words/tuples can't be action as right side of OR AND XOR"
             );
-
-        synthesized = spare;
     }
 
-    return Test_Conditional(synthesized);
+    require (
+      Stable* out = Decay_If_Unstable(OUT)
+    );
+
+    return Test_Conditional(out);
 }
 
 
@@ -536,7 +538,7 @@ INLINE Result(bool) Eval_Logic_Op_Right_Side(Level* level_)
 //      return: [logic?]
 //      left [any-stable?]
 //      @right "Right is evaluated if left is true"
-//          [group! tuple! word!]
+//          [group! word! tuple! ^word! ^tuple!]
 //  ]
 //
 DECLARE_NATIVE(AND_1)  // see TO-C-NAME
@@ -550,7 +552,7 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
         return LOGIC(false);  // if left is false, don't run right hand side
 
     require (
-      bool right = Eval_Logic_Op_Right_Side(LEVEL)
+      bool right = Eval_Logic_Op_Right_Side_Uses_Scratch_And_Out(LEVEL)
     );
     USED(ARG(RIGHT));
 
@@ -566,7 +568,7 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
 //      return: [logic?]
 //      left [any-stable?]
 //      @right "Right is evaluated if left is false"
-//          [group! tuple! word!]
+//          [group! word! tuple! ^word! ^tuple!]
 //  ]
 //
 DECLARE_NATIVE(OR_1)  // see TO-C-NAME
@@ -580,7 +582,7 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
         return LOGIC(true);  // if left is true, don't run right hand side
 
     require (
-      bool right = Eval_Logic_Op_Right_Side(LEVEL)
+      bool right = Eval_Logic_Op_Right_Side_Uses_Scratch_And_Out(LEVEL)
     );
     USED(ARG(RIGHT));
 
@@ -596,7 +598,7 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
 //      return: [logic?]
 //      left [any-stable?]
 //      @right "Always evaluated"
-//          [group! tuple! word!]
+//          [group! word! tuple! ^word! ^tuple!]
 //  ]
 //
 DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
@@ -604,7 +606,7 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
     INCLUDE_PARAMS_OF_XOR_1;
 
     require (
-      bool right = Eval_Logic_Op_Right_Side(LEVEL)
+      bool right = Eval_Logic_Op_Right_Side_Uses_Scratch_And_Out(LEVEL)
     );  // always evals
     USED(ARG(RIGHT));
 

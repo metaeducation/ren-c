@@ -305,11 +305,13 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
     return L->u.action.label;
 }
 
+typedef Byte StateByte;
+
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define LEVEL_STATE_BYTE(L) \
         SECOND_BYTE(known(Level*, L))
 #else
-    INLINE Byte& LEVEL_STATE_BYTE(Level* L) {
+    INLINE StateByte& LEVEL_STATE_BYTE(Level* L) {
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
         return SECOND_BYTE(L);
     }
@@ -478,23 +480,28 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
 ){
     assert(not TOP_LEVEL or Not_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC));
 
-    L->out = out;  // must be a valid cell for GC [3]
   #if RUNTIME_CHECKS
-    if (L->out)
-        assert(
-            Is_Cell_Erased(L->out)
-            or Not_Cell_Readable(L->out)
-            or not Is_Api_Value(L->out)
-        );
-  #endif
-
     assert(
-        not (L->out->header.bits &
+        out != &L->feed->gotten
+        and out != &L->spare
+        and out != &L->scratch
+    );
+    assert(
+        Is_Cell_Erased(out)
+        or Not_Cell_Readable(out)
+        or not Is_Api_Value(out)
+    );
+    assert(
+        not (out->header.bits &
             (BASE_FLAG_ROOT | BASE_FLAG_MARKED | BASE_FLAG_MANAGED)
         )
     );
+  #endif
+
     if (not (L->flags.bits & FLAG_STATE_BYTE(255)))  // no FLAG_STATE_BYTE()
-        Erase_Cell(L->out);  // STATE_0 requires erased cell [1]
+        Erase_Cell(out);  // STATE_0 requires erased cell [1]
+
+    L->out = out;  // must be a valid cell for GC [3]
 
   #if RUNTIME_CHECKS
     //

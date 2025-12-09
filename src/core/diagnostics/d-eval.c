@@ -180,8 +180,10 @@ void Where(Level* L)
 // These are checks common to Expression and Exit checks (hence also common
 // to the "end of Start" checks, since that runs on the first expression)
 //
-static void Evaluator_Shared_Checks_Debug(Level* L)
+static void Evaluator_Shared_Checks_Debug(Level* const L)
 {
+    USE_LEVEL_SHORTHANDS (L);
+
     // The state isn't actually guaranteed to balance overall until a level
     // is completely dropped.  This is because a level may be reused over
     // multiple calls by something like REDUCE or FORM, accumulating items
@@ -202,13 +204,40 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
         //
         // !!! This is totally dicey, and likely to break.
 
-        DECLARE_STABLE (check);
-        assume (
-          Get_Word(check, L_next, L_binding)
-        );
-        assert(
-            memcmp(check, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
-        );
+        UNUSED(level_);
+
+        Blit_Cell(PUSH(), OUT);
+        Blit_Cell(PUSH(), SCRATCH);
+
+        heeded (Copy_Cell(SCRATCH, L_next));
+        Bind_If_Unbound(Known_Element(SCRATCH), L_binding);
+        Metafy_Cell(Known_Element(SCRATCH));
+        heeded (Corrupt_Cell_If_Needful(SPARE));
+
+        StateByte saved_state = STATE;
+        STATE = 1;
+
+        Error* e;
+        Get_Var_In_Scratch_To_Out(L, NO_STEPS) except (e) {
+        }
+        if (not e)
+            assert(
+                memcmp(OUT, L_next_gotten_raw, 4 * sizeof(uintptr_t)) == 0
+            );
+        else {
+            assert(Not_Cell_Readable(L_next_gotten_raw));
+        }
+
+        STATE = saved_state;
+
+      #if DEBUG_POISON_UNINITIALIZED_CELLS
+        Force_Poison_Cell(SCRATCH);
+        Force_Poison_Cell(OUT);
+      #endif
+        Blit_Cell(SCRATCH, TOP);
+        DROP();
+        Blit_Cell(OUT, TOP);
+        DROP();
     }
 
     assert(L == TOP_LEVEL);

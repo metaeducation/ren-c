@@ -961,7 +961,7 @@ void Needful_Panic_Abruptly(const char* error) {
 #define needful_unnecessary /* (expr) */  NEEDFUL_STATIC_ASSERT_DECLTYPE_VALID
 #define needful_dont /* (expr) */         NEEDFUL_STATIC_ASSERT_DECLTYPE_VALID
 #define needful_cant /* (expr) */         NEEDFUL_STATIC_ASSERT_DECLTYPE_VALID
-#define needful_heeded /* (expr) */       NEEDFUL_PASSTHRU
+#define needful_heeded /* (expr) */       NEEDFUL_USED
 
 #define NEEDFUL_POSSIBLY /* (cond) */        NEEDFUL_STATIC_IGNORE
 #define NEEDFUL_IMPOSSIBLE /* (cond) */      NEEDFUL_STATIC_ASSERT_NOT

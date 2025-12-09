@@ -173,6 +173,9 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     assert(not Is_Parameter_Unconstrained(unwrap result_param));
 
+    heeded (Corrupt_Cell_If_Needful(SCRATCH));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+
     require (
       bool check = Typecheck_Coerce_Return(LEVEL, unwrap result_param, OUT)
     );

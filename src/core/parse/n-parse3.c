@@ -481,9 +481,19 @@ bool Process_Group_For_Parse_Throws(
         : Derive_Binding(P_RULE_BINDING, group);
 
     DECLARE_VALUE (eval);
-    Flags flags = LEVEL_MASK_NONE;
-    if (Eval_Element_Core_Throws(eval, flags, group, derived))
+
+    require (
+      Level* sub = Make_Level_At_Core(
+        &Evaluator_Executor, group, derived, LEVEL_MASK_NONE
+      )
+    );
+    Init_Ghost(Evaluator_Primed_Cell(sub));
+    Push_Level_Erase_Out_If_State_0(eval, sub);
+
+    if (Trampoline_With_Top_As_Root_Throws())
         return true;
+
+    Drop_Level(sub);
 
     if (Is_Error(eval)) {
         if (Is_Error_Veto_Signal(Cell_Error(eval))) {

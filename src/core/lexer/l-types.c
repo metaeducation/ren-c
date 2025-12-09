@@ -304,20 +304,20 @@ DECLARE_NATIVE(OF)
 
   check_if_next_is_sym_of: { /////////////////////////////////////////////////
 
-    // In order to speed up the navigation from builtin symbols like HEAD to
-    // find HEAD-OF, the %make-boot.r process attempts to reorder the symbols
-    // in such a way that HEAD-OF is the SymId immediately after HEAD.
-    //
-    // This can't always be done.  e.g. if the symbol is in an order-dependent
-    // range, such as datatypes: SIGIL can't be followed by SIGIL-OF because
-    // SIGIL-OF is not a datatype.  It also obviously won't work for an -OF
-    // function that the user (or unprocessed Mezzanine) comes up with after
-    // the fact.  So we check to see if the next symbol is an -OF match and
-    // save on symbol hashing and lookup.
-    //
-    // (This could be optimized at load time if symbols carried a flag that
-    // said the next symbol was an -OF, but rather than take a symbol flag
-    // for now we just do the relatively cheap check.)
+  // In order to speed up the navigation from builtin symbols like HEAD to
+  // find HEAD-OF, the %make-boot.r process attempts to reorder the symbols
+  // in such a way that HEAD-OF is the SymId immediately after HEAD.
+  //
+  // This can't always be done.  e.g. if the symbol is in an order-dependent
+  // range, such as datatypes: SIGIL can't be followed by SIGIL-OF because
+  // SIGIL-OF is not a datatype.  It also obviously won't work for an -OF
+  // function that the user (or unprocessed Mezzanine) comes up with after
+  // the fact.  So we check to see if the next symbol is an -OF match and save
+  // on symbol hashing and lookup.
+  //
+  // (This could be optimized at load time if symbols carried a flag that said
+  // the next symbol was an -OF, but rather than take a symbol flag for now we
+  // just do the relatively cheap check.)
 
     SymId id = unwrap opt_id;
 
@@ -361,16 +361,17 @@ DECLARE_NATIVE(OF)
 
 } have_sym_of: { /////////////////////////////////////////////////////////////
 
-    Element* prop_of = Init_Word(SCRATCH, sym_of);
+    heeded (Init_Word(SCRATCH, sym_of));
+    heeded (Bind_If_Unbound(Known_Element(SCRATCH), Feed_Binding(LEVEL->feed)));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+
+    STATE = 1;  // Get_Var_In_Scratch_To_Out() requires
 
     require (
-      Stable* spare_action = Get_Word(
-        SPARE,
-        prop_of,
-        Feed_Binding(LEVEL->feed)
-    ));
+      Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS)
+    );
 
-    if (not Is_Action(spare_action))
+    if (not Is_Possibly_Unstable_Value_Action(OUT))
         panic ("OF looked up to a value that wasn't an ACTION!");
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
@@ -378,7 +379,7 @@ DECLARE_NATIVE(OF)
     require (
       Level* sub = Make_Level(&Stepper_Executor, level_->feed, flags)
     );
-    Copy_Lifted_Cell(Evaluator_Level_Current(sub), spare_action);
+    Copy_Lifted_Cell(Evaluator_Level_Current(sub), Known_Stable(OUT));
     LIFT_BYTE(Evaluator_Level_Current(sub)) = NOQUOTE_2;  // plain FRAME!
     Force_Invalidate_Gotten(&sub->u.eval.current_gotten);
 

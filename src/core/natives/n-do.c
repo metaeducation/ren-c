@@ -1027,16 +1027,24 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 
     STATE = ST__S_S_GETTING_OPERATION;  // will be necessary in the future...
 
+    heeded (Copy_Cell(SCRATCH, operation));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+
     require (
-      Stable* spare = Get_Var(SPARE, GROUPS_OK, operation, SPECIFIED)
+      Stable* out = Get_Var(
+        OUT,
+        NO_STEPS,
+        operation,
+        SPECIFIED
+      )
     );
 
-    if (not Is_Action(spare) and not Is_Frame(spare))
-        panic (spare);
+    if (not Is_Action(out) and not Is_Frame(out))
+        panic (out);
 
-    Deactivate_If_Action(spare);  // APPLY has <unrun> on ARG(OPERATION)
+    Deactivate_If_Action(out);  // APPLY has <unrun> on ARG(OPERATION)
 
-    Copy_Cell(ARG(OPERATION), spare);
+    Copy_Cell(ARG(OPERATION), out);
 
     STATE = STATE_0;  // reset state for APPLY so it looks like initial entry
     Set_Level_Flag(LEVEL, _S_S_DELEGATING);  // [2]

@@ -1161,8 +1161,7 @@ DECLARE_NATIVE(DEFAULT)
         slashed = true;  // so we put the slash back on
     }
 
-    Option(Sigil) sigil = Sigil_Of(target);
-    assert(not sigil or sigil == SIGIL_META);
+    assert(not Sigil_Of(target) or Sigil_Of(target) == SIGIL_META);
     assume (
       Unsingleheart_Sequence_Preserve_Sigil(target)
     );
@@ -1176,6 +1175,8 @@ DECLARE_NATIVE(DEFAULT)
             target, TYPE_PATH, CELL_FLAG_LEADING_SPACE
         )
     );}
+
+    heeded (Corrupt_Cell_If_Needful(SPARE));
 
     require (
         Get_Var_In_Scratch_To_Out(level_, steps)

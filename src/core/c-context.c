@@ -836,7 +836,7 @@ VarList* Make_Varlist_Detect_Managed(
     //    doing the instantiation and what the thing is.  Better ideas are
     //    hopefully coming down the pipe, but this is what R3-Alpha did.  :-/
 
-    Stable* var = Flex_Head(Stable, a);
+    Value* var = Flex_Head(Stable, a);
     Tweak_Non_Frame_Varlist_Rootvar(a, heart);  // rootvar
     ++var;
 

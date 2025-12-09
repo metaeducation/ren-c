@@ -183,35 +183,42 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
 //
 // Returns TRUE if it set the flag.
 //
-bool Lookahead_To_Sync_Infix_Defer_Flag(Feed* feed) {
-    assert(Not_Feed_Flag(feed, DEFERRING_INFIX));
-    assert(Is_Gotten_Invalid(&feed->gotten));
+bool Lookahead_To_Sync_Infix_Defer_Flag(Level* L) {
+    assert(Not_Feed_Flag(L->feed, DEFERRING_INFIX));
+    assert(Is_Gotten_Invalid(&L->feed->gotten));
 
-    Clear_Feed_Flag(feed, NO_LOOKAHEAD);
+    Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
-    if (Is_Feed_At_End(feed))
+    if (Is_Feed_At_End(L->feed))
         return false;
 
-    if (Type_Of_Unchecked(At_Feed(feed)) != TYPE_WORD)
+    if (Type_Of_Unchecked(At_Feed(L->feed)) != TYPE_WORD)
         return false;
 
-    Get_Word(
-        &feed->gotten, At_Feed(feed), Feed_Binding(feed)
-    ) except (Error* e) {
-        Erase_Cell(&feed->gotten);  // could this be Trap_Get_Word() invariant?
+    heeded (Copy_Cell(SCRATCH, At_Feed(L->feed)));
+    Bind_If_Unbound(Known_Element(SCRATCH), Feed_Binding(L->feed));
+    Metafy_Cell(Known_Element(SCRATCH));  // need for unstable lookup
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+
+    Get_Var_In_Scratch_To_Out(L, NO_STEPS) except (Error* e) {
+        Erase_Cell(&L->feed->gotten);  // could this be Get_Var() invariant?
         UNUSED(e);  // don't care (if we care, we'll hit it on next step)
         return false;
     }
 
-    if (not Is_Action(&feed->gotten))
+    Copy_Cell(&L->feed->gotten, OUT);
+
+    if (not Is_Possibly_Unstable_Value_Action(&L->feed->gotten))
         return false;
 
-    Option(InfixMode) infix_mode = Frame_Infix_Mode(&feed->gotten);
+    Option(InfixMode) infix_mode = Frame_Infix_Mode(
+        Known_Stable(&L->feed->gotten)
+    );
     if (not infix_mode)
         return false;
 
     if (infix_mode == INFIX_DEFER)
-        Set_Feed_Flag(feed, DEFERRING_INFIX);
+        Set_Feed_Flag(L->feed, DEFERRING_INFIX);
     return true;
 }
 
@@ -638,12 +645,12 @@ Bounce Action_Executor(Level* L)
 
           case PARAMCLASS_JUST:
             Just_Next_In_Feed(ARG, L->feed);  // don't pick up binding
-            Lookahead_To_Sync_Infix_Defer_Flag(L->feed);  // [1]
+            Lookahead_To_Sync_Infix_Defer_Flag(L);  // [1]
             goto continue_fulfilling;
 
           case PARAMCLASS_THE:
             The_Next_In_Feed(ARG, L->feed);  // pick up binding
-            Lookahead_To_Sync_Infix_Defer_Flag(L->feed);  // [1]
+            Lookahead_To_Sync_Infix_Defer_Flag(L);  // [1]
             goto continue_fulfilling;
 
   //=//// SOFT QUOTED ARG-OR-REFINEMENT-ARG  //////////////////////////////=//
@@ -687,7 +694,7 @@ Bounce Action_Executor(Level* L)
             // https://forum.rebol.info/t/1361
             //
             if (
-                Lookahead_To_Sync_Infix_Defer_Flag(L->feed) and  // ensure got
+                Lookahead_To_Sync_Infix_Defer_Flag(L) and  // ensure got
                 (Get_Flavor_Flag(
                     VARLIST,
                     Phase_Paramlist(Frame_Phase(&L->feed->gotten)),
@@ -872,8 +879,8 @@ Bounce Action_Executor(Level* L)
 
         assert(LIFT_BYTE(ARG) != DUAL_0);  // not a tripwire
 
-        if (Is_Ghost_Or_Void(ARG)) {
-            if (Get_Parameter_Flag(param, OPT_OUT)) {  // <opt-out> param
+        if (Get_Parameter_Flag(param, OPT_OUT)) {  // <opt-out> param
+            if (Is_Ghost_Or_Void(ARG)) {
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
                 Mark_Typechecked(ARG);
                 Init_Nulled(OUT);

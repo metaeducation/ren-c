@@ -156,9 +156,7 @@ STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
 
 #define CORRUPT_INDEX ((REBLEN)(-3))
 
-typedef struct FeedStruct Feed;
-
-struct FeedStruct {
+typedef struct {
     HeaderUnion flags;  // quoting level included
 
     // This is the "prefetched" value being processed.  Entry points to the
@@ -240,7 +238,7 @@ struct FeedStruct {
     // !!! Review how often gotten has hits vs. misses, and what the benefit
     // of the feature actually is.
     //
-    Stable gotten;  // Note: Might be erased cell!
+    Value gotten;  // Note: Might be erased cell!
 
     // Feeds need to be freed when the last level reference is dropped.  This
     // doesn't go in a simple stacklike order, due to stack rearrangement
@@ -252,7 +250,7 @@ struct FeedStruct {
   #if TRAMPOLINE_COUNTS_TICKS
     Tick tick;
   #endif
-};
+} Feed;
 
 #define Force_Invalidate_Gotten(cell)  Force_Erase_Cell(cell)
 #define Invalidate_Gotten(cell)  Erase_Cell(cell)
