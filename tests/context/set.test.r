@@ -71,3 +71,17 @@
         e.id = 'test
     ]
 )
+
+(
+    a: ~ b: ~
+    all [
+        '~['10 '20]~ = lift set [a b] pack [10 20]
+        a = 10
+        b = 20
+    ]
+)
+
+((the '10) = lift set _ 10)
+((the '10) = lift set _ pack [10 20])
+((the '10) = lift set '^ 10)
+('~['10 '20]~ = lift set '^ pack [10 20])

@@ -156,12 +156,13 @@ core: [
 
     natives/ -> [
         n-bitwise.c
+        n-collections.c
         n-compose.c
         n-control.c
         n-data.c
         n-do.c
         n-error.c
-        n-get-set.c
+        n-get.c
         n-ghost.c
         n-io.c
         n-loop.c
@@ -171,7 +172,7 @@ core: [
         n-protect.c
         n-reduce.c
         n-series.c
-        n-sets.c
+        n-set.c
         n-strings.c
         n-system.c
         n-transcode.c

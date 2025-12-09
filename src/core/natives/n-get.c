@@ -1,5 +1,5 @@
 //
-//  file: %n-get-set.c
+//  file: %n-get.c
 //  summary: "Native functions to GET (Paths, Chains, Tuples, Words...)"
 //  section: natives
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
@@ -55,51 +55,8 @@
 //    of allowing TRY existed before meta-representation unlifting, so this
 //    is an open question that arose.)
 //
-//    In the case of an assignment, the only way to get it to return a
-//    raised ERROR! will be if the value being assigned was an ERROR!.  In
-//    the case of a regular assignment the assignment itself will not be
-//    performed and the error just passed through.  In a meta-assignment,
-//    the assignment will be performed and the ERROR! passed through in its
-//    unlifted form.
-//
-//  B. For convenience, assignments via WORD!: and TUPLE!: will pass thru
-//     ERROR!, and skip the assign.  You only get the assignment of the error
-//     antiform if you use ^WORD!: or ^TUPLE!: to indicate meta-assignment.
-//
-//     This raises questions about what should happen here:
-//
-//         >> eval [try (print "printing" $word): fail "what happens?"]
-//         ; does the message print or not?
-//         == ~null~  ; antiform
-//
-//     The same issues apply whether you are in the evaluator or the native.
-//     It would seem that left-to-right evaluation order would make people
-//     think that it would print first, so that's the direction we're going.
-//
 
 #include "sys-core.h"
-
-
-//
-//  Set_Var_In_Scratch_To_Out: C
-//
-Result(None) Set_Var_In_Scratch_To_Out(
-    Level* level_,  // OUT may be ERROR! antiform, see [A]
-    Option(Element*) steps_out  // no GROUP!s if nulled
-){
-    Liftify(OUT);  // must be lifted to be taken literally in dual protocol
-    Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
-        level_,
-        steps_out
-    );
-    require (
-      Unliftify_Undecayed(OUT)
-    );
-    if (e)
-        return fail (unwrap e);
-
-    return none;
-}
 
 
 //
@@ -603,6 +560,9 @@ Result(Stable*) Get_Var(
 }
 
 
+//
+//  Recalculate_Group_Arg_Vanishes: C
+//
 // TWEAK handles GROUP!s inside of a TUPLE! if you ask it to.  But it doesn't
 // work at the higher level of `set $(first [word1 word2]) value`...it's a
 // narrower function for handling single WORD!/TUPLE! targets.  Higher-level
@@ -613,7 +573,7 @@ Result(Stable*) Get_Var(
 //    parameterization of GET or SET.  So long as a GROUP! didn't synthesize
 //    another GROUP!, we allow any other thing from that list.
 //
-static Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
+Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
 {
     INCLUDE_PARAMS_OF_GET;  // TARGET types must be compatible with SET
 
@@ -662,80 +622,6 @@ static Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
 
 
 //
-//  set: native [
-//
-//  "Sets a variable to specified value (for dual band states, see TWEAK)"
-//
-//      return: [
-//          any-value?   "Same value as input (not decayed)"
-//          <null>       "If VALUE is NULL, or if <opt-out> of target "
-//          error!       "Passed thru from input if not a meta-assign"
-//      ]
-//      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [
-//              <opt-out>
-//              word! tuple!
-//              ^word! ^tuple!
-//              group! "If :GROUPS, retrigger SET based on evaluated value"
-//              @block!
-//          ]
-//      ^value "Will be decayed if TARGET not BLOCK! or metavariables"
-//          [any-value? error!]
-//      :groups "Allow GROUP! Evaluations"
-//      :steps "Return evaluation steps for reproducible access"
-//  ]
-//
-DECLARE_NATIVE(SET)
-//
-// SET is really just a version of TWEAK that passes a lifted argument, but
-// also wants to make its return value match the assignment value.  This means
-// it has to unlift value.
-//
-// 1. SET of a BLOCK! should expose the implementation of the multi-return
-//    mechanics used by SET-BLOCK!.  That will take some refactoring... not
-//    an urgent priority, but it needs to be done.
-{
-    INCLUDE_PARAMS_OF_TWEAK;  // !!! must have compatible frame
-
-    Element* target = Element_ARG(TARGET);
-
-    Value* v = Atom_ARG(DUAL);  // not a dual yet (we have to lift it...)
-
-    bool groups_ok = Bool_ARG(GROUPS);
-
-    USED(ARG(STEPS));  // TWEAK heeds this
-
-    if (Is_Group(target)) {  // Group before error passthru [B]
-        if (not groups_ok)
-            return fail ("SET of GROUP! target without :GROUPS not allowed");
-
-        require (
-          bool vanished = Recalculate_Group_Arg_Vanishes(LEVEL, SYM_SET)
-        );
-        if (vanished)
-            return NULLED;
-    }
-
-    if (Is_Error(v) and not Is_Metaform(target))
-        return COPY(v);  // error passthru [B]
-
-    Value* dual = Liftify(v);
-
-    Option(Bounce) b = Irreducible_Bounce(
-        LEVEL,
-        Apply_Cfunc(NATIVE_CFUNC(TWEAK), LEVEL)
-    );
-    if (b)
-        return unwrap b;  // keep bouncing while we couldn't get OUT as answer
-
-    Element* lifted = Known_Element(dual);
-    assert(Any_Lifted(lifted));
-
-    return UNLIFT(lifted);
-}
-
-
-//
 //  get: native [
 //
 //  "Gets a variable (for dual band states, see TWEAK)"
@@ -750,6 +636,8 @@ DECLARE_NATIVE(SET)
 //              <opt-out>
 //              word! tuple!   "Unstable fetches error"
 //              ^word! ^tuple! "Do not decay unstable antiform results"
+//              quoted! quasiform!  "Get unlifted version of item"
+//              block!  "Recursively GET items into a PACK!"
 //              path!   "Specialize action specified by path"
 //              group!  "If :GROUPS, retrigger GET based on evaluated value"
 //              @block!
@@ -792,6 +680,31 @@ DECLARE_NATIVE(GET)
             return NULLED;
     }
 
+    if (Any_Lifted(target))
+        return UNLIFT(target);
+
+    if (Is_Block(target)) {
+        Source* a = Make_Source(Series_Len_At(target));
+
+        Context* binding = List_Binding(target);
+
+        const Element* tail;
+        const Element* at = List_At(&tail, target);
+
+        for (; at != tail; ++at) {
+            Derelativize(target, at, binding);
+            Bounce b = Apply_Cfunc(NATIVE_CFUNC(GET), LEVEL);
+            assert (b == OUT);
+            UNUSED(b);
+            require (
+              Sink(Element) elem = Alloc_Tail_Array(a)
+            );
+            Copy_Cell(elem, Liftify(OUT));
+        }
+
+        return Init_Pack(OUT, a);
+    }
+
     Option(Bounce) b = Irreducible_Bounce(
         LEVEL,
         Apply_Cfunc(NATIVE_CFUNC(TWEAK), LEVEL)
@@ -809,6 +722,28 @@ DECLARE_NATIVE(GET)
       Unliftify_Undecayed(OUT)
     );
     return OUT;
+}
+
+
+//
+//  Set_Var_In_Scratch_To_Out: C
+//
+Result(None) Set_Var_In_Scratch_To_Out(
+    Level* level_,  // OUT may be ERROR! antiform, see [A]
+    Option(Element*) steps_out  // no GROUP!s if nulled
+){
+    Liftify(OUT);  // must be lifted to be taken literally in dual protocol
+    Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
+        level_,
+        steps_out
+    );
+    require (
+      Unliftify_Undecayed(OUT)
+    );
+    if (e)
+        return fail (unwrap e);
+
+    return none;
 }
 
 

@@ -150,16 +150,6 @@
         : (L->flags.bits & LEVEL_FLAG_AFRAID_OF_GHOSTS))
 
 
-// When a SET-BLOCK! is being processed for multi-returns, it may encounter
-// leading-SPACE chains as in ([foo :bar]: 10).  Once the work of extracting
-// the real variable from the path is done and pushed to the stack, this bit
-// is used to record that the variable was optional.  This makes it easier
-// for the phase after the right hand side is evaluated--vs. making it pick
-// apart the path again.
-//
-#define CELL_FLAG_STACK_HINT_OPTIONAL  CELL_FLAG_HINT
-
-
 //
 // SET-WORD! and SET-TUPLE! want to do roughly the same thing as the first step
 // of their evaluation.  They evaluate the right hand side into L->out.
@@ -422,7 +412,7 @@ Bounce Stepper_Executor(Level* L)
             // don't care (will hit on next step if we care)
         }
         STATE = saved_state;
-        Copy_Cell(&L->scratch, TOP);
+        Copy_Cell(CURRENT, TOP_ELEMENT);
         DROP();
 
         if (e) {
@@ -1189,7 +1179,6 @@ Bounce Stepper_Executor(Level* L)
         goto handle_generic_set; }
 
       case TRAILING_SPACE_AND(BLOCK): {  // [a b]: multi-return assign
-        STATE = ST_STEPPER_SET_BLOCK;
         goto handle_set_block; }
 
       case TRAILING_SPACE_AND(GROUP): {  // (xxx): -- generic retrigger set
@@ -1545,7 +1534,6 @@ Bounce Stepper_Executor(Level* L)
     else switch (opt Type_Of(SPARE)) {
       case TYPE_BLOCK:
         Copy_Cell(CURRENT, cast(Element*, SPARE));
-        STATE = ST_STEPPER_SET_BLOCK;
         goto handle_set_block;
 
       case TYPE_WORD:
@@ -1562,218 +1550,15 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} handle_set_block: {
+} handle_set_block: {  ///////////////////////////////////////////////////////
 
-    // The evaluator treats SET-BLOCK! specially as a means for implementing
-    // multiple return values.  It unpacks antiform blocks into components.
-    //
-    //     >> pack [1 2]
-    //     == ~['1 '2]~  ; anti
-    //
-    //     >> [a b]: pack [1 2]
-    //     == 1
-    //
-    //     >> a
-    //     == 1
-    //
-    //     >> b
-    //     == 2
-    //
-    // If a component is optional (e.g. the pack is too short to provide it),
-    // it can be marked as a refinement.
-    //
-    //     >> [a b]: pack [1]
-    //     ** Error: pack doesn't have enough values to set b
-    //
-    //     >> [a :b]: pack [1]
-    //     == 1
-    //
-    //     >> b
-    //     == ~null~  ; anti
-    //
-    // It supports `_` in slots whose results you don't want to ask for, `#`
-    // in slots you want to ask for (but don't want to name), will evaluate
-    // GROUP!s, and also allows FENCE! to {circle} which result you want to be
-    // the overall result of the expression (defaults to passing through the
-    // entire pack).
-    //
-    // 1. Empty SET-BLOCK follows the same rules as any other block receiving
-    //    more values than it wants: it ignores the extra values, and passes
-    //    through the original assignment.  That's technically *all* potential
-    //    states that might come up on the right hand side--including ERROR!
-    //    The behavior naturally "falls out" of the implementation.
+    STATE = ST_STEPPER_SET_BLOCK;
 
-    assert(STATE == ST_STEPPER_SET_BLOCK and Is_Block(CURRENT));
-
-    possibly(Series_Len_At(CURRENT) == 0);  // pass through everything [1]
-
-    const Element* tail;
-    const Element* check = List_At(&tail, CURRENT);
-    Context* check_binding = Derive_Binding(L_binding, CURRENT);
-
-    // we've extracted the array at and tail, can reuse current now
-
-    Option(StackIndex) circled = 0;
-
-  push_variables_loop: for (; check != tail; ++check) {
-
-    // We pre-process the SET-BLOCK! first and collect the variables to write
-    // on the stack.  (It makes more sense for any GROUP!s in the set-block to
-    // be evaluated on the left before the right.)
-    //
-    // !!! Should the block be locked while the advancement happens?  It
-    // wouldn't need to be since everything is on the stack before code is run
-    // on the right...but it might reduce confusion.
-
-    if (Is_Quoted(check))
-        panic ("QUOTED? not currently permitted in SET-BLOCK!s");
-
-    bool circle_this;
-
-    if (not Is_Fence(check)) {  // not "circled"
-        circle_this = false;
-        Derelativize(CURRENT, check, check_binding);  // same heart
-        goto circle_detection_finished;
-    }
-
-  handle_fence_in_set_block: {  // "circled"
-
-    // By default, the evaluation product of a SET-BLOCK expression is what
-    // the right hand side was (e.g. an entire pack).  But {xxx} indicates a
-    // desire to pick a specific unpacked result as the return.
-    //
-    //     >> [a b]: pack [1 2]
-    //     == ~['1 '2]~  ; anti
-    //
-    //     >> [a {b}]: pack [1 2]
-    //     == 2
-
-    if (circled)
-        panic ("Can only {Circle} one multi-return result");
-
-    Length len_at = Series_Len_At(check);
-    if (len_at == 1) {
-        Derelativize(
-            CURRENT,
-            List_Item_At(check),
-            check_binding
-        );
-    }
-    else  // !!! should {} be a synonym for {_}?
-        panic ("{Circle} only one element in multi-return");
-
-    circle_this = true;
-
-} circle_detection_finished: {
-
-    bool is_optional;
-    bool is_action;
-
-    if (not Is_Chain(CURRENT)) {
-        is_optional = false;
-        goto optional_detection_finished;
-    }
-
-  handle_chain_in_set_block: {
-
-    Option(SingleHeart) single;
-    if (
-        not (single = Try_Get_Sequence_Singleheart(CURRENT))
-        or not Singleheart_Has_Leading_Space(unwrap single)
-    ){
-        panic (
-            "Only leading SPACE CHAIN! in SET BLOCK! dialect"
-        );
-    }
-    assume (
-      Unsingleheart_Sequence(CURRENT)
+    require (
+      bool threw = Push_Set_Block_Instructions_To_Stack_Throws(L, L_binding)
     );
-    is_optional = true;
-
-} optional_detection_finished: {
-
-    if (not Is_Path(CURRENT)) {
-        is_action = false;
-        goto path_detection_finished;
-    }
-
-    Option(SingleHeart) single;
-    if (
-        not (single = Try_Get_Sequence_Singleheart(CURRENT))
-        or not Singleheart_Has_Leading_Space(unwrap single)
-    ){
-        panic (
-            "Only leading SPACE PATH! in SET BLOCK! dialect"
-        );
-    }
-    assume (
-      Unsingleheart_Sequence(CURRENT)
-    );
-    is_action = true;
-
-} path_detection_finished: {
-
-    if (
-        Is_Group(CURRENT)
-        or Is_Pinned_Form_Of(GROUP, CURRENT)
-        or Is_Meta_Form_Of(GROUP, CURRENT)
-    ){
-        if (Eval_Any_List_At_Throws(SPARE, CURRENT, SPECIFIED)) {
-            Drop_Data_Stack_To(STACK_BASE);
-            goto return_thrown;
-        }
-        if (Is_Void(SPARE) and Is_Group(CURRENT)) {
-            Init_Quasar(PUSH());  // [(void)]: ... pass thru
-        }
-        else {
-            require (
-              Stable* spare = Decay_If_Unstable(SPARE)
-            );
-            if (Is_Antiform(spare))
-                panic (Error_Bad_Antiform(spare));
-
-            if (Is_Pinned_Form_Of(GROUP, CURRENT)) {
-                Pinify_Cell(Known_Element(spare));  // add @ decoration
-            }
-            else if (Is_Meta_Form_Of(GROUP, CURRENT)) {
-                Metafy_Cell(Known_Element(spare));  // add ^ decoration
-            }
-            else
-                assert(Is_Group(CURRENT));
-
-            Copy_Cell(PUSH(), spare);
-        }
-    }
-    else
-        Copy_Cell(PUSH(), CURRENT);
-
-    UNUSED(*CURRENT);  // look at stack top now
-
-    if (is_optional)  // so next phase won't worry about leading slash
-        Set_Cell_Flag(TOP, STACK_HINT_OPTIONAL);
-
-    if (is_action)
-        Set_Cell_Flag(TOP, SCRATCH_VAR_NOTE_ONLY_ACTION);
-
-    if (circle_this)
-        circled = TOP_INDEX;
-
-    if (Is_Metaform_Space(TOP) or Is_Meta_Form_Of(WORD, TOP))  // meta-assign result
-        continue;
-
-    if (Is_Word(TOP) or Is_Tuple(TOP))
-        continue;
-
-    if (Is_Space(TOP))
-        continue;
-
-    panic (
-        "SET-BLOCK! items are (@THE, ^META) WORD/TUPLE or _ or ^]"
-    );
-
-}}} set_block_eval_right_hand_side: {
-
-    level_->u.eval.stackindex_circled = circled;  // remember it
+    if (threw)
+        goto return_thrown;
 
     Level* sub = Maybe_Rightward_Continuation_Needed(L);
     if (not sub)
@@ -1781,178 +1566,11 @@ Bounce Stepper_Executor(Level* L)
 
     return CONTINUE_SUBLEVEL(sub);
 
-}} set_block_rightside_in_out: {
-
-    // 1. On errors we don't assign variables, yet pass the error through.
-    //    That permits code like this to work:
-    //
-    //        rescue [[a b]: transcode "1&aa"]
-
-    if (Is_Error(OUT))  // don't assign variables [1]
-        goto set_block_drop_stack_and_continue;
-
-} set_block_result_not_error: {
-
-    // 1. The OUT cell is used by the Set_Var() mechanics as the place to
-    //    write from.  Free it up so there's more space to work.  (This
-    //    means we have to stop our variable enumeration right before the
-    //    top of the stack.)
-    //
-    // 2. We enumerate from left to right in the SET-BLOCK!, with the "main"
-    //    being the first assigned to any variables.  This has the benefit
-    //    that if any of the multi-returns were marked as "circled" then the
-    //    overwrite of the returned OUT for the whole evaluation will happen
-    //    *after* the original OUT was captured into any desired variable.
-
-    Copy_Cell(PUSH(), OUT);  // free up OUT cell [1]
-
-    const Source* pack_array;  // needs GC guarding when OUT overwritten
-    const Element* pack_at_lifted;  // individual pack block items are lifted
-    const Element* pack_tail;
-
-    if (Is_Pack(OUT)) {  // antiform block
-        pack_at_lifted = List_At(&pack_tail, OUT);
-
-        pack_array = Cell_Array(OUT);
-        Push_Lifeguard(pack_array);
-    }
-    else {  // single item
-        Copy_Lifted_Cell(SPARE, OUT);
-        pack_at_lifted = cast(Element*, SPARE);
-        pack_tail = cast(Element*, SPARE) + 1;  // not a valid cell
-
-        pack_array = nullptr;
-    }
-
-    StackIndex stackindex_var = STACK_BASE + 1;  // [2]
-    Option(StackIndex) circled = level_->u.eval.stackindex_circled;
-
-  next_pack_item: {
-
-    if (stackindex_var == (TOP_INDEX + 1) - 1)  // -1 accounts for pushed OUT
-        goto set_block_finalize_and_drop_stack;
-
-    bool is_optional = Get_Cell_Flag(
-        Data_Stack_Cell_At(stackindex_var),
-        STACK_HINT_OPTIONAL
-    );
-
-    bool is_action = Get_Cell_Flag(
-        Data_Stack_Cell_At(stackindex_var),
-        SCRATCH_VAR_NOTE_ONLY_ACTION
-    );
-
-    Element* var = CURRENT;  // stable location (scratch), safe across SET
-    Copy_Cell(var, Data_Stack_At(Element, stackindex_var));
-    if (is_action) {
-        assert(var == &level_->scratch);
-        heeded (Set_Cell_Flag(var, SCRATCH_VAR_NOTE_ONLY_ACTION));
-    }
-
-    assert(LIFT_BYTE(var) == NOQUOTE_2);
-
-    if (pack_at_lifted == pack_tail) {  // no more multi-return values
-        if (not is_optional) {
-            if (circled == stackindex_var)
-                panic ("Circled item has no multi-return value to use");
-
-            Init_Ghost_For_End(OUT);
-
-            heeded (Corrupt_Cell_If_Needful(SPARE));
-            require (
-              Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS)
-            );
-            goto skip_circled_check;  // we checked it wasn't circled
-        }
-
-        // match typical input of lift which will be Unliftify'd
-        // (special handling ^WORD! below will actually use plain null to
-        // distinguish)
-        //
-        Init_Nulled(OUT);
-    }
-    else {
-        Copy_Cell(OUT, pack_at_lifted);
-        require (
-          Unliftify_Undecayed(OUT)  // unlift for output...
-        );
-    }
-
-    if (Is_Metaform_Space(var))
-        goto circled_check;
-
-    if (Is_Meta_Form_Of(WORD, var)) {
-        heeded (Corrupt_Cell_If_Needful(SPARE));
-        require (
-          Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS)
-        );
-        goto circled_check;  // ...because we may have circled this
-    }
-
-    if (Is_Error(OUT))  // don't pass thru errors if not ^ sigil
-        panic (Cell_Error(OUT));
+} set_block_rightside_in_out: {  /////////////////////////////////////////////
 
     require (
-      Decay_If_Unstable(OUT)
+      Set_Block_From_Instructions_On_Stack_To_Out(L)
     );
-
-    if (Is_Space(var))
-        goto circled_check;
-
-    if (Is_Word(var) or Is_Tuple(var) or Is_Pinned_Form_Of(WORD, var)) {
-        heeded (Corrupt_Cell_If_Needful(SPARE));
-        require (
-          Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK)
-        );
-    }
-    else
-        assert(false);
-
-    goto circled_check;
-
-} circled_check: { ///////////////////////////////////////////////////////////
-
-  // Note: no circling passes through the original PACK!
-
-    if (circled == stackindex_var)
-        Copy_Cell(TOP_ATOM, OUT);
-
-} skip_circled_check: { //////////////////////////////////////////////////////
-
-    ++stackindex_var;
-    if (pack_at_lifted != pack_tail)
-        ++pack_at_lifted;
-    goto next_pack_item;
-
-} set_block_finalize_and_drop_stack: {
-
-    // 1. At the start of the process we pushed the meta-value of whatever the
-    //    right hand side of the SET_BLOCK! was (as long as it wasn't an
-    //    ERROR!).  OUT gets overwritten each time we write a variable, so we
-    //    have to restore it to make the overall SET-BLOCK! process match
-    //    the right hand side.  (This value is overwritten by a circled value,
-    //    so it may not actually be the original right hand side.);
-
-    if (pack_array)
-        Drop_Lifeguard(pack_array);
-
-    Move_Value(OUT, TOP_ATOM);  // restore OUT (or circled) from stack [1]
-
-}} set_block_drop_stack_and_continue: {
-
-    // We've just changed the values of variables, and these variables
-    // might be coming up next.  Consider:
-    //
-    //     304 = [a]: test 1020
-    //     a = 304
-    //
-    // The `a` was fetched and found to not be infix, and in the process
-    // its value was known.  But then we assigned that a with a new value
-    // in the implementation of SET-BLOCK! here, so, it's incorrect.
-
-    Invalidate_Gotten(L_next_gotten_raw);
-
-    Drop_Data_Stack_To(STACK_BASE);  // drop writeback variables
     goto lookahead;
 
 

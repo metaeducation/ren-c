@@ -153,3 +153,10 @@
 (null? get:groups ())
 (null? get:groups ^void)
 (null? get:groups (^void))
+
+('~['1 '2]~ = lift get ['1 '2])
+(
+    a: 10
+    b: 20
+    '~['10 '20]~ = lift get [a b]
+)
