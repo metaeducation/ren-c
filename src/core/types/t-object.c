@@ -1106,7 +1106,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
                     Tweak_Cell_Binding(def, c);
                 return COPY(def);
             }
-            Init_Tripwire(Append_Context_Bind_Word(c, def));
+            Init_Ghost_For_Unset(Append_Context_Bind_Word(c, def));
             return COPY(def);
         }
 

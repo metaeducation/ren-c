@@ -63,7 +63,7 @@ void Bind_Values_Inner_Loop(
                     and Is_Set_Word(v)
                 )
             ){
-                Init_Tripwire(Append_Context_Bind_Word(context, v));
+                Init_Ghost_For_Unset(Append_Context_Bind_Word(context, v));
             }
           }
           else {
@@ -253,7 +253,7 @@ Let* Make_Let_Variable(
     );
 
     Init(Slot) slot = Slot_Init_Hack(u_cast(Slot*, Stub_Cell(let)));
-    Init_Tripwire(slot);
+    Init_Ghost_For_Unset(slot);
 
     Tweak_Link_Inherit_Bind_Raw(let, inherit);  // linked list [1]
     Corrupt_Unused_Field(let->misc.corrupt);  // not currently used
@@ -1318,7 +1318,9 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             symbol = Word_Symbol(item);
 
             if (Try_Add_Binder_Index(binder, symbol, index)) {
-                Stable* var = Init_Tripwire(Append_Context(varlist, symbol));
+                Value* var = Init_Ghost_For_Unset(
+                    Append_Context(varlist, symbol)
+                );
                 if (Is_Meta_Form_Of(WORD, item))
                     Set_Cell_Flag(var, LOOP_SLOT_ROOT_META);
                 else if (Is_Tied_Form_Of(WORD, item))

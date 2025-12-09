@@ -467,7 +467,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
             if (Get_Parameter_Flag(param, REFINEMENT))
                 Init_Nulled(arg);
             else
-                Init_Tripwire(arg);
+                Init_Unspecialized_Ghost(arg);
         }
     }
 

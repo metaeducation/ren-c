@@ -68,7 +68,7 @@ Result(None) Prep_Action_Level(
             if (Get_Parameter_Flag(param, REFINEMENT))
                 Init_Nulled(arg);
             else
-                Init_Tripwire(arg);
+                Init_Unspecialized_Ghost(arg);
         }
     }
 
@@ -229,10 +229,8 @@ bool Pushed_Continuation(
         for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
             if (Is_Specialized(param))
                 Blit_Param_Drop_Mark(arg, param);
-            else {
-                Erase_Cell(arg);
-                Init_Tripwire(arg);
-            }
+            else
+                Init_Ghost_For_Unset(Erase_Cell(arg));
         }
 
         arg = First_Unspecialized_Arg(&param, L);

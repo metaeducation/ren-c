@@ -64,7 +64,7 @@ transcode-header: func [
         line: $line
     ]
 
-    hdr: all [key = 'Rebol, block? hdr, hdr]
+    hdr: all [key = 'Rebol, match block! hdr]
     return pack [hdr rest line]  ; !!! hdr can be null but not ELSE-reactive
 ]
 
@@ -88,14 +88,9 @@ transcode-header: func [
 ; the binary data, which can contain anything you like. This can support
 ; multiple scripts in the same binary data ("multi-scripts").
 ;
-; If not /ONLY and the script is embedded in a block and not compressed then
+; If not :ONLY and the script is embedded in a block and not compressed then
 ; the body text will be a decoded block instead of binary, to avoid the
 ; overhead of decoding the body twice.
-;
-; Syntax errors are returned as words:
-;    no-header
-;    bad-header
-;    bad-compress
 ;
 load-header: func [
     "Loads script header object and body binary (not loaded)"

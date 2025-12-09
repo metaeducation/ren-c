@@ -543,7 +543,7 @@ Result(None) Wrap_Extend_Core(
     Option(Stump*) stump = cl->binder.stump_list;
     for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
         const Symbol* symbol = Info_Stump_Bind_Symbol(unwrap stump);
-        Init_Tripwire(Append_Context(context, symbol));
+        Init_Ghost_For_Unset(Append_Context(context, symbol));
     }
 
     Destruct_Collector(cl);
@@ -842,7 +842,7 @@ VarList* Make_Varlist_Detect_Managed(
 
     REBINT i;
     for (i = 1; i <= len; ++i, ++var)  // 0th item is rootvar, already filled
-        Init_Tripwire(var);  // need all slots valid before Read_Slot() call?
+        Init_Ghost_For_Unset(var);  // need all slots valid before Read_Slot()?
 
     if (parent) {
         Value* dest = Flex_At(Value, a, 1);
@@ -850,7 +850,6 @@ VarList* Make_Varlist_Detect_Managed(
         Slot* src = Varlist_Slots(&src_tail, unwrap parent);
         for (; src != src_tail; ++dest, ++src) {
             Flags clone_flags = BASE_FLAG_MANAGED;  // !!! Review, what flags?
-            unnecessary(assert(Is_Tripwire(Known_Stable(dest))));
 
             // !!! If we are creating a derived object, should it be able
             // to copy the ACCESSOR/etc.?
