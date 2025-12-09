@@ -215,7 +215,7 @@ DECLARE_NATIVE(READ_STDIN)
 //          error!  "Cancellation (e.g. ESCAPE or Ctrl-C)"
 //      ]
 //      source "Where to read from (stdin currently only place supported)"
-//          [~(@stdin)~]
+//          [~(#stdin)~]
 //      :raw "Include the newline, and allow reaching end of file with no line"
 //      :hide "Mask input with a * character (not implemented)"
 //  ]
@@ -251,7 +251,7 @@ DECLARE_NATIVE(READ_LINE)
     INCLUDE_PARAMS_OF_READ_LINE;
 
   #if RUNTIME_CHECKS
-    rebElide("assert [@stdin =", ARG(SOURCE), "]");
+    rebElide("assert [#stdin = @", ARG(SOURCE), "]");
   #else
     UNUSED(ARG(SOURCE));
   #endif
@@ -377,7 +377,7 @@ DECLARE_NATIVE(READ_LINE)
 //          error!      "ESCAPE pressed (if not :RAW) or timeout"
 //      ]
 //      source "Where to read from (stdin currently only place supported)"
-//          [~(@stdin)~]
+//          [~(#stdin)~]
 //      :raw "Return keys like Up, Ctrl-A, or ESCAPE literally"
 //      :timeout "Seconds to wait before returning ~timeout~ if no input"
 //          [integer! decimal!]
@@ -400,7 +400,7 @@ DECLARE_NATIVE(READ_CHAR)
     INCLUDE_PARAMS_OF_READ_CHAR;
 
   #if RUNTIME_CHECKS
-    rebElide("assert [@stdin =", ARG(SOURCE), "]");
+    rebElide("assert [#stdin = @", ARG(SOURCE), "]");
   #else
     UNUSED(ARG(SOURCE));
   #endif

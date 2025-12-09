@@ -128,8 +128,8 @@ DECLARE_NATIVE(READ)
 //
 //  "Writes to a file, URL, or port - auto-converts text strings"
 //
-//      return: [port! block! @word!]  ; !!! http write returns BLOCK!, why?
-//      destination [port! file! url! block! @word!]
+//      return: [port! block! ~(#stdout)~]  ; !!! http write returns BLOCK (?)
+//      destination [port! file! url! block! ~(#stdout)~]
 //      data "Data to write (non-binary converts to UTF-8)"
 //          [blob! text! block! object! rune!]
 //      :part "Partial write a given number of units"
@@ -147,9 +147,9 @@ DECLARE_NATIVE(WRITE)
     Element* port = Element_ARG(DESTINATION);
     Element* data = Element_ARG(DATA);
 
-    if (Is_Pinned_Form_Of(WORD, port)) {
-        if (Word_Id(port) != SYM_STDOUT)
-            panic ("only @stdout support on WRITE for @ right now");
+    if (Is_Rune(port)) {
+        if (rebNot("#stdout =", port))
+            panic ("only #stdout support on WRITE for RUNE! right now");
 
         if (Bool_ARG(PART) or Bool_ARG(SEEK) or Bool_ARG(APPEND))
             panic (Error_Bad_Refines_Raw());
