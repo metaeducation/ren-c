@@ -75,8 +75,7 @@ for-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
     ]
 ]
 
-emit-proto: func [
-    return: ~
+emit-proto: proc [
     proto [text!]
 ][
     let [
@@ -109,7 +108,7 @@ emit-proto: func [
         ]
     ]
 
-    if header.2 != 'API [return ~]
+    if header.2 != 'API [exit]
     if not set-word? header.1 [
         panic ["API declaration should be a SET-WORD!, not" (header.1)]
     ]
@@ -179,7 +178,6 @@ emit-proto: func [
         proto: (ensure text! proto)
         is-variadic: (reify is-variadic)
     ]
-    return ~
 ]
 
 process: proc [ file] [

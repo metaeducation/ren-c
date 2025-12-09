@@ -158,10 +158,9 @@ argv-block-to-command*: func [
 ; as some potentially OS-specific detection on how to launch URLs (e.g. looks
 ; at registry keys on Windows)
 
-browse: func [
+browse: proc [
     "Open web browser to a URL or local file."
 
-    return: ~
     location [<opt-out> url! file!]
 ][
     print "Opening web browser..."
@@ -179,7 +178,7 @@ browse: func [
         call:shell command except [  ; CALL is synchronous by default
             continue  ; just keep trying
         ]
-        return ~
+        exit
     ]
     panic "Could not open web browser"
 ]

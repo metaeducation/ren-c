@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -237,7 +237,16 @@ Bounce Func_Dispatcher(Level* const L)
   //    would mean people writing custom loop generators would have to use
   //    LAMBDA instead of FUNC.)
 
-    panic ("End of FUNCTION reached without calling RETURN (see LAMBDA)");
+    const Element* param = Quoted_Returner_Of_Paramlist(
+        Phase_Paramlist(details), SYM_RETURN
+    );
+
+    if (Get_Parameter_Flag(param, AUTO_TRASH)) {
+        Init_Trash_Named_From_Level(OUT, L);
+        return OUT;
+    }
+
+    panic ("FUNCTION end without calling RETURN (see LAMBDA, PROCEDURE)");
 }}
 
 
@@ -413,6 +422,54 @@ DECLARE_NATIVE(FUNCTION)
         &Func_Dispatcher,
         MAX_IDX_FUNC  // archetype and one array slot (will be filled)
     ));
+
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
+    return Packify_Action(OUT);
+}
+
+
+//
+//  procedure: native [
+//
+//  "Variation of FUNCTION that will always return TRASH!"
+//
+//      return: [~[action!]~]
+//      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
+//          [block!]
+//      body [block!]
+//  ]
+//
+DECLARE_NATIVE(PROCEDURE)
+{
+    INCLUDE_PARAMS_OF_PROCEDURE;
+
+    Element* spec = Element_ARG(SPEC);
+    Element* body = Element_ARG(BODY);
+
+    require (
+      Details* details = Make_Interpreted_Action(
+        spec,
+        body,
+        SYM_RETURN,
+        &Func_Dispatcher,
+        MAX_IDX_FUNC  // archetype and one array slot (will be filled)
+    ));
+
+    Element* param = m_cast(Element*, Quoted_Returner_Of_Paramlist(
+        Phase_Paramlist(details), SYM_RETURN
+    ));
+
+    if (Is_Parameter_Unconstrained(param)) {
+        Unprotect_Cell(param);
+        const Strand* notes = opt Parameter_Strand(param);
+        Copy_Cell(param, g_auto_trash_param);
+        Set_Parameter_Strand(param, notes);
+        Quotify_Parameter_Local(param);
+        Set_Cell_Flag(param, PARAM_NOTE_TYPECHECKED);
+        Protect_Cell(param);
+    }
+    else if (Not_Parameter_Flag(param, AUTO_TRASH))
+        panic ("If PROCEDURE has RETURN:, it must be [return: ~]");
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return Packify_Action(OUT);

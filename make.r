@@ -1130,13 +1130,12 @@ help-object: make object! collect [parse3 help-spec [
 topic: spec: ~  ; avoid leaks (FWIW)
 
 
-help: func [
-    return: ~
+help: proc [
     :topic [text!]
 ][
     if not topic [
         print help-object.usage
-        return ~
+        exit
     ]
     topic: to-word topic
     print newline
@@ -1144,14 +1143,14 @@ help: func [
         for-each [topic msg] help-object [
             print msg
         ]
-        return ~
+        exit
     ]
     let msg: select help-object topic
     if not msg [
         print ["Unknown topic:" topic]
         print newline
         print help-object.usage
-        return ~
+        exit
     ]
     print msg
 ]

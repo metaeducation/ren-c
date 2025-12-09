@@ -288,42 +288,6 @@ DECLARE_NATIVE(LAMBDA)
 
 
 //
-//  procedure: native [
-//
-//  "Variation of LAMBDA that will always return TRASH!"
-//
-//      return: [~[action!]~]
-//      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
-//          [block!]
-//      body [block!]
-//  ]
-//
-DECLARE_NATIVE(PROCEDURE)
-{
-    INCLUDE_PARAMS_OF_PROCEDURE;
-
-    Element* spec = Element_ARG(SPEC);
-    Element* body = Element_ARG(BODY);
-
-    Option(SymId) no_returner = none;  // don't allow []: or RETURN:
-
-    require (
-      Details* details = Make_Interpreted_Action(
-        spec,
-        body,
-        no_returner,
-        &Lambda_Dispatcher,
-        MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
-    ));
-
-    Init_Quasar(Details_At(details, IDX_LAMBDA_RESULT_PARAM));  // no return
-
-    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
-    return Packify_Action(OUT);
-}
-
-
-//
 //  diverger: native [
 //
 //  "Declares divergent function (will PANIC if it reaches the end of body)"

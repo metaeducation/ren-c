@@ -203,13 +203,12 @@ bytes-to-version: reverse copy version-to-bytes
 emit: proc [
     "Emits binary data, optionally marking positions with SET-WORD!"
 
-    return: ~
     ctx [object!]
     code [block! blob!]
 ][
     if blob? code [
         append ctx.msg code
-        return ~
+        exit
     ]
 
     while [not tail? code] [
@@ -226,7 +225,6 @@ emit: proc [
             ]
         ]
     ]
-    return ~
 ]
 
 ; Network formats generally use big-endian byte ordering.  The concept seems
@@ -791,8 +789,7 @@ change-cipher-spec: proc [
 ]
 
 
-encrypted-handshake-msg: func [
-    return: ~
+encrypted-handshake-msg: proc [
     ctx [object!]
     unencrypted [blob!]
 ][

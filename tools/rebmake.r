@@ -445,8 +445,7 @@ cc: make compiler-class [
     id: null
     exec-file: %cc
 
-    check: func [
-        return: ~
+    check: proc [
         "Assigns .exec-file, extracts the compiler version"
         exec [<opt> file! text!]
         <.>
@@ -454,7 +453,7 @@ cc: make compiler-class [
         .exec-file: any [exec, .exec-file]
 
         if .name [  ; don't need to try and guess what kind of compiler it is
-            return ~
+            exit
         ]
 
         ; Try auto-detecting what kind of compiler it is
@@ -504,7 +503,6 @@ cc: make compiler-class [
             ]
         ]
       ]
-      return ~
     ]
 
     compile: func [
@@ -1207,8 +1205,7 @@ generator-class: make object! [
         ]
     ]
 
-    setup-output: func [
-        return: ~
+    setup-output: proc [
         project [object!]
         <.>
     ][
@@ -1220,7 +1217,7 @@ generator-class: make object! [
             #object-library [target-platform.archive-suffix]
             #object-file [target-platform.obj-suffix]
         ] else [
-            return ~
+            exit
         ]
 
         let basename
@@ -1259,12 +1256,10 @@ generator-class: make object! [
         ]
 
         project.basename: basename
-        return ~
     ]
 
-    setup-outputs: func [
+    setup-outputs: proc [
         "Set the output and implib for the project tree"
-        return: ~
         project [object!]
         <.>
     ][
@@ -1276,7 +1271,7 @@ generator-class: make object! [
             #static-library
             #solution
             #object-library [
-                if yes? project.generated [return ~]
+                if yes? project.generated [exit]
                 ./setup-output project
                 project.generated: 'yes
                 for-each 'dep project.depends [
@@ -1289,7 +1284,6 @@ generator-class: make object! [
         ] else [
             ; !!! can this happen?  non-exhaustive list?
         ]
-        return ~
     ]
 ]
 
@@ -1504,8 +1498,7 @@ export execution: make generator-class [
     gen-cmd-create: host.gen-cmd-create/
     gen-cmd-delete: host.gen-cmd-delete/
 
-    run-target: func [
-        return: ~
+    run-target: proc [
         target [object!]
         :cwd "change working directory"  ; !!! Not heeded (?)
             [file!]
@@ -1522,7 +1515,7 @@ export execution: make generator-class [
                     exists? to file! target.target
                 ][
                     ; TODO: Check timestamp to see if it needs to be updated
-                    return ~
+                    exit
                 ]
                 either block? target.commands [
                     for-each 'cmd target.commands [
@@ -1539,7 +1532,6 @@ export execution: make generator-class [
             (dump target)
             panic "Unrecognized target class"
         ]
-        return ~
     ]
 
     run: proc [
@@ -1548,12 +1540,12 @@ export execution: make generator-class [
             [object!]
     ][
         ;dump project
-        if not object? project [return ~]
+        if not object? project [exit]
 
         ./prepare project
 
         if not find [#dynamic-extension #static-extension] project.class [
-            if yes? project.generated [return ~]
+            if yes? project.generated [exit]
             project.generated: 'yes
         ]
 

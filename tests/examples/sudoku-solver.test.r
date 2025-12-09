@@ -73,7 +73,7 @@
         return okay
     ]
 
-    solve: func [] [
+    solve: proc [] [
         count-up 'y 9 [
             count-up 'x 9 [
                 if 0 = input.(9 * (y - 1) + x) [
@@ -84,14 +84,14 @@
                             input.(9 * (y - 1) + x): 0  ; backtracking
                         ]
                     ]
-                    return ~
+                    exit
                 ]
             ]
         ]
         output: copy input  ; will backtrack and put the zeros back
     ]
 
-    solve
+    /solve
 
     (form-grid output) = trim -[
         5 3 4 | 6 7 8 | 9 1 2

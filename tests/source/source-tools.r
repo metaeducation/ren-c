@@ -199,8 +199,10 @@ export analyse: context [
 
             let non-std-func-space: null
 
-            let emit-proto: func [return: ~ proto] [
-                if not block? proto-parser.data [return ~]
+            let emit-proto: proc [proto] [
+                if not block? proto-parser.data [
+                    exit
+                ]
 
                 eval overbind c-parser-extension [
                     if last-func-end [
@@ -273,7 +275,6 @@ export analyse: context [
                         ]
                     ]
                 ]
-                return ~
             ]
 
             proto-parser.emit-proto: emit-proto/

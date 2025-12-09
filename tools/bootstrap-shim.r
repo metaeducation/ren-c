@@ -910,13 +910,17 @@ func-core: lambda3 [
     :member [<skip> set-word3!]
     spec
     body
+    /has-return
     /must-return
     <local> gen
 ][
-    gen: either must-return [
-        body: append3 copy body [  ; splices
-            panic:blame "FUNCTION did not have a RETURN" $return
+    gen: either has-return [
+        body: append3 copy body either must-return [  ; splices
+            [panic:blame "FUNCTION did not have a RETURN" $return]
+        ] [
+            [return ~]
         ]
+        insert3 body [let exit: does [return ~]]  ; splices
         func3/  ; want definitional return
     ][
         lambda3/  ; don't want definitional return for PROCEDURE
@@ -941,9 +945,9 @@ func-core: lambda3 [
     ]
 ]
 
-func: infix specialize func-core/ [must-return: okay]
+func: infix specialize func-core/ [must-return: okay, has-return: okay]
 
-proc: infix specialize func-core/ [must-return: null]
+proc: infix specialize func-core/ [must-return: null, has-return: okay]
 
 function: ~#[FUNCTION deprecated (will be FUNC synonym, eventually)]#~
 

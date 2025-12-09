@@ -30,6 +30,8 @@ c-break-debug: c-debug-break/  ; easy to mix up
 func: function/  ; historical and heavily-used abbreviation
 proc: procedure/  ; long to write out, so abbreviate it
 
+exit: specialize inline/ [code: [return ~]]
+
 lib: system.contexts.lib  ; alias for faster access
 
 ; Note: OPTIONAL-VETO is an optimized intrinsic of the same functionality

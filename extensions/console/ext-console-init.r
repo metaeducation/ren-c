@@ -111,7 +111,7 @@ export console!: make object! [
         write stdout space
     ]
 
-    print-result: func [
+    print-result: proc [
         ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-value?]
         <.>
@@ -128,14 +128,14 @@ export console!: make object! [
 
         if error? ^v [
             print-error disarm ^v
-            return ~
+            exit
         ]
 
         === GHOSTS! ===
 
         if ghost? ^v [
             print unspaced [result _ "\~,~\" _ _ ";" _ "antiform (ghost!)"]
-            return ~
+            exit
         ]
 
         === UNPACK FIRST VALUE IN "PACKS" ===
@@ -152,7 +152,7 @@ export console!: make object! [
                 print unspaced [
                     result _ --[\~[]~\  ; antiform (pack!) "void"]--
                 ]
-                return ~
+                exit
             ]
 
             if not decayable? ^v [
@@ -161,7 +161,7 @@ export console!: make object! [
                 print unspaced [
                     result _ "\" mold quasi v "\" _ _ ";" _ "antiform (pack!)"
                 ]
-                return ~
+                exit
             ]
 
             let len: length of unanti ^v
@@ -173,7 +173,7 @@ export console!: make object! [
                     "\~[" (mold lift ^v) "]~\"
                         _ --[; antiform (pack!) "action-pack"]--
                 ]
-                return ~
+                exit
             ]
 
             print ["; first in pack of length" len]
@@ -204,7 +204,7 @@ export console!: make object! [
         ; a debugging aid for knowing where trashes came from).
 
         if trash? ^v [
-            return ~
+            exit
         ]
 
         === ANTIFORMS (^META v parameter means they are quasiforms) ===
@@ -235,7 +235,7 @@ export console!: make object! [
             print unspaced [
                 result _ "\" mold v "\" _ _ ";" _ "antiform (" name "!)"
             ]
-            return ~
+            exit
         ]
 
         === "ORDINARY" VALUES (non-antiform) ===
@@ -272,8 +272,6 @@ export console!: make object! [
             ]
             print [result (molded)]
         ]
-
-        return ~
     ]
 
     print-warning: proc [s <.>] [print [warning reduce s]]

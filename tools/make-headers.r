@@ -53,8 +53,7 @@ e-funcs: make-emitter "Internal API" (
 
 prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 
-emit-proto: func [
-    return: ~
+emit-proto: proc [
     proto [text!]
 ][
     any [
@@ -63,7 +62,7 @@ emit-proto: func [
 
         ; should anything be done here with IMPLEMENT_GENERIC() ?
     ] then [
-        return ~
+        exit
     ]
 
     let header: proto-parser.data
@@ -89,7 +88,7 @@ emit-proto: func [
             ; and considers itself to have "non-extension linkage" to the API,
             ; so the calls can be directly linked without a struct.
             ;
-            return ~
+            exit
         ]
         'C [
             ; The only accepted type for now
@@ -111,8 +110,6 @@ emit-proto: func [
     e-funcs/emit [proto proto-parser.file --[
         RL_API $<Proto>; /* $<proto-parser.file> */
     ]--]
-
-    return ~
 ]
 
 process-conditional: proc [
@@ -181,9 +178,8 @@ e-funcs/emit [--[
 ; Items can be blocks if there's special flags for the file (<no-make-header>
 ; marks it to be skipped by this script)
 ;
-handle-item: func [
+handle-item: proc [
     "Handle a single item in %file-base.r"
-    return: ~
     name [path! tuple! file!]  ; bootstrap EXE loads [foo.c] as [foo/c]
     dir [<opt> file!]
     options [<opt> block!]
@@ -194,7 +190,7 @@ handle-item: func [
         block? opt options
         find options <no-make-header>
     ] then [
-        return ~  ; skip this file
+        exit ; skip this file
     ]
 
     assert [
@@ -207,7 +203,6 @@ handle-item: func [
     proto-parser.file: to file! unspaced [opt subdir, file]
     proto-parser.emit-directive: emit-directive/
     proto-parser/process (as text! read proto-parser.file)
-    return ~
 ]
 
 name: null

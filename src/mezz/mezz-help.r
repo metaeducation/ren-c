@@ -158,10 +158,9 @@ help-action: proc [
 ]
 
 
-help-value: func [
+help-value: proc [
     "Give non-dialected help for an atom with any datatype"
 
-    return: ~
     ^value [any-value?]
     :name [word! tuple! path!]
 ][
@@ -188,15 +187,15 @@ help-value: func [
         ]
         if free? value [
             print "!!! contents no longer available, as it has been FREE'd !!!"
-            return ~
+            exit
         ]
         if action? ^value [
             help-action ^value
-            return ~
+            exit
         ]
         let [molded truncated]: mold:limit atom' 2000  ; quasiform
         print unspaced [molded (? if truncated ["..."]) _ _ "; anti"]
-        return ~
+        exit
     ]
 
     value: decay ^value  ; Note: synonym for (value: ^value)
@@ -204,17 +203,16 @@ help-value: func [
     print [opt name "is an element of type" to word! type of value]
     if free? value [
         print "!!! contents no longer available, as it has been FREE'd !!!"
-        return ~
+        exit
     ]
     if match [object! port!] value [
         for-each 'line summarize-obj value [
             print line
         ]
-        return ~
+        exit
     ]
     let [molded truncated]: mold:limit value 2000
     print unspaced [molded (if truncated ["..."])]
-    return ~
 ]
 
 
@@ -261,14 +259,14 @@ help: func [
         help object!
         help datatype!]--
 
-    return: ~
+    return: ~  ; may return other types if dialected to do so?
     @topic "WORD! to explain, or other HELP target (if no args, general help)"
         [<end> element?]
     :web "Open web browser to related documentation."
 ][
     if unset? $topic [  ; just `>> help` or `eval [help]` or similar
         print-general-help
-        return ~
+        exit
     ]
 
     if web [
@@ -281,7 +279,7 @@ help: func [
             browse join url! [
                 http://www.rebol.com/r3/docs/datatypes/ (string) ".html"
             ]
-            return ~
+            exit
         ]
 
         ; !!! The logic here repeats somewhat the same thing that is done
@@ -306,7 +304,7 @@ help: func [
         browse join url! [
             https://github.com/gchiu/reboldocs/blob/master/ (item) ".MD"
         ]
-        return ~
+        exit
     ]
 
     let make-libuser: does [  ; hacky unified context for searching
@@ -327,7 +325,7 @@ help: func [
         word! tuple! path! [
             let ^value: get meta topic except e -> [
                 print form e  ; not bound, etc.
-                return ~
+                exit
             ]
             if action? ^value [
                 help-action:name ^value topic  ; bypass print name
@@ -367,14 +365,13 @@ help: func [
         print "For info on what it evaluates to, try" ["HELP (" topic ")"]
     ]
 
-    return ~
+    exit
 ]
 
 
-source: func [
+source: proc [
     "Prints the source code for an ACTION! (if available)"
 
-    return: ~
     @arg [<unrun> word! path! frame! tag!]
 ][
     let name
@@ -394,7 +391,7 @@ source: func [
             name: arg
             if action? (^f: get arg else [
                 print [name "is not set to a value"]
-                return ~
+                exit
             ]) [
                 f: unrun f/
             ]
@@ -415,7 +412,7 @@ source: func [
             ]
         ]
     ] then [
-        return ~
+        exit
     ]
 
     let r-param: return of f
@@ -457,8 +454,6 @@ source: func [
     ] else [
         print "...native code, no source available..."
     ]
-
-    return ~
 ]
 
 
@@ -517,13 +512,12 @@ bugs: proc [
 
 ; temporary solution to ensuring scripts run on a minimum build
 ;
-require-commit: func [
+require-commit: proc [
     "checks current commit against required commit"
 
-    return: ~
     commit [text!]
 ][
-    let c: select system.script.header 'commit else [return ~]
+    let c: select system.script.header 'commit else [exit]
 
     ; If we happen to have commit information that includes a date, then we
     ; can look at the date of the running Rebol and know that a build that is
@@ -557,5 +551,4 @@ require-commit: func [
             ]
         ]
     ]
-    return ~
 ]

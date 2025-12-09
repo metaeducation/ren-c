@@ -41,10 +41,9 @@ log: proc [
     write stdout unspaced report
 ]
 
-run-single-test: func [
+run-single-test: proc [
     "Run code and write the success or failure to the log file"
 
-    return: ~
     code "Code GROUP! from test file, assumed bound into isolated module"
         [group!]
     expected-id [<opt> word!]
@@ -62,7 +61,7 @@ run-single-test: func [
     ] then [
         .successes: me + 1
         log reduce [_ -["correct failure:"]- _ @(quasi expected-id) newline]
-        return ~
+        exit
     ]
 
     case [
@@ -86,7 +85,7 @@ run-single-test: func [
         result = '~okay~ [
             .successes: me + 1
             log reduce [_ -["succeeded"]- newline]
-            return ~
+            exit
         ]
 
         result = '~null~ [
@@ -105,11 +104,9 @@ run-single-test: func [
         .test-failures: me + 1
         log reduce [space -["failed, ]- message -["]- newline]
     ]
-    return ~
 ]
 
-run-test-cluster: func [
-    return: ~
+run-test-cluster: proc [
     flags [block!]
     cluster "Block of GROUP!s to be run together in a common isolated context"
         [block!]
@@ -117,7 +114,7 @@ run-test-cluster: func [
     if not empty? exclude flags .allowed-flags [
         .skipped: me + 1
         log [space -["skipped"]- newline]
-        return ~
+        exit
     ]
 
     ; Here we use MODULE instead of MAKE MODULE! so that we get IMPORT and
@@ -174,16 +171,13 @@ run-test-cluster: func [
             run-single-test inside isolate group opt expected-id
         )
     ]]
-
-    return ~
 ]
 
 
 ; The tests are collected in a pre-phase with COLLECT-TESTS.  It produces a
 ; long list of BLOCK!s that are test groups.
 ;
-process-tests: func [
-    return: ~
+process-tests: proc [
     test-sources [block!]
     handler [action!]
 ][

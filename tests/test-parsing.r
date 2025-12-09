@@ -190,8 +190,7 @@ export collect-tests: func [
     return into
 ]
 
-export collect-logs: func [
-    return: ~
+export collect-logs: proc [
     collected-logs "collect the logged results here (modified)"
         [block!]
     log-file [file!]

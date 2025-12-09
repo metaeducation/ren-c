@@ -42,8 +42,8 @@ set extend lib 'recover (
     ~#[See SYS.UTIL/RECOVER and https://forum.rebol.info/t/1871]#~
 )
 
-exit: lib.exit/
-lib.exit: ~#[See SYS.UTIL/EXIT]#~
+exit: lib.exit-process/
+lib.exit-process: ~#[See SYS.UTIL/EXIT]#~
 
 
 ; 1. The console exits to the shell, and hence really only needs the exit code

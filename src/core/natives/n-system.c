@@ -43,7 +43,7 @@ DECLARE_NATIVE(HALT)
 
 
 //
-//  exit: native [
+//  exit-process: native [
 //
 //  "Stop the interpreter, return exit status"
 //
@@ -53,9 +53,9 @@ DECLARE_NATIVE(HALT)
 //      :abrupt "Don't shut down, end process immediately (leaks in Valgrind)"
 //  ]
 //
-DECLARE_NATIVE(EXIT)  // moved to SYS.UTIL/EXIT by boot code, for safety
+DECLARE_NATIVE(EXIT_PROCESS)  // moved to SYS.UTIL/EXIT by boot
 {
-    INCLUDE_PARAMS_OF_EXIT;
+    INCLUDE_PARAMS_OF_EXIT_PROCESS;
 
     int status = VAL_INT32(ARG(STATUS));  // exit() takes an int
 
