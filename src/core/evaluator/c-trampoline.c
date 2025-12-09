@@ -280,7 +280,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
       result_in_out:
         UNUSED(bounce);
 
-        assert(Is_Cell_Readable(L->out));
+        Assert_Cell_Readable(L->out);
 
         if (Get_Level_Flag(L, FORCE_HEAVY_NULLS)) {
             if (Is_Light_Null(L->out))

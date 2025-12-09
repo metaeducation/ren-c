@@ -78,7 +78,7 @@
 #include "sys-core.h"
 
 
-#define PRIMED  cast(Value*, &L->u.eval.primed)
+#define PRIMED  &L->u.eval.primed
 
 
 static bool Using_Sublevel_For_Stepping(Level* L) {  // see [A]
@@ -157,15 +157,19 @@ Bounce Evaluator_Executor(Level* const L)
         ));
         Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-        if (Is_Level_At_End(sub))
+        if (Is_Level_At_End(sub)) {
+            Init_Ghost(OUT);
             goto finished;
+        }
 
         STATE = ST_EVALUATOR_STEPPING;
         return CONTINUE_SUBLEVEL(sub);  // executors *must* catch
     }
 
-    if (Is_Level_At_End(L))
+    if (Is_Level_At_End(L)) {
+        Init_Ghost(OUT);
         goto finished;
+    }
 
     goto call_stepper_executor_directly;
 
@@ -221,8 +225,10 @@ Bounce Evaluator_Executor(Level* const L)
     Level* step_level = Level_For_Stepping(L);
 
     if (Is_Ghost(OUT)) {  // ELIDE, COMMENT, ~,~ or ^GHOST-VAR etc. [1]
-        if (Is_Level_At_End(step_level))
+        if (Is_Level_At_End(step_level)) {
+            Move_Value(OUT, PRIMED);
             goto finished;
+        }
 
         goto start_new_step;  // leave previous result as-is in PRIMED
     }
@@ -230,14 +236,13 @@ Bounce Evaluator_Executor(Level* const L)
     possibly(Get_Level_Flag(step_level, AFRAID_OF_GHOSTS));
     Set_Level_Flag(step_level, AFRAID_OF_GHOSTS);  // always unafraid now [B]
 
-    Move_Value(PRIMED, OUT);  // make current result the preserved one
-
     if (Is_Level_At_End(step_level))
         goto finished;
 
     require (  // panic if error seen before final step [2]
       Elide_Unless_Error_Including_In_Packs(PRIMED)
     );
+    Move_Value(PRIMED, OUT);  // make current result the preserved one
 
     goto start_new_step;
 
@@ -246,7 +251,6 @@ Bounce Evaluator_Executor(Level* const L)
     if (Using_Sublevel_For_Stepping(L))
         Drop_Level(SUBLEVEL);
 
-    Move_Value(OUT, PRIMED);
     return OUT;
 }}
 
