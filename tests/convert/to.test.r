@@ -5,7 +5,6 @@
 ; decoration after conversion.
 ;
 ('percent! = to word! percent!)
-('money! = to word! money!)
 
 [#1967
     (not same? to blob! [1] to blob! [2])

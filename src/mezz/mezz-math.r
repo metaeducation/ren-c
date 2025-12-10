@@ -30,9 +30,9 @@ atan: arctangent:radians/
 
 modulo: func [
     "Compute a remainder of A divided by B with the sign of B."
-    return: [any-number? money! time!]
-    a [any-number? money! time!]
-    b [any-number? money! time!] "Must be nonzero."
+    return: [any-number? time!]
+    a [any-number? time!]
+    b [any-number? time!] "Must be nonzero."
     :adjusted "Set 'almost zero' and 'almost B' to zero"
 ][
     ; This function tries to find the remainder that is "almost non-negative"
@@ -63,7 +63,7 @@ pow: infix power/
 
 sign-of: func [
     "Returns sign of number as 1, 0, or -1 (to use as multiplier)."
-    value [any-number? money! time!]
+    value [any-number? time!]
 ][
     return case [
         positive? value [1]

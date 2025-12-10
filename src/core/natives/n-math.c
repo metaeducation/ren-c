@@ -48,8 +48,8 @@
 //
 //  "Changes the sign of a number (see COMPLEMENT for inversion of sets)"
 //
-//      return: [any-number? pair! money! time!]
-//      value [any-number? pair! money! time!]
+//      return: [any-number? pair! time!]
+//      value [any-number? pair! time!]
 //  ]
 //
 DECLARE_NATIVE(NEGATE)
@@ -252,8 +252,8 @@ DECLARE_NATIVE(POWER)
 //
 //  "Returns the absolute value"
 //
-//      return: [any-number? pair! money! time!]
-//      value [any-number? pair! money! time!]
+//      return: [any-number? pair! time!]
+//      value [any-number? pair! time!]
 //  ]
 //
 DECLARE_NATIVE(ABSOLUTE)
@@ -268,10 +268,10 @@ DECLARE_NATIVE(ABSOLUTE)
 //
 //  "Returns the first number raised to the second number"
 //
-//      return: [any-number? pair! money! time!]
-//      value [any-number? pair! money! time!]
+//      return: [any-number? pair! time!]
+//      value [any-number? pair! time!]
 //      :to "Return the nearest multiple of the parameter (must be non-zero)"
-//          [any-number? money! time!]
+//          [any-number? time!]
 //      :even "Halves round toward even results"
 //      :down "Round toward zero, ignoring discarded digits. (truncate)"
 //      :half-down "Halves round toward zero"
@@ -1196,7 +1196,7 @@ DECLARE_NATIVE(ZEROIFY)
 //  "Returns TRUE if the value is negative"
 //
 //      return: [logic?]
-//      value [any-number? money! time! pair!]
+//      value [any-number? time! pair!]
 //  ]
 //
 DECLARE_NATIVE(NEGATIVE_Q)
@@ -1216,7 +1216,7 @@ DECLARE_NATIVE(NEGATIVE_Q)
 //  "Returns TRUE if the value is positive"
 //
 //      return: [logic?]
-//      value [any-number? money! time! pair!]
+//      value [any-number? time! pair!]
 //  ]
 //
 DECLARE_NATIVE(POSITIVE_Q)

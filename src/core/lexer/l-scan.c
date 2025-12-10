@@ -1762,20 +1762,8 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             goto rune_or_file_token;  // different policies on / : .
 
           case LEX_SPECIAL_DOLLAR:
-            if (
-                cp[1] == '$' or cp[1] == ':' or Is_Lex_Delimit(cp[1])
-            ){
-                while (*cp == '$')
-                    ++cp;
-                S->end = cp;
-                return TOKEN_WORD;
-            }
-            if (Has_Lex_Flag(flags, LEX_SPECIAL_AT)) {
-                token = TOKEN_EMAIL;
-                goto prescan_subsume_all_dots;
-            }
-            token = TOKEN_MONEY;
-            goto prescan_subsume_up_to_one_dot;
+            S->end = cp + 1;
+            return TOKEN_DOLLAR;
 
           case LEX_SPECIAL_UTF8_ERROR:
             return fail (Error_Syntax(S, TOKEN_WORD));
@@ -1967,10 +1955,8 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
         token = TOKEN_EMAIL;
         goto prescan_subsume_all_dots;
     }
-    if (Has_Lex_Flag(flags, LEX_SPECIAL_DOLLAR)) {  // !!! XYZ$10.20 ??
-        token = TOKEN_MONEY;
-        goto prescan_subsume_up_to_one_dot;
-    }
+    if (Has_Lex_Flag(flags, LEX_SPECIAL_DOLLAR))  // !!! XYZ$10.20 ??
+        return fail ("Dollar sign in invalid position");
     if (Has_Lex_Flags(flags, LEX_FLAGS_NONWORD_SPECIALS))
         return fail (Error_Syntax(S, TOKEN_WORD));  // non-word chars (eg % \ )
     if (
@@ -1984,7 +1970,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
 
 } prescan_subsume_up_to_one_dot: { ////////////////////////////////////////////
 
-    assert(token == TOKEN_MONEY or token == TOKEN_TIME);
+    assert(token == TOKEN_TIME);
 
     // By default, `.` is a delimiter class which stops token scaning.  So if
     // scanning $10.20 or $3.04, there is common code to look past the
@@ -2498,24 +2484,6 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     if (S->begin[len - 1] == '%')
         KIND_BYTE(TOP) = TYPE_PERCENT;
-
-    goto lookahead;
-
-} case TOKEN_MONEY: { ////////////////////////////////////////////////////////
-
-  // !!! Money is slated for deletion, as $ is a Sigil now.  So $1.2 is a
-  // DECIMAL! with a Sigil, not a MONEY!.
-
-    if (Is_Lex_Interstitial(*S->end)) {  // Do not allow $1/$2
-        ++S->end;  // include / in error message
-        return fail (Error_Syntax(S, token));
-    }
-
-    trap (
-      const Byte* ep = Scan_Money_To_Stack(S->begin, len)
-    );
-    if (S->end != ep)
-        return fail (Error_Syntax(S, token));
 
     goto lookahead;
 

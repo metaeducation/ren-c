@@ -141,17 +141,6 @@ uint32_t Hash_Cell(const Cell* cell)
         hash = (INTEGER_PAYLOAD_I64(cell) >> 32) ^ (INTEGER_PAYLOAD_I64(cell));
         break;
 
-      case TYPE_MONEY: {
-        //
-        // Writes the 3 pointer fields as three uintptr_t integer values to
-        // build a `deci` type.  So it is safe to read the three pointers as
-        // uintptr_t back, and hash them.
-        //
-        hash = cell->payload.split.one.u;
-        hash ^= cell->payload.split.two.u;
-        hash ^= cell->extra.u;
-        break; }
-
       hash_pair:
         //
       case TYPE_PAIR:

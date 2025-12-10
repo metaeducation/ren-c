@@ -229,7 +229,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Integer)
                 Move_Cell(val, out);
                 return Run_Generic_Dispatch(val, level_, verb); }
 
-            // Only type valid to subtract from, divide into, is decimal/money:
+            // Only type valid to subtract from, divide into, is decimal:
             case SYM_SUBTRACT:
                 n = 1;
                 /* fall through */

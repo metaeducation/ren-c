@@ -115,7 +115,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case TYPE_INTEGER:
       case TYPE_DECIMAL:
       case TYPE_PERCENT:
-      case TYPE_MONEY:
         break;
 
       case TYPE_EMAIL:

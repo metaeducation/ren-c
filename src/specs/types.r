@@ -141,10 +141,6 @@ rune!       "immutable codepoint or codepoint sequence"
             (:payload1)  ; may or may not embed data in rune vs. use node
             [any-utf8? any-inert? any-sequencable?]
 
-money!      "digits and decimal points as a string, preserved precisely"
-            (CELL_MASK_NO_MARKING)
-            [any-utf8? any-inert? any-sequencable?]
-
 
 ; ============================================================================
 ; ABOVE THIS LINE, Don't Mark "Extra": (not Heart_Implies_Extra_Needs_Mark())

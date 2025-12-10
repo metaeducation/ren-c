@@ -667,7 +667,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return Init_Word(OUT, sym);
     }
 
-    if (to == TYPE_RUNE or to == TYPE_MONEY) {  // may make node if mutable
+    if (to == TYPE_RUNE) {  // may make node if mutable
         if (not Any_String(v) or Is_Flex_Frozen(Cell_Strand(v))) {
             possibly(Any_Word(v));
             return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
@@ -840,7 +840,7 @@ Result(Element*) Alias_Any_Utf8_As(
         return Init_Integer(out, c);
     }
 
-    if (as == TYPE_RUNE or as == TYPE_MONEY) {  // fits cell or freeze string
+    if (as == TYPE_RUNE) {  // fits cell or freeze string
         assert(as != TYPE_WORD and not (Any_String_Type(as)));
 
         if (Stringlike_Has_Stub(v)) {

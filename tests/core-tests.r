@@ -43,8 +43,6 @@
 %datatypes/lit-word.test.r
 %datatypes/logic.test.r
 %datatypes/module.test.r
-%datatypes/money.test.r
-; %datatypes/money-math.test.r  ; not currently working
 %datatypes/null.test.r
 %datatypes/object.test.r
 %datatypes/pair.test.r

@@ -385,7 +385,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         if ((
             heart == TYPE_PAIR
             or heart == TYPE_TUPLE
-            or heart == TYPE_MONEY
             or heart == TYPE_TIME
         ) and (
             id == SYM_ADD
@@ -400,7 +399,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         if (heart == TYPE_DECIMAL
             || heart == TYPE_INTEGER
             || heart == TYPE_PERCENT
-            || heart == TYPE_MONEY
             || heart == TYPE_RUNE
         ){
             if (heart == TYPE_DECIMAL) {
@@ -474,23 +472,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
 }
 
 
-// 1. You can't convert a DECIMAL! to a MONEY! in a way that keeps it exact
-//    in such a way that it could round trip consistently through TO TEXT!.
-//
-//        >> m: to money! 10.20  ; gets passed 10.2
-//        == $10.20  ; we'd be faking the terminal 0
-//
-//        >> to text! m
-//        == "$10.20"  ; seems good
-//
-//        >> to text! to decimal! m
-//        == "10.2"  ; not "10.20" as you might expect
-//
-//    The concept that TO is going for is that if you can successfully perform
-//    the conversion, then these round trips should give consistent answers.
-//    It's a theory and being tried out to make TO "actually useful".
-//
-// 2. Right now the intelligence that gets 1% to render that way instead
+// 1. Right now the intelligence that gets 1% to render that way instead
 //    of 1.0% is in FORM.  We don't repeat that here, but just call the
 //    form process and drop the trailing %.  Should be factored better.
 //
@@ -509,17 +491,12 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
     REBDEC d = VAL_DECIMAL(val);
 
     if (Any_Utf8_Type(to)) {
-        if (to == TYPE_MONEY)
-            return fail (  // (to money! 10.20) acts as (to money! 10.2) [1]
-                "TO MONEY! of DECIMAL! can't conserve precision"
-            );
-
         DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
         Push_Mold(mo);
         Mold_Element(mo, val);
 
-        if (Is_Percent(val)) { // leverage (buggy) rendering 1% vs 1.0% [2]
+        if (Is_Percent(val)) { // leverage (buggy) rendering 1% vs 1.0% [1]
             Term_Strand_Len_Size(
                 mo->strand,
                 Strand_Len(mo->strand) - 1,

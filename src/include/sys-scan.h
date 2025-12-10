@@ -47,7 +47,6 @@ typedef enum {
     TOKEN_BLOCK_BEGIN,
     TOKEN_FENCE_END,
     TOKEN_FENCE_BEGIN,
-    TOKEN_MONEY,
     TOKEN_TIME,
     TOKEN_DATE,
     TOKEN_CHAR,
@@ -400,8 +399,6 @@ extern const EscapeInfo g_escape_info[MAX_ESC + 1];
 #define MAX_SCAN_TUPLE (11 * 4 + 1)
 
 #define MAX_SCAN_DECIMAL 24
-
-#define MAX_SCAN_MONEY 36
 
 #define MAX_SCAN_TIME 30
 

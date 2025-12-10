@@ -122,8 +122,11 @@ INLINE KindByte Kind_From_Sigil_And_Heart(Option(Sigil) sigil, HeartEnum heart)
 //    writing e.e. `Metafy_Cell(Clear_Cell_Sigil(elem))`.
 //
 
-INLINE bool Any_Sigilable_Type(Option(Type) t)  // build on sequencable [1]
-  { return Any_Sequence_Type(t) or Any_Sequencable_Type(t); }
+INLINE bool Any_Sigilable_Type(Option(Type) t) {  // build on sequencable [1]
+    return (
+        Any_Sequence_Type(t) or Any_Sequencable_Type(t) or t == TYPE_DECIMAL
+    );
+}
 
 INLINE bool Any_Sigiled_Type(Option(Type) t)
   { return t == TYPE_METAFORM or t == TYPE_PINNED or t == TYPE_TIED; }

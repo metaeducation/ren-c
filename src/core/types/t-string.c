@@ -633,22 +633,6 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Email)
 }
 
 
-IMPLEMENT_GENERIC(MOLDIFY, Is_Money)
-{
-    INCLUDE_PARAMS_OF_MOLDIFY;
-
-    Element* v = Element_ARG(VALUE);
-    Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
-
-    UNUSED(form);
-    Append_Codepoint(mo->strand, '$');
-    Append_Any_Utf8(mo->strand, v);
-
-    return TRASH;
-}
-
-
 static void Mold_File(Molder* mo, const Cell* v)
 {
     Append_Codepoint(mo->strand, '%');

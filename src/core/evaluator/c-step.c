@@ -1615,7 +1615,6 @@ Bounce Stepper_Executor(Level* L)
   case TYPE_INTEGER:
   case TYPE_DECIMAL:
   case TYPE_PERCENT:
-  case TYPE_MONEY:
   case TYPE_PAIR:
   case TYPE_TIME:
   case TYPE_DATE:

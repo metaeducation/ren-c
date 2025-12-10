@@ -99,7 +99,6 @@ const char * const g_token_names[] = {
     "block-begin",
     "fence-end",
     "fence-begin",
-    "money",
     "time",
     "date",
     "char",
