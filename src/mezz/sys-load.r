@@ -639,7 +639,7 @@ export*: func [
 
     if not block? what [
         if set-group? what [
-            ^what: eval what
+            ^what: eval unchain what
             case [
                 void? ^what [word: null]
                 word? ^what [word: ^what]
