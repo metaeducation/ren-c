@@ -252,6 +252,9 @@ function3: ~#[FUNCTION slated for synonym of FUNC, so no FUNCTION3]#~
 rune!: issue3!
 rune?: issue3?/
 
+tied-integer?: money?/
+quoted?: lit-word?/
+
 
 === "TRY TO UNIFY SPACE AND BLANK TESTING" ===
 

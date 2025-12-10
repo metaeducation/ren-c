@@ -580,8 +580,29 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
 }
 
 
+static Option(const Symbol*) Symbol_For_Error_Element(const Element* v)
+{
+    if (Is_Tied_Form_Of(WORD, v))
+        return Word_Symbol(v);
+
+    if (not Is_Tied_Form_Of(INTEGER, v))
+        return nullptr;
+
+    switch (VAL_INT32(v)) {
+      case 1: return CANON(ARG1);
+      case 2: return CANON(ARG2);
+      case 3: return CANON(ARG3);
+      case 4: return CANON(ARG4);
+      case 5: return CANON(ARG5);
+
+      default:
+        panic("$N argument placeholders beyond $5 are not supported");
+    }
+}
+
+
 //
-//  Make_Error_Managed_Vaptr: C
+//  Make_Error_From_Vaptr_Managed: C
 //
 // (WARNING va_list by pointer: http://stackoverflow.com/a/3369762/211160)
 //
@@ -594,7 +615,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
 // %errors.r has not been loaded).  Hence the caller can assume it will
 // regain control to properly call va_end with no longjmp to skip it.
 //
-Error* Make_Error_Managed_Vaptr(
+Error* Make_Error_From_Vaptr_Managed(
     Option(SymId) cat_id,
     Option(SymId) id,
     va_list* vaptr
@@ -642,7 +663,8 @@ Error* Make_Error_Managed_Vaptr(
         const Element* tail;
         const Element* temp = List_At(&tail, message);
         for (; temp != tail; ++temp) {
-            if (Is_Get_Word(temp))
+            Option(const Symbol*) symbol = Symbol_For_Error_Element(temp);
+            if (symbol)
                 ++expected_args;
             else
                 assert(Is_Text(temp));
@@ -663,19 +685,19 @@ Error* Make_Error_Managed_Vaptr(
         deeply
     );
 
-    // Arrays from errors.r look like `["The value" :arg1 "is not" :arg2]`
+    // Arrays from errors.r look like `["The value" $1 "is not" $2]`
     // They can also be a single TEXT! (which will just bypass this loop).
     //
     if (not Is_Text(message)) {
-        const Element* msg_tail;
-        const Element* msg_item = List_At(&msg_tail, message);
+        const Element* tail;
+        const Element* at = List_At(&tail, message);
 
-        for (; msg_item != msg_tail; ++msg_item) {
-            if (not Is_Get_Word(msg_item))
+        for (; at != tail; ++at) {
+            Option(const Symbol*) symbol = Symbol_For_Error_Element(at);
+            if (not symbol)
                 continue;
 
-            const Symbol* symbol = Word_Symbol(msg_item);
-            Init(Slot) slot = Append_Context(varlist, symbol);
+            Init(Slot) slot = Append_Context(varlist, unwrap symbol);
 
             const void *p = va_arg(*vaptr, const void*);
 
@@ -729,7 +751,7 @@ Error* Make_Error_Managed_Vaptr(
 //     panic (Make_Error_Managed(SYM_CATEGORY, SYM_SOMETHING, arg1, arg2, ...));
 //
 // Note that in C, variadic functions don't know how many arguments they were
-// passed.  Make_Error_Managed_Vaptr() knows how many arguments are in an
+// passed.  Make_Error_From_Vaptr_Managed() knows how many arguments are in an
 // error's template in %errors.r for a given error id, so that is the number
 // of arguments it will *attempt* to use--reading invalid memory if wrong.
 //
@@ -750,7 +772,7 @@ Error* Make_Error_Managed_Raw(
 
     va_start(va, opt_id);  // last fixed argument is opt_id, pass that
 
-    Error* error = Make_Error_Managed_Vaptr(
+    Error* error = Make_Error_From_Vaptr_Managed(
         u_cast(Option(SymId), cast(SymId, opt_cat_id)),
         u_cast(Option(SymId), cast(SymId, opt_id)),
         &va
@@ -1376,15 +1398,59 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     DECLARE_STABLE (message);
     require (Read_Slot(message, &vars->message));
 
-    // Append: error message ARG1, ARG2, etc.
-    if (Is_Block(message)) {
-        bool relax = true;  // don't want error rendering to cause errors
-        Form_Array_At(mo, Cell_Array(message), 0, error, relax);
-    }
-    else if (Is_Text(message))
+    if (Is_Text(message)) {
         Form_Element(mo, cast(Element*, message));
-    else {
+        return TRASH;
+    }
+
+    if (not Is_Block(message)) {
         require (Append_Ascii(mo->strand, "(improperly formatted error)"));
+        return TRASH;
+    }
+
+    const Source* array = Cell_Array(message);
+    REBLEN index = Series_Index(message);
+
+    REBINT len = Array_Len(array) - index;
+    if (len < 0)
+        len = 0;
+
+    REBINT n;
+    for (n = 0; n < len;) {
+        DECLARE_ELEMENT (safe);
+        const Element* item = Array_At(array, index + n);
+        Stable* wval = nullptr;
+
+        Option(const Symbol*) symbol = Symbol_For_Error_Element(item);
+        if (symbol) {
+            Slot *wslot = opt Select_Symbol_In_Context(
+                Varlist_Archetype(error),
+                unwrap symbol
+            );
+            if (wslot) {
+                wval = Slot_Hack(wslot);
+                if (Is_Antiform(wval))
+                    item = Copy_Lifted_Cell(safe, wval);
+                else
+                    item = Ensure_Element(wval);
+            }
+        }
+
+        Mold_Or_Form_Element(mo, item, wval == nullptr);
+        n++;
+        if (GET_MOLD_FLAG(mo, MOLD_FLAG_LINES)) {
+            Append_Codepoint(mo->strand, LF);
+        }
+        else {  // Add a space if needed
+            if (
+                n < len
+                and Strand_Len(mo->strand) != 0
+                and *Binary_Last(mo->strand) != LF
+                and NOT_MOLD_FLAG(mo, MOLD_FLAG_TIGHT)
+            ){
+                Append_Codepoint(mo->strand, ' ');
+            }
+        }
     }
 
     return TRASH;

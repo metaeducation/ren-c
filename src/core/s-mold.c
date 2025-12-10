@@ -318,57 +318,6 @@ void Mold_Array_At(
 
 
 //
-//  Form_Array_At: C
-//
-void Form_Array_At(
-    Molder* mo,
-    const Array* array,
-    REBLEN index,
-    Option(VarList*) context,
-    bool relax  // make antiforms into quasiforms instead of erroring
-){
-    REBINT len = Array_Len(array) - index;
-    if (len < 0)
-        len = 0;
-
-    REBINT n;
-    for (n = 0; n < len;) {
-        DECLARE_ELEMENT (safe);
-        const Element* item = Array_At(array, index + n);
-        Stable* wval = nullptr;
-        if (context and (Is_Word(item) or Is_Get_Word(item))) {
-            Slot *wslot = opt Select_Symbol_In_Context(
-                Varlist_Archetype(unwrap context),
-                Word_Symbol(item)
-            );
-            if (wslot) {
-                wval = Slot_Hack(wslot);
-                if (relax and (Is_Antiform(wval)))
-                    item = Copy_Lifted_Cell(safe, wval);
-                else
-                    item = Ensure_Element(wval);
-            }
-        }
-        Mold_Or_Form_Element(mo, item, wval == nullptr);
-        n++;
-        if (GET_MOLD_FLAG(mo, MOLD_FLAG_LINES)) {
-            Append_Codepoint(mo->strand, LF);
-        }
-        else {  // Add a space if needed
-            if (
-                n < len
-                and Strand_Len(mo->strand) != 0
-                and *Binary_Last(mo->strand) != LF
-                and NOT_MOLD_FLAG(mo, MOLD_FLAG_TIGHT)
-            ){
-                Append_Codepoint(mo->strand, ' ');
-            }
-        }
-    }
-}
-
-
-//
 //  Mold_Or_Form_Cell_Ignore_Quotes: C
 //
 // Variation which molds a cell.  Quoting is not considered, but quasi is.

@@ -498,9 +498,34 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
     Heart heart = Heart_Of_Builtin_Fundamental(v);
 
     if (form) {
-        Option(VarList*) context = nullptr;
-        bool relax = false;
-        Form_Array_At(mo, Cell_Array(v), Series_Index(v), context, relax);
+        const Source* array = Cell_Array(v);
+        REBLEN index = Series_Index(v);
+
+        REBINT len = Array_Len(array) - index;
+        if (len < 0)
+            len = 0;
+
+        REBINT n;
+        for (n = 0; n < len;) {
+            DECLARE_ELEMENT (safe);
+            const Element* item = Array_At(array, index + n);
+            Mold_Or_Form_Element(mo, item, true);
+            n++;
+            if (GET_MOLD_FLAG(mo, MOLD_FLAG_LINES)) {
+                Append_Codepoint(mo->strand, LF);
+            }
+            else {  // Add a space if needed
+                if (
+                    n < len
+                    and Strand_Len(mo->strand) != 0
+                    and *Binary_Last(mo->strand) != LF
+                    and NOT_MOLD_FLAG(mo, MOLD_FLAG_TIGHT)
+                ){
+                    Append_Codepoint(mo->strand, ' ');
+                }
+            }
+        }
+
         return TRASH;
     }
 

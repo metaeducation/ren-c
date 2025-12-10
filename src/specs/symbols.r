@@ -45,6 +45,14 @@ false
 yes
 no
 
+; === ERRORS ===
+
+arg1
+arg2
+arg3
+arg4
+arg5
+
 ; === SPECULATIVE ~NaN~ ===
 
 NaN
