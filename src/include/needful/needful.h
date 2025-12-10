@@ -957,6 +957,7 @@ void Needful_Panic_Abruptly(const char* error) {
 
 #define needful_possibly /* (cond) */     NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL
 #define needful_impossible /* (cond) */   NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL
+#define needful_definitely /* (cond) */   NEEDFUL_STATIC_ASSERT_DECLTYPE_BOOL
 
 #define needful_unnecessary /* (expr) */  NEEDFUL_STATIC_ASSERT_DECLTYPE_VALID
 #define needful_dont /* (expr) */         NEEDFUL_STATIC_ASSERT_DECLTYPE_VALID
@@ -965,6 +966,7 @@ void Needful_Panic_Abruptly(const char* error) {
 
 #define NEEDFUL_POSSIBLY /* (cond) */        NEEDFUL_STATIC_IGNORE
 #define NEEDFUL_IMPOSSIBLE /* (cond) */      NEEDFUL_STATIC_ASSERT_NOT
+#define NEEDFUL_DEFINITELY /* (cond) */      NEEDFUL_STATIC_ASSERT
 
 #define NEEDFUL_UNNECESSARY /* (expr) */     NEEDFUL_STATIC_IGNORE
 #define NEEDFUL_DONT /* (expr) */            NEEDFUL_STATIC_IGNORE
@@ -1087,6 +1089,7 @@ void Needful_Panic_Abruptly(const char* error) {
 #if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)
     #define possibly /* (cond) */    needful_possibly
     #define impossible /* (cond) */  needful_impossible
+    #define definitely /* (cond) */  needful_definitely
 
     #define unnecessary /* (expr) */  needful_unnecessary
     #define dont /* (expr) */         needful_dont
@@ -1095,6 +1098,7 @@ void Needful_Panic_Abruptly(const char* error) {
 
     #define POSSIBLY /* (cond) */        NEEDFUL_POSSIBLY
     #define IMPOSSIBLE /* (cond) */      NEEDFUL_IMPOSSIBLE
+    #define DEFINITELY /* (cond) */      NEEDFUL_DEFINITELY
 
     #define UNNECESSARY /* (expr) */     NEEDFUL_UNNECESSARY
     #define DONT /* (expr) */            NEEDFUL_DONT

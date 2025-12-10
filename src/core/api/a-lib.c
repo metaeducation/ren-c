@@ -2998,6 +2998,7 @@ void *API_rebZinflateAlloc(
 // integer arguments).  But for now, stick it in the API just to get the
 // wide availability.
 //
+#undef None
 #if TO_WINDOWS
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>

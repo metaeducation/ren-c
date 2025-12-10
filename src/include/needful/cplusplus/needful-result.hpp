@@ -190,7 +190,7 @@ struct NEEDFUL_NODISCARD ResultWrapper {
     ResultWrapper() = delete;
 
     ResultWrapper(Result0Struct)  // how failures are returned [1]
-      : r {needful_nocast_0}
+      : r {}
         {}
 
     template <
