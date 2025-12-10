@@ -174,8 +174,8 @@ unset-variable:     ["Unset variable:" $1]
 
 ; These need to have the same arguments (shared code coerces them)
 ;
-expect-arg:         [$1 "expects" $2 "for its" $3 "argument"]
-phase-expect-arg:   [$1 "internal phase expects" $2 "for its" $3 "argument"]
+expect-arg:         [$1 "got" $2 "for" $3 "argument, expected" $4]
+phase-expect-arg:   [$1 "inner phase got" $2 "for" $3 "argument, expected" $4]
 
 no-logic-typecheck: [$1 "must return LOGIC? to use in typechecking"]
 no-arg-typecheck:   [$1 "must take an argument to use in typechecking"]

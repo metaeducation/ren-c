@@ -1066,9 +1066,9 @@ Error* Error_Unexpected_Type(Type expected, const Stable* actual)
 // Function in frame of `call` expected parameter `param` to be a type
 // different than the arg given.
 //
-// !!! Right now, we do not include the arg itself in the error.  It would
-// potentially lead to some big molding, and the error machinery isn't
-// really equipped to handle it.
+// 1. Right now, we do not include the arg itself in the error--just datatype.
+//    The argument would potentially lead to some big molding, and the error
+//    machinery isn't really equipped to handle it.
 //
 Error* Error_Arg_Type(
     Option(const Symbol*) label,  // function's name
@@ -1076,22 +1076,25 @@ Error* Error_Arg_Type(
     const Param* param,
     const Stable* arg
 ){
-    if (Parameter_Class(param) == PARAMCLASS_META and Is_Lifted_Error(arg))
-        return Cell_Error(arg);
-
     const Symbol* param_symbol = Key_Symbol(key);
 
-    DECLARE_ELEMENT (spec);
     Option(const Source*) param_array = Parameter_Spec(param);
-    if (param_array)
-        Init_Block(spec, unwrap param_array);
+
+    DECLARE_ELEMENT (spec);
+    assert(param_array);  // if you accept all types, no type error!
+    if (not param_array)
+        Init_Quasi_Word(spec, CANON(ERROR));  // shouldn't happen, defensive
     else
-        Init_Block(spec, g_empty_array);
+        Init_Block(spec, unwrap param_array);
+
+    DECLARE_ELEMENT (lifted_type);
+    Copy_Lifted_Cell(lifted_type, Datatype_Of(arg));
 
     return Error_Expect_Arg_Raw(
         label,
-        spec,
-        param_symbol
+        lifted_type,  // just datatype, not argument [1]
+        param_symbol,
+        spec
     );
 }
 
