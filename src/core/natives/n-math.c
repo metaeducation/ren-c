@@ -868,9 +868,9 @@ DECLARE_NATIVE(EQUAL_Q)
 
     bool relax = Bool_ARG(RELAX);
 
-    if (Is_Void(Atom_ARG(VALUE1)))
-        return LOGIC(Is_Void(Atom_ARG(VALUE2)));
-    else if (Is_Void(Atom_ARG(VALUE2)))
+    if (Is_Void(ARG(VALUE1)))
+        return LOGIC(Is_Void(ARG(VALUE2)));
+    else if (Is_Void(ARG(VALUE2)))
         return LOGIC(false);
 
     if (LIFT_BYTE(ARG(VALUE1)) != LIFT_BYTE(ARG(VALUE2)))
@@ -983,9 +983,9 @@ DECLARE_NATIVE(SAME_Q)
 {
     INCLUDE_PARAMS_OF_SAME_Q;
 
-    if (Is_Void(Atom_ARG(VALUE1)))
-        return LOGIC(Is_Void(Atom_ARG(VALUE2)));
-    else if (Is_Void(Atom_ARG(VALUE2)))
+    if (Is_Void(ARG(VALUE1)))
+        return LOGIC(Is_Void(ARG(VALUE2)));
+    else if (Is_Void(ARG(VALUE2)))
         return LOGIC(false);
 
     if (LIFT_BYTE(ARG(VALUE1)) != LIFT_BYTE(ARG(VALUE2)))

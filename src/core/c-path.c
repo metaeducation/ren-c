@@ -309,7 +309,7 @@ DECLARE_NATIVE(POKE)
 
     Element* location = Element_ARG(LOCATION);
     Stable* picker = ARG(PICKER);
-    Value* atom = Atom_ARG(VALUE);
+    Value* v = ARG(VALUE);
 
     if (Get_Level_Flag(LEVEL, POKE_NOT_INITIAL_ENTRY))
         goto dispatch_generic;
@@ -327,16 +327,15 @@ DECLARE_NATIVE(POKE)
     if (Is_Keyword(picker) or Is_Trash(picker))
         panic ("PICK with keyword or trash picker never allowed");
 
-    if (Is_Error(atom))
-        return COPY(atom);  // bypass and don't do the poke
+    if (Is_Error(v))
+        return COPY(v);  // bypass and don't do the poke
 
     Set_Level_Flag(LEVEL, POKE_NOT_INITIAL_ENTRY);
 
-    Copy_Cell(Atom_ARG(STORE), atom);  // save value to return [1]
+    Copy_Cell(LOCAL(STORE), v);  // save value to return [1]
 
-    Stable* dual = ARG(VALUE);  // same slot (TWEAK* reuses this frame!) [2]
-
-    Liftify(dual);  // TWEAK* expects QUOTED!/QUASIFORM! for literal DUAL
+    Stable* dual = Liftify(v);  // same slot (TWEAK* reuses this frame!) [2]
+    USED(dual);  // TWEAK* expects QUOTED!/QUASIFORM! for literal DUAL
 
     goto dispatch_generic;
 
@@ -360,7 +359,7 @@ DECLARE_NATIVE(POKE)
             "Can't writeback to immediate in POKE (use TWEAK* if intentional)"
         );
 
-    return COPY(Atom_ARG(STORE));  // stored ^VALUE argument was meta
+    return COPY(LOCAL(STORE));  // stored ^VALUE argument was meta
 }}
 
 

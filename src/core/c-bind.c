@@ -902,7 +902,6 @@ DECLARE_NATIVE(ADD_LET_BINDING)
 // environment by passing in a rule block with a version of that rule block
 // with an updated binding.  A function that wants to add to the evaluator
 // environment uses the frame at the moment.
-//
 {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
@@ -923,16 +922,16 @@ DECLARE_NATIVE(ADD_LET_BINDING)
 
     Let* let = Make_Let_Variable(Word_Symbol(ARG(WORD)), parent);
 
-    Value* atom = Atom_ARG(VALUE);
+    Value* v = ARG(VALUE);
     if (Is_Meta_Form_Of(WORD, word)) {
-        Copy_Cell(Stub_Cell(let), atom);  // don't decay
+        Copy_Cell(Stub_Cell(let), v);  // don't decay
     }
     else {
         assert(Is_Word(word));
         require (
-          Stable* value = Decay_If_Unstable(atom)
+          Stable* stable = Decay_If_Unstable(v)
         );
-        Copy_Cell(Stub_Cell(let), value);
+        Copy_Cell(Stub_Cell(let), stable);
     }
 
     if (Is_Frame(env)) {

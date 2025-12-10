@@ -205,9 +205,10 @@ export emit-include-params-macro: func [
     ]
     let spec: copy find proto "["  ; make copy (we'll corrupt it)
 
+    let caret-surrogate: "m3ta-"
     replace spec "@" -[]-  ; @WORD! would be invalid EMAIL! [1]
     replace spec "$" -[]-  ; $WORD! would be invalid MONEY! [1]
-    replace spec "^^" -[]-  ; ^WORD! would just be invalid [1]
+    replace spec "^^" caret-surrogate  ; ^WORD! would just be invalid [1]
 
     textually-splice-last-fence spec  ; bootstrap loads {...} locals as TEXT!
 
@@ -262,17 +263,25 @@ export emit-include-params-macro: func [
                 continue  ; note get-word3! is refinement?
             ]
 
-            let param-name: resolve noquote item
+            let param-name: to text! resolve noquote item
+
+            let param-type: "Stable*"
+            parse3 param-name [
+                remove caret-surrogate (param-type: "Value*") to <end>
+                | to <end>
+            ]
+
             append symbols param-name
             all [
                 is-intrinsic
                 n = 1  ; first parameter
             ] then [
-                keep cscape [
-                    param-name "DECLARE_INTRINSIC_PARAM(${PARAM-NAME})"
+                keep cscape [param-name
+                    "DECLARE_INTRINSIC_PARAM(${PARAM-NAME})"
                 ]
             ] else [
-                keep cscape [n param-name "DECLARE_PARAM($<n>, ${PARAM-NAME})"]
+                keep cscape [n param-name param-type
+                    "DECLARE_PARAM($<Param-Type>, $<n>, ${PARAM-NAME})"]
             ]
             n: n + 1
         ]

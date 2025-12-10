@@ -284,8 +284,8 @@ DECLARE_NATIVE(THEN_Q)
 {
     INCLUDE_PARAMS_OF_THEN_Q;
 
-    Value* atom = Atom_ARG(VALUE);
-    return LOGIC(not Is_Light_Null(atom));
+    Value* v = ARG(VALUE);
+    return LOGIC(not Is_Light_Null(v));
 }
 
 
@@ -302,8 +302,8 @@ DECLARE_NATIVE(ELSE_Q)
 {
     INCLUDE_PARAMS_OF_ELSE_Q;
 
-    Value* atom = Atom_ARG(VALUE);
-    return LOGIC(Is_Light_Null(atom));
+    Value* v = ARG(VALUE);
+    return LOGIC(Is_Light_Null(v));
 }
 
 
@@ -322,16 +322,16 @@ DECLARE_NATIVE(THEN)
 {
     INCLUDE_PARAMS_OF_THEN;
 
-    Value* atom = Atom_ARG(LEFT);
+    Value* left = ARG(LEFT);
     Stable* branch = ARG(BRANCH);
 
-    if (Is_Error(atom))
-        return COPY(atom);
+    if (Is_Error(left))
+        return COPY(left);
 
-    if (Is_Light_Null(atom))
+    if (Is_Light_Null(left))
         return NULLED;
 
-    return DELEGATE_BRANCH(OUT, branch, atom);
+    return DELEGATE_BRANCH(OUT, branch, left);
 }
 
 
@@ -350,16 +350,16 @@ DECLARE_NATIVE(ELSE)
 {
     INCLUDE_PARAMS_OF_ELSE;
 
-    Value* atom = Atom_ARG(LEFT);
+    Value* left = ARG(LEFT);
     Stable* branch = ARG(BRANCH);
 
-    if (Is_Error(atom))
-        return COPY(atom);
+    if (Is_Error(left))
+        return COPY(left);
 
-    if (not Is_Light_Null(atom))
-        return COPY(atom);
+    if (not Is_Light_Null(left))
+        return COPY(left);
 
-    return DELEGATE_BRANCH(OUT, branch, atom);
+    return DELEGATE_BRANCH(OUT, branch, left);
 }
 
 
@@ -378,7 +378,7 @@ DECLARE_NATIVE(ALSO)
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    Value* atom = Atom_ARG(LEFT);
+    Value* left = ARG(LEFT);
     Stable* branch = ARG(BRANCH);
 
     enum {
@@ -398,20 +398,20 @@ DECLARE_NATIVE(ALSO)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Error(atom))
-        return COPY(atom);
+    if (Is_Error(left))
+        return COPY(left);
 
-    if (Is_Light_Null(atom))
+    if (Is_Light_Null(left))
         return NULLED;
 
     STATE = ST_ALSO_RUNNING_BRANCH;
-    return CONTINUE_BRANCH(OUT, branch, atom);
+    return CONTINUE_BRANCH(OUT, branch, left);
 
 } discard_branch_result_in_out_and_return_input: {  //////////////////////////
 
     dont(UNUSED(OUT));  // would corrupt the OUT pointer itself
 
-    return COPY(atom);
+    return COPY(left);
 }}
 
 
@@ -1230,22 +1230,22 @@ DECLARE_NATIVE(MAYBE)
     INCLUDE_PARAMS_OF_MAYBE;
 
     Element* target = Element_ARG(TARGET);
-    Value* atom = Atom_ARG(VALUE);
+    Value* v = ARG(VALUE);
 
-    if (Is_Error(atom))
-        return COPY(atom);  // pass through but don't assign anything
+    if (Is_Error(v))
+        return COPY(v);  // pass through but don't assign anything
 
     assume (
         Unsingleheart_Sequence(target)  // drop the colon off the end
     );
     Element* quoted_target = Quotify(target);
 
-    if (Is_Light_Null(atom))
+    if (Is_Light_Null(v))
         return rebDelegate("get meta", quoted_target);
 
-    Element* lifted_atom = Liftify(atom);
+    Element* lifted = Liftify(v);
 
-    return rebDelegate(CANON(SET), quoted_target, lifted_atom);  // may decay
+    return rebDelegate(CANON(SET), quoted_target, lifted);  // may decay
 }
 
 
@@ -1338,7 +1338,7 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_THROW;
 
-    Value* atom = Atom_ARG(VALUE);
+    Value* v = ARG(VALUE);
 
     Level* throw_level = LEVEL;  // Level of this RETURN call
 
@@ -1349,6 +1349,6 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
     Element* label = Init_Frame(
         SCRATCH, cast(ParamList*, unwrap coupling), ANONYMOUS, UNCOUPLED
     );
-    Init_Thrown_With_Label(LEVEL, atom, label);
+    Init_Thrown_With_Label(LEVEL, v, label);
     return BOUNCE_THROWN;
 }

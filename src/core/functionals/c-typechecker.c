@@ -1151,7 +1151,7 @@ DECLARE_NATIVE(TYPECHECK)
 
     Stable* test = ARG(TEST);
 
-    heeded (Copy_Cell(SPARE, Atom_ARG(VALUE)));
+    heeded (Copy_Cell(SPARE, ARG(VALUE)));
 
     if (not Bool_ARG(META)) {  // decay before typecheck if not ^META
       require(

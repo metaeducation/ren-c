@@ -498,11 +498,11 @@ DECLARE_NATIVE(SET)
 // also wants to make its return value match the assignment value.  This means
 // it has to unlift value.
 {
-    INCLUDE_PARAMS_OF_TWEAK;  // !!! must have compatible frame
+    INCLUDE_PARAMS_OF_SET;  // !!! must have compatible frame with TWEAK
 
     Element* target = Element_ARG(TARGET);
 
-    Value* v = Atom_ARG(DUAL);  // not a dual yet (we have to lift it...)
+    Value* v = ARG(VALUE);  // not a dual yet (we have to lift it...)
 
     bool groups_ok = Bool_ARG(GROUPS);
 

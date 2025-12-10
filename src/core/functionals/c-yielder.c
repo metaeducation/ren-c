@@ -599,7 +599,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
       default: assert(false);
     }
 
-    Value* atom = Atom_ARG(VALUE);
+    Value* v = ARG(VALUE);
 
   //=//// EXTRACT YIELDER FROM DEFINITIONAL YIELD'S CELL ///////////////////=//
 
@@ -635,14 +635,14 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
   // of one value, YIELD DONE, or YIELD of any other error antiform which the
   // yielder will elevate to an abrupt panic.
 
-    if (Is_Error(atom) or Bool_ARG(FINAL)) {  // not resumable, throw
+    if (Is_Error(v) or Bool_ARG(FINAL)) {  // not resumable, throw
         Stable* spare = Init_Action(
             SPARE,  // use as label for throw
             Frame_Phase(LIB(DEFINITIONAL_YIELD)),
             CANON(YIELD),
             Level_Varlist(yielder_level)
         );
-        Init_Thrown_With_Label(LEVEL, atom, spare);
+        Init_Thrown_With_Label(LEVEL, v, spare);
         return BOUNCE_THROWN;
     }
 
@@ -664,7 +664,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
     Unplug_Stack(plug, yielder_level, yield_level);  // preserve stack [1]
     assert(yielder_level == TOP_LEVEL);
 
-    Copy_Lifted_Cell(yielded_lifted, atom);
+    Copy_Lifted_Cell(yielded_lifted, v);
 
     STATE = ST_YIELD_SUSPENDED;  // can't BOUNCE_CONTINUE with STATE_0 [2]
     return BOUNCE_CONTINUE;  // now continues yielder_level, not yield_level

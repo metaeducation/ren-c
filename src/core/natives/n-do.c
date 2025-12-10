@@ -833,7 +833,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         panic (Error_Need_Non_End_Raw(lookback));
     }
 
-    Init_Integer(Atom_ARG(INDEX), unwrap index);
+    Init_Integer(LOCAL(INDEX), unwrap index);
     goto eval_step_maybe_labeled;
 
 }} handle_unlabeled_item: { //////////////////////////////////////////////////

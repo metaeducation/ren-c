@@ -641,7 +641,7 @@ DECLARE_NATIVE(UNLESS)
     INCLUDE_PARAMS_OF_UNLESS;
 
     Stable* left = ARG(LEFT);
-    Value* right = Atom_ARG(RIGHT);
+    Value* right = ARG(RIGHT);
 
     if (Is_Ghost(right))
         panic ("UNLESS can't be used with GHOST! antiform");

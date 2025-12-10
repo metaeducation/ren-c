@@ -262,14 +262,14 @@ DECLARE_NATIVE(EXCEPT)
 {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Value* atom = Atom_ARG(LEFT);
+    Value* left = ARG(LEFT);
     Stable* branch = ARG(BRANCH);
 
-    if (not Is_Error(atom))
-        return COPY(atom);  // pass thru any non-errors
+    if (not Is_Error(left))
+        return COPY(left);  // pass thru any non-errors
 
-    LIFT_BYTE(atom) = NOQUOTE_2;  // turn antiform error into plain warning
-    Element* warning = Known_Element(atom);
+    LIFT_BYTE(left) = NOQUOTE_2;  // turn antiform error into plain warning
+    Element* warning = Known_Element(left);
 
     return DELEGATE_BRANCH(OUT, branch, warning);  // !!! pass antiform? [1]
 }
@@ -288,7 +288,7 @@ DECLARE_NATIVE(TRAP)
 {
     INCLUDE_PARAMS_OF_TRAP;
 
-    Value* v = Atom_ARG(VALUE);
+    Value* v = ARG(VALUE);
 
     if (not Is_Error(v))
         return COPY(v);  // pass thru any non-errors
@@ -325,12 +325,12 @@ DECLARE_NATIVE(REQUIRE)
 {
     INCLUDE_PARAMS_OF_REQUIRE;
 
-    Value* atom = Atom_ARG(VALUE);
+    Value* v = ARG(VALUE);
 
-    if (not Is_Error(atom))
-        return COPY(atom);  // pass thru any non-errors
+    if (not Is_Error(v))
+        return COPY(v);  // pass thru any non-errors
 
-    panic (Cell_Error(atom));
+    panic (Cell_Error(v));
 }
 
 

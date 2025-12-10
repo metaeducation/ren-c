@@ -438,10 +438,10 @@ DECLARE_NATIVE(SPREAD)
 {
     INCLUDE_PARAMS_OF_SPREAD;
 
-    if (Is_Void(Atom_ARG(VALUE)))
+    if (Is_Void(ARG(VALUE)))
         return VOID;  // void is a no-op, so just pass it through
 
-    Stable* v = ARG(VALUE);
+    Stable* v = Known_Stable(ARG(VALUE));
 
     if (Is_Nulled(v))
         return NULLED;
@@ -595,9 +595,10 @@ DECLARE_NATIVE(DISARM)
 {
     INCLUDE_PARAMS_OF_DISARM;
 
-    Value* error = Atom_ARG(ERROR);
-    LIFT_BYTE(error) = NOQUOTE_2;
-    return COPY(error);
+    Value* error = ARG(ERROR);
+    Copy_Cell(OUT, error);
+    LIFT_BYTE(OUT) = NOQUOTE_2;
+    return OUT;
 }
 
 

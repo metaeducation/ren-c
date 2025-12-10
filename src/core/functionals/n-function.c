@@ -576,7 +576,7 @@ DECLARE_NATIVE(UNWIND)
     INCLUDE_PARAMS_OF_UNWIND;
 
     Stable* level = ARG(LEVEL);
-    Value* result = Atom_ARG(RESULT);
+    Value* result = ARG(RESULT);
 
     return Init_Thrown_Unwind_Value(LEVEL, level, result, level_);
 }
@@ -661,7 +661,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]
 
-    Value* atom = Atom_ARG(VALUE);
+    Value* v = ARG(VALUE);
 
     Level* return_level = LEVEL;  // Level of this RETURN call
 
@@ -683,23 +683,23 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
         heeded (Corrupt_Cell_If_Needful(SCRATCH));
 
         require (
-          bool check = Typecheck_Coerce_Return(LEVEL, param, atom)
+          bool check = Typecheck_Coerce_Return(LEVEL, param, v)
         );
         if (not check)  // do it now [2]
-            panic (Error_Bad_Return_Type(target_level, atom, param));
+            panic (Error_Bad_Return_Type(target_level, v, param));
 
         if (
-            Is_Possibly_Unstable_Value_Trash(atom)
+            Is_Possibly_Unstable_Value_Trash(v)
             and Get_Parameter_Flag(param, AUTO_TRASH)
         ){
-            Init_Trash_Named_From_Level(atom, target_level);
+            Init_Trash_Named_From_Level(v, target_level);
         }
 
         DECLARE_STABLE (label);
         Copy_Cell(label, LIB(UNWIND)); // see Make_Thrown_Unwind_Value
         g_ts.unwind_level = target_level;
 
-        Init_Thrown_With_Label(LEVEL, atom, label);
+        Init_Thrown_With_Label(LEVEL, v, label);
         return BOUNCE_THROWN;
     }
 
@@ -716,16 +716,16 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     const Stable* gather_args;
 
     require (
-      Stable* v = Decay_If_Unstable(atom)
+      Stable* stable = Decay_If_Unstable(v)
     );
     if (
-        Is_Tag(v)
-        and strcmp(cast(char*, Cell_Utf8_At(v)), "redo") == 0
+        Is_Tag(stable)
+        and strcmp(cast(char*, Cell_Utf8_At(stable)), "redo") == 0
     ){
         gather_args = LIB(NULL);
     }
-    else if (Is_Action(v) or Is_Frame(v)) {  // just reuse Level
-        gather_args = v;
+    else if (Is_Action(stable) or Is_Frame(stable)) {  // just reuse Level
+        gather_args = stable;
         Release_Feed(target_level->feed);
         target_level->feed = return_level->feed;
         Add_Feed_Reference(return_level->feed);

@@ -653,25 +653,24 @@ INLINE Result(Level*) Prep_Level_Core(
 // are used in natives.  They capture the implicit Level* passed to every
 // DECLARE_NATIVE ('level_') and read the information out cleanly, like this:
 //
-//     DECLARE_PARAM(1, FOO);
-//     DECLARE_PARAM(2, BAR);
+//     DECLARE_PARAM(Value*, 1, FOO);  // when parameter was ^META
+//     DECLARE_PARAM(Stable*, 2, BAR);  // when parameter was non-^META
 //
-//     if (Is_Integer(ARG(FOO)) and Bool_ARG(BAR)) { ... }
-//
-// ARG() gives a mutable pointer to the argument's cell.  Bool_ARG() is typically
-// used with refinements, and gives a const reference where NULLED cells are
-// turned into C nullptr.
+// ARG() gives a pointer to the argument's cell, and it will be of the type
+// mentioned in the DECLARE_PARAM().
 //
 // By contract, Rebol functions are allowed to mutate their arguments and
 // refinements just as if they were locals...guaranteeing only their return
 // result as externally visible.  Hence the ARG() cells provide a GC-safe
 // slot for natives to hold values once they are no longer needed.
 //
-// It is also possible to get the typeset-with-symbol for a particular
-// parameter or refinement, e.g. with `PARAM(FOO)` or `PARAM(BAR)`.
+// It is also possible to get the PARAMETER! for an argument with `PARAM(FOO)`
+// or `PARAM(BAR)`.
+//
 
-#define DECLARE_PARAM(n,name) \
-    static const int param_##name##_ = n
+#define DECLARE_PARAM(T,n,name) \
+    static const int param_##name##_ = n; \
+    typedef T param_type_##name##_
 
 #define DECLARE_INTRINSIC_PARAM(name)  /* was used, not used at the moment */ \
     NOOP  // the INCLUDE_PARAMS_OF_XXX macros still make this, may find a use
@@ -680,13 +679,10 @@ INLINE Result(Level*) Prep_Level_Core(
     Erase_Cell(Level_Arg(level_, param_##name##_))
 
 #define ARG(name) \
-    Known_Stable(Level_Arg(level_, param_##name##_))
+    cast(param_type_##name##_, Level_Arg(level_, param_##name##_))
 
 #define Element_ARG(name) \
     Known_Element(Level_Arg(level_, param_##name##_))  // checked build asserts
-
-#define Atom_ARG(name) \
-    Level_Arg(level_, param_##name##_)
 
 #define Bool_ARG(name) \
     (not Is_Nulled(Known_Stable(Level_Arg(level_, param_##name##_))))
@@ -706,7 +702,7 @@ INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 #define Optional_Element_ARG(name) \
     Optional_Element_Level_Arg(level_, PARAM_INDEX(name))
 
-#define LOCAL(name) /* alias for ARG() when slot is <local> */ \
+#define LOCAL(name) /* alias for ARG() when slot is {local} */ \
     Level_Arg(level_, PARAM_INDEX(name))  // initialized to unset state!
 
 #define Element_LOCAL(name) \

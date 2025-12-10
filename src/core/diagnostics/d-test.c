@@ -77,7 +77,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
 {
     INCLUDE_PARAMS_OF_TEST_LIBREBOL;
 
-    Value* v = Atom_ARG(VALUE);
+    Value* v = ARG(VALUE);
     USED(v);
 
   start: {
