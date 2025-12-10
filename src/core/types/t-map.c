@@ -497,11 +497,11 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
         panic ("Null or trash can't be used as value in MAP!");
 
     if (  // give label to action/frame if it's a word and doesn't have one
-        Is_Word(TOP)
+        Is_Word(TOP_STABLE)
         and (Is_Action(val) or Is_Frame(val))
         and not Frame_Label_Deep(val)
     ){
-        Update_Frame_Cell_Label(val, Word_Symbol(TOP));
+        Update_Frame_Cell_Label(val, Word_Symbol(TOP_STABLE));
     }
 
     Copy_Cell(PUSH(), val);

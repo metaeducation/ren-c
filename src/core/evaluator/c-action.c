@@ -771,7 +771,7 @@ Bounce Action_Executor(Level* L)
 
       next_pickup:
 
-        assert(Is_Pushed_Refinement(TOP));
+        assert(Is_Pushed_Refinement(TOP_STABLE));
 
         if (not Cell_Binding(TOP)) {  // duplicate or junk, loop didn't index
             assume (

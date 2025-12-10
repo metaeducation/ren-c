@@ -441,8 +441,8 @@ typedef struct {
 typedef struct {
     Array* array;
     StackIndex index;
-    Stable* movable_top;
-    const Stable* movable_tail;
+    Value* movable_top;
+    const Value* movable_tail;
 
   #if DEBUG_EXTANT_STACK_POINTERS
     Count num_refs_extant;  // # of Data_Stack_At()/TOP refs extant

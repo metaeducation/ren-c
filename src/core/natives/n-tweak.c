@@ -207,7 +207,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
                 );
 
             Copy_Cell(value_arg, TOP_ELEMENT);
-            if (Is_Lifted_Ghost_Or_Void(TOP)) // don't know if it was ^META :-(
+            if (Is_Lifted_Ghost_Or_Void(TOP_STABLE)) // don't know if it was ^META :-(
                 break;  // remove signal
 
             require (
@@ -231,12 +231,12 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
         // if not meta, needs to decay if unstable
 
-        if (not Any_Lifted(TOP)) {
-            Copy_Cell(value_arg, TOP);
+        if (not Any_Lifted(TOP_STABLE)) {
+            Copy_Cell(value_arg, TOP_STABLE);
             continue;  // dual signal, do not lift dual
         }
 
-        if (Is_Lifted_Ghost_Or_Void(TOP)) {  // (x: ~[]~) or (x: ())
+        if (Is_Lifted_Ghost_Or_Void(TOP_STABLE)) {  // (x: ~[]~) or (x: ())
             Init_Ghost_For_End(value_arg);  // both act like (^x: ())
             Liftify(value_arg);
             continue;
@@ -288,7 +288,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
     Clear_Cell_Flag(SCRATCH, SCRATCH_VAR_NOTE_ONLY_ACTION);  // consider *once*
 
-    Corrupt_Cell_If_Needful(TOP);  // shouldn't use past this point
+    Corrupt_Cell_If_Needful(TOP_STABLE);  // shouldn't use past this point
 
 } call_updater: {
 
@@ -375,7 +375,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     }
 
     Copy_Cell(PUSH(), Known_Element(SPARE));
-    Liftify(TOP);  // dual protocol, lift (?)
+    Liftify(TOP_STABLE);  // dual protocol, lift (?)
 
     Copy_Cell(PUSH(), scratch_var);  // save var for steps + error messages
     switch (unwrap Underlying_Sigil_Of(TOP_ELEMENT)) {
@@ -394,7 +394,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         goto return_error;
     }
 
-    unnecessary(Liftify(TOP));  // if ^x, not literally ^x ... meta-variable
+    unnecessary(Liftify(TOP_STABLE));  // if ^x, not literally ^x ... meta-variable
 
     goto set_from_steps_on_stack;
 
@@ -431,7 +431,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
                 e = Error_No_Binding_Raw(Known_Element(SPARE));
                 goto return_error;
             }
-            Liftify(TOP);
+            Liftify(TOP_STABLE);
             Liftify(Init_Word(PUSH(), CANON(DOT_1)));
             Liftify(Init_Word(PUSH(), u_cast(const Symbol*, payload1)));
             goto set_from_steps_on_stack;
@@ -465,7 +465,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             goto return_error;
         }
 
-        Liftify(TOP);  // dual protocol, lift (?)
+        Liftify(TOP_STABLE);  // dual protocol, lift (?)
     }
 
     for (at = head; at != tail; ++at) {
@@ -624,7 +624,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     //    value here if the picker wasn't ^META.
 
     if (Is_Dual_Nulled_Pick_Signal(out)) {
-        assert(Is_Nulled(TOP));
+        assert(Is_Nulled(TOP_STABLE));
       #if RUNTIME_CHECKS
         Unprotect_Cell(OUT);
       #endif

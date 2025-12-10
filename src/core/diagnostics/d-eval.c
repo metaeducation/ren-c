@@ -230,13 +230,9 @@ static void Evaluator_Shared_Checks_Debug(Level* const L)
 
         STATE = saved_state;
 
-      #if DEBUG_POISON_UNINITIALIZED_CELLS
-        Force_Poison_Cell(SCRATCH);
-        Force_Poison_Cell(OUT);
-      #endif
-        Blit_Cell(SCRATCH, TOP);
+        Force_Blit_Cell(SCRATCH, TOP);
         DROP();
-        Blit_Cell(OUT, TOP);
+        Force_Blit_Cell(OUT, TOP);
         DROP();
     }
 

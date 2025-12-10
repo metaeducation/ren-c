@@ -66,7 +66,7 @@
 //   memory-pooled levels and stacklessness (see %c-trampoline.c)
 //
 
-// The result of PUSH() and TOP is not Stable*, but OnStack(Stable*).  In an
+// The result of PUSH() and TOP_STABLE is not Stable*, but OnStack(Stable*).  In an
 // unchecked build this is just a Stable*, but with DEBUG_EXTANT_STACK_POINTERS
 // it becomes a checked C++ wrapper class...which keeps track of how many
 // such stack values are extant.  If the number is not zero, then you will
@@ -187,14 +187,14 @@
 
 // TOP is the most recently pushed item.
 //
-#define TOP \
-    cast(OnStack(Stable*), cast(Stable*, g_ds.movable_top))  // assume valid
+#define TOP_STABLE \
+    cast(OnStack(Stable*), Known_Stable(g_ds.movable_top))
 
 #define TOP_ELEMENT \
-    cast(OnStack(Element*), cast(Element*, g_ds.movable_top))  // assume valid
+    cast(OnStack(Element*), Known_Element(g_ds.movable_top))
 
-#define TOP_ATOM \
-    cast(OnStack(Value*), cast(Value*, g_ds.movable_top))  // assume valid
+#define TOP \
+    cast(OnStack(Value*), g_ds.movable_top)  // assume valid
 
 
 // 1. Use the fact that the data stack is always dynamic to avoid having to

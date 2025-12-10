@@ -267,13 +267,13 @@ Result(bool) Push_Set_Block_Instructions_To_Stack_Throws(
     if (circle_this)
         circled = TOP_INDEX;
 
-    if (Is_Metaform_Space(TOP) or Is_Meta_Form_Of(WORD, TOP))  // meta-assign
+    if (Is_Metaform_Space(TOP_STABLE) or Is_Meta_Form_Of(WORD, TOP_STABLE))  // meta-assign
         continue;
 
-    if (Is_Word(TOP) or Is_Tuple(TOP))
+    if (Is_Word(TOP_STABLE) or Is_Tuple(TOP_STABLE))
         continue;
 
-    if (Is_Space(TOP))
+    if (Is_Space(TOP_STABLE))
         continue;
 
     panic (
@@ -422,7 +422,7 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
   // Note: no circling passes through the original PACK!
 
     if (circled == stackindex_var)
-        Copy_Cell(TOP_ATOM, OUT);
+        Copy_Cell(TOP, OUT);
 
 } skip_circled_check: { //////////////////////////////////////////////////////
 
@@ -443,7 +443,7 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
     if (pack_array)
         Drop_Lifeguard(pack_array);
 
-    Move_Value(OUT, TOP_ATOM);  // restore OUT (or circled) from stack [1]
+    Move_Value(OUT, TOP);  // restore OUT (or circled) from stack [1]
 
 }} set_block_drop_stack_and_continue: {
 

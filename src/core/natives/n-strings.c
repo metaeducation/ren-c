@@ -308,7 +308,7 @@ DECLARE_NATIVE(JOIN)
             REBINT i;
             for (i = 0; i < len; ++i)
                 Copy_Sequence_At(PUSH(), unwrap base, i);
-            if (Is_Space(TOP))
+            if (Is_Space(TOP_STABLE))
                 DROP();  // will add back if join produces nothing [1]
         }
         else {

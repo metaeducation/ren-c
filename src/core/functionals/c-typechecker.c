@@ -347,7 +347,7 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
     assert(TOP_INDEX == L->baseline.stack_base);
     --L->baseline.stack_base;
-    Move_Value(SPARE, TOP_ATOM);  // restore pack to the SPARE [1]
+    Move_Value(SPARE, TOP);  // restore pack to the SPARE [1]
     DROP();
     assert(Is_Pack(SPARE));
 

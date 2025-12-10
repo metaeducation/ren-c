@@ -2052,7 +2052,7 @@ DECLARE_NATIVE(CONSTRUCT)
     } while ((symbol = Try_Get_Settable_Word_Symbol(nullptr, at)));
 
     if (not Is_Pinned_Form_Of(BLOCK, spec)) {
-        Copy_Cell(Level_Scratch(SUBLEVEL), TOP);
+        Copy_Cell(Level_Scratch(SUBLEVEL), TOP_STABLE);
         DROP();
 
         LEVEL_STATE_BYTE(SUBLEVEL) = ST_STEPPER_REEVALUATING;

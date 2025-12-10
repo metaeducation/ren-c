@@ -679,9 +679,9 @@ static Result(const Byte*) Scan_String_Into_Mold_Core(
                 ++count;
                 ++cp;
             }
-            if (count > VAL_INT32(TOP))
+            if (count > VAL_INT32(TOP_ELEMENT))
                 return fail ("Nested -- level closure too long");
-            if (count == VAL_INT32(TOP)) {
+            if (count == VAL_INT32(TOP_ELEMENT)) {
                 DROP();
                 if (TOP_INDEX == base)
                     goto finished;  // end overall scan, don't add codepoints
@@ -722,8 +722,8 @@ static Result(const Byte*) Scan_String_Into_Mold_Core(
             }
             if (
                 *cp == left
-                and VAL_INT32(TOP) != 0  // don't want "--" to nest a scan!
-                and count >= VAL_INT32(TOP)
+                and VAL_INT32(TOP_STABLE) != 0  // don't want "--" to nest a scan!
+                and count >= VAL_INT32(TOP_STABLE)
             ){
                 Init_Integer(PUSH(), count);
                 Append_Codepoint(Mold_Buffer(mo), left);
@@ -1924,7 +1924,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
                     return TOKEN_URL;
                 }
 
-                Byte want = unwrap First_Byte_Of_Rune_If_Single_Char(TOP);
+                Byte want = unwrap First_Byte_Of_Rune_If_Single_Char(TOP_STABLE);
                 if (*cp != want) {
                     Drop_Data_Stack_To(base);
                     return fail (Error_Mismatch(want, *cp));
@@ -1943,7 +1943,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
         }
 
         if (base != TOP_INDEX) {
-            Byte want = unwrap First_Byte_Of_Rune_If_Single_Char(TOP);
+            Byte want = unwrap First_Byte_Of_Rune_If_Single_Char(TOP_STABLE);
             Drop_Data_Stack_To(base);
             return fail (Error_Mismatch(want, *cp));
         }

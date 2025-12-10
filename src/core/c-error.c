@@ -368,7 +368,7 @@ void Set_Location_Of_Error(
 
         if (Is_Level_Fulfilling_Or_Typechecking(L)) { // differentiate [3]
             Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
-            Move_Cell(Stub_Cell(a), TOP);
+            Copy_Cell(Stub_Cell(a), TOP);
             Init_Fence(TOP, a);
             continue;
         }

@@ -674,16 +674,16 @@ static void Mark_Root_Stubs(void)
 //
 static void Mark_Data_Stack(void)
 {
-    const Stable* head = Flex_Head(Stable, g_ds.array);  // unstable allowed
+    const Value* head = Flex_Head(Value, g_ds.array);  // unstable allowed
     assert(Is_Cell_Poisoned(head));  // Data_Stack_At(0) deliberately invalid
 
-    Stable* stackval = g_ds.movable_top;
+    Value* stackval = g_ds.movable_top;
     for (; stackval != head; --stackval)  // stop before Data_Stack_At(0)
         Queue_Mark_Maybe_Erased_Cell_Deep(stackval);  // allow erasure [1]
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
     stackval = g_ds.movable_top + 1;
-    for (; stackval != Flex_Tail(Stable, g_ds.array); ++stackval)
+    for (; stackval != Flex_Tail(Value, g_ds.array); ++stackval)
         assert(Is_Cell_Poisoned(stackval));
   #endif
 
