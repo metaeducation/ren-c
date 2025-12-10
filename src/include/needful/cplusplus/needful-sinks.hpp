@@ -223,7 +223,7 @@ struct SinkWrapper {
         return *this;
     }
 
-    operator bool() const { return p != nullptr; }
+    explicit operator bool() const { return p != nullptr; }
 
     operator T*() const {  // corrupt before yielding pointer
         if (corruption_pending) {
@@ -396,7 +396,7 @@ struct InitWrapper {
         return *this;
     }
 
-    operator bool() const { return p != nullptr; }
+    explicit operator bool() const { return p != nullptr; }
 
     operator T*() const { return p; }
 
@@ -518,7 +518,7 @@ struct NeedWrapper {
         return *this;
     }
 
-    operator bool() const { return p != nullptr; }
+    explicit operator bool() const { return p != nullptr; }
 
     operator T*() const { return p; }
 

@@ -188,7 +188,7 @@ struct CTypeList {
         enum { value = false };
 
         // Allow usage without ::value in most contexts [1]
-        constexpr operator bool() const { return value; }
+        constexpr explicit operator bool() const { return value; }
     };
 };
 
@@ -200,7 +200,7 @@ struct CTypeList<T1, Ts...> {  // Specialization for non-empty lists
                     typename CTypeList<Ts...>::template contains<T>() };
 
         // Allow usage without ::value in most contexts [1]
-        constexpr operator bool() const { return value; }
+        constexpr explicit operator bool() const { return value; }
     };
 };
 

@@ -612,7 +612,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     if (
         not Is_Metaform(scratch_var)
         and Is_Lifted_Antiform(spare_location_dual)
-        and not Is_Stable_Antiform_Kind_Byte(spare_location_dual)
+        and not Is_Stable_Antiform_Kind_Byte(KIND_BYTE(spare_location_dual))
     ){
         return Error_User("PICK result cannot be unstable unless metaform");
     }
