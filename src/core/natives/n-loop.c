@@ -1427,7 +1427,7 @@ DECLARE_NATIVE(EVERY)
 
 } not_initial_entry: {  //////////////////////////////////////////////////////
 
-    iterator = Value_LOCAL(ITERATOR);
+    iterator = Stable_LOCAL(ITERATOR);
 
     switch (STATE) {
       case ST_EVERY_INITIALIZED_ITERATOR:
@@ -2007,7 +2007,7 @@ DECLARE_NATIVE(MAP)
 
 } not_initial_entry: {  //////////////////////////////////////////////////////
 
-    iterator = Value_LOCAL(ITERATOR);
+    iterator = Stable_LOCAL(ITERATOR);
 
     switch (STATE) {
       case ST_MAP_INITIALIZED_ITERATOR:

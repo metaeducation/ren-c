@@ -734,7 +734,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     // ITERATOR locals are initialized.
 
     frame = Element_LOCAL(FRAME);
-    iterator = Value_LOCAL(ITERATOR);
+    iterator = Stable_LOCAL(ITERATOR);
 
     switch (STATE) {
       case ST_FRAME_FILLER_INITIALIZED_ITERATOR:

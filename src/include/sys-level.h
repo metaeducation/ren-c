@@ -712,7 +712,7 @@ INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
 #define Element_LOCAL(name) \
     Known_Element(Level_Arg(level_, PARAM_INDEX(name)))
 
-#define Value_LOCAL(name) \
+#define Stable_LOCAL(name) \
     Known_Stable(Level_Arg(level_, PARAM_INDEX(name)))
 
 #define PARAM(name) \
