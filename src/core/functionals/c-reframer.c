@@ -465,8 +465,8 @@ DECLARE_NATIVE(REFRAMER)
     const Key* key;
     const Param* param;
 
-    if (Bool_ARG(PARAMETER)) {
-        const Symbol* symbol = Word_Symbol(ARG(PARAMETER));
+    if (ARG(PARAMETER)) {
+        const Symbol* symbol = Word_Symbol(unwrap ARG(PARAMETER));
         param_index = opt Try_Get_Binder_Index(binder, symbol);
         if (param_index == 0) {
             Destruct_Binder(binder);

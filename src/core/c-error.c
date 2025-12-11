@@ -1387,12 +1387,12 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     // Protect against recursion. !!!!
     //
     if (not form) {
-        Init_Nulled(ARG(FORM));  // form = false;
+        Init_Nulled(LOCAL(FORM));  // form = false;
         return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);
     }
 

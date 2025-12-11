@@ -105,7 +105,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
         INCLUDE_PARAMS_OF_TYPECHECKER_ARCHETYPE;
 
-        bool check_datatype = Bool_ARG(TYPE);
+        bool check_datatype = did ARG(TYPE);
         if (check_datatype) {
             if (not Is_Datatype(v))
                 return fail (
@@ -113,8 +113,8 @@ Bounce Typechecker_Dispatcher(Level* const L)
                 );
 
             if (
-                Bool_ARG(QUOTED)
-                or Bool_ARG(TIED) or Bool_ARG(PINNED) or Bool_ARG(METAFORM)
+                ARG(QUOTED)
+                or ARG(TIED) or ARG(PINNED) or ARG(METAFORM)
             ){
                 return fail (Error_Bad_Refines_Raw());
             }
@@ -122,7 +122,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
             type = Datatype_Type(v);
         }
         else {
-            if (Bool_ARG(QUOTED)) {
+            if (ARG(QUOTED)) {
                 if (Is_Antiform(v) or Quotes_Of(cast(Element*, v)) == 0)
                     return LOGIC(false);
                 Noquotify(cast(Element*, v));
@@ -130,7 +130,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
 
             type = Type_Of(v);
 
-            if (Bool_ARG(QUASIFORM)) {
+            if (ARG(QUASIFORM)) {
                 if (type != TYPE_QUASIFORM)
                     return LOGIC(false);
 
@@ -138,8 +138,8 @@ Bounce Typechecker_Dispatcher(Level* const L)
                 type = Type_Of(v);
             }
 
-            if (Bool_ARG(TIED)) {
-                if (Bool_ARG(PINNED) or Bool_ARG(METAFORM))
+            if (ARG(TIED)) {
+                if (ARG(PINNED) or ARG(METAFORM))
                     return fail (Error_Bad_Refines_Raw());
 
                 if (type != TYPE_TIED)
@@ -147,8 +147,8 @@ Bounce Typechecker_Dispatcher(Level* const L)
 
                 type = Heart_Of(v);
             }
-            else if (Bool_ARG(PINNED)) {
-                if (Bool_ARG(METAFORM))
+            else if (ARG(PINNED)) {
+                if (ARG(METAFORM))
                     return fail (Error_Bad_Refines_Raw());
 
                 if (type != TYPE_PINNED)
@@ -156,7 +156,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
 
                 type = Heart_Of(v);
             }
-            else if (Bool_ARG(METAFORM)) {
+            else if (ARG(METAFORM)) {
                 if (type != TYPE_METAFORM)
                     return LOGIC(false);
 
@@ -1153,7 +1153,7 @@ DECLARE_NATIVE(TYPECHECK)
 
     heeded (Copy_Cell(SPARE, ARG(VALUE)));
 
-    if (not Bool_ARG(META)) {  // decay before typecheck if not ^META
+    if (not ARG(META)) {  // decay before typecheck if not ^META
       require(
         Decay_If_Unstable(SPARE)  // or return definitional error to match [1]?
       );
@@ -1182,7 +1182,7 @@ DECLARE_NATIVE(TYPECHECK)
     }
 
     if (Is_Error(SPARE)) {
-        assert(Bool_ARG(META));  // otherwise would have pre-decay'd, PANIC
+        assert(ARG(META));  // otherwise would have pre-decay'd, PANIC
         return COPY(SPARE);  // panic would require a :RELAX option [1]
     }
 

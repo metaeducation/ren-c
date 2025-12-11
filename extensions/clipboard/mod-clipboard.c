@@ -62,11 +62,11 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         INCLUDE_PARAMS_OF_READ;
         UNUSED(ARG(SOURCE));  // implied by `port`
 
-        if (Bool_ARG(PART) or Bool_ARG(SEEK))
+        if (ARG(PART) or ARG(SEEK))
             panic (Error_Bad_Refines_Raw());
 
-        UNUSED(Bool_ARG(STRING));  // handled in dispatcher
-        UNUSED(Bool_ARG(LINES));  // handled in dispatcher
+        UNUSED(ARG(STRING));  // handled in dispatcher
+        UNUSED(ARG(LINES));  // handled in dispatcher
 
         SetLastError(NO_ERROR);
         if (not IsClipboardFormatAvailable(CF_UNICODETEXT)) {
@@ -107,7 +107,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         INCLUDE_PARAMS_OF_WRITE;
         UNUSED(ARG(DESTINATION));  // implied by `port`
 
-        if (Bool_ARG(APPEND) or Bool_ARG(LINES))
+        if (ARG(APPEND) or ARG(LINES))
             panic (Error_Bad_Refines_Raw());
 
         Stable* data = ARG(DATA);
@@ -122,8 +122,8 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         // Handle :PART refinement:
         //
         REBINT len = Series_Len_At(data);
-        if (Bool_ARG(PART) and VAL_INT32(ARG(PART)) < len)
-            len = VAL_INT32(ARG(PART));
+        if (ARG(PART) and VAL_INT32(unwrap ARG(PART)) < len)
+            len = VAL_INT32(unwrap ARG(PART));
 
         if (not OpenClipboard(nullptr))
             return "panic -[OpenClipboard() fail on clipboard write]-";
@@ -168,7 +168,7 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
         INCLUDE_PARAMS_OF_OPEN;
         UNUSED(PARAM(SPEC));
 
-        if (Bool_ARG(NEW) or Bool_ARG(READ) or Bool_ARG(WRITE))
+        if (ARG(NEW) or ARG(READ) or ARG(WRITE))
             panic (Error_Bad_Refines_Raw());
 
         // !!! Currently just ignore (it didn't do anything)

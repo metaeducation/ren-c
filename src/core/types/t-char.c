@@ -227,7 +227,7 @@ REBINT CT_Utf8(const Element* a, const Element* b, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Any_Utf8)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -462,7 +462,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     if (form) {
         Append_Any_Utf8_Limit(mo->strand, v, UNLIMITED);
@@ -954,7 +954,8 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Utf8)
     INCLUDE_PARAMS_OF_REVERSE_OF;
 
     Element* any_utf8 = Element_ARG(VALUE);
-    Stable* part = ARG(PART);
+    Value* part = LOCAL(PART);
+    possibly(Is_Light_Null(part));
 
     Stable* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
 
@@ -998,7 +999,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Rune)
 
     attempt {
         Codepoint c = cast(Codepoint,
-            1 + (Random_Int(Bool_ARG(SECURE)) % limit)
+            1 + (Random_Int(did ARG(SECURE)) % limit)
         );
 
         Init_Single_Codepoint_Rune(OUT, c) except (Error* e) {
@@ -1017,9 +1018,10 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Utf8)
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
     Element* any_utf8 = Element_ARG(VALUE);
-    Stable* part = ARG(PART);
+    Value* part = LOCAL(PART);
+    possibly(Is_Light_Null(part));
 
-    if (Bool_ARG(SECURE))
+    if (ARG(SECURE))
         panic (Error_Bad_Refines_Raw());
 
     Stable* datatype = Copy_Cell(SPARE, Datatype_Of(any_utf8));
@@ -1112,7 +1114,7 @@ DECLARE_NATIVE(TRAILING_BYTES_FOR_UTF8)
         panic (Error_Out_Of_Range(ARG(FIRST_BYTE)));
 
     uint_fast8_t trail = g_trailing_bytes_for_utf8[cast(Byte, byte)];
-    if (trail > 3 and not Bool_ARG(EXTENDED)) {
+    if (trail > 3 and not ARG(EXTENDED)) {
         assert(trail == 4 or trail == 5);
         panic (
             "Use :EXTENDED with TRAILING-BYTES-FOR-UTF-8 for 4 or 5 bytes"

@@ -67,7 +67,7 @@ DECLARE_NATIVE(THE)
 
     Element* v = Element_ARG(VALUE);
 
-    if (Bool_ARG(SOFT) and Is_Soft_Escapable_Group(v)) {
+    if (ARG(SOFT) and Is_Soft_Escapable_Group(v)) {
         if (Eval_Any_List_At_Throws(OUT, v, SPECIFIED))
             return THROWN;
         return OUT;
@@ -119,7 +119,7 @@ DECLARE_NATIVE(QUOTE)
     INCLUDE_PARAMS_OF_QUOTE;
 
     Element* e = Element_ARG(VALUE);
-    REBINT depth = Bool_ARG(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1;
+    Count depth = ARG(DEPTH) ? VAL_INT32(unwrap ARG(DEPTH)) : 1;
 
     if (depth < 0)
         panic (PARAM(DEPTH));
@@ -146,7 +146,7 @@ DECLARE_NATIVE(UNQUOTE)
 
     Element* v = Element_ARG(VALUE);
 
-    Count depth = (Bool_ARG(DEPTH) ? VAL_INT32(ARG(DEPTH)) : 1);
+    Count depth = ARG(DEPTH) ? VAL_INT32(unwrap ARG(DEPTH)) : 1;
 
     if (depth < 0)
         panic (PARAM(DEPTH));
@@ -180,7 +180,7 @@ DECLARE_NATIVE(QUASI)
     Element* elem = Element_ARG(VALUE);
 
     if (Is_Quasiform(elem)) {
-        if (Bool_ARG(PASS))
+        if (ARG(PASS))
             return COPY(elem);
         panic ("Use QUASI:PASS if QUASI argument is already a quasiform");
     }
@@ -240,7 +240,7 @@ DECLARE_NATIVE(LIFT)
         return COPY(Liftify(atom));
 
     if (
-        Bool_ARG(LITE)  // LIFT:LITE handles quasiforms specially
+        ARG(LITE)  // LIFT:LITE handles quasiforms specially
         and Is_Antiform(atom)
     ){
         if (Is_Error(atom))
@@ -285,13 +285,13 @@ DECLARE_NATIVE(UNLIFT)
 
     if (Is_Antiform(atom)) {
         assert(Is_Void(atom) or Is_Light_Null(atom));
-        if (not Bool_ARG(LITE))
+        if (not ARG(LITE))
             panic ("UNLIFT only accepts NULL or VOID if :LITE");
         return COPY(atom);  // pass through as-is
     }
 
     if (LIFT_BYTE(atom) == NOQUOTE_2) {
-        if (not Bool_ARG(LITE))
+        if (not ARG(LITE))
             panic ("UNLIFT only takes non quoted/quasi things if :LITE");
 
         Copy_Cell(OUT, atom);
@@ -302,7 +302,7 @@ DECLARE_NATIVE(UNLIFT)
         return OUT;
     }
 
-    if (LIFT_BYTE(atom) == QUASIFORM_3 and Bool_ARG(LITE))
+    if (LIFT_BYTE(atom) == QUASIFORM_3 and ARG(LITE))
         panic (
             "UNLIFT:LITE does not accept quasiforms (plain forms are meta)"
         );
@@ -342,7 +342,7 @@ DECLARE_NATIVE(ANTIFORM_Q)
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))  // intrinsic shortcut
         return LOGIC(Is_Antiform(atom));
 
-    if (not Bool_ARG(TYPE))
+    if (not ARG(TYPE))
         return LOGIC(Is_Antiform(atom));
 
     require (  // mutable [1]
@@ -676,7 +676,7 @@ DECLARE_NATIVE(OPTIONAL)  // ususally used via its aliases of OPT or ?
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))
         veto = false;  // default in intrinsic dispatch to not light
     else
-        veto = Bool_ARG(VETO);  // slower dispatch with frame + refinement
+        veto = did ARG(VETO);  // slower dispatch with frame + refinement
 
     return Optional_Intrinsic_Native_Core(LEVEL, veto);
 }

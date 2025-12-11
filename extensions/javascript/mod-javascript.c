@@ -962,7 +962,7 @@ DECLARE_NATIVE(JS_NATIVE)
     // !!! A bit wasteful to use a whole cell for this--could just be whether
     // the ID is positive or negative.  Keep things clear, optimize later.
     //
-    Init_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER), Bool_ARG(AWAITER));
+    Init_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER), ARG(AWAITER));
 
   //=//// MAKE ASCII SOURCE FOR JAVASCRIPT FUNCTION ///////////////////////=//
 
@@ -1003,7 +1003,7 @@ DECLARE_NATIVE(JS_NATIVE)
     require (
       Append_Ascii(mo->strand, "let f = ")  // store function here
     );
-    if (Bool_ARG(AWAITER)) {  // runs in rebPromise() [1]
+    if (ARG(AWAITER)) {  // runs in rebPromise() [1]
         require (
           Append_Ascii(mo->strand, "async ")
         );
@@ -1016,7 +1016,7 @@ DECLARE_NATIVE(JS_NATIVE)
     require (
       Append_Ascii(mo->strand, "};\n")  // end `function() {`
     );
-    if (Bool_ARG(AWAITER)) {
+    if (ARG(AWAITER)) {
         require (
           Append_Ascii(mo->strand, "f.is_awaiter = true;\n")
         );
@@ -1141,7 +1141,7 @@ DECLARE_NATIVE(JS_EVAL_P)
     //
     // !!! All other types come back as trash (~ antiform).  Error instead?
     //
-    if (Bool_ARG(LOCAL)) {
+    if (ARG(LOCAL)) {
         addr = EM_ASM_INT(
             { try { return reb.Box(eval(UTF8ToString($0))); }  // direct
               catch(e) {  // v-- WASM EXCEPTIONS! DANGER! See [C]

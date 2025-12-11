@@ -242,8 +242,8 @@ DECLARE_NATIVE(FILE_ACTOR)
         // !!! R3-Alpha would bound the seek to the file size; that's flaky
         // and might give people a wrong impression.  Let it error.
 
-        if (Bool_ARG(SEEK)) {
-            int64_t seek = VAL_INT64(ARG(SEEK));
+        if (ARG(SEEK)) {
+            int64_t seek = VAL_INT64(unwrap ARG(SEEK));
             if (seek <= 0)
                 panic (PARAM(SEEK));
             file->offset = seek;
@@ -277,8 +277,8 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         REBLEN len = file_size - file->offset;  // default is read everything
 
-        if (Bool_ARG(PART)) {
-            int64_t limit = VAL_INT64(ARG(PART));
+        if (ARG(PART)) {
+            int64_t limit = VAL_INT64(unwrap ARG(PART));
             if (limit < 0) {
                 result = rebStable(
                     "make warning! {Negative :PART passed to READ of file}"
@@ -319,12 +319,12 @@ DECLARE_NATIVE(FILE_ACTOR)
       case SYM_APPEND: {
         INCLUDE_PARAMS_OF_APPEND;
 
-        if (Is_Antiform(ARG(VALUE)))
+        if (Is_Antiform(unwrap ARG(VALUE)))
             panic (PARAM(VALUE));
 
         Element* v = Element_ARG(VALUE);
 
-        if (Bool_ARG(PART) or Bool_ARG(DUP) or Bool_ARG(LINE))
+        if (ARG(PART) or ARG(DUP) or ARG(LINE))
             panic (Error_Bad_Refines_Raw());
 
         assert(Is_Port(ARG(SERIES)));  // !!! poorly named
@@ -337,7 +337,7 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         UNUSED(PARAM(DESTINATION));
 
-        if (Bool_ARG(SEEK) and Bool_ARG(APPEND))
+        if (ARG(SEEK) and ARG(APPEND))
             panic (Error_Bad_Refines_Raw());
 
         Stable* data = ARG(DATA);  // binary, string, or block
@@ -366,11 +366,11 @@ DECLARE_NATIVE(FILE_ACTOR)
         }
         else {
             int flags = 0;
-            if (Bool_ARG(SEEK)) {  // do not create
+            if (ARG(SEEK)) {  // do not create
                 flags |= UV_FS_O_WRONLY;
             }
-            else if (Bool_ARG(APPEND)) {  // do not truncate
-                assert(not Bool_ARG(SEEK));  // checked above
+            else if (ARG(APPEND)) {  // do not truncate
+                assert(not ARG(SEEK));  // checked above
                 flags |= UV_FS_O_WRONLY | UV_FS_O_CREAT;
             }
             else
@@ -389,14 +389,14 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         uint64_t file_size = File_Size_Cacheable_May_Panic(port);
 
-        if (Bool_ARG(APPEND)) {
+        if (ARG(APPEND)) {
             //
             // We assume WRITE:APPEND has the same semantics as WRITE:SEEK to
             // the end of the file.  This means the position before the call is
             // lost, and WRITE after a WRITE:APPEND will always write to the
             // new end of the file.
             //
-            assert(not Bool_ARG(SEEK));  // checked above
+            assert(not ARG(SEEK));  // checked above
             file->offset = file_size;
         }
         else {
@@ -404,8 +404,8 @@ DECLARE_NATIVE(FILE_ACTOR)
             //
             // https://discourse.julialang.org/t/why-is-seek-zero-based/55569/
             //
-            if (Bool_ARG(SEEK)) {
-                int64_t seek = VAL_INT64(ARG(SEEK));
+            if (ARG(SEEK)) {
+                int64_t seek = VAL_INT64(unwrap ARG(SEEK));
                 if (seek <= 0)
                     result = rebStable(
                         "make warning! {Negative :PART passed to READ of file}"
@@ -440,7 +440,7 @@ DECLARE_NATIVE(FILE_ACTOR)
             const Element* item = List_Item_At(data);
             for (; remain != 0; --remain, ++item) {
                 Form_Element(mo, item);
-                if (Bool_ARG(LINES))
+                if (ARG(LINES))
                     Append_Codepoint(mo->strand, LF);
             }
 
@@ -495,7 +495,7 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         Flags flags = 0;
 
-        if (Bool_ARG(NEW))
+        if (ARG(NEW))
             flags |= UV_FS_O_CREAT | UV_FS_O_TRUNC;
 
         // The flag condition for O_RDWR is not just the OR'ing together of
@@ -503,13 +503,13 @@ DECLARE_NATIVE(FILE_ACTOR)
         // of /READ and /WRITE even though it's the same as not specifying
         // either to make it easier for generic calling via APPLY.
         //
-        if (Bool_ARG(READ) and Bool_ARG(WRITE)) {
+        if (ARG(READ) and ARG(WRITE)) {
             flags |= UV_FS_O_RDWR;
         }
-        else if (Bool_ARG(READ)) {
+        else if (ARG(READ)) {
             flags |= UV_FS_O_RDONLY;
         }
-        else if (Bool_ARG(WRITE)) {
+        else if (ARG(WRITE)) {
             flags |= UV_FS_O_WRONLY;
         }
         else
@@ -531,12 +531,15 @@ DECLARE_NATIVE(FILE_ACTOR)
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(PARAM(VALUE));
 
-        if (Bool_ARG(DEEP))
+        if (ARG(DEEP))
             panic (Error_Bad_Refines_Raw());
+
+        Value* part = LOCAL(PART);
+        possibly(Is_Light_Null(part));
 
         return rebValue(CANON(APPLIQUE), CANON(READ), "[",
             "source:", port,
-            "part:", rebQ(ARG(PART)),
+            "part:", Liftify(part),
         "]"); }
 
     //=//// CLOSE //////////////////////////////////////////////////////////=//
@@ -686,7 +689,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         INCLUDE_PARAMS_OF_SKIP;
 
         UNUSED(PARAM(SERIES));
-        UNUSED(Bool_ARG(UNBOUNDED));  // !!! Should :UNBOUNDED behave differently?
+        UNUSED(ARG(UNBOUNDED));  // !!! Should :UNBOUNDED behave differently?
 
         int64_t offset = VAL_INT64(ARG(OFFSET));
         if (offset < 0 and cast(uint64_t, -offset) > file->offset) {

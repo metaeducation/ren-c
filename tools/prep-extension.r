@@ -382,7 +382,7 @@ if not empty? symbol-forward-decls [
 
 e1/emit [--[
     /*
-     * INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), Bool_ARG(), ARG()
+     * INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), ARG(), ARG()
      *
      * Note these are not technically required if the extension uses
      * librebol.

@@ -474,10 +474,10 @@ DECLARE_NATIVE(DEFLATE)
     const Byte* bp = Cell_Bytes_Limit_At(&size, ARG(DATA), &limit);
 
     Option(SymId) envelope;
-    if (not Bool_ARG(ENVELOPE))
+    if (not ARG(ENVELOPE))
         envelope = SYM_0;
     else {
-        envelope = Word_Id(ARG(ENVELOPE));
+        envelope = Word_Id(unwrap ARG(ENVELOPE));
         switch (opt envelope) {
           case SYM_ZLIB:
           case SYM_GZIP:
@@ -530,8 +530,8 @@ DECLARE_NATIVE(INFLATE)
     INCLUDE_PARAMS_OF_INFLATE;
 
     REBINT max;
-    if (Bool_ARG(MAX)) {
-        max = Int32s(ARG(MAX), 1);
+    if (ARG(MAX)) {
+        max = Int32s(unwrap ARG(MAX), 1);
         if (max < 0)
             panic (PARAM(MAX));
     }
@@ -550,10 +550,10 @@ DECLARE_NATIVE(INFLATE)
     }
 
     Option(SymId) envelope;
-    if (not Bool_ARG(ENVELOPE))
+    if (not ARG(ENVELOPE))
         envelope = SYM_0;
     else {
-        envelope = Word_Id(ARG(ENVELOPE));
+        envelope = Word_Id(unwrap ARG(ENVELOPE));
         switch (opt envelope) {
           case SYM_ZLIB:
           case SYM_GZIP:

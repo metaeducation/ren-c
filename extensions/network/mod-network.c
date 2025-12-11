@@ -948,7 +948,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 
         UNUSED(PARAM(SOURCE));
 
-        if (Bool_ARG(SEEK))
+        if (ARG(SEEK))
             panic (Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(STRING)); // handled in dispatcher
@@ -962,11 +962,11 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         rebreq->actual = 0;
         rebreq->result = nullptr;
 
-        if (Bool_ARG(PART)) {
-            if (not Is_Integer(ARG(PART)))
+        if (ARG(PART)) {
+            if (not Is_Integer(unwrap ARG(PART)))
                 panic (PARAM(PART));
 
-            rebreq->length_store = VAL_INT32(ARG(PART));
+            rebreq->length_store = VAL_INT32(unwrap ARG(PART));
             rebreq->length = &rebreq->length_store;
         }
         else {
@@ -1004,7 +1004,7 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 
         UNUSED(PARAM(DESTINATION));
 
-        if (Bool_ARG(SEEK) or Bool_ARG(APPEND) or Bool_ARG(LINES))
+        if (ARG(SEEK) or ARG(APPEND) or ARG(LINES))
             panic (Error_Bad_Refines_Raw());
 
         if (sock->stream == nullptr and sock->transport != TRANSPORT_UDP)
@@ -1044,8 +1044,11 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
         // !!! If you FREEZE the data then a copy is not necessary, review
         // this as an angle on efficiency.
         //
+        Value* part = LOCAL(PART);
+        possibly(Is_Light_Null(part));
+
         rebreq->binary = rebStable(
-            "as blob! copy:part", data, rebQ(ARG(PART))
+            "as blob! copy:part", data, rebQ(part)
         );
         rebUnmanage(rebreq->binary);  // otherwise would be seen as a leak
 
@@ -1264,10 +1267,14 @@ DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
     Stable* ports = nullptr;
 
     Option(const Element*) val;
-    if (not Is_Block(ARG(VALUE)))
-        val = Is_Nulled(ARG(VALUE)) ? nullptr : Element_ARG(VALUE);
+    if (not ARG(VALUE)) {
+        val = nullptr;
+    }
+    else if (not Is_Block(unwrap ARG(VALUE))) {
+        val = Element_ARG(VALUE);
+    }
     else {
-        ports = ARG(VALUE);
+        ports = unwrap ARG(VALUE);
 
         REBLEN num_pending = 0;
         const Element* tail;
@@ -1305,8 +1312,7 @@ DECLARE_NATIVE(WAIT_P)  // See wrapping function WAIT in usermode code
           Sink(Element) cell = Alloc_Tail_Array(single)
         );
         Copy_Cell(cell, unwrap val);
-        Init_Block(ARG(VALUE), single);
-        ports = ARG(VALUE);
+        ports = Init_Block(LOCAL(VALUE), single);
 
         timeout = ALL_BITS;
         break; }

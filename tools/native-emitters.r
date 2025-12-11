@@ -255,33 +255,51 @@ export emit-include-params-macro: func [
     let symbols: copy []
     let n: 1
     let items: collect [
-        for-each 'item paramlist [
-            if group? item [
+        while [not tail? paramlist] [
+            let item: paramlist.1
+            paramlist: next paramlist
+            if group? item [  ; escapable parameters are in GROUP!
                 item: first item
             ]
             if not match [word! get-word3! lit-word3!] item [
                 continue  ; note get-word3! is refinement?
             ]
+            while [text? opt try paramlist.1] [paramlist: next paramlist]
+            if spec: match block! opt try paramlist.1 [
+                paramlist: next paramlist
+            ]
 
-            let param-name: to text! resolve noquote item
+            let name: to text! resolve noquote item
 
-            let param-type: "Stable*"
-            parse3 param-name [
-                remove caret-surrogate (param-type: "Value*") to <end>
+            let type: "Stable*"
+            parse3 name [
+                remove caret-surrogate (type: "Value*") to <end>
                 | to <end>
             ]
 
-            append symbols param-name
+            let optional: any [
+                get-word3? item
+                find opt spec <opt>
+            ] then [
+                type: copy type
+                insert type "Option("
+                append type ")"
+                <- "true"
+            ] else [
+                "false"
+            ]
+
+            append symbols as word! name
             all [
                 is-intrinsic
                 n = 1  ; first parameter
             ] then [
-                keep cscape [param-name
-                    "DECLARE_INTRINSIC_PARAM(${PARAM-NAME})"
+                keep cscape [name
+                    "DECLARE_INTRINSIC_PARAM(${NAME})"
                 ]
             ] else [
-                keep cscape [n param-name param-type
-                    "DECLARE_PARAM($<Param-Type>, $<n>, ${PARAM-NAME})"]
+                keep cscape [n name type optional
+                    "DECLARE_PARAM($<Type>, ${NAME}, $<n>, $<optional>)"]
             ]
             n: n + 1
         ]

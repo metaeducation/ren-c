@@ -832,7 +832,7 @@ DECLARE_NATIVE(UNBIND)
         const Element* tail;
         Element* at = List_At_Ensure_Mutable(&tail, word);
         Option(VarList*) context = nullptr;
-        Unbind_Values_Core(at, tail, context, Bool_ARG(DEEP));
+        Unbind_Values_Core(at, tail, context, did ARG(DEEP));
     }
 
     return COPY(word);
@@ -1051,17 +1051,17 @@ DECLARE_NATIVE(INFIX)
 
     Stable* out = Copy_Cell(OUT, ARG(ACTION));
 
-    if (Bool_ARG(OFF)) {
-        if (Bool_ARG(DEFER) or Bool_ARG(POSTPONE))
+    if (ARG(OFF)) {
+        if (ARG(DEFER) or ARG(POSTPONE))
             panic (Error_Bad_Refines_Raw());
         Tweak_Frame_Infix_Mode(out, PREFIX_0);
     }
-    else if (Bool_ARG(DEFER)) {  // not OFF, already checked
-        if (Bool_ARG(POSTPONE))
+    else if (ARG(DEFER)) {  // not OFF, already checked
+        if (ARG(POSTPONE))
             panic (Error_Bad_Refines_Raw());
         Tweak_Frame_Infix_Mode(out, INFIX_DEFER);
     }
-    else if (Bool_ARG(POSTPONE)) {  // not OFF or DEFER, we checked
+    else if (ARG(POSTPONE)) {  // not OFF or DEFER, we checked
         Tweak_Frame_Infix_Mode(out, INFIX_POSTPONE);
     }
     else
@@ -1090,7 +1090,7 @@ DECLARE_NATIVE(GHOSTABLE)
 
     Stable* out = Copy_Cell(OUT, ARG(ACTION));
 
-    if (Bool_ARG(OFF))
+    if (ARG(OFF))
         Clear_Cell_Flag(out, WEIRD_GHOSTABLE);
     else
         Set_Cell_Flag(out, WEIRD_GHOSTABLE);

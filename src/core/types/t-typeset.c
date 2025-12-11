@@ -376,7 +376,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     if (not form) {
         Begin_Non_Lexical_Mold(mo, v);  // &[parameter!
@@ -499,7 +499,7 @@ void Undecorate_Element(Element* e)
             for (Length i = 1; i < len; i++)
                 Copy_Sequence_At(PUSH(), e, i);
             assume (  // anything that could be in a sequence works outside
-              Pop_Sequence_Or_Conflation(e, Heart_Of(e), base)
+              Pop_Sequence_Or_Conflation(e, unwrap Heart_Of(e), base)
             );
         }
         Tweak_Cell_Binding(e, binding);  // preserve original binding
@@ -576,7 +576,7 @@ Result(None) Decorate_Element(const Element* decoration, Element* element)
         }
 
         trap (  // note that this may fail; propagate error if so
-          Pop_Sequence_Or_Conflation(element, sequence_to_add, base)
+          Pop_Sequence_Or_Conflation(element, unwrap sequence_to_add, base)
         );
 
         Tweak_Cell_Binding(element, binding);  // preserve original binding
@@ -621,18 +621,18 @@ DECLARE_NATIVE(DECORATE)
 {
     INCLUDE_PARAMS_OF_DECORATE;
 
-    Element* element = Element_ARG(VALUE);
+    Element* v = Element_ARG(VALUE);
 
-    if (Is_Nulled(ARG(DECORATION)))
-        return COPY(element);
+    if (not ARG(DECORATION))
+        return COPY(v);
 
     Element* decoration = Element_ARG(DECORATION);
 
     trap (
-      Decorate_Element(decoration, element)
+      Decorate_Element(decoration, v)
     );
 
-    return COPY(element);
+    return COPY(v);
 }
 
 
@@ -660,19 +660,19 @@ DECLARE_NATIVE(REDECORATE)
 {
     INCLUDE_PARAMS_OF_REDECORATE;
 
-    Element* e = Element_ARG(VALUE);
+    Element* v = Element_ARG(VALUE);
 
-    if (Is_Nulled(ARG(DECORATION)))
-        return COPY(e);
+    if (not ARG(DECORATION))
+        return COPY(v);
 
     Element* decoration = Element_ARG(DECORATION);
 
-    Undecorate_Element(e);
+    Undecorate_Element(v);
     trap (
-      Decorate_Element(decoration, e)
+      Decorate_Element(decoration, v)
     );
 
-    return COPY(e);
+    return COPY(v);
 }
 
 
@@ -703,7 +703,7 @@ DECLARE_NATIVE(DECORATION_OF)
     Clear_Cell_Sigil(element);
 
     Element* out;
-    switch (Heart_Of(element)) {
+    switch (unwrap Heart_Of(element)) {
       case TYPE_TUPLE:
         out = Init_Word(OUT, CANON(DOT_1));
         break;

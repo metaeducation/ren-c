@@ -287,7 +287,7 @@ REBINT CT_Decimal(const Element* a, const Element* b, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Decimal)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -325,7 +325,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     UNUSED(form);
 
@@ -590,7 +590,7 @@ IMPLEMENT_GENERIC(RANDOM, Any_Float)
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     REBDEC d = VAL_DECIMAL(val);
-    REBDEC rand = Random_Dec(d, Bool_ARG(SECURE));
+    REBDEC rand = Random_Dec(d, did ARG(SECURE));
 
     return Init_Decimal_Or_Percent(OUT, heart, rand);
 }
@@ -626,24 +626,26 @@ IMPLEMENT_GENERIC(ROUND, Any_Float)
     USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
     USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
 
-    if (not Bool_ARG(TO)) {
+    Stable* to = opt ARG(TO);
+    if (not to) {
         if (heart == TYPE_PERCENT)
-            Init_Decimal(ARG(TO), 0.01L);  // round 5.5% -> 6%
+            to = Init_Decimal(LOCAL(TO), 0.01L);  // round 5.5% -> 6%
         else
-            Init_Integer(ARG(TO), 1);
+            to = Init_Integer(LOCAL(TO), 1);
     }
-
-    if (Is_Time(ARG(TO)))
+    else if (Is_Time(to))
         panic (PARAM(TO));
 
-    d1 = Round_Dec(d1, level_, Dec64(ARG(TO)));
-    if (Is_Percent(ARG(TO))) {
+    d1 = Round_Dec(d1, level_, Dec64(to));
+
+    if (Is_Percent(to)) {
         heart = TYPE_PERCENT;
         return Init_Decimal_Or_Percent(OUT, heart, d1);
     }
 
-    if (Is_Integer(ARG(TO)))
+    if (Is_Integer(to))
         return Init_Integer(OUT, cast(REBI64, d1));
+
     return Init_Decimal_Or_Percent(OUT, heart, d1);
 }
 

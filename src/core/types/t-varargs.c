@@ -442,12 +442,12 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
 
     Element* varargs = cast(Element*, ARG(SERIES));
 
-    if (Bool_ARG(DEEP))
+    if (ARG(DEEP))
         panic (Error_Bad_Refines_Raw());
-    if (Bool_ARG(LAST))
+    if (ARG(LAST))
         panic (Error_Varargs_Take_Last_Raw());
 
-    if (not Bool_ARG(PART)) {
+    if (not ARG(PART)) {
         if (Do_Vararg_Op_Maybe_End_Throws(
             OUT,
             VARARG_OP_TAKE,
@@ -462,10 +462,10 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
 
     assert(TOP_INDEX == STACK_BASE);
 
-    if (not Is_Integer(ARG(PART)))
+    if (not Is_Integer(unwrap ARG(PART)))
         panic (PARAM(PART));
 
-    REBINT limit = VAL_INT32(ARG(PART));
+    REBINT limit = VAL_INT32(unwrap ARG(PART));
     if (limit < 0)
         limit = 0;
 
@@ -580,7 +580,7 @@ IMPLEMENT_GENERIC(TAIL_Q, Is_Varargs)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Varargs)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -601,7 +601,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     UNUSED(form);
 
@@ -641,7 +641,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
             break; }
 
           default:
-            crash (NULL);
+            crash (nullptr);
         };
         Mold_Element(mo, param_word);
     }

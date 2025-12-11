@@ -611,9 +611,9 @@ DECLARE_NATIVE(WRAP)
     VarList* parent = nullptr;
 
     CollectFlags flags = COLLECT_ONLY_SET_WORDS;
-    if (Bool_ARG(SET))
+    if (ARG(SET))
         flags = COLLECT_DEEP_BLOCKS | COLLECT_DEEP_FENCES | COLLECT_ANY_WORD;
-    if (Bool_ARG(DEEP))
+    if (ARG(DEEP))
         flags |= COLLECT_ANY_LIST_DEEP;
 
     VarList* varlist = Make_Varlist_Detect_Managed(
@@ -652,50 +652,54 @@ DECLARE_NATIVE(COLLECT_WORDS)
 {
     INCLUDE_PARAMS_OF_COLLECT_WORDS;
 
+    DECLARE_COLLECTOR (cl);  // can't panic once collector is constructed
+
     Flags flags;
-    if (Bool_ARG(SET))
+    if (ARG(SET))
         flags = COLLECT_ONLY_SET_WORDS;
     else
         flags = COLLECT_ANY_WORD;
 
-    if (Bool_ARG(DEEP))
+    if (ARG(DEEP))
         flags |= COLLECT_ANY_LIST_DEEP;
 
-  //=//// GENERATE DUMMY BINDINGS FOR THE IGNORED SYMBOLS /////////////////=//
+  generate_dummy_bindings_for_ignored_symbols: {
 
-    // 1. We do not want to panic() during the bind at this point in time (the
-    //    system doesn't know how to clean up, and the only cleanup it does
-    //    assumes you were collecting for a keylist...it doesn't have access to
-    //    the "ignore" bindings.)  Do a pre-pass to panic first, if there are
-    //    any non-words in a block the user passed in.
-    //
-    // 2. The way words get ignored in the collecting process is to give them
-    //    dummy bindings so it appears they've "already been collected", but
-    //    not actually add them to the collection.  Then, duplicates don't
-    //    cause an error...so they will just be skipped when encountered.
-    //
-    // 3. /IGNORE may have duplicate words in it (this situation arises when
-    //    `function [/test /test] []` calls COLLECT-WORDS and tries to ignore
-    //    both tests.  Debug build counts the number (overkill, tests binder).
+  // 1. We do not want to panic() during the bind at this point in time (the
+  //    system doesn't know how to clean up, and the only cleanup it does
+  //    assumes you were collecting for a keylist...it doesn't have access to
+  //    the "ignore" bindings.)  Do a pre-pass to panic first, if there are
+  //    any non-words in a block the user passed in.
+  //
+  // 2. The way words get ignored in the collecting process is to give them
+  //    dummy bindings so it appears they've "already been collected", but
+  //    not actually add them to the collection.  Then, duplicates don't
+  //    cause an error...so they will just be skipped when encountered.
+  //
+  // 3. :IGNORE may have duplicate words in it (this situation arises when
+  //    `function [:test :test] []` calls COLLECT-WORDS and tries to ignore
+  //    both tests.  Debug build counts the number (overkill, tests binder).
 
-    Stable* ignore = ARG(IGNORE);
+    Option(Stable*) ignore = ARG(IGNORE);
 
-    if (Is_Block(ignore)) {  // avoid panic in mid-collect [1]
+    if (ignore and Is_Block(unwrap ignore)) {  // no panic in mid-collect [1]
         const Element* check_tail;
-        const Element* check = List_At(&check_tail, ignore);
+        const Element* check = List_At(&check_tail, unwrap ignore);
         for (; check != check_tail; ++check) {
             if (not Any_Word(check))
                 panic (Error_Bad_Value(check));
         }
     }
 
-    DECLARE_COLLECTOR (cl);
     Option(Context*) no_context = nullptr;
     Construct_Collector(cl, flags, no_context);
 
-    if (Is_Block(ignore)) {  // ignore via dummy bindings [2]
+    if (not ignore) {
+        // we still constructed the collector, but nothing to ignore
+    }
+    else if (Is_Block(unwrap ignore)) {  // ignore via dummy bindings [2]
         const Element* ignore_tail;
-        const Element* ignore_at = List_At(&ignore_tail, ignore);
+        const Element* ignore_at = List_At(&ignore_tail, unwrap ignore);
         for (; ignore_at != ignore_tail; ++ignore_at) {
             const Symbol* symbol = Word_Symbol(ignore_at);
 
@@ -708,16 +712,17 @@ DECLARE_NATIVE(COLLECT_WORDS)
             }
         }
     }
-    else if (Is_Object(ignore)) {
+    else {
+        assert (Is_Object(unwrap ignore));
         const Key* key_tail;
-        const Key* key = Varlist_Keys(&key_tail, Cell_Varlist(ignore));
+        const Key* key = Varlist_Keys(&key_tail, Cell_Varlist(unwrap ignore));
         for (; key != key_tail; ++key)
             Add_Binder_Index(&cl->binder, Key_Symbol(key), -1);  // no dups
     }
-    else
-        assert(Is_Nulled(ignore));
 
-  //=//// RUN COMMON COLLECTION CODE //////////////////////////////////////=//
+    goto run_common_collection_code;
+
+} run_common_collection_code: {  /////////////////////////////////////////////
 
     const Element* block_tail;
     const Element* block_at = List_At(&block_tail, ARG(BLOCK));
@@ -726,7 +731,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
       Collect_Inner_Loop(cl, flags, block_at, block_tail)
     );
 
-    StackIndex base = TOP_INDEX;  // could be more efficient to calc/add
+    assert(TOP_INDEX == STACK_BASE);  // could be more efficient to calc/add
 
     Option(Stump*) stump = cl->binder.stump_list;
     for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
@@ -737,14 +742,13 @@ DECLARE_NATIVE(COLLECT_WORDS)
         Init_Word(PUSH(), Info_Stump_Bind_Symbol(unwrap stump));
     }
 
-    Source* array = Pop_Managed_Source_From_Stack(base);
-
-  //=//// REMOVE DUMMY BINDINGS FOR THE IGNORED SYMBOLS ///////////////////=//
+} remove_dummy_bindings_for_ignored_symbols: {
 
     Destruct_Collector(cl);  // does removal automatically
 
+    Source* array = Pop_Managed_Source_From_Stack(STACK_BASE);
     return Init_Block(OUT, array);
-}
+}}
 
 
 //

@@ -678,7 +678,7 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
         Phase_Paramlist(target_details), SYM_RETURN
     );
 
-    if (not Bool_ARG(RUN)) {  // plain simple RETURN (not weird tail-call)
+    if (not ARG(RUN)) {  // plain simple RETURN (not weird tail-call)
         heeded (Corrupt_Cell_If_Needful(SPARE));
         heeded (Corrupt_Cell_If_Needful(SCRATCH));
 

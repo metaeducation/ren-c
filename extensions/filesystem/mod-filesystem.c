@@ -474,7 +474,7 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
 
     Stable* path = ARG(PATH);
     if (Is_File(path)) {
-        if (not Bool_ARG(PASS))
+        if (not ARG(PASS))
             return "panic -[LOCAL-TO-FILE needs :PASS to passthru FILE!]-";
 
         require (
@@ -485,7 +485,7 @@ DECLARE_NATIVE(LOCAL_TO_FILE)
 
     return Init_File(
         OUT,
-        To_REBOL_Path(path, Bool_ARG(DIR) ? PATH_OPT_SRC_IS_DIR : 0)
+        To_REBOL_Path(path, ARG(DIR) ? PATH_OPT_SRC_IS_DIR : 0)
     );
 }
 
@@ -512,7 +512,7 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
 
     Stable* path = ARG(PATH);
     if (Is_Text(path)) {
-        if (not Bool_ARG(PASS))
+        if (not ARG(PASS))
             return "-[FILE-TO-LOCAL needs :PASS to passthru STRING!]-";
 
         require (
@@ -526,8 +526,8 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
         To_Local_Path(
             path,
             REB_FILETOLOCAL_0
-                | (Bool_ARG(FULL) ? REB_FILETOLOCAL_FULL : 0)
-                | (Bool_ARG(NO_TAIL_SLASH) ? REB_FILETOLOCAL_NO_TAIL_SLASH : 0)
+                | (ARG(FULL) ? REB_FILETOLOCAL_FULL : 0)
+                | (ARG(NO_TAIL_SLASH) ? REB_FILETOLOCAL_NO_TAIL_SLASH : 0)
         )
     );
 }

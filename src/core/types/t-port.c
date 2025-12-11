@@ -57,7 +57,7 @@ DECLARE_NATIVE(OPEN_Q)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Port)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -216,7 +216,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
         if (Is_Nulled(out))
             return nullptr;  // !!! `read dns://` returns nullptr on failure
 
-        if ((Bool_ARG(STRING) or Bool_ARG(LINES)) and not Is_Text(out)) {
+        if ((ARG(STRING) or ARG(LINES)) and not Is_Text(out)) {
             if (not Is_Blob(out))
                 panic (
                     "READ :STRING or :LINES used on a non-BLOB!/TEXT! read"
@@ -228,7 +228,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
             Init_Text(OUT, decoded);
         }
 
-        if (Bool_ARG(LINES)) { // caller wants BLOCK! of STRING!s, not one
+        if (ARG(LINES)) { // caller wants BLOCK! of STRING!s, not one
             assert(Is_Text(out));
 
             DECLARE_ELEMENT (temp);

@@ -1111,7 +1111,7 @@ Bounce Action_Executor(Level* L)
 //  Push_Action: C
 //
 // Allocate the Array of Values inspected by a function when executed (the
-// Cells behind ARG(NAME), Bool_ARG(NAME), ARG_N(3),  etc.)
+// Cells behind ARG(NAME), ARG(NAME), ARG_N(3),  etc.)
 //
 // The argument slots are left uninitialized at the outset, and are fulfilled
 // as the Action_Executor() walks through the parameter list.  This makes the

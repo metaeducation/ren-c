@@ -182,10 +182,10 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
 
     Value* with = SCRATCH;
-    if (not Bool_ARG(WITH))
+    if (not ARG(WITH))
         Init_Void(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
     else
-        Copy_Cell(SCRATCH, ARG(WITH));
+        Copy_Cell(SCRATCH, unwrap ARG(WITH));
 
     Level* continue_level = LEVEL;  // Level of this CONTINUE call
 
@@ -376,7 +376,7 @@ static Bounce Loop_Integer_Common(
                 if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
                     return THROWN;
 
-                switch (interrupt) {
+                switch (unwrap interrupt) {
                   case LOOP_INTERRUPT_BREAK:
                     return BREAKING_NULL;
 
@@ -506,7 +506,7 @@ static Bounce Loop_Number_Common(
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Eval_Branch_Throws(OUT, body)) {
-            LoopInterrupt interrupt;
+            Option(LoopInterrupt) interrupt;
             if (not Throw_Was_Loop_Interrupt(OUT, LEVEL, &interrupt))
                 return THROWN;
 
@@ -637,7 +637,7 @@ DECLARE_NATIVE(FOR_SKIP)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
-    if (Is_Blank(ARG(SERIES)) or Is_Nulled(ARG(SERIES)))
+    if (not ARG(SERIES) or Is_Blank(unwrap ARG(SERIES)))
         return VOID;
 
     Element* word = Element_ARG(WORD);
@@ -745,10 +745,10 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
     INCLUDE_PARAMS_OF_DEFINITIONAL_STOP;
 
     Value* with = SCRATCH;
-    if (not Bool_ARG(WITH))
+    if (not ARG(WITH))
         Init_Void(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
     else
-        Copy_Cell(SCRATCH, ARG(WITH));
+        Copy_Cell(SCRATCH, unwrap ARG(WITH));
 
     Level* stop_level = LEVEL;  // Level of this STOP call
 
@@ -1259,7 +1259,7 @@ DECLARE_NATIVE(FOR_EACH)
     INCLUDE_PARAMS_OF_FOR_EACH;
 
     Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
-    Stable* data = ARG(DATA);
+    Option(Stable*) data = ARG(DATA);
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
     Element* iterator;  // holds Loop_Each_State, all paths must cleanup!
@@ -1281,7 +1281,7 @@ DECLARE_NATIVE(FOR_EACH)
     //    even in the code of this dispatcher, we need to clean up the
     //    iterator state.
 
-    if (Is_Blank(data) or Is_Nulled(data))  // same response as to empty series
+    if (not data or Is_Blank(unwrap data))  // same response as to empty series
         return VOID;
 
     require (
@@ -1293,7 +1293,7 @@ DECLARE_NATIVE(FOR_EACH)
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
         Add_Definitional_Break_Again_Continue(body, level_);
 
-    iterator = Init_Loop_Each_May_Alias_Data(LOCAL(ITERATOR), data);
+    iterator = Init_Loop_Each_May_Alias_Data(LOCAL(ITERATOR), unwrap data);
     STATE = ST_FOR_EACH_INITIALIZED_ITERATOR;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_for_each
 
@@ -1392,7 +1392,7 @@ DECLARE_NATIVE(EVERY)
     INCLUDE_PARAMS_OF_EVERY;
 
     Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
-    Stable* data = ARG(DATA);
+    Option(Stable*) data = ARG(DATA);
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
     Stable* iterator;  // holds Loop_Each_State, all paths must cleanup!
@@ -1408,7 +1408,7 @@ DECLARE_NATIVE(EVERY)
 
   initial_entry: {
 
-    if (Is_Blank(data) or Is_Nulled(data))  // same response as to empty series
+    if (not data or Is_Blank(unwrap data))  // same response as to empty series
         return VOID;
 
     require (
@@ -1419,7 +1419,7 @@ DECLARE_NATIVE(EVERY)
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
         Add_Definitional_Break_Again_Continue(body, level_);
 
-    iterator = Init_Loop_Each_May_Alias_Data(LOCAL(ITERATOR), data);
+    iterator = Init_Loop_Each_May_Alias_Data(LOCAL(ITERATOR), unwrap data);
     STATE = ST_EVERY_INITIALIZED_ITERATOR;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // need to finalize_every
 
@@ -1550,7 +1550,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     Count removals = 0;
 
-    if (Is_Blank(ARG(DATA)) or Is_Nulled(ARG(DATA))) {
+    if (not ARG(DATA) or Is_Blank(unwrap ARG(DATA))) {
         Init_Blank(OUT);
         goto return_pack;
     }
@@ -1951,7 +1951,7 @@ DECLARE_NATIVE(MAP)
     INCLUDE_PARAMS_OF_MAP;
 
     Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
-    Stable* data = ARG(DATA);  // action invokes, frame enumerates
+    Option(Stable*) data_arg = ARG(DATA);  // action invokes, frame enumerates
     Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
 
     Stable* iterator;  // holds Loop_Each_State, all paths must cleanup!
@@ -1969,11 +1969,13 @@ DECLARE_NATIVE(MAP)
 
     assert(Is_Cell_Erased(OUT));  // output only written in MAP if BREAK hit
 
-    if (Is_Blank(data) or Is_Nulled(data))  // same response as to empty series
+    if (not data_arg or Is_Blank(unwrap data_arg))  // same response as empty
         return Init_Block(OUT, Make_Source(0));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
         Add_Definitional_Break_Again_Continue(body, level_);
+
+    Stable* data = unwrap data_arg;
 
     if (Is_Action(data)) {
         // treat as a generator
@@ -2139,7 +2141,7 @@ DECLARE_NATIVE(REPEAT)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    Stable* count = ARG(COUNT);
+    Stable* count = opt ARG(COUNT);
     Element* body = Element_ARG(BODY);
 
     Stable* index = u_cast(Stable*, SPARE);  // current index, erased on entry
@@ -2157,7 +2159,7 @@ DECLARE_NATIVE(REPEAT)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Nulled(count))
+    if (not count)
         return VOID;  // treat <opt> void input as "don't run"
 
     if (Is_Logic(count)) {

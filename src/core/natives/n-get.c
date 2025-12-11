@@ -491,7 +491,7 @@ Result(Stable*) Get_Var(
 ){
     Value* atom_out = u_cast(Value*, out);
 
-    assert(var != cast(Cell*, out));
+    assert(var != atom_out);
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (Is_Chain(var) or Is_Path(var)) {
@@ -662,10 +662,10 @@ DECLARE_NATIVE(GET)
 
     Element* target = Element_ARG(TARGET);
 
-    assert(Is_Nulled(ARG(DUAL)));  // "value" slot (SET uses, GET does not) [2]
-    USED(ARG(DUAL));
+    assert(Is_Light_Null(LOCAL(DUAL)));  // "value" (SET uses, GET doesn't) [2]
+    USED(ARG(DUAL));  // NULL is signal for TWEAK to GET
 
-    bool groups_ok = Bool_ARG(GROUPS);
+    bool groups_ok = did ARG(GROUPS);
 
     USED(ARG(STEPS));  // TWEAK heeds this
 

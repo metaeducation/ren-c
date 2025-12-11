@@ -256,8 +256,8 @@ DECLARE_NATIVE(READ_LINE)
     UNUSED(ARG(SOURCE));
   #endif
 
-    bool raw = Bool_ARG(RAW);
-    bool hide = Bool_ARG(HIDE);
+    bool raw = did ARG(RAW);
+    bool hide = did ARG(HIDE);
 
     if (hide)  // https://github.com/rebol/rebol-issues/issues/476
         return "panic -[READ-LINE:HIDE not yet implemented:]-";
@@ -405,15 +405,16 @@ DECLARE_NATIVE(READ_CHAR)
     UNUSED(ARG(SOURCE));
   #endif
 
-    bool raw = Bool_ARG(RAW);
+    bool raw = did ARG(RAW);
 
     int timeout_msec;
-    if (not Bool_ARG(TIMEOUT))
+    if (not ARG(TIMEOUT))
         timeout_msec = 0;  // "no timeout" in Try_Get_One_Console_Event() [1]
     else {
+        Stable* timeout = unwrap ARG(TIMEOUT);
         timeout_msec = rebUnboxInteger("case [",
-            "decimal?", ARG(TIMEOUT), "[1000 * round:up", ARG(TIMEOUT), "]",
-            "integer?", ARG(TIMEOUT), "[1000 *", ARG(TIMEOUT), "]",
+            "decimal?", timeout, "[1000 * round:up", timeout, "]",
+            "integer?", timeout, "[1000 *", timeout, "]",
             "panic ~[unreachable]~",
         "]");
 

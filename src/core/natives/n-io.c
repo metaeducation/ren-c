@@ -54,8 +54,7 @@ DECLARE_NATIVE(FORM)
 //      value [fundamental?]
 //      molder "Settings for the mold, including in progress series"
 //          [handle!]
-//      form "Do not put system delimiters on item"
-//          [logic?]
+//      :form "Do not put system delimiters on item"
 //  ]
 //
 DECLARE_NATIVE(MOLDIFY)
@@ -111,11 +110,11 @@ DECLARE_NATIVE(MOLD)
     Stable* v = ARG(VALUE);
 
     DECLARE_MOLDER (mo);
-    if (Bool_ARG(FLAT))
+    if (ARG(FLAT))
         SET_MOLD_FLAG(mo, MOLD_FLAG_INDENT);
-    if (Bool_ARG(LIMIT)) {
+    if (ARG(LIMIT)) {
         SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
-        mo->limit = Int32(ARG(LIMIT));
+        mo->limit = Int32(unwrap ARG(LIMIT));
     }
 
     Push_Mold(mo);
@@ -135,8 +134,8 @@ DECLARE_NATIVE(MOLD)
     Liftify(Init_Text(Array_At(pack, 0), popped));
 
     if (mo->opts & MOLD_FLAG_WAS_TRUNCATED) {
-        assert(Bool_ARG(LIMIT));
-        Copy_Lifted_Cell(Array_At(pack, 1), ARG(LIMIT));
+        assert(ARG(LIMIT));
+        Copy_Lifted_Cell(Array_At(pack, 1), unwrap ARG(LIMIT));
     }
     else
         Init_Lifted_Null(Array_At(pack, 1));
@@ -216,10 +215,10 @@ DECLARE_NATIVE(NEW_LINE)
     Source* a = Cell_Array_Known_Mutable(pos);  // need if setting flag at tail
 
     REBINT skip;
-    if (Bool_ARG(ALL))
+    if (ARG(ALL))
         skip = 1;
-    else if (Bool_ARG(SKIP)) {
-        skip = Int32s(ARG(SKIP), 1);
+    else if (ARG(SKIP)) {
+        skip = Int32s(unwrap ARG(SKIP), 1);
         if (skip < 1)
             skip = 1;
     }
@@ -341,7 +340,7 @@ REBLEN Milliseconds_From_Value(const Stable* v) {
         break;
 
     default:
-        crash (NULL); // avoid uninitialized msec warning
+        crash (nullptr); // avoid uninitialized msec warning
     }
 
     if (msec < 0)

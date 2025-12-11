@@ -34,7 +34,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
 
     Element* a = Element_ARG(VALUE1);
     Element* b = Element_ARG(VALUE2);
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     const Source* a_array = Cell_Array(a);
     const Source* b_array = Cell_Array(b);
@@ -491,7 +491,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     assert(Series_Index(v) <= Series_Len_Head(v));
 
@@ -586,8 +586,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         }
 
         Flags flags = (
-            (Bool_ARG(MATCH) ? AM_FIND_MATCH : 0)
-            | (Bool_ARG(CASE) ? AM_FIND_CASE : 0)
+            (ARG(MATCH) ? AM_FIND_MATCH : 0)
+            | (ARG(CASE) ? AM_FIND_CASE : 0)
         );
 
         REBLEN limit = Part_Tail_May_Modify_Index(list, ARG(PART));
@@ -596,8 +596,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         REBLEN index = Series_Index(list);
 
         REBINT skip;
-        if (Bool_ARG(SKIP)) {
-            skip = VAL_INT32(ARG(SKIP));
+        if (ARG(SKIP)) {
+            skip = VAL_INT32(unwrap ARG(SKIP));
             if (skip == 0)
                 panic (PARAM(SKIP));
         }
@@ -651,9 +651,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         INCLUDE_PARAMS_OF_INSERT;
         USED(PARAM(SERIES));
 
-        Option(const Stable*) arg = Is_Undone_Opt_Nulled(ARG(VALUE))
-            ? nullptr
-            : ARG(VALUE);
+        Option(const Stable*) arg = ARG(VALUE);
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
@@ -677,9 +675,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 
         Copy_Cell(OUT, list);
 
-        if (Bool_ARG(PART))
+        if (ARG(PART))
             flags |= AM_PART;
-        if (Bool_ARG(LINE))
+        if (ARG(LINE))
             flags |= AM_LINE;
 
         require (
@@ -690,7 +688,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             arg,
             flags,
             len,
-            Bool_ARG(DUP) ? Int32(ARG(DUP)) : 1
+            ARG(DUP) ? Int32(unwrap ARG(DUP)) : 1
         ));
         return OUT; }
 
@@ -974,7 +972,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
         index, // at
         tail, // tail
         0, // extra
-        Bool_ARG(DEEP)
+        did ARG(DEEP)
     ));
 
     Element* out = Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(list), copy);
@@ -1092,7 +1090,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
 {
     INCLUDE_PARAMS_OF_TAKE;
 
-    if (Bool_ARG(DEEP))
+    if (ARG(DEEP))
         panic (Error_Bad_Refines_Raw());
 
     Element* list = Element_ARG(SERIES);
@@ -1101,7 +1099,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
     Source* arr = Cell_Array_Ensure_Mutable(list);
 
     REBLEN len;
-    if (Bool_ARG(PART)) {
+    if (ARG(PART)) {
         len = Part_Len_May_Modify_Index(list, ARG(PART));
         if (len == 0)
             return Init_Any_List(OUT, heart, Make_Source_Managed(0));
@@ -1111,17 +1109,17 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
 
     REBLEN index = Series_Index(list); // Partial() can change index
 
-    if (Bool_ARG(LAST))
+    if (ARG(LAST))
         index = Series_Len_Head(list) - len;
 
     if (index >= Series_Len_Head(list)) {
-        if (not Bool_ARG(PART))
+        if (not ARG(PART))
             return fail (Error_Nothing_To_Take_Raw());
 
         return Init_Any_List(OUT, heart, Make_Source_Managed(0));
     }
 
-    if (Bool_ARG(PART)) {
+    if (ARG(PART)) {
         Source* copy = Copy_Source_At_Max_Shallow(arr, index, len);
         Init_Any_List(OUT, heart, copy);
     }
@@ -1227,7 +1225,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
 
     Element* spare = Init_Integer(
         SPARE,
-        1 + (Random_Int(Bool_ARG(SECURE))
+        1 + (Random_Int(did ARG(SECURE))
             % (Series_Len_Head(list) - index))
     );
 
@@ -1244,7 +1242,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_List)
     Element* list = Element_ARG(SERIES);
 
     Array* arr = Cell_Array_Ensure_Mutable(list);
-    Shuffle_Array(arr, Series_Index(list), Bool_ARG(SECURE));
+    Shuffle_Array(arr, Series_Index(list), did ARG(SECURE));
     return COPY(list);
 }
 
@@ -1390,26 +1388,31 @@ IMPLEMENT_GENERIC(SORT, Any_List)
     Array* arr = Cell_Array_Ensure_Mutable(list);
 
     SortInfo info;
-    info.cased = Bool_ARG(CASE);
-    info.reverse = Bool_ARG(REVERSE);
-    UNUSED(Bool_ARG(ALL));  // !!! not used?
+    info.cased = did ARG(CASE);
+    info.reverse = did ARG(REVERSE);
+    UNUSED(ARG(ALL));  // !!! not used?
 
-    Stable* cmp = ARG(COMPARE);  // null if no :COMPARE
-    Deactivate_If_Action(cmp);
-    if (Is_Frame(cmp)) {
-        info.comparator = cmp;
-        info.offset = 0;
-    }
-    else if (Is_Integer(cmp)) {
-        info.comparator = nullptr;
-        info.offset = Int32(cmp) - 1;
-        panic ("INTEGER! support (e.g. column select) not working in sort");
-    }
-    else {
-        assert(Is_Nulled(cmp));
+  set_up_comparator: {
+
+    Stable* cmp = opt ARG(COMPARE);
+    if (not cmp) {
         info.comparator = LIB(LESSER_Q);
         info.offset = 0;
     }
+    else {
+        Deactivate_If_Action(cmp);
+        if (Heart_Of(cmp)) {
+            info.comparator = cmp;
+            info.offset = 0;
+        }
+        else if (Is_Integer(cmp)) {
+            info.comparator = nullptr;
+            info.offset = Int32(cmp) - 1;
+            panic ("INTEGER! support (e.g. column select) not working in sort");
+        }
+    }
+
+} perform_sort: {
 
     Copy_Cell(OUT, list);  // save list before messing with index
 
@@ -1420,12 +1423,12 @@ IMPLEMENT_GENERIC(SORT, Any_List)
 
     // Skip factor:
     REBLEN skip;
-    if (Is_Nulled(ARG(SKIP)))
+    if (not ARG(SKIP))
         skip = 1;
     else {
-        skip = Get_Num_From_Arg(ARG(SKIP));
+        skip = Get_Num_From_Arg(unwrap ARG(SKIP));
         if (skip <= 0 or len % skip != 0 or skip > len)
-            panic (Error_Out_Of_Range(ARG(SKIP)));
+            panic (Error_Out_Of_Range(unwrap ARG(SKIP)));
     }
 
     bsd_qsort_r(
@@ -1437,7 +1440,8 @@ IMPLEMENT_GENERIC(SORT, Any_List)
     );
 
     return OUT;
-}
+}}
+
 
 //
 //  blockify: native [
@@ -1593,9 +1597,13 @@ DECLARE_NATIVE(GLOM)
     INCLUDE_PARAMS_OF_GLOM;
 
     Stable* accumulator = ARG(ACCUMULATOR);  // may not be at head [1]
-    Stable* value = ARG(VALUE);  // may not be at head [1]
 
-    if (Is_Nulled(value) or Is_Blank(value))
+    if (not ARG(VALUE))
+        return COPY(accumulator);
+
+    Stable* value = unwrap ARG(VALUE);  // may not be at head [1]
+
+    if (Is_Blank(value))
         return COPY(accumulator);
 
     if (Is_Block(accumulator))

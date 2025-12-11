@@ -52,7 +52,7 @@ IMPLEMENT_GENERIC(SKIP, Any_Series)
         i = cast(REBI64, SERIES_INDEX_UNBOUNDED(v)) + cast(REBI64, offset);
     }
 
-    if (not Bool_ARG(UNBOUNDED)) {
+    if (not ARG(UNBOUNDED)) {
         if (i < 0 or i > cast(REBI64, Series_Len_Head(v)))
             return fail (Error_Index_Out_Of_Range_Raw());
     }
@@ -96,7 +96,7 @@ IMPLEMENT_GENERIC(AT, Any_Series)
     else
         i = cast(REBI64, SERIES_INDEX_UNBOUNDED(v)) + cast(REBI64, offset);
 
-    if (Bool_ARG(BOUNDED)) {
+    if (ARG(BOUNDED)) {
         if (i < 0 or i > cast(REBI64, Series_Len_Head(v)))
             return NULLED;
     }
@@ -115,7 +115,7 @@ IMPLEMENT_GENERIC(REMOVE, Any_Series)
     Ensure_Mutable(v);  // !!! Review making this extract
 
     REBINT len;
-    if (Bool_ARG(PART))
+    if (ARG(PART))
         len = Part_Len_May_Modify_Index(v, ARG(PART));
     else
         len = 1;
@@ -319,8 +319,8 @@ IMPLEMENT_GENERIC(UNIQUE, Any_Series)  // single-arity set operation
         ARG(SERIES),
         nullptr,  // no ARG(VALUE2)
         SOP_NONE,
-        Bool_ARG(CASE),
-        Bool_ARG(SKIP) ? Int32s(ARG(SKIP), 1) : 1
+        did ARG(CASE),
+        ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
     return Init_Series(OUT, heart, flex);
@@ -357,8 +357,8 @@ IMPLEMENT_GENERIC(INTERSECT, Any_Series)
         ARG(VALUE1),
         ARG(VALUE2),
         SOP_FLAG_CHECK,
-        Bool_ARG(CASE),
-        Bool_ARG(SKIP) ? Int32s(ARG(SKIP), 1) : 1
+        did ARG(CASE),
+        ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
     return Init_Series(OUT, heart, flex);
@@ -380,8 +380,8 @@ IMPLEMENT_GENERIC(UNION, Any_Series)
         ARG(VALUE1),
         ARG(VALUE2),
         SOP_FLAG_BOTH,
-        Bool_ARG(CASE),
-        Bool_ARG(SKIP) ? Int32s(ARG(SKIP), 1) : 1
+        did ARG(CASE),
+        ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
     return Init_Series(OUT, heart, flex);
@@ -403,8 +403,8 @@ IMPLEMENT_GENERIC(DIFFERENCE, Any_Series)
         ARG(VALUE1),
         ARG(VALUE2),
         SOP_FLAG_BOTH | SOP_FLAG_CHECK | SOP_FLAG_INVERT,
-        Bool_ARG(CASE),
-        Bool_ARG(SKIP) ? Int32s(ARG(SKIP), 1) : 1
+        did ARG(CASE),
+        ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
     return Init_Series(OUT, heart, flex);
@@ -426,8 +426,8 @@ IMPLEMENT_GENERIC(EXCLUDE, Any_Series)
         ARG(DATA),
         ARG(EXCLUSIONS),
         SOP_FLAG_CHECK | SOP_FLAG_INVERT,
-        Bool_ARG(CASE),
-        Bool_ARG(SKIP) ? Int32s(ARG(SKIP), 1) : 1
+        did ARG(CASE),
+        ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
     return Init_Series(OUT, heart, flex);

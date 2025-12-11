@@ -102,7 +102,7 @@ DECLARE_NATIVE(REDUCE)
     INCLUDE_PARAMS_OF_REDUCE;
 
     Element* v = Element_ARG(VALUE);  // newline flag leveraged [2]
-    Stable* predicate = ARG(PREDICATE);
+    Option(Stable*) predicate = ARG(PREDICATE);
 
     enum {
         ST_REDUCE_INITIAL_ENTRY = STATE_0,
@@ -182,13 +182,13 @@ DECLARE_NATIVE(REDUCE)
 
 } reduce_step_result_in_spare: { /////////////////////////////////////////////
 
-    if (Is_Nulled(predicate))  // default is no processing
+    if (not predicate)  // default is no processing
         goto process_out;
 
     if (Is_Ghost_Or_Void(SPARE)) {  // vaporize unless accepted by predicate
         const Param* param = First_Unspecialized_Param(
             nullptr,
-            Frame_Phase(predicate)
+            Frame_Phase(unwrap predicate)
         );
         if (not Typecheck_Value_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
             goto next_reduce_step;  // not accepted, so skip it
@@ -197,7 +197,7 @@ DECLARE_NATIVE(REDUCE)
     SUBLEVEL->executor = &Just_Use_Out_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
 
-    return CONTINUE(SPARE, predicate, SPARE);  // arg can be same as output
+    return CONTINUE(SPARE, unwrap predicate, SPARE);  // arg may also be output
 
 } process_out: {  ////////////////////////////////////////////////////////////
 
@@ -465,7 +465,7 @@ DECLARE_NATIVE(FLATTEN)
         at,
         tail,
         List_Binding(block),
-        Bool_ARG(DEEP) ? FLATTEN_DEEP : FLATTEN_ONCE
+        ARG(DEEP) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 
     return Init_Block(OUT, Pop_Source_From_Stack(STACK_BASE));

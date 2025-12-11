@@ -35,7 +35,7 @@ Rebol [
         DECLARE_NATIVE(NATIVE_NAME_P) {  ; C name may be adjusted [2]
             INCLUDE_PARAMS_OF_NATIVE_NAME_P;
 
-            if (Bool_ARG(REFINEMENT)) {
+            if (ARG(REFINEMENT)) {
                  int i = VAL_INT32(ARG(ARGUMENT));
                  /* etc, etc. */
             }
@@ -66,7 +66,7 @@ Rebol [
         Not only does the text for the spec have to be extracted, but the
         `INCLUDE_PARAMS_OF_XXX` macros are generated to give a more readable
         way of accessing the parameters than by numeric index.  See the
-        Bool_ARG() and ARG() macro definitions for more on this.
+        ARG() and ARG() macro definitions for more on this.
     ]--
 ]
 

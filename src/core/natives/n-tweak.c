@@ -378,7 +378,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Liftify(TOP_STABLE);  // dual protocol, lift (?)
 
     Copy_Cell(PUSH(), scratch_var);  // save var for steps + error messages
-    switch (unwrap Underlying_Sigil_Of(TOP_ELEMENT)) {
+    switch (opt Underlying_Sigil_Of(TOP_ELEMENT)) {
       case SIGIL_0:
         break;
 
@@ -793,9 +793,7 @@ DECLARE_NATIVE(TWEAK)
         ST_TWEAK_TWEAKING  // trampoline rule: OUT must be erased if STATE_0
     };
 
-    Stable* dual = ARG(DUAL);
-
-    Copy_Cell(OUT, dual);
+    Copy_Cell(OUT, LOCAL(DUAL));
 
     if (Is_Nulled(ARG(TARGET)))
         return OUT;   // same for SET as [10 = (void): 10]
@@ -803,7 +801,7 @@ DECLARE_NATIVE(TWEAK)
     Element* target = Element_ARG(TARGET);
 
     Option(Element*) steps;
-    if (Bool_ARG(GROUPS))
+    if (ARG(GROUPS))
         steps = GROUPS_OK;
     else
         steps = NO_STEPS;  // no GROUP! evals

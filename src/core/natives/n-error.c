@@ -120,7 +120,7 @@ DECLARE_NATIVE(ENRECOVER)
     }
 
     if (not Is_Throwing_Panic(LEVEL)) {  // non-ERROR! throws
-        if (Bool_ARG(RELAX))
+        if (ARG(RELAX))
             return BOUNCE_THROWN;  // e.g. RETURN, THROW
         return Init_Warning(OUT, Error_No_Catch_For_Throw(LEVEL));
     }

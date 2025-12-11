@@ -65,7 +65,7 @@ REBINT CT_Blob(const Element* a, const Element* b, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Blob)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -240,7 +240,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     UNUSED(form);
 
@@ -295,7 +295,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
 static Result(Element*) Copy_Blob_Part_At_May_Modify_Index(
     Sink(Element) out,
     Element* blob,  // may modify index
-    const Stable* part
+    Option(const Stable*) part
 ){
     Length len = Part_Len_May_Modify_Index(blob, part);
     trap (
@@ -322,9 +322,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         INCLUDE_PARAMS_OF_INSERT;  // compatible frame with APPEND, CHANGE
         UNUSED(PARAM(SERIES));  // covered by `v`
 
-        Option(const Stable*) arg = Is_Undone_Opt_Nulled(ARG(VALUE))
-            ? nullptr
-            : ARG(VALUE);
+        Option(const Stable*) arg = ARG(VALUE);
 
         REBLEN len; // length of target
         if (id == SYM_CHANGE)
@@ -342,9 +340,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         }
 
         Flags flags = 0;
-        if (Bool_ARG(PART))
+        if (ARG(PART))
             flags |= AM_PART;
-        if (Bool_ARG(LINE))
+        if (ARG(LINE))
             flags |= AM_LINE;
 
         // !!! This mimics the historical behavior for now:
@@ -374,7 +372,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             arg,
             flags,
             len,
-            Bool_ARG(DUP) ? Int32(ARG(DUP)) : 1
+            ARG(DUP) ? Int32(unwrap ARG(DUP)) : 1
         ));
         return COPY(v); }
 
@@ -390,15 +388,15 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         const Element* pattern = Element_ARG(PATTERN);
 
         Flags flags = (
-            (Bool_ARG(MATCH) ? AM_FIND_MATCH : 0)
-            | (Bool_ARG(CASE) ? AM_FIND_CASE : 0)
+            (ARG(MATCH) ? AM_FIND_MATCH : 0)
+            | (ARG(CASE) ? AM_FIND_CASE : 0)
         );
 
         REBINT tail = Part_Tail_May_Modify_Index(v, ARG(PART));
 
         REBINT skip;
-        if (Bool_ARG(SKIP))
-            skip = VAL_INT32(ARG(SKIP));
+        if (ARG(SKIP))
+            skip = VAL_INT32(unwrap ARG(SKIP));
         else
             skip = 1;
 
@@ -719,7 +717,7 @@ IMPLEMENT_GENERIC(COPY, Is_Blob)
     INCLUDE_PARAMS_OF_COPY;
 
     Element* blob = Element_ARG(VALUE);
-    UNUSED(Bool_ARG(DEEP));  // :DEEP is historically ignored on BLOB!
+    UNUSED(ARG(DEEP));  // :DEEP is historically ignored on BLOB!
 
     require (
       Copy_Blob_Part_At_May_Modify_Index(OUT, blob, ARG(PART))
@@ -735,11 +733,11 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     Element* blob = Element_ARG(SERIES);
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
 
-    if (Bool_ARG(DEEP))
+    if (ARG(DEEP))
         panic (Error_Bad_Refines_Raw());
 
     REBINT len;
-    if (Bool_ARG(PART)) {
+    if (ARG(PART)) {
         len = Part_Len_May_Modify_Index(blob, ARG(PART));
         if (len == 0)
             return Init_Blob(OUT, Make_Binary(0));
@@ -748,7 +746,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
 
     REBINT tail = Series_Len_Head(blob);  // Note :PART can change index
 
-    if (Bool_ARG(LAST)) {
+    if (ARG(LAST)) {
         if (tail - len < 0) {
             SERIES_INDEX_UNBOUNDED(blob) = 0;
             len = tail;
@@ -760,13 +758,13 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
     REBLEN index = Series_Index(blob);
 
     if (index >= tail) {
-        if (not Bool_ARG(PART))
+        if (not ARG(PART))
             return fail (Error_Nothing_To_Take_Raw());
 
         return Init_Blob(OUT, Make_Binary(0));
     }
 
-    if (not Bool_ARG(PART))  // just return byte value
+    if (not ARG(PART))  // just return byte value
         Init_Integer(OUT, *Blob_At(blob));
     else { // return binary series
         require (
@@ -835,7 +833,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
     if (index >= tail)
         return fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
-    index += Random_Int(Bool_ARG(SECURE)) % (tail - index);
+    index += Random_Int(did ARG(SECURE)) % (tail - index);
     const Binary* bin = Cell_Binary(blob);
     return Init_Integer(OUT, *Binary_At(bin, index));
 }
@@ -851,7 +849,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Is_Blob)
 
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
 
-    bool secure = Bool_ARG(SECURE);
+    bool secure = did ARG(SECURE);
     REBLEN n;
     for (n = Binary_Len(bin) - index; n > 1;) {
         REBLEN k = index + Random_Int(secure) % n;
@@ -939,14 +937,14 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
 
     Element* blob = Element_ARG(SERIES);
 
-    if (Bool_ARG(ALL))
+    if (ARG(ALL))
         panic (Error_Bad_Refines_Raw());
 
-    if (Bool_ARG(CASE)) {
+    if (ARG(CASE)) {
         // Ignored...all BLOB! sorts are case-sensitive.
     }
 
-    if (Bool_ARG(COMPARE))
+    if (ARG(COMPARE))
         panic (Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
     Flags flags = 0;
@@ -960,10 +958,10 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
         return OUT;
 
     REBLEN skip;
-    if (not Bool_ARG(SKIP))
+    if (not ARG(SKIP))
         skip = 1;
     else {
-        skip = Get_Num_From_Arg(ARG(SKIP));
+        skip = Get_Num_From_Arg(unwrap ARG(SKIP));
         if (skip <= 0 or (len % skip != 0) or skip > len)
             panic (PARAM(SKIP));
     }
@@ -974,7 +972,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
         size *= skip;
     }
 
-    if (Bool_ARG(REVERSE))
+    if (ARG(REVERSE))
         flags |= CC_FLAG_REVERSE;
 
     bsd_qsort_r(
@@ -1004,7 +1002,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
 {
     INCLUDE_PARAMS_OF_ENCODE_INTEGER;
 
-    bool little = Bool_ARG(LE);
+    bool little = did ARG(LE);
 
     Stable* options = ARG(OPTIONS);
     if (Series_Len_At(options) != 2)
@@ -1105,7 +1103,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
 {
     INCLUDE_PARAMS_OF_DECODE_INTEGER;
 
-    bool little = Bool_ARG(LE);
+    bool little = did ARG(LE);
 
     Size bin_size;
     const Byte* bin_data = Blob_Size_At(&bin_size, ARG(BINARY));

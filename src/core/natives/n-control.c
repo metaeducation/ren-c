@@ -433,7 +433,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     INCLUDE_PARAMS_OF_ALL;
 
     Element* block = Element_ARG(BLOCK);
-    Stable* predicate = ARG(PREDICATE);
+    Option(Stable*) predicate = ARG(PREDICATE);
 
     Stable* condition;  // will be found in OUT or SCRATCH
 
@@ -488,7 +488,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
       Stable* spare = Decay_If_Unstable(SPARE)
     );
 
-    if (not Is_Nulled(predicate))
+    if (predicate)
         goto run_predicate_on_eval_product;
 
     condition = spare;  // w/o predicate, `condition` is eval result
@@ -504,7 +504,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [1]
 
     STATE = ST_ANY_ALL_NONE_PREDICATE;
-    return CONTINUE(SCRATCH, predicate, SPARE);
+    return CONTINUE(SCRATCH, unwrap predicate, SPARE);
 
 } predicate_result_in_scratch: {  ////////////////////////////////////////////
 
@@ -672,7 +672,7 @@ DECLARE_NATIVE(CASE)
     INCLUDE_PARAMS_OF_CASE;
 
     Element* cases = Element_ARG(CASES);
-    Stable* predicate = ARG(PREDICATE);
+    Option(Stable*) predicate = ARG(PREDICATE);
 
     enum {
         ST_CASE_INITIAL_ENTRY = STATE_0,
@@ -735,12 +735,12 @@ DECLARE_NATIVE(CASE)
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // we tolerate "fallout" from a condition
 
-    if (Is_Nulled(predicate))
+    if (not predicate)
         goto processed_result_in_spare;
 
     STATE = ST_CASE_RUNNING_PREDICATE;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
-    return CONTINUE(SPARE, predicate, SPARE);  // with == out is legal
+    return CONTINUE(SPARE, unwrap predicate, SPARE);  // with == out is legal
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
@@ -824,7 +824,7 @@ DECLARE_NATIVE(CASE)
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
-    if (not Bool_ARG(ALL)) {
+    if (not ARG(ALL)) {
         Drop_Level(SUBLEVEL);
         return BRANCHED(OUT);
     }
@@ -853,7 +853,7 @@ DECLARE_NATIVE(CASE)
     //    This counts as a "branch taken", so void and null are boxed into an
     //    antiform pack.
 
-    assert(Bool_ARG(ALL) or Is_Cell_Erased(OUT));  // never ran branch, or :ALL
+    assert(ARG(ALL) or Is_Cell_Erased(OUT));  // never ran branch, or :ALL
 
     Drop_Level(SUBLEVEL);
 
@@ -890,7 +890,7 @@ DECLARE_NATIVE(SWITCH)
 
     Stable* left = ARG(VALUE);
     Element* cases = Element_ARG(CASES);
-    Stable* predicate = ARG(PREDICATE);
+    Stable* predicate;  // enforced as EQUAL? by initial_entry if none given
 
     enum {
         ST_SWITCH_INITIAL_ENTRY = STATE_0,
@@ -898,15 +898,18 @@ DECLARE_NATIVE(SWITCH)
         ST_SWITCH_RUNNING_BRANCH
     };
 
-    switch (STATE) {
-      case ST_SWITCH_INITIAL_ENTRY:
+    if (STATE == ST_SWITCH_INITIAL_ENTRY)
         goto initial_entry;
+
+    predicate = unwrap ARG(PREDICATE);
+
+    switch (STATE) {
 
       case ST_SWITCH_EVALUATING_RIGHT:
         goto right_result_in_spare;
 
       case ST_SWITCH_RUNNING_BRANCH:
-        if (not Bool_ARG(ALL)) {
+        if (not ARG(ALL)) {
             Drop_Level(SUBLEVEL);
             return BRANCHED(OUT);
         }
@@ -917,20 +920,20 @@ DECLARE_NATIVE(SWITCH)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. Originally this called the "guts" of comparison by default, instead
-    //    of invoking the EQUAL? native.  But the comparison guts are no
-    //    longer available without a frame.  So really this just needs to
-    //    be worked on and sped up, such as to create one frame and reuse
-    //    it over and over.  Review.
+  // 1. Originally this called the "guts" of comparison by default, instead
+  //    of invoking the EQUAL? native.  But comparison guts are no longer
+  //    available without a frame.  So really this just needs to be worked on
+  //    and sped up, such as to create one frame and reuse it over and over.
 
     assert(Is_Cell_Erased(SPARE));  // initial condition
     assert(Is_Cell_Erased(OUT));  // if no writes to out performed, we act void
 
-    if (Bool_ARG(TYPE) and Bool_ARG(PREDICATE))
+    if (ARG(TYPE) and ARG(PREDICATE))
         panic (Error_Bad_Refines_Raw());
 
-    if (not Bool_ARG(TYPE) and not Bool_ARG(PREDICATE)) {
-        Copy_Cell(predicate, LIB(EQUAL_Q));  // no more builtin comparison [1]
+    predicate = opt ARG(PREDICATE);
+    if (not predicate) {
+        predicate = Copy_Cell(LOCAL(PREDICATE), LIB(EQUAL_Q));  // default [1]
         LIFT_BYTE(predicate) = NOQUOTE_2;
     }
 
@@ -1010,7 +1013,7 @@ DECLARE_NATIVE(SWITCH)
       Stable* spare = Decay_If_Unstable(SPARE)
     );
 
-    if (Bool_ARG(TYPE)) {
+    if (ARG(TYPE)) {
         if (not Is_Datatype(spare) and not Is_Action(spare))
             panic ("switch:type conditions must be DATATYPE! or ACTION!");
 
@@ -1022,7 +1025,7 @@ DECLARE_NATIVE(SWITCH)
         }
     }
     else {
-        assert(not Is_Nulled(predicate));
+        assert(predicate);
 
         Sink(Stable) scratch = SCRATCH;
         if (rebRunThrows(
@@ -1075,7 +1078,7 @@ DECLARE_NATIVE(SWITCH)
     //    These cases still count as "branch taken", so if a null or void fall
     //    out they will be put in a pack.  (See additional remarks in CASE)
 
-    assert(Bool_ARG(ALL) or Is_Cell_Erased(OUT));
+    assert(ARG(ALL) or Is_Cell_Erased(OUT));
 
     Drop_Level(SUBLEVEL);
 

@@ -175,7 +175,7 @@ DECLARE_NATIVE(DNS_ACTOR)
         INCLUDE_PARAMS_OF_READ;
         UNUSED(PARAM(SOURCE));  // covered by `port`
 
-        if (Bool_ARG(PART) or Bool_ARG(SEEK))
+        if (ARG(PART) or ARG(SEEK))
             panic (Error_Bad_Refines_Raw());
 
         UNUSED(PARAM(STRING)); // handled in dispatcher
@@ -275,7 +275,7 @@ DECLARE_NATIVE(DNS_ACTOR)
 
         UNUSED(PARAM(SPEC));
 
-        if (Bool_ARG(NEW) or Bool_ARG(READ) or Bool_ARG(WRITE))
+        if (ARG(NEW) or ARG(READ) or ARG(WRITE))
             panic (Error_Bad_Refines_Raw());
 
         // !!! All the information the DNS needs is at the moment in the

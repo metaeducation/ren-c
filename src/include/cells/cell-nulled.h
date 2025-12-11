@@ -121,8 +121,6 @@ INLINE bool Is_Lifted_Null(const Value* v) {
 #define Is_Quasi_Null(v) \
     Is_Lifted_Null(known(Stable*, (v)))  // subtle distinction of question...
 
-#define Is_Undone_Opt_Nulled(v)  Is_Nulled(v)
-
 
 //=//// "HEAVY NULLS" (BLOCK! Antiform Pack with `~null~` in it) //////////=//
 //

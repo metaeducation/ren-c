@@ -64,7 +64,7 @@ REBINT CT_Pair(const Element* a, const Element* b, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Pair)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -139,7 +139,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Pair)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     Mold_Or_Form_Element(mo, Cell_Pair_First(v), form);
 
@@ -341,7 +341,7 @@ IMPLEMENT_GENERIC(REVERSE, Is_Pair)
 {
     INCLUDE_PARAMS_OF_REVERSE;
 
-    if (Bool_ARG(PART))
+    if (ARG(PART))
         panic (Error_Bad_Refines_Raw());
 
     const Element* pair = Element_ARG(SERIES);

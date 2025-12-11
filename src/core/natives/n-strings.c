@@ -92,14 +92,14 @@ DECLARE_NATIVE(LATIN1_Q)
 
 
 #define Push_Join_Delimiter_If_Pending() do { \
-    if (delimiter and Get_Cell_Flag(ARG(WITH), DELIMITER_NOTE_PENDING)) { \
-        Copy_Cell(PUSH(), ARG(WITH)); \
-        Clear_Cell_Flag(ARG(WITH), DELIMITER_NOTE_PENDING); \
+    if (delimiter and Get_Cell_Flag(LOCAL(WITH), DELIMITER_NOTE_PENDING)) { \
+        Copy_Cell(PUSH(), LOCAL(WITH)); \
+        Clear_Cell_Flag(LOCAL(WITH), DELIMITER_NOTE_PENDING); \
     } \
   } while (0)
 
 #define Mark_Join_Delimiter_Pending()  \
-    Set_Cell_Flag(ARG(WITH), DELIMITER_NOTE_PENDING) \
+    Set_Cell_Flag(LOCAL(WITH), DELIMITER_NOTE_PENDING) \
 
 
 //
@@ -137,13 +137,13 @@ DECLARE_NATIVE(JOIN)
     }
     bool joining_datatype = not base;  // compiler should optimize out
 
-    Option(const Element*) rest = Is_Nulled(ARG(REST))
+    Option(const Element*) rest = Is_Nulled(Stable_LOCAL(REST))
         ? nullptr
         : Element_ARG(REST);
 
     Element* original_index;
 
-    Option(Element*) delimiter = Is_Nulled(ARG(WITH))
+    Option(Element*) delimiter = Is_Nulled(Stable_LOCAL(WITH))
         ? nullptr
         : Element_ARG(WITH);
     if (delimiter)
@@ -165,8 +165,8 @@ DECLARE_NATIVE(JOIN)
         CELL_FLAG_DELIMITER_NOTE_PENDING
         == CELL_FLAG_PARAM_NOTE_TYPECHECKED
     );
-    assert(Get_Cell_Flag(ARG(WITH), PARAM_NOTE_TYPECHECKED));
-    Clear_Cell_Flag(ARG(WITH), PARAM_NOTE_TYPECHECKED);
+    assert(Get_Cell_Flag(LOCAL(WITH), PARAM_NOTE_TYPECHECKED));
+    Clear_Cell_Flag(LOCAL(WITH), PARAM_NOTE_TYPECHECKED);
 
     if (Any_List(ARG(BASE)) or Any_Sequence(ARG(BASE))) {
         if (
@@ -199,12 +199,12 @@ DECLARE_NATIVE(JOIN)
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
 
-    if (Bool_ARG(HEAD) and delimiter)
+    if (ARG(HEAD) and delimiter)
         Form_Element(mo, unwrap delimiter);
 
     Form_Element(mo, unwrap rest);
 
-    if (Bool_ARG(TAIL) and delimiter)
+    if (ARG(TAIL) and delimiter)
         Form_Element(mo, unwrap delimiter);
 
     return Init_Text(OUT, Pop_Molded_Strand(mo));
@@ -288,7 +288,7 @@ DECLARE_NATIVE(JOIN)
     if (not joining_datatype)
         Copy_Cell(PUSH(), unwrap base);
 
-    if (Bool_ARG(HEAD) and delimiter)  // speculatively start with
+    if (ARG(HEAD) and delimiter)  // speculatively start with
         Copy_Cell(PUSH(), unwrap delimiter);  // may be tossed
 
     original_index = Init_Integer(LOCAL(ORIGINAL_INDEX), TOP_INDEX);
@@ -320,7 +320,7 @@ DECLARE_NATIVE(JOIN)
         }
     }
 
-    if (Bool_ARG(HEAD) and delimiter)  // speculatively start with
+    if (ARG(HEAD) and delimiter)  // speculatively start with
         Copy_Cell(PUSH(), unwrap delimiter);  // may be tossed
 
     original_index = Init_Integer(LOCAL(ORIGINAL_INDEX), TOP_INDEX);
@@ -549,7 +549,7 @@ DECLARE_NATIVE(JOIN)
         return rebValue(CANON(COPY), rebQ(unwrap base));
     }
 
-    if (Bool_ARG(TAIL) and delimiter)
+    if (ARG(TAIL) and delimiter)
         Copy_Cell(PUSH(), unwrap delimiter);
 
     if (heart == TYPE_BLOB)
@@ -731,7 +731,7 @@ DECLARE_NATIVE(JOIN)
 
     Drop_Level_Unbalanced(SUBLEVEL);
 
-    if (Bool_ARG(TAIL) and delimiter)
+    if (ARG(TAIL) and delimiter)
         Copy_Cell(PUSH(), unwrap delimiter);
 
     Sink(Element) out = OUT;
@@ -778,8 +778,8 @@ DECLARE_NATIVE(DEBASE)
     const Byte* bp = Cell_Bytes_At(&size, ARG(VALUE));
 
     REBINT base = 64;
-    if (Bool_ARG(BASE))
-        base = VAL_INT32(ARG(BASE));
+    if (ARG(BASE))
+        base = VAL_INT32(unwrap ARG(BASE));
     else
         base = 64;
 
@@ -808,8 +808,8 @@ DECLARE_NATIVE(ENBASE)
     INCLUDE_PARAMS_OF_ENBASE;
 
     REBINT base;
-    if (Bool_ARG(BASE))
-        base = VAL_INT32(ARG(BASE));
+    if (ARG(BASE))
+        base = VAL_INT32(unwrap ARG(BASE));
     else
         base = 64;
 
@@ -939,7 +939,7 @@ DECLARE_NATIVE(DEHEX)
 
     Element* string = Element_ARG(STRING);
 
-    if (Bool_ARG(BLOB))
+    if (ARG(BLOB))
         panic ("DEHEX:BLOB not yet implemented, but will permit %00");
 
     DECLARE_MOLDER (mo);
@@ -1046,7 +1046,7 @@ DECLARE_NATIVE(DELINE)
     //
     Api(Stable*) input = rebStable("as text!", ARG(INPUT));
 
-    if (Bool_ARG(LINES)) {
+    if (ARG(LINES)) {
         Init_Block(OUT, Split_Lines(cast(Element*, input)));
         rebRelease(input);
         return OUT;
@@ -1216,8 +1216,8 @@ DECLARE_NATIVE(ENTAB)
     Element* string = Element_ARG(STRING);
 
     REBINT tabsize;
-    if (Bool_ARG(SIZE))
-        tabsize = Int32s(ARG(SIZE), 1);
+    if (ARG(SIZE))
+        tabsize = Int32s(unwrap ARG(SIZE), 1);
     else
         tabsize = TAB_SIZE;
 
@@ -1296,8 +1296,8 @@ DECLARE_NATIVE(DETAB)
     REBLEN len = Series_Len_At(string);
 
     REBINT tabsize;
-    if (Bool_ARG(SIZE))
-        tabsize = Int32s(ARG(SIZE), 1);
+    if (ARG(SIZE))
+        tabsize = Int32s(unwrap ARG(SIZE), 1);
     else
         tabsize = TAB_SIZE;
 
@@ -1396,8 +1396,8 @@ DECLARE_NATIVE(TO_HEX)
     Element* arg = Element_ARG(VALUE);
 
     REBLEN len;
-    if (Bool_ARG(SIZE))
-        len = VAL_INT64(ARG(SIZE));
+    if (ARG(SIZE))
+        len = VAL_INT64(unwrap ARG(SIZE));
     else
         len = 0;  // !!! avoid compiler warning--but rethink this routine
 
@@ -1405,7 +1405,7 @@ DECLARE_NATIVE(TO_HEX)
     Push_Mold(mo);
 
     if (Is_Integer(arg)) {
-        if (not Bool_ARG(SIZE) or len > MAX_HEX_LEN)
+        if (not ARG(SIZE) or len > MAX_HEX_LEN)
             len = MAX_HEX_LEN;
 
         Form_Hex_Pad(mo, VAL_INT64(arg), len);
@@ -1413,7 +1413,7 @@ DECLARE_NATIVE(TO_HEX)
     else if (Is_Tuple(arg)) {
         REBLEN n;
         if (
-            not Bool_ARG(SIZE)
+            not ARG(SIZE)
             or len > 2 * MAX_TUPLE
             or len > 2 * Sequence_Len(arg)
         ){

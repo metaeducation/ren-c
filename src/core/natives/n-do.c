@@ -363,7 +363,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         flags |= LEVEL_FLAG_AFRAID_OF_GHOSTS;  // for EVAL:STEP consistency [1]
     else {
         assert(Is_Group(source));
-        if (Bool_ARG(STEP))
+        if (ARG(STEP))
             panic (
                 ":STEP only BLOCK!s in EVALUATE (use AS BLOCK! if intentional)"
             );
@@ -371,15 +371,15 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
     require (
       Level* sub = Make_Level_At(
-        Bool_ARG(STEP) ? &Stepper_Executor : &Evaluator_Executor,
+        ARG(STEP) ? &Stepper_Executor : &Evaluator_Executor,
         source,  // all lists treated the same [1]
         flags
     ));
-    if (not Bool_ARG(STEP))
+    if (not ARG(STEP))
         Init_Ghost(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    if (not Bool_ARG(STEP))  // plain evaluation to end, maybe void/ghost
+    if (not ARG(STEP))  // plain evaluation to end, maybe void/ghost
         return DELEGATE_SUBLEVEL(sub);
 
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
@@ -400,7 +400,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    a better way to abstract things like "accumulated LETs".  It may
     //    evolve that EVAL:STEP on a BLOCK! actually produces a FRAME!...
 
-    if (Bool_ARG(STEP))  // !!! may be legal (or mandatory) in the future [1]
+    if (ARG(STEP))  // !!! may be legal (or mandatory) in the future [1]
         panic (":STEP not implemented for FRAME! in EVALUATE");
 
     if (Not_Base_Readable(CELL_FRAME_PAYLOAD_1_PHASE(source)))
@@ -431,7 +431,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     //    the varargs came from.  It's still on the stack, and we don't want
     //    to disrupt its state.  Use a sublevel.
 
-    if (Bool_ARG(STEP))
+    if (ARG(STEP))
         panic (":STEP not implemented for VARARGS! in EVALUATE");
 
     Element* position;
@@ -474,7 +474,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
   //    probably be to make EVALUATE return something with more limited
   //    privileges... more like a FRAME!/VARARGS!.
 
-    assert(Bool_ARG(STEP));
+    assert(ARG(STEP));
 
     Forget_Cell_Was_Lifeguard(source);  // unprotect so we can edit for return
 
@@ -484,7 +484,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
     Tweak_Cell_Binding(source, binding);  // integrate LETs [1]
 
-    if (Bool_ARG(STEP)) {
+    if (ARG(STEP)) {
         Source* pack = Make_Source_Managed(2);
         Set_Flex_Len(pack, 2);
         Copy_Lifted_Cell(Array_At(pack, 0), source);  // pack wants META values
@@ -750,7 +750,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         if (THROWING)
             goto finalize_maybe_throwing;
         if (Is_Nulled(iterator)) {
-            assert(Bool_ARG(RELAX));
+            assert(ARG(RELAX));
             goto handle_next_item;
         }
         goto unlabeled_step_result_in_spare;
@@ -844,7 +844,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     while (true) {
         if (not Try_Advance_Evars(e)) {
-            if (not Bool_ARG(RELAX))
+            if (not ARG(RELAX))
                 panic (Error_Apply_Too_Many_Raw());
 
             Shutdown_Evars(e);
@@ -931,7 +931,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
   //    itself rule that out automatically?  It asserts for now.
 
     if (Is_Nulled(iterator))
-        assert(Bool_ARG(RELAX));
+        assert(ARG(RELAX));
     else {
         EVARS *e = Cell_Handle_Pointer(EVARS, iterator);
         Shutdown_Evars(e);

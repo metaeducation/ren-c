@@ -142,7 +142,7 @@ DECLARE_NATIVE(DIR_ACTOR)
 
         UNUSED(PARAM(SOURCE));
 
-        if (Bool_ARG(PART) or Bool_ARG(SEEK) or Bool_ARG(STRING) or Bool_ARG(LINES))
+        if (ARG(PART) or ARG(SEEK) or ARG(STRING) or ARG(LINES))
             panic (Error_Bad_Refines_Raw());
 
         DECLARE_STABLE (dir_path);
@@ -246,10 +246,10 @@ DECLARE_NATIVE(DIR_ACTOR)
 
         UNUSED(PARAM(SPEC));
 
-        if (Bool_ARG(READ) or Bool_ARG(WRITE))
+        if (ARG(READ) or ARG(WRITE))
             panic (Error_Bad_Refines_Raw());
 
-        if (Bool_ARG(NEW)) {
+        if (ARG(NEW)) {
             Stable* error = Create_Directory(port);
             if (error) {
                 rebRelease(error);  // !!! throws away details

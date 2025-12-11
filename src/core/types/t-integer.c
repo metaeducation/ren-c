@@ -42,7 +42,7 @@ REBINT CT_Integer(const Element* a, const Element* b, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Integer)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -171,7 +171,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Integer)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     UNUSED(form);
 
@@ -417,7 +417,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Integer)
     if (max == 0)
         panic (PARAM(MAX));  // range is 1 to max, inclusive
 
-    return Init_Integer(OUT, Random_Range(max, Bool_ARG(SECURE)));
+    return Init_Integer(OUT, Random_Range(max, did ARG(SECURE)));
 }
 
 
@@ -431,7 +431,7 @@ IMPLEMENT_GENERIC(RANDOM_BETWEEN, Is_Integer)
     if (max < min)
         panic (PARAM(MAX));  // 0 to 0 is okay, but disallow 1 to 0
 
-    REBI64 rand = Random_Range(1 + max - min, Bool_ARG(SECURE));  // 1-based
+    REBI64 rand = Random_Range(1 + max - min, did ARG(SECURE));  // 1-based
 
     return Init_Integer(OUT, rand + min - 1);
 }
@@ -463,18 +463,18 @@ IMPLEMENT_GENERIC(ROUND, Is_Integer)
     USED(ARG(EVEN)); USED(ARG(DOWN)); USED(ARG(HALF_DOWN));
     USED(ARG(FLOOR)); USED(ARG(CEILING)); USED(ARG(HALF_CEILING));
 
-    if (not Bool_ARG(TO))
+    if (not ARG(TO))
         return Init_Integer(OUT, Round_Int(num, level_, 0L));
 
-    Element* to = Is_Nulled(ARG(TO))
-        ? Init_Integer(ARG(TO), 1)  // default to round to integer 1
-        : Element_ARG(TO);
+    Stable* to = opt ARG(TO);
+    if (not to)
+        to = Init_Integer(LOCAL(TO), 1);  // default to round to integer 1
 
     if (Is_Decimal(to) || Is_Percent(to)) {
         REBDEC dec = Round_Dec(
             cast(REBDEC, num), level_, VAL_DECIMAL(to)
         );
-        Heart to_heart = Heart_Of_Builtin_Fundamental(to);
+        Heart to_heart = Heart_Of_Builtin_Fundamental(Known_Element(to));
         Init(Element) out = OUT;
         Reset_Cell_Header_Noquote(
             TRACK(out),
@@ -484,7 +484,7 @@ IMPLEMENT_GENERIC(ROUND, Is_Integer)
         return OUT;
     }
 
-    if (Is_Time(ARG(TO)))
+    if (Is_Time(to))
         panic (PARAM(TO));
 
     return Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to)));

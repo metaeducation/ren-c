@@ -114,10 +114,10 @@ DECLARE_NATIVE(COPY)
     );
 
     if (not dispatcher) {  // trivial copy, is it good to do so? [1]
-        if (Bool_ARG(PART))
+        if (ARG(PART))
             panic (Error_Bad_Refines_Raw());
 
-        UNUSED(Bool_ARG(DEEP));  // historically we ignore it
+        UNUSED(ARG(DEEP));  // historically we ignore it
 
         LIFT_BYTE(elem) = lift_byte;  // restore
         return COPY(elem);
@@ -325,7 +325,7 @@ DECLARE_NATIVE(TO)
     if (not to)
         panic ("TO doesn't work with extension types");
 
-    if (to > MAX_TYPE_FUNDAMENTAL)  // !!! is quoted applicable, or dumb?
+    if (unwrap to > MAX_TYPE_FUNDAMENTAL)  // !!! is quoted applicable, or dumb?
         panic ("TO can't produce antiforms or quoteds");
 
   handle_sigil_cases: {
@@ -349,7 +349,7 @@ DECLARE_NATIVE(TO)
 
     Option(Sigil) sigil = Sigil_Of(value);
     if (sigil) {  // to or from a sigiled form [1]
-        switch (Heart_Of(value)) {
+        switch (unwrap Heart_Of(value)) {
           case TYPE_INTEGER:
           case TYPE_WORD:
           case TYPE_RUNE:
@@ -362,7 +362,7 @@ DECLARE_NATIVE(TO)
     }
 
     if (Any_Sigiled_Type(to)) {  // limited handling for adding Sigils [2]
-        switch (Heart_Of(value)) {
+        switch (unwrap Heart_Of(value)) {
           case TYPE_INTEGER:
           case TYPE_WORD:
             break;

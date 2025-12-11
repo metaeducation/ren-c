@@ -152,19 +152,19 @@ Bounce Lambda_Dispatcher(Level* const L)
     if (not result_param)
         return BOUNCE_DELEGATE;  // no typecheck callback needed (ARROW)
 
-    if (Is_Quasar(result_param)) {
+    if (Is_Quasar(unwrap result_param)) {
         STATE = ST_LAMBDA_PROCEDURE_EXECUTING;
         return CONTINUE_SUBLEVEL(sub);
     }
 
-    if (Is_Space(result_param)) {
+    if (Is_Space(unwrap result_param)) {
         STATE = ST_LAMBDA_DIVERGER_EXECUTING;
         return CONTINUE_SUBLEVEL(sub);
     }
 
     STATE = ST_LAMBDA_LAMBDA_EXECUTING;
 
-    if (Is_Parameter_Unconstrained(result_param))
+    if (Is_Parameter_Unconstrained(unwrap result_param))
         return BOUNCE_DELEGATE;  // also no typecheck needed
 
     return CONTINUE_SUBLEVEL(sub);

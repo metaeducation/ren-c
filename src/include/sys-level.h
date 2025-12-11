@@ -325,15 +325,21 @@ typedef Byte StateByte;
 #define Level_Args_Head(L) \
     (u_cast(Value*, (L)->rootvar) + 1)
 
+
+INLINE Value* Level_Arg_Core(Level* L, REBLEN n, bool optional) {
+    assert(n != 0 and n <= Level_Num_Args(L));
+    assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
+    if (optional and Is_Light_Null(u_cast(Value*, L->rootvar) + n))
+        return nullptr;
+    return u_cast(Value*, L->rootvar) + n;  // 1-indexed
+}
+
 #if NO_RUNTIME_CHECKS
     #define Level_Arg(L,n) \
         (u_cast(Value*, (L)->rootvar) + (n))
 #else
-    INLINE Value* Level_Arg(Level* L, REBLEN n) {
-        assert(n != 0 and n <= Level_Num_Args(L));
-        assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
-        return u_cast(Value*, L->rootvar) + n;  // 1-indexed
-    }
+    #define Level_Arg(L,n) \
+        Level_Arg_Core((L), (n), false)
 #endif
 
 
@@ -667,10 +673,15 @@ INLINE Result(Level*) Prep_Level_Core(
 // It is also possible to get the PARAMETER! for an argument with `PARAM(FOO)`
 // or `PARAM(BAR)`.
 //
+// 1. We don't want to get unused typedef or unused variable warnings for the
+//    pieces that DECLARE_PARAM() makes that aren't necessarily used.  So
+//    only the `param_NAME_ = n;` piece is not marked USED().
 
-#define DECLARE_PARAM(T,n,name) \
+#define DECLARE_PARAM(T,name,n,opt) \
     static const int param_##name##_ = n; \
-    typedef T param_type_##name##_
+    typedef T param_type_##name##_; \
+    static bool param_opt_##name##_ = opt; \
+    USED(u_cast(param_type_##name##_, param_opt_##name##_))  // trust n [1]
 
 #define DECLARE_INTRINSIC_PARAM(name)  /* was used, not used at the moment */ \
     NOOP  // the INCLUDE_PARAMS_OF_XXX macros still make this, may find a use
@@ -679,28 +690,14 @@ INLINE Result(Level*) Prep_Level_Core(
     Erase_Cell(Level_Arg(level_, param_##name##_))
 
 #define ARG(name) \
-    cast(param_type_##name##_, Level_Arg(level_, param_##name##_))
+    cast(param_type_##name##_, \
+        Level_Arg_Core(level_, param_##name##_, param_opt_##name##_))
 
-#define Element_ARG(name) \
-    Known_Element(Level_Arg(level_, param_##name##_))  // checked build asserts
-
-#define Bool_ARG(name) \
-    (not Is_Nulled(Known_Stable(Level_Arg(level_, param_##name##_))))
-
-
-INLINE Option(Element*) Optional_Element_Level_Arg(Level* L, REBLEN n)
-{
-    Stable* arg = Known_Stable(Level_Arg(L, n));
-    if (Is_Nulled(arg))
-        return nullptr;
-    return Known_Element(arg);
-}
+#define Element_ARG(name) /* checked build asserts it's an Element */ \
+    Known_Element(Level_Arg(level_, param_##name##_))
 
 #define PARAM_INDEX(name) \
     (param_##name##_)
-
-#define Optional_Element_ARG(name) \
-    Optional_Element_Level_Arg(level_, PARAM_INDEX(name))
 
 #define LOCAL(name) /* alias for ARG() when slot is {local} */ \
     Level_Arg(level_, PARAM_INDEX(name))  // initialized to unset state!

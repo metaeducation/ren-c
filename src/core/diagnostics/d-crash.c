@@ -238,7 +238,7 @@ static ATTRIBUTE_NO_RETURN void Crash_Of_Last_Resort(void) {
 // coverity[+kill]
 //
 ATTRIBUTE_NO_RETURN void Crash_Core(
-    const void *p,  // Flex*, Stable*, or UTF-8 char*
+    Option(const void *) p,  // Flex*, Stable*, or UTF-8 char*
     Tick tick,
     const char *file, // UTF8
     int line
@@ -250,7 +250,12 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
   #endif
 
   #if DEBUG_FANCY_CRASH
-    Printf_Stderr("C Source File %s, Line %d, Pointer %p\n", file, line, p);
+    Printf_Stderr(
+        "C Source File %s, Line %d, Pointer %p\n",
+        file,
+        line,
+        unwrap p
+    );
     Printf_Stderr("At evaluator tick: %lu\n", cast(unsigned long, tick));
   #else
     UNUSED(tick);
@@ -301,18 +306,18 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
             PANIC_BUF_SIZE - strsize(buf)
         );
     }
-    else switch (Detect_Rebol_Pointer(p)) {
+    else switch (Detect_Rebol_Pointer(unwrap p)) {
       case DETECTED_AS_UTF8: // string might be empty...handle specially?
         strncat(
             buf,
-            cast(char*, p),
+            cast(char*, unwrap p),
             PANIC_BUF_SIZE - strsize(buf)
         );
         break;
 
       case DETECTED_AS_STUB: {  // non-FREE stub
       #if DEBUG_FANCY_CRASH
-        const Stub* s = cast(Stub*, p);
+        const Stub* s = cast(Stub*, unwrap p);
         Printf_Stderr("Stub detected...\n");
         if (Stub_Flavor(s) == FLAVOR_VARLIST) {
             Printf_Stderr("...and it's a varlist...\n");
@@ -330,7 +335,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
       case DETECTED_AS_CELL:
       case DETECTED_AS_END: {
       #if DEBUG_FANCY_CRASH
-        const Cell* c = cast(Cell*, p);
+        const Cell* c = cast(Cell*, unwrap p);
         if (Heart_Of(c) == TYPE_WARNING) {
             Printf_Stderr("...crash() on an ERROR! Cell, trying to PROBE...");
             PROBE(c);
@@ -348,7 +353,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
             PANIC_BUF_SIZE - strsize(buf)
         );
       #if DEBUG_FANCY_CRASH
-        Crash_With_Stub_Debug(u_cast(const Stub*, p));
+        Crash_With_Stub_Debug(u_cast(const Stub*, unwrap p));
       #endif
         break;
 
@@ -463,7 +468,7 @@ DECLARE_NATIVE(PANIC)
     INCLUDE_PARAMS_OF_PANIC;
 
     Stable* reason = ARG(REASON);
-    Stable* blame = ARG(BLAME);
+    Stable* blame = opt ARG(BLAME);
 
   #if NO_RUNTIME_CHECKS
     UNUSED(blame);

@@ -548,7 +548,7 @@ DECLARE_NATIVE(GENERATOR)  // could also be made in LIB with SPECIALIZE
 
     assert(STATE == STATE_0);
 
-    Copy_Cell(ARG(SPEC), g_empty_block);
+    Copy_Cell(LOCAL(SPEC), g_empty_block);
     USED(ARG(BODY));
     return NATIVE_CFUNC(YIELDER)(LEVEL);
 }
@@ -635,7 +635,7 @@ DECLARE_NATIVE(DEFINITIONAL_YIELD)
   // of one value, YIELD DONE, or YIELD of any other error antiform which the
   // yielder will elevate to an abrupt panic.
 
-    if (Is_Error(v) or Bool_ARG(FINAL)) {  // not resumable, throw
+    if (Is_Error(v) or ARG(FINAL)) {  // not resumable, throw
         Stable* spare = Init_Action(
             SPARE,  // use as label for throw
             Frame_Phase(LIB(DEFINITIONAL_YIELD)),

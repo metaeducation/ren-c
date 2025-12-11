@@ -143,15 +143,18 @@ DECLARE_NATIVE(TRANSCODE)
         Term_Binary(m_cast(Binary*, Cell_Binary(source)));
 
     Option(const Strand*) file;
-    if (Bool_ARG(FILE)) {
-        file = Cell_Strand(ARG(FILE));
+    if (not ARG(FILE))
+        file = ANONYMOUS;
+    else {
+        file = Cell_Strand(unwrap ARG(FILE));
         Freeze_Flex(unwrap file);  // freezes vs. interning [2]
     }
-    else
-        file = ANONYMOUS;
 
     Sink(Stable) line_number_out = OUT;  // use as scratch space
-    if (Any_Word(ARG(LINE))) {
+    if (not ARG(LINE)) {  // not provided
+        Init_Integer(line_number_out, 1);
+    }
+    else if (Any_Word(unwrap ARG(LINE))) {
         require (
           Get_Var(
             line_number_out,
@@ -161,10 +164,8 @@ DECLARE_NATIVE(TRANSCODE)
         ));
         // null not allowed, must be integer
     }
-    else if (Is_Nulled(ARG(LINE)))  // not provided
-        Init_Integer(line_number_out, 1);
     else
-        Copy_Cell(line_number_out, ARG(LINE));
+        Copy_Cell(line_number_out, unwrap ARG(LINE));
 
     LineNumber start_line;
     if (Is_Integer(line_number_out)) {
@@ -190,7 +191,7 @@ DECLARE_NATIVE(TRANSCODE)
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
         | FLAG_STATE_BYTE(ST_SCANNER_OUTERMOST_SCAN);
 
-    if (Bool_ARG(NEXT) or Bool_ARG(ONE))
+    if (ARG(NEXT) or ARG(ONE))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
     Binary* bin = Make_Binary(sizeof(TranscodeState));
@@ -258,7 +259,7 @@ DECLARE_NATIVE(TRANSCODE)
 
     assert(Is_Void(OUT));  // scanner returns void if it doesn't return error
 
-    if (Bool_ARG(ONE)) {  // want *exactly* one element
+    if (ARG(ONE)) {  // want *exactly* one element
         if (TOP_INDEX == STACK_BASE)
             return fail ("Transcode was empty (or all comments)");
         assert(TOP_INDEX == STACK_BASE + 1);
@@ -266,7 +267,7 @@ DECLARE_NATIVE(TRANSCODE)
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
-    if (Bool_ARG(LINE) and Is_Word(ARG(LINE))) {  // want line number updated
+    if (ARG(LINE) and Is_Word(unwrap ARG(LINE))) {  // want line number updated
         Init_Integer(OUT, transcode->line);
         Copy_Cell(Level_Scratch(SUBLEVEL), Element_ARG(LINE));  // variable
         heeded (Corrupt_Cell_If_Needful(Level_Spare(SUBLEVEL)));
@@ -286,7 +287,7 @@ DECLARE_NATIVE(TRANSCODE)
   //    often than not the case that empty content evaluating to GHOST! is
   //    what you want (e.g. scripts that are empty besides a header are ok).
 
-    if (Bool_ARG(NEXT)) {
+    if (ARG(NEXT)) {
         if (TOP_INDEX == STACK_BASE) {
             Init_Nulled(OUT);
         }
@@ -311,7 +312,7 @@ DECLARE_NATIVE(TRANSCODE)
 
     Drop_Level(SUBLEVEL);
 
-    if (not Bool_ARG(NEXT)) {
+    if (not ARG(NEXT)) {
         assert(Is_Block(Known_Element(OUT)));
         return OUT;  // single block result
     }

@@ -270,7 +270,7 @@ Bounce Composer_Executor(Level* const L)
     bool deep;
     Element* pattern;
     bool conflate;
-    Stable* predicate;
+    Option(Stable*) predicate;
 
   extract_arguments_from_original_compose_call: {
 
@@ -287,12 +287,12 @@ Bounce Composer_Executor(Level* const L)
     INCLUDE_PARAMS_OF_COMPOSE2;
 
     UNUSED(ARG(TEMPLATE));  // accounted for by Level feed
-    deep = Bool_ARG(DEEP);
+    deep = did ARG(DEEP);
     pattern = Element_ARG(PATTERN);
-    conflate = Bool_ARG(CONFLATE);
+    conflate = did ARG(CONFLATE);
     predicate = ARG(PREDICATE);
 
-    assert(Is_Nulled(predicate) or Is_Frame(predicate));
+    assert(not predicate or Is_Frame(unwrap predicate));
 
 } jump_to_label_for_state: {
 
@@ -351,13 +351,13 @@ Bounce Composer_Executor(Level* const L)
         goto handle_next_item;
     }
 
-    if (Is_Nulled(predicate)) {
+    if (not predicate) {
         STATE = ST_COMPOSER_EVAL_GROUP;
         return CONTINUE(OUT, Known_Element(SPARE));
     }
 
     STATE = ST_COMPOSER_RUNNING_PREDICATE;
-    return CONTINUE(OUT, predicate, SPARE);
+    return CONTINUE(OUT, unwrap predicate, SPARE);
 
 } process_slot_evaluation_result_in_out: {  //////////////////////////////////
 
@@ -683,7 +683,7 @@ DECLARE_NATIVE(COMPOSE2)
     assert(Is_Logic(Known_Stable(OUT)));
 
     trap (
-      Finalize_Composer_Level(SUBLEVEL, input, Bool_ARG(CONFLATE))
+      Finalize_Composer_Level(SUBLEVEL, input, did ARG(CONFLATE))
     );
     Drop_Level(SUBLEVEL);
     return OUT;

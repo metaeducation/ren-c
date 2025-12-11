@@ -594,7 +594,7 @@ static bool Combinator_Param_Hook(
 
     Element* rules = Element_ARG(RULES);
 
-    UNUSED(Bool_ARG(PATH));  // used by caller of hook
+    UNUSED(ARG(PATH));  // used by caller of hook
 
     Option(SymId) symid = Key_Id(key);
 
@@ -622,13 +622,13 @@ static bool Combinator_Param_Hook(
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
         Copy_Cell(var, ARG(STATE));
     }
-    else if (symid == SYM_VALUE and Bool_ARG(VALUE)) {
+    else if (symid == SYM_VALUE and ARG(VALUE)) {
         //
         // The "value" parameter only has special meaning for datatype
         // combinators, e.g. TEXT!.  Otherwise a combinator can have an
         // argument named value for other purposes.
         //
-        Copy_Cell(var, ARG(VALUE));
+        Copy_Cell(var, unwrap ARG(VALUE));
     }
     else if (symid == SYM_RULE_START) {
         Copy_Cell(var, ARG(RULE_START));
@@ -775,7 +775,7 @@ DECLARE_NATIVE(COMBINATORIZE)
     // when it doesn't end in /.  Now /ONLY is not used.  Review general
     // mechanisms for refinements on combinators.
     //
-    if (Bool_ARG(PATH))
+    if (ARG(PATH))
         panic ("PATH! mechanics in COMBINATORIZE not supported ATM");
 
     ParamList* paramlist = Make_Varlist_For_Action(
@@ -791,8 +791,8 @@ DECLARE_NATIVE(COMBINATORIZE)
 
     Push_Lifeguard(s.ctx);  // Combinator_Param_Hook may call evaluator
 
-    USED(Bool_ARG(STATE));
-    USED(Bool_ARG(VALUE));
+    USED(ARG(STATE));
+    USED(ARG(VALUE));
 
     const Key* key_tail;
     const Key* key = Phase_Keys(&key_tail, phase);

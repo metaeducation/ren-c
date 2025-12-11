@@ -213,18 +213,18 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 
     // flags has PROT_SET bit (set or not)
 
-    if (Bool_ARG(DEEP))
+    if (ARG(DEEP))
         flags |= PROT_DEEP;
-    //if (Bool_ARG(WORDS))
+    //if (ARG(WORDS))
     //  flags |= PROT_WORDS;
 
     if (Is_Block(value)) {
         Element* block = Known_Element(value);
 
-        if (Bool_ARG(WORDS))
+        if (ARG(WORDS))
             panic ("WORDS not currently implemented in PROTECT");
 
-        if (Bool_ARG(VALUES)) {
+        if (ARG(VALUES)) {
             const Stable* slot;
             const Element* tail;
             const Element* item = List_At(&tail, block);
@@ -292,7 +292,7 @@ DECLARE_NATIVE(PROTECT)
     Element* v = Element_ARG(VALUE);
 
     if (Any_Word(v) or Is_Tuple(v)) {
-        if (Bool_ARG(HIDE))
+        if (ARG(HIDE))
             Init_Word(OUT, CANON(HIDE));
         else
             Init_Word(OUT, CANON(PROTECT));
@@ -320,7 +320,7 @@ DECLARE_NATIVE(PROTECT)
 
     Flags flags = PROT_SET;
 
-    if (Bool_ARG(HIDE))
+    if (ARG(HIDE))
         flags |= PROT_HIDE;
     else
         flags |= PROT_WORD; // there is no unhide
@@ -358,7 +358,7 @@ DECLARE_NATIVE(UNPROTECT)
     USED(PARAM(WORDS));
     USED(PARAM(VALUES));
 
-    if (Bool_ARG(HIDE))
+    if (ARG(HIDE))
         panic ("Cannot un-hide an object field once hidden");
 
     Element* v = Element_ARG(VALUE);
@@ -514,17 +514,17 @@ void Force_Value_Frozen_Core(
 //  ]
 //
 DECLARE_NATIVE(FREEZE)
+//
+// 1. ARG(BLAME) is not exposed as a feature because there's nowhere to store
+//    locking information in the Flex.  So the only thing that happens if
+//    you pass in something other than null is FLEX_FLAG_AUTO_LOCKED is set
+//    to deliver a message that the system locked something implicitly.  We
+//    don't want to say that here, so hold off on the feature.
 {
     INCLUDE_PARAMS_OF_FREEZE;
 
-    // Bool_ARG(BLAME) is not exposed as a feature because there's nowhere to store
-    // locking information in the Flex.  So the only thing that happens if
-    // you pass in something other than null is FLEX_FLAG_AUTO_LOCKED is set
-    // to deliver a message that the system locked something implicitly.  We
-    // don't want to say that here, so hold off on the feature.
-    //
     Flex* locker = nullptr;
-    Force_Value_Frozen_Core(ARG(VALUE), Bool_ARG(DEEP), locker);
+    Force_Value_Frozen_Core(ARG(VALUE), did ARG(DEEP), locker);
 
     return COPY(ARG(VALUE));
 }

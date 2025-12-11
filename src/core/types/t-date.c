@@ -101,7 +101,7 @@ REBINT CT_Date(const Element* a_in, const Cell* b_in, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Date)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -143,7 +143,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);  // calls MOLDIFY on the time component, may heed
+    bool form = did ARG(FORM);  // calls MOLDIFY on the time component, may heed
 
     UNUSED(form);
 
@@ -185,7 +185,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
 
     if (Does_Date_Have_Time(v)) {
         Append_Codepoint(mo->strand, '/');
-        Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // Bool_ARG(FORM)?
+        Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Time)(LEVEL);  // ARG(FORM)?
         assert(Is_Possibly_Unstable_Value_Trash(Value_From_Bounce(bounce)));
         // !!! generically might BOUNCE_CONTINUE
         UNUSED(bounce);
@@ -1148,7 +1148,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Date)
     if (year == 0)
         panic (UNHANDLED);
 
-    const bool secure = Bool_ARG(SECURE);
+    const bool secure = did ARG(SECURE);
 
     REBLEN rand_year = Random_Range(year, secure);
     REBLEN rand_month = Random_Range(12, secure);
@@ -1189,10 +1189,10 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Date)
     Stable* val1 = ARG(VALUE1);
     Stable* val2 = ARG(VALUE2);
 
-    if (Bool_ARG(CASE))
+    if (ARG(CASE))
         panic (Error_Bad_Refines_Raw());
 
-    if (Bool_ARG(SKIP))
+    if (ARG(SKIP))
         panic (Error_Bad_Refines_Raw());
 
     if (not Is_Date(val2))
@@ -1238,12 +1238,12 @@ DECLARE_NATIVE(MAKE_DATE_YMDSNZ)
     VAL_MONTH(OUT) = VAL_INT32(ARG(MONTH));
     VAL_DAY(OUT) = VAL_INT32(ARG(DAY));
 
-    if (Is_Nulled(ARG(ZONE)))
+    if (not ARG(ZONE))
         VAL_ZONE(OUT) = NO_DATE_ZONE;
     else
-        VAL_ZONE(OUT) = VAL_INT32(ARG(ZONE)) / ZONE_MINS;
+        VAL_ZONE(OUT) = VAL_INT32(unwrap ARG(ZONE)) / ZONE_MINS;
 
-    REBI64 nano = Is_Nulled(ARG(NANO)) ? 0 : VAL_INT64(ARG(NANO));
+    REBI64 nano = not ARG(NANO) ? 0 : VAL_INT64(unwrap ARG(NANO));
     Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_INT64(ARG(SECONDS))) + nano);
 
     assert(Does_Date_Have_Time(OUT));
@@ -1279,7 +1279,7 @@ DECLARE_NATIVE(MAKE_TIME_SN)
 
     Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_TIME);
 
-    REBI64 nano = Is_Nulled(ARG(NANO)) ? 0 : VAL_INT64(ARG(NANO));
+    REBI64 nano = not ARG(NANO) ? 0 : VAL_INT64(unwrap ARG(NANO));
     Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_INT64(ARG(SECONDS))) + nano);
 
     return OUT;

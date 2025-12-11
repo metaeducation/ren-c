@@ -2554,7 +2554,7 @@ DECLARE_NATIVE(PARSE3)
         OUT,
         input, SPECIFIED,
         sub,
-        (Bool_ARG(CASE) ? AM_FIND_CASE : 0)
+        (ARG(CASE) ? AM_FIND_CASE : 0)
         //
         // We always want "case-sensitivity" on binary bytes, vs. treating
         // as case-insensitive bytes for ASCII characters.
@@ -2576,7 +2576,7 @@ DECLARE_NATIVE(PARSE3)
 } interpret_subparse_results_as_success_or_failure: {
 
     if (Is_Light_Null(OUT)) {  // a match failed (but may be at end of input)
-        if (Bool_ARG(MATCH))
+        if (ARG(MATCH))
             return NULLED;
         return fail (Error_Parse3_Incomplete_Raw());
     }
@@ -2585,13 +2585,13 @@ DECLARE_NATIVE(PARSE3)
     assert(index <= Series_Len_Head(input));
 
     if (index != Series_Len_Head(input)) {  // didn't reach end of input
-        if (Bool_ARG(MATCH))
+        if (ARG(MATCH))
             return NULLED;
-        if (not Bool_ARG(RELAX))
+        if (not ARG(RELAX))
             return fail (Error_Parse3_Incomplete_Raw());
     }
 
-    if (Bool_ARG(MATCH))
+    if (ARG(MATCH))
         return COPY(scratch_original_input);
 
     Copy_Cell(OUT, g_trash_parse3_success);  // trash result unless ACCEPT

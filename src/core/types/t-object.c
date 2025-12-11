@@ -375,7 +375,7 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Any_Context)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* value1 = Element_ARG(VALUE1);
     Element* value2 = Element_ARG(VALUE2);
@@ -640,19 +640,22 @@ DECLARE_NATIVE(SET_ADJUNCT)
 {
     INCLUDE_PARAMS_OF_SET_ADJUNCT;
 
-    Stable* adjunct = ARG(ADJUNCT);
-
     Option(VarList*) ctx;
-    if (Any_Context(adjunct)) {
+
+  extract_adjunct_context: {
+
+    Stable* adjunct = opt ARG(ADJUNCT);
+    if (not adjunct)
+        ctx = nullptr;
+    else {
+        assert(Any_Context(adjunct));
         if (Is_Frame(adjunct))
             panic ("SET-ADJUNCT can't store bindings, FRAME! disallowed");
 
         ctx = Cell_Varlist(adjunct);
     }
-    else {
-        assert(Is_Nulled(adjunct));
-        ctx = nullptr;
-    }
+
+} assign_or_clear_adjunct_context: {
 
     Stable* v = ARG(VALUE);
 
@@ -665,8 +668,8 @@ DECLARE_NATIVE(SET_ADJUNCT)
     else
         Tweak_Misc_Varlist_Adjunct(Cell_Varlist(v), ctx);
 
-    return COPY(adjunct);
-}
+    return COPY(LOCAL(ADJUNCT));
+}}
 
 
 //
@@ -824,7 +827,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     Strand* s = mo->strand;
 
@@ -955,7 +958,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     Strand* s = mo->strand;
 
@@ -1113,7 +1116,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         assert(Is_Block(def));
 
         CollectFlags flags = COLLECT_ONLY_SET_WORDS;
-        if (Bool_ARG(PREBOUND))
+        if (ARG(PREBOUND))
             flags |= COLLECT_TOLERATE_PREBOUND;
 
         require (
@@ -1136,7 +1139,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         INCLUDE_PARAMS_OF_SELECT;
         UNUSED(ARG(SERIES));  // extracted as `c`
 
-        if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
+        if (ARG(PART) or ARG(SKIP) or ARG(MATCH))
             panic (Error_Bad_Refines_Raw());
 
         Stable* pattern = ARG(VALUE);
@@ -1149,7 +1152,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         Option(Index) index = Find_Symbol_In_Context(
             context,
             Word_Symbol(pattern),
-            Bool_ARG(CASE)
+            did ARG(CASE)
         );
         if (not index)
             return NULLED;
@@ -1217,10 +1220,10 @@ IMPLEMENT_GENERIC(COPY, Any_Context)
 
     const Element* context = Element_ARG(VALUE);
 
-    if (Bool_ARG(PART))
+    if (ARG(PART))
         panic (Error_Bad_Refines_Raw());
 
-    bool deep = Bool_ARG(DEEP);
+    bool deep = did ARG(DEEP);
     return Copy_Any_Context(OUT, context, deep);
 }
 
@@ -1497,10 +1500,10 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
 
     const Element* frame = Element_ARG(VALUE);
 
-    if (Bool_ARG(DEEP))
+    if (ARG(DEEP))
         panic ("COPY:DEEP on FRAME! not implemented");
 
-    if (Bool_ARG(PART))
+    if (ARG(PART))
         panic (Error_Bad_Refines_Raw());
 
     ParamList* copy = Make_Varlist_For_Action(
@@ -1853,7 +1856,7 @@ REBINT CT_Frame(const Element* a, const Element* b, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Frame)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* value1 = Element_ARG(VALUE1);
     Element* value2 = Element_ARG(VALUE2);
@@ -1881,10 +1884,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
 
     if (LIFT_BYTE(v) != QUASIFORM_3) {
-        return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds Bool_ARG(FORM)
+        return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds ARG(FORM)
     }
 
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
     UNUSED(form);
 
     Begin_Non_Lexical_Mold(mo, v);
@@ -1967,8 +1970,8 @@ DECLARE_NATIVE(CONSTRUCT)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    VarList* parent = Bool_ARG(WITH)
-        ? Cell_Varlist(ARG(WITH))
+    VarList* parent = ARG(WITH)
+        ? Cell_Varlist(unwrap ARG(WITH))
         : nullptr;
 
     const Element* tail;

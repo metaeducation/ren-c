@@ -51,7 +51,7 @@ REBINT CT_Bitset(const Element* a, const Element* b, bool strict)
 IMPLEMENT_GENERIC(EQUAL_Q, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -91,7 +91,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     UNUSED(form); // all bitsets are "molded" at this time
 
@@ -106,7 +106,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
     }
 
     Init_Blob(v, bset);
-    Init_Nulled(ARG(FORM));  // form = false
+    Init_Nulled(LOCAL(FORM));  // form = false
     Bounce bounce = GENERIC_CFUNC(MOLDIFY, Is_Blob)(LEVEL);
     assert(Is_Possibly_Unstable_Value_Trash(Value_From_Bounce(bounce)));
     // !!! generically it could BOUNCE_CONTINUE...
@@ -584,10 +584,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
         UNUSED(PARAM(SERIES));  // covered by `v`
 
-        if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
+        if (ARG(PART) or ARG(SKIP) or ARG(MATCH))
             panic (Error_Bad_Refines_Raw());
 
-        if (not Check_Bits(VAL_BITSET(v), ARG(VALUE), Bool_ARG(CASE)))
+        if (not Check_Bits(VAL_BITSET(v), ARG(VALUE), did ARG(CASE)))
             return LOGIC(false);
         return LOGIC(true); }
 
@@ -596,13 +596,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
         INCLUDE_PARAMS_OF_APPEND;
         USED(PARAM(SERIES));  // covered by `v`
 
-        if (Is_Undone_Opt_Nulled(ARG(VALUE)))
+        if (not ARG(VALUE))
             return COPY(v);  // don't panic on read only if it would be a no-op
-        if (Is_Antiform(ARG(VALUE)))
+        if (Is_Antiform(unwrap ARG(VALUE)))
             panic (PARAM(VALUE));
         const Element* arg = Element_ARG(VALUE);
 
-        if (Bool_ARG(PART) or Bool_ARG(DUP) or Bool_ARG(LINE))
+        if (ARG(PART) or ARG(DUP) or ARG(LINE))
             panic (Error_Bad_Refines_Raw());
 
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
@@ -623,7 +623,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
-        if (not Bool_ARG(PART))
+        if (not ARG(PART))
             panic (Error_Missing_Arg_Raw());
 
         if (not Set_Bits(bset, Element_ARG(PART), false))
@@ -700,7 +700,7 @@ IMPLEMENT_GENERIC(COPY, Is_Bitset)
     Element* bset = Element_ARG(VALUE);
     Binary* bits = VAL_BITSET(bset);
 
-    if (Bool_ARG(PART) or Bool_ARG(DEEP))
+    if (ARG(PART) or ARG(DEEP))
         panic (Error_Bad_Refines_Raw());
 
     require (
@@ -764,7 +764,7 @@ Option(Error*) Blobify_Args_For_Bitset_Arity_2_Set_Operation(
     Element* bset = Element_ARG(VALUE1);
     Element* arg = Element_ARG(VALUE2);
 
-    if (Bool_ARG(SKIP))
+    if (ARG(SKIP))
         return Error_Bad_Refines_Raw();
 
     UNUSED(ARG(CASE));

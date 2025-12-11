@@ -318,16 +318,14 @@ DECLARE_NATIVE(HIJACK)
 
     Phase* victim = Frame_Phase(ARG(VICTIM));
 
-    Option(const Element*) opt_hijacker = Is_Nulled(ARG(HIJACKER))
-        ? nullptr
-        : Element_ARG(HIJACKER);
+    Option(const Stable*) opt_hijacker = ARG(HIJACKER);
 
     bool victim_unimplemented =
         Is_Stub_Details(victim) and
         Details_Dispatcher(cast(Details*, victim)) == &Unimplemented_Dispatcher;
 
-    if (opt_hijacker) {
-        Phase* hijacker = Frame_Phase(unwrap opt_hijacker);
+    if (ARG(HIJACKER)) {
+        Phase* hijacker = Frame_Phase(unwrap ARG(HIJACKER));
         if (victim == hijacker)
             panic ("Cannot HIJACK function with itself");  // right?
     }

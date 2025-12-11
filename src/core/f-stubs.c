@@ -389,11 +389,11 @@ void Extra_Init_Frame_Checks_Debug(Phase* phase) {
 //
 REBLEN Part_Len_May_Modify_Index(
     Stable* series,  // ANY-SERIES? value whose index may be modified
-    const Stable* part  // :PART (number, position in value, or nulled cell)
+    Option(const Stable*) part_arg  // :PART (number, position in value)
 ){
     assert(Is_Rune(series) or Any_Series(series));
 
-    if (Is_Nulled(part)) {  // indicates :PART refinement unused
+    if (not part_arg) {  // indicates :PART refinement unused
         if (not Is_Rune(series))
             return Series_Len_At(series);  // use plain length
 
@@ -401,6 +401,8 @@ REBLEN Part_Len_May_Modify_Index(
         Cell_Utf8_Size_At(&size, series);
         return size;
     }
+
+    const Stable* part = unwrap part_arg;
 
     // Series_Index() checks to make sure it's for in-bounds
     //
@@ -460,7 +462,7 @@ REBLEN Part_Len_May_Modify_Index(
 // Simple variation that instead of returning the length, returns the absolute
 // tail position in the series of the partial sequence.
 //
-REBLEN Part_Tail_May_Modify_Index(Stable* series, const Stable* limit)
+REBLEN Part_Tail_May_Modify_Index(Stable* series, Option(const Stable*) limit)
 {
     REBLEN len = Part_Len_May_Modify_Index(series, limit);
     return len + Series_Index(series); // uses the possibly-updated index
@@ -482,12 +484,12 @@ REBLEN Part_Tail_May_Modify_Index(Stable* series, const Stable* limit)
 //
 // https://github.com/rebol/rebol-issues/issues/1570
 //
-REBLEN Part_Limit_Append_Insert(const Stable* part) {
-    if (Is_Nulled(part))
+REBLEN Part_Limit_Append_Insert(Option(const Stable*) part) {
+    if (not part)
         return UINT32_MAX;  // treat as no limit
 
-    if (Is_Integer(part)) {
-        REBINT i = Int32(part);
+    if (Is_Integer(unwrap part)) {
+        REBINT i = Int32(unwrap part);
         if (i < 0)  // Clip negative numbers to mean 0
             return 0;  // !!! Would it be better to warning?
         return i;
@@ -593,7 +595,7 @@ Result(Element*) Unsingleheart_Sequence_Preserve_Sigil(Element* seq) {
       Unsingleheart_Sequence(seq)
     );
     if (sigil)
-        Add_Cell_Sigil(seq, sigil);
+        Add_Cell_Sigil(seq, unwrap sigil);
     return seq;
 }
 
@@ -660,7 +662,7 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
             continue;
 
         if (Not_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))
-            if (Bool_ARG(FORCE)) {
+            if (ARG(FORCE)) {
                 Clear_Cell_Sigil(e);
                 continue;
             }

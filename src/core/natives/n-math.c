@@ -287,17 +287,17 @@ DECLARE_NATIVE(ROUND)
     USED(ARG(TO));  // passed through via LEVEL
 
     Count num_refinements = 0;
-    if (Bool_ARG(EVEN))
+    if (ARG(EVEN))
         ++num_refinements;
-    if (Bool_ARG(DOWN))
+    if (ARG(DOWN))
         ++num_refinements;
-    if (Bool_ARG(HALF_DOWN))
+    if (ARG(HALF_DOWN))
         ++num_refinements;
-    if (Bool_ARG(FLOOR))
+    if (ARG(FLOOR))
         ++num_refinements;
-    if (Bool_ARG(CEILING))
+    if (ARG(CEILING))
         ++num_refinements;
-    if (Bool_ARG(HALF_CEILING))
+    if (ARG(HALF_CEILING))
         ++num_refinements;
 
     if (num_refinements > 1)
@@ -398,7 +398,7 @@ DECLARE_NATIVE(RANDOM_BETWEEN)
 
     Element* min = Element_ARG(MIN);
     Element* max = Element_ARG(MAX);
-    USED(Bool_ARG(SECURE));  // passed through via LEVEL
+    USED(ARG(SECURE));  // passed through via LEVEL
 
     if (Type_Of(min) != Type_Of(max))
         return fail ("RANDOM-BETWEEN requires MIN and MAX of same type");
@@ -484,8 +484,8 @@ DECLARE_NATIVE(SHUFFLE_OF)
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
     Element* elem = cast(Element*, ARG(VALUE));
-    USED(Bool_ARG(SECURE));  // other args get passed via LEVEL
-    USED(Bool_ARG(PART));
+    USED(ARG(SECURE));  // other args get passed via LEVEL
+    USED(ARG(PART));
 
     Bounce bounce;
     if (Try_Dispatch_Generic(&bounce, SHUFFLE_OF, elem, LEVEL))
@@ -584,7 +584,7 @@ DECLARE_NATIVE(COSINE)
 {
     INCLUDE_PARAMS_OF_COSINE;
 
-    REBDEC dval = cos(Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SYM_COSINE));
+    REBDEC dval = cos(Trig_Value(ARG(ANGLE), did ARG(RADIANS), SYM_COSINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -606,7 +606,7 @@ DECLARE_NATIVE(SINE)
 {
     INCLUDE_PARAMS_OF_SINE;
 
-    REBDEC dval = sin(Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SYM_SINE));
+    REBDEC dval = sin(Trig_Value(ARG(ANGLE), did ARG(RADIANS), SYM_SINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -628,7 +628,7 @@ DECLARE_NATIVE(TANGENT)
 {
     INCLUDE_PARAMS_OF_TANGENT;
 
-    REBDEC dval = Trig_Value(ARG(ANGLE), Bool_ARG(RADIANS), SYM_TANGENT);
+    REBDEC dval = Trig_Value(ARG(ANGLE), did ARG(RADIANS), SYM_TANGENT);
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         panic (Error_Overflow_Raw());
 
@@ -651,7 +651,7 @@ DECLARE_NATIVE(ARCCOSINE)
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
     require (
-      Arc_Trans(OUT, ARG(COSINE), Bool_ARG(RADIANS), SYM_COSINE)
+      Arc_Trans(OUT, ARG(COSINE), did ARG(RADIANS), SYM_COSINE)
     );
     return OUT;
 }
@@ -672,7 +672,7 @@ DECLARE_NATIVE(ARCSINE)
     INCLUDE_PARAMS_OF_ARCSINE;
 
     require (
-      Arc_Trans(OUT, ARG(SINE), Bool_ARG(RADIANS), SYM_SINE)
+      Arc_Trans(OUT, ARG(SINE), did ARG(RADIANS), SYM_SINE)
     );
     return OUT;
 }
@@ -693,7 +693,7 @@ DECLARE_NATIVE(ARCTANGENT)
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
     require (
-        Arc_Trans(OUT, ARG(TANGENT), Bool_ARG(RADIANS), SYM_TANGENT)
+        Arc_Trans(OUT, ARG(TANGENT), did ARG(RADIANS), SYM_TANGENT)
     );
     return OUT;
 }
@@ -866,7 +866,7 @@ DECLARE_NATIVE(EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    bool relax = Bool_ARG(RELAX);
+    bool relax = did ARG(RELAX);
 
     if (Is_Void(ARG(VALUE1)))
         return LOGIC(Is_Void(ARG(VALUE2)));

@@ -67,7 +67,7 @@ DECLARE_NATIVE(NOW)
     assert(Does_Date_Have_Time(out));
     assert(Does_Date_Have_Zone(out));
 
-    if (not Bool_ARG(PRECISE)) {
+    if (not ARG(PRECISE)) {
         //
         // The "time" field is measured in nanoseconds, and the historical
         // meaning of not using precise measurement was to use only the
@@ -77,14 +77,14 @@ DECLARE_NATIVE(NOW)
         Tweak_Cell_Nanoseconds(out, SECS_TO_NANO(VAL_SECS(out)));
     }
 
-    if (Bool_ARG(UTC)) {
+    if (ARG(UTC)) {
         //
         // Say it has a time zone component, but it's 0:00 (as opposed
         // to saying it has no time zone component at all?)
         //
         VAL_ZONE(out) = 0;
     }
-    else if (Bool_ARG(LOCAL)) {
+    else if (ARG(LOCAL)) {
         //
         // Clear out the time zone flag
         //
@@ -92,13 +92,13 @@ DECLARE_NATIVE(NOW)
     }
     else {
         if (
-            Bool_ARG(YEAR)
-            or Bool_ARG(MONTH)
-            or Bool_ARG(DAY)
-            or Bool_ARG(TIME)
-            or Bool_ARG(DATE)
-            or Bool_ARG(WEEKDAY)
-            or Bool_ARG(YEARDAY)
+            ARG(YEAR)
+            or ARG(MONTH)
+            or ARG(DAY)
+            or ARG(TIME)
+            or ARG(DATE)
+            or ARG(WEEKDAY)
+            or ARG(YEARDAY)
         ){
             Fold_Zone_Into_Date(out);
         }
@@ -106,26 +106,26 @@ DECLARE_NATIVE(NOW)
 
     REBINT n = -1;
 
-    if (Bool_ARG(DATE)) {
+    if (ARG(DATE)) {
         Tweak_Cell_Nanoseconds(out, NO_DATE_TIME);
         VAL_ZONE(out) = NO_DATE_ZONE;
     }
-    else if (Bool_ARG(TIME)) {
+    else if (ARG(TIME)) {
         KIND_BYTE(out) = TYPE_TIME;
     }
-    else if (Bool_ARG(ZONE)) {
+    else if (ARG(ZONE)) {
         Tweak_Cell_Nanoseconds(out, VAL_ZONE(out) * ZONE_MINS * MIN_SEC);
         KIND_BYTE(out) = TYPE_TIME;
     }
-    else if (Bool_ARG(WEEKDAY))
+    else if (ARG(WEEKDAY))
         n = Week_Day(out);
-    else if (Bool_ARG(YEARDAY))
+    else if (ARG(YEARDAY))
         n = Julian_Date(out);
-    else if (Bool_ARG(YEAR))
+    else if (ARG(YEAR))
         n = VAL_YEAR(out);
-    else if (Bool_ARG(MONTH))
+    else if (ARG(MONTH))
         n = VAL_MONTH(out);
-    else if (Bool_ARG(DAY))
+    else if (ARG(DAY))
         n = VAL_DAY(out);
 
     if (n > 0)

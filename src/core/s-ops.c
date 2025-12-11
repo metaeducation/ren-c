@@ -71,7 +71,7 @@ void Trim_Tail(Molder* mo, Byte ascii)
 void Change_Case(
     Sink(Stable) out,
     Stable* val, // !!! Not const--uses Partial(), may change index, review
-    const Stable* part,
+    Option(const Stable*) part,
     bool upper
 ){
     if (Is_Rune_And_Is_Char(val)) {

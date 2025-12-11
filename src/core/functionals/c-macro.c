@@ -257,7 +257,7 @@ DECLARE_NATIVE(INLINE)
 {
     INCLUDE_PARAMS_OF_INLINE;
 
-    if (Is_Nulled(ARG(CODE)))
+    if (not ARG(CODE))
         goto continue_evaluating;
 
   didnt_opt_out: {

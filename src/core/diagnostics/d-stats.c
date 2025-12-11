@@ -46,12 +46,14 @@ DECLARE_NATIVE(STATS)
 {
     INCLUDE_PARAMS_OF_STATS;
 
-    REBI64 num_evals = g_ts.total_eval_cycles + g_ts.eval_dose - g_ts.eval_countdown;
+    REBI64 num_evals = (
+        g_ts.total_eval_cycles + g_ts.eval_dose - g_ts.eval_countdown
+    );
 
-    if (Bool_ARG(EVALS))
+    if (ARG(EVALS))
         return Init_Integer(OUT, num_evals);
 
-    if (Bool_ARG(PROFILE)) {
+    if (ARG(PROFILE)) {
       #if DEBUG_COLLECT_STATS
         return rebValue("make object! [",
             "evals:", rebI(num_evals),
@@ -70,18 +72,18 @@ DECLARE_NATIVE(STATS)
     }
 
   #if RUNTIME_CHECKS
-    if (Bool_ARG(POOL)) {
-        Stable* pool_id = ARG(POOL);
+    if (ARG(POOL)) {
+        Stable* pool_id = unwrap ARG(POOL);
         Dump_All_Flex_In_Pool(VAL_INT32(pool_id));
         return NULLED;
     }
 
-    if (Bool_ARG(SHOW))
+    if (ARG(SHOW))
         Dump_Pools();
 
-    return Init_Integer(OUT, Inspect_Flex(Bool_ARG(SHOW)));
+    return Init_Integer(OUT, Inspect_Flex(did ARG(SHOW)));
   #else
-    UNUSED(Bool_ARG(SHOW));
+    UNUSED(ARG(SHOW));
     UNUSED(ARG(POOL));
 
     panic (Error_Checked_Build_Only_Raw());

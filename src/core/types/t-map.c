@@ -56,7 +56,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Map)
 // which is clearly incorrect.  Needs to be written.
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
-    bool strict = not Bool_ARG(RELAX);
+    bool strict = not ARG(RELAX);
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -666,7 +666,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     const Map* m = VAL_MAP(v);
 
@@ -741,7 +741,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         UNUSED(PARAM(SERIES));  // covered by `v`
 
-        if (Bool_ARG(PART) or Bool_ARG(SKIP) or Bool_ARG(MATCH))
+        if (ARG(PART) or ARG(SKIP) or ARG(MATCH))
             panic (Error_Bad_Refines_Raw());
 
         const Map* m = VAL_MAP(map);
@@ -749,7 +749,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         Option(Index) n = Find_Map_Entry(
             m_cast(Map*, VAL_MAP(map)),  // should not modify, see below
             ARG(VALUE),
-            Bool_ARG(CASE)
+            did ARG(CASE)
         );
 
         if (not n)
@@ -770,20 +770,20 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PARAM(SERIES));
 
-        if (Is_Undone_Opt_Nulled(ARG(VALUE)))
+        if (not ARG(VALUE))
             return COPY(map);  // don't panic on read only if it would be no-op
 
-        if (not Is_Splice(ARG(VALUE)))
+        if (not Is_Splice(unwrap ARG(VALUE)))
             panic (
                 "Appending to MAP! only accepts a splice block of key/value"
             );
 
-        LIFT_BYTE(ARG(VALUE)) = NOQUOTE_2;
+        LIFT_BYTE(unwrap ARG(VALUE)) = NOQUOTE_2;
         Element* arg = Element_ARG(VALUE);
 
         Map* m = VAL_MAP_Ensure_Mutable(map);
 
-        if (Bool_ARG(LINE) or Bool_ARG(DUP))
+        if (ARG(LINE) or ARG(DUP))
             panic (Error_Bad_Refines_Raw());
 
         REBLEN len = Part_Len_May_Modify_Index(arg, ARG(PART));
@@ -845,11 +845,11 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
 
     const Element* map = Element_ARG(VALUE);
 
-    if (Bool_ARG(PART))
+    if (ARG(PART))
         panic (Error_Bad_Refines_Raw());
 
     require (
-      Map* copy = Copy_Map(VAL_MAP(map), Bool_ARG(DEEP))
+      Map* copy = Copy_Map(VAL_MAP(map), did ARG(DEEP))
     );
     return Init_Map(OUT, copy);
 }

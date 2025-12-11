@@ -151,10 +151,10 @@ DECLARE_NATIVE(WRITE)
         if (rebNot("#stdout =", port))
             panic ("only #stdout support on WRITE for RUNE! right now");
 
-        if (Bool_ARG(PART) or Bool_ARG(SEEK) or Bool_ARG(APPEND))
+        if (ARG(PART) or ARG(SEEK) or ARG(APPEND))
             panic (Error_Bad_Refines_Raw());
 
-        if (Bool_ARG(LINES)) {
+        if (ARG(LINES)) {
             if (Is_Block(data))
                 Pinify_Cell(data);  // don't reduce
             Api(Stable*) delimited = rebStable("delimit:tail newline @", data);

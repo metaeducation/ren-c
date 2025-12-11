@@ -73,7 +73,7 @@ static bool Try_Init_Startupinfo_Sink(
     Sink(HANDLE) hwrite,  // set to match hsink unless it doesn't need closing
     Sink(HANDLE) hread,  // write may have read side if pipe captures variables
     DWORD std_handle_id,  // e.g. STD_OUTPUT_HANDLE, STD_ERROR_HANDLE
-    const Stable* arg  // argument e.g. :OUTPUT or :ERROR for behavior
+    Option(const Stable*) arg  // argument e.g. :OUTPUT or :ERROR for behavior
 ){
     SECURITY_ATTRIBUTES sa;
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -84,11 +84,11 @@ static bool Try_Init_Startupinfo_Sink(
     *hwrite = 0;
     *hsink = INVALID_HANDLE_VALUE;  // this function must set unless error
 
-    if (Is_Nulled(arg)) {  // write normally (usually to console)
+    if (not arg) {  // write normally (usually to console)
         *hsink = GetStdHandle(std_handle_id);
     }
-    else if (Is_Word(arg)) {
-        char mode = Get_Char_For_Stream_Mode(arg);
+    else if (Is_Word(unwrap arg)) {
+        char mode = Get_Char_For_Stream_Mode(unwrap arg);
         if (mode == 'i') {
             //
             // !!! This said true was "inherit", but hwrite was not being
@@ -126,7 +126,7 @@ static bool Try_Init_Startupinfo_Sink(
             *hsink = *hwrite;
         }
     }
-    else switch (opt Type_Of(arg)) {
+    else switch (opt Type_Of(unwrap arg)) {
       case TYPE_TEXT:  // write to pre-existing TEXT!
       case TYPE_BLOB:  // write to pre-existing BLOB!
         if (not CreatePipe(hread, hwrite, NULL, 0))
@@ -143,7 +143,7 @@ static bool Try_Init_Startupinfo_Sink(
         break;
 
       case TYPE_FILE: {  // write to file
-        WCHAR *local_wide = rebSpellWide("file-to-local @", arg);
+        WCHAR *local_wide = rebSpellWide("file-to-local @", unwrap arg);
 
         // !!! This was done in two steps, is this necessary?
 
@@ -180,7 +180,7 @@ static bool Try_Init_Startupinfo_Sink(
         break; }
 
       default:
-        crash (arg);  // CALL's type checking should have screened the types
+        crash (arg);  // CALL's typecheck should have screened the types
     }
 
     assert(*hsink != INVALID_HANDLE_VALUE);
@@ -196,23 +196,27 @@ static bool Try_Init_Startupinfo_Sink(
 Bounce Call_Core(Level* level_) {
     INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
 
-    UNUSED(Bool_ARG(CONSOLE));  // !!! This is not paid attention to (?)
+    UNUSED(ARG(CONSOLE));  // !!! This is not paid attention to (?)
+
+    Option(Stable*) input = ARG(INPUT);
+    Option(Stable*) output = ARG(OUTPUT);
+    Option(Stable*) error = ARG(ERROR);
 
     // Make sure that if the output or error series are STRING! or BLOB!,
     // they are not read-only, before we try appending to them.
     //
-    if (Is_Text(ARG(OUTPUT)) or Is_Blob(ARG(OUTPUT)))
-        Ensure_Mutable(ARG(OUTPUT));
-    if (Is_Text(ARG(ERROR)) or Is_Blob(ARG(ERROR)))
-        Ensure_Mutable(ARG(ERROR));
+    if (output and (Is_Text(unwrap output) or Is_Blob(unwrap output)))
+        Ensure_Mutable(unwrap output);
+    if (error and (Is_Text(unwrap error) or Is_Blob(unwrap error)))
+        Ensure_Mutable(unwrap error);
 
     bool flag_wait;
     if (
-        Bool_ARG(WAIT)
+        ARG(WAIT)
         or (
-            Is_Text(ARG(INPUT)) or Is_Blob(ARG(INPUT))
-            or Is_Text(ARG(OUTPUT)) or Is_Blob(ARG(OUTPUT))
-            or Is_Text(ARG(ERROR)) or Is_Blob(ARG(ERROR))
+            (input and (Is_Text(unwrap input) or Is_Blob(unwrap input)))
+            or (output and (Is_Text(unwrap output) or Is_Blob(unwrap output)))
+            or (error and (Is_Text(unwrap error) or Is_Blob(unwrap error)))
         )  // I/O redirection implies /WAIT
     ){
         flag_wait = true;
@@ -228,7 +232,7 @@ Bounce Call_Core(Level* level_) {
 
       text_command:
 
-        if (Bool_ARG(SHELL)) {
+        if (ARG(SHELL)) {
             //
             // Do not pass /U for UCS-2, see notes at top of file.
             //
@@ -294,7 +298,7 @@ Bounce Call_Core(Level* level_) {
     HANDLE hErrorWrite = 0;
     HANDLE hErrorRead = 0;
 
-    UNUSED(Bool_ARG(INFO));
+    UNUSED(ARG(INFO));
 
     unsigned char* inbuf = nullptr;
     size_t inbuf_size = 0;
@@ -305,11 +309,11 @@ Bounce Call_Core(Level* level_) {
 
     //=//// INPUT SOURCE SETUP ////////////////////////////////////////////=//
 
-    if (not Bool_ARG(INPUT)) {  // get stdin normally (usually from user console)
+    if (not input) {  // get stdin normally (usually from user console)
         si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     }
-    else if (Is_Word(ARG(INPUT))) {
-        char mode = Get_Char_For_Stream_Mode(ARG(INPUT));
+    else if (Is_Word(unwrap input)) {
+        char mode = Get_Char_For_Stream_Mode(unwrap input);
         if (mode == 'i') {  // !!! make inheritable (correct?)
             if (not SetHandleInformation(
                 hInputRead,
@@ -336,22 +340,25 @@ Bounce Call_Core(Level* level_) {
              );  // don't offer any stdin
         }
     }
-    else switch (opt Type_Of(ARG(INPUT))) {
+    else switch (opt Type_Of(unwrap input)) {
       case TYPE_TEXT: {  // feed standard input from TEXT!
         //
         // See notes at top of file about why UTF-16/UCS-2 are not used here.
         // Pipes and file redirects are generally understood in Windows to
         // *not* use those encodings, and transmit raw bytes.
         //
-        inbuf_size = rebSpellInto(nullptr, 0, ARG(INPUT));
+        inbuf_size = rebSpellInto(nullptr, 0, unwrap input);
         inbuf = rebAllocBytes(inbuf_size + 1);
-        size_t check = rebSpellInto(cast(char*, inbuf), inbuf_size, ARG(INPUT));
+        size_t check = rebSpellInto(
+            cast(char*, inbuf), inbuf_size,
+            unwrap input
+        );
         assert(check == inbuf_size);
         UNUSED(check);
         goto input_via_buffer; }
 
       case TYPE_BLOB:  // feed standard input from BLOB! (full-band)
-        inbuf = rebBytes(&inbuf_size, ARG(INPUT));
+        inbuf = rebBytes(&inbuf_size, unwrap input);
 
       input_via_buffer:
 
@@ -369,7 +376,7 @@ Bounce Call_Core(Level* level_) {
         break;
 
       case TYPE_FILE: {  // feed standard input from file contents
-        WCHAR *local_wide = rebSpellWide("file-to-local", ARG(INPUT));
+        WCHAR *local_wide = rebSpellWide("file-to-local", unwrap input);
 
         hInputRead = CreateFile(
             local_wide,
@@ -389,7 +396,7 @@ Bounce Call_Core(Level* level_) {
         break; }
 
       default:
-        crash (ARG(INPUT));
+        crash (input);
     }
 
     //=//// OUTPUT SINK SETUP /////////////////////////////////////////////=//
@@ -680,27 +687,33 @@ Bounce Call_Core(Level* level_) {
     // remarks at the top of file about how piped data is not generally
     // assumed to be UCS-2.
     //
-    if (Is_Text(ARG(OUTPUT))) {
+    if (not output) {
+        assert(outbuf == nullptr);
+    }
+    else if (Is_Text(unwrap output)) {
         Value* output_val = rebRepossess(outbuf, outbuf_used);
-        rebElide("insert", ARG(OUTPUT), "deline", output_val);
+        rebElide("insert", unwrap output, "deline", output_val);
         rebRelease(output_val);
     }
-    else if (Is_Blob(ARG(OUTPUT))) {
+    else if (Is_Blob(unwrap output)) {
         Value* output_val = rebRepossess(outbuf, outbuf_used);
-        rebElide("insert", ARG(OUTPUT), output_val);
+        rebElide("insert", unwrap output, output_val);
         rebRelease(output_val);
     }
     else
         assert(outbuf == nullptr);
 
-    if (Is_Text(ARG(ERROR))) {
+    if (not error) {
+        assert(errbuf == nullptr);
+    }
+    else if (Is_Text(unwrap error)) {
         Value* error_val = rebRepossess(errbuf, errbuf_used);
-        rebElide("insert", ARG(ERROR), "deline", error_val);
+        rebElide("insert", unwrap error, "deline", error_val);
         rebRelease(error_val);
     }
-    else if (Is_Blob(ARG(ERROR))) {
+    else if (Is_Blob(unwrap error)) {
         Value* error_val = rebRepossess(errbuf, errbuf_used);
-        rebElide("append", ARG(ERROR), error_val);
+        rebElide("append", unwrap error, error_val);
         rebRelease(error_val);
     }
     else
@@ -711,11 +724,11 @@ Bounce Call_Core(Level* level_) {
     if (ret != 0)
         rebPanic_OS (ret);
 
-    if (Bool_ARG(INFO)) {
+    if (ARG(INFO)) {
         VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
 
         Init_Integer(Append_Context(info, CANON(ID)), pid);
-        if (Bool_ARG(WAIT))
+        if (ARG(WAIT))
             Init_Integer(Append_Context(info, CANON(EXIT_CODE)), exit_code);
 
         return Init_Object(OUT, info);
@@ -724,7 +737,7 @@ Bounce Call_Core(Level* level_) {
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used
     //
-    if (Bool_ARG(WAIT))
+    if (ARG(WAIT))
         return Init_Integer(OUT, exit_code);
 
     return Init_Integer(OUT, pid);

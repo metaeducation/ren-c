@@ -257,7 +257,7 @@ INLINE bool Not_Cell_Stable(Need(const Value*) a) {
     #define Known_Stable(a)  u_cast(Stable*, (a))
 #else
     #define Assert_Cell_Stable(c) \
-        assert(Is_Cell_Stable(cast(const Value*, (c))));
+        assert(Is_Cell_Stable(cast(const Value*, (c))))
 
     MUTABLE_IF_C(Stable*, INLINE) Known_Stable(CONST_IF_C(Value*) v_) {
         CONSTABLE(Value*) v = m_cast(Value*, v_);

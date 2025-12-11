@@ -459,12 +459,11 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     INCLUDE_PARAMS_OF_COPY;
 
     Element* seq = Element_ARG(VALUE);
-    bool deep = Bool_ARG(DEEP);
-    Stable* part = ARG(PART);
+    bool deep = did ARG(DEEP);
 
     if (not deep or Is_Cell_Wordlike(seq)) {  // wordlike is /A or :B etc
-        if (part)
-            panic (part);
+        if (ARG(PART))
+            panic (PARAM(PART));
         return COPY(seq);
     }
 
@@ -481,10 +480,13 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
         }
     }
 
-    if (trivial_copy)  // something like a/1/foo
+    if (not ARG(PART) and trivial_copy)  // something like a/1/foo
         return COPY(seq);
 
     Stable* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
+
+    Value* part = LOCAL(PART);
+    possibly(Is_Light_Null(part));
 
     Liftify(datatype);
     Quotify(seq);
@@ -544,7 +546,8 @@ IMPLEMENT_GENERIC(REVERSE_OF, Any_Sequence)
     INCLUDE_PARAMS_OF_REVERSE_OF;
 
     Element* seq = Element_ARG(VALUE);
-    Stable* part = ARG(PART);
+    Value* part = LOCAL(PART);
+    possibly(Is_Light_Null(part));
 
     Stable* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 
@@ -569,7 +572,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
     Element* seq = Element_ARG(COLLECTION);
 
     if (Is_Cell_Wordlike(seq)) {  // e.g. FOO: or :FOO [1]
-        REBI64 one_or_two = Random_Range(2, Bool_ARG(SECURE));
+        REBI64 one_or_two = Random_Range(2, did ARG(SECURE));
         if (one_or_two == 1)
             return Init_Space(OUT);
         Copy_Cell(OUT, seq);
@@ -579,7 +582,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 
     if (Is_Cell_Pairlike(seq)) {  // e.g. A/B
         assert(Is_Cell_Listlike(seq));  // all pairlikes are also listlike
-        REBI64 one_or_two = Random_Range(2, Bool_ARG(SECURE));
+        REBI64 one_or_two = Random_Range(2, did ARG(SECURE));
         if (one_or_two == 1)
             return COPY(Cell_Pair_First(seq));
         return COPY(Cell_Pair_Second(seq));
@@ -595,7 +598,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 
     Byte used = seq->payload.at_least_8[IDX_SEQUENCE_USED];
 
-    REBI64 rand = Random_Range(used, Bool_ARG(SECURE));  // from 1 to used
+    REBI64 rand = Random_Range(used, did ARG(SECURE));  // from 1 to used
     return Init_Integer(OUT, seq->payload.at_least_8[rand]);
 }
 
@@ -604,11 +607,12 @@ IMPLEMENT_GENERIC(SHUFFLE_OF, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_SHUFFLE_OF;
 
-    Element* seq = Element_ARG(VALUE);
-    Stable* part = ARG(PART);
-
-    if (Bool_ARG(SECURE) or Bool_ARG(PART))
+    if (ARG(SECURE) or ARG(PART))
         panic (Error_Bad_Refines_Raw());
+
+    Element* seq = Element_ARG(VALUE);
+    Value* part = LOCAL(PART);
+    possibly(Is_Light_Null(part));
 
     Stable* datatype = Copy_Cell(SPARE, Datatype_Of(seq));
 
@@ -664,7 +668,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
 
     Element* c = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     UNUSED(form);
 

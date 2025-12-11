@@ -504,7 +504,7 @@ DECLARE_NATIVE(SET)
 
     Value* v = ARG(VALUE);  // not a dual yet (we have to lift it...)
 
-    bool groups_ok = Bool_ARG(GROUPS);
+    bool groups_ok = did ARG(GROUPS);
 
     USED(ARG(STEPS));  // TWEAK heeds this
 

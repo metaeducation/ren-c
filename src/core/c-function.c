@@ -908,13 +908,13 @@ DECLARE_NATIVE(COUPLE)
     if (Not_Details_Flag(details, METHODIZED))
         return fail ("FRAME! is not methodized, cannot COUPLE it");
 
-    Stable* coupling = ARG(COUPLING);
+    Option(Stable*) coupling = ARG(COUPLING);
 
-    if (Is_Nulled(coupling))
+    if (not coupling)
         Tweak_Frame_Coupling(action_or_frame, nullptr);
     else {
-        assert(Is_Object(coupling) or Is_Frame(coupling));
-        Tweak_Frame_Coupling(action_or_frame, Cell_Varlist(coupling));
+        assert(Is_Object(unwrap coupling) or Is_Frame(unwrap coupling));
+        Tweak_Frame_Coupling(action_or_frame, Cell_Varlist(unwrap coupling));
     }
 
     return COPY(action_or_frame);
