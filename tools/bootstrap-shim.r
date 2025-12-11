@@ -215,6 +215,7 @@ for-each [alias] [
     set-word3!:                 ; use set-word?
     set-path3!:                 ; use set-path?
     get-word3!:                 ; use get-word?
+    get-word3?:                 ; ...
     char3!:                     ; use get-path?
     any-word3!:                 ; use any-word?
     lit-word3!:                 ; use lit-word?
@@ -390,7 +391,7 @@ unquote: lambda3 [x [any-value!]] [  ; see the more general EVAL
 run-word?: refinement3?/
 run-word!: refinement3!
 refinement!: get-word3!
-refinement?: get-word?/
+refinement?: get-word3?/
 
 chain!: path!  ; works in some places (a:b scans as a PATH! in bootstrap EXE)
 
@@ -834,7 +835,7 @@ modernize-action: func3 [
                 ;
                 keep3 case [
                     lit-word? w [to-get-word w]
-                    get-word? w [to lit-word3! w]
+                    get-word3? w [to lit-word3! w]
                     <else> [w]
                 ]
 
@@ -1090,7 +1091,7 @@ cscape-inside: func3 [
         case [
             text? item [continue]  ; should only be last item
             file? item [continue]
-            get-word? item [
+            get-word3? item [
                 item: get item
                 assert [object? item]
                 code: bind item code

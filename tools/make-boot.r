@@ -894,7 +894,7 @@ boot-typespecs: collect [
 boot-molded: copy ""
 append:line boot-molded "["
 for-each 'sec sections [
-    if get-word? sec [  ; wasn't LOAD-ed (no bootstrap compatibility issues)
+    if get-word3? sec [  ; wasn't LOAD-ed (no bootstrap compatibility issues)
         append boot-molded (get inside sections sec)
     ]
     else [  ; was LOAD-ed for easier analysis (makes bootstrap complicated)
