@@ -248,7 +248,7 @@ static void Init_Action_Spec_Tags(void)
 
   initialize_auto_trash_param: {
 
-  // This is a bit of a tricky bootstrap issue because Set_Parameter_Spec()
+  // Bit of a tricky bootstrap issue because Set_Spec_Of_Parameter_In_Top()
   // that does spec analysis to fill in a PARAMETER! dpends on Get_Word(),
   // which in turn depends on the TWEAK mechanics, and that hasn't been
   // initialized yet.
@@ -1060,7 +1060,7 @@ void Shutdown_Core(bool clean)
     Shutdown_Yielder_Errors();
     Shutdown_Utf8_Errors();
     Shutdown_Stackoverflow();
-    Shutdown_Typesets();
+    Shutdown_Type_Predicates();
 
     Shutdown_Natives();
 

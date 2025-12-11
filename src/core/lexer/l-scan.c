@@ -3011,7 +3011,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     assert(Quotes_Of(TOP_ELEMENT) == 0);
     possibly(Is_Quasiform(TOP_ELEMENT));  // e.g. ~/~ so can't ask Sigil_Of()
-    assert(Underlying_Sigil_Of(TOP_ELEMENT) == 0);
+    assert(Cell_Underlying_Sigil(TOP_ELEMENT) == 0);
 
     LIFT_BYTE(TOP_ELEMENT) = DUAL_0;  // clear out so masking in works
     TOP_ELEMENT->header.bits |= sigil_and_lift_mask;

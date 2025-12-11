@@ -267,20 +267,14 @@ static Result(None) Push_Keys_And_Params_Core(
                 );
             }
 
-            Element* temp = Copy_Cell(SPARE, TOP_ELEMENT);  // GET moves stack
-
-            if (Parameter_Spec(temp))  // `func [x [integer!] [integer!]]`
+            if (Parameter_Spec(TOP_ELEMENT))  // `func [x [word!] [word!]]`
                 return fail (Error_Bad_Func_Def_Raw(item));  // too many blocks
 
             Context* derived = Derive_Binding(Level_Binding(L), item);
-            Option(Error*) e = rescue (
-                Set_Parameter_Spec(temp, item, derived)
+            trap (
+                Set_Spec_Of_Parameter_In_Top(L, item, derived)
             );
 
-            if (e)
-                return fail (unwrap e);
-
-            Copy_Cell(TOP_ELEMENT, temp);  // update modification on stack
             continue;
         }
 

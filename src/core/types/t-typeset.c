@@ -87,58 +87,40 @@ void Startup_Type_Predicates(void)
 
 
 //
-//  Shutdown_Typesets: C
+//  Shutdown_Type_Predicates: C
 //
-void Shutdown_Typesets(void)
+void Shutdown_Type_Predicates(void)
 {
 }
 
 
 //
-//  Set_Parameter_Spec: C
+//  Set_Spec_Of_Parameter_In_Top: C
 //
 // This copies the input spec as an array stored in the parameter, while
 // setting flags appropriately and making notes for optimizations to help in
 // the later typechecking.
 //
-// 1. Right now the assumption is that the param is GC safe.
-//
-// 2. TAG! parameter modifiers can't be abstracted.  So you can't say:
-//
-//        modifier: either condition [<end>] [<opt-out>]
-//        foo: func [arg [modifier integer!]] [...]
-//
-// 3. Everything non-TAG! can be abstracted via WORD!.  This can lead to some
-//    strange mixtures:
-//
-//        func compose:deep [x [word! (^integer!)]] [ ... ]
-//
-//    (But then the help will show the types as [word! ~{integer}~].  Is it
-//    preferable to enforce words for some things?  That's not viable for
-//    type predicate actions, like ANY-ELEMENT?...)
-//
-// 4. Ren-C disallows unbounds, and validates what the word looks up to
-//    at the time of creation.  If it didn't, then optimizations could not
-//    be calculated at creation-time.
-//
-//    (R3-Alpha had a hacky fallback where unbound variables were interpreted
-//    as their word.  So if you said `word!: integer!` and used WORD!, you'd
-//    get the integer typecheck... but if WORD! is unbound then it would act
-//    as a WORD! typecheck.)
-//
-Result(None) Set_Parameter_Spec(
-    Element* param,  // target should be GC safe [1]
+Result(None) Set_Spec_Of_Parameter_In_Top(
+    Level* const L,
     const Element* spec,
     Context* spec_binding
 ){
-    ParamClass pclass = Parameter_Class(param);
-    assert(pclass != PARAMCLASS_0);  // must have class
+    USE_LEVEL_SHORTHANDS (L);
 
-    uintptr_t* flags = &CELL_PARAMETER_PAYLOAD_2_FLAGS(param);
-    if (*flags & PARAMETER_FLAG_REFINEMENT) {
-        assert(*flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
-    }
+    StateByte saved_state = STATE;
+    STATE = 1;
+
+    assert(not Parameter_Spec(TOP_ELEMENT));
+    possibly(Parameter_Strand(TOP_ELEMENT));
+
+    ParamClass pclass = Parameter_Class(TOP_ELEMENT);
+    assert(pclass != PARAMCLASS_0);  // must have class
     UNUSED(pclass);
+
+    Flags flags = CELL_PARAMETER_PAYLOAD_2_FLAGS(TOP_ELEMENT);
+    if (flags & PARAMETER_FLAG_REFINEMENT)
+        assert(flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
 
     Source* copy;
 
@@ -153,18 +135,8 @@ Result(None) Set_Parameter_Spec(
   // binding on the second walk, but just trying to keep the spec array from
   // getting GC'd in the middle of a first walk for now.)
   //
-  // 1. It is now possible for people to write type specs with strings in
-  //    them, such as:
-  //
-  //       func [
-  //           return: [
-  //               block! "list of records as [person name age]"
-  //               integer! "count of entries if :COUNT-ONLY used"
-  //               ...
-  //           ]
-  //       ]
-  //
-  //    Stripping out the newline markers makes this unreadable; keep them.
+  // 1. Type specs can get pretty long now (especially with text comments that
+  //    are preserved inside them).  Can be unreadable if newlines stripped.
 
     const Element* tail;
     const Element* item = List_At(&tail, spec);
@@ -184,184 +156,312 @@ Result(None) Set_Parameter_Spec(
         dont(Clear_Cell_Flag(dest, NEWLINE_BEFORE));  // assume significant [1]
     }
 
+    CELL_PARAMETER_PAYLOAD_1_SPEC(TOP_ELEMENT) = copy;  // GC-protects copy
+    Clear_Cell_Flag(TOP_ELEMENT, DONT_MARK_PAYLOAD_1);  // sync flag
+
 } process_parameter_spec: {
 
-    CELL_PARAMETER_PAYLOAD_1_SPEC(param) = copy;  // should GC protect the copy
-    Clear_Cell_Flag(param, DONT_MARK_PAYLOAD_1);  // sync flag
+  // 1. Since we copied the spec and relativized it, we could just walk
+  //    the `dest` array and not look at the original items.  But keep it
+  //    stylized this way in case this changes to copying-as-we-go.
 
     const Element* tail;
     const Element* item = List_At(&tail, spec);
 
-    Element* dest = Array_Head(copy);
+    Element* dest = Array_Head(copy);  // assume item and dest distinct [1]
 
     TypesetByte* optimized = copy->misc.at_least_4;
     TypesetByte* optimized_tail = optimized + sizeof(uintptr_t);
 
-    if (item == tail) {
-        *flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
+    goto process_spec_item_if_not_at_tail;
+
+  spoken_for: {  /////////////////////////////////////////////////////////////
+
+  // The spec processing loop jumps here when the item's influence is fully
+  // captured by PARAMETER_FLAG_XXX and the optimization bytes.
+
+    Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
+    goto loop;
+
+} cant_optimize: {  //////////////////////////////////////////////////////////
+
+  // The spec processing loop jumps here when there's not an optimization
+  // captured by PARAMETER_FLAG_XXX and the optimization bytes, and hence if
+  // the optimization checks fail the typechecker has to physically walk the
+  // spec array and test the non-PARAMSPEC_SPOKEN_FOR items before deciding
+  // the typecheck failed.
+
+    flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+    goto loop;
+
+} loop: {  ///////////////////////////////////////////////////////////////////
+
+    ++item;
+    ++dest;
+    goto process_spec_item_if_not_at_tail;
+
+} process_spec_item_if_not_at_tail: {  ///////////////////////////////////////
+
+  // Each spec item gets processed, and if PARAMETER_FLAG_PARAMSPEC_SPOKEN_FOR
+  // is not set then it will be considered an incomplete optimization, and
+  // it may be necessary for typechecking to walk the spec block to avoid any
+  // false negatives.
+
+    if (item == tail)
+        goto finished_processing_spec;
+
+} handle_text: {
+
+  // It is now possible for people to write type specs with strings in them:
+  //
+  //       func [
+  //           return: [
+  //               block! "list of records as [person name age]"
+  //               integer! "count of entries if :COUNT-ONLY used"
+  //               ...
+  //           ]
+  //       ]
+
+    if (Is_Text(item)) {  // TEXT! literals just ignored (kept for HELP)
+        goto spoken_for;
     }
-    else for (; item != tail; ++item, ++dest) {
-        if (Is_Text(item)) {  // TEXT! literals just ignored (kept for HELP)
-            Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
-            continue;
+
+} handle_space: {
+
+    if (Is_Space(item)) {
+        flags |= PARAMETER_FLAG_SPACE_DEFINITELY_OK;
+        goto spoken_for;
+    }
+
+} handle_tags: {
+
+  // 1. TAG! parameter modifiers can't be abstracted.  So you can't say:
+  //
+  //        modifier: either condition [<end>] [<opt-out>]
+  //        foo: func [arg [modifier integer!]] [...]
+  //
+  // 2. !!! The actual final notation for variadics is not decided on; it
+  //    once used <...> but was changed to <variadic>`, may change back
+
+    if (Heart_Of(item) == TYPE_TAG) {  // literal check of tag [1]
+        bool strict = false;
+
+        if (
+            0 == CT_Utf8(item, g_tag_variadic, strict)
+        ){
+            flags |= PARAMETER_FLAG_VARIADIC;  // <variadic>, not <...> [2]
         }
-
-        if (Is_Space(item)) {
-            *flags |= PARAMETER_FLAG_SPACE_DEFINITELY_OK;
-            Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
-            continue;
+        else if (0 == CT_Utf8(item, g_tag_end, strict)) {
+            flags |= PARAMETER_FLAG_ENDABLE;
+            flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
         }
-
-        if (Is_Quasiform(item)) {  // optimize some cases? (e.g. ~word!~ ?)
-            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-            continue;
+        else if (0 == CT_Utf8(item, g_tag_opt_out, strict)) {
+            flags |= PARAMETER_FLAG_OPT_OUT;
+            flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
         }
-
-        if (Heart_Of(item) == TYPE_TAG) {  // literal check of tag [2]
-            bool strict = false;
-
-            if (
-                0 == CT_Utf8(item, g_tag_variadic, strict)
-            ){
-                // !!! The actual final notation for variadics is not decided
-                // on, so there is compatibility for now with the <...> form
-                // from when that was a TAG! vs. a 5-element TUPLE!  While
-                // core sources were changed to `<variadic>`, asking users
-                // to shuffle should only be done once (when final is known).
-                //
-                *flags |= PARAMETER_FLAG_VARIADIC;
-            }
-            else if (0 == CT_Utf8(item, g_tag_end, strict)) {
-                *flags |= PARAMETER_FLAG_ENDABLE;
-                *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
-            }
-            else if (0 == CT_Utf8(item, g_tag_opt_out, strict)) {
-                *flags |= PARAMETER_FLAG_OPT_OUT;
-                *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
-            }
-            else if (0 == CT_Utf8(item, g_tag_opt, strict)) {
-                *flags |= PARAMETER_FLAG_UNDO_OPT;
-                *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
-            }
-            else if (0 == CT_Utf8(item, g_tag_const, strict)) {
-                *flags |= PARAMETER_FLAG_CONST;
-            }
-            else if (0 == CT_Utf8(item, g_tag_unrun, strict)) {
-                *flags |= PARAMETER_FLAG_UNRUN;
-            }
-            else if (0 == CT_Utf8(item, g_tag_divergent, strict)) {
-                //
-                // !!! Currently just commentary so we can find the divergent
-                // functions.  Review what the best notation or functionality
-                // concept is.
-            }
-            else if (0 == CT_Utf8(item, g_tag_null, strict)) {
-                *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
-            }
-            else if (0 == CT_Utf8(item, g_tag_void, strict)) {
-                *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
-            }
-            else {
-                panic (item);
-            }
-            Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
-            continue;
+        else if (0 == CT_Utf8(item, g_tag_opt, strict)) {
+            flags |= PARAMETER_FLAG_UNDO_OPT;
+            flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
         }
-
-        if (LIFT_BYTE(item) != NOQUOTE_2) {  // [~word!~ 'word! ''~block!~]...
-            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-            continue;  // no optimization strategy yet
+        else if (0 == CT_Utf8(item, g_tag_const, strict)) {
+            flags |= PARAMETER_FLAG_CONST;
         }
-
-        if (Sigil_Of(item)) {  // [@integer! ^word! '''~tuple!~]...
-            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-            continue;  // no optimization strategy yet
+        else if (0 == CT_Utf8(item, g_tag_unrun, strict)) {
+            flags |= PARAMETER_FLAG_UNRUN;
         }
-
-        if (Any_Sequence(item)) {  // [word!: .block! word!/group!.integer!]
-            // won't optimize crazy cases, but need to optimize SET-WORD etc.
-            panic ("No support for sequences in parameter spec...yet!");
+        else if (0 == CT_Utf8(item, g_tag_divergent, strict)) {
+            //
+            // !!! Currently just commentary so we can find the divergent
+            // functions.  Review what the best notation or functionality
+            // concept is.
         }
-
-        DECLARE_STABLE (lookup);
-
-        if (Is_Word(item)) {  // allow abstraction [3]
-            require (
-              Get_Word(lookup, item, spec_binding)
-            );
+        else if (0 == CT_Utf8(item, g_tag_null, strict)) {
+            flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
         }
-        else
-            Copy_Cell(lookup, item);
-
-        Option(Type) type = Type_Of(lookup);
-
-        if (type == TYPE_DATATYPE) {
-            if (optimized == optimized_tail) {
-                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-                continue;
-            }
-            Option(Type) datatype_type = Datatype_Type(lookup);
-            if (not datatype_type) {
-                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-                continue;
-            }
-            *optimized = u_cast(Byte, unwrap datatype_type);
-            ++optimized;
-            Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
-        }
-        else if (type == TYPE_ACTION) {
-            Details* details = opt Try_Frame_Details(lookup);
-            if (
-                details
-                and Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
-            ){
-                Dispatcher* dispatcher = Details_Dispatcher(details);
-                if (dispatcher == NATIVE_CFUNC(ANY_STABLE_Q))
-                    *flags |= PARAMETER_FLAG_ANY_STABLE_OK;
-                else if (dispatcher == NATIVE_CFUNC(ANY_VALUE_Q))
-                    *flags |= PARAMETER_FLAG_ANY_ATOM_OK;
-                else if (dispatcher == NATIVE_CFUNC(VOID_Q))
-                    *flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
-                else if (dispatcher == &Typechecker_Dispatcher) {
-                    if (optimized == optimized_tail) {
-                        *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-                        continue;
-                    }
-
-                    assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
-
-                    Stable* index = Details_At(
-                        details, IDX_TYPECHECKER_TYPESET_BYTE
-                    );
-                    *optimized = VAL_UINT8(index);
-                    ++optimized;
-                }
-                else
-                    *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-            }
-            else
-                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-        }
-        else if (KIND_BYTE(lookup) == TYPE_WORD) {  // @word! etc.
-            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+        else if (0 == CT_Utf8(item, g_tag_void, strict)) {
+            flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
         }
         else {
-            // By pre-checking we can avoid needing to double check in the
-            // actual type-checking phase.
-
             panic (item);
         }
+        goto spoken_for;
     }
+
+} handle_lifted_forms: {
+
+  // optimize some cases? (e.g. ~word!~ or 'word! to be in optimized?)
+  //
+  // 1. You can end up with a FENCE! in a spec block, e.g. with:
+  //
+  //        func compose:deep [x [word! (lift integer!)]] [ ... ]
+  //
+  //    (But then the help will show the types as [word! ~{integer!}~].  Is it
+  //    preferable to enforce words for some things?  That's not viable for
+  //    type predicate actions, like ANY-ELEMENT?...)
+
+    if (LIFT_BYTE(item) != NOQUOTE_2) {  // [~word!~ 'word! ''~block!~]...
+        goto cant_optimize;  // no optimization strategy yet
+    }
+
+} handle_sigiled_forms: {
+
+    if (Sigil_Of(item)) {  // [@integer! ^word!]...
+        goto cant_optimize;  // no optimization strategy yet
+    }
+
+} handle_sequences: {
+
+  // Sequences are how we recognize patterns like [word!: .block! /group!:],
+  // as opposed to having predicates like SET-RUN-WORD? or figuring out how
+  // to name all these variations.
+  //
+  // 1. Not going to optimize crazy cases, but maybe things like SET-WORD
+  //    should have a TypesetByte.
+  //
+  // 2. We want to catch things like `[/worrd!:]` at spec creation time, so
+  //   that you get the errors earlier rather than at typecheck time.
+
+    if (Any_Sequence(item)) {
+        Element* scratch = Copy_Cell(SCRATCH, item);
+        do {
+            SingleHeart singleheart = opt Try_Get_Sequence_Singleheart(scratch);
+            if (not singleheart)
+                panic ("No non-Singleheart sequences in typespec dialect ATM");
+            assume (
+              Unsingleheart_Sequence(scratch)
+            );
+        } while (Any_Sequence(scratch));
+
+        if (not Is_Word(scratch))
+            panic ("Only singleheart WORD! sequences in parameter specs");
+
+        goto handle_word_in_scratch;  // lookup to ensure bound
+    }
+
+    if (Is_Word(item)) {
+        Copy_Cell(SCRATCH, item);
+        goto handle_word_in_scratch;
+    }
+
+} unrecognized_literal_spec_item: {
+
+    panic (item);
+
+} handle_word_in_scratch: {  /////////////////////////////////////////////////
+
+  // We check WORD! last (which can also be a WORD! that was produced by
+  // unsinglehearting sequences).
+  //
+  // Ren-C disallows unbounds, and validates what the word looks up to at the
+  // time of creation.  If it didn't, then optimizations could not be
+  // calculated at creation-time.
+  //
+  // (R3-Alpha had a fallback hack where unbound variables were interpreted
+  // as their word.  So if you said `word!: integer!` and used WORD!, you'd
+  // get the integer typecheck.  But if WORD! is unbound then it would act
+  // as a WORD! typecheck.  This seems bad.)
+
+    assert(Is_Word(Known_Element(SCRATCH)));
+    heeded (Bind_If_Unbound(Known_Element(SCRATCH), spec_binding));
+    heeded (Corrupt_Cell_If_Needful(SPARE));
+
+    require (
+      Get_Var_In_Scratch_To_Out(L, NO_STEPS)
+    );
+
+    if (Not_Cell_Stable(OUT))
+        panic ("Parameter spec words must be bound to stable values");
+
+    Stable* fetched = Known_Stable(OUT);
+
+    Option(Type) type = Type_Of(fetched);
+
+  handle_datatype: {
+
+    if (type == TYPE_DATATYPE) {
+        if (not Is_Word(item)) {
+            assert(Any_Sequence(item));
+            goto cant_optimize;
+        }
+
+        if (optimized == optimized_tail)
+            goto cant_optimize;
+
+        Option(Type) datatype_type = Datatype_Type(fetched);
+        if (not datatype_type)
+            goto cant_optimize;
+
+        *optimized = u_cast(TypesetByte, unwrap datatype_type);
+        ++optimized;
+        goto spoken_for;
+    }
+
+} handle_action: {
+
+    if (type == TYPE_ACTION) {
+        if (not Is_Word(item)) {
+            assert(Any_Sequence(item));
+            goto cant_optimize;  // no optimizations for `/word!:` etc. ATM
+        }
+
+        Details* details = opt Try_Frame_Details(fetched);
+        if (
+            not details
+            or Not_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
+        ){
+            goto cant_optimize;
+        }
+
+        Dispatcher* dispatcher = Details_Dispatcher(details);
+        if (dispatcher == NATIVE_CFUNC(ANY_STABLE_Q)) {
+            flags |= PARAMETER_FLAG_ANY_STABLE_OK;
+            goto spoken_for;
+        }
+        if (dispatcher == NATIVE_CFUNC(ANY_VALUE_Q)) {
+            flags |= PARAMETER_FLAG_ANY_ATOM_OK;
+            goto spoken_for;
+        }
+        if (dispatcher == NATIVE_CFUNC(VOID_Q)) {
+            flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
+            goto spoken_for;
+        }
+        if (dispatcher == &Typechecker_Dispatcher) {
+            if (optimized == optimized_tail)
+                goto cant_optimize;
+
+            assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
+
+            Stable* index = Details_At(
+                details, IDX_TYPECHECKER_TYPESET_BYTE
+            );
+            *optimized = VAL_UINT8(index);
+            ++optimized;
+            goto spoken_for;
+        }
+        goto cant_optimize;
+    }
+
+}} unrecognized_fetched_spec_item: {
+
+  // By pre-checking we can avoid needing to double check in the actual
+  // type-checking phase.
+
+    panic (item);
+
+} finished_processing_spec: {  ///////////////////////////////////////////////
 
     if (optimized != optimized_tail)
         *optimized = 0;  // signal termination (else tail is termination)
 
     Freeze_Source_Shallow(copy);  // !!! copy and freeze should likely be deep
 
-    assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));
+    assert(Not_Cell_Flag(TOP_ELEMENT, VAR_MARKED_HIDDEN));
+    CELL_PARAMETER_PAYLOAD_2_FLAGS(TOP_ELEMENT) = flags;
+
+    STATE = saved_state;
 
     return none;
-}}
+}}}
 
 
 IMPLEMENT_GENERIC(MAKE, Is_Parameter)
@@ -513,7 +613,7 @@ void Undecorate_Element(Element* e)
 Result(None) Decorate_Element(const Element* decoration, Element* element)
 {
     Option(Count) quotes_to_add = Quotes_Of(decoration);
-    Option(Sigil) sigil_to_add = Underlying_Sigil_Of(decoration);
+    Option(Sigil) sigil_to_add = Cell_Underlying_Sigil(decoration);
     Option(Heart) sequence_to_add = none;
 
     if (Is_Space_Underlying(decoration))

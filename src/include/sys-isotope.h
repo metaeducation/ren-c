@@ -51,13 +51,13 @@
 //    If you were allowed to pass in an Element*, then you'd have an invalid
 //    Element at the callsite when the operation completed.
 //
-INLINE Result(Value*) Coerce_To_Antiform(Need(Value*) atom) {
-    Element* elem = Known_Element(atom);  // guaranteed element on input (?)
+INLINE Result(Value*) Coerce_To_Antiform(Need(Value*) v) {
+    Element* elem = Known_Element(v);  // guaranteed element on input (?)
 
-    if (Underlying_Sigil_Of(elem))
+    if (Cell_Underlying_Sigil(elem))
         return fail (Error_User("Cells with sigils cannot become antiforms"));
 
-    Option(Heart) heart = Heart_Of(atom);
+    Option(Heart) heart = Heart_Of(elem);
 
     if (not Is_Stable_Antiform_Kind_Byte(u_cast(KindByte, heart)))
         assert(not Is_Api_Value(elem));  // no unstable antiforms in API [1]
@@ -105,8 +105,8 @@ INLINE Result(Value*) Coerce_To_Antiform(Need(Value*) atom) {
                 return fail (elem);
             }
             // !!! don't mess with flags (e.g. SLOT_WEIRD_MARKED_DUAL)
-            atom->payload = Stub_Cell(unwrap patch)->payload;
-            atom->extra = Stub_Cell(unwrap patch)->extra;
+            v->payload = Stub_Cell(unwrap patch)->payload;
+            v->extra = Stub_Cell(unwrap patch)->extra;
         }
         else {
             assert(Any_List_Type(heart) or heart == TYPE_COMMA);
@@ -118,8 +118,8 @@ INLINE Result(Value*) Coerce_To_Antiform(Need(Value*) atom) {
             Tweak_Frame_Lens_Or_Label(elem, ANONYMOUS);
     }
 
-    LIFT_BYTE_RAW(atom) = ANTIFORM_1;  // few places should use LIFT_BYTE_RAW!
-    return atom;
+    LIFT_BYTE_RAW(v) = ANTIFORM_1;  // few places should use LIFT_BYTE_RAW!
+    return v;
 }
 
 // 1. There's an exception in the case of KEYWORD! which is the antiform of

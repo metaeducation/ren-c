@@ -729,27 +729,73 @@ bool Typecheck_Uses_Spare_And_Scratch(
         LIFT_BYTE(SPARE) = NOQUOTE_2;
     }
 
-    Sigil sigil = Sigil_Of(item);
-    if (sigil) {
+    if (Cell_Underlying_Sigil(SPARE) != Sigil_Of(item))
+        goto test_failed;
+
+    SPARE->header.bits &= (~ CELL_MASK_SIGIL);  // don't care if it's antiform
+
+    const Symbol* label;
+
+    if (not Any_Sequence_Type(Heart_Of(item))) {
+        label = Word_Symbol(item);
+        goto handle_after_any_quoting_adjustments;
+    }
+
+  check_destructured_sequence: {
+
+  // We want to be able to match things like `/[x]:` against a constraint
+  // like `[/block!:]`.  Doing so requires going multiple levels deep into the
+  // match (first matching against a PATH!, and then matching against a
+  // CHAIN! that's inside the PATH!, etc.)
+  //
+  // This requires not only destructuring the item we're checking (which has
+  // been copied into SPARE) but destructuring the typespec item as well...
+  // which is being iterated and is const.  So we copy it into SCRATCH.
+  //
+  // Ultimately this could be generalized to support `integer!/word!:group!`
+  // or things that aren't "SingleHeart" sequences.  But for now, this is
+  // geared toward just breaking down singleheart sequences to make sure they
+  // match at each sequence level, and bottom out in a WORD! that can be used
+  // to check the type of the unitary matching element dug into in SPARE.
+
+    Element* scratch = Copy_Cell(SCRATCH, item);
+    do {
+        SingleHeart singleheart = opt Try_Get_Sequence_Singleheart(scratch);
+        if (not singleheart)
+            panic ("Non-Singleheart sequence in typespec dialect unsupported");
+
+        if (Heart_Of(SPARE) != Heart_Of(scratch))  // must be seq of same type
+            goto test_failed;
+
+        if (not Try_Get_Sequence_Singleheart(SPARE))
+            goto test_failed;
+
         if (
-            Is_Antiform(SPARE)
-            or Underlying_Sigil_Of(Known_Element(SPARE)) != sigil
+            Get_Cell_Flag(SPARE, LEADING_SPACE)  // XXX: doesn't match :XXX
+            != Get_Cell_Flag(scratch, LEADING_SPACE)
         ){
-            sigil = SIGIL_0;  // don't unsigilize at test_failed
             goto test_failed;
         }
 
-        Clear_Cell_Sigil(Known_Element(SPARE));
+        assume (
+          Unsingleheart_Sequence(Known_Element(SPARE))
+        );
+        assume (
+          Unsingleheart_Sequence(scratch)
+        );
     }
+    while (Any_Sequence_Type(Heart_Of(scratch)));
 
-  handle_after_any_quoting_adjustments: {
+    if (not Is_Word(scratch))
+        panic ("Non-WORD! in destructured typespec sequence unsupported ATM");
 
-    Option(const Symbol*) label = Word_Symbol(item);
+    label = Word_Symbol(scratch);
+
+} handle_after_any_quoting_adjustments: {
 
     DECLARE_ELEMENT (temp_item_word);
-    Copy_Cell(temp_item_word, item);
-    KIND_BYTE(temp_item_word) = TYPE_WORD;
-    LIFT_BYTE(temp_item_word) = NOQUOTE_2;  // ~word!~ or 'word! etc.
+    Init_Word(temp_item_word, label);
+    Tweak_Cell_Binding(temp_item_word, Cell_Binding(item));
 
     require (
       Get_Word(test, temp_item_word, derived)
@@ -1023,9 +1069,12 @@ Result(bool) Typecheck_Coerce(
 // Give back an action antiform which can act as a checker for a datatype.
 //
 Result(Stable*) Init_Typechecker(
+    Level* const L,
     Init(Stable) out,
     const Stable* datatype_or_block
 ){
+    USE_LEVEL_SHORTHANDS (L);
+
     possibly(out == datatype_or_block);
 
     if (Is_Datatype(datatype_or_block)) {
@@ -1043,31 +1092,24 @@ Result(Stable*) Init_Typechecker(
         return out;
     }
 
-    Source* a = Make_Source_Managed(2);
-    Set_Flex_Len(a, 2);
-    Init_Set_Word(Array_At(a, 0), CANON(TEST));
+    StackIndex base = TOP_INDEX;
+
+    Init_Set_Word(PUSH(), CANON(TEST));
 
     const Element* block = Known_Element(datatype_or_block);
-    Element* param = Init_Unconstrained_Parameter(
-        Array_At(a, 1), FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
+    Init_Unconstrained_Parameter(
+        PUSH(), FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
     );
-    Push_Lifeguard(param);
-    Option(Error*) e = rescue (
-        Set_Parameter_Spec(param, block, Cell_Binding(block))
+
+    trap (
+      Set_Spec_Of_Parameter_In_Top(L, block, Cell_Binding(block))
     );
-    Drop_Lifeguard(param);
-    if (e)
-        return fail (unwrap e);
 
-    DECLARE_ELEMENT (def);
-
-    Init_Block(def, a);
-    Push_Lifeguard(def);
+    Element* def = Init_Block(SCRATCH, Pop_Source_From_Stack(base));
 
     bool threw = Specialize_Action_Throws(
         out, LIB(MATCH), def, TOP_INDEX  // !!! should be TYPECHECK
     );
-    Drop_Lifeguard(def);
 
     if (threw)
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
@@ -1103,7 +1145,7 @@ DECLARE_NATIVE(TYPECHECKER)
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
     require (
-      Init_Typechecker(OUT, ARG(TYPES))
+      Init_Typechecker(LEVEL, OUT, ARG(TYPES))
     );
     return Packify_Action(OUT);
 }
@@ -1160,9 +1202,9 @@ DECLARE_NATIVE(TYPECHECK)
         panic (PARAM(TEST));
     }
 
-    if (Is_Error(SPARE)) {
+    if (Is_Error(v)) {
         assert(ARG(META));  // otherwise would have pre-decay'd, PANIC
-        return COPY(SPARE);  // panic would require a :RELAX option [1]
+        return COPY(v);  // panic would require a :RELAX option [1]
     }
 
     return LOGIC(false);

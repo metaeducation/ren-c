@@ -224,7 +224,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         Option(Sigil) picker_sigil = Sigil_Of(picker_instruction);
         UNUSED(picker_sigil);  // ideas on the table for this...
 
-        if (SIGIL_META == Underlying_Sigil_Of(Known_Element(SCRATCH))) {
+        if (SIGIL_META == Cell_Underlying_Sigil(Known_Element(SCRATCH))) {
             Copy_Cell(value_arg, TOP_ELEMENT);  // don't decay
             continue;
         }
@@ -378,7 +378,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     Liftify(TOP_STABLE);  // dual protocol, lift (?)
 
     Copy_Cell(PUSH(), scratch_var);  // save var for steps + error messages
-    switch (opt Underlying_Sigil_Of(TOP_ELEMENT)) {
+    switch (opt Cell_Underlying_Sigil(TOP_ELEMENT)) {
       case SIGIL_0:
         break;
 

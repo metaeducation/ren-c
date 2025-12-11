@@ -25,3 +25,19 @@
 ;
 ((typecheck:meta [integer!] 1 / 0) except e -> [e.id = 'zero-divide])
 (not try typecheck:meta [integer!] 1 / 0)
+
+; Singleheart sequences can be matched
+[
+    (typecheck [/word!] '/foo)
+    (typecheck [/word!:] '/foo:)
+    (not typecheck [/word!:] '/foo)
+    (not typecheck [/word!] '/foo:)
+
+    (typecheck [group!/] '(foo)/)
+
+    ; REVIEW: (foo):/ is coming up as a CHAIN! when it should be a PATH!.
+    ;
+    ; (typecheck [group!:/] '(foo):/)
+    ; (not typecheck [group!:/] '(foo)/)
+    ; (not typecheck [group!/] '(foo):/)
+]

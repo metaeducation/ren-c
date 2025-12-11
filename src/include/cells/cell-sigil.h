@@ -84,9 +84,9 @@ INLINE Option(Sigil) Sigil_Of(const Element* e) {
     return u_cast(Sigil, KIND_BYTE_RAW(e) >> KIND_SIGIL_SHIFT);
 }
 
-INLINE Option(Sigil) Underlying_Sigil_Of(const Element* e) {
-    possibly(LIFT_BYTE(e) != NOQUOTE_2);
-    return u_cast(Sigil, KIND_BYTE_RAW(e) >> KIND_SIGIL_SHIFT);
+INLINE Option(Sigil) Cell_Underlying_Sigil(const Cell* c) {
+    possibly(LIFT_BYTE(c) == ANTIFORM_1);  // sigil will be none if antiform
+    return u_cast(Sigil, KIND_BYTE_RAW(c) >> KIND_SIGIL_SHIFT);
 }
 
 INLINE KindByte Kind_From_Sigil_And_Heart(Option(Sigil) sigil, HeartEnum heart)

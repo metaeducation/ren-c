@@ -43,6 +43,8 @@
 //
 #define Byte unsigned char  // don't change to uint8_t, see note
 
+typedef Byte StateByte;
+
 
 //=//// 2-BIT UNSIGNED TYPE ///////////////////////////////////////////////=//
 //

@@ -60,6 +60,41 @@
 
 
 //
+//  Save_Level_Scratch_Spare: C
+//
+StateByte Save_Level_Scratch_Spare(Level* level_) {
+    StateByte saved_state = STATE;
+
+    assert(not Is_Cell_Poisoned(SCRATCH));
+    assert(not Is_Cell_Poisoned(SPARE));
+
+    Blit_Cell(PUSH(), SCRATCH);
+    Blit_Cell(PUSH(), SPARE);
+
+    return saved_state;
+}
+
+
+//
+//  Restore_Level_Scratch_Spare: C
+//
+void Restore_Level_Scratch_Spare(
+    Level* level_,
+    StateByte saved_state
+){
+    Force_Blit_Cell(SPARE, TOP);
+    Force_Erase_Cell(TOP);  // allows DROP() of protected cell
+    DROP();
+
+    Force_Blit_Cell(SCRATCH, TOP);
+    Force_Erase_Cell(TOP);  // allows DROP() of protected cell
+    DROP();
+
+    STATE = saved_state;
+}
+
+
+//
 //  Get_Var_In_Scratch_To_Out: C
 //
 Result(None) Get_Var_In_Scratch_To_Out(
@@ -106,11 +141,7 @@ Result(None) Get_Word_Or_Tuple(
 
     assert(Is_Word(v) or Is_Tuple(v));  // no sigil, can't give back unstable
 
-    assert(not Is_Cell_Poisoned(SPARE));
-    assert(not Is_Cell_Poisoned(SCRATCH));
-
-    Blit_Cell(PUSH(), SCRATCH);  // will copy protection bit
-    Blit_Cell(PUSH(), SPARE);  // will copy protection bit
+    StateByte saved_state = Save_Level_Scratch_Spare(L);
 
     Force_Erase_Cell(SCRATCH);  // clears protection bit
 
@@ -134,12 +165,10 @@ Result(None) Get_Word_Or_Tuple(
 
     Error* e;
 
-    StateByte saved_state = STATE;
     STATE = 1;
     Get_Var_In_Scratch_To_Out(L, NO_STEPS) except (e) {
         // still need to restore state and scratch
     }
-    STATE = saved_state;
 
     if (not e) {
         trap (
@@ -154,13 +183,7 @@ Result(None) Get_Word_Or_Tuple(
         DROP();
     }
 
-    Force_Blit_Cell(SPARE, TOP);
-    Force_Erase_Cell(TOP);  // allows DROP() of protected cell
-    DROP();
-
-    Force_Blit_Cell(SCRATCH, TOP);
-    Force_Erase_Cell(TOP);  // allows DROP() of protected cell
-    DROP();
+    Restore_Level_Scratch_Spare(L, saved_state);
 
     if (e)
         return fail (e);

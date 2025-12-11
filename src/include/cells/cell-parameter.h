@@ -97,6 +97,8 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* v) {
     if (base != nullptr and Not_Base_Readable(base))
         panic (Error_Series_Data_Freed_Raw());
 
+    assert(Get_Cell_Flag(v, DONT_MARK_PAYLOAD_1) == (base == nullptr));
+
     return cast(Source*, base);
 }
 

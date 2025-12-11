@@ -305,7 +305,6 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
     return L->u.action.label;
 }
 
-typedef Byte StateByte;
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define LEVEL_STATE_BYTE(L) \

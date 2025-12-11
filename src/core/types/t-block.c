@@ -576,8 +576,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
                 panic ("Cannot SELECT with antiforms on lists");
 
             if (Is_Datatype(pattern)) {
-                require (
-                    Init_Typechecker(pattern, pattern)  // out = in is okay
+                require (  // out = in is okay
+                    Init_Typechecker(LEVEL, pattern, pattern)
                 );
             }
             else if (Is_Action(pattern)) {
