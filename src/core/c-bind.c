@@ -445,7 +445,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
 //      'vars "Variable(s) to create"  ; can't soft quote due to DEFAULT
 //          [
 //              word! ^word! group! block!
-//              set-word? ^set-word? set-run-word? set-block? set-group?
+//              word!: ^word!: /word!: block!: group!:
 //          ]
 //      @expression "Optional Expression to assign"
 //          [<variadic> element?]  ; fake variadic [1]

@@ -498,19 +498,18 @@ eval-all: func [
 <|: infix:postpone eval-all/
 
 
-; !!! This is an interim implementation of GETTER that returns nothing.  The
-; other concept of it would be to return a PACK! with "sub-band" content
-; which represented the TWEAK* representation of a getter.
-;
+; !!! This is an interim implementation of GETTER that returns nothing.
 ; (Note it would be wasteful to call the getter, when 99 times out of 100
 ; the value would be discarded--so whatever is done here should avoid that.)
 ;
 getter: infix proc [
-    @var [set-word? set-run-word?]
+    @var [element?:]
     action [block! action!]
 ][
-    if block? ^action [action: does action]
-    tweak var unrun action/
+    tweak unchain var case [
+        block? ^action [does action]
+        <else> [unrun action/]
+    ]
 ]
 
 

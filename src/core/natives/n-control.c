@@ -1102,9 +1102,9 @@ DECLARE_NATIVE(SWITCH)
 //      return: [any-stable?]
 //      @target "Word or path which might be set (or not)"  ; on left
 //          [
-//              set-word? set-tuple? ^set-word? ^set-tuple?
-//              set-run-word?  ; meta form meaningless?
-//              ; set-group? ^set-group?  ; TBD...
+//              word!: tuple!: ^word!: ^tuple!:
+//              /word!:  ; meta form meaningless?
+//              ; group!: ^group!:  ; TBD...
 //          ]
 //      @(branch) [<unrun> any-branch?]
 //  ]
@@ -1218,7 +1218,7 @@ DECLARE_NATIVE(DEFAULT)
 //
 //      return: [any-stable?]
 //      @target "Word or tuple which might be set (or not)"
-//          [set-group? set-word? set-tuple?]  ; should do set-block!, etc [1]
+//          [group!: word!: tuple!:]  ; should do set-block!, etc [1]
 //      ^value "Quantity used to overwrite the left if not null"
 //          [any-value?]  ; to do set-block! etc. needs to take PACK!
 //  ]

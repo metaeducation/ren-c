@@ -775,7 +775,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
 //      dual "Ordinary GET or SET with lifted value (unlifts), else dual"
 //          [
 //              <opt> "act as a raw GET of the dual state"
-//              frame! "set to store a GETTER/SETTER function in dual band"
+//              <unrun> frame! "store a GETTER/SETTER function in dual band"
 //              word! "special instructions (e.g. PROTECT, UNPROTECT)"
 //              quasiform! quoted! "store unlifted values as a normal SET"
 //          ]

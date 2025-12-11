@@ -148,7 +148,7 @@ bool Arrow_Details_Querier(
 //
 //      return: [~[action!]~]
 //      spec "Names of arguments"
-//          [_ word! 'word! ^word! refinement? block!]
+//          [_ word! 'word! ^word! :word! block!]
 //      body [<const> block!]
 //  ]
 //

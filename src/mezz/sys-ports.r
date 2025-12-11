@@ -231,7 +231,7 @@ make-scheme: proc [
         let actor: make object! (length of scheme.actor) / 4
         for-each [name op args body] scheme.actor [
             assert [
-                match [set-word? set-run-word?] name
+                match [word!: /word!:] name
                 find [func lambda function] op  ; why'd R3-Alpha constrain this?
                 block? args
                 block? body

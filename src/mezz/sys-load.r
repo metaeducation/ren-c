@@ -624,7 +624,7 @@ export*: func [
     return: [any-stable?]
     where "Specialized for each module via EXPORT"
         [module!]
-    @what [set-word? set-run-word? set-group? group? block!]
+    @what [word!: /word!: group!: group! block!]
     ^args "(export x: ...) for single or (export [...]) for words list"
         [any-value? <variadic>]
 
@@ -640,12 +640,13 @@ export*: func [
     if not block? what [
         if set-group? what [
             ^what: eval unchain what
-            case [
-                void? ^what [word: null]
-                word? ^what [word: ^what]
-                set-word? ^what [word: unchain ^what]
-                set-run-word? ^what [word: unchain unpath ^what]
-                panic "EXPORT of SET-GROUP! must be VOID, WORD! or SET-WORD?"
+            word: case [
+                void? ^what [null]
+                word? ^what [^what]
+                match [word!:] ^what [unchain ^what]
+                match [/word!:] ^what [unchain unpath ^what]
+
+                panic "EXPORT of SET-GROUP must be VOID, WORD or SET-WORD"
             ]
         ] else [
             word: resolve what

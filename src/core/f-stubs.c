@@ -605,11 +605,14 @@ Result(Element*) Unsingleheart_Sequence_Preserve_Sigil(Element* seq) {
 //
 //  "If possible, convert a value to a SET-XXX! representation"
 //
-//      return: [<null> any-set-value? set-word?]
+//      return: [<null> element?:]
 //      value [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(SETIFY)
+//
+// !!! This function is needed somewhat often and isn't covered by DECORATE.
+// It may be possible to do with something like (join value ':)
 {
     INCLUDE_PARAMS_OF_SETIFY;
 
@@ -626,11 +629,13 @@ DECLARE_NATIVE(SETIFY)
 //
 //  "If possible, convert a value to a GET-XXX! representation"
 //
-//      return: [<null> any-get-value? get-word?]
+//      return: [<null> :element?]
 //      value [<opt-out> element?]
 //  ]
 //
 DECLARE_NATIVE(GETIFY)
+//
+// !!! REVIEW: Redundant with (DECORATE ':) ...
 {
     INCLUDE_PARAMS_OF_GETIFY;
 
