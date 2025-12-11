@@ -1327,12 +1327,14 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         return OUT;  // not lifted, so not a "normal" state
     }
 
+    Context* c = Cell_Context(context);
+
     if (  // !!! BUGGY, new system needed
         KIND_BYTE(OUT) == TYPE_FRAME
         and LIFT_BYTE_RAW(OUT) == ANTIFORM_1
         and Frame_Coupling(u_cast(Stable*, OUT)) == UNCOUPLED
+        and Stub_Flavor(c) == FLAVOR_VARLIST
     ){
-        Context* c = Cell_Context(context);
         Tweak_Frame_Coupling(u_cast(Stable*, OUT), cast(VarList*, c));
     }
 
