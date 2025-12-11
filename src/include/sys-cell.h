@@ -395,16 +395,40 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
   //    However, even a constexpr which did this would add cost in the
   //    checked build (functions aren't inlined).  So for this case, we
   //    just use a macro variant with no STATIC_ASSERT_LVALUE() check.
+  //
+  // 1. For const Cell subclasses (e.g. const Stable), use no-op corruption.
+  //    This avoids instantiating the generic CorruptHelper<T> in
+  //    needful-corruption.hpp, which would try to memset() a const object
+  //    and trigger GCC errors (and UB).  The reason we need to silently
+  //    accept attempts to corrupt const Cells is due to how generic cast()
+  //    works: it makes a const type out of whatever it got, and may or may
+  //    not turn it back mutable ("lenient" constness semantics).
 
   namespace needful {
     template<typename T>
     struct CorruptHelper<
         T,
-        typename std::enable_if<std::is_base_of<Cell, T>::value>::type
+        typename std::enable_if<
+            std::is_base_of<Cell, typename std::remove_const<T>::type>::value
+            and not std::is_const<T>::value
+        >::type
     >{
-      static void corrupt(T& ref) {
-        Init_Unreadable_Untracked_Evil_Macro(&ref);  // &ref needs evil [1]
-      }
+        static void corrupt(T& ref) {
+            Init_Unreadable_Untracked_Evil_Macro(&ref);  // &ref needs evil [1]
+        }
+    };
+
+    template<typename T>
+    struct CorruptHelper<
+        T,
+        typename std::enable_if<
+            std::is_base_of<Cell, typename std::remove_const<T>::type>::value
+            and std::is_const<T>::value
+        >::type
+    >{
+        static void corrupt(T&) {
+            // no-op for const Cell-derived types
+        }
     };
   }
 #endif
