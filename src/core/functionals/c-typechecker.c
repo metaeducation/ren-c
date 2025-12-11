@@ -1108,7 +1108,7 @@ Result(Stable*) Init_Typechecker(
     Element* def = Init_Block(SCRATCH, Pop_Source_From_Stack(base));
 
     bool threw = Specialize_Action_Throws(
-        out, LIB(MATCH), def, TOP_INDEX  // !!! should be TYPECHECK
+        out, LIB(TYPECHECK), def, TOP_INDEX  // !!! should be TYPECHECK
     );
 
     if (threw)

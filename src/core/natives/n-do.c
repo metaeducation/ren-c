@@ -638,10 +638,8 @@ DECLARE_NATIVE(APPLIQUE)
     Drop_Data_Stack_To(STACK_BASE);  // refinement order unimportant
 
     require (
-      Use* use = Alloc_Use_Inherits_Core(
-        USE_FLAG_SET_WORDS_ONLY,
-        List_Binding(def)
-    ));
+      Use* use = Alloc_Use_Inherits(List_Binding(def))
+    );
     Copy_Cell(Stub_Cell(use), Element_LOCAL(FRAME));
 
     Tweak_Cell_Binding(def, use);

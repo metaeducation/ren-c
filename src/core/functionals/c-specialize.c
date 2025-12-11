@@ -217,46 +217,39 @@ bool Specialize_Action_Throws(
     Option(const Symbol*) label = Frame_Label(specializee);
     Option(VarList*) coupling = Frame_Coupling(specializee);
 
-    DECLARE_BINDER (binder);
-    if (def)
-        Construct_Binder_Core(binder);  // conditional, must use _Core()
-
     Phase* unspecialized = Frame_Phase(specializee);
+
+  make_exemplar_context: {
 
     // This produces a context where partially specialized refinement slots
     // will be on the stack (including any we are adding "virtually", from
     // the current TOP_INDEX down to the lowest_stackindex).
-    //
+
     ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(
         specializee,
         lowest_stackindex,
-        def ? binder : nullptr,
+        nullptr,  // no binder
         g_quasi_null  // !!! random hack, signal now weird
     );
     Manage_Stub(exemplar);  // destined to be managed, guarded
 
-    if (def) { // code that fills the frame...fully or partially
-        //
-        // Bind all the SET-WORD! in the body that match params in the frame
-        // into the frame.  This means `value: value` can very likely have
-        // `value:` bound for assignments into the frame while `value` refers
-        // to whatever value was in the context the specialization is running
-        // in, but this is likely the more useful behavior.
-        //
-        require (
-          Use* use = Alloc_Use_Inherits_Core(
-            USE_FLAG_SET_WORDS_ONLY,
-            List_Binding(unwrap def)
-        ));
-        Init_Frame(Stub_Cell(use), exemplar, label, coupling);
+  run_code_that_fills_frame_fully_or_partially: {
+
+  // 1. At one time, SET-WORD would bind to the frame and WORD would not,
+  //    which let you write things like [value: value] and it could be
+  //    meaningful.  But this was deemed to not fit the binding model for how
+  //    USE works.  The SPECIALIZE primitive achieves this goal without USE,
+  //    by going one step at a time (like APPLY) and doing its own lookup
+  //    on the key values.
+
+    if (def) {
+        require (  // [value: value] will both refer into frame [1]
+          Use* use = Alloc_Use_Inherits(List_Binding(unwrap def))
+        );
+        Init_Lensed_Frame(Stub_Cell(use), exemplar, unspecialized, coupling);
 
         Tweak_Cell_Binding(unwrap def, use);
         Remember_Cell_Is_Lifeguard(Stub_Cell(use));  // protects exemplar
-
-        // !!! Only one binder can be in effect, and we're calling arbitrary
-        // code.  Must clean up now vs. in loop we do at the end.  :-(
-        //
-        Destruct_Binder_Core(binder);
 
         bool threw = Eval_Any_List_At_Throws(
             u_cast(Value*, out),  // use as temporary output
@@ -271,6 +264,8 @@ bool Specialize_Action_Throws(
 
         Erase_Cell(out);  // ignore result of specialization code
     }
+
+} do_specialization: {
 
     const Key* tail;
     const Key* key = Phase_Keys(&tail, unspecialized);
@@ -400,7 +395,7 @@ bool Specialize_Action_Throws(
     Copy_Ghostability(out, specializee);
 
     return false;  // code block did not throw
-}
+}}}
 
 
 #define LEVEL_FLAG_SPECIALIZE_FINISHED_FILLING  LEVEL_FLAG_MISCELLANEOUS

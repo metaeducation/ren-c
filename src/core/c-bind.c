@@ -315,13 +315,6 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
     next = opt Link_Inherit_Bind(c);  // save so we can update `c`
 
     if (flavor == FLAVOR_USE) {
-        if (  // some USEs only affect SET-WORD!s
-            Get_Flavor_Flag(USE, c, SET_WORDS_ONLY)
-            and not Is_Set_Word(wordlike)
-        ){
-            goto next_context;
-        }
-
         Element* overbind = Known_Element(Stub_Cell(c));
 
         if (Is_Word(overbind)) {  // OVERBIND use of single WORD!

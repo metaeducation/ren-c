@@ -32,11 +32,15 @@
 // allocation.  But if that pointer is already occupied then a Use stub has
 // to be created as a holder to give it a place to put in another chain.
 //
+// 1. At one time there was USE_FLAG_SET_WORDS_ONLY, which was deemed to not
+//    be a good idea.  It may be that USE doesn't need flags, but since it
+//    is a Stub leave the parameter for future use.
+//
 INLINE Result(Use*) Alloc_Use_Inherits_Core(
-    Flags flags,
+    Flags flags,  // reserved for future use [1]
     Context* inherit
 ){
-    assert(0 == (flags & ~(USE_FLAG_SET_WORDS_ONLY)));
+    assert(STUB_MASK_0 == flags);
 
     trap (
       Stub* use = Make_Untracked_Stub(STUB_MASK_USE | flags)

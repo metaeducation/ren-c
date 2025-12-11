@@ -365,23 +365,6 @@ INLINE void Set_Parameter_Strand(Cell* v, Option(const Strand*) s) {
 }
 
 
-// Antiform parameters are used to represent unspecialized parameters.  When
-// the slot they are in is overwritten by another value, that indicates they
-// are then fixed at a value and hence specialized--so not part of the public
-// interface of the function.
-//
-INLINE bool Is_Specialized(const Param* p) {
-    if (Is_Parameter(p)) {
-        if (Get_Cell_Flag_Unchecked(p, VAR_MARKED_HIDDEN))
-            assert(!"Unspecialized parameter is marked hidden!");
-        return false;
-    }
-    return true;
-}
-
-#define Not_Specialized(v)      (not Is_Specialized(v))
-
-
 //=//// CELL_FLAG_PARAM_NOTE_TYPECHECKED //////////////////////////////////=//
 //
 // For specialized or fulfilled values, a parameter which is checked does not
@@ -413,6 +396,25 @@ INLINE bool Is_Parameter_Final_Type(const Param* p) {
     assert(Heart_Of(p) == TYPE_PARAMETER);
     return Get_Parameter_Flag(p, FINAL_TYPECHECK);
 }
+
+
+
+// A PARAMETER! that has not been typechecked represents an unspecialized
+// parameter.  When the slot they are in is overwritten by another value, that
+// indicates they are then fixed at a value and hence specialized--so not part
+// of the public interface of the function.
+//
+INLINE bool Is_Specialized(const Param* p) {
+    if (Is_Parameter(p) and Not_Cell_Flag(p, PARAM_NOTE_TYPECHECKED)) {
+        if (Get_Cell_Flag_Unchecked(p, VAR_MARKED_HIDDEN))
+            assert(!"Unspecialized parameter is marked hidden!");
+        return false;
+    }
+    return true;
+}
+
+#define Not_Specialized(v)      (not Is_Specialized(v))
+
 
 
 //=//// PARAMETER "BLITTING" //////////////////////////////////////////////=//
