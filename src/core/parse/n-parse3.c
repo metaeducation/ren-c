@@ -662,7 +662,7 @@ static Result(REBIXO) Parse_One_Rule(
         else switch (opt Type_Of(rule)) {
           case TYPE_FRAME: {  // want to run a type constraint...
             Copy_Cell(SPARE, item);
-            if (Typecheck_Spare_With_Predicate_Uses_Scratch(
+            if (Predicate_Check_Spare_Uses_Scratch(
                 level_, rule, Frame_Label(rule)
             )){
                 return pos + 1;
@@ -671,9 +671,8 @@ static Result(REBIXO) Parse_One_Rule(
 
           case TYPE_PARAMETER: {
             assert(rule != SPARE);
-            Copy_Cell(SPARE, item);
-            if (Typecheck_Value_In_Spare_Uses_Scratch(
-                LEVEL, rule, P_RULE_BINDING
+            if (Typecheck_Uses_Spare_And_Scratch(
+                LEVEL, item, rule, P_RULE_BINDING
             )){
                 return pos + 1;  // type was in typeset
             }

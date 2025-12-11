@@ -190,8 +190,11 @@ DECLARE_NATIVE(REDUCE)
             nullptr,
             Frame_Phase(unwrap predicate)
         );
-        if (not Typecheck_Value_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
+        if (not Typecheck_Uses_Spare_And_Scratch(  // *sublevel*'s spare!
+            SUBLEVEL, SPARE, param, SPECIFIED  // so passing L->spare is ok
+        )){
             goto next_reduce_step;  // not accepted, so skip it
+        }
     }
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;

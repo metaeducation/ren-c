@@ -1017,9 +1017,8 @@ DECLARE_NATIVE(SWITCH)
         if (not Is_Datatype(spare) and not Is_Action(spare))
             panic ("switch:type conditions must be DATATYPE! or ACTION!");
 
-        Copy_Cell(Level_Spare(SUBLEVEL), left);  // spare of the *sublevel!*
-        if (not Typecheck_Value_In_Spare_Uses_Scratch(  // *sublevel*'s SPARE!
-            SUBLEVEL, spare, SPECIFIED
+        if (not Typecheck_Uses_Spare_And_Scratch(  // *sublevel*'s SPARE!
+            SUBLEVEL, left, spare, SPECIFIED  // ...so passing L->spare ok
         )){
             goto next_switch_step;
         }

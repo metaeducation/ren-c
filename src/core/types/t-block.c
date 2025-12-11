@@ -208,9 +208,11 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
             else
                 param = Phase_Param(phase, CELL_VARARGS_SIGNED_PARAM_INDEX(arg));
 
-            Init_Nulled(SPARE);
-            if (Typecheck_Value_In_Spare_Uses_Scratch(LEVEL, param, SPECIFIED))
+            if (Typecheck_Uses_Spare_And_Scratch(
+                LEVEL, LIB(NULL), param, SPECIFIED
+            )){
                 return fail (Error_Null_Vararg_List_Raw());
+            }
         }
 
         StackIndex base = TOP_INDEX;

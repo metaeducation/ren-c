@@ -283,7 +283,7 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
 
 
 //
-//  Typecheck_Pack_In_Spare_Uses_Scratch: C
+//  Typecheck_Pack_Uses_Scratch_And_Spare: C
 //
 // It's possible in function type specs to check packs with ~[...]~ notation.
 // This routine itemwise checks a pack against one of those type specs.
@@ -293,18 +293,14 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
 //
 // 1. Due to the way that the intrinsic optimization works, it has to have
 //    the argument to the intrinsic in the spare...and it uses the scratch
-//    cell for putting the intrinsic action itself value into.  Since we're
-//    recursing and want intrinsic optimizations to still work, we have
-//    to push the existing SPARE out of the way.  If we used Alloc_Value()
-//    we'd be creating an API handle with an unstable antiform in it.
+//    cell for putting the intrinsic action itself value into.
 //
-bool Typecheck_Pack_In_Spare_Uses_Scratch(
+bool Typecheck_Pack_Uses_Scratch_And_Spare(  // scratch and spare used [1]
     Level* const L,
+    const Value* pack,
     const Element* types
 ){
     USE_LEVEL_SHORTHANDS (L);
-
-    const Value* pack = SPARE;
 
     assert(Is_Quasi_Block(types));  // could relax this to any list
     assert(Is_Pack(pack));  // could relax this also to any list
@@ -323,20 +319,16 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
     bool result = true;
 
-    assert(TOP_INDEX == L->baseline.stack_base);
-    Move_Value(PUSH(), SPARE);  // need somewhere to save spare [1]
-    ++L->baseline.stack_base;  // typecheck functions should not see that push
-    assert(TOP_INDEX == L->baseline.stack_base);
-
     Context* types_binding = List_Binding(types);
 
     for (; types_at != types_tail; ++types_at, ++pack_at) {
-        Copy_Cell(SPARE, pack_at);
+        DECLARE_VALUE (unlifted);
+        Copy_Cell(unlifted, pack_at);
         assume (
-          Unliftify_Undecayed(SPARE)
+          Unliftify_Undecayed(unlifted)
         );
-        if (not Typecheck_Value_In_Spare_Uses_Scratch(
-            L, types_at, types_binding
+        if (not Typecheck_Uses_Spare_And_Scratch(
+            L, unlifted, types_at, types_binding
         )){
             result = false;
             goto return_result;
@@ -345,14 +337,9 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
   return_result:
 
-    assert(TOP_INDEX == L->baseline.stack_base);
-    --L->baseline.stack_base;
-    Move_Value(SPARE, TOP);  // restore pack to the SPARE [1]
-    DROP();
-    assert(Is_Pack(SPARE));
-
   #if RUNTIME_CHECKS
     Init_Unreadable(SCRATCH);
+    Init_Unreadable(SPARE);
   #endif
 
     return result;
@@ -360,23 +347,20 @@ bool Typecheck_Pack_In_Spare_Uses_Scratch(
 
 
 //
-//  Typecheck_Spare_With_Predicate_Uses_Scratch: C
+//  Predicate_Check_Spare_Uses_Scratch: C
 //
-bool Typecheck_Spare_With_Predicate_Uses_Scratch(
+bool Predicate_Check_Spare_Uses_Scratch(
     Level* const L,
-    const Stable* test,
+    const Stable* predicate,
     Option(const Symbol*) label
 ){
     USE_LEVEL_SHORTHANDS (L);
 
-    assert(Is_Action(test) or Is_Frame(test));
+    assert(Is_Action(predicate) or Is_Frame(predicate));
 
     bool result;
 
-    assert(test != SCRATCH);
-    assert(test != SPARE);
-
-    const Value* v = SPARE;
+    assert(predicate != SCRATCH and predicate != SPARE);
 
   try_builtin_typeset_checker_dispatch: {
 
@@ -384,7 +368,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
   // being the Typechecker_Dispatcher().  This means it's one of 255 built-in
   // type checks, such as ANY-WORD? or INTEGER? or INTEGER!.
 
-    Details* details = opt Try_Frame_Details(test);
+    Details* details = opt Try_Frame_Details(predicate);
     if (not details)
         goto non_intrinsic_dispatch;
 
@@ -409,7 +393,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
         Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
         and not SPORADICALLY(100)
     ){
-        Copy_Cell(SCRATCH, test);  // intrinsic may need, but panic() requires
+        Copy_Cell(SCRATCH, predicate);  // intrinsic may need, panic() requires
         possibly(Is_Antiform(SCRATCH));  // don't bother canonizing LIFT_BYTE()
 
         Remember_Cell_Is_Lifeguard(SPARE);
@@ -453,7 +437,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     ));
     Push_Level_Erase_Out_If_State_0(SCRATCH, sub);  // sub's out is L->scratch
     require (
-      Push_Action(sub, test, PREFIX_0)
+      Push_Action(sub, predicate, PREFIX_0)
     );
 
     const Key* key = sub->u.action.key;
@@ -475,7 +459,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
     if (not arg)
         panic (Error_No_Arg_Typecheck(label));  // must take argument
 
-    Copy_Cell(arg, v);  // do not decay [4]
+    Copy_Cell(arg, SPARE);  // do not decay [4]
 
     heeded (Corrupt_Cell_If_Needful(Level_Spare(sub)));
     heeded (Corrupt_Cell_If_Needful(Level_Scratch(sub)));
@@ -528,7 +512,7 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 
 
 //
-//  Typecheck_Value_In_Spare_Uses_Scratch: C
+//  Typecheck_Uses_Spare_And_Scratch: C
 //
 // Ren-C has eliminated the concept of TYPESET!, instead gaining behaviors
 // for TYPE-BLOCK! and TYPE-GROUP!.
@@ -537,16 +521,15 @@ bool Typecheck_Spare_With_Predicate_Uses_Scratch(
 //    support it, so (match [antiform?] frame.unspecialized-arg) is illegal.
 //    Review where a check for prohibiting this might be put.
 //
-bool Typecheck_Value_In_Spare_Uses_Scratch(
+bool Typecheck_Uses_Spare_And_Scratch(
     Level* const L,
+    const Value* v,
     const Stable* tests,  // PARAMETER!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!...
     Context* tests_binding
 ){
     USE_LEVEL_SHORTHANDS (L);
 
     assert(tests != SCRATCH);
-
-    const Value* v = SPARE;
 
     bool result;
 
@@ -590,7 +573,8 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
         break;
 
       case TYPE_ACTION:
-        return Typecheck_Spare_With_Predicate_Uses_Scratch(
+        Copy_Cell(SPARE, v);
+        return Predicate_Check_Spare_Uses_Scratch(
             L,
             tests,
             Frame_Label(tests)
@@ -609,15 +593,16 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
 
   check_spare_against_test_in_item: { ////////////////////////////////////////
 
-  // 1. Some elements in the parameter specification array are accounted for
-  // in type checking by flags or optimization bytes.  There is no need to
-  // check those here, just check things that don't have PARAMSPEC_SPOKEN_FOR.
+  // 1. Some elements in the parameter spec array are accounted for in type
+  //    checking by flags or optimization bytes.  There is no need to check
+  //    those here, just check things that don't have PARAMSPEC_SPOKEN_FOR.
   //
   // 2. [~word!~] matches QUASI-WORD? and ['integer!] matches QUOTED-INTEGER?
   //    and [''~any-series?~] matches DOUBLE_QUOTED-QUASI-ANY-SERIES?... etc.
   //    Because we don't want to make an infinite number of type constraint
   //    functions to cover every combination.  This pretty much ties our hands
-  //    on the meaning of quasiform or quoted WORD!s in the type spec.
+  //    on the meaning of quasiform or quoted WORD!s in the type spec, and
+  //    we apply that further to sequences [e.g. [word!: /tuple!]]
   //
   // 3. While TAG! will have PARAMSPEC_SPOKEN_FOR in a PARAMETER!, it does not
   //    in a plain BLOCK! used with TYPECHECK.  TYPECHECK could pay to convert
@@ -626,14 +611,15 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
   //    probably have behavior for <opt> and other parameter spec tags, though
   //    it's tricky given that typecheck can't mutate the incoming value.
 
-    Option(Sigil) sigil = SIGIL_0;  // added then removed if non-zero
-    LiftByte lift_byte = LIFT_BYTE(SPARE);  // adjusted if test quoted/quasi
-
-    if (Get_Cell_Flag(item, PARAMSPEC_SPOKEN_FOR))
+    if (Get_Cell_Flag(item, PARAMSPEC_SPOKEN_FOR))  // already checked [1]
         goto continue_loop;
 
-    if (Heart_Of(item) == TYPE_WORD)  // our hands are tied on the meaning [2]
+    if (
+        Heart_Of(item) == TYPE_WORD  // our hands are tied on the meaning [2]
+        or Any_Sequence_Type(Heart_Of(item))
+    ){
         goto adjust_quote_level_and_run_type_constraint;
+    }
 
     if (Is_Quasiform(item))
         goto handle_non_word_quasiform;
@@ -643,9 +629,9 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
 
     if (Any_Sigiled_Space(item)) {
         if (
-            not Is_Antiform(SPARE)
-            and Any_Sigiled_Space(Known_Element(SPARE))
-            and Sigil_Of(item) == Sigil_Of(Known_Element(SPARE))
+            not Is_Antiform(v)
+            and Any_Sigiled_Space(Known_Element(v))
+            and Sigil_Of(item) == Sigil_Of(Known_Element(v))
         ){
             goto test_succeeded;
         }
@@ -654,12 +640,12 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
 
     if (Is_Tag(item)) {  // if BLOCK!, support <null> and <void> [3]
         if (0 == CT_Utf8(item, g_tag_null, true)) {
-            if (Is_Cell_Stable(SPARE) and Is_Nulled(cast(Stable*, SPARE)))
+            if (Is_Light_Null(v))
                 goto test_succeeded;
             goto test_failed;
         }
         if (0 == CT_Utf8(item, g_tag_void, true)) {
-            if (Is_Void(SPARE))
+            if (Is_Void(v))
                 goto test_succeeded;
             goto test_failed;
         }
@@ -689,7 +675,7 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
     if (Heart_Of(item) == TYPE_BLOCK) {  // typecheck pack [1]
         if (not Is_Pack(v))
             goto test_failed;
-        if (Typecheck_Pack_In_Spare_Uses_Scratch(L, item))
+        if (Typecheck_Pack_Uses_Scratch_And_Spare(L, v, item))
             goto test_succeeded;
         goto test_failed;
     }
@@ -699,8 +685,8 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
     }
 
     if (Heart_Of(item) == TYPE_GROUP) {  // match any element literally [3]
-        if (Is_Antiform(SPARE))
-            goto test_failed;  // can't match against antiforms
+        if (Is_Antiform(v))
+            goto test_failed;  // can't match elements against antiforms
 
         const Element* splice_tail;
         const Element* splice_at = List_At(&splice_tail, item);
@@ -709,7 +695,7 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
             bool strict = true;  // system now case-sensitive by default
             require (
               bool equal = Equal_Values(
-                Known_Element(SPARE),
+                Known_Element(v),
                 splice_at,
                 strict
             ));
@@ -723,17 +709,19 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
 
 } handle_non_word_quoted: { //////////////////////////////////////////////////
 
-    // It's not clear exactly what non-word quoteds would do.  It could be
-    // that '[integer! word!] would match a non-quoted BLOCK! with 2
-    // elements in it that were an integer and a word, for instance.  But
-    // anything we do would be inconsistent with the WORD! interpretation
-    // that it's exactly the same quoting level as the quotes on the test.
-    //
-    // Review when this gets further.
+  // It's not clear exactly what non-word quoteds would do.  It could be that
+  // '[integer! word!] would match a non-quoted BLOCK! with 2 elements in it
+  // that were an integer and a word, for instance.  But anything we do would
+  // be inconsistent with the WORD! interpretation that it's exactly the same
+  // quoting level as the quotes on the test.
+  //
+  // Review when this gets further.
 
     panic (item);
 
 } adjust_quote_level_and_run_type_constraint: {
+
+    Copy_Cell(SPARE, v);
 
     if (LIFT_BYTE(item) != NOQUOTE_2) {
         if (LIFT_BYTE(item) != LIFT_BYTE(SPARE))
@@ -741,17 +729,20 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
         LIFT_BYTE(SPARE) = NOQUOTE_2;
     }
 
-} handle_after_any_quoting_adjustments: {
-
-    sigil = Sigil_Of(item);
+    Sigil sigil = Sigil_Of(item);
     if (sigil) {
-        if (Is_Antiform(v) or Sigil_Of(cast(Element*, v)) != sigil) {
+        if (
+            Is_Antiform(SPARE)
+            or Underlying_Sigil_Of(Known_Element(SPARE)) != sigil
+        ){
             sigil = SIGIL_0;  // don't unsigilize at test_failed
             goto test_failed;
         }
 
-        Clear_Cell_Sigil(Known_Element(SPARE));  // make plain, will re-sigilize
+        Clear_Cell_Sigil(Known_Element(SPARE));
     }
+
+  handle_after_any_quoting_adjustments: {
 
     Option(const Symbol*) label = Word_Symbol(item);
 
@@ -765,25 +756,25 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
     );
 
     if (Is_Action(test)) {
-        if (Typecheck_Spare_With_Predicate_Uses_Scratch(L, test, label))
+        if (Predicate_Check_Spare_Uses_Scratch(L, test, label))
             goto test_succeeded;
         goto test_failed;
     }
 
     switch (opt Type_Of_Unchecked(test)) {
-      case TYPE_PARAMETER: {
-        if (Typecheck_Value_In_Spare_Uses_Scratch(L, test, SPECIFIED))
+      case TYPE_PARAMETER:  // !! Problem: spare use
+        if (Typecheck_Uses_Spare_And_Scratch(L, SPARE, test, SPECIFIED))
             goto test_succeeded;
-        goto test_failed; }
+        goto test_failed;
 
       case TYPE_DATATYPE: {
-        Option(Type) t = Type_Of(v);
+        Option(Type) t = Type_Of(SPARE);
         if (t) {  // builtin type
             if (Datatype_Type(test) == t)
                 goto test_succeeded;
             goto test_failed;
         }
-        if (Datatype_Extra_Heart(test) == Cell_Extra_Heart(v))
+        if (Datatype_Extra_Heart(test) == Cell_Extra_Heart(SPARE))
             goto test_succeeded;
         goto test_failed; }
 
@@ -793,12 +784,7 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
 
     panic ("Invalid element in TYPE-GROUP!");
 
-} test_succeeded: {
-
-    if (sigil)
-        Add_Cell_Sigil(Known_Element(SPARE), unwrap sigil);
-
-    LIFT_BYTE(SPARE) = lift_byte;  // restore quote level
+}} test_succeeded: {
 
     if (not match_all) {
         result = true;
@@ -807,11 +793,6 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
     goto continue_loop;
 
 } test_failed: {
-
-    if (sigil)
-        Add_Cell_Sigil(Known_Element(SPARE), unwrap sigil);
-
-    LIFT_BYTE(SPARE) = lift_byte;  // restore quote level
 
     if (match_all) {
         result = false;
@@ -838,6 +819,7 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
 
   #if RUNTIME_CHECKS
     Init_Unreadable(SCRATCH);
+    Init_Unreadable(SPARE);
   #endif
 
     Drop_Lifeguard(test);
@@ -867,7 +849,7 @@ bool Typecheck_Value_In_Spare_Uses_Scratch(
 Result(bool) Typecheck_Coerce(
     Level* const L,
     const Element* param,
-    Value* atom,  // need mutability for coercion
+    Value* v,  // need mutability for coercion
     bool is_return
 ){
     USE_LEVEL_SHORTHANDS (L);
@@ -877,13 +859,13 @@ Result(bool) Typecheck_Coerce(
     assert(Not_Cell_Readable(SPARE));
   #endif
 
-    assert(atom != SCRATCH and atom != SPARE);
+    assert(v != SCRATCH and v != SPARE);
 
     if (Get_Parameter_Flag(param, OPT_OUT))
-        assert(not Is_Void(atom));  // should have bypassed this check
+        assert(not Is_Void(v));  // should have bypassed this check
 
     if (Get_Parameter_Flag(param, CONST))
-        Set_Cell_Flag(atom, CONST);  // mutability override? [2]
+        Set_Cell_Flag(v, CONST);  // mutability override? [2]
 
     bool result;
 
@@ -897,8 +879,8 @@ Result(bool) Typecheck_Coerce(
         //
         // same as PARAMCLASS_META
     }
-    else if (Not_Cell_Stable(atom)) {
-        if (Is_Void(atom)) {  // non-^META endable parameters can be void
+    else if (Not_Cell_Stable(v)) {
+        if (Is_Void(v)) {  // non-^META endable parameters can be void
             if (Get_Parameter_Flag(param, ENDABLE))
                 goto return_true;
         }
@@ -907,26 +889,26 @@ Result(bool) Typecheck_Coerce(
 
   typecheck_again: {
 
-    if (Is_Antiform(atom)) {
+    if (Is_Antiform(v)) {
         if (
             Get_Parameter_Flag(param, NULL_DEFINITELY_OK)
-            and Is_Light_Null(atom)
+            and Is_Light_Null(v)
         ){
             goto return_true;
         }
 
-        if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(atom))
+        if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(v))
             goto return_true;
 
         if (
             Get_Parameter_Flag(param, TRASH_DEFINITELY_OK)
-            and Is_Possibly_Unstable_Value_Trash(atom)
+            and Is_Possibly_Unstable_Value_Trash(v)
         ){
             goto return_true;
         }
     }
 
-    if (Get_Parameter_Flag(param, ANY_STABLE_OK) and Is_Cell_Stable(atom))
+    if (Get_Parameter_Flag(param, ANY_STABLE_OK) and Is_Cell_Stable(v))
         goto return_true;
 
     if (Get_Parameter_Flag(param, ANY_ATOM_OK))
@@ -934,8 +916,8 @@ Result(bool) Typecheck_Coerce(
 
     if (Is_Parameter_Unconstrained(param)) {
         if (Get_Parameter_Flag(param, REFINEMENT)) {  // no-arg refinement
-            assert(not Is_Light_Null(atom));  // NULL_DEFINITELY_OK handles
-            if (Is_Possibly_Unstable_Value_Okay(atom))
+            assert(not Is_Light_Null(v));  // NULL_DEFINITELY_OK handles
+            if (Is_Possibly_Unstable_Value_Okay(v))
                 goto return_true;
             goto return_false;
         }
@@ -943,7 +925,7 @@ Result(bool) Typecheck_Coerce(
     }
 
     if (Get_Parameter_Flag(param, SPACE_DEFINITELY_OK))
-        if (Is_Cell_Stable(atom) and Is_Space(u_cast(Stable*, atom)))
+        if (Is_Cell_Stable(v) and Is_Space(Known_Stable(v)))
             goto return_true;
 
 } do_optimized_checks_signaled_by_bytes: {
@@ -953,7 +935,7 @@ Result(bool) Typecheck_Coerce(
     const TypesetByte* optimized_tail
         = optimized + sizeof(spec->misc.at_least_4);
 
-    Option(Type) type = Type_Of(atom);  // Option/extension can be ANY-ELEMENT?
+    Option(Type) type = Type_Of(v);  // Option/extension can be ANY-ELEMENT?
     for (; optimized != optimized_tail; ++optimized) {
         if (*optimized == 0)
             break;  // premature end of list
@@ -963,8 +945,7 @@ Result(bool) Typecheck_Coerce(
     }
 
     if (Get_Parameter_Flag(param, INCOMPLETE_OPTIMIZATION)) {
-        Copy_Cell(SPARE, atom);
-        if (Typecheck_Value_In_Spare_Uses_Scratch(L, param, SPECIFIED))
+        if (Typecheck_Uses_Spare_And_Scratch(L, v, param, SPECIFIED))
             goto return_true;
     }
 
@@ -975,33 +956,33 @@ Result(bool) Typecheck_Coerce(
       do_coercion:
 
         if (
-            Is_Possibly_Unstable_Value_Action(atom)
+            Is_Possibly_Unstable_Value_Action(v)
             and Get_Parameter_Flag(param, UNRUN)
         ){
-            LIFT_BYTE(atom) = NOQUOTE_2;
+            LIFT_BYTE(v) = NOQUOTE_2;
             possibly(coerced);  // this may be a coercion after decay...
             coerced = true;
             goto typecheck_again;
         }
 
-        if (Is_Error(atom))
+        if (Is_Error(v))
             goto return_false;
 
-        if (Is_Ghost(atom))
+        if (Is_Ghost(v))
             goto return_false;  // comma antiforms
 
-        if (Is_Antiform(atom) and Is_Antiform_Unstable(atom)) {
+        if (Is_Antiform(v) and Is_Antiform_Unstable(v)) {
             trap (
-              Decay_If_Unstable(atom)
+              Decay_If_Unstable(v)
             );
             assert(not coerced);  // should only decay once...
             coerced = true;
 
             if (
-                Is_Possibly_Unstable_Value_Action(atom)
+                Is_Possibly_Unstable_Value_Action(v)
                 and Get_Parameter_Flag(param, UNRUN)
             ){
-                LIFT_BYTE(atom) = NOQUOTE_2;
+                LIFT_BYTE(v) = NOQUOTE_2;
             }
 
             goto typecheck_again;
@@ -1020,7 +1001,7 @@ Result(bool) Typecheck_Coerce(
 
 } return_result: { ///////////////////////////////////////////////////////////
 
-    if ((result == true) and Not_Cell_Stable(atom))
+    if ((result == true) and Not_Cell_Stable(v))
         assert(
             is_return
             or Parameter_Class(param) == PARAMCLASS_META
@@ -1151,28 +1132,26 @@ DECLARE_NATIVE(TYPECHECK)
 
     Stable* test = ARG(TEST);
 
-    heeded (Copy_Cell(SPARE, ARG(VALUE)));
+    Value* v = ARG(VALUE);
 
     if (not ARG(META)) {  // decay before typecheck if not ^META
       require(
-        Decay_If_Unstable(SPARE)  // or return definitional error to match [1]?
+        Decay_If_Unstable(v)  // or return definitional error to match [1]?
       );
     }
 
     switch (opt Type_Of(test)) {
       case TYPE_ACTION:
-        if (Typecheck_Spare_With_Predicate_Uses_Scratch(
-            LEVEL, test, Frame_Label(test)
-        )){
+        Copy_Cell(SPARE, v);
+        if (Predicate_Check_Spare_Uses_Scratch(LEVEL, test, Frame_Label(test)))
             return LOGIC(true);
-        }
         break;
 
         // fall through
       case TYPE_PARAMETER:
       case TYPE_BLOCK:
       case TYPE_DATATYPE:
-        if (Typecheck_Value_In_Spare_Uses_Scratch(LEVEL, test, SPECIFIED))
+        if (Typecheck_Uses_Spare_And_Scratch(LEVEL, v, test, SPECIFIED))
             return LOGIC(true);
         break;
 
@@ -1212,22 +1191,23 @@ DECLARE_NATIVE(MATCH)
 
     Stable* test = ARG(TEST);
 
-    Stable* spare = Copy_Cell(SPARE, ARG(VALUE));
-    assert(not Is_Nulled(spare));  // <opt-out> args should prohibit NULL
+    Stable* v = ARG(VALUE);
+    assert(not Is_Nulled(v));  // <opt-out> args should prohibit NULL
 
     switch (opt Type_Of(test)) {
-      case TYPE_ACTION:
-        if (not Typecheck_Spare_With_Predicate_Uses_Scratch(
+      case TYPE_ACTION: {
+        Copy_Cell(SPARE, v);
+        if (not Predicate_Check_Spare_Uses_Scratch(
             LEVEL, test, Frame_Label(test)
         )){
             return nullptr;
         }
-        break;
+        break; }
 
       case TYPE_PARAMETER:
       case TYPE_BLOCK:
       case TYPE_DATATYPE:
-        if (not Typecheck_Value_In_Spare_Uses_Scratch(LEVEL, test, SPECIFIED))
+        if (not Typecheck_Uses_Spare_And_Scratch(LEVEL, v, test, SPECIFIED))
             return nullptr;
         break;
 
@@ -1236,7 +1216,7 @@ DECLARE_NATIVE(MATCH)
         panic (PARAM(TEST));
     }
 
-    return COPY(spare);  // test matched, return input value
+    return COPY(v);  // test matched, return input value
 }
 
 
