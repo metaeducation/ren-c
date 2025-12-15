@@ -984,6 +984,7 @@ DECLARE_NATIVE(DEFAULT)
     if (
         not Is_Nulled(OUT)
         and not Is_Trash(OUT)
+        and not Is_Tripwire(OUT)
         and (not Is_Blank(OUT) or Bool_ARG(ONLY))
     ){
         return OUT;  // count it as "already set"
