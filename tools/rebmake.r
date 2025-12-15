@@ -1062,7 +1062,7 @@ generator-class: make object! [
         flip-flag solution null
 
         if find words-of solution 'depends [
-            for-each dep solution/depends [
+            for-each dep opt solution/depends [
                 if dep/class = #variable [
                     append vars reduce [
                         dep/name

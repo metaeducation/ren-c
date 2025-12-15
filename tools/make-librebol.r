@@ -118,7 +118,7 @@ emit-proto: func [return: [~] proto] [
     ; https://github.com/rebol/rebol-issues/issues/2317
     ;
     append api-objects make object! compose/only [
-        spec: match block! third header  ; metadata API comment
+        spec: match block! opt third header  ; metadata API comment
         name: (ensure text! name)
         returns: (ensure text! trim/tail returns)
         paramlist: (ensure block! paramlist)

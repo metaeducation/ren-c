@@ -231,7 +231,7 @@ dump-obj: function [
 
             type: try type of get* 'val
 
-            str: if lib/match [action! object!] :type [
+            str: if lib/match [action! object!] opt :type [
                 spaced [word  mold spec-of :val  words of :val]
             ] else [
                 form word
