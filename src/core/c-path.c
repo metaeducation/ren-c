@@ -87,24 +87,26 @@ Bounce PD_Unhooked(
 //
 bool Next_Path_Throws(REBPVS *pvs)
 {
+    const Cell* at = Pvs_At(pvs);
+
     if (Is_Nulled(pvs->out))
-        panic (Error_No_Value_Core(pvs->value, pvs->specifier));
+        panic (Error_No_Value_Core(at, Pvs_Binding(pvs)));
 
     PATH_HOOK hook = Path_Hooks[Type_Of(pvs->out)];
     assert(hook != nullptr);  // &PD_Panic is used instead of nullptr
 
-    if (Is_Get_Word(pvs->value)) { // e.g. object/:field
-        Move_Opt_Var_May_Panic(PVS_PICKER(pvs), pvs->value, pvs->specifier);
+    if (Is_Get_Word(at)) { // e.g. object/:field
+        Move_Opt_Var_May_Panic(PVS_PICKER(pvs), at, Pvs_Binding(pvs));
     }
-    else if (Is_Group(pvs->value)) { // object/(expr) case:
+    else if (Is_Group(at)) { // object/(expr) case:
         if (Get_Eval_Flag(pvs, NO_PATH_GROUPS))
             panic ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
-        Specifier* derived = Derive_Specifier(pvs->specifier, pvs->value);
+        Specifier* derived = Derive_Specifier(Pvs_Binding(pvs), at);
         if (Eval_Array_At_Throws(
             PVS_PICKER(pvs),
-            Cell_Array(pvs->value),
-            VAL_INDEX(pvs->value),
+            Cell_Array(at),
+            VAL_INDEX(at),
             derived
         )) {
             Copy_Cell(pvs->out, PVS_PICKER(pvs));
@@ -112,7 +114,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         }
     }
     else { // object/word and object/value case:
-        Derelativize(PVS_PICKER(pvs), pvs->value, pvs->specifier);
+        Derelativize(PVS_PICKER(pvs), at, Pvs_Binding(pvs));
     }
 
     // Disallow voids from being used in path dispatch.  This rule seems like
@@ -120,7 +122,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     // to use in SELECT.
     //
     if (Is_Nulled(PVS_PICKER(pvs)))
-        panic (Error_No_Value_Core(pvs->value, pvs->specifier));
+        panic (Error_No_Value_Core(at, Pvs_Binding(pvs)));
 
     Fetch_Next_In_Level(pvs); // may be at end
 
@@ -251,8 +253,8 @@ bool Next_Path_Throws(REBPVS *pvs)
     }
 
     if (
-        IS_END(pvs->value)
-        or (Is_Blank(pvs->value) and IS_END(pvs->value + 1))
+        Is_Level_At_End(pvs)
+        or (Is_Blank(Pvs_At(pvs)) and Is_Pvs_Next_End(pvs))
     ){
         return false; // did not throw
     }
@@ -321,7 +323,7 @@ bool Eval_Path_Throws_Core(
     DECLARE_LEVEL (pvs);
 
     Push_Level_At(pvs, array, index, specifier, flags);
-    assert(NOT_END(pvs->value)); // tested 0-length path previously
+    assert(Not_Level_At_End(pvs)); // tested 0-length path previously
 
     // Push_Level_At sets the output to the global unwritable END cell, so we
     // have to wait for this point to set to the output cell we want.
@@ -342,15 +344,17 @@ bool Eval_Path_Throws_Core(
 
     pvs->opt_label = nullptr;
 
+    const Cell* at = Pvs_At(pvs);
+
     // Seed the path evaluation process by looking up the first item (to
     // get a datatype to dispatch on for the later path items)
     //
-    if (Is_Word(pvs->value)) {
+    if (Is_Word(at)) {
         //
         // Remember the actual location of this variable, not just its value,
         // in case we need to do BOUNCE_IMMEDIATE writeback (e.g. month/day: 1)
         //
-        pvs->u.ref.cell = Get_Mutable_Var_May_Panic(pvs->value, pvs->specifier);
+        pvs->u.ref.cell = Get_Mutable_Var_May_Panic(at, Pvs_Binding(pvs));
 
         Copy_Cell(pvs->out, KNOWN(pvs->u.ref.cell));
 
@@ -358,20 +362,20 @@ bool Eval_Path_Throws_Core(
             if (Get_Cell_Flag(pvs->u.ref.cell, INFIX_IF_ACTION))
                 Set_Cell_Flag(pvs->out, INFIX_IF_ACTION);
 
-            pvs->opt_label = Word_Symbol(pvs->value);
+            pvs->opt_label = Word_Symbol(at);
         }
     }
-    else if (Is_Group(pvs->value)) {
+    else if (Is_Group(at)) {
         pvs->u.ref.cell = nullptr; // nowhere to BOUNCE_IMMEDIATE write back to
 
         if (Get_Eval_Flag(pvs, NO_PATH_GROUPS))
             panic ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
-        Specifier* derived = Derive_Specifier(pvs->specifier, pvs->value);
+        Specifier* derived = Derive_Specifier(Pvs_Binding(pvs), at);
         if (Eval_Array_At_Throws(
             pvs->out,
-            Cell_Array(pvs->value),
-            VAL_INDEX(pvs->value),
+            Cell_Array(at),
+            VAL_INDEX(at),
             derived
         )){
             goto return_thrown;
@@ -380,16 +384,15 @@ bool Eval_Path_Throws_Core(
     else {
         pvs->u.ref.cell = nullptr; // nowhere to BOUNCE_IMMEDIATE write back to
 
-        Derelativize(pvs->out, pvs->value, pvs->specifier);
+        Derelativize(pvs->out, at, Pvs_Binding(pvs));
     }
 
     if (Is_Nulled(pvs->out))
-        panic (Error_No_Value_Core(pvs->value, pvs->specifier));
-
+        panic (Error_No_Value_Core(at, Pvs_Binding(pvs)));
     Fetch_Next_In_Level(pvs);
 
-    assert(NOT_END(pvs->value));  // paths must be at least 2 long
-    if (Is_Blank(pvs->value) and IS_END(pvs->value + 1)) {
+    assert(Not_Level_At_End(pvs));  // paths must be at least 2 long
+    if (Is_Blank(Pvs_At(pvs)) and Is_Pvs_Next_End(pvs)) {
         //
         // Paths like `append/` will get the value and ensure it is an
         // action.  so `x: 10 x/` should fail.  !!! panic in callers or here?
@@ -399,8 +402,8 @@ bool Eval_Path_Throws_Core(
             goto return_thrown;
 
         assert(
-            IS_END(pvs->value)
-            or (Is_Blank(pvs->value) and IS_END(pvs->value + 1))
+            Is_Level_At_End(pvs)
+            or (Is_Blank(Pvs_At(pvs)) and Is_Pvs_Next_End(pvs))
         );
     }
 
@@ -582,16 +585,13 @@ DECLARE_NATIVE(PICK)
         return Do_Port_Action(level_, location, word);
     }
 
-    DECLARE_LEVEL (pvs);
+    DECLARE_END_LEVEL (pvs);
     pvs->flags = Endlike_Header(DO_MASK_NONE);
 
     Copy_Cell(OUT, location);
     pvs->out = OUT;
 
     Copy_Cell(PVS_PICKER(pvs), ARG(PICKER));
-
-    pvs->value = END_BASE;
-    pvs->specifier = SPECIFIED;
 
     pvs->opt_label = nullptr;  // applies to e.g. :append/only returning APPEND
     pvs->special = nullptr;
@@ -663,16 +663,13 @@ DECLARE_NATIVE(POKE)
         return Do_Port_Action(level_, location, word);
     }
 
-    DECLARE_LEVEL (pvs);
+    DECLARE_END_LEVEL (pvs);
     pvs->flags = Endlike_Header(DO_MASK_NONE);
 
     Copy_Cell(OUT, location);
     pvs->out = OUT;
 
     Copy_Cell(PVS_PICKER(pvs), ARG(PICKER));
-
-    pvs->value = END_BASE;
-    pvs->specifier = SPECIFIED;
 
     pvs->opt_label = nullptr;  // applies to e.g. :append/only returning APPEND
     pvs->special = ARG(VALUE);

@@ -165,7 +165,7 @@ STATIC_ASSERT(EVAL_FLAG_4_IS_FALSE == BASE_FLAG_CELL);
 //
 // Function dispatchers have a special return value used by EVAL, which tells
 // it to use the frame's cell as the head of the next evaluation (before
-// what L->value would have ordinarily run.)  It used to have another mode
+// what L->feed->value would have ordinarily run.)  It used to have another mode
 // which was able to request the frame to change EVAL_FLAG_EXPLICIT_EVALUATE
 // state for the duration of the next evaluation...a feature that was used
 // by EVAL/ONLY.  The somewhat obscure feature was used to avoid needing to
@@ -412,10 +412,59 @@ typedef struct {
     //
     Array* array;
 
+    // `value`
+    //
+    // This is the "prefetched" value being processed.  Entry points to the
+    // evaluator must load a first value pointer into it...which for any
+    // successive evaluations will be updated via Fetch_Next_In_Level()--which
+    // retrieves values from arrays or va_lists.  But having the caller pass
+    // in the initial value gives the option of that value being out of band.
+    //
+    // (Hence if one has the series `[[a b c] [d e]]` it would be possible to
+    // have an independent path value `append/only` and NOT insert it in the
+    // series, yet get the effect of `append/only [a b c] [d e]`.  This only
+    // works for one value, but is a convenient no-cost trick for apply-like
+    // situations...as insertions usually have to "slide down" the values in
+    // the series and may also need to perform alloc/free/copy to expand.
+    // It also is helpful since in C, variadic functions must have at least
+    // one non-variadic parameter...and one might want that non-variadic
+    // parameter to be blended in with the variadics.)
+    //
+    // !!! Review impacts on debugging; e.g. a debug mode should hold onto
+    // the initial value in order to display full error messages.
+    //
+    const Cell* value;
+
+    // `specifier`
+    //
+    // This is used for relatively bound words to be looked up to become
+    // specific.  Typically the specifier is extracted from the payload of the
+    // ANY-ARRAY! value that provided the source.array for the call to DO.
+    // It may be nullptr if it's known that there are no relatively bound
+    // words that will be encountered from the source--as in va_list calls.
+    //
+    Specifier* specifier;
+
+    // `gotten`
+    //
+    // There is a lookahead step to see if the next item in an array is a
+    // WORD!.  If so it is checked to see if that word is a "lookback word"
+    // (e.g. one that refers to an ACTION! value set with the INFIX flag).
+    // Performing that lookup has the same cost as getting the variable value.
+    // Considering that the value will need to be used anyway--infix or not--
+    // the pointer is held in this field for WORD!s (and sometimes ACTION!)
+    //
+    // This carries a risk if a DO_NEXT is performed--followed by something
+    // that changes variables or the array--followed by another DO_NEXT.
+    // There is an assert to check this, and clients wishing to be robust
+    // across this (and other modifications) need to use the INDEXOR-based API.
+    //
+    const Value* gotten;
+
     // `index`
     //
     // This holds the index of the *next* item in the array to fetch as
-    // L->value for processing.  It's invalid if the frame is for a C va_list.
+    // L->feed->value for processing.  It's invalid if the frame is for a C va_list.
     //
     REBLEN index;
 
@@ -446,7 +495,7 @@ struct LevelStruct {
     //
     // Eval_Core_Throws() uses it to implement the SHOVE() operation, which
     // needs a calculated ACTION! value (including binding) to have a stable
-    // location which L->gotten can point to during arbitrary left-hand-side
+    // location which L->feed->gotten can point to during arbitrary left-hand-side
     // evaluations.
     //
     Cell spare;
@@ -509,61 +558,12 @@ struct LevelStruct {
     //
     Feed* feed;
 
-    // `specifier`
-    //
-    // This is used for relatively bound words to be looked up to become
-    // specific.  Typically the specifier is extracted from the payload of the
-    // ANY-ARRAY! value that provided the source.array for the call to DO.
-    // It may be nullptr if it's known that there are no relatively bound
-    // words that will be encountered from the source--as in va_list calls.
-    //
-    Specifier* specifier;
-
-    // `value`
-    //
-    // This is the "prefetched" value being processed.  Entry points to the
-    // evaluator must load a first value pointer into it...which for any
-    // successive evaluations will be updated via Fetch_Next_In_Level()--which
-    // retrieves values from arrays or va_lists.  But having the caller pass
-    // in the initial value gives the option of that value being out of band.
-    //
-    // (Hence if one has the series `[[a b c] [d e]]` it would be possible to
-    // have an independent path value `append/only` and NOT insert it in the
-    // series, yet get the effect of `append/only [a b c] [d e]`.  This only
-    // works for one value, but is a convenient no-cost trick for apply-like
-    // situations...as insertions usually have to "slide down" the values in
-    // the series and may also need to perform alloc/free/copy to expand.
-    // It also is helpful since in C, variadic functions must have at least
-    // one non-variadic parameter...and one might want that non-variadic
-    // parameter to be blended in with the variadics.)
-    //
-    // !!! Review impacts on debugging; e.g. a debug mode should hold onto
-    // the initial value in order to display full error messages.
-    //
-    const Cell* value;
-
     // `expr_index`
     //
     // The error reporting machinery doesn't want where `index` is right now,
     // but where it was at the beginning of a single EVALUATE step.
     //
     uintptr_t expr_index;
-
-    // `gotten`
-    //
-    // There is a lookahead step to see if the next item in an array is a
-    // WORD!.  If so it is checked to see if that word is a "lookback word"
-    // (e.g. one that refers to an ACTION! value set with the INFIX flag).
-    // Performing that lookup has the same cost as getting the variable value.
-    // Considering that the value will need to be used anyway--infix or not--
-    // the pointer is held in this field for WORD!s (and sometimes ACTION!)
-    //
-    // This carries a risk if a DO_NEXT is performed--followed by something
-    // that changes variables or the array--followed by another DO_NEXT.
-    // There is an assert to check this, and clients wishing to be robust
-    // across this (and other modifications) need to use the INDEXOR-based API.
-    //
-    const Value* gotten;
 
     // `original`
     //
@@ -650,7 +650,7 @@ struct LevelStruct {
     // But in PATH! frames, `special` is non-nullptr if this is a SET-PATH!,
     // and it is the value to ultimately set the path to.  The set should only
     // occur at the end of the path, so most setters should check
-    // `IS_END(pvs->value + 1)` before setting.
+    // `IS_END(Pvs_At(pvs) + 1)` before setting.
     //
     // !!! See notes at top of %c-path.c about why the path dispatch is more
     // complicated than simply being able to only pass the setval to the last
@@ -685,10 +685,7 @@ struct LevelStruct {
     } ref;
 
     struct {
-        // current_gotten has to be in the Level* for stackless, but can be
-        // a stack variable in the bootstrap evaluator.
-        //
-        /*const Value* current_gotten;*/
+        const Value* current_gotten;
     } eval;
   } u;
 

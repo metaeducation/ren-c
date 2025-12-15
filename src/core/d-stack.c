@@ -148,7 +148,7 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
             Init_Word(PUSH(), CANON(_TNULL_T));  // ~null~ WORD!
         }
         else
-            Derelativize(PUSH(), item, L->specifier);
+            Derelativize(PUSH(), item, Level_Binding(L));
 
         if (count == LVL_INDEX(L) - start - 1) {
             //
@@ -184,8 +184,8 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
     //
     Collapsify_Array(near, SPECIFIED, 3);
 
-    if (Any_List_Type(Unchecked_Type_Of(L->value)))
-        Init_Any_List(out, Type_Of(L->value), near);
+    if (Any_List_Type(Unchecked_Type_Of(L->feed->value)))
+        Init_Any_List(out, Type_Of(L->feed->value), near);
     else
         Init_Block(out, near);
 

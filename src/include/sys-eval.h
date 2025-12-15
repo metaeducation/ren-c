@@ -87,7 +87,7 @@ INLINE bool IS_QUOTABLY_SOFT(const Cell* v) {
 //
 // One invariant of access is that the input may only advance.  Before any
 // operations are called, any low-level client must have already seeded
-// L->value with a valid "fetched" Value*.
+// L->feed->value with a valid "fetched" Value*.
 //
 // This privileged level of access can be used by natives that feel they can
 // optimize performance by working with the evaluator directly.
@@ -215,9 +215,9 @@ INLINE void Push_Level_At_End(Level* L, Flags flags) {
     L->flags = Endlike_Header(flags);
 
     assert(L->feed == &TG_Level_Feed_End); // see DECLARE_END_LEVEL
-    L->gotten = nullptr;
+    L->feed->gotten = nullptr;
     SET_FRAME_VALUE(L, END_BASE);
-    L->specifier = SPECIFIED;
+    L->feed->specifier = SPECIFIED;
 
     Push_Level_Core(L);
 }
@@ -247,16 +247,16 @@ INLINE void Push_Level_At(
 ){
     L->flags = Endlike_Header(flags);
 
-    L->gotten = nullptr; // Eval_Core_Throws() must fetch for TYPE_WORD, etc.
+    L->feed->gotten = nullptr; // Eval_Core_Throws() must fetch for TYPE_WORD, etc.
     SET_FRAME_VALUE(L, Array_At(array, index));
 
     L->feed->vaptr = nullptr;
     L->feed->array = array;
     L->feed->index = index + 1;
-    L->feed->pending = L->value + 1;
+    L->feed->pending = L->feed->value + 1;
     L->feed->deferring_infix = false;
 
-    L->specifier = specifier;
+    L->feed->specifier = specifier;
 
     // Frames are pushed to reuse for several sequential operations like
     // ANY, ALL, CASE, REDUCE.  It is allowed to change the output cell for
@@ -288,29 +288,29 @@ INLINE void Set_Level_Detected_Fetch(
     Level* L,
     const void *p
 ){
-    // This is the last chance we'll have to see L->value.  So if we are
+    // This is the last chance we'll have to see L->feed->value.  So if we are
     // supposed to be freeing it or releasing it, then it must be proxied
     // into a place where the data will be safe long enough for lookback.
 
-    if (Not_Base_Root_Bit_Set(L->value))
+    if (Not_Base_Root_Bit_Set(L->feed->value))
         goto detect;
 
     Array* a; // ^--goto
-    a = Singular_From_Cell(L->value);
+    a = Singular_From_Cell(L->feed->value);
     if (Not_Flex_Info(a, API_RELEASE))
         goto detect;
 
     if (Get_Flex_Info(a, API_INSTRUCTION))
-        Free_Instruction(Singular_From_Cell(L->value));
+        Free_Instruction(Singular_From_Cell(L->feed->value));
     else
-        rebRelease(cast(const Value*, L->value));
+        rebRelease(cast(const Value*, L->feed->value));
 
   detect: {
 
     if (not p) { // libRebol's null/~null~ (Is_Nulled prohibited below)
 
         L->feed->array = nullptr;
-        L->value = NULLED_CELL;
+        L->feed->value = NULLED_CELL;
 
     } else switch (Detect_Rebol_Pointer(p)) {
 
@@ -379,7 +379,7 @@ INLINE void Set_Level_Detected_Fetch(
             //
             // This happens when somone says rebValue(..., "", ...) or similar,
             // and gets an empty array from a string scan.  It's not legal
-            // to put an END in L->value, and it's unknown if the variadic
+            // to put an END in L->feed->value, and it's unknown if the variadic
             // feed is actually over so as to put null... so get another
             // value out of the va_list and keep going.
             //
@@ -396,8 +396,8 @@ INLINE void Set_Level_Detected_Fetch(
         //
         Manage_Flex(reified);
 
-        L->value = Array_Head(reified);
-        L->feed->pending = L->value + 1; // may be END
+        L->feed->value = Array_Head(reified);
+        L->feed->pending = L->feed->value + 1; // may be END
         L->feed->array = reified;
         L->feed->index = 1;
 
@@ -412,7 +412,7 @@ INLINE void Set_Level_Detected_Fetch(
         //
         assert(Get_Flex_Info(instruction, API_INSTRUCTION));
         assert(Not_Base_Managed(instruction));
-        L->value = ARR_SINGLE(instruction);
+        L->feed->value = ARR_SINGLE(instruction);
         break; }
 
       case DETECTED_AS_FREE:
@@ -427,15 +427,15 @@ INLINE void Set_Level_Detected_Fetch(
         // it will be released on the *next* call (see top of function)
 
         L->feed->array = nullptr;
-        L->value = cell; // note that END is detected separately
-        assert(not IS_RELATIVE(L->value));
+        L->feed->value = cell; // note that END is detected separately
+        assert(not IS_RELATIVE(L->feed->value));
         break; }
 
       case DETECTED_AS_END: {
         //
         // We're at the end of the variadic input, so end of the line.
         //
-        L->value = END_BASE;
+        L->feed->value = END_BASE;
         Corrupt_If_Needful(L->feed->pending);
 
         // The va_end() is taken care of here, or if there is a throw/panic it
@@ -464,7 +464,7 @@ INLINE void Set_Level_Detected_Fetch(
 // Fetch_Next_In_Level() (see notes above)
 //
 // Once a va_list is "fetched", it cannot be "un-fetched".  Hence only one
-// unit of fetch is done at a time, into L->value.  L->feed->pending thus
+// unit of fetch is done at a time, into L->feed->value.  L->feed->pending thus
 // must hold a signal that data remains in the va_list and it should be
 // consulted further.  That signal is an END marker.
 //
@@ -474,14 +474,14 @@ INLINE void Set_Level_Detected_Fetch(
 INLINE void Fetch_Next_In_Level(Level* L) {
     assert(Not_Level_At_End(L)); // caller should test this first
 
-    // We are changing L->value, and thus by definition any L->gotten value
+    // We are changing L->feed->value, and thus by definition any L->feed->gotten value
     // will be invalid.  It might be "wasteful" to always set this to END,
     // especially if it's going to be overwritten with the real fetch...but
     // at a source level, having every call to Fetch_Next_In_Level have to
-    // explicitly set L->gotten to null is overkill.  Could be split into
-    // a version that just trashes L->gotten in the debug build vs. END.
+    // explicitly set L->feed->gotten to null is overkill.  Could be split into
+    // a version that just trashes L->feed->gotten in the debug build vs. END.
     //
-    L->gotten = nullptr;
+    L->feed->gotten = nullptr;
 
     if (NOT_END(L->feed->pending)) {
         //
@@ -495,7 +495,7 @@ INLINE void Fetch_Next_In_Level(Level* L) {
             or L->feed->pending == Array_At(L->feed->array, L->feed->index)
         );
 
-        L->value = L->feed->pending;
+        L->feed->value = L->feed->pending;
 
         ++L->feed->pending; // might be becoming an END marker, here
         ++L->feed->index;
@@ -506,7 +506,7 @@ INLINE void Fetch_Next_In_Level(Level* L) {
         // an array by Reify_Va_To_Array_In_Level().  The first END we hit
         // is the full stop end.
         //
-        L->value = END_BASE;
+        L->feed->value = END_BASE;
         Corrupt_If_Needful(L->feed->pending);
 
         ++L->feed->index; // for consistency in index termination state
@@ -534,7 +534,7 @@ INLINE void Fetch_Next_In_Level(Level* L) {
 
 
 INLINE void Quote_Next_In_Level(Value* dest, Level* L) {
-    Derelativize(dest, L->value, L->specifier);
+    Derelativize(dest, L->feed->value, L->feed->specifier);
     Fetch_Next_In_Level(L);
 }
 
@@ -698,30 +698,10 @@ INLINE bool Eval_Step_Mid_Level_Throws(Level* L, Flags flags) {
 //
 INLINE bool Eval_Step_In_Subframe_Throws(
     Value* out,
-    Level* higher,  // may not be direct parent (not child->prior upon push!)
     Flags flags,
     Level* child  // passed w/base preload, refinements can be on stack
 ){
     child->out = out;
-
-    // !!! Should they share a source instead of updating?
-    //
-    assert(child->feed == higher->feed);
-    child->value = higher->value;
-    child->gotten = higher->gotten;
-    child->specifier = higher->specifier;
-
-    // L->gotten is never marked for GC, because it should never be kept
-    // alive across arbitrary evaluations (L->value should keep it alive).
-    // We'll write it back with an updated value from the child after the
-    // call, and no one should be able to read it until then (e.g. the caller
-    // can't be a variadic frame that is executing yet)
-    //
-  #if RUNTIME_CHECKS
-    Corrupt_If_Needful(higher->gotten);
-    REBLEN old_index = higher->feed->index;
-  #endif
-
     child->flags = Endlike_Header(flags);
 
     // One case in which child->prior on this push may not be equal to the
@@ -731,23 +711,21 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     // it is the variadic frame.
     //
     Push_Level_Core(child);
+    possibly(child->feed == child->prior->feed);
+
+    // L->feed->gotten is never marked for GC, because it should never be kept
+    // alive across arbitrary evaluations (L->feed->value should keep it alive).
+    // We'll write it back with an updated value from the child after the
+    // call, and no one should be able to read it until then (e.g. the caller
+    // can't be a variadic frame that is executing yet)
+    //
+  #if RUNTIME_CHECKS
+    Corrupt_If_Needful(child->feed->gotten);
+  #endif
+
     Reuse_Varlist_If_Available(child);
     bool threw = Eval_Core_Throws(child);
     Drop_Level(child);
-
-    assert(
-        IS_END(child->value)
-        or LVL_IS_VALIST(child)
-        or old_index != child->feed->index
-        or (flags & EVAL_FLAG_REEVALUATE_CELL)
-        or threw
-    );
-
-    // !!! Should they share a source instead of updating?
-    //
-    higher->value = child->value;
-    higher->gotten = child->gotten;
-    assert(higher->specifier == child->specifier); // !!! can't change?
 
     return threw;
 }
@@ -771,7 +749,7 @@ INLINE REBIXO Eval_At_Core(
     L->feed->array = array;
     L->feed->deferring_infix = false;
 
-    L->gotten = nullptr; // SET_FRAME_VALUE() asserts this is nullptr
+    L->feed->gotten = nullptr; // SET_FRAME_VALUE() asserts this is nullptr
 
     if (opt_first) {
         SET_FRAME_VALUE(L, opt_first);
@@ -782,13 +760,13 @@ INLINE REBIXO Eval_At_Core(
     else {
         SET_FRAME_VALUE(L, Array_At(array, index));
         L->feed->index = index + 1;
-        L->feed->pending = L->value + 1;
+        L->feed->pending = L->feed->value + 1;
         if (Is_Level_At_End(L))
             return END_FLAG;
     }
 
     L->out = out;
-    L->specifier = specifier;
+    L->feed->specifier = specifier;
 
     Push_Level_Core(L);
     Reuse_Varlist_If_Available(L);
@@ -844,8 +822,8 @@ INLINE void Reify_Va_To_Array_In_Level(
         assert(L->feed->pending == END_BASE);
 
         do {
-            assert(not Is_Antiform(L->value));
-            Derelativize(PUSH(), L->value, L->specifier);
+            assert(not Is_Antiform(L->feed->value));
+            Derelativize(PUSH(), L->feed->value, L->feed->specifier);
 
             Fetch_Next_In_Level(L);
         } while (Not_Level_At_End(L));
@@ -883,7 +861,7 @@ INLINE void Reify_Va_To_Array_In_Level(
     else
         SET_FRAME_VALUE(L, Array_Head(L->feed->array));
 
-    L->feed->pending = L->value + 1;
+    L->feed->pending = L->feed->value + 1;
 }
 
 
@@ -920,10 +898,10 @@ INLINE REBIXO Eval_Va_Core(
     L->feed->deferring_infix = false;
 
     // We reuse logic in Fetch_Next_In_Level() and Set_Level_Detected_Fetch()
-    // but the previous L->value will be tested for BASE_FLAG_ROOT.
+    // but the previous L->feed->value will be tested for BASE_FLAG_ROOT.
     //
     DECLARE_VALUE (junk);
-    L->value = Init_Unreadable(junk); // shows where garbage came from
+    L->feed->value = Init_Unreadable(junk); // shows where garbage came from
 
     if (opt_first)
         Set_Level_Detected_Fetch(L, opt_first);
@@ -934,8 +912,8 @@ INLINE REBIXO Eval_Va_Core(
         return END_FLAG;
 
     L->out = out;
-    L->specifier = SPECIFIED; // relative values not allowed in va_lists
-    L->gotten = nullptr;
+    L->feed->specifier = SPECIFIED; // relative values not allowed in va_lists
+    L->feed->gotten = nullptr;
 
     Push_Level_Core(L);
     Reuse_Varlist_If_Available(L);

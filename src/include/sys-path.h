@@ -82,6 +82,13 @@
 #define PVS_PICKER(pvs) \
     Level_Spare(pvs)
 
+#define Pvs_At(pvs)  Level_At(pvs)
+#define Pvs_Binding(pvs)  Level_Binding(pvs)
+
+// !!! Strange old broken mechanic, review...
+//
+#define Is_Pvs_Next_End(pvs)  IS_END(Pvs_At(pvs) + 1)
+
 INLINE bool Get_Path_Throws_Core(
     Value* out,
     const Cell* any_path,

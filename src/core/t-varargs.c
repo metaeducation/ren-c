@@ -198,7 +198,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
                 return true;
             }
 
-            if (IS_END(L_temp->value)) {
+            if (Is_Level_At_End(L_temp)) {
                 SET_END(shared);
             }
             else {
@@ -276,13 +276,12 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             DECLARE_SUBLEVEL (child, L);
             if (Eval_Step_In_Subframe_Throws(
                 SET_END(out),
-                L,
                 EVAL_FLAG_FULFILLING_ARG,
                 child
             )){
                 return true;
             }
-            L->gotten = nullptr; // cache must be forgotten...
+            L->feed->gotten = nullptr; // cache must be forgotten...
             break; }
 
         case PARAMCLASS_HARD_QUOTE:
@@ -609,11 +608,11 @@ void MF_Varargs(Molder* mo, const Cell* v, bool form) {
     else if (Is_Level_Style_Varargs_Maybe_Null(&L, v)) {
         if (not L)
             Append_Unencoded(mo->utf8flex, "!!!");
-        else if (IS_END((unwrap L)->value))
+        else if (Is_Level_At_End(unwrap L))
             Append_Unencoded(mo->utf8flex, "[]");
         else if (pclass == PARAMCLASS_HARD_QUOTE) {
             Append_Unencoded(mo->utf8flex, "[");
-            Mold_Value(mo, (unwrap L)->value); // hard quote can show one
+            Mold_Value(mo, Level_At(unwrap L)); // hard quote can show one
             Append_Unencoded(mo->utf8flex, " ...]");
         }
         Append_Unencoded(mo->utf8flex, "[...]");

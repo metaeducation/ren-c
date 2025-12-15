@@ -1064,20 +1064,20 @@ static void Mark_Level_Stack_Deep(void)
         // will stay on the stack while the zero-arity function is running.
         // The array still might be used in an error, so can't GC it.
         //
-        Queue_Mark_Opt_End_Cell_Deep(L->value);
+        Queue_Mark_Opt_End_Cell_Deep(L->feed->value);
 
-        // If L->gotten is set, it usually shouldn't need marking because
-        // it's fetched via L->value and so would be kept alive by it.  Any
+        // If L->feed->gotten is set, it usually shouldn't need marking because
+        // it's fetched via L->feed->value and so would be kept alive by it.  Any
         // code that a frame runs that might disrupt that relationship so it
-        // would fetch differently should have meant clearing L->gotten.
+        // would fetch differently should have meant clearing L->feed->gotten.
         //
-        dont(Queue_Mark_Opt_End_Cell_Deep(L->gotten));
+        dont(Queue_Mark_Opt_End_Cell_Deep(L->feed->gotten));
 
         if (
-            L->specifier != SPECIFIED
-            and (L->specifier->header.bits & BASE_FLAG_MANAGED)
+            L->feed->specifier != SPECIFIED
+            and (L->feed->specifier->header.bits & BASE_FLAG_MANAGED)
         ){
-            Queue_Mark_Context_Deep(CTX(L->specifier));
+            Queue_Mark_Context_Deep(CTX(L->feed->specifier));
         }
 
         Queue_Mark_Opt_End_Cell_Deep(L->out); // END legal, but not nullptr

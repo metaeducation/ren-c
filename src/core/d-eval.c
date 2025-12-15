@@ -59,7 +59,7 @@ void Dump_Level_Location(const Cell* current, Level* L)
     DECLARE_VALUE (dump);
 
     if (current) {
-        Derelativize(dump, current, L->specifier);
+        Derelativize(dump, current, Level_Binding(L));
         printf("Dump_Level_Location() current\n");
         PROBE(dump);
     }
@@ -98,7 +98,7 @@ void Dump_Level_Location(const Cell* current, Level* L)
             TYPE_BLOCK,
             L->feed->array,
             cast(REBLEN, L->feed->index),
-            L->specifier
+            L->feed->specifier
         );
         PROBE(dump);
     }
@@ -195,9 +195,9 @@ void Eval_Core_Expression_Checks_Debug(Level* L) {
     //
     /* L->prior->gotten is either nullptr or corrupt */
 
-    if (L->gotten) {
+    if (L->feed->gotten) {
         assert(Is_Word(Level_At(L)));
-        assert(Try_Get_Opt_Var(Level_At(L), Level_Binding(L)) == L->gotten);
+        assert(Try_Get_Opt_Var(Level_At(L), Level_Binding(L)) == L->feed->gotten);
     }
 
     assert(Is_Cell_Unreadable(&TG_Thrown_Arg)); // no evals between throws
@@ -305,9 +305,9 @@ void Do_After_Action_Checks_Debug(Level* L) {
 void Eval_Core_Exit_Checks_Debug(Level* L) {
     Eval_Core_Shared_Checks_Debug(L);
 
-    if (L->gotten) {
+    if (L->feed->gotten) {
         assert(Is_Word(Level_At(L)));
-        assert(Try_Get_Opt_Var(Level_At(L), Level_Binding(L)) == L->gotten);
+        assert(Try_Get_Opt_Var(Level_At(L), Level_Binding(L)) == L->feed->gotten);
     }
 
     if (Not_Level_At_End(L) and not LVL_IS_VALIST(L)) {

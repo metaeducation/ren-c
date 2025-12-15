@@ -88,15 +88,14 @@ INLINE void CATCH_THROWN(Cell* arg_out, Value* thrown) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-#define Not_Level_At_End(L)  NOT_END((L)->value)
-#define Is_Level_At_End(L)  IS_END((L)->value)
+#define Not_Level_At_End(L)  NOT_END((L)->feed->value)
+#define Is_Level_At_End(L)  IS_END((L)->feed->value)
+#define Level_Binding(L)  (L)->feed->specifier
 
 INLINE const Cell* Level_At(Level* L) {
-    assert(NOT_END(L->value));
-    return L->value;
+    assert(NOT_END(L->feed->value));
+    return L->feed->value;
 }
-
-#define Level_Binding(L)  (L)->specifier
 
 
 INLINE bool LVL_IS_VALIST(Level* L) {
@@ -285,8 +284,8 @@ INLINE const char* Frame_Label_Or_Anonymous_UTF8(Level* L) {
 }
 
 INLINE void SET_FRAME_VALUE(Level* L, const Cell* value) {
-    assert(not L->gotten); // is fetched L->value, we'd be invalidating it!
-    L->value = value;
+    assert(not L->feed->gotten); // is fetched L->feed->value, we'd be invalidating it!
+    L->feed->value = value;
 }
 
 

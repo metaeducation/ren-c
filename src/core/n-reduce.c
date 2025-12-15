@@ -525,7 +525,7 @@ bool Compose_To_Stack_Throws(
         else {
             // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7] ;-- non-deep
             //
-            Derelativize(PUSH(), at, L->specifier);  // preserves newline
+            Derelativize(PUSH(), at, Level_Binding(L));  // preserves newline
         }
 
         Fetch_Next_In_Level(L);

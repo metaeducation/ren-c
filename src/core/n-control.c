@@ -699,7 +699,7 @@ static Bounce Case_Choose_Core_May_Throw(
             // ** Script Error: if does not allow tag! for its branch argument
             //
             if (not Is_Block(cell) and not Is_Action(cell))
-                panic (Error_Invalid_Core(cell, L->specifier));
+                panic (Error_Invalid_Core(cell, Level_Binding(L)));
 
             continue;
         }
@@ -717,7 +717,7 @@ static Bounce Case_Choose_Core_May_Throw(
                 return BOUNCE_THROWN;
             }
 
-            L->gotten = nullptr; // can't hold onto cache, running user code
+            L->feed->gotten = nullptr; // can't hold onto cache, running user code
 
             Copy_Cell(block, OUT); // can't evaluate into ARG(BLOCK)
             if (Is_Block(block)) {
@@ -734,7 +734,7 @@ static Bounce Case_Choose_Core_May_Throw(
                     return BOUNCE_THROWN;
                 }
             } else
-                panic (Error_Invalid_Core(OUT, L->specifier));
+                panic (Error_Invalid_Core(OUT, Level_Binding(L)));
 
             Trashify_Branched(OUT);  // null is reserved for no branch taken
         }
@@ -923,7 +923,7 @@ DECLARE_NATIVE(SWITCH)
             OUT,
             Cell_Array(at),
             VAL_INDEX(at),
-            L->specifier
+            Level_Binding(L)
         )){
             Abort_Level(L);
             return BOUNCE_THROWN;
@@ -968,7 +968,7 @@ DECLARE_NATIVE(DEFAULT)
 
     if (Is_Nulled(target)) { // e.g. `case [... default [...]]`
         UNUSED(ARG(LOOK));
-        if (NOT_END(level_->value)) // !!! shortcut using variadic for now
+        if (Not_Level_At_End(level_)) // !!! shortcut using variadic for now
             panic ("DEFAULT usage with no left hand side must be at <end>");
 
         if (Do_Branch_Throws(OUT, ARG(BRANCH)))

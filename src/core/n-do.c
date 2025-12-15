@@ -71,7 +71,7 @@ DECLARE_NATIVE(REEVAL)
     Init_Trash(OUT);  // !!! R3C patch, better than error on `reeval :elide`
     Set_Cell_Flag(OUT, OUT_MARKED_STALE);
 
-    if (Eval_Step_In_Subframe_Throws(OUT, level_, flags, child))
+    if (Eval_Step_In_Subframe_Throws(OUT, flags, child))
         return BOUNCE_THROWN;
 
     return OUT;
@@ -148,13 +148,13 @@ DECLARE_NATIVE(EVAL_INFIX)
         panic ("ME and MY only work if right hand WORD! is an ACTION!");
 
     // Here we do something devious.  We subvert the system by setting
-    // L->gotten to an infixed version of the function even if it is
+    // L->feed->gotten to an infixed version of the function even if it is
     // not infixed.  This lets us slip in a first argument to a function
     // *as if* it were infixed, e.g. `series: my next`.
     //
     Set_Cell_Flag(temp, INFIX_IF_ACTION);
     Push_Lifeguard(temp);
-    L->gotten = temp;
+    L->feed->gotten = temp;
 
     // !!! If we were to give an error on using ME with non-infix or MY with
     // non-prefix, we'd need to know the fetched infix state.  At the moment,
@@ -168,7 +168,7 @@ DECLARE_NATIVE(EVAL_INFIX)
     //
     DECLARE_VALUE (word);
     Init_Word(word, opt_label);
-    L->value = word;
+    L->feed->value = word;
 
     // Simulate as if the passed-in value was calculated into the output slot,
     // which is where infix functions usually find their left hand values.
@@ -176,7 +176,7 @@ DECLARE_NATIVE(EVAL_INFIX)
     Copy_Cell(OUT, ARG(LEFT));
 
     Flags flags = EVAL_FLAG_FULFILLING_ARG | EVAL_FLAG_POST_SWITCH;
-    if (Eval_Step_In_Subframe_Throws(OUT, L, flags, child)) {
+    if (Eval_Step_In_Subframe_Throws(OUT, flags, child)) {
         Drop_Lifeguard(temp);
         return BOUNCE_THROWN;
     }
@@ -488,7 +488,7 @@ DECLARE_NATIVE(EVALUATE)
             return nullptr;
 
         while (Not_Level_At_End(L)) {
-            if (Eval_Step_In_Subframe_Throws(SET_END(OUT), L, flags, child))
+            if (Eval_Step_In_Subframe_Throws(SET_END(OUT), flags, child))
                 return BOUNCE_THROWN;
 
             if (Bool_ARG(STEP3))
