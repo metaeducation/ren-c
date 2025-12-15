@@ -3324,11 +3324,10 @@ Bounce Api_Function_Dispatcher(Level* const L)
         Phase_Paramlist(details), SYM_RETURN
     );
 
-    heeded (Corrupt_Cell_If_Needful(Level_Spare(L)));
-    heeded (Corrupt_Cell_If_Needful(Level_Scratch(L)));
-
     require(
-      bool check = Typecheck_Coerce_Return(L, param, L->out)
+      bool check = Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
+        L, param, L->out
+      )
     );
     if (not check)
         panic (Error_Bad_Return_Type(L, L->out, param));

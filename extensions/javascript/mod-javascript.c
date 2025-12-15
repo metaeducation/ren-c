@@ -835,13 +835,10 @@ Bounce JavaScript_Dispatcher(Level* const L)
         Phase_Paramlist(details), SYM_RETURN
     );
 
-    heeded (Corrupt_Cell_If_Needful(SPARE));
-    heeded (Corrupt_Cell_If_Needful(SCRATCH));
-
-    bool is_return = true;
-
     require (
-        bool check = Typecheck_Coerce(L, param, OUT, is_return)
+      bool check = Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
+        L, param, OUT
+      )
     );
     if (not check)
         panic (Error_Bad_Return_Type(L, OUT, param));

@@ -360,11 +360,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     }
 
     if (param) {
-        heeded (Corrupt_Cell_If_Needful(Level_Spare(TOP_LEVEL)));
-        heeded (Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
-
         require (
-          bool check = Typecheck_Coerce(TOP_LEVEL, param, out, false)
+          bool check = Typecheck_Coerce_Uses_Spare_And_Scratch(
+            TOP_LEVEL, param, out
+          )
         );
         if (not check) {
             // !!! Array-based varargs only store the parameter list they are

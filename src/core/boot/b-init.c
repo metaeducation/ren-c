@@ -265,7 +265,7 @@ static void Init_Action_Spec_Tags(void)
 
     Element* param = Init_Unconstrained_Parameter(
         Alloc_Value(),
-        FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
+        FLAG_PARAMCLASS_BYTE(PARAMCLASS_META)
     );
     CELL_PARAMETER_PAYLOAD_1_SPEC(param) = a;  // should GC protect array
     Clear_Cell_Flag(param, DONT_MARK_PAYLOAD_1);  // sync flag

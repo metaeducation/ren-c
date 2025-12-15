@@ -627,11 +627,8 @@ Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
     ParamList* paramlist = Phase_Paramlist(Frame_Phase(action));
     Param* param = Phase_Param(paramlist, PARAM_INDEX(TARGET));
 
-    heeded (Corrupt_Cell_If_Needful(SCRATCH));
-    heeded (Corrupt_Cell_If_Needful(SPARE));
-
     require (
-      bool check = Typecheck_Coerce(LEVEL, param, out, false)
+      bool check = Typecheck_Coerce_Uses_Spare_And_Scratch(LEVEL, param, out)
     );
 
     if (not check)

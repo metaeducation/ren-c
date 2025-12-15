@@ -336,10 +336,7 @@ void Do_After_Action_Checks_Debug(Level* level_) {
         );
         assert(Is_Parameter(param));
 
-        heeded (Corrupt_Cell_If_Needful(SPARE));
-        heeded (Corrupt_Cell_If_Needful(SCRATCH));
-
-        bool check = Typecheck_Coerce_Return(
+        bool check = Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
             LEVEL, param, OUT
         ) except (Error* e) {
             assert(!"'Raw' native code did not decay/panic value correctly!");

@@ -124,7 +124,7 @@ bool Arrow_Details_Querier(
       case SYM_RETURN_OF:
         Init_Unconstrained_Parameter(
             out,
-            FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
+            FLAG_PARAMCLASS_BYTE(PARAMCLASS_META)
         );
         return true;
 

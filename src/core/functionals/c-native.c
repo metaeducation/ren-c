@@ -197,7 +197,7 @@ DECLARE_NATIVE(NATIVE)
     if (ARG(COMBINATOR) and ARG(INTRINSIC))
         panic (Error_Bad_Refines_Raw());
 
-    NativeType native_type = did ARG(COMBINATOR) ? NATIVE_COMBINATOR
+    NativeType native_type = ARG(COMBINATOR) ? NATIVE_COMBINATOR
         : ARG(INTRINSIC) ? NATIVE_INTRINSIC
         : NATIVE_NORMAL;
 

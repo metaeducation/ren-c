@@ -79,10 +79,10 @@ INLINE bool Is_Logic(Need(const Stable*) v) {
 #define Is_Okay(v) \
     Is_Anti_Word_With_Id((v), SYM_OKAY)
 
-INLINE bool Is_Possibly_Unstable_Value_Okay(Value* atom) {  // typecheck only!
-    if (not Is_Possibly_Unstable_Value_Keyword(atom))
+INLINE bool Is_Possibly_Unstable_Value_Okay(const Value* v) {
+    if (not Is_Possibly_Unstable_Value_Keyword(v))
         return false;
-    return Word_Id(atom) == SYM_OKAY;
+    return Word_Id(v) == SYM_OKAY;
 }
 
 #define Init_Okay(out) \

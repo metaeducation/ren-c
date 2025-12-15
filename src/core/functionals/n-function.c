@@ -583,19 +583,14 @@ DECLARE_NATIVE(UNWIND)
 
 
 //
-//  Typecheck_Coerce_Return: C
+//  Typecheck_Coerce_Return_Uses_Spare_And_Scratch: C
 //
-Result(bool) Typecheck_Coerce_Return(
+Result(bool) Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
     Level* L,  // Level whose spare/scratch used (not necessarily return level)
     const Element* param,  // parameter for the RETURN (may be quoted)
-    Value* atom  // coercion needs mutability
+    Value* v  // not `const Value*` -- coercion needs mutability
 ){
-  #if NEEDFUL_DOES_CORRUPTIONS
-    assert(Not_Cell_Readable(Level_Scratch(L)));
-    assert(Not_Cell_Readable(Level_Spare(L)));
-  #endif
-
-    assert(  // to be in specialized slot, RETURN can't be a plain PARAMETER!
+    assert(  // for specialized slot, RETURN can't be a plain PARAMETER!
         Heart_Of(param) == TYPE_PARAMETER
         and (
             LIFT_BYTE(param) == NOQUOTE_2
@@ -603,21 +598,13 @@ Result(bool) Typecheck_Coerce_Return(
         )
     );
 
-    if (Is_Error(atom))
-        return true;  // For now, all functions return definitional errors
+    assert(Parameter_Class(param) == PARAMCLASS_META);
 
-    if (
-        Get_Parameter_Flag(param, TRASH_DEFINITELY_OK)
-        and Is_Possibly_Unstable_Value_Trash(atom)
-    ){
-        return true;  // common case, make fast
-    }
-
-    if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(atom))
-        return true;  // kind of common... necessary?
+    if (Is_Error(v))
+        return true;  // for now, all functions allow definitional errors
 
     trap (
-      bool check = Typecheck_Coerce(L, param, atom, true)
+      bool check = Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, v)
     );
 
     return check;
@@ -679,11 +666,10 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     );
 
     if (not ARG(RUN)) {  // plain simple RETURN (not weird tail-call)
-        heeded (Corrupt_Cell_If_Needful(SPARE));
-        heeded (Corrupt_Cell_If_Needful(SCRATCH));
-
         require (
-          bool check = Typecheck_Coerce_Return(LEVEL, param, v)
+          bool check = Typecheck_Coerce_Return_Uses_Spare_And_Scratch(
+            LEVEL, param, v
+          )
         );
         if (not check)  // do it now [2]
             panic (Error_Bad_Return_Type(target_level, v, param));

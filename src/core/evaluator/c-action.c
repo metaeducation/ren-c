@@ -917,11 +917,8 @@ Bounce Action_Executor(Level* L)
             continue;
         }
 
-        heeded (Corrupt_Cell_If_Needful(SPARE));
-        heeded (Corrupt_Cell_If_Needful(SCRATCH));
-
         require (
-          bool check = Typecheck_Coerce(L, param, ARG, false)
+          bool check = Typecheck_Coerce_Uses_Spare_And_Scratch(L, param, ARG)
         );
         if (not check) {
             require (

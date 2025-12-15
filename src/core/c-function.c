@@ -171,7 +171,7 @@ static Result(None) Push_Keys_And_Params_Core(
 
         Init_Unconstrained_Parameter(
             PUSH(),
-            FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
+            FLAG_PARAMCLASS_BYTE(PARAMCLASS_META)
         );
         returner_index = TOP_INDEX;
     }
@@ -339,20 +339,23 @@ static Result(None) Push_Keys_And_Params_Core(
                     );
                 }
                 symbol = CANON(DUMMY1);
-                pclass = PARAMCLASS_NORMAL;
+                pclass = PARAMCLASS_META;
                 is_returner = true;
                 break; }
 
               case TRAILING_SPACE_AND(WORD):
-                if (not returner_id)
+                if (
+                    quoted
+                    or not returner_id
+                    or Word_Id(item) != unwrap returner_id
+                ){
                     return fail (
-                        "SET-WORD in spec but no RETURN or YIELD in effect"
+                        "SET-WORD in spec must match RETURN:/YIELD: name"
                     );
-                if (not quoted and Word_Id(item) == unwrap returner_id) {
-                    symbol = Word_Symbol(item);
-                    pclass = PARAMCLASS_NORMAL;
-                    is_returner = true;
                 }
+                symbol = Word_Symbol(item);
+                pclass = PARAMCLASS_META;
+                is_returner = true;
                 break;
 
               default:

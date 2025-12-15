@@ -384,11 +384,10 @@ Details* Alloc_Action_From_Exemplar(
             continue;
         }
 
-        heeded (Corrupt_Cell_If_Needful(Level_Spare(TOP_LEVEL)));
-        heeded (Corrupt_Cell_If_Needful(Level_Scratch(TOP_LEVEL)));
-
         require (
-          bool check = Typecheck_Coerce(TOP_LEVEL, param, arg, false)
+          bool check = Typecheck_Coerce_Uses_Spare_And_Scratch(
+            TOP_LEVEL, param, arg
+          )
         );
         if (not check)
             panic (Error_Arg_Type(label, key, param, arg));
