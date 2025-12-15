@@ -293,6 +293,7 @@ application-class: make project-class [
             depends
             searches
             ldflags
+			debug
     ]
 
 ]
@@ -316,6 +317,7 @@ dynamic-library-class: make project-class [
             depends
             searches
             ldflags
+			debug
     ]
 ]
 
@@ -510,7 +512,7 @@ cc: make compiler-class [
         depends [block! ~null~]
         searches [block! ~null~]
         ldflags [block! any-string! ~null~]
-        /debug
+        debug [logic! ~null~]
         /dynamic
     ][
         suffix: either dynamic [
@@ -707,7 +709,10 @@ cl: make compiler-class [
                         debug = okay
                         integer? debug ;-- doesn't map to a CL option
                     ][
-                        keep "/Od /Zi"
+						if not O [
+							keep "/Od"
+						]
+                        keep "/Zi"
                     ]
 
                     panic ["unrecognized debug option:" debug]
@@ -742,7 +747,7 @@ cl: make compiler-class [
         depends [block! ~null~]
         searches [block! ~null~]
         ldflags [block! any-string! ~null~]
-        /debug
+        debug [logic! ~null~]
         /dynamic
     ][
         suffix: either dynamic [

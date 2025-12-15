@@ -428,7 +428,7 @@ switch user-config/debug [
         app-config/debug: okay
         cfg-symbols: okay
         cfg-sanitize: okay
-        append app-config/cflags <gcc:-fsanitize=address>
+        append app-config/cflags [<gcc:-fsanitize=address> <msc:/fsanitize=address>]
         append app-config/ldflags <gcc:-fsanitize=address>
     ]
 
