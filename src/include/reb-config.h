@@ -437,6 +437,12 @@ an EXE, no DLLs or LIBs.  See the main branch for more complex options.
 #endif
 
 
+// !!! This feature used to exercise the idea that pointers given back from
+// a feed would expire, but it was done in an outdated way.  It's not a bad
+// idea to test this, even though the main problem with it is resolved by
+// copying a cell into "current" in evaluator stepping.  But if the test were
+// to be reinvented it should be a feature of the feed layer.
+//
 #define DEBUG_EXPIRED_LOOKBACK  0
 
 

@@ -122,9 +122,9 @@ bool Next_Path_Throws(REBPVS *pvs)
     if (Is_Nulled(PVS_PICKER(pvs)))
         panic (Error_No_Value_Core(pvs->value, pvs->specifier));
 
-    Fetch_Next_In_Level(nullptr, pvs); // may be at end
+    Fetch_Next_In_Level(pvs); // may be at end
 
-    if (IS_END(pvs->value) and PVS_IS_SET_PATH(pvs)) {
+    if (Is_Level_At_End(pvs) and PVS_IS_SET_PATH(pvs)) {
         const Value* bounce = hook(
             pvs,
             PVS_PICKER(pvs),
@@ -386,7 +386,7 @@ bool Eval_Path_Throws_Core(
     if (Is_Nulled(pvs->out))
         panic (Error_No_Value_Core(pvs->value, pvs->specifier));
 
-    Fetch_Next_In_Level(nullptr, pvs);
+    Fetch_Next_In_Level(pvs);
 
     assert(NOT_END(pvs->value));  // paths must be at least 2 long
     if (Is_Blank(pvs->value) and IS_END(pvs->value + 1)) {

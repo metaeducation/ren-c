@@ -129,10 +129,6 @@ INLINE void Push_Level_Core(Level* L)
     assert(not IN_DATA_STACK_DEBUG(L->out));
   #endif
 
-  #if DEBUG_EXPIRED_LOOKBACK
-    f->stress = nullptr;
-  #endif
-
     // The arguments to functions in their frame are exposed via FRAME!s
     // and through WORD!s.  This means that if you try to do an evaluation
     // directly into one of those argument slots, and run arbitrary code
@@ -289,7 +285,6 @@ INLINE void Push_Level(Level* L, const Value* v)
 // parameter in the variadic).
 //
 INLINE void Set_Level_Detected_Fetch(
-    const Cell* *opt_lookback,
     Level* L,
     const void *p
 ){
@@ -297,47 +292,20 @@ INLINE void Set_Level_Detected_Fetch(
     // supposed to be freeing it or releasing it, then it must be proxied
     // into a place where the data will be safe long enough for lookback.
 
-    if (Not_Base_Root_Bit_Set(L->value)) {
-        if (opt_lookback)
-            *opt_lookback = L->value; // non-API values must be stable/GC-safe
+    if (Not_Base_Root_Bit_Set(L->value))
         goto detect;
-    }
 
     Array* a; // ^--goto
     a = Singular_From_Cell(L->value);
-    if (Not_Flex_Info(a, API_RELEASE)) {
-        if (opt_lookback)
-            *opt_lookback = L->value; // keep-alive API value or instruction
+    if (Not_Flex_Info(a, API_RELEASE))
         goto detect;
-    }
-
-    if (opt_lookback) {
-        //
-        // Eval_Core_Throws() is wants the old L->value, but we're going to
-        // free it.  It has to be kept alive -and- kept safe from GC.  e.g.
-        //
-        //     Value* word = rebValue("make word! {hello}");
-        //     rebValue(rebR(word), "shove (recycle :the)");
-        //
-        // The `current` cell the evaluator is looking at is the WORD!, then
-        // L->value receives the "shove" `shove`.  The shove runs the code in
-        // the GROUP!.  But there are no other references to `hello` after
-        // the Free_Value() done by rebR(), so it's a candidate for recycle,
-        // which would mean shoving a bad `current` as the arg to `:the`
-        //
-        // The Level_Spare(L) is used as the GC-safe location proxied to.
-        //
-        Copy_Cell(Level_Spare(L), KNOWN(L->value));
-        *opt_lookback = Level_Spare(L);
-    }
 
     if (Get_Flex_Info(a, API_INSTRUCTION))
         Free_Instruction(Singular_From_Cell(L->value));
     else
         rebRelease(cast(const Value*, L->value));
 
-
-  detect:;
+  detect: {
 
     if (not p) { // libRebol's null/~null~ (Is_Nulled prohibited below)
 
@@ -489,7 +457,7 @@ INLINE void Set_Level_Detected_Fetch(
       default:
         assert(false);
     }
-}
+}}
 
 
 //
@@ -503,19 +471,8 @@ INLINE void Set_Level_Detected_Fetch(
 // More generally, an END marker in L->feed->pending for this routine is a
 // signal that the vaptr (if any) should be consulted next.
 //
-INLINE void Fetch_Next_In_Level(
-    const Cell* *opt_lookback,
-    Level* L
-){
+INLINE void Fetch_Next_In_Level(Level* L) {
     assert(Not_Level_At_End(L)); // caller should test this first
-
-  #if DEBUG_EXPIRED_LOOKBACK
-    if (f->stress) {
-        Erase_Cell(f->stress);
-        free(f->stress);
-        f->stress = nullptr;
-    }
-  #endif
 
     // We are changing L->value, and thus by definition any L->gotten value
     // will be invalid.  It might be "wasteful" to always set this to END,
@@ -538,9 +495,6 @@ INLINE void Fetch_Next_In_Level(
             or L->feed->pending == Array_At(L->feed->array, L->feed->index)
         );
 
-        if (opt_lookback)
-            *opt_lookback = L->value; // must be non-movable, GC-safe
-
         L->value = L->feed->pending;
 
         ++L->feed->pending; // might be becoming an END marker, here
@@ -552,9 +506,6 @@ INLINE void Fetch_Next_In_Level(
         // an array by Reify_Va_To_Array_In_Level().  The first END we hit
         // is the full stop end.
         //
-        if (opt_lookback)
-            *opt_lookback = L->value; // all values would have been spooled
-
         L->value = END_BASE;
         Corrupt_If_Needful(L->feed->pending);
 
@@ -577,22 +528,14 @@ INLINE void Fetch_Next_In_Level(
         //
         const void *p = va_arg(*L->feed->vaptr, const void*);
         L->feed->index = TRASHED_INDEX; // avoids warning in release build
-        Set_Level_Detected_Fetch(opt_lookback, L, p);
+        Set_Level_Detected_Fetch(L, p);
     }
-
-  #if DEBUG_EXPIRED_LOOKBACK
-    if (opt_lookback) {
-        f->stress = cast(Cell*, malloc(sizeof(Cell)));
-        memcpy(f->stress, *opt_lookback, sizeof(Cell));
-        *opt_lookback = f->stress;
-    }
-  #endif
 }
 
 
 INLINE void Quote_Next_In_Level(Value* dest, Level* L) {
     Derelativize(dest, L->value, L->specifier);
-    Fetch_Next_In_Level(nullptr, L);
+    Fetch_Next_In_Level(L);
 }
 
 
@@ -630,7 +573,7 @@ INLINE void Abort_Level(Level* L) {
         // the frame processing the array will take the other branch.
 
         while (Not_Level_At_End(L))
-            Fetch_Next_In_Level(nullptr, L);
+            Fetch_Next_In_Level(L);
     }
     else {
         if (Get_Eval_Flag(L, TOOK_FRAME_HOLD)) {
@@ -651,10 +594,6 @@ pop:;
 
 
 INLINE void Drop_Level_Core(Level* L) {
-  #if DEBUG_EXPIRED_LOOKBACK
-    free(f->stress);
-  #endif
-
     if (L->varlist) {
         assert(Not_Base_Managed(L->varlist));
         LINK(L->varlist).reuse = TG_Reuse;
@@ -908,7 +847,7 @@ INLINE void Reify_Va_To_Array_In_Level(
             assert(not Is_Antiform(L->value));
             Derelativize(PUSH(), L->value, L->specifier);
 
-            Fetch_Next_In_Level(nullptr, L);
+            Fetch_Next_In_Level(L);
         } while (Not_Level_At_End(L));
 
         if (truncated)
@@ -987,9 +926,9 @@ INLINE REBIXO Eval_Va_Core(
     L->value = Init_Unreadable(junk); // shows where garbage came from
 
     if (opt_first)
-        Set_Level_Detected_Fetch(nullptr, L, opt_first);
+        Set_Level_Detected_Fetch(L, opt_first);
     else
-        Fetch_Next_In_Level(nullptr, L);
+        Fetch_Next_In_Level(L);
 
     if (Is_Level_At_End(L))
         return END_FLAG;

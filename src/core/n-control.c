@@ -676,7 +676,7 @@ static Bounce Case_Choose_Core_May_Throw(
 
         if (IS_FALSEY(cell)) {  // not a matching condition
             if (choose) {
-                Fetch_Next_In_Level(nullptr, L); // skip next, whatever it is
+                Fetch_Next_In_Level(L); // skip next, whatever it is
                 continue;
             }
 
@@ -852,7 +852,7 @@ DECLARE_NATIVE(SWITCH)
 
         if (Is_Block(at)) {
             Init_Nulled(OUT);
-            Fetch_Next_In_Level(nullptr, L);
+            Fetch_Next_In_Level(L);
             continue;
         }
 
@@ -916,7 +916,7 @@ DECLARE_NATIVE(SWITCH)
                 break;
             if (Is_Action(at))
                 goto action_not_supported; // literal action
-            Fetch_Next_In_Level(nullptr, L);
+            Fetch_Next_In_Level(L);
         }
 
         if (Eval_Array_At_Throws( // it's a match, so run the BLOCK!
@@ -936,7 +936,7 @@ DECLARE_NATIVE(SWITCH)
             return OUT;
         }
 
-        Fetch_Next_In_Level(nullptr, L); // keep matching if /ALL
+        Fetch_Next_In_Level(L); // keep matching if /ALL
     }
 
     Drop_Level(L);

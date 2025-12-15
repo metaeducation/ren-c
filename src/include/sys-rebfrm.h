@@ -451,6 +451,15 @@ struct LevelStruct {
     //
     Cell spare;
 
+    // `scratch`
+    //
+    // The modern executable had another temporary storage cell motivated the
+    // need to hold onto a "current" cell being evaluated without worrying
+    // about it expiring due to feed advancement.  That cell found other uses
+    // in non-stepper levels as well.
+    //
+    Cell scratch;
+
     // `flags`
     //
     // These are EVAL_FLAG_XXX or'd together--see their documentation above.
@@ -675,11 +684,12 @@ struct LevelStruct {
         Specifier* specifier;
     } ref;
 
-    // Used to slip cell to re-evaluate into Eval_Core_Throws()
-    //
     struct {
-        const Value* value;
-    } reval;
+        // current_gotten has to be in the Level* for stackless, but can be
+        // a stack variable in the bootstrap evaluator.
+        //
+        /*const Value* current_gotten;*/
+    } eval;
   } u;
 
    #if DEBUG_COUNT_TICKS
@@ -728,25 +738,6 @@ struct LevelStruct {
     //
     struct Reb_State state;
   #endif
-
-  #if DEBUG_EXPIRED_LOOKBACK
-    //
-    // On each call to Fetch_Next_In_Level, it's possible to ask it to give
-    // a pointer to a cell with equivalent data to what was previously in
-    // L->value, but that might not be L->value.  So for all practical
-    // purposes, one is to assume that the L->value pointer died after the
-    // fetch.  If clients are interested in doing "lookback" and examining
-    // two values at the same time (or doing a GC and expecting to still
-    // have the old f->current work), then they must not use the old L->value
-    // but request the lookback pointer from Fetch_Next_In_Level().
-    //
-    // To help stress this invariant, frames will forcibly expire value
-    // cells, handing out disposable lookback pointers on each eval.
-    //
-    // !!! Test currently leaks on shutdown, review how to not leak.
-    //
-    Cell* stress;
-  #endif
 };
 
 
@@ -767,6 +758,7 @@ struct LevelStruct {
     name##_struct.feed = (feed_ptr); \
     Level* const name = &name##_struct; \
     Erase_Cell(&name->spare); \
+    Erase_Cell(&name->scratch); \
     Init_Unreadable(&name->spare); \
     name->stack_base = TOP_INDEX;
 

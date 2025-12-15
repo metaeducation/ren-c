@@ -113,7 +113,7 @@ void Startup_Level_Stack(void)
 
     Level* L = ALLOC(Level); // needs dynamic allocation
     Erase_Cell(Level_Spare(L));
-    Init_Unreadable(Level_Spare(L));
+    Erase_Cell(Level_Scratch(L));
 
     L->out = m_cast(Value*, END_BASE); // should not be written
     L->feed = &TG_Level_Feed_End;

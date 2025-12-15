@@ -98,7 +98,7 @@
 #define P_CELL Level_Spare(L)
 
 #define FETCH_NEXT_RULE(L) \
-    Fetch_Next_In_Level(nullptr, (L))
+    Fetch_Next_In_Level((L))
 
 #define FETCH_TO_BAR_OR_END(L) \
     while (Not_Level_At_End(L) and not Is_Bar(P_RULE)) \

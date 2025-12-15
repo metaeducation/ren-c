@@ -298,7 +298,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
                 )){
                     return true;
                 }
-                Fetch_Next_In_Level(nullptr, L);
+                Fetch_Next_In_Level(L);
             }
             else // not a soft-"exception" case, quote ordinarily
                 Quote_Next_In_Level(out, L);

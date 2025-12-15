@@ -141,6 +141,9 @@ INLINE bool Start_New_Expression_Throws(Level* L) {
 #endif
 
 
+#define current  u_cast(Cell*, &L->scratch)  // no executor check
+
+
 // ARGUMENT LOOP MODES
 //
 // The settings of L->special are chosen purposefully.  It is kept in sync
@@ -340,15 +343,6 @@ INLINE void Seek_First_Param(Level* L, REBACT *action) {
 }
 
 
-#if DEBUG_EXPIRED_LOOKBACK
-    #define CURRENT_CHANGES_IF_FETCH_NEXT \
-        (L->fake_lookback != nullptr)
-#else
-    #define CURRENT_CHANGES_IF_FETCH_NEXT \
-        (current == Level_Spare(L))
-#endif
-
-
 // The L->out slot must be initialized well enough for GC safety.
 //
 // END has an advantage because recycle/torture will catch cases of evaluating
@@ -427,8 +421,6 @@ bool Eval_Core_Throws(Level* const L)
 
     const Value* current_gotten;
     Corrupt_If_Needful(current_gotten);
-    const Cell* current;
-    Corrupt_If_Needful(current);
 
     // Given how the evaluator is written, it's inevitable that there will
     // have to be a test for points to `goto` before running normal eval.
@@ -459,7 +451,6 @@ bool Eval_Core_Throws(Level* const L)
             goto process_action;
         }
 
-        current = L->u.reval.value;
         current_gotten = nullptr;
         eval_type = Type_Of(current);
 
@@ -493,12 +484,12 @@ bool Eval_Core_Throws(Level* const L)
     current_gotten = L->gotten;
 
     // Most calls to Fetch_Next_In_Level() are no longer interested in the
-    // cell backing the pointer that used to be in L->value (this is enforced
-    // by a rigorous test in DEBUG_EXPIRED_LOOKBACK).  Special care must be
-    // taken when one is interested in that data, because it may have to be
-    // moved.  So current is returned from Fetch_Next_In_Level().
+    // cell backing the pointer that used to be in L->value.  We copy the cell
+    // because we do care (attempts to do something other than copying all
+    // have turned out to be suboptimal.)
     //
-    Fetch_Next_In_Level(&current, L);
+    Copy_Cell_Core(current, L->value);  // !!! relative value!
+    Fetch_Next_In_Level(L);
 
     assert(eval_type != TYPE_0_END and eval_type == Unchecked_Type_Of(current));
 
@@ -641,7 +632,7 @@ bool Eval_Core_Throws(Level* const L)
     //
     Derelativize(L->out, current, L->specifier); // lookback in L->out
 
-    Fetch_Next_In_Level(nullptr, L); // skip the WORD! that invoked the action
+    Fetch_Next_In_Level(L); // skip the WORD! that invoked the action
     goto process_action;
 
   give_up_backward_quote_priority:;
@@ -714,8 +705,10 @@ bool Eval_Core_Throws(Level* const L)
         assert(TOP_INDEX >= L->stack_base);  // path process may push refines
         assert(L->refine == LOOKBACK_ARG or L->refine == ORDINARY_ARG);
 
-        Corrupt_If_Needful(current); // shouldn't be used below
+      #if RUNTIME_CHECKS
+        Erase_Cell(current); // shouldn't be used below
         Corrupt_If_Needful(current_gotten);
+      #endif
 
         Clear_Eval_Flag(L, DOING_PICKUPS);
 
@@ -1150,7 +1143,7 @@ bool Eval_Core_Throws(Level* const L)
                     goto abort_action;
                 }
 
-                Fetch_Next_In_Level(nullptr, L);
+                Fetch_Next_In_Level(L);
                 break;
 
               default:
@@ -1485,15 +1478,14 @@ bool Eval_Core_Throws(Level* const L)
 
         Init_Trash(L->out);  // `1 x: comment "hi"` shouldn't set x to 1!
 
-        if (CURRENT_CHANGES_IF_FETCH_NEXT) { // must use new frame
-            DECLARE_SUBLEVEL(child, L);
-            if (Eval_Step_In_Subframe_Throws(L->out, L, flags, child))
-                goto return_thrown;
-        }
-        else {
-            if (Eval_Step_Mid_Level_Throws(L, flags)) // light reuse of `L`
-                goto return_thrown;
-        }
+        DECLARE_SUBLEVEL(child, L);
+        if (Eval_Step_In_Subframe_Throws(L->out, L, flags, child))
+            goto return_thrown;
+
+      #if 0  // could we make a light reuse of `L`?  push cell, etc?
+        if (Eval_Step_Mid_Level_Throws(L, flags))
+            goto return_thrown;
+      #endif
 
         if (Is_Void(L->out))  // try to model after mainline EXE
             panic ("Can't assign ~void~ state via SET-WORD!");
@@ -1679,15 +1671,14 @@ bool Eval_Core_Throws(Level* const L)
 
         Init_Trash(L->out);  // `1 o/x: comment "hi"` shouldn't set o/x to 1!
 
-        if (CURRENT_CHANGES_IF_FETCH_NEXT) { // must use new frame
-            DECLARE_SUBLEVEL(child, L);
-            if (Eval_Step_In_Subframe_Throws(L->out, L, flags, child))
-                goto return_thrown;
-        }
-        else {
-            if (Eval_Step_Mid_Level_Throws(L, flags)) // light reuse of `L`
-                goto return_thrown;
-        }
+        DECLARE_SUBLEVEL(child, L);
+        if (Eval_Step_In_Subframe_Throws(L->out, L, flags, child))
+            goto return_thrown;
+
+      #if 0  // could we make a light reuse of `L`?  push cell, etc?
+        if (Eval_Step_Mid_Level_Throws(L, flags))
+            goto return_thrown;
+      #endif
 
         if (Eval_Path_Throws_Core(
             Level_Spare(L), // output if thrown, used as scratch space otherwise
@@ -1927,7 +1918,7 @@ bool Eval_Core_Throws(Level* const L)
         Symbol* opt_label = nullptr;
         Begin_Action(L, opt_label, LOOKBACK_ARG);
 
-        Fetch_Next_In_Level(nullptr, L); // advances L->value
+        Fetch_Next_In_Level(L); // advances L->value
         goto process_action;
     }
 
@@ -1976,7 +1967,8 @@ bool Eval_Core_Throws(Level* const L)
         // v-- The TICK_BREAKPOINT or C-DEBUG-BREAK landing spot --v
 
         current_gotten = L->gotten; // if nullptr, the word will error
-        Fetch_Next_In_Level(&current, L);
+		Copy_Cell_Core(current, L->value);  // !!! relative value!
+        Fetch_Next_In_Level(L);
 
         // Were we to jump to the TYPE_WORD switch case here, LENGTH would
         // cause an error in the expression below:
@@ -2050,7 +2042,7 @@ bool Eval_Core_Throws(Level* const L)
     assert(Is_Word(L->value));
     Begin_Action(L, Word_Symbol(L->value), LOOKBACK_ARG);
 
-    Fetch_Next_In_Level(nullptr, L); // advances L->value
+    Fetch_Next_In_Level(L);
     goto process_action;
 
   abort_action:;

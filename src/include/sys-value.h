@@ -1191,6 +1191,19 @@ INLINE Value* Copy_Cell(Cell* out, const Value* v)
     return KNOWN(out);
 }
 
+// Binding is different in the modern executable (and the relative value
+// distinction is not enforced) but this can be used to copy relative values
+// in the bootstrap executable, where the relative value handling is dicey.
+//
+INLINE Cell* Copy_Cell_Core(Cell* out, const Cell* v)
+{
+    Copy_Cell_Header(out, v);
+
+    out->extra = v->extra;
+    out->payload = v->payload;
+    return out;
+}
+
 
 // When doing something like a COPY of an OBJECT!, the var cells have to be
 // handled specially, e.g. by preserving the checked status.

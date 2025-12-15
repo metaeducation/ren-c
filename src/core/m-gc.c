@@ -1086,6 +1086,7 @@ static void Mark_Level_Stack_Deep(void)
         // DECLARE_LEVEL sets it up and no one is supposed to trash it.
         //
         Queue_Mark_Opt_End_Cell_Deep(Level_Spare(L));
+        Queue_Mark_Opt_End_Cell_Deep(Level_Scratch(L));
 
         if (not Is_Action_Level(L)) {
             //

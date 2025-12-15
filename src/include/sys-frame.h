@@ -175,6 +175,9 @@ INLINE int LVL_LINE(Level* L) {
 #define Level_Spare(L) \
     cast(Value*, &(L)->spare)
 
+#define Level_Scratch(L) \
+    cast(Value*, &(L)->scratch)
+
 #define LVL_PHASE_OR_DUMMY(L) \
     (L)->rootvar->payload.any_context.phase
 

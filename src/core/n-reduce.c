@@ -417,7 +417,7 @@ bool Compose_To_Stack_Throws(
         const Cell* at = Level_At(L);
         if (not Any_List(at)) { // non-arrays don't substitute/recurse
             Derelativize(PUSH(), at, specifier);  // preserves newline
-            Fetch_Next_In_Level(nullptr, L);
+            Fetch_Next_In_Level(L);
             continue;
         }
 
@@ -528,7 +528,7 @@ bool Compose_To_Stack_Throws(
             Derelativize(PUSH(), at, L->specifier);  // preserves newline
         }
 
-        Fetch_Next_In_Level(nullptr, L);
+        Fetch_Next_In_Level(L);
     }
 
     Drop_Level_Unbalanced(L); // Drop_Level() asesrts on stack accumulation

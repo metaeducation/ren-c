@@ -62,10 +62,9 @@ DECLARE_NATIVE(REEVAL)
 
     DECLARE_SUBLEVEL (child, level_);
 
-    // We need a way to slip the value through to the evaluator.  Can't run
-    // it from the frame's cell.
+    // This slips the value through to the evaluator.
     //
-    child->u.reval.value = ARG(VALUE);
+    Copy_Cell(Level_Scratch(child), ARG(VALUE));
 
     Flags flags = EVAL_FLAG_REEVALUATE_CELL;
 
