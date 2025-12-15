@@ -261,7 +261,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
             }
 
             arr = L->feed->array;
-            item = L->value;
+            item = Level_At(L);
         }
         else if (Is_Block_Style_Varargs(&shared, pos)) {
             arr = Cell_Array(shared);

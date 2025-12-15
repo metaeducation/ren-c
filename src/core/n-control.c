@@ -520,7 +520,7 @@ DECLARE_NATIVE(ALL)
 
     Init_Void(OUT);  // default return result
 
-    while (NOT_END(L->value)) {
+    while (Not_Level_At_End(L)) {
         if (Eval_Step_Throws(SET_END(SPARE), L)) {
             Copy_Cell(OUT, SPARE);
             Abort_Level(L);
@@ -563,7 +563,7 @@ DECLARE_NATIVE(ANY)
 
     Init_Void(OUT);  // default return result
 
-    while (NOT_END(L->value)) {
+    while (Not_Level_At_End(L)) {
         if (Eval_Step_Throws(SET_END(SPARE), L)) {
             Copy_Cell(OUT, SPARE);
             Abort_Level(L);
@@ -605,7 +605,7 @@ DECLARE_NATIVE(NONE)
     DECLARE_LEVEL (L);
     Push_Level(L, ARG(BLOCK));
 
-    while (NOT_END(L->value)) {
+    while (Not_Level_At_End(L)) {
         if (Eval_Step_Throws(SET_END(SPARE), L)) {
             Abort_Level(L);
             return BOUNCE_THROWN;
@@ -645,7 +645,7 @@ static Bounce Case_Choose_Core_May_Throw(
     SET_END(cell);
     Push_Lifeguard(cell);
 
-    while (NOT_END(L->value)) {
+    while (Not_Level_At_End(L)) {
 
         // Perform 1 EVALUATE's worth of evaluation on a "condition" to test
         // Will consume any pending "invisibles" (COMMENT, ELIDE, DUMP...)
@@ -658,7 +658,7 @@ static Bounce Case_Choose_Core_May_Throw(
         }
 
         if (IS_END(cell)) {  // !!! R3C patch for permissive invisibility
-            if (IS_END(L->value))
+            if (Is_Level_At_End(L))
                 break;
             continue;
         }
@@ -668,7 +668,7 @@ static Bounce Case_Choose_Core_May_Throw(
         //     case [1 > 2 [...] 3 > 4 [...] 10 + 20] = 30
         //     choose [1 > 2 (literal group) 3 > 4 <tag> 10 + 20] = 30
         //
-        if (IS_END(L->value)) {
+        if (Is_Level_At_End(L)) {
             Drop_Lifeguard(cell);
             Drop_Level(L);
             return Copy_Cell(OUT, cell);
@@ -705,8 +705,8 @@ static Bounce Case_Choose_Core_May_Throw(
         }
 
         if (choose) {
-            Derelativize(OUT, L->value, L->specifier); // null not possible
-            Fetch_Next_In_Level(nullptr, L); // keep matching if /ALL
+            Quote_Next_In_Level(OUT, L); // null not possible
+            // keep matching if /ALL
         }
         else {
             // Note: we are preserving `cell` to pass to an arity-1 ACTION!
@@ -842,19 +842,21 @@ DECLARE_NATIVE(SWITCH)
 
     Init_Nulled(OUT); // used for "fallout"
 
-    while (NOT_END(L->value)) {
+    while (Not_Level_At_End(L)) {
         //
         // If a branch is seen at this point, it doesn't correspond to any
         // condition to match.  If no more tests are run, let it suppress the
         // feature of the last value "falling out" the bottom of the switch
         //
-        if (Is_Block(L->value)) {
+        const Cell* at = Level_At(L);
+
+        if (Is_Block(at)) {
             Init_Nulled(OUT);
             Fetch_Next_In_Level(nullptr, L);
             continue;
         }
 
-        if (Is_Action(L->value)) {
+        if (Is_Action(at)) {
             //
             // It's a literal ACTION!, e.g. one composed in the block:
             //
@@ -880,7 +882,7 @@ DECLARE_NATIVE(SWITCH)
             }
 
             if (IS_END(OUT)) {
-                assert(IS_END(L->value));
+                assert(Is_Level_At_End(L));
                 Init_Nulled(OUT);
                 break;
             }
@@ -905,21 +907,22 @@ DECLARE_NATIVE(SWITCH)
         // Skip ahead to try and find a block, to treat as code for the match
 
         while (true) {
-            if (IS_END(L->value)) {
+            if (Is_Level_At_End(L)) {
                 Drop_Level(L);
                 return OUT; // last test "falls out", might be void
             }
-            if (Is_Block(L->value))
+            at = Level_At(L);
+            if (Is_Block(at))
                 break;
-            if (Is_Action(L->value))
+            if (Is_Action(at))
                 goto action_not_supported; // literal action
             Fetch_Next_In_Level(nullptr, L);
         }
 
         if (Eval_Array_At_Throws( // it's a match, so run the BLOCK!
             OUT,
-            Cell_Array(L->value),
-            VAL_INDEX(L->value),
+            Cell_Array(at),
+            VAL_INDEX(at),
             L->specifier
         )){
             Abort_Level(L);

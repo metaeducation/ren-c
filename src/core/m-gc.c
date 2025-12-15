@@ -791,7 +791,7 @@ static void Reify_Any_C_Valist_Frames(void)
 
     Level* L = TOP_LEVEL;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
-        if (NOT_END(L->value) and LVL_IS_VALIST(L)) {
+        if (Not_Level_At_End(L) and LVL_IS_VALIST(L)) {
             const bool truncated = true;
             Reify_Va_To_Array_In_Level(L, truncated);
         }

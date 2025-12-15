@@ -507,7 +507,7 @@ INLINE void Fetch_Next_In_Level(
     const Cell* *opt_lookback,
     Level* L
 ){
-    assert(NOT_END(L->value)); // caller should test this first
+    assert(Not_Level_At_End(L)); // caller should test this first
 
   #if DEBUG_EXPIRED_LOOKBACK
     if (f->stress) {
@@ -604,7 +604,7 @@ INLINE void Abort_Level(Level* L) {
     // Abort_Level() handles any work that wouldn't be done done naturally by
     // feeding a frame to its natural end.
     //
-    if (IS_END(L->value))
+    if (Is_Level_At_End(L))
         goto pop;
 
     if (LVL_IS_VALIST(L)) {
@@ -629,7 +629,7 @@ INLINE void Abort_Level(Level* L) {
         // any faster...they're usually reified into an array anyway, so
         // the frame processing the array will take the other branch.
 
-        while (NOT_END(L->value))
+        while (Not_Level_At_End(L))
             Fetch_Next_In_Level(nullptr, L);
     }
     else {
@@ -683,7 +683,7 @@ INLINE void Drop_Level_Unbalanced(Level* L) {
 INLINE void Drop_Level(Level* L)
 {
     if (Get_Eval_Flag(L, TO_END))
-        assert(IS_END(L->value) or THROWN(L->out));
+        assert(Is_Level_At_End(L) or THROWN(L->out));
 
     assert(TOP_INDEX == L->stack_base);  // Drop_Level_Core() does not check
     Drop_Level_Unbalanced(L);
@@ -838,13 +838,13 @@ INLINE REBIXO Eval_At_Core(
         SET_FRAME_VALUE(L, opt_first);
         L->feed->index = index;
         L->feed->pending = Array_At(array, index);
-        assert(NOT_END(L->value));
+        assert(Not_Level_At_End(L));
     }
     else {
         SET_FRAME_VALUE(L, Array_At(array, index));
         L->feed->index = index + 1;
         L->feed->pending = L->value + 1;
-        if (IS_END(L->value))
+        if (Is_Level_At_End(L))
             return END_FLAG;
     }
 
@@ -901,7 +901,7 @@ INLINE void Reify_Va_To_Array_In_Level(
     if (truncated)
         Init_Word(PUSH(), CANON(__OPTIMIZED_OUT__));
 
-    if (NOT_END(L->value)) {
+    if (Not_Level_At_End(L)) {
         assert(L->feed->pending == END_BASE);
 
         do {
@@ -909,7 +909,7 @@ INLINE void Reify_Va_To_Array_In_Level(
             Derelativize(PUSH(), L->value, L->specifier);
 
             Fetch_Next_In_Level(nullptr, L);
-        } while (NOT_END(L->value));
+        } while (Not_Level_At_End(L));
 
         if (truncated)
             L->feed->index = 2; // skip the --optimized-out--
@@ -991,7 +991,7 @@ INLINE REBIXO Eval_Va_Core(
     else
         Fetch_Next_In_Level(nullptr, L);
 
-    if (IS_END(L->value))
+    if (Is_Level_At_End(L))
         return END_FLAG;
 
     L->out = out;
@@ -1010,11 +1010,11 @@ INLINE REBIXO Eval_Va_Core(
         (flags & EVAL_FLAG_TO_END) // not just an EVALUATE, but a full DO
         or Get_Cell_Flag(L->out, OUT_MARKED_STALE) // just ELIDEs and COMMENTs
     ){
-        assert(IS_END(L->value));
+        assert(Is_Level_At_End(L));
         return END_FLAG;
     }
 
-    if ((flags & EVAL_FLAG_NO_RESIDUE) and NOT_END(L->value))
+    if ((flags & EVAL_FLAG_NO_RESIDUE) and Not_Level_At_End(L))
         panic (Error_Apply_Too_Many_Raw());
 
     return VA_LIST_FLAG; // frame may be at end, next call might just END_FLAG

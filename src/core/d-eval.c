@@ -64,9 +64,9 @@ void Dump_Level_Location(const Cell* current, Level* L)
         PROBE(dump);
     }
 
-    if (IS_END(L->value)) {
+    if (Is_Level_At_End(L)) {
         printf("...then Dump_Level_Location() is at end of array\n");
-        if (not current and not L->value) { // well, that wasn't informative
+        if (not current) { // well, that wasn't informative
             if (not L->prior)
                 printf("...and no parent frame, so you're out of luck\n");
             else {
@@ -76,7 +76,7 @@ void Dump_Level_Location(const Cell* current, Level* L)
         }
     }
     else {
-        Derelativize(dump, L->value, L->specifier);
+        Derelativize(dump, Level_At(L), Level_Binding(L));
         printf("Dump_Level_Location() next\n");
         PROBE(dump);
 
@@ -155,7 +155,7 @@ static void Eval_Core_Shared_Checks_Debug(Level* L) {
 
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
 
-    if (IS_END(L->value))
+    if (Is_Level_At_End(L))
         return;
 
     if (NOT_END(L->out) and THROWN(L->out))
@@ -163,9 +163,9 @@ static void Eval_Core_Shared_Checks_Debug(Level* L) {
 
     //=//// v-- BELOW CHECKS ONLY APPLY IN EXITS CASE WITH MORE CODE //////=//
 
-    assert(NOT_END(L->value));
-    assert(not THROWN(L->value));
-    assert(L->value != L->out);
+    assert(Not_Level_At_End(L));
+    assert(not THROWN(Level_At(L)));
+    assert(Level_At(L) != L->out);
 
     //=//// ^-- ADD CHECKS EARLIER THAN HERE IF THEY SHOULD ALWAYS RUN ////=//
 }
@@ -196,8 +196,8 @@ void Eval_Core_Expression_Checks_Debug(Level* L) {
     /* L->prior->gotten is either nullptr or corrupt */
 
     if (L->gotten) {
-        assert(Is_Word(L->value));
-        assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);
+        assert(Is_Word(Level_At(L)));
+        assert(Try_Get_Opt_Var(Level_At(L), Level_Binding(L)) == L->gotten);
     }
 
     assert(Is_Cell_Unreadable(&TG_Thrown_Arg)); // no evals between throws
@@ -306,11 +306,11 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
     Eval_Core_Shared_Checks_Debug(L);
 
     if (L->gotten) {
-        assert(Is_Word(L->value));
-        assert(Try_Get_Opt_Var(L->value, L->specifier) == L->gotten);
+        assert(Is_Word(Level_At(L)));
+        assert(Try_Get_Opt_Var(Level_At(L), Level_Binding(L)) == L->gotten);
     }
 
-    if (NOT_END(L->value) and not LVL_IS_VALIST(L)) {
+    if (Not_Level_At_End(L) and not LVL_IS_VALIST(L)) {
         if (L->feed->index > Array_Len(L->feed->array)) {
             assert(
                 (L->feed->pending != nullptr and IS_END(L->feed->pending))
@@ -321,7 +321,7 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
     }
 
     if (Get_Eval_Flag(L, TO_END))
-        assert(THROWN(L->out) or IS_END(L->value));
+        assert(THROWN(L->out) or Is_Level_At_End(L));
 
     // We'd like `eval [1 + comment "foo"]` to act identically to `eval [1 +]`
     // (as opposed to `eval [1 + ()]`).  Eval_Core_Throws() thus distinguishes

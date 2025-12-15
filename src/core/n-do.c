@@ -127,7 +127,7 @@ DECLARE_NATIVE(EVAL_INFIX)
         panic ("EVAL-INFIX is not made to support MAKE VARARGS! [...] rest");
     }
 
-    if (IS_END(L->value)) // no PATH! yet...
+    if (Is_Level_At_End(L)) // no PATH! yet...
         panic ("ME and MY hit end of input");
 
     DECLARE_SUBLEVEL (child, L);  // saves TOP_INDEX before refinement push
@@ -138,8 +138,8 @@ DECLARE_NATIVE(EVAL_INFIX)
     if (Get_If_Word_Or_Path_Throws(
         temp,
         &opt_label,
-        L->value,
-        L->specifier,
+        Level_At(L),
+        Level_Binding(L),
         push_refinements
     )){
         RETURN (temp);
@@ -421,7 +421,7 @@ DECLARE_NATIVE(EVALUATE)
         if (threw)
             return BOUNCE_THROWN; // prohibits recovery from exits
 
-        assert(IS_END(L->value)); // we started at END_FLAG, can only throw
+        assert(Is_Level_At_End(L)); // we started at END_FLAG, can only throw
 
         return L->out; }
 
@@ -485,10 +485,10 @@ DECLARE_NATIVE(EVALUATE)
         //
         DECLARE_SUBLEVEL (child, L);
         Flags flags = 0;
-        if (IS_END(L->value))
+        if (Is_Level_At_End(L))
             return nullptr;
 
-        while (NOT_END(L->value)) {
+        while (Not_Level_At_End(L)) {
             if (Eval_Step_In_Subframe_Throws(SET_END(OUT), L, flags, child))
                 return BOUNCE_THROWN;
 
@@ -657,6 +657,6 @@ DECLARE_NATIVE(APPLIQUE)
     if (action_threw)
         return BOUNCE_THROWN;
 
-    assert(IS_END(L->value)); // we started at END_FLAG, can only throw
+    assert(Is_Level_At_End(L)); // we started at END_FLAG, can only throw
     return OUT;
 }

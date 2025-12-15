@@ -1093,7 +1093,7 @@ bool Eval_Core_Throws(Level* const L)
 
     //=//// ERROR ON END MARKER ///////////////////////////////////////////=//
 
-            if (IS_END(L->value)) {
+            if (Is_Level_At_End(L)) {
                 if (not Is_Param_Endable(L->param))
                     panic (Error_No_Arg(L, L->param));
 
@@ -1250,7 +1250,7 @@ bool Eval_Core_Throws(Level* const L)
         assert(IS_END(L->param));
         // refine can be anything.
         assert(
-            IS_END(L->value)
+            Is_Level_At_End(L)
             or LVL_IS_VALIST(L)
             or IS_VALUE_IN_ARRAY_DEBUG(L->feed->array, L->value)
         );
@@ -1478,7 +1478,7 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_SET_WORD: {
-        if (IS_END(L->value)) // `eval [a:]` is illegal
+        if (Is_Level_At_End(L)) // `eval [a:]` is illegal
             panic (Error_Need_Non_End_Core(current, L->specifier));
 
         Flags flags = DO_MASK_NONE;
@@ -1672,7 +1672,7 @@ bool Eval_Core_Throws(Level* const L)
 //==//////////////////////////////////////////////////////////////////////==//
 
       case TYPE_SET_PATH: {
-        if (IS_END(L->value)) // `eval [a/b:]` is illegal
+        if (Is_Level_At_End(L)) // `eval [a/b:]` is illegal
             panic (Error_Need_Non_End_Core(current, L->specifier));
 
         Flags flags = DO_MASK_NONE;
@@ -2082,5 +2082,5 @@ bool Eval_Core_Throws(Level* const L)
     Eval_Core_Exit_Checks_Debug(L); // will get called unless a panic() longjmps
   #endif
 
-    return threw; // most callers should inspect for IS_END(L->value)
+    return threw; // most callers should inspect for Is_Level_At_End(L)
 }

@@ -592,7 +592,7 @@ bool Form_Reduce_Throws(
     bool pending = false; // pending delimiter output, *if* more non-nulls
     bool nothing = true; // any elements seen so far have been null or blank
 
-    while (NOT_END(L->value)) {
+    while (Not_Level_At_End(L)) {
         if (Eval_Step_Throws(SET_END(out), L)) {
             Drop_Mold(mo);
             Abort_Level(L);

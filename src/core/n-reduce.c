@@ -285,8 +285,8 @@ bool Reduce_To_Stack_Throws(
     DECLARE_LEVEL (L);
     Push_Level(L, any_array);
 
-    while (NOT_END(L->value)) {
-        bool line = Get_Cell_Flag(L->value, NEWLINE_BEFORE);
+    while (Not_Level_At_End(L)) {
+        bool line = Get_Cell_Flag(Level_At(L), NEWLINE_BEFORE);
 
         if (Eval_Step_Throws(SET_END(out), L)) {
             Drop_Data_Stack_To(base);
@@ -295,7 +295,7 @@ bool Reduce_To_Stack_Throws(
         }
 
         if (IS_END(out)) { // e.g. `reduce [comment "hi"]`
-            assert(IS_END(L->value));
+            assert(Is_Level_At_End(L));
             break;
         }
 
@@ -413,9 +413,10 @@ bool Compose_To_Stack_Throws(
         L, Cell_Array(any_array), VAL_INDEX(any_array), specifier, DO_MASK_NONE
     );
 
-    while (NOT_END(L->value)) {
-        if (not Any_List(L->value)) { // non-arrays don't substitute/recurse
-            Derelativize(PUSH(), L->value, specifier);  // preserves newline
+    while (Not_Level_At_End(L)) {
+        const Cell* at = Level_At(L);
+        if (not Any_List(at)) { // non-arrays don't substitute/recurse
+            Derelativize(PUSH(), at, specifier);  // preserves newline
             Fetch_Next_In_Level(nullptr, L);
             continue;
         }
@@ -425,17 +426,17 @@ bool Compose_To_Stack_Throws(
         Specifier* match_specifier = nullptr;
         const Cell* match = nullptr;
 
-        if (not Is_Group(L->value)) {
+        if (not Is_Group(at)) {
             //
             // Don't compose at this level, but may need to walk deeply to
             // find compositions inside it if /DEEP and it's an array
         }
-        else if (Match_For_Compose(L->value, pattern)) {
-            match = L->value;
+        else if (Match_For_Compose(at, pattern)) {
+            match = at;
             match_specifier = specifier;
         }
 
-        if (match) { // only L->value if pattern is just [] or (), else deeper
+        if (match) { // only `at` if pattern is just [] or (), else deeper
             REBIXO indexor = Eval_At_Core(
                 Init_Void(out), // want empty () to vanish as a VOID would
                 nullptr, // no opt_first
@@ -472,7 +473,7 @@ bool Compose_To_Stack_Throws(
                     // value spliced in (it may have its own newline flag)
                     //
                     Derelativize(PUSH(), push, VAL_SPECIFIER(out));
-                    if (Get_Cell_Flag(L->value, NEWLINE_BEFORE))
+                    if (Get_Cell_Flag(at, NEWLINE_BEFORE))
                         Set_Cell_Flag(TOP, NEWLINE_BEFORE);
 
                     while (++push, NOT_END(push))
@@ -484,7 +485,7 @@ bool Compose_To_Stack_Throws(
                 // compose/only [([a b c]) unmerged] => [[a b c] unmerged]
 
                 Copy_Cell(PUSH(), out);  // Not legal to eval to stack direct!
-                if (Get_Cell_Flag(L->value, NEWLINE_BEFORE))
+                if (Get_Cell_Flag(at, NEWLINE_BEFORE))
                     Set_Cell_Flag(TOP, NEWLINE_BEFORE);
             }
 
@@ -496,7 +497,7 @@ bool Compose_To_Stack_Throws(
             StackIndex deep_base = TOP_INDEX;
             if (Compose_To_Stack_Throws(
                 out,
-                L->value,
+                at,
                 specifier,
                 pattern,
                 true, // deep (guaranteed true if we get here)
@@ -508,23 +509,23 @@ bool Compose_To_Stack_Throws(
             }
 
             Flags flags = BASE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE;
-            if (Get_Array_Flag(Cell_Array(L->value), NEWLINE_AT_TAIL))
+            if (Get_Array_Flag(Cell_Array(at), NEWLINE_AT_TAIL))
                 flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
             Array* popped = Pop_Stack_Values_Core(deep_base, flags);
             Init_Any_List(
                 PUSH(),
-                Type_Of(L->value),
+                Type_Of(at),
                 popped // can't push and pop in same step, need this variable!
             );
 
-            if (Get_Cell_Flag(L->value, NEWLINE_BEFORE))
+            if (Get_Cell_Flag(at, NEWLINE_BEFORE))
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
         }
         else {
             // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7] ;-- non-deep
             //
-            Derelativize(PUSH(), L->value, L->specifier);  // preserves newline
+            Derelativize(PUSH(), at, L->specifier);  // preserves newline
         }
 
         Fetch_Next_In_Level(nullptr, L);

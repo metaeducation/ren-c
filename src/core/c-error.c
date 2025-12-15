@@ -1503,14 +1503,14 @@ DECLARE_NATIVE(TRAP)
     DECLARE_LEVEL (L);
     Push_Level(L, code);
 
-    while (NOT_END(L->value)) {
+    while (Not_Level_At_End(L)) {
         if (Eval_Step_Throws(SET_END(OUT), L)) {
             Abort_Level(L);
             return BOUNCE_THROWN;
         }
 
         if (IS_END(OUT)) { // e.g. `reduce [comment "hi"]`
-            assert(IS_END(L->value));
+            assert(Is_Level_At_End(L));
             break;
         }
 

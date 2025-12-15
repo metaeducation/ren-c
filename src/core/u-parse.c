@@ -78,8 +78,8 @@
 // usermode authored function arguments only.)
 //
 
-#define P_RULE              (L->value + 0) // rvalue, don't change pointer
-#define P_RULE_SPECIFIER    (L->specifier + 0) // rvalue, don't change pointer
+#define P_RULE              Level_At(L)  // rvalue, don't change pointer
+#define P_RULE_SPECIFIER    Level_Binding(L)  // rvalue, don't change pointer
 
 #define P_INPUT_VALUE       (Level_Args_Head(L) + 0)
 #define P_TYPE              Type_Of(P_INPUT_VALUE)
@@ -101,7 +101,7 @@
     Fetch_Next_In_Level(nullptr, (L))
 
 #define FETCH_TO_BAR_OR_END(L) \
-    while (NOT_END(L->value) and not Is_Bar(P_RULE)) \
+    while (Not_Level_At_End(L) and not Is_Bar(P_RULE)) \
         { FETCH_NEXT_RULE(L); }
 
 
@@ -341,7 +341,7 @@ static void Print_Parse_Index(Level* L) {
     // !!! Or does PARSE adjust to ensure it never is past the end, e.g.
     // when seeking a position given in a variable or modifying?
     //
-    if (IS_END(L->value)) {
+    if (Is_Level_At_End(L)) {
         if (P_POS >= Flex_Len(P_INPUT))
             Debug_Fmt("[]: ** END **");
         else
@@ -1138,7 +1138,7 @@ DECLARE_NATIVE(SUBPARSE)
     REBINT mincount = 1; // min pattern count
     REBINT maxcount = 1; // max pattern count
 
-    while (NOT_END(L->value)) {
+    while (Not_Level_At_End(L)) {
 
         /* Print_Parse_Index(L); */
         UPDATE_EXPRESSION_START(L);
@@ -1460,7 +1460,7 @@ DECLARE_NATIVE(SUBPARSE)
                         // for BREAK) where in UPARSE it means RETURN.
                         //
                         FETCH_NEXT_RULE(L);
-                        if (IS_END(P_RULE))
+                        if (Is_Level_At_End(L))
                             panic ("PARSE3 ACCEPT requires argument");
 
                         DECLARE_VALUE (thrown_arg);
@@ -1540,7 +1540,7 @@ DECLARE_NATIVE(SUBPARSE)
                     handle_cond:
                     case SYM_COND: {
                         FETCH_NEXT_RULE(L);
-                        if (IS_END(P_RULE))
+                        if (Is_Level_At_End(L))
                             panic (Error_Parse_End());
 
                         if (not Is_Group(P_RULE))
@@ -1569,7 +1569,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                     case SYM_INLINE: {
                         FETCH_NEXT_RULE(L);
-                        if (IS_END(P_RULE))
+                        if (Is_Level_At_End(L))
                             panic (Error_Parse_End());
 
                         if (not Is_Group(P_RULE))
@@ -1638,7 +1638,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                     bool strict = true;
                     if (
-                        NOT_END(P_RULE)
+                        Not_Level_At_End(L)
                         and Is_Tag(P_RULE)
                         and (0 == Compare_String_Vals(
                             P_RULE,
@@ -1771,7 +1771,7 @@ DECLARE_NATIVE(SUBPARSE)
             mincount = maxcount = Int32s(rule, 0);
 
             FETCH_NEXT_RULE(L);
-            if (IS_END(P_RULE))
+            if (Is_Level_At_End(L))
                 panic (Error_Parse_End());
 
             rule = Get_Parse_Value(save, P_RULE, P_RULE_SPECIFIER);
@@ -1780,7 +1780,7 @@ DECLARE_NATIVE(SUBPARSE)
                 maxcount = Int32s(rule, 0);
 
                 FETCH_NEXT_RULE(L);
-                if (IS_END(L->value))
+                if (Is_Level_At_End(L))
                     panic (Error_Parse_End());
 
                 rule = Get_Parse_Value(save, P_RULE, P_RULE_SPECIFIER);
@@ -1845,7 +1845,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                 case SYM_TO:
                 case SYM_THRU: {
-                    if (IS_END(L->value))
+                    if (Is_Level_At_End(L))
                         panic (Error_Parse_End());
 
                     if (!subrule) { // capture only on iteration #1
@@ -1875,7 +1875,7 @@ DECLARE_NATIVE(SUBPARSE)
                     if (not Is_Flex_Array(P_INPUT))
                         panic (Error_Parse_Rule()); // see #2253
 
-                    if (IS_END(L->value))
+                    if (Is_Level_At_End(L))
                         panic (Error_Parse_End());
 
                     if (not subrule) { // capture only on iteration #1
@@ -1895,7 +1895,7 @@ DECLARE_NATIVE(SUBPARSE)
                 }
 
                 case SYM_INTO: {
-                    if (IS_END(L->value))
+                    if (Is_Level_At_End(L))
                         panic (Error_Parse_End());
 
                     if (!subrule) {
@@ -2086,7 +2086,7 @@ DECLARE_NATIVE(SUBPARSE)
             if (P_POS == NOT_FOUND) {
                 if (P_FLAGS & PF_THEN) {
                     FETCH_TO_BAR_OR_END(L);
-                    if (NOT_END(P_RULE))
+                    if (Not_Level_At_End(L))
                         FETCH_NEXT_RULE(L);
                 }
             }
@@ -2176,7 +2176,7 @@ DECLARE_NATIVE(SUBPARSE)
                     count = (P_FLAGS & PF_INSERT) ? 0 : count;
                     bool only = false;
 
-                    if (IS_END(L->value))
+                    if (Is_Level_At_End(L))
                         panic (Error_Parse_End());
 
                     if (Is_Word(P_RULE)) { // check for ONLY flag
@@ -2186,7 +2186,7 @@ DECLARE_NATIVE(SUBPARSE)
                               case SYM_ONLY:
                                 only = true;
                                 FETCH_NEXT_RULE(L);
-                                if (IS_END(P_RULE))
+                                if (Is_Level_At_End(L))
                                     panic (Error_Parse_End());
                                 break;
 
@@ -2292,7 +2292,7 @@ DECLARE_NATIVE(SUBPARSE)
             // options later in the block to consider separated by |.
 
             FETCH_TO_BAR_OR_END(L);
-            if (IS_END(P_RULE)) // no alternate rule
+            if (Is_Level_At_End(L)) // no alternate rule
                 return Init_Nulled(OUT);
 
             // Jump to the alternate rule and reset input

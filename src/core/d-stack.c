@@ -102,7 +102,7 @@ Value* Init_Near_For_Frame(Cell* out, Level* L)
 {
     StackIndex base = TOP_INDEX;
 
-    if (NOT_END(L->value) and LVL_IS_VALIST(L)) {
+    if (Not_Level_At_End(L) and LVL_IS_VALIST(L)) {
         //
         // Traversing a C va_arg, so reify into a (truncated) array.
         //

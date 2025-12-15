@@ -52,16 +52,11 @@ INLINE void Init_For_Vararg_End(Value* out, enum Reb_Vararg_Op op) {
 INLINE bool Vararg_Op_If_No_Advance_Handled(
     Value* out,
     enum Reb_Vararg_Op op,
-    const Cell* opt_look, // the first value in the varargs input
+    const Cell* look, // the first value in the varargs input
     Specifier* specifier,
     ParamClass pclass
 ){
-    if (IS_END(opt_look)) {
-        Init_For_Vararg_End(out, op); // exhausted
-        return true;
-    }
-
-    if (pclass == PARAMCLASS_NORMAL and Is_Word(opt_look)) {
+    if (pclass == PARAMCLASS_NORMAL and Is_Word(look)) {
         //
         // When a variadic argument is being TAKE-n, deferred left hand side
         // argument needs to be seen as end of variadic input.  Otherwise,
@@ -75,7 +70,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         // and the rules apply.  Note the raw check is faster, no need to
         // separately test for IS_END()
 
-        const Value* child_gotten = Try_Get_Opt_Var(opt_look, specifier);
+        const Value* child_gotten = Try_Get_Opt_Var(look, specifier);
 
         if (child_gotten and Type_Of(child_gotten) == TYPE_ACTION) {
             if (Get_Cell_Flag(child_gotten, INFIX_IF_ACTION)) {
@@ -99,7 +94,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         if (pclass != PARAMCLASS_HARD_QUOTE)
             panic (Error_Varargs_No_Look_Raw()); // hard quote only
 
-        Derelativize(out, opt_look, specifier);
+        Derelativize(out, look, specifier);
 
         return true; // only a lookahead, no need to advance
     }
@@ -153,11 +148,15 @@ bool Do_Vararg_Op_Maybe_End_Throws(
 
         opt_vararg_level = nullptr;
 
+        if (IS_END(shared)) {
+            Init_For_Vararg_End(out, op); // exhausted
+            goto type_check_and_return;
+        }
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            IS_END(shared) ? END_BASE : List_At(shared),
-            IS_END(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
+            List_At(shared),
+            VAL_SPECIFIER(shared),
             pclass
         )){
             goto type_check_and_return;
@@ -252,11 +251,17 @@ bool Do_Vararg_Op_Maybe_End_Throws(
 
         opt_vararg_level = L;
 
+        if (Is_Level_At_End(L)) {
+            Init_For_Vararg_End(out, op); // exhausted
+            goto type_check_and_return;
+        }
+        const Cell* at = Level_At(L);
+        Specifier* specifier = Level_Binding(L);
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            L->value, // might be END
-            L->specifier,
+            at,
+            specifier,
             pclass
         )){
             goto type_check_and_return;
@@ -285,11 +290,11 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             break;
 
         case PARAMCLASS_SOFT_QUOTE:
-            if (IS_QUOTABLY_SOFT(L->value)) {
+            if (IS_QUOTABLY_SOFT(at)) {
                 if (Eval_Value_Core_Throws(
                     SET_END(out),
-                    L->value,
-                    L->specifier
+                    at,
+                    specifier
                 )){
                     return true;
                 }
