@@ -173,7 +173,7 @@ INLINE void Push_Level_Core(Level* L)
 
   #if RUNTIME_CHECKS
     //
-    // !!! TBD: the relevant file/line update when L->source->array changes
+    // !!! TBD: the relevant file/line update when L->feed->array changes
     //
     Option(Strand*) file = File_Of_Level(L);
     if (file)
@@ -199,10 +199,10 @@ INLINE void Push_Level_Core(Level* L)
         // the frame is finished.
     }
     else {
-        if (Get_Flex_Info(L->source->array, HOLD))
+        if (Get_Flex_Info(L->feed->array, HOLD))
             NOOP; // already temp-locked
         else {
-            Set_Flex_Info(L->source->array, HOLD);
+            Set_Flex_Info(L->feed->array, HOLD);
             Set_Eval_Flag(L, TOOK_FRAME_HOLD);
         }
     }
@@ -218,7 +218,7 @@ INLINE void Push_Level_Core(Level* L)
 INLINE void Push_Level_At_End(Level* L, Flags flags) {
     L->flags = Endlike_Header(flags);
 
-    assert(L->source == &TG_Level_Source_End); // see DECLARE_END_LEVEL
+    assert(L->feed == &TG_Level_Feed_End); // see DECLARE_END_LEVEL
     L->gotten = nullptr;
     SET_FRAME_VALUE(L, END_BASE);
     L->specifier = SPECIFIED;
@@ -227,7 +227,7 @@ INLINE void Push_Level_At_End(Level* L, Flags flags) {
 }
 
 INLINE void UPDATE_EXPRESSION_START(Level* L) {
-    L->expr_index = L->source->index; // this is garbage if EVAL_FLAG_VA_LIST
+    L->expr_index = L->feed->index; // this is garbage if EVAL_FLAG_VA_LIST
 }
 
 INLINE void Reuse_Varlist_If_Available(Level* L) {
@@ -254,11 +254,11 @@ INLINE void Push_Level_At(
     L->gotten = nullptr; // Eval_Core_Throws() must fetch for TYPE_WORD, etc.
     SET_FRAME_VALUE(L, Array_At(array, index));
 
-    L->source->vaptr = nullptr;
-    L->source->array = array;
-    L->source->index = index + 1;
-    L->source->pending = L->value + 1;
-    L->source->deferring_infix = false;
+    L->feed->vaptr = nullptr;
+    L->feed->array = array;
+    L->feed->index = index + 1;
+    L->feed->pending = L->value + 1;
+    L->feed->deferring_infix = false;
 
     L->specifier = specifier;
 
@@ -341,7 +341,7 @@ INLINE void Set_Level_Detected_Fetch(
 
     if (not p) { // libRebol's null/~null~ (Is_Nulled prohibited below)
 
-        L->source->array = nullptr;
+        L->feed->array = nullptr;
         L->value = NULLED_CELL;
 
     } else switch (Detect_Rebol_Pointer(p)) {
@@ -357,7 +357,7 @@ INLINE void Set_Level_Detected_Fetch(
             filename,
             start_line,
             cast(const Byte*, p),
-            L->source->vaptr
+            L->feed->vaptr
         );
 
         // !!! In the working definition, the "topmost level" of a variadic
@@ -405,7 +405,7 @@ INLINE void Set_Level_Detected_Fetch(
         // !!! for now, assume scan went to the end; ultimately it would need
         // to pass the "source".
         //
-        L->source->vaptr = nullptr;
+        L->feed->vaptr = nullptr;
 
         if (TOP_INDEX == base) {
             //
@@ -415,7 +415,7 @@ INLINE void Set_Level_Detected_Fetch(
             // feed is actually over so as to put null... so get another
             // value out of the va_list and keep going.
             //
-            p = va_arg(*L->source->vaptr, const void*);
+            p = va_arg(*L->feed->vaptr, const void*);
             goto detect;
         }
 
@@ -429,9 +429,9 @@ INLINE void Set_Level_Detected_Fetch(
         Manage_Flex(reified);
 
         L->value = Array_Head(reified);
-        L->source->pending = L->value + 1; // may be END
-        L->source->array = reified;
-        L->source->index = 1;
+        L->feed->pending = L->value + 1; // may be END
+        L->feed->array = reified;
+        L->feed->index = 1;
 
         break; }
 
@@ -458,7 +458,7 @@ INLINE void Set_Level_Detected_Fetch(
         // If the cell is in an API holder with FLEX_INFO_API_RELEASE then
         // it will be released on the *next* call (see top of function)
 
-        L->source->array = nullptr;
+        L->feed->array = nullptr;
         L->value = cell; // note that END is detected separately
         assert(not IS_RELATIVE(L->value));
         break; }
@@ -468,13 +468,13 @@ INLINE void Set_Level_Detected_Fetch(
         // We're at the end of the variadic input, so end of the line.
         //
         L->value = END_BASE;
-        Corrupt_If_Needful(L->source->pending);
+        Corrupt_If_Needful(L->feed->pending);
 
         // The va_end() is taken care of here, or if there is a throw/panic it
         // is taken care of by Abort_Level_Core()
         //
-        va_end(*L->source->vaptr);
-        L->source->vaptr = nullptr;
+        va_end(*L->feed->vaptr);
+        L->feed->vaptr = nullptr;
 
         // !!! Error reporting expects there to be an array.  The whole story
         // of errors when there's a va_list is not told very well, and what
@@ -482,8 +482,8 @@ INLINE void Set_Level_Detected_Fetch(
         // are reified from the beginning, else there's not going to be
         // a way to present errors in context.  Fake an empty array for now.
         //
-        L->source->array = EMPTY_ARRAY;
-        L->source->index = 0;
+        L->feed->array = EMPTY_ARRAY;
+        L->feed->index = 0;
         break; }
 
       default:
@@ -496,11 +496,11 @@ INLINE void Set_Level_Detected_Fetch(
 // Fetch_Next_In_Level() (see notes above)
 //
 // Once a va_list is "fetched", it cannot be "un-fetched".  Hence only one
-// unit of fetch is done at a time, into L->value.  L->source->pending thus
+// unit of fetch is done at a time, into L->value.  L->feed->pending thus
 // must hold a signal that data remains in the va_list and it should be
 // consulted further.  That signal is an END marker.
 //
-// More generally, an END marker in L->source->pending for this routine is a
+// More generally, an END marker in L->feed->pending for this routine is a
 // signal that the vaptr (if any) should be consulted next.
 //
 INLINE void Fetch_Next_In_Level(
@@ -526,7 +526,7 @@ INLINE void Fetch_Next_In_Level(
     //
     L->gotten = nullptr;
 
-    if (NOT_END(L->source->pending)) {
+    if (NOT_END(L->feed->pending)) {
         //
         // We assume the ->pending value lives in a source array, and can
         // just be incremented since the array has FLEX_INFO_HOLD while it
@@ -534,19 +534,19 @@ INLINE void Fetch_Next_In_Level(
         // means the release build doesn't need to call Array_At().
         //
         assert(
-            L->source->array // incrementing plain array of cells
-            or L->source->pending == Array_At(L->source->array, L->source->index)
+            L->feed->array // incrementing plain array of cells
+            or L->feed->pending == Array_At(L->feed->array, L->feed->index)
         );
 
         if (opt_lookback)
             *opt_lookback = L->value; // must be non-movable, GC-safe
 
-        L->value = L->source->pending;
+        L->value = L->feed->pending;
 
-        ++L->source->pending; // might be becoming an END marker, here
-        ++L->source->index;
+        ++L->feed->pending; // might be becoming an END marker, here
+        ++L->feed->index;
     }
-    else if (not L->source->vaptr) {
+    else if (not L->feed->vaptr) {
         //
         // The frame was either never variadic, or it was but got spooled into
         // an array by Reify_Va_To_Array_In_Level().  The first END we hit
@@ -556,13 +556,13 @@ INLINE void Fetch_Next_In_Level(
             *opt_lookback = L->value; // all values would have been spooled
 
         L->value = END_BASE;
-        Corrupt_If_Needful(L->source->pending);
+        Corrupt_If_Needful(L->feed->pending);
 
-        ++L->source->index; // for consistency in index termination state
+        ++L->feed->index; // for consistency in index termination state
 
         if (Get_Eval_Flag(L, TOOK_FRAME_HOLD)) {
-            assert(Get_Flex_Info(L->source->array, HOLD));
-            Clear_Flex_Info(L->source->array, HOLD);
+            assert(Get_Flex_Info(L->feed->array, HOLD));
+            Clear_Flex_Info(L->feed->array, HOLD);
 
             // !!! Future features may allow you to move on to another array.
             // If so, the "hold" bit would need to be reset like this.
@@ -575,8 +575,8 @@ INLINE void Fetch_Next_In_Level(
         // and handled in different ways.  Notably, a UTF-8 string can be
         // differentiated and loaded.
         //
-        const void *p = va_arg(*L->source->vaptr, const void*);
-        L->source->index = TRASHED_INDEX; // avoids warning in release build
+        const void *p = va_arg(*L->feed->vaptr, const void*);
+        L->feed->index = TRASHED_INDEX; // avoids warning in release build
         Set_Level_Detected_Fetch(opt_lookback, L, p);
     }
 
@@ -638,8 +638,8 @@ INLINE void Abort_Level(Level* L) {
             // The frame was either never variadic, or it was but got spooled
             // into an array by Reify_Va_To_Array_In_Level()
             //
-            assert(Get_Flex_Info(L->source->array, HOLD));
-            Clear_Flex_Info(L->source->array, HOLD);
+            assert(Get_Flex_Info(L->feed->array, HOLD));
+            Clear_Flex_Info(L->feed->array, HOLD);
         }
     }
 
@@ -767,7 +767,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
 
     // !!! Should they share a source instead of updating?
     //
-    assert(child->source == higher->source);
+    assert(child->feed == higher->feed);
     child->value = higher->value;
     child->gotten = higher->gotten;
     child->specifier = higher->specifier;
@@ -780,7 +780,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     //
   #if RUNTIME_CHECKS
     Corrupt_If_Needful(higher->gotten);
-    REBLEN old_index = higher->source->index;
+    REBLEN old_index = higher->feed->index;
   #endif
 
     child->flags = Endlike_Header(flags);
@@ -799,7 +799,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     assert(
         IS_END(child->value)
         or LVL_IS_VALIST(child)
-        or old_index != child->source->index
+        or old_index != child->feed->index
         or (flags & EVAL_FLAG_REEVALUATE_CELL)
         or threw
     );
@@ -828,22 +828,22 @@ INLINE REBIXO Eval_At_Core(
     DECLARE_LEVEL (L);
     L->flags = Endlike_Header(flags); // SET_FRAME_VALUE() *could* use
 
-    L->source->vaptr = nullptr;
-    L->source->array = array;
-    L->source->deferring_infix = false;
+    L->feed->vaptr = nullptr;
+    L->feed->array = array;
+    L->feed->deferring_infix = false;
 
     L->gotten = nullptr; // SET_FRAME_VALUE() asserts this is nullptr
 
     if (opt_first) {
         SET_FRAME_VALUE(L, opt_first);
-        L->source->index = index;
-        L->source->pending = Array_At(array, index);
+        L->feed->index = index;
+        L->feed->pending = Array_At(array, index);
         assert(NOT_END(L->value));
     }
     else {
         SET_FRAME_VALUE(L, Array_At(array, index));
-        L->source->index = index + 1;
-        L->source->pending = L->value + 1;
+        L->feed->index = index + 1;
+        L->feed->pending = L->value + 1;
         if (IS_END(L->value))
             return END_FLAG;
     }
@@ -861,9 +861,9 @@ INLINE REBIXO Eval_At_Core(
 
     assert(
         not (flags & EVAL_FLAG_TO_END)
-        or L->source->index == Array_Len(array) + 1
+        or L->feed->index == Array_Len(array) + 1
     );
-    return L->source->index;
+    return L->feed->index;
 }
 
 
@@ -902,7 +902,7 @@ INLINE void Reify_Va_To_Array_In_Level(
         Init_Word(PUSH(), CANON(__OPTIMIZED_OUT__));
 
     if (NOT_END(L->value)) {
-        assert(L->source->pending == END_BASE);
+        assert(L->feed->pending == END_BASE);
 
         do {
             assert(not Is_Antiform(L->value));
@@ -912,39 +912,39 @@ INLINE void Reify_Va_To_Array_In_Level(
         } while (NOT_END(L->value));
 
         if (truncated)
-            L->source->index = 2; // skip the --optimized-out--
+            L->feed->index = 2; // skip the --optimized-out--
         else
-            L->source->index = 1; // position at start of the extracted values
+            L->feed->index = 1; // position at start of the extracted values
     }
     else {
-        Assert_Corrupted_If_Needful(L->source->pending);
+        Assert_Corrupted_If_Needful(L->feed->pending);
 
         // Leave at end of frame, but give back the array to serve as
         // notice of the truncation (if it was truncated)
         //
-        L->source->index = 0;
+        L->feed->index = 0;
     }
 
-    assert(not L->source->vaptr); // feeding forward should have called va_end
+    assert(not L->feed->vaptr); // feeding forward should have called va_end
 
     // special array...may contain voids and eval flip is kept
-    L->source->array = Pop_Stack_Values(base);
-    Manage_Flex(L->source->array); // held alive while frame running
+    L->feed->array = Pop_Stack_Values(base);
+    Manage_Flex(L->feed->array); // held alive while frame running
 
     // The array just popped into existence, and it's tied to a running
     // frame...so safe to say we're holding it.  (This would be more complex
     // if we reused the empty array if base == TOP_INDEX, since someone else
     // might have a hold on it...not worth the complexity.)
     //
-    Set_Flex_Info(L->source->array, HOLD);
+    Set_Flex_Info(L->feed->array, HOLD);
     Set_Eval_Flag(L, TOOK_FRAME_HOLD);
 
     if (truncated)
-        SET_FRAME_VALUE(L, Array_At(L->source->array, 1)); // skip `--optimized--`
+        SET_FRAME_VALUE(L, Array_At(L->feed->array, 1)); // skip `--optimized--`
     else
-        SET_FRAME_VALUE(L, Array_Head(L->source->array));
+        SET_FRAME_VALUE(L, Array_Head(L->feed->array));
 
-    L->source->pending = L->value + 1;
+    L->feed->pending = L->value + 1;
 }
 
 
@@ -974,11 +974,11 @@ INLINE REBIXO Eval_Va_Core(
     DECLARE_LEVEL (L);
     L->flags = Endlike_Header(flags); // read by Set_Level_Detected_Fetch
 
-    L->source->index = TRASHED_INDEX; // avoids warning in release build
-    L->source->array = nullptr;
-    L->source->vaptr = vaptr;
-    L->source->pending = END_BASE; // signal next fetch comes from va_list
-    L->source->deferring_infix = false;
+    L->feed->index = TRASHED_INDEX; // avoids warning in release build
+    L->feed->array = nullptr;
+    L->feed->vaptr = vaptr;
+    L->feed->pending = END_BASE; // signal next fetch comes from va_list
+    L->feed->deferring_infix = false;
 
     // We reuse logic in Fetch_Next_In_Level() and Set_Level_Detected_Fetch()
     // but the previous L->value will be tested for BASE_FLAG_ROOT.

@@ -96,8 +96,8 @@ void Dump_Level_Location(const Cell* current, Level* L)
         Init_Any_Series_At_Core(
             dump,
             TYPE_BLOCK,
-            L->source->array,
-            cast(REBLEN, L->source->index),
+            L->feed->array,
+            cast(REBLEN, L->feed->index),
             L->specifier
         );
         PROBE(dump);
@@ -125,16 +125,16 @@ static void Eval_Core_Shared_Checks_Debug(Level* L) {
 
     assert(Not_Eval_Flag(L, FINAL_DEBUG));
 
-    if (L->source->array) {
+    if (L->feed->array) {
         assert(
-            L->source->index != TRASHED_INDEX
-            and L->source->index != END_FLAG_PRIVATE // ...special case use!
-            and L->source->index != THROWN_FLAG_PRIVATE // ...don't use these
-            and L->source->index != VA_LIST_FLAG_PRIVATE // ...usually...
+            L->feed->index != TRASHED_INDEX
+            and L->feed->index != END_FLAG_PRIVATE // ...special case use!
+            and L->feed->index != THROWN_FLAG_PRIVATE // ...don't use these
+            and L->feed->index != VA_LIST_FLAG_PRIVATE // ...usually...
         ); // END, THROWN, VA_LIST only used by wrappers
     }
     else
-        assert(L->source->index == TRASHED_INDEX);
+        assert(L->feed->index == TRASHED_INDEX);
 
     // If this fires, it means that Flip_Flex_To_White was not called an
     // equal number of times after Flip_Flex_To_Black, which means that
@@ -311,12 +311,12 @@ void Eval_Core_Exit_Checks_Debug(Level* L) {
     }
 
     if (NOT_END(L->value) and not LVL_IS_VALIST(L)) {
-        if (L->source->index > Array_Len(L->source->array)) {
+        if (L->feed->index > Array_Len(L->feed->array)) {
             assert(
-                (L->source->pending != nullptr and IS_END(L->source->pending))
+                (L->feed->pending != nullptr and IS_END(L->feed->pending))
                 or THROWN(L->out)
             );
-            assert(L->source->index == Array_Len(L->source->array) + 1);
+            assert(L->feed->index == Array_Len(L->feed->array) + 1);
         }
     }
 

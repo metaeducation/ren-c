@@ -93,7 +93,7 @@ INLINE bool Start_New_Expression_Throws(Level* L) {
 
     UPDATE_EXPRESSION_START(L); // !!! See LVL_INDEX() for caveats
 
-    L->source->deferring_infix = false;  // reset for new expression
+    L->feed->deferring_infix = false;  // reset for new expression
 
     Set_Cell_Flag(L->out, OUT_MARKED_STALE);
     return false;
@@ -391,11 +391,11 @@ INLINE void Expire_Out_Cell(Level* L) {
 //     L->value
 //     Pre-fetched first value to execute (cannot be an END marker)
 //
-//     L->source
+//     L->feed
 //     Contains the Array* or C va_list of subsequent values to fetch.
 //
 //     L->specifier
-//     Resolver for bindings of values in L->source, SPECIFIED if all resolved
+//     Resolver for bindings of values in L->feed, SPECIFIED if all resolved
 //
 //     L->gotten
 //     Must be either be the Get_Var() lookup of L->value, or END
@@ -1252,7 +1252,7 @@ bool Eval_Core_Throws(Level* const L)
         assert(
             IS_END(L->value)
             or LVL_IS_VALIST(L)
-            or IS_VALUE_IN_ARRAY_DEBUG(L->source->array, L->value)
+            or IS_VALUE_IN_ARRAY_DEBUG(L->feed->array, L->value)
         );
 
         Expire_Out_Cell(L);
@@ -2018,7 +2018,7 @@ bool Eval_Core_Throws(Level* const L)
     if (
         Get_Cell_Flag(L->gotten, DEFER_INFIX_IF_ACTION)
         and Get_Eval_Flag(L, FULFILLING_ARG)
-        and not L->source->deferring_infix
+        and not L->feed->deferring_infix
     ){
         assert(Not_Eval_Flag(L, TO_END));
         assert(Is_Action_Level_Fulfilling(L->prior));
@@ -2027,7 +2027,7 @@ bool Eval_Core_Throws(Level* const L)
         //
         assert(L->out == L->prior->arg);
 
-        L->source->deferring_infix = true;
+        L->feed->deferring_infix = true;
 
         // Leave the infix operator pending in the frame, and it's up to the
         // parent frame to decide whether to use EVAL_FLAG_POST_SWITCH to jump
@@ -2038,7 +2038,7 @@ bool Eval_Core_Throws(Level* const L)
         goto finished;
     }
 
-    L->source->deferring_infix = false;
+    L->feed->deferring_infix = false;
 
     // This is a case for an evaluative lookback argument we don't want to
     // defer, e.g. a #tight argument or a normal one which is not being

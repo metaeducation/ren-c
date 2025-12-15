@@ -208,7 +208,7 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
 //
 TVAR Level* TG_Top_Level;
 TVAR Level* TG_Bottom_Level;
-TVAR struct Reb_Level_Source TG_Level_Source_End;
+TVAR Feed TG_Level_Feed_End;
 
 
 // When Drop_Level() happens, it may have an allocated varlist Array that

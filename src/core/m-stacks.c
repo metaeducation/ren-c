@@ -106,17 +106,17 @@ void Startup_Level_Stack(void)
     TG_Top_Level = TG_Bottom_Level = nullptr;
   #endif
 
-    TG_Level_Source_End.index = 0;
-    TG_Level_Source_End.vaptr = nullptr;
-    TG_Level_Source_End.array = EMPTY_ARRAY; // for HOLD flag in Push_Level
-    Corrupt_If_Needful(TG_Level_Source_End.pending);
+    TG_Level_Feed_End.index = 0;
+    TG_Level_Feed_End.vaptr = nullptr;
+    TG_Level_Feed_End.array = EMPTY_ARRAY; // for HOLD flag in Push_Level
+    Corrupt_If_Needful(TG_Level_Feed_End.pending);
 
     Level* L = ALLOC(Level); // needs dynamic allocation
     Erase_Cell(Level_Spare(L));
     Init_Unreadable(Level_Spare(L));
 
     L->out = m_cast(Value*, END_BASE); // should not be written
-    L->source = &TG_Level_Source_End;
+    L->feed = &TG_Level_Feed_End;
     Push_Level_At_End(L, DO_MASK_NONE);
 
     // It's too early to be using Make_Paramlist_Managed_May_Panic()

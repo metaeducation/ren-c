@@ -207,8 +207,8 @@ bool Do_Vararg_Op_Maybe_End_Throws(
                 // be ready to use again we're throwing it away, and need to
                 // effectively "undo the prefetch" by taking it down by 1.
                 //
-                assert(L_temp->source->index > 0);
-                VAL_INDEX(shared) = L_temp->source->index - 1; // all sharings
+                assert(L_temp->feed->index > 0);
+                VAL_INDEX(shared) = L_temp->feed->index - 1; // all sharings
             }
 
             Drop_Level(L_temp);

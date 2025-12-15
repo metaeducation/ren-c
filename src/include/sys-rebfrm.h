@@ -392,7 +392,7 @@ STATIC_ASSERT(EVAL_FLAG_4_IS_FALSE == BASE_FLAG_CELL);
     ((k) >= TYPE_BLOCK)
 
 
-struct Reb_Level_Source {
+typedef struct {
     //
     // A frame may be sourced from a va_list of pointers, or not.  If this is
     // nullptr it's assumed that the values are sourced from a simple array.
@@ -423,7 +423,7 @@ struct Reb_Level_Source {
     // this is seen as true, that means it's the second visit.
     //
     bool deferring_infix;
-};
+} Feed;
 
 
 // NOTE: The ordering of the fields in LevelStruct are specifically done so
@@ -486,7 +486,7 @@ struct LevelStruct {
     //
     Value* out;
 
-    // `source.array`, `source.vaptr`
+    // `feed.array`, `feed.vaptr`
     //
     // This is the source from which new values will be fetched.  In addition
     // to working with an array, it is also possible to feed the evaluator
@@ -498,7 +498,7 @@ struct LevelStruct {
     // Since frames may share source information, this needs to be done with
     // a dereference.
     //
-    struct Reb_Level_Source *source;
+    Feed* feed;
 
     // `specifier`
     //
@@ -712,7 +712,7 @@ struct LevelStruct {
     // series to a file and line number associated with their creation,
     // either their source code or some trace back to the code that generated
     // them.  As the feature gets better, it will certainly be useful to be
-    // able to quickly see the information in the debugger for L->source.
+    // able to quickly see the information in the debugger for L->feed.
     //
     Ucs2Unit* file_ucs2;  // is wide char, unfortunately, in this old branch
     int line;
@@ -762,23 +762,23 @@ struct LevelStruct {
 // value between evaluations; it's not cleared.
 //
 
-#define DECLARE_LEVEL_CORE(name, source_ptr) \
+#define DECLARE_LEVEL_CORE(name, feed_ptr) \
     Level name##_struct; \
-    name##_struct.source = (source_ptr); \
+    name##_struct.feed = (feed_ptr); \
     Level* const name = &name##_struct; \
     Erase_Cell(&name->spare); \
     Init_Unreadable(&name->spare); \
     name->stack_base = TOP_INDEX;
 
 #define DECLARE_LEVEL(name) \
-    struct Reb_Level_Source name##source; \
-    DECLARE_LEVEL_CORE(name, &name##source)
+    Feed name##feed; \
+    DECLARE_LEVEL_CORE(name, &name##feed)
 
 #define DECLARE_END_LEVEL(name) \
-    DECLARE_LEVEL_CORE(name, &TG_Level_Source_End)
+    DECLARE_LEVEL_CORE(name, &TG_Level_Feed_End)
 
 #define DECLARE_SUBLEVEL(name, parent) \
-    DECLARE_LEVEL_CORE(name, (parent)->source)
+    DECLARE_LEVEL_CORE(name, (parent)->feed)
 
 
 #define TOP_LEVEL (TG_Top_Level + 0)  // avoid assign to via + 0

@@ -246,7 +246,7 @@ DECLARE_NATIVE(NEW_LINE_Q)
         Level* L;
         Value* shared;
         if (Is_Level_Style_Varargs_May_Panic(&L, pos)) {
-            if (not L->source->array) {
+            if (not L->feed->array) {
                 //
                 // C va_args input to frame, as from the API, but not in the
                 // process of using string components which *might* have
@@ -256,11 +256,11 @@ DECLARE_NATIVE(NEW_LINE_Q)
                 //    bool case_one = rebDid("new-line?", "[\n]");
                 //    bool case_two = rebDid(new_line_q, "[\n]");
                 //
-                assert(L->source->index == TRASHED_INDEX);
+                assert(L->feed->index == TRASHED_INDEX);
                 return Init_Logic(OUT, false);
             }
 
-            arr = L->source->array;
+            arr = L->feed->array;
             item = L->value;
         }
         else if (Is_Block_Style_Varargs(&shared, pos)) {

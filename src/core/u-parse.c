@@ -213,11 +213,11 @@ static bool Subparse_Throws(
     SET_FRAME_VALUE(L, List_At(rules)); // not an END due to test above
     L->specifier = Derive_Specifier(rules_specifier, rules);
 
-    L->source->vaptr = nullptr;
-    L->source->array = Cell_Array(rules);
-    L->source->index = VAL_INDEX(rules) + 1;
-    L->source->pending = L->value + 1;
-    L->source->deferring_infix = false;
+    L->feed->vaptr = nullptr;
+    L->feed->array = Cell_Array(rules);
+    L->feed->index = VAL_INDEX(rules) + 1;
+    L->feed->pending = L->value + 1;
+    L->feed->deferring_infix = false;
 
     L->flags = Endlike_Header(EVAL_FLAG_PARSE_FRAME); // terminates L->spare
 

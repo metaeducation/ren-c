@@ -440,7 +440,7 @@ void Set_Location_Of_Error(
     //
     L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
-        if (not L->source->array) {
+        if (not L->feed->array) {
             //
             // !!! We currently skip any calls from C (e.g. rebValue()) and look
             // for calls from Rebol files for the file and line.  However,
@@ -449,13 +449,13 @@ void Set_Location_Of_Error(
             //
             continue;
         }
-        if (Not_Array_Flag(L->source->array, HAS_FILE_LINE))
+        if (Not_Array_Flag(L->feed->array, HAS_FILE_LINE))
             continue;
         break;
     }
     if (L != BOTTOM_LEVEL) {
-        Option(Strand*) file = LINK(L->source->array).file;
-        LineNumber line = MISC(L->source->array).line;
+        Option(Strand*) file = LINK(L->feed->array).file;
+        LineNumber line = MISC(L->feed->array).line;
 
         if (file)
             Init_File(&vars->file, unwrap file);

@@ -90,12 +90,12 @@ INLINE void CATCH_THROWN(Cell* arg_out, Value* thrown) {
 
 
 INLINE bool LVL_IS_VALIST(Level* L) {
-    return L->source->vaptr != nullptr;
+    return L->feed->vaptr != nullptr;
 }
 
 INLINE Array* LVL_ARRAY(Level* L) {
     assert(IS_END(L->value) or not LVL_IS_VALIST(L));
-    return L->source->array;
+    return L->feed->array;
 }
 
 // !!! Though the evaluator saves its `index`, the index is not meaningful
@@ -106,16 +106,16 @@ INLINE Array* LVL_ARRAY(Level* L) {
 //
 INLINE REBLEN LVL_INDEX(Level* L) {
     if (IS_END(L->value))
-        return Array_Len(L->source->array);
+        return Array_Len(L->feed->array);
 
     assert(not LVL_IS_VALIST(L));
-    return L->source->index - 1;
+    return L->feed->index - 1;
 }
 
 INLINE REBLEN LVL_EXPR_INDEX(Level* L) {
     assert(not LVL_IS_VALIST(L));
     return L->expr_index == END_FLAG
-        ? Array_Len((L)->source->array)
+        ? Array_Len((L)->feed->array)
         : L->expr_index - 1;
 }
 
@@ -128,13 +128,13 @@ INLINE Option(Strand*) File_Of_Level(Level* L) {
     // be kept as a UTF-8 string inside the frame without needing interning
     // as a series.  But for now, just signal that it came from C code.
     //
-    if (not L->source->array)
+    if (not L->feed->array)
         return nullptr;
 
-    if (Not_Array_Flag(L->source->array, HAS_FILE_LINE))
+    if (Not_Array_Flag(L->feed->array, HAS_FILE_LINE))
         return nullptr;
 
-    Option(Strand*) file = LINK(L->source->array).file;
+    Option(Strand*) file = LINK(L->feed->array).file;
     if (file)
         assert(Is_Flex_Ucs2(unwrap file));
 
@@ -142,13 +142,13 @@ INLINE Option(Strand*) File_Of_Level(Level* L) {
 }
 
 INLINE int LVL_LINE(Level* L) {
-    if (not L->source->array)
+    if (not L->feed->array)
         return 0;
 
-    if (Not_Array_Flag(L->source->array, HAS_FILE_LINE))
+    if (Not_Array_Flag(L->feed->array, HAS_FILE_LINE))
         return 0;
 
-    return MISC(L->source->array).line;
+    return MISC(L->feed->array).line;
 }
 
 
@@ -488,7 +488,7 @@ INLINE void Push_Action(
     //
     L->special = ACT_SPECIALTY_HEAD(act);
 
-    L->source->deferring_infix = false;
+    L->feed->deferring_infix = false;
 
     assert(Not_Base_Managed(L->varlist));
     assert(Not_Flex_Info(L->varlist, INACCESSIBLE));

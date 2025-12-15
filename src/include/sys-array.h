@@ -288,11 +288,11 @@ INLINE Array* Make_Array_Core(REBLEN capacity, Flags flags) {
     //
     if (flags & ARRAY_FLAG_HAS_FILE_LINE) { // most callsites const fold this
         if (
-            TOP_LEVEL->source->array and
-            Get_Array_Flag(TOP_LEVEL->source->array, HAS_FILE_LINE)
+            TOP_LEVEL->feed->array and
+            Get_Array_Flag(TOP_LEVEL->feed->array, HAS_FILE_LINE)
         ){
-            LINK(s).file = LINK(TOP_LEVEL->source->array).file;
-            MISC(s).line = MISC(TOP_LEVEL->source->array).line;
+            LINK(s).file = LINK(TOP_LEVEL->feed->array).file;
+            MISC(s).line = MISC(TOP_LEVEL->feed->array).line;
         }
         else
             Clear_Array_Flag(s, HAS_FILE_LINE);

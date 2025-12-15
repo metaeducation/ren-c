@@ -1442,11 +1442,11 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     DECLARE_LEVEL (L);
     L->flags = Endlike_Header(flags); // read by Set_Level_Detected_Fetch
 
-    L->source->index = TRASHED_INDEX; // avoids warning in release build
-    L->source->array = nullptr;
-    L->source->vaptr = vaptr;
-    L->source->pending = END_BASE; // signal next fetch comes from va_list
-    L->source->deferring_infix = false;
+    L->feed->index = TRASHED_INDEX; // avoids warning in release build
+    L->feed->array = nullptr;
+    L->feed->vaptr = vaptr;
+    L->feed->pending = END_BASE; // signal next fetch comes from va_list
+    L->feed->deferring_infix = false;
 
     //
     // We reuse logic in Fetch_Next_In_Level() and Set_Level_Detected_Fetch()
@@ -1467,16 +1467,16 @@ intptr_t API_rebPromise(const void *p, va_list *vaptr)
     // The array is managed, but let's unmanage it so it doesn't get GC'd and
     // use it as the ID of the table entry for the promise.
     //
-    assert(Is_Base_Managed(L->source->array));
-    Clear_Base_Managed_Bit(L->source->array);
+    assert(Is_Base_Managed(L->feed->array));
+    Clear_Base_Managed_Bit(L->feed->array);
 
     EM_ASM_({
         setTimeout(function() { // evaluate the code w/no other code on GUI
             _API_rebPromise_callback($0); // for emscripten_sleep_with_yield()
         }, 0);
-    }, L->source->array);
+    }, L->feed->array);
 
-    return cast(intptr_t, L->source->array);
+    return cast(intptr_t, L->feed->array);
   #endif
 }
 

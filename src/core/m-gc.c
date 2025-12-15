@@ -1051,13 +1051,13 @@ static void Mark_Level_Stack_Deep(void)
         // earlier in the recycle process (don't want to create new arrays
         // once the recycling has started...)
         //
-        /* L->source->vaptr is either nullptr or corrupt */
+        /* L->feed->vaptr is either nullptr or corrupt */
 
-        // Note: L->source->pending should either live in L->source->array, or
+        // Note: L->feed->pending should either live in L->feed->array, or
         // it may be trash (e.g. if it's an apply).  GC can ignore it.
         //
-        if (L->source->array)
-            Queue_Mark_Array_Deep(L->source->array);
+        if (L->feed->array)
+            Queue_Mark_Array_Deep(L->feed->array);
 
         // END is possible, because the frame could be sitting at the end of
         // a block when a function runs, e.g. `eval [zero-arity]`.  That frame
