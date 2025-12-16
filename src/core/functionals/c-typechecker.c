@@ -669,10 +669,13 @@ static bool Typecheck_Unoptimized_Uses_Spare_And_Scratch(
         LIFT_BYTE(SPARE) = NOQUOTE_2;
     }
 
-    if (Cell_Underlying_Sigil(SPARE) != Sigil_Of(at))
-        goto test_failed;
+    Option(Sigil) test_sigil = Cell_Underlying_Sigil(at);
+    if (test_sigil) {
+        if (test_sigil != Cell_Underlying_Sigil(SPARE))
+            goto test_failed;
 
-    SPARE->header.bits &= (~ CELL_MASK_SIGIL);  // don't care if it's antiform
+        SPARE->header.bits &= (~ CELL_MASK_SIGIL);  // don't care if antiform
+    }
 
     const Symbol* label;
 
