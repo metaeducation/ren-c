@@ -166,7 +166,7 @@ Result(None) Get_Word_Or_Tuple(
     Error* e;
 
     STATE = 1;
-    Get_Var_In_Scratch_To_Out(L, NO_STEPS) except (e) {
+    Get_Var_In_Scratch_To_Out(L, GROUPS_OK) except (e) {
         // still need to restore state and scratch
     }
 
