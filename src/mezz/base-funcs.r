@@ -39,7 +39,7 @@ steal: lambda [
         [any-stable? <variadic>]
     @look [set-word? set-tuple? <variadic>]
 ][
-    get first look  ; returned value
+    get unchain first look  ; returned value
     elide take evaluation
 ]
 
