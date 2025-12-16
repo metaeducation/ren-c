@@ -1713,7 +1713,7 @@ Bounce Stepper_Executor(Level* L)
         }
 
         STATE = saved_state;
-        Corrupt_If_Needful(L->scratch);
+        Corrupt_Cell_If_Needful(CURRENT);
         Copy_Cell(OUT, TOP);
         DROP();
         break; }  // need to check for lookahead
