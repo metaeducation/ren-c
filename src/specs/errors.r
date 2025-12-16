@@ -189,6 +189,7 @@ not-related:        ["incompatible argument for" $1 "of" $2]
 bad-func-def:       ["invalid function definition:" $1]
 bad-func-arg:       ["function argument" $1 "is not valid"]
 
+func-no-return:     ["FUNCTION" $1 "didn't RETURN (see LAMBDA, PROCEDURE)"]
 bad-return-type:    [$1 "can't RETURN" $2 "but rather" $3]
 
 no-refine:          [$1 "has no refinement called" $2]

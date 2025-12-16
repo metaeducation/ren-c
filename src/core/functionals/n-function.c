@@ -246,7 +246,8 @@ Bounce Func_Dispatcher(Level* const L)
         return OUT;
     }
 
-    panic ("FUNCTION end without calling RETURN (see LAMBDA, PROCEDURE)");
+    Option(const Symbol*) label = Level_Label(L);
+    panic (Error_Func_No_Return_Raw(label ? unwrap label : CANON(ANONYMOUS)));
 }}
 
 
