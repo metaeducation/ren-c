@@ -60,8 +60,6 @@
 
 #if TRAMPOLINE_COUNTS_TICKS  // <-- VERY USEFUL! SEE %sys-tick.h FOR MORE INFO
 
-    extern Tick g_break_at_tick;
-
     //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
     Tick g_break_at_tick =         0;
     //      *** DON'T COMMIT THIS --^ KEEP IT AT ZERO! ***

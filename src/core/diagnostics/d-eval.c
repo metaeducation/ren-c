@@ -110,10 +110,6 @@ void Dump_Level_Location(Level* L)
     }
 }
 
-#if TRAMPOLINE_COUNTS_TICKS
-    extern Tick g_break_at_tick;
-#endif
-
 
 //
 //  Where_Core_Debug: C

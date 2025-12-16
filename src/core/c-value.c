@@ -104,9 +104,6 @@ void Probe_Cell_Print_Helper(
         Mold_Element(mo, cast(const Element*, atom));
 }
 
-#if TRAMPOLINE_COUNTS_TICKS
-    extern Tick g_break_at_tick;
-#endif
 
 //
 //  Probe_Core_Debug: C
