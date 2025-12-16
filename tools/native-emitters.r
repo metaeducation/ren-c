@@ -318,6 +318,26 @@ export emit-include-params-macro: func [
         insert items "NOOP"
     ]
 
+  ; For natives coming from %sys-core.h we do not have a per-native binding
+  ; defined using variable shadowing the way API natives do, e.g. there are
+  ; not lines in here like:
+  ;
+  ;       RebolContext* LIBREBOL_BINDING_NAME() = level_->varlist; \
+  ;       USED(LIBREBOL_BINDING_NAME()); \
+  ;
+  ; This would give libRebol a way to find the frame for the native, and do
+  ; resolution of the arguments by name vs. with ARG() macros.
+  ;
+  ; BUT the reason it is not done is because %sys-core.h natives do not want
+  ; to pay for managing the VarList, and if it were used as the binding on
+  ; API calls it would wind up glued onto elements of that code...making it
+  ; tax the garbage collector more.  The tradeoff is that core natives just
+  ; use the binding of LIB or the module they are in.
+  ;
+  ; (We could opportunistically manage the binding, but for the moment it is
+  ; preferred to enforce the unmanaged state to emphasize how much more GC
+  ; load would be created by using libRebol calls in core natives otherwise.)
+
     let prefix: all [extension unspaced [extension "_"]]
     e/emit [prefix native-name items varlist-hold --[
         #define ${OPT PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \

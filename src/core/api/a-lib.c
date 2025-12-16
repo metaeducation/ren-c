@@ -1291,7 +1291,7 @@ bool API_rebRunCoreThrows_internal(  // use interruptible or non macros [2]
         p, v_cast(va_list*, vaptr), FEED_MASK_DEFAULT
     ));
 
-    if (binding == nullptr) {
+    if (binding == nullptr) {  // e.g. someone calling libRebol() from main()
         assert(Is_Stub_Sea(g_user_context));
         binding = cast(RebolContext*, g_user_context);
     }
@@ -2657,7 +2657,7 @@ bool API_rebTestAndClearHaltRequested(void)
 // NOTE THIS IS NOT LEGAL:
 //
 //     void *instruction = rebQ("stuff");  // not passed direct to evaluator
-//     rebElide("print {Hi!}");  // a RECYCLE could be triggered here
+//     rebElide("print -[Hi!]-");  // a RECYCLE could be triggered here
 //     rebValue(..., instruction, ...);  // the instruction may be corrupt now!
 //
 //=////////////////////////////////////////////////////////////////////////=//

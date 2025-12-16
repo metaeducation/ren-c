@@ -148,11 +148,26 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
 
 } turn_utf8_into_delegated_code: {
 
-    // While it might seem more obvious for `return "some string";` to give
-    // back a text string, it's actually far more useful to run UTF-8 returns
-    // as delegated code:
-    //
-    // https://forum.rebol.info/t/returning-a-string-from-a-native/2357
+  // While it might seem more obvious for `return "some string";` to give back
+  // a text string, it's actually far more useful to run UTF-8 returns as
+  // delegated code:
+  //
+  //   https://forum.rebol.info/t/returning-a-string-from-a-native/2357
+  //
+  // 1. %sys-core.h natives don't want to manage their varlists, so use things
+  //    like ARG(NAME) for efficiency.  They pass LIBREBOL_BINDING_NAME() in
+  //    API calls as just the module they're in (core uses LIB context).
+  //
+  //    But here we're executing some code like `return "print -[Hi!]-"` and
+  //    there was no implicit capture of LIBREBOL_BINDING_NAME().  So we don't
+  //    have the binding...just a (probably) unmanaged varlist which never had
+  //    a moment that the inherited binding was poked into it (because core
+  //    natives are their own dispatchers).
+  //
+  //    To get basics like `return "halt"` to work in the stdio module, we
+  //    just run the code in LIB in this case.  You need to use an API like
+  //    rebContinue() if that's not good enough (but it still would not see
+  //    function arguments in %sys-core.h natives).
 
     assert(Detect_Rebol_Pointer(b) == DETECTED_AS_UTF8);
 
@@ -162,7 +177,13 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
         return nullptr;  // make return "~" fast!
     }
 
-    assert(Link_Inherit_Bind(L->varlist) != nullptr);
+    if (Link_Inherit_Bind(L->varlist) == nullptr) {  // raw native hack [1]
+        assert(Get_Details_Flag(Ensure_Level_Details(L), RAW_NATIVE));
+        possibly(Not_Base_Managed(L->varlist));
+        rebDelegateCore(cast(RebolContext*, g_lib_context), cp);
+        return BOUNCE_DELEGATE;
+    }
+
     assert(Is_Base_Managed(L->varlist));
     rebDelegateCore(cast(RebolContext*, L->varlist), cp);
     return BOUNCE_DELEGATE;
