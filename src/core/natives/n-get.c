@@ -171,9 +171,9 @@ Result(None) Get_Word_Or_Tuple(
     }
 
     if (not e) {
-        trap (
-          Decay_If_Unstable(OUT)  // L->out is `out`
-        );
+        Decay_If_Unstable(OUT) except (e) {  // L->out is `out`
+            // still need to restore state and scratch
+        }
     }
 
     L->out = saved_out;

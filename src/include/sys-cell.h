@@ -291,8 +291,12 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 // to read from them e.g. with Type_Of(), which is similar to erased cells.
 // But with the advantage that they have BASE_FLAG_BASE and BASE_FLAG_CELL
 // set in their header, hence they do not conflate with empty UTF-8 strings.
-// The GC tolerates them in places where an erased cell would trigger an
-// assertion indicating an element hadn't been initialized.
+//
+// Erased cells (with all zero bits in their header) cannot be used in places
+// where format bits have to be set, like NODE_FLAG_ROOT for API handles.  The
+// GC also tolerates them in places where an erased cell would trigger an
+// assertion indicating an element hadn't been initialized.  So they have
+// important applications despite some similiarities to erased cells.
 //
 // They're not legal in Source arrays exposed to users.  But are found in
 // other places, such as in MAP! to denote "zombie" slots.

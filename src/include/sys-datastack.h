@@ -272,12 +272,18 @@ INLINE OnStack(Value*) PUSH(void) {
 // Each POP resets the cell, to reclaim its resources and make it ready to
 // use with an Init_Xxx() routine on the next push.
 //
+// 1. Poison_Cell() has some protections designed to make sure you don't
+//    overwrite bits that indicate things are API handles or other potential
+//    "important" bits.  However, we might transitionally put read-only cells
+//    on the data stack, and not want that to impede dropping (especially
+//    automatic dropping during error unwinding).  So dodge the extra checks
+//    by calling Force_Poison_Cell().
 
 INLINE void DROP(void) {
     Assert_No_DataStack_Pointers_Extant();
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
-    Poison_Cell(g_ds.movable_top);
+    Force_Poison_Cell(g_ds.movable_top);  // force poison, vs normal [1]
   #endif
 
     --g_ds.index;
