@@ -522,7 +522,7 @@ bind construct [
     ]
 
     let name: select opt hdr 'name
-    select system.modules name then cached -> [
+    (select system.modules opt name) then cached -> [
         return pack [cached 'cached]
     ]
 

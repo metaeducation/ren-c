@@ -994,9 +994,6 @@ Result(bool) Typecheck_Coerce_Uses_Spare_And_Scratch(
 ){
     USE_LEVEL_SHORTHANDS (L);
 
-    if (Get_Parameter_Flag(param, OPT_OUT))
-        assert(not Is_Void(v));  // should have bypassed this check
-
     if (Get_Parameter_Flag(param, CONST))
         Set_Cell_Flag(v, CONST);  // mutability override? [1]
 
@@ -1022,6 +1019,12 @@ Result(bool) Typecheck_Coerce_Uses_Spare_And_Scratch(
     goto call_typecheck;
 
   call_typecheck: {  /////////////////////////////////////////////////////////
+
+    if (Get_Parameter_Flag(param, OPT_OUT)) {
+        assert(not Is_Void(v));  // should have bypassed this check
+        if (Is_Light_Null(v))
+            return false;  // can never run an opt-out with nulled arg
+    }
 
     if (Typecheck_Uses_Spare_And_Scratch(L, v, param, SPECIFIED))
         goto return_true;

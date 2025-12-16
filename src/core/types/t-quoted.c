@@ -664,7 +664,7 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
 //  "If argument is NULL, make it VOID (or VETO), else passthru"
 //
 //      return: [any-value? <void> error!]
-//      ^value [<opt-out> any-value?]
+//      ^value [any-value?]
 //      :veto "If true, then return VETO instead of VOID"
 //  ]
 //
