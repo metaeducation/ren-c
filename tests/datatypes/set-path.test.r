@@ -53,9 +53,9 @@
    ]
 )(
     m: make map! 10
-    set @[m (1 + 2)] <hard>
+    set pin reduce [lift m '(1 + 2)] <hard>
     all [
         <hard> = pick m the (1 + 2)
-        <hard> = get @[m (1 + 2)]
+        <hard> = get pin reduce [lift m '(1 + 2)]
     ]
 )

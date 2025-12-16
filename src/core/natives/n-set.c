@@ -564,6 +564,7 @@ DECLARE_NATIVE(SET)
         assert(
             Is_Meta_Form_Of(WORD, target)
             or Is_Meta_Form_Of(TUPLE, target)
+            or Is_Pinned_Form_Of(BLOCK, target)
         );
     }
 
