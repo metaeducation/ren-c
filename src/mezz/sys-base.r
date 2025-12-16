@@ -84,9 +84,9 @@ make-quit: lambda [
             ]
         ]
         let exit-code: ^result
-        quit* any [
-            if console [exit-code]  ; console gives code to shell, not to DO
-            if exit-code = 0 [~]  ; suppresses display when given back to DO
+        quit* case [
+            console [exit-code]  ; console gives code to shell, not to DO
+            exit-code = 0 [~]  ; suppresses display when given back to DO
         ] else [
             fail make warning! compose [  ; give definitional error back
                 message: [

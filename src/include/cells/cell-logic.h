@@ -278,9 +278,9 @@ INLINE bool Cell_Yes(const Stable* v) {  // corresponds to YES?
 //    it looks like ~null~ and ~okay~ the only things to consider, and if
 //    anything else is tested it errors.
 //
-// 3. At one time, TRASH! was considered to be an error to test conditionally.
-//    That didn't seem very useful, but stopping it in comparisons was deemed
-//    to be useful.  So trash is truthy now.
+// 3. TRASH! has gone back and forth on whether it is truthy; but now that
+//    unsetness is handled by the GHOST! state, the reasons for making it
+//    not an error have vanished, e.g. (`all [x: () ...]` vs. `all [x: ~ ...]`)
 //
 INLINE Result(bool) Test_Conditional(
     const Stable* v  // Not Value*, has to be stable... no VOID [1]
@@ -293,7 +293,8 @@ INLINE Result(bool) Test_Conditional(
     if (LIFT_BYTE(v) != ANTIFORM_1)
         return true;  // all non-antiforms (including quasi/quoted) are truthy
 
-    possibly(Heart_Of(v) == TYPE_RUNE);  // trash--now truthy [3]
+    if (Heart_Of(v) == TYPE_RUNE)  // trash--no longer truthy [3]
+        panic ("TRASH! (antiform RUNE!) values are neither truthy nor falsey");
 
     return true;  // !!! are all non-word/non-trash stable antiforms truthy?
 }
