@@ -559,7 +559,7 @@ DECLARE_NATIVE(SET)
   //    are not metaforms.
 
     if (Is_Word(target) or Is_Tuple(target))
-        DONT(require(Decay_If_Unstable(v)));  // TWEAK needs undecayed [1]
+        dont(Decay_If_Unstable(v));  // TWEAK needs undecayed [1]
     else {
         assert(
             Is_Meta_Form_Of(WORD, target)

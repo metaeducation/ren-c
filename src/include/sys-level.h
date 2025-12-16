@@ -680,7 +680,8 @@ INLINE Result(Level*) Prep_Level_Core(
     static const int param_##name##_ = n; \
     typedef T param_type_##name##_; \
     static bool param_opt_##name##_ = opt; \
-    USED(u_cast(param_type_##name##_, param_opt_##name##_))  // trust n [1]
+    USED(u_cast(param_type_##name##_, nullptr)); \
+    USED(param_opt_##name##_)  // trust n [1]
 
 #define DECLARE_INTRINSIC_PARAM(name)  /* was used, not used at the moment */ \
     NOOP  // the INCLUDE_PARAMS_OF_XXX macros still make this, may find a use

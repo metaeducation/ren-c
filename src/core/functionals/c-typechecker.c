@@ -343,6 +343,8 @@ bool Typecheck_Pack_Uses_Scratch_And_Spare(  // scratch and spare used [1]
     Init_Unreadable(SPARE);
   #endif
 
+    UNUSED(LEVEL);
+
     return result;
 }
 
@@ -1095,6 +1097,8 @@ Result(bool) Typecheck_Coerce_Uses_Spare_And_Scratch(
     assert(Not_Cell_Readable(SCRATCH));
     assert(Not_Cell_Readable(SPARE));
   #endif
+
+    UNUSED(LEVEL);
 
     return result;
 }}
