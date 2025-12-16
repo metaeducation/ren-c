@@ -930,6 +930,12 @@ DECLARE_NATIVE(LESSER_Q)
     LIFT_BYTE(v1) = NOQUOTE_2;
     LIFT_BYTE(v2) = NOQUOTE_2;
 
+    if (Sigil_Of(v1) != Sigil_Of(v2))
+        return fail ("Differing sigils are not comparable");
+
+    Clear_Cell_Sigil(v1);
+    Clear_Cell_Sigil(v2);
+
     if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
         if (Is_Integer(v1) and Is_Decimal(v2))
             Init_Decimal(v1, cast(REBDEC, VAL_INT64(v1)));
