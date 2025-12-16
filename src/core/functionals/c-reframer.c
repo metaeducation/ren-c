@@ -298,22 +298,21 @@ Bounce Reframer_Dispatcher(Level* const L)
     // may have been built by a higher level ADAPT or other function that
     // still holds references, and those references could be reachable by
     // code that runs to fulfill parameters...which could see partially
-    // filled values).  And we don't want to overwrite L->out in case of
-    // invisibility.  So the frame's spare cell is used.
+    // filled values).
     //
     bool error_on_deferred = true;
-    Sink(Stable) spare = SPARE;
+    Sink(Stable) out = OUT;
 
     require (
       Init_Invokable_From_Feed(
-        spare,
+        out,  // out cell can't be SPARE or SCRATCH of top level atm (asserts)
         nullptr,
         L->feed,
         error_on_deferred
     ));
 
     Value* arg = Level_Arg(L, VAL_INT32(param_index));
-    Move_Cell(arg, spare);
+    Move_Cell(arg, out);
 
     Tweak_Level_Phase(L, Frame_Phase(shim));
     Tweak_Level_Coupling(L, Frame_Coupling(shim));
