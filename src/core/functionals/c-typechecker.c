@@ -86,18 +86,16 @@ Bounce Typechecker_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    Value* arg = Intrinsic_ARG(LEVEL);
 
-    if (Is_Void(atom))
+    if (Is_Void(arg))
         return LOGIC(false);  // opt-out of the typecheck (null fails)
 
     Details* details = Level_Intrinsic_Details(L);
     assert(Details_Max(details) == MAX_IDX_TYPECHECKER);
 
-    DECLARE_VALUE (temp);  // can't overwrite scratch if error can be raised
-    Copy_Cell(temp, atom);
     require (
-      Stable* v = Decay_If_Unstable(temp)
+      Stable* v = Decay_If_Unstable(arg)
     );
 
     Option(Type) type = Type_Of(v);
@@ -398,8 +396,6 @@ bool Predicate_Check_Spare_Uses_Scratch(
     ){
         Copy_Cell(SCRATCH, predicate);  // intrinsic may need, panic() requires
         possibly(Is_Antiform(SCRATCH));  // don't bother canonizing LIFT_BYTE()
-
-        Remember_Cell_Is_Lifeguard(SPARE);
         Remember_Cell_Is_Lifeguard(SCRATCH);
 
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
@@ -409,7 +405,7 @@ bool Predicate_Check_Spare_Uses_Scratch(
         Clear_Level_Flag(L, RUNNING_TYPECHECK);
         Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
 
-        Forget_Cell_Was_Lifeguard(SPARE);
+        Corrupt_Cell_If_Needful(SPARE);  // predicate is allowed to trash it
         Forget_Cell_Was_Lifeguard(SCRATCH);
 
         if (bounce == nullptr) {

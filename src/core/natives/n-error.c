@@ -39,15 +39,15 @@ DECLARE_NATIVE(TRY)
 {
     INCLUDE_PARAMS_OF_TRY;
 
-    Value* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
-    if (Is_Void(atom) or Is_Light_Null(atom))
+    if (Is_Void(v) or Is_Light_Null(v))
         return NULLED;
 
-    if (Is_Error(atom))
+    if (Is_Error(v))
         return NULLED;
 
-    return COPY(atom);  // !!! also tolerates other antiforms, should it?
+    return COPY(v);  // !!! also tolerates other antiforms, should it?
 }
 
 
@@ -347,9 +347,9 @@ DECLARE_NATIVE(ERROR_Q)
 {
     INCLUDE_PARAMS_OF_ERROR_Q;
 
-    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
-    return LOGIC(Is_Error(atom));
+    return LOGIC(Is_Error(v));
 }
 
 

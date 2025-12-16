@@ -59,9 +59,9 @@ DECLARE_NATIVE(GHOST_Q)
 {
     INCLUDE_PARAMS_OF_GHOST_Q;
 
-    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
-    return LOGIC(Is_Ghost(atom));
+    return LOGIC(Is_Ghost(v));
 }
 
 
@@ -78,9 +78,9 @@ DECLARE_NATIVE(GHOST_OR_VOID_Q)
 {
     INCLUDE_PARAMS_OF_GHOST_OR_VOID_Q;
 
-    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
-    return LOGIC(Is_Ghost_Or_Void(atom));
+    return LOGIC(Is_Ghost_Or_Void(v));
 }
 
 
@@ -115,10 +115,10 @@ DECLARE_NATIVE(ELIDE)
 {
     INCLUDE_PARAMS_OF_ELIDE;  // no ARG(DISCARDED), parameter is intrinsic
 
-    Value* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
     require (
-      Elide_Unless_Error_Including_In_Packs(atom)
+      Elide_Unless_Error_Including_In_Packs(v)
     );
 
     return GHOST;
@@ -158,10 +158,10 @@ DECLARE_NATIVE(UNGHOST)
 {
     INCLUDE_PARAMS_OF_UNGHOST;
 
-    Value* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
-    if (Is_Ghost(atom))
+    if (Is_Ghost(v))
         return VOID;
 
-    return COPY(atom);
+    return COPY(v);
 }

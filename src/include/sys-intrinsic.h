@@ -75,18 +75,15 @@
 
 // Intrinsics always receive their arguments as a Lifted representation.
 //
-// 1. Typechecking intrinsics are not allowed to modify the SPARE cell.
-//    Many checks may be applied to the same value.  (You also can't write
-//    over the OUT Cell, use `return LOGIC(true)` or `return LOGIC(false)`)
+// 1. It was once the case that typechecking intrinsics protected their args,
+//    but the typechecking process proved destructive anyways (e.g. stripping
+//    off quotes etc.) and always copied the checked value back into the
+//    spare cell for each dispatch.  So now it's always mutable.
 //
-//    But non-typechecking intrinsics can write to the SPARE cell, so we
-//    return it non-const here, and trust the PROTECTED flag to catch bad
-//    writes at runtime in the debug build.
-//
-INLINE Value* Level_Dispatching_Intrinsic_Atom_Arg(Level* L) {
+INLINE Value* Level_Dispatching_Intrinsic_Arg(Level* L) {
     assert(Get_Level_Flag(L, DISPATCHING_INTRINSIC));
 
-    possibly(Get_Cell_Flag(Level_Spare(L), PROTECTED));  // if typechecker [1]
+    assert(Not_Cell_Flag(Level_Spare(L), PROTECTED));  // no longer true [1]
     return Level_Spare(L);
 }
 
@@ -116,15 +113,13 @@ INLINE Option(const Symbol*) Level_Intrinsic_Label(Level* L) {
 //
 // !!! Make this a macro that can't be accidentally used w/non-intrinsic.
 //
-INLINE Value* Intrinsic_Atom_ARG(Level* L) {
+INLINE Value* Intrinsic_ARG(Level* L) {
     if (Get_Level_Flag(L, DISPATCHING_INTRINSIC))
         return Level_Spare(L);
 
     return Level_Arg(L, 1);
 }
 
-#define Intrinsic_Typechecker_Atom_ARG(L) \
-    u_cast(const Value*, Intrinsic_Atom_ARG(L))
 
 
 //=//// INTRINSIC FUNCTION ARGUMENT PROCESSING HELPERS ////////////////////=//
@@ -150,67 +145,64 @@ INLINE Value* Intrinsic_Atom_ARG(Level* L) {
 
 
 INLINE Result(Bounce) Bounce_Opt_Out_Element_Intrinsic(  // <opt-out> handling
-    Sink(Element) elem_out,
+    Sink(Element*) element_out,
     Level* L  // writing OUT and SPARE is allowed in this helper
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Copy_Cell(elem_out, Known_Element(Level_Arg(L, 1)));  // was checked
+        *element_out = Known_Element(Level_Arg(L, 1));  // was checked
         return BOUNCE_GOOD_INTRINSIC_ARG;
     }
 
-    const Value* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
+    Value* arg = Level_Dispatching_Intrinsic_Arg(L);
 
-    if (Is_Error(atom_arg)) {
+    if (Is_Error(arg)) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
             return nullptr;  // [2]
-        return fail (Cell_Error(atom_arg));
+        return fail (Cell_Error(arg));
     }
 
-    if (Is_Void(atom_arg))  // handle PARAMETER_FLAG_OPT_OUT
+    if (Is_Void(arg))  // handle PARAMETER_FLAG_OPT_OUT
         return nullptr;
 
-    Init(Value) atom_out = u_cast(Value*, elem_out);
-    Copy_Cell(atom_out, atom_arg);
-
-    Decay_If_Unstable(atom_out) except (Error* e) {
+    Decay_If_Unstable(arg) except (Error* e) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
             return nullptr;  // [2]
         return fail (e);
     }
 
-    if (Is_Antiform(atom_out)) {
+    if (Is_Antiform(arg)) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
             return nullptr;  // [2]
         return fail (Error_Bad_Intrinsic_Arg_1(L));
     }
 
+    *element_out = Known_Element(arg);
     return BOUNCE_GOOD_INTRINSIC_ARG;
 }
 
 INLINE Result(Bounce) Bounce_Decay_Value_Intrinsic(
-    Sink(Stable) val_out,
+    Sink(Stable*) stable_out,
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        Copy_Cell(val_out, Known_Stable(Level_Arg(L, 1)));  // was checked
+        *stable_out = Known_Stable(Level_Arg(L, 1));  // was checked
         return BOUNCE_GOOD_INTRINSIC_ARG;
     }
 
-    const Value* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
+    Value* arg = Level_Dispatching_Intrinsic_Arg(L);
 
-    if (Is_Error(atom_arg)) {
+    if (Is_Error(arg)) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
             return nullptr;  // [2]
-        return fail (Cell_Error(atom_arg));
+        return fail (Cell_Error(arg));
     }
 
-    Init(Value) atom_out = u_cast(Value*, val_out);
-    Copy_Cell(atom_out, atom_arg);
-
-    Decay_If_Unstable(atom_out) except (Error* e) {
+    Decay_If_Unstable(arg) except (Error* e) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
             return nullptr;  // [2]
         return fail (e);
     }
+
+    *stable_out = Known_Stable(arg);
     return BOUNCE_GOOD_INTRINSIC_ARG;
 }

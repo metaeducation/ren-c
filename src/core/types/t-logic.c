@@ -39,13 +39,13 @@ DECLARE_NATIVE(NULL_Q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
-    const Value* atom = Intrinsic_Atom_ARG(LEVEL);
+    const Value* v = Intrinsic_ARG(LEVEL);
 
-    if (not Is_Pack(atom))
-        return LOGIC(Is_Light_Null(atom));
+    if (not Is_Pack(v))
+        return LOGIC(Is_Light_Null(v));
 
     DECLARE_VALUE (decayed);
-    Copy_Cell(decayed, atom);
+    Copy_Cell(decayed, v);
     trap (
         Decay_If_Unstable(decayed)
     );
@@ -72,9 +72,9 @@ DECLARE_NATIVE(OKAY_Q)
 {
     INCLUDE_PARAMS_OF_OKAY_Q;
 
-    DECLARE_STABLE (v);
+    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
     );
     if (b != BOUNCE_GOOD_INTRINSIC_ARG)
         return b;
@@ -96,9 +96,9 @@ DECLARE_NATIVE(LOGIC_Q)
 {
     INCLUDE_PARAMS_OF_LOGIC_Q;
 
-    DECLARE_STABLE (v);
+    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
     );
     if (b != BOUNCE_GOOD_INTRINSIC_ARG)
         return b;
@@ -138,9 +138,9 @@ DECLARE_NATIVE(BOOLEAN_Q)
 {
     INCLUDE_PARAMS_OF_BOOLEAN_Q;
 
-    DECLARE_ELEMENT (e);
+    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
     );
     if (b != BOUNCE_GOOD_INTRINSIC_ARG)
         return b;
@@ -162,9 +162,9 @@ DECLARE_NATIVE(ONOFF_Q)
 {
     INCLUDE_PARAMS_OF_ONOFF_Q;
 
-    DECLARE_ELEMENT (e);
+    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
     );
     if (b != BOUNCE_GOOD_INTRINSIC_ARG)
         return b;
@@ -186,9 +186,9 @@ DECLARE_NATIVE(YESNO_Q)
 {
     INCLUDE_PARAMS_OF_YESNO_Q;
 
-    DECLARE_ELEMENT (e);
+    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(e, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
     );
     if (b != BOUNCE_GOOD_INTRINSIC_ARG)
         return b;
@@ -445,9 +445,9 @@ DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_NOT_1;
 
-    DECLARE_STABLE (v);
+    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
     );
     if (b != BOUNCE_GOOD_INTRINSIC_ARG)
         return b;
@@ -472,9 +472,9 @@ DECLARE_NATIVE(TO_LOGIC)
 {
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
-    DECLARE_STABLE (v);
+    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(v, LEVEL)
+      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
     );
     if (b != BOUNCE_GOOD_INTRINSIC_ARG)
         return b;

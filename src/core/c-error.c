@@ -925,7 +925,7 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
 Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 {
     assert(Get_Level_Flag(L, DISPATCHING_INTRINSIC));  // valid otherwise [1]
-    Value* atom_arg = Level_Dispatching_Intrinsic_Atom_Arg(L);
+    Value* arg = Level_Dispatching_Intrinsic_Arg(L);
 
     Details* details = Level_Intrinsic_Details(L);
     Option(const Symbol*) label = Level_Intrinsic_Label(L);
@@ -936,10 +936,10 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
 
     const Symbol* param_symbol = Key_Symbol(Phase_Key(details, 1));
 
-    Stable* arg = Decay_If_Unstable(atom_arg) except (Error* e) {
+    Stable* stable = Decay_If_Unstable(arg) except (Error* e) {
         return e;
     }
-    return Error_Invalid_Arg_Raw(label, param_symbol, arg);
+    return Error_Invalid_Arg_Raw(label, param_symbol, stable);
 }
 
 

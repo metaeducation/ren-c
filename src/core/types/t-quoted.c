@@ -234,26 +234,26 @@ DECLARE_NATIVE(LIFT)
 {
     INCLUDE_PARAMS_OF_LIFT;
 
-    Value* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))  // intrinsic shortcut
-        return COPY(Liftify(atom));
+        return COPY(Liftify(v));
 
     if (
         ARG(LITE)  // LIFT:LITE handles quasiforms specially
-        and Is_Antiform(atom)
+        and Is_Antiform(v)
     ){
-        if (Is_Error(atom))
-            panic (Cell_Error(atom));  // conservative... should it passthru?
+        if (Is_Error(v))
+            panic (Cell_Error(v));  // conservative... should it passthru?
 
-        if (Is_Light_Null(atom) or Is_Void(atom))
-            return COPY(atom);  // ^META valid [1]
+        if (Is_Light_Null(v) or Is_Void(v))
+            return COPY(v);  // ^META valid [1]
 
-        LIFT_BYTE(atom) = NOQUOTE_2;  // META:LITE gives plain for the rest
-        return COPY(atom);
+        LIFT_BYTE(v) = NOQUOTE_2;  // META:LITE gives plain for the rest
+        return COPY(v);
     }
 
-    return COPY(Liftify(atom));
+    return COPY(Liftify(v));
 }
 
 
@@ -272,29 +272,29 @@ DECLARE_NATIVE(UNLIFT)
 {
     INCLUDE_PARAMS_OF_UNLIFT;
 
-    Value* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {  // intrinsic shortcut
-        if (not Any_Lifted(atom))
+        if (not Any_Lifted(v))
             panic ("Plain UNLIFT only accepts quasiforms and quoteds");
         require (
-          Unliftify_Undecayed(atom)
+          Unliftify_Undecayed(v)
         );
-        return COPY(atom);
+        return COPY(v);
     }
 
-    if (Is_Antiform(atom)) {
-        assert(Is_Void(atom) or Is_Light_Null(atom));
+    if (Is_Antiform(v)) {
+        assert(Is_Void(v) or Is_Light_Null(v));
         if (not ARG(LITE))
             panic ("UNLIFT only accepts NULL or VOID if :LITE");
-        return COPY(atom);  // pass through as-is
+        return COPY(v);  // pass through as-is
     }
 
-    if (LIFT_BYTE(atom) == NOQUOTE_2) {
+    if (LIFT_BYTE(v) == NOQUOTE_2) {
         if (not ARG(LITE))
             panic ("UNLIFT only takes non quoted/quasi things if :LITE");
 
-        Copy_Cell(OUT, atom);
+        Copy_Cell(OUT, v);
 
         require (
           Coerce_To_Antiform(OUT)
@@ -302,15 +302,15 @@ DECLARE_NATIVE(UNLIFT)
         return OUT;
     }
 
-    if (LIFT_BYTE(atom) == QUASIFORM_3 and ARG(LITE))
+    if (LIFT_BYTE(v) == QUASIFORM_3 and ARG(LITE))
         panic (
             "UNLIFT:LITE does not accept quasiforms (plain forms are meta)"
         );
 
     require (
-      Unliftify_Undecayed(atom)
+      Unliftify_Undecayed(v)
     );
-    return COPY(atom);  // quoted or quasi
+    return COPY(v);  // quoted or quasi
 }
 
 
@@ -330,23 +330,19 @@ DECLARE_NATIVE(ANTIFORM_Q)
 // !!! This can be deceptive, in the sense that you could ask if something
 // like an antiform pack is an antiform, and it will say yes...but then
 // another routine like integer? might say it's an integer.  Be aware.
-//
-// 1. If you're not running as an intrinsic, then the rules for immutable
-//    arguments don't apply...the frame got its own copy of the thing being
-//    typechecked so it can be modified.
 {
     INCLUDE_PARAMS_OF_ANTIFORM_Q;
 
-    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))  // intrinsic shortcut
-        return LOGIC(Is_Antiform(atom));
+        return LOGIC(Is_Antiform(v));
 
     if (not ARG(TYPE))
-        return LOGIC(Is_Antiform(atom));
+        return LOGIC(Is_Antiform(v));
 
-    require (  // mutable [1]
-      Stable* datatype = Decay_If_Unstable(m_cast(Value*, atom))
+    require (
+      Stable* datatype = Decay_If_Unstable(v)
     );
 
     if (not Is_Datatype(datatype))
@@ -391,17 +387,17 @@ DECLARE_NATIVE(ANTI)
 //  "Give the plain form of the antiform argument"
 //
 //      return: [plain?]
-//      ^antiform [antiform?]
+//      ^value [antiform?]
 //  ]
 //
 DECLARE_NATIVE(UNANTI)
 {
     INCLUDE_PARAMS_OF_UNANTI;
 
-    Value* atom = Intrinsic_Atom_ARG(LEVEL);
-    LIFT_BYTE(atom) = NOQUOTE_2;  // turn to plain form
+    Value* v = Intrinsic_ARG(LEVEL);
+    LIFT_BYTE(v) = NOQUOTE_2;  // turn to plain form
 
-    return COPY(Known_Element(atom));
+    return COPY(Known_Element(v));
 }
 
 
@@ -530,9 +526,9 @@ DECLARE_NATIVE(PACK_Q)
 {
     INCLUDE_PARAMS_OF_PACK_Q;
 
-    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
-    return LOGIC(Is_Pack(atom));
+    return LOGIC(Is_Pack(v));
 }
 
 
@@ -626,23 +622,23 @@ DECLARE_NATIVE(UNSPLICE)
 // with a refinement.  Share the code.
 //
 static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
-    Value* atom = Intrinsic_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
-    if (Is_Error(atom))
-        return COPY(atom);  // will pass thru vetos, and other errors
+    if (Is_Error(v))
+        return COPY(v);  // will pass thru vetos, and other errors
 
-    if (Is_Void(atom))
+    if (Is_Void(v))
         goto opting_out;  // void => void in OPT, or void => veto in OPT:VETO
 
-    if (Is_Ghost(atom))
+    if (Is_Ghost(v))
         panic ("Cannot OPT a GHOST!");  // !!! Should we opt out ghosts?
 
   decay_if_unstable: {
 
-    Copy_Cell(OUT, atom);  // we pass through original, but test decayed form
+    Copy_Cell(OUT, v);  // we pass through original, but test decayed form
 
     require (
-      Stable* decayed = Decay_If_Unstable(atom)
+      Stable* decayed = Decay_If_Unstable(v)
     );
     if (Is_Nulled(decayed))
         goto opting_out;
@@ -719,12 +715,14 @@ DECLARE_NATIVE(NOQUOTE)
 {
     INCLUDE_PARAMS_OF_NOQUOTE;
 
+    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(OUT, LEVEL)
+      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
     );
     if (b != BOUNCE_GOOD_INTRINSIC_ARG)
         return b;
 
+    Copy_Cell(OUT, e);
     LIFT_BYTE(OUT) = NOQUOTE_2;
     return OUT;
 }

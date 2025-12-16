@@ -76,12 +76,12 @@ DECLARE_NATIVE(VETO_Q)
 {
     INCLUDE_PARAMS_OF_VETO_Q;
 
-    const Value* atom = Intrinsic_Typechecker_Atom_ARG(LEVEL);
+    Value* v = Intrinsic_ARG(LEVEL);
 
-    if (not Is_Error(atom))
+    if (not Is_Error(v))
         return LOGIC(false);
 
-    return LOGIC(Is_Error_Veto_Signal(Cell_Error(atom)));
+    return LOGIC(Is_Error_Veto_Signal(Cell_Error(v)));
 }
 
 
