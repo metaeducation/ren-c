@@ -87,6 +87,7 @@ const char * const g_token_names[] = {
     "dollar",
     "newline",
     "underscore",
+    "hash",
     "comma",
     "word",
     "logic",

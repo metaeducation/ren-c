@@ -35,6 +35,7 @@ typedef enum {
     TOKEN_DOLLAR = 3,  // SIGIL_TIE
     TOKEN_NEWLINE,
     TOKEN_UNDERSCORE,
+    TOKEN_HASH,
     TOKEN_COMMA,
     TOKEN_WORD,
     TOKEN_LOGIC,

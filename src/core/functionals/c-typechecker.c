@@ -660,19 +660,26 @@ static bool Typecheck_Unoptimized_Uses_Spare_And_Scratch(
 } adjust_quote_level_and_run_type_constraint: {
 
     Copy_Cell(SPARE, v);
+    Element* scratch = Copy_Cell(SCRATCH, at);
 
-    if (LIFT_BYTE(at) != NOQUOTE_2) {
-        if (LIFT_BYTE(at) != LIFT_BYTE(SPARE))
+    if (LIFT_BYTE(scratch) != NOQUOTE_2) {
+        if (LIFT_BYTE(scratch) != LIFT_BYTE(SPARE))
             goto test_failed;  // should be willing to accept subset quotes
+
+        LIFT_BYTE(scratch) = NOQUOTE_2;
         LIFT_BYTE(SPARE) = NOQUOTE_2;
     }
 
-    Option(Sigil) test_sigil = Cell_Underlying_Sigil(at);
-    if (test_sigil) {
-        if (test_sigil != Cell_Underlying_Sigil(SPARE))
+    Option(Sigil) scratch_sigil = Cell_Underlying_Sigil(scratch);
+    Option(Sigil) v_sigil = Cell_Underlying_Sigil(SPARE);
+    if (scratch_sigil) {
+        if (scratch_sigil != v_sigil)
             goto test_failed;
 
         SPARE->header.bits &= (~ CELL_MASK_SIGIL);  // don't care if antiform
+        SCRATCH->header.bits &= (~ CELL_MASK_SIGIL);  // don't care if antiform
+        scratch_sigil = none;
+        v_sigil = none;
     }
 
     const Symbol* label;
@@ -681,6 +688,9 @@ static bool Typecheck_Unoptimized_Uses_Spare_And_Scratch(
         label = Word_Symbol(at);
         goto handle_after_any_quoting_adjustments;
     }
+
+    if (LIFT_BYTE(SPARE) != NOQUOTE_2 or v_sigil)
+        goto test_failed;  // 'foo: or @foo: won't match word!:
 
   check_destructured_sequence: {
 
@@ -699,7 +709,6 @@ static bool Typecheck_Unoptimized_Uses_Spare_And_Scratch(
   // match at each sequence level, and bottom out in a WORD! that can be used
   // to check the type of the unitary matching element dug into in SPARE.
 
-    Element* scratch = Copy_Cell(SCRATCH, at);
     do {
         SingleHeart singleheart = opt Try_Get_Sequence_Singleheart(scratch);
         if (not singleheart)

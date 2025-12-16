@@ -110,9 +110,9 @@ help-action: proc [
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C
     ;
     all [infix? frame, not empty? deco-args] then [
-        print [_ _ _ _ @deco-args.1 name @(spread next deco-args)]
+        print [____ @deco-args.1 name @(spread next deco-args)]
     ] else [
-        print [_ _ _ _ name @(spread deco-args) @(spread deco-refinements)]
+        print [____ name @(spread deco-args) @(spread deco-refinements)]
     ]
 
     print newline
@@ -125,14 +125,14 @@ help-action: proc [
     let return-param: return of frame
 
     print "DESCRIPTION:"
-    print [_ _ _ _ (any [return-param.text, "(undocumented)"])]
+    print [____ (any [return-param.text, "(undocumented)"])]
 
     let print-args: [list :indent-words] -> [
         for-each 'key list [
             let param: select frame key
-            print [_ _ _ _ @(decorate param key) @(? param.spec)]
+            print [____ @(decorate param key) @(? param.spec)]
             if param.text [
-                print [_ _ _ _ _ _ _ _ param.text]
+                print [____ ____ param.text]
             ]
         ]
     ]

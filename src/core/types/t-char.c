@@ -475,14 +475,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
   handle_single_char_representations: { //////////////////////////////////////
 
     // 1. Much reflection led to conclude that _ is the best representation
-    //    for the space rune:
+    //    for the space rune, and that # best represents newline.
     //
     //      https://rebol.metaeducation.com/t/2287
-    //
-    // 2. There's an open question if the same issues that drive the choice
-    //    of `_` to represent a literal space rune! should also apply to
-    //    using `#` to represent a literal newline rune!.  In that case, the
-    //    literal for a hash mark would be `##` instead of `#`.
 
     if (not Is_Rune_And_Is_Char(v))
         goto handle_ordinary_runes;
@@ -492,16 +487,16 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
         Append_Codepoint(mo->strand, '_');  // literal can't be `# ` [1]
         goto finished;
     }
-    if (c == '#') {  // might '\n' be rendered as `#`? [2]
-        Append_Codepoint(mo->strand, '#');  // vs. `##`
+    if (c == '\n') {
+        Append_Codepoint(mo->strand, '#');
         goto finished;
     }
 
 } handle_ordinary_runes: { ///////////////////////////////////////////////////
 
-    Append_Codepoint(mo->strand, '#');
-
     bool no_dittos = true;
+    bool all_spaces = true;
+    bool all_newlines = true;
     Codepoint c = Codepoint_At(cp);
 
     // !!! This should be smarter and share code with FILE! on whether
@@ -510,10 +505,16 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
     // of what that logic *should* do.
 
     for (; c != '\0'; cp = Utf8_Next(&c, cp)) {
+        if (c != ' ')
+            all_spaces = false;
+        if (c != '\n')
+            all_newlines = false;
+
         if (c > UINT8_MAX)
             continue;
         if (
             c <= 32  // control codes up to 32 (space)
+            or c == '#'  // hash used for newline representation
             or (
                 c >= 127  // 127 is delete, begins more control codes
                 and c <= 160  // 160 is non-breaking space, 161 starts Latin1
@@ -528,6 +529,20 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
         }
     }
 
+    if (all_spaces) {
+        for (Length i = 0; i < len; ++i)
+            Append_Codepoint(mo->strand, '_');
+        goto finished;
+    }
+
+    if (all_newlines) {
+        for (Length i = 0; i < len; ++i)
+            Append_Codepoint(mo->strand, '#');
+        goto finished;
+    }
+
+    Append_Codepoint(mo->strand, '#');
+
     if (no_dittos or not Stringlike_Has_Stub(v)) {  // !!! hack
         if (len == 1 and not no_dittos) {  // use historical CHAR! molding
             bool parened = true;  // !!! used to depend on MOLD's :ALL flag
@@ -538,11 +553,11 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
         }
         else
             Append_Any_Utf8_Limit(mo->strand, v, &len);
+        goto finished;
     }
-    else {
-        const Strand* s = Cell_Strand(v);  // !!! needs node
-        Mold_Text_Flex_At(mo, s, 0);
-    }
+
+    const Strand* s = Cell_Strand(v);  // !!! needs node
+    Mold_Text_Flex_At(mo, s, 0);
 
 } finished: { ///////////////////////////////////////////////////////////////
 

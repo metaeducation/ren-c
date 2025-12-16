@@ -35,9 +35,9 @@
 ; Empty-looking issues are space.
 ; Issue with empty quotes are NUL (zero codepoint, illegal in strings).
 ;
-(" " = as text! #)
-(-[#""]- = mold as rune! "")
-(-[#]- = mold #)
+("^/" = as text! #)
+(-[#]- = mold newline)
+(-[#"#"]- = mold #"#")
 
 ; Intent is to merge RUNE! and CHAR! into cell-packable UTF-8 immutable
 ; and atomic type.  This means a wide range of visible characters are allowed
@@ -68,3 +68,39 @@
     ]
     ok
 )
+
+(for-each [rune molded text] [
+      _ "_"
+    -[ ]-
+      __ "__"
+    -[  ]-
+      ____ "____"
+    -[    ]-
+      ______________________________ "______________________________"
+    -[                              ]-
+] [
+    assert [rune? rune]
+    assert [text? molded]
+    assert [text? text]
+    assert [text = (as text! rune)]
+    assert [rune = (as rune! text)]
+    assert [molded = mold rune]
+], okay)
+
+(for-each [rune molded text] [
+      # "#"
+    -[^/]-
+      ## "##"
+    -[^/^/]-
+      #### "####"
+    -[^/^/^/^/]-
+      ############################## "##############################"
+    -[^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/]-
+] [
+    assert [rune? rune]
+    assert [text? molded]
+    assert [text? text]
+    assert [text = (as text! rune)]
+    assert [rune = (as rune! text)]
+    assert [molded = mold rune]
+], okay)

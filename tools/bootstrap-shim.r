@@ -274,6 +274,9 @@ space?: func3 [x] [
 
 blank: blank?: ~#[No BLANK/BLANK? ~()~ in Bootstrap, Use SPACE/SPACE?]#~
 
+set the ____ "    "  ; can use multiple spaces
+set the __ "  "
+
 
 === "ADD CARET TO VOID" ===
 

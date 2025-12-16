@@ -1711,11 +1711,22 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
             // delimiter or space.  However `_a_` and `a_b` are left as
             // legal words (at least for the time being).
             //
-            if (Is_Lex_Delimit(cp[1]) or Is_Lex_Whitespace(cp[1]))
+            do { ++cp; } while (*cp == '_');
+            if (Is_Lex_End_List(*cp) or Is_Lex_Whitespace(*cp)) {
+                S->end = cp;
                 return TOKEN_UNDERSCORE;
+            }
+            cp = S->begin;
             goto prescan_word;
 
           case LEX_SPECIAL_POUND:
+            do { ++cp; } while (*cp == '#');
+            if (Is_Lex_End_List(*cp) or Is_Lex_Whitespace(*cp)) {
+                S->end = cp;
+                return TOKEN_HASH;
+            }
+            cp = S->begin;
+
           pound:
             ++cp;
             if (*cp == '"' or *cp == '[') {  // CHAR #"]" or #["]
@@ -2227,11 +2238,49 @@ static Bounce Scanner_Executor_Core(Level* const L) {
   //
   //    https://rebol.metaeducation.com/t/why-decorated space-vanishes/2550/
 
-    assert(*S->begin == '_' and len == 1);
+    assert(*S->begin == '_');
     if (S->quasi_pending or S->sigil_pending or S->num_quotes_pending)
         return fail (Error_Syntax(S, token));  // no ~_~ or $_ or '_ [1]
 
-    Init_Space(PUSH());
+    if (len == 1) {
+        Init_Space(PUSH());  // special flag handling for fast recognition
+        goto lookahead;
+    }
+
+    goto underscore_hash_common;
+
+} case TOKEN_HASH: { /////////////////////////////////////////////////////////
+
+  // `#` standalone becomes a newline value, `#a#` and `a#b` are illegal.
+
+    assert(*S->begin == '#');
+    goto underscore_hash_common;
+
+} underscore_hash_common: { //////////////////////////////////////////////////
+
+    Byte b = *S->begin == '_' ? ' ' : '\n';
+
+    PUSH();
+
+    if (len + 1 <= Size_Of(TOP->payload.at_least_8)) {
+        Reset_Cell_Header_Noquote(
+            TOP,
+            FLAG_HEART(TYPE_RUNE) | CELL_MASK_NO_MARKING
+        );
+        Mem_Fill(&TOP->payload.at_least_8, b, len);
+        TOP->payload.at_least_8[len] = '\0';
+        TOP->extra.at_least_4[IDX_EXTRA_USED] = len;
+        TOP->extra.at_least_4[IDX_EXTRA_LEN] = len;
+    }
+    else {
+        trap (
+          Strand* s = Make_Strand(len)
+        );
+        Mem_Fill(Strand_Head(s), b, len);
+        Term_Strand_Len_Size(s, len, len);
+        Freeze_Flex(s);
+        Init_Utf8_Non_String_From_Strand(TOP, TYPE_RUNE, s);
+    }
     goto lookahead;
 
 } case TOKEN_COMMA: { ////////////////////////////////////////////////////////
