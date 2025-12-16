@@ -173,7 +173,6 @@ DECLARE_NATIVE(DNS_ACTOR)
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
-        UNUSED(PARAM(SOURCE));  // covered by `port`
 
         if (ARG(PART) or ARG(SEEK))
             panic (Error_Bad_Refines_Raw());
@@ -272,8 +271,6 @@ DECLARE_NATIVE(DNS_ACTOR)
 
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
-
-        UNUSED(PARAM(SPEC));
 
         if (ARG(NEW) or ARG(READ) or ARG(WRITE))
             panic (Error_Bad_Refines_Raw());

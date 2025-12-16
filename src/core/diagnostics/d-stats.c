@@ -83,9 +83,6 @@ DECLARE_NATIVE(STATS)
 
     return Init_Integer(OUT, Inspect_Flex(did ARG(SHOW)));
   #else
-    UNUSED(ARG(SHOW));
-    UNUSED(ARG(POOL));
-
     panic (Error_Checked_Build_Only_Raw());
   #endif
 }
@@ -143,7 +140,6 @@ DECLARE_NATIVE(CALLGRIND)
     }
     return TRASH;
   #else
-    UNUSED(ARG(INSTRUCTION));
     panic ("Executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");
   #endif
 }

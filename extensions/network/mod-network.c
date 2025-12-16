@@ -946,8 +946,6 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PARAM(SOURCE));
-
         if (ARG(SEEK))
             panic (Error_Bad_Refines_Raw());
 
@@ -1001,8 +999,6 @@ static Bounce Transport_Actor(Level* level_, enum Transport_Type transport) {
 
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
-
-        UNUSED(PARAM(DESTINATION));
 
         if (ARG(SEEK) or ARG(APPEND) or ARG(LINES))
             panic (Error_Bad_Refines_Raw());

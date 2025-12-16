@@ -140,8 +140,6 @@ DECLARE_NATIVE(DIR_ACTOR)
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PARAM(SOURCE));
-
         if (ARG(PART) or ARG(SEEK) or ARG(STRING) or ARG(LINES))
             panic (Error_Bad_Refines_Raw());
 
@@ -193,7 +191,6 @@ DECLARE_NATIVE(DIR_ACTOR)
 
       case SYM_RENAME: {
         INCLUDE_PARAMS_OF_RENAME;
-        UNUSED(ARG(FROM));  // already have as port parameter
 
         DECLARE_STABLE (dir_path);
         require (
@@ -243,8 +240,6 @@ DECLARE_NATIVE(DIR_ACTOR)
         require (
           Get_Port_Path_From_Spec(dir_path, port)
         );
-
-        UNUSED(PARAM(SPEC));
 
         if (ARG(READ) or ARG(WRITE))
             panic (Error_Bad_Refines_Raw());

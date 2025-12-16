@@ -772,8 +772,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 
-        UNUSED(PARAM(SERIES)); // already accounted for
-
         Strand* s = Cell_Strand_Ensure_Mutable(v);
 
         REBINT limit;
@@ -805,7 +803,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_INSERT:
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;
-        UNUSED(PARAM(SERIES));
 
         Option(const Stable*) arg = ARG(VALUE);
 
@@ -865,10 +862,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_SELECT:
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
+
         if (Is_Antiform(ARG(PATTERN)))
             panic (PARAM(PATTERN));
-
-        UNUSED(PARAM(SERIES));
 
         Flags flags = (
             (ARG(MATCH) ? AM_FIND_MATCH : 0)
@@ -1000,11 +996,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
 //
 IMPLEMENT_GENERIC(TO, Any_String)
 {
-    INCLUDE_PARAMS_OF_TO;
-
-    USED(ARG(VALUE));
-    USED(ARG(TYPE));
-
     return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);
 }
 

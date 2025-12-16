@@ -61,10 +61,8 @@ DECLARE_NATIVE(MOLDIFY)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    USED(ARG(MOLDER));  // passed via LEVEL
-    USED(ARG(FORM));
-
-    return Dispatch_Generic(MOLDIFY, Element_ARG(VALUE), LEVEL);
+    Element* v = Element_ARG(VALUE);
+    return Dispatch_Generic(MOLDIFY, v, LEVEL);
 }
 
 
@@ -378,7 +376,6 @@ DECLARE_NATIVE(BASIC_READ)
     INCLUDE_PARAMS_OF_BASIC_READ;
 
   #if (! TO_WASI)
-    UNUSED(ARG(FILE));
     panic ("BASIC-READ is a simple demo used in WASI only");
   #else
     const Strand* filename = Cell_Strand(ARG(FILE));

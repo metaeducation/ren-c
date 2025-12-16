@@ -283,7 +283,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
     INCLUDE_PARAMS_OF_MAKE;
 
     assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_TIME);
-    UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
 

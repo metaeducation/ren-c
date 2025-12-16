@@ -54,7 +54,9 @@
 //
 DECLARE_NATIVE(NEGATE)
 {
-    Element* v = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_NEGATE;
+
+    Element* v = Element_ARG(VALUE);
     return Dispatch_Generic(NEGATE, v, LEVEL);
 }
 
@@ -207,8 +209,10 @@ DECLARE_NATIVE(MULTIPLY)
 //
 DECLARE_NATIVE(DIVIDE)
 {
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(DIVIDE));
+    INCLUDE_PARAMS_OF_DIVIDE;
+
+    Element* v1 = Element_ARG(VALUE1);
+    return Run_Generic_Dispatch(v1, LEVEL, CANON(DIVIDE));
 }
 
 
@@ -225,8 +229,10 @@ DECLARE_NATIVE(DIVIDE)
 //
 DECLARE_NATIVE(REMAINDER)
 {
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(REMAINDER));
+    INCLUDE_PARAMS_OF_REMAINDER;
+
+    Element* v1 = Element_ARG(VALUE1);
+    return Run_Generic_Dispatch(v1, LEVEL, CANON(REMAINDER));
 }
 
 
@@ -242,7 +248,9 @@ DECLARE_NATIVE(REMAINDER)
 //
 DECLARE_NATIVE(POWER)
 {
-    Element* v = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_POWER;
+
+    Element* v = Element_ARG(VALUE);
     return Run_Generic_Dispatch(v, LEVEL, CANON(POWER));
 }
 
@@ -258,7 +266,9 @@ DECLARE_NATIVE(POWER)
 //
 DECLARE_NATIVE(ABSOLUTE)
 {
-    Element* v = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_ABSOLUTE;
+
+    Element* v = Element_ARG(VALUE);
     return Dispatch_Generic(ABSOLUTE, v, LEVEL);
 }
 
@@ -325,7 +335,9 @@ DECLARE_NATIVE(EVEN_Q)  // Note: ODD? is defined as NOT EVEN?
 //
 //   https://rebol.metaeducation.com/t/odd-defined-in-terms-of-even/2521
 {
-    Element* v = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_EVEN_Q;
+
+    Element* v = Element_ARG(VALUE);
     return Dispatch_Generic(EVEN_Q, v, LEVEL);
 }
 
@@ -348,7 +360,9 @@ DECLARE_NATIVE(RANDOMIZE)
 // block as a random seed they could randomize on the mold of it... but
 // also we may want to expose the hash of a block for other reasons.
 {
-    Element* seed = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_RANDOMIZE;
+
+    Element* seed = Element_ARG(SEED);
     return Dispatch_Generic(RANDOMIZE, seed, LEVEL);
 }
 
@@ -373,7 +387,9 @@ DECLARE_NATIVE(RANDOM)
 // This application opens up now, since RANDOM-PICK is used to pick a random
 // item out of a block, and SHUFFLE and SHUFFLE-OF give you shuffled lists.
 {
-    Element* max = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_RANDOM;
+
+    Element* max = Element_ARG(MAX);
     return Dispatch_Generic(RANDOM, max, LEVEL);
 }
 
@@ -433,7 +449,9 @@ DECLARE_NATIVE(RANDOM_PICK)
 // they are not necessary, to cut down on the total amount of code and
 // potential for error.
 {
-    Element* collection = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_RANDOM_PICK;
+
+    Element* collection = Element_ARG(COLLECTION);
 
     Bounce bounce;
     if (Try_Dispatch_Generic(&bounce, RANDOM_PICK, collection, LEVEL))
@@ -462,7 +480,9 @@ DECLARE_NATIVE(RANDOM_PICK)
 //
 DECLARE_NATIVE(SHUFFLE)
 {
-    Element* series = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_SHUFFLE;
+
+    Element* series = Element_ARG(SERIES);
     return Dispatch_Generic(SHUFFLE, series, LEVEL);
 }
 

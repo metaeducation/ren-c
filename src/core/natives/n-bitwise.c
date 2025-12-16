@@ -47,13 +47,16 @@
 //
 DECLARE_NATIVE(BITWISE_NOT)
 {
-    if (Is_Logic(ARG_N(1))) {
-        bool b1 = Cell_Logic(ARG_N(1));
+    INCLUDE_PARAMS_OF_BITWISE_NOT;
+
+    Stable* v = ARG(VALUE);
+
+    if (Is_Logic(v)) {
+        bool b1 = Cell_Logic(v);
         return LOGIC(not b1);
     }
 
-    Element* e = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e, LEVEL, CANON(BITWISE_NOT));
+    return Run_Generic_Dispatch(Known_Element(v), LEVEL, CANON(BITWISE_NOT));
 }
 
 
@@ -81,14 +84,18 @@ INLINE bool Math_Arg_For_Logic(Stable* arg)
 //
 DECLARE_NATIVE(BITWISE_AND)
 {
-    if (Is_Logic(ARG_N(1))) {
-        bool b1 = Cell_Logic(ARG_N(1));
-        bool b2 = Math_Arg_For_Logic(ARG_N(2));
+    INCLUDE_PARAMS_OF_BITWISE_AND;
+
+    Stable* v1 = ARG(VALUE1);
+    Stable* v2 = ARG(VALUE2);
+
+    if (Is_Logic(v1)) {
+        bool b1 = Cell_Logic(v1);
+        bool b2 = Math_Arg_For_Logic(v2);
         return LOGIC(b1 and b2);
     }
 
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(BITWISE_AND));
+    return Run_Generic_Dispatch(Known_Element(v1), LEVEL, CANON(BITWISE_AND));
 }
 
 
@@ -104,14 +111,18 @@ DECLARE_NATIVE(BITWISE_AND)
 //
 DECLARE_NATIVE(BITWISE_OR)
 {
-    if (Is_Logic(ARG_N(1))) {
-        bool b1 = Cell_Logic(ARG_N(1));
-        bool b2 = Math_Arg_For_Logic(ARG_N(2));
+    INCLUDE_PARAMS_OF_BITWISE_OR;
+
+    Stable* v1 = ARG(VALUE1);
+    Stable* v2 = ARG(VALUE2);
+
+    if (Is_Logic(v1)) {
+        bool b1 = Cell_Logic(v1);
+        bool b2 = Math_Arg_For_Logic(v2);
         return LOGIC(b1 or b2);
     }
 
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(BITWISE_OR));
+    return Run_Generic_Dispatch(Known_Element(v1), LEVEL, CANON(BITWISE_OR));
 }
 
 
@@ -127,14 +138,18 @@ DECLARE_NATIVE(BITWISE_OR)
 //
 DECLARE_NATIVE(BITWISE_XOR)
 {
-   if (Is_Logic(ARG_N(1))) {
-        bool b1 = Cell_Logic(ARG_N(1));
-        bool b2 = Math_Arg_For_Logic(ARG_N(2));
+    INCLUDE_PARAMS_OF_BITWISE_XOR;
+
+    Stable* v1 = ARG(VALUE1);
+    Stable* v2 = ARG(VALUE2);
+
+    if (Is_Logic(v1)) {
+        bool b1 = Cell_Logic(v1);
+        bool b2 = Math_Arg_For_Logic(v2);
         return LOGIC(b1 != b2);
     }
 
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(BITWISE_XOR));
+    return Run_Generic_Dispatch(Known_Element(v1), LEVEL, CANON(BITWISE_XOR));
 }
 
 
@@ -150,14 +165,20 @@ DECLARE_NATIVE(BITWISE_XOR)
 //
 DECLARE_NATIVE(BITWISE_AND_NOT)
 {
-   if (Is_Logic(ARG_N(1))) {
-        bool b1 = Cell_Logic(ARG_N(1));
-        bool b2 = Math_Arg_For_Logic(ARG_N(2));
+    INCLUDE_PARAMS_OF_BITWISE_AND_NOT;
+
+    Stable* v1 = ARG(VALUE1);
+    Stable* v2 = ARG(VALUE2);
+
+    if (Is_Logic(v1)) {
+        bool b1 = Cell_Logic(v1);
+        bool b2 = Math_Arg_For_Logic(v2);
         return LOGIC(b1 and not b2);
     }
 
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(e1, LEVEL, CANON(BITWISE_AND_NOT));
+    return Run_Generic_Dispatch(
+        Known_Element(v1), LEVEL, CANON(BITWISE_AND_NOT)
+    );
 }
 
 

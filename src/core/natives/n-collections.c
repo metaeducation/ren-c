@@ -389,8 +389,10 @@ Flex* Make_Set_Operation_Flex(
 //
 DECLARE_NATIVE(COMPLEMENT)
 {
-    Element* e = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(COMPLEMENT, e, LEVEL);
+    INCLUDE_PARAMS_OF_COMPLEMENT;
+
+    Element* v = Element_ARG(VALUE);
+    return Dispatch_Generic(COMPLEMENT, v, LEVEL);
 }
 
 
@@ -421,8 +423,10 @@ DECLARE_NATIVE(COMPLEMENT)
 //
 DECLARE_NATIVE(INTERSECT)
 {
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(INTERSECT, e1, LEVEL);
+    INCLUDE_PARAMS_OF_INTERSECT;
+
+    Element* v1 = Element_ARG(VALUE1);
+    return Dispatch_Generic(INTERSECT, v1, LEVEL);
 }
 
 
@@ -453,8 +457,10 @@ DECLARE_NATIVE(INTERSECT)
 //
 DECLARE_NATIVE(UNION)
 {
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(UNION, e1, LEVEL);
+    INCLUDE_PARAMS_OF_UNION;
+
+    Element* v1 = Element_ARG(VALUE1);
+    return Dispatch_Generic(UNION, v1, LEVEL);
 }
 
 
@@ -488,8 +494,10 @@ DECLARE_NATIVE(UNION)
 //
 DECLARE_NATIVE(DIFFERENCE)
 {
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(DIFFERENCE, e1, LEVEL);
+    INCLUDE_PARAMS_OF_DIFFERENCE;
+
+    Element* v1 = Element_ARG(VALUE1);
+    return Dispatch_Generic(DIFFERENCE, v1, LEVEL);
 }
 
 
@@ -510,8 +518,10 @@ DECLARE_NATIVE(DIFFERENCE)
 //
 DECLARE_NATIVE(EXCLUDE)
 {
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(EXCLUDE, e1, LEVEL);
+    INCLUDE_PARAMS_OF_EXCLUDE;
+
+    Element* v1 = Element_ARG(DATA);
+    return Dispatch_Generic(EXCLUDE, v1, LEVEL);
 }
 
 
@@ -529,6 +539,8 @@ DECLARE_NATIVE(EXCLUDE)
 //
 DECLARE_NATIVE(UNIQUE)
 {
-    Element* e1 = cast(Element*, ARG_N(1));
-    return Dispatch_Generic(UNIQUE, e1, LEVEL);
+    INCLUDE_PARAMS_OF_UNIQUE;
+
+    Element* series = Element_ARG(SERIES);
+    return Dispatch_Generic(UNIQUE, series, LEVEL);
 }

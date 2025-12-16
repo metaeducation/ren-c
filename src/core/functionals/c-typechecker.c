@@ -62,14 +62,6 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER_ARCHETYPE;
 
-    /* UNUSED(ARG(VALUE))); */  // it's an intrinsic, no first param defined
-    UNUSED(ARG(TYPE));
-    UNUSED(ARG(QUOTED));
-    UNUSED(ARG(QUASIFORM));
-    UNUSED(ARG(TIED));
-    UNUSED(ARG(PINNED));
-    UNUSED(ARG(METAFORM));
-
     panic ("TYPECHECKER-ARCHETYPE called (internal use only)");
 }
 

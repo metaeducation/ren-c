@@ -191,7 +191,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
     INCLUDE_PARAMS_OF_MAKE;
 
     assert(Datatype_Type(ARG(TYPE)) == TYPE_BLOB);
-    UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
 
@@ -320,7 +319,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_INSERT:
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;  // compatible frame with APPEND, CHANGE
-        UNUSED(PARAM(SERIES));  // covered by `v`
 
         Option(const Stable*) arg = ARG(VALUE);
 
@@ -380,7 +378,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_SELECT:
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
-        UNUSED(PARAM(SERIES));  // covered by `v`
 
         if (Is_Antiform(ARG(PATTERN)))
             panic (ARG(PATTERN));

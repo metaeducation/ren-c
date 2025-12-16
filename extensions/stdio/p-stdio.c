@@ -315,8 +315,6 @@ DECLARE_NATIVE(STDIO_ACTOR)
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PARAM(SOURCE));
-
         if (ARG(PART))
             panic (Error_Bad_Refines_Raw());
 

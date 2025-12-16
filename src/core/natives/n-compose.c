@@ -286,7 +286,7 @@ Bounce Composer_Executor(Level* const L)
 
     INCLUDE_PARAMS_OF_COMPOSE2;
 
-    UNUSED(ARG(TEMPLATE));  // accounted for by Level feed
+    USED(ARG(TEMPLATE));  // accounted for by Level feed
     deep = did ARG(DEEP);
     pattern = Element_ARG(PATTERN);
     conflate = did ARG(CONFLATE);
@@ -620,9 +620,6 @@ DECLARE_NATIVE(COMPOSE2)
 
     Element* pattern = Element_ARG(PATTERN);
     Element* input = Element_ARG(TEMPLATE);  // template is C++ keyword
-
-    USED(ARG(PREDICATE));  // used by Composer_Executor() via main_level
-    USED(ARG(DEEP));
 
     enum {
         ST_COMPOSE2_INITIAL_ENTRY = STATE_0,

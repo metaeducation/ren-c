@@ -207,7 +207,6 @@ DECLARE_NATIVE(FILE_ACTOR)
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PARAM(SOURCE));
         UNUSED(PARAM(STRING)); // handled in dispatcher
         UNUSED(PARAM(LINES)); // handled in dispatcher
 
@@ -334,8 +333,6 @@ DECLARE_NATIVE(FILE_ACTOR)
 
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
-
-        UNUSED(PARAM(DESTINATION));
 
         if (ARG(SEEK) and ARG(APPEND))
             panic (Error_Bad_Refines_Raw());
@@ -486,8 +483,6 @@ DECLARE_NATIVE(FILE_ACTOR)
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
-        UNUSED(PARAM(SPEC));
-
         DECLARE_STABLE (file_path);
         require (
           Get_Port_Path_From_Spec(file_path, port)
@@ -529,7 +524,6 @@ DECLARE_NATIVE(FILE_ACTOR)
 
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
-        UNUSED(PARAM(VALUE));
 
         if (ARG(DEEP))
             panic (Error_Bad_Refines_Raw());
@@ -546,7 +540,6 @@ DECLARE_NATIVE(FILE_ACTOR)
 
       case SYM_CLOSE: {
         INCLUDE_PARAMS_OF_CLOSE;
-        UNUSED(PARAM(PORT));
 
         if (file->id == FILEHANDLE_NONE) {
             //
@@ -568,7 +561,6 @@ DECLARE_NATIVE(FILE_ACTOR)
 
       case SYM_DELETE: {
         INCLUDE_PARAMS_OF_DELETE;
-        UNUSED(PARAM(PORT));
 
         if (file->id != FILEHANDLE_NONE) {
             Stable* error = Close_File(port);
@@ -594,7 +586,6 @@ DECLARE_NATIVE(FILE_ACTOR)
 
       case SYM_RENAME: {
         INCLUDE_PARAMS_OF_RENAME;
-        UNUSED(ARG(FROM));  // implicitly same as `port`
 
         DECLARE_STABLE (file_path);
         require (
@@ -664,7 +655,6 @@ DECLARE_NATIVE(FILE_ACTOR)
 
       case SYM_QUERY: {
         INCLUDE_PARAMS_OF_QUERY;
-        UNUSED(PARAM(TARGET));
 
         Stable* info = Query_File_Or_Directory(port);
         if (Is_Warning(info)) {

@@ -137,7 +137,6 @@ DECLARE_NATIVE(DO_BRANCH)
 // implementation...)  Revisit.
 {
     INCLUDE_PARAMS_OF_DO_BRANCH;
-    UNUSED(ARG(BRANCH));
 
     panic ("DO-BRANCH is theoretical and not part of an API yet.");
 }

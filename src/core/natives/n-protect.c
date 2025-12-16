@@ -206,7 +206,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
-    UNUSED(PARAM(HIDE)); // unused here, but processed in caller
+    USED(PARAM(HIDE)); // unused here, but processed in caller
 
     Stable* value = ARG(VALUE);
     assert(not Any_Word(value) and not Is_Tuple(value));
@@ -312,7 +312,7 @@ DECLARE_NATIVE(PROTECT)
         return COPY(v);
     }
 
-    // Avoid unused parameter warnings (core routine handles them via level_)
+    // Core routine handles these via LEVEL
     //
     USED(PARAM(DEEP));
     USED(PARAM(WORDS));
@@ -325,7 +325,7 @@ DECLARE_NATIVE(PROTECT)
     else
         flags |= PROT_WORD; // there is no unhide
 
-    return Protect_Unprotect_Core(level_, flags);
+    return Protect_Unprotect_Core(LEVEL, flags);
 }
 
 
@@ -351,9 +351,8 @@ DECLARE_NATIVE(UNPROTECT)
         ST_UNPROTECT_POKING
     };
 
-    // Avoid unused parameter warnings (core handles them via frame)
+    // Core handles these via LEVEL
     //
-    USED(PARAM(VALUE));
     USED(PARAM(DEEP));
     USED(PARAM(WORDS));
     USED(PARAM(VALUES));

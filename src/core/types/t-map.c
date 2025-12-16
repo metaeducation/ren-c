@@ -407,7 +407,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
     INCLUDE_PARAMS_OF_MAKE;
 
     assert(Datatype_Type(ARG(TYPE)) == TYPE_MAP);
-    UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
 
@@ -739,8 +738,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
 
-        UNUSED(PARAM(SERIES));  // covered by `v`
-
         if (ARG(PART) or ARG(SKIP) or ARG(MATCH))
             panic (Error_Bad_Refines_Raw());
 
@@ -768,7 +765,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
       case SYM_INSERT:
       case SYM_APPEND: {
         INCLUDE_PARAMS_OF_INSERT;
-        UNUSED(PARAM(SERIES));
 
         if (not ARG(VALUE))
             return COPY(map);  // don't panic on read only if it would be no-op

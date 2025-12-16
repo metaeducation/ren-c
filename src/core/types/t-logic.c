@@ -499,7 +499,6 @@ INLINE Result(bool) Eval_Logic_Op_Right_Side_Uses_Scratch_And_Out(
 ){
     INCLUDE_PARAMS_OF_AND_1;  // should be same as OR and XOR
 
-    USED(ARG(LEFT));  // caller examines
     Element* right = Element_ARG(RIGHT);
 
     if (Is_Group(right)) {
@@ -554,7 +553,6 @@ DECLARE_NATIVE(AND_1)  // see TO-C-NAME
     require (
       bool right = Eval_Logic_Op_Right_Side_Uses_Scratch_And_Out(LEVEL)
     );
-    USED(ARG(RIGHT));
 
     return LOGIC(right);
 }
@@ -584,7 +582,6 @@ DECLARE_NATIVE(OR_1)  // see TO-C-NAME
     require (
       bool right = Eval_Logic_Op_Right_Side_Uses_Scratch_And_Out(LEVEL)
     );
-    USED(ARG(RIGHT));
 
     return LOGIC(right);
 }
@@ -608,7 +605,6 @@ DECLARE_NATIVE(XOR_1)  // see TO-C-NAME
     require (
       bool right = Eval_Logic_Op_Right_Side_Uses_Scratch_And_Out(LEVEL)
     );  // always evals
-    USED(ARG(RIGHT));
 
     require (
       bool left = Test_Conditional(ARG(LEFT))

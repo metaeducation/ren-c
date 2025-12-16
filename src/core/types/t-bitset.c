@@ -126,7 +126,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Bitset)
     INCLUDE_PARAMS_OF_MAKE;
 
     assert(Datatype_Type(ARG(TYPE)) == TYPE_BITSET);
-    UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
 
@@ -582,8 +581,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
         if (Is_Antiform(ARG(VALUE)))
             panic (ARG(VALUE));
 
-        UNUSED(PARAM(SERIES));  // covered by `v`
-
         if (ARG(PART) or ARG(SKIP) or ARG(MATCH))
             panic (Error_Bad_Refines_Raw());
 
@@ -594,7 +591,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
       case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
       case SYM_INSERT: {
         INCLUDE_PARAMS_OF_APPEND;
-        USED(PARAM(SERIES));  // covered by `v`
 
         if (not ARG(VALUE))
             return COPY(v);  // don't panic on read only if it would be a no-op
@@ -619,7 +615,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
 
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
-        UNUSED(PARAM(SERIES));  // covered by `v`
 
         Binary* bset = VAL_BITSET_Ensure_Mutable(v);
 
@@ -866,8 +861,10 @@ IMPLEMENT_GENERIC(DIFFERENCE, Is_Bitset)
 
 IMPLEMENT_GENERIC(EXCLUDE, Is_Bitset)
 {
+    INCLUDE_PARAMS_OF_EXCLUDE;
+
     bool negated_result = (
-        Is_Bitset(ARG_N(1)) and BITS_NOT(VAL_BITSET(ARG_N(1)))
+        Is_Bitset(ARG(DATA)) and BITS_NOT(VAL_BITSET(ARG(DATA)))
     );
 
     Element* blob1;

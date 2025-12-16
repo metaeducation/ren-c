@@ -36,7 +36,9 @@
 //
 DECLARE_NATIVE(CREATE)
 {
-    Element* port = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_CREATE;
+
+    Element* port = Element_ARG(PORT);
     return Run_Generic_Dispatch(port, LEVEL, CANON(CREATE));
 }
 
@@ -52,7 +54,9 @@ DECLARE_NATIVE(CREATE)
 //
 DECLARE_NATIVE(DELETE)
 {
-    Element* port = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_DELETE;
+
+    Element* port = Element_ARG(PORT);
     return Run_Generic_Dispatch(port, LEVEL, CANON(DELETE));
 }
 
@@ -71,7 +75,9 @@ DECLARE_NATIVE(DELETE)
 //
 DECLARE_NATIVE(OPEN)
 {
-    Element* spec = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_OPEN;
+
+    Element* spec = Element_ARG(SPEC);
     return Run_Generic_Dispatch(spec, LEVEL, CANON(OPEN));
 }
 
@@ -87,7 +93,9 @@ DECLARE_NATIVE(OPEN)
 //
 DECLARE_NATIVE(CLOSE)
 {
-    Element* port = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_CLOSE;
+
+    Element* port = Element_ARG(PORT);
     return Dispatch_Generic(CLOSE, port, LEVEL);
 }
 
@@ -118,7 +126,9 @@ DECLARE_NATIVE(CLOSE)
 //
 DECLARE_NATIVE(READ)
 {
-    Element* port = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_READ;
+
+    Element* port = Element_ARG(SOURCE);
     return Run_Generic_Dispatch(port, LEVEL, CANON(READ));
 }
 
@@ -185,8 +195,10 @@ DECLARE_NATIVE(WRITE)
 //
 DECLARE_NATIVE(QUERY)
 {
-    Element* port = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(port, LEVEL, CANON(QUERY));
+    INCLUDE_PARAMS_OF_QUERY;
+
+    Element* target = Element_ARG(TARGET);
+    return Run_Generic_Dispatch(target, LEVEL, CANON(QUERY));
 }
 
 
@@ -207,7 +219,9 @@ DECLARE_NATIVE(MODIFY)
 //    kept, failure should be returning an ERROR! to say what happened, and
 //    let people TRY that or display it, not returning a logic.
 {
-    Element* target = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_MODIFY;
+
+    Element* target = Element_ARG(TARGET);
     return Run_Generic_Dispatch(target, LEVEL, CANON(MODIFY));
 }
 
@@ -224,6 +238,8 @@ DECLARE_NATIVE(MODIFY)
 //
 DECLARE_NATIVE(RENAME)
 {
-    Element* from = cast(Element*, ARG_N(1));
+    INCLUDE_PARAMS_OF_RENAME;
+
+    Element* from = Element_ARG(FROM);
     return Run_Generic_Dispatch(from, LEVEL, CANON(RENAME));
 }

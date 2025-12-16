@@ -1910,10 +1910,6 @@ DECLARE_NATIVE(MAP_EACH)
 {
     INCLUDE_PARAMS_OF_MAP_EACH;
 
-    UNUSED(PARAM(VARS));
-    UNUSED(PARAM(BODY));
-    UNUSED(LOCAL(ITERATOR));
-
     if (Is_Blank(ARG(DATA)) or Is_Nulled(ARG(DATA)))  // same as empty list
         return Init_Block(OUT, Make_Source_Managed(0));
 
@@ -2581,11 +2577,6 @@ DECLARE_NATIVE(WHILE)
 //
 //    (It's now easy for people to make their own weird polymorphic loops.)
 {
-    INCLUDE_PARAMS_OF_WHILE;
-
-    USED(ARG(CONDITION));
-    USED(ARG(BODY));
-
     bool is_while = true;
     return While_Or_Until_Native_Core(LEVEL, is_while);
 }
@@ -2606,11 +2597,6 @@ DECLARE_NATIVE(UNTIL)
 //
 // 1. See WHILE:1
 {
-    INCLUDE_PARAMS_OF_UNTIL;
-
-    USED(ARG(CONDITION));
-    USED(ARG(BODY));
-
     bool is_while = false;
     return While_Or_Until_Native_Core(LEVEL, is_while);
 }

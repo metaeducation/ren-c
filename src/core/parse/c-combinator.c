@@ -334,7 +334,6 @@ DECLARE_NATIVE(OPT_COMBINATOR)
 
     Stable* input = ARG(INPUT);  // combinator implicit
     Stable* parser = ARG(PARSER);
-    UNUSED(ARG(STATE));  // combinator implicit
 
     enum {
         ST_OPT_COMBINATOR_INITIAL_ENTRY = STATE_0,
@@ -790,9 +789,6 @@ DECLARE_NATIVE(COMBINATORIZE)
     s.rule_end = nullptr;  // argument found by param hook
 
     Push_Lifeguard(s.ctx);  // Combinator_Param_Hook may call evaluator
-
-    USED(ARG(STATE));
-    USED(ARG(VALUE));
 
     const Key* key_tail;
     const Key* key = Phase_Keys(&key_tail, phase);

@@ -60,7 +60,6 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
 
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
-        UNUSED(ARG(SOURCE));  // implied by `port`
 
         if (ARG(PART) or ARG(SEEK))
             panic (Error_Bad_Refines_Raw());
@@ -105,7 +104,6 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
 
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
-        UNUSED(ARG(DESTINATION));  // implied by `port`
 
         if (ARG(APPEND) or ARG(LINES))
             panic (Error_Bad_Refines_Raw());
@@ -166,7 +164,6 @@ DECLARE_NATIVE(CLIPBOARD_ACTOR)
 
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
-        UNUSED(PARAM(SPEC));
 
         if (ARG(NEW) or ARG(READ) or ARG(WRITE))
             panic (Error_Bad_Refines_Raw());

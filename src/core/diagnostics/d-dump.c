@@ -173,7 +173,6 @@ DECLARE_NATIVE(DUMP)
 
     return TRASH;
   #else
-    UNUSED(ARG(VALUE));
     panic (Error_Checked_Build_Only_Raw());
   #endif
 }

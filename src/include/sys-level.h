@@ -672,16 +672,44 @@ INLINE Result(Level*) Prep_Level_Core(
 // It is also possible to get the PARAMETER! for an argument with `PARAM(FOO)`
 // or `PARAM(BAR)`.
 //
-// 1. We don't want to get unused typedef or unused variable warnings for the
-//    pieces that DECLARE_PARAM() makes that aren't necessarily used.  So
-//    only the `param_NAME_ = n;` piece is not marked USED().
+// 1. Using enum values here for the parameter numbers (as opposed to const
+//    ints of some flavor) pretty much guarantees they will be compile-time
+//    constants in all compilers.
+//
+// 2. Typically the rigor brought in by unused variable and unused argument
+//    warnings is worth the cost.  But we suppress that here.  Reasoning:
+//
+//    * Many cases of using INCLUDE_PARAMS_OF_XXX are used to do partial
+//      processing (e.g. generics) which pass on the work elsewhere.  It's
+//      oppressive to have to mark USED() on variables you don't mention,
+//      and discouraged using clearer ARG() vs ARG_N() accessors.
+//
+//    * There's no corresponding feature for librebol-based natives; e.g.
+//      the INCLUDE_PARAMS_OF_XXX macro only enables rebValue("arg") but
+//      can't warn you if you don't mention all the arguments.
+//
+//    * Conditional suppression of the local typedef is tricky to do when
+//      you use accessors that don't want to use the type, and if it were
+//      unconditionally suppressed then one of the other values would have
+//      to serve as the warning trigger--and that would mean not using the
+//      enum trick that enforces compile-time constancy.
+//
+//    * Being made to mark everything USED() or UNUSED() creates noise that
+//      makes it hard to see the real cases of unused variables that matter.
+//
+//    So the primary idea here is that you get the unused variable warning
+//    when you don't use the arguments that you explicitly create variables
+//    for, e.g. when you say `Value* var = ARG(NAME);` and don't use that.
+//    And we cross our fingers and hope that AI of the future could help
+//    detect when you meant to use an argument but did not (and be able to
+//    say that for librebol-based natives as well).
+//
 
 #define DECLARE_PARAM(T,name,n,opt) \
-    static const int param_##name##_ = n; \
+    enum { param_##name##_ = (n) }; /* enums force compile-time const [1] */ \
+    enum { param_opt_##name##_ = (opt) }; \
     typedef T param_type_##name##_; \
-    static bool param_opt_##name##_ = opt; \
-    USED(u_cast(param_type_##name##_, nullptr)); \
-    USED(param_opt_##name##_)  // trust n [1]
+    USED(u_cast(param_type_##name##_, nullptr)) /* trust author :-/ [2] */
 
 #define DECLARE_INTRINSIC_PARAM(name)  /* was used, not used at the moment */ \
     NOOP  // the INCLUDE_PARAMS_OF_XXX macros still make this, may find a use
@@ -696,7 +724,7 @@ INLINE Result(Level*) Prep_Level_Core(
 #define Element_ARG(name) /* checked build asserts it's an Element */ \
     Known_Element(Level_Arg(level_, param_##name##_))
 
-#define PARAM_INDEX(name) \
+#define PARAM_INDEX(name) /* can't use in some macro expansion orders */ \
     (param_##name##_)
 
 #define LOCAL(name) /* alias for ARG() when slot is {local} */ \
@@ -709,7 +737,7 @@ INLINE Result(Level*) Prep_Level_Core(
     Known_Stable(Level_Arg(level_, PARAM_INDEX(name)))
 
 #define PARAM(name) \
-    Phase_Param(Level_Phase(level_), PARAM_INDEX(name))  // a TYPESET!
+    Phase_Param(Level_Phase(level_), param_##name##_)  // a TYPESET!
 
 #define ARG_N(n) \
     Known_Stable(Level_Arg(level_, (n)))

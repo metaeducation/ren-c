@@ -87,7 +87,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
     INCLUDE_PARAMS_OF_MAKE;
 
     assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_PAIR);
-    UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
 

@@ -37,7 +37,7 @@
 REBDEC Round_Dec(REBDEC dec, Level* level_, REBDEC scale)
 {
     INCLUDE_PARAMS_OF_ROUND;
-    UNUSED(ARG(VALUE));  // was extracted for `dec`
+    USED(ARG(VALUE));  // was extracted for `dec`
 
     REBDEC r;
     union {REBDEC d; REBI64 i;} m;
@@ -146,7 +146,7 @@ REBDEC Round_Dec(REBDEC dec, Level* level_, REBDEC scale)
 REBI64 Round_Int(REBI64 num, Level* level_, REBI64 scale)
 {
     INCLUDE_PARAMS_OF_ROUND;
-    UNUSED(ARG(VALUE));  // was extracted as `num`
+    USED(ARG(VALUE));  // was extracted as `num`
 
     /* using safe unsigned arithmetic */
     REBU64 sc, n, r, m, s;

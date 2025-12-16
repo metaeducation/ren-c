@@ -405,7 +405,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
     INCLUDE_PARAMS_OF_MAKE;
 
     assert(Datatype_Type(ARG(TYPE)) == TYPE_FRAME);
-    UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
 
@@ -479,7 +478,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
     INCLUDE_PARAMS_OF_MAKE;
 
     assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_MODULE);
-    UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
 
@@ -1094,7 +1092,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
       case SYM_EXTEND: {
         INCLUDE_PARAMS_OF_EXTEND;
-        UNUSED(ARG(CONTEXT));
+
         Element* def = Element_ARG(DEF);
 
         if (Is_Word(def)) {
@@ -2104,6 +2102,8 @@ DECLARE_NATIVE(CONSTRUCT)
 //
 DECLARE_NATIVE(EXTEND)
 {
-    Element* number = cast(Element*, ARG_N(1));
-    return Run_Generic_Dispatch(number, LEVEL, CANON(EXTEND));
+    INCLUDE_PARAMS_OF_EXTEND;
+
+    Element* context = Element_ARG(CONTEXT);
+    return Run_Generic_Dispatch(context, LEVEL, CANON(EXTEND));
 }

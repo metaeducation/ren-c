@@ -213,8 +213,6 @@ DECLARE_NATIVE(ENCODE_TEXT)
     if (Series_Len_At(ARG(OPTIONS)))
         panic (ARG(OPTIONS));
 
-    UNUSED(PARAM(STRING));
-
     panic (".txt codec not currently implemented (what should it do?)");
 }
 

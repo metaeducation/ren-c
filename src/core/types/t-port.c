@@ -74,7 +74,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
     INCLUDE_PARAMS_OF_MAKE;
 
     assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_PORT);
-    UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
 
@@ -205,7 +204,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     if (id == SYM_READ) {
         INCLUDE_PARAMS_OF_READ;
 
-        UNUSED(PARAM(SOURCE));
         UNUSED(PARAM(PART));
         UNUSED(PARAM(SEEK));
 
@@ -247,10 +245,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
 IMPLEMENT_GENERIC(COPY, Is_Port)
 {
     INCLUDE_PARAMS_OF_COPY;
-
-    USED(ARG(VALUE));  // arguments passed through via level_
-    USED(ARG(PART));
-    USED(ARG(DEEP));
 
     level_->u.action.label = Canon_Symbol(SYM_COPY);  // !!! Level_Verb() hack
     return GENERIC_CFUNC(OLDGENERIC, Is_Port)(level_);

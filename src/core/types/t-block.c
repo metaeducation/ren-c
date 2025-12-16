@@ -567,7 +567,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
       case SYM_FIND:
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_FIND; // must be same as select
-        UNUSED(PARAM(SERIES));
 
         Stable* pattern = ARG(PATTERN);  // SELECT takes antiforms literally
 
@@ -651,7 +650,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
       case SYM_INSERT:
       case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;
-        USED(PARAM(SERIES));
 
         Option(const Stable*) arg = ARG(VALUE);
 
@@ -711,7 +709,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 
       case SYM_SWAP: {
         INCLUDE_PARAMS_OF_SWAP;
-        UNUSED(ARG(SERIES1));
 
         Stable* arg = ARG(SERIES2);
         if (not Any_List(arg))
@@ -1273,8 +1270,6 @@ IMPLEMENT_GENERIC(FILE_OF, Any_Element)  // generic fallthrough returns error
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    UNUSED(ARG(VALUE));
-
     panic ("No file available for element");
 }
 
@@ -1302,8 +1297,6 @@ DECLARE_NATIVE(LINE_OF)
 IMPLEMENT_GENERIC(LINE_OF, Any_Element)  // generic fallthrough returns error
 {
     INCLUDE_PARAMS_OF_LINE_OF;
-
-    UNUSED(ARG(VALUE));
 
     panic ("No line available for element");
 }

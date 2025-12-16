@@ -603,8 +603,7 @@ Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
     Element* target = Element_ARG(TARGET);
     assert(Is_Group(target));
 
-    USED(ARG(GROUPS));
-    USED(ARG(STEPS));
+    USED(ARG(GROUPS));  // accounted for in caller (since we're running this!)
 
    // !!! At the moment, the generic Set_Var() mechanics aren't written to
    // handle GROUP!s.  But it probably should, since it handles groups that

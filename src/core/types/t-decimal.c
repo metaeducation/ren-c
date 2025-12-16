@@ -131,7 +131,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
     INCLUDE_PARAMS_OF_MAKE;
 
     assert(Datatype_Type(ARG(TYPE)) == TYPE_DECIMAL);
-    UNUSED(ARG(TYPE));
 
     Element* arg = Element_ARG(DEF);
 
@@ -240,9 +239,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
 IMPLEMENT_GENERIC(MAKE, Is_Percent)
 {
     INCLUDE_PARAMS_OF_MAKE;
-
-    UNUSED(ARG(TYPE));
-    UNUSED(ARG(DEF));
 
     panic ("MAKE of PERCENT! not supported at this time");  // [1]
 }

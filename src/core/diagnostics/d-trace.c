@@ -74,8 +74,5 @@ DECLARE_NATIVE(TRACE)
 {
     INCLUDE_PARAMS_OF_TRACE;
 
-    UNUSED(ARG(MODE));
-    UNUSED(ARG(FUNCTION));
-
     panic ("TRACE is being redesigned in light of Trampolines/Stackless");
 }

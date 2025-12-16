@@ -107,19 +107,6 @@ Value* g_trash_parse3_success;
 // usermode authored function arguments only.)
 //
 
-// The compiler typically warns us about not using all the arguments to
-// a native at some point.  Service routines may use only some of the values
-// in the parse frame, so defeat that check.
-//
-#define USE_PARAMS_OF_SUBPARSE \
-    INCLUDE_PARAMS_OF_SUBPARSE; \
-    USED(ARG(INPUT)); \
-    USED(ARG(FLAGS)); \
-    USED(ARG(NUM_QUOTES)); \
-    USED(ARG(POSITION)); \
-    USED(ARG(SAVE)); \
-    USED(ARG(LOOKBACK))
-
 #define P_AT_END            Is_Level_At_End(level_)
 #define P_RULE              At_Level(level_)  // rvalue
 #define P_RULE_BINDING      Level_Binding(level_)
@@ -476,7 +463,7 @@ bool Process_Group_For_Parse_Throws(
     Level* level_,
     const Element* group  // can't be same as out
 ){
-    USE_PARAMS_OF_SUBPARSE;
+    INCLUDE_PARAMS_OF_SUBPARSE;
 
     Context* derived = (group == P_SAVE)
         ? SPECIFIED
@@ -546,7 +533,7 @@ static Result(REBIXO) Parse_One_Rule(
     REBLEN pos,
     const Element* rule
 ){
-    USE_PARAMS_OF_SUBPARSE;
+    INCLUDE_PARAMS_OF_SUBPARSE;
 
     if (Is_Group(rule)) {
         bool veto;
@@ -790,7 +777,7 @@ static Result(REBIXO) To_Thru_Block_Rule(
     const Element* rule_block,
     bool is_thru
 ){
-    USE_PARAMS_OF_SUBPARSE;
+    INCLUDE_PARAMS_OF_SUBPARSE;
 
     DECLARE_ELEMENT (cell);  // holds evaluated rules (use frame cell instead?)
 
@@ -1051,7 +1038,7 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
     const Element* rule,
     bool is_thru
 ){
-    USE_PARAMS_OF_SUBPARSE;
+    INCLUDE_PARAMS_OF_SUBPARSE;
 
     if (Is_Quasiform(rule)) {
         if (
@@ -1177,7 +1164,7 @@ static Result(None) Handle_Mark_Rule(
     Level* level_,
     const Element* quoted_set_or_copy_word  // bound
 ){
-    USE_PARAMS_OF_SUBPARSE;
+    INCLUDE_PARAMS_OF_SUBPARSE;
 
     // !!! Experiment: Put the quote level of the original series back on when
     // setting positions (then remove)
@@ -1210,7 +1197,7 @@ static Result(None) Handle_Seek_Rule_Dont_Update_Begin(
     const Element* rule,
     Context* context
 ){
-    USE_PARAMS_OF_SUBPARSE;
+    INCLUDE_PARAMS_OF_SUBPARSE;
 
     Option(Type) t = Type_Of(rule);
     if (t == TYPE_WORD or t == TYPE_TUPLE) {
