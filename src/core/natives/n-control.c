@@ -1197,11 +1197,8 @@ DECLARE_NATIVE(DEFAULT)
 
 } branch_result_in_out: {  ///////////////////////////////////////////////////
 
-    // !!! TBD: "steps"
-  /* assert(Is_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
-     heeded (Corrupt_Cell_If_Needful(SPARE)); */
-
-    Copy_Cell(SCRATCH, target);  // we want the slash and meta as given
+    assert(Is_Pinned(Known_Element(SCRATCH)));  // steps is the "var" to set
+    heeded (Corrupt_Cell_If_Needful(SPARE));
 
     Set_Var_In_Scratch_To_Out(LEVEL, NO_STEPS) except (Error* e) {
         assert(false);  // shouldn't be able to happen (steps is pinned)
