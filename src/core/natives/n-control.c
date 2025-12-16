@@ -476,11 +476,8 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
 } eval_step_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Ghost_Or_Void(SPARE)) {  // no vote...ignore and continue
-        assert(STATE == ST_ANY_ALL_NONE_EVAL_STEP);
-        Reset_Evaluator_Erase_Out(SUBLEVEL);
-        return CONTINUE_SUBLEVEL(SUBLEVEL);
-    }
+    if (Is_Ghost_Or_Void(SPARE))  // no vote...ignore and continue
+        goto next_eval_step;
 
     Set_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST);
 
@@ -549,10 +546,15 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
         break;
     }
 
+    goto next_eval_step;
+
+} next_eval_step: { //////////////////////////////////////////////////////////
+
+    assert(STATE == ST_ANY_ALL_NONE_EVAL_STEP);
+
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
 
-    assert(STATE == ST_ANY_ALL_NONE_EVAL_STEP);
     Reset_Evaluator_Erase_Out(SUBLEVEL);
     return CONTINUE_SUBLEVEL(SUBLEVEL);
 

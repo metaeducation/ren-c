@@ -274,6 +274,9 @@ DECLARE_NATIVE(JOIN)
 
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
+    if (Is_Level_At_End(sub))
+        goto finish_stack_join;
+
     if (delimiter)
         assert(Not_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING));
 

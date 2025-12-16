@@ -158,9 +158,6 @@ DECLARE_NATIVE(REDUCE)
     ));
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
-    if (Is_Level_At_End(sub))
-        goto finished;
-
     goto next_reduce_step;
 
 } next_reduce_step: {  ///////////////////////////////////////////////////////
@@ -169,6 +166,9 @@ DECLARE_NATIVE(REDUCE)
   //    of the eval positions.  But when the evaluation callback happens, we
   //    won't have the starting value anymore.  Cache the newline flag on
   //    the ARG(VALUE) cell, as newline flags on ARG()s are available.
+
+    if (Is_Level_At_End(SUBLEVEL))
+        goto finished;
 
     if (Get_Cell_Flag(At_Level(SUBLEVEL), NEWLINE_BEFORE))
         Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag [1]
@@ -241,9 +241,6 @@ DECLARE_NATIVE(REDUCE)
         if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // [2]
             Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     }
-
-    if (Is_Level_At_End(SUBLEVEL))
-        goto finished;
 
     goto next_reduce_step;
 
