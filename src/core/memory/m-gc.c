@@ -739,19 +739,19 @@ static void Mark_Guarded(void)
 //
 static void Mark_Level(Level* L) {
 
-  //=//// MARK FEED (INCLUDES BINDING) ////////////////////////////////////=//
+  mark_feed: {
 
-    // 1. Misc_Feedstub_Pending() should either live in Feed_Array(), or it
-    //    may be corrupt (e.g. if it's an apply).  GC can ignore it.
-    //
-    // 2. This used to mark L->feed->p; but we probably do not need to.  All
-    //    variadics are reified as arrays in the GC (we could avoid this
-    //    using va_copy, but probably not worth it).  All values in feed
-    //    should be covered in terms of GC protection.
-    //
-    // 3. It used to be that ->gotten was "kept alive" via At_Level(), but
-    //    now it's possible that it's fully synthetic (from an accessor or
-    //    otherwise).  If it's synthetic, it has to be marked.
+  // 1. Misc_Feedstub_Pending() should either live in Feed_Array(), or it may
+  //    be corrupt (e.g. if it's an apply).  GC can ignore it.
+  //
+  // 2. This used to mark L->feed->p; but we probably do not need to.  All
+  //    variadics are reified as arrays in the GC (we could avoid this using
+  //    va_copy, but probably not worth it).  All values in feed should be
+  //    covered in terms of GC protection.
+  //
+  // 3. It used to be that ->gotten was "kept alive" via At_Level(), but now
+  //    it's possible that it's fully synthetic (e.g. an accessor).  If it's
+  //    synthetic, it has to be marked.
 
     Stub* singular = Feed_Singular(L->feed);  // don't mark Misc Pending [1]
     do {
@@ -769,10 +769,10 @@ static void Mark_Level(Level* L) {
 
     Queue_Mark_Maybe_Erased_Cell_Deep(&L->feed->gotten);  // have to mark [3]
 
-  //=//// MARK FRAME CELLS ////////////////////////////////////////////////=//
+} mark_level_cells: {
 
-    // Level cells should always contain initialized bits, though erased or
-    // fresh cells are allowed.
+  // Level cells should always contain initialized bits, though erased/fresh
+  // cells are allowed.
 
     Queue_Mark_Maybe_Erased_Cell_Deep(L->out);
     Queue_Mark_Maybe_Erased_Cell_Deep(&L->feed->fetched);
@@ -786,26 +786,24 @@ static void Mark_Level(Level* L) {
         return;
     }
 
-  //=//// SPECIAL MARKING FOR ACTION_EXECUTOR() LEVELS ////////////////////=//
+} mark_action_executor_levels: {
 
-    // 1. If the context is all set up with valid values and managed, then it
-    //    can be marked normally...no need for partial parameter traversal.
-    //
-    // 2. The cast(VarList, ...) operation does extra integrity checking of
-    //    the VarList in some debug builds, and the VarList may not be
-    //    complete at this point.  Cast to an array.
-    //
-    // 3. For efficiency, function argument slots are not pre-formatted--they
-    //    are initialized during the sunk cost of the parameter walk.  Hence
-    //    how far the function has gotten in its fulfillment must be taken
-    //    into account.  Only those argument slots that have been fulfilled
-    //    may be GC protected, since the others contain random bits.
-    //
-    // 4. Erasure (CELL_MASK_ERASED_0 in a cell's header) is a state that is
-    //    legal during evaluation, but not a valid state for cells in VarLists
-    //    (or Arrays).  It's thus only legal for frames that are fulfilling,
-    //    and only in the slot that is being fulfilled at the present moment
-    //    (skipped arguments picked up later are set to CELL_MASK_UNREADABLE).
+  // 1. Frame filling may put the VarList* into one of its own cells (to
+  //    represent a FRAME! or a VARARGS! argument), even while that VarList is
+  //    not complete enough to be marked with Queue_Mark_Base_Deep().
+  //
+  // 2. For efficiency, function argument slots are not pre-formatted--they're
+  //    initialized during the sunk cost of the parameter walk.  Hence how far
+  //    the function has gotten in its fulfillment must be taken into account.
+  //    Only those argument slots that have been fulfilled may be GC guarded,
+  //    since the others contain random bits in release builds (poison bits
+  //    in debug builds to help catch such errors).
+  //
+  // 3. Erasure (CELL_MASK_ERASED_0 in a cell's header) is a legal state in
+  //    evaluation, but not a valid state for cells in VarLists (or Arrays).
+  //    It's thus only legal for frames that are fulfilling, and only in the
+  //    slot that is being fulfilled at the present moment (skipped arguments
+  //    picked up later are set to CELL_MASK_UNREADABLE).
 
     Queue_Mark_Base_Deep(  // L->u.action.original is never nullptr
         cast(Base**, m_cast(Phase**, &L->u.action.original))
@@ -820,18 +818,6 @@ static void Mark_Level(Level* L) {
             Queue_Unmarked_Accessible_Stub_Deep(s);
     }
 
-    if (L->varlist and Is_Base_Managed(L->varlist)) {  // normal marking [1]
-        assert(
-            not Is_Level_Fulfilling_Or_Typechecking(L)
-            or LEVEL_STATE_BYTE(L) == ST_ACTION_TYPECHECKING  // filled/safe
-        );
-
-        Queue_Mark_Base_Deep(  // may be incomplete, can't cast(VarList*) [2]
-            cast(Base**, m_cast(ParamList**, &L->varlist))
-        );
-        return;
-    }
-
     if (
         Is_Level_Fulfilling_Or_Typechecking(L)
         and (
@@ -839,7 +825,15 @@ static void Mark_Level(Level* L) {
             or LEVEL_STATE_BYTE(L) == ST_ACTION_INITIAL_ENTRY_INFIX
         )
     ){
+        assert(not (L->varlist and Is_Base_Managed(L->varlist)));
         return;  // args and locals are poison/garbage
+    }
+
+    if (L->varlist and Is_Base_Managed(L->varlist)) {
+        dont(Queue_Mark_Base_Deep(  // may have bad slots, mark them below [1]
+            cast(Base**, m_cast(ParamList**, &L->varlist))
+        ));
+        Add_GC_Mark_If_Not_Already_Marked(L->varlist);
     }
 
     Phase* phase = Level_Phase(L);
@@ -851,22 +845,22 @@ static void Mark_Level(Level* L) {
         and LEVEL_STATE_BYTE(L) != ST_ACTION_TYPECHECKING
         and Not_Executor_Flag(ACTION, L, DOING_PICKUPS)
     ){
-        key_tail = L->u.action.key + 1;  // don't mark uninitialized bits [3]
+        key_tail = L->u.action.key + 1;  // don't mark uninitialized bits [2]
     }
 
     Value* arg = Level_Args_Head(L);
-    for (; key != key_tail; ++key, ++arg) {  // key_tail may be truncated [3]
+    for (; key != key_tail; ++key, ++arg) {  // key_tail may be truncated [2]
         if (Is_Cell_Erased(arg)) {
             assert(
                 Is_Level_Fulfilling_Or_Typechecking(L)
                 and LEVEL_STATE_BYTE(L) != ST_ACTION_TYPECHECKING
                 and key == L->u.action.key
             );
-            continue;  // only the current cell is allowed to be erased [4]
+            continue;  // only the current cell is allowed to be erased [3]
         }
         Queue_Mark_Cell_Deep(arg);
     }
-}
+}}
 
 
 //
