@@ -314,66 +314,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
     assert(Is_Blob(v));
 
     switch (opt id) {
-    //-- Modification:
-      case SYM_APPEND:
-      case SYM_INSERT:
-      case SYM_CHANGE: {
-        INCLUDE_PARAMS_OF_INSERT;  // compatible frame with APPEND, CHANGE
-
-        Option(const Stable*) arg = ARG(VALUE);
-
-        REBLEN len; // length of target
-        if (id == SYM_CHANGE)
-            len = Part_Len_May_Modify_Index(v, ARG(PART));
-        else
-            len = Part_Limit_Append_Insert(ARG(PART));
-
-        // Note that while inserting or appending VOID is a no-op, CHANGE with
-        // a :PART can actually erase data.
-        //
-        if (not arg and len == 0) {
-            if (id == SYM_APPEND) // append always returns head
-                SERIES_INDEX_UNBOUNDED(v) = 0;
-            return COPY(v);  // don't panic on read only if would be a no-op
-        }
-
-        Flags flags = 0;
-        if (ARG(PART))
-            flags |= AM_PART;
-        if (ARG(LINE))
-            flags |= AM_LINE;
-
-        // !!! This mimics the historical behavior for now:
-        //
-        //     rebol2>> append "abc" 'd
-        //     == "abcd"
-        //
-        //     rebol2>> append/only "abc" [d e]  ; like appending (the '[d e])
-        //     == "abcde"
-        //
-        // But for consistency, it would seem that if the incoming value is
-        // quoted that should give molding semantics, so quoted blocks include
-        // their brackets.  Review.
-        //
-        if (not arg) {
-            // not necessarily a no-op (e.g. CHANGE can erase)
-        }
-        else if (Is_Antiform(unwrap arg))
-        {
-            assert(Is_Splice(unwrap arg));  // typecheck shouldn't pass others
-        }
-
-        require (
-          SERIES_INDEX_UNBOUNDED(v) = Modify_String_Or_Blob(
-            v,
-            unwrap id,
-            arg,
-            flags,
-            len,
-            ARG(DUP) ? Int32(unwrap ARG(DUP)) : 1
-        ));
-        return COPY(v); }
-
     //-- Search:
       case SYM_SELECT:
       case SYM_FIND: {
@@ -544,6 +484,34 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
     }
 
     panic (UNHANDLED);
+}
+
+
+// See notes on CHANGE regarding questions of how much work is expected to be
+// handled by the "front end" native vs. Modify_String_Or_Blob() as callable
+// by C code that doesn't go through the native.
+//
+IMPLEMENT_GENERIC(CHANGE, Is_Blob)
+{
+    INCLUDE_PARAMS_OF_CHANGE;  // CHANGE, INSERT, APPEND
+
+    Length len = VAL_UINT32(unwrap ARG(PART));  // enforced > 0 by generic
+    Count dups = VAL_UINT32(unwrap ARG(DUP));  // enforced > 0 by generic
+
+    Flags flags = 0;
+    if (ARG(LINE))
+        flags |= AM_LINE;
+
+    require (
+      Modify_String_Or_Blob(
+        Element_ARG(SERIES),
+        u_cast(ModifyState, STATE),
+        unwrap ARG(VALUE),
+        flags,
+        len,
+        dups
+    ));
+    return COPY(ARG(SERIES));
 }
 
 

@@ -645,53 +645,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         Element* out = Derelativize(OUT, Array_At(arr, ret), binding);
         return Inherit_Const(out, list); }
 
-    //-- Modification:
-      case SYM_APPEND:
-      case SYM_INSERT:
-      case SYM_CHANGE: {
-        INCLUDE_PARAMS_OF_INSERT;
-
-        Option(const Stable*) arg = ARG(VALUE);
-
-        REBLEN len; // length of target
-        if (id == SYM_CHANGE)
-            len = Part_Len_May_Modify_Index(list, ARG(PART));
-        else
-            len = Part_Limit_Append_Insert(ARG(PART));
-
-        // Note that while inserting or appending VOID is a no-op, CHANGE with
-        // a :PART can actually erase data.
-        //
-        if (not arg and len == 0) {
-            if (id == SYM_APPEND)  // append always returns head
-                SERIES_INDEX_UNBOUNDED(list) = 0;
-            return COPY(list);  // don't panic on read only if would be a no-op
-        }
-
-        Source* arr = Cell_Array_Ensure_Mutable(list);
-        REBLEN index = Series_Index(list);
-
-        Flags flags = 0;
-
-        Copy_Cell(OUT, list);
-
-        if (ARG(PART))
-            flags |= AM_PART;
-        if (ARG(LINE))
-            flags |= AM_LINE;
-
-        require (
-          SERIES_INDEX_UNBOUNDED(OUT) = Modify_Array(
-            arr,
-            index,
-            unwrap id,
-            arg,
-            flags,
-            len,
-            ARG(DUP) ? Int32(unwrap ARG(DUP)) : 1
-        ));
-        return OUT; }
-
       case SYM_CLEAR: {
         Array* arr = Cell_Array_Ensure_Mutable(list);
         REBLEN index = Series_Index(list);
@@ -765,6 +718,34 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
     }
 
     panic (UNHANDLED);
+}
+
+
+// See notes on CHANGE regarding questions of how much work is expected to be
+// handled by the "front end" native vs. Modify_List() as callable by C code
+// that doesn't go through the native.
+//
+IMPLEMENT_GENERIC(CHANGE, Any_List)
+{
+    INCLUDE_PARAMS_OF_CHANGE;  // CHANGE, INSERT, APPEND
+
+    Length len = VAL_UINT32(unwrap ARG(PART));  // enforced > 0 by generic
+    Count dups = VAL_UINT32(unwrap ARG(DUP));  // enforced > 0 by generic
+
+    Flags flags = 0;
+    if (ARG(LINE))
+        flags |= AM_LINE;
+
+    require (
+      Modify_List(
+        Element_ARG(SERIES),
+        u_cast(ModifyState, STATE),
+        unwrap ARG(VALUE),
+        flags,
+        len,
+        dups
+    ));
+    return COPY(ARG(SERIES));
 }
 
 
@@ -1000,7 +981,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
     if (n >= Series_Len_Head(series))
         return DUAL_SIGNAL_NULL_ABSENT;
 
-    Stable* poke;
+    const Stable* poke;
 
     Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
@@ -1034,7 +1015,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
 } handle_poke: { /////////////////////////////////////////////////////////////
 
     if (Is_Lifted_Ghost_Or_Void(dual)) {
-        poke = nullptr;  // nullptr for removal in Modify_Xxx() atm
+        poke = LIB(BLANK);  // nullptr for removal in Modify_Xxx() atm
         goto call_modify;
     }
 
@@ -1056,27 +1037,26 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
     REBLEN part = 1;  // overwrite one element's worth of content
     REBLEN dups = 1;  // write exactly one copy of the material
 
+    SERIES_INDEX_UNBOUNDED(series) = n;
+
     if (Any_List(series)) {
-        Source* arr = Cell_Array_Ensure_Mutable(series);
         require (
-            Modify_Array(
-                arr, n, SYM_CHANGE, poke, AM_PART, part, dups
+            Modify_List(
+                series, ST_MODIFY_CHANGE, poke, (not AM_LINE), part, dups
             )
         );
     }
     else if (Any_String(series)) {
-        SERIES_INDEX_UNBOUNDED(series) = n;
         require (
             Modify_String_Or_Blob(
-                series, SYM_CHANGE, poke, AM_PART, part, dups
+                series, ST_MODIFY_CHANGE, poke, (not AM_LINE), part, dups
             )
         );
     }
     else {
-        SERIES_INDEX_UNBOUNDED(series) = n;
         require (
             Modify_String_Or_Blob(
-                series, SYM_CHANGE, poke, AM_PART, part, dups
+                series, ST_MODIFY_CHANGE, poke, (not AM_LINE), part, dups
             )
         );
     }

@@ -109,3 +109,40 @@
 (
     "ò " = format 2 "ò"
 )
+
+; BLOB! coercion currently allowed if it's UTF-8 compatible (should it be?)
+(
+    change x: "abc" #{64 65}
+    x = "dec"
+)
+
+; INTEGER! coercion currently allowed to calculate the length (should it be)
+(
+    change x: "abcdef" 100
+    x = "100def"
+)
+
+(
+    change x: [a b c] [d e]
+    x = [[d e] b c]
+)
+
+(
+    change x: "abcdef" ~(g "hi" jkl)~
+    x = "ghijkldef"
+)
+
+(
+    change x: [a b c] ~(d e)~
+    x = [d e c]
+)
+
+(
+    change x: #{1234} #{56}
+    x = #{5634}
+)
+
+(
+    change x: #{1234} #d
+    x = #{6434}
+)

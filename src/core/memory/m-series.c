@@ -355,9 +355,9 @@ void Remove_Any_Series_Len(Element* v, REBLEN index, REBINT len)
         require (
           Modify_String_Or_Blob(
             temp,
-            SYM_CHANGE,
-            nullptr,  // e.g. void
-            AM_PART,
+            ST_MODIFY_CHANGE,
+            LIB(BLANK),  // e.g. erase content
+            (not AM_LINE),
             len,
             1  // dups
         ));

@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2024 Ren-C Open Source Contributors
+// Copyright 2012-2025 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -21,50 +21,44 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// A. These are service routines called by the native functions that implement
+//    APPEND, INSERT, and CHANGE.  They do not do the "front-end" work of
+//    checking for things like zero or negative dup counts, and they do not
+//    assume meanings for things like null or void.  If you need that kind of
+//    handling you should go through the native functions.
+//
 
 #include "sys-core.h"
 
 
 //
-//  Modify_Array: C
+//  Modify_List: C
 //
-// Returns new dst_idx
-//
-Result(REBLEN) Modify_Array(
-    Source* dst_arr,  // target
-    REBLEN dst_idx,  // position
-    SymId op,  // INSERT, APPEND, CHANGE
-    Option(const Stable*) opt_src,  // source
-    REBLEN flags,  // AM_PART, AM_LINE
+Result(None) Modify_List(
+    Element* target,  // target
+    ModifyState op,  // INSERT, APPEND, CHANGE
+    const Stable* src_val,  // source
+    REBLEN flags,  // AM_LINE
     REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
-    REBINT dups  // dup count of how many times to insert the src content
+    Count dups  // dup count of how many times to insert the src content
 ){
-    assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
+    assert(
+        op == ST_MODIFY_APPEND
+        or op == ST_MODIFY_INSERT
+        or op == ST_MODIFY_CHANGE
+    );
+    assert(dups > 0);  // use native entry points for "weird" cases [A]
+    assert(part >= 0);
+    assert(not Is_Antiform(src_val) or Is_Splice(src_val));
+
+    Source* dst_arr = Cell_Array_Ensure_Mutable(target);
+    REBLEN dst_idx = SERIES_INDEX_UNBOUNDED(target);  // !!! bounded?
 
     REBLEN tail_idx = Array_Len(dst_arr);
 
     const Element* src_rel;
 
-    const Stable* src_val;
-    if (op == SYM_CHANGE and not opt_src) {
-        src_val = LIB(BLANK);  // CHANGE to void acts same as with empty splice
-        if (not (flags & AM_PART)) {
-            flags |= AM_PART;  // no PART with VOID erases one item...
-            part = 1;  // ...but erases one item
-        }
-    }
-    else if (not opt_src or dups <= 0) {
-        //
-        // If they are effectively asking for "no action" then all we have
-        // to do is return the natural index result for the operation.
-        // (APPEND will return 0, INSERT the tail of the insertion...)
-        //
-        return (op == SYM_APPEND) ? 0 : dst_idx;
-    }
-    else
-        src_val = unwrap opt_src;
-
-    if (op == SYM_APPEND or dst_idx > tail_idx)
+    if (op == ST_MODIFY_APPEND or dst_idx > tail_idx)
         dst_idx = tail_idx;
 
     // Each dup being inserted need a newline signal after it if:
@@ -84,8 +78,8 @@ Result(REBLEN) Modify_Array(
         REBLEN len_at = Series_Len_At(src_val);
         ilen = len_at;
 
-        // Adjust length of insertion if changing :PART
-        if (op != SYM_CHANGE and (flags & AM_PART)) {
+        // Adjust length of insertion if APPEND or INSERT :PART
+        if (op != ST_MODIFY_CHANGE) {
             if (part < ilen)
                 ilen = part;
         }
@@ -137,7 +131,7 @@ Result(REBLEN) Modify_Array(
         (dst_idx == Array_Len(dst_arr))
         and Get_Source_Flag(dst_arr, NEWLINE_AT_TAIL);
 
-    if (op != SYM_CHANGE) {
+    if (op != ST_MODIFY_CHANGE) {
         // Always expand dst_arr for INSERT and APPEND actions:
         trap (
            Expand_Flex_At_Index_And_Update_Used(dst_arr, dst_idx, size)
@@ -150,7 +144,7 @@ Result(REBLEN) Modify_Array(
                 dst_arr, dst_idx, size - part
             ));
         }
-        else if (size < part and (flags & AM_PART))
+        else if (size < part)
             Remove_Flex_Units_And_Update_Used(dst_arr, dst_idx, part - size);
         else if (size + dst_idx > tail_idx) {
             trap (
@@ -160,7 +154,7 @@ Result(REBLEN) Modify_Array(
         }
     }
 
-    tail_idx = (op == SYM_APPEND) ? 0 : size + dst_idx;
+    tail_idx = (op == ST_MODIFY_APPEND) ? 0 : size + dst_idx;
 
     REBLEN dup_index = 0;
     for (; dup_index < dups; ++dup_index) {  // dups checked > 0
@@ -214,7 +208,8 @@ Result(REBLEN) Modify_Array(
 
     Assert_Array(dst_arr);
 
-    return tail_idx;
+    SERIES_INDEX_UNBOUNDED(target) = tail_idx;
+    return none;
 }
 
 
@@ -244,15 +239,22 @@ static Error* Error_Bad_Utf8_Bin_Edit(Error* cause) {
 // of Series_Index() is different.  So in addition to the detection of the
 // FLEX_FLAG_IS_STRING on the Flex, we must know if dst is a BLOB!.
 //
-Result(REBLEN) Modify_String_Or_Blob(
+Result(None) Modify_String_Or_Blob(
     Stable* dst,  // ANY-STRING? or BLOB! value to modify
-    SymId op,  // SYM_APPEND @ tail, SYM_INSERT or SYM_CHANGE @ index
-    Option(const Stable*) opt_src,  // argument with content to inject
-    Flags flags,  // AM_PART, AM_LINE
-    REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
-    REBINT dups  // dup count of how many times to insert the src content
+    ModifyState op,  // APPEND @ tail, INSERT or CHANGE @ index
+    const Stable* src,  // argument with content to inject
+    Flags flags,  // AM_LINE
+    Length part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
+    Count dups  // dup count of how many times to insert the src content
 ){
-    assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
+    assert(
+        op == ST_MODIFY_APPEND
+        or op == ST_MODIFY_INSERT
+        or op == ST_MODIFY_CHANGE
+    );
+    assert(dups > 0);  // use native entry points for "weird" cases [A]
+    assert(part >= 0);
+    assert(not Is_Antiform(src) or Is_Splice(src));
 
     Ensure_Mutable(dst);  // note this also rules out ANY-WORD?s
 
@@ -261,9 +263,6 @@ Result(REBLEN) Modify_String_Or_Blob(
 
     REBLEN dst_idx = Series_Index(dst);
     Size dst_used = Flex_Used(dst_flex);
-
-    if (dups <= 0)
-        return op == SYM_APPEND ? 0 : dst_idx;
 
     REBLEN dst_len_old = 0xDECAFBAD;  // only if IS_SER_STRING(dst_ser)
     Size dst_off;
@@ -283,25 +282,14 @@ Result(REBLEN) Modify_String_Or_Blob(
         dst_len_old = Strand_Len(cast(Strand*, dst_flex));
     }
 
-    const Stable* src;
-    if (not opt_src) {  // void is no-op, unless CHANGE, where it means delete
-        if (op == SYM_APPEND)
-            return 0;  // APPEND returns index at head
-        else if (op == SYM_INSERT)
-            return dst_idx;  // INSERT returns index at insertion tail
-
-        assert(op == SYM_CHANGE);
-        src = g_empty_text;  // give same behavior as CHANGE to empty string
-    }
-    else
-        src = unwrap opt_src;
-
     // For INSERT:PART and APPEND:PART
     //
     Option(const Length*) limit;
-    if (op != SYM_CHANGE and (flags & AM_PART)) {
-        if (part <= 0)
-            return op == SYM_APPEND ? 0 : dst_idx;
+    if (op != ST_MODIFY_CHANGE) {
+        if (part <= 0) {
+            SERIES_INDEX_UNBOUNDED(dst) = op == ST_MODIFY_APPEND ? 0 : dst_idx;
+            return none;
+        }
         limit = &part;
     }
     else
@@ -310,7 +298,7 @@ Result(REBLEN) Modify_String_Or_Blob(
     // Now that we know there's actual work to do, we need `dst_idx` to speak
     // in terms of codepoints (if applicable)
 
-    if (op == SYM_APPEND or dst_off > dst_used) {
+    if (op == ST_MODIFY_APPEND or dst_off > dst_used) {
         dst_off = Flex_Used(dst_flex);
         dst_idx = dst_len_old;
     }
@@ -573,7 +561,7 @@ Result(REBLEN) Modify_String_Or_Blob(
     // we might add a new bookmark pertinent to the end of the insertion for
     // longer series.
 
-    if (op == SYM_APPEND or op == SYM_INSERT) {  // always expands
+    if (op == ST_MODIFY_APPEND or op == ST_MODIFY_INSERT) {  // always expands
         trap (
           Expand_Flex_At_Index_And_Update_Used(
             dst_flex, dst_off, src_size_total
@@ -592,12 +580,7 @@ Result(REBLEN) Modify_String_Or_Blob(
         }
     }
     else {  // CHANGE only expands if more content added than overwritten
-        assert(op == SYM_CHANGE);
-
-        // Historical behavior: `change s: "abc" "d"` will yield S as `"dbc"`.
-        //
-        if (not (flags & AM_PART))
-            part = src_len_total;
+        assert(op == ST_MODIFY_CHANGE);
 
         REBLEN dst_len_at;
         Size dst_size_at;
@@ -754,7 +737,7 @@ Result(REBLEN) Modify_String_Or_Blob(
     if (book) {
         Strand* dst_str = cast(Strand*, dst_flex);
         if (BOOKMARK_INDEX(book) > Strand_Len(dst_str)) {  // past active
-            assert(op == SYM_CHANGE);  // only change removes material
+            assert(op == ST_MODIFY_CHANGE);  // only change removes material
             Free_Bookmarks_Maybe_Null(dst_str);
         }
         else {
@@ -773,11 +756,16 @@ Result(REBLEN) Modify_String_Or_Blob(
     //
     Term_Flex_If_Necessary(dst_flex);
 
-    if (op == SYM_APPEND)
-        return 0;
+    if (op == ST_MODIFY_APPEND) {
+        SERIES_INDEX_UNBOUNDED(dst) = 0;
+        return none;
+    }
 
-    if (Is_Blob(dst))
-        return dst_off + src_size_total;
+    if (Is_Blob(dst)) {
+        SERIES_INDEX_UNBOUNDED(dst) = dst_off + src_size_total;
+        return none;
+    }
 
-    return dst_idx + src_len_total;
+    SERIES_INDEX_UNBOUNDED(dst) = dst_idx + src_len_total;
+    return none;
 }

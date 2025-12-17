@@ -401,8 +401,9 @@ void Join_Binary_In_Byte_Buf(const Stable* blk, REBINT limit)
 
     Set_Flex_Len(buf, 0);
 
-    const Element* val = List_Item_At(blk);
-    for (; limit > 0; val++, limit--) {
+    const Element* val_tail;
+    const Element* val = List_At(&val_tail, blk);
+    for (; limit > 0 and val != val_tail; val++, limit--) {
         switch (opt Type_Of(val)) {
           case TYPE_QUASIFORM:
             panic (Error_Bad_Value(val));

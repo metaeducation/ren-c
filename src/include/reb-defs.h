@@ -353,10 +353,13 @@ typedef struct rebol_time_fields {
     REBLEN n;
 } REB_TIMEF;
 
-enum act_modify_mask {
-    AM_PART = 1 << 0,
-    AM_LINE = 1 << 1
-};
+#define AM_LINE  0x01
+
+typedef enum {
+    ST_MODIFY_APPEND = 1,
+    ST_MODIFY_INSERT = 2,
+    ST_MODIFY_CHANGE = 3
+} ModifyState;
 
 enum act_find_mask {
     AM_FIND_CASE = 1 << 1,

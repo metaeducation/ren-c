@@ -2392,7 +2392,6 @@ DECLARE_NATIVE(SUBPARSE)
             } handle_result: {
 
                 if (Stub_Holds_Cells(P_INPUT)) {
-                    REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
                     if (Any_List(evaluated))  // bootstrap r3 has no SPREAD
                         Splicify(evaluated);
 
@@ -2401,34 +2400,30 @@ DECLARE_NATIVE(SUBPARSE)
                     // last minute that allows protects or unprotects
                     // to happen in rule processing if GROUP!s execute.
                     //
-                    Source* a = Cell_Array_Ensure_Mutable(ARG(POSITION));
+                    SERIES_INDEX_UNBOUNDED(ARG(POSITION)) = begin;
                     require (
-                      P_POS = Modify_Array(
-                        a,
-                        begin,
+                      Modify_List(
+                        Element_ARG(POSITION),  // updates P_POS
                         (P_FLAGS & PF_CHANGE)
-                            ? SYM_CHANGE
-                            : SYM_INSERT,
+                            ? ST_MODIFY_CHANGE
+                            : ST_MODIFY_INSERT,
                         evaluated,
-                        mod_flags,
-                        count,
+                        (not AM_LINE),
+                        count,  // !!! UNLIMITED for (P_FLAGS & PF_INSERT) ?
                         1
                     ));
                 }
                 else {
                     P_POS = begin;
-
-                    REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
-
                     require (
-                      P_POS = Modify_String_Or_Blob(  // checks readonly
-                        ARG(POSITION),
+                      Modify_String_Or_Blob(  // checks readonly
+                        Element_ARG(POSITION),  // updates P_POS
                         (P_FLAGS & PF_CHANGE)
-                            ? SYM_CHANGE
-                            : SYM_INSERT,
+                            ? ST_MODIFY_CHANGE
+                            : ST_MODIFY_INSERT,
                         evaluated,
-                        mod_flags,
-                        count,
+                        (not AM_LINE),
+                        count,  // !!! UNLIMITED for (P_FLAGS & PF_INSERT) ?
                         1
                     ));
                 }

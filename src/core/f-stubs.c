@@ -470,36 +470,6 @@ REBLEN Part_Tail_May_Modify_Index(Stable* series, Option(const Stable*) limit)
 
 
 //
-//  Part_Limit_Append_Insert: C
-//
-// This is for the specific cases of INSERT and APPEND interacting with :PART,
-// implementing a somewhat controversial behavior of only accepting an
-// INTEGER! and only speaking in terms of units limited to:
-//
-// https://github.com/rebol/rebol-issues/issues/2096
-// https://github.com/rebol/rebol-issues/issues/2383
-//
-// Note: the calculation for CHANGE is done based on the series being changed,
-// not the properties of the argument:
-//
-// https://github.com/rebol/rebol-issues/issues/1570
-//
-REBLEN Part_Limit_Append_Insert(Option(const Stable*) part) {
-    if (not part)
-        return UINT32_MAX;  // treat as no limit
-
-    if (Is_Integer(unwrap part)) {
-        REBINT i = Int32(unwrap part);
-        if (i < 0)  // Clip negative numbers to mean 0
-            return 0;  // !!! Would it be better to warning?
-        return i;
-    }
-
-    panic ("APPEND and INSERT only take :PART limit as INTEGER!");
-}
-
-
-//
 //  Add_Max: C
 //
 int64_t Add_Max(Option(Heart) heart, int64_t n, int64_t m, int64_t maxi)

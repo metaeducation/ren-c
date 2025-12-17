@@ -21,8 +21,133 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// A. INSERT, APPEND, and CHANGE were "frame-compatible generics" in R3-Alpha.
+//    They did not have independent native entry points (they were just cases
+//    in per-type switch statements), but in Ren-C they actually have their
+//    own entry points where common work can be done that apply to all types.
+//    This is taken advantage of by having them do things like the ARG(PART)
+//    processing in common, and then dispatching to CHANGE as the generic
+//    to do the common work.
+//
+//    It's a bit of a mess due to the historical design--and it's sort of not
+//    clear how much work should be done by the "front end" vs. "back end";
+//    e.g. if handling voids is done on the front end then that means code
+//    that reuses the internals but bypasses the native entry points will not
+//    get that handling.  Generally speaking, we probably want most all the
+//    code to be going through the native entry points and just endeavor to
+//    make that as fast as possible.  But for the moment it's still messy.
+//
 
 #include "sys-core.h"
+
+
+// This is for the specific cases of INSERT and APPEND interacting with :PART,
+// implementing a somewhat controversial behavior of only accepting an
+// INTEGER! and only speaking in terms of units limited to:
+//
+// https://github.com/rebol/rebol-issues/issues/2096
+// https://github.com/rebol/rebol-issues/issues/2383
+//
+// Note: the calculation for CHANGE is done based on the series being changed,
+// not the properties of the argument:
+//
+// https://github.com/rebol/rebol-issues/issues/1570
+//
+static REBLEN Part_Limit_Append_Insert(Option(const Stable*) part) {
+    if (not part)
+        return UINT32_MAX;  // treat as no limit
+
+    if (Is_Integer(unwrap part)) {
+        REBINT i = Int32(unwrap part);
+        if (i < 0)  // Clip negative numbers to mean 0
+            return 0;  // !!! Would it be better to warning?
+        return i;
+    }
+
+    panic ("APPEND and INSERT only take :PART limit as INTEGER!");
+}
+
+
+// Most routines that take a PART assume that if one is not provided then you
+// want to operate on the entire length of the thing you would have otherwise
+// been specifying a PART for.  But historical Rebol did not do this for the
+// CHANGE function specifically, instead choosing to make the amount replaced
+// depend on the size of the value being used to change with.
+//
+// The traditional way of making that guess wasn't done at a high level, but
+// rather was baked into the lower-level service routines.  Ren-C avoids the
+// lower-level guessing and instead provides a more limited high-level guess
+// that lets the :PART be fully specified at the native level.
+//
+// 1. This function is allowed to coerce the value just to demonstrate that
+//    some of the more "unpopular" :PART behaviors of CHANGE can be achieved
+//    with an a-priori determination of the length, if it were deemed to be
+//    truly important for these odd cases (I do not believe they are).
+//
+// 2. Using a SPLICE! to provide a conscious count of how many items to
+//    change is straightforward:
+//
+//        change [a b c] ~(d e)~ => [d e c]
+//
+//    But do notice that in string or binary cases, the actual amount of
+//    material that is spliced in may may be more than the :PART length, e.g.
+//    a PART=3 change of "abc" here splices in "ghijkl":
+//
+//        change "abcdef" ~(g "hi" jkl)~ => "ghijkldef"
+//
+static REBLEN Guess_Part_Len_For_Change_May_Coerce(
+    const Element* series,
+    Stable* v
+){
+    if (Is_Splice(v))
+        return Series_Len_At(v);  // [2]
+
+    if (Any_List(series))  // want :PART in items (Length)
+        return 1;  // change [a b c] [d e] => [[d e] b c]
+
+    if (Any_String(series)) {  // want :PART in codepoints (Length)
+        if (Any_Utf8(v)) {
+            Length len;
+            Cell_Utf8_Len_Size_At(&len, nullptr, v);
+            return len;  // change "abc" "de" => "dec"
+        }
+
+        if (Is_Blob(v)) {
+            Stable* as_text = rebStable(CANON(AS), CANON(TEXT_X), v);
+            Copy_Cell(v, as_text);
+            rebRelease(as_text);
+            return String_Len_At(v);  // change "abc" #{64 65} => "dec"
+        }
+
+        if (Is_Integer(v)) {
+            Stable* molded = rebStable(CANON(MOLD), v);
+            Copy_Cell(v, molded);
+            rebRelease(molded);
+            return String_Len_At(v);  // change "abcdef" 100 => "100def"
+        }
+
+        panic ("CHANGE length guessing is limited at this time.");
+    }
+
+    assert(Is_Blob(series));  // want :PART in bytes (Size)
+
+    if (Is_Integer(v))
+        return 1;
+
+    if (Is_Blob(v)) {
+        Size size;
+        Blob_Size_At(&size, v);  // change #{1234} #{56} => #{5634}
+        return size;
+    }
+
+    if (Any_Utf8(v)) {
+        Size size;
+        Cell_Utf8_Len_Size_At(nullptr, &size, v);
+        return size;  // change #{1234} #d => #{64 34}
+    }
+
+    panic ("CHANGE length guessing is limited at this time.");
+}
 
 
 //
@@ -45,13 +170,32 @@
 //      :line "Data should be its own line (formatting cue if ANY-LIST?)"
 //  ]
 //
-DECLARE_NATIVE(INSERT)  // Must be frame-compatible with APPEND, CHANGE
+DECLARE_NATIVE(INSERT)  // Must be frame-compatible with CHANGE [A]
 {
     INCLUDE_PARAMS_OF_INSERT;
 
     Element* series = Element_ARG(SERIES);
+    if (not Any_Series(series))
+        goto handle_non_series;
+
+  handle_series: {
+
+    Length len = Part_Limit_Append_Insert(ARG(PART));
+    Count dups = not ARG(DUP) ? 1 : VAL_UINT32(unwrap ARG(DUP));
+
+    if (len == 0 or dups == 0 or not ARG(VALUE))
+        return COPY(series);  // don't panic on read only if would be a no-op
+
+    Init_Integer(LOCAL(PART), len);
+    Init_Integer(LOCAL(DUP), dups);
+
+    STATE = ST_MODIFY_INSERT;
+    return Dispatch_Generic(CHANGE, series, LEVEL);  // CHANGE is "MODIFY" [A]
+
+} handle_non_series: { ///////////////////////////////////////////////////////
+
     return Run_Generic_Dispatch(series, LEVEL, CANON(INSERT));
-}
+}}
 
 
 //
@@ -71,13 +215,34 @@ DECLARE_NATIVE(INSERT)  // Must be frame-compatible with APPEND, CHANGE
 //      :line "Data should be its own line (formatting cue if ANY-LIST?)"
 //  ]
 //
-DECLARE_NATIVE(APPEND)  // Must be frame-compatible with CHANGE, INSERT
+DECLARE_NATIVE(APPEND)
 {
-    INCLUDE_PARAMS_OF_APPEND;
+    INCLUDE_PARAMS_OF_CHANGE;  // must be frame compatible with CHANGE [A]
 
     Element* series = Element_ARG(SERIES);
+    if (not Any_Series(series))
+        goto handle_non_series;
+
+  handle_series: {
+
+    Length len = Part_Limit_Append_Insert(ARG(PART));  // check even if <opt>
+    Count dups = not ARG(DUP) ? 1 : VAL_UINT32(unwrap ARG(DUP));
+
+    if (len == 0 or dups == 0 or not ARG(VALUE)) {
+        SERIES_INDEX_UNBOUNDED(series) = 0;  // append always returns head
+        return COPY(series);  // don't panic on read only if would be a no-op
+    }
+
+    Init_Integer(LOCAL(PART), len);
+    Init_Integer(LOCAL(DUP), dups);
+
+    STATE = ST_MODIFY_APPEND;
+    return Dispatch_Generic(CHANGE, series, LEVEL);  // CHANGE is "MODIFY" [A]
+
+} handle_non_series: { ///////////////////////////////////////////////////////
+
     return Run_Generic_Dispatch(series, LEVEL, CANON(APPEND));
-}
+}}
 
 
 //
@@ -97,13 +262,51 @@ DECLARE_NATIVE(APPEND)  // Must be frame-compatible with CHANGE, INSERT
 //      :line "Data should be its own line (formatting cue if ANY-LIST?)"
 //  ]
 //
-DECLARE_NATIVE(CHANGE)  // Must be frame-compatible with APPEND, INSERT
+DECLARE_NATIVE(CHANGE)  // Must be frame-compatible with APPEND, INSERT [A]
 {
     INCLUDE_PARAMS_OF_CHANGE;
 
     Element* series = Element_ARG(SERIES);
+    if (not Any_Series(series))
+        goto handle_non_series;
+
+  handle_series: {
+
+  // 1. R3-Alpha and Rebol2 say (change/dup/part "abcdef" "g" 0 2) will give
+  //    you "ggcdef", but Red will leave it as "abcdef", which seems better.
+  //
+  // 2. The service routines implementing CHANGE/INSERT/APPEND only accept the
+  //    antiform of SPLICE!, so void/null is converted into that here...since
+  //    unlike INSERT and APPEND a change with void/null isn't a no-op.
+
+    Count dups = not ARG(DUP) ? 1 : VAL_UINT32(unwrap ARG(DUP));
+    if (dups == 0)
+        return COPY(series);  // Treat CHANGE as no-op if zero dups [1]
+
+    Stable* v;
+    if (not ARG(VALUE))
+        v = Init_Blank(LOCAL(VALUE));  // e.g. treat <opt> as empty splice [2]
+    else
+        v = unwrap ARG(VALUE);
+
+    Length len;
+    if (ARG(PART))
+        len = Part_Len_May_Modify_Index(series, ARG(PART));
+    else
+        len = Guess_Part_Len_For_Change_May_Coerce(series, v);  // see notes
+
+    possibly(len == 0);  // CHANGE is not a no-op just due to 0 len
+
+    Init_Integer(LOCAL(PART), len);
+    Init_Integer(LOCAL(DUP), dups);
+
+    STATE = ST_MODIFY_CHANGE;
+    return Dispatch_Generic(CHANGE, series, LEVEL);  // CHANGE is "MODIFY" [A]
+
+} handle_non_series: { ///////////////////////////////////////////////////////
+
     return Run_Generic_Dispatch(series, LEVEL, CANON(CHANGE));
-}
+}}
 
 
 //

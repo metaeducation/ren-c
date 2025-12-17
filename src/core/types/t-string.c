@@ -289,10 +289,10 @@ static void Reverse_Strand(Strand* str, REBLEN index, Length len)
         require(
           Modify_String_Or_Blob(  // :PART to overwrite reversed portion
             string,
-            SYM_CHANGE,
+            ST_MODIFY_CHANGE,
             temp,
-            AM_PART,  // heed len for deletion
-            len,
+            (not AM_LINE),
+            len,  // how much to delete
             1 // dup count
         ));
 
@@ -798,66 +798,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
 
         return COPY(v); }
 
-    //-- Modification:
-      case SYM_APPEND:
-      case SYM_INSERT:
-      case SYM_CHANGE: {
-        INCLUDE_PARAMS_OF_INSERT;
-
-        Option(const Stable*) arg = ARG(VALUE);
-
-        REBLEN len; // length of target
-        if (Symbol_Id(verb) == SYM_CHANGE)
-            len = Part_Len_May_Modify_Index(v, ARG(PART));
-        else
-            len = Part_Limit_Append_Insert(ARG(PART));
-
-        // Note that while inserting or appending NULL is a no-op, CHANGE with
-        // a :PART can actually erase data.
-        //
-        if (not arg and len == 0) {
-            if (id == SYM_APPEND) // append always returns head
-                SERIES_INDEX_UNBOUNDED(v) = 0;
-            return COPY(v);  // don't panic on read only if would be a no-op
-        }
-
-        Flags flags = 0;
-        if (ARG(PART))
-            flags |= AM_PART;
-        if (ARG(LINE))
-            flags |= AM_LINE;
-
-        // !!! This mimics historical type tolerance, e.g. not everything that
-        // gets appended has to be a string:
-        //
-        //     rebol2>> append "abc" 'd
-        //     == "abcd"
-        //
-        // However it will not try to FORM blocks or other arrays; it only
-        // accepts antiform blocks to imply "append each item individually".
-        //
-        if (not arg) {
-            // not necessarily a no-op (e.g. CHANGE can erase)
-        }
-        else if (Is_Splice(unwrap arg)) {
-            // tolerated
-        }
-        else if (Any_List(unwrap arg))
-            panic (PARAM(VALUE));  // no `append "abc" [d e]` w/o SPREAD
-        else
-            assert(not Is_Antiform(unwrap arg));
-
-        require (
-          SERIES_INDEX_UNBOUNDED(v) = Modify_String_Or_Blob(
-            v,  // does read-only check
-            unwrap id,
-            arg,
-            flags,
-            len,
-            ARG(DUP) ? Int32(unwrap ARG(DUP)) : 1
-        ));
-        return COPY(v); }
-
     //-- Search:
       case SYM_SELECT:
       case SYM_FIND: {
@@ -981,6 +921,34 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
     }
 
     panic (UNHANDLED);
+}
+
+
+// See notes on CHANGE regarding questions of how much work is expected to be
+// handled by the "front end" native vs. Modify_String_Or_Blob() as callable
+// by C code that doesn't go through the native.
+//
+IMPLEMENT_GENERIC(CHANGE, Any_String)
+{
+    INCLUDE_PARAMS_OF_CHANGE;
+
+    Length len = VAL_UINT32(unwrap ARG(PART));  // enforced > 0 by generic
+    Count dups = VAL_UINT32(unwrap ARG(DUP));  // enforced > 0 by generic
+
+    Flags flags = 0;
+    if (ARG(LINE))
+        flags |= AM_LINE;
+
+    require (
+      Modify_String_Or_Blob(
+        Element_ARG(SERIES),  // does read-only check
+        u_cast(ModifyState, STATE),
+        unwrap ARG(VALUE),
+        flags,
+        len,
+        dups
+    ));
+    return COPY(ARG(SERIES));
 }
 
 
