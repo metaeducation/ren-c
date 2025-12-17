@@ -58,8 +58,8 @@ api-objects: make block! 50
 map-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
     return map-each 'api api-objects compose [  ; so bootstrap sees 'API
         let aux: make object! compose [
-            break: (lift get $break)  ; not definitional in bootstrap
-            continue: (lift get $continue)
+            /break: (lift get $break)  ; not definitional in bootstrap
+            /continue: (lift get $continue)
         ]
         eval overbind aux overbind api (code)
     ]
@@ -68,8 +68,8 @@ map-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
 for-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
     return for-each 'api api-objects compose [  ; so bootstrap sees 'API
         let aux: make object! compose [
-            break: (lift get $break)  ; not definitional in bootstrap
-            continue: (lift get $continue)
+            /break: (lift get $break)  ; not definitional in bootstrap
+            /continue: (lift get $continue)
         ]
         eval overbind aux overbind api (code)
     ]

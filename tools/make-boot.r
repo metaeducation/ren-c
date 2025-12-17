@@ -354,7 +354,7 @@ c-debug-break: ~#[C-DEBUG-BREAK applies in non-bootstrap %sysobj.r only]#~
 
 ob: make object! boot-sysobj
 
-c-debug-break: get $lib.c-debug-break
+c-debug-break: lib.c-debug-break/
 
 make-obj-defs: proc [
     "Given a Rebol OBJECT!, write C structs that can access its raw variables"
@@ -895,7 +895,7 @@ boot-molded: copy ""
 append:line boot-molded "["
 for-each 'sec sections [
     if get-word3? sec [  ; wasn't LOAD-ed (no bootstrap compatibility issues)
-        append boot-molded (get inside sections sec)
+        append boot-molded (get inside sections unchain sec)
     ]
     else [  ; was LOAD-ed for easier analysis (makes bootstrap complicated)
         append:line boot-molded mold:flat (get inside sections sec)

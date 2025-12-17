@@ -130,11 +130,14 @@ sys.util/recover [
     ]
 
     export set-word3!: set-word?/
+    export get-word3?: get-word?/  ; not clear this is going to stick as "get"
     export set-path3!: set-tuple?/
     export get-word3!: get-word?/
     export lit-word3!: lit-word?/
     export refinement3!: run-word?/
     export char3!: char?/
+
+    export tied-integer?: typechecker [$integer!]
 
     export load3: enclose (
         augment load/ [:header]  ; no multi-return values
@@ -215,7 +218,9 @@ for-each [alias] [
     set-word3!:                 ; use set-word?
     set-path3!:                 ; use set-path?
     get-word3!:                 ; use get-word?
+    get-path3!:                 ; use get-path?
     get-word3?:                 ; ...
+    get-path3?:                 ; ...
     char3!:                     ; use get-path?
     any-word3!:                 ; use any-word?
     lit-word3!:                 ; use lit-word?
@@ -415,8 +420,13 @@ setify: lambda3 [plain [word! path!]] [
     either word? plain [to-set-word plain] [to-set-path plain]
 ]
 
-unchain: lambda3 [chain [set-word3! set-path3!]] [
-    either set-word? chain [to-word chain] [to-path chain]
+unchain: lambda3 [chain [get-word3! get-path3! set-word3! set-path3!]] [
+    case [
+        set-word? chain [to-word chain]
+        set-path? chain [to-path chain]
+        get-word3? chain [to-word chain]
+        get-path3? chain [to-path chain]
+    ]
 ]
 
 unpath: lambda3 [path [refinement3!]] [
@@ -717,6 +727,7 @@ modernize-typespec: func3 [
         char?           char3!
         set-word?       set-word3!
         get-word?       get-word3!
+        get-path?       get-path3!
         set-tuple?      set-path3!
         get-tuple?      get-path3!
     ][
