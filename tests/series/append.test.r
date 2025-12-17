@@ -126,9 +126,11 @@
 ]
 
 [#2383 (
-    "abcde" = append:part "abc" spread ["defg"] 2
+    "abcdefg" = append:part "abc" spread ["defg"] 2
 )(
-    "abcdefgh" = append:part "abc" spread ["defg" "hijk"] 5
+    "abcdefghijk" = append:part "abc" spread ["defg" "hijk"] 5
+)(
+    "abcdefg" = append:part "abc" spread ["de" "fg" "hi"] 2
 )]
 
 ~illegal-zero-byte~ !! (append "abc" make-char 0)
@@ -146,12 +148,12 @@
 
 [
     ([a b c @d] = append [a b c] @d)
-    ([a b c '@d] = append [a b c] ^ @d)
+    ([a b c '@d] = append [a b c] lift @d)
     ([a b c @[d e]] = append [a b c] @[d e])
     ([a b c @(d e)] = append [a b c] @(d e))
     ([a b c @d.e] = append [a b c] @d.e)
     ([a b c @d/e] = append [a b c] @d/e)
-    ([a b c '@] = append [a b c] ^ '@)
+    ([a b c '@] = append [a b c] lift '@)
 ]
 
 ([a b c ~void~] = append [a b c] the ~void~)  ; no antiform of ~void~
@@ -166,9 +168,9 @@
 ]
 
 [
-    ('~[]~ = ^ if ok [])
+    ('~,~ = lift when ok [])
     (null? if null [<a>])
-    ([a b c] = append [a b c] if ok [])
+    ([a b c] = append [a b c] when ok [])
     ([a b c] = append [a b c] opt if null [<a>])
 ]
 
@@ -182,8 +184,24 @@
     )
 ]
 
-; Quasiform VOID is being tried out as accepted by spread as a convenience,
-; as opposed to erroring
+; Quasiforms were once tried out as accepted by spread as a convenience,
+; as opposed to erroring, but ~[]~ seems inconsistent with other PACK!
+; handling... and maybe it's not the best idea.  Review.
 [
-    ([a b] = append [a b] spread second [c ~[]~])
+    ~invalid-arg~ !! ([a b] = append [a b] spread second [c ~[]~])
+    ~invalid-arg~ !! ([a b] = append [a b] spread second [c ~()~])
+]
+
+([abc def ghi jkl mno] = append:part [abc def] spread [ghi jkl mno pqr] 3)
+
+("abcdefghijklmno" = append:part "abcdef" spread [ghi jkl mno pqr] 3)
+
+(#{ABCD12345678} = append:part #{ABCD} spread [#{12} #{3456} #{78} {9000}] 3)
+
+; Self-append cases
+[
+    (s: "abcd", "abcdabcd" = append s s)
+    (s: #{abcd}, #{abcdabcd} = append s s)
+    (s: [a b c d], [a b c d [a b c d]] = append s s)  ; not a problem case
+    (s: [a b c d], [a b c d a b c d] = append s spread s)  ; problem case
 ]

@@ -176,7 +176,7 @@
     insert:dup a 0 0
     a = []
 )
-(
+~out-of-range~ !! (
     a: make block! 0
     insert:dup a 0 -1
     a = []

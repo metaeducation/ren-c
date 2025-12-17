@@ -38,8 +38,8 @@ Result(None) Modify_List(
     Element* list,  // target
     ModifyState op,  // INSERT, APPEND, CHANGE
     const Stable* v,  // source
-    REBLEN flags,  // AM_LINE
-    REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
+    Flags flags,  // AM_LINE
+    Length part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
     Count dups  // dup count of how many times to insert the src content
 ){
     assert(
@@ -51,6 +51,14 @@ Result(None) Modify_List(
     assert(part >= 0);
     assert(not Is_Antiform(v) or Is_Splice(v));
 
+    Option(const Length*) limit;  // how much of `v` to inject (if splice)
+    if (op == ST_MODIFY_CHANGE)
+        limit = UNLIMITED;  // always uses all of `v`
+    else
+        limit = &part;  // may limit how much of `v` is used
+
+  setup_destination: {
+
     Source* array = Cell_Array_Ensure_Mutable(list);
     REBLEN index = SERIES_INDEX_UNBOUNDED(list);  // !!! bounded?
     REBLEN tail = Array_Len(array);
@@ -58,29 +66,45 @@ Result(None) Modify_List(
     if (op == ST_MODIFY_APPEND or index > tail)
         index = tail;
 
-    // Each dup being inserted need a newline signal after it if:
-    //
-    // * The user explicitly invokes the /LINE refinement (AM_LINE flag)
-    // * It's a spliced insertion and there's a NEWLINE_BEFORE flag on the
-    //   element *after* the last item in the dup
-    // * It's a spliced insertion and there dup goes to the end of the array
-    //   so there's no element after the last item, but NEWLINE_AT_TAIL is set
-    //   on the inserted array.
-    //
+  setup_newlines: {
+
+  // Each dup being inserted need a newline signal after it if:
+  //
+  // * The user explicitly invokes the :LINE refinement (AM_LINE flag)
+  //
+  // * It's a spliced insertion and a NEWLINE_BEFORE flag is on the element
+  //   element *after* the last item in the dup
+  //
+  // * It's a spliced insertion and there dup goes to the end of the array
+  //   so there's no element after the last item, but NEWLINE_AT_TAIL is set
+  //   on the inserted array.
+  //
+  // 1. Beyond newlines on the cells being inserted, there is also the chance
+  //    there was a newline tail flag on the target array, and the insertion
+  //    is at the end...so that flag may need to proxy on an inserted cell.
+
     bool tail_newline = did (flags & AM_LINE);
-    Length splice_len;
+
+    bool head_newline =
+        (index == Array_Len(array))
+        and Get_Source_Flag(array, NEWLINE_AT_TAIL);
+
+  setup_source: {
+
+  // 1. Self-splicing isn't very common, but we don't want to crash due to
+  //    the memory overlap.  Because it's rare this creates a managed series
+  //    and lets the GC free it, but really we could not manage the array
+  //    and free it in this routine--review.
 
     const Element* src;
+    Length splice_len;
 
-    if (Is_Splice(v)) {  // Check :PART, compute LEN:
+    if (Is_Splice(v)) {
         Length len_at = Series_Len_At(v);
         splice_len = len_at;
 
-        // Adjust length of insertion if APPEND or INSERT :PART
-        if (op != ST_MODIFY_CHANGE) {
-            if (part < splice_len)
-                splice_len = part;
-        }
+        if (limit and *(unwrap limit) < splice_len)
+            splice_len = *(unwrap limit);
 
         if (not tail_newline) {
             if (splice_len == len_at) {
@@ -98,19 +122,17 @@ Result(None) Modify_List(
             }
         }
 
-        // Are we modifying ourselves? If so, copy V's array first:
-        if (array == Cell_Array(v)) {
+        if (array == Cell_Array(v)) {  // !!! temp array for self-splice [1]
             Array* copy = Copy_Array_At_Extra_Shallow(
-                STUB_MASK_MANAGED_SOURCE,  // !!! or, don't manage and free?
+                STUB_MASK_MANAGED_SOURCE,
                 Cell_Array(v),
                 Series_Index(v),
                 0 // extra
             );
             src = Array_Head(copy);
         }
-        else {
+        else
             src = List_At(nullptr, v);  // may be tail
-        }
     }
     else {  // use passed in Cell
         splice_len = 1;
@@ -119,16 +141,9 @@ Result(None) Modify_List(
 
     Length expansion = dups * splice_len;  // total to insert (dups is > 0)
 
-    // If data is being tacked onto an array, beyond the newlines on the values
-    // in that array there is also the chance that there's a newline tail flag
-    // on the target, and the insertion is at the end.
-    //
-    bool head_newline =
-        (index == Array_Len(array))
-        and Get_Source_Flag(array, NEWLINE_AT_TAIL);
+  expand_or_resize_array: {
 
-    if (op != ST_MODIFY_CHANGE) {
-        // Always expand array for INSERT and APPEND actions:
+    if (op != ST_MODIFY_CHANGE) {  // Always expand for INSERT and APPEND
         trap (
            Expand_Flex_At_Index_And_Update_Used(array, index, expansion)
         );
@@ -152,6 +167,11 @@ Result(None) Modify_List(
 
     tail = (op == ST_MODIFY_APPEND) ? 0 : index + expansion;
 
+} perform_insertions: {
+
+  // 1. We wait to clear the NEWLINE_AT_TAIL flag on the target array until
+  //    the loop actually makes a value that can take over encoding the bit.
+
     REBLEN dup_index = 0;
     for (; dup_index < dups; ++dup_index) {  // dups checked > 0
         REBLEN i = 0;
@@ -163,11 +183,7 @@ Result(None) Modify_List(
 
             if (dup_index == 0 and i == 0 and head_newline) {
                 Set_Cell_Flag(Array_Head(array) + index, NEWLINE_BEFORE);
-
-                // The array flag is not cleared until the loop actually
-                // makes a value that will carry on the bit.
-                //
-                Clear_Source_Flag(array, NEWLINE_AT_TAIL);
+                Clear_Source_Flag(array, NEWLINE_AT_TAIL);  // [1]
                 continue;
             }
 
@@ -177,9 +193,21 @@ Result(None) Modify_List(
         }
     }
 
-    // The above loop only puts on (dups - 1) NEWLINE_BEFORE flags.  The
-    // last one might have to be the array flag if at tail.
-    //
+} finalize_newlines: {
+
+  // The insert loop only puts on (dups - 1) NEWLINE_BEFORE flags.  The last
+  // one might have to use the array flag.  See SOURCE_FLAG_NEWLINE_AT_TAIL.
+  //
+  // 1. Heuristic: if a line is added to the list with the explicit :LINE
+  //    flag, force the head element to have a newline.  Remove if you want:
+  //
+  //        >> x: copy []
+  //        >> append:line x [a b c]
+  //        == [
+  //            [a b c]
+  //        ]
+  //
+
     if (tail_newline) {
         if (index == Array_Len(array))
             Set_Source_Flag(array, NEWLINE_AT_TAIL);
@@ -187,15 +215,10 @@ Result(None) Modify_List(
             Set_Cell_Flag(Array_At(array, index), NEWLINE_BEFORE);
     }
 
-    if (flags & AM_LINE) {
-        //
-        // !!! Testing this heuristic: if someone adds a line to a list
-        // with the :LINE flag explicitly, force the head element to have a
-        // newline.  This allows `x: copy [] | append:line x [a b c]` to give
-        // a more common result.  The head line can be removed easily.
-        //
+    if (flags & AM_LINE)  // !!! testing this heuristic [1]
         Set_Cell_Flag(Array_Head(array), NEWLINE_BEFORE);
-    }
+
+} finish_up: {
 
   #if DEBUG_POISON_FLEX_TAILS
     if (Get_Stub_Flag(array, DYNAMIC))
@@ -206,7 +229,7 @@ Result(None) Modify_List(
 
     SERIES_INDEX_UNBOUNDED(list) = tail;
     return none;
-}
+}}}}}
 
 
 // !!! This should probably chain together with Error_Bad_Utf8_Bin_Edit_Raw()
@@ -215,6 +238,77 @@ Result(None) Modify_List(
 //
 static Error* Error_Bad_Utf8_Bin_Edit(Error* cause) {
     return cause;
+}
+
+
+//
+//  Join_Binary_In_Byte_Buf: C
+//
+// !!! This routine uses a different buffer from molding, because molding
+// currently has to maintain valid UTF-8 data.  It may be that the buffers
+// should be unified.
+//
+static void Join_Binary_In_Byte_Buf(
+    const Stable* splice,
+    Option(const Length*) limit
+){
+    assert(Is_Splice(splice));
+
+    Binary* buf = BYTE_BUF;
+
+    REBLEN tail = 0;
+
+    Length count = limit ? *(unwrap limit) : Series_Len_At(splice);
+
+    Set_Flex_Len(buf, 0);
+
+    const Element* val_tail;
+    const Element* val = List_At(&val_tail, splice);
+    for (; count > 0 and val != val_tail; ++val, --count) {
+        switch (opt Type_Of(val)) {
+          case TYPE_QUASIFORM:
+            panic (Error_Bad_Value(val));
+
+          case TYPE_INTEGER: {
+            require (
+              Expand_Flex_Tail_And_Update_Used(buf, 1)
+            );
+            *Binary_At(buf, tail) = cast(Byte, VAL_UINT8(val));  // can panic()
+            break; }
+
+          case TYPE_BLOB: {
+            Size size;
+            const Byte* data = Blob_Size_At(&size, val);
+            require (
+              Expand_Flex_Tail_And_Update_Used(buf, size)
+            );
+            memcpy(Binary_At(buf, tail), data, size);
+            break; }
+
+          case TYPE_RUNE:
+          case TYPE_TEXT:
+          case TYPE_FILE:
+          case TYPE_EMAIL:
+          case TYPE_URL:
+          case TYPE_TAG: {
+            Size utf8_size;
+            Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, val);
+
+            require (
+              Expand_Flex_Tail_And_Update_Used(buf, utf8_size)
+            );
+            memcpy(Binary_At(buf, tail), cast(Byte*, utf8), utf8_size);
+            Set_Flex_Len(buf, tail + utf8_size);
+            break; }
+
+          default:
+            panic (Error_Bad_Value(val));
+        }
+
+        tail = Flex_Used(buf);
+    }
+
+    *Binary_At(buf, tail) = 0;
 }
 
 
@@ -252,9 +346,13 @@ Result(None) Modify_String_Or_Blob(
     assert(part >= 0);
     assert(not Is_Antiform(v) or Is_Splice(v));
 
-    Ensure_Mutable(series);  // note this also rules out ANY-WORD?s
+    Option(const Length*) limit;  // how much of `v` to inject
+    if (op == ST_MODIFY_CHANGE)
+        limit = UNLIMITED;  // always uses all of `v`
+    else
+        limit = &part;  // may limit how much of `v` is used
 
-  setup_variables: {
+  setup_destination: {
 
   // The `binary` is the Flex being modified.  It can be either just a Binary*
   // or it can be a Strand* if the Binary is actually a string alias.
@@ -290,19 +388,6 @@ Result(None) Modify_String_Or_Blob(
         dst_len_old = Strand_Len(strand);
     }
 
-    // For INSERT:PART and APPEND:PART
-    //
-    Option(const Length*) limit;
-    if (op != ST_MODIFY_CHANGE) {
-        if (part <= 0) {
-            SERIES_INDEX_UNBOUNDED(series) = op == ST_MODIFY_APPEND ? 0 : index;
-            return none;
-        }
-        limit = &part;
-    }
-    else
-        limit = UNLIMITED;
-
     // Now that we know there's actual work to do, we need `index` to speak
     // in terms of codepoints (if applicable)
 
@@ -314,15 +399,22 @@ Result(None) Modify_String_Or_Blob(
         index = Strand_Index_At(strand, offset);
     }
 
-    // If the src is not an ANY-STRING?, then we need to create string data
-    // from the value to use its content.
-    //
-    DECLARE_MOLDER (mo);  // mo->strand will be non-null if Push_Mold() run
-    Byte src_byte;  // only used by BLOB! (mold buffer is UTF-8 legal)
+  setup_source: {
 
-    const Byte* src;  // start of bytes (potentially UTF-8) to insert
-    Length len;  // src length in codepoints (if dest is string)
-    Size size;  // src size in bytes
+  // We calculate `src`, `len`, and `size` for data (`v`) we are inserting.
+  //
+  // 1. If `v` is not naturally a source of bytes (like a string or binary)
+  //    then we may have to mold it into a UTF-8 representation.  Also, if
+  //    `v` aliases `series` we may have to copy the data into the mold
+  //    buffer to avoid overlap.
+  //
+  //    mo->strand will be non-null if Push_Mold() runs
+
+    const Byte* src;
+    Length len;  // in codepoints for strings, bytes for blobs
+    Size size;
+
+    DECLARE_MOLDER (mo);  // src may be set to point into mold buffer [1]
 
   dispatch_on_type: {
 
@@ -342,37 +434,54 @@ Result(None) Modify_String_Or_Blob(
 
 } handle_utf8: { /////////////////////////////////////////////////////////////
 
-  // 1. If Source == Destination we must prevent possible conflicts in the
-  //    memory regions being operated on.
-
-    if (Stringlike_Has_Stub(v) and Cell_Flex(v) == binary)
-        goto handle_generic_form;  // form a ne flex to be safe [1]
+  // 1. We have to worry about conflicts and resizes if source and destination
+  //    are the same.  Special cases like APPEND might be optimizable here,
+  //    but appending series to themselves is rare-ish.  Use the mold buffer.
 
     src = Cell_Utf8_Len_Size_At_Limit(
         &len,
         &size,
         v,
-        UNLIMITED
+        limit
     );
 
-    if (not strand)
-        len = size;
+    if (
+        Stringlike_Has_Stub(v)
+        and Cell_Flex(v) == binary  // conservative, copy to mold buffer [1]
+    ){
+        Push_Mold(mo);
+        Append_Utf8(mo->strand, src, len, size);
+        src = Binary_At(mo->strand, mo->base.size);
+        goto use_mold_buffer;
+    }
 
     goto src_and_len_and_size_known;
 
 } handle_integer: { //////////////////////////////////////////////////////////
 
+  // Note that (append #{123456} 10) is #{1234560A}, just the byte.
+  // But (append "abc" 10) is "abc10"
+
     if (not Is_Blob(series))
-        goto handle_generic_form;  // e.g. `append "abc" 10` is "abc10"
+        goto handle_generic_form;  // don't want single byte interpretation
 
-    // otherwise `append #{123456} 10` is #{1234560A}, just the byte
+    Byte byte = VAL_UINT8(v);  // panics if out of range
 
-    src_byte = VAL_UINT8(v);  // panics if out of range
-    if (strand and Is_Utf8_Lead_Byte(src_byte))
-        panic (Error_Bad_Utf8_Bin_Edit_Raw());
+    if (strand) {
+        if (Is_Utf8_Lead_Byte(byte))
+            panic (Error_Bad_Utf8_Bin_Edit_Raw());
+        if (byte == '\0')
+            panic (Error_Illegal_Zero_Byte_Raw());
+    }
 
-    src = &src_byte;
     len = size = 1;
+
+    Set_Flex_Len(BYTE_BUF, 0);
+    trap (
+        Expand_Flex_Tail_And_Update_Used(BYTE_BUF, size)
+    );
+    *Binary_Head(BYTE_BUF) = byte;
+    src = Binary_Head(BYTE_BUF);
 
     goto src_and_len_and_size_known;
 
@@ -444,7 +553,7 @@ Result(None) Modify_String_Or_Blob(
         src = Binary_Head(BYTE_BUF);
     }
 
-    goto binary_limit_accounted_for;
+    goto src_and_len_and_size_known;
 
 } handle_splice: { ///////////////////////////////////////////////////////////
 
@@ -458,19 +567,18 @@ Result(None) Modify_String_Or_Blob(
   //    historically was to form elements without reducing, and no spacing.
 
     if (Is_Blob(series)) {  // join in BYTE_BUF, R3-Alpha idea [1]
-        DECLARE_ELEMENT (group);
-        Copy_Lifted_Cell(group, v);
-        LIFT_BYTE(group) = NOQUOTE_2;
-        Join_Binary_In_Byte_Buf(group, -1);
+        Join_Binary_In_Byte_Buf(v, limit);
         src = Binary_Head(BYTE_BUF);  // cleared each time
         len = size = Binary_Len(BYTE_BUF);
     }
     else {  // form individual elements into mold buffer, no spacing [2]
         Push_Mold(mo);
 
+        Length count = limit ? *(unwrap limit) : Series_Len_At(v);
+
         const Element* item_tail;
         const Element* item = List_At(&item_tail, v);
-        for (; item != item_tail; ++item)
+        for (; count != 0 and item != item_tail; --count, ++item)
             Form_Element(mo, item);
         goto use_mold_buffer;
     }
@@ -482,7 +590,7 @@ Result(None) Modify_String_Or_Blob(
     Push_Mold(mo);
     Mold_Or_Form_Element(mo, Known_Element(v), true);
 
-    // Don't capture pointer until after mold (it may expand the buffer)
+    // Don't capture `src` pointer until after mold (it may expand the buffer)
 
     goto use_mold_buffer;
 
@@ -499,30 +607,8 @@ Result(None) Modify_String_Or_Blob(
 
 } src_and_len_and_size_known: { //////////////////////////////////////////////
 
-    // Here we are accounting for a :PART where we know the source series
-    // data is valid UTF-8.  (If the source were a BLOB!, where the :PART
-    // counts in bytes, it would have jumped below here with limit set up.)
-    //
-    // !!! Bad first implementation; improve.
-    //
-    if (strand) {
-        Utf8(const*) t = cast(Utf8(const*), src + size);
-        if (limit)
-            while (len > *(unwrap limit)) {
-                t = Step_Back_Codepoint(t);
-                --len;
-            }
-        size = t - src;  // len now equals limit
-    }
-    else {  // copying valid UTF-8 data possibly partially in bytes (!)
-        if (limit and size > *(unwrap limit))
-            size = *(unwrap limit);
-        len = size;
-    }
-
-    goto binary_limit_accounted_for;
-
-} binary_limit_accounted_for: {
+    if (not strand)
+        assert(len == size);
 
     Size expansion_size;  // includes duplicates and newlines, if applicable
     Length expansion_len;
@@ -754,4 +840,4 @@ Result(None) Modify_String_Or_Blob(
 
     SERIES_INDEX_UNBOUNDED(series) = index + expansion_len;
     return none;
-}}}
+}}}}
