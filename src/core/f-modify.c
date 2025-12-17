@@ -256,11 +256,18 @@ Result(None) Modify_String_Or_Blob(
 
   setup_variables: {
 
+  // The `binary` is the Flex being modified.  It can be either just a Binary*
+  // or it can be a Strand* if the Binary is actually a string alias.
+  //
+  // 1. Rather than testing for Is_Stub_Strand() and then casting multiple
+  //    times in the code below, we keep a `strand` variable that is either
+  //    null (if not a string) or the Strand* version of the binary if it is.
+
     Binary* binary = cast(Binary*, Cell_Flex_Ensure_Mutable(series));
 
     Strand* strand = Is_Stub_Strand(binary)
         ? cast(Strand*, binary)
-        : nullptr;
+        : nullptr;  // alias for binary, null if not a Strand [1]
 
     Length index = Series_Index(series);
     Size used = Binary_Len(binary);
@@ -319,15 +326,8 @@ Result(None) Modify_String_Or_Blob(
 
   dispatch_on_type: {
 
-    if (Is_Rune(v))  // characters store their encoding in their payload
-        goto handle_rune;
-
-    if (
-        Any_String(v)
-        and not Is_Tag(v)  // tags need `<` and `>` to render
-    ){
-        goto handle_non_tag_string;
-    }
+    if (Any_Utf8(v))
+        goto handle_utf8;
 
     if (Is_Integer(v))
         goto handle_integer;
@@ -340,13 +340,14 @@ Result(None) Modify_String_Or_Blob(
 
     goto handle_generic_form;
 
-} handle_rune: { /////////////////////////////////////////////////////////////
+} handle_utf8: { /////////////////////////////////////////////////////////////
 
-    // !!! We pass in UNLIMITED for the limit of how long the input is
-    // because currently :PART speaks in terms of the destination series.
-    // However, if that were changed to :LIMIT then we would want to
-    // be cropping the :PART of the input via passing a parameter here.
-    //
+  // 1. If Source == Destination we must prevent possible conflicts in the
+  //    memory regions being operated on.
+
+    if (Stringlike_Has_Stub(v) and Cell_Flex(v) == binary)
+        goto handle_generic_form;  // form a ne flex to be safe [1]
+
     src = Cell_Utf8_Len_Size_At_Limit(
         &len,
         &size,
@@ -354,39 +355,6 @@ Result(None) Modify_String_Or_Blob(
         UNLIMITED
     );
 
-    if (strand) {
-        if (len == 0)
-            panic (Error_Illegal_Zero_Byte_Raw());  // no '\0' in strings
-    }
-    else {
-        if (len == 0)
-            len = size = 1;  // Use the '\0' null term
-        else
-            len = size;  // binary counts length in bytes
-    }
-
-    goto src_and_len_and_size_known;
-
-} handle_non_tag_string: { ///////////////////////////////////////////////////
-
-    // !!! Branch is very similar to the one for RUNE! above (merge?)
-
-    // If Source == Destination we must prevent possible conflicts in
-    // the memory regions being moved.  Clone the Flex just to be safe.
-    //
-    // !!! It may be possible to optimize special cases like append.
-    //
-    if (binary == Cell_Flex(v))
-        goto handle_generic_form;
-
-    src = String_At(v);
-
-    // !!! We pass in UNLIMITED for the limit of how long the input is
-    // because currently :PART speaks in terms of the destination series.
-    // However, if that were changed to :LIMIT then we would want to
-    // be cropping the :PART of the input via passing a parameter here.
-    //
-    size = String_Size_Limit_At(&len, v, UNLIMITED);
     if (not strand)
         len = size;
 
@@ -410,6 +378,18 @@ Result(None) Modify_String_Or_Blob(
 
 } handle_blob: { /////////////////////////////////////////////////////////////
 
+  // 1. We could be more optimal here since we know it's valid UTF-8 than
+  //    walking characters up to the limit.  But for simplicity we use the
+  //    same branch as unverified UTF-8 blobs for now.
+  //
+  // 2. The binary may be invalid UTF-8.  We don't need to worry about the
+  //    *entire* binary, just the part we are adding (whereas AS has to worry
+  //    for aliasing, since BACK and HEAD are still possible)
+  //
+  // 3. We have to worry about conflicts and resizes if source and destination
+  //    are the same.  Special cases like APPEND might be optimizable here,
+  //    but appending series to themselves is rare-ish.  Use the byte buffer.
+
     const Binary* other = Cell_Binary(v);
 
     src = Blob_Size_At(&size, v);
@@ -419,65 +399,43 @@ Result(None) Modify_String_Or_Blob(
             size = *(unwrap limit);  // byte count for blob! dest
         len = size;
     }
+    else if (Is_Stub_Strand(other)) {  // guaranteed valid UTF-8
+        const Strand* other_as_strand = cast(Strand*, other);
+        if (Is_Continuation_Byte(*src))
+            panic (Error_Bad_Utf8_Bin_Edit_Raw());
+
+        UNUSED(other_as_strand);  // we don't exploit UTF-8 validity yet [1]
+        goto unverified_utf8_src_binary;
+    }
     else {
-        if (Is_Stub_Strand(other)) {  // guaranteed valid UTF-8
-            const Strand* other_as_strand = cast(Strand*, other);
-            if (Is_Continuation_Byte(*src))
-                panic (Error_Bad_Utf8_Bin_Edit_Raw());
+       unverified_utf8_src_binary:  // only needs to be valid up to :PART [2]
+        len = 0;
 
-            // !!! We could be more optimal here since we know it's valid
-            // UTF-8 than walking characters up to the limit, like:
-            //
-            // `src_len_raw = Strand_Len(str) - Strand_Index_At(str, offset);`
-            //
-            // But for simplicity just use the same branch that unverified
-            // binaries do for now.  This code can be optimized when the
-            // functionality has been proven for a while.
-            //
-            UNUSED(other_as_strand);
-            goto unverified_utf8_src_binary;
-        }
-        else {
-            unverified_utf8_src_binary:
-            //
-            // The binary may be invalid UTF-8.  We don't actually need
-            // to worry about the *entire* binary, just the part we are
-            // adding (whereas AS has to worry about the *whole* binary
-            // for aliasing, since BACK and HEAD are still possible)
-            //
-            len = 0;
-
-            Size bytes_left = size;
-            const Byte* bp = src;
-            for (; bytes_left > 0; --bytes_left, ++bp) {
-                Codepoint c = *bp;
-                if (Is_Byte_Ascii(c)) {  // just check for 0 bytes
-                    if (c == '\0')
-                        panic (Error_Bad_Utf8_Bin_Edit(
-                            Error_Illegal_Zero_Byte_Raw()
-                        ));
-                }
-                else {
-                    c = Back_Scan_Utf8_Char(
-                        &bp, &bytes_left
-                    ) except (Error* e) {
-                        panic (Error_Bad_Utf8_Bin_Edit(e));
-                    }
-                }
-                ++len;
-
-                if (limit and *(unwrap limit) == len)
-                    break;  // Note: :PART is count in codepoints
+        Size bytes_left = size;
+        const Byte* bp = src;
+        for (; bytes_left > 0; --bytes_left, ++bp) {
+            Codepoint c = *bp;
+            if (Is_Byte_Ascii(c)) {  // just check for 0 bytes
+                if (c == '\0')
+                    panic (Error_Bad_Utf8_Bin_Edit(
+                        Error_Illegal_Zero_Byte_Raw()
+                    ));
             }
+            else {
+                c = Back_Scan_Utf8_Char(
+                    &bp, &bytes_left
+                ) except (Error* e) {
+                    panic (Error_Bad_Utf8_Bin_Edit(e));
+                }
+            }
+            ++len;
+
+            if (limit and *(unwrap limit) == len)
+                break;  // Note: :PART is count in codepoints
         }
     }
 
-    // We have to worry about conflicts and resizes if the source and
-    // destination are the same.  Special cases like APPEND might be
-    // optimizable here, but appending series to themselves is rare-ish.
-    // Use the byte buffer.
-    //
-    if (other == binary) {
+    if (other == binary) {  // make copy in BYTE_BUF to avoid overlap [3]
         Set_Flex_Len(BYTE_BUF, 0);
         trap (
             Expand_Flex_Tail_And_Update_Used(BYTE_BUF, size)
@@ -490,17 +448,16 @@ Result(None) Modify_String_Or_Blob(
 
 } handle_splice: { ///////////////////////////////////////////////////////////
 
-    // !!! For APPEND and INSERT, the :PART should apply to *block* units,
-    // and not character units from the generated string.
+  // 1. !!! R3-Alpha had the notion of joining a binary into a global buffer
+  //    that was cleared out and reused.  This was not geared to be safe for
+  //    threading.  It might be unified with the mold buffer now that they are
+  //    both byte-oriented...though there may be some advantage to the mold
+  //    buffer being UTF-8 only.
+  //
+  // 2. !!! The logic for APPEND or INSERT or CHANGE on ANY-STRING? of BLOCK!
+  //    historically was to form elements without reducing, and no spacing.
 
-    if (Is_Blob(series)) {
-        //
-        // !!! R3-Alpha had the notion of joining a binary into a global
-        // buffer that was cleared out and reused.  This was not geared
-        // to be safe for threading.  It might be unified with the mold
-        // buffer now that they are both byte-oriented...though there may
-        // be some advantage to the mold buffer being UTF-8 only.
-        //
+    if (Is_Blob(series)) {  // join in BYTE_BUF, R3-Alpha idea [1]
         DECLARE_ELEMENT (group);
         Copy_Lifted_Cell(group, v);
         LIFT_BYTE(group) = NOQUOTE_2;
@@ -508,14 +465,9 @@ Result(None) Modify_String_Or_Blob(
         src = Binary_Head(BYTE_BUF);  // cleared each time
         len = size = Binary_Len(BYTE_BUF);
     }
-    else {
+    else {  // form individual elements into mold buffer, no spacing [2]
         Push_Mold(mo);
 
-        // !!! The logic for APPEND or INSERT or CHAINGE on ANY-STRING? of
-        // BLOCK! has been to form them without reducing, and no spaces
-        // between.  There is some rationale to this, though implications
-        // for operations like TO TEXT! of a BLOCK! are unclear...
-        //
         const Element* item_tail;
         const Element* item = List_At(&item_tail, v);
         for (; item != item_tail; ++item)
