@@ -91,57 +91,68 @@ Result(None) Modify_List(
 
   setup_source: {
 
+  // We establish a `src` pointer to the head of the data to be inserted, and
+  // a `len` for how many Cells there are in each dup.
+  //
   // 1. Self-splicing isn't very common, but we don't want to crash due to
-  //    the memory overlap.  Because it's rare this creates a managed series
-  //    and lets the GC free it, but really we could not manage the array
-  //    and free it in this routine--review.
+  //    the memory overlap.  Because it's rare, just make an unmanaged copy
+  //    of the desired portion vs. trying to do something fancy in-place.
 
     const Element* src;
-    Length splice_len;
+    Length len;
 
-    if (Is_Splice(v)) {
-        Length len_at = Series_Len_At(v);
-        splice_len = len_at;
+    Array* buffer = nullptr;  // for self-splice case [1]
 
-        if (limit and *(unwrap limit) < splice_len)
-            splice_len = *(unwrap limit);
+    if (Is_Splice(v))
+        goto handle_splice;  // use passed in Cell
 
-        if (not tail_newline) {
-            if (splice_len == len_at) {
-                tail_newline = Get_Flavor_Flag(
-                    SOURCE,
-                    Cell_Array(v),
-                    NEWLINE_AT_TAIL
-                );
-            }
-            else if (splice_len == 0)
-                tail_newline = false;
-            else {
-                const Cell* splice_tail = List_Item_At(v) + splice_len;
-                tail_newline = Get_Cell_Flag(splice_tail, NEWLINE_BEFORE);
-            }
-        }
+  handle_non_splice: {
 
-        if (array == Cell_Array(v)) {  // !!! temp array for self-splice [1]
-            Array* copy = Copy_Array_At_Extra_Shallow(
-                STUB_MASK_MANAGED_SOURCE,
+    len = 1;
+    src = Known_Element(v);
+    goto expand_or_resize_array;
+
+} handle_splice: { ///////////////////////////////////////////////////////////
+
+    Length splice_len_at = Series_Len_At(v);
+    len = splice_len_at;
+
+    if (limit and *(unwrap limit) < len)
+        len = *(unwrap limit);
+
+    if (not tail_newline) {
+        if (len == splice_len_at) {
+            tail_newline = Get_Flavor_Flag(
+                SOURCE,
                 Cell_Array(v),
-                Series_Index(v),
-                0 // extra
+                NEWLINE_AT_TAIL
             );
-            src = Array_Head(copy);
         }
-        else
-            src = List_At(nullptr, v);  // may be tail
-    }
-    else {  // use passed in Cell
-        splice_len = 1;
-        src = Known_Element(v);
+        else if (len == 0)
+            tail_newline = false;
+        else {
+            const Cell* splice_tail = List_Item_At(v) + len;
+            tail_newline = Get_Cell_Flag(splice_tail, NEWLINE_BEFORE);
+        }
     }
 
-    Length expansion = dups * splice_len;  // total to insert (dups is > 0)
+    if (array == Cell_Array(v)) {  // like with (append s spread s) [1]
+        buffer = Copy_Array_At_Extra_Shallow(
+            STUB_MASK_UNMANAGED_SOURCE,  // so we can Free_Unmanaged_Flex()
+            Cell_Array(v),
+            Series_Index(v),
+            0  // extra
+        );
+        src = Array_Head(buffer);
+    }
+    else
+        src = List_At(nullptr, v);  // may be tail
 
-  expand_or_resize_array: {
+    goto expand_or_resize_array;
+
+} expand_or_resize_array: { //////////////////////////////////////////////////
+
+    Length expansion = dups * len;  // total to insert (dups is > 0)
 
     if (op != ST_MODIFY_CHANGE) {  // Always expand for INSERT and APPEND
         trap (
@@ -172,26 +183,29 @@ Result(None) Modify_List(
   // 1. We wait to clear the NEWLINE_AT_TAIL flag on the target array until
   //    the loop actually makes a value that can take over encoding the bit.
 
-    REBLEN dup_index = 0;
-    for (; dup_index < dups; ++dup_index) {  // dups checked > 0
-        REBLEN i = 0;
-        for (; i < splice_len; ++i, ++index) {
-            Copy_Cell(
-                Array_Head(array) + index,
-                src + i
-            );
+    Element* dest = Array_Head(array);
 
-            if (dup_index == 0 and i == 0 and head_newline) {
-                Set_Cell_Flag(Array_Head(array) + index, NEWLINE_BEFORE);
-                Clear_Source_Flag(array, NEWLINE_AT_TAIL);  // [1]
+    Count d = 0;
+    for (; d < dups; ++d) {  // dups was checked as being > 0
+        Count i = 0;
+        for (; i < len; ++i, ++index) {
+            Copy_Cell(dest + index, src + i);
+
+            if (d == 0 and i == 0 and head_newline) {  // first injection [1]
+                Set_Cell_Flag(dest + index, NEWLINE_BEFORE);
+                Clear_Source_Flag(array, NEWLINE_AT_TAIL);
                 continue;
             }
 
-            if (dup_index > 0 and i == 0 and tail_newline) {
-                Set_Cell_Flag(Array_Head(array) + index, NEWLINE_BEFORE);
-            }
+            if (d > 0 and i == 0 and tail_newline)
+                Set_Cell_Flag(dest + index, NEWLINE_BEFORE);
         }
     }
+
+} free_buffer_if_created_for_self_splice: {
+
+    if (buffer)
+        Free_Unmanaged_Flex(buffer);
 
 } finalize_newlines: {
 
