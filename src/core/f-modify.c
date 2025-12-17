@@ -254,20 +254,24 @@ Result(None) Modify_String_Or_Blob(
 
     Ensure_Mutable(series);  // note this also rules out ANY-WORD?s
 
-    Binary* flex = cast(Binary*, Cell_Flex_Ensure_Mutable(series));
-    assert(not Is_Stub_Symbol(flex));  // would be immutable
+    Binary* binary = cast(Binary*, Cell_Flex_Ensure_Mutable(series));
+    assert(not Is_Stub_Symbol(binary));  // would be immutable
+
+    Strand* strand = Is_Stub_Strand(binary)
+        ? cast(Strand*, binary)
+        : nullptr;
 
     Length index = Series_Index(series);
-    Size used = Flex_Used(flex);
+    Size used = Binary_Len(binary);
 
-    REBLEN dst_len_old = 0xDECAFBAD;  // only if Is_Stub_Strand(flex)
+    REBLEN dst_len_old = 0xDECAFBAD;  // only if Is_Stub_Strand(binary)
     Size offset;
     if (Is_Blob(series)) {  // check invariants up front even if NULL / no-op
-        if (Is_Stub_Strand(flex)) {
-            Byte at = *Binary_At(flex, index);
+        if (strand) {
+            Byte at = *Binary_At(strand, index);
             if (Is_Continuation_Byte(at))
                 panic (Error_Bad_Utf8_Bin_Edit_Raw());
-            dst_len_old = Strand_Len(cast(Strand*, flex));
+            dst_len_old = Strand_Len(strand);
         }
         offset = index;
     }
@@ -275,7 +279,7 @@ Result(None) Modify_String_Or_Blob(
         assert(Any_String(series));
 
         offset = String_Byte_Offset_For_Index(series, index);  // !!! review speed
-        dst_len_old = Strand_Len(cast(Strand*, flex));
+        dst_len_old = Strand_Len(strand);
     }
 
     // For INSERT:PART and APPEND:PART
@@ -295,11 +299,11 @@ Result(None) Modify_String_Or_Blob(
     // in terms of codepoints (if applicable)
 
     if (op == ST_MODIFY_APPEND or offset > used) {
-        offset = Flex_Used(flex);
+        offset = Binary_Len(binary);
         index = dst_len_old;
     }
-    else if (Is_Blob(series) and Is_Stub_Strand(flex)) {
-        index = Strand_Index_At(cast(Strand*, flex), offset);
+    else if (Is_Blob(series) and strand) {
+        index = Strand_Index_At(strand, offset);
     }
 
     // If the src is not an ANY-STRING?, then we need to create string data
@@ -327,7 +331,7 @@ Result(None) Modify_String_Or_Blob(
             UNLIMITED
         );
 
-        if (Is_Stub_Strand(flex)) {
+        if (strand) {
             if (len == 0)
                 panic (Error_Illegal_Zero_Byte_Raw());  // no '\0' in strings
         }
@@ -349,7 +353,7 @@ Result(None) Modify_String_Or_Blob(
         //
         // !!! It may be possible to optimize special cases like append.
         //
-        if (flex == Cell_Flex(v))
+        if (binary == Cell_Flex(v))
             goto form;
 
         src = String_At(v);
@@ -360,7 +364,7 @@ Result(None) Modify_String_Or_Blob(
         // be cropping the :PART of the input via passing a parameter here.
         //
         size = String_Size_Limit_At(&len, v, UNLIMITED);
-        if (not Is_Stub_Strand(flex))
+        if (not strand)
             len = size;
     }
     else if (Is_Integer(v)) {
@@ -370,7 +374,7 @@ Result(None) Modify_String_Or_Blob(
         // otherwise `append #{123456} 10` is #{1234560A}, just the byte
 
         src_byte = VAL_UINT8(v);  // panics if out of range
-        if (Is_Stub_Strand(flex) and Is_Utf8_Lead_Byte(src_byte))
+        if (strand and Is_Utf8_Lead_Byte(src_byte))
             panic (Error_Bad_Utf8_Bin_Edit_Raw());
 
         src = &src_byte;
@@ -381,14 +385,14 @@ Result(None) Modify_String_Or_Blob(
 
         src = Blob_Size_At(&size, v);
 
-        if (not Is_Stub_Strand(flex)) {
+        if (not strand) {
             if (limit and *(unwrap limit) < size)
                 size = *(unwrap limit);  // byte count for blob! dest
             len = size;
         }
         else {
             if (Is_Stub_Strand(other)) {  // guaranteed valid UTF-8
-                const Strand* strand = cast(Strand*, other);
+                const Strand* other_as_strand = cast(Strand*, other);
                 if (Is_Continuation_Byte(*src))
                     panic (Error_Bad_Utf8_Bin_Edit_Raw());
 
@@ -401,7 +405,7 @@ Result(None) Modify_String_Or_Blob(
                 // binaries do for now.  This code can be optimized when the
                 // functionality has been proven for a while.
                 //
-                UNUSED(strand);
+                UNUSED(other_as_strand);
                 goto unverified_utf8_src_binary;
             }
             else {
@@ -444,7 +448,7 @@ Result(None) Modify_String_Or_Blob(
         // optimizable here, but appending series to themselves is rare-ish.
         // Use the byte buffer.
         //
-        if (other == flex) {
+        if (other == binary) {
             Set_Flex_Len(BYTE_BUF, 0);
             trap (
               Expand_Flex_Tail_And_Update_Used(BYTE_BUF, size)
@@ -501,7 +505,7 @@ Result(None) Modify_String_Or_Blob(
 
         src = Binary_At(mo->strand, mo->base.size);
         size = Strand_Size(mo->strand) - mo->base.size;
-        if (Is_Stub_Strand(flex))
+        if (strand)
             len = Strand_Len(mo->strand) - mo->base.index;
         else
             len = size;
@@ -513,7 +517,7 @@ Result(None) Modify_String_Or_Blob(
     //
     // !!! Bad first implementation; improve.
     //
-    if (Is_Stub_Strand(flex)) {
+    if (strand) {
         Utf8(const*) t = cast(Utf8(const*), src + size);
         if (limit)
             while (len > *(unwrap limit)) {
@@ -558,18 +562,18 @@ Result(None) Modify_String_Or_Blob(
     if (op == ST_MODIFY_APPEND or op == ST_MODIFY_INSERT) {  // always expands
         trap (
           Expand_Flex_At_Index_And_Update_Used(
-            flex, offset, expansion_size
+            binary, offset, expansion_size
         ));
 
-        if (Is_Stub_Strand(flex)) {
-            book = opt Link_Bookmarks(cast(Strand*, flex));
+        if (strand) {
+            book = opt Link_Bookmarks(strand);
 
             if (book and BOOKMARK_INDEX(book) > index) {  // only INSERT
                 BOOKMARK_INDEX(book) += expansion_len;
                 BOOKMARK_OFFSET(book) += expansion_size;
             }
             Tweak_Misc_Num_Codepoints(
-                cast(Strand*, flex), dst_len_old + expansion_len
+                strand, dst_len_old + expansion_len
             );
         }
     }
@@ -578,8 +582,7 @@ Result(None) Modify_String_Or_Blob(
 
         REBLEN dst_len_at;
         Size dst_size_at;
-        if (Is_Stub_Strand(flex)) {
-            Strand* strand = cast(Strand*, flex);
+        if (strand) {
             if (Is_Blob(series)) {
                 dst_size_at = Series_Len_At(series);  // byte count
                 dst_len_at = Strand_Index_At(strand, dst_size_at);
@@ -615,7 +618,7 @@ Result(None) Modify_String_Or_Blob(
         // have to be moved safely out of the way before being overwritten.
 
         Size part_size;
-        if (Is_Stub_Strand(flex)) {
+        if (strand) {
             if (Is_Blob(series)) {
                 //
                 // The calculations on the new length depend on `part` being
@@ -629,9 +632,9 @@ Result(None) Modify_String_Or_Blob(
                 }
                 else {  // count how many codepoints are in the `part`
                     part_size = part;
-                    Utf8(*) cp = cast(Utf8(*), Binary_At(flex, offset));
+                    Utf8(*) cp = cast(Utf8(*), Binary_At(binary, offset));
                     Utf8(*) pp = cast(Utf8(*),
-                        Binary_At(flex, offset + part_size)
+                        Binary_At(binary, offset + part_size)
                     );
                     if (Is_Continuation_Byte(*cast(Byte*, pp)))
                         panic (Error_Bad_Utf8_Bin_Edit_Raw());
@@ -669,7 +672,7 @@ Result(None) Modify_String_Or_Blob(
             //
             trap (
               Expand_Flex_At_Index_And_Update_Used(
-                flex,
+                binary,
                 offset,
                 expansion_size - part_size
             ));
@@ -679,7 +682,7 @@ Result(None) Modify_String_Or_Blob(
             // We're taking out more bytes than we're inserting.  Slide left.
             //
             Remove_Flex_Units_And_Update_Used(
-                flex,
+                binary,
                 offset,
                 part_size - expansion_size
             );
@@ -693,15 +696,15 @@ Result(None) Modify_String_Or_Blob(
         // complicated--but just assume that the start of the change is as
         // good a cache as any to be relevant for the next operation.
         //
-        if (Is_Stub_Strand(flex)) {
-            book = opt Link_Bookmarks(cast(Strand*, flex));
+        if (strand) {
+            book = opt Link_Bookmarks(strand);
 
             if (book and BOOKMARK_INDEX(book) > index) {
                 BOOKMARK_INDEX(book) = index;
                 BOOKMARK_OFFSET(book) = offset;
             }
             Tweak_Misc_Num_Codepoints(
-                cast(Strand*, flex), dst_len_old + expansion_len - part
+                strand, dst_len_old + expansion_len - part
             );
         }
     }
@@ -709,7 +712,7 @@ Result(None) Modify_String_Or_Blob(
     // Since the Flex may be expanded, its pointer could change...so this
     // can't be done up front at the top of this routine.
     //
-    Byte* dst = Flex_At(Byte, flex, offset);
+    Byte* dst = Binary_At(binary, offset);
 
     REBLEN d;
     for (d = 0; d < dups; ++d) {  // dups checked above as > 0
@@ -729,7 +732,6 @@ Result(None) Modify_String_Or_Blob(
     // unified with the mold buffer?)
 
     if (book) {
-        Strand* strand = cast(Strand*, flex);
         if (BOOKMARK_INDEX(book) > Strand_Len(strand)) {  // past active
             assert(op == ST_MODIFY_CHANGE);  // only change removes material
             Free_Bookmarks_Maybe_Null(strand);
@@ -739,7 +741,7 @@ Result(None) Modify_String_Or_Blob(
             Check_Bookmarks_Debug(strand);
           #endif
 
-            if (Strand_Len(strand) < Size_Of(Cell))  // not kept if small
+            if (Strand_Len(strand) < Size_Of(Cell))  // small not kept
                 Free_Bookmarks_Maybe_Null(strand);
         }
     }
@@ -748,7 +750,7 @@ Result(None) Modify_String_Or_Blob(
     // problems when it's not synchronized.  Review why the above code does
     // not always produce a legitimate termination.
     //
-    Term_Flex_If_Necessary(flex);
+    Term_Flex_If_Necessary(binary);
 
     if (op == ST_MODIFY_APPEND) {
         SERIES_INDEX_UNBOUNDED(series) = 0;
