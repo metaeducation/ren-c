@@ -367,25 +367,33 @@ Result(None) Modify_String_Or_Blob(
         ? cast(Strand*, binary)
         : nullptr;  // alias for binary, null if not a Strand [1]
 
-    Length index = Series_Index(series);
     Size used = Binary_Len(binary);
 
-    REBLEN dst_len_old = 0xDECAFBAD;  // only if Is_Stub_Strand(binary)
+    Length dst_len_old_store;
+    Length* dst_len_old = (strand ? &dst_len_old_store : nullptr);
+
     Size offset;
+
+    Length index_store;
+    Length* index;
+
     if (Is_Blob(series)) {  // check invariants up front even if NULL / no-op
+        index = nullptr;
+        offset = Series_Index(series);
         if (strand) {
-            Byte at = *Binary_At(strand, index);
+            Byte at = *Binary_At(strand, offset);
             if (Is_Continuation_Byte(at))
                 panic (Error_Bad_Utf8_Bin_Edit_Raw());
-            dst_len_old = Strand_Len(strand);
+            *dst_len_old = Strand_Len(strand);
         }
-        offset = index;
     }
     else {
         assert(Any_String(series));
 
-        offset = String_Byte_Offset_For_Index(series, index);  // !!! review speed
-        dst_len_old = Strand_Len(strand);
+        index = &index_store;
+        *index = Series_Index(series);
+        offset = String_Byte_Offset_For_Index(series, *index);  // !!! speedup?
+        *dst_len_old = Strand_Len(strand);
     }
 
     // Now that we know there's actual work to do, we need `index` to speak
@@ -393,17 +401,22 @@ Result(None) Modify_String_Or_Blob(
 
     if (op == ST_MODIFY_APPEND or offset > used) {
         offset = Binary_Len(binary);
-        index = dst_len_old;
+        if (strand)
+            *index = *dst_len_old;
     }
     else if (Is_Blob(series) and strand) {
-        index = Strand_Index_At(strand, offset);
+        *index = Strand_Index_At(strand, offset);
     }
 
   setup_source: {
 
-  // We calculate `src`, `len`, and `size` for data (`v`) we are inserting.
+  // We calculate `src`, and `size` in bytes for data (`v`) we are inserting.
   //
-  // 1. If `v` is not naturally a source of bytes (like a string or binary)
+  // 1. If the target `series` is a UTF-8 Strand, then we have to know not
+  //    just the bytes and size we are inserting, but that what we are
+  //    inserting is valid UTF-8 *and* know its length in codepoints too.
+  //
+  // 2. If `v` is not naturally a source of bytes (like a string or binary)
   //    then we may have to mold it into a UTF-8 representation.  Also, if
   //    `v` aliases `series` we may have to copy the data into the mold
   //    buffer to avoid overlap.
@@ -411,10 +424,13 @@ Result(None) Modify_String_Or_Blob(
   //    mo->strand will be non-null if Push_Mold() runs
 
     const Byte* src;
-    Length len;  // in codepoints for strings, bytes for blobs
     Size size;
 
-    DECLARE_MOLDER (mo);  // src may be set to point into mold buffer [1]
+    Length len_store;
+    Length* len;  // codepoint count needed if targeting a Strand [1]
+    len = (strand ? &len_store : nullptr);
+
+    DECLARE_MOLDER (mo);  // src may be set to point into mold buffer [2]
 
   dispatch_on_type: {
 
@@ -438,19 +454,23 @@ Result(None) Modify_String_Or_Blob(
   //    are the same.  Special cases like APPEND might be optimizable here,
   //    but appending series to themselves is rare-ish.  Use the mold buffer.
 
+    Length utf8_len;
     src = Cell_Utf8_Len_Size_At_Limit(
-        &len,
+        &utf8_len,  // calculate regardless in case needed for [1]
         &size,
         v,
         limit
     );
+
+    if (strand)
+        *len = utf8_len;
 
     if (
         Stringlike_Has_Stub(v)
         and Cell_Flex(v) == binary  // conservative, copy to mold buffer [1]
     ){
         Push_Mold(mo);
-        Append_Utf8(mo->strand, src, len, size);
+        Append_Utf8(mo->strand, src, utf8_len, size);
         src = Binary_At(mo->strand, mo->base.size);
         goto use_mold_buffer;
     }
@@ -472,9 +492,11 @@ Result(None) Modify_String_Or_Blob(
             panic (Error_Bad_Utf8_Bin_Edit_Raw());
         if (byte == '\0')
             panic (Error_Illegal_Zero_Byte_Raw());
+
+        *len = 1;
     }
 
-    len = size = 1;
+    size = 1;
 
     Set_Flex_Len(BYTE_BUF, 0);
     trap (
@@ -506,7 +528,6 @@ Result(None) Modify_String_Or_Blob(
     if (not strand) {
         if (limit and *(unwrap limit) < size)
             size = *(unwrap limit);  // byte count for blob! dest
-        len = size;
     }
     else if (Is_Stub_Strand(other)) {  // guaranteed valid UTF-8
         const Strand* other_as_strand = cast(Strand*, other);
@@ -518,7 +539,7 @@ Result(None) Modify_String_Or_Blob(
     }
     else {
        unverified_utf8_src_binary:  // only needs to be valid up to :PART [2]
-        len = 0;
+        *len = 0;
 
         Size bytes_left = size;
         const Byte* bp = src;
@@ -537,9 +558,9 @@ Result(None) Modify_String_Or_Blob(
                     panic (Error_Bad_Utf8_Bin_Edit(e));
                 }
             }
-            ++len;
+            ++(*len);
 
-            if (limit and *(unwrap limit) == len)
+            if (limit and *(unwrap limit) == *len)
                 break;  // Note: :PART is count in codepoints
         }
     }
@@ -566,10 +587,10 @@ Result(None) Modify_String_Or_Blob(
   // 2. !!! The logic for APPEND or INSERT or CHANGE on ANY-STRING? of BLOCK!
   //    historically was to form elements without reducing, and no spacing.
 
-    if (Is_Blob(series)) {  // join in BYTE_BUF, R3-Alpha idea [1]
+    if (not strand) {  // join in BYTE_BUF, R3-Alpha idea [1]
         Join_Binary_In_Byte_Buf(v, limit);
         src = Binary_Head(BYTE_BUF);  // cleared each time
-        len = size = Binary_Len(BYTE_BUF);
+        size = Binary_Len(BYTE_BUF);
     }
     else {  // form individual elements into mold buffer, no spacing [2]
         Push_Mold(mo);
@@ -580,7 +601,8 @@ Result(None) Modify_String_Or_Blob(
         const Element* item = List_At(&item_tail, v);
         for (; count != 0 and item != item_tail; --count, ++item)
             Form_Element(mo, item);
-        goto use_mold_buffer;
+
+        goto use_mold_buffer;  // assigns [src size len]
     }
 
     goto src_and_len_and_size_known;
@@ -599,26 +621,27 @@ Result(None) Modify_String_Or_Blob(
     src = Binary_At(mo->strand, mo->base.size);
     size = Strand_Size(mo->strand) - mo->base.size;
     if (strand)
-        len = Strand_Len(mo->strand) - mo->base.index;
-    else
-        len = size;
+        *len = Strand_Len(mo->strand) - mo->base.index;
 
     goto src_and_len_and_size_known;
 
 } src_and_len_and_size_known: { //////////////////////////////////////////////
 
-    if (not strand)
-        assert(len == size);
-
     Size expansion_size;  // includes duplicates and newlines, if applicable
-    Length expansion_len;
+
+    Length expansion_len_store;
+    Length* expansion_len;
+    expansion_len = (strand ? &expansion_len_store : nullptr);
+
     if (flags & AM_LINE) {
         expansion_size = (size + 1) * dups;
-        expansion_len = (len + 1) * dups;
+        if (strand)
+            *expansion_len = (*len + 1) * dups;
     }
     else {
         expansion_size = size * dups;
-        expansion_len = len * dups;
+        if (strand)
+            *expansion_len = (*len) * dups;
     }
 
   //=//// BELOW THIS LINE, BE CAREFUL WITH BOOKMARK-USING ROUTINES //////=//
@@ -644,28 +667,32 @@ Result(None) Modify_String_Or_Blob(
         if (strand) {
             book = opt Link_Bookmarks(strand);
 
-            if (book and BOOKMARK_INDEX(book) > index) {  // only INSERT
-                BOOKMARK_INDEX(book) += expansion_len;
+            if (book and BOOKMARK_INDEX(book) > *index) {  // only INSERT
+                BOOKMARK_INDEX(book) += *expansion_len;
                 BOOKMARK_OFFSET(book) += expansion_size;
             }
             Tweak_Misc_Num_Codepoints(
-                strand, dst_len_old + expansion_len
+                strand, *dst_len_old + *expansion_len
             );
         }
     }
     else {  // CHANGE only expands if more content added than overwritten
         assert(op == ST_MODIFY_CHANGE);
 
-        REBLEN dst_len_at;
         Size dst_size_at;
+
+        Length dst_len_at_store;
+        Length* dst_len_at;
+        dst_len_at = (strand ? &dst_len_at_store : nullptr);
+
         if (strand) {
             if (Is_Blob(series)) {
                 dst_size_at = Series_Len_At(series);  // byte count
-                dst_len_at = Strand_Index_At(strand, dst_size_at);
+                *dst_len_at = Strand_Index_At(strand, dst_size_at);
             }
             else
                 dst_size_at = String_Size_Limit_At(
-                    &dst_len_at,
+                    &*dst_len_at,
                     series,
                     UNLIMITED
                 );
@@ -675,8 +702,7 @@ Result(None) Modify_String_Or_Blob(
             book = opt Link_Bookmarks(strand);
         }
         else {
-            dst_len_at = Series_Len_At(series);
-            dst_size_at = dst_len_at;
+            dst_size_at = Series_Len_At(series);
         }
 
         // We are overwriting codepoints where the source codepoint sizes and
@@ -703,7 +729,7 @@ Result(None) Modify_String_Or_Blob(
                 // not splitting a codepoint's bytes.
                 //
                 if (part > dst_size_at) {  // can use Strand_Len() from above
-                    part = dst_len_at;
+                    part = *dst_len_at;
                     part_size = dst_size_at;
                 }
                 else {  // count how many codepoints are in the `part`
@@ -721,8 +747,8 @@ Result(None) Modify_String_Or_Blob(
                 }
             }
             else {
-                if (part > dst_len_at) {  // can use Strand_Len() from above
-                    part = dst_len_at;
+                if (part > *dst_len_at) {  // can use Strand_Len() from above
+                    part = *dst_len_at;
                     part_size = dst_size_at;
                 }
                 else {
@@ -775,12 +801,12 @@ Result(None) Modify_String_Or_Blob(
         if (strand) {
             book = opt Link_Bookmarks(strand);
 
-            if (book and BOOKMARK_INDEX(book) > index) {
-                BOOKMARK_INDEX(book) = index;
+            if (book and BOOKMARK_INDEX(book) > *index) {
+                BOOKMARK_INDEX(book) = *index;
                 BOOKMARK_OFFSET(book) = offset;
             }
             Tweak_Misc_Num_Codepoints(
-                strand, dst_len_old + expansion_len - part
+                strand, *dst_len_old + *expansion_len - part
             );
         }
     }
@@ -838,6 +864,6 @@ Result(None) Modify_String_Or_Blob(
         return none;
     }
 
-    SERIES_INDEX_UNBOUNDED(series) = index + expansion_len;
+    SERIES_INDEX_UNBOUNDED(series) = *index + *expansion_len;
     return none;
 }}}}
