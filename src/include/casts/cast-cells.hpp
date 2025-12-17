@@ -66,6 +66,9 @@ struct CastHook<const F*, const Value*> {  // both must be const [B]
   static void Validate_Bits(const F* p) {
     STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
 
+    if (not p)
+        return;
+
     const Cell* c = u_cast(const Cell*, p);
     Assert_Cell_Readable(c);
     unnecessary(assert(LIFT_BYTE_RAW(c) >= ANTIFORM_1));  // always true
@@ -79,6 +82,9 @@ template<typename F>  // [A]
 struct CastHook<const F*, const Stable*> {  // both must be const [B]
   static void Validate_Bits(const F* p) {
     STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
+
+    if (not p)
+        return;
 
     const Cell* c = u_cast(const Cell*, p);
     Assert_Cell_Readable(c);
@@ -94,6 +100,9 @@ template<typename F>  // [A]
 struct CastHook<const F*, const Element*> {  // both must be const [B]
     static void Validate_Bits(const F* p) {
         STATIC_ASSERT(In_C_Type_List(g_convertible_to_cell, F));
+
+        if (not p)
+            return;
 
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);

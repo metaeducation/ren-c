@@ -863,13 +863,13 @@ Special internal defines used by RT, not Host-Kit developers:
 // Option(TYPE*) is a poor-man's implementation of optionals that lets you
 // mark when a pointer is supposed to be passable as a nullptr.  It has some
 // runtime costs because it will assert if you `unwrap` the pointer and it is
-// null when it shouldn't be.  Add it to the sanitized build.
+// null when it shouldn't be.
 //
 #if !defined(NEEDFUL_OPTION_USES_WRAPPER)
-  #if defined(__SANITIZE_ADDRESS__) && NEEDFUL_CPP_ENHANCEMENTS
+  #if !defined(__SANITIZE_ADDRESS__) && NEEDFUL_CPP_ENHANCEMENTS
     #define NEEDFUL_OPTION_USES_WRAPPER  RUNTIME_CHECKS
   #else
-    #define NEEDFUL_OPTION_USES_WRAPPER  0
+    #define NEEDFUL_OPTION_USES_WRAPPER  0  // don't use in sanitized build
   #endif
 #endif
 
