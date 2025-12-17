@@ -109,16 +109,20 @@ DECLARE_NATIVE(LATIN1_Q)
 //
 //      return: [<null> any-utf8? any-list? any-sequence? blob!]
 //      base "If no base element and no material in rest to join, gives NULL"
-//          [datatype! any-utf8? any-list? any-sequence? blob!]
+//          [<opt-out> datatype! any-utf8? any-list? any-sequence? blob!]
 //      rest "Plain [...] blocks reduced, @[...] block items used as is"
 //          [<opt> block! @block! any-utf8? blob! integer!]
 //      :with [element? splice!]
-//      :head "Include delimiter at head of a non-NULL result"
+//      :head "Include delimiter at head of a non-NULL result"  ; [1]
 //      :tail "Include delimiter at tail of a non-NULL result"
 //      {original-index}
 //  ]
 //
 DECLARE_NATIVE(JOIN)
+//
+// 1. If you write (join:with:head text! [] "::") you currently get NULL back
+//    but (join:with:head group! [] '::) gives you (::).  The policy needs
+//    to be articulated as to what the best behavior is.
 {
     INCLUDE_PARAMS_OF_JOIN;
 
@@ -191,8 +195,8 @@ DECLARE_NATIVE(JOIN)
 
 } simple_join: { /////////////////////////////////////////////////////////////
 
-    // 1. Hard to unify this mold with code below that uses a level due to
-    //    asserts on states balancing.  Easiest to repeat a small bit of code!
+  // 1. Hard to unify this mold with code below that uses a level due to
+  //    asserts on states balancing.  Easiest to repeat a small bit of code!
 
     assert(Any_Utf8(unwrap rest));  // shortcut, no evals needed [1]
 
@@ -236,13 +240,11 @@ DECLARE_NATIVE(JOIN)
 
 } start_complex_join: { //////////////////////////////////////////////////////
 
-    // 1. It's difficult to handle the edge cases like `join:with:head` when
-    //    you are doing (join 'a 'b) and get it right.  So we make a feed
-    //    without having to make a fake @[...] array (though we could do
-    //    that as well).  It's a very minor optimization and may not be
-    //    worth it, but it points to maybe being able to use a better
-    //    optimization in the future (maybe one that wouldn't require a
-    //    Level at all).
+  // 1. It's difficult to handle the edge cases like `join:with:head` when you
+  //    are doing (join 'a 'b) and get it right.  So we make a feed without
+  //    having to make a fake @[...] array (though we could do that as well).
+  //    It's a very minor optimization and may not be worth it, but it points
+  //    to better optimizations (maybe one that wouldn't require a Level).
 
     Level* sub;
 
@@ -274,9 +276,6 @@ DECLARE_NATIVE(JOIN)
 
     Push_Level_Erase_Out_If_State_0(SPARE, sub);
 
-    if (Is_Level_At_End(sub))
-        goto finish_stack_join;
-
     if (delimiter)
         assert(Not_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING));
 
@@ -284,6 +283,7 @@ DECLARE_NATIVE(JOIN)
         goto start_mold_join;
 
     assert(Any_List_Type(heart) or Any_Sequence_Type(heart));
+
     goto start_stack_join;
 
   start_mold_join: { /////////////////////////////////////////////////////////
@@ -296,14 +296,16 @@ DECLARE_NATIVE(JOIN)
 
     original_index = Init_Integer(LOCAL(ORIGINAL_INDEX), TOP_INDEX);
 
+    if (Is_Level_At_End(sub))
+        goto finish_mold_join;
+
     goto first_mold_step;
 
 } start_stack_join: { ////////////////////////////////////////////////////////
 
-    // 1. We want (join 'a: [...]) to work, and (join 'a: []) to give `a:`
-    //    In order to do that we use the flag of whether the join produced
-    //    anything (e.g. the output is non-null) and if it didn't, we will
-    //    add a space back.
+  // 1. (join 'a: [...]) should work, and (join 'a: []) should give `a:`.
+  //    To do that we use the flag of whether the join produced anything (e.g.
+  //    the output is non-null) and if it didn't, we will add a space back.
 
     if (not joining_datatype) {
         if (Any_Sequence_Type(heart)) {
@@ -329,6 +331,10 @@ DECLARE_NATIVE(JOIN)
     original_index = Init_Integer(LOCAL(ORIGINAL_INDEX), TOP_INDEX);
 
     SUBLEVEL->baseline.stack_base = TOP_INDEX;
+
+    if (Is_Level_At_End(sub))
+        goto finish_stack_join;
+
     STATE = ST_JOIN_STACK_STEPPING;
     return CONTINUE_SUBLEVEL(sub);  // no special source rules
 
@@ -339,17 +345,17 @@ DECLARE_NATIVE(JOIN)
 
 } first_mold_step: { /////////////////////////////////////////////////////////
 
-    Level* sub = SUBLEVEL;
+  // 1. There's a concept that being able to put undelimited portions in the
+  //    delimit is useful:
+  //
+  //       >> print ["Outer" "spaced" ["inner" "unspaced"] "seems" "useful"]
+  //       Outer spaced innerunspaced seems useful
+  //
+  //    BUT it may only look like a good idea because it came around before
+  //    we could do real string interpolation.  Hacked in for the moment,
+  //    review the idea's relevance...
 
-    // 1. There's a concept that being able to put undelimited portions in the
-    //    delimit is useful:
-    //
-    //       >> print ["Outer" "spaced" ["inner" "unspaced"] "seems" "useful"]
-    //       Outer spaced innerunspaced seems useful
-    //
-    //    BUT it may only look like a good idea because it came around before
-    //    we could do real string interpolation.  Hacked in for the moment,
-    //    review the idea's relevance...
+    Level* sub = SUBLEVEL;
 
     if (Is_Level_At_End(sub))
         goto finish_mold_join;
@@ -423,7 +429,22 @@ DECLARE_NATIVE(JOIN)
 
 } mold_step_result_in_spare: { ///////////////////////////////////////////////
 
-    // 1. spaced [match [logic?] null ...]
+  // 1. spaced [null ...]
+  //
+  // 2. RUNE! suppresses the delimiter logic.  Hence:
+  //
+  //        >> delimit ":" ["a" _ "b" # () "c" newline "d" "e"]
+  //        == "a b^/c^/d:e"
+  //
+  //    Only the last interstitial is considered a candidate for delimiting.
+  //
+  // 3. Empty strings distinct from voids in terms of still being delimited.
+  //    This is important, e.g. in comma-delimited formats for empty fields.
+  //
+  //        >> delimit "," [field1 field2 field3]  ; field2 is ""
+  //        one,,three
+  //
+  //    The same principle would apply to a "space-delimited format".
 
     if (Is_Ghost_Or_Void(SPARE))  // spaced [elide print "hi"], etc
         goto next_mold_step;  // vaporize
@@ -432,7 +453,7 @@ DECLARE_NATIVE(JOIN)
         goto vetoed;
 
     require (
-      Stable* spare = Decay_If_Unstable(SPARE)  // [1]
+      Stable* spare = Decay_If_Unstable(SPARE)  // may error [1]
     );
 
     if (Is_Splice(spare)) {  // only allow splice for mold, for now
@@ -453,12 +474,14 @@ DECLARE_NATIVE(JOIN)
     else if (Is_Antiform(spare))
         return fail (Error_Bad_Antiform(spare));
 
-    if (Is_Rune(spare)) {  // do not delimit (unified w/char) [5]
+    if (Is_Rune(spare)) {  // do not delimit (unified w/char) [2]
         if (delimiter)
             Clear_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING);
         Copy_Cell(PUSH(), spare);
         goto next_mold_step;
     }
+
+    possibly(Is_Text(spare) and String_Len_At(spare) == 0);  // delimits [3]
 
     Push_Join_Delimiter_If_Pending();
     Copy_Cell(PUSH(), spare);
@@ -518,30 +541,7 @@ DECLARE_NATIVE(JOIN)
 
 } finish_mold_join: { /////////////////////////////////////////////////////////
 
-    // Process the items that made it to the stack.
-    //
-    // 4. BLOCK!s are prohibitied in DELIMIT because it's too often the case
-    //    the result is gibberish--guessing what to do is bad:
-    //
-    //        >> block: [1 2 <x> hello]
-    //
-    //        >> print ["Your block is:" block]
-    //        Your block is: 12<x>hello  ; ugh.
-    //
-    // 5. CHAR! suppresses the delimiter logic.  Hence:
-    //
-    //        >> delimit ":" ["a" space "b" newline void "c" newline "d" "e"]
-    //        == "a b^/c^/d:e"
-    //
-    //    Only the last interstitial is considered a candidate for delimiting.
-    //
-    // 6. Empty strings distinct from voids in terms of still being delimited.
-    //    This is important, e.g. in comma-delimited formats for empty fields.
-    //
-    //        >> delimit "," [field1 field2 field3]  ; field2 is ""
-    //        one,,three
-    //
-    //    The same principle would apply to a "space-delimited format".
+  // Either targeting a BLOB! or a UTF-8! type
 
     Drop_Level_Unbalanced(SUBLEVEL);
 
@@ -561,6 +561,14 @@ DECLARE_NATIVE(JOIN)
     goto finish_utf8_join;
 
   finish_utf8_join: { ////////////////////////////////////////////////////////
+
+  // 1. BLOCK!s are prohibitied in DELIMIT because it's too often the case the
+  //    result is gibberish--guessing what to do is bad:
+  //
+  //        >> block: [1 2 <x> hello]
+  //
+  //        >> print ["Your block is:" block]
+  //        Your block is: 12<x>hello  ; ugh.
 
     DECLARE_MOLDER (mo);
     Push_Mold(mo);
@@ -585,10 +593,10 @@ DECLARE_NATIVE(JOIN)
 
         assert(not Is_Antiform(v));  // non-molded splices push items
 
-        if (Any_List(v))  // guessing a behavior is bad [4]
+        if (Any_List(v))  // guessing a behavior is bad [1]
             panic ("JOIN requires @var to mold lists");
 
-        if (Any_Sequence(v))  // can have lists in them, dicey [4]
+        if (Any_Sequence(v))  // can have lists in them, dicey [1]
             panic ("JOIN requires @var to mold sequences");
 
         if (Any_Lifted(cast(Element*, v)) or Sigil_Of(cast(Element*, v)))

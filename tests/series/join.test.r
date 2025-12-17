@@ -86,3 +86,8 @@
 )(
     [a + b + c + d] = join:with block! [spread [a b] 'c 'd] '+
 )
+
+; !!! inconsistency, should think about what the rule should be
+;
+(null = join text! [])
+([] = join block! [])
