@@ -35,9 +35,9 @@
 //  Modify_List: C
 //
 Result(None) Modify_List(
-    Element* target,  // target
+    Element* list,  // target
     ModifyState op,  // INSERT, APPEND, CHANGE
-    const Stable* src_val,  // source
+    const Stable* v,  // source
     REBLEN flags,  // AM_LINE
     REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
     Count dups  // dup count of how many times to insert the src content
@@ -49,17 +49,14 @@ Result(None) Modify_List(
     );
     assert(dups > 0);  // use native entry points for "weird" cases [A]
     assert(part >= 0);
-    assert(not Is_Antiform(src_val) or Is_Splice(src_val));
+    assert(not Is_Antiform(v) or Is_Splice(v));
 
-    Source* dst_arr = Cell_Array_Ensure_Mutable(target);
-    REBLEN dst_idx = SERIES_INDEX_UNBOUNDED(target);  // !!! bounded?
+    Source* array = Cell_Array_Ensure_Mutable(list);
+    REBLEN index = SERIES_INDEX_UNBOUNDED(list);  // !!! bounded?
+    REBLEN tail = Array_Len(array);
 
-    REBLEN tail_idx = Array_Len(dst_arr);
-
-    const Element* src_rel;
-
-    if (op == ST_MODIFY_APPEND or dst_idx > tail_idx)
-        dst_idx = tail_idx;
+    if (op == ST_MODIFY_APPEND or index > tail)
+        index = tail;
 
     // Each dup being inserted need a newline signal after it if:
     //
@@ -71,112 +68,111 @@ Result(None) Modify_List(
     //   on the inserted array.
     //
     bool tail_newline = did (flags & AM_LINE);
-    REBLEN ilen;
+    Length splice_len;
 
-    // Check :PART, compute LEN:
-    if (Is_Splice(src_val)) {
-        REBLEN len_at = Series_Len_At(src_val);
-        ilen = len_at;
+    const Element* src;
+
+    if (Is_Splice(v)) {  // Check :PART, compute LEN:
+        Length len_at = Series_Len_At(v);
+        splice_len = len_at;
 
         // Adjust length of insertion if APPEND or INSERT :PART
         if (op != ST_MODIFY_CHANGE) {
-            if (part < ilen)
-                ilen = part;
+            if (part < splice_len)
+                splice_len = part;
         }
 
         if (not tail_newline) {
-            if (ilen == len_at) {
+            if (splice_len == len_at) {
                 tail_newline = Get_Flavor_Flag(
                     SOURCE,
-                    Cell_Array(src_val),
+                    Cell_Array(v),
                     NEWLINE_AT_TAIL
                 );
             }
-            else if (ilen == 0)
+            else if (splice_len == 0)
                 tail_newline = false;
             else {
-                const Cell* tail_cell = List_Item_At(src_val) + ilen;
-                tail_newline = Get_Cell_Flag(tail_cell, NEWLINE_BEFORE);
+                const Cell* splice_tail = List_Item_At(v) + splice_len;
+                tail_newline = Get_Cell_Flag(splice_tail, NEWLINE_BEFORE);
             }
         }
 
-        // Are we modifying ourselves? If so, copy src_val block first:
-        if (dst_arr == Cell_Array(src_val)) {
+        // Are we modifying ourselves? If so, copy V's array first:
+        if (array == Cell_Array(v)) {
             Array* copy = Copy_Array_At_Extra_Shallow(
                 STUB_MASK_MANAGED_SOURCE,  // !!! or, don't manage and free?
-                Cell_Array(src_val),
-                Series_Index(src_val),
+                Cell_Array(v),
+                Series_Index(v),
                 0 // extra
             );
-            src_rel = Array_Head(copy);
+            src = Array_Head(copy);
         }
         else {
-            src_rel = List_At(nullptr, src_val);  // may be tail
+            src = List_At(nullptr, v);  // may be tail
         }
     }
-    else {
-        // use passed in Cell
-        ilen = 1;
-        assert(Not_Antiform(src_val));
-        src_rel = cast(Element*, src_val);
+    else {  // use passed in Cell
+        splice_len = 1;
+        src = Known_Element(v);
     }
 
-    REBLEN size = dups * ilen;  // total to insert (dups is > 0)
+    Length expansion = dups * splice_len;  // total to insert (dups is > 0)
 
     // If data is being tacked onto an array, beyond the newlines on the values
     // in that array there is also the chance that there's a newline tail flag
     // on the target, and the insertion is at the end.
     //
     bool head_newline =
-        (dst_idx == Array_Len(dst_arr))
-        and Get_Source_Flag(dst_arr, NEWLINE_AT_TAIL);
+        (index == Array_Len(array))
+        and Get_Source_Flag(array, NEWLINE_AT_TAIL);
 
     if (op != ST_MODIFY_CHANGE) {
-        // Always expand dst_arr for INSERT and APPEND actions:
+        // Always expand array for INSERT and APPEND actions:
         trap (
-           Expand_Flex_At_Index_And_Update_Used(dst_arr, dst_idx, size)
+           Expand_Flex_At_Index_And_Update_Used(array, index, expansion)
         );
     }
     else {
-        if (size > part) {
+        if (expansion > part) {
             trap (
               Expand_Flex_At_Index_And_Update_Used(
-                dst_arr, dst_idx, size - part
+                array, index, expansion - part
             ));
         }
-        else if (size < part)
-            Remove_Flex_Units_And_Update_Used(dst_arr, dst_idx, part - size);
-        else if (size + dst_idx > tail_idx) {
+        else if (expansion < part)
+            Remove_Flex_Units_And_Update_Used(array, index, part - expansion);
+        else if (expansion + index > tail) {
             trap (
               Expand_Flex_Tail_And_Update_Used(
-                dst_arr, size - (tail_idx - dst_idx)
+                array, expansion - (tail - index)
             ));
         }
     }
 
-    tail_idx = (op == ST_MODIFY_APPEND) ? 0 : size + dst_idx;
+    tail = (op == ST_MODIFY_APPEND) ? 0 : index + expansion;
 
     REBLEN dup_index = 0;
     for (; dup_index < dups; ++dup_index) {  // dups checked > 0
-        REBLEN index = 0;
-        for (; index < ilen; ++index, ++dst_idx) {
+        REBLEN i = 0;
+        for (; i < splice_len; ++i, ++index) {
             Copy_Cell(
-                Array_Head(dst_arr) + dst_idx,
-                src_rel + index
+                Array_Head(array) + index,
+                src + i
             );
 
-            if (dup_index == 0 and index == 0 and head_newline) {
-                Set_Cell_Flag(Array_Head(dst_arr) + dst_idx, NEWLINE_BEFORE);
+            if (dup_index == 0 and i == 0 and head_newline) {
+                Set_Cell_Flag(Array_Head(array) + index, NEWLINE_BEFORE);
 
                 // The array flag is not cleared until the loop actually
                 // makes a value that will carry on the bit.
                 //
-                Clear_Source_Flag(dst_arr, NEWLINE_AT_TAIL);
+                Clear_Source_Flag(array, NEWLINE_AT_TAIL);
                 continue;
             }
 
-            if (dup_index > 0 and index == 0 and tail_newline) {
-                Set_Cell_Flag(Array_Head(dst_arr) + dst_idx, NEWLINE_BEFORE);
+            if (dup_index > 0 and i == 0 and tail_newline) {
+                Set_Cell_Flag(Array_Head(array) + index, NEWLINE_BEFORE);
             }
         }
     }
@@ -185,10 +181,10 @@ Result(None) Modify_List(
     // last one might have to be the array flag if at tail.
     //
     if (tail_newline) {
-        if (dst_idx == Array_Len(dst_arr))
-            Set_Source_Flag(dst_arr, NEWLINE_AT_TAIL);
+        if (index == Array_Len(array))
+            Set_Source_Flag(array, NEWLINE_AT_TAIL);
         else
-            Set_Cell_Flag(Array_At(dst_arr, dst_idx), NEWLINE_BEFORE);
+            Set_Cell_Flag(Array_At(array, index), NEWLINE_BEFORE);
     }
 
     if (flags & AM_LINE) {
@@ -198,17 +194,17 @@ Result(None) Modify_List(
         // newline.  This allows `x: copy [] | append:line x [a b c]` to give
         // a more common result.  The head line can be removed easily.
         //
-        Set_Cell_Flag(Array_Head(dst_arr), NEWLINE_BEFORE);
+        Set_Cell_Flag(Array_Head(array), NEWLINE_BEFORE);
     }
 
   #if DEBUG_POISON_FLEX_TAILS
-    if (Get_Stub_Flag(dst_arr, DYNAMIC))
-        Force_Poison_Cell(Array_Tail(dst_arr));
+    if (Get_Stub_Flag(array, DYNAMIC))
+        Force_Poison_Cell(Array_Tail(array));
   #endif
 
-    Assert_Array(dst_arr);
+    Assert_Array(array);
 
-    SERIES_INDEX_UNBOUNDED(target) = tail_idx;
+    SERIES_INDEX_UNBOUNDED(list) = tail;
     return none;
 }
 
@@ -240,9 +236,9 @@ static Error* Error_Bad_Utf8_Bin_Edit(Error* cause) {
 // FLEX_FLAG_IS_STRING on the Flex, we must know if dst is a BLOB!.
 //
 Result(None) Modify_String_Or_Blob(
-    Stable* dst,  // ANY-STRING? or BLOB! value to modify
+    Element* series,  // ANY-STRING? or BLOB! value to modify
     ModifyState op,  // APPEND @ tail, INSERT or CHANGE @ index
-    const Stable* src,  // argument with content to inject
+    const Stable* v,  // argument with content to inject
     Flags flags,  // AM_LINE
     Length part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
     Count dups  // dup count of how many times to insert the src content
@@ -254,32 +250,32 @@ Result(None) Modify_String_Or_Blob(
     );
     assert(dups > 0);  // use native entry points for "weird" cases [A]
     assert(part >= 0);
-    assert(not Is_Antiform(src) or Is_Splice(src));
+    assert(not Is_Antiform(v) or Is_Splice(v));
 
-    Ensure_Mutable(dst);  // note this also rules out ANY-WORD?s
+    Ensure_Mutable(series);  // note this also rules out ANY-WORD?s
 
-    Binary* dst_flex = cast(Binary*, Cell_Flex_Ensure_Mutable(dst));
-    assert(not Is_Stub_Symbol(dst_flex));  // would be immutable
+    Binary* flex = cast(Binary*, Cell_Flex_Ensure_Mutable(series));
+    assert(not Is_Stub_Symbol(flex));  // would be immutable
 
-    REBLEN dst_idx = Series_Index(dst);
-    Size dst_used = Flex_Used(dst_flex);
+    Length index = Series_Index(series);
+    Size used = Flex_Used(flex);
 
-    REBLEN dst_len_old = 0xDECAFBAD;  // only if IS_SER_STRING(dst_ser)
-    Size dst_off;
-    if (Is_Blob(dst)) {  // check invariants up front even if NULL / no-op
-        if (Is_Stub_Strand(dst_flex)) {
-            Byte at = *Binary_At(dst_flex, dst_idx);
+    REBLEN dst_len_old = 0xDECAFBAD;  // only if Is_Stub_Strand(flex)
+    Size offset;
+    if (Is_Blob(series)) {  // check invariants up front even if NULL / no-op
+        if (Is_Stub_Strand(flex)) {
+            Byte at = *Binary_At(flex, index);
             if (Is_Continuation_Byte(at))
                 panic (Error_Bad_Utf8_Bin_Edit_Raw());
-            dst_len_old = Strand_Len(cast(Strand*, dst_flex));
+            dst_len_old = Strand_Len(cast(Strand*, flex));
         }
-        dst_off = dst_idx;
+        offset = index;
     }
     else {
-        assert(Any_String(dst));
+        assert(Any_String(series));
 
-        dst_off = String_Byte_Offset_For_Index(dst, dst_idx);  // !!! review speed
-        dst_len_old = Strand_Len(cast(Strand*, dst_flex));
+        offset = String_Byte_Offset_For_Index(series, index);  // !!! review speed
+        dst_len_old = Strand_Len(cast(Strand*, flex));
     }
 
     // For INSERT:PART and APPEND:PART
@@ -287,7 +283,7 @@ Result(None) Modify_String_Or_Blob(
     Option(const Length*) limit;
     if (op != ST_MODIFY_CHANGE) {
         if (part <= 0) {
-            SERIES_INDEX_UNBOUNDED(dst) = op == ST_MODIFY_APPEND ? 0 : dst_idx;
+            SERIES_INDEX_UNBOUNDED(series) = op == ST_MODIFY_APPEND ? 0 : index;
             return none;
         }
         limit = &part;
@@ -295,15 +291,15 @@ Result(None) Modify_String_Or_Blob(
     else
         limit = UNLIMITED;
 
-    // Now that we know there's actual work to do, we need `dst_idx` to speak
+    // Now that we know there's actual work to do, we need `index` to speak
     // in terms of codepoints (if applicable)
 
-    if (op == ST_MODIFY_APPEND or dst_off > dst_used) {
-        dst_off = Flex_Used(dst_flex);
-        dst_idx = dst_len_old;
+    if (op == ST_MODIFY_APPEND or offset > used) {
+        offset = Flex_Used(flex);
+        index = dst_len_old;
     }
-    else if (Is_Blob(dst) and Is_Stub_Strand(dst_flex)) {
-        dst_idx = Strand_Index_At(cast(Strand*, dst_flex), dst_off);
+    else if (Is_Blob(series) and Is_Stub_Strand(flex)) {
+        index = Strand_Index_At(cast(Strand*, flex), offset);
     }
 
     // If the src is not an ANY-STRING?, then we need to create string data
@@ -311,40 +307,40 @@ Result(None) Modify_String_Or_Blob(
     //
     DECLARE_MOLDER (mo);  // mo->strand will be non-null if Push_Mold() run
 
-    const Byte* src_ptr;  // start of utf-8 encoded data to insert
-    REBLEN src_len_raw;  // length in codepoints (if dest is string)
-    Size src_size_raw;  // size in bytes
+    const Byte* src;  // start of bytes (potentially UTF-8) to insert
+    Length len;  // src length in codepoints (if dest is string)
+    Size size;  // src size in bytes
 
     Byte src_byte;  // only used by BLOB! (mold buffer is UTF-8 legal)
 
-    if (Is_Rune(src)) {  // characters store their encoding in their payload
+    if (Is_Rune(v)) {  // characters store their encoding in their payload
         //
         // !!! We pass in UNLIMITED for the limit of how long the input is
         // because currently :PART speaks in terms of the destination series.
         // However, if that were changed to :LIMIT then we would want to
         // be cropping the :PART of the input via passing a parameter here.
         //
-        src_ptr = Cell_Utf8_Len_Size_At_Limit(
-            &src_len_raw,
-            &src_size_raw,
-            src,
+        src = Cell_Utf8_Len_Size_At_Limit(
+            &len,
+            &size,
+            v,
             UNLIMITED
         );
 
-        if (Is_Stub_Strand(dst_flex)) {
-            if (src_len_raw == 0)
+        if (Is_Stub_Strand(flex)) {
+            if (len == 0)
                 panic (Error_Illegal_Zero_Byte_Raw());  // no '\0' in strings
         }
         else {
-            if (src_len_raw == 0)
-                src_len_raw = src_size_raw = 1;  // Use the '\0' null term
+            if (len == 0)
+                len = size = 1;  // Use the '\0' null term
             else
-                src_len_raw = src_size_raw;  // binary counts length in bytes
+                len = size;  // binary counts length in bytes
         }
     }
     else if (
-        Any_String(src)
-        and not Is_Tag(src)  // tags need `<` and `>` to render
+        Any_String(v)
+        and not Is_Tag(v)  // tags need `<` and `>` to render
     ){
         // !!! Branch is very similar to the one for RUNE! above (merge?)
 
@@ -353,49 +349,47 @@ Result(None) Modify_String_Or_Blob(
         //
         // !!! It may be possible to optimize special cases like append.
         //
-        if (Cell_Flex(dst) == Cell_Flex(src))
+        if (flex == Cell_Flex(v))
             goto form;
 
-        src_ptr = String_At(src);
+        src = String_At(v);
 
         // !!! We pass in UNLIMITED for the limit of how long the input is
         // because currently :PART speaks in terms of the destination series.
         // However, if that were changed to :LIMIT then we would want to
         // be cropping the :PART of the input via passing a parameter here.
         //
-        src_size_raw = String_Size_Limit_At(&src_len_raw, src, UNLIMITED);
-        if (not Is_Stub_Strand(dst_flex))
-            src_len_raw = src_size_raw;
+        size = String_Size_Limit_At(&len, v, UNLIMITED);
+        if (not Is_Stub_Strand(flex))
+            len = size;
     }
-    else if (Is_Integer(src)) {
-        if (not Is_Blob(dst))
+    else if (Is_Integer(v)) {
+        if (not Is_Blob(series))
             goto form;  // e.g. `append "abc" 10` is "abc10"
 
         // otherwise `append #{123456} 10` is #{1234560A}, just the byte
 
-        src_byte = VAL_UINT8(src);  // panics if out of range
-        if (Is_Stub_Strand(dst_flex) and Is_Utf8_Lead_Byte(src_byte))
+        src_byte = VAL_UINT8(v);  // panics if out of range
+        if (Is_Stub_Strand(flex) and Is_Utf8_Lead_Byte(src_byte))
             panic (Error_Bad_Utf8_Bin_Edit_Raw());
 
-        src_ptr = &src_byte;
-        src_len_raw = src_size_raw = 1;
+        src = &src_byte;
+        len = size = 1;
     }
-    else if (Is_Blob(src)) {
-        const Binary* b = Cell_Binary(src);
-        REBLEN offset = Series_Index(src);
+    else if (Is_Blob(v)) {
+        const Binary* other = Cell_Binary(v);
 
-        src_ptr = Binary_At(b, offset);
-        src_size_raw = Binary_Len(b) - offset;
+        src = Blob_Size_At(&size, v);
 
-        if (not Is_Stub_Strand(dst_flex)) {
-            if (limit and *(unwrap limit) < src_size_raw)
-                src_size_raw = *(unwrap limit);  // byte count for blob! dest
-            src_len_raw = src_size_raw;
+        if (not Is_Stub_Strand(flex)) {
+            if (limit and *(unwrap limit) < size)
+                size = *(unwrap limit);  // byte count for blob! dest
+            len = size;
         }
         else {
-            if (Is_Stub_Strand(b)) {  // guaranteed valid UTF-8
-                const Strand* str = cast(Strand*, b);
-                if (Is_Continuation_Byte(*src_ptr))
+            if (Is_Stub_Strand(other)) {  // guaranteed valid UTF-8
+                const Strand* strand = cast(Strand*, other);
+                if (Is_Continuation_Byte(*src))
                     panic (Error_Bad_Utf8_Bin_Edit_Raw());
 
                 // !!! We could be more optimal here since we know it's valid
@@ -407,7 +401,7 @@ Result(None) Modify_String_Or_Blob(
                 // binaries do for now.  This code can be optimized when the
                 // functionality has been proven for a while.
                 //
-                UNUSED(str);
+                UNUSED(strand);
                 goto unverified_utf8_src_binary;
             }
             else {
@@ -418,10 +412,10 @@ Result(None) Modify_String_Or_Blob(
                 // adding (whereas AS has to worry about the *whole* binary
                 // for aliasing, since BACK and HEAD are still possible)
                 //
-                src_len_raw = 0;
+                len = 0;
 
-                Size bytes_left = src_size_raw;
-                const Byte* bp = src_ptr;
+                Size bytes_left = size;
+                const Byte* bp = src;
                 for (; bytes_left > 0; --bytes_left, ++bp) {
                     Codepoint c = *bp;
                     if (Is_Byte_Ascii(c)) {  // just check for 0 bytes
@@ -437,9 +431,9 @@ Result(None) Modify_String_Or_Blob(
                             panic (Error_Bad_Utf8_Bin_Edit(e));
                         }
                     }
-                    ++src_len_raw;
+                    ++len;
 
-                    if (limit and *(unwrap limit) == src_len_raw)
+                    if (limit and *(unwrap limit) == len)
                         break;  // Note: :PART is count in codepoints
                 }
             }
@@ -450,23 +444,23 @@ Result(None) Modify_String_Or_Blob(
         // optimizable here, but appending series to themselves is rare-ish.
         // Use the byte buffer.
         //
-        if (b == dst_flex) {
+        if (other == flex) {
             Set_Flex_Len(BYTE_BUF, 0);
             trap (
-              Expand_Flex_Tail_And_Update_Used(BYTE_BUF, src_size_raw)
+              Expand_Flex_Tail_And_Update_Used(BYTE_BUF, size)
             );
-            memcpy(Binary_Head(BYTE_BUF), src_ptr, src_size_raw);
-            src_ptr = Binary_Head(BYTE_BUF);
+            memcpy(Binary_Head(BYTE_BUF), src, size);
+            src = Binary_Head(BYTE_BUF);
         }
 
         goto binary_limit_accounted_for;
     }
-    else if (Is_Splice(src)) {
+    else if (Is_Splice(v)) {
         //
         // !!! For APPEND and INSERT, the :PART should apply to *block* units,
         // and not character units from the generated string.
 
-        if (Is_Blob(dst)) {
+        if (Is_Blob(series)) {
             //
             // !!! R3-Alpha had the notion of joining a binary into a global
             // buffer that was cleared out and reused.  This was not geared
@@ -475,11 +469,11 @@ Result(None) Modify_String_Or_Blob(
             // be some advantage to the mold buffer being UTF-8 only.
             //
             DECLARE_ELEMENT (group);
-            Copy_Lifted_Cell(group, src);
+            Copy_Lifted_Cell(group, v);
             LIFT_BYTE(group) = NOQUOTE_2;
             Join_Binary_In_Byte_Buf(group, -1);
-            src_ptr = Binary_Head(BYTE_BUF);  // cleared each time
-            src_len_raw = src_size_raw = Binary_Len(BYTE_BUF);
+            src = Binary_Head(BYTE_BUF);  // cleared each time
+            len = size = Binary_Len(BYTE_BUF);
         }
         else {
             Push_Mold(mo);
@@ -490,7 +484,7 @@ Result(None) Modify_String_Or_Blob(
             // for operations like TO TEXT! of a BLOCK! are unclear...
             //
             const Element* item_tail;
-            const Element* item = List_At(&item_tail, src);
+            const Element* item = List_At(&item_tail, v);
             for (; item != item_tail; ++item)
                 Form_Element(mo, item);
             goto use_mold_buffer;
@@ -499,18 +493,18 @@ Result(None) Modify_String_Or_Blob(
     else { form:
 
         Push_Mold(mo);
-        Mold_Or_Form_Element(mo, cast(const Element*, src), true);
+        Mold_Or_Form_Element(mo, Known_Element(v), true);
 
         // Don't capture pointer until after mold (it may expand the buffer)
 
       use_mold_buffer:
 
-        src_ptr = Binary_At(mo->strand, mo->base.size);
-        src_size_raw = Strand_Size(mo->strand) - mo->base.size;
-        if (Is_Stub_Strand(dst_flex))
-            src_len_raw = Strand_Len(mo->strand) - mo->base.index;
+        src = Binary_At(mo->strand, mo->base.size);
+        size = Strand_Size(mo->strand) - mo->base.size;
+        if (Is_Stub_Strand(flex))
+            len = Strand_Len(mo->strand) - mo->base.index;
         else
-            src_len_raw = src_size_raw;
+            len = size;
     }
 
     // Here we are accounting for a :PART where we know the source series
@@ -519,32 +513,32 @@ Result(None) Modify_String_Or_Blob(
     //
     // !!! Bad first implementation; improve.
     //
-    if (Is_Stub_Strand(dst_flex)) {
-        Utf8(const*) t = cast(Utf8(const*), src_ptr + src_size_raw);
+    if (Is_Stub_Strand(flex)) {
+        Utf8(const*) t = cast(Utf8(const*), src + size);
         if (limit)
-            while (src_len_raw > *(unwrap limit)) {
+            while (len > *(unwrap limit)) {
                 t = Step_Back_Codepoint(t);
-                --src_len_raw;
+                --len;
             }
-        src_size_raw = t - src_ptr;  // src_len_raw now equals limit
+        size = t - src;  // len now equals limit
     }
     else {  // copying valid UTF-8 data possibly partially in bytes (!)
-        if (limit and src_size_raw > *(unwrap limit))
-            src_size_raw = *(unwrap limit);
-        src_len_raw = src_size_raw;
+        if (limit and size > *(unwrap limit))
+            size = *(unwrap limit);
+        len = size;
     }
 
   binary_limit_accounted_for: ;  // needs ; (next line is declaration)
 
-    Size src_size_total;  // includes duplicates and newlines, if applicable
-    REBLEN src_len_total;
+    Size expansion_size;  // includes duplicates and newlines, if applicable
+    Length expansion_len;
     if (flags & AM_LINE) {
-        src_size_total = (src_size_raw + 1) * dups;
-        src_len_total = (src_len_raw + 1) * dups;
+        expansion_size = (size + 1) * dups;
+        expansion_len = (len + 1) * dups;
     }
     else {
-        src_size_total = src_size_raw * dups;
-        src_len_total = src_len_raw * dups;
+        expansion_size = size * dups;
+        expansion_len = len * dups;
     }
 
   //=//// BELOW THIS LINE, BE CAREFUL WITH BOOKMARK-USING ROUTINES //////=//
@@ -564,18 +558,18 @@ Result(None) Modify_String_Or_Blob(
     if (op == ST_MODIFY_APPEND or op == ST_MODIFY_INSERT) {  // always expands
         trap (
           Expand_Flex_At_Index_And_Update_Used(
-            dst_flex, dst_off, src_size_total
+            flex, offset, expansion_size
         ));
 
-        if (Is_Stub_Strand(dst_flex)) {
-            book = opt Link_Bookmarks(cast(Strand*, dst_flex));
+        if (Is_Stub_Strand(flex)) {
+            book = opt Link_Bookmarks(cast(Strand*, flex));
 
-            if (book and BOOKMARK_INDEX(book) > dst_idx) {  // only INSERT
-                BOOKMARK_INDEX(book) += src_len_total;
-                BOOKMARK_OFFSET(book) += src_size_total;
+            if (book and BOOKMARK_INDEX(book) > index) {  // only INSERT
+                BOOKMARK_INDEX(book) += expansion_len;
+                BOOKMARK_OFFSET(book) += expansion_size;
             }
             Tweak_Misc_Num_Codepoints(
-                cast(Strand*, dst_flex), dst_len_old + src_len_total
+                cast(Strand*, flex), dst_len_old + expansion_len
             );
         }
     }
@@ -584,25 +578,25 @@ Result(None) Modify_String_Or_Blob(
 
         REBLEN dst_len_at;
         Size dst_size_at;
-        if (Is_Stub_Strand(dst_flex)) {
-            Strand* dst_str = cast(Strand*, dst_flex);
-            if (Is_Blob(dst)) {
-                dst_size_at = Series_Len_At(dst);  // byte count
-                dst_len_at = Strand_Index_At(dst_str, dst_size_at);
+        if (Is_Stub_Strand(flex)) {
+            Strand* strand = cast(Strand*, flex);
+            if (Is_Blob(series)) {
+                dst_size_at = Series_Len_At(series);  // byte count
+                dst_len_at = Strand_Index_At(strand, dst_size_at);
             }
             else
                 dst_size_at = String_Size_Limit_At(
                     &dst_len_at,
-                    dst,
+                    series,
                     UNLIMITED
                 );
 
             // Note: above functions may update the bookmarks --^
             //
-            book = opt Link_Bookmarks(dst_str);
+            book = opt Link_Bookmarks(strand);
         }
         else {
-            dst_len_at = Series_Len_At(dst);
+            dst_len_at = Series_Len_At(series);
             dst_size_at = dst_len_at;
         }
 
@@ -611,9 +605,9 @@ Result(None) Modify_String_Or_Blob(
         // were changing a four-codepoint sequence where all are 1 byte with
         // a single-codepoint sequence with a 4-byte codepoint, you get:
         //
-        //     src_len == 1
+        //     len == 1
         //     dst_len_at == 4
-        //     src_size_total == 4
+        //     expansion_size == 4
         //     dst_size_at == 4
         //
         // It deceptively seems there's enough capacity.  But since only one
@@ -621,8 +615,8 @@ Result(None) Modify_String_Or_Blob(
         // have to be moved safely out of the way before being overwritten.
 
         Size part_size;
-        if (Is_Stub_Strand(dst_flex)) {
-            if (Is_Blob(dst)) {
+        if (Is_Stub_Strand(flex)) {
+            if (Is_Blob(series)) {
                 //
                 // The calculations on the new length depend on `part` being
                 // in terms of codepoint count.  Transform it from byte count,
@@ -635,9 +629,9 @@ Result(None) Modify_String_Or_Blob(
                 }
                 else {  // count how many codepoints are in the `part`
                     part_size = part;
-                    Utf8(*) cp = cast(Utf8(*), Binary_At(dst_flex, dst_off));
+                    Utf8(*) cp = cast(Utf8(*), Binary_At(flex, offset));
                     Utf8(*) pp = cast(Utf8(*),
-                        Binary_At(dst_flex, dst_off + part_size)
+                        Binary_At(flex, offset + part_size)
                     );
                     if (Is_Continuation_Byte(*cast(Byte*, pp)))
                         panic (Error_Bad_Utf8_Bin_Edit_Raw());
@@ -654,7 +648,7 @@ Result(None) Modify_String_Or_Blob(
                 }
                 else {
                     REBLEN check;  // v-- !!! This call uses bookmark, review
-                    part_size = String_Size_Limit_At(&check, dst, &part);
+                    part_size = String_Size_Limit_At(&check, series, &part);
                     assert(check == part);
                     UNUSED(check);
                 }
@@ -669,25 +663,25 @@ Result(None) Modify_String_Or_Blob(
                 part_size = part;
         }
 
-        if (src_size_total > part_size) {
+        if (expansion_size > part_size) {
             //
             // We're adding more bytes than we're taking out.  Expand.
             //
             trap (
               Expand_Flex_At_Index_And_Update_Used(
-                dst_flex,
-                dst_off,
-                src_size_total - part_size
+                flex,
+                offset,
+                expansion_size - part_size
             ));
         }
-        else if (part_size > src_size_total) {
+        else if (part_size > expansion_size) {
             //
             // We're taking out more bytes than we're inserting.  Slide left.
             //
             Remove_Flex_Units_And_Update_Used(
-                dst_flex,
-                dst_off,
-                part_size - src_size_total
+                flex,
+                offset,
+                part_size - expansion_size
             );
         }
         else {
@@ -699,15 +693,15 @@ Result(None) Modify_String_Or_Blob(
         // complicated--but just assume that the start of the change is as
         // good a cache as any to be relevant for the next operation.
         //
-        if (Is_Stub_Strand(dst_flex)) {
-            book = opt Link_Bookmarks(cast(Strand*, dst_flex));
+        if (Is_Stub_Strand(flex)) {
+            book = opt Link_Bookmarks(cast(Strand*, flex));
 
-            if (book and BOOKMARK_INDEX(book) > dst_idx) {
-                BOOKMARK_INDEX(book) = dst_idx;
-                BOOKMARK_OFFSET(book) = dst_off;
+            if (book and BOOKMARK_INDEX(book) > index) {
+                BOOKMARK_INDEX(book) = index;
+                BOOKMARK_OFFSET(book) = offset;
             }
             Tweak_Misc_Num_Codepoints(
-                cast(Strand*, dst_flex), dst_len_old + src_len_total - part
+                cast(Strand*, flex), dst_len_old + expansion_len - part
             );
         }
     }
@@ -715,16 +709,16 @@ Result(None) Modify_String_Or_Blob(
     // Since the Flex may be expanded, its pointer could change...so this
     // can't be done up front at the top of this routine.
     //
-    Byte* dst_ptr = Flex_At(Byte, dst_flex, dst_off);
+    Byte* dst = Flex_At(Byte, flex, offset);
 
     REBLEN d;
     for (d = 0; d < dups; ++d) {  // dups checked above as > 0
-        memcpy(dst_ptr, src_ptr, src_size_raw);
-        dst_ptr += src_size_raw;
+        memcpy(dst, src, size);
+        dst += size;
 
         if (flags & AM_LINE) {  // line is not actually in inserted material
-            *dst_ptr = '\n';
-            ++dst_ptr;
+            *dst = '\n';
+            ++dst;
         }
     }
 
@@ -735,18 +729,18 @@ Result(None) Modify_String_Or_Blob(
     // unified with the mold buffer?)
 
     if (book) {
-        Strand* dst_str = cast(Strand*, dst_flex);
-        if (BOOKMARK_INDEX(book) > Strand_Len(dst_str)) {  // past active
+        Strand* strand = cast(Strand*, flex);
+        if (BOOKMARK_INDEX(book) > Strand_Len(strand)) {  // past active
             assert(op == ST_MODIFY_CHANGE);  // only change removes material
-            Free_Bookmarks_Maybe_Null(dst_str);
+            Free_Bookmarks_Maybe_Null(strand);
         }
         else {
           #if DEBUG_BOOKMARKS_ON_MODIFY
-            Check_Bookmarks_Debug(dst_str);
+            Check_Bookmarks_Debug(strand);
           #endif
 
-            if (Strand_Len(dst_str) < Size_Of(Cell))  // not kept if small
-                Free_Bookmarks_Maybe_Null(dst_str);
+            if (Strand_Len(strand) < Size_Of(Cell))  // not kept if small
+                Free_Bookmarks_Maybe_Null(strand);
         }
     }
 
@@ -754,18 +748,18 @@ Result(None) Modify_String_Or_Blob(
     // problems when it's not synchronized.  Review why the above code does
     // not always produce a legitimate termination.
     //
-    Term_Flex_If_Necessary(dst_flex);
+    Term_Flex_If_Necessary(flex);
 
     if (op == ST_MODIFY_APPEND) {
-        SERIES_INDEX_UNBOUNDED(dst) = 0;
+        SERIES_INDEX_UNBOUNDED(series) = 0;
         return none;
     }
 
-    if (Is_Blob(dst)) {
-        SERIES_INDEX_UNBOUNDED(dst) = dst_off + src_size_total;
+    if (Is_Blob(series)) {
+        SERIES_INDEX_UNBOUNDED(series) = offset + expansion_size;
         return none;
     }
 
-    SERIES_INDEX_UNBOUNDED(dst) = dst_idx + src_len_total;
+    SERIES_INDEX_UNBOUNDED(series) = index + expansion_len;
     return none;
 }

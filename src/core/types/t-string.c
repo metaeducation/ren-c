@@ -281,10 +281,10 @@ static void Reverse_Strand(Strand* str, REBLEN index, Length len)
             Append_Codepoint(mo->strand, c);
         }
 
-        DECLARE_STABLE (temp);
+        DECLARE_ELEMENT (temp);
         Init_Text(temp, Pop_Molded_Strand(mo));
 
-        DECLARE_STABLE (string);  // !!! Temp value, string type is irrelevant
+        DECLARE_ELEMENT (string);  // !!! Temp value, string type is irrelevant
         Init_Any_String_At(string, TYPE_TEXT, str, index);
         require(
           Modify_String_Or_Blob(  // :PART to overwrite reversed portion
