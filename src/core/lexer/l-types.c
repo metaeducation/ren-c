@@ -126,14 +126,13 @@ DECLARE_NATIVE(SIGIL_Q)
 {
     INCLUDE_PARAMS_OF_SIGIL_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Any_Sigiled_Space(e));
+    return LOGIC(Any_Sigiled_Space(v));
 }
 
 

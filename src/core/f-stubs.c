@@ -625,20 +625,19 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
 {
     INCLUDE_PARAMS_OF_META;  // META, PIN, TIE all same signature.
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     attempt {
-        if (Any_Plain(e))
+        if (Any_Plain(v))
             continue;
 
         if (Not_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))
             if (ARG(FORCE)) {
-                Clear_Cell_Sigil(e);
+                Clear_Cell_Sigil(v);
                 continue;
             }
 
@@ -647,11 +646,11 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
         );
     }
     then {
-        if (not Any_Sigilable(e))
-            return fail (Error_Bad_Sigil_Raw(e));
+        if (not Any_Sigilable(v))
+            return fail (Error_Bad_Sigil_Raw(v));
     }
 
-    return COPY(Add_Cell_Sigil(e, sigil));
+    return COPY(Add_Cell_Sigil(v, sigil));
 }
 
 
@@ -711,17 +710,16 @@ static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
 {
     INCLUDE_PARAMS_OF_UNMETA;  // same signature as UNPIN, UNTIE
 
-    Element *e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    if (Sigil_Of(e) != sigil)
+    if (Sigil_Of(v) != sigil)
         return fail ("Trying to remove Sigil from value without that Sigil");
 
-    return COPY(Clear_Cell_Sigil(e));
+    return COPY(Clear_Cell_Sigil(v));
 }
 
 
@@ -783,14 +781,13 @@ DECLARE_NATIVE(PLAIN)
 {
     INCLUDE_PARAMS_OF_PLAIN;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return COPY(Clear_Cell_Sigil(e));
+    return COPY(Clear_Cell_Sigil(v));
 }
 
 

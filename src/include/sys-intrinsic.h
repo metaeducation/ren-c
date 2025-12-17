@@ -144,14 +144,18 @@ INLINE Value* Intrinsic_ARG(Level* L) {
 #define BOUNCE_GOOD_INTRINSIC_ARG  BOUNCE_OKAY  // doesn't write OUT [1]
 
 
-INLINE Result(Bounce) Bounce_Opt_Out_Element_Intrinsic(  // <opt-out> handling
-    Sink(Element*) element_out,
-    Level* L  // writing OUT and SPARE is allowed in this helper
+// Handling for intrinsic args that are [<opt-out> element?], since they do
+// not necessarily do typechecking themselves.
+//
+// If it returns nullptr, then the caller should return nullptr, because
+// it means the opt out occurred (or running a typecheck and it failed, so
+// effectively an opt-out).
+//
+INLINE Result(Option(Element*)) Typecheck_Opt_Out_Element_Intrinsic_Arg(
+    Level* L
 ){
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        *element_out = Known_Element(Level_Arg(L, 1));  // was checked
-        return BOUNCE_GOOD_INTRINSIC_ARG;
-    }
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
+        return Known_Element(Level_Arg(L, 1));  // was checked
 
     Value* arg = Level_Dispatching_Intrinsic_Arg(L);
 
@@ -176,18 +180,14 @@ INLINE Result(Bounce) Bounce_Opt_Out_Element_Intrinsic(  // <opt-out> handling
         return fail (Error_Bad_Intrinsic_Arg_1(L));
     }
 
-    *element_out = Known_Element(arg);
-    return BOUNCE_GOOD_INTRINSIC_ARG;
+    return Known_Element(arg);
 }
 
-INLINE Result(Bounce) Bounce_Decay_Value_Intrinsic(
-    Sink(Stable*) stable_out,
+INLINE Result(Option(Stable*)) Typecheck_Stable_Decayed_Intrinsic_Arg(
     Level* L
 ){
-    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC)) {
-        *stable_out = Known_Stable(Level_Arg(L, 1));  // was checked
-        return BOUNCE_GOOD_INTRINSIC_ARG;
-    }
+    if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
+        return Known_Stable(Level_Arg(L, 1));  // was checked
 
     Value* arg = Level_Dispatching_Intrinsic_Arg(L);
 
@@ -203,6 +203,5 @@ INLINE Result(Bounce) Bounce_Decay_Value_Intrinsic(
         return fail (e);
     }
 
-    *stable_out = Known_Stable(arg);
-    return BOUNCE_GOOD_INTRINSIC_ARG;
+    return Known_Stable(arg);
 }

@@ -381,14 +381,13 @@ DECLARE_NATIVE(REFINEMENT_Q)
 {
     INCLUDE_PARAMS_OF_REFINEMENT_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Get_Word(e));
+    return LOGIC(Is_Get_Word(v));
 }
 
 
@@ -405,14 +404,13 @@ DECLARE_NATIVE(SET_WORD_Q)
 {
     INCLUDE_PARAMS_OF_SET_WORD_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Set_Word(e));
+    return LOGIC(Is_Set_Word(v));
 }
 
 
@@ -429,14 +427,13 @@ DECLARE_NATIVE(SET_RUN_WORD_Q)
 {
     INCLUDE_PARAMS_OF_SET_RUN_WORD_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Set_Run_Word(e));
+    return LOGIC(Is_Set_Run_Word(v));
 }
 
 
@@ -453,17 +450,16 @@ DECLARE_NATIVE(RUN_WORD_Q)
 {
     INCLUDE_PARAMS_OF_RUN_WORD_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    if (not Is_Path(e))
+    if (not Is_Path(v))
         return LOGIC(false);
 
-    Option(SingleHeart) single = Try_Get_Sequence_Singleheart(e);
+    Option(SingleHeart) single = Try_Get_Sequence_Singleheart(v);
     return LOGIC(single == LEADING_SPACE_AND(WORD));
 }
 
@@ -481,14 +477,13 @@ DECLARE_NATIVE(GET_WORD_Q)
 {
     INCLUDE_PARAMS_OF_GET_WORD_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Get_Word(e));
+    return LOGIC(Is_Get_Word(v));
 }
 
 
@@ -505,14 +500,13 @@ DECLARE_NATIVE(SET_TUPLE_Q)
 {
     INCLUDE_PARAMS_OF_SET_TUPLE_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Set_Tuple(e));
+    return LOGIC(Is_Set_Tuple(v));
 }
 
 
@@ -529,14 +523,13 @@ DECLARE_NATIVE(GET_TUPLE_Q)
 {
     INCLUDE_PARAMS_OF_GET_TUPLE_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Get_Tuple(e));
+    return LOGIC(Is_Get_Tuple(v));
 }
 
 
@@ -553,14 +546,13 @@ DECLARE_NATIVE(SET_GROUP_Q)
 {
     INCLUDE_PARAMS_OF_SET_GROUP_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Set_Group(e));
+    return LOGIC(Is_Set_Group(v));
 }
 
 
@@ -577,14 +569,13 @@ DECLARE_NATIVE(GET_GROUP_Q)
 {
     INCLUDE_PARAMS_OF_GET_GROUP_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Get_Group(e));
+    return LOGIC(Is_Get_Group(v));
 }
 
 
@@ -601,14 +592,13 @@ DECLARE_NATIVE(SET_BLOCK_Q)
 {
     INCLUDE_PARAMS_OF_SET_BLOCK_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Set_Block(e));
+    return LOGIC(Is_Set_Block(v));
 }
 
 
@@ -625,14 +615,13 @@ DECLARE_NATIVE(GET_BLOCK_Q)
 {
     INCLUDE_PARAMS_OF_GET_BLOCK_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Get_Block(e));
+    return LOGIC(Is_Get_Block(v));
 }
 
 
@@ -649,14 +638,13 @@ DECLARE_NATIVE(ANY_SET_VALUE_Q)
 {
     INCLUDE_PARAMS_OF_ANY_SET_VALUE_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Any_Set_Value(e));
+    return LOGIC(Any_Set_Value(v));
 }
 
 
@@ -673,14 +661,13 @@ DECLARE_NATIVE(ANY_GET_VALUE_Q)
 {
     INCLUDE_PARAMS_OF_ANY_GET_VALUE_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Any_Get_Value(e));
+    return LOGIC(Any_Get_Value(v));
 }
 
 
@@ -697,14 +684,13 @@ DECLARE_NATIVE(QUASI_WORD_Q)
 {
     INCLUDE_PARAMS_OF_QUASI_WORD_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Quasiform(e) and Heart_Of(e) == TYPE_WORD);
+    return LOGIC(Is_Quasiform(v) and Heart_Of(v) == TYPE_WORD);
 }
 
 
@@ -721,14 +707,13 @@ DECLARE_NATIVE(CHAR_Q)
 {
     INCLUDE_PARAMS_OF_CHAR_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Rune_And_Is_Char(e));
+    return LOGIC(Is_Rune_And_Is_Char(v));
 }
 
 
@@ -745,15 +730,14 @@ DECLARE_NATIVE(LIT_WORD_Q)
 {
     INCLUDE_PARAMS_OF_LIT_WORD_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     return LOGIC(
-        LIFT_BYTE(e) == ONEQUOTE_NONQUASI_4 and Heart_Of(e) == TYPE_WORD
+        LIFT_BYTE(v) == ONEQUOTE_NONQUASI_4 and Heart_Of(v) == TYPE_WORD
     );
 }
 
@@ -771,14 +755,13 @@ DECLARE_NATIVE(LIT_PATH_Q)
 {
     INCLUDE_PARAMS_OF_LIT_PATH_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Heart_Of(e) == TYPE_PATH and Quotes_Of(e) == 1);
+    return LOGIC(Heart_Of(v) == TYPE_PATH and Quotes_Of(v) == 1);
 }
 
 
@@ -795,12 +778,11 @@ DECLARE_NATIVE(ANY_INERT_Q)
 {
     INCLUDE_PARAMS_OF_ANY_INERT_Q;
 
-    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     return LOGIC(Not_Antiform(v) and Any_Inert(v));
 }
@@ -1293,12 +1275,11 @@ DECLARE_NATIVE(ANY_WORD_Q)
 {
     INCLUDE_PARAMS_OF_ANY_WORD_Q;
 
-    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     return LOGIC(Any_Word(v));
 }
@@ -1336,12 +1317,11 @@ DECLARE_NATIVE(BLANK_Q)
 {
     INCLUDE_PARAMS_OF_BLANK_Q;
 
-    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     return LOGIC(Is_Blank(v));
 }
@@ -1360,12 +1340,11 @@ DECLARE_NATIVE(TRIPWIRE_Q)
 {
     INCLUDE_PARAMS_OF_TRIPWIRE_Q;
 
-    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     return LOGIC(Is_Tripwire(v));
 }
@@ -1405,14 +1384,13 @@ DECLARE_NATIVE(QUASAR_Q)
 {
     INCLUDE_PARAMS_OF_QUASAR_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Quasar(e));
+    return LOGIC(Is_Quasar(v));
 }
 
 
@@ -1429,14 +1407,13 @@ DECLARE_NATIVE(SPACE_Q)
 {
     INCLUDE_PARAMS_OF_SPACE_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Space(e));
+    return LOGIC(Is_Space(v));
 }
 
 
@@ -1525,12 +1502,11 @@ DECLARE_NATIVE(DECAY)
 {
     INCLUDE_PARAMS_OF_DECAY;
 
-    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     return COPY(v);
 }
@@ -1583,12 +1559,11 @@ DECLARE_NATIVE(REIFY)
 {
     INCLUDE_PARAMS_OF_REIFY;
 
-    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     Copy_Cell(OUT, v);
     return Reify(OUT);
@@ -1608,14 +1583,13 @@ DECLARE_NATIVE(NOQUASI)
 {
     INCLUDE_PARAMS_OF_NOQUASI;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    Copy_Cell(OUT, e);
+    Copy_Cell(OUT, v);
     if (LIFT_BYTE(OUT) == QUASIFORM_3)
         LIFT_BYTE(OUT) = NOQUOTE_2;
     return OUT;
@@ -1661,12 +1635,11 @@ DECLARE_NATIVE(NOANTIFORM)
 {
     INCLUDE_PARAMS_OF_NOANTIFORM;
 
-    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     if (Is_Antiform(v))
         LIFT_BYTE(v) = NOQUOTE_2;

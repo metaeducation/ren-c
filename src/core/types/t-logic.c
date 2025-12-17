@@ -72,12 +72,11 @@ DECLARE_NATIVE(OKAY_Q)
 {
     INCLUDE_PARAMS_OF_OKAY_Q;
 
-    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     return LOGIC(Is_Okay(v));
 }
@@ -96,12 +95,11 @@ DECLARE_NATIVE(LOGIC_Q)
 {
     INCLUDE_PARAMS_OF_LOGIC_Q;
 
-    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     return LOGIC(Is_Logic(v));
 }
@@ -138,14 +136,13 @@ DECLARE_NATIVE(BOOLEAN_Q)
 {
     INCLUDE_PARAMS_OF_BOOLEAN_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_Boolean(e));
+    return LOGIC(Is_Boolean(v));
 }
 
 
@@ -162,14 +159,13 @@ DECLARE_NATIVE(ONOFF_Q)
 {
     INCLUDE_PARAMS_OF_ONOFF_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_OnOff(e));
+    return LOGIC(Is_OnOff(v));
 }
 
 
@@ -186,14 +182,13 @@ DECLARE_NATIVE(YESNO_Q)
 {
     INCLUDE_PARAMS_OF_YESNO_Q;
 
-    Element* e;
     require (
-      Bounce b = Bounce_Opt_Out_Element_Intrinsic(&e, LEVEL)
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
-    return LOGIC(Is_YesNo(e));
+    return LOGIC(Is_YesNo(v));
 }
 
 
@@ -445,12 +440,11 @@ DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_NOT_1;
 
-    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     require (
       bool cond = Test_Conditional(v)
@@ -472,12 +466,11 @@ DECLARE_NATIVE(TO_LOGIC)
 {
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
-    Stable* v;
     require (
-      Bounce b = Bounce_Decay_Value_Intrinsic(&v, LEVEL)
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
     );
-    if (b != BOUNCE_GOOD_INTRINSIC_ARG)
-        return b;
+    if (not v)
+        return NULLED;
 
     require (
       bool cond = Test_Conditional(v)
