@@ -131,7 +131,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
         if (VAL_DECIMAL(arg) < MIN_D64 or VAL_DECIMAL(arg) >= MAX_D64)
             panic (Error_Overflow_Raw());
 
-        return Init_Integer(OUT, cast(REBI64, VAL_DECIMAL(arg)));;
+        return Init_Integer(OUT, cast(REBI64, VAL_DECIMAL(arg)));
     }
 
     panic (Error_Bad_Make(TYPE_INTEGER, arg));

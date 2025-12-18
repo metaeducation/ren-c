@@ -51,7 +51,7 @@
 //=// NOTES ///////////////////////////////////////////////////////////////=//
 //
 // * Do not store the result of a PUSH() directly into a Stable* variable.
-//   Instead, use the OnStack(Stable*) type, which makes sure that you don't try
+//   Instead, use the OnStack(Stable) type, which makes sure that you don't try
 //   to hold a pointer into the stack across another push or an evaluation.
 //
 // * The data stack is limited in size, and this means code that uses it may
@@ -66,7 +66,7 @@
 //   memory-pooled levels and stacklessness (see %c-trampoline.c)
 //
 
-// The result of PUSH() and TOP is not Value*, but OnStack(Value*).  In an
+// The result of PUSH() and TOP is not Value*, but OnStack(Value).  In an
 // unchecked build this is just Value*, but with DEBUG_EXTANT_STACK_POINTERS
 // it becomes a checked C++ wrapper class...which keeps track of how many
 // such stack values are extant.  If the number is not zero, then you will
@@ -112,7 +112,7 @@
     #define Assert_No_DataStack_Pointers_Extant() \
         do { if (g_ds.num_refs_extant != 0) { \
             if (not g_gc.disabled or g_ds.movable_top == g_ds.movable_tail) \
-                assert(!"PUSH() while OnStack(Cell*) pointers are extant"); \
+                assert(!"PUSH() while OnStack(Cell) pointers are extant"); \
         } } while (0)
 
     template<typename TP>
@@ -219,13 +219,13 @@
 // TOP is the most recently pushed item.
 //
 #define TOP_STABLE \
-    cast(OnStack(Stable*), Known_Stable(g_ds.movable_top))
+    cast(OnStack(Stable), Known_Stable(g_ds.movable_top))
 
 #define TOP_ELEMENT \
-    cast(OnStack(Element*), Known_Element(g_ds.movable_top))
+    cast(OnStack(Element), Known_Element(g_ds.movable_top))
 
 #define TOP \
-    cast(OnStack(Value*), g_ds.movable_top)  // assume valid
+    cast(OnStack(Value), g_ds.movable_top)  // assume valid
 
 
 // 1. Use the fact that the data stack is always dynamic to avoid having to
@@ -260,7 +260,7 @@ INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
 }
 
 #define Data_Stack_At(T,i)  /* may be erased cell */ \
-    cast(OnStack(T*), u_cast(T*, Data_Stack_Cell_At(i)))  // u_cast() needed
+    cast(OnStack(T), u_cast(T*, Data_Stack_Cell_At(i)))  // u_cast() needed
 
 #if RUNTIME_CHECKS
     #define IN_DATA_STACK_DEBUG(v) \
@@ -279,7 +279,7 @@ INLINE Cell* Data_Stack_Cell_At(StackIndex i) {
 
 // Note: g_ds.movable_top is just TOP, but accessing TOP asserts on ENDs
 //
-INLINE OnStack(Value*) PUSH(void) {
+INLINE OnStack(Value) PUSH(void) {
     Assert_No_DataStack_Pointers_Extant();
 
     ++g_ds.index;

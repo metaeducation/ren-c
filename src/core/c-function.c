@@ -563,7 +563,7 @@ Result(ParamList*) Pop_Paramlist(
     StackIndex stackindex = base + 1;  // empty stack base would be 0, bad cell
     for (; stackindex <= TOP_INDEX; stackindex += 2) {
         const Symbol* symbol = Word_Symbol(Data_Stack_Cell_At(stackindex));
-        OnStack(Element*) slot = Data_Stack_At(Element, stackindex + 1);
+        OnStack(Element) slot = Data_Stack_At(Element, stackindex + 1);
 
         assert(Not_Cell_Flag(slot, VAR_MARKED_HIDDEN));  // use NOTE_SEALED
 

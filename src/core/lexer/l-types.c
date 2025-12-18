@@ -841,7 +841,7 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
     // payload.time.nanoseconds set
     // may be NO_DATE_TIME, don't Freshen_Cell_Header()
 
-    OnStack(Cell*) pushed = PUSH();
+    OnStack(Cell) pushed = PUSH();
     USED(pushed);  // we are using this for tracking live cell on stack
 
     Sink(Element) top = TOP;  // workaround ambiguity in Ensure_Date()

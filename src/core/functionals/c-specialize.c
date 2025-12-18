@@ -131,7 +131,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
         //
         StackIndex stackindex = highest_stackindex;
         for (; stackindex != lowest_stackindex; --stackindex) {
-            OnStack(Element*) ordered = Data_Stack_At(Element, stackindex);
+            OnStack(Element) ordered = Data_Stack_At(Element, stackindex);
             if (Word_Symbol(ordered) != symbol)
                 continue;  // just continuing this loop
 
@@ -347,7 +347,7 @@ bool Specialize_Action_Throws(
 
         while (ordered_stackindex != TOP_INDEX) {
             ordered_stackindex += 1;
-            OnStack(Element*) ordered = Data_Stack_At(
+            OnStack(Element) ordered = Data_Stack_At(
                 Element, ordered_stackindex
             );
             if (not Cell_Binding(ordered)) {  // specialize print:asdf/

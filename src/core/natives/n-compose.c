@@ -932,7 +932,7 @@ DECLARE_NATIVE(COMPOSE2)
     StackIndex triples = VAL_INT32(Known_Element(SCRATCH));
 
     assert(Is_Integer(Data_Stack_At(Element, triples)));  // start offset
-    OnStack(Element*) code = Data_Stack_At(Element, triples + 1);
+    OnStack(Element) code = Data_Stack_At(Element, triples + 1);
     assert(Is_Block(code));  // code to evaluate
     assert(Is_Integer(Data_Stack_At(Element, triples + 2)));  // end offset
 

@@ -381,8 +381,8 @@ Bounce Action_Executor(Level* L)
         // parameters at the callsite.
 
         if (TOP_INDEX != STACK_BASE) {  // reorderings/refinements
-            OnStack(Element*) ordered = TOP_ELEMENT;
-            OnStack(Element*) lowest = Data_Stack_At(Element, STACK_BASE);
+            OnStack(Element) ordered = TOP_ELEMENT;
+            OnStack(Element) lowest = Data_Stack_At(Element, STACK_BASE);
             const Symbol* param_symbol = Key_Symbol(KEY);
 
             for (; ordered != lowest; --ordered) {

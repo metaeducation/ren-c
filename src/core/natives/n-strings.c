@@ -663,8 +663,8 @@ DECLARE_NATIVE(JOIN)
 
   iterate_stack: {
 
-    OnStack(Stable*) at = Data_Stack_At(Stable, STACK_BASE + 1);
-    OnStack(Stable*) tail = Data_Stack_At(Stable, TOP_INDEX + 1);
+    OnStack(Stable) at = Data_Stack_At(Stable, STACK_BASE + 1);
+    OnStack(Stable) tail = Data_Stack_At(Stable, TOP_INDEX + 1);
 
     for (; at != tail; ++at) {
         if (Get_Cell_Flag(at, STACK_NOTE_MOLD)) {

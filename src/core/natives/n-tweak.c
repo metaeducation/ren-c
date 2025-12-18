@@ -525,7 +525,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
   do_stack_thing: {
 
-    OnStack(Element*) at = Data_Stack_At(Element, stackindex);
+    OnStack(Element) at = Data_Stack_At(Element, stackindex);
     Copy_Cell(spare_location_dual, at);  // dual protocol, leave lifted
     if (not Any_Lifted(spare_location_dual)) {
         e = Error_User("First Element in STEPS must be lifted");
