@@ -108,31 +108,6 @@ export extract-native-protos: func [
 ]
 
 
-; The bootstrap executable loads {...} as a text string.  In function specs
-; we use FENCE! for locals list.  But all we want here are the words.  If we
-; find a genuine locals-looking FENCE! at the tail of the spec, remove
-; the braces around it so we just have the words.
-;
-textually-splice-last-fence: proc [
-    spec [text!]
-][
-    let pos: find-last spec "}"
-    if pos [
-        if parse3 next pos [
-
-            opt some [space | newline] "]" accept (okay)
-            | accept (null)
-        ][
-            take pos
-            take find-reverse pos "{"
-        ] else [
-            ; This happens if you have "{}" or other braces in strings in
-            ; the spec.  If some locals aren't showing up check here why.
-        ]
-    ]
-]
-
-
 ; EMIT-INCLUDE-PARAMS-MACRO
 ;
 ; This routine has to deal with differences between specs the bootstrap EXE
@@ -140,9 +115,23 @@ textually-splice-last-fence: proc [
 ; to take in the textual spec, "massage" it in a way that doesn't destroy the
 ; information being captured, and then TRANSCODE it.
 ;
-;  1. Currently we do not need the information from $XXX or @XXX or ^XXX when
+;  1. Currently we do not need the information from $XXX or @XXX when
 ;     processing parameters to make the include macros.  So we just strip
-;     those characters out.
+;     the $ and @ characters out.
+;
+;     `^` is turned into a `m3ta-` so that ^XXX becomes m3ta-XXX so we can
+;     tell when something is a ^META argument and ARG() should be a Value*
+;     instead of a Stable.
+;
+;     Escapable parameters like @(foo) were seen as just GROUP! before but
+;     we have a more important usage for groups, so strip the parens.
+;
+;     We want {local1 local2} to become locals in the spec dialect, but this
+;     will load as a string in the bootstrap executable so we turn the braces
+;     into parentheses so we see that as a GROUP! (local1 local2)
+;
+;     !!! Note: temporarily just stripping the braces, as there's no special
+;     treatment for locals, but this is likely temporary.
 ;
 ;  2. All natives *should* specify a `return:`, because it's important to
 ;     document what the return types are (and HELP should show it).  But only
@@ -209,8 +198,11 @@ export emit-include-params-macro: func [
     replace spec "@" -[]-  ; @WORD! would be invalid EMAIL! [1]
     replace spec "$" -[]-  ; $WORD! would be invalid MONEY! [1]
     replace spec "^^" caret-surrogate  ; ^WORD! would just be invalid [1]
-
-    textually-splice-last-fence spec  ; bootstrap loads {...} locals as TEXT!
+    replace spec "(" ""  ; make escapable @(foo) just be @foo [1]
+    replace spec ")" ""
+    replace spec "{" ""  ; load {local1 local2} as local1 local2 [1]
+    replace spec "}" ""
+    replace spec "#" ""  ; stop ~(#foo)~ from becoming ~#foo~
 
     spec: transcode:one spec
 
@@ -258,9 +250,6 @@ export emit-include-params-macro: func [
         while [not tail? paramlist] [
             let item: paramlist.1
             paramlist: next paramlist
-            if group? item [  ; escapable parameters are in GROUP!
-                item: first item
-            ]
             if not match [word! get-word3! lit-word3!] item [
                 continue  ; note get-word3! is refinement?
             ]

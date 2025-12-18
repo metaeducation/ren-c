@@ -684,12 +684,11 @@ DECLARE_NATIVE(GET)
     assert(Is_Light_Null(LOCAL(DUAL)));  // "value" (SET uses, GET doesn't) [2]
     USED(ARG(DUAL));  // NULL is signal for TWEAK to GET
 
-    bool groups_ok = did ARG(GROUPS);
-
     USED(ARG(STEPS));  // TWEAK heeds this
+    USED(ARG(GROUPS));  // TWEAK heeds this too (but so do we)
 
     if (Is_Group(target)) {
-        if (not groups_ok)
+        if (not ARG(GROUPS))
             return fail ("GET of GROUP! target without :GROUPS not allowed");
 
         require (

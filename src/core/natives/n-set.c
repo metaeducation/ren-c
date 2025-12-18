@@ -504,12 +504,11 @@ DECLARE_NATIVE(SET)
 
     Value* v = ARG(VALUE);  // not a dual yet (we have to lift it...)
 
-    bool groups_ok = did ARG(GROUPS);
-
     USED(ARG(STEPS));  // TWEAK heeds this
+    USED(ARG(GROUPS));  // TWEAK heeds this too (but so do we)
 
     if (Is_Group(target)) {  // Group before error passthru [A]
-        if (not groups_ok)
+        if (not ARG(GROUPS))
             return fail ("SET of GROUP! target without :GROUPS not allowed");
 
         require (
