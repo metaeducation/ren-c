@@ -37,13 +37,18 @@
 //    panic (PARAM(NAME));     // impliciate parameter as having a bad value
 //    panic (other_cell);      // just report as a generic "bad value"
 //
-// 1. We would face an ambiguity in taking API handles, as to whether that
+// 1. Currently panic() itself won't take Value* in its type check.  If it
+//    did, then that opens the doors to the idea that it might have to
+//    decay, e.g. an ERROR! which would be causing a panic of its own.
+//    Reconsider if taking unstable pointers seems a good idea.
+//
+// 2. We would face an ambiguity in taking API handles, as to whether that
 //    is an error, or if it is "some value" that is just a bad value.  Since
 //    internal code that would use this function does not deal often in
 //    API values, it's believed that assuming they are errors when passed
 //    to `panic()` or `FAIL()` or `FAIL()` is the best policy.
 //
-// 2. We check to see if the Cell is in the paramlist of the current running
+// 3. We check to see if the Cell is in the paramlist of the current running
 //    native.  (We could theoretically do this with ARG(), or have a nuance of
 //    behavior with ARG()...or even for the Key*...but panicking on the PARAM()
 //    feels like the best way to "blame" that argument.)
@@ -65,13 +70,9 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
         return cast(Error*, f); }
 
       case DETECTED_AS_CELL: {
-        const Value* atom = cast(Value*, p);
-        assert(Is_Cell_Stable(atom));  // !!! Should unstable args be allowed?
-        UNUSED(atom);
+        const Stable* v = cast(Stable*, p);  // panic(Value*) prohibited [1]
 
-        const Stable* v = cast(Stable*, p);
-
-        if (Is_Base_Root_Bit_Set(v)) {  // API handles must be errors [1]
+        if (Is_Base_Root_Bit_Set(v)) {  // API handles must be errors [2]
             Error* error;
             if (Is_Warning(v)) {
                 error = Cell_Error(v);
@@ -90,7 +91,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
         const Param* head = Phase_Params_Head(Level_Phase(TOP_LEVEL));
         REBLEN num_params = Phase_Num_Params(Level_Phase(TOP_LEVEL));
 
-        if (v >= head and v < head + num_params) {  // PARAM() error [2]
+        if (v >= head and v < head + num_params) {  // PARAM() error [3]
             const Param* param = cast(const Param*, v);
             return Error_Invalid_Arg(TOP_LEVEL, param);
         }
@@ -685,9 +686,12 @@ Error* Make_Error_From_Vaptr_Managed(
         deeply
     );
 
-    // Arrays from errors.r look like `["The value" $1 "is not" $2]`
-    // They can also be a single TEXT! (which will just bypass this loop).
-    //
+  // Arrays from errors.r look like `["The value" $1 "is not" $2]`
+  // They can also be a single TEXT! (which will just bypass this loop).
+  //
+  // 1. We know the values received in the va_list are SymbolOrStable(*)
+  //    due to construction, so no unstable Value* possible.
+
     if (not Is_Text(message)) {
         const Element* tail;
         const Element* at = List_At(&tail, message);
@@ -711,7 +715,7 @@ Error* Make_Error_From_Vaptr_Managed(
                 break;
 
               case DETECTED_AS_CELL: {
-                Copy_Cell(slot, cast(Stable*, p));
+                Copy_Cell(slot, cast(Stable*, p));  // SymbolOrStable() [1]
                 break; }
 
               case DETECTED_AS_STUB: {  // let symbols act as words

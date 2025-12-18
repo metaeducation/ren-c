@@ -1238,22 +1238,26 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
 
   acquisition_loop: //////////////////////////////////////////////////////////
 
-    // This supports scanning of variadic material, e.g. C code like:
-    //
-    //     Stable* some_value = rebInteger(3);
-    //     rebElide("print [{The value is}", some_value, "]");
-    //
-    // We scan one string component at a time, pushing the appropriate items.
-    // Each time a UTF-8 source fragment being scanned is exhausted, ->at
-    // will be set to nullptr and this loop is run to see if there's more
-    // input to be processed--either values to splice, or other fragments
-    // of UTF-8 source.
-    //
-    // See the "Feed" abstraction for the mechanics by which these text and
-    // spliced components are fed to the scanner (and then optionally to the
-    // evaluator), potentially bypassing the need to create an intermediary
-    // BLOCK! structure to hold the code.
-    //
+  // This supports scanning of variadic material, e.g. C code like:
+  //
+  //     Value* some_value = rebInteger(3);
+  //     rebElide("print [-[The value is]-", some_value, "]");
+  //
+  // We scan one string component at a time, pushing the appropriate items.
+  // Each time a UTF-8 source fragment being scanned is exhausted, `->at` will
+  // be set to nullptr and this loop is run to see if there's more input to be
+  // processed--either values to splice, or other fragments of UTF-8 source.
+  //
+  // See the "Feed" abstraction for the mechanics by which these text and
+  // spliced components are fed to the scanner (and then optionally to the
+  // evaluator), potentially bypassing the need to create an intermediary
+  // BLOCK! structure to hold the code.
+  //
+  // 1. Once only Stable cells could be pushed, and reconstituted with the
+  //    tricky `@` operator into antiforms by the evaluator.  Now we also
+  //    allow arbitrary Value pointers, as they can be reconstituted by the
+  //    even trickier (but still similar) `^` operator.
+
     while (not transcode->at) {
         if (L->feed->p == nullptr) {  // API null, can't be in feed...
             Init_Quasi_Null(PUSH());  // ...so use a quasi null
@@ -1271,7 +1275,7 @@ static Result(Token) Locate_Token_May_Push_Mold(Molder* mo, Level* L)
           case DETECTED_AS_CELL: {
             Copy_Reified_Variadic_Feed_Cell(
                 PUSH(),
-                cast(Stable*, L->feed->p)
+                cast(Value*, L->feed->p)  // can be unstable now! [1]
             );
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);

@@ -2688,8 +2688,8 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
         break; }
 
       case DETECTED_AS_CELL: {
-        const Stable* at = cast(const Stable*, p);
-        if (Is_Nulled(at)) {
+        const Value* at = cast(const Value*, p);
+        if (Is_Light_Null(at)) {
             assert(not Is_Api_Value(at));  // only internals use nulled cells
             return cast(RebolBaseInternal*, g_quasi_null);
         }
@@ -2823,22 +2823,18 @@ RebolBaseInternal* API_rebRUN(const void* p)
         panic ("rebRUN() received nullptr");
 
     Stub* stub;
-    Stable* v;
+    Value* v;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_STUB: {
         stub = m_cast(Stub*, cast(Stub*, p));
-        v = cast(Stable*, Stub_Cell(stub));
+        v = cast(Value*, Stub_Cell(stub));
         if (Not_Flavor_Flag(API, stub, RELEASE))
             panic ("Can't quote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
-        const Stable* at = cast(const Stable*, p);
-        if (Is_Nulled(at))
-            panic ("rebRUN() received null cell");
-
-        v = Copy_Cell(Alloc_Value(), at);
+        v = Copy_Cell(Alloc_Value(), cast(const Value*, p));
         stub = Compact_Stub_From_Cell(v);
         Set_Flavor_Flag(API, stub, RELEASE);
         break; }
@@ -2847,9 +2843,13 @@ RebolBaseInternal* API_rebRUN(const void* p)
         panic ("Unknown pointer");
     }
 
-    if (Is_Action(v))
-        LIFT_BYTE(v) = NOQUOTE_2;
-    else if (not Is_Frame(v))
+    require (
+      Stable* stable = Decay_If_Unstable(v)
+    );
+
+    if (Is_Action(stable))
+        LIFT_BYTE(stable) = NOQUOTE_2;
+    else if (not Is_Frame(stable))
         panic ("rebRUN() requires FRAME! or actions (aka FRAME! antiforms)");
 
     return cast(RebolBaseInternal*, stub);  // cast needed in C

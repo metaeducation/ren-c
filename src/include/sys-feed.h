@@ -233,10 +233,10 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
 //
 INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
     Sink(Element) out,
-    const Stable* v
+    const Value* v
 ){
     if (Is_Antiform(v)) {
-        if (Is_Nulled(v))
+        if (Is_Light_Null(v))
             assert(not Is_Api_Value(v));  // only internals can be nulled [1]
 
         Copy_Lifted_Cell(out, v);
