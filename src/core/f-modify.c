@@ -362,12 +362,26 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
 
   setup_destination: {
 
-  // The `binary` is the Flex being modified.  It can be either just a Binary*
-  // or it can be a Strand* if the Binary is actually a string alias.
+  // The `binary` is the Flex being modified.  It can be either just a Binary
+  // or it can be a Strand subclass if the Binary is actually a string alias.
   //
   // 1. Rather than testing for Is_Stub_Strand() and then casting multiple
   //    times in the code below, we keep a `strand` variable that is either
   //    null (if not a string) or the Strand* version of the binary if it is.
+  //
+  // 2. It's possible to alias a UTF-8 string as a BLOB!, where the series
+  //    position can be on arbitrary byte offsets, not just codepoint offsets.
+  //    There's no valid way to perform an insertion in the middle of a UTF-8
+  //    codepoint, so we error in that case.
+  //
+  // 3. Right now the caches for Bookmarks are built into the Strand_At()
+  //    function, so functions that produce codepoint indexes from byte
+  //    offsets don't get the speedup.  Refactoring could make it so that
+  //    Strand_At() is not the only way to get a cached position.
+  //
+  // 4. To find the offset we could use String_Byte_Offset_For_Index(), but
+  //    we are more likely to get a good cached position from Strand_At()
+  //    giving the UTF-8 byte pointer, and subtracting the head.
 
     Binary* binary = cast(Binary*, Cell_Flex_Ensure_Mutable(series));
 
@@ -375,45 +389,37 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
         ? cast(Strand*, binary)
         : nullptr;  // alias for binary, null if not a Strand [1]
 
-    Size used = Binary_Len(binary);
+    Size offset;
+
+    Length index_store;
+    Length* index = (strand ? &index_store : nullptr);
 
     Length dst_len_old_store;
     Length* dst_len_old = (strand ? &dst_len_old_store : nullptr);
 
-    Size offset;
-
-    Length index_store;
-    Length* index;
-
-    if (Is_Blob(series)) {  // check invariants up front even if NULL / no-op
-        index = nullptr;
+    if (not strand) {  // modifying unconstrained binary, indexed by bytes
+        assert(Is_Blob(series));
         offset = Series_Index(series);
-        if (strand) {
-            Byte at = *Binary_At(strand, offset);
-            if (Is_Continuation_Byte(at))
-                panic (Error_Bad_Utf8_Bin_Edit_Raw());
-            *dst_len_old = Strand_Len(strand);
-        }
+        index = nullptr;
     }
-    else {
-        assert(Any_String(series));
+    else if (Is_Blob(series)) {  // aliasing a UTF-8 Strand, indexed by bytes
+        offset = Series_Index(series);
 
-        index = &index_store;
-        *index = Series_Index(series);
-        offset = String_Byte_Offset_For_Index(series, *index);  // !!! speedup?
+        Byte at = *Binary_At(strand, offset);
+        if (Is_Continuation_Byte(at))  // catch off-codepoint alias edits [2]
+            panic (Error_Bad_Utf8_Bin_Edit_Raw());
+
+        *index = Strand_Index_At(strand, offset);  // no cache atm [3]
+
         *dst_len_old = Strand_Len(strand);
     }
+    else {  // modifying a UTF-8 string, indexed by codepoints
+        assert(Any_String(series));
 
-    // Now that we know there's actual work to do, we need `index` to speak
-    // in terms of codepoints (if applicable)
+        offset = String_At(series) - Strand_Head(strand);  // uses cache [4]
 
-    if (offset > used) {
-        offset = Binary_Len(binary);
-        if (strand)
-            *index = *dst_len_old;
-    }
-    else if (Is_Blob(series) and strand) {
-        *index = Strand_Index_At(strand, offset);
+        *index = Series_Index(series);
+        *dst_len_old = Strand_Len(strand);
     }
 
   setup_source: {
@@ -442,6 +448,9 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
 
   dispatch_on_type: {
 
+    if (Is_Splice(v))  // !!! BUG: Any_Utf8() out of range for splice!
+        goto handle_splice;
+
     if (Any_Utf8(v))
         goto handle_utf8;
 
@@ -450,9 +459,6 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
 
     if (Is_Blob(v))
         goto handle_blob;
-
-    if (Is_Splice(v))
-        goto handle_splice;
 
     goto handle_generic_form;
 
@@ -463,13 +469,14 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
   //    but appending series to themselves is rare-ish.  Use the mold buffer.
 
     Length utf8_len;
-    src = Cell_Utf8_Len_Size_At_Limit(
+    Utf8(const*) utf8 = Cell_Utf8_Len_Size_At_Limit(
         &utf8_len,  // calculate regardless in case needed for [1]
         &size,
         v,
         limit
     );
 
+    src = utf8;
     if (strand)
         *len = utf8_len;
 
@@ -478,7 +485,7 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
         and Cell_Flex(v) == binary  // conservative, copy to mold buffer [1]
     ){
         Push_Mold(mo);
-        Append_Utf8(mo->strand, src, utf8_len, size);
+        Append_Utf8(mo->strand, utf8, utf8_len, size);
         src = Binary_At(mo->strand, mo->base.size);
         goto use_mold_buffer;
     }
@@ -489,14 +496,21 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
 
   // Note that (append #{123456} 10) is #{1234560A}, just the byte.
   // But (append "abc" 10) is "abc10"
+  //
+  // 1. If you alias an ANY-STRING? as BLOB! then try to insert a byte into
+  //    it, the only bytes that are valid are non-zero ASCII bytes.
+  //
+  //    (Note that the byte insertion will still have to check that you are
+  //    not splitting a UTF-8 codepoint, e.g. a CHANGE of a non-ASCII leading
+  //    UTF-8 byte to a single ASCII byte, which would corrupt the UTF-8.)
 
     if (not Is_Blob(series))
         goto handle_generic_form;  // don't want single byte interpretation
 
     Byte byte = VAL_UINT8(v);  // panics if out of range
 
-    if (strand) {
-        if (Is_Utf8_Lead_Byte(byte))
+    if (strand) {  // injecting byte into UTF-8-constrained alias BLOB! [1]
+        if (not Is_Byte_Ascii(byte))
             panic (Error_Bad_Utf8_Bin_Edit_Raw());
         if (byte == '\0')
             panic (Error_Illegal_Zero_Byte_Raw());
@@ -652,180 +666,173 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
             *expansion_len = (*len) * dups;
     }
 
-  //=//// BELOW THIS LINE, BE CAREFUL WITH BOOKMARK-USING ROUTINES //////=//
+    if (op == ST_MODIFY_INSERT)
+        goto expand_binary_or_strand_for_insert;  // always expands
 
-    // We extract the destination's bookmarks for updating.  This may conflict
-    // with other updating functions.  Be careful not to use any of the
-    // functions like Cell_Utf8_Size_At() etc. that leverage bookmarks after
-    // the extraction occurs.
+    assert(op == ST_MODIFY_CHANGE);
 
-    BookmarkList* book = nullptr;
+    Size dst_size_at;
 
-    // For strings, we should have generated a bookmark in the process of this
-    // modification in most cases where the size is notable.  If we had not,
-    // we might add a new bookmark pertinent to the end of the insertion for
-    // longer series.
+    Length dst_len_at_store;
+    Length* dst_len_at;
+    dst_len_at = (strand ? &dst_len_at_store : nullptr);
 
-    if (op == ST_MODIFY_INSERT) {  // always expands
+    Size part_size;
+
+    if (not strand)
+        goto calculate_change_for_binary;  // byte-based change
+
+    goto calculate_change_for_strand;  // utf-8 codepoint-based change
+
+  calculate_change_for_binary: { /////////////////////////////////////////////
+
+    dst_size_at = Series_Len_At(series);
+
+    if (part > dst_size_at) {
+        part = dst_size_at;
+        part_size = dst_size_at;
+    }
+    else
+        part_size = part;
+
+    goto expand_or_resize_binary_for_change;
+
+} calculate_change_for_strand: { /////////////////////////////////////////////
+
+  // CHANGE of a Strand with "UTF-8 Everywhere" is complicated :-(
+  //
+  // We are overwriting codepoints where the source codepoint sizes and the
+  // destination codepoint sizes may be different; byte counts don't tell the
+  // whole story.  e.g. if we were changing a four-codepoint sequence where
+  // all are 1 byte with a single 4-byte codepoint, you'd see:
+  //
+  //     len == 1
+  //     dst_len_at == 4
+  //     expansion_size == 4
+  //     dst_size_at == 4
+  //
+  // It deceptively seems there is enough capacity.  But only one codepoint is
+  // being overwritten (with a larger one).  So three bytes have to be moved
+  // safely out of the way before being overwritten.
+  //
+  // 1. The calculations on the new length depend on `part` being in terms of
+  //    codepoint count.  Transform it from byte count, and also be sure it's
+  //    a legitimate boundary and not splitting a codepoint's bytes.
+
+    if (Is_Blob(series)) {
+        dst_size_at = Series_Len_At(series);  // byte count
+        *dst_len_at = Strand_Index_At(strand, dst_size_at);
+
+        if (part > dst_size_at) {  // can use Strand_Len() from above [1]
+            part = *dst_len_at;
+            part_size = dst_size_at;
+        }
+        else {  // brute-force count how many codepoints are in the `part` [1]
+            part_size = part;
+            Utf8(*) cp = cast(Utf8(*), Binary_At(binary, offset));
+            Utf8(*) pp = cast(Utf8(*),
+                Binary_At(binary, offset + part_size)
+            );
+            if (Is_Continuation_Byte(*cast(Byte*, pp)))
+                panic (Error_Bad_Utf8_Bin_Edit_Raw());
+
+            part = 0;
+            for (; cp != pp; cp = Skip_Codepoint(cp))
+                ++part;
+        }
+    }
+    else {
+        dst_size_at = String_Size_Limit_At(
+            &*dst_len_at,
+            series,
+            UNLIMITED
+        );
+
+        if (part > *dst_len_at) {  // can use Strand_Len() from above
+            part = *dst_len_at;
+            part_size = dst_size_at;
+        }
+        else {
+            REBLEN check;  // v-- !!! This call uses bookmark, review
+            part_size = String_Size_Limit_At(&check, series, &part);
+            assert(check == part);
+            UNUSED(check);
+        }
+    }
+
+    goto expand_or_resize_binary_for_change;
+
+} expand_or_resize_binary_for_change: { //////////////////////////////////////
+
+  // 1. CHANGE arbitrarily warps what codepoint index maps to what byte offset
+  //    in the region of interest.  So instead of worrying over bookmark
+  //    maintenance we assume that a new cache marking the start of the change
+  //    is as good as any to be relevant for the next operation.
+
+    if (expansion_size > part_size) {  // adding more bytes than removing
         trap (
-          Expand_Flex_At_Index_And_Update_Used(
-            binary, offset, expansion_size
+          Expand_Flex_At_Index_And_Update_Used(  // slide data right
+            binary,
+            offset,
+            expansion_size - part_size
         ));
-
-        if (strand) {
-            book = opt Link_Bookmarks(strand);
-
-            if (book and BOOKMARK_INDEX(book) > *index) {  // only INSERT
-                BOOKMARK_INDEX(book) += *expansion_len;
-                BOOKMARK_OFFSET(book) += expansion_size;
-            }
-            Tweak_Misc_Num_Codepoints(
-                strand, *dst_len_old + *expansion_len
-            );
-        }
     }
-    else {  // CHANGE only expands if more content added than overwritten
-        assert(op == ST_MODIFY_CHANGE);
-
-        Size dst_size_at;
-
-        Length dst_len_at_store;
-        Length* dst_len_at;
-        dst_len_at = (strand ? &dst_len_at_store : nullptr);
-
-        if (strand) {
-            if (Is_Blob(series)) {
-                dst_size_at = Series_Len_At(series);  // byte count
-                *dst_len_at = Strand_Index_At(strand, dst_size_at);
-            }
-            else
-                dst_size_at = String_Size_Limit_At(
-                    &*dst_len_at,
-                    series,
-                    UNLIMITED
-                );
-
-            // Note: above functions may update the bookmarks --^
-            //
-            book = opt Link_Bookmarks(strand);
-        }
-        else {
-            dst_size_at = Series_Len_At(series);
-        }
-
-        // We are overwriting codepoints where the source codepoint sizes and
-        // the destination codepoint sizes may be different.  Hence if we
-        // were changing a four-codepoint sequence where all are 1 byte with
-        // a single-codepoint sequence with a 4-byte codepoint, you get:
-        //
-        //     len == 1
-        //     dst_len_at == 4
-        //     expansion_size == 4
-        //     dst_size_at == 4
-        //
-        // It deceptively seems there's enough capacity.  But since only one
-        // codepoint is being overwritten (with a larger one), three bytes
-        // have to be moved safely out of the way before being overwritten.
-
-        Size part_size;
-        if (strand) {
-            if (Is_Blob(series)) {
-                //
-                // The calculations on the new length depend on `part` being
-                // in terms of codepoint count.  Transform it from byte count,
-                // and also be sure it's a legitimate codepoint boundary and
-                // not splitting a codepoint's bytes.
-                //
-                if (part > dst_size_at) {  // can use Strand_Len() from above
-                    part = *dst_len_at;
-                    part_size = dst_size_at;
-                }
-                else {  // count how many codepoints are in the `part`
-                    part_size = part;
-                    Utf8(*) cp = cast(Utf8(*), Binary_At(binary, offset));
-                    Utf8(*) pp = cast(Utf8(*),
-                        Binary_At(binary, offset + part_size)
-                    );
-                    if (Is_Continuation_Byte(*cast(Byte*, pp)))
-                        panic (Error_Bad_Utf8_Bin_Edit_Raw());
-
-                    part = 0;
-                    for (; cp != pp; cp = Skip_Codepoint(cp))
-                        ++part;
-                }
-            }
-            else {
-                if (part > *dst_len_at) {  // can use Strand_Len() from above
-                    part = *dst_len_at;
-                    part_size = dst_size_at;
-                }
-                else {
-                    REBLEN check;  // v-- !!! This call uses bookmark, review
-                    part_size = String_Size_Limit_At(&check, series, &part);
-                    assert(check == part);
-                    UNUSED(check);
-                }
-            }
-        }
-        else {  // Just a non-aliased binary; keep the part in bytes
-            if (part > dst_size_at) {
-                part = dst_size_at;
-                part_size = dst_size_at;
-            }
-            else
-                part_size = part;
-        }
-
-        if (expansion_size > part_size) {
-            //
-            // We're adding more bytes than we're taking out.  Expand.
-            //
-            trap (
-              Expand_Flex_At_Index_And_Update_Used(
-                binary,
-                offset,
-                expansion_size - part_size
-            ));
-        }
-        else if (part_size > expansion_size) {
-            //
-            // We're taking out more bytes than we're inserting.  Slide left.
-            //
-            Remove_Flex_Units_And_Update_Used(
-                binary,
-                offset,
-                part_size - expansion_size
-            );
-        }
-        else {
-            // staying the same size (change "abc" "-" => "-bc")
-        }
-
-        // CHANGE can do arbitrary changes to what index maps to what offset
-        // in the region of interest.  The manipulations here would be
-        // complicated--but just assume that the start of the change is as
-        // good a cache as any to be relevant for the next operation.
-        //
-        if (strand) {
-            book = opt Link_Bookmarks(strand);
-
-            if (book and BOOKMARK_INDEX(book) > *index) {
-                BOOKMARK_INDEX(book) = *index;
-                BOOKMARK_OFFSET(book) = offset;
-            }
-            Tweak_Misc_Num_Codepoints(
-                strand, *dst_len_old + *expansion_len - part
-            );
-        }
+    else if (part_size > expansion_size) {  // taking out more than inserting
+        Remove_Flex_Units_And_Update_Used(  // slide data left
+            binary,
+            offset,
+            part_size - expansion_size
+        );
+    }
+    else {
+        // staying the same size (change "abc" "-" => "-bc")
     }
 
-    // Since the Flex may be expanded, its pointer could change...so this
-    // can't be done up front at the top of this routine.
-    //
+    if (strand) {
+        BookmarkList* book = opt Link_Bookmarks(strand);
+
+        if (book and BOOKMARK_INDEX(book) > *index) {  // in the danger zone
+            BOOKMARK_INDEX(book) = *index;  // so just make a new cache [1]
+            BOOKMARK_OFFSET(book) = offset;
+        }
+
+        Tweak_Misc_Num_Codepoints(
+            strand, *dst_len_old + *expansion_len - part
+        );
+    }
+
+    goto perform_insertions;
+
+} expand_binary_or_strand_for_insert: { //////////////////////////////////////
+
+    trap (
+      Expand_Flex_At_Index_And_Update_Used(
+        binary, offset, expansion_size
+    ));
+
+    if (strand) {
+        BookmarkList* book = opt Link_Bookmarks(strand);
+
+        if (book and BOOKMARK_INDEX(book) > *index) {
+            BOOKMARK_INDEX(book) += *expansion_len;
+            BOOKMARK_OFFSET(book) += expansion_size;
+        }
+
+        Tweak_Misc_Num_Codepoints(
+            strand, *dst_len_old + *expansion_len
+        );
+    }
+
+    goto perform_insertions;
+
+} perform_insertions: { //////////////////////////////////////////////////////
+
+  // Since the Flex may be expanded, its pointer could change...so this
+  // can't be done up front at the top of this routine.
+
     Byte* dst = Binary_At(binary, offset);
 
-    REBLEN d;
-    for (d = 0; d < dups; ++d) {  // dups checked above as > 0
+    for (Count d = 0; d < dups; ++d) {  // dups checked above as > 0
         memcpy(dst, src, size);
         dst += size;
 
@@ -835,26 +842,29 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
         }
     }
 
+} drop_mold_if_pushed: {
+
     if (mo->strand != nullptr)  // ...a Push_Mold() happened
         Drop_Mold(mo);
 
     // !!! Should BYTE_BUF's memory be reclaimed also (or should it be
     // unified with the mold buffer?)
 
-    if (book) {
-        if (BOOKMARK_INDEX(book) > Strand_Len(strand)) {  // past active
-            assert(op == ST_MODIFY_CHANGE);  // only change removes material
-            Free_Bookmarks_Maybe_Null(strand);
-        }
-        else {
-          #if DEBUG_BOOKMARKS_ON_MODIFY
-            Check_Bookmarks_Debug(strand);
-          #endif
+} finalize_bookmarks: {
 
-            if (Strand_Len(strand) < Size_Of(Cell))  // small not kept
-                Free_Bookmarks_Maybe_Null(strand);
-        }
+  // Note that for strings, we *should* have generated a bookmark in the
+  // process of this modification in most cases where the size is notable.
+
+    if (strand) {
+        if (Strand_Len(strand) < Size_Of(Cell))  // small not kept
+            Free_Bookmarks_Maybe_Null(strand);
+
+      #if DEBUG_BOOKMARKS_ON_MODIFY
+        Check_Bookmarks_Debug(strand);
+      #endif
     }
+
+} finish_up: {
 
     // !!! Set_Flex_Used() now corrupts the terminating byte, which notices
     // problems when it's not synchronized.  Review why the above code does
@@ -866,4 +876,4 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
         return offset + expansion_size;
 
     return *index + *expansion_len;
-}}}}
+}}}}}

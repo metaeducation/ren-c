@@ -35,14 +35,6 @@ INLINE bool VAL_PAST_END(const Cell* v)
    { return Series_Index(v) > Series_Len_Head(v); }
 
 INLINE Length Series_Len_At(const Cell* v) {
-    //
-    // !!! At present, it is considered "less of a lie" to tell people the
-    // length of a series is 0 if its index is actually past the end, than
-    // to implicitly clip the data pointer on out of bounds access.  It's
-    // still going to be inconsistent, as if the caller extracts the index
-    // and low level length themselves, they'll find it doesn't add up.
-    // This is a longstanding historical Rebol issue that needs review.
-    //
     REBIDX i = Series_Index(v);
     if (i < 0 or i > Series_Len_Head(v))
         panic (Error_Index_Out_Of_Range_Raw());

@@ -263,10 +263,10 @@ DECLARE_NATIVE(APPEND)
 
     return OUT;  // don't panic on read only if would be a no-op
 
-} handle_non_series: { ///////////////////////////////////////////////////////
+}} handle_non_series: { ///////////////////////////////////////////////////////
 
     return Run_Generic_Dispatch(series, LEVEL, CANON(APPEND));
-}}}
+}}
 
 
 //
