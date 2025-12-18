@@ -2402,8 +2402,8 @@ DECLARE_NATIVE(SUBPARSE)
                     //
                     SERIES_INDEX_UNBOUNDED(ARG(POSITION)) = begin;
                     require (
-                      Modify_List(
-                        Element_ARG(POSITION),  // updates P_POS
+                      Length tail = Modify_List(
+                        Element_ARG(POSITION),
                         (P_FLAGS & PF_CHANGE)
                             ? ST_MODIFY_CHANGE
                             : ST_MODIFY_INSERT,
@@ -2412,12 +2412,13 @@ DECLARE_NATIVE(SUBPARSE)
                         count,  // !!! UNLIMITED for (P_FLAGS & PF_INSERT) ?
                         1
                     ));
+                    P_POS = tail;
                 }
                 else {
                     P_POS = begin;
                     require (
-                      Modify_String_Or_Blob(  // checks readonly
-                        Element_ARG(POSITION),  // updates P_POS
+                      Length tail = Modify_String_Or_Blob(  // checks readonly
+                        Element_ARG(POSITION),
                         (P_FLAGS & PF_CHANGE)
                             ? ST_MODIFY_CHANGE
                             : ST_MODIFY_INSERT,
@@ -2426,6 +2427,7 @@ DECLARE_NATIVE(SUBPARSE)
                         count,  // !!! UNLIMITED for (P_FLAGS & PF_INSERT) ?
                         1
                     ));
+                    P_POS = tail;
                 }
             }}
 

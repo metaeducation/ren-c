@@ -12,6 +12,18 @@
 
 ([_] = append copy [] (space))
 
+; Semantic change from R3-Alpha/Red: APPEND doesn't return HEAD OF, but the
+; passed-in position instead.  You can ask for the HEAD OF if you like
+[
+    ("ef1234" = append (skip "abcdef" 4) "1234")
+    ("abcdef1234" = head of append (skip "abcdef" 4) "1234")
+
+    (#{ef1234} = append (skip #{abcdef} 2) #{1234})
+    (#{abcdef1234} = head of append (skip #{abcdef} 2) #{1234})
+
+    ([ef 12 34] = append (skip [ab cd ef] 2) spread [12 34])
+    ([ab cd ef 12 34] = head of append (skip [ab cd ef] 2) spread [12 34])
+]
 
 ; Slipstream in some tests of MY (there don't seem to be a lot of tests here)
 ;

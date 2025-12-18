@@ -356,9 +356,8 @@ typedef struct rebol_time_fields {
 #define AM_LINE  0x01
 
 typedef enum {
-    ST_MODIFY_APPEND = 1,
-    ST_MODIFY_INSERT = 2,
-    ST_MODIFY_CHANGE = 3
+    ST_MODIFY_INSERT = 1,
+    ST_MODIFY_CHANGE = 2
 } ModifyState;
 
 enum act_find_mask {

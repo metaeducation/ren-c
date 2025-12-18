@@ -287,17 +287,20 @@ static void Reverse_Strand(Strand* str, REBLEN index, Length len)
         DECLARE_ELEMENT (string);  // !!! Temp value, string type is irrelevant
         Init_Any_String_At(string, TYPE_TEXT, str, index);
         require(
-          Modify_String_Or_Blob(  // :PART to overwrite reversed portion
+          Length tail = Modify_String_Or_Blob(
             string,
             ST_MODIFY_CHANGE,
             temp,
             (not AM_LINE),
-            len,  // how much to delete
+            len,  // how much to delete (CHANGE:PART)
             1 // dup count
         ));
 
         assert(Series_Len_Head(string) == len_head);  // shouldn't change
         UNUSED(len_head);
+
+        assert(tail == index + len);
+        UNUSED(tail);
     }
 }
 
@@ -940,7 +943,7 @@ IMPLEMENT_GENERIC(CHANGE, Any_String)
         flags |= AM_LINE;
 
     require (
-      Modify_String_Or_Blob(
+      Length tail = Modify_String_Or_Blob(
         Element_ARG(SERIES),  // does read-only check
         u_cast(ModifyState, STATE),
         unwrap ARG(VALUE),
@@ -948,7 +951,11 @@ IMPLEMENT_GENERIC(CHANGE, Any_String)
         len,
         dups
     ));
-    return COPY(ARG(SERIES));
+
+    Element* out = Copy_Cell(OUT, Element_ARG(SERIES));
+    SERIES_INDEX_UNBOUNDED(out) = tail;
+
+    return OUT;
 }
 
 

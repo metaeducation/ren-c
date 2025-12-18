@@ -34,17 +34,18 @@
 //
 //  Modify_List: C
 //
-Result(None) Modify_List(
-    Element* list,  // target
-    ModifyState op,  // INSERT, APPEND, CHANGE
-    const Stable* v,  // source
+// Returns the tail index of any inserted content.
+//
+Result(Length) Modify_List(
+    const Element* list,
+    ModifyState op,  // INSERT, CHANGE
+    const Stable* v,
     Flags flags,  // AM_LINE
-    Length part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
-    Count dups  // dup count of how many times to insert the src content
+    Length part,  // length to remove (CHANGE) or limit to grow (INSERT)
+    Count dups  // count of times to insert `v`
 ){
     assert(
-        op == ST_MODIFY_APPEND
-        or op == ST_MODIFY_INSERT
+        op == ST_MODIFY_INSERT
         or op == ST_MODIFY_CHANGE
     );
     assert(dups > 0);  // use native entry points for "weird" cases [A]
@@ -60,11 +61,8 @@ Result(None) Modify_List(
   setup_destination: {
 
     Source* array = Cell_Array_Ensure_Mutable(list);
-    REBLEN index = SERIES_INDEX_UNBOUNDED(list);  // !!! bounded?
+    REBLEN index = Series_Index(list);
     REBLEN tail = Array_Len(array);
-
-    if (op == ST_MODIFY_APPEND or index > tail)
-        index = tail;
 
   setup_newlines: {
 
@@ -85,7 +83,7 @@ Result(None) Modify_List(
 
     bool tail_newline = did (flags & AM_LINE);
 
-    bool head_newline =
+    bool head_newline =  // for first item of inserted content [1]
         (index == Array_Len(array))
         and Get_Source_Flag(array, NEWLINE_AT_TAIL);
 
@@ -104,9 +102,9 @@ Result(None) Modify_List(
     Array* buffer = nullptr;  // for self-splice case [1]
 
     if (Is_Splice(v))
-        goto handle_splice;  // use passed in Cell
+        goto handle_splice;
 
-  handle_non_splice: {
+  handle_non_splice: {  // use passed in Cell as "single element splice"
 
     len = 1;
     src = Known_Element(v);
@@ -176,8 +174,6 @@ Result(None) Modify_List(
         }
     }
 
-    tail = (op == ST_MODIFY_APPEND) ? 0 : index + expansion;
-
 } perform_insertions: {
 
   // 1. We wait to clear the NEWLINE_AT_TAIL flag on the target array until
@@ -213,7 +209,7 @@ Result(None) Modify_List(
   // one might have to use the array flag.  See SOURCE_FLAG_NEWLINE_AT_TAIL.
   //
   // 1. Heuristic: if a line is added to the list with the explicit :LINE
-  //    flag, force the head element to have a newline.  Remove if you want:
+  //    flag, force the head element to have a newline.
   //
   //        >> x: copy []
   //        >> append:line x [a b c]
@@ -221,6 +217,7 @@ Result(None) Modify_List(
   //            [a b c]
   //        ]
   //
+  //    This is debatable behavior.  Review.
 
     if (tail_newline) {
         if (index == Array_Len(array))
@@ -241,8 +238,7 @@ Result(None) Modify_List(
 
     Assert_Array(array);
 
-    SERIES_INDEX_UNBOUNDED(list) = tail;
-    return none;
+    return index;
 }}}}}
 
 
@@ -329,10 +325,6 @@ static void Join_Binary_In_Byte_Buf(
 //
 //  Modify_String_Or_Blob: C
 //
-// This returns the index of the tail of the insertion.  The reason it does
-// so is because the caller would have a hard time calculating that if the
-// input Flex were FORM'd.
-//
 // It is possible to alias ANY-STRING? as BLOB! (or alias a binary as string,
 // but doing so marks the Flex with FLEX_FLAG_IS_STRING).  If a Blob's Binary
 // is aliased anywhere as a String Flex, it must carry this flag--and once it
@@ -343,17 +335,19 @@ static void Join_Binary_In_Byte_Buf(
 // of Series_Index() is different.  So in addition to the detection of the
 // FLEX_FLAG_IS_STRING on the Flex, we must know if dst is a BLOB!.
 //
-Result(None) Modify_String_Or_Blob(
-    Element* series,  // ANY-STRING? or BLOB! value to modify
-    ModifyState op,  // APPEND @ tail, INSERT or CHANGE @ index
-    const Stable* v,  // argument with content to inject
+// 1. The caller would have a hard time calculating the tail of insertions
+//    if the injected data gets FORM'd, so that index is returned.
+//
+Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
+    const Element* series,
+    ModifyState op,  // INSERT or CHANGE
+    const Stable* v,
     Flags flags,  // AM_LINE
-    Length part,  // dst to remove (CHANGE) or limit to grow (APPEND or INSERT)
-    Count dups  // dup count of how many times to insert the src content
+    Length part,  // length to remove (CHANGE) or limit to grow (INSERT)
+    Count dups  // how many times to insert `v`
 ){
     assert(
-        op == ST_MODIFY_APPEND
-        or op == ST_MODIFY_INSERT
+        op == ST_MODIFY_INSERT
         or op == ST_MODIFY_CHANGE
     );
     assert(dups > 0);  // use native entry points for "weird" cases [A]
@@ -413,7 +407,7 @@ Result(None) Modify_String_Or_Blob(
     // Now that we know there's actual work to do, we need `index` to speak
     // in terms of codepoints (if applicable)
 
-    if (op == ST_MODIFY_APPEND or offset > used) {
+    if (offset > used) {
         offset = Binary_Len(binary);
         if (strand)
             *index = *dst_len_old;
@@ -672,7 +666,7 @@ Result(None) Modify_String_Or_Blob(
     // we might add a new bookmark pertinent to the end of the insertion for
     // longer series.
 
-    if (op == ST_MODIFY_APPEND or op == ST_MODIFY_INSERT) {  // always expands
+    if (op == ST_MODIFY_INSERT) {  // always expands
         trap (
           Expand_Flex_At_Index_And_Update_Used(
             binary, offset, expansion_size
@@ -868,16 +862,8 @@ Result(None) Modify_String_Or_Blob(
     //
     Term_Flex_If_Necessary(binary);
 
-    if (op == ST_MODIFY_APPEND) {
-        SERIES_INDEX_UNBOUNDED(series) = 0;
-        return none;
-    }
+    if (Is_Blob(series))
+        return offset + expansion_size;
 
-    if (Is_Blob(series)) {
-        SERIES_INDEX_UNBOUNDED(series) = offset + expansion_size;
-        return none;
-    }
-
-    SERIES_INDEX_UNBOUNDED(series) = *index + *expansion_len;
-    return none;
+    return *index + *expansion_len;
 }}}}

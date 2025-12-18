@@ -353,7 +353,7 @@ void Remove_Any_Series_Len(Element* v, REBLEN index, REBINT len)
             index
         );
         require (
-          Modify_String_Or_Blob(
+          Length tail = Modify_String_Or_Blob(
             temp,
             ST_MODIFY_CHANGE,
             LIB(BLANK),  // e.g. erase content
@@ -361,6 +361,8 @@ void Remove_Any_Series_Len(Element* v, REBLEN index, REBINT len)
             len,
             1  // dups
         ));
+        assert(tail == index);  // CHANGE to blank should give same index
+        UNUSED(tail);
     }
     else  // ANY-LIST? is more straightforward
         Remove_Flex_Units_And_Update_Used(Cell_Flex_Ensure_Mutable(v), index, len);

@@ -737,7 +737,7 @@ IMPLEMENT_GENERIC(CHANGE, Any_List)
         flags |= AM_LINE;
 
     require (
-      Modify_List(
+      Length tail = Modify_List(
         Element_ARG(SERIES),
         u_cast(ModifyState, STATE),
         unwrap ARG(VALUE),
@@ -745,7 +745,11 @@ IMPLEMENT_GENERIC(CHANGE, Any_List)
         len,
         dups
     ));
-    return COPY(ARG(SERIES));
+
+    Element* out = Copy_Cell(OUT, Element_ARG(SERIES));
+    SERIES_INDEX_UNBOUNDED(out) = tail;
+
+    return OUT;
 }
 
 
@@ -1039,27 +1043,31 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
 
     SERIES_INDEX_UNBOUNDED(series) = n;
 
+    Length tail;
+
     if (Any_List(series)) {
         require (
-            Modify_List(
+            tail = Modify_List(
                 series, ST_MODIFY_CHANGE, poke, (not AM_LINE), part, dups
             )
         );
     }
     else if (Any_String(series)) {
         require (
-            Modify_String_Or_Blob(
+            tail = Modify_String_Or_Blob(
                 series, ST_MODIFY_CHANGE, poke, (not AM_LINE), part, dups
             )
         );
     }
     else {
         require (
-            Modify_String_Or_Blob(
+            tail = Modify_String_Or_Blob(
                 series, ST_MODIFY_CHANGE, poke, (not AM_LINE), part, dups
             )
         );
     }
+
+    UNUSED(tail);
 
     return NO_WRITEBACK_NEEDED;  // Array* in Cell stays the same
 }}

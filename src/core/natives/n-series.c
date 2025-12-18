@@ -227,22 +227,46 @@ DECLARE_NATIVE(APPEND)
 
     Length len = Part_Limit_Append_Insert(ARG(PART));  // check even if <opt>
     Count dups = not ARG(DUP) ? 1 : VAL_UINT32(unwrap ARG(DUP));
+    Length index = SERIES_INDEX_UNBOUNDED(series);
 
     if (len == 0 or dups == 0 or not ARG(VALUE)) {
-        SERIES_INDEX_UNBOUNDED(series) = 0;  // append always returns head
-        return COPY(series);  // don't panic on read only if would be a no-op
+        Copy_Cell(OUT, series);
+        goto return_original_position;
     }
 
     Init_Integer(LOCAL(PART), len);
     Init_Integer(LOCAL(DUP), dups);
 
-    STATE = ST_MODIFY_APPEND;
-    return Dispatch_Generic(CHANGE, series, LEVEL);  // CHANGE is "MODIFY" [A]
+  dispatch_to_generic_modify: {
+
+    SERIES_INDEX_UNBOUNDED(series) = Series_Len_Head(series);  // TAIL
+
+    STATE = ST_MODIFY_INSERT;  // CHANGE is "MODIFY" [A]
+
+    Bounce b = Dispatch_Generic(CHANGE, series, LEVEL);
+    b = opt Irreducible_Bounce(LEVEL, b);
+    if (b)
+        panic ("APPEND is built on INSERT, should not return Bounce");
+
+    goto return_original_position;
+
+} return_original_position: { ////////////////////////////////////////////////
+
+  // Historical Redbol treated (APPEND X Y) as (HEAD INSERT TAIL X Y), but it
+  // is arguably more valuable if APPEND always gives back the series it was
+  // passed at the position it was passed.  It's easy enough to get the HEAD
+  // if that's what you want, but if X was an expression then you'd lose the
+  // position if APPEND did the HEAD for you.
+
+    dont(SERIES_INDEX_UNBOUNDED(OUT) = 0);  // old behavior, HEAD OF
+    SERIES_INDEX_UNBOUNDED(OUT) = index;
+
+    return OUT;  // don't panic on read only if would be a no-op
 
 } handle_non_series: { ///////////////////////////////////////////////////////
 
     return Run_Generic_Dispatch(series, LEVEL, CANON(APPEND));
-}}
+}}}
 
 
 //

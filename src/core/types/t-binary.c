@@ -503,7 +503,7 @@ IMPLEMENT_GENERIC(CHANGE, Is_Blob)
         flags |= AM_LINE;
 
     require (
-      Modify_String_Or_Blob(
+      Length tail = Modify_String_Or_Blob(
         Element_ARG(SERIES),
         u_cast(ModifyState, STATE),
         unwrap ARG(VALUE),
@@ -511,7 +511,10 @@ IMPLEMENT_GENERIC(CHANGE, Is_Blob)
         len,
         dups
     ));
-    return COPY(ARG(SERIES));
+    Element* out = Copy_Cell(OUT, Element_ARG(SERIES));
+    SERIES_INDEX_UNBOUNDED(out) = tail;
+
+    return OUT;
 }
 
 
