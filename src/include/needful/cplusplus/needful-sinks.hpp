@@ -68,33 +68,19 @@
 //    able to default construct these types, but they can't give semantic
 //    meanings to default construction... C builds couldn't have parity.
 //
+//       { dont(Corrupt_If_Needful(p)); }  // may be zero in global scope
+//
 // F. C++ doesn't really let you template cast operators, so if we're going
 //    to force contravariant conversions for wrapper types the "loophole"
 //    you can use is to do the contravariance testing via construction and
 //    then ask the type to cast to void*, and then cast to the type.  It's
 //    a workaround that seems to work for wrapper types.
-
-
-//=//// FORWARD DEFINITIONS ///////////////////////////////////////////////=//
 //
-// This makes forward declarations of the wrappers, and defines the traits
-// used for contravariance checking.  Sink() and Init() have an extra ability
-// to convert things that are specifically convertible to outputs...some
-// special types might be willing to write data only when fresh (e.g. there
-// might be some additional meaning when non-fresh, like the location could
-// hold a "setter" function that would need to run vs. accepting raw bits.)
-//
-// 1. You can't safely extract ::type outside of a SFINAE context, so this
+// G. You can't safely extract ::type outside of a SFINAE context, so this
 //    workaround exposes a static member called `enable` that can be used in
 //    a `typename` context.
 //
 
-template<typename T> struct ExactWrapper;
-template<typename T> struct SinkWrapper;
-template<typename T> struct InitWrapper;
-
-template<typename U, typename T>
-struct AllowSinkConversion : std::false_type {};
 
 //=//// IfOutputConvertible TEST //////////////////////////////////////////=//
 //
@@ -139,7 +125,7 @@ struct IfOutputConvertible2 {  // used by Init() and Sink()
     static constexpr bool value = IfContravariant<U, T>::value
         or AllowSinkConversion<U, T>::value;
 
-    using enable = typename std::enable_if<value>;  // not ::type [1]
+    using enable = typename std::enable_if<value>;  // not ::type [G]
 };
 
 
@@ -160,7 +146,7 @@ struct IfOutputConvertible2 {  // used by Init() and Sink()
 //
 
 #undef NeedfulSink
-#define NeedfulSink(T)  SinkWrapper<T*>
+#define NeedfulSink(T)  needful::SinkWrapper<T*>
 
 template<typename TP>
 struct SinkWrapper {
@@ -211,6 +197,12 @@ struct SinkWrapper {
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
+    SinkWrapper(const NeedWrapper<U>& need) {
+        this->p = static_cast<T*>(need.p);
+        this->corruption_pending = (need.p != nullptr);  // corrupt
+    }
+
+    template<typename U, IfSinkConvertible<U>* = nullptr>
     SinkWrapper(const SinkWrapper<U>& other) {
         this->p = reinterpret_cast<T*>(other.p);
         this->corruption_pending = (other.p != nullptr);  // corrupt
@@ -249,6 +241,13 @@ struct SinkWrapper {
     SinkWrapper& operator=(const ExactWrapper<U>& exact) {
         this->p = u_cast(T*, exact.p);
         this->corruption_pending = (exact.p != nullptr);  // corrupt
+        return *this;
+    }
+
+    template<typename U, IfSinkConvertible<U>* = nullptr>
+    SinkWrapper& operator=(const NeedWrapper<U>& need) {
+        this->p = u_cast(T*, need.p);
+        this->corruption_pending = (need.p != nullptr);  // corrupt
         return *this;
     }
 
@@ -355,10 +354,10 @@ struct SinkWrapper {
 
 #if DEBUG_CHECK_INIT_SINKS
     #undef NeedfulInit
-    #define NeedfulInit(T)  SinkWrapper<T*>
+    #define NeedfulInit(T)  needful::SinkWrapper<T*>  // see notes above
 #else
     #undef NeedfulInit
-    #define NeedfulInit(T)  InitWrapper<T*>
+    #define NeedfulInit(T)  needful::InitWrapper<T*>
 #endif
 
 template<typename TP>
@@ -392,7 +391,12 @@ struct InitWrapper {
         {}
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper(const ExactWrapper<U>& need)
+    InitWrapper(const ExactWrapper<U>& exact)
+        : p {static_cast<T*>(exact.p)}
+        {}
+
+    template<typename U, IfInitConvertible<U>* = nullptr>
+    InitWrapper(const NeedWrapper<U>& need)
         : p {static_cast<T*>(need.p)}
         {}
 
@@ -421,7 +425,13 @@ struct InitWrapper {
     }
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper& operator=(const ExactWrapper<U>& need) {
+    InitWrapper& operator=(const ExactWrapper<U>& exact) {
+        this->p = static_cast<T*>(exact.p);
+        return *this;
+    }
+
+    template<typename U, IfInitConvertible<U>* = nullptr>
+    InitWrapper& operator=(const NeedWrapper<U>& need) {
         this->p = static_cast<T*>(need.p);
         return *this;
     }
@@ -480,7 +490,7 @@ struct InitWrapper {
 
 #undef NeedfulExact
 #define NeedfulExact(TP) \
-    ExactWrapper<TP>  // * not implicit [1]
+    needful::ExactWrapper<TP>  // * not implicit [1]
 
 template<typename U, typename T>
 struct IfExactType2 {
@@ -500,8 +510,7 @@ struct ExactWrapper {
     using IfExactType
         = typename IfExactType2<needful_unconstify_t(U), T>::enable::type;
 
-    ExactWrapper()  // compiler MIGHT need, see [E]
-        { dont(Corrupt_If_Needful(p)); }  // may be zero in global scope
+    ExactWrapper() = default;  // compiler MIGHT need, don't corrupt [E]
 
     ExactWrapper(std::nullptr_t) : p {nullptr}
         {}
@@ -556,9 +565,10 @@ struct ExactWrapper {
         {}
 
     template<typename U, IfExactType<U>* = nullptr>
-    ExactWrapper(const SinkWrapper<U*>& sink) {
+    ExactWrapper(const SinkWrapper<U*>& sink)
+        : p {static_cast<TP>(sink)}
+    {
         dont(assert(not sink.corruption_pending));  // must allow corrupt [2]
-        this->p = static_cast<T*>(sink);  // not sink.p (flush corruption)
     }
 
     template<typename U, IfExactType<U>* = nullptr>

@@ -185,7 +185,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
   #if NEEDFUL_OPTION_USES_WRAPPER
   namespace needful {
     template<>
-    struct OptionWrapper<Index> {  // bypass the 0 assert
+    struct needful::OptionWrapper<Index> {  // bypass the 0 assert
         NEEDFUL_DECLARE_WRAPPED_FIELD (intptr_t, o);
 
         OptionWrapper(intptr_t init) : o {init} {}  // no assert
@@ -198,16 +198,16 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
   }
 
     INLINE uintptr_t operator+(  // see definition of Option() for explanation
-        UnwrapHelper,
-        const OptionWrapper<Index>& option
+        needful::UnwrapHelper,
+        const needful::OptionWrapper<Index>& option
     ){
         assert(option.o != 0);
         return option.o;
     }
 
     INLINE uintptr_t operator+(  // see definition of Option() for explanation
-        OptHelper,
-        const OptionWrapper<Index>& option
+        needful::OptHelper,
+        const needful::OptionWrapper<Index>& option
     ){
         return option.o;
     }

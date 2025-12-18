@@ -17,12 +17,12 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// A. Since in C you can't stop raw pointers from being null, NonZero(T) may
+// A. Since in C you can't stop raw pointers from being null, Need(T) may
 //    seem better than Option(T).  That would mark when pointers were *not*
 //    optional...and assume unwrapped pointers were nullable.  But in practice
-//    the relative rarity of optional states would make this much more of a
-//    headache, look a lot worse, and provide minimal extra benefit over the
-//    more familiar Option(T) approach.
+//    the relative rarity of optional states would make this more heavyweight
+//    and look worse.  So Need(T) is saved for special cases only--where there
+//    is an emergent risk to someone thinking they can test for null.
 //
 //    The tradeoff is made to live with ambiguity that some raw pointers are
 //    nullable.  Hopefully these are at the edges of the code only, for
@@ -57,8 +57,6 @@
 //     Option(SomeEnum) baz = 0;          /* compile-time error */
 //
 
-struct NoneStruct {};
-
 #undef NeedfulNone
 #define NeedfulNone  needful::NoneStruct
 
@@ -68,31 +66,39 @@ struct NoneStruct {};
 
 //=//// OPTION WRAPPER ////////////////////////////////////////////////////=//
 //
-// 1. Unlike std::optional, Needful's Option() can only store types that have
+// 1. `T` must be explicitly bool-coercible.  `std::is_convertible<T, bool>`
+//    doesn't check for that, so use our C++11-compatible shim for C++20.
+//
+//    This means that obviously, things like Option(Need(T)) cannot work.
+//    But if not obvious, a clear error helps people who are confused.
+//
+// 2. Unlike std::optional, Needful's Option() can only store types that have
 //    a natural empty/falsey "sentinel" state.
 //
 //    BUT this means Option(T) is the same size as T, with no separate boolean
 //    to track the disengaged state!  Hence it is notably cheaper than
 //    std::optional, and can interoperate cleanly with C code.
 //
-// 2. Because we want this to work in plain C, we can't take advantage of a
-//    default construction to a zeroed value.  But we also can't disable the
-//    default constructor, because we want to be able to default construct
-//    structures with members that are Option().  :-(  Also, global variables
-//    need to be compatible with the 0-initialization property they'd have
-//    if they weren't marked Option().
+// 3. Since we want Option to work in plain C, we can't do defaulting to a
+//    zeroed value.  But we also can't disable the default constructor,
+//    because we want to default construct structures with Option members.
 //
-// If used in the C++ build with smart pointer classes, they must be boolean
-// coercible, e.g. `operator bool() const {...}`
+//    Also: global variables need to be compatible with the 0-initialization
+//    property they'd have if they weren't marked as Option().
 //
 
 template<typename T>
 struct OptionWrapper {
+    static_assert(
+        needful_is_explicitly_convertible_v(T, bool),
+        "T used with Option(T) must be explicitly convertible to bool"  // [1]
+    );
+
     NEEDFUL_DECLARE_WRAPPED_FIELD (T, o);
 
-    /* bool engaged; */  // unlike with std::optional, not needed! [1]
+    /* bool engaged; */  // unlike with std::optional, not needed! [2]
 
-    OptionWrapper () = default;  // garbage, or 0 if global [2]
+    OptionWrapper () = default;  // garbage, or 0 if global [3]
 
     OptionWrapper(NoneStruct)
         : o {needful_nocast_0}
@@ -175,57 +181,25 @@ bool operator!=(L left, const OptionWrapper<R>& right)
 #define NeedfulOption(T)  needful::OptionWrapper<T>
 
 
-//=/// UNWRAP AND OPT HELPER CLASSES //////////////////////////////////////=//
+
+//=/// UNWRAP HOOK FOR Optional(T) ////////////////////////////////////////=//
 //
-// To avoid needing parentheses and give a "keyword" look to the `unwrap`
-// and `opt` operators the C++ definition makes them put a global variable
-// on the left of an output stream operator.  The variable holds a dummy
-// class which only implements the extraction.
+// Use `unwrap` when you're sure that an optional contains a value (typically
+// known by doing a conditional check):
 //
 //    Option(Foo*) foo = ...;
 //    if (foo)
 //        Some_Function(unwrap foo)
 //
-//    /* because we have `#define unwrap g_unwrap_helper <<`, this makes...*/
+//    /* we have `#define unwrap needful::g_unwrap_helper +` so we get... */
 //
 //    Option(Foo*) foo = ...;
 //    if (foo)
-//        Some_Function(g_unwrap_helper << foo)
+//        Some_Function(g_unwrap_helper + foo)
 //
-// 1. It might seem tempting to make the unwrap operator precedence something
-//    prefix that's very high, like `~`.  This way you could write things
-//    like (unwrap num / 10) and it would be clear that the unwrap should
-//    happen before the division (as you can't divide a wrapped Option(T)).
+// 1. See the definition of UnwrapHelper for mechanics of how this "keyword"
+//    is accomplished (and why the `+` operator was chosen specifically).
 //
-//    But interoperability with Result(T) means that postfix extraction of
-//    results should ideally be higher precedence than opt or unwrap:
-//
-//       trap(Foo* foo = opt Some_Thing())
-//
-//    We have this expand out into:
-//
-//       Foo* foo = opt_helper + Some_Thing() % result_extractor;
-//       /* more expansion of trap macro */
-//
-//    If the result extractor wasn't higher precedence, maybe_helper would
-//    get a Result(Option(T)) and have to re-wrap that as a Result(T), which
-//    makes wasteful extra objects.  It's also semantically questionable: the
-//    result is conceptually on the "outside", and should extract first.
-//
-//    We use `+` (higher precedence than `==`) so `(unwrap foo == 10)` reads
-//    cleanly. `<<` would trigger "overloaded shift vs comparison" warnings.
-//
-// 2. The operator for giving you back the raw (possibly null or 0) value
-//    from a wrapped option is called `opt`.  It's a name with some flaws,
-//    because it sort of sounds like something that would create an Option
-//    from a raw pointer, vs creating a raw pointer from an Option.  However,
-//    on balance it seems to be the best name (it was once called `maybe`,
-//    but in the context of the system Needful was designed for, that means
-//    something completely different now.)  See also: [A] at top of file.
-//
-
-struct UnwrapHelper {};
-struct OptHelper {};
 
 template<typename T>
 T operator+(  // lower precedence than % [1]
@@ -236,25 +210,39 @@ T operator+(  // lower precedence than % [1]
     return option.o;
 }
 
+
+//=/// OPT HELPER CLASS ///////////////////////////////////////////////////=//
+//
+// The operator for giving you back the raw (possibly null or 0) value from a
+// wrapped Option(T) is called `opt`.
+//
+// 1. `opt` is a name with some flaws, as it sort of sounds like something
+//    that creates an Option from a raw pointer, vs. creating a raw pointer
+//    from an Option.  However, on balance it seems to be the best name.
+//
+//    (It was once called `maybe`, but in the context of the system Needful
+//    was designed for, that means something completely different now.)
+//
+//    See also: [A] at top of file.
+//
+// 2. See the definition of UnwrapHelper for mechanics of how this "keyword"
+//    is accomplished (and why the `+` operator was chosen specifically).
+
+struct OptHelper {};
+constexpr OptHelper g_opt_helper = {};
+
+#undef needful_opt  // imperfect name for raw extract, but oh well [1]
+#define needful_opt \
+    needful::g_opt_helper +  // lower precedence than % [2]
+
+
 template<typename T>
-T operator+(  // lower precedence than % [1]
+T operator+(  // lower precedence than % [2]
     OptHelper,
     const OptionWrapper<T>& option
 ){
     return option.o;
 }
-
-constexpr UnwrapHelper g_unwrap_helper = {};
-constexpr OptHelper g_opt_helper = {};
-
-
-#undef needful_unwrap
-#define needful_unwrap \
-    needful::g_unwrap_helper +  // lower precedence than % [1]
-
-#undef needful_opt  // imperfect name for raw extract, but oh well [2]
-#define needful_opt \
-    needful::g_opt_helper +  // lower precedence than % [1]
 
 
 //=/// BLOCK OptionWrapper() CONTRAVARIANCE ///////////////////////////////=//

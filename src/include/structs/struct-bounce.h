@@ -74,11 +74,11 @@ typedef Byte WildTwo[2];
         Bounce(std::nullptr_t) : b {nullptr} {}
 
       #if NEEDFUL_RESULT_USES_WRAPPER
-        Bounce(Result0Struct) : b {nullptr} {}  // want to accept `fail`
+        Bounce(needful::Result0Struct) : b {nullptr} {}  // to accept `fail`
       #endif
 
       #if NEEDFUL_CPP_ENHANCEMENTS
-        Bounce(Nocast0Struct) : b {nullptr} {}  // Result(T) uses this
+        Bounce(needful::Nocast0Struct) : b {nullptr} {}  // Result(T) uses this
       #endif
 
         Bounce(const Cell* cell) : b {cell} {}  // either API cell or OUT [2]

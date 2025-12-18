@@ -873,11 +873,11 @@ Special internal defines used by RT, not Host-Kit developers:
   #endif
 #endif
 
-#if !defined(CHECK_NEVERNULL_TYPEMACRO)
-  #if defined(__SANITIZE_ADDRESS__)
-    #define CHECK_NEVERNULL_TYPEMACRO  (RUNTIME_CHECKS && CPLUSPLUS_11)
+#if !defined(NEEDFUL_NEED_USES_WRAPPER)
+  #if !defined(__SANITIZE_ADDRESS__) && NEEDFUL_CPP_ENHANCEMENTS
+    #define NEEDFUL_NEED_USES_WRAPPER  RUNTIME_CHECKS
   #else
-    #define CHECK_NEVERNULL_TYPEMACRO 0
+    #define NEEDFUL_NEED_USES_WRAPPER  0  // don't use in sanitized build
   #endif
 #endif
 

@@ -141,6 +141,32 @@
 #endif
 
 
+//=//// FORWARD DEFINITIONS ///////////////////////////////////////////////=//
+//
+// This makes forward declarations of the wrappers.
+//
+// Sink() and Init() have an extra ability to convert things that are
+// specifically convertible to outputs...some special types might be willing
+// to write data only when fresh (e.g. there might be some additional meaning
+// when non-fresh, like the location could hold a "setter" function that
+// would need to run vs. accepting raw bits.)
+//
+
+namespace needful {
+    struct NoneStruct {};  // forward declare so Need() can refuse it
+
+    template<typename T> struct NeedWrapper;
+    template<typename T> struct OptionWrapper;
+
+    template<typename U, typename T>
+    struct AllowSinkConversion : std::false_type {};
+
+    template<typename T> struct SinkWrapper;
+    template<typename T> struct InitWrapper;
+    template<typename T> struct ExactWrapper;
+}
+
+
 //=//// INCLUDE THE NEEDFUL OVERRIDES /////////////////////////////////////=//
 //
 // 1. It's technically most correct to scope things with `::needful::`, which
@@ -165,6 +191,10 @@ namespace needful {  //=//// BEGIN `needful::` NAMESPACE //////////////////=//
 
   #if NEEDFUL_DOES_CORRUPTIONS
     #include "needful-corruption.hpp"
+  #endif
+
+  #if NEEDFUL_NEED_USES_WRAPPER
+    #include "needful-need.hpp"
   #endif
 
   #if NEEDFUL_OPTION_USES_WRAPPER

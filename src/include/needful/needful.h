@@ -69,6 +69,30 @@
 #endif
 
 
+/***[[ Need(T): NEVER NULL OR ZEROED TYPE, NON-BOOL COERCIBLE ]]**************
+**
+** Need(T) is the namesake of the Needful library, with honorary top billing.
+** It is a way to indicate that a pointer or value of type T is required.
+** The key reason for its existence is to protect against meaningless tests
+** for "truthiness" that would coerce to bool:
+**
+**    int value = 1020;
+**    Need(int*) ptr = &value;
+**
+**    printf("%d\n", *ptr);  // safe to dereference, can't be null
+**
+**    if (ptr) { ... }  // ** COMPILER ERROR: can't coerce to bool!
+**
+** While the compile-time checks are the primary purpose, runtime checks can
+** also be enabled to make sure that nulls or zeroes are not passed to a
+** type that is marked Need(T).
+*/
+
+#define NeedfulNeed(T)  T
+
+#define needful_unwrap
+
+
 /****[[ nocast: LEAST-ANNOYING-TO-C-PROGRAMMERS CAST OF malloc() etc. ]]******
 **
 ** If you wish to build C codebases as C++, crucial incompatibilities exist
@@ -246,7 +270,6 @@ typedef enum {
 
 #define NeedfulOption(T)  T
 
-#define needful_unwrap
 #define needful_opt
 
 
@@ -466,7 +489,8 @@ void Needful_Panic_Abruptly(const char* error) {
 
 #define NeedfulSink(T)  T *
 #define NeedfulInit(T)  T *
-#define NeedfulExact(TP)  TP
+
+#define NeedfulExact(T)  T  // precise type
 
 
 /****[[ known(T,expr): CHEAP COMPILE-TIME MACRO TYPE ASSURANCE ]]************
@@ -1010,6 +1034,17 @@ void Needful_Panic_Abruptly(const char* error) {
 **    operations, anyway).  So lenient defaults to the short name `known()`.
 */
 
+#if !defined(NEEDFUL_DONT_DEFINE_OPTION_SHORTHANDS)
+    #define Need /* (T) */          NeedfulNeed
+    #define unwrap /* ... */        needful_unwrap
+
+    #define None                    NeedfulNone
+    #define none                    needful_none
+
+    #define Option /* (T) */        NeedfulOption
+    #define opt /* ... */           needful_opt
+#endif
+
 #if !defined(NEEDFUL_DONT_DEFINE_CAST_SHORTHANDS)
     #define cast /* (T,...) */      needful_lenient_hookable_cast
 
@@ -1033,15 +1068,6 @@ void Needful_Panic_Abruptly(const char* error) {
     #define upcast /* (T,...) */    needful_upcast
 #endif
 
-#if !defined(NEEDFUL_DONT_DEFINE_OPTION_SHORTHANDS)
-    #define None                    NeedfulNone
-    #define none                    needful_none
-
-    #define Option /* (T) */        NeedfulOption
-    #define unwrap /* ... */        needful_unwrap
-    #define opt /* ... */           needful_opt
-#endif
-
 #if !defined(NEEDFUL_DONT_DEFINE_RESULT_SHORTHANDS)
     #define Result /* (T) */        NeedfulResult
 
@@ -1061,7 +1087,7 @@ void Needful_Panic_Abruptly(const char* error) {
 #if !defined(NEEDFUL_DONT_DEFINE_SINK_SHORTHANDS)
     #define Sink /* (T) */          NeedfulSink
     #define Init /* (T) */          NeedfulInit
-    #define Exact /* (TP) */        NeedfulExact
+    #define Exact /* (T) */         NeedfulExact
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_KNOWN_SHORTHANDS)
@@ -1160,6 +1186,10 @@ void Needful_Panic_Abruptly(const char* error) {
 
 #if !defined(NEEDFUL_CPP_ENHANCEMENTS)
     #define NEEDFUL_CPP_ENHANCEMENTS  0  // Note: can still be compiled as C++
+#endif
+
+#if !defined(NEEDFUL_NEED_USES_WRAPPER)
+  #define NEEDFUL_NEED_USES_WRAPPER  NEEDFUL_CPP_ENHANCEMENTS
 #endif
 
 #if !defined(NEEDFUL_OPTION_USES_WRAPPER)
