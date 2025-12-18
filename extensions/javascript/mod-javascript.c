@@ -959,7 +959,10 @@ DECLARE_NATIVE(JS_NATIVE)
     // !!! A bit wasteful to use a whole cell for this--could just be whether
     // the ID is positive or negative.  Keep things clear, optimize later.
     //
-    Init_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER), ARG(AWAITER));
+    Init_Logic(
+        Details_At(details, IDX_JS_NATIVE_IS_AWAITER),
+        did ARG(AWAITER)
+    );
 
   //=//// MAKE ASCII SOURCE FOR JAVASCRIPT FUNCTION ///////////////////////=//
 

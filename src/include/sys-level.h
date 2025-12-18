@@ -325,12 +325,12 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
     (u_cast(Value*, (L)->rootvar) + 1)
 
 
-INLINE Value* Level_Arg_Core(Level* L, REBLEN n, bool optional) {
+INLINE void* Level_Arg_Core(Level* L, REBLEN n, bool optional) {
     assert(n != 0 and n <= Level_Num_Args(L));
     assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
     if (optional and Is_Light_Null(u_cast(Value*, L->rootvar) + n))
         return nullptr;
-    return u_cast(Value*, L->rootvar) + n;  // 1-indexed
+    return L->rootvar + n;  // 1-indexed
 }
 
 #if NO_RUNTIME_CHECKS
@@ -338,7 +338,7 @@ INLINE Value* Level_Arg_Core(Level* L, REBLEN n, bool optional) {
         (u_cast(Value*, (L)->rootvar) + (n))
 #else
     #define Level_Arg(L,n) \
-        Level_Arg_Core((L), (n), false)
+        u_cast(Value*, Level_Arg_Core((L), (n), false))
 #endif
 
 
@@ -708,7 +708,7 @@ INLINE Result(Level*) Prep_Level_Core(
     enum { param_##name##_ = (n) }; /* enums force compile-time const [1] */ \
     enum { param_opt_##name##_ = (opt) }; \
     typedef T param_type_##name##_; \
-    USED(u_cast(param_type_##name##_, nullptr)) /* trust author :-/ [2] */
+    USED(sizeof(param_type_##name##_)) /* trust author :-/ [2] */
 
 #define DECLARE_INTRINSIC_PARAM(name)  /* was used, not used at the moment */ \
     NOOP  // the INCLUDE_PARAMS_OF_XXX macros still make this, may find a use

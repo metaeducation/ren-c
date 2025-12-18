@@ -266,16 +266,9 @@ export emit-include-params-macro: func [
                 | to <end>
             ]
 
-            let optional: any [
-                get-word3? item
-                find opt spec <opt>
-            ] then [
-                type: copy type
-                insert type "Option("
-                append type ")"
-                <- "true"
-            ] else [
-                "false"
+            let need: not any [
+                get-word3? item  ; refinements are optional
+                did find opt spec <opt>  ; <opt> arguments are optional
             ]
 
             append symbols as word! name
@@ -287,8 +280,16 @@ export emit-include-params-macro: func [
                     "DECLARE_INTRINSIC_PARAM(${NAME})"
                 ]
             ] else [
-                keep cscape [n name type optional
-                    "DECLARE_PARAM($<Type>, ${NAME}, $<n>, $<optional>)"]
+                if need [  ; optional = false
+                    keep cscape [n name type
+                        "DECLARE_PARAM(Need($<Type>), ${NAME}, $<n>, false)"
+                    ]
+                ]
+                else [  ; optional = true
+                    keep cscape [n name type
+                        "DECLARE_PARAM(Option($<Type>), ${NAME}, $<n>, true)"
+                    ]
+                ]
             ]
             n: n + 1
         ]
