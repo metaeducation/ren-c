@@ -123,7 +123,7 @@ void Push_Frame_Continuation(
 //    kinds of types branching permits.
 //
 bool Pushed_Continuation(
-    Need(Value*) out,  // not Sink (would corrupt, but with can be same as out)
+    Exact(Value*) out,  // not Sink (would corrupt, but with can be same as out)
     Flags flags,  // LEVEL_FLAG_FORCE_HEAVY_NULLS, etc. for pushed levels
     Context* binding,  // before branch forces non-empty variadic call
     const Stable* branch,  // *cannot* be the same as out

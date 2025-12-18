@@ -840,9 +840,11 @@ Option(const Byte*) Try_Scan_Date_To_Stack(const Byte* cp, REBLEN len) {
     // Overwriting scanned TYPE_TIME...
     // payload.time.nanoseconds set
     // may be NO_DATE_TIME, don't Freshen_Cell_Header()
-    //
-    OnStack(Element*) pushed = u_cast(Element*, PUSH());
-    Element* top = pushed;  // workaround ambiguity in Ensure_Date()
+
+    OnStack(Cell*) pushed = PUSH();
+    USED(pushed);  // we are using this for tracking live cell on stack
+
+    Sink(Element) top = TOP;  // workaround ambiguity in Ensure_Date()
     Reset_Cell_Header_Noquote(top, CELL_MASK_DATE);
     VAL_YEAR(top) = year;
     VAL_MONTH(top) = month;

@@ -462,15 +462,11 @@ void Needful_Panic_Abruptly(const char* error) {
 ** matters if you're applying inheritance selectively to datatypes in C++
 ** builds to add checking to your C codebase.  See the implementation of
 ** the contravariance in %needful-sinks.h for more details.
-**
-** 1. Historical note: NeedfulNeed() might seem like a funny name, but the
-**    library's name was actually inspired by the `Need` wrapper type, so
-**    it falls out that the "scoped" name for it would look a bit strange.
 */
 
 #define NeedfulSink(T)  T *
 #define NeedfulInit(T)  T *
-#define NeedfulNeed(TP)  TP  /* Need(TP) inspired Needful's name [1] */
+#define NeedfulExact(TP)  TP
 
 
 /****[[ known(T,expr): CHEAP COMPILE-TIME MACRO TYPE ASSURANCE ]]************
@@ -1065,7 +1061,7 @@ void Needful_Panic_Abruptly(const char* error) {
 #if !defined(NEEDFUL_DONT_DEFINE_SINK_SHORTHANDS)
     #define Sink /* (T) */          NeedfulSink
     #define Init /* (T) */          NeedfulInit
-    #define Need /* (TP) */         NeedfulNeed
+    #define Exact /* (TP) */        NeedfulExact
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_KNOWN_SHORTHANDS)

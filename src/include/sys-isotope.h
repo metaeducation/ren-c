@@ -51,7 +51,7 @@
 //    If you were allowed to pass in an Element*, then you'd have an invalid
 //    Element at the callsite when the operation completed.
 //
-INLINE Result(Value*) Coerce_To_Antiform(Need(Value*) v) {
+INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v) {
     Element* elem = Known_Element(v);  // guaranteed element on input (?)
 
     if (Cell_Underlying_Sigil(elem))
@@ -126,7 +126,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Need(Value*) v) {
 //    WORD!.  Only a limited set of them are allowed to exist.  But all
 //    words are allowed to be quasiforms.
 //
-INLINE Result(Element*) Coerce_To_Quasiform(Need(Element*) v) {
+INLINE Result(Element*) Coerce_To_Quasiform(Element* v) {
     Option(Heart) heart = Heart_Of(v);
 
     if (not Any_Isotopic_Type(heart)) {  // Note: all words have quasiforms [1]
@@ -135,7 +135,7 @@ INLINE Result(Element*) Coerce_To_Quasiform(Need(Element*) v) {
     }
 
     LIFT_BYTE_RAW(v) = QUASIFORM_3;  // few places should use LIFT_BYTE_RAW!
-    return u_cast(Element*, v);
+    return v;
 }
 
 
@@ -162,7 +162,7 @@ INLINE Result(Element*) Coerce_To_Quasiform(Need(Element*) v) {
     Decay_Or_Elide_Core((v), false)
 
 INLINE Result(Stable*) Decay_Or_Elide_Core(
-    Need(Value*) v,
+    Exact(Value*) v,
     bool want_value  // ELIDE is more permissive, doesn't want the value
 ){
     if (Not_Antiform(v))

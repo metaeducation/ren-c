@@ -128,7 +128,7 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 //
 Result(Codepoint) Back_Scan_Utf8_Char(  // no NUL or substitution chars [1]
     const Byte** bp,  // left alone if error result, "back updated" if not
-    Option(Need(Size*)) size  // decremented in non-error case
+    Option(Size*) size  // decremented in non-error case
 ){
     Codepoint c = 0;
 

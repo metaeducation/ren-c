@@ -215,7 +215,7 @@ typedef RebolHandleCleaner HandleCleaner;
   #if NEEDFUL_SINK_USES_WRAPPER  // for implementing SymbolOrValueHolder
     using needful::SinkWrapper;
     using needful::InitWrapper;
-    using needful::NeedWrapper;
+    using needful::ExactWrapper;
   #endif
 #endif
 

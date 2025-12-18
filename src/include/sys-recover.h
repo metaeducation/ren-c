@@ -365,6 +365,10 @@ struct JumpStruct {
 //   (This could be used by a strict build that wanted to get rid of all the
 //    hard-coded string panic()s, by triggering a compiler error on them.)
 //
+// 2. We don't accept unstable Value* pointers, because they might be ERROR!
+//    or undecayable, and would create their own panic.  (Review if allowing
+//    that is a good idea, but it doesn't seem like it is.)
+//
 
 #if DEBUG_PRINTF_PANIC_LOCATIONS
     #define Panic_Prelude_File_Line_Tick(...) \
@@ -377,26 +381,15 @@ struct JumpStruct {
 
 #if CPLUSPLUS_11  // add type checking of panic() argument in C++ build [1]
     template <class T>
-    INLINE Error* Derive_Error_From_Pointer(T* p) {
+    INLINE Error* Derive_Error_From_Pointer(T p) {
         static_assert(
-            std::is_same<T, Error>::value
-            or std::is_same<T, const char>::value
-            or std::is_base_of<const Stable, T>::value
-            or std::is_base_of<Cell, T>::value,
-            "Derive_Error_From_Pointer() works on: Error*, Cell*, const char*"
+            std::is_same<T, Error*>::value
+            or std::is_same<T, const char*>::value
+            or std::is_convertible<T, const Stable*>::value,  // Stable [2]
+            "Derive_Error_From_Pointer() works on [Error* Stable* char*]"
         );
         return Derive_Error_From_Pointer_Core(p);
     }
-
-  #if NEEDFUL_SINK_USES_WRAPPER
-    template <class T>
-    INLINE Error* Derive_Error_From_Pointer(Sink(T) sink)
-      { return Derive_Error_From_Pointer(sink.p); }
-
-    template <class T>
-    INLINE Error* Derive_Error_From_Pointer(Need(T*) need)
-      { return Derive_Error_From_Pointer(need.p); }
-  #endif
 #else
     #define Derive_Error_From_Pointer  Derive_Error_From_Pointer_Core
 #endif

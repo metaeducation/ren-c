@@ -226,7 +226,7 @@ INLINE bool Is_Lifted_Unstable_Antiform(const Value* a) {
 #define Is_Antiform_Stable(a) \
     (not Is_Antiform_Unstable(a))
 
-INLINE bool Not_Cell_Stable(Need(const Value*) a) {
+INLINE bool Not_Cell_Stable(Exact(const Value*) a) {
     possibly(not Is_Antiform(a));  // this is a general check for any Value
 
     Assert_Cell_Readable(a);
@@ -321,8 +321,8 @@ MUTABLE_IF_C(Element*, INLINE) Ensure_Element(CONST_IF_C(Value*) cell) {
 //   operations in the ^META domain to easily use functions like ALL and ANY
 //   on the lifted values.  (See the FOR-BOTH example.)
 
-INLINE Result(Value*) Coerce_To_Antiform(Need(Value*) atom);
-INLINE Result(Element*) Coerce_To_Quasiform(Need(Element*) v);
+INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) atom);
+INLINE Result(Element*) Coerce_To_Quasiform(Exact(Element*) v);
 
 #define Is_Quasiform(v) \
     (LIFT_BYTE(Ensure_Readable(known(Stable*, v))) == QUASIFORM_3)
@@ -340,7 +340,7 @@ INLINE Element* Quasify_Isotopic_Fundamental(Element* elem) {
     return elem;
 }
 
-INLINE Element* Quasify_Antiform(Need(Stable*) v) {
+INLINE Element* Quasify_Antiform(Exact(Stable*) v) {
     assert(Is_Antiform(v));
     LIFT_BYTE_RAW(v) = QUASIFORM_3;  // all antiforms can be quasi
     return u_cast(Element*, v);
@@ -360,7 +360,7 @@ INLINE Element* Reify(Value* v) {
 // are doing.
 //
 
-INLINE Stable* Stably_Antiformize_Unbound_Fundamental(Need(Stable*) v) {
+INLINE Stable* Stably_Antiformize_Unbound_Fundamental(Exact(Stable*) v) {
     assert(Heart_Of(v) != TYPE_WORD);  // no KEYWORD_IS_NULL handling
     assert(Any_Isotopic(v));
     assert(LIFT_BYTE(v) == NOQUOTE_2);
@@ -371,7 +371,7 @@ INLINE Stable* Stably_Antiformize_Unbound_Fundamental(Need(Stable*) v) {
     return v;
 }
 
-INLINE Value* Unstably_Antiformize_Unbound_Fundamental(Need(Value*) v) {
+INLINE Value* Unstably_Antiformize_Unbound_Fundamental(Exact(Value*) v) {
     assert(Heart_Of(v) != TYPE_WORD);  // no KEYWORD_IS_NULL handling
     assert(Any_Isotopic(v));
     assert(LIFT_BYTE(v) == NOQUOTE_2);
@@ -411,7 +411,7 @@ INLINE Element* Liftify(Value* atom) {
     return Quotify(cast(Element*, atom));  // a non-antiform winds up quoted
 }
 
-INLINE Result(Value*) Unliftify_Undecayed(Need(Value*) atom) {
+INLINE Result(Value*) Unliftify_Undecayed(Exact(Value*) atom) {
     if (LIFT_BYTE_RAW(atom) == QUASIFORM_3) {
         trap (
           Coerce_To_Antiform(atom)
@@ -421,7 +421,7 @@ INLINE Result(Value*) Unliftify_Undecayed(Need(Value*) atom) {
     return Unquotify(cast(Element*, atom));  // asserts that it's quoted
 }
 
-INLINE Stable* Unliftify_Known_Stable(Need(Stable*) val) {
+INLINE Stable* Unliftify_Known_Stable(Exact(Stable*) val) {
     assume (
       Unliftify_Undecayed(cast(Value*, val))
     );

@@ -700,7 +700,7 @@ Special internal defines used by RT, not Host-Kit developers:
 
 
 // Sinks are a feature which lets you mark a parameter as being output on an
-// interface--which is good to know.  But the Sink()/Need() functions are
+// interface--which is good to know.  But the Sink()/Exact() functions are
 // actually crucial to CHECK_CELL_SUBCLASSES working.
 //
 #if !defined(NEEDFUL_SINK_USES_WRAPPER)

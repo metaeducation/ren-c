@@ -249,19 +249,29 @@ INLINE Element* Init_Frame_Untracked(
 //     == [1 <even> 3 <even> 5]  ; no actual EVEN? antiforms can be in block
 //
 
-INLINE Stable* Actionify(Need(Stable*) val) {
+INLINE Stable* Actionify(Exact(Stable*) val) {
     assert(Is_Frame(val) and LIFT_BYTE(val) == NOQUOTE_2);
     Stably_Antiformize_Unbound_Fundamental(val);
     assert(Is_Action(val));
     return val;
 }
 
-#define Init_Action(out,a,label,coupling) \
-    Actionify(cast(Stable*, Init_Frame( \
-        known(Sink(Stable), (out)), (a), (label), (coupling)) \
-    ))  // note that antiform frames can't have lenses, only labels!
+INLINE Stable* Init_Action_By_Phase(
+    Sink(Stable) out,
+    Phase* phase,
+    Option(const Symbol*) label,
+    Option(VarList*) coupling
+){
+    Init_Frame(out, phase, label, coupling);
+    Stably_Antiformize_Unbound_Fundamental(out);
+    assert(Is_Action(out));
+    return out;
+}
 
-INLINE Stable* Deactivate_If_Action(Need(Stable*) v) {
+#define Init_Action(out,identity,label,coupling) \
+    Init_Action_By_Phase((out), known(Phase*, (identity)), (label), (coupling))
+
+INLINE Stable* Deactivate_If_Action(Exact(Stable*) v) {
     if (Is_Action(v))
         LIFT_BYTE(v) = NOQUOTE_2;
     return v;

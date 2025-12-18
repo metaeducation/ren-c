@@ -455,7 +455,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 //
 //  Trampoline_Throws: C
 //
-bool Trampoline_Throws(Need(Value*) out, Level* root)
+bool Trampoline_Throws(Exact(Value*) out, Level* root)
 {
     Push_Level_Erase_Out_If_State_0(out, root);
     bool threw = Trampoline_With_Top_As_Root_Throws();

@@ -68,10 +68,6 @@
 //    This reduces the number of bits needed to encode the class, leaving
 //    more room for PARAMETER_FLAG_XXX.
 //
-// 3. const-correctness with PARAMETER! cells is not particularly compelling,
-//    as they are created in one place and then only read from elsewhere.
-//    The OnStack() type has trouble with overloads of const vs. non-const,
-//    so just ignore the constness for practicality.
 
 /* DONT(#define CELL_PARAMETER_SYMBOL() ...) */  // [1]
 
@@ -81,9 +77,14 @@
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define CELL_PARAMETER_PAYLOAD_2_FLAGS(c)  (c)->payload.split.two.flags
 #else
-    INLINE uintptr_t& CELL_PARAMETER_PAYLOAD_2_FLAGS(const Cell* v) {
+    INLINE uintptr_t& CELL_PARAMETER_PAYLOAD_2_FLAGS(Cell* v) {
         assert(Unchecked_Heart_Of(v) == TYPE_PARAMETER);
-        return m_cast(Cell*, v)->payload.split.two.flags;  // mutable [3]
+        return v->payload.split.two.flags;
+    }
+
+    INLINE const uintptr_t& CELL_PARAMETER_PAYLOAD_2_FLAGS(const Cell* v) {
+        assert(Unchecked_Heart_Of(v) == TYPE_PARAMETER);
+        return v->payload.split.two.flags;
     }
 #endif
 

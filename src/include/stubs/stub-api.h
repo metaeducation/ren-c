@@ -164,7 +164,7 @@ INLINE Init(Value) Alloc_Value_Core(Flags flags)
 
     Connect_Api_Handle_To_Level(stub, TOP_LEVEL);  // [2]
 
-    return cell;
+    return u_cast(Value*, cell);
 }
 
 #define Alloc_Value() \

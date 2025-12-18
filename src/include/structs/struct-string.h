@@ -174,6 +174,9 @@ typedef struct BookmarkStruct Bookmark;
 // as a void* suitable for passing to variadics, which then can use
 // Detect_Rebol_Pointer() to figure out what it is.
 //
+// nullptr is accepted and will give a nulled cell.
+//
+
 #if NO_CPLUSPLUS_11
     #define SymbolOrStable(const_star) \
         void const_star
@@ -185,22 +188,18 @@ typedef struct BookmarkStruct Bookmark;
         const void* p;
 
         SymbolOrStableHolder(const Symbol* s) : p (s) {}
-        SymbolOrStableHolder(const Stable* v) : p (v) {}
 
       #if NEEDFUL_OPTION_USES_WRAPPER  // Option(const Symbol*) <> const Symbol*
         SymbolOrStableHolder(Option(const Symbol*)& s) : p (opt s) {}
       #endif
 
-      #if NEEDFUL_SINK_USES_WRAPPER
-        SymbolOrStableHolder(const NeedWrapper<Stable*>& v) : p (v.p) {}
-        SymbolOrStableHolder(const SinkWrapper<Stable*>& v) : p (v.p) {}
-        SymbolOrStableHolder(const InitWrapper<Stable*>& v) : p (v.p) {}
-        #if CHECK_CELL_SUBCLASSES
-            SymbolOrStableHolder(const NeedWrapper<Element*>& e) : p (e.p) {}
-            SymbolOrStableHolder(const SinkWrapper<Element*>& e) : p (e.p) {}
-            SymbolOrStableHolder(const InitWrapper<Element*>& e) : p (e.p) {}
-        #endif
-      #endif
+        template<
+            typename T,
+            typename std::enable_if<
+                std::is_convertible<T, const Stable*>::value
+            >::type* = nullptr
+        >
+        SymbolOrStableHolder(const T& v) : p (v) {}
     };
 
     #define SymbolOrStable(const_star) \

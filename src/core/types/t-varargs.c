@@ -373,7 +373,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             // vararg.  Revisit the question of how to give better errors.
             //
             if (not vararg_level)
-                panic (out);
+                panic (Known_Stable(out));
 
             panic (Error_Phase_Arg_Type(
                 unwrap vararg_level, key, param, cast(const Stable*, out))

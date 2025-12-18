@@ -448,15 +448,14 @@ INLINE void Free_Level_Internal(Level* L) {
     Raw_Pooled_Free(LEVEL_POOL, L);
 }
 
-// 1. Push_Level() takes an Value* for the output.  It is a Need() and not a
+// 1. Push_Level() takes an Value* for the output.  It is a Exact() and not a
 //    Sink() because we may not want to corrupt the cell we are given (e.g.
 //    if we're pushing a level to do infix processing on an already calculated
 //    result).
 //
-//    Taking an Value* is important, as we don't want to evaluate into variables
-//    or array slots.  Not only can they have their memory moved during an
-//    evaluation, but we don't want unstable antiforms being put into variables
-//    (or any antiforms being put in array cells).
+//    Taking a Value* is important: we don't want to evaluate antiforms into
+//    array Element* cells, and also they might move (which object Slots
+///   might also move as well).
 //
 //    We want the cell to be easy to cheaply erase with Erase_Cell() for
 //    performance reasons.  But also, if we allowed API cells as evaluation
@@ -480,7 +479,7 @@ INLINE void Free_Level_Internal(Level* L) {
 //    interruptibility is not.
 //
 INLINE void Push_Level_Dont_Inherit_Interruptibility(
-    Need(Value*) out,  // prohibits passing Element or Value as output [1]
+    Exact(Value*) out,  // prohibit passing Element/Stable/Slot as output [1]
     Level* L
 ){
     assert(not TOP_LEVEL or Not_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC));
@@ -523,7 +522,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
 }
 
 INLINE void Push_Level_Erase_Out_If_State_0(  // inherits uninterruptibility [4]
-    Need(Value*) out,  // prohibits passing `unstable` Cell* for output [1]
+    Exact(Value*) out,  // prohibit passing Element/Stable/Slot as output [1]
     Level* L
 ){
     Push_Level_Dont_Inherit_Interruptibility(out, L);

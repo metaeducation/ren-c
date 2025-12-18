@@ -95,7 +95,7 @@
             | CELL_FLAG_KEYWORD_IS_NULL))
 
 #define Is_Nulled(v) /* test for stable values, name avoids confusion [2] */ \
-    ((Ensure_Readable(known(const Stable*, (v)))->header.bits & ( \
+    ((Ensure_Readable(known(Exact(const Stable*), (v)))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_KEYWORD_IS_NULL \
     )) == ( \
         FLAG_LIFT_BYTE(ANTIFORM_1) | FLAG_HEART(TYPE_WORD) \

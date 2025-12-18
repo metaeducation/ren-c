@@ -115,7 +115,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
     if (THROWING)
         return THROWN;
 
-    Need(Stable*) with = Known_Stable(SPARE);  // passed to branch if run [1]
+    Stable* with = Known_Stable(SPARE);  // passed to branch if run [1]
     Value* branch = SCRATCH;  // GC-safe if eval target
 
     enum {

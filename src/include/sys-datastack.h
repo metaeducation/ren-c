@@ -66,8 +66,8 @@
 //   memory-pooled levels and stacklessness (see %c-trampoline.c)
 //
 
-// The result of PUSH() and TOP_STABLE is not Stable*, but OnStack(Stable*).  In an
-// unchecked build this is just a Stable*, but with DEBUG_EXTANT_STACK_POINTERS
+// The result of PUSH() and TOP is not Value*, but OnStack(Value*).  In an
+// unchecked build this is just Value*, but with DEBUG_EXTANT_STACK_POINTERS
 // it becomes a checked C++ wrapper class...which keeps track of how many
 // such stack values are extant.  If the number is not zero, then you will
 // get an assert if you try to PUSH() or DROP(), as well as if you
@@ -79,6 +79,26 @@
 // destructor is not called in this case...and the panic mechanism sets the
 // outstanding count to zero.
 //
+// 1. C++ templated cast operators can't work with wrappers; e.g. if we are
+//    trying to do something like:
+//
+//      OnStackPointer<Value*> x;
+//      Element* e = static_cast<Element*>(x);
+//
+//    This can't be accomplished with a templated operator like:
+//
+//      template<typename U>
+//      explicit operator U*() const { ... }
+//
+//    Unless U can be deduced as an Element.  But because the conversion is
+//    from OnStackPointer<Value*> to Element*, and there is no direct
+//    inheritance or conversion path, the compiler doesn't deduce U as Element
+//    and the conversion operator is not considered.
+//
+//    Thus for Sink(Element*) to be willing to receive OnStackPointer(Value*)
+//    we go through void*: `x_cast(Element*, x_cast(void*, onstackpointer))`
+//
+
 #if ! DEBUG_EXTANT_STACK_POINTERS
 
     #define Assert_No_DataStack_Pointers_Extant()
@@ -104,39 +124,47 @@
 
         NEEDFUL_DECLARE_WRAPPED_FIELD (TP, p);
 
-        OnStackPointer () : p (nullptr) {}
-        OnStackPointer (T* p) : p (p) {
-            if (p != nullptr)
-                ++g_ds.num_refs_extant;
-        }
-        OnStackPointer (const OnStackPointer &stk) : p (stk.p) {
-            if (p != nullptr)
-                ++g_ds.num_refs_extant;
-        }
-        ~OnStackPointer() {
-            if (p != nullptr)
-                --g_ds.num_refs_extant;
+        template <
+            typename U,
+            typename std::enable_if<
+                std::is_convertible<U, T*>::value
+            >::type* = nullptr
+        >
+        OnStackPointer (const U& u) : p (u) {
+            assert(p != nullptr);
+            ++g_ds.num_refs_extant;
         }
 
-        OnStackPointer& operator=(const OnStackPointer& other) {
-            if (p != nullptr)
-                --g_ds.num_refs_extant;
-            p = other.p;
-            if (p != nullptr)
-                ++g_ds.num_refs_extant;
-            return *this;
-        }
-
-        template<
+        template <  // explicit casting, strictly for sinks/contravariance
             typename U,
             typename std::enable_if<
                 std::is_convertible<T*, U>::value
+                and not std::is_same<T*, U>::value
             >::type* = nullptr
         >
-        operator U () const { return p; }
+        explicit OnStackPointer (const U& u) : p (x_cast(T*, u)) {
+            assert(p != nullptr);
+            ++g_ds.num_refs_extant;
+        }
 
-        template<typename U>
-        explicit operator U*() const { return u_cast(U*, p); }
+        OnStackPointer (const OnStackPointer &stk) : p (stk.p) {
+            assert(p != nullptr);
+            ++g_ds.num_refs_extant;
+        }
+        ~OnStackPointer() {
+            assert(p != nullptr);
+            --g_ds.num_refs_extant;
+        }
+
+        OnStackPointer& operator=(const OnStackPointer& other) {
+            p = other.p;
+            return *this;
+        }
+
+        operator T* () const { return p; }
+        operator Exact(const T*) () const { return p; }
+
+        operator void* () const { return p; }  // for Sink/Init [3]
 
         T* operator->() const { return p; }
 
@@ -180,6 +208,9 @@
            return temp;
         }
     };
+
+    template<typename T>  // disallow OnStack(T) from being passed to the API
+    inline const void* to_rebarg(const OnStack(T)& val) = delete;
 #endif
 
 #define TOP_INDEX \
@@ -261,7 +292,7 @@ INLINE OnStack(Value*) PUSH(void) {
   #endif
 
     Erase_Cell(g_ds.movable_top);
-    return u_cast(Value*, g_ds.movable_top);  // must u_cast(), erased
+    return g_ds.movable_top;
 }
 
 

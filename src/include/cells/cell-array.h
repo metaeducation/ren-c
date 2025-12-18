@@ -237,13 +237,13 @@ INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
 //    == [a b c d e]
 //
 
-INLINE Stable* Splicify(Need(Stable*) val) {
-    assert(Any_List(val) and LIFT_BYTE(val) == NOQUOTE_2);
-    KIND_BYTE(val) = TYPE_GROUP;  // splice drops knowledge of list type
-    Tweak_Cell_Binding(u_cast(Element*, val), UNBOUND);
-    Stably_Antiformize_Unbound_Fundamental(val);
-    assert(Is_Splice(val));
-    return val;
+INLINE Stable* Splicify(Exact(Stable*) v) {
+    assert(Any_List(v) and LIFT_BYTE(v) == NOQUOTE_2);
+    KIND_BYTE(v) = TYPE_GROUP;  // splice drops knowledge of list type
+    Tweak_Cell_Binding(u_cast(Element*, v), UNBOUND);
+    Stably_Antiformize_Unbound_Fundamental(v);
+    assert(Is_Splice(v));
+    return v;
 }
 
 INLINE Stable* Init_Splice_Untracked(Init(Stable) out, Source* a) {

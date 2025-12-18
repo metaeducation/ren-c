@@ -255,3 +255,16 @@ constexpr OptHelper g_opt_helper = {};
 #undef needful_opt  // imperfect name for raw extract, but oh well [2]
 #define needful_opt \
     needful::g_opt_helper +  // lower precedence than % [1]
+
+
+//=/// BLOCK OptionWrapper() CONTRAVARIANCE ///////////////////////////////=//
+//
+// You want compiler errors if you write Sink(Option(T)) or Init(Option(T)).
+//
+// Nullability is really the *only* contravariance property that a Needful
+// wrapper would have that would mess up Sink() or Init().  Hence it's an
+// "opt-out" property of the wrapper.
+//
+
+template<typename T>
+struct IsContravariantWrapper<OptionWrapper<T>> : std::false_type {};

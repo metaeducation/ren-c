@@ -196,7 +196,7 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
         if (*out != LF or last_error == ERROR_HANDLE_EOF)
             panic ("CR found not followed by LF in Windows typed input");
 
-        panic (rebError_OS(last_error));
+        panic (Known_Stable(rebError_OS(last_error)));  // is it WARNING! (?)
     }
 
     // If you are piping with something like `echo "hello" | r3 reader.r` then
@@ -209,7 +209,7 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
         *eof = true;  // was end of file
         return false;  // was not interrupted
     }
-    panic (rebError_OS(GetLastError()));
+    panic (Known_Stable(rebError_OS(GetLastError())));  // is it WARNING! (?)
 }
 
 

@@ -755,7 +755,7 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 // The primary goal is achieved by choosing Element as a most-derived type
 // instead of a base type.  The next two goals are trickier, and require a
 // smart pointer class to wrap the pointers and invert the class hierarchy
-// in terms of what are accepted for initialization (see Sink() and Need()).
+// in terms of what are accepted for initialization (see Sink() and Exact()).
 //
 // Additionally, the Cell* class is differentiated by not allowing you to
 // ask for its "type".  This makes it useful in passing to routines that
@@ -804,13 +804,13 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
   #if NEEDFUL_SINK_USES_WRAPPER
   namespace needful {
     template<>
-    struct AllowSinkConversion<Slot, Value> : std::true_type {};
+    struct AllowSinkConversion<Slot*, Value> : std::true_type {};
 
     template<>
-    struct AllowSinkConversion<Slot, Stable> : std::true_type {};
+    struct AllowSinkConversion<Slot*, Stable> : std::true_type {};
 
     template<>
-    struct AllowSinkConversion<Slot, Element> : std::true_type {};
+    struct AllowSinkConversion<Slot*, Element> : std::true_type {};
   }
   #endif
 #endif

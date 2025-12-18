@@ -68,7 +68,7 @@
 // conflate with dialected meanings.
 //
 
-INLINE bool Is_Logic(Need(const Stable*) v) {
+INLINE bool Is_Logic(Exact(const Stable*) v) {
     Assert_Cell_Readable(v);
     if (LIFT_BYTE(v) != ANTIFORM_1 or Heart_Of(v) != TYPE_WORD)
         return false;
@@ -102,7 +102,7 @@ INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
 #define Init_Logic(out,flag) \
     TRACK(Init_Logic_Untracked((out), (flag)))
 
-INLINE bool Cell_Logic(Need(const Stable*) v) {
+INLINE bool Cell_Logic(Exact(const Stable*) v) {
     assert(Is_Antiform(v));
     assert(Heart_Of(v) == TYPE_WORD);
     SymId id = unwrap Word_Id(v);
@@ -177,7 +177,7 @@ INLINE bool Is_Boolean(const Stable* v) {
 #define Init_Boolean(out,flag) \
     Init_Word((out), (flag) ? CANON(TRUE) : CANON(FALSE))
 
-INLINE bool Cell_True(Need(const Stable*) v) {  // corresponds to TRUE?
+INLINE bool Cell_True(Exact(const Stable*) v) {  // corresponds to TRUE?
     assert(Is_Word(v));
     Option(SymId) id = Word_Id(v);
     if (id == SYM_TRUE)

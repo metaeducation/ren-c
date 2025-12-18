@@ -94,12 +94,12 @@ INLINE void Force_Location_Of_Error(Error* error, Level* L) {
 #define Init_Warning(v,c) \
     Init_Context_Cell((v), TYPE_WARNING, (c))
 
-INLINE Value* Failify(Need(Value*) atom) {  // WARNING! => ERROR!
-    assert(Heart_Of(atom) == TYPE_WARNING and LIFT_BYTE(atom) == NOQUOTE_2);
-    Force_Location_Of_Error(Cell_Error(atom), TOP_LEVEL);  // ideally a noop
-    Unstably_Antiformize_Unbound_Fundamental(atom);
-    assert(Is_Error(atom));
-    return atom;
+INLINE Value* Failify(Exact(Value*) v) {  // WARNING! => ERROR!
+    assert(Heart_Of(v) == TYPE_WARNING and LIFT_BYTE(v) == NOQUOTE_2);
+    Force_Location_Of_Error(Cell_Error(v), TOP_LEVEL);  // ideally a noop
+    Unstably_Antiformize_Unbound_Fundamental(v);
+    assert(Is_Error(v));
+    return v;
 }
 
 

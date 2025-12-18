@@ -25,7 +25,7 @@
 // after the initialization the Element could hold invalid states.
 //
 // We use "SFINAE" to selectively enable the upside-down hierarchy, based
-// on the `std::is_base_of<>` type trait.
+// on a reversed usage of the `std::is_convertible<>` type trait.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -36,7 +36,7 @@
 //      https://stackoverflow.com/questions/3279543/
 //
 // B. While it might seem natural to use a base class to share functions
-//    between SinkWrapper, InitWrapper, and NeedWrapper, this is avoided for
+//    between SinkWrapper, InitWrapper, and ExactWrapper, this is avoided for
 //    debug build performance.  Debug builds don't inline function calls, and
 //    inheritance/virtual functions would add overhead to what is already
 //    debug instrumentation.  The wrappers are kept separate to maintain
@@ -47,8 +47,8 @@
 //    they'd make debugging confusing, and make it harder to add specific
 //    instrumentation if it were needed.
 //
-// C. This file names the macros [NeedfulInit NeedfulSink NeedfulNeed]
-//    instead of [Init Sink Need].  This is because those short names are
+// C. This file names the macros [NeedfulInit NeedfulSink NeedfulExact]
+//    instead of [Init Sink Exact].  This is because those short names are
 //    particularly likely to be defined in existing codebases...so you can
 //    #define these to whatever name is appropriate for your code.
 //
@@ -68,6 +68,11 @@
 //    able to default construct these types, but they can't give semantic
 //    meanings to default construction... C builds couldn't have parity.
 //
+// F. C++ doesn't really let you template cast operators, so if we're going
+//    to force contravariant conversions for wrapper types the "loophole"
+//    you can use is to do the contravariance testing via construction and
+//    then ask the type to cast to void*, and then cast to the type.  It's
+//    a workaround that seems to work for wrapper types.
 
 
 //=//// FORWARD DEFINITIONS ///////////////////////////////////////////////=//
@@ -84,24 +89,56 @@
 //    a `typename` context.
 //
 
-template<typename T> struct NeedWrapper;
+template<typename T> struct ExactWrapper;
 template<typename T> struct SinkWrapper;
 template<typename T> struct InitWrapper;
 
 template<typename U, typename T>
 struct AllowSinkConversion : std::false_type {};
 
-template<typename U, typename T>
-struct IfReverseInheritable2 {  // used by Need()
-    static constexpr bool value
-        = std::is_same<U, T>::value or std::is_base_of<U, T>::value;
-    using enable = typename std::enable_if<value>;  // not ::type [1]
-};
+//=//// IfOutputConvertible TEST //////////////////////////////////////////=//
+//
+// The premise of Needful's contravariance is that more derived classes
+// represent constraints on the bits, and the base class represents a less
+// constrained rule on that bits.  Hence this is illegal:
+//
+//     void Initialize_Derived(Sink(Base) base) { ... }
+//
+//     Derived* derived = ...;
+//     Initialize_Derived(derived);  // ** error to avoid breaking constraint
+//
+// We avoid writing bits that are legal in base but not the more-constrained
+// derived class.  And no writing of bits on different branches of derivation.
+// This is the usual rule.
+//
+// But you might have cases that are exceptions
+//
+//     void Initialize_Derived(Sink(Base) base) { ... }
+//
+//     Other* has_data = ...;
+//     Initialize_Derived(has_data);  // ** error to avoid breaking constraint
+//
+//     Init(Other*) fresh = ...;
+//     Initialize_Derived(fresh);  // maybe you want exceptions for Init/Sink
+//
+// If your particular problem has this character, the `AllowSinkConversion`
+// trait can be specialized to allow this exception.
+//
+// (FYI: This came up in a case of having a low-level "Slot" which could
+// represent either a value or be flagged as actually describing *where* to
+// write the value.  Hence you don't want to blindly overwrite the bits of
+// the Slot itself--as it might be the description of where to write.  You
+// have to check and consciously establish it being an indirection or not.
+// BUT if the Slot is "fresh" then you know it's not the kind that holds
+// an indirection...so you don't have to check and transform it to a non-Slot
+// before writing it.)
+//
 
 template<typename U, typename T>
 struct IfOutputConvertible2 {  // used by Init() and Sink()
-    static constexpr bool value = IfReverseInheritable2<U, T>::value
+    static constexpr bool value = IfContravariant<U, T>::value
         or AllowSinkConversion<U, T>::value;
+
     using enable = typename std::enable_if<value>;  // not ::type [1]
 };
 
@@ -127,18 +164,17 @@ struct IfOutputConvertible2 {  // used by Init() and Sink()
 
 template<typename TP>
 struct SinkWrapper {
-    NEEDFUL_DECLARE_WRAPPED_FIELD (TP, p);
+    using T = remove_pointer_t<TP>;  // T* is clearer than "TP" in this class
+
+    NEEDFUL_DECLARE_WRAPPED_FIELD (T*, p);
 
     mutable bool corruption_pending;  // can't corrupt on construct [1]
-
-    using T = remove_pointer_t<TP>;
-    using MT = remove_const_t<T>;  // mutable type
 
     template<typename U>
     using IfSinkConvertible
         = typename IfOutputConvertible2<U, T>::enable::type;
 
-    SinkWrapper()  // compiler MIGHT need [E]
+    SinkWrapper()  // compiler MIGHT need, see [E]
         : corruption_pending {false}
     {
         Corrupt_If_Needful(p);  // pointer itself, not contents!
@@ -157,9 +193,9 @@ struct SinkWrapper {
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper(U* u) {
-        this->p = static_cast<T*>(u);
-        this->corruption_pending = (u != nullptr);
+    SinkWrapper(const U& u) {
+        this->p = x_cast(T*, x_cast(void*, u));  // cast workaround [F]
+        this->corruption_pending = (this->p != nullptr);
     }
 
     SinkWrapper(const SinkWrapper& other) {
@@ -169,20 +205,20 @@ struct SinkWrapper {
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper(const NeedWrapper<U*>& need) {
-        this->p = static_cast<T*>(need.p);
-        this->corruption_pending = (need.p != nullptr);  // corrupt
+    SinkWrapper(const ExactWrapper<U>& exact) {
+        this->p = static_cast<T*>(exact.p);
+        this->corruption_pending = (exact.p != nullptr);  // corrupt
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper(const SinkWrapper<U*>& other) {
-        this->p = reinterpret_cast<MT*>(other.p);
+    SinkWrapper(const SinkWrapper<U>& other) {
+        this->p = reinterpret_cast<T*>(other.p);
         this->corruption_pending = (other.p != nullptr);  // corrupt
         other.corruption_pending = false;  // we take over corrupting
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper(const InitWrapper<U*>& init) {
+    SinkWrapper(const InitWrapper<U>& init) {
         this->p = reinterpret_cast<T*>(init.p);
         this->corruption_pending = (init.p != nullptr);  // corrupt
     }
@@ -203,21 +239,21 @@ struct SinkWrapper {
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper& operator=(U* ptr) {
+    SinkWrapper& operator=(U ptr) {
         this->p = u_cast(T*, ptr);
         this->corruption_pending = (ptr != nullptr);  // corrupt
         return *this;
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper& operator=(const NeedWrapper<U*>& need) {
-        this->p = u_cast(T*, need.p);
-        this->corruption_pending = (need.p != nullptr);  // corrupt
+    SinkWrapper& operator=(const ExactWrapper<U>& exact) {
+        this->p = u_cast(T*, exact.p);
+        this->corruption_pending = (exact.p != nullptr);  // corrupt
         return *this;
     }
 
     template<typename U, IfSinkConvertible<U>* = nullptr>
-    SinkWrapper& operator=(const InitWrapper<U*>& init) {
+    SinkWrapper& operator=(const InitWrapper<U>& init) {
         this->p = u_cast(T*, init.p);
         this->corruption_pending = (init.p != nullptr);  // corrupt
         return *this;
@@ -327,15 +363,15 @@ struct SinkWrapper {
 
 template<typename TP>
 struct InitWrapper {
-    NEEDFUL_DECLARE_WRAPPED_FIELD (TP, p);
+    using T = remove_pointer_t<TP>;  // T* is clearer than "TP" in this class
 
-    using T = remove_pointer_t<TP>;
+    NEEDFUL_DECLARE_WRAPPED_FIELD (T*, p);
 
     template<typename U>
     using IfInitConvertible
         = typename IfOutputConvertible2<U, T>::enable::type;
 
-    InitWrapper() {  // compiler might need [E]
+    InitWrapper() {  // compiler might need, see [E]
         dont(Corrupt_If_Needful(p));  // lightweight behavior vs. Sink()
     }
 
@@ -343,24 +379,25 @@ struct InitWrapper {
         {}
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper(U* u) : p {reinterpret_cast<T*>(u)}
-        {}
+    InitWrapper(const U& u) {
+        this->p = x_cast(T*, x_cast(void*, u));  // cast workaround [F]
+    }
 
     InitWrapper(const InitWrapper& other) : p {other.p}
         {}
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper(const InitWrapper<U*>& init)
+    InitWrapper(const InitWrapper<U>& init)
         : p {reinterpret_cast<T*>(init.p)}
         {}
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper(const NeedWrapper<U*>& need)
+    InitWrapper(const ExactWrapper<U>& need)
         : p {static_cast<T*>(need.p)}
         {}
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper(const SinkWrapper<U*>& sink) {
+    InitWrapper(const SinkWrapper<U>& sink) {
         this->p = static_cast<T*>(sink.p);
         sink.corruption_pending = false;  // squash corruption
     }
@@ -378,19 +415,19 @@ struct InitWrapper {
     }
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper& operator=(U* ptr) {
+    InitWrapper& operator=(U ptr) {
         this->p = u_cast(T*, ptr);
         return *this;
     }
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper& operator=(const NeedWrapper<U*>& need) {
+    InitWrapper& operator=(const ExactWrapper<U>& need) {
         this->p = static_cast<T*>(need.p);
         return *this;
     }
 
     template<typename U, IfInitConvertible<U>* = nullptr>
-    InitWrapper& operator=(const SinkWrapper<U*>& sink) {
+    InitWrapper& operator=(const SinkWrapper<U>& sink) {
         this->p = static_cast<T*>(sink.p);
         sink.corruption_pending = false;  // squash corruption
         return *this;
@@ -408,123 +445,165 @@ struct InitWrapper {
 };
 
 
-//=//// NEED() FOR CONTRAVARIANT INPUT PARAMETERS /////////////////////////=//
+//=//// EXACT() FOR FORBIDDING COVARIANT INPUT PARAMETERS /////////////////=//
 //
-// Need() enforces the contravariance of types (e.g. you can't pass a derived
-// class into a pointer that takes base classes), but unlike Sink() or Init()
-// it doesn't imply corruption, so it's an input parameter.
+// Exact() prohibits covariance, but but unlike Sink() or Init() it doesn't
+// imply corruption, so contravariance doesn't make sense.  It just enforces
+// that only the exact type is used.
 //
-// 1. It was decided that while Sink(T) and Init(T) implicitly add pointers
-//    to the type, you have to say Need(T*) if it's a pointer.  This is kind
-//    of an aesthetic choice.  However, the template -must- be parameterized
-//    with the type it is a stand-in for, so it is `SinkWrapper<T*>`,
-//    `InitWrapper<T*>`, and `NeedWrapper<T*>`.
+// NOTE: The code below might seem overcomplicated for that stated purpose,
+// and simplifications are welcome!  But it has some interoperability with
+// Sink() and Init() as well as fitting into Needful's casting framework.
+// So it's more complex than a minimal C++11 Exact() implementation would be.
+//
+// 1. While Sink(T) and Init(T) implicitly add pointers to the type, you have
+//    to say Exact(T*) if it's a pointer.  This allows you to use Exact
+//    with non-pointer types.
+//
+//    However, the template -must- be parameterized with the type it is a
+//    stand-in for, so it is `SinkWrapper<T*>`, `InitWrapper<T*>`, and
+//    `ExactWrapper<T*>`.
 //
 //    (See needful_rewrap_type() for the reasoning behind this constraint.)
 //
 // 2. Uses in the codebase the Needful library were written for required that
-//    Need(T*) be able to accept cells with pending corruptions.  I guess
+//    Exact(T*) be able to accept cells with pending corruptions.  I guess
 //    the thing I would say that if you want to argue with this design point,
 //    you should consider that there's nothing guaranteeing a plain `T*` is
 //    not corrupt...so you're not bulletproofing much and breaking some uses
 //    that turned out to be important.  It's better to have cross-cutting
-//    ways at runtime of noticing a given T* is corrupt regardless of Need().
+//    ways at runtime to notice a given T* is corrupt regardless of Exact().
+//
+// 3. Non-dependent enable_if conditions work in MSVC, but GCC has trouble
+//    with them.  Introducing a dependent type seems to help it along.
 //
 
-#undef NeedfulNeed
-#define NeedfulNeed(TP) \
-    NeedWrapper<TP>  // * not implicit [1]
+#undef NeedfulExact
+#define NeedfulExact(TP) \
+    ExactWrapper<TP>  // * not implicit [1]
 
-template<typename TP>
-struct NeedWrapper {
+template<typename U, typename T>
+struct IfExactType2 {
+    static constexpr bool value = std::is_same<U, T>::value;
+    using enable = typename std::enable_if<value>;  // not ::type [1]
+};
+
+template<typename TP>  // TP may or may not be a pointer type
+struct ExactWrapper {
     NEEDFUL_DECLARE_WRAPPED_FIELD (TP, p);
 
-    using T = remove_pointer_t<TP>;
-    using MT = remove_const_t<T>;  // mutable type
+    using MTP = needful_unconstify_t(TP);  // mutable type
+
+    using T = remove_pointer_t<MTP>;
 
     template<typename U>
-    using IfReverseInheritable
-        = typename IfReverseInheritable2<U, T>::enable::type;
+    using IfExactType
+        = typename IfExactType2<needful_unconstify_t(U), T>::enable::type;
 
-    NeedWrapper()  // compiler MIGHT need [E]
+    ExactWrapper()  // compiler MIGHT need, see [E]
         { dont(Corrupt_If_Needful(p)); }  // may be zero in global scope
 
-    NeedWrapper(std::nullptr_t) : p {nullptr}
+    ExactWrapper(std::nullptr_t) : p {nullptr}
         {}
 
     template<
         typename U,
+        typename D = TP,  // [3]
         typename = enable_if_t<
-            std::is_same<remove_const_t<T>, U>::value
-            and std::is_const<T>::value
-        >
+            std::is_pointer<D>::value
+        >,
+        IfExactType<U>* = nullptr
     >
-    NeedWrapper(const NeedWrapper<U*>& other)
+    ExactWrapper(U* u) : p {x_cast(TP, u)}
+        {}
+
+    template<
+        typename UP,
+        typename D = TP,  // [3]
+        typename = enable_if_t<
+            not std::is_pointer<D>::value
+        >,
+        IfExactType<UP>* = nullptr
+    >
+    ExactWrapper(UP u) : p {u}
+        {}
+
+    template<
+        typename U,
+        typename D = TP,  // [3]
+        typename = enable_if_t<
+            std::is_pointer<D>::value
+        >,
+        IfExactType<U>* = nullptr
+    >
+    ExactWrapper(const ExactWrapper<U*>& other)
         : p {other.p}
         {}
 
     template<
-        typename U,
-        typename = enable_if_t<  // don't disregard constness
-            needful_is_convertible_v(U*, T*)
+        typename UP,
+        typename D = TP,  // [3]
+        typename = enable_if_t<
+            not std::is_pointer<D>::value
         >,
-        IfReverseInheritable<U>* = nullptr
+        IfExactType<UP>* = nullptr
     >
-    NeedWrapper(U* u) : p {x_cast(MT*, u)}
+    ExactWrapper(const ExactWrapper<UP>& other)
+        : p {other.p}
         {}
 
-    NeedWrapper(const NeedWrapper& other) : p {other.p}
+    ExactWrapper(const ExactWrapper& other) : p {other.p}
         {}
 
-    template<typename U, IfReverseInheritable<U>* = nullptr>
-    NeedWrapper(const SinkWrapper<U*>& sink) {
+    template<typename U, IfExactType<U>* = nullptr>
+    ExactWrapper(const SinkWrapper<U*>& sink) {
         dont(assert(not sink.corruption_pending));  // must allow corrupt [2]
         this->p = static_cast<T*>(sink);  // not sink.p (flush corruption)
     }
 
-    template<typename U, IfReverseInheritable<U>* = nullptr>
-    NeedWrapper(const InitWrapper<U*>& init)
-        : p {static_cast<T*>(init.p)}
+    template<typename U, IfExactType<U>* = nullptr>
+    ExactWrapper(const InitWrapper<U*>& init)
+        : p {static_cast<TP>(init.p)}
         {}
 
-    NeedWrapper& operator=(std::nullptr_t) {
+    ExactWrapper& operator=(std::nullptr_t) {
         this->p = nullptr;
         return *this;
     }
 
-    NeedWrapper& operator=(const NeedWrapper& other) {
+    ExactWrapper& operator=(const ExactWrapper& other) {
         if (this != &other) {
             this->p = other.p;
         }
         return *this;
     }
 
-    template<typename U, IfReverseInheritable<U>* = nullptr>
-    NeedWrapper& operator=(U* ptr) {
-        this->p = static_cast<T*>(ptr);
+    template<typename U, IfExactType<U>* = nullptr>
+    ExactWrapper& operator=(U* ptr) {
+        this->p = static_cast<TP>(ptr);
         return *this;
     }
 
-    template<typename U, IfReverseInheritable<U>* = nullptr>
-    NeedWrapper& operator=(const SinkWrapper<U*>& sink) {
+    template<typename U, IfExactType<U>* = nullptr>
+    ExactWrapper& operator=(const SinkWrapper<U*>& sink) {
         dont(assert(not sink.corruption_pending));  // must allow corrupt [2]
-        this->p = static_cast<T*>(sink);  // not sink.p (flush corruption)
+        this->p = static_cast<TP>(sink);  // not sink.p (flush corruption)
         return *this;
     }
 
-    template<typename U, IfReverseInheritable<U>* = nullptr>
-    NeedWrapper& operator=(const InitWrapper<U*>& init) {
-        this->p = static_cast<T*>(init.p);
+    template<typename U, IfExactType<U>* = nullptr>
+    ExactWrapper& operator=(const InitWrapper<U*>& init) {
+        this->p = static_cast<TP>(init.p);
         return *this;
     }
 
     explicit operator bool() const { return p != nullptr; }
 
-    operator T*() const { return p; }
+    operator TP() const { return p; }
 
     template<typename U>
     explicit operator U*() const
         { return const_cast<U*>(reinterpret_cast<const U*>(p)); }
 
-    T* operator->() const { return p; }
+    TP operator->() const { return p; }
 };

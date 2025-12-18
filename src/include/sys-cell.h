@@ -1344,25 +1344,3 @@ INLINE Stable* Constify(Stable* v) {
         *v = nullptr;
     }
 #endif
-
-
-//=//// PASS SINK()/NEED() TO API VARIADICS ///////////////////////////////=//
-//
-// C doesn't have any type checking of variadic parameters, but when compiling
-// with C++ we can recursively break down the variadics and do typechecking
-// (as well as do interesting type conversions).  Here we enable Sink() and
-// Need() to handle Cell subclasses.
-//
-// Note that a similar converter should NOT be made for OnStack(...), as you
-// should not be passing values on the data stack to API functions.
-//
-
-#if NEEDFUL_SINK_USES_WRAPPER
-    template<typename T>
-    inline const void* to_rebarg(const Sink(T)& val)
-        { return u_cast(Value*, val); }
-
-    template<typename T>
-    inline const void* to_rebarg(const Need(T)& val)
-        { return u_cast(Value*, val); }
-#endif

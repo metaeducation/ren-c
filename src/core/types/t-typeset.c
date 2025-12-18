@@ -513,7 +513,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
 // so you can decorate a type block, like @([integer! block!])
 //
 Element* Decorate_According_To_Parameter(
-    Need(Element*) e,
+    Element* e,
     const Element* param
 ){
     if (Get_Parameter_Flag(param, REFINEMENT)) {

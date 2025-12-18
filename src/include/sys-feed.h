@@ -821,7 +821,7 @@ INLINE Result(Feed*) Prep_At_Feed(
 // !!! Warning: Narrow usage, only for reconstituting something you already
 // knew was an antiform.
 //
-INLINE Value* Undecayed_Antiformize_Unbound_Quasiform(Need(Value*) v) {
+INLINE Value* Undecayed_Antiformize_Unbound_Quasiform(Exact(Value*) v) {
     assert(Any_Isotopic_Type(Heart_Of(v)));
     assert(LIFT_BYTE(v) == QUASIFORM_3);
     if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))

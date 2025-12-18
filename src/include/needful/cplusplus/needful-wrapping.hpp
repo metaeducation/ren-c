@@ -154,3 +154,84 @@ struct RewrapHelper<const Wrapper, NewWrapped> {  // const needs forwarding
 
 #define needful_rewrap_type(WrapperType, NewInnerType) \
     typename needful::RewrapHelper<WrapperType, NewInnerType>::type
+
+
+//=//// CONTRAVARIANCE ////////////////////////////////////////////////////=//
+//
+// Needful's concept of contravariance is based on a very stylized usage of
+// inheritance, in which classes in a derivation hierarchy are all using the
+// same underlying bit patterns.  The only reason they're using inheritance
+// is to get compile-time checking of constraints on those bits, where the
+// subclasses represent more constrained bit patterns than their bases.
+//
+// 1. Sink(T) and Init(T) want to enable contravariant conversions for
+//    wrapped types, but only "safe" wrappers.
+//
+//    An example unsafe wrapper would be Option(T), because Sink(Option(T))
+//    would run the risk of trying to write bytes into a nullptr disengaged
+//    state.  However, this is really the exception and not the rule: Needful
+//    wrappers are just providing some debug instrumentation and no function,
+//    which means that nullability is the *only* property to worry about.
+//
+//    So we default to saying wrappers are contravariant, and really Option(T)
+//    is the only known exception at this time.
+//
+// 2. The stylized contravariance needs Plain-Old-Data (POD) C structs, that
+//    are standard-layout where no fields are added in derivation.  This is
+//    the only way that the "dangerous"-looking casts performed by Sink()
+//    and Init() are safe.  So we check for standard-layout and size-equality
+//    on base and derived classes before allowing them to be used this way.
+//
+
+template<typename T>  // assume wrappers are contravariant by default [1]
+struct IsContravariantWrapper : std::true_type {};
+
+
+template<typename B, typename D, typename = void>
+struct IsCompatibleBase : std::false_type {};
+
+template<typename B, typename D>  // stricter version of is_base_of<> [2]
+struct IsCompatibleBase<B, D,
+    typename std::enable_if<
+        std::is_base_of<B, D>::value
+    >::type>
+{
+    static_assert(
+        std::is_standard_layout<B>::value
+            and std::is_standard_layout<D>::value
+            and sizeof(B) == sizeof(D),
+        "IsCompatibleBase: types must be same-sized standard layout classes"
+    );
+    static constexpr bool value = std::is_base_of<B, D>::value;
+};
+
+
+template<
+    typename UP,
+    typename T,
+    bool IsWrapper = HasWrappedType<UP>::value  // default: not a wrapper [1]
+>
+struct IfContravariant {
+    using U = remove_pointer_t<UP>;  // Note: UP may or may not be a pointer
+
+    static constexpr bool value =
+        std::is_same<UP, T*>::value or (
+            std::is_pointer<UP>::value and std::is_class<T>::value
+                ? IsCompatibleBase<U, T>::value
+                : false
+        );
+    using enable = typename std::enable_if<value>;  // not ::type [G]
+};
+
+template<typename U, typename T>
+struct IfContravariant<U, T, /* bool IsWrapper = */ true> {  // wrapper [2]
+    using WP = typename U::wrapped_type;
+    using W = remove_pointer_t<WP>;
+
+    static constexpr bool value =
+        IsContravariantWrapper<U>::value
+        and std::is_class<W>::value
+        and std::is_class<T>::value
+        and IsCompatibleBase<W, T>::value;
+    using enable = typename std::enable_if<value>;  // not ::type [G]
+};

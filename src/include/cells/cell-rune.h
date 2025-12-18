@@ -373,7 +373,7 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
 //  * Quick way to unset variables, simply `(var: ~)`
 //
 
-INLINE bool Is_Tripwire(Need(const Stable*) v)  // don't allow Element*
+INLINE bool Is_Tripwire(Exact(const Stable*) v)  // don't allow Element*
  { return Is_Space_With_Lift_Sigil(ANTIFORM_1, SIGIL_0, v); }
 
 INLINE Stable* Init_Tripwire_Untracked(Init(Stable) out) {
