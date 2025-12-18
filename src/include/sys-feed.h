@@ -816,3 +816,22 @@ INLINE Result(Feed*) Prep_At_Feed(
         flags
     );
 }
+
+
+// !!! Warning: Narrow usage, only for reconstituting something you already
+// knew was an antiform.
+//
+INLINE Value* Undecayed_Antiformize_Unbound_Quasiform(Need(Value*) v) {
+    assert(Any_Isotopic_Type(Heart_Of(v)));
+    assert(LIFT_BYTE(v) == QUASIFORM_3);
+    if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
+        assert(not Cell_Binding(v));
+    LIFT_BYTE_RAW(v) = ANTIFORM_1;
+    if (Heart_Of(v) == TYPE_WORD) {
+        if (Word_Id(v) == SYM_NULL)
+            Set_Cell_Flag(v, KEYWORD_IS_NULL);  // see cell-nulled.h
+        else
+            assert(Not_Cell_Flag(v, KEYWORD_IS_NULL));
+    }
+    return v;
+}

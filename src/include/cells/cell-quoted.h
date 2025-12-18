@@ -340,35 +340,6 @@ INLINE Element* Quasify_Isotopic_Fundamental(Element* elem) {
     return elem;
 }
 
-INLINE Value* Undecayed_Antiformize_Unbound_Quasiform(Need(Value*) v) {
-    assert(Any_Isotopic_Type(Heart_Of(v)));
-    assert(LIFT_BYTE(v) == QUASIFORM_3);
-    if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
-        assert(not Cell_Binding(v));
-    LIFT_BYTE_RAW(v) = ANTIFORM_1;
-    return v;
-}
-
-INLINE Stable* Stably_Antiformize_Unbound_Fundamental(Need(Stable*) v) {
-    assert(Any_Isotopic(v));
-    assert(LIFT_BYTE(v) == NOQUOTE_2);
-    assert(Is_Stable_Antiform_Kind_Byte(KIND_BYTE(v)));
-    if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
-        assert(not Cell_Binding(v));
-    LIFT_BYTE_RAW(v) = ANTIFORM_1;
-    return v;
-}
-
-INLINE Value* Unstably_Antiformize_Unbound_Fundamental(Need(Value*) atom) {
-    assert(Any_Isotopic(atom));
-    assert(LIFT_BYTE(atom) == NOQUOTE_2);
-    assert(not Is_Stable_Antiform_Kind_Byte(KIND_BYTE(atom)));
-    if (Is_Bindable_Heart(Unchecked_Heart_Of(atom)))
-        assert(not Cell_Binding(atom));
-    LIFT_BYTE_RAW(atom) = ANTIFORM_1;
-    return atom;
-}
-
 INLINE Element* Quasify_Antiform(Need(Stable*) v) {
     assert(Is_Antiform(v));
     LIFT_BYTE_RAW(v) = QUASIFORM_3;  // all antiforms can be quasi
@@ -379,6 +350,36 @@ INLINE Element* Reify(Value* v) {
     if (LIFT_BYTE(v) == ANTIFORM_1)
         LIFT_BYTE_RAW(v) = QUASIFORM_3;  // all antiforms can be quasi
     return cast(Element*, v);
+}
+
+
+//=//// ANTIFORMIZE FUNDAMENTALS /////////////////////////////////////////=//
+//
+// !!! Warning: Internal use only, this bypasses typical checks: go through
+// the Coerce_To_Antiform() function instead unless you know what you
+// are doing.
+//
+
+INLINE Stable* Stably_Antiformize_Unbound_Fundamental(Need(Stable*) v) {
+    assert(Heart_Of(v) != TYPE_WORD);  // no KEYWORD_IS_NULL handling
+    assert(Any_Isotopic(v));
+    assert(LIFT_BYTE(v) == NOQUOTE_2);
+    assert(Is_Stable_Antiform_Kind_Byte(KIND_BYTE(v)));
+    if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
+        assert(not Cell_Binding(v));
+    LIFT_BYTE_RAW(v) = ANTIFORM_1;
+    return v;
+}
+
+INLINE Value* Unstably_Antiformize_Unbound_Fundamental(Need(Value*) v) {
+    assert(Heart_Of(v) != TYPE_WORD);  // no KEYWORD_IS_NULL handling
+    assert(Any_Isotopic(v));
+    assert(LIFT_BYTE(v) == NOQUOTE_2);
+    assert(not Is_Stable_Antiform_Kind_Byte(KIND_BYTE(v)));
+    if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
+        assert(not Cell_Binding(v));
+    LIFT_BYTE_RAW(v) = ANTIFORM_1;
+    return v;
 }
 
 
