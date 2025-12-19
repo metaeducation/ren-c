@@ -123,8 +123,11 @@ void* Probe_Core_Debug(
 ){
   #if TRAMPOLINE_COUNTS_TICKS
     Tick saved_tick = g_tick;
-    Tick saved_break_at_tick = g_break_at_tick;
-    g_break_at_tick = 0;  // prevent breaking during the probe
+
+    #if RUNTIME_CHECKS
+        Tick saved_break_at_tick = g_break_at_tick;
+        g_break_at_tick = 0;  // prevent breaking during the Probe()
+    #endif
   #endif
 
     bool top_was_intrinsic = Get_Level_Flag(TOP_LEVEL, DISPATCHING_INTRINSIC);
@@ -405,7 +408,10 @@ void* Probe_Core_Debug(
     Reconcile_Ticks();
     g_tick = saved_tick;
     g_ts.total_eval_cycles = saved_tick;
-    g_break_at_tick = saved_break_at_tick;
+
+    #if RUNTIME_CHECKS
+        g_break_at_tick = saved_break_at_tick;
+    #endif
   #endif
 
     return m_cast(void*, p);  // must cast back to const if source was const

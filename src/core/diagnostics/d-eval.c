@@ -119,8 +119,11 @@ void Dump_Level_Location(Level* L)
 void Where_Core_Debug(Level* L) {
   #if TRAMPOLINE_COUNTS_TICKS
     Tick saved_tick = g_tick;
-    Tick saved_break_at_tick = g_break_at_tick;
-    g_break_at_tick = 0;  // prevent breaking during the probe
+
+    #if RUNTIME_CHECKS
+        Tick saved_break_at_tick = g_break_at_tick;
+        g_break_at_tick = 0;  // prevent breaking during the Where()
+    #endif
   #endif
 
     if (FEED_IS_VARIADIC(L->feed))
@@ -160,7 +163,10 @@ void Where_Core_Debug(Level* L) {
     Reconcile_Ticks();
     g_tick = saved_tick;
     g_ts.total_eval_cycles = saved_tick;
-    g_break_at_tick = saved_break_at_tick;
+
+    #if RUNTIME_CHECKS
+        g_break_at_tick = saved_break_at_tick;
+    #endif
   #endif
 }
 
