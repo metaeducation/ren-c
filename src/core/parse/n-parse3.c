@@ -1322,11 +1322,11 @@ DECLARE_NATIVE(SUBPARSE)
     // annoying to find to inspect in the debugger.  This makes pointers into
     // the value payloads so they can be seen more easily.
     //
-    const REBIDX *pos_debug = &P_POS;
+    const Index* pos_debug = &P_POS;
     USED(pos_debug);
   #endif
 
-    REBIDX begin = P_POS;  // point at beginning of match
+    Index begin = P_POS;  // point at beginning of match
 
     // The loop iterates across each Element's worth of "rule" in the rule
     // block.  Some of these rules just set `flags` and `continue`, so that
@@ -2575,7 +2575,7 @@ DECLARE_NATIVE(PARSE3)
         return fail (Error_Parse3_Incomplete_Raw());
     }
 
-    REBLEN index = VAL_UINT32(Known_Element(OUT));
+    Index index = VAL_UINT32(Known_Element(OUT));
     assert(index <= Series_Len_Head(input));
 
     if (index != Series_Len_Head(input)) {  // didn't reach end of input

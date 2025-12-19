@@ -252,7 +252,7 @@ static Bounce Loop_Series_Common(
     Stable* var, // Must not be movable from context expansion, see #2274
     const Stable* body,
     Stable* start,
-    REBINT end,
+    Index end,
     REBINT bump
 ){
     // !!! This limits incoming `end` to the array bounds.  Should it assert?
@@ -267,11 +267,11 @@ static Bounce Loop_Series_Common(
     // it must be checked for changing to another series, or non-series.
     //
     Copy_Cell(var, start);
-    REBIDX* state = &SERIES_INDEX_UNBOUNDED(var);
+    Index* state = &SERIES_INDEX_UNBOUNDED(var);
 
     // Run only once if start is equal to end...edge case.
     //
-    REBINT s = Series_Index(start);
+    Index s = Series_Index(start);
     if (s == end) {
         Option(LoopInterrupt) interrupt = none;
         do {
@@ -718,7 +718,7 @@ DECLARE_NATIVE(FOR_SKIP)
         // Increment via skip, which may go before 0 or after the tail of
         // the series.
         //
-        // !!! Should also check for overflows of REBIDX range.
+        // !!! Should also check for overflows of Index range.
         //
         SERIES_INDEX_UNBOUNDED(spare) += skip;
     }
@@ -889,7 +889,7 @@ DECLARE_NATIVE(CYCLE)
 
 
 struct Reb_Enum_Series {
-    REBLEN index;  // index into the data for filling current variable
+    Index index;  // index into the data for filling current variable
     REBLEN len;  // length of the data
 };
 
@@ -1082,8 +1082,6 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
         }
 
         if (Any_Context_Type(heart)) {
-            assert(les->u.evars.index != 0);
-
             Element* spare_key = Init_Word(
                 SPARE, Key_Symbol(les->u.evars.key)
             );
@@ -1094,7 +1092,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
             }
             else {
                 Tweak_Cell_Binding(spare_key, Cell_Varlist(les->data));
-                Tweak_Word_Index(spare_key, les->u.evars.index);
+                Tweak_Word_Index(spare_key, les->u.evars.n);
             }
             trap (
               Write_Loop_Slot_May_Bind(slot, spare_key, les->data)
@@ -1582,7 +1580,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     if (Is_Block(body))
         Add_Definitional_Break_Again_Continue(body, level_);
 
-    REBLEN start = Series_Index(data);
+    Index start = Series_Index(data);
 
     DECLARE_MOLDER (mo);
     if (Any_List(data)) {  // use BASE_FLAG_MARKED to mark for removal [1]
@@ -1594,14 +1592,14 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     Set_Flex_Info(flex, HOLD);  // disallow mutations until finalize
 
-    REBLEN len = Any_String(data)
+    Length len = Any_String(data)
         ? Strand_Len(cast(Strand*, flex))
         : Flex_Used(flex);  // temp read-only, this won't change
 
     bool threw = false;
     bool breaking = false;
 
-    REBLEN index = start;
+    Index index = start;
     while (index < len) {
         assert(start == index);
 

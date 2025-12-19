@@ -722,7 +722,7 @@ static void Free_Unbiased_Flex_Data(char *unbiased, Size total)
 //
 Result(None) Expand_Flex_At_Index_And_Update_Used(
     Flex* f,
-    REBLEN index,
+    Index index,
     REBLEN delta
 ){
     Assert_Flex_Term_If_Needed(f);

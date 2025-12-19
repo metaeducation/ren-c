@@ -125,7 +125,7 @@ DECLARE_NATIVE(RECYCLE)
         count = Recycle_Core(sweeplist);
         assert(count == Flex_Used(sweeplist));
 
-        REBLEN index = 0;
+        Index index = 0;
         for (index = 0; index < count; ++index) {
             Base* base = *Flex_At(Base*, sweeplist, index);
             PROBE(base);

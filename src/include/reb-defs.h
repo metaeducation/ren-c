@@ -80,19 +80,20 @@ typedef uintptr_t Flags;
 // integers...even if that might be larger.
 //
 typedef intptr_t REBINT; // series index, signed, at *least* 32 bits
-typedef intptr_t REBIDX; // series index, signed, at *least* 32 bits
 typedef intptr_t REBLEN; // series length, unsigned, at *least* 32 bits
 
-// !!! These values are an attempt to differentiate 0-based indexing from
-// 1-based indexing, and try to be type-incompatible.
+// These try to differentiate logical units from byte count (Offset/Size)
+// they are signed and at *least* 32 bits
 //
-typedef intptr_t Offset;
-typedef intptr_t Length;
+typedef intptr_t Index;  // logical units index (e.g. codepoints)
+typedef intptr_t Length;  // logical units length (e.g. codepoints)
+
 typedef intptr_t Count;
 
 // Bjarne Stroustrup himself believes size_t being unsigned is a mistake
 // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1428r0.pdf
 //
+typedef intptr_t Offset;  // physical units offset (e.g. bytes)
 typedef intptr_t Size;  // Size (in bytes)
 #define Size_Of(x) u_cast(Size, sizeof(x))
 
@@ -145,61 +146,72 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 #define MAX_D64 ((double) 9.2233720368547758e18)
 
 
-//=//// 1-BASED INDEX TYPE ////////////////////////////////////////////////=//
+//=//// 1-BASED ORDINAL TYPE //////////////////////////////////////////////=//
 //
-// The Index type is not allowed to be 0 unless it is an Optional(Index).
+// The Ordinal type is not allowed to be 0 unless it is an Optional(Ordinal).
+// It has no runtime cost in release builds--it just helps encode the usage
+// of 0 as a sentinel value and avoid mistakes with that.
 //
-// 1. Due to the fact that Option(Index) is just `Index` when not using the
-//    NEEDFUL_OPTION_USES_WRAPPER switch, we cannot enforce Index's "never 0"
+// 1. Due to the fact that Option(Ordinal) is just `Ordinal` without the
+//    NEEDFUL_OPTION_USES_WRAPPER switch, we can't enforce Ordinal's "never 0"
 //    property without that switch.
 
 #if (! NEEDFUL_OPTION_USES_WRAPPER)
-    typedef intptr_t Index;
-    #define Index_To_Offset(i) ((i) - 1)
-    #define Offset_To_Index(i) ((i) + 1)
+    typedef intptr_t Ordinal;
+    #define Ordinal_To_Int ((o) - 1)
+    #define Int_To_Ordinal(i) ((i) + 1)
 #else
-    struct Index {
+    struct Ordinal {
         intptr_t value;
-        Index(intptr_t i) : value {i}  // explicit would be too painful
-          { assert(i != 0); }  // can't unless NEEDFUL_OPTION_USES_WRAPPER [1]
+
+        Ordinal()  // need default constructibility
+          { Corrupt_If_Needful(value); }  // trash if in global zero'd scope
+
+        Ordinal(intptr_t i) : value {i}  // explicit would be too painful
+          { assert(i != 0); }  // can't without real Option(T) [1]
 
         operator intptr_t() const
           { return value; }
 
-        Index& operator++()  // prefix
+        Ordinal& operator++()  // prefix
           { ++value; return *this; }
-        Index& operator--()  // prefix
+        Ordinal& operator--()  // prefix
           { --value; return *this; }
-        Index operator++(int)  // postfix
-          { Index temp = *this; ++value; return temp; }
-        Index operator--(int)  // postifx
-          { Index temp = *this; --value; return temp; }
+        Ordinal operator++(int)  // postfix
+          { Ordinal temp = *this; ++value; return temp; }
+        Ordinal operator--(int)  // postfix
+          { Ordinal temp = *this; --value; return temp; }
     };
 
-    INLINE Offset Index_To_Offset(Index i)
-     { return i.value - 1; }
+    INLINE intptr_t Ordinal_To_Int(Ordinal o)
+     { return o.value - 1; }
 
-    INLINE Index Offset_To_Index(Offset o)
-     { return Index {o + 1}; }
+    INLINE Ordinal Int_To_Ordinal(intptr_t i)
+     { return Ordinal {i + 1}; }
 
   #if NEEDFUL_OPTION_USES_WRAPPER
   namespace needful {
     template<>
-    struct needful::OptionWrapper<Index> {  // bypass the 0 assert
+    struct OptionWrapper<Ordinal> {  // bypass the 0 assert
         NEEDFUL_DECLARE_WRAPPED_FIELD (intptr_t, o);
 
         OptionWrapper(intptr_t init) : o {init} {}  // no assert
+        OptionWrapper(Ordinal ord) : o {ord.value} {}
 
         explicit operator bool() {
            // explicit exception in if https://stackoverflow.com/q/39995573/
            return o != 0 ? true : false;
         }
+
+        OptionWrapper(NoneStruct)
+            : o {0}
+        {}
     };
   }
 
     INLINE uintptr_t operator+(  // see definition of Option() for explanation
         needful::UnwrapHelper,
-        const needful::OptionWrapper<Index>& option
+        const needful::OptionWrapper<Ordinal>& option
     ){
         assert(option.o != 0);
         return option.o;
@@ -207,7 +219,7 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 
     INLINE uintptr_t operator+(  // see definition of Option() for explanation
         needful::OptHelper,
-        const needful::OptionWrapper<Index>& option
+        const needful::OptionWrapper<Ordinal>& option
     ){
         return option.o;
     }

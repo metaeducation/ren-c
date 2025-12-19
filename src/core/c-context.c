@@ -906,7 +906,7 @@ Result(Source*) Context_To_Array(const Element* context, REBINT mode)
 
     while (Try_Advance_Evars(&e)) {
         if (mode & 1) {
-            assert(e.index != 0);
+            assert(e.n != 0);
             Init_Word(PUSH(), Key_Symbol(e.key));
             if (mode & 2) {
                 trap (
@@ -918,7 +918,7 @@ Result(Source*) Context_To_Array(const Element* context, REBINT mode)
             }
             else {
                 Tweak_Cell_Binding(TOP_ELEMENT, e.ctx);
-                Tweak_Word_Index(TOP_ELEMENT, e.index);
+                Tweak_Word_Index(TOP_ELEMENT, e.n);
             }
 
             if (mode & 2)
@@ -956,7 +956,7 @@ Result(Source*) Context_To_Array(const Element* context, REBINT mode)
 // Note that since contexts like FRAME! can have multiple keys with the same
 // name, the Frame_Lens() of the context has to be taken into account.
 //
-Option(Index) Find_Symbol_In_Context(
+Option(Ordinal) Find_Symbol_In_Context(
     const Element* context,
     const Symbol* symbol,
     bool strict
@@ -986,7 +986,7 @@ Option(Index) Find_Symbol_In_Context(
         }
 
         Shutdown_Evars(&e);
-        return e.index;
+        return e.n;
     }
 
     Shutdown_Evars(&e);
@@ -1005,11 +1005,11 @@ Option(Slot*) Select_Symbol_In_Context(
     const Symbol* symbol
 ){
     const bool strict = false;
-    Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
-    if (not index)
+    Option(Ordinal) n = Find_Symbol_In_Context(context, symbol, strict);
+    if (not n)
         return nullptr;
 
-    return Varlist_Slot(Cell_Varlist(context), unwrap index);
+    return Varlist_Slot(Cell_Varlist(context), unwrap n);
 }
 
 

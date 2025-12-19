@@ -161,7 +161,7 @@ typedef const Symbol* Key;
 //=//// BOOKMARKS (codepoint position caches for UTF-8) ///////////////////=//
 
 struct BookmarkStruct {
-    REBLEN index;
+    Index index;
     Size offset;
 };
 typedef struct BookmarkStruct Bookmark;

@@ -252,17 +252,17 @@ INLINE REBLEN Varlist_Len(VarList* c) {
     return c->content.dynamic.used - 1;  // -1 for archetype
 }
 
-INLINE const Key* Varlist_Key(VarList* c, Index n) {  // 1-based
+INLINE const Key* Varlist_Key(VarList* c, Ordinal n) {  // 1-based
     assert(n != 0 and n <= Varlist_Len(c));
     return Flex_At(const Key, Bonus_Keylist(c), n - 1);
 }
 
-INLINE Slot* Varlist_Slot(VarList* c, Index n) {  // 1-based
+INLINE Slot* Varlist_Slot(VarList* c, Ordinal n) {  // 1-based
     assert(n != 0 and n <= Varlist_Len(c));
     return Flex_Head_Dynamic(Slot, c) + n;
 }
 
-INLINE Fixed(Slot*) Varlist_Fixed_Slot(VarList* c, Index n) {  // 1-based
+INLINE Fixed(Slot*) Varlist_Fixed_Slot(VarList* c, Ordinal n) {  // 1-based
     assert(Get_Flex_Flag(Varlist_Array(c), FIXED_SIZE));  // see #2274
     return Varlist_Slot(c, n);
 }

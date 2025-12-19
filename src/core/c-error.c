@@ -905,7 +905,7 @@ Error* Error_Invalid_Arg(Level* L, const Param* param)
     assert(param >= headparam);
     assert(param <= headparam + Level_Num_Args(L));
 
-    REBLEN index = 1 + (param - headparam);
+    Index index = 1 + (param - headparam);
 
     Option(const Symbol*) label = Try_Get_Action_Level_Label(L);
 
@@ -1416,7 +1416,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Warning)
     }
 
     const Source* array = Cell_Array(message);
-    REBLEN index = Series_Index(message);
+    Index index = Series_Index(message);
 
     REBINT len = Array_Len(array) - index;
     if (len < 0)

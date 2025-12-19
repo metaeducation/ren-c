@@ -169,18 +169,18 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Port)
     // Dispatch object function:
 
     const bool strict = false;
-    Option(Index) index = Find_Symbol_In_Context(
+    Option(Ordinal) n = Find_Symbol_In_Context(
         Known_Element(spare_actor), verb, strict
     );
 
     Sink(Stable) scratch_action = SCRATCH;
-    if (not index)
+    if (not n)
         Init_Nulled(scratch_action);
     else {
         require (
           Read_Slot(
             scratch_action,
-            Varlist_Slot(Cell_Varlist(spare_actor), unwrap index)
+            Varlist_Slot(Cell_Varlist(spare_actor), unwrap n)
         ));
     }
 

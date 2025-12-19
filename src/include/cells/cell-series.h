@@ -39,12 +39,12 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
     // Avoids Ensure_Readable(), because it's assumed that it was done in the
     // type checking to ensure Series_Index() applied.  (This is called often.)
     //
-    INLINE REBIDX SERIES_INDEX_UNBOUNDED(const Cell* c) {
+    INLINE Index SERIES_INDEX_UNBOUNDED(const Cell* c) {
         assert(Any_Series_Type(Unchecked_Heart_Of(c)));
         assert(Cell_Payload_1_Needs_Mark(c));
         return SERIESLIKE_PAYLOAD_2_INDEX(c);
     }
-    INLINE REBIDX & SERIES_INDEX_UNBOUNDED(Cell* c) {
+    INLINE Index& SERIES_INDEX_UNBOUNDED(Cell* c) {
         Assert_Cell_Writable(c);
         assert(Any_Series_Type(Unchecked_Heart_Of(c)));
         assert(Cell_Payload_1_Needs_Mark(c));
@@ -65,7 +65,7 @@ INLINE REBLEN Series_Index_Stringlike_Ok(const Cell* v) {
     assert(Any_Series_Type(heart) or Stringlike_Cell(v));
     UNUSED(heart);
     assert(Cell_Payload_1_Needs_Mark(v));
-    REBIDX i = SERIESLIKE_PAYLOAD_2_INDEX(v);
+    Index i = SERIESLIKE_PAYLOAD_2_INDEX(v);
     if (i < 0 or i > Series_Len_Head(v))
         panic (Error_Index_Out_Of_Range_Raw());
     return i;
@@ -102,7 +102,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
     Init(Element) out,
     Heart heart,
     const Flex* f,  // ensured managed by calling macro
-    REBLEN index,
+    Index index,
     Context* binding
 ){
   #if RUNTIME_CHECKS

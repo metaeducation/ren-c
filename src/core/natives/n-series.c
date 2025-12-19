@@ -227,7 +227,7 @@ DECLARE_NATIVE(APPEND)
 
     Length len = Part_Limit_Append_Insert(ARG(PART));  // check even if <opt>
     Count dups = not ARG(DUP) ? 1 : VAL_UINT32(unwrap ARG(DUP));
-    Length index = SERIES_INDEX_UNBOUNDED(series);
+    Index index = SERIES_INDEX_UNBOUNDED(series);
 
     if (len == 0 or dups == 0 or not ARG(VALUE)) {
         Copy_Cell(OUT, series);

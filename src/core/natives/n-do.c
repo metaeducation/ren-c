@@ -803,14 +803,14 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     const Symbol* symbol = Word_Symbol(At_Level(L));
 
-    Option(Index) index = Find_Symbol_In_Context(frame, symbol, false);
-    if (not index)
+    Option(Ordinal) n = Find_Symbol_In_Context(frame, symbol, false);
+    if (not n)
         panic (Error_Bad_Parameter_Raw(at));
 
     var = u_cast(Value*,
-        u_cast(Cell*, Varlist_Slot(Cell_Varlist(frame), unwrap index))
+        u_cast(Cell*, Varlist_Slot(Cell_Varlist(frame), unwrap n))
     );
-    param = Phase_Param(Frame_Phase(op), unwrap index);
+    param = Phase_Param(Frame_Phase(op), unwrap n);
 
     if (not Is_Parameter(u_cast(Stable*, var)))
         panic (Error_Bad_Parameter_Raw(at));
@@ -831,7 +831,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         panic (Error_Need_Non_End_Raw(lookback));
     }
 
-    Init_Integer(LOCAL(INDEX), unwrap index);
+    Init_Integer(LOCAL(INDEX), unwrap n);
     goto eval_step_maybe_labeled;
 
 }} handle_unlabeled_item: { //////////////////////////////////////////////////
@@ -885,7 +885,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
 } labeled_step_result_in_spare: {  ///////////////////////////////////////////
 
-    REBLEN index = VAL_UINT32(ARG(INDEX));
+    Index index = VAL_UINT32(ARG(INDEX));
 
     var = u_cast(Value*,
         u_cast(Cell*, Varlist_Slot(Cell_Varlist(frame), index))

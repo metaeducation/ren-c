@@ -35,7 +35,7 @@
 Array* Copy_Array_At_Extra_Shallow(
     Flags flags,
     const Array* original,
-    REBLEN index,
+    Index index,
     REBLEN extra
 ){
     REBLEN len = Array_Len(original);
@@ -66,7 +66,7 @@ Array* Copy_Array_At_Extra_Shallow(
 //
 Source* Copy_Source_At_Max_Shallow(
     const Source* original,
-    REBLEN index,
+    Index index,
     REBLEN max
 ){
     const Flags flags = STUB_MASK_UNMANAGED_SOURCE;
@@ -143,7 +143,7 @@ Result(None) Clonify(
 Result(Array*) Copy_Array_Core_Managed(  // always managed, [1]
     Flags flags,
     const Array* original,
-    REBLEN index,
+    Index index,
     REBLEN tail,
     REBLEN extra,
     bool deeply

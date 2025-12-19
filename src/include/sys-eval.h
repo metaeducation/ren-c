@@ -112,7 +112,7 @@ INLINE Element* Init_Pushable_Refinement_Bound(
     Sink(Element) out,
     const Symbol* symbol,
     Context* context,
-    REBLEN index
+    Index index
 ){
     Pinify_Cell(Init_Word_Bound(out, symbol, context));
     CELL_WORD_INDEX_I32(out) = index;

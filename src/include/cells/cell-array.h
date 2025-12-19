@@ -54,7 +54,7 @@ INLINE const Element* List_Len_At(
         return cast(Element*, base);
     }
     const Source* array = cast(Source*, base);
-    REBIDX i = SERIESLIKE_PAYLOAD_2_INDEX(cell);
+    Index i = SERIESLIKE_PAYLOAD_2_INDEX(cell);
     Length len = Array_Len(array);
     if (i < 0 or i > len)
         panic (Error_Index_Out_Of_Range_Raw());
@@ -76,7 +76,7 @@ INLINE const Element* List_At(
         return Pairing_Head(p);
     }
     const Source* array = cast(Source*, base);
-    REBIDX i = SERIESLIKE_PAYLOAD_2_INDEX(cell);
+    Index i = SERIESLIKE_PAYLOAD_2_INDEX(cell);
     Length len = Array_Len(array);
     if (i < 0 or i > len)
         panic (Error_Index_Out_Of_Range_Raw());
@@ -121,7 +121,7 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
     Init(Element) out,
     Heart heart,
     const Source* array,
-    REBLEN index,
+    Index index,
     Context* binding
 ){
     return Init_Series_At_Core_Untracked(
@@ -147,7 +147,7 @@ INLINE Element* Init_Relative_Block_At(
     Init(Element) out,
     Details* details,  // action to which array has relative bindings
     Array* array,
-    REBLEN index
+    Index index
 ){
     Reset_Cell_Header_Noquote(out, CELL_MASK_BLOCK);
     SERIESLIKE_PAYLOAD_1_BASE(out) = array;

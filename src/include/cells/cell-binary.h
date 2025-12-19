@@ -11,11 +11,15 @@ INLINE const Binary* Cell_Binary(const Cell* cell) {
 #define Cell_Binary_Known_Mutable(cell) \
     m_cast(Binary*, Cell_Binary(Known_Mutable(cell)))
 
+INLINE Offset Blob_Offset(const Cell* cell) {  // series index is in bytes
+    assert(Unchecked_Heart_Of(cell) == TYPE_BLOB);
+    return SERIES_INDEX_UNBOUNDED(cell);
+}
 
 INLINE const Byte* Blob_Size_At(Option(Sink(Size)) size_at, const Cell* cell)
 {
     const Binary* b = Cell_Binary(cell);
-    REBIDX i = SERIES_INDEX_UNBOUNDED(cell);
+    Index i = SERIES_INDEX_UNBOUNDED(cell);
     Size size = Binary_Len(b);
     if (i < 0 or i > size)
         panic (Error_Index_Out_Of_Range_Raw());

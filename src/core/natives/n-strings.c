@@ -1132,7 +1132,7 @@ DECLARE_NATIVE(ENLINE)
     Element* string = Element_ARG(STRING);
 
     Strand* s = Cell_Strand_Ensure_Mutable(string);
-    REBLEN idx = Series_Index(string);
+    Index idx = Series_Index(string);
 
     Length len;
     Size size = String_Size_Limit_At(&len, string, UNLIMITED);
@@ -1238,7 +1238,7 @@ DECLARE_NATIVE(ENTAB)
     REBLEN len = Series_Len_At(string);
 
     Utf8(const*) up = String_At(string);
-    REBLEN index = Series_Index(string);
+    Index index = Series_Index(string);
 
     REBINT n = 0;
     for (; index < len; index++) {
@@ -1318,7 +1318,7 @@ DECLARE_NATIVE(DETAB)
     // Estimate new length based on tab expansion:
 
     Utf8(const*) cp = String_At(ARG(STRING));
-    REBLEN index = Series_Index(ARG(STRING));
+    Index index = Series_Index(ARG(STRING));
 
     REBLEN n = 0;
 

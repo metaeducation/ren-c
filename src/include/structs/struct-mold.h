@@ -24,7 +24,7 @@
 typedef struct {
     Strand* strand;  // destination String (utf8, as all String are)
     struct {
-        REBLEN index;  // codepoint index where mold starts within String
+        Index index;  // codepoint index where mold starts within String
         Size size;  // byte offset where mold starts within String
     } base;
     Flags opts;       // special option flags

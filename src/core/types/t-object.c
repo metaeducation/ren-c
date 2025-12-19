@@ -58,6 +58,8 @@
 void Init_Evars(EVARS *e, const Element* v) {
     Heart heart = Heart_Of_Builtin_Fundamental(v);
 
+    e->first_time = true;
+
     e->lens_mode = LENS_MODE_ALL_UNSEALED;  // ensure not uninitialized
 
     if (heart == TYPE_MODULE) {  // !!! module enumeration is bad/slow [2]
@@ -70,7 +72,7 @@ void Init_Evars(EVARS *e, const Element* v) {
     // enumerator state in the current design.  So for the moment we fabricate
     // an array to enumerate.  The enumeration won't see changes.
 
-        e->index = INDEX_PATCHED;
+        e->n = INDEX_PATCHED;
 
         e->ctx = Cell_Module_Sea(v);
 
@@ -104,7 +106,7 @@ void Init_Evars(EVARS *e, const Element* v) {
         e->wordlist = Pop_Managed_Source_From_Stack(base);
         Clear_Base_Managed_Bit(e->wordlist);  // [1]
 
-        e->word = Array_Head(e->wordlist) - 1;
+        e->word = Array_Head(e->wordlist);
         e->word_tail = Array_Tail(e->wordlist);
 
         Corrupt_If_Needful(e->key_tail);
@@ -112,18 +114,18 @@ void Init_Evars(EVARS *e, const Element* v) {
         e->param = nullptr;
     }
     else {
-        e->index = 0;  // will be bumped to 1
+        e->n = 1;
 
         VarList* varlist = Cell_Varlist(v);
         e->ctx = varlist;
 
-        e->slot = Varlist_Slots_Head(varlist) - 1;
+        e->slot = Varlist_Slots_Head(varlist);
 
         assert(Flex_Used(Bonus_Keylist(varlist)) <= Varlist_Len(varlist));
 
         if (heart != TYPE_FRAME) {
             e->param = nullptr;
-            e->key = Varlist_Keys(&e->key_tail, varlist) - 1;
+            e->key = Varlist_Keys(&e->key_tail, varlist);
         }
         else {
 
@@ -133,7 +135,7 @@ void Init_Evars(EVARS *e, const Element* v) {
     //    This is because the Lens slot is used for a label when not lensed,
     //    common with antiforms.
 
-            e->slot = Varlist_Slots_Head(varlist) - 1;
+            e->slot = Varlist_Slots_Head(varlist);
 
             Phase* lens = opt Frame_Lens(v);
             if (not lens) {  // unlensed, only inputs visible [1]
@@ -151,8 +153,8 @@ void Init_Evars(EVARS *e, const Element* v) {
                     e->lens_mode = LENS_MODE_INPUTS;  // (adapt, etc.)
             }
 
-            e->param = Phase_Params_Head(lens) - 1;
-            e->key = Phase_Keys(&e->key_tail, lens) - 1;
+            e->param = Phase_Params_Head(lens);
+            e->key = Phase_Keys(&e->key_tail, lens);
             assert(Flex_Used(Phase_Keylist(lens)) <= Phase_Num_Params(lens));
         }
 
@@ -191,7 +193,12 @@ void Init_Evars(EVARS *e, const Element* v) {
 //
 bool Try_Advance_Evars(EVARS *e) {
     if (e->word) {
-        while (++e->word != e->word_tail) {
+        if (e->first_time)
+            e->first_time = false;
+        else
+            ++e->word;
+
+        while (e->word != e->word_tail) {
             e->slot = unwrap Sea_Slot(
                 cast(SeaOfVars*, e->ctx), Word_Symbol(e->word), true
             );
@@ -204,17 +211,21 @@ bool Try_Advance_Evars(EVARS *e) {
         return false;
     }
 
-    ++e->key;  // !! Note: keys can move if an ordinary context expands
-    if (e->param)
-        ++e->param;  // params are locked and should never move
-    if (e->slot)
-        ++e->slot;  // !! Note: vars can move if an ordinary context expands
-    ++e->index;
+    if (e->first_time)
+        e->first_time = false;
+    else {
+        ++e->key;  // !! Note: keys can move if ordinary context expands
+        if (e->param)
+            ++e->param;  // params are locked and should never move
+        if (e->slot)
+            ++e->slot;  // !! Note: vars can move if ordinary context expands
+        ++e->n;
+    }
 
     for (
         ;
         e->key != e->key_tail;
-        (++e->index, ++e->key,
+        (++e->n, ++e->key,
             e->param ? ++e->param : cast(Param*, nullptr),
             e->slot ? ++e->slot : nullptr
         )
@@ -1097,10 +1108,10 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
         if (Is_Word(def)) {
             bool strict = true;
-            Option(Index) i = Find_Symbol_In_Context(
+            Option(Ordinal) n = Find_Symbol_In_Context(
                 context, Word_Symbol(def), strict
             );
-            if (i) {
+            if (n) {
                 if (Is_Module(context))
                     Tweak_Cell_Binding(def, cast(SeaOfVars*, c));
                 else
@@ -1147,18 +1158,18 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         if (not Is_Word(pattern))
             return NULLED;
 
-        Option(Index) index = Find_Symbol_In_Context(
+        Option(Ordinal) n = Find_Symbol_In_Context(
             context,
             Word_Symbol(pattern),
             did ARG(CASE)
         );
-        if (not index)
+        if (not n)
             return NULLED;
 
         if (Is_Stub_Sea(c))
             panic ("SeaOfVars SELECT not implemented yet");
 
-        Slot* slot = Varlist_Slot(cast(VarList*, c), unwrap index);
+        Slot* slot = Varlist_Slot(cast(VarList*, c), unwrap n);
 
         require (
           Read_Slot(OUT, slot)
@@ -1289,11 +1300,11 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
             panic (PARAM(PICKER));
 
         symbol = Word_Symbol(picker);
-        Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
-        if (not index)
+        Option(Ordinal) n = Find_Symbol_In_Context(context, symbol, strict);
+        if (not n)
             slot = nullptr;
         else
-            slot = Varlist_Slot(Cell_Varlist(context), unwrap index);
+            slot = Varlist_Slot(Cell_Varlist(context), unwrap n);
     }
 
     if (not slot)
@@ -2032,16 +2043,16 @@ DECLARE_NATIVE(CONSTRUCT)
     VarList* varlist = Cell_Varlist(OUT);
 
     do {  // keep pushing SET-WORD!s so `construct [a: b: 1]` works
-        Option(Index) index = Find_Symbol_In_Context(
+        Option(Ordinal) n = Find_Symbol_In_Context(
             Varlist_Archetype(varlist),
             unwrap symbol,
             true
         );
-        assert(index);  // created a key for every SET-WORD! above!
+        assert(n);  // created a key for every SET-WORD! above!
 
         Copy_Cell(PUSH(), at);
         Tweak_Cell_Binding(TOP_ELEMENT, varlist);
-        Tweak_Word_Index(TOP_ELEMENT, unwrap index);
+        Tweak_Word_Index(TOP_ELEMENT, unwrap n);
 
         Fetch_Next_In_Feed(SUBLEVEL->feed);
 

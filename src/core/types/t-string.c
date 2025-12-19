@@ -74,7 +74,7 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
         return m_cast(Utf8(*), cp);
     }
 
-    REBLEN index;
+    Index index;
 
     Option(BookmarkList*) book = nullptr;  // updated at end if not nulled out
     if (not Is_Strand_Symbol(s))
@@ -248,7 +248,7 @@ Utf8(*) Non_Const_Correct_Strand_At(const Strand* s, REBLEN at)
 //
 //      https://stackoverflow.com/q/199260/
 //
-static void Reverse_Strand(Strand* str, REBLEN index, Length len)
+static void Reverse_Strand(Strand* str, Index index, Length len)
 {
     if (len <= 1)
         return;  // zero or one characters means reverse is a noop
@@ -465,7 +465,7 @@ void Mold_Codepoint(Molder* mo, Codepoint c, bool non_ascii_parened)
 //
 //  Mold_Text_Flex_At: C
 //
-void Mold_Text_Flex_At(Molder* mo, const Strand* s, REBLEN index) {
+void Mold_Text_Flex_At(Molder* mo, const Strand* s, Index index) {
     Strand* buf = mo->strand;
 
     if (index >= Strand_Len(s)) {
@@ -783,7 +783,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         else
             limit = 1;
 
-        REBLEN index = Series_Index(v);  // Part calculation may have changed!
+        Index index = Series_Index(v);  // Part calculation may have changed!
         REBLEN tail = Series_Len_Head(v);
 
         if (index >= tail or limit == 0)
@@ -864,7 +864,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_CLEAR: {
         Strand* s = Cell_Strand_Ensure_Mutable(v);
 
-        REBLEN index = Series_Index(v);
+        Index index = Series_Index(v);
         REBLEN tail = Series_Len_Head(v);
 
         if (index >= tail)
@@ -895,7 +895,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
         Strand* v_str = Cell_Strand_Ensure_Mutable(v);
         Strand* arg_str = Cell_Strand_Ensure_Mutable(arg);
 
-        REBLEN index = Series_Index(v);
+        Index index = Series_Index(v);
         REBLEN tail = Series_Len_Head(v);
 
         if (index < tail and Series_Index(arg) < Series_Len_Head(arg)) {
@@ -1117,7 +1117,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
 
     Element* v = Element_ARG(COLLECTION);
 
-    REBLEN index = Series_Index(v);
+    Index index = Series_Index(v);
     REBLEN tail = Series_Len_Head(v);
 
     if (index >= tail)
@@ -1144,7 +1144,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_String)
 
     Element* string = Element_ARG(SERIES);
 
-    REBLEN index = Series_Index(string);
+    Index index = Series_Index(string);
 
     Strand* s = Cell_Strand_Ensure_Mutable(string);
 
@@ -1437,7 +1437,7 @@ void Verify_Strand_Bookmarks_Debug(const Strand* s) {
     if (not book)
         return;  // no bookmarks
 
-    REBLEN index = BOOKMARK_INDEX(book);
+    Index index = BOOKMARK_INDEX(book);
     REBLEN offset = BOOKMARK_OFFSET(book);
 
     Utf8(const*) check_cp = Strand_Head(s);

@@ -201,7 +201,7 @@ void New_Indented_Line(Molder* mo)
 //
 REBINT Find_Pointer_In_Flex(Flex* f, const void *p)
 {
-    REBLEN index = 0;
+    Index index = 0;
     for (; index < Flex_Used(f); ++index) {
         if (*Flex_At(void*, f, index) == p)
             return index;
@@ -245,7 +245,7 @@ void Drop_Pointer_From_Flex(Flex* f, const void *p)
 void Mold_Array_At(
     Molder* mo,
     const Array* a,
-    REBLEN index,
+    Index index,
     const char *sep
 ){
     // Recursion check:

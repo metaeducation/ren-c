@@ -291,12 +291,14 @@ typedef enum {
 } LensMode;
 
 struct Reb_Enum_Vars {
+    bool first_time;
+
     const Key* key;
     const Key* key_tail;
     Param* param;
     LensMode lens_mode;
     Slot* slot;
-    REBLEN index;  // important for enumerations that are binding
+    Ordinal n;  // important for enumerations that are binding
 
     // !!! Enumerating key/val pairs in modules in the "sea of words" model is
     // tricky, as what it really is hooks the variables in a linked list off

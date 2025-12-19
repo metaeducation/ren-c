@@ -85,9 +85,9 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
 
     Slot* arg = Flex_At(Slot, a, 1);
 
-    REBLEN index = 1;  // used to bind REFINEMENT? values to parameter slots
+    Ordinal n = 1;  // used to bind REFINEMENT? cells to parameter slots
 
-    for (; key != tail; ++key, ++param, ++arg, ++index) {
+    for (; key != tail; ++key, ++param, ++arg, ++n) {
         if (Is_Specialized(param)) {  // includes locals
             Blit_Param_Keep_Mark(arg, param);
 
@@ -117,7 +117,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
             }
 
             if (binder)
-                Add_Binder_Index(unwrap binder, symbol, index);
+                Add_Binder_Index(unwrap binder, symbol, n);
 
             continue;
         }
@@ -136,7 +136,7 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
                 continue;  // just continuing this loop
 
             assert(Cell_Binding(ordered) == UNBOUND);  // we bind only one
-            Tweak_Word_Index(ordered, index);
+            Tweak_Word_Index(ordered, n);
             Tweak_Cell_Relative_Binding(ordered, cast(Details*, phase));
 
             if (not Is_Parameter_Unconstrained(param))  // needs argument
@@ -560,6 +560,6 @@ Value* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
     if (param == nullptr)
         return nullptr;
 
-    REBLEN index = param - Phase_Params_Head(phase);
+    Index index = param - Phase_Params_Head(phase);
     return Level_Args_Head(L) + index;
 }

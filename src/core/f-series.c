@@ -120,7 +120,7 @@ IMPLEMENT_GENERIC(REMOVE, Any_Series)
     else
         len = 1;
 
-    REBIDX index = SERIES_INDEX_UNBOUNDED(v);
+    Index index = SERIES_INDEX_UNBOUNDED(v);
     if (index < Series_Len_Head(v) and len != 0)
         Remove_Any_Series_Len(v, index, len);
 
@@ -575,7 +575,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Stable* s, const Stable* t)
 //
 REBLEN Find_In_Array_Simple(
     const Array* array,
-    REBLEN index,
+    Index index,
     const Element* target
 ){
     const Element* value = Array_Head(array);

@@ -257,14 +257,14 @@ DECLARE_NATIVE(HAS)
 
     const Symbol* symbol = Word_Symbol(v);
     const bool strict = true;
-    Option(Index) index = Find_Symbol_In_Context(context, symbol, strict);
-    if (not index)
+    Option(Ordinal) n = Find_Symbol_In_Context(context, symbol, strict);
+    if (not n)
         return NULLED;
 
     if (not Is_Module(context)) {
         VarList* varlist = Cell_Varlist(context);
         Element* out = Init_Word_Bound(OUT, symbol, varlist);
-        Tweak_Word_Index(out, unwrap index);
+        Tweak_Word_Index(out, unwrap n);
         Copy_Kind_Byte(out, v);
         return OUT;
     }
@@ -303,17 +303,17 @@ DECLARE_NATIVE(WITHOUT)
     if (Any_Word(v)) {
         const Symbol* symbol = Word_Symbol(v);
         const bool strict = true;
-        Option(Index) index = Find_Symbol_In_Context(
+        Option(Ordinal) n = Find_Symbol_In_Context(
             Element_ARG(CONTEXT), symbol, strict
         );
-        if (not index)
+        if (not n)
             return NULLED;
         Init_Word_Bound(
             OUT,
             symbol,  // !!! incoming case...consider impact of strict if false?
             ctx
         );
-        Tweak_Word_Index(OUT, unwrap index);
+        Tweak_Word_Index(OUT, unwrap n);
         Copy_Kind_Byte(Known_Element(OUT), v);
         return OUT;
     }

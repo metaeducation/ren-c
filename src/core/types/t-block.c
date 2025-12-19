@@ -38,8 +38,8 @@ IMPLEMENT_GENERIC(EQUAL_Q, Any_List)
 
     const Source* a_array = Cell_Array(a);
     const Source* b_array = Cell_Array(b);
-    REBLEN a_index = Series_Index(a);  // checks for out of bounds indices
-    REBLEN b_index = Series_Index(b);
+    Index a_index = Series_Index(a);  // checks for out of bounds indices
+    Index b_index = Series_Index(b);
 
     if (a_array == b_array)
         return LOGIC(a_index == b_index);
@@ -89,8 +89,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_List)
 
     const Source* a_array = Cell_Array(a);
     const Source* b_array = Cell_Array(b);
-    REBLEN a_index = Series_Index(a);  // checks for out of bounds indices
-    REBLEN b_index = Series_Index(b);
+    Index a_index = Series_Index(a);  // checks for out of bounds indices
+    Index b_index = Series_Index(b);
 
     if (a_array == b_array)
         return fail ("Temporarily disallow compare unequal length lists");
@@ -260,7 +260,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
 REBINT Find_In_Array(
     Sink(Length) len,
     const Array* array,
-    REBLEN index_unsigned, // index to start search
+    Index index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
     const Stable* pattern,
     Flags flags, // see AM_FIND_XXX
@@ -442,7 +442,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
         const Symbol* symbol = Word_Symbol(picker);
         const Element* tail;
         const Element* item = List_At(&tail, v);
-        REBLEN index = Series_Index(v);
+        Index index = Series_Index(v);
         for (; item != tail; ++item, ++index) {
             if (Is_Set_Word(item) and Are_Synonyms(symbol, Word_Symbol(item))) {
                 n = index + 1;
@@ -501,7 +501,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
 
     if (form) {
         const Source* array = Cell_Array(v);
-        REBLEN index = Series_Index(v);
+        Index index = Series_Index(v);
 
         REBINT len = Array_Len(array) - index;
         if (len < 0)
@@ -594,7 +594,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         REBLEN limit = Part_Tail_May_Modify_Index(list, ARG(PART));
 
         const Array* arr = Cell_Array(list);
-        REBLEN index = Series_Index(list);
+        Index index = Series_Index(list);
 
         REBINT skip;
         if (ARG(SKIP)) {
@@ -647,7 +647,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 
       case SYM_CLEAR: {
         Array* arr = Cell_Array_Ensure_Mutable(list);
-        REBLEN index = Series_Index(list);
+        Index index = Series_Index(list);
 
         if (index < Series_Len_Head(list)) {
             if (index == 0)
@@ -667,7 +667,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         if (not Any_List(arg))
             panic (PARAM(SERIES2));
 
-        REBLEN index = Series_Index(list);
+        Index index = Series_Index(list);
 
         if (
             index < Series_Len_Head(list)
@@ -943,7 +943,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
     REBLEN tail = Part_Tail_May_Modify_Index(list, ARG(PART));
 
     const Array* arr = Cell_Array(list);
-    REBLEN index = Series_Index(list);
+    Index index = Series_Index(list);
 
     Flags flags = STUB_MASK_MANAGED_SOURCE;
 
@@ -1094,7 +1094,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
     else
         len = 1;
 
-    REBLEN index = Series_Index(list); // Partial() can change index
+    Index index = Series_Index(list); // Partial() can change index
 
     if (ARG(LAST))
         index = Series_Len_Head(list) - len;
@@ -1136,7 +1136,7 @@ IMPLEMENT_GENERIC(REVERSE, Any_List)
     Element* list = Element_ARG(SERIES);
 
     Source* arr = Cell_Array_Ensure_Mutable(list);
-    REBLEN index = Series_Index(list);
+    Index index = Series_Index(list);
 
     REBLEN len = Part_Len_May_Modify_Index(list, ARG(PART));
     if (len == 0)
@@ -1206,7 +1206,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
 
     Element* list = Element_ARG(COLLECTION);
 
-    REBLEN index = Series_Index(list);
+    Index index = Series_Index(list);
     if (index >= Series_Len_Head(list))
         return fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
@@ -1402,7 +1402,7 @@ IMPLEMENT_GENERIC(SORT, Any_List)
     REBLEN len = Part_Len_May_Modify_Index(list, ARG(PART));
     if (len <= 1)
         return OUT;
-    REBLEN index = Series_Index(list);  // ^-- may have been modified
+    Index index = Series_Index(list);  // ^-- may have been modified
 
     // Skip factor:
     REBLEN skip;
@@ -1648,7 +1648,7 @@ DECLARE_NATIVE(GLOM)
     Element* dst = Array_At(a, a_len);  // old tail position
     Element* src = Array_Head(r);
 
-    REBLEN index;
+    Index index;
     for (index = 0; index < r_len; ++index, ++src, ++dst)
         Copy_Cell(dst, src);
 

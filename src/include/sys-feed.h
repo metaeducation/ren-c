@@ -665,7 +665,7 @@ INLINE Result(Feed*) Prep_Array_Feed(
     Result(void*) preallocated,
     Option(const Cell*) first,
     const Source* array,
-    REBLEN index,
+    Index index,
     Context* binding,
     Flags flags
 ){

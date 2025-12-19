@@ -199,7 +199,7 @@ REBINT Find_Key_Hashed(
         const Stable* src = key;
         indexes[slot] = (Array_Len(array) / wide) + 1;
 
-        REBLEN index;
+        Index index;
         for (index = 0; index < wide; ++src, ++index) {
             require (
               Cell* dest = Alloc_Tail_Array(array)
@@ -274,11 +274,9 @@ void Expand_Hashlist(HashList* hashlist)
 //
 //  Find_Map_Entry: C
 //
-// Try to find the entry in the map.  Returns index to value if found.
+// Try to find the entry in the map.  Returns 1-based index to value if found.
 //
-// RETURNS: the index to the VALUE or zero if there is none.
-//
-Option(Index) Find_Map_Entry(
+Option(Ordinal) Find_Map_Entry(
     Map* map,
     const Stable* key,
     bool strict
@@ -292,8 +290,8 @@ Option(Index) Find_Map_Entry(
         pairlist, hashlist, key, wide, strict, mode
     );
 
-    REBLEN *indexes = Flex_Head(REBLEN, hashlist);
-    REBLEN n = indexes[slot];
+    Index* indexes = Flex_Head(Index, hashlist);
+    Index n = indexes[slot];
 
     return n;  // n==0 or pairlist[(n-1)*]=~key
 }
@@ -302,7 +300,7 @@ Option(Index) Find_Map_Entry(
 //
 //  Update_Map_Entry: C
 //
-// Add or change/remove entry in the map.  Returns the index to the value.
+// Add or change/remove entry in the map.  Returns 1-based index to the value.
 //
 // 1. Since copies of keys are never made, a SET must always be done with an
 //    immutable key...because if it were changed, there'd be no notification
@@ -314,7 +312,7 @@ Option(Index) Find_Map_Entry(
 //    We freeze unconditionally, even if the key is already in the map, since
 //    variance in behavior based on the presence of the key is undesirable.
 //
-Option(Index) Update_Map_Entry(
+Option(Ordinal) Update_Map_Entry(
     Map* map,
     const Stable* key,
     Option(const Stable*) val,  // nullptr (not nulled cell) is remove
@@ -336,8 +334,8 @@ Option(Index) Update_Map_Entry(
         pairlist, hashlist, key, wide, strict, mode
     );
 
-    REBLEN *indexes = Flex_Head(REBLEN, hashlist);
-    REBLEN n = indexes[slot];
+    Index* indexes = Flex_Head(Index, hashlist);
+    Index n = indexes[slot];
 
     if (n) {  // found, must set or overwrite the value
         Stable* at = Flex_At(Stable, pairlist, ((n - 1) * 2) + 1);
@@ -349,7 +347,7 @@ Option(Index) Update_Map_Entry(
     }
 
     if (not val)
-        return 0;  // trying to remove non-existing key
+        return none;  // trying to remove non-existing key
 
     require (
       Cell* cell = Alloc_Tail_Array(pairlist)
@@ -743,7 +741,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
 
         const Map* m = VAL_MAP(map);
 
-        Option(Index) n = Find_Map_Entry(
+        Option(Ordinal) n = Find_Map_Entry(
             m_cast(Map*, VAL_MAP(map)),  // should not modify, see below
             ARG(VALUE),
             did ARG(CASE)
@@ -897,7 +895,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
 
   handle_pick: { /////////////////////////////////////////////////////////////
 
-    Option(Index) n = Find_Map_Entry(
+    Option(Ordinal) n = Find_Map_Entry(
         m_cast(Map*, VAL_MAP(map)),  // not modified
         picker,
         strict

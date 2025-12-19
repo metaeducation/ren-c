@@ -216,7 +216,7 @@ Result(Flex*) Copy_Flex_Core(Flags flags, const Flex* f)
 Result(Flex*) Copy_Flex_At_Len_Extra(
     Flags flags,
     const Flex* f,
-    REBLEN index,
+    Index index,
     REBLEN len,
     REBLEN extra
 ){
@@ -335,7 +335,7 @@ void Remove_Flex_Units_And_Update_Used(Flex* f, Size byteoffset, REBLEN quantity
 // Remove a series of values (bytes, longs, reb-vals) from the
 // series at the given index.
 //
-void Remove_Any_Series_Len(Element* v, REBLEN index, REBINT len)
+void Remove_Any_Series_Len(Element* v, Index index, REBINT len)
 {
     if (Any_String(v) or Is_Blob(v)) {
         //

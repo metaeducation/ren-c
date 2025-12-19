@@ -130,7 +130,7 @@ void Protect_Value(const Stable* v, Flags flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Flex(const Flex* f, REBLEN index, Flags flags)
+void Protect_Flex(const Flex* f, Index index, Flags flags)
 {
     if (Is_Stub_Black(f))
         return;  // avoid loop

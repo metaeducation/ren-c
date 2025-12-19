@@ -61,7 +61,7 @@ Result(Length) Modify_List(
   setup_destination: {
 
     Source* array = Cell_Array_Ensure_Mutable(list);
-    REBLEN index = Series_Index(list);
+    Index index = Series_Index(list);
     REBLEN tail = Array_Len(array);
 
   setup_newlines: {
@@ -398,12 +398,11 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
     Length* dst_len_old = (strand ? &dst_len_old_store : nullptr);
 
     if (not strand) {  // modifying unconstrained binary, indexed by bytes
-        assert(Is_Blob(series));
-        offset = Series_Index(series);
+        offset = Blob_Offset(series);
         index = nullptr;
     }
     else if (Is_Blob(series)) {  // aliasing a UTF-8 Strand, indexed by bytes
-        offset = Series_Index(series);
+        offset = Blob_Offset(series);
 
         Byte at = *Binary_At(strand, offset);
         if (Is_Continuation_Byte(at))  // catch off-codepoint alias edits [2]

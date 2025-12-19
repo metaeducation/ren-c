@@ -126,7 +126,7 @@ void Where_Core_Debug(Level* L) {
     if (FEED_IS_VARIADIC(L->feed))
         Reify_Variadic_Feed_As_Array_Feed(L->feed, false);
 
-    REBLEN index = FEED_INDEX(L->feed);
+    Index index = FEED_INDEX(L->feed);
 
     if (index > 0) {
         DECLARE_MOLDER (mo);

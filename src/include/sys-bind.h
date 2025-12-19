@@ -268,8 +268,6 @@ INLINE void Update_Binder_Index(
     const Symbol* symbol,
     REBINT index
 ){
-    assert(index != 0);  // singly linked list, removal would be inefficient
-
   #if CPLUSPLUS_11 && RUNTIME_CHECKS
     assert(binder->initialized);
   #endif

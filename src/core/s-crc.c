@@ -369,7 +369,7 @@ Result(HashList*) Hash_Block(const Stable* block, REBLEN skip, bool cased)
     REBLEN *hashes = Flex_Head(REBLEN, hashlist);
 
     const Array* array = Cell_Array(block);
-    REBLEN n = Series_Index(block);
+    Index n = Series_Index(block);
 
     while (true) {
         REBLEN skip_index = skip;

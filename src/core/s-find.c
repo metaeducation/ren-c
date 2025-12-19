@@ -193,7 +193,7 @@ REBINT Find_Binstr_In_Binstr(
     // Signed quantities allow stepping outside of bounds (e.g. large /SKIP)
     // and still comparing...but incoming parameters should not be negative.
     //
-    REBINT index1 = Series_Index(binstr1);
+    Index index1 = Series_Index(binstr1);
 
     // "`index` and `end` integrate the :PART.  If the :PART was negative,
     // then index would have been swapped to be the lower value...making what
@@ -437,10 +437,10 @@ REBINT Find_Bitset_In_Binstr(
     const Binary* bset,
     Flags flags
 ){
-    REBINT index = Series_Index(binstr);
-    REBINT end = end_unsigned;
+    Index index = Series_Index(binstr);
+    Index end = end_unsigned;
 
-    REBINT start;
+    Index start;
     if (skip < 0)
         start = 0;
     else

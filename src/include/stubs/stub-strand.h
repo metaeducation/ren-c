@@ -252,7 +252,7 @@ INLINE REBLEN Strand_Index_At(
     // Have to do it the slow way if it's a Symbol Flex...but hopefully
     // they're not too long (since spaces and newlines are illegal.)
     //
-    REBLEN index = 0;
+    Index index = 0;
     Utf8(const*) ep = cast(Utf8(const*), Binary_At(s, byteoffset));
     Utf8(const*) cp = Strand_Head(s);
     while (cp != ep) {
@@ -325,7 +325,7 @@ INLINE void Free_Bookmarks_Maybe_Null(const Strand* str) {
         if (not book)
             return;
 
-        REBLEN index = BOOKMARK_INDEX(book);
+        Index index = BOOKMARK_INDEX(book);
         Size offset = BOOKMARK_OFFSET(book);
 
         Utf8(const*) cp = Strand_Head(s);
@@ -498,7 +498,7 @@ INLINE Offset First_Hash_Candidate_Slot(
 
 INLINE Result(Binary*) Copy_Binary_At_Len(
     const Binary* b,
-    REBLEN index,
+    Index index,
     REBLEN len
 ){
     return u_downcast Copy_Flex_At_Len_Extra(

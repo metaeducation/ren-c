@@ -746,7 +746,7 @@ Details* Make_Dispatch_Details(
     Flags flags,
     const Stable* exemplar,  // FRAME! "interface" is keyword in MSVC :-(
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
-    Option(Index) details_max  // 1-based max index desired for Phase_Details
+    Option(Ordinal) details_max  // 1-based max index desired for Phase_Details
 ){
     assert(Heart_Of(exemplar) == TYPE_FRAME);
     assert(

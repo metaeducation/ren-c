@@ -149,7 +149,7 @@ DECLARE_NATIVE(REORDER)
     const Key* tail;
     const Key* key = Phase_Keys(&tail, reorderee);
     const Param* param = Phase_Params_Head(reorderee);
-    REBLEN index = 1;
+    Index index = 1;
     for (; key != tail; ++key, ++param, ++index) {
         if (Is_Specialized(param))
             continue;
@@ -230,7 +230,7 @@ DECLARE_NATIVE(REORDER)
     const Key* tail;
     const Key* key = Phase_Keys(&tail, reorderee);
     const Param* param = Phase_Params_Head(reorderee);
-    REBLEN index = 1;
+    Index index = 1;
     for (; key != tail; ++key, ++param, ++index) {
         if (Is_Specialized(param))
             continue;

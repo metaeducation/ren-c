@@ -292,7 +292,7 @@ bool Set_Bits(Binary* bset, const Element* val, bool set)
     }
 
     if (Is_Blob(val)) {
-        REBLEN i = Series_Index(val);
+        Index i = Series_Index(val);
 
         const Byte* bp = Binary_Head(Cell_Binary(val));
         for (; i != Series_Len_Head(val); i++)
@@ -440,7 +440,7 @@ bool Check_Bits(const Binary* bset, const Stable* val, bool uncased)
         return Check_Bit(bset, Int32s(val, 0), uncased);
 
     if (Is_Blob(val)) {
-        REBLEN i = Series_Index(val);
+        Index i = Series_Index(val);
         const Byte* bp = Binary_Head(Cell_Binary(val));
         for (; i != Series_Len_Head(val); ++i)
             if (Check_Bit(bset, bp[i], uncased))

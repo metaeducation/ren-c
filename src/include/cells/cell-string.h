@@ -35,7 +35,7 @@ INLINE bool VAL_PAST_END(const Cell* v)
    { return Series_Index(v) > Series_Len_Head(v); }
 
 INLINE Length Series_Len_At(const Cell* v) {
-    REBIDX i = Series_Index(v);
+    Index i = Series_Index(v);
     if (i < 0 or i > Series_Len_Head(v))
         panic (Error_Index_Out_Of_Range_Raw());
 
@@ -59,7 +59,7 @@ INLINE Utf8(const*) String_At(const Cell* v) {
         return Cell_Utf8_Head(v);  // might store utf8 directly in cell
 
     const Strand* str = cast(Strand*, Cell_Flex(v));
-    REBIDX i = SERIES_INDEX_UNBOUNDED(v);
+    Index i = SERIES_INDEX_UNBOUNDED(v);
     if (i < 0 or i > Strand_Len(str))
         panic (Error_Index_Out_Of_Range_Raw());
 
@@ -138,7 +138,7 @@ INLINE Size String_Byte_Offset_At(const Cell* cell) {
 // 1. Arbitrary seeking...this technique needs to be tuned, e.g. to look from
 //    the head or the tail depending on what's closer
 //
-INLINE Size String_Byte_Offset_For_Index(const Cell* cell, REBLEN index)
+INLINE Size String_Byte_Offset_For_Index(const Cell* cell, Index index)
 {
     assert(Any_String_Type(Unchecked_Heart_Of(cell)));
 
@@ -165,7 +165,7 @@ INLINE Element* Init_Any_String_At_Untracked(
     Init(Element) out,
     Heart heart,
     const Strand* s,
-    REBLEN index
+    Index index
 ){
     return Init_Series_At_Core(out, heart, s, index, UNBOUND);
 }

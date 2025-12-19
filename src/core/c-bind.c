@@ -144,7 +144,7 @@ void Bind_Values_Core(
     // ANY-WORD?, so it must be cleaned up to not break future bindings.)
     //
   if (not Is_Module(context)) {
-    REBLEN index = 1;
+    Index index = 1;
     const Key* key_tail;
     const Key* key = Varlist_Keys(&key_tail, c);
     const Slot* slot = Varlist_Slots_Head(c);
@@ -217,16 +217,16 @@ bool Try_Bind_Word(const Element* context, Element* word)
         return true;
     }
 
-    Option(Index) index = Find_Symbol_In_Context(
+    Option(Ordinal) n = Find_Symbol_In_Context(
         context,
         Word_Symbol(word),
         strict
     );
-    if (not index)
+    if (not n)
         return false;
 
     Tweak_Cell_Binding(word, Cell_Varlist(context));
-    Tweak_Word_Index(word, unwrap index);
+    Tweak_Word_Index(word, unwrap n);
     return true;
 }
 
@@ -405,14 +405,14 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
         Copy_Cell(out, Varlist_Archetype(vlist));
     }
 
-    Option(Index) index = Find_Symbol_In_Context(  // must search
+    Option(Ordinal) n = Find_Symbol_In_Context(  // must search
         out,
         symbol,
         true
     );
 
-    if (index) {
-        Tweak_Word_Index(wordlike, unwrap index);
+    if (n) {
+        Tweak_Word_Index(wordlike, unwrap n);
         return true;
     }
 
@@ -1125,13 +1125,13 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
     Init_Evars(&e, Phase_Archetype(relative));
     e.lens_mode = lens_mode;
     while (Try_Advance_Evars(&e))
-        Add_Binder_Index(binder, Key_Symbol(e.key), e.index);
+        Add_Binder_Index(binder, Key_Symbol(e.key), e.n);
     Shutdown_Evars(&e);
 
 } shallow_copy_then_adjust: {
 
     const Source* original = Cell_Array(body);
-    REBLEN index = Series_Index(body);
+    Index index = Series_Index(body);
    /* Context* binding = List_Binding(body); */
     REBLEN tail = Series_Len_At(body);
     assert(tail <= Array_Len(original));
@@ -1280,7 +1280,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 
     SymId dummy_sym = SYM_DUMMY1;
 
-    REBLEN index = 1;
+    Index index = 1;
     while (index <= num_vars) {
         const Symbol* symbol;
 

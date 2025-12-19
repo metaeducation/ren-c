@@ -638,7 +638,7 @@ typedef union { //=///////////////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //
     // ANY-SERIES?  // see %sys-series.h
     //     Flex* flex;  // vector/double-ended-queue of equal-sized items
-    //     REBLEN index;  // 0-based position (e.g. 0 means Rebol index 1)
+    //     Index index;  // 0-based position (e.g. 0 means Rebol index 1)
     //
     // ACTION!  // see %sys-action.h
     //     Array* paramlist;  // has MISC.meta, LINK.underlying

@@ -369,8 +369,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_CLEAR: {
         Binary* b = Cell_Binary_Ensure_Mutable(v);
 
-        REBINT tail = Series_Len_Head(v);
-        REBINT index = Series_Index(v);
+        Index tail = Series_Len_Head(v);
+        Index index = Series_Index(v);
 
         if (index >= tail)
             return COPY(v); // clearing after available data has no effect
@@ -469,8 +469,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         Byte* v_at = Blob_At_Ensure_Mutable(v);
         Byte* arg_at = Blob_At_Ensure_Mutable(arg);
 
-        REBINT tail = Series_Len_Head(v);
-        REBINT index = Series_Index(v);
+        Index tail = Series_Len_Head(v);
+        Index index = Series_Index(v);
 
         if (index < tail and Series_Index(arg) < Series_Len_Head(arg)) {
             Byte temp = *v_at;
@@ -582,11 +582,11 @@ Result(Element*) Alias_Blob_As(
 
     if (Any_Utf8_Type(as)) {  // convert to a string as first step [1]
         if (as == TYPE_WORD) {  // early fail on this, to save time
-            if (Series_Index(blob) != 0)  // (vs. failing on AS WORD! of string)
+            if (Blob_Offset(blob) != 0)  // (vs. failing on AS WORD! of string)
                 return fail ("Can't alias BLOB! as WORD! unless at head");
         }
 
-        Size byteoffset = Series_Index(blob);
+        Size byteoffset = Blob_Offset(blob);
 
         const Byte* at_ptr = Binary_At(bin, byteoffset);
         if (Is_Continuation_Byte(*at_ptr))  // must be on codepoint start
@@ -597,7 +597,7 @@ Result(Element*) Alias_Blob_As(
         enum Reb_Strmode strmode = STRMODE_ALL_CODEPOINTS;  // allow CR [2]
 
         const Strand* str;
-        REBLEN index;
+        Index index;
         if (
             not Is_Stub_Strand(bin)
             or strmode != STRMODE_ALL_CODEPOINTS
@@ -723,7 +723,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
             SERIES_INDEX_UNBOUNDED(blob) = tail - len;
     }
 
-    REBLEN index = Series_Index(blob);
+    Index index = Series_Index(blob);
 
     if (index >= tail) {
         if (not ARG(PART))
@@ -795,8 +795,8 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
 
     Element* blob = Element_ARG(COLLECTION);
 
-    REBINT tail = Series_Len_Head(blob);
-    REBINT index = Series_Index(blob);
+    Index tail = Series_Len_Head(blob);
+    Index index = Series_Index(blob);
 
     if (index >= tail)
         return fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
@@ -813,7 +813,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Is_Blob)
 
     Element* blob = Element_ARG(SERIES);
 
-    REBINT index = Series_Index(blob);
+    Index index = Series_Index(blob);
 
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
 
