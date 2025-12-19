@@ -291,8 +291,9 @@ static void Reverse_Strand(Strand* str, Index index, Length len)
             string,
             ST_MODIFY_CHANGE,
             temp,
+            UNLIMITED,  // use all of temp
             (not AM_LINE),
-            len,  // how much to delete (CHANGE:PART)
+            &len,  // how much to delete (CHANGE:PART)
             1 // dup count
         ));
 
@@ -935,20 +936,30 @@ IMPLEMENT_GENERIC(CHANGE, Any_String)
 {
     INCLUDE_PARAMS_OF_CHANGE;
 
-    Length len = VAL_UINT32(unwrap ARG(PART));  // enforced > 0 by generic
+    Length limit;
+    if (ARG(LIMIT))
+        limit = VAL_UINT32(unwrap ARG(LIMIT));
+
+    Length part;
+    if (ARG(PART))
+        part = VAL_UINT32(unwrap ARG(PART));  // enforced > 0 by generic
+
     Count dups = VAL_UINT32(unwrap ARG(DUP));  // enforced > 0 by generic
 
     Flags flags = 0;
     if (ARG(LINE))
         flags |= AM_LINE;
 
+    ModifyState op = u_cast(ModifyState, STATE);
+
     require (
       Length tail = Modify_String_Or_Blob(
         Element_ARG(SERIES),  // does read-only check
-        u_cast(ModifyState, STATE),
+        op,
         unwrap ARG(VALUE),
+        ARG(LIMIT) ? &limit : UNLIMITED,
         flags,
-        len,
+        ARG(PART) ? &part : UNLIMITED,
         dups
     ));
 

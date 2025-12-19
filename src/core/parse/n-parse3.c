@@ -1202,11 +1202,12 @@ static Result(None) Handle_Seek_Rule_Dont_Update_Begin(
     Option(Type) t = Type_Of(rule);
     if (t == TYPE_WORD or t == TYPE_TUPLE) {
         require (
-          Get_Var(SPARE, NO_STEPS, rule, context)
+          Get_Var(OUT, NO_STEPS, rule, context)
         );
-        if (Is_Antiform(SPARE))
-            panic (Error_Bad_Antiform(SPARE));
-        rule = Known_Element(SPARE);
+        if (Is_Antiform(OUT))
+            panic (Error_Bad_Antiform(OUT));
+        rule = Copy_Cell(SPARE, Known_Element(OUT));
+        Erase_Cell(OUT);
         t = Type_Of(rule);
     }
 
@@ -2408,8 +2409,9 @@ DECLARE_NATIVE(SUBPARSE)
                             ? ST_MODIFY_CHANGE
                             : ST_MODIFY_INSERT,
                         evaluated,
+                        UNLIMITED,
                         (not AM_LINE),
-                        count,  // !!! UNLIMITED for (P_FLAGS & PF_INSERT) ?
+                        &count,  // !!! UNLIMITED for (P_FLAGS & PF_INSERT) ?
                         1
                     ));
                     P_POS = tail;
@@ -2423,8 +2425,9 @@ DECLARE_NATIVE(SUBPARSE)
                             ? ST_MODIFY_CHANGE
                             : ST_MODIFY_INSERT,
                         evaluated,
+                        UNLIMITED,
                         (not AM_LINE),
-                        count,  // !!! UNLIMITED for (P_FLAGS & PF_INSERT) ?
+                        &count,  // !!! UNLIMITED for (P_FLAGS & PF_INSERT) ?
                         1
                     ));
                     P_POS = tail;

@@ -729,20 +729,30 @@ IMPLEMENT_GENERIC(CHANGE, Any_List)
 {
     INCLUDE_PARAMS_OF_CHANGE;  // CHANGE, INSERT, APPEND
 
-    Length len = VAL_UINT32(unwrap ARG(PART));  // enforced > 0 by generic
+    Length limit;
+    if (ARG(LIMIT))
+        limit = VAL_UINT32(unwrap ARG(LIMIT));
+
+    Length part;
+    if (ARG(PART))
+        part = VAL_UINT32(unwrap ARG(PART));  // enforced > 0 by generic
+
     Count dups = VAL_UINT32(unwrap ARG(DUP));  // enforced > 0 by generic
 
     Flags flags = 0;
     if (ARG(LINE))
         flags |= AM_LINE;
 
+    ModifyState op = u_cast(ModifyState, STATE);
+
     require (
       Length tail = Modify_List(
         Element_ARG(SERIES),
-        u_cast(ModifyState, STATE),
+        op,
         unwrap ARG(VALUE),
+        ARG(LIMIT) ? &limit : UNLIMITED,
         flags,
-        len,
+        ARG(PART) ? &part : UNLIMITED,
         dups
     ));
 
@@ -1048,21 +1058,39 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
     if (Any_List(series)) {
         require (
             tail = Modify_List(
-                series, ST_MODIFY_CHANGE, poke, (not AM_LINE), part, dups
+                series,
+                ST_MODIFY_CHANGE,
+                poke,
+                UNLIMITED,
+                (not AM_LINE),
+                &part,
+                dups
             )
         );
     }
     else if (Any_String(series)) {
         require (
             tail = Modify_String_Or_Blob(
-                series, ST_MODIFY_CHANGE, poke, (not AM_LINE), part, dups
+                series,
+                ST_MODIFY_CHANGE,
+                poke,
+                UNLIMITED,
+                (not AM_LINE),
+                &part,
+                dups
             )
         );
     }
     else {
         require (
             tail = Modify_String_Or_Blob(
-                series, ST_MODIFY_CHANGE, poke, (not AM_LINE), part, dups
+                series,
+                ST_MODIFY_CHANGE,
+                poke,
+                UNLIMITED,
+                (not AM_LINE),
+                &part,
+                dups
             )
         );
     }

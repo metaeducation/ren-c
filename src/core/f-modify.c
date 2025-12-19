@@ -40,8 +40,9 @@ Result(Length) Modify_List(
     const Element* list,
     ModifyState op,  // INSERT, CHANGE
     const Stable* v,
+    Option(const Length*) limit,  // limit to grow (INSERT)
     Flags flags,  // AM_LINE
-    Length part,  // length to remove (CHANGE) or limit to grow (INSERT)
+    Option(const Length*) part,  // length to remove (CHANGE)
     Count dups  // count of times to insert `v`
 ){
     assert(
@@ -49,14 +50,9 @@ Result(Length) Modify_List(
         or op == ST_MODIFY_CHANGE
     );
     assert(dups > 0);  // use native entry points for "weird" cases [A]
-    assert(part >= 0);
+    assert(not part or *(unwrap part) >= 0);
+    assert(not limit or *(unwrap limit) >= 0);
     assert(not Is_Antiform(v) or Is_Splice(v));
-
-    Option(const Length*) limit;  // how much of `v` to inject (if splice)
-    if (op == ST_MODIFY_CHANGE)
-        limit = UNLIMITED;  // always uses all of `v`
-    else
-        limit = &part;  // may limit how much of `v` is used
 
   setup_destination: {
 
@@ -152,20 +148,22 @@ Result(Length) Modify_List(
 
     Length expansion = dups * len;  // total to insert (dups is > 0)
 
-    if (op != ST_MODIFY_CHANGE) {  // Always expand for INSERT and APPEND
+    if (op == ST_MODIFY_INSERT) {  // Always expand for INSERT and APPEND
+        assert(not part);
         trap (
            Expand_Flex_At_Index_And_Update_Used(array, index, expansion)
         );
     }
     else {
-        if (expansion > part) {
+        Length p = *(unwrap part);
+        if (expansion > p) {
             trap (
               Expand_Flex_At_Index_And_Update_Used(
-                array, index, expansion - part
+                array, index, expansion - p
             ));
         }
-        else if (expansion < part)
-            Remove_Flex_Units_And_Update_Used(array, index, part - expansion);
+        else if (expansion < p)
+            Remove_Flex_Units_And_Update_Used(array, index, p - expansion);
         else if (expansion + index > tail) {
             trap (
               Expand_Flex_Tail_And_Update_Used(
@@ -342,8 +340,9 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
     const Element* series,
     ModifyState op,  // INSERT or CHANGE
     const Stable* v,
+    Option(const Length*) limit,  // limit to grow (INSERT)
     Flags flags,  // AM_LINE
-    Length part,  // length to remove (CHANGE) or limit to grow (INSERT)
+    Option(const Length*) part,  // length to remove (CHANGE)
     Count dups  // how many times to insert `v`
 ){
     assert(
@@ -351,14 +350,9 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
         or op == ST_MODIFY_CHANGE
     );
     assert(dups > 0);  // use native entry points for "weird" cases [A]
-    assert(part >= 0);
+    assert(not part or *(unwrap part) >= 0);
+    assert(not limit or *(unwrap limit) >= 0);
     assert(not Is_Antiform(v) or Is_Splice(v));
-
-    Option(const Length*) limit;  // how much of `v` to inject
-    if (op == ST_MODIFY_CHANGE)
-        limit = UNLIMITED;  // always uses all of `v`
-    else
-        limit = &part;  // may limit how much of `v` is used
 
   setup_destination: {
 
@@ -677,6 +671,7 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
     dst_len_at = (strand ? &dst_len_at_store : nullptr);
 
     Size part_size;
+    Length part_len;
 
     if (not strand)
         goto calculate_change_for_binary;  // byte-based change
@@ -687,12 +682,14 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
 
     dst_size_at = Series_Len_At(series);
 
-    if (part > dst_size_at) {
-        part = dst_size_at;
+    if (part and *(unwrap part) > dst_size_at) {
+        part_len = dst_size_at;
         part_size = dst_size_at;
     }
-    else
-        part_size = part;
+    else {
+        part_len = *(unwrap part);
+        part_size = *(unwrap part);
+    }
 
     goto expand_or_resize_binary_for_change;
 
@@ -722,12 +719,12 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
         dst_size_at = Series_Len_At(series);  // byte count
         *dst_len_at = Strand_Index_At(strand, dst_size_at);
 
-        if (part > dst_size_at) {  // can use Strand_Len() from above [1]
-            part = *dst_len_at;
+        if (part and *(unwrap part) > dst_size_at) {
+            part_len = *dst_len_at;  // can use Strand_Len() from above [1]
             part_size = dst_size_at;
         }
         else {  // brute-force count how many codepoints are in the `part` [1]
-            part_size = part;
+            part_size = *(unwrap part);
             Utf8(*) cp = cast(Utf8(*), Binary_At(binary, offset));
             Utf8(*) pp = cast(Utf8(*),
                 Binary_At(binary, offset + part_size)
@@ -735,9 +732,9 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
             if (Is_Continuation_Byte(*cast(Byte*, pp)))
                 panic (Error_Bad_Utf8_Bin_Edit_Raw());
 
-            part = 0;
+            part_len = 0;
             for (; cp != pp; cp = Skip_Codepoint(cp))
-                ++part;
+                ++part_len;
         }
     }
     else {
@@ -747,14 +744,15 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
             UNLIMITED
         );
 
-        if (part > *dst_len_at) {  // can use Strand_Len() from above
-            part = *dst_len_at;
+        if (part and *(unwrap part) > *dst_len_at) {
+            part_len = *dst_len_at;  // can use Strand_Len() from above
             part_size = dst_size_at;
         }
         else {
             REBLEN check;  // v-- !!! This call uses bookmark, review
-            part_size = String_Size_Limit_At(&check, series, &part);
-            assert(check == part);
+            part_len = *(unwrap part);
+            part_size = String_Size_Limit_At(&check, series, part);
+            assert(check == part_len);
             UNUSED(check);
         }
     }
@@ -796,7 +794,7 @@ Result(Length) Modify_String_Or_Blob(  // returns tail of insertions [1]
         }
 
         Tweak_Misc_Num_Codepoints(
-            strand, *dst_len_old + *expansion_len - part
+            strand, *dst_len_old + *expansion_len - part_len
         );
     }
 

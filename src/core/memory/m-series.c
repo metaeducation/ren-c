@@ -357,8 +357,9 @@ void Remove_Any_Series_Len(Element* v, Index index, REBINT len)
             temp,
             ST_MODIFY_CHANGE,
             LIB(HOLE),  // e.g. erase content (empty splice, ~()~ antiform)
+            UNLIMITED,
             (not AM_LINE),
-            len,
+            &len,
             1  // dups
         ));
         assert(tail == index);  // CHANGE to ~()~ antiform gives same index

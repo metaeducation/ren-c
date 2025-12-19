@@ -53,15 +53,18 @@
 //
 // https://github.com/rebol/rebol-issues/issues/1570
 //
-static REBLEN Part_Limit_Append_Insert(Option(const Stable*) part) {
-    if (not part)
-        return UINT32_MAX;  // treat as no limit
+static bool Part_Limit_Append_Insert(Option(Stable*) part_arg) {
+    if (not part_arg)
+        return false;  // will be treated as no limit (decoded as UNLIMITED)
 
-    if (Is_Integer(unwrap part)) {
-        REBINT i = Int32(unwrap part);
-        if (i < 0)  // Clip negative numbers to mean 0
-            return 0;  // !!! Would it be better to warning?
-        return i;
+    Stable* part = unwrap part_arg;
+    if (Is_Integer(part)) {
+        REBINT i = Int32(part);
+        if (i < 0) { // Clip negative numbers to mean 0
+            Init_Integer(part, 0);  // !!! Would it be better to warn?
+            return true;
+        }
+        return false;
     }
 
     panic ("APPEND and INSERT only take :PART limit as INTEGER!");
@@ -168,6 +171,7 @@ static REBLEN Guess_Part_Len_For_Change_May_Coerce(
 //      :dup "Duplicates the insert a specified number of times"
 //          [any-number? pair!]
 //      :line "Data should be its own line (formatting cue if ANY-LIST?)"
+//      {limit}  ; CHANGE expects value limit to be here
 //  ]
 //
 DECLARE_NATIVE(INSERT)  // Must be frame-compatible with CHANGE [A]
@@ -180,13 +184,14 @@ DECLARE_NATIVE(INSERT)  // Must be frame-compatible with CHANGE [A]
 
   handle_series: {
 
-    Length len = Part_Limit_Append_Insert(ARG(PART));
+    bool limit_zero = Part_Limit_Append_Insert(ARG(PART));
     Count dups = not ARG(DUP) ? 1 : VAL_UINT32(unwrap ARG(DUP));
 
-    if (len == 0 or dups == 0 or not ARG(VALUE))
+    if (limit_zero or dups == 0 or not ARG(VALUE))
         return COPY(series);  // don't panic on read only if would be a no-op
 
-    Init_Integer(LOCAL(PART), len);
+    Copy_Cell(LOCAL(LIMIT), LOCAL(PART));  // :PART acts as CHANGE's LIMIT
+    Init_Nulled(LOCAL(PART));
     Init_Integer(LOCAL(DUP), dups);
 
     STATE = ST_MODIFY_INSERT;
@@ -213,6 +218,7 @@ DECLARE_NATIVE(INSERT)  // Must be frame-compatible with CHANGE [A]
 //      :dup "Duplicates the insert a specified number of times"
 //          [any-number? pair!]
 //      :line "Data should be its own line (formatting cue if ANY-LIST?)"
+//      {limit}  ; CHANGE expects value limit to be here
 //  ]
 //
 DECLARE_NATIVE(APPEND)
@@ -225,16 +231,17 @@ DECLARE_NATIVE(APPEND)
 
   handle_series: {
 
-    Length len = Part_Limit_Append_Insert(ARG(PART));  // check even if <opt>
+    bool limit_zero = Part_Limit_Append_Insert(ARG(PART));
     Count dups = not ARG(DUP) ? 1 : VAL_UINT32(unwrap ARG(DUP));
     Index index = SERIES_INDEX_UNBOUNDED(series);
 
-    if (len == 0 or dups == 0 or not ARG(VALUE)) {
+    if (limit_zero or dups == 0 or not ARG(VALUE)) {
         Copy_Cell(OUT, series);
         goto return_original_position;
     }
 
-    Init_Integer(LOCAL(PART), len);
+    Copy_Cell(LOCAL(LIMIT), LOCAL(PART));  // :PART acts as CHANGE's LIMIT
+    Init_Nulled(LOCAL(PART));
     Init_Integer(LOCAL(DUP), dups);
 
   dispatch_to_generic_modify: {
@@ -284,6 +291,8 @@ DECLARE_NATIVE(APPEND)
 //      :dup "Duplicates the change a specified number of times"
 //          [any-number? pair!]
 //      :line "Data should be its own line (formatting cue if ANY-LIST?)"
+//      :limit "How much of value to use"
+//          [any-number? any-series? pair!]
 //  ]
 //
 DECLARE_NATIVE(CHANGE)  // Must be frame-compatible with APPEND, INSERT [A]
