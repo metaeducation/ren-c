@@ -483,6 +483,8 @@ read-body: proc [
             ;
             port.data: make blob! length of conn.data
 
+            let mk1
+
             cycle [  ; keep cycling while chunks are being read
                 ;
                 ; The chunk size is in the byte stream as ASCII chars forming a
@@ -491,9 +493,8 @@ read-body: proc [
                 ; the chunk.  READ until we have at least a chunk size.
                 ;
                 let chunk-size
-                let mk1
                 until [parse3:match conn.data [
-                    copy chunk-size: some hex-digits, thru crlfbin
+                    chunk-size: across some hex-digits, thru crlfbin
                     mk1: <here>, to <end>
                 ]][
                     read conn
@@ -518,6 +519,7 @@ read-body: proc [
                 ; Now we have the chunk size but may not have the chunk data.
                 ; Loop until enough data is gathered.
                 ;
+                let mk2
                 until [parse3:match mk1 [
                     repeat (chunk-size) one, mk2: <here>, crlfbin, to <end>
                 ]][
@@ -539,13 +541,14 @@ read-body: proc [
             ;
             ; https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Trailer
             ;
+            let trailer
             if parse3:match mk1 [
                 crlfbin (trailer: "") to <end>
                     |
                 copy trailer to crlf2bin to <end>
             ][
                 trailer: scan-net-header as blob! trailer
-                append headers spread trailer
+                extend headers trailer
                 clear conn.data
             ]
 
