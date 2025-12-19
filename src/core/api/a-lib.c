@@ -659,7 +659,7 @@ RebolValue* API_rebBlank(void)
 {
     ENTER_API;
 
-    return Init_Blank(Alloc_Value());
+    return Init_Hole(Alloc_Value());
 }
 
 

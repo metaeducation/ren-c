@@ -236,6 +236,14 @@ INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
 //    >> append [a b c] ~(d e)~
 //    == [a b c d e]
 //
+// 1. A splice with no elements is referred to as a "hole".  It has use cases
+//    for when you want a type that is "vanishing-like" but that can be stored
+//    in a plain variable and can manifest its vanishing intent without an
+//    operator like OPT being needed (the way you would need if you stored a
+//    null in a variable and wanted to make it void).
+//
+//    The tradeoff in using hole is that it is "truthy".
+//
 
 INLINE Stable* Splicify(Exact(Stable*) v) {
     assert(Any_List(v) and LIFT_BYTE(v) == NOQUOTE_2);
@@ -256,7 +264,7 @@ INLINE Stable* Init_Splice_Untracked(Init(Stable) out, Source* a) {
 #define Init_Splice(out,a) \
     TRACK(Init_Splice_Untracked((out), (a)))
 
-INLINE bool Is_Blank(const Stable* v) {
+INLINE bool Is_Hole(const Stable* v) {  // SPLICE with no elements [1]
     if (not Is_Splice(v))
         return false;
     const Element* tail;
@@ -264,5 +272,5 @@ INLINE bool Is_Blank(const Stable* v) {
     return tail == at;
 }
 
-#define Init_Blank(out) \
+#define Init_Hole(out) \
     TRACK(Init_Splice_Untracked((out), g_empty_array))

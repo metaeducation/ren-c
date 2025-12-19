@@ -236,10 +236,10 @@
 ~???~ !! (for-each [x y z] make object! [key: <value>] [])
 
 
-; BLANK acts same as empty block, void opts out and generates BREAK signal
+; HOLE acts same as empty block, void opts out and generates BREAK signal
 [
     (void? for-each 'x [] [panic])
-    (void? for-each 'x blank [panic])
+    (void? for-each 'x hole [panic])
     (null? for-each 'x ^void [panic])
 
     ~expect-arg~ !! (for-each 'x '~ [panic])

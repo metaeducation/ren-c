@@ -1305,7 +1305,7 @@ DECLARE_NATIVE(VOID_Q)
 
 
 //
-//  blank?: native:intrinsic [
+//  hole?: native:intrinsic [
 //
 //  "Tells you if argument is an ~()~ antiform, e.g. an empty splice"
 //
@@ -1313,9 +1313,9 @@ DECLARE_NATIVE(VOID_Q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(BLANK_Q)
+DECLARE_NATIVE(HOLE_Q)
 {
-    INCLUDE_PARAMS_OF_BLANK_Q;
+    INCLUDE_PARAMS_OF_HOLE_Q;
 
     require (
       Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
@@ -1323,7 +1323,7 @@ DECLARE_NATIVE(BLANK_Q)
     if (not v)
         return NULLED;
 
-    return LOGIC(Is_Blank(v));
+    return LOGIC(Is_Hole(v));
 }
 
 
@@ -1397,7 +1397,7 @@ DECLARE_NATIVE(QUASAR_Q)
 //
 //  space?: native:intrinsic [
 //
-//  "Tells you if argument is a space character (#)"
+//  "Is VALUE the RUNE! representing a single space character [_]"
 //
 //      return: [logic?]
 //      value [<opt-out> element?]
@@ -1414,6 +1414,41 @@ DECLARE_NATIVE(SPACE_Q)
         return NULLED;
 
     return LOGIC(Is_Space(v));
+}
+
+
+//
+//  blank?: native:intrinsic [
+//
+//  "Is VALUE a RUNE! consisting only of spaces [_ __ ____ _______ ...]"
+//
+//      return: [logic?]
+//      value [<opt-out> element?]
+//  ]
+//
+DECLARE_NATIVE(BLANK_Q)
+{
+    INCLUDE_PARAMS_OF_BLANK_Q;
+
+    require (
+      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+    );
+    if (not v)
+        return NULLED;
+
+    if (not Is_Rune(v))
+        return LOGIC(false);
+
+    const Byte* utf8 = Cell_Utf8_At(v);
+    if (*utf8 == '\0')
+        return LOGIC(false);
+
+    for (; *utf8 != '\0'; ++utf8) {
+        if (*utf8 != ' ')
+            return LOGIC(false);
+    }
+
+    return LOGIC(true);
 }
 
 

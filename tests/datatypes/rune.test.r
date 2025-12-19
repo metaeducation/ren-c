@@ -80,6 +80,7 @@
     -[                              ]-
 ] [
     assert [rune? rune]
+    assert [blank? rune]
     assert [text? molded]
     assert [text? text]
     assert [text = (as text! rune)]
@@ -98,6 +99,7 @@
     -[^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/^/]-
 ] [
     assert [rune? rune]
+    assert [not blank? rune]
     assert [text? molded]
     assert [text? text]
     assert [text = (as text! rune)]

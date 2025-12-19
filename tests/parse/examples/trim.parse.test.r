@@ -9,7 +9,7 @@
 
 [(
 utrim: func [
-    "Removes spaces from strings or blanks from blocks or objects"
+    "Removes spaces from strings or from blocks or objects"
 
     return: [any-string? any-list? blob! any-context?]
     series "Series (modified) or object (made)"
@@ -56,7 +56,7 @@ utrim: func [
                 ;
                 panic 'core/bad-refines
             ]
-            rule: blank
+            rule: hole
 
             if none [head tail] [
                 head: tail: okay  ; plain utrim => UTRIM:HEAD:TAIL

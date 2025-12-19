@@ -45,7 +45,7 @@ lf: LF:    newline
 
 nul: NUL:  #{00}  ; ^(NULL) no longer legal internal to strings
 
-blank: ~()~
+hole: ~()~
 quasar: '~
 
 null: ~null~

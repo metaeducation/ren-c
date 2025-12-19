@@ -200,7 +200,7 @@
 
         return: [any-stable? pack!]
         pos [any-series?]
-        :pending [blank? block!]
+        :pending [hole? block!]
         parser1 "Pending contributions rolled back if not max, even on success"
             [action!]
         parser2 "Pending contributions rolled back if not max, even on success"

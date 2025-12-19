@@ -18,16 +18,16 @@
 )]
 
 [
-    (void? for-each 'x blank [1020])
-    ([] = map-each 'x blank [1020])
-    (void? for-next 'x blank [1020])
+    (void? for-each 'x hole [1020])
+    ([] = map-each 'x hole [1020])
+    (void? for-next 'x hole [1020])
     (all wrap [
-        blank = [result count]: remove-each 'x blank [panic "never gets called"]
-        result = blank
+        hole = [result count]: remove-each 'x hole [panic "never gets called"]
+        result = hole
         count = 0
     ])
-    (void? every 'x blank [okay])
-    (void? for-skip 'x blank 2 [1020])
+    (void? every 'x hole [okay])
+    (void? for-skip 'x hole 2 [1020])
 
     ~nothing-to-take~ !! (take [])
     (null = try take ^void)

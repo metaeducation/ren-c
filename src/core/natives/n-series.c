@@ -309,7 +309,7 @@ DECLARE_NATIVE(CHANGE)  // Must be frame-compatible with APPEND, INSERT [A]
 
     Stable* v;
     if (not ARG(VALUE))
-        v = Init_Blank(LOCAL(VALUE));  // e.g. treat <opt> as empty splice [2]
+        v = Init_Hole(LOCAL(VALUE));  // e.g. treat <opt> as empty splice [2]
     else
         v = unwrap ARG(VALUE);
 

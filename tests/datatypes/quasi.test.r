@@ -95,12 +95,12 @@
 [
     (did foo: func [return: [any-stable?]] [return ~()~])
 
-    (blank? foo)
+    (hole? foo)
     (not void? foo)
     ('~()~ = lift foo)
 
-    (blank? applique foo/ [])
-    (blank? eval foo/)
+    (hole? applique foo/ [])
+    (hole? eval foo/)
 ]
 
 

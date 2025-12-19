@@ -1,7 +1,7 @@
 ; %parse-space.test.r
 ;
-; _ matches blanks in lists literally.  This is helpful in particular
-; with breaking down paths with empty slots:
+; _ is the RUNE! for space, and matches space RUNEs in lists literally.  This
+; is helpful in particular with breaking down paths with empty slots:
 ;
 ;    >> refinement-rule: [subparse path! [_ word!]]
 ;
@@ -10,14 +10,17 @@
 ;
 ; For strings and binaries, it is a synonym for SPACE.
 ;
-; (At one time it was thought it might be how to say "match any value", as
+; At one time it was thought it might be how to say "match any value", as
 ; underscore is sometimes used in this wildcarding fashion in some languages:
 ;
 ;    >> parse [x <y> "z"] [_ _ _]
 ;    == "z"  ; one idea for the behavior of space...
 ;
-; ...but the @ combinator does this better.  See %parse-the.test.r
+; But particularly due to the fact that quoted space renders as simply an
+; apostrophe, it seems the best thing to do in dialecting RUNE!s is to match
+; them as-is in blocks as well as in strings.
 ;
+; (Note the @ combinator is proposed for match any.  See %parse-the.test.r)
 
 (
     run-word-rule: [subparse path! [_ word!]]

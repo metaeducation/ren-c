@@ -628,7 +628,7 @@ DECLARE_NATIVE(CFOR)
 //          ~[<null>]~      "if body result was NULL"
 //      ]
 //      word [word! @word! _]
-//      series [<opt> blank? any-series?]
+//      series [<opt> hole? any-series?]
 //      skip [<opt-out> integer!]
 //      body [<const> any-branch?]
 //  ]
@@ -637,7 +637,7 @@ DECLARE_NATIVE(FOR_SKIP)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
-    if (not ARG(SERIES) or Is_Blank(unwrap ARG(SERIES)))
+    if (not ARG(SERIES) or Is_Hole(unwrap ARG(SERIES)))
         return VOID;
 
     Element* word = Element_ARG(WORD);
@@ -1245,7 +1245,7 @@ void Shutdown_Loop_Each(Stable* iterator)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
-//          [<opt> blank? any-series? any-context? map! any-sequence?
+//          [<opt> hole? any-series? any-context? map! any-sequence?
 //           action!]  ; action support experimental, e.g. generators
 //      body "Code to evaluate each time, if BREAK encountered returns NULL"
 //          [<const> block!]
@@ -1279,7 +1279,7 @@ DECLARE_NATIVE(FOR_EACH)
     //    even in the code of this dispatcher, we need to clean up the
     //    iterator state.
 
-    if (not data or Is_Blank(unwrap data))  // same response as to empty series
+    if (not data or Is_Hole(unwrap data))  // same response as to empty series
         return VOID;
 
     require (
@@ -1380,7 +1380,7 @@ DECLARE_NATIVE(FOR_EACH)
 //      ]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
-//      data [<opt> blank? any-series? any-context? map! action!]
+//      data [<opt> hole? any-series? any-context? map! action!]
 //      body [<const> block!]
 //      {iterator}
 //  ]
@@ -1406,7 +1406,7 @@ DECLARE_NATIVE(EVERY)
 
   initial_entry: {
 
-    if (not data or Is_Blank(unwrap data))  // same response as to empty series
+    if (not data or Is_Hole(unwrap data))  // same response as to empty series
         return VOID;
 
     require (
@@ -1523,11 +1523,11 @@ DECLARE_NATIVE(EVERY)
 //
 //  "Removes values for each body evaluation that's not null, modifies input"
 //
-//      return: [<null> ~[[blank? any-series?] integer!]~]
+//      return: [<null> ~[[hole? any-series?] integer!]~]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (modified)"
-//          [<opt> blank? any-series?]
+//          [<opt> hole? any-series?]
 //      body "Block to evaluate each time, return NULL if BREAK hit"
 //          [<const> block!]
 //  ]
@@ -1548,8 +1548,8 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     Count removals = 0;
 
-    if (not ARG(DATA) or Is_Blank(unwrap ARG(DATA))) {
-        Init_Blank(OUT);
+    if (not ARG(DATA) or Is_Hole(unwrap ARG(DATA))) {
+        Init_Hole(OUT);
         goto return_pack;
     }
 
@@ -1889,7 +1889,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
-//          [<opt-out> blank? action! any-series? any-sequence? any-context?]
+//          [<opt-out> hole? action! any-series? any-sequence? any-context?]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
 //      {iterator}
@@ -1908,7 +1908,7 @@ DECLARE_NATIVE(MAP_EACH)
 {
     INCLUDE_PARAMS_OF_MAP_EACH;
 
-    if (Is_Blank(ARG(DATA)) or Is_Nulled(ARG(DATA)))  // same as empty list
+    if (Is_Hole(ARG(DATA)) or Is_Nulled(ARG(DATA)))  // same as empty list
         return Init_Block(OUT, Make_Source_Managed(0));
 
     if (not Is_Action(ARG(DATA)))
@@ -1934,7 +1934,7 @@ DECLARE_NATIVE(MAP_EACH)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
-//          [<opt> blank? quoted! action!]
+//          [<opt> hole? quoted! action!]
 //      body "Block to evaluate each time"
 //          [<const> block!]
 //      {iterator}
@@ -1963,7 +1963,7 @@ DECLARE_NATIVE(MAP)
 
     assert(Is_Cell_Erased(OUT));  // output only written in MAP if BREAK hit
 
-    if (not data_arg or Is_Blank(unwrap data_arg))  // same response as empty
+    if (not data_arg or Is_Hole(unwrap data_arg))  // same response as empty
         return Init_Block(OUT, Make_Source(0));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))

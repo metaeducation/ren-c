@@ -1019,7 +1019,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
 } handle_poke: { /////////////////////////////////////////////////////////////
 
     if (Is_Lifted_Ghost_Or_Void(dual)) {
-        poke = LIB(BLANK);  // nullptr for removal in Modify_Xxx() atm
+        poke = LIB(HOLE);  // nullptr for removal in Modify_Xxx() atm
         goto call_modify;
     }
 
@@ -1432,14 +1432,14 @@ IMPLEMENT_GENERIC(SORT, Any_List)
 //  "If a value isn't already a BLOCK!, enclose it in a block, else return it"
 //
 //      return: [<null> block!]
-//      value [<opt-out> blank? element?]
+//      value [<opt-out> hole? element?]
 //  ]
 //
 DECLARE_NATIVE(BLOCKIFY)
 {
     INCLUDE_PARAMS_OF_BLOCKIFY;
 
-    Option(const Element*) v = Is_Blank(ARG(VALUE))
+    Option(const Element*) v = Is_Hole(ARG(VALUE))
         ? nullptr
         : Element_ARG(VALUE);
 
@@ -1464,14 +1464,14 @@ DECLARE_NATIVE(BLOCKIFY)
 //  "If a value isn't already a GROUP!, enclose it in a group, else return it"
 //
 //      return: [group!]
-//      value [<opt-out> blank? element?]
+//      value [<opt-out> hole? element?]
 //  ]
 //
 DECLARE_NATIVE(GROUPIFY)
 {
     INCLUDE_PARAMS_OF_GROUPIFY;
 
-    Option(const Element*) v = Is_Blank(ARG(VALUE))
+    Option(const Element*) v = Is_Hole(ARG(VALUE))
         ? nullptr
         : Element_ARG(VALUE);
 
@@ -1556,8 +1556,8 @@ DECLARE_NATIVE(ENVELOP)
 //
 //  "Efficient destructive appending operation that will reuse appended memory"
 //
-//      return: [blank? block!]
-//      accumulator [blank? block!]
+//      return: [hole? block!]
+//      accumulator [hole? block!]
 //      value [<opt> element? splice!]
 //  ]
 //
@@ -1565,10 +1565,10 @@ DECLARE_NATIVE(GLOM)
 //
 // GLOM was designed to bubble up `pending` values (e.g. collected values) in
 // UPARSE, which are lists...but often they will be empty.  So creating lots of
-// empty blocks was undesirable.  So having the accumulators start at blank
+// empty blocks was undesirable.  So having the accumulators start at hole
 // and be willing to start by taking over a bubbled up BLOCK! was desirable.
 //
-// https://forum.rebol.info/t/efficient-consuming-append-like-operator-glom/1647
+// https://rebol.metaeducation.com/t/consuming-append-like-operator/1647
 //
 // !!! This logic is repeated in APPEND etc.  It should be factored out.
 //
@@ -1586,15 +1586,15 @@ DECLARE_NATIVE(GLOM)
 
     Stable* value = unwrap ARG(VALUE);  // may not be at head [1]
 
-    if (Is_Blank(value))
+    if (Is_Hole(value))
         return COPY(accumulator);
 
     if (Is_Block(accumulator))
         goto handle_block_accumulator;
 
-  handle_blank_accumulator: { ////////////////////////////////////////////////
+  handle_hole_accumulator: {
 
-    assert(Is_Blank(accumulator));
+    assert(Is_Hole(accumulator));
 
     if (Is_Splice(value)) {  // see note: index may be nonzero
         Copy_Cell(OUT, value);

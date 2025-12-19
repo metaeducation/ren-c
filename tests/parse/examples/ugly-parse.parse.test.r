@@ -15,7 +15,7 @@
     ugly-combinators.(group!): combinator [
         return: [any-stable? pack!]
         input [any-series?]
-        :pending [blank? block!]   ; we retrigger combinator; it may KEEP, etc.
+        :pending [hole? block!]   ; we retrigger combinator; it may KEEP, etc.
         value [group?]
         {r comb}
     ][
@@ -25,7 +25,7 @@
             return fail "GET-GROUP! evaluated to NULL"  ; means no match
         ]
 
-        pending: blank
+        pending: hole
 
         any [
             ^r = okay  ; like [:(1 = 1)]

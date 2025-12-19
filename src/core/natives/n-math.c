@@ -840,7 +840,7 @@ DECLARE_NATIVE(VACANCY_Q)
 
     Stable* v = ARG(VALUE);
 
-    return LOGIC(Is_Trash(v) or Is_Nulled(v) or Is_Blank(v));
+    return LOGIC(Is_Trash(v) or Is_Nulled(v) or Is_Hole(v));
 }
 
 

@@ -33,7 +33,7 @@ tripwire
 quasar
 null
 okay
-blank
+hole
 NUL
 
 atom?
