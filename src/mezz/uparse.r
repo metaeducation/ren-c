@@ -492,8 +492,6 @@ default-combinators: make map! [
     ][
         append state.loops binding of $return
 
-        ^result: ^void
-
         cycle [
             [^ input]: condition-parser input except [
                 take:last state.loops
@@ -504,7 +502,7 @@ default-combinators: make map! [
             ; if it fails we disregard the result
             ;
             [^result input]: body-parser input except [
-                ^result: ^void
+                ^result: ()
                 continue
             ]
         ]
@@ -521,8 +519,6 @@ default-combinators: make map! [
     ][
         append state.loops binding of $return
 
-        ^result: ^void
-
         cycle [
             [^ input]: condition-parser input except [
                 ;
@@ -530,7 +526,7 @@ default-combinators: make map! [
                 ; but if it fails we disregard the result
                 ;
                 [^result input]: body-parser input except [
-                    ^result: ^void
+                    ^result: ()
                     continue
                 ]
                 continue
@@ -550,11 +546,9 @@ default-combinators: make map! [
     ][
         append state.loops binding of $return
 
-        ^result: ^void
-
         cycle [
             [^result input]: parser input except [
-                ^result: ~
+                ^result: ()
                 continue
             ]
         ]
@@ -1856,8 +1850,6 @@ default-combinators: make map! [
 
         append state.loops binding of $return
 
-        ^result: ()  ; [repeat (0) one] is void, but ^ can unvoidify it
-
         count-up 'i max [  ; will count infinitely if max is #
             ;
             ; After the minimum number of repeats are fulfilled, the parser
@@ -2403,8 +2395,6 @@ default-combinators: make map! [
 
         pending: hole  ; can become GLOM'd into a BLOCK!
 
-        ^result: ()  ; default result is invisible
-
         old-env: state.env
         return: adapt return/ [state.env: old-env]
         state.env: rules  ; currently using blocks as surrogate for environment
@@ -2516,7 +2506,7 @@ default-combinators: make map! [
                 ]
                 either ghost? ^temp [
                     if not can-vanish [
-                        if not ghost? ^result [^result: ^void]
+                        if not ghost? ^result [^result: ()]
                     ]
                 ][
                     ^result: ^temp  ; overwrite only if not ghost
