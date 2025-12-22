@@ -168,7 +168,7 @@ export console!: make object! [
 
             ^v: decay ^v  ; meta-assign allows ACTION! assignment
 
-            if (len = 1) and (action? ^v) [  ; SET-WORD assignable action pack
+            if (len = 1) and (action? opt ^v) [  ; SET-WORD-assignable action
                 print unspaced [
                     "\~[" (mold lift ^v) "]~\"
                         _ --[; antiform (pack!) "action-pack"]--
