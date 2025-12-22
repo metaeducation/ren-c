@@ -510,12 +510,12 @@ void Crash_On_Unreadable_Cell(const Cell* c) {
 //
 void Crash_On_Unwritable_Cell(const Cell* c) {
     if (not Is_Base(c))
-        printf("Non-node passed to cell write routine\n");
+        printf("Non-Base passed to cell write routine\n");
     else if (not Is_Base_A_Cell(c))
-        printf("Non-cell passed to cell write routine\n");
+        printf("Non-Cell passed to cell write routine\n");
     else {
         assert(Get_Cell_Flag(c, PROTECTED));
-        printf("Protected cell passed to writing routine\n");
+        printf("Protected Cell passed to writing routine\n");
     }
     crash (c);
 }

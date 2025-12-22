@@ -86,7 +86,7 @@ void Startup_Datatypes(void)
         Init_Fence(datatype, a);
         Stably_Antiformize_Unbound_Fundamental(datatype);
         assert(Is_Datatype(datatype));
-        Set_Cell_Flag(datatype, PROTECTED);
+        Protect_Cell(datatype);
 
         assert(datatype == Datatype_From_Type(type));  // convenient [3]
         assert(Datatype_Type(datatype) == type);  // sanity check

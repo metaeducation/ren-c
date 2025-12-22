@@ -1039,10 +1039,6 @@ INLINE Cell* Copy_Cell_Untracked(
     assert(out != v);  // usually a sign of a mistake; not worth supporting
     Assert_Cell_Readable(v);
 
-  #if DEBUG_TRACK_EXTEND_CELLS
-    assert(out->tick == TICK);  // should TRACK(out) before call, not after
-  #endif
-
     Freshen_Cell_Header(out);  // optimizer elides this after erasure [1]
     out->header.bits |= (BASE_FLAG_BASE | BASE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & copy_mask));
@@ -1096,11 +1092,11 @@ INLINE Cell* Copy_Cell_Untracked(
     }
 
     #define Copy_Cell(out,v) \
-        Copy_Cell_Overload(TRACK(out), (v))
+        TRACK(Copy_Cell_Overload((out), (v)))
 #endif
 
 #define Copy_Cell_Core(out,v,copy_mask) \
-    Copy_Cell_Untracked(TRACK(out), (v), (copy_mask))
+    TRACK(Copy_Cell_Untracked((out), (v), (copy_mask)))
 
 #define Copy_Lifted_Cell(out,v) \
     cast(Element*, Liftify(Copy_Cell(u_cast(Value*, (out)), (v))))

@@ -1295,7 +1295,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 
             Init(Slot) slot = Append_Context(varlist, symbol);
             Init_Blackhole_Slot(slot);
-            Set_Cell_Flag(slot, PROTECTED);
+            Protect_Cell(slot);
 
             if (rebinding)
                 Add_Binder_Index(binder, symbol, -1);  // for remove

@@ -605,7 +605,7 @@ Result(ParamList*) Pop_Paramlist(
             Set_Cell_Flag(param, VAR_MARKED_HIDDEN);
 
       #if DEBUG_PROTECT_PARAM_CELLS
-        Set_Cell_Flag(param, PROTECTED);
+        Protect_Cell(param);
       #endif
 
         ++key;

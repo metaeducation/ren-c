@@ -39,14 +39,14 @@
 
 #if CHECK_CELL_SUBCLASSES
     template<class T>
-    INLINE T* Protect_Cell(T* c) {
+    INLINE T Protect_Cell(T&& c) {
         assert(Not_Cell_Flag(c, PROTECTED));
         Set_Cell_Flag(c, PROTECTED);
         return c;
     }
 
     template<class T>
-    INLINE T* Unprotect_Cell(T* c) {
+    INLINE T Unprotect_Cell(T&& c) {
         assert(Get_Cell_Flag(c, PROTECTED));
         Clear_Cell_Flag(c, PROTECTED);
         return c;

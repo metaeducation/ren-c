@@ -117,15 +117,8 @@ INLINE Option(VarList*) Misc_Phase_Adjunct_Core(Phase* a) {
 //
 
 #if DEBUG_CELL_READ_WRITE
-    INLINE void Protect_Rootvar_If_Debug(Cell* rootvar) {
-        assert(Not_Cell_Flag(rootvar, PROTECTED));
-        Set_Cell_Flag(rootvar, PROTECTED);
-    }
-
-    INLINE void Unprotect_Rootvar_If_Debug(Cell* rootvar) {
-        assert(Get_Cell_Flag(rootvar, PROTECTED));
-        Clear_Cell_Flag(rootvar, PROTECTED);
-    }
+    #define Protect_Rootvar_If_Debug(rootvar)  Protect_Cell(rootvar)
+    #define Unprotect_Rootvar_If_Debug(rootvar)  Unprotect_Cell(rootvar)
 #else
     #define Protect_Rootvar_If_Debug(rootvar)    NOOP
     #define Unprotect_Rootvar_If_Debug(rootvar)  NOOP

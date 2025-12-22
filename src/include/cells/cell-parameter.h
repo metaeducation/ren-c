@@ -457,8 +457,16 @@ INLINE Cell* Blit_Param_Unmarked_Untracked(Cell* out, const Param* p) {
 #define Blit_Param_Unmarked(out,p) \
     TRACK(Blit_Param_Unmarked_Untracked(out,p));
 
-#define Blit_Param_Keep_Mark(out,p) \
-    Blit_Cell(out,p)  // for when not making a running varlist [1]
+INLINE Cell* Blit_Param_Keep_Mark_Untracked(Cell* out, const Param* p) {
+    Blit_Cell_Untracked(out, p);
+  #if DEBUG_PROTECT_PARAM_CELLS
+    Clear_Cell_Flag(out, PROTECTED);
+  #endif
+    return out;
+}
+
+#define Blit_Param_Keep_Mark(out,p) /* when not making running varlist [1] */ \
+    TRACK(Blit_Param_Keep_Mark_Untracked(out,p));
 
 
 //=//// FAST ANTI-WORD "BLITTING" /////////////////////////////////////////=//
