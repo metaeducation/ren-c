@@ -457,12 +457,12 @@ for-each [sw-cat list] boot-errors [
 
     add-sym cat  ; category might incidentally exist as SYM_XXX
 
-    for-each [sw-id t-message] list [
-        if not set-word? sw-id [
-            panic ["%errors.r parse error, not SET-WORD!" mold sw-id]
+    while [not tail? list] [
+        if not set-word? list.1 [
+            panic ["%errors.r parse error, not SET-WORD!" mold list.1]
         ]
-        let id: resolve sw-id
-        let message: t-message
+        let id: resolve list.1
+        let message: list.2
 
         ; Add a SYM_XXX constant for the error's ID word
         ;
@@ -476,14 +476,44 @@ for-each [sw-cat list] boot-errors [
         let arity: 0
         if block? message [  ; can have N GET-WORD! substitution slots
             ; This uses GET-WORD!...review rationale for why
-            parse3 message [opt some [
-                [quoted?/ | tied-integer?/] (arity: arity + 1)
+            parse3 message [some [
+                word! (arity: arity + 1)
                 |
-                one
-            ]]
-        ] else [
-            ensure text! message  ; textual message, no arguments
+                text!
+            ] <end> | (panic ["Malformed error template:" mold message])]
+        ] else [  ; textual message: interpolated, generate BLOCK! form
+            message: collect [
+                let start: message
+                let finish
+                parse3 ensure text! message [opt some [
+                    ahead [opt space "$"] finish: <here> (
+                        let run: copy:part start finish
+                        if not empty? run [
+                            keep run
+                        ]
+                    )
+                    opt space "$"  ; v-- bug in bootstrap [to [space | <end>]]
+                    start: <here> [to space | to <end>] finish: <here> (
+                        arity: arity + 1
+                        let num: transcode:one copy:part start finish
+                        assert [integer? num]
+                        keep transcode:one (join "arg" num)
+                    )
+                    opt space
+                    start: <here>
+                    |
+                    one
+                ]]
+                if not empty? start [
+                    keep start
+                ]
+            ]
         ]
+
+        ; update message (we may have transformed it) and advance list
+        ;
+        list.2: message
+        list: skip list 2
 
         ; Camel Case and make legal for C (e.g. "not-found*" => "Not_Found_P")
         ;

@@ -581,24 +581,24 @@ IMPLEMENT_GENERIC(MAKE, Is_Warning)
 }
 
 
+// Note: At one time the error templates used [$1 "text" $2] placeholders in
+// blocks instead of the named arguments [arg1 "text" arg2].  This was
+// changed to where a plain string form of the error was automatically broken
+// up into the named arguments such as "$1 text $2".  The `make prep` step
+// tranforms this into [arg1 "text" arg2], so there's no need to support
+// the numeric placeholders in the block form.
+//
+// (Eventually it is likely that REWORD will be used by the error machinery
+// to do interpolation, so that arbitrary user errors can take advantage of
+// the shorthand instead of just %errors.r ... but even then the %errors.r
+// file might still be auto-transformed so the work is done ahead of time.)
+//
 static Option(const Symbol*) Symbol_For_Error_Element(const Element* v)
 {
-    if (Is_Tied_Form_Of(WORD, v))
+    if (Is_Word(v))
         return Word_Symbol(v);
 
-    if (not Is_Tied_Form_Of(INTEGER, v))
-        return nullptr;
-
-    switch (VAL_INT32(v)) {
-      case 1: return CANON(ARG1);
-      case 2: return CANON(ARG2);
-      case 3: return CANON(ARG3);
-      case 4: return CANON(ARG4);
-      case 5: return CANON(ARG5);
-
-      default:
-        panic("$N argument placeholders beyond $5 are not supported");
-    }
+    return nullptr;
 }
 
 

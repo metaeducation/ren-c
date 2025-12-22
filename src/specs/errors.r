@@ -42,16 +42,16 @@ internal: [  ; ===============================================================
 ;
 stack-overflow:     "stack overflow"
 
-no-memory:          ["not enough memory:" $1 "bytes"]
+no-memory:          "not enough memory: $1 bytes"
 
 io-error:           "problem with IO"
 locked-series:      "locked series expansion"
 unexpected-case:    "no case in switch statement"
-bad-path:           ["bad path:" $1]
-not-here:           [$1 "not supported on your system"]
+bad-path:           "bad path: $1"
+not-here:           "$1 not supported on your system"
 globals-full:       "no more global variable space"
-bad-sys-func:       ["invalid or missing system function:" $1]
-invalid-error:      ["error object or fields were not valid:" $1]
+bad-sys-func:       "invalid or missing system function: $1"
+invalid-error:      "error object or fields were not valid: $1"
 hash-overflow:      "Hash ran out of space"
 
 checked-build-only: "Feature available only in RUNTIME_CHECKS builds"
@@ -61,37 +61,37 @@ invalid-exit:       "Frame does not exist on the stack to EXIT from"
 
 ] syntax: [  ; ===============================================================
 
-scan-invalid:       ["invalid" $1 "--" $2]
-scan-missing:       ["missing" $1]
-scan-extra:         ["extra" $1]
-scan-mismatch:      ["expected" $1 "but got" $2]
+scan-invalid:       "invalid $1 -- $2"
+scan-missing:       "missing $1"
+scan-extra:         "extra $1"
+scan-mismatch:      "expected $1 but got $2"
 
-no-header:          ["script is missing a REBOL header:" $1]
-bad-header:         ["script header is not valid:" $1]
-bad-compress:       ["compressed script body is not valid:" $1]
-malconstruct:       ["invalid construction spec:" $1]
-bad-char:           ["invalid character in:" $1]
-needs:              ["this script needs" $1 $2 "or better to run correctly"]
+no-header:          "script is missing a REBOL header: $1"
+bad-header:         "script header is not valid: $1"
+bad-compress:       "compressed script body is not valid: $1"
+malconstruct:       "invalid construction spec: $1"
+bad-char:           "invalid character in: $1"
+needs:              "this script needs $1 $2 or better to run correctly"
 
 
 ] script: [  ; ===============================================================
 
 no-value:           "No value in antiform BLOCK! pack: ~[]~ (VOID)"
-bad-null:           [$1 "cannot be null"]
-bad-word-get:       [$1 "is" $2 "antiform (see ^^(...) and GET:ANY)"]
-bad-antiform:       ["Invalid use of" $1 "antiform"]
-non-isotopic-type:  ["Quasiforms and antiforms not legal for value:" $1]
-illegal-keyword:    ["Illegal antiform keyword:" $1]
+bad-null:           "$1 cannot be null"
+bad-word-get:       "$1 is $2 antiform (see ^^(...) and GET:ANY)"
+bad-antiform:       "Invalid use of $1 antiform"
+non-isotopic-type:  "Quasiforms and antiforms not legal for value: $1"
+illegal-keyword:    "Illegal antiform keyword: $1"
 bad-void:           "Invalid use of void"
-need-non-end:       ["end was reached evaluating" $1]  ; SET-XXX!/SIGIL!
-not-bound:          [$1 "word is not bound to a context"]
-not-in-context:     [$1 "is not in the specified context"]
+need-non-end:       "end was reached evaluating $1"
+not-bound:          "$1 word is not bound to a context"
+not-in-context:     "$1 is not in the specified context"
 
-trash-condition:    ["Can't conditionally test TRASH!:" $1]
-keyword-condition:  ["Invalid antiform WORD! for conditional test:" $1]
+trash-condition:    "Can't conditionally test TRASH!: $1"
+keyword-condition:  "Invalid antiform WORD! for conditional test: $1"
 
-collectable-bound:  ["Collectable" $1 "bound, use :PREBOUND if intended"]
-assertion-failure:  ["assertion failure:" $1]
+collectable-bound:  "Collectable $1 bound, use :PREBOUND if intended"
+assertion-failure:  "Assertion failure: $1"
 
 ; NOTE: Preallocated errors
 ;
@@ -112,44 +112,44 @@ illegal-zero-byte:  "#{00} bytes illegal in ANY-STRING?, use BLOB!"
 utf8-trail-bad-bit: "UTF-8 trailing bytes without high bit set"
 
 bad-utf8:           "invalid UTF-8 byte sequence found during decoding"
-illegal-cr:         ["Illegal CR: See DELINE, and TO-TEXT:RELAX --" $1]
+illegal-cr:         "Illegal CR: See DELINE, and TO-TEXT:RELAX -- $1"
 mixed-cr-lf-found:  "DELINE requires files to be CR LF or LF consistently"
 bad-utf8-bin-edit:  "String aliased as BLOB! can't become invalid UTF-8"
 not-one-codepoint:  "Character data must be one UTF-8 codepoint"
 
 find-string-binary: "Can't search binary in string (must convert input)"
 
-expect-val:         ["expected" $1 "not" $2]
-expect-type:        [$1 $2 "field must be of type" $3]
-cannot-use:         ["cannot use" $1 "on" $2 "value"]
+expect-val:         "expected $1 not $2"
+expect-type:        "$1 $2 field must be of type $3"
+cannot-use:         "cannot use $1 on $2 value"
 
-no-binding:         ["Couldn't get binding for" $1]
+no-binding:         "Couldn't get binding for $1"
 
 ambiguous-infix:    "Ambiguous infix expression--use GROUP! to clarify"
 literal-left-path:  "Use ->- to pass literal left PATH! parameters right"
 
-surprising-action:  ["Surprising ACTION! assign to" $1 "^^ to APPROVE"]
+surprising-action:  "Surprising ACTION! assign to $1 (use /NAME: if meant)"
 
 sequence-too-short: "PATH!, CHAIN!, and TUPLE! must have more than 2 items"
-conflated-sequence: ["Sequence would conflate with" $1 "--" $2]
+conflated-sequence: "Sequence would conflate with $1 -- $2"
 bad-sequence-space: "SPACE only legal at head and tail of sequence"
-bad-sequence-item:  ["Value is not a valid" $1 "element:" $2]
-bad-sequence-head:  ["Value is not a valid sequence head:" $2]
+bad-sequence-item:  "Value is not a valid $1 element: $2"
+bad-sequence-head:  "Value is not a valid sequence head: $2"
 
-bad-sigil:          ["Value can't carry a Sigil [$ @ ^^]:" $1]
+bad-sigil:          ["Value can't carry a Sigil [$ @ ^^]:" arg1]
 
-cant-decorate-type: ["Cannot apply `:` or `^` decoration to:" $1]
+cant-decorate-type: "Cannot apply `:` or `^^` decoration to: $1"
 
 action-with-dotted: "ACTION! used with dotted sequence access form"
 inert-with-slashed: "ANY-INERT? used with slashed sequence access form"
 
-bad-get-group:      ["GROUP!s require :GROUPS in GET or SET:" $1]
+bad-get-group:      "GROUP!s require :GROUPS in GET or SET: $1"
 bad-set-group:      "SET-GROUP! sets WORD!/TUPLE!/BLOCK!"
 
 bad-branch-type:    "Bad branch type"
 
-do-running-frame:   ["Must COPY a FRAME! that's RUNNING? before DOing it"]
-expired-frame:      ["Cannot use a FRAME! whose stack storage expired"]
+do-running-frame:   "Must COPY a FRAME! that's RUNNING? before EVAL-ing it"
+expired-frame:      "Cannot use a FRAME! whose stack storage expired"
 
 apply-too-many:     "Too many values in APPLY argument block (see :RELAX)"
 
@@ -165,88 +165,88 @@ nontrivial-panic:   "PANIC requires complex expressions to be in a GROUP!"
 ; tells you what the parameter of the argument was for.
 
 unknown-error:      "Unknown error (failure on null, no additional info)"
-bad-value:          ["Failure on bad value (no additional info):" $1]
+bad-value:          "Failure on bad value (no additional info): $1"
 
-invalid-arg:        [$1 "has an invalid" $2 "argument:" $3]
-no-arg:             [$1 "is missing its" $2 "argument"]
+invalid-arg:        "$1 has an invalid $2 argument: $3"
+no-arg:             "$1 is missing its $2 argument"
 
-unset-variable:     ["Unset variable:" $1]
+unset-variable:     "Unset variable: $1"
 
 ; These need to have the same arguments (shared code coerces them)
 ;
-expect-arg:         [$1 "got" $2 "for" $3 "argument, expected" $4]
-phase-expect-arg:   [$1 "inner phase got" $2 "for" $3 "argument, expected" $4]
+expect-arg:         "$1 got $2 for $3 argument, expected $4"
+phase-expect-arg:   "$1 inner phase got $2 for $3 argument, expected $4"
 
-no-logic-typecheck: [$1 "must return LOGIC? to use in typechecking"]
-no-arg-typecheck:   [$1 "must take an argument to use in typechecking"]
+no-logic-typecheck: "$1 must return LOGIC? to use in typechecking"
+no-arg-typecheck:   "$1 must take an argument to use in typechecking"
 
-invalid-type:       [$1 "type is not allowed here"]
-invalid-op:         ["invalid operator:" $1]
-no-op-arg:          [$1 "operator is missing an argument"]
-invalid-data:       ["data not in correct format:" $1]
+invalid-type:       "$1 type is not allowed here"
+invalid-op:         "invalid operator: $1"
+no-op-arg:          "$1 operator is missing an argument"
+invalid-data:       "data not in correct format: $1"
 not-same-type:      "values must be of the same type"
-not-related:        ["incompatible argument for" $1 "of" $2]
-bad-func-def:       ["invalid function definition:" $1]
-bad-func-arg:       ["function argument" $1 "is not valid"]
+not-related:        "incompatible argument for $1 of $2"
+bad-func-def:       "invalid function definition: $1"
+bad-func-arg:       "function argument $1 is not valid"
 
-func-no-return:     ["FUNCTION" $1 "didn't RETURN (see LAMBDA, PROCEDURE)"]
-bad-return-type:    [$1 "can't RETURN" $2 "but rather" $3]
+func-no-return:     "FUNCTION $1 didn't RETURN (see LAMBDA, PROCEDURE)"
+bad-return-type:    "$1 can't RETURN $2 but rather $3"
 
-no-refine:          [$1 "has no refinement called" $2]
+no-refine:          "$1 has no refinement called $2"
 bad-refines:        "incompatible or invalid refinements"
-bad-parameter:      ["incompatible or duplicate parameter:" $1]
-bad-argless-refine: ["Argless Refinement" $1 "Must be either # or NULL"]
+bad-parameter:      "incompatible or duplicate parameter: $1"
+bad-argless-refine: "Argless Refinement $1 Must be either # or NULL"
 
-bad-field-set:      ["cannot set" $1 "field to" $2 "datatype"]
-bad-pick:           ["cannot pick" $1]
-bad-poke:           ["cannot poke" $1]
-bad-poke-dual:      ["poke of dual signal incompatible with target" $1]
-dup-vars:           ["duplicate variable specified:" $1]
+bad-field-set:      "cannot set $1 field to $2 datatype"
+bad-pick:           "cannot pick $1"
+bad-poke:           "cannot poke $1"
+bad-poke-dual:      "poke of dual signal incompatible with target $1"
+dup-vars:           "duplicate variable specified: $1"
 
 expression-barrier: "expression barrier hit while fulfilling argument"
 
 index-out-of-range: "series index before head or after tail"
-type-has-no-index:  ["Datatype" $1 "does not have an internal index"]
+type-has-no-index:  "Datatype $1 does not have an internal index"
 
 missing-arg:        "missing a required argument or refinement"
 too-short:          "content too short (or just whitespace)"
 too-long:           "content too long"
 invalid-chars:      "contains invalid characters"
-invalid-compare:    ["cannot compare" $1 "with" $2]
+invalid-compare:    "cannot compare $1 with $2"
 
-invalid-part:       ["invalid :part count:" $1]
+invalid-part:       "invalid :PART count: $1"
 
 no-return:          "block did not return a value"
 
 ; !!! Consider enhancements which would allow suppressing the :NAME in the
 ; rendering if not present.
 ;
-no-catch:           ["No CATCH for THROW of" $1 "with NAME:" $2]
+no-catch:           "No CATCH for THROW of $1 with NAME: $2"
 
-bad-bad:            [$1 "error:" $2]
+bad-bad:            "$1 error: $2"
 
-bad-make-arg:       ["cannot MAKE/TO" $1 "from:" $2]
-wrong-denom:        [$1 "not same denomination as" $2]
-bad-compression:    ["invalid compressed data - problem:" $1]
-dialect:            ["incorrect" $1 "dialect usage at:" $2]
+bad-make-arg:       "cannot MAKE/TO $1 from: $2"
+wrong-denom:        "$1 not same denomination as $2"
+bad-compression:    "invalid compressed data - problem: $1"
+dialect:            "incorrect $1 dialect usage at: $2"
 bad-command:        "invalid command format (extension function)"
-bad-cast:           ["cannot cast" $1 "as" $2]
-alias-constrains:   ["AS constrains unlocked input, so must be mutable"]
+bad-cast:           "cannot cast $1 as $2"
+alias-constrains:   "AS constrains unlocked input, so must be mutable"
 
 nothing-to-take:    "Can't TAKE, no value available (consider TRY TAKE)"
 archetype-invoked:  "Archetypal function invoked, no target context"
 
 parse3-rule:        "PARSE3 - invalid rule or usage of rule"
 parse3-end:         "PARSE3 - unexpected end of rule"
-parse3-variable:    ["PARSE3 - expected a variable, not:" $1]
-parse3-command:     ["PARSE3 - command cannot be used as variable:" $1]
-parse3-series:      ["PARSE3 - input must be a series:" $1]
+parse3-variable:    "PARSE3 - expected a variable, not: $1"
+parse3-command:     "PARSE3 - command cannot be used as variable: $1"
+parse3-series:      "PARSE3 - input must be a series: $1"
 parse3-multi-set:   "PARSE3 - SET can capture at most one value"
 parse3-incomplete:  "PARSE3 rules did not reach end of input"
 
 block-skip-wrong:   "Block is not even multiple of skip size"
 
-frame-already-used: ["Frame currently in use by a function call" $1]
+frame-already-used: "Frame currently in use by a function call $1"
 frame-not-on-stack: "Frame is no longer running on the stack"
 stale-frame:        "Original FRAME! can't be reused/viewed after invoking"
 
@@ -258,11 +258,11 @@ varargs-take-last:  "VARARGS! does not support TAKE-ing only :LAST item"
 null-vararg-list:   "Can't MAKE ANY-LIST? from VARARGS! allowing ~null~"
 anti-object-block:  "Can't create block from object if it has antiforms"
 
-conflicting-key:    [$1 "key conflicts; use SELECT or PUT with :CASE"]
+conflicting-key:    "$1 key conflicts; use SELECT or PUT with :CASE"
 
-non-block-branch:   ["Evaluated non-block/function used as branch" $1]
+non-block-branch:   "Evaluated non-block/function used as branch $1"
 
-native-unloaded:    ["Native has been unloaded:" $1]
+native-unloaded:    "Native has been unloaded: $1"
 
 
 ] math: [  ; ================================================================
@@ -271,16 +271,16 @@ zero-divide:        "attempt to divide by zero"
 overflow:           "math or number overflow"
 positive:           "positive number required"
 
-type-limit:         [$1 "overflow/underflow"]
-size-limit:         ["maximum limit reached:" $1]
-out-of-range:       ["value out of range:" $1]
+type-limit:         "$1 overflow/underflow"
+size-limit:         "maximum limit reached: $1"
+out-of-range:       "value out of range: $1"
 
 
 ] access: [  ; ===============================================================
 
-protected-word:     ["variable" $1 "locked by PROTECT (see UNPROTECT)"]
+protected-word:     "variable $1 locked by PROTECT (see UNPROTECT)"
 
-const-value:        ["CONST or iterative value (see MUTABLE):" $1]
+const-value:        "CONST or iterative value (see MUTABLE): $1"
 
 series-protected:   "series read-only due to PROTECT (see UNPROTECT)"
 series-frozen:      "series is permanently frozen, can't modify"
@@ -291,30 +291,30 @@ series-data-freed:  "series contents no longer available due to FREE"
 
 hidden:             "not allowed - would expose or modify hidden values"
 
-cannot-open:        ["cannot open:" $1 "reason:" $2]
-not-open:           ["port is not open:" $1]
-already-open:       ["port is already open:" $1]
-no-connect:         ["cannot connect:" $1 "reason:" $2]
-not-connected:      ["port is not connected:" $1]
-no-script:          ["script not found:" $1]
+cannot-open:        "cannot open: $1 reason: $2"
+not-open:           "port is not open: $1"
+already-open:       "port is already open: $1"
+no-connect:         "cannot connect: $1 reason: $2"
+not-connected:      "port is not connected: $1"
+no-script:          "script not found: $1"
 
-no-scheme-name:     "Scheme has no `name:` field (must be WORD!)"
-no-scheme:          ["missing port scheme:" $1]
+no-scheme-name:     "Scheme has no NAME: field (must be WORD!)"
+no-scheme:          "missing port scheme: $1"
 
-invalid-spec:       ["invalid spec or options:" $1]
-invalid-port:       ["invalid port object (invalid field values)"]
-invalid-actor:      ["invalid port actor (must be native or object)"]
-invalid-port-arg:   ["invalid port argument:" $1]
-no-port-action:     ["this port does not support:" $1]
+invalid-spec:       "invalid spec or options: $1"
+invalid-port:       "invalid port object (invalid field values)"
+invalid-actor:      "invalid port actor (must be native or object)"
+invalid-port-arg:   "invalid port argument: $1"
+no-port-action:     "this port does not support: $1"
 
-read-only:          ["read-only - write not allowed:" $1]
+read-only:          "read-only - write not allowed: $1"
 
-no-create:          ["cannot create:" $1]
-no-delete:          ["cannot delete:" $1]
-no-rename:          ["cannot rename:" $1]
+no-create:          "cannot create: $1"
+no-delete:          "cannot delete: $1"
+no-rename:          "cannot rename: $1"
 
-bad-extension:      ["invalid extension format:" $1]
+bad-extension:      "invalid extension format: $1"
 
-bad-memory:         ["non-accessible memory at" $1 "in" $2]
+bad-memory:         "non-accessible memory at $1 in $2"
 
 ]  ; ========================================================================
