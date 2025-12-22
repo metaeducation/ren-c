@@ -30,14 +30,14 @@
     ~parse-mismatch~ !! (10 = parse:relax "aaa" ["b" (10)])
 ]
 
-; PARSE can return GHOST!, but it's not "intrinsically ghostable" so you need
+; PARSE can return VOID!, but it's not "intrinsically vanishable" so you need
 ; an operator to manifest its vanishing nature.
 [
     (
         let result
         all [
-            ghost? ^result: parse "" []
-            ghost? ^result
+            void? ^result: parse "" []
+            void? ^result
         ]
     )
 

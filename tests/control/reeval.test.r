@@ -106,7 +106,7 @@
 (<before> = (<before> reeval comment/ "erase me"))
 
 
-; !!! There used to be some concept that GHOST!-returning things could
+; !!! There used to be some concept that VOID!-returning things could
 ; appear like an "end" to functions.  But rules for reification have changed,
 ; in that there are no "pure invisibles".  So saying that it's an <end> is
 ; questionable.  Review when there's enough time in priorities to think on it.

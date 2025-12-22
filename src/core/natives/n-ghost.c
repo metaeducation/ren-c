@@ -1,6 +1,6 @@
 //
 //  file: %n-ghost.c
-//  summary: "Native Functions for GHOST! Datatype (COMMENT, ELIDE, etc.)"
+//  summary: "Native Functions for VOID! Datatype (COMMENT, ELIDE, etc.)"
 //  section: natives
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
@@ -22,7 +22,7 @@
 //
 // For a long time, vanishing functions were not implemented as natives, due
 // to the desire to prove that they could be implemented in usermode.  But
-// now that GHOST! is well understood and simple to use (vs. being esoteric
+// now that VOID! is well understood and simple to use (vs. being esoteric
 // evaluator tricks on special infix functions), there's no reason not to
 // just implement them as fast intrinsics.
 //
@@ -31,23 +31,23 @@
 
 
 //
-//  nihil: ghostable native [
+//  nihil: vanishable native [
 //
-//  "Generate GHOST! (arity-0 COMMENT)"
+//  "Generate VOID! (arity-0 COMMENT)"
 //
-//      return: [ghost!]
+//      return: [void!]
 //  ]
 //
 DECLARE_NATIVE(NIHIL)
 {
     INCLUDE_PARAMS_OF_NIHIL;
 
-    return GHOST;
+    return VOID;
 }
 
 
 //
-//  ghost?: native:intrinsic [
+//  void?: native:intrinsic [
 //
 //  "Tells you if argument is a comma antiform (unstable)"
 //
@@ -55,41 +55,41 @@ DECLARE_NATIVE(NIHIL)
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(GHOST_Q)
+DECLARE_NATIVE(VOID_Q)
 {
-    INCLUDE_PARAMS_OF_GHOST_Q;
+    INCLUDE_PARAMS_OF_VOID_Q;
 
     Value* v = Intrinsic_ARG(LEVEL);
 
-    return LOGIC(Is_Ghost(v));
+    return LOGIC(Is_Void(v));
 }
 
 
 //
-//  ghost-or-void?: native:intrinsic [
+//  ghostly?: native:intrinsic [
 //
-//  "If argument is a ghost (antiform comma) or void (empty antiform block)"
+//  "Is VALUE either a VOID (antiform comma!) or NONE (empty antiform block!)"
 //
 //      return: [logic?]
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(GHOST_OR_VOID_Q)
+DECLARE_NATIVE(GHOSTLY_Q)
 {
-    INCLUDE_PARAMS_OF_GHOST_OR_VOID_Q;
+    INCLUDE_PARAMS_OF_GHOSTLY_Q;
 
     Value* v = Intrinsic_ARG(LEVEL);
 
-    return LOGIC(Is_Ghost_Or_Void(v));
+    return LOGIC(Is_Ghostly(v));
 }
 
 
 //
-//  comment: ghostable native:intrinsic [
+//  comment: vanishable native:intrinsic [
 //
 //  "Skip one element ahead, doing no evaluation (see also ELIDE)"
 //
-//      return: [ghost!]
+//      return: [void!]
 //      @skipped "Literal to skip, (comment print -[x]-) disallowed"
 //          [any-list? any-utf8? blob! any-scalar?]
 //  ]
@@ -98,17 +98,17 @@ DECLARE_NATIVE(COMMENT)
 {
     INCLUDE_PARAMS_OF_COMMENT;  // no ARG(SKIPPED), parameter is intrinsic
 
-    return GHOST;
+    return VOID;
 }
 
 
 //
-//  elide: ghostable native:intrinsic [
+//  elide: vanishable native:intrinsic [
 //
 //  "Argument evaluated, result discarded (not ERROR!, or packs with ERROR!s)"
 //
-//      return: [ghost!]
-//      ^discarded [any-stable? pack! ghost!]
+//      return: [void!]
+//      ^discarded [any-stable? pack! void!]
 //  ]
 //
 DECLARE_NATIVE(ELIDE)
@@ -121,7 +121,7 @@ DECLARE_NATIVE(ELIDE)
       Elide_Unless_Error_Including_In_Packs(v)
     );
 
-    return GHOST;
+    return VOID;
 }
 
 
@@ -130,7 +130,7 @@ DECLARE_NATIVE(ELIDE)
 //
 //  "Argument evaluated, result discarded (even ERROR! and undecayable packs)"
 //
-//      return: [ghost!]
+//      return: [void!]
 //      ^discarded [any-value?]
 //  ]
 //
@@ -138,30 +138,30 @@ DECLARE_NATIVE(IGNORE)
 {
     INCLUDE_PARAMS_OF_IGNORE;  // no ARG(DISCARDED), parameter is intrinsic
 
-    return GHOST;
+    return VOID;
 }
 
 
 //
-//  unghost: native:intrinsic [
+//  unvoid: native:intrinsic [  ; !!! Better name?
 //
-//  "If the argument is a GHOST!, convert it to a VOID!, else passthru"
+//  "If the argument is a VOID!, convert it to a NONE, else passthru"
 //
 //      return: [any-value?]
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(UNGHOST)
+DECLARE_NATIVE(UNVOID)
 //
-// Functions should be cautious about "leaking ghosts", as we want to limit
+// Functions should be cautious about "leaking voids", as we want to limit
 // the cases where expressions vanish some of the time and not others.
 {
-    INCLUDE_PARAMS_OF_UNGHOST;
+    INCLUDE_PARAMS_OF_UNVOID;
 
     Value* v = Intrinsic_ARG(LEVEL);
 
-    if (Is_Ghost(v))
-        return VOID;
+    if (Is_Void(v))
+        return NONE;
 
     return COPY(v);
 }

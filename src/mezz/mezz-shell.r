@@ -30,7 +30,7 @@ cd: lambda [
     ]
 ][
     change-dir switch:type all [set? $path, path] [  ; :PATH someday will work
-        null?/ [^void]
+        null?/ []
         file! [path]
         text! [local-to-file path]  ; LOCAL-TO-FILE is in filesystem extension
         tuple! word! path! [to-file path]

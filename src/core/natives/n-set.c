@@ -232,7 +232,7 @@ Result(bool) Push_Set_Block_Instructions_To_Stack_Throws(
             Drop_Data_Stack_To(STACK_BASE);
             return true;
         }
-        if (Is_Void(SPARE) and Is_Group(scratch)) {
+        if (Is_Ghostly(SPARE) and Is_Group(scratch)) {
             Init_Quasar(PUSH());  // [(void)]: ... pass thru
         }
         else {
@@ -367,7 +367,7 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
             if (circled == stackindex_var)
                 panic ("Circled item has no multi-return value to use");
 
-            Init_Ghost_For_End(OUT);
+            Init_Void_For_End(OUT);
 
             heeded (Corrupt_Cell_If_Needful(SPARE));
             require (
@@ -554,7 +554,7 @@ DECLARE_NATIVE(SET)
   // 1. We don't want to decay the value if we're going to pass it to TWEAK
   //    because (for instance) unstable ACTION-PACK! antiforms need to be
   //    passed to tweak so it knows an action assignment is "unsurprising".
-  //    Also, GHOST! and VOID are used to unset variables even if they
+  //    Also, VOID! and NONE are used to unset variables even if they
   //    are not metaforms.
 
     if (Is_Word(target) or Is_Tuple(target))

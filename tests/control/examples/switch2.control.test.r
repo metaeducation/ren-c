@@ -6,17 +6,13 @@
 [(
 log: elide/
 
-switch2: func [
+switch2: lambda [
     value [any-stable?]
     cases [block!]
     :multi
-    {more found ^result condition branch}
+    {more (okay) found (null) ^result condition branch}
 ][
-    found: null
-    ^result: ^void
-    more: okay
-
-    return parse cases [cycle [
+    parse cases [cycle [
         while cond (more) [
             ; Find next condition clause, or break loop if we hit => or end
             ;

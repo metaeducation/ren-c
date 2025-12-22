@@ -711,7 +711,7 @@ Error* Make_Error_From_Vaptr_Managed(
             else switch (Detect_Rebol_Pointer(p)) {
               case DETECTED_AS_END :
                 assert(!"Not enough arguments in Make_Error_Managed()");
-                Init_Ghost_For_End(u_cast(Value*, u_cast(Cell*, slot)));
+                Init_Void_For_End(u_cast(Value*, u_cast(Cell*, slot)));
                 break;
 
               case DETECTED_AS_CELL: {

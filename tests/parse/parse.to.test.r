@@ -52,7 +52,7 @@
 [(
     void? parse "abc" [to <end>]
 )(
-    ghost? parse "abc" [elide to <end>]
+    void? parse "abc" [elide to <end>]
 )(
     "b" = parse "aaabbb" [thru "b" elide to <end>]
 )(

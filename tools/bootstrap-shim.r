@@ -290,14 +290,16 @@ set the __ "  "
 ; While void can be assigned to plain SET-WORD! it can't in the current
 ; iteration of the bootstrap exe (needs adjusting!)  We mimic the behavior
 ; of assigning void producing the "unset" state (trash for bootstrap, but
-; ghost for modern Ren-C), this bridges the gap for now.
+; void for modern Ren-C), this bridges the gap for now.
 
 ^void: infix lambda3 [:left [<skip> set-word3!]] [
     if left [set:any left ~]  ; set set-words to trash (unset concept)
-    ~void~  ; otehrwise
+    ~void~  ; otherwise
 ]
 
 void: ~#[Use a caret if you want to refer to void, eventually can use ()]#~
+
+ghostly?: void?/
 
 
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===

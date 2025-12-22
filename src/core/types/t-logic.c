@@ -632,8 +632,8 @@ DECLARE_NATIVE(UNLESS)
     Stable* left = ARG(LEFT);
     Value* right = ARG(RIGHT);
 
-    if (Is_Ghost(right))
-        panic ("UNLESS can't be used with GHOST! antiform");
+    if (Is_Ghostly(right))
+        panic ("UNLESS can't be used with VOID! or NONE");
 
     if (Is_Light_Null(right) or Is_Heavy_Null(right))
         return COPY(left);

@@ -279,7 +279,7 @@ INLINE bool Cell_Yes(const Stable* v) {  // corresponds to YES?
 //    anything else is tested it errors.
 //
 // 3. TRASH! has gone back and forth on whether it is truthy; but now that
-//    unsetness is handled by the GHOST! state, the reasons for making it
+//    unsetness is handled by the VOID! state, the reasons for making it
 //    not an error have vanished, e.g. (`all [x: () ...]` vs. `all [x: ~ ...]`)
 //
 INLINE Result(bool) Test_Conditional(

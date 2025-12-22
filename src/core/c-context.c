@@ -543,7 +543,7 @@ Result(None) Wrap_Extend_Core(
     Option(Stump*) stump = cl->binder.stump_list;
     for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
         const Symbol* symbol = Info_Stump_Bind_Symbol(unwrap stump);
-        Init_Ghost_For_Unset(Append_Context(context, symbol));
+        Init_Void_For_Unset(Append_Context(context, symbol));
     }
 
     Destruct_Collector(cl);
@@ -846,7 +846,7 @@ VarList* Make_Varlist_Detect_Managed(
 
     REBINT i;
     for (i = 1; i <= len; ++i, ++var)  // 0th item is rootvar, already filled
-        Init_Ghost_For_Unset(var);  // need all slots valid before Read_Slot()?
+        Init_Void_For_Unset(var);  // need all slots valid before Read_Slot()?
 
     if (parent) {
         Value* dest = Flex_At(Value, a, 1);

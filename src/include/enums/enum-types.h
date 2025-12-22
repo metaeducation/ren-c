@@ -395,6 +395,6 @@ INLINE bool Is_Stable_Antiform_Kind_Byte(KindByte kind_byte) {
     return (
         kind_byte != cast(KindByte, TYPE_BLOCK)  // Is_Pack()
         and kind_byte != cast(KindByte, TYPE_WARNING)  // Is_Error()
-        and kind_byte != cast(KindByte, TYPE_COMMA)  // Is_Ghost()
+        and kind_byte != cast(KindByte, TYPE_COMMA)  // Is_Void()
     );
 }

@@ -120,7 +120,7 @@ export console!: make object! [
 
         === HANDLE ERROR! FIRST ===
 
-        ; Typical type checks (e.g. INTEGER?, GHOST? and such) will fail on
+        ; Typical type checks (e.g. INTEGER?, VOID? and such) will fail on
         ; ERROR!, so test for these first.
         ;
         ; Note that this is a definitional error...not a panic/exception, so
@@ -131,10 +131,10 @@ export console!: make object! [
             exit
         ]
 
-        === GHOSTS! ===
+        === VOID! ===
 
-        if ghost? ^v [
-            print unspaced [result _ "\~,~\" _ _ ";" _ "antiform (ghost!)"]
+        if void? ^v [
+            print unspaced [result _ "\~,~\" _ _ ";" _ "antiform (void!)"]
             exit
         ]
 
@@ -145,12 +145,12 @@ export console!: make object! [
         ; was in a pack.  This hints the user to do a ^META on the value to
         ; see the complete pack.
         ;
-        ; 0-length packs (~[]~ antiform, a.k.a. "void") mold like antiforms.
+        ; 0-length packs (~[]~ antiform, a.k.a. "none") mold like antiforms.
 
         if pack? ^v [
-            if void? ^v [  ; mold like a regular antiform, for now
+            if none? ^v [  ; mold like a regular antiform, for now
                 print unspaced [
-                    result _ --[\~[]~\  ; antiform (pack!) "void"]--
+                    result _ --[\~[]~\  ; antiform (pack!) "none"]--
                 ]
                 exit
             ]
@@ -224,7 +224,7 @@ export console!: make object! [
             ;     == ~something~
             ;
             let name: switch type of unanti ^v [
-                ; error and ghost handled above
+                ; error and void handled above
                 group! ["splice"]
                 group! ["datatype"]
                 frame! ["action"]
@@ -886,7 +886,7 @@ console*: func [
 
     ; If the transcode returned [], then it was like (transcode "") or
     ; transcode "; some comment".  But rather than have the console print out
-    ; a note that evaluated to GHOST!, we just cycle the prompt.  This is
+    ; a note that evaluated to VOID!, we just cycle the prompt.  This is
     ; more pleasing if you just hit enter to see if the console is responding.
     ;
     if [] = code [

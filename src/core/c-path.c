@@ -299,7 +299,7 @@ DECLARE_NATIVE(TWEAK_P_BEDROCK)
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<opt-out> any-stable?]
 //      ^value "ERROR! will be piped through without doing the poke"
-//          [<void> any-stable? error!]
+//          [<ghost> any-stable? error!]
 //      {store}
 //  ]
 //

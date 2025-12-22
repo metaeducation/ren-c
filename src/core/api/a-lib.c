@@ -1216,13 +1216,13 @@ static Result(None) Undecayed_Run_Valist_And_Call_Va_End(  // va_end()s [1]
     Level* L = Make_Level(
         &Evaluator_Executor,
         feed,
-        LEVEL_MASK_NONE | (not LEVEL_FLAG_AFRAID_OF_GHOSTS)  // !!! correct?
+        LEVEL_MASK_NONE | (not LEVEL_FLAG_SUPPRESS_VOIDS)  // !!! correct?
     ) except (Error* e) {
         Free_Feed(feed);
         return fail (e);
     }
 
-    Init_Ghost(Evaluator_Primed_Cell(L));
+    Init_Void(Evaluator_Primed_Cell(L));
 
     if (run_flags & RUN_VA_FLAG_INTERRUPTIBLE)
         L->flags.bits &= (~ LEVEL_FLAG_UNINTERRUPTIBLE);
@@ -1432,7 +1432,7 @@ void API_rebPushContinuation_internal(
     require (
       Level* L = Make_Level_At(&Evaluator_Executor, block, flags)
     );
-    Init_Ghost(Evaluator_Primed_Cell(L));
+    Init_Void(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(u_cast(Value*, out), L);
 }
 
@@ -1441,7 +1441,7 @@ void API_rebPushContinuation_internal(
 //  rebUndecayed: API
 //
 // By default rebValue() will decay unstable antiforms.  This will give you
-// back undecayed PACK! or GHOST! or ERROR! values.
+// back undecayed PACK! or VOID! or ERROR! values.
 //
 // If you get an unstable value back and want to use it with the API, then
 // it has to be spliced in using the `^` operator.  See [B].

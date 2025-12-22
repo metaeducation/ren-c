@@ -191,7 +191,7 @@ export cscape: func [
             ; on purpose in the template).  We need to put some kind of signal
             ; to get that behavior.
             ;
-            if void? unlift sub [
+            if ghostly? unlift sub [
                 keep void-marker  ; replaced in post phase
                 continue
             ]

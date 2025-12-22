@@ -263,8 +263,8 @@ DECLARE_NATIVE(SHOVE)
 //      ]
 //      source [
 //          <opt-out>  "useful for `evaluate opt ...` scenarios"
-//          block!  "always 'afraid of ghosts' semantics, :STEP ok"
-//          group!  "must eval to end, only afraid of ghosts after value seen"
+//          block!  "always 'void suppression' semantics, :STEP ok"
+//          group!  "must eval to end, only suppress voids after value seen"
 //          <unrun> frame!  "invoke the frame (no arguments, see RUN)"
 //          warning!  "panic on the error (prefer PANIC)"
 //          varargs!  "simulates as if BLOCK! is being executed"
@@ -287,12 +287,13 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 //    an ERROR! would have to panic anyway, so it might as well use the one
 //    it is given.
 //
-// 3. It might seem that since EVAL [] has an answer (GHOST! or VOID depending
-//    on if you use the ^ operator), that EVAL:STEP [] should also have an
-//    answer.  But in practice, there's a dummy step at the end of every
-//    enumeration, e.g. EVAL [1 + 2 10 + 20] goes through three steps, where
-//    the third step is a termination signal with no synthesized product.
-//    The null return value signals this termination.
+// 3. It might seem that since EVAL [] has an answer (VOID! or NONE depending
+//    on how you call it), that EVAL:STEP [] should also have an answer...
+//
+//    *BUT* in practice, there's a dummy step at the end of every enumeration,
+//    e.g. EVAL [1 + 2 10 + 20] goes through three steps, where the third step
+//    is a termination signal with no synthesized product.  The null return
+//    value signals this termination.
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
@@ -332,22 +333,22 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
   //
   //    * "transparent" mode like how GROUP! works, where `(expr)` and `expr`
   //      behave the same, at the cost of having distinct behavior for all
-  //      steps producing GHOST! up until the first non-GHOST! value.  (No
+  //      steps producing VOID! up until the first non-VOID! value.  (No
   //      need to use the `^` operator in those initial steps.)
   //
   //    * "regimented" mode like how `eval block` is expected to work, where
-  //      every step has the same "afraid of ghosts" behavior, even before
-  //      the first non-GHOST! value is seen.  This enables simulating the
+  //      every step has the same "afraid of voids" behavior, even before
+  //      the first non-VOID! value is seen.  This enables simulating the
   //      answer of a full EVAL using just sequential EVAL:STEP calls, and
-  //      just throwing away any ghosts.
+  //      just throwing away any voids.
   //
   //    To understand why these are different, consider:
   //
-  //        eval:step [eval [comment "hi"] ...]    ; must make VOID
-  //        eval:step [^ eval [comment "hi"] ...]  ; must make GHOST!
+  //        eval:step [eval [comment "hi"] ...]    ; must make NONE
+  //        eval:step [^ eval [comment "hi"] ...]  ; must make VOID!
   //
-  //    By contrast, you wouldn't want `ghost? (eval [comment "hi"])` to be
-  //    false.  It needs the same answer as `ghost? eval [comment "hi"]` which
+  //    By contrast, you wouldn't want `void? (eval [comment "hi"])` to be
+  //    false.  It needs the same answer as `void? eval [comment "hi"]` which
   //    is true.  Merely parenthesizing a single expression isn't expected to
   //    change what it produces.
   //
@@ -360,7 +361,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
     Flags flags = LEVEL_MASK_NONE;
 
     if (Is_Block(source))
-        flags |= LEVEL_FLAG_AFRAID_OF_GHOSTS;  // for EVAL:STEP consistency [1]
+        flags |= LEVEL_FLAG_SUPPRESS_VOIDS;  // for EVAL:STEP consistency [1]
     else {
         assert(Is_Group(source));
         if (ARG(STEP))
@@ -376,10 +377,10 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         flags
     ));
     if (not ARG(STEP))
-        Init_Ghost(Evaluator_Primed_Cell(sub));
+        Init_Void(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 
-    if (not ARG(STEP))  // plain evaluation to end, maybe void/ghost
+    if (not ARG(STEP))  // plain evaluation to end, maybe void/none
         return DELEGATE_SUBLEVEL(sub);
 
     Set_Level_Flag(sub, TRAMPOLINE_KEEPALIVE);  // to ask how far it got
@@ -910,8 +911,8 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     if (/* param and */ Parameter_Class(param) != PARAMCLASS_META)
         Move_Value(var, SPARE);
     else {
-        if (Is_Ghost_Or_Void(SPARE))
-            Init_Ghost(var);
+        if (Is_Ghostly(SPARE))
+            Init_Void(var);
         else {
             Move_Value(var, SPARE);
             require (

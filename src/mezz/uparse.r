@@ -348,8 +348,8 @@ default-combinators: make map! [
     ][
         [^result input]: trap parser input  ; non-matching parser, no match
 
-        if void? ^result [
-            panic "CONDITIONAL combinator received VOID antiform result"
+        if ghostly? ^result [
+            panic "CONDITIONAL combinator received VOID/NONE antiform result"
         ]
         if null? ^result [
             return fail "CONDITIONAL combinator received NULL antiform result"
@@ -392,7 +392,7 @@ default-combinators: make map! [
         {^result remainder}
     ][
         [^result remainder]: parser input except e -> [
-            return ^void  ; succeed w/void on parse fail, don't advance input
+            return ()  ; succeed w/void on parse fail, don't advance input
         ]
         input: remainder  ; advance input
         return ^result  ; return successful parser result
@@ -400,7 +400,7 @@ default-combinators: make map! [
 
     'spread combinator [
         "Return splice antiform group for list arguments"
-        return: [<null> <void> element? splice!]
+        return: [<null> <ghost> element? splice!]
         input [any-series?]
         parser [action!]
         {^result}
@@ -801,7 +801,7 @@ default-combinators: make map! [
         [^where remainder]: trap parser input
 
         case [
-            void? ^where [
+            ghostly? ^where [
                 input: remainder
             ]
             integer? ^where [
@@ -857,9 +857,9 @@ default-combinators: make map! [
         return input
     ]
 
-    <end> ghostable combinator [
+    <end> vanishable combinator [
         "Only match if the input is at the end"
-        return: [ghost!]
+        return: [void!]
         input [any-series?]
         :negated
     ][
@@ -988,7 +988,7 @@ default-combinators: make map! [
         ;
         [^subseries input]: trap parser input
 
-        if void? ^subseries [
+        if ghostly? ^subseries [
             panic "Cannot SUPBARSE into a void"
         ]
 
@@ -1098,7 +1098,7 @@ default-combinators: make map! [
     ][
         [^result input pending]: trap parser input
 
-        if void? ^result [
+        if ghostly? ^result [
             pending: hole
             return null
         ]
@@ -1483,7 +1483,7 @@ default-combinators: make map! [
     ; counts as a phase).  This is done using the <delay> tag (may not be
     ; the best name).
 
-    group! ghostable combinator [
+    group! vanishable combinator [
         "Synthesize result of evaluating the group (invisible if <delay>)"
         return: [any-value?]
         input [any-series?]
@@ -1508,25 +1508,17 @@ default-combinators: make map! [
 
         ^result: eval value
 
-        case [
-            error? ^result [
-                if veto? ^result [  ; VETO error means fail the GROUP! rule
-                    return ^result
-                ]
-                panic ^result  ; all other error antiforms escalate to panics
+        if error? ^result [
+            if veto? ^result [  ; VETO error means fail the GROUP! rule
+                return ^result
             ]
-            void? ^result [  ; void is an interesting synthesized value...
-                return ^void  ; but it wouldn't DECAY, so handle specially
-            ]
-            ghost? ^result [  ; allow (elide print "HI") to vanish
-                return ()
-            ]
+            panic ^result  ; all other error antiforms escalate to panics
         ]
 
         return decay ^result
     ]
 
-    'phase ghostable combinator [
+    'phase vanishable combinator [
         "Make a phase for capturing <delay> groups "
         return: [any-value?]
         input [any-series?]
@@ -1587,8 +1579,8 @@ default-combinators: make map! [
             panic e  ; can't use TRAP here, don't want to fail [1]
         ]
 
-        if (void? ^r) or (ghost? ^r) [
-            return ^r
+        if ghostly? ^r [
+            return ()
         ]
 
         r: decay ^r  ; packs can't act as rules, decay them
@@ -1734,18 +1726,18 @@ default-combinators: make map! [
     ; https://rebol.metaeducation.com/t/dialecting-quasiforms-in-parse/2379
     ;
     ; Whether it evaluates the contents or does as-is, ~[]~ would still mean
-    ; "synthesize a void" either way.  We introduce it here to bridge
-    ; compatibility with old tests that matched stable void keywords.
+    ; "synthesize a none" either way.  We introduce it here to bridge
+    ; compatibility with old tests that matched stable ~none~ keywords.
 
     '~[]~ combinator [
         return: [~[]~]
         input [any-series?]
     ][
-        return ^void
+        return ~[]~
     ]
 
     keyword! combinator [
-        return: [ghost!]
+        return: [void!]
         input [any-series?]
         value [keyword!]
         {comb neq?}
@@ -1813,7 +1805,7 @@ default-combinators: make map! [
     ][
         [^times input]: trap times-parser input
 
-        if void? ^times [  ; VOID-in-NULL-out
+        if ghostly? ^times [  ; GHOST-in-NULL-out
             return null
         ]
         switch:type ^times [
@@ -2042,8 +2034,8 @@ default-combinators: make map! [
                 comb: runs state.combinators.(group!)
                 [^result input pending]: trap comb state input value
 
-                if void? ^result [
-                    return ^void
+                if ghostly? ^result [
+                    return ()
                 ]
                 ^result: decay ^result
             ]
@@ -2068,9 +2060,9 @@ default-combinators: make map! [
 
     === INVISIBLE COMBINATORS ===
 
-    'elide ghostable combinator [
+    'elide vanishable combinator [
         "Transform a result-bearing combinator into one that has no result"
-        return: [ghost!]
+        return: [void!]
         input [any-series?]
         parser [action!]
     ][
@@ -2078,9 +2070,9 @@ default-combinators: make map! [
         return ()
     ]
 
-    'comment ghostable combinator [
+    'comment vanishable combinator [
         "Comment out an arbitrary amount of PARSE material"
-        return: [ghost!]
+        return: [void!]
         input [any-series?]
         'ignored [block! text! tag! rune!]
     ][
@@ -2096,7 +2088,7 @@ default-combinators: make map! [
     ][
         [^result _]: trap parser input
 
-        if void? ^result [  ; e.g. `skip (opt num)` when num is null
+        if ghostly? ^result [  ; e.g. `skip (opt num)` when num is null
             return input
         ]
         if not integer? ^result [
@@ -2234,7 +2226,7 @@ default-combinators: make map! [
     ;    combinator takes arguments.
 
     word! combinator [
-        "Run some set of combinators allowed from fetching WORD!, unghostably"
+        "Runs some combinators allowed from fetching WORD! (non-vanishingly)"
         return: [any-value?]
         input [any-series?]
         :pending [hole? block!]
@@ -2328,7 +2320,7 @@ default-combinators: make map! [
             block: unpin block  ; should be able to enumerate regardless..
             pending: hole  ; not running any rules, won't add to pending
             if tail? block [
-                return ^void  ; empty literal blocks match at any location
+                return ()  ; empty literal blocks match at any location
             ]
             if not tail? input [
                 for-each 'item block [
@@ -2377,7 +2369,7 @@ default-combinators: make map! [
     ; function...rather than being able to build a small function for each
     ; step that could short circuit before the others were needed.)
 
-    block! (block-combinator: ghostable combinator [
+    block! (block-combinator: vanishable combinator [
         "Sequence parse rules together, and return any alternate that matches"
         return: [any-value?]
         input [any-series?]
@@ -2492,7 +2484,7 @@ default-combinators: make map! [
                 f.1: pos  ; PARSIFY specialized STATE in, so input is 1st
             ]
 
-            can-vanish: default [ghostable? f]
+            can-vanish: default [vanishable? f]
 
             if not error? ^temp: eval f [
                 [^temp pos subpending]: ^temp
@@ -2504,9 +2496,9 @@ default-combinators: make map! [
                     print mold:limit rules 200
                     panic "Combinator did not set pending"
                 ]
-                either ghost? ^temp [
+                either void? ^temp [
                     if not can-vanish [
-                        if not ghost? ^result [^result: ()]
+                        if not void? ^result [^result: ()]
                     ]
                 ][
                     ^result: ^temp  ; overwrite only if not ghost

@@ -228,7 +228,7 @@ export analyse: context [
                 if parse proto-parser.data [
                     opt 'export
                     name: ['//: | set-word?/] (name: resolve name)
-                    opt 'ghostable
+                    opt 'vanishable
                     opt ['infix | 'infix:defer | 'infix:postpone]
                     [
                         'native

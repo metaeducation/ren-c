@@ -68,7 +68,7 @@ Result(None) Prep_Action_Level(
             if (Get_Parameter_Flag(param, REFINEMENT))
                 Init_Nulled(arg);
             else
-                Init_Unspecialized_Ghost(arg);
+                Init_Unspecialized_Void(arg);
         }
     }
 
@@ -204,7 +204,7 @@ bool Pushed_Continuation(
           Level* L = Make_Level_At_Core(
             &Evaluator_Executor, cast(Element*, branch), binding, flags
         ));
-        Init_Ghost(Evaluator_Primed_Cell(L));
+        Init_Void(Evaluator_Primed_Cell(L));
 
         Push_Level_Erase_Out_If_State_0(out, L);
         goto pushed_continuation; }
@@ -230,7 +230,7 @@ bool Pushed_Continuation(
             if (Is_Specialized(param))
                 Blit_Param_Drop_Mark(arg, param);
             else
-                Init_Ghost_For_Unset(Erase_Cell(arg));
+                Init_Void_For_Unset(Erase_Cell(arg));
         }
 
         arg = First_Unspecialized_Arg(&param, L);

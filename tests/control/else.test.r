@@ -91,7 +91,7 @@
 
 [
     ~no-arg~ !! (else [~unused~])
-    (() then [okay])  ; GHOST! with THEN is legal...
+    (() then [okay])  ; VOID! with THEN is legal...
     (1000 + 20 () then [okay])
 
     (^void then [okay])
@@ -101,7 +101,7 @@
     (void? (1000 + 20 ((^void) else [panic ~#unreachable~])))
 
     (eval [] then [okay])
-    (ghost? eval [] else [panic ~#unreachable~])
+    (void? eval [] else [panic ~#unreachable~])
 ]
 
 [

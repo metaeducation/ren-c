@@ -200,7 +200,7 @@ DECLARE_NATIVE(TEST_LIBREBOL)
     Set_Cell_Flag(Init_Integer(PUSH(), 9), NEWLINE_BEFORE);
 
     Value* noop = rebUndecayed("");
-    assert(Is_Ghost(noop));
+    assert(Is_Void(noop));
     Copy_Lifted_Cell(PUSH(), noop);
     rebRelease(noop);
 

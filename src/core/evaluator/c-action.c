@@ -253,7 +253,7 @@ Result(None) Handle_Barrier_Hit(Sink(Value) out, Level* L) {
     if (Not_Parameter_Flag(PARAM, ENDABLE))
         return fail (Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
 
-    Init_Ghost_For_End(out);
+    Init_Void_For_End(out);
     return none;
 }
 
@@ -901,7 +901,7 @@ Bounce Action_Executor(Level* L)
         assert(LIFT_BYTE(ARG) != DUAL_0);  // not a tripwire
 
         if (Get_Parameter_Flag(param, OPT_OUT)) {  // <opt-out> param
-            if (Is_Ghost_Or_Void(ARG)) {
+            if (Is_Ghostly(ARG)) {
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
                 Mark_Typechecked(ARG);
                 Init_Nulled(OUT);
@@ -909,7 +909,7 @@ Bounce Action_Executor(Level* L)
             }
         }
 
-        if (Get_Parameter_Flag(param, UNDO_OPT) and Is_Ghost_Or_Void(ARG)) {
+        if (Get_Parameter_Flag(param, UNDO_OPT) and Is_Ghostly(ARG)) {
             Init_Nulled(ARG);
             Mark_Typechecked(ARG);  // null generally not in typeset
             continue;
@@ -1078,8 +1078,8 @@ Bounce Action_Executor(Level* L)
     if (not Is_Error(OUT))  // !!! Should there be an R_FAIL ?
         assert(STACK_BASE == TOP_INDEX);
 
-    if (Get_Level_Flag(L, AFRAID_OF_GHOSTS) and Is_Ghost(OUT))
-        Init_Void(OUT);
+    if (Get_Level_Flag(L, SUPPRESS_VOIDS) and Is_Void(OUT))
+        Init_None(OUT);
 
 } skip_output_check: {  //////////////////////////////////////////////////////
 

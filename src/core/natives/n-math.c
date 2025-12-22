@@ -877,8 +877,8 @@ DECLARE_NATIVE(VACANCY_Q)
 //  "TRUE if the values are equal"
 //
 //      return: [logic?]
-//      ^value1 [any-stable? <void>]
-//      ^value2 [any-stable? <void>]
+//      ^value1 [any-stable? <ghost>]
+//      ^value2 [any-stable? <ghost>]
 //      :relax "Use less strict comparison rules (e.g. caseless comparison)"
 //  ]
 //
@@ -888,9 +888,9 @@ DECLARE_NATIVE(EQUAL_Q)
 
     bool relax = did ARG(RELAX);
 
-    if (Is_Void(ARG(VALUE1)))
-        return LOGIC(Is_Void(ARG(VALUE2)));
-    else if (Is_Void(ARG(VALUE2)))
+    if (Is_Ghostly(ARG(VALUE1)))
+        return LOGIC(Heart_Of(ARG(VALUE1)) == Heart_Of(ARG(VALUE2)));
+    else if (Is_Ghostly(ARG(VALUE2)))
         return LOGIC(false);
 
     if (LIFT_BYTE(ARG(VALUE1)) != LIFT_BYTE(ARG(VALUE2)))
@@ -995,8 +995,8 @@ IMPLEMENT_GENERIC(LESSER_Q, Any_Element)
 //  "TRUE if the values are identical"
 //
 //      return: [logic?]
-//      ^value1 [any-stable? <void>]  ; !!! antiforms okay? e.g. "same splice"?
-//      ^value2 [any-stable? <void>]
+//      ^value1 [any-stable? <ghost>]
+//      ^value2 [any-stable? <ghost>]
 //  ]
 //
 DECLARE_NATIVE(SAME_Q)
@@ -1009,9 +1009,9 @@ DECLARE_NATIVE(SAME_Q)
 {
     INCLUDE_PARAMS_OF_SAME_Q;
 
-    if (Is_Void(ARG(VALUE1)))
-        return LOGIC(Is_Void(ARG(VALUE2)));
-    else if (Is_Void(ARG(VALUE2)))
+    if (Is_Ghostly(ARG(VALUE1)))
+        return LOGIC(Heart_Of(ARG(VALUE1)) == Heart_Of(ARG(VALUE2)));
+    else if (Is_Ghostly(ARG(VALUE2)))
         return LOGIC(false);
 
     if (LIFT_BYTE(ARG(VALUE1)) != LIFT_BYTE(ARG(VALUE2)))
@@ -1084,7 +1084,7 @@ DECLARE_NATIVE(GREATER_Q)
     Quotify(v2);
 
     return rebDelegate(
-        "none [equal?", v1, v2, "lesser?", v1, v2, "]"
+        "not any [equal?", v1, v2, "lesser?", v1, v2, "]"
     );
 }
 

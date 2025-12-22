@@ -2,8 +2,8 @@
 
 (metaform! = type of '^(a b c))
 
-; Vanishing stuff via ghosts (empty packs) can only be observed via meta
-; operations.  You cannot pass a ghost antiform to `=`
+; Vanishing stuff via voids can only be observed via meta operations.
+; You cannot pass a void antiform to `=`
 [
     ('~,~ = lift ())
     ('~,~ = lift (comment "hi"))

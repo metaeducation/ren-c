@@ -1,8 +1,8 @@
 ; %ugly-parse.parse.test.r
 ;
-; Usermode implementation via tweak of a maligned proposal to always splice
-; BLOCK! evaluations in parse as retriggered rules, unless a keyword was
-; used to suppress them
+; Usermode implementation a maligned proposal to always splice BLOCK!
+; evaluations in parse as retriggered rules, unless a keyword was
+; used to suppress them.
 ;
 ; Overall a turkey of an idea...but interesting to demo as something you
 ; could do by tweaking UPARSE if you wanted it.
@@ -19,29 +19,22 @@
         value [group?]
         {r comb}
     ][
-        ^r: eval value except e -> [panic e]  ; can't return fail
+        ^r: eval value except e -> [panic e]  ; can't `return fail` for this
 
-        if null? ^r [  ; like [:(1 = 0)]
-            return fail "GET-GROUP! evaluated to NULL"  ; means no match
+        if ghostly? ^r [  ; like [inline (comment "hi")]
+            return ()
+        ]
+
+        if antiform? ^r [
+            panic "Misguided GROUP! cannot make non-ghostly antiforms"
         ]
 
         pending: hole
 
-        any [
-            ^r = okay  ; like [:(1 = 1)]
-            ghost? ^r  ; like [:(comment "hi")]
-        ] then [
-            return ()
-        ]
-
-        if void? ^r [  ; like [:(if 1 = 0 [...])]
-            return ^void  ; couldn't produce void at all if vaporized
-        ]
-
-        r: ^r  ; only needed as ^META to check for VOID
+        r: ^r  ; only needed as ^META to check for ghosts
 
         if word? r [
-            r: :[r]  ; enable 0-arity combinators
+            r: reduce [r]  ; enable 0-arity combinators
         ]
 
         if not comb: select state.combinators type of r [
@@ -51,16 +44,16 @@
         return [{_} input pending]: run comb state input r
     ]
 
-    ; DISCARD is different from ELIDE when GROUP! acts like a GET-GROUP!,
-    ; because we want to suppress the triggering of the generated rule
+    ; DISCARD is different from ELIDE when GROUP! acts like INLINE because we
+    ; want to suppress the triggering of the generated rule.
     ;
-    ugly-combinators.discard: ghostable combinator [
-        return: [ghost!]
+    ugly-combinators.discard: vanishable combinator [
+        return: [void!]
         input [any-series?]
         @group [group!]
     ][
         eval group
-        return ^ghost
+        return ()
     ]
 
     ugly-parse: specialize parse/ [combinators: ugly-combinators]

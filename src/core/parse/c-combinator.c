@@ -321,7 +321,7 @@ void Push_Parser_Sublevel(
 //
 //  "If parser fails, succeed and return VOID without advancing the input"
 //
-//      return: [<void> any-stable?]
+//      return: [void! any-stable?]
 //      parser [action!]
 //      {remainder}  ; !!! no longer separate output, review
 //  ]
@@ -662,7 +662,7 @@ static bool Combinator_Param_Hook(
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
                 panic ("Too few parameters for combinator");  // !!! Error_No_Arg
-            Init_Ghost_For_End(u_cast(Value*, var));
+            Init_Void_For_End(u_cast(Value*, var));
         }
         else {
             if (Parameter_Class(param) == PARAMCLASS_THE)
@@ -687,7 +687,7 @@ static bool Combinator_Param_Hook(
         ){
             if (Not_Parameter_Flag(param, ENDABLE))
                 panic ("Too few parameters for combinator");  // !!! Error_No_Arg
-            Init_Ghost_For_End(u_cast(Value*, var));
+            Init_Void_For_End(u_cast(Value*, var));
         }
         else {
             // !!! Getting more than one value back from a libRebol API is not
@@ -809,7 +809,7 @@ DECLARE_NATIVE(COMBINATORIZE)
     Set_Flex_Len(pack, 2);
 
     Element* frame = Init_Frame(Array_At(pack, 0), paramlist, label, coupling);
-    Copy_Ghostability(frame, combinator);
+    Copy_Vanishability(frame, combinator);
     Quasify_Isotopic_Fundamental(frame);
 
     Copy_Lifted_Cell(Array_At(pack, 1), ARG(RULES));  // advanced by param hook

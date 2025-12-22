@@ -207,7 +207,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
                 );
 
             Copy_Cell(value_arg, TOP_ELEMENT);
-            if (Is_Lifted_Ghost_Or_Void(TOP_STABLE)) // don't know if it was ^META :-(
+            if (Is_Lifted_Ghostly(TOP_STABLE)) // don't know if it was ^META :-(
                 break;  // remove signal
 
             require (
@@ -236,8 +236,8 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
             continue;  // dual signal, do not lift dual
         }
 
-        if (Is_Lifted_Ghost_Or_Void(TOP_STABLE)) {  // (x: ~[]~) or (x: ())
-            Init_Ghost_For_End(value_arg);  // both act like (^x: ())
+        if (Is_Lifted_Ghostly(TOP_STABLE)) {  // (x: ~[]~) or (x: ())
+            Init_Void_For_End(value_arg);  // both act like (^x: ())
             Liftify(value_arg);
             continue;
         }

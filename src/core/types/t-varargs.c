@@ -33,7 +33,7 @@ INLINE void Init_For_Vararg_End(Value* out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
         Init_Logic(out, true);
     else
-        Init_Ghost(out);
+        Init_Void(out);
 }
 
 
@@ -349,7 +349,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
   type_check_and_return:;
 
-    if (Is_Ghost(out))
+    if (Is_Void(out))
         return false;
 
     if (op == VARARG_OP_TAIL_Q) {
@@ -453,7 +453,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
         )){
             return THROWN;
         }
-        if (Is_Ghost(OUT))
+        if (Is_Void(OUT))
             return fail (Error_Nothing_To_Take_Raw());
         return OUT;
     }
@@ -475,7 +475,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Varargs)
         )){
             return THROWN;
         }
-        if (Is_Ghost(OUT))
+        if (Is_Void(OUT))
             break;
 
         require (
@@ -524,7 +524,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Varargs)
         assert(false); // VARARG_OP_FIRST can't throw
         return THROWN;
     }
-    if (Is_Ghost(OUT))
+    if (Is_Void(OUT))
         return nullptr;
 
     return DUAL_LIFTED(OUT);

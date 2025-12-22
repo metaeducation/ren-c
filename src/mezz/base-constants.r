@@ -53,8 +53,8 @@ ok: okay: ~okay~
 ok?: okay?/
 
 ; https://rebol.metaeducation.com/t/why-caret-to-use-void-vs-just-void/2526
-^void: ~[]~
-^ghost: ~,~
+^none: ~[]~
+^void: ~,~
 ^tripwire: ~
 
 ; These should be aliases for things like system.ports.input and such, but

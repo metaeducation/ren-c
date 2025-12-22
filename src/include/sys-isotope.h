@@ -147,7 +147,7 @@ INLINE Result(Element*) Coerce_To_Quasiform(Element* v) {
 // so they have to be elevated to panics.
 //
 // "Elision" is more permissive than decay, because you're not actually trying
-// to extract a value if the antiform is a PACK! or GHOST! (or a PACK! with
+// to extract a value if the antiform is a PACK! or VOID! (or a PACK! with
 // a PACK! in the first slot, which must be unpacked vs. auto-decaying).  So
 // you only need to be concerned about sweeping any ERROR!s under the rug.
 //
@@ -169,8 +169,8 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
         goto finished;
 
     if (not Is_Pack(v)) {
-        if (want_value and Is_Ghost(v))
-            return fail ("Cannot decay GHOST! to a value");
+        if (want_value and Is_Void(v))
+            return fail ("Cannot decay VOID! to a value");
 
         if (Is_Error(v))
             return fail (Cell_Error(v));
@@ -219,8 +219,8 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
         if (Is_Lifted_Pack(first))  // don't decay first slot [2]
             return fail ("PACK! cannot decay PACK! in first slot");
 
-        if (Is_Lifted_Ghost(first))
-            return fail ("PACK! cannot decay GHOST! in first slot");
+        if (Is_Lifted_Void(first))
+            return fail ("PACK! cannot decay VOID! in first slot");
 
         assert(not Is_Lifted_Error(first));  // we ruled these out already
 

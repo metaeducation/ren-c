@@ -612,7 +612,7 @@ Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
     if (Eval_Any_List_At_Throws(OUT, target, SPECIFIED))
         panic (Error_No_Catch_For_Throw(LEVEL));
 
-    if (Is_Ghost_Or_Void(OUT))
+    if (Is_Ghostly(OUT))
         return true;
 
     require (

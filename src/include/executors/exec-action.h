@@ -244,19 +244,17 @@ enum {
     ST_ACTION_INITIAL_ENTRY_INFIX,
     ST_ACTION_FULFILLING_INFIX_FROM_OUT,
 
-    // While some special-purpose functions intentionally receive ghost, most
-    // don't want to...so we can treat it as an expression barrier--whether
-    // it's produced by a COMMA! evaluating, or otherwise.
+    // <end>-able functions get VOID! when a comma or end of list is hit:
+    //
+    //    bar: func [^y [void! integer!]] [...]
+    //
+    //    (bar,)  ; panics when comma is hit
+    //    (bar)  ; also panics
     //
     //    foo: func [x [integer! <end>]] [...]
     //
-    //    (foo,)  ; sees an end
-    //    (foo anti ',)  ; also sees an end
-    //
-    //    bar: func [^y [ghost! integer!]] [...]
-    //
-    //    (bar,)  ; sees comma as barrier
-    //    (bar anti ',)  ; same
+    //    (foo,)  ; receives a VOID!
+    //    (foo)  ; also recieves a VOID!
     //
     ST_ACTION_BARRIER_HIT,
 

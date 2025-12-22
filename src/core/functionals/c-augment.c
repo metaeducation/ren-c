@@ -134,7 +134,7 @@ DECLARE_NATIVE(AUGMENT)
     );
 
     Stable* out = Init_Frame(OUT, paramlist, label, coupling);
-    Copy_Ghostability(out, original);
+    Copy_Vanishability(out, original);
 
     if (Is_Frame(original))
         return OUT;

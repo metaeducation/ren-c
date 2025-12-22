@@ -63,7 +63,7 @@ void Bind_Values_Inner_Loop(
                     and Is_Set_Word(v)
                 )
             ){
-                Init_Ghost_For_Unset(Append_Context_Bind_Word(context, v));
+                Init_Void_For_Unset(Append_Context_Bind_Word(context, v));
             }
           }
           else {
@@ -253,7 +253,7 @@ Let* Make_Let_Variable(
     );
 
     Init(Slot) slot = Slot_Init_Hack(u_cast(Slot*, Stub_Cell(let)));
-    Init_Ghost_For_Unset(slot);
+    Init_Void_For_Unset(slot);
 
     Tweak_Link_Inherit_Bind_Raw(let, inherit);  // linked list [1]
     Corrupt_Unused_Field(let->misc.corrupt);  // not currently used
@@ -440,7 +440,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
 //      return: [
 //          any-stable?  "Expression result if (let x: <expr>)"
 //          word!        "the new variable if (let $x)"
-//          ghost!       "vanishes if (let x)"
+//          void!       "vanishes if (let x)"
 //      ]
 //      'vars "Variable(s) to create"  ; can't soft quote due to DEFAULT
 //          [
@@ -709,7 +709,7 @@ DECLARE_NATIVE(LET)
             if (Eval_Any_List_At_Throws(OUT, temp, item_binding))
                 return THROWN;
 
-            if (Is_Void(OUT)) {
+            if (Is_Ghostly(OUT)) {
                 Init_Space(OUT);
             }
             else {
@@ -1310,7 +1310,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             symbol = Word_Symbol(item);
 
             if (Try_Add_Binder_Index(binder, symbol, index)) {
-                Value* var = Init_Ghost_For_Unset(
+                Value* var = Init_Void_For_Unset(
                     Append_Context(varlist, symbol)
                 );
                 if (Is_Meta_Form_Of(WORD, item))

@@ -876,8 +876,6 @@ INLINE Bounce Native_Looped_Result(Level* level_, Value* atom) {
     assert(atom == level_->out);  // wouldn't be zero cost if we supported copy
     if (Is_Light_Null(atom))
         Init_Heavy_Null_Untracked(atom);  // distinguish from null for BREAK
-    else if (Is_Void(atom))
-        Init_Tripwire_Untracked(atom);  // distinguish from loop that never ran
     return level_->out;
 }
 
@@ -922,8 +920,8 @@ INLINE Bounce Native_Looped_Result(Level* level_, Value* atom) {
 
     #define SUBLEVEL    (assert(TOP_LEVEL->prior == level_), TOP_LEVEL)
 
+    #define NONE        x_cast(Bounce, Init_None(OUT))
     #define VOID        x_cast(Bounce, Init_Void(OUT))
-    #define GHOST       x_cast(Bounce, Init_Ghost(OUT))
     #define NULLED      x_cast(Bounce, Init_Nulled(OUT))  // nontrivial [1]
 
     #define TRASH       TRACK(Native_Trash_Result_Untracked(level_))

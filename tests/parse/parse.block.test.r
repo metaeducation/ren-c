@@ -11,7 +11,7 @@
 
 
 ; Empty block rules vaporize, but only if literally in source (the WORD!
-; combinator is not GHOSTABLE even though the BLOCK! combinator is.)
+; combinator is not VANISHABLE even though the BLOCK! combinator is.)
 ;
 ('b = parse [a b] ['a 'b []])
 (
@@ -26,12 +26,12 @@
 
 ; No-op rule of empty block should always match.
 [
-    (ghost? parse "" [])
-    (ghost? parse "" [[]])
-    (ghost? parse "" [[[]]])
+    (void? parse "" [])
+    (void? parse "" [[]])
+    (void? parse "" [[[]]])
 
-    (ghost? parse [] [])
-    (ghost? parse [] [[[]]])
+    (void? parse [] [])
+    (void? parse [] [[[]]])
 
     ~parse-incomplete~ !! (parse [x] [])
     ~parse-incomplete~ !! (parse [x] [[[]]])

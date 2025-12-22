@@ -1,27 +1,27 @@
 ; %elide.test.r
 ;
 ; ELIDE is an evaluating variation of COMMENT.  It evaluates its
-; argument, but discards the result and synthesizes GHOST!
+; argument, but discards the result and synthesizes VOID!
 ;
 ; ELIDE will panic if you give it an ERROR! antiform, but also if you
 ; give it a PACK! that contains ERROR! antiforms.  However, it doesn't
 ; care if it can produce a value or not.  So it's more permissive than
-; DECAY (which will panic if you give it something like a VOID since
-; that's an empty PACK! that can't give you a value, or GHOST!, or a
+; DECAY (which will panic if you give it something like a NONE since
+; that's an empty PACK! that can't give you a value, or VOID!, or a
 ; PACK! with a PACK! in the first slot.)
 
-(ghost? elide "a")
+(void? elide "a")
 ('~,~ = lift elide "a")
-(ghost? eval [elide "a"])
+(void? eval [elide "a"])
 ('~,~ = lift eval [elide "a"])
 
 (1 = eval [elide "a" 1])
 (1 = eval [1 elide "a"])
 
-(ghost? elide ^void)
-(ghost? elide pack [1 2 3])
-(ghost? elide pack [pack [1 2] 3])
-(ghost? elide pack [3 pack [1 2]])
+(void? elide ^void)
+(void? elide pack [1 2 3])
+(void? elide pack [pack [1 2] 3])
+(void? elide pack [3 pack [1 2]])
 
 ~zero-divide~ !! (elide 1 / 0)
 ~zero-divide~ !! (elide pack [1 / 0 2 3])
@@ -31,7 +31,7 @@
 (
     x: ~
     all [
-        ghost? elide elide elide x: 1020
+        void? elide elide elide x: 1020
         x = 1020
     ]
 )

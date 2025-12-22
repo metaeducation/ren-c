@@ -44,16 +44,16 @@
 [
     (foo: lambda [] [], ok)
 
-    (ghost? foo)
-    (ghost? (foo))
+    (void? foo)
+    (void? (foo))
 
     ((lift ^ghost) = lift applique foo/ [])
-    (ghost? applique foo/ [])
-    (ghost? (applique foo/ []))
+    (void? applique foo/ [])
+    (void? (applique foo/ []))
 
     ((lift ^ghost) = lift eval foo/)
-    (ghost? eval foo/)
-    (ghost? (eval foo/))
+    (void? eval foo/)
+    (void? (eval foo/))
 ]
 
 [
@@ -185,12 +185,13 @@
         ]
     )
     (all [
-        ghost? ()  ; empty groups make ghosts
+        void? ()  ; empty groups make voids
         3 = (1 + 2 ())
     ])
-    ~no-value~ !! (
-        a: () 1 + 2  ; can't assign nihil
-    )
+    (all [
+        void? a: () 1 + 2  ; can't assign nihil
+        void? ^a
+    ])
 ]
 
 

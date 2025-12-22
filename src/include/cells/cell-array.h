@@ -182,44 +182,6 @@ INLINE Element* Init_Relative_Block_At(
 #endif
 
 
-//=//// "PACKS" (BLOCK! Antiforms) ////////////////////////////////////////=//
-//
-// BLOCK! antiforms are exploited as a mechanism for bundling values in a way
-// that they can be passed around as a single value.  They are leveraged in
-// particular for multi-return, because a SET-WORD! will unpack only the
-// first item, while a SET-BLOCK! will unpack others.
-//
-//      >> pack [<a> <b>]
-//      == ~['<a> '<b>]~  ; anti
-//
-//      >> x: pack [<a> <b>]
-//      == <a>
-//
-//      >> [x y]: pack [<a> <b>]
-//      == <a>
-//
-//      >> x
-//      == <a>
-//
-//      >> y
-//      == <b>
-//
-
-INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
-    Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, a, 0, SPECIFIED);
-    Unstably_Antiformize_Unbound_Fundamental(out);
-    assert(Is_Pack(out));
-    return out;
-}
-
-#define Init_Pack(out,a) \
-    TRACK(Init_Pack_Untracked((out), (a)))
-
-#define Init_Lifted_Pack(out,a) \
-    TRACK(Quasify_Isotopic_Fundamental(Init_Any_List_At_Core_Untracked( \
-        (out), TYPE_BLOCK, (a), 0, SPECIFIED)))
-
-
 //=//// "SPLICES" (GROUP! Antiforms) //////////////////////////////////////=//
 //
 // Group antiforms are understood by routines like APPEND or INSERT or CHANGE

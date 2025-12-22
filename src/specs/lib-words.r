@@ -28,7 +28,6 @@ Rebol [
 ]
 
 void
-ghost
 tripwire
 quasar
 null
@@ -36,7 +35,7 @@ okay
 hole
 NUL
 
-atom?
+value?
 element?
 fundamental?
 plain?

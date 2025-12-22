@@ -338,18 +338,18 @@ INLINE bool Is_Frame_Infix(const Stable* c) {  // faster than != PREFIX_0
 }
 
 
-//=//// CELL GHOSTABILITY /////////////////////////////////////////////////=//
+//=//// ACTION! CELL VANISHABILITY ////////////////////////////////////////=//
 //
-// See CELL_FLAG_WEIRD_GHOSTABLE.  When you derive one function from another,
-// you generally want to mirror its ghostable status.
+// See CELL_FLAG_WEIRD_VANISHABLE.  When you derive one function from another,
+// you generally want to mirror its vanishable status.
 //
 
-INLINE void Copy_Ghostability(Stable* to, const Stable* from) {
+INLINE void Copy_Vanishability(Stable* to, const Stable* from) {
     assert(Is_Action(to) or Is_Frame(to));
     assert(Is_Action(from) or Is_Frame(from));
 
-    if (Get_Cell_Flag(from, WEIRD_GHOSTABLE))
-        Set_Cell_Flag(to, WEIRD_GHOSTABLE);
+    if (Get_Cell_Flag(from, WEIRD_VANISHABLE))
+        Set_Cell_Flag(to, WEIRD_VANISHABLE);
     else
-        Clear_Cell_Flag(to, WEIRD_GHOSTABLE);
+        Clear_Cell_Flag(to, WEIRD_VANISHABLE);
 }

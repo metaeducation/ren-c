@@ -478,7 +478,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
     ParamList* lens = Phase_Paramlist(Frame_Phase(arg));
     Element* out = Init_Lensed_Frame(OUT, exemplar, lens, coupling);
 
-    Copy_Ghostability(out, arg);
+    Copy_Vanishability(out, arg);
 
     return OUT;
 }
@@ -930,7 +930,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         );
 
         if (Is_Antiform(var)) {
-            if (Is_Ghost(var)) {
+            if (Is_Void(var)) {
               require (
                 Append_Ascii(mo->strand, "()")  // looks better than ~,~
               );
@@ -1118,7 +1118,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
                     Tweak_Cell_Binding(def, c);
                 return COPY(def);
             }
-            Init_Ghost_For_Unset(Append_Context_Bind_Word(c, def));
+            Init_Void_For_Unset(Append_Context_Bind_Word(c, def));
             return COPY(def);
         }
 

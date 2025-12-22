@@ -106,10 +106,10 @@ ParamList* Make_Varlist_For_Action_Push_Partials(
                 if (Get_Parameter_Flag(param, REFINEMENT))
                     Init_Nulled(Slot_Init_Hack(arg));
                 else
-                    Init_Unspecialized_Ghost(Slot_Init_Hack(arg));
+                    Init_Unspecialized_Void(Slot_Init_Hack(arg));
             }
             else if (placeholder == g_quasi_null) {
-                Init_Unspecialized_Ghost(Slot_Init_Hack(arg));
+                Init_Unspecialized_Void(Slot_Init_Hack(arg));
             }
             else {
                 assert(placeholder == nullptr);
@@ -287,12 +287,12 @@ bool Specialize_Action_Throws(
         Stable* arg = Slot_Hack(slot);
 
         if (Is_Specialized(param)) {  // was specialized in underlying phase
-            if (not Is_Unspecialized_Ghost(arg))
+            if (not Is_Unspecialized_Void(arg))
                 assert(not Is_Parameter(arg));  // couldn't change
             continue;
         }
 
-        if (Is_Unspecialized_Ghost(arg)) {  // no assignments in specialization
+        if (Is_Unspecialized_Void(arg)) {  // no assignments in specialization
           #if DEBUG_POISON_UNINITIALIZED_CELLS
             Poison_Cell(slot);
           #endif
@@ -392,7 +392,7 @@ bool Specialize_Action_Throws(
     Actionify(out);
 
     Tweak_Frame_Infix_Mode(out, infix_mode);
-    Copy_Ghostability(out, specializee);
+    Copy_Vanishability(out, specializee);
 
     return false;  // code block did not throw
 }}}
@@ -457,7 +457,7 @@ DECLARE_NATIVE(SPECIALIZE)
     Stable* out = Copy_Cell(OUT, Element_LOCAL(FRAME));
 
     Tweak_Frame_Infix_Mode(out, infix_mode);
-    Copy_Ghostability(out, specializee);
+    Copy_Vanishability(out, specializee);
 
     if (Is_Frame(specializee))
         return OUT;

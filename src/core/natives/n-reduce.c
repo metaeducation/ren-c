@@ -185,7 +185,7 @@ DECLARE_NATIVE(REDUCE)
     if (not predicate)  // default is no processing
         goto process_out;
 
-    if (Is_Ghost_Or_Void(SPARE)) {  // vaporize unless accepted by predicate
+    if (Is_Void(SPARE)) {  // vaporize unless accepted by predicate
         const Param* param = First_Unspecialized_Param(
             nullptr,
             Frame_Phase(unwrap predicate)
@@ -210,7 +210,7 @@ DECLARE_NATIVE(REDUCE)
   //    underneath it pushes a value to the data stack, that level must be
   //    informed the stack element is "not for it" before the next call.
 
-    if (Is_Ghost_Or_Void(SPARE))
+    if (Is_Void(SPARE))
         goto next_reduce_step;  // void results are skipped by reduce
 
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
@@ -270,10 +270,10 @@ DECLARE_NATIVE(REDUCE)
 //  "Evaluates expressions, passing each result to body (antiforms handled)"
 //
 //      return: [
-//          any-value?      "last body result"
+//          any-value?      "last body result (if not NULL)"
+//          ~[<null>]~      "if last body result was NULL"
 //          <null>          "if BREAK encountered"
-//          ~[<null>]~      "if body result was null"
-//          <void>          "if body never ran"
+//          void!           "if body never ran"
 //      ]
 //      vars "Variable to receive each reduced value (multiple TBD)"
 //          [_ word! @word! block!]
@@ -354,8 +354,8 @@ DECLARE_NATIVE(REDUCE_EACH)
 
     Slot* slot = Varlist_Slot(Cell_Varlist(vars), 1);
 
-    if (Is_Ghost(SPARE) and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META))
-        goto reduce_next;  // skip ghost unless meta?
+    if (Is_Void(SPARE) and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META))
+        goto reduce_next;  // skip void unless meta?
 
     require (
       Write_Loop_Slot_May_Bind_Or_Decay(slot, SPARE, block)

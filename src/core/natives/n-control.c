@@ -155,9 +155,9 @@ Bounce The_Group_Branch_Executor(Level* const L)
         LEVEL->feed,
         (LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
             & (~ LEVEL_FLAG_FORCE_HEAVY_NULLS))  // take off branch flag [1]
-            | (not LEVEL_FLAG_AFRAID_OF_GHOSTS)  // voids same as ghosts here
+            | (not LEVEL_FLAG_SUPPRESS_VOIDS)  // voids same as nones here
     ));
-    Init_Ghost(Evaluator_Primed_Cell(sub));
+    Init_Void(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(branch, sub);  // branch GC-protected [2]
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
@@ -176,7 +176,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
 
     assert(Is_Level_At_End(L));
 
-    if (Is_Void(branch))  // void branches giving their input is useful  [1]
+    if (Is_Ghostly(branch))  // void branches giving their input is useful  [1]
         return Copy_Cell(OUT, with);
 
     require (
@@ -222,7 +222,7 @@ DECLARE_NATIVE(IF)
 //
 //  "When CONDITION is not NULL, execute BRANCH, otherwise return VOID"
 //
-//      return: [any-value? <void>]
+//      return: [any-value? void!]
 //      condition [any-stable?]
 //      @(branch) [<unrun> any-branch?]
 //  ]
@@ -415,13 +415,13 @@ DECLARE_NATIVE(ALSO)
 }}
 
 
-#define LEVEL_FLAG_SAW_NON_VOID_OR_NON_GHOST  LEVEL_FLAG_MISCELLANEOUS
+#define LEVEL_FLAG_SAW_NON_VOID  LEVEL_FLAG_MISCELLANEOUS
 
 
 typedef enum {
     NATIVE_IS_ANY,
     NATIVE_IS_ALL,
-    NATIVE_IS_NONE
+    NATIVE_IS_NONE_OF
 } WhichAnyAllNone;
 
 
@@ -452,7 +452,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
   initial_entry: { ///////////////////////////////////////////////////////////
 
-    assert(Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST));
+    assert(Not_Level_Flag(LEVEL, SAW_NON_VOID));
 
     Executor* executor;
     if (Is_Pinned_Form_Of(BLOCK, block))
@@ -462,7 +462,11 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
         executor = &Stepper_Executor;
     }
 
-    Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
+    Flags flags = (
+        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
+            | LEVEL_FLAG_SUPPRESS_VOIDS
+    );
+
     require (
       Level* sub = Make_Level_At(executor, block, flags)
     );
@@ -476,17 +480,17 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
 } eval_step_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Ghost_Or_Void(SPARE))  // no vote...ignore and continue
+    if (Is_Void(SPARE))  // no vote...ignore and continue
         goto next_eval_step;
 
-    Set_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST);
+    Set_Level_Flag(LEVEL, SAW_NON_VOID);
 
     require (
       Stable* spare = Decay_If_Unstable(SPARE)
     );
 
     if (predicate)
-        goto run_predicate_on_eval_product;
+        goto run_predicate_on_eval_product;  // NONEs passed to predicate
 
     condition = spare;  // w/o predicate, `condition` is eval result
     goto process_condition;
@@ -509,7 +513,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
     //    predicate let it pass.  Don't want that to trip up `if all` so make
     //    it heavy...but this way `(all:predicate [null] not?/) then [<runs>]`
 
-    if (Is_Void(SCRATCH))  // !!! should void predicate results opt-out?
+    if (Is_Ghostly(SCRATCH))  // !!! should void predicate results opt-out?
         panic (Error_Bad_Void());
 
     if (Is_Light_Null(SCRATCH))  // predicates can approve null [1]
@@ -540,7 +544,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
         Move_Value(OUT, SPARE);  // leaves SPARE as fresh...good for next step
         break;
 
-      case NATIVE_IS_NONE:
+      case NATIVE_IS_NONE_OF:
         if (cond)
             goto return_null;  // succeeding NONE clause returns null
         break;
@@ -572,7 +576,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 
     Drop_Level(SUBLEVEL);
 
-    if (Not_Level_Flag(LEVEL, SAW_NON_VOID_OR_NON_GHOST))
+    if (Not_Level_Flag(LEVEL, SAW_NON_VOID))
         return VOID;  // return void if all evaluations vaporized [1]
 
     switch (which) {
@@ -582,7 +586,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
       case NATIVE_IS_ALL:
         return BRANCHED(OUT);  // successful ALL returns the last value
 
-      case NATIVE_IS_NONE:
+      case NATIVE_IS_NONE_OF:
         return OKAY;  // successful NONE has no value to return, use OKAY
 
       default:  // some C compilers don't seem to know this is unreachable
@@ -607,7 +611,7 @@ Bounce Any_All_None_Native_Core(Level* level_, WhichAnyAllNone which)
 //
 //  "Short-circuiting variant of AND, using a block of expressions as input"
 //
-//      return: [<null> <void> any-stable?]
+//      return: [<null> void! any-stable?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! @block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
@@ -625,7 +629,7 @@ DECLARE_NATIVE(ALL)
 //
 //  "Short-circuiting version of OR, using a block of expressions as input"
 //
-//      return: [<null> <void> any-stable?]
+//      return: [<null> void! any-stable?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! @block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
@@ -639,20 +643,20 @@ DECLARE_NATIVE(ANY)
 
 
 //
-//  none: native [
+//  none_of: native [
 //
 //  "Short-circuiting shorthand for NOT ALL"
 //
-//      return: [<null> <void> any-stable?]
+//      return: [<null> void! any-stable?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! @block!]
 //      :predicate "Test for whether an evaluation passes (default is DID)"
 //          [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(NONE)
+DECLARE_NATIVE(NONE_OF)
 {
-    return Any_All_None_Native_Core(LEVEL, NATIVE_IS_NONE);
+    return Any_All_None_Native_Core(LEVEL, NATIVE_IS_NONE_OF);
 }
 
 
@@ -727,7 +731,7 @@ DECLARE_NATIVE(CASE)
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Ghost(SPARE))  // skip over things like ELIDE, but not voids!
+    if (Is_Void(SPARE))  // skip over things like ELIDE, but not voids!
         goto handle_next_clause;
 
     require (
@@ -754,7 +758,7 @@ DECLARE_NATIVE(CASE)
     //        Whoops?
     //        == <hmm>
 
-    if (Is_Void(SPARE))  // error on void predicate results (not same as [1])
+    if (Is_Ghostly(SPARE))  // error on void predicate results (not same as [1])
         panic (Error_Bad_Void());
 
     goto processed_result_in_spare;
@@ -789,7 +793,7 @@ DECLARE_NATIVE(CASE)
         Level_Binding(SUBLEVEL),
         LEVEL_MASK_NONE
     ));
-    Init_Ghost(Evaluator_Primed_Cell(sub));
+    Init_Void(Evaluator_Primed_Cell(sub));
 
     STATE = ST_CASE_EVALUATING_GROUP_BRANCH;
     SUBLEVEL->executor = &Just_Use_Out_Executor;
@@ -1002,11 +1006,8 @@ DECLARE_NATIVE(SWITCH)
     //    being evaluated as const.  But we have to proxy that const flag
     //    over to the block.
 
-    if (Is_Ghost(SPARE))  // skip comments or ELIDEs
+    if (Is_Void(SPARE))  // skip comments or ELIDEs
         goto next_switch_step;
-
-    if (Is_Void(SPARE))
-        panic (Error_Bad_Void());
 
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;  // nothing left, so drop frame and return
@@ -1149,10 +1150,8 @@ DECLARE_NATIVE(DEFAULT)
   //    fields can legitimately give back ERROR! in-band if a field stores
   //    a lifted error.  It's under review.
   //
-  // 3. TRASH!, BLANK, and NULL are considered "defaultable".  VOID can't be
-  //    stored in variables directly, but it might be that metavariables such
-  //    as (^x: ^void, ^x: default [1020]) should be willing to overwrite the
-  //    void state.  Review.
+  // 3. TRASH!, VOID!, NULL, empty PACK! and empty SPLICE! are "defaultable".
+  //    Space runes (blanks) aren't; no stable form is overwritten by DEFAULT.
 
     Element* steps = u_cast(Element*, SCRATCH);  // avoid double-eval [1]
     STATE = ST_DEFAULT_GETTING_TARGET;  // can't leave at STATE_0
@@ -1186,7 +1185,7 @@ DECLARE_NATIVE(DEFAULT)
         Get_Var_In_Scratch_To_Out(level_, steps)
     );
 
-    if (not Is_Ghost(OUT)) {  // should void count?  GHOST! is "unset"
+    if (not Is_Ghostly(OUT)) {
         require (  // may need decay [2]
             Stable* out = Decay_If_Unstable(OUT)
         );

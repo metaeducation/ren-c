@@ -71,20 +71,20 @@ enum {
 // This runs very much like function dispatch, but there's no RETURN.  So
 // the result of the call will just be whatever the body evaluates to.
 //
-// 1. We prime the result with GHOST!, because lambdas are willing to vanish
-//    if their bodies fully vaporize with no non-ghost values seen:
+// 1. We prime the result with VOID!, because lambdas are willing to vanish
+//    if their bodies fully vaporize with no non-void values seen:
 //
 //        test1: lambda [] []
 //        test2: lambda [] [comment "no body"]
 //
-//        >> ghost? test1
+//        >> void? test1
 //        == \~okay~\  ; antiform
 //
-//        >> ghost? test2
+//        >> void? test2
 //        == \~okay~\  ; antiform
 //
-//    Do note that this will often appear as VOID in multi-step opeations if
-//    you do not make the lambda GHOSTABLE.
+//    Do note that this will often appear as NONE in multi-step opeations if
+//    you do not make the lambda VANISHABLE.
 //
 //    https://rebol.metaeducation.com/t/comment-vanishes-but-not-if-eval/2563
 //
@@ -139,13 +139,13 @@ Bounce Lambda_Dispatcher(Level* const L)
     Tweak_Cell_Binding(spare_rebound, L->varlist);
 
     Flags flags = LEVEL_MASK_NONE
-        | (not LEVEL_FLAG_AFRAID_OF_GHOSTS);  // allow vanish [1]
+        | (not LEVEL_FLAG_SUPPRESS_VOIDS);  // allow vanish [1]
 
     require (
       Level* sub = Make_Level_At_Core(
         &Evaluator_Executor, spare_rebound, SPECIFIED, flags
     ));
-    Init_Ghost(Evaluator_Primed_Cell(sub));  // allow vanish [1]
+    Init_Void(Evaluator_Primed_Cell(sub));  // allow vanish [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
 

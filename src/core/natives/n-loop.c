@@ -76,7 +76,7 @@ bool Throw_Was_Loop_Interrupt(
         and Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
-        if (not Is_Void(out))  // nihil signals no argument to CONTINUE
+        if (not Is_Void(out))  // void signals no argument to CONTINUE
             Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable :WITH
         *interrupt = LOOP_INTERRUPT_CONTINUE;
         return true;
@@ -1237,10 +1237,10 @@ void Shutdown_Loop_Each(Stable* iterator)
 //  "Evaluates a block for each value(s) in a series"
 //
 //      return: [
-//          any-stable?     "last body result"
+//          any-stable?     "last body result (if not NULL)"
+//          ~[<null>]~      "if last body result was NULL"
 //          <null>          "if BREAK encountered"
-//          ~[<null>]~      "if body result was null"
-//          <void>          "if body never ran"
+//          void!           "if body never ran"
 //      ]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
@@ -1373,10 +1373,10 @@ DECLARE_NATIVE(FOR_EACH)
 //  "Iterate and return null if any previous body evaluations were falsey"
 //
 //      return: [
-//          any-stable?     "last body result"
+//          any-stable?     "last body result (if not NULL)"
+//          ~[<null>]~      "if last body result was NULL"
 //          <null>          "if any body eval was NULL, or BREAK encountered"
-//          ~[<null>]~      "if body result was NULL"
-//          <void>          "if body never ran"
+//          void!           "if body never ran"
 //      ]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
@@ -1484,7 +1484,7 @@ DECLARE_NATIVE(EVERY)
         }
     }
 
-    if (Is_Ghost_Or_Void(SPARE)) {
+    if (Is_Ghostly(SPARE)) {
         Init_Tripwire(OUT);  // forget OUT for loop composition [1]
         goto next_iteration;  // ...but void does not NULL-lock output
     }
@@ -1674,7 +1674,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
         bool keep;
 
-        if (Is_Void(OUT)) {
+        if (Is_Ghostly(OUT)) {
             keep = true;  // treat same as logic false (e.g. don't remove) [1]
             goto handle_keep_or_no_keep;
         }
@@ -2059,7 +2059,7 @@ DECLARE_NATIVE(MAP)
         }
     }
 
-    if (Is_Void(SPARE))
+    if (Is_Ghostly(SPARE))
         goto next_iteration;  // okay to skip
 
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE))) {
@@ -2115,10 +2115,10 @@ DECLARE_NATIVE(MAP)
 //  "Evaluates a block a specified number of times"
 //
 //      return: [
-//          any-stable?     "last body result"
+//          any-stable?     "last body result (if not NULL)"
+//          ~[<null>]~      "if last body result was NULL"
 //          <null>          "if BREAK encountered"
-//          ~[<null>]~      "if body result was null"
-//          <void>          "if body never ran"
+//          void!           "if body never ran"
 //      ]
 //      count "Repetitions (true loops infinitely, false doesn't run)"
 //          [<opt> any-number? logic?]
@@ -2219,10 +2219,10 @@ DECLARE_NATIVE(REPEAT)
 //  "Evaluates a branch a number of times or over a series, return last result"
 //
 //      return: [
-//          any-stable?     "last body result"
+//          any-stable?     "last body result (if not NULL)"
+//          ~[<null>]~      "if last body result was NULL"
 //          <null>          "if BREAK encountered"
-//          ~[<null>]~      "if body result was null"
-//          <void>          "if body never ran"
+//          void!           "if body never ran"
 //      ]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
@@ -2396,15 +2396,12 @@ DECLARE_NATIVE(INSIST)
   //    CONTINUE:WITH OKAY will stop the INSIST and return OKAY, while
   //    CONTINUE:WITH 10 will stop and return 10, etc.
   //
-  // 2. Due to body_result_in_out:[1], we want CONTINUE (or CONTINUE VOID)
+  // 2. Due to body_result_in_out:[1], we want CONTINUE (or CONTINUE:WITH ())
   //    to keep the loop running.  For parity between what continue does with
   //    an argument and what the loop does if the body evaluates to that
   //    argument, it suggests a void body result be intent to continue.
   //
-  // 3. Being willing to tolerate a GHOST is a little more questionable.
-  //    For now, don't allow it...though it may wind up being useful.
-  //
-  // 4. Today we don't test undecayed values for truthiness or falseyness.
+  // 3. Today we don't test undecayed values for truthiness or falseyness.
   //    Hence INSIST cannot return something like a pack...it must be META'd
   //    and the result UNMETA'd.  That would mean all pack quasiforms would
   //    be considered truthy.
@@ -2428,13 +2425,10 @@ DECLARE_NATIVE(INSIST)
         // continue acts like body evaluated to its argument [1]
     }
 
-    if (Is_Void(OUT))
-        goto loop_again;  // skip voids [2]
+    if (Is_Ghostly(OUT))
+        goto loop_again;  // skip ghosts [2]
 
-    if (Is_Ghost(OUT))
-        panic ("Body of INSIST must not return GHOST");  // tolerate? [3]
-
-    require (  // decay for truth test [4]
+    require (  // decay for truth test [3]
       Stable* out = Decay_If_Unstable(OUT)
     );
     require (

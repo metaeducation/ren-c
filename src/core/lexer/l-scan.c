@@ -2301,7 +2301,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     if (*S->end == '~') {
         if (not S->quasi_pending)
             return fail (
-                "Comma only followed by ~ for ~,~ quasiform (meta-GHOST!)"
+                "Comma only followed by ~ for ~,~ quasiform (meta-VOID!)"
             );
         Quasify_Isotopic_Fundamental(Init_Comma(PUSH()));
         S->sigil_pending = SIGIL_0;
@@ -3152,7 +3152,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
 
     possibly(Get_Scan_Executor_Flag(L, NEWLINE_PENDING));  // may be true [1]
 
-    return VOID;
+    return Init_Tripwire(OUT);
 
 }}
 
@@ -3181,7 +3181,7 @@ Bounce Scanner_Executor(Level* level_)
             if (Is_Error(level_->out))
                 assert(TOP_INDEX == STACK_BASE);
             else
-                assert(Is_Void(level_->out));
+                assert(Is_Tripwire(Known_Stable(level_->out)));
         }
         else
             assert(b == BOUNCE_CONTINUE);

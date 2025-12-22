@@ -3,7 +3,7 @@
 ; Function requested by @gchiu, serves as another test of loop composition.
 
 [
-    (for-parallel: func [
+    (for-parallel: lambda [
         return: [any-value?]
         vars [block!]
         blk1 [<opt> any-list?]

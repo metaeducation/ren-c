@@ -178,7 +178,7 @@ INLINE Count Noquotify(Element* elem) {
 
 //=//// UNSTABLE ANTIFORMS ////////////////////////////////////////////////=//
 //
-// Unstable antiforms like PACK!, ERROR!, and GHOST! antiforms aren't just
+// Unstable antiforms like PACK!, ERROR!, and VOID! antiforms aren't just
 // not allowed in blocks, they can't be in stored in "normal" variables
 // (only ^META variables can hold them).  They will either decay to stable
 // forms or cause errors in decay.
@@ -207,7 +207,7 @@ INLINE bool Is_Antiform_Unstable(const Value* a) {
     return (
         KIND_BYTE(a) == TYPE_BLOCK  // Is_Pack()
         or KIND_BYTE(a) == TYPE_WARNING  // Is_Error()
-        or KIND_BYTE(a) == TYPE_COMMA  // Is_Ghost()
+        or KIND_BYTE(a) == TYPE_COMMA  // Is_Void()
     );
 }
 
@@ -219,7 +219,7 @@ INLINE bool Is_Lifted_Unstable_Antiform(const Value* a) {
     return (
         KIND_BYTE(a) == TYPE_BLOCK  // Is_Pack()
         or KIND_BYTE(a) == TYPE_WARNING  // Is_Error()
-        or KIND_BYTE(a) == TYPE_COMMA  // Is_Ghost()
+        or KIND_BYTE(a) == TYPE_COMMA  // Is_Void()
     );
 }
 

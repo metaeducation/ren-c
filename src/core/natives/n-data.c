@@ -1057,25 +1057,25 @@ DECLARE_NATIVE(INFIX)
 
 
 //
-//  ghostable: native [
+//  vanishable: native [
 //
-//  "Make a function's invocations not default to turn GHOST! results to VOID"
+//  "Make a function's invocations not default to turn VOID! results to NONE"
 //
 //      return: [~[action!]~ frame!]
 //      action [action! frame!]
-//      :off "Give back non-ghostable version of the passed in function"
+//      :off "Give back non-vanishable version of the passed in function"
 //  ]
 //
-DECLARE_NATIVE(GHOSTABLE)
+DECLARE_NATIVE(VANISHABLE)
 {
-    INCLUDE_PARAMS_OF_GHOSTABLE;
+    INCLUDE_PARAMS_OF_VANISHABLE;
 
     Stable* out = Copy_Cell(OUT, ARG(ACTION));
 
     if (ARG(OFF))
-        Clear_Cell_Flag(out, WEIRD_GHOSTABLE);
+        Clear_Cell_Flag(out, WEIRD_VANISHABLE);
     else
-        Set_Cell_Flag(out, WEIRD_GHOSTABLE);
+        Set_Cell_Flag(out, WEIRD_VANISHABLE);
 
     if (Is_Action(out))
         return Packify_Action(OUT);
@@ -1085,19 +1085,19 @@ DECLARE_NATIVE(GHOSTABLE)
 
 
 //
-//  ghostable?: native [
+//  vanishable?: native [
 //
-//  "Return whether a function naturally suppresses GHOST! to VOID conversion"
+//  "Return whether a function naturally suppresses VOID! to NONE conversion"
 //
 //      return: [logic?]
 //      action [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(GHOSTABLE_Q)
+DECLARE_NATIVE(VANISHABLE_Q)
 {
-    INCLUDE_PARAMS_OF_GHOSTABLE_Q;
+    INCLUDE_PARAMS_OF_VANISHABLE_Q;
 
-    return LOGIC(Get_Cell_Flag(ARG(ACTION), WEIRD_GHOSTABLE));
+    return LOGIC(Get_Cell_Flag(ARG(ACTION), WEIRD_VANISHABLE));
 }
 
 
@@ -1286,7 +1286,7 @@ DECLARE_NATIVE(ANY_WORD_Q)
 
 
 //
-//  void?: native:intrinsic [
+//  none?: native:intrinsic [
 //
 //  "Tells you if argument is an ~[]~ antiform, e.g. an empty pack"
 //
@@ -1294,13 +1294,13 @@ DECLARE_NATIVE(ANY_WORD_Q)
 //      ^value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(VOID_Q)
+DECLARE_NATIVE(NONE_Q)
 {
-    INCLUDE_PARAMS_OF_VOID_Q;
+    INCLUDE_PARAMS_OF_NONE_Q;
 
     Value* v = Intrinsic_ARG(LEVEL);
 
-    return LOGIC(Is_Void(v));
+    return LOGIC(Is_None(v));
 }
 
 
@@ -1353,7 +1353,7 @@ DECLARE_NATIVE(TRIPWIRE_Q)
 //
 //  noop: native [  ; native:intrinsic currently needs at least 1 argument
 //
-//  "Returns TRASH! (alternative to [] branches returning GHOST!/VOID)"  ; [1]
+//  "Returns TRASH! (alternative to [] branches returning VOID!/NONE)"  ; [1]
 //
 //      return: ~
 //  ]

@@ -505,10 +505,10 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
         assert(Word_Id(At_Level(L)) == SYM_TWEAK_P_BEDROCK);
         break;
 
-      case SYM_C_DEBUG_BREAK:  // c-debug-break: ghostable  native [...]
+      case SYM_C_DEBUG_BREAK:  // c-debug-break: vanishable  native [...]
         assert(Word_Id(At_Level(L)) == SYM_C_DEBUG_BREAK);
         Fetch_Next_In_Feed(L->feed);
-        assert(Word_Id(At_Level(L)) == SYM_GHOSTABLE);
+        assert(Word_Id(At_Level(L)) == SYM_VANISHABLE);
         break;
 
       default:
@@ -573,9 +573,9 @@ void Startup_Natives(const Element* boot_natives)
         boot_natives,
         lib,
         LEVEL_MASK_NONE
-            | LEVEL_FLAG_AFRAID_OF_GHOSTS  // irrelevant, won't vaporize!
+            | LEVEL_FLAG_SUPPRESS_VOIDS  // irrelevant, won't vaporize!
     ));
-    Init_Ghost(Evaluator_Primed_Cell(L));
+    Init_Void(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(dual_step, L);
 
   setup_native_dispatcher_enumeration: {

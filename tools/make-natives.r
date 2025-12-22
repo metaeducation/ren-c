@@ -146,9 +146,9 @@ leaders: [
     tweak*  ; REAL tweak* (overwrites bootstrap) uses NULL?, SPACE?
 
     antiform?  ; needs to accept unstable antiforms, overwrites auto-gen case
-    void?  ; same
+    none?  ; same
     infix
-    ghostable
+    vanishable
 
     any-word?  ; Not clear what future of this is (any-sigil'd word)
 

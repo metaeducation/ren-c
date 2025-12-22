@@ -41,7 +41,7 @@ DECLARE_NATIVE(TRY)
 
     Value* v = Intrinsic_ARG(LEVEL);
 
-    if (Is_Void(v) or Is_Light_Null(v))
+    if (Is_Ghostly(v) or Is_Light_Null(v))
         return NULLED;
 
     if (Is_Error(v))
@@ -99,9 +99,9 @@ DECLARE_NATIVE(ENRECOVER)
       Level* L = Make_Level_At(
         &Evaluator_Executor,
         code,
-        LEVEL_FLAG_AFRAID_OF_GHOSTS  // EVAL-like semantics?
+        LEVEL_FLAG_SUPPRESS_VOIDS  // EVAL-like semantics?
     ));
-    Init_Ghost(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
+    Init_Void(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 
@@ -222,7 +222,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
         goto finished;
     }
 
-    if (not Is_Ghost_Or_Void(SPARE))
+    if (not Is_Ghostly(SPARE))
         Move_Value(OUT, SPARE);
 
     if (Is_Level_At_End(SUBLEVEL))

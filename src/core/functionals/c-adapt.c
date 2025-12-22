@@ -212,7 +212,7 @@ DECLARE_NATIVE(ADAPT)
     Tweak_Cell_Binding(rebound, List_Binding(prelude));
 
     Stable* out = Init_Frame(OUT, details, Frame_Label_Deep(adaptee), UNCOUPLED);
-    Copy_Ghostability(out, adaptee);
+    Copy_Vanishability(out, adaptee);
 
     if (Is_Frame(adaptee))
         return OUT;

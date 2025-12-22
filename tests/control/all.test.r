@@ -20,7 +20,7 @@
     (
         x: <overwritten>
         all [
-            void? x: all [^void ^void]
+            void? x: all [^void ^void ()]
             void? x
         ]
     )

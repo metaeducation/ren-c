@@ -58,7 +58,7 @@
 
     ("HelloWorld" = unspaced ["Hello" ^void "World"])
     (
-        f: make frame! func [] [return ^ghost]
+        f: make frame! func [] [return ^void]
         "HelloWorld" = unspaced ["Hello" eval f "World"]
     )
 

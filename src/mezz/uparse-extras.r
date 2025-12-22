@@ -19,8 +19,8 @@ destructure: func [
     input [any-series?]
     dialect [block!]
     :multi "Run multiple branches"
+    {^result}
 ][
-    let ^result: ^void
     let combinators: copy default-combinators
     parse dialect [until <end> [
         let set-word: *in* set-word?/, let rule: *in* block! (

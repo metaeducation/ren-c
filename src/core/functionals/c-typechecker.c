@@ -80,7 +80,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
 
     Value* arg = Intrinsic_ARG(LEVEL);
 
-    if (Is_Void(arg))
+    if (Is_Ghostly(arg))
         return LOGIC(false);  // opt-out of the typecheck (null fails)
 
     Details* details = Level_Intrinsic_Details(L);
@@ -442,7 +442,7 @@ bool Predicate_Check_Spare_Uses_Scratch(
             if (Get_Parameter_Flag(param, REFINEMENT))
                 Init_Nulled(arg);
             else
-                Init_Unspecialized_Ghost(arg);
+                Init_Unspecialized_Void(arg);
         }
     }
 
@@ -537,7 +537,7 @@ static bool Typecheck_Unoptimized_Uses_Spare_And_Scratch(
   // 3. While TAG! will have PARAMSPEC_SPOKEN_FOR in a PARAMETER!, it does not
   //    in a plain BLOCK! used with TYPECHECK.  TYPECHECK could pay to convert
   //    BLOCK! to PARAMETER! but it's cheaper if we are willing to process a
-  //    block on the fly.  This handles <null> and <void> tags but it should
+  //    block on the fly.  This handles <null> and <ghost> tags but it should
   //    probably have behavior for <opt> and other parameter spec tags, though
   //    it's tricky given that typecheck can't mutate the incoming value.
 
@@ -568,14 +568,14 @@ static bool Typecheck_Unoptimized_Uses_Spare_And_Scratch(
         goto test_failed;
     }
 
-    if (Is_Tag(at)) {  // if BLOCK!, support <null> and <void> [3]
+    if (Is_Tag(at)) {  // if BLOCK!, support <null> and <ghost> [3]
         if (0 == CT_Utf8(at, g_tag_null, true)) {
             if (Is_Light_Null(v))
                 goto test_succeeded;
             goto test_failed;
         }
-        if (0 == CT_Utf8(at, g_tag_void, true)) {
-            if (Is_Void(v))
+        if (0 == CT_Utf8(at, g_tag_ghost, true)) {
+            if (Is_Ghostly(v))
                 goto test_succeeded;
             goto test_failed;
         }
@@ -874,8 +874,12 @@ bool Typecheck_Uses_Spare_And_Scratch(
             return true;
         }
 
-        if (Get_Parameter_Flag(param, VOID_DEFINITELY_OK) and Is_Void(v))
+        if (
+            Get_Parameter_Flag(param, GHOSTLY_DEFINITELY_OK)
+            and Is_Ghostly(v)
+        ){
             return true;
+        }
 
         if (
             Get_Parameter_Flag(param, TRASH_DEFINITELY_OK)
@@ -1011,7 +1015,7 @@ Result(bool) Typecheck_Coerce_Uses_Spare_And_Scratch(
         Corrupt_Cell_If_Needful(SCRATCH);  // may not make it to typecheck [2]
         Corrupt_Cell_If_Needful(SPARE);
 
-        if (Is_Endlike_Ghost(v)) {  // non-^META endable parameters can be void
+        if (Is_Endlike_Void(v)) {  // non-^META endable parameters can be void
             if (Get_Parameter_Flag(param, ENDABLE))
                 goto return_true;
         }
@@ -1023,7 +1027,7 @@ Result(bool) Typecheck_Coerce_Uses_Spare_And_Scratch(
   call_typecheck: {  /////////////////////////////////////////////////////////
 
     if (Get_Parameter_Flag(param, OPT_OUT)) {
-        assert(not Is_Void(v));  // should have bypassed this check
+        assert(not Is_Ghostly(v));  // should have bypassed this check
         if (Is_Light_Null(v))
             return false;  // can never run an opt-out with nulled arg
     }
@@ -1049,7 +1053,7 @@ Result(bool) Typecheck_Coerce_Uses_Spare_And_Scratch(
     if (Is_Error(v))
         goto return_false;
 
-    if (Is_Ghost(v))
+    if (Is_Void(v))
         goto return_false;  // comma antiforms
 
     if (not Is_Antiform(v) or not Is_Antiform_Unstable(v))
@@ -1086,7 +1090,7 @@ Result(bool) Typecheck_Coerce_Uses_Spare_And_Scratch(
     if ((result == true) and Not_Cell_Stable(v))
         assert(
             Parameter_Class(param) == PARAMCLASS_META
-            or (Get_Parameter_Flag(param, ENDABLE) and Is_Endlike_Ghost(v))
+            or (Get_Parameter_Flag(param, ENDABLE) and Is_Endlike_Void(v))
         );
   #endif
 

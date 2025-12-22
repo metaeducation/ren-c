@@ -51,7 +51,7 @@
 //   possible using CLOSURE which made a costly deep copy of the function's
 //   body on every invocation.  Ren-C's method does not require a copy.)
 //
-// * Functions that (return: [ghost!]) vanish completely, leaving whatever
+// * Functions that (return: [void!]) vanish completely, leaving whatever
 //   result was in the evaluation previous to the function call as-is.
 //
 // * Refinements-as-their-own-arguments--which streamlines the evaluator,

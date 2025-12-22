@@ -227,7 +227,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
                 return BOUNCE_THROWN;
             }
 
-            if (Is_Ghost(OUT))
+            if (Is_Void(OUT))
                 break;
 
             require (
@@ -1028,7 +1028,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
-    if (Is_Lifted_Ghost_Or_Void(dual)) {
+    if (Is_Lifted_Ghostly(dual)) {
         poke = LIB(HOLE);  // nullptr for removal in Modify_Xxx() atm
         goto call_modify;
     }

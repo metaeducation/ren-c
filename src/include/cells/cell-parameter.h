@@ -126,8 +126,8 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* v) {
 // For non-endability, error parity is kept with GROUP!s, such that the same
 // error is given for `eval [1 +,]` and `(1 +,)`.
 //
-// GHOST! is used to represent the end state in all parameter types.  This
-// can be a conflation when dealing with ^META parameters that take GHOST!,
+// VOID! is used to represent the end state in all parameter types.  This
+// can be a conflation when dealing with ^META parameters that take VOID!,
 // but this is fairly rare.
 //
 #define PARAMETER_FLAG_ENDABLE \
@@ -198,19 +198,19 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* v) {
 //=//// PARAMETER_FLAG_OPT_OUT ////////////////////////////////////////////=//
 //
 // If a parameter is marked with the `<opt-out>` annotation, then that means
-// if that argument is void in a function invocation, the dispatcher for the
-// function won't be run at all--and ~null~ will be returned by the call.
+// if that argument is VOID or NONE in a function invocation, the dispatcher
+// for the function won't be run at all; NULL will be returned by the call.
 //
 // This helps avoid the need to take the argument as ^META just to do the
 // test for void, if this is the intent.  Beyond convenience, it doesn't speed
-// natives up all that much, as they could test `Is_Void(arg)` and then
-// `return Init_Nulled(OUT); Unliftify_Undecayed(arg);`...which would
-// be fairly fast.  But it speeds up usermode code much more, considering that
-// `if void? ^arg [return null]` needs several frames and lookups to run.
+// natives up all that much, as they could test `Any_Void(arg)` and then
+// `return Init_Nulled(OUT);`...which would be fairly fast.  But it speeds up
+// usermode code much more, considering that `if void? ^arg [return null]`
+// needs several frames and lookups to run.
 //
-// Plus the <opt-out> annotation helps convey the "void-in-null-out" contract
-// more clearly than just being willing to take void and able to return null,
-// which doesn't connect the two states.
+// Plus the <opt-out> annotation helps convey the "ghost-in-null-out" contract
+// more clearly than just being willing to take VOID or NONE and *able* to
+// return null, which doesn't connect the two states.
 //
 #define PARAMETER_FLAG_OPT_OUT \
     FLAG_LEFT_BIT(13)
@@ -224,11 +224,11 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* v) {
     FLAG_LEFT_BIT(14)
 
 
-//=//// PARAMETER_FLAG_VOID_DEFINITELY_OK /////////////////////////////////=//
+//=//// PARAMETER_FLAG_GHOSTLY_DEFINITELY_OK //////////////////////////////=//
 //
 // See notes on NULL_DEFINITELY_OK
 //
-#define PARAMETER_FLAG_VOID_DEFINITELY_OK \
+#define PARAMETER_FLAG_GHOSTLY_DEFINITELY_OK \
     FLAG_LEFT_BIT(15)
 
 

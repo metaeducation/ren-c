@@ -10,7 +10,7 @@
 ((lift null) = lift null)
 
 (3 = all [
-    ghost? comment "Hi" 1 + 2
+    void? comment "Hi" 1 + 2
 ])
 ((the '3) = lift (comment "Hi" 1 + 2))
 (3 = unlift (lift (comment "Hi" 1 + 2)))

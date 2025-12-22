@@ -1,8 +1,8 @@
 ; functions/control/do.r
 
 [
-    (ghost? eval [])
-    (ghost? (eval []))
+    (void? eval [])
+    (void? (eval []))
     ('~,~ = lift eval [])
 
     (void? (1 + 2 eval []))
@@ -22,8 +22,8 @@
 
     (all [
         let x: ~
-        ghost? ^x: comment "HI" comment "HI"  ; not eval'd in same step
-        ghost? ^x
+        void? ^x: comment "HI" comment "HI"  ; not eval'd in same step
+        void? ^x
     ])
 
     (all [
@@ -44,9 +44,9 @@
     ('~[~null~]~ = lift eval [heavy null])
     ('~[~null~]~ = lift eval [if okay [null]])
 
-    (ghost? ^ eval [])
-    (ghost? ^ eval [comment "hi"])
-    (ghost? ^ eval make frame! func [] [return ~,~])
+    (void? ^ eval [])
+    (void? ^ eval [comment "hi"])
+    (void? ^ eval make frame! func [] [return ~,~])
     ((lift ^void) = lift eval [^void])
 
     ((lift null) = lift eval [null])
@@ -64,14 +64,14 @@
     x: <overwritten>
     all [
         (lift ^ghost) = lift x: eval []
-        ghost? unlift x
+        void? unlift x
     ]
 )
 (
     x: 10
     all [
         '~,~ = x: lift eval []
-        ghost? unlift x
+        void? unlift x
     ]
 )
 (
@@ -85,7 +85,7 @@
     ('~,~ = lift eval [comment "HI"])
 
     (void? (1 + 2 eval [comment "HI"]))
-    (ghost? eval [comment "HI"])
+    (void? eval [comment "HI"])
 
     (
         y: <overwritten>
@@ -195,7 +195,7 @@
 )
 (0:00 = eval [0:00])
 (0.0.0 = eval [0.0.0])
-(ghost? ^ eval [()])
+(void? ^ eval [()])
 ('a = eval ['a])
 
 ; !!! Currently, EVAL of an ERROR! is like FAIL; it is not definitional,

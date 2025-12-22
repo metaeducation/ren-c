@@ -394,7 +394,7 @@ collect*: lambda [
         enclose append/ lambda [  ; Derive from APPEND for :LINE :DUP
             f [frame!]
         ][
-            decay either void? f.value [  ; DECAY, we want pure null
+            decay either ghostly? f.value [  ; DECAY, we want pure null
                 null  ; void in, null out (should it pass through the void?)
             ][
                 f.series: out: default [make block! 16]  ; no null return now

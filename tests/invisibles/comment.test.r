@@ -1,6 +1,6 @@
 ; %comment.test.r
 ;
-; COMMENT returns GHOST!, which is an unstable antiform.  It limits the
+; COMMENT returns VOID!, which is an unstable antiform.  It limits the
 ; number of types it takes in order to avoid the illusion that it's
 ; could suppress evaluations, e.g. consider (comment print "HI").  Since
 ; PRINT is an evaluator-active WORD!, it would just be commenting out

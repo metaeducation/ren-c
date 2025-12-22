@@ -152,7 +152,7 @@ Bounce Inliner_Dispatcher(Level* const L)
   // 1. Generating a void should do the same thing as an empty splice, and
   //    continue running as a single step...not return in its own step.
 
-    if (Is_Void(OUT))
+    if (Is_Ghostly(OUT))
         goto continue_evaluating;  // MACRO never returns directly [1]
 
     require (

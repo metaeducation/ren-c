@@ -207,7 +207,7 @@ parameter!  "function parameter description"
 ; datatype that was FEED-specific.  Better ideas welcome.
 
 comma!        "separator between full evaluations"
-~ghost!~:U    "elision state that is discarded by the evaluator"
+~void!~:U     "discarded by evaluations (when safe to do so)"
               (CELL_MASK_NO_MARKING)
               [any-unit?]  ; NOT inert
 

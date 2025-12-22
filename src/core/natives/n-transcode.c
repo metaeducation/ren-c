@@ -257,7 +257,7 @@ DECLARE_NATIVE(TRANSCODE)
         return OUT;
     }
 
-    assert(Is_Void(OUT));  // scanner returns void if it doesn't return error
+    assert(Is_Tripwire(Known_Stable(OUT)));  // TRASH! if it not an ERROR!
 
     if (ARG(ONE)) {  // want *exactly* one element
         if (TOP_INDEX == STACK_BASE)
@@ -284,7 +284,7 @@ DECLARE_NATIVE(TRANSCODE)
   //    empty (or all comments and whitespace), then the result is not NULL,
   //    but an empty BLOCK!.  This makes TRY TRANSCODE more useful (as you
   //    know that if you get NULL there was an actual error), and it is more
-  //    often than not the case that empty content evaluating to GHOST! is
+  //    often than not the case that empty content evaluating to VOID! is
   //    what you want (e.g. scripts that are empty besides a header are ok).
 
     if (ARG(NEXT)) {
