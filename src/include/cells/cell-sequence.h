@@ -231,7 +231,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
     }
 
     if (Any_List(e)) {  // try mirror optimization
-        assert(Is_Group(e) or Is_Block(e));  // only valid kinds
+        assert(Is_Group(e) or Is_Block(e) or Is_Fence(e));  // only valid kinds
         const Source* a = Cell_Array(e);
         Option(Heart) mirror = Mirror_Of(a);
         Option(Heart) h = Heart_Of(e);

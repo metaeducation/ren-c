@@ -68,7 +68,8 @@ Rebol [
         are relevant to them:
 
         * COLLECT uses QUOTED! items to inexpensively mark the things it has
-          put together for collection.
+          put together for collection (it gets QUOTED! due to being the most
+          common pending client)
 
         * GATHER uses FENCE! to make pairs of a WORD! field name and a lifted
           value for what will be assigned to the object field.
@@ -158,7 +159,7 @@ bind construct [
             ]
             spread compose:deep [
                 return: (opt description)
-                    [~[(types) any-series? [hole? block!]]~]
+                    [~[(types) any-series? [hole? quoted! block!]]~]
             ]
         )
 
@@ -180,15 +181,17 @@ bind construct [
             ]
         )
 
-        (if ':pending = try spec.1 [
-            assert [spec.2 = [hole? block!]]
-            autopipe: 'no  ; they're asking to handle pending themselves
-            spread reduce [':pending spec.2]
-            elide spec: my skip 2
-        ] else [
-            autopipe: 'yes  ; they didn't mention pending, handle automatically
-            spread [:pending [hole? block!]]
-        ])
+        (
+            if '{pending}: = try spec.1 [
+                assert [spec.2 = [hole? quoted! block!]]
+                autopipe: 'no  ; they're asking to handle pending themselves
+
+                elide spec: my skip 2
+            ] else [
+                autopipe: 'yes  ; didn't mention pending, handle automatically
+            ]
+            ${pending (hole)}  ; add pending local (RETURN proxies as output)
+        )
 
         ; Whatever arguments the combinator takes, if any
         ;
@@ -202,7 +205,7 @@ bind construct [
         (spread when yes? autopipe '[
             let f: binding of $return
 
-            pending: hole
+            assert [hole? pending]  ; starts out hole, they can leave it so
             let in-args: null
             for-each [key ^val] f [
                 if not in-args [
@@ -217,13 +220,16 @@ bind construct [
                     ; rigged so that their results append to an aggregator in
                     ; the order they are run (if they succeed).
                     ;
+                    ; !!! Changing this to a lambda breaks things.  Figure
+                    ; out why it breaks.
+                    ;
                     f.(key): enclose (augment ^val [:modded]) func [
                         f2
                         {^result remainder subpending}
                     ][
                         [^result remainder subpending]: trap eval-free f2
 
-                        pending: glom pending spread subpending
+                        glom $pending subpending
                         return pack [^result remainder subpending]
                     ]
                 ]
@@ -474,7 +480,7 @@ default-combinators: make map! [
             return fail e
         ]
         cycle [  ; if first try succeeds, we'll succeed overall--keep looping
-            [^result input]: parser input except [
+            [^result input]: parser input except e -> [
                 take:last state.loops
                 return ^result
             ]
@@ -560,11 +566,10 @@ default-combinators: make map! [
         return: [integer!]
         input [any-series?]
         parser [action!]
-        {count}
+        {count (0)}
     ][
         append state.loops binding of $return
 
-        count: 0
         cycle [
             [^ input]: parser input except [
                 take:last state.loops
@@ -636,7 +641,7 @@ default-combinators: make map! [
         ; things like PENDING (which gets type checked as a multi-return, so
         ; we can't leave it as unset).  Review.
         ;
-        pending: hole
+        pending: hole  ; !!! but (parse [a] [accept keep 'a]) should error...
         state/return pack [^value pending]
     ]
 
@@ -1059,72 +1064,91 @@ default-combinators: make map! [
     ; UPARSE has a generic framework for bubbling up gathered items.  We look
     ; through that list of items here for anything marked as collect material
     ; and remove it.
+    ;
+    ; 1. All collect items are appended literally--so COLLECT itself doesn't
+    ;    have to worry about splicing.  More efficient concepts (like double
+    ;    quoting normal items, and single quoting spliced blocks) could be
+    ;    used instead--though copies of blocks would be needed either way.
+    ;
+    ; 2. !!! More often than not a COLLECT probably is going to be getting a
+    ;    list of all QUOTED! items.  If so, there's probably no great reason
+    ;    to do a new allocation...instead the quoteds should be mutated into
+    ;    unquoted forms.  But in usermode code it's a little hard to get a
+    ;    performance benefit by scanning and falling back.  Save it for the
+    ;    native implementation.
+    ;
+    ; 3. Passing through the input to KEEP is more useful in the general
+    ;    case for COLLECT+KEEP, because "GHOST-IN-NULL-OUT" wouldn't really
+    ;    tell you the answer to "did anything get kept" on acccount of
+    ;    empty splices not being nulled.  For maximum flexibility, passthru
+    ;    allows asking what you want to know, e.g. (nothing? keep x) vs.
+    ;    (ghostly? keep x)
+    ;
+    ; 4. We could keep a quasi-group as a SPLICE! and not flatten it here,
+    ;    but the problem would be if someone made a splice and then changed
+    ;    the underlying array later.  So we go ahead and flatten it into
+    ;    individual quoted items.
 
     'collect combinator [
         "Return a block of collected values from usage of the KEEP combinator"
         return: [block!]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]
         parser [action!]
-        {collected}
+        {collected result}
     ][
         [^ input pending]: trap parser input
 
-        ; PENDING can be a "hole" or a block full of items that may or may
-        ; not be intended for COLLECT.  Right now the logic is that all QUOTED!
-        ; items are intended for collect, extract those from the pending list.
-        ;
-        ; !!! More often than not a COLLECT probably is going to be getting an
-        ; list of all QUOTED! items.  If so, there's probably no great reason
-        ; to do a new allocation...instead the quoteds should be mutated into
-        ; unquoted forms.  Punt on such optimizations for now.
-        ;
-        collected: collect [
-            remove-each 'item pending [
-                if quoted? item [keep unquote item, okay]
+        case [  ; COLLECT looks for QUOTED! [B]
+            hole? pending []
+
+            (quoted? pending) and (quoted? unquote pending) [
+                result: envelop [] unquote unquote pending
+                pending: hole
+            ]
+        ] else [
+            result: collect [  ; new array usually not needed [2]
+                remove-each 'item pending [
+                    if quoted? item [
+                        keep unquote item
+                        okay
+                    ]
+                ]
             ]
         ]
 
-        return collected
+        return any [result, copy []]
     ]
 
     'keep combinator [
-        "Keep PARSER's synthesized result to add to enclosing COLLECT parse"
-        return: [<null> element? splice!]
+        "KEEP PARSER's result for COLLECT, and synthesize that same result"
+        return: [any-value?]  ; piped result most useful [3]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]
         parser [action!]
-        {^result}
+        {^result decayed}
     ][
         [^result input pending]: trap parser input
 
         if ghostly? ^result [
-            pending: hole
-            return null
+            return ^result
         ]
-        ^result: decay ^result
 
-        ; Since COLLECT is considered the most common `pending` client, we
-        ; reserve QUOTED! items for collected things.
-        ;
-        ; All collect items are appended literally--so COLLECT itself doesn't
-        ; have to worry about splicing.  More efficient concepts (like double
-        ; quoting normal items, and single quoting spliced blocks) could be
-        ; used instead--though copies of blocks would be needed either way.
-        ;
-        case [
-            element? ^result [
-                pending: glom pending quote result  ; quoteds target COLLECT
+        decayed: decay ^result
+
+        case [  ; QUOTED! reserved for COLLECT [B]
+            element? decayed [
+                glom $pending quote quote decayed
             ]
-            splice? ^result [
-                for-each 'item unsplice result [
-                    pending: glom pending quote item  ; quoteds target COLLECT
+            splice? decayed [  ; flatten splice; saving it would be risky [4]
+                for-each 'item unsplice decayed [
+                    glom $pending quote quote item
                 ]
             ]
             panic "Incorrect KEEP (not value or SPREAD)"
         ]
 
-        return ^result
+        return ^result  ; return undecayed result
     ]
 
     === ACCUMULATE ===
@@ -1180,28 +1204,37 @@ default-combinators: make map! [
         "GATHER an object from EMIT combinator calls in the passed-in parser"
         return: [object!]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]
         parser [action!]
-        {obj}
+        {obj result}
     ][
         [^ input pending]: trap parser input
 
-        obj: make object! collect [
-            remove-each 'item pending [
-                if fence? item [  ; default combinators GATHER owns FENCE! [B]
-                    keep spread item, okay
+        case [  ; default combinators GATHER owns FENCE! [B]
+            hole? pending []
+
+            (quoted? pending) and (fence? unquote pending) [
+                result: construct unquote pending
+                pending: hole
+            ]
+        ] else [
+            result: construct collect [
+                remove-each 'item pending [
+                    if fence? item [
+                        keep spread item, okay
+                    ]
                 ]
             ]
         ]
 
-        return obj
+        return any [result {}]  ; !!! empty object, vs an error?
     ]
 
     'emit combinator [
         "Emit object field for GATHER with name and value; synthesize value"
         return: [any-stable?]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]
         @target [set-word? set-group?]
         parser [action!]
         {^result}
@@ -1226,8 +1259,9 @@ default-combinators: make map! [
 
         [^result input pending]: trap parser input
 
-        result: lift require ^result  ; lift arbitrary result to put in block
-        pending: glom pending reduce ${target result}  ; use FENCE!, see [B]
+        glom $pending quote reduce ${  ; FENCE!, see [B]
+            target lift require ^result  ; lift arbitrary result to put in list
+        }
         return ^result
     ]
 
@@ -1487,12 +1521,11 @@ default-combinators: make map! [
         "Synthesize result of evaluating the group (invisible if <delay>)"
         return: [any-value?]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]
         value [any-list?]  ; allow any array to use this "EVAL combinator"
         {^result}
     ][
         if tail? value [
-            pending: hole
             return ()
         ]
 
@@ -1504,8 +1537,6 @@ default-combinators: make map! [
             return ()  ; act invisible
         ]
 
-        pending: hole
-
         ^result: eval value
 
         if error? ^result [
@@ -1515,23 +1546,33 @@ default-combinators: make map! [
             panic ^result  ; all other error antiforms escalate to panics
         ]
 
-        return decay ^result
+        return ^result
     ]
 
     'phase vanishable combinator [
         "Make a phase for capturing <delay> groups "
         return: [any-value?]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]
         parser [action!]
         {^result}
     ][
         [^result input pending]: trap parser input
 
-        remove-each 'item pending [
-            if group? item [  ; PHASE owns GROUP! in default combinators [A]
-                eval item
-                okay
+        case [  ; PHASE owns GROUP! in default combinators [A]
+            hole? pending []
+
+            (quoted? pending) and (group? unquote pending) [
+                eval unquote pending
+                pending: hole
+            ]
+        ]
+        else [
+            remove-each 'item pending [
+                if group? item [
+                    eval item
+                    okay
+                ]
             ]
         ]
 
@@ -1570,7 +1611,7 @@ default-combinators: make map! [
         "Synthesizes result of running combinator from evaluating the parser"
         return: [any-value?]
         input [any-series?]
-        :pending [hole? block!]   ; we retrigger combinator; it may KEEP, etc.
+        {pending}: [hole? quoted! block!]   ; we retrigger combinator; it may KEEP, etc.
 
         parser [action!]
         {^r comb subpending}
@@ -1600,7 +1641,7 @@ default-combinators: make map! [
         ]
 
         [^r input subpending]: trap run comb state input r  ; [3]
-        pending: glom pending subpending
+        glom $pending subpending
 
         return ^r
     ]
@@ -1710,7 +1751,7 @@ default-combinators: make map! [
         "Synthesize literal value"
         return: [element?]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]
         'value [element?]
         {comb}
     ][
@@ -1748,12 +1789,9 @@ default-combinators: make map! [
     splice! combinator [
         return: [<divergent>]
         input [any-series?]
-        :pending [hole? block!]
         value [splice!]
         {comb neq?}
     ][
-        pending: hole
-
         if tail? input [
             return fail "SPLICE! cannot match at end of input"
         ]
@@ -2023,7 +2061,7 @@ default-combinators: make map! [
     pinned! combinator compose [
         return: [any-value?]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]
         value [@any-element?]
         {^result comb subpending}
     ][
@@ -2041,7 +2079,7 @@ default-combinators: make map! [
             ]
             match [tuple! word!] value [
                 ^result: get value
-                pending: hole  ; no pending, only "subpending"
+                ; no pending, only "subpending"
             ]
             block? value [  ; match literal block redundant [4]
                 comb: runs state.combinators.(block!)
@@ -2053,7 +2091,7 @@ default-combinators: make map! [
 
         [^result input subpending]: trap comb state input lift result
 
-        pending: glom pending spread subpending
+        glom $pending subpending
         return ^result
     ]
 
@@ -2152,31 +2190,29 @@ default-combinators: make map! [
     ; With Ren-C it's easier to try these ideas out.  So the concept is that
     ; you can make a PATH! that starts with / and that will be run as a normal
     ; action but whose arguments are fulfilled via PARSE.
+    ;
+    ; 1. !!! We cannot use the autopipe mechanism because hooked combinator
+    ;    does not see the augmented frame.  Have to do it manually.
+    ;
+    ; 2. !!! We very inelegantly pass a block of PARSERS for the argument in
+    ;    because we can't reach out to the augmented frame (design rule) so
+    ;    the augmented function has to collect them into a block and pass
+    ;    them in a refinement we know about.  This is the beginning of a
+    ;    possible generic mechanism for variadic combinators, but it's tricky
+    ;    because the variadic step is before this function actually runs...
+    ;    review as the prototype evolves.
 
     action! combinator [
         "Run an ordinary action with parse rule products as its arguments"
         return: [any-value?]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]  ; can't use autopipe [1]
         value [frame!]
         ; AUGMENT is used to add param1, param2, param3, etc.
-        :parsers "Sneaky argument of parsers collected from arguments"
+        :parsers "Sneaky argument of parsers collected from arguments"  ; [2]
             [block!]
         {arg subpending}
     ][
-        ; !!! We very inelegantly pass a block of PARSERS for the argument in
-        ; because we can't reach out to the augmented frame (rule of the
-        ; design) so the augmented function has to collect them into a block
-        ; and pass them in a refinement we know about.  This is the beginning
-        ; of a possible generic mechanism for variadic combinators, but it's
-        ; tricky because the variadic step is before this function actually
-        ; runs...review as the prototype evolves.
-
-        ; !!! We cannot use the autopipe mechanism because hooked combinator
-        ; does not see the augmented frame.  Have to do it manually.
-        ;
-        pending: hole
-
         let f: make frame! value
         for-each 'key f [
             let param: select value key
@@ -2185,7 +2221,7 @@ default-combinators: make map! [
 
                 f.(key): [{_} input subpending]: trap run parsers.1 input
 
-                pending: glom pending spread subpending
+                glom $pending subpending
                 parsers: next parsers
             ]
         ]
@@ -2229,13 +2265,13 @@ default-combinators: make map! [
         "Runs some combinators allowed from fetching WORD! (non-vanishingly)"
         return: [any-value?]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]
         value [word! tuple!]
-        {^r comb rule-start rule-end}
+        {
+            ^r comb
+            rule-start rule-end  ; !!! currently not handled [1]
+        }
     ][
-        rule-start: null  ; !!! currently not handled [1]
-        rule-end: null
-
         switch:type r: get value [
             block! [  ; block rules accepted to look up from word! (of course)
                 rule-start: ^r
@@ -2297,7 +2333,7 @@ default-combinators: make map! [
         "Handle BLOCK! of rules as if each item in the block is an alternate"
         return: [any-value?]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]
         @arg "Acts as rules if WORD!/BLOCK!, pinned acts inert"
             [word! block! group! @word! @block! @group! ]
         {^result block}
@@ -2318,7 +2354,6 @@ default-combinators: make map! [
 
         if match [@block!] block [
             block: unpin block  ; should be able to enumerate regardless..
-            pending: hole  ; not running any rules, won't add to pending
             if tail? block [
                 return ()  ; empty literal blocks match at any location
             ]
@@ -2373,7 +2408,7 @@ default-combinators: make map! [
         "Sequence parse rules together, and return any alternate that matches"
         return: [any-value?]
         input [any-series?]
-        :pending [hole? block!]
+        {pending}: [hole? quoted! block!]
         value "Rules in sequence, with `|` and `||` separating alternates"
             [block!]
         :limit "Limit of how far to consider (used by ... recursion)"
@@ -2384,8 +2419,6 @@ default-combinators: make map! [
         rules: value  ; alias for clarity
         limit: default [tail of rules]
         pos: input
-
-        pending: hole  ; can become GLOM'd into a BLOCK!
 
         old-env: state.env
         return: adapt return/ [state.env: old-env]
@@ -2488,11 +2521,11 @@ default-combinators: make map! [
 
             if not error? ^temp: eval f [
                 [^temp pos subpending]: ^temp
-                if unset? $pos [
+                if unset? $pos [  ; !!! rethink check, could be any bad value
                     print mold:limit rules 200
                     panic "Combinator did not set remainder"
                 ]
-                if unset? $subpending [
+                if unset? $subpending [  ; rethink check...
                     print mold:limit rules 200
                     panic "Combinator did not set pending"
                 ]
@@ -2503,14 +2536,14 @@ default-combinators: make map! [
                 ][
                     ^result: ^temp  ; overwrite only if not ghost
                 ]
-                pending: glom pending spread subpending
+                glom $pending subpending
             ] else [
                 ^result: ()  ; reset, e.g. `[veto |]`
 
-                if not hole? pending [
+                if block? pending [
                     free pending  ; proactively release memory
+                    pending: hole
                 ]
-                pending: hole
 
                 ; If we fail a match, we skip ahead to the next alternate rule
                 ; by looking for an `|`, resetting the input position to where
@@ -2966,7 +2999,7 @@ parse*: func [
     "Process as much of the input as parse rules consume (see also PARSE)"
 
     return: [
-        ~[any-value? [hole? block!]]~
+        ~[any-value? [hole? quoted! block!]]~
         "Synthesized value from last match rule, and any pending values"
 
         error! "error if no match"
@@ -3054,7 +3087,7 @@ parse*: func [
     sys.util/recover:relax [  ; :RELAX allows RETURN from block
         [^synthesized remainder pending]: eval f except e -> [
             assert [empty? state.loops]
-            pending: hole  ; didn't get assigned due to error
+            ; pending + remainder + synthesized not assigned, due to error
             return fail e  ; wrappers catch
         ]
     ] then e -> [

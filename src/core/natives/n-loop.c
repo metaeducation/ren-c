@@ -888,6 +888,20 @@ DECLARE_NATIVE(CYCLE)
 }}
 
 
+// !!! The point of accepting QUOTED in the XXX-EACH iterators is for the
+// efficiency of not creating blocks.  But work needs to be done on the
+// internals to realize that efficiency.  For now, be slow and make the block
+// on the insides of the iteration, with an eye to improving in the future.
+//
+static void Morph_Quoted_To_Block(Element* data)
+{
+    assert(Is_Quoted(data));
+    Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
+    Unquotify(Copy_Cell(Stub_Cell(a), data));
+    Init_Block(data, a);
+}
+
+
 struct Reb_Enum_Series {
     Index index;  // index into the data for filling current variable
     REBLEN len;  // length of the data
@@ -921,6 +935,10 @@ typedef struct {
 Element* Init_Loop_Each_May_Alias_Data(Sink(Element) iterator, Stable* data)
 {
     assert(not Is_Api_Value(data));  // used to be cue to free, but not now
+
+    if (Is_Quoted(data)) {
+        Morph_Quoted_To_Block(Known_Element(data));
+    }
 
     require (
       LoopEachState *les = Alloc_On_Heap(LoopEachState)
@@ -1246,7 +1264,7 @@ void Shutdown_Loop_Each(Stable* iterator)
 //          [_ word! @word! block!]
 //      data "The series to traverse"
 //          [<opt> hole? any-series? any-context? map! any-sequence?
-//           action!]  ; action support experimental, e.g. generators
+//           action! quoted!]  ; action support experimental, e.g. generators
 //      body "Code to evaluate each time, if BREAK encountered returns NULL"
 //          [<const> block!]
 //      {iterator}
@@ -1527,7 +1545,7 @@ DECLARE_NATIVE(EVERY)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (modified)"
-//          [<opt> hole? any-series?]
+//          [<opt> hole? any-series?]  ; !!! can't do QUOTED!
 //      body "Block to evaluate each time, return NULL if BREAK hit"
 //          [<const> block!]
 //  ]
@@ -1889,7 +1907,12 @@ DECLARE_NATIVE(REMOVE_EACH)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
-//          [<opt-out> hole? action! any-series? any-sequence? any-context?]
+//          [
+//              <opt-out> hole?
+//              quoted!
+//              any-series? any-sequence? any-context?
+//              action!
+//          ]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
 //      {iterator}

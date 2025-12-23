@@ -15,7 +15,7 @@
     ugly-combinators.(group!): combinator [
         return: [any-stable? pack!]
         input [any-series?]
-        :pending [hole? block!]   ; we retrigger combinator; it may KEEP, etc.
+        {pending}: [hole? quoted! block!]   ; combinator may KEEP, etc.
         value [group?]
         {r comb}
     ][
@@ -28,8 +28,6 @@
         if antiform? ^r [
             panic "Misguided GROUP! cannot make non-ghostly antiforms"
         ]
-
-        pending: hole
 
         r: ^r  ; only needed as ^META to check for ghosts
 

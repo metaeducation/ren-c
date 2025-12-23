@@ -1582,121 +1582,165 @@ DECLARE_NATIVE(ENVELOP)
 //
 //  glom: native [
 //
-//  "Efficient destructive appending operation that will reuse appended memory"
+//  "Efficient destructive merging operation that reuses appended memory"
 //
-//      return: [hole? block!]
-//      accumulator [hole? block!]
-//      value [<opt> element? splice!]
+//      return: [hole? block! quoted!]
+//      items1 [
+//          word! tuple!  "variable to fetch and update with result"
+//          hole?  "empty value, will be ignored"
+//          block!  "list of items"
+//          quoted!  "single item using a QUOTED! as a light container"
+//      ]
+//      items2 [hole? block! quoted!]  ; spec used for typecheck of var
 //  ]
 //
 DECLARE_NATIVE(GLOM)
 //
 // GLOM was designed to bubble up `pending` values (e.g. collected values) in
 // UPARSE, which are lists...but often they will be empty.  So creating lots of
-// empty blocks was undesirable.  So having the accumulators start at hole
+// empty blocks was undesirable.  Allowing accumulators to start at hole
 // and be willing to start by taking over a bubbled up BLOCK! was desirable.
+// Using QUOTED! as a light container for one item also has benefits.
 //
 // https://rebol.metaeducation.com/t/consuming-append-like-operator/1647
 //
-// !!! This logic is repeated in APPEND etc.  It should be factored out.
+// GLOM only works with mutable arrays, as part of its efficiency.  Diminish
+// the smaller array that we are not returning so GC will reclaim its memory
+// (even if there are outstanding references--it will canonize them to a
+// canon freed Stub when it does the sweeping).
 //
 // 1. If the accumulator or result are blocks, there's no guarantee they are
-//    at the head.  Series_Index() might be nonzero.  GLOM could prohibit that or
-//    just take advantage of it if it's expedient (e.g. avoid a resize by
+//    at the head.  Series_Index() might be nonzero.  GLOM could prohibit that
+//    or just take advantage of it if it's expedient (e.g. avoid a resize by
 //    moving the data within an array and returning a 0 index).
 {
     INCLUDE_PARAMS_OF_GLOM;
 
-    Stable* accumulator = ARG(ACCUMULATOR);  // may not be at head [1]
+  fetch_and_typecheck_items1_if_passed_as_var: {
 
-    if (not ARG(VALUE))
-        return COPY(accumulator);
+    assert(Is_Cell_Erased(SCRATCH));
 
-    Stable* value = unwrap ARG(VALUE);  // may not be at head [1]
+    if (Is_Word(ARG(ITEMS1)) or Is_Tuple(ARG(ITEMS1))) {
+        Copy_Cell(SCRATCH, ARG(ITEMS1));
+        heeded (Corrupt_Cell_If_Needful(SPARE));
 
-    if (Is_Hole(value))
-        return COPY(accumulator);
+        STATE = 1;  // required :-/
 
-    if (Is_Block(accumulator))
-        goto handle_block_accumulator;
+        require (
+            Get_Var_In_Scratch_To_Out(LEVEL, NO_STEPS)
+        );
 
-  handle_hole_accumulator: {
+        ParamList* paramlist = Phase_Paramlist(Frame_Phase(LIB(GLOM)));
+        Param* param = Phase_Param(paramlist, PARAM_INDEX(ITEMS2));
 
-    assert(Is_Hole(accumulator));
+        require (
+          bool check = Typecheck_Coerce_Uses_Spare_And_Scratch(
+            LEVEL, param, OUT
+          )
+        );
 
-    if (Is_Splice(value)) {  // see note: index may be nonzero
-        Copy_Cell(OUT, value);
-        LIFT_BYTE(OUT) = NOQUOTE_2;
-        KIND_BYTE(OUT) = TYPE_BLOCK;
-        return OUT;
+        Copy_Cell(SCRATCH, ARG(ITEMS1));  // save again (for writeback)
+        Copy_Cell(LOCAL(ITEMS1), OUT);
+
+        if (not check)
+            panic (Error_Invalid_Arg(LEVEL, param));
     }
 
-    Source* a = Make_Source_Managed(1);
-    Set_Flex_Len(a, 1);
-    Copy_Cell(Array_Head(a), cast(Element*, value));
-    return Init_Block(OUT, a);
+} handle_hole_cases: {
 
-} handle_block_accumulator: { ////////////////////////////////////////////////
+    if (Is_Hole(ARG(ITEMS1))) {
+        Copy_Cell(OUT, ARG(ITEMS2));  // one is a hole, two may or may not be
+        goto return_out;
+    }
 
-    assert(Is_Block(accumulator));
-    Source* a = Cell_Array_Ensure_Mutable(accumulator);
+    if (Is_Hole(ARG(ITEMS2))) {  // two isn't a hole, but one is
+        Copy_Cell(OUT, ARG(ITEMS1));
+        goto return_out;
+    }
 
-    if (Is_Splice(value))
-        goto append_many_items;
+    Element* one = Element_ARG(ITEMS1);  // may not be at head [1]
+    Element* two = Element_ARG(ITEMS2);  // may not be at head [1]
 
-  append_one_item: { /////////////////////////////////////////////////////////
+    if (Is_Quoted(one) and Is_Quoted(two)) {  // both quoted, make block
+        Source* a = Make_Source_Managed(2);
+        Set_Flex_Len(a, 2);
+        Unquotify(Copy_Cell(Array_Head(a), one));
+        Unquotify(Copy_Cell(Array_At(a, 1), two));
+        Init_Block(OUT, a);
+        goto return_out;
+    }
 
-    // Here we are just appending one item.  We don't do anything special
-    // at this time, but we should be willing to return Series_Index()=0 and
-    // reclaim any bias or space at the head vs. doing an expansion.  In
-    // practice all GLOM that exist for the moment will be working on
-    // series that are at their head, so this won't help.
+  handle_one_as_block_and_two_as_quoted: {
 
+    if (Is_Block(one) and Is_Quoted(two)) {
+        Source* a = Cell_Array_Ensure_Mutable(one);
+
+        require (
+          Sink(Element) cell = Alloc_Tail_Array(a)
+        );
+        Unquotify(Copy_Cell(cell, two));
+        Copy_Cell(OUT, one);
+        goto return_out;
+    }
+
+} handle_one_as_quoted_and_two_as_block: {
+
+    if (Is_Quoted(one) and Is_Block(two)) {
+        Unquotify(one);
+        require (
+          Modify_List(
+            two, ST_MODIFY_INSERT, one, UNLIMITED, not AM_LINE, UNLIMITED, 1
+          )
+        );
+        Copy_Cell(OUT, two);
+        goto return_out;
+    }
+
+} handle_one_as_bigger: {
+
+    assert(Is_Block(one) and Is_Block(two));
+
+    Source* a1 = Cell_Array_Ensure_Mutable(one);  // ensure mutability...
+    Source* a2 = Cell_Array_Ensure_Mutable(two);  // ...one Diminish()ed below
+
+    if (Array_Len(a1) > Array_Len(a2)) {
+        Copy_Cell(OUT, one);
+        SERIES_INDEX_UNBOUNDED(one) = Array_Len(a1);
+        Stable* splice = Splicify(Stable_LOCAL(ITEMS2));
+        require (
+          Modify_List(
+            one, ST_MODIFY_INSERT, splice, UNLIMITED, not AM_LINE, UNLIMITED, 1
+          )
+        );
+        Diminish_Stub(a2);
+        goto return_out;
+    }
+
+ handle_two_as_bigger: {
+
+    Copy_Cell(OUT, two);
+    Stable* splice = Splicify(Stable_LOCAL(ITEMS1));
     require (
-      Sink(Element) cell = Alloc_Tail_Array(a)
+      Modify_List(
+        two, ST_MODIFY_INSERT, splice, UNLIMITED, not AM_LINE, UNLIMITED, 1
+      )
     );
-    Copy_Cell(cell, Known_Element(value));
-    return COPY(accumulator);
+    Diminish_Stub(a1);
+    goto return_out;
 
-} append_many_items: { ///////////////////////////////////////////////////////
+}}} return_out: {  ///////////////////////////////////////////////////////////
 
-    // We're appending multiple items from result.  But we want to avoid
-    // allocating new arrays if at all possible...and we are fluidly willing
-    // to promote the result array to be the accumulator if that is necessary.
-    //
-    // But in the interests of time, just expand the target array for now
-    // if necessary--work on other details later.
+  // If we were passed a variable that we fetched, we also need to do the
+  // update of that variable with whatever we put in OUT.
 
-    Array* r = Cell_Array_Ensure_Mutable(value);
-    Length a_len = Array_Len(a);
-    Length r_len = Array_Len(r);
-    require (
-      Expand_Flex_Tail_And_Update_Used(a, r_len)  // moves memory, get `at` after
-    );
-    Element* dst = Array_At(a, a_len);  // old tail position
-    Element* src = Array_Head(r);
+    if (not Is_Cell_Erased(SCRATCH)) {
+      require (
+        Set_Var_In_Scratch_To_Out(LEVEL, GROUPS_OK)
+      );
+    }
 
-    Index index;
-    for (index = 0; index < r_len; ++index, ++src, ++dst)
-        Copy_Cell(dst, src);
-
-    assert(Array_Len(a) == a_len + r_len);  // Expand_Flex updated
-
-  #if DEBUG_POISON_FLEX_TAILS
-    Term_Flex_If_Necessary(a);
-  #endif
-
-  diminish_stub: { ////////////////////////////////////////////////////////////
-
-    // GLOM only works with mutable arrays, as part of its efficiency.  We
-    // show a hint of the optimizations to come by decaying the incoming
-    // result array (we might sporadically do it the other way just to
-    // establish that the optimizations could obliterate either).
-
-    Diminish_Stub(r);
-
-    return COPY(accumulator);
-}}}}
+    return OUT;
+}}
 
 
 #if RUNTIME_CHECKS
