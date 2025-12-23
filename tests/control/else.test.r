@@ -91,21 +91,21 @@
 
 [
     ~no-arg~ !! (else [~unused~])
-    (() then [okay])  ; VOID! with THEN is legal...
+    (() then [okay])  ; GHOST! with THEN is legal...
     (1000 + 20 () then [okay])
 
-    (^void then [okay])
-    (1020 = (1000 + 20 elide-if-void (^void else [panic ~#unreachable~])))
+    (^ghost then [okay])
+    (1020 = (1000 + 20 elide-if-void (^ghost else [panic ~#unreachable~])))
 
-    ((^void) then [okay])
-    (void? (1000 + 20 ((^void) else [panic ~#unreachable~])))
+    ((^ghost) then [okay])
+    (ghost? (1000 + 20 ((^ghost) else [panic ~#unreachable~])))
 
     (eval [] then [okay])
-    (void? eval [] else [panic ~#unreachable~])
+    (ghost? eval [] else [panic ~#unreachable~])
 ]
 
 [
-    (foo: func [] [return ^void], ok)
+    (foo: func [] [return ^ghost], ok)
     (foo then [okay])
     (1020 = (1000 + 20 elide-if-void (foo else [panic ~#unreachable~])))
 ]
@@ -124,8 +124,8 @@
 
 ; https://forum.rebol.info/t/2176
 [
-    (null = (null else (^void)))
-    (^void = (^void else (^void)))
+    (null = (null else (^ghost)))
+    (^ghost = (^ghost else (^ghost)))
 
-    (3 = (if ok [1 + 2] then (^void)))
+    (3 = (if ok [1 + 2] then (^ghost)))
 ]

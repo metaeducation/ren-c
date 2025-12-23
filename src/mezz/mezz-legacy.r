@@ -65,7 +65,7 @@ prin: proc [
     value [<opt> element?]
 ][
     write stdout switch:type value [
-        null?/ [exit]  ; <opt> turns from VOID! or NONE to null
+        null?/ [exit]  ; <opt> turns from GHOST! or HEAVY VOID to null
         text! rune! [value]
         block! [spaced value]
     ] else [

@@ -74,7 +74,7 @@
     === GENERATE, no stop ===
     ; Fibonacci numbers, forever
 
-    sequence: giulio-generate [a: b: 1] ^void [c: a + b a: b b: c]
+    sequence: giulio-generate [a: b: 1] ^ghost [c: a + b a: b b: c]
     [1 2 3 5 8 13] = collect [for-each 'x sequence/ [
         keep x
         if x >= 10 [break]  ;  <- manual break

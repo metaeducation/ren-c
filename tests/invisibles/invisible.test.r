@@ -4,7 +4,7 @@
 ; "Opportunistic Invisibility" means that functions can treat invisibility as
 ; a return type, decided on after they've already started running.
 [
-    (vanish-if-odd: func [return: [void! integer!] x] [
+    (vanish-if-odd: func [return: [ghost! integer!] x] [
         if even? x [return x]
         return ~,~
     ] ok)
@@ -12,7 +12,7 @@
     (2 = (<test> vanish-if-odd 2))
     (<test> = (<test> vanish-if-odd 1))
 
-    (vanish-if-even: func [return: [void! integer!] y] [
+    (vanish-if-even: func [return: [ghost! integer!] y] [
         return unlift ^(vanish-if-odd y + 1)
     ] ok)
 
@@ -33,7 +33,7 @@
         int-spec 10
     )
     (
-        invis-spec: func [return: [void! integer!] x] [
+        invis-spec: func [return: [ghost! integer!] x] [
             return ~,~
         ]
         <test> = (<test> invis-spec 10)
@@ -51,7 +51,7 @@
     all [
         "Hello World." = add-period "Hello World"
         num-runs = 1
-        null = add-period ^void  ; shouldn't run ADD-PERIOD body
+        null = add-period ^ghost  ; shouldn't run ADD-PERIOD body
         num-runs = 1
     ]
 )

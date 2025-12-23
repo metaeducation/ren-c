@@ -73,7 +73,7 @@
 ; ENRESCUE (similar to RESCUE but single result, LIFT'ed if not an error)
 
 #enrescue (
-    (lift ^void) = enrescue []
+    (lift ^ghost) = enrescue []
 )
 #enrescue (
     (lift null) = enrescue [null]

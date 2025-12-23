@@ -1,6 +1,6 @@
 //
 //  file: %cell-comma.h
-//  summary: "COMMA! Datatype and Vanishing VOID! Antiform of ~,~"
+//  summary: "COMMA! Datatype and Vanishing GHOST! Antiform of ~,~"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
@@ -31,7 +31,7 @@
 //
 // It has the property that it renders "glued" to the element to the left.
 //
-// Commas are recognized specially by the evaluator, and produce a VOID!:
+// Commas are recognized specially by the evaluator, and produce a GHOST!:
 //
 //     >> eval:step [1 + 2, 10 + 20]
 //     == [, 10 + 20]  ; new position, but produced 3 as product
@@ -63,7 +63,7 @@ INLINE Element* Init_Comma_Untracked(Init(Element) out) {
     TRACK(Init_Comma_Untracked(out))
 
 
-//=//// VOID! (COMMA! ANTIFORM) ///////////////////////////////////////////=//
+//=//// GHOST! (COMMA! ANTIFORM) ///////////////////////////////////////////=//
 //
 // The unstable ~,~ antiform is used to signal vanishing intent, e.g. it is
 // the return result of things like COMMENT and ELIDE.  It only *actually*
@@ -71,18 +71,18 @@ INLINE Element* Init_Comma_Untracked(Init(Element) out) {
 // marked vanishable using the `^` operator.
 //
 // See Evaluator_Executor() for how stepping over a block retains the last
-// value at each step, so that if a step produces a VOID! the previous
+// value at each step, so that if a step produces a GHOST! the previous
 // evaluation can be preserved.
 //
 
 INLINE Value* Init_Void_Untracked(Init(Value) out) {
     Init_Comma_Untracked(out);
     Unstably_Antiformize_Unbound_Fundamental(out);
-    assert(Is_Void(out));
+    assert(Is_Ghost(out));
     return out;
 }
 
-#define Init_Void(out) \
+#define Init_Ghost(out) \
     TRACK(Init_Void_Untracked(out))
 
 
@@ -98,7 +98,7 @@ INLINE Value* Init_Void_Untracked(Init(Value) out) {
 // ^META parameters from being <end>-able and close that loophole, or leave
 // it open and just accept the conflation.
 //
-// This usage of VOID! applies in other places, such as when a PACK! has
+// This usage of GHOST! applies in other places, such as when a PACK! has
 // too few values, as this is more useful than erroring in the moment:
 //
 //     >> [a b c]: pack [1 2]
@@ -110,12 +110,12 @@ INLINE Value* Init_Void_Untracked(Init(Value) out) {
 //     >> b
 //     == 2
 //
-//     >> void? ^c
+//     >> ghost? ^c
 //     == \~okay~\  ; antiform
 //
 // Trash would be another possible choice (and able to store a message, like
 // ~#PACK-TOO-SHORT~).  But the mechanics of the system are geared toward
-// graceful handling of VOID! with <opt> and null inter-convertibility, which
+// graceful handling of GHOST! with <opt> and null inter-convertibility, which
 // aren't properties that one generally wants for TRASH!...that's designed to
 // throw a deliberate informative wrench into things, to let you know why
 // a variable has been "poisoned".  You shouldn't really be manipulating or
@@ -123,11 +123,11 @@ INLINE Value* Init_Void_Untracked(Init(Value) out) {
 // that is intended to stay trash for a reason...)
 //
 
-#define Init_Void_For_End(out)  Init_Void(out)
-#define Is_Endlike_Void(v)  Is_Void(v)
+#define Init_Void_For_End(out)  Init_Ghost(out)
+#define Is_Endlike_Void(v)  Is_Ghost(v)
 
-#define Init_Void_For_Unset(out)  Init_Void(out)
-#define Is_Unsetlike_Void(v)  Is_Void(v)
+#define Init_Void_For_Unset(out)  Init_Ghost(out)
+#define Is_Unsetlike_Void(v)  Is_Ghost(v)
 
-#define Init_Unspecialized_Void(out)  Init_Void(out)
-#define Is_Unspecialized_Void(v)  Is_Void(v)
+#define Init_Unspecialized_Void(out)  Init_Ghost(out)
+#define Is_Unspecialized_Void(v)  Is_Ghost(v)

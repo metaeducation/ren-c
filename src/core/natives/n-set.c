@@ -232,7 +232,7 @@ Result(bool) Push_Set_Block_Instructions_To_Stack_Throws(
             Drop_Data_Stack_To(STACK_BASE);
             return true;
         }
-        if (Is_Ghostly(SPARE) and Is_Group(scratch)) {
+        if (Any_Void(SPARE) and Is_Group(scratch)) {
             Init_Quasar(PUSH());  // [(void)]: ... pass thru
         }
         else {
@@ -554,8 +554,7 @@ DECLARE_NATIVE(SET)
   // 1. We don't want to decay the value if we're going to pass it to TWEAK
   //    because (for instance) unstable ACTION-PACK! antiforms need to be
   //    passed to tweak so it knows an action assignment is "unsurprising".
-  //    Also, VOID! and NONE are used to unset variables even if they
-  //    are not metaforms.
+  //    Also, VOID is used to unset variables even if they are not metaforms.
 
     if (Is_Word(target) or Is_Tuple(target))
         dont(Decay_If_Unstable(v));  // TWEAK needs undecayed [1]

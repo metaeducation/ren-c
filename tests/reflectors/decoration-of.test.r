@@ -4,7 +4,7 @@
 ; sequence types.
 
 (not decoration of [a b c])
-([a b c] = decorate ^void [a b c])
+([a b c] = decorate ^ghost [a b c])
 
 (
     d: decoration of the :tu.p.le

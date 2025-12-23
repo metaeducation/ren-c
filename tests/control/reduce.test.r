@@ -68,7 +68,7 @@
 ([] = reduce [opt ~null~])
 
 
-([] = reduce [^void])
+([] = reduce [^ghost])
 
 
 ; === PREDICATES ===
@@ -91,7 +91,7 @@
 ; https://forum.rebol.info/t/should-void-be-offered-to-predicates-for-reduce-any-all-etc/1872
 ;
 (['3 ~[]~ '300] = reduce:predicate [
-    1 + 2 ^void 100 + 200
+    1 + 2 ^ghost 100 + 200
 ] lift/)
 
 ([-3 -300] = reduce:predicate [1 + 2 when null [10 + 20] 100 + 200] negate/)

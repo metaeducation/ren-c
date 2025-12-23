@@ -232,7 +232,7 @@
     ~parse-mismatch~ !! (parse "aa" [repeat 3 #a])
 
     (#a = parse "aa" [some [#a]])
-    (void? parse "aa" [some [#a] repeat (#) [#b]])
+    (ghost? parse "aa" [some [#a] repeat (#) [#b]])
     ("b" = parse "aabb" [repeat 2 #a, repeat 2 "b"])
 
     ~parse-mismatch~ !! (parse "aabb" [repeat 2 "a", repeat 3 #b])

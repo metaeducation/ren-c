@@ -174,7 +174,7 @@ help-value: proc [
         splice? ^value ['splice!]
         action? ^value ['action]
         pack? ^value ['pack!]
-        void? ^value ['void!]
+        ghost? ^value ['ghost!]
         error? ^value ['error!]
 
         antiform? ^value [

@@ -210,6 +210,7 @@ for-each [alias] [
     bind3:                      ; BIND's arguments reversed
     head3:                      ; use HEAD OF instead
     tail3:                      ; use TAIL OF instead
+    void3:                      ; use ^GHOST instead
 
     issue3!:                    ; now it's rune!
     issue3?:                    ; ...
@@ -292,14 +293,12 @@ set the __ "  "
 ; of assigning void producing the "unset" state (trash for bootstrap, but
 ; void for modern Ren-C), this bridges the gap for now.
 
-^void: infix lambda3 [:left [<skip> set-word3!]] [
+^ghost: infix lambda3 [:left [<skip> set-word3!]] [
     if left [set:any left ~]  ; set set-words to trash (unset concept)
     ~void~  ; otherwise
 ]
 
-void: ~#[Use a caret if you want to refer to void, eventually can use ()]#~
-
-ghostly?: void?/
+void: ~#[Use ^GHOST to refer to void in bootstrap, eventually will use ()]#~
 
 
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
@@ -464,7 +463,7 @@ spread: func3 [
 ][
     return case [
         null? :x [return null]
-        void? :x [return ^void]
+        void? :x [return void3]
         <else> [reduce [#splice! x]]
     ]
 ]
@@ -641,7 +640,7 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
 
         if antiform? unlift product [
             if void? unlift product [
-                change3:part pos ^void 1
+                change3:part pos ^ghost 1
                 continue
             ]
             panic:blame [mold product "antiform compose found"] $return
@@ -868,7 +867,7 @@ modernize-action: func3 [
                     keep3:only spec.1
                 ]
 
-                if spec.1 = [void?] [
+                if spec.1 = [ghost?] [
                     keep3:only []  ; old cue for invisibility
                     spec: my next
                     continue
@@ -1160,18 +1159,18 @@ blockify: func3 [x] [
 
 assert [[a b c d e] = append [a b c] spread [d e]]
 assert [[a b c [d e]] = append [a b c] [d e]]
-assert [[a b c] = append [a b c] ^void]
-assert [null = append ^void [d e]]
+assert [[a b c] = append [a b c] ^ghost]
+assert [null = append ^ghost [d e]]
 
 assert [[d e a b c] = head of insert [a b c] spread [d e]]
 assert [[[d e] a b c] = head of insert [a b c] [d e]]
-assert [[a b c] = head of insert [a b c] ^void]
-assert [null = insert ^void [d e]]
+assert [[a b c] = head of insert [a b c] ^ghost]
+assert [null = insert ^ghost [d e]]
 
 assert [[d e c] = head of change [a b c] spread [d e]]
 assert [[[d e] b c] = head of change [a b c] [d e]]
-assert [[a b c] = head of change [a b c] ^void]
-assert [null = change ^void [d e]]
+assert [[a b c] = head of change [a b c] ^ghost]
+assert [null = change ^ghost [d e]]
 
 === "END ENCLOSURE THAT AVOIDED OVERWRITING TOP-LEVEL DECLS" ===
 

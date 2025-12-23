@@ -51,7 +51,7 @@
     (1020 = (heavy null then [1020] else [304]))
 
     ((lift null) = lift light heavy null)
-    ((lift ^void) = lift light heavy ^void)
+    ((lift ^ghost) = lift light heavy ^ghost)
 ]
 
 ; Conditionals return NULL on failure, and ~[~null~]~ antiform on a branch that
@@ -64,9 +64,9 @@
     ~illegal-keyword~ !! (if ok [~asdf~])  ; not all keywords legal
     (''~asdf~ = lift if ok ['~asdf~])  ; but okay as quasiforms
 
-    ((lift ^void) <> lift ~()~)
-    (not (lift ^void) = first [~()~])
-    (not (lift ^void) = ^void)
+    ((lift ^ghost) <> lift ~()~)
+    (not (lift ^ghost) = first [~()~])
+    (not (lift ^ghost) = ^ghost)
 ]
 
 ; If your type constraint on return is NULL?, that doesn't accept heavy

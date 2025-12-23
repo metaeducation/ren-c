@@ -151,8 +151,8 @@
 )
 (null? get:groups $())
 (null? get:groups ())
-(null? get:groups ^void)
-(null? get:groups (^void))
+(null? get:groups ^ghost)
+(null? get:groups (^ghost))
 
 ('~['1 '2]~ = lift get ['1 '2])
 (

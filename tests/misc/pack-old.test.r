@@ -45,10 +45,10 @@
         reduce:predicate block lift/
     ]
 
-    let ^result: ^void
+    let ^result: ^ghost
     for-each [val'] block [
-        if void? ^result [
-            ^result: either space? vars.1 [^void] [unlift val']
+        if ghost? ^result [
+            ^result: either space? vars.1 [^ghost] [unlift val']
         ]
         if tail? vars [
             panic "Too many values for vars in PACK (use <...> if on purpose)"

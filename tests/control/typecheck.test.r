@@ -5,10 +5,10 @@
 
 ; If you don't want decay you have to use :META
 ;
-~???~ !! (typecheck [void?] ^void)
-~???~ !! (typecheck [integer!] ^void)
-(typecheck:meta [void?] ^void)
-(not typecheck:meta [integer!] ^void)
+~???~ !! (typecheck [ghost?] ^ghost)
+~???~ !! (typecheck [integer!] ^ghost)
+(typecheck:meta [ghost?] ^ghost)
+(not typecheck:meta [integer!] ^ghost)
 
 ; ERROR! will be decayed by default, can't pass test
 ;

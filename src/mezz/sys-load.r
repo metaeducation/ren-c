@@ -641,7 +641,7 @@ export*: func [
         if set-group? what [
             ^what: eval unchain what
             word: case [
-                ghostly? ^what [null]
+                void? ^what [null]
                 word? ^what [^what]
                 match [word!:] ^what [unchain ^what]
                 match [/word!:] ^what [unchain unpath ^what]

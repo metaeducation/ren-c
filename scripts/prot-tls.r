@@ -220,7 +220,7 @@ emit: proc [
         else [
             let result
             if [code ^result]: evaluate:step code [
-                if ghostly? ^result [continue]  ; invisible
+                if void? ^result [continue]  ; invisible
                 append ctx.msg ensure blob! ^result
             ]
         ]

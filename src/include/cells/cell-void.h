@@ -56,15 +56,15 @@ INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
         (out), TYPE_BLOCK, (a), 0, SPECIFIED)))
 
 
-//=//// "NONE" (EMPTY PACK! ANTIFORM) /////////////////////////////////////=//
+//=//// "HEAVY VOID" (EMPTY PACK! ANTIFORM) ///////////////////////////////=//
 
-#define Init_None_Untracked(out) \
+#define Init_Heavy_Void_Untracked(out) \
     Init_Pack_Untracked((out), g_empty_array)
 
-#define Init_None(out) \
-    TRACK(Init_None_Untracked(out))
+#define Init_Heavy_Void(out) \
+    TRACK(Init_Heavy_Void_Untracked(out))
 
-INLINE bool Is_None(Exact(const Value*) v) {
+INLINE bool Is_Heavy_Void(Exact(const Value*) v) {
     if (not Is_Pack(v))
         return false;
     const Element* tail;
@@ -72,7 +72,7 @@ INLINE bool Is_None(Exact(const Value*) v) {
     return tail == at;
 }
 
-INLINE Element* Init_Lifted_None_Untracked(Sink(Element) out) {
+INLINE Element* Init_Lifted_Heavy_Void_Untracked(Sink(Element) out) {
     Init_Any_List_At_Core_Untracked(
         out, TYPE_BLOCK, g_empty_array, 0, SPECIFIED
     );
@@ -80,10 +80,10 @@ INLINE Element* Init_Lifted_None_Untracked(Sink(Element) out) {
     return out;
 }
 
-#define Init_Lifted_None(out) \
-    TRACK(Init_Lifted_None_Untracked((out)))
+#define Init_Lifted_Heavy_Void(out) \
+    TRACK(Init_Lifted_Heavy_Void_Untracked((out)))
 
-INLINE bool Is_Lifted_None(const Stable* v) {
+INLINE bool Is_Lifted_Heavy_Void(const Stable* v) {
     if (not Is_Lifted_Pack(v))
         return false;
     const Element* tail;
@@ -91,10 +91,10 @@ INLINE bool Is_Lifted_None(const Stable* v) {
     return tail == at;
 }
 
-INLINE bool Is_Ghostly(Exact(const Value*) v) {
-    return Is_Void(v) or Is_None(v);
+INLINE bool Any_Void(Exact(const Value*) v) {
+    return Is_Ghost(v) or Is_Heavy_Void(v);
 }
 
-INLINE bool Is_Lifted_Ghostly(const Stable* v) {
-    return Is_Lifted_Void(v) or Is_Lifted_None(v);
+INLINE bool Is_Any_Lifted_Void(const Stable* v) {
+    return Is_Lifted_Ghost(v) or Is_Lifted_Heavy_Void(v);
 }

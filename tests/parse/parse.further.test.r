@@ -11,7 +11,7 @@
 ("at least 1" = parse "a" [further [opt "a" opt "b"] ("at least 1")])
 ("at least 1" = parse "ab" [further [opt "a" opt "b"] ("at least 1")])
 
-(void? parse "" [repeat (#) some further [to <end>]])
+(ghost? parse "" [repeat (#) some further [to <end>]])
 
 [https://github.com/red/red/issues/3927
     ~parse-incomplete~ !! (parse "bx" [some further [not ahead "b" | one]])

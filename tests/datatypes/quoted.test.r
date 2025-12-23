@@ -121,13 +121,13 @@
 )
 
 
-(void? ~[]~)
-(void? ^void)
-(void? eval [^void])
-(void? (eval [^void]))
-(void? eval [~[]~])
-(void? eval [, ~[]~,])
-(void? eval [1 + 2, ^void])
+(ghost? ~[]~)
+(ghost? ^ghost)
+(ghost? eval [^ghost])
+(ghost? (eval [^ghost]))
+(ghost? eval [~[]~])
+(ghost? eval [, ~[]~,])
+(ghost? eval [1 + 2, ^ghost])
 
 (
     [1 (2 + 3) [4 + 5] a/+/b c.+.d: :e.+.f]
@@ -145,7 +145,7 @@
 ; No quote levels is legal for QUOTE to add also, if /DEPTH is 0
 [
     (<x> = quote:depth <x> 0)
-    ~expect-arg~ !! (void? quote:depth ^void 0)  ; can't quote voids, only lift
+    ~expect-arg~ !! (ghost? quote:depth ^ghost 0)  ; can't quote voids, only lift
 ]
 
 ; low level "KIND"

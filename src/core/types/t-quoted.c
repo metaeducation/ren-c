@@ -246,7 +246,7 @@ DECLARE_NATIVE(LIFT)
         if (Is_Error(v))
             panic (Cell_Error(v));  // conservative... should it passthru?
 
-        if (Is_Light_Null(v) or Is_Ghostly(v))
+        if (Is_Light_Null(v) or Any_Void(v))
             return COPY(v);  // ^META valid [1]
 
         LIFT_BYTE(v) = NOQUOTE_2;  // META:LITE gives plain for the rest
@@ -264,7 +264,7 @@ DECLARE_NATIVE(LIFT)
 //
 //      return: [any-value?]
 //      ^value "Can be plain or antiform like NULL or VOID if :LITE"
-//          [<null> <ghost> element? quoted! quasiform!]
+//          [<null> <void> element? quoted! quasiform!]
 //      :lite "Pass thru NULL and GHOSTLY? antiforms as-is"
 //  ]
 //
@@ -284,7 +284,7 @@ DECLARE_NATIVE(UNLIFT)
     }
 
     if (Is_Antiform(v)) {
-        assert(Is_Ghostly(v) or Is_Light_Null(v));
+        assert(Any_Void(v) or Is_Light_Null(v));
         if (not ARG(LITE))
             panic ("UNLIFT only accepts NULL or VOID/NONE if :LITE");
         return COPY(v);  // pass through as-is
@@ -408,13 +408,13 @@ DECLARE_NATIVE(UNANTI)
 //
 //      return: [
 //          splice! "note that splices carry no bindings"
-//          <ghost> <null> "void/none and null pass through"
+//          <void> <null> "void/none and null pass through"
 //      ]
 //      ^value [
 //          any-list? "plain lists become splices"
 //          hole? "empty splices pass through as empty splice"  ; [1]
 //          quasiform! "automatic DEGRADE quasiform lists to splice"  ; [2]
-//          <ghost> <null> "void/none and null pass through"
+//          <void> <null> "void/none and null pass through"
 //      ]
 //  ]
 //
@@ -434,8 +434,8 @@ DECLARE_NATIVE(SPREAD)
 {
     INCLUDE_PARAMS_OF_SPREAD;
 
-    if (Is_Ghostly(ARG(VALUE)))
-        return VOID;  // void is a no-op, so just pass it through
+    if (Any_Void(ARG(VALUE)))
+        return GHOST;  // void is a no-op, so just pass it through
 
     Stable* v = Known_Stable(ARG(VALUE));
 
@@ -446,7 +446,7 @@ DECLARE_NATIVE(SPREAD)
         return COPY(Splicify(v));
 
     if (Is_Hole(v))
-        return VOID;  // immutable empty array makes problems for GLOM [3]
+        return GHOST;  // immutable empty array makes problems for GLOM [3]
 
     if (Is_Nulled(v) or Is_Quasi_Null(v))  // quasi ok [2]
         return Init_Nulled(OUT);  // pass through [1]
@@ -627,7 +627,7 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
     if (Is_Error(v))
         return COPY(v);  // will pass thru vetos, and other errors
 
-    if (Is_Ghostly(v))
+    if (Any_Void(v))
         goto opting_out;  // void => void in OPT, or void => veto in OPT:VETO
 
   decay_if_unstable: {
@@ -647,18 +647,18 @@ static Bounce Optional_Intrinsic_Native_Core(Level* level_, bool veto) {
     if (veto)
         return fail (Cell_Error(g_error_veto));  // OPT:VETO
 
-    return VOID;
+    return GHOST;
 }}
 
 
 //
 //  optional: native:intrinsic [
 //
-//  "If argument is NULL, make it VOID! (or VETO), else passthru"
+//  "If argument is NULL, make it GHOST! (or VETO), else passthru"
 //
-//      return: [any-value? void! error!]
+//      return: [any-value? ghost! error!]
 //      ^value [any-value?]
-//      :veto "If true, then return VETO instead of VOID!"
+//      :veto "If true, then return VETO instead of GHOST!"
 //  ]
 //
 DECLARE_NATIVE(OPTIONAL)  // ususally used via its aliases of OPT or ?

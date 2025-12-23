@@ -117,7 +117,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Environment)
         panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
-    if (Is_Lifted_Ghostly(dual)) {
+    if (Is_Any_Lifted_Void(dual)) {
         poke = nullptr;
         goto update_environment;
     }

@@ -4,11 +4,11 @@
 
 ; Edge case of matching END with THRU
 ;
-(void? parse "" [thru ["a" | <end>]])
-(void? parse [] [thru ["a" | <end>]])
+(ghost? parse "" [thru ["a" | <end>]])
+(ghost? parse [] [thru ["a" | <end>]])
 
 [
-    (void? parse [] [thru <end>])
+    (ghost? parse [] [thru <end>])
     ('a = parse [a] [thru 'a])
     ('a = parse [a] [thru 'a <end>])
     ~parse-mismatch~ !! (parse [a] [thru 'a one])
@@ -104,7 +104,7 @@
 )
 
 [
-    (void? parse "" [thru <end>])
+    (ghost? parse "" [thru <end>])
     (#a = parse "a" [thru #a])
     (#a = parse "a" [thru #a <end>])
     ~parse-mismatch~ !! (parse "a" [thru #a one])
@@ -135,7 +135,7 @@
         wa: [#{0A}]
         ok
     )
-    (void? parse #{} [thru <end>])
+    (ghost? parse #{} [thru <end>])
     (#{0A} = parse #{0A} [thru #{0A}])
     (#{0A} = parse #{0A} [thru #{0A} <end>])
     ~parse-mismatch~ !! (parse #{0A} [thru #{0A} one])

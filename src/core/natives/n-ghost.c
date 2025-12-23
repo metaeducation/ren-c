@@ -1,6 +1,6 @@
 //
 //  file: %n-ghost.c
-//  summary: "Native Functions for VOID! Datatype (COMMENT, ELIDE, etc.)"
+//  summary: "Native Functions for GHOST! Datatype (COMMENT, ELIDE, etc.)"
 //  section: natives
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
@@ -22,7 +22,7 @@
 //
 // For a long time, vanishing functions were not implemented as natives, due
 // to the desire to prove that they could be implemented in usermode.  But
-// now that VOID! is well understood and simple to use (vs. being esoteric
+// now that GHOST! is well understood and simple to use (vs. being esoteric
 // evaluator tricks on special infix functions), there's no reason not to
 // just implement them as fast intrinsics.
 //
@@ -33,23 +33,42 @@
 //
 //  nihil: vanishable native [
 //
-//  "Generate VOID! (arity-0 COMMENT)"
+//  "Generate GHOST! (arity-0 COMMENT)"
 //
-//      return: [void!]
+//      return: [ghost!]
 //  ]
 //
 DECLARE_NATIVE(NIHIL)
 {
     INCLUDE_PARAMS_OF_NIHIL;
 
-    return VOID;
+    return GHOST;
+}
+
+
+//
+//  ghost?: native:intrinsic [
+//
+//  "Tells you if argument is a comma antiform (unstable)"
+//
+//      return: [logic?]
+//      ^value [any-value?]
+//  ]
+//
+DECLARE_NATIVE(GHOST_Q)
+{
+    INCLUDE_PARAMS_OF_GHOST_Q;
+
+    Value* v = Intrinsic_ARG(LEVEL);
+
+    return LOGIC(Is_Ghost(v));
 }
 
 
 //
 //  void?: native:intrinsic [
 //
-//  "Tells you if argument is a comma antiform (unstable)"
+//  "Is VALUE a VOID (antiform comma, e.g. ghost!) or HEAVY VOID (empty pack!)"
 //
 //      return: [logic?]
 //      ^value [any-value?]
@@ -61,26 +80,7 @@ DECLARE_NATIVE(VOID_Q)
 
     Value* v = Intrinsic_ARG(LEVEL);
 
-    return LOGIC(Is_Void(v));
-}
-
-
-//
-//  ghostly?: native:intrinsic [
-//
-//  "Is VALUE either a VOID (antiform comma!) or NONE (empty antiform block!)"
-//
-//      return: [logic?]
-//      ^value [any-value?]
-//  ]
-//
-DECLARE_NATIVE(GHOSTLY_Q)
-{
-    INCLUDE_PARAMS_OF_GHOSTLY_Q;
-
-    Value* v = Intrinsic_ARG(LEVEL);
-
-    return LOGIC(Is_Ghostly(v));
+    return LOGIC(Any_Void(v));
 }
 
 
@@ -89,7 +89,7 @@ DECLARE_NATIVE(GHOSTLY_Q)
 //
 //  "Skip one element ahead, doing no evaluation (see also ELIDE)"
 //
-//      return: [void!]
+//      return: [ghost!]
 //      @skipped "Literal to skip, (comment print -[x]-) disallowed"
 //          [any-list? any-utf8? blob! any-scalar?]
 //  ]
@@ -98,7 +98,7 @@ DECLARE_NATIVE(COMMENT)
 {
     INCLUDE_PARAMS_OF_COMMENT;  // no ARG(SKIPPED), parameter is intrinsic
 
-    return VOID;
+    return GHOST;
 }
 
 
@@ -107,8 +107,8 @@ DECLARE_NATIVE(COMMENT)
 //
 //  "Argument evaluated, result discarded (not ERROR!, or packs with ERROR!s)"
 //
-//      return: [void!]
-//      ^discarded [any-stable? pack! void!]
+//      return: [ghost!]
+//      ^discarded [any-stable? pack! ghost!]
 //  ]
 //
 DECLARE_NATIVE(ELIDE)
@@ -121,7 +121,7 @@ DECLARE_NATIVE(ELIDE)
       Elide_Unless_Error_Including_In_Packs(v)
     );
 
-    return VOID;
+    return GHOST;
 }
 
 
@@ -130,7 +130,7 @@ DECLARE_NATIVE(ELIDE)
 //
 //  "Argument evaluated, result discarded (even ERROR! and undecayable packs)"
 //
-//      return: [void!]
+//      return: [ghost!]
 //      ^discarded [any-value?]
 //  ]
 //
@@ -138,14 +138,14 @@ DECLARE_NATIVE(IGNORE)
 {
     INCLUDE_PARAMS_OF_IGNORE;  // no ARG(DISCARDED), parameter is intrinsic
 
-    return VOID;
+    return GHOST;
 }
 
 
 //
 //  unvoid: native:intrinsic [  ; !!! Better name?
 //
-//  "If the argument is a VOID!, convert it to a NONE, else passthru"
+//  "If the argument is a GHOST!, convert it to a HEAVY VOID, else passthru"
 //
 //      return: [any-value?]
 //      ^value [any-value?]
@@ -160,8 +160,8 @@ DECLARE_NATIVE(UNVOID)
 
     Value* v = Intrinsic_ARG(LEVEL);
 
-    if (Is_Void(v))
-        return NONE;
+    if (Is_Ghost(v))
+        return Init_Heavy_Void(OUT);
 
     return COPY(v);
 }

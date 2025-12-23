@@ -57,7 +57,7 @@
     success: 'true
     blk: []
     all [
-        void? for 'i each blk [success: 'false]
+        ghost? for 'i each blk [success: 'false]
         true? success
     ]
 )
@@ -238,9 +238,9 @@
 
 ; HOLE acts same as empty block, void opts out and generates BREAK signal
 [
-    (void? for-each 'x [] [panic])
-    (void? for-each 'x hole [panic])
-    (null? for-each 'x ^void [panic])
+    (ghost? for-each 'x [] [panic])
+    (ghost? for-each 'x hole [panic])
+    (null? for-each 'x ^ghost [panic])
 
     ~expect-arg~ !! (for-each 'x '~ [panic])
     ~unspecified-arg~ !! (for-each 'x ~ [panic])

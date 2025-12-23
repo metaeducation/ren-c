@@ -440,7 +440,7 @@ bool Try_Get_Binding_Of(Sink(Element) out, const Element* wordlike)
 //      return: [
 //          any-stable?  "Expression result if (let x: <expr>)"
 //          word!        "the new variable if (let $x)"
-//          void!       "vanishes if (let x)"
+//          ghost!       "vanishes if (let x)"
 //      ]
 //      'vars "Variable(s) to create"  ; can't soft quote due to DEFAULT
 //          [
@@ -709,7 +709,7 @@ DECLARE_NATIVE(LET)
             if (Eval_Any_List_At_Throws(OUT, temp, item_binding))
                 return THROWN;
 
-            if (Is_Ghostly(OUT)) {
+            if (Any_Void(OUT)) {
                 Init_Space(OUT);
             }
             else {

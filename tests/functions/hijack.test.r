@@ -4,7 +4,7 @@
     foo: func [x] [return x + 1]
     another-foo: foo/
 
-    old-foo: hijack foo/ ^void
+    old-foo: hijack foo/ ^ghost
 
     all [
         (old-foo 10) = 11

@@ -44,16 +44,16 @@
 [
     (foo: lambda [] [], ok)
 
-    (void? foo)
-    (void? (foo))
+    (ghost? foo)
+    (ghost? (foo))
 
     ((lift ^ghost) = lift applique foo/ [])
-    (void? applique foo/ [])
-    (void? (applique foo/ []))
+    (ghost? applique foo/ [])
+    (ghost? (applique foo/ []))
 
     ((lift ^ghost) = lift eval foo/)
-    (void? eval foo/)
-    (void? (eval foo/))
+    (ghost? eval foo/)
+    (ghost? (eval foo/))
 ]
 
 [
@@ -76,12 +76,12 @@
 
 ; Explicit return of VOID
 [
-    (did foo: func [return: [any-value?]] [return ^void])
+    (did foo: func [return: [any-value?]] [return ^ghost])
 
-    (void? foo)
-    ((lift ^void) = lift foo)
+    (ghost? foo)
+    ((lift ^ghost) = lift foo)
 
-    (void? (1 + 2 foo))
+    (ghost? (1 + 2 foo))
 ]
 
 ; Not providing an argument is an error (too easy to pick up random arguments
@@ -96,7 +96,7 @@
     (did foo: func [return: [any-stable?]] [return ~()~])
 
     (hole? foo)
-    (not void? foo)
+    (not ghost? foo)
     ('~()~ = lift foo)
 
     (hole? applique foo/ [])
@@ -180,17 +180,17 @@
     (
         a: 1020
         all [
-            void? ^a: (^void)
-            void? ^a
+            ghost? ^a: (^ghost)
+            ghost? ^a
         ]
     )
     (all [
-        void? ()  ; empty groups make voids
+        ghost? ()  ; empty groups make voids
         3 = (1 + 2 ())
     ])
     (all [
-        void? a: () 1 + 2  ; can't assign nihil
-        void? ^a
+        ghost? a: () 1 + 2  ; can't assign nihil
+        ghost? ^a
     ])
 ]
 
@@ -219,7 +219,7 @@
 ; Other types receive a quoting level
 [
     (null = lift:lite null)
-    (^void = lift:lite ^void)
+    (^ghost = lift:lite ^ghost)
     (okay = lift:lite okay)
 
     (['1 '2] = lift:lite pack [1 2])
@@ -231,7 +231,7 @@
 ; UNMETA:LITE works on keywords, but not other "antiform" forms as a trick
 ; lift forms are plain forms, not quasiforms
 [
-    (void? unlift:lite ^void)
+    (ghost? unlift:lite ^ghost)
     (null? unlift:lite null)
     (okay? unlift:lite okay)
 

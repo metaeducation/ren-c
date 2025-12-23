@@ -89,7 +89,7 @@ static Result(None) Push_Keys_And_Params_For_Fence(
         ) {
             switch (initializer) {
               case SYM_NULL: Init_Nulled(PUSH()); break;
-              case SYM_VOID: Init_Void(PUSH()); break;
+              case SYM_VOID: Init_Ghost(PUSH()); break;
               case SYM_TRIPWIRE: Init_Tripwire(PUSH()); break;
               default: assert(false);
             }

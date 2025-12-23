@@ -152,7 +152,7 @@ Bounce Inliner_Dispatcher(Level* const L)
   // 1. Generating a void should do the same thing as an empty splice, and
   //    continue running as a single step...not return in its own step.
 
-    if (Is_Ghostly(OUT))
+    if (Any_Void(OUT))
         goto continue_evaluating;  // MACRO never returns directly [1]
 
     require (
@@ -166,7 +166,7 @@ Bounce Inliner_Dispatcher(Level* const L)
     }
 
     if (Is_Antiform(out))
-        panic ("MACRO body must return VOID, ANY-ELEMENT?, or SPLICE!");
+        panic ("MACRO body must return GHOST, ANY-ELEMENT?, or SPLICE!");
 
     Splice_Element_Into_Feed(L->feed, Known_Element(out));
     goto continue_evaluating;

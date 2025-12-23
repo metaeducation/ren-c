@@ -16,7 +16,7 @@
 ('b = parse [a b] ['a 'b []])
 (
     var: []
-    void? parse [a b] ['a 'b var]
+    ghost? parse [a b] ['a 'b var]
 )
 (
     var: []
@@ -26,12 +26,12 @@
 
 ; No-op rule of empty block should always match.
 [
-    (void? parse "" [])
-    (void? parse "" [[]])
-    (void? parse "" [[[]]])
+    (ghost? parse "" [])
+    (ghost? parse "" [[]])
+    (ghost? parse "" [[[]]])
 
-    (void? parse [] [])
-    (void? parse [] [[[]]])
+    (ghost? parse [] [])
+    (ghost? parse [] [[[]]])
 
     ~parse-incomplete~ !! (parse [x] [])
     ~parse-incomplete~ !! (parse [x] [[[]]])
@@ -85,12 +85,12 @@
 ]
 
 
-; A BLOCK! rule is allowed to return VOID and NULL, distinct from failure
+; A BLOCK! rule is allowed to return GHOST and NULL, distinct from failure
 [
     (
         x: ~
         all [
-            void? parse [1] [x: [integer! opt text!]]
+            ghost? parse [1] [x: [integer! opt text!]]
             x = null
         ]
     )

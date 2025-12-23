@@ -20,7 +20,7 @@ Rebol [
 assert: vanishable func [
     "Ensure conditions are branch triggers if hooked by debugging"
 
-    return: [void!]
+    return: [ghost!]
     conditions "Block of conditions to evaluate and test for logical truth"
         [block!]
     :handler "Optional code to run if the assertion fails, receives condition"
@@ -69,7 +69,7 @@ catch: specialize catch*/ [name: 'throw]
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
 ===: func [
-    return: [void!]
+    return: [ghost!]
     'remarks [element? <variadic>]
     :visibility [onoff?]
 ]
@@ -128,13 +128,13 @@ unset: redescribe [
 )
 
 unset?: redescribe [
-    "Determine if a variable holds a VOID! antiform"
+    "Determine if a variable holds a GHOST! antiform"
 ](
-    cascade [meta/ get/ void?/]
+    cascade [meta/ get/ ghost?/]
 )
 
 set?: redescribe [
-    "Determine if a variable holds something other than a VOID! antiform"
+    "Determine if a variable holds something other than a GHOST! antiform"
 ](
     cascade [unset?/ not/]
 )
@@ -481,7 +481,7 @@ lock-of: redescribe [
 eval-all: func [
     "Evaluate any number of expressions and discard them"
 
-    return: [void!]
+    return: [ghost!]
     expressions "Any number of expressions on the right"
         [any-stable? <variadic>]
 ][
@@ -493,7 +493,7 @@ eval-all: func [
 ; These constructs used to be infix to complete their left hand side.  Yet
 ; that form of completion was only one expression's worth, when they wanted
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
-; `return: [void!]`) permit a more flexible version of the mechanic.
+; `return: [ghost!]`) permit a more flexible version of the mechanic.
 
 <|: infix:postpone eval-all/
 

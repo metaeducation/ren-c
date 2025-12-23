@@ -460,7 +460,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
 } key_step_result_in_out: { //////////////////////////////////////////////////
 
-    if (Is_Void(SPARE))
+    if (Is_Ghost(SPARE))
         goto reduce_key;  // try again...
 
     require (
@@ -484,7 +484,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
 } value_step_result_in_out: { ////////////////////////////////////////////////
 
-    if (Is_Void(SPARE))
+    if (Is_Ghost(SPARE))
         goto reduce_value;  // try again...
 
     require (
@@ -877,7 +877,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Map)
         panic (Error_Bad_Poke_Dual_Raw(dual));
     }
 
-    if (Is_Lifted_Ghostly(dual)) {
+    if (Is_Any_Lifted_Void(dual)) {
         poke = nullptr;  // remove signal
         goto handle_poke;
     }

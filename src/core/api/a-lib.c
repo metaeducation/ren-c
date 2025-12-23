@@ -107,7 +107,7 @@
 //    won't work:
 //
 //        Value* v = rebVoid();
-//        assert(rebUnboxLogic("void?", v));  // would PANIC on the void
+//        assert(rebUnboxLogic("ghost?", v));  // would PANIC on the void
 //
 //    That's because the API is not willing to decay values that come from API
 //    handles by default, just as it won't decay a WORD! holding an antiform
@@ -118,7 +118,7 @@
 //    preceding the value you wish to splice as-is.  So this works:
 //
 //        Value* v = rebVoid();
-//        assert(rebUnboxLogic("void? ^", v));  // assertion would succeed
+//        assert(rebUnboxLogic("ghost? ^", v));  // assertion would succeed
 //
 
 
@@ -608,7 +608,7 @@ RebolValue* API_rebVoid(void)  // unstable antiform [B]
 {
     ENTER_API;
 
-    return Init_Void(Alloc_Value());
+    return Init_Ghost(Alloc_Value());
 }
 
 
@@ -1216,13 +1216,13 @@ static Result(None) Undecayed_Run_Valist_And_Call_Va_End(  // va_end()s [1]
     Level* L = Make_Level(
         &Evaluator_Executor,
         feed,
-        LEVEL_MASK_NONE | (not LEVEL_FLAG_SUPPRESS_VOIDS)  // !!! correct?
+        LEVEL_MASK_NONE | (not LEVEL_FLAG_AFRAID_OF_GHOSTS)  // !!! correct?
     ) except (Error* e) {
         Free_Feed(feed);
         return fail (e);
     }
 
-    Init_Void(Evaluator_Primed_Cell(L));
+    Init_Ghost(Evaluator_Primed_Cell(L));
 
     if (run_flags & RUN_VA_FLAG_INTERRUPTIBLE)
         L->flags.bits &= (~ LEVEL_FLAG_UNINTERRUPTIBLE);
@@ -1432,7 +1432,7 @@ void API_rebPushContinuation_internal(
     require (
       Level* L = Make_Level_At(&Evaluator_Executor, block, flags)
     );
-    Init_Void(Evaluator_Primed_Cell(L));
+    Init_Ghost(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(u_cast(Value*, out), L);
 }
 
@@ -1441,7 +1441,7 @@ void API_rebPushContinuation_internal(
 //  rebUndecayed: API
 //
 // By default rebValue() will decay unstable antiforms.  This will give you
-// back undecayed PACK! or VOID! or ERROR! values.
+// back undecayed PACK! or GHOST! or ERROR! values.
 //
 // If you get an unstable value back and want to use it with the API, then
 // it has to be spliced in using the `^` operator.  See [B].

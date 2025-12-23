@@ -18,23 +18,23 @@
 )]
 
 [
-    (void? for-each 'x hole [1020])
+    (ghost? for-each 'x hole [1020])
     ([] = map-each 'x hole [1020])
-    (void? for-next 'x hole [1020])
+    (ghost? for-next 'x hole [1020])
     (all wrap [
         hole = [result count]: remove-each 'x hole [panic "never gets called"]
         result = hole
         count = 0
     ])
-    (void? every 'x hole [okay])
-    (void? for-skip 'x hole 2 [1020])
+    (ghost? every 'x hole [okay])
+    (ghost? for-skip 'x hole 2 [1020])
 
     ~nothing-to-take~ !! (take [])
-    (null = try take ^void)
-    (null = find ^void 304)
-    (null = select ^void 304)
+    (null = try take ^ghost)
+    (null = find ^ghost 304)
+    (null = select ^ghost 304)
 
-    (null = pick ^void 304)
+    (null = pick ^ghost 304)
 
     (_ = copy _)  ; do NOT want opt-out of copy
 ]

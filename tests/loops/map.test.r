@@ -59,7 +59,7 @@
 
 [
     (['1 ~null~ '3] = map 'x each [1 2 3] [lift if x <> 2 [x]])
-    (['1 ~[]~ '3] = map 'x each [1 2 3] [lift if x = 2 [^void] else [x]])
+    (['1 ~[]~ '3] = map 'x each [1 2 3] [lift if x = 2 [^ghost] else [x]])
 ]
 
 ; MAP-EACH works with ANY-CONTEXT? now
@@ -73,7 +73,7 @@
 [
     ([] = map-each 'x [] [panic])
     ([] = map-each 'x hole [panic])
-    (null? map-each 'x ^void [panic])
+    (null? map-each 'x ^ghost [panic])
 
     ~expect-arg~ !! (map-each 'x '~ [panic])
     ~unspecified-arg~ !! (map-each 'x ~ [panic])
@@ -84,7 +84,7 @@
     m: make map! ['key 1000]
     all [
         m.key = 1000
-        elide m.('key): ^void
+        elide m.('key): ^ghost
         not try m.key
     ]
 )

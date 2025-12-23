@@ -15,7 +15,7 @@ Rebol [
 dump: vanishable func [
     "Show the name of a value or expressions with the value (See Also: --)"
 
-    return: [void!]
+    return: [ghost!]
     @(value) [any-stable?]
     @extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
         [element? <variadic>]
@@ -159,7 +159,7 @@ dumps: infix func [
         ; have a way to be called--in spirit they are like infix functions,
         ; so SHOVE (>-) would be used, but it doesn't work yet...review.)
         ;
-        d: func [return: [void!] :on :off] bind construct [
+        d: func [return: [ghost!] :on :off] bind construct [
             d': (
                 let d'': specialize dump/ [prefix: (as text! name)]
                 d'' #on
@@ -263,7 +263,7 @@ summarize-obj: func [
 **: func [
     "Comment until end of line, or end of current list"
 
-    return: [void!]
+    return: [ghost!]
     'args [element? <variadic>]
 ][
     let value

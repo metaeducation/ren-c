@@ -21,7 +21,7 @@
     ][
         ^r: eval value except e -> [panic e]  ; can't `return fail` for this
 
-        if ghostly? ^r [  ; like [inline (comment "hi")]
+        if void? ^r [  ; like [inline (comment "hi")]
             return ()
         ]
 
@@ -46,7 +46,7 @@
     ; want to suppress the triggering of the generated rule.
     ;
     ugly-combinators.discard: vanishable combinator [
-        return: [void!]
+        return: [ghost!]
         input [any-series?]
         @group [group!]
     ][

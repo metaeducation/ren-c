@@ -446,7 +446,7 @@ DECLARE_NATIVE(JOIN)
   //
   //    The same principle would apply to a "space-delimited format".
 
-    if (Is_Ghostly(SPARE))  // spaced [elide print "hi"], etc
+    if (Any_Void(SPARE))  // spaced [elide print "hi"], etc
         goto next_mold_step;  // vaporize
 
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))
@@ -505,7 +505,7 @@ DECLARE_NATIVE(JOIN)
 
 } stack_step_result_in_spare: { //////////////////////////////////////////////
 
-    if (Is_Ghostly(SPARE))
+    if (Any_Void(SPARE))
         goto next_stack_step;  // vaporize
 
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE)))

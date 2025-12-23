@@ -12,24 +12,24 @@
 ; voids match and don't advance input (nulls are errors)
 ;
 (
-    parse3 [] [^void]
+    parse3 [] [^ghost]
     ok
 )
 (
     let pos: ~
-    parse3 [a b] ['a ^void pos: <here> 'b]
+    parse3 [a b] ['a ^ghost pos: <here> 'b]
     pos = [b]
 )
 (
-    parse3 "a" [^void "a"]
+    parse3 "a" [^ghost "a"]
     ok
 )
 (
-    parse3 "a" [to ^void "a"]
+    parse3 "a" [to ^ghost "a"]
     ok
 )
 (
-    parse3 "a" [thru ^void "a"]
+    parse3 "a" [thru ^ghost "a"]
     ok
 )
 

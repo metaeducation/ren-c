@@ -68,7 +68,7 @@
 (
     foo: func [x [<end> integer!]] [return ^x]
     all [
-        void? (foo,)
+        ghost? (foo,)
         10 = (foo 10)
     ]
 )(

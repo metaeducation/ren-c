@@ -34,12 +34,12 @@
     ]
     all [
         304 = (304 ^ outer)
-        void? outer
+        ghost? outer
         var = 1020
     ]
 )(
     var: #before
-    inner: func [return: [void!]] [
+    inner: func [return: [ghost!]] [
         var: 1020
         return ~,~
     ]
@@ -52,11 +52,11 @@
     ]
 )(
     var: #before
-    inner: func [return: [void!]] [
+    inner: func [return: [ghost!]] [
         var: 1020
         return ~,~
     ]
-    outer: enclose inner/ func [return: [void! any-stable?] f] [
+    outer: enclose inner/ func [return: [ghost! any-stable?] f] [
         return eval-free f  ; now try unquoting
     ]
     all [

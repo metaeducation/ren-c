@@ -14,7 +14,7 @@ Rebol [
 verify: vanishable func [
     "Verify all the conditions in the passed-in block are conditionally true"
 
-    return: [void!]
+    return: [ghost!]
     conditions "Conditions to check"
         [block!]
     :handler "Optional code to run if the assertion fails, receives condition"
@@ -23,7 +23,7 @@ verify: vanishable func [
 ][
     while [[{pos} ^result]: evaluate:step conditions else [return ()]] [
         all [
-            not ghostly? ^result
+            not void? ^result
             not ^result
 
             if handler [  ; may or may-not take two arguments

@@ -62,10 +62,10 @@
     ; voids and nulls as-is, to serve as the signal for breaking or opting out
     ; of contributing to the final loop result:
     ;
-    ;     >> lift ^void
+    ;     >> lift ^ghost
     ;     == ~[]~
     ;
-    ;     >> lift:lite ^void
+    ;     >> lift:lite ^ghost
     ;     == ~[]~  ; anti
     ;
 
@@ -139,7 +139,7 @@
     ; for UNMETA:LITE to be willing to take VOID and return it as-is instead
     ; of raising an error, and that plays to our advantage here.
 
-    (void? for-both 'x [] [] [panic "Body Never Runs"])
+    (ghost? for-both 'x [] [] [panic "Body Never Runs"])
 
     (
         <something> = eval [

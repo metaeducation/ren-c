@@ -95,7 +95,7 @@
 [
     (did branch: does [if nbreak = n [break] n: n + 1])
 
-    (nbreak: ('...), n: 0, void? repeat 0 branch/)
+    (nbreak: ('...), n: 0, ghost? repeat 0 branch/)
     (nbreak: ('...), n: 0, 3 = repeat 3 branch/)
 ]
 

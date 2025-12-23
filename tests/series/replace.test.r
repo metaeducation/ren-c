@@ -62,8 +62,8 @@
 
 ([3 4] = replace:one copy [3 0 4] 0 ())
 ([3 0 4] = replace:one copy [3 0 4] comment "hi" 1020)
-([2 0 2 0] = replace copy [1 0 2 0 1 0 2 0] spread [1 0] ^none)
-("34" = replace:one copy "304" "0" ^void)
+([2 0 2 0] = replace copy [1 0 2 0 1 0 2 0] spread [1 0] none)
+("34" = replace:one copy "304" "0" ^ghost)
 ("304" = replace:one copy "304" () "1020")
 ("2020" = replace copy "10201020" "10" ())
 (#{3040} = replace:one copy #{300040} #{00} ~,~)

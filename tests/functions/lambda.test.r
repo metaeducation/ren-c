@@ -32,9 +32,9 @@
 
 ; Lambdas are void by default, for invisibility you need explicit return
 [
-    (lammy: x -> [], void? lammy 1)
-    (lammy: lambda '[x y] [elide x + y], void? lammy 1 2)
-    (lammy: lambda [x y {z}] [elide x + y], void? lammy 1 2)
+    (lammy: x -> [], ghost? lammy 1)
+    (lammy: lambda '[x y] [elide x + y], ghost? lammy 1 2)
+    (lammy: lambda [x y {z}] [elide x + y], ghost? lammy 1 2)
 ]
 
 (

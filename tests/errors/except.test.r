@@ -21,5 +21,5 @@
     e.message = "foo"
 )
 (
-    void? (^void except e -> [<unused>])
+    ghost? (^ghost except e -> [<unused>])
 )

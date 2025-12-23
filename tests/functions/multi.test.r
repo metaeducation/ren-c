@@ -71,7 +71,7 @@
     )(
         a: b: c: null
         all [
-            <z-result> = [a b {(^void)}]: test 1020
+            <z-result> = [a b {(^ghost)}]: test 1020
             a = 304
             b = <y-result>
             c = null
@@ -95,7 +95,7 @@
     ]
 )(
     all wrap [
-        'abc = [rest {(^void)}]: transcode:next "abc def"
+        'abc = [rest {(^ghost)}]: transcode:next "abc def"
         rest = " def"
     ]
 )(
@@ -184,7 +184,7 @@
 ; Propagates nihil signals, but sets variables to null
 [
     (all wrap [
-        void? [:x]: comment "hi"
+        ghost? [:x]: comment "hi"
         null? x
     ])
 ]

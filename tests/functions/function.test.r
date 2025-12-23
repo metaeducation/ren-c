@@ -447,7 +447,7 @@
 )]
 
 (
-    foo: lambda [^arg [null? void! <end> void? integer!]] [
+    foo: lambda [^arg [null? ghost! <end> ghost? integer!]] [
         either unset? $arg [<unset>] [lift ^arg]
     ]
     all [

@@ -41,7 +41,7 @@ DECLARE_NATIVE(TRY)
 
     Value* v = Intrinsic_ARG(LEVEL);
 
-    if (Is_Ghostly(v) or Is_Light_Null(v))
+    if (Any_Void(v) or Is_Light_Null(v))
         return NULLED;
 
     if (Is_Error(v))
@@ -99,9 +99,9 @@ DECLARE_NATIVE(ENRECOVER)
       Level* L = Make_Level_At(
         &Evaluator_Executor,
         code,
-        LEVEL_FLAG_SUPPRESS_VOIDS  // EVAL-like semantics?
+        LEVEL_FLAG_AFRAID_OF_GHOSTS  // EVAL-like semantics?
     ));
-    Init_Void(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
+    Init_Ghost(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 
@@ -171,7 +171,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 
   // 1. We aren't catching throws or panics, only cooperative ERROR! results.
 
-    Init_Void(OUT);  // default if all evaluations produce void
+    Init_Ghost(OUT);  // default if all evaluations produce void
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;  // reused for each step
 
@@ -222,7 +222,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
         goto finished;
     }
 
-    if (not Is_Ghostly(SPARE))
+    if (not Any_Void(SPARE))
         Move_Value(OUT, SPARE);
 
     if (Is_Level_At_End(SUBLEVEL))

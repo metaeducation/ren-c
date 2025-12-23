@@ -76,7 +76,7 @@ bool Throw_Was_Loop_Interrupt(
         and Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
-        if (not Is_Void(out))  // void signals no argument to CONTINUE
+        if (not Is_Ghost(out))  // void signals no argument to CONTINUE
             Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable :WITH
         *interrupt = LOOP_INTERRUPT_CONTINUE;
         return true;
@@ -183,7 +183,7 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 
     Value* with = SCRATCH;
     if (not ARG(WITH))
-        Init_Void(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
+        Init_Ghost(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
     else
         Copy_Cell(SCRATCH, unwrap ARG(WITH));
 
@@ -300,7 +300,7 @@ static Bounce Loop_Series_Common(
     //
     const bool counting_up = (s < end); // equal checked above
     if ((counting_up and bump <= 0) or (not counting_up and bump >= 0))
-        return VOID;  // avoid infinite loops
+        return GHOST;  // avoid infinite loops
 
     while (
         counting_up
@@ -342,7 +342,7 @@ static Bounce Loop_Series_Common(
     }
 
     if (Is_Cell_Erased(OUT))
-        return VOID;
+        return GHOST;
 
     return LOOPED(OUT);
 }
@@ -502,7 +502,7 @@ static Bounce Loop_Number_Common(
     //
     const bool counting_up = (s < e); // equal checked above
     if ((counting_up and b <= 0) or (not counting_up and b >= 0))
-        return VOID;  // avoid inf. loop, means never ran
+        return GHOST;  // avoid inf. loop, means never ran
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Eval_Branch_Throws(OUT, body)) {
@@ -529,7 +529,7 @@ static Bounce Loop_Number_Common(
     }
 
     if (Is_Cell_Erased(OUT))
-        return VOID;
+        return GHOST;
 
     return LOOPED(OUT);
 }
@@ -638,7 +638,7 @@ DECLARE_NATIVE(FOR_SKIP)
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
     if (not ARG(SERIES) or Is_Hole(unwrap ARG(SERIES)))
-        return VOID;
+        return GHOST;
 
     Element* word = Element_ARG(WORD);
     Element* series = Element_ARG(SERIES);
@@ -646,7 +646,7 @@ DECLARE_NATIVE(FOR_SKIP)
 
     REBINT skip = Int32(ARG(SKIP));
     if (skip == 0)
-        return VOID;  // https://forum.rebol.info/t/infinite-loop-vs-error/936
+        return GHOST;  // https://forum.rebol.info/t/infinite-loop-vs-error/936
 
     require (
       VarList* varlist = Create_Loop_Context_May_Bind_Body(body, word)
@@ -724,7 +724,7 @@ DECLARE_NATIVE(FOR_SKIP)
     }
 
     if (Is_Cell_Erased(OUT))
-        return VOID;
+        return GHOST;
 
     return LOOPED(OUT);
 }
@@ -746,7 +746,7 @@ DECLARE_NATIVE(DEFINITIONAL_STOP)  // See CYCLE for notes about STOP
 
     Value* with = SCRATCH;
     if (not ARG(WITH))
-        Init_Void(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
+        Init_Ghost(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
     else
         Copy_Cell(SCRATCH, unwrap ARG(WITH));
 
@@ -1258,7 +1258,7 @@ void Shutdown_Loop_Each(Stable* iterator)
 //          any-stable?     "last body result (if not NULL)"
 //          ~[<null>]~      "if last body result was NULL"
 //          <null>          "if BREAK encountered"
-//          void!           "if body never ran"
+//          ghost!           "if body never ran"
 //      ]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
@@ -1298,7 +1298,7 @@ DECLARE_NATIVE(FOR_EACH)
     //    iterator state.
 
     if (not data or Is_Hole(unwrap data))  // same response as to empty series
-        return VOID;
+        return GHOST;
 
     require (
       VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
@@ -1379,7 +1379,7 @@ DECLARE_NATIVE(FOR_EACH)
         return BREAKING_NULL;
 
     if (Is_Cell_Erased(OUT))
-        return VOID;
+        return GHOST;
 
     return LOOPED(OUT);
 }}
@@ -1394,7 +1394,7 @@ DECLARE_NATIVE(FOR_EACH)
 //          any-stable?     "last body result (if not NULL)"
 //          ~[<null>]~      "if last body result was NULL"
 //          <null>          "if any body eval was NULL, or BREAK encountered"
-//          void!           "if body never ran"
+//          ghost!           "if body never ran"
 //      ]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
@@ -1425,7 +1425,7 @@ DECLARE_NATIVE(EVERY)
   initial_entry: {
 
     if (not data or Is_Hole(unwrap data))  // same response as to empty series
-        return VOID;
+        return GHOST;
 
     require (
       VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
@@ -1502,7 +1502,7 @@ DECLARE_NATIVE(EVERY)
         }
     }
 
-    if (Is_Ghostly(SPARE)) {
+    if (Any_Void(SPARE)) {
         Init_Tripwire(OUT);  // forget OUT for loop composition [1]
         goto next_iteration;  // ...but void does not NULL-lock output
     }
@@ -1530,7 +1530,7 @@ DECLARE_NATIVE(EVERY)
         return THROWN;
 
     if (Is_Cell_Erased(OUT))
-        return VOID;
+        return GHOST;
 
     return OUT;
 }}
@@ -1692,7 +1692,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
         bool keep;
 
-        if (Is_Ghostly(OUT)) {
+        if (Any_Void(OUT)) {
             keep = true;  // treat same as logic false (e.g. don't remove) [1]
             goto handle_keep_or_no_keep;
         }
@@ -2082,7 +2082,7 @@ DECLARE_NATIVE(MAP)
         }
     }
 
-    if (Is_Ghostly(SPARE))
+    if (Any_Void(SPARE))
         goto next_iteration;  // okay to skip
 
     if (Is_Error(SPARE) and Is_Error_Veto_Signal(Cell_Error(SPARE))) {
@@ -2141,7 +2141,7 @@ DECLARE_NATIVE(MAP)
 //          any-stable?     "last body result (if not NULL)"
 //          ~[<null>]~      "if last body result was NULL"
 //          <null>          "if BREAK encountered"
-//          void!           "if body never ran"
+//          ghost!           "if body never ran"
 //      ]
 //      count "Repetitions (true loops infinitely, false doesn't run)"
 //          [<opt> any-number? logic?]
@@ -2177,16 +2177,16 @@ DECLARE_NATIVE(REPEAT)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (not count)
-        return VOID;  // treat <opt> void input as "don't run"
+        return GHOST;  // treat <opt> void input as "don't run"
 
     if (Is_Logic(count)) {
         if (Cell_Logic(count) == false)
-            return VOID;  // treat false as "don't run"
+            return GHOST;  // treat false as "don't run"
 
         Init_True(index);
     }
     else if (VAL_INT64(count) <= 0)
-        return VOID;  // negative means "don't run" (vs. error)
+        return GHOST;  // negative means "don't run" (vs. error)
     else {
         assert(Any_Number(count));
         Init_Integer(index, 1);
@@ -2245,7 +2245,7 @@ DECLARE_NATIVE(REPEAT)
 //          any-stable?     "last body result (if not NULL)"
 //          ~[<null>]~      "if last body result was NULL"
 //          <null>          "if BREAK encountered"
-//          void!           "if body never ran"
+//          ghost!           "if body never ran"
 //      ]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
@@ -2301,7 +2301,7 @@ DECLARE_NATIVE(FOR)
 
     REBI64 n = VAL_INT64(value);
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
-        return VOID;
+        return GHOST;
 
     if (Is_Block(body))
         Add_Definitional_Break_Again_Continue(body, level_);
@@ -2448,7 +2448,7 @@ DECLARE_NATIVE(INSIST)
         // continue acts like body evaluated to its argument [1]
     }
 
-    if (Is_Ghostly(OUT))
+    if (Any_Void(OUT))
         goto loop_again;  // skip ghosts [2]
 
     require (  // decay for truth test [3]
@@ -2566,7 +2566,7 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
 } return_out: {  /////////////////////////////////////////////////////////////
 
     if (Is_Cell_Erased(OUT))
-        return VOID;  // body never ran, so no result to return!
+        return GHOST;  // body never ran, so no result to return!
 
     return LOOPED(OUT);  // VOID => TRASH, NULL => HEAVY NULL
 }}

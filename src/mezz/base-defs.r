@@ -152,14 +152,14 @@ lesser-or-equal?: equal-or-lesser?/
 ?!=: infix lax-not-equal?/
 
 
-elide-if-none: vanishable func [
-    "Argument is evaluative, but discarded if none"
+elide-if-heavy-void: vanishable func [
+    "Argument is evaluative, but discarded if heavy void (or void)"
 
     return: [any-value?]
     ^value "Evaluation product to be ignored"
-        [any-value?]  ; void! is passed through
+        [any-value?]  ; ghost! is passed through
 ][
-    if none? ^value [return ()]
+    if '~[]~ = lift ^value [return ()]
     return ^value
 ]
 
@@ -171,7 +171,7 @@ elide-if-none: vanishable func [
 |||: func [
     "Inertly consumes all subsequent data, evaluating to previous result"
 
-    return: [void!]
+    return: [ghost!]
     'omit [element? <variadic>]
 ][
     insist [null? try take omit]

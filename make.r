@@ -850,7 +850,7 @@ for-each 'entry read extension-dir [
         continue
     ]
 
-    user-config.extensions.(ext-name): ^void  ; remove
+    user-config.extensions.(ext-name): ^ghost  ; remove
 
     switch mode [
         '- [

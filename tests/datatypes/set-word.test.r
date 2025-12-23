@@ -42,8 +42,8 @@
 [https://github.com/metaeducation/ren-c/issues/876 (
     x: 1020
     all [
-        void? (null, x: (^void))
-        void? x
+        ghost? (null, x: (^ghost))
+        ghost? x
     ]
 )
 ~no-value~ !! (
@@ -82,5 +82,5 @@
 )
 (null? set:groups $() 100)
 (null? set:groups () pack [10 20])
-(null? set:groups ^void ~)
-(null? set:groups (^void) ())
+(null? set:groups ^ghost ~)
+(null? set:groups (^ghost) ())

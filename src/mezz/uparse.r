@@ -354,8 +354,8 @@ default-combinators: make map! [
     ][
         [^result input]: trap parser input  ; non-matching parser, no match
 
-        if ghostly? ^result [
-            panic "CONDITIONAL combinator received VOID/NONE antiform result"
+        if void? ^result [
+            panic "CONDITIONAL combinator received VOID antiform result"
         ]
         if null? ^result [
             return fail "CONDITIONAL combinator received NULL antiform result"
@@ -391,7 +391,7 @@ default-combinators: make map! [
     ]
 
     'optional combinator [
-        "If parser fails, succeed and return VOID; don't advance input"
+        "If parser fails, succeed and return GHOST; don't advance input"
         return: [any-value?]
         input [any-series?]
         parser [action!]
@@ -406,7 +406,7 @@ default-combinators: make map! [
 
     'spread combinator [
         "Return splice antiform group for list arguments"
-        return: [<null> <ghost> element? splice!]
+        return: [<null> <void> element? splice!]
         input [any-series?]
         parser [action!]
         {^result}
@@ -806,7 +806,7 @@ default-combinators: make map! [
         [^where remainder]: trap parser input
 
         case [
-            ghostly? ^where [
+            void? ^where [
                 input: remainder
             ]
             integer? ^where [
@@ -864,7 +864,7 @@ default-combinators: make map! [
 
     <end> vanishable combinator [
         "Only match if the input is at the end"
-        return: [void!]
+        return: [ghost!]
         input [any-series?]
         :negated
     ][
@@ -993,7 +993,7 @@ default-combinators: make map! [
         ;
         [^subseries input]: trap parser input
 
-        if ghostly? ^subseries [
+        if void? ^subseries [
             panic "Cannot SUPBARSE into a void"
         ]
 
@@ -1082,7 +1082,7 @@ default-combinators: make map! [
     ;    tell you the answer to "did anything get kept" on acccount of
     ;    empty splices not being nulled.  For maximum flexibility, passthru
     ;    allows asking what you want to know, e.g. (nothing? keep x) vs.
-    ;    (ghostly? keep x)
+    ;    (void? keep x)
     ;
     ; 4. We could keep a quasi-group as a SPLICE! and not flatten it here,
     ;    but the problem would be if someone made a splice and then changed
@@ -1130,7 +1130,7 @@ default-combinators: make map! [
     ][
         [^result input pending]: trap parser input
 
-        if ghostly? ^result [
+        if void? ^result [
             return ^result
         ]
 
@@ -1620,7 +1620,7 @@ default-combinators: make map! [
             panic e  ; can't use TRAP here, don't want to fail [1]
         ]
 
-        if ghostly? ^r [
+        if void? ^r [
             return ()
         ]
 
@@ -1778,7 +1778,7 @@ default-combinators: make map! [
     ]
 
     keyword! combinator [
-        return: [void!]
+        return: [ghost!]
         input [any-series?]
         value [keyword!]
         {comb neq?}
@@ -1843,7 +1843,7 @@ default-combinators: make map! [
     ][
         [^times input]: trap times-parser input
 
-        if ghostly? ^times [  ; GHOST-in-NULL-out
+        if void? ^times [  ; GHOST-in-NULL-out
             return null
         ]
         switch:type ^times [
@@ -2072,7 +2072,7 @@ default-combinators: make map! [
                 comb: runs state.combinators.(group!)
                 [^result input pending]: trap comb state input value
 
-                if ghostly? ^result [
+                if void? ^result [
                     return ()
                 ]
                 ^result: decay ^result
@@ -2100,7 +2100,7 @@ default-combinators: make map! [
 
     'elide vanishable combinator [
         "Transform a result-bearing combinator into one that has no result"
-        return: [void!]
+        return: [ghost!]
         input [any-series?]
         parser [action!]
     ][
@@ -2110,7 +2110,7 @@ default-combinators: make map! [
 
     'comment vanishable combinator [
         "Comment out an arbitrary amount of PARSE material"
-        return: [void!]
+        return: [ghost!]
         input [any-series?]
         'ignored [block! text! tag! rune!]
     ][
@@ -2126,7 +2126,7 @@ default-combinators: make map! [
     ][
         [^result _]: trap parser input
 
-        if ghostly? ^result [  ; e.g. `skip (opt num)` when num is null
+        if void? ^result [  ; e.g. `skip (opt num)` when num is null
             return input
         ]
         if not integer? ^result [
@@ -2529,9 +2529,9 @@ default-combinators: make map! [
                     print mold:limit rules 200
                     panic "Combinator did not set pending"
                 ]
-                either void? ^temp [
+                either ghost? ^temp [
                     if not can-vanish [
-                        if not void? ^result [^result: ()]
+                        if not ghost? ^result [^result: ()]
                     ]
                 ][
                     ^result: ^temp  ; overwrite only if not ghost

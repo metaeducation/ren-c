@@ -901,7 +901,7 @@ Bounce Action_Executor(Level* L)
         assert(LIFT_BYTE(ARG) != DUAL_0);  // not a tripwire
 
         if (Get_Parameter_Flag(param, OPT_OUT)) {  // <opt-out> param
-            if (Is_Ghostly(ARG)) {
+            if (Any_Void(ARG)) {
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
                 Mark_Typechecked(ARG);
                 Init_Nulled(OUT);
@@ -909,7 +909,7 @@ Bounce Action_Executor(Level* L)
             }
         }
 
-        if (Get_Parameter_Flag(param, UNDO_OPT) and Is_Ghostly(ARG)) {
+        if (Get_Parameter_Flag(param, UNDO_OPT) and Any_Void(ARG)) {
             Init_Nulled(ARG);
             Mark_Typechecked(ARG);  // null generally not in typeset
             continue;
@@ -1078,8 +1078,8 @@ Bounce Action_Executor(Level* L)
     if (not Is_Error(OUT))  // !!! Should there be an R_FAIL ?
         assert(STACK_BASE == TOP_INDEX);
 
-    if (Get_Level_Flag(L, SUPPRESS_VOIDS) and Is_Void(OUT))
-        Init_None(OUT);
+    if (Get_Level_Flag(L, AFRAID_OF_GHOSTS) and Is_Ghost(OUT))
+        Init_Heavy_Void(OUT);
 
 } skip_output_check: {  //////////////////////////////////////////////////////
 

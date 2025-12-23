@@ -573,9 +573,9 @@ void Startup_Natives(const Element* boot_natives)
         boot_natives,
         lib,
         LEVEL_MASK_NONE
-            | LEVEL_FLAG_SUPPRESS_VOIDS  // irrelevant, won't vaporize!
+            | LEVEL_FLAG_AFRAID_OF_GHOSTS  // irrelevant, won't vaporize!
     ));
-    Init_Void(Evaluator_Primed_Cell(L));
+    Init_Ghost(Evaluator_Primed_Cell(L));
     Push_Level_Erase_Out_If_State_0(dual_step, L);
 
   setup_native_dispatcher_enumeration: {

@@ -275,8 +275,8 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
         else if (0 == CT_Utf8(item, g_tag_null, strict)) {
             flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
         }
-        else if (0 == CT_Utf8(item, g_tag_ghost, strict)) {
-            flags |= PARAMETER_FLAG_GHOSTLY_DEFINITELY_OK;
+        else if (0 == CT_Utf8(item, g_tag_void, strict)) {
+            flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
         }
         else {
             panic (item);
@@ -418,8 +418,8 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
             flags |= PARAMETER_FLAG_ANY_ATOM_OK;
             goto spoken_for;
         }
-        if (dispatcher == NATIVE_CFUNC(GHOSTLY_Q)) {
-            flags |= PARAMETER_FLAG_GHOSTLY_DEFINITELY_OK;
+        if (dispatcher == NATIVE_CFUNC(VOID_Q)) {
+            flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
             goto spoken_for;
         }
         if (dispatcher == &Typechecker_Dispatcher) {

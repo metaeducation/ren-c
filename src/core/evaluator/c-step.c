@@ -147,7 +147,7 @@
 #define Make_Action_Sublevel(action) \
     Make_Level(&Action_Executor, L->feed, \
       Get_Cell_Flag(action, WEIRD_VANISHABLE) ? LEVEL_MASK_NONE \
-        : (L->flags.bits & LEVEL_FLAG_SUPPRESS_VOIDS))
+        : (L->flags.bits & LEVEL_FLAG_AFRAID_OF_GHOSTS))
 
 
 //
@@ -282,11 +282,11 @@ Bounce Stepper_Executor(Level* L)
             panic ("Intrinsic dispatcher returned Irreducible Bounce");
 
         if (
-            Get_Level_Flag(L, SUPPRESS_VOIDS)
+            Get_Level_Flag(L, AFRAID_OF_GHOSTS)
             and Not_Cell_Flag(CURRENT, WEIRD_VANISHABLE)
-            and Is_Void(OUT)
+            and Is_Ghost(OUT)
         ){
-            Init_None(OUT);  // usually done in action dispatcher
+            Init_Heavy_Void(OUT);  // usually done in action dispatcher
         }
 
         Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
@@ -564,9 +564,9 @@ Bounce Stepper_Executor(Level* L)
     //    keywords (e.g. ~null~ and ~okay~)
     //
     // 2. If we are in a step of a sequential series of evaluations, then
-    //    it is risky to allow VOID! to vanish, e.g.:
+    //    it is risky to allow GHOST! to vanish, e.g.:
     //
-    //        eval compose [some stuff (lift ^var)]  ; var incidentally VOID!
+    //        eval compose [some stuff (lift ^var)]  ; var incidentally GHOST!
     //
     //    It's a fine line. If you had composed in code like `comment "hi"`
     //    that would be one thing, but synthesizing a lifted value from an
@@ -579,8 +579,8 @@ Bounce Stepper_Executor(Level* L)
       Coerce_To_Antiform(OUT)
     );
 
-    if (Get_Level_Flag(L, SUPPRESS_VOIDS) and Is_Void(OUT))
-        Init_None(OUT);  // help avoid accidental vanishing [2]
+    if (Get_Level_Flag(L, AFRAID_OF_GHOSTS) and Is_Ghost(OUT))
+        Init_Heavy_Void(OUT);  // help avoid accidental vanishing [2]
 
     STATE = cast(StepperState, TYPE_QUASIFORM);  // can't leave STATE_0
     goto lookahead;
@@ -744,9 +744,9 @@ Bounce Stepper_Executor(Level* L)
     // A META-WORD! gives you the undecayed representation of the variable
     //
     // 1. We don't want situations like `^x: (<expr> ^y)` to assign <expr>
-    //    to x just because y incidentally held a VOID!.  You need to be
+    //    to x just because y incidentally held a GHOST!.  You need to be
     //    explicit with `^x: (<expr> ^ ^y)` to get that behavior, which
-    //    would bypass the LEVEL_FLAG_SUPPRESS_VOIDS which sequential
+    //    would bypass the LEVEL_FLAG_AFRAID_OF_GHOSTS which sequential
     //    evaluations in Evaluator_Executor() use by default.
 
     heeded (CURRENT);
@@ -759,8 +759,8 @@ Bounce Stepper_Executor(Level* L)
 
     possibly(Not_Cell_Stable(OUT) or Is_Trash(Known_Stable(OUT)));
 
-    if (Get_Level_Flag(L, SUPPRESS_VOIDS) and Is_Void(OUT))
-        Init_None(OUT);  // help avoid accidental vanishing [1]
+    if (Get_Level_Flag(L, AFRAID_OF_GHOSTS) and Is_Ghost(OUT))
+        Init_Heavy_Void(OUT);  // help avoid accidental vanishing [1]
 
     goto lookahead;
 
@@ -914,15 +914,15 @@ Bounce Stepper_Executor(Level* L)
   //   https://forum.rebol.info/t/1387/6
   //
   // 1. We depend on EVAL:STEP only returning NULL when it's given the tail
-  //    of a block, to indicate no synthesized value (not even VOID!).  If
+  //    of a block, to indicate no synthesized value (not even GHOST!).  If
   //    we "just skipped" commas in this case, we'd have to create some
   //    other notion of how to detect Is_Level_At_End() that counted commas
   //    *before* asking for an evaluation.
   //
-  //    So there's no getting around the fact that [,] produces VOID!.
+  //    So there's no getting around the fact that [,] produces GHOST!.
   //
   // 2. The cleanest model of COMMA! behavior would be for it to always step
-  //    over it and produce a VOID! on each step over a comma.  But this
+  //    over it and produce a GHOST! on each step over a comma.  But this
   //    risks being costly enough that people might avoid using commas even
   //    if they liked the visual separation.  For now, exercise both options:
   //    a high-performance "just skip it", and a slower "debug" mode.
@@ -934,13 +934,13 @@ Bounce Stepper_Executor(Level* L)
         goto finished;
     }
 
-    if (Is_Level_At_End(L)) {  // [,] always has to make a VOID! [1]
-        Init_Void(OUT);
+    if (Is_Level_At_End(L)) {  // [,] always has to make a GHOST! [1]
+        Init_Ghost(OUT);
         goto finished;
     }
 
-    if (In_Debug_Mode(64)) {  // simulate VOID! generation, sometimes [2]
-        Init_Void(OUT);
+    if (In_Debug_Mode(64)) {  // simulate GHOST! generation, sometimes [2]
+        Init_Ghost(OUT);
         goto finished;
     }
 
@@ -1054,7 +1054,7 @@ Bounce Stepper_Executor(Level* L)
     // -----------------------------------------------------------------------
 
       if (Is_Level_At_End(L)) {
-          Init_Void(OUT);  // cue Evaluator_Executor() to keep last result
+          Init_Ghost(OUT);  // cue Evaluator_Executor() to keep last result
           goto finished;
       }
 
@@ -1188,9 +1188,9 @@ Bounce Stepper_Executor(Level* L)
             &Evaluator_Executor,
             CURRENT,
             L_binding,
-            LEVEL_MASK_NONE | (not LEVEL_FLAG_SUPPRESS_VOIDS)
+            LEVEL_MASK_NONE | (not LEVEL_FLAG_AFRAID_OF_GHOSTS)
         ));
-        Init_Void(Evaluator_Primed_Cell(sub));
+        Init_Ghost(Evaluator_Primed_Cell(sub));
         Push_Level_Erase_Out_If_State_0(SPARE, sub);
         STATE = ST_STEPPER_SET_GROUP;
         return CONTINUE_SUBLEVEL(sub); }
@@ -1253,19 +1253,19 @@ Bounce Stepper_Executor(Level* L)
 } case TYPE_GROUP: //// GROUP! (...) /////////////////////////////////////////
   handle_group_or_meta_group: {
 
-    // Groups simply evaluate their contents, and can evaluate to VOID! if
+    // Groups simply evaluate their contents, and can evaluate to GHOST! if
     // the contents completely disappear.
     //
     // 1. For an explanation of starting this particular Evaluator_Executor()
     //    as being unafraid of voids, see notes at the top of %c-eval.c
     //    Simply put, we want `expr` and `(expr)` to behave similarly, and
     //    the constraints forcing `eval [expr] to be different from `expr`
-    //    w.r.t. VOID! don't apply to inline groups.
+    //    w.r.t. GHOST! don't apply to inline groups.
 
     Invalidate_Gotten(L_next_gotten_raw);  // arbitrary code changes variables
 
     Flags flags = LEVEL_MASK_NONE
-        | (not LEVEL_FLAG_SUPPRESS_VOIDS);  // group semantics, not EVAL [1]
+        | (not LEVEL_FLAG_AFRAID_OF_GHOSTS);  // group semantics, not EVAL [1]
 
     require (
       Level* sub = Make_Level_At_Inherit_Const(
@@ -1276,7 +1276,7 @@ Bounce Stepper_Executor(Level* L)
     ));
 
     Value* primed = Evaluator_Primed_Cell(sub);
-    Init_Void(primed);  // want to vaporize if all voids [1]
+    Init_Ghost(primed);  // want to vaporize if all voids [1]
 
     Push_Level_Erase_Out_If_State_0(OUT, sub);
     return CONTINUE_SUBLEVEL(sub);
@@ -1497,7 +1497,7 @@ Bounce Stepper_Executor(Level* L)
     assert(
         Is_Word(CURRENT) or Is_Meta_Form_Of(WORD, CURRENT)
         or Is_Tuple(CURRENT) or Is_Meta_Form_Of(TUPLE, CURRENT)
-        or Is_Lifted_Void(CURRENT)
+        or Is_Lifted_Ghost(CURRENT)
     );
     STATE = ST_STEPPER_GENERIC_SET;
 
@@ -1530,7 +1530,7 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Space(CURRENT))
        goto handle_generic_set;
 
-    if (Is_Ghostly(SPARE)) {
+    if (Any_Void(SPARE)) {
         Init_Space(CURRENT);  // can't put voids in feed position
         goto handle_generic_set;
     }

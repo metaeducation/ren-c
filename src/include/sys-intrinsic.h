@@ -165,7 +165,7 @@ INLINE Result(Option(Element*)) Typecheck_Opt_Out_Element_Intrinsic_Arg(
         return fail (Cell_Error(arg));
     }
 
-    if (Is_Ghostly(arg))  // handle PARAMETER_FLAG_OPT_OUT
+    if (Any_Void(arg))  // handle PARAMETER_FLAG_OPT_OUT
         return nullptr;
 
     Decay_If_Unstable(arg) except (Error* e) {

@@ -40,7 +40,7 @@
 
     (
         rule: $(comment "vanish!")
-        void? parse [a b] ['a 'b rule]
+        ghost? parse [a b] ['a 'b rule]
     )
 
     (

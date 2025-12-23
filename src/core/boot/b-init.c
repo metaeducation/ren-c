@@ -241,7 +241,7 @@ static void Init_Action_Spec_Tags(void)
     known_nullptr(g_tag_divergent) = Make_Locked_Tag("divergent");
     known_nullptr(g_tag_unrun) = Make_Locked_Tag("unrun");
     known_nullptr(g_tag_null) = Make_Locked_Tag("null");
-    known_nullptr(g_tag_ghost) = Make_Locked_Tag("ghost");
+    known_nullptr(g_tag_void) = Make_Locked_Tag("void");
     known_nullptr(g_tag_dot_1) = Make_Locked_Tag(".");
 
     known_nullptr(g_tag_here) = Make_Locked_Tag("here");  // used by PARSE
@@ -297,7 +297,7 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&g_tag_divergent);
     rebReleaseAndNull(&g_tag_unrun);
     rebReleaseAndNull(&g_tag_null);
-    rebReleaseAndNull(&g_tag_ghost);
+    rebReleaseAndNull(&g_tag_void);
     rebReleaseAndNull(&g_tag_dot_1);
 
     rebReleaseAndNull(&g_tag_here);  // used by PARSE

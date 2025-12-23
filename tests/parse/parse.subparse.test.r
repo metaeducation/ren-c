@@ -11,7 +11,7 @@
     ; the default behavior that functions which do not support VOID returns
     ; will react by producing a VOID when passed a VOID.
     ;
-    (void? parse [[]] [subparse any-series?/ []])
+    (ghost? parse [[]] [subparse any-series?/ []])
 
     ('a = parse [[a]] [subparse any-series?/ ['a]])
     ('c = parse [b [a] c] ['b subparse any-series?/ ['a] 'c])

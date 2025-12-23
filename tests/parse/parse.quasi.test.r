@@ -17,19 +17,19 @@
     ~bad-antiform~ !! ('b = parse [a b] ['a @[(null)] 'b])
 ]
 
-; !!! Review NONE behavior
+; !!! Review HEAVY VOID behavior
 [
-    ('b = parse [a b] ['a ~[]~ 'b])
-    ('b = parse [a b] ['a @none 'b])
-    ('b = parse [a b] ['a @lib.none 'b])
-    ('b = parse [a b] ['a @(^none) 'b])
-    ('b = parse [a b] ['a @[(^none)] 'b])
+    (heavy-void: ~[]~)
 
-    (^none = parse [a b] ['a 'b ~[]~])
-    (^none = parse [a b] ['a 'b @none])
-    (^none = parse [a b] ['a 'b @lib.none])
-    (^none = parse [a b] ['a 'b @(^none)])
-    (^none = parse [a b] ['a 'b @[(^none)]])
+    ~???~ !! (parse [a b] ['a ~[]~ 'b])
+    ~???~ !! (parse [a b] ['a @heavy-void 'b])
+    ~???~ !! (parse [a b] ['a @(^heavy-void) 'b])
+    ~???~ !! (parse [a b] ['a @[(^heavy-void)] 'b])
+
+    ~???~ !! (parse [a b] ['a 'b ~[]~])
+    ~???~ !! (parse [a b] ['a 'b @heavy-void])
+    ~???~ !! (parse [a b] ['a 'b @(^heavy-void)])
+    ~???~ !! (parse [a b] ['a 'b @[(^heavy-void)]])
 ]
 
 ; !!! Review VOID behavior
@@ -42,7 +42,7 @@
     ('b = parse [a b] ['a @[(~,~)] 'b])
 
     ('b = parse [a b] ['a 'b ~,~])
-    ; (parse [a b] ['a 'b ^void])  ; [1]
+    ; (parse [a b] ['a 'b ^ghost])  ; [1]
     ; ('b = parse [a b] ['a 'b @void])  ; [1]
     ; ('b = parse [a b] ['a 'b @lib.void])  ; [1]
     ('b = parse [a b] ['a 'b @(~,~)])

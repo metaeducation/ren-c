@@ -15,28 +15,28 @@ Rebol [
 (sys.util/register-codec
     'BE
     []
-    ^void
+    ^ghost
     decode-integer/
     encode-integer/)
 
 (sys.util/register-codec
     'LE
     []
-    ^void
+    ^ghost
     decode-integer:LE/
     encode-integer:LE/)
 
 (sys.util/register-codec
     'UTF-8
     []
-    ^void
+    ^ghost
     decode-UTF-8/
     encode-UTF-8/)
 
 (sys.util/register-codec
     'IEEE-754
     []
-    ^void
+    ^ghost
     decode-IEEE-754/
     encode-IEEE-754/)
 
@@ -394,8 +394,8 @@ collect*: lambda [
         enclose append/ lambda [  ; Derive from APPEND for :LINE :DUP
             f [frame!]
         ][
-            decay either ghostly? f.value [  ; DECAY, we want pure null
-                null  ; void in, null out (should it pass through the void?)
+            decay either void? f.value [  ; DECAY, we want pure null
+                null  ; void in, null out (should it pass through the ghost?)
             ][
                 f.series: out: default [make block! 16]  ; no null return now
                 f.value  ; ELIDE leaves as result

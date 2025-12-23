@@ -89,7 +89,7 @@
     (
         bar: func [
             "Invisible normal arity-0 function should run on next eval"
-            return: [void!]
+            return: [ghost!]
         ][
             bar: null
             return ~,~

@@ -207,7 +207,7 @@ parameter!  "function parameter description"
 ; datatype that was FEED-specific.  Better ideas welcome.
 
 comma!        "separator between full evaluations"
-~void!~:U     "discarded by evaluations (when safe to do so)"
+~ghost!~:U     "a.k.a. VOID, discarded by evaluations (when safe to do so)"
               (CELL_MASK_NO_MARKING)
               [any-unit?]  ; NOT inert
 
@@ -232,7 +232,7 @@ comma!        "separator between full evaluations"
 <ANY-LIST?>
 
     block!      "list of elements that blocks evaluation unless EVAL is used"
-    ~pack!~:U   "multi-return that can be unpacked or decays to first item"
+    ~pack!~:U   "multi-return that decays to first item, empty is HEAVY VOID"
                 (payload1)
                 [any-series? any-branch? any-sequencable?]
 

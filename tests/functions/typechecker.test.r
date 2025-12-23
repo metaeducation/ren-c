@@ -16,7 +16,7 @@
     okay? t 'abc
     null? t <abc>
     null? t null
-    null? t ^void
+    null? t ^ghost
 ])
 
 (all [

@@ -476,7 +476,7 @@ bool Process_Group_For_Parse_Throws(
         &Evaluator_Executor, group, derived, LEVEL_MASK_NONE
       )
     );
-    Init_Void(Evaluator_Primed_Cell(sub));
+    Init_Ghost(Evaluator_Primed_Cell(sub));
     Push_Level_Erase_Out_If_State_0(eval, sub);
 
     if (Trampoline_With_Top_As_Root_Throws())
@@ -492,7 +492,7 @@ bool Process_Group_For_Parse_Throws(
         panic (Cell_Error(eval));
     }
 
-    if (Is_Ghostly(eval)) {
+    if (Any_Void(eval)) {
         // allow it (can't decay)
     }
     else {
@@ -1652,7 +1652,7 @@ DECLARE_NATIVE(SUBPARSE)
                     goto return_thrown;
                 }
 
-                if (Is_Ghostly(eval))
+                if (Any_Void(eval))
                     goto pre_rule;
 
                 if (Is_Error(eval)) {

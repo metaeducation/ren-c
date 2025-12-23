@@ -244,17 +244,17 @@ enum {
     ST_ACTION_INITIAL_ENTRY_INFIX,
     ST_ACTION_FULFILLING_INFIX_FROM_OUT,
 
-    // <end>-able functions get VOID! when a comma or end of list is hit:
+    // <end>-able functions get GHOST! when a comma or end of list is hit:
     //
-    //    bar: func [^y [void! integer!]] [...]
+    //    bar: func [^y [ghost! integer!]] [...]
     //
     //    (bar,)  ; panics when comma is hit
     //    (bar)  ; also panics
     //
     //    foo: func [x [integer! <end>]] [...]
     //
-    //    (foo,)  ; receives a VOID!
-    //    (foo)  ; also recieves a VOID!
+    //    (foo,)  ; receives a GHOST!
+    //    (foo)  ; also recieves a GHOST!
     //
     ST_ACTION_BARRIER_HIT,
 

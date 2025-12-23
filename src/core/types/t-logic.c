@@ -632,8 +632,8 @@ DECLARE_NATIVE(UNLESS)
     Stable* left = ARG(LEFT);
     Value* right = ARG(RIGHT);
 
-    if (Is_Ghostly(right))
-        panic ("UNLESS can't be used with VOID! or NONE");
+    if (Any_Void(right))
+        panic ("UNLESS can't be used with VOID");
 
     if (Is_Light_Null(right) or Is_Heavy_Null(right))
         return COPY(left);

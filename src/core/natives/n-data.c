@@ -1059,7 +1059,7 @@ DECLARE_NATIVE(INFIX)
 //
 //  vanishable: native [
 //
-//  "Make a function's invocations not default to turn VOID! results to NONE"
+//  "Make function's invocation not turn GHOST! results to empty PACK!"
 //
 //      return: [~[action!]~ frame!]
 //      action [action! frame!]
@@ -1087,7 +1087,7 @@ DECLARE_NATIVE(VANISHABLE)
 //
 //  vanishable?: native [
 //
-//  "Return whether a function naturally suppresses VOID! to NONE conversion"
+//  "Return if a function naturally suppresses GHOST! to HEAVY VOID conversion"
 //
 //      return: [logic?]
 //      action [<unrun> frame!]
@@ -1286,25 +1286,6 @@ DECLARE_NATIVE(ANY_WORD_Q)
 
 
 //
-//  none?: native:intrinsic [
-//
-//  "Tells you if argument is an ~[]~ antiform, e.g. an empty pack"
-//
-//      return: [logic?]
-//      ^value [any-value?]
-//  ]
-//
-DECLARE_NATIVE(NONE_Q)
-{
-    INCLUDE_PARAMS_OF_NONE_Q;
-
-    Value* v = Intrinsic_ARG(LEVEL);
-
-    return LOGIC(Is_None(v));
-}
-
-
-//
 //  hole?: native:intrinsic [
 //
 //  "Tells you if argument is an ~()~ antiform, e.g. an empty splice"
@@ -1353,7 +1334,7 @@ DECLARE_NATIVE(TRIPWIRE_Q)
 //
 //  noop: native [  ; native:intrinsic currently needs at least 1 argument
 //
-//  "Returns TRASH! (alternative to [] branches returning VOID!/NONE)"  ; [1]
+//  "Returns TRASH! (alternative to [] branches returning VOID)"  ; [1]
 //
 //      return: ~
 //  ]
@@ -1455,9 +1436,9 @@ DECLARE_NATIVE(BLANK_Q)
 //
 //  heavy: native:intrinsic [
 //
-//  "Make the heavy form of NULL (passes through all other values)"
+//  "Make the heavy forms of NULL (null in PACK!) and VOID (empty PACK!)"
 //
-//      return: [any-value?]
+//      return: [any-value? pack!]
 //      ^value [any-value?]
 //  ]
 //
@@ -1469,6 +1450,9 @@ DECLARE_NATIVE(HEAVY)
 
     if (Is_Light_Null(v))
         return Init_Heavy_Null(OUT);
+
+    if (Is_Ghost(v))
+        return Init_Heavy_Void(OUT);
 
     return COPY(v);
 }

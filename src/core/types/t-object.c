@@ -930,7 +930,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
         );
 
         if (Is_Antiform(var)) {
-            if (Is_Void(var)) {
+            if (Is_Ghost(var)) {
               require (
                 Append_Ascii(mo->strand, "()")  // looks better than ~,~
               );

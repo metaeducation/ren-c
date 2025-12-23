@@ -369,7 +369,7 @@ Bounce Composer_Executor(Level* const L)
     LiftByte list_lift_byte = LIFT_BYTE(At_Level(L));
     Option(Sigil) sigil = Cell_Underlying_Sigil(At_Level(L));
 
-    if (Is_Ghostly(OUT)) {
+    if (Any_Void(OUT)) {
         if (not sigil and list_lift_byte == NOQUOTE_2) {
             L->u.compose.changed = true;
             goto handle_next_item;  // compose [(void)] => []
@@ -497,7 +497,7 @@ Bounce Composer_Executor(Level* const L)
 
     assert(Is_Splice(out));
     assert(list_lift_byte == NOQUOTE_2);  // quotes make quasiforms above [1]
-    assert(not sigil);  // should've errored on any non-NONE/VOID! antiform
+    assert(not sigil);  // should've errored on any non-VOID antiform
 
     const Element* push_tail;
     const Element* push = List_At(&push_tail, out);
@@ -956,7 +956,7 @@ DECLARE_NATIVE(COMPOSE2)
     }
 
     const Stable* result;
-    if (Is_Ghostly(OUT))
+    if (Any_Void(OUT))
         result = LIB(HOLE);  // canonize as empty splice
     else {
         require (

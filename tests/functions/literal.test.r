@@ -4,7 +4,7 @@
 ; and a nihil`
 
 [
-    (did detector: lambda [^x [<end> any-stable? pack! void!]] [
+    (did detector: lambda [^x [<end> any-stable? pack! ghost!]] [
         tweak $ '^x null
     ])
 
@@ -24,6 +24,6 @@
 
 (
     x: 'false
-    (unlift lift ^void) then [x: 'true]
+    (unlift lift ^ghost) then [x: 'true]
     true? x
 )

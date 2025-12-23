@@ -80,7 +80,7 @@ Bounce Typechecker_Dispatcher(Level* const L)
 
     Value* arg = Intrinsic_ARG(LEVEL);
 
-    if (Is_Ghostly(arg))
+    if (Any_Void(arg))
         return LOGIC(false);  // opt-out of the typecheck (null fails)
 
     Details* details = Level_Intrinsic_Details(L);
@@ -537,7 +537,7 @@ static bool Typecheck_Unoptimized_Uses_Spare_And_Scratch(
   // 3. While TAG! will have PARAMSPEC_SPOKEN_FOR in a PARAMETER!, it does not
   //    in a plain BLOCK! used with TYPECHECK.  TYPECHECK could pay to convert
   //    BLOCK! to PARAMETER! but it's cheaper if we are willing to process a
-  //    block on the fly.  This handles <null> and <ghost> tags but it should
+  //    block on the fly.  This handles <null> and <void> tags but it should
   //    probably have behavior for <opt> and other parameter spec tags, though
   //    it's tricky given that typecheck can't mutate the incoming value.
 
@@ -568,14 +568,14 @@ static bool Typecheck_Unoptimized_Uses_Spare_And_Scratch(
         goto test_failed;
     }
 
-    if (Is_Tag(at)) {  // if BLOCK!, support <null> and <ghost> [3]
+    if (Is_Tag(at)) {  // if BLOCK!, support <null> and <void> [3]
         if (0 == CT_Utf8(at, g_tag_null, true)) {
             if (Is_Light_Null(v))
                 goto test_succeeded;
             goto test_failed;
         }
-        if (0 == CT_Utf8(at, g_tag_ghost, true)) {
-            if (Is_Ghostly(v))
+        if (0 == CT_Utf8(at, g_tag_void, true)) {
+            if (Any_Void(v))
                 goto test_succeeded;
             goto test_failed;
         }
@@ -875,8 +875,8 @@ bool Typecheck_Uses_Spare_And_Scratch(
         }
 
         if (
-            Get_Parameter_Flag(param, GHOSTLY_DEFINITELY_OK)
-            and Is_Ghostly(v)
+            Get_Parameter_Flag(param, VOID_DEFINITELY_OK)
+            and Any_Void(v)
         ){
             return true;
         }
@@ -1027,7 +1027,7 @@ Result(bool) Typecheck_Coerce_Uses_Spare_And_Scratch(
   call_typecheck: {  /////////////////////////////////////////////////////////
 
     if (Get_Parameter_Flag(param, OPT_OUT)) {
-        assert(not Is_Ghostly(v));  // should have bypassed this check
+        assert(not Any_Void(v));  // should have bypassed this check
         if (Is_Light_Null(v))
             return false;  // can never run an opt-out with nulled arg
     }
@@ -1053,7 +1053,7 @@ Result(bool) Typecheck_Coerce_Uses_Spare_And_Scratch(
     if (Is_Error(v))
         goto return_false;
 
-    if (Is_Void(v))
+    if (Is_Ghost(v))
         goto return_false;  // comma antiforms
 
     if (not Is_Antiform(v) or not Is_Antiform_Unstable(v))

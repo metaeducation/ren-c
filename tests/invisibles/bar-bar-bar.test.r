@@ -4,7 +4,7 @@
 ; (variadically spools values inertly)
 
 (
-    void? eval [|||]
+    ghost? eval [|||]
 )
 (
     3 = eval [1 + 2 ||| 10 + 20, 100 + 200]

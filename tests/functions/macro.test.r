@@ -31,5 +31,5 @@
         ]
     )
     (0 = (1 + inline the 'negate 1))
-    (3 = (1 + inline ^void 2))
+    (3 = (1 + inline ^ghost 2))
 ]

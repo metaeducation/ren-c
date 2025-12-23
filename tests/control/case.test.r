@@ -149,6 +149,6 @@
 
 (1 = case [(comment "hi") okay [1]])
 
-~bad-void~ !! (case [(^void) okay [1]])
+~bad-void~ !! (case [(^ghost) okay [1]])
 
 ([a] = case [okay '[a]])

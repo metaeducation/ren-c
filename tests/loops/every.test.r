@@ -51,7 +51,7 @@
     ]
 )
 
-((lift ^void) = lift every 'x [] [panic ~#unreachable~])
+((lift ^ghost) = lift every 'x [] [panic ~#unreachable~])
 
 ('~null~ = lift every 'x [1 2 3 4] [if odd? x [x]])
 
