@@ -632,11 +632,12 @@ c99: func [
 ]
 
 
-bootstrap: func [
+bootstrap: proc [
     "Download Rebol sources from GitHub and build using TCC"
 
     :options "Use system.options.ARGS to get additional make.r options"
     :cheat "Use CALL to do the download and unzip vs. internal (faster)"
+    :bypass "Don't bother downloading and unzipping"
 
     {
         ; We fetch the .ZIP file of the master branch from GitHub.  Note this
@@ -647,9 +648,12 @@ bootstrap: func [
     }
 ][
     print ["Downloading and Unzipping Source From:" zipped-url]
-    if cheat [
-        write %master.zip (read zipped-url)
-        call [unzip master.zip]
+    case [
+        cheat [
+            write %master.zip (read zipped-url)
+            call [unzip master.zip]
+        ]
+        bypass [noop]
     ]
     else [
         unzip:quiet %./ zipped-url

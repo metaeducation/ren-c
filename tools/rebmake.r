@@ -1538,6 +1538,7 @@ export execution: make generator-class [
         project [object!]
         :parent "parent project"
             [object!]
+        <.>
     ][
         ;dump project
         if not object? project [exit]
