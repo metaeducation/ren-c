@@ -2601,7 +2601,7 @@ DECLARE_NATIVE(PARSE3)
 //
 //  "Accept argument as parse result (Internal Implementation Detail ATM)"
 //
-//      return: [<divergent>]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(PARSE_ACCEPT)
@@ -2620,7 +2620,7 @@ DECLARE_NATIVE(PARSE_ACCEPT)
 //
 //  "Break the current parse rule (Internal Implementation Detail ATM)"
 //
-//      return: [<divergent>]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(PARSE_BREAK)
@@ -2639,7 +2639,7 @@ DECLARE_NATIVE(PARSE_BREAK)
 //
 //  "Reject the current parse rule (Internal Implementation Detail ATM)"
 //
-//      return: [<divergent>]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(PARSE_REJECT)

@@ -461,7 +461,7 @@ Bounce Delegate_Operation_With_Part(
 //
 //  "Generic aggregator for the old-style generic dispatch"
 //
-//      return: [<divergent>]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(OLDGENERIC)

@@ -218,7 +218,7 @@ bool Lambda_Details_Querier(
             Copy_Cell(out, arbitrary);
             rebRelease(arbitrary);
         }
-        else if (Is_Space(param)) {  // [<divergent>] PARAMETER!
+        else if (Is_Space(param)) {  // [] PARAMETER!
             Api(Stable*) arbitrary = rebStable("return of @", LIB(CRASH));
             Copy_Cell(out, arbitrary);
             rebRelease(arbitrary);

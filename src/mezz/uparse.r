@@ -366,7 +366,7 @@ default-combinators: make map! [
 
     'veto combinator [
         "Stop the current rule chain, and skip to the next `|` alternate"
-        return: [<divergent>]
+        return: []
         input [any-series?]
         ; :negated  <- could this be negated to not veto?
     ][
@@ -581,7 +581,7 @@ default-combinators: make map! [
 
     'break combinator [
         "Break an iterated construct like SOME or REPEAT, failing the match"
-        return: [<divergent>]
+        return: []
         input [any-series?]
         {f}
     ][
@@ -595,7 +595,7 @@ default-combinators: make map! [
 
     'stop combinator [
         "Break an iterated construct like SOME or REPEAT, succeeding the match"
-        return: [<divergent>]
+        return: []
         input [any-series?]
         parser [<end> action!]
         {f ^result}
@@ -628,7 +628,7 @@ default-combinators: make map! [
 
     'accept combinator [
         "Return a value explicitly from the parse, terminating early"
-        return: [<divergent>]
+        return: []
         input [any-series?]
         parser [action!]
         {^value}
@@ -924,7 +924,7 @@ default-combinators: make map! [
 
     'copy combinator [
         "Disabled combinator, included to help guide to use ACROSS"
-        return: [<divergent>]
+        return: []
         input [any-series?]
     ][
         panic [
@@ -1293,7 +1293,7 @@ default-combinators: make map! [
 
     'set combinator [
         "Disabled combinator, included to help guide to use SET-WORD!"
-        return: [<divergent>]
+        return: []
         input [any-series?]
     ][
         panic [
@@ -1786,7 +1786,7 @@ default-combinators: make map! [
     ]
 
     splice! combinator [
-        return: [<divergent>]
+        return: []
         input [any-series?]
         value [splice!]
         {comb neq?}
@@ -2595,7 +2595,7 @@ default-combinators: make map! [
     ; would want to pass a rule to PANIC.
 
     'panic combinator [
-        return: [<divergent>]
+        return: []
         input [any-series?]
         'reason [block! text!]
         {e}

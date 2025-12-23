@@ -270,7 +270,7 @@ bool Hijacker_Details_Querier(
 //
 //  "Panic function returned on HIJACK-ing a function that was void-HIJACKED"
 //
-//      return: [<divergent>]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(UNIMPLEMENTED)

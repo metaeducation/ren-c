@@ -92,7 +92,7 @@ bool Throw_Was_Loop_Interrupt(
 //
 //  "Exit the current iteration of a loop and stop iterating further"
 //
-//      return: [<divergent>]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(DEFINITIONAL_BREAK)
@@ -128,7 +128,7 @@ DECLARE_NATIVE(DEFINITIONAL_BREAK)
 //
 //  "Re-run a loop without advancing its loop variables"
 //
-//      return: [<divergent>]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(DEFINITIONAL_AGAIN)
@@ -164,7 +164,7 @@ DECLARE_NATIVE(DEFINITIONAL_AGAIN)
 //
 //  "Throws control back to top of loop for next iteration"
 //
-//      return: [<divergent>]
+//      return: []
 //      :with "Act as if loop body finished with this value"
 //          [any-stable?]
 //  ]
@@ -735,7 +735,7 @@ DECLARE_NATIVE(FOR_SKIP)
 //
 //  "End the current iteration of CYCLE, optionally returning a value"
 //
-//      return: [<divergent>]
+//      return: []
 //      :with "Act as if loop body finished with this value"
 //          [any-stable?]
 //  ]

@@ -1329,7 +1329,7 @@ DECLARE_NATIVE(CATCH_P)  // specialized to plain CATCH w/ NAME="THROW" in boot
 //
 //  "Throws control back to a previous catch"
 //
-//      return: [<divergent>]
+//      return: []
 //      ^value "What CATCH will receive (unstable antiforms ok, e.g. ERROR!)"
 //          [any-value?]
 //  ]

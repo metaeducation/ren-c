@@ -384,7 +384,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
 //
 //  "Terminate abnormally.  By design, do not allow any more user code to run."
 //
-//      return: [<divergent>]
+//      return: []
 //      @info "If you want to implicate a value, use (crash @value)"
 //          [<end> warning! text! @word!]
 //  ]
@@ -458,7 +458,7 @@ DECLARE_NATIVE(FAIL_P)
 //
 //  "Early-boot version of panic (overridden by more complex usermode version)"
 //
-//      return: [<divergent>]
+//      return: []
 //      reason [any-stable?]  ; permissive to avoid callsite error
 //      :blame [word!]
 //  ]
