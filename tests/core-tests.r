@@ -286,6 +286,7 @@
 %parse/parse.set-group.test.r
 %parse/parse.skip.test.r
 %parse/parse.some.test.r
+%parse/parse.splice.test.r
 %parse/parse.stop.test.r
 %parse/parse.subparse.test.r
 %parse/parse.tag-end.test.r

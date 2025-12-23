@@ -1786,29 +1786,14 @@ default-combinators: make map! [
     ]
 
     splice! combinator [
-        return: []
+        return: [splice!]
         input [any-series?]
         value [splice!]
-        {comb neq?}
     ][
-        if tail? input [
-            return fail "SPLICE! cannot match at end of input"
+        [_ input]: find:match input value else [
+            fail "SPLICE! combinator did not match"
         ]
-
-        if not any-list? input [
-            panic "Splice combinators only match ANY-LIST? input"
-        ]
-
-        neq?: either state.case [not-equal?/] [lax-not-equal?/]
-        for-each 'item unanti value [
-            if neq? input.1 item [
-                return fail [
-                    "Value at input position didn't match splice element"
-                ]
-            ]
-            input: next input
-        ]
-        return value  ; matched splice is result
+        return value  ; matched splice is result (cheap, may not want copy)
     ]
 
     === INTEGER! COMBINATOR ===
@@ -2062,7 +2047,7 @@ default-combinators: make map! [
         input [any-series?]
         {pending}: [none? quoted! block!]
         value [@any-element?]
-        {^result comb subpending}
+        {^result adjusted comb subpending}
     ][
         value: plain value  ; turn into plain GROUP!/WORD!/TUPLE!/etc.
 
@@ -2086,9 +2071,18 @@ default-combinators: make map! [
             ]
         ]
 
-        comb: runs state.combinators.(type of lift result)  ; quoted or quasi
+        if splice? result [
+            comb: runs state.combinators.(splice!)
+            adjusted: result
+        ] else [
+            if antiform? result [
+                panic ["Illegal antiform in PINNED! combinator"]
+            ]
+            comb: runs state.combinators.(quoted!)
+            adjusted: quote result
+        ]
 
-        [^result input subpending]: trap comb state input lift result
+        [^result input subpending]: trap comb state input adjusted
 
         glom $pending subpending
         return ^result

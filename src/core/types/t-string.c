@@ -807,8 +807,25 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
 
-        if (Is_Antiform(ARG(PATTERN)))
-            panic (PARAM(PATTERN));
+        Stable* pattern = ARG(PATTERN);
+
+        if (Is_Splice(pattern)) {  // not optimized
+            if (Is_None(pattern))
+                Copy_Cell(pattern, g_empty_text);
+            else {
+                KIND_BYTE(pattern) = Kind_From_Sigil_And_Heart(
+                    SIGIL_PIN, TYPE_BLOCK
+                );
+                LIFT_BYTE_RAW(pattern) = NOQUOTE_2;
+                Api(Stable*) joined = rebStable(
+                    CANON(JOIN), CANON(TEXT_X), pattern
+                );
+                Copy_Cell(pattern, joined);
+                rebRelease(joined);
+            }
+        }
+        else if (Is_Antiform(pattern))
+            panic (pattern);
 
         Flags flags = (
             (ARG(MATCH) ? AM_FIND_MATCH : 0)
@@ -828,7 +845,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
 
         REBLEN len;
         REBINT find = Find_Value_In_Binstr(
-            &len, v, tail, Element_ARG(PATTERN), flags, skip
+            &len, v, tail, Known_Element(pattern), flags, skip
         );
 
         if (find == NOT_FOUND)
