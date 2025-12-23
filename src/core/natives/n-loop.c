@@ -628,7 +628,7 @@ DECLARE_NATIVE(CFOR)
 //          ~[<null>]~      "if body result was NULL"
 //      ]
 //      word [word! @word! _]
-//      series [<opt> hole? any-series?]
+//      series [<opt> none? any-series?]
 //      skip [<opt-out> integer!]
 //      body [<const> any-branch?]
 //  ]
@@ -637,7 +637,7 @@ DECLARE_NATIVE(FOR_SKIP)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
-    if (not ARG(SERIES) or Is_Hole(unwrap ARG(SERIES)))
+    if (not ARG(SERIES) or Is_None(unwrap ARG(SERIES)))
         return GHOST;
 
     Element* word = Element_ARG(WORD);
@@ -1263,7 +1263,7 @@ void Shutdown_Loop_Each(Stable* iterator)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse"
-//          [<opt> hole? any-series? any-context? map! any-sequence?
+//          [<opt> none? any-series? any-context? map! any-sequence?
 //           action! quoted!]  ; action support experimental, e.g. generators
 //      body "Code to evaluate each time, if BREAK encountered returns NULL"
 //          [<const> block!]
@@ -1297,7 +1297,7 @@ DECLARE_NATIVE(FOR_EACH)
     //    even in the code of this dispatcher, we need to clean up the
     //    iterator state.
 
-    if (not data or Is_Hole(unwrap data))  // same response as to empty series
+    if (not data or Is_None(unwrap data))  // same response as to empty series
         return GHOST;
 
     require (
@@ -1398,7 +1398,7 @@ DECLARE_NATIVE(FOR_EACH)
 //      ]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
-//      data [<opt> hole? any-series? any-context? map! action!]
+//      data [<opt> none? any-series? any-context? map! action!]
 //      body [<const> block!]
 //      {iterator}
 //  ]
@@ -1424,7 +1424,7 @@ DECLARE_NATIVE(EVERY)
 
   initial_entry: {
 
-    if (not data or Is_Hole(unwrap data))  // same response as to empty series
+    if (not data or Is_None(unwrap data))  // same response as to empty series
         return GHOST;
 
     require (
@@ -1541,11 +1541,11 @@ DECLARE_NATIVE(EVERY)
 //
 //  "Removes values for each body evaluation that's not null, modifies input"
 //
-//      return: [<null> ~[[hole? any-series?] integer!]~]
+//      return: [<null> ~[[none? any-series?] integer!]~]
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (modified)"
-//          [<opt> hole? any-series?]  ; !!! can't do QUOTED!
+//          [<opt> none? any-series?]  ; !!! can't do QUOTED!
 //      body "Block to evaluate each time, return NULL if BREAK hit"
 //          [<const> block!]
 //  ]
@@ -1566,7 +1566,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
     Count removals = 0;
 
-    if (not ARG(DATA) or Is_Hole(unwrap ARG(DATA))) {
+    if (not ARG(DATA) or Is_None(unwrap ARG(DATA))) {
         Init_Hole(OUT);
         goto return_pack;
     }
@@ -1908,7 +1908,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //          [_ word! @word! block!]
 //      data "The series to traverse"
 //          [
-//              <opt-out> hole?
+//              <opt-out> none?
 //              quoted!
 //              any-series? any-sequence? any-context?
 //              action!
@@ -1931,7 +1931,7 @@ DECLARE_NATIVE(MAP_EACH)
 {
     INCLUDE_PARAMS_OF_MAP_EACH;
 
-    if (Is_Hole(ARG(DATA)) or Is_Nulled(ARG(DATA)))  // same as empty list
+    if (Is_None(ARG(DATA)) or Is_Nulled(ARG(DATA)))  // same as empty list
         return Init_Block(OUT, Make_Source_Managed(0));
 
     if (not Is_Action(ARG(DATA)))
@@ -1957,7 +1957,7 @@ DECLARE_NATIVE(MAP_EACH)
 //      vars "Word or block of words to set each time, no new var if @word"
 //          [_ word! @word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
-//          [<opt> hole? quoted! action!]
+//          [<opt> none? quoted! action!]
 //      body "Block to evaluate each time"
 //          [<const> block!]
 //      {iterator}
@@ -1986,7 +1986,7 @@ DECLARE_NATIVE(MAP)
 
     assert(Is_Cell_Erased(OUT));  // output only written in MAP if BREAK hit
 
-    if (not data_arg or Is_Hole(unwrap data_arg))  // same response as empty
+    if (not data_arg or Is_None(unwrap data_arg))  // same response as empty
         return Init_Block(OUT, Make_Source(0));
 
     if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))

@@ -957,7 +957,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     const Stable* result;
     if (Any_Void(OUT))
-        result = LIB(HOLE);  // canonize as empty splice
+        result = LIB(NONE);  // canonize as empty splice
     else {
         require (
           result = Decay_If_Unstable(OUT)
@@ -1004,7 +1004,7 @@ DECLARE_NATIVE(COMPOSE2)
 
         at_offset = end_offset;
 
-        if (Is_Hole(eval))  // VOID translated to empty splice for data stack
+        if (Is_None(eval))  // VOID translated to empty splice for data stack
             continue;
 
         if (LIFT_BYTE(eval) != NOQUOTE_2)

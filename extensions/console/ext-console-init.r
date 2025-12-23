@@ -208,6 +208,15 @@ export console!: make object! [
             exit
         ]
 
+        === EMPTY SPLICE! ("NONE") ===
+
+        if none? ^v [
+            print unspaced [
+                result _ --[\~()~\  ; antiform (splice!) "none"]--
+            ]
+            exit
+        ]
+
         === ANTIFORMS (^META v parameter means they are quasiforms) ===
 
         if antiform? ^v [

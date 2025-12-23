@@ -1189,7 +1189,7 @@ DECLARE_NATIVE(DEFAULT)
         require (  // may need decay [2]
             Stable* out = Decay_If_Unstable(OUT)
         );
-        if (not (Is_Trash(out) or Is_Nulled(out) or Is_Hole(out)))
+        if (not (Is_Trash(out) or Is_Nulled(out) or Is_None(out)))
             return OUT;  // consider it a "value" [3]
     }
 

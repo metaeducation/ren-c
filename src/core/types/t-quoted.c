@@ -412,7 +412,7 @@ DECLARE_NATIVE(UNANTI)
 //      ]
 //      ^value [
 //          any-list? "plain lists become splices"
-//          hole? "empty splices pass through as empty splice"  ; [1]
+//          none? "empty splices pass through as empty splice"  ; [1]
 //          quasiform! "automatic DEGRADE quasiform lists to splice"  ; [2]
 //          <void> <null> "void/none and null pass through"
 //      ]
@@ -445,7 +445,7 @@ DECLARE_NATIVE(SPREAD)
     if (Any_List(v))  // most common case
         return COPY(Splicify(v));
 
-    if (Is_Hole(v))
+    if (Is_None(v))
         return GHOST;  // immutable empty array makes problems for GLOM [3]
 
     if (Is_Nulled(v) or Is_Quasi_Null(v))  // quasi ok [2]

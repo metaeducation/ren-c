@@ -253,15 +253,15 @@ an: lambda [
 
 
 empty?: lambda [
-    "OKAY if hole or void, if empty, or if index is at or beyond its tail"
+    "OKAY if none or void, if empty, or if index is at or beyond its tail"
     []: [logic?]
     container [
-        <opt> hole? any-series? any-sequence? object! port! bitset! map!
+        <opt> none? any-series? any-sequence? object! port! bitset! map!
     ]
 ][
     any [
         null? container  ; e.g. input was void
-        hole? container
+        none? container
         0 = length of container  ; sequences always have > 0 length, not empty
     ]
 ]

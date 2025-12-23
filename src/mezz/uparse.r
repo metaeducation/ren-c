@@ -159,7 +159,7 @@ bind construct [
             ]
             spread compose:deep [
                 return: (opt description)
-                    [~[(types) any-series? [hole? quoted! block!]]~]
+                    [~[(types) any-series? [none? quoted! block!]]~]
             ]
         )
 
@@ -183,14 +183,14 @@ bind construct [
 
         (
             if '{pending}: = try spec.1 [
-                assert [spec.2 = [hole? quoted! block!]]
+                assert [spec.2 = [none? quoted! block!]]
                 autopipe: 'no  ; they're asking to handle pending themselves
 
                 elide spec: my skip 2
             ] else [
                 autopipe: 'yes  ; didn't mention pending, handle automatically
             ]
-            ${pending (hole)}  ; add pending local (RETURN proxies as output)
+            ${pending (none)}  ; add pending local (RETURN proxies as output)
         )
 
         ; Whatever arguments the combinator takes, if any
@@ -205,7 +205,6 @@ bind construct [
         (spread when yes? autopipe '[
             let f: binding of $return
 
-            assert [hole? pending]  ; starts out hole, they can leave it so
             let in-args: null
             for-each [key ^val] f [
                 if not in-args [
@@ -641,7 +640,7 @@ default-combinators: make map! [
         ; things like PENDING (which gets type checked as a multi-return, so
         ; we can't leave it as unset).  Review.
         ;
-        pending: hole  ; !!! but (parse [a] [accept keep 'a]) should error...
+        pending: none  ; !!! but (parse [a] [accept keep 'a]) should error...
         state/return pack [^value pending]
     ]
 
@@ -1093,18 +1092,18 @@ default-combinators: make map! [
         "Return a block of collected values from usage of the KEEP combinator"
         return: [block!]
         input [any-series?]
-        {pending}: [hole? quoted! block!]
+        {pending}: [none? quoted! block!]
         parser [action!]
         {collected result}
     ][
         [^ input pending]: trap parser input
 
         case [  ; COLLECT looks for QUOTED! [B]
-            hole? pending []
+            none? pending []
 
             (quoted? pending) and (quoted? unquote pending) [
                 result: envelop [] unquote unquote pending
-                pending: hole
+                pending: none
             ]
         ] else [
             result: collect [  ; new array usually not needed [2]
@@ -1124,7 +1123,7 @@ default-combinators: make map! [
         "KEEP PARSER's result for COLLECT, and synthesize that same result"
         return: [any-value?]  ; piped result most useful [3]
         input [any-series?]
-        {pending}: [hole? quoted! block!]
+        {pending}: [none? quoted! block!]
         parser [action!]
         {^result decayed}
     ][
@@ -1204,18 +1203,18 @@ default-combinators: make map! [
         "GATHER an object from EMIT combinator calls in the passed-in parser"
         return: [object!]
         input [any-series?]
-        {pending}: [hole? quoted! block!]
+        {pending}: [none? quoted! block!]
         parser [action!]
         {obj result}
     ][
         [^ input pending]: trap parser input
 
         case [  ; default combinators GATHER owns FENCE! [B]
-            hole? pending []
+            none? pending []
 
             (quoted? pending) and (fence? unquote pending) [
                 result: construct unquote pending
-                pending: hole
+                pending: none
             ]
         ] else [
             result: construct collect [
@@ -1234,7 +1233,7 @@ default-combinators: make map! [
         "Emit object field for GATHER with name and value; synthesize value"
         return: [any-stable?]
         input [any-series?]
-        {pending}: [hole? quoted! block!]
+        {pending}: [none? quoted! block!]
         @target [set-word? set-group?]
         parser [action!]
         {^result}
@@ -1521,7 +1520,7 @@ default-combinators: make map! [
         "Synthesize result of evaluating the group (invisible if <delay>)"
         return: [any-value?]
         input [any-series?]
-        {pending}: [hole? quoted! block!]
+        {pending}: [none? quoted! block!]
         value [any-list?]  ; allow any array to use this "EVAL combinator"
         {^result}
     ][
@@ -1553,18 +1552,18 @@ default-combinators: make map! [
         "Make a phase for capturing <delay> groups "
         return: [any-value?]
         input [any-series?]
-        {pending}: [hole? quoted! block!]
+        {pending}: [none? quoted! block!]
         parser [action!]
         {^result}
     ][
         [^result input pending]: trap parser input
 
         case [  ; PHASE owns GROUP! in default combinators [A]
-            hole? pending []
+            none? pending []
 
             (quoted? pending) and (group? unquote pending) [
                 eval unquote pending
-                pending: hole
+                pending: none
             ]
         ]
         else [
@@ -1611,7 +1610,7 @@ default-combinators: make map! [
         "Synthesizes result of running combinator from evaluating the parser"
         return: [any-value?]
         input [any-series?]
-        {pending}: [hole? quoted! block!]   ; we retrigger combinator; it may KEEP, etc.
+        {pending}: [none? quoted! block!]   ; we retrigger combinator; it may KEEP, etc.
 
         parser [action!]
         {^r comb subpending}
@@ -1751,7 +1750,7 @@ default-combinators: make map! [
         "Synthesize literal value"
         return: [element?]
         input [any-series?]
-        {pending}: [hole? quoted! block!]
+        {pending}: [none? quoted! block!]
         'value [element?]
         {comb}
     ][
@@ -2061,7 +2060,7 @@ default-combinators: make map! [
     pinned! combinator compose [
         return: [any-value?]
         input [any-series?]
-        {pending}: [hole? quoted! block!]
+        {pending}: [none? quoted! block!]
         value [@any-element?]
         {^result comb subpending}
     ][
@@ -2206,7 +2205,7 @@ default-combinators: make map! [
         "Run an ordinary action with parse rule products as its arguments"
         return: [any-value?]
         input [any-series?]
-        {pending}: [hole? quoted! block!]  ; can't use autopipe [1]
+        {pending}: [none? quoted! block!]  ; can't use autopipe [1]
         value [frame!]
         ; AUGMENT is used to add param1, param2, param3, etc.
         :parsers "Sneaky argument of parsers collected from arguments"  ; [2]
@@ -2252,7 +2251,7 @@ default-combinators: make map! [
     ; 3. You can traditionally use `rule: []` as a way of getting a "no op"
     ;    rule that matches at any position.  But that only works if you use
     ;    the rule as a plain word, not as a literal match...because `@rule`
-    ;    would match an empty block literally.  Empty splice (hole) is a
+    ;    would match an empty block literally.  Empty splice (none) is a
     ;    nice way to have a rule that opts out of either case.  Unlike
     ;    matching QUOTED! where mistaken interpretations might happen, a
     ;    splice is a splice so it seems like it should be allowed.
@@ -2265,7 +2264,7 @@ default-combinators: make map! [
         "Runs some combinators allowed from fetching WORD! (non-vanishingly)"
         return: [any-value?]
         input [any-series?]
-        {pending}: [hole? quoted! block!]
+        {pending}: [none? quoted! block!]
         value [word! tuple!]
         {
             ^r comb
@@ -2333,7 +2332,7 @@ default-combinators: make map! [
         "Handle BLOCK! of rules as if each item in the block is an alternate"
         return: [any-value?]
         input [any-series?]
-        {pending}: [hole? quoted! block!]
+        {pending}: [none? quoted! block!]
         @arg "Acts as rules if WORD!/BLOCK!, pinned acts inert"
             [word! block! group! @word! @block! @group! ]
         {^result block}
@@ -2408,7 +2407,7 @@ default-combinators: make map! [
         "Sequence parse rules together, and return any alternate that matches"
         return: [any-value?]
         input [any-series?]
-        {pending}: [hole? quoted! block!]
+        {pending}: [none? quoted! block!]
         value "Rules in sequence, with `|` and `||` separating alternates"
             [block!]
         :limit "Limit of how far to consider (used by ... recursion)"
@@ -2542,7 +2541,7 @@ default-combinators: make map! [
 
                 if block? pending [
                     free pending  ; proactively release memory
-                    pending: hole
+                    pending: none
                 ]
 
                 ; If we fail a match, we skip ahead to the next alternate rule
@@ -2999,7 +2998,7 @@ parse*: func [
     "Process as much of the input as parse rules consume (see also PARSE)"
 
     return: [
-        ~[any-value? [hole? quoted! block!]]~
+        ~[any-value? [none? quoted! block!]]~
         "Synthesized value from last match rule, and any pending values"
 
         error! "error if no match"

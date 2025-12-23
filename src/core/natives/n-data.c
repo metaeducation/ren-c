@@ -1286,7 +1286,7 @@ DECLARE_NATIVE(ANY_WORD_Q)
 
 
 //
-//  hole?: native:intrinsic [
+//  none?: native:intrinsic [
 //
 //  "Tells you if argument is an ~()~ antiform, e.g. an empty splice"
 //
@@ -1294,9 +1294,9 @@ DECLARE_NATIVE(ANY_WORD_Q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(HOLE_Q)
+DECLARE_NATIVE(NONE_Q)
 {
-    INCLUDE_PARAMS_OF_HOLE_Q;
+    INCLUDE_PARAMS_OF_NONE_Q;
 
     require (
       Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
@@ -1304,7 +1304,7 @@ DECLARE_NATIVE(HOLE_Q)
     if (not v)
         return NULLED;
 
-    return LOGIC(Is_Hole(v));
+    return LOGIC(Is_None(v));
 }
 
 

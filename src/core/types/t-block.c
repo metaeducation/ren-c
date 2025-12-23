@@ -1029,7 +1029,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Series)
 } handle_poke: { /////////////////////////////////////////////////////////////
 
     if (Is_Any_Lifted_Void(dual)) {
-        poke = LIB(HOLE);  // nullptr for removal in Modify_Xxx() atm
+        poke = LIB(NONE);  // nullptr for removal in Modify_Xxx() atm
         goto call_modify;
     }
 
@@ -1460,14 +1460,14 @@ IMPLEMENT_GENERIC(SORT, Any_List)
 //  "If a value isn't already a BLOCK!, enclose it in a block, else return it"
 //
 //      return: [<null> block!]
-//      value [<opt-out> hole? element?]
+//      value [<opt-out> none? element?]
 //  ]
 //
 DECLARE_NATIVE(BLOCKIFY)
 {
     INCLUDE_PARAMS_OF_BLOCKIFY;
 
-    Option(const Element*) v = Is_Hole(ARG(VALUE))
+    Option(const Element*) v = Is_None(ARG(VALUE))
         ? nullptr
         : Element_ARG(VALUE);
 
@@ -1492,14 +1492,14 @@ DECLARE_NATIVE(BLOCKIFY)
 //  "If a value isn't already a GROUP!, enclose it in a group, else return it"
 //
 //      return: [group!]
-//      value [<opt-out> hole? element?]
+//      value [<opt-out> none? element?]
 //  ]
 //
 DECLARE_NATIVE(GROUPIFY)
 {
     INCLUDE_PARAMS_OF_GROUPIFY;
 
-    Option(const Element*) v = Is_Hole(ARG(VALUE))
+    Option(const Element*) v = Is_None(ARG(VALUE))
         ? nullptr
         : Element_ARG(VALUE);
 
@@ -1584,14 +1584,14 @@ DECLARE_NATIVE(ENVELOP)
 //
 //  "Efficient destructive merging operation that reuses appended memory"
 //
-//      return: [hole? block! quoted!]
+//      return: [none? block! quoted!]
 //      items1 [
 //          word! tuple!  "variable to fetch and update with result"
-//          hole?  "empty value, will be ignored"
+//          none?  "empty value, will be ignored"
 //          block!  "list of items"
 //          quoted!  "single item using a QUOTED! as a light container"
 //      ]
-//      items2 [hole? block! quoted!]  ; spec used for typecheck of var
+//      items2 [none? block! quoted!]  ; spec used for typecheck of var
 //  ]
 //
 DECLARE_NATIVE(GLOM)
@@ -1648,12 +1648,12 @@ DECLARE_NATIVE(GLOM)
 
 } handle_hole_cases: {
 
-    if (Is_Hole(ARG(ITEMS1))) {
+    if (Is_None(ARG(ITEMS1))) {
         Copy_Cell(OUT, ARG(ITEMS2));  // one is a hole, two may or may not be
         goto return_out;
     }
 
-    if (Is_Hole(ARG(ITEMS2))) {  // two isn't a hole, but one is
+    if (Is_None(ARG(ITEMS2))) {  // two isn't a hole, but one is
         Copy_Cell(OUT, ARG(ITEMS1));
         goto return_out;
     }

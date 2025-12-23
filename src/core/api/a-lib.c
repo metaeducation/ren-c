@@ -653,13 +653,13 @@ RebolValue* API_rebSpace(void)
 
 
 //
-//  rebBlank: API
+//  rebNone: API
 //
-RebolValue* API_rebBlank(void)
+RebolValue* API_rebNone(void)
 {
     ENTER_API;
 
-    return Init_Hole(Alloc_Value());
+    return Init_None(Alloc_Value());
 }
 
 

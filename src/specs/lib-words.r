@@ -32,7 +32,7 @@ tripwire
 quasar
 null
 okay
-hole
+none
 NUL
 
 value?

@@ -15,7 +15,7 @@
     ugly-combinators.(group!): combinator [
         return: [any-stable? pack!]
         input [any-series?]
-        {pending}: [hole? quoted! block!]   ; combinator may KEEP, etc.
+        {pending}: [none? quoted! block!]   ; combinator may KEEP, etc.
         value [group?]
         {r comb}
     ][

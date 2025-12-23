@@ -72,7 +72,7 @@
 ; BLANK acts same as empty block, void opts out and generates BREAK signal
 [
     ([] = map-each 'x [] [panic])
-    ([] = map-each 'x hole [panic])
+    ([] = map-each 'x none [panic])
     (null? map-each 'x ^ghost [panic])
 
     ~expect-arg~ !! (map-each 'x '~ [panic])

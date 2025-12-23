@@ -226,7 +226,7 @@ INLINE Stable* Init_Splice_Untracked(Init(Stable) out, Source* a) {
 #define Init_Splice(out,a) \
     TRACK(Init_Splice_Untracked((out), (a)))
 
-INLINE bool Is_Hole(const Stable* v) {  // SPLICE with no elements [1]
+INLINE bool Is_None(const Stable* v) {  // SPLICE with no elements [1]
     if (not Is_Splice(v))
         return false;
     const Element* tail;
@@ -234,5 +234,5 @@ INLINE bool Is_Hole(const Stable* v) {  // SPLICE with no elements [1]
     return tail == at;
 }
 
-#define Init_Hole(out) \
+#define Init_None(out) \
     TRACK(Init_Splice_Untracked((out), g_empty_array))
