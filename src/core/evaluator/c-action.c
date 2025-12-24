@@ -1079,7 +1079,7 @@ Bounce Action_Executor(Level* L)
         assert(STACK_BASE == TOP_INDEX);
 
     if (Get_Level_Flag(L, AFRAID_OF_GHOSTS) and Is_Ghost(OUT))
-        Init_Heavy_Void(OUT);
+        Set_Cell_Flag(OUT, OUT_NOTE_SCARY_GHOST);
 
 } skip_output_check: {  //////////////////////////////////////////////////////
 

@@ -74,8 +74,21 @@ INLINE Element* Init_Comma_Untracked(Init(Element) out) {
 // value at each step, so that if a step produces a GHOST! the previous
 // evaluation can be preserved.
 //
+// 1. The Stepper_Executor() needs to turn GHOST! into an empty PACK! if a
+//    context is "afraid of ghosts" (e.g. a multi-step operation that hasn't
+//    used an operator to indicate expectation of a ghost arising from a non
+//    vanishable function).  But it can't turn the GHOST! into an empty pack
+//    until it has finished processing any infix operation.  So a flag is
+//    put on the GHOST! to carry the signal.
+//
+//    The flag is in the positive sense (i.e. if the flag is set, the GHOST!
+//    is overwritten), because this way when the overwrite happens it also
+//    clears the flag, so Stepper_Executor() doesn't leak a stray signal that
+//    could have meaning to the next step (e.g. CELL_FLAG_NOTE is used by
+//    frame processing for tracking if a FRAME! cell has been typechecked)
+//
 
-INLINE Value* Init_Void_Untracked(Init(Value) out) {
+INLINE Value* Init_Ghost_Untracked(Init(Value) out) {
     Init_Comma_Untracked(out);
     Unstably_Antiformize_Unbound_Fundamental(out);
     assert(Is_Ghost(out));
@@ -83,7 +96,17 @@ INLINE Value* Init_Void_Untracked(Init(Value) out) {
 }
 
 #define Init_Ghost(out) \
-    TRACK(Init_Void_Untracked(out))
+    TRACK(Init_Ghost_Untracked(out))
+
+#define CELL_FLAG_OUT_NOTE_SCARY_GHOST  CELL_FLAG_NOTE  // turn into pack [1]
+
+#define CELL_MASK_SCARY_GHOST \
+    (FLAG_KIND_BYTE(TYPE_COMMA) \
+        | FLAG_LIFT_BYTE(ANTIFORM_1) \
+        | CELL_FLAG_OUT_NOTE_SCARY_GHOST)
+
+#define Is_Scary_Ghost(out) /* check header with single mask operation */ \
+    (((out)->header.bits & CELL_MASK_SCARY_GHOST) == CELL_MASK_SCARY_GHOST)
 
 
 //=//// VOID is Used To Signal <end> Reached /////////////////////////////=//

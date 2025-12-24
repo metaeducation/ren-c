@@ -286,7 +286,7 @@ Bounce Stepper_Executor(Level* L)
             and Not_Cell_Flag(CURRENT, WEIRD_VANISHABLE)
             and Is_Ghost(OUT)
         ){
-            Init_Heavy_Void(OUT);  // usually done in action dispatcher
+            Set_Cell_Flag(OUT, OUT_NOTE_SCARY_GHOST);
         }
 
         Clear_Level_Flag(L, DISPATCHING_INTRINSIC);
@@ -580,7 +580,7 @@ Bounce Stepper_Executor(Level* L)
     );
 
     if (Get_Level_Flag(L, AFRAID_OF_GHOSTS) and Is_Ghost(OUT))
-        Init_Heavy_Void(OUT);  // help avoid accidental vanishing [2]
+        Set_Cell_Flag(OUT, OUT_NOTE_SCARY_GHOST);  // avoid accidents [2]
 
     STATE = cast(StepperState, TYPE_QUASIFORM);  // can't leave STATE_0
     goto lookahead;
@@ -760,7 +760,7 @@ Bounce Stepper_Executor(Level* L)
     possibly(Not_Cell_Stable(OUT) or Is_Trash(Known_Stable(OUT)));
 
     if (Get_Level_Flag(L, AFRAID_OF_GHOSTS) and Is_Ghost(OUT))
-        Init_Heavy_Void(OUT);  // help avoid accidental vanishing [1]
+        Set_Cell_Flag(OUT, OUT_NOTE_SCARY_GHOST);  // avoid accidents [1]
 
     goto lookahead;
 
@@ -936,11 +936,13 @@ Bounce Stepper_Executor(Level* L)
 
     if (Is_Level_At_End(L)) {  // [,] always has to make a GHOST! [1]
         Init_Ghost(OUT);
+        dont(Set_Cell_Flag(OUT, OUT_NOTE_SCARY_GHOST));
         goto finished;
     }
 
     if (In_Debug_Mode(64)) {  // simulate GHOST! generation, sometimes [2]
         Init_Ghost(OUT);
+        dont(Set_Cell_Flag(OUT, OUT_NOTE_SCARY_GHOST));
         goto finished;
     }
 
@@ -1909,8 +1911,15 @@ Bounce Stepper_Executor(Level* L)
     //        left-the: infix the/
     //        o: make object! [f: does [1]]
     //        o.f left-the  ; want error suggesting SHOVE, need flag for it
+    //
+    // 2. We wait until the end of the routine to turn ghosts into heavy void.
+    //    If we did it sooner, we would prevent infix routines (e.g. ELSE)
+    //    from seeing the ghosts.
 
     Clear_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_PATH);  // [1]
+
+    if (Is_Scary_Ghost(OUT))  // [2]
+        Init_Heavy_Void(OUT);
 
   #if RUNTIME_CHECKS
     Evaluator_Exit_Checks_Debug(L);

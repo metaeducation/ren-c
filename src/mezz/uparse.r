@@ -169,7 +169,7 @@ bind construct [
             input-name: spec.1
             assert [word? input-name]  ; can call it almost anything you want
             let [description types]: if block? spec.2 [  ; no description
-                pack [null spec.2]
+                pack [none spec.2]
                 elide spec: my skip 2
             ] else [
                 pack [ensure text! spec.2, ensure block! spec.3]
@@ -177,7 +177,7 @@ bind construct [
             ]
             assert [types = [any-series?]]  ; enforce for now...
             spread reduce [
-                input-name, opt description, types
+                input-name description types  ; description may be NONE
             ]
         )
 
