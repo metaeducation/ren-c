@@ -53,7 +53,7 @@ mkdir:deep join prep-dir %core/
 
 type-table: load3 %types.r
 
-for-each-datatype: proc [
+for-each-datatype: func [
     "Iterate type table by creating an object for each row"
 
     var "Word to set each time to the row made into an object record"
@@ -148,6 +148,7 @@ for-each-datatype: proc [
     ]] else [
         panic "Couldn't fully parse %types.r"
     ]
+    return ~
 ]
 
 ; 1. Type ranges are inclusive, so the end is included in the range.  This is

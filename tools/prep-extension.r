@@ -769,7 +769,7 @@ script-uncompressed: cscape [--[
 
     $<Specs-Uncompressed>
 
-    $<when has-startup* ["startup*  ; extension-author-provided startup code"]>
+    $<if has-startup* ["startup*  ; extension-author-provided startup code"]>
 
     $<Initscript-Body>
 ]--]

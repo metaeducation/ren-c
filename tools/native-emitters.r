@@ -400,7 +400,7 @@ export extract-generic-implementations: func [
                     replace name "_" "-"
 
                     replace type* "_" "-"
-                    replace type* "is-" ^ghost
+                    replace type* "is-" none
 
                     keep make generic-info! compose [
                         name: (name)

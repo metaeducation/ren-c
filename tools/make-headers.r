@@ -182,14 +182,11 @@ handle-item: proc [
     "Handle a single item in %file-base.r"
     name [path! tuple! file!]  ; bootstrap EXE loads [foo.c] as [foo/c]
     dir [<opt> file!]
-    options [<opt> block!]
+    options [block!]
 ][
     file: to file! name
 
-    all [
-        block? opt options
-        find options <no-make-header>
-    ] then [
+    find options <no-make-header> then [
         exit ; skip this file
     ]
 
@@ -200,7 +197,7 @@ handle-item: proc [
     ]
 
     proto-parser.emit-proto: emit-proto/
-    proto-parser.file: to file! unspaced [opt subdir, file]
+    proto-parser.file: to file! unspaced [opt dir, file]
     proto-parser.emit-directive: emit-directive/
     proto-parser/process (as text! read proto-parser.file)
 ]
@@ -212,13 +209,13 @@ parse3 file-base.core [some [
     ahead [path! '->] subdir: path! '-> ahead block! into [  ; descend
         (subdir: to file! subdir)
         some [name: [tuple! | path! | file!] options: try block! (
-            handle-item name subdir opt options
+            handle-item name subdir any [options []]
         )]
         (subdir: null)
     ]
     |
     name: [tuple! | path! | file!] options: try block! (
-        handle-item name ^ghost opt options
+        handle-item name () any [options []]
     )
 ]]
 

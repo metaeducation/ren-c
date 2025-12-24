@@ -1410,7 +1410,7 @@ makefile: make generator-class [
                                 when ddep.class <> #object-library [ddep]
                             ]
                         )
-                        commands: append reduce [dep/command] opt (
+                        commands: append reduce [dep/command] opt-in (
                             spread dep.post-build-commands
                         )
                     ]

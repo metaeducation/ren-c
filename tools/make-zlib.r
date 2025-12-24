@@ -64,7 +64,7 @@ bind construct [
     let [name line-iter line pos]
 
     let include-rule: compose [
-        (when stdio [
+        (if stdio [
             [open-include name: across "stdio.h" close-include |]
         ])
         -["]- name: across to -["]-

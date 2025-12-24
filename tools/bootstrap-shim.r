@@ -189,6 +189,7 @@ warning!: error!
 comment [  ; need unmentioned words in user context [1]
     tail
     char! any-word! any-path! lit-word! lit-path! issue! issue?
+    void
 ]
 
 for-each [alias] [
@@ -210,7 +211,7 @@ for-each [alias] [
     bind3:                      ; BIND's arguments reversed
     head3:                      ; use HEAD OF instead
     tail3:                      ; use TAIL OF instead
-    void3:                      ; use ^GHOST instead
+    void3:                      ; use () instead
 
     issue3!:                    ; now it's rune!
     issue3?:                    ; ...
@@ -282,23 +283,6 @@ blank: blank?: ~#[No BLANK/BLANK? ~()~ in Bootstrap, Use SPACE/SPACE?]#~
 
 set the ____ "    "  ; can use multiple spaces
 set the __ "  "
-
-
-=== "ADD CARET TO VOID" ===
-
-; https://rebol.metaeducation.com/t/why-is-there-a-caret-to-use-void/2526
-
-; While void can be assigned to plain SET-WORD! it can't in the current
-; iteration of the bootstrap exe (needs adjusting!)  We mimic the behavior
-; of assigning void producing the "unset" state (trash for bootstrap, but
-; void for modern Ren-C), this bridges the gap for now.
-
-^ghost: infix lambda3 [:left [<skip> set-word3!]] [
-    if left [set:any left ~]  ; set set-words to trash (unset concept)
-    ~void~  ; otherwise
-]
-
-void: ~#[Use ^GHOST to refer to void in bootstrap, eventually will use ()]#~
 
 
 === "MAKE THE KEEP IN COLLECT3 OBVIOUS AS KEEP3" ===
@@ -468,10 +452,22 @@ spread: func3 [
     ]
 ]
 
-append: func3 [series value [<opt> any-element!] /line <local> only] [
-    if not value [
-        return series
+none: spread []
+none?: lambda3 [value] [
+    value = [#splice! []]
+]
+assert [none? none]
+
+append: func3 [
+    series [<opt> any-element!]
+    value [<opt> any-element!]
+    /line
+    <local> only
+] [
+    any [not value not series] then [
+        return null
     ]
+    if none? value [return series]
 
     any [
         object? series
@@ -500,10 +496,16 @@ append: func3 [series value [<opt> any-element!] /line <local> only] [
     return append3:(opt only):(opt line) series opt value
 ]
 
-insert: func3 [series value [<opt> any-element!] /line <local> only] [
-    if not value [
-        return series
+insert: func3 [
+    series [<opt> any-element!]
+    value [<opt> any-element!]
+    /line
+    <local> only
+] [
+    any [not value not series] then [
+        return null
     ]
+    if none? value [return series]
 
     only: 'only
     if (block? value) and (#splice! = first value) [
@@ -519,10 +521,16 @@ insert: func3 [series value [<opt> any-element!] /line <local> only] [
     return insert3:(opt only):(opt line) series opt value
 ]
 
-change: func3 [series value [<opt> any-element!] /line <local> only] [
-    if not value [
-        return series
+change: func3 [
+    series [<opt> any-element!]
+    value [<opt> any-element!]
+    /line
+    <local> only
+] [
+    any [not value not series] then [
+        return null
     ]
+    if none? value [return series]
 
     only: 'only
     if (block? value) and (#splice! = first value) [
@@ -537,11 +545,14 @@ change: func3 [series value [<opt> any-element!] /line <local> only] [
 
 replace: func3 [
     target [<opt-out> any-series!]
-    pattern [<opt> any-element!]
-    replacement [<opt> any-element!]
+    pattern [<opt-out> any-element!]
+    replacement [<opt-out> any-element!]
 ][
-    if not pattern [
+    if none? pattern [
         return target
+    ]
+    if none? replacement [
+        replacement: null
     ]
 
     if (block? pattern) and (#splice! = first pattern) [
@@ -558,7 +569,7 @@ replace: func3 [
             pattern: reduce [pattern]
         ]
     ]
-    return replace3 target (opt pattern) (opt replacement)
+    return replace3 target pattern (opt replacement)
 ]
 
 join: func3 [
@@ -640,7 +651,7 @@ compose: func3 [block [block!] /deep <local> result pos product count] [
 
         if antiform? unlift product [
             if void? unlift product [
-                change3:part pos ^ghost 1
+                change3:part pos () 1  ; void opts-in (erasure) in CHANGE3
                 continue
             ]
             panic:blame [mold product "antiform compose found"] $return
@@ -1159,18 +1170,18 @@ blockify: func3 [x] [
 
 assert [[a b c d e] = append [a b c] spread [d e]]
 assert [[a b c [d e]] = append [a b c] [d e]]
-assert [[a b c] = append [a b c] ^ghost]
-assert [null = append ^ghost [d e]]
+assert [null = append [a b c] ()]
+assert [null = append () [d e]]
 
 assert [[d e a b c] = head of insert [a b c] spread [d e]]
 assert [[[d e] a b c] = head of insert [a b c] [d e]]
-assert [[a b c] = head of insert [a b c] ^ghost]
-assert [null = insert ^ghost [d e]]
+assert [null = insert [a b c] ()]
+assert [null = insert () [d e]]
 
 assert [[d e c] = head of change [a b c] spread [d e]]
 assert [[[d e] b c] = head of change [a b c] [d e]]
-assert [[a b c] = head of change [a b c] ^ghost]
-assert [null = change ^ghost [d e]]
+assert [null = change [a b c] ()]
+assert [null = change () [d e]]
 
 === "END ENCLOSURE THAT AVOIDED OVERWRITING TOP-LEVEL DECLS" ===
 
