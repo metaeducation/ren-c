@@ -700,6 +700,32 @@ DECLARE_NATIVE(OPTIONAL_VETO)  // usually used via its alias of ?!
 
 
 //
+//  opt-in: native:intrinsic [
+//
+//  "If argument is NULL, make it an empty SPLICE! antiform (NONE)"
+//
+//      return: [any-value?]
+//      value [any-stable?]
+//  ]
+//
+DECLARE_NATIVE(OPT_IN)
+{
+    INCLUDE_PARAMS_OF_OPT_IN;
+
+    require (
+      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
+    );
+    if (not v)
+        panic (v);
+
+    if (Is_Nulled(v))
+        return Init_None(OUT);
+
+    return COPY(v);
+}
+
+
+//
 //  noquote: native:intrinsic [
 //
 //  "Removes all levels of quoting from a (potentially) quoted element"

@@ -1512,6 +1512,9 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Space(CURRENT))  // e.g. `(void): ...`  !!! use space var!
         goto lookahead;  // pass through everything
 
+    if (Is_Error(OUT) and not Is_Metaform(CURRENT))
+        goto lookahead;  // you can say (try var: fail "hi") without panicking
+
     heeded (Bind_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 

@@ -101,28 +101,28 @@ replace: func [
     target "Series to replace within (modified)"
         [<opt-out> any-series?]
     pattern "Value to be replaced (converted if necessary)"
-        [<opt> element? splice!]
+        [<opt-out> element? splice!]
     replacement "Value to replace with (called each time if action)"
-        [<opt> <unrun> element? splice! frame!]
+        [<opt-out> <unrun> element? splice! frame!]
 
     :one "Replace one (or zero) occurrences"
     :case "Case-sensitive replacement"  ; !!! Note this aliases CASE native!
 
     {^value pos tail}  ; !!! Aliases TAIL native (should use TAIL OF)
 ][
-    if not pattern [return target]  ; could fall thru, but optimize...
+    if none? pattern [return target]  ; FIND would always find NONE
 
     let case_REPLACE: case
     case: lib.case/
 
     pos: target
 
-    while [[pos :tail]: find // [
+    while [[pos tail]: find // [
         pos
-        opt pattern
+        pattern
         case: case_REPLACE
     ]][
-        if frame? opt replacement [
+        if frame? replacement [
             ;
             ; If arity-0 action, pos and tail discarded
             ; If arity-1 action, pos will be argument to replacement
@@ -131,12 +131,17 @@ replace: func [
             ; They are passed as const so that the replacing function answers
             ; merely by providing the replacement.
             ;
-            value: apply:relax replacement [const pos, const tail]
+            ^value: apply:relax replacement [const pos, const tail]
         ] else [
             value: replacement
         ]
 
-        pos: change:part pos (opt value) tail
+        if void? ^value [  ; treat returning void as "opt out of this replace"
+            pos: tail
+            continue
+        ]
+
+        pos: change:part pos value tail
 
         if one [break]
     ]

@@ -30,9 +30,6 @@
 // Common code for series that just tweaks the index (doesn't matter if it's
 // a TEXT!, BLOCK!, BLOB!, etc.)
 //
-// 1. `skip x logic` means `either logic [skip x] [x]` (this is reversed
-//    from R3-Alpha and Rebol2, which skipped when false)
-//
 IMPLEMENT_GENERIC(SKIP, Any_Series)
 {
     INCLUDE_PARAMS_OF_SKIP;
@@ -40,17 +37,9 @@ IMPLEMENT_GENERIC(SKIP, Any_Series)
     Element* v = Element_ARG(SERIES);
     assert(Any_Series(v));
 
-    REBI64 i;
-    if (Is_Logic(ARG(OFFSET))) {  // preserve a behavior for SKIP of LOGIC [1]
-        if (Cell_Logic(ARG(OFFSET)))
-            i = cast(REBI64, SERIES_INDEX_UNBOUNDED(v)) + 1;
-        else
-            i = cast(REBI64, SERIES_INDEX_UNBOUNDED(v));
-    }
-    else {  // `skip series 1` means second element, add offset as-is
-        REBINT offset = Get_Num_From_Arg(ARG(OFFSET));
-        i = cast(REBI64, SERIES_INDEX_UNBOUNDED(v)) + cast(REBI64, offset);
-    }
+    // `skip series 1` means second element, add offset as-is
+    REBINT offset = Get_Num_From_Arg(ARG(OFFSET));
+    REBI64 i = cast(REBI64, SERIES_INDEX_UNBOUNDED(v)) + cast(REBI64, offset);
 
     if (not ARG(UNBOUNDED)) {
         if (i < 0 or i > cast(REBI64, Series_Len_Head(v)))

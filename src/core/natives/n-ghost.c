@@ -85,6 +85,25 @@ DECLARE_NATIVE(VOID_Q)
 
 
 //
+//  heavy-void?: native:intrinsic [
+//
+//  "Is VALUE specifically HEAVY VOID (empty pack!)"
+//
+//      return: [logic?]
+//      ^value [any-value?]
+//  ]
+//
+DECLARE_NATIVE(HEAVY_VOID_Q)
+{
+    INCLUDE_PARAMS_OF_HEAVY_VOID_Q;
+
+    Value* v = Intrinsic_ARG(LEVEL);
+
+    return LOGIC(Is_Heavy_Void(v));
+}
+
+
+//
 //  comment: vanishable native:intrinsic [
 //
 //  "Skip one element ahead, doing no evaluation (see also ELIDE)"

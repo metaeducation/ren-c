@@ -177,13 +177,17 @@
 ; Appending to a void returns null
 [
     (null = append ^ghost "abc")
+    (null = append heavy () "abc")
+
+    (null = append "abc" ())
+    (null = append "abc" pack [])
 ]
 
 [
     ('~,~ = lift when ok [])
     (null? if null [<a>])
-    ([a b c] = append [a b c] when ok [])
-    ([a b c] = append [a b c] opt if null [<a>])
+    (null = append [a b c] when ok [])
+    (null = append [a b c] opt if null [<a>])
 ]
 
 ; BLANK acts like an empty block when passed to SPREAD

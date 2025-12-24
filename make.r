@@ -1662,7 +1662,7 @@ for-each 'ext extensions [
         name: ext.name
 
         depends: collect [let name, let options, let obj, parse3 (
-            append copy ext.sources opt spread ext.depends
+            append copy ext.sources spread any [ext.depends []]
         ) [some [
             name: [file! | tuple! | path!] options: try [block!] (
                 let file: to file! name

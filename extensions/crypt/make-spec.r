@@ -146,7 +146,7 @@ depends: collect [  ; add common options and path prefix to files in list
   some [
     file: [tuple! | path!], block: try block! (
         keep join %mbedtls/library/ to file! file
-        keep append (copy common) (spread opt block)
+        keep append (copy common) spread any [block []]
     )
   ]
 ] ]  ; end COLLECT

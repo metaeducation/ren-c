@@ -4,37 +4,36 @@
 
 [
     (for-parallel: lambda [
-        return: [any-value?]
         vars [block!]
-        blk1 [<opt> any-list?]
-        blk2 [<opt> any-list?]
+        blk1 [none? any-list?]
+        blk2 [none? any-list?]
         body [block!]
         {context}
     ][
         [vars context]: wrap:set compose vars
         body: overbind context body
-        return while [(not empty? opt blk1) or (not empty? opt blk2)] [
-            (vars): pack [(try first opt blk1) (try first opt blk2)]
+        while [(not empty? blk1) or (not empty? blk2)] [
+            (vars): pack [(try first blk1) (try first blk2)]
 
-            repeat 1 body else [  ; !!! REVIEW: invent ONCE for REPEAT 1
-                return null  ; if pure NULL it was a BREAK
+            attempt body else [
+                break  ; if pure NULL it was a BREAK
             ]
 
-            ; They either did a CONTINUE the REPEAT caught, or the body reached
+            ; They either did a CONTINUE the ATTEMPT caught, or body reached
             ; the end.  ELIDE the increment, so body evaluation is result.
             ;
-            elide blk1: next opt blk1
-            elide blk2: next opt blk2
+            elide try blk1: next blk1
+            elide try blk2: next blk2
         ]
     ], ok)
 
-    (ghost? for-parallel [x y] [] [] [panic])
+    (heavy-void? for-parallel [x y] [] [] [panic])
     ([1 2] = collect [for-parallel [x y] [] [1 2] [keep opt x, keep y]])
     ([a b] = collect [for-parallel [x y] [a b] [] [keep x, keep opt y]])
 
-    (^ghost = for-parallel [x y] ^ghost ^ghost [panic])
-    ([1 2] = collect [for-parallel [x y] ^ghost [1 2] [keep opt x, keep y]])
-    ([a b] = collect [for-parallel [x y] [a b] ^ghost [keep x, keep opt y]])
+    (heavy-void? for-parallel [x y] none none [panic])
+    ([1 2] = collect [for-parallel [x y] none [1 2] [keep opt x, keep y]])
+    ([a b] = collect [for-parallel [x y] [a b] none [keep x, keep opt y]])
 
     ((lift null) = lift for-parallel [x y] [a b] [1 2] [if x = 'b [break]])
     ('~[~null~]~ = lift for-parallel [x y] [a b] [1 2] [null])
@@ -47,7 +46,7 @@
     ([[a 1] [b 2]] = collect [
         assert [
             20 = for-parallel [x y] [a b] [1 2] [
-                keep :[x y]
+                keep reduce [x y]
                 y * 10
             ]
         ]
@@ -56,7 +55,7 @@
     ([[a 1] [b 2] [c ~null~]] = collect [
         assert [
             <exhausted> = for-parallel [x y] [a b c] [1 2] [
-                keep :[x reify y]
+                keep reduce [x reify y]
                 if y [y * 10] else [<exhausted>]
             ]
         ]
@@ -65,7 +64,7 @@
     ([[a 1] [b 2] [~null~ 3]] = collect [
         assert [
             30 = for-parallel [x y] [a b] [1 2 3] [
-                keep :[reify x y]
+                keep reduce [reify x y]
                 y * 10
             ]
         ]

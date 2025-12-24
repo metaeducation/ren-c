@@ -165,7 +165,7 @@ static REBLEN Guess_Part_Len_For_Change_May_Coerce(
 //      series "At position (modified)"
 //          [<opt-out> any-series? port! map! object! bitset! port!]
 //      value "What to insert (antiform groups will splice, e.g. SPREAD)"
-//          [<opt> element? splice!]
+//          [<opt-out> element? splice!]
 //      :part "Limits to a given length or position"
 //          [any-number? any-series? pair!]
 //      :dup "Duplicates the insert a specified number of times"
@@ -187,7 +187,7 @@ DECLARE_NATIVE(INSERT)  // Must be frame-compatible with CHANGE [A]
     bool limit_zero = Part_Limit_Append_Insert(ARG(PART));
     Count dups = not ARG(DUP) ? 1 : VAL_UINT32(unwrap ARG(DUP));
 
-    if (limit_zero or dups == 0 or not ARG(VALUE))
+    if (limit_zero or dups == 0 or Is_None(ARG(VALUE)))
         return COPY(series);  // don't panic on read only if would be a no-op
 
     Copy_Cell(LOCAL(LIMIT), LOCAL(PART));  // :PART acts as CHANGE's LIMIT
@@ -212,7 +212,7 @@ DECLARE_NATIVE(INSERT)  // Must be frame-compatible with CHANGE [A]
 //      series "Any position (modified)"
 //          [<opt-out> any-series? port! map! object! module! bitset!]
 //      value "What to append (antiform groups will splice, e.g. SPREAD)"
-//          [<opt> element? splice!]
+//          [<opt-out> element? splice!]
 //      :part "Limits to a given length or position"
 //          [any-number? any-series? pair!]
 //      :dup "Duplicates the insert a specified number of times"
@@ -235,7 +235,7 @@ DECLARE_NATIVE(APPEND)
     Count dups = not ARG(DUP) ? 1 : VAL_UINT32(unwrap ARG(DUP));
     Index index = SERIES_INDEX_UNBOUNDED(series);
 
-    if (limit_zero or dups == 0 or not ARG(VALUE)) {
+    if (limit_zero or dups == 0 or Is_None(ARG(VALUE))) {
         Copy_Cell(OUT, series);
         goto return_original_position;
     }
@@ -285,7 +285,7 @@ DECLARE_NATIVE(APPEND)
 //      series "At position (modified)"
 //          [<opt-out> any-series? port!]
 //      value "The new value (antiform groups will splice, e.g. SPREAD)"
-//          [<opt> element? splice!]
+//          [<opt-out> element? splice!]
 //      :part "Limits the amount to change to a given length or position"
 //          [any-number? any-series? pair!]
 //      :dup "Duplicates the change a specified number of times"
@@ -307,20 +307,12 @@ DECLARE_NATIVE(CHANGE)  // Must be frame-compatible with APPEND, INSERT [A]
 
   // 1. R3-Alpha and Rebol2 say (change/dup/part "abcdef" "g" 0 2) will give
   //    you "ggcdef", but Red will leave it as "abcdef", which seems better.
-  //
-  // 2. The service routines implementing CHANGE/INSERT/APPEND only accept the
-  //    antiform of SPLICE!, so void/null is converted into that here...since
-  //    unlike INSERT and APPEND a change with void/null isn't a no-op.
 
     Count dups = not ARG(DUP) ? 1 : VAL_UINT32(unwrap ARG(DUP));
     if (dups == 0)
         return COPY(series);  // Treat CHANGE as no-op if zero dups [1]
 
-    Stable* v;
-    if (not ARG(VALUE))
-        v = Init_None(LOCAL(VALUE));  // e.g. treat <opt> as empty splice [2]
-    else
-        v = unwrap ARG(VALUE);
+    Stable* v = ARG(VALUE);  // CHANGE to NONE isn't a no-op (erases data)
 
     Length len;
     if (ARG(PART))
@@ -513,21 +505,38 @@ DECLARE_NATIVE(SORT)
 //
 //  "Returns the series forward or backward from the current position"
 //
-//      return:
-//          [<null> any-series? port!]
-//      series [<opt-out> any-series? port!]
-//      offset "Input skipped by offset, default to null if out of bounds"
-//          [any-number? logic? pair!]
+//      return: [
+//          none? "when input is NONE and skipping by 0"
+//          any-series? "when input is a series and skipping by a valid offset"
+//          error! "when skip would be out of bounds (and :UNBOUNDED not used)"
+//          port!  ; port meaning is different [1]
+//      ]
+//      series [<opt-out> none? any-series? port!]
+//      offset "Input skipped by offset"
+//          [<opt-out> none? okay? any-number? pair!]
 //      :unbounded "Return out of bounds series if before tail or after head"
 //  ]
 //
 DECLARE_NATIVE(SKIP)
 //
-// !!! SKIP has a meaning for ANY-SERIES? that's different from what it means
-// when used with ports.  Right now we make the port case go through the old
-// generic dispatch, but this points to a bunch of design work to do.  :-(
+// 1. !!! SKIP has a meaning for ANY-SERIES? that's different from what it
+//    means when used with ports.  Right now we make the port case go through
+//    the old generic dispatch, but generics need serious thought.  :-(
 {
     INCLUDE_PARAMS_OF_SKIP;
+
+    if (Is_None(ARG(OFFSET)))
+        return COPY(ARG(SERIES));  // series may or may not be NONE
+
+    if (Is_None(ARG(SERIES))) {
+        Element* offset = Element_ARG(OFFSET);
+        if (not Is_Integer(offset) or 0 != VAL_UINT32(offset))
+            return fail ("Cannot SKIP a NONE by a non-zero offset");
+        return Init_None(OUT);
+    }
+
+    if (Is_Okay(ARG(OFFSET)))  // !!! Experiment, preserve *some* logic [1]
+        Init_Integer(ARG(OFFSET), 1);
 
     Element* series = Element_ARG(SERIES);
     return Dispatch_Generic(SKIP, series, LEVEL);

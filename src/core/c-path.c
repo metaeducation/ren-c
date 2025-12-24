@@ -112,7 +112,7 @@ Result(Element*) Init_Any_Sequence_At_Listlike(
 //  "Perform a path picking operation; same code as `(location).(picker)`"
 //
 //      return: [<null> any-stable?]
-//      location [<opt-out> <unrun> plain?]  ; can't pick sigil'd/quoted/quasi
+//      location [<opt-out> <unrun> none? plain?]  ; can't pick sigil'd/quoted
 //      picker "Index offset, symbol, or other value to use as index"
 //          [<opt-out> any-stable?]
 //      {dual}  ; slot in position of DUAL for TWEAK*
@@ -130,13 +130,15 @@ DECLARE_NATIVE(PICK)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    Element* location = Element_ARG(LOCATION);
-    Stable* picker = ARG(PICKER);
-
     if (Get_Level_Flag(LEVEL, PICK_NOT_INITIAL_ENTRY))
         goto dispatch_generic;
 
   initial_entry: {
+
+    Stable* picker = ARG(PICKER);
+
+    if (Is_None(ARG(LOCATION)))  // (try first none) same as (try first [])
+        return fail (Error_Bad_Pick_Raw(picker));
 
     Set_Level_Flag(LEVEL, PICK_NOT_INITIAL_ENTRY);
 
@@ -149,7 +151,7 @@ DECLARE_NATIVE(PICK)
 
     Bounce bounce = opt Irreducible_Bounce(
         LEVEL,
-        Dispatch_Generic(TWEAK_P, location, LEVEL)
+        Dispatch_Generic(TWEAK_P, Element_ARG(LOCATION), LEVEL)
     );
 
     if (bounce)

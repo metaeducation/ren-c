@@ -1567,7 +1567,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     Count removals = 0;
 
     if (not ARG(DATA) or Is_None(unwrap ARG(DATA))) {
-        Init_Hole(OUT);
+        Init_None(OUT);
         goto return_pack;
     }
 
