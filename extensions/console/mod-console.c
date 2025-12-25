@@ -363,7 +363,7 @@ DECLARE_NATIVE(CONSOLE)
   //
   //    It would just execute the code directly:
   //
-  //        result': ^(print "hi")  ; BUT ^(...) no longer means META!
+  //        result': ^(print "hi")  ; BUT ^(...) no longer means LIFT
   //
   //    That might be a nice idea, but as it turns out there's no mechanism
   //    for rescuing abrupt panics in the API...and I'm not entirely sure

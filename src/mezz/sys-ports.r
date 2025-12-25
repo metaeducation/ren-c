@@ -232,7 +232,8 @@ make-scheme: proc [
         for-each [name op args body] scheme.actor [
             assert [
                 match [word!: /word!:] name
-                find [func lambda function] op  ; why'd R3-Alpha constrain this?
+                ; !!! why constrain this?
+                find [func lambda function proc diverger] op
                 block? args
                 block? body
             ]
