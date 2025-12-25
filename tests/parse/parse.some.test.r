@@ -160,7 +160,7 @@
     try parse "a" [opt some [
         (
             i: i + 1
-            j: if i = 2 [[<end> next]]
+            j: when i = 2 [[<end> next]]
         )
         j
     ]]
@@ -176,7 +176,7 @@
     i: 0
     j: ~
     all [
-        error? parse "a" [opt some [(i: i + 1, j: if i = 2 '[veto]) j]]
+        error? parse "a" [opt some [(i: i + 1, j: when i = 2 '[veto]) j]]
         i = 2
     ]
 )]

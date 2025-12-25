@@ -145,7 +145,7 @@ bind construct [
 
     let comb: unrun func compose [  ; unrun to not store COMB as label
         ; Get the text description if given
-        (? if text? spec.1 [spec.1, elide spec: my next])
+        (if text? spec.1 [spec.1, elide spec: my next])
 
         ; Enforce a RETURN: definition.  RETURN: [...] is allowed w/no text
         (
@@ -175,7 +175,10 @@ bind construct [
                 pack [ensure text! spec.2, ensure block! spec.3]
                 elide spec: my skip 3
             ]
-            assert [types = [any-series?]]  ; enforce for now...
+            assert [any [  ; enforce for now...
+                types = [any-series?]
+                types = [any-list?]
+            ]]
             spread reduce [
                 input-name description types  ; description may be NONE
             ]
@@ -202,7 +205,7 @@ bind construct [
         ; we receive in will automatically bubble up their pending contents in
         ; order of being called.
 
-        (spread when yes? autopipe '[
+        (spread if yes? autopipe '[
             let f: binding of $return
 
             let in-args: null
@@ -2469,7 +2472,8 @@ default-combinators: make map! [
                 continue
             ]
 
-            can-vanish: if rules.1 = '^ [
+            can-vanish: all [
+                rules.1 = '^
                 rules: next rules
                 okay
             ]

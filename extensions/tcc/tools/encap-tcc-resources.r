@@ -137,7 +137,7 @@ encap: compose [
     ;
     ; The Windows directory contains some other junk, like examples.
     ;
-    (? if platform-config.os-base = 'Windows [
+    (if platform-config.os-base = 'Windows [
         compose [
             ; typically %(...)/win32/include
             %win32/include/  ; `(config-tccdir)/include/` see CHANGE_DIR above

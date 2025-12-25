@@ -207,9 +207,9 @@
     x: ~
     all [
         [#a <kept> #a <kept> #a <kept>] = parse "aaa" [x: collect [some [
-            keep (when null [<not kept>])
+            keep (if null [<not kept>])
             keep one
-            keep (when ok [<kept>])
+            keep (if ok [<kept>])
         ]]]
         x = [#a <kept> #a <kept> #a <kept>]
     ]

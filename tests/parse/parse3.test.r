@@ -263,7 +263,7 @@
     i: 0
     j: ~
     parse3 "a" [
-        some [thru "a" (i: i + 1, j: if i > 1 [<end> one]) j]
+        some [thru "a" (i: i + 1, j: when i > 1 [<end> one]) j]
     ]
     i = 1
 )
@@ -325,7 +325,7 @@
 [#1268 (
     i: 0
     j: ~
-    parse3 "a" [some [opt "a" (i: i + 1, j: if i = 2 [[veto]]) j]]
+    parse3 "a" [some [opt "a" (i: i + 1, j: when i = 2 [[veto]]) j]]
     i = 2
 )]
 
@@ -437,7 +437,7 @@
     j: ~
     all [
         error? parse3 "a" [
-            some [opt "a" (i: i + 1 j: if i = 2 [[<end> one]]) j]
+            some [opt "a" (i: i + 1 j: when i = 2 [[<end> one]]) j]
         ]
         i = 2
     ]
@@ -454,7 +454,7 @@
 )
 (
     parse3 "aaabbb" [
-        inline ([some "a"]) inline (when null [some "c"]) inline ([some "b"])
+        inline ([some "a"]) inline (if null [some "c"]) inline ([some "b"])
     ]
     ok
 )

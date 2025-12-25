@@ -37,8 +37,8 @@
 
 ; Voided expressions work in GET-GROUP! substitutions
 
-(ghost? parse [a b] ['a 'b :(opt if null [[some 'c]])])
-('c = parse [a b c c c] ['a 'b :(opt if ok [[some 'c]])])
+(ghost? parse [a b] ['a 'b :(if null [[some 'c]])])
+('c = parse [a b c c c] ['a 'b :(if ok [[some 'c]])])
 
 ; Liberal policy of letting voids skip ahead is convenient to use void as a
 ; state equivalent to no-op...if you are willing to deal with the possible
@@ -49,11 +49,11 @@
 ; If this is not what you want, then ~okay~ is a better fit.
 
 (
-    c-rule: if null [[some 'c]]
+    c-rule: when null [[some 'c]]
     ^ghost = parse [a b] ['a 'b c-rule]
 )
 (
-    c-rule: if ok [[some 'c]]
+    c-rule: when ok [[some 'c]]
     'c = parse [a b c c c] ['a 'b c-rule]
 )
 

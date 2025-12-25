@@ -68,7 +68,7 @@ switch2: lambda [
             ; Otherwise, run the branch.  Keep going if we are using :MULTI,
             ; else return whatever that branch gives back.
             (
-                ^result: if ok (branch)  ; branch semantics for null
+                ^result: heavy eval branch  ; branch semantics for null
                 if not multi [return ^result]
                 found: null
             )

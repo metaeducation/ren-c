@@ -194,7 +194,7 @@ help-value: proc [
             exit
         ]
         let [molded truncated]: mold:limit atom' 2000  ; quasiform
-        print unspaced [molded (? if truncated ["..."]) _ _ "; anti"]
+        print unspaced [molded (if truncated ["..."]) _ _ "; anti"]
         exit
     ]
 

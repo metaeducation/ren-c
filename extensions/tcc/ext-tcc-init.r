@@ -288,16 +288,17 @@ compile: proc [
         ;
         4 = fourth system.version [  ; Linux
             let lddir: "lib"
-            let triplet: if 40 = fifth system.version [  ; 64-bit
+            let triplet: all [
+                40 = fifth system.version  ; 64-bit
                 "x86_64-linux-gnu"
             ]
             insert config.library-path spread compose [
                 (unspaced ["/usr/" lddir])
-                (? if triplet [unspaced ["/usr/" lddir "/" triplet]])
+                (if triplet [unspaced ["/usr/" lddir "/" triplet]])
                 (unspaced ["/" lddir])
-                (? if triplet [unspaced ["/" lddir "/" triplet]])
+                (if triplet [unspaced ["/" lddir "/" triplet]])
                 (unspaced ["/usr/local/" lddir])
-                (? if triplet [unspaced ["/usr/local/" lddir "/" triplet]])
+                (if triplet [unspaced ["/usr/local/" lddir "/" triplet]])
             ]
         ]
     ]
@@ -678,7 +679,7 @@ bootstrap: proc [
     call [
         (system.options.boot) make.r
             "config=configs/bootstrap.r"
-            (when options [spread system.options.args])
+            (if options [spread system.options.args])
     ]
 ]
 

@@ -361,7 +361,7 @@ main-startup: func [
             %.rebol/  ; default *nix (covers Linux, MacOS (OS X) and Unix)
         ]
 
-        if exists? path [path]
+        all [exists? path, path]  ; (match [exists?] path) if it were LOGIC!...
     ]
 
     ; Set system.users.home (users HOME directory)

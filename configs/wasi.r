@@ -135,7 +135,7 @@ cflags: compose [
     ;
     "-DPANIC_JUST_ABORTS=1"  ; no exceptions or setjmp()/longjmp()
 
-    (? if yes? debug-wasi-extension [spread [
+    (if yes? debug-wasi-extension [spread [
         "-DDEBUG_HAS_PROBE=1"
         "-DDEBUG_FANCY_CRASH=1"
         "-DTRAMPOLINE_COUNTS_TICKS=1"
@@ -150,5 +150,5 @@ ldflags: compose [
 
     "-lwasi-emulated-signal"  ; cflags needs "-D_WASI_EMULATED_SIGNAL"
 
-    (? if yes? debug-wasi-extension ["-g"])
+    (if yes? debug-wasi-extension ["-g"])
 ]

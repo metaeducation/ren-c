@@ -835,10 +835,12 @@ INLINE Bounce Native_Copy_Result_Untracked(
     return level_->out;
 }
 
-INLINE Bounce Native_Branched_Result(Level* level_, Value* atom) {
-    assert(atom == level_->out);  // wouldn't be zero cost if we supported copy
-    if (Is_Light_Null(atom))
-        Init_Heavy_Null(atom);  // box up for THEN reactivity [2]
+INLINE Bounce Native_Branched_Result(Level* level_, Value* v) {
+    assert(v == level_->out);  // wouldn't be zero cost if we supported copy
+    if (Is_Light_Null(v))
+        Init_Heavy_Null(v);  // box up for THEN reactivity [2]
+    else if (Is_Ghost(v))
+        Init_Heavy_Void(v);
     return level_->out;
 }
 

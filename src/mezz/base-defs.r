@@ -311,7 +311,7 @@ echo: proc [
         [element? <variadic>]
     {line}
 ][
-    line: if block? first args [take args] else [
+    line: when block? first args [take args] else [
         collect [
             cycle [
                 case [

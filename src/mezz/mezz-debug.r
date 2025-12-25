@@ -26,7 +26,7 @@ verify: vanishable func [
             not void? ^result
             not ^result
 
-            if handler [  ; may or may-not take two arguments
+            ^ if handler [  ; may or may-not take two arguments
                 let ^reaction: if block? handler [
                     eval handler
                 ] else [
@@ -172,7 +172,7 @@ net-trace: proc [
     either val [
         hijack net-log/ func [txt :C :S][
             print [
-                (? if c ["C:"]) (? if s ["S:"])
+                (if c ["C:"]) (if s ["S:"])
                     either block? txt [spaced txt] [txt]
             ]
             txt

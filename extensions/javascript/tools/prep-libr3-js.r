@@ -452,22 +452,18 @@ for-each-api [
         continue
     ]
 
-    let prologue: if null [
+    let prologue: when null [
         ; It can be useful for debugging to see the API entry points;
         ; using console.error() adds a stack trace to it.
         ;
         unspaced [--[console.error("Entering ]-- name --[");^/]--]
-    ] else [
-        null
     ]
 
-    let epilogue: if null [
+    let epilogue: when null [
         ; Similar to debugging on entry, it can be useful on exit to see
         ; when APIs return...code comes *before* the return statement.
         ;
         unspaced [--[console.error("Exiting ]-- name --[");^/]--]
-    ] else [
-        null
     ]
 
     let code-for-returning: trim:auto copy (switch js-return-type [
@@ -504,7 +500,7 @@ for-each-api [
 
     e-cwrap/emit cscape [:api --[
         reb.$<No-Reb-Name> = function() {
-            $<Opt Prologue>
+            $<Prologue>
             let argc = arguments.length
             let stack = stackSave()
             let packed = stackAlloc(4 * (argc + 1))
@@ -541,7 +537,7 @@ for-each-api [
 
             stackRestore(stack)
 
-            $<Opt Epilogue>
+            $<Epilogue>
             $<Code-For-Returning>
         }
     ]--]

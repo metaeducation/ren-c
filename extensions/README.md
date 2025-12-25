@@ -148,7 +148,7 @@ linker flag for including the library.
         'Windows [%odbc32]
     ] else [
         compose [
-            %odbc (? if yes? user-config.odbc-requires-ltdl [%ltdl])
+            %odbc (if yes? user-config.odbc-requires-ltdl [%ltdl])
         ]
     ]
 

@@ -38,12 +38,12 @@
     )
 ]
 
-("aaa" = parse "aaa" [inline (when null ["bbb"]) "aaa"])
-("aaa" = parse "bbbaaa" [inline (when ok ["bbb"]) "aaa"])
+("aaa" = parse "aaa" [inline (if null ["bbb"]) "aaa"])
+("aaa" = parse "bbbaaa" [inline (if ok ["bbb"]) "aaa"])
 
 ("b" = parse "aaabbb" [inline ([some "a"]) inline ([some "b"])])
 ("b" = parse "aaabbb" [
-    inline ([some "a"]) inline (when null [some "c"]) inline ([some "b"])]
+    inline ([some "a"]) inline (if null [some "c"]) inline ([some "b"])]
 )
 
 ; !!! Partial rule splicing doesn't work with GET-GROUP! being a combinator
@@ -130,7 +130,7 @@
 
 ; Void/nihil handling, just vanishes
 [
-    ('z = parse [x z] ['x inline (when null 'y) 'z])
+    ('z = parse [x z] ['x inline (if null 'y) 'z])
 
     ('z = parse [x z] ['x inline (assert [okay]) 'z])
 ]

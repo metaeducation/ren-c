@@ -458,6 +458,14 @@ none?: lambda3 [value] [
 ]
 assert [none? none]
 
+when: lambda3 [condition branch] [
+    either condition (branch) [none]
+]
+
+opt-in: lambda3 [value] [
+    either value [value] [none]
+]
+
 append: func3 [
     series [<opt> any-element!]
     value [<opt> any-element!]
@@ -1154,10 +1162,13 @@ decode: func3 [codec bin [blob!]] [
 ]
 
 blockify: func3 [x] [
+    if void? :x [
+        return null
+    ]
     if null? x [
         panic:blame "BLOCKIFY can't take ~null~ antiform" $x
     ]
-    if void? x [
+    if none? x [
         return copy []
     ]
     if block? x [

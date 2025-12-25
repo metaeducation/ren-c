@@ -7,7 +7,7 @@
         return parse text [collect until <end> [
             (capturing: null)
             opt keep between <here> ["$(" (capturing: okay) | <end>]
-            inline (? if capturing $[
+            inline (if capturing $[
                 inner: between <here> ")"
                 keep (as word! inner)
             ])

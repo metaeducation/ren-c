@@ -662,8 +662,8 @@ cc: make compiler-class [
                     ]
                 ][
                     spaced [
-                        when dep.flags [
-                            when find dep.flags 'static ["-static"]
+                        if dep.flags [
+                            if find dep.flags 'static ["-static"]
                         ]
                         unspaced ["-l" dep.output]
                     ]
@@ -1407,7 +1407,7 @@ makefile: make generator-class [
                         target: dep.output
                         depends: append copy objs (
                             spread map-each 'ddep dep.depends [
-                                when ddep.class <> #object-library [ddep]
+                                if ddep.class <> #object-library [ddep]
                             ]
                         )
                         commands: append reduce [dep/command] opt-in (

@@ -1043,11 +1043,10 @@ void Term_Insert(STD_TERM *t, const Value* v) {
         // Systems may handle tabs differently, but we want our buffer to
         // have the right number of spaces accounted for.  Just transform.
         //
-        Value* v_no_tab = rebValue(
-            "if find", v, "tab [",
-                "replace copy", v, "tab", "--[    ]--",
-            "]"
-        );
+        Value* v_no_tab = rebValue("all [",
+            "find", v, "tab",
+            "replace copy", v, "tab", "____",
+        "]");
 
         size_t encoded_size;
         unsigned char *encoded = rebBytes(&encoded_size,

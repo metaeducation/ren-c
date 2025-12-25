@@ -82,7 +82,7 @@
 
 ; recursive behaviour
 
-('~[~null~]~ = lift if ok [if null [1]])
+('~[]~ = lift if ok [if null [1]])
 (heavy-null? if ok [2 if null [1]])
 (1 = if ok [if ok [1]])
 
@@ -105,7 +105,7 @@
 )
 (1 = if false? 'false [1])
 
-((lift null) = lift if not okay [1])
+((lift ()) = lift if not okay [1])
 ('~[~null~]~ = lift if no? 'no [null])
 
 (warning? if off? 'off [rescue [1 / 0]])

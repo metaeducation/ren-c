@@ -654,7 +654,7 @@ export*: func [
         ^args: try take args  ; eval before EXTEND clears variable...
         return (  ; can't append until after, if prev. definition used in expr
             (
-                when word [  ; no "attached" state, must append word to get IN
+                if word [  ; no "attached" state, must append word to get IN
                     extend where word  ; maybe bound e.g. WHAT-DIR
                 ]
             ): ^args

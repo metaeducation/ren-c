@@ -193,9 +193,9 @@ Bounce The_Group_Branch_Executor(Level* const L)
 //
 //  if: native [
 //
-//  "If CONDITION is not NULL, execute BRANCH, otherwise return NULL"
+//  "If CONDITION is not NULL, execute BRANCH, otherwise return GHOST!"
 //
-//      return: [any-value? heavy-null?]
+//      return: [any-value? ghost!]
 //      condition [any-stable?]
 //      @(branch) [<unrun> any-branch?]
 //  ]
@@ -211,7 +211,7 @@ DECLARE_NATIVE(IF)
       bool cond = Test_Conditional(condition)
     );
     if (not cond)
-        return NULLED;  // "light" null (not in a pack) if condition is false
+        return GHOST;  // "light" void (not in a pack) if condition is false
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
 }
@@ -220,9 +220,9 @@ DECLARE_NATIVE(IF)
 //
 //  when: native [
 //
-//  "When CONDITION is not NULL, execute BRANCH, otherwise return GHOST"
+//  "When CONDITION is not NULL, execute BRANCH, otherwise return NONE"
 //
-//      return: [any-value? ghost!]
+//      return: [any-value? none?]
 //      condition [any-stable?]
 //      @(branch) [<unrun> any-branch?]
 //  ]
@@ -238,7 +238,7 @@ DECLARE_NATIVE(WHEN)
       bool cond = Test_Conditional(condition)
     );
     if (not cond)
-        return GHOST;  // deviation from IF (!) ...VOID not NULL
+        return Init_None(OUT);  // deviation from IF (!) ...NONE not VOID
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
 }
@@ -285,7 +285,7 @@ DECLARE_NATIVE(THEN_Q)
     INCLUDE_PARAMS_OF_THEN_Q;
 
     Value* v = ARG(VALUE);
-    return LOGIC(not Is_Light_Null(v));
+    return LOGIC(not (Is_Light_Null(v) or Is_Ghost(v)));
 }
 
 
@@ -303,7 +303,7 @@ DECLARE_NATIVE(ELSE_Q)
     INCLUDE_PARAMS_OF_ELSE_Q;
 
     Value* v = ARG(VALUE);
-    return LOGIC(Is_Light_Null(v));
+    return LOGIC(Is_Light_Null(v) or Is_Ghost(v));
 }
 
 
@@ -328,8 +328,8 @@ DECLARE_NATIVE(THEN)
     if (Is_Error(left))
         return COPY(left);
 
-    if (Is_Light_Null(left))
-        return NULLED;
+    if (Is_Light_Null(left) or Is_Ghost(left))
+        return COPY(left);
 
     return DELEGATE_BRANCH(OUT, branch, left);
 }
@@ -356,7 +356,7 @@ DECLARE_NATIVE(ELSE)
     if (Is_Error(left))
         return COPY(left);
 
-    if (not Is_Light_Null(left))
+    if (not (Is_Light_Null(left) or Is_Ghost(left)))
         return COPY(left);
 
     return DELEGATE_BRANCH(OUT, branch, left);
@@ -401,8 +401,8 @@ DECLARE_NATIVE(ALSO)
     if (Is_Error(left))
         return COPY(left);
 
-    if (Is_Light_Null(left))
-        return NULLED;
+    if (Is_Light_Null(left) or Is_Ghost(left))
+        return COPY(left);
 
     STATE = ST_ALSO_RUNNING_BRANCH;
     return CONTINUE_BRANCH(OUT, branch, left);
