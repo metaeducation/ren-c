@@ -274,7 +274,7 @@ parse-asn: func [
 
     return: [<null> block!]
     data [blob!]
-] bind {
+] bind construct [
     universal-tags: [
         <eoc>
         <boolean>
@@ -310,7 +310,7 @@ parse-asn: func [
     ]
 
     class-types: [@universal @application @context-specific @private]
-} [
+] [
     let data-start: data  ; may not be at head
 
     let index: getter [
@@ -975,14 +975,14 @@ decrypt-data: func [
 parse-protocol: lambda [
     []: [object!]
     data [blob!]
-] bind {
+] bind construct [
     protocol-types: [
         20 <change-cipher-spec>
         21 #alert
         22 #handshake
         23 #application
     ]
-} [
+] [
     make object! [
         type: select protocol-types data.1 else [
             panic ["unknown/invalid protocol type:" data.1]

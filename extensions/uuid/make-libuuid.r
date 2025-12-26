@@ -23,9 +23,9 @@ ROOT: https://raw.githubusercontent.com/karelzak/util-linux/master/
 
 mkdir %libuuid
 
-[.]: {
+[.]: construct [
     exclude-headers: ~  ; set differently in each routine
-}
+]
 
 add-config-h: [
     to "/*" thru "*/"

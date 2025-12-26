@@ -561,9 +561,9 @@ console*: func [
     ; blocks is made easier by collaboration between EMIT and a hooked version
     ; of the underlying RETURN of this function.
 
-    [.]: {
+    [.]: construct [
         instruction: copy []
-    }
+    ]
 
     let emit: proc [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"

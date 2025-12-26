@@ -73,9 +73,9 @@ catch: specialize catch*/ [name: 'throw]
     'remarks [element? <variadic>]
     :visibility [onoff?]
 ]
-bind {
+bind construct [
     logging: 'off
-} [
+] [
     if visibility [logging: visibility, return ()]
 
     if on? logging [

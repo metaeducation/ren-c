@@ -404,9 +404,9 @@
     f: func [
         :count [integer!]
     ]
-    bind o1 bind o2 bind {
+    bind o1 bind o2 bind construct [
         static: 10 + n
-    }[
+    ] [
         count: default [2]
         let data: reduce [count x y outer static]
         return case [

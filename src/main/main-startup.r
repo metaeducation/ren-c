@@ -199,12 +199,12 @@ main-startup: func [
     argv "Raw command line argument block received by main() as TEXT!s"
         [block!]
     {.}  ; local dot, not method
-] bind {
+] bind construct [
     o: system.options  ; shorthand since options are often read or written
-} [
-    [.]: {
+] [
+    [.]: construct [
         instruction: copy '[]  ; quote for no binding, want console binding [1]
-    }
+    ]
 
     let emit: proc [
         "Builds up sandboxed code to submit to C, hooked RETURN will finalize"

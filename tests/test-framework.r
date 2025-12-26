@@ -18,7 +18,7 @@ Rebol [
 
 import %test-parsing.r
 
-[.]: {
+[.]: construct [
     log-file: ~
 
     ; counters
@@ -30,7 +30,7 @@ import %test-parsing.r
     successes: ~
 
     allowed-flags: ~
-}
+]
 
 ; By default we echo the log to the screen also.  This should be an option.
 ;

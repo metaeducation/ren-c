@@ -31,9 +31,9 @@
         return: [<null> pack!]
         f [frame!]
         {result remainder subpending}
-    ] bind {
+    ] bind construct [
         indent: 0
-    } [
+    ] [
         let input: f.input  ; save to use after EVAL F
         let name: f.value
 

@@ -108,9 +108,9 @@ load-header: func [
 
     {data hdr rest line body final end binary}
 ]
-bind {
+bind construct [
     non-ws: make bitset! [not 1 - 32]
-} [
+] [
     data: as blob! source  ; if it's not UTF-8, decoding provides error
 
     ; The TRANSCODE function convention is that the LINE OF is the line number
