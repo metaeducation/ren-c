@@ -29,7 +29,7 @@
 )
 
 (
-    all wrap [
+    all {
         1 = [pos {value}]: transcode:next "1 [2] <3>"
         value = 1
         pos = " [2] <3>"
@@ -45,7 +45,7 @@
         null? [pos :value]: transcode:next pos
         null? value
         pos = null
-    ]
+    }
 )
 
 (
@@ -57,7 +57,7 @@
 (
     str: "Cat😺: [😺 😺] (😺)"
 
-    all wrap [
+    all {
         'Cat😺: = [pos {value}]: transcode:next str
         set-word? value
         value = 'Cat😺:
@@ -66,7 +66,7 @@
         [[😺 😺] (😺)] = value: transcode pos  ; no position, read to end
         block? value
         value = [[😺 😺] (😺)]  ; no position out always gets block
-    ]
+    }
 )
 
 ; Do the same thing, but with UTF-8 binary...
@@ -74,7 +74,7 @@
     bin: as blob! "Cat😺: [😺 😺] (😺)"
     bin =  #{436174F09F98BA3A205BF09F98BA20F09F98BA5D2028F09F98BA29}
 
-    all wrap [
+    all {
         'Cat😺: = [pos {value}]: transcode:next bin
         set-word? value
         value = 'Cat😺:
@@ -84,7 +84,7 @@
         [[😺 😺] (😺)] = value: transcode pos  ; no position, read to end
         block? value
         value = [[😺 😺] (😺)]  ; no position out always gets block
-    ]
+    }
 )
 
 [

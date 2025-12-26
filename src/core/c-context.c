@@ -604,7 +604,7 @@ DECLARE_NATIVE(WRAP)
 {
     INCLUDE_PARAMS_OF_WRAP;
 
-    Element* list = cast(Element*, ARG(LIST));
+    Element* list = Element_ARG(LIST);
 
     const Element* tail;
     const Element* at = List_At(&tail, list);
@@ -632,6 +632,40 @@ DECLARE_NATIVE(WRAP)
     Liftify(Init_Object(Array_At(pack, 1), varlist));
 
     return Init_Pack(OUT, pack);
+}
+
+
+//
+//  as-block-wrap: native [  ; REVIEW: make intrinsic
+//
+//  "Bind code in context and return it as a BLOCK! (default FENCE! behavior)"
+//
+//      return: [block!]
+//      list [<opt-out> any-list?]
+//  ]
+//
+DECLARE_NATIVE(AS_BLOCK_WRAP)
+{
+    INCLUDE_PARAMS_OF_AS_BLOCK_WRAP;
+
+    Element* list = Element_ARG(LIST);
+
+    const Element* tail;
+    const Element* at = List_At(&tail, list);
+    VarList* parent = nullptr;
+
+    VarList* varlist = Make_Varlist_Detect_Managed(
+        COLLECT_ONLY_SET_WORDS,
+        TYPE_OBJECT,  // !!! Presume object?
+        at,
+        tail,
+        parent
+    );
+    Tweak_Link_Inherit_Bind(varlist, Cell_Binding(list));
+    Tweak_Cell_Binding(list, varlist);
+    KIND_BYTE(list) = TYPE_BLOCK;
+
+    return COPY(list);
 }
 
 

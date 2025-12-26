@@ -220,7 +220,7 @@
 
 ; The BREAK designates breaking the outer repeat (definitional BREAK)
 (
-    null = repeat 1 wrap [
+    null = repeat 1 {
         f: lambda [x] [
             either x = 1 [
                 repeat 1 [f 2]
@@ -228,13 +228,13 @@
             ] [break]
         ]
         f 1
-    ]
+    }
 )
 
 (
     result: <before>
     all [
-        2 = catch wrap [  ; outer catch
+        2 = catch {  ; outer catch
             f: lambda [x] [
                 either x = 1 [
                     catch [f 2]  ; inner catch--no throws in block
@@ -242,7 +242,7 @@
                 ] [throw 2]  ; definitional throw, only matches outer catch
             ]
             result: f 1  ; never returns due ot outer catch
-        ]
+        }
         result = <before>
     ]
 )

@@ -25,7 +25,7 @@
                 [1 + 2 + 3]
                 -[1 + 2 + 3]-
                 #{01FF02FF03}
-            ] (wrap [
+            ] {
                 protect value: copy original
                 sys.util/recover code then e -> [
                     any [
@@ -38,7 +38,7 @@
                         panic e
                     ]
                 ]
-            ])
+            }
             return ok
         ]
         ok

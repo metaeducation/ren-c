@@ -21,11 +21,11 @@
     (ghost? for-each 'x none [1020])
     ([] = map-each 'x none [1020])
     (ghost? for-next 'x none [1020])
-    (all wrap [
+    (all {
         none = [result count]: remove-each 'x none [panic "never gets called"]
         result = none
         count = 0
-    ])
+    })
     (ghost? every 'x none [okay])
     (ghost? for-skip 'x none 2 [1020])
 

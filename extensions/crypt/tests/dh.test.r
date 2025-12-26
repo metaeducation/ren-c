@@ -25,7 +25,7 @@
     233    239    241    251]
 
     randomize "Deterministic!"
-    repeat 1000 (wrap [
+    repeat 1000 {
         g: p: ~
         insist [
             g: random-pick byte-primes
@@ -40,7 +40,7 @@
         modulus: encode [BE + 1] p
         base: encode [BE + 1] g
 
-        repeat 1 (wrap [
+        repeat 1 {
             mine: dh-generate-keypair:insecure modulus base
             mine.modulus = modulus
             (length of modulus) = length of mine.public-key
@@ -61,8 +61,8 @@
                     "did not arrive at the same shared secret"
                 ]
             ]
-        ])
-    ])
+        }
+    }
     ok
 )
 

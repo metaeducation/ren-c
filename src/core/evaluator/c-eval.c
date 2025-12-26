@@ -261,7 +261,9 @@ Bounce Evaluator_Executor(Level* const L)
 // The evaluator allows you to override some aspects of its functionality,
 // such as what happens to evaluate FENCE!.  This is a novel new concept.
 //
+// But FENCE! typically runs WRAP.
+//
 void Startup_Evaluator(void)
 {
-    Copy_Cell(Sink_LIB(FENCE_X_EVAL), LIB(CONSTRUCT));
+    Copy_Cell(Sink_LIB(FENCE_X_EVAL), LIB(AS_BLOCK_WRAP));
 }

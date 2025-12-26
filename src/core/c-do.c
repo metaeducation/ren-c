@@ -150,7 +150,7 @@ bool Pushed_Continuation(
     if (Is_Antiform(branch))  // no other antiforms can be branches
         panic (Error_Bad_Antiform(branch));
 
-    if (Is_Pinned_Form_Of(GROUP, branch)) {  // [2] for GET-GROUP!
+    if (Is_Pinned_Form_Of(GROUP, branch)) {  // [2] for @(gr o up)
         assert(flags & LEVEL_FLAG_FORCE_HEAVY_NULLS);  // needed for trick
         require (
           Level* grouper = Make_Level_At_Core(
@@ -199,10 +199,44 @@ bool Pushed_Continuation(
         Clear_Cell_Sigil(Derelativize(out, cast(Element*, branch), binding));
         goto just_use_out;
 
-      case TYPE_BLOCK: {
+      case TYPE_FENCE: {  // WRAP, then execute
+        const Element* tail;
+        const Element* at = List_At(&tail, branch);
+        VarList* parent = nullptr;
+
+        VarList* varlist = Make_Varlist_Detect_Managed(
+            COLLECT_ONLY_SET_WORDS,
+            TYPE_OBJECT,  // !!! Presume object?
+            at,
+            tail,
+            parent
+        );
+        Tweak_Link_Inherit_Bind(
+            varlist,
+            Derive_Binding(binding, Known_Element(branch))
+        );
+        binding = varlist;  // update binding
+        goto handle_list_with_adjusted_binding; }
+
+      case TYPE_BLOCK:  // plain execution
+        binding = Derive_Binding(binding, Known_Element(branch));
+        goto handle_list_with_adjusted_binding;
+
+      handle_list_with_adjusted_binding: {
+          Option(Element*) first = nullptr;
+          require (
+            Result(Feed*) feed = Prep_Array_Feed(
+              Alloc_Feed(),
+              first,  // no injection
+              Cell_Array(branch),
+              Series_Index(branch),
+              binding,
+              FEED_MASK_DEFAULT | (branch->header.bits & FEED_FLAG_CONST)
+            )
+        );
         require (
-          Level* L = Make_Level_At_Core(
-            &Evaluator_Executor, cast(Element*, branch), binding, flags
+          Level* L = Make_Level(
+            &Evaluator_Executor, feed, flags
         ));
         Init_Ghost(Evaluator_Primed_Cell(L));
 

@@ -375,11 +375,11 @@
 
 ; infinite recursion
 (
-    <deep-enough> = catch wrap [
+    <deep-enough> = catch {
         counter: 0
         blk: [counter: me + 1, if counter = 5000 [throw <deep-enough>], all blk]
         eval blk
-    ]
+    }
 )
 
 ; PREDICATES

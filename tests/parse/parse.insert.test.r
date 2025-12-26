@@ -18,41 +18,41 @@
 )]
 
 [https://github.com/red/red/issues/3357
-    (all wrap [
+    (all {
         '~#insert~ = lift parse x3357: [] [insert ('foo)]
         x3357 = [foo]
-    ])
-    (all wrap [
+    })
+    (all {
         '~#insert~ = lift parse x3357b: [] [insert (the foo)]
         x3357b = [foo]
-    ])
+    })
 ]
 
 ; Block insertion tests from %parse-test.red
 [
-    (all wrap [
+    (all {
         '~#insert~ = lift parse blk: [] [insert (1)]
         blk = [1]
-    ])
-    (all wrap [
+    })
+    (all {
         'a = parse blk: [a a] [next insert (the b) one]
         blk = [a b a]
-    ])
-    (all wrap [
+    })
+    (all {
         p: ~
         '~#remove~ = lift parse blk: [] [
             p: <here> insert (the a) seek (p) remove 'a
         ]
         blk = []
-    ])
-    (all wrap [
+    })
+    (all {
         '~#insert~ = lift parse blk: [] [insert (spread [a b])]
         blk = [a b]
-    ])
-    (all wrap [
+    })
+    (all {
         '~#insert~ = lift parse blk: [] [insert ([a b])]
         blk = [[a b]]
-    ])
+    })
     (
         series: [a b c]
         letter: 'x
@@ -84,54 +84,54 @@
 
 ; TEXT! insertion tests from %parse-test.red
 [
-    (all wrap [
+    (all {
         '~#insert~ = lift parse str: "" [insert (#1)]
         str = "1"
-    ])
-    (all wrap [
+    })
+    (all {
         #a = parse str: "aa" [next insert (#b) one]
         str = "aba"
-    ])
-    (all wrap [
+    })
+    (all {
         p: ~
         '~#remove~ = lift parse str: "" [
             p: <here> insert (#a) seek (p) remove #a
         ]
         str = ""
-    ])
-    (all wrap [
+    })
+    (all {
         p: ~
         '~#remove~ = lift parse str: "test" [
             some [next p: <here> insert (#_)] seek (p) remove one
         ]
         str = "t_e_s_t"
-    ])
+    })
 ]
 
 ; BLOB! insertion tests from %parse-test.red
 [
-   (all wrap [
+    (all {
         '~#insert~ = lift parse bin: #{} [insert (#"^A")]
         bin = #{01}
-    ])
-    (all wrap [
+    })
+    (all {
         10 = parse bin: #{0A0A} [next insert (#{0B}) one]
         bin = #{0A0B0A}
-    ])
-    (all wrap [
+    })
+    (all {
         p: ~
         '~#remove~ = lift parse bin: #{} [
             p: <here> insert (#{0A}) seek (p) remove #{0A}
         ]
         bin = #{}
-    ])
-    (all wrap [
+    })
+    (all {
         p: ~
         '~#remove~ = lift parse bin: #{DEADBEEF} [
             some [next p: <here> insert (NUL)] seek (p) remove one
         ]
         bin = #{DE00AD00BE00EF}
-    ])
+    })
 ]
 
 ; !!! Red has an arity-2 form of INSERT which allows you to specify a series

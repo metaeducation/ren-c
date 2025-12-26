@@ -80,7 +80,7 @@
         http://./bar                    [http://./ %bar]
         (at %/vol/dir/file.r 6)         [%dir/ %file.r]
     ]
-    for-each [test result] split-path-tests wrap [
+    for-each [test result] split-path-tests {
         [dir file]: split-path:relax test
         if result <> actual: reduce [any [dir _], any [file _]] [
             panic [mold test 'expected mold result "but got" mold actual]
@@ -93,6 +93,6 @@
         if test <> res [
             panic ["Split did not JOIN equivalently:" mold test mold res]
         ]
-    ]
+    }
     ok
 )

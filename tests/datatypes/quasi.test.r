@@ -21,12 +21,12 @@
 
 (
     valid: ["~abc~" "~a|b~"]
-    for-each 'str valid wrap [
+    for-each 'str valid {
         word: parse str [/to-word between '~ '~]
         bad: transcode:one str
         assert [quasi? bad]
         assert [word = unquasi bad]
-    ]
+    }
     ok
 )
 

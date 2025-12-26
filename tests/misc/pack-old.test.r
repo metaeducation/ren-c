@@ -81,30 +81,30 @@
 
 (
     a: b: ~#bad~
-    all [
+    all {
         3 = [a b]: pack-old [1 + 2 3 + 4]
         a = 3
         b = 7
-    ]
+    }
 )
 
 (
     a: b: ~#bad~
-    all wrap [
+    all {
         1 = [a b c]: pack-old @[1 + 2]
         a = 1
         b = '+
         c = 2
-    ]
+    }
 )
 
 ; <...> is used to indicate willingness to discard extra values
 (
-    all wrap [
+    all {
         1 = [a b <...>]: pack-old @[1 2 3 4 5]
         a = 1
         b = 2
-    ]
+    }
 )
 
 (
@@ -125,7 +125,7 @@
 (
     a: 10
     b: 20
-    all wrap [space = [a b]: pack-old @[_ _], space? a, space? b]
+    all {space = [a b]: pack-old @[_ _], space? a, space? b}
 )
 (
     a: 10

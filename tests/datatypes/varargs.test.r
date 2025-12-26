@@ -136,7 +136,7 @@
 ; https://github.com/metaeducation/ren-c/issues/912
 
 (
-    vblock: collect wrap [
+    vblock: collect {
         log: adapt keep/ [set $value spread reduce value]
         variadic2: func [return: [text!] v [any-stable? <variadic>]] [
            log [<1> take v]
@@ -146,9 +146,9 @@
        ]
        result: variadic2 "a" "b" then t -> [log [<t> t] "then"]
        log [<result> result]
-    ]
+    }
 
-    nblock: collect wrap [
+    nblock: collect {
         log: adapt keep/ [set $value spread reduce value]
         normal2: func [return: [text!] n1 n2] [
             log [<1> n1 <2> n2]
@@ -156,7 +156,7 @@
         ]
         result: normal2 "a" "b" then t -> [log [<t> t] "then"]
         log [<result> result]
-    ]
+    }
 
     all [
         vblock = [<1> "a" <2> "b" <t> "returned" <result> "then"]

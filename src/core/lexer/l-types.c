@@ -182,7 +182,7 @@ DECLARE_NATIVE(SIZE_OF)
 
     if (Is_File(elem) or Is_Url(elem))  // !!! hack in FILE! and URL! [1]
         return rebDelegate(
-            "all wrap [info: info?", elem, "info.size]"
+            "all {info: info?", elem, "info.size}"
         );
 
     return Dispatch_Generic(SIZE_OF, elem, LEVEL);

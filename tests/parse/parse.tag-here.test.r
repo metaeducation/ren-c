@@ -34,31 +34,31 @@
     ]
 )]
 
-(all wrap [
-    pos: ~
+(all {
+    pos: ()
     [x y] = res: parse ser: [x y] [pos: <here>, elide [one, one]]
     pos = ser
-])
-(all wrap [
-    pos: ~
+})
+(all {
+    pos: ()
     [y] = res: parse ser: [x y] [one, pos: <here>, elide one]
     pos = next ser
-])
-(all wrap [
-    pos: ~
+})
+(all {
+    pos: ()
     [] = res: parse ser: [x y] [one, one, pos: <here>]
     pos = tail of ser
-])
+})
 [#2130 (
-    all wrap [
-        pos: val: ~
+    all {
+        pos: val: ()
         'x = res: parse ser: [x] [pos: <here>, val: word!]
         val = 'x
         pos = ser
-    ]
+    }
 )(
-    all wrap  [
-        pos: val: ~
+    all {
+        pos: val: ()
         'true = res: parse ser: "foo" [
             pos: <here>
             val: across one
@@ -66,7 +66,7 @@
         ]
         val = "f"
         pos = ser
-    ]
+    }
 )]
 
 ; Should return the same series type as input (Rebol2 did not do this)

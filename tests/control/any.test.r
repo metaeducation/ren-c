@@ -368,12 +368,12 @@
 
 ; infinite recursion
 (
-    <deep-enough> = catch wrap [
+    <deep-enough> = catch {
         n: 0
         blk: [all [either 5000 = n: n + 1 [throw <deep-enough>] [okay]]]
         append blk.2 as group! blk
         eval blk
-    ]
+    }
 )
 
 ; PREDICATES

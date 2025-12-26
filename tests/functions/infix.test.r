@@ -70,20 +70,20 @@
         foo: func [] [
             panic "foo should not run, it's prefix and runs on *next* step"
         ]
-        all wrap [
+        all {
             1020 = [pos {_}]: evaluate:step [1020 foo 304]
             pos = [foo 304]
-        ]
+        }
     )(
         i-foo: infix func [
             "0-arity function, but infix so runs in *same* step"
         ][
             return <i-foo>
         ]
-        all wrap [
+        all {
             <i-foo> = [pos {_}]: evaluate:step [1020 i-foo 304]
             pos = [304]
-        ]
+        }
     )
 
     (
@@ -94,14 +94,14 @@
             bar: null
             return ~,~
         ]
-        all wrap [
+        all {
             [pos var]: evaluate:step [1020 bar 304]
             pos = [bar 304]
             var = 1020
             action? bar/
             bar
             null? bar
-        ]
+        }
     )(
         i-bar: infix func [
             "Invisible infix arity-0 function should run on same step"
@@ -110,12 +110,12 @@
             i-bar: null
             return left
         ]
-        all wrap [
+        all {
             [pos var]: evaluate:step [1020 i-bar 304]
             pos = [304]
             var = 1020
             null? i-bar
-        ]
+        }
     )
 ]
 

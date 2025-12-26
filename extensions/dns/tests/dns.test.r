@@ -8,10 +8,10 @@
 ; (e.g. dns://example.com will not do a reverse lookup on the tuple you get)
 ; https://networkengineering.stackexchange.com/q/25421/
 ;
-(all wrap [
+(all {
     tuple? address: read dns://rebol.com
     "rebol.com" = read join dns:// address
-])
+})
 
 ; Reading dns:// has been standardized in Ren-C to try and get the real
 ; IP address of the system.  On Windows this is as easy as passing null to

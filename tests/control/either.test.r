@@ -66,22 +66,22 @@
 
     ; Infinite recursion
 
-    (<deep-enough> = catch wrap [
+    (<deep-enough> = catch {
         depth: 0
         eval blk: [
             depth: me + 1
             if depth = 1000 [throw <deep-enough>]
             either okay (blk) []
         ]
-    ])
-    (<deep-enough> = catch wrap [
+    })
+    (<deep-enough> = catch {
         depth: 0
         eval blk: [
             depth: me + 1
             if depth = 1000 [throw <deep-enough>]
             either null [] (blk)
         ]
-    ])
+    })
 ]
 
 [

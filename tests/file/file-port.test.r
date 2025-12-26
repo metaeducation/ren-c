@@ -22,10 +22,10 @@
             delete f
             return ~
         ]
-        for-each 'item (read f) wrap [
+        for-each 'item (read f) {
            name: join f item
            delete-recurse name
-        ]
+        }
         delete f
         return ~
     ]
@@ -245,7 +245,7 @@
         pos: change // [pos (copy:part data part) part: part]
     ]
 
-    repeat 128 wrap [
+    repeat 128 {
         ; Make a random thing of data up to 1k in size
         ;
         len: random 1024
@@ -271,7 +271,7 @@
         ;
         assert [(length of p) = (length of pos)]
         assert [(offset of p) = ((index of pos) - 1)]  ; TBD: offset
-    ]
+    }
 
     close p
 

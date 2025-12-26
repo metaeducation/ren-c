@@ -87,11 +87,11 @@
 (1 = if ok [if ok [1]])
 
 ; infinite recursion
-(<deep-enough> = catch wrap [
+(<deep-enough> = catch {
     depth: 0
     blk: [depth: me + 1, if depth = 1000 [throw <deep-enough>], if ok (blk)]
     eval blk
-])
+})
 
 (
     success: 'no

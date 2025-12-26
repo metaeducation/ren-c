@@ -229,12 +229,12 @@
         #"漢"  ; 3 utf-8 bytes encoded
         #"😺"  ; 4 utf-8 bytes encoded
     ]
-    count-up 'size 4 wrap [
+    count-up 'size 4 {
         c: codepoints.(size)
         if size != length of as blob! c [
             panic "test character doesn't match expected size"
         ]
-        count-up 'len 64 wrap [
+        count-up 'len 64 wrap {
             s: copy ""
             e: copy ""
             picks: copy []
@@ -254,9 +254,9 @@
                 ]
             ]
             if not s = e [panic ["Mismatch:" mold s "=>" mold e]]
-        ]
+        }
         ok
-    ]
+    }
 )
 
 

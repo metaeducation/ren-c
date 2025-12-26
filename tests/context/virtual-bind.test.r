@@ -97,13 +97,13 @@
 (
     data: array:initial 20 1
     sum: 0
-    for-each 'x data wrap [
+    for-each 'x data {
         code: copy []  ; block captures binding that can see X
         for-each 'y data [  ; block can't see Y w/o overbind, let's COMPOSE it
             append code spread compose:deep [sum: sum + eval [x + (y) + z]]
         ]
         for-each 'z data code  ; FOR-EACH overbinds for Z visibility
-    ]
+    }
     sum = 24000
 )
 

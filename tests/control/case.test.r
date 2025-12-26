@@ -131,11 +131,11 @@
 
 ; infinite recursion
 (
-    <deep-enough> = catch wrap [
+    <deep-enough> = catch {
         x: 0
         blk: [elide (x: x + 1, if x = 5000 [throw <deep-enough>]) case blk]
         eval blk
-    ]
+    }
 )
 
 

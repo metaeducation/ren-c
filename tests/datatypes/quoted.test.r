@@ -249,7 +249,7 @@
         _
         |
         ~(_)~
-    ] wrap [
+    ] {
         e1: e2: equal1: equal2: ~
 
         lit-item: quote get meta $item
@@ -274,7 +274,7 @@
         if equal1 != equal2 [
             panic "no comparison parity"
         ]
-    ]
+    }
     close port
     ok
 )

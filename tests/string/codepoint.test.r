@@ -7,7 +7,7 @@
         #à   224     #{C3A0}
         #漢  28450   #{E6BCA2}
         #😺  128570  #{F09F98BA}
-    ] wrap [
+    ] {
         assert [cp = codepoint of c]
         assert [bin = as blob! c]
         assert [cp = codepoint of bin]
@@ -26,7 +26,7 @@
         assert [cp = codepoint of txtcopy]  ; non-head ok
         append txtcopy "B"
         assert [error? codepoint of txtcopy]  ; tail data bad
-    ]
+    }
     ok
 )
 

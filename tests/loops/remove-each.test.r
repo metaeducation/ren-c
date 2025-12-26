@@ -7,20 +7,20 @@
 ;   https://github.com/metaeducation/rebol-issues/issues/931
 
 (
-    all wrap [
+    all {
         s: [1 2]
         s = [_ count]: remove-each 'i s [okay]
         empty? s
         count = 2
-    ]
+    }
 )
 (
-    all wrap [
+    all {
         s: [1 2]
         s = [_ count]: remove-each 'i s: [1 2] [null]
         [1 2] = s
         count = 0
-    ]
+    }
 )
 
 ; BLOCK!

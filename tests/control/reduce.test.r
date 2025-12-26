@@ -27,11 +27,11 @@
 
 ; infinite recursion
 (
-    <deep-enough> = catch wrap [
+    <deep-enough> = catch {
         x: 0
         blk: [x: x + 1, if x = 5000 [throw <deep-enough>] reduce blk]
         eval blk
-    ]
+    }
 )
 
 ; Quick flatten test, here for now

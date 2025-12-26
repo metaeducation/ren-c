@@ -49,32 +49,32 @@
 
 ; BLOCK! change tests from %parse-test.red
 [
-    (all wrap [
+    (all {
         '~#change~ = lift parse blk: [1] [change integer! (the a)]
         blk = [a]
-    ])
-    (all wrap [
+    })
+    (all {
         '~#change~ = lift parse blk: [1 2 3] [change [some integer!] (the a)]
         blk = [a]
-    ])
-    (all wrap [
+    })
+    (all {
         3 = parse blk: [1 a 2 b 3] [some [change word! (#".") | integer!]]
         blk = [1 #"." 2 #"." 3]
-    ])
-    (all wrap [
+    })
+    (all {
         '~#change~ = lift parse blk: [1 2 3] [change [some integer!] (99)]
         blk = [99]
-    ])
-    (all wrap [
+    })
+    (all {
         '~#change~ = lift parse blk: [1 2 3] [change [some integer!] ([a])]
         blk = [[a]]
-    ])
-    (all wrap [
+    })
+    (all {
         '~#change~ = lift parse blk: [1 2 3] [
             change [some integer!] (reduce [1 + 2])
         ]
         blk = [[3]]
-    ])
+    })
     (
         b: ["long long long string" "long long long string" 1]
         '~#change~ = lift parse copy "." [change one (spread b)]
@@ -84,92 +84,92 @@
 
 ; TEXT! change tests from %parse-test.red
 [
-    (all wrap [
+    (all {
         '~#change~ = lift parse str: "1" [change one (#a)]
         str = "a"
-    ])
-    (all wrap [
+    })
+    (all {
         '~#change~ = lift parse str: "123" [change [repeat 3 one] (#a)]
         str = "a"
-    ])
+    })
     (
         alpha: charset [#a - #z]
-        all wrap [
+        all {
             #3 = parse str: "1a2b3" [
                 some [change alpha (#".") | one]
             ]
             str = "1.2.3"
-        ]
+        }
     )
-    (all wrap [
+    (all {
         '~#change~ = lift parse str: "123" [change skip 3 (99)]
         str = "99"
-    ])
-    (all wrap [
+    })
+    (all {
         '~#change~ = lift parse str: "test" [some [change #t (#o) | one]]
         str = "oeso"
-    ])
-    (all wrap [
+    })
+    (all {
         #4 = parse str: "12abc34" [
             some [to alpha change [some alpha] ("zzzz")] repeat 2 one
         ]
         str = "12zzzz34"
-    ])
+    })
 ]
 
 
 ; BLOB! change tests from %parse-test.red
 [
-    (all wrap [
+    (all {
         '~#change~ = lift parse bin: #{01} [change one (#{0A})]
         bin = #{0A}
-    ])
-    (all wrap [
+    })
+    (all {
         '~#change~ = lift parse bin: #{010203} [change [skip 3] (#{0A})]
         bin = #{0A}
-    ])
+    })
     (
         digit: charset [1 - 9]
-        all wrap [
+        all {
             '~#change~ = lift parse bin: #{010A020B03} [
                 some [change digit (#{00}) | next]
             ]
             bin = #{000A000B00}
-        ]
+        }
     )
-    (all wrap [
+    (all {
         '~#change~ = lift parse bin: #{010203} [change skip 3 (99)]
         bin = #{63}
-    ])
-    (all wrap [
+    })
+    (all {
         239 = parse bin: #{BEADBEEF} [
             some [change #{BE} (#{DE}) | one]
         ]
         bin = #{DEADDEEF}
-    ])
-    (all wrap [
+    })
+    (all {
         14 = parse bin: #{0A0B0C03040D0E} [
             some [to digit change [some digit] (#{BEEF})] repeat 2 one
         ]
         bin = #{0A0B0CBEEF0D0E}
-    ])
+    })
 ]
 
 [#1245
-    (all wrap [
+    (all {
         '~#change~ = lift parse s: "(1)" [change "(1)" ("()")]
         s = "()"
-    ])
+    })
 ]
 
 ; https://github.com/metaeducation/rebol-issues/issues/1279
 (
     s: ~
-    all wrap [
+    all {
         let n
         '~#change~ = lift parse s: [1] [change n: integer! (n * 10)]
         s = [10]
-    ]
+    }
 )
 
 [

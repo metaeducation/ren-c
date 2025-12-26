@@ -8,12 +8,12 @@
 ; while hybrid syntax is still around.
 
 
-(all wrap [
+(all {
     x: y: ~
     "bbb" = parse "aaabbb" [x: across some "a", y: across [some "b"]]
     x = "aaa"
     y = "bbb"
-])
+})
 
 [https://github.com/red/red/issues/1093
    (

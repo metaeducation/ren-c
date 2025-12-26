@@ -256,11 +256,11 @@
     ]
 )
 (
-    all wrap [
+    all {
         null? [pos :value]: evaluate:step []
         pos = null
         null? value
-    ]
+    }
 )
 (
     [pos value]: evaluate:step [rescue [1 / 0]]
@@ -316,11 +316,11 @@
 (3 = reeval unrun reeval/ unrun add/ 1 2)
 ; infinite recursion for block
 (
-    <deep-enough> = catch wrap [
+    <deep-enough> = catch {
         x: 0
         blk: [x: x + 1, if x = 2000 [throw <deep-enough>] eval blk]
         eval blk
-    ]
+    }
 )
 
 ; This was supposed to test infinite recursion in strings, but it doesn't
@@ -335,11 +335,11 @@
 
 ; infinite recursion for evaluate
 (
-    <deep-enough> = catch wrap [
+    <deep-enough> = catch {
         x: 0
         blk: [x: x + 1, if x = 2000 [throw <deep-enough>] evaluate blk]
         eval blk
-    ]
+    }
 )
 
 ; evaluating quoted argument

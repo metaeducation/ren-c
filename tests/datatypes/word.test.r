@@ -170,7 +170,7 @@
         -[<<]- -[>>]- -[>>=]- -[<<=]- -[>>=<->]-
 
         -[-<=>-]- -[-<>-]- -[>=<]-
-    ] wrap [
+    ] {
         assert: specialize lib.assert/ [
             handler: [echo Failure on: @str]
         ]
@@ -214,7 +214,7 @@
         [pos l]: transcode:next unspaced ["^^" str]
         assert [pos = ""]
         assert [l = meta word]
-    ]
+    }
     ok)
 ]
 

@@ -68,11 +68,11 @@
 (
     wrapped: enclose (
         func [in] [return pack [~, in + 1]]
-    ) f -> wrap [
+    ) f -> {
         x: f.in
         [_ o]: eval-free f
         o * 10
-    ]
+    }
     110 = wrapped 10
 )
 

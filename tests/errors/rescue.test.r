@@ -89,17 +89,17 @@
 )
 #enrescue (
     f: make frame! lambda [] [fail 'test]
-    all wrap [
+    all {
         warning? e: enrescue f
         e.id = 'test
-    ]
+    }
 )
 #enrescue (
     f: make frame! lambda [] [1000 + 20]
-    all wrap [
+    all {
         quoted? q: enrescue f
         1020 = unquote q
-    ]
+    }
 )
 
 

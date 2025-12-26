@@ -29,12 +29,12 @@
             append data g
         ]
     ]
-    all wrap [
+    all {
         action? result: gmaker
         done? result
         done? result
         data = [1 2 3]
-    ]
+    }
 )
 
 
@@ -286,7 +286,7 @@
         yield pack ["FOO!" <foo>]
         yield pack ["BAR!" <bar>]
     ]
-    all wrap [
+    all {
         "FOO!" = [a b]: g
         a = "FOO!"
         b = <foo>
@@ -295,7 +295,7 @@
 
         done? g
         done? g
-    ]
+    }
 )
 
 ; Make sure enumeration handles nulls (quirk of API-based implementation had

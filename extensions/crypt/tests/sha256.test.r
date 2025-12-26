@@ -70,7 +70,7 @@
     ]
 
     randomize "Deterministic Behavior Desired"
-    repeat 100 (wrap [
+    repeat 100 {
         data-len: random 1024
         data: make blob! data-len
         repeat data-len [append data (random-between 0 255)]
@@ -84,6 +84,6 @@
         if a != b [
             panic ["Mismatched HMAC-SHA256 for" mold data "with" mold key]
         ]
-    ])
+    }
     ok
 )

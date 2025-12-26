@@ -3,8 +3,8 @@
 ; #1703
 ; #1711
 (
-    any wrap [
+    any {
         not warning? e: sys.util/recover [make-dir %/folder-to-save-test-files]
         e.type = 'access
-    ]
+    }
 )

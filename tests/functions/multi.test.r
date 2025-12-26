@@ -17,29 +17,29 @@
 
     (304 = test 1020)
 
-    (all wrap [
+    (all {
         304 = [a]: test 1020
         a = 304
-    ])
+    })
 
-    (all wrap [
+    (all {
         304 = [b c]: test 1020
         b = 304
         c = <y-result>
-    ])
+    })
 
-    (all wrap [
+    (all {
         304 = [d e f]: test 1020
         d = 304
         e = <y-result>
         f = <z-result>
-    ])
+    })
 
-    (all wrap [
+    (all {
         304 = [g _ h]: test 1020
         g = 304
         h = <z-result>
-    ])
+    })
 
     ; "Circling" results using FENCE! is a way of making the overall
     ; multi-return result of the expression come from another output.
@@ -89,15 +89,15 @@
 ]
 
 [(
-    all wrap [
+    all {
         'abc = [rest {_}]: transcode:next "abc def"
         rest = " def"
-    ]
+    }
 )(
-    all wrap [
+    all {
         'abc = [rest {(^ghost)}]: transcode:next "abc def"
         rest = " def"
-    ]
+    }
 )(
     error? [_]: panic "a"
 )]
@@ -146,47 +146,47 @@
         foo: func [return: [~[integer! integer!]~]] [
             return pack [20 10]
         ]
-        all wrap [
+        all {
             '~#weird~ = [{^x} :y]: (foo then [~#weird~])
             x = '~#weird~
             y = null
-        ]
+        }
     )
 
     (
         foo: func [return: [~[integer! integer!]~]] [
             return pack [20 10]
         ]
-        all wrap [
+        all {
             '~#weird~ <> [^x y]: foo then [~#weird~]
             x = the '20
             y = 10
-        ]
+        }
     )
 
     (
-        all wrap [
+        all {
             x: find "abc" 'b then [10]
             x = 10
             [y]: find "abc" 'b then [10]
             y = 10
-        ]
+        }
     )
 ]
 
 ; You can use a {} without a variable to get a return result
 ;
-(all wrap [
+(all {
     " cd" = [_ item]: transcode:next "ab cd"
     item = 'ab
-])
+})
 
 ; Propagates nihil signals, but sets variables to null
 [
-    (all wrap [
+    (all {
         ghost? [:x]: comment "hi"
         null? x
-    ])
+    })
 ]
 
 ; ELIDE (or multi-step evals) will not ignore packs containing ERROR!
@@ -204,12 +204,12 @@
         [^e]: pack [1 / 0] 1 + 2
     )
     (
-        all wrap [
+        all {
             ignore [^e n]: pack [1 / 0, 1 + 0]
             n = 1
             error? ^e
             'zero-divide = (unanti ^e).id
-        ]
+        }
     )
 ]
 
@@ -217,11 +217,11 @@
 [
     ~???~ !! ([a b]: 10)
     (
-        all wrap [
+        all {
             10 = [a :b]: 10
             a = 10
             b = null
-        ]
+        }
     )
 ]
 

@@ -52,22 +52,22 @@
     ]
     ok)
 
-    (all wrap [
+    (all {
         [null 1020] = block: (null ->- left-lit-bound 1020)
         null = get first block
-    ])
-    (all wrap [
+    })
+    (all {
         [null 304] = block: (null ->- right-lit-bound 304)
         null = get first block
-    ])
-    (all wrap [
+    })
+    (all {
         [(panic 'x) 1020] = block: ((panic 'x) ->- left-lit-bound 1020)
         panic/ = get inside block.1 block.1.1
-    ])
-    (all wrap [
+    })
+    (all {
         [(panic 'x) 304] = block: ((panic 'x) ->- right-lit-bound 304)
         panic/ = get inside block.1 block.1.1
-    ])
+    })
 ]
 
 ; 'LITERAL as-is parameter
@@ -81,22 +81,22 @@
     value: <whatever>
     ok)
 
-    (all wrap [
+    (all {
         [value 1020] = block: (value ->- left-lit-as-is 1020)
         null = binding of first block
-    ])
-    (all wrap [
+    })
+    (all {
         [value 304] = block: (value ->- right-lit-as-is 304)
         null = binding of first block
-    ])
-    (all wrap [
+    })
+    (all {
         [(panic 'x) 1020] = block: ((panic 'x) ->- left-lit-as-is 1020)
         null = binding of inside block.1 block.1.1
-    ])
-    (all wrap [
+    })
+    (all {
         [(panic 'x) 304] = block: ((panic 'x) ->- right-lit-as-is 304)
         null = binding of inside block.1 block.1.1
-    ])
+    })
 ]
 
 ; @(LITERAL) as-is soft parameter
@@ -113,28 +113,28 @@
     value: <whatever>
     ok)
 
-    (all wrap [
+    (all {
         [value 1020] = block: (value ->- left-soft-as-is 1020)
         <whatever> = get first block  ; should not be bound [1]
-    ])
-    (all wrap [
+    })
+    (all {
         [value 304] = block: (value ->- right-soft-as-is 304)
         <whatever> = get first block  ; should not be bound [1]
-    ])
-    (all wrap [
+    })
+    (all {
         [value 1020] = block: (('value) ->- left-soft-as-is 1020)
         null = binding of first block
-    ])
-    (all wrap [
+    })
+    (all {
         [value 304] = block: (('value) ->- right-soft-as-is 304)
         null = binding of first block
-    ])
-    ~x~ !! (all wrap [
+    })
+    ~x~ !! (all {
         block: ((panic 'x) ->- left-soft-as-is 1020)
-    ])
-    ~x~ !! (all wrap [
+    })
+    ~x~ !! (all {
         block: ((panic 'x) ->- right-soft-as-is 304)
-    ])
+    })
 ]
 
 (

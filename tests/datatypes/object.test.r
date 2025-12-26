@@ -174,12 +174,12 @@
     ; derived binding allows the derived object's methods to see the derived
     ; object's values.
     ;
-    count-up 'i 2048 wrap [
+    count-up 'i 2048 {
         derived: make o-big [var-1: 100000 + i]
         if 132639 + i <> derived/meth-255 [
             panic "Unexpected Sum"
         ]
-    ]
+    }
     ok
 )
 

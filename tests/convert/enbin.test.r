@@ -20,7 +20,7 @@
 
 (
     randomize "Reproducible Permutations!"
-    repeat 1000 wrap [
+    repeat 1000 {
         endian: random-pick [be le]
         signedness: random-pick [+ +/-]
         num-bytes: random 8
@@ -41,6 +41,6 @@
         comment [
             print [mold settings value "=>" mold bin "=>" value]
         ]
-    ]
+    }
     ok
 )

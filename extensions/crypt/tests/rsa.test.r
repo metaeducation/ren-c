@@ -26,14 +26,14 @@
 
     ; Should return same result every time...
     ;
-    (repeat 10 (wrap [
+    (repeat 10 {
         cryptcheck: rsa-encrypt plaintext private
         if cryptcheck <> encrypted [
             panic [
                 "Different encrypt:" mold cryptcheck "vs" mold encrypted
             ]
         ]
-    ]), ok)
+    }, ok)
 
     (plaintext = rsa-decrypt encrypted private)
 ]
@@ -90,7 +90,7 @@
             ; Can't use pkcs1-v21 without hashing as just `[pkcs1-v21]`
             [pkcs1-v21 #md5]
             [pkcs1-v21 #sha512]
-        ] (wrap [
+        ] {
             ; Skip impossible combinations (512 bit hash needs two hashes
             ; in pkcs1-v21, plus two bytes, and 1024 isn't enough for that)
             ;
@@ -112,7 +112,7 @@
             ; happens incidentally that's an incredibly rare fluke.
             ;
             encrypted-list: copy []
-            repeat 10 (wrap [
+            repeat 10 {
                 encrypted: rsa-encrypt plaintext public
                 if find encrypted-list encrypted [
                     panic [
@@ -125,8 +125,8 @@
                         "Decrypt expected:" mold plaintext "got" mold decrypted
                     ]
                 ]
-            ])
-        ])
+            }
+        }
     ]
   ]
 

@@ -3,19 +3,19 @@
 ; Generic way of surrounding things in lists.
 
 (
-    all wrap [
+    all {
         a: 1020
         [(a)] = block: envelop $[()] 'a  ; uses binding of block
         1020 = eval block
-    ]
+    }
 )
 (
-    all wrap [
+    all {
         a: 1020
         [(a)] = block: envelop '[()] 'a  ; no binding passed in, so unbound
         e: sys.util/recover [eval block]
         e.id = 'not-bound
-    ]
+    }
 )
 
 ('{{{a b c}}} = envelop '{{{}}} spread [a b c])

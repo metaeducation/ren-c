@@ -15,12 +15,12 @@
     parse "" [opt some further [remove <end>] (okay)]
 )]
 
-(all wrap [
+(all {
     '~#remove~ = lift parse text: "a ^/ " [
         some [newline remove [to <end>] | "a" [remove [to newline]] | next]
     ]
     text = "a^/"
-])
+})
 
 
 ; BLOCK! remove tests from %parse-test.red
@@ -139,16 +139,16 @@
             bin = #{00BEEF}
         ]
     )
-    (all wrap [
+    (all {
         ws: make bitset! [" ^- ^/^M" #{00}]
         '~#remove~ = lift parse s: #{00DE00AD00} [some [remove ws | next]]
         s = #{DEAD}
-    ])
-    (all wrap [
+    })
+    (all {
         ws: make bitset! [" ^- ^/^M" #{00}]
         '~#remove~ = lift parse s: #{00DE00AD00} [some [remove ws | one]]
         s = #{DEAD}
-    ])
+    })
     (
         bin: #{DEAD0001020300BEEF}
         digit: charset [1 - 9]
