@@ -13,7 +13,7 @@
     expr "Block to evaluate"
         [block!]
     :only "Translate operators to their prefix calls, but don't execute"
-]
+](
 bind construct [
     ;
     ; !!! This creation of static rules helps avoid creating those rules
@@ -135,4 +135,4 @@ bind construct [
         ]
         return ret.1
     ]
-], ok)
+]), ok)

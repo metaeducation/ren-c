@@ -494,8 +494,8 @@ bool Yielder_Details_Querier(
 //      return: [~[action!]~]
 //      spec "Arguments passed in to each call for the generator"
 //          [block!]
-//      body "Code containing YIELD statements"
-//          [block!]
+//      @body "Code containing YIELD statements"
+//          [block! group!]
 //      ; :resettable  ; should yielders offer a reset facility?
 //  ]
 //
@@ -509,24 +509,23 @@ DECLARE_NATIVE(YIELDER)
 {
     INCLUDE_PARAMS_OF_YIELDER;
 
-    Element* spec = Element_ARG(SPEC);
-    Element* body = Element_ARG(BODY);
-
-    require (
-      Details* details = Make_Interpreted_Action(
-        spec,
-        body,  // relativized and put in Details array at IDX_YIELDER_BODY
+    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+        LEVEL,
         SYM_YIELD,  // give it a YIELD, but no RETURN (see YIELD:FINAL)
         &Yielder_Dispatcher,
         MAX_IDX_YIELDER  // details array capacity
     ));
+
+    if (bounce)
+        return bounce;
+
+    Details* details = Ensure_Frame_Details(Known_Stable(OUT));
 
     assert(Is_Block(Details_At(details, IDX_YIELDER_BODY)));
     Init_Nulled(Details_At(details, IDX_YIELDER_ORIGINAL_FRAME));
     Init_Nulled(Details_At(details, IDX_YIELDER_PLUG));
     Init_Nulled(Details_At(details, IDX_YIELDER_YIELDED_LIFTED));
 
-    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return Packify_Action(OUT);
 }
 

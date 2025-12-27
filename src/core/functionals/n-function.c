@@ -111,7 +111,7 @@ Bounce Func_Dispatcher(Level* const L)
             return BOUNCE_THROWN;  // wasn't a REDO thrown to this level
         }
 
-        CATCH_THROWN(OUT, level_);
+        CATCH_THROWN(OUT, L);
 
         if (Is_Light_Null(OUT))
             goto redo_with_current_frame_values;
@@ -340,13 +340,51 @@ bool Func_Details_Querier(
 //        >> f
 //        == []
 //
-Result(Details*) Make_Interpreted_Action(
-    const Element* spec,
-    const Element* body,
+Bounce Make_Interpreted_Action(
+    Level* level_,
     Option(SymId) returner,  // SYM_RETURN, SYM_YIELD, SYM_DUMMY1 ([]:)
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
+    INCLUDE_PARAMS_OF_FUNCTION;
+
+    Element* spec = Element_ARG(SPEC);
+    Element* body = Element_ARG(BODY);
+
+    enum {
+        ST_FUNC_INITIAL_ENTRY = STATE_0,
+        ST_FUNC_CALCULATING_BODY
+    };
+
+    switch (STATE) {
+      case ST_FUNC_INITIAL_ENTRY: goto initial_entry;
+      case ST_FUNC_CALCULATING_BODY: goto calculated_body_in_spare;
+      default: assert(false);
+    }
+
+  initial_entry: { ///////////////////////////////////////////////////////////
+
+    if (not Is_Group(body))
+        goto process_spec_and_block_body;
+
+    KIND_BYTE(body) = TYPE_BLOCK;
+    STATE = ST_FUNC_CALCULATING_BODY;
+    return CONTINUE(SPARE, body);
+
+} calculated_body_in_spare: { ////////////////////////////////////////////////
+
+    require (
+      Stable* spare = Decay_If_Unstable(SPARE)
+    );
+
+    if (not Is_Block(spare))
+        panic ("Interpreted action GROUP! must eval to BLOCK! body");
+
+    Copy_Cell(body, Known_Element(spare));
+    goto process_spec_and_block_body;
+
+} process_spec_and_block_body: { /////////////////////////////////////////////
+
     assert(Is_Block(spec) and Is_Block(body));
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
@@ -393,8 +431,10 @@ Result(Details*) Make_Interpreted_Action(
     if (Get_Cell_Flag(body, CONST))  // capture mutability flag [2]
         Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need Stable*
 
-    return details;
-}
+    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
+
+    return OUT;
+}}
 
 
 //
@@ -405,26 +445,25 @@ Result(Details*) Make_Interpreted_Action(
 //      return: [~[action!]~]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
-//      body [block!]
+//      @body [block! group!]
 //  ]
 //
 DECLARE_NATIVE(FUNCTION)
 {
     INCLUDE_PARAMS_OF_FUNCTION;
 
-    Element* spec = Element_ARG(SPEC);
-    Element* body = Element_ARG(BODY);
+    possibly(STATE != STATE_0);
 
-    require (
-      Details* details = Make_Interpreted_Action(
-        spec,
-        body,
+    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+        LEVEL,
         SYM_RETURN,  // has a RETURN: in the paramlist
         &Func_Dispatcher,
         MAX_IDX_FUNC  // archetype and one array slot (will be filled)
     ));
 
-    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
+    if (bounce)
+        return bounce;
+
     return Packify_Action(OUT);
 }
 
@@ -437,44 +476,53 @@ DECLARE_NATIVE(FUNCTION)
 //      return: [~[action!]~]
 //      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
 //          [block!]
-//      body [block!]
+//      @body [block! group!]
 //  ]
 //
 DECLARE_NATIVE(PROCEDURE)
 {
     INCLUDE_PARAMS_OF_PROCEDURE;
 
-    Element* spec = Element_ARG(SPEC);
-    Element* body = Element_ARG(BODY);
+    possibly(STATE != STATE_0);
 
-    require (
-      Details* details = Make_Interpreted_Action(
-        spec,
-        body,
+    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+        LEVEL,
         SYM_RETURN,
         &Func_Dispatcher,
         MAX_IDX_FUNC  // archetype and one array slot (will be filled)
     ));
+
+    if (bounce)
+        return bounce;
+
+  tweak_unconstrained_parameter_to_auto_trash: {
+
+    Details* details = Ensure_Frame_Details(Known_Stable(OUT));
 
     Element* param = m_cast(Element*, Quoted_Returner_Of_Paramlist(
         Phase_Paramlist(details), SYM_RETURN
     ));
 
     if (Is_Parameter_Unconstrained(param)) {
+      #if DEBUG_PROTECT_PARAM_CELLS
         Unprotect_Cell(param);
+      #endif
+
         const Strand* notes = opt Parameter_Strand(param);
         Copy_Cell(param, g_auto_trash_param);
         Set_Parameter_Strand(param, notes);
         Quotify_Parameter_Local(param);
         Set_Cell_Flag(param, PARAM_NOTE_TYPECHECKED);
+
+      #if DEBUG_PROTECT_PARAM_CELLS
         Protect_Cell(param);
+      #endif
     }
     else if (Not_Parameter_Flag(param, AUTO_TRASH))
         panic ("If PROCEDURE has RETURN:, it must be [return: ~]");
 
-    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return Packify_Action(OUT);
-}
+}}
 
 
 //

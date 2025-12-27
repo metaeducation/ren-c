@@ -403,7 +403,7 @@
 
     f: func [
         :count [integer!]
-    ]
+    ](
     bind o1 bind o2 bind construct [
         static: 10 + n
     ] [
@@ -415,7 +415,7 @@
                append (f:count count - 1) data
             ]
         ]
-    ]
+    ])
 
     f = [
         [0 "x" "y" "outer" 30]

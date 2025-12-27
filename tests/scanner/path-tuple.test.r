@@ -144,7 +144,7 @@
 
         value [element?]
         {mtype}
-    ]
+    ](
     bind construct [
         mapping: reduce [
             path! block!
@@ -164,7 +164,7 @@
             ]
         ]
         return get meta $value
-    ]
+    ])
 
 
     iter: tests

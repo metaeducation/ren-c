@@ -56,7 +56,7 @@ disable-user-includes: proc [
     lines [block!] "Block of strings"
     :inline [block!] "Block of filenames to inline if seen"
     :stdio "Disable stdio.h"
-]
+](
 bind construct [
     open-include: charset -["<]-
     close-include: charset -[">]-
@@ -94,7 +94,7 @@ bind construct [
             "If we inline a header, should happen once and only once for each"
         ]
     ]
-]
+])
 
 
 ;

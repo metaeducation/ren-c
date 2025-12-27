@@ -274,7 +274,7 @@ parse-asn: func [
 
     return: [<null> block!]
     data [blob!]
-] bind construct [
+] (bind construct [
     universal-tags: [
         <eoc>
         <boolean>
@@ -387,7 +387,7 @@ parse-asn: func [
             ]
         ]
     ] ]
-]
+])
 
 
 === PROTOCOL STATE (MODE) HANDLING ===
@@ -975,7 +975,7 @@ decrypt-data: func [
 parse-protocol: lambda [
     []: [object!]
     data [blob!]
-] bind construct [
+] (bind construct [
     protocol-types: [
         20 <change-cipher-spec>
         21 #alert
@@ -991,7 +991,7 @@ parse-protocol: lambda [
         size: decode [BE +] copy:part at data 4 2
         messages: copy:part at data 6 size
     ]
-]
+])
 
 
 grab: infix lambda [
@@ -1026,7 +1026,7 @@ parse-messages: func [
 
     ctx [object!]
     proto [object!]
-]
+](
 bind construct [
     message-types: [
         0 #hello-request
@@ -1491,7 +1491,7 @@ bind construct [
 
     ctx.seq-num-r: ctx.seq-num-r + 1
     return result
-]
+])
 
 
 parse-response: func [

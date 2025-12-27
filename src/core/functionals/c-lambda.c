@@ -99,7 +99,6 @@ Bounce Lambda_Dispatcher(Level* const L)
     enum {
         ST_LAMBDA_INITIAL_ENTRY = STATE_0,
         ST_LAMBDA_LAMBDA_EXECUTING,
-        ST_LAMBDA_PROCEDURE_EXECUTING,  // PROCEDURE shares this dispatcher [2]
         ST_LAMBDA_DIVERGER_EXECUTING  // DIVERGER shares this dispatcher [2]
     };
 
@@ -119,7 +118,6 @@ Bounce Lambda_Dispatcher(Level* const L)
     switch (STATE) {
       case ST_LAMBDA_INITIAL_ENTRY: goto initial_entry;
       case ST_LAMBDA_LAMBDA_EXECUTING: goto lambda_finished;
-      case ST_LAMBDA_PROCEDURE_EXECUTING: goto procedure_finished;
       case ST_LAMBDA_DIVERGER_EXECUTING: goto diverger_finished;
       default: assert(false);
     }
@@ -152,11 +150,6 @@ Bounce Lambda_Dispatcher(Level* const L)
     if (not result_param)
         return BOUNCE_DELEGATE;  // no typecheck callback needed (ARROW)
 
-    if (Is_Quasar(unwrap result_param)) {
-        STATE = ST_LAMBDA_PROCEDURE_EXECUTING;
-        return CONTINUE_SUBLEVEL(sub);
-    }
-
     if (Is_Space(unwrap result_param)) {
         STATE = ST_LAMBDA_DIVERGER_EXECUTING;
         return CONTINUE_SUBLEVEL(sub);
@@ -185,13 +178,6 @@ Bounce Lambda_Dispatcher(Level* const L)
         panic (Error_Bad_Return_Type(L, OUT, unwrap result_param));
 
     return OUT;
-
-} procedure_finished: { //////////////////////////////////////////////////////
-
-    trap (
-      Elide_Unless_Error_Including_In_Packs(OUT)  // turn ERROR! to PANIC
-    );
-    return Init_Trash_Named_From_Level(OUT, L);
 
 } diverger_finished: { ///////////////////////////////////////////////////////
 
@@ -249,7 +235,7 @@ bool Lambda_Details_Querier(
 //      return: [~[action!]~]
 //      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
 //          [block!]
-//      body [block!]
+//      @body [block! group!]
 //  ]
 //
 DECLARE_NATIVE(LAMBDA)
@@ -267,24 +253,23 @@ DECLARE_NATIVE(LAMBDA)
 {
     INCLUDE_PARAMS_OF_LAMBDA;
 
-    Element* spec = Element_ARG(SPEC);
-    Element* body = Element_ARG(BODY);
-
-    require (
-      Details* details = Make_Interpreted_Action(
-        spec,
-        body,
+    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+        LEVEL,
         SYM_DUMMY1,  // cue look for []: in the paramlist for return spec [1]
         &Lambda_Dispatcher,
         MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
     ));
+
+    if (bounce)
+        return bounce;
+
+    Details* details = Ensure_Frame_Details(Known_Stable(OUT));
 
     Pop_Unpopped_Return(  // SYM_DUMMY1 parameter was not popped
         Details_At(details, IDX_LAMBDA_RESULT_PARAM),
         STACK_BASE
       );
 
-    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return Packify_Action(OUT);
 }
 
@@ -297,29 +282,26 @@ DECLARE_NATIVE(LAMBDA)
 //      return: [~[action!]~]
 //      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
 //          [block!]
-//      body [block!]
+//      @body [block! group!]
 //  ]
 //
 DECLARE_NATIVE(DIVERGER)
 {
     INCLUDE_PARAMS_OF_DIVERGER;
 
-    Element* spec = Element_ARG(SPEC);
-    Element* body = Element_ARG(BODY);
-
-    Option(SymId) no_returner = none;  // don't allow []: or RETURN:
-
-    require (
-      Details* details = Make_Interpreted_Action(
-        spec,
-        body,
-        no_returner,
+    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+        LEVEL,
+        none,  // returner... don't allow []: or RETURN:
         &Lambda_Dispatcher,
         MAX_IDX_LAMBDA  // archetype and one array slot (will be filled)
     ));
 
+    if (bounce)
+        return bounce;
+
+    Details* details = Ensure_Frame_Details(Known_Stable(OUT));
+
     Init_Space(Details_At(details, IDX_LAMBDA_RESULT_PARAM));  // panic signal
 
-    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return Packify_Action(OUT);
 }

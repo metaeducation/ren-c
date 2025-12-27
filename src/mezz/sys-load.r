@@ -107,7 +107,7 @@ load-header: func [
     :required "Script header is required"
 
     {data hdr rest line body final end binary}
-]
+](
 bind construct [
     non-ws: make bitset! [not 1 - 32]
 ] [
@@ -214,7 +214,7 @@ bind construct [
     ensure [<null> block! _] hdr.options
 
     return pack [hdr body line final]
-]
+])
 
 
 ; 1. !!! R3-Alpha's READ is nebulous, comment said "can be string, binary,
@@ -404,7 +404,7 @@ import*: func [
         [element?]
     :into "e.g. reuse VarList* already made for NATIVEs loading from extension"
         [module!]
-]
+](
 bind construct [
     importing-remotely: 'no
 ][
@@ -615,7 +615,7 @@ bind construct [
     importing-remotely: old-importing-remotely
 
     return pack [mod 'executed ^product]  ; ERROR! antiform is legal product
-]
+])
 
 
 export*: func [

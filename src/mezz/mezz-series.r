@@ -164,7 +164,7 @@ reword: func [
     :case "Characters are case-sensitive"
     :escape "Escape char(s) or [prefix suffix] delimiters (default is $)"
         [char? any-string? word! blob! block!]
-]
+](
 bind construct [
     ;
     ; Note: this list should be the same as above with delimiters, with
@@ -301,7 +301,7 @@ bind construct [
 
     apply parse3/ [source rule case: case_REWORD]  ; should succeed
     return out
-]
+])
 
 
 move: func [

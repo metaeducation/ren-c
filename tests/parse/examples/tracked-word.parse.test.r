@@ -31,7 +31,7 @@
         return: [<null> pack!]
         f [frame!]
         {result remainder subpending}
-    ] bind construct [
+    ] (bind construct [
         indent: 0
     ] [
         let input: f.input  ; save to use after EVAL F
@@ -66,7 +66,7 @@
         ]
 
         return pack [^result, remainder, subpending]
-    ]
+    ])
 
     tracked-combinators: copy default-combinators
     tracked-combinators.(word!): tracked-word!-combinator

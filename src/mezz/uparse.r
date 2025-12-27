@@ -127,7 +127,7 @@ combinator: func [
 
     spec [block!]
     body [block!]
-]
+](
 bind construct [
     wrapper: unrun lambda [  ; unrun to not store WRAPPER as label
         "Enclosing function for hooking all combinators"
@@ -199,7 +199,7 @@ bind construct [
         ; Whatever arguments the combinator takes, if any
         ;
         (spread spec)
-    ] compose [
+    ] (compose [
         ;
         ; !!! If we are "autopipe" then we need to make it so the parsers that
         ; we receive in will automatically bubble up their pending contents in
@@ -260,7 +260,7 @@ bind construct [
         ; If the body does not return and falls through here, the function
         ; will fail as it has a RETURN: that needs to be used to type check
         ; (and must always be used so all return paths get covered if hooked)
-    ]
+    ])
 
     ; Enclosing with the wrapper permits us to inject behavior before and
     ; after each combinator is executed.
@@ -268,7 +268,7 @@ bind construct [
     return enclose augment comb [
         :rule-start [block!] :rule-end [block!]
     ] wrapper  ; returns plain FRAME! (combinators not evaluator active)
-]
+])
 
 
 ; It should be possible to find out if something is a combinator in a more

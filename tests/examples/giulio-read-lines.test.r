@@ -34,7 +34,7 @@
             ]
         ]
 
-        return func [] bind construct [
+        return func [] (bind construct [
             buffer: make blob! 4096
             port: src
         ] compose:deep [
@@ -58,7 +58,7 @@
             ]
             if all [true? eof, empty? buffer] [return done]
             return (opt spread if not binary '[as text!]) take:part buffer pos
-        ]
+        ])
     ]
 
     giulio-input-lines: redescribe [

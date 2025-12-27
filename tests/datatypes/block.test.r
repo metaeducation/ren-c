@@ -42,11 +42,11 @@
 (
     make-one-thru-five: func [
         return: [null? integer!]
-    ]
+    ](
     bind construct [count: 0] [
         if count = 5 [count: 0 return null]
         return count: count + 1
-    ]
+    ])
 
     all [
         [1 2 3 4 5] = make block! make-one-thru-five/
@@ -63,7 +63,7 @@
 ([[~ ~ ~] [~ ~ ~]] = array [2 3])
 ([[0 0 0] [0 0 0]] = array:initial [2 3] 0)
 (
-    counter: func [] bind construct [n: 0] [return n: n + 1]
+    counter: func [] (bind construct [n: 0] [return n: n + 1])
     [1 2 3 4 5] = array:initial 5 counter/
 )
 

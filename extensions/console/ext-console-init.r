@@ -420,7 +420,7 @@ start-console: proc [
 
     :skin "Custom skin (e.g. derived from MAKE CONSOLE!) or file"
         [file! object!]
-]
+](
 bind construct [
     o: system.options  ; shorthand since options are often read or written
 ][
@@ -514,7 +514,7 @@ bind construct [
             "(CONSOLE" if no? proto-skin.was-updated ["not"] "updated)"
         ]
     ]
-]
+])
 
 
 console*: func [

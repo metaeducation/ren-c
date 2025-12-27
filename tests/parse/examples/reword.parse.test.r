@@ -9,7 +9,7 @@
     values [map! object! block!]
     :case
     :escape [word! blob! block! any-string? char?]
-] bind construct [
+] (bind construct [
     delimiter-types: [word! blob! char? any-string?]
     keyword-types: [integer! word! blob! char? any-string?]
 ][
@@ -109,7 +109,7 @@
 
     parse-thru // [source rule case: case_REWORD] else [panic]  ; why panic?
     return out
-]
+])
 ok)
 
 ("Multiple Search and Replace" = uparse-reword:escape "Multiple Foo and Bar" [

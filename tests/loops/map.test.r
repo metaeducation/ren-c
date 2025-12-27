@@ -23,20 +23,20 @@
 (
     make-one-thru-five: func [
         return: [error! integer!]
-    ] bind construct [count: 0] [
+    ] (bind construct [count: 0] [
         if count = 5 [return done]
         return count: count + 1
-    ]
+    ])
     [10 20 30 40 50] = map 'i make-one-thru-five/ [
         i * 10
     ]
 )(
     make-one-thru-five: func [
         return: [error! integer!]
-    ] bind construct [count: 0] [
+    ] (bind construct [count: 0] [
         if count = 5 [return done]
         return count: count + 1
-    ]
+    ])
     [[1 2] [3 4] [5]]  = map [a b] make-one-thru-five/ [
         compose [(a) (opt b)]
     ]

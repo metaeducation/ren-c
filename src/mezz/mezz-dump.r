@@ -21,7 +21,7 @@ dump: vanishable func [
         [element? <variadic>]
     :prefix "Put a custom marker at the beginning of each output line"
         [text!]
-]
+](
 bind construct [
     enablements: to map! []
 ][
@@ -94,7 +94,7 @@ bind construct [
         dump-one value
     ]
     return ()
-]
+])
 
 contains-newline: func [return: [logic?] pos [block! group!]] [
     while [pos] [
@@ -159,7 +159,7 @@ dumps: infix func [
         ; have a way to be called--in spirit they are like infix functions,
         ; so SHOVE (>-) would be used, but it doesn't work yet...review.)
         ;
-        d: func [return: [ghost!] :on :off] bind construct [
+        d: func [return: [ghost!] :on :off] (bind construct [
             d': (
                 let d'': specialize dump/ [prefix: (as text! name)]
                 d'' #on
@@ -171,7 +171,7 @@ dumps: infix func [
                 #else [d' (value)]
             ]
             return ()
-        ]
+        ])
     ]
     return set name d/
 ]

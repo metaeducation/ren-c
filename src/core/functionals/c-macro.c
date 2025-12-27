@@ -217,28 +217,23 @@ bool Inliner_Details_Querier(
 //      return: [~[action!]~]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
-//      body [block!]
+//      @body [block! group!]
 //  ]
 //
 DECLARE_NATIVE(INLINER)
 {
     INCLUDE_PARAMS_OF_INLINER;
 
-    Element* spec = Element_ARG(SPEC);
-    Element* body = Element_ARG(BODY);
-
-    Option(SymId) no_returner = none;
-
-    require (
-      Details* details = Make_Interpreted_Action(
-        spec,
-        body,
-        no_returner,
+    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+        LEVEL,
+        none,  // no returner; inliners return code, not eval products
         &Inliner_Dispatcher,
         MAX_IDX_INLINER  // details capacity, just body slot (and archetype)
     ));
 
-    Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
+    if (bounce)
+        return bounce;
+
     return Packify_Action(OUT);
 }
 

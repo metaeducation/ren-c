@@ -199,7 +199,7 @@ main-startup: func [
     argv "Raw command line argument block received by main() as TEXT!s"
         [block!]
     {.}  ; local dot, not method
-] bind construct [
+] (bind construct [
     o: system.options  ; shorthand since options are often read or written
 ] [
     [.]: construct [
@@ -736,6 +736,6 @@ main-startup: func [
     ]
 
     return <start-console>
-]
+])
 
 export [main-startup about usage license]

@@ -72,7 +72,7 @@ catch: specialize catch*/ [name: 'throw]
     return: [ghost!]
     'remarks [element? <variadic>]
     :visibility [onoff?]
-]
+](
 bind construct [
     logging: 'off
 ] [
@@ -89,7 +89,7 @@ bind construct [
         ]
     ]
     return ()
-]
+])
 
 what-dir: func [  ; This can be HIJACK'd by a "smarter" version
     "Returns the current directory path"
