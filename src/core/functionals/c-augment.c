@@ -123,13 +123,15 @@ DECLARE_NATIVE(AUGMENT)
 
     Phase* prior = Frame_Phase(original);
     Option(VarList*) prior_coupling = Frame_Coupling(original);
+    Option(Element*) gather = nullptr;
 
     require (  // checks for duplicates
       ParamList* paramlist = Pop_Paramlist(
         STACK_BASE,
         Is_Quasar(methodization) ? nullptr : methodization,
         prior,
-        prior_coupling
+        prior_coupling,
+        gather
       )
     );
 

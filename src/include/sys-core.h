@@ -393,6 +393,7 @@ typedef struct {
     REBLEN num_deleteds;  // Deleted symbol hash slots "in use"
   #endif
     Symbol deleted_symbol;  // pointer used to indicate a deletion
+    Option(Binder*) binder;  // binder in effect
 } SymbolState;
 
 typedef struct {

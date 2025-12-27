@@ -215,9 +215,8 @@ bool Inliner_Details_Querier(
 //  "Makes function that generates code to splice into the execution stream"
 //
 //      return: [~[action!]~]
-//      spec "Help string (opt) followed by arg words (and opt type + string)"
-//          [block!]
-//      @body [block! group!]
+//      spec [block! datatype!]
+//      @(body) [block! fence!]
 //  ]
 //
 DECLARE_NATIVE(INLINER)

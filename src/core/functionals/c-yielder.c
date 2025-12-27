@@ -489,13 +489,11 @@ bool Yielder_Details_Querier(
 //
 //  yielder: native [
 //
-//  "Produce generator function that can be called multiple times until DONE"
+//  "Produce generator function that can YIELD multiple values until DONE"
 //
 //      return: [~[action!]~]
-//      spec "Arguments passed in to each call for the generator"
-//          [block!]
-//      @body "Code containing YIELD statements"
-//          [block! group!]
+//      spec [block! datatype!]
+//      @(body) [block! fence!]
 //      ; :resettable  ; should yielders offer a reset facility?
 //  ]
 //

@@ -3419,10 +3419,13 @@ RebolValue* API_rebFunctionFlipped(
     else
         Tweak_Cell_Binding(spec, g_lib_context);  // !!! needs module isolation
 
+    Element* gather = nullptr;
+
     ParamList* paramlist = Make_Paramlist_Managed(
         spec,
         MKF_MASK_NONE,
-        SYM_RETURN  // has return for type checking and continuation use
+        SYM_RETURN,  // has return for type checking and continuation use
+        gather
     )
     except (Error* e) {
         panic (e);

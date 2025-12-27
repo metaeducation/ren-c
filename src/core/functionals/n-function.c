@@ -352,46 +352,33 @@ Bounce Make_Interpreted_Action(
     Element* body = Element_ARG(BODY);
 
     enum {
-        ST_FUNC_INITIAL_ENTRY = STATE_0,
-        ST_FUNC_CALCULATING_BODY
+        ST_FUNC_INITIAL_ENTRY = STATE_0
     };
 
     switch (STATE) {
       case ST_FUNC_INITIAL_ENTRY: goto initial_entry;
-      case ST_FUNC_CALCULATING_BODY: goto calculated_body_in_spare;
       default: assert(false);
     }
 
   initial_entry: { ///////////////////////////////////////////////////////////
 
-    if (not Is_Group(body))
-        goto process_spec_and_block_body;
+    assert(Is_Block(spec));
 
-    KIND_BYTE(body) = TYPE_BLOCK;
-    STATE = ST_FUNC_CALCULATING_BODY;
-    return CONTINUE(SPARE, body);
+    Element* gather;
+    if (Is_Fence(body))
+        gather = body;
+    else {
+        assert(Is_Block(body));
+        gather = nullptr;
+    }
 
-} calculated_body_in_spare: { ////////////////////////////////////////////////
-
-    require (
-      Stable* spare = Decay_If_Unstable(SPARE)
-    );
-
-    if (not Is_Block(spare))
-        panic ("Interpreted action GROUP! must eval to BLOCK! body");
-
-    Copy_Cell(body, Known_Element(spare));
-    goto process_spec_and_block_body;
-
-} process_spec_and_block_body: { /////////////////////////////////////////////
-
-    assert(Is_Block(spec) and Is_Block(body));
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
     ParamList* paramlist = Make_Paramlist_Managed(
         spec,
         returner == SYM_DUMMY1 ? MKF_DONT_POP_RETURN : MKF_MASK_NONE,
-        returner
+        returner,
+        gather
     ) except (Error* e) {
         panic (e);
     }
@@ -443,9 +430,8 @@ Bounce Make_Interpreted_Action(
 //  "Generates an ACTION! with RETURN capability"
 //
 //      return: [~[action!]~]
-//      spec "Help string (opt) followed by arg words (and opt type + string)"
-//          [block!]
-//      @body [block! group!]
+//      spec [block! datatype!]
+//      @(body) [block! fence!]
 //  ]
 //
 DECLARE_NATIVE(FUNCTION)
@@ -474,9 +460,8 @@ DECLARE_NATIVE(FUNCTION)
 //  "Variation of FUNCTION that will always return TRASH!"
 //
 //      return: [~[action!]~]
-//      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
-//          [block!]
-//      @body [block! group!]
+//      spec [block! datatype!]
+//      @(body) [block! fence!]
 //  ]
 //
 DECLARE_NATIVE(PROCEDURE)

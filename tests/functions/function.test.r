@@ -470,3 +470,20 @@
     some-name: func [return: ~] [return ~]
     #some-name = unanti some-name
 )
+
+; FENCE! body gathers locals in top level
+[
+    (all {
+        y: <outer-y>
+        z: <outer-z>
+        foo: func [x] {
+            x: x + 20
+            y: <inner-y>
+            (z: <inner-z>)
+            return reduce [x y]
+        }
+        [1020 <inner-y>] = foo 1000
+        y = <outer-y>
+        z = <inner-z>
+    })
+]

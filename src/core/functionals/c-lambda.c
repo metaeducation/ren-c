@@ -233,9 +233,8 @@ bool Lambda_Details_Querier(
 //  "Make an anonymous function that doesn't define a local RETURN"
 //
 //      return: [~[action!]~]
-//      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
-//          [block!]
-//      @body [block! group!]
+//      spec [block! datatype!]
+//      @(body) [block! fence!]
 //  ]
 //
 DECLARE_NATIVE(LAMBDA)
@@ -280,9 +279,8 @@ DECLARE_NATIVE(LAMBDA)
 //  "Declares divergent function (will PANIC if it reaches the end of body)"
 //
 //      return: [~[action!]~]
-//      spec "Help string (opt) followed by arg words, RETURN is a legal arg"
-//          [block!]
-//      @body [block! group!]
+//      spec [block! datatype!]
+//      @(body) [block! fence!]
 //  ]
 //
 DECLARE_NATIVE(DIVERGER)

@@ -923,11 +923,14 @@ DECLARE_NATIVE(JS_NATIVE)
     Element* spec = Element_ARG(SPEC);
     Element* source = Element_ARG(SOURCE);
 
+    Element* gather = nullptr;
+
     require (
       ParamList* paramlist = Make_Paramlist_Managed(
         spec,
         MKF_MASK_NONE,
-        SYM_RETURN  // want return
+        SYM_RETURN,  // want return
+        gather
     ));
 
     Details* details = Make_Dispatch_Details(

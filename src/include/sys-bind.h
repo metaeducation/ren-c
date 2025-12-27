@@ -165,6 +165,9 @@ INLINE void Tweak_Link_Stump_Next(Stump* stump, Option(Stump*) next) {
 }
 
 INLINE void Construct_Binder_Core(Binder* binder) {
+    assert(not g_symbols.binder);
+    g_symbols.binder = binder;
+
     binder->stump_list = nullptr;
 
   #if RUNTIME_CHECKS && CPLUSPLUS_11
@@ -173,6 +176,8 @@ INLINE void Construct_Binder_Core(Binder* binder) {
 }
 
 INLINE void Destruct_Binder_Core(Binder* binder) {
+    assert(g_symbols.binder == binder);
+
     while (binder->stump_list != nullptr) {
         Stump* stump = unwrap binder->stump_list;
         binder->stump_list = Link_Stump_Next(stump);
@@ -190,6 +195,8 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
   #if RUNTIME_CHECKS && CPLUSPLUS_11
     binder->initialized = false;
   #endif
+
+    g_symbols.binder = nullptr;
 }
 
 

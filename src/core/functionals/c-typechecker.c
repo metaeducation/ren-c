@@ -246,11 +246,14 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
 
     StackIndex base = TOP_INDEX;
 
+    Element* gather = nullptr;
+
     assume (
       ParamList* paramlist = Make_Paramlist_Managed(
         spec,
         MKF_DONT_POP_RETURN,  // no RETURN: in spec (always logic)
-        SYM_0  // return type for all typecheckers is the same [3]
+        SYM_0,  // return type for all typecheckers is the same [3]
+        gather
     ));
 
     DECLARE_ELEMENT (discard);

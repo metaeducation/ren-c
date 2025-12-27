@@ -204,56 +204,41 @@ Source* Expanded_Combinator_Spec(const Element* original)
 //
 //      return: [frame!]
 //      spec [block!]
-//      body [block!]
+//      @(body) [block! fence!]
 //  ]
 //
 DECLARE_NATIVE(COMBINATOR)
 {
     INCLUDE_PARAMS_OF_COMBINATOR;
 
-    Element* spec = Element_ARG(SPEC);
-    Element* body = Element_ARG(BODY);
+  expand_spec_if_state_0: {
 
-    // This creates the expanded spec and puts it in a block which manages it.
-    // That might not be needed if Make_Paramlist_Managed() could take an
-    // array and an index.
-    //
-    Sink(Element) expanded_spec = SCRATCH;
-    Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
+  // This creates the expanded spec and puts it in a block.  Could be more
+  // efficient and push parameters directly to stack, but this is the easiest
+  // way to reuse the work of Make_Interpreted_Action() for now.
 
-    require (
-      ParamList* paramlist = Make_Paramlist_Managed(
-        expanded_spec,
-        MKF_MASK_NONE,
-        SYM_RETURN  // want RETURN:
-    ));
+    if (STATE == STATE_0) {
+        Element* spec = Element_ARG(SPEC);
+        Init_Block(spec, Expanded_Combinator_Spec(spec));
+    }
 
-    Details* details = Make_Dispatch_Details(
-        BASE_FLAG_MANAGED,
-        Phase_Archetype(paramlist),
+} make_interpreted_action_frame: {
+
+    Bounce bounce = opt Irreducible_Bounce(LEVEL, Make_Interpreted_Action(
+        LEVEL,
+        SYM_RETURN,  // want RETURN:
         &Combinator_Dispatcher,
         MAX_IDX_COMBINATOR  // details array capacity
-    );
+    ));
 
-    // !!! As with FUNC, we copy and bind the block the user gives us.  This
-    // means we will not see updates to it.  So long as we are copying it,
-    // we might as well mutably bind it--there's no incentive to virtual
-    // bind things that are copied.
-    //
-    Array* relativized = Copy_And_Bind_Relative_Deep_Managed(
-        body,
-        details,
-        LENS_MODE_ALL_UNSEALED
-    );
+    if (bounce)
+        return bounce;
 
-    Init_Relative_Block(
-        Details_At(details, IDX_COMBINATOR_BODY),
-        details,
-        relativized
-    );
+    assert(Is_Possibly_Unstable_Value_Action(OUT));
+    LIFT_BYTE(OUT) = NOQUOTE_2;  // now it's known to not be antiform
 
-    return Init_Frame(OUT, details, ANONYMOUS, UNCOUPLED);
-}
+    return OUT;
+}}
 
 
 //

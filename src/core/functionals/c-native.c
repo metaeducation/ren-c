@@ -105,11 +105,14 @@ Result(Details*) Make_Native_Dispatch_Details(
 
     StackIndex base = TOP_INDEX;
 
+    Element* gather = nullptr;
+
     require (
       ParamList* paramlist = Make_Paramlist_Managed(
         spec,
         MKF_DONT_POP_RETURN,  // we put it in Details, not ParamList
-        SYM_RETURN  // native RETURN: types checked only if RUNTIME_CHECKS
+        SYM_RETURN,  // native RETURN: types checked only if RUNTIME_CHECKS
+        gather
     ));
 
     Assert_Flex_Term_If_Needed(Varlist_Array(paramlist));

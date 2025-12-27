@@ -505,8 +505,74 @@ Result(ParamList*) Pop_Paramlist(
     StackIndex base,
     Option(const Element*) methodization,
     Option(Phase*) prior,
-    Option(VarList*) prior_coupling
+    Option(VarList*) prior_coupling,
+    Option(Element*) gather
 ){
+  gather_locals_if_needed: {
+
+  // The locals gathering mechanic has to match the logic of FENCE! in general
+  // but with a twist: it's putting these into the FRAME! of the function vs.
+  // in a separate object, and it's not re-adding any parameters or locals
+  // that were already in the spec.
+  //
+  // This is an awkward re-use of the WRAP code, which accomplishes the goal
+  // of not re-creating that collection logic here.  However, we wind up
+  // walking the parameter list twice.
+
+    if (gather) {
+        assert(Is_Fence(unwrap gather));
+
+        CollectFlags flags = COLLECT_ONLY_SET_WORDS;
+
+        DECLARE_COLLECTOR (cl);
+        Construct_Collector(cl, flags, nullptr);
+
+      add_existing_parameters_and_locals: {
+
+        StackIndex stackindex = base + 1;
+        for (; stackindex <= TOP_INDEX; stackindex += 2) {
+            const Symbol* symbol = Word_Symbol(Data_Stack_Cell_At(stackindex));
+
+            if (Try_Add_Binder_Index(
+                &cl->binder,
+                symbol,
+                cl->next_index
+            )){
+                ++cl->next_index;
+            }
+            else {
+                // Duplicate parameter found, code below has error for it
+                // Just fall through to whatever that error is for now.
+                // (Ultimately we want to avoid duplicating this work.)
+            }
+        }
+
+      } gather_top_level_declarations_to_stack: {
+
+        Option(Stump*) params_stump = cl->binder.stump_list;
+
+        const Element* tail;
+        const Element* at = List_At(&tail, unwrap gather);
+
+        Collect_Inner_Loop(
+            cl, flags, at, tail
+        ) except (Error* e) {
+            Destruct_Collector(cl);
+            return fail (e);
+        }
+
+        Option(Stump*) stump = cl->binder.stump_list;
+        for (; stump != params_stump; stump = Link_Stump_Next(unwrap stump)) {
+            const Symbol* symbol = Info_Stump_Bind_Symbol(unwrap stump);
+            Init_Word(PUSH(), symbol);
+            Init_Void_For_Unset(PUSH());
+        }
+
+        Destruct_Collector(cl);
+    }}
+
+} process_parameters_and_locals_on_stack: {
+
     Count num_params = (TOP_INDEX - base) / 2 + (methodization ? 1 : 0);
 
     require (
@@ -633,7 +699,7 @@ Result(ParamList*) Pop_Paramlist(
 
     Assert_Flex_Term_If_Needed(paramlist);
     return cast(ParamList*, paramlist);
-}
+}}
 
 
 //
@@ -660,7 +726,8 @@ Result(ParamList*) Pop_Paramlist(
 Result(ParamList*) Make_Paramlist_Managed(
     const Element* spec,
     Flags flags,  // flags may be modified to carry additional information
-    Option(SymId) returner  // e.g. SYM_YIELD, SYM_RETURN, or SYM_DUMMY1 ([]:)
+    Option(SymId) returner,  // e.g. SYM_YIELD, SYM_RETURN, or SYM_DUMMY1 ([]:)
+    Option(Element*) gather
 ){
     Element* methodization = Init_Quasar(PUSH());
 
@@ -685,7 +752,8 @@ Result(ParamList*) Make_Paramlist_Managed(
         base,
         Is_Quasar(methodization) ? nullptr : methodization,
         prior,
-        prior_coupling
+        prior_coupling,
+        gather
       )
     );
 

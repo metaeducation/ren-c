@@ -499,6 +499,8 @@ void Startup_Interning(void)
     ));
     Clear_Flex(g_symbols.by_hash);  // all slots start as nullptr
     Set_Flex_Len(g_symbols.by_hash, n);
+
+    assert(not g_symbols.binder);
 }
 
 
@@ -663,6 +665,8 @@ void Shutdown_Builtin_Symbols(void)
 //
 void Shutdown_Interning(void)
 {
+    assert(not g_symbols.binder);
+
   #if RUNTIME_CHECKS
     if (g_symbols.num_slots_in_use - g_symbols.num_deleteds != 0) {
         //

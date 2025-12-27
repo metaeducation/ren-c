@@ -431,7 +431,7 @@ void Collect_Context_Keys(
 //
 //      https://github.com/rebol/rebol-issues/issues/2276
 //
-static Result(None) Collect_Inner_Loop(
+Result(None) Collect_Inner_Loop(
     Collector *cl,
     CollectFlags flags,
     const Element* head,

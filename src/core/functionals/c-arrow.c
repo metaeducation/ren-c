@@ -254,13 +254,15 @@ DECLARE_NATIVE(ARROW)
 
     Option(Phase*) prior = nullptr;
     Option(VarList*) prior_coupling = nullptr;
+    Option(Element*) gather = nullptr;
 
     require (
       ParamList* paramlist = Pop_Paramlist(
           STACK_BASE,
           Is_Quasar(methodization) ? nullptr : methodization,
           prior,
-          prior_coupling
+          prior_coupling,
+          gather
       )
     );
 

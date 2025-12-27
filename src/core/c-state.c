@@ -40,6 +40,8 @@
 //
 void Snap_State(struct Reb_State *s)
 {
+    assert(not g_symbols.binder);  // only one binder active at a time ATM
+
     s->stack_base = TOP_INDEX;
 
     s->guarded_len = Flex_Dynamic_Used(g_gc.guarded);
@@ -64,13 +66,16 @@ void Snap_State(struct Reb_State *s)
 //
 void Rollback_Globals_To_State(struct Reb_State *s)
 {
+  rollback_data_stack: {
+
     Drop_Data_Stack_To(s->stack_base);
 
-    // Free any manual Flexes that were extant (e.g. Make_Flex() nodes
-    // which weren't created with BASE_FLAG_MANAGED and were not transitioned
-    // into the managed state).  This will include any Flexes used as backing
-    // store for rebAlloc() calls.
-    //
+} free_extant_manuals: {
+
+  // These are any Make_Flex() nodes not created with BASE_FLAG_MANAGED and
+  // were not transitioned into the managed state).  This will include any
+  // Flexes used as backing store for rebAlloc() calls.
+
     assert(Flex_Dynamic_Used(g_gc.manuals) >= s->manuals_len);
     while (Flex_Dynamic_Used(g_gc.manuals) != s->manuals_len) {
         Free_Unmanaged_Flex(
@@ -82,7 +87,19 @@ void Rollback_Globals_To_State(struct Reb_State *s)
         );  // ^-- Free_Unmanaged_Flex() will decrement Flex_Used()
     }
 
+} rollback_guarded_list: {
+
     Set_Flex_Len(g_gc.guarded, s->guarded_len);
+
+} undo_binder_influences: {
+
+  // There can only be one binder in effect, and it decorates the symbol
+  // table in a way that must be undone if there is a panic during its use.
+
+    if (g_symbols.binder)
+        Destruct_Binder(unwrap g_symbols.binder);
+
+} rollback_mold_state: {
 
     Term_Strand_Len_Size(g_mold.buffer, s->mold_buf_len, s->mold_buf_size);
 
@@ -101,7 +118,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
   #if RUNTIME_CHECKS
     g_num_evars_outstanding = s->num_evars_outstanding;
   #endif
-}
+}}
 
 
 #define DATASTACK_FLAG_HAS_PUSHED_CELLS     STUB_SUBCLASS_FLAG_24

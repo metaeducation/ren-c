@@ -455,10 +455,8 @@ DECLARE_NATIVE(REFRAMER)
 
     REBLEN param_index = 0;
 
-    if (TOP_INDEX != STACK_BASE) {
-        Destruct_Binder(binder);
+    if (TOP_INDEX != STACK_BASE)
         panic ("REFRAMER can't use partial specializions ATM");
-    }
 
     const Key* key;
     const Param* param;
@@ -466,10 +464,9 @@ DECLARE_NATIVE(REFRAMER)
     if (ARG(PARAMETER)) {
         const Symbol* symbol = Word_Symbol(unwrap ARG(PARAMETER));
         param_index = opt Try_Get_Binder_Index(binder, symbol);
-        if (param_index == 0) {
-            Destruct_Binder(binder);
+        if (param_index == 0)
             panic (Error_No_Arg(label, symbol));
-        }
+
         key = Varlist_Key(exemplar, param_index);
         param = cast(Param*, Varlist_Slot(exemplar, param_index));
     }
