@@ -814,35 +814,46 @@ INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
 }
 
 
-// Convenience routine for returning a value which is *not* located in OUT.
-// (If at all possible, it's better to build values directly into OUT and
-// then return the OUT pointer...this is the fastest form of returning.)
+// We *could* allow direct `return v;` of arbitrary cells, with semantics that
+// the dispatch machinery would just copy the cell contents into L->out.
 //
-// Note: We do not allow direct `return v` of arbitrary values to be copied
-// in the dispatcher because it's too easy to think that will work for an
-// arbitrary local variable, which would be dead after the return.
+// This is not done for two reasons:
 //
-INLINE Bounce Native_Copy_Result_Untracked(
-    Value* out,  // have to pass; comma at callsite -> "operand has no effect"
-    Level* level_,
-    const Value* v
-){
-    assert(out == level_->out);
-    UNUSED(out);
-    assert(v != level_->out);   // Copy_Cell() would fail; don't tolerate
+// 1. The function dispatch is optimized to notice the literal pointer L->out
+//    as the default common return result.  Copying to that location and
+//    returning the L->out pointer avoids having to do further tests like
+//    "is this a Cell?" and then "is this an API handle I need to free" etc.
+//    We exploit the native's knowledge vs. having to rediscover it.
+//
+// 2. It avoids the potential of returning C stack variables (DECLARE_VALUE)
+//    that would be dead after the return (only FRAME! cells or SCRATCH/SPARE
+//    would be legal, but there wouldn't be a cheap check that these were
+//    all you were returning.)
+//
+// Hence you're only allowed to return API Cells, and they are freed upon
+// the return.  Core natives must `return COPY(v);` for any non-API cells.
+//
+INLINE void Native_Copy_Result_Untracked(Level* L, const Value* v) {
     assert(not Is_Api_Value(v));  // too easy to not release()
-    Copy_Cell_Untracked(level_->out, v, CELL_MASK_COPY);
-    return level_->out;
+    Copy_Cell_Untracked(L->out, v, CELL_MASK_COPY);
 }
 
-INLINE Bounce Native_Branched_Result(Level* level_, Value* v) {
-    assert(v == level_->out);  // wouldn't be zero cost if we supported copy
+
+// We turn light nulls and ghosts into their heavy forms for ELSE/THEN/ALSO
+// reactivity.
+//
+// !!! This may evolve into saying that it's *pack* reactivity in general,
+// with efficient forms of 1-element pack and branches always making one.
+//
+INLINE void Native_Branched_Result(Level* L, Value* v) {
+    assert(v == L->out);  // wouldn't be zero cost if we supported copy
+    UNUSED(L);
     if (Is_Light_Null(v))
         Init_Heavy_Null(v);  // box up for THEN reactivity [2]
     else if (Is_Ghost(v))
         Init_Heavy_Void(v);
-    return level_->out;
 }
+
 
 // It's necessary to be able to tell from the outside of a loop whether it
 // had a BREAK or not, e.g.
@@ -927,12 +938,15 @@ INLINE Bounce Native_Looped_Result(Level* level_, Value* atom) {
 
     #define TRASH       TRACK(Native_Trash_Result_Untracked(level_))
     #define THROWN      Native_Thrown_Result(level_)
-    #define COPY(v)     Native_Copy_Result_Untracked(TRACK(OUT), level_, (v))
     #define UNLIFT(v)   Native_Unlift_Result(level_, (v))
 
-    #define BRANCHED(v)  Native_Branched_Result(level_, (v))
+    #define COPY(v) \
+        (Native_Copy_Result_Untracked(level_, (v)), x_cast(Bounce, TRACK(OUT)))
 
-    #define VETOING_NULL  u_cast(Bounce, nullptr)
+    #define BRANCHED(v) \
+        (Native_Branched_Result(level_, (v)), x_cast(Bounce, TRACK(OUT)))
+
+    #define VETOING_NULL  x_cast(Bounce, nullptr)
 
     #define LOOPED(v)      Native_Looped_Result(level_, (v))
     #define BREAKING_NULL  VETOING_NULL  // does break it need to be distinct?
