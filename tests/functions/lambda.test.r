@@ -92,3 +92,11 @@
     foo: lambda [[]: []] [1020]
     foo
 )]
+
+; Alternative formulation for construction via code: LAMBDA BLOCK!
+[
+    (
+        negatory: lambda block! [[x] reverse [x negate]]
+        -1020 = negatory 1020
+    )
+]

@@ -348,9 +348,6 @@ Bounce Make_Interpreted_Action(
 ){
     INCLUDE_PARAMS_OF_FUNCTION;
 
-    Element* spec = Element_ARG(SPEC);
-    Element* body = Element_ARG(BODY);
-
     enum {
         ST_FUNC_INITIAL_ENTRY = STATE_0
     };
@@ -362,6 +359,47 @@ Bounce Make_Interpreted_Action(
 
   initial_entry: { ///////////////////////////////////////////////////////////
 
+    if (not Is_Datatype(ARG(SPEC)))
+        goto process_spec_and_block_or_fence_body;
+
+    if (Datatype_Type(ARG(SPEC)) != TYPE_BLOCK)
+        panic ("SPEC must be BLOCK! datatype if BODY is spec and body");
+
+    if (not Is_Block(ARG(BODY)))
+        panic ("BODY must be BLOCK! if SPEC is BLOCK! datatype");
+
+    if (rebRunThrows(
+        SPARE,
+        CANON(REDUCE), rebQ(ARG(BODY))
+    )){
+        return THROWN;
+    }
+    require (
+        Stable* spare = Decay_If_Unstable(SPARE)
+    );
+    assert(Is_Block(spare));  // REDUCE guarantee
+
+    Length len;
+    const Element* at = List_Len_At(&len, spare);
+
+    if (len != 2)
+        panic ("SPEC as BLOCK! means second argument must be length 2");
+
+    if (not Is_Block(at))
+        panic ("SPEC as BLOCK! means reduced SPEC must be BLOCK!");
+
+    if (not (Is_Block(at + 1) or Is_Fence(at + 1)))
+        panic ("Interpreted action body must eval to BLOCK! or FENCE!");
+
+    Copy_Cell(ARG(SPEC), at);
+    Copy_Cell(ARG(BODY), at + 1);
+
+    goto process_spec_and_block_or_fence_body;
+
+} process_spec_and_block_or_fence_body: { ////////////////////////////////////
+
+    Element* spec = Element_ARG(SPEC);
+    Element* body = Element_ARG(BODY);
     assert(Is_Block(spec));
 
     Element* gather;

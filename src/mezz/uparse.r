@@ -238,7 +238,7 @@ bind construct [
             ]
         ])
 
-        return: lambda [^value] compose2:deep '{} [  ; already composing w/()
+        return: lambda block! [[^value] compose2:deep '{} [  ; ()-composing
             {unrun return/} pack [
                 ^value except e -> [
                     {unrun return/} fail e
@@ -246,7 +246,7 @@ bind construct [
                 {input-name}
                 pending  ; can't change PENDING name at this time
             ]
-        ]
+        ]]
 
         ; ** Currently parsers unify RETURN where a failure is done with
         ; a `return fail`.  Should this instead be ACCEPT and REJECT, as
