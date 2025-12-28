@@ -264,6 +264,7 @@ DECLARE_NATIVE(SHOVE)
 //      source [
 //          <opt-out>  "useful for `evaluate opt ...` scenarios"
 //          block!  "always 'void suppression' semantics, :STEP ok"
+//          fence!  "WRAP semantics, produces BLOCK!, :STEP ok"
 //          group!  "must eval to end, only suppress voids after value seen"
 //          <unrun> frame!  "invoke the frame (no arguments, see RUN)"
 //          warning!  "panic on the error (prefer PANIC)"
@@ -307,6 +308,26 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
     switch (STATE) {
       case ST_EVALUATE_INITIAL_ENTRY: {
+        if (Is_Fence(source)) {  // BLOCKWRAP semantics
+            const Element* tail;
+            const Element* at = List_At(&tail, source);
+            VarList* parent = nullptr;
+
+            VarList* varlist = Make_Varlist_Detect_Managed(
+                COLLECT_ONLY_SET_WORDS,
+                TYPE_OBJECT,  // !!! Presume object?
+                at,
+                tail,
+                parent
+            );
+            Tweak_Link_Inherit_Bind(varlist, Cell_Binding(source));
+            Tweak_Cell_Binding(source, varlist);
+            KIND_BYTE(source) = TYPE_BLOCK;
+
+            Remember_Cell_Is_Lifeguard(source);  // may be only reference!
+            goto initial_entry_list;
+        }
+
         Remember_Cell_Is_Lifeguard(source);  // may be only reference!
 
         if (Is_Block(source) or Is_Group(source))

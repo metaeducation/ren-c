@@ -304,6 +304,15 @@
     )
 ]
 
+; EVAL of FENCE! gives blockwrap semantics:
+[
+    (all {
+        x: <outer-x>
+        fence: ${x: <inner-x>}
+        <inner-x> = eval fence
+        x = <outer-x>
+    })
+]
 
 (
     f1: func [return: [integer!]] [evaluate [return 1 2] 2]
