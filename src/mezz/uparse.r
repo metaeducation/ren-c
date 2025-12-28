@@ -1769,8 +1769,8 @@ default-combinators: make map! [
     ; https://rebol.metaeducation.com/t/dialecting-quasiforms-in-parse/2379
     ;
     ; Whether it evaluates the contents or does as-is, ~[]~ would still mean
-    ; "synthesize a none" either way.  We introduce it here to bridge
-    ; compatibility with old tests that matched stable ~none~ keywords.
+    ; "synthesize empty pack" either way.  We introduce it here to bridge
+    ; compatibility with old tests.
 
     '~[]~ combinator [
         return: [~[]~]
@@ -2383,22 +2383,47 @@ default-combinators: make map! [
         return fail "All of the parsers in ANY block failed"
     ]
 
-    === BLOCK! COMBINATOR ===
+  === BLOCK! COMBINATOR ===
 
-    ; Handling of BLOCK! is the central combinator.  The contents are processed
-    ; as a set of alternatives separated by `|`, with a higher-level sequence
-    ; operation indicated by `||`.  The bars are treated specially; e.g. | is
-    ; not an "OR combinator" due to semantics, because if arguments to all the
-    ; steps were captured in one giant ACTION! that would mean changes to
-    ; variables by a GROUP! would not be percieved by later steps...since once
-    ; a rule like SOME captures a variable it won't see changes:
-    ;
-    ; https://forum.rebol.info/t/when-should-parse-notice-changes/1528
-    ;
-    ; (There is also a performance benefit, since if | was a combinator then
-    ; a sequence of 100 alternates would have to build a very large OR
-    ; function...rather than being able to build a small function for each
-    ; step that could short circuit before the others were needed.)
+  ; Handling of BLOCK! is the central combinator.  The contents are processed
+  ; as a set of alternatives separated by `|`, with a higher-level sequence
+  ; operation indicated by `||`.
+  ;
+  ; The bars are treated specially; e.g. | is not an "OR combinator".  This is
+  ; due to semantics: if arguments to all the steps were captured in one giant
+  ; ACTION! that would mean changes to variables by a GROUP! would not be
+  ; percieved by later steps...since once a rule like SOME captures a variable
+  ; it won't see changes:
+  ;
+  ;   https://forum.rebol.info/t/when-should-parse-notice-changes/1528
+  ;
+  ; (There is also a performance benefit, since if | was a combinator then a
+  ; sequence of 100 alternates would have to build a very large OR function...
+  ; rather than being able to build a small function for each step that could
+  ; short circuit before the others were needed.)
+  ;
+  ; 1. If a bar is reached without a failure prior, that means the alternative
+  ;    was fulfilled.  Note the base case is a match, e.g. with input "cde"
+  ;    then [| "ab"] will consider itself to be a match before any input is
+  ;    consumed, e.g. before the "c".
+  ;
+  ;    However: UPARSE has an extra trick up its sleeve with `||`, so you can
+  ;    have a sequence of alternates within the same block.  This carries a
+  ;    performance penalty--as successful matches must scan ahead through
+  ;    the whole rule of blocks just as a failing match would when searching
+  ;    alternates.
+  ;
+  ;    !!! Caching "there are no `|` beyond this point" or "there are no `||`
+  ;    beyond this point flags on cells could speed up a native implementation
+  ;    although invalidating such flags in the face of block edits would
+  ;    have its own problems.
+  ;
+  ; 2. Instead of knowing the name of BLOCK-COMBINATOR, this once used
+  ;    (ACTION OF BINDING OF $RETURN).  But the fusion of actions and frames
+  ;    removed ACTION OF.  So the action is accessed by an assigned name from
+  ;    outside.  On the plus side, that allowed RULE-START and RULE-END to be
+  ;    exposed, which were not visible to the inner function that was returned
+  ;    by (ACTION OF BINDING OF $RETURN).
 
     block! (block-combinator: vanishable combinator [
         "Sequence parse rules together, and return any alternate that matches"
@@ -2410,7 +2435,7 @@ default-combinators: make map! [
         :limit "Limit of how far to consider (used by ... recursion)"
             [block!]
         :thru "Keep trying rule until end of block"
-        {rules pos ^result f sublimit subpending temp old-env can-vanish}
+        {rules pos old-env ^result f r sublimit subpending subresult can-vanish}
     ][
         rules: value  ; alias for clarity
         limit: default [tail of rules]
@@ -2421,54 +2446,31 @@ default-combinators: make map! [
         state.env: rules  ; currently using blocks as surrogate for environment
 
         until [same? rules limit] [
-            if rules.1 = ', [  ; COMMA! is only legal between steps
-                rules: my next
+            if comma? rules.1 [  ; COMMA! is only legal between steps
+                rules: next rules
                 continue
             ]
 
-            if rules.1 = '| [
-                ;
-                ; Rule alternative was fulfilled.  Base case is a match, e.g.
-                ; with input "cde" then [| "ab"] will consider itself to be a
-                ; match before any input is consumed, e.g. before the "c".
-                ;
-                ; But UPARSE has an extra trick up its sleeve with `||`, so
-                ; you can have a sequence of alternates within the same block.
-                ; scan ahead to see if that's the case.
-                ;
-                ; !!! This carries a performance penalty, as successful matches
-                ; must scan ahead through the whole rule of blocks just as a
-                ; failing match would when searching alternates.  Caching
-                ; "are there alternates beyond this point" or "are there
-                ; sequences beyond this point" could speed that up as flags on
-                ; cells if they were available to the internal implementation.
-                ;
+            if rules.1 = '| [  ; rule alternative fulfilled, but must scan [1]
                 catch [  ; use CATCH to continue outer loop
-                    let r
                     while [r: try rules.1] [
-                        rules: my next
+                        rules: next rules
                         if r = '|| [
                             input: pos  ; don't roll back past current pos
-                            throw <inline-sequence-operator>
+                            throw '||
                         ]
                     ]
                 ] then [
                     continue
                 ]
 
-                ; If we didn't find an inline sequencing operator, then the
-                ; successful alternate means the whole block is done.
-                ;
                 input: pos
-                return ^result
+                return ^result  ; no || found, so | success means block done
             ]
 
-            ; If you hit an inline sequencing operator here then it's the last
-            ; alternate in a list.
-            ;
-            if rules.1 = '|| [
+            if rules.1 = '|| [  ; hitting || here means last alternate in list
                 input: pos  ; don't roll back past current pos
-                rules: my next
+                rules: next rules
                 continue
             ]
 
@@ -2478,9 +2480,6 @@ default-combinators: make map! [
                 okay
             ]
 
-            ; Do one "Parse Step".  This involves turning whatever is at the
-            ; next parse position into an ACTION!, then running it.
-            ;
             if rules.1 = '... [  ; "variadic" parser, use recursion
                 rules: next rules
                 if tail? rules [  ; if at end, act like [elide to <end>]
@@ -2489,14 +2488,7 @@ default-combinators: make map! [
                 ]
                 sublimit: find:part rules [...] limit
 
-                ; !!! Once this used ACTION OF BINDING OF $RETURN,
-                ; the fusion of actions and frames removed ACTION OF.  So the
-                ; action is accessed by an assigned name from outside.  On
-                ; the plus side, that allowed RULE-START and RULE-END to be
-                ; exposed, which were not visible to the inner function that
-                ; ACTION OF BINDING OF $RETURN received.
-                ;
-                f: make frame! block-combinator/  ; this combinator
+                f: make frame! block-combinator/  ; this combinator [2]
                 f.state: state
                 f.input: pos  ; know parameter is called "input"
                 f.value: rules
@@ -2516,51 +2508,21 @@ default-combinators: make map! [
 
             can-vanish: default [vanishable? f]
 
-            if not error? ^temp: eval f [
-                [^temp pos subpending]: ^temp
-                if unset? $pos [  ; !!! rethink check, could be any bad value
-                    print mold:limit rules 200
-                    panic "Combinator did not set remainder"
-                ]
-                if unset? $subpending [  ; rethink check...
-                    print mold:limit rules 200
-                    panic "Combinator did not set pending"
-                ]
-                either ghost? ^temp [
-                    if not can-vanish [
-                        if not ghost? ^result [^result: ()]
-                    ]
-                ][
-                    ^result: ^temp  ; overwrite only if not ghost
-                ]
-                glom $pending subpending
-            ] else [
+            if error? ^subresult: eval f [  ; parser failed to match
                 ^result: ()  ; reset, e.g. `[veto |]`
 
                 if block? pending [
                     free pending  ; proactively release memory
-                    pending: none
                 ]
+                pending: none
 
-                ; If we fail a match, we skip ahead to the next alternate rule
-                ; by looking for an `|`, resetting the input position to where
-                ; it was when we started.  If there are no more `|` then all
-                ; the alternates failed, so return NULL.
-                ;
-                pos: catch [
-                    let r
+                pos: catch [  ; skip to next alternate (if any)
                     while [r: try rules.1] [
-                        rules: my next
-                        if r = '| [throw input]  ; reset POS
-
-                        ; If we see a sequencing operator after a failed
-                        ; alternate, it means we can't consider the alternates
-                        ; across that sequencing operator as candidates.  So
-                        ; return null just like we would if reaching the end.
-                        ;
-                        if r = '|| [break]
+                        rules: next rules
+                        if r = '| [throw input]  ; reset position
+                        if r = '|| [break]  ; no relevant alternates after fail
                     ]
-                ] else [
+                ] else [  ; no throw to reset position
                     if (not thru) or (tail? input) [
                         return fail* make warning! [
                             id: 'parse-mismatch
@@ -2569,10 +2531,28 @@ default-combinators: make map! [
                         ]
                     ]
                     rules: value
-                    pos: input: my next
-                    continue
+                    pos: input: next rules
                 ]
+                continue
             ]
+
+            [^subresult pos subpending]: ^subresult
+            if unset? $pos [  ; !!! rethink check, could be any bad value
+                print mold:limit rules 200
+                panic "Combinator did not set remainder"
+            ]
+            if unset? $subpending [  ; rethink check...
+                print mold:limit rules 200
+                panic "Combinator did not set pending"
+            ]
+            either ghost? ^subresult [
+                if not can-vanish [
+                    ^result: ~[]~  ; heavy void
+                ]
+            ][
+                ^result: ^subresult  ; overwrite only if not ghost
+            ]
+            glom $pending subpending
         ]
 
         input: pos
@@ -2842,7 +2822,7 @@ parsify: func [
             "COMMA! can only be run between PARSE steps, not during them"
         ]
     ]
-    rules: my next
+    rules: next rules
 
     while [comb: select state.combinators r] [  ; literal match first [2]
         if match frame! comb [
@@ -2991,7 +2971,36 @@ parsify: func [
 ; EPARSE demo in the web console, where combinators are used to mark ranges
 ; in the text...but these need to be able to participate in the rollback
 ; mechanism.  So they are gathered in pending.
-
+;
+; 1. PATH!s, TUPLE!s, and URL!s are read only and don't have indices.  But we
+;    want to be able to parse them, so make them read-only series aliases:
+;
+;      https://forum.rebol.info/t/1276/16
+;
+; 2. There's no first-class ENVIRONMENT! type (yet!), so lists are used as a
+;    surrogate for exposing their bindings.  When the environment is expanded
+;    (e.g. by LET) the rules block in effect is changed to a block with the
+;    same contents (array+position) but a different binding.
+;
+; 3. Red has PARSE:PART, so to run their tests we fake it.  Real :PART would
+;    tax combinator implementation, so thinking about a system-wide feature
+;    makes more sense.
+;
+;    (The series will not have the same identity, so mutating operations will
+;    mutate the wrong series...we could copy back, but that just shows what a
+;    slippery slope this is.)
+;
+; 4. There's a display issue with giving the whole rule in that the outermost
+;    block isn't positioned within another block, so it would have to be
+;    nested in a singular block to get brackets on it and suggest you are in
+;    a block rule.  But more generally, giving the entire parse rule as a
+;    parse step in the display isn't that helpful--you know you're running
+;    the whole rule.  Revisit if this turns out to be a problem.
+;
+; 5. Each UPARSE operation can have a different set of combinators in effect.
+;    To get at that information (as well as other parse-global state) we use
+;    the FRAME! of PARSE itself.
+;
 parse*: func [
     "Process as much of the input as parse rules consume (see also PARSE)"
 
@@ -3014,86 +3023,52 @@ parse*: func [
     :hook "Call a hook on dispatch of each combinator"
         [<unrun> frame!]
 
-    {loops furthest ^synthesized remainder pending env}
-][
-    ; PATH!s, TUPLE!s, and URL!s are read only and don't have indices.  But we
-    ; want to be able to parse them, so make them read-only series aliases:
-    ;
-    ; https://forum.rebol.info/t/1276/16
-    ;
+    {
+        loops  ; block of FRAME!s representing stack of iterations in effect
+        env  ; no first class environment yet, use rules as proxy [1]
+        furthest  ; furthest point reached in parse
+        ^synthesized
+        remainder
+        pending
+    }
+] [
+    env: rules  ; see [1]
+
     lib/case [  ; !!! Careful... :CASE is a refinement to this function
-        any-sequence? input [input: as block! input]
+        any-sequence? input [input: as block! input]  ; see [2]
         url? input [input: as text! input]
     ]
 
     loops: copy []  ; need new loop copy each invocation
 
-    ; We put an implicit PHASE bracketing the whole of UPARSE* so that the
-    ; <delay> groups will be executed.
-    ;
-    rules: inside rules bindable reduce ['phase bindable rules]
-
-    ; There's no first-class ENVIRONMENT! type, so lists are used as a
-    ; surrogate for exposing their bindings.  When the environment is
-    ; expanded (e.g. by LET) the rules block in effect is changed to a block
-    ; with the same contents (array+position) but a different binding.
-    ;
-    env: rules
-
-    ; !!! Red has a :PART feature and so in order to run the tests pertaining
-    ; to that we go ahead and fake it.  Actually implementing :PART would be
-    ; quite a tax on the combinators...so thinking about a system-wide slice
-    ; capability would be more sensible.  The series will not have the same
-    ; identity, so mutating operations will mutate the wrong series...we
-    ; could copy back, but that just shows what a slippery slope this is.
-    ;
     if part [
-        input: copy:part input part
+        input: copy:part input part  ; see [3]
     ]
 
     combinators: default [default-combinators]
 
-    ; The COMBINATOR definition makes a function which is hooked with code
-    ; that will mark the furthest point reached by any match.
-    ;
-    furthest: input
+    furthest: input  ; COMBINATOR hook marks furthest point reached by a match
 
-    ; Each UPARSE operation can have a different set of combinators in
-    ; effect.  So it's necessary to need to have some way to get at that
-    ; information.  For now, we use the FRAME! of the parse itself as the
-    ; way that data is threaded...as it gives access to not just the
-    ; combinators, but also the :VERBOSE or other settings...we can add more.
-    ;
-    let state: binding of $return
-
-    let f: make frame! combinators.(block!)
-    f.state: state
-    set-combinator-input f input  ; don't know what BLOCK! combinator called it
+    let f: make frame! combinators.(type of rules)
+    f.state: binding of $return  ; see [4]
+    set-combinator-input f input
     f.value: rules
-
-    ; There's a display issue with giving the whole rule in that the outermost
-    ; block isn't positioned within another block, so it would have to be
-    ; nested in a singular block to get brackets on it and suggest you are
-    ; in a block rule.  But more generally, giving the entire parse rule as
-    ; a parse step in the display isn't that helpful--you know you're running
-    ; the whole rule.  Revisit if this turns out to be a problem.
-    ;
-    f.rule-start: null
+    f.rule-start: null  ; see [5]
     f.rule-end: null
 
     sys.util/recover:relax [  ; :RELAX allows RETURN from block
         [^synthesized remainder pending]: eval f except e -> [
-            assert [empty? state.loops]
+            assert [empty? loops]
             ; pending + remainder + synthesized not assigned, due to error
             return fail e  ; wrappers catch
         ]
     ] then e -> [
         print "!!! HARD FAIL DURING PARSE !!!"
-        print mold:limit state.rules 200
+        print mold:limit rules 200
         panic e
     ]
 
-    assert [empty? state.loops]
+    assert [empty? loops]
 
     if (not tail? remainder) and (not relax) [
         return fail make warning! [
