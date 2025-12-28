@@ -1208,7 +1208,7 @@ Bounce Stepper_Executor(Level* L)
       case LEADING_SPACE_AND(BLOCK): {  // !!! :[a b] reduces, not great...
         Bind_If_Unbound(CURRENT, L_binding);
         if (rebRunThrows(
-            u_cast(Sink(Stable), OUT),  // <-- output, API won't make atoms
+            OUT,  // <-- output
             CANON(REDUCE), CURRENT
         )){
             goto return_thrown;

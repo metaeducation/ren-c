@@ -502,7 +502,7 @@ DECLARE_NATIVE(PACK)
     assert(Is_Block(block));
 
     if (rebRunThrows(
-        u_cast(Init(Stable), SPARE),
+        SPARE,
         "reduce:predicate",  // commas excluded by :PREDICATE [1]
             rebQ(block), rebQ(LIB(LIFT))  // fail ok [2]
     )){

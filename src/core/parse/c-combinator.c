@@ -680,9 +680,9 @@ static bool Combinator_Param_Hook(
             // write to native frame variables, so hack in a temporary here.
             // (could be done much more efficiently another way!)
 
-            if (rebRunThrows(u_cast(Sink(Stable), SPARE), "let temp"))
+            if (rebRunThrows(SPARE, "let temp"))
                 assert(!"LET failed");
-            Element* temp = cast(Element*, SPARE);
+            Element* temp = Known_Element(SPARE);
             Api(Stable*) parser = rebStable(
                 "[_", temp, "]: parsify", rebQ(ARG(STATE)), ARG(RULES)
             );

@@ -90,14 +90,16 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
         return Init_Port(OUT, context);
     }
 
-    Sink(Stable) out = OUT;
     if (rebRunThrows(
-        out,  // <-- output cell
+        OUT,  // <-- output cell
         "sys.util/make-port*", rebQ(arg)
     )){
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
+    require (
+      Stable* out = Decay_If_Unstable(OUT)
+    );
     if (not Is_Port(out))  // should always create a port
         return fail (out);
 

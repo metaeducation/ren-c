@@ -1029,9 +1029,8 @@ DECLARE_NATIVE(SWITCH)
     else {
         assert(predicate);
 
-        Sink(Stable) scratch = SCRATCH;
         if (rebRunThrows(
-            scratch,  // <-- output cell
+            SCRATCH,  // <-- output cell
             predicate,
                 rebQ(left),  // first arg (left hand side if infix)
                 rebQ(spare)  // second arg (right side if infix)
@@ -1039,6 +1038,9 @@ DECLARE_NATIVE(SWITCH)
             return BOUNCE_THROWN;  // aborts sublevel
         }
 
+        require (
+          Stable* scratch = Decay_If_Unstable(SCRATCH)
+        );
         require (
           bool cond = Test_Conditional(scratch)
         );

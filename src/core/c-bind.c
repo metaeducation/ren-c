@@ -1441,8 +1441,7 @@ Result(None) Read_Slot_Meta(Sink(Value) out, const Slot* slot)
     LIFT_BYTE(temp) = ONEQUOTE_NONQUASI_4;
     unnecessary(Push_Lifeguard(temp));  // slot protects it.
 
-    Sink(Stable) out_value = u_cast(Stable*, out);
-    if (rebRunThrows(out_value, CANON(GET), temp))
+    if (rebRunThrows(out, CANON(GET), temp))
         return fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     return none;

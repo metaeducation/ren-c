@@ -1176,10 +1176,8 @@ static Result(None) Handle_Mark_Rule(
     // !!! Assume we might not be able to corrupt SPARE (rule may be
     // in SPARE?)
     //
-    Sink(Stable) out = OUT;
-    DECLARE_VALUE (temp);
     if (rebRunThrows(
-        out,  // <-- output cell
+        OUT,  // <-- output cell
         CANON(SET), quoted_set_or_copy_word, ARG(POSITION)
     )){
         panic (Error_No_Catch_For_Throw(LEVEL));
