@@ -1721,7 +1721,7 @@ default-combinators: make map! [
                 return unquote value
             ]
             if negated [
-                return item
+                return unquote value
             ]
             return fail [
                 "Value at parse position wasn't unquote of QUOTED! item"
@@ -3013,7 +3013,7 @@ parse*: func [
     input "Input data"
         [<opt-out> any-series? url! any-sequence?]
     rules "Block of parse rules"
-        [block!]
+        [<const> block!]
     :combinators "List of keyword and datatype handlers used for this parse"
         [map!]
     :case "Do case-sensitive matching"

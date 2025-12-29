@@ -51,15 +51,19 @@ DECLARE_NATIVE(CONST) {
 //  "Return if a value is a read-only view of its underlying data"
 //
 //      return: [logic?]
-//      value [any-series? any-context?]
+//      value [element?]
 //  ]
 //
-DECLARE_NATIVE(CONST_Q) {
+DECLARE_NATIVE(CONST_Q)
+//
+// !!! Should this integrate the question of if the series is immutable, vs.
+// just if the value is *const*, specifically?  Knowing the flag is helpful
+// for debugging at least.
+{
     INCLUDE_PARAMS_OF_CONST_Q;
 
-    // !!! Should this integrate the question of if the series is immutable,
-    // besides just if the value is *const*, specifically?  Knowing the flag
-    // is helpful for debugging at least.
+    if (not Any_Series(ARG(VALUE)))
+        return fail ("CONST? only works on SERIES?");
 
     return LOGIC(Get_Cell_Flag(ARG(VALUE), CONST));
 }

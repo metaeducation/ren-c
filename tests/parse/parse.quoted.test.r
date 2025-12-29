@@ -6,10 +6,10 @@
 ('(b c) = parse "<a> 100 (b c)" ['<a> space '100 space '(b c)])
 
 (
-    all [
-        let pos: parse-thru [... [a b]] [to '[a b]]
+    all {
+        pos: parse-thru [... [a b]] [to '[a b]]
         pos = [[a b]]
-    ]
+    }
 )
 ([a b] = parse [... [a b]] [thru '[a b]])
 (1 = parse [1 1 1] [some '1])
@@ -32,46 +32,46 @@
     ('b = parse [a b] [['a] ['b]])
 
     (
-        res: ~
-        all [
+        all {
+            res: ()
             1 = parse [] [(res: 1)]
             res = 1
-        ]
+        }
     )
     (
-        res: ~
-        all [
+        all {
+            res: ()
             1 = parse [a] ['a (res: 1)]
             res = 1
-        ]
+        }
     )
     (
-        res: '~before~
-        all [
+        all {
+            res: ()
             error? parse [a] ['b (res: 1)]
-            res = '~before~
-        ]
+            unset? $res
+        }
     )
     (
-        res: ~
-        all [
+        all {
+            res: ()
             1 = parse [] [[(res: 1)]]
             res = 1
-        ]
+        }
     )
     (
-        res: ~
-        all [
+        all {
+            res: ()
             1 = parse [a] [['a (res: 1)]]
             res = 1
-        ]
+        }
     )
     (
-        res: '~before~
-        all [
+        all {
+            res: ()
             error? parse [a] [['b (res: 1)]]
-            res = '~before~
-        ]
+            unset? $res
+        }
     )
 ]
 
@@ -80,24 +80,24 @@
 ; match in strings.  This gives a cleaner look, as you drop off 3 vertical
 ; tick marks from everything like ["ab"] to become ['ab]
 [
-    (all [
-        let pos: parse-thru "abbbbbc" ['a some ['b]]
+    (all {
+        pos: parse-thru "abbbbbc" ['a some ['b]]
         "c" = pos
-    ])
-    (all [
-        let pos: parse-thru "abbbbc" ['ab, some ['bc | 'b]]
+    })
+    (all {
+        pos: parse-thru "abbbbc" ['ab, some ['bc | 'b]]
         "" = pos
-    ])
-    (all [
-        let pos: parse-thru "abc10def" ['abc '10]
+    })
+    (all {
+        pos: parse-thru "abc10def" ['abc '10]
         "def" = pos
-    ])
+    })
 
     (1 = parse "1 1 1" [some ['1 [space | <end>]]])
 ]
 
 [#682 (  ; like the old way...
-    t: ~
+    t: ()
     parse "<tag>text</tag>" [thru '<tag> t: across to '</tag> to <end>]
     t = "text"
 )(
@@ -106,43 +106,43 @@
 
 [
     (
-        res: ~
-        all [
+        all {
+            res: ()
             'a = parse [a] [res: 'a]
             res = 'a
-        ]
+        }
     )
     (
-        res: ~
-        all [
+        all {
+            res: ()
             'a = parse [a a] [res: repeat 2 'a]
             res = 'a
-        ]
+        }
     )
     (
-        res: '~before~
-        all [
+        all {
+            res: ()
             error? parse [a a] [res: repeat 3 'a]
-            res = '~before~
-        ]
+            unset? $res
+        }
     )
     (
-        res: ~
-        all [
+        all {
+            res: ()
             'a = parse [a] [res: ['a]]
             res = 'a
-        ]
+        }
     )
     (
-        res: 0
-        all [
+        all {
+            res: ()
             'b = parse [a a b] [one res: 'a one]
             res = 'a
-        ]
+        }
     )
 ]
 
-; Case sensitivity (consider this also for THE or other quoted construct
+; Case sensitivity (consider this also for THE or other quoted construct)
 [
     (equal? 'a (parse [a] ['a]))
     (equal? 'A (parse [a] ['A]))
@@ -155,4 +155,22 @@
 
     (equal? 'p/a (parse:case [p/a] ['p/a]))
     ~parse-mismatch~ !! (parse:case [p/a] ['p/A])
+]
+
+; The thing you get back from quoting is the rule, which gets const'd
+[
+    (all {
+        rule: ['[a]]
+        result: parse "[a]" rule
+        same? (unquote rule.1) result
+        not const? rule.1
+        const? result
+    })
+    (all {
+        rule: ['[a]]
+        result: parse [[a]] rule
+        same? (unquote rule.1) result
+        not const? rule.1
+        const? result
+    })
 ]
