@@ -2383,11 +2383,11 @@ default-combinators: make map! [
         return fail "All of the parsers in ANY block failed"
     ]
 
-  === BLOCK! COMBINATOR ===
+  === BLOCK! AND FENCE! COMBINATORS ===
 
-  ; Handling of BLOCK! is the central combinator.  The contents are processed
-  ; as a set of alternatives separated by `|`, with a higher-level sequence
-  ; operation indicated by `||`.
+  ; Handling of BLOCK! is the central combinator (FENCE! being just the WRAP'd
+  ; version).  The contents are processed as a set of alternatives separated
+  ; by `|`, with a higher-level sequence operation indicated by `||`.
   ;
   ; The bars are treated specially; e.g. | is not an "OR combinator".  This is
   ; due to semantics: if arguments to all the steps were captured in one giant
@@ -2431,7 +2431,7 @@ default-combinators: make map! [
         input [any-series?]
         {pending}: [none? quoted! block!]
         value "Rules in sequence, with `|` and `||` separating alternates"
-            [block!]
+            [any-list?]  ; FENCE! does an ADAPT, typechecks
         :limit "Limit of how far to consider (used by ... recursion)"
             [block!]
         :thru "Keep trying rule until end of block"
@@ -2558,6 +2558,9 @@ default-combinators: make map! [
         input: pos
         return ^result
     ])
+
+    fence! (adapt block-combinator [value: as-block-wrap value])
+
 
     === PANIC COMBINATOR ===
 
