@@ -542,46 +542,34 @@ DECLARE_NATIVE(FILE_TO_LOCAL)
 //  ]
 //
 DECLARE_NATIVE(WHAT_DIR)
+//
+// 1. !!! Because of the need to track a notion of "current path" which could
+//    be a URL! as well as a FILE!, the state is stored in the system options.
+//    For now--however--it is "duplicate" in the case of a FILE!, because the
+//    OS has its own tracked state.  We let the OS state win for files if they
+//    have diverged somehow--because the code was already here and it would be
+//    more compatible.  But reconsider the duplication.
+//
+// 2. Lousy error, but ATM the user can directly edit system.options.  They
+//    shouldn't be able to (or if they can, it should be validated)
+//
+// !!! With dual states, we can make system.options.current-path an "accessor"
+// which would automatically sync the OS state, and if you wrote to it with
+// a new value it would change that state.
 {
     INCLUDE_PARAMS_OF_WHAT_DIR;
 
-    Sink(Stable) spare_current_path = SPARE;
-    require (
-      Read_Slot(
-        spare_current_path,
-        Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH)
-    ));
+    Stable* current_path = rebStable("sys.options.current-path");
 
-    if (Is_File(spare_current_path) or Is_Nulled(spare_current_path)) {
-        //
-        // !!! Because of the need to track a notion of "current path" which
-        // could be a URL! as well as a FILE!, the state is stored in the
-        // system options.  For now--however--it is "duplicate" in the case
-        // of a FILE!, because the OS has its own tracked state.  We let the
-        // OS state win for files if they have diverged somehow--because the
-        // code was already here and it would be more compatible.  But
-        // reconsider the duplication.
-
+    if (not current_path or Is_File(current_path)) {  // synchronize [1]
         Stable* refresh = Get_Current_Dir_Value();
-        Copy_Cell(spare_current_path, refresh);
-        require (
-          Write_Loop_Slot_May_Unbind_Or_Decay(
-            Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH),
-            refresh,
-            LIB(SPACE)  // no container applicable
-        ));
-        rebRelease(refresh);
+        rebElide("system.options.current-path:", rebR(refresh));
     }
-    else if (not Is_Url(spare_current_path)) {
-        //
-        // Lousy error, but ATM the user can directly edit system.options.
-        // They shouldn't be able to (or if they can, it should be validated)
-        //
-        panic (spare_current_path);
-    }
+    else if (not Is_Url(current_path))
+        panic (current_path);  // lousy error [2]
 
-    return rebValue(
-        CANON(TRY), CANON(COPY), spare_current_path  // "caller mutates"
+    return rebValue( // "caller mutates"
+        CANON(TRY), CANON(COPY), CANON(OPT), rebQ(rebR(current_path))
     );
 }
 
