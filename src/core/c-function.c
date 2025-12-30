@@ -57,7 +57,7 @@ static Result(None) Push_Keys_And_Params_For_Fence(
         }
         else if (Is_Meta_Form_Of(WORD, item)) {
             symbol = Word_Symbol(item);
-            initializer = SYM_VOID;
+            initializer = SYM_GHOST;
             meta = true;
         }
         else if (Is_Quasi_Word(item)) {
@@ -73,7 +73,7 @@ static Result(None) Push_Keys_And_Params_For_Fence(
             )
         ){
             symbol = Word_Symbol(item);
-            initializer = SYM_VOID;  // null is *bad* for "optional actions"
+            initializer = SYM_GHOST;  // null is *bad* for "optional actions"
             must_be_action = true;
         }
         else
@@ -89,7 +89,7 @@ static Result(None) Push_Keys_And_Params_For_Fence(
         ) {
             switch (initializer) {
               case SYM_NULL: Init_Nulled(PUSH()); break;
-              case SYM_VOID: Init_Ghost(PUSH()); break;
+              case SYM_GHOST: Init_Ghost(PUSH()); break;
               case SYM_TRIPWIRE: Init_Tripwire(PUSH()); break;
               default: assert(false);
             }

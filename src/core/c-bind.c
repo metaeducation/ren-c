@@ -1176,9 +1176,21 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 //
 //    for-each [x y] [1 2 3] [print ["x is" x "and y is" y]]
 //
-// Ren-C adds a feature of letting @WORD! be used to indicate that the loop
-// variable should be written into the existing bound variable that the @WORD!
-// specified.
+// Ren-C adds features:
+//
+// * Quoting a WORD! means that the variable will be unbound when written
+//   by the loop structure (hence, loops use a special write function that
+//   is sensitive to this flag to update the variable).
+//
+// * Using $WORD! means that the existing binding of the variable will be
+//   used vs. creating a new one.
+//
+// * Using ^WORD! means the variable will not be decayed when it is written.
+//   Failing to decorate with ^ also means that ACTION! antiforms will cause
+//   errors and not be assigned.
+//
+// (The combinatorics of wanting both $ and ^ semantics are not currently
+// worked out yet.)
 //
 // 1. The returned VarList* is an ordinary object, that outlives the loop:
 //
@@ -1189,7 +1201,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
 //    !!! Loops should probably free their objects by default when finished
 //
 // 2. The binding of BODY will only be modified if there are actual new loop
-//    variables created.  So (for-each @x ...) won't make any new variables.
+//    variables created.  So (for-each $x ...) won't make any new variables.
 //    But note that this means there won't be a reference to the VarList*
 //    containing the alias that gets created in that case...which means that
 //    the caller needs to be sure that VarList* gets GC-protected.
@@ -1224,64 +1236,73 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 
     const Element* tail;
     const Element* item;
+    Context* binding;  // needed if looking up $var to write to
 
-    Context* binding;  // needed if looking up @var to write to
-    bool rebinding;
-    if (Is_Block(spec)) {  // walk the block for errors BEFORE making binder
+    if (Is_Block(spec)) {
         binding = List_Binding(spec);
         item = List_At(&tail, spec);
+    } else {
+        item = cast(Element*, spec);
+        tail = cast(Element*, spec) + 1;
+        binding = SPECIFIED;
+    }
 
-        const Element* check = item;
+    bool body_needs_binding = false;
 
-        rebinding = false;
-        for (; check != tail; ++check) {
-            if (Is_Space(check)) {
-                // Will be transformed into dummy item, no rebinding needed
+  walk_block_for_errors_before_making_binder: {
+
+  // Better to error here, because if we wait until we're in the middle of
+  // building the context, the managed portion (keylist) would be incomplete
+  // and tripped on by the GC if we didn't do some kind of workaround.
+
+    for (const Element* check = item; check != tail; ++check) {
+        if (Is_Space(check))  // makes blackhole, doesn't need rebinding
+            continue;
+
+        if (
+            LIFT_BYTE(check) == NOQUOTE_2
+            or LIFT_BYTE(check) == ONEQUOTE_NONQUASI_4
+        ){
+            KindByte kind = KIND_BYTE(check);
+            if (
+                kind == Kind_From_Sigil_And_Heart(SIGIL_0, TYPE_WORD)
+                or kind == Kind_From_Sigil_And_Heart(SIGIL_META, TYPE_WORD)
+            ){
+                body_needs_binding = true;
+                continue;
             }
             else if (
-                Is_Word(check)
-                or Is_Meta_Form_Of(WORD, check)
-                or Is_Tied_Form_Of(WORD, check)
+                kind == Kind_From_Sigil_And_Heart(SIGIL_TIE, TYPE_WORD)
             ){
-                rebinding = true;
-            }
-            else if (not Is_Pinned_Form_Of(WORD, check)) {
-                //
-                // Better to error here, because if we wait until we're in
-                // the middle of building the context, the managed portion
-                // (keylist) would be incomplete and tripped on by the GC if
-                // we didn't do some kind of workaround.
-                //
-                return fail (Error_Bad_Value(check));
+                continue;
             }
         }
+
+        return fail (Error_Bad_Value(check));
     }
-    else {
-        item = cast(Element*, spec);
-        tail = cast(Element*, spec);
-        binding = SPECIFIED;
-        rebinding = Is_Word(item) or Is_Meta_Form_Of(WORD, item);
-    }
+
+} make_object: {
+
+  // 1. Tied word indicates that we wish to use the original binding.  So
+  //    `for-each $x [1 2 3] [...]` will actually set that x instead of making
+  //    a new one.  We use the ALIAS dual convention, of storing the word in
+  //    the slot with DUAL_0
 
     // KeyLists are always managed, but varlist is unmanaged by default (so
     // it can be freed if there is a problem)
     //
     VarList* varlist = Alloc_Varlist(TYPE_OBJECT, num_vars);
 
-    // We want to check for duplicates and a Binder can be used for that
-    // purpose--but note that a panic() cannot happen while binders are
-    // in effect UNLESS the BUF_COLLECT contains information to undo it!
-    // There's no BUF_COLLECT here, so don't panic while binder in effect.
-    //
-    DECLARE_BINDER (binder);
-    Construct_Binder(binder);  // only used if `rebinding`
+    DECLARE_BINDER (binder);  // used to check for duplicates
+    if (body_needs_binding)
+        Construct_Binder(binder);
 
     Option(Error*) e = SUCCESS;
 
     SymId dummy_sym = SYM_DUMMY1;
 
     Index index = 1;
-    while (index <= num_vars) {
+    for (; index <= num_vars; ++index, ++item) {
         const Symbol* symbol;
 
         if (Is_Space(item)) {
@@ -1297,43 +1318,19 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             Init_Blackhole_Slot(slot);
             Protect_Cell(slot);
 
-            if (rebinding)
+            if (body_needs_binding)
                 Add_Binder_Index(binder, symbol, -1);  // for remove
+
+            continue;
         }
-        else if (
-            Is_Word(item)
-            or Is_Meta_Form_Of(WORD, item)
-            or Is_Tied_Form_Of(WORD, item)
-        ){
-            assert(rebinding); // shouldn't get here unless we're rebinding
 
-            symbol = Word_Symbol(item);
+        symbol = Word_Symbol(item);
 
-            if (Try_Add_Binder_Index(binder, symbol, index)) {
-                Value* var = Init_Void_For_Unset(
-                    Append_Context(varlist, symbol)
-                );
-                if (Is_Meta_Form_Of(WORD, item))
-                    Set_Cell_Flag(var, LOOP_SLOT_ROOT_META);
-                else if (Is_Tied_Form_Of(WORD, item))
-                    Set_Cell_Flag(var, LOOP_SLOT_NOTE_TIE);
-            }
-            else {  // note for-each [x @x] is bad, too
-                DECLARE_ELEMENT (word);
-                Init_Word(word, symbol);
-                e = Error_Dup_Vars_Raw(word);
-                break;
-            }
-        }
-        else if (Is_Pinned_Form_Of(WORD, item)) {
+        KindByte kind = KIND_BYTE(item);
 
-            // Pinned word indicates that we wish to use the original binding.
-            // So `for-each @x [1 2 3] [...]` will actually set that x
-            // instead of creating a new one.
-            //
-            // We use the ALIAS dual convention, of storing the pinned word
-            // in the slot with DUAL_0
-            //
+        Init(Slot) slot = Append_Context(varlist, symbol);
+
+        if (kind == Kind_From_Sigil_And_Heart(SIGIL_TIE, TYPE_WORD)) {
             if (dummy_sym == SYM_DUMMY9)
                 e = Error_User(
                     "Current limitation: only up to 9 foreign/space keys"
@@ -1342,20 +1339,30 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
 
-            Init(Slot) slot = Append_Context(varlist, symbol);
             Derelativize(slot, item, binding);
-            LIFT_BYTE(slot) = DUAL_0;
-
-            if (rebinding)
-                Add_Binder_Index(binder, symbol, -1);  // for remove
+            LIFT_BYTE(slot) = DUAL_0;  // alias dual convention [1]
         }
         else {
-            e = Error_User("Bad datatype in variable spec");
-            break;
+            assert(body_needs_binding);  // set above
+
+            if (not Try_Add_Binder_Index(binder, symbol, index)) {
+                DECLARE_ELEMENT (word);
+                Init_Word(word, symbol);
+                e = Error_Dup_Vars_Raw(word);
+                break;  // note for-each [x $x] can be legal
+            }
+
+            Init_Void_For_Unset(slot);
+            if (kind == Kind_From_Sigil_And_Heart(SIGIL_META, TYPE_WORD))
+                Set_Cell_Flag(slot, LOOP_SLOT_ROOT_META);
+            else
+                assert(kind == Kind_From_Sigil_And_Heart(SIGIL_0, TYPE_WORD));
         }
 
-        ++item;
-        ++index;
+        if (LIFT_BYTE(item) == ONEQUOTE_NONQUASI_4)
+            Set_Cell_Flag(slot, LOOP_SLOT_NOTE_UNBIND);
+        else
+            assert(LIFT_BYTE(item) == NOQUOTE_2);
     }
 
     // As currently written, the loop constructs which use these contexts
@@ -1374,7 +1381,8 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     //
     /* Set_Flex_Flag(c, DONT_RELOCATE); */
 
-    Destruct_Binder(binder);  // must remove bind indices even if failing
+    if (body_needs_binding)
+        Destruct_Binder(binder);  // must remove bind indices even if failing
 
     if (e) {
         Free_Unmanaged_Flex(Varlist_Array(varlist));
@@ -1389,28 +1397,23 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     //
     Set_Flex_Flag(Varlist_Array(varlist), FIXED_SIZE);
 
-    // Virtual version of `Bind_Values_Deep(Array_Head(body_out), context)`
-    //
-    if (rebinding) {
-        require (
-          Use* use = Alloc_Use_Inherits(List_Binding(body))
-        );
-        Copy_Cell(Stub_Cell(use), Varlist_Archetype(varlist));
-        Tweak_Cell_Binding(body, use);
+    if (body_needs_binding) {  // don't modify binding unless we have to
+        Tweak_Link_Inherit_Bind(varlist, List_Binding(body));
+        Tweak_Cell_Binding(body, varlist);
     }
 
     return varlist;
-}
+}}
 
 
 //
 //  Read_Slot_Meta: C
 //
-// Create_Loop_Context_May_Bind_Body() allows @WORD! for reusing an existing
+// Create_Loop_Context_May_Bind_Body() allows $WORD! for reusing an existing
 // variable's binding:
 //
 //     x: 10
-//     for-each @x [20 30 40] [...]
+//     for-each $x [20 30 40] [...]
 //     ; The 10 will be overwritten, and x will be equal to 40, here
 //
 // It accomplishes this by putting a word into the "variable" slot, and having
@@ -1435,7 +1438,7 @@ Result(None) Read_Slot_Meta(Sink(Value) out, const Slot* slot)
     Copy_Cell(temp, cast(Element*, slot));
   #if RUNTIME_CHECKS
     LIFT_BYTE(temp) = NOQUOTE_2;
-    assert(Is_Pinned_Form_Of(WORD, temp));  // alias
+    assert(Is_Tied_Form_Of(WORD, temp));  // alias
   #endif
     KIND_BYTE(temp) = TYPE_WORD;
     LIFT_BYTE(temp) = ONEQUOTE_NONQUASI_4;
@@ -1463,36 +1466,65 @@ Result(None) Read_Slot(Sink(Stable) out, const Slot* slot) {
 
 
 //
-//  Write_Slot: C
+//  Write_Loop_Slot_May_Unbind_Or_Decay: C
 //
-Result(None) Write_Slot(Slot* slot, const Value* write)
-{
-    Flags persist = (slot->header.bits & CELL_MASK_PERSIST_SLOT);
-
-    if (LIFT_BYTE(slot) == DUAL_0)
-        goto handle_dual_slot;
-
-  handle_non_weird: {
-
-    Value* var = u_cast(Value*, slot);
-
-    Copy_Cell(var, write);
-
-    slot->header.bits |= persist;  // preserve persist bits
-    return none;
-
-} handle_dual_slot: { ////////////////////////////////////////////////////////
+// Loops need to remember the decorations on the iterative variables, in order
+// to know if they should unbind or decay the values.  This information does
+// not apply to *all* writes to those variables: only the writes performed by
+// the loop itself.  Hence a special write function is used.
+//
+// (It could be done another way by preserving the iterative variables and
+// looking at the decorations on them each time they are written to, but this
+// approach seems more efficient.)
+//
+Result(None) Write_Loop_Slot_May_Unbind_Or_Decay(
+    Slot* slot,
+    Value* write,
+    const Stable* container
+){
+    if (Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)) {
+        require (
+            Decay_If_Unstable(write)
+        );
+    }
 
     if (Is_Blackhole_Slot(slot))  // e.g. `for-each _ [1 2 3] [...]`
-        return none;  // toss it
+        return none;  // toss it (we decayed first, in case it is undecayable)
 
-    assert(Is_Cell_Stable(write));
+    if (Get_Cell_Flag(slot, LOOP_SLOT_NOTE_UNBIND)) {
+        if (Is_Antiform(write)) {
+            assert(Cell_Binding(write) == UNBOUND);
+        }
+        else if (Is_Bindable_Heart(Heart_Of(write))) {
+            /* CELL_WORD_INDEX_I32(v) = 0; */  // necessary if word?
+            Set_Cell_Flag(write, DONT_MARK_PAYLOAD_2);
+            Tweak_Cell_Binding(Known_Element(write), UNBOUND);
+        }
+    }
+    else if (
+        Any_List(container)
+        and not Is_Antiform(write)
+        and Is_Bindable_Heart(Heart_Of(write))
+    ){
+        Bind_If_Unbound(
+            Known_Element(write),
+            List_Binding(Known_Element(container))
+        );
+    }
+
+    Flags persist = (slot->header.bits & CELL_MASK_PERSIST_SLOT);
+
+    if (LIFT_BYTE(slot) != DUAL_0) {  // ordinary write
+        Copy_Cell(u_cast(Value*, slot), write);
+        slot->header.bits |= persist;  // preserve persist bits
+        return none;
+    }
 
     DECLARE_ELEMENT (temp);
     Copy_Cell(temp, u_cast(Element*, slot));
   #if RUNTIME_CHECKS
     LIFT_BYTE(temp) = NOQUOTE_2;
-    assert(Is_Pinned_Form_Of(WORD, temp));
+    assert(Is_Tied_Form_Of(WORD, temp));
   #endif
     KIND_BYTE(temp) = TYPE_WORD;
     LIFT_BYTE(temp) = ONEQUOTE_NONQUASI_4;
@@ -1502,68 +1534,6 @@ Result(None) Write_Slot(Slot* slot, const Value* write)
 
     unnecessary(slot->header.bits |= persist);  // didn't write actual slot
     return none;
-}}
-
-
-//
-//  Write_Loop_Slot_May_Bind_Or_Decay: C
-//
-Result(None) Write_Loop_Slot_May_Bind_Or_Decay(
-    Slot* slot,
-    Option(Value*) write,
-    const Stable* container
-){
-    if (not write)
-        return Write_Slot(slot, LIB(NULL));
-
-    attempt {  // attempt to get stable antiform to write
-        if (Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)) {
-            require (
-              Decay_If_Unstable(unwrap write)
-            );
-            continue;
-        }
-
-        if (Not_Cell_Stable(unwrap write))
-            break;
-    }
-    then {  // `write` is stable
-        if (
-            Is_Action(Known_Stable(unwrap write))
-            and Not_Cell_Flag(slot, LOOP_SLOT_ROOT_META)
-        ){
-            return fail (
-                "Cannot write to loop slot with ACTION! unless it is ^META"
-            );
-        }
-    }
-
-    if (Not_Cell_Flag(slot, LOOP_SLOT_NOTE_TIE))
-        return Write_Slot(slot, unwrap write);
-
-    if (not Any_List(container))
-        return fail ("Loop data must be list to use $var notation");
-
-    DECLARE_ELEMENT (temp);
-    Derelativize(
-        temp,
-        cast(const Element*, unwrap write),
-        List_Binding(cast(const Element*, container))
-    );
-    Copy_Cell(unwrap write, temp);
-    return Write_Slot(slot, temp);
-}
-
-
-//
-//  Write_Loop_Slot_May_Bind: C
-//
-Result(None) Write_Loop_Slot_May_Bind(
-    Slot* slot,
-    Option(Stable*) write,
-    const Stable* container
-){
-    return Write_Loop_Slot_May_Bind_Or_Decay(slot, write, container);
 }
 
 

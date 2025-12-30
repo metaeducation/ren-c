@@ -80,7 +80,7 @@ pointer
 rebval  ; would "cell" be better?  probably so...
 
 routine?
-#void
+void
 #return
 library
 #name

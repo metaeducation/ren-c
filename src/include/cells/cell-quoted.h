@@ -45,17 +45,7 @@
 //     >> mean: ~foo~
 //     == ~foo~  ; anti
 //
-// With the use of the `^xxx` family of types and the `^` operator, it is
-// possible to leverage a form of quoting to transition antiform to quasiform,
-// and quasiforms to quoted:
-//
-//     >> ^nice
-//     == '~foo~
-//
-//     >> ^mean
-//     == ~foo~
-//
-// Antiforms are new in Ren-C and central to how the design solves historical
+// Antiforms are new in Ren-C, and central to how the design solves historical
 // problems in Rebol languages.
 //
 
@@ -80,6 +70,11 @@ INLINE Count Quotes_From_Lift_Byte(LiftByte lift_byte) {
 
 #define Any_Fundamental(v) \
     (LIFT_BYTE(Ensure_Readable(known(Stable*, (v)))) == NOQUOTE_2)
+
+
+#define Is_Quoted_Form_Of(heartname, v) \
+    Cell_Has_Lift_Sigil_Heart( \
+        ONEQUOTE_NONQUASI_4, SIGIL_0, TYPE_##heartname, known(Stable*, (v)))
 
 
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.

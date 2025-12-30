@@ -93,7 +93,7 @@ INLINE KindByte Kind_From_Sigil_And_Heart(Option(Sigil) sigil, HeartEnum heart)
 {
     return (
         u_cast(KindByte, heart)
-        | (u_cast(KindByte, unwrap sigil) << KIND_SIGIL_SHIFT)
+        | (u_cast(KindByte, opt sigil) << KIND_SIGIL_SHIFT)
     );
 }
 

@@ -565,9 +565,10 @@ DECLARE_NATIVE(WHAT_DIR)
         Stable* refresh = Get_Current_Dir_Value();
         Copy_Cell(spare_current_path, refresh);
         require (
-          Write_Slot(
+          Write_Loop_Slot_May_Unbind_Or_Decay(
             Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH),
-            refresh
+            refresh,
+            LIB(SPACE)  // no container applicable
         ));
         rebRelease(refresh);
     }

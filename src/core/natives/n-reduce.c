@@ -358,7 +358,7 @@ DECLARE_NATIVE(REDUCE_EACH)
         goto reduce_next;  // skip void unless meta?
 
     require (
-      Write_Loop_Slot_May_Bind_Or_Decay(slot, SPARE, block)
+      Write_Loop_Slot_May_Unbind_Or_Decay(slot, SPARE, block)
     );
 
 } invoke_loop_body: {

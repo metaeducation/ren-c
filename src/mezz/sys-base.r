@@ -143,7 +143,7 @@ module: func [
   ;    been mapped out.
 
     if spec [  ; validate the important fields of the header, if there is one
-        for-each [$var $types] [  ; need bound to GET, use $
+        for-each [var types] [
             spec.name [<null> word! tuple!]
             spec.type [word!]  ; `script` default from system.standard.header
             spec.version [<null> tuple!]

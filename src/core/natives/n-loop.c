@@ -685,7 +685,7 @@ DECLARE_NATIVE(FOR_SKIP)
         }
 
         require (
-          Write_Loop_Slot_May_Bind(slot, spare, body)
+          Write_Loop_Slot_May_Unbind_Or_Decay(slot, spare, body)
         );
 
         Option(LoopInterrupt) interrupt = none;
@@ -1039,9 +1039,10 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
     const Slot* slot_tail;
     Slot* slot = Varlist_Slots(&slot_tail, vars_ctx);
     for (; slot != slot_tail; ++slot) {
-        if (not les->more_data) {  // Y is null in `for-each [x y] [1] ...`
+        if (not les->more_data) {  // Y is ghost in `for-each [x y] [1] ...`
+            Init_Void_For_Unset(SPARE);
             trap (
-              Write_Loop_Slot_May_Bind(slot, nullptr, les->data)
+              Write_Loop_Slot_May_Unbind_Or_Decay(slot, SPARE, les->data)
             );
             goto maybe_lift_and_continue;
         }
@@ -1058,7 +1059,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 Is_Error(SPARE)
                 and Is_Error_Done_Signal(Cell_Error(SPARE))
             )) {
-                Write_Loop_Slot_May_Bind_Or_Decay(
+                Write_Loop_Slot_May_Unbind_Or_Decay(
                     slot, SPARE, les->data
                 ) except (Error* e) {
                     return fail (e);
@@ -1073,8 +1074,11 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                     //
                     return true;
                 }
+                Init_Void_For_Unset(SPARE);
                 trap (
-                  Write_Loop_Slot_May_Bind(slot, nullptr, les->data)
+                  Write_Loop_Slot_May_Unbind_Or_Decay(
+                    slot, SPARE, les->data
+                  )
                 );
             }
 
@@ -1091,7 +1095,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 Array_At(cast(Array*, les->flex), les->u.eser.index)
             );
             trap (
-              Write_Loop_Slot_May_Bind(slot, spare_element, les->data)
+              Write_Loop_Slot_May_Unbind_Or_Decay(slot, spare_element, les->data)
             );
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
@@ -1113,7 +1117,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 Tweak_Word_Index(spare_key, les->u.evars.n);
             }
             trap (
-              Write_Loop_Slot_May_Bind(slot, spare_key, les->data)
+              Write_Loop_Slot_May_Unbind_Or_Decay(slot, spare_key, les->data)
             );
 
             if (Varlist_Len(vars_ctx) == 1) {
@@ -1129,7 +1133,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                     Read_Slot_Meta(SPARE, les->u.evars.slot)
                 );
                 trap (  // heeds LOOP_SLOT_ROOT_META, errors if unstable w/o
-                    Write_Loop_Slot_May_Bind_Or_Decay(slot, SPARE, les->data)
+                    Write_Loop_Slot_May_Unbind_Or_Decay(slot, SPARE, les->data)
                 );
             }
             else
@@ -1164,7 +1168,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
 
             Stable* spare_key = Copy_Cell(SPARE, key);
             trap (
-              Write_Loop_Slot_May_Bind(slot, spare_key, les->data)
+              Write_Loop_Slot_May_Unbind_Or_Decay(slot, spare_key, les->data)
             );
 
             if (Varlist_Len(vars_ctx) == 1) {
@@ -1178,7 +1182,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 ++slot;
                 Stable* spare_val = Copy_Cell(SPARE, val);
                 trap (
-                  Write_Loop_Slot_May_Bind(slot, spare_val, les->data)
+                  Write_Loop_Slot_May_Unbind_Or_Decay(slot, spare_val, les->data)
                 );
             }
             else
@@ -1194,7 +1198,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
             );
 
             trap (
-              Write_Loop_Slot_May_Bind(slot, spare_rune, les->data)
+              Write_Loop_Slot_May_Unbind_Or_Decay(slot, spare_rune, les->data)
             );
 
             if (++les->u.eser.index == les->u.eser.len)
@@ -1210,7 +1214,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 SPARE, Binary_Head(b)[les->u.eser.index]
             );
             trap (
-              Write_Loop_Slot_May_Bind(slot, spare_integer, les->data)
+              Write_Loop_Slot_May_Unbind_Or_Decay(slot, spare_integer, les->data)
             );
 
             if (++les->u.eser.index == les->u.eser.len)
@@ -1260,8 +1264,8 @@ void Shutdown_Loop_Each(Stable* iterator)
 //          <null>          "if BREAK encountered"
 //          ghost!           "if body never ran"
 //      ]
-//      vars "Word or block of words to set each time, no new var if @word"
-//          [_ word! @word! block!]
+//      @(vars) "Word or block of words to set each time, no new var if $word"
+//          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data "The series to traverse"
 //          [<opt> none? any-series? any-context? map! any-sequence?
 //           action! quoted!]  ; action support experimental, e.g. generators
@@ -1396,8 +1400,8 @@ DECLARE_NATIVE(FOR_EACH)
 //          <null>          "if any body eval was NULL, or BREAK encountered"
 //          ghost!           "if body never ran"
 //      ]
-//      vars "Word or block of words to set each time, no new var if @word"
-//          [_ word! @word! block!]
+//      @(vars) "Word or block of words to set each time, no new var if $word"
+//          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data [<opt> none? any-series? any-context? map! action!]
 //      body [<const> block!]
 //      {iterator}
@@ -1542,8 +1546,8 @@ DECLARE_NATIVE(EVERY)
 //  "Removes values for each body evaluation that's not null, modifies input"
 //
 //      return: [<null> ~[[none? any-series?] integer!]~]
-//      vars "Word or block of words to set each time, no new var if @word"
-//          [_ word! @word! block!]
+//      @(vars) "Word or block of words to set each time, no new var if $word"
+//          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data "The series to traverse (modified)"
 //          [<opt> none? any-series?]  ; !!! can't do QUOTED!
 //      body "Block to evaluate each time, return NULL if BREAK hit"
@@ -1904,8 +1908,8 @@ DECLARE_NATIVE(REMOVE_EACH)
 //  "Evaluate a block for each value(s) in a series and collect as a block"
 //
 //      return: [<null> block!]
-//      vars "Word or block of words to set each time, no new var if @word"
-//          [_ word! @word! block!]
+//      @(vars) "Word or block of words to set each time, no new var if $word"
+//          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data "The series to traverse"
 //          [
 //              <opt-out> none?
@@ -1954,8 +1958,8 @@ DECLARE_NATIVE(MAP_EACH)
 //  "Evaluate a block for each value(s) in a series and collect as a block"
 //
 //      return: [<null> block!]
-//      vars "Word or block of words to set each time, no new var if @word"
-//          [_ word! @word! block!]
+//      @(vars) "Word or block of words to set each time, no new var if $word"
+//          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
 //          [<opt> none? quoted! action!]
 //      body "Block to evaluate each time"
@@ -2247,8 +2251,8 @@ DECLARE_NATIVE(REPEAT)
 //          <null>          "if BREAK encountered"
 //          ghost!           "if body never ran"
 //      ]
-//      vars "Word or block of words to set each time, no new var if @word"
-//          [_ word! @word! block!]
+//      @(vars) "Word or block of words to set each time, no new var if $word"
+//          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      value "Maximum number or series to traverse"
 //          [<opt-out> any-number? any-sequence? quoted! block! action!]
 //      body [<const> block!]
@@ -2316,7 +2320,7 @@ DECLARE_NATIVE(FOR)
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
     require (
-      Write_Loop_Slot_May_Bind(slot, spare_one, body)
+      Write_Loop_Slot_May_Unbind_Or_Decay(slot, spare_one, body)
     );
 
     STATE = ST_FOR_RUNNING_BODY;
@@ -2359,7 +2363,7 @@ DECLARE_NATIVE(FOR)
         panic (Error_Overflow_Raw());
 
     require (
-      Write_Loop_Slot_May_Bind(slot, spare, body)
+      Write_Loop_Slot_May_Unbind_Or_Decay(slot, spare, body)
     );
 
 } invoke_loop_body: { ////////////////////////////////////////////////////////

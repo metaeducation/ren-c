@@ -576,13 +576,9 @@ static Result(REBIXO) Parse_One_Rule(
     }
 
     if (Is_Quasi_Word(rule)) {
-        if (
-            Is_Quasi_Word_With_Id(rule, SYM_VOID)
-            or Is_Quasi_Word_With_Id(rule, SYM_OKAY)
-        ){
+        if (Is_Quasi_Word_With_Id(rule, SYM_OKAY))
             return pos;  // just skip ahead
-        }
-        panic ("PARSE3 only supports ~void~ and ~okay~ quasiforms/antiforms");
+        panic ("PARSE3 only supports ~okay~ quasiforms/antiforms");
     }
     else switch (opt Type_Of(rule)) {  // same behaviors for all P_INPUT
       case TYPE_INTEGER:
@@ -1041,12 +1037,8 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
     INCLUDE_PARAMS_OF_SUBPARSE;
 
     if (Is_Quasiform(rule)) {
-        if (
-            Is_Quasi_Word_With_Id(rule, SYM_VOID)
-            or Is_Quasi_Word_With_Id(rule, SYM_OKAY)
-        ){
+        if (Is_Quasi_Word_With_Id(rule, SYM_OKAY))
             return P_POS;  // no-op
-        }
         if (not Is_Lifted_Datatype(rule))
             panic ("PARSE3 supports ~void~, ~okay~, and datatype antiforms");
     }

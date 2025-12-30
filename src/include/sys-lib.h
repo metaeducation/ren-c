@@ -52,7 +52,7 @@
 INLINE const Value* Lib_Value(SymId id) {
     assert(id <= MAX_SYM_LIB_PREMADE);
     Value* v = cast(Value*, Stub_Cell(&g_lib_patches[id]));
-    if (id != SYM_VOID)
+    if (id != SYM_GHOST)
         assert(not Is_Unsetlike_Void(v));
     cant(assert(Get_Cell_Flag(v, PROTECTED)));  // LIB not protected yet [A]
     return v;

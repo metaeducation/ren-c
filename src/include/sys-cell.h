@@ -465,7 +465,7 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 //
 // 2. Slots have more use for persistent flags than most Cells do.  e.g. if
 //    a Slot represents a place where a loop variable is being stored, it
-//    may want to remember CELL_FLAG_LOOP_SLOT_NOTE_TIE so it can know that
+//    may want to remember CELL_FLAG_LOOP_SLOT_NOTE_UNBIND so it can know that
 //    the variable was named by $var, hence needs to be bound.  Rather than
 //    store this information in a side-structure, it can be stored on the
 //    Slot itself...but it can't be overwritten or it would be forgotten on
