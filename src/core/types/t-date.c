@@ -949,7 +949,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
     // The modifications are done to the time zone adjusted fields, and
     // then the time is fixed back.
 
-    Stable* poke = Unliftify_Known_Stable(dual);
+    Stable* poke = Known_Stable_Unlift_Cell(dual);
 
     switch (opt sym) {
       case SYM_YEAR:

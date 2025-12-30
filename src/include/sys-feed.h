@@ -147,7 +147,7 @@ INLINE const Element* At_Feed(Feed* feed) {
         DECLARE_VALUE (temp);
         Copy_Cell(temp, elem);
         assume (  // we put the flag on; we know it's a valid lift to unlift
-            Unliftify_Undecayed(temp)
+            Unlift_Cell_No_Decay(temp)
         );
         panic (Error_Bad_Antiform(temp));
     }
@@ -277,7 +277,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         }
         else {
             assert(Is_Quoted(single));
-            Unquotify(Copy_Cell(&feed->fetched, single));
+            Unquote_Cell(Copy_Cell(&feed->fetched, single));
             feed->p = &feed->fetched;
         }
         GC_Kill_Flex(inst1);

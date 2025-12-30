@@ -174,7 +174,7 @@ Result(None) Init_Invokable_From_Feed(
         Fetch_Next_In_Feed(feed);  // we've seen it now
 
     if (not Is_Action(out)) {
-        Quotify(Known_Element(out));
+        Quote_Cell(Known_Element(out));
         return none;
     }
 
@@ -255,7 +255,7 @@ Result(None) Init_Frame_From_Feed(
     );
 
     Stable* var = Slot_Hack(Varlist_Slot(exemplar, 2));
-    Unquotify(Copy_Cell(var, cast(Element*, out)));
+    Unquote_Cell(Copy_Cell(var, cast(Element*, out)));
 
     // Should we save the WORD! from a variable access to use as the name of
     // the identity alias?

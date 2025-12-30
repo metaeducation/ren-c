@@ -534,7 +534,7 @@ Element* Decorate_According_To_Parameter(
         break; }
 
       case PARAMCLASS_JUST:
-        Quotify(e);
+        Quote_Cell(e);
         break;
 
       case PARAMCLASS_THE:
@@ -923,7 +923,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
-    Unliftify_Known_Stable(dual);
+    Known_Stable_Unlift_Cell(dual);
 
     if (Is_Antiform(dual))
         panic (Error_Bad_Antiform(dual));

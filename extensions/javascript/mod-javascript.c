@@ -496,7 +496,7 @@ void RunPromise(void)
         metaresult = Init_Warning(TOP_LEVEL->out, error);
     }
     else
-        metaresult = Liftify(TOP_LEVEL->out);
+        metaresult = Lift_Cell(TOP_LEVEL->out);
 
     Drop_Level(TOP_LEVEL);
 

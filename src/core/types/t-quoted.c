@@ -237,7 +237,7 @@ DECLARE_NATIVE(LIFT)
     Value* v = Intrinsic_ARG(LEVEL);
 
     if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))  // intrinsic shortcut
-        return COPY(Liftify(v));
+        return COPY(Lift_Cell(v));
 
     if (
         ARG(LITE)  // LIFT:LITE handles quasiforms specially
@@ -253,7 +253,7 @@ DECLARE_NATIVE(LIFT)
         return COPY(v);
     }
 
-    return COPY(Liftify(v));
+    return COPY(Lift_Cell(v));
 }
 
 
@@ -278,7 +278,7 @@ DECLARE_NATIVE(UNLIFT)
         if (not Any_Lifted(v))
             panic ("Plain UNLIFT only accepts quasiforms and quoteds");
         require (
-          Unliftify_Undecayed(v)
+          Unlift_Cell_No_Decay(v)
         );
         return COPY(v);
     }
@@ -308,7 +308,7 @@ DECLARE_NATIVE(UNLIFT)
         );
 
     require (
-      Unliftify_Undecayed(v)
+      Unlift_Cell_No_Decay(v)
     );
     return COPY(v);  // quoted or quasi
 }

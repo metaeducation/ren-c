@@ -1099,7 +1099,7 @@ INLINE Cell* Copy_Cell_Untracked(
     TRACK(Copy_Cell_Untracked((out), (v), (copy_mask)))
 
 #define Copy_Lifted_Cell(out,v) \
-    cast(Element*, Liftify(Copy_Cell(u_cast(Value*, (out)), (v))))
+    cast(Element*, Lift_Cell(Copy_Cell(u_cast(Value*, (out)), (v))))
 
 INLINE Element* Copy_Plain_Cell(Init(Element) out, const Value* v) {
     Copy_Cell(u_cast(Value*, (out)), v);
@@ -1175,7 +1175,7 @@ INLINE Cell* Move_Cell_Untracked(
     Move_Cell_Untracked(TRACK(out), (v), (cell_mask))
 
 #define Move_Lifted_Cell(out,v) \
-    cast(Element*, Liftify(Move_Cell_Core((out), (v), CELL_MASK_COPY)))
+    cast(Element*, Lift_Cell(Move_Cell_Core((out), (v), CELL_MASK_COPY)))
 
 INLINE Value* Move_Atom_Untracked(
     Value* out,
@@ -1214,7 +1214,7 @@ INLINE Value* Move_Atom_Untracked(
     Move_Atom_Untracked(TRACK(out), (a))
 
 #define Move_Lifted_Atom(out,a) \
-    cast(Element*, Liftify(Move_Atom_Untracked(TRACK(out), (a))))
+    cast(Element*, Lift_Cell(Move_Atom_Untracked(TRACK(out), (a))))
 
 
 //=//// CELL "BLITTING" (COMPLETE OVERWRITE) //////////////////////////////=//

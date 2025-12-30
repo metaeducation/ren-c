@@ -633,7 +633,7 @@ static Result(REBIXO) Parse_One_Rule(
         const Element* item = Array_At(P_INPUT_ARRAY, pos);
 
         if (Is_Quoted(rule)) {  // fall through to direct match
-            rule = Unquotify(Copy_Cell(SPARE, rule));
+            rule = Unquote_Cell(Copy_Cell(SPARE, rule));
         }
         else if (Is_Pinned_Form_Of(WORD, rule)) {
             require (
@@ -1071,7 +1071,7 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
         Flags find_flags = (P_FLAGS & AM_FIND_CASE);
         DECLARE_STABLE (temp);
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
-            Unquotify(Derelativize(temp, rule, P_RULE_BINDING));
+            Unquote_Cell(Derelativize(temp, rule, P_RULE_BINDING));
         }
         else if (Is_Pinned_Form_Of(WORD, rule)) {
             require (
@@ -1578,7 +1578,7 @@ DECLARE_NATIVE(SUBPARSE)
                         Unsingleheart_Sequence(quoted_set_or_copy_word)
                     );
                 }
-                Quotify(quoted_set_or_copy_word);
+                Quote_Cell(quoted_set_or_copy_word);
 
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
@@ -1864,7 +1864,7 @@ DECLARE_NATIVE(SUBPARSE)
         assume (
             Unsingleheart_Sequence(quoted_set_or_copy_word)
         );
-        Quotify(quoted_set_or_copy_word);
+        Quote_Cell(quoted_set_or_copy_word);
         FETCH_NEXT_RULE(L);
 
         if (Is_Word(P_RULE) and Word_Id(P_RULE) == SYM_ACROSS) {
@@ -2292,7 +2292,7 @@ DECLARE_NATIVE(SUBPARSE)
                 // sense to carry forward the quoting on the input.  It is not
                 // obvious what marking a position should do.
 
-                rebElide(CANON(SET), quoted_set_or_copy_word, Liftify(OUT));
+                rebElide(CANON(SET), quoted_set_or_copy_word, Lift_Cell(OUT));
                 Erase_Cell(OUT);
             }
             else if (P_FLAGS & PF_SET) {
@@ -2333,7 +2333,7 @@ DECLARE_NATIVE(SUBPARSE)
                         );
                 }
 
-                rebElide(CANON(SET), quoted_set_or_copy_word, Liftify(OUT));
+                rebElide(CANON(SET), quoted_set_or_copy_word, Lift_Cell(OUT));
                 Erase_Cell(OUT);
             }
 

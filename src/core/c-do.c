@@ -171,7 +171,7 @@ bool Pushed_Continuation(
 
     switch (opt Type_Of(branch)) {
       case TYPE_QUOTED:
-        Unquotify(Derelativize(out, cast(Element*, branch), binding));
+        Unquote_Cell(Derelativize(out, cast(Element*, branch), binding));
         goto just_use_out;
 
       case TYPE_QUASIFORM:
@@ -184,7 +184,7 @@ bool Pushed_Continuation(
         else {
             Derelativize(out, cast(Element*, branch), binding);
             require (
-              Unliftify_Undecayed(out)
+              Unlift_Cell_No_Decay(out)
             );
         }
         goto just_use_out;

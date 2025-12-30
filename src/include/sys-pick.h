@@ -116,7 +116,7 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 #define NO_STEPS  cast(Option(Element*), nullptr)
 
 
-#define DUAL_LIFTED(v)    Liftify(v ? v : Init_Nulled(OUT))
+#define DUAL_LIFTED(v)    Lift_Cell(v ? v : Init_Nulled(OUT))
 #define DUAL_SIGNAL_NULL_ABSENT  NULLED
 #define Is_Dual_Nulled_Absent_Signal(dual)  Is_Nulled(dual)
 

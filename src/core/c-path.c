@@ -180,7 +180,7 @@ DECLARE_NATIVE(PICK)
 } pick_succeeded_out_is_lifted: {
 
     require (
-      Unliftify_Undecayed(OUT)
+      Unlift_Cell_No_Decay(OUT)
     );
 
     if (Not_Cell_Stable(OUT)) {
@@ -336,7 +336,7 @@ DECLARE_NATIVE(POKE)
 
     Copy_Cell(LOCAL(STORE), v);  // save value to return [1]
 
-    Stable* dual = Liftify(v);  // same slot (TWEAK* reuses this frame!) [2]
+    Stable* dual = Lift_Cell(v);  // same slot (TWEAK* reuses this frame!) [2]
     USED(dual);  // TWEAK* expects QUOTED!/QUASIFORM! for literal DUAL
 
     goto dispatch_generic;

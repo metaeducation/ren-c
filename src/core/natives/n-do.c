@@ -205,7 +205,7 @@ DECLARE_NATIVE(SHOVE)
             );
         }
         else {
-            // The infix fulfillment code will Liftify() OUT
+            // The infix fulfillment code will Lift_Cell() OUT
         }
         break; }
 

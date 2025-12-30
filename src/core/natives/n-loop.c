@@ -897,7 +897,7 @@ static void Morph_Quoted_To_Block(Element* data)
 {
     assert(Is_Quoted(data));
     Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
-    Unquotify(Copy_Cell(Stub_Cell(a), data));
+    Unquote_Cell(Copy_Cell(Stub_Cell(a), data));
     Init_Block(data, a);
 }
 
@@ -1896,7 +1896,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     Set_Flex_Len(pack, 2);
 
     Copy_Lifted_Cell(Array_At(pack, 0), OUT);
-    Liftify(Init_Integer(Array_At(pack, 1), removals));
+    Lift_Cell(Init_Integer(Array_At(pack, 1), removals));
 
     return Init_Pack(OUT, pack);
 }}
@@ -1939,7 +1939,7 @@ DECLARE_NATIVE(MAP_EACH)
         return Init_Block(OUT, Make_Source_Managed(0));
 
     if (not Is_Action(ARG(DATA)))
-        Quotify(Element_ARG(DATA));  // dialect, in theory [1]
+        Quote_Cell(Element_ARG(DATA));  // dialect, in theory [1]
 
     const Stable* map_action = LIB(MAP);
     Details* details = Ensure_Frame_Details(map_action);
@@ -2005,7 +2005,7 @@ DECLARE_NATIVE(MAP)
         not Is_Quoted(data)
         or Quotes_Of(Known_Element(data)) != 1
         or not (
-            Any_Series(Unquotify(Known_Element(data)))  // <= UNQUOTIFY here!
+            Any_Series(Unquote_Cell(Known_Element(data)))  // <= UNQUOTIFY here!
             or Is_Path(data)  // has been unquoted
             or Any_Context(data)
             or Any_Sequence(data)
@@ -2284,7 +2284,7 @@ DECLARE_NATIVE(FOR)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Quoted(value)) {
-        Unquotify(value);
+        Unquote_Cell(value);
 
         if (not (Any_Series(value) or Any_Sequence(value)))
             panic (PARAM(VALUE));

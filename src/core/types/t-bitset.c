@@ -669,7 +669,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Bitset)
 
 } handle_poke: { /////////////////////////////////////////////////////////////
 
-    Stable* poke = Unliftify_Known_Stable(dual);  // ~null~/~okay~ antiforms
+    Stable* poke = Known_Stable_Unlift_Cell(dual);  // ~null~/~okay~ antiforms
 
     if (not Is_Logic(poke))
         panic (Error_Bad_Value_Raw(poke));

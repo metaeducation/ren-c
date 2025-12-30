@@ -1240,12 +1240,12 @@ DECLARE_NATIVE(MAYBE)
     assume (
         Unsingleheart_Sequence(target)  // drop the colon off the end
     );
-    Element* quoted_target = Quotify(target);
+    Element* quoted_target = Quote_Cell(target);
 
     if (Is_Light_Null(v))
         return rebDelegate("get meta", quoted_target);
 
-    Element* lifted = Liftify(v);
+    Element* lifted = Lift_Cell(v);
 
     return rebDelegate(CANON(SET), quoted_target, lifted);  // may decay
 }

@@ -108,8 +108,8 @@ INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
     return elem;
 }
 
-#define Quotify(elem)      Quotify_Depth((elem), 1)
-#define Unquotify(elem)    Unquotify_Depth((elem), 1)
+#define Quote_Cell(elem)      Quotify_Depth((elem), 1)
+#define Unquote_Cell(elem)    Unquotify_Depth((elem), 1)
 
 INLINE Count Noquotify(Element* elem) {
     Count depth = Quotes_Of(elem);
@@ -398,27 +398,27 @@ INLINE Value* Unstably_Antiformize_Unbound_Fundamental(Exact(Value*) v) {
 #define Not_Lifted(v) \
     (LIFT_BYTE(Ensure_Readable(v)) < QUASIFORM_3)  // anti or fundamental
 
-INLINE Element* Liftify(Value* atom) {
+INLINE Element* Lift_Cell(Value* atom) {
     if (LIFT_BYTE_RAW(atom) == ANTIFORM_1) {
         LIFT_BYTE_RAW(atom) = QUASIFORM_3;  // anti means quasi valid
         return cast(Element*, atom);
     }
-    return Quotify(cast(Element*, atom));  // a non-antiform winds up quoted
+    return Quote_Cell(cast(Element*, atom));  // a non-antiform winds up quoted
 }
 
-INLINE Result(Value*) Unliftify_Undecayed(Exact(Value*) atom) {
+INLINE Result(Value*) Unlift_Cell_No_Decay(Exact(Value*) atom) {
     if (LIFT_BYTE_RAW(atom) == QUASIFORM_3) {
         trap (
           Coerce_To_Antiform(atom)
         );
         return atom;
     }
-    return Unquotify(cast(Element*, atom));  // asserts that it's quoted
+    return Unquote_Cell(cast(Element*, atom));  // asserts that it's quoted
 }
 
-INLINE Stable* Unliftify_Known_Stable(Exact(Stable*) val) {
+INLINE Stable* Known_Stable_Unlift_Cell(Exact(Stable*) val) {
     assume (
-      Unliftify_Undecayed(cast(Value*, val))
+      Unlift_Cell_No_Decay(cast(Value*, val))
     );
     Assert_Cell_Stable(val);
     return val;

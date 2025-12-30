@@ -700,7 +700,7 @@ DECLARE_NATIVE(LET)
 
         if (Is_Quoted(temp)) {
             Derelativize(PUSH(), temp, temp_binding);
-            Unquotify(TOP_ELEMENT);  // drop quote in output block [1]
+            Unquote_Cell(TOP_ELEMENT);  // drop quote in output block [1]
             altered = true;
             continue;  // do not make binding
         }

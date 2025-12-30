@@ -392,7 +392,7 @@ void Replug_Stack(Level* base, Stable* plug) {
         else {
             Copy_Cell(Level_Scratch(base), item);
             assume (
-              Unliftify_Undecayed(Level_Scratch(base))
+              Unlift_Cell_No_Decay(Level_Scratch(base))
             );
         }
     }
@@ -406,7 +406,7 @@ void Replug_Stack(Level* base, Stable* plug) {
         else {
             Copy_Cell(&base->spare, item);
             assume (
-              Unliftify_Undecayed(Level_Spare(base))
+              Unlift_Cell_No_Decay(Level_Spare(base))
             );
         }
     }

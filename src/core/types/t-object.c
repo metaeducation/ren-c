@@ -936,7 +936,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
               );
             }
             else {
-                Liftify(var);  // will become quasi...
+                Lift_Cell(var);  // will become quasi...
                 Mold_Element(mo, Known_Element(var));  // ...molds as `~xxx~`
                 UNUSED(var);
             }
@@ -1353,7 +1353,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         Tweak_Frame_Coupling(u_cast(Stable*, OUT), cast(VarList*, c));
     }
 
-    Liftify(OUT);  // lift the cell to indicate "normal" state
+    Lift_Cell(OUT);  // lift the cell to indicate "normal" state
     return OUT;
 
 } handle_poke: { /////////////////////////////////////////////////////////////
@@ -1374,7 +1374,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         Corrupt_Cell_If_Needful(SPARE);
         Copy_Cell(OUT, dual);
         require (
-          Unliftify_Undecayed(OUT)
+          Unlift_Cell_No_Decay(OUT)
         );
         STATE = 1;
         require (
@@ -1387,7 +1387,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     if (Any_Lifted(dual)) {  // don't antagonize...yet [1]
         require (
-          Unliftify_Undecayed(m_cast(Value*, u_cast(Value*, slot)))
+          Unlift_Cell_No_Decay(m_cast(Value*, u_cast(Value*, slot)))
         );
         return NO_WRITEBACK_NEEDED;
     }

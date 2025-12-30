@@ -129,7 +129,7 @@ DECLARE_NATIVE(MOLD)
     Set_Flex_Len(pack, 2);
 
     Strand* popped = Pop_Molded_Strand(mo);  // sets MOLD_FLAG_TRUNCATED
-    Liftify(Init_Text(Array_At(pack, 0), popped));
+    Lift_Cell(Init_Text(Array_At(pack, 0), popped));
 
     if (mo->opts & MOLD_FLAG_WAS_TRUNCATED) {
         assert(ARG(LIMIT));

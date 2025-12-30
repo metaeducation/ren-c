@@ -259,7 +259,7 @@ DECLARE_NATIVE(INLINE)
     Element* code = Element_ARG(CODE);
 
     if (Is_Quoted(code)) {
-        Unquotify(code);
+        Unquote_Cell(code);
         Splice_Element_Into_Feed(level_->feed, code);
     }
     else {

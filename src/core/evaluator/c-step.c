@@ -827,10 +827,10 @@ Bounce Stepper_Executor(Level* L)
 
     Element* out = Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
     KIND_BYTE(out) = TYPE_BLOCK;
-    Quotify(out);  // !!! was quoting, to avoid binding?
+    Quote_Cell(out);  // !!! was quoting, to avoid binding?
 
     Element* spare = Init_Word(SPARE, CANON(PACK));
-    dont(Quotify(Known_Element(SPARE)));  // want to run word
+    dont(Quote_Cell(Known_Element(SPARE)));  // want to run word
 
     Api(Value*) temp = rebUndecayed_helper(
         cast(RebolContext*, Level_Binding(L)),
@@ -1589,10 +1589,10 @@ Bounce Stepper_Executor(Level* L)
     // in the local environment to do the handling.
 
     Element* out = Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-    Quotify(out);
+    Quote_Cell(out);
 
     Element* spare = Init_Word(SPARE, CANON(FENCE_X_EVAL));
-    dont(Quotify(Known_Element(SPARE)));  // want to run word
+    dont(Quote_Cell(Known_Element(SPARE)));  // want to run word
 
     Api(Value*) temp = rebValue_helper(  // pass binding explicitly to helper
         cast(RebolContext*, Level_Binding(L)),

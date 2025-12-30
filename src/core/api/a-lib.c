@@ -1495,7 +1495,7 @@ RebolValue* API_rebEnrescue(
         panic (e);
     }
 
-    Liftify(v);
+    Lift_Cell(v);
     assert(not Is_Light_Null(v));  // lift operations cannot produce NULL
 
     if (Cell_Has_Lift_Heart_No_Sigil(QUASIFORM_3, TYPE_WARNING, v))  // lifted
@@ -1531,7 +1531,7 @@ RebolValue* API_rebRescue2(
         panic (e);
     }
 
-    Liftify(v);
+    Lift_Cell(v);
 
     if (Cell_Has_Lift_Heart_No_Sigil(QUASIFORM_3, TYPE_WARNING, v)) { // lifted
         LIFT_BYTE(v) = NOQUOTE_2;  // plain error
@@ -1544,7 +1544,7 @@ RebolValue* API_rebRescue2(
         return nullptr;
     }
 
-    Unliftify_Undecayed(v) except (Error* e) {
+    Unlift_Cell_No_Decay(v) except (Error* e) {
         panic (e);
     };
 
@@ -1659,7 +1659,7 @@ RebolValue* API_rebQuote(
     if (Is_Antiform(v))
         panic ("rebQuote() called on expression that returned an antiform");
 
-    return Quotify(cast(Element*, v));
+    return Quote_Cell(cast(Element*, v));
 }
 
 
@@ -2705,7 +2705,7 @@ const RebolBaseInternal* API_rebQUOTING(const void* p)
     }
 
     Value* v = u_cast(Value*, Stub_Cell(stub));
-    Liftify(v);
+    Lift_Cell(v);
     return cast(RebolBaseInternal*, stub);  // C needs cast
 }
 
@@ -2749,7 +2749,7 @@ RebolBaseInternal* API_rebUNQUOTING(const void* p)
         panic ("rebUNQUOTING()/rebU() can only unquote QUOTED? values");
 
     require (
-        Unliftify_Undecayed(v)
+        Unlift_Cell_No_Decay(v)
     );
     return cast(RebolBaseInternal*, stub);  // cast needed in C
 }

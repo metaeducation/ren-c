@@ -1664,8 +1664,8 @@ DECLARE_NATIVE(GLOM)
     if (Is_Quoted(one) and Is_Quoted(two)) {  // both quoted, make block
         Source* a = Make_Source_Managed(2);
         Set_Flex_Len(a, 2);
-        Unquotify(Copy_Cell(Array_Head(a), one));
-        Unquotify(Copy_Cell(Array_At(a, 1), two));
+        Unquote_Cell(Copy_Cell(Array_Head(a), one));
+        Unquote_Cell(Copy_Cell(Array_At(a, 1), two));
         Init_Block(OUT, a);
         goto return_out;
     }
@@ -1678,7 +1678,7 @@ DECLARE_NATIVE(GLOM)
         require (
           Sink(Element) cell = Alloc_Tail_Array(a)
         );
-        Unquotify(Copy_Cell(cell, two));
+        Unquote_Cell(Copy_Cell(cell, two));
         Copy_Cell(OUT, one);
         goto return_out;
     }
@@ -1686,7 +1686,7 @@ DECLARE_NATIVE(GLOM)
 } handle_one_as_quoted_and_two_as_block: {
 
     if (Is_Quoted(one) and Is_Block(two)) {
-        Unquotify(one);
+        Unquote_Cell(one);
         require (
           Modify_List(
             two, ST_MODIFY_INSERT, one, UNLIMITED, not AM_LINE, UNLIMITED, 1

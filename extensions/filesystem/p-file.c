@@ -533,7 +533,7 @@ DECLARE_NATIVE(FILE_ACTOR)
 
         return rebValue(CANON(APPLIQUE), CANON(READ), "[",
             "source:", port,
-            "part:", Liftify(part),
+            "part:", Lift_Cell(part),
         "]"); }
 
     //=//// CLOSE //////////////////////////////////////////////////////////=//

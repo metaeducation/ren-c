@@ -808,7 +808,7 @@ INLINE Bounce Native_Unlift_Result(Level* level_, const Element* v) {
     assert(not THROWING);
     Copy_Cell(level_->out, v);
     require (
-      Value* atom = Unliftify_Undecayed(level_->out)
+      Value* atom = Unlift_Cell_No_Decay(level_->out)
     );
     return atom;
 }

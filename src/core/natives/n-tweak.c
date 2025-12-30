@@ -98,7 +98,7 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
         Force_Erase_Cell(Level_Arg(sub, 1)),
         Known_Element(SPARE)
     );
-    Unquotify(location_arg);
+    Unquote_Cell(location_arg);
 
     picker_arg = Copy_Cell(
         Force_Erase_Cell(Level_Arg(sub, 2)),
@@ -118,7 +118,7 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 } adjust_frame_arguments_now_that_its_safe_to_panic: {
 
     if (Any_Lifted(picker_arg)) {  // literal x.'y or x.('y) => 'y
-        Unliftify_Known_Stable(picker_arg);
+        Known_Stable_Unlift_Cell(picker_arg);
 
         if (Is_Keyword(picker_arg) or Is_Trash(picker_arg))
             return Error_User(
@@ -184,7 +184,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         Force_Erase_Cell(Level_Arg(sub, 1)),
         Known_Element(spare_location_dual)
     );
-    Unquotify(location_arg);
+    Unquote_Cell(location_arg);
 
     picker_arg = Copy_Cell(
         Force_Erase_Cell(Level_Arg(sub, 2)),
@@ -199,7 +199,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
     attempt {  // v-- how to handle cases like ^x.(...) and know it's ^META?
         if (Any_Lifted(picker_arg)) {  // literal x.'y or x.('y) => 'y
-            Unliftify_Known_Stable(picker_arg);
+            Known_Stable_Unlift_Cell(picker_arg);
 
             if (Is_Keyword(picker_arg) or Is_Trash(picker_arg))
                 return Error_User(
@@ -211,12 +211,12 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
                 break;  // remove signal
 
             require (
-              Unliftify_Undecayed(value_arg)
+              Unlift_Cell_No_Decay(value_arg)
             );
             Decay_If_Unstable(value_arg) except (Error* e) {
                 return e;
             }
-            Liftify(value_arg);
+            Lift_Cell(value_arg);
             break;
         }
 
@@ -238,13 +238,13 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
 
         if (Is_Any_Lifted_Void(TOP_STABLE)) {  // (x: ~[]~) or (x: ())
             Init_Void_For_End(value_arg);  // both act like (^x: ())
-            Liftify(value_arg);
+            Lift_Cell(value_arg);
             continue;
         }
 
         Copy_Cell(value_arg, TOP_ELEMENT);
         require (
-          Unliftify_Undecayed(value_arg)
+          Unlift_Cell_No_Decay(value_arg)
         );
         bool was_singular_pack = (
             Is_Pack(value_arg) and Series_Len_At(value_arg) == 1
@@ -252,7 +252,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
         Decay_If_Unstable(value_arg) except (Error* e) {
             return e;
         };
-        Liftify(value_arg);
+        Lift_Cell(value_arg);
 
         if (Is_Lifted_Action(Known_Stable(value_arg))) {
             //
@@ -375,7 +375,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     }
 
     Copy_Cell(PUSH(), Known_Element(SPARE));
-    Liftify(TOP_STABLE);  // dual protocol, lift (?)
+    Lift_Cell(TOP_STABLE);  // dual protocol, lift (?)
 
     Copy_Cell(PUSH(), scratch_var);  // save var for steps + error messages
     switch (opt Cell_Underlying_Sigil(TOP_ELEMENT)) {
@@ -394,7 +394,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         goto return_error;
     }
 
-    unnecessary(Liftify(TOP_STABLE));  // if ^x, not literally ^x ... meta-variable
+    unnecessary(Lift_Cell(TOP_STABLE));  // if ^x, not literally ^x ... meta-variable
 
     goto set_from_steps_on_stack;
 
@@ -431,9 +431,9 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
                 e = Error_No_Binding_Raw(Known_Element(SPARE));
                 goto return_error;
             }
-            Liftify(TOP_STABLE);
-            Liftify(Init_Word(PUSH(), CANON(DOT_1)));
-            Liftify(Init_Word(PUSH(), u_cast(const Symbol*, payload1)));
+            Lift_Cell(TOP_STABLE);
+            Lift_Cell(Init_Word(PUSH(), CANON(DOT_1)));
+            Lift_Cell(Init_Word(PUSH(), u_cast(const Symbol*, payload1)));
             goto set_from_steps_on_stack;
         }
 
@@ -465,7 +465,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             goto return_error;
         }
 
-        Liftify(TOP_STABLE);  // dual protocol, lift (?)
+        Lift_Cell(TOP_STABLE);  // dual protocol, lift (?)
     }
 
     for (at = head; at != tail; ++at) {
@@ -491,7 +491,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         }
 
         possibly(Is_Antiform(spare_picker));  // e.g. PICK DATATYPE! from MAP!
-        Liftify(spare_picker);  // signal literal pick
+        Lift_Cell(spare_picker);  // signal literal pick
         Move_Cell(PUSH(), spare_picker);
     }
 
@@ -595,16 +595,16 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         if (Is_Frame(Known_Stable(SPARE))) {
             Api(Value*) result = rebUndecayed(Known_Stable(SPARE));
             Copy_Cell(SPARE, result);
-            Liftify(SPARE);
+            Lift_Cell(SPARE);
             rebRelease(result);
             continue;
         }
 
         if (Is_Dual_Meta_Word_Alias_Signal(Known_Stable(SPARE))) {
-            Quotify(Known_Element(SPARE));
+            Quote_Cell(Known_Element(SPARE));
             Api(Value*) result = rebUndecayed(CANON(GET), SPARE);
             Copy_Cell(SPARE, result);
-            Liftify(SPARE);
+            Lift_Cell(SPARE);
             rebRelease(result);
             continue;
         }

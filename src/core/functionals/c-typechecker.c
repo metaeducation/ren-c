@@ -319,7 +319,7 @@ bool Typecheck_Pack_Uses_Scratch_And_Spare(  // scratch and spare used [1]
         DECLARE_VALUE (unlifted);
         Copy_Cell(unlifted, pack_at);
         assume (
-          Unliftify_Undecayed(unlifted)
+          Unlift_Cell_No_Decay(unlifted)
         );
         if (not Typecheck_Uses_Spare_And_Scratch(  // might be BLOCK!, etc [2]
             L, unlifted, types_at, types_binding

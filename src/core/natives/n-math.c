@@ -461,7 +461,7 @@ DECLARE_NATIVE(RANDOM_PICK)
     if (not Handles_Generic(LENGTH_OF, datatype))
         panic (UNHANDLED);
 
-    Quotify(collection);
+    Quote_Cell(collection);
     return rebDelegate(
         CANON(PICK), collection, CANON(RANDOM), CANON(LENGTH_OF), collection
     );
@@ -519,7 +519,7 @@ DECLARE_NATIVE(SHUFFLE_OF)
         panic (UNHANDLED);
     }
 
-    Quotify(elem);
+    Quote_Cell(elem);
     return rebDelegate(CANON(SHUFFLE), CANON(COPY), elem);
 }
 
@@ -1057,8 +1057,8 @@ DECLARE_NATIVE(SAME_Q)
         );
     }
 
-    Liftify(v1);
-    Liftify(v2);
+    Lift_Cell(v1);
+    Lift_Cell(v2);
     return rebDelegate(CANON(EQUAL_Q), v1, v2);
 }
 
@@ -1080,8 +1080,8 @@ DECLARE_NATIVE(GREATER_Q)
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
 
-    Quotify(v1);
-    Quotify(v2);
+    Quote_Cell(v1);
+    Quote_Cell(v2);
 
     return rebDelegate(
         "not any [equal?", v1, v2, "lesser?", v1, v2, "]"
@@ -1106,8 +1106,8 @@ DECLARE_NATIVE(EQUAL_OR_LESSER_Q)
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
 
-    Quotify(v1);
-    Quotify(v2);
+    Quote_Cell(v1);
+    Quote_Cell(v2);
 
     return rebDelegate(
         "any [equal?", v1, v2, "lesser?", v1, v2, "]"
@@ -1132,8 +1132,8 @@ DECLARE_NATIVE(GREATER_OR_EQUAL_Q)
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
 
-    Quotify(v1);
-    Quotify(v2);
+    Quote_Cell(v1);
+    Quote_Cell(v2);
 
     return rebDelegate(
         "any [equal?", v1, v2, "not lesser?", v1, v2, "]"
@@ -1158,8 +1158,8 @@ DECLARE_NATIVE(MAXIMUM)
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
 
-    Quotify(v1);
-    Quotify(v2);
+    Quote_Cell(v1);
+    Quote_Cell(v2);
 
     return rebDelegate(
         "either lesser?", v1, v2,
@@ -1186,8 +1186,8 @@ DECLARE_NATIVE(MINIMUM)
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
 
-    Quotify(v1);
-    Quotify(v2);
+    Quote_Cell(v1);
+    Quote_Cell(v2);
 
     return rebDelegate(
         "either lesser?", v1, v2,
@@ -1231,7 +1231,7 @@ DECLARE_NATIVE(NEGATIVE_Q)
 
     Element* v = Element_ARG(VALUE);
 
-    Quotify(v);  // not necessary for scalars, but futureproof it
+    Quote_Cell(v);  // not necessary for scalars, but futureproof it
     return rebDelegate(CANON(LESSER_Q), v, CANON(ZEROIFY), v);
 }
 
@@ -1251,7 +1251,7 @@ DECLARE_NATIVE(POSITIVE_Q)
 
     Element* v = Element_ARG(VALUE);
 
-    Quotify(v);  // not necessary for scalars, but futureproof it
+    Quote_Cell(v);  // not necessary for scalars, but futureproof it
     return rebDelegate(CANON(GREATER_Q), v, CANON(ZEROIFY), v);
 }
 
@@ -1271,6 +1271,6 @@ DECLARE_NATIVE(ZERO_Q)
 
     Element* v = Element_ARG(VALUE);
 
-    Quotify(v);  // not necessary for scalars, but futureproof it
+    Quote_Cell(v);  // not necessary for scalars, but futureproof it
     return rebDelegate(CANON(EQUAL_Q), v, CANON(ZEROIFY), v);
 }

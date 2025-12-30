@@ -116,7 +116,7 @@ DECLARE_NATIVE(ENRECOVER)
             LIFT_BYTE(OUT) = NOQUOTE_2;  // turn it into normal error
             return OUT;
         }
-        return Liftify(OUT);
+        return Lift_Cell(OUT);
     }
 
     if (not Is_Throwing_Panic(LEVEL)) {  // non-ERROR! throws
@@ -234,7 +234,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 } finished: {  ///////////////////////////////////////////////////////////////
 
     Drop_Level(SUBLEVEL);
-    return Liftify(OUT);  // ^META result, may be initial void state
+    return Lift_Cell(OUT);  // ^META result, may be initial void state
 }}
 
 
@@ -306,7 +306,7 @@ DECLARE_NATIVE(TRAP)
     if (not Is_Possibly_Unstable_Value_Action(OUT))
         panic ("TRAP can't find RETURN in scope to tunnel ERROR! to");
 
-    Element* lifted_error = Liftify(v);
+    Element* lifted_error = Lift_Cell(v);
 
     return rebDelegate(rebRUN(Known_Stable(OUT)), lifted_error);
 }

@@ -259,7 +259,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     Copy_Cell(OUT, yielded_lifted);  // keep yielded_lifted around for resume
     assume (
-      Unliftify_Undecayed(OUT)
+      Unlift_Cell_No_Decay(OUT)
     );
     return OUT;
 
@@ -343,7 +343,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     Copy_Cell(yield_level->out, yielded_lifted);  // resumed YIELD's result [2]
     assume (
-      Unliftify_Undecayed(yield_level->out)
+      Unlift_Cell_No_Decay(yield_level->out)
     );
     Init_Nulled(yielded_lifted);
 

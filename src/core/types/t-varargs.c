@@ -208,7 +208,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             }
             else {
                 require (
-                  Unliftify_Undecayed(out)
+                  Unlift_Cell_No_Decay(out)
                 );
 
                 // The indexor is "prefetched", so though the temp level would
@@ -624,7 +624,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
             break; }
 
           case PARAMCLASS_JUST: {
-            Quotify(Init_Word(param_word, Key_Symbol(key)));
+            Quote_Cell(Init_Word(param_word, Key_Symbol(key)));
             break; }
 
           case PARAMCLASS_THE: {
@@ -635,7 +635,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Varargs)
             require (
               Getify(Init_Word(param_word, Key_Symbol(key)))
             );
-            Quotify(param_word);
+            Quote_Cell(param_word);
             break; }
 
           default:

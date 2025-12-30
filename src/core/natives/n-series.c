@@ -467,7 +467,7 @@ DECLARE_NATIVE(REVERSE_OF)
         panic (UNHANDLED);
     }
 
-    Quotify(v);
+    Quote_Cell(v);
     return rebDelegate(CANON(REVERSE), CANON(COPY), v);
 }
 

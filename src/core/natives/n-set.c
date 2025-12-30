@@ -381,7 +381,7 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
     else {
         Copy_Cell(OUT, pack_at_lifted);
         require (
-          Unliftify_Undecayed(OUT)  // unlift for output...
+          Unlift_Cell_No_Decay(OUT)  // unlift for output...
         );
     }
 
@@ -566,7 +566,7 @@ DECLARE_NATIVE(SET)
         );
     }
 
-    Value* dual = Liftify(v);  // make dual for TWEAK [2]
+    Value* dual = Lift_Cell(v);  // make dual for TWEAK [2]
 
     Option(Bounce) b = Irreducible_Bounce(
         LEVEL,

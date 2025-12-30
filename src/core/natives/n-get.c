@@ -114,7 +114,7 @@ Result(None) Get_Var_In_Scratch_To_Out(
         return none;
 
     require (
-      Unliftify_Undecayed(OUT)  // not unstable if wasn't ^META [1]
+      Unlift_Cell_No_Decay(OUT)  // not unstable if wasn't ^META [1]
     );
     return none;
 }
@@ -417,7 +417,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
     }
 
     possibly(Is_Frame(spare_left));
-    Quotify(Known_Element(spare_left));  // lifted protocol
+    Quote_Cell(Known_Element(spare_left));  // lifted protocol
 
     Copy_Cell(PUSH(), at);
 
@@ -435,7 +435,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
 
     Copy_Cell(OUT, SPARE);
     require (
-      Unliftify_Undecayed(OUT)
+      Unlift_Cell_No_Decay(OUT)
     );
 
     goto ensure_out_is_action;
@@ -717,7 +717,7 @@ DECLARE_NATIVE(GET)
             require (
               Sink(Element) elem = Alloc_Tail_Array(a)
             );
-            Copy_Cell(elem, Liftify(OUT));
+            Copy_Cell(elem, Lift_Cell(OUT));
         }
 
         return Init_Pack(OUT, a);
@@ -737,7 +737,7 @@ DECLARE_NATIVE(GET)
         panic ("GET of DUAL_0 state, code to resolve this not in GET yet");
 
     require (
-      Unliftify_Undecayed(OUT)
+      Unlift_Cell_No_Decay(OUT)
     );
     return OUT;
 }
@@ -750,13 +750,13 @@ Result(None) Set_Var_In_Scratch_To_Out(
     Level* level_,  // OUT may be ERROR! antiform, see [A]
     Option(Element*) steps_out  // no GROUP!s if nulled
 ){
-    Liftify(OUT);  // must be lifted to be taken literally in dual protocol
+    Lift_Cell(OUT);  // must be lifted to be taken literally in dual protocol
     Option(Error*) e = Trap_Tweak_Var_In_Scratch_With_Dual_Out(
         level_,
         steps_out
     );
     require (
-      Unliftify_Undecayed(OUT)
+      Unlift_Cell_No_Decay(OUT)
     );
     if (e)
         return fail (unwrap e);

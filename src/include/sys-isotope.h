@@ -208,7 +208,7 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
 
         Copy_Cell(v, at);
         assume (
-            Unliftify_Undecayed(v)
+            Unlift_Cell_No_Decay(v)
         );
         trap (  /// elide recursively to look for hidden ERROR! [1]
             Elide_Unless_Error_Including_In_Packs(v)
@@ -226,7 +226,7 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
 
         Copy_Cell(v, first);  // Note: no antiform binding (PACK!)
         assume (  // Any_Lifted() already checked for all pack items
-            Unliftify_Undecayed(v)
+            Unlift_Cell_No_Decay(v)
         );
     }
 
@@ -244,7 +244,7 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
 
 INLINE Result(Stable*) Unliftify_Decayed(Stable* v) {
     trap (
-      Value *atom = Unliftify_Undecayed(cast(Value*, v))
+      Value *atom = Unlift_Cell_No_Decay(cast(Value*, v))
     );
     return Decay_If_Unstable(atom);
 }
