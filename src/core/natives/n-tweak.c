@@ -593,7 +593,16 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
         }
 
         if (Is_Frame(Known_Stable(SPARE))) {
-            Api(Stable*) result = rebStable(Known_Stable(SPARE));
+            Api(Value*) result = rebUndecayed(Known_Stable(SPARE));
+            Copy_Cell(SPARE, result);
+            Liftify(SPARE);
+            rebRelease(result);
+            continue;
+        }
+
+        if (Is_Dual_Meta_Word_Alias_Signal(Known_Stable(SPARE))) {
+            Quotify(Known_Element(SPARE));
+            Api(Value*) result = rebUndecayed(CANON(GET), SPARE);
             Copy_Cell(SPARE, result);
             Liftify(SPARE);
             rebRelease(result);
@@ -762,7 +771,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
 //  "Low-level variable setter, that can assign within the dual band"
 //
 //      return: [
-//          <null> frame! word! quasiform! quoted!
+//          <null> frame! word! quasiform! quoted! ^word!
 //          error!      "Passthru even if it skips the assign"
 //      ]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
@@ -777,6 +786,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
 //              <opt> "act as a raw GET of the dual state"
 //              <unrun> frame! "store a GETTER/SETTER function in dual band"
 //              word! "special instructions (e.g. PROTECT, UNPROTECT)"
+//              ^word! "alias a word to another word"
 //              quasiform! quoted! "store unlifted values as a normal SET"
 //          ]
 //      :groups "Allow GROUP! Evaluations"

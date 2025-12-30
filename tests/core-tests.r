@@ -108,6 +108,7 @@
 %control/match.test.r
 %control/reduce.test.r
 %control/reeval.test.r
+%control/static.test.r
 %control/switch.test.r
 %control/typecheck.test.r
 %control/unless.test.r

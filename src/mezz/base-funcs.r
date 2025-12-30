@@ -63,6 +63,32 @@ yield: ~#[YIELD used when no generator or yielder is providing it]#~
 
 catch: specialize catch*/ [name: 'throw]
 
+static: infix lambda [
+    "Create static variable with lasting identity across multiple invocations"
+    []: [any-value?]
+    @var [word!: tuple!: ^word!: ^tuple!:]
+    @init [block! fence!]
+][
+    if init <> '[^static-storage] {  ; first run if not equal
+        static-storage: eval init
+        init.1: meta $static-storage  ; mutate block to [^static-storage]
+        clear next init
+    }
+    get tweak unchain var init.1  ; or `(var): alias init.1`
+]
+
+cache: lambda [
+    "Calculate result once, return cached result on successive evals"
+    []: [any-value?]
+    @init [block! fence!]
+][
+    if init <> '[^cache-storage] {  ; first run if not equal
+        cache-storage: eval init
+        init.1: meta $cache-storage  ; mutate block to [^cache-storage]
+        clear next init
+    }
+    get init.1
+]
 
 ; Simple "divider-style" thing for remarks.  At a certain verbosity level,
 ; it could dump those remarks out...perhaps based on how many == there are.
