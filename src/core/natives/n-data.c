@@ -1526,7 +1526,7 @@ DECLARE_NATIVE(DECAYABLE_Q)
 
     Value* v = Intrinsic_ARG(LEVEL);
 
-    Decay_If_Unstable(v) except (Error* e) {
+    Elide_Unless_Error_Including_In_Packs(v) except (Error* e) {
         UNUSED(e);
         return LOGIC(false);
     }

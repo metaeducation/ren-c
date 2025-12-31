@@ -1321,7 +1321,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         if (Is_Dual_Word_Named_Signal(dual))
             goto handle_named_signal;
 
-        if (Is_Dual_Meta_Word_Alias_Signal(dual))
+        if (Is_Dual_Meta_Alias_Signal(dual))
             goto handle_poke;
 
         panic (Error_Bad_Poke_Dual_Raw(dual));  // smart error RE:remove?
@@ -1337,7 +1337,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         LIFT_BYTE(OUT) = NOQUOTE_2;
         assert(
             Is_Frame(Known_Stable(OUT))
-            or Is_Meta_Form_Of(WORD, Known_Stable(OUT))
+            or Is_Dual_Meta_Alias_Signal(Known_Stable(OUT))
         );
         return OUT;  // not lifted, so not a "normal" state
     }
@@ -1361,14 +1361,14 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     assert(
         Any_Lifted(dual)
         or Is_Frame(dual)
-        or Is_Dual_Meta_Word_Alias_Signal(dual)
+        or Is_Dual_Meta_Alias_Signal(dual)
         // more!
     );
 
     if (Get_Cell_Flag(slot, PROTECTED))  // POKE, must check PROTECT status
         panic (Error_Protected_Key(symbol));
 
-    if (Is_Dual_Slot_Alias_Signal(slot)) {
+    if (Is_Dual_Slot_Alias_Signal(slot) and Any_Lifted(dual)) {
         Copy_Cell(SCRATCH, u_cast(Value*, slot));
         LIFT_BYTE(SCRATCH) = NOQUOTE_2;
         Corrupt_Cell_If_Needful(SPARE);
@@ -1383,7 +1383,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         return NO_WRITEBACK_NEEDED;
     }
 
-    Copy_Cell(m_cast(Stable*, u_cast(Stable*, slot)), dual);
+    Copy_Cell(m_cast(Value*, u_cast(Value*, slot)), dual);
 
     if (Any_Lifted(dual)) {  // don't antagonize...yet [1]
         require (

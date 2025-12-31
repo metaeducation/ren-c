@@ -533,6 +533,32 @@ DECLARE_NATIVE(PACK_Q)
 
 
 //
+//  alias: native [
+//
+//  "Make a dual state for proxying SET and GET to another variable"
+//
+//      return: [pack!]  ; !!! actually a dual state, not a "normal pack!"
+//      var [word! tuple!]
+//  ]
+//
+DECLARE_NATIVE(ALIAS)
+{
+    INCLUDE_PARAMS_OF_ALIAS;
+
+    Element* var = Element_ARG(VAR);
+    assert(Is_Word(var) or Is_Tuple(var));
+    KIND_BYTE(var) = Kind_From_Sigil_And_Heart(
+        SIGIL_META, unwrap Heart_Of(var)
+    );
+
+    Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
+    Copy_Cell(Array_Head(a), var);
+
+    return Init_Pack(OUT, a);
+}
+
+
+//
 //  runs: native [
 //
 //  "Turn frame or action into antiform in PACK!, allows SET-WORD! assignment"

@@ -126,13 +126,3 @@ INLINE Option(Dispatcher*) Get_Generic_Dispatcher(
 
 #define Is_Dual_Nulled_Pick_Signal(dual)  Is_Nulled(dual)
 #define Init_Dual_Nulled_Pick_Signal(dual)  Init_Nulled(dual)
-
-
-#define Is_Dual_Word_Named_Signal(dual)  Is_Word(dual)
-
-#define Is_Dual_Meta_Word_Alias_Signal(dual) \
-    Is_Meta_Form_Of(WORD, (dual))
-
-#define Is_Dual_Slot_Alias_Signal(slot) \
-    Cell_Has_Lift_Sigil_Heart( \
-        DUAL_0, SIGIL_META, TYPE_WORD, known(Slot*, (slot)))

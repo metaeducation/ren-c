@@ -242,12 +242,21 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
             continue;
         }
 
+        bool was_singular_pack = (
+            Is_Lifted_Pack(TOP_ELEMENT) and Series_Len_At(TOP_ELEMENT) == 1
+        );
+
+        if (was_singular_pack) {  // alias hack: allow (alias: ~[^word]~)
+            const Element* at = List_Item_At(TOP_ELEMENT);
+            if (Is_Dual_Meta_Alias_Signal(at)) {
+                Copy_Cell(value_arg, at);
+                continue;
+            }
+        }
+
         Copy_Cell(value_arg, TOP_ELEMENT);
         require (
           Unlift_Cell_No_Decay(value_arg)
-        );
-        bool was_singular_pack = (
-            Is_Pack(value_arg) and Series_Len_At(value_arg) == 1
         );
         Decay_If_Unstable(value_arg) except (Error* e) {
             return e;
@@ -600,7 +609,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
             continue;
         }
 
-        if (Is_Dual_Meta_Word_Alias_Signal(Known_Stable(SPARE))) {
+        if (Is_Dual_Meta_Alias_Signal(Known_Element(SPARE))) {
             Quote_Cell(Known_Element(SPARE));
             Api(Value*) result = rebUndecayed(CANON(GET), SPARE);
             Copy_Cell(SPARE, result);
@@ -771,7 +780,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out(
 //  "Low-level variable setter, that can assign within the dual band"
 //
 //      return: [
-//          <null> frame! word! quasiform! quoted! ^word!
+//          <null> frame! word! quasiform! quoted! ^word! ^tuple!
 //          error!      "Passthru even if it skips the assign"
 //      ]
 //      target "Word or tuple, or calculated sequence steps (from GET)"

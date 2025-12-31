@@ -63,18 +63,16 @@ yield: ~#[YIELD used when no generator or yielder is providing it]#~
 
 catch: specialize catch*/ [name: 'throw]
 
-static: infix lambda [
+static: lambda [
     "Create static variable with lasting identity across multiple invocations"
-    []: [any-value?]
-    @var [word!: tuple!: ^word!: ^tuple!:]
+    []: [pack?]  ; !!! actually a dual
     @init [block! fence!]
 ][
-    if init <> '[^static-storage] {  ; first run if not equal
-        static-storage: eval init
-        init.1: meta $static-storage  ; mutate block to [^static-storage]
-        clear next init
+    if init <> '[static-storage] {  ; first run if not equal
+        static-storage: eval init  ; mutate to [static-storage]
+        insert clear mutable init $static-storage
     }
-    get tweak unchain var init.1  ; or `(var): alias init.1`
+    alias init.1
 ]
 
 cache: lambda [
@@ -83,9 +81,8 @@ cache: lambda [
     @init [block! fence!]
 ][
     if init <> '[^cache-storage] {  ; first run if not equal
-        cache-storage: eval init
-        init.1: meta $cache-storage  ; mutate block to [^cache-storage]
-        clear next init
+        ^cache-storage: eval init  ; mutate block to [^cache-storage]
+        insert mutable init meta $cache-storage
     }
     get init.1
 ]

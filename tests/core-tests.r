@@ -81,6 +81,7 @@
 %comparison/strict-equalq.test.r
 %comparison/strict-not-equalq.test.r
 
+%context/alias.test.r
 %context/bind.test.r
 %context/boundq.test.r
 %context/bindq.test.r

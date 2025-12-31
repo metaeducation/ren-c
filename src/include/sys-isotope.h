@@ -139,6 +139,23 @@ INLINE Result(Element*) Coerce_To_Quasiform(Element* v) {
 }
 
 
+//=//// DUAL STATE DEFINITIONS ///////////////////////////////////////////////
+
+#define Is_Dual_Word_Named_Signal(dual)  Is_Word(dual)
+
+INLINE bool Is_Dual_Meta_Alias_Signal(const Stable* dual) {
+    return Is_Meta_Form_Of(WORD, (dual)) or Is_Meta_Form_Of(TUPLE, (dual));
+}
+
+INLINE bool Is_Dual_Slot_Alias_Signal(Slot* slot) {
+    return Cell_Has_Lift_Sigil_Heart(
+        DUAL_0, SIGIL_META, TYPE_WORD, known(Slot*, (slot))
+    ) or Cell_Has_Lift_Sigil_Heart(
+        DUAL_0, SIGIL_META, TYPE_TUPLE, known(Slot*, (slot))
+    );
+}
+
+
 //=//// ELIDING AND DECAYING UNSTABLE ANTIFORMS ///////////////////////////=//
 //
 // Decay is the process of producing a stable value from an unstable one.  It
@@ -197,8 +214,12 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
         return fail ("Empty PACK! cannot decay to single value");
 
     for (const Element* at = first; at != tail; ++at) {
-        if (not Any_Lifted(at))
+        if (not Any_Lifted(at)) {
+            if (Is_Dual_Meta_Alias_Signal(at))  // !!! new concept
+                continue;  // !!! try this for alias first, others later...
+
             return fail ("Non-lifted element in PACK!");
+        }
 
         if (Is_Lifted_Error(at))
             return fail (Cell_Error(at));
@@ -224,10 +245,17 @@ INLINE Result(Stable*) Decay_Or_Elide_Core(
 
         assert(not Is_Lifted_Error(first));  // we ruled these out already
 
-        Copy_Cell(v, first);  // Note: no antiform binding (PACK!)
-        assume (  // Any_Lifted() already checked for all pack items
-            Unlift_Cell_No_Decay(v)
-        );
+        if (Is_Dual_Meta_Alias_Signal(first)) {
+            trap (
+                Get_Word_Or_Tuple(v, first, SPECIFIED)
+            );
+        }
+        else {
+            Copy_Cell(v, first);  // Note: no antiform binding (PACK!)
+            assume (  // Any_Lifted() already checked for all pack items
+                Unlift_Cell_No_Decay(v)
+            );
+        }
     }
 
     goto finished;

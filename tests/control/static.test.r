@@ -12,11 +12,11 @@
 
     foo: func [num] {
        store: static [runs: runs + 1, 0]
-       return store: me + num 
-    } 
+       return store: me + num
+    }
 
     all [
-       10 = foo 10 
+       10 = foo 10
        runs = 1
        30 = foo 20
        runs = 1
@@ -37,3 +37,17 @@
         runs = 1
     ]
 )
+
+(all {
+    x: y: static [10 + 20]
+    x = 30, y = 30
+    x: 1020
+    x = 1020, y = 1020
+})
+
+(all {
+    x: decay y: static [10 + 20]
+    x = 30, y = 30
+    x: 1020
+    x = 1020, y = 30
+})

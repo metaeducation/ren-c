@@ -127,19 +127,26 @@ Result(None) Get_Var_In_Scratch_To_Out(
 //
 Result(None) Get_Word_Or_Tuple(
     Sink(Stable) out,
-    const Element* v,
+    const Element* var,
     Context* context
 ){
     Level* const L = TOP_LEVEL;
 
     USE_LEVEL_SHORTHANDS (L);
 
-    assert(out != SCRATCH and out != SPARE);
     possibly(out == OUT);
-    possibly(v == SPARE);
-    assert(v != SCRATCH);  // need to put bound word in scratch
+    possibly(var == SPARE);
+    assert(var != SCRATCH);  // need to put bound word in scratch
 
-    assert(Is_Word(v) or Is_Tuple(v));  // no sigil, can't give back unstable
+    assert(
+        Is_Word(var) or Is_Meta_Form_Of(WORD, var)
+        or Is_Tuple(var) or Is_Meta_Form_Of(TUPLE, var)
+    );
+
+    if (OUT != out) {
+        Blit_Cell(PUSH(), OUT);
+        Assert_Cell_Initable(OUT);  // don't need to erase
+    }
 
     StateByte saved_state = Save_Level_Scratch_Spare(L);
 
@@ -147,19 +154,11 @@ Result(None) Get_Word_Or_Tuple(
 
     heeded (Derelativize(  // have to do after SCRATCH erase, in case protected
         SCRATCH,
-        v,  // have to do before SPARE erase, in case (v = SPARE)
+        var,  // have to do before SPARE erase, in case (v = SPARE)
         context
     ));
 
     Force_Erase_Cell(SPARE);  // clears protection bit
-
-    if (out != OUT) {
-        Blit_Cell(PUSH(), OUT);
-        Assert_Cell_Initable(OUT);  // don't need to erase
-    }
-
-    Value* saved_out = OUT;
-    L->out = out;
 
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
@@ -170,20 +169,17 @@ Result(None) Get_Word_Or_Tuple(
         // still need to restore state and scratch
     }
 
-    if (not e) {
-        Decay_If_Unstable(OUT) except (e) {  // L->out is `out`
-            // still need to restore state and scratch
-        }
-    }
+    require (
+        Decay_If_Unstable(OUT)
+    );
 
-    L->out = saved_out;
+    Restore_Level_Scratch_Spare(L, saved_state);
 
     if (OUT != out) {
+        Copy_Cell(out, Known_Stable(OUT));
         Force_Blit_Cell(OUT, TOP);
         DROP();
     }
-
-    Restore_Level_Scratch_Spare(L, saved_state);
 
     if (e)
         return fail (e);
@@ -491,7 +487,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
 
 
 //
-//  Get_Var: C
+//  Meta_Get_Var: C
 //
 // May generate specializations for paths.  See Get_Var_Maybe_Trash()
 //
@@ -506,15 +502,13 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
 //
 // * The code behind Get_Var should be merged with GET so they are the same.
 //
-Result(Stable*) Get_Var(
-    Sink(Stable) out,
+Result(Value*) Meta_Get_Var(
+    Sink(Value) out,
     Option(Element*) steps_out,  // if nullptr, then GROUP!s not legal
     const Element* var,
     Context* context
 ){
-    Value* atom_out = u_cast(Value*, out);
-
-    assert(var != atom_out);
+    assert(u_cast(Value*, var) != out);
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (Is_Chain(var) or Is_Path(var)) {
@@ -534,7 +528,7 @@ Result(Stable*) Get_Var(
                 LEVEL_MASK_NONE | FLAG_STATE_BYTE(1)  // rule for trampoline
             ));
 
-            Push_Level_Erase_Out_If_State_0(atom_out, level_);
+            Push_Level_Erase_Out_If_State_0(out, level_);
 
             heeded (Derelativize(SCRATCH, var, context));
             heeded (Corrupt_Cell_If_Needful(SPARE));
@@ -549,7 +543,7 @@ Result(Stable*) Get_Var(
         if (error)
             return fail (unwrap error);
 
-        assert(Is_Action(Known_Stable(out)));
+        assert(Is_Possibly_Unstable_Value_Action(out));
 
         if (TOP_INDEX != base) {
             DECLARE_STABLE (action);
@@ -568,17 +562,31 @@ Result(Stable*) Get_Var(
             Init_Quasar(unwrap steps_out);  // !!! What to return?
     }
     else {
-        assert(Is_Word(var) or Is_Tuple(var));
-
         trap (
             Get_Word_Or_Tuple(out, var, context)
         );
     }
 
-    trap (
-        Decay_If_Unstable(atom_out)
-    );
+    return out;
+}
 
+
+//
+//  Get_Var: C
+//
+Result(Stable*) Get_Var(
+    Sink(Stable) out,
+    Option(Element*) steps_out,  // if nullptr, then GROUP!s not legal
+    const Element* var,
+    Context* context
+){
+    Value* unstable_out = u_cast(Value*, out);
+    trap (
+      Meta_Get_Var(unstable_out, steps_out, var, context)
+    );
+    trap (
+      Decay_If_Unstable(unstable_out)
+    );
     return out;
 }
 

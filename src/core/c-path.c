@@ -199,7 +199,7 @@ DECLARE_NATIVE(PICK)
 //
 //      return: [
 //          <null> "no writeback needed"
-//          word! frame! quoted! quasiform! ^word!
+//          word! frame! quoted! quasiform! ^word! ^tuple!
 //      ]
 //      location [<opt-out> fundamental?]  ; can't poke a quoted/quasi
 //      picker [<opt-out> element?]
