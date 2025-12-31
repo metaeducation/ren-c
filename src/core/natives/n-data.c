@@ -382,7 +382,7 @@ DECLARE_NATIVE(REFINEMENT_Q)
     INCLUDE_PARAMS_OF_REFINEMENT_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -405,7 +405,7 @@ DECLARE_NATIVE(SET_WORD_Q)
     INCLUDE_PARAMS_OF_SET_WORD_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -428,7 +428,7 @@ DECLARE_NATIVE(SET_RUN_WORD_Q)
     INCLUDE_PARAMS_OF_SET_RUN_WORD_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -451,7 +451,7 @@ DECLARE_NATIVE(RUN_WORD_Q)
     INCLUDE_PARAMS_OF_RUN_WORD_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -478,7 +478,7 @@ DECLARE_NATIVE(GET_WORD_Q)
     INCLUDE_PARAMS_OF_GET_WORD_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -501,7 +501,7 @@ DECLARE_NATIVE(SET_TUPLE_Q)
     INCLUDE_PARAMS_OF_SET_TUPLE_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -524,7 +524,7 @@ DECLARE_NATIVE(GET_TUPLE_Q)
     INCLUDE_PARAMS_OF_GET_TUPLE_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -547,7 +547,7 @@ DECLARE_NATIVE(SET_GROUP_Q)
     INCLUDE_PARAMS_OF_SET_GROUP_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -570,7 +570,7 @@ DECLARE_NATIVE(GET_GROUP_Q)
     INCLUDE_PARAMS_OF_GET_GROUP_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -593,7 +593,7 @@ DECLARE_NATIVE(SET_BLOCK_Q)
     INCLUDE_PARAMS_OF_SET_BLOCK_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -616,7 +616,7 @@ DECLARE_NATIVE(GET_BLOCK_Q)
     INCLUDE_PARAMS_OF_GET_BLOCK_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -639,7 +639,7 @@ DECLARE_NATIVE(ANY_SET_VALUE_Q)
     INCLUDE_PARAMS_OF_ANY_SET_VALUE_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -662,7 +662,7 @@ DECLARE_NATIVE(ANY_GET_VALUE_Q)
     INCLUDE_PARAMS_OF_ANY_GET_VALUE_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -685,7 +685,7 @@ DECLARE_NATIVE(QUASI_WORD_Q)
     INCLUDE_PARAMS_OF_QUASI_WORD_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -708,7 +708,7 @@ DECLARE_NATIVE(CHAR_Q)
     INCLUDE_PARAMS_OF_CHAR_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -731,7 +731,7 @@ DECLARE_NATIVE(LIT_WORD_Q)
     INCLUDE_PARAMS_OF_LIT_WORD_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -756,7 +756,7 @@ DECLARE_NATIVE(LIT_PATH_Q)
     INCLUDE_PARAMS_OF_LIT_PATH_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -778,11 +778,7 @@ DECLARE_NATIVE(ANY_INERT_Q)
 {
     INCLUDE_PARAMS_OF_ANY_INERT_Q;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        return NULLED;
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     return LOGIC(Not_Antiform(v) and Any_Inert(v));
 }
@@ -1275,11 +1271,7 @@ DECLARE_NATIVE(ANY_WORD_Q)
 {
     INCLUDE_PARAMS_OF_ANY_WORD_Q;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        return NULLED;
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     return LOGIC(Any_Word(v));
 }
@@ -1298,11 +1290,7 @@ DECLARE_NATIVE(NONE_Q)
 {
     INCLUDE_PARAMS_OF_NONE_Q;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        return NULLED;
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     return LOGIC(Is_None(v));
 }
@@ -1321,11 +1309,7 @@ DECLARE_NATIVE(TRIPWIRE_Q)
 {
     INCLUDE_PARAMS_OF_TRIPWIRE_Q;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        return NULLED;
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     return LOGIC(Is_Tripwire(v));
 }
@@ -1366,7 +1350,7 @@ DECLARE_NATIVE(QUASAR_Q)
     INCLUDE_PARAMS_OF_QUASAR_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -1389,7 +1373,7 @@ DECLARE_NATIVE(SPACE_Q)
     INCLUDE_PARAMS_OF_SPACE_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -1412,7 +1396,7 @@ DECLARE_NATIVE(BLANK_Q)
     INCLUDE_PARAMS_OF_BLANK_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -1521,11 +1505,7 @@ DECLARE_NATIVE(DECAY)
 {
     INCLUDE_PARAMS_OF_DECAY;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        return NULLED;
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     return COPY(v);
 }
@@ -1578,11 +1558,7 @@ DECLARE_NATIVE(REIFY)
 {
     INCLUDE_PARAMS_OF_REIFY;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        return NULLED;
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     Copy_Cell(OUT, v);
     return Reify(OUT);
@@ -1603,7 +1579,7 @@ DECLARE_NATIVE(NOQUASI)
     INCLUDE_PARAMS_OF_NOQUASI;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -1654,11 +1630,7 @@ DECLARE_NATIVE(NOANTIFORM)
 {
     INCLUDE_PARAMS_OF_NOANTIFORM;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        return NULLED;
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     if (Is_Antiform(v))
         LIFT_BYTE(v) = NOQUOTE_2;

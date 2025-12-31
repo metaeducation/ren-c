@@ -72,11 +72,7 @@ DECLARE_NATIVE(OKAY_Q)
 {
     INCLUDE_PARAMS_OF_OKAY_Q;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        return NULLED;
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     return LOGIC(Is_Okay(v));
 }
@@ -95,11 +91,7 @@ DECLARE_NATIVE(LOGIC_Q)
 {
     INCLUDE_PARAMS_OF_LOGIC_Q;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        return NULLED;
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     return LOGIC(Is_Logic(v));
 }
@@ -137,7 +129,7 @@ DECLARE_NATIVE(BOOLEAN_Q)
     INCLUDE_PARAMS_OF_BOOLEAN_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -160,7 +152,7 @@ DECLARE_NATIVE(ONOFF_Q)
     INCLUDE_PARAMS_OF_ONOFF_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -183,7 +175,7 @@ DECLARE_NATIVE(YESNO_Q)
     INCLUDE_PARAMS_OF_YESNO_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -440,11 +432,7 @@ DECLARE_NATIVE(NOT_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_NOT_1;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        return NULLED;
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     require (
       bool cond = Test_Conditional(v)
@@ -466,11 +454,7 @@ DECLARE_NATIVE(TO_LOGIC)
 {
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        return NULLED;
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     require (
       bool cond = Test_Conditional(v)

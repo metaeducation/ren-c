@@ -147,32 +147,15 @@ INLINE Value* Intrinsic_ARG(Level* L) {
 // Handling for intrinsic args that are [<opt-out> element?], since they do
 // not necessarily do typechecking themselves.
 //
-// If it returns nullptr, then the caller should return nullptr, because
-// it means the opt out occurred (or running a typecheck and it failed, so
-// effectively an opt-out).
+// If it returns nullptr, then the caller should return nullptr.
 //
-INLINE Result(Option(Element*)) Typecheck_Opt_Out_Element_Intrinsic_Arg(
+INLINE Result(Option(Element*)) Typecheck_Element_Intrinsic_Arg(
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
         return Known_Element(Level_Arg(L, 1));  // was checked
 
     Value* arg = Level_Dispatching_Intrinsic_Arg(L);
-
-    if (Is_Error(arg)) {
-        if (Get_Level_Flag(L, RUNNING_TYPECHECK))
-            return nullptr;  // [2]
-        return fail (Cell_Error(arg));
-    }
-
-    if (Any_Void(arg))  // handle PARAMETER_FLAG_OPT_OUT
-        return nullptr;
-
-    Decay_If_Unstable(arg) except (Error* e) {
-        if (Get_Level_Flag(L, RUNNING_TYPECHECK))
-            return nullptr;  // [2]
-        return fail (e);
-    }
 
     if (Is_Antiform(arg)) {
         if (Get_Level_Flag(L, RUNNING_TYPECHECK))
@@ -183,25 +166,19 @@ INLINE Result(Option(Element*)) Typecheck_Opt_Out_Element_Intrinsic_Arg(
     return Known_Element(arg);
 }
 
-INLINE Result(Option(Stable*)) Typecheck_Stable_Decayed_Intrinsic_Arg(
+// Because decay can call the evaluator (e.g. for GETTER or ALIAS that is
+// decaying) the machinery has to do that before the intrinsic, as we do not
+// want frameless natives on the stack above an evaluation (which might want
+// to introspect the stack and isn't prepared to see an intrinsic there).
+//
+// If the parameter is <opt-out> that is handled prior to this as well.
+//
+INLINE Stable* Stable_Decayed_Intrinsic_Arg(
     Level* L
 ){
     if (Not_Level_Flag(L, DISPATCHING_INTRINSIC))
         return Known_Stable(Level_Arg(L, 1));  // was checked
 
     Value* arg = Level_Dispatching_Intrinsic_Arg(L);
-
-    if (Is_Error(arg)) {
-        if (Get_Level_Flag(L, RUNNING_TYPECHECK))
-            return nullptr;  // [2]
-        return fail (Cell_Error(arg));
-    }
-
-    Decay_If_Unstable(arg) except (Error* e) {
-        if (Get_Level_Flag(L, RUNNING_TYPECHECK))
-            return nullptr;  // [2]
-        return fail (e);
-    }
-
     return Known_Stable(arg);
 }

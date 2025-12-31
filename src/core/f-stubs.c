@@ -626,7 +626,7 @@ static Bounce Sigilize_Native_Core(Level* level_, Sigil sigil)
     INCLUDE_PARAMS_OF_META;  // META, PIN, TIE all same signature.
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -711,7 +711,7 @@ static Bounce Unsigilize_Native_Core(Level* level_, Sigil sigil)
     INCLUDE_PARAMS_OF_UNMETA;  // same signature as UNPIN, UNTIE
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;
@@ -782,7 +782,7 @@ DECLARE_NATIVE(PLAIN)
     INCLUDE_PARAMS_OF_PLAIN;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;

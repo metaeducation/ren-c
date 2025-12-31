@@ -271,6 +271,18 @@ Bounce Stepper_Executor(Level* L)
       intrinsic_arg_in_spare:
       case ST_STEPPER_CALCULATING_INTRINSIC_ARG: {
         Details* details = Ensure_Frame_Details(CURRENT);
+
+        Param* param = Phase_Params_Head(details);
+        if (Get_Parameter_Flag(param, OPT_OUT) and Any_Void(SPARE)) {
+            Init_Nulled(OUT);
+            goto lookahead;
+        }
+        if (Parameter_Class(param) != PARAMCLASS_META) {
+          require (
+            Decay_If_Unstable(SPARE)  // decay may eval, do before intrinsic
+          );
+        }
+
         Dispatcher* dispatcher = Details_Dispatcher(details);
 
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));

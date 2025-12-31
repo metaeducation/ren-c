@@ -127,7 +127,7 @@ DECLARE_NATIVE(SIGIL_Q)
     INCLUDE_PARAMS_OF_SIGIL_Q;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;

@@ -712,11 +712,7 @@ DECLARE_NATIVE(OPT_IN)
 {
     INCLUDE_PARAMS_OF_OPT_IN;
 
-    require (
-      Stable* v = opt Typecheck_Stable_Decayed_Intrinsic_Arg(LEVEL)
-    );
-    if (not v)
-        panic (v);
+    Stable* v = Stable_Decayed_Intrinsic_Arg(LEVEL);
 
     if (Is_Nulled(v))
         return Init_None(OUT);
@@ -739,7 +735,7 @@ DECLARE_NATIVE(NOQUOTE)
     INCLUDE_PARAMS_OF_NOQUOTE;
 
     require (
-      Element* v = opt Typecheck_Opt_Out_Element_Intrinsic_Arg(LEVEL)
+      Element* v = opt Typecheck_Element_Intrinsic_Arg(LEVEL)
     );
     if (not v)
         return NULLED;

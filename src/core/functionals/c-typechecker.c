@@ -389,6 +389,15 @@ bool Predicate_Check_Spare_Uses_Scratch(
         Get_Details_Flag(details, CAN_DISPATCH_AS_INTRINSIC)
         and not SPORADICALLY(100)
     ){
+        Param* param = Phase_Params_Head(details);
+        if (Get_Parameter_Flag(param, OPT_OUT) and Any_Void(SPARE))
+            goto test_failed;
+        if (Parameter_Class(param) != PARAMCLASS_META) {
+          require (
+            Decay_If_Unstable(SPARE)  // decay may eval, do before intrinsic
+          );
+        }
+
         Copy_Cell(SCRATCH, predicate);  // intrinsic may need, panic() requires
         possibly(Is_Antiform(SCRATCH));  // don't bother canonizing LIFT_BYTE()
         Remember_Cell_Is_Lifeguard(SCRATCH);
