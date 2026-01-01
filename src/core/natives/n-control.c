@@ -38,7 +38,7 @@
 //   single-arity functions used as branches will also be executed--but passed
 //   the value of the triggering condition.  Useful with arrow functions:
 //
-//       >> if 1 < 2 [10 + 20] then x -> [print ["THEN got" x]]
+//       >> if 1 < 2 [10 + 20] then (x -> [print ["THEN got" x]])
 //       THEN got 30
 //
 //   (See Eval_Branch_Throws() for supported ANY-BRANCH? types and behaviors.)
@@ -56,59 +56,27 @@
 
 
 //
-//  The_Group_Branch_Executor: C
+//  Group_Branch_Executor: C
 //
-// Branching code typically uses "soft" literal slots for the branch.  That
-// means that if you use a GROUP! there, the parameter gathering process will
-// pre-evaluate it.
+// Branches do not use escapable literals for GROUP! evaluations, they get
+// the group literally and only run it if the branch is taken:
 //
 //     >> branchy: func [flag] [either flag '[<a>] '[<b>]]
 //
-//     >> either okay (print "a" branchy true) (print "b" branchy false)
-//     a
-//     b
-//     == <a>
-//
-// That behavior might seem less useful than only evaluating the groups in
-// the event of the branch running.  And it might seem you could accomplish
-// that by taking the arguments as non-soft literal and then having the
-// branch handler evaluate the groups when the branch was taken.  However,
-// the use of the soft literal convention is important for another reason:
-// it's how lambdas are allowed to be implicitly grouped:
-//
-//     case [...] then x -> [...]
-//     =>
-//     case [...] then (x -> [...])
-//
-// This implicit grouping only happens with soft literals.  If THEN does a
-// hard literal argument forward, and -> does a hard literal backward, then
-// that is a deadlock and there is an error.
-//
-// So to accomplish the desire of a group that only evaluates to produce the
-// branch to run if the branch is to be taken, we use @GROUP!:
-//
-//     >> either okay @(print "a" branchy true) @(print "b" branchy false)
+//     >> either okay (print "a" branchy okay) (print "b" branchy null)
 //     a
 //     == <a>
 //
-// It's not super common to need this.  But if someone does...the way it is
-// accomplished is that @GROUP! branches have their own executor.  This
-// means something like IF can push a level with the branch executor that
-// can complete and run the evaluated-to branch.
+// This executor is used to run the GROUP! and then do the eval of whatever
+// branch is produced.
 //
-// So the group branch executor is pushed with the feed of the GROUP! to run.
-// It gives this feed to an Stepper_Executor(), and then delegates to the
-// branch returned as a result.
-//
-//////////////////////////////////////////////////////////////////////////////
+Bounce Group_Branch_Executor(Level* const L)
 //
 // 1. The `with` parameter in continuations isn't required to be GC safe or
 //    even distinct from the output cell (see CONTINUE_CORE()).  So whoever
 //    dispatched to the group branch executor could have passed a fleeting
 //    value pointer...hence it needs to be stored somewhere.  So the group
 //    executor expects it to be preloaded into SPARE, or be unreadable.
-//
-Bounce The_Group_Branch_Executor(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
@@ -197,7 +165,7 @@ Bounce The_Group_Branch_Executor(Level* const L)
 //
 //      return: [any-value? ghost!]
 //      condition [any-stable?]
-//      @(branch) [<unrun> any-branch?]
+//      @branch [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(IF)
@@ -224,7 +192,7 @@ DECLARE_NATIVE(IF)
 //
 //      return: [any-value? none?]
 //      condition [any-stable?]
-//      @(branch) [<unrun> any-branch?]
+//      @branch [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(WHEN)
@@ -315,7 +283,7 @@ DECLARE_NATIVE(ELSE_Q)
 //      return: [any-value?]
 //      ^left "Note: only NULL not in a PACK! will trigger branch evaluation"
 //          [<null> any-value?]
-//      @(branch) [<unrun> any-branch?]
+//      @branch [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(THEN)
@@ -343,7 +311,7 @@ DECLARE_NATIVE(THEN)
 //      return: [any-value?]
 //      ^left "Note: only NULL not in a PACK! will suppress branch evaluation"
 //          [<null> any-value?]
-//      @(branch) [<unrun> any-branch?]
+//      @branch [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(ELSE)
@@ -371,7 +339,7 @@ DECLARE_NATIVE(ELSE)
 //      return: [any-value?]
 //      ^left "Note: only NULL not in a PACK! will trigger branch evaluation"
 //          [<null> any-value?]
-//      @(branch) [<unrun> any-branch?]
+//      @branch [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(ALSO)
@@ -684,7 +652,6 @@ DECLARE_NATIVE(CASE)
         ST_CASE_INITIAL_ENTRY = STATE_0,
         ST_CASE_CONDITION_EVAL_STEP,
         ST_CASE_RUNNING_PREDICATE,
-        ST_CASE_EVALUATING_GROUP_BRANCH,
         ST_CASE_RUNNING_BRANCH
     };
 
@@ -692,8 +659,6 @@ DECLARE_NATIVE(CASE)
       case ST_CASE_INITIAL_ENTRY: goto initial_entry;
       case ST_CASE_CONDITION_EVAL_STEP: goto condition_result_in_spare;
       case ST_CASE_RUNNING_PREDICATE: goto predicate_result_in_spare;
-      case ST_CASE_EVALUATING_GROUP_BRANCH:
-        goto handle_processed_branch_in_scratch;
       case ST_CASE_RUNNING_BRANCH: goto branch_result_in_out;
       default: assert(false);
     }
@@ -776,46 +741,19 @@ DECLARE_NATIVE(CASE)
     //    being evaluated as const.  But we have to proxy that const flag
     //    over to the block.
 
-    Element* branch = Derelativize(
-        SCRATCH, At_Level(SUBLEVEL), Level_Binding(SUBLEVEL)
-    );
-    Inherit_Const(branch, cases);  // branch needs to respect const [1]
-
-    Fetch_Next_In_Feed(SUBLEVEL->feed);
-
-    if (not Is_Group(branch))
-        goto handle_processed_branch_in_scratch;
-
-    require (
-      Level* sub = Make_Level_At_Inherit_Const(
-        &Evaluator_Executor,
-        branch,  // non @GROUP! branches are run unconditionally
-        Level_Binding(SUBLEVEL),
-        LEVEL_MASK_NONE
-    ));
-    Init_Ghost(Evaluator_Primed_Cell(sub));
-
-    STATE = ST_CASE_EVALUATING_GROUP_BRANCH;
-    SUBLEVEL->executor = &Just_Use_Out_Executor;
-    Push_Level_Erase_Out_If_State_0(SCRATCH, sub);  // level has array and index
-    return CONTINUE_SUBLEVEL(sub);
-
-} handle_processed_branch_in_scratch: {  /////////////////////////////////////
-
-    // 1. Maintain symmetry with IF on non-taken branches:
-    //
-    //        >> if null <some-tag>
-    //        ** Script Error: if does not allow tag! for its branch...
-
-    require (
-      Stable* branch = Decay_If_Unstable(SCRATCH)
-    );
     require (
       Stable* spare = Decay_If_Unstable(SPARE)
     );
     require (
       bool cond = Test_Conditional(spare)
     );
+
+    Element* branch = Derelativize(
+        SCRATCH, At_Level(SUBLEVEL), Level_Binding(SUBLEVEL)
+    );
+    Inherit_Const(branch, cases);  // branch needs to respect const [1]
+
+    Fetch_Next_In_Feed(SUBLEVEL->feed);
 
     if (not cond) {
         if (not Any_Branch(branch))  // like IF [1]
@@ -1111,7 +1049,7 @@ DECLARE_NATIVE(SWITCH)
 //              /word!:  ; meta form meaningless?
 //              ; group!: ^group!:  ; TBD...
 //          ]
-//      @(branch) [<unrun> any-branch?]
+//      @branch [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(DEFAULT)

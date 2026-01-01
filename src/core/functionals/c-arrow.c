@@ -23,7 +23,7 @@
 // It is infixed as `->`, where the argument is taken literally...permitting
 // plain WORD! to be used as the argument:
 //
-//     >> if ok [10] then x -> [print ["The branch produced" x]]
+//     >> if ok [10] then (x -> [print ["The branch produced" x]])
 //     The branch produced 10
 //
 // While a BLOCK! of arguments can be used to gather multiple arguments, you
@@ -32,9 +32,9 @@
 //     case [
 //         true [pack [10 + 20, 3 + 4]]  ; makes antiform ~['30 '7]~
 //         ...
-//     ] then ~[a b]~ -> [
+//     ] then (~[a b]~ -> [
 //         assert [a = 30, b = 7]
-//     ]
+//     ])
 //
 // (NOTE: This feature is TBD, and the above example is a placeholder.)
 //

@@ -460,10 +460,10 @@ bind construct [
             proto-skin.name: default ["loaded"]
             append o.loaded skin-file
         ]
-        except e -> [
+        except (e -> [
             skin-error: e  ; show error later if `--verbose`
             proto-skin.name: "error"
-        ]
+        ])
     ]
 
     proto-skin.name: default ["default"]
@@ -846,37 +846,32 @@ console*: func [
         return 0  ; !!! how did this work before?
     ]
 
+  ; 1. If loading the string gave back an error, check to see if it's the kind
+  ;    of error that comes from having partial input (scan-missing).  If so,
+  ;    CONTINUE and read more data until it's complete (or until an empty line
+  ;    signals to just report the error as-is)
+  ;
+  ; 2. Error message tells you what's missing, not what's open and needs to be
+  ;    closed.  Invert the symbol.
+  ;
+  ; 3. Backslash is used in the second column to help make a pattern that isn't
+  ;    legal in Rebol code, which is also uncommon in program output.  This
+  ;    enables detection of transcripts, potentially to replay them without
+  ;    running program output or evaluation results.
+  ;
+  ;    *Note this is not running in a continuation at present*, so the
+  ;    WRITE-STDOUT can only be done via the EMIT.
+
     let code: (
         transcode (delimit newline result)
-    ) except error -> [
-        ;
-        ; If loading the string gave back an error, check to see if it
-        ; was the kind of error that comes from having partial input
-        ; (scan-missing).  If so, CONTINUE and read more data until
-        ; it's complete (or until an empty line signals to just report
-        ; the error as-is)
-        ;
-        if error.id = 'scan-missing [
-            ;
-            ; Error message tells you what's missing, not what's open and
-            ; needs to be closed.  Invert the symbol.
-            ;
+    ) except (error -> [
+        if error.id = 'scan-missing [  ; [1]
             switch error.arg1 [
                 #"}" [#"{"]
                 #")" [#"("]
                 #"]" [#"["]
-            ] also unclosed -> [
-                ;
-                ; Backslash is used in the second column to help make a
-                ; pattern that isn't legal in Rebol code, which is also
-                ; uncommon in program output.  This enables detection of
-                ; transcripts, potentially to replay them without running
-                ; program output or evaluation results.
-                ;
-                ; *Note this is not running in a continuation at present*,
-                ; so the WRITE-STDOUT can only be done via the EMIT.
-                ;
-                emit [write stdout unspaced [(<*> unclosed) "\" _ _]]
+            ] then (unclosed -> [  ; [2]
+                emit [write stdout unspaced [(<*> unclosed) "\" _ _]]  ; [3]
 
                 emit [reduce [  ; reduce will runs in sandbox
                     (<*> spread result)  ; splice previous inert literal lines
@@ -884,7 +879,7 @@ console*: func [
                 ]]
 
                 return block!  ; documents expected match of REDUCE product
-            ]
+            ])
         ]
 
         ; Could be an unclosed double quote (unclosed tag?) which more input
@@ -892,7 +887,7 @@ console*: func [
         ;
         emit [system.console/print-panic (<*> error)]
         return <prompt>
-    ]
+    ])
 
     ; If the transcode returned [], then it was like (transcode "") or
     ; transcode "; some comment".  But rather than have the console print out

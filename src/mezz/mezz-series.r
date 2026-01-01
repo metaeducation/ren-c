@@ -630,9 +630,9 @@ split: func [
                 )
             ]
             block! ['false]
-        ] then fill -> [
+        ] then (fill -> [
             if true? fill [add-fill-val]
-        ]
+        ])
     ]
 
     return result

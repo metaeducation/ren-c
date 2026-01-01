@@ -135,7 +135,7 @@
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )
 
-    ((1 then x -> [x * 10]) = 10)
+    ((1 then (x -> [x * 10])) = 10)
 ]
 
 

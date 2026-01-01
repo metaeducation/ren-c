@@ -58,7 +58,7 @@ export to-c-name: func [
 
     let string: either block? value [unspaced value] [form value]
 
-    switch string [
+    let s: switch string [
         ; Used specifically by t-routine.c to make SYM_ELLIPSIS
         ;
         "..." ["ellipsis_3"]
@@ -113,7 +113,10 @@ export to-c-name: func [
         "xor_eq" ["xor_eq_1"]
 
         "did" ["did_1"]  ; This is a macro in Ren-C code
-    ] then s -> [
+    ] else [
+        null
+    ]
+    if s [
         return copy s
     ]
 

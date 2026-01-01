@@ -58,8 +58,8 @@
 
 ; The above should work whether you use a GROUP! or not (-> quote left wins)
 (
-    foo: func [return: [integer!] y] [return the 1 then x -> [x + y]]
-    bar: func [return: [integer!] y] [return 1 then x -> [x + y]]
+    foo: func [return: [integer!] y] [return the 1 then (x -> [x + y])]
+    bar: func [return: [integer!] y] [return 1 then (x -> [x + y])]
     all [
         11 = foo 10
         1 = bar 10
@@ -79,14 +79,14 @@
 ; receive the value it is decayed, so they do not have to be ^META.  But if
 ; they *are* ^META then the true state is passed through.
 [
-    (~[~null~]~ then x -> [(lift ^x) = '~null~])
-    (~[~null~]~ then ^x -> [(lift ^x) = '~[~null~]~])
-    ('~[~null~]~ then x -> [^x = '~[~null~]~])
-    ('~[~null~]~ then ^x -> [^x = '~[~null~]~])
+    (~[~null~]~ then (x -> [(lift ^x) = '~null~]))
+    (~[~null~]~ then (^x -> [(lift ^x) = '~[~null~]~]))
+    ('~[~null~]~ then (x -> [^x = '~[~null~]~]))
+    ('~[~null~]~ then (^x -> [^x = '~[~null~]~]))
 
-    (catch [~[~null~]~ also x -> [throw ((lift ^x) = '~null~)]])
-    (catch [~[~null~]~ also ^x -> [throw ((lift ^x) = '~[~null~]~)]])
-    (catch ['~null~ also ^x -> [throw (^x = '~null~)]])
+    (catch [~[~null~]~ also (x -> [throw ((lift ^x) = '~null~)])])
+    (catch [~[~null~]~ also (^x -> [throw ((lift ^x) = '~[~null~]~)])])
+    (catch ['~null~ also (^x -> [throw (^x = '~null~)])])
 ]
 
 [

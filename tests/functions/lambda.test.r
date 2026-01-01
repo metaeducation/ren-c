@@ -7,7 +7,7 @@
 
 ; Nested virtual binds were triggering an assertion.
 ;
-(3 = (1 then x -> [2 also y -> [3]]))
+(3 = (1 then (x -> [2 also (y -> [3])])))
 
 ; Meta parameters are allowed, and accept voids by default`
 [

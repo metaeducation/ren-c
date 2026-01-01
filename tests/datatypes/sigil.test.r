@@ -130,9 +130,9 @@
         ,
         (make object! [x: 10])
     ][
-        assert [meta item except e -> [e.id = 'bad-sigil]]
-        assert [pin item except e -> [e.id = 'bad-sigil]]
-        assert [tie item except e -> [e.id = 'bad-sigil]]
+        assert [meta item except (e -> [e.id = 'bad-sigil])]
+        assert [pin item except (e -> [e.id = 'bad-sigil])]
+        assert [tie item except (e -> [e.id = 'bad-sigil])]
     ]
     ok
 )

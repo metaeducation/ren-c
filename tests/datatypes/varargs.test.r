@@ -144,7 +144,7 @@
            if not tail? v [panic "THEN SHOULD APPEAR AS IF IT IS VARARGS END"]
            return "returned"
        ]
-       result: variadic2 "a" "b" then t -> [log [<t> t] "then"]
+       result: variadic2 "a" "b" then (t -> [log [<t> t] "then"])
        log [<result> result]
     }
 
@@ -154,7 +154,7 @@
             log [<1> n1 <2> n2]
             return "returned"
         ]
-        result: normal2 "a" "b" then t -> [log [<t> t] "then"]
+        result: normal2 "a" "b" then (t -> [log [<t> t] "then"])
         log [<result> result]
     }
 

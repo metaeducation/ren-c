@@ -23,7 +23,7 @@
 ; (this is strictly more powerful than a :RELAX refinement would be, as TRY
 ; gives you the equivalent to what that would do)
 ;
-((typecheck:meta [integer!] 1 / 0) except e -> [e.id = 'zero-divide])
+((typecheck:meta [integer!] 1 / 0) except (e -> [e.id = 'zero-divide]))
 (not try typecheck:meta [integer!] 1 / 0)
 
 ; Singleheart sequences can be matched

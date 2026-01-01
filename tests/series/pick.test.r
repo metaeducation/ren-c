@@ -18,7 +18,9 @@
         ~bad-pick~ 3 2147483647
     ][
         assert compose:deep [
-            result = eval [pick at data (pos) (index)] except e -> [quasi e.id]
+            result = eval [
+                pick at data (pos) (index)
+            ] except (e -> [quasi e.id])
         ]
     ]
     ok
@@ -46,7 +48,9 @@
         ~bad-pick~ 3 2147483647
     ][
         assert compose:deep [
-            result = eval [pick at data (pos) (index)] except e -> [quasi e.id]
+            result = eval [pick at data (pos) (index)] except (e -> [
+                quasi e.id
+            ])
         ]
     ]
     ok

@@ -49,9 +49,9 @@
 )
 
 (
-    [pos-or-logic :value]: transcode:next "[^M^/ a] b c" except e -> [
+    [pos-or-logic :value]: transcode:next "[^M^/ a] b c" except (e -> [
         e.id = 'illegal-cr
-    ]
+    ])
 )
 
 (

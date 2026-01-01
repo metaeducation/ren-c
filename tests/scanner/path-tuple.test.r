@@ -182,7 +182,7 @@
         let items
         rescue [
             items: transcode text
-        ] then error -> [
+        ] then (error -> [
             if iter.1 <> '!! [
                 panic ["Unexpected failure on" @text "->" @error.id]
             ]
@@ -205,7 +205,7 @@
             ]
             iter: my next
             continue
-        ]
+        ])
 
         if (iter.1 = '!!) [
             panic ["Unexpected success on" @text "->" (mold spread items)]

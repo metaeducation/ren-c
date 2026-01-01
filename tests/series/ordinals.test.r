@@ -5,7 +5,7 @@
         first second third fourth fifth sixth seventh eighth ninth tenth
     ][
         assert compose [null = try ($ ordinal) []]
-        assert compose [($ordinal) [] except e -> [e.id = 'bad-pick]]
+        assert compose [($ordinal) [] except (e -> [e.id = 'bad-pick])]
     ]
     ok
 )

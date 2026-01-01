@@ -42,11 +42,11 @@
 //     branch trigger or not.  With that addressed, it's just inconvenient to
 //     force functions to take ^ARG to get things like NULL.)
 //
-//         if ok [null] then x -> [
+//         if ok [null] then (x -> [
 //             ;
 //             ; Why would we want to have to make it ^x, when we know any
 //             ; nulls that triggered the branch would have been heavy forms?
-//         ]
+//         ])
 //
 Result(None) Prep_Action_Level(
     Level* L,
@@ -150,11 +150,11 @@ bool Pushed_Continuation(
     if (Is_Antiform(branch))  // no other antiforms can be branches
         panic (Error_Bad_Antiform(branch));
 
-    if (Is_Pinned_Form_Of(GROUP, branch)) {  // [2] for @(gr o up)
+    if (Is_Group(branch)) {  // [2] for @(gr o up)
         assert(flags & LEVEL_FLAG_FORCE_HEAVY_NULLS);  // needed for trick
         require (
           Level* grouper = Make_Level_At_Core(
-            &The_Group_Branch_Executor,  // evaluates to synthesize branch
+            &Group_Branch_Executor,  // evaluates to synthesize branch
             cast(Element*, branch),
             binding,
             (flags & (~ LEVEL_FLAG_FORCE_HEAVY_NULLS))

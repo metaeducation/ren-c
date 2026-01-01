@@ -244,7 +244,7 @@ comma!        "separator between full evaluations"
     group!      "list that evaluates expressions as an isolated group"
     ~splice!~   "fragment of multiple values without a surrounding block"
                 (payload1)
-                [any-series? any-sequencable?]
+                [any-series? any-branch? any-sequencable?]
 
 </ANY-LIST?>
 

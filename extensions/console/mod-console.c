@@ -401,12 +401,12 @@ DECLARE_NATIVE(CONSOLE)
             "catch* 'quit* [",  // definitional quit (customized THROW) [4]
                 "sys.contexts.user.quit: sys.util/make-quit:console quit*/",
                 "result': lift eval code",
-            "] then caught -> [",  // QUIT wraps QUIT* to only throw integers
+            "] then (caught -> [",  // QUIT wraps QUIT* to only throw integers
                 "result': caught",  // INTEGER! due to :CONSOLE, out of band
-            "]",
-        "] then warning -> [",
+            "])",
+        "] then (warning -> [",
             "result': warning",  // non-lifted WARNING! out of band
-        "]"
+        "])"
     );
 
 } finished: {  ///////////////////////////////////////////////////////////////

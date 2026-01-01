@@ -27,7 +27,7 @@
                 #{01FF02FF03}
             ] {
                 protect value: copy original
-                sys.util/recover code then e -> [
+                sys.util/recover code then (e -> [
                     any [
                         e.id <> 'series-protected
                         not equal? value original
@@ -37,7 +37,7 @@
                         ; print ["Code:" print mold code]
                         panic e
                     ]
-                ]
+                ])
             }
             return ok
         ]

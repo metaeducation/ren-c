@@ -100,10 +100,10 @@ run-single-test: proc [
         <default> [
             spaced ["was" (to word! type of result) ", not true or false"]
         ]
-    ] then message -> [
+    ] then (message -> [
         .test-failures: me + 1
         log reduce [space -["failed, ]- message -["]- newline]
-    ]
+    ])
 ]
 
 run-test-cluster: proc [
@@ -231,9 +231,9 @@ process-tests: proc [
                 sys.util/recover [
                     handler flags collected
                 ]
-                then error -> [
+                then (error -> [
                     log [space "error:" mold error newline]
-                ]
+                ])
                 else [
                     log [space "success." newline]
                 ]

@@ -1307,11 +1307,11 @@ get-encap: func [
     rebol-path "The executable to search for the encap information in"
         [file!]
 ][
-    read:part rebol-path 1 except e -> [
+    read:part rebol-path 1 except (e -> [
         print [e]
         print ["Can't check for embedded code in Rebol path:" rebol-path]
         return null
-    ]
+    ])
 
     let compressed-data: any [
         elf-format/get-embedding rebol-path,

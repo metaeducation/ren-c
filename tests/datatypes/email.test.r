@@ -53,11 +53,11 @@
                 "LOAD of" mold text "should've been email, was" to word! type
             ]
         ]
-    ] then e -> [
+    ] then (e -> [
         if supported = '+ [
             panic ["Should LOAD" mold text "as an email but couldn't"]
         ]
-    ]
+    ])
 ], ok)
 
 

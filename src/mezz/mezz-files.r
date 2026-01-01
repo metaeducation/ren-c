@@ -225,9 +225,9 @@ ask: func [
             write stdout space  ; space after prompt is implicit
         ]
 
-        let line: read-line stdin except e -> [
+        let line: read-line stdin except (e -> [
             return null  ; escape key pressed, return as null
-        ]
+        ])
 
         if not line [  ; can't happen with interactive console [2]
             return null
@@ -241,7 +241,7 @@ ask: func [
             continue
         ]
 
-        return (make type line except e -> [  ; MAKE is more flexible than TO
+        return make type line except (e -> [  ; MAKE is more flexible than TO
             e.file: null  ; scrub for light printing of error [3]
             e.line: null
             e.where: null

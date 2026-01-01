@@ -211,12 +211,12 @@
         }
     ][
         ; use packs with error instead of RESCUE in MAXMATCH-C
-        ignore [^result1 remainder1 pending1]: parser1 pos except e -> [
+        ignore [^result1 remainder1 pending1]: parser1 pos except (e -> [
             pack [fail e]
-        ]
-        ignore [^result2 remainder2 pending2]: parser2 pos except e -> [
+        ])
+        ignore [^result2 remainder2 pending2]: parser2 pos except (e -> [
             pack [fail e]
-        ]
+        ])
         if error? ^result2 [  ; parser2 didn't succeed
             if error? ^result1 [
                 return ^result1  ; neither succeeded

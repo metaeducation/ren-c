@@ -38,10 +38,10 @@
         let name: f.value
 
         indent: me + 1
-        [^result remainder subpending]: eval f except e -> [
+        [^result remainder subpending]: eval f except (e -> [
             indent: me - 1
             return fail e
-        ]
+        ])
         indent: me - 1
 
         let consumed: copy:part input remainder

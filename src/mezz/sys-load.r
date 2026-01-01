@@ -119,9 +119,7 @@ bind construct [
 
     === TRY TO MATCH PATTERN OF "Rebol [...]" ===
 
-    [hdr rest line]: transcode-header:file data file except e -> [
-        return fail e  ; TRANSCODE choked, wasn't valid at all
-    ]
+    [hdr rest line]: trap transcode-header:file data file
 
     if not hdr [
         ;
@@ -451,9 +449,9 @@ bind construct [
 
     ; If URL is decorated source (syntax highlighting, etc.) get raw form.
     ;
-    (adjust-url-for-raw opt match url! source) then adjusted -> [
+    (adjust-url-for-raw opt match url! source) then (adjusted -> [
         source: adjusted  ; !!! https://forum.rebol.info/t/1582/6
-    ]
+    ])
 
 
     === TREAT (IMPORT 'FILENAME) AS REQUEST TO LOOK LOCALLY FOR FILENAME.R ===
@@ -522,9 +520,9 @@ bind construct [
     ]
 
     let name: select opt hdr 'name
-    (select system.modules opt name) then cached -> [
+    (select system.modules opt name) then (cached -> [
         return pack [cached 'cached]
-    ]
+    ])
 
     ensure [<null> object!] hdr
 

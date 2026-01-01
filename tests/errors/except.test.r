@@ -10,7 +10,7 @@
 (
    x: ~
    all [
-       #X = fail "hello" then [x: #T] else [x: #E] except e -> [x: e, #X]
+       #X = fail "hello" then [x: #T] else [x: #E] except (e -> [x: e, #X])
        warning? x
    ]
 )
@@ -21,5 +21,5 @@
     e.message = "foo"
 )
 (
-    ghost? (^ghost except e -> [<unused>])
+    ghost? (^ghost except (e -> [<unused>]))
 )

@@ -479,9 +479,9 @@ main-startup: func [
             is-script-implicit: 'no  ; must use --script
 
             emit [
-                do (<*> spaced ["Rebol []" param]) except e -> [
+                do (<*> spaced ["Rebol []" param]) except (e -> [
                     sys.contexts.user/quit e.exit-code
-                ]
+                ])
             ]
         )
     |
@@ -553,9 +553,9 @@ main-startup: func [
                 code: as text! code
             ]
             emit [
-                do (<*> spaced ["Rebol []" code]) except e -> [
+                do (<*> spaced ["Rebol []" code]) except (e -> [
                     quit e.exit-code
-                ]
+                ])
             ]
         )
     |
@@ -653,9 +653,9 @@ main-startup: func [
             do (join o.bin %rebol.r)
             append o.loaded (join o.bin %rebol.r)
             loud-print ["Finished evaluating script:" (join o.bin %rebol.r)]
-        ] then e -> [
+        ] then (e -> [
             die:error "Error found in rebol.r script" e
-        ]
+        ])
     ]
 
     ; Evaluate user.r script:
@@ -671,9 +671,9 @@ main-startup: func [
             do join o.resources %user.r
             append o.loaded join o.resources %user.r
             loud-print ["Finished evaluating:" join o.resources %user.r]
-        ] then e -> [
+        ] then (e -> [
             die:error "Error found in user.r script" e
-        ]
+        ])
     ]
 
     let main
@@ -703,9 +703,9 @@ main-startup: func [
         ; showing execution of a main.r if that is found in the encapping.
 
         emit [
-            do (<*> code) except e -> [
+            do (<*> code) except (e -> [
                 quit e.exit-code
-            ]
+            ])
         ]
         quit-when-done: default ['yes]
     ]
@@ -723,9 +723,9 @@ main-startup: func [
     ;
     if match [file! url!] opt o.script [
         emit [
-            (do:args (<*> o.script) (<*> script-args)) except e -> [
+            (do:args (<*> o.script) (<*> script-args)) except (e -> [
                 quit e.exit-code
-            ]
+            ])
         ]
     ]
 

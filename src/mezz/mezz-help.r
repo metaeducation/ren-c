@@ -180,7 +180,7 @@ help-value: proc [
         antiform? ^value [
             panic "Invalid Antiform Heart Found, Please Report:" @atom'
         ]
-    ] then antitype -> [
+    ] then (antitype -> [
         let heart: reify heart of atom
         print [
             (opt name) "is" (an antitype) ["(antiform of" _ @(heart) ")"]
@@ -196,7 +196,7 @@ help-value: proc [
         let [molded truncated]: mold:limit atom' 2000  ; quasiform
         print unspaced [molded (if truncated ["..."]) _ _ "; anti"]
         exit
-    ]
+    ])
 
     value: decay ^value  ; Note: synonym for (value: ^value)
 
@@ -323,10 +323,10 @@ help: func [
         ]
 
         word! tuple! path! [
-            let ^value: get meta topic except e -> [
+            let ^value: get meta topic except (e -> [
                 print form e  ; not bound, etc.
                 exit
-            ]
+            ])
             if action? ^value [
                 help-action:name ^value topic  ; bypass print name
             ] else [

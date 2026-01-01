@@ -173,7 +173,7 @@ DECLARE_NATIVE(READ_STDIN)
     if (Term_IO) {
         return rebDelegate("catch [",
             "throw as blob! opt (",
-                "read-line stdin except e -> [throw fail e]",
+                "read-line stdin except (e -> [throw fail e])",
             ")",
         "]");
     }

@@ -420,10 +420,10 @@ iterate-skip: redescribe [
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
             let result
-            rescue [^result: eval f] then e -> [
+            rescue [^result: eval f] then (e -> [
                 set word f.series
                 panic e
-            ]
+            ])
             set word f.series
             ^result
         ]

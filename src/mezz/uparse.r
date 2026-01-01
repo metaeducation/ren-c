@@ -240,9 +240,9 @@ bind construct [
 
         return: lambda block! [[^value] compose2:deep '{} [  ; ()-composing
             {unrun return/} pack [
-                ^value except e -> [
+                ^value except (e -> [
                     {unrun return/} fail e
-                ]
+                ])
                 {input-name}
                 pending  ; can't change PENDING name at this time
             ]
@@ -385,9 +385,9 @@ default-combinators: make map! [
         parser [action!]
         {^result remainder}
     ][
-        [^result remainder]: parser input except e -> [
+        [^result remainder]: parser input except (e -> [
             return null  ; succeed w/null on parse fail, don't advance input
-        ]
+        ])
         input: remainder  ; advance input
         return ^result  ; return successful parser result
     ]
@@ -399,9 +399,9 @@ default-combinators: make map! [
         parser [action!]
         {^result remainder}
     ][
-        [^result remainder]: parser input except e -> [
+        [^result remainder]: parser input except (e -> [
             return ()  ; succeed w/void on parse fail, don't advance input
-        ]
+        ])
         input: remainder  ; advance input
         return ^result  ; return successful parser result
     ]
@@ -429,9 +429,9 @@ default-combinators: make map! [
         :negated
     ][
         if negated [
-            parser input except e -> [
+            parser input except (e -> [
                 return ~#not~
-            ]
+            ])
             return fail "Negated parser passed to AHEAD succeded"
         ]
         return [{^}]: parser input  ; don't care about parser's remainder
@@ -477,15 +477,15 @@ default-combinators: make map! [
     ][
         append state.loops binding of $return
 
-        [^result input]: parser input except e -> [
+        [^result input]: parser input except (e -> [
             take:last state.loops
             return fail e
-        ]
+        ])
         cycle [  ; if first try succeeds, we'll succeed overall--keep looping
-            [^result input]: parser input except e -> [
+            [^result input]: parser input except (e -> [
                 take:last state.loops
                 return ^result
-            ]
+            ])
         ]
         panic ~#unreachable~
     ]
@@ -837,13 +837,13 @@ default-combinators: make map! [
 
         limit: start
         cycle [
-            [^ remainder]: parser-right limit except e -> [
+            [^ remainder]: parser-right limit except (e -> [
                 if tail? limit [  ; remainder of null
                     return fail e
                 ]
                 limit: next limit
                 continue  ; don't try to assign the `[^ remainder]:`
-            ]
+            ])
             input: remainder
             return copy:part start limit
         ]
@@ -1171,9 +1171,9 @@ default-combinators: make map! [
         collected: copy []
         cycle [
             append collected (
-                [{^} input]: parser input except e -> [
+                [{^} input]: parser input except (e -> [
                     return collected
-                ]
+                ])
             )
         ]
     ]
@@ -1618,9 +1618,9 @@ default-combinators: make map! [
         parser [action!]
         {^r comb subpending}
     ][
-        [^r input pending]: parser input except e -> [
+        [^r input pending]: parser input except (e -> [
             panic e  ; can't use TRAP here, don't want to fail [1]
-        ]
+        ])
 
         if void? ^r [
             return ()
@@ -2500,9 +2500,9 @@ default-combinators: make map! [
 
                 rules: sublimit else [tail of rules]
             ] else [
-                f: make frame! [{_} rules]: parsify state rules except e -> [
+                f: make frame! [{_} rules]: parsify state rules except (e -> [
                     panic e  ; rule WORD! was null, no combinator for type...
-                ]
+                ])
                 f.1: pos  ; PARSIFY specialized STATE in, so input is 1st
             ]
 
@@ -3060,16 +3060,16 @@ parse*: func [
     f.rule-end: null
 
     sys.util/recover:relax [  ; :RELAX allows RETURN from block
-        [^synthesized remainder pending]: eval f except e -> [
+        [^synthesized remainder pending]: eval f except (e -> [
             assert [empty? loops]
             ; pending + remainder + synthesized not assigned, due to error
             return fail e  ; wrappers catch
-        ]
-    ] then e -> [
+        ])
+    ] then (e -> [
         print "!!! HARD FAIL DURING PARSE !!!"
         print mold:limit rules 200
         panic e
-    ]
+    ])
 
     assert [empty? loops]
 
@@ -3151,10 +3151,10 @@ parse-trace-hook: func [
         print ["RULE:" mold spread copy:part f.rule-start f.rule-end]
     ]
 
-    let ^result: eval f except e -> [
+    let ^result: eval f except (e -> [
         print ["RESULT': FAIL"]
         return fail e
-    ]
+    ])
 
     print ["RESULT':" @result]
 

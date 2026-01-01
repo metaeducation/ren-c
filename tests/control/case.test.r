@@ -38,25 +38,15 @@
     ]
 )
 
-; Plain GROUP!s run to generate a branch regardless of if the branch is taken.
-; @GROUP!s only run to generate the branch if it would be taken.
+; GROUP!s only run to generate branch if the branch is taken.
 [
     (3 = case [okay (reduce ['add 1 2])])
     (
-        ran: 'no
-        all [
+        all {
+            ran: 'no
             null? case [null (ran: 'yes, reduce ['add 1 2])]
-            yes? ran
-        ]
-    )
-
-    (3 = case [okay @(reduce ['add 1 2])])
-    (
-        ran: 'no
-        all [
-            null? case [null @(ran: 'yes, reduce ['add 1 2])]
             no? ran
-        ]
+        }
     )
 ]
 

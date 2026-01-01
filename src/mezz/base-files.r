@@ -26,7 +26,7 @@ info?: func [
         return query target
     ]
 
-    let t: write target [HEAD] except e -> [return null]
+    let t: write target [HEAD] except (e -> [return null])
 
     if only [return 'file]
     return make object! [
@@ -139,12 +139,12 @@ make-dir: func [
     for-each 'dir dirs [
         path: if empty? path [dir] else [join path dir]
         append path slash
-        make-dir path except e -> [
+        make-dir path except (e -> [
             for-each 'dir created [
                 sys.util/recover [delete dir]
             ]
             return fail e
-        ]
+        ])
         insert created path
     ]
     return path

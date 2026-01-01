@@ -19,7 +19,7 @@
         value [group?]
         {r comb}
     ][
-        ^r: eval value except e -> [panic e]  ; can't `return fail` for this
+        ^r: eval value except (e -> [panic e])  ; can't `return fail` for this
 
         if void? ^r [  ; like [inline (comment "hi")]
             return ()

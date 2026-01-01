@@ -245,7 +245,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
 //
 //      return: [any-value?]  ; [1]
 //      ^left [any-value?]
-//      @(branch) [<unrun> any-branch?]
+//      @branch [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(EXCEPT)

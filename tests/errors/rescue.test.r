@@ -53,7 +53,7 @@
     rescue [1 / 0] then (warning?/)
 )
 #rescue (
-    rescue [1 / 0] then e -> [warning? e]
+    rescue [1 / 0] then (e -> [warning? e])
 )
 #rescue (
     rescue [] then (func [e] [return <handler-not-run>]) else [okay]
