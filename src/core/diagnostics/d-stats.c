@@ -98,7 +98,7 @@ DECLARE_NATIVE(STATS)
 //  "Provide access to services in <valgrind/callgrind.h>"
 //
 //      return: ~
-//      'instruction [~(on off)~]
+//      'instruction [~[on off]~]
 //  ]
 //
 DECLARE_NATIVE(CALLGRIND)

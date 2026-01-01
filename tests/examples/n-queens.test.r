@@ -138,7 +138,7 @@
 
     solve-n-queens: func [
         return: [
-            ~[integer! block!]~
+            ~(integer! block!)~
             "The number of solutions, and solutions"
 
             integer! "Just the number of solutions if :COUNTONLY"

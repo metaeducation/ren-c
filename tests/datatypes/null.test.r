@@ -41,7 +41,7 @@
 ; was called, in line with the idea of "heavy isotopes".
 [
     ((lift null) = lift null)
-    ('~[~null~]~ = lift heavy null)
+    ('~(~null~)~ = lift heavy null)
 
     (x: heavy 10, 10 = x)
     (x: heavy null, (lift null) = ^x)
@@ -54,18 +54,18 @@
     ((lift ^ghost) = lift light heavy ^ghost)
 ]
 
-; Conditionals return NULL on failure, and ~[~null~]~ antiform on a branch that
-; executes and evaluates to either NULL or ~[~null~]~ antiform.
+; Conditionals return NULL on failure, and ~(~null~)~ antiform on a branch that
+; executes and evaluates to either NULL or ~(~null~)~ antiform.
 [
-    ('~[~null~]~ = lift if ok [null])
-    ('~[~null~]~ = lift if ok [heavy null])
+    ('~(~null~)~ = lift if ok [null])
+    ('~(~null~)~ = lift if ok [heavy null])
     ('~,~ = lift if ok [])
 
     ~illegal-keyword~ !! (if ok [~asdf~])  ; not all keywords legal
     (''~asdf~ = lift if ok ['~asdf~])  ; but okay as quasiforms
 
-    ((lift ^ghost) <> lift ~()~)
-    (not (lift ^ghost) = first [~()~])
+    ((lift ^ghost) <> lift ~[]~)
+    (not (lift ^ghost) = first [~[]~])
     (not (lift ^ghost) = ^ghost)
 ]
 

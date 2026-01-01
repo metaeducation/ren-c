@@ -147,19 +147,13 @@ bind construct [
         ; Get the text description if given
         (if text? spec.1 [spec.1, elide spec: my next])
 
-        ; Enforce a RETURN: definition.  RETURN: [...] is allowed w/no text
+        ; Enforce a RETURN: [...] definition
         (
             assert [spec.1 = 'return:]
-            let [description types]: if block? spec.2 [  ; no description
-                pack [null spec.2]
-                elide spec: my skip 2
-            ] else [
-                pack [ensure text! spec.2, ensure block! spec.3]
-                elide spec: my skip 3
-            ]
-            spread compose:deep [
-                return: (opt description)
-                    [~[(types) any-series? [none? quoted! block!]]~]
+            let types: spec.2
+            spec: my skip 2
+            spread compose2:deep '{} [
+                return: [~({types} any-series? [none? quoted! block!])~]
             ]
         )
 
@@ -1763,20 +1757,20 @@ default-combinators: make map! [
 
     === ANTIFORM COMBINATORS ===
 
-    ; !!! It's not clear how ~[...]~ should act generally, but one idea would
+    ; !!! It's not clear how ~(...)~ should act generally, but one idea would
     ; be that it be a shorthand for PACK:
     ;
     ; https://rebol.metaeducation.com/t/dialecting-quasiforms-in-parse/2379
     ;
-    ; Whether it evaluates the contents or does as-is, ~[]~ would still mean
+    ; Whether it evaluates the contents or does as-is, ~()~ would still mean
     ; "synthesize empty pack" either way.  We introduce it here to bridge
     ; compatibility with old tests.
 
-    '~[]~ combinator [
-        return: [~[]~]
+    '~()~ combinator [
+        return: [~()~]
         input [any-series?]
     ][
-        return ~[]~
+        return ~()~
     ]
 
     keyword! combinator [
@@ -2027,7 +2021,7 @@ default-combinators: make map! [
     ; 2. Evaluatively, if we get a quasiform as the lifted it means it was an
     ;    antiform.  Semantically that's matched by the quasiform combinator,
     ;    which treats source-level quasiforms as if they evaluated to their
-    ;    antiforms, e.g. (parse [a b a b] [some ~(a b)~]) matches the splice.
+    ;    antiforms, e.g. (parse [a b a b] [some ~[a b]~]) matches the splice.
     ;
     ; 3. @PATH! might be argued to have the meaning of "run this function
     ;    on the current item and if the result returns okay, then consider it
@@ -2285,7 +2279,7 @@ default-combinators: make map! [
 
             bitset! []  ; bitsets also legal to lookup
 
-            splice! []  ; e.g. ~()~ opts out of both `rule` and `@item` [3]
+            splice! []  ; e.g. ~[]~ opts out of both `rule` and `@item` [3]
 
             okay?/ [
                 panic "WORD! fetches cannot be ~okay~ in UPARSE (see COND)"
@@ -2547,7 +2541,7 @@ default-combinators: make map! [
             ]
             either ghost? ^subresult [
                 if not can-vanish [
-                    ^result: ~[]~  ; heavy void
+                    ^result: ~()~  ; heavy void
                 ]
             ][
                 ^result: ^subresult  ; overwrite only if not ghost
@@ -2633,9 +2627,11 @@ comment [combinatorize: func [
     "Specialize arity-N combinator to build arity-1 parser just taking INPUT"
 
     return: [
-        ~[action! block!]~  "Parser function, and advanced rules position"
+        ~(
+            action! "Parser function"
+            block! "Advanced rules position"
+        )~
     ]
-
     combinator [frame!]
     rules [block!]
     state [frame!]
@@ -2808,9 +2804,11 @@ parsify: func [
     "Transform one step's worth of rules into a parser action"
 
     return: [
-        ~[action! block!]~  "Arity-1 parser, and advanced rules position"
+        ~(
+            action! "Arity-1 parser"
+            block! "advanced rules position"
+        )~
     ]
-
     state "Parse state"
         [frame!]
     rules "Parse rules to (partially) convert to a combinator action"
@@ -3008,9 +3006,10 @@ parse*: func [
     "Process as much of the input as parse rules consume (see also PARSE)"
 
     return: [
-        ~[any-value? [none? quoted! block!]]~
-        "Synthesized value from last match rule, and any pending values"
-
+        ~(
+            any-value? "Synthesized value from last match rule"
+            [none? quoted! block!] "Any pending values"
+        )~
         error! "error if no match"
     ]
     input "Input data"

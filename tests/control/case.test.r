@@ -20,14 +20,14 @@
     null? case []  ; maybe useful (e.g. as COMPOSE product)
 )
 (
-    '~[~null~]~ = lift case [
+    '~(~null~)~ = lift case [
         okay [null]  ; turned to heavy null pack so ELSE won't run
         null [1 + 2]
     ]
 )
 
 [#2246 (
-    '~[~null~]~ = lift case [okay [null]]  ; branch was taken (vs. null)
+    '~(~null~)~ = lift case [okay [null]]  ; branch was taken (vs. null)
 )(
     '~,~ = lift case [okay []]
 )]

@@ -336,7 +336,7 @@ typedef enum {
     //     a is 3
     //
     //     >> foo pack [1 2]
-    //     a is ~['1 '2]~
+    //     a is ~('1 '2)~
     //
     PARAMCLASS_META,
 

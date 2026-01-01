@@ -5,7 +5,7 @@
 
 ((the '3) = lift 1 + 2)
 
-('~[~null~]~ = lift if ok [null])
+('~(~null~)~ = lift if ok [null])
 
 ((lift null) = lift null)
 

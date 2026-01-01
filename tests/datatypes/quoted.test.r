@@ -8,11 +8,11 @@
     (quoted! = type of first ['''10])
     (integer! = heart of first ['''10])
 
-    (quasiform! = type of first [~()~])
-    (group! = heart of first [~()~])
+    (quasiform! = type of first [~[]~])
+    (group! = heart of first [~[]~])
 
-    (quoted! = type of first ['~()~])
-    (group! = heart of first ['~()~])
+    (quoted! = type of first ['~[]~])
+    (group! = heart of first ['~[]~])
 ]
 
 (
@@ -121,12 +121,12 @@
 )
 
 
-(ghost? ~[]~)
+(ghost? ~,~)
 (ghost? ^ghost)
 (ghost? eval [^ghost])
 (ghost? (eval [^ghost]))
-(ghost? eval [~[]~])
-(ghost? eval [, ~[]~,])
+(ghost? eval [~,~])
+(ghost? eval [, ~,~,])
 (ghost? eval [1 + 2, ^ghost])
 
 (
@@ -248,7 +248,7 @@
         ("try library here")
         _
         |
-        ~(_)~
+        ~[_]~
     ] {
         e1: e2: equal1: equal2: ~
 
@@ -283,7 +283,7 @@
 (
     x: ~
     all [
-        quasi? x: '~()~
+        quasi? x: '~[]~
         quasi? get meta $x
     ]
 )

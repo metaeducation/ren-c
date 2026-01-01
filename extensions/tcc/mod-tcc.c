@@ -322,7 +322,7 @@ static bool Pending_Native_Details_Querier(
 //
 //  "Make ACTION! from C source, compiled on-demand or by COMPILE function"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      spec "Rebol parameter definitions (similar to FUNCTION's spec)"
 //          [block!]
 //      source "C source of the native implementation"

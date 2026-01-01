@@ -70,10 +70,10 @@
 ; e.g. TWO can be a shorthand for SKIP 2
 [
     ('a = parse [a] [one])
-    (~(a a)~ = parse [a a] [two])
-    (~(a a a)~ = parse [a a a] [three])
-    (~(a a a a)~ = parse [a a a a] [four])
-    (~(a a a a a)~ = parse [a a a a a] [five])
+    (~[a a]~ = parse [a a] [two])
+    (~[a a a]~ = parse [a a a] [three])
+    (~[a a a a]~ = parse [a a a a] [four])
+    (~[a a a a a]~ = parse [a a a a a] [five])
 
     ~parse-mismatch~ !! (parse [] [three])
     ~parse-mismatch~ !! (parse [a] [three])

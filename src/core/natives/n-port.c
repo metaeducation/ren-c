@@ -113,7 +113,7 @@ DECLARE_NATIVE(CLOSE)
 //          block! "READ:LINES returned BLOCK!"
 //          port! "asynchronous READ on PORT!s returned the PORT!"
 //          tuple! "READ:DNS returned tuple!"
-//          ~(~halt~)~ "!!! If READ is Ctrl-C'd in nonhaltable API calls"
+//          ~[~halt~]~ "!!! If READ is Ctrl-C'd in nonhaltable API calls"
 //      ]
 //      source [port! file! url! block!]
 //      :part "Partial read a given number of units (source relative)"
@@ -138,8 +138,8 @@ DECLARE_NATIVE(READ)
 //
 //  "Writes to a file, URL, or port - auto-converts text strings"
 //
-//      return: [port! block! ~(#stdout)~]  ; !!! http write returns BLOCK (?)
-//      destination [port! file! url! block! ~(#stdout)~]
+//      return: [port! block! ~[#stdout]~]  ; !!! http write returns BLOCK (?)
+//      destination [port! file! url! block! ~[#stdout]~]
 //      data "Data to write (non-binary converts to UTF-8)"
 //          [blob! text! block! object! rune!]
 //      :part "Partial write a given number of units"

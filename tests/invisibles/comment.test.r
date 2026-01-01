@@ -80,8 +80,8 @@
     (<kept> obj.x:,)
 )
 
-('~[]~ = lift (if ok [] else [<else>]))
-('~[]~ = lift (if ok [comment <true-branch>] else [<else>]))
+('~()~ = lift (if ok [] else [<else>]))
+('~()~ = lift (if ok [comment <true-branch>] else [<else>]))
 
 
 ; GROUP!s "vaporize" if they are empty or invisible, but can't be used as

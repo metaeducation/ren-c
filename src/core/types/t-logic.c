@@ -190,7 +190,7 @@ DECLARE_NATIVE(YESNO_Q)
 //  "Tests if word is the word TRUE (errors if not TRUE or FALSE)"
 //
 //      return: [logic?]
-//      word [~(true false)~]
+//      word [~[true false]~]
 //  ]
 //
 DECLARE_NATIVE(TRUE_Q)
@@ -207,7 +207,7 @@ DECLARE_NATIVE(TRUE_Q)
 //  "Tests if value is the word FALSE (errors if not TRUE or FALSE)"
 //
 //      return: [logic?]
-//      word [~(true false)~]
+//      word [~[true false]~]
 //  ]
 //
 DECLARE_NATIVE(FALSE_Q)
@@ -223,7 +223,7 @@ DECLARE_NATIVE(FALSE_Q)
 //
 //  "The word TRUE if the condition is a branch trigger, otherwise FALSE"
 //
-//      return: [~(true false)~]
+//      return: [~[true false]~]
 //      value [any-stable?]
 //  ]
 //
@@ -244,7 +244,7 @@ DECLARE_NATIVE(BOOLEAN)
 //  "Tests if word is the word YES (errors if not YES or NO)"
 //
 //      return: [logic?]
-//      word [~(yes no)~]
+//      word [~[yes no]~]
 //  ]
 //
 DECLARE_NATIVE(YES_Q)
@@ -261,7 +261,7 @@ DECLARE_NATIVE(YES_Q)
 //  "Tests if value is the word NO (errors if not YES or NO)"
 //
 //      return: [logic?]
-//      word [~(yes no)~]
+//      word [~[yes no]~]
 //  ]
 //
 DECLARE_NATIVE(NO_Q)
@@ -277,7 +277,7 @@ DECLARE_NATIVE(NO_Q)
 //
 //  "The word YES if the condition is a branch trigger, otherwise NO"
 //
-//      return: [~(yes no)~]
+//      return: [~[yes no]~]
 //      condition [any-stable?]
 //  ]
 //
@@ -298,7 +298,7 @@ DECLARE_NATIVE(TO_YESNO)
 //  "Tests if word is the word ON (errors if not ON or OFF)"
 //
 //      return: [logic?]
-//      word [~(on off)~]
+//      word [~[on off]~]
 //  ]
 //
 DECLARE_NATIVE(ON_Q)
@@ -315,7 +315,7 @@ DECLARE_NATIVE(ON_Q)
 //  "Tests if value is the word OFF (errors if not ON or OFF)"
 //
 //      return: [logic?]
-//      word [~(on off)~]
+//      word [~[on off]~]
 //  ]
 //
 DECLARE_NATIVE(OFF_Q)
@@ -331,7 +331,7 @@ DECLARE_NATIVE(OFF_Q)
 //
 //  "The word ON if the condition is a branch trigger, otherwise OFF"
 //
-//      return: [~(on off)~]
+//      return: [~[on off]~]
 //      condition [any-stable?]
 //  ]
 //

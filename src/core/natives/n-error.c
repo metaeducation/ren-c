@@ -87,21 +87,13 @@ DECLARE_NATIVE(ENRECOVER)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. We prime the evaluator with nihil so (enrecover [comment "hi"]) and
-    //    (enrecover []) will return a ~[]~ empty block antiform.  This is
-    //    because a key early use of ENRESCUE is in the console, and the
-    //    console wishes to give the user the clearest feedback on what
-    //    is going on.  It may be that there should be an option that decays
-    //    that to void, and maybe even that should be the default, but at
-    //    time of writing serving the needs of the console is most important.
-
     require (
       Level* L = Make_Level_At(
         &Evaluator_Executor,
         code,
         LEVEL_FLAG_AFRAID_OF_GHOSTS  // EVAL-like semantics?
     ));
-    Init_Ghost(Evaluator_Primed_Cell(L));  // able to produce nihil [1]
+    Init_Ghost(Evaluator_Primed_Cell(L));
 
     Push_Level_Erase_Out_If_State_0(OUT, L);
 

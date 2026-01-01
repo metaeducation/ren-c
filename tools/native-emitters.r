@@ -198,13 +198,13 @@ export emit-include-params-macro: func [
     replace spec "@" -[]-  ; @WORD! would be invalid EMAIL! [1]
     replace spec "$" -[]-  ; $WORD! would be invalid MONEY! [1]
     replace spec "^^" caret-surrogate  ; ^WORD! would just be invalid [1]
-    replace spec "~(" ""  ; stop ~(on off)~ from becoming "~on off~"
-    replace spec ")~" ""
+    replace spec "~[" ""  ; stop ~[on off]~ from becoming "~on off~"
+    replace spec "]~" ""
     replace spec "(" ""  ; make escapable @(foo) just be @foo [1]
     replace spec ")" ""
     replace spec "{" ""  ; load {local1 local2} as local1 local2 [1]
     replace spec "}" ""
-    replace spec "#" ""  ; stop ~(#foo)~ from becoming ~#foo~
+    replace spec "#" ""  ; stop ~[#foo]~ from becoming ~#foo~
 
     spec: transcode:one spec
 

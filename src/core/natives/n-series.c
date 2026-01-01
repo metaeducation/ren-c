@@ -90,13 +90,13 @@ static bool Part_Limit_Append_Insert(Option(Stable*) part_arg) {
 // 2. Using a SPLICE! to provide a conscious count of how many items to
 //    change is straightforward:
 //
-//        change [a b c] ~(d e)~ => [d e c]
+//        change [a b c] ~[d e]~ => [d e c]
 //
 //    But do notice that in string or binary cases, the actual amount of
 //    material that is spliced in may may be more than the :PART length, e.g.
 //    a PART=3 change of "abc" here splices in "ghijkl":
 //
-//        change "abcdef" ~(g "hi" jkl)~ => "ghijkldef"
+//        change "abcdef" ~[g "hi" jkl]~ => "ghijkldef"
 //
 static REBLEN Guess_Part_Len_For_Change_May_Coerce(
     const Element* series,
@@ -570,7 +570,7 @@ DECLARE_NATIVE(AT)
 //  "Searches for the position where a matching value is found"
 //
 //      return: [
-//          ~[any-series? any-series?]~
+//          ~(any-series? any-series?)~
 //          "position found and tail of find"
 //
 //          <null> "if not found"

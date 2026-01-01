@@ -232,7 +232,7 @@ bool Lambda_Details_Querier(
 //
 //  "Make an anonymous function that doesn't define a local RETURN"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      spec [block! datatype!]
 //      @(body) [block! fence!]
 //  ]
@@ -278,7 +278,7 @@ DECLARE_NATIVE(LAMBDA)
 //
 //  "Declares divergent function (will PANIC if it reaches the end of body)"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      spec [block! datatype!]
 //      @(body) [block! fence!]
 //  ]

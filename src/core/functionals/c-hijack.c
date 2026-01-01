@@ -288,7 +288,7 @@ DECLARE_NATIVE(UNIMPLEMENTED)
 //
 //  "Make victim references run another frame, return new identity for victim"
 //
-//      return: [~[action!]~ frame!]
+//      return: [~(action!)~ frame!]
 //      victim "Frame whose inherited instances are to be affected"
 //          [action! frame!]
 //      hijacker "The frame to run in its place (void to leave TBD)"

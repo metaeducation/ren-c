@@ -107,7 +107,7 @@ module: func [
     "Creates a new module (used by both IMPORT and DO)"
 
     return: [
-        ~[module! any-value?]~
+        ~(module! any-value?)~
         "Module and meta-result (may be error) of running the body"
     ]
     spec "The header block of the module (modified)"

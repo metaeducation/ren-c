@@ -236,7 +236,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
             continue;  // dual signal, do not lift dual
         }
 
-        if (Is_Any_Lifted_Void(TOP_STABLE)) {  // (x: ~[]~) or (x: ())
+        if (Is_Any_Lifted_Void(TOP_STABLE)) {  // (x: ~()~) or (x: ())
             Init_Void_For_End(value_arg);  // both act like (^x: ())
             Lift_Cell(value_arg);
             continue;
@@ -246,7 +246,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_To_Top_Put_Writeback_Dual_In_Spare(
             Is_Lifted_Pack(TOP_ELEMENT) and Series_Len_At(TOP_ELEMENT) == 1
         );
 
-        if (was_singular_pack) {  // alias hack: allow (alias: ~[^word]~)
+        if (was_singular_pack) {  // alias hack: allow (alias: ~(^word)~)
             const Element* at = List_Item_At(TOP_ELEMENT);
             if (Is_Dual_Meta_Alias_Signal(at)) {
                 Copy_Cell(value_arg, at);

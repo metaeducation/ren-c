@@ -132,7 +132,7 @@
     flag: 'true
     <complete> = catch [
         while [okay] [
-            ~()~
+            ~[]~
             if true? flag [flag: 'false, continue]
             if null [panic]
             throw <complete>

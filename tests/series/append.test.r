@@ -130,7 +130,7 @@
 
     ([a b c '[3 d e]] = append [a b c] lift compose [(1 + 2) d e])
 
-    ([a b c ~[]~] = append [a b c] lift ^ghost)
+    ([a b c ~()~] = append [a b c] lift ^ghost)
 
     (
         [a b c ~null~] = append [a b c] lift null
@@ -193,7 +193,7 @@
 ; BLANK acts like an empty block when passed to SPREAD
 [
     ([a b] = append [a b] spread second [c []])
-    ([a b] = append [a b] spread degrade second [c ~()~])
+    ([a b] = append [a b] spread degrade second [c ~[]~])
 
     ~bad-value~ !! (
         [a b] = append [a b] spread second [c ~]
@@ -201,11 +201,11 @@
 ]
 
 ; Quasiforms were once tried out as accepted by spread as a convenience,
-; as opposed to erroring, but ~[]~ seems inconsistent with other PACK!
+; as opposed to erroring, but ~()~ seems inconsistent with other PACK!
 ; handling... and maybe it's not the best idea.  Review.
 [
-    ~invalid-arg~ !! ([a b] = append [a b] spread second [c ~[]~])
     ~invalid-arg~ !! ([a b] = append [a b] spread second [c ~()~])
+    ~invalid-arg~ !! ([a b] = append [a b] spread second [c ~[]~])
 ]
 
 ([abc def ghi jkl mno] = append:part [abc def] spread [ghi jkl mno pqr] 3)

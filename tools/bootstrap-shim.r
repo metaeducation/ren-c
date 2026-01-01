@@ -279,7 +279,7 @@ space?: func3 [x] [
     return (x = space) or (x = _)
 ]
 
-blank: blank?: ~#[No BLANK/BLANK? ~()~ in Bootstrap, Use SPACE/SPACE?]#~
+blank: blank?: ~#[No BLANK/BLANK? in Bootstrap, Use SPACE/SPACE?]#~
 
 set the ____ "    "  ; can use multiple spaces
 set the __ "  "

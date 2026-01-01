@@ -166,7 +166,7 @@ DECLARE_NATIVE(RECYCLE)
 //  "Set a usage limit only once (used for SECURE)"
 //
 //      return: ~
-//      field [~(eval memory)~]
+//      field [~[eval memory]~]
 //      limit [any-number?]
 //  ]
 //

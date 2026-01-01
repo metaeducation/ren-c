@@ -513,7 +513,7 @@ void Get_Padding_And_Hash_From_Spec(
 //  "Generate a public and private key for encoding at most NUM-BITS of data"
 //
 //      return: [
-//          ~[object! object!]~ "RSA [public private] key objects in pack"
+//          ~(object! object!)~ "RSA [public private] key objects in pack"
 //      ]
 //      num-bits "How much data this key can encrypt (less when not [raw])"
 //          [integer!]

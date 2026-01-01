@@ -12,31 +12,31 @@
 ; BLOCK! will match the block literally.
 
 (
-    rule: ~("a" b #c)~
+    rule: ~["a" b #c]~
     rule = parse ["a" b #c] [rule]
 )(
-    rule: ~("a" b #c)~
+    rule: ~["a" b #c]~
     rule = parse "abc" [rule]
 )(
-    rule: ~(#{AA} #{BB} #{CC})~
+    rule: ~[#{AA} #{BB} #{CC}]~
     rule = parse #{AABBCC} [rule]
 )
 
 (
-    rule: ~("a" b #c)~
+    rule: ~["a" b #c]~
     rule = parse ["a" b #c] [@rule]
 )(
-    rule: ~("a" b #c)~
+    rule: ~["a" b #c]~
     rule = parse "abc" [@rule]
 )(
-    rule: ~(#{AA} #{BB} #{CC})~
+    rule: ~[#{AA} #{BB} #{CC}]~
     rule = parse #{AABBCC} [@rule]
 )
 
-(~()~ = parse [a] ['a none])
-(~()~ = parse "a" ["a" none])
-(~()~ = parse #{AA} [#{AA} none])
+(~[]~ = parse [a] ['a none])
+(~[]~ = parse "a" ["a" none])
+(~[]~ = parse #{AA} [#{AA} none])
 
-(~()~ = parse [a] ['a @none])
-(~()~ = parse "a" ["a" @none])
-(~()~ = parse #{AA} [#{AA} @none])
+(~[]~ = parse [a] ['a @none])
+(~[]~ = parse "a" ["a" @none])
+(~[]~ = parse #{AA} [#{AA} @none])

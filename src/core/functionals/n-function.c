@@ -467,7 +467,7 @@ Bounce Make_Interpreted_Action(
 //
 //  "Generates an ACTION! with RETURN capability"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      spec [block! datatype!]
 //      @(body) [block! fence!]
 //  ]
@@ -497,7 +497,7 @@ DECLARE_NATIVE(FUNCTION)
 //
 //  "Variation of FUNCTION that will always return TRASH!"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      spec [block! datatype!]
 //      @(body) [block! fence!]
 //  ]

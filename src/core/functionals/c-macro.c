@@ -214,7 +214,7 @@ bool Inliner_Details_Querier(
 //
 //  "Makes function that generates code to splice into the execution stream"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      spec [block! datatype!]
 //      @(body) [block! fence!]
 //  ]

@@ -19,14 +19,14 @@
 
 ; !!! Review HEAVY VOID behavior
 [
-    (heavy-void: ~[]~)
+    (heavy-void: ~()~)
 
-    ~???~ !! (parse [a b] ['a ~[]~ 'b])
+    ~???~ !! (parse [a b] ['a ~()~ 'b])
     ~???~ !! (parse [a b] ['a @heavy-void 'b])
     ~???~ !! (parse [a b] ['a @(^heavy-void) 'b])
     ~???~ !! (parse [a b] ['a @[(^heavy-void)] 'b])
 
-    ~???~ !! (parse [a b] ['a 'b ~[]~])
+    ~???~ !! (parse [a b] ['a 'b ~()~])
     ~???~ !! (parse [a b] ['a 'b @heavy-void])
     ~???~ !! (parse [a b] ['a 'b @(^heavy-void)])
     ~???~ !! (parse [a b] ['a 'b @[(^heavy-void)]])
@@ -51,11 +51,11 @@
 
 [
     (
-        splice: ~(a b)~
-        obj: make object! [splice: ~(a b)~]
+        splice: ~[a b]~
+        obj: make object! [splice: ~[a b]~]
         ok
     )
-    (splice = parse [a b a b] [some ~(a b)~])
+    (splice = parse [a b a b] [some ~[a b]~])
     ~???~ !! (parse [a b a b] [some splice])  ; disallowed case for WORD!
     (splice = parse [a b a b] [some @splice])
     (splice = parse [a b a b] [some @obj.splice])

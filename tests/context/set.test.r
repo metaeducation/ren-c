@@ -41,7 +41,7 @@
     b: 20
     c: 30
     did all [
-        '~[~null~ '99]~ = lift [a b c]: pack [null 99]  ; too few values
+        '~(~null~ '99)~ = lift [a b c]: pack [null 99]  ; too few values
         a = null
         b = 99
         unset? $c
@@ -75,7 +75,7 @@
 (
     a: ~ b: ~
     all [
-        '~['10 '20]~ = lift set [a b] pack [10 20]
+        '~('10 '20)~ = lift set [a b] pack [10 20]
         a = 10
         b = 20
     ]
@@ -84,4 +84,4 @@
 ((the '10) = lift set _ 10)
 ((the '10) = lift set _ pack [10 20])
 ((the '10) = lift set '^ 10)
-('~['10 '20]~ = lift set '^ pack [10 20])
+('~('10 '20)~ = lift set '^ pack [10 20])

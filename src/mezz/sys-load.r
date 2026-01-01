@@ -40,9 +40,11 @@ transcode-header: func [
     "Try to match a data blob! as being a script, fail if not"
 
     return: [
-        ~[[<null> block!] [<null> blob!] [integer!]]~
-        "[header rest line]"
-
+        ~(
+            [<null> block!] "header"
+            [<null> blob!] "rest"
+            integer! "line"
+        )~
         error! "Missing `Rebol [...]` at start of data"
     ]
     data [blob!]
@@ -96,8 +98,12 @@ load-header: func [
     "Loads script header object and body binary (not loaded)"
 
     return: [
-        ~[[<null> object!] [blob! text!] [<null> integer!] blob!]~
-        "header OBJECT! if present [hdr body line final], and next position"
+        ~(
+            [<null> object!] "header object if present"
+            [blob! text!] "body"
+            [<null> integer!] "line"
+            blob! "next position"
+        )~
     ]
     source "Source code (text! will be UTF-8 encoded)"
         [blob! text!]
@@ -233,9 +239,10 @@ load: func [
     "Loads code or data from a file, URL, text string, or binary"
 
     return: [
-        ~[element? [<null> object!]]~
-        "BLOCK! if Rebol code (or codec value) plus optional header"
-
+        ~(
+            element? "BLOCK! if Rebol code (or codec value)"
+            [<null> object!] "optional header"
+        )~
         <null>
     ]
     source "Source of the information being loaded"
@@ -381,11 +388,15 @@ import*: func [
     "Imports a module; locate, load, make, and setup its bindings"
 
     return: [
-        ~[module! ~(executed)~ any-value?]~
-        "Loaded module and evaluative product (if not previously loaded)"
-
-        ~[module! ~(cached registered nameless)~]~
-        "Previously loaded module"
+        ~(
+            module! "module if not previously loaded"
+            ~[executed]~
+            any-value? "evaluative product"
+        )~
+        ~(
+            module! "module if previously loaded"
+            ~[cached registered nameless]~
+        )~
     ]
     where "Where to put exported definitions from SOURCE"
         [<opt> module!]

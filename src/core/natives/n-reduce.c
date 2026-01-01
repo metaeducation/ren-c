@@ -271,7 +271,7 @@ DECLARE_NATIVE(REDUCE)
 //
 //      return: [
 //          any-value?      "last body result (if not NULL)"
-//          ~[<null>]~      "if last body result was NULL"
+//          ~(<null>)~      "if last body result was NULL"
 //          <null>          "if BREAK encountered"
 //          ghost!           "if body never ran"
 //      ]

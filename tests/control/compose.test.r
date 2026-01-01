@@ -11,7 +11,7 @@
 ; Preserve one element rule vs. tolerate vaporization.
 ;
 ([~null~ *] = compose [(reify null) * (opt null)])
-([~[]~ *] = compose [(lift ^ghost) * (^ghost)])
+([~,~ *] = compose [(lift ^ghost) * (^ghost)])
 
 ; Voids vaporize regardless of form.
 
@@ -147,7 +147,7 @@
 
 ; Decorating voids or comments grafts decorations onto SPACE
 ;
-([@ $ ^ ' ~] = compose [@(nihil) $(^ghost) ^() '(elide 1) ~(~[]~)~])
+([@ $ ^ ' ~] = compose [@(nihil) $(^ghost) ^() '(elide 1) ~(~()~)~])
 
 
 ; COMPOSE no longer tries to convert set-forms
@@ -213,8 +213,8 @@
         [<a> (if ok [^ghost]) <b>]
         predicate: cascade [eval/ reify/]
     ])
-    ([<a>] = compose [<a> (~()~)])  ; "BLANK"
-    ([<a>] = compose [<a> (~[]~)])  ; "VOID"
+    ([<a>] = compose [<a> (~[]~)])  ; "NONE"
+    ([<a>] = compose [<a> (~()~)])  ; "VOID"
 ]
 
 [

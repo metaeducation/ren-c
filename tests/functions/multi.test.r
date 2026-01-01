@@ -5,7 +5,7 @@
 ; Assigning empty block passes things through undisturbed
 [
     (10 = []: 10)
-    (~['10 '20]~ = []: pack [10 20])
+    (~('10 '20)~ = []: pack [10 20])
     (error? []: fail "HI")
 ]
 
@@ -81,7 +81,7 @@
 
 [
     (
-        foo: func [return: [~[integer! integer!]~] arg] [
+        foo: func [return: [~(integer! integer!)~] arg] [
             return pack [20 10]
         ]
         null? insist [[{_} _]: foo break]
@@ -143,7 +143,7 @@
     )
 
     (
-        foo: func [return: [~[integer! integer!]~]] [
+        foo: func [return: [~(integer! integer!)~]] [
             return pack [20 10]
         ]
         all {
@@ -154,7 +154,7 @@
     )
 
     (
-        foo: func [return: [~[integer! integer!]~]] [
+        foo: func [return: [~(integer! integer!)~]] [
             return pack [20 10]
         ]
         all {
@@ -227,13 +227,13 @@
 
 [
     (
-        '~(a b c)~ = lift decay [x]: spread [a b c]
+        '~[a b c]~ = lift decay [x]: spread [a b c]
     )
     (
-        '~(a b c)~ = lift [{_}]: spread [a b c]
+        '~[a b c]~ = lift [{_}]: spread [a b c]
     )
     (
-        '~(a b c)~ = lift decay [_]: spread [a b c]  ; definitive behavior TBD
+        '~[a b c]~ = lift decay [_]: spread [a b c]  ; definitive behavior TBD
     )
 ]
 

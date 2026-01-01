@@ -17,7 +17,7 @@
 
 ; quasiforms are reified values and hence conditionally truthy
 ;
-(did first [~()~])
+(did first [~[]~])
 
 (
     valid: ["~abc~" "~a|b~"]
@@ -93,11 +93,11 @@
 ]
 
 [
-    (did foo: func [return: [any-stable?]] [return ~()~])
+    (did foo: func [return: [any-stable?]] [return ~[]~])
 
     (none? foo)
     (not ghost? foo)
-    ('~()~ = lift foo)
+    ('~[]~ = lift foo)
 
     (none? applique foo/ [])
     (none? eval foo/)
@@ -236,11 +236,11 @@
     (okay? unlift:lite okay)
 
     ~expect-arg~ !! (
-        unlift:lite ~(a b c)~
+        unlift:lite ~[a b c]~
     )
 
     ~???~ !! (
-        unlift:lite '~(a b c)~
+        unlift:lite '~[a b c]~
     )
     (splice? unlift:lite the (a b c))
     (pack? unlift:lite ['1 '2])

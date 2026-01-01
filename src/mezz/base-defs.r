@@ -159,7 +159,7 @@ elide-if-heavy-void: vanishable func [
     ^value "Evaluation product to be ignored"
         [any-value?]  ; ghost! is passed through
 ][
-    if '~[]~ = lift ^value [return ()]
+    if '~()~ = lift ^value [return ()]
     return ^value
 ]
 

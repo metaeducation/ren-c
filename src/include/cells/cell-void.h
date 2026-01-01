@@ -1,6 +1,6 @@
 //
 //  file: %cell-void.h
-//  summary: "Unstable Antiform State of ~[]~ Used For Opting Out"
+//  summary: "Unstable Antiform State of ~()~ Used For Opting Out"
 //  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  homepage: https://github.com/metaeducation/ren-c/
 //
@@ -20,13 +20,13 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// BLOCK! antiforms are known as PACK!, and used as a mechanism for bundling
+// GROUP! antiforms are known as PACK!, and used as a mechanism for bundling
 // values so they can be passed as a single value.  They are leveraged in
 // particular for multi-return, because a SET-WORD! will unpack only the
 // first item, while a SET-BLOCK! will unpack others.
 //
 //      >> pack [<a> <b>]
-//      == ~['<a> '<b>]~  ; anti
+//      == \~('<a> '<b>)~\  ; antiform (pack!)
 //
 //      >> x: pack [<a> <b>]
 //      == <a>
@@ -42,7 +42,7 @@
 //
 
 INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
-    Init_Any_List_At_Core_Untracked(out, TYPE_BLOCK, a, 0, SPECIFIED);
+    Init_Any_List_At_Core_Untracked(out, TYPE_GROUP, a, 0, SPECIFIED);
     Unstably_Antiformize_Unbound_Fundamental(out);
     assert(Is_Pack(out));
     return out;
@@ -53,7 +53,7 @@ INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
 
 #define Init_Lifted_Pack(out,a) \
     TRACK(Quasify_Isotopic_Fundamental(Init_Any_List_At_Core_Untracked( \
-        (out), TYPE_BLOCK, (a), 0, SPECIFIED)))
+        (out), TYPE_GROUP, (a), 0, SPECIFIED)))
 
 
 //=//// "HEAVY VOID" (EMPTY PACK! ANTIFORM) ///////////////////////////////=//
@@ -74,7 +74,7 @@ INLINE bool Is_Heavy_Void(Exact(const Value*) v) {
 
 INLINE Element* Init_Lifted_Heavy_Void_Untracked(Sink(Element) out) {
     Init_Any_List_At_Core_Untracked(
-        out, TYPE_BLOCK, g_empty_array, 0, SPECIFIED
+        out, TYPE_GROUP, g_empty_array, 0, SPECIFIED
     );
     Quasify_Isotopic_Fundamental(out);
     return out;

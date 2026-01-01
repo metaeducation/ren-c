@@ -37,7 +37,7 @@
 //     == [, 10 + 20]  ; new position, but produced 3 as product
 //
 //     >> [x ^y]: eval:step [, 10 + 20]
-//     == \~['[] ~,~]~\  ; leading commas are ignored in an eval step
+//     == \~('[] ~,~)~\  ; leading commas are ignored in an eval step
 //
 // (Although internally, if the evaluator knows you're not debugging, it will
 // silently skip through the commas without yielding an evaluative product.)
@@ -125,7 +125,7 @@ INLINE Value* Init_Ghost_Untracked(Init(Value) out) {
 // too few values, as this is more useful than erroring in the moment:
 //
 //     >> [a b c]: pack [1 2]
-//     == \~['1 '2]~\  ; antiform
+//     == \~('1 '2)~\  ; antiform
 //
 //     >> a
 //     == 1

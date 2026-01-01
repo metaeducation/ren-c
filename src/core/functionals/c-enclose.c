@@ -212,7 +212,7 @@ bool Encloser_Details_Querier(
 //
 //  "Wrap code around a frame with access to its instance and return value"
 //
-//      return: [~[action!]~ frame!]
+//      return: [~(action!)~ frame!]
 //      inner "Frame to be copied, then passed to OUTER"
 //          [action! frame!]
 //      outer "Gets a FRAME! for INNER before invocation, can EVAL it (or not)"

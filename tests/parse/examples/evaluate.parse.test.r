@@ -19,7 +19,7 @@
 
 (
     keeper-saver: func [
-        return: [~[block! block!]~]
+        return: [~(block! block!)~]
         input [block!]
         {mode value saved}
     ][

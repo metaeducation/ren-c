@@ -146,12 +146,12 @@ export console!: make object! [
         ; was in a pack.  This hints the user to do a ^META on the value to
         ; see the complete pack.
         ;
-        ; 0-length packs (~[]~ antiform, "heavy void") mold like antiforms.
+        ; 0-length packs (~()~ antiform, "heavy void") mold like antiforms.
 
         if pack? ^v [
-            if '~[]~ = lift ^v [  ; mold like a regular antiform, for now
+            if '~()~ = lift ^v [  ; mold like a regular antiform, for now
                 print unspaced [
-                    result _ --[\~[]~\  ; antiform (pack!) "heavy void"]--
+                    result _ --[\~()~\  ; antiform (pack!) "heavy void"]--
                 ]
                 exit
             ]
@@ -171,7 +171,7 @@ export console!: make object! [
 
             if (len = 1) and (action? opt ^v) [  ; SET-WORD-assignable action
                 print unspaced [
-                    "\~[" (mold lift ^v) "]~\"
+                    "\~(" (mold lift ^v) ")~\"
                         _ --[; antiform (pack!) "action-pack"]--
                 ]
                 exit
@@ -212,7 +212,7 @@ export console!: make object! [
 
         if none? ^v [
             print unspaced [
-                result _ --[\~()~\  ; antiform (splice!) "none"]--
+                result _ --[\~[]~\  ; antiform (splice!) "none"]--
             ]
             exit
         ]
@@ -338,7 +338,7 @@ export console!: make object! [
         return: [
             text!           "one line of text"
             <null>          "signal no input available"
-            ~(~escape~)~    "signal cancellation"
+            ~[~escape~]~    "signal cancellation"
         ]
         <.>
     ][
@@ -537,7 +537,7 @@ console*: func [
         <opt>       "no result for a previous request if first call"
     ]
     resumable "Is the RESUME function allowed to exit this console"
-        [~(yes no)~]
+        [~[yes no]~]
     skin "Console skin to use if the console has to be launched"
         [<opt> object! file!]
     {.}

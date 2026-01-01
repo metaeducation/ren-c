@@ -24,33 +24,6 @@
 // for the typical interpretation of BLOCK! or GROUP!, in terms of giving
 // sequences like `x: 1 + 2` a meaning for how SET-WORD! or INTEGER! behaves.
 //
-// It may return a DUAL_0 signal for unset.  That's because it's necessary for
-// functions like EVAL:STEP to know when there is no result to return.
-//
-// Consider:
-//
-//    eval:step [1 + 2, void]
-//       => new position [, void]
-//       => synthesized result is 3
-//
-//    eval:step [, void]
-//       => new position []
-//       => synthesized result is unstable ~[]~ antiform
-//
-//    eval:step []
-//       => null (no position, no synthesized result)
-//
-// By the same token:
-//
-//    eval:step [, , ,]
-//       => null (no position, no synthesized result)
-//
-// To provide the fundamental information that EVAL:STEP needs, there has to
-// be a way to return something to indicate "no synthesized result" that is
-// completely out of band of all possible expression evaluation results.
-// Rather than awkwardly make all states ^META with an unlifted value to
-// represent nothing, this uses DUAL_0 to return a *unset* result.
-//
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * Stepper_Executor() is LONG.  That's largely on purpose.  Breaking it
@@ -616,10 +589,10 @@ Bounce Stepper_Executor(Level* L)
     // should not perform further reduction:
     //
     //    >> pack [1 + 2 10 + 20]
-    //    == ~['3 '30]~  ; anti
+    //    == ~('3 '30)~  ; anti
     //
     //    >> pack @[1 + 2 10 + 20]
-    //    == ~['1 '+ '2 '10 '+ '20]~  ; anti
+    //    == ~('1 '+ '2 '10 '+ '20)~  ; anti
     //
     // It also helps in cases like:
     //
@@ -824,12 +797,12 @@ Bounce Stepper_Executor(Level* L)
     // Produces a PACK! of what it is given:
     //
     //    >> ^[1 + 2 null]
-    //    == ~['3 ~null~]~  ; anti
+    //    == ~('3 ~null~)~  ; anti
     //
     // This is the most useful meaning, and it round trips the values:
     //
     //    >> ^[a b]: ^[1 + 2 null]
-    //    == ~['3 ~null~]~
+    //    == ~('3 ~null~)~
     //
     //    >> a
     //    == 3

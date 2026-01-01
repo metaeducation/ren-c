@@ -62,11 +62,11 @@
     ; voids and nulls as-is, to serve as the signal for breaking or opting out
     ; of contributing to the final loop result:
     ;
-    ;     >> lift ^ghost
-    ;     == ~[]~
+    ;     >> lift ()
+    ;     == ~,~
     ;
-    ;     >> lift:lite ^ghost
-    ;     == ~[]~  ; anti
+    ;     >> lift:lite ()
+    ;     == \~,~\  ; antiform (ghost!) "void"
     ;
 
 
@@ -106,17 +106,17 @@
     ])
 
     ; It's not possible to return a "pure NULL" otherwise.  But the existence
-    ; of ~[~null~]~ antiforms permit a non-break-signaling construct that
+    ; of ~(~null~)~ antiforms permit a non-break-signaling construct that
     ; carries semantic intent of a "there's an answer and it is null"
 
     ([1 2 3 4] = collect [
         let result': ~
         assert [
-            '~[~null~]~ = result': lift for-both 'x [1 2] [3 4] [
+            '~(~null~)~ = result': lift for-both 'x [1 2] [3 4] [
                 keep x
                 null
             ]
-            result' = '~[~null~]~
+            result' = '~(~null~)~
         ]
     ])
 
@@ -131,12 +131,12 @@
         ]
     ])
 
-    ; The contract of returning VOID is preserved when no loop bodies
+    ; The contract of returning GHOST! is preserved when no loop bodies
     ; run, as both FOR-EACH in the ALL have their contributions erased
     ; and effectively leave behind an `all []`.  Ren-C's working definition
-    ; (motivated by this kind of example) is that should produce a VOID
+    ; (motivated by this kind of example) is that should produce a GHOST!
     ; as well.  Technical reasons besides this scenario lead it to be favorable
-    ; for UNMETA:LITE to be willing to take VOID and return it as-is instead
+    ; for UNMETA:LITE to be willing to take GHOST! and return it as-is instead
     ; of raising an error, and that plays to our advantage here.
 
     (ghost? for-both 'x [] [] [panic "Body Never Runs"])
@@ -160,18 +160,7 @@
         ]
     ])
 
-    ; FOR-BOTH provides a proof of why this is the case:
-    ;
-    ;     >> for-each 'x [1 2] [if x = 2 [continue]]
-    ;     == ~  ; anti
-    ;
-    ; Plain void is reserved for "loop didn't run", and we do not want
-    ; a loop that consists of just CONTINUE to lie and say the body of the
-    ; loop didn't run.  It forces our hand to return something else to
-    ; convey a void intent.  "Heavy voids" would be undecayable (~[~[]~]~)
-    ; so we fall back on trash for this edge case.
+    (heavy-void? for-both 'x [1 2] [3 4] [if x > 2 [continue] x * 10])
 
-    (trash? for-both 'x [1 2] [3 4] [if x > 2 [continue] x * 10])
-
-    (trash? for-both 'x [1 2] [3 4] [comment "Maintain invariant!"])
+    (heavy-void? for-both 'x [1 2] [3 4] [comment "Maintain invariant!"])
 ]

@@ -702,11 +702,11 @@ Result(None) Decorate_Element(const Element* decoration, Element* element)
 //      return: [element?]
 //      decoration [  ; TBD: create DECORATION? type constraint
 //          <opt> "give back value as-is"
-//          ~(@ ^ $ ~)~ "sigils on SPACE character act as proxy for sigilizing"
-//          ~(. : /)~ "words as proxies for leading-blank sequence decoration"
-//          ~(^. ^: ^/)~ "meta-word proxies"
-//          ~(@. @: @/)~ "pinned-word proxies"
-//          ~($. $: $/)~ "tied-word proxies"
+//          ~[@ ^ $ ~]~ "sigils on SPACE character act as proxy for sigilizing"
+//          ~[. : /]~ "words as proxies for leading-blank sequence decoration"
+//          ~[^. ^: ^/]~ "meta-word proxies"
+//          ~[@. @: @/]~ "pinned-word proxies"
+//          ~[$. $: $/]~ "tied-word proxies"
 //          quoted! "allows things like [' '' ''' '@ ''^ ''$] etc."
 //          parameter! "apply parameter decoration rules as in spec dialect"
 //          error! "if decoration is invalid for the value"
@@ -741,11 +741,11 @@ DECLARE_NATIVE(DECORATE)
 //      return: [element?]
 //      decoration [  ; TBD: create DECORATION? type constraint
 //          <opt> "give back value as-is"
-//          ~(@ ^ $ ~)~ "sigils on SPACE character act as proxy for sigilizing"
-//          ~(. : /)~ "words as proxies for leading-blank sequence decoration"
-//          ~(^. ^: ^/)~ "meta-word proxies"
-//          ~(@. @: @/)~ "pinned-word proxies"
-//          ~($. $: $/)~ "tied-word proxies"
+//          ~[@ ^ $ ~]~ "sigils on SPACE character act as proxy for sigilizing"
+//          ~[. : /]~ "words as proxies for leading-blank sequence decoration"
+//          ~[^. ^: ^/]~ "meta-word proxies"
+//          ~[@. @: @/]~ "pinned-word proxies"
+//          ~[$. $: $/]~ "tied-word proxies"
 //          quoted! "allows things like [' '' ''' '@ ''^ ''$] etc."
 //          parameter! "apply parameter decoration rules as in spec dialect"
 //          error! "if decoration is invalid for the value"
@@ -779,8 +779,8 @@ DECLARE_NATIVE(REDECORATE)
 //  "Give back the decoration of a value as per DECORATE"
 //
 //      return: [
-//          ~(@ ^ $ ~)~ "sigils on SPACE character act as proxy for sigils"
-//          ~(. : /)~ "words as proxies for leading-blank sequences"
+//          ~[@ ^ $ ~]~ "sigils on SPACE character act as proxy for sigils"
+//          ~[. : /]~ "words as proxies for leading-blank sequences"
 //          quoted! "quotes are in decoration, like [' '' ''' '@ ''^ ''$] etc."
 //          <null> "if none of the above decorations are present"
 //      ]

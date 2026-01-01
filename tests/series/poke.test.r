@@ -7,7 +7,7 @@
 (
     list: [a b c]
     all [
-        ~(d e f)~ = list.2: spread [d e f]
+        ~[d e f]~ = list.2: spread [d e f]
         list = [a d e f c]
     ]
 )

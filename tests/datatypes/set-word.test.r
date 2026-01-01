@@ -64,15 +64,15 @@
 (
     obj: make object! [field: ~]
     all [
-        '~['10 '20]~ = lift set:groups $($obj.field) pack [10 20]
+        '~('10 '20)~ = lift set:groups $($obj.field) pack [10 20]
         (the '10) = lift ^obj.field
     ]
 )
 (
     obj: make object! [field: ~]
     all [
-        '~['10 '20]~ = lift set:groups $(meta $obj.field) pack [10 20]
-        '~['10 '20]~ = lift ^obj.field
+        '~('10 '20)~ = lift set:groups $(meta $obj.field) pack [10 20]
+        '~('10 '20)~ = lift ^obj.field
     ]
 )
 ~???~ !! (

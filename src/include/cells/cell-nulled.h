@@ -38,13 +38,13 @@
 // null to a void, with ? as a shorthand:
 //
 //    >> opt find [c d] 'e
-//    == \~[]~\  ; antiform
+//    == \~,~\  ; antiform (ghost!) "void"
 //
 //    >> append [a b] opt find [c d] 'e
-//    == [a b]
+//    == \~null~\  ; antiform
 //
 //    >> append [a b] ? find [c d] 'e
-//    == [a b]
+//    == \~null~\  ; antiform
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -141,14 +141,17 @@ INLINE bool Is_Lifted_Null(const Value* v) {
 // this gives the right behavior *most* of the time...while being distinct
 // enough that ELSE & THEN can react to them as signals the branch was taken.
 //
-//     >> x: ~[~null~]~
-//     == ~null~  ; anti
+//     >> x: ~(~null~)~
+//     == \~(~null~)~\  ; antiform (pack!) "heavy null"
+//
+//     >> x
+//     == \~null~\  ; antiform
 //
 //     >> if ok [null]
-//     == ~[~null~]~  ; anti (heavy null)
+//     == \~(~null~)~\  ; antiform (pack!) "heavy null"
 //
 //     >> if ok [null] else [print "This won't run"]
-//     == ~[~null~]~  ; anti (heavy null)
+//     == \~(~null~)~\  ; antiform (pack!) "heavy null"
 //
 
 #define Init_Heavy_Null_Untracked(out) \

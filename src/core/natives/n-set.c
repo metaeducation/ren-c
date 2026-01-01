@@ -67,7 +67,7 @@
 // multiple return values.  It unpacks antiform blocks into components.
 //
 //     >> pack [1 2]
-//     == ~['1 '2]~  ; anti
+//     == ~('1 '2)~  ; anti
 //
 //     >> [a b]: pack [1 2]
 //     == 1
@@ -82,7 +82,7 @@
 // can be marked with a leading colon to get null instead of unset:
 //
 //     >> [a b]: pack [1]
-//     == ~['1]~
+//     == ~('1)~
 //
 //     >> b
 //     ** PANIC: b is unset
@@ -153,7 +153,7 @@ Result(bool) Push_Set_Block_Instructions_To_Stack_Throws(
   // to pick a specific unpacked result as the return.
   //
   //     >> [a b]: pack [1 2]
-  //     == ~['1 '2]~  ; anti
+  //     == ~('1 '2)~  ; anti
   //
   //     >> [a {b}]: pack [1 2]
   //     == 2

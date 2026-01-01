@@ -138,11 +138,11 @@
 )
 (
     obj: make object! [^field: pack [10 20]]  ; meta assign
-    '~['10 '20]~ = lift get:groups $(meta $obj.field)  ; meta get
+    '~('10 '20)~ = lift get:groups $(meta $obj.field)  ; meta get
 )
 ~???~ !! (
     obj: make object! [^field: pack [10 20]]  ; meta assign
-    '~['10 '20]~ = lift get:groups $($obj.field)  ; plain get
+    '~('10 '20)~ = lift get:groups $($obj.field)  ; plain get
 )
 ~???~ !! (
     name: 10
@@ -154,9 +154,9 @@
 (null? get:groups ^ghost)
 (null? get:groups (^ghost))
 
-('~['1 '2]~ = lift get ['1 '2])
+('~('1 '2)~ = lift get ['1 '2])
 (
     a: 10
     b: 20
-    '~['10 '20]~ = lift get [a b]
+    '~('10 '20)~ = lift get [a b]
 )

@@ -1016,7 +1016,7 @@ DECLARE_NATIVE(INFIX_Q)
 //
 //  "For functions that gets 1st argument from left, e.g (/+: infix get $add)"
 //
-//      return: [~[action!]~ frame!]
+//      return: [~(action!)~ frame!]
 //      action [action! frame!]
 //      :off "Give back a non-infix version of the passed in function"
 //      :defer "Allow one full expression on the left to evaluate"
@@ -1057,7 +1057,7 @@ DECLARE_NATIVE(INFIX)
 //
 //  "Make function's invocation not turn GHOST! results to empty PACK!"
 //
-//      return: [~[action!]~ frame!]
+//      return: [~(action!)~ frame!]
 //      action [action! frame!]
 //      :off "Give back non-vanishable version of the passed in function"
 //  ]
@@ -1280,7 +1280,7 @@ DECLARE_NATIVE(ANY_WORD_Q)
 //
 //  none?: native:intrinsic [
 //
-//  "Tells you if argument is an ~()~ antiform, e.g. an empty splice"
+//  "Tells you if argument is an ~[]~ antiform, e.g. an empty splice"
 //
 //      return: [logic?]
 //      value
@@ -1445,7 +1445,7 @@ DECLARE_NATIVE(HEAVY)
 //
 //  heavy-null?: native:intrinsic [
 //
-//  "Determine if argument is the heavy form of NULL, ~[~null~]~ antiform"
+//  "Determine if argument is the heavy form of NULL, ~(~null~)~ antiform"
 //
 //      return: [logic?]
 //      ^value [any-value?]

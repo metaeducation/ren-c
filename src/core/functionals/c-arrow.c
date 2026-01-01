@@ -30,9 +30,9 @@
 // can also use a quasiform of block to unpack the arguments:
 //
 //     case [
-//         true [pack [10 + 20, 3 + 4]]  ; makes antiform ~['30 '7]~
+//         true [pack [10 + 20, 3 + 4]]  ; makes antiform ~('30 '7)~
 //         ...
-//     ] then (~[a b]~ -> [
+//     ] then (~(a b)~ -> [
 //         assert [a = 30, b = 7]
 //     ])
 //
@@ -146,7 +146,7 @@ bool Arrow_Details_Querier(
 //
 //  "Makes an anonymous function that doesn't copy its body, can unpack args"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      spec "Names of arguments"
 //          [_ word! 'word! ^word! :word! block!]
 //      body [<const> block!]

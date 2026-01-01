@@ -393,7 +393,7 @@ INLINE Heart Heart_Of_Singleheart(SingleHeart single) {
 INLINE bool Is_Stable_Antiform_Kind_Byte(KindByte kind_byte) {
     assert((kind_byte / MOD_HEART_64) == 0);  // antiforms don't have sigils
     return (
-        kind_byte != cast(KindByte, TYPE_BLOCK)  // Is_Pack()
+        kind_byte != cast(KindByte, TYPE_GROUP)  // Is_Pack()
         and kind_byte != cast(KindByte, TYPE_WARNING)  // Is_Error()
         and kind_byte != cast(KindByte, TYPE_COMMA)  // Is_Ghost()
     );

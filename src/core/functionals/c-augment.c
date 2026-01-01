@@ -62,7 +62,7 @@
 //
 //  "Create an action variant that acts the same, but has added parameters"
 //
-//      return: [~[action!]~ frame!]
+//      return: [~(action!)~ frame!]
 //      original "Frame whose implementation is to be augmented"
 //          [action! frame!]
 //      spec "Spec dialect for words to add to the derived function"

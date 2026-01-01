@@ -232,7 +232,7 @@ comma!        "separator between full evaluations"
 <ANY-LIST?>
 
     block!      "list of elements that blocks evaluation unless EVAL is used"
-    ~pack!~:U   "multi-return that decays to first item, empty is HEAVY VOID"
+    ~splice!~   "fragment of multiple values without a surrounding container"
                 (payload1)
                 [any-series? any-branch? any-sequencable?]
 
@@ -242,7 +242,7 @@ comma!        "separator between full evaluations"
                 [any-series? any-branch? any-sequencable?]
 
     group!      "list that evaluates expressions as an isolated group"
-    ~splice!~   "fragment of multiple values without a surrounding block"
+    ~pack!~:U   "multi-return that decays to first item, empty is HEAVY VOID"
                 (payload1)
                 [any-series? any-branch? any-sequencable?]
 

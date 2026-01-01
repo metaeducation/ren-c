@@ -13,7 +13,7 @@
 )
 
 ((lift null) = lift switch 2 [1 []])
-('~[~null~]~ = lift switch 1 [1 [null]])
+('~(~null~)~ = lift switch 1 [1 [null]])
 
 (
     cases: reduce [1 head of insert copy [] rescue [1 / 0]]

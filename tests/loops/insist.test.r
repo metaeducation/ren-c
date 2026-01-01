@@ -60,7 +60,7 @@
 ; decayed to run that test.
 [
     (1 = insist [pack [1 2]])
-    ('~['1 '2]~ = insist [lift pack [1 2]])
+    ('~('1 '2)~ = insist [lift pack [1 2]])
 ]
 
 [

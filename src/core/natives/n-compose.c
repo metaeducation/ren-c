@@ -401,7 +401,7 @@ Bounce Composer_Executor(Level* const L)
 
         if (list_lift_byte != NOQUOTE_2) {
             if (list_lift_byte & QUASI_BIT)
-                panic ("Can't COMPOSE antiforms into ~(...)~ slots");
+                panic ("Can't COMPOSE antiforms into ~[...]~ slots");
 
             Copy_Lifted_Cell(PUSH(), OUT);
             LIFT_BYTE(TOP) = list_lift_byte;
@@ -472,7 +472,7 @@ Bounce Composer_Executor(Level* const L)
   //    feature of quoting composition slots lifts the decayed result:
   //
   //        >> compose [a: ~null~ b: '(spread [c 'd])]
-  //        == [a: ~null~ b: ~(c 'd)~]
+  //        == [a: ~null~ b: ~[c 'd]~]
   //
   //    This is far more useful than something like distributing the quotes
   //    across the spliced items, which would be very odd:

@@ -10,7 +10,7 @@
 
     ((the '10) = detector 10)
     ((lift null) = detector null)
-    ('~[~null~]~ = detector if ok [null])
+    ('~(~null~)~ = detector if ok [null])
 
     ('~,~ = detector (comment "hi"))
     (tripwire? detector)

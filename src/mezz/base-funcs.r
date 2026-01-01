@@ -133,7 +133,7 @@ change-dir: func [  ; This can be HIJACK'd by a "smarter" version
 redescribe: func [
     "Mutate action description with new title and/or new argument notes"
 
-    return: [~[action!]~ frame!]
+    return: [~(action!)~ frame!]
     spec "Either a string description, or a spec block"
         [block!]
     action "(modified) Action whose description is to be updated"

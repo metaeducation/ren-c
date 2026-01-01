@@ -383,7 +383,7 @@ Byte* Decompress_Alloc_Core(  // returned pointer can be rebRepossessed() [1]
 //      return: [
 //          blob! "Little-endian format of 4-byte CRC-32"
 //      ]
-//      method [~(adler32 crc32)~]
+//      method [~[adler32 crc32]~]
 //      data "Data to encode (using UTF-8 if TEXT!)"
 //          [blob! text!]
 //      :part "Length of data"
@@ -461,7 +461,7 @@ DECLARE_NATIVE(CHECKSUM_CORE)
 //      :part "Length of data (elements)"
 //          [integer! blob! text!]
 //      :envelope "ZLIB (adler32, no size) or GZIP (crc32, uncompressed size)"
-//          [~(zlib gzip)~]
+//          [~[zlib gzip]~]
 //  ]
 //
 DECLARE_NATIVE(DEFLATE)
@@ -512,7 +512,7 @@ DECLARE_NATIVE(DEFLATE)
 //      :max "Error out if result is larger than this"
 //          [integer!]
 //      :envelope "ZLIB, GZIP, or DETECT (http://stackoverflow.com/a/9213826)"
-//          [~(zlib gzip detect)~]
+//          [~[zlib gzip detect]~]
 //  ]
 //
 DECLARE_NATIVE(INFLATE)

@@ -79,13 +79,13 @@
 ; receive the value it is decayed, so they do not have to be ^META.  But if
 ; they *are* ^META then the true state is passed through.
 [
-    (~[~null~]~ then (x -> [(lift ^x) = '~null~]))
-    (~[~null~]~ then (^x -> [(lift ^x) = '~[~null~]~]))
-    ('~[~null~]~ then (x -> [^x = '~[~null~]~]))
-    ('~[~null~]~ then (^x -> [^x = '~[~null~]~]))
+    (~(~null~)~ then (x -> [(lift ^x) = '~null~]))
+    (~(~null~)~ then (^x -> [(lift ^x) = '~(~null~)~]))
+    ('~(~null~)~ then (x -> [^x = '~(~null~)~]))
+    ('~(~null~)~ then (^x -> [^x = '~(~null~)~]))
 
-    (catch [~[~null~]~ also (x -> [throw ((lift ^x) = '~null~)])])
-    (catch [~[~null~]~ also (^x -> [throw ((lift ^x) = '~[~null~]~)])])
+    (catch [~(~null~)~ also (x -> [throw ((lift ^x) = '~null~)])])
+    (catch [~(~null~)~ also (^x -> [throw ((lift ^x) = '~(~null~)~)])])
     (catch ['~null~ also (^x -> [throw (^x = '~null~)])])
 ]
 

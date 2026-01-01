@@ -80,7 +80,7 @@ Result(Element*) Transcode_One(
 //
 //      return: [
 //          block!                      "Transcoded elements block"
-//          ~[[text! blob!] element?]~  "[remainder element] if :NEXT"
+//          ~([text! blob!] element?)~  "(remainder element) if :NEXT"
 //          <null>                      "if :NEXT but no more elements"
 //          element?                    "if :ONE used"
 //          error!                      "scanner error if encountered"

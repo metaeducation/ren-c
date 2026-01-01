@@ -77,8 +77,8 @@ run-single-test: proc [
             spaced ["did not error, but expected:" @(quasi expected-id)]
         ]
 
-        '~[]~ = result [
-            "test returned empty pack ~[]~ antiform"  ; UNMETA panics
+        '~()~ = result [
+            "test returned empty pack ~()~ antiform"  ; UNLIFT panics
         ]
         (elide if pack? ^result [result: first unquasi result])
 
@@ -246,7 +246,10 @@ export do-recover: func [
     "Executes tests in the FILE and recovers from crash"
 
     return: [
-        ~[file! text!]~  "log file, and textual summary of results"
+        ~(
+            file! "log file"
+            text! "textual summary of results"
+        )~
     ]
     file [file!] "test file"
     flags [block!] "which flags to accept"

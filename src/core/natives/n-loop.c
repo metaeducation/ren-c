@@ -176,7 +176,7 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 // throw, like `throw:name value continue/`.
 //
 // 1. How CONTINUE with no argument acts is up to the loop construct to
-//    interpret.  e.g. MAP-EACH, it acts like CONTINUE:WITH ~()~.  We throw
+//    interpret.  e.g. MAP-EACH, it acts like CONTINUE:WITH ~[]~.  We throw
 //    the non-valued VOID state to allow for the custom interpretation.
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
@@ -625,7 +625,7 @@ DECLARE_NATIVE(CFOR)
 //      return: [
 //          any-stable?     "last body result"
 //          <null>          "if BREAK encountered"
-//          ~[<null>]~      "if body result was NULL"
+//          ~(<null>)~      "if body result was NULL"
 //      ]
 //      word [word! @word! _]
 //      series [<opt> none? any-series?]
@@ -1260,7 +1260,7 @@ void Shutdown_Loop_Each(Stable* iterator)
 //
 //      return: [
 //          any-stable?     "last body result (if not NULL)"
-//          ~[<null>]~      "if last body result was NULL"
+//          ~(<null>)~      "if last body result was NULL"
 //          <null>          "if BREAK encountered"
 //          ghost!           "if body never ran"
 //      ]
@@ -1396,7 +1396,7 @@ DECLARE_NATIVE(FOR_EACH)
 //
 //      return: [
 //          any-stable?     "last body result (if not NULL)"
-//          ~[<null>]~      "if last body result was NULL"
+//          ~(<null>)~      "if last body result was NULL"
 //          <null>          "if any body eval was NULL, or BREAK encountered"
 //          ghost!           "if body never ran"
 //      ]
@@ -1545,7 +1545,7 @@ DECLARE_NATIVE(EVERY)
 //
 //  "Removes values for each body evaluation that's not null, modifies input"
 //
-//      return: [<null> ~[[none? any-series?] integer!]~]
+//      return: [<null> ~([none? any-series?] integer!)~]
 //      @(vars) "Word or block of words to set each time, no new var if $word"
 //          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data "The series to traverse (modified)"
@@ -2143,7 +2143,7 @@ DECLARE_NATIVE(MAP)
 //
 //      return: [
 //          any-stable?     "last body result (if not NULL)"
-//          ~[<null>]~      "if last body result was NULL"
+//          ~(<null>)~      "if last body result was NULL"
 //          <null>          "if BREAK encountered"
 //          ghost!           "if body never ran"
 //      ]
@@ -2247,7 +2247,7 @@ DECLARE_NATIVE(REPEAT)
 //
 //      return: [
 //          any-stable?     "last body result (if not NULL)"
-//          ~[<null>]~      "if last body result was NULL"
+//          ~(<null>)~      "if last body result was NULL"
 //          <null>          "if BREAK encountered"
 //          ghost!           "if body never ran"
 //      ]

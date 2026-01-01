@@ -28,7 +28,7 @@
             let m: adjunct-of f
             keep reify all [m, m.description]
 
-            let keep-param: lambda [k [word! ~(return:)~] p [parameter!]] [
+            let keep-param: lambda [k [word! ~[return:]~] p [parameter!]] [
                 keep reduce [k (reify p.spec) (reify p.text)]
             ]
             keep-param 'return: (return of f)
@@ -80,9 +80,9 @@
 ; Literal parameter checking
 [
     (
-        foo: func [control [~(on off)~]] [return control]
-        bar: func [decoration [~([*] (()))~]] [return decoration]
-        baz: func [evil [~(~mojo~ ~jojo~ ~(mojo jojo)~)~]] [return evil]
+        foo: func [control [~[on off]~]] [return control]
+        bar: func [decoration [~[[*] (())]~]] [return decoration]
+        baz: func [evil [~[~mojo~ ~jojo~ ~[mojo jojo]~]~]] [return evil]
         ok
     )
 
@@ -97,6 +97,6 @@
 
     ('~mojo~ = baz '~mojo~)
     ('~jojo~ = baz '~jojo~)
-    ('~(mojo jojo)~ = baz lift spread [mojo jojo])
+    ('~[mojo jojo]~ = baz lift spread [mojo jojo])
     ~expect-arg~ !! (baz lift spread [jojo mojo])
 ]

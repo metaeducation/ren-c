@@ -162,7 +162,7 @@
     m: to map! [key <initial>]
     all [
         m.key = <initial>
-        elide m.key: ~[]~
+        elide m.key: ~()~
         null? try m.key
     ]
 )

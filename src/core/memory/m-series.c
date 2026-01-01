@@ -356,13 +356,13 @@ void Remove_Any_Series_Len(Element* v, Index index, REBINT len)
           Length tail = Modify_String_Or_Blob(
             temp,
             ST_MODIFY_CHANGE,
-            LIB(NONE),  // e.g. erase content (empty splice, ~()~ antiform)
+            LIB(NONE),  // e.g. erase content (empty splice, ~[]~ antiform)
             UNLIMITED,
             (not AM_LINE),
             &len,
             1  // dups
         ));
-        assert(tail == index);  // CHANGE to ~()~ antiform gives same index
+        assert(tail == index);  // CHANGE to ~[]~ antiform gives same index
         UNUSED(tail);
     }
     else  // ANY-LIST? is more straightforward

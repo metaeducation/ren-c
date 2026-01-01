@@ -168,7 +168,7 @@ bool Adapter_Details_Querier(
 //
 //  "Create a variant of an action that preprocesses its arguments"
 //
-//      return: [~[action!]~ frame!]
+//      return: [~(action!)~ frame!]
 //      original "Code to be run after the prelude is complete"
 //          [action! frame!]
 //      prelude "Code to run in constructed frame before adaptee runs"

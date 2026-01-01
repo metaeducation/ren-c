@@ -655,7 +655,7 @@ Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
 //
 //      return: [
 //          any-value?             "will be decayed if not ^META input"
-//          ~[@block! any-value?]~ "Give :STEPS as well as the result value"
+//          ~(@block! any-value?)~ "Give :STEPS as well as the result value"
 //          error!                 "Passthru even it skips the assign"
 //      ]
 //      target "Word or tuple or path, or calculated sequence steps (from GET)"

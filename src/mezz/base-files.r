@@ -39,7 +39,7 @@ info?: func [
 
 exists?: func [
     "Returns the type of a file or URL if it exists, otherwise null"
-    return: [<null> ~(file dir)~]  ; should return logic, FILETYPE OF separate
+    return: [<null> ~[file dir]~]  ; should return logic, FILETYPE OF separate
     target [<opt-out> file! url!]
 ][
     if space? target [return null]  ; https://forum.rebol.info/t/954
@@ -195,8 +195,8 @@ file-type?: lambda [
 ]
 
 split-path: lambda [  ; :FILE used in bootstrap vs. multi-return
-    "Splits and returns ~[directory filename]~ (either may be null)"
-    []: [~[[<null> file! url!] [<null> file! url!]]~]
+    "Splits and returns ~(directory filename)~ (either may be null)"
+    []: [~([<null> file! url!] [<null> file! url!])~]
 
     target [file! url!]
     :relax "Allow filenames to be . and .."

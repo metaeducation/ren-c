@@ -50,10 +50,10 @@ save: func [
     value "Value(s) to save"
         [<const> element?]
     :header "Provide REBOL header block/object, or INCLUDED if in value"
-        [block! object! ~(included)~]
+        [block! object! ~[included]~]
     :length "Save the length of the script content in the header"
     :compress "Detect from header if not supplied"  ; weird old feature [1]
-        [~(none raw base64)~]
+        [~[none raw base64]~]
 ][
     ; Special datatypes use codecs directly (e.g. PNG image file):
     all [

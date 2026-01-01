@@ -862,7 +862,7 @@ INLINE void Native_Branched_Result(Level* L, Value* v) {
 //   while [true? flag] [flag: 'false, null]
 //
 // We don't want that to evaluate to NULL--because NULL is reserved for a
-// break signal.  So we make a ~[~null~]~ "heavy null" antiform PACK!.
+// break signal.  So we make a ~(~null~)~ "heavy null" antiform PACK!.
 //
 // Also, returning VOID is reserved for if-and-only-if the loop never ran.
 // That's crucial for implementing loop compositions that give correct result

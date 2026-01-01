@@ -90,7 +90,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Fundamental)  // catch-all for ExtraHeart*
 //  "Converts value to a REBOL-readable string"
 //
 //      return: [
-//          ~[text! [<null> integer!]]~
+//          ~(text! [<null> integer!])~
 //          "source string, and if truncated returns integer :LIMIT"
 //
 //          <null> "when input is void"

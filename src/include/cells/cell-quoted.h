@@ -133,14 +133,14 @@ INLINE Count Noquotify(Element* elem) {
 //     >> append [a b c] [d e]
 //     == [a b c [d e]]
 //
-//     >> ~(d e)~
-//     == \~(d e)~\  ; antiform (splice!)
+//     >> ~[d e]~
+//     == \~[d e]~\  ; antiform (splice!)
 //
-//     >> append [a b c] ~(d e)~
+//     >> append [a b c] ~[d e]~
 //     == [a b c d e]
 //
-//     >> append [a b c] '~(d e)~
-//     == [a b c ~(d e)~]
+//     >> append [a b c] '~[d e]~
+//     == [a b c ~[d e]~]
 //
 // As demonstrated, the reified QUASIFORM! and the non-reified ANTIFORM! work
 // in concert to solve the problem.
@@ -200,7 +200,7 @@ INLINE bool Is_Antiform_Unstable(const Value* a) {
     assert(LIFT_BYTE(a) == ANTIFORM_1);
     impossible(0 != (a->header.bits & CELL_MASK_SIGIL));  // kind = heart [1]
     return (
-        KIND_BYTE(a) == TYPE_BLOCK  // Is_Pack()
+        KIND_BYTE(a) == TYPE_GROUP  // Is_Pack()
         or KIND_BYTE(a) == TYPE_WARNING  // Is_Error()
         or KIND_BYTE(a) == TYPE_COMMA  // Is_Ghost()
     );
@@ -212,7 +212,7 @@ INLINE bool Is_Lifted_Unstable_Antiform(const Value* a) {
         return false;
     possibly(0 != (a->header.bits & CELL_MASK_SIGIL));  // we're testing [1]
     return (
-        KIND_BYTE(a) == TYPE_BLOCK  // Is_Pack()
+        KIND_BYTE(a) == TYPE_GROUP  // Is_Pack()
         or KIND_BYTE(a) == TYPE_WARNING  // Is_Error()
         or KIND_BYTE(a) == TYPE_COMMA  // Is_Ghost()
     );
@@ -241,7 +241,7 @@ INLINE bool Not_Cell_Stable(Exact(const Value*) a) {
     return (
         masked == (FLAG_HEART(TYPE_WARNING) | FLAG_LIFT_BYTE(ANTIFORM_1))
         or masked == (FLAG_HEART(TYPE_COMMA) | FLAG_LIFT_BYTE(ANTIFORM_1))
-        or masked == (FLAG_HEART(TYPE_BLOCK) | FLAG_LIFT_BYTE(ANTIFORM_1))
+        or masked == (FLAG_HEART(TYPE_GROUP) | FLAG_LIFT_BYTE(ANTIFORM_1))
     );
 }
 

@@ -406,7 +406,7 @@ bool Specialize_Action_Throws(
 //
 //  "Create a new action through partial or full specialization of another"
 //
-//      return: [~[action!]~ frame!]
+//      return: [~(action!)~ frame!]
 //      operation [action! frame!]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 ref: refine1]"
 //          [block!]

@@ -76,7 +76,7 @@ needs:              "this script needs $1 $2 or better to run correctly"
 
 ] script: [  ; ===============================================================
 
-no-value:           "No value in antiform BLOCK! pack: ~[]~ (VOID)"
+no-value:           "No value in antiform GROUP! pack: ~()~ (heavy void)"
 bad-null:           "$1 cannot be null"
 bad-word-get:       "$1 is $2 antiform (see ^^(...) and GET:ANY)"
 bad-antiform:       "Invalid use of $1 antiform"

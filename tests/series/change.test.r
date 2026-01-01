@@ -128,12 +128,12 @@
 )
 
 (
-    change x: "abcdef" ~(g "hi" jkl)~
+    change x: "abcdef" ~[g "hi" jkl]~
     x = "ghijkldef"
 )
 
 (
-    change x: [a b c] ~(d e)~
+    change x: [a b c] ~[d e]~
     x = [d e c]
 )
 

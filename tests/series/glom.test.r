@@ -2,10 +2,10 @@
 ;
 ; Optimized operation for accumulation.
 
-(~()~ = glom ~()~ ~()~)
+(~[]~ = glom ~[]~ ~[]~)
 
-([a] = glom [a] ~()~)
-([a] = glom ~()~ [a] )
+([a] = glom [a] ~[]~)
+([a] = glom ~[]~ [a] )
 
 ([a [b c]] = glom [a] quote [b c])
 ([a b c] = glom [a] [b c])

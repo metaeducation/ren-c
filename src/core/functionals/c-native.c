@@ -177,7 +177,7 @@ Result(Details*) Make_Native_Dispatch_Details(
 //
 //  "(Internal Function) Create a native, using compiled C code"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      spec [block!]
 //      :combinator "This native is an implementation of a PARSE keyword"
 //      :intrinsic "This native can be called without building a frame"

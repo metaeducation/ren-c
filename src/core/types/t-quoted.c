@@ -429,7 +429,7 @@ DECLARE_NATIVE(SPREAD)
 //
 // 2. Generally speaking, functions are not supposed to conflate quasiforms
 //    with their antiforms.  But it seems like being willing to DEGRADE a
-//    ~[]~ or a ~null~ here instead of erroring helps more than it hurts.
+//    ~()~ or a ~null~ here instead of erroring helps more than it hurts.
 //    Should it turn out to be bad for some reason, this might be dropped.
 {
     INCLUDE_PARAMS_OF_SPREAD;
@@ -472,7 +472,7 @@ DECLARE_NATIVE(PACK)
 //    any predicates.  This is by design, so we get:
 //
 //        >> pack [1 + 2, comment "hi", opt null]
-//        == \~['3 ~,~ ~[]~]~\  ; antiform (pack!)
+//        == \~('3 ~,~ ~,~)~\  ; antiform (pack!)
 //
 // 2. Using LIFT as a predicate means error antiforms are tolerated; it is
 //    expected that you IGNORE (vs. ELIDE) a PACK which contains errors, as
@@ -563,7 +563,7 @@ DECLARE_NATIVE(ALIAS)
 //
 //  "Turn frame or action into antiform in PACK!, allows SET-WORD! assignment"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      frame [frame! action!]
 //  ]
 //

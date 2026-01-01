@@ -80,11 +80,11 @@
 [
     (
         non-detector: lambda [arg] [arg]
-        'a = apply non-detector/ [~['a 'b]~]
+        'a = apply non-detector/ [~('a 'b)~]
     )
     (
         detector: lambda [^arg] [arg]
-        '~['a 'b]~ = apply detector/ [~['a 'b]~]
+        '~('a 'b)~ = apply detector/ [~('a 'b)~]
     )
 ]
 

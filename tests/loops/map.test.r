@@ -59,7 +59,7 @@
 
 [
     (['1 ~null~ '3] = map 'x each [1 2 3] [lift if x <> 2 [x]])
-    (['1 ~[]~ '3] = map 'x each [1 2 3] [lift if x = 2 [^ghost] else [x]])
+    (['1 ~()~ '3] = map 'x each [1 2 3] [lift if x = 2 [^ghost] else [x]])
 ]
 
 ; MAP-EACH works with ANY-CONTEXT? now

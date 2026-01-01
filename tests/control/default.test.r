@@ -51,7 +51,7 @@
     x: default [1020]
     x = 1020
 )(
-    x: second [~()~ ~]  ; quasiform of trash
+    x: second [~[]~ ~]  ; quasiform of trash
     x: default [1020]
     x = '~
 )(

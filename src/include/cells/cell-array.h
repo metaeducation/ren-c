@@ -182,9 +182,9 @@ INLINE Element* Init_Relative_Block_At(
 #endif
 
 
-//=//// "SPLICES" (GROUP! Antiforms) //////////////////////////////////////=//
+//=//// "SPLICES" (BLOCK! Antiforms) //////////////////////////////////////=//
 //
-// Group antiforms are understood by routines like APPEND or INSERT or CHANGE
+// Block antiforms are understood by routines like APPEND or INSERT or CHANGE
 // to mean that you intend to splice their content (the default is to append
 // as-is, which is changed from Rebol2/Red).  The typical way of making these
 // antiforms is the SPREAD function.
@@ -193,23 +193,23 @@ INLINE Element* Init_Relative_Block_At(
 //    == [a b c] [d e]
 //
 //    >> spread [d e]
-//    == ~(d e)~  ; anti
+//    == ~[d e]~  ; anti
 //
-//    >> append [a b c] ~(d e)~
+//    >> append [a b c] ~[d e]~
 //    == [a b c d e]
 //
-// 1. A splice with no elements is referred to as a "hole".  It has use cases
+// 1. A splice with no elements is referred to as a "NONE".  It has use cases
 //    for when you want a type that is "vanishing-like" but that can be stored
 //    in a plain variable and can manifest its vanishing intent without an
 //    operator like OPT being needed (the way you would need if you stored a
 //    null in a variable and wanted to make it void).
 //
-//    The tradeoff in using hole is that it is "truthy".
+//    The tradeoff in using none is that it is "truthy".
 //
 
 INLINE Stable* Splicify(Exact(Stable*) v) {
     assert(Any_List(v) and LIFT_BYTE(v) == NOQUOTE_2);
-    KIND_BYTE(v) = TYPE_GROUP;  // splice drops knowledge of list type
+    KIND_BYTE(v) = TYPE_BLOCK;  // splice drops knowledge of list type
     Tweak_Cell_Binding(u_cast(Element*, v), UNBOUND);
     Stably_Antiformize_Unbound_Fundamental(v);
     assert(Is_Splice(v));
@@ -217,7 +217,7 @@ INLINE Stable* Splicify(Exact(Stable*) v) {
 }
 
 INLINE Stable* Init_Splice_Untracked(Init(Stable) out, Source* a) {
-    Init_Group(out, a);
+    Init_Block(out, a);
     Stably_Antiformize_Unbound_Fundamental(out);
     assert(Is_Splice(out));
     return out;

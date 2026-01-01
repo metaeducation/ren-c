@@ -21,6 +21,6 @@
 ((the '10) = lift (10 comment "hi"))
 
 (null = unlift (lift null))
-('~[~null~]~ = lift (if ok [null]))
+('~(~null~)~ = lift (if ok [null]))
 
 ((the '1020) = lift (1000 + 20))

@@ -278,14 +278,15 @@ Details* Make_Typechecker(TypesetByte typeset_byte) {  // parameter cache [1]
 //
 //  Typecheck_Pack_Uses_Scratch_And_Spare: C
 //
-// It's possible in function type specs to check packs with ~[...]~ notation.
-// This routine itemwise checks a pack against one of those type specs.
+// It's possible in function type specs to check packs with ~(...)~ notation.
+// This routine itemwise checks a pack against one of those type specs, with
+// TEXT! strings ignored as descriptions of the fields.
 //
 // 1. Due to the way that the intrinsic optimization works, it has to have
 //    the argument to the intrinsic in the spare...and it uses the scratch
 //    cell for putting the intrinsic action itself value into.
 //
-// 2. Note that blocks are legal, as in ~[[integer! word!] object!]~, which
+// 2. Note that blocks are legal, as in ~([integer! word!] object!)~, which
 //    means that the first item in the pack can be either an integer or word.
 //    So we don't call Typecheck_Unoptimized_Uses_Spare_And_Scratch() here.
 //
@@ -296,7 +297,7 @@ bool Typecheck_Pack_Uses_Scratch_And_Spare(  // scratch and spare used [1]
 ){
     USE_LEVEL_SHORTHANDS (L);
 
-    assert(Is_Quasi_Block(types));  // could relax this to any list
+    assert(Is_Quasi_Group(types));  // could relax this to any list
     assert(Is_Pack(pack));  // could relax this also to any list
 
     const Element* pack_tail;
@@ -305,17 +306,16 @@ bool Typecheck_Pack_Uses_Scratch_And_Spare(  // scratch and spare used [1]
     const Element* types_tail;
     const Element* types_at = List_At(&types_tail, types);
 
-    if ((pack_tail - pack_at) != (types_tail - types_at))  // not same length
-        return false;
-
-    if (pack_at == pack_tail)  // pack is empty (so both are empty)
-        return true;
-
     bool result = true;
 
     Context* types_binding = List_Binding(types);
 
-    for (; types_at != types_tail; ++types_at, ++pack_at) {
+    while (types_at != types_tail) {
+        if (Is_Text(types_at)) {  // allow descriptions inside the pack
+            ++types_at;  // advance types block but not pack item
+            continue;
+        }
+
         DECLARE_VALUE (unlifted);
         Copy_Cell(unlifted, pack_at);
         assume (
@@ -327,6 +327,8 @@ bool Typecheck_Pack_Uses_Scratch_And_Spare(  // scratch and spare used [1]
             result = false;
             goto return_result;
         }
+        ++pack_at;
+        ++types_at;
     }
 
   return_result:
@@ -597,7 +599,7 @@ static bool Typecheck_Unoptimized_Uses_Spare_And_Scratch(
 
   handle_non_word_quasiform: { ///////////////////////////////////////////////
 
-  // 1. ~[integer! word!]~ is a typecheck that matches a 2-element PACK! with
+  // 1. ~(integer! word!)~ is a typecheck that matches a 2-element PACK! with
   //    an integer and a word.  It's recursive, packs can contain packs, etc.
   //
   // 2. Because people might build a type spec block by composing, they might
@@ -611,10 +613,10 @@ static bool Typecheck_Unoptimized_Uses_Spare_And_Scratch(
   //
   // 3. When 'XXX! began matching quoted things of type XXX!, ['true 'false]
   //    stopped being how to match against literal words true and false.
-  //    Quasiform group of [~(true false)~] actually looks kind of good; it
+  //    Quasiform group of [~[true false]~] actually looks kind of good; it
   //    will match any of the single items in the group literally.
 
-    if (Heart_Of(at) == TYPE_BLOCK) {  // typecheck pack [1]
+    if (Heart_Of(at) == TYPE_GROUP) {  // typecheck pack [1]
         if (not Is_Pack(v))
             goto test_failed;
         if (Typecheck_Pack_Uses_Scratch_And_Spare(L, v, at))
@@ -626,7 +628,7 @@ static bool Typecheck_Unoptimized_Uses_Spare_And_Scratch(
         panic ("Quasiform FENCE! in type spec not supported yet");
     }
 
-    if (Heart_Of(at) == TYPE_GROUP) {  // match any element literally [3]
+    if (Heart_Of(at) == TYPE_BLOCK) {  // match any element literally [3]
         if (Is_Antiform(v))
             goto test_failed;  // can't match elements against antiforms
 
@@ -1177,7 +1179,7 @@ Result(Stable*) Init_Typechecker(
 //
 //  "Make a function for checking types (generated function gives LOGIC!)"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      types [datatype! block!]
 //  ]
 //
@@ -1283,7 +1285,7 @@ DECLARE_NATIVE(MATCH)
 //
 //  "Make a specialization of the MATCH function for a fixed type argument"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      test [block! datatype! parameter! action!]
 //  ]
 //

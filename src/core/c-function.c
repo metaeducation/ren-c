@@ -991,7 +991,7 @@ DECLARE_NATIVE(COUPLE)
 //
 //  "Disassociate an ACTION from OBJECT!"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      action [<unrun> frame!]
 //  ]
 //

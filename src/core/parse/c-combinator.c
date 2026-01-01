@@ -709,7 +709,7 @@ static bool Combinator_Param_Hook(
 //  "Analyze combinator parameters in rules to produce a specialized parser"
 //
 //      return: [
-//          ~[action! block!]~ "Parser function and advanced position in rules"
+//          ~(action! block!)~ "Parser function and advanced position in rules"
 //      ]
 //      combinator "Parser combinator taking input, but also other parameters"
 //          [frame!]

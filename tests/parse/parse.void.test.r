@@ -6,7 +6,7 @@
 
 ; lifted voids are just skipped, and skipped if hit in a variable
 
-('b = parse [a b] ['a ~[]~ 'b])
+('b = parse [a b] ['a ~()~ 'b])
 (
     ^var: ^ghost
     'b = parse [a b] ['a ^var 'b]
@@ -14,7 +14,7 @@
 
 ; Voids synthesize void
 
-(ghost? parse [a b] ['a 'b ~[]~])
+(ghost? parse [a b] ['a 'b ~()~])
 (
     ^var: ^ghost
     ghost? parse [a b] ['a 'b ^var]
@@ -22,7 +22,7 @@
 (
     test: ~
     all [
-        'b = parse [a b] ['a ^test: [~[]~] 'b]
+        'b = parse [a b] ['a ^test: [~()~] 'b]
         ghost? ^test
     ]
 )

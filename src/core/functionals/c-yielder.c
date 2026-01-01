@@ -491,7 +491,7 @@ bool Yielder_Details_Querier(
 //
 //  "Produce generator function that can YIELD multiple values until DONE"
 //
-//      return: [~[action!]~]
+//      return: [~(action!)~]
 //      spec [block! datatype!]
 //      @(body) [block! fence!]
 //      ; :resettable  ; should yielders offer a reset facility?

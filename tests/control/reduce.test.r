@@ -19,7 +19,7 @@
 ; was introduced, the name was at first a secondary result...until the
 ; convenience of throwing packs was decided as better.
 ;
-(~['1 '2]~ = catch [throw pack [1 2]])
+(~('1 '2)~ = catch [throw pack [1 2]])
 
 (1 = reeval unrun func [return: [integer!]] [reduce [return 1 2] 2])
 ; recursive behaviour
@@ -90,7 +90,7 @@
 ; Voids are offered, but omitted if predicate doesn't take them.
 ; https://forum.rebol.info/t/should-void-be-offered-to-predicates-for-reduce-any-all-etc/1872
 ;
-(['3 ~[]~ '300] = reduce:predicate [
+(['3 ~()~ '300] = reduce:predicate [
     1 + 2 ^ghost 100 + 200
 ] lift/)
 

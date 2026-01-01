@@ -13,7 +13,7 @@
 (null? catch [()])
 (warning? catch [throw rescue [1 / 0]])
 (1 = catch [throw 1])
-((the '~()~) = lift catch [throw eval ['~()~]])
+((the '~[]~) = lift catch [throw eval ['~[]~]])
 (warning? first catch [throw reduce [rescue [1 / 0]]])
 (1 = catch [throw 1])
 
@@ -57,7 +57,7 @@
 ; (null? catch/name [()] 'catch)
 ; (null? catch/name [rescue [1 / 0]] 'catch)
 ; (null? catch/name [1] 'catch)
-; ('~()~ = catch/name [throw/name ('~()~) 'catch] 'catch)
+; ('~[]~ = catch/name [throw/name ('~[]~) 'catch] 'catch)
 ; (error? catch/name [throw/name (1 / 0) 'catch] 'catch)
 ; (1 = catch/name [throw/name 1 'catch] 'catch)
 ; (

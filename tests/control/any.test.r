@@ -386,8 +386,8 @@
     predicate: cascade [odd?/ not/]
 ])
 
-('~[~null~]~ = lift any:predicate [1 null 2] not/)
-('~[~null~]~ = lift any:predicate [1 null 2] not/)
+('~(~null~)~ = lift any:predicate [1 null 2] not/)
+('~(~null~)~ = lift any:predicate [1 null 2] not/)
 ("this is why" = (any:predicate [1 null 2] not/ then ["this is why"]))
 
 (10 = any [(10 elide "stale")])

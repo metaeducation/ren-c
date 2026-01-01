@@ -120,7 +120,7 @@ zip-entry: func [
     "Compresses a file"
 
     return: [
-        ~[blob! blob!]~ "local header and central directory entry"
+        ~(blob! blob!)~ "local header and central directory entry"
     ]
     name "Name of file"
         [file!]

@@ -259,7 +259,7 @@ DECLARE_NATIVE(SHOVE)
 //
 //      return: [
 //          any-value?              "Evaluation product"
-//          ~[block! any-value?]~   "[position product] pack if :STEP"  ; [1]
+//          ~(block! any-value?)~   "[position product] pack if :STEP"  ; [1]
 //      ]
 //      source [
 //          <opt-out>  "useful for `evaluate opt ...` scenarios"
