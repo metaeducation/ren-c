@@ -247,54 +247,37 @@ INLINE bool Cell_Yes(const Stable* v) {  // corresponds to YES?
 // The default behavior of the system is to consider there being only one
 // conditionally false value: the ~null~ antiform.
 //
-// This is slated to be extensible, so that contexts can provide a different
-// definition of "truthiness" and "falseyness" via the COND(ITIONAL) function.
-// That hasn't happened yet, so at time of writing, ~null~ antiforms are the
-// only conditionally false state.
+// (Some question has arisen about the extensibility of this, if there could
+// be a conditional function put in scopes that influences the test, similar
+// to how RebindableSyntax works.)
 //
-// 1. VOID antiforms are neither "truthy" nor "falsey": since voids opt
-//    out of aggregate logic operations, an isolated operation like IF cannot
-//    consider void to be either true or false.  Type checking helps enforce
-//    this rule, since unstable values cannot be passed as a condition to
-//    the test functions.
+// 1. At the moment, ~okay~ and ~null~ are the only two KEYWORD!s (antiform
+//    WORD!s).  There is some question on what behavior is wanted from ~NaN~...
+//    would it be falsey?  Not known since it's not in use yet.  But generally
+//    right now it looks like ~null~ and ~okay~ the only things to consider,
+//    and if anything else is tested it errors.
 //
-//    It would be possible to say that VOIDs were truthy, and that would
-//    produce some potentially interesting use cases like (any [expr, void])
-//    being able to evaluate to void if expr1 was falsey or opted out.  Yet
-//    semantically, we want to think of the truthiness of a PACK! as being
-//    directly tied to its first element...and voids have no element there
-//    to be tested, and should not decay to assign a normal variable.  So it's
-//    not particularly coherent to try and argue voids are true or false,
-//    and creates ambiguity to gain a relatively unimportant feature.
-//
-//    !!! Should this enforce Stable* passed, and disallow Element*, since
-//    the builtin conditional never considers elements to be falsey?
-//
-// 2. There used to be a ~void~ antiform as "stable void", but the role has
-//    been overtaken by the ~()~ empty splice antiform ("BLANK").  So now
-//    ~okay~ and ~null~ are the only two KEYWORD!s (antiform WORD!s).  There
-//    is some question on what behavior is wanted from ~NaN~... would it be
-//    falsey?  Not known since it's not in use yet.  But generally right now
-//    it looks like ~null~ and ~okay~ the only things to consider, and if
-//    anything else is tested it errors.
-//
-// 3. TRASH! has gone back and forth on whether it is truthy; but now that
-//    unsetness is handled by the GHOST! state, the reasons for making it
-//    not an error have vanished, e.g. (`all [x: () ...]` vs. `all [x: ~ ...]`)
+// 2. TRASH! has gone back and forth on whether it is truthy; but now that
+//    unsetness is handled by the GHOST! state, reasons for making it not be
+//    an error have vanished, e.g. (`all [x: () ...]` vs. `all [x: ~ ...]`)
 //
 INLINE Result(bool) Test_Conditional(
-    const Stable* v  // Not Value*, has to be stable... no VOID [1]
+    Exact(const Stable*) v  // disable passing Element* (they're always truthy)
 ){
     Assert_Cell_Readable(v);
-
-    if (Is_Keyword(v))  // make conditional test of ~null~/~okay~ fastest
-        return Not_Cell_Flag(v, KEYWORD_IS_NULL);  // ~NaN~ falsey?  [2]
 
     if (LIFT_BYTE(v) != ANTIFORM_1)
         return true;  // all non-antiforms (including quasi/quoted) are truthy
 
-    if (Heart_Of(v) == TYPE_RUNE)  // trash--no longer truthy [3]
-        panic ("TRASH! (antiform RUNE!) values are neither truthy nor falsey");
+    if (KIND_BYTE(v) == TYPE_WORD) { // conditional test of ~null~/~okay~
+        assert(Get_Cell_Flag(v, KEYWORD_IS_NULL) == (Word_Id(v) == SYM_NULL));
+        return Not_Cell_Flag(v, KEYWORD_IS_NULL);  // ~NaN~ falsey?  [1]
+    }
+
+    if (KIND_BYTE(v) == TYPE_RUNE)  // trash--no longer truthy [2]
+        return fail (
+            "TRASH! (antiform RUNE!) values are neither truthy nor falsey"
+        );
 
     return true;  // !!! are all non-word/non-trash stable antiforms truthy?
 }
