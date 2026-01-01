@@ -64,7 +64,7 @@ DECLARE_NATIVE(BIND)
             require (
               Use* use = Alloc_Use_Inherits(Cell_Binding(v))
             );
-            Derelativize(Stub_Cell(use), at, Cell_Binding(spec));
+            Copy_Cell_May_Bind(Stub_Cell(use), at, Cell_Binding(spec));
             KIND_BYTE(Stub_Cell(use)) = TYPE_WORD;
 
             Element* overbind = Known_Element(Stub_Cell(use));
@@ -195,7 +195,7 @@ DECLARE_NATIVE(INSIDE)
         context = Sequence_Binding(where);
     }
 
-    Derelativize(OUT, element, context);
+    Copy_Cell_May_Bind(OUT, element, context);
     return OUT;
 }
 

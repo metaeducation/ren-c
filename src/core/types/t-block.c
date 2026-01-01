@@ -642,7 +642,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
         if (ret >= limit)
             return NULLED;
 
-        Element* out = Derelativize(OUT, Array_At(arr, ret), binding);
+        Element* out = Copy_Cell_May_Bind(OUT, Array_At(arr, ret), binding);
         return Inherit_Const(out, list); }
 
       case SYM_CLEAR: {
@@ -918,7 +918,7 @@ Result(Element*) Alias_Any_List_As(
 
         /* Tweak_Cell_Binding(temp) = Cell_Binding(list); */  // may be unfit
 
-        return Derelativize(out, temp, Cell_Binding(list));  // try this (?)
+        return Copy_Cell_May_Bind(out, temp, Cell_Binding(list));  // (?)
     }
 
     return fail (Error_Invalid_Type(as));
@@ -1139,7 +1139,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
         Init_Any_List(OUT, heart, copy);
     }
     else
-        Derelativize(OUT, Array_At(arr, index), List_Binding(list));
+        Copy_Cell_May_Bind(OUT, Array_At(arr, index), List_Binding(list));
 
     Remove_Flex_Units_And_Update_Used(arr, index, len);
     return OUT;

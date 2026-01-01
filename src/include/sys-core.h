@@ -675,9 +675,9 @@ INLINE Error* Cell_Error(const Cell* c);
 #include "stubs/stub-use.h"
 #include "sys-bind.h"
 
-#include "cells/cell-datatype.h"  // needs Derelativize()
+#include "cells/cell-datatype.h"  // needs Copy_Cell_May_Bind()
 
-#include "cells/cell-sequence.h"  // needs Derelativize()
+#include "cells/cell-sequence.h"  // needs Copy_Cell_May_Bind()
 
 //=//// ISOTOPE COERCION AND DECAY ////////////////////////////////////////=//
 

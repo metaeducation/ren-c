@@ -168,7 +168,7 @@ Result(None) Init_Invokable_From_Feed(
         );
     }
     else
-        Derelativize(out, v, Feed_Binding(feed));
+        Copy_Cell_May_Bind(out, v, Feed_Binding(feed));
 
     if (not first)  // nothing passed in, so we used a feed value
         Fetch_Next_In_Feed(feed);  // we've seen it now

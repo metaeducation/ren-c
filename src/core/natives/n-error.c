@@ -286,7 +286,7 @@ DECLARE_NATIVE(TRAP)
         return COPY(v);  // pass thru any non-errors
 
     Element* return_word = Init_Word(SCRATCH, CANON(RETURN));
-    Bind_If_Unbound(return_word, Feed_Binding(LEVEL->feed));
+    Bind_Cell_If_Unbound(return_word, Feed_Binding(LEVEL->feed));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
     STATE = 1;

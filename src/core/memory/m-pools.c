@@ -1156,7 +1156,7 @@ Stub* Diminish_Stub(Stub* s)
 
     // 1. !!! Contexts and actions keep their archetypes, for now, in the
     //    now collapsed base.  For FRAME! this means holding onto the binding
-    //    which winds up being used in Derelativize().  See SPC_BINDING.
+    //    which winds up being used in Copy_Cell_May_Bind().  See SPC_BINDING.
     //    Preserving ACTION!'s archetype is speculative--to point out the
     //    possibility exists for the other array with a "canon" [0]
     //

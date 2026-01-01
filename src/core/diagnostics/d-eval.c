@@ -82,7 +82,7 @@ void Dump_Level_Location(Level* L)
         }
     }
     else {
-        Derelativize(dump, L_next, L_binding);
+        Copy_Cell_May_Bind(dump, L_next, L_binding);
         printf("Dump_Level_Location() next\n");
         PROBE(dump);
 
@@ -212,7 +212,7 @@ static void Evaluator_Shared_Checks_Debug(Level* const L)
         Blit_Cell(PUSH(), SCRATCH);
 
         heeded (Copy_Cell(SCRATCH, L_next));
-        Bind_If_Unbound(Known_Element(SCRATCH), L_binding);
+        Bind_Cell_If_Unbound(Known_Element(SCRATCH), L_binding);
         Metafy_Cell(Known_Element(SCRATCH));
         heeded (Corrupt_Cell_If_Needful(SPARE));
 

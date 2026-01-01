@@ -281,7 +281,7 @@ static Result(None) Push_Keys_And_Params_Core(
   //=//// LOCALS IN FENCE! (OBJECT CREATION DIALECT) //////////////////////=//
 
         if (Is_Fence(item)) {
-            Element* spare = Derelativize(SPARE, item, Level_Binding(L));
+            Element* spare = Copy_Cell_May_Bind(SPARE, item, Level_Binding(L));
             trap (
               Push_Keys_And_Params_For_Fence(L, spare)
             );

@@ -502,7 +502,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
             Init_Quasi_Word(PUSH(), CANON(OPTIMIZED_OUT));
 
         do {
-            Derelativize(PUSH(), At_Feed(feed), Feed_Binding(feed));
+            Copy_Cell_May_Bind(PUSH(), At_Feed(feed), Feed_Binding(feed));
             assert(Not_Antiform(TOP));
             Fetch_Next_In_Feed(feed);
         } while (Not_Feed_At_End(feed));

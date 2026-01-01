@@ -255,7 +255,7 @@ static bool Subparse_Throws(
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_SUBPARSE;
 
-    Derelativize(
+    Copy_Cell_May_Bind(
         Erase_ARG(INPUT),
         cast(Element*, input),
         input_binding
@@ -1071,7 +1071,7 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
         Flags find_flags = (P_FLAGS & AM_FIND_CASE);
         DECLARE_STABLE (temp);
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
-            Unquote_Cell(Derelativize(temp, rule, P_RULE_BINDING));
+            Unquote_Cell(Copy_Cell_May_Bind(temp, rule, P_RULE_BINDING));
         }
         else if (Is_Pinned_Form_Of(WORD, rule)) {
             require (
@@ -1507,7 +1507,7 @@ DECLARE_NATIVE(SUBPARSE)
                     if (Eval_Value_Throws(OUT, P_RULE, P_RULE_BINDING))
                         goto return_thrown;
                 } else {
-                    Derelativize(OUT, P_RULE, P_RULE_BINDING);
+                    Copy_Cell_May_Bind(OUT, P_RULE, P_RULE_BINDING);
                 }
 
                 require (
@@ -1570,7 +1570,7 @@ DECLARE_NATIVE(SUBPARSE)
                     goto handle_set;
                 }
 
-                quoted_set_or_copy_word = Derelativize(
+                quoted_set_or_copy_word = Copy_Cell_May_Bind(
                     LOCAL(LOOKBACK), P_RULE, P_RULE_BINDING
                 );
                 if (Is_Chain(quoted_set_or_copy_word)) {
@@ -1858,7 +1858,7 @@ DECLARE_NATIVE(SUBPARSE)
     }
     else if (Is_Set_Tuple(rule)) {
       handle_set:
-        quoted_set_or_copy_word = Derelativize(
+        quoted_set_or_copy_word = Copy_Cell_May_Bind(
             LOCAL(LOOKBACK), rule, P_RULE_BINDING
         );
         assume (
@@ -2058,7 +2058,7 @@ DECLARE_NATIVE(SUBPARSE)
                     break;
                 }
                 else if (Any_Sequence(into)) {  // need position, alias BLOCK!
-                    Derelativize(SPARE, into, P_INPUT_SPECIFIER);
+                    Copy_Cell_May_Bind(SPARE, into, P_INPUT_SPECIFIER);
 
                     into = Blockify_Any_Sequence(cast(Element*, SPARE));
                 }

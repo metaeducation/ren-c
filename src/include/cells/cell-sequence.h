@@ -700,7 +700,7 @@ INLINE Element* Copy_Sequence_At(
     }
 }
 
-INLINE Element* Derelativize_Sequence_At(
+INLINE Element* Copy_Sequence_At_May_Bind(
     Init(Element) out,
     const Element* sequence,
     REBLEN n,
@@ -708,7 +708,7 @@ INLINE Element* Derelativize_Sequence_At(
 ){
     Copy_Sequence_At(out, sequence, n);
     if (Is_Bindable_Heart(Unchecked_Heart_Of(out)))
-        Bind_If_Unbound(out, context);
+        Bind_Cell_If_Unbound(out, context);
     return out;
 }
 
@@ -898,7 +898,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
         return nullptr;  // e is not /?:?:? style path
 
     DECLARE_ELEMENT (temp);  // !!! should be able to optimize and not need this
-    Derelativize_Sequence_At(temp, e, 1, Sequence_Binding(e));
+    Copy_Sequence_At_May_Bind(temp, e, 1, Sequence_Binding(e));
     assert(Is_Chain(temp));
 
     if (TRAILING_SPACE_AND(WORD) != Try_Get_Sequence_Singleheart(temp))

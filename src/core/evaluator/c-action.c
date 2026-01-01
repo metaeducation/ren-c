@@ -217,7 +217,7 @@ bool Lookahead_To_Sync_Infix_Defer_Flag(Level* L) {
         return false;
 
     heeded (Copy_Cell(SCRATCH, At_Feed(L->feed)));
-    Bind_If_Unbound(Known_Element(SCRATCH), Feed_Binding(L->feed));
+    Bind_Cell_If_Unbound(Known_Element(SCRATCH), Feed_Binding(L->feed));
     Metafy_Cell(Known_Element(SCRATCH));  // need for unstable lookup
     heeded (Corrupt_Cell_If_Needful(SPARE));
 

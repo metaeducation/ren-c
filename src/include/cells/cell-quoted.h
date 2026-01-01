@@ -221,23 +221,23 @@ INLINE bool Is_Lifted_Unstable_Antiform(const Value* a) {
 #define Is_Antiform_Stable(a) \
     (not Is_Antiform_Unstable(a))
 
-INLINE bool Not_Cell_Stable(Exact(const Value*) a) {
-    possibly(not Is_Antiform(a));  // this is a general check for any Value
+INLINE bool Not_Cell_Stable(Exact(const Value*) v) {
+    possibly(not Is_Antiform(v));  // this is a general check for any Value
 
-    Assert_Cell_Readable(a);
-    assert(LIFT_BYTE_RAW(a) != DUAL_0);
+    Assert_Cell_Readable(v);
+    assert(LIFT_BYTE_RAW(v) != DUAL_0);
 
   #if defined(NO_BRANCH_UNSTABLE_ANTIFORM_CHECK)  // !!! TBD: measure speed [2]
     impossible(  // [1]
         LIFT_BYTE_RAW(a) == ANTIFORM_1 and (a->header.bits & CELL_MASK_SIGIL)
     );
   #else
-    if (LIFT_BYTE_RAW(a) != ANTIFORM_1)
+    if (LIFT_BYTE_RAW(v) != ANTIFORM_1)
         return false;
-    impossible(0 != (a->header.bits & CELL_MASK_SIGIL));  // [1]
+    impossible(0 != (v->header.bits & CELL_MASK_SIGIL));  // [1]
   #endif
 
-    uintptr_t masked = a->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT;
+    uintptr_t masked = v->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT;
     return (
         masked == (FLAG_HEART(TYPE_WARNING) | FLAG_LIFT_BYTE(ANTIFORM_1))
         or masked == (FLAG_HEART(TYPE_COMMA) | FLAG_LIFT_BYTE(ANTIFORM_1))

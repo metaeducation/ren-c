@@ -155,17 +155,17 @@ Source* Expanded_Combinator_Spec(const Element* original)
     Context* binding = List_Binding(original);
 
     assert(Is_Text(item));  // "combinator description"
-    Derelativize(PUSH(), item, binding);
+    Copy_Cell_May_Bind(PUSH(), item, binding);
     assert(item != tail);
     ++item;
 
     assert(Is_Set_Word(item) and Word_Id(item) == SYM_RETURN);  // return:
-    Derelativize(PUSH(), item, binding);
+    Copy_Cell_May_Bind(PUSH(), item, binding);
     assert(item != tail);
     ++item;
 
     assert(Is_Block(item));  // [return type block]
-    Derelativize(PUSH(), item, binding);
+    Copy_Cell_May_Bind(PUSH(), item, binding);
     assert(item != tail);
     ++item;
 
@@ -182,7 +182,7 @@ Source* Expanded_Combinator_Spec(const Element* original)
     Sync_Feed_At_Cell_Or_End_May_Panic(feed);
 
     while (Not_Feed_At_End(feed)) {
-        Derelativize(PUSH(), At_Feed(feed), Feed_Binding(feed));
+        Copy_Cell_May_Bind(PUSH(), At_Feed(feed), Feed_Binding(feed));
         Fetch_Next_In_Feed(feed);
     }
 
@@ -191,7 +191,7 @@ Source* Expanded_Combinator_Spec(const Element* original)
     // Note: We pushed unbound code, won't find FRAME! etc.
 
     for (; item != tail; ++item)
-        Derelativize(PUSH(), item, binding);  // everything else
+        Copy_Cell_May_Bind(PUSH(), item, binding);  // everything else
 
     return Pop_Source_From_Stack(base);
 }
@@ -390,7 +390,7 @@ DECLARE_NATIVE(TEXT_X_COMBINATOR)
         ++SERIES_INDEX_UNBOUNDED(input);
         Copy_Cell(ARG(REMAINDER), input);
 
-        Derelativize(OUT, at, List_Binding(input));
+        Copy_Cell_May_Bind(OUT, at, List_Binding(input));
         return OUT;  // Note: returns item in array, not rule, when an array!
     }
 
@@ -651,7 +651,7 @@ static bool Combinator_Param_Hook(
         }
         else {
             if (Parameter_Class(param) == PARAMCLASS_THE)
-                Derelativize(var, item, List_Binding(rules));
+                Copy_Cell_May_Bind(var, item, List_Binding(rules));
             else {
                 assert(Parameter_Class(param) == PARAMCLASS_JUST);
                 Copy_Cell(var, item);

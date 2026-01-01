@@ -467,7 +467,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
 
     if (Any_Word(head)) {  // add binding at head
         if (not Try_Get_Binding_Of(
-            PUSH(), Derelativize(SPARE, head, at_binding)
+            PUSH(), Copy_Cell_May_Bind(SPARE, head, at_binding)
         )){
             DROP();
             e = Error_No_Binding_Raw(Known_Element(SPARE));
@@ -480,7 +480,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     for (at = head; at != tail; ++at) {
         if (not Is_Group(at)) {  // must keep WORD!s at head as-is for writeback
             possibly(Is_Quoted(at));  // will be interpreted "literally"
-            Derelativize(PUSH(), at, at_binding);
+            Copy_Cell_May_Bind(PUSH(), at, at_binding);
             continue;
         }
 
@@ -513,7 +513,7 @@ Option(Error*) Trap_Tweak_Var_In_Scratch_With_Dual_Out_Push_Steps(
     const Element* at;
     Context* at_binding = Cell_Binding(scratch_var);
     for (at = head; at != tail; ++at)
-        Derelativize(PUSH(), at, at_binding);
+        Copy_Cell_May_Bind(PUSH(), at, at_binding);
 
     goto set_from_steps_on_stack;
 

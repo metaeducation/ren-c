@@ -214,11 +214,11 @@ DECLARE_NATIVE(SHOVE)
         break;
 
       case PARAMCLASS_THE:  // cheat and do something usermode can't ATM [2]
-        Derelativize(OUT, left, Level_Binding(L));
+        Copy_Cell_May_Bind(OUT, left, Level_Binding(L));
         break;
 
       case PARAMCLASS_SOFT:  // !!! can we trust infix to just do this part?
-        Derelativize(OUT, left, Level_Binding(L));
+        Copy_Cell_May_Bind(OUT, left, Level_Binding(L));
         break;
 
       default:

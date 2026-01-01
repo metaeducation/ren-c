@@ -361,7 +361,7 @@ DECLARE_NATIVE(OF)
 } have_sym_of: { /////////////////////////////////////////////////////////////
 
     heeded (Init_Word(SCRATCH, sym_of));
-    heeded (Bind_If_Unbound(Known_Element(SCRATCH), Feed_Binding(LEVEL->feed)));
+    heeded (Bind_Cell_If_Unbound(Known_Element(SCRATCH), Feed_Binding(LEVEL->feed)));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
     STATE = 1;  // Get_Var_In_Scratch_To_Out() requires
@@ -1158,7 +1158,7 @@ DECLARE_NATIVE(SCAN_NET_HEADER)
                     require (
                       Sink(Element) prior = Alloc_Tail_Array(a)
                     );
-                    Derelativize(
+                    Copy_Cell_May_Bind(
                         prior,
                         item + 1,  // prior value
                         SPECIFIED  // no relative values added

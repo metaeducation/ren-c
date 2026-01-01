@@ -984,7 +984,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 // or Element, and that you can't copy a Stable into an Element...keeping
 // antiforms and unstable antiforms out of places they should not be.
 //
-// Interface designed to line up with Derelativize()
+// Interface designed to line up with Copy_Cell_May_Bind()
 //
 // 1. If you write `Erase_Cell(dest)` followed by `Copy_Cell(dest, src)` the
 //    optimizer notices it doesn't need the masking of Freshen_Cell_Header().

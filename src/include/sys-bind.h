@@ -49,7 +49,7 @@
 //
 
 
-INLINE Element* Derelativize_Untracked(
+INLINE Element* Copy_Cell_May_Bind_Untracked(
     Sink(Element) out,
     const Element* v,
     Context* context
@@ -72,11 +72,11 @@ INLINE Element* Derelativize_Untracked(
 }
 
 
-#define Derelativize(dest,v,context) \
-    Derelativize_Untracked(TRACK(dest), (v), (context))
+#define Copy_Cell_May_Bind(dest,v,context) \
+    Copy_Cell_May_Bind_Untracked(TRACK(dest), (v), (context))
 
 
-INLINE Element* Bind_If_Unbound(Element* elem, Context* context) {
+INLINE Element* Bind_Cell_If_Unbound(Element* elem, Context* context) {
     assert(Is_Cell_Bindable(elem));
     possibly(context == nullptr);  // SPECIFIED
 

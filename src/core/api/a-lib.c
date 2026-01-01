@@ -1382,7 +1382,7 @@ RebolValue* API_rebTranscodeInto(
 
     StackIndex base = TOP_INDEX;
     while (Not_Feed_At_End(feed)) {
-        Derelativize(PUSH(), At_Feed(feed), Feed_Binding(feed));
+        Copy_Cell_May_Bind(PUSH(), At_Feed(feed), Feed_Binding(feed));
         Fetch_Next_In_Feed(feed);
     }
 

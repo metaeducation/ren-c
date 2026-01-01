@@ -748,7 +748,7 @@ DECLARE_NATIVE(CASE)
       bool cond = Test_Conditional(spare)
     );
 
-    Element* branch = Derelativize(
+    Element* branch = Copy_Cell_May_Bind(
         SCRATCH, At_Level(SUBLEVEL), Level_Binding(SUBLEVEL)
     );
     Inherit_Const(branch, cases);  // branch needs to respect const [1]
@@ -1000,7 +1000,7 @@ DECLARE_NATIVE(SWITCH)
         at = At_Level(SUBLEVEL);
     }
 
-    Element* scratch = Derelativize(SCRATCH, at, Level_Binding(SUBLEVEL));
+    Element* scratch = Copy_Cell_May_Bind(SCRATCH, at, Level_Binding(SUBLEVEL));
     Inherit_Const(scratch, cases);  // need to inherit proxy const bit [3]
 
     STATE = ST_SWITCH_RUNNING_BRANCH;

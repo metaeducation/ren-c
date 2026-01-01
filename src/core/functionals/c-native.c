@@ -527,7 +527,7 @@ static void Make_Native_In_Lib_By_Hand(Level* L, SymId id)
 } make_native: {
 
     DECLARE_ELEMENT (spec);
-    Derelativize(spec, At_Level(L), g_lib_context);
+    Copy_Cell_May_Bind(spec, At_Level(L), g_lib_context);
     Fetch_Next_In_Feed(L->feed);
 
     Dispatcher* dispatcher = f_cast(Dispatcher*, *g_native_cfunc_pos);

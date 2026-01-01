@@ -158,8 +158,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
 
         DECLARE_ELEMENT (numerator);
         DECLARE_ELEMENT (denominator);
-        Derelativize_Sequence_At(numerator, arg, 0, Sequence_Binding(arg));
-        Derelativize_Sequence_At(denominator, arg, 1, Sequence_Binding(arg));
+        Copy_Sequence_At_May_Bind(numerator, arg, 0, Sequence_Binding(arg));
+        Copy_Sequence_At_May_Bind(denominator, arg, 1, Sequence_Binding(arg));
         Push_Lifeguard(numerator);  // might be GROUP!, so (1.2)/4
         Push_Lifeguard(denominator);
 

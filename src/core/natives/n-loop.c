@@ -1635,7 +1635,7 @@ DECLARE_NATIVE(REMOVE_EACH)
             }
 
             if (Any_List(data))
-                Derelativize(
+                Copy_Cell_May_Bind(
                     var,
                     Array_At(Cell_Array(data), index),
                     List_Binding(data)

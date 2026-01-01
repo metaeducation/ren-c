@@ -152,7 +152,7 @@ Result(None) Get_Word_Or_Tuple(
 
     Force_Erase_Cell(SCRATCH);  // clears protection bit
 
-    heeded (Derelativize(  // have to do after SCRATCH erase, in case protected
+    heeded (Copy_Cell_May_Bind(  // do after SCRATCH erase, in case protected
         SCRATCH,
         var,  // have to do before SPARE erase, in case (v = SPARE)
         context
@@ -530,7 +530,7 @@ Result(Value*) Meta_Get_Var(
 
             Push_Level_Erase_Out_If_State_0(out, level_);
 
-            heeded (Derelativize(SCRATCH, var, context));
+            heeded (Copy_Cell_May_Bind(SCRATCH, var, context));
             heeded (Corrupt_Cell_If_Needful(SPARE));
 
             Get_Path_Push_Refinements(level_) except (error) {
@@ -718,7 +718,7 @@ DECLARE_NATIVE(GET)
         const Element* at = List_At(&tail, target);
 
         for (; at != tail; ++at) {
-            Derelativize(target, at, binding);
+            Copy_Cell_May_Bind(target, at, binding);
             Bounce b = Apply_Cfunc(NATIVE_CFUNC(GET), LEVEL);
             assert (b == OUT);
             UNUSED(b);

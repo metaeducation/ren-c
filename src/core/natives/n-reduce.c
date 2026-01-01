@@ -438,7 +438,7 @@ static void Flatten_Core(
             );
         }
         else
-            Derelativize(PUSH(), item, binding);
+            Copy_Cell_May_Bind(PUSH(), item, binding);
     }
 }
 

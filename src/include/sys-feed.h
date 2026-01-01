@@ -553,7 +553,7 @@ INLINE Element* Inertly_Derelativize_Inheriting_Const(
     const Element* e,
     Feed* feed
 ){
-    Derelativize(out, e, Feed_Binding(feed));
+    Copy_Cell_May_Bind(out, e, Feed_Binding(feed));
     out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
     return out;
 }

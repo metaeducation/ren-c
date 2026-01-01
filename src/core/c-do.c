@@ -170,19 +170,19 @@ bool Pushed_Continuation(
   switch_on_sigil: {
 
     switch (opt Type_Of(branch)) {
-      case TYPE_QUOTED:
-        Unquote_Cell(Derelativize(out, cast(Element*, branch), binding));
+      case TYPE_QUOTED:  // note: not bound (use $tied to get a binding)
+        Unquote_Cell(Copy_Cell(out, Known_Element(branch)));
         goto just_use_out;
 
       case TYPE_QUASIFORM:
         if (
-            Is_Lifted_Null(cast(Element*, branch))
+            Is_Lifted_Null(Known_Element(branch))
             and (flags & LEVEL_FLAG_FORCE_HEAVY_NULLS)
         ){
             Init_Heavy_Null(out);
         }
         else {
-            Derelativize(out, cast(Element*, branch), binding);
+            Copy_Cell(out, Known_Element(branch));
             require (
               Unlift_Cell_No_Decay(out)
             );
@@ -195,8 +195,10 @@ bool Pushed_Continuation(
       case TYPE_PINNED:
         break;
 
-      case TYPE_TIED:
-        Clear_Cell_Sigil(Derelativize(out, cast(Element*, branch), binding));
+      case TYPE_TIED:  // note: bound (use 'quoted to avoid binding)
+        Clear_Cell_Sigil(
+            Copy_Cell_May_Bind(out, Known_Element(branch), binding)
+        );
         goto just_use_out;
 
       case TYPE_FENCE: {  // WRAP, then execute
@@ -268,7 +270,7 @@ bool Pushed_Continuation(
         }
 
         arg = First_Unspecialized_Arg(&param, L);
-        Derelativize(arg, cast(Element*, branch), binding);
+        Copy_Cell_May_Bind(arg, cast(Element*, branch), binding);
         KIND_BYTE(arg) = TYPE_BLOCK;  // :[1 + 2] => [3], not :[3]
 
         Push_Level_Erase_Out_If_State_0(out, L);

@@ -362,7 +362,7 @@ DECLARE_NATIVE(JOIN)
 
     const Element* item = At_Level(sub);
     if (Is_Block(item) and delimiter) {  // hack [1]
-        Derelativize(SPARE, item, Level_Binding(sub));
+        Copy_Cell_May_Bind(SPARE, item, Level_Binding(sub));
         Fetch_Next_In_Feed(sub->feed);
 
         Api(Stable*) unspaced = rebStable(CANON(UNSPACED), rebQ(SPARE));
@@ -383,7 +383,7 @@ DECLARE_NATIVE(JOIN)
         if (item_heart == TYPE_WORD or item_heart == TYPE_TUPLE) {
             Element* subscratch = Copy_Cell(Level_Scratch(sub), item);
             Clear_Cell_Sigil(subscratch);
-            Bind_If_Unbound(subscratch, Level_Binding(sub));
+            Bind_Cell_If_Unbound(subscratch, Level_Binding(sub));
             heeded (Corrupt_Cell_If_Needful(Level_Spare(sub)));
             assert(sub->out == SPARE);
             assert(LEVEL_STATE_BYTE(sub) == 0);
@@ -398,7 +398,7 @@ DECLARE_NATIVE(JOIN)
 
         if (item_heart == TYPE_GROUP) {
             SUBLEVEL->executor = &Just_Use_Out_Executor;
-            Derelativize(SCRATCH, item, Level_Binding(sub));
+            Copy_Cell_May_Bind(SCRATCH, item, Level_Binding(sub));
             KIND_BYTE(SCRATCH) = TYPE_BLOCK;  // the-block is different
             Fetch_Next_In_Feed(sub->feed);
 

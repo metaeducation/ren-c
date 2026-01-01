@@ -672,8 +672,8 @@ STATIC_ASSERT(sizeof(PayloadUnion) == sizeof(uintptr_t) * 2);
 //    The reason this is done is because not all flags from the source should
 //    be copied (see CELL_MASK_COPY) and some flags in the destination must
 //    be preserved (see CELL_MASK_PERSIST).  Copy mechanics are handled with
-//    C functions (Copy_Cell(), Derelativize()) so really all the C++ build is
-//    doing here is helping notice if you try to use a raw byte copy.
+//    C functions (Copy_Cell(), Copy_Cell_May_Bind()) so really the C++ build
+//    is just helping notice if you try to use a raw byte copy.
 //
 // 4. In cases where you do want to copy a Cell (or structure containing a
 //    Cell) in a bytewise fashion, the copy disablement in [2] throws a wrench

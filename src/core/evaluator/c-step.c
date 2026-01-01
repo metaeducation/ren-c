@@ -186,7 +186,7 @@ Bounce Inert_Stepper_Executor(Level* L)
 
     assert(Not_Level_At_End(L));
 
-    Derelativize(OUT, At_Feed(L->feed), Feed_Binding(L->feed));
+    Copy_Cell_May_Bind(OUT, At_Feed(L->feed), Feed_Binding(L->feed));
     Fetch_Next_In_Feed(L->feed);
     return OUT;
 }
@@ -385,7 +385,7 @@ Bounce Stepper_Executor(Level* L)
         Copy_Cell(PUSH(), CURRENT);
 
         heeded (Copy_Cell(CURRENT, L_next));  // v-- L_binding bad here [2]
-        Bind_If_Unbound(CURRENT, Feed_Binding(L->feed));
+        Bind_Cell_If_Unbound(CURRENT, Feed_Binding(L->feed));
         Metafy_Cell(Known_Element(CURRENT));  // need for unstable lookup
         heeded (Corrupt_Cell_If_Needful(SPARE));
 
@@ -452,7 +452,7 @@ Bounce Stepper_Executor(Level* L)
             pclass == PARAMCLASS_THE  // infix func [@x ...] [...]
             or pclass == PARAMCLASS_SOFT
         );
-        Derelativize(OUT, CURRENT, L_binding);  // put left side in OUT [1]
+        Copy_Cell_May_Bind(OUT, CURRENT, L_binding);  // left side in OUT [1]
     }
 
     Force_Blit_Cell(L_current_gotten_raw, L_next_gotten_raw);
@@ -713,7 +713,7 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Antiform(OUT))
         panic ("$ operator cannot bind antiforms");
 
-    Bind_If_Unbound(Known_Element(OUT), Level_Binding(L));
+    Bind_Cell_If_Unbound(Known_Element(OUT), Level_Binding(L));
     goto lookahead;
 
 
@@ -735,7 +735,7 @@ Bounce Stepper_Executor(Level* L)
     //    evaluations in Evaluator_Executor() use by default.
 
     heeded (CURRENT);
-    Bind_If_Unbound(CURRENT, L_binding);
+    Bind_Cell_If_Unbound(CURRENT, L_binding);
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
     require (
@@ -770,7 +770,7 @@ Bounce Stepper_Executor(Level* L)
     //    to the field being a lifted error, or (^obj.missing-field) to give
     //    an ERROR! due to the field being absent.
 
-    heeded (Bind_If_Unbound(CURRENT, L_binding));
+    heeded (Bind_Cell_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
     assert(Is_Metaform(CURRENT));
 
@@ -991,7 +991,7 @@ Bounce Stepper_Executor(Level* L)
 
     assert(not Sigil_Of(CURRENT));
 
-    heeded (Bind_If_Unbound(CURRENT, L_binding));
+    heeded (Bind_Cell_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
     require (
@@ -1159,7 +1159,7 @@ Bounce Stepper_Executor(Level* L)
         break;  // wasn't xxx: or :xxx where xxx is BLOCK!/CHAIN!/WORD!/etc
 
       case TRAILING_SPACE_AND(WORD): {  // FOO: or ^FOO:
-        Bind_If_Unbound(CURRENT, L_binding);
+        Bind_Cell_If_Unbound(CURRENT, L_binding);
         goto handle_generic_set; }
 
       case TRAILING_SPACE_AND(TUPLE): {  // a.b.c: is a set tuple
@@ -1191,7 +1191,7 @@ Bounce Stepper_Executor(Level* L)
         panic (":TUPLE! meaning is likely to become TRY TUPLE!"); }
 
       case LEADING_SPACE_AND(BLOCK): {  // !!! :[a b] reduces, not great...
-        Bind_If_Unbound(CURRENT, L_binding);
+        Bind_Cell_If_Unbound(CURRENT, L_binding);
         if (rebRunThrows(
             OUT,  // <-- output
             CANON(REDUCE), CURRENT
@@ -1301,11 +1301,11 @@ Bounce Stepper_Executor(Level* L)
         not blank_at_head  // `.a` means pick member from "self"
         and Any_Inert(spare)  // `1.2.3` is inert
     ){
-        Derelativize(OUT, CURRENT, L_binding);
+        Copy_Cell_May_Bind(OUT, CURRENT, L_binding);
         goto lookahead;
     }
 
-    heeded (Bind_If_Unbound(CURRENT, L_binding));
+    heeded (Bind_Cell_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
     require (
@@ -1346,7 +1346,7 @@ Bounce Stepper_Executor(Level* L)
             if (Is_Space(spare))
                 slash_at_head = true;
             else {
-                Derelativize(OUT, CURRENT, L_binding);  // inert [2]
+                Copy_Cell_May_Bind(OUT, CURRENT, L_binding);  // inert [2]
                 goto lookahead;
             }
         }
@@ -1422,7 +1422,7 @@ Bounce Stepper_Executor(Level* L)
   //    running infix with paths is `left ->- right/side`, which uses an infix
   //    WORD! to mediate the interaction.
 
-    heeded (Bind_If_Unbound(CURRENT, L_binding));
+    heeded (Bind_Cell_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
     Get_Path_Push_Refinements(LEVEL) except (Error* e) {
@@ -1502,7 +1502,7 @@ Bounce Stepper_Executor(Level* L)
     if (Is_Error(OUT) and not Is_Metaform(CURRENT))
         goto lookahead;  // you can say (try var: fail "hi") without panicking
 
-    heeded (Bind_If_Unbound(CURRENT, L_binding));
+    heeded (Bind_Cell_If_Unbound(CURRENT, L_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
     require (
@@ -1678,7 +1678,7 @@ Bounce Stepper_Executor(Level* L)
         Copy_Cell(PUSH(), OUT);  // save out if infix wants it...
 
         heeded (Copy_Cell(CURRENT, L_next));  // v-- L_binding bad here [2]
-        Bind_If_Unbound(CURRENT, Feed_Binding(L->feed));
+        Bind_Cell_If_Unbound(CURRENT, Feed_Binding(L->feed));
         Metafy_Cell(Known_Element(CURRENT));  // need for unstable lookup
         heeded (Corrupt_Cell_If_Needful(SPARE));
 

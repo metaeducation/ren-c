@@ -108,7 +108,7 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
         if (pclass == PARAMCLASS_JUST)
             Copy_Cell(out, look);
         else if (pclass == PARAMCLASS_THE)
-            Derelativize(out, look, binding);
+            Copy_Cell_May_Bind(out, look, binding);
         else
             panic (Error_Varargs_No_Look_Raw()); // hard quote only
 
@@ -223,7 +223,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             break; }
 
         case PARAMCLASS_THE:
-            Derelativize(
+            Copy_Cell_May_Bind(
                 out,
                 List_Item_At(shared),
                 List_Binding(shared)
@@ -245,7 +245,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 }
             }
             else { // not a soft-"exception" case, quote ordinarily
-                Derelativize(
+                Copy_Cell_May_Bind(
                     out,
                     List_Item_At(shared),
                     List_Binding(shared)

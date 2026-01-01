@@ -521,11 +521,11 @@ Result(Element*) Unsingleheart_Sequence(Element* seq)
         const Pairing* pairing = cast(Pairing*, payload1);
         if (Is_Space(Pairing_First(pairing))) {
             assert(not Is_Space(Pairing_Second(pairing)));
-            Derelativize(seq, Pairing_Second(pairing), Cell_Binding(seq));
+            Copy_Cell_May_Bind(seq, Pairing_Second(pairing), Cell_Binding(seq));
             return seq;
         }
         if (Is_Space(Pairing_Second(pairing))) {
-            Derelativize(seq, Pairing_First(pairing), Cell_Binding(seq));
+            Copy_Cell_May_Bind(seq, Pairing_First(pairing), Cell_Binding(seq));
             return seq;
         }
         goto report_error;

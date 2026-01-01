@@ -372,8 +372,8 @@ Result(Element*) Alias_Any_Sequence_As(
             Context *binding = List_Binding(seq);
             Source* a = Make_Source_Managed(2);
             Set_Flex_Len(a, 2);
-            Derelativize(Array_At(a, 0), Pairing_First(p), binding);
-            Derelativize(Array_At(a, 1), Pairing_Second(p), binding);
+            Copy_Cell_May_Bind(Array_At(a, 0), Pairing_First(p), binding);
+            Copy_Cell_May_Bind(Array_At(a, 1), Pairing_Second(p), binding);
             Freeze_Source_Shallow(a);
             Init_Any_List(out, as, a);
         }

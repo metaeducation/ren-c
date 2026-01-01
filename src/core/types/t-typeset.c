@@ -152,7 +152,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
 
     Element* dest = Array_Head(copy);
     for (; item != tail; ++item, ++dest) {
-        Derelativize(dest, item, spec_binding);
+        Copy_Cell_May_Bind(dest, item, spec_binding);
         dont(Clear_Cell_Flag(dest, NEWLINE_BEFORE));  // assume significant [1]
     }
 
@@ -359,7 +359,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
   // as a WORD! typecheck.  This seems bad.)
 
     assert(Is_Word(Known_Element(SCRATCH)));
-    heeded (Bind_If_Unbound(Known_Element(SCRATCH), spec_binding));
+    heeded (Bind_Cell_If_Unbound(Known_Element(SCRATCH), spec_binding));
     heeded (Corrupt_Cell_If_Needful(SPARE));
 
     require (

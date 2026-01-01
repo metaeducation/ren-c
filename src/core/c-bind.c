@@ -699,7 +699,7 @@ DECLARE_NATIVE(LET)
         Context* temp_binding = item_binding;
 
         if (Is_Quoted(temp)) {
-            Derelativize(PUSH(), temp, temp_binding);
+            Copy_Cell_May_Bind(PUSH(), temp, temp_binding);
             Unquote_Cell(TOP_ELEMENT);  // drop quote in output block [1]
             altered = true;
             continue;  // do not make binding
@@ -746,12 +746,12 @@ DECLARE_NATIVE(LET)
 
         switch (opt Heart_Of(temp)) {  // permit quasi
           case TYPE_RUNE:  // is multi-return opt for dialect, passthru
-            Derelativize(PUSH(), temp, temp_binding);
+            Copy_Cell_May_Bind(PUSH(), temp, temp_binding);
             break;
 
           wordlike:
           case TYPE_WORD: {
-            Derelativize(PUSH(), temp, temp_binding);  // !!! no derel
+            Copy_Cell_May_Bind(PUSH(), temp, temp_binding);  // !!! no derel
             const Symbol* symbol = Word_Symbol(temp);
             bindings = Make_Let_Variable(symbol, bindings);
             Tweak_Cell_Binding(TOP_ELEMENT, bindings);
@@ -1339,7 +1339,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
 
-            Derelativize(slot, item, binding);
+            Copy_Cell_May_Bind(slot, item, binding);
             LIFT_BYTE(slot) = DUAL_0;  // alias dual convention [1]
         }
         else {
@@ -1506,7 +1506,7 @@ Result(None) Write_Loop_Slot_May_Unbind_Or_Decay(
         and not Is_Antiform(write)
         and Is_Bindable_Heart(Heart_Of(write))
     ){
-        Bind_If_Unbound(
+        Bind_Cell_If_Unbound(
             Known_Element(write),
             List_Binding(Known_Element(container))
         );

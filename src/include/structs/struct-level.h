@@ -379,7 +379,7 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     //
     // It starts out unmanaged, so that if no usages by the user specifically
     // ask for a FRAME! value, and the VarList* isn't needed to store in a
-    // Derelativize()'d or Move_Cell()'d value as a binding, it can be
+    // Copy_Cell_May_Bind()'d or Move_Cell()'d value as a binding, it can be
     // reused or freed.  See Push_Action() and Drop_Action() for the logic.
     //
     // !!! Only Action_Executor() uses this at the moment, but FRAME! may
