@@ -251,6 +251,9 @@ Bounce Evaluator_Executor(Level* const L)
     if (Using_Sublevel_For_Stepping(L))
         Drop_Level(SUBLEVEL);
 
+    if (Get_Level_Flag(L, FORCE_HEAVY_BRANCH))
+        Force_Cell_Heavy(L->out);
+
     return OUT;
 }}
 

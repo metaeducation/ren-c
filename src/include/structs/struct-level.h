@@ -48,16 +48,21 @@ STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == BASE_FLAG_UNREADABLE);
     FLAG_LEFT_BIT(2)
 
 
-//=//// LEVEL_FLAG_FORCE_HEAVY_NULLS //////////////////////////////////////=//
+//=//// LEVEL_FLAG_FORCE_HEAVY_BRANCH /////////////////////////////////////=//
 //
 // If something is a branch and it is evaluating, then it cannot result in
-// either a pure null or void result.  So they have to be put in a PACK!.
+// either a light null or light void result.  They have to make a PACK!.
 //
-// This is done as a general service of the Trampoline...because if it did
-// not, this would require a separate continuation callback to do it.  So
-// routines like IF would not be able to just delegate to another level.
+// In order to avoid making routines like IF have to get callbacks to handle
+// the Force_Cell_Heavy() call, this is controlled by a flag.  It used to be
+// a general service of the Trampoline, but that was wasteful as only the
+// Action_Executor() and Evaluator_Executor() run branches.
 //
-#define LEVEL_FLAG_FORCE_HEAVY_NULLS \
+// (This could be a shared flag between ACTION_EXECUTOR and EVAL_EXECUTOR,
+// but ACTION_EXECUTOR_FLAG_XXX are exhausted at the moment; there are more
+// generic LEVEL_FLAG_XXX free to use.)
+//
+#define LEVEL_FLAG_FORCE_HEAVY_BRANCH \
     FLAG_LEFT_BIT(3)
 
 

@@ -175,3 +175,10 @@ INLINE bool Is_Lifted_Heavy_Null(const Stable* v) {
     const Element* at = List_At(&tail, v);
     return (tail == at + 1) and Is_Lifted_Null(at);
 }
+
+INLINE void Force_Cell_Heavy(Value* v) {
+    if (Is_Light_Null(v))
+        Init_Heavy_Null(v);
+    else if (Is_Ghost(v))
+        Init_Heavy_Void(v);
+}

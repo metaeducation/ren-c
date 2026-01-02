@@ -124,7 +124,7 @@ void Push_Frame_Continuation(
 //
 bool Pushed_Continuation(
     Exact(Value*) out,  // not Sink (would corrupt, but with can be same as out)
-    Flags flags,  // LEVEL_FLAG_FORCE_HEAVY_NULLS, etc. for pushed levels
+    Flags flags,  // FORCE_HEAVY_BRANCH, etc. for pushed levels
     Context* binding,  // before branch forces non-empty variadic call
     const Stable* branch,  // *cannot* be the same as out
     Option(const Value*) with  // can be same as out or not GC-safe, may copy
@@ -151,13 +151,13 @@ bool Pushed_Continuation(
         panic (Error_Bad_Antiform(branch));
 
     if (Is_Group(branch)) {  // [2] for @(gr o up)
-        assert(flags & LEVEL_FLAG_FORCE_HEAVY_NULLS);  // needed for trick
+        assert(flags & LEVEL_FLAG_FORCE_HEAVY_BRANCH);  // branches
         require (
           Level* grouper = Make_Level_At_Core(
             &Group_Branch_Executor,  // evaluates to synthesize branch
             cast(Element*, branch),
             binding,
-            (flags & (~ LEVEL_FLAG_FORCE_HEAVY_NULLS))
+            LEVEL_MASK_NONE  // Group_Branch_Executor() assumes heaviness
         ));
         if (with == nullptr)  // spare will hold the value
             assert(Is_Cell_Erased(Level_Spare(grouper)));
@@ -175,18 +175,12 @@ bool Pushed_Continuation(
         goto just_use_out;
 
       case TYPE_QUASIFORM:
-        if (
-            Is_Lifted_Null(Known_Element(branch))
-            and (flags & LEVEL_FLAG_FORCE_HEAVY_NULLS)
-        ){
-            Init_Heavy_Null(out);
-        }
-        else {
-            Copy_Cell(out, Known_Element(branch));
-            require (
-              Unlift_Cell_No_Decay(out)
-            );
-        }
+        Copy_Cell(out, Known_Element(branch));
+        require (
+          Unlift_Cell_No_Decay(out)
+        );
+        if (flags & LEVEL_FLAG_FORCE_HEAVY_BRANCH)
+            Force_Cell_Heavy(out);
         goto just_use_out;
 
       case TYPE_METAFORM:

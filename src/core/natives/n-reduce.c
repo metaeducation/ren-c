@@ -405,7 +405,7 @@ DECLARE_NATIVE(REDUCE_EACH)
     if (breaking)
         return BREAKING_NULL;
 
-    return BRANCHED(OUT);
+    return OUT_BRANCHED;
 }}
 
 

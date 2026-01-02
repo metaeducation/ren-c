@@ -368,7 +368,7 @@ static Bounce Loop_Series_Common(
     if (Is_Cell_Erased(OUT))
         return GHOST;
 
-    return LOOPED(OUT);
+    return OUT_BRANCHED;
 }
 
 
@@ -413,7 +413,7 @@ static Bounce Loop_Integer_Common(
             }
         } while (interrupt == LOOP_INTERRUPT_AGAIN);
 
-        return LOOPED(OUT);
+        return OUT_BRANCHED;
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -451,7 +451,7 @@ static Bounce Loop_Integer_Common(
             panic (Error_Overflow_Raw());
     }
 
-    return LOOPED(OUT);
+    return OUT_BRANCHED;
 }
 
 
@@ -519,7 +519,7 @@ static Bounce Loop_Number_Common(
             }
         } while (interrupt == LOOP_INTERRUPT_AGAIN);
 
-        return LOOPED(OUT);
+        return OUT_BRANCHED;
     }
 
     // As per #1993, see notes in Loop_Integer_Common()
@@ -555,7 +555,7 @@ static Bounce Loop_Number_Common(
     if (Is_Cell_Erased(OUT))
         return GHOST;
 
-    return LOOPED(OUT);
+    return OUT_BRANCHED;
 }
 
 
@@ -743,7 +743,7 @@ DECLARE_NATIVE(FOR_SKIP)
     if (Is_Cell_Erased(OUT))
         return GHOST;
 
-    return LOOPED(OUT);
+    return OUT_BRANCHED;
 }
 
 
@@ -1402,7 +1402,7 @@ DECLARE_NATIVE(FOR_EACH)
     if (Is_Cell_Erased(OUT))
         return GHOST;
 
-    return LOOPED(OUT);
+    return OUT_BRANCHED;
 }}
 
 
@@ -2237,7 +2237,7 @@ DECLARE_NATIVE(REPEAT)
     }
 
     if (VAL_INT64(count) == VAL_INT64(index))  // reached the desired count
-        return LOOPED(OUT);
+        return OUT_BRANCHED;
 
     mutable_VAL_INT64(index) += 1;
 
@@ -2365,7 +2365,7 @@ DECLARE_NATIVE(FOR)
         panic (Error_Invalid_Type_Raw(Datatype_Of(spare)));
 
     if (VAL_INT64(spare) == VAL_INT64(value))
-        return LOOPED(OUT);
+        return OUT_BRANCHED;
 
     if (Add_I64_Overflows(&mutable_VAL_INT64(spare), VAL_INT64(spare), 1))
         panic (Error_Overflow_Raw());
@@ -2468,7 +2468,7 @@ DECLARE_NATIVE(INSIST)
       bool cond = Test_Conditional(out)
     );
     if (cond)
-        return LOOPED(OUT);
+        return OUT_BRANCHED;
 
     goto loop_again;  // not truthy, keep going
 }}
@@ -2575,7 +2575,7 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
     if (Is_Cell_Erased(OUT))
         return GHOST;  // body never ran, so no result to return!
 
-    return LOOPED(OUT);  // VOID => TRASH, NULL => HEAVY NULL
+    return OUT_BRANCHED;
 }}
 
 

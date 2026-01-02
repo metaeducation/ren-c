@@ -280,13 +280,6 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         Assert_Cell_Readable(L->out);
 
-        if (Get_Level_Flag(L, FORCE_HEAVY_NULLS)) {
-            if (Is_Light_Null(L->out))
-                Init_Heavy_Null(L->out);
-            else if (Is_Ghost(L->out))
-                Init_Heavy_Void(L->out);
-        }
-
         if (Get_Level_Flag(L, ROOT_LEVEL)) {
             assert(L == TOP_LEVEL);
             CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;

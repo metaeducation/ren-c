@@ -385,7 +385,7 @@ void Evaluator_Exit_Checks_Debug(Level* L) {
         // are okay if they are set.
         //
         filtered &= ~ (
-            LEVEL_FLAG_FORCE_HEAVY_NULLS
+            LEVEL_FLAG_FORCE_HEAVY_BRANCH
             | LEVEL_FLAG_AFRAID_OF_GHOSTS
             | LEVEL_FLAG_UNINTERRUPTIBLE
             | EVAL_EXECUTOR_FLAG_FULFILLING_ARG

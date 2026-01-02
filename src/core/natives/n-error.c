@@ -206,7 +206,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
         Drop_Level(SUBLEVEL);
         Move_Value(OUT, SPARE);
         LIFT_BYTE(OUT) = NOQUOTE_2;  // change antiform error to plain
-        return BRANCHED(OUT);
+        return OUT_BRANCHED;
     }
 
     if (STATE == ST_ENRESCUE_RUNNING_FRAME) {

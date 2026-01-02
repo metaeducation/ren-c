@@ -1115,6 +1115,9 @@ Bounce Action_Executor(Level* L)
 
     Drop_Action(L);  // must panic before Drop_Action()
 
+    if (Get_Level_Flag(L, FORCE_HEAVY_BRANCH))
+        Force_Cell_Heavy(OUT);
+
     return OUT;  // not thrown
 
 } handle_thrown: {  //////////////////////////////////////////////////////////

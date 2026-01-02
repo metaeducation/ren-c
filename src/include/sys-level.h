@@ -839,60 +839,6 @@ INLINE void Native_Copy_Result_Untracked(Level* L, const Value* v) {
 }
 
 
-// We turn light nulls and ghosts into their heavy forms for ELSE/THEN/ALSO
-// reactivity.
-//
-// !!! This may evolve into saying that it's *pack* reactivity in general,
-// with efficient forms of 1-element pack and branches always making one.
-//
-INLINE void Native_Branched_Result(Level* L, Value* v) {
-    assert(v == L->out);  // wouldn't be zero cost if we supported copy
-    UNUSED(L);
-    if (Is_Light_Null(v))
-        Init_Heavy_Null(v);  // box up for THEN reactivity [2]
-    else if (Is_Ghost(v))
-        Init_Heavy_Void(v);
-}
-
-
-// It's necessary to be able to tell from the outside of a loop whether it
-// had a BREAK or not, e.g.
-//
-//   flag: 'true
-//   while [true? flag] [flag: 'false, null]
-//
-// We don't want that to evaluate to NULL--because NULL is reserved for a
-// break signal.  So we make a ~(~null~)~ "heavy null" antiform PACK!.
-//
-// Also, returning VOID is reserved for if-and-only-if the loop never ran.
-// That's crucial for implementing loop compositions that give correct result
-// values.  For instance, we want these loops to have parity:
-//
-//     >> for-both 'x [1 2 3 4] [] [x * 10]
-//     == 40
-//
-//     >> for-each 'x [1 2 3 4] [x * 10]
-//     == 40
-//
-// If FOR-BOTH is implemented in terms of two FOR-EACH loops, then we want to
-// know the second FOR-EACH loop never produced a result (without having to
-// look at the input and hinge on the semantics of the loop).  But if VOID
-// is this signal, we have to worry about:
-//
-//     >> for-both 'x [1 2] [3 4] [if x = 4 [void]]
-//     == 20  ; if second FOR-EACH gave VOID, and we assumed "never ran"
-//
-// So instead, TRASH is produced for VOID if the body ever ran.  This can be
-// worked around with meta-result protocols if it's truly needed.
-//
-INLINE Bounce Native_Looped_Result(Level* level_, Value* atom) {
-    assert(atom == level_->out);  // wouldn't be zero cost if we supported copy
-    if (Is_Light_Null(atom))
-        Init_Heavy_Null_Untracked(atom);  // distinguish from null for BREAK
-    return level_->out;
-}
-
-
 // Quick access functions from natives (or compatible functions that name a
 // Level* pointer `level_`) to get some of the common public fields.
 //
@@ -943,12 +889,12 @@ INLINE Bounce Native_Looped_Result(Level* level_, Value* atom) {
     #define COPY(v) \
         (Native_Copy_Result_Untracked(level_, (v)), x_cast(Bounce, TRACK(OUT)))
 
-    #define BRANCHED(v) \
-        (Native_Branched_Result(level_, (v)), x_cast(Bounce, TRACK(OUT)))
+    #define OUT_BRANCHED \
+        (assert(not Is_Light_Null(OUT) and not Is_Ghost(OUT)), \
+        x_cast(Bounce, OUT))
 
     #define VETOING_NULL  x_cast(Bounce, nullptr)
 
-    #define LOOPED(v)      Native_Looped_Result(level_, (v))
     #define BREAKING_NULL  VETOING_NULL  // does break it need to be distinct?
 
     // Note: For efficiency, intrinsic typecheckers must return BOUNCE_OKAY

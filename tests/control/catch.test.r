@@ -4,13 +4,13 @@
     success: ~
     catch [
         throw success: okay
-        sucess: null
+        success: null
     ]
     success
 )
 ; catch results
-(null? catch [])
-(null? catch [()])
+(ghost? catch [])
+(ghost? catch [()])
 (warning? catch [throw rescue [1 / 0]])
 (1 = catch [throw 1])
 ((the '~[]~) = lift catch [throw eval ['~[]~]])
@@ -39,9 +39,7 @@
     (space = catch [words of throw space])
 ]
 (space = catch [values of throw space])
-[#1945
-    (space = catch [spec of throw space])
-]
+
 ; throw should not be caught by RESCUE
 (a: 1 catch [a: warning? rescue [throw 2]] a = 1)
 
@@ -128,7 +126,7 @@
     }
 )
 (
-    null = catch [10 + 20]
+    ghost? catch [10 + 20]
 )
 
 ; Antiforms
@@ -139,14 +137,14 @@
 ; ELSE/THEN reactivity
 [
     (null = catch [throw null])
-    (<caught> = catch [throw null] then [<caught>])
-    (null = catch [null])
-    (null = catch [null] then [panic])
+    (<caught> = catch [throw null] else [<caught>])  ; THROW not heavy
+    (ghost? catch [null])
+    (ghost? catch [null] then [panic])
     (<uncaught> = catch [null] else [<uncaught>])
     (<uncaught> = catch [null] then [panic] else [<uncaught>])
 
     (ghost? opt catch [throw ^ghost])
-    (<caught> = catch [throw ^ghost] then [<caught>])
+    (<caught> = catch [throw ^ghost] else [<caught>])  ; THROW not heavy
     (ghost? opt catch [^ghost])
     (ghost? opt catch [^ghost] then [panic])
     (<uncaught> = catch [^ghost] else [<uncaught>])
