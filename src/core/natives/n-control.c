@@ -23,16 +23,19 @@
 //
 // Control constructs follow these rules:
 //
-// * If they do not run any branches, they return NULL.  This will signal
+// * If they do not run any branches, they return GHOST.  This will signal
 //   functions like ELSE and THEN.
 //
-//   (The exception is WHEN, which returns VOID)
+//   (The exception is WHEN, which returns NONE)
 //
-// * If a branch *does* run--and its evaluation *happens* to produce NULL--the
-//   null will be wrapped in a BLOCK! antiform ("heavy null").  This way THEN
-//   runs instead of ELSE.  Although this does mean there is some conflation of
-//   the results, the conflated values have properties that mostly align with
-//   what their intent was--so it works about as well as it can.
+// * If a branch *does* run--and its evaluation *happens* to produce GHOST,
+//   the result will be an empty GROUP! antiform (pack!), a.k.a. "heavy void".
+//   This way THEN runs instead of ELSE.  The same is true if it happens to
+//   produce a NULL--it's wrapped in a pack to be a "heavy null".
+//
+//   Although this does mean there is some conflation of the results, the
+//   conflated values have properties that mostly align with what their intent
+//   was--so it works about as well as it can.
 //
 // * Zero-arity function values used as branches will be executed, and
 //   single-arity functions used as branches will also be executed--but passed
@@ -41,7 +44,7 @@
 //       >> if 1 < 2 [10 + 20] then (x -> [print ["THEN got" x]])
 //       THEN got 30
 //
-//   (See Eval_Branch_Throws() for supported ANY-BRANCH? types and behaviors.)
+//   (See Pushed_Continuation() for supported ANY-BRANCH? types and behaviors.)
 //
 //=//// NOTES ////////////////////////////////////////////////////////////=//
 //
@@ -61,7 +64,7 @@
 // Branches do not use escapable literals for GROUP! evaluations, they get
 // the group literally and only run it if the branch is taken:
 //
-//     >> branchy: func [flag] [either flag '[<a>] '[<b>]]
+//     >> branchy: lambda [flag] [either flag '[<a>] '[<b>]]
 //
 //     >> either okay (print "a" branchy okay) (print "b" branchy null)
 //     a
@@ -69,6 +72,12 @@
 //
 // This executor is used to run the GROUP! and then do the eval of whatever
 // branch is produced.
+//
+// !!! There are opportunities for optimization here.  The Level could be
+// morphed directly into an Evaluator_Executor() after the branch gets
+// evaluated.  Also, analysis of the GROUP! could handle simple patterns
+// like (x -> [x + 1]) by noticing it was a 3 element group, and simply bind
+// the block to a variable named X and run it instead of creating a function.
 //
 Bounce Group_Branch_Executor(Level* const L)
 //
@@ -83,7 +92,8 @@ Bounce Group_Branch_Executor(Level* const L)
     if (THROWING)
         return THROWN;
 
-    Stable* with = Known_Stable(SPARE);  // passed to branch if run [1]
+    Value* with = SPARE;  // passed to branch if run [1]
+    possibly(Is_Cell_Erased(with));
     Value* branch = SCRATCH;  // GC-safe if eval target
 
     enum {
@@ -121,8 +131,7 @@ Bounce Group_Branch_Executor(Level* const L)
       Level* sub = Make_Level(
         &Evaluator_Executor,
         LEVEL->feed,
-        (LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255))  // take out state 1
-            & (~ LEVEL_FLAG_FORCE_HEAVY_NULLS))  // take off branch flag [1]
+        (not LEVEL_FLAG_FORCE_HEAVY_NULLS)
             | (not LEVEL_FLAG_AFRAID_OF_GHOSTS)  // all voids act same here
     ));
     Init_Ghost(Evaluator_Primed_Cell(sub));
@@ -137,10 +146,19 @@ Bounce Group_Branch_Executor(Level* const L)
   //
   //        switch-d: enclose (augment switch/ [
   //            :default "Default case if no others are found"
-  //            [block!]
-  //        ]) lambda [f [frame!]] [
+  //                [block!]
+  //        ]) f -> [
   //            eval f else (opt f.default)
   //        ]
+  //
+  //    If we make this evaluate to what (eval f) would have been if there
+  //    was no ELSE clause, that makes SWITCH-D with no default behave like
+  //    a plain SWITCH.
+  //
+  // 2. The `return DELEGATE(...)` pattern is a feature provied by the
+  //    Action_Executor().  But since this is its own executor, it the service
+  //    isn't available and so we must handle the result callback...even
+  //    though all we do is `return OUT;`
 
     assert(Is_Level_At_End(L));
 
@@ -179,7 +197,7 @@ DECLARE_NATIVE(IF)
       bool cond = Test_Conditional(condition)
     );
     if (not cond)
-        return GHOST;  // "light" void (not in a pack) if condition is false
+        return GHOST;  // "light" void (triggers ELSE)
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
 }
@@ -206,7 +224,7 @@ DECLARE_NATIVE(WHEN)
       bool cond = Test_Conditional(condition)
     );
     if (not cond)
-        return Init_None(OUT);  // deviation from IF (!) ...NONE not VOID
+        return Init_None(OUT);  // empty splice (triggers THEN)
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // branch semantics [A]
 }

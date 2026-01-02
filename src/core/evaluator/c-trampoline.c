@@ -322,8 +322,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    to be reserved to mean something else.)
 
     if (bounce == BOUNCE_CONTINUE) {
-        if (L != TOP_LEVEL)  // continuing self ok [1]
+        if (L != TOP_LEVEL) {  // continuing self ok [1]
             assert(LEVEL_STATE_BYTE(L) != 0);  // else state nonzero [2]
+            assert(Not_Level_Flag(TOP_LEVEL, ROOT_LEVEL));
+        }
 
         L = TOP_LEVEL;
         goto bounce_on_trampoline_skip_just_use_out;
