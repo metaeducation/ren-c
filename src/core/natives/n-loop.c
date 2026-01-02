@@ -21,6 +21,25 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// A. Loop bodies are taken as escapable literals, vs. taking literal GROUP!.
+//    Hence it will always evaluate the groups, even if there's no data.
+//    It would simply be too hard for loop wrappers to dodge situations of
+//    evaluating the GROUP! more than once if they had to take the groups
+//    literally at the callsite.  Also, the technical matter of getting the
+//    FENCE! or BLOCK! that you want to bind loop variables to would become
+//    much more complex if it had to be deferred (you don't want to bind
+//    the loop variables to the group...)
+//
+//    Therefore: if you have a "computed branch" and the calculation would be
+//    undesirable to do if the data turns out to be empty, don't use a GROUP!,
+//    use a cache:
+//
+//        for-each item data-maybe-empty [
+//            eval cache [some-expensive-transformation [
+//                ...
+//            ]]
+//        ]
+//
 
 #include "sys-core.h"
 #include "sys-int-funcs.h" //Add_I64_Overflows
@@ -214,6 +233,11 @@ void Add_Definitional_Break_Again_Continue(
     Element* body,
     Level* loop_level
 ){
+    if (not (Is_Block(body) or Is_Fence(body))) {
+        assert(Is_Frame(body));
+        return;
+    }
+
     Context* parent = List_Binding(body);
     Let* let_continue = Make_Let_Variable(CANON(CONTINUE), parent);
 
@@ -549,8 +573,7 @@ static Bounce Loop_Number_Common(
 //          "Ending value"
 //      bump [any-number?]
 //          "Amount to skip each time"
-//      body [<const> any-branch?]
-//          "Code to evaluate"
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(CFOR)
@@ -565,8 +588,7 @@ DECLARE_NATIVE(CFOR)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
-    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
-        Add_Definitional_Break_Again_Continue(body, level_);
+    Add_Definitional_Break_Again_Continue(body, level_);
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
     Stable* var = Slot_Hack(slot);
@@ -630,7 +652,7 @@ DECLARE_NATIVE(CFOR)
 //      word [word! @word! _]
 //      series [<opt> none? any-series?]
 //      skip [<opt-out> integer!]
-//      body [<const> any-branch?]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(FOR_SKIP)
@@ -653,8 +675,7 @@ DECLARE_NATIVE(FOR_SKIP)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(WORD), varlist));
 
-    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
-        Add_Definitional_Break_Again_Continue(body, level_);
+    Add_Definitional_Break_Again_Continue(body, level_);
 
     Fixed(Slot*) slot = Varlist_Fixed_Slot(varlist, 1);
 
@@ -777,6 +798,11 @@ void Add_Definitional_Stop(
     Element* body,
     Level* loop_level
 ){
+    if (not (Is_Block(body) or Is_Fence(body))) {
+        assert(Is_Frame(body));
+        return;
+    }
+
     Context* parent = List_Binding(body);
 
     Force_Level_Varlist_Managed(loop_level);
@@ -799,8 +825,7 @@ void Add_Definitional_Stop(
 //  "Evaluate branch endlessly until BREAK gives NULL or a STOP gives a result"
 //
 //      return: [<null> any-stable?]
-//      body "Code to evaluate each time"
-//          [<const> any-branch?]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(CYCLE)
@@ -822,10 +847,8 @@ DECLARE_NATIVE(CYCLE)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body)) {
-        Add_Definitional_Break_Again_Continue(body, level_);
-        Add_Definitional_Stop(body, level_);
-    }
+    Add_Definitional_Break_Again_Continue(body, level_);
+    Add_Definitional_Stop(body, level_);
 
     STATE = ST_CYCLE_EVALUATING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);
@@ -1269,8 +1292,7 @@ void Shutdown_Loop_Each(Stable* iterator)
 //      data "The series to traverse"
 //          [<opt> none? any-series? any-context? map! any-sequence?
 //           action! quoted!]  ; action support experimental, e.g. generators
-//      body "Code to evaluate each time, if BREAK encountered returns NULL"
-//          [<const> block!]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //      {iterator}
 //  ]
 //
@@ -1310,8 +1332,7 @@ DECLARE_NATIVE(FOR_EACH)
 
     Remember_Cell_Is_Lifeguard(Init_Object(vars, varlist));
 
-    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
-        Add_Definitional_Break_Again_Continue(body, level_);
+    Add_Definitional_Break_Again_Continue(body, level_);
 
     iterator = Init_Loop_Each_May_Alias_Data(LOCAL(ITERATOR), unwrap data);
     STATE = ST_FOR_EACH_INITIALIZED_ITERATOR;
@@ -1403,7 +1424,7 @@ DECLARE_NATIVE(FOR_EACH)
 //      @(vars) "Word or block of words to set each time, no new var if $word"
 //          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data [<opt> none? any-series? any-context? map! action!]
-//      body [<const> block!]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //      {iterator}
 //  ]
 //
@@ -1436,8 +1457,7 @@ DECLARE_NATIVE(EVERY)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
-    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
-        Add_Definitional_Break_Again_Continue(body, level_);
+    Add_Definitional_Break_Again_Continue(body, level_);
 
     iterator = Init_Loop_Each_May_Alias_Data(LOCAL(ITERATOR), unwrap data);
     STATE = ST_EVERY_INITIALIZED_ITERATOR;
@@ -1550,8 +1570,7 @@ DECLARE_NATIVE(EVERY)
 //          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data "The series to traverse (modified)"
 //          [<opt> none? any-series?]  ; !!! can't do QUOTED!
-//      body "Block to evaluate each time, return NULL if BREAK hit"
-//          [<const> block!]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(REMOVE_EACH)
@@ -1599,8 +1618,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     );
     Remember_Cell_Is_Lifeguard(Init_Object(ARG(VARS), varlist));
 
-    if (Is_Block(body))
-        Add_Definitional_Break_Again_Continue(body, level_);
+    Add_Definitional_Break_Again_Continue(body, level_);
 
     Index start = Series_Index(data);
 
@@ -1917,8 +1935,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //              any-series? any-sequence? any-context?
 //              action!
 //          ]
-//      body "Block to evaluate each time (result will be kept literally)"
-//          [<const> block!]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //      {iterator}
 //  ]
 //
@@ -1962,8 +1979,7 @@ DECLARE_NATIVE(MAP_EACH)
 //          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
 //          [<opt> none? quoted! action!]
-//      body "Block to evaluate each time"
-//          [<const> block!]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //      {iterator}
 //  ]
 //
@@ -1993,8 +2009,7 @@ DECLARE_NATIVE(MAP)
     if (not data_arg or Is_None(unwrap data_arg))  // same response as empty
         return Init_Block(OUT, Make_Source(0));
 
-    if (Is_Block(body) or Is_Meta_Form_Of(BLOCK, body))
-        Add_Definitional_Break_Again_Continue(body, level_);
+    Add_Definitional_Break_Again_Continue(body, level_);
 
     Stable* data = unwrap data_arg;
 
@@ -2149,8 +2164,7 @@ DECLARE_NATIVE(MAP)
 //      ]
 //      count "Repetitions (true loops infinitely, false doesn't run)"
 //          [<opt> any-number? logic?]
-//      body "Code to evaluate each time, if BREAK encountered returns NULL"
-//          [<unrun> <const> block! frame!]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(REPEAT)
@@ -2196,8 +2210,7 @@ DECLARE_NATIVE(REPEAT)
         Init_Integer(index, 1);
     }
 
-    if (Is_Block(body))
-        Add_Definitional_Break_Again_Continue(body, level_);
+    Add_Definitional_Break_Again_Continue(body, level_);
 
     STATE = ST_REPEAT_EVALUATING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // catch break/continue
@@ -2255,7 +2268,7 @@ DECLARE_NATIVE(REPEAT)
 //          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      value "Maximum number or series to traverse"
 //          [<opt-out> any-number? any-sequence? quoted! block! action!]
-//      body [<const> block!]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(FOR)
@@ -2307,8 +2320,7 @@ DECLARE_NATIVE(FOR)
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
         return GHOST;
 
-    if (Is_Block(body))
-        Add_Definitional_Break_Again_Continue(body, level_);
+    Add_Definitional_Break_Again_Continue(body, level_);
 
     require (
       VarList* varlist = Create_Loop_Context_May_Bind_Body(body, vars)
@@ -2380,8 +2392,7 @@ DECLARE_NATIVE(FOR)
 //  "Evaluates the body until it produces a non-NULL (and non-VOID) value"
 //
 //      return: [<null> any-stable?]
-//      body "If BREAK encountered, returns NULL"
-//          [<const> block!]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(INSIST)
@@ -2403,8 +2414,7 @@ DECLARE_NATIVE(INSIST)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Block(body))
-        Add_Definitional_Break_Again_Continue(body, level_);
+    Add_Definitional_Break_Again_Continue(body, level_);
 
     STATE = ST_INSIST_EVALUATING_BODY;
     Enable_Dispatcher_Catching_Of_Throws(LEVEL);  // for BREAK, CONTINUE, etc.
@@ -2497,21 +2507,18 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    // 1. We *could* have CONTINUE in the *condition* as well as the body of a
-    //    WHILE/UNTIL skip the execution of the body of that loop, and run the
-    //    condition again.  :-/
-    //
-    //    That *may* be interesting for some stylized usage that puts complex
-    //    branching code in a condition.  But it adds some cost, and would
-    //    override the default meaning of CONTINUE continuing some enclosing
-    //    loop...which is free, and enables other strange stylized usages.
+  // 1. We *could* have CONTINUE in the *condition* as well as the body of a
+  //    WHILE/UNTIL skip the execution of the body of that loop, and run the
+  //    condition again.  :-/
+  //
+  //    That *may* be interesting for some stylized usage that puts complex
+  //    branching code in a condition.  But it adds some cost, and would
+  //    override the default meaning of CONTINUE continuing some enclosing
+  //    loop...which is free, and enables other strange stylized usages.
 
     STATE = ST_WHILE_OR_UNTIL_EVALUATING_CONDITION;  // set before catching
 
-    if (Is_Block(body))
-        Add_Definitional_Break_Again_Continue(body, LEVEL);  // no condition bind [1]
-    else
-        assert(Is_Frame(body));
+    Add_Definitional_Break_Again_Continue(body, LEVEL);  // not condition [1]
 
 } evaluate_condition: {  /////////////////////////////////////////////////////
 
@@ -2583,8 +2590,7 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
 //
 //      return: [<null> any-stable?]
 //      condition [<unrun> <const> block! frame!]  ; literals not allowed, [1]
-//      body "If BREAK is encountered in body, return NULL"
-//          [<unrun> <const> block! frame!]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(WHILE)
@@ -2608,8 +2614,7 @@ DECLARE_NATIVE(WHILE)
 //
 //      return: [<null> any-stable?]
 //      condition [<unrun> <const> block! frame!]  ; literals not allowed, [1]
-//      body "if BREAK is encountered in body, return NULL"
-//          [<unrun> <const> block! frame!]
+//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(UNTIL)

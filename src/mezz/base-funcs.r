@@ -452,7 +452,7 @@ count-up: func [
     return: [any-value?]
     var [word!]
     limit [<opt-out> integer! rune!]
-    body [block!]
+    @(body) [block! fence!]
     {start end ^result}
 ][
     ; REPEAT in UPARSE wanted to try out some cutting-edge ideas about
@@ -470,7 +470,7 @@ count-up: func [
         limit
     ]
     return cycle [
-        ^result: cfor var start end 1 body else [
+        ^result: cfor var start end 1 (body) else [
             return null  ; a BREAK was encountered
         ]
         if limit <> # [  ; Note: STOP:WITH not ^META, decays PACK! etc
