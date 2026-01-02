@@ -469,7 +469,7 @@ Bounce Make_Interpreted_Action(
 //
 //      return: [~(action!)~]
 //      spec [block! datatype!]
-//      @(body) [block! fence!]
+//      @(body) [<const> block! fence!]
 //  ]
 //
 DECLARE_NATIVE(FUNCTION)
@@ -499,7 +499,7 @@ DECLARE_NATIVE(FUNCTION)
 //
 //      return: [~(action!)~]
 //      spec [block! datatype!]
-//      @(body) [block! fence!]
+//      @(body) [<const> block! fence!]
 //  ]
 //
 DECLARE_NATIVE(PROCEDURE)

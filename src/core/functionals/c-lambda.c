@@ -234,7 +234,7 @@ bool Lambda_Details_Querier(
 //
 //      return: [~(action!)~]
 //      spec [block! datatype!]
-//      @(body) [block! fence!]
+//      @(body) [<const> block! fence!]
 //  ]
 //
 DECLARE_NATIVE(LAMBDA)
@@ -280,7 +280,7 @@ DECLARE_NATIVE(LAMBDA)
 //
 //      return: [~(action!)~]
 //      spec [block! datatype!]
-//      @(body) [block! fence!]
+//      @(body) [<const> block! fence!]
 //  ]
 //
 DECLARE_NATIVE(DIVERGER)

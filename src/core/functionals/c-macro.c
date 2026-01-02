@@ -216,7 +216,7 @@ bool Inliner_Details_Querier(
 //
 //      return: [~(action!)~]
 //      spec [block! datatype!]
-//      @(body) [block! fence!]
+//      @(body) [<const> block! fence!]
 //  ]
 //
 DECLARE_NATIVE(INLINER)

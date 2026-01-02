@@ -493,7 +493,7 @@ bool Yielder_Details_Querier(
 //
 //      return: [~(action!)~]
 //      spec [block! datatype!]
-//      @(body) [block! fence!]
+//      @(body) [<const> block! fence!]
 //      ; :resettable  ; should yielders offer a reset facility?
 //  ]
 //

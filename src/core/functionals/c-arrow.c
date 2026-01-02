@@ -27,7 +27,7 @@
 //     The branch produced 10
 //
 // While a BLOCK! of arguments can be used to gather multiple arguments, you
-// can also use a quasiform of block to unpack the arguments:
+// can also use a quasiform of group to unpack the arguments:
 //
 //     case [
 //         true [pack [10 + 20, 3 + 4]]  ; makes antiform ~('30 '7)~
@@ -90,14 +90,14 @@ Bounce Arrow_Dispatcher(Level* const L)
     Details* details = Ensure_Level_Details(L);
     assert(Details_Max(details) == MAX_IDX_ARROW);
 
-    const Element* block = cast(Element*, Details_At(details, IDX_ARROW_BODY));
-    assert(Is_Block(block));
+    const Element* body = Known_Element(Details_At(details, IDX_ARROW_BODY));
+    assert(Is_Block(body) or Is_Fence(body));
 
     assert(Link_Inherit_Bind(L->varlist) == nullptr);
-    Add_Link_Inherit_Bind(L->varlist, List_Binding(block));
+    Add_Link_Inherit_Bind(L->varlist, List_Binding(body));
     Force_Level_Varlist_Managed(L);
 
-    Element* spare_rebound = Copy_Cell(SPARE, block);
+    Element* spare_rebound = Copy_Cell(SPARE, body);
     Tweak_Cell_Binding(spare_rebound, L->varlist);
 
     return DELEGATE_CORE(
@@ -149,7 +149,7 @@ bool Arrow_Details_Querier(
 //      return: [~(action!)~]
 //      spec "Names of arguments"
 //          [_ word! 'word! ^word! :word! block!]
-//      body [<const> block!]
+//      @(body) [<const> block! fence!]
 //  ]
 //
 DECLARE_NATIVE(ARROW)
@@ -163,12 +163,12 @@ DECLARE_NATIVE(ARROW)
 
     Element* methodization = Init_Quasar(SCRATCH);
 
-  //=//// TRY TO OPTIMIZE FOR SIMPLE CASES ////////////////////////////////=//
+  try_optimizing_simple_paramlist: {
 
-    const Element* item_tail;
-    const Element* item;
+    const Element* tail;
+    const Element* at;
     if (Is_Block(spec)) {
-        item = List_At(&item_tail, spec);
+        at = List_At(&tail, spec);
     }
     else if (
         Is_Word(spec)
@@ -177,47 +177,47 @@ DECLARE_NATIVE(ARROW)
         or Is_Quoted(spec)
         or (Is_Path(spec) and Is_Refinement(spec))
     ){
-        item = cast(Element*, spec);
-        item_tail = item + 1;
+        at = spec;
+        tail = at + 1;
     }
     else {
         assert(Is_Space(spec));
-        item = nullptr;
-        item_tail = nullptr;
+        at = nullptr;
+        tail = nullptr;
     }
 
-    for (; item != item_tail; ++item) {
+    for (; at != tail; ++at) {
         Flags param_flags = 0;
         ParamClass pclass;
         const Symbol* symbol;
-        if (Is_Word(item)) {
+        if (Is_Word(at)) {
             pclass = PARAMCLASS_NORMAL;
-            symbol = Word_Symbol(item);
+            symbol = Word_Symbol(at);
         }
-        else if (Is_Meta_Form_Of(WORD, item)) {
+        else if (Is_Meta_Form_Of(WORD, at)) {
             pclass = PARAMCLASS_META;
-            symbol = Word_Symbol(item);
+            symbol = Word_Symbol(at);
         }
-        else if (Is_Quoted(item)) {
-            if (Quotes_Of(item) != 1)
-                panic (item);
-            if (Heart_Of(item) == TYPE_WORD)
+        else if (Is_Quoted(at)) {
+            if (Quotes_Of(at) != 1)
+                panic (at);
+            if (Heart_Of(at) == TYPE_WORD)
                 pclass = PARAMCLASS_JUST;
             else
-                panic (item);
-            symbol = Word_Symbol(item);
+                panic (at);
+            symbol = Word_Symbol(at);
         }
-        else if (Is_Pinned_Form_Of(WORD, item)) {
+        else if (Is_Pinned_Form_Of(WORD, at)) {
             pclass = PARAMCLASS_THE;
-            symbol = Word_Symbol(item);
+            symbol = Word_Symbol(at);
         }
-        else if (Is_Refinement(item)) {
+        else if (Is_Refinement(at)) {
             pclass = PARAMCLASS_NORMAL;
-            symbol = Cell_Refinement_Symbol(item);
+            symbol = Cell_Refinement_Symbol(at);
             param_flags |= PARAMETER_FLAG_REFINEMENT;
             param_flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
         }
-        else if (Is_Set_Word(item) and Word_Id(item) == SYM_RETURN) {
+        else if (Is_Set_Word(at) and Word_Id(at) == SYM_RETURN) {
             panic (
                 "ARROW (->) does not offer RETURN facilities, use FUNCTION"
             );
@@ -238,7 +238,7 @@ DECLARE_NATIVE(ARROW)
         );
     }
 
-  //=//// IF NOT OPTIMIZABLE, USE THE FULL PARAMLIST PROCESS //////////////=//
+} process_paramlist_if_not_optimizable: {
 
     if (not optimizable) {
         require (
@@ -250,7 +250,7 @@ DECLARE_NATIVE(ARROW)
         ));
     }
 
-  //=//// POP THE PARAMLIST AND MAKE THE DETAILS PHASE ////////////////////=//
+} pop_paramlist_and_make_details_phase: {
 
     Option(Phase*) prior = nullptr;
     Option(VarList*) prior_coupling = nullptr;
@@ -277,4 +277,4 @@ DECLARE_NATIVE(ARROW)
 
     Init_Action(OUT, details, ANONYMOUS, UNCOUPLED);
     return Packify_Action(OUT);
-}
+}}

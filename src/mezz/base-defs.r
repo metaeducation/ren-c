@@ -205,16 +205,12 @@ requote: reframer func [
 ; https://forum.rebol.info/t/for-lightweight-lambda-arrow-functions/2172
 ;
 ->: infix lambda [
-    @words "Names of arguments (will not be type checked)"
-        [<end> _ word! 'word! ^word! refinement? block! group!]
-    body "Code to execute (will not be deep copied)"
-        [block!]
+    @(words) "Names of arguments (will not be type checked)"
+        [<end> _ word! 'word! ^word! :word! block! group!]
+    @(body) "Code to execute (will not be deep copied)"
+        [block! fence!]
 ][
-    case [
-        not words [words: []]  ; x: -> [print "hi"] will take no arguments
-        if group? words [words: eval words]
-    ]
-    arrow words body
+    arrow any [words []] (body)
 ]
 
 ; Particularly helpful for annotating when a branch result is used.

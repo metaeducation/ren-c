@@ -126,7 +126,7 @@ combinator: func [
     return: [frame!]
 
     spec [block!]
-    @(body) [block!]  ; FENCE! handling is tricky, need to think...
+    @(body) [<const> block!]  ; FENCE! handling is tricky, need to think...
 ](
 bind construct [
     wrapper: unrun lambda [  ; unrun to not store WRAPPER as label

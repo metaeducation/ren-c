@@ -204,7 +204,7 @@ Source* Expanded_Combinator_Spec(const Element* original)
 //
 //      return: [frame!]
 //      spec [block!]
-//      @(body) [block! fence!]
+//      @(body) [<const> block! fence!]
 //  ]
 //
 DECLARE_NATIVE(COMBINATOR)
