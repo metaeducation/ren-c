@@ -447,21 +447,22 @@ iterate-back: redescribe [
 )
 
 
+; 1. REPEAT in UPARSE wanted to try out some cutting-edge ideas about "opting"
+;    to counting loops, e.g. `count-up i _` doesn't loop at all.  But what if
+;    `count-up i #` meant loop forever?  This clunky layer on top of cfor is
+;    a good test of loop abstraction, and is good enough to let UPARSE do its
+;    experiment without changing any native code.
+;
+;    Note: STOP:WITH is not ^META, decays PACK! etc
+;
 count-up: func [
     "Loop the body, setting a word from 1 up to the end value given"
     return: [any-value?]
-    var [word!]
+    @(var) [_ word! 'word! $word! '$word!]
     limit [<opt-out> integer! rune!]
     @(body) [block! fence!]
     {start end ^result}
 ][
-    ; REPEAT in UPARSE wanted to try out some cutting-edge ideas about
-    ; "opting in" to counting loops, e.g. `count-up 'i _` opts out and doesn't
-    ; loop at all.  But what if `count-up 'i #` meant loop forever?  This
-    ; clunky layer on top of cfor is a good test of loop abstraction, and
-    ; is good enough to let UPARSE do its experiment without changing any
-    ; native code.
-
     start: 1
     end: if rune? limit [
         if limit <> # [panic]
@@ -470,11 +471,11 @@ count-up: func [
         limit
     ]
     return cycle [
-        ^result: cfor var start end 1 (body) else [
+        ^result: cfor (var) start end 1 (body) else [
             return null  ; a BREAK was encountered
         ]
-        if limit <> # [  ; Note: STOP:WITH not ^META, decays PACK! etc
-            return heavy ^result  ; the limit was actually reached
+        if limit <> # [  ; wacky idea: # loops forever [1]
+            return ^result  ; the limit was actually reached
         ]
         ; otherwise keep going...
         end: end + 100

@@ -564,15 +564,11 @@ static Bounce Loop_Number_Common(
 //
 //  "Evaluate a block over a range of values (See also: REPEAT)"
 //
-//      return: [any-stable?]
-//      word [word!]
-//          "Variable to hold current value"
+//      return: [any-value?]
+//      @(word) [_ word! 'word! $word! '$word!]
 //      start [any-series? any-number?]
-//          "Starting value"
 //      end [any-series? any-number?]
-//          "Ending value"
 //      bump [any-number?]
-//          "Amount to skip each time"
 //      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
 //  ]
 //
