@@ -52,10 +52,10 @@
     ; See footnotes below...
 
     (
-        for-both: lambda [@(var) blk1 blk2 @(body)] [
+        for-both: lambda [@(var) blk1 blk2 body] [
             all [
-                ^ for-each (var) blk1 (body) then lift/
-                ^ for-each (var) blk2 (body) then lift/
+                ^ for-each (var) blk1 body then lift/
+                ^ for-each (var) blk2 body then lift/
             ] then unlift/
         ]
 

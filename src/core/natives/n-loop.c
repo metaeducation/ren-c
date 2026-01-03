@@ -21,14 +21,34 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A. Loop bodies are taken as escapable literals, vs. taking literal GROUP!.
-//    Hence it will always evaluate the groups, even if there's no data.
-//    It would simply be too hard for loop wrappers to dodge situations of
-//    evaluating the GROUP! more than once if they had to take the groups
-//    literally at the callsite.  Also, the technical matter of getting the
-//    FENCE! or BLOCK! that you want to bind loop variables to would become
-//    much more complex if it had to be deferred (you don't want to bind
-//    the loop variables to the group...)
+// A. Loop bodies are not taken as literals, the way branches are.  The body
+//    is evaluated at the callsite as usual.  Hence any GROUP! is evaluated
+//    to build the body regardless of whether there is data or not, and any
+//    FENCE! has to be evaluated to do its wrapping prior to being received
+//    by the loop.
+//
+//    This may seem wasteful in the case of work being done to produce or
+//    wrap the body even when there is no data to enumerate.  And it also may
+//    seem like a missed opportunity to take FENCE! literally and dodge the
+//    creation of locals for any loop variables that match SET-WORD at the
+//    top level of that fence (similar to how FUNCTION takes FENCE! literally
+//    to signal gathering of locals at the top level).
+//
+//    But loop bodies are designed to be called multiple times, and it just
+//    impacts loop wrappers too seriously.  Imagine if FOR-EACH took its body
+//    literally and you tried to wrap it:
+//
+//        for-both: lambda [@(var) blk1 blk2 @(body)] [  ; alternate universe
+//            all [
+//                ^ for-each (var) blk1 (body) then lift/
+//                ^ for-each (var) blk2 (body) then lift/
+//            ] then unlift/
+//        ]
+//
+//    A FENCE! that was received and analyzed by FOR-EACH would create *two*
+//    separate wrappings, each with its own state.  This reality would leak
+//    into the user experience by splitting identity across two separate sets
+//    of variables, instead of just one.
 //
 //    Therefore: if you have a "computed branch" and the calculation would be
 //    undesirable to do if the data turns out to be empty, don't use a GROUP!,
@@ -235,7 +255,7 @@ void Add_Definitional_Break_Again_Continue(
     Element* body,
     Level* loop_level
 ){
-    if (not (Is_Block(body) or Is_Fence(body))) {
+    if (not Is_Block(body)) {
         assert(Is_Frame(body));
         return;
     }
@@ -571,7 +591,7 @@ static Bounce Loop_Number_Common(
 //      start [any-series? any-number?]
 //      end [any-series? any-number?]
 //      bump [any-number?]
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(CFOR)
@@ -650,7 +670,7 @@ DECLARE_NATIVE(CFOR)
 //      word [word! @word! _]
 //      series [<opt> none? any-series?]
 //      skip [<opt-out> integer!]
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(FOR_SKIP)
@@ -796,7 +816,7 @@ void Add_Definitional_Stop(
     Element* body,
     Level* loop_level
 ){
-    if (not (Is_Block(body) or Is_Fence(body))) {
+    if (not Is_Block(body)) {
         assert(Is_Frame(body));
         return;
     }
@@ -823,7 +843,7 @@ void Add_Definitional_Stop(
 //  "Evaluate branch endlessly until BREAK gives NULL or a STOP gives a result"
 //
 //      return: [<null> any-stable?]
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(CYCLE)
@@ -1290,7 +1310,7 @@ void Shutdown_Loop_Each(Stable* iterator)
 //      data "The series to traverse"
 //          [<opt> none? any-series? any-context? map! any-sequence?
 //           action! quoted!]  ; action support experimental, e.g. generators
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //      {iterator}
 //  ]
 //
@@ -1422,7 +1442,7 @@ DECLARE_NATIVE(FOR_EACH)
 //      @(vars) "Word or block of words to set each time, no new var if $word"
 //          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data [<opt> none? any-series? any-context? map! action!]
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //      {iterator}
 //  ]
 //
@@ -1568,7 +1588,7 @@ DECLARE_NATIVE(EVERY)
 //          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data "The series to traverse (modified)"
 //          [<opt> none? any-series?]  ; !!! can't do QUOTED!
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(REMOVE_EACH)
@@ -1933,7 +1953,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //              any-series? any-sequence? any-context?
 //              action!
 //          ]
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //      {iterator}
 //  ]
 //
@@ -1977,7 +1997,7 @@ DECLARE_NATIVE(MAP_EACH)
 //          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
 //          [<opt> none? quoted! action!]
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //      {iterator}
 //  ]
 //
@@ -2162,7 +2182,7 @@ DECLARE_NATIVE(MAP)
 //      ]
 //      count "Repetitions (true loops infinitely, false doesn't run)"
 //          [<opt> any-number? logic?]
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(REPEAT)
@@ -2266,7 +2286,7 @@ DECLARE_NATIVE(REPEAT)
 //          [_ word! ^word! $word! 'word! '^word! '$word! block!]
 //      value "Maximum number or series to traverse"
 //          [<opt-out> any-number? any-sequence? quoted! block! action!]
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(FOR)
@@ -2390,7 +2410,7 @@ DECLARE_NATIVE(FOR)
 //  "Evaluates the body until it produces a non-NULL (and non-VOID) value"
 //
 //      return: [<null> any-stable?]
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(INSIST)
@@ -2588,7 +2608,7 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
 //
 //      return: [<null> any-stable?]
 //      condition [<unrun> <const> block! frame!]  ; literals not allowed, [1]
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(WHILE)
@@ -2612,7 +2632,7 @@ DECLARE_NATIVE(WHILE)
 //
 //      return: [<null> any-stable?]
 //      condition [<unrun> <const> block! frame!]  ; literals not allowed, [1]
-//      @(body) [<opt-out> <unrun> <const> block! fence! frame!]  ; [A]
+//      body [<opt-out> <unrun> <const> block! frame!]  ; [A]
 //  ]
 //
 DECLARE_NATIVE(UNTIL)
