@@ -217,43 +217,48 @@ DECLARE_NATIVE(UNQUASI)
 //
 //  "antiforms -> quasiforms, adds a quote to rest"
 //
-//      return: [
-//          quoted! quasiform! "lifted forms"
-//          keyword! element? warning!  "Keywords and plain forms if :LITE"
-//      ]
+//      return: [quoted! quasiform!]
 //      ^value [any-value?]
-//      :lite "Make plain forms vs. quasi, and pass thru keywords like ~null~"
 //  ]
 //
 DECLARE_NATIVE(LIFT)
-//
-// 1. Most code has to go through Coerce_To_Antiform()...even code that has
-//    a quasiform in its hand (as not all quasiforms can be antiforms).  But
-//    ^META parameters are guaranteed to be things that were validated as
-//    antiforms.
 {
     INCLUDE_PARAMS_OF_LIFT;
 
     Value* v = Intrinsic_ARG(LEVEL);
 
-    if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC))  // intrinsic shortcut
-        return COPY(Lift_Cell(v));
+    return Copy_Lifted_Cell(OUT, v);
+}
 
-    if (
-        ARG(LITE)  // LIFT:LITE handles quasiforms specially
-        and Is_Antiform(v)
-    ){
-        if (Is_Error(v))
-            panic (Cell_Error(v));  // conservative... should it passthru?
 
-        if (Is_Light_Null(v) or Any_Void(v))
-            return COPY(v);  // ^META valid [1]
+//
+//  lift*: native:intrinsic [
+//
+//  "Variant of LIFT that only lifts THEN-reactive values"
+//
+//      return: [
+//          quoted! quasiform! "lifted forms"
+//          ghost! <null> error! "passed through"
+//      ]
+//      ^value [any-value?]
+//  ]
+//
+DECLARE_NATIVE(LIFT_P)
+{
+    INCLUDE_PARAMS_OF_LIFT_P;
 
-        LIFT_BYTE(v) = NOQUOTE_2;  // META:LITE gives plain for the rest
+    Value* v = Intrinsic_ARG(LEVEL);
+
+    if (Is_Error(v))
         return COPY(v);
-    }
 
-    return COPY(Lift_Cell(v));
+    if (Is_Ghost(v))
+        return GHOST;
+
+    if (Is_Light_Null(v))
+        return NULLED;
+
+    return Copy_Lifted_Cell(OUT, v);
 }
 
 
@@ -263,56 +268,52 @@ DECLARE_NATIVE(LIFT)
 //  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
 //
 //      return: [any-value?]
-//      ^value "Can be plain or antiform like NULL or VOID if :LITE"
-//          [<null> <void> element? quoted! quasiform!]
-//      :lite "Pass thru NULL and GHOSTLY? antiforms as-is"
+//      ^value [quoted! quasiform!]  ; REVIEW: decay PACK!?
 //  ]
 //
 DECLARE_NATIVE(UNLIFT)
 {
     INCLUDE_PARAMS_OF_UNLIFT;
 
-    Value* v = Intrinsic_ARG(LEVEL);
+    Element* v = Known_Element(Intrinsic_ARG(LEVEL));
 
-    if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {  // intrinsic shortcut
-        if (not Any_Lifted(v))
-            panic ("Plain UNLIFT only accepts quasiforms and quoteds");
-        require (
-          Unlift_Cell_No_Decay(v)
-        );
-        return COPY(v);
+    if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {  // wasn't typechecked
+        if (not Is_Quoted(v) and not Is_Quasiform(v))
+            panic (Error_Bad_Intrinsic_Arg_1(LEVEL));
     }
 
-    if (Is_Antiform(v)) {
-        assert(Any_Void(v) or Is_Light_Null(v));
-        if (not ARG(LITE))
-            panic ("UNLIFT only accepts NULL or VOID/NONE if :LITE");
-        return COPY(v);  // pass through as-is
-    }
-
-    if (LIFT_BYTE(v) == NOQUOTE_2) {
-        if (not ARG(LITE))
-            panic ("UNLIFT only takes non quoted/quasi things if :LITE");
-
-        Copy_Cell(OUT, v);
-
-        require (
-          Coerce_To_Antiform(OUT)
-        );
-        return OUT;
-    }
-
-    if (LIFT_BYTE(v) == QUASIFORM_3 and ARG(LITE))
-        panic (
-            "UNLIFT:LITE does not accept quasiforms (plain forms are meta)"
-        );
-
-    require (
-      Unlift_Cell_No_Decay(v)
-    );
-    return COPY(v);  // quoted or quasi
+    return UNLIFT(v);  // quoted or quasi
 }
 
+
+//
+//  unlift*: native:intrinsic [
+//
+//  "Variant of UNLIFT that only unlifts THEN-reactive values"
+//
+//      return: [any-value?]
+//      ^value [<null> ghost! quoted! quasiform!]
+//  ]
+//
+DECLARE_NATIVE(UNLIFT_P)
+{
+    INCLUDE_PARAMS_OF_UNLIFT_P;
+
+    Value* v = Intrinsic_ARG(LEVEL);
+
+    if (Is_Ghost(v))
+        return GHOST;
+
+    if (Is_Light_Null(v))
+        return NULLED;
+
+    if (Get_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {  // wasn't typechecked
+        if (not Any_Lifted(v))
+            panic (Error_Bad_Intrinsic_Arg_1(LEVEL));
+    }
+
+    return UNLIFT(Known_Element(v));  // must be lifted (quoted or quasi)
+}
 
 
 //

@@ -75,7 +75,7 @@
 [(
     all {
         orig: func ["description" a "a" :b "b"] [return <unused>]
-        aug: lift:lite augment orig/ [c "c" :d "d"]
+        aug: unrun augment orig/ [c "c" :d "d"]
         if m: adjunct-of aug [
             m.description = null  ; description not inherited ATM
         ]

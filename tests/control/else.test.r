@@ -129,3 +129,10 @@
 
     (3 = (if ok [1 + 2] then (^ghost)))
 ]
+
+; THENCE is prefix reversed THEN
+[
+    (3 = thence [1 + 2] okay)
+    (null? thence [1 + 2] null)
+    (ghost? thence [1 + 2] ())
+]

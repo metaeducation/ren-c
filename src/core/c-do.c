@@ -72,7 +72,7 @@ Result(None) Prep_Action_Level(
         }
     }
 
-    if (with) do {
+    if (with) { attempt {
         arg = First_Unspecialized_Arg(&param, L);
         if (not arg)
             break;
@@ -84,8 +84,7 @@ Result(None) Prep_Action_Level(
               Decay_If_Unstable(arg)
             );
         }
-        break;
-    } while (0);
+    }}
 
     return none;
 }
@@ -269,6 +268,21 @@ bool Pushed_Continuation(
 
         Push_Level_Erase_Out_If_State_0(out, L);
         goto pushed_continuation; }
+
+      case TYPE_PATH: {
+        Length len = Sequence_Len(branch);
+        Copy_Sequence_At(out, branch, len - 1);
+        if (not Is_Space(Known_Element(out)))
+            panic ("Only terminal-slash PATH! can act as BRANCH!");
+
+        require (
+          Meta_Get_Var(out, NO_STEPS, Known_Element(branch), binding)
+        );
+        require (
+          branch = Decay_If_Unstable(out)
+        );
+        assert(Is_Action(branch));
+        goto handle_action; }
 
       case TYPE_FRAME:
         goto handle_action;

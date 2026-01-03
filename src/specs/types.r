@@ -224,7 +224,7 @@ comma!        "separator between full evaluations"
 
     path!       "member or refinement selection with execution bias"
                 (:payload1)
-                []
+                [any-branch?]  ; e.g. (... then lift/)
 
 </ANY-SEQUENCE?>
 

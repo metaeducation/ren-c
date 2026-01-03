@@ -237,8 +237,8 @@ DECLARE_NATIVE(WHEN)
 //
 //      return: [any-value? heavy-null?]
 //      condition [any-stable?]
-//      @(non-null-branch) [<unrun> any-branch?]
-//      @(null-branch) [<unrun> any-branch?]
+//      @non-null-branch [any-branch?]
+//      @null-branch [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(EITHER)
@@ -296,11 +296,10 @@ DECLARE_NATIVE(ELSE_Q)
 //
 //  then: infix:defer native [  ; NOTE - INFIX:DEFER
 //
-//  "If LEFT is NULL, return NULL, otherwise return BRANCH evaluation"
+//  "If LEFT is NULL or GHOST!, return it, otherwise return EVAL BRANCH"
 //
 //      return: [any-value?]
-//      ^left "Note: only NULL not in a PACK! will trigger branch evaluation"
-//          [<null> any-value?]
+//      ^left [<null> ghost! any-value?]
 //      @branch [any-branch?]
 //  ]
 //
@@ -322,13 +321,39 @@ DECLARE_NATIVE(THEN)
 
 
 //
-//  else: infix:defer native [  ; NOTE - INFIX:DEFER
+//  thence: native [
 //
-//  "If LEFT is NULL, return BRANCH evaluation, otherwise return LEFT"
+//  "If VALUE is NULL or GHOST!, return it, otherwise return EVAL BRANCH"
 //
 //      return: [any-value?]
-//      ^left "Note: only NULL not in a PACK! will suppress branch evaluation"
-//          [<null> any-value?]
+//      @branch [any-branch?]
+//      ^value [<null> ghost! any-value?]
+//  ]
+//
+DECLARE_NATIVE(THENCE)
+{
+    INCLUDE_PARAMS_OF_THENCE;
+
+    Stable* branch = ARG(BRANCH);
+    Value* v = ARG(VALUE);
+
+    if (Is_Error(v))
+        return COPY(v);
+
+    if (Is_Light_Null(v) or Is_Ghost(v))
+        return COPY(v);
+
+    return DELEGATE_BRANCH(OUT, branch, v);
+}
+
+
+//
+//  else: infix:defer native [  ; NOTE - INFIX:DEFER
+//
+//  "If LEFT is NULL or GHOST!, return EVAL BRANCH, else return LEFT"
+//
+//      return: [any-value?]
+//      ^left [<null> ghost! any-value?]
 //      @branch [any-branch?]
 //  ]
 //
@@ -352,11 +377,10 @@ DECLARE_NATIVE(ELSE)
 //
 //  also: infix:defer native [  ; NOTE - INFIX:DEFER
 //
-//  "If LEFT is NULL, return NULL, otherwise evaluate BRANCH but return LEFT"
+//  "If LEFT is NULL or GHOST!, return it, else EVAL BRANCH but return LEFT"
 //
 //      return: [any-value?]
-//      ^left "Note: only NULL not in a PACK! will trigger branch evaluation"
-//          [<null> any-value?]
+//      ^left [<null> ghost! any-value?]
 //      @branch [any-branch?]
 //  ]
 //

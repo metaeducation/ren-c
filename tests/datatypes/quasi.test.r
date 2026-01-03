@@ -214,34 +214,28 @@
     ((the '''a) = reify the '''a)
 ]
 
-; META:LITE does not produce quasiforms
-; It passes through keywords, and makes antiforms their plain forms
-; Other types receive a quoting level
+; LIFT* lifts anything that would trigger a THEN
 [
-    (null = lift:lite null)
-    (^ghost = lift:lite ^ghost)
-    (okay = lift:lite okay)
+    (null = lift* null)
+    (^ghost = lift* ^ghost)
+    ('~okay~ = lift* okay)
 
-    (['1 '2] = lift:lite pack [1 2])
+    ('~('1 '2)~ = lift* pack [1 2])
 
-    (the '[1 2] = lift:lite [1 2])
-    (the ''a = lift:lite first ['a])
+    (the '[1 2] = lift* [1 2])
+    (the ''a = lift* first ['a])
 ]
 
-; UNMETA:LITE works on keywords, but not other "antiform" forms as a trick
-; lift forms are plain forms, not quasiforms
+; UNLIFT* unlifts anything that would trigger a THEN
 [
-    (ghost? unlift:lite ^ghost)
-    (null? unlift:lite null)
-    (okay? unlift:lite okay)
+    (ghost? unlift* ^ghost)
+    (null? unlift* null)
+    (okay = unlift* '~okay~)
 
     ~expect-arg~ !! (
-        unlift:lite ~[a b c]~
+        unlift* ~[a b c]~
     )
 
-    ~???~ !! (
-        unlift:lite '~[a b c]~
-    )
-    (splice? unlift:lite the (a b c))
-    (pack? unlift:lite ['1 '2])
+    (splice? unlift* '~[a b c]~)
+    (pack? unlift* '~('1 '2)~)
 ]

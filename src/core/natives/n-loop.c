@@ -95,7 +95,7 @@ bool Throw_Was_Loop_Interrupt(
         and Frame_Coupling(label) == Level_Varlist(loop_level)
     ){
         CATCH_THROWN(out, loop_level);
-        if (not Is_Ghost(out))  // void signals no argument to CONTINUE
+        if (not Is_Heavy_Void(out))  // void signals no argument to CONTINUE
             Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable :WITH
         *interrupt = LOOP_INTERRUPT_CONTINUE;
         return true;
@@ -194,15 +194,17 @@ DECLARE_NATIVE(DEFINITIONAL_CONTINUE)
 // stack.  It uses the value of its own native function as the name of the
 // throw, like `throw:name value continue/`.
 //
-// 1. How CONTINUE with no argument acts is up to the loop construct to
-//    interpret.  e.g. MAP-EACH, it acts like CONTINUE:WITH ~[]~.  We throw
-//    the non-valued VOID state to allow for the custom interpretation.
+// 1. CONTINUE with no argument acts like the branch completed with no
+//    result; and since it's being run as a branch we throw heavy void.
+//
+//    Functions like INSIST and REMOVE-EACH thus should tolerate no result
+//    OR force you to CONTINUE:WITH a value saying what you mean.
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
 
     Value* with = SCRATCH;
     if (not ARG(WITH))
-        Init_Ghost(SCRATCH);  // See: https://forum.rebol.info/t/1965/3 [1]
+        Init_Heavy_Void(SCRATCH);  // https://forum.rebol.info/t/1965/3 [1]
     else
         Copy_Cell(SCRATCH, unwrap ARG(WITH));
 

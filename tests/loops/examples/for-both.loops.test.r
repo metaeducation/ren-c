@@ -18,7 +18,10 @@
 ;
 ; But critically, that will not honor BREAK correctly:
 ;
-;     >> for-both-naive x [1 2] [3 4] [if x = '2 [break], print [x]]
+;     rebol2>> for-both-naive x [1 2] [3 4] [
+;                  if x = '2 [break]
+;                  print [x]
+;              ]
 ;     1
 ;     3  ; the BREAK only broke the first FOR-EACH
 ;     4
@@ -31,7 +34,10 @@
 ; evaluation "drop out".  But if the second series is empty, the fallout from
 ; the first loop is forgotten:
 ;
-;     >> for-both-naive x [1 2] [] [print [x], x * 10]
+;     rebol2>> for-both-naive x [1 2] [] [
+;                  print [x]
+;                  x * 10
+;              ]
 ;     1  ; evaluated to 10
 ;     2  ; evaluated to 20
 ;     == #[none!]  ; Rebol2's `foreach x [] [<n/a>]`, Red is #[unset]
@@ -43,49 +49,69 @@
 ; valuable example to focus on while putting the pieces in place.
 
 [
+    ; See footnotes below...
+
     (
-        for-both: lambda [var blk1 blk2 body] [
-            unlift:lite all [
-                lift:lite for-each var blk1 body
-                lift:lite for-each var blk2 body
-            ]
+        for-both: lambda [@(var) blk1 blk2 @(body)] [
+            all [
+                ^ for-each (var) blk1 (body) then lift/
+                ^ for-each (var) blk2 (body) then lift/
+            ] then unlift/
         ]
 
         ok
     )
 
-    ; ^-- This is a LAMBDA instead of a FUNCTION so that no RETURN is needed
-    ; (the result "drops out" the bottom of lambdas, and there is no RETURN
-    ; definition in effect).
-    ;
-    ; ^-- Note that this uses LIFT:LITE.  The reason is that it wants to leave
-    ; voids and nulls as-is, to serve as the signal for breaking or opting out
-    ; of contributing to the final loop result:
-    ;
-    ;     >> lift ()
-    ;     == ~,~
-    ;
-    ;     >> lift:lite ()
-    ;     == \~,~\  ; antiform (ghost!) "void"
-    ;
+  ; 1. This is a LAMBDA instead of a FUNCTION so that no RETURN is needed
+  ;    (the result "drops out" the bottom of lambdas, and there is no RETURN
+  ;    definition in effect).
+  ;
+  ; 2. The strategy here is that we want to LIFT anything that a THEN would
+  ;    react to, leaving "light void" (ghost!) and "light null" (the ~null~
+  ;    keyword!) in their unlifted states.  This lets them serve as the signal
+  ;    for breaking or opting out of contributing to the final loop result:
+  ;
+  ;        >> lift ()
+  ;        == ~,~
+  ;
+  ;        >> () then lift/
+  ;        == \~,~\  ; antiform (ghost!) "void"
+  ;
+  ;        >> lift null
+  ;        == ~null~
+  ;
+  ;        >> null then lift/
+  ;        == \~null~\  ; antiform (keyword!)
+  ;
+  ; 3. In order to "erase" the contribution of loops that don't run, we have
+  ;    to work around the fact that FOR-EACH and LIFT aren't marked as being
+  ;    vanishing functions.  So when they return GHOST! in multi-step eval
+  ;    operations that have sequential meanings (like ALL), a safety mechanism
+  ;    kicks in to produce a "heavy void" that won't vanish.  To subvert that
+  ;    we use the `^` operator--which allows expressions to vanish even if
+  ;    it might be confusing that the result of the overall expression is not
+  ;    the result of the last expression (we know we want that, here).
 
 
-    ; If you're the sort to throw softballs, this would be the only case you
-    ; would write.  (Perhaps good enough for some Redbols, but not Ren-C!)
+  ; ==== TESTS =====
+
+  ; If you're the sort to throw softballs, this would be the only case you
+  ; would write.  (Perhaps good enough for some Redbols, but not Ren-C!)
 
     ([1 2 3 4] = collect [
         assert [40 = for-both 'x [1 2] [3 4] [keep x, x * 10]]
     ])
 
-    ; Saves result from second loop output, due to META:LITE vanishing on the
-    ; void produced by contract when FOR-EACH does not run.
+  ; Saves result from second call to body's output, due to the vanishing
+  ; void produced by contract when FOR-EACH does not run.
 
     ([1 2] = collect [
         assert [20 = for-both 'x [1 2] [] [keep x, x * 10]]
     ])
 
-    ; The all-important support of BREAK... META:LITE of NULL remains NULL, and
-    ; is falsey to short circuit the ALL.
+  ; The all-important support of BREAK!  (NULL THEN LIFT/) will not run the
+  ; lift, hence the break signal remains NULL, and is falsey to short circuit
+  ; the ALL to return NULL overall.
 
     ([1] = collect [
         assert [
@@ -105,9 +131,10 @@
         ]
     ])
 
-    ; It's not possible to return a "pure NULL" otherwise.  But the existence
-    ; of ~(~null~)~ antiforms permit a non-break-signaling construct that
-    ; carries semantic intent of a "there's an answer and it is null"
+  ; It's not possible to return a "light NULL" if the loop does not break.
+  ; But the existence of ~(~null~)~ antiforms permit a non-break-signaling
+  ; construct that carries semantic intent of a "there's an answer and it is
+  ; null"
 
     ([1 2 3 4] = collect [
         let result': ~
@@ -131,25 +158,22 @@
         ]
     ])
 
-    ; The contract of returning GHOST! is preserved when no loop bodies
-    ; run, as both FOR-EACH in the ALL have their contributions erased
-    ; and effectively leave behind an `all []`.  Ren-C's working definition
-    ; (motivated by this kind of example) is that should produce a GHOST!
-    ; as well.  Technical reasons besides this scenario lead it to be favorable
-    ; for UNMETA:LITE to be willing to take GHOST! and return it as-is instead
-    ; of raising an error, and that plays to our advantage here.
+  ; The contract of returning GHOST! is preserved when no loop bodies run, as
+  ; both FOR-EACH in the ALL have their contributions erased and effectively
+  ; leave behind an `all []`.  Ren-C's working definition (motivated by this
+  ; kind of example) is that should produce a GHOST! as well.
 
     (ghost? for-both 'x [] [] [panic "Body Never Runs"])
 
     (
         <something> = eval [
             <something>
-            elide-if-void for-both 'x [] [] [panic "Body Never Runs"]
+            ^ for-both 'x [] [] [panic "Body Never Runs"]
         ]
     )
 
-    ; Handles antiforms (^META operations make quasiforms, these are truthy, so
-    ; the only falsey possibility is the BREAK)
+  ; Handles antiforms (LIFT turns them to quasiforms, these are truthy, so
+  ; the only falsey possibility is the BREAK)
 
     ([1 2 3 4] = collect [
         assert [

@@ -100,7 +100,7 @@ sys.util/recover [
     export split-path3: enclose (
         augment split-path/ [:file [any-word? tuple!]]
     ) f -> [
-        let results: lift:lite eval f  ; no [...]: in bootstrap load of file
+        let results: unquasi lift eval f  ; no [...]: in bootstrap load of file
         set opt f.file unlift results.2
         unlift results.1
     ]
