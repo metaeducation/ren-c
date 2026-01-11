@@ -456,13 +456,6 @@ gunzip: redescribe [
 )
 
 
-default*: infix redescribe [
-    {Would be the same as DEFAULT/ONLY if paths could dispatch infix}
-](
-    specialize 'default [only: okay]
-)
-
-
 skip*: redescribe [
     {Variant of SKIP that returns NULL instead of clipping to series bounds}
 ](

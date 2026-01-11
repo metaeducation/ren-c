@@ -957,7 +957,6 @@ DECLARE_NATIVE(SWITCH)
 //          [block! action!]
 //      :look "Variadic lookahead used to make sure at end if no target"
 //          [<...>]
-//      /only "Consider target being BLANK! to be a value not to overwrite"
 //  ]
 //
 DECLARE_NATIVE(DEFAULT)
