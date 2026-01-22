@@ -277,6 +277,15 @@ INLINE void Finalize_Arg(
             return;
         }
 
+        if (  // handle ~(veto)~ signal using historical "opt out" mechanic
+            Is_Error(arg)
+            and Is_Error_Veto_Signal(cast(Error*, Cell_Varlist(arg)))
+        ){
+            Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
+            LVL_PHASE_OR_DUMMY(L_state) = PG_Dummy_Action;
+            return;
+        }
+
         PANIC_IF_ERROR(arg);  // simulate definitional error somewhat
 
         panic (Error_Arg_Type(L_state, param, Type_Of(arg)));

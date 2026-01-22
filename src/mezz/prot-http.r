@@ -103,7 +103,7 @@ http-awake: function [return: [logic!] event [event!]] [
     port: event/port
     http-port: port/locals
     state: http-port/state
-    if action? opt :http-port/awake [state/awake: :http-port/awake]
+    if action? cond :http-port/awake [state/awake: :http-port/awake]
     awake: :state/awake
 
     return degrade switch event/type [
@@ -626,7 +626,7 @@ check-data: function [
                 awaken-wait-loop
             ]
         ]
-        integer? headers/content-length [
+        integer? cond headers/content-length [
             port/data: conn/data
             if headers/content-length <= length of port/data [
                 state/state: 'ready
@@ -683,7 +683,7 @@ sys/util/make-scheme [
             /string
             <local> foo
         ][
-            foo: if action? opt :port/awake [
+            foo: if action? cond :port/awake [
                 if not open? port [
                     cause-error 'access 'not-open port/spec/ref
                 ]
@@ -722,7 +722,7 @@ sys/util/make-scheme [
                     value
                 ]
             ]
-            if action? opt :port/awake [
+            if action? cond :port/awake [
                 if not open? port [
                     cause-error 'access 'not-open port/spec/ref
                 ]

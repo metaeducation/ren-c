@@ -639,7 +639,7 @@ make-obj-defs: function [
         for-each field words-of obj [
             if all [
                 field != 'standard
-                object? opt get in obj field
+                object? any [(get in obj field) _]  ; no COND in preboot
             ][
                 extended-prefix: uppercase unspaced [prefix "_" field]
                 make-obj-defs e obj/(field) extended-prefix (depth - 1)

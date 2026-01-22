@@ -248,7 +248,7 @@ dig-action-adjunct-fields: function [
         get 'adjunct/specializee
         get 'adjunct/adaptee
         all [
-            block? opt :adjunct/pipeline
+            block? cond :adjunct/pipeline
             first adjunct/pipeline
         ]
     ]
@@ -745,11 +745,11 @@ module: func [
     ; To try and standardize the variance, Ren-C does not accept LIT-WORD!
     ; in these slots.
     ;
-    if lit-word? opt spec/name [
+    if lit-word? cond spec/name [
         spec/name: as word! spec/name
         panic ["Ren-C module name:" (spec/name) "must be WORD!, not LIT-WORD!"]
     ]
-    if lit-word? opt spec/type [
+    if lit-word? cond spec/type [
         spec/type: as word! spec/type
         panic ["Ren-C module type:" (spec/type) "must be WORD!, not LIT-WORD!"]
     ]
@@ -786,7 +786,7 @@ module: func [
 
     ; Collect 'export keyword exports, removing the keywords
     if find body 'export [
-        if not block? opt select spec 'exports [
+        if not block? cond select spec 'exports [
             append spec reduce ['exports make block! 10]
         ]
 
@@ -837,7 +837,7 @@ module: func [
     set-adjunct mod spec
 
     ; Add exported words at top of context (performance):
-    if block? opt select spec 'exports [bind/new spec/exports mod]
+    if block? cond select spec 'exports [bind/new spec/exports mod]
 
     either find spec/options 'isolate [
         ;

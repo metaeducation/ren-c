@@ -570,7 +570,7 @@ ext-console-impl: function [
         ; a chance to be initialized (it may *never* be initialized if the
         ; interpreter is being called non-interactively from the shell).
         ;
-        if object? opt system/console [
+        if object? cond system/console [
             emit [system/console/print-error (<*> lift result)]
         ] else [
             emit [print [form (<*> lift result)]]

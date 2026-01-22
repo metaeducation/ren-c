@@ -288,7 +288,7 @@ DECLARE_NATIVE(TYPECHECKER)
     archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
 
-    REBU64 bits;  // don't allow INTEGER? NULL tests, must be INTEGER? OPT NULL
+    REBU64 bits;  // don't allow INTEGER? NULL tests, must be INTEGER? COND NULL
     if (Is_Datatype(type)) {
         switch (Datatype_Type(type)) {
           case TYPE_VOID:

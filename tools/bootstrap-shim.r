@@ -69,8 +69,7 @@ read: lib/read: adapt 'lib/read [
 
 
 ; R3PREBOOT was snapshotted right before <opt-out> was legal to mark an
-; argument as meaning a function returns null if that argument is blank (void
-; in the modern world).
+; argument as meaning a function returns null if that argument is void.
 ;
 ; See if <opt-out> causes an error, and if so assume it's R3PREBOOT.
 ;

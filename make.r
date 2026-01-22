@@ -999,7 +999,7 @@ add-project-flags: func [
     ]
 
     if D [
-        if block? opt project/definitions [
+        if block? cond project/definitions [
             append project/definitions definitions
         ] else [
             ensure [~null~] project/definitions
@@ -1008,7 +1008,7 @@ add-project-flags: func [
     ]
 
     if I [
-        if block? opt project/includes [
+        if block? cond project/includes [
             append project/includes includes
         ] else [
             ensure [~null~] project/includes
@@ -1016,7 +1016,7 @@ add-project-flags: func [
         ]
     ]
     if c [
-        if block? opt project/cflags [
+        if block? cond project/cflags [
             append project/cflags cflags
         ] else [
             ensure [~null~] project/cflags
