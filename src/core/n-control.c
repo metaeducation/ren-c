@@ -68,32 +68,6 @@ DECLARE_NATIVE(IF)
     INCLUDE_PARAMS_OF_IF;
 
     if (IS_FALSEY(ARG(CONDITION)))  // fails on void and trash
-        return Init_Nulled(OUT);
-
-    if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(CONDITION)))
-        return BOUNCE_THROWN;
-
-    return Trashify_Branched(OUT);  // trash means no branch (cues ELSE)
-}
-
-
-//
-//  when: native [
-//
-//  {When TO LOGIC! CONDITION is true, execute branch, else VOID}
-//
-//      return: "null if branch not run, otherwise branch result"
-//          [any-value!]
-//      condition [any-stable!]
-//      branch "If arity-1 ACTION!, receives the evaluated condition"
-//          [block! action!]
-//  ]
-//
-DECLARE_NATIVE(WHEN)
-{
-    INCLUDE_PARAMS_OF_WHEN;
-
-    if (IS_FALSEY(ARG(CONDITION)))  // fails on void and trash
         return Init_Void(OUT);
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(CONDITION)))
@@ -358,7 +332,7 @@ DECLARE_NATIVE(ELSE)
     INCLUDE_PARAMS_OF_ELSE; // faster than EITHER-TEST specialized w/`VALUE?`
 
     Value* left = ARG(LEFT);
-    if (not Is_Nulled(left))
+    if (not (Is_Nulled(left) or Is_Void(left)))
         RETURN (left);
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
@@ -386,8 +360,8 @@ DECLARE_NATIVE(THEN)
     INCLUDE_PARAMS_OF_THEN; // faster than EITHER-TEST specialized w/`NULL?`
 
     Value* left = ARG(LEFT);
-    if (Is_Nulled(left))
-        return nullptr;  // left didn't run, so signal THEN didn't run either
+    if (Is_Nulled(left) or Is_Void(left))
+        RETURN (left);  // left didn't run, so signal THEN didn't run either
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;
@@ -415,7 +389,7 @@ DECLARE_NATIVE(ALSO)
 
     Value* left = ARG(LEFT);
     if (Is_Nulled(left) or Is_Void(left))
-        return nullptr;
+        RETURN (left);
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;
@@ -987,7 +961,7 @@ DECLARE_NATIVE(DEFAULT)
         not Is_Nulled(OUT)
         and not Is_Trash(OUT)
         and not Is_Tripwire(OUT)
-        and (not Is_Blank(OUT) or Bool_ARG(ONLY))
+        and not Is_Void(OUT)
     ){
         return OUT;  // count it as "already set"
     }

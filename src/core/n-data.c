@@ -702,7 +702,6 @@ DECLARE_NATIVE(SET)
 //
 //      return: [any-value!]
 //      value [any-value!]
-//      /veto "Instead of turning into a void, turn into a VETO"
 //  ]
 //
 DECLARE_NATIVE(OPTIONAL)
@@ -710,7 +709,27 @@ DECLARE_NATIVE(OPTIONAL)
     INCLUDE_PARAMS_OF_OPTIONAL;
 
     if (Is_Nulled(ARG(VALUE)))
-        return Bool_ARG(VETO) ? Copy_Cell(OUT, g_error_veto) : Init_Void(OUT);
+        return Init_Void(OUT);
+
+    RETURN (ARG(VALUE));
+}
+
+
+//
+//  conditional: native [
+//
+//  {Convert nulls to VETO, pass through most other values}
+//
+//      return: [any-value!]
+//      value [any-value!]
+//  ]
+//
+DECLARE_NATIVE(CONDITIONAL)
+{
+    INCLUDE_PARAMS_OF_CONDITIONAL;
+
+    if (Is_Nulled(ARG(VALUE)))
+        return Copy_Cell(OUT, g_error_veto);
 
     RETURN (ARG(VALUE));
 }
@@ -1150,12 +1169,14 @@ DECLARE_NATIVE(ALIASES_Q)
 //
 INLINE bool Is_Set(const Value* location)
 {
-    if (Any_Word(location))
-        return not Is_Trash(Get_Opt_Var_May_Panic(location, SPECIFIED));
+    if (Any_Word(location)) {
+        const Value* var = Get_Opt_Var_May_Panic(location, SPECIFIED);
+        return not (Is_Trash(var) or Is_Void(var));
+    }
 
     DECLARE_VALUE (temp); // result may be generated
     Get_Path_Core(temp, location, SPECIFIED);
-    return not Is_Trash(temp);
+    return not (Is_Trash(temp) or Is_Void(temp));
 }
 
 

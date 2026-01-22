@@ -11,8 +11,7 @@
 )
 (1 = if okay [1])
 
-(null? if null [])
-(void? when null [])
+(void? if null [])
 (trash? if okay [])
 
 (error? if okay [sys/util/rescue [1 / 0]])
@@ -58,7 +57,7 @@
 (if first ['a/b] [okay])
 (if first ['a] [okay])
 (if okay [okay])
-(null? if null [okay])
+(void? if null [okay])
 (if $1 [okay])
 (if (specialize 'of [property: 'type]) [okay])
 (if make object! [] [okay])

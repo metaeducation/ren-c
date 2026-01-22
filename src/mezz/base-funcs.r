@@ -16,9 +16,8 @@ Rebol [
     }
 ]
 
-?: opt: optional/
-
-?!: optional:veto/
+cond: conditional/
+opt: optional/
 
 assert: func [
     {Ensure conditions are conditionally true if hooked by debugging}

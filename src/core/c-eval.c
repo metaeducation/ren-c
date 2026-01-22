@@ -1436,8 +1436,12 @@ bool Eval_Core_Throws(Level* const L)
             goto process_action;
         }
 
-        if (Is_Trash(L_current_gotten))  // need `:x` if `x` is unset
+        if (  // need `:x` if `x` is unset
+            Is_Trash(L_current_gotten)
+            or Is_Void(L_current_gotten)
+        ){
             panic (Error_No_Value_Core(current, L_binding));
+        }
 
         if (Is_Tripwire(L_current_gotten))
             panic (Error_Fetched_Tripwire_Core(
@@ -1482,8 +1486,7 @@ bool Eval_Core_Throws(Level* const L)
             goto return_thrown;
       #endif
 
-        if (Is_Void(L->out))  // try to model after mainline EXE
-            panic ("Can't assign ~void~ state via SET-WORD!");
+        possibly(Is_Void(L->out));  // allow void assignments
 
         Copy_Cell(Sink_Var_May_Panic(current, L_binding), L->out);
         break; }
