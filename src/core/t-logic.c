@@ -367,7 +367,7 @@ DECLARE_NATIVE(XOR_Q)
 //      left "Result of evaluation of left hand item"
 //          [any-stable!]
 //      :right "Evaluated only if left is not null"
-//          [group! word! path!]
+//          [group! word! get-word! path! get-path!]
 //  ]
 //
 DECLARE_NATIVE(AND)
@@ -385,7 +385,10 @@ DECLARE_NATIVE(AND)
             return BOUNCE_THROWN;
     }
     else {
-        assert(Is_Word(right) or Is_Path(right));
+        assert(
+            Is_Word(right) or Is_Get_Word(right)
+            or Is_Path(right) or Is_Get_Path(right)
+        );
 
         if (Eval_Value_Throws(OUT, right))
             return BOUNCE_THROWN;
@@ -406,7 +409,7 @@ DECLARE_NATIVE(AND)
 //      left "Result of evaluation of left hand item"
 //          [any-stable!]
 //      :right "Evaluated only if left is null"
-//          [group! word! path!]
+//          [group! word! get-word! path! get-path!]
 //  ]
 DECLARE_NATIVE(OR)
 {
@@ -423,7 +426,10 @@ DECLARE_NATIVE(OR)
             return BOUNCE_THROWN;
     }
     else {
-        assert(Is_Word(right) or Is_Path(right));
+        assert(
+            Is_Word(right) or Is_Get_Word(right)
+            or Is_Path(right) or Is_Get_Path(right)
+        );
 
         if (Eval_Value_Throws(OUT, right))
             return BOUNCE_THROWN;
@@ -445,7 +451,7 @@ DECLARE_NATIVE(OR)
 //      left "Result of evaluation of left hand item"
 //          [any-stable!]
 //      :right "Will always be evaluated"
-//          [group! word! path!]
+//          [group! word! get-word! path! get-path!]
 //  ]
 //
 DECLARE_NATIVE(XOR)
@@ -460,7 +466,10 @@ DECLARE_NATIVE(XOR)
             return BOUNCE_THROWN;
     }
     else {
-        assert(Is_Word(right) or Is_Path(right));
+        assert(
+            Is_Word(right) or Is_Get_Word(right)
+            or Is_Path(right) or Is_Get_Path(right)
+        );
 
         if (Eval_Value_Throws(OUT, right))
             return BOUNCE_THROWN;
