@@ -304,10 +304,10 @@ start-console: function [
             proto-skin/name: default ["loaded"]
             append o/loaded skin-file
 
-        ] then arrow e [
+        ] then (e -> [
             skin-error: e       ;; show error later if --verbose
             proto-skin/name: "error"
-        ]
+        ])
     ]
 
     proto-skin/name: default ["default"]
@@ -662,7 +662,7 @@ ext-console-impl: function [
         code: load/all delimit newline result
         assert [block? code]
 
-    ] then arrow error [
+    ] then (error -> [
         ;
         ; If loading the string gave back an error, check to see if it
         ; was the kind of error that comes from having partial input
@@ -679,7 +679,7 @@ ext-console-impl: function [
                 "}" ["{"]
                 ")" ["("]
                 "]" ["["]
-            ] also arrow unclosed [
+            ] also (unclosed -> [
                 ;
                 ; Backslash is used in the second column to help make a
                 ; pattern that isn't legal in Rebol code, which is also
@@ -694,7 +694,7 @@ ext-console-impl: function [
                 ]]
 
                 return block!
-            ]
+            ])
         ]
 
         ; Could be an unclosed double quote (unclosed tag?) which more input
@@ -702,7 +702,7 @@ ext-console-impl: function [
         ;
         emit [system/console/print-error (<*> lift error)]
         return <prompt>
-    ]
+    ])
 
     if shortcut: select system/console/shortcuts cond first code [
         ;

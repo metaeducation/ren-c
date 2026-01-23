@@ -144,12 +144,12 @@ make-dir: func [
     for-each dir dirs [
         path: either empty? path [dir] [join path dir]
         append path slash
-        sys/util/rescue [make-dir path] then arrow e [
+        sys/util/rescue [make-dir path] then (e -> [
             for-each dir created [
                 sys/util/rescue [delete dir]
             ]
             panic e
-        ]
+        ])
         insert created path
     ]
     return path

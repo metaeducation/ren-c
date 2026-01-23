@@ -521,10 +521,10 @@ iterate-skip: redescribe [
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
-            sys/util/rescue [set the result: eval f] then arrow e [
+            sys/util/rescue [set the result: eval f] then (e -> [
                 set word saved
                 panic e
-            ]
+            ])
             set word saved
             :result
         ]

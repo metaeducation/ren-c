@@ -640,9 +640,9 @@ host-start: function [
             do join o/bin %rebol.reb
             append o/loaded join o/bin %rebol.reb
             loud-print ["Finished evaluating script:" join o/bin %rebol.reb]
-        ] then arrow e [
+        ] then (e -> [
             die/error "Error found in rebol.reb script" e
-        ]
+        ])
     ]
 
     ; Evaluate user.reb script:
@@ -658,9 +658,9 @@ host-start: function [
             do join o/resources %user.reb
             append o/loaded join o/resources %user.reb
             loud-print ["Finished evaluating script:" join o/resources %user.reb]
-        ] then arrow e [
+        ] then (e -> [
             die/error "Error found in user.reb script" e
-        ]
+        ])
     ]
 
     ; Evaluate any script argument, e.g. `r3 test.r` or `r3 --script test.r`
