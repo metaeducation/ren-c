@@ -573,7 +573,7 @@ const void *API_rebQ(const RebolValue* v)
     else
         Copy_Cell(single, v);
 
-    Meta_Quotify(cast(Value*, single));
+    Lift_Cell(cast(Value*, single));
 
     return instruction;  // add opcodes?
 }

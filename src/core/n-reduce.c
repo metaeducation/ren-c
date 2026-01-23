@@ -142,14 +142,14 @@ bool Any_Lifted(Value* v) {
 
 
 //
-//  Meta_Quotify: C
+//  Lift_Cell: C
 //
 // Poor man's implementation of the "lift" functionality in mainline Ren-C
 //
 // Note that the "quasi-words" don't look up to anything, and are simply
 // special cases in the evaluator handling of TYPE_WORD.
 //
-Value* Meta_Quotify(Value* v)
+Value* Lift_Cell(Value* v)
 {
     if (Is_Void(v))
         return Init_Word(v, CANON(_TVOID_T));
@@ -185,7 +185,7 @@ Value* Meta_Quotify(Value* v)
 //
 //  Meta_Unquotify: C
 //
-Value* Meta_Unquotify(Value* v)
+Value* Unlift_Cell(Value* v)
 {
     if (Is_Word(v)) {
         switch (opt Word_Id(v)) {
@@ -245,7 +245,7 @@ DECLARE_NATIVE(LIFT)
     INCLUDE_PARAMS_OF_LIFT;
 
     Value* v = ARG(VALUE);
-    Meta_Quotify(v);
+    Lift_Cell(v);
     return Copy_Cell(OUT, v);
 }
 
@@ -266,7 +266,7 @@ DECLARE_NATIVE(UNLIFT)
     INCLUDE_PARAMS_OF_UNLIFT;
 
     Value* v = ARG(VALUE);
-    Meta_Unquotify(v);
+    Unlift_Cell(v);
     return Copy_Cell(OUT, v);
 }
 

@@ -88,7 +88,7 @@ static Value* Enrescue_Dangerous(Level* level_) {
         return nullptr;
     }
 
-    Meta_Quotify(OUT);
+    Lift_Cell(OUT);
     return nullptr;
 }
 

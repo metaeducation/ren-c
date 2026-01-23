@@ -607,7 +607,7 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
             DECLARE_VALUE (reified);
             Copy_Cell(reified, var);
             if (Is_Antiform(var))
-                Meta_Quotify(reified);
+                Lift_Cell(reified);
             if (not Is_Param_Hidden(key)) {
                 had_output = true;
                 Emit(mo, "N: V\n", Key_Symbol(key), reified);
@@ -631,19 +631,6 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
 
     Append_Codepoint(out, '[');
 
-    // !!! New experimental Ren-C code for the [[spec][body]] format of the
-    // non-evaluative MAKE OBJECT!.
-
-    // First loop: spec block.  This is difficult because unlike functions,
-    // objects are dynamically modified with new members added.  If the spec
-    // were captured with strings and other data in it as separate from the
-    // "keylist" information, it would have to be updated to reflect newly
-    // added fields in order to be able to run a corresponding MAKE OBJECT!.
-    //
-    // To get things started, we aren't saving the original spec that made
-    // the object...but regenerate one from the keylist.  If this were done
-    // with functions, they would "forget" their help strings in MOLDing.
-
     Value* keys_head = Varlist_Keys_Head(c);
     Value* vars_head = Varlist_Slots_Head(Cell_Varlist(v));
 
@@ -666,7 +653,7 @@ void MF_Context(Molder* mo, const Cell* v, bool form)
         DECLARE_VALUE (reified);
         Copy_Cell(reified, var);
         if (Is_Antiform(var))
-            Meta_Quotify(reified);
+            Lift_Cell(reified);
         Mold_Value(mo, reified);
     }
 

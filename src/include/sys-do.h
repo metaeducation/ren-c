@@ -134,7 +134,7 @@ INLINE bool Do_Branch_Core_Throws(
         return Eval_List_At_Throws(out, branch);
 
     if (condition and NOT_END(condition))
-        Meta_Quotify(condition);
+        Lift_Cell(condition);
     assert(Is_Action(branch));
     bool threw = Apply_Only_Throws(
         out,
@@ -144,7 +144,7 @@ INLINE bool Do_Branch_Core_Throws(
         rebEND // ...but if condition wasn't an END marker, we need one
     );
     if (condition and NOT_END(condition))
-        Meta_Unquotify(condition);
+        Unlift_Cell(condition);
     return threw;
 }
 
