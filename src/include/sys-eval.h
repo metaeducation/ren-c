@@ -977,7 +977,7 @@ INLINE void Handle_Api_Dispatcher_Result(Level* L, const Value* r) {
       #if DEBUG_FRAME_LABELS
         printf("during ACTION!: %s\n", L->label_utf8);
       #endif
-        printf("`return OUT;` or use `RETURN (non_api_cell);`\n");
+        printf("`return OUT;` or use `return COPY_TO_OUT(non_api_cell);`\n");
         crash (r);
     }
   #endif

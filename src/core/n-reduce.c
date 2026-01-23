@@ -98,7 +98,7 @@ DECLARE_NATIVE(VETO_Q)
     if (not Is_Error(atom))
         return nullptr;
 
-    return LOGIC(Is_Error_Veto_Signal(cast(Error*, Cell_Varlist(atom))));
+    return LOGIC_OUT(Is_Error_Veto_Signal(cast(Error*, Cell_Varlist(atom))));
 }
 
 
@@ -360,7 +360,7 @@ DECLARE_NATIVE(REDUCE)
     // !!! Should the error be more "reduce-specific" if args were required?
 
     if (Any_Inert(value)) // don't bother with the evaluation
-        RETURN (value);
+        return COPY_TO_OUT(value);
 
     if (Eval_Value_Throws(OUT, value))
         return BOUNCE_THROWN;

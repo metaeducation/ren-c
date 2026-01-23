@@ -201,14 +201,14 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
             || Word_Id(verb) == SYM_APPEND
             || Word_Id(verb) == SYM_REMOVE
         ){
-            RETURN (save_port);
+            return COPY_TO_OUT(save_port);
         }
         return bounce; }
 
     case SYM_CLEAR:
         Term_Array_Len(Cell_Array(state), 0);
         CLR_SIGNAL(SIG_EVENT_PORT);
-        RETURN (port);
+        return COPY_TO_OUT(port);
 
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
@@ -243,7 +243,7 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
                 rebRelease(result); // ignore result
             }
         }
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_CLOSE: {
         OS_ABORT_DEVICE(req);
@@ -253,7 +253,7 @@ static Bounce Event_Actor(Level* level_, Value* port, Value* verb)
         // free req!!!
         req->flags &= ~RRF_OPEN;
         req = nullptr;
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_FIND:
         break; // !!! R3-Alpha said "add it" (e.g. unimplemented)

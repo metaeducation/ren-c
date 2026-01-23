@@ -178,13 +178,13 @@ DECLARE_NATIVE(BIND)
         // Bind a single word
 
         if (Try_Bind_Word(context, v))
-            RETURN (v);
+            return COPY_TO_OUT(v);
 
         // not in context, bind/new means add it if it's not.
         //
         if (Bool_ARG(NEW) or (Is_Set_Word(v) and Bool_ARG(SET))) {
             Append_Context(context, v, nullptr);
-            RETURN (v);
+            return COPY_TO_OUT(v);
         }
 
         panic (Error_Not_In_Context_Raw(v));
@@ -392,7 +392,7 @@ DECLARE_NATIVE(UNBIND)
     else
         Unbind_Values_Core(List_At(word), nullptr, Bool_ARG(DEEP));
 
-    RETURN (word);
+    return COPY_TO_OUT(word);
 }
 
 
@@ -649,7 +649,7 @@ DECLARE_NATIVE(SET)
     UNUSED(Bool_ARG(ANY));  // !!!provided for bootstrap at this time
 
     if (Is_Nulled(target))  // set (opt ...) expr => (expr)
-        RETURN (ARG(VALUE));
+        return COPY_TO_OUT(ARG(VALUE));
 
     if (not Is_Block(target)) {
         assert(Any_Word(target) or Any_Path(target));
@@ -661,7 +661,7 @@ DECLARE_NATIVE(SET)
             SPECIFIED
         );
 
-        RETURN (value);
+        return COPY_TO_OUT(value);
     }
 
     const Cell* item = List_At(target);
@@ -694,7 +694,7 @@ DECLARE_NATIVE(SET)
         );
     }
 
-    RETURN (ARG(VALUE));
+    return COPY_TO_OUT(ARG(VALUE));
 }
 
 
@@ -714,7 +714,7 @@ DECLARE_NATIVE(OPTIONAL)
     if (Is_Nulled(ARG(VALUE)))
         return Init_Void(OUT);
 
-    RETURN (ARG(VALUE));
+    return COPY_TO_OUT(ARG(VALUE));
 }
 
 
@@ -734,7 +734,7 @@ DECLARE_NATIVE(CONDITIONAL)
     if (Is_Nulled(ARG(VALUE)))
         return Copy_Cell(OUT, g_error_veto);
 
-    RETURN (ARG(VALUE));
+    return COPY_TO_OUT(ARG(VALUE));
 }
 
 
@@ -814,7 +814,7 @@ DECLARE_NATIVE(IN)
     // Special form: IN object block
     if (Is_Block(word) or Is_Group(word)) {
         Bind_Values_Deep(VAL_ARRAY_HEAD(word), context);
-        RETURN (word);
+        return COPY_TO_OUT(word);
     }
 
     REBLEN index = Find_Canon_In_Context(context, VAL_WORD_CANON(word), false);
@@ -866,7 +866,7 @@ DECLARE_NATIVE(RESOLVE)
         Bool_ARG(EXTEND)
     );
 
-    RETURN (ARG(TARGET));
+    return COPY_TO_OUT(ARG(TARGET));
 }
 
 
@@ -966,7 +966,7 @@ DECLARE_NATIVE(FREE_Q)
     else if (Any_Series(v))
         s = v->payload.any_series.series;  // VAL_SERIES fails if freed
     else
-        return LOGIC(false);
+        return LOGIC_OUT(false);
 
     return Init_Logic(OUT, Get_Flex_Info(s, INACCESSIBLE));
 }
@@ -996,7 +996,7 @@ DECLARE_NATIVE(AS)
     case TYPE_LIT_PATH:
     case TYPE_GET_PATH:
         if (new_type == Type_Of(v))
-            RETURN (v); // no-op
+            return COPY_TO_OUT(v); // no-op
 
         if (not Any_List(v))
             goto bad_cast;
@@ -1008,7 +1008,7 @@ DECLARE_NATIVE(AS)
     case TYPE_URL:
     case TYPE_EMAIL: {
         if (new_type == Type_Of(v))
-            RETURN (v); // no-op
+            return COPY_TO_OUT(v); // no-op
 
         // !!! Until UTF-8 Everywhere, turning ANY-WORD! into an ANY-STRING!
         // means it has to be UTF-8 decoded into Ucs2Unit (UCS-2).  We do that
@@ -1059,7 +1059,7 @@ DECLARE_NATIVE(AS)
     case TYPE_ISSUE:
     case TYPE_REFINEMENT: {
         if (new_type == Type_Of(v))
-            RETURN (v); // no-op
+            return COPY_TO_OUT(v); // no-op
 
         // !!! Until UTF-8 Everywhere, turning ANY-STRING! into an ANY-WORD!
         // means you have to have an interning of it.
@@ -1107,7 +1107,7 @@ DECLARE_NATIVE(AS)
 
     case TYPE_BLOB: {
         if (new_type == Type_Of(v))
-            RETURN (v); // no-op
+            return COPY_TO_OUT(v); // no-op
 
         // !!! A locked BINARY! shouldn't (?) complain if it exposes a
         // Symbol holding UTF-8 data, even prior to the UTF-8 conversion.

@@ -71,7 +71,7 @@ tail: :tail-of
 
 comment [
     ; !!! Less common cases still linger as question mark routines that
-    ; don't return LOGIC!, and they seem like they need greater rethinking in
+    ; don't return LOGIC_OUT!, and they seem like they need greater rethinking in
     ; general. What replaces them (for ones that are kept) might be new.
     ;
     encoding?: ~

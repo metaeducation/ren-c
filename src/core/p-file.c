@@ -299,12 +299,12 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         case SYM_HEAD:
             file->index = 0;
             req->modes |= RFM_RESEEK;
-            RETURN (port);
+            return COPY_TO_OUT(port);
 
         case SYM_TAIL:
             file->index = file->size;
             req->modes |= RFM_RESEEK;
-            RETURN (port);
+            return COPY_TO_OUT(port);
 
         case SYM_HEAD_Q:
             return Init_Logic(OUT, file->index == 0);
@@ -437,7 +437,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             rebRelease(result);
         }
 
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
@@ -461,7 +461,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
         Open_File_Port(port, file, path);
 
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
@@ -497,7 +497,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
             rebRelease(result); // ignore error
         }
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_DELETE: {
         INCLUDE_PARAMS_OF_DELETE;
@@ -514,7 +514,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             rebJumps("panic", result);
 
         rebRelease(result); // ignore result
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_RENAME: {
         INCLUDE_PARAMS_OF_RENAME;
@@ -532,7 +532,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             rebJumps("panic", result);
         rebRelease(result); // ignore result
 
-        RETURN (ARG(FROM)); }
+        return COPY_TO_OUT(ARG(FROM)); }
 
     case SYM_CREATE: {
         if (not (req->flags & RRF_OPEN)) {
@@ -553,7 +553,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
         // !!! should it leave file open???
 
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_QUERY: {
         INCLUDE_PARAMS_OF_QUERY;
@@ -595,11 +595,11 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
             assert(result != nullptr);
             if (rebDid("error?", rebQ(result))) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error
-                return LOGIC(false);
+                return LOGIC_OUT(false);
             }
             rebRelease(result); // ignore result
         }
-        return LOGIC(true); }
+        return LOGIC_OUT(true); }
 
     case SYM_SKIP: {
         INCLUDE_PARAMS_OF_SKIP;
@@ -609,7 +609,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
 
         file->index += Get_Num_From_Arg(ARG(OFFSET));
         req->modes |= RFM_RESEEK;
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_CLEAR: {
         // !! check for write enabled?
@@ -618,7 +618,7 @@ static Bounce File_Actor(Level* level_, Value* port, Value* verb)
         req->length = 0;
 
         OS_DO_DEVICE_SYNC(req, RDC_WRITE);
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     default:
         break;

@@ -113,7 +113,7 @@ static Bounce Transport_Actor(
 
             switch (opt property) {
             case SYM_OPEN_Q:
-                return LOGIC(false);
+                return LOGIC_OUT(false);
 
             default:
                 break;
@@ -165,7 +165,7 @@ static Bounce Transport_Actor(
                     rebJumps("panic", l_result);
                 rebRelease(l_result); // ignore result
 
-                RETURN (port);
+                return COPY_TO_OUT(port);
             }
             else if (Is_Tuple(arg)) { // Host IP specified:
                 DEVREQ_NET(sock)->remote_port =
@@ -192,7 +192,7 @@ static Bounce Transport_Actor(
             break; }
 
         case SYM_CLOSE:
-            RETURN (port);
+            return COPY_TO_OUT(port);
 
         case SYM_ON_WAKE_UP:  // allowed after a close
             break;
@@ -411,7 +411,7 @@ static Bounce Transport_Actor(
         }
 
         Init_Blank(Varlist_Slot(ctx, STD_PORT_DATA));
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
@@ -451,7 +451,7 @@ static Bounce Transport_Actor(
 
             sock->flags &= ~RRF_OPEN;
         }
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_OPEN: {
         Value* result = OS_DO_DEVICE(sock, RDC_CONNECT);
@@ -471,7 +471,7 @@ static Bounce Transport_Actor(
             //
             rebRelease(result); // ignore result
         }
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     default:
         break;

@@ -449,7 +449,7 @@ DECLARE_NATIVE(ADJUNCT_OF)
     if (not adjunct)
         return nullptr;
 
-    RETURN (Varlist_Archetype(adjunct));
+    return COPY_TO_OUT(Varlist_Archetype(adjunct));
 }
 
 
@@ -493,7 +493,7 @@ DECLARE_NATIVE(SET_ADJUNCT)
     if (not adjunct)
         return nullptr;
 
-    RETURN (Varlist_Archetype(adjunct));
+    return COPY_TO_OUT(Varlist_Archetype(adjunct));
 }
 
 
@@ -799,7 +799,7 @@ REBTYPE(Context)
                     continue;
 
                 VarList* ctx_parent = Varlist_For_Level_May_Manage(parent);
-                RETURN (Varlist_Archetype(ctx_parent));
+                return COPY_TO_OUT(Varlist_Archetype(ctx_parent));
             }
             return nullptr; }
 
@@ -813,13 +813,13 @@ REBTYPE(Context)
         PANIC_IF_ERROR(arg);
 
         if (Is_Nulled(arg) or Is_Blank(arg))
-            RETURN (value); // don't panic on read only if it would be a no-op
+            return COPY_TO_OUT(value);  // don't panic on no-op read only
 
         PANIC_IF_READ_ONLY_CONTEXT(c);
         if (not Is_Object(value) and not Is_Module(value))
             panic (Error_Illegal_Action(Type_Of(value), verb));
         Append_To_Context(c, arg);
-        RETURN (value);
+        return COPY_TO_OUT(value);
 
       case SYM_COPY: { // Note: words are not copied and bindings not changed!
         INCLUDE_PARAMS_OF_COPY;
@@ -859,9 +859,9 @@ REBTYPE(Context)
             return nullptr;
 
         if (Word_Id(verb) == SYM_FIND)
-            return LOGIC(true); // !!! not optimal, OKAY would be better
+            return LOGIC_OUT(true); // !!! not optimal, OKAY would be better
 
-        RETURN (Varlist_Slot(c, n)); }
+        return COPY_TO_OUT(Varlist_Slot(c, n)); }
 
       default:
         break;

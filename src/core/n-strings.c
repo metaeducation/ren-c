@@ -890,7 +890,7 @@ DECLARE_NATIVE(DELINE)
 
     Term_Strand_Len(s, len_head);
 
-    RETURN (ARG(STRING));
+    return COPY_TO_OUT(ARG(STRING));
 }
 
 
@@ -937,7 +937,7 @@ DECLARE_NATIVE(ENLINE)
     }
 
     if (delta == 0)
-        RETURN (ARG(STRING)); // nothing to do
+        return COPY_TO_OUT(ARG(STRING)); // nothing to do
 
     Expand_Flex_Tail(flex, delta);
 
@@ -965,7 +965,7 @@ DECLARE_NATIVE(ENLINE)
         --len;
     }
 
-    RETURN (ARG(STRING));
+    return COPY_TO_OUT(ARG(STRING));
 }
 
 
@@ -1294,7 +1294,7 @@ DECLARE_NATIVE(IDENTIFY_UTF8_Q)
 
     UNUSED(ARG(DATA)); // see notes on decode-text
 
-    return LOGIC(true);
+    return LOGIC_OUT(true);
 }
 
 

@@ -1545,7 +1545,7 @@ DECLARE_NATIVE(EXCEPT)
 
     Value* left = ARG(LEFT);
     if (not Is_Error(left))
-        RETURN (left);
+        return COPY_TO_OUT(left);
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;

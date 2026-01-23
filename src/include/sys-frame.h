@@ -239,10 +239,10 @@ INLINE int LVL_LINE(Level* L) {
     #define D_ARGC      Level_Num_Args(level_)  // count of args+refinements/args
     #define D_ARG(n)    Level_Arg(level_, (n))  // pass 1 for first arg
 
-    #define RETURN(v) \
-        return Copy_Cell(OUT, (v))
+    #define COPY_TO_OUT(v) \
+        u_cast(Bounce, Copy_Cell(OUT, (v)))
 
-    #define LOGIC(v)    cast(Bounce, Init_Logic(OUT, (v)))
+    #define LOGIC_OUT(v)  cast(Bounce, Init_Logic(OUT, (v)))
 #endif
 
 INLINE bool Is_Action_Level(Level* L) {

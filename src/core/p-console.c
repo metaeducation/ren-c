@@ -101,12 +101,12 @@ static Bounce Console_Actor(Level* level_, Value* port, Value* verb)
 
     case SYM_OPEN: {
         req->flags |= RRF_OPEN;
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_CLOSE:
         req->flags &= ~RRF_OPEN;
         //OS_DO_DEVICE(req, RDC_CLOSE);
-        RETURN (port);
+        return COPY_TO_OUT(port);
 
     default:
         break;

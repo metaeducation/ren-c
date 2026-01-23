@@ -393,9 +393,9 @@ REBTYPE(Typeset)
             panic (Error_Invalid(arg));
 
         if (Typeset_Check(val, Datatype_Type(arg)))
-            return LOGIC(true);
+            return LOGIC_OUT(true);
 
-        return LOGIC(false);
+        return LOGIC_OUT(false);
 
     case SYM_INTERSECT:
     case SYM_UNION:
@@ -414,11 +414,11 @@ REBTYPE(Typeset)
             assert(Word_Id(verb) == SYM_DIFFERENCE);
             Cell_Typeset_Bits(val) ^= Cell_Typeset_Bits(arg);
         }
-        RETURN (val);
+        return COPY_TO_OUT(val);
 
     case SYM_COMPLEMENT:
         Cell_Typeset_Bits(val) = ~Cell_Typeset_Bits(val);
-        RETURN (val);
+        return COPY_TO_OUT(val);
 
     default:
         break;

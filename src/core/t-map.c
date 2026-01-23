@@ -416,7 +416,7 @@ Bounce PD_Map(
     if (Is_Zombie(val))  // zombie entry, means unused
         return nullptr;
 
-    return Copy_Cell(pvs->out, val); // RETURN (...) uses `level_`, not `pvs`
+    return Copy_Cell(pvs->out, val); // COPY_TO_OUT uses `level_`, not `pvs`
 }
 
 
@@ -789,7 +789,7 @@ REBTYPE(Map)
         );
         UNUSED(n);
 
-        RETURN (ARG(VALUE)); }
+        return COPY_TO_OUT(ARG(VALUE)); }
 
     case SYM_INSERT:
     case SYM_APPEND: {

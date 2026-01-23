@@ -141,7 +141,7 @@ DECLARE_NATIVE(EVAL_INFIX)
         Level_Binding(L),
         push_refinements
     )){
-        RETURN (temp);
+        return COPY_TO_OUT(temp);
     }
 
     if (not Is_Action(temp))
@@ -469,7 +469,7 @@ DECLARE_NATIVE(EVALUATE)
             if (not Is_Nulled(var))
                 Copy_Cell(Sink_Var_May_Panic(var, SPECIFIED), OUT);
 
-            RETURN (source);  // original VARARGS! will have updated position
+            return COPY_TO_OUT(source);  // original VARARGS! will have updated position
         }
 
         Level* L;
@@ -508,7 +508,7 @@ DECLARE_NATIVE(EVALUATE)
         if (not Is_Nulled(var))
             Copy_Cell(Sink_Var_May_Panic(var, SPECIFIED), OUT);
 
-        RETURN (source); } // original VARARGS! will have an updated position
+        return COPY_TO_OUT(source); } // original VARARGS! will have an updated position
 
       case TYPE_ERROR:
         //
@@ -630,7 +630,7 @@ DECLARE_NATIVE(APPLIQUE)
 
     if (def_threw) {
         Free_Unmanaged_Flex(Varlist_Array(stolen)); // could TG_Reuse it
-        RETURN (temp);
+        return COPY_TO_OUT(temp);
     }
 
     Push_Level_At_End(L, EVAL_FLAG_PROCESS_ACTION);

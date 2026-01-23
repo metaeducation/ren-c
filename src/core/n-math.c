@@ -406,7 +406,7 @@ DECLARE_NATIVE(SHIFT)
         }
     }
 
-    RETURN (ARG(VALUE));
+    return COPY_TO_OUT(ARG(VALUE));
 }
 
 
@@ -580,9 +580,9 @@ DECLARE_NATIVE(LAX_EQUAL_Q)
     PANIC_IF_ERROR(v2);
 
     if (Compare_Modify_Values(v1, v2, 0))
-        return LOGIC(true);
+        return LOGIC_OUT(true);
 
-    return LOGIC(false);
+    return LOGIC_OUT(false);
 }
 
 
@@ -607,9 +607,9 @@ DECLARE_NATIVE(LAX_NOT_EQUAL_Q)
     PANIC_IF_ERROR(v2);
 
     if (Compare_Modify_Values(v1, v2, 0))
-        return LOGIC(false);
+        return LOGIC_OUT(false);
 
-    return LOGIC(true);
+    return LOGIC_OUT(true);
 }
 
 
@@ -634,9 +634,9 @@ DECLARE_NATIVE(EQUAL_Q)
     PANIC_IF_ERROR(v2);
 
     if (Compare_Modify_Values(v1, v2, 1))
-        return LOGIC(true);
+        return LOGIC_OUT(true);
 
-    return LOGIC(false);
+    return LOGIC_OUT(false);
 }
 
 
@@ -661,9 +661,9 @@ DECLARE_NATIVE(NOT_EQUAL_Q)
     PANIC_IF_ERROR(v2);
 
     if (Compare_Modify_Values(v1, v2, 1))
-        return LOGIC(false);
+        return LOGIC_OUT(false);
 
-    return LOGIC(true);
+    return LOGIC_OUT(true);
 }
 
 
@@ -691,15 +691,15 @@ DECLARE_NATIVE(SAME_Q)
     Value* v2 = ARG(VALUE2);
 
     if (Type_Of(v1) != Type_Of(v2))
-        return LOGIC(false); // can't be "same" value if not same type
+        return LOGIC_OUT(false); // can't be "same" value if not same type
 
     if (Is_Bitset(v1)) {
         //
         // BITSET! only has a series, no index.
         //
         if (Cell_Flex(v1) != Cell_Flex(v2))
-            return LOGIC(false);
-        return LOGIC(true);
+            return LOGIC_OUT(false);
+        return LOGIC_OUT(true);
     }
 
     if (Any_Series(v1)) {
@@ -707,10 +707,10 @@ DECLARE_NATIVE(SAME_Q)
         // ANY-SERIES! can only be the same if pointers and indices match.
         //
         if (Cell_Flex(v1) != Cell_Flex(v2))
-            return LOGIC(false);
+            return LOGIC_OUT(false);
         if (VAL_INDEX(v1) != VAL_INDEX(v2))
-            return LOGIC(false);
-        return LOGIC(true);
+            return LOGIC_OUT(false);
+        return LOGIC_OUT(true);
     }
 
     if (Any_Context(v1)) {
@@ -718,8 +718,8 @@ DECLARE_NATIVE(SAME_Q)
         // ANY-CONTEXT! are the same if the varlists match.
         //
         if (Cell_Varlist(v1) != Cell_Varlist(v2))
-            return LOGIC(false);
-        return LOGIC(true);
+            return LOGIC_OUT(false);
+        return LOGIC_OUT(true);
     }
 
     if (Is_Map(v1)) {
@@ -727,8 +727,8 @@ DECLARE_NATIVE(SAME_Q)
         // MAP! will be the same if the map pointer matches.
         //
         if (VAL_MAP(v1) != VAL_MAP(v2))
-            return LOGIC(false);
-        return LOGIC(true);
+            return LOGIC_OUT(false);
+        return LOGIC_OUT(true);
     }
 
     if (Any_Word(v1)) {
@@ -736,10 +736,10 @@ DECLARE_NATIVE(SAME_Q)
         // ANY-WORD! must match in binding as well as be otherwise equal.
         //
         if (Word_Symbol(v1) != Word_Symbol(v2))
-            return LOGIC(false);
+            return LOGIC_OUT(false);
         if (VAL_BINDING(v1) != VAL_BINDING(v2))
-            return LOGIC(false);
-        return LOGIC(true);
+            return LOGIC_OUT(false);
+        return LOGIC_OUT(true);
     }
 
     if (Is_Decimal(v1) or Is_Percent(v1)) {
@@ -752,18 +752,18 @@ DECLARE_NATIVE(SAME_Q)
                 &VAL_DECIMAL(v1), &VAL_DECIMAL(v2), sizeof(REBDEC)
             ) == 0
         ){
-            return LOGIC(true);
+            return LOGIC_OUT(true);
         }
 
-        return LOGIC(false);
+        return LOGIC_OUT(false);
     }
 
     // For other types, just fall through to strict equality comparison
     //
     if (Compare_Modify_Values(v1, v2, 1))
-        return LOGIC(true);
+        return LOGIC_OUT(true);
 
-    return LOGIC(false);
+    return LOGIC_OUT(false);
 }
 
 
@@ -781,9 +781,9 @@ DECLARE_NATIVE(LESSER_Q)
     INCLUDE_PARAMS_OF_LESSER_Q;
 
     if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), -1))
-        return LOGIC(false);
+        return LOGIC_OUT(false);
 
-    return LOGIC(true);
+    return LOGIC_OUT(true);
 }
 
 
@@ -801,9 +801,9 @@ DECLARE_NATIVE(EQUAL_OR_LESSER_Q)
     INCLUDE_PARAMS_OF_EQUAL_OR_LESSER_Q;
 
     if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), -2))
-        return LOGIC(false);
+        return LOGIC_OUT(false);
 
-    return LOGIC(true);
+    return LOGIC_OUT(true);
 }
 
 
@@ -821,9 +821,9 @@ DECLARE_NATIVE(GREATER_Q)
     INCLUDE_PARAMS_OF_GREATER_Q;
 
     if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), -2))
-        return LOGIC(true);
+        return LOGIC_OUT(true);
 
-    return LOGIC(false);
+    return LOGIC_OUT(false);
 }
 
 
@@ -841,9 +841,9 @@ DECLARE_NATIVE(GREATER_OR_EQUAL_Q)
     INCLUDE_PARAMS_OF_GREATER_OR_EQUAL_Q;
 
     if (Compare_Modify_Values(ARG(VALUE1), ARG(VALUE2), -1))
-        return LOGIC(true);
+        return LOGIC_OUT(true);
 
-    return LOGIC(false);
+    return LOGIC_OUT(false);
 }
 
 
@@ -931,9 +931,9 @@ DECLARE_NATIVE(NEGATIVE_Q)
     Init_Zeroed_Hack(z, Type_Of(ARG(NUMBER)));
 
     if (Compare_Modify_Values(ARG(NUMBER), z, -1))
-        return LOGIC(false);
+        return LOGIC_OUT(false);
 
-    return LOGIC(true);
+    return LOGIC_OUT(true);
 }
 
 
@@ -953,9 +953,9 @@ DECLARE_NATIVE(POSITIVE_Q)
     Init_Zeroed_Hack(z, Type_Of(ARG(NUMBER)));
 
     if (Compare_Modify_Values(ARG(NUMBER), z, -2))
-        return LOGIC(true);
+        return LOGIC_OUT(true);
 
-    return LOGIC(false);
+    return LOGIC_OUT(false);
 }
 
 
@@ -978,7 +978,7 @@ DECLARE_NATIVE(ZERO_Q)
         Init_Zeroed_Hack(z, type);
 
         if (Compare_Modify_Values(ARG(VALUE), z, 1))
-            return LOGIC(true);
+            return LOGIC_OUT(true);
     }
-    return LOGIC(false);
+    return LOGIC_OUT(false);
 }

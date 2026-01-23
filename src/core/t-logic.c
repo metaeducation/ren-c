@@ -200,9 +200,9 @@ DECLARE_NATIVE(AND_Q)
     INCLUDE_PARAMS_OF_AND_Q;
 
     if (IS_TRUTHY(ARG(VALUE1)) && IS_TRUTHY(ARG(VALUE2)))
-        return LOGIC(true);
+        return LOGIC_OUT(true);
 
-    return LOGIC(false);
+    return LOGIC_OUT(false);
 }
 
 
@@ -220,9 +220,9 @@ DECLARE_NATIVE(NOR_Q)
     INCLUDE_PARAMS_OF_NOR_Q;
 
     if (IS_FALSEY(ARG(VALUE1)) && IS_FALSEY(ARG(VALUE2)))
-        return LOGIC(true);
+        return LOGIC_OUT(true);
 
-    return LOGIC(false);
+    return LOGIC_OUT(false);
 }
 
 
@@ -378,7 +378,7 @@ DECLARE_NATIVE(AND)
     Value* right = ARG(RIGHT);
 
     if (IS_FALSEY(left))
-        return LOGIC(false);
+        return LOGIC_OUT(false);
 
     if (Is_Group(right)) {
         if (Eval_List_At_Throws(OUT, right))
@@ -397,7 +397,7 @@ DECLARE_NATIVE(AND)
             panic ("AND requires a GROUP! on right to run actions");
     }
 
-    return LOGIC(IS_TRUTHY(OUT));
+    return LOGIC_OUT(IS_TRUTHY(OUT));
 }
 
 
@@ -419,7 +419,7 @@ DECLARE_NATIVE(OR)
     Value* right = ARG(RIGHT);
 
     if (IS_TRUTHY(left))
-        return LOGIC(true);
+        return LOGIC_OUT(true);
 
     if (Is_Group(right)) {
         if (Eval_List_At_Throws(OUT, right))
@@ -438,7 +438,7 @@ DECLARE_NATIVE(OR)
             panic ("OR requires a GROUP! on right to run actions");
     }
 
-    return LOGIC(IS_TRUTHY(OUT));
+    return LOGIC_OUT(IS_TRUTHY(OUT));
 }
 
 
@@ -479,9 +479,9 @@ DECLARE_NATIVE(XOR)
     }
 
     if (IS_TRUTHY(left))
-        return LOGIC(IS_FALSEY(OUT));
+        return LOGIC_OUT(IS_FALSEY(OUT));
 
-    return LOGIC(IS_TRUTHY(OUT));  // left is falsey, so return right
+    return LOGIC_OUT(IS_TRUTHY(OUT));  // left is falsey, so return right
 }
 
 
@@ -507,9 +507,9 @@ DECLARE_NATIVE(UNLESS)
     INCLUDE_PARAMS_OF_UNLESS;
 
     if (IS_TRUTHY(ARG(RIGHT)))
-        RETURN (ARG(RIGHT));
+        return COPY_TO_OUT(ARG(RIGHT));
 
-    RETURN (ARG(LEFT)); // preserve the exact truthy or falsey value
+    return COPY_TO_OUT(ARG(LEFT)); // preserve the exact truthy or falsey value
 }
 
 
@@ -575,8 +575,8 @@ REBTYPE(Logic)
             return nullptr;
         }
         if (Random_Int(Bool_ARG(SECURE)) & 1)
-            return LOGIC(true);
-        return LOGIC(false); }
+            return LOGIC_OUT(true);
+        return LOGIC_OUT(false); }
 
     default:
         panic (Error_Illegal_Action(TYPE_BLANK, verb));

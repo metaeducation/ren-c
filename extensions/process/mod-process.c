@@ -2023,7 +2023,7 @@ DECLARE_NATIVE(SET_ENV)
     rebFree(key_utf8);
   #endif
 
-    RETURN (ARG(VALUE));
+    return COPY_TO_OUT(ARG(VALUE));
 }
 
 

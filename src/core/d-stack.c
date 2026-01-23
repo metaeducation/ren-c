@@ -226,9 +226,9 @@ DECLARE_NATIVE(RUNNING_Q)
     Option(Level*) L = Level_Of_Varlist_May_Panic(frame_ctx);
 
     if (Is_Action_Level_Fulfilling(unwrap L))
-        return LOGIC(false);
+        return LOGIC_OUT(false);
 
-    return LOGIC(true);
+    return LOGIC_OUT(true);
 }
 
 
@@ -249,7 +249,7 @@ DECLARE_NATIVE(PENDING_Q)
     Option(Level*) L = Level_Of_Varlist_May_Panic(frame_ctx);
 
     if (L and Is_Action_Level_Fulfilling(unwrap L))
-        return LOGIC(true);
+        return LOGIC_OUT(true);
 
-    return LOGIC(false);
+    return LOGIC_OUT(false);
 }

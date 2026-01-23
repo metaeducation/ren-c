@@ -766,7 +766,7 @@ static REBIXO Parse_Array_One_Rule_Core(
         Value* v = rebValue(rule, rebQ(P_OUT));
         SET_END(P_OUT);
         if (v and not Is_Okay(v))
-            panic ("Type constraint didn't return LOGIC! in UPARSE");
+            panic ("Type constraint didn't return LOGIC_OUT! in UPARSE");
 
         bool logic = (v != nullptr);
         rebRelease(v);

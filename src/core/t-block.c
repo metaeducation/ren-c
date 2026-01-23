@@ -886,7 +886,7 @@ REBTYPE(List)
         if (Is_Nulled(arg) and len == 0) { // only nulls bypass write attempts
             if (sym == SYM_APPEND) // append always returns head
                 VAL_INDEX(list) = 0;
-            RETURN (list); // don't panic on read only if it would be a no-op
+            return COPY_TO_OUT(list);  // don't panic on no-op read only
         }
         Panic_If_Read_Only_Flex(arr);
 
@@ -926,7 +926,7 @@ REBTYPE(List)
                 Set_Flex_Len(Cell_Flex(list), cast(REBLEN, index));
             }
         }
-        RETURN (list);
+        return COPY_TO_OUT(list);
     }
 
     //-- Creation:
@@ -989,7 +989,7 @@ REBTYPE(List)
             Blit_Cell(List_At(list), List_At(arg));
             Blit_Cell(List_At(arg), &temp);
         }
-        RETURN (list);
+        return COPY_TO_OUT(list);
     }
 
     case SYM_REVERSE: {
@@ -997,7 +997,7 @@ REBTYPE(List)
 
         REBLEN len = Part_Len_May_Modify_Index(list, D_ARG(3));
         if (len == 0)
-            RETURN (list); // !!! do 1-element reversals update newlines?
+            return COPY_TO_OUT(list); // !!! do 1-element reversals update newlines?
 
         Cell* front = List_At(list);
         Cell* back = front + len - 1;
@@ -1040,7 +1040,7 @@ REBTYPE(List)
             else
                 Clear_Cell_Flag(back, NEWLINE_BEFORE);
         }
-        RETURN (list);
+        return COPY_TO_OUT(list);
     }
 
     case SYM_SORT: {
@@ -1062,7 +1062,7 @@ REBTYPE(List)
             Bool_ARG(ALL),
             Bool_ARG(REVERSE)
         );
-        RETURN (list);
+        return COPY_TO_OUT(list);
     }
 
     case SYM_RANDOM: {
@@ -1095,7 +1095,7 @@ REBTYPE(List)
         }
 
         Shuffle_List(list, Bool_ARG(SECURE));
-        RETURN (list);
+        return COPY_TO_OUT(list);
     }
 
     default:

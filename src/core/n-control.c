@@ -306,7 +306,7 @@ DECLARE_NATIVE(EITHER_TEST)
         return BOUNCE_THROWN;
 
     if (VAL_LOGIC(OUT))
-        RETURN (ARG(ARG));
+        return COPY_TO_OUT(ARG(ARG));
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(ARG)))
         return BOUNCE_THROWN;
@@ -333,7 +333,7 @@ DECLARE_NATIVE(ELSE)
 
     Value* left = ARG(LEFT);
     if (not (Is_Nulled(left) or Is_Void(left)))
-        RETURN (left);
+        return COPY_TO_OUT(left);
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;
@@ -361,7 +361,7 @@ DECLARE_NATIVE(THEN)
 
     Value* left = ARG(LEFT);
     if (Is_Nulled(left) or Is_Void(left))
-        RETURN (left);  // left didn't run, so signal THEN didn't run either
+        return COPY_TO_OUT(left);  // left didn't run, so signal THEN didn't run either
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;
@@ -389,12 +389,12 @@ DECLARE_NATIVE(ALSO)
 
     Value* left = ARG(LEFT);
     if (Is_Nulled(left) or Is_Void(left))
-        RETURN (left);
+        return COPY_TO_OUT(left);
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;
 
-    RETURN (left); // just passing thru the input
+    return COPY_TO_OUT(left); // just passing thru the input
 }
 
 
@@ -470,7 +470,7 @@ DECLARE_NATIVE(NON)
         panic ("NON expected value to not match a type, but it did match");
     }
 
-    RETURN (value);
+    return COPY_TO_OUT(value);
 }
 
 

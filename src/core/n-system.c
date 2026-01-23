@@ -248,7 +248,7 @@ DECLARE_NATIVE(CHECK)
         Assert_Array(VAL_ACT_DETAILS(value));
     }
 
-    return LOGIC(true);
+    return LOGIC_OUT(true);
 #endif
 }
 

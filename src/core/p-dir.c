@@ -237,7 +237,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         if (Word_Id(verb) != SYM_CREATE)
             Init_Nulled(state);
 
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_RENAME: {
         INCLUDE_PARAMS_OF_RENAME;
@@ -259,7 +259,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         }
 
         rebRelease(result); // ignore result
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_DELETE: {
         Init_Nulled(state);
@@ -277,7 +277,7 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
         }
 
         rebRelease(result); // ignore result
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
@@ -303,11 +303,11 @@ static Bounce Dir_Actor(Level* level_, Value* port, Value* verb)
 
         Init_Dir_Path(&dir, path, POL_READ);
         Init_Block(state, Read_Dir_May_Panic(&dir));
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_CLOSE:
         Init_Nulled(state);
-        RETURN (port);
+        return COPY_TO_OUT(port);
 
     case SYM_QUERY: {
         Init_Nulled(state);

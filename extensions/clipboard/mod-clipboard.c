@@ -213,7 +213,7 @@ static Bounce Clipboard_Actor(
 
         assert(h_check == h);
 
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
@@ -234,13 +234,13 @@ static Bounce Clipboard_Actor(
 
         // !!! Currently just ignore (it didn't do anything)
 
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_CLOSE: {
 
         // !!! Currently just ignore (it didn't do anything)
 
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     default:
         break;

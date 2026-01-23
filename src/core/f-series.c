@@ -156,7 +156,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         }
 
         VAL_INDEX(value) = cast(REBLEN, i);
-        RETURN (value); }
+        return COPY_TO_OUT(value); }
 
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
@@ -180,7 +180,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         if (index < tail and len != 0)
             Remove_Flex(Cell_Flex(value), VAL_INDEX(value), len);
 
-        RETURN (value); }
+        return COPY_TO_OUT(value); }
 
     case SYM_INTERSECT: {
         if (Is_Blob(value))

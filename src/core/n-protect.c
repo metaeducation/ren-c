@@ -218,7 +218,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 
     if (Is_Word(value) || Is_Path(value)) {
         Protect_Word_Value(value, flags); // will unmark if deep
-        RETURN (ARG(VALUE));
+        return COPY_TO_OUT(ARG(VALUE));
     }
 
     if (Is_Block(value)) {
@@ -229,7 +229,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                 Derelativize(word, val, VAL_SPECIFIER(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
-            RETURN (ARG(VALUE));
+            return COPY_TO_OUT(ARG(VALUE));
         }
         if (Bool_ARG(VALUES)) {
             Value* var;
@@ -261,7 +261,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                 if (flags & PROT_DEEP)
                     Uncolor(var);
             }
-            RETURN (ARG(VALUE));
+            return COPY_TO_OUT(ARG(VALUE));
         }
     }
 
@@ -273,7 +273,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     if (flags & PROT_DEEP)
         Uncolor(value);
 
-    RETURN (ARG(VALUE));
+    return COPY_TO_OUT(ARG(VALUE));
 }
 
 

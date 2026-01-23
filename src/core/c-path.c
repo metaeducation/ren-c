@@ -695,7 +695,7 @@ DECLARE_NATIVE(POKE)
         panic (Error_Invalid(PVS_PICKER(pvs))); // raise error in release build
     }
 
-    RETURN (ARG(VALUE)); // return the value we got in
+    return COPY_TO_OUT(ARG(VALUE)); // return the value we got in
 }
 
 

@@ -166,11 +166,11 @@ static Bounce DNS_Actor(Level* level_, Value* port, Value* verb)
         }
 
         OS_DO_DEVICE_SYNC(sock, RDC_OPEN);
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_CLOSE: {
         OS_DO_DEVICE_SYNC(sock, RDC_CLOSE);
-        RETURN (port); }
+        return COPY_TO_OUT(port); }
 
     case SYM_ON_WAKE_UP:
         return Init_Trash(OUT);

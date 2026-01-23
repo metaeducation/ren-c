@@ -638,8 +638,8 @@ REBTYPE(Bitset)
             panic (Error_Bad_Refines_Raw());
 
         if (not Check_Bits(Cell_Bitset(value), arg, Bool_ARG(CASE)))
-            return LOGIC(false);
-        return LOGIC(true);
+            return LOGIC_OUT(false);
+        return LOGIC_OUT(true);
     }
 
     case SYM_COMPLEMENT:
@@ -655,7 +655,7 @@ REBTYPE(Bitset)
     case SYM_INSERT: {
         PANIC_IF_ERROR(arg);
         if (Is_Nulled(arg) or Is_Blank(arg))
-            RETURN (value); // don't panic on read only if it would be a no-op
+            return COPY_TO_OUT(value);  // don't panic on no-op read only
 
         Panic_If_Read_Only_Flex(Cell_Bitset(value));
 

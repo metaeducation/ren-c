@@ -769,5 +769,5 @@ DECLARE_NATIVE(CHANGE_DIR)
 
     Copy_Cell(current_path, arg);
 
-    RETURN (ARG(PATH));
+    return COPY_TO_OUT(ARG(PATH));
 }

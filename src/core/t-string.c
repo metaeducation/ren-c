@@ -1161,7 +1161,7 @@ REBTYPE(String)
         UNUSED(PARAM(SERIES));
         UNUSED(PARAM(VALUE));
 
-        UNUSED(Bool_ARG(ONLY)); // all strings appends are /ONLY...currently unused
+        UNUSED(Bool_ARG(ONLY)); // all strings appends are /ONLY
 
         PANIC_IF_ERROR(arg);
 
@@ -1177,7 +1177,7 @@ REBTYPE(String)
         if (Is_Nulled(arg) and len == 0) { // only nulls bypass write attempts
             if (sym == SYM_APPEND) // append always returns head
                 VAL_INDEX(v) = 0;
-            RETURN (v); // don't panic on read only if it would be a no-op
+            return COPY_TO_OUT(v);  // don't panic on no-op read only
         }
         Panic_If_Read_Only_Flex(Cell_Flex(v));
 
@@ -1213,7 +1213,7 @@ REBTYPE(String)
                 Bool_ARG(DUP) ? Int32(ARG(COUNT)) : 1
             );
         }
-        RETURN (v); }
+        return COPY_TO_OUT(v); }
 
     //-- Search:
     case SYM_SELECT:
@@ -1307,7 +1307,7 @@ REBTYPE(String)
             else
                 str_to_char(v, v, ret);
         }
-        RETURN (v); }
+        return COPY_TO_OUT(v); }
 
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
@@ -1377,7 +1377,7 @@ REBTYPE(String)
             else
                 Term_Non_Array_Flex_Len(Cell_Flex(v), cast(REBLEN, index));
         }
-        RETURN (v); }
+        return COPY_TO_OUT(v); }
 
     //-- Creation:
 
@@ -1507,7 +1507,7 @@ REBTYPE(String)
                 }
             }
         }
-        RETURN (v); }
+        return COPY_TO_OUT(v); }
 
     //-- Special actions:
 
@@ -1521,7 +1521,7 @@ REBTYPE(String)
 
         if (index < tail && VAL_INDEX(arg) < VAL_LEN_HEAD(arg))
             swap_chars(v, arg);
-        RETURN (v); }
+        return COPY_TO_OUT(v); }
 
     case SYM_REVERSE: {
         Panic_If_Read_Only_Flex(Cell_Flex(v));
@@ -1533,7 +1533,7 @@ REBTYPE(String)
             else
                 reverse_string(v, len);
         }
-        RETURN (v); }
+        return COPY_TO_OUT(v); }
 
     case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
@@ -1559,7 +1559,7 @@ REBTYPE(String)
             ARG(LIMIT),   // (void if not /PART)
             Bool_ARG(REVERSE)
         );
-        RETURN (v); }
+        return COPY_TO_OUT(v); }
 
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -1603,7 +1603,7 @@ REBTYPE(String)
             panic ("UTF-8 Everywhere: String shuffle temporarily unavailable");
 
         Shuffle_String(v, Bool_ARG(SECURE));
-        RETURN (v); }
+        return COPY_TO_OUT(v); }
 
     default:
         // Let the port system try the action, e.g. OPEN %foo.txt
