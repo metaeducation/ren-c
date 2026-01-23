@@ -154,8 +154,7 @@ http-awake: function [return: [logic!] event [event!]] [
             close http-port
             reify res
         ]
-        default ['~okay~]
-    ]
+    ] else ['~okay~]
 ]
 
 make-http-error: func [

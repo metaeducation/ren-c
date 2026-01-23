@@ -228,10 +228,9 @@ set-target-platform: func [
         'osx [
             target-platform: osx
         ]
-        default [
-            print ["Unknown platform:" platform "falling back to POSIX"]
-            target-platform: posix
-        ]
+    ] else [
+        print ["Unknown platform:" platform "falling back to POSIX"]
+        target-platform: posix
     ]
 ]
 
@@ -558,7 +557,7 @@ cc: make compiler-class [
         return: [~null~ text!]
         dep [object!]
     ][
-        return degrade switch dep/class [
+        return degrade (switch dep/class [  ; <-- R3PREBOOT needs GROUP! here
             #object-file [
                 comment [ ;-- !!! This was commented out, why?
                     if find words-of dep 'depends [
@@ -601,11 +600,10 @@ cc: make compiler-class [
             #entry [
                 '~null~
             ]
-            default [
-                dump dep
-                panic "unrecognized dependency"
-            ]
-        ]
+        ] else [
+            dump dep
+            panic "unrecognized dependency"
+        ])
     ]
 ]
 
@@ -805,7 +803,7 @@ cl: make compiler-class [
         return: [~null~ text!]
         dep [object!]
     ][
-        return degrade switch dep/class [
+        return degrade (switch dep/class [  ; <-- R3PREBOOT needs GROUP! here
             #object-file [
                 file-to-local to-file dep/output
             ]
@@ -840,11 +838,10 @@ cl: make compiler-class [
             #entry [
                 '~null~
             ]
-            default [
-                dump dep
-                panic "unrecognized dependency"
-            ]
-        ]
+        ] else [
+            dump dep
+            panic "unrecognized dependency"
+        ])
     ]
 ]
 
@@ -1137,10 +1134,9 @@ generator-class: make object! [
                     copy project/output
                 ]
             ]
-            default [
-                basename: project/output
-                project/output: join basename opt suffix
-            ]
+        ] else [
+            basename: project/output
+            project/output: join basename opt suffix
         ]
 
         project/basename: basename
@@ -1236,7 +1232,7 @@ makefile: make generator-class [
                             keep case [
                                 file? w [file-to-local w]
                                 file? w/output [file-to-local w/output]
-                                default [w/output]
+                                <else> [w/output]
                             ]
                         ]
                     ]
@@ -1332,10 +1328,9 @@ makefile: make generator-class [
                 #dynamic-extension #static-extension [
                     _
                 ]
-                default [
-                    dump dep
-                    panic ["unrecognized project type:" dep/class]
-                ]
+            ] else [
+                dump dep
+                panic ["unrecognized project type:" dep/class]
             ]
         ]
     ]
@@ -1380,13 +1375,11 @@ Execution: make generator-class [
         'Linux [linux]
         'OSX [osx]
         'Android [android]
-
-        default [
-           print [
-               "Untested platform" system/platform "- assume POSIX compilant"
-           ]
-           posix
+    ] else [
+        print [
+            "Untested platform" system/platform "- assume POSIX compilant"
         ]
+        posix
     ]
 
     gen-cmd-create: :host/gen-cmd-create
@@ -1420,10 +1413,9 @@ Execution: make generator-class [
                     call/shell cmd
                 ]
             ]
-            default [
-                dump target
-                panic "Unrecognized target class"
-            ]
+        ] else [
+            dump target
+            panic "Unrecognized target class"
         ]
     ]
 
@@ -1489,10 +1481,9 @@ Execution: make generator-class [
                     run dep
                 ]
             ]
-            default [
-                dump project
-                panic ["unrecognized project type:" project/class]
-            ]
+        ] else [
+            dump project
+            panic ["unrecognized project type:" project/class]
         ]
     ]
 ]

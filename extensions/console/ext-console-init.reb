@@ -402,7 +402,7 @@ ext-console-impl: function [
             ]
             block! [
                 if not empty? instruction [append/line instruction [()]]
-                append/line instruction compose/deep <*> item
+                append/line instruction compose/pattern/deep item <*>
             ]
             panic
         ]
@@ -460,9 +460,8 @@ ext-console-impl: function [
                 assert [empty? instruction]
                 state
             ]
-            default [
-                emit [panic [{Bad console instruction:} (<*> mold state)]]
-            ]
+        ] else [
+            emit [panic [{Bad console instruction:} (<*> mold state)]]
         ]
     ]
 
@@ -516,9 +515,7 @@ ext-console-impl: function [
             integer! [result/arg1] ;-- Note: may be too big for status range
 
             error! [1] ;-- !!! integer error mapping deprecated
-
-            default [1] ;-- generic error code
-        ]
+        ] else [1]  ;-- generic error code
     ]
 
     ; HALT handling (uncaught THROW/NAME with the name as the HALT ACTION!)

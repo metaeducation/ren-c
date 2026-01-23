@@ -268,6 +268,18 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 // that a variadic doesn't have, which is to make decisions about rejecting
 // a parameter *before* the function body runs.
 //
+// !!! <skip> usages have been removed from this bootstrap executable and the
+// impacts minimized.  But it's still used in bootstrapping *new* executables.
+// (see the mainline repository's %bootstrap-shim.r and %import-shim.r for
+// the usages of <skip>)
+//
+// A key problem it is used to address is that methodization binds functions
+// that have [<.>] in their spec and quote the SET-WORD! on the left to know
+// where to bind it.  This could be done with a special FUNC-DOT or similar,
+// that always quoted its left-hand side (an analogue to METHOD).  But with
+// <skip> we can make it look more elegant.  It would be nice to be able to
+// excise <skip> entirely, but that would require other implementations.
+//
 #define Is_Param_Skippable(v) \
     Typeset_Check((v), TYPE_TS_SKIPPABLE)
 

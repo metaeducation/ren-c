@@ -324,7 +324,7 @@ reword: function [
                         append out case [
                             action? :v [v :keyword-match]
                             block? :v [eval :v]
-                            default [:v]
+                            <else> [:v]
                         ]
                     )
 
@@ -541,8 +541,7 @@ format: function [
             integer! [abs rule]
             text! [length of rule]
             char! [1]
-            default [0]
-        ]
+        ] else [0]
     ]
 
     out: make text! val

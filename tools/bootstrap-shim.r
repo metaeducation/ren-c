@@ -289,6 +289,7 @@ null?: :blank3?
 
 null3-to-blank3: func3 [v [<opt> any-stable!]] [  ; bootstrap TRY no "voids"
     if3 null3? :v [return _]
+    if3 blank3? :v [return junk]
     :v
 ]
 blank3-to-null3: func3 [v [<opt> any-stable!]] [  ; bootstrap OPT makes "voids"
@@ -343,37 +344,53 @@ for-each: func ['var data [<opt> any-stable!] body] [  ; need to take NULL3
     lib/for-each (var) data body
 ]
 append: adapt :lib/append [
-    if3 blank3? :value [panic "APPEND: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :value [
+        panic/blame "APPEND: value is bootstrap NULL (BLANK!)" 'value
+    ]
 ]
 insert: adapt :lib/insert [
-    if3 blank3? :value [panic "INSERT: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :value [
+        panic/blame "INSERT: value is bootstrap NULL (BLANK!)" 'value
+    ]
 ]
 change: adapt :lib/change [
-    if3 blank3? :value [panic "CHANGE: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :value [
+        panic/blame "CHANGE: value is bootstrap NULL (BLANK!)" 'value
+    ]
 ]
 join: adapt :lib/join-of [
-    if3 blank3? :value [panic "JOIN: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :value [
+        panic/blame "JOIN: value is bootstrap NULL (BLANK!)" 'value
+    ]
 ]
 
 find: enclose :lib/find func3 [f] [  ; !!! interface won't take null
-    if3 blank3? :f/series [panic "FIND: series is bootstrap NULL (BLANK!)"]
+    if3 blank3? :f/series [
+        panic/blame "FIND: series is bootstrap NULL (BLANK!)" 'value
+    ]
     ; do `any [arg []]` if you want to opt out of find
     return null3-to-blank3 lib/do f
 ]
 
 copy: enclose :lib/copy func3 [f] [
-    if3 blank3? :f/value [panic "COPY: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :f/value [
+        panic/blame "COPY: value is bootstrap NULL (BLANK!)" 'value
+    ]
     return null3-to-blank3 lib/do f
 ]
 
 to-file: enclose :lib/to-file func3 [f] [
-    if3 blank3? :f/value [panic "TO-FILE: value is bootstrap NULL (BLANK!)"]
+    if3 blank3? :f/value [
+        panic/blame "TO-FILE: value is bootstrap NULL (BLANK!)" 'value
+    ]
     return null3-to-blank3 lib/do f
 ]
 
 collect: adapt :lib/collect [
     body: compose [keep: enclose 'keep func [f] [
-        if3 blank3? f/value [panic "KEEP: value is bootstrap NULL (BLANK!)"]
+        if3 blank3? f/value [
+            panic/blame "KEEP: value is bootstrap NULL (BLANK!)" 'value
+        ]
         f/value: blank3-to-null3 :f/value
         return null3-to-blank3 lib/do f
     ]]

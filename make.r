@@ -70,10 +70,9 @@ for-each [name value] options [
                 ]
             ]
         ]
-        default [
-            set in user-config (to-word replace to text! name #"_" #"-")
-                load value
-        ]
+    ] else [
+        set in user-config (to-word replace to text! name #"_" #"-")
+            load value
     ]
 ]
 
@@ -180,8 +179,8 @@ gen-obj: func [
     append flags <msc:/wd26812>
 
     if block? s [
-        for-each flag next s [
-            append flags degrade switch flag [
+        for-each flag next s [  ; v-- R3PREBOOT needs GROUP! here
+            append flags degrade (switch flag [
                 <no-uninitialized> [
                     [
                         <gcc:-Wno-uninitialized>
@@ -228,11 +227,9 @@ gen-obj: func [
                 <no-constant-conditional> [
                     <msc:/wd4127>
                 ]
-
-                default [
-                    ensure [text! tag!] flag
-                ]
-            ]
+            ] else [
+                ensure [text! tag!] flag
+            ])
         ]
         s: s/1
     ]
@@ -243,7 +240,7 @@ gen-obj: func [
         source: to-file case [
             dir [join directory s]
             main [s]
-            default [join src-dir s]
+            <else> [join src-dir s]
         ]
         output: to-obj-path to file! eval [  ; can't use (), we're in COMPOSE
             either main [
@@ -1050,7 +1047,7 @@ process-module: func [
                     ; #object-library has already been taken care of above
                     ; if s/class = #object-library [s]
                 ]
-                default [
+                <else> [
                     dump s
                     panic [type of s "can't be a dependency of a module"]
                 ]
@@ -1071,7 +1068,7 @@ process-module: func [
                     ][
                         lib
                     ]
-                    default [
+                    <else> [
                         panic [
                             "unrecognized module library" lib
                             "in module" mod
@@ -1266,10 +1263,9 @@ add-new-obj-folders: function [
             #object-library [
                 lib: lib/depends
             ]
-            default [
-                dump lib
-                panic ["unexpected class"]
-            ]
+        ] else [
+            dump lib
+            panic ["unexpected class"]
         ]
 
         for-each obj lib [

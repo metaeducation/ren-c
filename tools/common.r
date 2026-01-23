@@ -98,39 +98,37 @@ to-c-name: function [
         "~" [copy "tilde_1"]
 
         "." [copy "period"]
+    ] else [
+        ;
+        ; If these symbols occur composite in a longer word, they use a
+        ; shorthand; e.g. `foo?` => `foo_q`
 
-        default [
-            ;
-            ; If these symbols occur composite in a longer word, they use a
-            ; shorthand; e.g. `foo?` => `foo_q`
+        for-each [reb c] [
+            #"'"  ""      ; isn't => isnt, don't => dont
+            -   "_"     ; foo-bar => foo_bar
+            *   "_p"    ; !!! because it symbolizes a (p)ointer in C??
+            .   <bad>   ; !!! no longer legal
+            ?   "_q"    ; (q)uestion
+            !   "_x"    ; e(x)clamation
+            +   "_a"    ; (a)ddition
+            ~   "_t"   ;; (t)ilde
+            |   "_b"    ; (b)ar
 
-            for-each [reb c] [
-              #"'"  ""      ; isn't => isnt, don't => dont
-                -   "_"     ; foo-bar => foo_bar
-                *   "_p"    ; !!! because it symbolizes a (p)ointer in C??
-                .   <bad>   ; !!! no longer legal
-                ?   "_q"    ; (q)uestion
-                !   "_x"    ; e(x)clamation
-                +   "_a"    ; (a)ddition
-                ~   "_t"   ;; (t)ilde
-                |   "_b"    ; (b)ar
-
-            ][
-                all [
-                    c = <bad>
-                    find string c
-                    panic [
-                        reb space "is no longer legal internal to WORD!"
-                        "in" value
-                    ]
-
+        ][
+            all [
+                c = <bad>
+                find string c
+                panic [
+                    reb space "is no longer legal internal to WORD!"
+                    "in" value
                 ]
-                if c = <bad> [continue]
-                replace string (form reb) c
-            ]
 
-            string
+            ]
+            if c = <bad> [continue]
+            replace string (form reb) c
         ]
+
+        string
     ]
 
     if empty? string [

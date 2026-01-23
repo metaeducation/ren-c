@@ -542,10 +542,10 @@ bool Compose_To_Stack_Throws(
 //  {Evaluates only contents of GROUP!-delimited expressions in an array}
 //
 //      return: [any-list!]
-//      :pattern "Distinguish compose groups, e.g. [(plain) (* composed *)]"
-//          [<skip> tag!]
 //      value "Array to use as the template for substitution"
 //          [any-list!]
+//      /pattern "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
+//      pattern-arg [tag!]
 //      /deep "Compose deeply into nested arrays"
 //      /only "Insert arrays as single value (not as contents of array)"
 //  ]
@@ -556,6 +556,7 @@ DECLARE_NATIVE(COMPOSE)
 // https://forum.rebol.info/t/stopping-the-into-virus/705
 {
     INCLUDE_PARAMS_OF_COMPOSE;
+    USED(ARG(PATTERN));  // we look at PATTERN_ARG, that's enough
 
     StackIndex base = TOP_INDEX;
 
@@ -563,7 +564,7 @@ DECLARE_NATIVE(COMPOSE)
         OUT,
         ARG(VALUE),
         VAL_SPECIFIER(ARG(VALUE)),
-        ARG(PATTERN),
+        ARG(PATTERN_ARG),
         Bool_ARG(DEEP),
         Bool_ARG(ONLY)
     )){

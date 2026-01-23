@@ -94,9 +94,7 @@ prin: function [
         null [return]
         text! char! [value]
         block! [spaced value]
-
-        default [form :value]
-    ]
+    ] else [form :value]
 ]
 
 

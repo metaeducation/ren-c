@@ -236,7 +236,7 @@ host-start: function [
             ]
             block! [
                 if not empty? instruction [append/line instruction [()]]
-                append/line instruction compose/deep <*> item
+                append/line instruction compose/pattern/deep item <*>
             ]
             panic
         ]

@@ -54,7 +54,7 @@ emit-native-proto: function [
             ; could do tests here to create special buffer categories to
             ; put certain natives first or last, etc. (not currently needed)
             ;
-            default [
+            <else> [
                 unsorted-buffer
             ]
         ] unspaced [

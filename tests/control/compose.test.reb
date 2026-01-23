@@ -63,9 +63,11 @@
 ; COMPOSE with pattern, beginning tests
 
 (
-    [(1 + 2) 3] = compose <*> [(1 + 2) (<*> 1 + 2)]
+    [(1 + 2) 3] = compose/pattern [(1 + 2) (<*> 1 + 2)] <*>
 )(
-    'a/(b)/3/c = compose <*> 'a/(b)/(<*> 1 + 2)/c
+    'a/(b)/3/c = compose/pattern 'a/(b)/(<*> 1 + 2)/c <*>
 )(
-    [(a b c) [((d) 1 + 2)]] = compose/deep <*> [(a (<*> 'b) c) [((d) 1 + 2)]]
+    [(a b c) [((d) 1 + 2)]] = (
+        compose/pattern/deep [(a (<*> 'b) c) [((d) 1 + 2)]] <*>
+    )
 )

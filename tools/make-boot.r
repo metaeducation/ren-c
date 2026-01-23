@@ -176,10 +176,9 @@ generic-hooks: collect [
             '* [
                 keep cscape [t {T_Unhooked /* $<T/Name> */}]
             ]
-            default [
-                keep cscape [t
-                    {T_$<Propercase-Of t/class> /* $<T/Name> */}
-                ]
+        ] else [
+            keep cscape [t
+                {T_$<Propercase-Of t/class> /* $<T/Name> */}
             ]
         ]
     ]
@@ -194,13 +193,12 @@ path-hooks: collect [
                 keep cscape [proper t {PD_$<Proper> /* $<T/Name> */}]
             ]
             '* [keep cscape [t {PD_Unhooked /* $<T/Name> */}]]
-            default [
-                ; !!! Today's PORT! path dispatches through context although
-                ; that isn't its technical "class" for responding to generics.
-                ;
-                proper: propercase-of t/path
-                keep cscape [proper t {PD_$<Proper> /* $<T/Name> */}]
-            ]
+        ] else [
+            ; !!! Today's PORT! path dispatches through context although
+            ; that isn't its technical "class" for responding to generics.
+            ;
+            proper: propercase-of t/path
+            keep cscape [proper t {PD_$<Proper> /* $<T/Name> */}]
         ]
     ]
 ]
@@ -244,15 +242,14 @@ mold-hooks: collect [
                 keep cscape [proper t {/* $<T/Name> */ MF_$<Proper>}]
             ]
             '* [keep cscape [t {/* $<T/Name> */ MF_Unhooked}]]
-            default [
-                ;
-                ; ERROR! may be a context, but it has its own special forming
-                ; beyond the class (falls through to ANY-CONTEXT! for mold),
-                ; and BINARY! has a different handler than strings
-                ;
-                proper: propercase-of t/mold
-                keep cscape [proper t {MF_$<Proper> /* $<T/Name> */}]
-            ]
+        ] else [
+            ;
+            ; ERROR! may be a context, but it has its own special forming
+            ; beyond the class (falls through to ANY-CONTEXT! for mold),
+            ; and BINARY! has a different handler than strings
+            ;
+            proper: propercase-of t/mold
+            keep cscape [proper t {MF_$<Proper> /* $<T/Name> */}]
         ]
     ]
 ]

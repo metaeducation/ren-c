@@ -31,6 +31,8 @@
     error? sys/util/rescue [bad-skippy: lambda [x [<skip> integer!] y] [reduce [reify :x y]]]
 )
 
+; <SKIP> FEATURE: Dependencies removed from the executable itself, but it is
+; used as a trick in bootstrapping new executables.  See implementation notes.
 [
     (
         skippy: lambda [:x [<skip> integer!] y] [reduce [reify :x y]]

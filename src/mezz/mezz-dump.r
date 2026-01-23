@@ -36,7 +36,7 @@ dump: function [
         return case [
             null? val ["// null"]
             object? :val [unspaced ["make object! [" (dump-obj val) "]"]]
-            default [mold/limit :val system/options/dump-size]
+            <else> [mold/limit :val system/options/dump-size]
         ]
     ]
 
@@ -88,7 +88,7 @@ dump: function [
             ]
         ]
 
-        default [dump-one :value]
+        <else> [dump-one :value]
     ]
 ]
 
@@ -162,7 +162,7 @@ dumps: infix function [
             case [
                 on [d' #on]
                 off [d' #off]
-                default [d' (value)]
+                <else> [d' (value)]
             ]
         ]
     ]
