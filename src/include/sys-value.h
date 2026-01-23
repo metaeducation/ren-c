@@ -250,9 +250,22 @@
 #if DEBUG_CELL_READ_WRITE
     //
     // In the debug build, functions aren't inlined, and the overhead actually
-    // adds up very quickly of getting the 3 parameters passed in.  Run the
-    // risk of repeating macro arguments to speed up this critical test.
-    //
+    // adds up very quickly of getting the 3 parameters passed in.  Repeat
+    // the macro arguments to speed up this critical test.
+
+    #define Assert_Cell_Readable(c) \
+        do { \
+            STATIC_ASSERT_LVALUE(c);  /* evil macro, ensures used correctly */ \
+            if (not ((c)->header.bits & BASE_FLAG_CELL)) { \
+                printf("Non-cell passed to cell reading routine\n"); \
+                crash (c); \
+            } \
+            else if (not ((c)->header.bits & BASE_FLAG_BASE)) { \
+                printf("Non-Base passed to cell reading routine\n"); \
+                crash (c); \
+            } \
+        } while (0)
+
     #define Assert_Cell_Writable(c) \
         do { \
             STATIC_ASSERT_LVALUE(c);  /* evil macro, ensures used correctly */ \
@@ -268,9 +281,22 @@
                 crash (c); \
             } \
         } while (0)
+
+    INLINE const Cell* Ensure_Cell_Readable(const Cell* c) {
+        Assert_Cell_Readable(c);
+        return c;
+    }
+
+    INLINE const Cell* Ensure_Cell_Writable(const Cell* c) {
+        Assert_Cell_Writable(c);  // Cell is const, we may just be "curious"
+        return c;
+    }
 #else
-    #define Assert_Cell_Writable(c) \
-        NOOP
+    #define Assert_Cell_Readable(c)  NOOP
+    #define Assert_Cell_Writable(c)  NOOP
+
+    #define Ensure_Cell_Readable(c)  (c)
+    #define Ensure_Cell_Writable(c)  (c)
 #endif
 
 
