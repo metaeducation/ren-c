@@ -436,26 +436,30 @@ static Value* Make_Locked_Tag(const char *utf8) { // helper
 //
 static void Init_Action_Spec_Tags(void)
 {
-    Root_Here_Tag = Make_Locked_Tag("here");
     Root_With_Tag = Make_Locked_Tag("with");
     Root_Ellipsis_Tag = Make_Locked_Tag("...");
-    Root_End_Tag = Make_Locked_Tag("end");
+    Root_Hole_Tag = Make_Locked_Tag("hole");
     Root_Opt_Tag = Make_Locked_Tag("opt");
     Root_Veto_Tag = Make_Locked_Tag("veto");
     Root_Local_Tag = Make_Locked_Tag("local");
     Root_Skip_Tag = Make_Locked_Tag("skip");
+
+    Root_Here_Tag = Make_Locked_Tag("here");
+    Root_End_Tag = Make_Locked_Tag("end");
 }
 
 static void Shutdown_Action_Spec_Tags(void)
 {
-    rebRelease(Root_Here_Tag);
     rebRelease(Root_With_Tag);
     rebRelease(Root_Ellipsis_Tag);
-    rebRelease(Root_End_Tag);
+    rebRelease(Root_Hole_Tag);
     rebRelease(Root_Opt_Tag);
     rebRelease(Root_Veto_Tag);
     rebRelease(Root_Local_Tag);
     rebRelease(Root_Skip_Tag);
+
+    rebRelease(Root_Here_Tag);
+    rebRelease(Root_End_Tag);
 }
 
 

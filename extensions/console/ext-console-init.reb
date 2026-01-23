@@ -742,7 +742,7 @@ ext-console-impl: function [
 why: function [
     "Explain the last error in more detail."
     return: [~]
-    'err [<end> word! path! error!] "Optional error value"
+    'err [<hole> word! path! error!] "Optional error value"
 ][
     err: default [system/state/last-error]
 

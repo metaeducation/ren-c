@@ -512,7 +512,7 @@ DECLARE_NATIVE(GET)
 //
 //      return: [any-stable!]
 //      source "Word or path to get"
-//          [<dequote> any-word! any-path!]
+//          [any-word! any-path!]
 //  ]
 //
 DECLARE_NATIVE(GET_P)
@@ -893,8 +893,8 @@ DECLARE_NATIVE(INFIX_Q)
 //  {Function for returning the same value that it got in (identity function)}
 //
 //      return: [any-stable!]
-//      value [<end> any-stable!]
-//          {!!! <end> flag is hack to limit infix reach to the left}
+//      value [<hole> any-stable!]
+//          {!!! <hole> flag is hack to limit infix reach to the left}
 //  ]
 //
 DECLARE_NATIVE(IDENTITY)
@@ -903,7 +903,7 @@ DECLARE_NATIVE(IDENTITY)
 // https://stackoverflow.com/q/3136338
 //
 // This is assigned to <- for convenience, but cannot be used under that name
-// in bootstrap with R3-Alpha.  It uses the <end>-ability to stop left reach,
+// in bootstrap with R3-Alpha.  It uses the <hole>-ability to stop left reach,
 // since there is no specific flag for that.
 {
     INCLUDE_PARAMS_OF_IDENTITY;

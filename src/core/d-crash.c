@@ -224,7 +224,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
 //
 //  "Cause abnormal termination of Rebol (dumps debug info in debug builds)"
 //
-//      reason [<end> text! error!]
+//      reason [<hole> text! error!]
 //          "Message to report (evaluation not counted in ticks)"
 //  ]
 //
@@ -239,7 +239,7 @@ DECLARE_NATIVE(CRASH)
     // string cell...but crash() on UTF-8 character data assumes you mean to
     // report the contained message.
     //
-    if (Is_Nulled(v)) {  // <end>
+    if (Is_Nulled_Holelike(v)) {
         p = nullptr;
     }
     else if (Is_Text(v)) {

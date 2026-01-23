@@ -100,7 +100,7 @@ help: function [
     "Prints information about words and values (if no args, general help)."
 
     return: [~]
-    :topic [<end> any-element!]
+    :topic [<hole> any-element!]
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc
         "Open web browser to related documentation."
@@ -507,7 +507,7 @@ what: function [
     {Prints a list of known actions}
 
     return: [~]
-    'name [<end> word! lit-word!]
+    'name [<hole> word! lit-word!]
         "Optional module name"
     /args
         "Show arguments not titles"

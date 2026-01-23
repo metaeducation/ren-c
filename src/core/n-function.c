@@ -320,7 +320,7 @@ DECLARE_NATIVE(TYPECHECKER)
         CANON(VALUE)
     );
     Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);
-    assert(not Is_Param_Endable(param));
+    assert(not Is_Hole_Ok_For_Param(param));
 
     MISC(paramlist).adjunct = nullptr;  // !!! auto-generate info for HELP?
 
@@ -847,7 +847,7 @@ DECLARE_NATIVE(N_SHOT)
         CANON(VALUE) // SYM_CODE ?
     );
     Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);
-    assert(not Is_Param_Endable(param));
+    assert(not Is_Hole_Ok_For_Param(param));
 
     MISC(paramlist).adjunct = nullptr;  // !!! auto-generate info for HELP?
 

@@ -113,14 +113,16 @@ PVAR Value PG_Bounce_Thrown[2]; // has "pseudotype" TYPE_R_THROWN
 PVAR Value* Root_System;
 PVAR Value* Root_Typesets;
 
-PVAR Value* Root_Here_Tag; // used in modern parse as `pos: <here>`
 PVAR Value* Root_With_Tag; // overrides locals gathering (can disable RETURN)
 PVAR Value* Root_Ellipsis_Tag; // marks variadic argument <...>
-PVAR Value* Root_End_Tag; // marks endable argument (NULL if at end of input)
+PVAR Value* Root_Hole_Tag; // marks endable argument (NULL if at end of input)
 PVAR Value* Root_Opt_Tag; // marks that passing void will receive null
 PVAR Value* Root_Veto_Tag; // marks that argument wants <veto> tag as-is
 PVAR Value* Root_Local_Tag; // marks beginning of a list of "pure locals"
 PVAR Value* Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
+
+PVAR Value* Root_Here_Tag; // used in modern parse as `pos: <here>`
+PVAR Value* Root_End_Tag; // used by PARSE instead of `end` WORD!
 
 PVAR Value* Root_Empty_Text; // read-only ""
 PVAR Value* Root_Empty_Binary; // read-only #{}

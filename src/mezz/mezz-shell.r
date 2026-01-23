@@ -25,7 +25,7 @@ cd: func [
 
     return: [file!]
         {The directory after the change}
-    'path [<end> file! word! path! text!]
+    'path [<hole> file! word! path! text!]
         "Accepts %file, :variables and just words (as dirs)"
 ][
     switch type of :path [

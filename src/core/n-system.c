@@ -55,7 +55,7 @@ DECLARE_NATIVE(HALT)
 //  {Stop evaluating and return control to command shell or calling script.}
 //
 //      atom "See: http://en.wikipedia.org/wiki/Exit_status"
-//          [<end> any-stable!]
+//          [<hole> any-stable!]
 //      /value "Allow non-integers for yielding values to calling scripts"
 //  ]
 //
@@ -73,7 +73,7 @@ DECLARE_NATIVE(QUIT)
         // don't convert end to integer 0 for success synonym
     }
     else {
-        if (Is_Endish_Nulled(atom))
+        if (Is_Nulled_Holelike(atom))
             Init_Integer(atom, 1);
         else if (not Is_Integer(atom))
             panic ("QUIT must receive INTEGER! unless /VALUE used");
@@ -390,7 +390,7 @@ DECLARE_NATIVE(C_DEBUG_BREAK)
 //
 //      return: [any-stable!]
 //          {For maximum freedom, can be anything}
-//      :value [<end> any-element!]
+//      :value [<hole> any-element!]
 //          {An argument (which test code may or may not use)}
 //  ]
 //

@@ -541,13 +541,13 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 #define Init_Nulled(out) \
     Reset_Cell_Header((out), TYPE_NULLED, 0)
 
-#define CELL_FLAG_NULL_IS_ENDISH FLAG_TYPE_SPECIFIC_BIT(0)
+#define CELL_FLAG_NULL_IS_HOLELIKE FLAG_TYPE_SPECIFIC_BIT(0)
 
-#define Init_Endish_Nulled(out) \
-    Reset_Cell_Header((out), TYPE_NULLED, CELL_FLAG_NULL_IS_ENDISH)
+#define Init_Holelike_Nulled(out) \
+    Reset_Cell_Header((out), TYPE_NULLED, CELL_FLAG_NULL_IS_HOLELIKE)
 
-INLINE bool Is_Endish_Nulled(const Cell* v) {
-    return Is_Nulled(v) and Get_Cell_Flag(v, NULL_IS_ENDISH);
+INLINE bool Is_Nulled_Holelike(const Cell* v) {
+    return Is_Nulled(v) and Get_Cell_Flag(v, NULL_IS_HOLELIKE);
 }
 
 

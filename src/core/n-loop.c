@@ -978,7 +978,7 @@ DECLARE_NATIVE(FOR_SKIP)
 //
 //      return: []
 //      value "If no argument is provided, assume trash"
-//          [~null~ <end> any-stable!]
+//          [~null~ <hole> any-stable!]
 //  ]
 //
 DECLARE_NATIVE(STOP)
@@ -1001,7 +1001,7 @@ DECLARE_NATIVE(STOP)
     Value* v = ARG(VALUE);
 
     Copy_Cell(OUT, NAT_VALUE(STOP));
-    if (Is_Endish_Nulled(v))
+    if (Is_Nulled_Holelike(v))
         CONVERT_NAME_TO_THROWN(OUT, TRASH_VALUE); // `if okay [stop]`
     else
         CONVERT_NAME_TO_THROWN(OUT, v); // `if okay [stop ...]`

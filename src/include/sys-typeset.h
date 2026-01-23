@@ -241,15 +241,15 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 // kept...but could be abandoned if having more bits were at issue.
 //
 
-// Endability is distinct from optional, and it means that a parameter is
+// HOLE_OK is distinct from optional, and it means that a parameter is
 // willing to accept being at the end of the input.  This means either
 // an infix dispatch's left argument is missing (e.g. `eval [+ 5]`) or an
 // ordinary argument hit the end (e.g. the trick used for `>> help` when
 // the arity is 1 usually as `>> help foo`)
 //
-#define TYPE_TS_ENDABLE TYPE_0
-#define Is_Param_Endable(v) \
-    Typeset_Check((v), TYPE_TS_ENDABLE)
+#define TYPE_TS_HOLE_OK  TYPE_0
+#define Is_Hole_Ok_For_Param(v) \
+    Typeset_Check((v), TYPE_TS_HOLE_OK)
 
 // Indicates that when this parameter is fulfilled, it will do so with a
 // value of type VARARGS!, that actually just holds a pointer to the frame

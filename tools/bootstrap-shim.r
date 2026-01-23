@@ -137,7 +137,7 @@ print: lib/print: func3 [value <local> pos] [
 panic-with-where: :lib/fail  ; old exe calls panics "fail"
 
 panic: func3 [
-    reason [<end> error! text! block!]
+    reason [<end> error! text! block!]  ; <end> is HOLE in modern EXEs
     /blame location [frame! any-word!]
 ][
     if3 not reason [  ; <end> becomes null, not legal arg to fail

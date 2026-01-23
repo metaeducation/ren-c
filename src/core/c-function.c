@@ -349,9 +349,9 @@ Array* Make_Paramlist_Managed_May_Panic(
             Copy_Cell(PUSH(), EMPTY_TEXT);
         assert(Is_Text(TOP));
 
-        // Note there are currently two ways to get NULL: ~null~ and <end>.
+        // Note there are currently two ways to get NULL: ~null~ and <hole>.
         // If the typeset bits contain TYPE_NULLED, that indicates ~null~.
-        // But Is_Param_Endable() indicates <end>.
+        // But Is_Hole_Ok_For_Param() indicates <hole>.
         //
         Value* typeset = Init_Typeset(
             PUSH(),  // volatile if you PUSH() again

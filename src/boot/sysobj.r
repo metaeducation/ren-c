@@ -150,9 +150,9 @@ standard: construct [
 
     func-body: [
         return: lambda [
-            {Returns a value from an action} value [<end> any-stable!]
+            {Returns a value from an action} value [<hole> any-stable!]
         ][
-            unwind/with (binding of 'return) either end? 'value [] [:value]
+            unwind/with (binding of 'return) either hole? 'value [] [:value]
         ]
         #BODY
     ]
@@ -161,9 +161,9 @@ standard: construct [
 
     proc-body: [
         return: lambda [
-            {Returns a value from an action} value [<end> any-stable!]
+            {Returns a value from an action} value [<hole> any-stable!]
         ][
-            unwind/with (binding of 'return) either end? 'value [] [:value]
+            unwind/with (binding of 'return) either hole? 'value [] [:value]
         ]
         #BODY
         void

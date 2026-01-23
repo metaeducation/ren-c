@@ -163,7 +163,7 @@ list-dir: function [
     "Print contents of a directory (ls)."
 
     return: [~]
-    'path [<end> file! word! path! text!]
+    'path [<hole> file! word! path! text!]
         "Accepts %file, :variables, and just words (as dirs)"
     /l "Line of info format"
     /f "Files only"

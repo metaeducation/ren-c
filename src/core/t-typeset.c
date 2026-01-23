@@ -207,8 +207,8 @@ bool Update_Typeset_Bits_Core(
             if (0 == Compare_String_Vals(item, Root_Ellipsis_Tag, true)) {
                 Set_Typeset_Flag(typeset, TYPE_TS_VARIADIC);
             }
-            else if (0 == Compare_String_Vals(item, Root_End_Tag, true)) {
-                Set_Typeset_Flag(typeset, TYPE_TS_ENDABLE);
+            else if (0 == Compare_String_Vals(item, Root_Hole_Tag, true)) {
+                Set_Typeset_Flag(typeset, TYPE_TS_HOLE_OK);
             }
             else if (0 == Compare_String_Vals(item, Root_Veto_Tag, true)) {
                 dont_take_null_as_input = true;
@@ -224,8 +224,10 @@ bool Update_Typeset_Bits_Core(
                     panic ("Only hard-quoted parameters are <skip>-able");
 
                 Set_Typeset_Flag(typeset, TYPE_TS_SKIPPABLE);
-                Set_Typeset_Flag(typeset, TYPE_TS_ENDABLE); // skip => null
+                Set_Typeset_Flag(typeset, TYPE_TS_HOLE_OK); // skip => null
             }
+            else
+                panic (Error_Invalid_Core(maybe_word, specifier));
         }
         else if (Is_Datatype(item)) {
             assert(Datatype_Type(item) != TYPE_0);

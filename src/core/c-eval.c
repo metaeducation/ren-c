@@ -203,10 +203,10 @@ INLINE void Finalize_Arg(
         // This is a legal result for COMMENT in `eval [1 + comment "foo"]`.
         // No different from `eval [1 +]`, where Eval_Core_Throws() gives END.
 
-        if (not Is_Param_Endable(param))
+        if (not Is_Hole_Ok_For_Param(param))
             panic (Error_No_Arg(L_state, param));
 
-        Init_Endish_Nulled(arg);
+        Init_Holelike_Nulled(arg);
         Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
         return;
     }
@@ -991,10 +991,10 @@ bool Eval_Core_Throws(Level* const L)
                         goto continue_arg_loop;
                     }
 
-                    if (not Is_Param_Endable(L->param))
+                    if (not Is_Hole_Ok_For_Param(L->param))
                         panic (Error_No_Arg(L, L->param));
 
-                    Init_Endish_Nulled(L->arg);
+                    Init_Holelike_Nulled(L->arg);
                     Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                     goto continue_arg_loop;
                 }
@@ -1087,10 +1087,10 @@ bool Eval_Core_Throws(Level* const L)
     //=//// ERROR ON END MARKER ///////////////////////////////////////////=//
 
             if (Is_Level_At_End(L)) {
-                if (not Is_Param_Endable(L->param))
+                if (not Is_Hole_Ok_For_Param(L->param))
                     panic (Error_No_Arg(L, L->param));
 
-                Init_Endish_Nulled(L->arg);
+                Init_Holelike_Nulled(L->arg);
                 Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
             }
@@ -1117,8 +1117,8 @@ bool Eval_Core_Throws(Level* const L)
               case PARAMCLASS_HARD_QUOTE:
                 if (Is_Param_Skippable(L->param)) {
                     if (not Typeset_Check(L->param, Type_Of(L_next))) {
-                        assert(Is_Param_Endable(L->param));
-                        Init_Endish_Nulled(L->arg);
+                        assert(Is_Hole_Ok_For_Param(L->param));
+                        Init_Holelike_Nulled(L->arg);
                         Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                         goto continue_arg_loop;
                     }

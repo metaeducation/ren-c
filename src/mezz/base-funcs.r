@@ -613,7 +613,7 @@ arity-of: function [
 arrow: lambda [
     {Convenience variadic wrapper for LAMBDA (infix'd as ->)}
 
-    :args [<end> word! block!]
+    :args [<hole> word! block!]
         {Block of argument words, or a single word (if only one argument)}
     :body [any-element! <...>]
         {Block that serves as the body or variadic elements for the body}
@@ -895,7 +895,7 @@ panic: function [
 
     return: []
     reason "ERROR! value, message text, or failure spec"
-        [<end> error! text! block!]
+        [<hole> error! text! block!]
     /blame "Specify an originating location other than the PANIC itself"
     location "Frame or parameter at which to indicate the error originated"
         [frame! any-word!]

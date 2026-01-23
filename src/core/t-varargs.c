@@ -425,7 +425,7 @@ Bounce PD_Varargs(
     }
 
     if (IS_END(pvs->out))
-        Init_Endish_Nulled(pvs->out);
+        Init_Holelike_Nulled(pvs->out);
 
     return pvs->out;
 }
@@ -486,7 +486,7 @@ REBTYPE(Varargs)
                 return BOUNCE_THROWN;
             }
             if (IS_END(OUT))
-                return Init_Endish_Nulled(OUT);
+                return Init_Holelike_Nulled(OUT);
             return OUT;
         }
 
