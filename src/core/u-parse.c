@@ -1560,7 +1560,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                         FETCH_NEXT_RULE(L);
 
-                        if (IS_TRUTHY(condition))
+                        if (Logical_Test(condition))
                             continue;
 
                         P_POS = NOT_FOUND;

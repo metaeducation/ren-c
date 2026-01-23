@@ -61,7 +61,7 @@ Bounce MAKE_Integer(Value* out, Type type, const Value* arg)
         // that it will make an integer 0 out of FALSE due to it having
         // fewer seeming "rules" than TO would.
 
-        if (VAL_LOGIC(arg))
+        if (Cell_Logic(arg))
             Init_Integer(out, 1);
         else
             Init_Integer(out, 0);

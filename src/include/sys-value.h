@@ -708,7 +708,16 @@ INLINE bool Is_Cell_Unreadable(const Cell* c) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// 1. The design of the mainline EXE is that at compile time, values are
+//    known to be Stable or potentially Unstable.  All Stable values can be
+//    tested for logic (as voids and trash are not stable).  This means that
+//    on a stable value, `not Logical_Test(v)` is identical to Is_Nulled(v).
 //
+//    That design won't ever make it to this bootstrap executable.  The
+//    closest would be if Is_Nulled(v) would itself always error on TRASH!
+//    or VOID! values...requiring you to test for them in advance.  It's a
+//    poor-man's substitute for compile-time certainty, but it would help
+//    make Is_Nulled() equivalent to `not Logical_Test(v)`.
 //
 
 #define OKAY_VALUE \
@@ -719,7 +728,12 @@ INLINE bool Is_Cell_Unreadable(const Cell* c) {
 
 INLINE void PANIC_IF_ERROR(const Cell* c);
 
-INLINE bool IS_TRUTHY(const Cell* v) {
+INLINE bool Is_Failure(const Cell* v) {
+    UNUSED(v);
+    return false;  // !!! reserved for future development
+}
+
+INLINE bool Logical_Test(const Cell* v) {  // MIGHT ERROR, unlike mainline [1]
     if (Is_Nulled(v))
         return false;
     if (Is_Void(v))
@@ -729,9 +743,6 @@ INLINE bool IS_TRUTHY(const Cell* v) {
     PANIC_IF_ERROR(v);  // approximate definitional errors...
     return true;
 }
-
-#define IS_FALSEY(v) \
-    (not IS_TRUTHY(v))
 
 INLINE bool Is_Logic(const Cell* v) {
     return Is_Nulled(v) or Is_Okay(v);
@@ -745,7 +756,7 @@ INLINE Value* Init_Logic(Value* out, bool b) {
     return out;
 }
 
-INLINE bool VAL_LOGIC(const Cell* v) {
+INLINE bool Cell_Logic(const Cell* v) {
     if (Is_Nulled(v))
         return false;
     assert(Is_Okay(v));
@@ -754,7 +765,7 @@ INLINE bool VAL_LOGIC(const Cell* v) {
 
 
 INLINE bool Is_Refine_Unused(const Value* refine) {
-    return refine == ARG_TO_UNUSED_REFINEMENT or IS_FALSEY(refine);
+    return refine == ARG_TO_UNUSED_REFINEMENT or not Logical_Test(refine);
 }
 
 

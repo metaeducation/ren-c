@@ -595,7 +595,7 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
 
           case LOOP_EVERY:
             no_falseys = no_falseys and (
-                Is_Void(les->out) or IS_TRUTHY(les->out)
+                Is_Void(les->out) or Logical_Test(les->out)
             );
             break;
 
@@ -1317,7 +1317,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
             if (
                 Is_Nulled(res->out)
                 or Is_Void(res->out)
-                or IS_FALSEY(res->out)
+                or not Logical_Test(res->out)
             ){
                 res->start = index;
                 continue; // keep requested, don't mark for culling
@@ -1334,7 +1334,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
             if (
                 not Is_Nulled(res->out)
                 and not Is_Void(res->out)
-                and IS_TRUTHY(res->out)
+                and Logical_Test(res->out)
             ){
                 res->start = index;
                 continue; // remove requested, don't save to buffer
@@ -1533,7 +1533,7 @@ DECLARE_NATIVE(REPEAT)
 
     Init_Void(OUT);  // result if body never runs, like `while [null] [...]`
 
-    if (IS_FALSEY(ARG(COUNT))) {
+    if (not Logical_Test(ARG(COUNT))) {
         assert(Is_Logic(ARG(COUNT))); // is false...opposite of infinite loop
         return OUT;
     }
@@ -1541,7 +1541,7 @@ DECLARE_NATIVE(REPEAT)
     REBI64 count;
 
     if (Is_Logic(ARG(COUNT))) {
-        assert(VAL_LOGIC(ARG(COUNT)) == true);
+        assert(Cell_Logic(ARG(COUNT)) == true);
 
         // Run forever, and as a micro-optimization don't handle specially
         // in the loop, just seed with a very large integer.  In the off
@@ -1640,7 +1640,7 @@ DECLARE_NATIVE(INSIST)
                 goto skip_check;
         }
 
-        if (not Is_Void(OUT) and IS_TRUTHY(OUT))
+        if (not Is_Void(OUT) and Logical_Test(OUT))
             return OUT;
 
     } while (true);
@@ -1660,11 +1660,11 @@ static Bounce While_Or_Until_Native_Core(Level* level_, bool is_while)
         }
 
         if (is_while) {
-            if (IS_FALSEY(SPARE))
+            if (not Logical_Test(SPARE))
                 return OUT; // while got its falsehood, return last body result
         }
         else {
-            if (IS_TRUTHY(SPARE))
+            if (Logical_Test(SPARE))
                 return OUT; // until got its truth, return last body result
         }
 

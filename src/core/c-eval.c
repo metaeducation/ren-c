@@ -790,7 +790,7 @@ bool Eval_Core_Throws(Level* const L)
                 // some kind of processing, use the truthiness of the value.
                 //
                 if (Not_Cell_Flag(L->special, ARG_MARKED_CHECKED)) {
-                    if (IS_FALSEY(L->special)) // !!! error on void, needed?
+                    if (not Logical_Test(L->special)) // !!! error on void, needed?
                         goto unused_refinement;
 
                     L->refine = L->arg; // remember, as we might revoke!

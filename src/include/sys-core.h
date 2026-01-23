@@ -650,7 +650,7 @@ enum {
 #if RUNTIME_CHECKS
     #define LEGACY(option) ( \
         (PG_Boot_Phase >= BOOT_ERRORS) \
-        and IS_TRUTHY(Get_System(SYS_OPTIONS, (option))) \
+        and Logical_Test(Get_System(SYS_OPTIONS, (option))) \
     )
 #endif
 

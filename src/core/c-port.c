@@ -167,7 +167,7 @@ REBINT Awake_System(Array* ports, bool only)
 
     // Awake function returns 1 for end of WAIT:
     //
-    return (Is_Logic(result) and VAL_LOGIC(result)) ? 1 : 0;
+    return (Is_Logic(result) and Cell_Logic(result)) ? 1 : 0;
 }
 
 

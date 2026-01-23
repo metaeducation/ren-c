@@ -199,7 +199,7 @@ DECLARE_NATIVE(AND_Q)
 {
     INCLUDE_PARAMS_OF_AND_Q;
 
-    if (IS_TRUTHY(ARG(VALUE1)) && IS_TRUTHY(ARG(VALUE2)))
+    if (Logical_Test(ARG(VALUE1)) && Logical_Test(ARG(VALUE2)))
         return LOGIC_OUT(true);
 
     return LOGIC_OUT(false);
@@ -219,7 +219,7 @@ DECLARE_NATIVE(NOR_Q)
 {
     INCLUDE_PARAMS_OF_NOR_Q;
 
-    if (IS_FALSEY(ARG(VALUE1)) && IS_FALSEY(ARG(VALUE2)))
+    if (not Logical_Test(ARG(VALUE1)) && not Logical_Test(ARG(VALUE2)))
         return LOGIC_OUT(true);
 
     return LOGIC_OUT(false);
@@ -241,61 +241,26 @@ DECLARE_NATIVE(NAND_Q)
 
     return Init_Logic(
         OUT,
-        IS_TRUTHY(ARG(VALUE1)) and IS_TRUTHY(ARG(VALUE2))
+        Logical_Test(ARG(VALUE1)) and Logical_Test(ARG(VALUE2))
     );
 }
 
 
 //
-//  did?: native [
+//  logical: native [
 //
-//  "Clamps a value to LOGIC! (e.g. a synonym for NOT? NOT? or TO-LOGIC)"
+//  "Clamps a value to LOGIC! (e.g. a synonym for NOT NOT or TO-LOGIC)"
 //
 //      return: [logic!]
 //          "Only LOGIC!'s FALSE and BLANK! for value return FALSE"
 //      value [any-stable!]
 //  ]
 //
-DECLARE_NATIVE(DID_Q)
+DECLARE_NATIVE(LOGICAL)
 {
-    INCLUDE_PARAMS_OF_DID_Q;
+    INCLUDE_PARAMS_OF_LOGICAL;
 
-    return Init_Logic(OUT, IS_TRUTHY(ARG(VALUE)));
-}
-
-
-//
-//  did: native [
-//
-//  "Synonym for TO-LOGIC"
-//
-//      return: [logic!]
-//      value [any-stable!]
-//  ]
-//
-DECLARE_NATIVE(DID)
-{
-    INCLUDE_PARAMS_OF_DID;
-
-    return Init_Logic(OUT, IS_TRUTHY(ARG(VALUE)));
-}
-
-
-//
-//  not?: native [
-//
-//  "Returns the logic complement."
-//
-//      return: [logic!]
-//          "Only LOGIC!'s FALSE and BLANK! for value return TRUE"
-//      value [any-stable!]
-//  ]
-//
-DECLARE_NATIVE(NOT_Q)
-{
-    INCLUDE_PARAMS_OF_NOT_Q;
-
-    return Init_Logic(OUT, IS_FALSEY(ARG(VALUE)));
+    return Init_Logic(OUT, Logical_Test(ARG(VALUE)));
 }
 
 
@@ -312,7 +277,46 @@ DECLARE_NATIVE(NOT)
 {
     INCLUDE_PARAMS_OF_NOT;
 
-    return Init_Logic(OUT, IS_FALSEY(ARG(VALUE)));
+    return Init_Logic(OUT, not Logical_Test(ARG(VALUE)));
+}
+
+
+
+//
+//  did: native [
+//
+//  "Test for NOT void or null or failure (IF DID is prefix THEN)"
+//
+//      return: [logic!]
+//      value [any-value!]  ; unstable okay
+//  ]
+//
+DECLARE_NATIVE(DID)
+{
+    INCLUDE_PARAMS_OF_DID;
+
+    Value* v = ARG(VALUE);
+
+    return Init_Logic(OUT, not (Is_Nulled(v) or Is_Void(v) or Is_Failure(v)));
+}
+
+
+//
+//  didn't: native [
+//
+//  "Test for void or null or failure (IF DIDN'T is prefix ELSE)"
+//
+//      return: [logic!]
+//      value [any-value!]  ; unstable okay
+//  ]
+//
+DECLARE_NATIVE(DIDNT)
+{
+    INCLUDE_PARAMS_OF_DIDNT;
+
+    Value* v = ARG(VALUE);
+
+    return Init_Logic(OUT, Is_Nulled(v) or Is_Void(v) or Is_Failure(v));
 }
 
 
@@ -331,7 +335,7 @@ DECLARE_NATIVE(OR_Q)
 
     return Init_Logic(
         OUT,
-        IS_TRUTHY(ARG(VALUE1)) or IS_TRUTHY(ARG(VALUE2))
+        Logical_Test(ARG(VALUE1)) or Logical_Test(ARG(VALUE2))
     );
 }
 
@@ -353,7 +357,7 @@ DECLARE_NATIVE(XOR_Q)
     //
     return Init_Logic(
         OUT,
-        IS_TRUTHY(ARG(VALUE1)) != IS_TRUTHY(ARG(VALUE2))
+        Logical_Test(ARG(VALUE1)) != Logical_Test(ARG(VALUE2))
     );
 }
 
@@ -377,7 +381,7 @@ DECLARE_NATIVE(AND)
     Value* left = ARG(LEFT);
     Value* right = ARG(RIGHT);
 
-    if (IS_FALSEY(left))
+    if (not Logical_Test(left))
         return LOGIC_OUT(false);
 
     if (Is_Group(right)) {
@@ -397,7 +401,7 @@ DECLARE_NATIVE(AND)
             panic ("AND requires a GROUP! on right to run actions");
     }
 
-    return LOGIC_OUT(IS_TRUTHY(OUT));
+    return LOGIC_OUT(Logical_Test(OUT));
 }
 
 
@@ -418,7 +422,7 @@ DECLARE_NATIVE(OR)
     Value* left = ARG(LEFT);
     Value* right = ARG(RIGHT);
 
-    if (IS_TRUTHY(left))
+    if (Logical_Test(left))
         return LOGIC_OUT(true);
 
     if (Is_Group(right)) {
@@ -438,7 +442,7 @@ DECLARE_NATIVE(OR)
             panic ("OR requires a GROUP! on right to run actions");
     }
 
-    return LOGIC_OUT(IS_TRUTHY(OUT));
+    return LOGIC_OUT(Logical_Test(OUT));
 }
 
 
@@ -478,10 +482,10 @@ DECLARE_NATIVE(XOR)
             panic ("XOR requires a GROUP! on right to run actions");
     }
 
-    if (IS_TRUTHY(left))
-        return LOGIC_OUT(IS_FALSEY(OUT));
+    if (Logical_Test(left))
+        return LOGIC_OUT(not Logical_Test(OUT));
 
-    return LOGIC_OUT(IS_TRUTHY(OUT));  // left is falsey, so return right
+    return LOGIC_OUT(Logical_Test(OUT));  // left is falsey, so return right
 }
 
 
@@ -506,7 +510,7 @@ DECLARE_NATIVE(UNLESS)
 {
     INCLUDE_PARAMS_OF_UNLESS;
 
-    if (IS_TRUTHY(ARG(RIGHT)))
+    if (Logical_Test(ARG(RIGHT)))
         return COPY_TO_OUT(ARG(RIGHT));
 
     return COPY_TO_OUT(ARG(LEFT)); // preserve the exact truthy or falsey value
@@ -516,7 +520,7 @@ DECLARE_NATIVE(UNLESS)
 INLINE bool Math_Arg_For_Logic(Value* arg)
 {
     if (Is_Logic(arg))
-        return VAL_LOGIC(arg);
+        return Cell_Logic(arg);
 
     if (Is_Blank(arg))
         return false;
@@ -532,7 +536,7 @@ void MF_Logic(Molder* mo, const Cell* v, bool form)
 {
     UNUSED(form); // currently no distinction between MOLD and FORM
 
-    Emit(mo, "+N", VAL_LOGIC(v) ? CANON(TRUE) : CANON(FALSE));
+    Emit(mo, "+N", Cell_Logic(v) ? CANON(TRUE) : CANON(FALSE));
 }
 
 
@@ -541,7 +545,7 @@ void MF_Logic(Molder* mo, const Cell* v, bool form)
 //
 REBTYPE(Logic)
 {
-    bool b1 = VAL_LOGIC(D_ARG(1));
+    bool b1 = Cell_Logic(D_ARG(1));
     bool b2;
 
     switch (opt Word_Id(verb)) {

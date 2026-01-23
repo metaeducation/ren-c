@@ -301,11 +301,11 @@ static void Startup_Antiforms(void)
 {
     Value* okay_value = Append_Context(Lib_Context, nullptr, CANON(OKAY));
     Init_Okay(okay_value);
-    assert(IS_TRUTHY(okay_value) and VAL_LOGIC(okay_value) == true);
+    assert(Logical_Test(okay_value) and Cell_Logic(okay_value) == true);
 
     Value* null_value = Append_Context(Lib_Context, nullptr, CANON(NULL));
     Init_Nulled(null_value);
-    assert(IS_FALSEY(null_value) and Is_Nulled(null_value));
+    assert(not Logical_Test(null_value) and Is_Nulled(null_value));
 }
 
 

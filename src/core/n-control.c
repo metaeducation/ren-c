@@ -67,7 +67,7 @@ DECLARE_NATIVE(IF)
 {
     INCLUDE_PARAMS_OF_IF;
 
-    if (IS_FALSEY(ARG(CONDITION)))  // fails on void and trash
+    if (not Logical_Test(ARG(CONDITION)))  // fails on void and trash
         return Init_Void(OUT);
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(CONDITION)))
@@ -92,7 +92,7 @@ DECLARE_NATIVE(IF_NOT)
 {
     INCLUDE_PARAMS_OF_IF_NOT;
 
-    if (IS_TRUTHY(ARG(CONDITION)))  // fails on void and trash
+    if (Logical_Test(ARG(CONDITION)))  // fails on void and trash
         return nullptr;
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(CONDITION)))
@@ -121,7 +121,7 @@ DECLARE_NATIVE(EITHER)
 
     if (Do_Branch_With_Throws(
         OUT,
-        IS_TRUTHY(ARG(CONDITION))  // fails on void and trash
+        Logical_Test(ARG(CONDITION))  // fails on void and trash
             ? ARG(TRUE_BRANCH)
             : ARG(FALSE_BRANCH),
         ARG(CONDITION)
@@ -194,7 +194,7 @@ bool Either_Test_Core_Throws(
             return true;
         }
 
-        Init_Logic(out, IS_TRUTHY(out));
+        Init_Logic(out, Logical_Test(out));
         return false; }
 
       case TYPE_DATATYPE:
@@ -305,7 +305,7 @@ DECLARE_NATIVE(EITHER_TEST)
     if (Either_Test_Core_Throws(OUT, ARG(TEST), ARG(ARG)))
         return BOUNCE_THROWN;
 
-    if (VAL_LOGIC(OUT))
+    if (Cell_Logic(OUT))
         return COPY_TO_OUT(ARG(ARG));
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), ARG(ARG)))
@@ -332,8 +332,12 @@ DECLARE_NATIVE(ELSE)
     INCLUDE_PARAMS_OF_ELSE; // faster than EITHER-TEST specialized w/`VALUE?`
 
     Value* left = ARG(LEFT);
-    if (not (Is_Nulled(left) or Is_Void(left)))
+
+    if (not (Is_Nulled(left) or Is_Void(left) or Is_Failure(left)))
         return COPY_TO_OUT(left);
+
+    if (Is_Failure(left) and Is_Block(ARG(BRANCH)))  // pass error if function
+        panic (u_cast(Error*, Cell_Varlist(left)));
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
         return BOUNCE_THROWN;
@@ -360,7 +364,7 @@ DECLARE_NATIVE(THEN)
     INCLUDE_PARAMS_OF_THEN; // faster than EITHER-TEST specialized w/`NULL?`
 
     Value* left = ARG(LEFT);
-    if (Is_Nulled(left) or Is_Void(left))
+    if (Is_Nulled(left) or Is_Void(left) or Is_Failure(left))
         return COPY_TO_OUT(left);  // left didn't run, so signal THEN didn't run either
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
@@ -388,7 +392,7 @@ DECLARE_NATIVE(ALSO)
     INCLUDE_PARAMS_OF_ALSO; // `then func [x] [(...) :x]` => `also [...]`
 
     Value* left = ARG(LEFT);
-    if (Is_Nulled(left) or Is_Void(left))
+    if (Is_Nulled(left) or Is_Void(left) or Is_Failure(left))
         return COPY_TO_OUT(left);
 
     if (Do_Branch_With_Throws(OUT, ARG(BRANCH), left))
@@ -424,8 +428,8 @@ DECLARE_NATIVE(MATCH)
     if (Either_Test_Core_Throws(temp, test, value))
         return BOUNCE_THROWN;
 
-    if (VAL_LOGIC(temp)) {
-        if (IS_FALSEY(value)) // see above for why false match not passed thru
+    if (Cell_Logic(temp)) {
+        if (not Logical_Test(value)) // see above for why false match not passed thru
             return Init_Trash(OUT);
         return Copy_Cell(OUT, value);
     }
@@ -504,7 +508,7 @@ DECLARE_NATIVE(ALL)
         if (Is_Void(SPARE))
             continue;
 
-        if (IS_FALSEY(SPARE)) {  // nulled will trigger failure
+        if (not Logical_Test(SPARE)) {  // nulled will trigger failure
             Abort_Level(L);
             return nullptr;
         }
@@ -547,7 +551,7 @@ DECLARE_NATIVE(ANY)
         if (Is_Void(SPARE))
             continue;
 
-        if (IS_TRUTHY(SPARE)) { // successful ANY returns the value
+        if (Logical_Test(SPARE)) { // successful ANY returns the value
             Abort_Level(L);
             return Copy_Cell(OUT, SPARE);
         }
@@ -588,7 +592,7 @@ DECLARE_NATIVE(NONE)
         if (Is_Void(SPARE))
             continue;
 
-        if (IS_TRUTHY(SPARE)) { // any true results mean failure
+        if (Logical_Test(SPARE)) { // any true results mean failure
             Abort_Level(L);
             return nullptr;
         }
@@ -648,7 +652,7 @@ static Bounce Case_Choose_Core_May_Throw(
             return Copy_Cell(OUT, cell);
         }
 
-        if (IS_FALSEY(cell)) {  // not a matching condition
+        if (not Logical_Test(cell)) {  // not a matching condition
             if (choose) {
                 Fetch_Next_In_Level(L); // skip next, whatever it is
                 continue;

@@ -884,7 +884,7 @@ bool API_rebDid(const void *p, va_list *vaptr)
     if (Do_Va_Throws(condition, p, vaptr)) // calls va_end()
         panic (Error_No_Catch_For_Throw(condition));
 
-    return IS_TRUTHY(condition); // will panic() on voids
+    return Logical_Test(condition); // will panic() on voids
 }
 
 
@@ -900,7 +900,7 @@ bool API_rebNot(const void *p, va_list *vaptr)
     if (Do_Va_Throws(condition, p, vaptr)) // calls va_end()
         panic (Error_No_Catch_For_Throw(condition));
 
-    return IS_FALSEY(condition); // will panic() on voids
+    return not Logical_Test(condition); // will panic() on voids
 }
 
 

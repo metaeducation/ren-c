@@ -546,8 +546,8 @@ Bounce PD_Bitset(
         flex,
         picker,
         BITS_NOT(flex)
-            ? IS_FALSEY(opt_setval)
-            : IS_TRUTHY(opt_setval)
+            ? not Logical_Test(opt_setval)
+            : Logical_Test(opt_setval)
     )){
         return BOUNCE_INVISIBLE;
     }

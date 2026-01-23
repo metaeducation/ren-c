@@ -119,7 +119,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             // reversed from R3-Alpha and Rebol2, which skipped when false)
             //
             if (Is_Logic(arg)) {
-                if (VAL_LOGIC(arg))
+                if (Cell_Logic(arg))
                     i = cast(REBI64, index) + 1;
                 else
                     i = cast(REBI64, index);

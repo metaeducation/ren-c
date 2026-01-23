@@ -1288,7 +1288,7 @@ DECLARE_NATIVE(NOOP)
 
 
 //
-//  logical: native [
+//  int-to-logic: native [
 //
 //  "Produces ~null~ antiform for 0, or ~okay~ antiform for all other integers"
 //
@@ -1296,9 +1296,9 @@ DECLARE_NATIVE(NOOP)
 //      number [integer!]
 //  ]
 //
-DECLARE_NATIVE(LOGICAL)
+DECLARE_NATIVE(INT_TO_LOGIC)
 {
-    INCLUDE_PARAMS_OF_LOGICAL;
+    INCLUDE_PARAMS_OF_INT_TO_LOGIC;
 
     Value* num = ARG(NUMBER);
     return Init_Logic(OUT, VAL_INT64(num) != 0);

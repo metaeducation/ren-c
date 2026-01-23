@@ -44,7 +44,7 @@ CR:        #"^M"
 LF:        newline
 
 ;-- Function synonyms:
-to-logic: :did?
+to-logic: :logical
 min: :minimum
 max: :maximum
 abs: :absolute

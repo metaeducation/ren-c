@@ -809,8 +809,8 @@ struct LevelStruct {
 //   left-hand argument of a lookback operation.  After that fulfillment,
 //   it will be transitioned to EMPTY_BLOCK.
 //
-// Because of how this lays out, IS_TRUTHY() can be used to determine if an
-// argument should be type checked normally...while IS_FALSEY() means that the
+// Because of how this lays out, Logical_Test() can be used to determine if an
+// argument should be type checked normally...while not Logical_Test() means that the
 // arg's bits must be set to null.  Since the skipping-refinement-args case
 // doesn't write to arguments at all, it doesn't get to the point where the
 // decision of type checking needs to be made...so using C's nullptr for that

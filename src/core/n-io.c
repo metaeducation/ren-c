@@ -521,7 +521,7 @@ DECLARE_NATIVE(WAIT)
 
     assert(Is_Logic(OUT));
 
-    if (IS_FALSEY(OUT)) { // timeout
+    if (not Logical_Test(OUT)) { // timeout
         Sieve_Ports(nullptr);  // just reset the waked list
         return nullptr;
     }
@@ -591,7 +591,7 @@ DECLARE_NATIVE(WAKE_UP)
         if (Apply_Only_Throws(OUT, fully, awake, ARG(EVENT), rebEND))
             panic (Error_No_Catch_For_Throw(OUT));
 
-        if (not (Is_Logic(OUT) and VAL_LOGIC(OUT)))
+        if (not (Is_Logic(OUT) and Cell_Logic(OUT)))
             woke_up = false;
     }
 

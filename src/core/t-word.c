@@ -114,7 +114,7 @@ Bounce MAKE_Word(Value* out, Type type, const Value* arg)
         return Init_Any_Word(
             out,
             type,
-            VAL_LOGIC(arg) ? CANON(TRUE) : CANON(FALSE)
+            Cell_Logic(arg) ? CANON(TRUE) : CANON(FALSE)
         );
     }
 

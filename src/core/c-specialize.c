@@ -357,7 +357,7 @@ bool Specialize_Action_Throws(
                 if (Is_Trash(arg))
                     goto unspecialized_arg;
 
-                if (IS_TRUTHY(arg))
+                if (Logical_Test(arg))
                     Init_Refinement(arg, Cell_Parameter_Symbol(param));
                 else
                     Init_Nulled(arg);

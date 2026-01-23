@@ -466,7 +466,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
     REBINT tristate = -1;
 
     if (Is_Logic(result)) {
-        if (VAL_LOGIC(result))
+        if (Cell_Logic(result))
             tristate = 1;
     }
     else if (Is_Integer(result)) {
@@ -481,7 +481,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
         else if (VAL_DECIMAL(result) == 0)
             tristate = 0;
     }
-    else if (IS_TRUTHY(result))
+    else if (Logical_Test(result))
         tristate = 1;
 
     return tristate;
@@ -638,7 +638,7 @@ Bounce PD_List(
         // It did this regardless of how many elements were in the array.
         // (For safety, it has been suggested arrays > length 2 should fail).
         //
-        if (VAL_LOGIC(picker))
+        if (Cell_Logic(picker))
             n = VAL_INDEX(pvs->out);
         else
             n = VAL_INDEX(pvs->out) + 1;
