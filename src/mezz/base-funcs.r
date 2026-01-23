@@ -260,7 +260,7 @@ dig-action-adjunct-fields: function [
 
     inherit-frame: function [
         return: [frame!]
-        parent [<opt-out> frame!]
+        parent [frame!]
     ][
         child: make frame! :value
         for-each param child [
@@ -275,23 +275,23 @@ dig-action-adjunct-fields: function [
     return make system/standard/action-adjunct [
         description: ensure [~null~ text!] any [
             select adjunct 'description
-            copy opt select opt fields 'description
+            copy cond select cond fields 'description
         ]
         return-type: ensure [~null~ block!] any [
             select adjunct 'return-type
-            copy opt select opt fields 'return-type
+            copy cond select cond fields 'return-type
         ]
         return-note: ensure [~null~ text!] any [
             select adjunct 'return-note
-            copy opt select opt fields 'return-note
+            copy cond select cond fields 'return-note
         ]
         parameter-types: ensure [~null~ frame!] any [
             select adjunct 'parameter-types
-            inherit-frame opt get opt 'parameter-types
+            inherit-frame cond get cond 'parameter-types
         ]
         parameter-notes: ensure [~null~ frame!] any [
             select adjunct 'parameter-notes
-            inherit-frame opt get opt 'parameter-notes
+            inherit-frame cond get cond 'parameter-notes
         ]
     ]
 ]

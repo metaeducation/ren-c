@@ -427,7 +427,7 @@ Bounce PD_Context(
 //  {Get a reference to the "adjunct" context associated with a value.}
 //
 //      return: [~null~ any-context!]
-//      value [<opt-out> action! any-context!]
+//      value [action! any-context!]
 //  ]
 //
 DECLARE_NATIVE(ADJUNCT_OF)

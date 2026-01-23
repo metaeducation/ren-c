@@ -210,10 +210,9 @@ bool Update_Typeset_Bits_Core(
             else if (0 == Compare_String_Vals(item, Root_End_Tag, true)) {
                 Set_Typeset_Flag(typeset, TYPE_TS_ENDABLE);
             }
-            else if (0 == Compare_String_Vals(item, Root_Opt_Out_Tag, true)) {
+            else if (0 == Compare_String_Vals(item, Root_Veto_Tag, true)) {
                 dont_take_null_as_input = true;
-                Set_Typeset_Flag(typeset, TYPE_VOID);  // accepts, but noops
-                Set_Typeset_Flag(typeset, TYPE_TS_NOOP_IF_VOID);
+                Set_Typeset_Flag(typeset, TYPE_TS_WANT_VETO);
             }
             else if (0 == Compare_String_Vals(item, Root_Opt_Tag, true)) {
                 dont_take_null_as_input = true;
@@ -252,10 +251,10 @@ bool Update_Typeset_Bits_Core(
         if (TS_VALUE != (Cell_Typeset_Bits(typeset) & TS_VALUE))
             Clear_Typeset_Flag(typeset, TYPE_TRASH);
 
-    // If you use <opt-out> or <opt> then null is not legal as an input
-    // even if you say ANY-VALUE! in the types.  But do note that <opt>
-    // will turn the cell into a null for the function run, despite not
-    // typechecking null on the interface.
+    // If you use <opt> then null is not legal as an input even if you say
+    // ANY-VALUE! in the types.  But do note that <opt> will turn the cell
+    // into a null for the function run, despite not typechecking null on the
+    // interface.
     //
     if (dont_take_null_as_input)
         Clear_Typeset_Flag(typeset, TYPE_NULLED);

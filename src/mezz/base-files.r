@@ -202,14 +202,14 @@ file-type?: function [
 ][
     return all [
         pos: find system/options/file-types opt suffix-of file
-        first opt find pos word!
+        first cond find pos word!
     ]
 ]
 
 split-path: func [
     "Splits and returns dir component, variable for filename optionally set"
     return: [~null~ file!]
-    location [<opt-out> file! url! text!]
+    location [file! url! text!]
     /file  ; no multi-return, simulate it
         farg [any-word! any-path!]
     <local> pos dir

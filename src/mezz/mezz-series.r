@@ -38,7 +38,7 @@ last?: single?: func [
 extend: func [
     "Extend object with words or a block of code"
     return: [~null~ word! object!]
-    context [<opt-out> word! object!]
+    context [word! object!]
     def "Note: if BLOCK!, can't have null evaluations"
         [word! block!]
 ][
@@ -86,7 +86,7 @@ array: func [
             repeat size [block: insert/only block value] ; Called every time
         ]
     ] else [
-        insert/dup/only (opt get 'value) size
+        insert/dup/only block :value size
     ]
     return head of block
 ]
@@ -501,7 +501,7 @@ collect-lines: adapt 'collect [  ; https://forum.rebol.info/t/945/1
     body: compose [
         keep: adapt specialize 'keep [
             line: okay  only: null  part: null
-        ] [value: (spaced opt :value) else [[]]]  ; can't assign void
+        ] [value: (spaced cond :value) else [[]]]  ; can't assign void
         (as group! body)
     ]
 ]
@@ -512,7 +512,7 @@ collect-text: cascade [  ; https://forum.rebol.info/t/945/2
             keep: adapt specialize 'keep [
                 line: null  only: null  part: null
             ][
-                value: (unspaced opt :value) else [[]]  ; can't assign void
+                value: (unspaced cond :value) else [[]]  ; can't assign void
             ]
             (as group! body)
         ]
@@ -596,7 +596,7 @@ split: function [
 
     return: [block!]
     series "The series to split"
-        [<opt-out> any-series!]
+        [any-series!]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
         [<opt> block! integer! char! bitset! text!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"

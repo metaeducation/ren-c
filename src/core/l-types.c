@@ -83,9 +83,9 @@ Bounce MAKE_Unhooked(Value* out, Type type, const Value* arg)
 //
 //      return: [any-stable!]
 //          {Constructed value, or NULL if BLANK! input}
-//      type [<opt-out> datatype! event! any-context!]
+//      type [datatype! event! any-context!]
 //          {The datatype -or- an examplar value of the type to construct}
-//      def [<opt-out> any-element!]
+//      def [any-element!]
 //          {Definition or size of the new value (binding may be modified)}
 //  ]
 //
@@ -194,8 +194,8 @@ Bounce TO_Unhooked(Value* out, Type type, const Value* arg)
 //
 //      return: "VALUE converted to TYPE, null if type or value are blank"
 //          [any-stable!]
-//      type [<opt-out> datatype!]
-//      value [<opt-out> any-element!]
+//      type [datatype!]
+//      value [any-element!]
 //  ]
 //
 DECLARE_NATIVE(TO)

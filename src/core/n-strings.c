@@ -104,7 +104,7 @@ static struct {
 //          [~null~ text!]
 //      delimiter [~null~ char! text!]
 //      line "Will be copied if already a text value"
-//          [<opt-out> text! block!]
+//          [text! block!]
 //      /tail "Include delimiter at tail of result (if non-NULL)"
 //  ]
 //

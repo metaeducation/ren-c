@@ -441,7 +441,7 @@ static void Init_Action_Spec_Tags(void)
     Root_Ellipsis_Tag = Make_Locked_Tag("...");
     Root_End_Tag = Make_Locked_Tag("end");
     Root_Opt_Tag = Make_Locked_Tag("opt");
-    Root_Opt_Out_Tag = Make_Locked_Tag("opt-out");
+    Root_Veto_Tag = Make_Locked_Tag("veto");
     Root_Local_Tag = Make_Locked_Tag("local");
     Root_Skip_Tag = Make_Locked_Tag("skip");
 }
@@ -453,7 +453,7 @@ static void Shutdown_Action_Spec_Tags(void)
     rebRelease(Root_Ellipsis_Tag);
     rebRelease(Root_End_Tag);
     rebRelease(Root_Opt_Tag);
-    rebRelease(Root_Opt_Out_Tag);
+    rebRelease(Root_Veto_Tag);
     rebRelease(Root_Local_Tag);
     rebRelease(Root_Skip_Tag);
 }

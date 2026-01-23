@@ -152,7 +152,7 @@
 (null = reeval lift null)
 ($1 = reeval $1)
 (null? try reeval (specialize 'of [property: 'type]) null)
-(null? eval void)
+(null? eval veto)
 (
     a-value: make object! []
     same? :a-value reeval :a-value

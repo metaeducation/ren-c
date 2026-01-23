@@ -646,7 +646,7 @@ static Bounce Loop_Each(Level* level_, LOOP_MODE mode)
     les.data = ARG(DATA);
     les.body = ARG(BODY);
 
-    if (Is_Blank(les.data)) {
+    if (Is_Nulled(les.data) or Is_Blank(les.data)) {
         if (mode == LOOP_MAP_EACH)
             return Init_Block(OUT, Make_Array(0));
         return OUT;
@@ -884,9 +884,9 @@ DECLARE_NATIVE(FOR)
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word! refinement! issue! blank!]
 //      series "The series to iterate over"
-//          [<opt-out> blank! any-series!]
+//          [blank! any-series!]
 //      skip "Number of positions to skip each time"
-//          [<opt-out> integer!]
+//          [integer!]
 //      body "Code to evaluate each time"
 //          [block! action!]
 //  ]
@@ -1061,7 +1061,7 @@ DECLARE_NATIVE(CYCLE)
 //          {Last body result, or null if BREAK}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time, no new var if LIT-WORD!"
-//      data [<opt-out> blank! any-series! any-context! map! datatype! action!]
+//      data [<opt> blank! any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
 //      body [block! action!]
 //          "Block to evaluate each time"
@@ -1082,7 +1082,7 @@ DECLARE_NATIVE(FOR_EACH)
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<opt-out> blank! any-series! any-context! map! datatype! action!]
+//      data [<opt> blank! any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
 //      body [block! action!]
 //          "Block to evaluate each time"
@@ -1379,7 +1379,7 @@ static Bounce Remove_Each_Core(struct Remove_Each_State *res)
 //          {Number of removed series items, or null if BREAK}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<opt-out> blank! any-series!]
+//      data [<opt> blank! any-series!]
 //          "The series to traverse (modified)" ; should BLANK! opt-out?
 //      body [block! action!]
 //          "Block to evaluate (return TRUE to remove)"
@@ -1392,7 +1392,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     struct Remove_Each_State res;
     res.data = ARG(DATA);
 
-    if (Is_Blank(res.data))
+    if (Is_Nulled(res.data) or Is_Blank(res.data))
         return Init_Integer(OUT, 0);
 
     if (not (
@@ -1502,7 +1502,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 //          {Collected block (BREAK/WITH can add a final result to block)}
 //      'vars [word! lit-word! refinement! issue! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<opt-out> blank! any-series! action!]
+//      data [<opt> blank! any-series! action!]
 //          "The series to traverse"
 //      body [block!]
 //          "Block to evaluate each time"
@@ -1521,7 +1521,7 @@ DECLARE_NATIVE(MAP_EACH)
 //
 //      return: [any-value!]
 //          {Last body result, or null if BREAK}
-//      count [<opt-out> any-number! logic!]
+//      count [any-number! logic!]
 //          "Repetitions (true loops infinitely, false doesn't run)"
 //      body [block! action!]
 //          "Block to evaluate or action to run."
@@ -1579,7 +1579,7 @@ DECLARE_NATIVE(REPEAT)
 //          {Last body result or BREAK value}
 //      'word [word! lit-word! refinement!]
 //          "Word to set each time"
-//      value [<opt-out> any-number! any-series!]
+//      value [any-number! any-series!]
 //          "Maximum number or series to traverse"
 //      body [block!]
 //          "Block to evaluate each time"

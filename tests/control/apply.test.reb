@@ -29,11 +29,11 @@
             lift evaluate/step3 block the arg:
         ])
 
-        if refinement? first opt params [
+        if refinement? first cond params [
             using-args: did set (in frame params/1) get/any 'arg
         ] else [
             if using-args [
-                set (in frame first opt params) get/any 'arg
+                set (in frame first cond params) get/any 'arg
             ]
         ]
 

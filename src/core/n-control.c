@@ -409,7 +409,7 @@ DECLARE_NATIVE(ALSO)
 //          [
 //              datatype! typeset! block! logic! action! ;-- like EITHER-TEST
 //          ]
-//      value [<opt-out> any-stable!]
+//      value [any-stable!]
 //  ]
 //
 DECLARE_NATIVE(MATCH)

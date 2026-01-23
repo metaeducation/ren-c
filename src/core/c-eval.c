@@ -259,11 +259,6 @@ INLINE void Finalize_Arg(
     }
 
     if (Is_Void(arg)) {
-        if (Is_Param_Noop_If_Void(param)) {
-            Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
-            LVL_PHASE_OR_DUMMY(L_state) = PG_Dummy_Action;
-            return;
-        }
         if (Is_Param_Null_If_Void(param)) {
             Init_Nulled(arg);
             Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
@@ -272,17 +267,18 @@ INLINE void Finalize_Arg(
     }
 
     if (not Is_Param_Variadic(param)) {
-        if (Typeset_Check(param, Type_Of(arg))) {
-            Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
-            return;
-        }
-
         if (  // handle ~(veto)~ signal using historical "opt out" mechanic
             Is_Error(arg)
             and Is_Error_Veto_Signal(cast(Error*, Cell_Varlist(arg)))
+            and not Does_Param_Want_Veto(param)
         ){
             Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
             LVL_PHASE_OR_DUMMY(L_state) = PG_Dummy_Action;
+            return;
+        }
+
+        if (Typeset_Check(param, Type_Of(arg))) {
+            Set_Cell_Flag(arg, ARG_MARKED_CHECKED);
             return;
         }
 

@@ -43,8 +43,8 @@ REBINT CT_Unit(const Cell* a, const Cell* b, REBINT mode)
 //
 //  MAKE_Unit: C
 //
-// MAKE is disallowed, with the general rule that a blank in will give
-// a null out... for e.g. `make object! opt select data spec else [...]`
+// MAKE is disallowed, with the general rule that a VETO in will give
+// a null out... for e.g. `make object! cond select data spec else [...]`
 //
 Bounce MAKE_Unit(Value* out, Type type, const Value* arg) {
     UNUSED(out);

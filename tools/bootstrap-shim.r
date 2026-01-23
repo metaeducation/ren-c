@@ -68,10 +68,9 @@ read: lib/read: adapt 'lib/read [
 ]
 
 
-; R3PREBOOT was snapshotted right before <opt-out> was legal to mark an
-; argument as meaning a function returns null if that argument is void.
+; R3PREBOOT doesn't understand the <veto> annotation in function type specs.
 ;
-; See if <opt-out> causes an error, and if so assume it's R3PREBOOT.
+; See if <veto> causes an error, and if so assume it's R3PREBOOT.
 ;
 ; What this really means is that we are only catering the shim code to the
 ; snapshot.  (It would be possible to rig up shim code for pretty much any
@@ -79,7 +78,7 @@ read: lib/read: adapt 'lib/read [
 ; obvious reward.)
 ;
 trap [  ; in even older bootstrap executable, this means SYS.UTIL/RECOVER
-    func [i [<opt-out> integer!]] [...]
+    func [i [<veto> integer!]] [...]
 ] else [
     opt+: :opt  ; see [A]
 
@@ -243,10 +242,10 @@ noop: :lib/null
 junk: :lib/void  ; function that returns a very ornery value
 junk?: :lib/void?
 
-junkify: func3 [x [<opt> any-stable!]] [
-    if3 lib/blank? :x [return junk]
-    ; if3 lib/null? :x [return junk]  ; assume null is pure null
-    :x
+junkify: func3 [v [<opt> any-stable!]] [
+    if3 lib/blank? :v [return junk]
+    ; if3 lib/null? :v [return junk]  ; assume null is pure null
+    :v
 ]
 
 
@@ -288,19 +287,19 @@ blank: blank?: func3 [] [panic/blame "No BLANK in bootstrap-shim" 'return]
 null: ~null~: _
 null?: :blank3?
 
-null3-to-blank3: func3 [x [<opt> any-stable!]] [  ; bootstrap TRY no "voids"
-    if3 null3? :x [return _]
-    :x
+null3-to-blank3: func3 [v [<opt> any-stable!]] [  ; bootstrap TRY no "voids"
+    if3 null3? :v [return _]
+    :v
 ]
-blank3-to-null3: func3 [x [<opt> any-stable!]] [  ; bootstrap OPT makes "voids"
-    if3 blank3? :x [return null3]
-    :x
+blank3-to-null3: func3 [v [<opt> any-stable!]] [  ; bootstrap OPT makes "voids"
+    if3 blank3? :v [return null3]
+    :v
 ]
 
 opt: :blank3-to-null3
-opt+: func3 [x [<opt> any-stable!]] [  ; see [A]
-    if3 null3? :x [panic "MAYBE+: X is BOOTSTRAP VOID (// NULL)"]
-    return :x
+opt+: func3 [v [<opt> any-stable!]] [  ; see [A]
+    if3 null3? :v [panic "MAYBE+: X is BOOTSTRAP VOID (// NULL)"]
+    return :v
 ]
 
 all: chain [:lib/all :null3-to-blank3]
@@ -333,10 +332,10 @@ else: enfix enclose :lib/else func3 [f] [
     junkify lib/do f
 ]
 
-empty?: func3 [x [<opt> any-stable!]] [  ; need to expand typespec for null3
-    if3 blank3? :x [panic "EMPTY?: series is bootstrap NULL (BLANK!)"]
-    if3 null3? :x [return okay]
-    return lib/empty? :x
+empty?: func3 [v [<opt> any-stable!]] [  ; need to expand typespec for null3
+    if3 blank3? :v [panic "EMPTY?: series is bootstrap NULL (BLANK!)"]
+    if3 null3? :v [return okay]
+    return lib/empty? :v
 ]
 for-each: func ['var data [<opt> any-stable!] body] [  ; need to take NULL3
     if3 blank3? :data [panic "FOR-EACH: data is bootstrap NULL (BLANK!)"]
@@ -401,17 +400,17 @@ either: adapt :either [
 ]
 
 wordtester: infix func3 ['name [set-word!] want [word!] dont [word!]] [
-    return set name func3 [x] [
+    return set name func3 [v] [
         lib/case [
-            :x = want [okay]
-            :x = dont [null]
+            :v = want [okay]
+            :v = dont [null]
         ]
         panic [to word! name "expects only" mold reduce [want dont]]
     ]
 ]
 
 okay: ~okay~: true
-okay?: ok?: func [x] [x = lib/true]
+okay?: ok?: func [v] [v = lib/true]
 
 on: true: yes: off: false: no: func [] [
     panic/blame "No ON TRUE YES OFF FALSE NO definitions any more" 'return
@@ -428,6 +427,25 @@ logic!: make typeset! [blank! logic!]
 
 and: or: func [] [
     panic/blame "AND/OR in preboot EXE are non-logic, weird precedence" 'return
+]
+
+
+; === VETO (ONLY WORKS FOR MODERNIZE-ACTION ACTIONS) ===
+;
+; However type tests like `block? cond` should work because ERROR! would not
+; pass the check and return null.
+
+veto: make error! [id: 'veto message: "Bootstrap VETO error (true for VETO?)"]
+veto?: func3 [v [<opt> any-stable!]] [
+    did all [
+        error? :v
+        v.id = 'veto
+    ]
+]
+
+cond: func3 [v [<opt> any-stable!]] [
+    if3 null3? :v [return veto]
+    :v
 ]
 
 
@@ -557,7 +575,7 @@ collect*: :collect
 collect: :collect-block
 
 modernize-action: function3 [
-    "Account for the <opt-out> annotation as a usermode feature"
+    "Adjust meaning of <opt>, implement <veto> annotation, for R3PREBOOT"
     return: [block!]
     spec [block!]
     body [block!]
@@ -599,13 +617,13 @@ modernize-action: function3 [
                     replace typespec '~null~ blank!
                     if find typespec <opt> [  ; need to turn to blank3
                         append blankers compose/deep [
-                            if void? (as get-word w) [(as set-word! w) null]
+                            if void? (as get-word! w) [(as set-word! w) null]
                         ]
                     ]
-                    if find typespec <opt-out> [
-                        replace typespec <opt-out> <opt>
+                    if find typespec <veto> [
+                        replace typespec <veto> error!
                         append blankers compose [
-                            if void? (as get-word! w) [return null]
+                            if veto? (as get-word! w) [return null]
                         ]
                     ]
                     keep/only typespec

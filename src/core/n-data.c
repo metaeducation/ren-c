@@ -468,7 +468,7 @@ INLINE void Get_Opt_Polymorphic_May_Panic(
 //  {Gets the value of a word or path, or block of words/paths.}
 //
 //      return: [any-stable!]
-//      source [<opt-out> any-word! any-path! block!]
+//      source [any-word! any-path! block!]
 //          {Word or path to get, or block of words or paths}
 //      /any "Retrieve ANY-VALUE! (e.g. do not error on trash)"
 //  ]
@@ -512,7 +512,7 @@ DECLARE_NATIVE(GET)
 //
 //      return: [any-stable!]
 //      source "Word or path to get"
-//          [<opt-out> <dequote> any-word! any-path!]
+//          [<dequote> any-word! any-path!]
 //  ]
 //
 DECLARE_NATIVE(GET_P)
@@ -610,7 +610,7 @@ DECLARE_NATIVE(INFIX)
 //
 //      return: [any-stable!]
 //          {Will be the values set to, or void if any set values are void}
-//      target [<opt-out> any-word! any-path! block!]
+//      target [<opt> any-word! any-path! block!]
 //          {Word or path, or block of words and paths}
 //      value [any-stable! trash!]
 //          "Value or block of values"
@@ -647,6 +647,9 @@ DECLARE_NATIVE(SET)
     Value* value = ARG(VALUE);
 
     UNUSED(Bool_ARG(ANY));  // !!!provided for bootstrap at this time
+
+    if (Is_Nulled(target))  // set (opt ...) expr => (expr)
+        RETURN (ARG(VALUE));
 
     if (not Is_Block(target)) {
         assert(Any_Word(target) or Any_Path(target));
@@ -976,7 +979,7 @@ DECLARE_NATIVE(FREE_Q)
 //
 //      return: [~null~ any-series! any-word!]
 //      type [datatype!]
-//      value [<opt-out> any-series! any-word!]
+//      value [any-series! any-word!]
 //  ]
 //
 DECLARE_NATIVE(AS)

@@ -2918,7 +2918,7 @@ void Shutdown_Scanner(void)
 //  {Translates UTF-8 binary source to values.}
 //
 //      return: [any-stable! block! blob! text! error!]
-//      source [<opt-out> blob! text!]
+//      source [blob! text!]
 //          "Must be Unicode UTF-8 encoded"
 //      /next3
 //          {Translate next complete value (blocks as single value)}

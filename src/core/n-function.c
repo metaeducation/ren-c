@@ -295,8 +295,11 @@ DECLARE_NATIVE(TYPECHECKER)
           case TYPE_NULLED:
           case TYPE_OKAY:
           case TYPE_TRASH:
-          case TYPE_ERROR:  // antiform in mainline, allow error? on NULL
             bits = TS_VALUE;
+            break;
+
+          case TYPE_ERROR:  // antiform in mainline, allow error? on NULL
+            bits = TS_VALUE | FLAG_TYPE(TYPE_TS_WANT_VETO);
             break;
 
           default:
@@ -317,8 +320,6 @@ DECLARE_NATIVE(TYPECHECKER)
         CANON(VALUE)
     );
     Tweak_Parameter_Class(param, PARAMCLASS_NORMAL);
-    if (bits == TS_ELEMENT)
-        Set_Typeset_Flag(param, TYPE_TS_NOOP_IF_VOID);
     assert(not Is_Param_Endable(param));
 
     MISC(paramlist).adjunct = nullptr;  // !!! auto-generate info for HELP?

@@ -261,7 +261,7 @@ print: func [
     return: "NULL if blank input or effectively empty block, otherwise trash"
         [~null~ trash!]
     line "Line of text or block, blank or [] has NO output, newline allowed"
-        [<opt-out> char! text! block!]
+        [char! text! block!]
 ][
     if char? line [
         if not equal? line newline [

@@ -181,9 +181,9 @@ host-script-pre-load: function [
 ][
     ; Print out the script info
     boot-print [
-        (if is-module ["Module:"] else ["Script:"]) reify select opt hdr 'title
-            "Version:" reify select opt hdr 'version
-            "Date:" reify select opt hdr 'date
+        (if is-module ["Module:"] else ["Script:"]) reify select cond hdr 'title
+            "Version:" reify select cond hdr 'version
+            "Date:" reify select cond hdr 'date
     ]
 ]
 
@@ -339,7 +339,7 @@ host-start: function [
 
         return: "Null if not found"
             [~null~ file!]
-        dir [<opt-out> text!]
+        dir [text!]
     ][
         return all [
             not empty? dir
@@ -362,7 +362,7 @@ host-start: function [
             return null
         ]
 
-        return to-dir opt any [
+        return to-dir cond any [
             get-env 'HOME
             all [
                 homedrive: get-env 'HOMEDRIVE
@@ -632,7 +632,7 @@ host-start: function [
     ; !!! see https://github.com/rebol/rebol-issues/issues/706
     ;
     all [
-        not find opt o/suppress %rebol.reb
+        not find cond o/suppress %rebol.reb
         elide (loud-print ["Checking for rebol.reb file in" o/bin])
         exists? join o/bin %rebol.reb
     ] then [
@@ -650,7 +650,7 @@ host-start: function [
     ;
     all [
         o/resources
-        not find opt o/suppress %user.reb
+        not find cond o/suppress %user.reb
         elide (loud-print ["Checking for user.reb file in" o/resources])
         exists? join o/resources %user.reb
     ] then [

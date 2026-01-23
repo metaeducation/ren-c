@@ -288,7 +288,7 @@ int ceil_log2(unsigned long long x) {
 //  {Break at known evaluation point (only use when running under C debugger}
 //
 //      return: [~null~]
-//      tick [<opt-out> integer!]
+//      tick [integer!]
 //          {Get from CRASH, Level.tick, Stub.tick, Cell.tick}
 //      /relative
 //          {TICK parameter represents a count relative to the current tick}

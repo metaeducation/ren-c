@@ -1275,9 +1275,15 @@ REBTYPE(String)
         else
             skip = 1;
 
-        REBLEN ret = find_string(
-            Cell_Flex(v), index, tail, arg, len, flags, skip
-        );
+        REBLEN ret;
+        if (Is_Nulled(v)) {
+            ret = index;  // always find <opt>
+        }
+        else {
+            ret = find_string(
+                Cell_Flex(v), index, tail, arg, len, flags, skip
+            );
+        }
 
         if (ret >= cast(REBLEN, tail))
             return nullptr;

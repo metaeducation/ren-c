@@ -59,8 +59,11 @@ map-files-to-local: function [
 ends-with?: func [
     return: [~null~ logic!]
     s [any-string!]
-    suffix [<opt-out> any-string!]
+    suffix [<opt> any-string!]
 ][
+    if not suffix [
+        return null  ; !!! historical behavior; no VETO so can't use COND
+    ]
     return did any [
         empty? suffix
         suffix ?= (skip tail-of s negate length of suffix)

@@ -11,14 +11,14 @@
 ; MAKE of a BLANK! is not legal, but MAKE TARGET-TYPE VOID follows rule of
 ; void-in null-out
 ;
-(null = make blank! void)
+(null = make blank! veto)
 (error? sys/util/rescue [make blank! [a b c]])
-(null = make integer! void)
-(null = make object! void)
+(null = make integer! cond null)
+(null = make object! veto)
 
-(null? to blank! void)  ;-- TO's universal protocol for void 2nd argument
-(null? to void 1) ;-- TO's universal protocol for void 1st argument
-(error? sys/util/rescue [to blank! 1]) ;-- no other types allow "conversion" to blank
+(null? to blank! veto)  ; universal protocol for VETO rgument
+(null? to veto 1) ; universal protocol for VETO argument
+(error? sys/util/rescue [to blank! 1])  ;-- no other "conversion" to blank
 
 ("_" = mold blank)
 [#1666 #1650 (

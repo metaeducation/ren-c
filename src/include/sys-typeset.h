@@ -291,14 +291,18 @@ INLINE void Tweak_Parameter_Class(Cell* v, ParamClass c) {
 #define Is_Param_Unbindable(v) \
     Typeset_Check((v), TYPE_TS_UNBINDABLE)
 
-// Parameters can be marked such that if they are blank, the action will not
-// be run at all.  This is done via the `<opt-out>` annotation, which indicates
-// "handle blanks specially" (in contrast to BLANK!, which just means a
-// parameter can be passed in as a blank, and the function runs normally)
+// By default, parameters that receive VETO will not run the action at all
+// and return NULL.  If a parameter wants it they have to say <veto>
 //
-#define Is_Param_Noop_If_Void(v) \
-    Typeset_Check((v), TYPE_TS_NOOP_IF_VOID)
+// !!! Note: Not handling the <veto> annotation is used in %boostrap-shim.r
+// to detect the preboot executable.
+//
+#define Does_Param_Want_Veto(v) \
+    Typeset_Check((v), TYPE_TS_WANT_VETO)
 
+// <opt> in the preboot executable was used to mean "I accept NULL".  In this
+// executable it means that if the argument is void, it is received as null.
+//
 #define Is_Param_Null_If_Void(v) \
     Typeset_Check((v), TYPE_TS_NULL_IF_VOID)
 

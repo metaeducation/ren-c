@@ -283,7 +283,7 @@ start-console: function [
 
     all [
         skin-file: %console-skin.reb
-        not find opt o/suppress skin-file
+        not find cond o/suppress skin-file
         o/resources
         exists? skin-file: join o/resources skin-file
     ] then [
@@ -707,7 +707,7 @@ ext-console-impl: function [
         return <prompt>
     ]
 
-    if shortcut: select system/console/shortcuts opt first code [
+    if shortcut: select system/console/shortcuts cond first code [
         ;
         ; Shortcuts like `q => [quit 0]`, `d => [dump]`
         ;

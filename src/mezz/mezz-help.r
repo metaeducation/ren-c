@@ -20,8 +20,8 @@ spec-of: function [
 ][
     adjunct: match object! adjunct-of :action
 
-    specializee: match action! select opt adjunct 'specializee
-    adaptee: match action! select opt adjunct 'adaptee
+    specializee: match action! select cond adjunct 'specializee
+    adaptee: match action! select cond adjunct 'adaptee
     original-adjunct: match object! any [
         adjunct-of opt :specializee
         adjunct-of opt :adaptee
@@ -29,17 +29,17 @@ spec-of: function [
 
     return collect [
         keep/line opt ensure [~null~ text!] any [
-            select opt adjunct 'description
-            select opt original-adjunct 'description
+            select cond adjunct 'description
+            select cond original-adjunct 'description
         ]
 
         return-type: ensure [~null~ block!] any [
-            select opt adjunct 'return-type
-            select opt original-adjunct 'return-type
+            select cond adjunct 'return-type
+            select cond original-adjunct 'return-type
         ]
         return-note: ensure [~null~ text!] any [
-            select opt adjunct 'return-note
-            select opt original-adjunct 'return-note
+            select cond adjunct 'return-note
+            select cond original-adjunct 'return-note
         ]
         if any [return-type return-note] [
             keep compose/only [
@@ -48,18 +48,18 @@ spec-of: function [
         ]
 
         types: ensure [~null~ frame!] any [
-            select opt adjunct 'parameter-types
-            select opt original-adjunct 'parameter-types
+            select cond adjunct 'parameter-types
+            select cond original-adjunct 'parameter-types
         ]
         notes: ensure [~null~ frame!] any [
-            select opt adjunct 'parameter-notes
-            select opt original-adjunct 'parameter-notes
+            select cond adjunct 'parameter-notes
+            select cond original-adjunct 'parameter-notes
         ]
 
         for-each param words of :action [
             keep compose/only [
-                (param) (opt select opt types param)
-                    (opt select opt notes param)
+                (param) (opt select cond types param)
+                    (opt select cond notes param)
             ]
         ]
     ]
@@ -75,7 +75,7 @@ title-of: function [
         action! [
             reify all [
                 adjunct: match object! adjunct-of :value
-                copy opt match text! select opt adjunct 'description
+                copy cond match text! select cond adjunct 'description
             ]
         ]
 
@@ -91,7 +91,7 @@ browse: function [
     "stub function for browse* in extensions/process/ext-process-init.reb"
 
     return: [~]
-    location [<opt-out> url! file!]
+    location [url! file!]
 ][
     print "Browse needs redefining"
 ]
@@ -349,15 +349,15 @@ help: function [
     adjunct: adjunct-of :value
 
     original-name: (ensure [~null~ word!] any [
-        select opt adjunct 'specializee-name
-        select opt adjunct 'adaptee-name
+        select cond adjunct 'specializee-name
+        select cond adjunct 'adaptee-name
     ]) also arrow name [
         uppercase mold name
     ]
 
-    specializee: ensure [~null~ action!] select opt adjunct 'specializee
-    adaptee: ensure [~null~ action!] select opt adjunct 'adaptee
-    pipeline: ensure [~null~ block!] select opt adjunct 'pipeline
+    specializee: ensure [~null~ action!] select cond adjunct 'specializee
+    adaptee: ensure [~null~ action!] select cond adjunct 'adaptee
+    pipeline: ensure [~null~ block!] select cond adjunct 'pipeline
 
     classification: case [
         :specializee [
@@ -392,10 +392,10 @@ help: function [
     print-args: function [list /indent-words] [
         for-each param list [
             type: ensure [~null~ block!] (
-                select opt fields/parameter-types to-word param
+                select cond fields/parameter-types to-word param
             )
             note: ensure [~null~ text!] (
-                select opt fields/parameter-notes to-word param
+                select cond fields/parameter-notes to-word param
             )
 
             ;-- parameter name and type line
