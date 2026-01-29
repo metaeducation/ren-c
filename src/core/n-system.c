@@ -73,7 +73,7 @@ DECLARE_NATIVE(QUIT)
         // don't convert end to integer 0 for success synonym
     }
     else {
-        if (Is_Nulled_Holelike(atom))
+        if (Is_Cell_A_Holelike_Nulled(atom))
             Init_Integer(atom, 1);
         else if (not Is_Integer(atom))
             panic ("QUIT must receive INTEGER! unless /VALUE used");

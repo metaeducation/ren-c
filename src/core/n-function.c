@@ -186,17 +186,17 @@ DECLARE_NATIVE(UNWIND)
 
 
 //
-//  return: native [
+//  definitional-return: native [
 //
-//  {RETURN, giving a result to the caller}
+//  {RETURN, giving a result to the caller (archetype)}
 //
 //      return: []
-//      value [any-value!]
+//      value [<hole> any-value!]
 //  ]
 //
-DECLARE_NATIVE(RETURN)
+DECLARE_NATIVE(DEFINITIONAL_RETURN)
 {
-    INCLUDE_PARAMS_OF_RETURN;
+    INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;
 
     Level* L = level_; // implicit parameter to DECLARE_NATIVE()
 
@@ -233,6 +233,8 @@ DECLARE_NATIVE(RETURN)
     REBACT *target_fun = LVL_UNDERLYING(target_level);
 
     Value* v = ARG(VALUE);
+    if (Is_Cell_A_Holelike_Nulled(v))
+        Init_Trash(v);
 
     // Defininitional returns are "locals"--there's no argument type check.
     // So TYPESET! bits in the RETURN param are used for legal return types.

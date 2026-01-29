@@ -878,7 +878,7 @@ bool Eval_Core_Throws(Level* const L)
 
               case PARAMCLASS_RETURN:
                 assert(Cell_Parameter_Id(L->param) == SYM_RETURN);
-                Copy_Cell(L->arg, NAT_VALUE(RETURN)); // !!! L->special?
+                Copy_Cell(L->arg, NAT_VALUE(DEFINITIONAL_RETURN));
                 INIT_BINDING(L->arg, L->varlist);
                 Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
@@ -1093,6 +1093,17 @@ bool Eval_Core_Throws(Level* const L)
                 Init_Holelike_Nulled(L->arg);
                 Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
+            }
+
+            if (Is_Hole_Ok_For_Param(L->param)) {
+                if (Get_Cell_Flag(L->feed->value, NEWLINE_BEFORE)) {
+                    DECLARE_VALUE (param_name);
+                    Init_Word(param_name, Cell_Param_Canon(L->param));
+                    DECLARE_VALUE (label);
+                    Get_Level_Label_Or_Blank(label, L);
+
+                    panic (Error_Hole_Spans_Newline_Raw(param_name, label));
+                }
             }
 
             switch (pclass) {

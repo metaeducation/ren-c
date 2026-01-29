@@ -1001,7 +1001,7 @@ DECLARE_NATIVE(STOP)
     Value* v = ARG(VALUE);
 
     Copy_Cell(OUT, NAT_VALUE(STOP));
-    if (Is_Nulled_Holelike(v))
+    if (Is_Cell_A_Holelike_Nulled(v))
         CONVERT_NAME_TO_THROWN(OUT, TRASH_VALUE); // `if okay [stop]`
     else
         CONVERT_NAME_TO_THROWN(OUT, v); // `if okay [stop ...]`

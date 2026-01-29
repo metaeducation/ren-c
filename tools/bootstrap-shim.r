@@ -119,7 +119,7 @@ prin3-buggy: :lib/prin
 print: lib/print: func3 [value <local> pos] [
     if3 value = newline [  ; new: allow newline, to mean print newline only
         prin3-buggy newline
-        return ~
+        return
     ]
     value: lib/spaced value  ; uses bootstrap shim spaced (once available)
     while [1] [
@@ -241,6 +241,7 @@ noop: :lib/null
 
 junk: :lib/void  ; function that returns a very ornery value
 junk?: :lib/void?
+junk!: void!
 
 junkify: func3 [v [<opt> any-stable!]] [
     if3 lib/blank? :v [return junk]
@@ -591,6 +592,9 @@ quote: func3 [] [panic/blame "Use THE instead of QUOTE for literalizing" 'return
 collect*: :collect
 collect: :collect-block
 
+; 1. There's no simple mapping in R3PREBOOT where you can say something like
+;    "VOID! is TRASH!", because it's actually "voidnull".
+;
 modernize-action: function3 [
     "Adjust meaning of <opt>, implement <veto> annotation, for R3PREBOOT"
     return: [block!]
@@ -606,7 +610,7 @@ modernize-action: function3 [
                 spec/2 = [~]
             ] then [
                 spec: next spec
-                keep [return: [<opt>]]
+                keep [return: [<opt> junk!]]  ; !!! weird [1]
                 continue
             ]
 

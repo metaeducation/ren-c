@@ -1104,7 +1104,7 @@ generator-class: make object! [
             #static-library (reify target-platform/archive-suffix)
             #object-library (reify target-platform/archive-suffix)
             #object-file (reify target-platform/obj-suffix)
-        ] project/class [return ~]
+        ] project/class [return]
 
         suffix: degrade second suffix
 
@@ -1155,7 +1155,7 @@ generator-class: make object! [
             #static-library
             #solution
             #object-library [
-                if project/generated? [return ~]
+                if project/generated? [return]
                 setup-output project
                 project/generated?: okay
                 for-each dep project/depends [

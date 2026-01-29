@@ -87,6 +87,8 @@ script: [
     need-non-null:      {non-NULL value required (see MAYBE, TRY, REIFY)}
     bad-antiform:       [{invalid use of} :arg1 {antiform}]
 
+    hole-spans-newline: [:arg1 {<hole> param of} :arg2 {can't span a newline}]
+
     not-bound:          [:arg1 {word is not bound to a context}]
     no-relative:        [:arg1 {word is bound relative to context not on stack}]
     not-in-context:     [:arg1 {is not in the specified context}]

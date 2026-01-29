@@ -131,7 +131,7 @@ console!: make object! [
 
         if (void? :v) [  ; nothingness (e.g. result of eval [])
             print [result "~void~  ; anti"]
-            return ~
+            return
         ]
 
         if trash? :v [
@@ -140,7 +140,7 @@ console!: make object! [
             ; make this legacy bootstrapping branch at least look a bit like
             ; the new branch.
             ;
-            return ~
+            return
         ]
 
         case [

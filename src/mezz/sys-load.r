@@ -75,7 +75,7 @@ export-words: func [
     words "The exports words block of the module"
         [block! blank!]
 ][
-    if blank? words [return ~]
+    if blank? words [return]
 
     ; words already set in lib are not overriden
     resolve/extend/only lib ctx words

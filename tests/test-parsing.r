@@ -134,7 +134,7 @@ make object! [
                 test-file 'dialect {^/"failed, cannot read the file"^/}
             ]
             change-dir current-dir
-            return ~
+            return
         ] else [
             change-dir current-dir
             append collected-tests test-file

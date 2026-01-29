@@ -288,7 +288,7 @@ init-schemes: func [
         init: func [port] [
             ;;print ["Init" title]
             port/data: copy [] ; The port wake list
-            return ~
+            return
         ]
     ]
 
@@ -308,7 +308,7 @@ init-schemes: func [
                 parse port/spec/ref [thru #":" 0 2 slash path: <here>]
                 append port/spec compose [path: (to file! path)]
             ]
-            return ~
+            return
         ]
     ]
 

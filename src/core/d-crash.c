@@ -239,7 +239,7 @@ DECLARE_NATIVE(CRASH)
     // string cell...but crash() on UTF-8 character data assumes you mean to
     // report the contained message.
     //
-    if (Is_Nulled_Holelike(v)) {
+    if (Is_Cell_A_Holelike_Nulled(v)) {
         p = nullptr;
     }
     else if (Is_Text(v)) {

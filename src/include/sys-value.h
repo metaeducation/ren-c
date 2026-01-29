@@ -572,7 +572,7 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 #define Init_Holelike_Nulled(out) \
     Reset_Cell_Header((out), TYPE_NULLED, CELL_FLAG_NULL_IS_HOLELIKE)
 
-INLINE bool Is_Nulled_Holelike(const Cell* v) {
+INLINE bool Is_Cell_A_Holelike_Nulled(const Cell* v) {
     return Is_Nulled(v) and Get_Cell_Flag(v, NULL_IS_HOLELIKE);
 }
 
