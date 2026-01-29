@@ -600,12 +600,10 @@ static Bounce Loop_Each_Core(struct Loop_Each_State *les) {
             break;
 
           case LOOP_MAP_EACH:
-            if (Is_Nulled(les->out))  // null body is error now
-                panic (Error_Need_Non_Null_Raw());
-            if (Is_Okay(les->out))
-                panic ("~okay~ antiforms not legal as MAP-EACH body product");
             if (Is_Void(les->out))  // vanish result
                 Init_Trash(les->out);  // nulled is used to signal breaking only
+            else if (Is_Antiform(les->out))
+                panic (Error_Bad_Antiform(les->out));
             else
                 Copy_Cell(PUSH(), les->out);  // not void, added to the result
             break;
