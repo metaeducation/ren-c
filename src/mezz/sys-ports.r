@@ -188,7 +188,7 @@ decode-url: ~  ; used by sys funcs, defined above, set below
 
 make-scheme: function [
     "Make a scheme from a specification and add it to the system."
-    return: [~]
+    return: [trash!]
     def [block!]
         "Scheme specification"
     /with
@@ -229,7 +229,7 @@ make-scheme: function [
 ]
 
 init-schemes: func [
-    return: [~]
+    return: [trash!]
     "INIT: Init system native schemes and ports."
 ][
     sys/util/decode-url: lib/decode-url: :sys/util/*parse-url/decode-url

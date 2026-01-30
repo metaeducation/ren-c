@@ -6,7 +6,7 @@
     not in o 'b
 )]
 
-([] = append copy [] (void))
+([] = append copy [] ())
 
 
 ; Slipstream in some tests of MY (there don't seem to be a lot of tests here)

@@ -103,7 +103,7 @@ boot-banner: [
 
 about: function [
     "Information about REBOL"
-    return: [~]
+    return: [trash!]
 ][
     print make-banner boot-banner
 ]
@@ -119,7 +119,7 @@ about: function [
 ;
 usage: function [
     "Prints command-line arguments."
-    return: [~]
+    return: [trash!]
 ][
 ;       --cgi (-c)       Load CGI utiliy module and modes
 ;       --version tuple  Script must be this version or greater
@@ -167,14 +167,14 @@ usage: function [
 
 license: function [
     "Prints the REBOL/core license agreement."
-    return: [~]
+    return: [trash!]
 ][
     print system/license
 ]
 
 host-script-pre-load: function [
     {Code registered as a hook when a module or script are loaded}
-    return: [~]
+    return: [trash!]
     is-module [logic!]
     hdr [~null~ object!]
         {Header object (will be blank for DO of BINARY! with no header)}
@@ -221,7 +221,7 @@ host-start: function [
     emit: function [
         {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
 
-        return: [~]
+        return: [trash!]
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction

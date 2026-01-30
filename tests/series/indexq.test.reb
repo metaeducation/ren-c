@@ -8,5 +8,5 @@
     2 = index? a
 )
 [#1611
-    (null? index of void)
+    (null? index of :void)
 ]

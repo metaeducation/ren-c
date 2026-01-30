@@ -170,11 +170,6 @@ bool Update_Typeset_Bits_Core(
         const Cell* item;
 
         if (Is_Word(maybe_word)) {
-            if (Word_Id(maybe_word) == SYM_TILDE_1) {  // ~
-                Set_Typeset_Flag(typeset, TYPE_TRASH);
-                clear_trash_flag = false;
-                continue;
-            }
             if (
                 Word_Id(maybe_word) == SYM__TNULL_T  // ~null~
                 or Word_Id(maybe_word) == SYM_NULL_Q  // null?
@@ -183,15 +178,8 @@ bool Update_Typeset_Bits_Core(
                 continue;
             }
             else if (
-                Word_Id(maybe_word) == SYM__TVOID_T  // ~void~
-                or Word_Id(maybe_word) == SYM_VOID_Q  // void?
-            ){
-                Set_Typeset_Flag(typeset, TYPE_VOID);
-                continue;
-            }
-            else if (
-                Word_Id(maybe_word) == SYM__TOKAY_T  // ~void~
-                or Word_Id(maybe_word) == SYM_OKAY_Q  // void?
+                Word_Id(maybe_word) == SYM__TOKAY_T  // ~okay~
+                or Word_Id(maybe_word) == SYM_OKAY_Q  // okay?
             ){
                 Set_Typeset_Flag(typeset, TYPE_OKAY);
                 continue;
@@ -306,17 +294,9 @@ Array* Typeset_To_Array(const Value* tset)
     StackIndex base = TOP_INDEX;
 
     REBINT n;
-    for (n = 1; n < TYPE_NULLED; ++n) {
-        if (Typeset_Check(tset, cast(Type, n))) {
-            if (n == TYPE_NULLED) {
-                Init_Word(PUSH(), CANON(_TNULL_T));
-            }
-            else if (n == TYPE_VOID) {
-                Init_Word(PUSH(), CANON(_TVOID_T));
-            }
-            else
-                Init_Datatype(PUSH(), cast(Type, n));
-        }
+    for (n = 1; n < TYPE_MAX; ++n) {
+        if (Typeset_Check(tset, cast(Type, n)))
+            Init_Datatype(PUSH(), cast(Type, n));
     }
 
     return Pop_Stack_Values(base);

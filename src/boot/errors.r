@@ -204,7 +204,7 @@ script: [
 
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]
 
-    void-conditional:   [{Void antiforms (~void~) not conditionally true/false}]
+    void-conditional:   [{Void antiforms (~) not conditionally true/false}]
 ]
 
 math: [

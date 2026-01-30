@@ -94,7 +94,7 @@ count: func [s c /local n] [
 ]
 
 emit-proto: func [
-    return: [~]
+    return: [trash!]
     proto
 ][
     if all [
@@ -148,7 +148,7 @@ emit-proto: func [
 ]
 
 process: func [
-    return: [~]
+    return: [trash!]
     file
 ][
     if verbose [probe [file]]

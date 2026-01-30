@@ -15,7 +15,7 @@ Rebol [
 dump: function [
     {Show the name of a value or expressions with the value (See Also: --)}
 
-    return: [~]
+    return: [trash!]
     :value [any-element!]
     :extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
         [any-element! <...>]
@@ -40,7 +40,7 @@ dump: function [
         ]
     ]
 
-    dump-one: function [return: [~] item] [
+    dump-one: function [return: [trash!] item] [
         switch type of item [
             refinement! ;-- treat as label, /a no shift and shorter than "a"
             text! [ ;-- good for longer labeling when you need spaces/etc.
@@ -154,7 +154,7 @@ dumps: infix function [
         ; have a way to be called--in spirit they are like infix functions,
         ; so SHOVE (->) would be used, but it doesn't work yet...review.)
         ;
-        d: function [return: [~] /on /off <static> d'] compose/deep [
+        d: function [return: [trash!] /on /off <static> d'] compose/deep [
             d': default [
                 d'': specialize 'dump [sigil: (as text! name)]
                 d'' #on

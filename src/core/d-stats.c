@@ -136,7 +136,7 @@ DECLARE_NATIVE(STATS)
 //
 //  {Provide access to services in <valgrind/callgrind.h>}
 //
-//      return: [~]
+//      return: [trash!]
 //      'instruction [word!]
 //          {Currently just either ON or OFF}
 //  ]

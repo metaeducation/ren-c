@@ -261,17 +261,17 @@ junkify: func3 [v [<opt> any-stable!]] [
 null3?: :lib/null?
 null3: :lib/null
 
-~: :null3  ; conflated
+~trash~: :null3  ; conflated
 trash?: func [] [
-    panic/blame "NOTHING? conflated with VOID? in bootstrap" 'return
+    panic/blame "TRASH? conflated with VOID? in R3PREBOOT" 'return
 ]
 
 void?: :null3?
-~void~: :null3
-void: :null3
+~: :null3
+void: :null3  ; !!! beware :VOID, will give you an ACTION!
 
 void!: func3 [] [  ; MODERNIZE-ACTION should convert all these away
-    panic/blame "NOTHING! converted to <opt> in bootstrap-shim" 'return
+    panic/blame "VOID! should defer to <opt> in bootstrap-shim" 'return
 ]
 
 
@@ -485,7 +485,7 @@ try: func3 [value [<opt> any-stable!]] [  ; poor man's definitional error handle
 
 reify: func3 [value [<opt> any-stable!]] [
     case [
-        lib/null? :value [return '~void~]  ; bootstrap-EXE's //NULL
+        lib/null? :value [return '~]  ; bootstrap-EXE's //NULL
         okay? :value [return '~okay~]
         null? :value [return '~null~]  ; bootstrap-EXE's blank
     ]
@@ -494,7 +494,7 @@ reify: func3 [value [<opt> any-stable!]] [
 
 degrade: func3 [value [any-stable!]] [
     case [
-        '~void~ = :value [return lib/null]  ; append [a b c] null is no-op
+        '~ = :value [return lib/null]  ; append [a b c] null is no-op
         '~okay~ = :value [return okay]
         '~null~ = :value [return null]
     ]
@@ -607,7 +607,7 @@ modernize-action: function3 [
         iterate spec [
             all [
                 spec/1 = the return:
-                spec/2 = [~]
+                spec/2 = [trash!]
             ] then [
                 spec: next spec
                 keep [return: [<opt> junk!]]  ; !!! weird [1]

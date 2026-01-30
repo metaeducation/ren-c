@@ -90,7 +90,7 @@ title-of: function [
 browse: function [
     "stub function for browse* in extensions/process/ext-process-init.reb"
 
-    return: [~]
+    return: [trash!]
     location [url! file!]
 ][
     print "Browse needs redefining"
@@ -99,7 +99,7 @@ browse: function [
 help: function [
     "Prints information about words and values (if no args, general help)."
 
-    return: [~]
+    return: [trash!]
     :topic [<hole> any-element!]
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc
@@ -190,7 +190,7 @@ help: function [
     make-libuser: does [
         libuser: copy system/contexts/lib
         for-each [key val] system/contexts/user [
-            if not trash? get* 'val [
+            if not void? get* 'val [
                append libuser key
                libuser/(key): :val
             ]
@@ -438,7 +438,7 @@ help: function [
 source: function [
     "Prints the source code for an ACTION! (if available)"
 
-    return: [~]
+    return: [trash!]
     'arg [word! path! action! tag!]
 ][
     switch type of :arg [
@@ -506,7 +506,7 @@ source: function [
 what: function [
     {Prints a list of known actions}
 
-    return: [~]
+    return: [trash!]
     'name [<hole> word! lit-word!]
         "Optional module name"
     /args
@@ -561,7 +561,7 @@ say-browser: does [
 
 bugs: func [
     "View bug database."
-    return: [~]
+    return: [trash!]
 ][
     say-browser
     browse https://github.com/metaeducation/ren-c/issues
@@ -570,7 +570,7 @@ bugs: func [
 
 chat: func [
     "Open REBOL/ren-c developers chat forum"
-    return: [~]
+    return: [trash!]
 ][
     say-browser
     browse http://chat.stackoverflow.com/rooms/291/rebol
@@ -581,7 +581,7 @@ chat: func [
 require-commit: function [
     "checks current commit against required commit"
 
-    return: [~]
+    return: [trash!]
     commit [text!]
 ][
     c: select system/script/header 'commit else [return]

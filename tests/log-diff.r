@@ -16,7 +16,7 @@ Rebol [
 do %test-parsing.r
 
 make-diff: function [
-    return: [~]
+    return: [trash!]
     old-log [file!]
     new-log [file!]
     diff-file [file!]

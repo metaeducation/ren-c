@@ -71,16 +71,16 @@ void MF_Unit(Molder* mo, const Cell* v, bool form)
     UNUSED(form); // no distinction between MOLD and FORM
 
     switch (Type_Of(v)) {
-      case TYPE_BLANK:
+      case TYPE_BLANK:  // holdover from historical Ren-C "BLANK!"
         Append_Unencoded(mo->utf8flex, "_");
         break;
 
-      case TYPE_TRASH:  // In modern Ren-C, nothing is an antiform of blank
-        Append_Unencoded(mo->utf8flex, "~");
+      case TYPE_TRASH:  // In modern Ren-C, trash is hte antiform of rune
+        Append_Unencoded(mo->utf8flex, "~trash~");
         break;
 
-      case TYPE_VOID:  // In modern Ren-C, void is the antiform of the word VOID
-        Append_Unencoded(mo->utf8flex, "~void~");
+      case TYPE_VOID:  // In modern Ren-C, void is the antiform of blank
+        Append_Unencoded(mo->utf8flex, "~");
         break;
 
       default:

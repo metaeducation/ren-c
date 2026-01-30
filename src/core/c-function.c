@@ -1271,7 +1271,7 @@ Bounce Lambda_Dispatcher(Level* L)
 // Contrasts with the Lambda_Dispatcher() because if no RETURN is executed,
 // then it falls through to return trash...and typechecks that trash is a
 // legal return value for the function.  This is particularly convenient if
-// you define a function with [return: [~]].
+// you define a function with [return: [trash!]].
 //
 // Note that the reason RETURN does the typechecking and unwinds the stack
 // past this dispatcher--vs. unwinding to this dispatcher and letting it do

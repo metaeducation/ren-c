@@ -467,10 +467,10 @@ INLINE void Get_Opt_Polymorphic_May_Panic(
 //
 //  {Gets the value of a word or path, or block of words/paths.}
 //
-//      return: [any-stable!]
+//      return: [any-value!]
 //      source [any-word! any-path! block!]
 //          {Word or path to get, or block of words or paths}
-//      /any "Retrieve ANY-VALUE! (e.g. do not error on trash)"
+//      /any "Retrieve ANY-VALUE! (e.g. do not error on void or trash)"
 //  ]
 //
 DECLARE_NATIVE(GET)
@@ -510,7 +510,7 @@ DECLARE_NATIVE(GET)
 //
 //  {Gets the value of a word or path, allows trash}
 //
-//      return: [any-stable!]
+//      return: [any-value!]
 //      source "Word or path to get"
 //          [any-word! any-path!]
 //  ]
@@ -608,11 +608,11 @@ DECLARE_NATIVE(INFIX)
 //
 //  {Sets a word, path, or block of words and paths to specified value(s).}
 //
-//      return: [any-stable!]
+//      return: [any-value!]
 //          {Will be the values set to, or void if any set values are void}
 //      target [<opt> any-word! any-path! block!]
 //          {Word or path, or block of words and paths}
-//      value [any-stable! trash!]
+//      value [any-value!]
 //          "Value or block of values"
 //      /single "If target and value are blocks, set each to the same value"
 //      /some "blank values (or values past end of block) are not set."
@@ -739,16 +739,16 @@ DECLARE_NATIVE(CONDITIONAL)
 
 
 //
-//  void: native [
+//  noop: native [
 //
 //  {Generate transient void state}
 //
-//      return: [~void~]
+//      return: [void!]
 //  ]
 //
-DECLARE_NATIVE(VOID)
+DECLARE_NATIVE(NOOP)
 {
-    INCLUDE_PARAMS_OF_VOID;
+    INCLUDE_PARAMS_OF_NOOP;
 
     return Init_Void(OUT);
 }
@@ -919,7 +919,7 @@ DECLARE_NATIVE(IDENTITY)
 //
 //  {Releases the underlying data of a value so it can no longer be accessed}
 //
-//      return: [~]
+//      return: [trash!]
 //      memory [any-series! any-context! handle!]
 //  ]
 //
@@ -1265,25 +1265,6 @@ DECLARE_NATIVE(THE)
 
     Copy_Cell(OUT, v);
     return OUT;
-}
-
-
-//
-//  noop: native [
-//
-//  "Do nothing, and return TRASH"
-//
-//      return: [~]
-//  ]
-//
-DECLARE_NATIVE(NOOP)
-//
-// Having a function called "TRASH" would be deceiving, as if you fetched it
-// with (get 'trash) it would be a function, not a TRASH! value.
-{
-    INCLUDE_PARAMS_OF_NOOP;
-
-    return Init_Trash(OUT);
 }
 
 

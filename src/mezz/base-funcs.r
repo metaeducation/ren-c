@@ -22,7 +22,7 @@ opt: optional/
 assert: func [
     {Ensure conditions are conditionally true if hooked by debugging}
 
-    return: [~]
+    return: [trash!]
     conditions [block!]
         {Block of conditions to evaluate and test for logical truth}
 ][
@@ -45,7 +45,7 @@ enblock: func [item [<opt> any-element!]] [
 so: infix func [
     {Postfix assertion which won't keep running if left expression is false}
 
-    return: [~]
+    return: [trash!]
     condition "Condition to test (voids are treated as false)"
         [any-stable!]
 ][
@@ -648,11 +648,11 @@ find-last: specialize :find [
 
 reify: func [
     return: [any-element!]
-    value [~null~ ~void~ trash! any-stable!]
+    value [~null~ void! trash! any-stable!]
 ][
     case [
-        void? :value [return '~void~]
-        trash? :value [return '~]
+        void? :value [return '~]
+        trash? :value [return '~trash~]
         null? :value [return '~null~]
         okay? :value [return '~okay~]
     ]
@@ -660,14 +660,14 @@ reify: func [
 ]
 
 degrade: func [
-    return: [~void~ any-stable!]
+    return: [void! any-stable!]
     value [any-stable!]
 ][
     case [
-        '~void~ = :value [return void]
         '~ = :value [return ~]
-        '~null~ = :value [return null]
-        '~okay~ = :value [return okay]
+        '~trash~ = :value [return ~trash~]
+        '~null~ = :value [return ~null~]
+        '~okay~ = :value [return ~okay~]
     ]
     return :value
 ]

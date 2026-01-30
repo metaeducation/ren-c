@@ -114,7 +114,7 @@ make object! [
     ]
 
     set 'collect-tests function [
-        return: [~]
+        return: [trash!]
         collected-tests [block!]
             {collect the tests here (modified)}
         test-file [file!]

@@ -195,7 +195,7 @@ static void Startup_Base(Array* boot_base)
     if (Eval_Array_At_Throws(result, boot_base, 0, SPECIFIED))
         crash (result);
 
-    if (not Is_Trash(result))
+    if (not Is_Okay(result))
         crash (result);
 }
 
@@ -230,7 +230,7 @@ static void Startup_Sys(Array* boot_sys) {
     if (Eval_Array_At_Throws(result, boot_sys, 0, SPECIFIED))
         crash (result);
 
-    if (not Is_Trash(result))
+    if (not Is_Okay(result))
         crash (result);
 }
 
@@ -412,7 +412,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
     for (i = 0; names[i] != nullptr; ++i) {
         Symbol* str = Intern_UTF8_Managed(b_cast(names[i]), strlen(names[i]));
         Value* val = Append_Context(Lib_Context, nullptr, str);
-        assert(Is_Trash(val));  // functions will fill in
+        assert(Is_Void(val));  // functions will fill in
         UNUSED(val);
     }
 }
@@ -726,7 +726,7 @@ static Array* Startup_Generics(const Value* boot_generics)
     if (Eval_List_At_Throws(result, boot_generics))
         crash (result);
 
-    if (not Is_Blank(result))
+    if (not Is_Okay(result))
         crash (result);
 
     // Sanity check the symbol transformation
@@ -948,7 +948,7 @@ static void Init_System_Object(
     DECLARE_VALUE (result);
     if (Eval_List_At_Throws(result, boot_sysobj_spec))
         crash (result);
-    if (not Is_Blank(result))
+    if (not Is_Okay(result))
         crash (result);
 
     // Create a global value for it.  (This is why we are able to say `system`
@@ -1541,7 +1541,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
     }
 
     if (not Is_Trash(result))
-        crash (result); // FINISH-INIT-CORE is a PROCEDURE, returns void
+        crash (result); // FINISH-INIT-CORE is a PROCEDURE, returns trash
 
     return nullptr;
 }

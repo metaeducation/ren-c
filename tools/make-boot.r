@@ -602,7 +602,7 @@ ob: make object! boot-sysobj
 make-obj-defs: function [
     {Given a Rebol OBJECT!, write C structs that can access its raw variables}
 
-    return: [~]
+    return: [trash!]
     e [object!]
        {The emitter to write definitions to}
     obj
@@ -779,10 +779,10 @@ for-each section [boot-base boot-sys boot-mezz] [
         append get section load join %../mezz/ file
     ]
 
-    ; Make section evaluation return NOTHING! (something like <section-done>
+    ; Make section evaluation return ~okay~ (something like <section-done>
     ; may be better, but calling code is C and that complicates checking).
     ;
-    append get section '~
+    append get section '~okay~
 
     mezz-files: next mezz-files
 ]

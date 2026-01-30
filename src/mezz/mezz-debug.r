@@ -14,7 +14,7 @@ Rebol [
 verify: function [
     {Verify all the conditions in the passed-in block are conditionally true}
 
-    return: [~]
+    return: [trash!]
     conditions [block!]
         {Conditions to check}
     <local> result
@@ -139,7 +139,7 @@ net-log: func [txt /C /S][txt]
 net-trace: function [
     "Switch between using a no-op or a print operation for net-tracing"
 
-    return: [~]
+    return: [trash!]
     val [logic!]
 ][
     either val [

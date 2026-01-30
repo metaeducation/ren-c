@@ -526,5 +526,5 @@ cgi: construct [ ; CGI environment variables
 ;   help: null      ; True if the --help flags was specified
 ;   halt: null      ; halt after script
 
-;-- Current expectation is that evaluation ends with BLANK!
-_
+;-- Current expectation is that evaluation ends with ~okay~
+~okay~

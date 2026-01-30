@@ -19,7 +19,7 @@ do %test-framework.r
 ; appropriate flags depending on the interpreter version.
 
 do-core-tests: function [
-    return: [~]
+    return: [trash!]
 ][
     ; Check if we run R3 or R2.
     flags: pick [

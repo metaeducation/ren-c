@@ -1001,8 +1001,8 @@ static REBIXO To_Thru_Block_Rule(
 
         if (Series_Len_At(rule_block) == 1) {
             const Cell* at = List_At(rule_block);
-            if (Is_Word(at) and Word_Id(at) == SYM__TVOID_T)
-                return P_POS;  // make `to [~void~]` about as fast as `to []`
+            if (Is_Word(at) and Word_Id(at) == SYM_TILDE_1)
+                return P_POS;  // make `to [~]` about as fast as `to []`
         }
     }
 

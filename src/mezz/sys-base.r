@@ -188,7 +188,7 @@ do*: function [
 
 export: func [
     "Low level export of values (e.g. functions) to lib."
-    return: [~]
+    return: [trash!]
     words [block!] "Block of words (already defined in local context)"
 ][
     for-each word words [append lib reduce [word get word]]

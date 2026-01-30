@@ -57,7 +57,7 @@ map-each-api: lambda [code [block!]] [
     ]
 ]
 
-emit-proto: func [return: [~] proto] [
+emit-proto: func [return: [trash!] proto] [
     header: proto-parser/data
 
     all [
@@ -127,7 +127,7 @@ emit-proto: func [return: [~] proto] [
 ]
 
 process: func [
-    return: [~]
+    return: [trash!]
     file [file!]
 ][
     data: read the-file: file

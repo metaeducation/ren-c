@@ -68,7 +68,7 @@
 //
 //  {Initialize random number generators and OS-provided crypto services}
 //
-//      return: [~]
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(INIT_CRYPTO)

@@ -23,7 +23,7 @@ Rebol [
 ]
 
 
-unset: func [return: [~] word [any-word!]] [set/any word ~]
+unset: func [return: [trash!] word [any-word!]] [set/any word ~]
 eval: :evaluate
 
 ; Start with basic debugging
@@ -39,10 +39,10 @@ probe: func [
     value [any-value!]
 ][
     case [
-        trash? :value [write-stdout "~  ; anti"]
-        void? :value [write-stdout "~void~  ; anti"]
-        null? :value [write-stdout "~null~  ; anti"]
-        okay? :value [write-stdout "~okay~  ; anti"]
+        trash? :value [write-stdout "\~trash~\"]
+        void? :value [write-stdout "\~\"]
+        null? :value [write-stdout "\~null~\"]
+        okay? :value [write-stdout "\~okay~\"]
         <else> [write-stdout mold :value]
     ]
     write-stdout newline
@@ -61,23 +61,23 @@ probe: func [
 comment: func [
     {Ignores the argument value, but does no evaluation (see also ELIDE).}
 
-    return: [~void~]
+    return: [void!]
         {The evaluator will skip over the result (not seen, not even void)}
     :discarded [block! any-string! blob! any-scalar!]
         "Literal value to be ignored." ;-- `comment print "hi"` disallowed
 ][
-    return void
+    return ~
 ]
 
 elide: func [
     {Argument is evaluative, but discarded (see also COMMENT).}
 
-    return: [~void~]
+    return: [void!]
         {The evaluator will skip over the result (not seen, not even void)}
     discarded [any-stable! trash!]
         {Evaluated value to be ignored.}
 ][
-    return void
+    return ~
 ]
 
 
@@ -173,7 +173,7 @@ empty?: func [
 
 reeval func [
     {Make fast type testing functions (variadic to quote "top-level" words)}
-    return: [~]
+    return: [trash!]
     'set-words [tag! set-word! <...>]
     <local>
         set-word type-name tester
@@ -289,7 +289,7 @@ print: func [
     'terminal [word!]
 ][
     assert [equal? terminal '===]
-    return void
+    return ~
 ]
 
 

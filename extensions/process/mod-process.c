@@ -1815,7 +1815,7 @@ DECLARE_NATIVE(GET_OS_BROWSERS)
 //
 //  "Use system sleep to wait a certain amount of time (doesn't use PORT!s)."
 //
-//      return: [~]
+//      return: [trash!]
 //      duration [integer! decimal! time!]
 //          {Length to sleep (integer and decimal are measuring seconds)}
 //

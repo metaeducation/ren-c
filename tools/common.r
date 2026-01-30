@@ -388,7 +388,7 @@ propercase-of: func [
 ]
 
 write-if-changed: function [
-    return: [~]
+    return: [trash!]
     dest [file!]
     content [text! block!]
 ][

@@ -470,7 +470,7 @@ modify: generic [
 ;
 on-wake-up: generic [
     {Updates external and internal states (normally after read/write).}
-    return: [~]
+    return: [trash!]
     port [port!]
 ]
 

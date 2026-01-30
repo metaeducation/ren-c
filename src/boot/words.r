@@ -51,8 +51,8 @@ none
 ; When code is CSCAPE'd it runs substitutions, and so quotes necessary on
 ; the tilde.  Review.
 ;
-"~"  ; SYM_TILDE_1 (TRASH in modern Ren-C, but UNDEFINED in R3C)
-~void~
+"~"  ; SYM_TILDE_1 (quasiform in modern Ren-C, here a WORD!, looks up to VOID!)
+~trash~
 void?
 ~null~
 null?

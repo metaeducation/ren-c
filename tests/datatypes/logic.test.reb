@@ -24,7 +24,7 @@
 (okay = int-to-logic -1)
 
 (didn't null)
-(didn't void)
+(didn't :void)
 (not didn't 1020)
 
 (not did null)

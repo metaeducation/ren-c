@@ -209,7 +209,7 @@ windows: make platform-class [
 ]
 
 set-target-platform: func [
-    return: [~]
+    return: [trash!]
     platform
 ][
     switch platform [
@@ -342,14 +342,14 @@ compiler-class: make object! [
 
     ;check if the compiler is available
     check: method [
-        return: [~]
+        return: [trash!]
         exec [~null~ file! text!]
     ][
         panic "archetype check"
     ]
 
     compile: method [
-        return: [~]
+        return: [trash!]
         output [file!]
         source [file!]
         include [file! block!]
@@ -383,7 +383,7 @@ cc: make compiler-class [
     id: null
 
     check: method [
-        return: [~]
+        return: [trash!]
         exec [~null~ file! text!]
         <static>
         digit (charset "0123456789")
@@ -641,7 +641,7 @@ cl: make compiler-class [
     exec-file: %cl.exe
 
     check: method [
-        return: [~]
+        return: [trash!]
         exec [~null~ file! text!]
     ][
         exec-file: any [exec exec-file]
@@ -1053,7 +1053,7 @@ generator-class: make object! [
     ]
 
     prepare: method [
-        return: [~]
+        return: [trash!]
         solution [object!]
     ][
         if find words-of solution 'output [
@@ -1077,7 +1077,7 @@ generator-class: make object! [
     ]
 
     flip-flag: method [
-        return: [~]
+        return: [trash!]
         project [object!]
         to [logic!]
     ][
@@ -1095,7 +1095,7 @@ generator-class: make object! [
     ]
 
     setup-output: method [
-        return: [~]
+        return: [trash!]
         project [object!]
     ][
         if not suffix: find reduce [
@@ -1144,7 +1144,7 @@ generator-class: make object! [
 
     setup-outputs: method [
         {Set the output/implib for the project tree}
-        return: [~]
+        return: [trash!]
         project [object!]
     ][
         ;print ["Setting outputs for:"]
@@ -1260,7 +1260,7 @@ makefile: make generator-class [
     ]
 
     emit: method [
-        return: [~]
+        return: [trash!]
         buf [blob!]
         project [object!]
         /parent parent-object
@@ -1336,7 +1336,7 @@ makefile: make generator-class [
     ]
 
     generate: method [
-        return: [~]
+        return: [trash!]
         output [file!]
         solution [object!]
     ][
@@ -1387,7 +1387,7 @@ Execution: make generator-class [
     gen-cmd-strip: :host/gen-cmd-strip
 
     run-target: method [
-        return: [~]
+        return: [trash!]
         target [object!]
         /cwd dir [file!]
     ][
@@ -1420,7 +1420,7 @@ Execution: make generator-class [
     ]
 
     run: method [
-        return: [~]
+        return: [trash!]
         project [object!]
         /parent p-project
     ][

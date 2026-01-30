@@ -216,7 +216,7 @@ gen-obj: func [
                 ]
                 <no-make-header> [
                     ;for make-header. ignoring
-                    '~void~
+                    reify ~  ; can't do reify :VOID, void is function
                 ]
                 <no-unreachable> [
                     <msc:/wd4702>
@@ -367,7 +367,7 @@ for-each x targets [
 ;;;; GO!
 
 set-exec-path: func [
-    return: [~]
+    return: [trash!]
     tool [object!]
     path
 ][
@@ -978,7 +978,7 @@ for-each [label list] reduce [
 ]
 
 add-project-flags: func [
-    return: [~]
+    return: [trash!]
     project [object!]
     /I includes
     /D definitions
@@ -1248,7 +1248,7 @@ prep: make rebmake/entry-class [
 ; this will make sure `%objs/generic/` is in there.
 
 add-new-obj-folders: function [
-    return: [~]
+    return: [trash!]
     objs
     folders
     <local>

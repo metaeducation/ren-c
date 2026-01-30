@@ -358,7 +358,7 @@ DECLARE_NATIVE(C_DEBUG_BREAK_AT)
 //
 //  "Break at next evaluation point (only use when running under C debugger)"
 //
-//      return: [~void~]
+//      return: [void!]
 //  ]
 //
 DECLARE_NATIVE(C_DEBUG_BREAK)

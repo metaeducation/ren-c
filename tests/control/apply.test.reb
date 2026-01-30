@@ -12,7 +12,7 @@
 ;
 (did redbol-apply: function [
     {APPLY interface is still evolving, see https://trello.com/c/P2HCcu0V}
-    return: [any-stable!]
+    return: [any-value!]
     action [action!]
     block [block!]
     /only
@@ -109,8 +109,8 @@
 )
 
 (
-    trash? redbol-apply lambda [
-        x [any-stable! trash!]
+    void? redbol-apply lambda [
+        x [any-value!]
     ][
         get/any 'x
     ][
@@ -118,18 +118,18 @@
     ]
 )
 (
-    trash? redbol-apply lambda [
-        'x [any-stable! trash!]
+    '~ = redbol-apply lambda [
+        'x [any-value!]
     ][
         get/any 'x
     ][
-        ~
+        '~
     ]
 )
 (
-    trash? redbol-apply func [
-        return: [any-stable!]
-        x [any-stable! trash!]
+    void? redbol-apply func [
+        return: [any-value!]
+        x [any-value!]
     ][
         return get/any 'x
     ][
@@ -137,17 +137,17 @@
     ]
 )
 (
-    trash? redbol-apply func [
-        return: [any-stable!]
-        'x [any-stable! trash!]
+    '~ = redbol-apply func [
+        return: [any-value!]
+        'x [any-value!]
     ][
         return get/any 'x
     ][
-        ~
+        '~
     ]
 )
 (
-    error? redbol-apply func ['x [any-stable! trash!]] [
+    error? redbol-apply func ['x [any-value!]] [
         return get 'x
     ][
         make error! ""
@@ -189,6 +189,6 @@
 ; !!! This shows a weak spot: how would REDBOL-APPLY/ONLY work on antiforms?
 ; It could degrade them, which would be an argument for not using quasars much.
 ;
-('~null~ = redbol-apply/only lambda [/a] [a] [~null~])
+(/a = redbol-apply/only lambda [/a] [a] [~null~])
 
 (group! = redbol-apply/only :type-of [()])

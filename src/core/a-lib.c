@@ -549,8 +549,8 @@ RebolValue* API_rebValueInline(const RebolValue* array)
 // forms.
 //
 //    null => `~null~`
-//    void => `~void~`
-//    trash => `~`
+//    void => `~`
+//    trash => `~trash~`
 //    any-element! => `(the ...)`
 //
 // There's a parallel Rebol action! that does this called UNEVAL, which is

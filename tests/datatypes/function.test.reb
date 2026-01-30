@@ -408,8 +408,8 @@
 )
 
 [#539 (
-    f: func [return: [~]] [
-        use [x] [return ~ ] ; https://github.com/metaeducation/ren-c/issues/755
+    f: func [return: [trash!]] [
+        use [x] [return ] ; https://github.com/metaeducation/ren-c/issues/755
         return 42
     ]
     trash? f

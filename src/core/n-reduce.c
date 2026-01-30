@@ -121,7 +121,7 @@ bool Any_Lifted(Value* v) {
         if (
             Word_Id(v) == SYM__TNULL_T
             or Word_Id(v) == SYM__TOKAY_T
-            or Word_Id(v) == SYM__TVOID_T
+            or Word_Id(v) == SYM__TTRASH_T
             or Word_Id(v) == SYM_TILDE_1
         ){
             return true;
@@ -152,7 +152,7 @@ bool Any_Lifted(Value* v) {
 Value* Lift_Cell(Value* v)
 {
     if (Is_Void(v))
-        return Init_Word(v, CANON(_TVOID_T));
+        return Init_Word(v, CANON(TILDE_1));
 
     if (Is_Okay(v))
         return Init_Word(v, CANON(_TOKAY_T));
@@ -161,7 +161,7 @@ Value* Lift_Cell(Value* v)
         return Init_Word(v, CANON(_TNULL_T));
 
     if (Is_Trash(v))
-        return Init_Word(v, CANON(TILDE_1));
+        return Init_Word(v, CANON(_TTRASH_T));
 
     if (Is_Word(v)) {
         KIND_BYTE(v) = TYPE_LIT_WORD;
@@ -189,13 +189,13 @@ Value* Unlift_Cell(Value* v)
 {
     if (Is_Word(v)) {
         switch (opt Word_Id(v)) {
-          case SYM__TVOID_T:
+          case SYM_TILDE_1:
             return Init_Void(v);
           case SYM__TOKAY_T:
             return Init_Okay(v);
           case SYM__TNULL_T:
             return Init_Nulled(v);
-          case SYM_TILDE_1:
+          case SYM__TTRASH_T:
             return Init_Trash(v);
         default:
           break;
@@ -219,7 +219,7 @@ Value* Unlift_Cell(Value* v)
     }
 
     panic (
-        "UNLIFT needs [~ ~NULL~ ~VOID~ ~OKAY~ LIT-WORD! LIT-PATH! (THE <item>)]"
+        "UNLIFT needs [~ ~NULL~ ~OKAY~ LIT-WORD! LIT-PATH! (THE <item>)]"
     );
 }
 

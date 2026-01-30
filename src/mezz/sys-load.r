@@ -69,7 +69,7 @@ bind-lib: func [
 export-words: func [
     {Exports words of a context into both the system lib and user contexts.}
 
-    return: [~]
+    return: [trash!]
     ctx "Module context"
         [module! object!]
     words "The exports words block of the module"

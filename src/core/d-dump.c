@@ -298,7 +298,7 @@ void Dump_Stack(Level* L, REBLEN level)
 //
 //  "Temporary debug dump"
 //
-//      return: [~]
+//      return: [trash!]
 //      :value [any-word!]
 //  ]
 //

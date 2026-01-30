@@ -42,7 +42,7 @@ mkdir/deep join output-dir %os/
 print "--- Make Host Init Code ---"
 
 write-c-file: function [
-    return: [~]
+    return: [trash!]
     c-file
     code
 ][

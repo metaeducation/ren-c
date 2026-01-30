@@ -241,16 +241,6 @@ bool Either_Test_Core_Throws(
                     }
                     continue;
                 }
-                if (
-                    Word_Id(item) == SYM__TVOID_T
-                    or Word_Id(item) == SYM_VOID_Q
-                ){
-                    if (Is_Void(arg)) {
-                        Init_Logic(out, true);
-                        return false;
-                    }
-                    continue;
-                }
                 var = Get_Opt_Var_May_Panic(item, specifier);
             }
 
@@ -423,16 +413,15 @@ DECLARE_NATIVE(MATCH)
     Value* test = ARG(TEST);
 
     Value* value = ARG(VALUE);
+    if (Is_Nulled(value))
+        panic ("NULL not supported by MATCH (see TYPECHECK)");
 
     DECLARE_VALUE (temp);
     if (Either_Test_Core_Throws(temp, test, value))
         return BOUNCE_THROWN;
 
-    if (Cell_Logic(temp)) {
-        if (not Logical_Test(value)) // see above for why false match not passed thru
-            return Init_Trash(OUT);
+    if (Cell_Logic(temp))
         return Copy_Cell(OUT, value);
-    }
 
     return nullptr;
 }

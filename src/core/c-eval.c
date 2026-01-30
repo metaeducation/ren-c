@@ -872,7 +872,7 @@ bool Eval_Core_Throws(Level* const L)
 
             switch (pclass) {
               case PARAMCLASS_LOCAL:
-                Init_Trash(L->arg);  // !!! L->special?
+                Init_Nulled(L->arg);  // !!! L->special?
                 Set_Cell_Flag(L->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 
@@ -1408,8 +1408,8 @@ bool Eval_Core_Throws(Level* const L)
 
       case TYPE_WORD:
         switch (opt Word_Id(current)) {  // quasiform simulation
-          case SYM__TVOID_T:
-            Init_Void(L->out);
+          case SYM__TTRASH_T:
+            Init_Trash(L->out);
             goto post_switch;
 
           case SYM__TNULL_T:
@@ -1421,7 +1421,7 @@ bool Eval_Core_Throws(Level* const L)
             goto post_switch;
 
           case SYM_TILDE_1:
-            Init_Trash(L->out);
+            Init_Void(L->out);
             goto post_switch;
 
           default:
@@ -1491,7 +1491,7 @@ bool Eval_Core_Throws(Level* const L)
 
         Flags flags = DO_MASK_NONE;
 
-        Init_Trash(L->out);  // `1 x: comment "hi"` shouldn't set x to 1!
+        Init_Void(L->out);  // `1 x: comment "hi"` shouldn't set x to 1!
 
         DECLARE_SUBLEVEL(child, L);
         if (Eval_Step_In_Subframe_Throws(L->out, flags, child))
@@ -1683,7 +1683,7 @@ bool Eval_Core_Throws(Level* const L)
 
         Flags flags = DO_MASK_NONE;
 
-        Init_Trash(L->out);  // `1 o/x: comment "hi"` shouldn't set o/x to 1!
+        Init_Void(L->out);  // `1 o/x: comment "hi"` shouldn't set o/x to 1!
 
         DECLARE_SUBLEVEL(child, L);
         if (Eval_Step_In_Subframe_Throws(L->out, flags, child))

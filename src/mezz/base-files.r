@@ -157,7 +157,7 @@ make-dir: func [
 
 delete-dir: func [
     {Deletes a directory including all files and subdirectories.}
-    return: [~]
+    return: [trash!]
     dir [file! url!]
     <local> files
 ][

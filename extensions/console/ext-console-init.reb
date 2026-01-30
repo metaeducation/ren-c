@@ -88,7 +88,7 @@ console!: make object! [
     info: to-text #{e29398} ;-- info "(i)" symbol
     greeting: null
 
-    print-prompt: func [return: [~]] [
+    print-prompt: func [return: [trash!]] [
         ;
         ; !!! Previously the HOST-CONSOLE hook explicitly took an (optional)
         ; FRAME! where a debug session was focused and a stack depth integer,
@@ -126,11 +126,11 @@ console!: make object! [
         write-stdout space
     ]
 
-    print-result: function [return: [~] v [any-value!]]  [
+    print-result: function [return: [trash!] v [any-value!]]  [
         last-result': lift :v
 
         if (void? :v) [  ; nothingness (e.g. result of eval [])
-            print [result "~void~  ; anti"]
+            print [result "\~\  ; antiform (void!)"]
             return
         ]
 
@@ -148,11 +148,11 @@ console!: make object! [
                 ; As with nothing, we can be forward-looking and lie about the
                 ; representation of null, as a WORD! antiform.
                 ;
-                print [result "~null~  ; anti"]
+                print [result "\~null~\  ; antiform (logic!)"]
             ]
 
             okay? :v [
-                print [result "~okay~  ; anti"]
+                print [result "\~okay~\  ; antiform (logic!)"]
             ]
 
             free? :v [
@@ -257,7 +257,7 @@ console!: make object! [
 
     add-shortcut: func [
         {Add/Change console shortcut}
-        return: [~]
+        return: [trash!]
         name [any-word!] "Shortcut name"
         block [block!] "Command(s) expanded to"
     ][
@@ -269,7 +269,7 @@ console!: make object! [
 start-console: function [
     "Called when a REPL is desired after command-line processing, vs quitting"
 
-    return: [~]
+    return: [trash!]
     <static>
         o (system/options) ;-- shorthand since options are often read/written
 ][
@@ -387,7 +387,7 @@ ext-console-impl: function [
     emit: function [
         {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
 
-        return: [~]
+        return: [trash!]
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction
@@ -738,7 +738,7 @@ ext-console-impl: function [
 
 why: function [
     "Explain the last error in more detail."
-    return: [~]
+    return: [trash!]
     'err [<hole> word! path! error!] "Optional error value"
 ][
     err: default [system/state/last-error]

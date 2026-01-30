@@ -34,7 +34,7 @@ verbose: null
 unsorted-buffer: make text! 20000
 
 process: func [
-    return: [~]
+    return: [trash!]
     file
     ; <with> the-file ;-- note external variable (can't do this in R3-Alpha)
 ][
@@ -102,7 +102,7 @@ append output-buffer mold/only load (join src-dir %boot/generics.r)
 
 append output-buffer unspaced [
     newline
-    "_ ;-- C code expects BLANK! evaluation result, at present" newline
+    "~okay~  ; C code expects ~okay~ evaluation result, at present" newline
     newline
 ]
 

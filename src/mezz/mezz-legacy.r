@@ -87,7 +87,7 @@ comment [
 prin: function [
     "Print without implicit line break, blocks are SPACED."
 
-    return: [~]
+    return: [trash!]
     value [any-stable!]
 ][
     write-stdout switch type of :value [
@@ -133,7 +133,6 @@ rejoin: function [
     ]
     return append result next values
 ]
-
 
 ; The name FOREVER likely dissuades its use, since many loops aren't intended
 ; to run forever.  CYCLE gives similar behavior without suggesting the

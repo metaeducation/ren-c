@@ -55,7 +55,7 @@ decode-key-value-text: function [
         some data-field-char opt some [#" " some data-field-char] #":"
     ]
 
-    emit-meta: func [return: [~] <local> key] [
+    emit-meta: func [return: [trash!] <local> key] [
         key: replace copy/part position eof #" " #"-"
         remove back tail-of key
         append meta reduce [
@@ -121,7 +121,7 @@ proto-parser: context [
     data: null
     eoh: null  ; End of file header.
 
-    process: func [return: [~] text] [
+    process: func [return: [trash!] text] [
         parse2/match text [grammar/rule]
     ]
 
@@ -294,7 +294,7 @@ proto-parser: context [
 
 rewrite-if-directives: function [
     {Bottom up rewrite conditional directives to remove unnecessary sections.}
-    return: [~]
+    return: [trash!]
     position
 ][
     insist [
