@@ -1115,9 +1115,9 @@ void MF_String(Molder* mo, const Cell* v, bool form)
         Size size;
         Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, Series_Len_At(v));
 
-        Append_Unencoded(mo->utf8flex, "~#[");
+        Append_Unencoded(mo->utf8flex, "~<");
         Append_Utf8_Utf8(mo->utf8flex, s_cast(Binary_At(temp, offset)), size);
-        Append_Unencoded(mo->utf8flex, "]#~");
+        Append_Unencoded(mo->utf8flex, ">~");
         break; }
 
     default:
