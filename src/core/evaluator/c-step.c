@@ -1794,6 +1794,7 @@ Bounce Stepper_Executor(Level* L)
     );
     STATE = ST_STEPPER_GENERIC_SET;
 
+    Erase_Cell(OUT);  // expected by Reuse_Sublevel_Same_Feed_For_Step()
     require (
       Reuse_Sublevel_Same_Feed_For_Step()
     );
@@ -1851,17 +1852,14 @@ Bounce Stepper_Executor(Level* L)
     switch (opt Type_Of(stable_out)) {
       case TYPE_BLOCK:
         Copy_Cell(CURRENT, As_Element(stable_out));
-        Erase_Cell(OUT);  // !!! necessary?
         goto handle_set_block;
 
       case TYPE_WORD:
         Copy_Cell(CURRENT, As_Element(stable_out));
-        Erase_Cell(OUT);  // !!! necessary?
         goto handle_generic_set;
 
       case TYPE_TUPLE:
         Copy_Cell(CURRENT, As_Element(stable_out));
-        Erase_Cell(OUT);  // !!! necessary?
         goto handle_generic_set;
 
       default:
@@ -1884,6 +1882,7 @@ Bounce Stepper_Executor(Level* L)
     if (threw)
         goto return_thrown;
 
+    Erase_Cell(OUT);  // expected by Reuse_Sublevel_Same_Feed_For_Step()
     require (
       Reuse_Sublevel_Same_Feed_For_Step()
     );
