@@ -36,27 +36,30 @@
 **
 ****[[ NOTES ]]***************************************************************
 **
-** A. When built in C language mode, the Result() and Option() types rely on
-**    the polymorphic construction from 0 for enums, pointers and integers.
-**    Though legal, GCC and Clang give warnings about such conversions if they
-**    produce a pointer -AND- come from a compound expression:
+** A. In C, bare `0` is a "null pointer constant" and converts implicitly to
+**    any pointer type.  But the comma operator strips that status: `(expr, 0)`
+**    is just an integer expression that happens to evaluate to 0, so
+**    assigning it to a pointer is an int-to-pointer conversion.  GCC and
+**    Clang warn about this:
 **
-**     SomeEnum Make_Enum(...) { return 0; }  // no warning
-**     Something* Make_Pointer(...) { return 0; }  // no warning
+**       Something* f(void) { return 0; }          // fine: 0 is NPC
+**       Something* f(void) { return (expr, 0); }  // warned: not NPC
 **
-**     SomeEnum Make_Enum(...) { return (..., 0); }  // no warning
-**     Something* Make_Pointer(...) { return (..., 0); }  // GCC + Clang warn
+**    This matters for Needful because `fail(...)` expands to a comma
+**    expression ending in 0, and `none` can do the same.  So any function
+**    returning Result(Something*) or Option(Something*) would trigger
+**    `-Wint-conversion` on every `return fail(...)` or `return none`.
 **
-**   If you want to use Result(Something*) in C builds, `return fail (...);`
-**   requires the compound construction from 0, and Option(Something*) may
-**   need this if you conditionally produce `none`.  Needful disables the
-**   warning for convenience, so you don't need `-Wno-int-conversion`.  But
-**   don't worry: the C++ enhanced build will catch any mistakes.
+**    Needful disables the warning globally in C mode.  This is safe:
 **
-**   (C++ is more strict than C about what can be converted from 0, and would
-**   have errors--not warnings.  Tools like `nocast` are used to work around
-**   this if just using the skeletal file, with more targeted behavior
-**   in the enhanced definitions.)
+**      - The only code producing these conversions is Needful's own macros.
+**      - The C++ enhanced build catches any real type mistakes.
+**      - `nocast` provides the targeted int-to-pointer behavior in C++ when
+**        building without the full enhancements.
+**
+**    If you want the warning back for non-Needful code, you can set
+**    `#define NEEDFUL_DISABLE_INT_WARNING 0` and add your own
+**    pragma push/pop around call sites that use fail() or none.
 */
 
 #ifndef NEEDFUL_H_INCLUDED  /* "include guard" allows multiple #includes */
@@ -129,7 +132,12 @@
 ** can't accomplish the behavior of nocast without some special mechanics, so
 ** we have to #ifdef __cplusplus here.
 **
-** 1. The choice of `+` as the operator to use is intentional due to wanting
+** 1. NocastConvert: only one case needs special handling.  static_cast
+**    already handles void* -> T*, int -> enum, and same-type conversions.
+**    The sole exception: int -> T* must substitute nullptr (C++ forbids
+**    implicit int-to-pointer conversion, even for literal 0).
+**
+** 2. The choice of `+` as the operator to use is intentional due to wanting
 **    something with lower precedence than `%` (used in Result and Optional)
 **/
 #ifndef __cplusplus
@@ -142,35 +150,19 @@
 
     template<
         class To, class From,
-        class FromNoRef = typename std::remove_reference<From>::type,
-        bool ToIsPtr = std::is_pointer<To>::value,
-        bool FromIsInt = std::is_integral<FromNoRef>::value,
-        bool FromIsVoidPtr =
-            std::is_pointer<FromNoRef>::value &&
-            std::is_void<typename std::remove_pointer<FromNoRef>::type>::value
+        bool IntToPtr =  /* only one case needs special handling [1] */
+            std::is_pointer<To>::value &&
+            std::is_integral<
+                typename std::remove_reference<From>::type
+            >::value
     >
-    struct NocastConvert {  // enums, same-type casts, etc.
-        static To Do_It(From f) { return static_cast<To>(f); }
+    struct NocastConvert {
+        static To Do_Conversion(From f) { return static_cast<To>(f); }
     };
 
-    // Case 1: (nocast 0) -> T*   (avoid int->ptr cast error; use nullptr)
     template<class To, class From>
-    struct NocastConvert<
-        To, From,
-        typename std::remove_reference<From>::type,
-        /*ToIsPtr*/ true, /*FromIsInt*/ true, /*FromIsVoidPtr*/ false
-    >{
-        static To Do_It(From) { return static_cast<To>(nullptr); }
-    };
-
-    // Case 2: (nocast void_ptr) -> T*   (e.g. from malloc)
-    template<class To, class From>
-    struct NocastConvert<
-        To, From,
-        typename std::remove_reference<From>::type,
-        /*ToIsPtr*/ true, /*FromIsInt*/ false, /*FromIsVoidPtr*/ true
-    >{
-        static To Do_It(From f) { return static_cast<To>(f); }
+    struct NocastConvert<To, From, /*IntToPtr*/ true> {
+        static To Do_Conversion(From) { return static_cast<To>(nullptr); }
     };
 
     template<class From>
@@ -179,11 +171,11 @@
 
         template<class To>
         operator To() const {
-            return NocastConvert<To, From>::Do_It(f);
+            return NocastConvert<To, From>::Do_Conversion(f);
         }
     };
 
-    template<class T>  // choice of operator+ is meaningful [1]
+    template<class T>  // choice of operator+ is meaningful [2]
     inline NocastHolder<T> operator+(NocastMaker, T v) { return { v }; }
 
     constexpr NocastMaker g_nocast_maker{};
@@ -208,7 +200,7 @@
     struct Nocast0Struct {
         template<class To>
         constexpr operator To() const {
-            return NocastConvert<To, int>::Do_It(0);  // literal 0, no member
+            return NocastConvert<To, int>::Do_Conversion(0);
         }
     };
   }
