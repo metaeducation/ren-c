@@ -43,150 +43,76 @@
 
 
 #undef NeedfulNeed
-#define NeedfulNeed(TP) \
-    needful::NeedWrapper<TP>  // * not implicit [1]
+#define NeedfulNeed(T) \
+    needful::NeedWrapper<T>  // * not implicit [1]
 
-
-template<typename U, typename T>
-struct IfCovariant2 {
-    static constexpr bool value = std::is_convertible<U, T>::value;
-    using enable = typename std::enable_if<value>;  // not ::type [1]
-};
-
-template<typename TP>  // TP may or may not be a pointer type
+template<typename T>
 struct NeedWrapper {
   private:  // even private deleted operators get considered for overload [2]
     /* operator bool() const = delete; */
 
   public:
-    NEEDFUL_DECLARE_WRAPPED_FIELD (TP, p);
+    NEEDFUL_DECLARE_WRAPPED_FIELD (T, n);
 
-    using T = remove_pointer_t<TP>;
-
-    template<typename U>
-    using IfCovariant
-        = typename IfCovariant2<U, T>::enable::type;
-
-    NeedWrapper() = default;  // compiler MIGHT need, see [E]
+    NeedWrapper() = default;  // need compatibility with C build behavior
 
     NeedWrapper(std::nullptr_t) = delete;
     NeedWrapper(NoneStruct) = delete;
 
-    // enable x_cast() from void* to work around casting issues [F]
-    //
-    explicit NeedWrapper(void* p) : p {x_cast(TP, p)} {}
-    explicit NeedWrapper(const void* p) : p {x_cast(TP, p)} {}
-
-    template<
+    template <
         typename U,
-        typename D = TP,  // [3]
-        typename = enable_if_t<
-            std::is_pointer<D>::value
-        >,
-        IfCovariant<U>* = nullptr
+        typename = enable_if_t<not needful_is_convertible_v(U, T)>
     >
-    NeedWrapper(U* u) : p {x_cast(TP, u)}
-        {}
+    explicit NeedWrapper(const U& something)
+        : n {needful_xtreme_cast(T, something)}
+      { assert(n); }
 
-    template<
-        typename UP,
-        typename D = TP,  // [3]
-        typename = enable_if_t<
-            not std::is_pointer<D>::value
-        >,
-        IfCovariant<UP>* = nullptr
-    >
-    NeedWrapper(UP u) : p {u}
-        {}
-
-    template<
+    template <
         typename U,
-        typename D = TP,  // [3]
-        typename = enable_if_t<
-            std::is_pointer<D>::value
-        >,
-        IfCovariant<U>* = nullptr
+        typename = enable_if_t<needful_is_convertible_v(U, T)>
     >
-    NeedWrapper(const NeedWrapper<U*>& other)
-        : p {other.p}
-        {}
+    NeedWrapper(U&& u) : n {static_cast<T>(u)} { assert(n); }
 
-    template<
-        typename UP,
-        typename D = TP,  // [3]
-        typename = enable_if_t<
-            not std::is_pointer<D>::value
-        >,
-        IfCovariant<UP>* = nullptr
+    template <
+        typename U,
+        typename = enable_if_t<needful_is_convertible_v(U, T)>
     >
-    NeedWrapper(const NeedWrapper<UP>& other)
-        : p {other.p}
-        {}
+    NeedWrapper(const NeedWrapper<U>& other) : n {other.n}
+        {}  // shouldn't need to assert(n)
 
-    NeedWrapper(const NeedWrapper& other) : p {other.p}
-        {}
-
-    template<typename U, IfCovariant<U>* = nullptr>
-    NeedWrapper(const SinkWrapper<U*>& sink)
-        : p {static_cast<TP>(sink.p)}  // not corrupt, `sink.p` vs `sink` ok
-    {
-        assert(not sink.corruption_pending);
-    }
-
-    template<typename U, IfCovariant<U>* = nullptr>
-    NeedWrapper(const InitWrapper<U*>& init)
-        : p {static_cast<TP>(init.p)}
-        {}
-
-    template<typename U, IfCovariant<U>* = nullptr>
-    NeedWrapper(const ContraWrapper<U*>& contra)
-        : p {static_cast<TP>(contra.p)}
-        {}
+    NeedWrapper(const NeedWrapper& other) : n {other.n}
+        {}  // shouldn't need to assert(n)
 
     NeedWrapper& operator=(std::nullptr_t) = delete;
     NeedWrapper& operator=(NoneStruct) = delete;
 
     NeedWrapper& operator=(const NeedWrapper& other) {
         if (this != &other) {
-            this->p = other.p;
+            this->n = other.n;
+            assert(this->n);
         }
         return *this;
     }
 
-    template<typename U, IfCovariant<U>* = nullptr>
-    NeedWrapper& operator=(U* ptr) {
-        this->p = static_cast<TP>(ptr);
+    template<
+        typename U,
+        typename = enable_if_t<needful_is_convertible_v(U, T)>
+    >
+    NeedWrapper& operator=(U&& u) {
+        this->n = static_cast<T>(u);
+        assert(this->n);
         return *this;
     }
 
-    template<typename U, IfCovariant<U>* = nullptr>
-    NeedWrapper& operator=(const SinkWrapper<U*>& sink) {
-        assert(not sink.corruption_pending);
-        this->p = static_cast<TP>(sink.p);
-        return *this;
-    }
+    operator T() const { return n; }
 
-    template<typename U, IfCovariant<U>* = nullptr>
-    NeedWrapper& operator=(const InitWrapper<U*>& init) {
-        this->p = static_cast<TP>(init.p);
-        return *this;
-    }
-
-    template<typename U, IfCovariant<U>* = nullptr>
-    NeedWrapper& operator=(const ContraWrapper<U*>& contra) {
-        this->p = static_cast<TP>(contra.p);
-        return *this;
-    }
-
-    operator TP() const { return p; }
-
-    operator ExactWrapper<needful_constify_t(TP)>() const { return p; }
+    operator ExactWrapper<needful_constify_t(T)>() const { return n; }
 
     template<typename U>
-    explicit operator U*() const
-        { return const_cast<U*>(reinterpret_cast<const U*>(p)); }
+    explicit operator U() const
+        { return static_cast<U>(n); }
 
-    TP operator->() const { return p; }
+    T operator->() const { return n; }
 };
 
   //=//// LABORIOUS REPEATED OPERATORS ////////////////////////////////////=//
@@ -196,32 +122,32 @@ struct NeedWrapper {
 
 template<typename L, typename R>
 bool operator==(const NeedWrapper<L>& left, const NeedWrapper<R>& right)
-  { return left.p == right.p; }
+  { return left.n == right.n; }
 
 template<typename L, typename R>
 bool operator==(const NeedWrapper<L>& left, R right)
-  { return left.p == right; }
+  { return left.n == right; }
 
 template<typename L, typename R>
 bool operator==(L left, const NeedWrapper<R>& right)
-  { return left == right.p; }
+  { return left == right.n; }
 
 template<typename L, typename R>
 bool operator!=(const NeedWrapper<L>& left, const NeedWrapper<R>& right)
-  { return left.p != right.p; }
+  { return left.n != right.n; }
 
 template<typename L, typename R>
 bool operator!=(const NeedWrapper<L>& left, R right)
-  { return left.p != right; }
+  { return left.n != right; }
 
 template<typename L, typename R>
 bool operator!=(L left, const NeedWrapper<R>& right)
-  { return left != right.p; }
+  { return left != right.n; }
 
 
-//=/// UNWRAP HELPER CLASS ////////////////////////////////////////////////=//
+//=/// UNWRAP HELPER CLASS (LEGAL ON Need(), NOT JUST Option()) ///////////=//
 //
-// To avoid needing parentheses and give a "keyword" look to the `unwrap`
+// To avoid requiring parentheses and give a "keyword" look to the `unwrap`
 // operator, the C++ definition makes them put a global variable on the left
 // of an output stream operator.  The variable holds a dummy class which only
 // implements the extraction.
@@ -271,6 +197,38 @@ constexpr UnwrapHelper g_unwrap_helper = {};
 template<typename T>
 T operator+(  // lower precedence than % [1]
     UnwrapHelper,
+    const NeedWrapper<T>& need
+){
+    return need.p;  // never allowed to be zero or null
+}
+
+
+//=/// "NEEDED" HELPER CLASS //////////////////////////////////////////////=//
+//
+// The `needed` operator extracts the raw value from Need(T), analogous to how
+// `opt` extracts from Option(T).  The key difference is that `needed` gives a
+// compile-time error on Option(T), making it useful as a static filter:
+//
+//    | Operator | On Option(T)  | On Need(T) |
+//    |----------|---------------|------------|
+//    | opt      | Extract raw   | Error      |
+//    | needed   | Error         | Extract raw|
+//    | unwrap   | Assert+Extract| Extract    |
+//
+// This is useful for building macros that predictably reject optional types.
+//
+
+struct NeededHelper {};
+constexpr NeededHelper g_needed_helper = {};
+
+#undef needful_needed
+#define needful_needed \
+    needful::g_needed_helper +  // lower precedence than %
+
+
+template<typename T>
+T operator+(  // lower precedence than %
+    NeededHelper,
     const NeedWrapper<T>& need
 ){
     return need.p;  // never allowed to be zero or null

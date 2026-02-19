@@ -44,8 +44,8 @@
 **                         printf("success!\n");
 **                     }
 **
-**                 (yes, standard C! `except` is a macro that expands very
-**                 cleverly into a for() loop that can scope the declaration)
+**                 (yes, it's standard C! `except` is a macro that expands
+**                 into a for() loop that can scope the declaration)
 **
 **   cast()        A family of visible, hookable casts (h_cast, u_cast,
 **                 m_cast, i_cast, ...) that replace C's invisible
@@ -136,8 +136,8 @@
 */
 
 #define NeedfulNeed(T)  T
-
 #define needful_unwrap
+#define needful_needed
 
 
 /****[[ nocast: LEAST-ANNOYING-TO-C-PROGRAMMERS CAST OF malloc() etc. ]]******
@@ -638,7 +638,8 @@ void Needful_Panic_Abruptly(const char* error) {
 **                               & u_cast()      // const TA* => const TB*
 **
 ** TYPE CONVERSIONS
-**    - Non-pointer to pointer:    i_cast()    // intptr_t => T*
+**    - intlike to intlike:        i_cast()    // enum E => int, int => enum E
+**    - i_cast unwrap optimize:    ii_cast()   // Option(int) => int
 **    - Non-integral to integral:  p_cast()    // T* => intptr_t
 **    - Function to function:      f_cast()    // ret1(*)(...) => ret2(*)(...)
 **    - va_list to void*:          v_cast()    // va_list* <=> void*
@@ -1129,6 +1130,7 @@ void Needful_Panic_Abruptly(const char* error) {
 #if !defined(NEEDFUL_DONT_DEFINE_OPTION_SHORTHANDS)
     #define Need /* (T) */          NeedfulNeed
     #define unwrap /* ... */        needful_unwrap
+    #define needed /* ... */        needful_needed
 
     #define None                    NeedfulNone
     #define none                    needful_none

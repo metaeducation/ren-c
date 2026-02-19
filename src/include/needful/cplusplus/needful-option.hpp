@@ -86,10 +86,21 @@
 //    Also: global variables need to be compatible with the 0-initialization
 //    property they'd have if they weren't marked as Option().
 //
-// 4. Hookable_Cast_Helper blocks cast() from stripping Option().  But
+// 4. We want to avoid situations where Option(T) variables are assigned the
+//    results of Need(T) functions, because this creates a misleading
+//    situation where the variable may be boolean tested.  However C++ does
+//    not distinguish between creating a variable or passing to a function
+//    argument that is merely permissive.  The compromise chosen is to block
+//    prvalue Need(T) from implicitly constructing Option(T), with `needed`
+//    as an extractor for the raw value (or you could store in a variable).
+//
+// 5. Hookable_Cast_Helper blocks cast() from stripping Option().  But
 //    x_cast() and other explicit conversions are allowed here, since they
 //    indicate the caller is deliberately extracting.
 //
+
+#undef NeedfulOption
+#define NeedfulOption(T)  needful::OptionWrapper<T>
 
 template<typename>
 struct IsOptionWrapper : std::false_type {};
@@ -132,9 +143,12 @@ struct OptionWrapper {
         : o {other.o}  // necessary...won't use the (U something) template
       {}
 
+    template<typename U>  // block *prvalue* Need(T) specifically [4]
+    OptionWrapper(NeedWrapper<U>&&) = delete;
+
     template<typename U>
     explicit operator U() const {
-        return u_cast(U, o);  // cast() blocks removal, for x_cast() only [4]
+        return u_cast(U, o);  // cast() blocks removal, for x_cast() only [5]
     }
 
     explicit operator bool() const {  // explicit exception in `if`
@@ -189,10 +203,6 @@ struct IsOptionWrapper<OptionWrapper<X>> : std::true_type {};
 
 template<typename X>  // Option carries engaged/disengaged semantics [8]
 struct IsWrapperSemantic<OptionWrapper<X>> : std::true_type {};
-
-#undef NeedfulOption
-#define NeedfulOption(T)  needful::OptionWrapper<T>
-
 
 
 //=/// UNWRAP HOOK FOR Optional(T) ////////////////////////////////////////=//
@@ -255,6 +265,25 @@ T operator+(  // lower precedence than % [2]
     const OptionWrapper<T>& option
 ){
     return option.o;
+}
+
+
+//=/// BLOCK `needed` ON OptionWrapper ////////////////////////////////////=//
+//
+// The `needed` operator is only valid on Need(T), not on Option(T).  If you
+// try to use `needed` on an Option(T), it's a compile-time error.  This makes
+// `needed` a useful building block for macros that reject optional types.
+//
+template<typename T>
+T operator+(
+    NeededHelper,
+    const OptionWrapper<T>&
+){
+    static_assert(
+        sizeof(T) != sizeof(T),  // dependent false
+        "cannot use `need` on an Option(T) -- use `opt` or `unwrap` instead"
+    );
+    return *static_cast<T*>(nullptr);  // unreachable
 }
 
 
