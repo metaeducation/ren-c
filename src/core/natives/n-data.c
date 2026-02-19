@@ -43,7 +43,7 @@ DECLARE_NATIVE(BIND1)
 {
     INCLUDE_PARAMS_OF_BIND1;
 
-    Element* v = Element_ARG(VALUE);
+    Element* v = ARG(VALUE);
 
     Copy_Cell_May_Bind(OUT, v, Level_Binding(level_));
     return OUT;
@@ -204,7 +204,7 @@ DECLARE_NATIVE(INSIDE)
 {
     INCLUDE_PARAMS_OF_INSIDE;
 
-    Element* element = Element_ARG(VALUE);
+    Element* element = ARG(VALUE);
     Element* where = Element_ARG(WHERE);
 
     Context* context;
@@ -1014,7 +1014,7 @@ DECLARE_NATIVE(INFIX_Q)
 {
     INCLUDE_PARAMS_OF_INFIX_Q;
 
-    Element* frame = Element_ARG(FRAME);
+    Element* frame = ARG(FRAME);
     return LOGIC_OUT(Is_Frame_Infix(frame));
 }
 
@@ -1698,7 +1698,7 @@ DECLARE_NATIVE(DEGRADE)
 {
     INCLUDE_PARAMS_OF_DEGRADE;
 
-    Element* elem = Element_ARG(VALUE);
+    Element* elem = ARG(VALUE);
     if (not Is_Quasiform(elem))
         return COPY_TO_OUT(elem);
 

@@ -240,7 +240,7 @@ INLINE Cell* Arg_Of_Level_Inline(
         u_cast(ArgMode, unchecked_argmode_##name##_)))
 
 #define Element_ARG(name) \
-    cast(Element*, Required_Arg_Of_Level(level_, checked_##name##_))
+    As_Element(ARG(name))
 
 #define ARG_N(n) \
     As_Stable(Required_Arg_Of_Level(level_, (n)))

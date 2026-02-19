@@ -422,7 +422,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Error)
     assert(Datatype_Type(ARG(TYPE)) == TYPE_ERROR);
     UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     // Frame from the error object template defined in %sysobj.r
     //

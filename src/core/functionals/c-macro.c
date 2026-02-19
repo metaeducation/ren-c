@@ -258,7 +258,7 @@ DECLARE_NATIVE(INLINE)
 
   didnt_opt_out: {
 
-    Element* code = Element_ARG(CODE);
+    Element* code = unwrap Element_ARG(CODE);
 
     if (Is_Quoted(code)) {
         Unquote_Cell(code);

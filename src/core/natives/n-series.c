@@ -318,7 +318,7 @@ DECLARE_NATIVE(CHANGE)  // Must be frame-compatible with APPEND, INSERT [A]
 
     Length len;
     if (ARG(PART))
-        len = Part_Len_May_Modify_Index(series, ARG(PART));
+        len = Part_Len_May_Modify_Index(series, Element_ARG(PART));
     else
         len = Guess_Part_Len_For_Change_May_Coerce(series, v);  // see notes
 

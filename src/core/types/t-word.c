@@ -100,7 +100,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
     Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
     assert(heart == TYPE_WORD);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     if (not Any_Sequence(arg))
         return fail (Error_Bad_Make(heart, arg));

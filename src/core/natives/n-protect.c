@@ -39,10 +39,10 @@ DECLARE_NATIVE(CONST)
 {
     INCLUDE_PARAMS_OF_CONST;
 
-    Element* e = Element_ARG(VALUE);
-    Set_Cell_Flag(e, CONST);
+    Element* v = ARG(VALUE);
+    Set_Cell_Flag(v, CONST);
 
-    return COPY_TO_OUT(e);
+    return COPY_TO_OUT(v);
 }
 
 
@@ -84,10 +84,10 @@ DECLARE_NATIVE(MUTABLE)
 {
     INCLUDE_PARAMS_OF_MUTABLE;
 
-    Element* e = Element_ARG(VALUE);
-    Clear_Cell_Flag(e, CONST);
+    Element* v = ARG(VALUE);
+    Clear_Cell_Flag(v, CONST);
 
-    return COPY_TO_OUT(e);
+    return COPY_TO_OUT(v);
 }
 
 

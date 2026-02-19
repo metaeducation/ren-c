@@ -132,7 +132,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
 
     assert(Datatype_Type(ARG(TYPE)) == TYPE_DECIMAL);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     Option(Type) type = Type_Of(arg);
     if (Any_Utf8_Type(type)) {

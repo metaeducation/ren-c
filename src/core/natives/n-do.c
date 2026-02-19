@@ -54,7 +54,7 @@ DECLARE_NATIVE(REEVAL)
     //
     UNUSED(ARG(EXPRESSIONS));
 
-    Element* v = Element_ARG(VALUE);
+    Element* v = ARG(VALUE);
 
     Flags flags = FLAG_STATE_BYTE(ST_STEPPER_REEVALUATING);
 
@@ -111,7 +111,7 @@ DECLARE_NATIVE(SHOVE)
     if (not Is_Level_Style_Varargs_May_Panic(&L, ARG(RIGHT)))
         panic ("SHOVE (->-) not implemented for MAKE VARARGS! [...] yet");
 
-    Element* left = Element_ARG(LEFT);
+    Element* left = ARG(LEFT);
 
     if (Is_Level_At_End(L))  // shouldn't be for WORD!/PATH! unless APPLY
         return COPY_TO_OUT(ARG(LEFT));  // evaluator wants `help <-` to work
@@ -622,7 +622,7 @@ DECLARE_NATIVE(APPLIQUE)
 {
     INCLUDE_PARAMS_OF_APPLIQUE;
 
-    Element* op = Element_ARG(OPERATION);
+    Element* op = ARG(OPERATION);
     Element* def = Element_ARG(DEF);
 
     enum {
@@ -1034,7 +1034,7 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 
   fetch_action_for_operation: {
 
-    Element* operation = Element_ARG(OPERATION);
+    Element* operation = ARG(OPERATION);
 
     STATE = ST__S_S_GETTING_OPERATION;  // will be necessary in the future...
 

@@ -103,7 +103,7 @@ DECLARE_NATIVE(COPY)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* elem = Element_ARG(VALUE);
+    Element* elem = ARG(VALUE);
 
     LiftByte lift_byte = LIFT_BYTE(elem);
     LIFT_BYTE(elem) = NOQUOTE_3;  // dispatch requires unquoted items

@@ -159,7 +159,7 @@ DECLARE_NATIVE(TRANSCODE)
           Get_Var(
             line_number_out,
             NO_STEPS,
-            Element_ARG(LINE),
+            unwrap Element_ARG(LINE),
             SPECIFIED
         ));
         // null not allowed, must be integer
@@ -281,7 +281,7 @@ DECLARE_NATIVE(TRANSCODE)
 
         require (
           Set_Var_To_Out_Use_Toplevel(
-            Element_ARG(LINE), GROUP_EVAL_NO
+            unwrap Element_ARG(LINE), GROUP_EVAL_NO
           )
         );
         SUBLEVEL->baseline.stack_base = STACK_BASE;

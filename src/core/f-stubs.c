@@ -392,7 +392,7 @@ void Extra_Init_Frame_Checks_Debug(Phase* phase) {
 //
 REBLEN Part_Len_May_Modify_Index(
     Stable* series,  // ANY-SERIES? value whose index may be modified
-    Option(const Stable*) part_arg  // :PART (number, position in value)
+    Option(const Element*) part_arg  // :PART (number, position in value)
 ){
     assert(Is_Rune(series) or Any_Series(series));
 
@@ -405,7 +405,7 @@ REBLEN Part_Len_May_Modify_Index(
         return size;
     }
 
-    const Stable* part = unwrap part_arg;
+    const Element* part = unwrap part_arg;
 
     // Series_Index() checks to make sure it's for in-bounds
     //
@@ -465,7 +465,7 @@ REBLEN Part_Len_May_Modify_Index(
 // Simple variation that instead of returning the length, returns the absolute
 // tail position in the series of the partial sequence.
 //
-REBLEN Part_Tail_May_Modify_Index(Stable* series, Option(const Stable*) limit)
+REBLEN Part_Tail_May_Modify_Index(Element* series, Option(const Element*) limit)
 {
     REBLEN len = Part_Len_May_Modify_Index(series, limit);
     return len + Series_Index(series); // uses the possibly-updated index
@@ -590,7 +590,7 @@ DECLARE_NATIVE(SETIFY)
     INCLUDE_PARAMS_OF_SETIFY;
 
     trap (
-      Element* e = Setify(Element_ARG(VALUE))
+      Element* e = Setify(ARG(VALUE))
     );
 
     return COPY_TO_OUT(e);
@@ -613,7 +613,7 @@ DECLARE_NATIVE(GETIFY)
     INCLUDE_PARAMS_OF_GETIFY;
 
     trap (
-      Element* e = Getify(Element_ARG(VALUE))
+      Element* e = Getify(ARG(VALUE))
     );
 
     return COPY_TO_OUT(e);

@@ -321,7 +321,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
     Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_String_Type(heart) or Any_Utf8_Type(heart));  // rune calls [1]
 
-    Element* def = Element_ARG(DEF);
+    Element* def = ARG(DEF);
 
     if (Is_Integer(def)) { // new string with given integer capacity [2]
         require (
@@ -780,7 +780,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
 
         REBINT limit;
         if (ARG(PART))
-            limit = Part_Len_May_Modify_Index(v, ARG(PART));
+            limit = Part_Len_May_Modify_Index(v, Element_ARG(PART));
         else
             limit = 1;
 
@@ -832,7 +832,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             | (ARG(CASE) ? AM_FIND_CASE : 0)
         );
 
-        REBLEN tail = Part_Tail_May_Modify_Index(v, ARG(PART));
+        REBLEN tail = Part_Tail_May_Modify_Index(v, Element_ARG(PART));
 
         REBINT skip;
         if (ARG(SKIP)) {
@@ -1048,11 +1048,11 @@ IMPLEMENT_GENERIC(COPY, Any_String)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* string = Element_ARG(VALUE);
+    Element* string = ARG(VALUE);
 
     UNUSED(ARG(DEEP));  // :DEEP is historically ignored on ANY-STRING?
 
-    REBINT len = Part_Len_May_Modify_Index(string, ARG(PART));
+    REBINT len = Part_Len_May_Modify_Index(string, Element_ARG(PART));
 
     require (
       Strand* copy = Copy_String_At_Limit(string, &len)
@@ -1077,7 +1077,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
 
     REBLEN len;
     if (ARG(PART)) {
-        len = Part_Len_May_Modify_Index(v, ARG(PART));
+        len = Part_Len_May_Modify_Index(v, Element_ARG(PART));
         if (len == 0) {
             Heart heart = Heart_Of_Builtin_Fundamental(v);
             require (
@@ -1137,7 +1137,7 @@ IMPLEMENT_GENERIC(REVERSE, Any_String)
     Strand* s = Cell_Strand_Ensure_Mutable(string);
 
     Copy_Cell(OUT, string);  // save before index adjustment
-    REBINT len = Part_Len_May_Modify_Index(string, ARG(PART));
+    REBINT len = Part_Len_May_Modify_Index(string, Element_ARG(PART));
     Reverse_Strand(s, Series_Index(string), len);
     return OUT;
 }
@@ -1280,7 +1280,7 @@ IMPLEMENT_GENERIC(SORT, Any_String)
         panic (Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
     Copy_Cell(OUT, v);  // before index modification
-    REBLEN limit = Part_Len_May_Modify_Index(v, ARG(PART));
+    REBLEN limit = Part_Len_May_Modify_Index(v, Element_ARG(PART));
     if (limit <= 1)
         return OUT;
 

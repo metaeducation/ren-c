@@ -64,7 +64,7 @@ DECLARE_NATIVE(HEART_OF)
 {
     INCLUDE_PARAMS_OF_HEART_OF;
 
-    Element* elem = Element_ARG(VALUE);
+    Element* elem = ARG(VALUE);
 
     Option(Heart) heart = Heart_Of(elem);
     if (heart)
@@ -87,7 +87,7 @@ DECLARE_NATIVE(QUOTES_OF)
 {
     INCLUDE_PARAMS_OF_QUOTES_OF;
 
-    return Init_Integer(OUT, Quotes_Of(Element_ARG(VALUE)));
+    return Init_Integer(OUT, Quotes_Of(ARG(VALUE)));
 }
 
 

@@ -683,9 +683,10 @@ DECLARE_NATIVE(FOR_SKIP)
     if (not ARG(SERIES))
         return Init_Heavy_Void(OUT);
 
+    Element* series = unwrap Element_ARG(SERIES);
+
     Element* word = Element_ARG(WORD);
-    Element* series = Element_ARG(SERIES);
-    Element* body = Element_ARG(BODY);
+    Element* body = ARG(BODY);
 
     REBINT skip = Int32(ARG(SKIP));
     if (skip == 0)  // https://forum.rebol.info/t/infinite-loop-vs-error/936
@@ -852,7 +853,7 @@ DECLARE_NATIVE(CYCLE)
 {
     INCLUDE_PARAMS_OF_CYCLE;
 
-    Element* body = Element_ARG(BODY);
+    Element* body = ARG(BODY);
 
     enum {
         ST_CYCLE_INITIAL_ENTRY = STATE_0,
@@ -1382,7 +1383,7 @@ DECLARE_NATIVE(FOR_EACH)
 
     Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
     Option(Value*) data = ARG(DATA);
-    Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
+    Element* body = ARG(BODY);  // bound to vars on initial_entry
 
     Element* iterator;  // holds Loop_Each_State, all paths must cleanup!
 
@@ -1513,7 +1514,7 @@ DECLARE_NATIVE(EVERY)
 
     Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
     Option(Value*) data = ARG(DATA);
-    Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
+    Element* body = ARG(BODY);  // bound to vars on initial_entry
 
     Stable* iterator;  // holds Loop_Each_State, all paths must cleanup!
 
@@ -1656,7 +1657,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     INCLUDE_PARAMS_OF_REMOVE_EACH;
 
     Element* vars = Element_ARG(VARS);
-    Element* body = Element_ARG(BODY);
+    Element* body = ARG(BODY);
 
     Count removals = 0;
 
@@ -1667,7 +1668,7 @@ DECLARE_NATIVE(REMOVE_EACH)
 
   process_non_blank: { ////////////////////////////////////////////////////=//
 
-    Element* data = Element_ARG(DATA);
+    Element* data = unwrap Element_ARG(DATA);
 
     // 1. Updating arrays in place may not be better than pushing values to
     //    the data stack and creating a precisely-sized output Flex to swap as
@@ -2068,7 +2069,7 @@ DECLARE_NATIVE(MAP)
 
     Element* vars = Element_ARG(VARS);  // becomes context on initial_entry
     Option(Value*) data_arg = ARG(DATA);  // action invokes, frame enumerates
-    Element* body = Element_ARG(BODY);  // bound to vars on initial_entry
+    Element* body = ARG(BODY);  // bound to vars on initial_entry
 
     Stable* iterator;  // holds Loop_Each_State, all paths must cleanup!
 
@@ -2250,8 +2251,8 @@ DECLARE_NATIVE(REPEAT)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    Stable* count = opt ARG(COUNT);
-    Element* body = Element_ARG(BODY);
+    Stable* count = opt ARG(COUNT);  // nullptr checked in initial_entry
+    Element* body = ARG(BODY);
 
     Stable* index = u_cast(Stable*, SPARE);  // current index, erased on entry
 
@@ -2348,7 +2349,7 @@ DECLARE_NATIVE(FOR)
 
     Element* vars = Element_ARG(VARS);
     Element* value = Element_ARG(VALUE);
-    Element* body = Element_ARG(BODY);
+    Element* body = ARG(BODY);
 
     enum {
         ST_FOR_INITIAL_ENTRY = STATE_0,
@@ -2470,7 +2471,7 @@ DECLARE_NATIVE(INSIST)
 {
     INCLUDE_PARAMS_OF_INSIST;
 
-    Element* body = Element_ARG(BODY);
+    Element* body = ARG(BODY);
 
     enum {
         ST_INSIST_INITIAL_ENTRY = STATE_0,
@@ -2545,7 +2546,7 @@ DECLARE_NATIVE(INSIST)
 
 
 //
-//  /while: native [  ; note: UNTIL shares this implementation
+//  /while: native [
 //
 //  "So long as a condition is not NULL, evaluate the body"
 //
@@ -2554,12 +2555,12 @@ DECLARE_NATIVE(INSIST)
 //      body [<const> block! frame!]  ; [A]
 //  ]
 //
-DECLARE_NATIVE(WHILE)
+DECLARE_NATIVE(WHILE)  // note: UNTIL shares this implementation
 {
     INCLUDE_PARAMS_OF_WHILE;
 
-    Element* condition = Element_ARG(CONDITION);
-    Element* body = Element_ARG(BODY);
+    Element* condition = ARG(CONDITION);
+    Element* body = ARG(BODY);
 
     enum {
         ST_WHILE_INITIAL_ENTRY = STATE_0,

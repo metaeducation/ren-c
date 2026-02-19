@@ -567,7 +567,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
 
     assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_DATE);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     if (Any_List(arg))
         goto make_from_array;

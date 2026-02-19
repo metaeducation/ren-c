@@ -57,7 +57,7 @@ DECLARE_NATIVE(DRAIN_Q)
 {
     INCLUDE_PARAMS_OF_DRAIN_Q;
 
-    Element* v = Element_ARG(VALUE);
+    Element* v = ARG(VALUE);
 
     bool is_drain;
 
@@ -92,7 +92,7 @@ DECLARE_NATIVE(HOLE_Q)
 {
     INCLUDE_PARAMS_OF_HOLE_Q;
 
-    Element* v = Element_ARG(VALUE);
+    Element* v = ARG(VALUE);
 
     bool is_hole;
 
@@ -147,7 +147,7 @@ DECLARE_NATIVE(REDUCE)
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
-    Element* v = Element_ARG(VALUE);  // newline flag leveraged [2]
+    Element* v = ARG(VALUE);  // newline flag leveraged [2]
     Option(Element*) predicate = ARG(PREDICATE);
 
     enum {
@@ -429,7 +429,7 @@ DECLARE_NATIVE(REDUCE_EACH)
 {
     INCLUDE_PARAMS_OF_REDUCE_EACH;
 
-    Element* vars = Element_ARG(VARS);
+    Element* vars = ARG(VARS);
     Element* block = Element_ARG(BLOCK);
     Element* body = Element_ARG(BODY);
 

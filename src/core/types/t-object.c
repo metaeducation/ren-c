@@ -414,7 +414,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
 
     assert(Datatype_Type(ARG(TYPE)) == TYPE_FRAME);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     // MAKE FRAME! on a VARARGS! was an experiment designed before REFRAMER
     // existed, to allow writing things like REQUOTE.  It's still experimental
@@ -486,7 +486,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
 
     assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_MODULE);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     if (not Any_List(arg))
         return fail ("Currently only (MAKE MODULE! LIST) is allowed");
@@ -505,7 +505,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
     INCLUDE_PARAMS_OF_MAKE;
 
     Stable* type = ARG(TYPE);  // may be antiform datatype
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     if (Is_Object(type)) {
         VarList* varlist = cast(VarList*, Cell_Context(type));
@@ -1221,7 +1221,7 @@ IMPLEMENT_GENERIC(COPY, Any_Context)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    const Element* context = Element_ARG(VALUE);
+    const Element* context = ARG(VALUE);
 
     if (ARG(PART))
         panic (Error_Bad_Refines_Raw());
@@ -1500,7 +1500,7 @@ DECLARE_NATIVE(BYTES_OF)
 {
     INCLUDE_PARAMS_OF_BYTES_OF;
 
-    return Dispatch_Generic(BYTES_OF, Element_ARG(VALUE), LEVEL);
+    return Dispatch_Generic(BYTES_OF, ARG(VALUE), LEVEL);
 }
 
 
@@ -1524,7 +1524,7 @@ IMPLEMENT_GENERIC(COPY, Is_Frame)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    const Element* frame = Element_ARG(VALUE);
+    const Element* frame = ARG(VALUE);
 
     if (ARG(DEEP))
         panic ("COPY:DEEP on FRAME! not implemented");
@@ -1562,7 +1562,7 @@ DECLARE_NATIVE(PARAMETERS_OF)
 {
     INCLUDE_PARAMS_OF_PARAMETERS_OF;
 
-    Element* frame = Element_ARG(FRAME);
+    Element* frame = ARG(FRAME);
 
     return Init_Frame(
         OUT,
@@ -1591,7 +1591,7 @@ DECLARE_NATIVE(RETURN_OF)
 {
     INCLUDE_PARAMS_OF_RETURN_OF;
 
-    Element* frame = Element_ARG(FRAME);
+    Element* frame = ARG(FRAME);
     Phase* phase = Frame_Phase(frame);
 
     Details* details = Ensure_Phase_Details(phase);
@@ -1621,7 +1621,7 @@ DECLARE_NATIVE(BODY_OF)  // !!! should this be SOURCE-OF ?
 {
     INCLUDE_PARAMS_OF_BODY_OF;
 
-    Element* frame = Element_ARG(FRAME);
+    Element* frame = ARG(FRAME);
     Phase* phase = Frame_Phase(frame);
 
     Details* details = Ensure_Phase_Details(phase);
@@ -1650,7 +1650,7 @@ DECLARE_NATIVE(COUPLING_OF)
 {
     INCLUDE_PARAMS_OF_COUPLING_OF;
 
-    Element* frame = Element_ARG(FRAME);
+    Element* frame = ARG(FRAME);
 
     Details* details = Ensure_Phase_Details(Frame_Phase(frame));
     if (Not_Details_Flag(details, METHODIZED))
@@ -1682,7 +1682,7 @@ DECLARE_NATIVE(LABEL_OF)
 {
     INCLUDE_PARAMS_OF_LABEL_OF;
 
-    Element* frame = Element_ARG(FRAME);
+    Element* frame = ARG(FRAME);
 
     Option(const Symbol*) label = Frame_Label_Deep(frame);
     if (label)
@@ -1748,7 +1748,7 @@ IMPLEMENT_GENERIC(FILE_OF, Is_Frame)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    Element* frame = Element_ARG(VALUE);
+    Element* frame = ARG(VALUE);
     Level* L;
     const Source* a;
     File_Line_Frame_Heuristic(&L, &a, frame);
@@ -1773,7 +1773,7 @@ IMPLEMENT_GENERIC(LINE_OF, Is_Frame)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
-    Element* frame = Element_ARG(VALUE);
+    Element* frame = ARG(VALUE);
     Level* L;
     const Source* a;
     File_Line_Frame_Heuristic(&L, &a, frame);
@@ -1806,7 +1806,7 @@ DECLARE_NATIVE(NEAR_OF)
 {
     INCLUDE_PARAMS_OF_NEAR_OF;
 
-    Element* frame = Element_ARG(FRAME);
+    Element* frame = ARG(FRAME);
     Phase* phase = Frame_Phase(frame);
 
     if (Is_Stub_Details(phase))
@@ -1830,7 +1830,7 @@ DECLARE_NATIVE(PARENT_OF)
 {
     INCLUDE_PARAMS_OF_PARENT_OF;
 
-    Element* frame = Element_ARG(FRAME);
+    Element* frame = ARG(FRAME);
     Phase* phase = Frame_Phase(frame);
 
     if (Is_Stub_Details(phase))

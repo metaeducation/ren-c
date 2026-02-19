@@ -321,7 +321,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         if (Is_Antiform(unwrap ARG(VALUE)))
             panic (PARAM(VALUE));
 
-        Element* v = Element_ARG(VALUE);
+        Element* v = unwrap Element_ARG(VALUE);
 
         if (ARG(PART) or ARG(DUP) or ARG(LINE))
             panic (Error_Bad_Refines_Raw());
@@ -422,7 +422,7 @@ DECLARE_NATIVE(FILE_ACTOR)
            }
         }
 
-        REBLEN len = Part_Len_May_Modify_Index(ARG(DATA), ARG(PART));
+        REBLEN len = Part_Len_May_Modify_Index(ARG(DATA), Element_ARG(PART));
 
         if (Is_Block(data)) {  // will produce TEXT! from the data
             //

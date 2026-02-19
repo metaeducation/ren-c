@@ -416,7 +416,7 @@ DECLARE_NATIVE(CHECKSUM_CORE)
 {
     INCLUDE_PARAMS_OF_CHECKSUM_CORE;
 
-    REBLEN len = Part_Len_May_Modify_Index(ARG(DATA), ARG(PART));
+    REBLEN len = Part_Len_May_Modify_Index(ARG(DATA), Element_ARG(PART));
 
     Size size;
     const Byte* data = Cell_Bytes_Limit_At(&size, ARG(DATA), &len);
@@ -468,7 +468,7 @@ DECLARE_NATIVE(DEFLATE)
 {
     INCLUDE_PARAMS_OF_DEFLATE;
 
-    REBLEN limit = Part_Len_May_Modify_Index(ARG(DATA), ARG(PART));
+    REBLEN limit = Part_Len_May_Modify_Index(ARG(DATA), Element_ARG(PART));
 
     Size size;
     const Byte* bp = Cell_Bytes_Limit_At(&size, ARG(DATA), &limit);
@@ -541,7 +541,7 @@ DECLARE_NATIVE(INFLATE)
     const Byte* data;
     Size size;
     if (Is_Blob(ARG(DATA))) {
-        size = Part_Len_May_Modify_Index(ARG(DATA), ARG(PART));
+        size = Part_Len_May_Modify_Index(ARG(DATA), Element_ARG(PART));
         data = Blob_At(ARG(DATA));  // after (in case index modified)
     }
     else {

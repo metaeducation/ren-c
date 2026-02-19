@@ -917,7 +917,7 @@ DECLARE_NATIVE(TWEAK)
     if (not ARG(TARGET))
         return COPY_TO_OUT(LOCAL(DUAL));   // same for SET as [10 = (void): 10]
 
-    Element* target = Element_ARG(TARGET);
+    Element* target = unwrap Element_ARG(TARGET);
 
     Option(Element*) steps;
     if (ARG(GROUPS))

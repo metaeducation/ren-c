@@ -391,7 +391,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
 
     assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_VARARGS);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     // With MAKE VARARGS! on an ANY-LIST?, the array is the backing store
     // (shared) that the varargs interface cannot affect, but changes to

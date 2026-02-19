@@ -135,7 +135,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
     Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_List_Type(heart));
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     if (Is_Integer(arg) or Is_Decimal(arg)) {
         //
@@ -608,7 +608,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             | (ARG(CASE) ? AM_FIND_CASE : 0)
         );
 
-        REBLEN limit = Part_Tail_May_Modify_Index(list, ARG(PART));
+        REBLEN limit = Part_Tail_May_Modify_Index(list, Element_ARG(PART));
 
         const Array* arr = Cell_Array(list);
         Index index = Series_Index(list);
@@ -967,9 +967,9 @@ IMPLEMENT_GENERIC(COPY, Any_List)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* list = Element_ARG(VALUE);
+    Element* list = ARG(VALUE);
 
-    REBLEN tail = Part_Tail_May_Modify_Index(list, ARG(PART));
+    REBLEN tail = Part_Tail_May_Modify_Index(list, Element_ARG(PART));
 
     const Array* arr = Cell_Array(list);
     Index index = Series_Index(list);
@@ -1144,7 +1144,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
 
     REBLEN len;
     if (ARG(PART)) {
-        len = Part_Len_May_Modify_Index(list, ARG(PART));
+        len = Part_Len_May_Modify_Index(list, Element_ARG(PART));
         if (len == 0)
             return Init_Any_List(OUT, heart, Make_Source_Managed(0));
     }
@@ -1195,7 +1195,7 @@ IMPLEMENT_GENERIC(REVERSE, Any_List)
     Source* arr = Cell_Array_Ensure_Mutable(list);
     Index index = Series_Index(list);
 
-    REBLEN len = Part_Len_May_Modify_Index(list, ARG(PART));
+    REBLEN len = Part_Len_May_Modify_Index(list, Element_ARG(PART));
     if (len == 0)
         return COPY_TO_OUT(list); // !!! 1-element reversals update newlines?
 
@@ -1305,7 +1305,7 @@ DECLARE_NATIVE(FILE_OF)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    Element* elem = Element_ARG(VALUE);
+    Element* elem = ARG(VALUE);
     LIFT_BYTE(elem) = NOQUOTE_3;  // allow line-of and file-of on quoted/quasi
 
     return Dispatch_Generic(FILE_OF, elem, LEVEL);
@@ -1333,7 +1333,7 @@ DECLARE_NATIVE(LINE_OF)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
-    Element* elem = Element_ARG(VALUE);
+    Element* elem = ARG(VALUE);
     LIFT_BYTE(elem) = NOQUOTE_3;  // allow line-of and file-of on quoted/quasi
 
     return Dispatch_Generic(FILE_OF, elem, LEVEL);
@@ -1351,7 +1351,7 @@ IMPLEMENT_GENERIC(FILE_OF, Any_List)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    Element* list = Element_ARG(VALUE);
+    Element* list = ARG(VALUE);
     const Source* s = Cell_Array(list);
 
     Option(const Strand*) file = Link_Filename(s);
@@ -1365,7 +1365,7 @@ IMPLEMENT_GENERIC(LINE_OF, Any_List)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
-    Element* list = Element_ARG(VALUE);
+    Element* list = ARG(VALUE);
     const Source* s = Cell_Array(list);
 
     if (MISC_SOURCE_LINE(s) == 0)
@@ -1458,7 +1458,7 @@ IMPLEMENT_GENERIC(SORT, Any_List)
 
     Copy_Cell(OUT, list);  // save list before messing with index
 
-    REBLEN len = Part_Len_May_Modify_Index(list, ARG(PART));
+    REBLEN len = Part_Len_May_Modify_Index(list, Element_ARG(PART));
     if (len <= 1)
         return OUT;
     Index index = Series_Index(list);  // ^-- may have been modified

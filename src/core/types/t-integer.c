@@ -106,7 +106,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
 
     assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_INTEGER);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     if (Any_Utf8(arg)) {  // !!! odd historical behavior [1]
         Sink(Element) out = OUT;

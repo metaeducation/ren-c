@@ -406,7 +406,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
 
     assert(Datatype_Type(ARG(TYPE)) == TYPE_MAP);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     enum {
         ST_MAKE_MAP_INITIAL_ENTRY,
@@ -777,14 +777,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
             );
 
         LIFT_BYTE(unwrap ARG(VALUE)) = NOQUOTE_3;
-        Element* arg = Element_ARG(VALUE);
+        Element* arg = unwrap Element_ARG(VALUE);
 
         Map* m = VAL_MAP_Ensure_Mutable(map);
 
         if (ARG(LINE) or ARG(DUP))
             panic (Error_Bad_Refines_Raw());
 
-        REBLEN len = Part_Len_May_Modify_Index(arg, ARG(PART));
+        REBLEN len = Part_Len_May_Modify_Index(arg, Element_ARG(PART));
         const Element* tail;
         const Element* at = List_At(&tail, arg);  // w/modified index
 
@@ -841,7 +841,7 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    const Element* map = Element_ARG(VALUE);
+    const Element* map = ARG(VALUE);
 
     if (ARG(PART))
         panic (Error_Bad_Refines_Raw());

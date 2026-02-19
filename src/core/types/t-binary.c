@@ -192,7 +192,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
 
     assert(Datatype_Type(ARG(TYPE)) == TYPE_BLOB);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     switch (opt Type_Of(arg)) {
       case TYPE_INTEGER:  // !!! R3-Alpha nebulously tolerated DECIMAL! :-(
@@ -294,7 +294,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
 static Result(Element*) Copy_Blob_Part_At_May_Modify_Index(
     Sink(Element) out,
     Element* blob,  // may modify index
-    Option(const Stable*) part
+    Option(const Element*) part
 ){
     Length len = Part_Len_May_Modify_Index(blob, part);
     trap (
@@ -344,7 +344,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             | (ARG(CASE) ? AM_FIND_CASE : 0)
         );
 
-        REBINT tail = Part_Tail_May_Modify_Index(v, ARG(PART));
+        REBINT tail = Part_Tail_May_Modify_Index(v, Element_ARG(PART));
 
         REBINT skip;
         if (ARG(SKIP))
@@ -567,7 +567,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
     }
 
     if (to == TYPE_BLOB) {
-        const Stable* part = Stable_LIB(NULL);  // no :PART, copy to end
+        Option(const Element*) part = nullptr;  // no :PART, copy to end
         require (
           Copy_Blob_Part_At_May_Modify_Index(OUT, v, part)
         );
@@ -709,11 +709,11 @@ IMPLEMENT_GENERIC(COPY, Is_Blob)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* blob = Element_ARG(VALUE);
+    Element* blob = ARG(VALUE);
     UNUSED(ARG(DEEP));  // :DEEP is historically ignored on BLOB!
 
     require (
-      Copy_Blob_Part_At_May_Modify_Index(OUT, blob, ARG(PART))
+      Copy_Blob_Part_At_May_Modify_Index(OUT, blob, Element_ARG(PART))
     );
     return OUT;
 }
@@ -731,7 +731,7 @@ IMPLEMENT_GENERIC(TAKE, Is_Blob)
 
     REBINT len;
     if (ARG(PART)) {
-        len = Part_Len_May_Modify_Index(blob, ARG(PART));
+        len = Part_Len_May_Modify_Index(blob, Element_ARG(PART));
         if (len == 0)
             return Init_Blob(OUT, Make_Binary(0));
     } else
@@ -777,7 +777,7 @@ IMPLEMENT_GENERIC(REVERSE, Is_Blob)
 
     Element* blob = Element_ARG(SERIES);
 
-    REBLEN len = Part_Len_May_Modify_Index(blob, ARG(PART));
+    REBLEN len = Part_Len_May_Modify_Index(blob, Element_ARG(PART));
     Byte* bp = Blob_At_Ensure_Mutable(blob);  // index may've changed
 
     if (len > 0) {
@@ -944,7 +944,7 @@ IMPLEMENT_GENERIC(SORT, Is_Blob)
 
     Copy_Cell(OUT, blob);  // copy to output before index adjustment
 
-    REBLEN len = Part_Len_May_Modify_Index(blob, ARG(PART));
+    REBLEN len = Part_Len_May_Modify_Index(blob, Element_ARG(PART));
     Byte* data_at = Blob_At_Ensure_Mutable(blob);  // ^ index changes
 
     if (len <= 1)

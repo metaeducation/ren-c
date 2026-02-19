@@ -88,7 +88,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
 
     assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_PAIR);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     if (Is_Text(arg)) {  // "-1234567890x-1234567890"
         trap (

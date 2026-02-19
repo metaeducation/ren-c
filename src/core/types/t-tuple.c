@@ -36,7 +36,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
     Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_Sequence_Type(heart));
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     if (Is_Block(arg))
         return rebValue(
@@ -458,7 +458,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* seq = Element_ARG(VALUE);
+    Element* seq = ARG(VALUE);
     bool deep = did ARG(DEEP);
 
     if (not deep or Is_Cell_Wordlike(seq)) {  // wordlike is /A or :B etc

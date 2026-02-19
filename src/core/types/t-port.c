@@ -75,7 +75,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
 
     assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_PORT);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     if (Is_Object(arg)) {
         //

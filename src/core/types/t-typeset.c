@@ -742,7 +742,7 @@ DECLARE_NATIVE(DECORATE)
     if (not ARG(DECORATION))
         return COPY_TO_OUT(v);
 
-    Element* decoration = Element_ARG(DECORATION);
+    Element* decoration = unwrap Element_ARG(DECORATION);
 
     trap (
       Decorate_Element(decoration, v)
@@ -775,12 +775,12 @@ DECLARE_NATIVE(REDECORATE)
 {
     INCLUDE_PARAMS_OF_REDECORATE;
 
-    Element* v = Element_ARG(VALUE);
+    Element* v = ARG(VALUE);
 
     if (not ARG(DECORATION))
         return COPY_TO_OUT(v);
 
-    Element* decoration = Element_ARG(DECORATION);
+    Element* decoration = unwrap Element_ARG(DECORATION);
 
     Undecorate_Element(v);
     trap (
@@ -809,7 +809,7 @@ DECLARE_NATIVE(DECORATION_OF)
 {
     INCLUDE_PARAMS_OF_DECORATION_OF;
 
-    Element* element = Element_ARG(VALUE);
+    Element* element = ARG(VALUE);
 
     Option(Count) quotes = Quotes_Of(element);
     Noquotify(element);
@@ -862,7 +862,7 @@ DECLARE_NATIVE(UNDECORATE)
 {
     INCLUDE_PARAMS_OF_UNDECORATE;
 
-    Element* e = Element_ARG(VALUE);
+    Element* e = ARG(VALUE);
 
     Undecorate_Element(e);
 

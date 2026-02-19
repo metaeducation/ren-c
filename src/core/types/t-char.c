@@ -254,7 +254,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
     Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
     assert(Any_Utf8_Type(heart));
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     switch (opt Type_Of(arg)) {
       case TYPE_INTEGER: {
@@ -430,7 +430,7 @@ DECLARE_NATIVE(NUL_Q)
 {
     INCLUDE_PARAMS_OF_NUL_Q;
 
-    Element* e = Element_ARG(VALUE);
+    Element* e = ARG(VALUE);
     return LOGIC_OUT(Is_Blob_And_Is_Zero(e));
 }
 

@@ -127,7 +127,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Bitset)
 
     assert(Datatype_Type(ARG(TYPE)) == TYPE_BITSET);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     REBINT len = Find_Max_Bit(arg);
     if (len == NOT_FOUND)
@@ -596,7 +596,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
             return COPY_TO_OUT(v);  // don't panic on read only for noops
         if (Is_Antiform(unwrap ARG(VALUE)))
             panic (PARAM(VALUE));
-        const Element* arg = Element_ARG(VALUE);
+        const Element* arg = unwrap Element_ARG(VALUE);
 
         if (ARG(PART) or ARG(DUP) or ARG(LINE))
             panic (Error_Bad_Refines_Raw());
@@ -621,7 +621,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
         if (not ARG(PART))
             panic (Error_Missing_Arg_Raw());
 
-        if (not Set_Bits(bset, Element_ARG(PART), false))
+        if (not Set_Bits(bset, unwrap Element_ARG(PART), false))
             panic (PARAM(PART));
 
         return COPY_TO_OUT(v); }
@@ -690,7 +690,7 @@ IMPLEMENT_GENERIC(COPY, Is_Bitset)
 {
     INCLUDE_PARAMS_OF_COPY;
 
-    Element* bset = Element_ARG(VALUE);
+    Element* bset = ARG(VALUE);
     Binary* bits = VAL_BITSET(bset);
 
     if (ARG(PART) or ARG(DEEP))

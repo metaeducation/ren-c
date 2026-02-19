@@ -1297,7 +1297,7 @@ DECLARE_NATIVE(MAYBE)
 {
     INCLUDE_PARAMS_OF_MAYBE;
 
-    Element* target = Element_ARG(TARGET);
+    Element* target = ARG(TARGET);
     Value* v = ARG(VALUE);
 
     if (Is_Failure(v))

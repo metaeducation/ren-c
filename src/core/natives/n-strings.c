@@ -1383,7 +1383,7 @@ DECLARE_NATIVE(LOWERCASE)
 {
     INCLUDE_PARAMS_OF_LOWERCASE;
 
-    Change_Case(OUT, ARG(STRING), ARG(PART), false);
+    Change_Case(OUT, ARG(STRING), Element_ARG(PART), false);
     return OUT;
 }
 
@@ -1404,7 +1404,7 @@ DECLARE_NATIVE(UPPERCASE)
 {
     INCLUDE_PARAMS_OF_UPPERCASE;
 
-    Change_Case(OUT, ARG(STRING), ARG(PART), true);
+    Change_Case(OUT, ARG(STRING), Element_ARG(PART), true);
     return OUT;
 }
 

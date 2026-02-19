@@ -284,7 +284,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 
     assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_TIME);
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     switch (opt Type_Of(arg)) {
       case TYPE_INTEGER:  // interpret as seconds

@@ -119,7 +119,7 @@ DECLARE_NATIVE(QUOTE)
 {
     INCLUDE_PARAMS_OF_QUOTE;
 
-    Element* e = Element_ARG(VALUE);
+    Element* e = ARG(VALUE);
     Count depth = ARG(DEPTH) ? VAL_INT32(unwrap ARG(DEPTH)) : 1;
 
     if (depth < 0)
@@ -145,7 +145,7 @@ DECLARE_NATIVE(UNQUOTE)
 {
     INCLUDE_PARAMS_OF_UNQUOTE;
 
-    Element* v = Element_ARG(VALUE);
+    Element* v = ARG(VALUE);
 
     Count depth = ARG(DEPTH) ? VAL_INT32(unwrap ARG(DEPTH)) : 1;
 

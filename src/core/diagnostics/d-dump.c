@@ -153,7 +153,7 @@ DECLARE_NATIVE(DUMP)
     INCLUDE_PARAMS_OF_DUMP;
 
   #if RUNTIME_CHECKS
-    Element* v = Element_ARG(VALUE);
+    Element* v = ARG(VALUE);
     assert(Is_Word(v));
 
     PROBE(v);

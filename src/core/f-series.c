@@ -108,7 +108,7 @@ IMPLEMENT_GENERIC(REMOVE, Any_Series)
 
     REBINT len;
     if (ARG(PART))
-        len = Part_Len_May_Modify_Index(v, ARG(PART));
+        len = Part_Len_May_Modify_Index(v, Element_ARG(PART));
     else
         len = 1;
 
