@@ -127,7 +127,7 @@
 
     template<typename T>
     struct OnStackPointer {
-        using W = typename needful::UnwrappedIfWrappedType<T>::type;
+        using W = needful_unwrapped_type(T);
 
         static_assert(std::is_convertible<T, const Cell*>::value,
             "OnStack(T) must be used with a Cell*-convertible type");

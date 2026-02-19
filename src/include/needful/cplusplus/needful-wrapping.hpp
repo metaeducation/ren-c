@@ -60,7 +60,7 @@
 //=//// WRAPPER CLASS DEFINITION ///////////////////////////////////////////=//
 //
 // This is better than just `using wrapped_type = T;` because it helps people
-// reading the code naviate to this definition and read the rationale for
+// reading the code navigate to this definition and read the rationale for
 // why this convention is used.  It also means you can't cheat--the bits
 // are the same as the C definition.
 //
@@ -74,6 +74,7 @@
     static_assert(std::is_standard_layout<T>::value, \
         "Needful wrapped types must be standard-layout"); \
     using wrapped_type = T; \
+    using wrapped_deep_type = needful_deeply_unwrapped_type(T); \
     T name
 
 #define NEEDFUL_OVERRIDE_WRAPPED_FIELD_TYPE(T) /* derived class may use */ \
@@ -84,18 +85,18 @@
 
 //=//// WRAPPER CLASS DETECTION ///////////////////////////////////////////=//
 //
-// Uses SFINAE (Substitution Failure Is Not An Error) to detect if a type T
-// has a nested type called `wrapped_type`. This enables generic code to
-// distinguish between "wrapper" types (which define `wrapped_type`) and
-// regular types.
+// Detects whether a type `T` declares a nested type named `wrapped_type`.
+// Types that do so are treated as "wrapper" types by Needful's generic code.
 //
-// The trick is to declare two overloads of `test`: one that is valid only if
-// `T::wrapped_type` exists, and a fallback. The result is a compile-time
-// boolean constant, `HasWrappedType<T>::value`, that is true if T has a
-// `wrapped_type`, and false otherwise.
+// This uses the standard C++11 "detection idiom" based on `void_t`.  The
+// primary template defaults to `false_type`, while a partial specialization
+// is selected only if substitution of `typename T::wrapped_type` succeeds.
+// If the nested type does not exist, substitution fails silently (SFINAE),
+// and the primary template is used instead.
 //
-// This pattern is robust and avoids hard errors for types that do not have
-// the member, making it ideal for metaprogramming and generic code.
+// (NOTE: Using a common empty base class for all wrapper classes was tried
+// to see if it would be more efficient.  But it didn't help, and just made
+// a rule you might not want to follow in your class, so we stick with this.)
 //
 // 1. Any type exposing `wrapped_type` must be standard-layout, because
 //    NEEDFUL_EXTRACT_INNER relies on reinterpret_cast to the first member
@@ -104,22 +105,15 @@
 //    type is first examined--rather than at each individual cast site.
 //
 
+template<typename T, typename = void>
+struct HasWrappedType : std::false_type {};
+
 template<typename T>
-struct HasWrappedType {
-  private:
-    template<typename U>
-    static auto test(int) -> decltype(
-        typename U::wrapped_type{},
-        std::true_type{}
-    );
-    template<typename>
-    static std::false_type test(...);
-
-  public:
-    static constexpr bool value = decltype(test<T>(0))::value;
-
-    static_assert(  // standard-layout needed for first-member aliasing [1]
-        not value or std::is_standard_layout<T>::value,
+struct HasWrappedType<T, void_t<typename T::wrapped_type>>
+    : std::true_type
+{
+    static_assert(
+        std::is_standard_layout<T>::value,
         "Wrapper types (with wrapped_type) must be standard-layout"
     );
 };
@@ -127,52 +121,31 @@ struct HasWrappedType {
 
 //=//// UNWRAPPING: GET THE INNER TYPE OF A WRAPPER /////////////////////=//
 
-template<typename T, bool = HasWrappedType<T>::value>
-struct UnwrappedType
-  { using type = T; };
-
-template<typename T>
-struct UnwrappedType<T, true>
-  { using type = typename T::wrapped_type; };
-
-#define needful_unwrapped_type(T) \
-    typename needful::UnwrappedType<T>::type
-
-
-// DeeplyUnwrappedType: Recursively unwrap through all wrapper layers to
-// reach the innermost non-wrapper type.  For example:
-//
-//     DeeplyUnwrappedType<OptionWrapper<Heart>>::type => HeartEnum
-//     DeeplyUnwrappedType<Heart>::type                => HeartEnum
-//     DeeplyUnwrappedType<int>::type                  => int
-//
-// This is useful for i_cast(), which needs to verify that the ultimate
-// leaf type is integral or enum even when there are multiple wrapper layers
-// (e.g. Option around a debug-mode Heart struct that wraps HeartEnum).
-//
-template<typename T, bool = HasWrappedType<T>::value>
-struct DeeplyUnwrappedType
-  { using type = T; };
-
-template<typename T>
-struct DeeplyUnwrappedType<T, true>
-  : DeeplyUnwrappedType<typename T::wrapped_type> {};
-
-#define needful_deeply_unwrapped_type(T) \
-    typename needful::DeeplyUnwrappedType<T>::type
-
-
-template<typename T>
-struct UnwrappedIfWrappedType {
-    using type = conditional_t<
-        HasWrappedType<T>::value,
-        needful_unwrapped_type(T),
-        T
-    >;
+template<typename T, typename = void>
+struct UnwrappedType {
+    using type = T;
 };
 
-#define needful_unwrapped_if_wrapped_type(T) \
-    typename needful::UnwrappedIfWrappedType<T>::type
+template<typename T>
+struct UnwrappedType<T, void_t<typename T::wrapped_type>> {
+    using type = typename T::wrapped_type;
+};
+
+template<typename T, typename = void>
+struct DeeplyUnwrappedType {
+    using type = T;
+};
+
+template<typename T>
+struct DeeplyUnwrappedType<T, void_t<typename T::wrapped_deep_type>> {
+    using type = typename T::wrapped_deep_type;
+};
+
+#define needful_unwrapped_type(T) /* unwrapped IF wrapped, else T */ \
+    typename needful::UnwrappedType<T>::type
+
+#define needful_deeply_unwrapped_type(T) /* unwrapped IF wrapped, else T */ \
+    typename needful::DeeplyUnwrappedType<T>::type
 
 
 //=//// REWRAP AN INNER TYPE WITH THE SAME TEMPLATE ///////////////////////=//
@@ -296,12 +269,10 @@ struct IsWrapperSemantic : std::false_type {};
 
 template<typename T>
 struct IsBasicType {
-    static constexpr bool value = std::is_fundamental<T>::value
-        or std::is_enum<T>::value
-        or (HasWrappedType<T>::value and (
-            std::is_fundamental<needful_unwrapped_type(T)>::value
-            or std::is_enum<needful_unwrapped_type(T)>::value
-        ));
+    using Adjusted = needful_unwrapped_type(T);  // !!! deep?
+
+    static constexpr bool value =
+        std::is_fundamental<Adjusted>::value or std::is_enum<Adjusted>::value;
 };
 
 
