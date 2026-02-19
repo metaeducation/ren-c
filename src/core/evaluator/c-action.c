@@ -91,54 +91,69 @@
 //
 Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
     if (b == OUT) {  // common case, made fastest
-        assert(Is_Cell_Readable(OUT));  // must write output, even if just void
+        assert(Is_Cell_Readable(OUT));  // must write out, even if just void
         return none;
     }
 
-    if (b == nullptr) {  // API and internal code can both return `nullptr`
+  handle_null_or_failure: {
+
+  // 1. nullptr Bounce often means "return a ~null~ antiform", though internal
+  //    APIs usually use NULL_OUT to initialize the output cell directly to
+  //    the null state and take the earlier/faster branch above.
+  //
+  //    However there is a second meaning of the 0 state when `g_failure` is
+  //    set, which is the desire to return a FAILURE! antiform of whatever the
+  //    Error* in `g_failure` is.
+  //
+  // 2. At one time this would unwind levels as a convenience on failure:
+  //
+  //        while (TOP_LEVEL != L) {
+  //            Rollback_Level(TOP_LEVEL);
+  //            Drop_Level(TOP_LEVEL);
+  //            Erase_Cell(TOP_LEVEL->out);
+  //        }
+  //        Rollback_Level(L);
+  //
+  //   However this is a bit presumptuous; nothing used it so it's hard to
+  //   tell how many places would be helped.  It was discovered to be broken'
+  //   for intrinsics since they shouldn't roll back the sublevel they ran in
+  //   as they weren't expected to...so this was removed for now.
+
+    if (b == nullptr) {  // could be from a NEEDFUL_RESULT_0 [1]
         if (not g_failure) {
             Init_Null(OUT);
             return none;
         }
 
-        // if g_failure is set, nullptr came from `return fail()` not a
-        // `return nullptr` indicating null.  See NEEDFUL_RESULT_0.
-
         assert(not Is_Throwing(L));
-
-        while (TOP_LEVEL != L) {  // convenience
-            Rollback_Level(TOP_LEVEL);
-            Drop_Level(TOP_LEVEL);
-            Erase_Cell(TOP_LEVEL->out);
-        }
-        Rollback_Level(L);  // not throwing, no trampoline rollback TOP_LEVEL
 
         Init_Error_Cell(L->out, g_failure);
         g_failure = nullptr;  // have to do before Force_Location_Of_Error()
-        Failify_Cell(L->out);  // forces location of error to level
-
-      #if DEBUG_EXTANT_STACK_POINTERS  // want to use stack in location setting
-        Count save_extant = g_ds.num_refs_extant;
-        g_ds.num_refs_extant = 0;
-      #endif
-
-      #if DEBUG_EXTANT_STACK_POINTERS
-        assert(g_ds.num_refs_extant == 0);
-        g_ds.num_refs_extant = save_extant;
-      #endif
+        Failify_Cell_And_Force_Location(L->out);
 
         return none;
     }
 
+} give_up_on_simplifying_if_bounce_wild: {
+
     if (Is_Bounce_Wild(b))
         return b;  // can't simplify, may be a panic, continuation, etc.
 
-    if (b == BOUNCE_OKAY) {  // BOUNCE_OKAY is just LIB(OKAY) (fixed pointer)
-        Init_Okay(OUT);  // ...optimization doesn't write OUT, but we do here
-        return none;  // essential to typechecker intrinsic optimization...
+} handle_bounce_okay: {
+
+  // BOUNCE_OKAY is just LIB(OKAY) (fixed pointer).  It's important for cases
+  // like typecheckers that don't actually want to overwrite their OUT cell,
+  // which is essential to the intrinsic optimization.
+  //
+  // (But if we're receiving it here, we're not a typechecker call, so we
+  // go ahead and reify the okay into the output cell.
+
+    if (b == BOUNCE_OKAY) {
+        Init_Okay(OUT);
+        return none;
     }
 
-  copy_api_cell_to_out_and_release_it: {
+} copy_api_cell_to_out_and_release_it: {
 
     if (Is_Bounce_A_Cell(b)) {  // must be Api Value
         Api(Value*) v = Value_From_Bounce(b);

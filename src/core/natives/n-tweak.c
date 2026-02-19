@@ -935,11 +935,8 @@ DECLARE_NATIVE(TWEAK)
         target,
         steps
     );
-    if (e) {
-        Init_Error_Cell(OUT, unwrap e);
-        Failify_Cell(OUT);
-        return OUT;
-    }
+    if (e)
+        return fail (unwrap e);
 
   return_value_even_if_we_dont_assign: {
 

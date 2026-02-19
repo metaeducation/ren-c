@@ -237,7 +237,7 @@ DECLARE_NATIVE(TRANSCODE)
                     OUT,
                     Error_User("TRANSCODE:ONE scanned more than one element")
                 );
-                Failify_Cell(OUT);
+                Failify_Cell_And_Force_Location(OUT);
             }
         }
         Drop_Level(SUBLEVEL);

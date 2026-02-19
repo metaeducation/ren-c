@@ -462,7 +462,7 @@ DECLARE_NATIVE(FAIL_P)
     Stable* v = ARG(REASON);
 
     Copy_Cell(OUT, v);
-    return Failify_Cell(OUT);
+    return Failify_Cell_And_Force_Location(OUT);
 }
 
 

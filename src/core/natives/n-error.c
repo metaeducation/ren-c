@@ -120,7 +120,7 @@ DECLARE_NATIVE(ENRECOVER)
         if (ARG(RELAX))
             return BOUNCE_THROWN;  // e.g. RETURN, THROW
 
-        return Init_Error_Cell(OUT, Error_No_Catch_For_Throw(LEVEL));
+        return fail (Error_No_Catch_For_Throw(LEVEL));
     }
 
     Copy_Cell(OUT, VAL_THROWN_LABEL(LEVEL));

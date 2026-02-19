@@ -1619,7 +1619,7 @@ Bounce Stepper_Executor(Level* L)
         CURRENT, GROUP_EVAL_YES
     ) except (Error* e) {
         Init_Error_Cell(OUT, e);
-        Failify_Cell(OUT);
+        Failify_Cell_And_Force_Location(OUT);
     } else {
         possibly(Not_Cell_Stable(OUT));  // unmeta'd item [1]
     }
@@ -1823,7 +1823,7 @@ Bounce Stepper_Executor(Level* L)
         CURRENT, GROUP_EVAL_YES
     ) except (Error* e) {
         Init_Error_Cell(OUT, e);
-        Failify_Cell(OUT);
+        Failify_Cell_And_Force_Location(OUT);
     }
 
     Set_Eval_Executor_Flag(L, OUT_IS_DISCARDABLE);

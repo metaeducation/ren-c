@@ -36,10 +36,6 @@
 //  ]
 //
 DECLARE_NATIVE(NULL_Q)
-//
-// !!! It seems that NULL? should return true for "any null", e.g. heavy forms
-// as well.  The questions discerning them should be separate (e.g. LIGHT-NULL?
-// and HEAVY-NULL?).
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
@@ -50,7 +46,7 @@ DECLARE_NATIVE(NULL_Q)
 
     if (Is_Heavy_Null(v))
         return fail (
-            "Heavy null detected by NULL?, use NULL? DECAY if intentional"
+            "Heavy null detected by NULL?, use NOT or NULL? DECAY if meant"
        );
 
     Ensure_No_Failures_Including_In_Packs(v) except (Error* e) {

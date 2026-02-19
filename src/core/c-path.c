@@ -139,11 +139,8 @@ DECLARE_NATIVE(PICK)
     Option(Error*) e = Tweak_Stack_Steps_With_Dual_Scratch_To_Dual_Spare();
     Drop_Data_Stack_To(STACK_BASE);
 
-    if (e) {  // should be willing to bounce to trampoline...
-        Init_Error_Cell(OUT, unwrap e);
-        Failify_Cell(OUT);
-        return OUT;
-    }
+    if (e)  // should be willing to bounce to trampoline...
+        return fail (unwrap e);
 
     require (
       Unlift_Cell_No_Decay(SPARE)  // !!! faster version, known ok antiform?
@@ -284,11 +281,8 @@ DECLARE_NATIVE(POKE)
     Option(Error*) e = Tweak_Stack_Steps_With_Dual_Scratch_To_Dual_Spare();
     Drop_Data_Stack_To(STACK_BASE);
 
-    if (e) {
-        Init_Error_Cell(OUT, unwrap e);
-        Failify_Cell(OUT);
-        return OUT;
-    }
+    if (e)
+        return fail (unwrap e);
 
     return Copy_Cell(OUT, v);
 }
