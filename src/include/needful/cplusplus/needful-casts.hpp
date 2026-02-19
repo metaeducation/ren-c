@@ -653,9 +653,20 @@ NEEDFUL_DEFINE_DOWNCAST_HELPERS(UnhookableDowncast, unhookable);
 
 //=//// INTEGER-LIKE CAST /////////////////////////////////////////////////=//
 //
+// NOTE: Usually i_cast() acts like just a C-style cast, and ii_cast() is
+// mapped to this cast behavior.  It's because using this cast for all simple
+// integer casts in every build slows it down *dramatically*.  See %needful.h
+// for more information, and only use ii_cast() when you know you are
+// dealing with a wrapper...most useful on hot paths.
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
 // i_cast(T, expr) signals "both sides of this conversion are conceptually
-// integer-like data".  It's the lightweight alternative to cast() when you
-// know the conversion is simple and want zero runtime cost in debug builds.
+// integer-like data".  Its goal is zero runtime cost in debug builds, and
+// because it sidesteps Needful wrappers it can actually be faster than a
+// C-style cast (though Needful wrappers are debug-only, so this is only a
+// concern in debug builds... C casts won't run conversions when the wrapper
+// is not there)
 //
 //     int n = i_cast(int, some_enum);    // enum -> int
 //     Byte b = i_cast(Byte, big_int);    // narrowing int -> int
@@ -678,31 +689,27 @@ NEEDFUL_DEFINE_DOWNCAST_HELPERS(UnhookableDowncast, unhookable);
 //
 // WHAT GUARANTEES DOES i_cast ACTUALLY MAKE?
 //
-// For raw int/enum sources, the guarantee is real: the static_asserts
-// reject pointers (use p_cast), function pointers (use f_cast), and
-// non-convertible class types.  For Needful wrappers, it additionally
-// verifies the deeply-unwrapped leaf is integral/enum.
+// For raw int/enum sources, the guarantee is real: the static_asserts reject
+// pointers (use p_cast), function pointers (use f_cast), and non-convertible
+// class types.  For Needful wrappers, it additionally verifies the deeply
+// unwrapped leaf is integral/enum (needful wrappers are not supposed to have
+// any more "runtime truth" than their raw types).
 //
-// For non-Needful class types, i_cast relaxes to "convertible": if
-// either side is a class constructible/convertible from the other, the
-// cast is allowed.  This means wrapper-to-wrapper casts slip through on
-// convertibility alone.  That's a deliberate trade-off: i_cast won't
-// break when a plain integer gets wrapped in a non-Needful class later.
-// At that point i_cast becomes commentary--"this is integer-like"--
-// rather than a hard enforcement.  That's acceptable; the alternative
-// (refusing class targets and forcing everything to x_cast) loses all
-// documentation value.
+// For non-Needful class types, i_cast relaxes to "convertible": if either
+// side is a class constructible/convertible from the other, the cast is
+// allowed.  This means class-to-class casts slip through on convertibility
+// alone.  That's a deliberate trade-off: i_cast won't break when a plain
+// integer gets wrapped in a non-Needful class later.  At that point i_cast
+// becomes commentary--"this is integer-like"--rather than a hard enforcement.
+// That's acceptable; the alternative (refusing class targets and forcing
+// everything to x_cast) gives i_cast() poor invariants.
 //
 // IMPLEMENTATION NOTES:
 //
-// - IntegerCastHelper is a struct, not a function: static_asserts fire
-//   at compile time with no codegen.  NEEDFUL_DUMMY_INSTANCE instantiates
-//   it in the comma operator so the macro body is pure cast expressions.
-//
-// - IntegerCastExtractType computes the target type for pointer-based
-//   extraction.  Non-wrapped: remove_const_t<V> (identity; the pointer
-//   cast is a no-op).  Wrapped: the unwrapped inner type (the pointer
-//   cast reinterprets to the standard-layout first member).
+// - IntegerCastHelper<T> is a single-type struct (not paired <To,From>), so
+//   the compiler instantiates O(N+M) of them instead of O(N*M).  This avoids
+//   the combinatoric explosion that a paired IntegerCastHelper<To,From> would
+//   cause across pervasive use sites.
 //
 // - NEEDFUL_MATERIALIZE_PRVALUE(expr) binds expr to a same-type const
 //   ref and takes its address.  This forces temporary materialization
@@ -711,68 +718,26 @@ NEEDFUL_DEFINE_DOWNCAST_HELPERS(UnhookableDowncast, unhookable);
 //   the reinterpreted pointer—zero cost, no conversion operator call.
 //
 
-template<
-    typename To, typename From,
-    bool IsWrapped = HasWrappedType<From>::value
->
-struct IntegerCastHelper;
+template<typename T>
+struct IntegerCastHelper {
+    using type = needful_deeply_unwrapped_type(T);
 
-template<typename To, typename From>
-struct IntegerCastHelper<To, From, false> {
     static_assert(
-        std::is_integral<To>::value or std::is_enum<To>::value
-            or (std::is_class<To>::value
-                and std::is_constructible<To, From>::value),
-        "invalid i_cast() - target must be integer, enum, or a class type"
-        " constructible from the source"
-    );
-    static_assert(
-        std::is_integral<From>::value or std::is_enum<From>::value
-            or (std::is_class<From>::value
-                and std::is_convertible<From, To>::value),
-        "invalid i_cast() - source must be integer, enum, or a class type"
-        " implicitly convertible to the target"
+        std::is_integral<type>::value or std::is_enum<type>::value
+            or std::is_class<type>::value,  // class fair game, if they convert
+        "invalid i_cast() - source must be integer, enum, or class type"
     );
 };
 
-template<typename To, typename From>
-struct IntegerCastHelper<To, From, true> {
-    using FromDeep = needful_deeply_unwrapped_type(From);
-
-    static_assert(
-        std::is_integral<To>::value or std::is_enum<To>::value
-            or (std::is_class<To>::value
-                and std::is_constructible<To, FromDeep>::value),
-        "invalid i_cast() - target must be integer, enum, or a class type"
-        " constructible from the unwrapped source"
-    );
-    static_assert(
-        std::is_integral<FromDeep>::value
-            or std::is_enum<FromDeep>::value,
-        "invalid i_cast() on wrapped source - deep leaf must be integer/enum"
-    );
-};
-
-template<typename From, bool IsWrapped = HasWrappedType<From>::value>
-struct IntegerCastExtractType;
-
-template<typename From>
-struct IntegerCastExtractType<From, true> {
-    using type = needful_unwrapped_type(From);  // inner type: pointer target
-};
-
-template<typename From>
-struct IntegerCastExtractType<From, false> {
-    using type = remove_const_t<From>;  // identity: pointer cast is a no-op
-};
+#define Needful_Integer_Cast_Validate(T) \
+    NEEDFUL_DUMMY_INSTANCE(needful::IntegerCastHelper<T>::type)
 
 #undef needful_integer_cast
 #define needful_integer_cast(T,expr) \
-    (NEEDFUL_DUMMY_INSTANCE(needful::IntegerCastHelper< \
-        T, needful::remove_reference_t<decltype(expr)>>), \
+    (Needful_Integer_Cast_Validate(T), \
     needful_xtreme_cast(T, \
         *needful_xtreme_cast( \
-            const typename needful::IntegerCastExtractType< \
+            const typename needful::IntegerCastHelper< \
                 needful::remove_reference_t<decltype(expr)> \
             >::type *, \
             NEEDFUL_MATERIALIZE_PRVALUE(expr))))

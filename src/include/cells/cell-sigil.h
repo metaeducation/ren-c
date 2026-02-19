@@ -76,23 +76,19 @@
     Cell_Has_Lift_Sigil_Heart(Known_Stable(v), \
         NOQUOTE_3, SIGIL_TIE, TYPE_##heartname)
 
-INLINE Option(Sigil) Sigil_Of(const Element* e) {
-    assert(LIFT_BYTE(e) == NOQUOTE_3);
-    return i_cast(Sigil, KIND_BYTE_RAW(e) >> KIND_SIGIL_SHIFT);
+INLINE Option(Sigil) Sigil_Of(const Element* v) {
+    assert(LIFT_BYTE(v) == NOQUOTE_3);
+    return i_cast(Sigil, KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT);
 }
 
-INLINE Option(Sigil) Cell_Underlying_Sigil(const Cell* c) {
-    possibly(LIFT_BYTE(c) <= STABLE_ANTIFORM_2);  // SIGIL_0 if antiform
-    return i_cast(Sigil, KIND_BYTE_RAW(c) >> KIND_SIGIL_SHIFT);
+INLINE Option(Sigil) Cell_Underlying_Sigil(const Cell* cell) {
+    possibly(LIFT_BYTE(cell) <= STABLE_ANTIFORM_2);  // SIGIL_0 if antiform
+    return i_cast(Sigil, KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT);
 }
 
-INLINE KindByte Kind_From_Sigil_And_Heart(Option(Sigil) sigil, HeartEnum heart)
-{
-    return (
-        i_cast(KindByte, heart)
-        | (i_cast(KindByte, opt sigil) << KIND_SIGIL_SHIFT)
-    );
-}
+#define Kind_From_Sigil_And_Heart(sigil,heart) \
+    (ii_cast(KindByte, known(Option(Sigil), (sigil)) << KIND_SIGIL_SHIFT) \
+        | i_cast(KindByte, known(HeartEnum, (heart))))
 
 
 //=//// SIGIL MODIFICATION ////////////////////////////////////////////////=//

@@ -816,7 +816,7 @@ Bounce Stepper_Executor(Level* L)
   // PINNED! types originally focused on inert "do nothing", but are seeming
   // more valuable to use for iterators.
 
-  switch (STATE = i_cast(StateByte, Heart_Of(CURRENT))) {
+  switch (STATE = ii_cast(StateByte, Heart_Of(CURRENT))) {
 
   case TYPE_BLANK: { //// LITERALLY OPERATOR (@) /////////////////////////////
 
@@ -905,7 +905,7 @@ Bounce Stepper_Executor(Level* L)
     //     >> get 'var
     //     ** Error: var is unbound
 
-  switch (STATE = i_cast(StateByte, Heart_Of(CURRENT))) {
+  switch (STATE = ii_cast(StateByte, Heart_Of(CURRENT))) {
 
   case TYPE_BLANK: { //// BIND OPERATOR ($) //////////////////////////////////
 
@@ -945,7 +945,7 @@ Bounce Stepper_Executor(Level* L)
   // METAFORM! types retrieve things with less intervention (decaying, or
   // perhaps suppressing VOID! => HEAVY VOID conversions).
 
-  switch (STATE = i_cast(StateByte, Heart_Of(CURRENT))) {
+  switch (STATE = ii_cast(StateByte, Heart_Of(CURRENT))) {
 
   case TYPE_BLANK: { //// IDENTITY OPERATOR (^) ///////////////////////////////
 
@@ -1117,7 +1117,7 @@ Bounce Stepper_Executor(Level* L)
     // 1. The Stepper_Executor()'s state bytes are a superset of the
     //    Heart_Of() of processed values.  See the ST_STEPPER_XXX enumeration.
 
-  switch ((STATE = i_cast(StateByte, Heart_Of(CURRENT)))) {  // superset [1]
+  switch ((STATE = ii_cast(StateByte, Heart_Of(CURRENT)))) {  // superset [1]
 
   case TYPE_BLANK: { //// BLANK! (often manifests as "," character) //////////
 

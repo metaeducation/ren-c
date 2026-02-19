@@ -628,13 +628,13 @@ Error* Make_Error_From_Vaptr_Managed(
       #if RUNTIME_CHECKS
         printf(
             "panic() before errors initialized, cat_id = %d, id = %d\n",
-            i_cast(int, cat_id),
-            i_cast(int, id)
+            i_cast(int, opt cat_id),
+            i_cast(int, opt id)
         );
       #endif
 
         DECLARE_ELEMENT (id_value);
-        Init_Integer(id_value, i_cast(int, id));
+        Init_Integer(id_value, i_cast(int, opt id));
         crash (id_value);
     }
 

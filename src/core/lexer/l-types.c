@@ -325,7 +325,7 @@ DECLARE_NATIVE(OF)
     const Symbol* sym_of;
 
     Option(SymId) id = Symbol_Id(sym);
-    if (id and i_cast(SymId16, id) <= MAX_SYM_BUILTIN - 1)
+    if (id and i_cast(SymId16, unwrap id) <= MAX_SYM_BUILTIN - 1)
         goto check_if_next_is_sym_of;
 
     goto no_optimization;
@@ -348,7 +348,7 @@ DECLARE_NATIVE(OF)
   // just do the relatively cheap check.)
 
     const Utf8Byte* utf8 = Strand_Head(Canon_Symbol(unwrap id));
-    SymId next_id = i_cast(SymId, i_cast(SymId16, id) + 1);
+    SymId next_id = i_cast(SymId, i_cast(SymId16, unwrap id) + 1);
     const Utf8Byte* maybe_utf8_of = Strand_Head(Canon_Symbol(next_id));
     while (true) {
         if (*maybe_utf8_of == '\0')  // hit end of what would be "longer"

@@ -1067,12 +1067,23 @@ void Needful_Panic_Abruptly(const char* error) {
 ** forwarding doesn't always work around that.  It's cleaner and safer (and
 ** faster at compile time) to do it this way.
 **
-** 1. A quick and dirty way to write `return failed;` and not have to come
+** 1. needful_integer_cast() has been honed to slow down build times about as
+**    much as possible, while having zero runtime cost even in unoptimized
+**    builds (an important property one seeks for something as fundamental as
+**    an integer cast).  But it's still slow--enough so that replacing all
+**    integer casts with i_cast() in one codebase made it take 2x as long to
+**    compile.  So day-to-day dev builds should probably leave i_cast() as
+**    a macro for the plain C "xtreme" cast.  However if you're using wrapper
+**    classes the needful_integer_cast() can actually be zero cost where a
+**    C cast would not be; so judicious use of ii_cast() on hot paths in
+**    debug builds extracting integers from wrappers can be a good idea.
+**
+** 2. A quick and dirty way to write `return failed;` and not have to come
 **    up with an error might be useful in some codebases.  We don't try to
 **    define that here, because it's open ended as to what you'd use for
 **    your error value type.
 **
-** 2. The lenient form of known_cast() is quite useful for writing polymorphic
+** 3. The lenient form of known_cast() is quite useful for writing polymorphic
 **    macros which are const-in => const-out and mutable-in => mutable-out.
 **    This tends to be more useful than wanting to enforce that only mutable
 **    pointers can be passed into a macro (the bulk of macros are reading
@@ -1100,7 +1111,13 @@ void Needful_Panic_Abruptly(const char* error) {
 
     #define m_cast /* (T,...) */    needful_mutable_cast
 
+  #if defined(NEEDFUL_ICAST_SLOW_BUILD)  /* default off for fast builds [1] */
     #define i_cast /* (T,...) */    needful_integer_cast
+  #else
+    #define i_cast /* (T,...) */    needful_xtreme_cast
+  #endif
+    #define ii_cast /* (T,...) */   needful_integer_cast  /* see [1] */
+
     #define p_cast /* (T,...) */    needful_pointer_cast
     #define f_cast /* (T,...) */    needful_function_cast
     #define v_cast /* (T,...) */    needful_valist_cast
@@ -1117,7 +1134,7 @@ void Needful_Panic_Abruptly(const char* error) {
     #define Result /* (T) */        NeedfulResult
 
     #define fail /* (...) */        needful_fail
-    /* #define failed               needful_fail("generic failure");  [1] */
+    /* #define failed               needful_fail("generic failure");  [2] */
     #define panic /* (...) */       needful_panic
 
     #define trap /* (expr) */               needful_trap
@@ -1145,8 +1162,8 @@ void Needful_Panic_Abruptly(const char* error) {
     #define lenient_known_not /* (T,expr) */     needful_lenient_known_not
     /*  no lenient_known_any at this time */
 
-    #define known /* (T,expr) [2] */             needful_lenient_known
-    #define known_not /* (T,expr) [2] */         needful_lenient_known_not
+    #define known /* (T,expr) [3] */             needful_lenient_known
+    #define known_not /* (T,expr) [3] */         needful_lenient_known_not
     #define known_any /* ((T,...),expr) */       needful_rigid_known_any
 
     #define rigid_x_cast_known /* (T,expr) */    needful_rigid_x_cast_known

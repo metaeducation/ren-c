@@ -523,7 +523,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
             no_dittos = false;
             break;
         }
-        if (Is_Lex_Delimit(cast(Byte, c))) {
+        if (Is_Lex_Delimit(i_cast(Byte, c))) {
             no_dittos = false;  // comma, bracket, parentheses, dittos...
             break;
         }

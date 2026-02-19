@@ -1350,11 +1350,11 @@ Count Recycle_Core(Flex* sweeplist)
     assert(Is_Stub_Erased(&g_datatype_patches[SYM_0_constexpr]));  // skip
 
     for (
-        SymId16 id = MIN_SYM_BUILTIN_TYPES;
-        id <= MAX_SYM_BUILTIN_TYPES;
-        ++id
+        SymId16 id16 = MIN_SYM_BUILTIN_TYPES;
+        id16 <= MAX_SYM_BUILTIN_TYPES;
+        ++id16
     ){
-        Type type = Type_From_Symbol_Id(i_cast(SymId, id));
+        Type type = Type_From_Symbol_Id(i_cast(SymId, id16));
         Patch* patch = &g_datatype_patches[i_cast(Byte, type)];
         if (Is_Stub_Erased(patch))
             continue;  // isotope slot for non-isotopic type

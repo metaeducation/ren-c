@@ -264,7 +264,7 @@ e-types/emit [--[
     extern uint_fast32_t const g_sparse_memberships[MAX_TYPEBYTE + 1];
 
     #define Sparse_Memberships(t) \
-        g_sparse_memberships[i_cast(Byte, known(Option(Type), (t)))]
+        g_sparse_memberships[ii_cast(Byte, known(Option(Type), (t)))]
 ]--]
 
 e-types/emit [--[
@@ -316,7 +316,7 @@ for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
 
     e-types/emit [tr --[
         INLINE bool Any_${Proper-Name}_Type(Option(Type) t)
-          { return i_cast(TypeByte, (t)) >= $<TR.START> and i_cast(TypeByte, (t)) <= $<TR.END>; }
+          { return ii_cast(TypeByte, (t)) >= $<TR.START> and ii_cast(TypeByte, (t)) <= $<TR.END>; }
 
         #define Any_${Proper-Name}(cell) \
             Any_${Proper-Name}_Type(Type_Of(cell))
