@@ -487,9 +487,9 @@ Option(Phase*) Reuse_Sublevel_To_Determine_Left_Literal_Infix_Core(
 
   // Put OUT back in CURRENT and CURRENT back in feed
 
-    Unshield_Cell_If_Debug(&L->feed->fetched);
+    Track_Unshield_Cell(&L->feed->fetched);
     Move_Cell(&L->feed->fetched, CURRENT);
-    Shield_Cell_If_Debug(&L->feed->fetched);
+    Track_Shield_Cell(&L->feed->fetched);
     L->feed->p = &L->feed->fetched;
 
     Move_Cell(CURRENT, As_Element(OUT));

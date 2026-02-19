@@ -136,13 +136,13 @@ INLINE void Drop_Lifeguard(const void* p) {  // p may be erased cell (not Base)
 //
 
 #define Remember_Cell_Is_Lifeguard(c) \
-    Shield_Cell_If_Debug(c)
+    Track_Shield_Cell(c)
 
 #define Forget_Cell_Was_Lifeguard(c) /* not always necessary [1] */ \
-    Unshield_Cell_If_Debug(c)
+    Track_Unshield_Cell(c)
 
 #define Clear_Lingering_Out_Cell_Shield_If_Debug(L) \
-    Clear_Cell_Shield_If_Debug(Level_Out(L))
+    Track_Clear_Cell_Shield(Level_Out(L))
 
 
 //=//// FLEX DECAY ////////////////////////////////////////////////////////=//

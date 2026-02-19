@@ -116,10 +116,10 @@ INLINE Option(VarList*) Misc_Phase_Adjunct_Core(Phase* a) {
 //
 
 #define Shield_Rootvar_If_Debug(rootvar) \
-    Shield_Cell_If_Debug(rootvar)
+    Track_Shield_Cell(rootvar)
 
 #define Unshield_Rootvar_If_Debug(rootvar) \
-    Unshield_Cell_If_Debug(rootvar)
+    Track_Unshield_Cell(rootvar)
 
 INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
   { return m_cast(Element*, Varlist_Archetype(c)); }  // inline checks mutable

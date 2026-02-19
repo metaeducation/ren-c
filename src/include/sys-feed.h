@@ -281,7 +281,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
 ){
     Flex* f = m_cast(Flex*, cast(Flex*, feed->p));
 
-    Unshield_Cell_If_Debug(&feed->fetched);
+    Track_Unshield_Cell(&feed->fetched);
 
     switch (Stub_Flavor(f)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
@@ -354,7 +354,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         crash (feed->p);
     }
 
-    Shield_Cell_If_Debug(&feed->fetched);
+    Track_Shield_Cell(&feed->fetched);
 
     return cast(const Element*, feed->p);
 }
@@ -386,9 +386,9 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Panic(Feed* feed)
 
       case DETECTED_AS_CELL: {  // antiforms handled specially in feeds
         const Value* v = cast(Value*, feed->p);
-        Unshield_Cell_If_Debug(&feed->fetched);
+        Track_Unshield_Cell(&feed->fetched);
         Copy_Cell(&feed->fetched, v);
-        Shield_Cell_If_Debug(&feed->fetched);
+        Track_Shield_Cell(&feed->fetched);
         break; }
 
       case DETECTED_AS_STUB:  // e.g. rebQ, rebU, or a rebR() handle
@@ -640,7 +640,7 @@ INLINE Result(Feed*) Prep_Feed_Common(
   #endif
 
     Force_Erase_Cell(&feed->fetched);
-    Shield_Cell_If_Debug(&feed->fetched);
+    Track_Shield_Cell(&feed->fetched);
 
     assume (
       Stub* s = Prep_Stub(

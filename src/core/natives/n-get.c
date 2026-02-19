@@ -298,7 +298,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
 
     Option(Error*) error = SUCCESS;
 
-    Shield_Cell_If_Debug(SCRATCH);  // (common exit path undoes this shield)
+    Track_Shield_Cell(SCRATCH);  // (common exit path undoes this shield)
 
     const Element* path = As_Element(SCRATCH);
     assert(Is_Path(path));
@@ -501,7 +501,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
 
     Corrupt_Cell_If_Needful(SPARE);
 
-    Unshield_Cell_If_Debug(SCRATCH);
+    Track_Unshield_Cell(SCRATCH);
 
     if (error)
         return fail (unwrap error);

@@ -847,7 +847,7 @@ Bounce Action_Executor(Level* L)
     PARAM = Phase_Params_Head(phase);
 
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
-        Clear_Cell_Shield_If_Debug(ARG);  // we Mem_Copy(), shield bits copied
+        Track_Clear_Cell_Shield(ARG);  // we Mem_Copy(), shield bits copied
 
         ARG->header.bits |= pure_mask;  // when's the right time for this [?]
 

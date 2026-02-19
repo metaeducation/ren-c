@@ -492,13 +492,13 @@ INLINE const Slot* Known_Unspecialized(const Param* p) {
 //
 
 #define Shield_Param_If_Debug(param) \
-    Shield_Cell_If_Debug(known(Param*, (param)));
+    Track_Shield_Cell(known(Param*, (param)));
 
 #define Unshield_Param_If_Debug(param) \
-    Unshield_Cell_If_Debug(known(Param*, (param)));
+    Track_Unshield_Cell(known(Param*, (param)));
 
 #define Clear_Param_Shield_If_Debug(param) \
-    Clear_Cell_Shield_If_Debug(known(Param*, (param)));
+    Track_Clear_Cell_Shield(known(Param*, (param)));
 
 
 //=//// FAST ANTI-WORD "BLITTING" /////////////////////////////////////////=//

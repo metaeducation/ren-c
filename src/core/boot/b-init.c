@@ -460,7 +460,7 @@ static void Init_System_Object(
     KIND_BYTE(std_error_slot) = TYPE_ERROR;
 
     Stable* rootvar = Rootvar_Of_Varlist(varlist);
-    Assert_Cell_Shielded_If_Debug(rootvar);
+    Assert_Cell_Shielded_If_Tracking(rootvar);
     KIND_BYTE(rootvar) = TYPE_ERROR;  // !!! shielding allows KIND_BYTE()
 }}
 

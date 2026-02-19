@@ -206,7 +206,7 @@
     #define Touch_Cell(cell) \
         STATIC_FAIL(need_DEBUG_TRACK_EXTEND_CELLS_and_TRAMPOLINE_COUNTS_TICKS)
 
-    #define Touch_Cell_If_Debug(cell)  NOOP
+    #define Touch_Cell_If_Debug(cell)  USED(cell)
 #endif
 
 
@@ -235,26 +235,29 @@
 // and we have the Cell `track_flags` available, we have the advantage of
 // being able to guard arbitrary cells against writes.
 //
+// 1. We want to do USED(cell) here instead of a NOOP, because even though
+//    the shield macros are no-ops in builds without the tracking, the
+//    expression that produced the cell may have side effects we need.
 
 #if DEBUG_TRACK_EXTEND_CELLS && DEBUG_CELL_READ_WRITE
-   INLINE void Shield_Cell_If_Debug(Cell* cell) {
+   INLINE void Track_Shield_Cell(Cell* cell) {
        assert(Not_Track_Flag(cell, SHIELD_FROM_WRITES));
        Set_Track_Flag(cell, SHIELD_FROM_WRITES);
    }
 
-   INLINE void Unshield_Cell_If_Debug(Cell* cell) {
+   INLINE void Track_Unshield_Cell(Cell* cell) {
        assert(Get_Track_Flag(cell, SHIELD_FROM_WRITES));
        Clear_Track_Flag(cell, SHIELD_FROM_WRITES);
    }
 
-   #define Clear_Cell_Shield_If_Debug(cell) \
+   #define Track_Clear_Cell_Shield(cell) \
        Clear_Track_Flag((cell), SHIELD_FROM_WRITES);
 
-    #define Assert_Cell_Shielded_If_Debug(cell) \
+    #define Assert_Cell_Shielded_If_Tracking(cell) \
         assert(Get_Track_Flag((cell), SHIELD_FROM_WRITES))
 #else
-    #define Shield_Cell_If_Debug(cell)  NOOP
-    #define Unshield_Cell_If_Debug(cell)  NOOP
-    #define Clear_Cell_Shield_If_Debug(cell)  NOOP
-    #define Assert_Cell_Shielded_If_Debug(cell)  NOOP
+    #define Track_Shield_Cell(cell)  USED(cell)  // may have effects [1]
+    #define Track_Unshield_Cell(cell)  USED(cell)
+    #define Track_Clear_Cell_Shield(cell)  USED(cell)
+    #define Assert_Cell_Shielded_If_Tracking(cell)  NOOP  // no effects allowed
 #endif

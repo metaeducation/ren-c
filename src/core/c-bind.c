@@ -1380,7 +1380,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 
             Init(Slot) slot = Append_Context(varlist, symbol);
             Init_Bedrock_Drain(slot);
-            Shield_Cell_If_Debug(slot);
+            Track_Shield_Cell(slot);
 
             if (body_needs_binding)
                 Add_Binder_Index(binder, symbol, -1);  // for remove

@@ -666,7 +666,7 @@ Option(Error*) Tweak_Stack_Steps_With_Dual_Scratch_To_Dual_Spare(void)
 
     Option(Error*) error = SUCCESS;  // for common exit path on error
 
-    Shield_Cell_If_Debug(OUT);
+    Track_Shield_Cell(OUT);
 
     // We always poke from the top of the stack, not from OUT.  This is
     // because we may have to decay it, and we don't want to modify OUT.
@@ -826,7 +826,7 @@ Option(Error*) Tweak_Stack_Steps_With_Dual_Scratch_To_Dual_Spare(void)
 
     Corrupt_Cell_If_Needful(SCRATCH);
 
-    Unshield_Cell_If_Debug(OUT);
+    Track_Unshield_Cell(OUT);
 
     return error;
 }}
