@@ -1,11 +1,11 @@
 /*
 **  file: %needful.h
-**  summary: "C macros that offer powerful features in C++11 or higher"
+**  summary: "Single-header C library with Rust-grade safety when built as C++"
 **  homepage: <needful homepage TBD>
 **
 ******************************************************************************
 **
-** Copyright 2015-2025 hostilefork.com
+** Copyright 2015-2026 hostilefork.com
 **
 ** Licensed under the MIT License
 **
@@ -13,26 +13,70 @@
 **
 ******************************************************************************
 **
-** Needful is a header-only library, containing various definitions for C
-** constructs that can behave in more "interesting" ways when built as C++.
+** Needful is a single-file, header-only library that gives C codebases
+** powerful safety features--Option(T), Result(T), type-safe casts, structured
+** error handling, and more--with zero runtime cost, no dependencies, and no
+** tools beyond the compiler you already have.
 **
-** To help convince you of Needful's "light" nature in C builds, it's written
-** with all the C #defines up front in this one file--you can see how simple
-** they (mostly) are.  Adding it to a C project is a low-impact proposition...
-** you only have to add *one* file to your project, and it can be built in
-** either C or C++ mode, standalone.
+** The key trick: every Needful construct compiles as a transparent no-op
+** in C.  But flip one switch (`#define NEEDFUL_CPP_ENHANCEMENTS 1`) and
+** rebuild as C++11, and those same constructs light up with compile-time
+** type enforcement that catches real bugs.  Your C code stays C.  The C++
+** compiler just *checks* it harder.
 **
-** But if you `#define NEEDFUL_CPP_ENHANCEMENTS 1` (and have the additional
-** files implementing the enhancements in Needful's directory) then they'll be
-** included at the end of the file.  This will #undef the simple definitions,
-** and #define them as more complex ones.  This is what gives the powerful
-** compile-time checks.  You can enlist in the Needful project separately in
-** your continuous integration or whatever build system you have, and the extra
-** files will only be included when you ask to build with the extra features.
+****[[ WHAT YOU GET ]]*********************************************************
 **
-** It helps document your code even if you just use the one `needful.h` file.
-** But when you do build with the C++ enhancements, you get powerful checks,
-** with no extra tools needed but the compiler you already have.
+**   Need(T)       Marks a value as *required* non-null/non-zero.  Blocks
+**                 boolean coercion to prevent meaningless null-checks.
+**                 (Honorary top billing, as it's the library's namesake!)
+**
+**   Option(T)     Rust-like optional that uses T's falsey state as sentinel.
+**                 Same size as T (no extra bool!).  `unwrap` and `opt` to
+**                 extract, with compile-time enforcement in C++ builds.
+**
+**   Result(T)     Multiplexed error + return value, like Rust's Result<T,E>.
+**                 `trap` auto-propagates, `except` catches with scoped
+**                 error variables, and `else` attaches naturally:
+**
+**                     int x = Risky_Call(arg) except (Error* e) {
+**                         printf("caught: %s\n", e->message);
+**                     } else {
+**                         printf("success!\n");
+**                     }
+**
+**                 (yes, standard C! `except` is a macro that expands very
+**                 cleverly into a for() loop that can scope the declaration)
+**
+**   cast()        A family of visible, hookable casts (h_cast, u_cast,
+**                 m_cast, i_cast, ...) that replace C's invisible
+**                 parenthesized casts.  Can run debug-build validation
+**                 hooks--even on raw pointer casts.
+**
+**   Sink(T)       Marks output parameters with contravariant type safety.
+**   Init(T)       Contravariant output + corruption scrambling in debug.
+**
+**   known(T,expr) Compile-time type assertion inside macros.  Zero cost,
+**                 even in debug builds--no function template overhead.
+**
+**   Comments      `possibly()`, `dont()`, `heeded()`, `unnecessary()`...
+**                 annotations that document intent AND compile-check the
+**                 expressions they wrap, keeping comments up-to-date.
+**
+****[[ GETTING STARTED ]]*****************************************************
+**
+**   1. Drop `needful.h` into your project.  #include it.  Done.
+**      All macros expand to trivial C--your build won't even notice.
+**
+**   2. When ready, add the C++ enhancement files to Needful's directory
+**      and `#define NEEDFUL_CPP_ENHANCEMENTS 1`.  Build as C++11 or later.
+**      Every macro grows teeth: type mismatches become compile errors.
+**
+**   3. You can run both build modes in CI: the C build for production,
+**      the C++ build to catch bugs.  No code changes needed between them.
+**
+** The C definitions in this file are intentionally written out in full so
+** you can see how simple they are.  Adding Needful to a C project is a
+** low-impact proposition: one file, no dependencies, no magic.
 **
 ****[[ NOTES ]]***************************************************************
 **
