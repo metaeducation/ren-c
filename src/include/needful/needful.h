@@ -116,30 +116,6 @@
 #endif
 
 
-/***[[ Need(T): NEVER NULL OR ZEROED TYPE, NON-BOOL COERCIBLE ]]**************
-**
-** Need(T) is the namesake of the Needful library, with honorary top billing.
-** It is a way to indicate that a pointer or value of type T is required.
-** The key reason for its existence is to protect against meaningless tests
-** for "truthiness" that would coerce to bool:
-**
-**    int value = 1020;
-**    Need(int*) ptr = &value;
-**
-**    printf("%d\n", *ptr);  // safe to dereference, can't be null
-**
-**    if (ptr) { ... }  // ** COMPILER ERROR: can't coerce to bool!
-**
-** While the compile-time checks are the primary purpose, runtime checks can
-** also be enabled to make sure that nulls or zeroes are not passed to a
-** type that is marked Need(T).
-*/
-
-#define NeedfulNeed(T)  T
-#define needful_unwrap
-#define needful_needed
-
-
 /****[[ nocast: LEAST-ANNOYING-TO-C-PROGRAMMERS CAST OF malloc() etc. ]]******
 **
 ** If you wish to build C codebases as C++, crucial incompatibilities exist
@@ -251,6 +227,29 @@
 
     #define needful_nocast_0  needful::Nocast0Struct{}
 #endif
+
+
+/***[[ Need(T): NEVER NULL OR ZEROED TYPE, NON-BOOL COERCIBLE ]]**************
+**
+** Need(T) is a way to indicate that a pointer or value of type T is required.
+** The key reason for its existence is to protect against meaningless tests
+** for "truthiness" that would coerce to bool:
+**
+**    int value = 1020;
+**    Need(int*) ptr = &value;
+**
+**    printf("%d\n", *ptr);  // safe to dereference, can't be null
+**
+**    if (ptr) { ... }  // ** COMPILER ERROR: can't coerce to bool!
+**
+** While the compile-time checks are the primary purpose, runtime checks can
+** also be enabled to make sure that nulls or zeroes are not passed to a
+** type that is marked Need(T).
+*/
+
+#define NeedfulNeed(T)  T
+#define needful_unwrap
+#define needful_needed
 
 
 /***[[ Option(T): EXPLICITLY DISENGAGE-ABLE TYPE ]]***************************
@@ -838,71 +837,6 @@ void Needful_Panic_Abruptly(const char* error) {
 #define needful_upcast /* (T,expr) */  needful_xtreme_cast
 
 
-/***[[ attempt, until, whilst: ENHANCED LOOP MACROS ]]************************
-**
-** This is a fun trick that brings a little bit of the ATTEMPT and UNTIL loop
-** functionality from Ren-C into C.
-**
-** The `attempt` macro is a loop that runs its body just once, and then
-** evaluates the `then` or `else` clause (if present):
-**
-**     attempt {
-**         ... some code ...
-**         if (condition) { break; }  // exit attempt, run "else" clause
-**         if (condition) { continue; }  // exit attempt, run "then" clause
-**         if (condition) { again; }  // jump to attempt and run it again
-**         ... more code ...
-**     }
-**     then {  // optional then clause
-**        ... code to run if no break happened ...
-**     }
-**     else {  // optional else clause (must have then clause to use else)
-**        ... code to run if a break happened ...
-**     }
-**
-** It doesn't do anything you couldn't do with defining some goto labels.
-** But if you have B breaks and C continues and A agains, you don't have to
-** type the label names ((B + 1) + (C + 1) + (A + 1)) times.  And you don't
-** have to worry about coming up with the names for those labels!
-**
-** Since `while` is taken, the corresponding enhanced version of while that
-** supports `then` and `else` clauses is called `whilst`.  But for a better
-** name, the `until` macro is a negated sense of the whilst loop.
-**
-** 1. Since the macros define variables tracking whether the `then` clause
-**    should run or not, and whether an `again` should signal continuing to
-**    run...these loops can only be used in one scope at a time.  To use more
-**    than once in a function, define another scope.
-**
-** 2. Due to limits of the trick, you can't use an `else` clause without at
-**    least a minimal `then {}` clause.
-*/
-
-#define needful_attempt /* {body} */ \
-    bool run_then_ = false;  /* as long as run_then_ is false, keep going */ \
-    bool run_again_ = false;  /* if run_again_, don't set run_then_ */ \
-    for (; (! run_then_); \
-        run_again_ ? (run_again_ = false), true  /* again keeps looping */ \
-        : (run_then_ = true))  /* continue exits the attempt "loop" */
-
-#define needful_until(cond) /* {body} */ \
-    bool run_then_ = false; \
-    bool run_again_ = false; \
-    for (; run_again_ ? (run_again_ = false), true :  /* skip condition */ \
-        (cond) ? (run_then_ = true, false) : true; )
-
-#define needful_whilst(cond) /* {body} */ /* can't be while [1] */ \
-    bool run_then_ = false; \
-    bool run_again_ = false; \
-    for (; run_again_ ? (run_again_ = false), true :  /* skip condition */ \
-        (! cond) ? (run_then_ = true, false) : true; )
-
-#define needful_then /* {branch} */ \
-    if (run_then_)
-
-#define needful_again \
-    { run_again_ = true; continue; }
-
 
 /****[[ NEEDFUL_DOES_CORRUPTIONS + CORRUPTION SEED/DOSE ]]********************
 **
@@ -1210,14 +1144,6 @@ void Needful_Panic_Abruptly(const char* error) {
     #define x_cast_known /* (T,expr) [2] */      needful_lenient_x_cast_known
 
     #define known_lvalue /* (var) */             needful_known_lvalue
-#endif
-
-#if !defined(NEEDFUL_DONT_DEFINE_LOOP_SHORTHANDS)
-    #define attempt /* {body} */            needful_attempt
-    #define until /* (cond) {body} */       needful_until
-    #define whilst /* (cond) {body} */      needful_whilst
-    #define then /* {branch} */             needful_then
-    #define again                           needful_again
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)

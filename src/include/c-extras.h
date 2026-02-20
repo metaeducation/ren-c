@@ -634,5 +634,83 @@
     #define CONSTABLE(param_type)  param_type  // use m_cast() on assignment
 #endif
 
+/***[[ attempt, until, whilst: ENHANCED LOOP MACROS ]]************************
+**
+** NOTE: This was cut from needful.h, due to being a bit tangential to the
+** library's core purpose, and also because the trick only works once per
+** scope.
+**
+** --------------------------------------------------------------------------
+**
+** This is a fun trick that brings a little bit of the ATTEMPT and UNTIL loop
+** functionality from Ren-C into C.
+**
+** The `attempt` macro is a loop that runs its body just once, and then
+** evaluates the `then` or `else` clause (if present):
+**
+**     attempt {
+**         ... some code ...
+**         if (condition) { break; }  // exit attempt, run "else" clause
+**         if (condition) { continue; }  // exit attempt, run "then" clause
+**         if (condition) { again; }  // jump to attempt and run it again
+**         ... more code ...
+**     }
+**     then {  // optional then clause
+**        ... code to run if no break happened ...
+**     }
+**     else {  // optional else clause (must have then clause to use else)
+**        ... code to run if a break happened ...
+**     }
+**
+** It doesn't do anything you couldn't do with defining some goto labels.
+** But if you have B breaks and C continues and A agains, you don't have to
+** type the label names ((B + 1) + (C + 1) + (A + 1)) times.  And you don't
+** have to worry about coming up with the names for those labels!
+**
+** Since `while` is taken, the corresponding enhanced version of while that
+** supports `then` and `else` clauses is called `whilst`.  But for a better
+** name, the `until` macro is a negated sense of the whilst loop.
+**
+** 1. Since the macros define variables tracking whether the `then` clause
+**    should run or not, and whether an `again` should signal continuing to
+**    run...these loops can only be used in one scope at a time.  To use more
+**    than once in a function, define another scope.
+**
+** 2. Due to limits of the trick, you can't use an `else` clause without at
+**    least a minimal `then {}` clause.
+*/
+
+#define needful_attempt /* {body} */ \
+    bool run_then_ = false;  /* as long as run_then_ is false, keep going */ \
+    bool run_again_ = false;  /* if run_again_, don't set run_then_ */ \
+    for (; (! run_then_); \
+        run_again_ ? (run_again_ = false), true  /* again keeps looping */ \
+        : (run_then_ = true))  /* continue exits the attempt "loop" */
+
+#define needful_until(cond) /* {body} */ \
+    bool run_then_ = false; \
+    bool run_again_ = false; \
+    for (; run_again_ ? (run_again_ = false), true :  /* skip condition */ \
+        (cond) ? (run_then_ = true, false) : true; )
+
+#define needful_whilst(cond) /* {body} */ /* can't be while [1] */ \
+    bool run_then_ = false; \
+    bool run_again_ = false; \
+    for (; run_again_ ? (run_again_ = false), true :  /* skip condition */ \
+        (! cond) ? (run_then_ = true, false) : true; )
+
+#define needful_then /* {branch} */ \
+    if (run_then_)
+
+#define needful_again \
+    { run_again_ = true; continue; }
+
+#if !defined(NEEDFUL_DONT_DEFINE_LOOP_SHORTHANDS)
+    #define attempt /* {body} */            needful_attempt
+    #define until /* (cond) {body} */       needful_until
+    #define whilst /* (cond) {body} */      needful_whilst
+    #define then /* {branch} */             needful_then
+    #define again                           needful_again
+#endif
 
 #endif
