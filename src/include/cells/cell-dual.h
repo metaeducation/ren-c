@@ -31,7 +31,7 @@
 
 
 #define Is_Bedrock(cell) \
-    (LIFT_BYTE(Possibly_Bedrock(cell)) == BEDROCK_0)
+    (LIFT_BYTE(Possibly_Bedrock(cell)) == BEDROCK_255)
 
 #define Is_Dualized_Bedrock(dual) \
     (LIFT_BYTE(Known_Dual(dual)) == NOQUOTE_3)
@@ -120,14 +120,14 @@ INLINE bool Is_Bedrock_Dual_A_Drain(const Dual* dual) {
     Is_Cell_Space_With_Lift_Sigil((cell), (lift_byte), SIGIL_0)
 
 #define Is_Cell_A_Bedrock_Drain(cell) \
-    Is_Drain_Core(Possibly_Bedrock(cell), BEDROCK_0)
+    Is_Drain_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Drain(dual) \
     Is_Drain_Core(Known_Dual(dual), NOQUOTE_3)
 
 INLINE Slot* Init_Bedrock_Drain(Init(Slot) out) {
     Init_Space(out);
-    LIFT_BYTE(out) = BEDROCK_0;
+    LIFT_BYTE(out) = BEDROCK_255;
     return out;
 }
 
@@ -245,7 +245,7 @@ INLINE bool Is_Bedrock_Dual_A_Hole(const Dual* dual) {
     Cell_Has_Lift_Sigil_Heart((cell), (lift_byte), SIGIL_0, TYPE_PARAMETER)
 
 #define Is_Cell_A_Bedrock_Hole(cell) \
-    Is_Hole_Core(Possibly_Bedrock(cell), BEDROCK_0)
+    Is_Hole_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Hole(dual) \
     Is_Hole_Core(Known_Dual(dual), NOQUOTE_3)
@@ -292,7 +292,7 @@ INLINE bool Is_Alias_Core(const Cell* cell, LiftByte lift_byte) {
 }
 
 #define Is_Cell_A_Bedrock_Alias(cell) \
-    Is_Alias_Core(Possibly_Bedrock(cell), BEDROCK_0)
+    Is_Alias_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Alias(dual) \
     Is_Alias_Core(Known_Dual(dual), NOQUOTE_3)
@@ -318,7 +318,7 @@ INLINE bool Is_Bedrock_Dual_An_Accessor(const Dual* dual) {
     Cell_Has_Lift_Sigil_Heart((cell), (lift_byte), SIGIL_0, TYPE_FRAME)
 
 #define Is_Cell_A_Bedrock_Accessor(cell) \
-    Is_Accessor_Core(Possibly_Bedrock(cell), BEDROCK_0)
+    Is_Accessor_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Accessor(dual) \
     Is_Accessor_Core(Known_Dual(dual), NOQUOTE_3)

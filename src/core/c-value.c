@@ -103,7 +103,7 @@ void Probe_Cell_Print_Helper(
         DECLARE_ELEMENT (reified);
         Copy_Cell_Core(reified, v, CELL_MASK_ALL);
         LIFT_BYTE(reified) = NOQUOTE_3;
-        if (LIFT_BYTE(v) == BEDROCK_0) {
+        if (LIFT_BYTE(v) == BEDROCK_255) {
             require (
               Append_Ascii(mo->strand, "\\\\")
             );
@@ -115,7 +115,7 @@ void Probe_Cell_Print_Helper(
         }
         if (not Is_Blank(reified))
             Mold_Element(mo, reified);
-        if (LIFT_BYTE(v) == BEDROCK_0) {
+        if (LIFT_BYTE(v) == BEDROCK_255) {
             require (
               Append_Ascii(mo->strand, "\\\\  ; bedrock")
             );

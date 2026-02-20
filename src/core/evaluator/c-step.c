@@ -1128,7 +1128,7 @@ Bounce Stepper_Executor(Level* L)
   //
   // 1. In argument fulfillment, we want to treat BLANK! the same as reaching
   //    the end of a block.  That means leaving a "hole" in the argument slot
-  //    which is BEDROCK_0... it *acts* like a NULL, but is "beneath" null
+  //    which is BEDROCK_255... it *acts* like a NULL, but is "beneath" null
   //    as it is not a value that can be a product of evaluation.  Hence by
   //    definition we cannot write it into the OUT parameter--the action
   //    executor has to preemptively notice commas in the feed and not call

@@ -780,7 +780,7 @@ DECLARE_NATIVE(GET)
         return OUT;
     }
 
-    assert(Any_Lifted(OUT));  // should not give back BEDROCK_0 states.
+    assert(Any_Lifted(OUT));  // should not give back BEDROCK_255 states.
 
     require (
       Unlift_Cell_No_Decay(OUT)  // decay or not was guided by ^VAR marker

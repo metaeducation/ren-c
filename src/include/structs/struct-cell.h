@@ -263,7 +263,8 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 #define LIFT_BYTE_RAW(cell) /* don't go through LiftHolder() [1] */ \
     THIRD_BYTE(&(cell)->header.bits)
 
-#define BEDROCK_0  0
+#define LIFT_0  TYPE_0_constexpr
+#define BEDROCK_255  255
 
 #if DEBUG_HOOK_LIFT_BYTE  // e.g. stop `LIFT_BYTE(cell) = QUASIFORM_4` [2]
     struct Lift_1_Struct { constexpr operator LiftByte() const { return 1; } };

@@ -569,7 +569,7 @@ INLINE bool Is_Parameter_Divergent(const Cell* v) {
 
 INLINE Param* Unspecialize_Parameter(Cell* p) {
     assert(Heart_Of(p) == TYPE_PARAMETER and LIFT_BYTE(p) == NOQUOTE_3);
-    LIFT_BYTE(p) = BEDROCK_0;
+    LIFT_BYTE(p) = BEDROCK_255;
     return u_cast(Param*, p);
 }
 
@@ -634,7 +634,7 @@ INLINE SymId Starred_Returner_Id(SymId id) {
 // slot that defines the cell where the DEFINITIONAL-RETURN will be put in
 // the instantiation.  (A similar tactic is used for a method's implicit `.`)
 //
-// Because it is a plain PARAMETER! (and not a BEDROCK_0 PARAMETER!, a.k.a.
+// Because it is a plain PARAMETER! (and not a BEDROCK_255 PARAMETER!, a.k.a.
 // a "HOLE") the function machinery won't try to gather it as an argument at
 // the callsite...since it thinks it is "specialized".  The dispatcher for
 // the function will overwrite the cell with an actual ACTION! that does the

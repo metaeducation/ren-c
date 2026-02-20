@@ -859,7 +859,7 @@ bool Typecheck_Use_Toplevel(
     const Cell* tests,
     Context* tests_binding
 ){
-    possibly(LIFT_BYTE(tests) == BEDROCK_0);  // ParamList slot, unspecialized
+    possibly(LIFT_BYTE(tests) == BEDROCK_255);  // ParamList slot, unspecialized
 
     USE_LEVEL_SHORTHANDS (L);
 
@@ -1029,7 +1029,7 @@ Result(bool) Typecheck_Coerce_Use_Toplevel(
     const Cell* param,
     Value* v  // not `const Value*` -- coercion needs mutability
 ){
-    possibly(LIFT_BYTE(param) == BEDROCK_0);  // ParamList slot, unspecialized
+    possibly(LIFT_BYTE(param) == BEDROCK_255);  // ParamList slot, unspecialized
 
     USE_LEVEL_SHORTHANDS (L);
 

@@ -200,7 +200,7 @@ Array* Pop_Stack_Values_Core(Flags flags, StackIndex base) {
     for (; count < len; ++count, ++src, ++dest) {
         possibly(src->header.bits & CELL_MASK_PERSIST);  // all bits copied [1]
         if (LIFT_BYTE(src) <= STABLE_ANTIFORM_2) {  // only ok in some arrays
-            possibly(LIFT_BYTE(src) == BEDROCK_0);
+            possibly(LIFT_BYTE(src) == BEDROCK_255);
             if (flavor < MIN_FLAVOR_ANTIFORMS_OK)
                 crash ("Unexpected antiform found on data stack");
         }

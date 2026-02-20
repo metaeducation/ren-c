@@ -160,7 +160,7 @@ INLINE Count Noquotify(Element* elem) {
 
 #if CHECK_CELL_SUBCLASSES
     INLINE bool Is_Antiform(const Value* v) {
-        assert(LIFT_BYTE_RAW(v) != BEDROCK_0);
+        assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
         return LIFT_BYTE(Ensure_Readable(v)) <= STABLE_ANTIFORM_2;
     }
 
@@ -216,7 +216,7 @@ INLINE Count Noquotify(Element* elem) {
         possibly(not Is_Antiform(v));  // general check for any Value
 
         Assert_Cell_Readable(v);
-        assert(LIFT_BYTE_RAW(v) != BEDROCK_0);
+        assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
 
         bool stable = (LIFT_BYTE_RAW(v) != UNSTABLE_ANTIFORM_1);
 
@@ -340,7 +340,7 @@ INLINE Element* Quasify_Antiform(Exact(Stable*) v) {
 INLINE Element* Reify_If_Antiform(Value* v) {
     if (LIFT_BYTE(v) > STABLE_ANTIFORM_2)
         return As_Element(v);
-    assert(LIFT_BYTE_RAW(v) != BEDROCK_0);
+    assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
     LIFT_BYTE_RAW(v) = QUASIFORM_4;  // all antiforms can become quasi
     return As_Element(v);
 }
@@ -404,7 +404,7 @@ INLINE Dual* Lift_Cell(Value* v) {
     if (LIFT_BYTE_RAW(v) > STABLE_ANTIFORM_2)
         return As_Dual(Quote_Cell(As_Element(v)));  // non-antiform -> quoted
 
-    assert(LIFT_BYTE_RAW(v) != BEDROCK_0);
+    assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
     LIFT_BYTE_RAW(v) = QUASIFORM_4;  // both unstable and stable become quasi
     return As_Dual(v);
 }

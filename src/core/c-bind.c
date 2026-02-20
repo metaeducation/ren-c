@@ -1350,7 +1350,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
   // 1. Tied word indicates that we wish to use the original binding.  So
   //    `for-each $x [1 2 3] [...]` will actually set that x instead of making
   //    a new one.  We use the ALIAS dual convention, of storing the word in
-  //    the slot with BEDROCK_0
+  //    the slot with BEDROCK_255
 
     // KeyLists are always managed, but varlist is unmanaged by default (so
     // it can be freed if there is a problem)
@@ -1405,7 +1405,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 
             Element* copy = Copy_Cell_May_Bind(slot, item, binding);
             Force_Cell_Sigil(copy, SIGIL_META);  // make it $word
-            LIFT_BYTE(slot) = BEDROCK_0;
+            LIFT_BYTE(slot) = BEDROCK_255;
             assert(Is_Cell_A_Bedrock_Alias(slot));  // alias uses ^META [1]
         }
         else {
@@ -1477,7 +1477,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 //
 void Read_Slot_Dual(Sink(Value) out, const Slot* slot)
 {
-    if (LIFT_BYTE(slot) == BEDROCK_0)
+    if (LIFT_BYTE(slot) == BEDROCK_255)
         Copy_Plain_Cell(out, slot);
     else
         Copy_Lifted_Cell(out, As_Value(slot));
@@ -1499,7 +1499,7 @@ void Read_Slot_Dual(Sink(Value) out, const Slot* slot)
 //
 Result(None) Read_Slot_Meta(Sink(Value) out, const Slot* slot)
 {
-    if (LIFT_BYTE(slot) != BEDROCK_0) {
+    if (LIFT_BYTE(slot) != BEDROCK_255) {
         const Value* var = Slot_Hack(slot);
         Copy_Cell(out, var);
         return none;
@@ -1571,7 +1571,7 @@ Result(None) Write_Loop_Slot_May_Unbind_Or_Decay(Slot* slot, Value* v)
     if (Get_Cell_Flag(slot, LOOP_SLOT_FORMAT_UNBIND))
         Unbind_Cell_If_Bindable_Core(v);
 
-    if (LIFT_BYTE(slot) != BEDROCK_0) {  // ordinary write
+    if (LIFT_BYTE(slot) != BEDROCK_255) {  // ordinary write
         Copy_Cell(u_cast(Value*, slot), v);
         return none;
     }

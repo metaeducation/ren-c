@@ -118,7 +118,7 @@ DECLARE_NATIVE(MUTABLE_Q) {
 //
 void Protect_Slot(const Cell* v, Flags flags)
 {
-    if (LIFT_BYTE(v) == BEDROCK_0)
+    if (LIFT_BYTE(v) == BEDROCK_255)
         return;  // !!! PROTECT should reach aliases; but SETTERS? GETTERS?
 
     Option(Heart) heart = Heart_Of(v);

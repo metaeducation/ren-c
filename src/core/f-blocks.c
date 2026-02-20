@@ -195,7 +195,7 @@ void Uncolor_Array(const Array* a)
     const Cell* tail = Flex_Tail(Cell, a);
     const Cell* at = Flex_Head(Cell, a);
     for (; at != tail; ++at) {
-        if (LIFT_BYTE(at) == BEDROCK_0)
+        if (LIFT_BYTE(at) == BEDROCK_255)
             continue;  // !!! REVIEW
 
         Option(Heart) heart = Heart_Of(at);
@@ -218,7 +218,7 @@ void Uncolor_Array(const Array* a)
 //
 void Uncolor_Slot(const Cell* v)
 {
-    if (LIFT_BYTE(v) == BEDROCK_0)
+    if (LIFT_BYTE(v) == BEDROCK_255)
         return;  // !!! REVIEW
 
     Option(Heart) heart = Heart_Of(v);

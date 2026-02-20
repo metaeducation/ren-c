@@ -98,7 +98,7 @@ struct CastHook<const F*, const Param*> {  // both must be const [B]
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
         assert(
-            LIFT_BYTE_RAW(c) != BEDROCK_0
+            LIFT_BYTE_RAW(c) != BEDROCK_255
             or KIND_BYTE_RAW(c) == Kind_From_Sigil_And_Heart(
                 SIGIL_0, TYPE_PARAMETER
             )
@@ -119,7 +119,7 @@ struct CastHook<const F*, const Value*> {  // both must be const [B]
 
     const Cell* c = u_cast(const Cell*, p);
     Assert_Cell_Readable(c);
-    assert(LIFT_BYTE_RAW(c) != BEDROCK_0);  // bedrock is only illegal lift
+    assert(LIFT_BYTE_RAW(c) != BEDROCK_255);  // bedrock is only illegal lift
   }
 };
 

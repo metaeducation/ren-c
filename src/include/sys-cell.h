@@ -779,7 +779,7 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
             assert(right >= 0 and right <= 255);
 
             Option(Heart) heart = Unchecked_Heart_Of(cell);
-            if (right != BEDROCK_0 and not (right & NONQUASI_BIT))
+            if (right != BEDROCK_255 and not (right & NONQUASI_BIT))
                 assert(Any_Isotopic_Type(heart));  // has quasiforms/antiforms
 
             /* add write checks you want here */
@@ -833,7 +833,7 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 INLINE Option(Type) Underlying_Type_Of_Unchecked(  // inlined in Type_Of() [1]
     const Stable* v
 ){
-    assert(LIFT_BYTE_RAW(v) != BEDROCK_0);
+    assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
 
     if (KIND_BYTE_RAW(v) <= MAX_HEARTBYTE)  // raw [2]
         return i_cast(HeartEnum, KIND_BYTE_RAW(v));
@@ -867,8 +867,8 @@ INLINE Option(Type) Type_Of_Unchecked(const Value* v) {
         return i_cast(TypeEnum, KIND_BYTE_RAW(v) + MAX_TYPEBYTE_ELEMENT);
 
     #if RUNTIME_CHECKS
-      case BEDROCK_0:
-        crash ("Unexpected lift byte value BEDROCK_0 for Value* (not Slot*)");
+      case BEDROCK_255:
+        crash ("Unexpected lift byte value BEDROCK_255 for Value* (not Slot*)");
     #endif
 
       default:
@@ -910,7 +910,7 @@ INLINE Option(Type) Type_Of_When_Unquoted(const Element* elem) {
 
 INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
 {
-    assert((flags & CELL_MASK_LIFT) == FLAG_LIFT_BYTE(BEDROCK_0));
+    assert((flags & CELL_MASK_LIFT) == FLAG_LIFT_BYTE(LIFT_0));
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
         BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_3)
