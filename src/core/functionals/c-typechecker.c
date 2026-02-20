@@ -947,7 +947,15 @@ bool Typecheck_Use_Toplevel(
 
 }} handle_non_parameter: {
 
-    switch (opt Type_Of(As_Stable(tests))) {
+    Type type = opt Type_Of(As_Stable(tests));
+
+    if (type == TYPE_WORD or type == TYPE_QUASIFORM or Is_Quoted_Type(type)) {
+        at = cast(Element*, tests);
+        tail = cast(Element*, tests) + 1;
+        derived = tests_binding;
+        match_all = true;
+    }
+    else switch (type) {
       case TYPE_DATATYPE: {
         Option(Type) t_test = Datatype_Type(As_Stable(tests));
         Option(Type) t = Type_Of_Maybe_Unstable(v);
@@ -981,15 +989,6 @@ bool Typecheck_Use_Toplevel(
       case TYPE_GROUP:
         at = List_At(&tail, tests);
         derived = Derive_Binding(tests_binding, As_Element(tests));
-        match_all = true;
-        break;
-
-      case TYPE_QUASIFORM:
-      case TYPE_QUOTED:
-      case TYPE_WORD:
-        at = cast(Element*, tests);
-        tail = cast(Element*, tests) + 1;
-        derived = tests_binding;
         match_all = true;
         break;
 

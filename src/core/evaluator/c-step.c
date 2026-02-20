@@ -775,7 +775,7 @@ Bounce Stepper_Executor(Level* L)
     Copy_Cell(OUT, CURRENT);
 
     LIFT_BYTE(OUT) -= Quote_Shift(1);
-    STATE = i_cast(StepperState, TYPE_QUOTED);  // can't leave STATE_0
+    STATE = ST_STEPPER_NONZERO_STATE;  // can't leave STATE_0
 
     goto lookahead;
 

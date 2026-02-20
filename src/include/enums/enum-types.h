@@ -279,6 +279,14 @@ typedef Byte TypeByte;  // Byte whose value is <= MAX_TYPEBYTE
   #endif
 #endif
 
+// !!! The idea of a single TYPE_QUOTED isn't that interesting; instead, if
+// the Type bytes are able to hold states of LIFT/QUASI in their higher
+// levels, then the LIFT_BYTE() can actually be the answer to Type_Of()...
+// then you can check a range of those values to know if it's quoted or not.
+//
+#define Is_Quoted_Type(type) \
+    (type == TYPE_QUOTED)
+
 
 //=//// CUSTOM DATATYPE HEART (0) /////////////////////////////////////////=//
 //

@@ -184,10 +184,33 @@ bool Pushed_Continuation(
 
 } switch_on_sigil: {
 
-    switch (opt Type_Of(branch)) {
-      case TYPE_QUOTED:  // note: not bound (use $tied to get a binding)
-        Unquote_Cell(Copy_Cell(out, branch));
-        goto just_use_out;
+    Type type = opt Type_Of(branch);
+
+    switch (type) {
+      case TYPE_BLOCK:  // plain execution
+        binding = Derive_Binding(binding, branch);
+        goto handle_list_with_adjusted_binding;
+
+      handle_list_with_adjusted_binding: {
+          Option(Element*) first = nullptr;
+          require (
+            Result(Feed*) feed = Prep_Array_Feed(
+              Alloc_Feed(),
+              first,  // no injection
+              Cell_Array(branch),
+              Series_Index(branch),
+              binding,
+              FEED_MASK_DEFAULT | (branch->header.bits & FEED_FLAG_CONST)
+            )
+        );
+
+        require (
+          Level* L = Make_Level(
+            &Evaluator_Executor, feed, flags
+        ));
+        Push_Level(Erase_Cell(out), L);
+
+        goto pushed_continuation; }
 
       case TYPE_QUASIFORM:
         Copy_Cell(out, branch);
@@ -228,31 +251,6 @@ bool Pushed_Continuation(
         );
         binding = varlist;  // update binding
         goto handle_list_with_adjusted_binding; }
-
-      case TYPE_BLOCK:  // plain execution
-        binding = Derive_Binding(binding, branch);
-        goto handle_list_with_adjusted_binding;
-
-      handle_list_with_adjusted_binding: {
-          Option(Element*) first = nullptr;
-          require (
-            Result(Feed*) feed = Prep_Array_Feed(
-              Alloc_Feed(),
-              first,  // no injection
-              Cell_Array(branch),
-              Series_Index(branch),
-              binding,
-              FEED_MASK_DEFAULT | (branch->header.bits & FEED_FLAG_CONST)
-            )
-        );
-
-        require (
-          Level* L = Make_Level(
-            &Evaluator_Executor, feed, flags
-        ));
-        Push_Level(Erase_Cell(out), L);
-
-        goto pushed_continuation; }
 
       case TYPE_CHAIN: {  // effectively REDUCE
         if (not Is_Get_Block(branch))
@@ -303,6 +301,11 @@ bool Pushed_Continuation(
 
       default:
         break;
+    }
+
+    if (Is_Quoted_Type(type)) {  // not bound (use $tied to get a binding)
+        Unquote_Cell(Copy_Cell(out, branch));
+        goto just_use_out;
     }
 
     panic (Error_Bad_Branch_Type_Raw());  // narrow input types? [3]
