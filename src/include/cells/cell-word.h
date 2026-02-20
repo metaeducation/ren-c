@@ -116,10 +116,10 @@ INLINE Dual* Init_Word_Untracked(
 }
 
 #define Init_Word(out,str) \
-    TRACK(Init_Word_Untracked((out), FLAG_LIFT_BYTE(NOQUOTE_3), (str)))
+    TRACK(Init_Word_Untracked((out), FLAG_LIFT_BYTE(NOQUOTE_63), (str)))
 
 #define Init_Quasi_Word(out,symbol) \
-    TRACK(Init_Word_Untracked((out), FLAG_LIFT_BYTE(QUASIFORM_4), (symbol)))
+    TRACK(Init_Word_Untracked((out), FLAG_LIFT_BYTE(QUASIFORM_64), (symbol)))
 
 INLINE Dual* Init_Word_Bound_Untracked(
     Sink(Dual) out,
@@ -178,10 +178,10 @@ INLINE bool Is_Word_With_Id_Core(const Cell* v, LiftByte lift, SymId id) {
 }
 
 #define Is_Word_With_Id(v,id) \
-    Is_Word_With_Id_Core(Known_Stable(v), NOQUOTE_3, (id))
+    Is_Word_With_Id_Core(Known_Stable(v), NOQUOTE_63, (id))
 
 #define Is_Quasi_Word_With_Id(v,id) \
-    Is_Word_With_Id_Core(Known_Stable(v), QUASIFORM_4, (id))
+    Is_Word_With_Id_Core(Known_Stable(v), QUASIFORM_64, (id))
 
 
 //=//// '| AND '|| WORD CHECKS ////////////////////////////////////////////=//

@@ -185,7 +185,7 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
                 SECOND_BYTE(p) == '\0'  // rebEND
                 or (
                     SECOND_BYTE(p) == u_cast(Byte, TYPE_BLANK)
-                    and THIRD_BYTE(p) == u_cast(Byte, NOQUOTE_3)
+                    and THIRD_BYTE(p) == u_cast(Byte, NOQUOTE_63)
                 )
             );
             return DETECTED_AS_END;

@@ -568,7 +568,7 @@ INLINE bool Is_Parameter_Divergent(const Cell* v) {
 }
 
 INLINE Param* Unspecialize_Parameter(Cell* p) {
-    assert(Heart_Of(p) == TYPE_PARAMETER and LIFT_BYTE(p) == NOQUOTE_3);
+    assert(Heart_Of(p) == TYPE_PARAMETER and LIFT_BYTE(p) == NOQUOTE_63);
     LIFT_BYTE(p) = BEDROCK_255;
     return u_cast(Param*, p);
 }
@@ -643,7 +643,7 @@ INLINE SymId Starred_Returner_Id(SymId id) {
 
 INLINE void Regularize_Parameter_Local(Param* param) {
     assert(Is_Cell_A_Bedrock_Hole(param));
-    LIFT_BYTE(param) = NOQUOTE_3;
+    LIFT_BYTE(param) = NOQUOTE_63;
 }
 
 INLINE const Element* Returnlike_Parameter_In_Paramlist(

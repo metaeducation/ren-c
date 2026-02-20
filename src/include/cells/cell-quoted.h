@@ -57,29 +57,29 @@
 
 INLINE Count Quotes_Of(const Element* v) {
     assert(LIFT_BYTE_RAW(v) < MIN_LIFTBYTE_ANTIFORM);
-    return (LIFT_BYTE(v) - NOQUOTE_3) >> 1;
+    return (LIFT_BYTE(v) - NOQUOTE_63) >> 1;
 }
 
 INLINE Count Quotes_From_Lift_Byte(LiftByte lift_byte) {
     assert(lift_byte < MIN_LIFTBYTE_ANTIFORM);
-    return (lift_byte - NOQUOTE_3) >> 1;
+    return (lift_byte - NOQUOTE_63) >> 1;
 }
 
 #define Is_Unquoted(v) \
-    (LIFT_BYTE(Ensure_Readable(Known_Stable(v))) == NOQUOTE_3)
+    (LIFT_BYTE(Ensure_Readable(Known_Stable(v))) == NOQUOTE_63)
 
 #define Is_Possibly_Unstable_Value_Quoted(v) \
-    (LIFT_BYTE(Ensure_Readable(v)) >= ONEQUOTE_NONQUASI_5)
+    (LIFT_BYTE(Ensure_Readable(v)) >= ONEQUOTE_NONQUASI_65)
 
 #define Is_Quoted(v) \
     Is_Possibly_Unstable_Value_Quoted(Known_Stable(v))
 
 #define Any_Fundamental(v) \
-    (LIFT_BYTE(Ensure_Readable(Known_Stable(v))) == NOQUOTE_3)
+    (LIFT_BYTE(Ensure_Readable(Known_Stable(v))) == NOQUOTE_63)
 
 #define Is_Quoted_Form_Of(heartname, v) \
     Cell_Has_Lift_Sigil_Heart(Known_Stable(v), \
-        ONEQUOTE_NONQUASI_5, SIGIL_0, TYPE_##heartname)
+        ONEQUOTE_NONQUASI_65, SIGIL_0, TYPE_##heartname)
 
 
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.
@@ -119,9 +119,9 @@ INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
 INLINE Count Noquotify(Element* elem) {
     Count depth = Quotes_Of(elem);
     if (LIFT_BYTE_RAW(elem) & NONQUASI_BIT)
-        LIFT_BYTE_RAW(elem) = NOQUOTE_3;
+        LIFT_BYTE_RAW(elem) = NOQUOTE_63;
     else
-        LIFT_BYTE_RAW(elem) = QUASIFORM_4;  // already quasi
+        LIFT_BYTE_RAW(elem) = QUASIFORM_64;  // already quasi
     return depth;
 }
 
@@ -171,7 +171,7 @@ INLINE Count Noquotify(Element* elem) {
 #undef Any_Antiform  // Is_Antiform() faster than auto-generated macro [1]
 
 #define Is_Lifted_Antiform(v) \
-    (LIFT_BYTE(Ensure_Readable(v)) == QUASIFORM_4)
+    (LIFT_BYTE(Ensure_Readable(v)) == QUASIFORM_64)
 
 
 //=//// UNSTABLE ANTIFORMS ////////////////////////////////////////////////=//
@@ -252,7 +252,7 @@ INLINE Count Noquotify(Element* elem) {
 INLINE bool Is_Lifted_Unstable_Antiform(const Value* v) {  // costs more [3]
     unnecessary(Ensure_Readable(v));  // assume Is_Antiform() checked readable
 
-    if (LIFT_BYTE(v) != QUASIFORM_4)
+    if (LIFT_BYTE(v) != QUASIFORM_64)
         return false;  // not quasiform so not lifted unstable
 
     possibly(0 != (v->header.bits & CELL_MASK_SIGIL));  // quasi sigils ok
@@ -312,24 +312,24 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) atom);
 INLINE Result(Element*) Coerce_To_Quasiform(Exact(Element*) v);
 
 #define Is_Quasiform(v) \
-    (LIFT_BYTE(Ensure_Readable(Known_Stable(v))) == QUASIFORM_4)
+    (LIFT_BYTE(Ensure_Readable(Known_Stable(v))) == QUASIFORM_64)
 
 INLINE Element* Unquasify(Element* elem) {
-    assert(LIFT_BYTE(elem) == QUASIFORM_4);
-    LIFT_BYTE(elem) = NOQUOTE_3;
+    assert(LIFT_BYTE(elem) == QUASIFORM_64);
+    LIFT_BYTE(elem) = NOQUOTE_63;
     return elem;
 }
 
 INLINE Element* Quasify_Isotopic_Fundamental(Element* elem) {
     assert(Any_Isotopic_Type(Heart_Of(elem)));
-    assert(LIFT_BYTE(elem) == NOQUOTE_3);
-    LIFT_BYTE_RAW(elem) = QUASIFORM_4;
+    assert(LIFT_BYTE(elem) == NOQUOTE_63);
+    LIFT_BYTE_RAW(elem) = QUASIFORM_64;
     return elem;
 }
 
 INLINE Element* Quasify_Antiform(Exact(Stable*) v) {
     assert(Is_Antiform(v));
-    LIFT_BYTE_RAW(v) = QUASIFORM_4;  // all antiforms can be quasi
+    LIFT_BYTE_RAW(v) = QUASIFORM_64;  // all antiforms can be quasi
     return u_cast(Element*, v);
 }
 
@@ -337,7 +337,7 @@ INLINE Element* Reify_If_Antiform(Value* v) {
     if (LIFT_BYTE(v) < MIN_LIFTBYTE_ANTIFORM)
         return As_Element(v);
     assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
-    LIFT_BYTE_RAW(v) = QUASIFORM_4;  // all antiforms can become quasi
+    LIFT_BYTE_RAW(v) = QUASIFORM_64;  // all antiforms can become quasi
     return As_Element(v);
 }
 
@@ -351,7 +351,7 @@ INLINE Element* Reify_If_Antiform(Value* v) {
 
 INLINE void Antiformize_Unbound_Fundamental(Value* v, LiftByte lift_byte) {
     assert(Heart_Of(v) != HEART_WORD_SIGNIFYING_LOGIC);  // no LOGIC_IS_OKAY
-    assert(LIFT_BYTE_RAW(v) == NOQUOTE_3);
+    assert(LIFT_BYTE_RAW(v) == NOQUOTE_63);
     possibly(Not_Stable_Antiform_Heart(Heart_Of_Unsigiled_Isotopic(v)));
     if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
         assert(not Cell_Binding(v));
@@ -375,7 +375,7 @@ INLINE void Antiformize_Unbound_Fundamental(Value* v, LiftByte lift_byte) {
 
 INLINE bool Not_Lifted(const Value* v) {
     Assert_Cell_Readable(v);
-    if (LIFT_BYTE_RAW(v) < QUASIFORM_4)
+    if (LIFT_BYTE_RAW(v) < QUASIFORM_64)
         return true;  // fundamental
     if (LIFT_BYTE(v) >= MIN_LIFTBYTE_ANTIFORM)
         return true;  // antiform
@@ -390,12 +390,12 @@ INLINE Dual* Lift_Cell(Value* v) {
         return As_Dual(Quote_Cell(As_Element(v)));  // non-antiform -> quoted
 
     assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
-    LIFT_BYTE_RAW(v) = QUASIFORM_4;  // both unstable and stable become quasi
+    LIFT_BYTE_RAW(v) = QUASIFORM_64;  // both unstable and stable become quasi
     return As_Dual(v);
 }
 
 INLINE Result(Value*) Unlift_Cell_No_Decay_Core(Value* v) {
-    if (LIFT_BYTE_RAW(v) == QUASIFORM_4) {
+    if (LIFT_BYTE_RAW(v) == QUASIFORM_64) {
         trap (
           Coerce_To_Antiform(v)
         );
@@ -430,7 +430,7 @@ INLINE Dual* Copy_Lifted_Cell_Untracked(Init(Dual) out, const Value* v)
 
 INLINE Dual* Copy_Plain_Cell_Untracked(Init(Dual) out, const Cell* cell) {
     Copy_Cell_Core_Untracked(out, cell, CELL_MASK_COPY);
-    LIFT_BYTE(out) = NOQUOTE_3;
+    LIFT_BYTE(out) = NOQUOTE_63;
     return out;
 }
 

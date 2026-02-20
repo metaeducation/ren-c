@@ -504,7 +504,7 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
         heeded (Set_Cell_Flag(var, SCRATCH_VAR_NOTE_ONLY_ACTION));
     }
 
-    assert(LIFT_BYTE(var) == NOQUOTE_3);
+    assert(LIFT_BYTE(var) == NOQUOTE_63);
 
     if (pack_at_lifted == pack_tail) {  // no more multi-return values
         if (not is_optional) {

@@ -34,7 +34,7 @@
     (LIFT_BYTE(Possibly_Bedrock(cell)) == BEDROCK_255)
 
 #define Is_Dualized_Bedrock(dual) \
-    (LIFT_BYTE(Known_Dual(dual)) == NOQUOTE_3)
+    (LIFT_BYTE(Known_Dual(dual)) == NOQUOTE_63)
 
 
 //=//// UNDECAYED ~(...)~ BEDROCK PACK!s //////////////////////////////////-//
@@ -86,7 +86,7 @@ INLINE const Dual* Opt_Extract_Dual_If_Undecayed_Bedrock(const Value* v) {
     if (item == tail or item + 1 != tail)
         return nullptr;
 
-    if (LIFT_BYTE(item) != NOQUOTE_3)
+    if (LIFT_BYTE(item) != NOQUOTE_63)
         return nullptr;
 
     return item;
@@ -123,7 +123,7 @@ INLINE bool Is_Bedrock_Dual_A_Drain(const Dual* dual) {
     Is_Drain_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Drain(dual) \
-    Is_Drain_Core(Known_Dual(dual), NOQUOTE_3)
+    Is_Drain_Core(Known_Dual(dual), NOQUOTE_63)
 
 INLINE Slot* Init_Bedrock_Drain(Init(Slot) out) {
     Init_Space(out);
@@ -203,7 +203,7 @@ INLINE bool Is_Hot_Potato_With_Id_Core(
 
 #define Is_Lifted_Hot_Potato_With_Id(v, id) \
     Is_Hot_Potato_With_Id_Core( \
-        known(Value*, (v)), (id), QUASIFORM_4)
+        known(Value*, (v)), (id), QUASIFORM_64)
 
 #define Is_Hot_Potato(v) \
     Is_Hot_Potato_With_Id((v), none)
@@ -248,7 +248,7 @@ INLINE bool Is_Bedrock_Dual_A_Hole(const Dual* dual) {
     Is_Hole_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Hole(dual) \
-    Is_Hole_Core(Known_Dual(dual), NOQUOTE_3)
+    Is_Hole_Core(Known_Dual(dual), NOQUOTE_63)
 
 INLINE bool Is_Undecayed_Hole(const Value* v) {  // ~(parameter!)~ PACK!
     const Dual* dual = Opt_Extract_Dual_If_Undecayed_Bedrock(v);
@@ -295,7 +295,7 @@ INLINE bool Is_Alias_Core(const Cell* cell, LiftByte lift_byte) {
     Is_Alias_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Alias(dual) \
-    Is_Alias_Core(Known_Dual(dual), NOQUOTE_3)
+    Is_Alias_Core(Known_Dual(dual), NOQUOTE_63)
 
 INLINE bool Is_Undecayed_Alias(const Value* v) {  // ~(^meta)~ PACK!
     const Dual* dual = Opt_Extract_Dual_If_Undecayed_Bedrock(v);
@@ -321,7 +321,7 @@ INLINE bool Is_Bedrock_Dual_An_Accessor(const Dual* dual) {
     Is_Accessor_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Accessor(dual) \
-    Is_Accessor_Core(Known_Dual(dual), NOQUOTE_3)
+    Is_Accessor_Core(Known_Dual(dual), NOQUOTE_63)
 
 #define Is_Dual_Word_Named_Signal(dual)  Is_Word(Known_Dual(dual))
 

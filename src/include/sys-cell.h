@@ -721,7 +721,7 @@ INLINE Heart Heart_Of_Unsigiled_Isotopic(const Cell* c) {
 }
 
 INLINE Option(Heart) Heart_Of_Fundamental(const Cell* c) {
-    assert(LIFT_BYTE_RAW(c) == NOQUOTE_3);
+    assert(LIFT_BYTE_RAW(c) == NOQUOTE_63);
     return Heart_Of(c);
 }
 
@@ -732,7 +732,7 @@ INLINE Heart Heart_Of_Builtin(const Cell* c) {
 }
 
 INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
-    assert(LIFT_BYTE_RAW(c) == NOQUOTE_3);
+    assert(LIFT_BYTE_RAW(c) == NOQUOTE_63);
     Option(Heart) heart = Heart_Of(c);
     assert(heart);
     return opt heart;  // faster than unwrap, we already checked for 0
@@ -742,7 +742,7 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
     (TYPE_0 == opt Heart_Of(cell))
 
 INLINE bool Type_Of_Is_0(const Cell* cell) {
-    return Heart_Of_Is_0(cell) and LIFT_BYTE_RAW(cell) == NOQUOTE_3;
+    return Heart_Of_Is_0(cell) and LIFT_BYTE_RAW(cell) == NOQUOTE_63;
 }
 
 
@@ -787,7 +787,7 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
             LIFT_BYTE_RAW(cell) = right;
         }
 
-        void operator=(const Lift_4_Struct& right) = delete;
+        void operator=(const Lift_64_Struct& right) = delete;
 
         void operator=(const LiftHolder& right)  // must write explicitly
           { *this = u_cast(LiftByte, right); }
@@ -845,7 +845,7 @@ INLINE Option(Type) Type_Of_Unchecked(const Value* v) {
     switch (  // branches are in order of commonality (nonquoted first)
         LIFT_BYTE_RAW(v)  // raw [2]
     ){
-      case NOQUOTE_3: {  // inlining of Underlying_Type_Of_Unchecked() [1]
+      case NOQUOTE_63: {  // inlining of Underlying_Type_Of_Unchecked() [1]
         if (KIND_BYTE_RAW(v) <= MAX_HEARTBYTE)  // raw [2]
             return i_cast(HeartEnum, KIND_BYTE_RAW(v));
 
@@ -853,7 +853,7 @@ INLINE Option(Type) Type_Of_Unchecked(const Value* v) {
             i_cast(Sigil, KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT)
         ); }
 
-      case QUASIFORM_4:
+      case QUASIFORM_64:
         return TYPE_QUASIFORM;
 
       case LIFTBYTE_PACK:
@@ -896,7 +896,7 @@ INLINE Option(Type) Type_Of_Unchecked(const Value* v) {
     Datatype_Of_Possibly_Unstable(Known_Stable(v))
 
 INLINE Option(Type) Type_Of_When_Unquoted(const Element* elem) {
-    if (LIFT_BYTE(elem) == QUASIFORM_4)
+    if (LIFT_BYTE(elem) == QUASIFORM_64)
         return TYPE_QUASIFORM;
 
     assert(LIFT_BYTE(elem) < MIN_LIFTBYTE_ANTIFORM);
@@ -914,7 +914,7 @@ INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
     assert((flags & CELL_MASK_LIFT) == FLAG_LIFT_BYTE(LIFT_0));
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_3)
+        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_63)
     );
 }
 
@@ -935,7 +935,7 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_3)
+        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_63)
     );
     c->extra.base = m_cast(ExtraHeart*, extra_heart);
 }

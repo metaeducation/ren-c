@@ -1312,7 +1312,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     Cell* out_cell = Copy_Cell_Core(OUT, slot, CELL_MASK_COPY);
 
     if (LIFT_BYTE(out_cell) == BEDROCK_255) {  // return as nonquoted/nonquasi
-        LIFT_BYTE(out_cell) = NOQUOTE_3;
+        LIFT_BYTE(out_cell) = NOQUOTE_63;
         return OUT_UNLIFTED_DUAL_INDIRECT_PICK;
     }
 
@@ -1361,7 +1361,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         and not Is_Cell_A_Bedrock_Hole(slot)
     ){  // CASE 2: Writing non-bedrock into bedrock slot
         Copy_Cell_Core(OUT, slot, CELL_MASK_COPY);  // fetch for return
-        LIFT_BYTE(OUT) = NOQUOTE_3;
+        LIFT_BYTE(OUT) = NOQUOTE_63;
         return OUT_UNLIFTED_DUAL_INDIRECT_POKE;  // alias, setter, drain...
     }
 
@@ -1907,7 +1907,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
 
-    if (LIFT_BYTE(v) != QUASIFORM_4) {
+    if (LIFT_BYTE(v) != QUASIFORM_64) {
         return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds ARG(FORM)
     }
 

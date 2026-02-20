@@ -58,9 +58,9 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
 
     if (
         (elem->header.bits & (FLAG_LIFT_BYTE(255) | CELL_MASK_SIGIL))
-            != FLAG_LIFT_BYTE(QUASIFORM_4)
+            != FLAG_LIFT_BYTE(QUASIFORM_64)
     ){
-        if (LIFT_BYTE(elem) != QUASIFORM_4)
+        if (LIFT_BYTE(elem) != QUASIFORM_64)
             return fail (
                 Error_User("Can only coerce quasiforms to antiforms")
             );
@@ -170,11 +170,11 @@ INLINE Result(Element*) Coerce_To_Quasiform(Element* v) {
     Option(Heart) heart = Heart_Of(v);
 
     if (not Any_Isotopic_Type(heart)) {  // Note: all words have quasiforms [1]
-        LIFT_BYTE(v) = NOQUOTE_3;
+        LIFT_BYTE(v) = NOQUOTE_63;
         return fail (Error_Non_Isotopic_Type_Raw(v));
     }
 
-    LIFT_BYTE_RAW(v) = QUASIFORM_4;  // few places should use LIFT_BYTE_RAW!
+    LIFT_BYTE_RAW(v) = QUASIFORM_64;  // few places should use LIFT_BYTE_RAW!
     return v;
 }
 

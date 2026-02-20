@@ -266,14 +266,14 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 #define LIFT_0  TYPE_0_constexpr
 #define BEDROCK_255  255
 
-#if DEBUG_HOOK_LIFT_BYTE  // e.g. stop `LIFT_BYTE(cell) = QUASIFORM_4` [2]
-    struct Lift_4_Struct { constexpr operator LiftByte() const { return 4; } };
+#if DEBUG_HOOK_LIFT_BYTE  // e.g. stop `LIFT_BYTE(cell) = QUASIFORM_64` [2]
+    struct Lift_64_Struct { constexpr operator LiftByte() const { return 64; } };
 
-    constexpr Lift_4_Struct quasiform_4;
+    constexpr Lift_64_Struct quasiform_64;
 
-    #define QUASIFORM_4          quasiform_4
+    #define QUASIFORM_64          quasiform_64
 #else
-    #define QUASIFORM_4          4
+    #define QUASIFORM_64          64
 #endif
 
 #define MAX_LIFTBYTE_ANTIFORM  LIFTBYTE_PACK
@@ -288,10 +288,10 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 #define LIFTBYTE_LOGIC 247
 #define MIN_LIFTBYTE_ANTIFORM  LIFTBYTE_LOGIC
 
-#define NOQUOTE_3               3
+#define NOQUOTE_63              63
 #define NONQUASI_BIT            1
-// see above for QUASIFORM_4
-#define ONEQUOTE_NONQUASI_5     5  // non-quasiquoted state of 1 quote
+// see above for QUASIFORM_64
+#define ONEQUOTE_NONQUASI_65    65  // non-quasiquoted state of 1 quote
 
 #define MAX_QUOTE_DEPTH     126         // highest legal quoting level
 #define Quote_Shift(n)      ((n) << 1)  // help find manipulation sites

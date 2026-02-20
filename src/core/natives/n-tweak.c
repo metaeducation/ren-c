@@ -51,7 +51,7 @@ static Option(Error*) Trap_Adjust_Lifted_Antiform_For_Tweak(Value* spare)
 {
     assert(Is_Lifted_Antiform(spare));
     if (Heart_Of(spare) == TYPE_FRAME) {  // e.g. (append.series)
-        LIFT_BYTE_RAW(spare) = ONEQUOTE_NONQUASI_5;
+        LIFT_BYTE_RAW(spare) = ONEQUOTE_NONQUASI_65;
         return SUCCESS;
     }
 
@@ -228,7 +228,7 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
     if (Is_Bedrock_Dual_A_Hole(dual_spare)) {  // unspecialized cell
         if (adjusted == TYPE_FRAME) { // picking parameter from an ACTION!
-            LIFT_BYTE(dual_spare) = ONEQUOTE_NONQUASI_5;  // plain lifted
+            LIFT_BYTE(dual_spare) = ONEQUOTE_NONQUASI_65;  // plain lifted
         } else {  // make it look like a NULL
             Init_Lifted_Null_Signifying_Unspecialized(dual_spare);
         }
@@ -551,11 +551,11 @@ Option(Error*) Trap_Push_Steps_To_Stack(
     for (at = head; at != tail; ++at) {
         bool unbind;
         switch (LIFT_BYTE(at)) {
-          case NOQUOTE_3:
+          case NOQUOTE_63:
             unbind = false;
             break;
 
-          case ONEQUOTE_NONQUASI_5:
+          case ONEQUOTE_NONQUASI_65:
             unbind = true;
             break;
 
@@ -587,7 +587,7 @@ Option(Error*) Trap_Push_Steps_To_Stack(
         else {
             Copy_Cell_May_Bind(PUSH(), at, at_binding);
             if (unbind)
-                LIFT_BYTE(TOP) = NOQUOTE_3;
+                LIFT_BYTE(TOP) = NOQUOTE_63;
         }
 
         // !!! Here we could validate or rule out items in the TUPLE! dialect,
@@ -742,7 +742,7 @@ Option(Error*) Tweak_Stack_Steps_With_Dual_Scratch_To_Dual_Spare(void)
         }
 
         if (dont_indirect) {
-            possibly(LIFT_BYTE(SPARE) == NOQUOTE_3);  // bedrock introspect
+            possibly(LIFT_BYTE(SPARE) == NOQUOTE_63);  // bedrock introspect
             continue;
         }
 

@@ -119,7 +119,7 @@ INLINE void Unbind_Cell_If_Bindable_Core(Value* v) {
 INLINE Element* Copy_Dequoted_Cell(Sink(Element) out, const Cell* in) {
     Assert_Cell_Stable(in);
     Copy_Cell_Core_Untracked(out, in, CELL_MASK_COPY);
-    LIFT_BYTE(out) = NOQUOTE_3;
+    LIFT_BYTE(out) = NOQUOTE_63;
     return out;
 }
 

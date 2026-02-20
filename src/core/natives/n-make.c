@@ -103,7 +103,7 @@ DECLARE_NATIVE(COPY)
     Element* elem = ARG(VALUE);
 
     LiftByte lift_byte = LIFT_BYTE(elem);
-    LIFT_BYTE(elem) = NOQUOTE_3;  // dispatch requires unquoted items
+    LIFT_BYTE(elem) = NOQUOTE_63;  // dispatch requires unquoted items
 
     Option(Dispatcher*) dispatcher = Get_Generic_Dispatcher(
         &GENERIC_TABLE(COPY),
@@ -120,7 +120,7 @@ DECLARE_NATIVE(COPY)
         return COPY_TO_OUT(elem);
     }
 
-    if (lift_byte == NOQUOTE_3)  // don't have to requote/etc.
+    if (lift_byte == NOQUOTE_63)  // don't have to requote/etc.
         return Apply_Cfunc(unwrap dispatcher, LEVEL);
 
     Option(const Symbol*) label = Level_Label(level_);

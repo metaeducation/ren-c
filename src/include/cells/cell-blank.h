@@ -63,7 +63,7 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out, Flags flags) {
 }
 
 #define Init_Blank(out) \
-    TRACK(Init_Blank_Untracked((out), FLAG_LIFT_BYTE(NOQUOTE_3)))
+    TRACK(Init_Blank_Untracked((out), FLAG_LIFT_BYTE(NOQUOTE_63)))
 
 
 //=//// DECORATED BLANK! ("," DOES NOT RENDER) ////////////////////////////=//
@@ -88,23 +88,23 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out, Flags flags) {
 
 #define Init_Sigiled_Blank(out,sigil) \
     TRACK(Init_Blank_Untracked( \
-        (out), FLAG_LIFT_BYTE(NOQUOTE_3) | FLAG_SIGIL(sigil)))
+        (out), FLAG_LIFT_BYTE(NOQUOTE_63) | FLAG_SIGIL(sigil)))
 
 #define Is_Cell_Blank_With_Lift_Sigil(v, lift_byte, sigil) \
     Cell_Has_Lift_Sigil_Heart( \
         Known_Stable(v), (lift_byte), (sigil), TYPE_BLANK)
 
 #define Is_Pinned_Blank(v) /* renders as `@` [1] */ \
-    Is_Cell_Blank_With_Lift_Sigil((v), NOQUOTE_3, SIGIL_PIN)
+    Is_Cell_Blank_With_Lift_Sigil((v), NOQUOTE_63, SIGIL_PIN)
 
 #define Is_Metaform_Blank(v) /* renders as `^` [1] */ \
-    Is_Cell_Blank_With_Lift_Sigil((v), NOQUOTE_3, SIGIL_META)
+    Is_Cell_Blank_With_Lift_Sigil((v), NOQUOTE_63, SIGIL_META)
 
 #define Is_Tied_Blank(v) /* renders as `$` [1] */ \
-    Is_Cell_Blank_With_Lift_Sigil((v), NOQUOTE_3, SIGIL_TIE)
+    Is_Cell_Blank_With_Lift_Sigil((v), NOQUOTE_63, SIGIL_TIE)
 
 INLINE bool Any_Sigiled_Blank(const Element* e) {
-    if (LIFT_BYTE(e) != NOQUOTE_3 or not Sigil_Of(e))
+    if (LIFT_BYTE(e) != NOQUOTE_63 or not Sigil_Of(e))
         return false;
     return Heart_Of(e) == TYPE_BLANK;
 }
@@ -120,7 +120,7 @@ INLINE bool Any_Sigiled_Blank(const Element* e) {
 
 #define Is_Quasar(v) \
     Cell_Has_Lift_Sigil_Heart( \
-        Known_Stable(v), QUASIFORM_4, SIGIL_0, TYPE_BLANK)
+        Known_Stable(v), QUASIFORM_64, SIGIL_0, TYPE_BLANK)
 
 INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
     Init_Blank(out);
@@ -153,7 +153,7 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
 
 #define Init_Lifted_Void(out) \
     Init_Blank_Untracked(Possibly_Unstable(out), \
-        FLAG_LIFT_BYTE(QUASIFORM_4))
+        FLAG_LIFT_BYTE(QUASIFORM_64))
 
 
 //=//// "VOID TO MAKE HEAVY" FLAG /////////////////////////////////////////=//

@@ -569,7 +569,7 @@ REBLEN Find_Value_In_Binstr(
         return result;
     }
     else if (
-        LIFT_BYTE(pattern) == NOQUOTE_3
+        LIFT_BYTE(pattern) == NOQUOTE_63
         and pattern_heart == TYPE_BITSET
     ){
         return Find_Bitset_In_Binstr(

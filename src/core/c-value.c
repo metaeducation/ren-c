@@ -102,7 +102,7 @@ void Probe_Cell_Print_Helper(
     if (LIFT_BYTE(v) >= MIN_LIFTBYTE_ANTIFORM) {
         DECLARE_ELEMENT (reified);
         Copy_Cell_Core(reified, v, CELL_MASK_ALL);
-        LIFT_BYTE(reified) = NOQUOTE_3;
+        LIFT_BYTE(reified) = NOQUOTE_63;
         if (LIFT_BYTE(v) == BEDROCK_255) {
             require (
               Append_Ascii(mo->strand, "\\\\")

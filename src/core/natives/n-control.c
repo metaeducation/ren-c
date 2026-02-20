@@ -989,7 +989,7 @@ DECLARE_NATIVE(SWITCH)
     predicate = opt ARG(PREDICATE);
     if (not predicate) {
         predicate = Copy_Cell(LOCAL(PREDICATE), LIB(EQUAL_Q));  // default [1]
-        LIFT_BYTE(predicate) = NOQUOTE_3;
+        LIFT_BYTE(predicate) = NOQUOTE_63;
     }
 
     require (

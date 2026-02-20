@@ -681,7 +681,7 @@ Result(bool) Typecheck_Coerce_Return_Use_Toplevel(
         Heart_Of(param) == TYPE_PARAMETER
         and (
             LIFT_BYTE(param) == BEDROCK_255  // "holes" in ParamLists
-            or LIFT_BYTE(param) == NOQUOTE_3  // plain PARAMETER!
+            or LIFT_BYTE(param) == NOQUOTE_63  // plain PARAMETER!
         )
     );
 

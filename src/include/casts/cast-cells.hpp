@@ -161,7 +161,7 @@ struct CastHook<const F*, const Element*> {  // both must be const [B]
 //=//// cast(Dual*, ...) //////////////////////////////////////////////////=//
 
 // Same rules as Element* (just a different meaning: ordinary cells are the
-// lifted states, while bedrock states are represented by NOQUOTE_3).
+// lifted states, while bedrock states are represented by NOQUOTE_63).
 
 template<typename F>  // [A]
 struct CastHook<const F*, const Dual*> {  // both must be const [B]

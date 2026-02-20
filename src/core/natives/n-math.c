@@ -897,8 +897,8 @@ DECLARE_NATIVE(EQUAL_Q)
     if (LIFT_BYTE(ARG(VALUE1)) != LIFT_BYTE(ARG(VALUE2)))
         return LOGIC_OUT(false);
 
-    LIFT_BYTE(ARG(VALUE1)) = NOQUOTE_3;
-    LIFT_BYTE(ARG(VALUE2)) = NOQUOTE_3;
+    LIFT_BYTE(ARG(VALUE1)) = NOQUOTE_63;
+    LIFT_BYTE(ARG(VALUE2)) = NOQUOTE_63;
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -948,8 +948,8 @@ DECLARE_NATIVE(LESSER_Q)
     if (LIFT_BYTE(v1) != LIFT_BYTE(v2))
         return fail ("Differing quote levels are not comparable");
 
-    LIFT_BYTE(v1) = NOQUOTE_3;
-    LIFT_BYTE(v2) = NOQUOTE_3;
+    LIFT_BYTE(v1) = NOQUOTE_63;
+    LIFT_BYTE(v2) = NOQUOTE_63;
 
     if (Sigil_Of(v1) != Sigil_Of(v2))
         return fail ("Differing sigils are not comparable");
@@ -1013,8 +1013,8 @@ DECLARE_NATIVE(SAME_Q)
     if (LIFT_BYTE(ARG(VALUE1)) != LIFT_BYTE(ARG(VALUE2)))
         return LOGIC_OUT(false);
 
-    LIFT_BYTE(ARG(VALUE1)) = NOQUOTE_3;
-    LIFT_BYTE(ARG(VALUE2)) = NOQUOTE_3;
+    LIFT_BYTE(ARG(VALUE1)) = NOQUOTE_63;
+    LIFT_BYTE(ARG(VALUE2)) = NOQUOTE_63;
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);

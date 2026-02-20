@@ -110,7 +110,7 @@ DECLARE_NATIVE(ENRECOVER)
 
     if (not THROWING) {  // successful result
         if (Is_Failure(OUT)) {
-            LIFT_BYTE(OUT) = NOQUOTE_3;  // turn it into normal error
+            LIFT_BYTE(OUT) = NOQUOTE_63;  // turn it into normal error
             return OUT;
         }
         return Lift_Cell(OUT);
@@ -212,7 +212,7 @@ DECLARE_NATIVE(ENRESCUE)  // wrapped as RESCUE
     if (Is_Failure(SPARE)) {
         Drop_Level(SUBLEVEL);
         Move_Cell(OUT, SPARE);
-        LIFT_BYTE(OUT) = NOQUOTE_3;  // change antiform error to plain
+        LIFT_BYTE(OUT) = NOQUOTE_63;  // change antiform error to plain
         return OUT_BRANCHED;
     }
 
@@ -269,7 +269,7 @@ DECLARE_NATIVE(EXCEPT)
     Element* branch = ARG(BRANCH);
 
     if (Is_Failure(left)) {
-        LIFT_BYTE(left) = NOQUOTE_3;  // turn FAILURE! to plain ERROR! [1]
+        LIFT_BYTE(left) = NOQUOTE_63;  // turn FAILURE! to plain ERROR! [1]
     }
     else if (Is_Hot_Potato(left)) {
         // leave as-is [2]

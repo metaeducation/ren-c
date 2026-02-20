@@ -745,7 +745,7 @@ Bounce Stepper_Executor(Level* L)
 
     assert(Is_Cell_Erased(OUT));
 
-    if (LIFT_BYTE(CURRENT) == NOQUOTE_3) {
+    if (LIFT_BYTE(CURRENT) == NOQUOTE_63) {
         Option(Sigil) sigil = Sigil_Of(CURRENT);
         switch (opt sigil) {
           case SIGIL_0:
@@ -762,10 +762,10 @@ Bounce Stepper_Executor(Level* L)
         }
     }
 
-    if (LIFT_BYTE(CURRENT) > QUASIFORM_4)
+    if (LIFT_BYTE(CURRENT) > QUASIFORM_64)
         goto handle_quoted;
 
-    assert(LIFT_BYTE(CURRENT) == QUASIFORM_4);
+    assert(LIFT_BYTE(CURRENT) == QUASIFORM_64);
     goto handle_quasiform;
 
 } handle_quoted: { //// QUOTED! [ 'XXX  '''@XXX  '~XXX~ ] ////////////////////

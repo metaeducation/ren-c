@@ -1306,7 +1306,7 @@ DECLARE_NATIVE(FILE_OF)
     INCLUDE_PARAMS_OF_FILE_OF;
 
     Element* elem = ARG(VALUE);
-    LIFT_BYTE(elem) = NOQUOTE_3;  // allow line-of and file-of on quoted/quasi
+    LIFT_BYTE(elem) = NOQUOTE_63;  // allow line-of and file-of on quoted/quasi
 
     return Dispatch_Generic(FILE_OF, elem, LEVEL);
 }
@@ -1334,7 +1334,7 @@ DECLARE_NATIVE(LINE_OF)
     INCLUDE_PARAMS_OF_LINE_OF;
 
     Element* elem = ARG(VALUE);
-    LIFT_BYTE(elem) = NOQUOTE_3;  // allow line-of and file-of on quoted/quasi
+    LIFT_BYTE(elem) = NOQUOTE_63;  // allow line-of and file-of on quoted/quasi
 
     return Dispatch_Generic(FILE_OF, elem, LEVEL);
 }

@@ -299,7 +299,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
   //    preferable to enforce words for some things?  That's not viable for
   //    type predicate actions, like ANY-ELEMENT?...)
 
-    if (LIFT_BYTE(item) != NOQUOTE_3) {  // [~word!~ 'word! ''~block!~]...
+    if (LIFT_BYTE(item) != NOQUOTE_63) {  // [~word!~ 'word! ''~block!~]...
         goto cant_optimize;  // no optimization strategy yet
     }
 

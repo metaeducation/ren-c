@@ -317,7 +317,7 @@ INLINE Value* Activate_Frame_Core(Value* v) {
 
 INLINE Element* Deactivate_Action(Exact(Value*) v) {
     assert(Is_Action(v));
-    LIFT_BYTE(v) = NOQUOTE_3;
+    LIFT_BYTE(v) = NOQUOTE_63;
     return As_Element(v);
 }
 

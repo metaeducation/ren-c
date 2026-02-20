@@ -3081,9 +3081,9 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     sigil_before = Cell_Underlying_Sigil(head);
 
     if (LIFT_BYTE_RAW(head) & NONQUASI_BIT)
-        LIFT_BYTE_RAW(head) = NOQUOTE_3;
+        LIFT_BYTE_RAW(head) = NOQUOTE_63;
     else
-        LIFT_BYTE_RAW(head) = QUASIFORM_4;
+        LIFT_BYTE_RAW(head) = QUASIFORM_64;
 
     head->header.bits &= (~ CELL_MASK_SIGIL);
 
@@ -3120,7 +3120,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     possibly(Is_Quasiform(TOP_ELEMENT));  // e.g. ~/~ so can't ask Sigil_Of()
     assert(Cell_Underlying_Sigil(TOP_ELEMENT) == 0);
 
-    LIFT_BYTE(TOP_ELEMENT) = NOQUOTE_3 + Quote_Shift(quotes_before);
+    LIFT_BYTE(TOP_ELEMENT) = NOQUOTE_63 + Quote_Shift(quotes_before);
     TOP_ELEMENT->header.bits |= FLAG_SIGIL(sigil_before);
 
     goto sequence_or_conflation_was_pushed;

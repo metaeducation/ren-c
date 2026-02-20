@@ -113,7 +113,7 @@ INLINE bool Is_Rune_And_Is_Char(const Stable* v) {
                 | CELL_FLAG_RUNE_SINGLE_CODEPOINT
         )) == (
             FLAG_HEART(TYPE_RUNE)
-                | FLAG_LIFT_BYTE(NOQUOTE_3)
+                | FLAG_LIFT_BYTE(NOQUOTE_63)
                 | CELL_FLAG_RUNE_SINGLE_CODEPOINT
         )
     );
@@ -333,7 +333,7 @@ INLINE bool Is_Cell_Space_With_Lift_Sigil(
 }
 
 #define Is_Space(v) /* renders as `_` */ \
-    Is_Cell_Space_With_Lift_Sigil(Known_Stable(v), NOQUOTE_3, SIGIL_0)
+    Is_Cell_Space_With_Lift_Sigil(Known_Stable(v), NOQUOTE_63, SIGIL_0)
 
 INLINE bool Is_Newline(Stable* v) {
     return Is_Rune(v) and ('\n' == opt Codepoint_Of_Rune_If_Single_Char(v));

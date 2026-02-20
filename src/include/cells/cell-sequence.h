@@ -215,7 +215,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
         flag == CELL_MASK_ERASED_0  // 0 means no leading space, item is "head"
     ));
 
-    if (LIFT_BYTE(v) != NOQUOTE_3)
+    if (LIFT_BYTE(v) != NOQUOTE_63)
         goto cant_optimize_in_situ;  // quote bits mean on sequence itself
 
     if (Is_Word(v)) {  // in-situ optimization, see [B]
@@ -685,7 +685,7 @@ INLINE Element* Copy_Sequence_At_Untracked(
 
         Copy_Cell_Core_Untracked(out, sequence, CELL_MASK_COPY);  // [2]
         KIND_BYTE(out) = TYPE_WORD;
-        LIFT_BYTE(out) = NOQUOTE_3;  // [3]
+        LIFT_BYTE(out) = NOQUOTE_63;  // [3]
         return out; }
 
       case FLAVOR_SOURCE : {  // uncompressed sequence, or compressed "mirror"
@@ -697,7 +697,7 @@ INLINE Element* Copy_Sequence_At_Untracked(
 
             Copy_Cell_Core_Untracked(out, sequence, CELL_MASK_COPY);
             KIND_BYTE(out) = MIRROR_BYTE(a);
-            LIFT_BYTE(out) = NOQUOTE_3;  // [3]
+            LIFT_BYTE(out) = NOQUOTE_63;  // [3]
             return out;
         }
         assert(Array_Len(a) >= 2);
@@ -880,7 +880,7 @@ INLINE bool Is_Get_Word_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Get_Word(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_3 and Is_Get_Word_Cell(v); }
+  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Get_Word_Cell(v); }
 
 INLINE bool Is_Set_Word_Cell(const Cell* c) {
     return (
@@ -890,7 +890,7 @@ INLINE bool Is_Set_Word_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Set_Word(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_3 and Is_Set_Word_Cell(v); }
+  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Set_Word_Cell(v); }
 
 
 // The new /foo: assignment form ensures that the thing being assigned is
@@ -902,7 +902,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
     Option(Sink(bool)) bound,
     const Element* e
 ){
-    if (LIFT_BYTE(e) != NOQUOTE_3)
+    if (LIFT_BYTE(e) != NOQUOTE_63)
         return nullptr;
     if (Is_Set_Word_Cell(e)) {
         if (bound)
@@ -944,7 +944,7 @@ INLINE bool Is_Get_Tuple_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Get_Tuple(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_3 and Is_Get_Tuple_Cell(v); }
+  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Get_Tuple_Cell(v); }
 
 INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
     return (
@@ -954,7 +954,7 @@ INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Set_Tuple(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_3 and Is_Set_Tuple_Cell(v); }
+  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Set_Tuple_Cell(v); }
 
 
 // GET-BLOCK! and SET-BLOCK!
@@ -967,7 +967,7 @@ INLINE bool Is_Get_Block_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Get_Block(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_3 and Is_Get_Block_Cell(v); }
+  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Get_Block_Cell(v); }
 
 INLINE bool Is_Set_Block_Cell(const Cell* c) {
     return (
@@ -977,7 +977,7 @@ INLINE bool Is_Set_Block_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Set_Block(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_3 and Is_Set_Block_Cell(v); }
+  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Set_Block_Cell(v); }
 
 
 // GET-GROUP! and SET-GROUP!
@@ -990,7 +990,7 @@ INLINE bool Is_Get_Group_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Get_Group(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_3 and Is_Get_Group_Cell(v); }
+  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Get_Group_Cell(v); }
 
 INLINE bool Is_Set_Group_Cell(const Cell* c) {
     return (
@@ -1000,13 +1000,13 @@ INLINE bool Is_Set_Group_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Set_Group(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_3 and Is_Set_Group_Cell(v); }
+  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Set_Group_Cell(v); }
 
 
 INLINE bool Any_Set_Value(const Stable* v) {  // !!! optimize?
     Option(SingleHeart) single;
     return (
-        LIFT_BYTE(v) == NOQUOTE_3
+        LIFT_BYTE(v) == NOQUOTE_63
         and Heart_Of(v) == TYPE_CHAIN
         and (single = Try_Get_Sequence_Singleheart(v))
         and Singleheart_Has_Trailing_Blank(unwrap single)
@@ -1016,7 +1016,7 @@ INLINE bool Any_Set_Value(const Stable* v) {  // !!! optimize?
 INLINE bool Any_Get_Value(const Stable* v) {  // !!! optimize?
     Option(SingleHeart) single;
     return (
-        LIFT_BYTE(v) == NOQUOTE_3
+        LIFT_BYTE(v) == NOQUOTE_63
         and Heart_Of(v) == TYPE_CHAIN
         and (single = Try_Get_Sequence_Singleheart(v))
         and Singleheart_Has_Leading_Blank(unwrap single)

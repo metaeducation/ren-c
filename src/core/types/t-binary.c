@@ -328,7 +328,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
                 KIND_BYTE(pattern) = Kind_From_Sigil_And_Heart(
                     SIGIL_PIN, TYPE_BLOCK
                 );
-                LIFT_BYTE_RAW(pattern) = NOQUOTE_3;
+                LIFT_BYTE_RAW(pattern) = NOQUOTE_63;
                 Api(Stable*) joined = rebStable(
                     CANON(JOIN), CANON(BLOB_X), pattern
                 );

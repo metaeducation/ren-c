@@ -1826,7 +1826,7 @@ DECLARE_NATIVE(SUBPARSE)
               Init_Typechecker(SPARE, lookup)
             );
 
-            LIFT_BYTE(SPARE) = NOQUOTE_3;
+            LIFT_BYTE(SPARE) = NOQUOTE_63;
             rule = As_Element(SPARE);
             assert(Is_Frame(rule));
         }

@@ -66,7 +66,7 @@
             bp[1] == 0  // not strictly necessary, but rebEND is 2 bytes
             or (
                 bp[1] == u_cast(Byte, TYPE_BLANK)
-                and bp[2] == u_cast(Byte, NOQUOTE_3)
+                and bp[2] == u_cast(Byte, NOQUOTE_63)
             )
         );
         return true;
@@ -843,7 +843,7 @@ INLINE Result(Feed*) Prep_At_Feed(
             | CELL_FLAG_NEWLINE_BEFORE \
     )) != ( \
         FLAG_KIND_BYTE(TYPE_WORD) /* CHAIN! or PATH!...worth it? [2] */ \
-            | FLAG_LIFT_BYTE(NOQUOTE_3)   \
+            | FLAG_LIFT_BYTE(NOQUOTE_63)   \
             | (not CELL_FLAG_NEWLINE_BEFORE)  /* no infix newlines [3] */ \
     ))
 
@@ -858,5 +858,5 @@ INLINE Result(Feed*) Prep_At_Feed(
             | FLAG_LIFT_BYTE(255) \
     )) == ( \
         FLAG_KIND_BYTE(TYPE_BLANK) \
-            | FLAG_LIFT_BYTE(NOQUOTE_3) \
+            | FLAG_LIFT_BYTE(NOQUOTE_63) \
     ))

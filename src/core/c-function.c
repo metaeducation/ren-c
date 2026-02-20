@@ -337,10 +337,10 @@ static Result(None) Push_Keys_And_Params_Core(
     v = spare;  // need to mutate if CHAIN! or quoted
 
     if (Quotes_Of(v) > 0) {
-        if (LIFT_BYTE(v) != ONEQUOTE_NONQUASI_5)
+        if (LIFT_BYTE(v) != ONEQUOTE_NONQUASI_65)
             return fail (Error_Bad_Func_Def_Raw(v));
 
-        LIFT_BYTE(SPARE) = NOQUOTE_3;
+        LIFT_BYTE(SPARE) = NOQUOTE_63;
         quoted = true;
 
         if (Is_Word(v))
@@ -859,7 +859,7 @@ Details* Make_Dispatch_Details(
 ){
     assert(Heart_Of(exemplar) == TYPE_FRAME);
     assert(
-        LIFT_BYTE(exemplar) == NOQUOTE_3
+        LIFT_BYTE(exemplar) == NOQUOTE_63
         or LIFT_BYTE(exemplar) == LIFTBYTE_ACTION  // allow action antiform
     );
 
@@ -916,7 +916,7 @@ Details* Make_Dispatch_Details(
 
     Cell* rootvar = Array_Head(a);
     Copy_Cell(rootvar, exemplar);
-    LIFT_BYTE(rootvar) = NOQUOTE_3;  // canonize action antiforms to FRAME!
+    LIFT_BYTE(rootvar) = NOQUOTE_63;  // canonize action antiforms to FRAME!
     Shield_Rootvar_If_Debug(rootvar);
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)

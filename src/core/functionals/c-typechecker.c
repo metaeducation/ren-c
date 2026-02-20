@@ -670,12 +670,12 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
     Copy_Cell(SPARE, v);
     Element* scratch = Copy_Cell(SCRATCH, at);
 
-    if (LIFT_BYTE(scratch) != NOQUOTE_3) {
+    if (LIFT_BYTE(scratch) != NOQUOTE_63) {
         if (LIFT_BYTE(scratch) != LIFT_BYTE(SPARE))
             goto test_failed;  // should be willing to accept subset quotes
 
-        LIFT_BYTE(scratch) = NOQUOTE_3;
-        LIFT_BYTE(SPARE) = NOQUOTE_3;
+        LIFT_BYTE(scratch) = NOQUOTE_63;
+        LIFT_BYTE(SPARE) = NOQUOTE_63;
     }
 
     Option(Sigil) scratch_sigil = Cell_Underlying_Sigil(scratch);
@@ -697,7 +697,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         goto handle_after_any_quoting_adjustments;
     }
 
-    if (LIFT_BYTE(SPARE) != NOQUOTE_3 or v_sigil)
+    if (LIFT_BYTE(SPARE) != NOQUOTE_63 or v_sigil)
         goto test_failed;  // 'foo: or @foo: won't match word!:
 
   check_destructured_sequence: {

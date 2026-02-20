@@ -159,7 +159,7 @@ Bounce Inliner_Dispatcher(Level* const L)
       Stable* out = Decay_If_Unstable(OUT)
     );
     if (Is_Splice(out)) {
-        LIFT_BYTE(out) = NOQUOTE_3;
+        LIFT_BYTE(out) = NOQUOTE_63;
         KIND_BYTE(out) = TYPE_BLOCK;
         Splice_Block_Into_Feed(L->feed, As_Element(out));
         goto continue_evaluating;

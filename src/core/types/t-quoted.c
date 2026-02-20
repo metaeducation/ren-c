@@ -393,7 +393,7 @@ DECLARE_NATIVE(UNANTI)
     INCLUDE_PARAMS_OF_UNANTI;
 
     Value* v = Unchecked_ARG(VALUE);
-    LIFT_BYTE(v) = NOQUOTE_3;  // turn to plain form
+    LIFT_BYTE(v) = NOQUOTE_63;  // turn to plain form
 
     return COPY_TO_OUT(As_Element(v));
 }
@@ -571,7 +571,7 @@ DECLARE_NATIVE(UNSPLICE)
     INCLUDE_PARAMS_OF_UNSPLICE;
 
     Stable* splice = ARG(SPLICE);
-    LIFT_BYTE(splice) = NOQUOTE_3;
+    LIFT_BYTE(splice) = NOQUOTE_63;
     KIND_BYTE(splice) = TYPE_BLOCK;
     return COPY_TO_OUT(splice);
 }
@@ -597,6 +597,6 @@ DECLARE_NATIVE(NOQUOTE)
         return NULL_OUT;
 
     Copy_Cell(OUT, v);
-    LIFT_BYTE(OUT) = NOQUOTE_3;
+    LIFT_BYTE(OUT) = NOQUOTE_63;
     return OUT;
 }

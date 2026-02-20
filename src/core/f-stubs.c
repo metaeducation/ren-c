@@ -509,7 +509,7 @@ Result(Element*) Unsingleheart_Sequence(Element* seq)
 {
     assert(Any_Sequence_Type(Heart_Of(seq)));
     assert(not Sigil_Of(seq));
-    assert(LIFT_BYTE(seq) == NOQUOTE_3);
+    assert(LIFT_BYTE(seq) == NOQUOTE_63);
 
     if (not Sequence_Has_Pointer(seq))
         goto report_error;  // compressed bytes don't encode blanks

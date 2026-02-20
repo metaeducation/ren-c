@@ -232,7 +232,7 @@ INLINE Element* Init_Relative_Block_At(
 //
 
 INLINE Stable* Splicify(Exact(Stable*) v) {
-    assert(Any_List(v) and LIFT_BYTE(v) == NOQUOTE_3);
+    assert(Any_List(v) and LIFT_BYTE(v) == NOQUOTE_63);
     KIND_BYTE(v) = HEART_BLOCK_SIGNIFYING_SPLICE;  // forget former list type
     Tweak_Cell_Binding(u_cast(Element*, v), UNBOUND);
     Antiformize_Unbound_Fundamental(v, LIFTBYTE_SPLICE);
