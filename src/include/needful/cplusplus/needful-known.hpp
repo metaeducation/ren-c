@@ -260,6 +260,33 @@ struct CTypeList<T1, Ts...> {  // Specialization for non-empty lists
     list::contains<T>()
 
 
+//=//// EXACT TYPE ENSURING HELPER ////////////////////////////////////////=//
+//
+// exactly(T, expr) asserts expr is exactly of type T (not just convertible)
+// lenient_exactly(T, expr) allows constness to match as well
+
+template<typename From, typename To>
+struct IsSameAsserter {
+    static_assert(std::is_same<From, To>::value, "exactly() failed");
+};
+
+#undef needful_rigid_exactly
+#define needful_rigid_exactly(T,expr) \
+    (NEEDFUL_DUMMY_INSTANCE(needful::IsSameAsserter< \
+        needful::remove_reference_t<decltype(expr)>, \
+        T \
+    >), \
+    (expr))
+
+#undef needful_lenient_exactly
+#define needful_lenient_exactly(T,expr) \
+    (NEEDFUL_DUMMY_INSTANCE(needful::IsSameAsserter< \
+        needful::remove_reference_t<decltype(expr)>, \
+        needful_constify_t(T) /* loosen to matching constified T too */ \
+    >), \
+    (expr))
+
+
 //=//// EXACT() FOR FORBIDDING COVARIANT INPUT PARAMETERS /////////////////=//
 //
 // Exact() prohibits covariance, but but unlike Sink() or Init() it doesn't

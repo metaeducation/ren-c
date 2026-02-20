@@ -903,8 +903,8 @@ INLINE void Native_Copy_Result_Untracked(Level* L, const Value* v) {
     #define NULL_OUT_VETOING /* Note that BREAK is implemented via VETO */ \
         x_cast(Bounce, Init_Null_Signifying_Vetoed(OUT))  // [3]
 
-    #define LOGIC_OUT(b) \
-        ((b) == true ? BOUNCE_OKAY : nullptr)  // no Init_Okay/Null()! [4]
+    #define LOGIC_OUT(b) /* no Init_Okay/Null()! [4] */ \
+        (exactly(bool, (b)) ? BOUNCE_OKAY : nullptr)
 
     #define TRASH_OUT  TRACK(Native_Trash_Result_Untracked(level_))
 

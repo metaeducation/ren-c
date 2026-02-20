@@ -595,6 +595,9 @@ void Needful_Panic_Abruptly(const char* error) {
 
 #define needful_known_lvalue(variable)  (*&variable)
 
+#define needful_lenient_exactly(T,expr)      (expr)
+#define needful_rigid_exactly(T,expr)        (expr)
+
 
 /****[[ ENABLEABLE: Argument Type Subsetting ]]*******************************
 */
@@ -1144,6 +1147,10 @@ void Needful_Panic_Abruptly(const char* error) {
     #define x_cast_known /* (T,expr) [2] */      needful_lenient_x_cast_known
 
     #define known_lvalue /* (var) */             needful_known_lvalue
+
+    #define lenient_exactly /* (T,expr) [3] */   needful_lenient_exactly
+    #define rigid_exactly /* (T,expr) [3] */     needful_rigid_exactly
+    #define exactly /* (T,expr) [3] */           needful_lenient_exactly
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)
