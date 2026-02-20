@@ -383,7 +383,7 @@ static Bounce Loop_Series_Common(
         );
 
         if (
-            Type_Of(var) != Type_Of(start)
+            not Have_Same_Type(var, start)
             or Cell_Flex(var) != Cell_Flex(start)
         ){
             panic ("Can only change series index, not series to iterate");
@@ -1982,7 +1982,7 @@ DECLARE_NATIVE(REMOVE_EACH)
     if (breaking)
         return NULL_OUT_VETOING;
 
-    assert(Type_Of(As_Stable(OUT)) == Type_Of(data));
+    assert(Have_Same_Type(As_Stable(OUT), data));
 
 }} return_pack: { //////////////////////////////////////////////////////////=//
 

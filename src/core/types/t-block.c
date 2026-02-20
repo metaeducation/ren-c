@@ -351,7 +351,7 @@ REBINT Find_In_Array(
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
                         Word_Symbol(item) == pattern_symbol
-                        and Type_Of(item) == Type_Of(stable_pattern)
+                        and (unwrap Type_Of(item)) == Type_Of(stable_pattern)
                     ){
                         return index;
                     }

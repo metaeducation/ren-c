@@ -85,7 +85,7 @@ bool Try_Match_For_Compose(
         const Element* pattern_1 = List_Item_At(pattern);
 
         if (Any_List(pattern_1)) {
-            if (Type_Of(match_1) != Type_Of(pattern_1))
+            if (not Have_Same_Type(match_1, pattern_1))
                 return false;
             pattern = pattern_1;
             Copy_Cell(match, match_1);
@@ -94,7 +94,7 @@ bool Try_Match_For_Compose(
         if (not (Is_Tag(pattern_1) or Is_File(pattern_1)))
             panic ("COMPOSE non-list patterns just TAG! and FILE! atm");
 
-        if (Type_Of(match_1) != Type_Of(pattern_1))
+        if (not Have_Same_Type(match_1, pattern_1))
             return false;
 
         if (CT_Utf8(match_1, pattern_1, 1) != 0)

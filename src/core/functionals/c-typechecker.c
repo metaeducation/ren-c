@@ -722,8 +722,8 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         if (not singleheart)
             panic ("Non-Singleheart sequence in typespec dialect unsupported");
 
-        if (Heart_Of(SPARE) != Heart_Of(scratch))  // must be seq of same type
-            goto test_failed;
+        if (Heart_Of_Builtin(SPARE) != Heart_Of_Builtin(scratch))
+            goto test_failed;  // must be seq of same type
 
         if (not Try_Get_Sequence_Singleheart(SPARE))
             goto test_failed;
@@ -780,7 +780,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
       case TYPE_DATATYPE: {
         Option(Type) t = Type_Of_Maybe_Unstable(SPARE);
         if (t) {  // builtin type
-            if (Datatype_Type(stable_test) == t)
+            if (Datatype_Type(stable_test) == (unwrap t))
                 goto test_succeeded;
             goto test_failed;
         }
@@ -948,8 +948,14 @@ bool Typecheck_Use_Toplevel(
 }} handle_non_parameter: {
 
     switch (opt Type_Of(As_Stable(tests))) {
-      case TYPE_DATATYPE:
-        return Type_Of_Maybe_Unstable(v) == Datatype_Type(As_Stable(tests));
+      case TYPE_DATATYPE: {
+        Option(Type) t_test = Datatype_Type(As_Stable(tests));
+        Option(Type) t = Type_Of_Maybe_Unstable(v);
+        if (t_test)
+            return t == unwrap t_test;  // builtin type, must match
+        if (t)
+            return false;  // non-builtin type can't match builtin type
+        return Datatype_Extra_Heart(As_Stable(tests)) == Cell_Extra_Heart(v); }
 
       case TYPE_BLOCK:
         at = List_At(&tail, tests);

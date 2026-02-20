@@ -335,8 +335,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         ){
             const Stable* value = cast(Stable*, v);
             assert(
-                Datatype_Type(value)
-                == Datatype_Type_Slow_Debug(value)
+                (opt Datatype_Type(value))
+                == (opt Datatype_Type_Slow_Debug(value))
             );
         }
         break; }

@@ -907,7 +907,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
       case SYM_SWAP: {
         Stable* arg = ARG_N(2);
 
-        if (Type_Of(v) != Type_Of(arg))
+        if (not Have_Same_Type(v, arg))
             panic (Error_Not_Same_Type_Raw());
 
         Strand* v_str = Cell_Strand_Ensure_Mutable(v);

@@ -78,6 +78,8 @@
 // FENCE!s created by the user to the ones made in Startup_Datatypes() which
 // have the DATATYPE_BYTE() set.
 //
+// Non-builtin types will give zero (Datatype_Type() returns an Option(Type))
+//
 #define DATATYPE_BYTE(source) \
     SECOND_BYTE(&FLEX_INFO(source))
 
@@ -210,6 +212,17 @@ INLINE const ExtraHeart* Datatype_Extra_Heart(const Stable* v) {
 INLINE const ExtraHeart* Cell_Extra_Heart(const Cell* v) {
     assert(Heart_Of_Is_0(v));
     return cast(ExtraHeart*, v->extra.base);
+}
+
+INLINE bool Have_Same_Type(const Stable* a, const Stable* b) {
+    Option(Type) ta = Type_Of(a);
+    Option(Type) tb = Type_Of(b);
+    if ((not ta) and (not tb))
+        return (
+            Cell_Extra_Heart(Datatype_Of(a))
+            == Cell_Extra_Heart(Datatype_Of(b))
+        );
+    return (opt ta == opt tb);
 }
 
 

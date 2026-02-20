@@ -63,7 +63,7 @@ Result(Element*) Transcode_One(
         rebRelease(warning);
         return fail (error);
     }
-    if (heart and Heart_Of(result) != heart) {
+    if (heart and (Heart_Of(result) != unwrap heart)) {
         rebRelease(result);
         return fail ("Transcode_One() gave unwanted type");
     }

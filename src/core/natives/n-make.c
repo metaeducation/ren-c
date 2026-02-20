@@ -257,7 +257,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
     );
 
     if (to_or_as == TYPE_MAP) {  // doesn't preserve order requirement :-/
-        if (Type_Of(scratch_reverse) != Type_Of(spare_input))
+        if (not Have_Same_Type(scratch_reverse, spare_input))
             panic ("Reverse TO/AS of MAP! didn't produce original type");
         return OUT;
     }

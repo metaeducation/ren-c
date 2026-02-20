@@ -416,8 +416,8 @@ REBLEN Part_Len_May_Modify_Index(
         len = Int32(part);  // may be positive or negative
     else {  // must be same series
         if (
-            Is_Rune(part)
-            or Type_Of(series) != Type_Of(part)  // !!! allow AS aliases?
+            Is_Rune(part)  // !!! v-- allow AS alias?
+            or not Have_Same_Type(series, part)
             or Cell_Flex(series) != Cell_Flex(part)
         ){
             panic (Error_Invalid_Part_Raw(part));

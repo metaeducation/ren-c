@@ -317,12 +317,18 @@ typedef Byte TypeByte;  // Byte whose value is <= MAX_TYPEBYTE
     u_cast(Option(Heart), none)
 
 #if NEEDFUL_OPTION_USES_WRAPPER  // make safe for extension types [2]
-    bool operator==(Option(Type)& a, Option(Type)& b) = delete;
-    void operator!=(Option(Type)& a, Option(Type)& b) = delete;
+    ENABLE_IF_EXACT_ARG_TYPE(Option(Type))
+    void operator==(const T&, const T&) = delete;
+
+    ENABLE_IF_EXACT_ARG_TYPE(Option(Type))
+    void operator!=(const T&, const T&) = delete;
 
   #if DEBUG_EXTRA_HEART_CHECKS  // in this mode, Heart is distinct from Type
-    bool operator==(Option(Heart)& a, Option(Heart)& b) = delete;
-    bool operator!=(Option(Heart)& a, Option(Heart)& b) = delete;
+    ENABLE_IF_EXACT_ARG_TYPE(Option(Heart))
+    void operator==(const T&, const T&) = delete;
+
+    ENABLE_IF_EXACT_ARG_TYPE(Option(Heart))
+    void operator!=(const T&, const T&) = delete;
 
     #if defined(_MSC_VER)
         ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
@@ -348,7 +354,7 @@ typedef Byte TypeByte;  // Byte whose value is <= MAX_TYPEBYTE
 //=//// SINGLEHEART OPTIMIZED SEQUENCE TYPE ///////////////////////////////=//
 //
 // In Ren-C, `/foo` is a 2-element PATH! with a BLANK! at the head, and `bar:`
-// is a 2-element CHAIN! with a BLAKN! at the tail.  Due to how common these
+// is a 2-element CHAIN! with a BLANK! at the tail.  Due to how common these
 // are, and the fact that they are immutable sequences, there is investment
 // in optimizing them.  They are called "SingleHeart" sequences, and because
 // detection of these is so common there's a special enum which multiplexes
@@ -363,10 +369,10 @@ typedef Byte TypeByte;  // Byte whose value is <= MAX_TYPEBYTE
 // (See notes on SingleHeart definition for more...)
 
 #define Leading_Blank_And(heart) \
-    i_cast(SingleHeart, (i_cast(Byte, heart) << 8) + 1)
+    i_cast(SingleHeart, (i_cast(Byte, known(Heart, (heart))) << 8) + 1)
 
 #define Trailing_Blank_And(heart) \
-    i_cast(SingleHeart, i_cast(Byte, heart) << 8)
+    i_cast(SingleHeart, i_cast(Byte, known(Heart, (heart))) << 8)
 
 #define LEADING_BLANK_AND(name)     Leading_Blank_And(TYPE_##name)
 #define TRAILING_BLANK_AND(name)    Trailing_Blank_And(TYPE_##name)

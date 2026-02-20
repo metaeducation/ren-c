@@ -727,14 +727,14 @@ INLINE Option(Heart) Heart_Of_Fundamental(const Cell* c) {
 
 INLINE Heart Heart_Of_Builtin(const Cell* c) {
     Option(Heart) heart = Heart_Of(c);
-    assert(heart != TYPE_0);
+    assert(heart);
     return opt heart;  // faster than unwrap, we already checked for 0
 }
 
 INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
     assert(LIFT_BYTE_RAW(c) == NOQUOTE_3);
     Option(Heart) heart = Heart_Of(c);
-    assert(heart != TYPE_0);
+    assert(heart);
     return opt heart;  // faster than unwrap, we already checked for 0
 }
 

@@ -478,7 +478,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
       case SYM_SWAP: {
         Stable* arg = ARG_N(2);
 
-        if (Type_Of(v) != Type_Of(arg))
+        if (not Have_Same_Type(v, arg))
             panic (Error_Not_Same_Type_Raw());
 
         Byte* v_at = Blob_At_Ensure_Mutable(v);

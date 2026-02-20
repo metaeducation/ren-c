@@ -416,7 +416,7 @@ DECLARE_NATIVE(RANDOM_BETWEEN)
     Element* max = Element_ARG(MAX);
     USED(ARG(SECURE));  // passed through via LEVEL
 
-    if (Type_Of(min) != Type_Of(max))
+    if (not Have_Same_Type(min, max))
         return fail ("RANDOM-BETWEEN requires MIN and MAX of same type");
 
     return Dispatch_Generic(RANDOM_BETWEEN, min, LEVEL);
@@ -909,7 +909,7 @@ DECLARE_NATIVE(EQUAL_Q)
     Clear_Cell_Sigil(v1);
     Clear_Cell_Sigil(v2);
 
-    if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
+    if (not Have_Same_Type(v1, v2)) {  // !!! need generic "coercibility"
         if (not relax)
             return LOGIC_OUT(false);
 
@@ -957,7 +957,7 @@ DECLARE_NATIVE(LESSER_Q)
     Clear_Cell_Sigil(v1);
     Clear_Cell_Sigil(v2);
 
-    if (Type_Of(v1) != Type_Of(v2)) {  // !!! need generic "coercibility"
+    if (not Have_Same_Type(v1, v2)) {  // !!! need generic "coercibility"
         if (Is_Integer(v1) and Is_Decimal(v2))
             Init_Decimal(v1, cast(REBDEC, VAL_INT64(v1)));
         else if (Is_Decimal(v1) and Is_Integer(v2))
