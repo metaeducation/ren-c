@@ -210,7 +210,7 @@ INLINE Element* Textify_Any_Utf8(Element* any_utf8) {  // always works
 
 INLINE bool Is_Tripwire_Core(Value* v) {
     if (not Cell_Has_Lift_Sigil_Heart(
-        v, UNSTABLE_ANTIFORM_1, SIGIL_0, HEART_TAG_SIGNIFYING_TRASH
+        v, UNSTABLE_ANTIFORM_254, SIGIL_0, HEART_TAG_SIGNIFYING_TRASH
     )){
         return false;
     }

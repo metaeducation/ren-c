@@ -787,8 +787,8 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
             LIFT_BYTE_RAW(cell) = right;
         }
 
-        void operator=(const Lift_1_Struct& right) = delete;
-        void operator=(const Lift_2_Struct& right) = delete;
+        void operator=(const Lift_254_Struct& right) = delete;
+        void operator=(const Lift_253_Struct& right) = delete;
         void operator=(const Lift_4_Struct& right) = delete;
 
         void operator=(const LiftHolder& right)  // must write explicitly
@@ -855,14 +855,14 @@ INLINE Option(Type) Type_Of_Unchecked(const Value* v) {
             i_cast(Sigil, KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT)
         ); }
 
-      case STABLE_ANTIFORM_2:
+      case STABLE_ANTIFORM_253:
         assert(KIND_BYTE_RAW(v) <= MAX_HEARTBYTE);  // raw [2]
         return i_cast(TypeEnum, KIND_BYTE_RAW(v) + MAX_TYPEBYTE_ELEMENT);
 
       case QUASIFORM_4:
         return TYPE_QUASIFORM;
 
-      case UNSTABLE_ANTIFORM_1:
+      case UNSTABLE_ANTIFORM_254:
         assert(KIND_BYTE_RAW(v) <= MAX_HEARTBYTE);  // raw [2]
         return i_cast(TypeEnum, KIND_BYTE_RAW(v) + MAX_TYPEBYTE_ELEMENT);
 
@@ -898,7 +898,7 @@ INLINE Option(Type) Type_Of_When_Unquoted(const Element* elem) {
     if (LIFT_BYTE(elem) == QUASIFORM_4)
         return TYPE_QUASIFORM;
 
-    assert(LIFT_BYTE(elem) > STABLE_ANTIFORM_2);
+    assert(LIFT_BYTE(elem) < MIN_LIFTBYTE_ANTIFORM);
     return Underlying_Type_Of(elem);
 }
 

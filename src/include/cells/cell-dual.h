@@ -199,7 +199,7 @@ INLINE bool Is_Hot_Potato_With_Id_Core(
 
 #define Is_Hot_Potato_With_Id(v, id) \
     Is_Hot_Potato_With_Id_Core( \
-        known(Value*, (v)), (id), UNSTABLE_ANTIFORM_1)
+        known(Value*, (v)), (id), UNSTABLE_ANTIFORM_254)
 
 #define Is_Lifted_Hot_Potato_With_Id(v, id) \
     Is_Hot_Potato_With_Id_Core( \

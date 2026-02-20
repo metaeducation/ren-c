@@ -68,7 +68,7 @@ DECLARE_NATIVE(MAKE)
 Bounce Copy_Quoter_Executor(Level* level_)
 {
     if (STATE == NOQUOTE_3)  // actually means antiform
-        LIFT_BYTE_RAW(OUT) = STABLE_ANTIFORM_2;
+        LIFT_BYTE_RAW(OUT) = STABLE_ANTIFORM_253;
     else
         LIFT_BYTE_RAW(OUT) = STATE;
 
@@ -147,7 +147,7 @@ DECLARE_NATIVE(COPY)
     sub->u.action.original = Frame_Phase(LIB(COPY));
     Set_Action_Level_Label(sub, label);
 
-    if (lift_byte == STABLE_ANTIFORM_2)
+    if (lift_byte == STABLE_ANTIFORM_253)
         STATE = NOQUOTE_3;  // 0 state is reserved
     else
         STATE = lift_byte;

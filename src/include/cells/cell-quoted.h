@@ -56,12 +56,12 @@
 //
 
 INLINE Count Quotes_Of(const Element* v) {
-    assert(LIFT_BYTE_RAW(v) > STABLE_ANTIFORM_2);
+    assert(LIFT_BYTE_RAW(v) < MIN_LIFTBYTE_ANTIFORM);
     return (LIFT_BYTE(v) - NOQUOTE_3) >> 1;
 }
 
 INLINE Count Quotes_From_Lift_Byte(LiftByte lift_byte) {
-    assert(lift_byte > STABLE_ANTIFORM_2);
+    assert(lift_byte < MIN_LIFTBYTE_ANTIFORM);
     return (lift_byte - NOQUOTE_3) >> 1;
 }
 
@@ -85,7 +85,7 @@ INLINE Count Quotes_From_Lift_Byte(LiftByte lift_byte) {
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.
 //
 INLINE Element* Quotify_Depth(Element* elem, Count depth) {
-    assert(LIFT_BYTE_RAW(elem) > STABLE_ANTIFORM_2);
+    assert(LIFT_BYTE_RAW(elem) < MIN_LIFTBYTE_ANTIFORM);
 
     if (depth == 0)
         return elem;
@@ -101,7 +101,7 @@ INLINE Element* Quotify_Depth(Element* elem, Count depth) {
 // Turns 'X into X, or '''''[1 + 2] into '''(1 + 2), etc.
 //
 INLINE Element* Unquotify_Depth(Element* elem, Count depth) {
-    assert(LIFT_BYTE_RAW(elem) > STABLE_ANTIFORM_2);
+    assert(LIFT_BYTE_RAW(elem) < MIN_LIFTBYTE_ANTIFORM);
 
     if (depth == 0)
         return elem;
@@ -153,7 +153,7 @@ INLINE Count Noquotify(Element* elem) {
 // 1. Each antiform gets a synthetic TYPE_XXX enum value, and these states are
 //    all numerically greater than the TYPE_XXX for non-antiforms.  However,
 //    calculating the synthetic type and then seeing if it's a large value
-//    is slower than just checking the LIFT_BYTE() for STABLE_ANTIFORM_2.
+//    is slower than just checking the LIFT_BYTE() for STABLE_ANTIFORM_253.
 //    So even though the range-based Any_Antiform() macro was auto-generated
 //    with other enum checks from %types.r, C code should prefer Is_Antiform().
 //
@@ -161,13 +161,13 @@ INLINE Count Noquotify(Element* elem) {
 #if CHECK_CELL_SUBCLASSES
     INLINE bool Is_Antiform(const Value* v) {
         assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
-        return LIFT_BYTE(Ensure_Readable(v)) <= STABLE_ANTIFORM_2;
+        return LIFT_BYTE(Ensure_Readable(v)) >= MIN_LIFTBYTE_ANTIFORM;
     }
 
     INLINE bool Is_Antiform(const Element* v) = delete;
 #else
     #define Is_Antiform(v) \
-        (LIFT_BYTE(Ensure_Readable(v)) <= STABLE_ANTIFORM_2)
+        (LIFT_BYTE(Ensure_Readable(v)) >= MIN_LIFTBYTE_ANTIFORM)
 #endif
 
 #define Not_Antiform(v) (not Is_Antiform(v))
@@ -192,7 +192,7 @@ INLINE Count Noquotify(Element* elem) {
 //
 // 1. When antiforms are created, they use two distinct lift states: one for
 //    stable and another for unstable.  This makes testing for antiforms
-//    "slower" (have to test <= STABLE_ANTIFORM_2 vs. simple equality), but
+//    "slower" (have to test >= MIN_LIFTBYTE_ANTIFORM v. simple equality), but
 //    it makes testing for unstable antiforms very fast (which is nice, since
 //    that has to be done very often).
 //
@@ -208,7 +208,7 @@ INLINE Count Noquotify(Element* elem) {
 
 #if NO_RUNTIME_CHECKS
     #define Is_Cell_Stable(v) \
-        (LIFT_BYTE(v) != UNSTABLE_ANTIFORM_1)  // it's really fast! [1]
+        (LIFT_BYTE(v) != UNSTABLE_ANTIFORM_254)  // it's really fast! [1]
 
     #define Is_Antiform_Stable  Is_Cell_Stable  // equivalent [2]
 #else
@@ -218,7 +218,7 @@ INLINE Count Noquotify(Element* elem) {
         Assert_Cell_Readable(v);
         assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
 
-        bool stable = (LIFT_BYTE_RAW(v) != UNSTABLE_ANTIFORM_1);
+        bool stable = (LIFT_BYTE_RAW(v) != UNSTABLE_ANTIFORM_254);
 
       #if RUNTIME_CHECKS
         if (stable)
@@ -241,7 +241,7 @@ INLINE Count Noquotify(Element* elem) {
 
     INLINE bool Is_Antiform_Stable_Core(const Value* a) {  // narrow check [2]
         unnecessary(Ensure_Readable(a));  // Is_Antiform() checked readable
-        assert(LIFT_BYTE(a) <= STABLE_ANTIFORM_2);
+        assert(LIFT_BYTE(a) >= MIN_LIFTBYTE_ANTIFORM);
         impossible(0 != (a->header.bits & CELL_MASK_SIGIL));
         return Is_Cell_Stable(a);
     }
@@ -296,7 +296,7 @@ MUTABLE_IF_C(Option(Element*), INLINE) Try_As_Element(CONST_IF_C(Stable*) v_) {
 
 MUTABLE_IF_C(Element*, INLINE) Ensure_Element(CONST_IF_C(Value*) cell) {
     CONSTABLE(Value*) v = m_cast(Value*, cell);
-    if (LIFT_BYTE(v) <= STABLE_ANTIFORM_2)
+    if (LIFT_BYTE(v) >= MIN_LIFTBYTE_ANTIFORM)
         panic (Error_Bad_Antiform(v));
     return As_Element(v);
 }
@@ -338,7 +338,7 @@ INLINE Element* Quasify_Antiform(Exact(Stable*) v) {
 }
 
 INLINE Element* Reify_If_Antiform(Value* v) {
-    if (LIFT_BYTE(v) > STABLE_ANTIFORM_2)
+    if (LIFT_BYTE(v) < MIN_LIFTBYTE_ANTIFORM)
         return As_Element(v);
     assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
     LIFT_BYTE_RAW(v) = QUASIFORM_4;  // all antiforms can become quasi
@@ -359,7 +359,7 @@ INLINE Stable* Stably_Antiformize_Unbound_Fundamental_Core(Stable* v) {
     assert(Is_Stable_Antiform_Heart(Heart_Of_Unsigiled_Isotopic(v)));
     if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
         assert(not Cell_Binding(v));
-    LIFT_BYTE_RAW(v) = STABLE_ANTIFORM_2;
+    LIFT_BYTE_RAW(v) = STABLE_ANTIFORM_253;
     return v;
 }
 
@@ -369,7 +369,7 @@ INLINE Value* Unstably_Antiformize_Unbound_Fundamental_Core(Value* v) {
     assert(Not_Stable_Antiform_Heart(Heart_Of_Unsigiled_Isotopic(v)));
     if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
         assert(not Cell_Binding(v));
-    LIFT_BYTE_RAW(v) = UNSTABLE_ANTIFORM_1;
+    LIFT_BYTE_RAW(v) = UNSTABLE_ANTIFORM_254;
     return v;
 }
 
@@ -394,14 +394,20 @@ INLINE Value* Unstably_Antiformize_Unbound_Fundamental_Core(Value* v) {
 //  https://forum.rebol.info/t/1833
 //
 
-#define Any_Lifted(v) \
-    (LIFT_BYTE(Ensure_Readable(v)) >= QUASIFORM_4)  // quasi or quoted
+INLINE bool Not_Lifted(const Value* v) {
+    Assert_Cell_Readable(v);
+    if (LIFT_BYTE_RAW(v) < QUASIFORM_4)
+        return true;  // fundamental
+    if (LIFT_BYTE(v) >= MIN_LIFTBYTE_ANTIFORM)
+        return true;  // antiform
+    return false;  // quoted or quasi
+}
 
-#define Not_Lifted(v) \
-    (LIFT_BYTE(Ensure_Readable(v)) < QUASIFORM_4)  // anti or fundamental
+#define Any_Lifted(v) \
+    (not Not_Lifted(v))  // anti or fundamental
 
 INLINE Dual* Lift_Cell(Value* v) {
-    if (LIFT_BYTE_RAW(v) > STABLE_ANTIFORM_2)
+    if (LIFT_BYTE_RAW(v) < MIN_LIFTBYTE_ANTIFORM)
         return As_Dual(Quote_Cell(As_Element(v)));  // non-antiform -> quoted
 
     assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
@@ -416,7 +422,7 @@ INLINE Result(Value*) Unlift_Cell_No_Decay_Core(Value* v) {
         );
         return v;
     }
-    unnecessary(assert(LIFT_BYTE_RAW(v) > STABLE_ANTIFORM_2));
+    unnecessary(assert(LIFT_BYTE_RAW(v) < MIN_LIFTBYTE_ANTIFORM));
     return Unquote_Cell(As_Element(v));  // asserts that it's quoted
 }
 

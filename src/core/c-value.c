@@ -99,7 +99,7 @@ void Probe_Cell_Print_Helper(
         return;
     }
 
-    if (LIFT_BYTE(v) <= STABLE_ANTIFORM_2) {
+    if (LIFT_BYTE(v) >= MIN_LIFTBYTE_ANTIFORM) {
         DECLARE_ELEMENT (reified);
         Copy_Cell_Core(reified, v, CELL_MASK_ALL);
         LIFT_BYTE(reified) = NOQUOTE_3;

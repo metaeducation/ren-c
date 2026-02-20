@@ -104,7 +104,7 @@
 INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
     return Init_Word_Untracked(
         out,
-        FLAG_LIFT_BYTE(STABLE_ANTIFORM_2)
+        FLAG_LIFT_BYTE(STABLE_ANTIFORM_253)
             | (logic ? CELL_FLAG_LOGIC_IS_OKAY : 0),
         logic ? CANON(OKAY) : CANON(NULL)
     );
@@ -116,7 +116,7 @@ INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
 #define Init_Null(out) /* name helps avoid confusion [B] */ \
     TRACK(Init_Word_Untracked( \
         Possibly_Antiform(out), \
-        FLAG_LIFT_BYTE(STABLE_ANTIFORM_2) | (not CELL_FLAG_LOGIC_IS_OKAY),  \
+        FLAG_LIFT_BYTE(STABLE_ANTIFORM_253) | (not CELL_FLAG_LOGIC_IS_OKAY),  \
         CANON(NULL)))
 
 #define Init_Lifted_Null(out) \
@@ -129,7 +129,7 @@ INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
 #define Init_Okay(out) \
     TRACK(Init_Word_Untracked( \
         Possibly_Antiform(out), \
-        FLAG_LIFT_BYTE(STABLE_ANTIFORM_2) \
+        FLAG_LIFT_BYTE(STABLE_ANTIFORM_253) \
             | CELL_FLAG_LOGIC_IS_OKAY,  \
         CANON(OKAY)))
 
@@ -171,14 +171,14 @@ INLINE bool Cell_Logic_Core(const Stable* v) {
     ((Ensure_Readable(Possibly_Unstable(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
-        FLAG_LIFT_BYTE(STABLE_ANTIFORM_2) | FLAG_HEART(TYPE_WORD) \
+        FLAG_LIFT_BYTE(STABLE_ANTIFORM_253) | FLAG_HEART(TYPE_WORD) \
             | (not CELL_FLAG_LOGIC_IS_OKAY)))
 
 #define Is_Null(v) /* test for stable values, don't confuse w/nullptr [2] */ \
     ((Ensure_Readable(Possibly_Antiform(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
-        FLAG_LIFT_BYTE(STABLE_ANTIFORM_2) | FLAG_HEART(TYPE_WORD) \
+        FLAG_LIFT_BYTE(STABLE_ANTIFORM_253) | FLAG_HEART(TYPE_WORD) \
             | (not CELL_FLAG_LOGIC_IS_OKAY)))
 
 
@@ -238,7 +238,7 @@ INLINE bool Is_Lifted_Null(const Value* v) {
     ((Ensure_Readable(Possibly_Unstable(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
-        FLAG_LIFT_BYTE(STABLE_ANTIFORM_2) \
+        FLAG_LIFT_BYTE(STABLE_ANTIFORM_253) \
             | FLAG_HEART(HEART_WORD_SIGNIFYING_LOGIC) \
             | CELL_FLAG_LOGIC_IS_OKAY))
 
@@ -246,7 +246,7 @@ INLINE bool Is_Lifted_Null(const Value* v) {
     ((Ensure_Readable(Possibly_Antiform(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
-        FLAG_LIFT_BYTE(STABLE_ANTIFORM_2) \
+        FLAG_LIFT_BYTE(STABLE_ANTIFORM_253) \
             | FLAG_HEART(HEART_WORD_SIGNIFYING_LOGIC) \
             | CELL_FLAG_LOGIC_IS_OKAY))
 
