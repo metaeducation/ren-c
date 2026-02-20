@@ -210,7 +210,7 @@ INLINE Element* Textify_Any_Utf8(Element* any_utf8) {  // always works
 
 INLINE bool Is_Tripwire_Core(Value* v) {
     if (not Cell_Has_Lift_Sigil_Heart(
-        v, UNSTABLE_ANTIFORM_254, SIGIL_0, HEART_TAG_SIGNIFYING_TRASH
+        v, LIFTBYTE_TRASH, SIGIL_0, HEART_TAG_SIGNIFYING_TRASH
     )){
         return false;
     }
@@ -222,7 +222,7 @@ INLINE bool Is_Tripwire_Core(Value* v) {
 
 INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
     Init_Any_String_Untracked(out, TYPE_TAG, CANON(QUESTION_1));
-    Unstably_Antiformize_Unbound_Fundamental(out);
+    Antiformize_Unbound_Fundamental(out, LIFTBYTE_TRASH);
     assert(Is_Tripwire(out));
     return out;
 }
@@ -239,7 +239,7 @@ INLINE Value* Init_Labeled_Trash_Untracked(
     const Symbol* label
 ){
     Init_Any_String_Untracked(out, HEART_TAG_SIGNIFYING_TRASH, label);
-    Unstably_Antiformize_Unbound_Fundamental(out);
+    Antiformize_Unbound_Fundamental(out, LIFTBYTE_TRASH);
     assert(Is_Trash(out));
     return out;
 }

@@ -151,11 +151,7 @@ INLINE Count Noquotify(Element* elem) {
 // in concert to solve the problem.
 //
 // 1. Each antiform gets a synthetic TYPE_XXX enum value, and these states are
-//    all numerically greater than the TYPE_XXX for non-antiforms.  However,
-//    calculating the synthetic type and then seeing if it's a large value
-//    is slower than just checking the LIFT_BYTE() for STABLE_ANTIFORM_253.
-//    So even though the range-based Any_Antiform() macro was auto-generated
-//    with other enum checks from %types.r, C code should prefer Is_Antiform().
+//    all numerically greater than the TYPE_XXX for non-antiforms.
 //
 
 #if CHECK_CELL_SUBCLASSES
@@ -208,7 +204,7 @@ INLINE Count Noquotify(Element* elem) {
 
 #if NO_RUNTIME_CHECKS
     #define Is_Cell_Stable(v) \
-        (LIFT_BYTE(v) != UNSTABLE_ANTIFORM_254)  // it's really fast! [1]
+        (LIFT_BYTE(v) <= MAX_LIFTBYTE_STABLE)  // it's really fast! [1]
 
     #define Is_Antiform_Stable  Is_Cell_Stable  // equivalent [2]
 #else
@@ -218,7 +214,7 @@ INLINE Count Noquotify(Element* elem) {
         Assert_Cell_Readable(v);
         assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
 
-        bool stable = (LIFT_BYTE_RAW(v) != UNSTABLE_ANTIFORM_254);
+        bool stable = (LIFT_BYTE_RAW(v) <= MAX_LIFTBYTE_STABLE);
 
       #if RUNTIME_CHECKS
         if (stable)
@@ -353,31 +349,14 @@ INLINE Element* Reify_If_Antiform(Value* v) {
 // are doing.
 //
 
-INLINE Stable* Stably_Antiformize_Unbound_Fundamental_Core(Stable* v) {
-    assert(Heart_Of(v) != HEART_WORD_SIGNIFYING_LOGIC);  // no LOGIC_IS_OKAY
-    assert(LIFT_BYTE(v) == NOQUOTE_3);
-    assert(Is_Stable_Antiform_Heart(Heart_Of_Unsigiled_Isotopic(v)));
-    if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
-        assert(not Cell_Binding(v));
-    LIFT_BYTE_RAW(v) = STABLE_ANTIFORM_253;
-    return v;
-}
-
-INLINE Value* Unstably_Antiformize_Unbound_Fundamental_Core(Value* v) {
+INLINE void Antiformize_Unbound_Fundamental(Value* v, LiftByte lift_byte) {
     assert(Heart_Of(v) != HEART_WORD_SIGNIFYING_LOGIC);  // no LOGIC_IS_OKAY
     assert(LIFT_BYTE_RAW(v) == NOQUOTE_3);
-    assert(Not_Stable_Antiform_Heart(Heart_Of_Unsigiled_Isotopic(v)));
+    possibly(Not_Stable_Antiform_Heart(Heart_Of_Unsigiled_Isotopic(v)));
     if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
         assert(not Cell_Binding(v));
-    LIFT_BYTE_RAW(v) = UNSTABLE_ANTIFORM_254;
-    return v;
+    LIFT_BYTE_RAW(v) = lift_byte;
 }
-
-#define Stably_Antiformize_Unbound_Fundamental(v) \
-    Stably_Antiformize_Unbound_Fundamental_Core(Known_Stable(v))
-
-#define Unstably_Antiformize_Unbound_Fundamental(v) \
-    Unstably_Antiformize_Unbound_Fundamental_Core(Possibly_Unstable(v))
 
 
 //=//// LIFTING ///////////////////////////////////////////////////////////=//

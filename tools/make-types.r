@@ -385,11 +385,6 @@ for-each-datatype 't [
     if not t.antiname [continue]  ; no special name for antiform form
 
     let need: either yes? t.unstable ["Possibly_Unstable"] ["Known_Stable"]
-    let liftbyte: either yes? t.unstable [
-        "UNSTABLE_ANTIFORM_254"
-    ] [
-        "STABLE_ANTIFORM_253"
-    ]
 
     let proper-name: propercase-of t.antiname
 
@@ -398,9 +393,7 @@ for-each-datatype 't [
     ;
     e-types/emit [t proper-name --[
         #define Is_$<Proper-Name>(v) \
-            Cell_Has_Lift_Heart_No_Sigil($<Need>(v), \
-                $<LIFTBYTE>, TYPE_$<T.NAME>)
-
+            (LIFT_BYTE(Ensure_Readable(Possibly_Unstable(v))) == LIFTBYTE_$<T.ANTINAME>)
 
         #define Is_Lifted_$<Proper-Name>(v) \
             Cell_Has_Lift_Heart_No_Sigil(Known_Stable(v), \
@@ -422,8 +415,7 @@ for-each-datatype 't [
     ;
     e-types/emit [t proper-name --[
         #define Is_Possibly_Unstable_Value_$<Proper-Name>(v) \
-            Cell_Has_Lift_Heart_No_Sigil(Possibly_Unstable(v), \
-                STABLE_ANTIFORM_253, TYPE_$<T.NAME>)
+            (LIFT_BYTE(Ensure_Readable(Possibly_Unstable(v))) == LIFTBYTE_$<T.ANTINAME>)
     ]--]
 ]
 

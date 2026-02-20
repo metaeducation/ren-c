@@ -146,7 +146,7 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
 //
 
 #define Init_Void_Untracked(out) \
-    Init_Blank_Untracked((out), FLAG_LIFT_BYTE(UNSTABLE_ANTIFORM_254))
+    Init_Blank_Untracked((out), FLAG_LIFT_BYTE(LIFTBYTE_VOID))
 
 #define Init_Void(out) \
     TRACK(Init_Void_Untracked(out))
@@ -187,7 +187,7 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
 
 #define CELL_MASK_VOID_TO_MAKE_HEAVY \
     (FLAG_KIND_BYTE(HEART_BLANK_SIGNIFYING_VOID) \
-        | FLAG_LIFT_BYTE(UNSTABLE_ANTIFORM_254) \
+        | FLAG_LIFT_BYTE(LIFTBYTE_VOID) \
         | CELL_FLAG_OUT_NOTE_VOID_TO_MAKE_HEAVY)
 
 #define Is_Level_Out_Noted_Void_To_Make_Heavy(L) /* one mask operation [2] */ \

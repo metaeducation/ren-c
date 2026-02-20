@@ -122,7 +122,7 @@ INLINE RebolValue* Register_Datatype(const char* name)  // return "holder" [1]
 
     Init(Slot) slot = Append_Context(g_datatypes_context, symbol);
     Stable* datatype = Init_Fence(slot, a);
-    Stably_Antiformize_Unbound_Fundamental(datatype);
+    Antiformize_Unbound_Fundamental(datatype, LIFTBYTE_DATATYPE);
     assert(Is_Datatype(datatype));
 
     Copy_Cell(result, datatype);

@@ -98,7 +98,7 @@ void Startup_Datatypes(void)
 
         Freeze_Source_Deep(a);
         Init_Fence(datatype, a);
-        Stably_Antiformize_Unbound_Fundamental(datatype);
+        Antiformize_Unbound_Fundamental(datatype, LIFTBYTE_DATATYPE);
         assert(Is_Datatype(datatype));
         Protect_Cell(datatype);
         Set_Cell_Flag(datatype, FINAL);

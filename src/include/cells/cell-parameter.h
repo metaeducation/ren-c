@@ -511,7 +511,7 @@ INLINE const Slot* Known_Unspecialized(const Param* p) {
 #define Blit_Null_Typechecked(out) \
     TRACK(Blit_Word_Untracked( \
         (out), \
-        FLAG_LIFT_BYTE(STABLE_ANTIFORM_253) \
+        FLAG_LIFT_BYTE(LIFTBYTE_LOGIC) \
             | (not CELL_FLAG_LOGIC_IS_OKAY) \
             | CELL_FLAG_PARAM_NOTE_TYPECHECKED, \
         CANON(NULL) \
@@ -520,7 +520,7 @@ INLINE const Slot* Known_Unspecialized(const Param* p) {
 #define Blit_Okay_Typechecked(out) \
     TRACK(Blit_Word_Untracked( \
         (out), \
-        FLAG_LIFT_BYTE(STABLE_ANTIFORM_253) \
+        FLAG_LIFT_BYTE(LIFTBYTE_LOGIC) \
             | CELL_FLAG_LOGIC_IS_OKAY \
             | CELL_FLAG_PARAM_NOTE_TYPECHECKED, \
         CANON(OKAY) \

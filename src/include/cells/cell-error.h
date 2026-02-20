@@ -77,7 +77,7 @@ INLINE void Force_Location_Of_Error(Error* error, Level* L) {
 INLINE Value* Failify_Cell_And_Force_Location(Exact(Value*) v) {
     assert(Is_Possibly_Unstable_Value_Error(v));
     Force_Location_Of_Error(Cell_Error(v), TOP_LEVEL);  // ideally a noop
-    Unstably_Antiformize_Unbound_Fundamental(v);
+    Antiformize_Unbound_Fundamental(v, LIFTBYTE_FAILURE);
     assert(Is_Failure(v));
     return v;  // ERROR! => FAILURE!
 }

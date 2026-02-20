@@ -401,7 +401,7 @@ DECLARE_NATIVE(PACK)
 
     assert(Is_Possibly_Unstable_Value_Block(OUT));
     KIND_BYTE(OUT) = TYPE_GROUP;
-    Unstably_Antiformize_Unbound_Fundamental(OUT);
+    Antiformize_Unbound_Fundamental(OUT, LIFTBYTE_PACK);
     assert(Is_Pack(OUT));
     return OUT;
 }

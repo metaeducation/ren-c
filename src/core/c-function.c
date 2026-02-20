@@ -860,7 +860,7 @@ Details* Make_Dispatch_Details(
     assert(Heart_Of(exemplar) == TYPE_FRAME);
     assert(
         LIFT_BYTE(exemplar) == NOQUOTE_3
-        or LIFT_BYTE(exemplar) == UNSTABLE_ANTIFORM_254  // allow action antiform
+        or LIFT_BYTE(exemplar) == LIFTBYTE_ACTION  // allow action antiform
     );
 
   check_flags: {

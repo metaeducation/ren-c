@@ -177,10 +177,6 @@ INLINE bool Is_Word_With_Id_Core(const Cell* v, LiftByte lift, SymId id) {
     return id == Word_Id(v);  // is CANON(id) == Word_Symbol(v) faster?
 }
 
-#define Is_Anti_Word_With_Id(v,id) \
-    Is_Word_With_Id_Core(Known_Stable(Possibly_Antiform(v)), \
-        STABLE_ANTIFORM_253, (id))
-
 #define Is_Word_With_Id(v,id) \
     Is_Word_With_Id_Core(Known_Stable(v), NOQUOTE_3, (id))
 

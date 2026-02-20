@@ -787,8 +787,6 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
             LIFT_BYTE_RAW(cell) = right;
         }
 
-        void operator=(const Lift_254_Struct& right) = delete;
-        void operator=(const Lift_253_Struct& right) = delete;
         void operator=(const Lift_4_Struct& right) = delete;
 
         void operator=(const LiftHolder& right)  // must write explicitly
@@ -855,14 +853,17 @@ INLINE Option(Type) Type_Of_Unchecked(const Value* v) {
             i_cast(Sigil, KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT)
         ); }
 
-      case STABLE_ANTIFORM_253:
-        assert(KIND_BYTE_RAW(v) <= MAX_HEARTBYTE);  // raw [2]
-        return i_cast(TypeEnum, KIND_BYTE_RAW(v) + MAX_TYPEBYTE_ELEMENT);
-
       case QUASIFORM_4:
         return TYPE_QUASIFORM;
 
-      case UNSTABLE_ANTIFORM_254:
+      case LIFTBYTE_PACK:
+      case LIFTBYTE_FAILURE:
+      case LIFTBYTE_ACTION:
+      case LIFTBYTE_TRASH:
+      case LIFTBYTE_VOID:
+      case LIFTBYTE_SPLICE:
+      case LIFTBYTE_DATATYPE:
+      case LIFTBYTE_LOGIC:
         assert(KIND_BYTE_RAW(v) <= MAX_HEARTBYTE);  // raw [2]
         return i_cast(TypeEnum, KIND_BYTE_RAW(v) + MAX_TYPEBYTE_ELEMENT);
 

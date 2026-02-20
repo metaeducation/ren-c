@@ -267,28 +267,27 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 #define BEDROCK_255  255
 
 #if DEBUG_HOOK_LIFT_BYTE  // e.g. stop `LIFT_BYTE(cell) = QUASIFORM_4` [2]
-    struct Lift_254_Struct { constexpr operator LiftByte() const { return 254; } };
-    struct Lift_253_Struct { constexpr operator LiftByte() const { return 253; } };
     struct Lift_4_Struct { constexpr operator LiftByte() const { return 4; } };
 
-    constexpr Lift_254_Struct unstable_antiform_254;
-    constexpr Lift_253_Struct stable_antiform_253;
     constexpr Lift_4_Struct quasiform_4;
 
-    #define UNSTABLE_ANTIFORM_254  unstable_antiform_254
-    #define STABLE_ANTIFORM_253    stable_antiform_253
     #define QUASIFORM_4          quasiform_4
 #else
-    #define UNSTABLE_ANTIFORM_254  254
-    #define STABLE_ANTIFORM_253    253  // also "QUASI" (NONQUASI_BIT is clear)
     #define QUASIFORM_4          4
 #endif
 
-#define MAX_LIFTBYTE_STABLE  STABLE_ANTIFORM_253
-#define MAX_LIFTBYTE_ANTIFORM  UNSTABLE_ANTIFORM_254
-#define MIN_LIFTBYTE_ANTIFORM  STABLE_ANTIFORM_253
+#define MAX_LIFTBYTE_ANTIFORM  LIFTBYTE_PACK
+#define LIFTBYTE_PACK  254
+#define LIFTBYTE_VOID  253
+#define LIFTBYTE_ACTION 252
+#define LIFTBYTE_TRASH 251
+#define LIFTBYTE_FAILURE 250
+#define MAX_LIFTBYTE_STABLE  LIFTBYTE_DATATYPE
+#define LIFTBYTE_DATATYPE 249
+#define LIFTBYTE_SPLICE 248
+#define LIFTBYTE_LOGIC 247
+#define MIN_LIFTBYTE_ANTIFORM  LIFTBYTE_LOGIC
 
-// see above for STABLE_ANTIFORM_253
 #define NOQUOTE_3               3
 #define NONQUASI_BIT            1
 // see above for QUASIFORM_4

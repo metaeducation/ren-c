@@ -331,7 +331,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         if (
             heart == HEART_FENCE_SIGNIFYING_DATATYPE
-            and LIFT_BYTE(v) == STABLE_ANTIFORM_253
+            and LIFT_BYTE(v) == LIFTBYTE_DATATYPE
         ){
             const Stable* value = cast(Stable*, v);
             assert(
