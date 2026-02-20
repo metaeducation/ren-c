@@ -374,7 +374,7 @@ e-types/emit newline
 for-each [ts-name types] sparse-typesets [
     e-types/emit [propercase-of ts-name --[
         #define Any_${propercase-of Ts-Name}_Type(t) \
-            (did (Sparse_Memberships(t) & TYPESET_FLAG_${TS-NAME}))
+            (logical (Sparse_Memberships(t) & TYPESET_FLAG_${TS-NAME}))
 
         #define Any_${propercase-of Ts-Name}(cell) \
             Any_${propercase-of Ts-Name}_Type(Type_Of(cell))

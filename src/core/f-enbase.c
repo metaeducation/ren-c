@@ -33,7 +33,7 @@ static const Byte Debase64[128] =
     #define BIN_ERROR   (Byte)0x80
     #define BIN_SPACE   (Byte)0x40
     #define BIN_VALUE   (Byte)0x3f
-    #define IS_BIN_SPACE(c) (did (Debase64[c] & BIN_SPACE))
+    #define IS_BIN_SPACE(c) (logical (Debase64[c] & BIN_SPACE))
 
     /* Control Chars */
     BIN_ERROR,BIN_ERROR,BIN_ERROR,BIN_ERROR,    /* 80 */

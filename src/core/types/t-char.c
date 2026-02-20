@@ -462,7 +462,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Rune)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     if (form) {
         Append_Any_Utf8_Limit(mo->strand, v, UNLIMITED);
@@ -1015,7 +1015,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Rune)
 
     attempt {
         Codepoint c = cast(Codepoint,
-            1 + (Random_Int(did ARG(SECURE)) % limit)
+            1 + (Random_Int(ARG(SECURE)) % limit)
         );
 
         Init_Single_Codepoint_Rune(OUT, c) except (Error* e) {

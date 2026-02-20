@@ -516,7 +516,7 @@ DECLARE_NATIVE(FREEZE)
     INCLUDE_PARAMS_OF_FREEZE;
 
     Flex* locker = nullptr;
-    Force_Value_Frozen_Core(ARG(VALUE), did ARG(DEEP), locker);
+    Force_Value_Frozen_Core(ARG(VALUE), ARG(DEEP), locker);
 
     return COPY_TO_OUT(ARG(VALUE));
 }

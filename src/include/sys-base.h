@@ -57,28 +57,44 @@ typedef Byte BaseByte;
 #define Is_Base(p) \
     (cast(Byte*, (p))[0] & BASE_BYTEMASK_0x80_NODE)
 
-#define Is_Base_A_Cell(n)   (did (BASE_BYTE(n) & BASE_BYTEMASK_0x08_CELL))
-#define Is_Base_A_Stub(n)   (not Is_Base_A_Cell(n))
 
-#define Is_Base_Marked(n)   (did (BASE_BYTE(n) & BASE_BYTEMASK_0x01_MARKED))
-#define Not_Base_Marked(n)  (not Is_Base_Marked(n))
+#define Is_Base_A_Cell(n) \
+    (logical (BASE_BYTE(n) & BASE_BYTEMASK_0x08_CELL))
 
-#define Is_Base_Managed(n)  (did (BASE_BYTE(n) & BASE_BYTEMASK_0x04_MANAGED))
-#define Not_Base_Managed(n) (not Is_Base_Managed(n))
+#define Is_Base_A_Stub(n) \
+    (not Is_Base_A_Cell(n))
+
+
+#define Is_Base_Marked(n) \
+    (logical (BASE_BYTE(n) & BASE_BYTEMASK_0x01_MARKED))
+
+#define Not_Base_Marked(n) \
+    (not Is_Base_Marked(n))
+
+
+#define Is_Base_Managed(n) \
+    (logical (BASE_BYTE(n) & BASE_BYTEMASK_0x04_MANAGED))
+
+#define Not_Base_Managed(n) \
+    (not Is_Base_Managed(n))
+
 
 #define Is_Base_Readable(n) \
-    (not (BASE_BYTE(n) & BASE_BYTEMASK_0x40_UNREADABLE))
+    (not (BASE_BYTE(n) & BASE_BYTEMASK_0x40_UNREADABLE))  // negative logic!
 
-#define Not_Base_Readable(n) (not Is_Base_Readable(n))
+#define Not_Base_Readable(n) \
+    (not Is_Base_Readable(n))
+
 
 // Is_Base_Root() sounds like it might be the only node.
 // Is_Base_A_Root() sounds like a third category vs Is_Base_A_Cell()/Stub()
-//
+
 #define Is_Base_Root_Bit_Set(n) \
-    (did (BASE_BYTE(n) & BASE_BYTEMASK_0x02_ROOT))
+    (logical (BASE_BYTE(n) & BASE_BYTEMASK_0x02_ROOT))
 
 #define Not_Base_Root_Bit_Set(n) \
     (not (BASE_BYTE(n) & BASE_BYTEMASK_0x02_ROOT))
+
 
 // Add "_Bit" suffix to reinforce lack of higher level function.  (A macro
 // with the name Set_Base_Managed() might sound like it does more, like
@@ -90,17 +106,20 @@ typedef Byte BaseByte;
 #define Clear_Base_Root_Bit(n) \
     BASE_BYTE(n) &= (~ BASE_BYTEMASK_0x02_ROOT)
 
+
 #define Set_Base_Marked_Bit(n) \
     BASE_BYTE(n) |= BASE_BYTEMASK_0x01_MARKED
 
 #define Clear_Base_Marked_Bit(n) \
     BASE_BYTE(n) &= (~ BASE_BYTEMASK_0x01_MARKED)
 
+
 #define Set_Base_Managed_Bit(n) \
     BASE_BYTE(n) |= BASE_BYTEMASK_0x04_MANAGED
 
 #define Clear_Base_Managed_Bit(n) \
     BASE_BYTE(n) &= (~ BASE_BYTEMASK_0x04_MANAGED)
+
 
 #define Set_Base_Unreadable_Bit(n) \
     BASE_BYTE(n) |= BASE_BYTEMASK_0x40_UNREADABLE

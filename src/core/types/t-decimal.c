@@ -321,7 +321,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     UNUSED(form);
 
@@ -586,7 +586,7 @@ IMPLEMENT_GENERIC(RANDOM, Any_Float)
     assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
 
     REBDEC d = VAL_DECIMAL(val);
-    REBDEC rand = Random_Dec(d, did ARG(SECURE));
+    REBDEC rand = Random_Dec(d, ARG(SECURE));
 
     return Init_Decimal_Or_Percent(OUT, heart, rand);
 }

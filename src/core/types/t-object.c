@@ -832,7 +832,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Context)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     Strand* s = mo->strand;
 
@@ -962,7 +962,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Let)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     Strand* s = mo->strand;
 
@@ -1155,7 +1155,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
         Option(Ordinal) n = Find_Symbol_In_Context(
             context,
             Word_Symbol(pattern),
-            did ARG(CASE)
+            ARG(CASE)
         );
         if (not n)
             return NULL_OUT;
@@ -1226,8 +1226,7 @@ IMPLEMENT_GENERIC(COPY, Any_Context)
     if (ARG(PART))
         panic (Error_Bad_Refines_Raw());
 
-    bool deep = did ARG(DEEP);
-    return Copy_Any_Context(OUT, context, deep);
+    return Copy_Any_Context(OUT, context, ARG(DEEP));
 }
 
 
@@ -1912,7 +1911,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
         return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds ARG(FORM)
     }
 
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
     UNUSED(form);
 
     Begin_Non_Lexical_Mold(mo, v);

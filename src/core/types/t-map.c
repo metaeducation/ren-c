@@ -667,7 +667,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Map)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     const Map* m = VAL_MAP(v);
 
@@ -748,7 +748,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Map)
         Option(Ordinal) n = Find_Map_Entry(
             m_cast(Map*, VAL_MAP(map)),  // should not modify, see below
             ARG(VALUE),
-            did ARG(CASE)
+            ARG(CASE)
         );
 
         if (not n)
@@ -847,7 +847,7 @@ IMPLEMENT_GENERIC(COPY, Is_Map)
         panic (Error_Bad_Refines_Raw());
 
     require (
-      Map* copy = Copy_Map(VAL_MAP(map), did ARG(DEEP))
+      Map* copy = Copy_Map(VAL_MAP(map), ARG(DEEP))
     );
     return Init_Map(OUT, copy);
 }

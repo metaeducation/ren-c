@@ -152,7 +152,7 @@ INLINE void Set_Level_Infix_Mode(Level* L, Option(InfixMode) mode) {
 
 INLINE bool Is_Level_Infix(Level* L) {  // a bit faster than != PREFIX_0
     assert(Is_Action_Level(L));
-    return (did (L->flags.bits & LEVEL_MASK_CRUMB));
+    return logical (L->flags.bits & LEVEL_MASK_CRUMB);
 }
 
 

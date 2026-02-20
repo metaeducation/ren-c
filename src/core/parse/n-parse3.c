@@ -671,7 +671,9 @@ static Result(REBIXO) Parse_One_Rule(
         // default?!
         //
         require (
-          bool equal = Equal_Values(item, rule, did (P_FLAGS & AM_FIND_CASE))
+          bool equal = Equal_Values(
+            item, rule, logical (P_FLAGS & AM_FIND_CASE)
+          )
         );
         if (equal)
             return pos + 1;
@@ -2006,7 +2008,7 @@ DECLARE_NATIVE(SUBPARSE)
                 else {
                     require (
                       bool equal = Equal_Values(
-                        cmp, subrule, did (P_FLAGS & AM_FIND_CASE)
+                        cmp, subrule, logical (P_FLAGS & AM_FIND_CASE)
                       )
                     );
                     if (equal)

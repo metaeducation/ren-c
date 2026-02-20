@@ -200,7 +200,7 @@ DECLARE_NATIVE(FILE_ACTOR)
         return LOGIC_OUT(file->offset > size); }
 
       case SYM_OPEN_Q:
-        return LOGIC_OUT(did (file->id != FILEHANDLE_NONE));
+        return LOGIC_OUT(file->id != FILEHANDLE_NONE);
 
     //=//// READ ///////////////////////////////////////////////////////////=//
 

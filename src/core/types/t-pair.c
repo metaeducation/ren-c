@@ -138,7 +138,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Pair)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     Mold_Or_Form_Element(mo, Cell_Pair_First(v), form);
 

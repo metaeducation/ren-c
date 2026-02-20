@@ -613,7 +613,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Url)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     UNUSED(form);
     Append_Any_Utf8(mo->strand, v);
@@ -628,7 +628,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Email)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     UNUSED(form);
     Append_Any_Utf8(mo->strand, v);
@@ -689,7 +689,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     Strand* buf = mo->strand;
 
@@ -1155,7 +1155,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_String)
     if (index >= tail)
         return fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
-    index += Random_Int(did ARG(SECURE)) % (tail - index);
+    index += Random_Int(ARG(SECURE)) % (tail - index);
 
     return Init_Char_Unchecked(
         OUT,
@@ -1188,7 +1188,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_String)
             string  // return string at original position
         );
 
-    bool secure = did ARG(SECURE);
+    bool secure = ARG(SECURE);
 
     REBLEN n;
     for (n = Strand_Len(s) - index; n > 1;) {

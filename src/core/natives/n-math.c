@@ -604,7 +604,7 @@ DECLARE_NATIVE(COSINE)
 {
     INCLUDE_PARAMS_OF_COSINE;
 
-    REBDEC dval = cos(Trig_Value(ARG(ANGLE), did ARG(RADIANS), SYM_COSINE));
+    REBDEC dval = cos(Trig_Value(ARG(ANGLE), ARG(RADIANS), SYM_COSINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -626,7 +626,7 @@ DECLARE_NATIVE(SINE)
 {
     INCLUDE_PARAMS_OF_SINE;
 
-    REBDEC dval = sin(Trig_Value(ARG(ANGLE), did ARG(RADIANS), SYM_SINE));
+    REBDEC dval = sin(Trig_Value(ARG(ANGLE), ARG(RADIANS), SYM_SINE));
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
@@ -648,7 +648,7 @@ DECLARE_NATIVE(TANGENT)
 {
     INCLUDE_PARAMS_OF_TANGENT;
 
-    REBDEC dval = Trig_Value(ARG(ANGLE), did ARG(RADIANS), SYM_TANGENT);
+    REBDEC dval = Trig_Value(ARG(ANGLE), ARG(RADIANS), SYM_TANGENT);
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         panic (Error_Overflow_Raw());
 
@@ -671,7 +671,7 @@ DECLARE_NATIVE(ARCCOSINE)
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
     require (
-      Arc_Trans(OUT, ARG(COSINE), did ARG(RADIANS), SYM_COSINE)
+      Arc_Trans(OUT, ARG(COSINE), ARG(RADIANS), SYM_COSINE)
     );
     return OUT;
 }
@@ -692,7 +692,7 @@ DECLARE_NATIVE(ARCSINE)
     INCLUDE_PARAMS_OF_ARCSINE;
 
     require (
-      Arc_Trans(OUT, ARG(SINE), did ARG(RADIANS), SYM_SINE)
+      Arc_Trans(OUT, ARG(SINE), ARG(RADIANS), SYM_SINE)
     );
     return OUT;
 }
@@ -713,7 +713,7 @@ DECLARE_NATIVE(ARCTANGENT)
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
     require (
-        Arc_Trans(OUT, ARG(TANGENT), did ARG(RADIANS), SYM_TANGENT)
+        Arc_Trans(OUT, ARG(TANGENT), ARG(RADIANS), SYM_TANGENT)
     );
     return OUT;
 }
@@ -892,7 +892,7 @@ DECLARE_NATIVE(EQUAL_Q)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    bool relax = did ARG(RELAX);
+    bool relax = ARG(RELAX);
 
     if (LIFT_BYTE(ARG(VALUE1)) != LIFT_BYTE(ARG(VALUE2)))
         return LOGIC_OUT(false);

@@ -91,7 +91,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Bitset)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     UNUSED(form); // all bitsets are "molded" at this time
 
@@ -231,7 +231,7 @@ bool Check_Bit(const Binary* bset, REBLEN c, bool uncased)
 retry:
     i = n >> 3;
     if (i < tail)
-        flag = did (Binary_Head(bset)[i] & (1 << (7 - (n & 7))));
+        flag = logical (Binary_Head(bset)[i] & (1 << (7 - (n & 7))));
 
     // Check uppercase if needed:
     if (uncased && !flag) {
@@ -584,7 +584,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
         if (ARG(PART) or ARG(SKIP) or ARG(MATCH))
             panic (Error_Bad_Refines_Raw());
 
-        if (not Check_Bits(VAL_BITSET(v), ARG(VALUE), did ARG(CASE)))
+        if (not Check_Bits(VAL_BITSET(v), ARG(VALUE), ARG(CASE)))
             return LOGIC_OUT(false);
         return LOGIC_OUT(true); }
 

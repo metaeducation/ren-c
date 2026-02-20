@@ -494,7 +494,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Parameter)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     if (not form) {
         Begin_Non_Lexical_Mold(mo, v);  // &[parameter!

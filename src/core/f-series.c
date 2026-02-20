@@ -311,7 +311,7 @@ IMPLEMENT_GENERIC(UNIQUE, Any_Series)  // single-arity set operation
         ARG(SERIES),
         nullptr,  // no ARG(VALUE2)
         SOP_NONE,
-        did ARG(CASE),
+        ARG(CASE),
         ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
@@ -349,7 +349,7 @@ IMPLEMENT_GENERIC(INTERSECT, Any_Series)
         ARG(VALUE1),
         ARG(VALUE2),
         SOP_FLAG_CHECK,
-        did ARG(CASE),
+        ARG(CASE),
         ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
@@ -372,7 +372,7 @@ IMPLEMENT_GENERIC(UNION, Any_Series)
         ARG(VALUE1),
         ARG(VALUE2),
         SOP_FLAG_BOTH,
-        did ARG(CASE),
+        ARG(CASE),
         ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
@@ -395,7 +395,7 @@ IMPLEMENT_GENERIC(DIFFERENCE, Any_Series)
         ARG(VALUE1),
         ARG(VALUE2),
         SOP_FLAG_BOTH | SOP_FLAG_CHECK | SOP_FLAG_INVERT,
-        did ARG(CASE),
+        ARG(CASE),
         ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 
@@ -418,7 +418,7 @@ IMPLEMENT_GENERIC(EXCLUDE, Any_Series)
         ARG(DATA),
         ARG(EXCLUSIONS),
         SOP_FLAG_CHECK | SOP_FLAG_INVERT,
-        did ARG(CASE),
+        ARG(CASE),
         ARG(SKIP) ? Int32s(unwrap ARG(SKIP), 1) : 1
     );
 

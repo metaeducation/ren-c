@@ -145,7 +145,7 @@ DECLARE_NATIVE(MOLD)
     else
         Mold_Element(mo, cast(Element*, v));
 
-    truncated = did (mo->opts & MOLD_FLAG_WAS_TRUNCATED);
+    truncated = logical (mo->opts & MOLD_FLAG_WAS_TRUNCATED);
     strand = Pop_Molded_Strand(mo);
 
 } return_pack: {

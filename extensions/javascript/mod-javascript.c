@@ -965,7 +965,7 @@ DECLARE_NATIVE(JS_NATIVE)
     //
     Init_Logic(
         Details_At(details, IDX_JS_NATIVE_IS_AWAITER),
-        did ARG(AWAITER)
+        ARG(AWAITER)
     );
 
   //=//// MAKE ASCII SOURCE FOR JAVASCRIPT FUNCTION ///////////////////////=//

@@ -81,7 +81,7 @@ DECLARE_NATIVE(STATS)
     if (ARG(SHOW))
         Dump_Pools();
 
-    return Init_Integer(OUT, Inspect_Flex(did ARG(SHOW)));
+    return Init_Integer(OUT, Inspect_Flex(ARG(SHOW)));
   #else
     panic (Error_Checked_Build_Only_Raw());
   #endif

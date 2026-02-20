@@ -297,7 +297,7 @@ REBINT Find_In_Array(
 
                 require (
                   bool equal = Equal_Values(
-                    item, other, did (flags & AM_FIND_CASE)
+                    item, other, logical (flags & AM_FIND_CASE)
                   )
                 );
                 if (not equal)
@@ -375,7 +375,7 @@ REBINT Find_In_Array(
           bool equal = Equal_Values(
             item,
             stable_pattern,
-            did (flags & AM_FIND_CASE)
+            logical (flags & AM_FIND_CASE)
           )
         );
         if (equal)
@@ -499,7 +499,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     assert(Series_Index(v) <= Series_Len_Head(v));
 
@@ -985,7 +985,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
         index, // at
         tail, // tail
         0, // extra
-        did ARG(DEEP)
+        ARG(DEEP)
     ));
 
     Element* out = Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(list), copy);
@@ -1269,7 +1269,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_List)
 
     Element* spare = Init_Integer(
         SPARE,
-        1 + (Random_Int(did ARG(SECURE))
+        1 + (Random_Int(ARG(SECURE))
             % (Series_Len_Head(list) - index))
     );
 
@@ -1286,7 +1286,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Any_List)
     Element* list = Element_ARG(SERIES);
 
     Array* arr = Cell_Array_Ensure_Mutable(list);
-    Shuffle_Array(arr, Series_Index(list), did ARG(SECURE));
+    Shuffle_Array(arr, Series_Index(list), ARG(SECURE));
     return COPY_TO_OUT(list);
 }
 
@@ -1431,8 +1431,8 @@ IMPLEMENT_GENERIC(SORT, Any_List)
     Array* arr = Cell_Array_Ensure_Mutable(list);
 
     SortInfo info;
-    info.cased = did ARG(CASE);
-    info.reverse = did ARG(REVERSE);
+    info.cased = ARG(CASE);
+    info.reverse = ARG(REVERSE);
     UNUSED(ARG(ALL));  // !!! not used?
 
   set_up_comparator: {

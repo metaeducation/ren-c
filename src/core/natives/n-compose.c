@@ -298,9 +298,9 @@ Bounce Composer_Executor(Level* const L)
     INCLUDE_PARAMS_OF_COMPOSE2;
 
     USED(ARG(TEMPLATE));  // accounted for by Level feed
-    deep = did ARG(DEEP);
+    deep = ARG(DEEP);
     pattern = Element_ARG(PATTERN);
-    conflate = did ARG(CONFLATE);
+    conflate = ARG(CONFLATE);
     predicate = ARG(PREDICATE);
 
     assert(not predicate or Is_Frame(unwrap predicate));
@@ -692,7 +692,7 @@ DECLARE_NATIVE(COMPOSE2)
     assert(Is_Logic(As_Stable(OUT)));
 
     trap (
-      Finalize_Composer_Level(SUBLEVEL, input, did ARG(CONFLATE))
+      Finalize_Composer_Level(SUBLEVEL, input, ARG(CONFLATE))
     );
     Drop_Level(SUBLEVEL);
     return OUT;

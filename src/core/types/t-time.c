@@ -184,7 +184,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Time)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     UNUSED(form);  // no difference between MOLD and FORM at this time
 
@@ -689,7 +689,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Time)
     Element* time = Element_ARG(MAX);
     REBI64 secs = VAL_NANO(time);
 
-    REBI64 rand_secs = Random_Range(secs / SEC_SEC, did ARG(SECURE)) * SEC_SEC;
+    REBI64 rand_secs = Random_Range(secs / SEC_SEC, ARG(SECURE)) * SEC_SEC;
     return Init_Time_Nanoseconds(OUT, rand_secs);
 }
 

@@ -76,7 +76,7 @@ INLINE void Construct_Molder(Molder* mo) {
     ((mo)->opts |= (f))
 
 #define GET_MOLD_FLAG(mo,f) \
-    (did ((mo)->opts & (f)))
+    (logical ((mo)->opts & (f)))
 
 #define NOT_MOLD_FLAG(mo,f) \
     (not ((mo)->opts & (f)))

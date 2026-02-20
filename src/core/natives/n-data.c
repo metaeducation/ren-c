@@ -817,7 +817,7 @@ DECLARE_NATIVE(UNBIND)
         const Element* tail;
         Element* at = List_At_Ensure_Mutable(&tail, word);
         Option(VarList*) context = nullptr;
-        Unbind_Values_Core(at, tail, context, did ARG(DEEP));
+        Unbind_Values_Core(at, tail, context, ARG(DEEP));
     }
     */
 

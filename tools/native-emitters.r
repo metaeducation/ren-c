@@ -387,8 +387,16 @@ export emit-include-params-macro: func [
 
             append symbols name
 
-            keep cscape [checkmode cwrap ctype name n argmode
-                "DECLARE_$<CHECKMODE>_PARAM($<CWrap>($<CType>*), ${NAME}, $<n>, $<ARGMODE>)"
+            if param.refinement and (not param.spec) [
+                assert [argmode = 'ARGMODE_OPTIONAL]
+                keep cscape [checkmode cwrap ctype name n argmode
+                    "DECLARE_$<CHECKMODE>_PARAM(bool, ${NAME}, $<n>, $<ARGMODE>)"
+                ]
+            ]
+            else [
+                keep cscape [checkmode cwrap ctype name n argmode
+                    "DECLARE_$<CHECKMODE>_PARAM($<CWrap>($<CType>*), ${NAME}, $<n>, $<ARGMODE>)"
+                ]
             ]
             n: n + 1
         ]

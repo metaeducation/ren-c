@@ -191,7 +191,7 @@ Bounce Call_Core(Level* level_) {
         crash (input);  // typechecking should not have allowed it
     }
 
-    bool flag_wait = did ARG(WAIT) or (
+    bool flag_wait = ARG(WAIT) or (
         (input and (Is_Text(unwrap input) or Is_Blob(unwrap input)))
         or (output and (Is_Text(unwrap output) or Is_Blob(unwrap output)))
         or (error and (Is_Text(unwrap error) or Is_Blob(unwrap error)))

@@ -170,7 +170,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Integer)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     UNUSED(form);
 
@@ -416,7 +416,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Integer)
     if (max == 0)
         panic (PARAM(MAX));  // range is 1 to max, inclusive
 
-    return Init_Integer(OUT, Random_Range(max, did ARG(SECURE)));
+    return Init_Integer(OUT, Random_Range(max, ARG(SECURE)));
 }
 
 
@@ -430,7 +430,7 @@ IMPLEMENT_GENERIC(RANDOM_BETWEEN, Is_Integer)
     if (max < min)
         panic (PARAM(MAX));  // 0 to 0 is okay, but disallow 1 to 0
 
-    REBI64 rand = Random_Range(1 + max - min, did ARG(SECURE));  // 1-based
+    REBI64 rand = Random_Range(1 + max - min, ARG(SECURE));  // 1-based
 
     return Init_Integer(OUT, rand + min - 1);
 }

@@ -256,8 +256,8 @@ DECLARE_NATIVE(READ_LINE)
     UNUSED(ARG(SOURCE));
   #endif
 
-    bool raw = did ARG(RAW);
-    bool hide = did ARG(HIDE);
+    bool raw = ARG(RAW);
+    bool hide = ARG(HIDE);
 
     if (hide)  // https://github.com/rebol/rebol-issues/issues/476
         return "panic -[READ-LINE:HIDE not yet implemented:]-";
@@ -405,7 +405,7 @@ DECLARE_NATIVE(READ_CHAR)
     UNUSED(ARG(SOURCE));
   #endif
 
-    bool raw = did ARG(RAW);
+    bool raw = ARG(RAW);
 
     int timeout_msec;
     if (not ARG(TIMEOUT))

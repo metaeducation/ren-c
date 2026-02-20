@@ -239,6 +239,8 @@
 //
 
 #define did !!  // Not in iso646.h
+#define didnt !  // another synonym
+#define logical !!  // synonym (makes sense in some places "did" does not)
 
 #if defined(__cplusplus)
   #if defined(_MSC_VER)

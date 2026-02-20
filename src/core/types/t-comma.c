@@ -34,7 +34,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blank)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     UNUSED(v);
     UNUSED(mo);

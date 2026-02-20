@@ -77,7 +77,7 @@ Result(Length) Modify_List(
   //    there was a newline tail flag on the target array, and the insertion
   //    is at the end...so that flag may need to proxy on an inserted cell.
 
-    bool tail_newline = did (flags & AM_LINE);
+    bool tail_newline = logical (flags & AM_LINE);
 
     bool head_newline =  // for first item of inserted content [1]
         (index == Array_Len(array))

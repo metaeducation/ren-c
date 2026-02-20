@@ -228,13 +228,13 @@ INLINE Cell* Arg_Of_Level_Inline(
     (u_cast(Arg*, (L)->rootvar) + 1)  // 1-based indexing
 
 #define ARG(name) \
-    cast(checked_type_##name##_, Arg_Of_Level_Inline( \
+    x_cast(checked_type_##name##_, Arg_Of_Level_Inline( \
         level_, \
         checked_##name##_, \
         u_cast(ArgMode, checked_argmode_##name##_)))
 
 #define Unchecked_ARG(name) \
-    cast(unchecked_type_##name##_, Arg_Of_Level_Inline( \
+    x_cast(unchecked_type_##name##_, Arg_Of_Level_Inline( \
         level_, \
         unchecked_##name##_, \
         u_cast(ArgMode, unchecked_argmode_##name##_)))

@@ -70,7 +70,7 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
     }
 
     if (Not_Level_Flag(LEVEL, DISPATCHING_INTRINSIC)) {
-        bool check_datatype = did ARG(TYPE);
+        bool check_datatype = ARG(TYPE);
         if (check_datatype) {
             if (not Is_Datatype(v))
                 return fail (

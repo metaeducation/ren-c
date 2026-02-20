@@ -1014,7 +1014,7 @@ Result(None) Remake_Flex(Flex* f, REBLEN units, Flags flags)
     //
     assert((flags & ~(BASE_FLAG_BASE | FLEX_FLAG_POWER_OF_2)) == 0);
 
-    bool preserve = did (flags & BASE_FLAG_BASE);
+    bool preserve = logical (flags & BASE_FLAG_BASE);
 
     REBLEN used_old = Flex_Used(f);
     Byte wide = Flex_Wide(f);

@@ -239,7 +239,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Blob)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     UNUSED(form);
 
@@ -826,7 +826,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Is_Blob)
     if (index >= tail)
         return fail (Error_Bad_Pick_Raw(Init_Integer(SPARE, 0)));
 
-    index += Random_Int(did ARG(SECURE)) % (tail - index);
+    index += Random_Int(ARG(SECURE)) % (tail - index);
     const Binary* bin = Cell_Binary(blob);
     return Init_Integer(OUT, *Binary_At(bin, index));
 }
@@ -842,7 +842,7 @@ IMPLEMENT_GENERIC(SHUFFLE, Is_Blob)
 
     Binary* bin = Cell_Binary_Ensure_Mutable(blob);
 
-    bool secure = did ARG(SECURE);
+    bool secure = ARG(SECURE);
     REBLEN n;
     for (n = Binary_Len(bin) - index; n > 1;) {
         REBLEN k = index + Random_Int(secure) % n;
@@ -995,7 +995,7 @@ DECLARE_NATIVE(ENCODE_INTEGER)
 {
     INCLUDE_PARAMS_OF_ENCODE_INTEGER;
 
-    bool little = did ARG(LE);
+    bool little = ARG(LE);
 
     Stable* options = ARG(OPTIONS);
     if (Series_Len_At(options) != 2)
@@ -1096,7 +1096,7 @@ DECLARE_NATIVE(DECODE_INTEGER)
 {
     INCLUDE_PARAMS_OF_DECODE_INTEGER;
 
-    bool little = did ARG(LE);
+    bool little = ARG(LE);
 
     Size bin_size;
     const Byte* bin_data = Blob_Size_At(&bin_size, ARG(BINARY));

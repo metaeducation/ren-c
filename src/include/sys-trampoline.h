@@ -86,7 +86,7 @@ INLINE void Set_Trampoline_Flag_Core(Flags f) { // used in %sys-series.h
     Set_Trampoline_Flag_Core(TRAMPOLINE_FLAG_##name)
 
 #define Get_Trampoline_Flag(name) \
-    (did (g_ts.signal_flags & TRAMPOLINE_FLAG_##name))
+    (logical (g_ts.signal_flags & TRAMPOLINE_FLAG_##name))
 
 #define Clear_Trampoline_Flag(name) \
     g_ts.signal_flags &= (~ TRAMPOLINE_FLAG_##name)

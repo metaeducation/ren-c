@@ -143,7 +143,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Date)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);  // calls MOLDIFY on the time component, may heed
+    bool form = ARG(FORM);  // calls MOLDIFY on the time component, may heed
 
     UNUSED(form);
 
@@ -1151,7 +1151,7 @@ IMPLEMENT_GENERIC(RANDOM, Is_Date)
     if (year == 0)
         panic (UNHANDLED);
 
-    const bool secure = did ARG(SECURE);
+    bool secure = ARG(SECURE);
 
     REBLEN rand_year = Random_Range(year, secure);
     REBLEN rand_month = Random_Range(12, secure);

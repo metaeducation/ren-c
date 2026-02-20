@@ -459,7 +459,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     INCLUDE_PARAMS_OF_COPY;
 
     Element* seq = ARG(VALUE);
-    bool deep = did ARG(DEEP);
+    bool deep = ARG(DEEP);
 
     if (not deep or Is_Cell_Wordlike(seq)) {  // wordlike is /A or :B etc
         if (ARG(PART))
@@ -572,7 +572,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
     Element* seq = Element_ARG(COLLECTION);
 
     if (Is_Cell_Wordlike(seq)) {  // e.g. FOO: or :FOO [1]
-        REBI64 one_or_two = Random_Range(2, did ARG(SECURE));
+        REBI64 one_or_two = Random_Range(2, ARG(SECURE));
         if (one_or_two == 1)
             return Init_Space(OUT);
         Copy_Cell(OUT, seq);
@@ -582,7 +582,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 
     if (Is_Cell_Pairlike(seq)) {  // e.g. A/B
         assert(Is_Cell_Listlike(seq));  // all pairlikes are also listlike
-        REBI64 one_or_two = Random_Range(2, did ARG(SECURE));
+        REBI64 one_or_two = Random_Range(2, ARG(SECURE));
         if (one_or_two == 1)
             return COPY_TO_OUT(Cell_Pair_First(seq));
         return COPY_TO_OUT(Cell_Pair_Second(seq));
@@ -598,7 +598,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 
     Byte used = seq->payload.at_least_8[IDX_SEQUENCE_USED];
 
-    REBI64 rand = Random_Range(used, did ARG(SECURE));  // from 1 to used
+    REBI64 rand = Random_Range(used, ARG(SECURE));  // from 1 to used
     return Init_Integer(OUT, seq->payload.at_least_8[rand]);
 }
 
@@ -668,7 +668,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
 
     Element* c = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     UNUSED(form);
 
