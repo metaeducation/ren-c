@@ -108,7 +108,7 @@ INLINE bool Rune_Is_Single_Codepoint(const Cell* cell) {
 
 INLINE bool Is_Rune_And_Is_Char(const Stable* v) {
     return (
-        (Ensure_Readable(v)->header.bits & (
+        (Readable_Cell(v)->header.bits & (
             CELL_MASK_HEART_AND_SIGIL_AND_LIFT
                 | CELL_FLAG_RUNE_SINGLE_CODEPOINT
         )) == (
@@ -314,7 +314,7 @@ INLINE bool Is_Cell_Space_With_Lift_Sigil(
     LiftByte lift,
     Option(Sigil) sigil
 ){
-    bool is_space = (Ensure_Readable(cell)->header.bits & (
+    bool is_space = (Readable_Cell(cell)->header.bits & (
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_RUNE_IS_SPACE
     )) == (
         FLAG_HEART(TYPE_RUNE)

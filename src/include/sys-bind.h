@@ -206,7 +206,9 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
 
         const Symbol* symbol = Info_Stump_Bind_Symbol(stump);
         assert(Get_Flavor_Flag(SYMBOL, symbol, HITCH_IS_BIND_STUMP));
-        Clear_Flavor_Flag(SYMBOL, symbol, HITCH_IS_BIND_STUMP);
+        Clear_Flavor_Flag(
+            SYMBOL, m_cast(Symbol*, symbol), HITCH_IS_BIND_STUMP
+        );
         Tweak_Misc_Hitch(m_cast(Symbol*, symbol), Misc_Hitch(stump));
 
         assert(Is_Base_Readable(stump));
@@ -255,7 +257,9 @@ INLINE bool Try_Add_Binder_Index(
     binder->stump_list = stump;
 
     Tweak_Misc_Hitch(m_cast(Symbol*, symbol), stump);
-    Set_Flavor_Flag(SYMBOL, symbol, HITCH_IS_BIND_STUMP);  // must remove [1]
+    Set_Flavor_Flag(  // must remove [1]
+        SYMBOL, m_cast(Symbol*, symbol), HITCH_IS_BIND_STUMP
+    );
 
     return true;
 }

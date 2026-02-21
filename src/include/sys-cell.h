@@ -159,8 +159,8 @@
     #define Assert_Cell_Writable(c)    NOOP
     #define Assert_Cell_Initable(c)    NOOP
 
-    #define Ensure_Readable(c) (c)
-    #define Ensure_Writable(c) (c)
+    #define Readable_Cell(c) (c)
+    #define Writable_Cell(c) (c)
 #else
     #define Assert_Cell_Readable(c) do { \
         STATIC_ASSERT_LVALUE(c);  /* see [A] */ \
@@ -213,17 +213,17 @@
     } while (0)
 
   #if NO_CPLUSPLUS_11
-    #define Ensure_Readable(c) (c)
-    #define Ensure_Writable(c) (c)
+    #define Readable_Cell(c) (c)
+    #define Writable_Cell(c) (c)
   #else
     template<typename T>
-    const T& Ensure_Readable(const T& cell) {
+    const T& Readable_Cell(const T& cell) {
         Assert_Cell_Readable(cell);
         return cell;
     }
 
     template<typename T>
-    const T& Ensure_Writable(const T& cell) {
+    const T& Writable_Cell(const T& cell) {
         Assert_Cell_Writable(cell);
         return cell;
     }
@@ -251,8 +251,8 @@
 //
 // Poisoning is used in the spirit of things like Address Sanitizer to block
 // reading or writing locations such as beyond the allocated memory of an
-// Array Flex.  It leverages the checks done by Ensure_Readable() and by
-// Ensure_Writable()
+// Array Flex.  It leverages the checks done by Readable_Cell() and by
+// Writable_Cell()
 //
 // 1. To stop reading but not writing, use Init_Unreadable() cells instead.
 //
@@ -558,20 +558,18 @@ INLINE bool Is_Cell_Readable(const Cell* c) {
 STATIC_ASSERT(not (CELL_MASK_PERSIST & CELL_FLAG_NOTE));
 
 
-//=//// GETTING, SETTING, and CLEARING VALUE FLAGS ////////////////////////=//
+//=//// GETTING, SETTING, and CLEARING CELL FLAGS /////////////////////////=//
 //
 // The header of a cell contains information about what kind of cell it is,
 // as well as some flags that are reserved for system purposes.  These are
 // the BASE_FLAG_XXX and CELL_FLAG_XXX flags, that work on any cell.
 //
-// 1. Cell flags are managed distinctly from conceptual immutability of their
-//    data, and so we m_cast away constness.
 
 #define Get_Cell_Flag(c,name) \
-    ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) != 0)
+    ((Readable_Cell(c)->header.bits & CELL_FLAG_##name) != 0)
 
 #define Not_Cell_Flag(c,name) \
-    ((Ensure_Readable(c)->header.bits & CELL_FLAG_##name) == 0)
+    ((Readable_Cell(c)->header.bits & CELL_FLAG_##name) == 0)
 
 #define Get_Cell_Flag_Unchecked(c,name) \
     ((known(Cell*, (c))->header.bits & CELL_FLAG_##name) != 0)
@@ -579,13 +577,11 @@ STATIC_ASSERT(not (CELL_MASK_PERSIST & CELL_FLAG_NOTE));
 #define Not_Cell_Flag_Unchecked(c,name) \
     ((known(Cell*, (c))->header.bits & CELL_FLAG_##name) == 0)
 
-#define Set_Cell_Flag(c,name) /* cast away const [1] */ \
-    m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
-        |= CELL_FLAG_##name
+#define Set_Cell_Flag(c,name) \
+    (Readable_Cell(c)->header.bits |= CELL_FLAG_##name)
 
-#define Clear_Cell_Flag(c,name) /* cast away const [1] */ \
-    m_cast(HeaderUnion*, &Ensure_Readable(c)->header)->bits \
-        &= ~CELL_FLAG_##name
+#define Clear_Cell_Flag(c,name) \
+    (Readable_Cell(c)->header.bits &= ~CELL_FLAG_##name)
 
 
 //=//// CELL TYPE-SPECIFIC "CRUMB" ////////////////////////////////////////=//
@@ -628,7 +624,7 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 // combination, and does so by testing the header bits against a mask which
 // can be calculated at compile-time.
 //
-// Note that Ensure_Readable() is a no-op in the release build.
+// Note that Readable_Cell() is a no-op in the release build.
 //
 
 #define Unchecked_Cell_Has_Lift_Sigil_Heart(cell,lift,sigil,heart) \
@@ -636,14 +632,14 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
         == (FLAG_SIGIL(sigil) | FLAG_HEART(heart) | FLAG_LIFT_BYTE(lift)))
 
 #define Cell_Has_Lift_Sigil_Heart(cell,lift,sigil,heart) \
-    Unchecked_Cell_Has_Lift_Sigil_Heart(Ensure_Readable(cell), \
+    Unchecked_Cell_Has_Lift_Sigil_Heart(Readable_Cell(cell), \
         (lift), (sigil), (heart))
 
 #define Unchecked_Cell_Has_Lift_Heart_No_Sigil(cell,lift,heart) \
     Unchecked_Cell_Has_Lift_Sigil_Heart((cell), (lift), SIGIL_0, (heart))
 
 #define Cell_Has_Lift_Heart_No_Sigil(cell,lift,heart) \
-    Unchecked_Cell_Has_Lift_Heart_No_Sigil(Ensure_Readable(cell), \
+    Unchecked_Cell_Has_Lift_Heart_No_Sigil(Readable_Cell(cell), \
         (lift), (heart))
 
 
@@ -713,7 +709,7 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
         i_cast(HeartEnum, KIND_BYTE_RAW(c) & KIND_BYTEMASK_HEART_0x3F))
 
 #define Heart_Of(c) \
-    Unchecked_Heart_Of(Ensure_Readable(c))
+    Unchecked_Heart_Of(Readable_Cell(c))
 
 INLINE Heart Heart_Of_Unsigiled_Isotopic(const Cell* c) {
     KindByte kind_byte = KIND_BYTE(c);
@@ -897,16 +893,16 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
     #define Type_Of_Possibly_Unstable  Type_Of_Core
 #else
     #define Underlying_Type_Of(v) \
-        Underlying_Type_Of_Unchecked(Ensure_Readable(Known_Stable(v)))
+        Underlying_Type_Of_Unchecked(Readable_Cell(Known_Stable(v)))
 
     #define Type_Of(v) \
-        Type_Of_Core(Ensure_Readable(Known_Stable(v)))
+        Type_Of_Core(Readable_Cell(Known_Stable(v)))
 
     #define Type_Of_Unchecked(v) \
         Type_Of_Core(Known_Stable(v))
 
     #define Type_Of_Possibly_Unstable(v) \
-        Type_Of_Core(Ensure_Readable(Possibly_Unstable(v)))
+        Type_Of_Core(Readable_Cell(Possibly_Unstable(v)))
 #endif
 
 #define Datatype_Of(v) \

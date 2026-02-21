@@ -530,7 +530,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         else
             feed->p = Array_Head(Feed_Array(feed));
 
-        assert(Ensure_Readable(At_Feed(feed)));  // not end at start, not end now
+        assert(Readable_Cell(At_Feed(feed)));  // not end at start, not end now
 
         // The array just popped into existence, and it's tied to a running
         // level...so safe to say we're holding it.

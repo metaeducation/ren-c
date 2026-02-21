@@ -26,7 +26,7 @@
 
 
 INLINE bool Is_Cell_Listlike(const Cell* v) {  // PACK!s are allowed
-    // called by core code, sacrifice Ensure_Readable() checks
+    // called by core code, sacrifice Readable_Cell() checks
     if (Any_List_Type(Unchecked_Heart_Of(v)))
         return true;
     if (not Any_Sequence_Type(Unchecked_Heart_Of(v)))

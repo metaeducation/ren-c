@@ -1086,7 +1086,7 @@ Element* Init_Loop_Each_May_Alias_Data(
 
     les->took_hold = Not_Flex_Flag(les->flex, FIXED_SIZE);
     if (les->took_hold)
-        Set_Flex_Flag(les->flex, FIXED_SIZE);
+        Set_Flex_Flag(m_cast(Flex*, les->flex), FIXED_SIZE);
 
     if (Any_Context(data)) {
         les->more_data = Try_Advance_Evars(&les->u.evars);
@@ -1344,7 +1344,7 @@ void Shutdown_Loop_Each(Stable* iterator)
     LoopEachState *les = Cell_Handle_Pointer(LoopEachState, iterator);
 
     if (les->took_hold)  // release read-only lock
-        Clear_Flex_Flag(les->flex, FIXED_SIZE);
+        Clear_Flex_Flag(m_cast(Flex*, les->flex), FIXED_SIZE);
 
     if (les->generator)
         assert(not les->data);
@@ -1826,7 +1826,10 @@ DECLARE_NATIVE(REMOVE_EACH)
 
             do {
                 assert(start <= len);
-                Set_Cell_Flag(Array_At(Cell_Array(data), start), NOTE_REMOVE);
+                Set_Cell_Flag(  // checked mutability up front, and set HOLD
+                    Array_At(Cell_Array_Known_Mutable(data), start),
+                    NOTE_REMOVE
+                );
                 ++start;
             } while (start != index);
         }

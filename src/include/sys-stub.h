@@ -82,8 +82,6 @@ INLINE void Erase_Stub(Stub* s) {
 //
 // See definitions of STUB_FLAG_XXX.
 //
-// 1. Stub flags are managed distinctly from conceptual immutability of their
-//    data, and so we we cast away constness.
 
 #define Get_Stub_Flag(s,name) \
     ((known(Stub*, (s))->header.bits & STUB_FLAG_##name) != 0)
@@ -92,10 +90,10 @@ INLINE void Erase_Stub(Stub* s) {
     ((known(Stub*, (s))->header.bits & STUB_FLAG_##name) == 0)
 
 #define Set_Stub_Flag(s,name) \
-    (m_cast(Stub*, (s))->header.bits |= STUB_FLAG_##name)  // m_cast() [1]
+    (known(Stub*, (s))->header.bits |= STUB_FLAG_##name)
 
 #define Clear_Stub_Flag(s,name) \
-    (m_cast(Stub*, (s))->header.bits &= (~ STUB_FLAG_##name))  // m_cast() [1]
+    (known(Stub*, (s))->header.bits &= (~ STUB_FLAG_##name))
 
 
 //=//// STUB FLAVOR ACCESSORS /////////////////////////////////////////////=//
@@ -170,8 +168,6 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
 // FLAVOR_XXX, and asserts if it does not.  This is used by the subclass
 // testing macros as a check that you are testing the flag for the
 // Flavor that you expect.
-//
-// 1. See Set_Stub_Flag()/Clear_Stub_Flag() for why implicit mutability.
 
 #if NO_RUNTIME_CHECKS || NO_CPLUSPLUS_11
     #define ensure_flavor(flavor,stub) \
@@ -197,14 +193,12 @@ INLINE Size Wide_For_Flavor(Flavor flavor) {
         & subclass##_FLAG_##name) == 0)
 
 #define Set_Flavor_Flag(subclass,stub,name) \
-    m_cast(HeaderUnion*, /* [1] */ \
-        &ensure_flavor(FLAVOR_##subclass, (stub))->header)->bits \
-        |= subclass##_FLAG_##name
+    (ensure_flavor(FLAVOR_##subclass, (stub))->header.bits \
+        |= subclass##_FLAG_##name)
 
 #define Clear_Flavor_Flag(subclass,stub,name)\
-    m_cast(HeaderUnion*, /* [1] */ \
-        &ensure_flavor(FLAVOR_##subclass, (stub))->header)->bits \
-        &= ~subclass##_FLAG_##name
+    (ensure_flavor(FLAVOR_##subclass, (stub))->header.bits \
+        &= ~subclass##_FLAG_##name)
 
 
 //=//// STUB CELL ACCESS //////////////////////////////////////////////////=//
@@ -330,7 +324,7 @@ INLINE bool Is_Stub_White(const Stub* f)
 
 INLINE void Flip_Stub_To_Black(const Stub* f) {
     assert(Not_Stub_Flag(f, BLACK));
-    Set_Stub_Flag(f, BLACK);
+    Set_Stub_Flag(m_cast(Stub*, f), BLACK);
   #if RUNTIME_CHECKS
     g_mem.num_black_stubs += 1;
   #endif
@@ -338,7 +332,7 @@ INLINE void Flip_Stub_To_Black(const Stub* f) {
 
 INLINE void Flip_Stub_To_White(const Stub* f) {
     assert(Get_Stub_Flag(f, BLACK));
-    Clear_Stub_Flag(f, BLACK);
+    Clear_Stub_Flag(m_cast(Stub*, f), BLACK);
   #if RUNTIME_CHECKS
     g_mem.num_black_stubs -= 1;
   #endif

@@ -67,7 +67,7 @@
     Flex_Used(known(Array*, (a)))
 
 
-// See Ensure_Readable(), Ensure_Writable() and related functions for an
+// See Readable_Cell(), Writable_Cell() and related functions for an
 // explanation of bits that are formatted in cell headers to be legal to use.
 //
 // 1. Expandable arrays prep all cells, including in the not-yet-used

@@ -73,7 +73,7 @@ INLINE Count Quotes_From_Lift_Byte(LiftByte lift_byte) {
 // it's an Element).
 //
 #define Is_Quoted(v) \
-    (LIFT_BYTE(Ensure_Readable(Known_Element(v))) > MAX_LIFT_NOQUOTE_QUASI_OK)
+    (LIFT_BYTE(Readable_Cell(Known_Element(v))) > MAX_LIFT_NOQUOTE_QUASI_OK)
 
 // Slower test for quotedness when you can't rule out antiforms (you have to
 // check a second range of the LIFT_BYTE).
@@ -88,13 +88,13 @@ INLINE bool Is_Cell_Quoted_Core(const Cell* cell) {
 }
 
 #define Is_Possibly_Unstable_Value_Quoted(v) \
-    (Is_Cell_Quoted_Core(Ensure_Readable(v)))
+    (Is_Cell_Quoted_Core(Readable_Cell(v)))
 
 #define Is_Cell_Quoted(v) \
-    Is_Cell_Quoted_Core(Ensure_Readable(Known_Stable(v)))
+    Is_Cell_Quoted_Core(Readable_Cell(Known_Stable(v)))
 
 #define Any_Fundamental(v) \
-    (LIFT_BYTE(Ensure_Readable(Known_Stable(v))) <= MAX_LIFT_NOQUOTE_NOQUASI)
+    (LIFT_BYTE(Readable_Cell(Known_Stable(v))) <= MAX_LIFT_NOQUOTE_NOQUASI)
 
 #define Is_Quoted_Form_Of(heartname, v) \
     Cell_Has_Lift_Sigil_Heart(Known_Stable(v), \
@@ -216,13 +216,13 @@ INLINE bool Have_Matching_Lift_Levels(const Stable* a, const Stable* b) {
 #if CHECK_CELL_SUBCLASSES
     INLINE bool Is_Antiform(const Value* v) {
         assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
-        return LIFT_BYTE(Ensure_Readable(v)) >= MIN_LIFT_ANTIFORM;
+        return LIFT_BYTE(Readable_Cell(v)) >= MIN_LIFT_ANTIFORM;
     }
 
     INLINE bool Is_Antiform(const Element* v) = delete;
 #else
     #define Is_Antiform(v) \
-        (LIFT_BYTE(Ensure_Readable(v)) >= MIN_LIFT_ANTIFORM)
+        (LIFT_BYTE(Readable_Cell(v)) >= MIN_LIFT_ANTIFORM)
 #endif
 
 #define Not_Antiform(v) (not Is_Antiform(v))
@@ -230,7 +230,7 @@ INLINE bool Have_Matching_Lift_Levels(const Stable* a, const Stable* b) {
 #undef Any_Antiform  // Is_Antiform() faster than auto-generated macro [1]
 
 #define Is_Lifted_Antiform(v) \
-    (LIFT_BYTE(Ensure_Readable(v)) == QUASIFORM_64)
+    (LIFT_BYTE(Readable_Cell(v)) == QUASIFORM_64)
 
 
 //=//// UNSTABLE ANTIFORMS ////////////////////////////////////////////////=//
@@ -295,7 +295,7 @@ INLINE bool Have_Matching_Lift_Levels(const Stable* a, const Stable* b) {
         Is_Cell_Stable_Core(Possibly_Unstable(v))
 
     INLINE bool Is_Antiform_Stable_Core(const Value* a) {  // narrow check [2]
-        unnecessary(Ensure_Readable(a));  // Is_Antiform() checked readable
+        unnecessary(Readable_Cell(a));  // Is_Antiform() checked readable
         assert(LIFT_BYTE(a) >= MIN_LIFT_ANTIFORM);
         impossible(0 != (a->header.bits & CELL_MASK_SIGIL));
         return Is_Cell_Stable(a);
@@ -309,7 +309,7 @@ INLINE bool Have_Matching_Lift_Levels(const Stable* a, const Stable* b) {
 #define Not_Antiform_Stable(v)  (not Is_Antiform_Stable(v))
 
 INLINE bool Is_Lifted_Unstable_Antiform(const Value* v) {  // costs more [3]
-    unnecessary(Ensure_Readable(v));  // assume Is_Antiform() checked readable
+    unnecessary(Readable_Cell(v));  // assume Is_Antiform() checked readable
 
     if (LIFT_BYTE(v) != QUASIFORM_64)
         return false;  // not quasiform so not lifted unstable
@@ -343,7 +343,7 @@ MUTABLE_IF_C(Result(Stable*), INLINE) Ensure_Stable(CONST_IF_C(Value*) v_) {
 //
 
 MUTABLE_IF_C(Option(Element*), INLINE) Try_As_Element(CONST_IF_C(Stable*) v_) {
-    CONSTABLE(Stable*) v = m_cast(Stable*, Ensure_Readable(v_));
+    CONSTABLE(Stable*) v = m_cast(Stable*, Readable_Cell(v_));
     if (Is_Antiform(v))
         return nullptr;
     return As_Element(v);
@@ -371,7 +371,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) atom);
 INLINE Result(Element*) Coerce_To_Quasiform(Exact(Element*) v);
 
 #define Is_Quasiform(v) \
-    (LIFT_BYTE(Ensure_Readable(Known_Stable(v))) == QUASIFORM_64)
+    (LIFT_BYTE(Readable_Cell(Known_Stable(v))) == QUASIFORM_64)
 
 INLINE Element* Unquasify(Element* elem) {
     assert(LIFT_BYTE(elem) == QUASIFORM_64);

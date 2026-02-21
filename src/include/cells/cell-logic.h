@@ -152,7 +152,7 @@ INLINE bool Cell_Logic_Core(const Stable* v) {
 //
 // 1. Beyond having a special header-only test for nulls, we can also do it
 //    without even an inline function call.  (Debug builds tend not to inline
-//    functions aggressively.)  However, the Ensure_Readable() adds overhead
+//    functions aggressively.)  However, the Readable_Cell() adds overhead
 //    in many checked builds...all the more reasons to not add another call!
 //
 // 2. If you are uninitiated to the codebase, you might think `Is_Null(v)`
@@ -168,14 +168,14 @@ INLINE bool Cell_Logic_Core(const Stable* v) {
 //
 
 #define Is_Light_Null(v) /* test allowed on potentially unstable values */ \
-    ((Ensure_Readable(Possibly_Unstable(v))->header.bits & ( \
+    ((Readable_Cell(Possibly_Unstable(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
         FLAG_LIFT_BYTE(LIFTBYTE_LOGIC) | FLAG_HEART(TYPE_WORD) \
             | (not CELL_FLAG_LOGIC_IS_OKAY)))
 
 #define Is_Null(v) /* test for stable values, don't confuse w/nullptr [2] */ \
-    ((Ensure_Readable(Possibly_Antiform(v))->header.bits & ( \
+    ((Readable_Cell(Possibly_Antiform(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
         FLAG_LIFT_BYTE(LIFTBYTE_LOGIC) | FLAG_HEART(TYPE_WORD) \
@@ -235,7 +235,7 @@ INLINE bool Is_Lifted_Null(const Value* v) {
 //
 
 #define Is_Possibly_Unstable_Value_Okay(v) \
-    ((Ensure_Readable(Possibly_Unstable(v))->header.bits & ( \
+    ((Readable_Cell(Possibly_Unstable(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
         FLAG_LIFT_BYTE(LIFTBYTE_LOGIC) \
@@ -243,7 +243,7 @@ INLINE bool Is_Lifted_Null(const Value* v) {
             | CELL_FLAG_LOGIC_IS_OKAY))
 
 #define Is_Okay(v) \
-    ((Ensure_Readable(Possibly_Antiform(v))->header.bits & ( \
+    ((Readable_Cell(Possibly_Antiform(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
         FLAG_LIFT_BYTE(LIFTBYTE_LOGIC) \

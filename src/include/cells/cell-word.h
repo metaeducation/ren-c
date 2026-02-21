@@ -33,7 +33,7 @@
 #define WORDLIKE_PAYLOAD_1_SYMBOL_BASE  SERIESLIKE_PAYLOAD_1_BASE
 
 INLINE bool Is_Cell_Wordlike(const Cell* v) {
-    // called by core code, sacrifice Ensure_Readable() checks
+    // called by core code, sacrifice Readable_Cell() checks
     if (Unchecked_Heart_Of(v) == TYPE_WORD)
         return true;
     if (not Any_Sequence_Type(Unchecked_Heart_Of(v)))
@@ -65,14 +65,14 @@ INLINE void Tweak_Word_Index(const Cell* v, Index i) {
     assert(Is_Cell_Wordlike(v));
     assert(i != 0);
     CELL_WORD_INDEX_I32(m_cast(Cell*, v)) = i;
-    Set_Cell_Flag(v, DONT_MARK_PAYLOAD_2);
+    Set_Cell_Flag(m_cast(Cell*, v), DONT_MARK_PAYLOAD_2);
 }
 
 INLINE void Tweak_Word_Stub(const Cell* v, Stub* stub) {
     assert(Is_Cell_Wordlike(v));
     assert(Is_Stub_Let(stub) or Is_Stub_Patch(stub));
     m_cast(Cell*, v)->payload.split.two.base = stub;
-    Clear_Cell_Flag(v, DONT_MARK_PAYLOAD_2);
+    Clear_Cell_Flag(m_cast(Cell*, v), DONT_MARK_PAYLOAD_2);
 }
 
 INLINE Cell* Blit_Word_Untracked(

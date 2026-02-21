@@ -896,7 +896,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     );
 
   #if NEEDFUL_DOES_CORRUPTIONS
-    assert(not param or Ensure_Readable(param));  // nullptr means toss result
+    assert(not param or Readable_Cell(param));  // nullptr means toss result
   #endif
 
     Reset_Stepper_Erase_Out(SUBLEVEL);

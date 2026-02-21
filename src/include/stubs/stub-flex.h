@@ -109,8 +109,6 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
 // Using token pasting macros achieves some brevity, but also helps to avoid
 // mixups with FLEX_INFO_XXX!
 //
-// 1. Flex flags are managed distinctly from conceptual immutability of their
-//    data, and so we we cast away constness.
 
 #define Get_Flex_Flag(f,name) \
     ((known(Flex*, (f))->header.bits & FLEX_FLAG_##name) != 0)
@@ -119,10 +117,10 @@ INLINE Stub* Set_Stub_Unreadable(Stub* s) {
     ((known(Flex*, (f))->header.bits & FLEX_FLAG_##name) == 0)
 
 #define Set_Flex_Flag(f,name) \
-    (m_cast(Flex*, known(Flex*, (f)))->header.bits |= FLEX_FLAG_##name)
+    (known(Flex*, (f))->header.bits |= FLEX_FLAG_##name)
 
 #define Clear_Flex_Flag(f,name) \
-    (m_cast(Flex*, known(Flex*, (f)))->header.bits &= (~ FLEX_FLAG_##name))
+    (known(Flex*, (f))->header.bits &= (~ FLEX_FLAG_##name))
 
 
 //=//// FLEX "INFO" BITS (or INODE) ///////////////////////////////////////=//

@@ -51,7 +51,7 @@
 
 
 INLINE bool Is_Cell_Pairlike(const Cell* v) {
-    // called by core code, sacrifice Ensure_Readable() checks
+    // called by core code, sacrifice Readable_Cell() checks
     if (Unchecked_Heart_Of(v) == TYPE_PAIR)
         return true;
     if (not Any_Sequence_Type(Unchecked_Heart_Of(v)))

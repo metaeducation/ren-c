@@ -51,7 +51,7 @@
         FLAG_SIGIL(sigil))
 
 #define Unlifted_Cell_Has_Sigil(sigil,cell) \
-    Unchecked_Unlifted_Cell_Has_Sigil((sigil), Ensure_Readable(cell))
+    Unchecked_Unlifted_Cell_Has_Sigil((sigil), Readable_Cell(cell))
 
 #define Any_Plain(v) \
     Unlifted_Cell_Has_Sigil(SIGIL_0, Known_Stable(v))

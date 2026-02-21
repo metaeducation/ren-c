@@ -386,12 +386,12 @@ for-each-datatype 't [
 
     let proper-name: propercase-of t.antiname
 
-    ; Note: Ensure_Readable() not defined yet at this point, so defined as
+    ; Note: Readable_Cell() not defined yet at this point, so defined as
     ; a macro vs. an inline function.  Revisit.
     ;
     e-types/emit [t proper-name --[
         #define Is_$<Proper-Name>(v) \
-            (LIFT_BYTE(Ensure_Readable($<Want>(v))) == LIFTBYTE_$<T.ANTINAME>)
+            (LIFT_BYTE(Readable_Cell($<Want>(v))) == LIFTBYTE_$<T.ANTINAME>)
 
         #define Is_Lifted_$<Proper-Name>(v) \
             Cell_Has_Lift_Heart_No_Sigil(Known_Stable(v), \
@@ -413,7 +413,7 @@ for-each-datatype 't [
     ;
     e-types/emit [t proper-name --[
         #define Is_Possibly_Unstable_Value_$<Proper-Name>(v) \
-            (LIFT_BYTE(Ensure_Readable(Possibly_Unstable(v))) == LIFTBYTE_$<T.ANTINAME>)
+            (LIFT_BYTE(Readable_Cell(Possibly_Unstable(v))) == LIFTBYTE_$<T.ANTINAME>)
     ]--]
 ]
 

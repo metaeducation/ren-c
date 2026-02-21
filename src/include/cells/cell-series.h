@@ -36,7 +36,7 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
     //
     //     SERIES_INDEX_UNBOUNDED(v) = xxx;  // ensures v is ANY-SERIES?
     //
-    // Avoids Ensure_Readable(), because it's assumed that it was done in the
+    // Avoids Readable_Cell(), because it's assumed that it was done in the
     // type checking to ensure Series_Index() applied.  (This is called often.)
     //
     INLINE Index SERIES_INDEX_UNBOUNDED(const Cell* c) {
