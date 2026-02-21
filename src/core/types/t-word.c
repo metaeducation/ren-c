@@ -122,7 +122,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
             break;
     }
     then {
-        KIND_BYTE(arg) = heart;
+        Tweak_Cell_Type(arg, heart);
         return COPY_TO_OUT(arg);
     }
 

@@ -170,7 +170,7 @@ INLINE Result(Element*) Coerce_To_Quasiform(Element* v) {
     Option(Heart) heart = Heart_Of(v);
 
     if (not Any_Isotopic_Type(heart)) {  // Note: all words have quasiforms [1]
-        LIFT_BYTE(v) = NOQUOTE_63;
+        Clear_Cell_Quotes_And_Quasi(v);
         return fail (Error_Non_Isotopic_Type_Raw(v));
     }
 

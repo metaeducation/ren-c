@@ -115,10 +115,10 @@ INLINE Option(VarList*) Misc_Phase_Adjunct_Core(Phase* a) {
 // For the moment that is done with the Misc_Varlist_Adjunct() field instead.
 //
 
-#define Shield_Rootvar_If_Debug(rootvar) \
+#define Shield_Rootvar_If_Tracking(rootvar) \
     Track_Shield_Cell(rootvar)
 
-#define Unshield_Rootvar_If_Debug(rootvar) \
+#define Unshield_Rootvar_If_Tracking(rootvar) \
     Track_Unshield_Cell(rootvar)
 
 INLINE Element* Rootvar_Of_Varlist(VarList* c)  // mutable archetype access
@@ -163,7 +163,7 @@ INLINE void Tweak_Frame_Coupling(Cell* c, Option(VarList*) coupling) {
 }
 
 
-INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
+INLINE Element* Tweak_Non_Frame_Varlist_Rootvar_Untracked(
     Array* varlist,
     Heart heart
 ){
@@ -171,18 +171,19 @@ INLINE void Tweak_Non_Frame_Varlist_Rootvar_Untracked(
     Sink(Element) rootvar = Array_Head(varlist);
     Reset_Cell_Header_Noquote(
         rootvar,
-        FLAG_HEART(heart)
+        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // varlist
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // coupling only on frames
     );
     CELL_CONTEXT_VARLIST(rootvar) = varlist;
     CELL_FRAME_PAYLOAD_2_COUPLING(rootvar) = nullptr;  // not a frame
     CELL_FRAME_EXTRA_LENS_OR_LABEL(rootvar) = nullptr;  // not a frame
-    Shield_Rootvar_If_Debug(rootvar);
+    Shield_Rootvar_If_Tracking(rootvar);
+    return rootvar;
 }
 
 #define Tweak_Non_Frame_Varlist_Rootvar(heart,varlist) \
-    Tweak_Non_Frame_Varlist_Rootvar_Untracked((heart), (varlist))
+    TRACK(Tweak_Non_Frame_Varlist_Rootvar_Untracked((heart), (varlist)))
 
 
 //=//// CONTEXT KEYLISTS //////////////////////////////////////////////////=//
@@ -280,7 +281,7 @@ MUTABLE_IF_C(Stable*, INLINE) Stable_Slot_Hack(
 ){
     CONSTABLE(Value*) s = u_cast(Value*, slot);
     assert(LIFT_BYTE(s) != BEDROCK_255);
-    if (LIFT_BYTE(s) > MAX_LIFTBYTE_STABLE)
+    if (LIFT_BYTE(s) > MAX_LIFT_STABLE)
         panic ("Stable_Slot_Hack() called on non-Stable slot");
     return As_Stable(s);
 }

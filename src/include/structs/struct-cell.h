@@ -276,32 +276,40 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
     #define QUASIFORM_64          64
 #endif
 
-#define MAX_LIFTBYTE_ANTIFORM  LIFTBYTE_PACK
+#define MAX_LIFT_ANTIFORM  LIFTBYTE_PACK
 #define LIFTBYTE_PACK  254
 #define LIFTBYTE_VOID  253
 #define LIFTBYTE_ACTION 252
 #define LIFTBYTE_TRASH 251
 #define LIFTBYTE_FAILURE 250
-#define MAX_LIFTBYTE_STABLE  LIFTBYTE_DATATYPE
+#define MAX_LIFT_STABLE  LIFTBYTE_DATATYPE
 #define LIFTBYTE_DATATYPE 249
 #define LIFTBYTE_SPLICE 248
 #define LIFTBYTE_LOGIC 247
-#define MIN_LIFTBYTE_ANTIFORM  LIFTBYTE_LOGIC
+#define MIN_LIFT_ANTIFORM  LIFTBYTE_LOGIC
+
+#define MAX_LIFT_NOQUOTE_QUASI_OK 64
+#define MAX_LIFT_NOQUOTE_NOQUASI 63
 
 #define NOQUOTE_63              63
 #define NONQUASI_BIT            1
 // see above for QUASIFORM_64
 #define ONEQUOTE_NONQUASI_65    65  // non-quasiquoted state of 1 quote
 
-#define MAX_QUOTE_DEPTH     126         // highest legal quoting level
+#define MAX_QUOTE_DEPTH_63     63         // highest legal quoting level
 #define Quote_Shift(n)      ((n) << 1)  // help find manipulation sites
 
 #define FLAG_LIFT_BYTE(byte)  FLAG_THIRD_BYTE(byte)
 
 #define CELL_MASK_LIFT  FLAG_LIFT_BYTE(255)
 
+#define CELL_MASK_LIFTED_OR_ANTIFORM_OR_DUAL \
+    FLAG_LIFT_BYTE(128 + 64)  // the 2 high bits set
+
 #define CELL_MASK_HEART_AND_SIGIL_AND_LIFT \
     (CELL_MASK_HEART_AND_SIGIL | CELL_MASK_LIFT)
+
+#define As_Lift(byte)  i_cast(LiftByte, (byte))
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//

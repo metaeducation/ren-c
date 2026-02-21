@@ -836,7 +836,6 @@ IMPLEMENT_GENERIC(TO, Any_List)
         if (not Is_Word(item))
             return fail ("TO ANY-WORD? needs list with one word in it");
         Copy_Cell(OUT, item);
-        KIND_BYTE(OUT) = to;
         return OUT;
     }
 
@@ -918,7 +917,7 @@ Result(Element*) Alias_Any_List_As(
 ){
     if (Any_List_Type(as)) {
         Copy_Cell(out, list);
-        KIND_BYTE(out) = as;
+        Tweak_Cell_Type(out, as);
         return out;
     }
 
@@ -1305,10 +1304,10 @@ DECLARE_NATIVE(FILE_OF)
 {
     INCLUDE_PARAMS_OF_FILE_OF;
 
-    Element* elem = ARG(VALUE);
-    LIFT_BYTE(elem) = NOQUOTE_63;  // allow line-of and file-of on quoted/quasi
+    Element* v = ARG(VALUE);
+    Clear_Cell_Quotes_And_Quasi(v);  // allow file-of on quoted/quasi
 
-    return Dispatch_Generic(FILE_OF, elem, LEVEL);
+    return Dispatch_Generic(FILE_OF, v, LEVEL);
 }
 
 IMPLEMENT_GENERIC(FILE_OF, Any_Element)  // generic fallthrough returns error
@@ -1333,10 +1332,10 @@ DECLARE_NATIVE(LINE_OF)
 {
     INCLUDE_PARAMS_OF_LINE_OF;
 
-    Element* elem = ARG(VALUE);
-    LIFT_BYTE(elem) = NOQUOTE_63;  // allow line-of and file-of on quoted/quasi
+    Element* v = ARG(VALUE);
+    Clear_Cell_Quotes_And_Quasi(v);  // allow line-of on quoted/quasi
 
-    return Dispatch_Generic(FILE_OF, elem, LEVEL);
+    return Dispatch_Generic(FILE_OF, v, LEVEL);
 }
 
 IMPLEMENT_GENERIC(LINE_OF, Any_Element)  // generic fallthrough returns error
@@ -1698,8 +1697,8 @@ DECLARE_NATIVE(GLOM)
     if (Is_Quoted(one) and Is_Quoted(two)) {  // both quoted, make block
         Source* a = Make_Source_Managed(2);
         Set_Flex_Len(a, 2);
-        Unquote_Cell(Copy_Cell(Array_Head(a), one));
-        Unquote_Cell(Copy_Cell(Array_At(a, 1), two));
+        Unquote_Quoted_Cell(Copy_Cell(Array_Head(a), one));
+        Unquote_Quoted_Cell(Copy_Cell(Array_At(a, 1), two));
         Init_Block(OUT, a);
         goto return_out;
     }
@@ -1712,7 +1711,7 @@ DECLARE_NATIVE(GLOM)
         require (
           Sink(Element) cell = Alloc_Tail_Array(a)
         );
-        Unquote_Cell(Copy_Cell(cell, two));
+        Unquote_Quoted_Cell(Copy_Cell(cell, two));
         Copy_Cell(OUT, one);
         goto return_out;
     }
@@ -1720,7 +1719,7 @@ DECLARE_NATIVE(GLOM)
 } handle_one_as_quoted_and_two_as_block: {
 
     if (Is_Quoted(one) and Is_Block(two)) {
-        Unquote_Cell(one);
+        Unquote_Quoted_Cell(one);
         require (
           Modify_List(
             two, ST_MODIFY_INSERT, one, UNLIMITED, not AM_LINE, UNLIMITED, 1
@@ -1740,7 +1739,7 @@ DECLARE_NATIVE(GLOM)
     if (Array_Len(a1) > Array_Len(a2)) {
         Copy_Cell(OUT, one);
         SERIES_INDEX_UNBOUNDED(one) = Array_Len(a1);
-        Stable* splice = Splicify(Stable_LOCAL(ITEMS2));
+        Stable* splice = Spread_Cell(Stable_LOCAL(ITEMS2));
         require (
           Modify_List(
             one, ST_MODIFY_INSERT, splice, UNLIMITED, not AM_LINE, UNLIMITED, 1
@@ -1753,7 +1752,7 @@ DECLARE_NATIVE(GLOM)
  handle_two_as_bigger: {
 
     Copy_Cell(OUT, two);
-    Stable* splice = Splicify(Stable_LOCAL(ITEMS1));
+    Stable* splice = Spread_Cell(Stable_LOCAL(ITEMS1));
     require (
       Modify_List(
         two, ST_MODIFY_INSERT, splice, UNLIMITED, not AM_LINE, UNLIMITED, 1

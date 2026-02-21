@@ -133,7 +133,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(heart)
+        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // series stub needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );

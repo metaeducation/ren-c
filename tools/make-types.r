@@ -271,22 +271,22 @@ e-types/emit [--[
     /*
      * SINGLE TYPE CHECK MACROS, e.g. Is_Block() or Is_Tag()
      *
-     * Originally these macros looked like:
+     * Modern Ren-C carves out special values of the LIFT_BYTE for unlifted
+     * values--trading off some abilities to have higher quoting levels to
+     * get a very fast answer to Type_Of().  This means these macros can be
+     * very straightforward, and check a single byte as Rebol2/Red do:
+     *
+     *     #define Is_Text(v) \
+     *         (Type_Of(v) == TYPE_TEXT)
+     *
+     * Before the modern tricks, being recognized as unlifted values meant
+     * you had to check *two* bytes...the LIFT_BYTE and the KIND_BYTE, and
+     * mask to check they were both what was desired:
      *
      *     #define Is_Text(cell) \
-     *         (Type_Of(cell) == TYPE_TEXT)
+     *         Cell_Has_Lift_Heart_No_Sigil((cell), NOQUOTE_0, TYPE_TEXT)
      *
-     * So you'd calculate TYPE_QUOTED, TYPE_QUASI, or TYPE_ANTIFORM from the
-     * LIFT_BYTE(), and those would be filtered out and not match.
-     *
-     * This was changed to instead mask out the heart byte and lift byte
-     * from the header, and compare to the precise mask of NOQUOTE_63 with
-     * the specific heart byte:
-     *
-     *     #define Is_Text(cell) \
-     *         Cell_Has_Lift_Heart_No_Sigil((cell), NOQUOTE_63, TYPE_TEXT)
-     *
-     * This avoids the branching in Type_Of(), so it's a slight bit faster.
+     * It's worth it for the system to be designed to not need to do that.
      */
 ]--]
 
@@ -294,18 +294,16 @@ for-each-datatype 't [
     if t.cellmask [
         e-types/emit [t --[
             #define CELL_MASK_${T.NAME} \
-                (FLAG_HEART(TYPE_${T.NAME}) | $<MOLD T.CELLMASK>)
+                (FLAG_HEART(TYPE_${T.NAME}) | FLAG_LIFT_BYTE(As_Lift(TYPE_${T.NAME})) | $<MOLD T.CELLMASK>)
         ]--]
     ]
 
     e-types/emit [propercase-of t --[
         #define Is_${propercase-of T.name}(v) \
-            Cell_Has_Lift_Heart_No_Sigil(Known_Stable(v), \
-                NOQUOTE_63, TYPE_$<T.NAME>)
+            (Type_Of(v) == TYPE_$<T.NAME>)
 
         #define Is_Possibly_Unstable_Value_${propercase-of T.name}(v) \
-            Cell_Has_Lift_Heart_No_Sigil(Possibly_Unstable(v), \
-                NOQUOTE_63, TYPE_$<T.NAME>)
+            (Type_Of_Possibly_Unstable(v) == TYPE_$<T.NAME>)
     ]--]
 ]
 
@@ -384,7 +382,7 @@ for-each [ts-name types] sparse-typesets [
 for-each-datatype 't [
     if not t.antiname [continue]  ; no special name for antiform form
 
-    let need: either yes? t.unstable ["Possibly_Unstable"] ["Known_Stable"]
+    let want: either yes? t.unstable ["Possibly_Unstable"] ["Known_Stable"]
 
     let proper-name: propercase-of t.antiname
 
@@ -393,7 +391,7 @@ for-each-datatype 't [
     ;
     e-types/emit [t proper-name --[
         #define Is_$<Proper-Name>(v) \
-            (LIFT_BYTE(Ensure_Readable(Possibly_Unstable(v))) == LIFTBYTE_$<T.ANTINAME>)
+            (LIFT_BYTE(Ensure_Readable($<Want>(v))) == LIFTBYTE_$<T.ANTINAME>)
 
         #define Is_Lifted_$<Proper-Name>(v) \
             Cell_Has_Lift_Heart_No_Sigil(Known_Stable(v), \

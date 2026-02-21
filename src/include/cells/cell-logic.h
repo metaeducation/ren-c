@@ -382,7 +382,7 @@ INLINE Value* Force_Cell_Heavy(Value* v) {
 INLINE bool Is_Boolean(const Stable* v) {
     Assert_Cell_Readable(v);
 
-    if (LIFT_BYTE(v) != NOQUOTE_63 or Heart_Of(v) != TYPE_WORD)
+    if (LIFT_BYTE(v) != As_Lift(TYPE_WORD))
         return false;
 
     Option(SymId) id = Word_Id(v);
@@ -409,7 +409,7 @@ INLINE bool Cell_True(const Stable* v) {  // corresponds to TRUE?
 
 INLINE bool Is_OnOff(const Stable* v) {
     Assert_Cell_Readable(v);
-    if (LIFT_BYTE(v) != NOQUOTE_63 or Heart_Of(v) != TYPE_WORD)
+    if (LIFT_BYTE(v) != As_Lift(TYPE_WORD))
         return false;
     Option(SymId) id = Word_Id(v);
     return id == SYM_ON or id == SYM_OFF;
@@ -435,7 +435,7 @@ INLINE bool Cell_On(const Stable* v) {  // corresponds to ON?
 
 INLINE bool Is_YesNo(const Stable* v) {
     Assert_Cell_Readable(v);
-    if (LIFT_BYTE(v) != NOQUOTE_63 or Heart_Of(v) != TYPE_WORD)
+    if (LIFT_BYTE(v) != As_Lift(TYPE_WORD))
         return false;
     Option(SymId) id = Word_Id(v);
     return id == SYM_YES or id == SYM_NO;

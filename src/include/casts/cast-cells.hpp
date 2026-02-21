@@ -136,7 +136,7 @@ struct CastHook<const F*, const Stable*> {  // both must be const [B]
 
     const Cell* c = u_cast(const Cell*, p);
     Assert_Cell_Readable(c);
-    assert(LIFT_BYTE_RAW(c) <= MAX_LIFTBYTE_STABLE);
+    assert(LIFT_BYTE_RAW(c) <= MAX_LIFT_STABLE);
   }
 };
 
@@ -153,7 +153,7 @@ struct CastHook<const F*, const Element*> {  // both must be const [B]
 
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
-        assert(LIFT_BYTE_RAW(c) < MIN_LIFTBYTE_ANTIFORM);
+        assert(LIFT_BYTE_RAW(c) < MIN_LIFT_ANTIFORM);
     }
 };
 
@@ -173,6 +173,6 @@ struct CastHook<const F*, const Dual*> {  // both must be const [B]
 
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
-        assert(LIFT_BYTE_RAW(c) < MIN_LIFTBYTE_ANTIFORM);
+        assert(LIFT_BYTE_RAW(c) < MIN_LIFT_ANTIFORM);
     }
 };

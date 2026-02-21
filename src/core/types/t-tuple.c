@@ -351,7 +351,7 @@ Result(Element*) Alias_Any_Sequence_As(
         }
 
         Trust_Const(Copy_Cell(out, seq));
-        KIND_BYTE(out) = as;
+        Tweak_Cell_Type(out, as);
         possibly(Get_Cell_Flag(out, LEADING_BLANK));
         return out;
     }
@@ -384,11 +384,11 @@ Result(Element*) Alias_Any_Sequence_As(
             if (Get_Cell_Flag(seq, LEADING_BLANK)) {
                 Init_Blank(Array_At(a, 0));
                 Copy_Cell(Array_At(a, 1), seq);
-                KIND_BYTE(Array_At(a, 1)) = TYPE_WORD;
+                Tweak_Cell_Type(Array_At(a, 1), TYPE_WORD);
             }
             else {
                 Copy_Cell(Array_At(a, 0), seq);
-                KIND_BYTE(Array_At(a, 0)) = TYPE_WORD;
+                Tweak_Cell_Type(Array_At(a, 0), TYPE_WORD);
                 Init_Blank(Array_At(a, 1));
             }
             Freeze_Source_Shallow(a);
@@ -400,7 +400,7 @@ Result(Element*) Alias_Any_Sequence_As(
             if (MIRROR_BYTE(a)) {  // .[a] or (xxx): compression
                 Source* two = Make_Source_Managed(2);
                 Set_Flex_Len(two, 2);
-                Cell* tweak;
+                Element* tweak;
                 if (Get_Cell_Flag(seq, LEADING_BLANK)) {
                     Init_Blank(Array_At(two, 0));
                     tweak = Copy_Cell(Array_At(two, 1), seq);
@@ -409,14 +409,14 @@ Result(Element*) Alias_Any_Sequence_As(
                     tweak = Copy_Cell(Array_At(two, 0), seq);
                     Init_Blank(Array_At(two, 1));
                 }
-                KIND_BYTE(tweak) = MIRROR_BYTE(a);
+                Tweak_Cell_Type(tweak, u_cast(HeartEnum, MIRROR_BYTE(a)));
                 Clear_Cell_Flag(tweak, LEADING_BLANK);
                 Init_Any_List(out, as, two);
             }
             else {
                 assert(Is_Source_Frozen_Shallow(a));
                 Copy_Cell(out, seq);
-                KIND_BYTE(out) = TYPE_BLOCK;
+                Tweak_Cell_Type(out, TYPE_BLOCK);
                 Clear_Cell_Flag(out, LEADING_BLANK);  // don't want stray flag
             }
             break; }
@@ -576,7 +576,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
         if (one_or_two == 1)
             return Init_Space(OUT);
         Copy_Cell(OUT, seq);
-        KIND_BYTE(OUT) = TYPE_WORD;
+        Tweak_Cell_Type(As_Element(OUT), TYPE_WORD);
         return OUT;
     }
 
@@ -590,7 +590,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 
     if (Is_Cell_Listlike(seq)) {  // alias as BLOCK! and dispatch to list pick
         possibly(Is_Cell_Pairlike(seq));  // why we tested pairlike first
-        KIND_BYTE(seq) = TYPE_BLOCK;
+        Tweak_Cell_Type(seq, TYPE_BLOCK);
         return GENERIC_CFUNC(RANDOM_PICK, Any_List)(LEVEL);
     }
 

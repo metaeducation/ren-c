@@ -222,7 +222,7 @@ const Stable* Datatype_From_Type(Type type)
 //
 const Stable* Datatype_Of_Possibly_Unstable(const Value* v)
 {
-    Option(Type) type = Type_Of_Maybe_Unstable(v);
+    Option(Type) type = Type_Of_Possibly_Unstable(v);
     if (type)
         return Datatype_From_Type(unwrap type);
 
@@ -509,7 +509,7 @@ Result(Element*) Unsingleheart_Sequence(Element* seq)
 {
     assert(Any_Sequence_Type(Heart_Of(seq)));
     assert(not Sigil_Of(seq));
-    assert(LIFT_BYTE(seq) == NOQUOTE_63);
+    assert(LIFT_BYTE(seq) <= MAX_LIFT_NOQUOTE_NOQUASI);
 
     if (not Sequence_Has_Pointer(seq))
         goto report_error;  // compressed bytes don't encode blanks
@@ -538,14 +538,14 @@ Result(Element*) Unsingleheart_Sequence(Element* seq)
 
     const Flex* f = cast(Flex*, payload1);
     if (Is_Stub_Symbol(f)) {
-        KIND_BYTE(seq) = TYPE_WORD;
+        Tweak_Cell_Type(seq, TYPE_WORD);
         Clear_Cell_Flag(seq, LEADING_BLANK);  // !!! necessary?
         return seq;
     }
 
     Option(Heart) mirror = Mirror_Of(cast(Source*, f));
     if (mirror) {  // no length 2 sequence arrays unless mirror
-        KIND_BYTE(seq) = unwrap mirror;
+        Tweak_Cell_Type(seq, unwrap mirror);
         Clear_Cell_Flag(seq, LEADING_BLANK);  // !!! necessary
         return seq;
     }

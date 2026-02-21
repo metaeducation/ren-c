@@ -90,7 +90,7 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
             if (ARG(QUOTED)) {
                 if (Is_Antiform(v) or Quotes_Of(cast(Element*, v)) == 0)
                     return LOGIC_OUT(false);
-                Noquotify(cast(Element*, v));
+                Noquotify_Cell(cast(Element*, v));
             }
 
             type = Type_Of(v);
@@ -180,7 +180,7 @@ DECLARE_NATIVE(UNSTABLE_TYPECHECKER_ARCHETYPE)
         return LOGIC_OUT(Is_Void(v));
     }
 
-    Option(Type) type = Type_Of_Maybe_Unstable(v);
+    Option(Type) type = Type_Of_Possibly_Unstable(v);
 
     return LOGIC_OUT(Builtin_Typeset_Check(typeset_byte, unwrap type));
 }
@@ -368,7 +368,7 @@ bool Predicate_Check_Spare_Uses_Scratch(
         TypesetByte typeset_byte = VAL_UINT8(
             Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
         );
-        Option(Type) type = Type_Of_Maybe_Unstable(SPARE);
+        Option(Type) type = Type_Of_Possibly_Unstable(SPARE);
         if (Builtin_Typeset_Check(typeset_byte, unwrap type))
             goto test_succeeded;
         goto test_failed;
@@ -461,7 +461,7 @@ bool Predicate_Check_Spare_Uses_Scratch(
     if (not arg)
         panic (Error_No_Arg_Typecheck(label));  // must take argument
 
-    Clear_Param_Shield_If_Debug(arg);
+    Clear_Param_Shield_If_Tracking(arg);
     Copy_Cell(arg, SPARE);  // do not decay [4]
 
     require (
@@ -670,12 +670,12 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
     Copy_Cell(SPARE, v);
     Element* scratch = Copy_Cell(SCRATCH, at);
 
-    if (LIFT_BYTE(scratch) != NOQUOTE_63) {
-        if (LIFT_BYTE(scratch) != LIFT_BYTE(SPARE))
+    if (LIFT_BYTE(scratch) > MAX_LIFT_NOQUOTE_NOQUASI) {
+        if (not Have_Matching_Lift_Levels(scratch, As_Stable(SPARE)))
             goto test_failed;  // should be willing to accept subset quotes
 
-        LIFT_BYTE(scratch) = NOQUOTE_63;
-        LIFT_BYTE(SPARE) = NOQUOTE_63;
+        Clear_Cell_Quotes_And_Quasi(scratch);
+        Clear_Cell_Quotes_And_Quasi(As_Element(SPARE));
     }
 
     Option(Sigil) scratch_sigil = Cell_Underlying_Sigil(scratch);
@@ -684,8 +684,9 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         if (scratch_sigil != v_sigil)
             goto test_failed;
 
-        SPARE->header.bits &= (~ CELL_MASK_SIGIL);  // don't care if antiform
-        SCRATCH->header.bits &= (~ CELL_MASK_SIGIL);  // don't care if antiform
+        Clear_Cell_Sigil(scratch);
+        if (not Is_Antiform(SPARE))
+            Clear_Cell_Sigil(As_Element(SPARE));
         scratch_sigil = none;
         v_sigil = none;
     }
@@ -697,7 +698,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         goto handle_after_any_quoting_adjustments;
     }
 
-    if (LIFT_BYTE(SPARE) != NOQUOTE_63 or v_sigil)
+    if (LIFT_BYTE(SPARE) > MAX_LIFT_NOQUOTE_NOQUASI or v_sigil)
         goto test_failed;  // 'foo: or @foo: won't match word!:
 
   check_destructured_sequence: {
@@ -778,7 +779,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         goto test_failed;
 
       case TYPE_DATATYPE: {
-        Option(Type) t = Type_Of_Maybe_Unstable(SPARE);
+        Option(Type) t = Type_Of_Possibly_Unstable(SPARE);
         if (t) {  // builtin type
             if (Datatype_Type(stable_test) == (unwrap t))
                 goto test_succeeded;
@@ -924,7 +925,7 @@ bool Typecheck_Use_Toplevel(
     const TypesetByte* optimized_tail
         = optimized + sizeof(spec->misc.at_least_4);
 
-    Option(Type) type = Type_Of_Maybe_Unstable(v);
+    Option(Type) type = Type_Of_Possibly_Unstable(v);
     for (; optimized != optimized_tail; ++optimized) {
         if (*optimized == 0)
             break;  // premature end of list
@@ -958,7 +959,7 @@ bool Typecheck_Use_Toplevel(
     else switch (type) {
       case TYPE_DATATYPE: {
         Option(Type) t_test = Datatype_Type(As_Stable(tests));
-        Option(Type) t = Type_Of_Maybe_Unstable(v);
+        Option(Type) t = Type_Of_Possibly_Unstable(v);
         if (t_test)
             return t == unwrap t_test;  // builtin type, must match
         if (t)

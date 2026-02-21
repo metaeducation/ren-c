@@ -60,7 +60,8 @@ INLINE Element* Init_Decimal_Or_Percent_Untracked(
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(heart) | CELL_MASK_NO_MARKING
+        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+            | CELL_MASK_NO_MARKING
     );
     out->payload.dec = dec;
     return out;

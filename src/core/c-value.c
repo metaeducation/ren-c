@@ -92,17 +92,17 @@ void Probe_Cell_Print_Helper(
         return;
     }
 
-    if (Is_Possibly_Unstable_Value_Blank(v)) {
+    if (Type_Of_Core(v) == TYPE_BLANK) {
         require (
           Append_Ascii(mo->strand, "\\\\blank\\\\")
         );
         return;
     }
 
-    if (LIFT_BYTE(v) >= MIN_LIFTBYTE_ANTIFORM) {
+    if (LIFT_BYTE(v) >= MIN_LIFT_ANTIFORM) {
         DECLARE_ELEMENT (reified);
         Copy_Cell_Core(reified, v, CELL_MASK_ALL);
-        LIFT_BYTE(reified) = NOQUOTE_63;
+        Normalize_Cell(reified);
         if (LIFT_BYTE(v) == BEDROCK_255) {
             require (
               Append_Ascii(mo->strand, "\\\\")

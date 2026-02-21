@@ -313,7 +313,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break;
 
       case TYPE_VARARGS: {
-        assert((v->header.bits & CELL_MASK_VARARGS) == CELL_MASK_VARARGS);
         Phase* phase = Extract_Cell_Varargs_Phase(v);
         if (phase)  // null if came from MAKE VARARGS!
             assert(Is_Base_Marked(phase));
@@ -331,7 +330,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         if (
             heart == HEART_FENCE_SIGNIFYING_DATATYPE
-            and LIFT_BYTE(v) == LIFTBYTE_DATATYPE
+            and LIFT_BYTE(v) == As_Lift(TYPE_DATATYPE)
         ){
             const Stable* value = cast(Stable*, v);
             assert(

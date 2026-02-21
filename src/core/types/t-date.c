@@ -64,8 +64,8 @@ REBINT CT_Date(const Element* a_in, const Cell* b_in, bool strict)
 
     DECLARE_ELEMENT (a);
     DECLARE_ELEMENT (b);
-    Copy_Dequoted_Cell(a, a_in);
-    Copy_Dequoted_Cell(b, b_in);
+    Copy_Dequote_Dequasi_Cell(a, a_in);
+    Copy_Dequote_Dequasi_Cell(b, b_in);
 
     Adjust_Date_UTC(a);  // gets 00:00:00+0:00 filled in if no time info
     Adjust_Date_UTC(b);

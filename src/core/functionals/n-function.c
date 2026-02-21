@@ -547,7 +547,7 @@ DECLARE_NATIVE(PROCEDURE)
         assert(Get_Parameter_Flag(param, TRASH_DEFINITELY_OK));
         assert(Get_Parameter_Flag(param, AUTO_TRASH));
 
-        Shield_Param_If_Debug(param);
+        Shield_Param_If_Tracking(param);
     }
     else if (Not_Parameter_Flag(param, AUTO_TRASH))
         panic ("If PROCEDURE has RETURN:, it must be [return: ~]");
@@ -681,7 +681,7 @@ Result(bool) Typecheck_Coerce_Return_Use_Toplevel(
         Heart_Of(param) == TYPE_PARAMETER
         and (
             LIFT_BYTE(param) == BEDROCK_255  // "holes" in ParamLists
-            or LIFT_BYTE(param) == NOQUOTE_63  // plain PARAMETER!
+            or LIFT_BYTE(param) == As_Lift(TYPE_PARAMETER)  // plain PARAMETER!
         )
     );
 

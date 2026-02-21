@@ -471,8 +471,8 @@ Option(Phase*) Reuse_Sublevel_To_Determine_Left_Literal_Infix_Core(
         }
 
         if (  // v-- OUT is what used to be on left
-            Type_Of_Unchecked(OUT) != TYPE_WORD
-            and Type_Of_Unchecked(OUT) != TYPE_PATH
+            Type_Of_Unchecked(As_Element(OUT)) != TYPE_WORD
+            and Type_Of_Unchecked(As_Element(OUT)) != TYPE_PATH
         ){
             continue;
         }
@@ -745,7 +745,7 @@ Bounce Stepper_Executor(Level* L)
 
     assert(Is_Cell_Erased(OUT));
 
-    if (LIFT_BYTE(CURRENT) == NOQUOTE_63) {
+    if (LIFT_BYTE(CURRENT) <= MAX_LIFT_NOQUOTE_NOQUASI) {
         Option(Sigil) sigil = Sigil_Of(CURRENT);
         switch (opt sigil) {
           case SIGIL_0:
@@ -772,9 +772,8 @@ Bounce Stepper_Executor(Level* L)
 
     // Quoted values drop one quote level.  Binding is left as-is.
 
-    Copy_Cell(OUT, CURRENT);
+    Unquote_Quoted_Cell(Copy_Cell(OUT, CURRENT));
 
-    LIFT_BYTE(OUT) -= Quote_Shift(1);
     STATE = ST_STEPPER_NONZERO_STATE;  // can't leave STATE_0
 
     goto lookahead;
@@ -1073,8 +1072,7 @@ Bounce Stepper_Executor(Level* L)
     //    == ~null~  ; anti
 
     Element* out = Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-    KIND_BYTE(out) = TYPE_BLOCK;
-    Quote_Cell(out);  // !!! was quoting, to avoid binding?
+    Tweak_Cell_Quoted_Type(out, TYPE_BLOCK);  // !!! quote to avoid binding?
 
     Element* spare = Init_Word(SPARE, CANON(PACK));
     dont(Quote_Cell(As_Element(SPARE)));  // want to run word

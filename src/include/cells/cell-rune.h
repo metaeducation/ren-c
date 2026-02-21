@@ -113,7 +113,7 @@ INLINE bool Is_Rune_And_Is_Char(const Stable* v) {
                 | CELL_FLAG_RUNE_SINGLE_CODEPOINT
         )) == (
             FLAG_HEART(TYPE_RUNE)
-                | FLAG_LIFT_BYTE(NOQUOTE_63)
+                | FLAG_LIFT_BYTE(As_Lift(TYPE_RUNE))
                 | CELL_FLAG_RUNE_SINGLE_CODEPOINT
         )
     );
@@ -168,7 +168,8 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
 
     Reset_Cell_Header_Noquote(  // include fast flags for space/char checks
         out,
-        FLAG_HEART(heart) | CELL_MASK_NO_MARKING
+        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+            | CELL_MASK_NO_MARKING
             | ((len == 1) ? CELL_FLAG_RUNE_SINGLE_CODEPOINT : 0)
             | ((len == 1) and (bp[0] == ' ') ? CELL_FLAG_RUNE_IS_SPACE : 0)
     );
@@ -240,7 +241,8 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(TYPE_RUNE) | CELL_MASK_NO_MARKING
+        FLAG_HEART(TYPE_RUNE) | FLAG_LIFT_BYTE(As_Lift(TYPE_RUNE))
+            | CELL_MASK_NO_MARKING
             | CELL_FLAG_RUNE_SINGLE_CODEPOINT
             | ((c == ' ') ? CELL_FLAG_RUNE_IS_SPACE : 0)
     );
@@ -333,7 +335,7 @@ INLINE bool Is_Cell_Space_With_Lift_Sigil(
 }
 
 #define Is_Space(v) /* renders as `_` */ \
-    Is_Cell_Space_With_Lift_Sigil(Known_Stable(v), NOQUOTE_63, SIGIL_0)
+    Is_Cell_Space_With_Lift_Sigil(Known_Stable(v), As_Lift(TYPE_RUNE), SIGIL_0)
 
 INLINE bool Is_Newline(Stable* v) {
     return Is_Rune(v) and ('\n' == opt Codepoint_Of_Rune_If_Single_Char(v));

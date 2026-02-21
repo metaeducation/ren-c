@@ -413,13 +413,15 @@ DECLARE_NATIVE(JOIN)
 
         if (item_heart == TYPE_GROUP) {
             SUBLEVEL->executor = &Just_Use_Out_Executor;
-            Copy_Cell_May_Bind(SCRATCH, item, Level_Binding(sub));
-            KIND_BYTE(SCRATCH) = TYPE_BLOCK;  // the-block is different
+            Element* scratch = Copy_Cell_May_Bind(
+                SCRATCH, item, Level_Binding(sub)
+            );
+            Tweak_Cell_Type(scratch, TYPE_BLOCK);
             Fetch_Next_In_Feed(sub->feed);
 
             SUBLEVEL->baseline.stack_base = TOP_INDEX;
             STATE = ST_JOIN_EVALUATING_THE_GROUP;
-            return CONTINUE(SPARE, cast(Element*, SCRATCH));
+            return CONTINUE(SPARE, scratch);
         }
 
         panic (item);
@@ -430,7 +432,7 @@ DECLARE_NATIVE(JOIN)
 
         Copy_Cell(PUSH(), item);
         Sync_Toplevel_Baseline_After_Pushes(sub);
-        Unquote_Cell(TOP_ELEMENT);
+        Unquote_Quoted_Cell(TOP_ELEMENT);
         Set_Cell_Flag(TOP, STACK_NOTE_MOLD);
 
         Mark_Join_Delimiter_Pending();

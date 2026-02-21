@@ -85,8 +85,8 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
         // system.standard.port is made with CONTEXT and not with MAKE PORT!
         //
         VarList* context = Copy_Varlist_Shallow_Managed(Cell_Varlist(arg));
-        Stable* rootvar = Rootvar_Of_Varlist(context);
-        KIND_BYTE(rootvar) = TYPE_PORT;
+        Element* rootvar = Rootvar_Of_Varlist(context);
+        Tweak_Cell_Type(rootvar, TYPE_PORT);
         return Init_Port(OUT, context);
     }
 

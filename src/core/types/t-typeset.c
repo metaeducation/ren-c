@@ -299,7 +299,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
   //    preferable to enforce words for some things?  That's not viable for
   //    type predicate actions, like ANY-ELEMENT?...)
 
-    if (LIFT_BYTE(item) != NOQUOTE_63) {  // [~word!~ 'word! ''~block!~]...
+    if (LIFT_BYTE(item) > MAX_LIFT_NOQUOTE_NOQUASI) {  // [~word!~ ''word!]...
         goto cant_optimize;  // no optimization strategy yet
     }
 
@@ -585,7 +585,7 @@ Element* Decorate_According_To_Parameter(
 //
 void Undecorate_Element(Element* e)
 {
-    Noquotify(e);
+    Noquotify_Cell(e);
     Clear_Cell_Sigil(e);
 
     if (not Any_Sequence(e))
@@ -812,7 +812,7 @@ DECLARE_NATIVE(DECORATION_OF)
     Element* element = ARG(VALUE);
 
     Option(Count) quotes = Quotes_Of(element);
-    Noquotify(element);
+    Noquotify_Cell(element);
 
     Option(Sigil) sigil = Sigil_Of(element);
     Clear_Cell_Sigil(element);

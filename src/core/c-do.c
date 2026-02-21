@@ -77,7 +77,7 @@ Result(None) Prep_Action_Level(
             break;
         }
 
-        Clear_Param_Shield_If_Debug(arg);
+        Clear_Param_Shield_If_Tracking(arg);
         Value* copied = Copy_Cell(arg, unwrap with);  // do not decay [1]
 
         if (Parameter_Class(param) != PARAMCLASS_META) {
@@ -304,7 +304,7 @@ bool Pushed_Continuation(
     }
 
     if (Is_Quoted_Type(type)) {  // not bound (use $tied to get a binding)
-        Unquote_Cell(Copy_Cell(out, branch));
+        Unquote_Quoted_Cell(Copy_Cell(out, branch));
         goto just_use_out;
     }
 

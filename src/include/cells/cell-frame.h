@@ -234,7 +234,7 @@ INLINE Element* Init_Frame_Unchecked_Untracked(
     Reset_Cell_Header_Noquote(
         out,
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART(TYPE_FRAME)
+            | FLAG_HEART(TYPE_FRAME) | FLAG_LIFT_BYTE(As_Lift(TYPE_FRAME))
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // first is phase
             | (coupling ? 0 : CELL_FLAG_DONT_MARK_PAYLOAD_2)
     );
@@ -317,7 +317,7 @@ INLINE Value* Activate_Frame_Core(Value* v) {
 
 INLINE Element* Deactivate_Action(Exact(Value*) v) {
     assert(Is_Action(v));
-    LIFT_BYTE(v) = NOQUOTE_63;
+    LIFT_BYTE(v) = As_Lift(TYPE_FRAME);
     return As_Element(v);
 }
 

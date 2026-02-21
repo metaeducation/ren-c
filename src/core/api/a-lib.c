@@ -1509,9 +1509,9 @@ RebolValue* API_rebEnrescue(
     assert(not Is_Light_Null(v));  // lift operations cannot produce NULL
 
     if (Cell_Has_Lift_Heart_No_Sigil(v, QUASIFORM_64, TYPE_ERROR))  // lifted
-        LIFT_BYTE(v) = NOQUOTE_63;  // plain error
+        LIFT_BYTE(v) = As_Lift(TYPE_ERROR);  // plain error
     else
-        assert(LIFT_BYTE(v) > NOQUOTE_63);
+        assert(LIFT_BYTE(v) > MAX_LIFT_NOQUOTE_NOQUASI);
 
     Set_Base_Root_Bit(v);
     return v;  // caller must rebRelease()
@@ -1546,7 +1546,7 @@ RebolValue* API_rebRescue2(
     Lift_Cell(v);
 
     if (Cell_Has_Lift_Heart_No_Sigil(v, QUASIFORM_64, TYPE_ERROR)) { // lifted
-        LIFT_BYTE(v) = NOQUOTE_63;  // plain error
+        LIFT_BYTE(v) = As_Lift(TYPE_ERROR);  // plain error
         return v;  // caller must rebRelease();
     }
 
@@ -2835,7 +2835,7 @@ RebolBaseInternal* API_rebINLINE(const RebolValue* v)
       const Stable* i = Ensure_Stable(v)
     );
 
-    if (not (Is_Block(i) or Is_Quoted(i) or Is_Space(i)))
+    if (not (Is_Block(i) or Is_Cell_Quoted(i) or Is_Space(i)))
         panic ("rebINLINE() requires argument to be a BLOCK!/QUOTED?/SPACE");
 
     require (

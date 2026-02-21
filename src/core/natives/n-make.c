@@ -67,7 +67,7 @@ DECLARE_NATIVE(MAKE)
 //
 Bounce Copy_Quoter_Executor(Level* level_)
 {
-    LIFT_BYTE_RAW(OUT) = STATE;
+    LIFT_BYTE(OUT) = STATE;
 
     return OUT;
 }
@@ -103,7 +103,7 @@ DECLARE_NATIVE(COPY)
     Element* elem = ARG(VALUE);
 
     LiftByte lift_byte = LIFT_BYTE(elem);
-    LIFT_BYTE(elem) = NOQUOTE_63;  // dispatch requires unquoted items
+    Clear_Cell_Quotes_And_Quasi(elem);  // dispatch requires unquoted items
 
     Option(Dispatcher*) dispatcher = Get_Generic_Dispatcher(
         &GENERIC_TABLE(COPY),
@@ -120,7 +120,7 @@ DECLARE_NATIVE(COPY)
         return COPY_TO_OUT(elem);
     }
 
-    if (lift_byte == NOQUOTE_63)  // don't have to requote/etc.
+    if (lift_byte <= MAX_LIFT_NOQUOTE_NOQUASI)  // don't need requote/quasi
         return Apply_Cfunc(unwrap dispatcher, LEVEL);
 
     Option(const Symbol*) label = Level_Label(level_);

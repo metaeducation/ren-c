@@ -491,13 +491,13 @@ INLINE const Slot* Known_Unspecialized(const Param* p) {
 // them, this is something to consider.
 //
 
-#define Shield_Param_If_Debug(param) \
+#define Shield_Param_If_Tracking(param) \
     Track_Shield_Cell(known(Param*, (param)));
 
 #define Unshield_Param_If_Debug(param) \
     Track_Unshield_Cell(known(Param*, (param)));
 
-#define Clear_Param_Shield_If_Debug(param) \
+#define Clear_Param_Shield_If_Tracking(param) \
     Track_Clear_Cell_Shield(known(Param*, (param)));
 
 
@@ -529,24 +529,24 @@ INLINE const Slot* Known_Unspecialized(const Param* p) {
 
 INLINE Element* Init_Unconstrained_Parameter_Untracked(
     Init(Element) out,
-    Flags flags
+    Flags param_flags
 ){
-    ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&flags));
+    ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&param_flags));
     assert(pclass != PARAMCLASS_0);  // must have class
-    if (flags & PARAMETER_FLAG_REFINEMENT) {
-        assert(flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
+    if (param_flags & PARAMETER_FLAG_REFINEMENT) {
+        assert(param_flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
     }
     UNUSED(pclass);
 
     Reset_Cell_Header_Noquote(
         out,
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART(TYPE_PARAMETER)
+            | FLAG_HEART(TYPE_PARAMETER) | FLAG_LIFT_BYTE(As_Lift(TYPE_PARAMETER))
             | CELL_FLAG_DONT_MARK_PAYLOAD_1  // spec (starting off null here)
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // flags, never marked
     );
     CELL_PARAMETER_PAYLOAD_1_SPEC(out) = nullptr;
-    CELL_PARAMETER_PAYLOAD_2_FLAGS(out) = flags;
+    CELL_PARAMETER_PAYLOAD_2_FLAGS(out) = param_flags;
     CELL_PARAMETER_EXTRA_STRAND(out) = nullptr;
 
     return out;
@@ -568,7 +568,7 @@ INLINE bool Is_Parameter_Divergent(const Cell* v) {
 }
 
 INLINE Param* Unspecialize_Parameter(Cell* p) {
-    assert(Heart_Of(p) == TYPE_PARAMETER and LIFT_BYTE(p) == NOQUOTE_63);
+    assert(LIFT_BYTE(p) == As_Lift(TYPE_PARAMETER));
     LIFT_BYTE(p) = BEDROCK_255;
     return u_cast(Param*, p);
 }
@@ -643,7 +643,7 @@ INLINE SymId Starred_Returner_Id(SymId id) {
 
 INLINE void Regularize_Parameter_Local(Param* param) {
     assert(Is_Cell_A_Bedrock_Hole(param));
-    LIFT_BYTE(param) = NOQUOTE_63;
+    Normalize_Cell(param);
 }
 
 INLINE const Element* Returnlike_Parameter_In_Paramlist(

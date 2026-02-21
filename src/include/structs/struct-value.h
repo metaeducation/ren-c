@@ -146,11 +146,11 @@ typedef Param Arg;  // !!! Args should be just Slot; review.
 // Some parts of the system want to be able to represent a value that could
 // be in a BEDROCK_255 state, but push it "in-band" of normal values.  This is
 // done by taking most values and putting them in lifted representation, and
-// then using the unlifted NOQUOTE_63 state to represent BEDROCK_255.
+// then using the unlifted states to represent BEDROCK_255.
 //
 // PACK!, for example, contains "dual values"...they are Element* (because
 // they have to be, to be in a List).  But the representational conception is
-// that the values are lifted unless they are signals in the NOQUOTE_63 state.)
+// that the values are lifted unless they are signals in the unlifted state.)
 //
 // !!! Should there be a `Lifted` subclass, holding Quoted/Quasi?  Currently
 // functions like Lift_Cell() just return Dual...

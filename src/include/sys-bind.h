@@ -116,10 +116,10 @@ INLINE void Unbind_Cell_If_Bindable_Core(Value* v) {
 // routines want to do things like return errors, and when they do they need
 // to strip the quotes off (typically).
 //
-INLINE Element* Copy_Dequoted_Cell(Sink(Element) out, const Cell* in) {
+INLINE Element* Copy_Dequote_Dequasi_Cell(Sink(Element) out, const Cell* in) {
     Assert_Cell_Stable(in);
     Copy_Cell_Core_Untracked(out, in, CELL_MASK_COPY);
-    LIFT_BYTE(out) = NOQUOTE_63;
+    Clear_Cell_Quotes_And_Quasi(out);  // !!! clears quasi too (?)
     return out;
 }
 

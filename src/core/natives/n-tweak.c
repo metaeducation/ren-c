@@ -125,7 +125,7 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
         Erase_ARG(LOCATION),
         dual_spare
     );
-    Unquote_Cell(location_arg);
+    Unquote_Quoted_Cell(location_arg);
 
     picker_arg = Copy_Cell(
         Erase_ARG(PICKER),
@@ -301,7 +301,7 @@ Option(Error*) Trap_Tweak_Spare_Is_Dual_Writeback_Dual_In_Scratch_To_Spare(
         Erase_ARG(LOCATION),
         dual_location_spare
     );
-    Unquote_Cell(location_arg);
+    Unquote_Quoted_Cell(location_arg);
 
     picker_arg = Copy_Cell(
         Erase_ARG(PICKER),
@@ -437,7 +437,7 @@ bool Try_Push_Steps_To_Stack_For_Word(
         break;
 
       case SIGIL_META:  // we remember the sigil from scratch_var
-        TOP->header.bits &= (~ CELL_MASK_SIGIL);
+        Clear_Cell_Sigil(TOP_ELEMENT);
         break;
 
       case SIGIL_PIN:
@@ -550,18 +550,14 @@ Option(Error*) Trap_Push_Steps_To_Stack(
 
     for (at = head; at != tail; ++at) {
         bool unbind;
-        switch (LIFT_BYTE(at)) {
-          case NOQUOTE_63:
+        if (LIFT_BYTE(at) <= MAX_LIFT_NOQUOTE_NOQUASI) {
             unbind = false;
-            break;
-
-          case ONEQUOTE_NONQUASI_65:
-            unbind = true;
-            break;
-
-          default:
-            panic ("TUPLE! dialect allows single quote 'unbind on items");
         }
+        else if (LIFT_BYTE(at) == ONEQUOTE_NONQUASI_65) {
+            unbind = true;
+        }
+        else
+            panic ("TUPLE! dialect allows single quote 'unbind on items");
 
         if (Heart_Of(at) == TYPE_GROUP) {
             if (not groups_ok) {
@@ -587,7 +583,7 @@ Option(Error*) Trap_Push_Steps_To_Stack(
         else {
             Copy_Cell_May_Bind(PUSH(), at, at_binding);
             if (unbind)
-                LIFT_BYTE(TOP) = NOQUOTE_63;
+                Clear_Cell_Quotes_And_Quasi(TOP_ELEMENT);
         }
 
         // !!! Here we could validate or rule out items in the TUPLE! dialect,
@@ -741,8 +737,8 @@ Option(Error*) Tweak_Stack_Steps_With_Dual_Scratch_To_Dual_Spare(void)
             panic (unwrap error);
         }
 
-        if (dont_indirect) {
-            possibly(LIFT_BYTE(SPARE) == NOQUOTE_63);  // bedrock introspect
+        if (dont_indirect) {  // v-- may be bedrock introspect
+            possibly(Is_Dualized_Bedrock(As_Dual(SPARE)));
             continue;
         }
 

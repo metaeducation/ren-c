@@ -214,7 +214,7 @@ static void Shutdown_Lib(void)
 
 static Element* Make_Locked_Tag(const char *utf8) { // helper
     Element* t = cast(Element*, rebText(utf8));
-    KIND_BYTE(t) = TYPE_TAG;
+    Tweak_Cell_Type(t, TYPE_TAG);
 
     Force_Value_Frozen_Deep(t);
     return t;
@@ -455,13 +455,14 @@ static void Init_System_Object(
 
     Slot* std_error_slot = Get_System(SYS_STANDARD, STD_ERROR);
     assert(KIND_BYTE(std_error_slot) == TYPE_OBJECT);
-    assert(LIFT_BYTE_RAW(std_error_slot) == NOQUOTE_63);
+    assert(LIFT_BYTE_RAW(std_error_slot) == As_Lift(TYPE_OBJECT));
     VarList* varlist = Cell_Varlist(u_cast(Element*, std_error_slot));
-    KIND_BYTE(std_error_slot) = TYPE_ERROR;
+    Tweak_Cell_Type(u_cast(Element*, std_error_slot), TYPE_ERROR);
 
-    Stable* rootvar = Rootvar_Of_Varlist(varlist);
-    Assert_Cell_Shielded_If_Tracking(rootvar);
-    KIND_BYTE(rootvar) = TYPE_ERROR;  // !!! shielding allows KIND_BYTE()
+    Element* rootvar = Rootvar_Of_Varlist(varlist);
+    Unshield_Rootvar_If_Tracking(rootvar);
+    Tweak_Cell_Type(rootvar, TYPE_ERROR);
+    Shield_Rootvar_If_Tracking(rootvar);
 }}
 
 

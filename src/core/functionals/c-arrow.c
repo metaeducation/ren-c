@@ -94,8 +94,7 @@ DECLARE_NATIVE(ARROW)
   //
   // https://rebol.metaeducation.com/t/arrow-function-written-in-usermode/2651
 
-    LIFT_BYTE(spec) = NOQUOTE_63;
-    KIND_BYTE(spec) = Kind_From_Sigil_And_Heart(SIGIL_0, TYPE_BLOCK);
+    Clear_Cell_Quotes_And_Quasi(spec);
 
     Sink(Stable) spare_inner = SPARE;
 

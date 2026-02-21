@@ -349,7 +349,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     }
 
     DECLARE_ELEMENT (element);
-    Copy_Dequoted_Cell(element, cell);
+    Copy_Dequote_Dequasi_Cell(element, cell);
     Option(Sigil) sigil = Sigil_Of(element);
     Clear_Cell_Sigil(element);  // can't have Sigil and dispatch to mold
 
@@ -360,6 +360,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     Init_Logic(formval, form);
 
     bool tildes = NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
+        and (LIFT_BYTE(cell) > MAX_LIFT_NOQUOTE_NOQUASI)
         and (not (LIFT_BYTE(cell) & NONQUASI_BIT));
 
     if (tildes)

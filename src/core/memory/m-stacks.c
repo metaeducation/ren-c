@@ -93,7 +93,7 @@ void Startup_Feeds(void)
     g_cell_aligned_end.header.bits = (
         FLAG_FIRST_BYTE(BASE_BYTE_END)
             | FLAG_KIND_BYTE(TYPE_BLANK)  // make testable as BLANK! too [1]
-            | FLAG_LIFT_BYTE(NOQUOTE_63)
+            | FLAG_LIFT_BYTE(As_Lift(TYPE_BLANK))
     );
 
     static const void* packed = &g_cell_aligned_end;  // "packed feed items"
@@ -199,7 +199,7 @@ Array* Pop_Stack_Values_Core(Flags flags, StackIndex base) {
     Count count = 0;
     for (; count < len; ++count, ++src, ++dest) {
         possibly(src->header.bits & CELL_MASK_PERSIST);  // all bits copied [1]
-        if (LIFT_BYTE(src) >= MIN_LIFTBYTE_ANTIFORM) {  // ok in *some* arrays
+        if (LIFT_BYTE(src) >= MIN_LIFT_ANTIFORM) {  // ok in *some* arrays
             possibly(LIFT_BYTE(src) == BEDROCK_255);
             if (flavor < MIN_FLAVOR_ANTIFORMS_OK)
                 crash ("Unexpected antiform found on data stack");

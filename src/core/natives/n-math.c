@@ -894,11 +894,11 @@ DECLARE_NATIVE(EQUAL_Q)
 
     bool relax = ARG(RELAX);
 
-    if (LIFT_BYTE(ARG(VALUE1)) != LIFT_BYTE(ARG(VALUE2)))
+    if (not Have_Matching_Lift_Levels(ARG(VALUE1), ARG(VALUE2)))
         return LOGIC_OUT(false);
 
-    LIFT_BYTE(ARG(VALUE1)) = NOQUOTE_63;
-    LIFT_BYTE(ARG(VALUE2)) = NOQUOTE_63;
+    Normalize_Cell(ARG(VALUE1));
+    Normalize_Cell(ARG(VALUE2));
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
@@ -945,11 +945,11 @@ DECLARE_NATIVE(LESSER_Q)
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
 
-    if (LIFT_BYTE(v1) != LIFT_BYTE(v2))
-        return fail ("Differing quote levels are not comparable");
+    if (not Have_Matching_Lift_Levels(v1, v2))
+        return fail ("Differing lift levels are not comparable");
 
-    LIFT_BYTE(v1) = NOQUOTE_63;
-    LIFT_BYTE(v2) = NOQUOTE_63;
+    Clear_Cell_Quotes_And_Quasi(v1);
+    Clear_Cell_Quotes_And_Quasi(v2);
 
     if (Sigil_Of(v1) != Sigil_Of(v2))
         return fail ("Differing sigils are not comparable");
@@ -1010,11 +1010,11 @@ DECLARE_NATIVE(SAME_Q)
 {
     INCLUDE_PARAMS_OF_SAME_Q;
 
-    if (LIFT_BYTE(ARG(VALUE1)) != LIFT_BYTE(ARG(VALUE2)))
+    if (not Have_Matching_Lift_Levels(ARG(VALUE1), ARG(VALUE2)))
         return LOGIC_OUT(false);
 
-    LIFT_BYTE(ARG(VALUE1)) = NOQUOTE_63;
-    LIFT_BYTE(ARG(VALUE2)) = NOQUOTE_63;
+    Normalize_Cell(ARG(VALUE1));
+    Normalize_Cell(ARG(VALUE2));
 
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);

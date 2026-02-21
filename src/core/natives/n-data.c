@@ -86,10 +86,11 @@ DECLARE_NATIVE(BIND)
             require (
               Use* use = Alloc_Use_Inherits(Cell_Binding(v))
             );
-            Copy_Cell_May_Bind(Stub_Cell(use), at, Cell_Binding(spec));
-            KIND_BYTE(Stub_Cell(use)) = TYPE_WORD;
+            Element* overbind = Copy_Cell_May_Bind(
+                Stub_Cell(use), at, Cell_Binding(spec)
+            );
+            Tweak_Cell_Type(overbind, TYPE_WORD);
 
-            Element* overbind = As_Element(Stub_Cell(use));
             if (not IS_WORD_BOUND(overbind))
                 panic (Error_Not_Bound_Raw(overbind));
 
@@ -118,8 +119,8 @@ DECLARE_NATIVE(BIND)
         require (
           Use* use = Alloc_Use_Inherits(Cell_Binding(v))
         );
-        Copy_Cell(Stub_Cell(use), spec);
-        KIND_BYTE(Stub_Cell(use)) = TYPE_WORD;
+        Element* overbind = Copy_Cell(Stub_Cell(use), spec);
+        Tweak_Cell_Type(overbind, TYPE_WORD);
 
         Tweak_Cell_Binding(v, use);
 
@@ -262,10 +263,9 @@ DECLARE_NATIVE(OVERBIND)
 //
 //  "Returns a word bound into the context, if it's available, else null"
 //
-//      return: [<null> any-word?]
+//      return: [<null> word!]  ; support ANY-WORD?, quoted, etc?
 //      context [any-context?]
-//      value "Can carry Sigil, is preserved ('@foo = has obj '@foo)"
-//          [any-word?]  ; QUOTED? support?
+//      value [word!]  ; unbind?
 //  ]
 //
 DECLARE_NATIVE(HAS)
@@ -273,8 +273,6 @@ DECLARE_NATIVE(HAS)
     INCLUDE_PARAMS_OF_HAS;
 
     Element* v = Element_ARG(VALUE);
-    assert(Any_Word(v));  // want to preserve sigil
-
     Element* context = Element_ARG(CONTEXT);
 
     const Symbol* symbol = Word_Symbol(v);
@@ -287,13 +285,11 @@ DECLARE_NATIVE(HAS)
         VarList* varlist = Cell_Varlist(context);
         Element* out = Init_Word_Bound(OUT, symbol, varlist);
         Tweak_Word_Index(out, unwrap n);
-        Copy_Kind_Byte(out, v);
         return OUT;
     }
 
     SeaOfVars* sea = Cell_Module_Sea(context);
     Element* out = Init_Word(OUT, symbol);
-    Copy_Kind_Byte(out, v);
     Tweak_Cell_Binding(out, sea);
     return OUT;
 }
@@ -304,10 +300,10 @@ DECLARE_NATIVE(HAS)
 //
 //  "Remove a virtual binding from a value"
 //
-//      return: [<null> any-word? any-list?]
+//      return: [<null> word! any-list?]
 //      context "If integer, then removes that number of virtual bindings"
 //          [integer! any-context?]
-//      value [<const> any-word? any-list?]  ; QUOTED? support?
+//      value [<const> word! any-list?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(WITHOUT)
@@ -322,7 +318,7 @@ DECLARE_NATIVE(WITHOUT)
     // IN would return trash on failure.  We carry forward the NULL-failing
     // here in IN, but BIND's behavior on words may need revisiting.
     //
-    if (Any_Word(v)) {
+    if (Is_Word(v)) {
         const Symbol* symbol = Word_Symbol(v);
         const bool strict = true;
         Option(Ordinal) n = Find_Symbol_In_Context(
@@ -336,7 +332,6 @@ DECLARE_NATIVE(WITHOUT)
             ctx
         );
         Tweak_Word_Index(OUT, unwrap n);
-        Copy_Kind_Byte(As_Element(OUT), v);
         return OUT;
     }
 
@@ -868,12 +863,12 @@ DECLARE_NATIVE(RESOLVE)
     Element* source = Element_ARG(SOURCE);
 
     if (Any_Word(source)) {
-        KIND_BYTE(source) = TYPE_WORD;
+        Tweak_Cell_Type(source, TYPE_WORD);
         return COPY_TO_OUT(source);
     }
 
-    if (Is_Tuple(source)) {
-        KIND_BYTE(source) = TYPE_TUPLE;
+    if (Is_Tuple(source)) {  // !!! Any_Tuple?
+        Tweak_Cell_Type(source, TYPE_TUPLE);
         return COPY_TO_OUT(source);
     }
 
@@ -1680,7 +1675,7 @@ DECLARE_NATIVE(NOQUASI)
 
     Copy_Cell(OUT, v);
     if (LIFT_BYTE(OUT) == QUASIFORM_64)
-        LIFT_BYTE(OUT) = NOQUOTE_63;
+        Normalize_Cell(OUT);
     return OUT;
 }
 
@@ -1727,6 +1722,6 @@ DECLARE_NATIVE(NOANTIFORM)
     Stable* v = ARG(VALUE);
 
     if (Is_Antiform(v))
-        LIFT_BYTE(v) = NOQUOTE_63;
+        Normalize_Cell(v);
     return COPY_TO_OUT(v);
 }

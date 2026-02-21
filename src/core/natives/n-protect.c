@@ -439,7 +439,7 @@ void Force_Value_Frozen_Core(
     if (Is_Value_Frozen_Deep(v))
         return;
 
-    possibly(Is_Quoted(v) or Is_Quasiform(v));
+    possibly(Is_Cell_Quoted(v) or Is_Quasiform(v));
     Heart heart = Heart_Of_Builtin(v);
 
     if (heart == TYPE_FRAME and Is_Frame_Details(v))

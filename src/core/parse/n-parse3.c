@@ -626,7 +626,7 @@ static Result(REBIXO) Parse_One_Rule(
         const Element* item = Array_At(P_INPUT_ARRAY, pos);
 
         if (Is_Quoted(rule)) {  // fall through to direct match
-            rule = Unquote_Cell(Copy_Cell(SPARE, rule));
+            rule = Unquote_Quoted_Cell(Copy_Cell(SPARE, rule));
         }
         else if (Is_Pinned_Form_Of(WORD, rule)) {
             DECLARE_ELEMENT (unpinned);
@@ -1072,7 +1072,7 @@ static Result(REBIXO) To_Thru_Non_Block_Rule(
         Flags find_flags = (P_FLAGS & AM_FIND_CASE);
         DECLARE_VALUE (temp);
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
-            Unquote_Cell(Copy_Cell_May_Bind(temp, rule, P_RULE_BINDING));
+            Unquote_Quoted_Cell(Copy_Cell_May_Bind(temp, rule, P_RULE_BINDING));
         }
         else if (Is_Pinned_Form_Of(WORD, rule)) {
             require (
@@ -1171,7 +1171,7 @@ static Result(None) Handle_Mark_Rule(
       Set_Word_Or_Tuple(set_or_copy_word, ARG(POSITION))
     );
 
-    Noquotify(Element_ARG(POSITION));  // go back to 0 quote level
+    Noquotify_Cell(Element_ARG(POSITION));  // go back to 0 quote level
 
     return none;
 }
@@ -1292,7 +1292,7 @@ DECLARE_NATIVE(SUBPARSE)
     //
     assert(Is_Trash(LOCAL(NUM_QUOTES)));
     Init_Integer(LOCAL(NUM_QUOTES), Quotes_Of(Element_ARG(INPUT)));
-    Noquotify(Element_ARG(INPUT));
+    Noquotify_Cell(Element_ARG(INPUT));
 
     // Make sure index position is not past END
     if (SERIES_INDEX_UNBOUNDED(ARG(INPUT)) > Series_Len_Head(ARG(INPUT)))
@@ -1826,7 +1826,7 @@ DECLARE_NATIVE(SUBPARSE)
               Init_Typechecker(SPARE, lookup)
             );
 
-            LIFT_BYTE(SPARE) = NOQUOTE_63;
+            LIFT_BYTE(SPARE) = As_Lift(TYPE_FRAME);
             rule = As_Element(SPARE);
             assert(Is_Frame(rule));
         }
@@ -2389,7 +2389,7 @@ DECLARE_NATIVE(SUBPARSE)
 
                 if (Stub_Holds_Cells(P_INPUT)) {
                     if (Any_List(evaluated))  // bootstrap r3 has no SPREAD
-                        Splicify(evaluated);
+                        Spread_Cell(evaluated);
 
                     // Note: We could check for mutability at the start
                     // of the operation -but- by checking right at the

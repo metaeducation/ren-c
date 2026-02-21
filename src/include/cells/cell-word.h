@@ -116,7 +116,7 @@ INLINE Dual* Init_Word_Untracked(
 }
 
 #define Init_Word(out,str) \
-    TRACK(Init_Word_Untracked((out), FLAG_LIFT_BYTE(NOQUOTE_63), (str)))
+    TRACK(Init_Word_Untracked((out), FLAG_LIFT_BYTE(As_Lift(TYPE_WORD)), (str)))
 
 #define Init_Quasi_Word(out,symbol) \
     TRACK(Init_Word_Untracked((out), FLAG_LIFT_BYTE(QUASIFORM_64), (symbol)))
@@ -128,7 +128,7 @@ INLINE Dual* Init_Word_Bound_Untracked(
 ){
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(TYPE_WORD)
+        FLAG_HEART(TYPE_WORD) | FLAG_LIFT_BYTE(As_Lift(TYPE_WORD))
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );
@@ -170,15 +170,15 @@ INLINE Result(Managed(const Symbol*)) Intern_Unsized_Symbol(const char *bp)
 // rather than extracting the Symbol* and asking it.
 //
 
-INLINE bool Is_Word_With_Id_Core(const Cell* v, LiftByte lift, SymId id) {
+INLINE bool Is_Word_With_Id_Core(const Cell* v, LiftByte lift_byte, SymId id) {
     assert(id != SYM_0_constexpr);
-    if (not Cell_Has_Lift_Sigil_Heart(v, lift, SIGIL_0, TYPE_WORD))
+    if (not Cell_Has_Lift_Sigil_Heart(v, lift_byte, SIGIL_0, TYPE_WORD))
         return false;
     return id == Word_Id(v);  // is CANON(id) == Word_Symbol(v) faster?
 }
 
 #define Is_Word_With_Id(v,id) \
-    Is_Word_With_Id_Core(Known_Stable(v), NOQUOTE_63, (id))
+    Is_Word_With_Id_Core(Known_Stable(v), As_Lift(TYPE_WORD), (id))
 
 #define Is_Quasi_Word_With_Id(v,id) \
     Is_Word_With_Id_Core(Known_Stable(v), QUASIFORM_64, (id))

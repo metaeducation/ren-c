@@ -34,7 +34,7 @@
     (LIFT_BYTE(Possibly_Bedrock(cell)) == BEDROCK_255)
 
 #define Is_Dualized_Bedrock(dual) \
-    (LIFT_BYTE(Known_Dual(dual)) == NOQUOTE_63)
+    (LIFT_BYTE(Known_Dual(dual)) <= MAX_LIFT_NOQUOTE_NOQUASI)
 
 
 //=//// UNDECAYED ~(...)~ BEDROCK PACK!s //////////////////////////////////-//
@@ -86,7 +86,7 @@ INLINE const Dual* Opt_Extract_Dual_If_Undecayed_Bedrock(const Value* v) {
     if (item == tail or item + 1 != tail)
         return nullptr;
 
-    if (LIFT_BYTE(item) != NOQUOTE_63)
+    if (LIFT_BYTE(item) > MAX_LIFT_NOQUOTE_NOQUASI)
         return nullptr;
 
     return item;
@@ -123,7 +123,7 @@ INLINE bool Is_Bedrock_Dual_A_Drain(const Dual* dual) {
     Is_Drain_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Drain(dual) \
-    Is_Drain_Core(Known_Dual(dual), NOQUOTE_63)
+    Is_Drain_Core(Known_Dual(dual), As_Lift(TYPE_RUNE))
 
 INLINE Slot* Init_Bedrock_Drain(Init(Slot) out) {
     Init_Space(out);
@@ -248,7 +248,7 @@ INLINE bool Is_Bedrock_Dual_A_Hole(const Dual* dual) {
     Is_Hole_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Hole(dual) \
-    Is_Hole_Core(Known_Dual(dual), NOQUOTE_63)
+    Is_Hole_Core(Known_Dual(dual), As_Lift(TYPE_PARAMETER))
 
 INLINE bool Is_Undecayed_Hole(const Value* v) {  // ~(parameter!)~ PACK!
     const Dual* dual = Opt_Extract_Dual_If_Undecayed_Bedrock(v);
@@ -283,11 +283,17 @@ INLINE bool Is_Bedrock_Dual_An_Alias(const Dual* dual) {
     );
 }
 
-INLINE bool Is_Alias_Core(const Cell* cell, LiftByte lift_byte) {
+INLINE bool Is_Alias_Core(const Cell* cell, Option(LiftByte) lift_byte) {
     return Cell_Has_Lift_Sigil_Heart(
-        cell, lift_byte, SIGIL_META, TYPE_WORD
+        cell,
+        lift_byte ? unwrap lift_byte : As_Lift(TYPE_WORD),
+        SIGIL_META,
+        TYPE_WORD
     ) or Cell_Has_Lift_Sigil_Heart(
-        cell, lift_byte, SIGIL_META, TYPE_TUPLE
+        cell,
+        lift_byte ? unwrap lift_byte : As_Lift(TYPE_TUPLE),
+        SIGIL_META,
+        TYPE_TUPLE
     );
 }
 
@@ -295,7 +301,7 @@ INLINE bool Is_Alias_Core(const Cell* cell, LiftByte lift_byte) {
     Is_Alias_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Alias(dual) \
-    Is_Alias_Core(Known_Dual(dual), NOQUOTE_63)
+    Is_Alias_Core(Known_Dual(dual), none)  // word or tuple
 
 INLINE bool Is_Undecayed_Alias(const Value* v) {  // ~(^meta)~ PACK!
     const Dual* dual = Opt_Extract_Dual_If_Undecayed_Bedrock(v);
@@ -321,7 +327,7 @@ INLINE bool Is_Bedrock_Dual_An_Accessor(const Dual* dual) {
     Is_Accessor_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Accessor(dual) \
-    Is_Accessor_Core(Known_Dual(dual), NOQUOTE_63)
+    Is_Accessor_Core(Known_Dual(dual), As_Lift(TYPE_FRAME))
 
 #define Is_Dual_Word_Named_Signal(dual)  Is_Word(Known_Dual(dual))
 

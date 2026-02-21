@@ -135,9 +135,9 @@ Bounce Encloser_Dispatcher(Level* const L)
     assert(Not_Stub_Flag(varlist, MISC_NEEDS_MARK));
 
     Element* rootvar = Rootvar_Of_Varlist(varlist);  // no more encloser [2]
-    Unshield_Rootvar_If_Debug(rootvar);
+    Unshield_Rootvar_If_Tracking(rootvar);
     Copy_Cell(rootvar, inner);
-    Shield_Rootvar_If_Debug(rootvar);
+    Shield_Rootvar_If_Tracking(rootvar);
 
     assert(Get_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
     Clear_Flavor_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);  // [3]

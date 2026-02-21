@@ -937,9 +937,8 @@ DECLARE_NATIVE(CYCLE)
 //
 static void Morph_Quoted_To_Block(Element* data)
 {
-    assert(Is_Quoted(data));
     Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
-    Unquote_Cell(Copy_Cell(Stub_Cell(a), data));
+    Unquote_Quoted_Cell(Copy_Cell(Stub_Cell(a), data));
     Init_Block(data, a);
 }
 
@@ -2100,7 +2099,7 @@ DECLARE_NATIVE(MAP)
             not Is_Quoted(data)
             or Quotes_Of(data) != 1
             or not (
-                Any_Series(Unquote_Cell(data))  // <= UNQUOTIFY here!
+                Any_Series(Unquote_Quoted_Cell(data))  // <= UNQUOTIFY here!
                 or Is_Path(data)  // has been unquoted
                 or Any_Context(data)
                 or Any_Sequence(data)
@@ -2369,7 +2368,7 @@ DECLARE_NATIVE(FOR)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Quoted(value)) {
-        Unquote_Cell(value);
+        Unquote_Quoted_Cell(value);
 
         if (not (Any_Series(value) or Any_Sequence(value)))
             panic (PARAM(VALUE));

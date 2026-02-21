@@ -477,7 +477,8 @@ IMPLEMENT_GENERIC(ROUND, Is_Integer)
         Init(Element) out = OUT;
         Reset_Cell_Header_Noquote(
             TRACK(out),
-            FLAG_HEART(to_heart) | CELL_MASK_NO_MARKING
+            FLAG_HEART(to_heart) | FLAG_LIFT_BYTE(As_Lift(to_heart))
+                | CELL_MASK_NO_MARKING
         );
         VAL_DECIMAL(out) = dec;
         return OUT;

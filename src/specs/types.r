@@ -266,10 +266,10 @@ word!       "evaluates a variable or action"
 ; ABOVE THESE ARE QUOTED, QUASIFORM, and ANTIFORM "PSEUDOTYPES"
 ; ============================================================================
 
-; The TYPE_QUOTED, TYPE_QUASIFORM, and all the antiform types (TYPE_SPLICE,
+; TYPE_QUASIFORM, TYPE_QUOTED_XXX, and all the antiform types (TYPE_SPLICE,
 ; TYPE_TRASH, etc.) enum values never appear in the KIND_BYTE() of a cell.
-; These are synthesized datatypes when the LIFT_BYTE() contains values other
-; than one (NOQUOTE_63).
+; These are synthesized datatypes when the LIFT_BYTE() contains values greater
+; than
 ;
 ; They're not inert... QUASIFORM? becomes ANTIFORM? when evaluated, and QUOTED?
 ; removes one level of quoting.  (ANTIFORM? should never be seen by the

@@ -147,15 +147,19 @@ DECLARE_NATIVE(UNQUOTE)
 
     Element* v = ARG(VALUE);
 
+    Count quotes = Quotes_Of(v);
     Count depth = ARG(DEPTH) ? VAL_INT32(unwrap ARG(DEPTH)) : 1;
 
     if (depth < 0)
         panic (PARAM(DEPTH));
 
-    if (depth > Quotes_Of(v))
+    if (depth > quotes)
         panic ("Value not quoted enough for unquote depth requested");
 
-    return Unquotify_Depth(Copy_Cell(OUT, v), depth);
+    Noquotify_Cell(v);
+    Quotify_Depth(v, quotes - depth);  // panics if too deep
+
+    return Copy_Cell(OUT, v);
 }
 
 
@@ -393,7 +397,7 @@ DECLARE_NATIVE(UNANTI)
     INCLUDE_PARAMS_OF_UNANTI;
 
     Value* v = Unchecked_ARG(VALUE);
-    LIFT_BYTE(v) = NOQUOTE_63;  // turn to plain form
+    Normalize_Cell(v);  // turn to plain form
 
     return COPY_TO_OUT(As_Element(v));
 }
@@ -427,7 +431,7 @@ DECLARE_NATIVE(SPREAD)
     Stable* v = unwrap ARG(VALUE);
 
     if (Any_List(v))  // most common case
-        return COPY_TO_OUT(Splicify(v));
+        return COPY_TO_OUT(Spread_Cell(v));
 
     panic (PARAM(VALUE));
 }
@@ -486,9 +490,8 @@ DECLARE_NATIVE(ALIAS)
 
     Element* var = Element_ARG(VAR);
     assert(Is_Word(var) or Is_Tuple(var));
-    KIND_BYTE(var) = Kind_From_Sigil_And_Heart(
-        SIGIL_META, unwrap Heart_Of(var)
-    );
+
+    Tweak_Cell_Sigiled_Type(var, SIGIL_META, unwrap Heart_Of(var));
 
     Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
     Copy_Cell(Array_Head(a), var);
@@ -563,17 +566,16 @@ DECLARE_NATIVE(DISARM)
 //  "Give back a block! for splice! input"
 //
 //      return: [block!]  ; BLOCK! seems more generically desired than GROUP!
-//      splice [splice!]
+//      value [splice!]
 //  ]
 //
 DECLARE_NATIVE(UNSPLICE)
 {
     INCLUDE_PARAMS_OF_UNSPLICE;
 
-    Stable* splice = ARG(SPLICE);
-    LIFT_BYTE(splice) = NOQUOTE_63;
-    KIND_BYTE(splice) = TYPE_BLOCK;
-    return COPY_TO_OUT(splice);
+    Stable* v = ARG(VALUE);
+    Unsplice_Cell(v);
+    return COPY_TO_OUT(v);
 }
 
 
@@ -596,7 +598,5 @@ DECLARE_NATIVE(NOQUOTE)
     if (not v)
         return NULL_OUT;
 
-    Copy_Cell(OUT, v);
-    LIFT_BYTE(OUT) = NOQUOTE_63;
-    return OUT;
+    return Copy_Plain_Cell(OUT, v);;
 }

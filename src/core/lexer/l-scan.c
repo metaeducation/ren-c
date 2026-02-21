@@ -2331,7 +2331,8 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     if (len + 1 <= Size_Of(TOP->payload.at_least_8)) {
         Reset_Cell_Header_Noquote(
             TOP,
-            FLAG_HEART(TYPE_RUNE) | CELL_MASK_NO_MARKING
+            FLAG_HEART(TYPE_RUNE) | FLAG_LIFT_BYTE(As_Lift(TYPE_RUNE))
+                | CELL_MASK_NO_MARKING
         );
         Mem_Fill(&TOP->payload.at_least_8, b, len);
         TOP->payload.at_least_8[len] = '\0';
@@ -2592,7 +2593,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         return fail (Error_Syntax(S, token));
 
     if (S->begin[len - 1] == '%')
-        KIND_BYTE(TOP) = TYPE_PERCENT;
+        Tweak_Cell_Type(TOP_ELEMENT, TYPE_PERCENT);
 
     goto lookahead;
 
@@ -3080,12 +3081,18 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     quotes_before = Quotes_Of(head);
     sigil_before = Cell_Underlying_Sigil(head);
 
-    if (LIFT_BYTE_RAW(head) & NONQUASI_BIT)
-        LIFT_BYTE_RAW(head) = NOQUOTE_63;
-    else
-        LIFT_BYTE_RAW(head) = QUASIFORM_64;
+    if (quotes_before != 0) {
+        if (LIFT_BYTE_RAW(head) & NONQUASI_BIT)
+            Clear_Cell_Quotes_And_Quasi(head);
+        else
+            LIFT_BYTE_RAW(head) = QUASIFORM_64;
+    }
 
-    head->header.bits &= (~ CELL_MASK_SIGIL);
+    Byte b = LIFT_BYTE_RAW(head);
+    USED(b);
+
+    if (LIFT_BYTE_RAW(head) != QUASIFORM_64)
+        Clear_Cell_Sigil(head);
 
 } trap_pop: {
 
@@ -3120,8 +3127,11 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     possibly(Is_Quasiform(TOP_ELEMENT));  // e.g. ~/~ so can't ask Sigil_Of()
     assert(Cell_Underlying_Sigil(TOP_ELEMENT) == 0);
 
-    LIFT_BYTE(TOP_ELEMENT) = NOQUOTE_63 + Quote_Shift(quotes_before);
-    TOP_ELEMENT->header.bits |= FLAG_SIGIL(sigil_before);
+    if (sigil_before)
+        Add_Cell_Sigil(TOP_ELEMENT, unwrap sigil_before);
+
+    if (quotes_before != 0)
+        LIFT_BYTE(TOP_ELEMENT) = NOQUOTE_63 + Quote_Shift(quotes_before);
 
     goto sequence_or_conflation_was_pushed;
 

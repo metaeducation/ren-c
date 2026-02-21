@@ -1201,8 +1201,8 @@ IMPLEMENT_GENERIC(TO, Any_Context)
 
         VarList* v = cast(VarList*, c);
         VarList* copy = Copy_Varlist_Shallow_Managed(v);  // !!! copy [1]
-        Stable* rootvar = Rootvar_Of_Varlist(copy);
-        KIND_BYTE(rootvar) = TYPE_PORT;
+        Element* rootvar = Rootvar_Of_Varlist(copy);
+        Tweak_Cell_Type(rootvar, TYPE_PORT);
         return Init_Port(OUT, copy);
     }
 
@@ -1312,7 +1312,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     Cell* out_cell = Copy_Cell_Core(OUT, slot, CELL_MASK_COPY);
 
     if (LIFT_BYTE(out_cell) == BEDROCK_255) {  // return as nonquoted/nonquasi
-        LIFT_BYTE(out_cell) = NOQUOTE_63;
+        Normalize_Cell(out_cell);
         return OUT_UNLIFTED_DUAL_INDIRECT_PICK;
     }
 
@@ -1361,7 +1361,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         and not Is_Cell_A_Bedrock_Hole(slot)
     ){  // CASE 2: Writing non-bedrock into bedrock slot
         Copy_Cell_Core(OUT, slot, CELL_MASK_COPY);  // fetch for return
-        LIFT_BYTE(OUT) = NOQUOTE_63;
+        Normalize_Cell(OUT);
         return OUT_UNLIFTED_DUAL_INDIRECT_POKE;  // alias, setter, drain...
     }
 

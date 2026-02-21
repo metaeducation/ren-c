@@ -57,7 +57,7 @@ INLINE Dual* Init_Context_Cell_Untracked(Init(Dual) out, VarList* vlist) {
     Reset_Cell_Header_Noquote(
         out,
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART(heart)
+            | FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // first is phase/varlist
             | (CELL_FLAG_DONT_MARK_PAYLOAD_2)  // no coupling
     );

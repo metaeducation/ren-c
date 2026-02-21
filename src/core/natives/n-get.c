@@ -317,7 +317,7 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
     else switch (Stub_Flavor(cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {  // `/a` or `a/`
         Element* spare = Copy_Cell(SPARE, path);
-        KIND_BYTE(spare) = Kind_From_Sigil_And_Heart(SIGIL_META, TYPE_WORD);
+        Tweak_Cell_Sigiled_Type(spare, SIGIL_META, TYPE_WORD);
 
         Get_Word_Or_Tuple(OUT, spare) except (Error* e) {
             error = e;

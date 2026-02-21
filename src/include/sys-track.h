@@ -255,9 +255,13 @@
 
     #define Assert_Cell_Shielded_If_Tracking(cell) \
         assert(Get_Track_Flag((cell), SHIELD_FROM_WRITES))
+
+    #define Assert_Cell_Unshielded_If_Tracking(cell) \
+        assert(Not_Track_Flag((cell), SHIELD_FROM_WRITES))
 #else
     #define Track_Shield_Cell(cell)  USED(cell)  // may have effects [1]
     #define Track_Unshield_Cell(cell)  USED(cell)
     #define Track_Clear_Cell_Shield(cell)  USED(cell)
     #define Assert_Cell_Shielded_If_Tracking(cell)  NOOP  // no effects allowed
+    #define Assert_Cell_Unshielded_If_Tracking(cell)  NOOP  // no effects
 #endif

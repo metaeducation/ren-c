@@ -675,6 +675,7 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
         }
 
         void operator=(KindByte right) {
+            Assert_Cell_Unshielded_If_Tracking(cell);
             /* add write checks you want here */
             KIND_BYTE_RAW(cell) = right;
         }
@@ -721,7 +722,7 @@ INLINE Heart Heart_Of_Unsigiled_Isotopic(const Cell* c) {
 }
 
 INLINE Option(Heart) Heart_Of_Fundamental(const Cell* c) {
-    assert(LIFT_BYTE_RAW(c) == NOQUOTE_63);
+    assert(LIFT_BYTE_RAW(c) <= MAX_LIFT_NOQUOTE_NOQUASI);
     return Heart_Of(c);
 }
 
@@ -732,7 +733,7 @@ INLINE Heart Heart_Of_Builtin(const Cell* c) {
 }
 
 INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
-    assert(LIFT_BYTE_RAW(c) == NOQUOTE_63);
+    assert(LIFT_BYTE_RAW(c) <= MAX_LIFT_NOQUOTE_NOQUASI);
     Option(Heart) heart = Heart_Of(c);
     assert(heart);
     return opt heart;  // faster than unwrap, we already checked for 0
@@ -742,7 +743,7 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
     (TYPE_0 == opt Heart_Of(cell))
 
 INLINE bool Type_Of_Is_0(const Cell* cell) {
-    return Heart_Of_Is_0(cell) and LIFT_BYTE_RAW(cell) == NOQUOTE_63;
+    return LIFT_BYTE_RAW(cell) == As_Lift(TYPE_0);
 }
 
 
@@ -776,11 +777,20 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
         }
 
         void operator=(int right) {
+            Assert_Cell_Unshielded_If_Tracking(cell);
+
             assert(right >= 0 and right <= 255);
 
-            Option(Heart) heart = Unchecked_Heart_Of(cell);
-            if (right != BEDROCK_255 and not (right & NONQUASI_BIT))
-                assert(Any_Isotopic_Type(heart));  // has quasiforms/antiforms
+            if (right <= MAX_HEARTBYTE) {
+                assert(KIND_BYTE_RAW(cell) == right);  // no sigil
+            }
+            else if (right > MAX_HEARTBYTE and right <= MAX_TYPEBYTE_FUNDAMENTAL) {
+                assert(cell->header.bits & CELL_MASK_SIGIL);
+            }
+            else if (right != BEDROCK_255 and (right >= MIN_LIFT_ANTIFORM)) {
+                Option(Heart) heart = Unchecked_Heart_Of(cell);
+                assert(Any_Isotopic_Type(heart));
+            }
 
             /* add write checks you want here */
 
@@ -841,18 +851,21 @@ INLINE Option(Type) Underlying_Type_Of_Unchecked(  // inlined in Type_Of() [1]
     );
 }
 
-INLINE Option(Type) Type_Of_Unchecked(const Value* v) {
-    switch (  // branches are in order of commonality (nonquoted first)
-        LIFT_BYTE_RAW(v)  // raw [2]
-    ){
-      case NOQUOTE_63: {  // inlining of Underlying_Type_Of_Unchecked() [1]
-        if (KIND_BYTE_RAW(v) <= MAX_HEARTBYTE)  // raw [2]
-            return i_cast(HeartEnum, KIND_BYTE_RAW(v));
+// will become the same answer as LIFT_BYTE_RAW for speed.
+//
+INLINE Option(Type) Type_Of_Core(const Cell* v) {
+    if (LIFT_BYTE(v) <= MAX_HEARTBYTE) {  // raw [2]
+        assert(KIND_BYTE_RAW(v) == LIFT_BYTE_RAW(v));
+        assert(not (v->header.bits & CELL_MASK_SIGIL));
+        return i_cast(HeartEnum, KIND_BYTE_RAW(v));
+    }
+    if (LIFT_BYTE_RAW(v) <= MAX_TYPEBYTE_FUNDAMENTAL) {  // raw [2]
+        assert(v->header.bits & CELL_MASK_SIGIL);
+        return i_cast(TypeEnum, LIFT_BYTE_RAW(v));
+    }
+    assert(LIFT_BYTE_RAW(v) >= QUASIFORM_64);
 
-        return Type_Enum_For_Sigil_Unchecked(
-            i_cast(Sigil, KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT)
-        ); }
-
+    switch (LIFT_BYTE_RAW(v)) {
       case QUASIFORM_64:
         return TYPE_QUASIFORM;
 
@@ -879,17 +892,21 @@ INLINE Option(Type) Type_Of_Unchecked(const Value* v) {
 
 #if NO_RUNTIME_CHECKS
     #define Underlying_Type_Of  Underlying_Type_Of_Unchecked
-    #define Type_Of  Type_Of_Unchecked
-    #define Type_Of_Maybe_Unstable  Type_Of_Unchecked
+    #define Type_Of  Type_Of_Core
+    #define Type_Of_Unchecked  Type_Of_Core
+    #define Type_Of_Possibly_Unstable  Type_Of_Core
 #else
     #define Underlying_Type_Of(v) \
         Underlying_Type_Of_Unchecked(Ensure_Readable(Known_Stable(v)))
 
     #define Type_Of(v) \
-        Type_Of_Unchecked(Ensure_Readable(Known_Stable(v)))
+        Type_Of_Core(Ensure_Readable(Known_Stable(v)))
 
-    #define Type_Of_Maybe_Unstable(v) \
-        Type_Of_Unchecked(Ensure_Readable(v))
+    #define Type_Of_Unchecked(v) \
+        Type_Of_Core(Known_Stable(v))
+
+    #define Type_Of_Possibly_Unstable(v) \
+        Type_Of_Core(Ensure_Readable(Possibly_Unstable(v)))
 #endif
 
 #define Datatype_Of(v) \
@@ -899,7 +916,7 @@ INLINE Option(Type) Type_Of_When_Unquoted(const Element* elem) {
     if (LIFT_BYTE(elem) == QUASIFORM_64)
         return TYPE_QUASIFORM;
 
-    assert(LIFT_BYTE(elem) < MIN_LIFTBYTE_ANTIFORM);
+    assert(LIFT_BYTE(elem) < MIN_LIFT_ANTIFORM);
     return Underlying_Type_Of(elem);
 }
 
@@ -911,10 +928,10 @@ INLINE Option(Type) Type_Of_When_Unquoted(const Element* elem) {
 
 INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
 {
-    assert((flags & CELL_MASK_LIFT) == FLAG_LIFT_BYTE(LIFT_0));
+    assert(SECOND_BYTE(&flags) /* kind */ == THIRD_BYTE(&flags) /* lift */);
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_63)
+        BASE_FLAG_BASE | BASE_FLAG_CELL | flags
     );
 }
 
@@ -931,11 +948,11 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
     const ExtraHeart* extra_heart,
     uintptr_t flags
 ){
-    assert((flags & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) == 0);
+    assert(SECOND_BYTE(&flags) /* kind */ == THIRD_BYTE(&flags) /* lift */);
 
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
-        BASE_FLAG_BASE | BASE_FLAG_CELL | flags | FLAG_LIFT_BYTE(NOQUOTE_63)
+        BASE_FLAG_BASE | BASE_FLAG_CELL | flags
     );
     c->extra.base = m_cast(ExtraHeart*, extra_heart);
 }

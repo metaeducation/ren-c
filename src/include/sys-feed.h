@@ -65,8 +65,8 @@
         assert(
             bp[1] == 0  // not strictly necessary, but rebEND is 2 bytes
             or (
-                bp[1] == u_cast(Byte, TYPE_BLANK)
-                and bp[2] == u_cast(Byte, NOQUOTE_63)
+                bp[1] == i_cast(Byte, TYPE_BLANK)
+                and bp[2] == i_cast(Byte, As_Lift(TYPE_BLANK))
             )
         );
         return true;
@@ -298,7 +298,7 @@ INLINE Option(const Element*) Try_Reify_Variadic_Feed_At(
         }
         else {
             assert(Is_Quoted(single));
-            Unquote_Cell(Copy_Cell(&feed->fetched, single));
+            Unquote_Quoted_Cell(Copy_Cell(&feed->fetched, single));
             feed->p = &feed->fetched;
         }
         GC_Kill_Flex(inst1);
@@ -843,9 +843,9 @@ INLINE Result(Feed*) Prep_At_Feed(
             | CELL_FLAG_NEWLINE_BEFORE \
     )) != ( \
         FLAG_KIND_BYTE(TYPE_WORD) /* CHAIN! or PATH!...worth it? [2] */ \
-            | FLAG_LIFT_BYTE(NOQUOTE_63)   \
+            | FLAG_LIFT_BYTE(As_Lift(TYPE_WORD))   \
             | (not CELL_FLAG_NEWLINE_BEFORE)  /* no infix newlines [3] */ \
-    ))
+    ))  // !!! REVIEW: can just look for As_Lift(TYPE_WORD)!
 
 
 // Due to Feeds canonizing rebEND to g_cell_aligned_end, we can take advantage
@@ -858,5 +858,5 @@ INLINE Result(Feed*) Prep_At_Feed(
             | FLAG_LIFT_BYTE(255) \
     )) == ( \
         FLAG_KIND_BYTE(TYPE_BLANK) \
-            | FLAG_LIFT_BYTE(NOQUOTE_63) \
-    ))
+            | FLAG_LIFT_BYTE(As_Lift(TYPE_BLANK)) \
+    ))  // !!! REVIEW: can just look for As_Lift(TYPE_BLANK)!

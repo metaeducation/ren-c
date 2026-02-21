@@ -215,13 +215,13 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
         flag == CELL_MASK_ERASED_0  // 0 means no leading space, item is "head"
     ));
 
-    if (LIFT_BYTE(v) != NOQUOTE_63)
+    if (LIFT_BYTE(v) > MAX_LIFT_NOQUOTE_NOQUASI)
         goto cant_optimize_in_situ;  // quote bits mean on sequence itself
 
     if (Is_Word(v)) {  // in-situ optimization, see [B]
         v->header.bits &= (~ CELL_FLAG_LEADING_BLANK);
         v->header.bits |= flag;
-        KIND_BYTE(v) = heart;
+        Tweak_Cell_Type(v, heart);
         return v;
     }
 
@@ -232,7 +232,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
         Option(Heart) h = Heart_Of(v);
         if (not mirror or (unwrap mirror == unwrap h)) {
             MIRROR_BYTE(a) = unwrap Heart_Of(v);  // remember what kind it is
-            KIND_BYTE(v) = heart;  // e.g. TYPE_BLOCK => TYPE_PATH
+            Tweak_Cell_Type(v, heart);  // e.g. TYPE_BLOCK => TYPE_PATH
             v->header.bits |= flag;
             return v;
         }
@@ -270,7 +270,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
 
     Reset_Cell_Header_Noquote(
         v,
-        FLAG_HEART(heart)
+        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // mark the pairing
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // payload second not used
     );
@@ -315,7 +315,8 @@ INLINE Result(Element*) Init_Any_Sequence_Bytes(
     assert(Any_Sequence_Type(heart));
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(heart) | CELL_MASK_NO_MARKING
+        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+            | CELL_MASK_NO_MARKING
     );
     Tweak_Cell_Binding(out, UNBOUND);  // paths bindable, can't have garbage
 
@@ -358,7 +359,8 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(heart) | CELL_MASK_NO_MARKING
+        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+            | CELL_MASK_NO_MARKING
     );
     Tweak_Cell_Binding(out, UNBOUND);  // paths are bindable, can't be garbage
 
@@ -468,7 +470,7 @@ INLINE Result(Element*) Init_Any_Sequence_Or_Conflation_Pairlike(
 
     Reset_Cell_Header_Noquote(
         out,
-        FLAG_HEART(heart)
+        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // first is pairing
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // payload second not used
     );
@@ -684,8 +686,7 @@ INLINE Element* Copy_Sequence_At_Untracked(
             return Init_Blank(out);
 
         Copy_Cell_Core_Untracked(out, sequence, CELL_MASK_COPY);  // [2]
-        KIND_BYTE(out) = TYPE_WORD;
-        LIFT_BYTE(out) = NOQUOTE_63;  // [3]
+        Tweak_Cell_Type(out, TYPE_WORD);  // [3]
         return out; }
 
       case FLAVOR_SOURCE : {  // uncompressed sequence, or compressed "mirror"
@@ -696,8 +697,7 @@ INLINE Element* Copy_Sequence_At_Untracked(
                 return Init_Blank(out);
 
             Copy_Cell_Core_Untracked(out, sequence, CELL_MASK_COPY);
-            KIND_BYTE(out) = MIRROR_BYTE(a);
-            LIFT_BYTE(out) = NOQUOTE_63;  // [3]
+            Tweak_Cell_Type(out, u_cast(HeartEnum, MIRROR_BYTE(a)));  // [3]
             return out;
         }
         assert(Array_Len(a) >= 2);
@@ -821,13 +821,14 @@ INLINE void Get_Tuple_Bytes(
 
 INLINE Element* Init_Set_Word(Init(Element) out, const Symbol* s) {
     Init_Word(out, s);
-    KIND_BYTE(out) = TYPE_CHAIN;
+    Tweak_Cell_Type(out, TYPE_CHAIN);
+    impossible(Get_Cell_Flag(out, LEADING_BLANK));
     return out;
 }
 
 INLINE Element* Init_Get_Word(Init(Element) out, const Symbol* s) {
     Init_Word(out, s);
-    KIND_BYTE(out) = TYPE_CHAIN;
+    Tweak_Cell_Type(out, TYPE_CHAIN);
     Set_Cell_Flag(out, LEADING_BLANK);
     return out;
 }
@@ -880,7 +881,7 @@ INLINE bool Is_Get_Word_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Get_Word(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Get_Word_Cell(v); }
+  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Get_Word_Cell(v); }
 
 INLINE bool Is_Set_Word_Cell(const Cell* c) {
     return (
@@ -890,7 +891,7 @@ INLINE bool Is_Set_Word_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Set_Word(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Set_Word_Cell(v); }
+  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Set_Word_Cell(v); }
 
 
 // The new /foo: assignment form ensures that the thing being assigned is
@@ -902,7 +903,7 @@ INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
     Option(Sink(bool)) bound,
     const Element* e
 ){
-    if (LIFT_BYTE(e) != NOQUOTE_63)
+    if (LIFT_BYTE(e) > MAX_LIFT_NOQUOTE_NOQUASI)
         return nullptr;
     if (Is_Set_Word_Cell(e)) {
         if (bound)
@@ -944,7 +945,7 @@ INLINE bool Is_Get_Tuple_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Get_Tuple(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Get_Tuple_Cell(v); }
+  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Get_Tuple_Cell(v); }
 
 INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
     return (
@@ -954,7 +955,7 @@ INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Set_Tuple(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Set_Tuple_Cell(v); }
+  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Set_Tuple_Cell(v); }
 
 
 // GET-BLOCK! and SET-BLOCK!
@@ -967,7 +968,7 @@ INLINE bool Is_Get_Block_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Get_Block(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Get_Block_Cell(v); }
+  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Get_Block_Cell(v); }
 
 INLINE bool Is_Set_Block_Cell(const Cell* c) {
     return (
@@ -977,7 +978,7 @@ INLINE bool Is_Set_Block_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Set_Block(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Set_Block_Cell(v); }
+  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Set_Block_Cell(v); }
 
 
 // GET-GROUP! and SET-GROUP!
@@ -990,7 +991,7 @@ INLINE bool Is_Get_Group_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Get_Group(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Get_Group_Cell(v); }
+  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Get_Group_Cell(v); }
 
 INLINE bool Is_Set_Group_Cell(const Cell* c) {
     return (
@@ -1000,14 +1001,13 @@ INLINE bool Is_Set_Group_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Set_Group(const Stable* v)
-  { return LIFT_BYTE(v) == NOQUOTE_63 and Is_Set_Group_Cell(v); }
+  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Set_Group_Cell(v); }
 
 
 INLINE bool Any_Set_Value(const Stable* v) {  // !!! optimize?
     Option(SingleHeart) single;
     return (
-        LIFT_BYTE(v) == NOQUOTE_63
-        and Heart_Of(v) == TYPE_CHAIN
+        LIFT_BYTE(v) == As_Lift(TYPE_CHAIN)
         and (single = Try_Get_Sequence_Singleheart(v))
         and Singleheart_Has_Trailing_Blank(unwrap single)
     );
@@ -1016,8 +1016,7 @@ INLINE bool Any_Set_Value(const Stable* v) {  // !!! optimize?
 INLINE bool Any_Get_Value(const Stable* v) {  // !!! optimize?
     Option(SingleHeart) single;
     return (
-        LIFT_BYTE(v) == NOQUOTE_63
-        and Heart_Of(v) == TYPE_CHAIN
+        LIFT_BYTE(v) == As_Lift(TYPE_CHAIN)
         and (single = Try_Get_Sequence_Singleheart(v))
         and Singleheart_Has_Leading_Blank(unwrap single)
     );

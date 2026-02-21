@@ -148,7 +148,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 // a single quote of nothing.
 //
 Result(None) Init_Invokable_From_Feed(
-    Sink(Stable) out,
+    Sink(Element) out,
     Option(const Element*) first,  // override first value, vs. At_Feed(feed)
     Feed* feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
@@ -167,9 +167,15 @@ Result(None) Init_Invokable_From_Feed(
     StackIndex base = TOP_INDEX;
 
     if (Is_Word(v) or Is_Tuple(v) or Is_Path(v) or Is_Chain(v)) {
+        Value* sink_out = u_cast(Value*, out);
         require (
-          Get_Var(out, NO_STEPS, v, Feed_Binding(feed))
+          Get_Var(sink_out, NO_STEPS, v, Feed_Binding(feed))
         );
+        require (
+          Stable* stable = Decay_If_Unstable(sink_out)
+        );
+        if (Is_Antiform(stable))
+            panic ("Actions made with REFRAMER cannot work with ANTIFORMs");
     }
     else
         Copy_Cell_May_Bind(out, v, Feed_Binding(feed));
@@ -178,7 +184,7 @@ Result(None) Init_Invokable_From_Feed(
         Fetch_Next_In_Feed(feed);  // we've seen it now
 
     if (not Is_Frame(out)) {
-        Quote_Cell(As_Element(out));
+        Quote_Cell(out);
         return none;
     }
 
@@ -187,13 +193,15 @@ Result(None) Init_Invokable_From_Feed(
     // to put the phase back.
     //
     DECLARE_ELEMENT (frame);
-    Move_Cell(frame, As_Element(out));
+    Move_Cell(frame, out);
     Push_Lifeguard(frame);
 
     Option(VarList*) coupling = Frame_Coupling(frame);
 
+    Value* sink_out = u_cast(Value*, out);
+
     Level* L = Make_Pushed_Level_From_Action_Feed_May_Throw(
-        out,
+        sink_out,  // result not used by this routine, so non-Element bits ok
         frame,
         feed,
         base,
@@ -238,7 +246,7 @@ Result(None) Init_Invokable_From_Feed(
 // This converts QUOTED?s into frames for the identity function.
 //
 Result(None) Init_Frame_From_Feed(
-    Sink(Stable) out,
+    Sink(Element) out,
     const Element* first,
     Feed* feed,
     bool error_on_deferred
@@ -257,7 +265,7 @@ Result(None) Init_Frame_From_Feed(
     );
 
     Stable* var = Stable_Slot_Hack(Varlist_Slot(exemplar, 2));
-    Unquote_Cell(Copy_Cell(var, As_Element(out)));
+    Unquote_Quoted_Cell(Copy_Cell(var, out));
 
     // Should we save the WORD! from a variable access to use as the name of
     // the identity alias?

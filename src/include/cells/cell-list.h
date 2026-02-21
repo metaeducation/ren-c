@@ -231,13 +231,19 @@ INLINE Element* Init_Relative_Block_At(
 //    The tradeoff in using none is that it is "truthy".
 //
 
-INLINE Stable* Splicify(Exact(Stable*) v) {
-    assert(Any_List(v) and LIFT_BYTE(v) == NOQUOTE_63);
+INLINE Stable* Spread_Cell(Exact(Stable*) v) {
+    assert(Any_List(v));
     KIND_BYTE(v) = HEART_BLOCK_SIGNIFYING_SPLICE;  // forget former list type
     Tweak_Cell_Binding(u_cast(Element*, v), UNBOUND);
     Antiformize_Unbound_Fundamental(v, LIFTBYTE_SPLICE);
     assert(Is_Splice(v));
     return v;
+}
+
+INLINE Element* Unsplice_Cell(Stable* v) {
+    assert(Is_Splice(v));
+    LIFT_BYTE(v) = As_Lift(TYPE_BLOCK);
+    return As_Element(v);
 }
 
 INLINE Stable* Init_Splice_Untracked(Init(Stable) out, const Source* a) {

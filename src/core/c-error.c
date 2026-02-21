@@ -1031,13 +1031,13 @@ Error* Error_Invalid_Type(Type type)
 //
 // Accessors like VAL_UINT8() are written to be able to extract the value
 // from QUOTED? integers (used in applications like molding, where the quoted
-// status is supposed to be ignored).  Copy_Dequoted_Cell() is defined
+// status is supposed to be ignored).  Copy_Dequote_Dequasi_Cell() is defined
 // after %cell-integer.h, so we handle the issue here.
 //
 Error* Error_Out_Of_Range(const Stable* arg)
 {
     DECLARE_ELEMENT (unquoted);
-    Copy_Dequoted_Cell(unquoted, arg);
+    Copy_Dequote_Dequasi_Cell(unquoted, arg);
 
     return Error_Out_Of_Range_Raw(unquoted);
 }

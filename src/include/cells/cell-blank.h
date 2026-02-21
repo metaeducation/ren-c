@@ -54,7 +54,12 @@
 //
 
 INLINE Element* Init_Blank_Untracked(Init(Element) out, Flags flags) {
-    Reset_Cell_Header(out, CELL_MASK_BLANK | flags);
+    Reset_Cell_Header(
+        out,
+        FLAG_KIND_BYTE(TYPE_BLANK) | flags
+            | CELL_FLAG_DONT_MARK_PAYLOAD_1
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2
+    );
     Tweak_Cell_Binding(out, UNBOUND);  // Is_Bindable_Heart() due to niche use
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
     Corrupt_Unused_Field(out->payload.split.two.corrupt);
@@ -63,7 +68,7 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out, Flags flags) {
 }
 
 #define Init_Blank(out) \
-    TRACK(Init_Blank_Untracked((out), FLAG_LIFT_BYTE(NOQUOTE_63)))
+    TRACK(Init_Blank_Untracked((out), FLAG_LIFT_BYTE(As_Lift(TYPE_BLANK))))
 
 
 //=//// DECORATED BLANK! ("," DOES NOT RENDER) ////////////////////////////=//
@@ -86,27 +91,34 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out, Flags flags) {
 // pleasing property that the ~ antiform is void.
 //
 
+INLINE Element* Init_Sigiled_Blank_Core(Init(Element) out, Sigil sigil) {
+    return Init_Blank_Untracked(
+        out,
+        FLAG_LIFT_BYTE(sigil ? Lift_From_Sigil(sigil) : As_Lift(TYPE_BLANK))
+            | FLAG_SIGIL(sigil)
+    );
+}
+
 #define Init_Sigiled_Blank(out,sigil) \
-    TRACK(Init_Blank_Untracked( \
-        (out), FLAG_LIFT_BYTE(NOQUOTE_63) | FLAG_SIGIL(sigil)))
+    TRACK(Init_Sigiled_Blank_Core((out), (sigil)))
 
 #define Is_Cell_Blank_With_Lift_Sigil(v, lift_byte, sigil) \
     Cell_Has_Lift_Sigil_Heart( \
         Known_Stable(v), (lift_byte), (sigil), TYPE_BLANK)
 
 #define Is_Pinned_Blank(v) /* renders as `@` [1] */ \
-    Is_Cell_Blank_With_Lift_Sigil((v), NOQUOTE_63, SIGIL_PIN)
+    Is_Cell_Blank_With_Lift_Sigil((v), As_Lift(TYPE_PINNED), SIGIL_PIN)
 
 #define Is_Metaform_Blank(v) /* renders as `^` [1] */ \
-    Is_Cell_Blank_With_Lift_Sigil((v), NOQUOTE_63, SIGIL_META)
+    Is_Cell_Blank_With_Lift_Sigil((v), As_Lift(TYPE_METAFORM), SIGIL_META)
 
 #define Is_Tied_Blank(v) /* renders as `$` [1] */ \
-    Is_Cell_Blank_With_Lift_Sigil((v), NOQUOTE_63, SIGIL_TIE)
+    Is_Cell_Blank_With_Lift_Sigil((v), As_Lift(TYPE_TIED), SIGIL_TIE)
 
-INLINE bool Any_Sigiled_Blank(const Element* e) {
-    if (LIFT_BYTE(e) != NOQUOTE_63 or not Sigil_Of(e))
+INLINE bool Any_Sigiled_Blank(const Element* v) {
+    if (LIFT_BYTE(v) > MAX_LIFT_NOQUOTE_NOQUASI or not Sigil_Of(v))
         return false;
-    return Heart_Of(e) == TYPE_BLANK;
+    return Heart_Of(v) == TYPE_BLANK;
 }
 
 
@@ -152,8 +164,7 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
     TRACK(Init_Void_Untracked(out))
 
 #define Init_Lifted_Void(out) \
-    Init_Blank_Untracked(Possibly_Unstable(out), \
-        FLAG_LIFT_BYTE(QUASIFORM_64))
+    Init_Blank_Untracked(Possibly_Unstable(out), FLAG_LIFT_BYTE(QUASIFORM_64))
 
 
 //=//// "VOID TO MAKE HEAVY" FLAG /////////////////////////////////////////=//

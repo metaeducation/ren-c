@@ -813,10 +813,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             if (Is_None(As_Stable(pattern)))
                 Copy_Cell(pattern, LIB(EMPTY_TEXT));
             else {
-                KIND_BYTE(pattern) = Kind_From_Sigil_And_Heart(
-                    SIGIL_PIN, TYPE_BLOCK
-                );
-                LIFT_BYTE_RAW(pattern) = NOQUOTE_63;
+                Tweak_Cell_Sigiled_Type(pattern, SIGIL_PIN, TYPE_BLOCK);
+
                 Api(Stable*) joined = rebStable(
                     CANON(JOIN), CANON(TEXT_X), pattern
                 );
@@ -1021,7 +1019,7 @@ Result(Element*) Alias_Any_String_As(
 ){
     if (Any_String_Type(as)) {  // special handling not in Utf8 generic [1]
         Copy_Cell(out, string);
-        KIND_BYTE(out) = as;
+        Tweak_Cell_Type(out, as);
         Inherit_Const(out, string);
         return out;
     }

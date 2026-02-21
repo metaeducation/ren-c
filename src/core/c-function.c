@@ -340,7 +340,7 @@ static Result(None) Push_Keys_And_Params_Core(
         if (LIFT_BYTE(v) != ONEQUOTE_NONQUASI_65)
             return fail (Error_Bad_Func_Def_Raw(v));
 
-        LIFT_BYTE(SPARE) = NOQUOTE_63;
+        Clear_Cell_Quotes_And_Quasi(spare);
         quoted = true;
 
         if (Is_Word(v))
@@ -710,7 +710,7 @@ Result(ParamList*) Pop_Paramlist(
         else
             Set_Cell_Flag(param, PARAM_NOTE_TYPECHECKED);  // locals "checked"
 
-        Shield_Param_If_Debug(param);
+        Shield_Param_If_Tracking(param);
 
         ++key;
         ++param;
@@ -857,10 +857,9 @@ Details* Make_Dispatch_Details(
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     Option(Ordinal) details_max  // 1-based max index desired for Phase_Details
 ){
-    assert(Heart_Of(exemplar) == TYPE_FRAME);
     assert(
-        LIFT_BYTE(exemplar) == NOQUOTE_63
-        or LIFT_BYTE(exemplar) == LIFTBYTE_ACTION  // allow action antiform
+        LIFT_BYTE(exemplar) == As_Lift(TYPE_FRAME)
+        or LIFT_BYTE(exemplar) == LIFTBYTE_ACTION
     );
 
   check_flags: {
@@ -916,8 +915,8 @@ Details* Make_Dispatch_Details(
 
     Cell* rootvar = Array_Head(a);
     Copy_Cell(rootvar, exemplar);
-    LIFT_BYTE(rootvar) = NOQUOTE_63;  // canonize action antiforms to FRAME!
-    Shield_Rootvar_If_Debug(rootvar);
+    LIFT_BYTE(rootvar) = As_Lift(TYPE_FRAME);  // canonize ACTION! to FRAME!
+    Shield_Rootvar_If_Tracking(rootvar);
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
 

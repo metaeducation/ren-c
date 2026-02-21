@@ -52,20 +52,25 @@ DECLARE_NATIVE(NOW)
 {
     INCLUDE_PARAMS_OF_NOW;
 
-    Value* timestamp = Get_Current_Datetime_Value();
+    Api(Value*) timestamp = Get_Current_Datetime_Value();
     Copy_Cell(OUT, timestamp);
     rebRelease(timestamp);
-
-    trap (
-        Stable* out = Decay_If_Unstable(OUT)
-    );
 
     // However OS-level date and time is plugged into the system, it needs to
     // have enough granularity to give back date, time, and time zone.
 
-    assert(Is_Date(out));
-    assert(Does_Date_Have_Time(out));
-    assert(Does_Date_Have_Zone(out));
+    trap (  // shouldn't be unstable, but API's RebolValue* doesn't stop it
+      Stable* stable = Decay_If_Unstable(OUT)
+    );
+    if (
+        not Is_Date(stable)
+        or not Does_Date_Have_Time(stable)
+        or not Does_Date_Have_Zone(stable)
+    ){
+        panic ("Get_Current_Datetime_Value() didn't give date w/time and zone");
+    }
+
+    Element* out = As_Element(stable);
 
     if (not ARG(PRECISE)) {
         //
@@ -111,11 +116,11 @@ DECLARE_NATIVE(NOW)
         VAL_ZONE(out) = NO_DATE_ZONE;
     }
     else if (ARG(TIME)) {
-        KIND_BYTE(out) = TYPE_TIME;
+        Tweak_Cell_Type(out, TYPE_TIME);
     }
     else if (ARG(ZONE)) {
         Tweak_Cell_Nanoseconds(out, VAL_ZONE(out) * ZONE_MINS * MIN_SEC);
-        KIND_BYTE(out) = TYPE_TIME;
+        Tweak_Cell_Type(out, TYPE_TIME);
     }
     else if (ARG(WEEKDAY))
         n = Week_Day(out);
