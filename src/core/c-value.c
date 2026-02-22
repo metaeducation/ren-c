@@ -92,13 +92,6 @@ void Probe_Cell_Print_Helper(
         return;
     }
 
-    if (Type_Of_Core(v) == TYPE_BLANK) {
-        require (
-          Append_Ascii(mo->strand, "\\\\blank\\\\")
-        );
-        return;
-    }
-
     if (LIFT_BYTE(v) >= MIN_LIFT_ANTIFORM) {
         DECLARE_ELEMENT (reified);
         Copy_Cell_Core(reified, v, CELL_MASK_ALL);
@@ -125,6 +118,11 @@ void Probe_Cell_Print_Helper(
               Append_Ascii(mo->strand, "~\\  ; antiform")
             );
         }
+    }
+    else if (Is_Blank(As_Element(v))) {
+        require (
+          Append_Ascii(mo->strand, "\\\\blank\\\\")
+        );
     }
     else
         Mold_Element(mo, As_Element(v));

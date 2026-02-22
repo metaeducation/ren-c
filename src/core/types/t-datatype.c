@@ -53,9 +53,9 @@ void Startup_Datatypes(void)
   // token pastes in such a way that these won't compile.  Rather than find
   // some crazy workaround, we just make these runtime checks.
 
-    assert(Type_Enum_For_Sigil_Unchecked(SIGIL_META) == TYPE_METAFORM);
-    assert(Type_Enum_For_Sigil_Unchecked(SIGIL_PIN) == TYPE_PINNED);
-    assert(Type_Enum_For_Sigil_Unchecked(SIGIL_TIE) == TYPE_TIED);
+    assert(i_cast(TypeEnum, SIGIL_META) == TYPE_METAFORM);
+    assert(i_cast(TypeEnum, SIGIL_PIN) == TYPE_PINNED);
+    assert(i_cast(TypeEnum, SIGIL_TIE) == TYPE_TIED);
 
 } startup_datatypes: {
 

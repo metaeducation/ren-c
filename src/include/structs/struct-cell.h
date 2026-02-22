@@ -228,34 +228,24 @@ typedef enum {
 
 #define CELL_MASK_SIGIL  FLAG_SIGIL_CRUMB(3)  // 0b11 << KIND_SIGIL_SHIFT
 
-#define Type_Enum_For_Sigil_Unchecked(sigil) /* SIGIL_XXX != TYPE_XXX [1] */ \
-    u_cast(TypeEnum, u_cast(Byte, known(Sigil, (sigil)) + MAX_HEARTBYTE))
-
 
 //=//// BITS 16-23: QUOTE/QUASI/ANTI/DUAL BYTE ("LIFT") ///////////////////=//
 //
-// Cells can be quote-escaped up to 126 levels.  Because the low bit of the
-// lifting byte is reserved for whether the contained value is a quasiform,
-// each quoting level effectively adds 2 to the lift byte.
+// Cells can be quote-escaped up to MAX_QUOTE_DEPTH_64 levels.  Because the
+// low bit of the lifting byte is reserved for whether the contained value is
+// a quasiform when in the quoted state, each quoting level effectively adds
+// 2 to the lift byte.
 //
 // A Cell's underlying "HEART" can report it as something like TYPE_WORD, but
-// that is only reported as the result of Type_Of() when LIFT_BYTE() is 2.
-// When LIFT_BYTE() is 3 it says it is TYPE_QUASIFORM, and when it's greater
-// than 4 then Type_Of() reports TYPE_QUOTED.  A LIFT_BYTE() of 1 will give
-// back various TYPE_XXX answers corresponding to the antiforms (such as
-// TYPE_SPLICE, TYPE_TRASH, TYPE_ERROR, etc.)
+// that is only reported as the result of Type_Of() when LIFT_BYTE() is also
+// TYPE_WORD.  Higher LIFT_BYTE() will give back various TYPE_XXX answers
+// corresponding to the quoted, quasiform, or antiform states.
 //
 // 1. There's a complex runtime check to ensure coherence in the lift byte
 //    with the rest of the cell, which is triggered in some C++ builds when
 //    you use LIFT_BYTE() directly.  This raw accessor is used to implement
 //    that layer, and can also be used for efficiency in some cases that
 //    want to subvert those checks.
-//
-// 2. Not all datatypes have quasiforms/antiforms (e.g. ~/foo/~ is a PATH!
-//    with a Quasi-Space in the first and last slots, not a quasiform).  To
-//    help avoid casual assignments to LIFT_BYTE() of the 2 and 4 values
-//    we prohibit them in certain builds, requiring LIFT_BYTE_RAW() to be
-//    used if you are truly sure it's safe.
 //
 
 typedef Byte LiftByte;  // help document when Byte means a lifting byte
@@ -265,16 +255,6 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 
 #define LIFT_0  TYPE_0_constexpr
 #define BEDROCK_255  255
-
-#if DEBUG_HOOK_LIFT_BYTE  // e.g. stop `LIFT_BYTE(cell) = QUASIFORM_64` [2]
-    struct Lift_64_Struct { constexpr operator LiftByte() const { return 64; } };
-
-    constexpr Lift_64_Struct quasiform_64;
-
-    #define QUASIFORM_64          quasiform_64
-#else
-    #define QUASIFORM_64          64
-#endif
 
 #define MAX_LIFT_ANTIFORM  LIFTBYTE_PACK
 #define LIFTBYTE_PACK  254
@@ -293,10 +273,19 @@ typedef Byte LiftByte;  // help document when Byte means a lifting byte
 
 #define NOQUOTE_63              63
 #define NONQUASI_BIT            1
-// see above for QUASIFORM_64
-#define ONEQUOTE_NONQUASI_65    65  // non-quasiquoted state of 1 quote
 
-#define MAX_QUOTE_DEPTH_63     63         // highest legal quoting level
+STATIC_ASSERT(i_cast(Byte, TYPE_QUASIFORM) == 64);
+#define QUASIFORM_64            64
+STATIC_ASSERT(not (QUASIFORM_64 & NONQUASI_BIT));
+
+STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED) == 65);
+#define ONEQUOTE_NONQUASI_65    65
+STATIC_ASSERT(ONEQUOTE_NONQUASI_65 & NONQUASI_BIT);
+
+STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_64_TIMES_NONQUASI) == 191);
+STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_64_TIMES_QUASI) == 192);
+#define MAX_QUOTE_DEPTH_64     64         // highest legal quoting level
+
 #define Quote_Shift(n)      ((n) << 1)  // help find manipulation sites
 
 #define FLAG_LIFT_BYTE(byte)  FLAG_THIRD_BYTE(byte)

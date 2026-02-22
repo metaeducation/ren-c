@@ -109,8 +109,8 @@ INLINE Element* Quotify_Depth(Element* v, Count depth) {
     if (depth == 0)
         return v;
 
-    if (Quotes_Of(v) + depth >  MAX_QUOTE_DEPTH_63)
-        panic ("Quoting Depth of 63 Exceeded");
+    if (Quotes_Of(v) + depth >  MAX_QUOTE_DEPTH_64)
+        panic ("Quoting Depth of 64 Exceeded");
 
     if (LIFT_BYTE(v) <= MAX_LIFT_NOQUOTE_NOQUASI)
         LIFT_BYTE_RAW(v) = NOQUOTE_63;
@@ -124,6 +124,9 @@ INLINE Element* Quotify_Depth(Element* v, Count depth) {
 
 #define Quote_Cell(v)  Quotify_Depth((v), 1)
 
+#define Lift_From_Sigil(sigil) \
+    i_cast(Byte, known(Sigil, (sigil)))
+
 INLINE Element* Unquote_Quoted_Cell(Element* v) {
     assert(LIFT_BYTE_RAW(v) > MAX_LIFT_NOQUOTE_QUASI_OK);
 
@@ -132,31 +135,29 @@ INLINE Element* Unquote_Quoted_Cell(Element* v) {
     if (LIFT_BYTE_RAW(v) == NOQUOTE_63) {
         Sigil sigil = i_cast(Sigil, KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT);
         if (sigil)
-            LIFT_BYTE(v) = As_Lift(MAX_HEARTBYTE + i_cast(LiftByte, sigil));
+            LIFT_BYTE(v) = Lift_From_Sigil(sigil);
         else
             LIFT_BYTE(v) = As_Lift(KIND_BYTE(v));
     }
     return v;
 }
 
-
-INLINE void Normalize_Cell(Cell* cell) {
-    if (LIFT_BYTE_RAW(cell) <= MAX_HEARTBYTE) {
-        assert(not (cell->header.bits & CELL_MASK_SIGIL));
+INLINE void Normalize_Cell(Cell* cell) {  // drop quoted/quasi/anti, keep sigil
+    possibly(LIFT_BYTE(cell) == BEDROCK_255);  // normalizes bedrock too
+    if (LIFT_BYTE_RAW(cell) < MIN_HEARTBYTE) {
+        possibly(LIFT_BYTE_RAW(cell) == 0);  // extension type w/no Sigil
+        assert(
+            (KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT) == LIFT_BYTE_RAW(cell)
+        );
     }
-    else if (
-        LIFT_BYTE_RAW(cell) > MAX_HEARTBYTE
-        and LIFT_BYTE_RAW(cell) <= MAX_TYPEBYTE_FUNDAMENTAL
-    ){
-        Sigil sigil = i_cast(Sigil, KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT);
-        assert(sigil == i_cast(Sigil, LIFT_BYTE_RAW(cell) - MAX_HEARTBYTE));
-        USED(sigil);
+    else if (LIFT_BYTE_RAW(cell) <= MAX_HEARTBYTE) {
+        assert(LIFT_BYTE_RAW(cell) == KIND_BYTE_RAW(cell));  // no Sigil, equal
     }
     else {
         possibly(LIFT_BYTE_RAW(cell) == QUASIFORM_64);
         Sigil sigil = i_cast(Sigil, KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT);
         if (sigil)
-            LIFT_BYTE(cell) = As_Lift(MAX_HEARTBYTE + i_cast(LiftByte, sigil));
+            LIFT_BYTE(cell) = Lift_From_Sigil(sigil);
         else
             LIFT_BYTE(cell) = As_Lift(KIND_BYTE(cell));
     }

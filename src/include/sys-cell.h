@@ -754,6 +754,13 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 //
 // 1. We don't bother with const correctness in this debugging aid, as the
 //    regular build will enforce that.  Cast away constness for simplicity.
+//
+// 2. Not all datatypes have quasiforms/antiforms (e.g. ~/foo/~ is a PATH!
+//    with a Quasi-Space in the first and last slots, not a quasiform).  To
+//    help avoid casual assignments to LIFT_BYTE() of the 2 and 4 values
+//    we prohibit them in certain builds, requiring LIFT_BYTE_RAW() to be
+//    used if you are truly sure it's safe.
+//
 
 #if (! DEBUG_HOOK_LIFT_BYTE)
     #define LIFT_BYTE(cell) \
@@ -777,11 +784,21 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 
             assert(right >= 0 and right <= 255);
 
-            if (right <= MAX_HEARTBYTE) {
-                assert(KIND_BYTE_RAW(cell) == right);  // no sigil
+            if (right == 0) {  // extension type with no Sigil
+                assert(KIND_BYTE_RAW(cell) == 0);
             }
-            else if (right > MAX_HEARTBYTE and right <= MAX_TYPEBYTE_FUNDAMENTAL) {
-                assert(cell->header.bits & CELL_MASK_SIGIL);
+            else if (right < MIN_HEARTBYTE) {  // Sigil'd (nonquoted/nonquasi)
+                Sigil sigil = i_cast(
+                    Sigil, KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT
+                );
+                assert(i_cast(int, sigil) == right);
+            }
+            else if (right <= MAX_HEARTBYTE) {  // ordinary type with no Sigil
+                assert(KIND_BYTE_RAW(cell) == right);
+            }
+            else if (right == QUASIFORM_64) {
+                Option(Heart) heart = Unchecked_Heart_Of(cell);
+                assert(Any_Sequencable_Type(heart));  // [2]
             }
             else if (right != BEDROCK_255 and (right >= MIN_LIFT_ANTIFORM)) {
                 Option(Heart) heart = Unchecked_Heart_Of(cell);
@@ -792,8 +809,6 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 
             LIFT_BYTE_RAW(cell) = right;
         }
-
-        void operator=(const Lift_64_Struct& right) = delete;
 
         void operator=(const LiftHolder& right)  // must write explicitly
           { *this = u_cast(LiftByte, right); }
@@ -821,11 +836,7 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 // Note that these functions return Option(Type) because TYPE_0 is how
 // "extension types" are reported (things not in the 63 builtin-heart range).
 //
-// 1. Type_Of() is called *a lot*, so it's worth it to manually inline the
-//    logic for Underlying_Type_Of() inside of Type_Of(), because C/C++
-//    compilers do not honor `inline` in debug builds.
-//
-// 2. KIND_BYTE() and LIFT_BYTE() in certain checked builds have overhead
+// 1. KIND_BYTE() and LIFT_BYTE() in certain checked builds have overhead
 //    (creating actual wrapper objects to monitor reads/writes of the byte
 //    to check invariants).  We don't want to pay that overhead on every
 //    Type_Of() call.  Use KIND_BYTE_RAW() and LIFT_BYTE_RAW().
@@ -834,37 +845,24 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 //    it to change these to non-raw calls temporarily.)
 //
 
-INLINE Option(Type) Underlying_Type_Of_Unchecked(  // inlined in Type_Of() [1]
-    const Stable* v
-){
-    assert(LIFT_BYTE_RAW(v) != BEDROCK_255);
-
-    if (KIND_BYTE_RAW(v) <= MAX_HEARTBYTE)  // raw [2]
-        return i_cast(HeartEnum, KIND_BYTE_RAW(v));
-
-    return Type_Enum_For_Sigil_Unchecked(
-        i_cast(Sigil, KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT)
-    );
-}
-
 // will become the same answer as LIFT_BYTE_RAW for speed.
 //
 INLINE Option(Type) Type_Of_Core(const Cell* v) {
-    if (LIFT_BYTE(v) <= MAX_HEARTBYTE) {  // raw [2]
-        assert(KIND_BYTE_RAW(v) == LIFT_BYTE_RAW(v));
-        assert(not (v->header.bits & CELL_MASK_SIGIL));
-        return i_cast(HeartEnum, KIND_BYTE_RAW(v));
+    if (LIFT_BYTE_RAW(v) < MIN_HEARTBYTE) {  // raw [1]
+        possibly(KIND_BYTE_RAW(v) == 0);  // extension type w/no Sigil
+        assert((KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT) == LIFT_BYTE_RAW(v));
     }
-    if (LIFT_BYTE_RAW(v) <= MAX_TYPEBYTE_FUNDAMENTAL) {  // raw [2]
-        assert(v->header.bits & CELL_MASK_SIGIL);
-        return i_cast(TypeEnum, LIFT_BYTE_RAW(v));
+    else if (LIFT_BYTE_RAW(v) <= MAX_LIFT_NOQUOTE_NOQUASI) {
+        assert(KIND_BYTE_RAW(v) == LIFT_BYTE_RAW(v));  // no Sigil, equal
     }
-    assert(LIFT_BYTE_RAW(v) >= QUASIFORM_64);
-
-    switch (LIFT_BYTE_RAW(v)) {
-      case QUASIFORM_64:
-        return TYPE_QUASIFORM;
-
+    else if (LIFT_BYTE_RAW(v) == QUASIFORM_64) {
+        /* assert(Any_Sequencable_Type(Unchecked_Heart_Of(v))); */  // ?
+    }
+    else if (LIFT_BYTE_RAW(v) <= 192) {
+        // QUOTED! types can be anything
+        return TYPE_QUOTED;  // may become 255 in the future
+    }
+    else switch (LIFT_BYTE_RAW(v)) {  // still working on these...
       case LIFTBYTE_PACK:
       case LIFTBYTE_FAILURE:
       case LIFTBYTE_ACTION:
@@ -873,28 +871,23 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
       case LIFTBYTE_SPLICE:
       case LIFTBYTE_DATATYPE:
       case LIFTBYTE_LOGIC:
-        assert(KIND_BYTE_RAW(v) <= MAX_HEARTBYTE);  // raw [2]
+        assert(KIND_BYTE_RAW(v) <= MAX_HEARTBYTE);
         return i_cast(TypeEnum, KIND_BYTE_RAW(v) + MAX_TYPEBYTE_ELEMENT);
 
     #if RUNTIME_CHECKS
-      case BEDROCK_255:
+      default:
         crash ("Unexpected lift byte value BEDROCK_255 for Value* (not Slot*)");
     #endif
-
-      default:
-        return TYPE_QUOTED;
     }
+
+    return i_cast(TypeEnum, LIFT_BYTE_RAW(v));
 }
 
 #if NO_RUNTIME_CHECKS
-    #define Underlying_Type_Of  Underlying_Type_Of_Unchecked
     #define Type_Of  Type_Of_Core
     #define Type_Of_Unchecked  Type_Of_Core
     #define Type_Of_Possibly_Unstable  Type_Of_Core
 #else
-    #define Underlying_Type_Of(v) \
-        Underlying_Type_Of_Unchecked(Readable_Cell(Known_Stable(v)))
-
     #define Type_Of(v) \
         Type_Of_Core(Readable_Cell(Known_Stable(v)))
 
@@ -905,16 +898,47 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
         Type_Of_Core(Readable_Cell(Possibly_Unstable(v)))
 #endif
 
+#if CPLUSPLUS_11
+    template<typename Enum, Enum E>
+    struct KnownNotQuotedHelper {
+        static_assert(sizeof(Enum) == 0,
+            "KnownNotQuotedHelper used with unsupported enum type");
+    };
+
+    template<TypeEnum E>
+    struct KnownNotQuotedHelper<TypeEnum, E> {
+        static_assert(
+            i_cast(int, E) <= MAX_LIFT_NOQUOTE_QUASI_OK ||
+            i_cast(int, E) > MAX_TYPEBYTE_FUNDAMENTAL,
+            "Only for non-quoted type enums"
+        );
+        constexpr static TypeEnum value = E;
+    };
+
+  #if DEBUG_EXTRA_HEART_CHECKS
+    template<HeartEnum E>
+    struct KnownNotQuotedHelper<HeartEnum, E> {
+        constexpr static TypeEnum value = cast(TypeEnum, E);
+    };
+  #endif
+
+    #define known_not_quoted_enum_state(E) \
+        KnownNotQuotedHelper<decltype(E), E>::value
+#else
+    #define known_not_quoted_enum_state(E)  E
+#endif
+
+#define Has_Type(v,type) \
+    (LIFT_BYTE(Readable_Cell(Known_Stable(v))) \
+        == i_cast(Byte, known_not_quoted_enum_state(type)))
+
+#define Possibly_Unstable_Has_Type(v,type) \
+    (LIFT_BYTE(Readable_Cell(Possibly_Unstable(v))) \
+        == i_cast(Byte, known_not_quoted_enum_state(type)))
+
+
 #define Datatype_Of(v) \
     Datatype_Of_Possibly_Unstable(Known_Stable(v))
-
-INLINE Option(Type) Type_Of_When_Unquoted(const Element* elem) {
-    if (LIFT_BYTE(elem) == QUASIFORM_64)
-        return TYPE_QUASIFORM;
-
-    assert(LIFT_BYTE(elem) < MIN_LIFT_ANTIFORM);
-    return Underlying_Type_Of(elem);
-}
 
 
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//

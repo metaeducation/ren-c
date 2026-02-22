@@ -63,6 +63,18 @@ Rebol [
     ]--
 ]
 
+; In the numerical assignments of types, the first is TYPE_0...which means
+; the Cell's payload is for an extension type (added by DLLs after-the-fact).
+; these Cells surrender their "Extra" slot to hold a pointer to their
+; actual extension type, and thus only have two remaining platform-pointers
+; to use.
+
+; 1, 2, and 3 are taken for TYPE_METAFORM, TYPE_PINNED, and TYPE_TIED.  They
+; are put so early to make the test for sigilized types very fast.  (These
+; are not legal states for the "Heart" of a Cell...so they're not concerned
+; with questions like "do they indicate bindability.)
+
+; So at time of writing, the following types thus start in the enum at 4.
 
 integer!    "64 bit integer"
             (CELL_MASK_NO_MARKING)  ; would change with bignum ints
@@ -266,10 +278,9 @@ word!       "evaluates a variable or action"
 ; ABOVE THESE ARE QUOTED, QUASIFORM, and ANTIFORM "PSEUDOTYPES"
 ; ============================================================================
 
-; TYPE_QUASIFORM, TYPE_QUOTED_XXX, and all the antiform types (TYPE_SPLICE,
+; TYPE_QUASIFORM, TYPE_QUOTED_X_TIMES_XXX, and all antiform types (TYPE_SPLICE,
 ; TYPE_TRASH, etc.) enum values never appear in the KIND_BYTE() of a cell.
-; These are synthesized datatypes when the LIFT_BYTE() contains values greater
-; than
+; These are synthesized datatypes in the LIFT_BYTE().
 ;
 ; They're not inert... QUASIFORM? becomes ANTIFORM? when evaluated, and QUOTED?
 ; removes one level of quoting.  (ANTIFORM? should never be seen by the
@@ -279,6 +290,3 @@ word!       "evaluates a variable or action"
 ; creation of help strings and usermode functions like QUOTED? and QUASIFORM?.
 ; However the sheer number of edge cases involved made it better to clean
 ; up the %make-types.r process to do the pseudotype generation itself.
-;
-; !!! Could ANY-STABLE? be generated in a more automatic fashion, now that
-; a ^META parameter is not required to receive TRASH! ?

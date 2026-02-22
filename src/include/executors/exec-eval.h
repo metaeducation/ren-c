@@ -184,9 +184,10 @@ typedef enum {
     // easy use in the "hot" level header location.
     //
     // Since we only evaluate Element, start the stepper custom states *after*
-    // MAX_TYPEBYTE_ELEMENT (inclusive, TYPE_QUOTED = MAX_TYPEBYTE_ELEMENT)
+    // MAX_TYPEBYTE_FUNDAMENTAL (quoted and quasiform types don't require
+    // continuations so we don't need to worry about those states, either)
 
-    ST_STEPPER_MAX_TYPE = MAX_TYPEBYTE_ELEMENT,
+    ST_STEPPER_MAX_TYPE = MAX_TYPEBYTE_FUNDAMENTAL,
 
 
   //=//// STEPPER STATES ABOVE MAX_TYPE ////////////////////////////////////=//

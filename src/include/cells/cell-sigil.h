@@ -24,10 +24,10 @@
 // quoting, they can be applied only once...so there is no $$ or @$
 //
 // Sigils (or their absence) are represented via 2 bits in the KIND_BYTE().
-// This limits the number of fundamental types to 63 (as TYPE_0 is reserved
-// for representing an extension type.)  This limitation is not of much
-// concern in the modern system, as extension types allow making as many as
-// are required.
+// This limits the number of fundamental types to 60 (as TYPE_0 is reserved
+// for representing an extension type, and 3 type bytes are reserved for
+// the Sigil pseudotypes).  This limitation is not of much concern in the
+// modern system, as extension types allow making as many as are required.
 //
 //=//// NOTES ////////////////////////////////////////////////////////////=//
 //
@@ -79,14 +79,11 @@
 
 INLINE Option(Sigil) Sigil_Of(const Element* v) {
     assert(LIFT_BYTE_RAW(v) <= MAX_LIFT_NOQUOTE_NOQUASI);
-    if (
-        LIFT_BYTE(v) > MAX_HEARTBYTE  // check cheaper if 1-3 are Sigils
-        and LIFT_BYTE_RAW(v) <= MAX_TYPEBYTE_FUNDAMENTAL
-    ){
-        Sigil sigil = i_cast(Sigil, KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT);
-        assert (sigil == i_cast(Sigil, LIFT_BYTE_RAW(v) - MAX_HEARTBYTE));
-        return sigil;
+    if (LIFT_BYTE_RAW(v) < MIN_HEARTBYTE) {
+        assert((KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT) == LIFT_BYTE_RAW(v));
+        return i_cast(Sigil, LIFT_BYTE_RAW(v));
     }
+    assert(not (v->header.bits & CELL_MASK_SIGIL));
     return SIGIL_0;
 }
 
@@ -95,16 +92,13 @@ INLINE Option(Sigil) Cell_Underlying_Sigil(const Cell* cell) {
     possibly(LIFT_BYTE_RAW(cell) == BEDROCK_255);  // !!! allow, or take Value?
     Sigil sigil = i_cast(Sigil, KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT);
     if (sigil and LIFT_BYTE(cell) <= MAX_LIFT_NOQUOTE_NOQUASI)  // raw [2]
-        assert(sigil == i_cast(Sigil, LIFT_BYTE_RAW(cell) - MAX_HEARTBYTE));
+        assert(sigil == i_cast(Sigil, LIFT_BYTE_RAW(cell)));
     return sigil;
 }
 
 #define Kind_From_Sigil_And_Heart(sigil,heart) \
     (ii_cast(KindByte, known(Option(Sigil), (sigil)) << KIND_SIGIL_SHIFT) \
         | i_cast(KindByte, known(HeartEnum, (heart))))
-
-#define Lift_From_Sigil(sigil) \
-    (As_Lift(MAX_HEARTBYTE + i_cast(Byte, known(Sigil, (sigil)))))
 
 
 //=//// SIGIL MODIFICATION ////////////////////////////////////////////////=//
@@ -139,20 +133,17 @@ INLINE bool Any_Sigiled_Type(Option(Type) t)
     Any_Sigilable_Type(Type_Of(cell))
 
 INLINE Element* Clear_Cell_Sigil(Element* v) {
-    assert(LIFT_BYTE(v) < MIN_LIFT_ANTIFORM);  // no quotes/quasiforms
+    assert(LIFT_BYTE(v) <= MAX_LIFT_NOQUOTE_NOQUASI);
 
   #if RUNTIME_CHECKS
-    bool had_sigil = did (v->header.bits & CELL_MASK_SIGIL);
+    bool had_sigil = logical (v->header.bits & CELL_MASK_SIGIL);
   #endif
 
     v->header.bits &= (~ CELL_MASK_SIGIL);
 
-    if (
-        LIFT_BYTE(v) > MAX_HEARTBYTE
-        and LIFT_BYTE_RAW(v) <= MAX_TYPEBYTE_FUNDAMENTAL
-    ){
-        assert(had_sigil);
-        LIFT_BYTE(v) = As_Lift(KIND_BYTE(v));  // can copy it after sigil removed
+    if (LIFT_BYTE_RAW(v) < MIN_HEARTBYTE) {
+        assert(had_sigil or LIFT_BYTE_RAW(v) == 0);
+        LIFT_BYTE(v) = As_Lift(KIND_BYTE(v));  // can copy after sigil removed
     }
 
   #if RUNTIME_CHECKS
@@ -165,7 +156,13 @@ INLINE Element* Clear_Cell_Sigil(Element* v) {
 
 INLINE Element* Add_Cell_Sigil(Element* v, Sigil sigil) {
     assert(not (v->header.bits & CELL_MASK_SIGIL));  // no quotes/quasi [2]
-    assert(LIFT_BYTE_RAW(v) <= MAX_LIFT_NOQUOTE_NOQUASI);
+    assert(
+        LIFT_BYTE_RAW(v) == 0
+        or (
+            LIFT_BYTE_RAW(v) >= MIN_HEARTBYTE
+            and LIFT_BYTE_RAW(v) <= MAX_LIFT_NOQUOTE_NOQUASI
+        )
+    );
     assert(Any_Sigilable(v));
     v->header.bits |= FLAG_SIGIL(sigil);
     LIFT_BYTE(v) = Lift_From_Sigil(sigil);
@@ -219,6 +216,7 @@ INLINE void Tweak_Cell_Quoted_Type(Element* v, Heart heart) {
 
 INLINE void Tweak_Cell_Sigiled_Type(Cell* cell, Sigil sigil, Heart heart) {
     assert(sigil);
+    definitely(i_cast(Byte, sigil) < MIN_HEARTBYTE);
     KIND_BYTE(cell) = Kind_From_Sigil_And_Heart(sigil, heart);
-    LIFT_BYTE(cell) = i_cast(LiftByte, sigil) + MAX_HEARTBYTE;
+    LIFT_BYTE(cell) = Lift_From_Sigil(sigil);
 }

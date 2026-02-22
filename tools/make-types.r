@@ -65,7 +65,7 @@ for-each-datatype: func [
     body: overbind obj body  ; make variable visible to body
     var: has obj var
 
-    let heart*: 1  ; 0 is reserved
+    let heart*: 4  ; 0 is reserved and 1-3 are sigils
 
     let [  ; no LET in PARSE3
         name* description*
@@ -172,7 +172,7 @@ for-each-typerange: proc [
 
     let [name* any-name!* starting]
 
-    let heart*: 1  ; 0 is reserved
+    let heart*: 4  ; 0 is reserved, 1-3 are Sigils
     cycle [  ; need to be in loop for BREAK to work
         parse3:match type-table [some [not <end>
             opt some [name*: tag! (
@@ -273,20 +273,15 @@ e-types/emit [--[
      *
      * Modern Ren-C carves out special values of the LIFT_BYTE for unlifted
      * values--trading off some abilities to have higher quoting levels to
-     * get a very fast answer to Type_Of().  This means these macros can be
-     * very straightforward, and check a single byte as Rebol2/Red do:
+     * get a very fast answer to Type_Of().  However, it's still necessary
+     * to collapse the many quoted states of the lift byte to a single one
+     * to get TYPE_QUOTED.
      *
-     *     #define Is_Text(v) \
-     *         (Type_Of(v) == TYPE_TEXT)
+     * But if we're only interested in whether something has a fundamental
+     * non-quoted type or not, we don't need to do that collapse...and can
+     * just compare the LIFT_BYTE() directly, which Has_Type() does.
      *
-     * Before the modern tricks, being recognized as unlifted values meant
-     * you had to check *two* bytes...the LIFT_BYTE and the KIND_BYTE, and
-     * mask to check they were both what was desired:
-     *
-     *     #define Is_Text(cell) \
-     *         Cell_Has_Lift_Heart_No_Sigil((cell), NOQUOTE_0, TYPE_TEXT)
-     *
-     * It's worth it for the system to be designed to not need to do that.
+     *     #define Is_Text(v)  Has_Type((v), TYPE_TEXT)
      */
 ]--]
 
@@ -299,11 +294,10 @@ for-each-datatype 't [
     ]
 
     e-types/emit [propercase-of t --[
-        #define Is_${propercase-of T.name}(v) \
-            (Type_Of(v) == TYPE_$<T.NAME>)
+        #define Is_${propercase-of T.name}(v)  Has_Type((v), TYPE_$<T.NAME>)
 
         #define Is_Possibly_Unstable_Value_${propercase-of T.name}(v) \
-            (Type_Of_Possibly_Unstable(v) == TYPE_$<T.NAME>)
+            Possibly_Unstable_Has_Type((v), TYPE_$<T.NAME>)
     ]--]
 ]
 
@@ -420,41 +414,14 @@ for-each-datatype 't [
 e-types/write-emitted
 
 
-=== "CALCULATE SPARSE TYPESET MEMBERSHIPS" ===
+=== "SYMBOL-TO-TYPESET-BITS MAPPING TABLES" ===
 
-; Some typesets in %types.r are in tag ranges like <ANY-XXX?>...</ANY-XXX?>.
-; These can be checked by range.  Others are in a block with the type, like
-; [any-unit? any-inert?].  These sparse typesets get TYPESET_FLAG_XXX that
-; are collected into a `g_sparse_memberships[]` C array.
-
-memberships: copy []
-
-for-each-datatype 't [
-    let flagits: collect [
-        for-each [ts-name types] sparse-typesets [
-            if not find types t.name [continue]
-
-            keep cscape [ts-name "TYPESET_FLAG_${TS-NAME}"]
-        ]
-    ]
-    if empty? flagits [
-        append memberships cscape [t -[/* $<t.name> - $<t.heart> */  0]-]
-    ] else [
-        append memberships cscape [flagits t
-            --[/* $<t.name> - $<t.heart> */  ($<Delimit " | " Flagits>)]--
-        ]
-    ]
-]
-
-
-=== "SYMBOL-TO-TYPESET-BITS MAPPING TABLE" ===
+; See comments where the files are written out (would be redundant to write
+; them here, so better to have them show up in the .h and .c files)
 
 e-typesets: make-emitter "Built-in Typesets (Ranged and Sparse)" (
     join prep-dir %core/tmp-typesets.c
 )
-e-typesets/emit [--[
-    #include "sys-core.h"
-]--]
 
 e-typeset-bytes: make-emitter "Typeset Byte Mapping" (
     join prep-dir %specs/tmp-typeset-bytes.r
@@ -472,10 +439,102 @@ typedefines: make block! 128
 
 singlehearts: make block! 256  ; tricky thing, see description in comments
 
-typeset-flags: copy []
+typeset-flags: copy []  ; from ranges in %types.r, <ANY-XXX?>...</ANY-XXX?>
+sparse-memberships: copy []  ; non-ranged in %types.r, [any-unit? any-inert?]
 
 index: 1
 
+do-appends: proc [
+    name [word! text! integer!]
+    description [<opt> text!]
+    sparse [block!]  ; possibly empty
+    :ranged [block!]
+    :heart
+][
+    description: default [
+        assert [integer? name]
+        <- "reserved for future use"
+    ]
+
+    ranged: default [
+        reduce [
+            "TYPESET_FLAG_0_RANGE"
+            unspaced ["FLAG_THIRD_BYTE(" index ")"]
+            unspaced ["FLAG_FOURTH_BYTE(" index ")"]
+        ]
+    ]
+
+    append types cscape [name  ; for the non-distinguishing heart/type builds
+        --[TYPE_${NAME} = $<index>]--
+    ]
+
+    if heart [  ; still needs slot in TYPE enum if heart
+        append pseudotype-hearts cscape [name
+            --[ENUM_PSEUDO_${NAME} = $<index>]--
+        ]
+
+        append typedefines cscape [name
+            --[#define TYPE_${NAME}  HEART_ENUM(${NAME})]--
+        ]
+    ]
+    else [
+        append pseudotype-hearts cscape [name
+            --[ENUM_TYPE_${NAME} = $<index>]--
+        ]
+
+        append typedefines cscape [name
+            --[#define TYPE_${NAME}  TYPE_ENUM(${NAME})]--
+        ]
+    ]
+
+    append singlehearts cscape [name
+        --[SINGLEHEART_TAIL_SPACE_${NAME} = $<index * 256>]--
+    ]
+    append singlehearts cscape [name
+        --[SINGLEHEART_HEAD_SPACE_${NAME} = $<(index * 256) + 1>]--
+    ]
+
+    e-typeset-bytes/emit [name -[
+        $<name> $<index>
+    ]-]
+
+    e-typespecs/emit [name description -[
+        $<name> $<mold description>
+    ]-]
+
+    append typeset-flags cscape [name ranged
+        --[/* $<index> - $<name> */  ($<Delimit " | " Ranged>)]--
+    ]
+
+    if empty? sparse [
+        append sparse-memberships cscape [name -[/* $<index> - $<name> */  0]-]
+    ] else [
+        append sparse-memberships cscape [name sparse
+            --[/* $<index> - $<name> */  ($<Delimit " | " Sparse>)]--
+        ]
+    ]
+
+    index: me + 1
+]
+
+=== "PSEUDOTYPES FOR SIGILIZED TYPES" ===
+
+; TYPE_METAFORM, TYPE_PINNED, and TYPE_TIED come from 2-bit encoding in the
+; KIND_BYTE() so are derived types when present in the LIFT_BYTE.
+
+for-each [name description] [
+    metaform "marker to read unlifted and write lifted representations"
+    pinned "mark to bind in the evaluator in current context, and keep mark"
+    tied "mark to bind in the evaluator in current context, and drop mark"
+][
+    do-appends name description ["TYPESET_FLAG_BRANCH"]
+]
+
+=== "HEART TYPES" ===
+
+; "Heart" types refer to the actual pattern of layout of a Cell.
+
+min-heart: ~
 max-heart: ~
 
 for-each-datatype 't [  ; plains
@@ -483,83 +542,82 @@ for-each-datatype 't [  ; plains
         --[ENUM_TYPE_${T.NAME} = $<index>]--
     ]
 
-    append pseudotype-hearts cscape [t
-        --[ENUM_PSEUDO_${T.NAME} = $<index>]--
+    min-heart: default [cscape [t.name --[TYPE_${T.NAME}]--]]
+    max-heart: cscape [t.name --[TYPE_${T.NAME}]--]  ; overwritten until max
+
+    let sparse: collect [
+        for-each [ts-name types] sparse-typesets [
+            if not find types t.name [continue]
+
+            keep cscape [ts-name "TYPESET_FLAG_${TS-NAME}"]
+        ]
     ]
 
-    append types cscape [t
-        --[TYPE_${T.NAME} = $<index>]--
-    ]
-    max-heart: cscape [t --[TYPE_${T.NAME}]--]  ; overwritten until max found
-
-    append typedefines cscape [t
-        --[#define TYPE_${T.NAME}  HEART_ENUM(${T.NAME})]--
-    ]
-
-    append singlehearts cscape [t
-        --[SINGLEHEART_TAIL_SPACE_${T.NAME} = $<index * 256>]--
-    ]
-    append singlehearts cscape [t
-        --[SINGLEHEART_HEAD_SPACE_${T.NAME} = $<(index * 256) + 1>]--
-    ]
-
-    e-typeset-bytes/emit [t -[
-        $<t.name> $<index>
-    ]-]
-
-    e-typespecs/emit [t -[
-        $<t.name> $<mold t.description>
-    ]-]
-
-    append typeset-flags cscape [t --[
-        /* $<index> - $<t.name> */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
-    ]--]
-
-    index: me + 1
+    do-appends:heart t.name t.description sparse
 ]
 
-for-each [pseudo spec] [
-    metaform "marker to read unlifted and write lifted representations"
-    pinned "mark to bind in the evaluator in current context, and keep mark"
-    tied "mark to bind in the evaluator in current context, and drop mark"
+=== "FILL SPACE UNTIL QUASIFORM (64)" ===
 
-    ; ^-- "fundamentals" (though not "plain") should be first
+; These are fundamental types that are reserved for future use.  (Modern Ren-C
+; gets away with fewer types, because things like SET-WORD! aren't fundamental
+; because that's a CHAIN! containing a WORD!, and also extension types are
+; available so long as you're willing to give up a pointer per cell for it.)
 
-    quasiform "value which evaluates to an antiform"
-    quoted "container for arbitrary levels of quoting"
-][
-    append memberships cscape [pseudo
-        --[/* $<pseudo> - $<index> */  (TYPESET_FLAG_BRANCH)]--
+assert [index <= 64]  ; need 64 to be quasiform
+
+while [index < 64] [
+    do-appends // [
+        unspaced ["reserved_" index]
+        "<reserved>"
+        sparse: []
     ]
-
-    append pseudotypes cscape [pseudo
-        --[ENUM_TYPE_$<PSEUDO> = $<index>]--
-    ]
-
-    append types cscape [pseudo
-        --[TYPE_$<PSEUDO> = $<index>]--
-    ]
-
-    append typedefines cscape [pseudo
-        --[#define TYPE_$<PSEUDO>  TYPE_ENUM($<PSEUDO>)]--
-    ]
-
-    e-typeset-bytes/emit [pseudo --[
-        $<pseudo> $<index>
-    ]--]
-
-    e-typespecs/emit [pseudo spec --[
-        $<pseudo> $<mold spec>
-    ]--]
-
-    append typeset-flags cscape [pseudo --[
-        /* $<index> - $<pseudo> */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
-    ]--]
-
-    index: me + 1
 ]
+
+do-appends // [
+    'quasiform
+    "value which evaluates to an antiform"
+    ["TYPESET_FLAG_BRANCH"]
+]
+
+=== "CREATE THE QUOTING PSEUDOTYPES (UP THRU 192)" ===
+
+; Up to 66 levels of quoting are implemented by reserving 65-192 in the
+; type byte (half the states encode that the quoted thing is a quasiform too).
+;
+; If we stopped at 195 leaving 64 full states above, that would mean there'd
+; be a state for "quoted 66 levels and quasi" but no state for "quoted 66
+; levels and nonquasi".  So we round up, leaving 63 states for antiforms,
+; bedrock states, and whatever else.  (This could be compromised to have
+; more or fewer quote states; 64 might be a better choice just because it's
+; likely easier to emulate in other models, review the decision.)
+
+do-appends // [
+    "quoted"
+    "container for up to 64 levels of quoting"
+    ["TYPESET_FLAG_BRANCH"]
+]
+
+num-quotes: 1
+is-quasi: okay
+
+while [index <= 192] [
+    do-appends // [
+        unspaced [
+            "quoted_" num-quotes "_time" (if num-quotes > 1 ["s"])
+                "_" if not is-quasi ["non"] "quasi"
+        ]
+        "<internal>"
+        ["TYPESET_FLAG_BRANCH"]
+    ]
+    if is-quasi [
+        num-quotes: me + 1
+        is-quasi: null
+    ] else [
+        is-quasi: okay
+    ]
+]
+
+=== "CREATE THE ANTIFORMS" ===
 
 first-antiform-index: index
 
@@ -567,72 +625,84 @@ antiheart-aliases: copy []
 
 max-type: ~
 
-for-each-datatype 't [  ; now generate bytes for antiforms
-    if t.antiname [
-        append antiheart-aliases cscape [t
-            --[#define HEART_${T.NAME}_SIGNIFYING_${T.ANTINAME}  HEART_ENUM(${T.NAME})]--
+do-anti-appends: proc [
+    name [<opt> text! word!]
+    antiname [<opt> text! word!]
+    antidescription [<opt> text!]
+][
+    if antiname [
+        append antiheart-aliases cscape [name antiname
+            --[#define HEART_${NAME}_SIGNIFYING_${ANTINAME}  HEART_ENUM(${NAME})]--
         ]
 
-        append memberships cscape [t
-            --[/* $<t.antiname> - $<index> */  (0)]--
+        append sparse-memberships cscape [antiname
+            --[/* $<index> - $<antiname> */  (0)]--
         ]
 
-        append pseudotypes cscape [t
-            --[ENUM_TYPE_${T.ANTINAME} = $<index>]--
+        append pseudotypes cscape [antiname
+            --[ENUM_TYPE_${ANTINAME} = $<index>]--
         ]
 
-        append types cscape [t
-            --[TYPE_${T.ANTINAME} = $<index>]--
+        append types cscape [antiname
+            --[TYPE_${ANTINAME} = $<index>]--
         ]
-        max-type: cscape [t
-            --[TYPE_${T.ANTINAME}]--  ; overwritten until max found
-        ]
-
-        append typedefines cscape [t
-            --[#define TYPE_${T.ANTINAME}  TYPE_ENUM(${T.ANTINAME})]--
+        max-type: cscape [antiname
+            --[TYPE_${ANTINAME}]--  ; overwritten until max found
         ]
 
-        e-typeset-bytes/emit [t -[
-            ${t.antiname} $<index>
+        append typedefines cscape [antiname
+            --[#define TYPE_${ANTINAME}  TYPE_ENUM(${ANTINAME})]--
+        ]
+
+        e-typeset-bytes/emit [antiname -[
+            ${antiname} $<index>
         ]-]
 
-        e-typespecs/emit [t -[
-            $<t.antiname> $<mold t.antidescription>
+        e-typespecs/emit [antiname antidescription -[
+            $<antiname> $<mold antidescription>
         ]-]
 
-        append typeset-flags cscape [t --[
-            /* $<index> - ${t.antiname} */
+        append typeset-flags cscape [antiname --[
+            /* $<index> - ${antiname} */
             TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
         ]--]
     ] else [
-        append memberships cscape [t
+        append sparse-memberships cscape [
             --[/* $<index> */  (0)]--
         ]
 
-        append pseudotypes cscape [t --[ENUM_TYPE_$<index> = $<index>]--]
+        append pseudotypes cscape [ --[ENUM_TYPE_$<index> = $<index>]--]
 
-        append typedefines cscape [t
+        append typedefines cscape [
             --[/* no #define for TYPE_$<index> */]--
         ]
 
-        append types cscape [t --[TYPE_$<index> = $<index>]--]
-        max-type: cscape [t --[TYPE_$<index>]--]
+        append types cscape [ --[TYPE_$<index> = $<index>]--]
+        max-type: cscape [ --[TYPE_$<index>]--]
 
         ; don't need a #define for these
 
-        e-typeset-bytes/emit [t -[
+        e-typeset-bytes/emit [ -[
             ~ $<index>
         ]-]
 
-        e-typespecs/emit [t -[
+        e-typespecs/emit [ -[
             ~ ~
         ]-]
 
-        append typeset-flags cscape [t --[
+        append typeset-flags cscape [ --[
             /* $<index> - <unused> */  0
         ]--]
     ]
     index: me + 1
+]
+
+for-each sigil [metaform pinned tied] [  ; space out by 3 ?
+    do-anti-appends () () ()
+]
+
+for-each-datatype 't [  ; now generate bytes for antiforms
+    do-anti-appends (opt t.name) (opt t.antiname) (opt t.antidescription)
 ]
 
 
@@ -704,7 +774,8 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
 
 ; Add ANY-ELEMENT? to the absolute end of the list, so it hooks last.  Include
-; TYPE_QUOTED and TYPE_QUASI, and TYPE_0 for ExtraHeart extension types.
+; TYPE_QUOTED_X_TIMES_Y and TYPE_QUASIFORM, and TYPE_0 for ExtraHeart
+; extension types.
 (
     e-typeset-bytes/emit [ts-name -[
         any-element $<index>
@@ -719,6 +790,8 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
 
 e-typesets/emit [--[
+    #include "sys-core.h"
+
     /*
      * Builtin "typesets" use either ranges or sparse bits to answer whether
      * a type matches a typeset.  If the top bit TYPESET_FLAG_0_RANGE is not
@@ -740,7 +813,7 @@ e-typesets/emit [--[
      */
     uint_fast32_t const g_sparse_memberships[MAX_TYPEBYTE + 1] = {
         /* 0 - <ExtraHeart> */  0,
-        $(Memberships),
+        $(Sparse-Memberships),
     };
 ]--]
 
@@ -829,20 +902,21 @@ e-hearts/emit [rebs --[
         $[Typedefines]
     #endif
 
+    #define MAX_TYPEBYTE_FUNDAMENTAL  63  /* should be UNLIFTED, more clear */
+    #define MAX_TYPEBYTE_ELEMENT  192
+
     STATIC_ASSERT(i_cast(int, $<MAX-TYPE>) <= 256);  /* Stored in bytes */
 
+    STATIC_ASSERT(i_cast(Byte, TYPE_METAFORM) == 1);
+    STATIC_ASSERT(i_cast(Byte, TYPE_PINNED) == 2);
+    STATIC_ASSERT(i_cast(Byte, TYPE_TIED) == 3);
+
+    #define MIN_HEARTBYTE  i_cast(Byte, $<MIN-HEART>)
     #define MAX_HEARTBYTE  i_cast(Byte, $<MAX-HEART>)
-    STATIC_ASSERT(i_cast(Byte, MAX_HEARTBYTE) < 64);
+    STATIC_ASSERT(MIN_HEARTBYTE == 4);
+    STATIC_ASSERT(MAX_HEARTBYTE <= MAX_TYPEBYTE_FUNDAMENTAL);
 
-    STATIC_ASSERT(i_cast(Byte, TYPE_METAFORM) == MAX_HEARTBYTE + 1);
-    STATIC_ASSERT(i_cast(Byte, TYPE_PINNED) == MAX_HEARTBYTE + 2);
-    STATIC_ASSERT(i_cast(Byte, TYPE_TIED) == MAX_HEARTBYTE + 3);
-    STATIC_ASSERT(i_cast(Byte, TYPE_QUASIFORM) == MAX_HEARTBYTE + 4);
-    STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED) == MAX_HEARTBYTE + 5);
-
-    #define MAX_TYPEBYTE_FUNDAMENTAL  i_cast(TypeByte, TYPE_TIED)
-
-    #define MAX_TYPEBYTE_ELEMENT  i_cast(TypeByte, TYPE_QUOTED)
+    STATIC_ASSERT(i_cast(Byte, TYPE_QUASIFORM) == 64);
 
     #define MAX_TYPEBYTE  i_cast(TypeByte, $<MAX-TYPE>)
 
