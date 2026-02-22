@@ -82,7 +82,10 @@
 // a Heart is expected.  It also stops (Heart_Of(cell) == TYPE_QUASIFORM)
 // sorts of mistakes.
 //
-// Clang doesn't allow any of it, so just forget it.
+// Clang doesn't allow any of it, so just forget it.  There are other ways of
+// doing it but they have runtime costs in debug builds, among other problems:
+//
+// https://rebol.metaeducation.com/t/enum-inheritance-in-c/2690
 //
 // 1. The technique requires splitting the enum into two parts (where the
 //    TypeEnum has dummy values to cover the HeartEnum cases so that switch()
@@ -276,16 +279,6 @@ typedef Byte TypeByte;  // Byte whose value is <= MAX_TYPEBYTE
       { return t < type.t; }
   #endif
 #endif
-
-// !!! The idea of a single TYPE_QUOTED isn't that interesting; instead, if
-// the Type bytes are able to hold states of LIFT/QUASI in their higher
-// levels, then the LIFT_BYTE() can actually be the answer to Type_Of()...
-// then you can check a range of those values to know if it's quoted or not.
-//
-INLINE bool Is_Quoted_Type(Option(Type) type) {
-    return (ii_cast(Byte, type) > MAX_LIFT_NOQUOTE_QUASI_OK)
-        and (ii_cast(Byte, type) <= MAX_TYPEBYTE_ELEMENT);
-}
 
 
 //=//// CUSTOM DATATYPE HEART (0) /////////////////////////////////////////=//

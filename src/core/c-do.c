@@ -303,7 +303,7 @@ bool Pushed_Continuation(
         break;
     }
 
-    if (Is_Quoted_Type(type)) {  // not bound (use $tied to get a binding)
+    if (type == TYPE_QUOTED) {  // not bound (use $tied to get a binding)
         Unquote_Quoted_Cell(Copy_Cell(out, branch));
         goto just_use_out;
     }
