@@ -192,7 +192,7 @@ Init(Slot) Append_To_Sea_Core(
         id = SYM_0;
 
     Patch* patch;
-    if (id and i_cast(int, id) < MAX_SYM_LIB_PREMADE) {
+    if (id and i_cast(SymId16, id) < MAX_SYM_LIB_PREMADE) {
         patch = &g_lib_patches[i_cast(int, id)];  // pre-allocated at boot [1]
         assert(INFO_PATCH_SEA(patch) == nullptr);  // don't double add
         // patch->header.bits should be already set

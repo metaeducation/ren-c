@@ -700,6 +700,7 @@ e-ext-symids: make-emitter "Extension SymId Commitment Table" (
     join prep-dir %specs/tmp-ext-symid.r
 )
 
+last-name: ~
 for-next 'pos sym-table [
     while [tag? cond try pos.1] [  ; remove placeholders, add defines
         let definition: as text! pos.1
@@ -710,14 +711,13 @@ for-next 'pos sym-table [
         if definition.1 = #"/" [  ; inclusive maximum
             definition: next definition
             delta: -1
-            name: first back pos
+            name: last-name
         ] else [
             delta: 0
-            name: first pos
-        ]
-
-        append placeholder-define-items cscape [
-            -[#define $<DEFINITION>  $<symid + delta>]-
+            let temp-pos: pos  ; !!! hacky, improve all this
+            while [block? name: first temp-pos] [
+                temp-pos: next temp-pos
+            ]
         ]
 
         switch definition [
@@ -726,6 +726,16 @@ for-next 'pos sym-table [
             ]
             "MIN_SYM_EXTENDED" [
                 emitting-extension-syms: okay  ; numbers only, no symbol
+            ]
+        ]
+
+        if not emitting-extension-syms [
+            append placeholder-define-items cscape [name
+                -[#define $<DEFINITION>  i_cast(SymId16, SYM_${NAME})  /* $<symid + delta> */]-
+            ]
+        ] else [
+            append placeholder-define-items cscape [name
+                -[#define $<DEFINITION>  i_cast(SymId16, EXT_SYM_$<symid + delta>)  /* $<name> */]-
             ]
         ]
     ]
@@ -772,6 +782,7 @@ for-next 'pos sym-table [
         pos: back pos  ; so for-next gets us back to this position
     ]
 
+    last-name: name
     symid: symid + 1
 ]
 

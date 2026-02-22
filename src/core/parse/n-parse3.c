@@ -1451,10 +1451,10 @@ DECLARE_NATIVE(SUBPARSE)
             }
 
             assert(
-                i_cast(int, cmd) >= MIN_SYM_PARSE3
-                and i_cast(int, cmd) <= MAX_SYM_PARSE3
+                i_cast(SymId16, cmd) >= MIN_SYM_PARSE3
+                and i_cast(SymId16, cmd) <= MAX_SYM_PARSE3
             );
-            if (i_cast(int, cmd) >= MIN_SYM_PARSE3_MATCH)
+            if (i_cast(SymId16, cmd) >= MIN_SYM_PARSE3_MATCH)
                 goto skip_pre_rule;
 
             switch (opt cmd) {

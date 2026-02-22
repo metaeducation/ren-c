@@ -46,18 +46,7 @@
 //
 void Startup_Datatypes(void)
 {
-  check_things_that_foil_static_asserts: {
-
-  // The complex enum wrapping means that TYPE_ENUM() is defined differently
-  // in different builds.  STATIC_ASSERT() being a macro will expand the
-  // token pastes in such a way that these won't compile.  Rather than find
-  // some crazy workaround, we just make these runtime checks.
-
-    assert(i_cast(TypeEnum, SIGIL_META) == TYPE_METAFORM);
-    assert(i_cast(TypeEnum, SIGIL_PIN) == TYPE_PINNED);
-    assert(i_cast(TypeEnum, SIGIL_TIE) == TYPE_TIED);
-
-} startup_datatypes: {
+  startup_datatypes: {
 
     SeaOfVars* datatypes = Alloc_Sea_Core(BASE_FLAG_MANAGED);
 

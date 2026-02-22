@@ -44,6 +44,13 @@
 //   not why: the design had already converged on 3.
 //
 
+// Note: aggressive test of ii_cast() inside a static assertion, casting a
+// C++ enum class (in some builds) to a C enum.
+//
+STATIC_ASSERT(SIGIL_META == ii_cast(Sigil, TYPE_METAFORM));
+STATIC_ASSERT(SIGIL_PIN == ii_cast(Sigil, TYPE_PINNED));
+STATIC_ASSERT(SIGIL_TIE == ii_cast(Sigil, TYPE_TIED));
+
 
 #define Unchecked_Unlifted_Cell_Has_Sigil(sigil,cell) \
     (((cell)->header.bits & \
