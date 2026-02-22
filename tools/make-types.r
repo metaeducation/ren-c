@@ -49,22 +49,18 @@ mkdir:deep join prep-dir %specs/
 mkdir:deep join prep-dir %core/
 
 
-=== "DATATYPE DEFINITIONS" ===
+=== "LOAD TYPES.R TABLE" ===
+
+; This file is all about digesting the "dialected" %types.r table into
+; into actionable information.  We use PARSE to build objects from it, and
+; then operate on those objects.
 
 type-table: load3 %types.r
 
-for-each-datatype: func [
-    "Iterate type table by creating an object for each row"
 
-    var "Word to set each time to the row made into an object record"
-        [word!]
-    body "Block to evaluate each time"
-        [block!]
-][
-    let obj: construct compose [(setify var) ~]  ; make variable
-    body: overbind obj body  ; make variable visible to body
-    var: has obj var
+=== "MAKE OBJECT!s FROM DATATYPE DEFINITIONS" ===
 
+datatype-objects: collect [
     let heart*: 4  ; 0 is reserved and 1-3 are sigils
 
     let [  ; no LET in PARSE3
@@ -127,7 +123,7 @@ for-each-datatype: func [
         (
             name*: to text! name*
             assert [#"!" = take:last name*]
-            set var make object! [
+            keep make object! [
                 name: name*
                 cellmask: cellmask*
                 heart: ensure integer! heart*
@@ -142,90 +138,96 @@ for-each-datatype: func [
                 antidescription: antidescription*
                 unstable: unstable*
             ]
-            repeat 1 body else [return null]  ; give body BREAK/CONTINUE
         )
         (heart*: heart* + 1)
     ]] else [
         panic "Couldn't fully parse %types.r"
     ]
-    return
 ]
+
+=== "MAKE OBJECT!S FROM TYPE RANGES e.g. <ANY-LIST?>...</ANY-LIST>" ===
 
 ; 1. Type ranges are inclusive, so the end is included in the range.  This is
 ;    done so that checks of a single type look more sensible when done with
 ;    a range (e.g. start and end are the same)
-;
-for-each-typerange: proc [
-    "Iterate type table and create object for each <TYPE!>...</TYPE!> range"
 
-    var "Word to set each time to the typerange as an object record"
-        [word!]
-    body "Block to evaluate each time"
-        [block!]
-][
-    let obj: construct compose [(setify var) ~]  ; make variable
-    body: overbind obj body  ; make variable visible to body
-    var: has obj var
-
+typerange-objects: collect [
     let stack: copy []
     let types*: _  ; will be put in a block, can't be null
 
     let [name* any-name!* starting]
 
     let heart*: 4  ; 0 is reserved, 1-3 are Sigils
-    cycle [  ; need to be in loop for BREAK to work
-        parse3:match type-table [some [not <end>
-            opt some [name*: tag! (
+
+    parse3:match type-table [some [not <end>
+        opt some [name*: tag! (
+            name*: to text! name*
+            lowercase name*
+            starting: not (#"/" = first name*)
+            if not starting [take name*]
+            any-name!*: to word! name*
+
+            ; The name ANY-META-VALUE! is used to produce functions like
+            ; ANY_META() in the C code.  Extract relevant name part.
+            ;
+            parse3:match name* [
+                opt remove "any-"
+                to "?"  ; once dropped -VALUE from e.g. ANY-META-VALUE?
+                remove "?"
+            ] else [
+                panic "Bad type category name"
+            ]
+
+            if starting [
+                append stack spread reduce [heart* any-name!*]
+                types*: copy []
+            ] else [
+                assert [any-name!* = take:last stack]
+                keep make object! [
+                    name: name*
+                    any-name!: any-name!*
+                    start: ensure integer! take:last stack
+                    end: heart* - 1  ; compare end using <=, not <, see [1]
+                    types: types*
+                ]
+                types*: _
+            ]
+        )]
+        [<end> | [
+            [name*: word! (if not space? types* [
                 name*: to text! name*
-                lowercase name*
-                starting: not (#"/" = first name*)
-                if not starting [take name*]
-                any-name!*: to word! name*
+                assert [#"?" <> last name*]
+                append types* to text! name*
+            ])]
+            text!
+            opt [[quasiform! | chain!] text!]
+            group!
+            block!
+            (heart*: heart* + 1)
+        ]]
+    ]] else [
+        panic "Couldn't fully parse %types.r"
+    ]
+    assert [empty? stack]
+]
 
-                ; The name ANY-META-VALUE! is used to produce functions like
-                ; ANY_META() in the C code.  Extract relevant name part.
-                ;
-                parse3:match name* [
-                    opt remove "any-"
-                    to "?"  ; once dropped -VALUE from e.g. ANY-META-VALUE?
-                    remove "?"
-                ] else [
-                    panic "Bad type category name"
-                ]
 
-                if starting [
-                    append stack spread reduce [heart* any-name!*]
-                    types*: copy []
-                ] else [
-                    assert [any-name!* = take:last stack]
-                    set var make object! [
-                        name: name*
-                        any-name!: any-name!*
-                        start: ensure integer! take:last stack
-                        end: heart* - 1  ; compare end using <=, not <, see [1]
-                        types: types*
-                    ]
-                    types*: _
-                    eval body  ; no support for BREAK/CONTINUE in bootstrap
-                ]
-            )]
-            [<end> | [
-                [name*: word! (if not space? types* [
-                    name*: to text! name*
-                    assert [#"?" <> last name*]
-                    append types* to text! name*
-                ])]
-                text!
-                opt [[quasiform! | chain!] text!]
-                group!
-                block!
-                (heart*: heart* + 1)
-            ]]
-        ]] else [
-            panic "Couldn't fully parse %types.r"
+sparse-typesets: copy []
+
+for-each 't datatype-objects [
+    if t.antiname [  ; if there was a ~antiname~ in types.r for this type
+        append t.typesets "isotopic"  ; add to the Any_Isotopic() typeset
+    ]
+
+    for-each 'ts-name t.typesets [
+        let spot
+        if spot: select sparse-typesets ts-name [
+            append spot t.name  ; not the first time we've seen this typeset
+            continue
         ]
-        assert [empty? stack]
-        break  ; doesn't return last value (bootstrap)
+
+        append sparse-typesets ts-name
+        append sparse-typesets reduce [t.name]
     ]
 ]
 
@@ -285,7 +287,7 @@ e-types/emit [--[
      */
 ]--]
 
-for-each-datatype 't [
+for-each 't datatype-objects [
     if t.cellmask [
         e-types/emit [t --[
             #define CELL_MASK_${T.NAME} \
@@ -301,9 +303,7 @@ for-each-datatype 't [
     ]--]
 ]
 
-sparse-typesets: copy []
-
-for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
+for-each 'tr typerange-objects [  ; (e.g. ANY-STRING? < ANY-UTF8?)
     let proper-name: propercase-of tr.name
 
     e-types/emit [tr --[
@@ -313,23 +313,6 @@ for-each-typerange 'tr [  ; typeranges first (e.g. ANY-STRING? < ANY-UTF8?)
         #define Any_${Proper-Name}(cell) \
             Any_${Proper-Name}_Type(Type_Of(cell))
     ]--]
-]
-
-for-each-datatype 't [
-    if t.antiname [  ; if there was a ~antiname~ in types.r for this type
-        append t.typesets "isotopic"  ; add to the Any_Isotopic() typeset
-    ]
-
-    for-each 'ts-name t.typesets [
-        let spot
-        if spot: select sparse-typesets ts-name [
-            append spot t.name  ; not the first time we've seen this typeset
-            continue
-        ]
-
-        append sparse-typesets ts-name
-        append sparse-typesets reduce [t.name]
-    ]
 ]
 
 
@@ -373,7 +356,7 @@ for-each [ts-name types] sparse-typesets [
     ]--]
 ]
 
-for-each-datatype 't [
+for-each 't datatype-objects [
     if not t.antiname [continue]  ; no special name for antiform form
 
     let want: either yes? t.unstable ["Possibly_Unstable"] ["Known_Stable"]
@@ -537,7 +520,7 @@ for-each [name description] [
 min-heart: ~
 max-heart: ~
 
-for-each-datatype 't [  ; plains
+for-each 't datatype-objects [  ; plains
     append plains cscape [t
         --[ENUM_TYPE_${T.NAME} = $<index>]--
     ]
@@ -701,7 +684,7 @@ for-each sigil [metaform pinned tied] [  ; space out by 3 ?
     do-anti-appends () () ()
 ]
 
-for-each-datatype 't [  ; now generate bytes for antiforms
+for-each 't datatype-objects [  ; now generate bytes for antiforms
     do-anti-appends (opt t.name) (opt t.antiname) (opt t.antidescription)
 ]
 
@@ -719,7 +702,7 @@ for-each-datatype 't [  ; now generate bytes for antiforms
     index: me + 1
 )
 
-for-each-typerange 'tr [  ; range, typeset is a start and end
+for-each 'tr typerange-objects [  ; range, typeset is a start and end
     e-typeset-bytes/emit [tr -[
         any-$<tr.name> $<index>
     ]-]
