@@ -885,7 +885,7 @@ e-hearts/emit [rebs --[
         $[Typedefines]
     #endif
 
-    #define MAX_TYPEBYTE_FUNDAMENTAL  63  /* should be UNLIFTED, more clear */
+    #define MAX_TYPEBYTE_FUNDAMENTAL  63  /* better name than "fundamental"? */
     #define MAX_TYPEBYTE_ELEMENT  192
 
     STATIC_ASSERT(i_cast(int, $<MAX-TYPE>) <= 256);  /* Stored in bytes */

@@ -146,10 +146,6 @@ static void Push_Composer_Level(
     if (Any_Sequence_Type(heart)) {  // allow sequences [1]
         LiftByte lift_byte = LIFT_BYTE(list_or_seq);
 
-        DECLARE_ELEMENT (fundamental);
-        Copy_Cell(fundamental, As_Element(list_or_seq));
-        Clear_Cell_Quotes_And_Quasi(fundamental);
-
         assume (  // all sequences alias as block
           Alias_Any_Sequence_As(adjusted, As_Element(list_or_seq), TYPE_BLOCK)
         );
