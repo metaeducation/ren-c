@@ -50,50 +50,14 @@
 //         { ... }
 //    }
 //
-// But to make a long story short, the desire to use the TYPE_XXX values
-// in switch() statements is a thorny one.  C++ doesn't have enum inheritance.
-// So you either have two enums with overlapping values (e.g. HEART_INTEGER
-// in the HeartEnum, and TYPE_INTEGER in the TypeEnum), or you have two enums
-// that spread TYPE_XXX values across the enums...and hope the compiler lets
-// you get away with lax conversions between them.
-//
-// Using a enums with redundancy (HEART_INTEGER/TYPE_INTEGER) is the least
-// dodgy way to do it.  But it means that if you change between switch(type)
-// and switch(heart) you need to rename all your case labels.  It's also
-// cleaner reading if people only have to see TYPE_XXX constants.  So for
-// now, this goes the hard road of only using TYPE_XXX constants.
-//
-// The only way to do static analysis to stop the invalid bytes is to make
-// KIND_BYTE() a macro that creates a C++ class that holds onto the cell,
-// and has an assignment operator that does the desired check before it
-// writes the byte to the intended location.  In order to do this, TYPE_XXX
-// values can't be "plain" C enums, because there's no way to overload
-// them distinctly.  They have to be a class, or an "enum class".
-//
-// Only MSVC is willing to ignore the C++ standard and allow you to switch()
-// on mixed enum class values.  So even though TYPE_INTEGER comes from the
-// HeartEnum and TYPE_QUASIFORM comes from the TypeEnum, you can mix and match
-// them in a switch().  So only MSVC is able to statically prevent non-heart
-// assignments to KIND_BYTE(), or comparisons of Pseudotypes against literal
-// heart TYPE_XXX enum states.
-//
-// GCC won't interconvert enum classes, which rules out that ability.  But
-// it does allow the minor (but useful) prevention of passing a Type where
-// a Heart is expected.  It also stops (Heart_Of(cell) == TYPE_QUASIFORM)
-// sorts of mistakes.
-//
-// Clang doesn't allow any of it, so just forget it.  There are other ways of
-// doing it but they have runtime costs in debug builds, among other problems:
-//
-// https://rebol.metaeducation.com/t/enum-inheritance-in-c/2690
-//
 // 1. The technique requires splitting the enum into two parts (where the
 //    TypeEnum has dummy values to cover the HeartEnum cases so that switch()
 //    statements on a TypeEnum doesn't trigger a warning checking against
-//    TYPE_XXX integral values that it doesn't have an integer for).  But
-//    if you're not using the classes there are enum comparison errors.
-//    A consolidated enum seems to have to be used if you're not going to
-//    be doing the class trick.
+//    TYPE_XXX integral values that it doesn't have an integer for).
+//
+//    Fancier methods than overlapping enums have been tried, and rejected:
+//
+//      https://rebol.metaeducation.com/t/enum-inheritance-in-c/2690
 //
 // 2. All extension types use the 0 byte for their heart.  This means that
 //    you can't say (Type_Of(cell1) == Type_Of(cell2)) and get a correct
@@ -150,17 +114,20 @@ typedef Byte TypeByte;  // any byte value (but represents a Type)
     ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
     INLINE bool operator!=(T&& t, const HeartEnum& heart) = delete;
 
-    // Because there are non-explicit conversions betwen the two types, it's
-    // a hodgepodge of default behaviors that become ambiguous with overloads.
+    // Types cannot be directly compared against each other, because there
+    // are a lot of states that represent "TYPE_QUOTED".  We don't want to
+    // pay to collapse those states to a canon value on every Type_Of() call,
+    // so it's better to disable the comparison and have an Is_Quoted_Type()
+    // function as well as a Same_Types() if you want the expensive check.
     //
-    // You have to add the overloads and then use SFINAE to disable very
-    // narrow cases of ambiguity.  This is a bit of a mess, but it works.
+    // Note: if we actually delete the operators, that will consider them as
+    // candidates in overloads and create conflicts with working comparisons.
+    // So just mentioning it here in a comment.
 
-    INLINE bool operator==(Type& left, Type& right)
-      { return left.t == right.t; }
-
-    INLINE bool operator!=(Type& left, Type& right)
-      { return left.t != right.t; }
+    /*
+    INLINE bool operator==(const Type& left, const Type& right) = delete;
+    INLINE bool operator!=(const Type& left, const Type& right) = delete;
+    */
 
     // Very narrow equality tests, only applying to literal Heart values.
 
@@ -183,33 +150,49 @@ typedef Byte TypeByte;  // any byte value (but represents a Type)
     // Comparisons for TypeEnum and Type (Because Heart can become a type,
     // this covers Type/Heart comparisons as well as Type/Type comparisons.
 
-    INLINE bool operator>=(const Type& type, TypeEnum t)
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
+    INLINE bool operator>=(const Type& type, T&& t)
       { return type.t >= t; }
 
-    INLINE bool operator>=(TypeEnum t, const Type& type)
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
+    INLINE bool operator>=(T&& t, const Type& type)
       { return t >= type.t; }
 
-    INLINE bool operator<=(const Type& type, TypeEnum t)
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
+    INLINE bool operator<=(const Type& type, T&& t)
       { return type.t <= t; }
 
-    INLINE bool operator<=(TypeEnum t, const Type& type)
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
+    INLINE bool operator<=(T&& t, const Type& type)
       { return t <= type.t; }
 
-    INLINE bool operator>(const Type& type, TypeEnum t)
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
+    INLINE bool operator>(const Type& type, T&& t)
       { return type.t > t; }
 
-    INLINE bool operator>(TypeEnum t, const Type& type)
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
+    INLINE bool operator>(T&& t, const Type& type)
       { return t > type.t; }
 
-    INLINE bool operator<(const Type& type, TypeEnum t)
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
+    INLINE bool operator<(const Type& type, T&& t)
       { return type.t < t; }
 
-    INLINE bool operator<(TypeEnum t, const Type& type)
+    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
+    INLINE bool operator<(T&& t, const Type& type)
       { return t < type.t; }
 
     typedef HeartEnum Heart;
 #endif
 
+
+INLINE bool Is_Quoted_Type(Option(Type) type) {
+    if (i_cast(TypeByte, type) <= MAX_LIFT_NOQUOTE_QUASI_OK)
+        return false;
+    if (i_cast(TypeByte, type) > MAX_TYPEBYTE_ELEMENT)
+        return false;
+    return true;
+}
 
 //=//// CUSTOM DATATYPE HEART (0) /////////////////////////////////////////=//
 //

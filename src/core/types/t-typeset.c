@@ -62,6 +62,15 @@ void Startup_Type_Predicates(void)
         assert(typeset_byte == id16);  // MIN_SYM_TYPESETS should be 1
         assert(typeset_byte > 0 and typeset_byte < 256);
 
+        if (
+            typeset_byte
+            == i_cast(TypeByte, PSEUDOTYPE_QUOTED_1_TIME_NONQUASI)
+        ){
+            continue;  // lib value is QUOTED?, it's a native
+        }
+        else if (Is_Quoted_Type(i_cast(Type, typeset_byte)))
+            continue;  // range will be used for other optimizations
+
         Details* details = Make_Typechecker(typeset_byte);
 
         SymId id = i_cast(SymId, id16);

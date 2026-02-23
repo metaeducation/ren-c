@@ -950,7 +950,7 @@ bool Typecheck_Use_Toplevel(
 
     Type type = opt Type_Of(As_Stable(tests));
 
-    if (type == TYPE_WORD or type == TYPE_QUASIFORM or type == TYPE_QUOTED) {
+    if (type == TYPE_WORD or type == TYPE_QUASIFORM or Is_Quoted_Type(type)) {
         at = cast(Element*, tests);
         tail = cast(Element*, tests) + 1;
         derived = tests_binding;

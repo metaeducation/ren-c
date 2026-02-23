@@ -859,8 +859,7 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
         /* assert(Any_Sequencable_Type(Unchecked_Heart_Of(v))); */  // ?
     }
     else if (LIFT_BYTE_RAW(v) <= 192) {
-        // QUOTED! types can be anything
-        return TYPE_QUOTED;  // may become 255 in the future
+        // we do not canonize the quoted range into "TYPE_QUOTED"
     }
     else switch (LIFT_BYTE_RAW(v)) {  // still working on these...
       case LIFTBYTE_PACK:
@@ -898,6 +897,9 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
         Type_Of_Core(Readable_Cell(Possibly_Unstable(v)))
 #endif
 
+// This used to be used to prevent equality checks on quoted types, but all
+// comparison on Type are now illegal.  Keeping in case this becomes useful.
+//
 #if CPLUSPLUS_11
     template<typename Enum, Enum E>
     struct KnownNotQuotedHelper {
@@ -927,14 +929,6 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
 #else
     #define known_not_quoted_enum_state(E)  E
 #endif
-
-#define Has_Type(v,type) \
-    (LIFT_BYTE(Readable_Cell(Known_Stable(v))) \
-        == i_cast(Byte, known_not_quoted_enum_state(type)))
-
-#define Possibly_Unstable_Has_Type(v,type) \
-    (LIFT_BYTE(Readable_Cell(Possibly_Unstable(v))) \
-        == i_cast(Byte, known_not_quoted_enum_state(type)))
 
 
 #define Datatype_Of(v) \

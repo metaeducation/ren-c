@@ -275,15 +275,14 @@ e-types/emit [--[
      *
      * Modern Ren-C carves out special values of the LIFT_BYTE for unlifted
      * values--trading off some abilities to have higher quoting levels to
-     * get a very fast answer to Type_Of().  However, it's still necessary
-     * to collapse the many quoted states of the lift byte to a single one
-     * to get TYPE_QUOTED.
+     * get a very fast answer to Type_Of().  To make that answer particularly
+     * fast, it doesn't canonize the quoted states to a single state...you
+     * need to use functions like Is_Quoted_Type(t).  Hence there is no
+     * single TYPE_QUOTED.
      *
-     * But if we're only interested in whether something has a fundamental
-     * non-quoted type or not, we don't need to do that collapse...and can
-     * just compare the LIFT_BYTE() directly, which Has_Type() does.
+     * But for non-quoted types, this is really only a single byte check!!
      *
-     *     #define Is_Text(v)  Has_Type((v), TYPE_TEXT)
+     *     #define Is_Text(v)  (Type_Of(v) == TYPE_TEXT)
      */
 ]--]
 
@@ -296,10 +295,10 @@ for-each 't datatype-objects [
     ]
 
     e-types/emit [propercase-of t --[
-        #define Is_${propercase-of T.name}(v)  Has_Type((v), TYPE_$<T.NAME>)
+        #define Is_${propercase-of T.name}(v)  (Type_Of(v) == TYPE_$<T.NAME>)
 
         #define Is_Possibly_Unstable_Value_${propercase-of T.name}(v) \
-            Possibly_Unstable_Has_Type((v), TYPE_$<T.NAME>)
+            (Type_Of_Possibly_Unstable(v) == TYPE_$<T.NAME>)
     ]--]
 ]
 
@@ -359,16 +358,16 @@ for-each [ts-name types] sparse-typesets [
 for-each 't datatype-objects [
     if not t.antiname [continue]  ; no special name for antiform form
 
-    let want: either yes? t.unstable ["Possibly_Unstable"] ["Known_Stable"]
+    let qualifier: all [yes? t.unstable, "_Possibly_Unstable"]
 
     let proper-name: propercase-of t.antiname
 
     ; Note: Readable_Cell() not defined yet at this point, so defined as
     ; a macro vs. an inline function.  Revisit.
     ;
-    e-types/emit [t proper-name --[
+    e-types/emit [t proper-name qualifier --[
         #define Is_$<Proper-Name>(v) \
-            (LIFT_BYTE(Readable_Cell($<Want>(v))) == LIFTBYTE_$<T.ANTINAME>)
+            (Type_Of$<Opt Qualifier>(v) == TYPE_$<T.ANTINAME>)
 
         #define Is_Lifted_$<Proper-Name>(v) \
             Cell_Has_Lift_Heart_No_Sigil(Known_Stable(v), \
@@ -390,7 +389,7 @@ for-each 't datatype-objects [
     ;
     e-types/emit [t proper-name --[
         #define Is_Possibly_Unstable_Value_$<Proper-Name>(v) \
-            (LIFT_BYTE(Readable_Cell(Possibly_Unstable(v))) == LIFTBYTE_$<T.ANTINAME>)
+            (Type_Of_Possibly_Unstable(v) == TYPE_$<T.ANTINAME>)
     ]--]
 ]
 
@@ -417,9 +416,9 @@ e-typespecs: make-emitter "Type Help Descriptions" (
 ; lists are all of the form "XXX = (num)", prefix (e.g. "TYPE_") added later
 sigils: make block! 3
 hearts: make block! 60  ; 64 minus sigils minus TYPE_0
-lifteds: make block! 2  ; QUASIFORM! and QUOTED!
-quoteds: make block! 127  ; 128 minus TYPE_QUOTED as one quote non quasi
-antiforms: make block! 64  ; lots of blank space atm
+quasiform: make block! 1  ; just QUASIFORM! (in a list to fit pattern)
+quoteds: make block! 128  ; 128 states for 64 quote levels
+antiforms: make block! 64  ; lots of blank space atm in this span
 
 singlehearts: make block! 256  ; tricky thing, see description in comments
 
@@ -455,10 +454,6 @@ do-appends: proc [
         ]
     ]
 
-    e-typeset-bytes/emit [name -[
-        $<name> $<index>
-    ]-]
-
     e-typespecs/emit [name description -[
         $<name> $<mold description>
     ]-]
@@ -488,6 +483,8 @@ for-each [name description] [
     pinned "mark to bind in the evaluator in current context, and keep mark"
     tied "mark to bind in the evaluator in current context, and drop mark"
 ][
+    e-typeset-bytes/emit [name "$<name> $<index>"]
+
     do-appends $sigils name description ["TYPESET_FLAG_BRANCH"]
 ]
 
@@ -499,6 +496,8 @@ min-heart: ~
 max-heart: ~
 
 for-each 't datatype-objects [
+    e-typeset-bytes/emit [t "$<t.name> $<index>"]
+
     min-heart: default [cscape [t.name --[TYPE_${T.NAME}]--]]
     max-heart: cscape [t.name --[TYPE_${T.NAME}]--]  ; overwritten until max
 
@@ -510,14 +509,14 @@ for-each 't datatype-objects [
         ]
     ]
 
-    do-appends $hearts t.name t.description sparse
-
     append singlehearts cscape [t
         --[SINGLEHEART_TAIL_SPACE_${T.NAME} = $<index * 256>]--
     ]
     append singlehearts cscape [t
         --[SINGLEHEART_HEAD_SPACE_${T.NAME} = $<(index * 256) + 1>]--
     ]
+
+    do-appends $hearts t.name t.description sparse
 ]
 
 === "FILL SPACE UNTIL QUASIFORM (64)" ===
@@ -530,6 +529,8 @@ for-each 't datatype-objects [
 assert [index <= 64]  ; need 64 to be quasiform
 
 while [index < 64] [
+    e-typeset-bytes/emit [name "~ $<index>"]
+
     do-appends // [
         $hearts
         unspaced ["reserved_" index]
@@ -538,36 +539,31 @@ while [index < 64] [
     ]
 ]
 
+e-typeset-bytes/emit [name "quasiform $<index>"]
+
 do-appends // [
-    $lifteds
+    $quasiform
     'quasiform
     "value which evaluates to an antiform"
     ["TYPESET_FLAG_BRANCH"]
 ]
 
+
 === "CREATE THE QUOTING PSEUDOTYPES (UP THRU 192)" ===
 
-; Up to 66 levels of quoting are implemented by reserving 65-192 in the
+; Up to 64 levels of quoting are implemented by reserving 65-192 in the
 ; type byte (half the states encode that the quoted thing is a quasiform too).
-;
-; If we stopped at 195 leaving 64 full states above, that would mean there'd
-; be a state for "quoted 66 levels and quasi" but no state for "quoted 66
-; levels and nonquasi".  So we round up, leaving 63 states for antiforms,
-; bedrock states, and whatever else.  (This could be compromised to have
-; more or fewer quote states; 64 might be a better choice just because it's
-; likely easier to emulate in other models, review the decision.)
-
-do-appends // [
-    $lifteds
-    "quoted"
-    "container for up to 64 levels of quoting"
-    ["TYPESET_FLAG_BRANCH"]
-]
 
 num-quotes: 1
-is-quasi: okay
+is-quasi: null
 
 while [index <= 192] [
+    if (num-quotes = 1) and (is-quasi = null) [
+        e-typeset-bytes/emit ["quoted $<index>"]
+    ] else [
+        e-typeset-bytes/emit ["~ $<index>"]
+    ]
+
     do-appends // [
         $quoteds
         unspaced [
@@ -575,7 +571,12 @@ while [index <= 192] [
                 "_" if not is-quasi ["non"] "quasi"
         ]
         "<internal>"
-        ["TYPESET_FLAG_BRANCH"]
+        sparse: ["TYPESET_FLAG_BRANCH"]
+        ranged: reduce [
+            "TYPESET_FLAG_0_RANGE"
+            unspaced ["FLAG_THIRD_BYTE(PSEUDOTYPE_QUOTED_1_TIME_NONQUASI)"]
+            unspaced ["FLAG_FOURTH_BYTE(PSEUDOTYPE_QUOTED_64_TIMES_QUASI)"]
+        ]
     ]
     if is-quasi [
         num-quotes: me + 1
@@ -599,6 +600,8 @@ do-anti-appends: proc [
     antidescription [<opt> text!]
 ][
     if antiname [
+        e-typeset-bytes/emit [antiname "${antiname} $<index>"]
+
         append antiforms cscape [antiname
             --[${ANTINAME} = $<index>]--
         ]
@@ -614,10 +617,6 @@ do-anti-appends: proc [
             --[/* $<index> - $<antiname> */  (0)]--
         ]
 
-        e-typeset-bytes/emit [antiname -[
-            ${antiname} $<index>
-        ]-]
-
         e-typespecs/emit [antiname antidescription -[
             $<antiname> $<mold antidescription>
         ]-]
@@ -627,18 +626,14 @@ do-anti-appends: proc [
             TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
         ]--]
     ] else [
+        e-typeset-bytes/emit ["~ $<index>"]
+
         append antiforms cscape [ --[RESERVED_$<index> = $<index>]--]
         max-type: cscape [ --[TYPE_RESERVED_$<index>]--]
 
         append sparse-memberships cscape [
             --[/* $<index> */  (0)]--
         ]
-
-        ; don't need a #define for these
-
-        e-typeset-bytes/emit [ -[
-            ~ $<index>
-        ]-]
 
         e-typespecs/emit [ -[
             ~ ~
@@ -662,9 +657,7 @@ for-each 't datatype-objects [  ; now generate bytes for antiforms
 
 ; antiform range check (core uses Is_Antiform() which just checks heart byte)
 (
-    e-typeset-bytes/emit [no-tildes -[
-        any-antiform $<index>
-    ]-]
+    e-typeset-bytes/emit ["any-antiform $<index>"]
 
     append typeset-flags cscape [t --[
         /* $<index> - any-antiform */
@@ -674,9 +667,7 @@ for-each 't datatype-objects [  ; now generate bytes for antiforms
 )
 
 for-each 'tr typerange-objects [  ; range, typeset is a start and end
-    e-typeset-bytes/emit [tr -[
-        any-$<tr.name> $<index>
-    ]-]
+    e-typeset-bytes/emit [tr "any-$<tr.name> $<index>"]
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-$<tr.name> */
@@ -686,9 +677,7 @@ for-each 'tr typerange-objects [  ; range, typeset is a start and end
 ]
 
 for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
-    e-typeset-bytes/emit [ts-name -[
-        any-$<ts-name> $<index>
-    ]-]
+    e-typeset-bytes/emit [ts-name "any-$<ts-name> $<index>"]
 
     append typeset-flags cscape [ts-name --[
         /* $<index> - any-$<ts-name> */
@@ -700,9 +689,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
 ; Add ANY-PLAIN? to be anything that's not meta/tied/pinned/quoted/quasi.
 (
-    e-typeset-bytes/emit [ts-name -[
-        any-plain $<index>
-    ]-]
+    e-typeset-bytes/emit [ts-name "any-plain $<index>"]
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-plain */
@@ -715,9 +702,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 ; Add ANY-FUNDAMENTAL? to go right up to the max heart byte (don't include
 ; quoted or quasi).  Include TYPE_0 for ExtraHeart types.
 (
-    e-typeset-bytes/emit [ts-name -[
-        any-fundamental $<index>
-    ]-]
+    e-typeset-bytes/emit ["any-fundamental $<index>"]
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-fundamental */
@@ -727,13 +712,9 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 )
 
 
-; Add ANY-ELEMENT? to the absolute end of the list, so it hooks last.  Include
-; TYPE_QUOTED_X_TIMES_Y and TYPE_QUASIFORM, and TYPE_0 for ExtraHeart
-; extension types.
+; Add ANY-ELEMENT? to the absolute end of the list, so it hooks last.S
 (
-    e-typeset-bytes/emit [ts-name -[
-        any-element $<index>
-    ]-]
+    e-typeset-bytes/emit ["any-element $<index>"]
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-element */
@@ -804,14 +785,14 @@ e-hearts/emit [rebs --[
             TYPE_0_constexpr = 0,  /* prefer TYPE_0 to get Option(Heart) */
             TYPE_$[Sigils],
             TYPE_$[Hearts],
-            TYPE_$[Lifteds],
-            TYPE_$[Quoteds],
+            TYPE_$[Quasiform],
+            PSEUDOTYPE_$[Quoteds],
             TYPE_$(Antiforms),
         } TypeEnum;
     #else
         /*
          * The "Extra Heart Byte Checks" are designed to make sure you don't
-         * pass Type where Heart is expected, or write things like TYPE_QUOTED
+         * pass Type where Heart is expected, or things like TYPE_QUASIFORM
          * or TYPE_SPLICE into the KIND_BYTE().
          *
          * Doing this with overlapping enums may not seem ideal, but trying
@@ -821,6 +802,10 @@ e-hearts/emit [rebs --[
          * is simpler, faster, and quite good enough.
          *
          * (This would be much easier if C++ defined enum inheritance.)
+         *
+         * Note that using C++ "enum classes" offers no real benefit here,
+         * and Clang won't let you do a switch() statement whose cases come
+         * from different enum classes.  It also prohibits zero conversions.
          */
 
         enum HeartEnum {
@@ -840,10 +825,11 @@ e-hearts/emit [rebs --[
             /* placeholders for values in range of heart byte */
             PLACEHOLDER_HEART_$[Hearts],
 
-            TYPE_$[Lifteds],
+            /* just one quasiform type! */
+            TYPE_$[Quasiform],
 
             /* PSEUDOTYPE_QUOTED_<N>_TIMES_<NON>QUASI states */
-            TYPE_$[Quoteds],
+            PSEUDOTYPE_$[Quoteds],
 
             TYPE_$(Antiforms),
         };

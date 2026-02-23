@@ -101,6 +101,29 @@ DECLARE_NATIVE(JUST)
 
 
 //
+//  /quoted?: native:intrinsic [
+//
+//  "Is type quoted"
+//
+//      return: [logic!]
+//      value '[any-stable?]
+//  ]
+//
+DECLARE_NATIVE(QUOTED_Q)
+//
+// Quoting is special because we do not canonize the Type byte for quoted
+// types...so it's not as simple as recognizing a single Type byte.  You have
+// to check a range.
+{
+    INCLUDE_PARAMS_OF_QUOTED_Q;
+
+    Stable* v = ARG(VALUE);
+
+    return LOGIC_OUT(Is_Quoted_Type(Type_Of(v)));
+}
+
+
+//
 //  /quote: native [
 //
 //  "Constructs a quoted form of the evaluated argument"

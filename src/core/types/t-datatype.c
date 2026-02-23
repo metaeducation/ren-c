@@ -56,7 +56,14 @@ void Startup_Datatypes(void)
         SymId id = i_cast(SymId, id16);
         Type type = Type_From_Symbol_Id(id);
 
-        if (i_cast(TypeByte, type) > MAX_TYPEBYTE_ELEMENT) {  // antiform
+        if (id == SYM_QUOTED_X) {
+            assert(type == PSEUDOTYPE_QUOTED_1_TIME_NONQUASI);
+            // make patch for now to be the "quoted!" datatype`
+        }
+        else if (Is_Quoted_Type(type)) {
+            continue;
+        }
+        else if (i_cast(TypeByte, type) > MAX_TYPEBYTE_ELEMENT) {  // antiform
             Heart heart = i_cast(
                 Heart,
                 i_cast(TypeByte, type) - MAX_TYPEBYTE_ELEMENT

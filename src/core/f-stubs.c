@@ -207,7 +207,13 @@ REBI64 Int64s(const Stable* val, REBINT sign)
 const Stable* Datatype_From_Type(Type type)
 {
     assert(i_cast(Byte, type) <= MAX_TYPEBYTE);
-    Patch* patch = &g_datatype_patches[i_cast(TypeByte, type)];
+    Patch* patch;
+    if (Is_Quoted_Type(type))
+        patch = &g_datatype_patches[  // !!! fix: wasted space
+            i_cast(TypeByte, PSEUDOTYPE_QUOTED_1_TIME_NONQUASI)
+        ];
+    else
+        patch = &g_datatype_patches[i_cast(TypeByte, type)];
     const Stable* datatype = cast(Stable*, Stub_Cell(patch));
     assert(Is_Datatype(datatype));
     return datatype;

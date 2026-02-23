@@ -222,7 +222,9 @@ INLINE bool Have_Same_Type(const Stable* a, const Stable* b) {
             Cell_Extra_Heart(Datatype_Of(a))
             == Cell_Extra_Heart(Datatype_Of(b))
         );
-    return (opt ta == opt tb);
+    if (Is_Quoted_Type(ta) and Is_Quoted_Type(tb))
+        return true;  // all quoted types are same type, regardless of heart
+    return (i_cast(TypeByte, ta) == i_cast(TypeByte, tb));
 }
 
 
