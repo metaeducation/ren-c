@@ -1827,7 +1827,7 @@ DECLARE_NATIVE(REMOVE_EACH)
             do {
                 assert(start <= len);
                 Set_Cell_Flag(  // checked mutability up front, and set HOLD
-                    Array_At(Cell_Array_Known_Mutable(data), start),
+                    Array_At(m_cast(Array*, Cell_Array(data)), start),
                     NOTE_REMOVE
                 );
                 ++start;
