@@ -1009,7 +1009,7 @@ Element* Init_Loop_Each_May_Alias_Data(
 
     if (Is_Lifted_Action(data)) {
         Copy_Cell(data_arg, data);
-        Antiformize_Unbound_Fundamental(data_arg, LIFTBYTE_ACTION);
+        Antiformize_Unbound_Fundamental(data_arg, TYPE_ACTION);
 
         les->took_hold = false;
         les->more_data = true;  // !!! Needs to do first call

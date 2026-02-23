@@ -221,12 +221,8 @@ Details* Make_Typechecker(TypesetByte typeset_byte)  // parameter cache [1]
         if (start != end)  // nontrivial range
             break;
 
-        if (start <= MAX_TYPEBYTE_ELEMENT)  // not an antiform
+        if (start <= MAX_LIFT_STABLE)  // don't need unstable checks
             break;
-
-        Heart heart = i_cast(Heart, start - MAX_TYPEBYTE_ELEMENT);
-        if (Is_Stable_Antiform_Heart(heart))
-            break;  // stable antiform, no unstable checks needed
 
         assert(typeset_byte == start);
         continue;

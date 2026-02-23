@@ -845,8 +845,6 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
 //    it to change these to non-raw calls temporarily.)
 //
 
-// will become the same answer as LIFT_BYTE_RAW for speed.
-//
 INLINE Option(Type) Type_Of_Core(const Cell* v) {
     if (LIFT_BYTE_RAW(v) < MIN_HEARTBYTE) {  // raw [1]
         possibly(KIND_BYTE_RAW(v) == 0);  // extension type w/no Sigil
@@ -862,16 +860,16 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
         // we do not canonize the quoted range into "TYPE_QUOTED"
     }
     else switch (LIFT_BYTE_RAW(v)) {  // still working on these...
-      case LIFTBYTE_PACK:
-      case LIFTBYTE_FAILURE:
-      case LIFTBYTE_ACTION:
-      case LIFTBYTE_TRASH:
-      case LIFTBYTE_VOID:
-      case LIFTBYTE_SPLICE:
-      case LIFTBYTE_DATATYPE:
-      case LIFTBYTE_LOGIC:
+      case TYPE_PACK:
+      case TYPE_FAILURE:
+      case TYPE_ACTION:
+      case TYPE_TRASH:
+      case TYPE_VOID:
+      case TYPE_SPLICE:
+      case TYPE_DATATYPE:
+      case TYPE_LOGIC:
         assert(KIND_BYTE_RAW(v) <= MAX_HEARTBYTE);
-        return u_cast(Option(Type), KIND_BYTE_RAW(v) + MAX_TYPEBYTE_ELEMENT);
+        break;
 
     #if RUNTIME_CHECKS
       default:

@@ -235,7 +235,7 @@ INLINE Stable* Spread_Cell(Exact(Stable*) v) {
     assert(Any_List(v));
     KIND_BYTE(v) = HEART_BLOCK_SIGNIFYING_SPLICE;  // forget former list type
     Tweak_Cell_Binding(u_cast(Element*, v), UNBOUND);
-    Antiformize_Unbound_Fundamental(v, LIFTBYTE_SPLICE);
+    Antiformize_Unbound_Fundamental(v, TYPE_SPLICE);
     assert(Is_Splice(v));
     return v;
 }
@@ -248,7 +248,7 @@ INLINE Element* Unsplice_Cell(Stable* v) {
 
 INLINE Stable* Init_Splice_Untracked(Init(Stable) out, const Source* a) {
     Init_Any_List(out, HEART_BLOCK_SIGNIFYING_SPLICE, a);
-    Antiformize_Unbound_Fundamental(out, LIFTBYTE_SPLICE);
+    Antiformize_Unbound_Fundamental(out, TYPE_SPLICE);
     assert(Is_Splice(out));
     return out;
 }
@@ -298,7 +298,7 @@ INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
     Init_Any_List_At_Core_Untracked(
         out, HEART_GROUP_SIGNIFYING_PACK, a, 0, SPECIFIED
     );
-    Antiformize_Unbound_Fundamental(out, LIFTBYTE_PACK);
+    Antiformize_Unbound_Fundamental(out, TYPE_PACK);
     assert(Is_Pack(out));
     return out;
 }

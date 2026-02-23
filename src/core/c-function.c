@@ -859,7 +859,7 @@ Details* Make_Dispatch_Details(
 ){
     assert(
         LIFT_BYTE(exemplar) == As_Lift(TYPE_FRAME)
-        or LIFT_BYTE(exemplar) == LIFTBYTE_ACTION
+        or LIFT_BYTE(exemplar) == TYPE_ACTION
     );
 
   check_flags: {

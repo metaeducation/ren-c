@@ -60,17 +60,8 @@ void Startup_Datatypes(void)
             assert(type == PSEUDOTYPE_QUOTED_1_TIME_NONQUASI);
             // make patch for now to be the "quoted!" datatype`
         }
-        else if (Is_Quoted_Type(type)) {
-            continue;
-        }
-        else if (i_cast(TypeByte, type) > MAX_TYPEBYTE_ELEMENT) {  // antiform
-            Heart heart = i_cast(
-                Heart,
-                i_cast(TypeByte, type) - MAX_TYPEBYTE_ELEMENT
-            );
-            if (not Any_Isotopic_Type(heart))
-                continue;  // don't define the dummy antiform for this [2]
-        }
+        else if (Is_Quoted_Type(type))
+            continue;  // bunch of unused symbols (close this gap)
 
         Patch* patch = &g_datatype_patches[i_cast(Byte, type)];
         assert(Is_Stub_Erased(patch));  // pre-boot state
@@ -94,7 +85,7 @@ void Startup_Datatypes(void)
 
         Freeze_Source_Deep(a);
         Init_Fence(datatype, a);
-        Antiformize_Unbound_Fundamental(datatype, LIFTBYTE_DATATYPE);
+        Antiformize_Unbound_Fundamental(datatype, TYPE_DATATYPE);
         assert(Is_Datatype(datatype));
         Protect_Cell(datatype);
         Set_Cell_Flag(datatype, FINAL);

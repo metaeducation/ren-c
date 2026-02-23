@@ -91,17 +91,17 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         if (Frame_Lens(elem))
             Tweak_Frame_Lens_Or_Label(elem, ANONYMOUS);  // show only inputs
         Force_Phase_Final(Frame_Phase(elem));
-        LIFT_BYTE_RAW(v) = LIFTBYTE_ACTION;  // [1]
+        LIFT_BYTE_RAW(v) = As_Lift(TYPE_ACTION);  // [1]
         break; }
 
       case HEART_BLOCK_SIGNIFYING_SPLICE: {
         Tweak_Cell_Binding(elem, UNBOUND);  // [2]
-        LIFT_BYTE_RAW(v) = LIFTBYTE_SPLICE;  // [1]
+        LIFT_BYTE_RAW(v) = As_Lift(TYPE_SPLICE);  // [1]
         break; }
 
       case HEART_GROUP_SIGNIFYING_PACK: {
         Tweak_Cell_Binding(elem, UNBOUND);  // [2]
-        LIFT_BYTE_RAW(v) = LIFTBYTE_PACK;  // [1]
+        LIFT_BYTE_RAW(v) = As_Lift(TYPE_PACK);  // [1]
         break; }
 
       case HEART_FENCE_SIGNIFYING_DATATYPE: {
@@ -119,7 +119,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         }
         v->payload = Stub_Cell(unwrap patch)->payload;
         v->extra = Stub_Cell(unwrap patch)->extra;
-        LIFT_BYTE_RAW(v) = LIFTBYTE_DATATYPE;  // [1]
+        LIFT_BYTE_RAW(v) = As_Lift(TYPE_DATATYPE);  // [1]
         break; }
 
       case HEART_WORD_SIGNIFYING_LOGIC: {
@@ -138,20 +138,20 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
             return fail (Error_Illegal_Anti_Word_Raw(elem));  // limited [3]
         }
         Unbind_Any_Word(elem);  // antiforms can't be bound [2]
-        LIFT_BYTE_RAW(v) = LIFTBYTE_LOGIC;  // raw [1]
+        LIFT_BYTE_RAW(v) = As_Lift(TYPE_LOGIC);  // raw [1]
         break; }
 
       case HEART_TAG_SIGNIFYING_TRASH:
         Freeze_Flex(Cell_Strand(v));  // !!! intern if WORD-like! ?
-        LIFT_BYTE_RAW(v) = LIFTBYTE_TRASH;  // raw [1]
+        LIFT_BYTE_RAW(v) = As_Lift(TYPE_TRASH);  // raw [1]
         break;
 
       case HEART_BLANK_SIGNIFYING_VOID:
-        LIFT_BYTE_RAW(v) = LIFTBYTE_VOID;  // raw [1]
+        LIFT_BYTE_RAW(v) = As_Lift(TYPE_VOID);  // raw [1]
         break;
 
       case HEART_ERROR_SIGNIFYING_FAILURE:
-        LIFT_BYTE_RAW(v) = LIFTBYTE_FAILURE;  // raw [1]
+        LIFT_BYTE_RAW(v) = As_Lift(TYPE_FAILURE);  // raw [1]
         break;
 
       default:

@@ -595,65 +595,68 @@ antiheart-aliases: copy []
 max-type: ~
 
 do-anti-appends: proc [
-    name [<opt> text! word!]
-    antiname [<opt> text! word!]
-    antidescription [<opt> text!]
+    name [text! word!]
+    antiname [text! word!]
+    antidescription [text!]
 ][
-    if antiname [
-        e-typeset-bytes/emit [antiname "${antiname} $<index>"]
+    e-typeset-bytes/emit [antiname "${antiname} $<index>"]
 
-        append antiforms cscape [antiname
-            --[${ANTINAME} = $<index>]--
-        ]
-        max-type: cscape [antiname
-            --[TYPE_${ANTINAME}]--  ; overwritten until max found
-        ]
-
-        append antiheart-aliases cscape [name antiname
-            --[#define HEART_${NAME}_SIGNIFYING_${ANTINAME}  TYPE_${NAME}]--
-        ]
-
-        append sparse-memberships cscape [antiname
-            --[/* $<index> - $<antiname> */  (0)]--
-        ]
-
-        e-typespecs/emit [antiname antidescription -[
-            $<antiname> $<mold antidescription>
-        ]-]
-
-        append typeset-flags cscape [antiname --[
-            /* $<index> - ${antiname} */
-            TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
-        ]--]
-    ] else [
-        e-typeset-bytes/emit ["~ $<index>"]
-
-        append antiforms cscape [ --[RESERVED_$<index> = $<index>]--]
-        max-type: cscape [ --[TYPE_RESERVED_$<index>]--]
-
-        append sparse-memberships cscape [
-            --[/* $<index> */  (0)]--
-        ]
-
-        e-typespecs/emit [ -[
-            ~ ~
-        ]-]
-
-        append typeset-flags cscape [ --[
-            /* $<index> - <unused> */  0
-        ]--]
+    append antiforms cscape [antiname
+        --[${ANTINAME} = $<index>]--
     ]
+    max-type: cscape [antiname
+        --[TYPE_${ANTINAME}]--  ; overwritten until max found
+    ]
+
+    append antiheart-aliases cscape [name antiname
+        --[#define HEART_${NAME}_SIGNIFYING_${ANTINAME}  TYPE_${NAME}]--
+    ]
+
+    append sparse-memberships cscape [antiname
+        --[/* $<index> - $<antiname> */  (0)]--
+    ]
+
+    e-typespecs/emit [antiname antidescription -[
+        $<antiname> $<mold antidescription>
+    ]-]
+
+    append typeset-flags cscape [antiname --[
+        /* $<index> - ${antiname} */
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
+    ]--]
+
     index: me + 1
 ]
 
-for-each sigil [metaform pinned tied] [  ; space out by 3 ?
-    do-anti-appends () () ()
+
+=== "ANTIFORMS (STABLE FIRST, THEN UNSTABLE)" ===
+
+; We want the stable antiforms to come first, this way we can byte check for
+; instability by just asking if the value is greater than the minimum unstable
+
+min-antiform: index
+max-stable: ~
+max-antiform: ~  ; overwritten each time
+
+for-each 't datatype-objects [
+    if not t.antiname [continue]
+    if t.unstable = 'yes [continue]  ; do stable antiforms first
+    max-stable: index
+    do-anti-appends t.name t.antiname t.antidescription
 ]
 
-for-each 't datatype-objects [  ; now generate bytes for antiforms
-    do-anti-appends (opt t.name) (opt t.antiname) (opt t.antidescription)
+for-each 't datatype-objects [
+    if not t.antiname [continue]
+    if t.unstable = 'no [continue]  ; now unstable ones
+    max-antiform: index
+    do-anti-appends t.name t.antiname t.antidescription
 ]
 
+=== "RANGE CHECKS" ===
+
+; These should ideally probably use the optimized type bytes that are for
+; the quoted ranges, perhaps saving all the upper 64 states for special
+; states and modes.  But review.
 
 ; antiform range check (core uses Is_Antiform() which just checks heart byte)
 (
@@ -850,6 +853,10 @@ e-hearts/emit [rebs --[
     STATIC_ASSERT(MAX_HEARTBYTE <= MAX_TYPEBYTE_FUNDAMENTAL);
 
     STATIC_ASSERT(i_cast(Byte, TYPE_QUASIFORM) == 64);
+
+    #define MIN_LIFT_ANTIFORM  $<min-antiform>
+    #define MAX_LIFT_STABLE  $<max-stable>
+    #define MAX_LIFT_ANTIFORM  $<max-antiform>
 
     #define MAX_TYPEBYTE  i_cast(TypeByte, $<MAX-TYPE>)
 

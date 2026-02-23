@@ -302,7 +302,7 @@ INLINE Element* Init_Frame_Untracked(
 INLINE Value* Activate_Frame_Core(Value* v) {
     assert(Is_Possibly_Unstable_Value_Frame(v));
     Force_Phase_Final(Frame_Phase(v));
-    Antiformize_Unbound_Fundamental(v, LIFTBYTE_ACTION);
+    Antiformize_Unbound_Fundamental(v, TYPE_ACTION);
     assert(Is_Action(v));
     return v;
 }

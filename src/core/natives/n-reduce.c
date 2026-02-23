@@ -401,7 +401,7 @@ DECLARE_NATIVE(PACK)
 
     assert(Is_Possibly_Unstable_Value_Block(OUT));
     Tweak_Cell_Type(As_Element(OUT), TYPE_GROUP);
-    Antiformize_Unbound_Fundamental(OUT, LIFTBYTE_PACK);
+    Antiformize_Unbound_Fundamental(OUT, TYPE_PACK);
     assert(Is_Pack(OUT));
     return OUT;
 }

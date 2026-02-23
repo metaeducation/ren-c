@@ -208,21 +208,15 @@ INLINE Element* Textify_Any_Utf8(Element* any_utf8) {  // always works
 // WORD! symbol and is thus cheap and on hand.  But review this idea.
 //
 
-INLINE bool Is_Tripwire_Core(Value* v) {
-    if (not Cell_Has_Lift_Sigil_Heart(
-        v, LIFTBYTE_TRASH, SIGIL_0, HEART_TAG_SIGNIFYING_TRASH
-    )){
-        return false;
-    }
-    return Cell_Strand(v) == CANON(QUESTION_1);
-}
+INLINE bool Is_Tripwire_Core(Value* v)
+  { return Is_Trash(v) and Cell_Strand(v) == CANON(QUESTION_1); }
 
 #define Is_Tripwire(v) \
     Is_Tripwire_Core(Possibly_Unstable(v))
 
 INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
     Init_Any_String_Untracked(out, TYPE_TAG, CANON(QUESTION_1));
-    Antiformize_Unbound_Fundamental(out, LIFTBYTE_TRASH);
+    Antiformize_Unbound_Fundamental(out, TYPE_TRASH);
     assert(Is_Tripwire(out));
     return out;
 }
@@ -239,7 +233,7 @@ INLINE Value* Init_Labeled_Trash_Untracked(
     const Symbol* label
 ){
     Init_Any_String_Untracked(out, HEART_TAG_SIGNIFYING_TRASH, label);
-    Antiformize_Unbound_Fundamental(out, LIFTBYTE_TRASH);
+    Antiformize_Unbound_Fundamental(out, TYPE_TRASH);
     assert(Is_Trash(out));
     return out;
 }

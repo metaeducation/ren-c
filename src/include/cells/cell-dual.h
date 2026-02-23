@@ -199,7 +199,7 @@ INLINE bool Is_Hot_Potato_With_Id_Core(
 
 #define Is_Hot_Potato_With_Id(v, id) \
     Is_Hot_Potato_With_Id_Core( \
-        known(Value*, (v)), (id), LIFTBYTE_PACK)
+        known(Value*, (v)), (id), As_Lift(TYPE_PACK))
 
 #define Is_Lifted_Hot_Potato_With_Id(v, id) \
     Is_Hot_Potato_With_Id_Core( \

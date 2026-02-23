@@ -409,17 +409,10 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
 
         if (
             not is_returner
-            and i_cast(TypeByte, datatype_type) > MAX_TYPEBYTE_ELEMENT
+            and i_cast(TypeByte, datatype_type) > MAX_LIFT_STABLE
+            and (pclass != PARAMCLASS_META and pclass != PARAMCLASS_SOFT)
         ){
-            HeartByte heart_byte =
-                i_cast(TypeByte, datatype_type) - MAX_TYPEBYTE_ELEMENT;
-
-            if (
-                Not_Stable_Antiform_Heart(i_cast(Heart, heart_byte)) and
-                (pclass != PARAMCLASS_META and pclass != PARAMCLASS_SOFT)
-            ){
-                panic ("Unstable type unusable unless ^META or soft param");
-            }
+            panic ("Unstable type unusable unless ^META or soft param");
         }
 
         *optimized = i_cast(TypesetByte, unwrap datatype_type);
