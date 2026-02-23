@@ -697,7 +697,7 @@ INLINE Element* Copy_Sequence_At_Untracked(
                 return Init_Blank(out);
 
             Copy_Cell_Core_Untracked(out, sequence, CELL_MASK_COPY);
-            Tweak_Cell_Type(out, u_cast(HeartEnum, MIRROR_BYTE(a)));  // [3]
+            Tweak_Cell_Type(out, u_cast(Heart, MIRROR_BYTE(a)));  // [3]
             return out;
         }
         assert(Array_Len(a) >= 2);

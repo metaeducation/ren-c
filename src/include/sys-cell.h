@@ -679,25 +679,25 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
         void operator=(const KindHolder& right)  // must write explicitly
           { *this = u_cast(KindByte, right); }
 
-        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum, KindHolder, Heart)
+        ENABLE_IF_EXACT_ARG_TYPE(Heart, KindHolder)
         void operator=(T right)
           { *this = i_cast(KindByte, right); }  // inherit operator= checks
 
-        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum, Heart)
+        ENABLE_IF_EXACT_ARG_TYPE(Heart)
         explicit operator T() const   // inherit Byte() cast extraction checks
           { return i_cast(T, i_cast(Byte, *this)); }
     };
 
-    INLINE bool operator==(const KindHolder& holder, HeartEnum h)
+    INLINE bool operator==(const KindHolder& holder, Heart h)
       { return KIND_BYTE_RAW(holder.cell) == i_cast(Byte, h); }
 
-    INLINE bool operator==(HeartEnum h, const KindHolder& holder)
+    INLINE bool operator==(Heart h, const KindHolder& holder)
       { return i_cast(Byte, h) == KIND_BYTE_RAW(holder.cell); }
 
-    INLINE bool operator!=(const KindHolder& holder, HeartEnum h)
+    INLINE bool operator!=(const KindHolder& holder, Heart h)
       { return KIND_BYTE_RAW(holder.cell) != i_cast(Byte, h); }
 
-    INLINE bool operator!=(HeartEnum h, const KindHolder& holder)
+    INLINE bool operator!=(Heart h, const KindHolder& holder)
       { return i_cast(Byte, h) != KIND_BYTE_RAW(holder.cell); }
 
     #define KIND_BYTE(cell) \
@@ -706,7 +706,7 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 
 #define Unchecked_Heart_Of(c) \
     i_cast(Option(Heart), \
-        i_cast(HeartEnum, KIND_BYTE_RAW(c) & KIND_BYTEMASK_HEART_0x3F))
+        i_cast(Heart, KIND_BYTE_RAW(c) & KIND_BYTEMASK_HEART_0x3F))
 
 #define Heart_Of(c) \
     Unchecked_Heart_Of(Readable_Cell(c))
@@ -872,7 +872,7 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
       case LIFTBYTE_DATATYPE:
       case LIFTBYTE_LOGIC:
         assert(KIND_BYTE_RAW(v) <= MAX_HEARTBYTE);
-        return i_cast(TypeEnum, KIND_BYTE_RAW(v) + MAX_TYPEBYTE_ELEMENT);
+        return u_cast(Option(Type), KIND_BYTE_RAW(v) + MAX_TYPEBYTE_ELEMENT);
 
     #if RUNTIME_CHECKS
       default:
@@ -880,7 +880,7 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
     #endif
     }
 
-    return i_cast(TypeEnum, LIFT_BYTE_RAW(v));
+    return u_cast(Option(Type), LIFT_BYTE_RAW(v));
 }
 
 #if NO_RUNTIME_CHECKS
@@ -916,9 +916,9 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
     };
 
   #if DEBUG_EXTRA_HEART_CHECKS
-    template<HeartEnum E>
-    struct KnownNotQuotedHelper<HeartEnum, E> {
-        constexpr static TypeEnum value = cast(TypeEnum, E);
+    template<Heart E>
+    struct KnownNotQuotedHelper<Heart, E> {
+        constexpr static TypeEnum value = i_cast(TypeEnum, E);
     };
   #endif
 

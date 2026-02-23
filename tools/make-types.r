@@ -414,11 +414,12 @@ e-typespecs: make-emitter "Type Help Descriptions" (
     join prep-dir %specs/tmp-typespecs.r
 )
 
-plains: make block! 64  ; "TYPE_XXX = (num)" for all KIND_BYTE
-pseudotype-hearts: make block! 128  ; "PSEUDO_XXX = (num)" for all KIND_BYTE
-pseudotypes: make block! 128  ; "TYPE_XXX = (num)" for all pseudotypes
-types: make block! 128
-typedefines: make block! 128
+; lists are all of the form "XXX = (num)", prefix (e.g. "TYPE_") added later
+sigils: make block! 3
+hearts: make block! 60  ; 64 minus sigils minus TYPE_0
+lifteds: make block! 2  ; QUASIFORM! and QUOTED!
+quoteds: make block! 127  ; 128 minus TYPE_QUOTED as one quote non quasi
+antiforms: make block! 64  ; lots of blank space atm
 
 singlehearts: make block! 256  ; tricky thing, see description in comments
 
@@ -428,12 +429,19 @@ sparse-memberships: copy []  ; non-ranged in %types.r, [any-unit? any-inert?]
 index: 1
 
 do-appends: proc [
+    which [word!]
     name [word! text! integer!]
     description [<opt> text!]
     sparse [block!]  ; possibly empty
     :ranged [block!]
     :heart
 ][
+    let enumlist: ensure block! get which
+
+    append enumlist cscape [name
+        --[${NAME} = $<index>]--
+    ]
+
     description: default [
         assert [integer? name]
         <- "reserved for future use"
@@ -445,36 +453,6 @@ do-appends: proc [
             unspaced ["FLAG_THIRD_BYTE(" index ")"]
             unspaced ["FLAG_FOURTH_BYTE(" index ")"]
         ]
-    ]
-
-    append types cscape [name  ; for the non-distinguishing heart/type builds
-        --[TYPE_${NAME} = $<index>]--
-    ]
-
-    if heart [  ; still needs slot in TYPE enum if heart
-        append pseudotype-hearts cscape [name
-            --[ENUM_PSEUDO_${NAME} = $<index>]--
-        ]
-
-        append typedefines cscape [name
-            --[#define TYPE_${NAME}  HEART_ENUM(${NAME})]--
-        ]
-    ]
-    else [
-        append pseudotype-hearts cscape [name
-            --[ENUM_TYPE_${NAME} = $<index>]--
-        ]
-
-        append typedefines cscape [name
-            --[#define TYPE_${NAME}  TYPE_ENUM(${NAME})]--
-        ]
-    ]
-
-    append singlehearts cscape [name
-        --[SINGLEHEART_TAIL_SPACE_${NAME} = $<index * 256>]--
-    ]
-    append singlehearts cscape [name
-        --[SINGLEHEART_HEAD_SPACE_${NAME} = $<(index * 256) + 1>]--
     ]
 
     e-typeset-bytes/emit [name -[
@@ -510,7 +488,7 @@ for-each [name description] [
     pinned "mark to bind in the evaluator in current context, and keep mark"
     tied "mark to bind in the evaluator in current context, and drop mark"
 ][
-    do-appends name description ["TYPESET_FLAG_BRANCH"]
+    do-appends $sigils name description ["TYPESET_FLAG_BRANCH"]
 ]
 
 === "HEART TYPES" ===
@@ -520,11 +498,7 @@ for-each [name description] [
 min-heart: ~
 max-heart: ~
 
-for-each 't datatype-objects [  ; plains
-    append plains cscape [t
-        --[ENUM_TYPE_${T.NAME} = $<index>]--
-    ]
-
+for-each 't datatype-objects [
     min-heart: default [cscape [t.name --[TYPE_${T.NAME}]--]]
     max-heart: cscape [t.name --[TYPE_${T.NAME}]--]  ; overwritten until max
 
@@ -536,7 +510,14 @@ for-each 't datatype-objects [  ; plains
         ]
     ]
 
-    do-appends:heart t.name t.description sparse
+    do-appends $hearts t.name t.description sparse
+
+    append singlehearts cscape [t
+        --[SINGLEHEART_TAIL_SPACE_${T.NAME} = $<index * 256>]--
+    ]
+    append singlehearts cscape [t
+        --[SINGLEHEART_HEAD_SPACE_${T.NAME} = $<(index * 256) + 1>]--
+    ]
 ]
 
 === "FILL SPACE UNTIL QUASIFORM (64)" ===
@@ -550,6 +531,7 @@ assert [index <= 64]  ; need 64 to be quasiform
 
 while [index < 64] [
     do-appends // [
+        $hearts
         unspaced ["reserved_" index]
         "<reserved>"
         sparse: []
@@ -557,6 +539,7 @@ while [index < 64] [
 ]
 
 do-appends // [
+    $lifteds
     'quasiform
     "value which evaluates to an antiform"
     ["TYPESET_FLAG_BRANCH"]
@@ -575,6 +558,7 @@ do-appends // [
 ; likely easier to emulate in other models, review the decision.)
 
 do-appends // [
+    $lifteds
     "quoted"
     "container for up to 64 levels of quoting"
     ["TYPESET_FLAG_BRANCH"]
@@ -585,6 +569,7 @@ is-quasi: okay
 
 while [index <= 192] [
     do-appends // [
+        $quoteds
         unspaced [
             "quoted_" num-quotes "_time" (if num-quotes > 1 ["s"])
                 "_" if not is-quasi ["non"] "quasi"
@@ -614,27 +599,19 @@ do-anti-appends: proc [
     antidescription [<opt> text!]
 ][
     if antiname [
-        append antiheart-aliases cscape [name antiname
-            --[#define HEART_${NAME}_SIGNIFYING_${ANTINAME}  HEART_ENUM(${NAME})]--
-        ]
-
-        append sparse-memberships cscape [antiname
-            --[/* $<index> - $<antiname> */  (0)]--
-        ]
-
-        append pseudotypes cscape [antiname
-            --[ENUM_TYPE_${ANTINAME} = $<index>]--
-        ]
-
-        append types cscape [antiname
-            --[TYPE_${ANTINAME} = $<index>]--
+        append antiforms cscape [antiname
+            --[${ANTINAME} = $<index>]--
         ]
         max-type: cscape [antiname
             --[TYPE_${ANTINAME}]--  ; overwritten until max found
         ]
 
-        append typedefines cscape [antiname
-            --[#define TYPE_${ANTINAME}  TYPE_ENUM(${ANTINAME})]--
+        append antiheart-aliases cscape [name antiname
+            --[#define HEART_${NAME}_SIGNIFYING_${ANTINAME}  TYPE_${NAME}]--
+        ]
+
+        append sparse-memberships cscape [antiname
+            --[/* $<index> - $<antiname> */  (0)]--
         ]
 
         e-typeset-bytes/emit [antiname -[
@@ -650,18 +627,12 @@ do-anti-appends: proc [
             TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
         ]--]
     ] else [
+        append antiforms cscape [ --[RESERVED_$<index> = $<index>]--]
+        max-type: cscape [ --[TYPE_RESERVED_$<index>]--]
+
         append sparse-memberships cscape [
             --[/* $<index> */  (0)]--
         ]
-
-        append pseudotypes cscape [ --[ENUM_TYPE_$<index> = $<index>]--]
-
-        append typedefines cscape [
-            --[/* no #define for TYPE_$<index> */]--
-        ]
-
-        append types cscape [ --[TYPE_$<index> = $<index>]--]
-        max-type: cscape [ --[TYPE_$<index>]--]
 
         ; don't need a #define for these
 
@@ -824,65 +795,58 @@ e-hearts/emit [rebs --[
      * check if a type Is_Bindable_Heart().  So when types are added or
      * removed, the numbers must shuffle around to preserve invariants.
      *
-     * NOTE ABOUT C++11 ENUM TYPING: It is best not to specify an "underlying
-     * type" because that prohibits certain optimizations, which the compiler
-     * can make based on knowing a value is only in the range of the enum.
+     * (Since we know it's an 8 bit type, and the enum isn't used for storage,
+     * we could use enum typing in C++ to say this is `uint_fast8_t`.  Should
+     * we do that?  Trusting the compiler is the more common choice.)
      */
     #if (! DEBUG_EXTRA_HEART_CHECKS)
         typedef enum {
-            TYPE_0_internal = 0,  /* use TYPE_0 or TYPE_0_constexpr */
-            $(Types),
+            TYPE_0_constexpr = 0,  /* prefer TYPE_0 to get Option(Heart) */
+            TYPE_$[Sigils],
+            TYPE_$[Hearts],
+            TYPE_$[Lifteds],
+            TYPE_$[Quoteds],
+            TYPE_$(Antiforms),
         } TypeEnum;
-
-        #define HEART_ENUM(name)  TYPE_##name
     #else
         /*
          * The "Extra Heart Byte Checks" are designed to make sure you don't
          * pass Type where Heart is expected, or write things like TYPE_QUOTED
          * or TYPE_SPLICE into the KIND_BYTE().
          *
-         * Accomplishing this rigorously requires using C++ enum classes.
-         * An enum class has to be used so that the values can be in a
-         * switch statement, and so that type checking can differentiate
-         * between them in order to overload functions differently for
-         * values in the range of hearts vs. in the range of hearts and types.
+         * Doing this with overlapping enums may not seem ideal, but trying
+         * to do it with one enum and C++ tricks to filter it wind up costing
+         * more at runtime--at least in debug builds, which don't inline
+         * constexpr functions.  It's just not worth it for the check--this
+         * is simpler, faster, and quite good enough.
          *
-         * (This would be much easier if C++ defined enum inheritance, but
-         * it does not, and as far as I can tell this is the only way you
-         * can pull it off.)
+         * (This would be much easier if C++ defined enum inheritance.)
          */
 
-      #if DEBUG_TYPE_ENUMS_USE_ENUM_CLASS  /* needs msvc for lax comparison */
-        enum class HeartEnum {
-      #else
         enum HeartEnum {
-      #endif
-            ENUM_TYPE_0_internal = 0,  /* use TYPE_0 or TYPE_0_constexpr */
-            $(Plains),
+            TYPE_0_constexpr = 0,  /* prefer TYPE_0 to get Option(Heart)! */
+
+            /* placeholders for TYPE_METAFORM, TYPE_PINNED, TYPE_TIED */
+            PLACEHOLDER_TYPE_$[Sigils],
+
+            TYPE_$(Hearts),
         };
 
-      #if DEBUG_TYPE_ENUMS_USE_ENUM_CLASS  /* needs msvc for lax comparison */
-        enum class TypeEnum {
-      #else
         enum TypeEnum {
-      #endif
-            /* PSEUDO_XXX placeholders for values in range of heart byte */
-            ENUM_PSEUDO_0_internal = 0,
-            $[Pseudotype-Hearts],
+            PLACEHOLDER_HEART_0 = 0,  /* need 0 state in overlapped enum */
 
-            /* TYPE_XXX pseudotypes for values out of range of heart byte */
-            $(Pseudotypes),
+            TYPE_$[Sigils],
+
+            /* placeholders for values in range of heart byte */
+            PLACEHOLDER_HEART_$[Hearts],
+
+            TYPE_$[Lifteds],
+
+            /* PSEUDOTYPE_QUOTED_<N>_TIMES_<NON>QUASI states */
+            TYPE_$[Quoteds],
+
+            TYPE_$(Antiforms),
         };
-
-    #if DEBUG_TYPE_ENUMS_USE_ENUM_CLASS  /* enum class needs qualifiers */
-      #define HEART_ENUM(name)  HeartEnum::ENUM_TYPE_##name
-      #define TYPE_ENUM(name)   TypeEnum::ENUM_TYPE_##name
-    #else
-      #define HEART_ENUM(name)  ENUM_TYPE_##name
-      #define TYPE_ENUM(name)   ENUM_TYPE_##name
-    #endif
-
-        $[Typedefines]
     #endif
 
     #define MAX_TYPEBYTE_FUNDAMENTAL  63  /* better name than "fundamental"? */

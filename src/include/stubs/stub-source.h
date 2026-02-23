@@ -100,25 +100,25 @@
         void operator=(const MirrorHolder& right)  // must write explicitly
           { *this = u_cast(Byte, right); }
 
-        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum, Heart)
+        ENABLE_IF_EXACT_ARG_TYPE(Heart)
         void operator=(T right)
           { *this = i_cast(Byte, right); }  // inherit op `=` Byte checks
 
-        ENABLE_IF_EXACT_ARG_TYPE(HeartEnum, Heart)
+        ENABLE_IF_EXACT_ARG_TYPE(Heart)
         explicit operator T() const  // inherit Byte() cast extraction checks
           { return u_cast(T, i_cast(Byte, *this)); }
     };
 
-    INLINE bool operator==(const MirrorHolder& holder, HeartEnum h)
+    INLINE bool operator==(const MirrorHolder& holder, Heart h)
       { return MIRROR_BYTE_RAW(holder.ref) == cast(Byte, h); }
 
-    INLINE bool operator==(HeartEnum h, const MirrorHolder& holder)
+    INLINE bool operator==(Heart h, const MirrorHolder& holder)
       { return cast(Byte, h) == MIRROR_BYTE_RAW(holder.ref); }
 
-    INLINE bool operator!=(const MirrorHolder& holder, HeartEnum h)
+    INLINE bool operator!=(const MirrorHolder& holder, Heart h)
       { return MIRROR_BYTE_RAW(holder.ref) != cast(Byte, h); }
 
-    INLINE bool operator!=(HeartEnum h, const MirrorHolder& holder)
+    INLINE bool operator!=(Heart h, const MirrorHolder& holder)
       { return cast(Byte, h) != MIRROR_BYTE_RAW(holder.ref); }
 
     #define MIRROR_BYTE(source) \

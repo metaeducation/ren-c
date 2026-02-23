@@ -185,13 +185,13 @@ struct RewrapHelper<const Wrapper, NewWrapped> {  // const needs forwarding
 // Not all types that expose `wrapped_type` are template instantiations that
 // RewrapHelper can decompose.  For example, a plain struct like:
 //
-//     struct Heart {
-//         NEEDFUL_DECLARE_WRAPPED_FIELD(HeartEnum, h);
+//     struct Type {
+//         NEEDFUL_DECLARE_WRAPPED_FIELD(TypeEnum, h);
 //         ...
 //     };
 //
 // ...has `wrapped_type` (so HasWrappedType is true), but it is not
-// `SomeTemplate<HeartEnum>`, so RewrapHelper cannot pattern-match it.
+// `SomeTemplate<TypeEnum>`, so RewrapHelper cannot pattern-match it.
 // IsRewrappable detects this so that other metaprogramming (like
 // ConstifyHelper) can fall back gracefully for non-template wrappers.
 //

@@ -105,7 +105,7 @@ INLINE Option(Sigil) Cell_Underlying_Sigil(const Cell* cell) {
 
 #define Kind_From_Sigil_And_Heart(sigil,heart) \
     (ii_cast(KindByte, known(Option(Sigil), (sigil)) << KIND_SIGIL_SHIFT) \
-        | i_cast(KindByte, known(HeartEnum, (heart))))
+        | i_cast(KindByte, known(Heart, (heart))))
 
 
 //=//// SIGIL MODIFICATION ////////////////////////////////////////////////=//

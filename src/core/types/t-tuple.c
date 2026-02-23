@@ -409,7 +409,7 @@ Result(Element*) Alias_Any_Sequence_As(
                     tweak = Copy_Cell(Array_At(two, 0), seq);
                     Init_Blank(Array_At(two, 1));
                 }
-                Tweak_Cell_Type(tweak, u_cast(HeartEnum, MIRROR_BYTE(a)));
+                Tweak_Cell_Type(tweak, u_cast(Heart, MIRROR_BYTE(a)));
                 Clear_Cell_Flag(tweak, LEADING_BLANK);
                 Init_Any_List(out, as, two);
             }

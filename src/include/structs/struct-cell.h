@@ -190,7 +190,7 @@ typedef Byte KindByte;  // help document when Byte is Heart + Sigil [1]
     FLAG_SECOND_BYTE(byte)
 
 #define FLAG_HEART(heart) \
-    FLAG_KIND_BYTE(i_cast(KindByte, known(HeartEnum, (heart))))
+    FLAG_KIND_BYTE(i_cast(KindByte, known(Heart, (heart))))
 
 #define KIND_BYTEMASK_HEART_0x3F  0x3F  /* 64 hearts, 2 bit crumb for Sigil */
 #define CELL_MASK_HEART_NO_SIGIL  FLAG_SECOND_BYTE(KIND_BYTEMASK_HEART_0x3F)

@@ -146,7 +146,7 @@ INLINE bool Is_Symbol_Id_Of_Builtin_Type(SymId id) {
 
 INLINE Type Type_From_Symbol_Id(SymId id) {
     assert(Is_Symbol_Id_Of_Builtin_Type(id));
-    return i_cast(TypeEnum, id - MIN_SYM_BUILTIN_TYPES + 1);
+    return i_cast(Type, id - MIN_SYM_BUILTIN_TYPES + 1);
 }
 
 INLINE SymId Symbol_Id_From_Type(Type type) {
@@ -196,7 +196,7 @@ INLINE Heart Datatype_Builtin_Heart(const Stable* v) {
     assert(type);
     Byte type_byte = u_cast(Byte, opt type);
     assert(type_byte <= MAX_HEARTBYTE);  // not QUOTED/QUASI/ANTI
-    return u_cast(HeartEnum, type_byte);
+    return u_cast(Heart, type_byte);
 }
 
 INLINE const ExtraHeart* Datatype_Extra_Heart(const Stable* v) {

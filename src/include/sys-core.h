@@ -231,7 +231,7 @@ typedef RebolHandleCleaner HandleCleaner;
 
 #include "mem-pools.h"
 
-#include "tmp-hearts.h"  // HeartEnum and TypeEnum (TYPE_BLOCK, TYPE_TEXT...)
+#include "tmp-hearts.h"  // TypeEnum (TYPE_BLOCK,TYPE_TEXT...), maybe HeartEnum
 #include "structs/struct-cell.h"
 #include "enums/enum-types.h"  // defines Heart and Type (safe wrappers if C++)
 

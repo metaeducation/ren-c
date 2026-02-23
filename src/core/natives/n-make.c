@@ -161,7 +161,7 @@ DECLARE_NATIVE(COPY)
 //
 Bounce To_Or_As_Checker_Executor(Level* const L)
 {
-    Heart to_or_as = i_cast(HeartEnum, LEVEL_STATE_BYTE(L));
+    Heart to_or_as = i_cast(Heart, LEVEL_STATE_BYTE(L));
     assert(to_or_as != TYPE_0);
 
     Element* spare_input = cast(Element*, Level_Spare(L));
