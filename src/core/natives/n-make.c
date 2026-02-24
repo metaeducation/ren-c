@@ -67,7 +67,7 @@ DECLARE_NATIVE(MAKE)
 //
 Bounce Copy_Quoter_Executor(Level* level_)
 {
-    TYPE_BYTE(OUT) = i_cast(TypeEnum, STATE);
+    Tweak_Cell_Type_Byte(OUT, Type_From_Byte(STATE));
 
     return OUT;
 }
@@ -116,7 +116,7 @@ DECLARE_NATIVE(COPY)
 
         UNUSED(ARG(DEEP));  // historically we ignore it
 
-        TYPE_BYTE(elem) = lift;  // restore
+        Tweak_Cell_Type_Byte(elem, lift);  // restore
         return COPY_TO_OUT(elem);
     }
 
@@ -144,7 +144,7 @@ DECLARE_NATIVE(COPY)
     sub->u.action.original = Frame_Phase(LIB(COPY));
     Set_Action_Level_Label(sub, label);
 
-    STATE = i_cast(StateByte, lift);
+    STATE = Byte_From_Type(lift);
 
     return BOUNCE_DOWNSHIFTED;
 }
@@ -161,8 +161,8 @@ DECLARE_NATIVE(COPY)
 //
 Bounce To_Or_As_Checker_Executor(Level* const L)
 {
-    Heart to_or_as = i_cast(Heart, LEVEL_STATE_BYTE(L));
-    assert(to_or_as != TYPE_0);
+    Heart to_or_as = Heart_From_Byte_Or_0(LEVEL_STATE_BYTE(L));
+    assert(to_or_as != HEART_0);
 
     Element* spare_input = cast(Element*, Level_Spare(L));
     Heart from = Heart_Of_Builtin_Fundamental(spare_input);
@@ -215,7 +215,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
 
     INCLUDE_PARAMS_OF_TO;
 
-    Copy_Cell(Erase_ARG(TYPE), Datatype_From_Type(from));
+    Copy_Cell(Erase_ARG(TYPE), Datatype_From_Heart(from));
     Copy_Cell(Erase_ARG(VALUE), out);
 
     assert(Get_Executor_Flag(ACTION, level_, IN_DISPATCH));
@@ -280,7 +280,7 @@ static Bounce Downshift_For_To_Or_As_Checker(Level *level_) {
     Option(const Symbol*) label = Level_Label(level_);
 
     Stable* datatype = ARG(TYPE);
-    STATE = i_cast(StateByte, Datatype_Builtin_Heart(datatype));  // may alter
+    STATE = Byte_From_Heart(Datatype_Builtin_Heart(datatype));  // may alter
     Copy_Cell(SPARE, ARG(VALUE));  // may alter ELEMENT too, save in SPARE
 
     Level* sub = Push_Downshifted_Level(OUT, level_);

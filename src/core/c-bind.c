@@ -1081,7 +1081,7 @@ Result(None) Clonify_And_Bind_Relative(
     ){
         // [2] is not active at this time
     }
-    else if (deeply and (Any_Series_Type(heart) or Any_Sequence_Type(heart))) {
+    else if (deeply and (Any_Series_Heart(heart) or Any_Sequence_Heart(heart))) {
         //
         // Objects and Flexes get shallow copied at minimum
         //
@@ -1113,7 +1113,7 @@ Result(None) Clonify_And_Bind_Relative(
             // See notes in Clonify()...need to copy immutable paths so that
             // binding pointers can be changed in the "immutable" copy.
             //
-            if (Any_Sequence_Type(heart))
+            if (Any_Sequence_Heart(heart))
                 Freeze_Source_Shallow(copy);
 
             // !!! At one point, arrays were marked relative as well as the
@@ -1123,7 +1123,7 @@ Result(None) Clonify_And_Bind_Relative(
             deep = Array_Head(copy);
             deep_tail = Array_Tail(copy);
         }
-        else if (Any_Series_Type(heart)) {
+        else if (Any_Series_Heart(heart)) {
             trap (
               Flex* copy = Copy_Flex_Core(BASE_FLAG_MANAGED, Cell_Flex(v))
             );
@@ -1329,7 +1329,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
         ){
             HeartsigilByte byte = HEARTSIGIL_BYTE(check);
             if (
-                byte == HEART_WORD
+                byte == Byte_From_Heart(HEART_WORD)
                 or byte == Byte_From_Heart_And_Sigil(HEART_WORD, SIGIL_META)
             ){
                 body_needs_binding = true;
@@ -1405,7 +1405,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 
             Element* copy = Copy_Cell_May_Bind(slot, item, binding);
             Force_Cell_Sigil(copy, SIGIL_META);  // make it $word
-            TYPE_BYTE(slot) = BEDROCK_255;
+            Tweak_Cell_Type_Byte(slot, BEDROCK_255);
             assert(Is_Cell_A_Bedrock_Alias(slot));  // alias uses ^META [1]
         }
         else {
@@ -1422,7 +1422,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             if (byte == Byte_From_Heart_And_Sigil(HEART_WORD, SIGIL_META))
                 Set_Cell_Flag(slot, LOOP_SLOT_ROOT_META);
             else
-                assert(byte == HEART_WORD);
+                assert(byte == Byte_From_Heart(HEART_WORD));
         }
 
         if (Type_Of(item) == TYPE_QUOTED_1_TIME_NONQUASI)

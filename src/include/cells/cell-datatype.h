@@ -146,13 +146,20 @@ INLINE bool Is_Symbol_Id_Of_Builtin_Type(SymId id) {
 
 INLINE Type Type_From_Symbol_Id(SymId id) {
     assert(Is_Symbol_Id_Of_Builtin_Type(id));
-    return i_cast(Type, id - MIN_SYM_BUILTIN_TYPES + 1);
+    return unwrap Type_From_Byte(id - MIN_SYM_BUILTIN_TYPES + 1);
 }
 
 INLINE SymId Symbol_Id_From_Type(Type type) {
     assert(type != TYPE_0_constexpr);
     return i_cast(SymId,
-        i_cast(SymId16, i_cast(Byte, type) + MIN_SYM_BUILTIN_TYPES - 1)
+        i_cast(SymId16, Byte_From_Type(type) + MIN_SYM_BUILTIN_TYPES - 1)
+    );
+}
+
+INLINE SymId Symbol_Id_From_Heart(Heart heart) {
+    assert(heart != HEART_0_constexpr);
+    return i_cast(SymId,
+        i_cast(SymId16, Byte_From_Heart(heart) + MIN_SYM_BUILTIN_TYPES - 1)
     );
 }
 
@@ -173,7 +180,7 @@ INLINE Option(SymId) Datatype_Id(const Stable* v) {
 //
 INLINE Option(Type) Datatype_Type(const Stable* v) {
     assert(Is_Datatype(v));  // only works on antiform [1]
-    return u_cast(Option(Type), DATATYPE_BYTE(Cell_Array(v)));
+    return Type_From_Byte(DATATYPE_BYTE(Cell_Array(v)));
 }
 
 #if RUNTIME_CHECKS
@@ -188,14 +195,14 @@ INLINE Option(Type) Datatype_Type(const Stable* v) {
 INLINE Option(Heart) Datatype_Heart(const Stable* v) {
     TypeEnum opt_type = opt Datatype_Type(v);
     assert(opt_type <= MAX_TYPE_HEART);  // no QUOTE/QUASI/ANTI
-    return i_cast(Option(Heart), opt_type);
+    return Heart_From_Byte(Byte_From_Type(opt_type));
 }
 
 INLINE Heart Datatype_Builtin_Heart(const Stable* v) {
     TypeEnum opt_type = opt Datatype_Type(v);
     assert(opt_type != TYPE_0_constexpr);  // enum class not bool coercible
     assert((opt_type) <= MAX_TYPE_HEART);  // not QUOTED/QUASI/ANTI
-    return i_cast(Heart, opt_type);
+    return ii_cast(Heart, Heart_From_Byte(Byte_From_Type(opt_type)));
 }
 
 INLINE const ExtraHeart* Datatype_Extra_Heart(const Stable* v) {
@@ -225,7 +232,7 @@ INLINE bool Have_Same_Type(const Stable* a, const Stable* b) {
         return true;  // all quoted types are same type, regardless of heart
     if (Is_Logic_Type(ta) and Is_Logic_Type(tb))
         return true;  // all logic types are same type, regardless of heart
-    return (i_cast(TypeByte, ta) == i_cast(TypeByte, tb));
+    return (opt ta) == (opt tb);
 }
 
 
@@ -257,8 +264,8 @@ INLINE bool Builtin_Typeset_Check(
     TypesetFlags typeset = g_typesets[typeset_byte];
 
     if (typeset & TYPESET_FLAG_0_RANGE) {  // trivial ranges ok (one datatype)
-        TypeEnum start = i_cast(TypeEnum, THIRD_BYTE(&typeset));
-        TypeEnum end = i_cast(TypeEnum, FOURTH_BYTE(&typeset));
+        TypeEnum start = Type_From_Byte_Or_0(THIRD_BYTE(&typeset));
+        TypeEnum end = Type_From_Byte_Or_0(FOURTH_BYTE(&typeset));
         return (
             start <= (opt type)
             and (opt type) <= end
@@ -268,5 +275,5 @@ INLINE bool Builtin_Typeset_Check(
     if ((opt type) > MAX_TYPE_ELEMENT)
         return false;  // antiform, no sparse_memberships (only ranged)
 
-    return did (g_sparse_memberships[u_cast(Byte, opt type)] & typeset);
+    return did (g_sparse_memberships[Byte_From_Type(type)] & typeset);
 }

@@ -319,7 +319,7 @@ uint32_t Hash_Cell(const Cell* cell)
         crash (nullptr); // List should be comprehensive
     }
 
-    return hash ^ crc32_table[u_cast(Byte, heart)];
+    return hash ^ crc32_table[Byte_From_Heart(heart)];
 }
 
 

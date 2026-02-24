@@ -2,7 +2,7 @@
 
 
 INLINE bool Stringlike_Cell(const Cell* v) {
-    return Any_Utf8_Type(Heart_Of(v)) and Stringlike_Has_Stub(v);
+    return Any_Utf8_Heart(Heart_Of(v)) and Stringlike_Has_Stub(v);
 }
 
 INLINE const Strand* Cell_Strand(const Cell* v) {
@@ -43,7 +43,7 @@ INLINE Length Series_Len_At(const Cell* v) {
 }
 
 INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
-    assert(Any_Utf8_Type(Heart_Of(c)));
+    assert(Any_Utf8_Heart(Heart_Of(c)));
 
     if (not Cell_Payload_1_Needs_Mark(c))  // must store bytes in cell direct
         return u_cast(Utf8(const*), c->payload.at_least_8);
@@ -55,7 +55,7 @@ INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
 INLINE Utf8(const*) String_At(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
 
-    if (not Any_String_Type(heart))  // non-positional: URL, RUNE, WORD...
+    if (not Any_String_Heart(heart))  // non-positional: URL, RUNE, WORD...
         return Cell_Utf8_Head(v);  // might store utf8 directly in cell
 
     const Strand* str = cast(Strand*, Cell_Flex(v));
@@ -68,7 +68,7 @@ INLINE Utf8(const*) String_At(const Cell* v) {
 
 
 INLINE Utf8(const*) Cell_Strand_Tail(const Cell* c) {
-    assert(Any_Utf8_Type(Heart_Of(c)));
+    assert(Any_Utf8_Heart(Heart_Of(c)));
 
     if (not Stringlike_Has_Stub(c)) {  // content in cell direct
         Size size = c->extra.at_least_4[IDX_EXTRA_USED];
@@ -89,7 +89,7 @@ INLINE Utf8(const*) Cell_Strand_Tail(const Cell* c) {
 
 INLINE REBLEN String_Len_At(const Cell* c) {
     Option(Heart) heart = Heart_Of(c);
-    if (Any_String_Type(heart))  // can have an index position
+    if (Any_String_Heart(heart))  // can have an index position
         return Series_Len_At(c);
 
     if (not Stringlike_Has_Stub(c))  // content directly in cell
@@ -140,7 +140,7 @@ INLINE Size String_Byte_Offset_At(const Cell* cell) {
 //
 INLINE Size String_Byte_Offset_For_Index(const Cell* cell, Index index)
 {
-    assert(Any_String_Type(Unchecked_Heart_Of(cell)));
+    assert(Any_String_Heart(Unchecked_Heart_Of(cell)));
 
     const Strand* strand = Cell_Strand(cell);
     Utf8(const*) at;

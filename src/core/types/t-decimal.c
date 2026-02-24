@@ -185,7 +185,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         const Element* item = List_Len_At(&len, arg);
 
         if (len != 2)
-            return fail (Error_Bad_Make(TYPE_DECIMAL, arg));
+            return fail (Error_Bad_Make(HEART_DECIMAL, arg));
 
         REBDEC d;
         if (Is_Integer(item))
@@ -222,7 +222,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
         break;
     }
 
-    return fail (Error_Bad_Make(TYPE_DECIMAL, arg));
+    return fail (Error_Bad_Make(HEART_DECIMAL, arg));
 }
 
 
@@ -486,7 +486,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
 
     REBDEC d = VAL_DECIMAL(val);
 
-    if (Any_Utf8_Type(to)) {
+    if (Any_Utf8_Heart(to)) {
         DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
         Push_Mold(mo);
@@ -500,7 +500,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
             );
         }
 
-        if (Any_String_Type(to))
+        if (Any_String_Heart(to))
             return Init_Any_String(OUT, to, Pop_Molded_Strand(mo));
 
         if (Try_Init_Small_Utf8(

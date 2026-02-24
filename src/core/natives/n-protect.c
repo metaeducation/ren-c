@@ -123,11 +123,11 @@ void Protect_Slot(const Cell* v, Flags flags)
 
     Option(Heart) heart = Heart_Of(v);
 
-    if (Any_Series_Type(heart))
+    if (Any_Series_Heart(heart))
         Protect_Flex(Cell_Flex(v), Series_Index(v), flags);
     else if (heart == HEART_MAP)
         Protect_Flex(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
-    else if (Any_Context_Type(heart))
+    else if (Any_Context_Heart(heart))
         Protect_Varlist(Cell_Varlist(v), flags);
 }
 
@@ -445,7 +445,7 @@ void Force_Value_Frozen_Core(
     if (heart == HEART_FRAME and Is_Frame_Details(v))
         return;  // special form, immutable
 
-    if (Any_List_Type(heart)) {
+    if (Any_List_Heart(heart)) {
         const Source* a = Cell_Array(v);
         if (deep) {
             if (not Is_Source_Frozen_Deep(a)) {
@@ -462,7 +462,7 @@ void Force_Value_Frozen_Core(
             }
         }
     }
-    else if (Any_Context_Type(heart)) {
+    else if (Any_Context_Heart(heart)) {
         VarList* c = Cell_Varlist(v);
         if (deep) {
             /*if (not Is_Context_Frozen_Deep(c)) {*/  // !!! review
@@ -474,7 +474,7 @@ void Force_Value_Frozen_Core(
         else
             panic ("What does a shallow freeze of a context mean?");
     }
-    else if (Any_Series_Type(heart)) {
+    else if (Any_Series_Heart(heart)) {
         UNUSED(deep);
 
         const Flex* f = Cell_Flex(v);
@@ -484,11 +484,11 @@ void Force_Value_Frozen_Core(
                 Set_Flex_Info(f, AUTO_LOCKED);
         }
     }
-    else if (Any_Sequence_Type(heart)) {
+    else if (Any_Sequence_Heart(heart)) {
         // No freezing needed
     }
     else
-        panic (Error_Invalid_Type(heart));  // not yet implemented
+        panic (v);  // not yet implemented
 }
 
 

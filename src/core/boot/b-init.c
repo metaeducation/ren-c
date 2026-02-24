@@ -124,6 +124,13 @@ static void Check_Basics(void)
       #endif
         crash ("Bad composed integer assignment for byte-ordering macro.");
     }
+
+    if (
+        ((flags & FLAG_FIRST_BYTE(0xFF)) != 4)
+        or ((flags & FLAG_SECOND_BYTE(0xFF)) != (21 << 8))
+    ){
+        crash ("Bad FLAG_FIRST_BYTE() or FLAG_SECOND_BYTE() masking.");
+    }
 }}
 
 
@@ -647,7 +654,7 @@ void Startup_Core(void)
 
     Source* typespecs = Cell_Array_Known_Mutable(&boot->typespecs);
     assert(  // exclude TYPE_0 (custom)
-        Array_Len(typespecs) == i_cast(TypeByte, MAX_TYPE_ANTIFORM)
+        Array_Len(typespecs) == Byte_From_Type(MAX_TYPE_ANTIFORM)
     );
     UNUSED(typespecs);  // not used at this time
 

@@ -567,7 +567,7 @@ INLINE bool Is_Parameter_Divergent(const Cell* v) {
 
 INLINE Param* Unspecialize_Parameter(Cell* p) {
     assert(Type_Of_Raw(p) == TYPE_PARAMETER);
-    TYPE_BYTE(p) = BEDROCK_255;
+    Tweak_Cell_Type_Byte(p, BEDROCK_255);
     return u_cast(Param*, p);
 }
 

@@ -38,9 +38,9 @@
 // make-work to check for them when you're sure you're dealing with something
 // that is constrained to being a valid cell heart.
 //
-// Hence, only some TYPE_XXX values can be written into HEARTSIGIL_BYTE():
+// Hence, only HEART_XXX values can be written into HEARTSIGIL_BYTE():
 //
-//    HEARTSIGIL_BYTE(cell) = TYPE_INTEGER;  // valid
+//    HEARTSIGIL_BYTE(cell) = HEART_INTEGER;  // valid
 //    HEARTSIGIL_BYTE(cell) = TYPE_QUASIFORM;  // invalid, it's a pseudotype
 //
 // And you shouldn't really be comparing Heart against pseudotypes:
@@ -50,38 +50,28 @@
 //         { ... }
 //    }
 //
-// 1. The technique requires splitting the enum into two parts (where the
-//    TypeEnum has dummy values to cover the HeartEnum cases so that switch()
-//    statements on a TypeEnum doesn't trigger a warning checking against
-//    TYPE_XXX integral values that it doesn't have an integer for).
-//
-//    Fancier methods than overlapping enums have been tried, and rejected:
-//
-//      https://rebol.metaeducation.com/t/enum-inheritance-in-c/2690
-//
-// 2. All extension types use the 0 byte for their heart.  This means that
-//    you can't say (Type_Of(cell1) == Type_Of(cell2)) and get a correct
+// 1. All extension types use the 0 byte for their heart.  This means that
+//    you can't say (Heart_Of(cell1) == Heart_Of(cell2)) and get a correct
 //    answer in the case of extension types.  To avoid that problem, we
-//    have Type_Of() return an Optional(Type), which we then prohibit the
-//    comparison of Option(Type) to Option(Type).  You can still compare an
-//    unwrapped Type to an Option(Type).
+//    have Heart_Of() return an Optional(Type), which we then prohibit the
+//    comparison of Option(Heart) to Option(Heart).  You can still compare an
+//    unwrapped Heart to an Option(Heart).
 //
 
 typedef Byte HeartByte;  // value is >= MIN_TYPE_HEART, <= MAX_TYPE_HEART
 
 #if (! DEBUG_EXTRA_HEART_CHECKS)
-    typedef TypeEnum Heart;  // avoid enum compare warnings [1]
+    typedef HeartEnum Heart;
     typedef TypeEnum Type;
 #else
     struct Type {  // v-- an "enum class" in MSVC (members are TypeEnum::XXX)
         NEEDFUL_DECLARE_WRAPPED_FIELD(TypeEnum, t);
 
         Type () = default;
-        Type (HeartEnum heart) : t (i_cast(TypeEnum, heart)) {}
         Type (TypeEnum type) : t (type) {}
 
         // !!! needed for u_cast(Option(Type), Byte) -- review ideas
-        explicit Type (TypeByte byte) : t (i_cast(TypeEnum, byte)) {}
+        explicit Type (uintptr_t u) : t (i_cast(TypeEnum, u)) {}
 
         Type (needful::Nocast0Struct)  // for return fail with Result(Type)
           : t (i_cast(TypeEnum, 0))  // (also used by Option(Type) = none)
@@ -90,8 +80,8 @@ typedef Byte HeartByte;  // value is >= MIN_TYPE_HEART, <= MAX_TYPE_HEART
         explicit operator bool() const  // for Option(Type) in if() statements
           { return t != i_cast(TypeEnum, 0); }
 
-        explicit operator TypeByte() const
-          { return i_cast(TypeByte, t); }
+        explicit operator uintptr_t() const
+          { return i_cast(uintptr_t, t); }
 
         operator TypeEnum() const
           { return t; }
@@ -133,22 +123,8 @@ typedef Byte HeartByte;  // value is >= MIN_TYPE_HEART, <= MAX_TYPE_HEART
     INLINE bool operator!=(const Type& left, const Type& right) = delete;
     */
 
-    // Very narrow equality tests, only applying to literal Heart values.
-
-    INLINE bool operator==(const Type& type, HeartEnum h)
-      { return i_cast(Byte, type.t) == u_cast(Byte, h); }
-
-    INLINE bool operator==(HeartEnum h, const Type& type)
-      { return i_cast(Byte, h) == u_cast(Byte, type.t); }
-
-    INLINE bool operator!=(const Type& type, HeartEnum h)
-      { return i_cast(Byte, type.t) != u_cast(Byte, h); }
-
-    INLINE bool operator!=(HeartEnum h, const Type& type)
-      { return i_cast(Byte, h) != u_cast(Byte, type.t); }
-
-    // Comparisons for TypeEnum and Type (Because Heart can become a type,
-    // this covers Type/Heart comparisons as well as Type/Type comparisons.
+    // Comparisons for TypeEnum and Type; do not permit comparison of Type
+    // variables to each other, but only to TYPE_XXX values.
 
     ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
     INLINE bool operator>=(const Type& type, T&& t)
@@ -207,9 +183,7 @@ INLINE bool Is_Logic_Type(Option(Type) type) {
 
 //=//// CUSTOM DATATYPE HEART (0) /////////////////////////////////////////=//
 //
-// There are a finite number of builtin datatypes (hearts and pseudotypes),
-// and then some builtin sparse and ranged typesets.  The sum of all of these
-// is up to 255 before running up against an implementation barrier.
+// There are a finite number of builtin datatypes (up to 60 HeartEnum values)
 //
 // So extension types all use the same heart value of 0.  This means that the
 // actual extension type's information is stored in the Cell's "extra" slot.
@@ -236,8 +210,11 @@ INLINE bool Is_Logic_Type(Option(Type) type) {
 //    us catch this case at compile time.
 //
 
+#define HEART_0 /* add safety of the Option() [1] */ \
+    u_cast(Option(Heart), HEART_0_constexpr)
+
 #define TYPE_0 /* add safety of the Option() [1] */ \
-    u_cast(Option(Heart), TYPE_0_constexpr)
+    u_cast(Option(Type), TYPE_0_constexpr)
 
 #if NEEDFUL_OPTION_USES_WRAPPER  // make safe for extension types [2]
     ENABLE_IF_EXACT_ARG_TYPE(Option(Type))
@@ -255,20 +232,20 @@ INLINE bool Is_Logic_Type(Option(Type) type) {
 
     #if defined(_MSC_VER)
         ENABLE_IF_EXACT_ARG_TYPE(Heart)
-        INLINE bool operator==(const Option(Type)& a, T b)
-          { return u_cast(Byte, opt a) == u_cast(Byte, b); }
+        INLINE bool operator==(const Option(Heart)& a, T b)
+          { return ii_cast(Heart, a) == b; }
 
         ENABLE_IF_EXACT_ARG_TYPE(Heart)
-        INLINE bool operator==(T a, const Option(Type)& b)
-          { return u_cast(Byte, a) == u_cast(Byte, opt b); }
+        INLINE bool operator==(T a, const Option(Heart)& b)
+          { return a == ii_cast(Heart, b); }
 
         ENABLE_IF_EXACT_ARG_TYPE(Heart)
-        INLINE bool operator!=(const Option(Type)& a, T b)
-          {  return u_cast(Byte, opt a) != u_cast(Byte, b); }
+        INLINE bool operator!=(const Option(Heart)& a, T b)
+          { return ii_cast(Heart, a) != b; }
 
         ENABLE_IF_EXACT_ARG_TYPE(Heart)
-        INLINE bool operator!=(T a, const Option(Type)& b)
-          {  return u_cast(Byte, a) != u_cast(Byte, opt b); }
+        INLINE bool operator!=(T a, const Option(Heart)& b)
+          { return a != ii_cast(Heart, b); }
     #endif
   #endif
 #endif
@@ -291,26 +268,23 @@ INLINE bool Is_Logic_Type(Option(Type) type) {
 //
 // (See notes on SingleHeart definition for more...)
 
-#define Leading_Blank_And(heart) \
-    i_cast(SingleHeart, (i_cast(Byte, known(Heart, (heart))) << 8) + 1)
-
-#define Trailing_Blank_And(heart) \
-    i_cast(SingleHeart, i_cast(Byte, known(Heart, (heart))) << 8)
-
-#define LEADING_BLANK_AND(name)     Leading_Blank_And(HEART_##name)
-#define TRAILING_BLANK_AND(name)    Trailing_Blank_And(HEART_##name)
-
-INLINE bool Singleheart_Has_Leading_Blank(SingleHeart single) {
+INLINE bool Singleheart_Has_Trailing_Blank(SingleHeart single) {
     assert(single != NOT_SINGLEHEART_0);
-    return did (i_cast(uint_fast16_t, single) & 1);
+    return did (i_cast(uint_fast16_t, single) & 0xFF);
 }
 
-#define Singleheart_Has_Trailing_Blank(single) \
-    (not Singleheart_Has_Leading_Blank(single))
+#define Singleheart_Has_Leading_Blank(single) \
+    (not Singleheart_Has_Trailing_Blank(single))
 
 INLINE Heart Heart_Of_Singleheart(SingleHeart single) {
     assert(single != NOT_SINGLEHEART_0);
-    Heart heart = i_cast(Heart, i_cast(uint_fast16_t, single) >> 8);
+
+    Heart heart;
+    if (Singleheart_Has_Trailing_Blank(single))
+        heart = i_cast(Heart, i_cast(uintptr_t, single) << 16);
+    else
+        heart = i_cast(Heart, i_cast(uintptr_t, single) << 8);
+
     assert(heart != HEART_0_constexpr and heart != HEART_BLANK);
     return heart;
 }

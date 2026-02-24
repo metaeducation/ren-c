@@ -361,7 +361,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
 
     bool tildes = NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
         and (Type_Of_Raw(cell) > MAX_TYPE_NOQUOTE_NOQUASI)
-        and (not (TYPE_BYTE(cell) & NONQUASI_BIT));
+        and (not (Byte_From_Type(Type_Of_Raw(cell)) & NONQUASI_BIT));
 
     if (tildes)
         Append_Codepoint(mo->strand, '~');

@@ -435,7 +435,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Map)
         executor = &Inert_Stepper_Executor;
     else {
         if (not Is_Block(arg))
-            panic (Error_Bad_Make(TYPE_MAP, arg));
+            panic (Error_Bad_Make(HEART_MAP, arg));
 
         executor = &Stepper_Executor;
     }
@@ -822,7 +822,7 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
     Element* map = Element_ARG(VALUE);
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_List_Type(to))  // !!! not ordered! [1]
+    if (Any_List_Heart(to))  // !!! not ordered! [1]
         return Init_Any_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
 
     if (to == HEART_MAP) {

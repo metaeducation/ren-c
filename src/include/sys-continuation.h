@@ -59,7 +59,7 @@
 
 
 #define CONTINUE_SUBLEVEL \
-    (assert(SUBLEVEL->prior == level_), BOUNCE_CONTINUE)
+    (assert(STATE != 0), assert(SUBLEVEL->prior == level_), BOUNCE_CONTINUE)
 
 
 //=//// DELEGATION HELPER MACROS ///////////////////////////////////////////=//

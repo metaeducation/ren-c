@@ -13,7 +13,7 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
     Option(Heart) heart = Heart_Of(c);
     assert(
         heart != HEART_MODULE
-        and Any_Context_Type(heart)
+        and Any_Context_Heart(heart)
     );
 
     Base* base = CELL_PAYLOAD_1(c);  // ParamList or Details

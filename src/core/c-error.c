@@ -742,7 +742,7 @@ Error* Make_Error_From_Vaptr_Managed(
 
     assert(Varlist_Len(varlist) == Varlist_Len(root_varlist) + expected_args);
 
-    HEARTSIGIL_BYTE(Rootvar_Of_Varlist(varlist)) = HEART_ERROR;
+    Tweak_Cell_Type(Rootvar_Of_Varlist(varlist), HEART_ERROR);
 
     // C struct mirroring fixed portion of error fields
     //
@@ -1209,9 +1209,9 @@ Error* Error_Bad_Return_Type(Level* L, Value* v, const Element* param) {
 //
 //  Error_Bad_Make: C
 //
-Error* Error_Bad_Make(Type type, const Element* spec)
+Error* Error_Bad_Make(Heart heart, const Element* spec)
 {
-    return Error_Bad_Make_Arg_Raw(Datatype_From_Type(type), spec);
+    return Error_Bad_Make_Arg_Raw(Datatype_From_Heart(heart), spec);
 }
 
 

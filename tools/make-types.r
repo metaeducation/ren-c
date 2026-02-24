@@ -264,11 +264,8 @@ e-types/emit [--[
      * for this issue."
      */
     extern uint_fast32_t const g_sparse_memberships[
-        i_cast(TypeByte, MAX_TYPE_ANTIFORM) + 1
+        Byte_From_Type(MAX_TYPE_ANTIFORM) + 1
     ];
-
-    #define Sparse_Memberships(t) \
-        g_sparse_memberships[ii_cast(Byte, known(Option(Type), (t)))]
 ]--]
 
 e-types/emit [--[
@@ -282,12 +279,15 @@ e-types/emit [--[
      * need to use functions like Is_Quoted_Type(t).  Hence there is no
      * single TYPE_QUOTED.
      *
-     * (As another optimization, there's no TYPE_LOGIC but it's split into
-     * a TYPE_LOGIC_NULL and TYPE_LOGIC_OKAY type byte.)
-     *
-     * But for non-quoted types, this is really only a single byte check!!
+     * As another optimization, the type enum consists of crafted masked
+     * values of the second-most-significant-byte in the header (so values
+     * like 0x0100, 0x0200, 0x0300, etc.)  It turns out that this is notably
+     * faster to work with that extracting the byte, so that makes this fast:
      *
      *     #define Is_Text(v)  (Type_Of(v) == TYPE_TEXT)
+     *
+     * Type_Of() is a bitwise & of a mask, and then TYPE_TEXT is a small
+     * integer constant.  This is about as fast as it gets.
      */
 ]--]
 
@@ -305,7 +305,8 @@ for-each 't datatype-objects [
     ]
 
     e-types/emit [propercase-of t --[
-        #define Is_${propercase-of T.name}(v)  (Type_Of(v) == TYPE_$<T.NAME>)
+        #define Is_${propercase-of T.name}(v) \
+            (Type_Of(v) == TYPE_${T.NAME})
 
         #define Is_Possibly_Unstable_Value_${propercase-of T.name}(v) \
             (Type_Of_Possibly_Unstable(v) == TYPE_$<T.NAME>)
@@ -316,11 +317,22 @@ for-each 'tr typerange-objects [  ; (e.g. ANY-STRING? < ANY-UTF8?)
     let proper-name: propercase-of tr.name
 
     e-types/emit [tr --[
-        INLINE bool Any_${Proper-Name}_Type(Option(Type) t)
-          { return ii_cast(TypeByte, (t)) >= $<TR.START> and ii_cast(TypeByte, (t)) <= $<TR.END>; }
+        INLINE bool Any_${Proper-Name}_Type(Option(Type) t) {
+            return (
+                ii_cast(TypeEnum, (t)) >= Type_From_Byte_Or_0($<TR.START>)
+                and ii_cast(TypeEnum, (t)) <= Type_From_Byte_Or_0($<TR.END>)
+            );
+        }
 
         #define Any_${Proper-Name}(cell) \
             Any_${Proper-Name}_Type(Type_Of(cell))
+
+        INLINE bool Any_${Proper-Name}_Heart(Option(Heart) h) {
+            return (
+                ii_cast(Heart, (h)) >= Heart_From_Byte_Or_0($<TR.START>)
+                and ii_cast(Heart, (h)) <= Heart_From_Byte_Or_0($<TR.END>)
+            );
+        }
     ]--]
 ]
 
@@ -358,7 +370,10 @@ e-types/emit newline
 for-each [ts-name types] sparse-typesets [
     e-types/emit [propercase-of ts-name --[
         #define Any_${propercase-of Ts-Name}_Type(t) \
-            (logical (Sparse_Memberships(t) & TYPESET_FLAG_${TS-NAME}))
+            (logical (g_sparse_memberships[Byte_From_Type(t)] & TYPESET_FLAG_${TS-NAME}))
+
+        #define Any_${propercase-of Ts-Name}_Heart(h) \
+            (logical (g_sparse_memberships[Byte_From_Heart(h)] & TYPESET_FLAG_${TS-NAME}))
 
         #define Any_${propercase-of Ts-Name}(cell) \
             Any_${propercase-of Ts-Name}_Type(Type_Of(cell))
@@ -367,8 +382,6 @@ for-each [ts-name types] sparse-typesets [
 
 for-each 't datatype-objects [
     if not t.antiname [continue]  ; no special name for antiform form
-
-    let qualifier: all [yes? t.unstable, "_Possibly_Unstable"]
 
     let proper-name: propercase-of t.antiname
 
@@ -382,6 +395,8 @@ for-each 't datatype-objects [
     ]--]
 
     if t.antiname = "logic" [continue]  ; skip Is_Logic() (special handling)
+
+    let qualifier: all [yes? t.unstable, "_Possibly_Unstable"]
 
     e-types/emit [t proper-name qualifier --[
         #define Is_$<Proper-Name>(v) \
@@ -447,7 +462,7 @@ do-appends: proc [
     name [word! text! integer!]
     description [<opt> text!]
     sparse [block!]  ; possibly empty
-    :ranged [block!]
+    :ranged [text!]
 ][
     let enumlist: ensure block! get which
 
@@ -461,15 +476,11 @@ do-appends: proc [
     ]
 
     append typedefines cscape [name
-        --[#define TYPE_${NAME}  TypeEnum::ENUM_${NAME}]--
+        --[#define TYPE_${NAME}  TYPE_(${NAME})]--
     ]
 
     ranged: default [
-        reduce [
-            "TYPESET_FLAG_0_RANGE"
-            unspaced ["FLAG_THIRD_BYTE(" index ")"]
-            unspaced ["FLAG_FOURTH_BYTE(" index ")"]
-        ]
+        cscape [name "FLAG_TYPESET_RANGE(TYPE_(${NAME}), TYPE_(${NAME}))"]
     ]
 
     e-typespecs/emit [name description -[
@@ -477,7 +488,7 @@ do-appends: proc [
     ]-]
 
     append typeset-flags cscape [name ranged
-        --[/* $<index> - $<name> */  ($<Delimit " | " Ranged>)]--
+        --[/* $<index> - $<name> */  $<Ranged>]--
     ]
 
     if empty? sparse [
@@ -496,20 +507,28 @@ do-appends: proc [
 ; TYPE_METAFORM, TYPE_PINNED, and TYPE_TIED come from 2-bit encoding in the
 ; HEARTSIGIL_BYTE() so are derived types when present in the TYPE_BYTE.
 
+min-sigil: ~  ; e.g. "META", "PIN", "TIE"
 max-sigil: ~
 
-for-each [sigil name description] [
+min-sigiled: ~  ; e.g. "METAFORM", "PINNED", "TIED"
+max-sigiled: ~
+
+for-each [sigil sigiled description] [
     meta metaform "read and write undecayed representations"
     pin pinned "bind in the evaluator in current context, and keep pin"
     tie tied "bind in the evaluator in current context, and drop tie"
 ][
-    e-typeset-bytes/emit [name "$<name> $<index>"]
+    e-typeset-bytes/emit [sigiled "$<sigiled> $<index>"]
 
+    min-sigil: default [sigil]
     max-sigil: sigil
+
+    min-sigiled: default [sigiled]
+    max-sigiled: sigiled
 
     append sigils cscape [sigil --[${SIGIL} = $<index>]--]
 
-    do-appends $sigilizeds name description ["TYPESET_FLAG_BRANCH"]
+    do-appends $sigilizeds sigiled description ["TYPESET_FLAG_BRANCH"]
 ]
 
 === "HEART TYPES" ===
@@ -520,6 +539,8 @@ min-heart: ~
 max-heart: ~
 
 for-each 't datatype-objects [
+    assert [text? t.name]
+
     e-typeset-bytes/emit [t "$<t.name> $<index>"]
 
     min-heart: default [t.name]
@@ -533,15 +554,17 @@ for-each 't datatype-objects [
         ]
     ]
 
-    append singlehearts cscape [t
-        --[SINGLEHEART_TAIL_SPACE_${T.NAME} = $<index * 256>]--
-    ]
-    append singlehearts cscape [t
-        --[SINGLEHEART_HEAD_SPACE_${T.NAME} = $<(index * 256) + 1>]--
-    ]
+    if t.name <> "blank" [
+        append singlehearts cscape [t
+            --[SINGLEHEART_TRAILING_BLANK_AND_${T.NAME} = Trailing_Blank_And_Core(HEART_${T.NAME})]--
+        ]
+        append singlehearts cscape [t
+            --[SINGLEHEART_LEADING_BLANK_AND_${T.NAME} = Leading_Blank_And_Core(HEART_${T.NAME})]--
+        ]
 
-    append heartdefines cscape [t
-        --[#define HEART_${T.NAME}  TYPE_${T.NAME}]--
+        append heartdefines cscape [t
+            --[#define HEART_${T.NAME}  TYPE_${T.NAME}]--
+        ]
     ]
 
     do-appends $hearts t.name t.description sparse
@@ -585,7 +608,8 @@ do-appends // [
 num-quotes: 1
 is-quasi: null
 
-max-element: ~
+min-quoted: ~
+max-quoted: ~
 
 while [index <= 192] [
     if (num-quotes = 1) and (is-quasi = null) [
@@ -598,18 +622,15 @@ while [index <= 192] [
         "quoted_" num-quotes "_time" (if num-quotes > 1 ["s"])
             "_" if not is-quasi ["non"] "quasi"
     ]
-    max-element: name
+    min-quoted: default [name]
+    max-quoted: name
 
     do-appends // [
         $quoteds
         name
         "<internal>"
         sparse: ["TYPESET_FLAG_BRANCH"]
-        ranged: reduce [
-            "TYPESET_FLAG_0_RANGE"
-            unspaced ["FLAG_THIRD_BYTE(TYPE_QUOTED_1_TIME_NONQUASI)"]
-            unspaced ["FLAG_FOURTH_BYTE(TYPE_QUOTED_64_TIMES_QUASI)"]
-        ]
+        ranged: "FLAG_TYPESET_RANGE(TYPE_QUOTED_1_TIME_NONQUASI, TYPE_QUOTED_64_TIMES_QUASI)"
     ]
     if is-quasi [
         num-quotes: me + 1
@@ -642,11 +663,7 @@ do-appends // [
     "logic-null"
     "either ~okay~, or ~null~ (the only 'falsey' state)"  ; get from types.r
     sparse: []
-    ranged: reduce [
-        "TYPESET_FLAG_0_RANGE"
-        unspaced ["FLAG_THIRD_BYTE(TYPE_LOGIC_NULL)"]
-        unspaced ["FLAG_FOURTH_BYTE(TYPE_LOGIC_OKAY)"]
-    ]
+    ranged: "FLAG_TYPESET_RANGE(TYPE_LOGIC_NULL, TYPE_LOGIC_OKAY)"
 ]
 
 e-typeset-bytes/emit ["~ $<index>"]
@@ -716,7 +733,7 @@ for-each 't datatype-objects [
 
     append typeset-flags cscape [t --[
         /* $<index> - any-antiform */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<first-antiform-index>) | FLAG_FOURTH_BYTE($<index - 1>)
+        FLAG_TYPESET_RANGE(Type_From_Byte($<first-antiform-index>), Type_From_Byte($<index - 1>))
     ]--]
     index: me + 1
 )
@@ -726,7 +743,7 @@ for-each 'tr typerange-objects [  ; range, typeset is a start and end
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-$<tr.name> */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<TR.START>) | FLAG_FOURTH_BYTE($<TR.END>)
+        FLAG_TYPESET_RANGE(Type_From_Byte($<TR.START>), Type_From_Byte($<TR.END>))
     ]--]
     index: index + 1
 ]
@@ -748,7 +765,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-plain */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_TYPE_HEART)
+        FLAG_TYPESET_RANGE(TYPE_0_constexpr, MAX_TYPE_HEART)
     ]--]
     index: index + 1
 )
@@ -761,7 +778,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-fundamental */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_TYPE_FUNDAMENTAL)
+        FLAG_TYPESET_RANGE(TYPE_0_constexpr, MAX_TYPE_FUNDAMENTAL)
     ]--]
     index: index + 1
 )
@@ -773,7 +790,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-element */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_TYPE_ELEMENT)
+        FLAG_TYPESET_RANGE(TYPE_0_constexpr, MAX_TYPE_ELEMENT)
     ]--]
     index: index + 1
 )
@@ -802,7 +819,7 @@ e-typesets/emit [--[
      * on 64-bit integers, which we are attempting to excise from the system).
      */
     uint_fast32_t const g_sparse_memberships[
-        i_cast(TypeByte, MAX_TYPE_ANTIFORM) + 1
+        Byte_From_Type(MAX_TYPE_ANTIFORM) + 1
     ] = {
         /* 0 - <ExtraHeart> */  0,
         $(Sparse-Memberships),
@@ -829,19 +846,33 @@ e-hearts/emit [rebs --[
      *
      * META (^) PIN (@) and TIE ($) are chosen in sync with the type bytes
      * so that 1, 2, and 3 of the TYPE_BYTE can be unlifted Sigilized states.
+     *
+     * Note: It has been shown that picking weird values of the Sigil at
+     * the shifted position is *slightly* faster, since FLAG_SIGIL(...) does
+     * not have to do a shift in that case.  However, the endianness to do
+     * this wouldn't work in standard C on big endian machines unless the
+     * HEARTSIGIL_BYTE() were moved, since it would be out of range for an
+     * enum to hold uintptr_t values that big.  So we avoid that particular
+     * optimization and Sigil is just the simple [0, 1, 2, or 3].
      */
+
+    #define BYTE_SIGIL_SHIFT  6
+    #define UINTPTR_SIGIL_SHIFT  (16 + BYTE_SIGIL_SHIFT)
+
     typedef enum {
-        SIGIL_0_constexpr = 0,
-        SIGIL_$(Sigils),
+        SIGIL_$[Sigils],
+
+        /* prefer SIGIL_0 over SIGIL_0_constexpr to get Option(Sigil)! */
+        SIGIL_0_constexpr = 0  /* last, can use "[...] << N," cscape */
     } Sigil;
 
     #define MAX_SIGIL  SIGIL_$<MAX-SIGIL>
 
 
     /*
-     * INTERNAL CELL HEART ENUM, e.g. TYPE_BLOCK or TYPE_TAG
+     * INTERNAL CELL HEART ENUM, e.g. HEART_BLOCK or HEART_TAG
      *
-     * GENERATED FROM %TYPES.R
+     * GENERATED FROM %TYPES.R (do not edit here)
      *
      * Do not export these values via libRebol, as the numbers can change.
      * Their ordering is for supporting tricks--like being able to quickly
@@ -851,101 +882,131 @@ e-hearts/emit [rebs --[
      * (Since we know it's an 8 bit type, and the enum isn't used for storage,
      * we could use enum typing in C++ to say this is `uint_fast8_t`.  Should
      * we do that?  Trusting the compiler is the more common choice.)
+     *
+     * 1. While C++ enum classes don't require qualification, our names
+     *    are things like VOID, and that's a macro in Windows headers.
+     *    To reduce collisions we call the enum members ENUM_XXX.
      */
-    #if (! DEBUG_EXTRA_HEART_CHECKS)
-        typedef enum {
-            TYPE_0_constexpr = 0,  /* prefer TYPE_0 to get Option(Type) */
-            TYPE_$[Sigilizeds],
-            TYPE_$[Hearts],
-            TYPE_$[Quasiform],
-            TYPE_$[Quoteds],
-            TYPE_$[Antiforms],
-            BEDROCK_255 = 255
-        } TypeEnum;
 
-        #define HEART_0_constexpr  TYPE_0_constexpr
-        $[HeartDefines]
+    #define Heart_From_Byte_Or_0(byte) \
+        i_cast(Heart, i_cast(uintptr_t, known(Byte, (byte))))
+
+    #define Heart_From_Byte(byte) \
+        i_cast(Option(Heart), i_cast(uintptr_t, known(Byte, (byte))))
+
+    #define Byte_From_Heart(h) \
+        i_cast(Byte, ii_cast(uintptr_t, known(Option(HeartEnum), (h))))
+
+    enum HeartEnum {
+        /* Note: 1 - 3 unused (match TYPE_METAFORM, TYPE_PINNED, TYPE_TIED) */
+
+        HEART_$[Hearts],
+
+        /* prefer HEART_0 over HEART_0_constexpr to get Option(Heart)! */
+        HEART_0_constexpr = 0  /* last, can use "[...] << N," cscape */
+    };
+
+    typedef enum HeartEnum HeartEnum;
+
+
+    /*
+     * INTERNAL CELL TYPE ENUM, e.g. TYPE_BLOCK or TYPE_QUASIFORM
+     *
+     * GENERATED FROM %TYPES.R (do not edit here)
+     *
+     * Do not export these values via libRebol, as the numbers can change.
+     * Their ordering is for supporting tricks--like being able to quickly
+     * check if a type Is_Bindable_Heart().  So when types are added or
+     * removed, the numbers must shuffle around to preserve invariants.
+     *
+     * (Since we know it's an 8 bit type, and the enum isn't used for storage,
+     * we could use enum typing in C++ to say this is `uint_fast8_t`.  Should
+     * we do that?  Trusting the compiler is the more common choice.)
+     *
+     * 1. While C++ enum classes don't require qualification, our names
+     *    are things like VOID, and that's a macro in Windows headers.
+     *    To reduce collisions we call the enum members ENUM_XXX.
+     */
+
+    #define Typeenum_From_Byte(byte) \
+        i_cast(TypeEnum, i_cast(uintptr_t, known(Byte, (byte))))
+
+    #define Type_From_Byte_Or_0(byte) \
+        i_cast(Type, Typeenum_From_Byte(byte))
+
+    #define Type_From_Byte(byte) \
+        i_cast(Option(Type), Typeenum_From_Byte(byte))
+
+    #define Byte_From_Type(t) \
+        i_cast(Byte, i_cast(uintptr_t, known(Option(TypeEnum), (t))))
+
+    #if DEBUG_EXTRA_HEART_CHECKS
+    #define TYPE_(name)  TypeEnum::ENUM_TYPE_##name
+
+    enum class TypeEnum {  /* ENUM_ prefix; bare words conflict [1] */
     #else
-        /*
-         * The "Extra Heart Byte Checks" are designed to make sure you don't
-         * pass Type where Heart is expected, or things like TYPE_QUASIFORM
-         * or TYPE_SPLICE into the HEARTSIGIL_BYTE().
-         *
-         * Doing this with overlapping enums may not seem ideal, but trying
-         * to do it with one enum and C++ tricks to filter it wind up costing
-         * more at runtime--at least in debug builds, which don't inline
-         * constexpr functions.  It's just not worth it for the check--this
-         * is simpler, faster, and quite good enough.
-         *
-         * (This would be much easier if C++ defined enum inheritance.)
-         *
-         * 1. We get benefit from using a C++ `enum class` for the TypeEnum.
-         *    But we have a wrapper class over it to facilitate HeartEnum
-         *    being accepted where Types are tested, which lets us gloss
-         *    over the lack of boolean convertibility needed by Option(Type).
-         *    Heart doesn't have such a class, and we'd hate to make one
-         *    just for that...and it really doesn't need the enum class.
-         *
-         * 2. While C++ enum classes don't require qualification, our names
-         *    are things like VOID, and that's a macro in Windows headers.
-         *    To reduce collisions we call the enum members ENUM_XXX.
-         */
+    #define TYPE_(name)  ENUM_TYPE_##name
 
-        enum HeartEnum {  /* no enum class, need zero conversion [1] */
-            HEART_0_constexpr = 0,  /* prefer HEART_0 to get Option(Heart)! */
-
-            /* placeholders for TYPE_METAFORM, TYPE_PINNED, TYPE_TIED */
-            PLACEHOLDER_TYPE_$[Sigilizeds],
-
-            HEART_$(Hearts),
-        };
-
-        enum class TypeEnum {  /* ENUM_ prefix; bare words conflict [2] */
-            ENUM_0_constexpr = 0,
-
-            ENUM_$[Sigilizeds],
-
-            /* placeholders for values in range of heart byte */
-            ENUM_$[Hearts],
-
-            /* just one quasiform type! */
-            ENUM_$[Quasiform],
-
-            /* PSEUDOTYPE_QUOTED_<N>_TIMES_<NON>QUASI states */
-            ENUM_$[Quoteds],
-
-            ENUM_$[Antiforms],
-
-            ENUM_255 = 255
-        };
-
-        #define TYPE_0_constexpr  TypeEnum::ENUM_0_constexpr
-        $[TypeDefines]
-        #define BEDROCK_255  TypeEnum::ENUM_255
+    enum TypeEnum {
     #endif
+        ENUM_TYPE_$[Sigilizeds],
 
-    STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_64_TIMES_QUASI) == 192);
-    #define LIFT_192  TYPE_QUOTED_64_TIMES_QUASI
+        /* placeholders for values in range of heart byte */
+        ENUM_TYPE_$[Hearts],
+
+        /* just one quasiform type! */
+        ENUM_TYPE_$[Quasiform],
+
+        /* QUOTED_<N>_TIMES_<NON>QUASI states */
+        ENUM_TYPE_$[Quoteds],
+
+        ENUM_TYPE_$[Antiforms],
+
+        ENUM_TYPE_255 = 255,
+
+        ENUM_TYPE_0_constexpr = 0  /* last, can use "[...] << N," cscape */
+    };
+
+    typedef enum TypeEnum TypeEnum;
+
+    /* prefer TYPE_0 over TYPE_0_constexpr to get Option(Type)! */
+    #define TYPE_0_constexpr  TYPE_(0_constexpr)
+    $[TypeDefines]
+    #define BEDROCK_255  TYPE_(255)
+
+    #define MIN_TYPE_QUOTED  TYPE_${MIN-QUOTED}
+    #define MAX_TYPE_QUOTED  TYPE_${MAX-QUOTED}
+    STATIC_ASSERT(MAX_TYPE_QUOTED == Typeenum_From_Byte(192));
 
     #define MAX_TYPE_FUNDAMENTAL  TYPE_${MAX-HEART}  /* same as max heart */
-    #define MAX_TYPE_ELEMENT  TYPE_${MAX-ELEMENT}
+    #define MAX_TYPE_ELEMENT  MAX_TYPE_QUOTED
 
-    STATIC_ASSERT(i_cast(Byte, TYPE_METAFORM) == 1);
-    STATIC_ASSERT(i_cast(Byte, TYPE_PINNED) == 2);
-    STATIC_ASSERT(i_cast(Byte, TYPE_TIED) == 3);
+    #define MIN_TYPE_SIGIL  TYPE_${MIN-SIGILED}
+    #define MAX_TYPE_SIGIL  TYPE_${MAX-SIGILED}
 
+    #define MIN_HEART  HEART_${MIN-HEART}
+    #define MAX_HEART  HEART_${MAX-HEART}
     #define MIN_TYPE_HEART  TYPE_${MIN-HEART}
     #define MAX_TYPE_HEART  TYPE_${MAX-HEART}
-    STATIC_ASSERT(i_cast(Byte, MIN_TYPE_HEART) == 4);
-    STATIC_ASSERT(i_cast(Byte, MAX_TYPE_HEART) < 64);
+    STATIC_ASSERT(MIN_TYPE_HEART == Typeenum_From_Byte(4));
+    STATIC_ASSERT(MAX_TYPE_HEART < Typeenum_From_Byte(64));
 
-    STATIC_ASSERT(i_cast(Byte, TYPE_QUASIFORM) == 64);
+    #define MAX_TYPE_NOQUOTE_NOQUASI  MAX_TYPE_HEART
+    #define MAX_TYPE_NOQUOTE_QUASI_OK  TYPE_QUASIFORM
+
+    STATIC_ASSERT(TYPE_QUASIFORM == Typeenum_From_Byte(64));
 
     #define MIN_TYPE_ANTIFORM  TYPE_${MIN-ANTIFORM}
     #define MAX_TYPE_STABLE  TYPE_${MAX-STABLE}
     #define MAX_TYPE_ANTIFORM  TYPE_${MAX-ANTIFORM}
 
-    STATIC_ASSERT(i_cast(int, MAX_TYPE_ANTIFORM) < 256);  /* stored in byte */
+    STATIC_ASSERT(MAX_TYPE_ANTIFORM <= Typeenum_From_Byte(255));
+
+    #define NOQUOTE_63              63
+    #define NONQUASI_BIT            1
+
+    STATIC_ASSERT(not (Byte_From_Type(TYPE_QUASIFORM) & NONQUASI_BIT));
+    STATIC_ASSERT(Byte_From_Type(TYPE_QUOTED_1_TIME_NONQUASI) & NONQUASI_BIT);
 
     /*
      * ANTIFORM HEART ALIASES
@@ -954,6 +1015,7 @@ e-hearts/emit [rebs --[
      * to indicate an antiform in source.
      */
     $[Antiheart-Aliases]
+
 
     /*
      * SINGLEHEART OPTIMIZED SEQUENCE DETECTION
@@ -965,6 +1027,22 @@ e-hearts/emit [rebs --[
      * since implicit casts to integer to facilitate switching would let you
      * use Heart or Type.
      */
+
+    #define Leading_Blank_And_Core(heart) \
+        (Byte_From_Heart(heart) << 8)
+
+    #define Trailing_Blank_And_Core(heart) \
+        Byte_From_Heart(heart)
+
+    #define Leading_Blank_And(heart) \
+        i_cast(SingleHeart, Leading_Blank_And_Core(heart))
+
+    #define Trailing_Blank_And(heart) \
+        i_cast(SingleHeart, Trailing_Blank_And_Core(heart))
+
+    #define LEADING_BLANK_AND(name)     SINGLEHEART_LEADING_BLANK_AND_##name
+    #define TRAILING_BLANK_AND(name)    SINGLEHEART_TRAILING_BLANK_AND_##name
+
     typedef enum {
         NOT_SINGLEHEART_0,  /* reserved falsey case for Option(SingleHeart) */
 

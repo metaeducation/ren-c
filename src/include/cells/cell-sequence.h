@@ -113,7 +113,7 @@ INLINE Result(None) Check_Sequence_Element(
     const Element* v,
     bool is_head
 ){
-    assert(Any_Sequence_Type(sequence_heart));
+    assert(Any_Sequence_Heart(sequence_heart));
 
     Option(Heart) h = Heart_Of(v);
 
@@ -150,7 +150,7 @@ INLINE Result(None) Check_Sequence_Element(
         return none;  // ~:$:~ etc. are legal
     }
 
-    if (not Any_Sequencable_Type(h))
+    if (not Any_Sequencable_Heart(h))
         goto bad_sequence_item;
 
     if (h == HEART_WORD) {
@@ -174,7 +174,7 @@ INLINE Result(None) Check_Sequence_Element(
   bad_sequence_item:
 
     return fail (
-        Error_Bad_Sequence_Item_Raw(Datatype_From_Type(sequence_heart), v)
+        Error_Bad_Sequence_Item_Raw(Datatype_From_Heart(sequence_heart), v)
     );
 }
 
@@ -206,7 +206,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
     Flags flag
 ){
     assert(flag == CELL_MASK_ERASED_0 or flag == CELL_FLAG_LEADING_BLANK);
-    assert(Any_Sequence_Type(heart));
+    assert(Any_Sequence_Heart(heart));
 
     trap (
       Check_Sequence_Element(
@@ -231,7 +231,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
         Option(Heart) mirror = Mirror_Of(a);
         Option(Heart) h = Heart_Of(v);
         if (not mirror or (unwrap mirror == unwrap h)) {
-            MIRROR_BYTE(a) = unwrap Heart_Of(v);  // remember what kind it is
+            Tweak_Mirror_Byte(a, unwrap Heart_Of(v));  // remember herat
             Tweak_Cell_Type(v, heart);  // e.g. TYPE_BLOCK => TYPE_PATH
             v->header.bits |= flag;
             return v;
@@ -312,7 +312,7 @@ INLINE Result(Element*) Init_Any_Sequence_Bytes(
     const Byte* data,
     Size size
 ){
-    assert(Any_Sequence_Type(heart));
+    assert(Any_Sequence_Heart(heart));
     Reset_Cell_Header(
         out,
         FLAG_HEART_AND_LIFT(heart)
@@ -349,7 +349,7 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
     const Stable* head,  // NOTE: Can't use PUSH() or evaluation
     REBLEN len
 ){
-    assert(Any_Sequence_Type(heart));
+    assert(Any_Sequence_Heart(heart));
 
     if (len > Size_Of(out->payload.at_least_8) - 1)
         return nullptr;  // no optimization yet if won't fit in payload bytes
@@ -391,7 +391,7 @@ INLINE Result(Element*) Init_Any_Sequence_Or_Conflation_Pairlike(
     const Element* first,
     const Element* second
 ){
-    assert(Any_Sequence_Type(heart));
+    assert(Any_Sequence_Heart(heart));
 
     if (
         (Is_Quasar(first) and Is_Quasar(second))  // ~/~ is a WORD!
@@ -607,7 +607,7 @@ INLINE Result(Stable*) Pop_Sequence_Or_Element_Or_Null(
 // optimized fashion using Refinify()
 
 INLINE Length Sequence_Len(const Cell* c) {
-    assert(Any_Sequence_Type(Heart_Of(c)));
+    assert(Any_Sequence_Heart(Heart_Of(c)));
 
     if (not Sequence_Has_Pointer(c)) {  // compressed bytes
         assert(not Cell_Payload_2_Needs_Mark(c));
@@ -660,7 +660,7 @@ INLINE Element* Copy_Sequence_At_Untracked(
     Index n
 ){
     assert(out != sequence);
-    assert(Any_Sequence_Type(Unchecked_Heart_Of(sequence)));
+    assert(Any_Sequence_Heart(Unchecked_Heart_Of(sequence)));
 
     if (not Sequence_Has_Pointer(sequence)) {  // compressed bytes
         assert(n < sequence->payload.at_least_8[IDX_SEQUENCE_USED]);
@@ -691,13 +691,14 @@ INLINE Element* Copy_Sequence_At_Untracked(
 
       case FLAVOR_SOURCE : {  // uncompressed sequence, or compressed "mirror"
         const Source* a = cast(Source*, SERIESLIKE_PAYLOAD_1_BASE(sequence));
-        if (Mirror_Of(a)) {  // [4]
+        Option(Heart) mirror = Mirror_Of(a);
+        if (mirror) {  // [4]
             assert(n < 2);
             if (Get_Cell_Flag(sequence, LEADING_BLANK) ? n == 0 : n != 0)
                 return Init_Blank(out);
 
             Copy_Cell_Core_Untracked(out, sequence, CELL_MASK_COPY);
-            Tweak_Cell_Type(out, u_cast(Heart, MIRROR_BYTE(a)));  // [3]
+            Tweak_Cell_Type(out, unwrap mirror);  // [3]
             return out;
         }
         assert(Array_Len(a) >= 2);
@@ -738,7 +739,7 @@ INLINE Byte Sequence_Byte_At(const Cell* sequence, REBLEN n) {
 }
 
 INLINE Context* Sequence_Binding(const Element* sequence) {
-    assert(Any_Sequence_Type(Heart_Of(sequence)));
+    assert(Any_Sequence_Heart(Heart_Of(sequence)));
 
     // Getting the binding for any of the optimized types means getting
     // the binding for *that item in the sequence*; the sequence itself
@@ -835,7 +836,7 @@ INLINE Element* Init_Get_Word(Init(Element) out, const Symbol* s) {
 
 
 INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
-    assert(Any_Sequence_Type(Heart_Of(c)));
+    assert(Any_Sequence_Heart(Heart_Of(c)));
 
     if (not Sequence_Has_Pointer(c))  // compressed bytes
         return NOT_SINGLEHEART_0;

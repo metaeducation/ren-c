@@ -279,7 +279,7 @@ bool Pushed_Continuation(
         const Param* param;
         Arg* arg = First_Unspecialized_Arg(&param, L);
         Copy_Cell_May_Bind(arg, branch, binding);
-        HEARTSIGIL_BYTE(arg) = HEART_BLOCK;  // :[1 + 2] => [3], not :[3]
+        Tweak_Cell_Type(arg, HEART_BLOCK);  // :[1 + 2] => [3], not :[3]
 
         Push_Level(Erase_Cell(out), L);
         goto pushed_continuation; }}

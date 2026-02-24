@@ -317,7 +317,7 @@ INLINE Value* Activate_Frame_Core(Value* v) {
 
 INLINE Element* Deactivate_Action(Exact(Value*) v) {
     assert(Is_Action(v));
-    TYPE_BYTE(v) = TYPE_FRAME;
+    Tweak_Cell_Type_Byte(v, TYPE_FRAME);
     return As_Element(v);
 }
 

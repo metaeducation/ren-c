@@ -421,7 +421,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
 
     // !!! Permit FRAME! ?
 
-    panic (Error_Bad_Make(TYPE_VARARGS, arg));
+    panic (Error_Bad_Make(HEART_VARARGS, arg));
 }
 
 

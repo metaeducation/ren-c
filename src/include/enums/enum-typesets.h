@@ -48,7 +48,7 @@
 // !!! Would this be faster as a flag in g_sparse_memberships[]?  Test that.
 //
 INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
-    assert(Any_Isotopic_Type(heart));
+    assert(Any_Isotopic_Heart(heart));
     return (
         heart == HEART_WORD_SIGNIFYING_LOGIC
         or heart == HEART_BLOCK_SIGNIFYING_SPLICE
@@ -92,11 +92,11 @@ INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
 
 //=//// MISC /////////////////////////////////////////////////////////////=//
 
-INLINE bool Any_Sequence_Or_List_Type(Option(Heart) h)  // !!! optimize?
-  { return Any_Sequence_Type(h) or Any_List_Type(h); }
+INLINE bool Any_Sequence_Or_List_Heart(Option(Heart) h)  // !!! optimize?
+  { return Any_Sequence_Heart(h) or Any_List_Heart(h); }
+
+INLINE bool Any_Bytes_Type(Option(Type) t)
+  { return Any_Utf8_Type(t) or t == TYPE_BLOB; }
 
 INLINE bool Any_Bytes_Heart(Option(Heart) h)
-  { return Any_Utf8_Type(h) or h == HEART_BLOB; }
-
-INLINE bool Any_Bytes_Type(Option(Type) h)
-  { return Any_Utf8_Type(h) or h == HEART_BLOB; }
+  { return Any_Utf8_Heart(h) or h == HEART_BLOB; }

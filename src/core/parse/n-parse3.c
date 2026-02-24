@@ -249,7 +249,7 @@ static bool Subparse_Throws(
     Level* const L,
     Flags flags
 ){
-    assert(Any_Series_Type(Heart_Of(input)));
+    assert(Any_Series_Heart(Heart_Of(input)));
 
     Push_Level(Erase_Cell(out), L);
 
@@ -548,7 +548,7 @@ static Result(REBIXO) Parse_One_Rule(
         else if (
             (Is_Text(rule) or Is_Blob(rule))
             and (Series_Len_At(rule) == 0)
-            and (Any_String_Type(P_HEART) or P_HEART == HEART_BLOB)
+            and (Any_String_Heart(P_HEART) or P_HEART == HEART_BLOB)
         ){
             // !!! The way this old R3-Alpha code was structured is now very
             // archaic (compared to UPARSE).  But while that design stabilizes,
@@ -681,7 +681,7 @@ static Result(REBIXO) Parse_One_Rule(
         return END_FLAG;
     }
     else {
-        assert(Any_String_Type(P_HEART) or P_HEART == HEART_BLOB);
+        assert(Any_String_Heart(P_HEART) or P_HEART == HEART_BLOB);
 
         if (Is_Pinned_Form_Of(WORD, rule)) {
             DECLARE_ELEMENT (unpinned);
@@ -857,7 +857,7 @@ static Result(REBIXO) To_Thru_Block_Rule(
             }
 
             // Try to match it:
-            if (Any_List_Type(P_HEART) or Any_Sequence_Type(P_HEART)) {
+            if (Any_List_Heart(P_HEART) or Any_Sequence_Heart(P_HEART)) {
                 if (Any_List(rule))
                     panic (Error_Parse3_Rule());
 
@@ -939,7 +939,7 @@ static Result(REBIXO) To_Thru_Block_Rule(
                     panic (Error_Parse3_Rule());
             }
             else {
-                assert(Any_String_Type(P_HEART));
+                assert(Any_String_Heart(P_HEART));
 
                 Codepoint unadjusted = Get_Strand_Char_At(
                     P_INPUT_STRING,
@@ -2233,7 +2233,7 @@ DECLARE_NATIVE(SUBPARSE)
             REBINT count = (begin > P_POS) ? 0 : P_POS - begin;
 
             if (P_FLAGS & PF_ACROSS) {
-                if (Any_List_Type(P_HEART)) {
+                if (Any_List_Heart(P_HEART)) {
                     //
                     // Act like R3-Alpha in preserving GROUP! vs. BLOCK!
                     // distinction (which Rebol2 did not).  But don't keep
@@ -2260,7 +2260,7 @@ DECLARE_NATIVE(SUBPARSE)
                     Init_Blob(OUT, bin);
                 }
                 else {
-                    assert(Any_String_Type(P_HEART));
+                    assert(Any_String_Heart(P_HEART));
 
                     DECLARE_VALUE (begin_val);
                     Init_Series_At(begin_val, P_HEART, P_INPUT, begin);

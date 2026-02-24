@@ -524,7 +524,7 @@ REBLEN Find_Value_In_Binstr(
     if (
         pattern_quotes == 1
         or (pattern_quotes == 0 and (
-            Any_Utf8_Type(pattern_heart)
+            Any_Utf8_Heart(pattern_heart)
             or HEART_INTEGER == pattern_heart  // `find "ab10cd" 10` -> "10cd"
             or HEART_BLOB == pattern_heart  // binstr_heart checked for BLOB
         ))

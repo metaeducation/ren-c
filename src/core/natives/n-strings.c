@@ -284,10 +284,10 @@ DECLARE_NATIVE(JOIN)
     if (delimiter)
         assert(Not_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING));
 
-    if (Any_Utf8_Type(heart) or heart == HEART_BLOB)
+    if (Any_Utf8_Heart(heart) or heart == HEART_BLOB)
         goto start_mold_join;
 
-    assert(Any_List_Type(heart) or Any_Sequence_Type(heart));
+    assert(Any_List_Heart(heart) or Any_Sequence_Heart(heart));
 
     goto start_stack_join;
 
@@ -315,7 +315,7 @@ DECLARE_NATIVE(JOIN)
   //    the output is non-null) and if it didn't, we will add a space back.
 
     if (not joining_datatype) {
-        if (Any_Sequence_Type(heart)) {
+        if (Any_Sequence_Heart(heart)) {
             Length len = Sequence_Len(unwrap base);
             REBINT i;
             for (i = 0; i < len; ++i)
@@ -643,7 +643,7 @@ DECLARE_NATIVE(JOIN)
         );
         Init_Word(OUT, s);
     }
-    else if (Any_String_Type(heart)) {
+    else if (Any_String_Heart(heart)) {
         Init_Any_String(OUT, heart, Pop_Molded_Strand(mo));
     }
     else if (heart == HEART_RUNE) {
@@ -768,7 +768,7 @@ DECLARE_NATIVE(JOIN)
         Copy_Cell(PUSH(), unwrap delimiter);
 
     Sink(Element) out = OUT;
-    if (Any_Sequence_Type(heart)) {
+    if (Any_Sequence_Heart(heart)) {
         trap (
           Pop_Sequence(out, heart, STACK_BASE)
         );

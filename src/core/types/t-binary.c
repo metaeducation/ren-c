@@ -223,7 +223,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Blob)
         break;
     }
 
-    return fail (Error_Bad_Make(TYPE_BLOB, arg));
+    return fail (Error_Bad_Make(HEART_BLOB, arg));
 }
 
 
@@ -554,7 +554,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
     Element* v = Element_ARG(VALUE);
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_String_Type(to)) {  // (to text! binary) questionable [1]
+    if (Any_String_Heart(to)) {  // (to text! binary) questionable [1]
         Size size;
         const Byte* at = Blob_Size_At(&size, v);
         return Init_Any_String(
@@ -603,7 +603,7 @@ Result(Element*) Alias_Blob_As(
     if (as == HEART_BLOB)  // (as blob! data) when data may be text or blob
         return Copy_Cell(out, blob);
 
-    if (Any_Utf8_Type(as)) {  // convert to a string as first step [1]
+    if (Any_Utf8_Heart(as)) {  // convert to a string as first step [1]
         if (as == HEART_WORD) {  // early fail on this, to save time
             if (Blob_Offset(blob) != 0)  // (vs. failing on AS WORD! of string)
                 return fail ("Can't alias BLOB! as WORD! unless at head");
@@ -676,7 +676,7 @@ Result(Element*) Alias_Blob_As(
             }
         }
 
-        if (Any_String_Type(as))
+        if (Any_String_Heart(as))
             return Init_Any_String_At(out, as, str, index);
 
         DECLARE_ELEMENT (string);
@@ -685,7 +685,7 @@ Result(Element*) Alias_Blob_As(
         return Alias_Any_String_As(out, string, as);
     }
 
-    return fail (Error_Invalid_Type(as));
+    return fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
 }
 
 

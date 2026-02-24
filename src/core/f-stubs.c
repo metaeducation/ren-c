@@ -210,17 +210,26 @@ const Stable* Datatype_From_Type(Type type)
     Patch* patch;
     if (Is_Quoted_Type(type))
         patch = &g_datatype_patches[  // !!! fix: wasted space
-            i_cast(TypeByte, TYPE_QUOTED_1_TIME_NONQUASI)
+            Byte_From_Type(TYPE_QUOTED_1_TIME_NONQUASI)
         ];
     else if (Is_Logic_Type(type))
         patch = &g_datatype_patches[
-            i_cast(TypeByte, TYPE_LOGIC_NULL)
+            Byte_From_Type(TYPE_LOGIC_NULL)
         ];
     else
-        patch = &g_datatype_patches[i_cast(TypeByte, type)];
+        patch = &g_datatype_patches[Byte_From_Type(type)];
     const Stable* datatype = cast(Stable*, Stub_Cell(patch));
     assert(Is_Datatype(datatype));
     return datatype;
+}
+
+
+//
+//  Datatype_From_Heart: C
+//
+const Stable* Datatype_From_Heart(Heart heart)
+{
+    return Datatype_From_Type(unwrap Type_From_Heart(heart));
 }
 
 
@@ -354,7 +363,7 @@ void Extra_Init_Context_Cell_Checks_Debug(
 
     assert(
         not Misc_Varlist_Adjunct(varlist)
-        or Any_Context_Type(CTX_TYPE(unwrap Misc_Varlist_Adjunct(varlist)))
+        or Any_Context_Heart(CTX_TYPE(unwrap Misc_Varlist_Adjunct(varlist)))
     );
 }
 
@@ -380,7 +389,7 @@ void Extra_Init_Frame_Checks_Debug(Phase* phase) {
     if (Get_Stub_Flag(phase, MISC_NEEDS_MARK)) {
         assert(
             Misc_Phase_Adjunct(phase) == nullptr
-            or Any_Context_Type(CTX_TYPE(unwrap Misc_Phase_Adjunct(phase)))
+            or Any_Context_Heart(CTX_TYPE(unwrap Misc_Phase_Adjunct(phase)))
         );
     }
 }
@@ -490,7 +499,7 @@ int64_t Add_Max(Option(Heart) heart, int64_t n, int64_t m, int64_t maxi)
     int64_t r = n + m;
     if (r < -maxi or r > maxi) {
         if (heart)
-            panic (Error_Type_Limit_Raw(Datatype_From_Type(unwrap heart)));
+            panic (Error_Type_Limit_Raw(Datatype_From_Heart(unwrap heart)));
         r = r > 0 ? maxi : -maxi;
     }
     return r;
@@ -504,7 +513,7 @@ int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 {
     int64_t r = n * m;
     if (r < -maxi or r > maxi)
-        panic (Error_Type_Limit_Raw(Datatype_From_Type(heart)));
+        panic (Error_Type_Limit_Raw(Datatype_From_Heart(heart)));
     return i_cast(int, r); // !!! (?) review this cast
 }
 
@@ -517,7 +526,7 @@ int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 //
 Result(Element*) Unsingleheart_Sequence(Element* seq)
 {
-    assert(Any_Sequence_Type(Heart_Of(seq)));
+    assert(Any_Sequence_Heart(Heart_Of(seq)));
     assert(not Sigil_Of(seq));
     assert(Type_Of_Raw(seq) <= MAX_TYPE_NOQUOTE_NOQUASI);
 

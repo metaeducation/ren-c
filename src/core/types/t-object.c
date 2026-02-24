@@ -287,8 +287,8 @@ REBINT CT_Context(const Element* a, const Element* b, bool strict)
     Heart a_heart = Heart_Of_Builtin_Fundamental(a);
     Heart b_heart = Heart_Of_Builtin_Fundamental(b);
 
-    assert(Any_Context_Type(a_heart));
-    assert(Any_Context_Type(b_heart));
+    assert(Any_Context_Heart(a_heart));
+    assert(Any_Context_Heart(b_heart));
 
     if (a_heart != b_heart)  // e.g. ERROR! won't equal OBJECT!
         return u_cast(Byte, a_heart) > u_cast(Byte, b_heart) ? 1 : 0;
@@ -461,7 +461,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Frame)
     StackIndex lowest_stackindex = TOP_INDEX;  // for refinements
 
     if (not Is_Frame(arg))
-        return fail (Error_Bad_Make(TYPE_FRAME, arg));
+        return fail (Error_Bad_Make(HEART_FRAME, arg));
 
     Option(VarList*) coupling = Frame_Coupling(arg);
 
@@ -536,7 +536,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             return Init_Object(OUT, derived);
         }
 
-        return fail (Error_Bad_Make(TYPE_OBJECT, arg));
+        return fail (Error_Bad_Make(HEART_OBJECT, arg));
     }
 
     assert(Datatype_Builtin_Heart(type) == HEART_OBJECT);
@@ -591,7 +591,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
         return Init_Object(OUT, c);
     }
 
-    return fail (Error_Bad_Make(TYPE_OBJECT, arg));
+    return fail (Error_Bad_Make(HEART_OBJECT, arg));
 }
 
 
@@ -1323,7 +1323,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         and Frame_Coupling(OUT) == UNCOUPLED
         and Stub_Flavor(c) == FLAVOR_VARLIST
     ){
-        assert(HEARTSIGIL_BYTE(OUT) == HEART_FRAME_SIGNIFYING_ACTION);
+        assert(Heart_Of(OUT) == HEART_FRAME_SIGNIFYING_ACTION);
         Tweak_Frame_Coupling(OUT, cast(VarList*, c));
     }
 
@@ -1352,7 +1352,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     if (Is_Dualized_Bedrock(dual)) {  // CASE 1: Overwriting w/new bedrock
         Copy_Cell_Core(slot, dual, CELL_MASK_COPY);  // store
-        TYPE_BYTE(slot) = BEDROCK_255;
+        Tweak_Cell_Type_Byte(slot, BEDROCK_255);
         return OKAY_OUT_NO_WRITEBACK;  // VarList* in cell not changed
     }
 
@@ -1907,7 +1907,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
 
-    if (TYPE_BYTE(v) != QUASIFORM_64) {
+    if (Type_Of_Raw(v) != TYPE_QUASIFORM) {
         return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds ARG(FORM)
     }
 

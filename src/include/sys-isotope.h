@@ -21,7 +21,7 @@
 //
 
 
-#undef Any_Isotopic  // use Any_Isotopic_Type(Heart_Of(v))
+#undef Any_Isotopic  // use Any_Isotopic_Heart(Heart_Of(v))
 
 
 // There are several rules that have to be followed with antiforms.  Having
@@ -88,17 +88,17 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         if (Frame_Lens(elem))
             Tweak_Frame_Lens_Or_Label(elem, ANONYMOUS);  // show only inputs
         Force_Phase_Final(Frame_Phase(elem));
-        TYPE_BYTE(v) = TYPE_ACTION;
+        Tweak_Cell_Type_Byte(v, TYPE_ACTION);
         break; }
 
       case HEART_BLOCK_SIGNIFYING_SPLICE: {
         Tweak_Cell_Binding(elem, UNBOUND);  // [1]
-        TYPE_BYTE(v) = TYPE_SPLICE;
+        Tweak_Cell_Type_Byte(v, TYPE_SPLICE);
         break; }
 
       case HEART_GROUP_SIGNIFYING_PACK: {
         Tweak_Cell_Binding(elem, UNBOUND);  // [1]
-        TYPE_BYTE(v) = TYPE_PACK;
+        Tweak_Cell_Type_Byte(v, TYPE_PACK);
         break; }
 
       case HEART_FENCE_SIGNIFYING_DATATYPE: {
@@ -116,18 +116,18 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         }
         v->payload = Stub_Cell(unwrap patch)->payload;
         v->extra = Stub_Cell(unwrap patch)->extra;
-        TYPE_BYTE(v) = TYPE_DATATYPE;
+        Tweak_Cell_Type_Byte(v, TYPE_DATATYPE);
         break; }
 
       case HEART_WORD_SIGNIFYING_LOGIC: {
         Unbind_Any_Word(elem);  // [1]
         switch (opt Word_Id(elem)) {
           case SYM_OKAY:
-            TYPE_BYTE(v) = TYPE_LOGIC_OKAY;
+            Tweak_Cell_Type_Byte(v, TYPE_LOGIC_OKAY);
             break;
 
           case SYM_NULL:
-            TYPE_BYTE(v) = TYPE_LOGIC_NULL;
+            Tweak_Cell_Type_Byte(v, TYPE_LOGIC_NULL);
             break;
 
           default:
@@ -137,15 +137,15 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
 
       case HEART_TAG_SIGNIFYING_TRASH:
         Freeze_Flex(Cell_Strand(v));  // !!! intern if WORD-like! ?
-        TYPE_BYTE(v) = TYPE_TRASH;
+        Tweak_Cell_Type_Byte(v, TYPE_TRASH);
         break;
 
       case HEART_BLANK_SIGNIFYING_VOID:
-        TYPE_BYTE(v) = TYPE_VOID;
+        Tweak_Cell_Type_Byte(v, TYPE_VOID);
         break;
 
       case HEART_ERROR_SIGNIFYING_FAILURE:
-        TYPE_BYTE(v) = TYPE_FAILURE;
+        Tweak_Cell_Type_Byte(v, TYPE_FAILURE);
         break;
 
       default:
@@ -163,12 +163,12 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
 INLINE Result(Element*) Coerce_To_Quasiform(Element* v) {
     Option(Heart) heart = Heart_Of(v);
 
-    if (not Any_Isotopic_Type(heart)) {  // Note: all words have quasiforms [1]
+    if (not Any_Isotopic_Heart(heart)) {  // Note: all words have quasiforms [1]
         Clear_Cell_Quotes_And_Quasi(v);
         return fail (Error_Non_Isotopic_Type_Raw(v));
     }
 
-    TYPE_BYTE_RAW(v) = QUASIFORM_64;  // few places should use TYPE_BYTE_RAW!
+    Tweak_Cell_Type_Byte(v, TYPE_QUASIFORM);
     return v;
 }
 

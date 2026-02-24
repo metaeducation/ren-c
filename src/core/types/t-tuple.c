@@ -34,13 +34,13 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
     INCLUDE_PARAMS_OF_MAKE;
 
     Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
-    assert(Any_Sequence_Type(heart));
+    assert(Any_Sequence_Heart(heart));
 
     Element* arg = ARG(DEF);
 
     if (Is_Block(arg))
         return rebValue(
-            CANON(TO), Datatype_From_Type(heart), CANON(REDUCE), arg
+            CANON(TO), Datatype_From_Heart(heart), CANON(REDUCE), arg
         );
 
     if (Is_Text(arg)) {
@@ -87,7 +87,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         return OUT;
     }
 
-    return fail (Error_Bad_Make(TYPE_TUPLE, arg));
+    return fail (Error_Bad_Make(HEART_TUPLE, arg));
 }
 
 
@@ -277,10 +277,10 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
 
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_Sequence_Type(to))  // e.g. `to chain! 'a.b.c` [1]
+    if (Any_Sequence_Heart(to))  // e.g. `to chain! 'a.b.c` [1]
         return GENERIC_CFUNC(AS, Any_Sequence)(LEVEL);  // immutable, same code
 
-    if (Any_List_Type(to)) {  // !!! Should list have isomorphic binding?
+    if (Any_List_Heart(to)) {  // !!! Should list have isomorphic binding?
         Source* a = Make_Source_Managed(1);
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), seq);
@@ -288,13 +288,13 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
         return Init_Any_List(OUT, to, a);
     }
 
-    if (Any_Utf8_Type(to) and to != HEART_WORD) {
+    if (Any_Utf8_Heart(to) and to != HEART_WORD) {
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
         Clear_Cell_Sigil(seq);  // to text! @a.b.c -> "a.b.c"
         Form_Element(mo, seq);
         const Strand* s = Pop_Molded_Strand(mo);
-        if (not Any_String_Type(to))
+        if (not Any_String_Heart(to))
             Freeze_Flex(s);
         return Init_Any_String(OUT, to, s);
     }
@@ -329,7 +329,7 @@ Result(Element*) Alias_Any_Sequence_As(
 ){
     Length len = Sequence_Len(seq);
 
-    if (Any_Sequence_Type(as)) {  // not all aliasings are legal [1]
+    if (Any_Sequence_Heart(as)) {  // not all aliasings are legal [1]
         REBINT i;
         for (i = 0; i < len; ++i) {
             DECLARE_ELEMENT (temp);
@@ -356,7 +356,7 @@ Result(Element*) Alias_Any_Sequence_As(
         return out;
     }
 
-    if (Any_List_Type(as)) {  // give immutable form, try to share memory
+    if (Any_List_Heart(as)) {  // give immutable form, try to share memory
         if (not Sequence_Has_Pointer(seq)) {  // byte packed sequence
             Source* a = Make_Source_Managed(len);
             Set_Flex_Len(a, len);
@@ -397,7 +397,8 @@ Result(Element*) Alias_Any_Sequence_As(
 
           case FLAVOR_SOURCE: {
             const Source* a = Cell_Array(seq);
-            if (MIRROR_BYTE(a)) {  // .[a] or (xxx): compression
+            Option(Heart) mirror = Mirror_Of(a);
+            if (mirror) {  // .[a] or (xxx): compression
                 Source* two = Make_Source_Managed(2);
                 Set_Flex_Len(two, 2);
                 Element* tweak;
@@ -409,7 +410,7 @@ Result(Element*) Alias_Any_Sequence_As(
                     tweak = Copy_Cell(Array_At(two, 0), seq);
                     Init_Blank(Array_At(two, 1));
                 }
-                Tweak_Cell_Type(tweak, u_cast(Heart, MIRROR_BYTE(a)));
+                Tweak_Cell_Type(tweak, unwrap mirror);
                 Clear_Cell_Flag(tweak, LEADING_BLANK);
                 Init_Any_List(out, as, two);
             }
@@ -427,7 +428,7 @@ Result(Element*) Alias_Any_Sequence_As(
         return out;
     }
 
-    return fail (Error_Invalid_Type(as));
+    return fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
 }
 
 

@@ -187,7 +187,9 @@ typedef enum {
     // MAX_TYPE_FUNDAMENTAL (quoted and quasiform types don't require
     // continuations so we don't need to worry about those states, either)
 
-    ST_STEPPER_MAX_TYPE = i_cast(StateByte, MAX_TYPE_FUNDAMENTAL),
+    ST_STEPPER_MAX_TYPE = i_cast(
+        StateByte, Byte_From_Type(MAX_TYPE_FUNDAMENTAL)
+    ),
 
 
   //=//// STEPPER STATES ABOVE MAX_TYPE ////////////////////////////////////=//
@@ -195,6 +197,9 @@ typedef enum {
     ST_STEPPER_LOOKING_AHEAD,
     ST_STEPPER_REEVALUATING,
     ST_STEPPER_FULFILLING_INTRINSIC_ARG,
+
+    ST_STEPPER_RUNNING_GROUP,
+    ST_STEPPER_RUNNING_ACTION,
 
     ST_STEPPER_BIND_OPERATOR,  // $ is the BIND operator
     ST_STEPPER_IDENTITY_OPERATOR,  // ^ is the IDENTITY operator

@@ -481,6 +481,17 @@ gen-obj: func [
                 <msc:/wd4365> <msc:/wd4245>
                 <gcc:-Wsign-compare>
 
+                ; This was observed with a benign macro:
+                ;
+                ; #define Byte_From_Type(t) \
+                ;    i_cast(Byte, i_cast(uintptr_t, known(TypeEnum, (t))) >> 8)
+                ;
+                ; There seemed to be no workaround (masking 0xFF didn't help,
+                ; nothing could help).  If someone figures out a way to keep
+                ; this on and compile that, then turn it back on.
+                ;
+                <msc:/wd4310>
+
                 ; The majority of Rebol's C code was written with little
                 ; attention to overflow in arithmetic.  In many places a
                 ; bigger type is converted into a smaller type without an

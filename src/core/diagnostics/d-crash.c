@@ -177,11 +177,11 @@ ATTRIBUTE_NO_RETURN void Crash_With_Cell_Debug(const Cell* c) {
   #endif
 
     Option(Heart) heart = Heart_Of(c);
-    Option(SymId) id = heart ? Symbol_Id_From_Type(unwrap heart) : SYM_0;
+    Option(SymId) id = heart ? Symbol_Id_From_Heart(unwrap heart) : SYM_0;
     const char *name = id ? Strand_Utf8(Canon_Symbol(unwrap id)) : "custom-0";
-    Printf_Stderr("Cell.sigilheart=%d\n", i_cast(int, HEARTSIGIL_BYTE_RAW(c)));
+    Printf_Stderr("Cell.sigilheart=%d\n", i_cast(int, HEARTSIGIL_BYTE(c)));
     Printf_Stderr("cell heart name=%s\n", name);
-    Printf_Stderr("Cell.type=%d\n", i_cast(int, TYPE_BYTE_RAW(c)));
+    Printf_Stderr("Cell.type=%d\n", i_cast(int, TYPE_BYTE(c)));
 
     if (Cell_Payload_1_Needs_Mark(c))
         Printf_Stderr("has payload1: %p\n", cast(void*, CELL_PAYLOAD_1(c)));

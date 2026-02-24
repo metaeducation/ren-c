@@ -143,7 +143,7 @@ static void Push_Composer_Level(
     DECLARE_ELEMENT (adjusted);
     assert(Is_Cell_Erased(adjusted));
 
-    if (Any_Sequence_Type(heart)) {  // allow sequences [1]
+    if (Any_Sequence_Heart(heart)) {  // allow sequences [1]
         TypeEnum lift = Type_Of_Raw(list_or_seq);
 
         assume (  // all sequences alias as block
@@ -151,12 +151,12 @@ static void Push_Composer_Level(
         );
 
         if (Type_Of_Raw(list_or_seq) > MAX_TYPE_NOQUOTE_NOQUASI)
-            TYPE_BYTE(adjusted) = lift;  // restore
+            Tweak_Cell_Type_Byte(adjusted, lift);  // restore
     }
     else if (Is_Splice(list_or_seq))
         Copy_Lifted_Cell(adjusted, list_or_seq);  // make it a quasiform
     else
-        assert(Any_List_Type(heart));
+        assert(Any_List_Heart(heart));
 
     require (
       Level* sub = Make_Level_At_Inherit_Const(
@@ -217,7 +217,7 @@ static Result(Stable*) Finalize_Composer_Level(
     );
     Heart heart = Heart_Of_Builtin(composee);
 
-    if (Any_Sequence_Type(heart)) {
+    if (Any_Sequence_Heart(heart)) {
         trap (
           Pop_Sequence_Or_Element_Or_Null(
             out,
@@ -234,7 +234,7 @@ static Result(Stable*) Finalize_Composer_Level(
 
         assert(  // no anti/quasi forms
             (Type_Of_Raw(composee) <= MAX_TYPE_NOQUOTE_NOQUASI)
-            or (TYPE_BYTE(composee) & NONQUASI_BIT)
+            or (Byte_From_Type(Type_Of_Raw(composee)) & NONQUASI_BIT)
         );
         Count num_quotes = Quotes_Of(As_Element(composee));
 
@@ -346,13 +346,13 @@ Bounce Composer_Executor(Level* const L)
 
     Option(Heart) heart = Heart_Of(at);  // quoted groups match [1]
 
-    if (not Any_Sequence_Or_List_Type(heart)) {  // won't substitute/recurse
+    if (not Any_Sequence_Or_List_Heart(heart)) {  // won't substitute/recurse
         Copy_Cell(PUSH(), at);  // keep newline flag
         goto handle_next_item;
     }
 
     if (not Try_Match_For_Compose(SPARE, at, pattern)) {
-        if (deep or Any_Sequence_Type(heart)) {  // sequences "same level"
+        if (deep or Any_Sequence_Heart(heart)) {  // sequences "same level"
             Push_Composer_Level(OUT, main_level, at, L_binding);
             STATE = ST_COMPOSER_RECURSING_DEEP;
             return CONTINUE_SUBLEVEL;
@@ -387,7 +387,7 @@ Bounce Composer_Executor(Level* const L)
         }
 
         Init_Blank(PUSH());
-        TYPE_BYTE(TOP_ELEMENT) = list_lift;
+        Tweak_Cell_Type_Byte(TOP_ELEMENT, list_lift);
         if (sigil)
             Add_Cell_Sigil(TOP_ELEMENT, unwrap sigil);  // ^ or @ or $
 
@@ -411,11 +411,11 @@ Bounce Composer_Executor(Level* const L)
             panic ("Cannot apply sigils to antiforms in COMPOSE'd slots");
 
         if (list_lift > MAX_TYPE_NOQUOTE_NOQUASI) {
-            if (not (i_cast(TypeByte, list_lift) & NONQUASI_BIT))
+            if (not (Byte_From_Type(list_lift) & NONQUASI_BIT))
                 panic ("Can't COMPOSE antiforms into ~(...)~ slots");
 
             Copy_Lifted_Cell(PUSH(), OUT);
-            TYPE_BYTE(TOP) = list_lift;
+            Tweak_Cell_Type_Byte(TOP, list_lift);
             goto handle_next_item;
         }
 
@@ -453,7 +453,7 @@ Bounce Composer_Executor(Level* const L)
 
     if (
         (list_lift <= MAX_TYPE_NOQUOTE_NOQUASI)
-        or (i_cast(TypeByte, list_lift) & NONQUASI_BIT)
+        or (Byte_From_Type(list_lift) & NONQUASI_BIT)
     ){
         Quotify_Depth(
             TOP_ELEMENT,
@@ -464,7 +464,7 @@ Bounce Composer_Executor(Level* const L)
             panic (
                 "COMPOSE cannot quasify items not at quote level 0"
             );
-        TYPE_BYTE(TOP) = list_lift;
+        Tweak_Cell_Type_Byte(TOP, list_lift);
     }
 
     if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))  // newline from group [1]

@@ -75,58 +75,14 @@
 // an allocation of a stub to hold the aliased array).
 //
 
-#define MIRROR_BYTE_RAW(source) \
-    SECOND_BYTE(&FLEX_INFO(source))
-
-#if (! DEBUG_HOOK_MIRROR_BYTE)
-    #define MIRROR_BYTE(source) \
-        MIRROR_BYTE_RAW(known(Source*, (source)))
-#else
-    struct MirrorHolder {
-        Source* & ref;
-
-        MirrorHolder(const Source* const& ref)
-            : ref (const_cast<Source* &>(ref))
-          {}
-
-        operator Byte() const {  // implicit cast, add any read checks here
-            return MIRROR_BYTE_RAW(ref);
-        }
-
-        void operator=(Byte right) {  // add any write checks you want here
-            MIRROR_BYTE_RAW(ref) = right;
-        }
-
-        void operator=(const MirrorHolder& right)  // must write explicitly
-          { *this = u_cast(Byte, right); }
-
-        ENABLE_IF_EXACT_ARG_TYPE(Heart)
-        void operator=(T right)
-          { *this = i_cast(Byte, right); }  // inherit op `=` Byte checks
-
-        ENABLE_IF_EXACT_ARG_TYPE(Heart)
-        explicit operator T() const  // inherit Byte() cast extraction checks
-          { return u_cast(T, i_cast(Byte, *this)); }
-    };
-
-    INLINE bool operator==(const MirrorHolder& holder, Heart h)
-      { return MIRROR_BYTE_RAW(holder.ref) == cast(Byte, h); }
-
-    INLINE bool operator==(Heart h, const MirrorHolder& holder)
-      { return cast(Byte, h) == MIRROR_BYTE_RAW(holder.ref); }
-
-    INLINE bool operator!=(const MirrorHolder& holder, Heart h)
-      { return MIRROR_BYTE_RAW(holder.ref) != cast(Byte, h); }
-
-    INLINE bool operator!=(Heart h, const MirrorHolder& holder)
-      { return cast(Byte, h) != MIRROR_BYTE_RAW(holder.ref); }
-
-    #define MIRROR_BYTE(source) \
-        MirrorHolder{source}
-#endif
+#define MIRROR_BYTE(source) \
+    SECOND_BYTE(&FLEX_INFO(known(Source*, (source))))
 
 #define Mirror_Of(source) \
-    u_cast(Option(Heart), MIRROR_BYTE_RAW(source))
+    Heart_From_Byte(MIRROR_BYTE(source))
+
+#define Tweak_Mirror_Byte(source, heart) \
+    (MIRROR_BYTE(source) = Byte_From_Heart(heart))
 
 
 // !!! Currently, many bits of code that make copies don't specify if they are

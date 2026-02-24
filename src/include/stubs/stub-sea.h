@@ -97,12 +97,12 @@ INLINE Option(Patch*) Sea_Patch(
             i_cast(SymId16, opt id) >= MIN_SYM_BUILTIN_TYPES
             and i_cast(SymId16, opt id) <= MAX_SYM_BUILTIN_TYPES
          )){
-            Type type = Type_From_Symbol_Id(unwrap id);
+            Byte type_byte = Byte_From_Type(Type_From_Symbol_Id(unwrap id));
             assert(
-                INFO_PATCH_SEA(&g_datatype_patches[i_cast(Byte, type)])
+                INFO_PATCH_SEA(&g_datatype_patches[type_byte])
                 == g_datatypes_context
             );
-            return &g_datatype_patches[i_cast(Byte, type)];
+            return &g_datatype_patches[type_byte];
         }
     }
 

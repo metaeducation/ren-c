@@ -74,7 +74,7 @@ INLINE Option(Dispatcher*) Get_Builtin_Generic_Dispatcher(
 ){
     const GenericInfo* info = table->info;
     for (; info->typeset_byte != 0; ++info) {
-        if (Builtin_Typeset_Check(info->typeset_byte, heart))
+        if (Builtin_Typeset_Check(info->typeset_byte, Type_From_Heart(heart)))
             return info->dispatcher;
     }
     return nullptr;

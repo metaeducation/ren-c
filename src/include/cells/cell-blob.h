@@ -129,7 +129,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
         return Blob_At(cell);
     }
 
-    if (Any_Utf8_Type(heart)) {
+    if (Any_Utf8_Heart(heart)) {
         *size_out = String_Size_Limit_At(nullptr, cell, &limit);
         return String_At(cell);
     }

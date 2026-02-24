@@ -540,8 +540,8 @@ Bounce Stepper_Executor(Level* L)
       case ST_STEPPER_GENERIC_SET: goto generic_set_rightside_in_out;
       case ST_STEPPER_SET_BLOCK: goto set_block_rightside_in_out;
 
-      case HEART_GROUP: goto group_or_meta_group_result_in_out;
-      case HEART_FRAME: goto action_result_in_out;
+      case ST_STEPPER_RUNNING_GROUP: goto group_or_meta_group_result_in_out;
+      case ST_STEPPER_RUNNING_ACTION: goto action_result_in_out;
 
       case ST_STEPPER_BIND_OPERATOR: goto bind_rightside_in_out;
       case ST_STEPPER_IDENTITY_OPERATOR: goto identity_rightside_in_out;
@@ -762,10 +762,10 @@ Bounce Stepper_Executor(Level* L)
         }
     }
 
-    if (TYPE_BYTE(CURRENT) > QUASIFORM_64)
+    if (Type_Of_Raw(CURRENT) >= MIN_TYPE_QUOTED)
         goto handle_quoted;
 
-    assert(TYPE_BYTE(CURRENT) == QUASIFORM_64);
+    assert(Type_Of_Raw(CURRENT) == TYPE_QUASIFORM);
     goto handle_quasiform;
 
 } handle_quoted: { //// QUOTED! [ 'XXX  '''@XXX  '~XXX~ ] ////////////////////
@@ -806,7 +806,7 @@ Bounce Stepper_Executor(Level* L)
     if (Get_Level_Flag(L, VANISHABLE_VOIDS_ONLY) and Is_Void(OUT))
         Note_Level_Out_As_Void_To_Make_Heavy(L);  // avoid accidents [2]
 
-    STATE = i_cast(StepperState, TYPE_QUASIFORM);  // can't leave STATE_0
+    STATE = ST_STEPPER_NONZERO_STATE;
     goto lookahead;
 
 
@@ -815,7 +815,7 @@ Bounce Stepper_Executor(Level* L)
   // PINNED! types originally focused on inert "do nothing", but are seeming
   // more valuable to use for iterators.
 
-  switch (STATE = ii_cast(StateByte, Heart_Of(CURRENT))) {
+  switch (Heart_Of_Or_0(CURRENT)) {
 
   case HEART_BLANK: { //// LITERALLY OPERATOR (@) ////////////////////////////
 
@@ -904,7 +904,7 @@ Bounce Stepper_Executor(Level* L)
     //     >> get 'var
     //     ** Error: var is unbound
 
-  switch (STATE = ii_cast(StateByte, Heart_Of(CURRENT))) {
+  switch (Heart_Of_Or_0(CURRENT)) {
 
   case HEART_BLANK: { //// BIND OPERATOR ($) /////////////////////////////////
 
@@ -944,7 +944,7 @@ Bounce Stepper_Executor(Level* L)
   // METAFORM! types retrieve things with less intervention (decaying, or
   // perhaps suppressing VOID! => HEAVY VOID conversions).
 
-  switch (STATE = ii_cast(StateByte, Heart_Of(CURRENT))) {
+  switch (Heart_Of_Or_0(CURRENT)) {
 
   case HEART_BLANK: { //// IDENTITY OPERATOR (^) //////////////////////////////
 
@@ -1115,7 +1115,7 @@ Bounce Stepper_Executor(Level* L)
     // 1. The Stepper_Executor()'s state bytes are a superset of the
     //    Heart_Of() of processed values.  See the ST_STEPPER_XXX enumeration.
 
-  switch ((STATE = ii_cast(StateByte, Heart_Of(CURRENT)))) {  // superset [1]
+  switch (Heart_Of_Or_0(CURRENT)) {  // superset [1]
 
   case HEART_BLANK: { //// BLANK! (often manifests as "," character) //////////
 
@@ -1195,7 +1195,7 @@ Bounce Stepper_Executor(Level* L)
     // Gather args and execute function (the arg gathering makes nested
     // eval calls that lookahead, but no lookahead after the action runs)
 
-    STATE = i_cast(StepperState, TYPE_FRAME);
+    STATE = ST_STEPPER_RUNNING_ACTION;
     return CONTINUE_SUBLEVEL;
 
 } action_result_in_out: {
@@ -1558,6 +1558,7 @@ Bounce Stepper_Executor(Level* L)
     );
 
     Erase_Cell(OUT);
+    STATE = ST_STEPPER_RUNNING_GROUP;
     return CONTINUE_SUBLEVEL;
 
 } group_or_meta_group_result_in_out: {

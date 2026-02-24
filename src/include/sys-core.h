@@ -574,8 +574,8 @@ INLINE Error* Cell_Error(const Cell* c);
 #endif
 
 #include "sys-cell.h"
-#include "cells/cell-quoted.h"  // defines Is_Cell_Stable(), used by API stubs
 #include "cells/cell-sigil.h"
+#include "cells/cell-quoted.h"  // defines Is_Cell_Stable(), used by API stubs
 
 #include "sys-stub.h"
 

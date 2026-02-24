@@ -68,7 +68,7 @@ DECLARE_NATIVE(HEART_OF)
 
     Option(Heart) heart = Heart_Of(elem);
     if (heart)
-        return COPY_TO_OUT(Datatype_From_Type(unwrap heart));
+        return COPY_TO_OUT(Datatype_From_Heart(unwrap heart));
 
     panic ("HEART OF not supported for extension types...yet!");
 }

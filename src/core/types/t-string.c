@@ -319,7 +319,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
     INCLUDE_PARAMS_OF_MAKE;
 
     Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
-    assert(Any_String_Type(heart) or Any_Utf8_Type(heart));  // rune calls [1]
+    assert(Any_String_Heart(heart) or Any_Utf8_Heart(heart));  // rune uses [1]
 
     Element* def = ARG(DEF);
 
@@ -694,7 +694,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
     Strand* buf = mo->strand;
 
     Heart heart = Heart_Of_Builtin_Fundamental(v);
-    assert(Any_Utf8_Type(heart));
+    assert(Any_Utf8_Heart(heart));
 
     if (form) {  // TAG! is not an exception--forms without delimiters [1]
         Append_Any_Utf8(buf, v);
@@ -1017,7 +1017,7 @@ Result(Element*) Alias_Any_String_As(
     const Element* string,
     Heart as
 ){
-    if (Any_String_Type(as)) {  // special handling not in Utf8 generic [1]
+    if (Any_String_Heart(as)) {  // special handling not in Utf8 generic [1]
         Copy_Cell(out, string);
         Tweak_Cell_Type(out, as);
         Inherit_Const(out, string);

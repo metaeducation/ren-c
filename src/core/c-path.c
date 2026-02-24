@@ -38,7 +38,7 @@ Result(Element*) Init_Any_Sequence_At_Listlike(
     const Source* a,
     Offset offset
 ){
-    assert(Any_Sequence_Type(heart));
+    assert(Any_Sequence_Heart(heart));
     assert(Is_Base_Managed(a));
     Assert_Flex_Term_If_Needed(a);
     assert(Is_Source_Frozen_Shallow(a));  // must be immutable (may be aliased)
@@ -378,7 +378,7 @@ IMPLEMENT_GENERIC(ZEROIFY, Any_Sequence)
     Element* sequence = Element_ARG(EXAMPLE);
 
     Heart heart = Heart_Of_Builtin(sequence);
-    assert(Any_Sequence_Type(heart));
+    assert(Any_Sequence_Heart(heart));
 
     REBLEN len = Sequence_Len(sequence);
     REBLEN n;

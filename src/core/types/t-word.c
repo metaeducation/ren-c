@@ -164,10 +164,10 @@ IMPLEMENT_GENERIC(TO, Is_Word)
     if (to == HEART_WORD)
         return GENERIC_CFUNC(AS, Is_Word)(LEVEL);  // immutable alias
 
-    if (Any_String_Type(to))  // need mutable copy
+    if (Any_String_Heart(to))  // need mutable copy
         return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);
 
-    if (Any_Utf8_Type(to))
+    if (Any_Utf8_Heart(to))
         return GENERIC_CFUNC(AS, Is_Word)(LEVEL);  // non-string, immutable
 
     return GENERIC_CFUNC(TO, Any_Utf8)(LEVEL);  // TO INTEGER!, etc.
@@ -187,7 +187,7 @@ Result(Element*) Alias_Any_Word_As(
         return out;
     }
 
-    if (Any_String_Type(as))  // will be an immutable string
+    if (Any_String_Heart(as))  // will be an immutable string
         return Init_Any_String(out, as, Word_Symbol(word));
 
     if (as == HEART_RUNE) {  // immutable (note no EMAIL! or URL! possible)
@@ -207,7 +207,7 @@ Result(Element*) Alias_Any_Word_As(
     if (as == HEART_BLOB)  // will be an immutable blob
         return Init_Blob(out, Word_Symbol(word));
 
-    return fail (Error_Invalid_Type(as));
+    return fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
 }
 
 

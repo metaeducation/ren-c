@@ -281,7 +281,7 @@ MUTABLE_IF_C(Stable*, INLINE) Stable_Slot_Hack(
 ){
     CONSTABLE(Value*) s = u_cast(Value*, slot);
     assert(Type_Of_Raw(s) != BEDROCK_255);
-    if (TYPE_BYTE(s) > i_cast(TypeByte, MAX_TYPE_STABLE))
+    if (Type_Of_Raw(s) > MAX_TYPE_STABLE)
         panic ("Stable_Slot_Hack() called on non-Stable slot");
     return As_Stable(s);
 }

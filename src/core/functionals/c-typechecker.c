@@ -108,7 +108,7 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
                 if (type != TYPE_TIED)
                     return LOGIC_OUT(false);
 
-                type = Heart_Of(v);
+                type = Type_From_Heart(Heart_Of(v));
             }
             else if (ARG(PINNED)) {
                 if (ARG(METAFORM))
@@ -117,13 +117,13 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
                 if (type != TYPE_PINNED)
                     return LOGIC_OUT(false);
 
-                type = Heart_Of(v);
+                type = Type_From_Heart(Heart_Of(v));
             }
             else if (ARG(METAFORM)) {
                 if (type != TYPE_METAFORM)
                     return LOGIC_OUT(false);
 
-                type = Heart_Of(v);
+                type = Type_From_Heart(Heart_Of(v));
             }
         }
     }
@@ -165,14 +165,14 @@ DECLARE_NATIVE(UNSTABLE_TYPECHECKER_ARCHETYPE)
         Details_At(details, IDX_TYPECHECKER_TYPESET_BYTE)
     );
 
-    if (typeset_byte == i_cast(TypesetByte, TYPE_FAILURE))
+    if (typeset_byte == Byte_From_Type(TYPE_FAILURE))
         return LOGIC_OUT(Is_Failure(v));
 
     require (
       Ensure_No_Failures_Including_In_Packs(v)
     );
 
-    if (typeset_byte == i_cast(TypesetByte, TYPE_VOID)) {
+    if (typeset_byte == Byte_From_Type(TYPE_VOID)) {
         if (Is_Heavy_Void(v))
             panic ("HEAVY VOID passed to VOID?; use ANY-VOID? to test both");
         return LOGIC_OUT(Is_Void(v));
@@ -214,15 +214,15 @@ Details* Make_Typechecker(TypesetByte typeset_byte)  // parameter cache [1]
         if (not (typeset & TYPESET_FLAG_0_RANGE))  // bits
             break;  // do stable check
 
-        Type start = i_cast(Type, THIRD_BYTE(&typeset));
-        Type end = i_cast(Type, FOURTH_BYTE(&typeset));
-        if (start != end)  // nontrivial range
-            break;
+        TypeEnum start = Type_From_Byte_Or_0(THIRD_BYTE(&typeset));
+        TypeEnum end = Type_From_Byte_Or_0(FOURTH_BYTE(&typeset));
+        if (start != end)
+            break;  // nontrivial range
 
         if (start <= MAX_TYPE_STABLE)  // don't need unstable checks
             break;
 
-        assert(typeset_byte == i_cast(TypesetByte, start));
+        assert(typeset_byte == Byte_From_Type(start));
         continue;
     }
     then {
@@ -556,7 +556,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
 
     if (
         Heart_Of(at) == HEART_WORD  // our hands are tied on the meaning [2]
-        or Any_Sequence_Type(Heart_Of(at))
+        or Any_Sequence_Heart(Heart_Of(at))
     ){
         goto adjust_quote_level_and_run_type_constraint;
     }
@@ -687,7 +687,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
 
     const Symbol* label;
 
-    if (not Any_Sequence_Type(Heart_Of(at))) {
+    if (not Any_Sequence_Heart(Heart_Of(at))) {
         label = Word_Symbol(at);
         goto handle_after_any_quoting_adjustments;
     }
@@ -737,7 +737,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
           Unsingleheart_Sequence(scratch)
         );
     }
-    while (Any_Sequence_Type(Heart_Of(scratch)));
+    while (Any_Sequence_Heart(Heart_Of(scratch)));
 
     if (not Is_Word(scratch))
         panic ("Non-WORD! in destructured typespec sequence unsupported ATM");
@@ -1149,7 +1149,7 @@ Result(Value*) Init_Typechecker(
         if (not t)
             panic ("TYPECHECKER does not support extension types yet");
 
-        Byte type_byte = i_cast(Byte, unwrap t);
+        Byte type_byte = Byte_From_Type(t);
         SymId16 id16 = i_cast(SymId16, type_byte) + MIN_SYM_TYPESETS - 1;
         assert(id16 == type_byte);  // MIN_SYM_TYPESETS should be 1
 

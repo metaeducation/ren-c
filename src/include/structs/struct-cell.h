@@ -183,21 +183,22 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 typedef Byte HeartsigilByte;  // help document when Byte is Heart + Sigil [1]
 
-#define HEARTSIGIL_BYTE_RAW(cell) /* don't go through KindHolder() [2] */ \
-    SECOND_BYTE(&(cell)->header.bits)
+#define HEARTSIGIL_BYTE(cell) /* don't go through KindHolder() [2] */ \
+    THIRD_BYTE(&(cell)->header.bits)
 
 #define FLAG_HEARTSIGIL_BYTE(byte) \
-    FLAG_SECOND_BYTE(exactly(int, (byte)))
+    FLAG_THIRD_BYTE(exactly(int, (byte)))
 
 #define FLAG_HEART(heart) \
-    FLAG_SECOND_BYTE(i_cast(HeartsigilByte, known(Heart, (heart))))
+    FLAG_THIRD_BYTE(ii_cast(Byte, known(Option(Heart), (heart))))
 
-#define HEARTSIGIL_BYTEMASK_HEART_0x3F  0x3F  /* 64 hearts, 2 bit crumb for Sigil */
-#define CELL_MASK_HEART_NO_SIGIL  FLAG_SECOND_BYTE(HEARTSIGIL_BYTEMASK_HEART_0x3F)
+#define HEARTSIGIL_BYTEMASK_HEART  0x3F
 
-#define CELL_MASK_HEART_AND_SIGIL  FLAG_HEARTSIGIL_BYTE(255)
+#define CELL_MASK_HEART_NO_SIGIL \
+    FLAG_HEARTSIGIL_BYTE(HEARTSIGIL_BYTEMASK_HEART)  /* minus 2 bit Sigil */
 
-#define BYTE_SIGIL_SHIFT  6
+#define CELL_MASK_HEART_AND_SIGIL \
+    FLAG_HEARTSIGIL_BYTE(255)
 
 
 //=//// CELL 2-bit SIGIL! /////////////////////////////////////////////////=//
@@ -213,12 +214,12 @@ typedef Byte HeartsigilByte;  // help document when Byte is Heart + Sigil [1]
     u_cast(Option(Sigil), SIGIL_0_constexpr)
 
 #define FLAG_SIGIL_CRUMB(crumb) \
-    FLAG_HEARTSIGIL_BYTE((crumb) << BYTE_SIGIL_SHIFT)
+    FLAG_HEARTSIGIL_BYTE(known(int, (crumb)) << BYTE_SIGIL_SHIFT)
 
 #define FLAG_SIGIL(sigil) \
-    FLAG_SIGIL_CRUMB(ii_cast(Byte, known(Option(Sigil), (sigil))))
+    FLAG_SIGIL_CRUMB(ii_cast(int, known(Option(Sigil), (sigil))))
 
-#define CELL_MASK_SIGIL  FLAG_SIGIL_CRUMB(3)  // 0b11 << BYTE_SIGIL_SHIFT
+#define CELL_MASK_SIGIL  FLAG_SIGIL_CRUMB(3)  // 0b11 << UINTPTR_SIGIL_SHIFT
 
 
 //=//// BITS 16-23: TYPE AND QUOTE/QUASI/ANTI/DUAL BYTE ("LIFT") //////////=//
@@ -248,40 +249,30 @@ typedef Byte HeartsigilByte;  // help document when Byte is Heart + Sigil [1]
 
 typedef Byte TypeByte;   // any byte value (but represents a Type/Lift)
 
-#define TYPE_BYTE_RAW(cell) /* don't go through TypeHolder() [1] */ \
-    THIRD_BYTE(&(cell)->header.bits)
+#define TYPE_BYTE(cell) /* don't go through Tweak_Cell_Type_Byte() [1] */ \
+    SECOND_BYTE(&(cell)->header.bits)
 
 #define Type_Of_Raw(v) \
-    i_cast(Type, TYPE_BYTE_RAW(v))
+    i_cast(Type, TYPE_BYTE(v))
 
 
-#define MAX_TYPE_NOQUOTE_QUASI_OK  i_cast(TypeEnum, 64)
-#define MAX_TYPE_NOQUOTE_NOQUASI  i_cast(TypeEnum, 63)
 
-#define NOQUOTE_63              63
-#define NONQUASI_BIT            1
-
-STATIC_ASSERT(i_cast(Byte, TYPE_QUASIFORM) == 64);
-#define QUASIFORM_64            64
-STATIC_ASSERT(not (QUASIFORM_64 & NONQUASI_BIT));
-
-STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_1_TIME_NONQUASI) == 65);
-STATIC_ASSERT(65 & NONQUASI_BIT);
-
-STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_64_TIMES_NONQUASI) == 191);
-STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_64_TIMES_QUASI) == 192);
 #define MAX_QUOTE_DEPTH_64     64         // highest legal quoting level
 
 #define Quote_Shift(n)      ((n) << 1)  // help find manipulation sites
 
+
+#define Type_From_Heart(h) \
+    Type_From_Byte(Byte_From_Heart(h))
+
 #define FLAG_TYPE_BYTE(type) \
-    FLAG_THIRD_BYTE(exactly(int, (type)))
+    FLAG_SECOND_BYTE(exactly(int, (type)))
 
 #define FLAG_TYPE(type) \
-    FLAG_THIRD_BYTE(i_cast(TypeByte, known(TypeEnum, (type))))
+    FLAG_SECOND_BYTE(ii_cast(Byte, known(Option(TypeEnum), (type))))
 
 #define CELL_MASK_LIFTED_OR_ANTIFORM_OR_DUAL \
-    FLAG_TYPE_BYTE(192)  // 128 + 64, the 2 high bits set
+    FLAG_SECOND_BYTE(192)  // 128 + 64, the 2 high bits set
 
 #define CELL_MASK_HEART_AND_SIGIL_AND_LIFT \
     (CELL_MASK_HEART_AND_SIGIL | FLAG_TYPE_BYTE(255))

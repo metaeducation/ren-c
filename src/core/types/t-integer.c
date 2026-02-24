@@ -112,7 +112,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
         Sink(Element) out = OUT;
 
         trap (  // (try make integer! "4chan") => null
-          Transcode_One(out, TYPE_0, arg)
+          Transcode_One(out, HEART_0, arg)
         );
         if (Is_Integer(out))
             return OUT;
@@ -134,7 +134,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
         return Init_Integer(OUT, cast(REBI64, VAL_DECIMAL(arg)));
     }
 
-    panic (Error_Bad_Make(TYPE_INTEGER, arg));
+    panic (Error_Bad_Make(HEART_INTEGER, arg));
 }
 
 
@@ -154,7 +154,7 @@ void Hex_String_To_Integer(Stable* out, const Element* value)  // !!! UNUSED
     }
 
     if (not Try_Scan_Hex_Integer(out, bp, utf8_size, utf8_size))
-        panic (Error_Bad_Make(TYPE_INTEGER, value));
+        panic (Error_Bad_Make(HEART_INTEGER, value));
 
     // !!! Unlike binary, always assumes unsigned (should it?).  Yet still
     // might run afoul of 64-bit range limit.
@@ -318,14 +318,14 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
     Element* val = Element_ARG(VALUE);
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_Utf8_Type(to) and to != HEART_WORD) {
+    if (Any_Utf8_Heart(to) and to != HEART_WORD) {
         DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
         Push_Mold(mo);
         Mold_Element(mo, val);
 
         const Strand* s;
-        if (Any_String_Type(to))
+        if (Any_String_Heart(to))
             s = Pop_Molded_Strand(mo);
         else {
             if (Try_Init_Small_Utf8(
@@ -344,7 +344,7 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
         return Init_Any_String(OUT, to, s);
     }
 
-    if (Any_List_Type(to))
+    if (Any_List_Heart(to))
         return rebValue(CANON(ENVELOP), ARG(TYPE), val);
 
     if (to == HEART_DECIMAL or to == HEART_PERCENT) {

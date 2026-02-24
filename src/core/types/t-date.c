@@ -675,7 +675,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
 
 } bad_make: {  ///////////////////////////////////////////////////////////////
 
-    return fail (Error_Bad_Make(TYPE_DATE, arg));
+    return fail (Error_Bad_Make(HEART_DATE, arg));
 }}
 
 

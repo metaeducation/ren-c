@@ -64,19 +64,19 @@ void Startup_Type_Predicates(void)
 
         if (
             typeset_byte
-            == i_cast(TypeByte, TYPE_QUOTED_1_TIME_NONQUASI)
+            == Byte_From_Type(TYPE_QUOTED_1_TIME_NONQUASI)
         ){
             continue;  // lib value is QUOTED?, it's a native
         }
         else if (
             typeset_byte
-            == i_cast(TypeByte, TYPE_LOGIC_NULL)
+            == Byte_From_Type(TYPE_LOGIC_NULL)
         ){
             continue;  // lib value is LOGIC?, it's a native
         }
-        else if (Is_Logic_Type(i_cast(Type, typeset_byte)))
+        else if (Is_Logic_Type(Type_From_Byte(typeset_byte)))
             continue;  // okay slot not used
-        else if (Is_Quoted_Type(i_cast(Type, typeset_byte)))
+        else if (Is_Quoted_Type(Type_From_Byte(typeset_byte)))
             continue;  // range will be used for other optimizations
 
         Details* details = Make_Typechecker(typeset_byte);
@@ -423,7 +423,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
             panic ("Unstable type unusable unless ^META or soft param");
         }
 
-        *optimized = i_cast(TypesetByte, unwrap datatype_type);
+        *optimized = Byte_From_Type(datatype_type);
         ++optimized;
         goto spoken_for;
     }

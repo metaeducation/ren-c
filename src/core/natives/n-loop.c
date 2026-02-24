@@ -1185,7 +1185,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
 
         Heart heart = Heart_Of_Builtin_Fundamental(les->data);
 
-        if (Any_List_Type(heart)) {
+        if (Any_List_Heart(heart)) {
             Element* spare_element = Copy_Cell_May_Bind(
                 SPARE,
                 Array_At(cast(Array*, les->flex), les->u.eser.index),
@@ -1200,7 +1200,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
             goto maybe_lift_and_continue;
         }
 
-        if (Any_Context_Type(heart)) {
+        if (Any_Context_Heart(heart)) {
             Element* spare_key = Init_Word(
                 SPARE, Key_Symbol(les->u.evars.key)
             );
@@ -1292,7 +1292,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
             goto maybe_lift_and_continue;
         }
 
-        if (Any_String_Type(heart)) {
+        if (Any_String_Heart(heart)) {
             Element* spare_rune = Init_Char_Unchecked(
                 SPARE,
                 Get_Strand_Char_At(cast(Strand*, les->flex), les->u.eser.index)

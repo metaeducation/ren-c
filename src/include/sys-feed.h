@@ -65,8 +65,8 @@
         assert(
             bp[1] == 0  // not strictly necessary, but rebEND is 2 bytes
             or (
-                bp[1] == i_cast(Byte, HEART_BLANK)
-                and bp[2] == i_cast(Byte, TYPE_BLANK)
+                bp[1] == Byte_From_Type(TYPE_BLANK)
+                and bp[2] == Byte_From_Heart(HEART_BLANK)
             )
         );
         return true;
@@ -797,7 +797,7 @@ INLINE Result(Feed*) Prep_At_Feed(
     );
 
     STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);
-    assert(Any_List_Type(Heart_Of(list)));  // tolerates quasi/quoted [1]
+    assert(Any_List_Heart(Heart_Of(list)));  // tolerates quasi/quoted [1]
 
     Flags flags = FEED_MASK_DEFAULT
         | (parent_flags & FEED_FLAG_CONST)  // inherit

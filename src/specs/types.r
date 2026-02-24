@@ -221,7 +221,7 @@ parameter!  "function parameter description"
 blank!        "evaluation separator, no rendering (shows in lists via commas)"
 ~void!~:U     "Panics on WORD! access, multi-step evaluations discard"
               (CELL_MASK_NO_MARKING)
-              [any-unit?]  ; NOT inert
+              [any-unit? any-sequencable?]  ; NOT inert
 
 
 <ANY-SEQUENCE?>

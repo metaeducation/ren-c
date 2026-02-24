@@ -321,7 +321,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
             );
             Tweak_Link_Inherit_Bind(varlist, Cell_Binding(source));
             Tweak_Cell_Binding(source, varlist);
-            HEARTSIGIL_BYTE(source) = HEART_BLOCK;
+            Tweak_Cell_Type(source, HEART_BLOCK);
 
             Remember_Cell_Is_Lifeguard(source);  // may be only reference!
             goto initial_entry_list;
@@ -931,6 +931,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
 
     possibly(u_cast(Cell*, param) == u_cast(Cell*, slot));  // !!! really?
     possibly(Get_Parameter_Flag(param, UNDO_OPT));  // our responsibility? [1]
+    USED(param);
 
     Move_Cell(Slot_Init_Hack(slot), SPARE);
     goto handle_next_item;

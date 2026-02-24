@@ -99,7 +99,7 @@ struct CastHook<const F*, const Param*> {  // both must be const [B]
         Assert_Cell_Readable(c);
         assert(
             Type_Of_Raw(c) != BEDROCK_255
-            or HEARTSIGIL_BYTE_RAW(c) == HEART_PARAMETER
+            or Heart_Of(c) == HEART_PARAMETER
         );
     }
 };

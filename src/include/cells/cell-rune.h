@@ -156,8 +156,8 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
 ){
     assert(size != 0);  // !!! review, this needs work
     assert(
-        Any_Utf8_Type(heart)
-        and not Any_String_Type(heart) and heart != HEART_WORD
+        Any_Utf8_Heart(heart)
+        and not Any_String_Heart(heart) and heart != HEART_WORD
     );
     assert(len <= size);
     if (size + 1 > Size_Of(out->payload.at_least_8))
@@ -363,7 +363,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
   #endif
 
     if (not Stringlike_Has_Stub(v)) {  // SIGIL!, some RUNE!...
-        assert(not Any_String_Type(Heart_Of(v)));
+        assert(not Any_String_Heart(Heart_Of(v)));
 
         REBLEN len;
         Size size;

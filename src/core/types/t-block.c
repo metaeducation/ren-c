@@ -133,7 +133,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
     INCLUDE_PARAMS_OF_MAKE;
 
     Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
-    assert(Any_List_Type(heart));
+    assert(Any_List_Heart(heart));
 
     Element* arg = ARG(DEF);
 
@@ -802,7 +802,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
     Element* list = Element_ARG(VALUE);
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_List_Type(to)) {
+    if (Any_List_Heart(to)) {
         Length len;
         const Element* at = List_Len_At(&len, list);
         return Init_Any_List(
@@ -810,7 +810,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         );
     }
 
-    if (Any_Sequence_Type(to)) {  // (to path! [a/b/c]) -> a/b/c
+    if (Any_Sequence_Heart(to)) {  // (to path! [a/b/c]) -> a/b/c
         Length len;
         const Element* item = List_Len_At(&len, list);
         if (Series_Len_At(list) != 1)
@@ -839,7 +839,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return OUT;
     }
 
-    if (Any_Utf8_Type(to)) {  // to tag! [1 a #b] => <1 a #b>
+    if (Any_Utf8_Heart(to)) {  // to tag! [1 a #b] => <1 a #b>
         assert(to != HEART_WORD);
 
         DECLARE_MOLDER (mo);
@@ -847,7 +847,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         Push_Mold(mo);
 
         Mold_Or_Form_Element(mo, list, false);
-        if (Any_String_Type(to))
+        if (Any_String_Heart(to))
             return Init_Any_String(OUT, to, Pop_Molded_Strand(mo));
 
         Init_Utf8_Non_String(
@@ -915,13 +915,13 @@ Result(Element*) Alias_Any_List_As(
     const Element* list,
     Heart as
 ){
-    if (Any_List_Type(as)) {
+    if (Any_List_Heart(as)) {
         Copy_Cell(out, list);
         Tweak_Cell_Type(out, as);
         return out;
     }
 
-    if (Any_Sequence_Type(as)) {
+    if (Any_Sequence_Heart(as)) {
         if (not Is_Source_Frozen_Shallow(Cell_Array(list)))  // freeze it [1]
             Freeze_Source_Shallow(Cell_Array_Ensure_Mutable(list));
 
@@ -939,7 +939,7 @@ Result(Element*) Alias_Any_List_As(
         return Copy_Cell_May_Bind(out, temp, Cell_Binding(list));  // (?)
     }
 
-    return fail (Error_Invalid_Type(as));
+    return fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
 }
 
 
@@ -1812,8 +1812,8 @@ void Assert_Array_Core(const Array* a)
 
         Assert_Cell_Readable(item);
         if (
-            i_cast(TypeEnum, Heart_Of(item)) < MIN_TYPE_HEART
-            or i_cast(TypeEnum, Heart_Of(item)) > MAX_TYPE_HEART
+            ii_cast(Heart, Heart_Of(item)) < MIN_HEART
+            or ii_cast(Heart, Heart_Of(item)) > MAX_HEART
         ){
             printf("Invalid Heart_Of() at index %d\n", i_cast(int, n));
             crash (a);

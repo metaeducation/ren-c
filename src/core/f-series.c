@@ -448,7 +448,7 @@ Result(bool) Equal_Values(const Stable* s, const Stable* t, bool strict)
 
     if (
         unwrap s_heart != unwrap t_heart
-        and not (Any_Number_Type(s_heart) and Any_Number_Type(t_heart))
+        and not (Any_Number_Heart(s_heart) and Any_Number_Heart(t_heart))
     ){
         return false;
     }
@@ -520,7 +520,7 @@ bool Try_Lesser_Value(Sink(bool) lesser, const Stable* s, const Stable* t)
 
     if (
         unwrap s_heart != unwrap t_heart
-        and not (Any_Number_Type(s_heart) and Any_Number_Type(t_heart))
+        and not (Any_Number_Heart(s_heart) and Any_Number_Heart(t_heart))
     ){
         return false;
     }

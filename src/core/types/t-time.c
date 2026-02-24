@@ -389,7 +389,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 
   bad_make:
 
-    return fail (Error_Bad_Make(TYPE_TIME, arg));
+    return fail (Error_Bad_Make(HEART_TIME, arg));
 }
 
 

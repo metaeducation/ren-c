@@ -1201,7 +1201,9 @@ Count Recycle_Core(Flex* sweeplist)
 
 } mark_builtin_datatypes: {
 
-    assert(Is_Stub_Erased(&g_datatype_patches[cast(Byte, TYPE_0)]));  // skip
+    assert(  // skip TYPE_0
+        Is_Stub_Erased(&g_datatype_patches[Byte_From_Type(TYPE_0)])
+    );
 
     for (
         SymId16 id16 = MIN_SYM_BUILTIN_TYPES;
@@ -1209,7 +1211,7 @@ Count Recycle_Core(Flex* sweeplist)
         ++id16
     ){
         Type type = Type_From_Symbol_Id(cast(SymId, id16));
-        Patch* patch = &g_datatype_patches[cast(Byte, type)];
+        Patch* patch = &g_datatype_patches[Byte_From_Type(type)];
         if (Is_Stub_Erased(patch))
             continue;  // isotope slot for non-isotopic type
         if (Not_Base_Marked(patch)) {  // this loop's prior steps can mark
@@ -1355,7 +1357,7 @@ Count Recycle_Core(Flex* sweeplist)
         ++id16
     ){
         Type type = Type_From_Symbol_Id(i_cast(SymId, id16));
-        Patch* patch = &g_datatype_patches[i_cast(Byte, type)];
+        Patch* patch = &g_datatype_patches[Byte_From_Type(type)];
         if (Is_Stub_Erased(patch))
             continue;  // isotope slot for non-isotopic type
         Remove_GC_Mark(patch);

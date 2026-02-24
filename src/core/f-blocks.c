@@ -200,10 +200,10 @@ void Uncolor_Array(const Array* a)
 
         Option(Heart) heart = Heart_Of(at);
         if (
-            Any_Sequence_Type(heart)
-            or Any_List_Type(heart)
+            Any_Sequence_Heart(heart)
+            or Any_List_Heart(heart)
             or (heart == HEART_MAP)
-            or Any_Context_Type(heart)
+            or Any_Context_Heart(heart)
         ){
             Uncolor_Slot(at);
         }
@@ -223,9 +223,9 @@ void Uncolor_Slot(const Cell* v)
 
     Option(Heart) heart = Heart_Of(v);
 
-    if (Any_List_Type(heart))
+    if (Any_List_Heart(heart))
         Uncolor_Array(Cell_Array(v));
-    else if (Any_Sequence_Type(heart)) {
+    else if (Any_Sequence_Heart(heart)) {
         REBLEN len = Sequence_Len(v);
         REBLEN i;
         DECLARE_ELEMENT (temp);
@@ -236,13 +236,13 @@ void Uncolor_Slot(const Cell* v)
     }
     else if (heart == HEART_MAP)
         Uncolor_Array(MAP_PAIRLIST(VAL_MAP(v)));
-    else if (Any_Context_Type(heart))
+    else if (Any_Context_Heart(heart))
         Uncolor_Array(Varlist_Array(Cell_Varlist(v)));
     else {
         // Shouldn't have marked recursively any non-Array Flexes (no need)
         //
         assert(
-            not Any_Series_Type(heart)
+            not Any_Series_Heart(heart)
             or Is_Stub_White(Cell_Flex(v))
         );
     }

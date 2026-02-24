@@ -27,9 +27,9 @@
 
 INLINE bool Is_Cell_Listlike(const Cell* v) {  // PACK!s are allowed
     // called by core code, sacrifice Readable_Cell() checks
-    if (Any_List_Type(Unchecked_Heart_Of(v)))
+    if (Any_List_Heart(Heart_Of(v)))
         return true;
-    if (not Any_Sequence_Type(Unchecked_Heart_Of(v)))
+    if (not Any_Sequence_Heart(Heart_Of(v)))
         return false;
     if (not Cell_Payload_1_Needs_Mark(v))
         return false;
@@ -71,7 +71,7 @@ INLINE const Element* List_Len_At(
 ){
     const Base* base = SERIESLIKE_PAYLOAD_1_BASE(cell);
     if (Is_Base_A_Cell(base)) {
-        assert(Any_Sequence_Type(Unchecked_Heart_Of(cell)));
+        assert(Any_Sequence_Heart(Unchecked_Heart_Of(cell)));
         assert(SERIESLIKE_PAYLOAD_2_INDEX(cell) == 0);
         if (len_at_out)
             *(unwrap len_at_out) = PAIRING_LEN_2;
@@ -93,7 +93,7 @@ INLINE const Element* List_At(
 ){
     const Base* base = SERIESLIKE_PAYLOAD_1_BASE(cell);
     if (Is_Base_A_Cell(base)) {
-        assert(Any_Sequence_Type(Heart_Of(cell)));
+        assert(Any_Sequence_Heart(Heart_Of(cell)));
         const Pairing* p = cast(Pairing*, base);
         if (tail_out)
             *(unwrap tail_out) = Pairing_Tail(p);
@@ -233,7 +233,7 @@ INLINE Element* Init_Relative_Block_At(
 
 INLINE Stable* Spread_Cell(Exact(Stable*) v) {
     assert(Any_List(v));
-    HEARTSIGIL_BYTE(v) = HEART_BLOCK_SIGNIFYING_SPLICE;  // forget former type
+    Tweak_Cell_Heart(v, HEART_BLOCK_SIGNIFYING_SPLICE);  // forget former type
     Tweak_Cell_Binding(u_cast(Element*, v), UNBOUND);
     Antiformize_Unbound_Fundamental(v, TYPE_SPLICE);
     assert(Is_Splice(v));
@@ -242,7 +242,7 @@ INLINE Stable* Spread_Cell(Exact(Stable*) v) {
 
 INLINE Element* Unsplice_Cell(Stable* v) {
     assert(Is_Splice(v));
-    TYPE_BYTE(v) = TYPE_BLOCK;
+    Tweak_Cell_Type_Byte(v, TYPE_BLOCK);
     return As_Element(v);
 }
 

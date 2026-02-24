@@ -127,7 +127,7 @@ INLINE bool Is_Bedrock_Dual_A_Drain(const Dual* dual) {
 
 INLINE Slot* Init_Bedrock_Drain(Init(Slot) out) {
     Init_Space(out);
-    TYPE_BYTE(out) = BEDROCK_255;
+    Tweak_Cell_Type_Byte(out, BEDROCK_255);
     return out;
 }
 
@@ -236,7 +236,7 @@ INLINE bool Is_Hot_Potato_With_Id_Core(
 
 INLINE bool Is_Bedrock_Dual_A_Hole(const Dual* dual) {
     assert(Is_Dualized_Bedrock(dual));
-    return HEARTSIGIL_BYTE(dual) == HEART_PARAMETER;
+    return Heart_Of(dual) == HEART_PARAMETER;
 }
 
 #define Is_Hole_Core(cell,lift) \
@@ -319,7 +319,7 @@ INLINE bool Is_Undecayed_Alias(const Value* v) {  // ~(^meta)~ PACK!
 
 INLINE bool Is_Bedrock_Dual_An_Accessor(const Dual* dual) {
     assert(Is_Dualized_Bedrock(dual));
-    return HEARTSIGIL_BYTE(dual) == HEART_FRAME;
+    return Heart_Of(dual) == HEART_FRAME;
 }
 
 #define Is_Accessor_Core(cell,lift) \

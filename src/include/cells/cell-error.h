@@ -84,7 +84,7 @@ INLINE Value* Failify_Cell_And_Force_Location(Exact(Value*) v) {
 
 INLINE Element* Disarm_Failure(Exact(Value*) v) {  // FAILURE! => ERROR!
     assert(Is_Failure(v));
-    TYPE_BYTE(v) = TYPE_ERROR;
+    Tweak_Cell_Type_Byte(v, TYPE_ERROR);
     assert(Is_Possibly_Unstable_Value_Error(v));
     return As_Element(v);
 }

@@ -1675,7 +1675,7 @@ DECLARE_NATIVE(NOQUASI)
         return NULL_OUT;
 
     Copy_Cell(OUT, v);
-    if (TYPE_BYTE(OUT) == QUASIFORM_64)
+    if (Type_Of_Raw(OUT) == TYPE_QUASIFORM)
         Normalize_Cell(OUT);
     return OUT;
 }

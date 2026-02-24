@@ -94,7 +94,7 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out, Flags flags) {
 INLINE Element* Init_Sigiled_Blank_Core(Init(Element) out, Sigil sigil) {
     return Init_Blank_Untracked(
         out,
-        FLAG_TYPE(sigil ? Lift_From_Sigil(sigil) : TYPE_BLANK)
+        FLAG_TYPE(sigil ? i_cast(TypeEnum, Type_From_Sigil(sigil)) : TYPE_BLANK)
             | FLAG_SIGIL(sigil)
     );
 }

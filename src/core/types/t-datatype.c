@@ -67,7 +67,7 @@ void Startup_Datatypes(void)
         else if (Is_Quoted_Type(type) or Is_Logic_Type(type))
             continue;  // bunch of unused symbols (close this gap)
 
-        Patch* patch = &g_datatype_patches[i_cast(Byte, type)];
+        Patch* patch = &g_datatype_patches[Byte_From_Type(type)];
         assert(Is_Stub_Erased(patch));  // pre-boot state
         FORCE_TRACK_0(Stub_Cell(patch));
 
@@ -85,7 +85,7 @@ void Startup_Datatypes(void)
         Sink(Stable) datatype = Stub_Cell(patch);
         Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
         Init_Word(Stub_Cell(a), Canon_Symbol(Symbol_Id_From_Type(type)));
-        DATATYPE_BYTE(a) = i_cast(Byte, type);
+        DATATYPE_BYTE(a) = Byte_From_Type(type);
 
         Freeze_Source_Deep(a);
         Init_Fence(datatype, a);
@@ -115,12 +115,14 @@ void Shutdown_Datatypes(void)
 {
     SymId16 id16 = MIN_SYM_BUILTIN_TYPES;
 
-    assert(Is_Stub_Erased(&g_datatype_patches[i_cast(Byte, TYPE_0)]));  // skip
+    assert(  // skip
+        Is_Stub_Erased(&g_datatype_patches[Byte_From_Type(TYPE_0)])
+    );
 
     for (; id16 <= MAX_SYM_BUILTIN_TYPES; ++id16) {
         SymId id = i_cast(SymId, id16);
         Type type = Type_From_Symbol_Id(id);
-        Patch* patch = &g_datatype_patches[i_cast(Byte, type)];
+        Patch* patch = &g_datatype_patches[Byte_From_Type(type)];
 
         if (Is_Stub_Erased(patch))
             continue;  // isotope slot for non-isotopic type

@@ -3,8 +3,8 @@
 INLINE const Flex* Cell_Flex(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
     assert(
-        Any_Series_Type(heart)
-        or (Any_Utf8_Type(heart) and Stringlike_Has_Stub(v))
+        Any_Series_Heart(heart)
+        or (Any_Utf8_Heart(heart) and Stringlike_Has_Stub(v))
     );
     UNUSED(heart);
     if (Not_Base_Readable(SERIESLIKE_PAYLOAD_1_BASE(v)))
@@ -40,13 +40,13 @@ INLINE const Flex* Cell_Flex(const Cell* v) {
     // type checking to ensure Series_Index() applied.  (This is called often.)
     //
     INLINE Index SERIES_INDEX_UNBOUNDED(const Cell* c) {
-        assert(Any_Series_Type(Unchecked_Heart_Of(c)));
+        assert(Any_Series_Heart(Unchecked_Heart_Of(c)));
         assert(Cell_Payload_1_Needs_Mark(c));
         return SERIESLIKE_PAYLOAD_2_INDEX(c);
     }
     INLINE Index& SERIES_INDEX_UNBOUNDED(Cell* c) {
         Assert_Cell_Writable(c);
-        assert(Any_Series_Type(Unchecked_Heart_Of(c)));
+        assert(Any_Series_Heart(Unchecked_Heart_Of(c)));
         assert(Cell_Payload_1_Needs_Mark(c));
         return SERIESLIKE_PAYLOAD_2_INDEX(c);  // returns a C++ reference
     }
@@ -62,7 +62,7 @@ INLINE bool Stringlike_Cell(const Cell* v);  // forward decl
 //
 INLINE REBLEN Series_Index_Stringlike_Ok(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
-    assert(Any_Series_Type(heart) or Stringlike_Cell(v));
+    assert(Any_Series_Heart(heart) or Stringlike_Cell(v));
     UNUSED(heart);
     assert(Cell_Payload_1_Needs_Mark(v));
     Index i = SERIESLIKE_PAYLOAD_2_INDEX(v);
@@ -76,7 +76,7 @@ INLINE REBLEN Series_Index_Stringlike_Ok(const Cell* v) {
 // unsigned REBLEN.
 //
 INLINE REBLEN Series_Index(const Cell* v) {
-    assert(Any_Series_Type(Heart_Of(v)));
+    assert(Any_Series_Heart(Heart_Of(v)));
     return Series_Index_Stringlike_Ok(v);
 }
 
@@ -108,13 +108,13 @@ INLINE Element* Init_Series_At_Core_Untracked(
   #if RUNTIME_CHECKS
     Assert_Flex_Term_If_Needed(f);  // even binaries [1]
 
-    if (Any_List_Type(heart)) {
+    if (Any_List_Heart(heart)) {
         assert(Stub_Flavor(f) == FLAVOR_SOURCE);  // no antiforms [2]
     }
-    else if (Any_String_Type(heart)) {
+    else if (Any_String_Heart(heart)) {
         assert(Is_Stub_Strand(f));
     }
-    else if (Any_Utf8_Type(heart)) {  // see also Init_Utf8_Non_String()
+    else if (Any_Utf8_Heart(heart)) {  // see also Init_Utf8_Non_String()
         assert(heart != HEART_WORD);  // can't use this init!
         assert(Is_Stub_Strand(f));
         assert(Is_Flex_Frozen(f));
@@ -123,7 +123,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
         assert(Stub_Holds_Bytes(f));  // Note: Binary allowed to alias Strand
     }
     else {
-        assert(Any_Sequence_Type(heart));
+        assert(Any_Sequence_Heart(heart));
         assert(Is_Stub_Source(f));
         assert(Is_Source_Frozen_Shallow(cast(Source*, f)));
     }
@@ -150,12 +150,15 @@ INLINE Element* Init_Series_At_Core_Untracked(
   #endif
 
   #if RUNTIME_CHECKS  // if non-string UTF-8 fits in cell, should be in cell
-    if (Any_Utf8_Type(heart) and not Any_String_Type(heart)) {
+    if (Any_Utf8_Heart(heart) and not Any_String_Heart(heart)) {
         Size utf8_size = String_Size_Limit_At(nullptr, out, UNLIMITED);
 
         assert(utf8_size + 1 > Size_Of(out->payload.at_least_8));
     }
   #endif
+
+    assert(Heart_Of(out) == opt heart);
+    assert(Type_Of(out) == opt Type_From_Heart(heart));
 
     return out;
 }

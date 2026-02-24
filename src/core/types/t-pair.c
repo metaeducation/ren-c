@@ -103,7 +103,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
     if (Is_Block(arg))
         return rebValue(CANON(TO), CANON(PAIR_X), CANON(REDUCE), arg);
 
-    return fail (Error_Bad_Make(TYPE_PAIR, arg));
+    return fail (Error_Bad_Make(HEART_PAIR, arg));
 }
 
 
@@ -255,7 +255,7 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
     Element* v = Element_ARG(VALUE);
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_List_Type(to)) {
+    if (Any_List_Heart(to)) {
         Source* a = Make_Source_Managed(2);
         Set_Flex_Len(a, 2);
         Copy_Cell(Array_At(a, 0), Cell_Pair_First(v));
@@ -263,13 +263,13 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
         return Init_Any_List(OUT, to, a);
     }
 
-    if (Any_String_Type(to) or to == HEART_RUNE) {
+    if (Any_String_Heart(to) or to == HEART_RUNE) {
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
         Mold_Element(mo, Cell_Pair_First(v));
         Append_Codepoint(mo->strand, ' ');
         Mold_Element(mo, Cell_Pair_Second(v));
-        if (Any_String_Type(to))
+        if (Any_String_Heart(to))
             return Init_Any_String(OUT, to, Pop_Molded_Strand(mo));
 
         if (Try_Init_Small_Utf8_Untracked(

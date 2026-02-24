@@ -136,9 +136,10 @@ INLINE bool Scanner_Mode_Matches(Level* L, Byte mode) {
 }
 
 INLINE Sigil Sigil_From_Token(Token t) {
-    assert(i_cast(int, t) != i_cast(int, SIGIL_0));
-    assert(i_cast(int, t) <= i_cast(int, MAX_SIGIL));
-    return i_cast(Sigil, t);
+    Sigil sigil = Sigil_From_Type(Type_From_Byte_Or_0(t));
+    assert(sigil != SIGIL_0);
+    assert(sigil <= MAX_SIGIL);
+    return sigil;
 }
 
 // Make a merged Byte from class and value parts.  Using this macro and casting
@@ -3082,16 +3083,13 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     sigil_before = Cell_Underlying_Sigil(head);
 
     if (quotes_before != 0) {
-        if (TYPE_BYTE_RAW(head) & NONQUASI_BIT)
+        if (Byte_From_Type(Type_Of_Raw(head)) & NONQUASI_BIT)
             Clear_Cell_Quotes_And_Quasi(head);
         else
-            TYPE_BYTE_RAW(head) = QUASIFORM_64;
+            Tweak_Cell_Type_Byte(head, TYPE_QUASIFORM);
     }
 
-    Byte b = TYPE_BYTE_RAW(head);
-    USED(b);
-
-    if (TYPE_BYTE_RAW(head) != QUASIFORM_64)
+    if (Type_Of_Raw(head) != TYPE_QUASIFORM)
         Clear_Cell_Sigil(head);
 
 } trap_pop: {
@@ -3131,9 +3129,9 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         Add_Cell_Sigil(TOP_ELEMENT, unwrap sigil_before);
 
     if (quotes_before != 0)
-        TYPE_BYTE(TOP_ELEMENT) = i_cast(TypeEnum,
+        Tweak_Cell_Type_Byte(TOP_ELEMENT, Type_From_Byte(
             NOQUOTE_63 + Quote_Shift(quotes_before)
-        );
+        ));
 
     goto sequence_or_conflation_was_pushed;
 

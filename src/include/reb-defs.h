@@ -327,6 +327,10 @@ enum Reb_Vararg_Op {
 typedef Byte TypesetByte;
 typedef Flags TypesetFlags;  // Ranged or sparse bitset of typesets
 
+#define FLAG_TYPESET_RANGE(start,end) \
+    (TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(Byte_From_Type(start)) \
+        | FLAG_FOURTH_BYTE(Byte_From_Type(end)))
+
 
 //=//// INFIX MODES ///////////////////////////////////////////////////////=//
 //

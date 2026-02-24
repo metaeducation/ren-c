@@ -156,11 +156,10 @@ INLINE bool Cell_Logic_Core(const Stable* v) {
 
 
 INLINE bool Is_Lifted_Null(const Value* v) {
-    if (TYPE_BYTE(v) != QUASIFORM_64)
-        return false;
-    if (Heart_Of(v) != HEART_WORD)
-        return false;
-    return Word_Id(v) == SYM_NULL;
+    return (
+        Cell_Has_Lift_Heart_No_Sigil(v, TYPE_QUASIFORM, HEART_WORD)
+        and Word_Id(v) == SYM_NULL
+    );
 }
 
 #define Is_Quasi_Null(v) \

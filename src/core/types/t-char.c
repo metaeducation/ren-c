@@ -186,8 +186,8 @@ Result(Codepoint) Back_Scan_Utf8_Char(  // no NUL or substitution chars [1]
 //
 REBINT CT_Utf8(const Element* a, const Element* b, bool strict)
 {
-    assert(Any_Utf8_Type(Heart_Of(a)));
-    assert(Any_Utf8_Type(Heart_Of(b)));
+    assert(Any_Utf8_Heart(Heart_Of(a)));
+    assert(Any_Utf8_Heart(Heart_Of(b)));
 
     if (Heart_Of(a) == HEART_RUNE or Heart_Of(b) == HEART_RUNE)
         strict = true;  // always true? [1]
@@ -252,7 +252,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
     INCLUDE_PARAMS_OF_MAKE;
 
     Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
-    assert(Any_Utf8_Type(heart));
+    assert(Any_Utf8_Heart(heart));
 
     Element* arg = ARG(DEF);
 
@@ -279,7 +279,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         Codepoint c;
         if (Is_Byte_Ascii(*bp)) {
             if (size != 1) {
-                Copy_Cell(ARG(TYPE), Datatype_From_Type(HEART_RUNE));
+                Copy_Cell(ARG(TYPE), Datatype_From_Heart(HEART_RUNE));
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
 
@@ -291,7 +291,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
             );
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0) {
-                Copy_Cell(ARG(TYPE), Datatype_From_Type(HEART_RUNE));
+                Copy_Cell(ARG(TYPE), Datatype_From_Heart(HEART_RUNE));
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
         }
@@ -657,7 +657,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
     possibly(Any_Word(v));  // delegates some cases
 
-    if (Any_String_Type(to)) {  // always need mutable new copy of data
+    if (Any_String_Heart(to)) {  // always need mutable new copy of data
         Length len;
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
@@ -738,14 +738,14 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return OUT;
     }
 
-    if (Any_Sequence_Type(to)) {  // to tuple! "a.b.c" -> a.b.c
+    if (Any_Sequence_Heart(to)) {  // to tuple! "a.b.c" -> a.b.c
         trap (
           Transcode_One(OUT, to, v)
         );
         return OUT;
     }
 
-    if (Any_List_Type(to)) {  // limited TRANSCODE (how limited?...) [1]
+    if (Any_List_Heart(to)) {  // limited TRANSCODE (how limited?...) [1]
         if (Stringlike_Has_Stub(v)) {
             if (Stub_Flavor(Cell_Strand(v)) == FLAVOR_SYMBOL)  // [2]
                 return rebValue(CANON(ENVELOP), rebQ(ARG(TYPE)), rebQ(v));
@@ -778,7 +778,7 @@ Result(Element*) Alias_Any_Utf8_As(
 ){
     assert(not Any_Word(v));  // not delegated
 
-    if (Any_String_Type(as)) {  // have to create a Flex if not stub [1]
+    if (Any_String_Heart(as)) {  // have to create a Flex if not stub [1]
         assert(not Any_String(v));  // not delegated by string generic
         if (Stringlike_Has_Stub(v)) {
             possibly(Is_Flex_Frozen(Cell_Strand(v)));
@@ -856,7 +856,7 @@ Result(Element*) Alias_Any_Utf8_As(
     }
 
     if (as == HEART_RUNE) {  // fits cell or freeze string
-        assert(as != HEART_WORD and not (Any_String_Type(as)));
+        assert(as != HEART_WORD and not (Any_String_Heart(as)));
 
         if (Stringlike_Has_Stub(v)) {
             const Strand *s = Cell_Strand(v);
@@ -890,14 +890,14 @@ Result(Element*) Alias_Any_Utf8_As(
         // have to validate the email or URL.  Build on top of logic in
         // the TO routine to do that, even though it copies the String.
         //
-        const Stable* datatype_as = Datatype_From_Type(as);
+        const Stable* datatype_as = Datatype_From_Heart(as);
         Api(Stable*) result = rebStable(CANON(TO), rebQ(datatype_as), rebQ(v));
         Copy_Cell(out, As_Element(result));
         rebRelease(result);
         return out;
     }
 
-    return fail (Error_Invalid_Type(as));
+    return fail (Error_Invalid_Type(unwrap Type_From_Heart(as)));
 }
 
 
