@@ -425,7 +425,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
             panic (Cell_Error(out));
 
         if (not Is_Trash(out))
-            panic (out);  // !!! MOLD is supposed to return trash
+            panic ("MOLD is supposed to return TRASH!");
 
         if (tildes)
             Append_Codepoint(mo->strand, '~');

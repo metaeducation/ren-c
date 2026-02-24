@@ -651,7 +651,7 @@ DECLARE_NATIVE(SET)
             return fail ("SET of GROUP! target without :GROUPS not allowed");
 
         require (
-          bool vanished = Recalculate_Group_Arg_Vanishes(LEVEL, SYM_SET)
+          bool vanished = Recalculate_Group_Arg_Vanishes(LEVEL, PARAM(TARGET))
         );
         if (vanished)
             return NULL_OUT;

@@ -695,7 +695,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     Stable* iterator;  // HANDLE! or NULLED (once initialized)
 
     Slot* slot;  // may come from evars iterator or found by index
-    Param* param;  // (same)
+    const Param* param;  // (same)
 
     if (STATE != ST_FRAME_FILLER_INITIAL_ENTRY)
         goto not_initial_entry;

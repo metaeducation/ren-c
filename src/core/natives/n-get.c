@@ -634,7 +634,7 @@ Result(Stable*) Get_Var(
 //    parameterization of GET or SET.  So long as a GROUP! didn't synthesize
 //    another GROUP!, we allow any other thing from that list.
 //
-Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
+Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, const Param* param)
 {
     INCLUDE_PARAMS_OF_GET;  // TARGET types must be compatible with SET
 
@@ -659,12 +659,6 @@ Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, SymId id)
 
     if (Is_Group(out))
         return fail ("GROUP! result from SET/GET of GROUP! target not legal");
-
-    const Value* action = Lib_Value(id);  // different TARGETS [1]
-    ParamList* paramlist = Phase_Paramlist(Frame_Phase(action));
-    const Slot* param = Known_Unspecialized(
-        Phase_Param(paramlist, PARAM_INDEX(TARGET))
-    );
 
     require (
       bool check = Typecheck_Coerce_Use_Toplevel(LEVEL, param, out)
@@ -732,7 +726,7 @@ DECLARE_NATIVE(GET)
             return fail ("GET of GROUP! target without :GROUPS not allowed");
 
         require (
-          bool vanished = Recalculate_Group_Arg_Vanishes(LEVEL, SYM_GET)
+          bool vanished = Recalculate_Group_Arg_Vanishes(LEVEL, PARAM(TARGET))
         );
         if (vanished)
             return NULL_OUT;

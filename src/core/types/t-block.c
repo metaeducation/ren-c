@@ -202,7 +202,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
             Level* param_level = Level_Of_Varlist_May_Panic(context);
 
             Phase* phase = Level_Phase(param_level);
-            Param* param;
+            const Param* param;
             if (CELL_VARARGS_SIGNED_PARAM_INDEX(arg) < 0)
                 param = Phase_Param(phase, - CELL_VARARGS_SIGNED_PARAM_INDEX(arg));
             else
@@ -1664,7 +1664,7 @@ DECLARE_NATIVE(GLOM)
         );
 
         ParamList* paramlist = Phase_Paramlist(Frame_Phase(LIB(GLOM)));
-        Param* param = Phase_Param(paramlist, PARAM_INDEX(ITEMS2));
+        const Param* param = Phase_Param(paramlist, PARAM_INDEX(ITEMS2));
 
         require (
           bool check = Typecheck_Coerce_Use_Toplevel(

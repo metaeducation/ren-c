@@ -230,7 +230,7 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
     Varlist_Key(Phase_Paramlist(a), (n))
 
 #define Phase_Param(a,n) \
-    cast(Param*, Varlist_Slot(Phase_Paramlist(a), (n)))
+    cast(const Param*, Varlist_Slot(Phase_Paramlist(a), (n)))
 
 #define Phase_Num_Params(a) \
     Varlist_Len(Phase_Paramlist(a))

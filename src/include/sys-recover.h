@@ -369,11 +369,11 @@ struct JumpStruct {
 //    or undecayable, and would create their own panic.  (Review if allowing
 //    that is a good idea, but it doesn't seem like it is.)
 //
-// 3. When the error reporting code receives a PARAMETER! Cell, it looks to
-//    see if that cell lives between the Params_Head and Params_Tail of the
-//    currently running Level.  If it does, then rather than reporting the
-//    PARAMETER! itself, it will report the argument that corresponds to
-//    that parameter's position in the function call.
+// 3. When the error reporting code receives a "bedrock" PARAMETER! (a.k.a.
+//    a "hole", it looks to see if it lives between the Params_Head and
+//    Params_Tail of the currently running Level.  If it does, then rather
+//    than reporting the "hole" itself, it will report the argument that
+//    corresponds to that parameter's position in the function call.
 //
 
 #if DEBUG_PRINTF_PANIC_LOCATIONS
@@ -392,7 +392,7 @@ struct JumpStruct {
             std::is_same<T, Error*>::value
             or std::is_same<T, const char*>::value
             or std::is_convertible<T, const Stable*>::value  // Stable [2]
-            or std::is_convertible<T, const Param*>::value,  // detected [3]
+            or std::is_same<T, const Param*>::value,  // detected [3]
             "Derive_Error_From_Pointer() on [Error* Stable* Param* char*]"
         );
         return Derive_Error_From_Pointer_Core(p);

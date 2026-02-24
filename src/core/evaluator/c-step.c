@@ -1328,7 +1328,7 @@ Bounce Stepper_Executor(Level* L)
     ){
         Copy_Plain_Cell(CURRENT, OUT);
 
-        Param* param = Phase_Param(details, 1);
+        const Param* param = Phase_Param(details, 1);
 
         switch (Parameter_Class(param)) {
           case PARAMCLASS_NORMAL:

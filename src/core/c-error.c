@@ -70,32 +70,39 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
         return cast(Error*, f); }
 
       case DETECTED_AS_CELL: {
-        const Stable* v = cast(Stable*, p);  // panic(Value*) prohibited [1]
+        if (not Is_Cell_A_Bedrock_Hole(cast(Cell*, p))) {  // PARAM() ok
+            const Stable* v = cast(Stable*, p);  // panic() takes Stable [1]
 
-        if (Is_Base_Root_Bit_Set(v)) {  // API handles must be errors [2]
-            Error* error;
-            if (Is_Error(v)) {
-                error = Cell_Error(v);
+            if (Is_Base_Root_Bit_Set(v)) {  // API handles must be errors [2]
+                Error* error;
+                if (Type_Of(v) == TYPE_ERROR) {
+                    error = Cell_Error(v);
+                }
+                else {
+                    assert(!"panic() given API handle that is not an ERROR!");
+                    error = Error_Bad_Value(v);
+                }
+                rebRelease(m_cast(Stable*, v));  // released even if we didn't
+                return error;
             }
-            else {
-                assert(!"panic() given API handle that is not an ERROR!");
-                error = Error_Bad_Value(v);
-            }
-            rebRelease(m_cast(Stable*, v));  // released even if we didn't
-            return error;
+
+            return Error_Bad_Value(v);
         }
 
-        if (not Is_Action_Level(TOP_LEVEL))
-            return Error_Bad_Value(v);
+        if (not Is_Action_Level(TOP_LEVEL)) {
+            assert(false);
+            return Error_User("panic() given PARAM() when not in a native");
+        }
 
+        const Param* param = cast(Param*, p);
         const Param* head = Phase_Params_Head(Level_Phase(TOP_LEVEL));
         REBLEN num_params = Phase_Num_Params(Level_Phase(TOP_LEVEL));
 
-        if (v >= head and v < head + num_params) {  // PARAM() error [3]
-            const Param* param = cast(const Param*, v);
+        if (param >= head and param < head + num_params)  // PARAM() [3]
             return Error_Invalid_Arg(TOP_LEVEL, param);
-        }
-        return Error_Bad_Value(v); }
+
+        assert(false);
+        return Error_User("panic() given PARAM() not in its ParamList"); }
 
       default:
         break;
@@ -954,7 +961,7 @@ Error* Error_Bad_Intrinsic_Arg_1(Level* const L)
     Details* details = Level_Intrinsic_Details(L);
     Option(const Symbol*) label = Level_Intrinsic_Label(L);
 
-    Param* param = Phase_Param(details, 1);
+    const Param* param = Phase_Param(details, 1);
     assert(Not_Specialized(param));
     UNUSED(param);
 
