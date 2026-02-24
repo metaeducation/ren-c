@@ -79,6 +79,25 @@ DECLARE_NATIVE(OKAY_Q)
 
 
 //
+//  /logic?: pure native:intrinsic [
+//
+//  "Tells you if the argument is a LOGIC! antiform (antiform WORD!)"
+//
+//      return: [logic!]
+//      value '[any-stable?]
+//  ]
+//
+DECLARE_NATIVE(LOGIC_Q)
+{
+    INCLUDE_PARAMS_OF_LOGIC_Q;
+
+    Stable* v = ARG(VALUE);
+
+    return LOGIC_OUT(Is_Logic_Type(Type_Of(v)));
+}
+
+
+//
 //  /int-to-logic: native [
 //
 //  "Produces ~null~ antiform for 0, or ~okay~ antiform for all other integers"

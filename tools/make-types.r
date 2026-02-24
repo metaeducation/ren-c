@@ -263,7 +263,9 @@ e-types/emit [--[
      * logic prevents it. Using a pointer cast is the most common 'silent' fix
      * for this issue."
      */
-    extern uint_fast32_t const g_sparse_memberships[MAX_TYPEBYTE + 1];
+    extern uint_fast32_t const g_sparse_memberships[
+        i_cast(TypeByte, MAX_TYPE_ANTIFORM) + 1
+    ];
 
     #define Sparse_Memberships(t) \
         g_sparse_memberships[ii_cast(Byte, known(Option(Type), (t)))]
@@ -279,6 +281,9 @@ e-types/emit [--[
      * fast, it doesn't canonize the quoted states to a single state...you
      * need to use functions like Is_Quoted_Type(t).  Hence there is no
      * single TYPE_QUOTED.
+     *
+     * (As another optimization, there's no TYPE_LOGIC but it's split into
+     * a TYPE_LOGIC_NULL and TYPE_LOGIC_OKAY type byte.)
      *
      * But for non-quoted types, this is really only a single byte check!!
      *
@@ -367,19 +372,20 @@ for-each 't datatype-objects [
 
     let proper-name: propercase-of t.antiname
 
-    ; Note: Readable_Cell() not defined yet at this point, so defined as
-    ; a macro vs. an inline function.  Revisit.
-    ;
-    e-types/emit [t proper-name qualifier --[
-        #define Is_$<Proper-Name>(v) \
-            (Type_Of$<Opt Qualifier>(v) == TYPE_$<T.ANTINAME>)
-
+    e-types/emit [t proper-name --[
         #define Is_Lifted_$<Proper-Name>(v) \
             Cell_Has_Lift_Heart_No_Sigil(Known_Stable(v), \
                 TYPE_QUASIFORM, HEART_$<T.NAME>)
 
         #define Is_Quasi_$<Propercase-Of T.Name>(v) \
             Is_Lifted_$<Proper-Name>(v)  /* alternative */
+    ]--]
+
+    if t.antiname = "logic" [continue]  ; skip Is_Logic() (special handling)
+
+    e-types/emit [t proper-name qualifier --[
+        #define Is_$<Proper-Name>(v) \
+            (Type_Of$<Opt Qualifier>(v) == TYPE_$<T.ANTINAME>)
     ]--]
 
     if yes? t.unstable [continue]
@@ -619,69 +625,83 @@ first-antiform-index: index
 
 antiheart-aliases: copy []
 
-max-type: ~
 
-do-anti-appends: proc [
-    name [text! word!]
-    antiname [text! word!]
-    antidescription [text!]
-][
-    e-typeset-bytes/emit [antiname "${antiname} $<index>"]
-
-    append typedefines cscape [antiname
-        --[#define TYPE_${ANTINAME}  TypeEnum::ENUM_${ANTINAME}]--
-    ]
-
-    append antiforms cscape [antiname
-        --[${ANTINAME} = $<index>]--
-    ]
-    max-type: cscape [antiname
-        --[TYPE_${ANTINAME}]--  ; overwritten until max found
-    ]
-
-    append antiheart-aliases cscape [name antiname
-        --[#define HEART_${NAME}_SIGNIFYING_${ANTINAME}  HEART_${NAME}]--
-    ]
-
-    append sparse-memberships cscape [antiname
-        --[/* $<index> - $<antiname> */  (0)]--
-    ]
-
-    e-typespecs/emit [antiname antidescription -[
-        $<antiname> $<mold antidescription>
-    ]-]
-
-    append typeset-flags cscape [antiname --[
-        /* $<index> - ${antiname} */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE($<index>) | FLAG_FOURTH_BYTE($<index>)
-    ]--]
-
-    index: me + 1
-]
-
-
-=== "ANTIFORMS (STABLE FIRST, THEN UNSTABLE)" ===
+=== "ANTIFORMS (LOGIC VARIANTS, OTHER STABLES, THEN UNSTABLE)" ===
 
 ; We want the stable antiforms to come first, this way we can byte check for
 ; instability by just asking if the value is greater than the minimum unstable
+;
+; Checking for LOGIC! NULL fast with a single byte check is worth splitting
+; logic into two bytes.
 
-min-antiform: ~
+min-antiform: "logic-null"
+
+e-typeset-bytes/emit ["logic $<index>"]
+do-appends // [
+    $antiforms
+    "logic-null"
+    "either ~okay~, or ~null~ (the only 'falsey' state)"  ; get from types.r
+    sparse: []
+    ranged: reduce [
+        "TYPESET_FLAG_0_RANGE"
+        unspaced ["FLAG_THIRD_BYTE(TYPE_LOGIC_NULL)"]
+        unspaced ["FLAG_FOURTH_BYTE(TYPE_LOGIC_OKAY)"]
+    ]
+]
+
+e-typeset-bytes/emit ["~ $<index>"]
+do-appends // [
+    $antiforms
+    "logic-okay"
+    "<internal>"
+    sparse: []
+]
+
+append antiheart-aliases cscape [name antiname
+    --[#define HEART_WORD_SIGNIFYING_LOGIC  HEART_WORD]--
+]
+
+
 max-stable: ~
 max-antiform: ~  ; overwritten each time
 
 for-each 't datatype-objects [
     if not t.antiname [continue]
     if t.unstable = 'yes [continue]  ; do stable antiforms first
-    min-antiform: default [t.antiname]
+
+    if t.antiname = "logic" [  ; split in two above
+        assert [t.name = "word"]
+        assert [t.unstable = 'no]
+        continue
+    ]
+    assert [t.antiname <> 'logic]  ; string not word
+
     max-stable: t.antiname
-    do-anti-appends t.name t.antiname t.antidescription
+
+    e-typeset-bytes/emit [t "${t.antiname} $<index>"]
+
+    append antiheart-aliases cscape [t
+        --[#define HEART_${T.NAME}_SIGNIFYING_${T.ANTINAME}  HEART_${T.NAME}]--
+    ]
+
+    do-appends // [$antiforms t.antiname t.antidescription sparse: []]
 ]
 
 for-each 't datatype-objects [
     if not t.antiname [continue]
     if t.unstable = 'no [continue]  ; now unstable ones
+
+    assert [t.antiname <> "logic"]  ; not unstable
+
     max-antiform: t.antiname
-    do-anti-appends t.name t.antiname t.antidescription
+
+    e-typeset-bytes/emit [t "${t.antiname} $<index>"]
+
+    append antiheart-aliases cscape [t
+        --[#define HEART_${T.NAME}_SIGNIFYING_${T.ANTINAME}  HEART_${T.NAME}]--
+    ]
+
+    do-appends // [$antiforms t.antiname t.antidescription sparse: []]
 ]
 
 === "RANGE CHECKS" ===
@@ -781,7 +801,9 @@ e-typesets/emit [--[
      * to 31 of those TYPESET_FLAG_XXX flags in this model (avoids dependency
      * on 64-bit integers, which we are attempting to excise from the system).
      */
-    uint_fast32_t const g_sparse_memberships[MAX_TYPEBYTE + 1] = {
+    uint_fast32_t const g_sparse_memberships[
+        i_cast(TypeByte, MAX_TYPE_ANTIFORM) + 1
+    ] = {
         /* 0 - <ExtraHeart> */  0,
         $(Sparse-Memberships),
     };
@@ -902,30 +924,28 @@ e-hearts/emit [rebs --[
         #define BEDROCK_255  TypeEnum::ENUM_255
     #endif
 
-    STATIC_ASSERT(i_cast(int, $<MAX-TYPE>) <= 256);  /* Stored in bytes */
-
     STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_64_TIMES_QUASI) == 192);
     #define LIFT_192  TYPE_QUOTED_64_TIMES_QUASI
 
-    #define MAX_TYPE_FUNDAMENTAL  TYPE_$<MAX-HEART>  /* same as max heart */
-    #define MAX_TYPE_ELEMENT  TYPE_$<MAX-ELEMENT>
+    #define MAX_TYPE_FUNDAMENTAL  TYPE_${MAX-HEART}  /* same as max heart */
+    #define MAX_TYPE_ELEMENT  TYPE_${MAX-ELEMENT}
 
     STATIC_ASSERT(i_cast(Byte, TYPE_METAFORM) == 1);
     STATIC_ASSERT(i_cast(Byte, TYPE_PINNED) == 2);
     STATIC_ASSERT(i_cast(Byte, TYPE_TIED) == 3);
 
-    #define MIN_TYPE_HEART  TYPE_$<MIN-HEART>
-    #define MAX_TYPE_HEART  TYPE_$<MAX-HEART>
+    #define MIN_TYPE_HEART  TYPE_${MIN-HEART}
+    #define MAX_TYPE_HEART  TYPE_${MAX-HEART}
     STATIC_ASSERT(i_cast(Byte, MIN_TYPE_HEART) == 4);
     STATIC_ASSERT(i_cast(Byte, MAX_TYPE_HEART) < 64);
 
     STATIC_ASSERT(i_cast(Byte, TYPE_QUASIFORM) == 64);
 
-    #define MIN_TYPE_ANTIFORM  TYPE_$<MIN-ANTIFORM>
-    #define MAX_TYPE_STABLE  TYPE_$<MAX-STABLE>
-    #define MAX_TYPE_ANTIFORM  TYPE_$<MAX-ANTIFORM>
+    #define MIN_TYPE_ANTIFORM  TYPE_${MIN-ANTIFORM}
+    #define MAX_TYPE_STABLE  TYPE_${MAX-STABLE}
+    #define MAX_TYPE_ANTIFORM  TYPE_${MAX-ANTIFORM}
 
-    #define MAX_TYPEBYTE  i_cast(TypeByte, $<MAX-TYPE>)
+    STATIC_ASSERT(i_cast(int, MAX_TYPE_ANTIFORM) < 256);  /* stored in byte */
 
     /*
      * ANTIFORM HEART ALIASES

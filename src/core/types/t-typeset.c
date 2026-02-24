@@ -68,6 +68,14 @@ void Startup_Type_Predicates(void)
         ){
             continue;  // lib value is QUOTED?, it's a native
         }
+        else if (
+            typeset_byte
+            == i_cast(TypeByte, TYPE_LOGIC_NULL)
+        ){
+            continue;  // lib value is LOGIC?, it's a native
+        }
+        else if (Is_Logic_Type(i_cast(Type, typeset_byte)))
+            continue;  // okay slot not used
         else if (Is_Quoted_Type(i_cast(Type, typeset_byte)))
             continue;  // range will be used for other optimizations
 

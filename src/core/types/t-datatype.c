@@ -58,9 +58,13 @@ void Startup_Datatypes(void)
 
         if (id == SYM_QUOTED_X) {
             assert(type == TYPE_QUOTED_1_TIME_NONQUASI);
-            // make patch for now to be the "quoted!" datatype`
+            // make patch for now to be the "quoted!" datatype
         }
-        else if (Is_Quoted_Type(type))
+        else if (id == SYM_LOGIC_X) {
+            assert(type == TYPE_LOGIC_NULL);
+            // make patch for now to be the "logic!" datatype
+        }
+        else if (Is_Quoted_Type(type) or Is_Logic_Type(type))
             continue;  // bunch of unused symbols (close this gap)
 
         Patch* patch = &g_datatype_patches[i_cast(Byte, type)];

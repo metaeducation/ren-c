@@ -824,7 +824,7 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 #endif
 
 
-//=//// VALUE TYPE (always TYPE_XXX <= MAX_TYPEBYTE) //////////////////////=//
+//=//// VALUE TYPE (always TYPE_XXX <= TYPE_MAX_ANTIFORM) /////////////////=//
 //
 // When asking about a value's "type", you want to see something like a
 // double-quoted WORD! as a QUOTED! value...though it's a WORD! underneath.
@@ -859,15 +859,37 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
         // we do not canonize the quoted range into "TYPE_QUOTED"
     }
     else switch (Type_Of_Raw(v)) {  // still working on these...
+      case TYPE_LOGIC_NULL:
+      case TYPE_LOGIC_OKAY:
+        assert(HEARTSIGIL_BYTE_RAW(v) == i_cast(TypeByte, TYPE_WORD));
+        break;
+
       case TYPE_PACK:
+        assert(HEARTSIGIL_BYTE_RAW(v) == i_cast(TypeByte, TYPE_GROUP));
+        break;
+
       case TYPE_FAILURE:
+        assert(HEARTSIGIL_BYTE_RAW(v) == i_cast(TypeByte, TYPE_ERROR));
+        break;
+
       case TYPE_ACTION:
+        assert(HEARTSIGIL_BYTE_RAW(v) == i_cast(TypeByte, TYPE_FRAME));
+        break;
+
       case TYPE_TRASH:
+        assert(HEARTSIGIL_BYTE_RAW(v) == i_cast(TypeByte, TYPE_TAG));
+        break;
+
       case TYPE_VOID:
+        assert(HEARTSIGIL_BYTE_RAW(v) == i_cast(TypeByte, TYPE_BLANK));
+        break;
+
       case TYPE_SPLICE:
+        assert(HEARTSIGIL_BYTE_RAW(v) == i_cast(TypeByte, TYPE_BLOCK));
+        break;
+
       case TYPE_DATATYPE:
-      case TYPE_LOGIC:
-        assert(HEARTSIGIL_BYTE_RAW(v) <= i_cast(TypeByte, MAX_TYPE_HEART));
+        assert(HEARTSIGIL_BYTE_RAW(v) == i_cast(TypeByte, TYPE_FENCE));
         break;
 
       default:

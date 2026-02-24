@@ -132,7 +132,7 @@ void Push_Redo_Action_Level(Value* out, Level* L1, const Value* run)
             Init_Pushed_Refinement(PUSH(), Key_Symbol(e.key));
 
             if (Is_Parameter_Unconstrained(e.param)) {
-                assert(Is_Okay(Slot_Hack(e.slot)));  // used but argless refine
+                assert(Is_Okay(Stable_Slot_Hack(e.slot)));  // used but argless
                 continue;
             }
         }

@@ -64,8 +64,6 @@ DECLARE_NATIVE(TYPECHECKER_ARCHETYPE)
     Option(Type) type = Type_Of(v);
 
     if (Is_Null(v)) {  // stop casual use of (integer? var) when null
-        if (type == TYPE_LOGIC)
-            return LOGIC_OUT(true);
         return fail (Error_Type_Test_Null_Raw());  // !!! Review: dumb idea?
     }
 

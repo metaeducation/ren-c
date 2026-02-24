@@ -89,7 +89,7 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
     Element* location_arg;
     Stable* picker_arg;
-    Element* dual_arg;
+    Stable* dual_arg;  // null indicates it's a pick
 
   adjust_antiform_pick_if_needed: {
 
@@ -133,7 +133,6 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     );
 
     dual_arg = Init_Null_Signifying_Tweak_Is_Pick(Erase_ARG(DUAL));
-    USED(dual_arg);
 
 }} erase_parent_spare_now_that_we_are_done_extracting_it: {
 
@@ -183,7 +182,7 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     assert(sub == TOP_LEVEL);
     unnecessary(Drop_Action(sub));  // !! action is dropped, should it be?
 
-    if (Is_Null_Signifying_Slot_Unavailable(Level_Spare(parent)))
+    if (Is_Null_Signifying_Slot_Unavailable(As_Stable(Level_Spare(parent))))
         goto return_without_unbinding;
 
     Dual* dual_spare = As_Dual(Level_Spare(parent));
@@ -653,8 +652,7 @@ Option(Error*) Tweak_Stack_Steps_With_Dual_Scratch_To_Dual_Spare(void)
     assert(Not_Cell_Readable(SPARE));
   #endif
 
-    assert(Is_Cell_Stable(SCRATCH));
-    bool tweak_is_pick = Is_Null_Signifying_Tweak_Is_Pick(SCRATCH);
+    bool tweak_is_pick = Is_Null_Signifying_Tweak_Is_Pick(As_Stable(SCRATCH));
 
     Sink(Stable) spare_location_dual = SPARE;
 

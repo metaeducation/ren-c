@@ -274,22 +274,7 @@ INLINE bool Have_Matching_Lift_Levels(const Stable* a, const Stable* b) {
         Assert_Cell_Readable(v);
         assert(Type_Of_Raw(v) != BEDROCK_255);
 
-        bool stable = (Type_Of_Raw(v) <= MAX_TYPE_STABLE);
-
-      #if RUNTIME_CHECKS
-        if (stable)
-            assert(
-                Not_Antiform(v)
-                or Is_Stable_Antiform_Heart(Heart_Of_Unsigiled_Isotopic(v))
-            );
-        else
-            assert(
-                Is_Antiform(v)
-                and Not_Stable_Antiform_Heart(Heart_Of_Unsigiled_Isotopic(v))
-            );
-      #endif
-
-        return stable;
+        return Type_Of_Raw(v) <= MAX_TYPE_STABLE;
     }
 
     #define Is_Cell_Stable(v) \

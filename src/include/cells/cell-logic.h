@@ -88,24 +88,15 @@
 
 //=//// LOGIC INITIALIZATION AND EXTRACTION //////////////////////////////=//
 //
-// Null testing is done often enough that it's worth being able to do that
-// test only via masking the header bits of a cell, without having to look
-// at the underlying Symbol ID to confirm it is SYM_NULL or SYM_OKAY.  So
-// we use a dedicated header flag applicable to LOGIC! cells.
+// Null testing is done often enough that it's worth splitting the TYPE_BYTE
+// used for LOGIC! into two separate values, one for the "okay" state and
+// one for the "null" state.
 //
-// 1. This creates a bit of potential for mistakes when constructing LOGIC!
-//    cells, as you can't just change the TYPE_BYTE() of a WORD!.  But this
-//    is true of all antiforms--this is why producing quasiforms and antiforms
-//    are forced through chokepoints like Coerce_To_Antiform().
-//
-
-#define CELL_FLAG_LOGIC_IS_OKAY  CELL_FLAG_TYPE_SPECIFIC_A  // [1]
 
 INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
     return Init_Word_Untracked(
         out,
-        FLAG_TYPE(TYPE_LOGIC)
-            | (logic ? CELL_FLAG_LOGIC_IS_OKAY : 0),
+        FLAG_TYPE(logic ? TYPE_LOGIC_OKAY : TYPE_LOGIC_NULL),
         logic ? CANON(OKAY) : CANON(NULL)
     );
 }
@@ -113,11 +104,8 @@ INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
 #define Init_Logic(out,flag) \
     TRACK(Init_Logic_Untracked((out), (flag)))
 
-#define Init_Null(out) /* name helps avoid confusion [B] */ \
-    TRACK(Init_Word_Untracked( \
-        Possibly_Antiform(out), \
-        FLAG_TYPE(TYPE_LOGIC) | (not CELL_FLAG_LOGIC_IS_OKAY),  \
-        CANON(NULL)))
+#define Init_Null(out) \
+    TRACK(Init_Logic_Untracked((out), false))
 
 #define Init_Lifted_Null(out) \
     Init_Quasi_Word((out), CANON(NULL))
@@ -127,11 +115,7 @@ INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
 
 
 #define Init_Okay(out) \
-    TRACK(Init_Word_Untracked( \
-        Possibly_Antiform(out), \
-        FLAG_TYPE(TYPE_LOGIC) \
-            | CELL_FLAG_LOGIC_IS_OKAY,  \
-        CANON(OKAY)))
+    TRACK(Init_Logic_Untracked((out), true))
 
 
 //=//// LOGIC EXTRACTION //////////////////////////////////////////////////=//
@@ -140,8 +124,10 @@ INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
 //
 
 INLINE bool Cell_Logic_Core(const Stable* v) {
-    assert(Is_Logic(v));
-    return Get_Cell_Flag(v, LOGIC_IS_OKAY);
+    if (Type_Of(v) == TYPE_LOGIC_OKAY)
+        return true;
+    assert(Type_Of(v) == TYPE_LOGIC_NULL);
+    return false;
 }
 
 #define Cell_Logic(v) \
@@ -150,12 +136,7 @@ INLINE bool Cell_Logic_Core(const Stable* v) {
 
 //=//// LIGHT NULLS (WORD! antiform of NULL) //////////////////////////////=//
 //
-// 1. Beyond having a special header-only test for nulls, we can also do it
-//    without even an inline function call.  (Debug builds tend not to inline
-//    functions aggressively.)  However, the Readable_Cell() adds overhead
-//    in many checked builds...all the more reasons to not add another call!
-//
-// 2. If you are uninitiated to the codebase, you might think `Is_Null(v)`
+// 1. If you are uninitiated to the codebase, you might think `Is_Null(v)`
 //    was defined as `(v == nullptr)`.  `Is_Nulled()` was used as the name for
 //    this macro for many years.  But as antiform WORD! ~null~ cells never
 //    make it into API handles and nullptr is how they are experienced...this
@@ -168,18 +149,10 @@ INLINE bool Cell_Logic_Core(const Stable* v) {
 //
 
 #define Is_Light_Null(v) /* test allowed on potentially unstable values */ \
-    ((Readable_Cell(Possibly_Unstable(v))->header.bits & ( \
-        CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
-    )) == ( \
-        FLAG_TYPE(TYPE_LOGIC) | FLAG_HEART(HEART_WORD) \
-            | (not CELL_FLAG_LOGIC_IS_OKAY)))
+    (Type_Of_Possibly_Unstable(v) == TYPE_LOGIC_NULL)
 
-#define Is_Null(v) /* test for stable values, don't confuse w/nullptr [2] */ \
-    ((Readable_Cell(Possibly_Antiform(v))->header.bits & ( \
-        CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
-    )) == ( \
-        FLAG_TYPE(TYPE_LOGIC) | FLAG_HEART(HEART_WORD) \
-            | (not CELL_FLAG_LOGIC_IS_OKAY)))
+#define Is_Null(v) /* test for stable values, don't confuse w/nullptr [1] */ \
+    (Type_Of(v) == TYPE_LOGIC_NULL)
 
 
 INLINE bool Is_Lifted_Null(const Value* v) {
@@ -235,20 +208,10 @@ INLINE bool Is_Lifted_Null(const Value* v) {
 //
 
 #define Is_Possibly_Unstable_Value_Okay(v) \
-    ((Readable_Cell(Possibly_Unstable(v))->header.bits & ( \
-        CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
-    )) == ( \
-        FLAG_TYPE(TYPE_LOGIC) \
-            | FLAG_HEART(HEART_WORD_SIGNIFYING_LOGIC) \
-            | CELL_FLAG_LOGIC_IS_OKAY))
+    (Type_Of_Possibly_Unstable(v) == TYPE_LOGIC_OKAY)
 
 #define Is_Okay(v) \
-    ((Readable_Cell(Possibly_Antiform(v))->header.bits & ( \
-        CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
-    )) == ( \
-        FLAG_TYPE(TYPE_LOGIC) \
-            | FLAG_HEART(HEART_WORD_SIGNIFYING_LOGIC) \
-            | CELL_FLAG_LOGIC_IS_OKAY))
+    (Type_Of(v) == TYPE_LOGIC_OKAY)
 
 
 //=//// CONDITIONAL "TRUTHINESS" and "FALSEYNESS" /////////////////////////=//
@@ -265,7 +228,7 @@ INLINE bool Is_Lifted_Null(const Value* v) {
 // legal on all stable states.
 //
 #define Logical_Test(v) \
-    (not Is_Null(Known_Stable(v)))
+    (not Is_Null(v))
 
 
 //=//// "HEAVY NULLS" (BLOCK! Antiform Pack with `~null~` in it) //////////=//

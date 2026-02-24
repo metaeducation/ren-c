@@ -176,7 +176,7 @@ typedef enum {
     ST_STEPPER_INITIAL_ENTRY = STATE_0,
 
 
-  //=//// STEPPER STATES BELOW MAX_TYPEBYTE RESERVED FOR DATATYPE /////////=//
+  //=//// STEPPER STATES RESERVED FOR DATATYPE ////////////////////////////=//
 
     // The stepper uses TYPE_XXX types of the current cell being processed
     // for the STATE byte in those cases.  This is helpful for knowing what

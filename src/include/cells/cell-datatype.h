@@ -223,6 +223,8 @@ INLINE bool Have_Same_Type(const Stable* a, const Stable* b) {
         );
     if (Is_Quoted_Type(ta) and Is_Quoted_Type(tb))
         return true;  // all quoted types are same type, regardless of heart
+    if (Is_Logic_Type(ta) and Is_Logic_Type(tb))
+        return true;  // all logic types are same type, regardless of heart
     return (i_cast(TypeByte, ta) == i_cast(TypeByte, tb));
 }
 

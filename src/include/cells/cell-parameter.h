@@ -511,8 +511,7 @@ INLINE const Slot* Known_Unspecialized(const Param* p) {
 #define Blit_Null_Typechecked(out) \
     TRACK(Blit_Word_Untracked( \
         (out), \
-        FLAG_TYPE(TYPE_LOGIC) \
-            | (not CELL_FLAG_LOGIC_IS_OKAY) \
+        FLAG_TYPE(TYPE_LOGIC_NULL) \
             | CELL_FLAG_PARAM_NOTE_TYPECHECKED, \
         CANON(NULL) \
     ))
@@ -520,8 +519,7 @@ INLINE const Slot* Known_Unspecialized(const Param* p) {
 #define Blit_Okay_Typechecked(out) \
     TRACK(Blit_Word_Untracked( \
         (out), \
-        FLAG_TYPE(TYPE_LOGIC) \
-            | CELL_FLAG_LOGIC_IS_OKAY \
+        FLAG_TYPE(TYPE_LOGIC_OKAY) \
             | CELL_FLAG_PARAM_NOTE_TYPECHECKED, \
         CANON(OKAY) \
     ))

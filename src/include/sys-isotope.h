@@ -69,17 +69,14 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
 
 } coerce_to_antiform: {
 
-  // 1. This is one of the rare functions allowed to use TYPE_BYTE_RAW(), and
-  //    you can see why the TYPE_BYTE() safety is important to most code!
-  //
-  // 2. Antiforms can't be bound.  Though SPLICE! or PACK! can have bindings
+  // 1. Antiforms can't be bound.  Though SPLICE! or PACK! can have bindings
   //    on the *elements*, the containing list is not allowed to be bound.
   //
   //    (If antiforms did have meaningful bindings, that would imply binding
   //    functions would need to accept them as parameters.  That leads to a
   //    mess--trying to handle unstable pack antiforms via meta-parameters.)
   //
-  // 3. All WORD!s are allowed to have quasiforms, but only NULL and OKAY are
+  // 2. All WORD!s are allowed to have quasiforms, but only NULL and OKAY are
   //    allowed to be antiforms.  Reserving others for future use had only
   //    nebulous benefit and created uncertainty, while having just those two
   //    states provides a solid LOGIC! type (vs. type constraint).
@@ -91,17 +88,17 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         if (Frame_Lens(elem))
             Tweak_Frame_Lens_Or_Label(elem, ANONYMOUS);  // show only inputs
         Force_Phase_Final(Frame_Phase(elem));
-        TYPE_BYTE(v) = TYPE_ACTION;  // [1]
+        TYPE_BYTE(v) = TYPE_ACTION;
         break; }
 
       case HEART_BLOCK_SIGNIFYING_SPLICE: {
-        Tweak_Cell_Binding(elem, UNBOUND);  // [2]
-        TYPE_BYTE(v) = TYPE_SPLICE;  // [1]
+        Tweak_Cell_Binding(elem, UNBOUND);  // [1]
+        TYPE_BYTE(v) = TYPE_SPLICE;
         break; }
 
       case HEART_GROUP_SIGNIFYING_PACK: {
-        Tweak_Cell_Binding(elem, UNBOUND);  // [2]
-        TYPE_BYTE(v) = TYPE_PACK;  // [1]
+        Tweak_Cell_Binding(elem, UNBOUND);  // [1]
+        TYPE_BYTE(v) = TYPE_PACK;
         break; }
 
       case HEART_FENCE_SIGNIFYING_DATATYPE: {
@@ -119,39 +116,36 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         }
         v->payload = Stub_Cell(unwrap patch)->payload;
         v->extra = Stub_Cell(unwrap patch)->extra;
-        TYPE_BYTE(v) = TYPE_DATATYPE;  // [1]
+        TYPE_BYTE(v) = TYPE_DATATYPE;
         break; }
 
       case HEART_WORD_SIGNIFYING_LOGIC: {
-        elem->header.bits &= ~(
-            CELL_FLAG_TYPE_SPECIFIC_A | CELL_FLAG_TYPE_SPECIFIC_B
-        );
+        Unbind_Any_Word(elem);  // [1]
         switch (opt Word_Id(elem)) {
           case SYM_OKAY:
-            Set_Cell_Flag(elem, LOGIC_IS_OKAY);
+            TYPE_BYTE(v) = TYPE_LOGIC_OKAY;
             break;
 
           case SYM_NULL:
+            TYPE_BYTE(v) = TYPE_LOGIC_NULL;
             break;
 
           default:
-            return fail (Error_Illegal_Anti_Word_Raw(elem));  // limited [3]
+            return fail (Error_Illegal_Anti_Word_Raw(elem));  // limited [2]
         }
-        Unbind_Any_Word(elem);  // antiforms can't be bound [2]
-        TYPE_BYTE(v) = TYPE_LOGIC;  // raw [1]
         break; }
 
       case HEART_TAG_SIGNIFYING_TRASH:
         Freeze_Flex(Cell_Strand(v));  // !!! intern if WORD-like! ?
-        TYPE_BYTE(v) = TYPE_TRASH;  // raw [1]
+        TYPE_BYTE(v) = TYPE_TRASH;
         break;
 
       case HEART_BLANK_SIGNIFYING_VOID:
-        TYPE_BYTE(v) = TYPE_VOID;  // raw [1]
+        TYPE_BYTE(v) = TYPE_VOID;
         break;
 
       case HEART_ERROR_SIGNIFYING_FAILURE:
-        TYPE_BYTE(v) = TYPE_FAILURE;  // raw [1]
+        TYPE_BYTE(v) = TYPE_FAILURE;
         break;
 
       default:

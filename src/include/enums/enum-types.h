@@ -122,6 +122,8 @@ typedef Byte HeartByte;  // value is >= MIN_TYPE_HEART, <= MAX_TYPE_HEART
     // so it's better to disable the comparison and have an Is_Quoted_Type()
     // function as well as a Same_Types() if you want the expensive check.
     //
+    // (LOGIC! is also not canonized, but split into OKAY and NULL states)
+    //
     // Note: if we actually delete the operators, that will consider them as
     // candidates in overloads and create conflicts with working comparisons.
     // So just mentioning it here in a comment.
@@ -185,12 +187,23 @@ typedef Byte HeartByte;  // value is >= MIN_TYPE_HEART, <= MAX_TYPE_HEART
 
 
 INLINE bool Is_Quoted_Type(Option(Type) type) {
-    if ((opt type) <= MAX_TYPE_NOQUOTE_QUASI_OK)
+    if (ii_cast(TypeEnum, type) <= MAX_TYPE_NOQUOTE_QUASI_OK)
         return false;
-    if ((opt type) > MAX_TYPE_ELEMENT)
+    if (ii_cast(TypeEnum, type) > MAX_TYPE_ELEMENT)
         return false;
     return true;
 }
+
+INLINE bool Is_Logic_Type(Option(Type) type) {
+    return (
+        ii_cast(TypeEnum, type) == TYPE_LOGIC_NULL
+        or ii_cast(TypeEnum, type) == TYPE_LOGIC_OKAY
+    );
+}
+
+#define Is_Logic(v) \
+    Is_Logic_Type(Type_Of(v))
+
 
 //=//// CUSTOM DATATYPE HEART (0) /////////////////////////////////////////=//
 //

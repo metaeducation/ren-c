@@ -369,8 +369,8 @@ INLINE bool Is_Bedrock_Dual_An_Accessor(const Dual* dual) {
 #define Init_Null_Signifying_Slot_Unavailable(cell)  Init_Null(cell)
 #define Is_Null_Signifying_Slot_Unavailable(cell)  Is_Null(cell)
 
-#define Init_Null_Signifying_Tweak_Is_Pick(dual)  Init_Null(dual)
-#define Is_Null_Signifying_Tweak_Is_Pick(dual)  Is_Null(dual)
+#define Init_Null_Signifying_Tweak_Is_Pick(cell)  Init_Null(cell)
+#define Is_Null_Signifying_Tweak_Is_Pick(cell)  Is_Null(cell)
 
 #define OUT_UNLIFTED_DUAL_INDIRECT_PICK \
     (assert(not Any_Lifted(OUT)), x_cast(Bounce, OUT))  // e.g. ALIAS, GETTER
