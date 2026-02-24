@@ -857,10 +857,7 @@ Details* Make_Dispatch_Details(
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     Option(Ordinal) details_max  // 1-based max index desired for Phase_Details
 ){
-    assert(
-        LIFT_BYTE(exemplar) == As_Lift(TYPE_FRAME)
-        or LIFT_BYTE(exemplar) == TYPE_ACTION
-    );
+    assert(Is_Possibly_Unstable_Value_Frame(exemplar) or Is_Action(exemplar));
 
   check_flags: {
 

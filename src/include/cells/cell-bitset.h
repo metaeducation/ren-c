@@ -66,7 +66,7 @@ INLINE Binary* VAL_BITSET(const Cell* v) {
 INLINE Element* Init_Bitset(Init(Element) out, Binary* bset) {
     Assert_Stub_Managed(bset);
 
-    Reset_Cell_Header_Noquote(out, CELL_MASK_BITSET);
+    Reset_Cell_Header(out, CELL_MASK_BITSET);
     Corrupt_Unused_Field(out->extra.corrupt);
     CELL_BITSET_BINARY(out) = bset;
     Corrupt_Unused_Field(out->payload.split.two.corrupt);

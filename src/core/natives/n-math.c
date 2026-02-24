@@ -185,7 +185,7 @@ DECLARE_NATIVE(MULTIPLY)
     Element* e2 = Element_ARG(VALUE2);
 
     if (
-        not Heart_Of_Is_0(e1)  // left is not an extension type v-- see [1]
+        not Heart_Of(e1)  // left is not an extension type v-- see [1]
         and i_cast(HeartByte, Heart_Of(e1)) < i_cast(HeartByte, Heart_Of(e2))
     ){
         Element* spare = Move_Cell(SPARE, e2);

@@ -598,6 +598,8 @@ void Needful_Panic_Abruptly(const char* error) {
 #define needful_lenient_exactly(T,expr)      (expr)
 #define needful_rigid_exactly(T,expr)        (expr)
 
+#define needful_known_literal(T,expr)        (expr)
+
 
 /****[[ ENABLEABLE: Argument Type Subsetting ]]*******************************
 */
@@ -1151,6 +1153,8 @@ void Needful_Panic_Abruptly(const char* error) {
     #define lenient_exactly /* (T,expr) [3] */   needful_lenient_exactly
     #define rigid_exactly /* (T,expr) [3] */     needful_rigid_exactly
     #define exactly /* (T,expr) [3] */           needful_lenient_exactly
+
+    #define known_literal /* (T,expr) [3] */     needful_known_literal
 #endif
 
 #if !defined(NEEDFUL_DONT_DEFINE_COMMENT_SHORTHANDS)

@@ -147,9 +147,9 @@ INLINE Element* Init_Handle_Cdata(
 ){
     assert(length != 0);  // can't be 0 unless cfunc (see also malloc(0))
 
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
-        FLAG_HEART(TYPE_HANDLE) |  FLAG_LIFT_BYTE(As_Lift(TYPE_HANDLE))
+        FLAG_HEART_AND_LIFT(TYPE_HANDLE)
             | CELL_MASK_NO_MARKING
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
@@ -163,9 +163,9 @@ INLINE Element* Init_Handle_Cfunc(
     Init(Element) out,
     CFunction* cfunc
 ){
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
-        FLAG_HEART(TYPE_HANDLE) | FLAG_LIFT_BYTE(As_Lift(TYPE_HANDLE))
+        FLAG_HEART_AND_LIFT(TYPE_HANDLE)
             | CELL_MASK_NO_MARKING
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
@@ -178,9 +178,9 @@ INLINE Element* Init_Handle_Base(
     Init(Element) out,
     const Base* base
 ){
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
-        FLAG_HEART(TYPE_HANDLE) | FLAG_LIFT_BYTE(As_Lift(TYPE_HANDLE))
+        FLAG_HEART_AND_LIFT(TYPE_HANDLE)
             | CELL_FLAG_DONT_MARK_PAYLOAD_1
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
@@ -203,9 +203,9 @@ INLINE void Init_Handle_Managed_Common(
     Tweak_Handle_Cleaner(stub, cleaner);  // FLAVOR_HANDLE in Diminish_Stub()
 
     Sink(Element) single = Stub_Cell(stub);
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         single,
-        FLAG_HEART(TYPE_HANDLE) | FLAG_LIFT_BYTE(As_Lift(TYPE_HANDLE))
+        FLAG_HEART_AND_LIFT(TYPE_HANDLE)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // points to singular
             | CELL_FLAG_DONT_MARK_PAYLOAD_2
     );
@@ -218,9 +218,9 @@ INLINE void Init_Handle_Managed_Common(
     // effectively update all instances...since the bits live in the shared
     // Flex component.
     //
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
-        FLAG_HEART(TYPE_HANDLE) | FLAG_LIFT_BYTE(As_Lift(TYPE_HANDLE))
+        FLAG_HEART_AND_LIFT(TYPE_HANDLE)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // points to stub
             | CELL_FLAG_DONT_MARK_PAYLOAD_2
     );

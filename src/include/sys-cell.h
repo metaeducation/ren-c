@@ -735,13 +735,6 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
     return opt heart;  // faster than unwrap, we already checked for 0
 }
 
-#define Heart_Of_Is_0(cell) \
-    (TYPE_0 == opt Heart_Of(cell))
-
-INLINE bool Type_Of_Is_0(const Cell* cell) {
-    return LIFT_BYTE_RAW(cell) == As_Lift(TYPE_0);
-}
-
 
 //=//// HOOKABLE LIFT_BYTE() ACCESSOR /////////////////////////////////////=//
 //
@@ -779,30 +772,34 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
             return LIFT_BYTE_RAW(cell);
         }
 
-        void operator=(int right) {
+        void operator=(LiftByte right) {
             Assert_Cell_Unshielded_If_Tracking(cell);
 
-            assert(right >= 0 and right <= 255);
-
-            if (right == 0) {  // extension type with no Sigil
+            if (right == TYPE_0_constexpr) {  // extension type with no Sigil
                 assert(KIND_BYTE_RAW(cell) == 0);
             }
             else if (right < MIN_HEARTBYTE) {  // Sigil'd (nonquoted/nonquasi)
-                Sigil sigil = i_cast(
-                    Sigil, KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT
+                assert( // kind byte should encode the Sigil
+                    (KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT) == right
                 );
-                assert(i_cast(int, sigil) == right);
             }
             else if (right <= MAX_HEARTBYTE) {  // ordinary type with no Sigil
-                assert(KIND_BYTE_RAW(cell) == right);
+                assert(KIND_BYTE_RAW(cell) == i_cast(TypeByte, right));
             }
-            else if (right == QUASIFORM_64) {
-                Option(Heart) heart = Unchecked_Heart_Of(cell);
-                assert(Any_Sequencable_Type(heart));  // [2]
+            else if (right == i_cast(TypeByte, TYPE_QUASIFORM)) {
+                assert(Any_Sequencable_Type(Unchecked_Heart_Of(cell)));  // [2]
             }
-            else if (right != BEDROCK_255 and (right >= MIN_LIFT_ANTIFORM)) {
-                Option(Heart) heart = Unchecked_Heart_Of(cell);
-                assert(Any_Isotopic_Type(heart));
+            else if (right <= MAX_TYPEBYTE_ELEMENT) {
+                // QUOTED! types
+            }
+            else if (right <= MAX_LIFT_ANTIFORM) {
+                assert(Any_Isotopic_Type(Unchecked_Heart_Of(cell)));
+            }
+            else if (right == BEDROCK_255) {
+                // no checks at present
+            }
+            else {
+                assert(!"Bad LIFT_BYTE() value");
             }
 
             /* add write checks you want here */
@@ -811,7 +808,7 @@ INLINE bool Type_Of_Is_0(const Cell* cell) {
         }
 
         void operator=(const LiftHolder& right)  // must write explicitly
-          { *this = u_cast(LiftByte, right); }
+          { *this = i_cast(LiftByte, right); }
 
         void operator-=(int shift)  // must write explicitly
           { LIFT_BYTE_RAW(cell) -= shift; }
@@ -938,17 +935,18 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
 // Assert_Cell_Initable() for the explanation of what "freshening" is, and why
 // it tolerates CELL_MASK_ERASED_0 in a cell header.
 
-INLINE void Reset_Cell_Header_Noquote(Cell* c, uintptr_t flags)
-{
-    assert(SECOND_BYTE(&flags) /* kind */ == THIRD_BYTE(&flags) /* lift */);
-    Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
-    c->header.bits |= (  // need to ensure node+cell flag get set
-        BASE_FLAG_BASE | BASE_FLAG_CELL | flags
-    );
-}
+INLINE uintptr_t FLAG_HEART_AND_LIFT(Heart heart)
+  { return FLAG_HEART(heart) | FLAG_LIFT_BYTE(heart); }
 
 INLINE void Reset_Cell_Header(Cell* c, uintptr_t flags)
 {
+    if (
+        THIRD_BYTE(&flags) /* lift */ <= MAX_LIFT_NOQUOTE_NOQUASI
+        and THIRD_BYTE(&flags) > MIN_HEARTBYTE
+    ){
+        assert(SECOND_BYTE(&flags) /* kind */ == THIRD_BYTE(&flags));
+    }
+
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set
     c->header.bits |= (  // need to ensure node+cell flag get set
         BASE_FLAG_BASE | BASE_FLAG_CELL | flags

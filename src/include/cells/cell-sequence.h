@@ -268,9 +268,9 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
         Init_Blank(Pairing_Second(p));
     }
 
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         v,
-        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+        FLAG_HEART_AND_LIFT(heart)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // mark the pairing
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // payload second not used
     );
@@ -313,9 +313,9 @@ INLINE Result(Element*) Init_Any_Sequence_Bytes(
     Size size
 ){
     assert(Any_Sequence_Type(heart));
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
-        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+        FLAG_HEART_AND_LIFT(heart)
             | CELL_MASK_NO_MARKING
     );
     Tweak_Cell_Binding(out, UNBOUND);  // paths bindable, can't have garbage
@@ -357,9 +357,9 @@ INLINE Option(Element*) Try_Init_Any_Sequence_All_Integers(
     if (len < 2)
         return nullptr;
 
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
-        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+        FLAG_HEART_AND_LIFT(heart)
             | CELL_MASK_NO_MARKING
     );
     Tweak_Cell_Binding(out, UNBOUND);  // paths are bindable, can't be garbage
@@ -468,9 +468,9 @@ INLINE Result(Element*) Init_Any_Sequence_Or_Conflation_Pairlike(
     Copy_Cell(Pairing_First(pairing), first);
     Copy_Cell(Pairing_Second(pairing), second);
 
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
-        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+        FLAG_HEART_AND_LIFT(heart)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // first is pairing
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // payload second not used
     );
@@ -881,7 +881,7 @@ INLINE bool Is_Get_Word_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Get_Word(const Stable* v)
-  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Get_Word_Cell(v); }
+  { return Is_Chain(v) and Is_Get_Word_Cell(v); }
 
 INLINE bool Is_Set_Word_Cell(const Cell* c) {
     return (
@@ -891,7 +891,7 @@ INLINE bool Is_Set_Word_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Set_Word(const Stable* v)
-  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Set_Word_Cell(v); }
+  { return Is_Chain(v) and Is_Set_Word_Cell(v); }
 
 
 // The new /foo: assignment form ensures that the thing being assigned is
@@ -945,7 +945,7 @@ INLINE bool Is_Get_Tuple_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Get_Tuple(const Stable* v)
-  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Get_Tuple_Cell(v); }
+  { return Is_Chain(v) and Is_Get_Tuple_Cell(v); }
 
 INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
     return (
@@ -955,7 +955,7 @@ INLINE bool Is_Set_Tuple_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Set_Tuple(const Stable* v)
-  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Set_Tuple_Cell(v); }
+  { return Is_Chain(v) and Is_Set_Tuple_Cell(v); }
 
 
 // GET-BLOCK! and SET-BLOCK!
@@ -968,7 +968,7 @@ INLINE bool Is_Get_Block_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Get_Block(const Stable* v)
-  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Get_Block_Cell(v); }
+  { return Is_Chain(v) and Is_Get_Block_Cell(v); }
 
 INLINE bool Is_Set_Block_Cell(const Cell* c) {
     return (
@@ -978,7 +978,7 @@ INLINE bool Is_Set_Block_Cell(const Cell* c) {
 }
 
 INLINE bool Is_Set_Block(const Stable* v)
-  { return LIFT_BYTE(v) == As_Lift(TYPE_CHAIN) and Is_Set_Block_Cell(v); }
+  { return Is_Chain(v) and Is_Set_Block_Cell(v); }
 
 
 // GET-GROUP! and SET-GROUP!

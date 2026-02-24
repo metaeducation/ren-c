@@ -288,9 +288,14 @@ e-types/emit [--[
 
 for-each 't datatype-objects [
     if t.cellmask [
+        ;
+        ; NOTE: FLAG_HEART_AND_LIFT() is an inline function (repeats macro
+        ; argument) so it's slower than FLAG_HEART() and FLAG_LIFT(); since
+        ; this is auto-generated do it the faster way.
+        ;
         e-types/emit [t --[
             #define CELL_MASK_${T.NAME} \
-                (FLAG_HEART(TYPE_${T.NAME}) | FLAG_LIFT_BYTE(As_Lift(TYPE_${T.NAME})) | $<MOLD T.CELLMASK>)
+                (FLAG_HEART(TYPE_${T.NAME}) | FLAG_LIFT_BYTE(TYPE_${T.NAME}) | $<MOLD T.CELLMASK>)
         ]--]
     ]
 

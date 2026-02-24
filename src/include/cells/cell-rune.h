@@ -112,8 +112,7 @@ INLINE bool Is_Rune_And_Is_Char(const Stable* v) {
             CELL_MASK_HEART_AND_SIGIL_AND_LIFT
                 | CELL_FLAG_RUNE_SINGLE_CODEPOINT
         )) == (
-            FLAG_HEART(TYPE_RUNE)
-                | FLAG_LIFT_BYTE(As_Lift(TYPE_RUNE))
+            FLAG_HEART_AND_LIFT(TYPE_RUNE)
                 | CELL_FLAG_RUNE_SINGLE_CODEPOINT
         )
     );
@@ -166,9 +165,9 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
 
     const Byte* bp = utf8;
 
-    Reset_Cell_Header_Noquote(  // include fast flags for space/char checks
+    Reset_Cell_Header(  // include fast flags for space/char checks
         out,
-        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+        FLAG_HEART_AND_LIFT(heart)
             | CELL_MASK_NO_MARKING
             | ((len == 1) ? CELL_FLAG_RUNE_SINGLE_CODEPOINT : 0)
             | ((len == 1) and (bp[0] == ' ') ? CELL_FLAG_RUNE_IS_SPACE : 0)
@@ -239,9 +238,9 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
     assert(not (c >= UNI_SUR_HIGH_START and c <= UNI_SUR_LOW_END));
     assert(not (c > UNI_MAX_LEGAL_UTF32));
 
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
-        FLAG_HEART(TYPE_RUNE) | FLAG_LIFT_BYTE(As_Lift(TYPE_RUNE))
+        FLAG_HEART_AND_LIFT(TYPE_RUNE)
             | CELL_MASK_NO_MARKING
             | CELL_FLAG_RUNE_SINGLE_CODEPOINT
             | ((c == ' ') ? CELL_FLAG_RUNE_IS_SPACE : 0)

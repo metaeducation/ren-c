@@ -538,10 +538,10 @@ INLINE Element* Init_Unconstrained_Parameter_Untracked(
     }
     UNUSED(pclass);
 
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART(TYPE_PARAMETER) | FLAG_LIFT_BYTE(As_Lift(TYPE_PARAMETER))
+            | FLAG_HEART_AND_LIFT(TYPE_PARAMETER)
             | CELL_FLAG_DONT_MARK_PAYLOAD_1  // spec (starting off null here)
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // flags, never marked
     );

@@ -2329,7 +2329,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     PUSH();
 
     if (len + 1 <= Size_Of(TOP->payload.at_least_8)) {
-        Reset_Cell_Header_Noquote(
+        Reset_Cell_Header(
             TOP,
             FLAG_HEART(TYPE_RUNE) | FLAG_LIFT_BYTE(As_Lift(TYPE_RUNE))
                 | CELL_MASK_NO_MARKING

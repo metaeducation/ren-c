@@ -164,7 +164,7 @@ DECLARE_NATIVE(DECODE_IEEE_754)
         return fail (blob);
 
     Init(Element) out = OUT;
-    Reset_Cell_Header_Noquote(TRACK(out), CELL_MASK_DECIMAL);
+    Reset_Cell_Header(TRACK(out), CELL_MASK_DECIMAL);
 
     Byte* dp = cast(Byte*, &VAL_DECIMAL(out));
 

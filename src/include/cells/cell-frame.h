@@ -231,10 +231,10 @@ INLINE Element* Init_Frame_Unchecked_Untracked(
     Option(const Stub*) lens_or_label,
     Option(VarList*) coupling
 ){
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART(TYPE_FRAME) | FLAG_LIFT_BYTE(As_Lift(TYPE_FRAME))
+            | FLAG_HEART_AND_LIFT(TYPE_FRAME)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // first is phase
             | (coupling ? 0 : CELL_FLAG_DONT_MARK_PAYLOAD_2)
     );

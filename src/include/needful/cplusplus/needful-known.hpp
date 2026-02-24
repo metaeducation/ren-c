@@ -287,6 +287,20 @@ struct IsSameAsserter {
     (expr))
 
 
+//=//// KNOWN LITERAL /////////////////////////////////////////////////////=//
+//
+// This lets you know that you've passed a known literal value.  It could
+// thus be considered safe to pass in macros.
+//
+
+template<typename T, T Value>
+struct MustBeLiteralAsserter {};
+
+#undef needful_known_literal
+#define needful_known_literal(T,expr) \
+    (NEEDFUL_DUMMY_INSTANCE(needful::MustBeLiteralAsserter<T,(expr)>), (expr))
+
+
 //=//// EXACT() FOR FORBIDDING COVARIANT INPUT PARAMETERS /////////////////=//
 //
 // Exact() prohibits covariance, but but unlike Sink() or Init() it doesn't

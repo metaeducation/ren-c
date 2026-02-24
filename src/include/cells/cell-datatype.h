@@ -210,7 +210,7 @@ INLINE const ExtraHeart* Datatype_Extra_Heart(const Stable* v) {
 
 
 INLINE const ExtraHeart* Cell_Extra_Heart(const Cell* v) {
-    assert(Heart_Of_Is_0(v));
+    assert(not Heart_Of(v));
     return cast(ExtraHeart*, v->extra.base);
 }
 

@@ -412,7 +412,7 @@ static Element* Init_Normalized_Date(
     if (year < 0 or year > MAX_YEAR)
         panic (Error_Type_Limit_Raw(Datatype_From_Type(TYPE_DATE)));
 
-    Reset_Cell_Header_Noquote(out, CELL_MASK_DATE);
+    Reset_Cell_Header(out, CELL_MASK_DATE);
     CELL_DATE_YMDZ(out).year = year;
     CELL_DATE_YMDZ(out).month = month + 1;
     CELL_DATE_YMDZ(out).day = day + 1;
@@ -1235,7 +1235,7 @@ DECLARE_NATIVE(MAKE_DATE_YMDSNZ)
 {
     INCLUDE_PARAMS_OF_MAKE_DATE_YMDSNZ;
 
-    Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_DATE);
+    Reset_Cell_Header(TRACK(OUT), CELL_MASK_DATE);
     VAL_YEAR(OUT) = VAL_INT32(ARG(YEAR));
     VAL_MONTH(OUT) = VAL_INT32(ARG(MONTH));
     VAL_DAY(OUT) = VAL_INT32(ARG(DAY));
@@ -1279,7 +1279,7 @@ DECLARE_NATIVE(MAKE_TIME_SN)
 {
     INCLUDE_PARAMS_OF_MAKE_TIME_SN;
 
-    Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_TIME);
+    Reset_Cell_Header(TRACK(OUT), CELL_MASK_TIME);
 
     REBI64 nano = not ARG(NANO) ? 0 : VAL_INT64(unwrap ARG(NANO));
     Tweak_Cell_Nanoseconds(OUT, SECS_TO_NANO(VAL_INT64(ARG(SECONDS))) + nano);

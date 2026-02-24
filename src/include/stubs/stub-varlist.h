@@ -169,9 +169,9 @@ INLINE Element* Tweak_Non_Frame_Varlist_Rootvar_Untracked(
 ){
     assert(heart != TYPE_FRAME);  // use Tweak_Frame_Varlist_Rootvar() instead
     Sink(Element) rootvar = Array_Head(varlist);
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         rootvar,
-        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+        FLAG_HEART_AND_LIFT(heart)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // varlist
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // coupling only on frames
     );

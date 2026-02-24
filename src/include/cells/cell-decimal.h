@@ -58,9 +58,9 @@ INLINE Element* Init_Decimal_Or_Percent_Untracked(
     if (not FINITE(dec))
         panic (Error_Overflow_Raw());
 
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
-        FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+        FLAG_HEART_AND_LIFT(heart)
             | CELL_MASK_NO_MARKING
     );
     out->payload.dec = dec;

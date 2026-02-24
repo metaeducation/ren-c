@@ -475,9 +475,9 @@ IMPLEMENT_GENERIC(ROUND, Is_Integer)
         );
         Heart to_heart = Heart_Of_Builtin_Fundamental(As_Element(to));
         Init(Element) out = OUT;
-        Reset_Cell_Header_Noquote(
+        Reset_Cell_Header(
             TRACK(out),
-            FLAG_HEART(to_heart) | FLAG_LIFT_BYTE(As_Lift(to_heart))
+            FLAG_HEART_AND_LIFT(to_heart)
                 | CELL_MASK_NO_MARKING
         );
         VAL_DECIMAL(out) = dec;

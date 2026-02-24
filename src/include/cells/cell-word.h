@@ -126,9 +126,9 @@ INLINE Dual* Init_Word_Bound_Untracked(
     const Symbol* symbol,
     Context* binding
 ){
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
-        FLAG_HEART(TYPE_WORD) | FLAG_LIFT_BYTE(As_Lift(TYPE_WORD))
+        FLAG_HEART_AND_LIFT(TYPE_WORD)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );

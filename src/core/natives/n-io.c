@@ -80,7 +80,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Fundamental)  // catch-all for ExtraHeart*
     UNUSED(ARG(FORM));
 
     Element* custom = Element_ARG(VALUE);
-    /*assert(Heart_Of_Is_0(custom));*/  // !!! currently does HANDLE!
+    /*assert(not Heart_Of(custom));*/  // !!! currently does HANDLE!
 
     Begin_Non_Lexical_Mold(mo, custom);
     Mold_Or_Form_Cell_Ignore_Quotes(mo, LIB(EMPTY_BLOCK), false);

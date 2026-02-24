@@ -54,10 +54,10 @@ INLINE Error* Cell_Error(const Cell* c) {
 //
 INLINE Dual* Init_Context_Cell_Untracked(Init(Dual) out, VarList* vlist) {
     Heart heart = CTX_TYPE(vlist);
-    Reset_Cell_Header_Noquote(
+    Reset_Cell_Header(
         out,
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART(heart) | FLAG_LIFT_BYTE(As_Lift(heart))
+            | FLAG_HEART_AND_LIFT(heart)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // first is phase/varlist
             | (CELL_FLAG_DONT_MARK_PAYLOAD_2)  // no coupling
     );
@@ -99,7 +99,7 @@ INLINE Dual* Init_Context_Cell_Untracked(Init(Dual) out, VarList* vlist) {
 
 INLINE Element* Init_Let(Init(Element) out, Let* let) {
     assert(Is_Base_Managed(let));
-    Reset_Cell_Header_Noquote(out, CELL_MASK_LET);
+    Reset_Cell_Header(out, CELL_MASK_LET);
     CELL_EXTRA(out) = nullptr;
     CELL_PAYLOAD_1(out) = let;
     Corrupt_Unused_Field(out->payload.split.two.corrupt);
@@ -119,7 +119,7 @@ INLINE Let* Cell_Let(const Cell* c) {
 
 INLINE Element* Init_Module(Init(Element) out, SeaOfVars* sea) {
     assert(Is_Base_Managed(sea));
-    Reset_Cell_Header_Noquote(out, CELL_MASK_MODULE);
+    Reset_Cell_Header(out, CELL_MASK_MODULE);
     CELL_EXTRA(out) = nullptr;
     CELL_PAYLOAD_1(out) = sea;
     Corrupt_Unused_Field(out->payload.split.two.corrupt);

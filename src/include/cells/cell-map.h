@@ -53,7 +53,7 @@ INLINE Element* Init_Map(Init(Element) out, Map* map)
 
     Force_Stub_Managed(MAP_PAIRLIST(map));
 
-    Reset_Cell_Header_Noquote(TRACK(out), CELL_MASK_MAP);
+    Reset_Cell_Header(TRACK(out), CELL_MASK_MAP);
     Corrupt_Unused_Field(out->extra.corrupt);
     CELL_MAP_PAIRLIST(out) = MAP_PAIRLIST(map);
     Corrupt_Unused_Field(out->payload.split.two.corrupt);

@@ -411,7 +411,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Varargs)
         else
             Copy_Cell(Stub_Cell(array1), arg);
 
-        Reset_Cell_Header_Noquote(TRACK(OUT), CELL_MASK_VARARGS);
+        Reset_Cell_Header(TRACK(OUT), CELL_MASK_VARARGS);
         Tweak_Cell_Varargs_Phase(OUT, nullptr);
         UNUSED(CELL_VARARGS_SIGNED_PARAM_INDEX(OUT));  // corrupts in C++11
         Tweak_Cell_Varargs_Origin(OUT, array1);

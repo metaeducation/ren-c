@@ -245,7 +245,7 @@ Flex* Make_Set_Operation_Flex(
                 if (!h) continue;
 
                 DECLARE_ELEMENT (mo_value);
-                Reset_Cell_Header_Noquote(TRACK(mo_value), CELL_MASK_TEXT);
+                Reset_Cell_Header(TRACK(mo_value), CELL_MASK_TEXT);
                 CELL_PAYLOAD_1(mo_value) = mo->strand;
                 SERIES_INDEX_UNBOUNDED(mo_value) = mo->base.index;
 
@@ -324,7 +324,7 @@ Flex* Make_Set_Operation_Flex(
                 if (!h) continue;
 
                 DECLARE_ELEMENT (buf_value);
-                Reset_Cell_Header_Noquote(
+                Reset_Cell_Header(
                     TRACK(buf_value),
                     CELL_MASK_BLOB
                 );

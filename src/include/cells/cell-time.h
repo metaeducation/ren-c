@@ -185,7 +185,7 @@ INLINE Element* Init_Time_Nanoseconds(
     Init(Element) v,
     REBI64 nanoseconds
 ){
-    Reset_Cell_Header_Noquote(v, CELL_MASK_TIME);
+    Reset_Cell_Header(v, CELL_MASK_TIME);
     Tweak_Cell_Nanoseconds(v, nanoseconds);
     return v;
 }

@@ -83,7 +83,7 @@ INLINE Stable* Init_Pair_Untracked(Init(Element) out, REBI64 x, REBI64 y) {
     Init_Integer(Pairing_First(p), x);
     Init_Integer(Pairing_Second(p), y);
 
-    Reset_Cell_Header_Noquote(out, CELL_MASK_PAIR);
+    Reset_Cell_Header(out, CELL_MASK_PAIR);
     Corrupt_Unused_Field(out->extra.corrupt);
     PAIRLIKE_PAYLOAD_1_PAIRING_BASE(out) = p;
     Corrupt_Unused_Field(out->payload.split.two.corrupt);

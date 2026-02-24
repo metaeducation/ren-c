@@ -382,7 +382,7 @@ INLINE Value* Force_Cell_Heavy(Value* v) {
 INLINE bool Is_Boolean(const Stable* v) {
     Assert_Cell_Readable(v);
 
-    if (LIFT_BYTE(v) != As_Lift(TYPE_WORD))
+    if (not Is_Word(v))
         return false;
 
     Option(SymId) id = Word_Id(v);

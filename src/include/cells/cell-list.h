@@ -173,7 +173,7 @@ INLINE Element* Init_Relative_Block_At(
     Array* array,
     Index index
 ){
-    Reset_Cell_Header_Noquote(out, CELL_MASK_BLOCK);
+    Reset_Cell_Header(out, CELL_MASK_BLOCK);
     SERIESLIKE_PAYLOAD_1_BASE(out) = array;
     SERIES_INDEX_UNBOUNDED(out) = index;
     Tweak_Cell_Relative_Binding(out, details);

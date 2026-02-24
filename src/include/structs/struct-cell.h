@@ -229,17 +229,23 @@ typedef enum {
 #define CELL_MASK_SIGIL  FLAG_SIGIL_CRUMB(3)  // 0b11 << KIND_SIGIL_SHIFT
 
 
-//=//// BITS 16-23: QUOTE/QUASI/ANTI/DUAL BYTE ("LIFT") ///////////////////=//
-//
-// Cells can be quote-escaped up to MAX_QUOTE_DEPTH_64 levels.  Because the
-// low bit of the lifting byte is reserved for whether the contained value is
-// a quasiform when in the quoted state, each quoting level effectively adds
-// 2 to the lift byte.
+//=//// BITS 16-23: TYPE AND QUOTE/QUASI/ANTI/DUAL BYTE ("LIFT") //////////=//
 //
 // A Cell's underlying "HEART" can report it as something like TYPE_WORD, but
 // that is only reported as the result of Type_Of() when LIFT_BYTE() is also
 // TYPE_WORD.  Higher LIFT_BYTE() will give back various TYPE_XXX answers
 // corresponding to the quoted, quasiform, or antiform states.
+//
+// Due to how it's designed, the LIFT_BYTE() gives back the answer to what
+// a Cell's Type_Of() is with a single byte read.  But different quoting and
+// quasiform combinations will give distinct answers, so there is no canon
+// value of TYPE_QUOTED.  This means comparing Type values directly doesn't
+// work in a general sense, so the `==` and `!=` operators are disabled for
+// direct Type to Type comparisons in the C++ build.
+//
+// Cells can be quote-escaped up to MAX_QUOTE_DEPTH_64 levels.  When quoted,
+// the low bit of the lifting byte is reserved for whether the contained value
+// is a quasiform...so each quoting level effectively adds 2 to the lift byte.
 //
 // 1. There's a complex runtime check to ensure coherence in the lift byte
 //    with the rest of the cell, which is triggered in some C++ builds when

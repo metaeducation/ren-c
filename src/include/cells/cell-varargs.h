@@ -87,7 +87,7 @@ INLINE void Tweak_Cell_Varargs_Origin(
 
 
 INLINE Element* Init_Varargs_Untyped_Normal(Init(Element) out, Level* L) {
-    Reset_Cell_Header_Noquote(out, CELL_MASK_VARARGS);
+    Reset_Cell_Header(out, CELL_MASK_VARARGS);
     Tweak_Cell_Varargs_Origin(out, L->varlist);  // frame-based VARARGS!
     UNUSED(CELL_VARARGS_SIGNED_PARAM_INDEX(out));
     Tweak_Cell_Varargs_Phase(out, nullptr);  // set in typecheck
@@ -112,7 +112,7 @@ INLINE Element* Init_Varargs_Untyped_Infix(
         Init_Block(Stub_Cell(feed), singular);  // index 0
     }
 
-    Reset_Cell_Header_Noquote(out, CELL_MASK_VARARGS);
+    Reset_Cell_Header(out, CELL_MASK_VARARGS);
     Tweak_Cell_Varargs_Origin(out, feed);
     UNUSED(CELL_VARARGS_SIGNED_PARAM_INDEX(out));
     Tweak_Cell_Varargs_Phase(out, nullptr);  // set in typecheck

@@ -125,7 +125,7 @@ INLINE Element* Quotify_Depth(Element* v, Count depth) {
 #define Quote_Cell(v)  Quotify_Depth((v), 1)
 
 #define Lift_From_Sigil(sigil) \
-    i_cast(Byte, known(Sigil, (sigil)))
+    i_cast(LiftByte, known(Sigil, (sigil)))
 
 INLINE Element* Unquote_Quoted_Cell(Element* v) {
     assert(LIFT_BYTE_RAW(v) > MAX_LIFT_NOQUOTE_QUASI_OK);
