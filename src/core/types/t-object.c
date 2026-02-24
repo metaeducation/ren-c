@@ -1323,7 +1323,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
         and Frame_Coupling(OUT) == UNCOUPLED
         and Stub_Flavor(c) == FLAVOR_VARLIST
     ){
-        assert(KIND_BYTE(OUT) == HEART_FRAME_SIGNIFYING_ACTION);
+        assert(HEARTSIGIL_BYTE(OUT) == HEART_FRAME_SIGNIFYING_ACTION);
         Tweak_Frame_Coupling(OUT, cast(VarList*, c));
     }
 

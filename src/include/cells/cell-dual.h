@@ -236,9 +236,7 @@ INLINE bool Is_Hot_Potato_With_Id_Core(
 
 INLINE bool Is_Bedrock_Dual_A_Hole(const Dual* dual) {
     assert(Is_Dualized_Bedrock(dual));
-    return (
-        KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_0, HEART_PARAMETER)
-    );
+    return HEARTSIGIL_BYTE(dual) == HEART_PARAMETER;
 }
 
 #define Is_Hole_Core(cell,lift) \
@@ -278,8 +276,12 @@ INLINE bool Is_Undecayed_Hole(const Value* v) {  // ~(parameter!)~ PACK!
 INLINE bool Is_Bedrock_Dual_An_Alias(const Dual* dual) {
     assert(Is_Dualized_Bedrock(dual));
     return (
-        KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_META, HEART_WORD)
-        or KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_META, HEART_TUPLE)
+        HEARTSIGIL_BYTE(dual) == Byte_From_Heart_And_Sigil(
+            HEART_WORD, SIGIL_META
+        )
+        or HEARTSIGIL_BYTE(dual) == Byte_From_Heart_And_Sigil(
+            HEART_TUPLE, SIGIL_META
+        )
     );
 }
 
@@ -317,7 +319,7 @@ INLINE bool Is_Undecayed_Alias(const Value* v) {  // ~(^meta)~ PACK!
 
 INLINE bool Is_Bedrock_Dual_An_Accessor(const Dual* dual) {
     assert(Is_Dualized_Bedrock(dual));
-    return KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_0, HEART_FRAME);
+    return HEARTSIGIL_BYTE(dual) == HEART_FRAME;
 }
 
 #define Is_Accessor_Core(cell,lift) \

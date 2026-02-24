@@ -173,7 +173,7 @@ DECLARE_NATIVE(MULTIPLY)
 //    ensure commutativity, we swap the arguments if their heart bytes are
 //    not in "canon order".
 //
-//    (Using the KIND_BYTE as the canon order is a bit of a hack, as the
+//    (Using the HEARTSIGIL_BYTE as the canon order is a bit of a hack, as the
 //    table can be reordered.  But we try to order the types in %types.r
 //    such that more complex types come later, so that we dispatch to the
 //    more complex type...e.g. multiplying a PAIR! by a DECIMAL! should

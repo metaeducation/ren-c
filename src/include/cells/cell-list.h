@@ -233,7 +233,7 @@ INLINE Element* Init_Relative_Block_At(
 
 INLINE Stable* Spread_Cell(Exact(Stable*) v) {
     assert(Any_List(v));
-    KIND_BYTE(v) = HEART_BLOCK_SIGNIFYING_SPLICE;  // forget former list type
+    HEARTSIGIL_BYTE(v) = HEART_BLOCK_SIGNIFYING_SPLICE;  // forget former type
     Tweak_Cell_Binding(u_cast(Element*, v), UNBOUND);
     Antiformize_Unbound_Fundamental(v, TYPE_SPLICE);
     assert(Is_Splice(v));

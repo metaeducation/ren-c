@@ -127,7 +127,7 @@ Bounce Evaluator_Executor(Level* const L)
     unnecessary(Force_Erase_Cell(PRIMED));  // !!! Prep_Level() does this ATM
     Init_Blank_Untracked(
         PRIMED,
-        FLAG_LIFT(TYPE_VOID)
+        FLAG_TYPE(TYPE_VOID)
             | CELL_FLAG_PRIMED_NOTE_DISCARDABLE
     );
     assert(Is_Void(PRIMED));

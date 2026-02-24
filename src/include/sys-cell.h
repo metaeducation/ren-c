@@ -415,7 +415,7 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 #define CELL_MASK_UNREADABLE \
     (BASE_FLAG_BASE | BASE_FLAG_CELL | BASE_FLAG_UNREADABLE \
         | CELL_FLAG_DONT_MARK_PAYLOAD_1 | CELL_FLAG_DONT_MARK_PAYLOAD_2 \
-        | FLAG_KIND_BYTE(255) | FLAG_LIFT(LIFT_255))
+        | FLAG_HEARTSIGIL_BYTE(255) | FLAG_TYPE_BYTE(255))
 
 #if CORRUPT_CELL_HEADERS_ONLY
     #define Init_Unreadable_Untracked_Evil_Macro(out) do { \
@@ -629,7 +629,7 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 
 #define Unchecked_Cell_Has_Lift_Sigil_Heart(cell,lift,sigil,heart) \
     (((cell)->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) \
-        == (FLAG_SIGIL(sigil) | FLAG_HEART(heart) | FLAG_LIFT(lift)))
+        == (FLAG_SIGIL(sigil) | FLAG_HEART(heart) | FLAG_TYPE(lift)))
 
 #define Cell_Has_Lift_Sigil_Heart(cell,lift,sigil,heart) \
     Unchecked_Cell_Has_Lift_Sigil_Heart(Readable_Cell(cell), \
@@ -643,10 +643,10 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
         (lift), (heart))
 
 
-//=//// HOOKABLE KIND_BYTE() ACCESSOR ////////////////////////////////////=//
+//=//// HOOKABLE HEARTSIGIL_BYTE() ACCESSOR ///////////////////////////////=//
 //
-// It can often be helpful to inject code to when the KIND_BYTE() is being
-// assigned.  This mechanism also intercepts reads of the KIND_BYTE() too,
+// It can often be helpful to inject code to when HEARTSIGIL_BYTE() is being
+// assigned.  This mechanism also intercepts reads of the HEARTSIGIL_BYTE(),
 // which is done pervasively.  It slows down the code in checked builds by
 // a noticeable amount, so we don't put it in all checked builds...only
 // special situations.
@@ -654,72 +654,72 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 // 1. We don't bother with const correctness in this debugging aid, as the
 //    regular build will enforce that.  Cast away constness for simplicity.
 
-#if (! DEBUG_HOOK_KIND_BYTE)
-    #define KIND_BYTE(cell) \
-        KIND_BYTE_RAW(cell)
+#if (! DEBUG_HOOK_HEARTSIGIL_BYTE)
+    #define HEARTSIGIL_BYTE(cell) \
+        HEARTSIGIL_BYTE_RAW(cell)
 #else
-    struct KindHolder {  // class for intercepting heart assignments
+    struct HeartsigilHolder {  // class for intercepting heart assignments
         Cell* cell;
 
-        KindHolder(const Cell* cell)
+        HeartsigilHolder(const Cell* cell)
             : cell (const_cast<Cell*>(cell))
           {}
 
-        operator KindByte() const {
+        operator HeartsigilByte() const {
             /* add read checks you want here */
-            return KIND_BYTE_RAW(cell);
+            return HEARTSIGIL_BYTE_RAW(cell);
         }
 
-        explicit operator TypeEnum() const {
+        explicit operator TypeEnum() const {  // explicit cast required
             /* review: fuse checks */
-            return i_cast(TypeEnum, KIND_BYTE_RAW(cell));
+            return i_cast(TypeEnum, HEARTSIGIL_BYTE_RAW(cell));
         }
 
-        void operator=(KindByte right) {
+        void operator=(HeartsigilByte right) {
             Assert_Cell_Unshielded_If_Tracking(cell);
             /* add write checks you want here */
-            KIND_BYTE_RAW(cell) = right;
+            HEARTSIGIL_BYTE_RAW(cell) = right;
         }
 
-        void operator=(const KindHolder& right)  // must write explicitly
-          { *this = u_cast(KindByte, right); }
+        void operator=(const HeartsigilHolder& right)  // must write explicitly
+          { *this = u_cast(HeartsigilByte, right); }
 
-        ENABLE_IF_EXACT_ARG_TYPE(Heart, KindHolder)
+        ENABLE_IF_EXACT_ARG_TYPE(Heart, HeartsigilHolder)
         void operator=(T right)
-          { *this = i_cast(KindByte, right); }  // inherit operator= checks
+          { *this = i_cast(HeartsigilByte, right); }  // do operator= checks
 
         ENABLE_IF_EXACT_ARG_TYPE(Heart)
         explicit operator T() const   // inherit Byte() cast extraction checks
           { return i_cast(T, i_cast(Byte, *this)); }
     };
 
-    INLINE bool operator==(const KindHolder& holder, Heart h)
-      { return KIND_BYTE_RAW(holder.cell) == i_cast(Byte, h); }
+    INLINE bool operator==(const HeartsigilHolder& holder, Heart h)
+      { return HEARTSIGIL_BYTE_RAW(holder.cell) == i_cast(Byte, h); }
 
-    INLINE bool operator==(Heart h, const KindHolder& holder)
-      { return i_cast(Byte, h) == KIND_BYTE_RAW(holder.cell); }
+    INLINE bool operator==(Heart h, const HeartsigilHolder& holder)
+      { return i_cast(Byte, h) == HEARTSIGIL_BYTE_RAW(holder.cell); }
 
-    INLINE bool operator!=(const KindHolder& holder, Heart h)
-      { return KIND_BYTE_RAW(holder.cell) != i_cast(Byte, h); }
+    INLINE bool operator!=(const HeartsigilHolder& holder, Heart h)
+      { return HEARTSIGIL_BYTE_RAW(holder.cell) != i_cast(Byte, h); }
 
-    INLINE bool operator!=(Heart h, const KindHolder& holder)
-      { return i_cast(Byte, h) != KIND_BYTE_RAW(holder.cell); }
+    INLINE bool operator!=(Heart h, const HeartsigilHolder& holder)
+      { return i_cast(Byte, h) != HEARTSIGIL_BYTE_RAW(holder.cell); }
 
-    #define KIND_BYTE(cell) \
-        KindHolder{cell}
+    #define HEARTSIGIL_BYTE(cell) \
+        HeartsigilHolder{cell}
 #endif
 
 #define Unchecked_Heart_Of(c) \
     i_cast(Option(Heart), \
-        i_cast(Heart, KIND_BYTE_RAW(c) & KIND_BYTEMASK_HEART_0x3F))
+        i_cast(Heart, HEARTSIGIL_BYTE_RAW(c) & HEARTSIGIL_BYTEMASK_HEART_0x3F))
 
 #define Heart_Of(c) \
     Unchecked_Heart_Of(Readable_Cell(c))
 
 INLINE Heart Heart_Of_Unsigiled_Isotopic(const Cell* c) {
-    KindByte kind_byte = KIND_BYTE(c);
-    assert(0 == kind_byte >> KIND_SIGIL_SHIFT);
-    return i_cast(Heart, kind_byte);
+    HeartsigilByte byte = HEARTSIGIL_BYTE(c);
+    assert(0 == (byte >> BYTE_SIGIL_SHIFT));
+    return i_cast(Heart, byte);
 }
 
 INLINE Option(Heart) Heart_Of_Fundamental(const Cell* c) {
@@ -778,15 +778,15 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
             Assert_Cell_Unshielded_If_Tracking(cell);
 
             if (right == TYPE_0_constexpr) {  // extension type with no Sigil
-                assert(KIND_BYTE_RAW(cell) == 0);
+                assert(HEARTSIGIL_BYTE_RAW(cell) == 0);
             }
             else if (right < MIN_TYPE_HEART) {  // Sigil'd (nonquoted/nonquasi)
                 assert( // kind byte should encode the Sigil
-                    (KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT) == i_cast(TypeByte, right)
+                    (HEARTSIGIL_BYTE_RAW(cell) >> BYTE_SIGIL_SHIFT) == i_cast(TypeByte, right)
                 );
             }
             else if (right <= MAX_TYPE_HEART) {  // ordinary type with no Sigil
-                assert(KIND_BYTE_RAW(cell) == i_cast(TypeByte, right));
+                assert(HEARTSIGIL_BYTE_RAW(cell) == i_cast(TypeByte, right));
             }
             else if (right == TYPE_QUASIFORM) {
                 assert(Any_Sequencable_Type(Unchecked_Heart_Of(cell)));  // [2]
@@ -835,10 +835,10 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 // Note that these functions return Option(Type) because TYPE_0 is how
 // "extension types" are reported (things not in the 63 builtin-heart range).
 //
-// 1. KIND_BYTE() and TYPE_BYTE() in certain checked builds have overhead
+// 1. HEARTSIGIL_BYTE() and TYPE_BYTE() in certain checked builds have overhead
 //    (creating actual wrapper objects to monitor reads/writes of the byte
 //    to check invariants).  We don't want to pay that overhead on every
-//    Type_Of() call.  Use KIND_BYTE_RAW() and TYPE_BYTE_RAW().
+//    Type_Of() call.  Use HEARTSIGIL_BYTE_RAW() and TYPE_BYTE_RAW().
 //
 //    (However, if one were trying to catch certain bugs, it might be worth
 //    it to change these to non-raw calls temporarily.)
@@ -847,10 +847,10 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 INLINE Option(Type) Type_Of_Core(const Cell* v) {
     if (Type_Of_Raw(v) < MIN_TYPE_HEART) {  // raw [1]
         possibly(Type_Of_Raw(v) == TYPE_0_constexpr);  // extended, no Sigil
-        assert((KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT) == TYPE_BYTE_RAW(v));
+        assert((HEARTSIGIL_BYTE_RAW(v) >> BYTE_SIGIL_SHIFT) == TYPE_BYTE_RAW(v));
     }
     else if (Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI) {
-        assert(KIND_BYTE_RAW(v) == TYPE_BYTE_RAW(v));  // no Sigil, equal
+        assert(HEARTSIGIL_BYTE_RAW(v) == TYPE_BYTE_RAW(v));  // no Sigil, equal
     }
     else if (TYPE_BYTE_RAW(v) == QUASIFORM_64) {
         /* assert(Any_Sequencable_Type(Unchecked_Heart_Of(v))); */  // ?
@@ -867,7 +867,7 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
       case TYPE_SPLICE:
       case TYPE_DATATYPE:
       case TYPE_LOGIC:
-        assert(KIND_BYTE_RAW(v) <= i_cast(TypeByte, MAX_TYPE_HEART));
+        assert(HEARTSIGIL_BYTE_RAW(v) <= i_cast(TypeByte, MAX_TYPE_HEART));
         break;
 
       default:
@@ -942,11 +942,11 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
 // it tolerates CELL_MASK_ERASED_0 in a cell header.
 
 INLINE uintptr_t FLAG_HEART_AND_LIFT(Heart heart)
-  { return FLAG_HEART(heart) | FLAG_LIFT(As_Lift(heart)); }
+  { return FLAG_HEART(heart) | FLAG_TYPE(i_cast(TypeEnum, heart)); }
 
 INLINE void Reset_Cell_Header(Cell* c, uintptr_t flags)
 {
-    if (  // THIRD_BYTE is TYPE_BYTE, SECOND_BYTE is KIND_BYTE
+    if (  // THIRD_BYTE is TYPE_BYTE, SECOND_BYTE is HEARTSIGIL_BYTE
         THIRD_BYTE(&flags) <= i_cast(TypeByte, MAX_TYPE_NOQUOTE_NOQUASI)
         and THIRD_BYTE(&flags) > i_cast(TypeByte, MIN_TYPE_HEART)
     ){

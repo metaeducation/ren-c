@@ -34,20 +34,20 @@
 //   establish whether this is a Cell or a "Stub", among other features.
 //   See %struct-base.h for explanations of these flags.
 //
-// * KIND_BYTE: the second byte indicates what type of information the other
-//   3 slots in the cell describe.  It holds a fundamental datatype known
+// * HEARTSIGIL_BYTE: the second byte indicates what type of information the
+//   other 3 slots in the cell describe.  It holds a fundamental enum known
 //   as a "Heart", with values like HEART_INTEGER, HEART_BLOCK, HEART_TEXT.
 //   It also reserves two bits to hold the "Sigil" of the cell, which is
 //   whether it's annotated with `@` or `^` or `$`.
 //
-// * TYPE_BYTE: the third byte is equal to the KIND_BYTE for "normal" values,
+// * TYPE_BYTE: the third byte equals the HEARTSIGIL_BYTE for "normal" values,
 //   but has higher levels indicates how quoted something is, or if it is a
 //   quaisform or antiform.  See %sys-quoted.h for more on the interpretation.
 //
 // * The fourth byte contains other cell flags.  Some of them apply to any
 //   cell type (such as whether the cell should have a new-line after it when
 //   molded out during display of its containing array), and others have a
-//   different purpose depending on what the KIND_BYTE is.
+//   different purpose depending on what the HEARTSIGIL_BYTE is.
 //
 // As for the other 3 slots...obviously, an arbitrary long string won't fit
 // into the remaining 3*32 bits, or even 3*64 bits!  You can fit the data for
@@ -164,45 +164,45 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // and then an extra 2 bits ("crumb") that that encode whether one of 3
 // different Sigil [@ ^ $] are present.
 //
-// Heart and Sigil are multiplexed into a single byte, called KIND_BYTE.
+// Heart and Sigil are multiplexed into a single byte, called HEARTSIGIL_BYTE.
 //
 // Most of the time code wants to check the Type_Of() of a cell and not it's
 // Heart_Of(), as Type treats quoted/quasi/antiform cells differently.  If you
 // only check Heart, then (''''x) equals (x) because both hearts are WORD!.
 //
-// 1. It's good to document where a Byte means a KindByte.  This doesn't
+// 1. It's good to document where a Byte means a HeartsigilByte.  This doesn't
 //    come up too often because most code isn't set up to handle the
 //    multiplexing of the Heart byte with a Sigil, so most code should just
 //    be dealing with Heart or Option(Heart).
 //
-// 2. There's a complex runtime check to ensure coherence in the KIND_BYTE
+// 2. There's a complex runtime check to ensure coherence in the HEARTSIGIL_BYTE
 //    with the rest of the cell, which is triggered in some C++ builds when
-//    you use KIND_BYTE() directly.  This raw accessor is used to implement
+//    you use HEARTSIGIL_BYTE() directly.  This raw accessor is used to implement
 //    that layer, and can also be used for efficiency in some cases that
 //    want to subvert those checks.
 
-typedef Byte KindByte;  // help document when Byte is Heart + Sigil [1]
+typedef Byte HeartsigilByte;  // help document when Byte is Heart + Sigil [1]
 
-#define KIND_BYTE_RAW(cell) /* don't go through KindHolder() [2] */ \
+#define HEARTSIGIL_BYTE_RAW(cell) /* don't go through KindHolder() [2] */ \
     SECOND_BYTE(&(cell)->header.bits)
 
-#define FLAG_KIND_BYTE(byte) \
-    FLAG_SECOND_BYTE(byte)
+#define FLAG_HEARTSIGIL_BYTE(byte) \
+    FLAG_SECOND_BYTE(exactly(int, (byte)))
 
 #define FLAG_HEART(heart) \
-    FLAG_KIND_BYTE(i_cast(KindByte, known(Heart, (heart))))
+    FLAG_SECOND_BYTE(i_cast(HeartsigilByte, known(Heart, (heart))))
 
-#define KIND_BYTEMASK_HEART_0x3F  0x3F  /* 64 hearts, 2 bit crumb for Sigil */
-#define CELL_MASK_HEART_NO_SIGIL  FLAG_SECOND_BYTE(KIND_BYTEMASK_HEART_0x3F)
+#define HEARTSIGIL_BYTEMASK_HEART_0x3F  0x3F  /* 64 hearts, 2 bit crumb for Sigil */
+#define CELL_MASK_HEART_NO_SIGIL  FLAG_SECOND_BYTE(HEARTSIGIL_BYTEMASK_HEART_0x3F)
 
-#define CELL_MASK_HEART_AND_SIGIL  FLAG_KIND_BYTE(255)
+#define CELL_MASK_HEART_AND_SIGIL  FLAG_HEARTSIGIL_BYTE(255)
 
-#define KIND_SIGIL_SHIFT  6
+#define BYTE_SIGIL_SHIFT  6
 
 
 //=//// CELL 2-bit SIGIL! /////////////////////////////////////////////////=//
 //
-// The KIND_BYTE() is structured so that the top two bits of the byte are
+// The HEARTSIGIL_BYTE() is structured so that the top two bits of the byte are
 // used for the "Sigil".  This can be [$ @ ^] or nothing.
 //
 // The TYPE_BYTE() values are chosen so that the non-quoted/quasi Sigilized
@@ -213,12 +213,12 @@ typedef Byte KindByte;  // help document when Byte is Heart + Sigil [1]
     u_cast(Option(Sigil), SIGIL_0_constexpr)
 
 #define FLAG_SIGIL_CRUMB(crumb) \
-    FLAG_KIND_BYTE((crumb) << KIND_SIGIL_SHIFT)
+    FLAG_HEARTSIGIL_BYTE((crumb) << BYTE_SIGIL_SHIFT)
 
 #define FLAG_SIGIL(sigil) \
     FLAG_SIGIL_CRUMB(ii_cast(Byte, known(Option(Sigil), (sigil))))
 
-#define CELL_MASK_SIGIL  FLAG_SIGIL_CRUMB(3)  // 0b11 << KIND_SIGIL_SHIFT
+#define CELL_MASK_SIGIL  FLAG_SIGIL_CRUMB(3)  // 0b11 << BYTE_SIGIL_SHIFT
 
 
 //=//// BITS 16-23: TYPE AND QUOTE/QUASI/ANTI/DUAL BYTE ("LIFT") //////////=//
@@ -254,8 +254,6 @@ typedef Byte TypeByte;   // any byte value (but represents a Type/Lift)
 #define Type_Of_Raw(v) \
     i_cast(Type, TYPE_BYTE_RAW(v))
 
-#define LIFT_0  TYPE_0_constexpr
-#define BEDROCK_255  LIFT_255
 
 #define MAX_TYPE_NOQUOTE_QUASI_OK  i_cast(TypeEnum, 64)
 #define MAX_TYPE_NOQUOTE_NOQUASI  i_cast(TypeEnum, 63)
@@ -276,23 +274,23 @@ STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_64_TIMES_QUASI) == 192);
 
 #define Quote_Shift(n)      ((n) << 1)  // help find manipulation sites
 
-#define FLAG_LIFT(type) \
+#define FLAG_TYPE_BYTE(type) \
+    FLAG_THIRD_BYTE(exactly(int, (type)))
+
+#define FLAG_TYPE(type) \
     FLAG_THIRD_BYTE(i_cast(TypeByte, known(TypeEnum, (type))))
 
 #define CELL_MASK_LIFTED_OR_ANTIFORM_OR_DUAL \
-    FLAG_LIFT(LIFT_192)  // 128 + 64, the 2 high bits set
+    FLAG_TYPE_BYTE(192)  // 128 + 64, the 2 high bits set
 
 #define CELL_MASK_HEART_AND_SIGIL_AND_LIFT \
-    (CELL_MASK_HEART_AND_SIGIL | FLAG_LIFT(LIFT_255))
-
-#define As_Lift(type) \
-    i_cast(TypeEnum, known(Heart, (type)))
+    (CELL_MASK_HEART_AND_SIGIL | FLAG_TYPE_BYTE(255))
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//
 //
 // Because the header for cells is only 32 bits on 32-bit platforms, there
-// are only 8 bits left over when you've used up the BASE_BYTE, KIND_BYTE,
+// are only 8 bits left over when you've used up the BASE_BYTE, HEARTSIGIL_BYTE,
 // and TYPE_BYTE.  These 8 scarce remaining cell bits have to be used very
 // carefully...and are multiplexed across types that can be tricky.
 //

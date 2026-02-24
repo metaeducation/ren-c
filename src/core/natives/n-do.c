@@ -321,7 +321,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
             );
             Tweak_Link_Inherit_Bind(varlist, Cell_Binding(source));
             Tweak_Cell_Binding(source, varlist);
-            KIND_BYTE(source) = HEART_BLOCK;
+            HEARTSIGIL_BYTE(source) = HEART_BLOCK;
 
             Remember_Cell_Is_Lifeguard(source);  // may be only reference!
             goto initial_entry_list;

@@ -57,8 +57,8 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
   // on purpose--to reserve the meanings for future use.
 
     if (
-        (elem->header.bits & (FLAG_LIFT(LIFT_255) | CELL_MASK_SIGIL))
-            != FLAG_LIFT(TYPE_QUASIFORM)
+        (elem->header.bits & (FLAG_TYPE_BYTE(255) | CELL_MASK_SIGIL))
+            != FLAG_TYPE(TYPE_QUASIFORM)
     ){
         if (Type_Of(elem) != TYPE_QUASIFORM)
             return fail (

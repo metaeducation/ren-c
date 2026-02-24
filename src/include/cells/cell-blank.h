@@ -56,7 +56,7 @@
 INLINE Element* Init_Blank_Untracked(Init(Element) out, Flags flags) {
     Reset_Cell_Header(
         out,
-        FLAG_KIND_BYTE(TYPE_BLANK) | flags
+        FLAG_HEART(HEART_BLANK) | flags
             | CELL_FLAG_DONT_MARK_PAYLOAD_1
             | CELL_FLAG_DONT_MARK_PAYLOAD_2
     );
@@ -68,7 +68,7 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out, Flags flags) {
 }
 
 #define Init_Blank(out) \
-    TRACK(Init_Blank_Untracked((out), FLAG_LIFT(TYPE_BLANK)))
+    TRACK(Init_Blank_Untracked((out), FLAG_TYPE(TYPE_BLANK)))
 
 
 //=//// DECORATED BLANK! ("," DOES NOT RENDER) ////////////////////////////=//
@@ -94,7 +94,7 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out, Flags flags) {
 INLINE Element* Init_Sigiled_Blank_Core(Init(Element) out, Sigil sigil) {
     return Init_Blank_Untracked(
         out,
-        FLAG_LIFT(sigil ? Lift_From_Sigil(sigil) : i_cast(TypeEnum, TYPE_BLANK))
+        FLAG_TYPE(sigil ? Lift_From_Sigil(sigil) : TYPE_BLANK)
             | FLAG_SIGIL(sigil)
     );
 }
@@ -158,13 +158,13 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
 //
 
 #define Init_Void_Untracked(out) \
-    Init_Blank_Untracked((out), FLAG_LIFT(TYPE_VOID))
+    Init_Blank_Untracked((out), FLAG_TYPE(TYPE_VOID))
 
 #define Init_Void(out) \
     TRACK(Init_Void_Untracked(out))
 
 #define Init_Lifted_Void(out) \
-    Init_Blank_Untracked(Possibly_Unstable(out), FLAG_LIFT(TYPE_QUASIFORM))
+    Init_Blank_Untracked(Possibly_Unstable(out), FLAG_TYPE(TYPE_QUASIFORM))
 
 
 //=//// "VOID TO MAKE HEAVY" FLAG /////////////////////////////////////////=//
@@ -197,8 +197,8 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
     ((L)->out->header.bits |= CELL_FLAG_OUT_NOTE_VOID_TO_MAKE_HEAVY)
 
 #define CELL_MASK_VOID_TO_MAKE_HEAVY \
-    (FLAG_KIND_BYTE(HEART_BLANK_SIGNIFYING_VOID) \
-        | FLAG_LIFT(TYPE_VOID) \
+    (FLAG_HEART(HEART_BLANK_SIGNIFYING_VOID) \
+        | FLAG_TYPE(TYPE_VOID) \
         | CELL_FLAG_OUT_NOTE_VOID_TO_MAKE_HEAVY)
 
 #define Is_Level_Out_Noted_Void_To_Make_Heavy(L) /* one mask operation [2] */ \

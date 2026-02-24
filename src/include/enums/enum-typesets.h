@@ -72,7 +72,7 @@ INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
 
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
 //
-// Note that the KIND_BYTE() is what is being tested--e.g. the type that the
+// Note that the HEARTSIGIL_BYTE() is what is being tested--e.g. the type that the
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
 // indicators in the TYPE_BYTE() do not affect it.
 //

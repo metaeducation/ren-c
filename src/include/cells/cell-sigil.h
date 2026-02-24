@@ -23,7 +23,7 @@
 // they are decorations that can be applied to any plain form.  Unlike
 // quoting, they can be applied only once...so there is no $$ or @$
 //
-// Sigils (or their absence) are represented via 2 bits in the KIND_BYTE().
+// Sigils (or their absence) are represented via 2 bits in the HEARTSIGIL_BYTE().
 // This limits the number of fundamental types to 60 (as TYPE_0 is reserved
 // for representing an extension type, and 3 type bytes are reserved for
 // the Sigil pseudotypes).  This limitation is not of much concern in the
@@ -51,6 +51,8 @@ STATIC_ASSERT(SIGIL_META == ii_cast(Sigil, TYPE_METAFORM));
 STATIC_ASSERT(SIGIL_PIN == ii_cast(Sigil, TYPE_PINNED));
 STATIC_ASSERT(SIGIL_TIE == ii_cast(Sigil, TYPE_TIED));
 
+INLINE bool Any_Sigiled_Type(Option(Type) t)
+  { return t == TYPE_METAFORM or t == TYPE_PINNED or t == TYPE_TIED; }
 
 #define Unchecked_Unlifted_Cell_Has_Sigil(sigil,cell) \
     (((cell)->header.bits & \
@@ -87,25 +89,30 @@ STATIC_ASSERT(SIGIL_TIE == ii_cast(Sigil, TYPE_TIED));
 INLINE Option(Sigil) Sigil_Of(const Element* v) {
     assert(Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI);
     if (Type_Of_Raw(v) < MIN_TYPE_HEART) {
-        assert((KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT) == TYPE_BYTE_RAW(v));
+        assert((HEARTSIGIL_BYTE_RAW(v) >> BYTE_SIGIL_SHIFT) == TYPE_BYTE_RAW(v));
         return i_cast(Sigil, TYPE_BYTE_RAW(v));
     }
     assert(not (v->header.bits & CELL_MASK_SIGIL));
     return SIGIL_0;
 }
 
+INLINE Sigil Sigil_For_Sigiled_Type(TypeEnum type) {
+    assert(Any_Sigiled_Type(type));
+    return i_cast(Sigil, type);
+}
+
 INLINE Option(Sigil) Cell_Underlying_Sigil(const Cell* cell) {
     possibly(Type_Of_Raw(cell) >= MIN_TYPE_ANTIFORM);  // SIGIL_0 if antiform
     possibly(Type_Of_Raw(cell) == BEDROCK_255);  // !!! allow, or take Value?
-    Sigil sigil = i_cast(Sigil, KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT);
+    Sigil sigil = i_cast(Sigil, HEARTSIGIL_BYTE_RAW(cell) >> BYTE_SIGIL_SHIFT);
     if (sigil and Type_Of_Raw(cell) <= MAX_TYPE_NOQUOTE_NOQUASI)  // raw [2]
         assert(sigil == i_cast(Sigil, TYPE_BYTE_RAW(cell)));
     return sigil;
 }
 
-#define Kind_From_Sigil_And_Heart(sigil,heart) \
-    ((ii_cast(KindByte, known(Option(Sigil), (sigil))) << KIND_SIGIL_SHIFT) \
-        | i_cast(KindByte, known(Heart, (heart))))
+#define Byte_From_Heart_And_Sigil(heart,sigil) \
+    ((ii_cast(HeartsigilByte, known(Option(Sigil), (sigil))) << BYTE_SIGIL_SHIFT) \
+        | i_cast(HeartsigilByte, known(Heart, (heart))))
 
 
 //=//// SIGIL MODIFICATION ////////////////////////////////////////////////=//
@@ -133,9 +140,6 @@ INLINE bool Any_Sigilable_Type(Option(Type) t) {  // build on sequencable [1]
     );
 }
 
-INLINE bool Any_Sigiled_Type(Option(Type) t)
-  { return t == TYPE_METAFORM or t == TYPE_PINNED or t == TYPE_TIED; }
-
 #define Any_Sigilable(cell) \
     Any_Sigilable_Type(Type_Of(cell))
 
@@ -150,7 +154,7 @@ INLINE Element* Clear_Cell_Sigil(Element* v) {
 
     if (Type_Of_Raw(v) < MIN_TYPE_HEART) {
         assert(had_sigil or Type_Of_Raw(v) == TYPE_0_constexpr);
-        TYPE_BYTE(v) = i_cast(TypeEnum, KIND_BYTE(v));  // after sigil removed
+        TYPE_BYTE(v) = i_cast(TypeEnum, HEARTSIGIL_BYTE(v));  // after sigil removed
     }
 
   #if RUNTIME_CHECKS
@@ -193,16 +197,6 @@ INLINE Option(char) Char_For_Sigil(Option(Sigil) sigil) {
     }
 }
 
-INLINE Sigil Sigil_For_Sigiled_Type(Type type) {
-    switch (type) {
-      case TYPE_METAFORM:  return SIGIL_META;
-      case TYPE_PINNED:    return SIGIL_PIN;
-      case TYPE_TIED:      return SIGIL_TIE;
-      default:
-        crash (nullptr);
-    }
-}
-
 
 //=//// UPDATING CELL TYPES ///////////////////////////////////////////////=//
 //
@@ -212,18 +206,18 @@ INLINE Sigil Sigil_For_Sigiled_Type(Type type) {
 //
 
 INLINE void Tweak_Cell_Type(Element* v, Heart heart) {
-    KIND_BYTE(v) = heart;
-    TYPE_BYTE(v) = As_Lift(heart);
+    HEARTSIGIL_BYTE(v) = heart;
+    TYPE_BYTE(v) = i_cast(TypeEnum, heart);
 }
 
 INLINE void Tweak_Cell_Quoted_Type(Element* v, Heart heart) {
-    KIND_BYTE(v) = heart;
+    HEARTSIGIL_BYTE(v) = heart;
     TYPE_BYTE(v) = TYPE_QUOTED_1_TIME_NONQUASI;
 }
 
-INLINE void Tweak_Cell_Sigiled_Type(Cell* cell, Sigil sigil, Heart heart) {
+INLINE void Tweak_Cell_Sigiled_Type(Cell* cell, Heart heart, Sigil sigil) {
     assert(sigil);
     definitely(i_cast(TypeEnum, sigil) < MIN_TYPE_HEART);
-    KIND_BYTE(cell) = Kind_From_Sigil_And_Heart(sigil, heart);
+    HEARTSIGIL_BYTE(cell) = Byte_From_Heart_And_Sigil(heart, sigil);
     TYPE_BYTE(cell) = Lift_From_Sigil(sigil);
 }

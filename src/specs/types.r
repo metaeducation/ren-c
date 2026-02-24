@@ -279,8 +279,8 @@ word!       "evaluates a variable or action"
 ; ============================================================================
 
 ; TYPE_QUASIFORM, TYPE_QUOTED_X_TIMES_XXX, and all the other antiform types
-; (TYPE_SPLICE, TYPE_TRASH, etc.) enum values never appear in the KIND_BYTE()
-; of a cell.  These are synthesized datatypes in the TYPE_BYTE().
+; (TYPE_SPLICE, TYPE_TRASH..) enum values never appear in the HEARTSIGIL_BYTE
+; of a cell.  These are synthesized datatypes in the TYPE_BYTE.
 ;
 ; They're not inert... QUASIFORM? becomes ANTIFORM? when evaluated, and QUOTED?
 ; removes one level of quoting.  (ANTIFORM? should never be seen by the

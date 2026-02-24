@@ -116,10 +116,10 @@ INLINE Dual* Init_Word_Untracked(
 }
 
 #define Init_Word(out,str) \
-    TRACK(Init_Word_Untracked((out), FLAG_LIFT(TYPE_WORD), (str)))
+    TRACK(Init_Word_Untracked((out), FLAG_TYPE(TYPE_WORD), (str)))
 
 #define Init_Quasi_Word(out,symbol) \
-    TRACK(Init_Word_Untracked((out), FLAG_LIFT(TYPE_QUASIFORM), (symbol)))
+    TRACK(Init_Word_Untracked((out), FLAG_TYPE(TYPE_QUASIFORM), (symbol)))
 
 INLINE Dual* Init_Word_Bound_Untracked(
     Sink(Dual) out,

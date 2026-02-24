@@ -317,7 +317,7 @@ INLINE bool Is_Cell_Space_With_Lift_Sigil(
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_RUNE_IS_SPACE
     )) == (
         FLAG_HEART(HEART_RUNE)
-            | FLAG_LIFT(type)
+            | FLAG_TYPE(type)
             | FLAG_SIGIL(sigil)
             | CELL_FLAG_RUNE_IS_SPACE
     );

@@ -38,10 +38,10 @@
 // make-work to check for them when you're sure you're dealing with something
 // that is constrained to being a valid cell heart.
 //
-// Hence, only some TYPE_XXX values can be written into KIND_BYTE():
+// Hence, only some TYPE_XXX values can be written into HEARTSIGIL_BYTE():
 //
-//    KIND_BYTE(cell) = TYPE_INTEGER;  // valid
-//    KIND_BYTE(cell) = TYPE_QUASIFORM;  // invalid, it's a pseudotype
+//    HEARTSIGIL_BYTE(cell) = TYPE_INTEGER;  // valid
+//    HEARTSIGIL_BYTE(cell) = TYPE_QUASIFORM;  // invalid, it's a pseudotype
 //
 // And you shouldn't really be comparing Heart against pseudotypes:
 //

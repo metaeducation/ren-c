@@ -92,8 +92,8 @@ void Startup_Feeds(void)
 {
     g_cell_aligned_end.header.bits = (
         FLAG_FIRST_BYTE(BASE_BYTE_END)
-            | FLAG_KIND_BYTE(TYPE_BLANK)  // make testable as BLANK! too [1]
-            | FLAG_LIFT(TYPE_BLANK)
+            | FLAG_HEART(HEART_BLANK)  // testing trick [1]
+            | FLAG_TYPE(TYPE_BLANK)
     );
 
     static const void* packed = &g_cell_aligned_end;  // "packed feed items"

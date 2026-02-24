@@ -133,11 +133,11 @@ INLINE Element* Unquote_Quoted_Cell(Element* v) {
     TYPE_BYTE_RAW(v) -= Quote_Shift(1);
     possibly(TYPE_BYTE_RAW(v) == QUASIFORM_64);
     if (TYPE_BYTE_RAW(v) == NOQUOTE_63) {
-        Sigil sigil = i_cast(Sigil, KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT);
+        Sigil sigil = i_cast(Sigil, HEARTSIGIL_BYTE_RAW(v) >> BYTE_SIGIL_SHIFT);
         if (sigil)
             TYPE_BYTE(v) = Lift_From_Sigil(sigil);
         else
-            TYPE_BYTE(v) = i_cast(TypeEnum, KIND_BYTE(v));
+            TYPE_BYTE(v) = i_cast(TypeEnum, HEARTSIGIL_BYTE(v));
     }
     return v;
 }
@@ -147,19 +147,19 @@ INLINE void Normalize_Cell(Cell* cell) {  // drop quoted/quasi/anti, keep sigil
     if (Type_Of_Raw(cell) < MIN_TYPE_HEART) {
         possibly(Type_Of_Raw(cell) == TYPE_0_constexpr);  // extended, no Sigil
         assert(
-            (KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT) == TYPE_BYTE_RAW(cell)
+            (HEARTSIGIL_BYTE_RAW(cell) >> BYTE_SIGIL_SHIFT) == TYPE_BYTE_RAW(cell)
         );
     }
     else if (Type_Of_Raw(cell) <= MAX_TYPE_HEART) {
-        assert(TYPE_BYTE_RAW(cell) == KIND_BYTE_RAW(cell));  // no Sigil, equal
+        assert(TYPE_BYTE_RAW(cell) == HEARTSIGIL_BYTE_RAW(cell));  // no Sigil, equal
     }
     else {
         possibly(TYPE_BYTE_RAW(cell) == QUASIFORM_64);
-        Sigil sigil = i_cast(Sigil, KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT);
+        Sigil sigil = i_cast(Sigil, HEARTSIGIL_BYTE_RAW(cell) >> BYTE_SIGIL_SHIFT);
         if (sigil)
             TYPE_BYTE(cell) = Lift_From_Sigil(sigil);
         else
-            TYPE_BYTE(cell) = i_cast(TypeEnum, KIND_BYTE(cell));
+            TYPE_BYTE(cell) = i_cast(TypeEnum, HEARTSIGIL_BYTE(cell));
     }
 }
 

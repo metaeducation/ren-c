@@ -1,6 +1,6 @@
 //
 //  file: %struct-value.h
-//  summary: "Subclasses of Cell to quarantine TYPE_BYTE()/KIND_BYTE() states"
+//  summary: "Subclasses of Cell to quarantine TYPE_BYTE() states"
 //  project: "Ren-C Interpreter and Run-time"
 //  homepage: https://github.com/metaeducation/ren-c/
 //

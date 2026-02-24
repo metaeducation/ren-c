@@ -290,12 +290,12 @@ for-each 't datatype-objects [
     if t.cellmask [
         ;
         ; NOTE: FLAG_HEART_AND_LIFT() is an inline function (repeats macro
-        ; argument) so it's slower than FLAG_HEART() and FLAG_LIFT(); since
+        ; argument) so it's slower than FLAG_HEART() and FLAG_TYPE(); since
         ; this is auto-generated do it the faster way.
         ;
         e-types/emit [t --[
             #define CELL_MASK_${T.NAME} \
-                (FLAG_HEART(HEART_${T.NAME}) | FLAG_LIFT(TYPE_${T.NAME}) | $<MOLD T.CELLMASK>)
+                (FLAG_HEART(HEART_${T.NAME}) | FLAG_TYPE(TYPE_${T.NAME}) | $<MOLD T.CELLMASK>)
         ]--]
     ]
 
@@ -488,7 +488,7 @@ do-appends: proc [
 === "PSEUDOTYPES FOR SIGILIZED TYPES" ===
 
 ; TYPE_METAFORM, TYPE_PINNED, and TYPE_TIED come from 2-bit encoding in the
-; KIND_BYTE() so are derived types when present in the TYPE_BYTE.
+; HEARTSIGIL_BYTE() so are derived types when present in the TYPE_BYTE.
 
 max-sigil: ~
 
@@ -838,7 +838,7 @@ e-hearts/emit [rebs --[
             TYPE_$[Quasiform],
             TYPE_$[Quoteds],
             TYPE_$[Antiforms],
-            LIFT_255 = 255
+            BEDROCK_255 = 255
         } TypeEnum;
 
         #define HEART_0_constexpr  TYPE_0_constexpr
@@ -847,7 +847,7 @@ e-hearts/emit [rebs --[
         /*
          * The "Extra Heart Byte Checks" are designed to make sure you don't
          * pass Type where Heart is expected, or things like TYPE_QUASIFORM
-         * or TYPE_SPLICE into the KIND_BYTE().
+         * or TYPE_SPLICE into the HEARTSIGIL_BYTE().
          *
          * Doing this with overlapping enums may not seem ideal, but trying
          * to do it with one enum and C++ tricks to filter it wind up costing
@@ -899,7 +899,7 @@ e-hearts/emit [rebs --[
 
         #define TYPE_0_constexpr  TypeEnum::ENUM_0_constexpr
         $[TypeDefines]
-        #define LIFT_255  TypeEnum::ENUM_255
+        #define BEDROCK_255  TypeEnum::ENUM_255
     #endif
 
     STATIC_ASSERT(i_cast(int, $<MAX-TYPE>) <= 256);  /* Stored in bytes */

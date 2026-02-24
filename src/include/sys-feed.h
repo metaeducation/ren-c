@@ -838,14 +838,14 @@ INLINE Result(Feed*) Prep_At_Feed(
 //
 #define Next_Not_Word_Or_Is_Newline_Or_End(L) ( \
     (u_cast(Cell*, L->feed->p)->header.bits & ( /* g_cell_aligned_end? [1] */ \
-        FLAG_KIND_BYTE(255) \
-            | FLAG_LIFT(LIFT_255) \
+        FLAG_HEARTSIGIL_BYTE(255) \
+            | FLAG_TYPE_BYTE(255) \
             | CELL_FLAG_NEWLINE_BEFORE \
     )) != ( \
-        FLAG_KIND_BYTE(TYPE_WORD) /* CHAIN! or PATH!...worth it? [2] */ \
-            | FLAG_LIFT(TYPE_WORD)   \
+        FLAG_HEART(HEART_WORD) /* CHAIN! or PATH!...worth it? [2] */ \
+            | FLAG_TYPE(TYPE_WORD)   \
             | (not CELL_FLAG_NEWLINE_BEFORE)  /* no infix newlines [3] */ \
-    ))  // !!! REVIEW: can just look for As_Lift(TYPE_WORD)!
+    ))  // !!! REVIEW: can just look for TYPE_WORD!
 
 
 // Due to Feeds canonizing rebEND to g_cell_aligned_end, we can take advantage
@@ -854,9 +854,9 @@ INLINE Result(Feed*) Prep_At_Feed(
 //
 #define Next_Is_End_Or_Blank(L) ( \
     (u_cast(Cell*, L->feed->p)->header.bits & ( \
-        FLAG_KIND_BYTE(255) \
-            | FLAG_LIFT(LIFT_255) \
+        FLAG_HEARTSIGIL_BYTE(255) \
+            | FLAG_TYPE_BYTE(255) \
     )) == ( \
-        FLAG_KIND_BYTE(TYPE_BLANK) \
-            | FLAG_LIFT(TYPE_BLANK) \
-    ))  // !!! REVIEW: can just look for FLAG_LIFT(TYPE_BLANK)
+        FLAG_HEART(HEART_BLANK) \
+            | FLAG_TYPE(TYPE_BLANK) \
+    ))  // !!! REVIEW: can just look for FLAG_TYPE(TYPE_BLANK)

@@ -1327,16 +1327,16 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             Type_Of_Raw(check) <= MAX_TYPE_NOQUOTE_QUASI_OK
             or Type_Of(check) == TYPE_QUOTED_1_TIME_NONQUASI
         ){
-            KindByte kind = KIND_BYTE(check);
+            HeartsigilByte byte = HEARTSIGIL_BYTE(check);
             if (
-                kind == Kind_From_Sigil_And_Heart(SIGIL_0, HEART_WORD)
-                or kind == Kind_From_Sigil_And_Heart(SIGIL_META, HEART_WORD)
+                byte == HEART_WORD
+                or byte == Byte_From_Heart_And_Sigil(HEART_WORD, SIGIL_META)
             ){
                 body_needs_binding = true;
                 continue;
             }
             else if (
-                kind == Kind_From_Sigil_And_Heart(SIGIL_TIE, HEART_WORD)
+                byte == Byte_From_Heart_And_Sigil(HEART_WORD, SIGIL_TIE)
             ){
                 continue;
             }
@@ -1390,11 +1390,11 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 
         symbol = Word_Symbol(item);
 
-        KindByte kind = KIND_BYTE(item);
+        HeartsigilByte byte = HEARTSIGIL_BYTE(item);
 
         Init(Slot) slot = Append_Context(varlist, symbol);
 
-        if (kind == Kind_From_Sigil_And_Heart(SIGIL_TIE, HEART_WORD)) {
+        if (byte == Byte_From_Heart_And_Sigil(HEART_WORD, SIGIL_TIE)) {
             if (dummy_sym == SYM_DUMMY9)
                 error = Error_User(
                     "Current limitation: only up to 9 foreign/space keys"
@@ -1419,10 +1419,10 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             }
 
             Init_Void_Signifying_Unset(slot);
-            if (kind == Kind_From_Sigil_And_Heart(SIGIL_META, HEART_WORD))
+            if (byte == Byte_From_Heart_And_Sigil(HEART_WORD, SIGIL_META))
                 Set_Cell_Flag(slot, LOOP_SLOT_ROOT_META);
             else
-                assert(kind == Kind_From_Sigil_And_Heart(SIGIL_0, HEART_WORD));
+                assert(byte == HEART_WORD);
         }
 
         if (Type_Of(item) == TYPE_QUOTED_1_TIME_NONQUASI)
