@@ -748,7 +748,7 @@ Bounce Stepper_Executor(Level* L)
     if (Type_Of_Raw(CURRENT) <= MAX_TYPE_NOQUOTE_NOQUASI) {
         Option(Sigil) sigil = Sigil_Of(CURRENT);
         switch (opt sigil) {
-          case SIGIL_0:
+          case SIGIL_0_constexpr:
             goto handle_plain;
 
           case SIGIL_META:  // ^ allows unstable antiforms to fetch

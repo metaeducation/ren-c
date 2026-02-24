@@ -104,7 +104,7 @@ INLINE Option(Sigil) Cell_Underlying_Sigil(const Cell* cell) {
 }
 
 #define Kind_From_Sigil_And_Heart(sigil,heart) \
-    (ii_cast(KindByte, known(Option(Sigil), (sigil)) << KIND_SIGIL_SHIFT) \
+    ((ii_cast(KindByte, known(Option(Sigil), (sigil))) << KIND_SIGIL_SHIFT) \
         | i_cast(KindByte, known(Heart, (heart))))
 
 
@@ -184,7 +184,7 @@ INLINE Element* Add_Cell_Sigil(Element* v, Sigil sigil) {
 
 INLINE Option(char) Char_For_Sigil(Option(Sigil) sigil) {
     switch (opt sigil) {
-      case SIGIL_0:     return '\0';
+      case SIGIL_0_constexpr: return '\0';
       case SIGIL_META:  return '^';
       case SIGIL_PIN:   return '@';
       case SIGIL_TIE:   return '$';

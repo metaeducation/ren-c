@@ -420,6 +420,7 @@ e-typespecs: make-emitter "Type Help Descriptions" (
 
 ; lists are all of the form "XXX = (num)", prefix (e.g. "TYPE_") added later
 sigils: make block! 3
+sigilizeds: make block! 3
 hearts: make block! 60  ; 64 minus sigils minus TYPE_0
 quasiform: make block! 1  ; just QUASIFORM! (in a list to fit pattern)
 quoteds: make block! 128  ; 128 states for 64 quote levels
@@ -489,14 +490,20 @@ do-appends: proc [
 ; TYPE_METAFORM, TYPE_PINNED, and TYPE_TIED come from 2-bit encoding in the
 ; KIND_BYTE() so are derived types when present in the TYPE_BYTE.
 
-for-each [name description] [
-    metaform "marker to read unlifted and write lifted representations"
-    pinned "mark to bind in the evaluator in current context, and keep mark"
-    tied "mark to bind in the evaluator in current context, and drop mark"
+max-sigil: ~
+
+for-each [sigil name description] [
+    meta metaform "read and write undecayed representations"
+    pin pinned "bind in the evaluator in current context, and keep pin"
+    tie tied "bind in the evaluator in current context, and drop tie"
 ][
     e-typeset-bytes/emit [name "$<name> $<index>"]
 
-    do-appends $sigils name description ["TYPESET_FLAG_BRANCH"]
+    max-sigil: sigil
+
+    append sigils cscape [sigil --[${SIGIL} = $<index>]--]
+
+    do-appends $sigilizeds name description ["TYPESET_FLAG_BRANCH"]
 ]
 
 === "HEART TYPES" ===
@@ -794,6 +801,21 @@ e-hearts: make-emitter "Cell Hearts Enum" (
 )
 
 e-hearts/emit [rebs --[
+
+    /*
+     * SIGILS
+     *
+     * META (^) PIN (@) and TIE ($) are chosen in sync with the type bytes
+     * so that 1, 2, and 3 of the TYPE_BYTE can be unlifted Sigilized states.
+     */
+    typedef enum {
+        SIGIL_0_constexpr = 0,
+        SIGIL_$(Sigils),
+    } Sigil;
+
+    #define MAX_SIGIL  SIGIL_$<MAX-SIGIL>
+
+
     /*
      * INTERNAL CELL HEART ENUM, e.g. TYPE_BLOCK or TYPE_TAG
      *
@@ -811,7 +833,7 @@ e-hearts/emit [rebs --[
     #if (! DEBUG_EXTRA_HEART_CHECKS)
         typedef enum {
             TYPE_0_constexpr = 0,  /* prefer TYPE_0 to get Option(Type) */
-            TYPE_$[Sigils],
+            TYPE_$[Sigilizeds],
             TYPE_$[Hearts],
             TYPE_$[Quasiform],
             TYPE_$[Quoteds],
@@ -851,7 +873,7 @@ e-hearts/emit [rebs --[
             HEART_0_constexpr = 0,  /* prefer HEART_0 to get Option(Heart)! */
 
             /* placeholders for TYPE_METAFORM, TYPE_PINNED, TYPE_TIED */
-            PLACEHOLDER_TYPE_$[Sigils],
+            PLACEHOLDER_TYPE_$[Sigilizeds],
 
             HEART_$(Hearts),
         };
@@ -859,7 +881,7 @@ e-hearts/emit [rebs --[
         enum class TypeEnum {  /* ENUM_ prefix; bare words conflict [2] */
             ENUM_0_constexpr = 0,
 
-            ENUM_$[Sigils],
+            ENUM_$[Sigilizeds],
 
             /* placeholders for values in range of heart byte */
             ENUM_$[Hearts],

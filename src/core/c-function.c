@@ -422,7 +422,7 @@ static Result(None) Push_Keys_And_Params_Core(
         symbol = Word_Symbol(v);
 
         switch (opt Sigil_Of(v)) {
-          case SIGIL_0:
+          case SIGIL_0_constexpr:
             pclass = PARAMCLASS_NORMAL;
             break;
 

@@ -433,7 +433,7 @@ bool Try_Push_Steps_To_Stack_For_Word(
 
     Copy_Cell(PUSH(), wordlike);  // variable is what we're picking with
     switch (opt Cell_Underlying_Sigil(TOP_ELEMENT)) {
-      case SIGIL_0:
+      case SIGIL_0_constexpr:
         break;
 
       case SIGIL_META:  // we remember the sigil from scratch_var

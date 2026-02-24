@@ -205,26 +205,18 @@ typedef Byte KindByte;  // help document when Byte is Heart + Sigil [1]
 // The KIND_BYTE() is structured so that the top two bits of the byte are
 // used for the "Sigil".  This can be [$ @ ^] or nothing.
 //
-// 1. We *could* make it so that the HeartByte values of 1, 2, 3 were reserved
-//    for the TYPE_META, TYPE_PINNED, and TYPE_TIED pseudotypes.  But this is
-//    likely not worth it, as it would put pseudotypes in the same range as
-//    fundamental types (complicates checking).  It would also take away 3
-//    values from HeartByte space.  Better to pay for an addition!
+// The TYPE_BYTE() values are chosen so that the non-quoted/quasi Sigilized
+// value states are the 1, 2, and 3 values.
 //
 
-typedef enum {
-    SIGIL_0 = 0,
-    SIGIL_META = 1,     // ^
-    SIGIL_PIN = 2,      // @
-    SIGIL_TIE = 3,      // $
-    MAX_SIGIL = SIGIL_TIE
-} Sigil;
+#define SIGIL_0 /* add safety of the Option() */ \
+    u_cast(Option(Sigil), SIGIL_0_constexpr)
 
 #define FLAG_SIGIL_CRUMB(crumb) \
     FLAG_KIND_BYTE((crumb) << KIND_SIGIL_SHIFT)
 
 #define FLAG_SIGIL(sigil) \
-    FLAG_SIGIL_CRUMB(u_cast(Byte, opt x_cast_known(Option(Sigil), (sigil))))
+    FLAG_SIGIL_CRUMB(ii_cast(Byte, known(Option(Sigil), (sigil))))
 
 #define CELL_MASK_SIGIL  FLAG_SIGIL_CRUMB(3)  // 0b11 << KIND_SIGIL_SHIFT
 
