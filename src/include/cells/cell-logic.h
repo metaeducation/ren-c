@@ -94,7 +94,7 @@
 // we use a dedicated header flag applicable to LOGIC! cells.
 //
 // 1. This creates a bit of potential for mistakes when constructing LOGIC!
-//    cells, as you can't just change the LIFT_BYTE() of a WORD!.  But this
+//    cells, as you can't just change the TYPE_BYTE() of a WORD!.  But this
 //    is true of all antiforms--this is why producing quasiforms and antiforms
 //    are forced through chokepoints like Coerce_To_Antiform().
 //
@@ -104,7 +104,7 @@
 INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
     return Init_Word_Untracked(
         out,
-        FLAG_LIFT_BYTE(TYPE_LOGIC)
+        FLAG_LIFT(TYPE_LOGIC)
             | (logic ? CELL_FLAG_LOGIC_IS_OKAY : 0),
         logic ? CANON(OKAY) : CANON(NULL)
     );
@@ -116,7 +116,7 @@ INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
 #define Init_Null(out) /* name helps avoid confusion [B] */ \
     TRACK(Init_Word_Untracked( \
         Possibly_Antiform(out), \
-        FLAG_LIFT_BYTE(TYPE_LOGIC) | (not CELL_FLAG_LOGIC_IS_OKAY),  \
+        FLAG_LIFT(TYPE_LOGIC) | (not CELL_FLAG_LOGIC_IS_OKAY),  \
         CANON(NULL)))
 
 #define Init_Lifted_Null(out) \
@@ -129,7 +129,7 @@ INLINE Stable* Init_Logic_Untracked(Init(Stable) out, bool logic) {
 #define Init_Okay(out) \
     TRACK(Init_Word_Untracked( \
         Possibly_Antiform(out), \
-        FLAG_LIFT_BYTE(TYPE_LOGIC) \
+        FLAG_LIFT(TYPE_LOGIC) \
             | CELL_FLAG_LOGIC_IS_OKAY,  \
         CANON(OKAY)))
 
@@ -171,21 +171,21 @@ INLINE bool Cell_Logic_Core(const Stable* v) {
     ((Readable_Cell(Possibly_Unstable(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
-        FLAG_LIFT_BYTE(TYPE_LOGIC) | FLAG_HEART(TYPE_WORD) \
+        FLAG_LIFT(TYPE_LOGIC) | FLAG_HEART(HEART_WORD) \
             | (not CELL_FLAG_LOGIC_IS_OKAY)))
 
 #define Is_Null(v) /* test for stable values, don't confuse w/nullptr [2] */ \
     ((Readable_Cell(Possibly_Antiform(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
-        FLAG_LIFT_BYTE(TYPE_LOGIC) | FLAG_HEART(TYPE_WORD) \
+        FLAG_LIFT(TYPE_LOGIC) | FLAG_HEART(HEART_WORD) \
             | (not CELL_FLAG_LOGIC_IS_OKAY)))
 
 
 INLINE bool Is_Lifted_Null(const Value* v) {
-    if (LIFT_BYTE(v) != QUASIFORM_64)
+    if (TYPE_BYTE(v) != QUASIFORM_64)
         return false;
-    if (Heart_Of(v) != TYPE_WORD)
+    if (Heart_Of(v) != HEART_WORD)
         return false;
     return Word_Id(v) == SYM_NULL;
 }
@@ -238,7 +238,7 @@ INLINE bool Is_Lifted_Null(const Value* v) {
     ((Readable_Cell(Possibly_Unstable(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
-        FLAG_LIFT_BYTE(TYPE_LOGIC) \
+        FLAG_LIFT(TYPE_LOGIC) \
             | FLAG_HEART(HEART_WORD_SIGNIFYING_LOGIC) \
             | CELL_FLAG_LOGIC_IS_OKAY))
 
@@ -246,7 +246,7 @@ INLINE bool Is_Lifted_Null(const Value* v) {
     ((Readable_Cell(Possibly_Antiform(v))->header.bits & ( \
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_LOGIC_IS_OKAY \
     )) == ( \
-        FLAG_LIFT_BYTE(TYPE_LOGIC) \
+        FLAG_LIFT(TYPE_LOGIC) \
             | FLAG_HEART(HEART_WORD_SIGNIFYING_LOGIC) \
             | CELL_FLAG_LOGIC_IS_OKAY))
 
@@ -381,10 +381,8 @@ INLINE Value* Force_Cell_Heavy(Value* v) {
 
 INLINE bool Is_Boolean(const Stable* v) {
     Assert_Cell_Readable(v);
-
     if (not Is_Word(v))
         return false;
-
     Option(SymId) id = Word_Id(v);
     return id == SYM_TRUE or id == SYM_FALSE;
 }
@@ -409,7 +407,7 @@ INLINE bool Cell_True(const Stable* v) {  // corresponds to TRUE?
 
 INLINE bool Is_OnOff(const Stable* v) {
     Assert_Cell_Readable(v);
-    if (LIFT_BYTE(v) != As_Lift(TYPE_WORD))
+    if (not Is_Word(v))
         return false;
     Option(SymId) id = Word_Id(v);
     return id == SYM_ON or id == SYM_OFF;
@@ -435,7 +433,7 @@ INLINE bool Cell_On(const Stable* v) {  // corresponds to ON?
 
 INLINE bool Is_YesNo(const Stable* v) {
     Assert_Cell_Readable(v);
-    if (LIFT_BYTE(v) != As_Lift(TYPE_WORD))
+    if (not Is_Word(v))
         return false;
     Option(SymId) id = Word_Id(v);
     return id == SYM_YES or id == SYM_NO;

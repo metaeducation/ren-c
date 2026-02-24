@@ -1039,7 +1039,7 @@ Element* Init_Loop_Each_May_Alias_Data(
     if (Any_Sequence(data)) {  // alias paths, chains, tuples as BLOCK!
         DECLARE_ELEMENT (temp);
         assume (  // all sequences can alias as block
-            Alias_Any_Sequence_As(temp, cast(Element*, data), TYPE_BLOCK)
+            Alias_Any_Sequence_As(temp, cast(Element*, data), HEART_BLOCK)
         );
         Copy_Cell(data, temp);
     }
@@ -1205,7 +1205,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
                 SPARE, Key_Symbol(les->u.evars.key)
             );
 
-            if (heart == TYPE_MODULE) {
+            if (heart == HEART_MODULE) {
                 Tweak_Word_Index(spare_key, INDEX_PATCHED);
                 Tweak_Cell_Binding(spare_key, Cell_Module_Sea(les->data));
             }
@@ -1245,7 +1245,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
             goto maybe_lift_and_continue;
         }
 
-        if (heart == TYPE_MAP) {
+        if (heart == HEART_MAP) {
             assert(les->u.eser.index % 2 == 0);  // should be on key slot
 
             const Stable* key;
@@ -1308,7 +1308,7 @@ static Result(bool) Loop_Each_Next_Maybe_Done(Level* level_)
             goto maybe_lift_and_continue;
         }
 
-        if (heart == TYPE_BLOB) {
+        if (heart == HEART_BLOB) {
             const Binary* b = cast(Binary*, les->flex);
 
             Element* spare_integer = Init_Integer(

@@ -137,7 +137,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Decimal)
     Option(Type) type = Type_Of(arg);
     if (Any_Utf8_Type(type)) {
         trap (
-          Transcode_One(OUT, TYPE_DECIMAL, arg)
+          Transcode_One(OUT, HEART_DECIMAL, arg)
         );
         return OUT;
     }
@@ -318,7 +318,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
 
     Element* v = Element_ARG(VALUE);
     Heart heart = Heart_Of_Builtin_Fundamental(v);
-    assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
+    assert(heart == HEART_DECIMAL or heart == HEART_PERCENT);
 
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = ARG(FORM);
@@ -329,7 +329,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
     REBINT len = Emit_Decimal(
         buf,
         VAL_DECIMAL(v),
-        heart == TYPE_PERCENT ? DEC_MOLD_MINIMAL : 0,
+        heart == HEART_PERCENT ? DEC_MOLD_MINIMAL : 0,
         GET_MOLD_FLAG(mo, MOLD_FLAG_COMMA_PT) ? ',' : '.',
         mo->digits
     );
@@ -337,7 +337,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Float)
       Append_Ascii_Len(mo->strand, s_cast(buf), len)
     );
 
-    if (heart == TYPE_PERCENT) {
+    if (heart == HEART_PERCENT) {
         require (
           Append_Ascii(mo->strand, "%")
         );
@@ -374,14 +374,14 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         INCLUDE_PARAMS_OF_ADD;  // must have same layout as others
         USED(ARG(VALUE1));  // is val
         arg = Element_ARG(VALUE2);
-        if (LIFT_BYTE(arg) > MAX_LIFT_NOQUOTE_NOQUASI)
+        if (TYPE_BYTE(arg) > MAX_LIFT_NOQUOTE_NOQUASI)
             panic (Error_Not_Related_Raw(verb, Datatype_Of(arg)));
 
         heart = Heart_Of_Builtin_Fundamental(arg);
         if ((
-            heart == TYPE_PAIR
-            or heart == TYPE_TUPLE
-            or heart == TYPE_TIME
+            heart == HEART_PAIR
+            or heart == HEART_TUPLE
+            or heart == HEART_TIME
         ) and (
             id == SYM_ADD
         )){
@@ -392,27 +392,27 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         }
 
         // If the type of the second arg is something we can handle:
-        if (heart == TYPE_DECIMAL
-            || heart == TYPE_INTEGER
-            || heart == TYPE_PERCENT
-            || heart == TYPE_RUNE
+        if (heart == HEART_DECIMAL
+            || heart == HEART_INTEGER
+            || heart == HEART_PERCENT
+            || heart == HEART_RUNE
         ){
-            if (heart == TYPE_DECIMAL) {
+            if (heart == HEART_DECIMAL) {
                 d2 = VAL_DECIMAL(arg);
             }
-            else if (heart == TYPE_PERCENT) {
+            else if (heart == HEART_PERCENT) {
                 d2 = VAL_DECIMAL(arg);
                 if (id == SYM_DIVIDE)
-                    heart = TYPE_DECIMAL;
+                    heart = HEART_DECIMAL;
                 else if (not Is_Percent(val))
                     heart = Heart_Of_Builtin_Fundamental(val);
             }
-            else if (heart == TYPE_RUNE) {
+            else if (heart == HEART_RUNE) {
                 require (
                   Codepoint c = Get_Rune_Single_Codepoint(arg)
                 );
                 d2 = cast(REBDEC, c);
-                heart = TYPE_DECIMAL;
+                heart = HEART_DECIMAL;
             }
             else {
                 d2 = cast(REBDEC, VAL_INT64(arg));
@@ -518,11 +518,11 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
         return Init_Any_String(OUT, to, s);
     }
 
-    if (to == TYPE_DECIMAL or to == TYPE_PERCENT)
+    if (to == HEART_DECIMAL or to == HEART_PERCENT)
         return Init_Decimal_Or_Percent(OUT, to, d);
 
 
-    if (to == TYPE_INTEGER) {
+    if (to == HEART_INTEGER) {
         REBDEC leftover = d - cast(REBDEC, cast(REBI64, d));
         if (leftover != 0.0)
             panic (
@@ -583,7 +583,7 @@ IMPLEMENT_GENERIC(RANDOM, Any_Float)
 
     const Element* val = Element_ARG(MAX);
     Heart heart = Heart_Of_Builtin_Fundamental(val);
-    assert(heart == TYPE_DECIMAL or heart == TYPE_PERCENT);
+    assert(heart == HEART_DECIMAL or heart == HEART_PERCENT);
 
     REBDEC d = VAL_DECIMAL(val);
     REBDEC rand = Random_Dec(d, ARG(SECURE));
@@ -624,7 +624,7 @@ IMPLEMENT_GENERIC(ROUND, Any_Float)
 
     Stable* to = opt ARG(TO);
     if (not to) {
-        if (heart == TYPE_PERCENT)
+        if (heart == HEART_PERCENT)
             to = Init_Decimal(LOCAL(TO), 0.01L);  // round 5.5% -> 6%
         else
             to = Init_Integer(LOCAL(TO), 1);
@@ -635,7 +635,7 @@ IMPLEMENT_GENERIC(ROUND, Any_Float)
     d1 = Round_Dec(d1, level_, Dec64(to));
 
     if (Is_Percent(to)) {
-        heart = TYPE_PERCENT;
+        heart = HEART_PERCENT;
         return Init_Decimal_Or_Percent(OUT, heart, d1);
     }
 

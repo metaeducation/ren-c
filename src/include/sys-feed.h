@@ -65,8 +65,8 @@
         assert(
             bp[1] == 0  // not strictly necessary, but rebEND is 2 bytes
             or (
-                bp[1] == i_cast(Byte, TYPE_BLANK)
-                and bp[2] == i_cast(Byte, As_Lift(TYPE_BLANK))
+                bp[1] == i_cast(Byte, HEART_BLANK)
+                and bp[2] == i_cast(Byte, TYPE_BLANK)
             )
         );
         return true;
@@ -136,7 +136,7 @@ INLINE void Tweak_Link_Feedstub_Splice(
     Misc_Feedstub_Pending(&(feed)->singular)
 
 #define FEED_IS_VARIADIC(feed) \
-    (TYPE_BLANK == Heart_Of(Feed_Data(feed)))
+    (HEART_BLANK == Heart_Of(Feed_Data(feed)))
 
 #define FEED_VAPTR_POINTER(feed)    Feed_Data(feed)->payload.comma.vaptr
 #define FEED_PACKED(feed)           Feed_Data(feed)->payload.comma.packed
@@ -425,7 +425,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Panic(Feed* feed)
         Finalize_Variadic_Feed(feed);
 
         feed->p = Array_Head(reified);
-        Init_Any_List_At(Feed_Data(feed), TYPE_BLOCK, reified, 1);
+        Init_Any_List_At(Feed_Data(feed), HEART_BLOCK, reified, 1);
         Tweak_Feed_Binding(feed, binding);
         break; }
 
@@ -677,7 +677,7 @@ INLINE Result(Feed*) Prep_Array_Feed(
     if (first) {
         feed->p = unwrap first;
         Init_Any_List_At_Core(
-            Feed_Data(feed), TYPE_BLOCK, array, index, binding
+            Feed_Data(feed), HEART_BLOCK, array, index, binding
         );
     }
     else {
@@ -685,7 +685,7 @@ INLINE Result(Feed*) Prep_Array_Feed(
         if (feed->p == Array_Tail(array))
             feed->p = &g_cell_aligned_end;
         Init_Any_List_At_Core(
-            Feed_Data(feed), TYPE_BLOCK, array, index + 1, binding
+            Feed_Data(feed), HEART_BLOCK, array, index + 1, binding
         );
     }
 
@@ -839,11 +839,11 @@ INLINE Result(Feed*) Prep_At_Feed(
 #define Next_Not_Word_Or_Is_Newline_Or_End(L) ( \
     (u_cast(Cell*, L->feed->p)->header.bits & ( /* g_cell_aligned_end? [1] */ \
         FLAG_KIND_BYTE(255) \
-            | FLAG_LIFT_BYTE(255) \
+            | FLAG_LIFT(LIFT_255) \
             | CELL_FLAG_NEWLINE_BEFORE \
     )) != ( \
         FLAG_KIND_BYTE(TYPE_WORD) /* CHAIN! or PATH!...worth it? [2] */ \
-            | FLAG_LIFT_BYTE(As_Lift(TYPE_WORD))   \
+            | FLAG_LIFT(TYPE_WORD)   \
             | (not CELL_FLAG_NEWLINE_BEFORE)  /* no infix newlines [3] */ \
     ))  // !!! REVIEW: can just look for As_Lift(TYPE_WORD)!
 
@@ -855,8 +855,8 @@ INLINE Result(Feed*) Prep_At_Feed(
 #define Next_Is_End_Or_Blank(L) ( \
     (u_cast(Cell*, L->feed->p)->header.bits & ( \
         FLAG_KIND_BYTE(255) \
-            | FLAG_LIFT_BYTE(255) \
+            | FLAG_LIFT(LIFT_255) \
     )) == ( \
         FLAG_KIND_BYTE(TYPE_BLANK) \
-            | FLAG_LIFT_BYTE(As_Lift(TYPE_BLANK)) \
-    ))  // !!! REVIEW: can just look for As_Lift(TYPE_BLANK)!
+            | FLAG_LIFT(TYPE_BLANK) \
+    ))  // !!! REVIEW: can just look for FLAG_LIFT(TYPE_BLANK)

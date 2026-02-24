@@ -74,7 +74,7 @@
 
 
 INLINE Phase* Frame_Phase(const Cell* c) {
-    assert(Unchecked_Heart_Of(c) == TYPE_FRAME);
+    assert(Unchecked_Heart_Of(c) == HEART_FRAME);
 
     Base* base = CELL_FRAME_PAYLOAD_1_PHASE(c);  // const irrelevant
     if (Not_Base_Readable(base))
@@ -168,18 +168,18 @@ typedef Phase Lens;  // !!! Create separate type?
     x_cast(Lens*, known(Details*, (details)))  // shows all unsealed [4]
 
 INLINE void Tweak_Frame_Lens(Stable* v, Lens* lens) {
-    assert(Heart_Of(v) == TYPE_FRAME);  // may be protected (e.g. archetype)
+    assert(Heart_Of(v) == HEART_FRAME);  // may be protected (e.g. archetype)
     assert(Is_Stub_Varlist(lens) or Is_Stub_Details(lens));
     Tweak_Frame_Lens_Or_Label(v, lens);
 }
 
 INLINE Option(Stub*) Frame_Lens_Or_Label(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_FRAME);
+    assert(Heart_Of(c) == HEART_FRAME);
     return cast(Stub*, CELL_FRAME_EXTRA_LENS_OR_LABEL(c));
 }
 
 INLINE Option(Lens*) Frame_Lens(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_FRAME);
+    assert(Heart_Of(c) == HEART_FRAME);
     Flex* f = cast(Flex*, CELL_FRAME_EXTRA_LENS_OR_LABEL(c));
     if (not f or Is_Stub_Symbol(f))
         return nullptr;
@@ -188,7 +188,7 @@ INLINE Option(Lens*) Frame_Lens(const Cell* c) {
 }
 
 INLINE Option(const Symbol*) Frame_Label(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_FRAME);
+    assert(Heart_Of(c) == HEART_FRAME);
     Flex* f = cast(Flex*, CELL_FRAME_EXTRA_LENS_OR_LABEL(c));
     if (not f)
         return nullptr;
@@ -207,7 +207,7 @@ INLINE Option(const Symbol*) Frame_Label_Deep(const Cell* c) {
 }
 
 INLINE void Update_Frame_Cell_Label(Cell* c, Option(const Symbol*) label) {
-    assert(Heart_Of(c) == TYPE_FRAME);
+    assert(Heart_Of(c) == HEART_FRAME);
     Assert_Cell_Writable(c);  // archetype R/O
     Tweak_Frame_Lens_Or_Label(c, label);
 }
@@ -234,7 +234,7 @@ INLINE Element* Init_Frame_Unchecked_Untracked(
     Reset_Cell_Header(
         out,
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART_AND_LIFT(TYPE_FRAME)
+            | FLAG_HEART_AND_LIFT(HEART_FRAME)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // first is phase
             | (coupling ? 0 : CELL_FLAG_DONT_MARK_PAYLOAD_2)
     );
@@ -317,7 +317,7 @@ INLINE Value* Activate_Frame_Core(Value* v) {
 
 INLINE Element* Deactivate_Action(Exact(Value*) v) {
     assert(Is_Action(v));
-    LIFT_BYTE(v) = As_Lift(TYPE_FRAME);
+    TYPE_BYTE(v) = TYPE_FRAME;
     return As_Element(v);
 }
 
@@ -331,17 +331,17 @@ INLINE Element* Deactivate_Action(Exact(Value*) v) {
 //
 
 INLINE Option(InfixMode) Frame_Infix_Mode(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_FRAME);
+    assert(Heart_Of(c) == HEART_FRAME);
     return u_cast(InfixMode, Get_Cell_Crumb(c));
 }
 
 INLINE void Tweak_Frame_Infix_Mode(Cell* c, Option(InfixMode) mode) {
-    assert(Heart_Of(c) == TYPE_FRAME);
+    assert(Heart_Of(c) == HEART_FRAME);
     Set_Cell_Crumb(c, opt mode);
 }
 
 INLINE bool Is_Frame_Infix(const Cell* c) {  // faster than != PREFIX_0
-    assert(Heart_Of(c) == TYPE_FRAME);
+    assert(Heart_Of(c) == HEART_FRAME);
     return did (c->header.bits & CELL_MASK_CRUMB);
 }
 

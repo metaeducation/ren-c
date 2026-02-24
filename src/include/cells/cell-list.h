@@ -162,9 +162,9 @@ INLINE Element* Init_Any_List_At_Core_Untracked(
 #define Init_Any_List(v,t,a) \
     Init_Any_List_At((v), (t), (a), 0)
 
-#define Init_Block(v,a)     Init_Any_List((v), TYPE_BLOCK, (a))
-#define Init_Group(v,a)     Init_Any_List((v), TYPE_GROUP, (a))
-#define Init_Fence(v,a)     Init_Any_List((v), TYPE_FENCE, (a))
+#define Init_Block(v,a)     Init_Any_List((v), HEART_BLOCK, (a))
+#define Init_Group(v,a)     Init_Any_List((v), HEART_GROUP, (a))
+#define Init_Fence(v,a)     Init_Any_List((v), HEART_FENCE, (a))
 
 
 INLINE Element* Init_Relative_Block_At(
@@ -242,7 +242,7 @@ INLINE Stable* Spread_Cell(Exact(Stable*) v) {
 
 INLINE Element* Unsplice_Cell(Stable* v) {
     assert(Is_Splice(v));
-    LIFT_BYTE(v) = As_Lift(TYPE_BLOCK);
+    TYPE_BYTE(v) = TYPE_BLOCK;
     return As_Element(v);
 }
 

@@ -434,7 +434,7 @@ IMPLEMENT_GENERIC(EXCLUDE, Any_Series)
 //
 Result(bool) Equal_Values(const Stable* s, const Stable* t, bool strict)
 {
-    if (LIFT_BYTE(s) != LIFT_BYTE(t))
+    if (TYPE_BYTE(s) != TYPE_BYTE(t))
         return false;
 
     Option(Heart) s_heart = Heart_Of(s);
@@ -503,10 +503,10 @@ Result(bool) Equal_Values(const Stable* s, const Stable* t, bool strict)
 //
 bool Try_Lesser_Value(Sink(bool) lesser, const Stable* s, const Stable* t)
 {
-    if (LIFT_BYTE(s) >= MIN_LIFT_ANTIFORM)
+    if (TYPE_BYTE(s) >= MIN_LIFT_ANTIFORM)
         return false;  // can't do less than on antiforms
 
-    if (LIFT_BYTE(s) != LIFT_BYTE(t))
+    if (TYPE_BYTE(s) != TYPE_BYTE(t))
         return false;  // comparisons against different-quoting levels illegal
 
     Option(Heart) s_heart = Heart_Of(s);

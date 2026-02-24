@@ -64,17 +64,17 @@ INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
 //
 // Note that the Heart_Of() is what is being tested--e.g. the type that the
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
-// indicators in the LIFT_BYTE() do not affect it.
+// indicators in the TYPE_BYTE() do not affect it.
 
 #define Heart_Implies_Extra_Needs_Mark(opt_heart) \
-    ((opt opt_heart) >= TYPE_VARARGS)
+    ((opt opt_heart) >= HEART_VARARGS)
 
 
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
 //
 // Note that the KIND_BYTE() is what is being tested--e.g. the type that the
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
-// indicators in the LIFT_BYTE() do not affect it.
+// indicators in the TYPE_BYTE() do not affect it.
 //
 // 1. To make this macro fast, we assume the caller passes in Option(Heart)
 //    and use compile-time-ensure to avoid an inline function.
@@ -84,7 +84,7 @@ INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
 //    accomplished in the core code with a single comparison.
 
 #define Is_Bindable_Heart(opt_heart) /* assume Option(Heart) [1] */ \
-    (known(Heart, (opt opt_heart)) >= TYPE_BLANK)  // only one test [2]
+    (known(Heart, (opt opt_heart)) >= HEART_BLANK)  // only one test [2]
 
 #define Is_Cell_Bindable(elem) \
     Is_Bindable_Heart(Unchecked_Heart_Of(Known_Element(elem)))
@@ -96,7 +96,7 @@ INLINE bool Any_Sequence_Or_List_Type(Option(Heart) h)  // !!! optimize?
   { return Any_Sequence_Type(h) or Any_List_Type(h); }
 
 INLINE bool Any_Bytes_Heart(Option(Heart) h)
-  { return Any_Utf8_Type(h) or h == TYPE_BLOB; }
+  { return Any_Utf8_Type(h) or h == HEART_BLOB; }
 
 INLINE bool Any_Bytes_Type(Option(Type) h)
-  { return Any_Utf8_Type(h) or h == TYPE_BLOB; }
+  { return Any_Utf8_Type(h) or h == HEART_BLOB; }

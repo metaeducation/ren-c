@@ -282,7 +282,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_TIME);
+    assert(Datatype_Builtin_Heart(ARG(TYPE)) == HEART_TIME);
 
     Element* arg = ARG(DEF);
 
@@ -304,7 +304,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Time)
 
       case TYPE_TEXT: { // "hh:mm:ss"
         trap (
-          Transcode_One(OUT, TYPE_TIME, arg)
+          Transcode_One(OUT, HEART_TIME, arg)
         );
         return OUT; }
 
@@ -412,16 +412,16 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
         Element* arg = Element_ARG(VALUE2);
         Heart heart = Heart_Of_Builtin_Fundamental(arg);
 
-        if (heart == TYPE_TIME) {     // handle TIME - TIME cases
+        if (heart == HEART_TIME) {     // handle TIME - TIME cases
             REBI64 secs2 = VAL_NANO(arg);
 
             switch (opt id) {
               case SYM_ADD:
-                secs = Add_Max(TYPE_TIME, secs, secs2, MAX_TIME);
+                secs = Add_Max(HEART_TIME, secs, secs2, MAX_TIME);
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_SUBTRACT:
-                secs = Add_Max(TYPE_TIME, secs, -secs2, MAX_TIME);
+                secs = Add_Max(HEART_TIME, secs, -secs2, MAX_TIME);
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_DIVIDE:
@@ -442,16 +442,16 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                 panic (Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (heart == TYPE_INTEGER) {     // handle TIME - INTEGER cases
+        else if (heart == HEART_INTEGER) {     // handle TIME - INTEGER cases
             REBI64 num = VAL_INT64(arg);
 
             switch (opt id) {
               case SYM_ADD:
-                secs = Add_Max(TYPE_TIME, secs, num * SEC_SEC, MAX_TIME);
+                secs = Add_Max(HEART_TIME, secs, num * SEC_SEC, MAX_TIME);
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_SUBTRACT:
-                secs = Add_Max(TYPE_TIME, secs, num * -SEC_SEC, MAX_TIME);
+                secs = Add_Max(HEART_TIME, secs, num * -SEC_SEC, MAX_TIME);
                 return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_DIVIDE:
@@ -471,13 +471,13 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                 panic (Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (heart == TYPE_DECIMAL) {     // handle TIME - DECIMAL cases
+        else if (heart == HEART_DECIMAL) {     // handle TIME - DECIMAL cases
             REBDEC dec = VAL_DECIMAL(arg);
 
             switch (opt id) {
               case SYM_ADD:
                 secs = Add_Max(
-                    TYPE_TIME,
+                    HEART_TIME,
                     secs,
                     u_cast(int64_t, dec * SEC_SEC),
                     MAX_TIME
@@ -486,7 +486,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
 
               case SYM_SUBTRACT:
                 secs = Add_Max(
-                    TYPE_TIME,
+                    HEART_TIME,
                     secs,
                     u_cast(int64_t, dec * -SEC_SEC),
                     MAX_TIME
@@ -508,7 +508,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Time)
                 panic (Error_Math_Args(TYPE_TIME, verb));
             }
         }
-        else if (heart == TYPE_DATE and id == SYM_ADD) {
+        else if (heart == HEART_DATE and id == SYM_ADD) {
             //
             // We're adding a time and a date, code for which exists in the
             // date dispatcher already.  Instead of repeating the code here in

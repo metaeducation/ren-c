@@ -7,7 +7,7 @@ INLINE bool Stringlike_Cell(const Cell* v) {
 
 INLINE const Strand* Cell_Strand(const Cell* v) {
     Option(Heart) heart = Heart_Of(v);
-    if (heart == TYPE_WORD)
+    if (heart == HEART_WORD)
         return Word_Symbol(v);
 
     assert(Stringlike_Cell(v));
@@ -26,7 +26,7 @@ INLINE const Strand* Cell_Strand(const Cell* v) {
 //
 INLINE Length Series_Len_Head(const Cell* v) {
     const Flex* f = Cell_Flex(v);
-    if (Is_Stub_Strand(f) and Heart_Of(v) != TYPE_BLOB)
+    if (Is_Stub_Strand(f) and Heart_Of(v) != HEART_BLOB)
         return Strand_Len(cast(Strand*, f));
     return Flex_Used(f);
 }
@@ -179,15 +179,15 @@ INLINE Element* Init_Any_String_At_Untracked(
 #define Init_Any_String(out,heart,s) \
     TRACK(Init_Any_String_Untracked((out), (heart), (s)))
 
-#define Init_Text(v,s)      Init_Any_String((v), TYPE_TEXT, (s))
-#define Init_File(v,s)      Init_Any_String((v), TYPE_FILE, (s))
-#define Init_Tag(v,s)       Init_Any_String((v), TYPE_TAG, (s))
+#define Init_Text(v,s)      Init_Any_String((v), HEART_TEXT, (s))
+#define Init_File(v,s)      Init_Any_String((v), HEART_FILE, (s))
+#define Init_Tag(v,s)       Init_Any_String((v), HEART_TAG, (s))
 
 
 INLINE Element* Textify_Any_Utf8(Element* any_utf8) {  // always works
     DECLARE_ELEMENT (temp);
     assume (
-      Alias_Any_Utf8_As(temp, any_utf8, TYPE_TEXT)
+      Alias_Any_Utf8_As(temp, any_utf8, HEART_TEXT)
     );
     Copy_Cell(any_utf8, temp);
     return any_utf8;
@@ -215,7 +215,7 @@ INLINE bool Is_Tripwire_Core(Value* v)
     Is_Tripwire_Core(Possibly_Unstable(v))
 
 INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
-    Init_Any_String_Untracked(out, TYPE_TAG, CANON(QUESTION_1));
+    Init_Any_String_Untracked(out, HEART_TAG, CANON(QUESTION_1));
     Antiformize_Unbound_Fundamental(out, TYPE_TRASH);
     assert(Is_Tripwire(out));
     return out;

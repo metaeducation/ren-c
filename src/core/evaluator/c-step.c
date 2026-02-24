@@ -745,7 +745,7 @@ Bounce Stepper_Executor(Level* L)
 
     assert(Is_Cell_Erased(OUT));
 
-    if (LIFT_BYTE(CURRENT) <= MAX_LIFT_NOQUOTE_NOQUASI) {
+    if (TYPE_BYTE(CURRENT) <= MAX_LIFT_NOQUOTE_NOQUASI) {
         Option(Sigil) sigil = Sigil_Of(CURRENT);
         switch (opt sigil) {
           case SIGIL_0:
@@ -762,10 +762,10 @@ Bounce Stepper_Executor(Level* L)
         }
     }
 
-    if (LIFT_BYTE(CURRENT) > QUASIFORM_64)
+    if (TYPE_BYTE(CURRENT) > QUASIFORM_64)
         goto handle_quoted;
 
-    assert(LIFT_BYTE(CURRENT) == QUASIFORM_64);
+    assert(TYPE_BYTE(CURRENT) == QUASIFORM_64);
     goto handle_quasiform;
 
 } handle_quoted: { //// QUOTED! [ 'XXX  '''@XXX  '~XXX~ ] ////////////////////
@@ -1072,7 +1072,7 @@ Bounce Stepper_Executor(Level* L)
     //    == ~null~  ; anti
 
     Element* out = Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-    Tweak_Cell_Quoted_Type(out, TYPE_BLOCK);  // !!! quote to avoid binding?
+    Tweak_Cell_Quoted_Type(out, HEART_BLOCK);  // !!! quote to avoid binding?
 
     Element* spare = Init_Word(SPARE, CANON(PACK));
     dont(Quote_Cell(As_Element(SPARE)));  // want to run word

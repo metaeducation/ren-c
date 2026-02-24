@@ -68,7 +68,7 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out, Flags flags) {
 }
 
 #define Init_Blank(out) \
-    TRACK(Init_Blank_Untracked((out), FLAG_LIFT_BYTE(As_Lift(TYPE_BLANK))))
+    TRACK(Init_Blank_Untracked((out), FLAG_LIFT(TYPE_BLANK)))
 
 
 //=//// DECORATED BLANK! ("," DOES NOT RENDER) ////////////////////////////=//
@@ -94,7 +94,7 @@ INLINE Element* Init_Blank_Untracked(Init(Element) out, Flags flags) {
 INLINE Element* Init_Sigiled_Blank_Core(Init(Element) out, Sigil sigil) {
     return Init_Blank_Untracked(
         out,
-        FLAG_LIFT_BYTE(sigil ? Lift_From_Sigil(sigil) : As_Lift(TYPE_BLANK))
+        FLAG_LIFT(sigil ? Lift_From_Sigil(sigil) : i_cast(TypeEnum, TYPE_BLANK))
             | FLAG_SIGIL(sigil)
     );
 }
@@ -104,21 +104,21 @@ INLINE Element* Init_Sigiled_Blank_Core(Init(Element) out, Sigil sigil) {
 
 #define Is_Cell_Blank_With_Lift_Sigil(v, lift_byte, sigil) \
     Cell_Has_Lift_Sigil_Heart( \
-        Known_Stable(v), (lift_byte), (sigil), TYPE_BLANK)
+        Known_Stable(v), (lift_byte), (sigil), HEART_BLANK)
 
 #define Is_Pinned_Blank(v) /* renders as `@` [1] */ \
-    Is_Cell_Blank_With_Lift_Sigil((v), As_Lift(TYPE_PINNED), SIGIL_PIN)
+    Is_Cell_Blank_With_Lift_Sigil((v), TYPE_PINNED, SIGIL_PIN)
 
 #define Is_Metaform_Blank(v) /* renders as `^` [1] */ \
-    Is_Cell_Blank_With_Lift_Sigil((v), As_Lift(TYPE_METAFORM), SIGIL_META)
+    Is_Cell_Blank_With_Lift_Sigil((v), TYPE_METAFORM, SIGIL_META)
 
 #define Is_Tied_Blank(v) /* renders as `$` [1] */ \
-    Is_Cell_Blank_With_Lift_Sigil((v), As_Lift(TYPE_TIED), SIGIL_TIE)
+    Is_Cell_Blank_With_Lift_Sigil((v), TYPE_TIED, SIGIL_TIE)
 
 INLINE bool Any_Sigiled_Blank(const Element* v) {
-    if (LIFT_BYTE(v) > MAX_LIFT_NOQUOTE_NOQUASI or not Sigil_Of(v))
+    if (TYPE_BYTE(v) > MAX_LIFT_NOQUOTE_NOQUASI or not Sigil_Of(v))
         return false;
-    return Heart_Of(v) == TYPE_BLANK;
+    return Heart_Of(v) == HEART_BLANK;
 }
 
 
@@ -132,7 +132,7 @@ INLINE bool Any_Sigiled_Blank(const Element* v) {
 
 #define Is_Quasar(v) \
     Cell_Has_Lift_Sigil_Heart( \
-        Known_Stable(v), QUASIFORM_64, SIGIL_0, TYPE_BLANK)
+        Known_Stable(v), TYPE_QUASIFORM, SIGIL_0, HEART_BLANK)
 
 INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
     Init_Blank(out);
@@ -158,13 +158,13 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
 //
 
 #define Init_Void_Untracked(out) \
-    Init_Blank_Untracked((out), FLAG_LIFT_BYTE(TYPE_VOID))
+    Init_Blank_Untracked((out), FLAG_LIFT(TYPE_VOID))
 
 #define Init_Void(out) \
     TRACK(Init_Void_Untracked(out))
 
 #define Init_Lifted_Void(out) \
-    Init_Blank_Untracked(Possibly_Unstable(out), FLAG_LIFT_BYTE(QUASIFORM_64))
+    Init_Blank_Untracked(Possibly_Unstable(out), FLAG_LIFT(TYPE_QUASIFORM))
 
 
 //=//// "VOID TO MAKE HEAVY" FLAG /////////////////////////////////////////=//
@@ -198,7 +198,7 @@ INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
 
 #define CELL_MASK_VOID_TO_MAKE_HEAVY \
     (FLAG_KIND_BYTE(HEART_BLANK_SIGNIFYING_VOID) \
-        | FLAG_LIFT_BYTE(TYPE_VOID) \
+        | FLAG_LIFT(TYPE_VOID) \
         | CELL_FLAG_OUT_NOTE_VOID_TO_MAKE_HEAVY)
 
 #define Is_Level_Out_Noted_Void_To_Make_Heavy(L) /* one mask operation [2] */ \

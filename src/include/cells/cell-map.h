@@ -27,7 +27,7 @@
 #define CELL_MAP_PAIRLIST(c)  CELL_PAYLOAD_1(c)
 
 INLINE const Map* VAL_MAP(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_MAP);
+    assert(Heart_Of(c) == HEART_MAP);
 
     Base* base = CELL_MAP_PAIRLIST(c);
     if (Not_Base_Readable(base))

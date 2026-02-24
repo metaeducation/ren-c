@@ -195,14 +195,14 @@ void Uncolor_Array(const Array* a)
     const Cell* tail = Flex_Tail(Cell, a);
     const Cell* at = Flex_Head(Cell, a);
     for (; at != tail; ++at) {
-        if (LIFT_BYTE(at) == BEDROCK_255)
+        if (TYPE_BYTE(at) == BEDROCK_255)
             continue;  // !!! REVIEW
 
         Option(Heart) heart = Heart_Of(at);
         if (
             Any_Sequence_Type(heart)
             or Any_List_Type(heart)
-            or (heart == TYPE_MAP)
+            or (heart == HEART_MAP)
             or Any_Context_Type(heart)
         ){
             Uncolor_Slot(at);
@@ -218,7 +218,7 @@ void Uncolor_Array(const Array* a)
 //
 void Uncolor_Slot(const Cell* v)
 {
-    if (LIFT_BYTE(v) == BEDROCK_255)
+    if (TYPE_BYTE(v) == BEDROCK_255)
         return;  // !!! REVIEW
 
     Option(Heart) heart = Heart_Of(v);
@@ -234,7 +234,7 @@ void Uncolor_Slot(const Cell* v)
             Uncolor_Slot(temp);
         }
     }
-    else if (heart == TYPE_MAP)
+    else if (heart == HEART_MAP)
         Uncolor_Array(MAP_PAIRLIST(VAL_MAP(v)));
     else if (Any_Context_Type(heart))
         Uncolor_Array(Varlist_Array(Cell_Varlist(v)));

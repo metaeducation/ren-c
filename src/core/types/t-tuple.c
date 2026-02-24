@@ -288,7 +288,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
         return Init_Any_List(OUT, to, a);
     }
 
-    if (Any_Utf8_Type(to) and to != TYPE_WORD) {
+    if (Any_Utf8_Type(to) and to != HEART_WORD) {
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
         Clear_Cell_Sigil(seq);  // to text! @a.b.c -> "a.b.c"
@@ -338,13 +338,13 @@ Result(Element*) Alias_Any_Sequence_As(
                 continue;
 
             assert(not Is_Path(temp));  // impossible!
-            if (Is_Chain(temp) and (as == TYPE_TUPLE or as == TYPE_CHAIN))
+            if (Is_Chain(temp) and (as == HEART_TUPLE or as == HEART_CHAIN))
                 return fail (
                     "Can't AS alias CHAIN!-containing sequence"
                     "as TUPLE! or CHAIN!"
                 );
 
-            if (Is_Tuple(temp) and as == TYPE_TUPLE)
+            if (Is_Tuple(temp) and as == HEART_TUPLE)
                 return fail (
                     "Can't AS alias TUPLE!-containing sequence as TUPLE!"
                 );
@@ -384,11 +384,11 @@ Result(Element*) Alias_Any_Sequence_As(
             if (Get_Cell_Flag(seq, LEADING_BLANK)) {
                 Init_Blank(Array_At(a, 0));
                 Copy_Cell(Array_At(a, 1), seq);
-                Tweak_Cell_Type(Array_At(a, 1), TYPE_WORD);
+                Tweak_Cell_Type(Array_At(a, 1), HEART_WORD);
             }
             else {
                 Copy_Cell(Array_At(a, 0), seq);
-                Tweak_Cell_Type(Array_At(a, 0), TYPE_WORD);
+                Tweak_Cell_Type(Array_At(a, 0), HEART_WORD);
                 Init_Blank(Array_At(a, 1));
             }
             Freeze_Source_Shallow(a);
@@ -416,7 +416,7 @@ Result(Element*) Alias_Any_Sequence_As(
             else {
                 assert(Is_Source_Frozen_Shallow(a));
                 Copy_Cell(out, seq);
-                Tweak_Cell_Type(out, TYPE_BLOCK);
+                Tweak_Cell_Type(out, HEART_BLOCK);
                 Clear_Cell_Flag(out, LEADING_BLANK);  // don't want stray flag
             }
             break; }
@@ -576,7 +576,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
         if (one_or_two == 1)
             return Init_Space(OUT);
         Copy_Cell(OUT, seq);
-        Tweak_Cell_Type(As_Element(OUT), TYPE_WORD);
+        Tweak_Cell_Type(As_Element(OUT), HEART_WORD);
         return OUT;
     }
 
@@ -590,7 +590,7 @@ IMPLEMENT_GENERIC(RANDOM_PICK, Any_Sequence)
 
     if (Is_Cell_Listlike(seq)) {  // alias as BLOCK! and dispatch to list pick
         possibly(Is_Cell_Pairlike(seq));  // why we tested pairlike first
-        Tweak_Cell_Type(seq, TYPE_BLOCK);
+        Tweak_Cell_Type(seq, HEART_BLOCK);
         return GENERIC_CFUNC(RANDOM_PICK, Any_List)(LEVEL);
     }
 
@@ -675,12 +675,12 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
     Heart heart = Heart_Of_Builtin_Fundamental(c);
 
     char interstitial;
-    if (heart == TYPE_TUPLE)
+    if (heart == HEART_TUPLE)
         interstitial = '.';
-    else if (heart == TYPE_CHAIN)
+    else if (heart == HEART_CHAIN)
         interstitial = ':';
     else {
-        assert(heart == TYPE_PATH);
+        assert(heart == HEART_PATH);
         interstitial = '/';
     }
 
@@ -704,10 +704,10 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_Sequence)
                 const Symbol* s = Word_Symbol(element);
                 if (Get_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE))
                     assert(
-                        heart == TYPE_CHAIN
+                        heart == HEART_CHAIN
                         and Sequence_Len(c) == 2
                     );
-                if (heart == TYPE_TUPLE)
+                if (heart == HEART_TUPLE)
                     assert(Not_Flavor_Flag(SYMBOL, s, ILLEGAL_IN_TUPLE));
                 UNUSED(s);
             }

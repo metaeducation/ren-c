@@ -92,11 +92,11 @@ void Probe_Cell_Print_Helper(
         return;
     }
 
-    if (LIFT_BYTE(v) >= MIN_LIFT_ANTIFORM) {
+    if (TYPE_BYTE(v) >= MIN_LIFT_ANTIFORM) {
         DECLARE_ELEMENT (reified);
         Copy_Cell_Core(reified, v, CELL_MASK_ALL);
         Normalize_Cell(reified);
-        if (LIFT_BYTE(v) == BEDROCK_255) {
+        if (TYPE_BYTE(v) == BEDROCK_255) {
             require (
               Append_Ascii(mo->strand, "\\\\")
             );
@@ -108,7 +108,7 @@ void Probe_Cell_Print_Helper(
         }
         if (not Is_Blank(reified))
             Mold_Element(mo, reified);
-        if (LIFT_BYTE(v) == BEDROCK_255) {
+        if (TYPE_BYTE(v) == BEDROCK_255) {
             require (
               Append_Ascii(mo->strand, "\\\\  ; bedrock")
             );

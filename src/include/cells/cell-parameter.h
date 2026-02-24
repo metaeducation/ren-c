@@ -78,12 +78,12 @@
     #define CELL_PARAMETER_PAYLOAD_2_FLAGS(c)  (c)->payload.split.two.flags
 #else
     INLINE uintptr_t& CELL_PARAMETER_PAYLOAD_2_FLAGS(Cell* v) {
-        assert(Unchecked_Heart_Of(v) == TYPE_PARAMETER);
+        assert(Unchecked_Heart_Of(v) == HEART_PARAMETER);
         return v->payload.split.two.flags;
     }
 
     INLINE const uintptr_t& CELL_PARAMETER_PAYLOAD_2_FLAGS(const Cell* v) {
-        assert(Unchecked_Heart_Of(v) == TYPE_PARAMETER);
+        assert(Unchecked_Heart_Of(v) == HEART_PARAMETER);
         return v->payload.split.two.flags;
     }
 #endif
@@ -92,7 +92,7 @@
 #define FLAG_PARAMCLASS_BYTE(b)  FLAG_FIRST_BYTE(b)
 
 INLINE Option(const Source*) Parameter_Spec(const Cell* v) {
-    assert(Heart_Of(v) == TYPE_PARAMETER);
+    assert(Heart_Of(v) == HEART_PARAMETER);
 
     const Base* base = CELL_PARAMETER_PAYLOAD_1_SPEC(v);
     if (base != nullptr and Not_Base_Readable(base))
@@ -357,17 +357,17 @@ INLINE Option(const Source*) Parameter_Spec(const Cell* v) {
 
 
 INLINE ParamClass Parameter_Class(const Cell* v) {
-    assert(Heart_Of(v) == TYPE_PARAMETER);
+    assert(Heart_Of(v) == HEART_PARAMETER);
     return i_cast(ParamClass, PARAMCLASS_BYTE(v));
 }
 
 INLINE Option(const Strand*) Parameter_Strand(const Cell* v) {
-    assert(Heart_Of(v) == TYPE_PARAMETER);
+    assert(Heart_Of(v) == HEART_PARAMETER);
     return cast(const Strand*, CELL_PARAMETER_EXTRA_STRAND(v));
 }
 
 INLINE void Set_Parameter_Strand(Cell* v, Option(const Strand*) s) {
-    assert(Heart_Of(v) == TYPE_PARAMETER);
+    assert(Heart_Of(v) == HEART_PARAMETER);
     CELL_PARAMETER_EXTRA_STRAND(v) = m_cast(Strand*, opt s);
 }
 
@@ -415,7 +415,7 @@ INLINE void Mark_Typechecked(Param* p) {
 }
 
 INLINE bool Is_Parameter_Final_Type(const Param* p) {
-    assert(Heart_Of(p) == TYPE_PARAMETER);
+    assert(Heart_Of(p) == HEART_PARAMETER);
     return Get_Parameter_Flag(p, FINAL_TYPECHECK);
 }
 
@@ -446,7 +446,7 @@ INLINE bool Is_Parameter_Final_Type(const Param* p) {
     CELL_FLAG_TYPE_SPECIFIC_A
 
 INLINE bool Not_Parameter_Checked_Or_Coerced(const Cell* cell) {
-    assert(Heart_Of(cell) == TYPE_PARAMETER);
+    assert(Heart_Of(cell) == HEART_PARAMETER);
     return Get_Cell_Flag(cell, PARAM_NOT_CHECKED_OR_COERCED);
 }
 
@@ -511,7 +511,7 @@ INLINE const Slot* Known_Unspecialized(const Param* p) {
 #define Blit_Null_Typechecked(out) \
     TRACK(Blit_Word_Untracked( \
         (out), \
-        FLAG_LIFT_BYTE(TYPE_LOGIC) \
+        FLAG_LIFT(TYPE_LOGIC) \
             | (not CELL_FLAG_LOGIC_IS_OKAY) \
             | CELL_FLAG_PARAM_NOTE_TYPECHECKED, \
         CANON(NULL) \
@@ -520,7 +520,7 @@ INLINE const Slot* Known_Unspecialized(const Param* p) {
 #define Blit_Okay_Typechecked(out) \
     TRACK(Blit_Word_Untracked( \
         (out), \
-        FLAG_LIFT_BYTE(TYPE_LOGIC) \
+        FLAG_LIFT(TYPE_LOGIC) \
             | CELL_FLAG_LOGIC_IS_OKAY \
             | CELL_FLAG_PARAM_NOTE_TYPECHECKED, \
         CANON(OKAY) \
@@ -541,7 +541,7 @@ INLINE Element* Init_Unconstrained_Parameter_Untracked(
     Reset_Cell_Header(
         out,
         BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART_AND_LIFT(TYPE_PARAMETER)
+            | FLAG_HEART_AND_LIFT(HEART_PARAMETER)
             | CELL_FLAG_DONT_MARK_PAYLOAD_1  // spec (starting off null here)
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // flags, never marked
     );
@@ -568,8 +568,8 @@ INLINE bool Is_Parameter_Divergent(const Cell* v) {
 }
 
 INLINE Param* Unspecialize_Parameter(Cell* p) {
-    assert(LIFT_BYTE(p) == As_Lift(TYPE_PARAMETER));
-    LIFT_BYTE(p) = BEDROCK_255;
+    assert(TYPE_BYTE(p) == TYPE_PARAMETER);
+    TYPE_BYTE(p) = BEDROCK_255;
     return u_cast(Param*, p);
 }
 

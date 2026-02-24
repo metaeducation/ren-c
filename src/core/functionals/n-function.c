@@ -117,7 +117,7 @@ Bounce Func_Dispatcher(Level* const L)
         if (Is_Light_Null(OUT))
             goto redo_with_current_frame_values;
 
-        assert(Heart_Of(OUT) == TYPE_FRAME);
+        assert(Heart_Of(OUT) == HEART_FRAME);
         goto reuse_level_to_run_frame_in_out;
     }
 
@@ -678,10 +678,10 @@ Result(bool) Typecheck_Coerce_Return_Use_Toplevel(
     Value* v  // not `const Value*` -- coercion needs mutability
 ){
     assert(  // for specialized slot, RETURN can't be a plain PARAMETER!
-        Heart_Of(param) == TYPE_PARAMETER
+        Heart_Of(param) == HEART_PARAMETER
         and (
-            LIFT_BYTE(param) == BEDROCK_255  // "holes" in ParamLists
-            or LIFT_BYTE(param) == As_Lift(TYPE_PARAMETER)  // plain PARAMETER!
+            TYPE_BYTE(param) == BEDROCK_255  // "holes" in ParamLists
+            or TYPE_BYTE(param) == TYPE_PARAMETER  // plain PARAMETER!
         )
     );
 

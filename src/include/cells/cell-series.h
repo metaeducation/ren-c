@@ -115,11 +115,11 @@ INLINE Element* Init_Series_At_Core_Untracked(
         assert(Is_Stub_Strand(f));
     }
     else if (Any_Utf8_Type(heart)) {  // see also Init_Utf8_Non_String()
-        assert(heart != TYPE_WORD);  // can't use this init!
+        assert(heart != HEART_WORD);  // can't use this init!
         assert(Is_Stub_Strand(f));
         assert(Is_Flex_Frozen(f));
     }
-    else if (heart == TYPE_BLOB) {
+    else if (heart == HEART_BLOB) {
         assert(Stub_Holds_Bytes(f));  // Note: Binary allowed to alias Strand
     }
     else {

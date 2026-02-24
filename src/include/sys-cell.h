@@ -105,7 +105,7 @@
 //
 // Note: due to the CastHook<> mechanism, some builds instrument cast() to
 // validate that the bits actually match the type (e.g. that you don't cast
-// a Cell with an antiform LIFT_BYTE() to an Element*).
+// a Cell with an antiform TYPE_BYTE() to an Element*).
 //
 
 #define As_Dual(v)      cast(Dual*, (v))
@@ -415,7 +415,7 @@ INLINE Cell* Force_Erase_Cell_Untracked(Cell* c) {
 #define CELL_MASK_UNREADABLE \
     (BASE_FLAG_BASE | BASE_FLAG_CELL | BASE_FLAG_UNREADABLE \
         | CELL_FLAG_DONT_MARK_PAYLOAD_1 | CELL_FLAG_DONT_MARK_PAYLOAD_2 \
-        | FLAG_KIND_BYTE(255) | FLAG_LIFT_BYTE(255))
+        | FLAG_KIND_BYTE(255) | FLAG_LIFT(LIFT_255))
 
 #if CORRUPT_CELL_HEADERS_ONLY
     #define Init_Unreadable_Untracked_Evil_Macro(out) do { \
@@ -629,7 +629,7 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
 
 #define Unchecked_Cell_Has_Lift_Sigil_Heart(cell,lift,sigil,heart) \
     (((cell)->header.bits & CELL_MASK_HEART_AND_SIGIL_AND_LIFT) \
-        == (FLAG_SIGIL(sigil) | FLAG_HEART(heart) | FLAG_LIFT_BYTE(lift)))
+        == (FLAG_SIGIL(sigil) | FLAG_HEART(heart) | FLAG_LIFT(lift)))
 
 #define Cell_Has_Lift_Sigil_Heart(cell,lift,sigil,heart) \
     Unchecked_Cell_Has_Lift_Sigil_Heart(Readable_Cell(cell), \
@@ -668,6 +668,11 @@ INLINE void Set_Cell_Crumb(Cell* c, Crumb crumb) {
         operator KindByte() const {
             /* add read checks you want here */
             return KIND_BYTE_RAW(cell);
+        }
+
+        explicit operator TypeEnum() const {
+            /* review: fuse checks */
+            return i_cast(TypeEnum, KIND_BYTE_RAW(cell));
         }
 
         void operator=(KindByte right) {
@@ -718,7 +723,7 @@ INLINE Heart Heart_Of_Unsigiled_Isotopic(const Cell* c) {
 }
 
 INLINE Option(Heart) Heart_Of_Fundamental(const Cell* c) {
-    assert(LIFT_BYTE_RAW(c) <= MAX_LIFT_NOQUOTE_NOQUASI);
+    assert(TYPE_BYTE_RAW(c) <= MAX_LIFT_NOQUOTE_NOQUASI);
     return Heart_Of(c);
 }
 
@@ -729,50 +734,47 @@ INLINE Heart Heart_Of_Builtin(const Cell* c) {
 }
 
 INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
-    assert(LIFT_BYTE_RAW(c) <= MAX_LIFT_NOQUOTE_NOQUASI);
+    assert(TYPE_BYTE_RAW(c) <= MAX_LIFT_NOQUOTE_NOQUASI);
     Option(Heart) heart = Heart_Of(c);
     assert(heart);
     return opt heart;  // faster than unwrap, we already checked for 0
 }
 
 
-//=//// HOOKABLE LIFT_BYTE() ACCESSOR /////////////////////////////////////=//
+//=//// HOOKABLE TYPE_BYTE() ACCESSOR /////////////////////////////////////=//
 //
-// While all datatypes have quoted forms, only some have quasiforms/antiforms.
-// For instance: paths don't have them, because ~/foo/~ is a 3-element path
-// with quasi-blanks at the head and tail, so no quasiform exists).
-//
-// This mechanism captures manipulations of the LIFT_BYTE() to be sure the
-// bad forms don't get made.
+// This mechanism captures manipulations of the TYPE_BYTE() to be sure the
+// bad forms don't get made.  Arbitrary hooks can be put here that can be
+// helpful during impromptu debugging.
 //
 // 1. We don't bother with const correctness in this debugging aid, as the
 //    regular build will enforce that.  Cast away constness for simplicity.
 //
 // 2. Not all datatypes have quasiforms/antiforms (e.g. ~/foo/~ is a PATH!
 //    with a Quasi-Space in the first and last slots, not a quasiform).  To
-//    help avoid casual assignments to LIFT_BYTE() of the 2 and 4 values
-//    we prohibit them in certain builds, requiring LIFT_BYTE_RAW() to be
+//    help avoid casual assignments to TYPE_BYTE() of the 2 and 4 values
+//    we prohibit them in certain builds, requiring TYPE_BYTE_RAW() to be
 //    used if you are truly sure it's safe.
 //
 
-#if (! DEBUG_HOOK_LIFT_BYTE)
-    #define LIFT_BYTE(cell) \
-        LIFT_BYTE_RAW(cell)
+#if (! DEBUG_HOOK_TYPE_BYTE)
+    #define TYPE_BYTE(cell) \
+        TYPE_BYTE_RAW(cell)
 #else
-    struct LiftHolder {  // class for intercepting lift assignments
+    struct TypeHolder {  // class for intercepting reads/writes
         Cell* cell;
 
         template<typename T>
-        LiftHolder(T&& wrapper)
+        TypeHolder(T&& wrapper)
             : cell (m_cast(Cell*, std::forward<T>(wrapper)))
         {}       // ^-- m_cast const Cell* for simplicity [1]
 
-        operator LiftByte() const {
+        operator TypeByte() const {
             /* add read checks you want here */
-            return LIFT_BYTE_RAW(cell);
+            return TYPE_BYTE_RAW(cell);
         }
 
-        void operator=(LiftByte right) {
+        void operator=(TypeByte right) {
             Assert_Cell_Unshielded_If_Tracking(cell);
 
             if (right == TYPE_0_constexpr) {  // extension type with no Sigil
@@ -799,26 +801,26 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
                 // no checks at present
             }
             else {
-                assert(!"Bad LIFT_BYTE() value");
+                assert(!"Bad TYPE_BYTE() value");
             }
 
             /* add write checks you want here */
 
-            LIFT_BYTE_RAW(cell) = right;
+            TYPE_BYTE_RAW(cell) = right;
         }
 
-        void operator=(const LiftHolder& right)  // must write explicitly
-          { *this = i_cast(LiftByte, right); }
+        void operator=(const TypeHolder& right)  // must write explicitly
+          { *this = i_cast(TypeByte, right); }
 
         void operator-=(int shift)  // must write explicitly
-          { LIFT_BYTE_RAW(cell) -= shift; }
+          { TYPE_BYTE_RAW(cell) -= shift; }
 
         void operator+=(int shift)  // must write explicitly
-          { LIFT_BYTE_RAW(cell) += shift; }
+          { TYPE_BYTE_RAW(cell) += shift; }
     };
 
-    #define LIFT_BYTE(cell) \
-        LiftHolder{cell}
+    #define TYPE_BYTE(cell) \
+        TypeHolder{cell}
 #endif
 
 
@@ -833,30 +835,30 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 // Note that these functions return Option(Type) because TYPE_0 is how
 // "extension types" are reported (things not in the 63 builtin-heart range).
 //
-// 1. KIND_BYTE() and LIFT_BYTE() in certain checked builds have overhead
+// 1. KIND_BYTE() and TYPE_BYTE() in certain checked builds have overhead
 //    (creating actual wrapper objects to monitor reads/writes of the byte
 //    to check invariants).  We don't want to pay that overhead on every
-//    Type_Of() call.  Use KIND_BYTE_RAW() and LIFT_BYTE_RAW().
+//    Type_Of() call.  Use KIND_BYTE_RAW() and TYPE_BYTE_RAW().
 //
 //    (However, if one were trying to catch certain bugs, it might be worth
 //    it to change these to non-raw calls temporarily.)
 //
 
 INLINE Option(Type) Type_Of_Core(const Cell* v) {
-    if (LIFT_BYTE_RAW(v) < MIN_HEARTBYTE) {  // raw [1]
+    if (TYPE_BYTE_RAW(v) < MIN_HEARTBYTE) {  // raw [1]
         possibly(KIND_BYTE_RAW(v) == 0);  // extension type w/no Sigil
-        assert((KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT) == LIFT_BYTE_RAW(v));
+        assert((KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT) == TYPE_BYTE_RAW(v));
     }
-    else if (LIFT_BYTE_RAW(v) <= MAX_LIFT_NOQUOTE_NOQUASI) {
-        assert(KIND_BYTE_RAW(v) == LIFT_BYTE_RAW(v));  // no Sigil, equal
+    else if (TYPE_BYTE_RAW(v) <= MAX_LIFT_NOQUOTE_NOQUASI) {
+        assert(KIND_BYTE_RAW(v) == TYPE_BYTE_RAW(v));  // no Sigil, equal
     }
-    else if (LIFT_BYTE_RAW(v) == QUASIFORM_64) {
+    else if (TYPE_BYTE_RAW(v) == QUASIFORM_64) {
         /* assert(Any_Sequencable_Type(Unchecked_Heart_Of(v))); */  // ?
     }
-    else if (LIFT_BYTE_RAW(v) <= 192) {
+    else if (TYPE_BYTE_RAW(v) <= 192) {
         // we do not canonize the quoted range into "TYPE_QUOTED"
     }
-    else switch (LIFT_BYTE_RAW(v)) {  // still working on these...
+    else switch (TYPE_BYTE_RAW(v)) {  // still working on these...
       case TYPE_PACK:
       case TYPE_FAILURE:
       case TYPE_ACTION:
@@ -874,7 +876,7 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
     #endif
     }
 
-    return u_cast(Option(Type), LIFT_BYTE_RAW(v));
+    return u_cast(Option(Type), TYPE_BYTE_RAW(v));
 }
 
 #if NO_RUNTIME_CHECKS
@@ -936,7 +938,7 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
 // it tolerates CELL_MASK_ERASED_0 in a cell header.
 
 INLINE uintptr_t FLAG_HEART_AND_LIFT(Heart heart)
-  { return FLAG_HEART(heart) | FLAG_LIFT_BYTE(heart); }
+  { return FLAG_HEART(heart) | FLAG_LIFT(As_Lift(heart)); }
 
 INLINE void Reset_Cell_Header(Cell* c, uintptr_t flags)
 {

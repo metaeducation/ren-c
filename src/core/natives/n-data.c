@@ -89,7 +89,7 @@ DECLARE_NATIVE(BIND)
             Element* overbind = Copy_Cell_May_Bind(
                 Stub_Cell(use), at, Cell_Binding(spec)
             );
-            Tweak_Cell_Type(overbind, TYPE_WORD);
+            Tweak_Cell_Type(overbind, HEART_WORD);
 
             if (not IS_WORD_BOUND(overbind))
                 panic (Error_Not_Bound_Raw(overbind));
@@ -120,7 +120,7 @@ DECLARE_NATIVE(BIND)
           Use* use = Alloc_Use_Inherits(Cell_Binding(v))
         );
         Element* overbind = Copy_Cell(Stub_Cell(use), spec);
-        Tweak_Cell_Type(overbind, TYPE_WORD);
+        Tweak_Cell_Type(overbind, HEART_WORD);
 
         Tweak_Cell_Binding(v, use);
 
@@ -707,7 +707,7 @@ DECLARE_NATIVE(QUASI_WORD_Q)
     if (not v)
         return NULL_OUT;
 
-    return LOGIC_OUT(Is_Quasiform(v) and Heart_Of(v) == TYPE_WORD);
+    return LOGIC_OUT(Is_Quasiform(v) and Heart_Of(v) == HEART_WORD);
 }
 
 
@@ -754,7 +754,7 @@ DECLARE_NATIVE(LIT_WORD_Q)
         return NULL_OUT;
 
     return LOGIC_OUT(
-        LIFT_BYTE(v) == ONEQUOTE_NONQUASI_65 and Heart_Of(v) == TYPE_WORD
+        TYPE_BYTE(v) == ONEQUOTE_NONQUASI_65 and Heart_Of(v) == HEART_WORD
     );
 }
 
@@ -778,7 +778,7 @@ DECLARE_NATIVE(LIT_PATH_Q)
     if (not v)
         return NULL_OUT;
 
-    return LOGIC_OUT(Heart_Of(v) == TYPE_PATH and Quotes_Of(v) == 1);
+    return LOGIC_OUT(Heart_Of(v) == HEART_PATH and Quotes_Of(v) == 1);
 }
 
 
@@ -863,12 +863,12 @@ DECLARE_NATIVE(RESOLVE)
     Element* source = Element_ARG(SOURCE);
 
     if (Any_Word(source)) {
-        Tweak_Cell_Type(source, TYPE_WORD);
+        Tweak_Cell_Type(source, HEART_WORD);
         return COPY_TO_OUT(source);
     }
 
     if (Is_Tuple(source)) {  // !!! Any_Tuple?
-        Tweak_Cell_Type(source, TYPE_TUPLE);
+        Tweak_Cell_Type(source, HEART_TUPLE);
         return COPY_TO_OUT(source);
     }
 
@@ -1674,7 +1674,7 @@ DECLARE_NATIVE(NOQUASI)
         return NULL_OUT;
 
     Copy_Cell(OUT, v);
-    if (LIFT_BYTE(OUT) == QUASIFORM_64)
+    if (TYPE_BYTE(OUT) == QUASIFORM_64)
         Normalize_Cell(OUT);
     return OUT;
 }

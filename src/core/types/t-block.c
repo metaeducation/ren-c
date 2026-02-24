@@ -550,11 +550,11 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_List)
         CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);  // only top level
         sep = "\000\000";
     }
-    else if (heart == TYPE_BLOCK)
+    else if (heart == HEART_BLOCK)
         sep = "[]";
-    else if (heart == TYPE_GROUP)
+    else if (heart == HEART_GROUP)
         sep = "()";
-    else if (heart == TYPE_FENCE)
+    else if (heart == HEART_FENCE)
         sep = "{}";
     else
         crash (v);
@@ -817,9 +817,9 @@ IMPLEMENT_GENERIC(TO, Any_List)
             return fail ("Can't TO ANY-SEQUENCE? on list with length > 1");
 
         if (
-            (Is_Path(item) and to == TYPE_PATH)
-            or (Is_Chain(item) and to == TYPE_CHAIN)
-            or (Is_Tuple(item) and to == TYPE_TUPLE)
+            (Is_Path(item) and to == HEART_PATH)
+            or (Is_Chain(item) and to == HEART_CHAIN)
+            or (Is_Tuple(item) and to == HEART_TUPLE)
         ){
             Copy_Cell(OUT, item);
             return OUT;
@@ -828,7 +828,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return fail ("TO ANY-SEQUENCE? needs list with a sequence in it");
     }
 
-    if (to == TYPE_WORD) {  // to word! '{a} -> a, see [3]
+    if (to == HEART_WORD) {  // to word! '{a} -> a, see [3]
         Length len;
         const Element* item = List_Len_At(&len, list);
         if (Series_Len_At(list) != 1)
@@ -840,7 +840,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
     }
 
     if (Any_Utf8_Type(to)) {  // to tag! [1 a #b] => <1 a #b>
-        assert(to != TYPE_WORD);
+        assert(to != HEART_WORD);
 
         DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
@@ -861,7 +861,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return OUT;
     }
 
-    if (to == TYPE_INTEGER) {
+    if (to == HEART_INTEGER) {
         Length len;
         const Element* at = List_Len_At(&len, list);
         if (len != 1 or not Is_Integer(at))
@@ -869,7 +869,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return COPY_TO_OUT(at);
     }
 
-    if (to == TYPE_MAP) {  // to map! [key1 val1 key2 val2 key3 val3]
+    if (to == HEART_MAP) {  // to map! [key1 val1 key2 val2 key3 val3]
         Length len = Series_Len_At(list);
         if (len % 2 != 0)
             return fail ("TO MAP! of list must have even number of items");
@@ -885,7 +885,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
         return Init_Map(OUT, map);
     }
 
-    if (to == TYPE_PAIR) {
+    if (to == HEART_PAIR) {
         const Element* tail;
         const Element* item = List_At(&tail, list);
 

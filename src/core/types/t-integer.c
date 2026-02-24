@@ -104,7 +104,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Integer)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_INTEGER);
+    assert(Datatype_Builtin_Heart(ARG(TYPE)) == HEART_INTEGER);
 
     Element* arg = ARG(DEF);
 
@@ -318,7 +318,7 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
     Element* val = Element_ARG(VALUE);
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (Any_Utf8_Type(to) and to != TYPE_WORD) {
+    if (Any_Utf8_Type(to) and to != HEART_WORD) {
         DECLARE_MOLDER (mo);
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
         Push_Mold(mo);
@@ -347,13 +347,13 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
     if (Any_List_Type(to))
         return rebValue(CANON(ENVELOP), ARG(TYPE), val);
 
-    if (to == TYPE_DECIMAL or to == TYPE_PERCENT) {
+    if (to == HEART_DECIMAL or to == HEART_PERCENT) {
         REBDEC d = cast(REBDEC, VAL_INT64(val));
         return Init_Decimal_Or_Percent(OUT, to, d);
     }
 
 
-    if (to == TYPE_INTEGER)
+    if (to == HEART_INTEGER)
         return COPY_TO_OUT(val);
 
     panic (UNHANDLED);

@@ -398,7 +398,7 @@ bool Predicate_Check_Spare_Uses_Scratch(
         }
 
         Copy_Plain_Cell(SCRATCH, predicate);  // intrinsic, panic() requires
-        possibly(Is_Antiform(SCRATCH));  // don't bother canonizing LIFT_BYTE()
+        possibly(Is_Antiform(SCRATCH));  // don't bother canonizing TYPE_BYTE()
         Remember_Cell_Is_Lifeguard(SCRATCH);
 
         assert(Not_Level_Flag(L, DISPATCHING_INTRINSIC));
@@ -557,7 +557,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         goto continue_loop;
 
     if (
-        Heart_Of(at) == TYPE_WORD  // our hands are tied on the meaning [2]
+        Heart_Of(at) == HEART_WORD  // our hands are tied on the meaning [2]
         or Any_Sequence_Type(Heart_Of(at))
     ){
         goto adjust_quote_level_and_run_type_constraint;
@@ -614,7 +614,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
   //    Quasiform group of [~[true false]~] actually looks kind of good; it
   //    will match any of the single items in the group literally.
 
-    if (Heart_Of(at) == TYPE_GROUP) {  // typecheck pack [1]
+    if (Heart_Of(at) == HEART_GROUP) {  // typecheck pack [1]
         if (not Is_Pack(v))
             goto test_failed;
         if (Typecheck_Pack_Use_Toplevel(L, v, at))
@@ -622,11 +622,11 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         goto test_failed;
     }
 
-    if (Heart_Of(at) == TYPE_FENCE) {  // interpret as datatype [2]
+    if (Heart_Of(at) == HEART_FENCE) {  // interpret as datatype [2]
         panic ("Quasiform FENCE! in type spec not supported yet");
     }
 
-    if (Heart_Of(at) == TYPE_BLOCK) {  // match any element literally [3]
+    if (Heart_Of(at) == HEART_BLOCK) {  // match any element literally [3]
         if (Is_Antiform(v))
             goto test_failed;  // can't match elements against antiforms
 
@@ -666,7 +666,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
     Copy_Cell(SPARE, v);
     Element* scratch = Copy_Cell(SCRATCH, at);
 
-    if (LIFT_BYTE(scratch) > MAX_LIFT_NOQUOTE_NOQUASI) {
+    if (TYPE_BYTE(scratch) > MAX_LIFT_NOQUOTE_NOQUASI) {
         if (not Have_Matching_Lift_Levels(scratch, As_Stable(SPARE)))
             goto test_failed;  // should be willing to accept subset quotes
 
@@ -694,7 +694,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         goto handle_after_any_quoting_adjustments;
     }
 
-    if (LIFT_BYTE(SPARE) > MAX_LIFT_NOQUOTE_NOQUASI or v_sigil)
+    if (TYPE_BYTE(SPARE) > MAX_LIFT_NOQUOTE_NOQUASI or v_sigil)
         goto test_failed;  // 'foo: or @foo: won't match word!:
 
   check_destructured_sequence: {
@@ -856,7 +856,7 @@ bool Typecheck_Use_Toplevel(
     const Cell* tests,
     Context* tests_binding
 ){
-    possibly(LIFT_BYTE(tests) == BEDROCK_255);  // ParamList slot, unspecialized
+    possibly(TYPE_BYTE(tests) == BEDROCK_255);  // ParamList slot, unspecialized
 
     USE_LEVEL_SHORTHANDS (L);
 
@@ -868,7 +868,7 @@ bool Typecheck_Use_Toplevel(
     Context* derived;
     bool match_all;
 
-    if (Heart_Of(tests) != TYPE_PARAMETER)  // note PARAMETER! maybe quoted [2]
+    if (Heart_Of(tests) != HEART_PARAMETER)  // note PARAMETER! maybe quoted [2]
         goto handle_non_parameter;
 
   handle_parameter: {
@@ -1025,7 +1025,7 @@ Result(bool) Typecheck_Coerce_Use_Toplevel(
     const Cell* param,
     Value* v  // not `const Value*` -- coercion needs mutability
 ){
-    possibly(LIFT_BYTE(param) == BEDROCK_255);  // ParamList slot, unspecialized
+    possibly(TYPE_BYTE(param) == BEDROCK_255);  // ParamList slot, unspecialized
 
     USE_LEVEL_SHORTHANDS (L);
 

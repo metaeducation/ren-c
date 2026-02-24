@@ -314,7 +314,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
 
             VarList* varlist = Make_Varlist_Detect_Managed(
                 COLLECT_ONLY_SET_WORDS,
-                TYPE_OBJECT,  // !!! Presume object?
+                HEART_OBJECT,  // !!! Presume object?
                 at,
                 tail,
                 parent

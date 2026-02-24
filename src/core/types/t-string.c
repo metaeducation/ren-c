@@ -285,7 +285,7 @@ static void Reverse_Strand(Strand* str, Index index, Length len)
         Init_Text(temp, Pop_Molded_Strand(mo));
 
         DECLARE_ELEMENT (string);  // !!! Temp value, string type is irrelevant
-        Init_Any_String_At(string, TYPE_TEXT, str, index);
+        Init_Any_String_At(string, HEART_TEXT, str, index);
         require(
           Length tail = Modify_String_Or_Blob(
             string,
@@ -353,7 +353,7 @@ DECLARE_NATIVE(TO_TEXT)
         const Byte* at = Blob_Size_At(&size, ARG(VALUE));
         return Init_Any_String(
             OUT,
-            TYPE_TEXT,
+            HEART_TEXT,
             Append_UTF8_May_Panic(
                 nullptr,
                 s_cast(at),
@@ -813,7 +813,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             if (Is_None(As_Stable(pattern)))
                 Copy_Cell(pattern, LIB(EMPTY_TEXT));
             else {
-                Tweak_Cell_Sigiled_Type(pattern, SIGIL_PIN, TYPE_BLOCK);
+                Tweak_Cell_Sigiled_Type(pattern, SIGIL_PIN, HEART_BLOCK);
 
                 Api(Stable*) joined = rebStable(
                     CANON(JOIN), CANON(TEXT_X), pattern
@@ -1377,7 +1377,7 @@ DECLARE_NATIVE(DECODE_UTF_8)
     if (Series_Len_At(ARG(OPTIONS)))
         panic ("UTF-8 Decoder Options not Designed Yet");
 
-    Heart heart = TYPE_TEXT;  // should options let you specify? [1]
+    Heart heart = HEART_TEXT;  // should options let you specify? [1]
 
     Size size;
     const Byte* at = Blob_Size_At(&size, blob);

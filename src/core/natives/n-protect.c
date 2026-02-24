@@ -118,14 +118,14 @@ DECLARE_NATIVE(MUTABLE_Q) {
 //
 void Protect_Slot(const Cell* v, Flags flags)
 {
-    if (LIFT_BYTE(v) == BEDROCK_255)
+    if (TYPE_BYTE(v) == BEDROCK_255)
         return;  // !!! PROTECT should reach aliases; but SETTERS? GETTERS?
 
     Option(Heart) heart = Heart_Of(v);
 
     if (Any_Series_Type(heart))
         Protect_Flex(Cell_Flex(v), Series_Index(v), flags);
-    else if (heart == TYPE_MAP)
+    else if (heart == HEART_MAP)
         Protect_Flex(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
     else if (Any_Context_Type(heart))
         Protect_Varlist(Cell_Varlist(v), flags);
@@ -442,7 +442,7 @@ void Force_Value_Frozen_Core(
     possibly(Is_Cell_Quoted(v) or Is_Quasiform(v));
     Heart heart = Heart_Of_Builtin(v);
 
-    if (heart == TYPE_FRAME and Is_Frame_Details(v))
+    if (heart == HEART_FRAME and Is_Frame_Details(v))
         return;  // special form, immutable
 
     if (Any_List_Type(heart)) {

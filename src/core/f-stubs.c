@@ -326,7 +326,7 @@ void Extra_Init_Context_Cell_Checks_Debug(
 ){
     assert(CTX_TYPE(varlist) == heart);
 
-    if (heart == TYPE_FRAME)  // may not have Misc_Varlist_Adjunct()
+    if (heart == HEART_FRAME)  // may not have Misc_Varlist_Adjunct()
         assert(
             (varlist->header.bits & STUB_MASK_LEVEL_VARLIST)
             == STUB_MASK_LEVEL_VARLIST
@@ -340,7 +340,7 @@ void Extra_Init_Context_Cell_Checks_Debug(
     // Currently only FRAME! uses the extra field, in order to capture the
     // ->coupling of the function value it links to (which is in ->phase)
     //
-    assert(archetype->extra.base == nullptr or heart == TYPE_FRAME);
+    assert(archetype->extra.base == nullptr or heart == HEART_FRAME);
 
     // KeyLists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
@@ -515,7 +515,7 @@ Result(Element*) Unsingleheart_Sequence(Element* seq)
 {
     assert(Any_Sequence_Type(Heart_Of(seq)));
     assert(not Sigil_Of(seq));
-    assert(LIFT_BYTE(seq) <= MAX_LIFT_NOQUOTE_NOQUASI);
+    assert(TYPE_BYTE(seq) <= MAX_LIFT_NOQUOTE_NOQUASI);
 
     if (not Sequence_Has_Pointer(seq))
         goto report_error;  // compressed bytes don't encode blanks
@@ -544,7 +544,7 @@ Result(Element*) Unsingleheart_Sequence(Element* seq)
 
     const Flex* f = cast(Flex*, payload1);
     if (Is_Stub_Symbol(f)) {
-        Tweak_Cell_Type(seq, TYPE_WORD);
+        Tweak_Cell_Type(seq, HEART_WORD);
         Clear_Cell_Flag(seq, LEADING_BLANK);  // !!! necessary?
         return seq;
     }

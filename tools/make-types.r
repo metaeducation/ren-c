@@ -273,7 +273,7 @@ e-types/emit [--[
     /*
      * SINGLE TYPE CHECK MACROS, e.g. Is_Block() or Is_Tag()
      *
-     * Modern Ren-C carves out special values of the LIFT_BYTE for unlifted
+     * Modern Ren-C carves out special values of the TYPE_BYTE for unlifted
      * values--trading off some abilities to have higher quoting levels to
      * get a very fast answer to Type_Of().  To make that answer particularly
      * fast, it doesn't canonize the quoted states to a single state...you
@@ -295,7 +295,7 @@ for-each 't datatype-objects [
         ;
         e-types/emit [t --[
             #define CELL_MASK_${T.NAME} \
-                (FLAG_HEART(TYPE_${T.NAME}) | FLAG_LIFT_BYTE(TYPE_${T.NAME}) | $<MOLD T.CELLMASK>)
+                (FLAG_HEART(HEART_${T.NAME}) | FLAG_LIFT(TYPE_${T.NAME}) | $<MOLD T.CELLMASK>)
         ]--]
     ]
 
@@ -376,7 +376,7 @@ for-each 't datatype-objects [
 
         #define Is_Lifted_$<Proper-Name>(v) \
             Cell_Has_Lift_Heart_No_Sigil(Known_Stable(v), \
-                QUASIFORM_64, TYPE_$<T.NAME>)
+                TYPE_QUASIFORM, HEART_$<T.NAME>)
 
         #define Is_Quasi_$<Propercase-Of T.Name>(v) \
             Is_Lifted_$<Proper-Name>(v)  /* alternative */
@@ -424,6 +424,8 @@ hearts: make block! 60  ; 64 minus sigils minus TYPE_0
 quasiform: make block! 1  ; just QUASIFORM! (in a list to fit pattern)
 quoteds: make block! 128  ; 128 states for 64 quote levels
 antiforms: make block! 64  ; lots of blank space atm in this span
+
+heartdefines: make block! 60
 
 singlehearts: make block! 256  ; tricky thing, see description in comments
 
@@ -481,7 +483,7 @@ do-appends: proc [
 === "PSEUDOTYPES FOR SIGILIZED TYPES" ===
 
 ; TYPE_METAFORM, TYPE_PINNED, and TYPE_TIED come from 2-bit encoding in the
-; KIND_BYTE() so are derived types when present in the LIFT_BYTE.
+; KIND_BYTE() so are derived types when present in the TYPE_BYTE.
 
 for-each [name description] [
     metaform "marker to read unlifted and write lifted representations"
@@ -519,6 +521,10 @@ for-each 't datatype-objects [
     ]
     append singlehearts cscape [t
         --[SINGLEHEART_HEAD_SPACE_${T.NAME} = $<(index * 256) + 1>]--
+    ]
+
+    append heartdefines cscape [t
+        --[#define HEART_${T.NAME}  TYPE_${T.NAME}]--
     ]
 
     do-appends $hearts t.name t.description sparse
@@ -614,7 +620,7 @@ do-anti-appends: proc [
     ]
 
     append antiheart-aliases cscape [name antiname
-        --[#define HEART_${NAME}_SIGNIFYING_${ANTINAME}  TYPE_${NAME}]--
+        --[#define HEART_${NAME}_SIGNIFYING_${ANTINAME}  HEART_${NAME}]--
     ]
 
     append sparse-memberships cscape [antiname
@@ -795,8 +801,11 @@ e-hearts/emit [rebs --[
             TYPE_$[Hearts],
             TYPE_$[Quasiform],
             PSEUDOTYPE_$[Quoteds],
-            TYPE_$(Antiforms),
+            TYPE_$[Antiforms],
+            LIFT_255 = 255
         } TypeEnum;
+
+        $[HeartDefines]
     #else
         /*
          * The "Extra Heart Byte Checks" are designed to make sure you don't
@@ -822,7 +831,7 @@ e-hearts/emit [rebs --[
             /* placeholders for TYPE_METAFORM, TYPE_PINNED, TYPE_TIED */
             PLACEHOLDER_TYPE_$[Sigils],
 
-            TYPE_$(Hearts),
+            HEART_$(Hearts),
         };
 
         enum TypeEnum {
@@ -831,7 +840,7 @@ e-hearts/emit [rebs --[
             TYPE_$[Sigils],
 
             /* placeholders for values in range of heart byte */
-            PLACEHOLDER_HEART_$[Hearts],
+            TYPE_$[Hearts],
 
             /* just one quasiform type! */
             TYPE_$[Quasiform],
@@ -839,14 +848,19 @@ e-hearts/emit [rebs --[
             /* PSEUDOTYPE_QUOTED_<N>_TIMES_<NON>QUASI states */
             PSEUDOTYPE_$[Quoteds],
 
-            TYPE_$(Antiforms),
+            TYPE_$[Antiforms],
+
+            LIFT_255 = 255
         };
     #endif
 
+    STATIC_ASSERT(i_cast(int, $<MAX-TYPE>) <= 256);  /* Stored in bytes */
+
+    STATIC_ASSERT(i_cast(Byte, PSEUDOTYPE_QUOTED_64_TIMES_QUASI) == 192);
+    #define LIFT_192  PSEUDOTYPE_QUOTED_64_TIMES_QUASI
+
     #define MAX_TYPEBYTE_FUNDAMENTAL  63  /* better name than "fundamental"? */
     #define MAX_TYPEBYTE_ELEMENT  192
-
-    STATIC_ASSERT(i_cast(int, $<MAX-TYPE>) <= 256);  /* Stored in bytes */
 
     STATIC_ASSERT(i_cast(Byte, TYPE_METAFORM) == 1);
     STATIC_ASSERT(i_cast(Byte, TYPE_PINNED) == 2);

@@ -100,7 +100,7 @@ INLINE Details* Ensure_Phase_Details_Core(Phase* p) {
     Ensure_Phase_Details_Core(Known_Phase(p))
 
 INLINE bool Is_Frame_Details(const Cell* v) {
-    assert(Heart_Of(v) == TYPE_FRAME);
+    assert(Heart_Of(v) == HEART_FRAME);
     return Is_Stub_Details(cast(Stub*, CELL_FRAME_PAYLOAD_1_PHASE(v)));
 }
 
@@ -114,7 +114,7 @@ INLINE bool Is_Frame_Details(const Cell* v) {
 //
 
 INLINE void Tweak_Frame_Lens_Or_Label(Cell* c, Option(const Stub*) f) {
-    assert(Heart_Of(c) == TYPE_FRAME);
+    assert(Heart_Of(c) == HEART_FRAME);
     CELL_FRAME_EXTRA_LENS_OR_LABEL(c) = m_cast(Stub*, opt f);  // no flag
 }
 

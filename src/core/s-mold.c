@@ -360,8 +360,8 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     Init_Logic(formval, form);
 
     bool tildes = NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
-        and (LIFT_BYTE(cell) > MAX_LIFT_NOQUOTE_NOQUASI)
-        and (not (LIFT_BYTE(cell) & NONQUASI_BIT));
+        and (TYPE_BYTE(cell) > MAX_LIFT_NOQUOTE_NOQUASI)
+        and (not (TYPE_BYTE(cell) & NONQUASI_BIT));
 
     if (tildes)
         Append_Codepoint(mo->strand, '~');
@@ -371,7 +371,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
 
     if (
         (tildes or sigil)
-        and Heart_Of(element) == TYPE_BLANK
+        and Heart_Of(element) == HEART_BLANK
     ){
         if (tildes and sigil)
             Append_Codepoint(mo->strand, '~');
@@ -466,7 +466,7 @@ void Mold_Or_Form_Element(Molder* mo, const Element* v, bool form)
         Quotes_Of(v) > 0
         and Is_Cell_Blank_With_Lift_Sigil(
             v,
-            LIFT_BYTE(v),  // passing v's actual lift means irrelevant for test
+            unwrap Type_Of(v),  // pass actual type means irrelevant for test
             SIGIL_0
         )
     ){

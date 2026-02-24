@@ -301,7 +301,7 @@ static Result(Element*) Copy_Blob_Part_At_May_Modify_Index(
       Binary* copy = Copy_Binary_At_Len(
         Cell_Binary(blob), Series_Index(blob), len
     ));
-    return Init_Series(out, TYPE_BLOB, copy);
+    return Init_Series(out, HEART_BLOB, copy);
 }
 
 
@@ -325,7 +325,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             if (Is_None(As_Stable(pattern)))
                 Copy_Cell(pattern, LIB(EMPTY_TEXT));
             else {
-                Tweak_Cell_Sigiled_Type(pattern, SIGIL_PIN, TYPE_BLOCK);
+                Tweak_Cell_Sigiled_Type(pattern, SIGIL_PIN, HEART_BLOCK);
 
                 Api(Stable*) joined = rebStable(
                     CANON(JOIN), CANON(BLOB_X), pattern
@@ -469,7 +469,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
         for (; size > 0; --size, ++bp, ++dp)
             *dp = ~(*bp);
 
-        return Init_Series(OUT, TYPE_BLOB, bin); }
+        return Init_Series(OUT, HEART_BLOB, bin); }
 
     //-- Special actions:
 
@@ -564,7 +564,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
         );
     }
 
-    if (to == TYPE_BLOB) {
+    if (to == HEART_BLOB) {
         Option(const Element*) part = nullptr;  // no :PART, copy to end
         require (
           Copy_Blob_Part_At_May_Modify_Index(OUT, v, part)
@@ -600,11 +600,11 @@ Result(Element*) Alias_Blob_As(
 ){
     const Binary* bin = Cell_Binary(blob);
 
-    if (as == TYPE_BLOB)  // (as blob! data) when data may be text or blob
+    if (as == HEART_BLOB)  // (as blob! data) when data may be text or blob
         return Copy_Cell(out, blob);
 
     if (Any_Utf8_Type(as)) {  // convert to a string as first step [1]
-        if (as == TYPE_WORD) {  // early fail on this, to save time
+        if (as == HEART_WORD) {  // early fail on this, to save time
             if (Blob_Offset(blob) != 0)  // (vs. failing on AS WORD! of string)
                 return fail ("Can't alias BLOB! as WORD! unless at head");
         }
@@ -680,7 +680,7 @@ Result(Element*) Alias_Blob_As(
             return Init_Any_String_At(out, as, str, index);
 
         DECLARE_ELEMENT (string);
-        Init_Any_String_At(string, TYPE_TEXT, str, index);
+        Init_Any_String_At(string, HEART_TEXT, str, index);
 
         return Alias_Any_String_As(out, string, as);
     }

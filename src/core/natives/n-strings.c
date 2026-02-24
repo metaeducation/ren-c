@@ -284,7 +284,7 @@ DECLARE_NATIVE(JOIN)
     if (delimiter)
         assert(Not_Cell_Flag(unwrap delimiter, DELIMITER_NOTE_PENDING));
 
-    if (Any_Utf8_Type(heart) or heart == TYPE_BLOB)
+    if (Any_Utf8_Type(heart) or heart == HEART_BLOB)
         goto start_mold_join;
 
     assert(Any_List_Type(heart) or Any_Sequence_Type(heart));
@@ -388,7 +388,7 @@ DECLARE_NATIVE(JOIN)
         Set_Level_Flag(LEVEL, DELIMIT_MOLD_RESULT);
 
         Option(Heart) item_heart = Heart_Of(item);
-        if (item_heart == TYPE_WORD or item_heart == TYPE_TUPLE) {
+        if (item_heart == HEART_WORD or item_heart == HEART_TUPLE) {
             DECLARE_ELEMENT (word_or_tuple);
             Copy_Cell(word_or_tuple, item);
             Clear_Cell_Sigil(word_or_tuple);
@@ -411,12 +411,12 @@ DECLARE_NATIVE(JOIN)
             goto mold_step_result_in_spare;
         }
 
-        if (item_heart == TYPE_GROUP) {
+        if (item_heart == HEART_GROUP) {
             SUBLEVEL->executor = &Just_Use_Out_Executor;
             Element* scratch = Copy_Cell_May_Bind(
                 SCRATCH, item, Level_Binding(sub)
             );
-            Tweak_Cell_Type(scratch, TYPE_BLOCK);
+            Tweak_Cell_Type(scratch, HEART_BLOCK);
             Fetch_Next_In_Feed(sub->feed);
 
             SUBLEVEL->baseline.stack_base = TOP_INDEX;
@@ -577,7 +577,7 @@ DECLARE_NATIVE(JOIN)
     if (ARG(TAIL) and delimiter)
         Copy_Cell(PUSH(), unwrap delimiter);
 
-    if (heart == TYPE_BLOB)
+    if (heart == HEART_BLOB)
         goto finish_blob_join;
 
     goto finish_utf8_join;
@@ -637,7 +637,7 @@ DECLARE_NATIVE(JOIN)
     Size size = Strand_Size(mo->strand) - mo->base.size;
     Length len = Strand_Len(mo->strand) - mo->base.index;
 
-    if (heart == TYPE_WORD) {
+    if (heart == HEART_WORD) {
         require (
           const Symbol* s = Intern_Symbol(utf8, size)
         );
@@ -646,10 +646,10 @@ DECLARE_NATIVE(JOIN)
     else if (Any_String_Type(heart)) {
         Init_Any_String(OUT, heart, Pop_Molded_Strand(mo));
     }
-    else if (heart == TYPE_RUNE) {
+    else if (heart == HEART_RUNE) {
         Init_Utf8_Non_String(OUT, heart, utf8, size, len);
     }
-    else if (heart == TYPE_EMAIL) {
+    else if (heart == HEART_EMAIL) {
         trap (
           const Byte* ep = Scan_Email_To_Stack(utf8, size)
         );
@@ -658,7 +658,7 @@ DECLARE_NATIVE(JOIN)
         Move_Cell(OUT, TOP_ELEMENT);
         DROP();
     }
-    else if (heart == TYPE_URL) {
+    else if (heart == HEART_URL) {
         if (
             cast(const Byte*, utf8) + size
             != Try_Scan_URL_To_Stack(utf8, size)

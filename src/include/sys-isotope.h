@@ -57,10 +57,10 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
   // on purpose--to reserve the meanings for future use.
 
     if (
-        (elem->header.bits & (FLAG_LIFT_BYTE(255) | CELL_MASK_SIGIL))
-            != FLAG_LIFT_BYTE(QUASIFORM_64)
+        (elem->header.bits & (FLAG_LIFT(LIFT_255) | CELL_MASK_SIGIL))
+            != FLAG_LIFT(TYPE_QUASIFORM)
     ){
-        if (LIFT_BYTE(elem) != QUASIFORM_64)
+        if (TYPE_BYTE(elem) != TYPE_QUASIFORM)
             return fail (
                 Error_User("Can only coerce quasiforms to antiforms")
             );
@@ -69,8 +69,8 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
 
 } coerce_to_antiform: {
 
-  // 1. This is one of the rare functions allowed to use LIFT_BYTE_RAW(), and
-  //    you can see why the LIFT_BYTE() safety is important to most code!
+  // 1. This is one of the rare functions allowed to use TYPE_BYTE_RAW(), and
+  //    you can see why the TYPE_BYTE() safety is important to most code!
   //
   // 2. Antiforms can't be bound.  Though SPLICE! or PACK! can have bindings
   //    on the *elements*, the containing list is not allowed to be bound.
@@ -91,17 +91,17 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         if (Frame_Lens(elem))
             Tweak_Frame_Lens_Or_Label(elem, ANONYMOUS);  // show only inputs
         Force_Phase_Final(Frame_Phase(elem));
-        LIFT_BYTE_RAW(v) = As_Lift(TYPE_ACTION);  // [1]
+        TYPE_BYTE_RAW(v) = TYPE_ACTION;  // [1]
         break; }
 
       case HEART_BLOCK_SIGNIFYING_SPLICE: {
         Tweak_Cell_Binding(elem, UNBOUND);  // [2]
-        LIFT_BYTE_RAW(v) = As_Lift(TYPE_SPLICE);  // [1]
+        TYPE_BYTE_RAW(v) = TYPE_SPLICE;  // [1]
         break; }
 
       case HEART_GROUP_SIGNIFYING_PACK: {
         Tweak_Cell_Binding(elem, UNBOUND);  // [2]
-        LIFT_BYTE_RAW(v) = As_Lift(TYPE_PACK);  // [1]
+        TYPE_BYTE_RAW(v) = TYPE_PACK;  // [1]
         break; }
 
       case HEART_FENCE_SIGNIFYING_DATATYPE: {
@@ -119,7 +119,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         }
         v->payload = Stub_Cell(unwrap patch)->payload;
         v->extra = Stub_Cell(unwrap patch)->extra;
-        LIFT_BYTE_RAW(v) = As_Lift(TYPE_DATATYPE);  // [1]
+        TYPE_BYTE_RAW(v) = TYPE_DATATYPE;  // [1]
         break; }
 
       case HEART_WORD_SIGNIFYING_LOGIC: {
@@ -138,20 +138,20 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
             return fail (Error_Illegal_Anti_Word_Raw(elem));  // limited [3]
         }
         Unbind_Any_Word(elem);  // antiforms can't be bound [2]
-        LIFT_BYTE_RAW(v) = As_Lift(TYPE_LOGIC);  // raw [1]
+        TYPE_BYTE_RAW(v) = TYPE_LOGIC;  // raw [1]
         break; }
 
       case HEART_TAG_SIGNIFYING_TRASH:
         Freeze_Flex(Cell_Strand(v));  // !!! intern if WORD-like! ?
-        LIFT_BYTE_RAW(v) = As_Lift(TYPE_TRASH);  // raw [1]
+        TYPE_BYTE_RAW(v) = TYPE_TRASH;  // raw [1]
         break;
 
       case HEART_BLANK_SIGNIFYING_VOID:
-        LIFT_BYTE_RAW(v) = As_Lift(TYPE_VOID);  // raw [1]
+        TYPE_BYTE_RAW(v) = TYPE_VOID;  // raw [1]
         break;
 
       case HEART_ERROR_SIGNIFYING_FAILURE:
-        LIFT_BYTE_RAW(v) = As_Lift(TYPE_FAILURE);  // raw [1]
+        TYPE_BYTE_RAW(v) = TYPE_FAILURE;  // raw [1]
         break;
 
       default:
@@ -174,7 +174,7 @@ INLINE Result(Element*) Coerce_To_Quasiform(Element* v) {
         return fail (Error_Non_Isotopic_Type_Raw(v));
     }
 
-    LIFT_BYTE_RAW(v) = QUASIFORM_64;  // few places should use LIFT_BYTE_RAW!
+    TYPE_BYTE_RAW(v) = QUASIFORM_64;  // few places should use TYPE_BYTE_RAW!
     return v;
 }
 

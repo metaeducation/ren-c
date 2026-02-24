@@ -43,11 +43,11 @@
     // allows an assert, but also lvalue: `VAL_INT64(v) = xxx`
     //
     INLINE REBI64 VAL_INT64(const Stable* c) {
-        assert(Heart_Of(c) == TYPE_INTEGER);
+        assert(Heart_Of(c) == HEART_INTEGER);
         return INTEGER_PAYLOAD_I64(c);
     }
     INLINE REBI64 & mutable_VAL_INT64(Stable* c) {
-        assert(Heart_Of(c) == TYPE_INTEGER);
+        assert(Heart_Of(c) == HEART_INTEGER);
         Assert_Cell_Writable(c);
         return INTEGER_PAYLOAD_I64(c);
     }

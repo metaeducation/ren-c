@@ -36,13 +36,13 @@
 //
 // * KIND_BYTE: the second byte indicates what type of information the other
 //   3 slots in the cell describe.  It holds a fundamental datatype known
-//   as a "Heart", which has values like TYPE_INTEGER, TYPE_BLOCK, TYPE_TEXT.
+//   as a "Heart", with values like HEART_INTEGER, HEART_BLOCK, HEART_TEXT.
 //   It also reserves two bits to hold the "Sigil" of the cell, which is
 //   whether it's annotated with `@` or `^` or `$`.
 //
-// * LIFT_BYTE: the third byte indicates how quoted something is, or if it
-//   is a quaisform or antiform.  See %sys-quoted.h for more on how the byte
-//   is interpreted.
+// * TYPE_BYTE: the third byte is equal to the KIND_BYTE for "normal" values,
+//   but has higher levels indicates how quoted something is, or if it is a
+//   quaisform or antiform.  See %sys-quoted.h for more on the interpretation.
 //
 // * The fourth byte contains other cell flags.  Some of them apply to any
 //   cell type (such as whether the cell should have a new-line after it when
@@ -232,11 +232,11 @@ typedef enum {
 //=//// BITS 16-23: TYPE AND QUOTE/QUASI/ANTI/DUAL BYTE ("LIFT") //////////=//
 //
 // A Cell's underlying "HEART" can report it as something like TYPE_WORD, but
-// that is only reported as the result of Type_Of() when LIFT_BYTE() is also
-// TYPE_WORD.  Higher LIFT_BYTE() will give back various TYPE_XXX answers
+// that is only reported as the result of Type_Of() when TYPE_BYTE() is also
+// TYPE_WORD.  Higher TYPE_BYTE() will give back various TYPE_XXX answers
 // corresponding to the quoted, quasiform, or antiform states.
 //
-// Due to how it's designed, the LIFT_BYTE() gives back the answer to what
+// Due to how it's designed, the TYPE_BYTE() gives back the answer to what
 // a Cell's Type_Of() is with a single byte read.  But different quoting and
 // quasiform combinations will give distinct answers, so there is no canon
 // value of TYPE_QUOTED.  This means comparing Type values directly doesn't
@@ -249,18 +249,18 @@ typedef enum {
 //
 // 1. There's a complex runtime check to ensure coherence in the lift byte
 //    with the rest of the cell, which is triggered in some C++ builds when
-//    you use LIFT_BYTE() directly.  This raw accessor is used to implement
+//    you use TYPE_BYTE() directly.  This raw accessor is used to implement
 //    that layer, and can also be used for efficiency in some cases that
 //    want to subvert those checks.
 //
 
-typedef Byte LiftByte;  // help document when Byte means a lifting byte
+typedef Byte TypeByte;   // any byte value (but represents a Type/Lift)
 
-#define LIFT_BYTE_RAW(cell) /* don't go through LiftHolder() [1] */ \
+#define TYPE_BYTE_RAW(cell) /* don't go through TypeHolder() [1] */ \
     THIRD_BYTE(&(cell)->header.bits)
 
 #define LIFT_0  TYPE_0_constexpr
-#define BEDROCK_255  255
+#define BEDROCK_255  LIFT_255
 
 #define MAX_LIFT_NOQUOTE_QUASI_OK 64
 #define MAX_LIFT_NOQUOTE_NOQUASI 63
@@ -282,24 +282,24 @@ STATIC_ASSERT(i_cast(Byte, PSEUDOTYPE_QUOTED_64_TIMES_QUASI) == 192);
 
 #define Quote_Shift(n)      ((n) << 1)  // help find manipulation sites
 
-#define FLAG_LIFT_BYTE(byte)  FLAG_THIRD_BYTE(byte)
-
-#define CELL_MASK_LIFT  FLAG_LIFT_BYTE(255)
+#define FLAG_LIFT(byte) \
+    FLAG_THIRD_BYTE(known(TypeEnum, (byte)))
 
 #define CELL_MASK_LIFTED_OR_ANTIFORM_OR_DUAL \
-    FLAG_LIFT_BYTE(128 + 64)  // the 2 high bits set
+    FLAG_LIFT(LIFT_192)  // 128 + 64, the 2 high bits set
 
 #define CELL_MASK_HEART_AND_SIGIL_AND_LIFT \
-    (CELL_MASK_HEART_AND_SIGIL | CELL_MASK_LIFT)
+    (CELL_MASK_HEART_AND_SIGIL | FLAG_LIFT(LIFT_255))
 
-#define As_Lift(byte)  i_cast(LiftByte, (byte))
+#define As_Lift(type) \
+    i_cast(TypeEnum, known(Heart, (type)))
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//
 //
 // Because the header for cells is only 32 bits on 32-bit platforms, there
 // are only 8 bits left over when you've used up the BASE_BYTE, KIND_BYTE,
-// and LIFT_BYTE.  These 8 scarce remaining cell bits have to be used very
+// and TYPE_BYTE.  These 8 scarce remaining cell bits have to be used very
 // carefully...and are multiplexed across types that can be tricky.
 //
 

@@ -116,11 +116,11 @@ DECLARE_NATIVE(NOW)
         VAL_ZONE(out) = NO_DATE_ZONE;
     }
     else if (ARG(TIME)) {
-        Tweak_Cell_Type(out, TYPE_TIME);
+        Tweak_Cell_Type(out, HEART_TIME);
     }
     else if (ARG(ZONE)) {
         Tweak_Cell_Nanoseconds(out, VAL_ZONE(out) * ZONE_MINS * MIN_SEC);
-        Tweak_Cell_Type(out, TYPE_TIME);
+        Tweak_Cell_Type(out, HEART_TIME);
     }
     else if (ARG(WEEKDAY))
         n = Week_Day(out);

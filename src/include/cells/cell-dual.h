@@ -31,10 +31,10 @@
 
 
 #define Is_Bedrock(cell) \
-    (LIFT_BYTE(Possibly_Bedrock(cell)) == BEDROCK_255)
+    (TYPE_BYTE(Possibly_Bedrock(cell)) == BEDROCK_255)
 
 #define Is_Dualized_Bedrock(dual) \
-    (LIFT_BYTE(Known_Dual(dual)) <= MAX_LIFT_NOQUOTE_NOQUASI)
+    (TYPE_BYTE(Known_Dual(dual)) <= MAX_LIFT_NOQUOTE_NOQUASI)
 
 
 //=//// UNDECAYED ~(...)~ BEDROCK PACK!s //////////////////////////////////-//
@@ -86,7 +86,7 @@ INLINE const Dual* Opt_Extract_Dual_If_Undecayed_Bedrock(const Value* v) {
     if (item == tail or item + 1 != tail)
         return nullptr;
 
-    if (LIFT_BYTE(item) > MAX_LIFT_NOQUOTE_NOQUASI)
+    if (TYPE_BYTE(item) > MAX_LIFT_NOQUOTE_NOQUASI)
         return nullptr;
 
     return item;
@@ -116,18 +116,18 @@ INLINE bool Is_Bedrock_Dual_A_Drain(const Dual* dual) {
     return Is_Space(dual);  // maybe no faster than Is_Dual_Drain()?
 }
 
-#define Is_Drain_Core(cell, lift_byte) \
-    Is_Cell_Space_With_Lift_Sigil((cell), (lift_byte), SIGIL_0)
+#define Is_Drain_Core(cell,lift) \
+    Is_Cell_Space_With_Lift_Sigil((cell), (lift), SIGIL_0)
 
 #define Is_Cell_A_Bedrock_Drain(cell) \
     Is_Drain_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Drain(dual) \
-    Is_Drain_Core(Known_Dual(dual), As_Lift(TYPE_RUNE))
+    Is_Drain_Core(Known_Dual(dual), TYPE_RUNE)
 
 INLINE Slot* Init_Bedrock_Drain(Init(Slot) out) {
     Init_Space(out);
-    LIFT_BYTE(out) = BEDROCK_255;
+    TYPE_BYTE(out) = BEDROCK_255;
     return out;
 }
 
@@ -183,9 +183,9 @@ INLINE bool Is_Undecayed_Drain(const Value* v) {  // ~(_)~ PACK!
 INLINE bool Is_Hot_Potato_With_Id_Core(
     Value* v,
     Option(SymId) id,
-    LiftByte lift_byte
+    Type lift
 ){
-    if (not Cell_Has_Lift_Sigil_Heart(v, lift_byte, SIGIL_0, TYPE_GROUP))
+    if (not Cell_Has_Lift_Sigil_Heart(v, lift, SIGIL_0, HEART_GROUP))
         return false;
 
     const Element* tail;
@@ -199,11 +199,11 @@ INLINE bool Is_Hot_Potato_With_Id_Core(
 
 #define Is_Hot_Potato_With_Id(v, id) \
     Is_Hot_Potato_With_Id_Core( \
-        known(Value*, (v)), (id), As_Lift(TYPE_PACK))
+        known(Value*, (v)), (id), TYPE_PACK)
 
 #define Is_Lifted_Hot_Potato_With_Id(v, id) \
     Is_Hot_Potato_With_Id_Core( \
-        known(Value*, (v)), (id), QUASIFORM_64)
+        known(Value*, (v)), (id), TYPE_QUASIFORM)
 
 #define Is_Hot_Potato(v) \
     Is_Hot_Potato_With_Id((v), none)
@@ -237,18 +237,18 @@ INLINE bool Is_Hot_Potato_With_Id_Core(
 INLINE bool Is_Bedrock_Dual_A_Hole(const Dual* dual) {
     assert(Is_Dualized_Bedrock(dual));
     return (
-        KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_0, TYPE_PARAMETER)
+        KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_0, HEART_PARAMETER)
     );
 }
 
-#define Is_Hole_Core(cell,lift_byte) \
-    Cell_Has_Lift_Sigil_Heart((cell), (lift_byte), SIGIL_0, TYPE_PARAMETER)
+#define Is_Hole_Core(cell,lift) \
+    Cell_Has_Lift_Sigil_Heart((cell), (lift), SIGIL_0, HEART_PARAMETER)
 
 #define Is_Cell_A_Bedrock_Hole(cell) \
     Is_Hole_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Hole(dual) \
-    Is_Hole_Core(Known_Dual(dual), As_Lift(TYPE_PARAMETER))
+    Is_Hole_Core(Known_Dual(dual), TYPE_PARAMETER)
 
 INLINE bool Is_Undecayed_Hole(const Value* v) {  // ~(parameter!)~ PACK!
     const Dual* dual = Opt_Extract_Dual_If_Undecayed_Bedrock(v);
@@ -278,22 +278,22 @@ INLINE bool Is_Undecayed_Hole(const Value* v) {  // ~(parameter!)~ PACK!
 INLINE bool Is_Bedrock_Dual_An_Alias(const Dual* dual) {
     assert(Is_Dualized_Bedrock(dual));
     return (
-        KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_META, TYPE_WORD)
-        or KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_META, TYPE_TUPLE)
+        KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_META, HEART_WORD)
+        or KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_META, HEART_TUPLE)
     );
 }
 
-INLINE bool Is_Alias_Core(const Cell* cell, Option(LiftByte) lift_byte) {
+INLINE bool Is_Alias_Core(const Cell* cell, Option(Type) lift) {
     return Cell_Has_Lift_Sigil_Heart(
         cell,
-        lift_byte ? unwrap lift_byte : As_Lift(TYPE_WORD),
+        lift ? i_cast(TypeEnum, unwrap lift) : TYPE_WORD,
         SIGIL_META,
-        TYPE_WORD
+        HEART_WORD
     ) or Cell_Has_Lift_Sigil_Heart(
         cell,
-        lift_byte ? unwrap lift_byte : As_Lift(TYPE_TUPLE),
+        lift ? i_cast(TypeEnum, unwrap lift) : TYPE_TUPLE,
         SIGIL_META,
-        TYPE_TUPLE
+        HEART_TUPLE
     );
 }
 
@@ -317,17 +317,17 @@ INLINE bool Is_Undecayed_Alias(const Value* v) {  // ~(^meta)~ PACK!
 
 INLINE bool Is_Bedrock_Dual_An_Accessor(const Dual* dual) {
     assert(Is_Dualized_Bedrock(dual));
-    return KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_0, TYPE_FRAME);
+    return KIND_BYTE(dual) == Kind_From_Sigil_And_Heart(SIGIL_0, HEART_FRAME);
 }
 
-#define Is_Accessor_Core(cell,lift_byte) \
-    Cell_Has_Lift_Sigil_Heart((cell), (lift_byte), SIGIL_0, TYPE_FRAME)
+#define Is_Accessor_Core(cell,lift) \
+    Cell_Has_Lift_Sigil_Heart((cell), (lift), SIGIL_0, HEART_FRAME)
 
 #define Is_Cell_A_Bedrock_Accessor(cell) \
     Is_Accessor_Core(Possibly_Bedrock(cell), BEDROCK_255)
 
 #define Is_Dual_Accessor(dual) \
-    Is_Accessor_Core(Known_Dual(dual), As_Lift(TYPE_FRAME))
+    Is_Accessor_Core(Known_Dual(dual), TYPE_FRAME)
 
 #define Is_Dual_Word_Named_Signal(dual)  Is_Word(Known_Dual(dual))
 

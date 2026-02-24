@@ -936,7 +936,7 @@ Result(const Byte*) Scan_Email_To_Stack(const Byte* cp, REBLEN len)
 
     if (Try_Init_Small_Utf8(
         PUSH(),
-        TYPE_EMAIL,
+        HEART_EMAIL,
         Strand_Head(s),
         Strand_Len(s),
         Strand_Size(s)
@@ -948,7 +948,7 @@ Result(const Byte*) Scan_Email_To_Stack(const Byte* cp, REBLEN len)
     DROP();  // didn't write, try again (stack may have moved...!)
 
     Freeze_Flex(s);
-    Init_Any_String(PUSH(), TYPE_EMAIL, s);
+    Init_Any_String(PUSH(), HEART_EMAIL, s);
     return cp;
 }
 
@@ -1016,7 +1016,7 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
 
     if (Try_Init_Small_Utf8(
         PUSH(),
-        TYPE_URL,
+        HEART_URL,
         Strand_Head(s),
         Strand_Len(s),
         Strand_Size(s)
@@ -1028,7 +1028,7 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
     DROP();  // didn't write, try again (stack may have moved...!)
 
     Freeze_Flex(s);
-    Init_Any_String(PUSH(), TYPE_URL, s);
+    Init_Any_String(PUSH(), HEART_URL, s);
 
     return cp + len;
 }

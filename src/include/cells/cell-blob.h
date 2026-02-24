@@ -43,7 +43,7 @@
 //
 
 INLINE const Binary* Cell_Binary(const Cell* cell) {
-    assert(Unchecked_Heart_Of(cell) == TYPE_BLOB);
+    assert(Unchecked_Heart_Of(cell) == HEART_BLOB);
     return cast(Binary*, Cell_Flex(cell));
 }
 
@@ -54,7 +54,7 @@ INLINE const Binary* Cell_Binary(const Cell* cell) {
     m_cast(Binary*, Cell_Binary(Known_Mutable(cell)))
 
 INLINE Offset Blob_Offset(const Cell* cell) {  // series index is in bytes
-    assert(Unchecked_Heart_Of(cell) == TYPE_BLOB);
+    assert(Unchecked_Heart_Of(cell) == HEART_BLOB);
     return SERIES_INDEX_UNBOUNDED(cell);
 }
 
@@ -83,10 +83,10 @@ INLINE const Byte* Blob_Size_At(Option(Sink(Size)) size_at, const Cell* cell)
     m_cast(Byte*, Blob_At(Known_Mutable(v)))
 
 #define Init_Blob(out,blob) \
-    Init_Series((out), TYPE_BLOB, (blob))
+    Init_Series((out), HEART_BLOB, (blob))
 
 #define Init_Blob_At(out,blob,offset) \
-    Init_Series_At((out), TYPE_BLOB, (blob), (offset))
+    Init_Series_At((out), HEART_BLOB, (blob), (offset))
 
 
 //=//// GLOBAL BINARIES //////////////////////////////////////////////////=//
@@ -111,7 +111,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     assert(Any_Bytes_Heart(heart));
 
     Length len_at;
-    if (heart == TYPE_BLOB)
+    if (heart == HEART_BLOB)
         Blob_Size_At(&len_at, cell);
     else
         len_at = String_Len_At(cell);
@@ -124,7 +124,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
 
     Corrupt_If_Needful(limit_in);
 
-    if (heart == TYPE_BLOB) {
+    if (heart == HEART_BLOB) {
         *size_out = limit;
         return Blob_At(cell);
     }
@@ -134,7 +134,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
         return String_At(cell);
     }
 
-    assert(Heart_Of(cell) == TYPE_WORD);
+    assert(Heart_Of(cell) == HEART_WORD);
     assert(limit == Series_Len_At(cell));
 
     const Symbol* symbol = Word_Symbol(cell);
@@ -171,7 +171,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
 //
 
 INLINE bool Is_Blob_And_Is_Zero(const Stable* v) {
-    if (Heart_Of(v) != TYPE_BLOB)
+    if (Heart_Of(v) != HEART_BLOB)
         return false;
 
     Size size;

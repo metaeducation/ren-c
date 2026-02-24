@@ -2331,7 +2331,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     if (len + 1 <= Size_Of(TOP->payload.at_least_8)) {
         Reset_Cell_Header(
             TOP,
-            FLAG_HEART(TYPE_RUNE) | FLAG_LIFT_BYTE(As_Lift(TYPE_RUNE))
+            FLAG_HEART_AND_LIFT(HEART_RUNE)
                 | CELL_MASK_NO_MARKING
         );
         Mem_Fill(&TOP->payload.at_least_8, b, len);
@@ -2346,7 +2346,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         Mem_Fill(Strand_Head(s), b, len);
         Term_Strand_Len_Size(s, len, len);
         Freeze_Flex(s);
-        Init_Utf8_Non_String_From_Strand(TOP, TYPE_RUNE, s);
+        Init_Utf8_Non_String_From_Strand(TOP, HEART_RUNE, s);
     }
     goto lookahead;
 
@@ -2593,7 +2593,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         return fail (Error_Syntax(S, token));
 
     if (S->begin[len - 1] == '%')
-        Tweak_Cell_Type(TOP_ELEMENT, TYPE_PERCENT);
+        Tweak_Cell_Type(TOP_ELEMENT, HEART_PERCENT);
 
     goto lookahead;
 
@@ -2723,7 +2723,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     if (S->end - 1 != S->begin + 1 + size)
         return fail (Error_Syntax(S, token));
 
-    Init_Any_String(PUSH(), TYPE_TAG, s);
+    Init_Any_String(PUSH(), HEART_TAG, s);
     goto lookahead;
 
 } case TOKEN_CONSTRUCT: { ////////////////////////////////////////////////////
@@ -2889,13 +2889,13 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     Heart heart;
     switch (LEVEL_STATE_BYTE(SUBLEVEL)) {
       case ST_SCANNER_BLOCK_MODE:
-        heart = TYPE_BLOCK;
+        heart = HEART_BLOCK;
         break;
       case ST_SCANNER_FENCE_MODE:
-        heart = TYPE_FENCE;
+        heart = HEART_FENCE;
         break;
       case ST_SCANNER_GROUP_MODE:
-        heart = TYPE_GROUP;
+        heart = HEART_GROUP;
         break;
       default:
         crash (L);
@@ -2941,17 +2941,17 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     switch (sub_mode) {
       case '/':
         assert(not Scanner_Mode_Matches(L, '/'));  // should have continued
-        heart = TYPE_PATH;
+        heart = HEART_PATH;
         break;
 
       case ':':
         assert(not Scanner_Mode_Matches(L, ':'));  // should have continued
-        heart = TYPE_CHAIN;
+        heart = HEART_CHAIN;
         break;
 
       case '.':
         assert(not Scanner_Mode_Matches(L, '.'));  // should have continued
-        heart = TYPE_TUPLE;
+        heart = HEART_TUPLE;
         break;
 
       default:
@@ -3082,16 +3082,16 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     sigil_before = Cell_Underlying_Sigil(head);
 
     if (quotes_before != 0) {
-        if (LIFT_BYTE_RAW(head) & NONQUASI_BIT)
+        if (TYPE_BYTE_RAW(head) & NONQUASI_BIT)
             Clear_Cell_Quotes_And_Quasi(head);
         else
-            LIFT_BYTE_RAW(head) = QUASIFORM_64;
+            TYPE_BYTE_RAW(head) = QUASIFORM_64;
     }
 
-    Byte b = LIFT_BYTE_RAW(head);
+    Byte b = TYPE_BYTE_RAW(head);
     USED(b);
 
-    if (LIFT_BYTE_RAW(head) != QUASIFORM_64)
+    if (TYPE_BYTE_RAW(head) != QUASIFORM_64)
         Clear_Cell_Sigil(head);
 
 } trap_pop: {
@@ -3131,7 +3131,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         Add_Cell_Sigil(TOP_ELEMENT, unwrap sigil_before);
 
     if (quotes_before != 0)
-        LIFT_BYTE(TOP_ELEMENT) = NOQUOTE_63 + Quote_Shift(quotes_before);
+        TYPE_BYTE(TOP_ELEMENT) = NOQUOTE_63 + Quote_Shift(quotes_before);
 
     goto sequence_or_conflation_was_pushed;
 

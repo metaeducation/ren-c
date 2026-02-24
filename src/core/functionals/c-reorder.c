@@ -189,7 +189,7 @@ DECLARE_NATIVE(REORDER)
         else if (Is_Quoted(item)) {
             if (
                 Quotes_Of(item) != 1
-                or Heart_Of(item) != TYPE_WORD
+                or Heart_Of(item) != HEART_WORD
             ) {
                 error = Error_User("REORDER allows single quoted ANY-WORD?");
                 goto cleanup_binder;

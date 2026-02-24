@@ -86,13 +86,13 @@ IMPLEMENT_GENERIC(MAKE, Is_Pair)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_PAIR);
+    assert(Datatype_Builtin_Heart(ARG(TYPE)) == HEART_PAIR);
 
     Element* arg = ARG(DEF);
 
     if (Is_Text(arg)) {  // "-1234567890x-1234567890"
         trap (
-          Transcode_One(OUT, TYPE_PAIR, arg)
+          Transcode_One(OUT, HEART_PAIR, arg)
         );
         return OUT;
     }
@@ -263,7 +263,7 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
         return Init_Any_List(OUT, to, a);
     }
 
-    if (Any_String_Type(to) or to == TYPE_RUNE) {
+    if (Any_String_Type(to) or to == HEART_RUNE) {
         DECLARE_MOLDER (mo);
         Push_Mold(mo);
         Mold_Element(mo, Cell_Pair_First(v));

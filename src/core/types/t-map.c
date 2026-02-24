@@ -645,7 +645,7 @@ VarList* Alloc_Varlist_From_Map(const Map* map)
 
     // See Alloc_Varlist() - cannot use it directly because no Collect_Words
 
-    VarList* c = Alloc_Varlist(TYPE_OBJECT, count);
+    VarList* c = Alloc_Varlist(HEART_OBJECT, count);
 
     const Stable* mval_tail = Flex_Tail(Stable, MAP_PAIRLIST(map));
     const Stable* mval = Flex_Head(Stable, MAP_PAIRLIST(map));
@@ -825,7 +825,7 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
     if (Any_List_Type(to))  // !!! not ordered! [1]
         return Init_Any_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
 
-    if (to == TYPE_MAP) {
+    if (to == HEART_MAP) {
         bool deep = false;
         require (
           Map* copy = Copy_Map(VAL_MAP(map), deep)

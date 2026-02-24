@@ -1019,8 +1019,8 @@ DECLARE_NATIVE(SAME_Q)
     Element* v1 = Element_ARG(VALUE1);
     Element* v2 = Element_ARG(VALUE2);
 
-    if (KIND_BYTE(v1) != KIND_BYTE(v2))
-        return LOGIC_OUT(false);  // not "same" value if not same heart
+    if (not Have_Same_Type(v1, v2))
+        return LOGIC_OUT(false);  // not "same" value if not same type
 
     if (Is_Bitset(v1))  // same if binaries are same
         return LOGIC_OUT(VAL_BITSET(v1) == VAL_BITSET(v2));

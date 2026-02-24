@@ -657,18 +657,18 @@ DECLARE_NATIVE(LET)
         : OUT;
 
     Init_Word_Bound(where, symbol, bindings);
-    if (Heart_Of(vars) != TYPE_WORD) {  // more complex than we'd like [1]
+    if (Heart_Of(vars) != HEART_WORD) {  // more complex than we'd like [1]
         assume (
           Setify(where)
           );
-        if (Heart_Of(vars) == TYPE_PATH) {
+        if (Heart_Of(vars) == HEART_PATH) {
             assume (  // was a path when we got it!
               Blank_Head_Or_Tail_Sequencify(
-                where, TYPE_PATH, CELL_FLAG_LEADING_BLANK
+                where, HEART_PATH, CELL_FLAG_LEADING_BLANK
             ));
         }
         else
-            assert(Heart_Of(vars) == TYPE_CHAIN);
+            assert(Heart_Of(vars) == HEART_CHAIN);
     }
     if (Is_Metaform(vars))
         Add_Cell_Sigil(where, SIGIL_META);
@@ -791,7 +791,7 @@ DECLARE_NATIVE(LET)
         assume (
           Setify(Init_Any_List(
             where,  // may be SPARE, and vars may point to it
-            TYPE_BLOCK,
+            HEART_BLOCK,
             Pop_Managed_Source_From_Stack(STACK_BASE)
         )));
     }
@@ -1324,19 +1324,19 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             continue;
 
         if (
-            LIFT_BYTE(check) <= MAX_LIFT_NOQUOTE_QUASI_OK
-            or LIFT_BYTE(check) == ONEQUOTE_NONQUASI_65
+            TYPE_BYTE(check) <= MAX_LIFT_NOQUOTE_QUASI_OK
+            or TYPE_BYTE(check) == ONEQUOTE_NONQUASI_65
         ){
             KindByte kind = KIND_BYTE(check);
             if (
-                kind == Kind_From_Sigil_And_Heart(SIGIL_0, TYPE_WORD)
-                or kind == Kind_From_Sigil_And_Heart(SIGIL_META, TYPE_WORD)
+                kind == Kind_From_Sigil_And_Heart(SIGIL_0, HEART_WORD)
+                or kind == Kind_From_Sigil_And_Heart(SIGIL_META, HEART_WORD)
             ){
                 body_needs_binding = true;
                 continue;
             }
             else if (
-                kind == Kind_From_Sigil_And_Heart(SIGIL_TIE, TYPE_WORD)
+                kind == Kind_From_Sigil_And_Heart(SIGIL_TIE, HEART_WORD)
             ){
                 continue;
             }
@@ -1355,7 +1355,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     // KeyLists are always managed, but varlist is unmanaged by default (so
     // it can be freed if there is a problem)
     //
-    VarList* varlist = Alloc_Varlist(TYPE_OBJECT, num_vars);
+    VarList* varlist = Alloc_Varlist(HEART_OBJECT, num_vars);
 
     DECLARE_BINDER (binder);  // used to check for duplicates
     if (body_needs_binding)
@@ -1394,7 +1394,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 
         Init(Slot) slot = Append_Context(varlist, symbol);
 
-        if (kind == Kind_From_Sigil_And_Heart(SIGIL_TIE, TYPE_WORD)) {
+        if (kind == Kind_From_Sigil_And_Heart(SIGIL_TIE, HEART_WORD)) {
             if (dummy_sym == SYM_DUMMY9)
                 error = Error_User(
                     "Current limitation: only up to 9 foreign/space keys"
@@ -1405,7 +1405,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 
             Element* copy = Copy_Cell_May_Bind(slot, item, binding);
             Force_Cell_Sigil(copy, SIGIL_META);  // make it $word
-            LIFT_BYTE(slot) = BEDROCK_255;
+            TYPE_BYTE(slot) = BEDROCK_255;
             assert(Is_Cell_A_Bedrock_Alias(slot));  // alias uses ^META [1]
         }
         else {
@@ -1419,16 +1419,16 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             }
 
             Init_Void_Signifying_Unset(slot);
-            if (kind == Kind_From_Sigil_And_Heart(SIGIL_META, TYPE_WORD))
+            if (kind == Kind_From_Sigil_And_Heart(SIGIL_META, HEART_WORD))
                 Set_Cell_Flag(slot, LOOP_SLOT_ROOT_META);
             else
-                assert(kind == Kind_From_Sigil_And_Heart(SIGIL_0, TYPE_WORD));
+                assert(kind == Kind_From_Sigil_And_Heart(SIGIL_0, HEART_WORD));
         }
 
-        if (LIFT_BYTE(item) == ONEQUOTE_NONQUASI_65)
+        if (TYPE_BYTE(item) == ONEQUOTE_NONQUASI_65)
             Set_Cell_Flag(slot, LOOP_SLOT_FORMAT_UNBIND);
         else
-            assert(LIFT_BYTE(item) <= MAX_LIFT_NOQUOTE_NOQUASI);
+            assert(TYPE_BYTE(item) <= MAX_LIFT_NOQUOTE_NOQUASI);
     }
 
     // As currently written, the loop constructs which use these contexts
@@ -1477,7 +1477,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 //
 void Read_Slot_Dual(Sink(Value) out, const Slot* slot)
 {
-    if (LIFT_BYTE(slot) == BEDROCK_255)
+    if (TYPE_BYTE(slot) == BEDROCK_255)
         Copy_Plain_Cell(out, slot);
     else
         Copy_Lifted_Cell(out, As_Value(slot));
@@ -1499,7 +1499,7 @@ void Read_Slot_Dual(Sink(Value) out, const Slot* slot)
 //
 Result(None) Read_Slot_Meta(Sink(Value) out, const Slot* slot)
 {
-    if (LIFT_BYTE(slot) != BEDROCK_255) {
+    if (TYPE_BYTE(slot) != BEDROCK_255) {
         const Value* var = Slot_Hack(slot);
         Copy_Cell(out, var);
         return none;
@@ -1520,7 +1520,7 @@ Result(None) Read_Slot_Meta(Sink(Value) out, const Slot* slot)
 
     DECLARE_ELEMENT (temp);  // don't have to guard--slot guards
     Copy_Cell_Core(temp, slot, CELL_MASK_COPY);
-    Tweak_Cell_Quoted_Type(temp, TYPE_WORD);
+    Tweak_Cell_Quoted_Type(temp, HEART_WORD);
     unnecessary(Push_Lifeguard(temp));  // slot protects it.
 
     if (rebRunThrows(out, CANON(GET), temp))
@@ -1570,7 +1570,7 @@ Result(None) Write_Loop_Slot_May_Unbind_Or_Decay(Slot* slot, Value* v)
     if (Get_Cell_Flag(slot, LOOP_SLOT_FORMAT_UNBIND))
         Unbind_Cell_If_Bindable_Core(v);
 
-    if (LIFT_BYTE(slot) != BEDROCK_255) {  // ordinary write
+    if (TYPE_BYTE(slot) != BEDROCK_255) {  // ordinary write
         Copy_Cell(u_cast(Value*, slot), v);
         return none;
     }
@@ -1579,7 +1579,7 @@ Result(None) Write_Loop_Slot_May_Unbind_Or_Decay(Slot* slot, Value* v)
 
     DECLARE_ELEMENT (temp);
     Copy_Cell(temp, u_cast(Element*, slot));
-    Tweak_Cell_Quoted_Type(temp, TYPE_WORD);
+    Tweak_Cell_Quoted_Type(temp, HEART_WORD);
     unnecessary(Push_Lifeguard(temp));  // slot protects it.
 
     rebElide(CANON(SET), temp, rebQ(v));  // may be writing alias, etc.
@@ -1609,7 +1609,7 @@ void Assert_Cell_Binding_Valid_Core(const Stable* cell)
     assert(Is_Base_A_Stub(binding));
     assert(Is_Base_Readable(binding));
 
-    if (heart == TYPE_FRAME) {
+    if (heart == HEART_FRAME) {
         assert(Is_Stub_Varlist(binding));  // actions/frames bind contexts only
         return;
     }

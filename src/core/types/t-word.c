@@ -98,7 +98,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
     INCLUDE_PARAMS_OF_MAKE;
 
     Heart heart = Datatype_Builtin_Heart(ARG(TYPE));
-    assert(heart == TYPE_WORD);
+    assert(heart == HEART_WORD);
 
     Element* arg = ARG(DEF);
 
@@ -161,7 +161,7 @@ IMPLEMENT_GENERIC(TO, Is_Word)
 
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
-    if (to == TYPE_WORD)
+    if (to == HEART_WORD)
         return GENERIC_CFUNC(AS, Is_Word)(LEVEL);  // immutable alias
 
     if (Any_String_Type(to))  // need mutable copy
@@ -181,7 +181,7 @@ Result(Element*) Alias_Any_Word_As(
     const Element* word,
     Heart as
 ){
-    if (as == TYPE_WORD) {
+    if (as == HEART_WORD) {
         Copy_Cell(out, word);
         Clear_Cell_Sigil(out);
         return out;
@@ -190,7 +190,7 @@ Result(Element*) Alias_Any_Word_As(
     if (Any_String_Type(as))  // will be an immutable string
         return Init_Any_String(out, as, Word_Symbol(word));
 
-    if (as == TYPE_RUNE) {  // immutable (note no EMAIL! or URL! possible)
+    if (as == HEART_RUNE) {  // immutable (note no EMAIL! or URL! possible)
         const Symbol* s = Word_Symbol(word);
         if (Try_Init_Small_Utf8(  // invariant: fit in cell if it can
             out,
@@ -204,7 +204,7 @@ Result(Element*) Alias_Any_Word_As(
         return Init_Any_String(out, as, s);
     }
 
-    if (as == TYPE_BLOB)  // will be an immutable blob
+    if (as == HEART_BLOB)  // will be an immutable blob
         return Init_Blob(out, Word_Symbol(word));
 
     return fail (Error_Invalid_Type(as));

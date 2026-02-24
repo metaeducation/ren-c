@@ -68,7 +68,6 @@
 //
 
 typedef Byte HeartByte;  // value is >= MIN_HEARTBYTE, <= MAX_HEARTBYTE
-typedef Byte TypeByte;  // any byte value (but represents a Type)
 
 #if (! DEBUG_EXTRA_HEART_CHECKS)
     typedef TypeEnum Heart;  // avoid enum compare warnings [1]
@@ -286,8 +285,8 @@ INLINE bool Is_Quoted_Type(Option(Type) type) {
 #define Trailing_Blank_And(heart) \
     i_cast(SingleHeart, i_cast(Byte, known(Heart, (heart))) << 8)
 
-#define LEADING_BLANK_AND(name)     Leading_Blank_And(TYPE_##name)
-#define TRAILING_BLANK_AND(name)    Trailing_Blank_And(TYPE_##name)
+#define LEADING_BLANK_AND(name)     Leading_Blank_And(HEART_##name)
+#define TRAILING_BLANK_AND(name)    Trailing_Blank_And(HEART_##name)
 
 INLINE bool Singleheart_Has_Leading_Blank(SingleHeart single) {
     assert(single != NOT_SINGLEHEART_0);
@@ -300,6 +299,6 @@ INLINE bool Singleheart_Has_Leading_Blank(SingleHeart single) {
 INLINE Heart Heart_Of_Singleheart(SingleHeart single) {
     assert(single != NOT_SINGLEHEART_0);
     Heart heart = i_cast(Heart, i_cast(uint_fast16_t, single) >> 8);
-    assert(heart != TYPE_0_constexpr and heart != TYPE_BLANK);
+    assert(heart != TYPE_0_constexpr and heart != HEART_BLANK);
     return heart;
 }

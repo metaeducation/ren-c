@@ -725,7 +725,7 @@ Bounce Call_Core(Level* level_) {
         rebPanic_OS (ret);
 
     if (ARG(INFO)) {
-        VarList* info = Alloc_Varlist(TYPE_OBJECT, 2);
+        VarList* info = Alloc_Varlist(HEART_OBJECT, 2);
 
         Init_Integer(Append_Context(info, CANON(ID)), pid);
         if (ARG(WAIT))

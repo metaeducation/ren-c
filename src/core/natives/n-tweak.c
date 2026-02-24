@@ -50,8 +50,8 @@
 static Option(Error*) Trap_Adjust_Lifted_Antiform_For_Tweak(Value* spare)
 {
     assert(Is_Lifted_Antiform(spare));
-    if (Heart_Of(spare) == TYPE_FRAME) {  // e.g. (append.series)
-        LIFT_BYTE_RAW(spare) = ONEQUOTE_NONQUASI_65;
+    if (Heart_Of(spare) == HEART_FRAME) {  // e.g. (append.series)
+        TYPE_BYTE_RAW(spare) = ONEQUOTE_NONQUASI_65;
         return SUCCESS;
     }
 
@@ -227,8 +227,8 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
     }
 
     if (Is_Bedrock_Dual_A_Hole(dual_spare)) {  // unspecialized cell
-        if (adjusted == TYPE_FRAME) { // picking parameter from an ACTION!
-            LIFT_BYTE(dual_spare) = ONEQUOTE_NONQUASI_65;  // plain lifted
+        if (adjusted == HEART_FRAME) { // picking parameter from an ACTION!
+            TYPE_BYTE(dual_spare) = ONEQUOTE_NONQUASI_65;  // plain lifted
         } else {  // make it look like a NULL
             Init_Lifted_Null_Signifying_Unspecialized(dual_spare);
         }
@@ -499,7 +499,7 @@ Option(Error*) Trap_Push_Steps_To_Stack(
     else switch (Stub_Flavor(cast(Flex*, payload1))) {
       case FLAVOR_SYMBOL: {
         if (Get_Cell_Flag(var, LEADING_BLANK)) {  // `/a` or `.a`
-            if (Heart_Of(var) != TYPE_TUPLE) {
+            if (Heart_Of(var) != HEART_TUPLE) {
                 error = Error_User("GET leading space only allowed on TUPLE!");
                 goto return_error;
             }
@@ -550,16 +550,16 @@ Option(Error*) Trap_Push_Steps_To_Stack(
 
     for (at = head; at != tail; ++at) {
         bool unbind;
-        if (LIFT_BYTE(at) <= MAX_LIFT_NOQUOTE_NOQUASI) {
+        if (TYPE_BYTE(at) <= MAX_LIFT_NOQUOTE_NOQUASI) {
             unbind = false;
         }
-        else if (LIFT_BYTE(at) == ONEQUOTE_NONQUASI_65) {
+        else if (TYPE_BYTE(at) == ONEQUOTE_NONQUASI_65) {
             unbind = true;
         }
         else
             panic ("TUPLE! dialect allows single quote 'unbind on items");
 
-        if (Heart_Of(at) == TYPE_GROUP) {
+        if (Heart_Of(at) == HEART_GROUP) {
             if (not groups_ok) {
                 error = Error_Bad_Get_Group_Raw(var);
                 goto return_error;

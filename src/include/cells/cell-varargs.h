@@ -59,12 +59,12 @@
 #define CELL_VARARGS_PAYLOAD_2_PHASE(c)  CELL_PAYLOAD_2(c)
 
 INLINE Phase* Extract_Cell_Varargs_Phase(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_VARARGS);
+    assert(Heart_Of(c) == HEART_VARARGS);
     return cast(Phase*, CELL_VARARGS_PAYLOAD_2_PHASE(c));
 }
 
 INLINE void Tweak_Cell_Varargs_Phase(Cell* c, Option(Phase*) phase) {
-    assert(Heart_Of(c) == TYPE_VARARGS);
+    assert(Heart_Of(c) == HEART_VARARGS);
     CELL_VARARGS_PAYLOAD_2_PHASE(c) = opt phase;
     if (phase)
         Clear_Cell_Flag(c, DONT_MARK_PAYLOAD_2);
@@ -73,7 +73,7 @@ INLINE void Tweak_Cell_Varargs_Phase(Cell* c, Option(Phase*) phase) {
 }
 
 INLINE Array* Cell_Varargs_Origin(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_VARARGS);
+    assert(Heart_Of(c) == HEART_VARARGS);
     return cast(Array*, CELL_VARARGS_EXTRA_ORIGIN(c));
 }
 
@@ -81,7 +81,7 @@ INLINE void Tweak_Cell_Varargs_Origin(
     Cell* c,
     Stub* source  // either a feed, or a frame varlist
 ){
-    assert(Heart_Of(c) == TYPE_VARARGS);
+    assert(Heart_Of(c) == HEART_VARARGS);
     CELL_VARARGS_EXTRA_ORIGIN(c) = source;
 }
 
@@ -124,7 +124,7 @@ INLINE bool Is_Block_Style_Varargs(
     Element* *shared_out,
     const Cell* vararg
 ){
-    assert(Heart_Of(vararg) == TYPE_VARARGS);
+    assert(Heart_Of(vararg) == HEART_VARARGS);
 
     Array* source = Cell_Varargs_Origin(vararg);
     if (Is_Stub_Varlist(source)) {
@@ -153,7 +153,7 @@ INLINE bool Is_Level_Style_Varargs_Maybe_Nullptr(
     Level* *L_out,
     const Cell* vararg
 ){
-    assert(Heart_Of(vararg) == TYPE_VARARGS);
+    assert(Heart_Of(vararg) == HEART_VARARGS);
 
     Array* source = Cell_Varargs_Origin(vararg);
     if (Is_Stub_Varlist(source)) {
@@ -207,7 +207,7 @@ INLINE Option(const Param*) Param_For_Varargs_If_There_Is_One(
     const Key* *key,
     const Cell* v
 ){
-    assert(Heart_Of(v) == TYPE_VARARGS);
+    assert(Heart_Of(v) == HEART_VARARGS);
 
     Phase* phase = Extract_Cell_Varargs_Phase(v);
     if (phase) {

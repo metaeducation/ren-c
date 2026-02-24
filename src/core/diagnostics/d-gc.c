@@ -73,7 +73,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (not Is_Stub_Varlist(binding))
             break;
 
-        if (CTX_TYPE(cast(VarList*, binding)) != TYPE_FRAME)
+        if (CTX_TYPE(cast(VarList*, binding)) != HEART_FRAME)
             break;
 
         KeyList* keylist = Bonus_Keylist(cast(VarList*, binding));
@@ -277,7 +277,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // a method for that object.)
         //
         if (CELL_EXTRA(v) != nullptr) {
-            if (CTX_TYPE(context) == TYPE_FRAME) {
+            if (CTX_TYPE(context) == HEART_FRAME) {
                 // !!! Needs review
                 /*Level* L = Level_Of_Varlist_If_Running(context);
                 if (L)  // comes from execution, not MAKE FRAME!
@@ -291,7 +291,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             assert(Get_Cell_Flag(v, DONT_MARK_PAYLOAD_2));
         else {
             assert(Not_Cell_Flag(v, DONT_MARK_PAYLOAD_2));
-            assert(heart == TYPE_FRAME); // may be heap-based frame
+            assert(heart == HEART_FRAME); // may be heap-based frame
             assert(Is_Base_Marked(v->payload.split.two.base));  // lens/label
         }
 
@@ -328,7 +328,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         Assert_Flex_Term_If_Needed(a);
         assert(Is_Base_Marked(a));
 
-        if (LIFT_BYTE(v) == TYPE_DATATYPE) {
+        if (TYPE_BYTE(v) == TYPE_DATATYPE) {
             const Stable* value = cast(Stable*, v);
             assert(
                 (opt Datatype_Type(value))

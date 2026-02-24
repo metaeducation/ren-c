@@ -39,7 +39,7 @@
 #else
     MUTABLE_IF_C(Cell*, INLINE) Ensure_Date(CONST_IF_C(Cell*) cell) {
         CONSTABLE(Cell*) c = m_cast(Cell*, cell);
-        assert(Heart_Of(c) == TYPE_DATE);
+        assert(Heart_Of(c) == HEART_DATE);
         return c;
     }
 #endif
@@ -71,7 +71,7 @@
 
 INLINE bool Does_Date_Have_Time(const Cell* c)
 {
-    assert(Heart_Of(c) == TYPE_DATE);
+    assert(Heart_Of(c) == HEART_DATE);
     if (c->payload.nanoseconds == NO_DATE_TIME) {
         assert(CELL_DATE_YMDZ(c).zone == NO_DATE_ZONE);
         return false;
@@ -81,7 +81,7 @@ INLINE bool Does_Date_Have_Time(const Cell* c)
 
 INLINE bool Does_Date_Have_Zone(const Cell* c)
 {
-    assert(Heart_Of(c) == TYPE_DATE);
+    assert(Heart_Of(c) == HEART_DATE);
     if (CELL_DATE_YMDZ(c).zone == NO_DATE_ZONE)  // out of band of 7-bit field
         return false;
     assert(c->payload.nanoseconds != NO_DATE_TIME);
@@ -98,7 +98,7 @@ INLINE bool Does_Date_Have_Zone(const Cell* c)
         T* cell;
 
         ZoneHolder(T* cell) : cell (cell)
-          { assert(Heart_Of(cell) == TYPE_DATE); }
+          { assert(Heart_Of(cell) == HEART_DATE); }
 
         operator int () const {  // stop accidental reads of NO_DATE_ZONE
             assert(CELL_DATE_YMDZ(cell).zone != NO_DATE_ZONE);
@@ -125,12 +125,12 @@ INLINE bool Does_Date_Have_Zone(const Cell* c)
 //=////////////////////////////////////////////////////////////////////////=//
 
 INLINE REBI64 VAL_NANO(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_TIME or Does_Date_Have_Time(c));
+    assert(Heart_Of(c) == HEART_TIME or Does_Date_Have_Time(c));
     return c->payload.nanoseconds;
 }
 
 INLINE void Tweak_Cell_Nanoseconds(Cell* c, REBI64 nano) {
-    assert(Heart_Of(c) == TYPE_TIME or Heart_Of(c) == TYPE_DATE);
+    assert(Heart_Of(c) == HEART_TIME or Heart_Of(c) == HEART_DATE);
     possibly(nano == NO_DATE_TIME);
     c->payload.nanoseconds = nano;
 }

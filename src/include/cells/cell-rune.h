@@ -83,7 +83,7 @@
 
 INLINE Codepoint Rune_Known_Single_Codepoint(const Cell* cell) {
     assert(
-        Unchecked_Heart_Of(cell) == TYPE_RUNE
+        Unchecked_Heart_Of(cell) == HEART_RUNE
         and not Stringlike_Has_Stub(cell)
         and cell->extra.at_least_4[IDX_EXTRA_LEN] == 1
     );
@@ -95,7 +95,7 @@ INLINE Codepoint Rune_Known_Single_Codepoint(const Cell* cell) {
 
 INLINE bool Rune_Is_Single_Codepoint(const Cell* cell) {
     assert(
-        Unchecked_Heart_Of(cell) == TYPE_RUNE
+        Unchecked_Heart_Of(cell) == HEART_RUNE
     );
     if (Get_Cell_Flag(cell, RUNE_SINGLE_CODEPOINT)) {
         assert(cell->extra.at_least_4[IDX_EXTRA_LEN] == 1);
@@ -112,7 +112,7 @@ INLINE bool Is_Rune_And_Is_Char(const Stable* v) {
             CELL_MASK_HEART_AND_SIGIL_AND_LIFT
                 | CELL_FLAG_RUNE_SINGLE_CODEPOINT
         )) == (
-            FLAG_HEART_AND_LIFT(TYPE_RUNE)
+            FLAG_HEART_AND_LIFT(HEART_RUNE)
                 | CELL_FLAG_RUNE_SINGLE_CODEPOINT
         )
     );
@@ -157,7 +157,7 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
     assert(size != 0);  // !!! review, this needs work
     assert(
         Any_Utf8_Type(heart)
-        and not Any_String_Type(heart) and heart != TYPE_WORD
+        and not Any_String_Type(heart) and heart != HEART_WORD
     );
     assert(len <= size);
     if (size + 1 > Size_Of(out->payload.at_least_8))
@@ -206,13 +206,13 @@ INLINE Element* Init_Utf8_Non_String(
 }
 
 #define Init_Email(out,utf8,size,len) \
-    Init_Utf8_Non_String((out), TYPE_EMAIL, (utf8), (size), (len))
+    Init_Utf8_Non_String((out), HEART_EMAIL, (utf8), (size), (len))
 
 #define Init_Url(out,utf8,size,len) \
-    Init_Utf8_Non_String((out), TYPE_URL, (utf8), (size), (len))
+    Init_Utf8_Non_String((out), HEART_URL, (utf8), (size), (len))
 
 #define Init_Rune(out,utf8,size,len) \
-    Init_Utf8_Non_String((out), TYPE_RUNE, (utf8), (size), (len))
+    Init_Utf8_Non_String((out), HEART_RUNE, (utf8), (size), (len))
 
 INLINE Element* Init_Utf8_Non_String_From_Strand(
     Init(Element) out,
@@ -240,7 +240,7 @@ INLINE Element* Init_Char_Unchecked_Untracked(Init(Element) out, Codepoint c) {
 
     Reset_Cell_Header(
         out,
-        FLAG_HEART_AND_LIFT(TYPE_RUNE)
+        FLAG_HEART_AND_LIFT(HEART_RUNE)
             | CELL_MASK_NO_MARKING
             | CELL_FLAG_RUNE_SINGLE_CODEPOINT
             | ((c == ' ') ? CELL_FLAG_RUNE_IS_SPACE : 0)
@@ -310,20 +310,20 @@ INLINE Result(Element*) Init_Single_Codepoint_Rune_Untracked(
 
 INLINE bool Is_Cell_Space_With_Lift_Sigil(
     const Cell* cell,
-    LiftByte lift,
+    Type type,
     Option(Sigil) sigil
 ){
     bool is_space = (Readable_Cell(cell)->header.bits & (
         CELL_MASK_HEART_AND_SIGIL_AND_LIFT | CELL_FLAG_RUNE_IS_SPACE
     )) == (
-        FLAG_HEART(TYPE_RUNE)
-            | FLAG_LIFT_BYTE(lift)
+        FLAG_HEART(HEART_RUNE)
+            | FLAG_LIFT(type)
             | FLAG_SIGIL(sigil)
             | CELL_FLAG_RUNE_IS_SPACE
     );
 
   #if RUNTIME_CHECKS
-    if (Heart_Of(cell) == TYPE_RUNE)
+    if (Heart_Of(cell) == HEART_RUNE)
         assert(
             Get_Cell_Flag(cell, RUNE_IS_SPACE)
             == (' ' == opt Codepoint_Of_Rune_If_Single_Char(cell))
@@ -334,7 +334,7 @@ INLINE bool Is_Cell_Space_With_Lift_Sigil(
 }
 
 #define Is_Space(v) /* renders as `_` */ \
-    Is_Cell_Space_With_Lift_Sigil(Known_Stable(v), As_Lift(TYPE_RUNE), SIGIL_0)
+    Is_Cell_Space_With_Lift_Sigil(Known_Stable(v), TYPE_RUNE, SIGIL_0)
 
 INLINE bool Is_Newline(Stable* v) {
     return Is_Rune(v) and ('\n' == opt Codepoint_Of_Rune_If_Single_Char(v));

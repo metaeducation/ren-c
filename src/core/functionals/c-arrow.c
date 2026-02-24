@@ -80,7 +80,7 @@ DECLARE_NATIVE(ARROW)
         goto wrap_spec_in_block;
     }
 
-    if (Heart_Of(spec) == TYPE_WORD)
+    if (Heart_Of(spec) == HEART_WORD)
         goto wrap_spec_in_block;
 
     if (not Is_Quasiform(spec))

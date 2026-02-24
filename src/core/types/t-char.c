@@ -189,7 +189,7 @@ REBINT CT_Utf8(const Element* a, const Element* b, bool strict)
     assert(Any_Utf8_Type(Heart_Of(a)));
     assert(Any_Utf8_Type(Heart_Of(b)));
 
-    if (Heart_Of(a) == TYPE_RUNE or Heart_Of(b) == TYPE_RUNE)
+    if (Heart_Of(a) == HEART_RUNE or Heart_Of(b) == HEART_RUNE)
         strict = true;  // always true? [1]
 
     REBLEN l1;
@@ -258,7 +258,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
 
     switch (opt Type_Of(arg)) {
       case TYPE_INTEGER: {
-        if (heart != TYPE_RUNE)
+        if (heart != HEART_RUNE)
             panic ("Only RUNE! can MAKE a UTF-8 immutable type with INTEGER!");
 
         REBINT n = Int32(arg);
@@ -268,7 +268,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         return OUT; }
 
       case TYPE_BLOB: {
-        if (heart != TYPE_RUNE)
+        if (heart != HEART_RUNE)
             panic ("Only RUNE! can MAKE a UTF-8 immutable type with BLOB!");
 
         Size size;
@@ -279,7 +279,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
         Codepoint c;
         if (Is_Byte_Ascii(*bp)) {
             if (size != 1) {
-                Copy_Cell(ARG(TYPE), Datatype_From_Type(TYPE_RUNE));
+                Copy_Cell(ARG(TYPE), Datatype_From_Type(HEART_RUNE));
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
 
@@ -291,7 +291,7 @@ IMPLEMENT_GENERIC(MAKE, Any_Utf8)
             );
             --size;  // must decrement *after* (or Back_Scan() will fail)
             if (size != 0) {
-                Copy_Cell(ARG(TYPE), Datatype_From_Type(TYPE_RUNE));
+                Copy_Cell(ARG(TYPE), Datatype_From_Type(HEART_RUNE));
                 return GENERIC_CFUNC(MAKE, Any_String)(level_);
             }
         }
@@ -669,7 +669,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return Init_Any_String(OUT, to, s);
     }
 
-    if (to == TYPE_WORD) {
+    if (to == HEART_WORD) {
         assert(not Any_Word(v));  // does not delegate this case
         if (not Any_String(v) or Is_Flex_Frozen(Cell_Strand(v)))
             return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
@@ -682,7 +682,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         return Init_Word(OUT, sym);
     }
 
-    if (to == TYPE_RUNE) {  // may make node if mutable
+    if (to == HEART_RUNE) {  // may make node if mutable
         if (not Any_String(v) or Is_Flex_Frozen(Cell_Strand(v))) {
             possibly(Any_Word(v));
             return GENERIC_CFUNC(AS, Any_Utf8)(LEVEL);  // immutable src
@@ -696,12 +696,12 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         );
     }
 
-    if (to == TYPE_EMAIL or to == TYPE_URL) {
+    if (to == HEART_EMAIL or to == HEART_URL) {
         Length len;
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
 
-        if (to == TYPE_EMAIL) {
+        if (to == HEART_EMAIL) {
             require (
               const Byte* ep = Scan_Email_To_Stack(utf8, size)
             );
@@ -725,12 +725,12 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
     }
 
     if (
-        to == TYPE_INTEGER
-        or to == TYPE_DECIMAL
-        or to == TYPE_PERCENT
-        or to == TYPE_DATE
-        or to == TYPE_TIME
-        or to == TYPE_PAIR
+        to == HEART_INTEGER
+        or to == HEART_DECIMAL
+        or to == HEART_PERCENT
+        or to == HEART_DATE
+        or to == HEART_TIME
+        or to == HEART_PAIR
     ){
         trap (
           Transcode_One(OUT, to, v)
@@ -807,11 +807,11 @@ Result(Element*) Alias_Any_Utf8_As(
         );
         Term_Strand_Len_Size(str, len, size);
         Freeze_Flex(str);
-        possibly(as == TYPE_BLOB);  // index 0 so byte transform not needed
+        possibly(as == HEART_BLOB);  // index 0 so byte transform not needed
         return Init_Series(out, as, str);
     }}
 
-    if (as == TYPE_WORD) {  // aliasing as WORD! freezes data
+    if (as == HEART_WORD) {  // aliasing as WORD! freezes data
         if (Stringlike_Has_Stub(v)) {
             const Strand* str = Cell_Strand(v);
             if (Series_Index(v) != 0)
@@ -837,7 +837,7 @@ Result(Element*) Alias_Any_Utf8_As(
         return Init_Word(out, sym);
     }
 
-    if (as == TYPE_BLOB) {  // resulting binary is UTF-8 constrained [2]
+    if (as == HEART_BLOB) {  // resulting binary is UTF-8 constrained [2]
         if (Stringlike_Has_Stub(v))
             return Init_Blob_At(
                 out,
@@ -848,15 +848,15 @@ Result(Element*) Alias_Any_Utf8_As(
         goto make_small_utf8_at_index_0;
     }
 
-    if (as == TYPE_INTEGER) {
+    if (as == HEART_INTEGER) {
         trap (
           Codepoint c = Get_Rune_Single_Codepoint(v)
         );
         return Init_Integer(out, c);
     }
 
-    if (as == TYPE_RUNE) {  // fits cell or freeze string
-        assert(as != TYPE_WORD and not (Any_String_Type(as)));
+    if (as == HEART_RUNE) {  // fits cell or freeze string
+        assert(as != HEART_WORD and not (Any_String_Type(as)));
 
         if (Stringlike_Has_Stub(v)) {
             const Strand *s = Cell_Strand(v);
@@ -878,7 +878,7 @@ Result(Element*) Alias_Any_Utf8_As(
         return out;
     }
 
-    if (as == TYPE_EMAIL or as == TYPE_URL) {
+    if (as == HEART_EMAIL or as == HEART_URL) {
         if (Stringlike_Has_Stub(v)) {
             const Strand *s = Cell_Strand(v);
             if (not Is_Flex_Frozen(s)) {  // always force frozen

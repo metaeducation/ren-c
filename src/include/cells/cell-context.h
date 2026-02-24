@@ -12,13 +12,13 @@
 INLINE VarList* Cell_Varlist(const Cell* c) {
     Option(Heart) heart = Heart_Of(c);
     assert(
-        heart != TYPE_MODULE
+        heart != HEART_MODULE
         and Any_Context_Type(heart)
     );
 
     Base* base = CELL_PAYLOAD_1(c);  // ParamList or Details
     if (Not_Base_Readable(base)) {
-        if (heart == TYPE_FRAME)
+        if (heart == HEART_FRAME)
             panic (Error_Expired_Frame_Raw());  // !!! different error?
         panic (Error_Series_Data_Freed_Raw());
     }
@@ -26,19 +26,19 @@ INLINE VarList* Cell_Varlist(const Cell* c) {
     if (Is_Stub_Varlist(cast(Stub*, base)))
         return cast(VarList*, base);
 
-    assert(Unchecked_Heart_Of(c) == TYPE_FRAME);
+    assert(Unchecked_Heart_Of(c) == HEART_FRAME);
     assert(Is_Stub_Details(cast(Stub*, base)));
     return Phase_Paramlist(cast(Phase*, base));
 }
 
 INLINE SeaOfVars* Cell_Module_Sea(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_MODULE);
+    assert(Heart_Of(c) == HEART_MODULE);
     return cast(SeaOfVars*, CELL_PAYLOAD_1(c));
 }
 
 
 INLINE Error* Cell_Error(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_ERROR);
+    assert(Heart_Of(c) == HEART_ERROR);
     return cast(Error*, Cell_Varlist(c));
 }
 
@@ -62,7 +62,7 @@ INLINE Dual* Init_Context_Cell_Untracked(Init(Dual) out, VarList* vlist) {
             | (CELL_FLAG_DONT_MARK_PAYLOAD_2)  // no coupling
     );
     CELL_FRAME_PAYLOAD_1_PHASE(out) = vlist;
-    if (heart == TYPE_FRAME)  // "self-lensing" Lens_Self()
+    if (heart == HEART_FRAME)  // "self-lensing" Lens_Self()
         CELL_FRAME_EXTRA_LENS_OR_LABEL(out) = u_cast(ParamList*, vlist);
     else
         CELL_FRAME_EXTRA_LENS_OR_LABEL(out) = nullptr;
@@ -88,13 +88,13 @@ INLINE Dual* Init_Context_Cell_Untracked(Init(Dual) out, VarList* vlist) {
 #endif
 
 #define Init_Port(out,c) \
-    TRACK(Init_Varlist_Cell_Untracked((out), TYPE_PORT, (c)))
+    TRACK(Init_Varlist_Cell_Untracked((out), HEART_PORT, (c)))
 
 #define Init_Object(out,c) \
-    TRACK(Init_Varlist_Cell_Untracked((out), TYPE_OBJECT, (c)))
+    TRACK(Init_Varlist_Cell_Untracked((out), HEART_OBJECT, (c)))
 
 #define Init_Error_Cell(out,c) \
-    TRACK(Init_Varlist_Cell_Untracked((out), TYPE_ERROR, (c)))
+    TRACK(Init_Varlist_Cell_Untracked((out), HEART_ERROR, (c)))
 
 
 INLINE Element* Init_Let(Init(Element) out, Let* let) {
@@ -107,7 +107,7 @@ INLINE Element* Init_Let(Init(Element) out, Let* let) {
 }
 
 INLINE Let* Cell_Let(const Cell* c) {
-    assert(Heart_Of(c) == TYPE_LET);
+    assert(Heart_Of(c) == HEART_LET);
 
     Base* base = CELL_PAYLOAD_1(c);
     if (Not_Base_Readable(base))
@@ -127,9 +127,9 @@ INLINE Element* Init_Module(Init(Element) out, SeaOfVars* sea) {
 }
 
 INLINE Context* Cell_Context(const Cell* c) {
-    if (Heart_Of(c) == TYPE_MODULE)
+    if (Heart_Of(c) == HEART_MODULE)
         return Cell_Module_Sea(c);
-    if (Heart_Of(c) == TYPE_LET)
+    if (Heart_Of(c) == HEART_LET)
         return Cell_Let(c);
     return Cell_Varlist(c);
 }

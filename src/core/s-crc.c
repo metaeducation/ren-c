@@ -151,7 +151,7 @@ uint32_t Hash_Cell(const Cell* cell)
       case TYPE_TIME:
       case TYPE_DATE:
         hash = VAL_NANO(cell) ^ (VAL_NANO(cell) / SEC_SEC);
-        if (heart == TYPE_DATE) {
+        if (heart == HEART_DATE) {
             //
             // !!! This hash used to be done with an illegal-in-C union alias
             // of bit fields.  This shift is done to account for the number

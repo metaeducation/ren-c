@@ -70,7 +70,7 @@ INLINE void Tweak_Handle_Cleaner(
 
 
 INLINE bool Is_Handle_Cfunc(const Stable* v) {
-    assert(Unchecked_Heart_Of(v) == TYPE_HANDLE);
+    assert(Unchecked_Heart_Of(v) == HEART_HANDLE);
     return CELL_HANDLE_LENGTH_U(v) == 0;
 }
 
@@ -78,7 +78,7 @@ MUTABLE_IF_C(Cell*, INLINE) Extract_Cell_Handle_Canon(CONST_IF_C(Cell*) cell)
 {
     CONSTABLE(Cell*) c = m_cast(Cell*, cell);
 
-    assert(Unchecked_Heart_Of(c) == TYPE_HANDLE);
+    assert(Unchecked_Heart_Of(c) == HEART_HANDLE);
     if (not Cell_Payload_1_Needs_Mark(c))
         return c;  // changing instance won't be seen by copies
 
@@ -117,7 +117,7 @@ INLINE CFunction* Cell_Handle_Cfunc(const Stable* v) {
 }
 
 INLINE Option(HandleCleaner*) Cell_Handle_Cleaner(const Stable* v) {
-    assert(Unchecked_Heart_Of(v) == TYPE_HANDLE);
+    assert(Unchecked_Heart_Of(v) == HEART_HANDLE);
     if (not Cell_Payload_1_Needs_Mark(v))
         return nullptr;
     Stub* stub = Extract_Cell_Handle_Stub(v);
@@ -149,7 +149,7 @@ INLINE Element* Init_Handle_Cdata(
 
     Reset_Cell_Header(
         out,
-        FLAG_HEART_AND_LIFT(TYPE_HANDLE)
+        FLAG_HEART_AND_LIFT(HEART_HANDLE)
             | CELL_MASK_NO_MARKING
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
@@ -165,7 +165,7 @@ INLINE Element* Init_Handle_Cfunc(
 ){
     Reset_Cell_Header(
         out,
-        FLAG_HEART_AND_LIFT(TYPE_HANDLE)
+        FLAG_HEART_AND_LIFT(HEART_HANDLE)
             | CELL_MASK_NO_MARKING
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
@@ -180,7 +180,7 @@ INLINE Element* Init_Handle_Base(
 ){
     Reset_Cell_Header(
         out,
-        FLAG_HEART_AND_LIFT(TYPE_HANDLE)
+        FLAG_HEART_AND_LIFT(HEART_HANDLE)
             | CELL_FLAG_DONT_MARK_PAYLOAD_1
     );
     Corrupt_Unused_Field(out->payload.split.one.corrupt);
@@ -205,7 +205,7 @@ INLINE void Init_Handle_Managed_Common(
     Sink(Element) single = Stub_Cell(stub);
     Reset_Cell_Header(
         single,
-        FLAG_HEART_AND_LIFT(TYPE_HANDLE)
+        FLAG_HEART_AND_LIFT(HEART_HANDLE)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // points to singular
             | CELL_FLAG_DONT_MARK_PAYLOAD_2
     );
@@ -220,7 +220,7 @@ INLINE void Init_Handle_Managed_Common(
     //
     Reset_Cell_Header(
         out,
-        FLAG_HEART_AND_LIFT(TYPE_HANDLE)
+        FLAG_HEART_AND_LIFT(HEART_HANDLE)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // points to stub
             | CELL_FLAG_DONT_MARK_PAYLOAD_2
     );

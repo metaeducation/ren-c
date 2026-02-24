@@ -262,7 +262,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
   // 2. !!! The actual final notation for variadics is not decided on; it
   //    once used <...> but was changed to <variadic>`, may change back
 
-    if (Heart_Of(item) == TYPE_TAG) {  // literal check of tag [1]
+    if (Heart_Of(item) == HEART_TAG) {  // literal check of tag [1]
         bool strict = false;
 
         if (
@@ -308,7 +308,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
   //    preferable to enforce words for some things?  That's not viable for
   //    type predicate actions, like ANY-ELEMENT?...)
 
-    if (LIFT_BYTE(item) > MAX_LIFT_NOQUOTE_NOQUASI) {  // [~word!~ ''word!]...
+    if (TYPE_BYTE(item) > MAX_LIFT_NOQUOTE_NOQUASI) {  // [~word!~ ''word!]...
         goto cant_optimize;  // no optimization strategy yet
     }
 
@@ -638,18 +638,18 @@ Result(None) Decorate_Element(const Element* decoration, Element* element)
     if (Any_Sigiled_Blank(decoration))
         goto finalize_decorations;  // not a sequence, just sigilize + quote
 
-    if (Heart_Of(decoration) == TYPE_WORD) {
+    if (Heart_Of(decoration) == HEART_WORD) {
         switch (unwrap Word_Id(decoration)) {
           case SYM_DOT_1:
-            sequence_to_add = TYPE_TUPLE;
+            sequence_to_add = HEART_TUPLE;
             break;
 
           case SYM_COLON_1:
-            sequence_to_add = TYPE_CHAIN;
+            sequence_to_add = HEART_CHAIN;
             break;
 
           case SYM_SLASH_1:
-            sequence_to_add = TYPE_PATH;
+            sequence_to_add = HEART_PATH;
             break;
 
           default:

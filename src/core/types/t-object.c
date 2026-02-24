@@ -62,7 +62,7 @@ void Init_Evars(EVARS *e, const Element* v) {
 
     e->lens_mode = LENS_MODE_ALL_UNSEALED;  // ensure not uninitialized
 
-    if (heart == TYPE_MODULE) {  // !!! module enumeration is bad/slow [2]
+    if (heart == HEART_MODULE) {  // !!! module enumeration is bad/slow [2]
 
   //=//// MODULE ENUMERATION //////////////////////////////////////////////=//
 
@@ -123,7 +123,7 @@ void Init_Evars(EVARS *e, const Element* v) {
 
         assert(Flex_Used(Bonus_Keylist(varlist)) <= Varlist_Len(varlist));
 
-        if (heart != TYPE_FRAME) {
+        if (heart != HEART_FRAME) {
             e->param = nullptr;
             e->key = Varlist_Keys(&e->key_tail, varlist);
         }
@@ -484,7 +484,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Module)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_MODULE);
+    assert(Datatype_Builtin_Heart(ARG(TYPE)) == HEART_MODULE);
 
     Element* arg = ARG(DEF);
 
@@ -515,7 +515,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 
             VarList* derived = Make_Varlist_Detect_Managed(
                 COLLECT_ONLY_SET_WORDS,
-                TYPE_OBJECT,
+                HEART_OBJECT,
                 at,
                 tail,
                 varlist
@@ -539,7 +539,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
         return fail (Error_Bad_Make(TYPE_OBJECT, arg));
     }
 
-    assert(Datatype_Builtin_Heart(type) == TYPE_OBJECT);
+    assert(Datatype_Builtin_Heart(type) == HEART_OBJECT);
 
     if (Is_Block(arg)) {
         const Element* tail;
@@ -547,7 +547,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
 
         VarList* ctx = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
-            TYPE_OBJECT,
+            HEART_OBJECT,
             at,
             tail,
             nullptr  // no parent (MAKE SOME-OBJ ... calls any_context generic)
@@ -576,7 +576,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
     if (Any_Number(arg)) {
         VarList* context = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
-            TYPE_OBJECT,
+            HEART_OBJECT,
             Array_Head(EMPTY_ARRAY),  // scan for toplevel set-words (empty)
             Array_Tail(EMPTY_ARRAY),
             nullptr  // no parent
@@ -791,7 +791,7 @@ VarList* Copy_Varlist_Extra_Managed(
             Bonus_Keylist(original)
         );
     else {
-        assert(CTX_TYPE(original) != TYPE_FRAME);  // can't expand FRAME!s
+        assert(CTX_TYPE(original) != HEART_FRAME);  // can't expand FRAME!s
 
         require (
           KeyList* keylist = u_downcast Copy_Flex_At_Len_Extra(
@@ -811,7 +811,7 @@ VarList* Copy_Varlist_Extra_Managed(
     // frame.  The pointer is NULLed out when the stack level completes.
     // If we're copying a frame here, we know it's not running.
     //
-    if (CTX_TYPE(original) == TYPE_FRAME)
+    if (CTX_TYPE(original) == HEART_FRAME)
         Tweak_Misc_Varlist_Adjunct_Raw(varlist, nullptr);
     else {
         // !!! Should the adjunct object be copied for other context types?
@@ -1193,8 +1193,8 @@ IMPLEMENT_GENERIC(TO, Any_Context)
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
     assert(heart != to);  // TO should have called COPY in this case
 
-    if (to == TYPE_PORT) {
-        if (heart != TYPE_OBJECT)
+    if (to == HEART_PORT) {
+        if (heart != HEART_OBJECT)
             panic (
                 "Only TO convert OBJECT! -> PORT! (weird internal code)"
             );
@@ -1202,7 +1202,7 @@ IMPLEMENT_GENERIC(TO, Any_Context)
         VarList* v = cast(VarList*, c);
         VarList* copy = Copy_Varlist_Shallow_Managed(v);  // !!! copy [1]
         Element* rootvar = Rootvar_Of_Varlist(copy);
-        Tweak_Cell_Type(rootvar, TYPE_PORT);
+        Tweak_Cell_Type(rootvar, HEART_PORT);
         return Init_Port(OUT, copy);
     }
 
@@ -1311,7 +1311,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     Cell* out_cell = Copy_Cell_Core(OUT, slot, CELL_MASK_COPY);
 
-    if (LIFT_BYTE(out_cell) == BEDROCK_255) {  // return as nonquoted/nonquasi
+    if (TYPE_BYTE(out_cell) == BEDROCK_255) {  // return as nonquoted/nonquasi
         Normalize_Cell(out_cell);
         return OUT_UNLIFTED_DUAL_INDIRECT_PICK;
     }
@@ -1319,7 +1319,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
     Context* c = Cell_Context(context);
 
     if (  // !!! BUGGY, new system needed
-        LIFT_BYTE_RAW(OUT) == TYPE_ACTION
+        Is_Action(OUT)
         and Frame_Coupling(OUT) == UNCOUPLED
         and Stub_Flavor(c) == FLAVOR_VARLIST
     ){
@@ -1352,7 +1352,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     if (Is_Dualized_Bedrock(dual)) {  // CASE 1: Overwriting w/new bedrock
         Copy_Cell_Core(slot, dual, CELL_MASK_COPY);  // store
-        LIFT_BYTE(slot) = BEDROCK_255;
+        TYPE_BYTE(slot) = BEDROCK_255;
         return OKAY_OUT_NO_WRITEBACK;  // VarList* in cell not changed
     }
 
@@ -1907,7 +1907,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Frame)
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
 
-    if (LIFT_BYTE(v) != QUASIFORM_64) {
+    if (TYPE_BYTE(v) != QUASIFORM_64) {
         return GENERIC_CFUNC(MOLDIFY, Any_Context)(LEVEL);  // heeds ARG(FORM)
     }
 
@@ -1997,7 +1997,7 @@ DECLARE_NATIVE(CONSTRUCT)
     if (parent)
         heart = CTX_TYPE(parent);
     else
-        heart = TYPE_OBJECT;
+        heart = HEART_OBJECT;
 
     VarList* varlist = Make_Varlist_Detect_Managed(
         COLLECT_ONLY_SET_WORDS,

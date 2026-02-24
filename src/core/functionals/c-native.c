@@ -405,7 +405,7 @@ bool Try_Dispatch_Generic_Core(
         NOOP;  // fall through to default for ANY-ELEMENT?, ANY-FUNDAMENTAL?
     }
     else if (
-        heart == TYPE_PORT
+        heart == HEART_PORT
         and symid != SYM_OLDGENERIC  // !!! legacy generics for port [2]
     ){
         // !!! skip bad port check for now

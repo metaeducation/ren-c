@@ -548,7 +548,7 @@ static Result(REBIXO) Parse_One_Rule(
         else if (
             (Is_Text(rule) or Is_Blob(rule))
             and (Series_Len_At(rule) == 0)
-            and (Any_String_Type(P_HEART) or P_HEART == TYPE_BLOB)
+            and (Any_String_Type(P_HEART) or P_HEART == HEART_BLOB)
         ){
             // !!! The way this old R3-Alpha code was structured is now very
             // archaic (compared to UPARSE).  But while that design stabilizes,
@@ -681,7 +681,7 @@ static Result(REBIXO) Parse_One_Rule(
         return END_FLAG;
     }
     else {
-        assert(Any_String_Type(P_HEART) or P_HEART == TYPE_BLOB);
+        assert(Any_String_Type(P_HEART) or P_HEART == HEART_BLOB);
 
         if (Is_Pinned_Form_Of(WORD, rule)) {
             DECLARE_ELEMENT (unpinned);
@@ -711,9 +711,9 @@ static Result(REBIXO) Parse_One_Rule(
         if (
             Quotes_Of(rule) == 1  // '<a> will mold to "<a>"
             or (Quotes_Of(rule) == 0 and (
-                rule_heart == TYPE_TEXT
-                or rule_heart == TYPE_RUNE
-                or rule_heart == TYPE_BLOB
+                rule_heart == HEART_TEXT
+                or rule_heart == HEART_RUNE
+                or rule_heart == HEART_BLOB
             ))
         ){
             REBLEN len;
@@ -737,7 +737,7 @@ static Result(REBIXO) Parse_One_Rule(
             //
             bool uncased;
             Codepoint uni;
-            if (P_HEART == TYPE_BLOB) {
+            if (P_HEART == HEART_BLOB) {
                 uni = *Binary_At(P_INPUT_BINARY, P_POS);
                 uncased = false;
             }
@@ -879,7 +879,7 @@ static Result(REBIXO) To_Thru_Block_Rule(
                     return Series_Index(iter) - 1;  // back up
                 }
             }
-            else if (P_HEART == TYPE_BLOB) {
+            else if (P_HEART == HEART_BLOB) {
                 Byte ch1 = *Blob_At(iter);
 
                 if (Series_Index(iter) == P_INPUT_LEN) {
@@ -1826,7 +1826,7 @@ DECLARE_NATIVE(SUBPARSE)
               Init_Typechecker(SPARE, lookup)
             );
 
-            LIFT_BYTE(SPARE) = As_Lift(TYPE_FRAME);
+            Deactivate_Action(SPARE);
             rule = As_Element(SPARE);
             assert(Is_Frame(rule));
         }
@@ -2241,7 +2241,7 @@ DECLARE_NATIVE(SUBPARSE)
                     //
                     Init_Any_List(
                         OUT,
-                        P_HEART == TYPE_GROUP ? TYPE_GROUP : TYPE_BLOCK,
+                        P_HEART == HEART_GROUP ? HEART_GROUP : HEART_BLOCK,
                         Copy_Source_At_Max_Shallow(
                             P_INPUT_ARRAY,
                             begin,
@@ -2249,7 +2249,7 @@ DECLARE_NATIVE(SUBPARSE)
                         )
                     );
                 }
-                else if (P_HEART == TYPE_BLOB) {
+                else if (P_HEART == HEART_BLOB) {
                     require (
                       Binary* bin = Copy_Binary_At_Len(
                         P_INPUT_BINARY,
@@ -2321,7 +2321,7 @@ DECLARE_NATIVE(SUBPARSE)
                 else {
                     assert(count == 1);  // check for > 1 would have errored
 
-                    if (P_HEART == TYPE_BLOB)
+                    if (P_HEART == HEART_BLOB)
                         Init_Integer(OUT, *Binary_At(P_INPUT_BINARY, begin));
                     else
                         Init_Char_Unchecked(

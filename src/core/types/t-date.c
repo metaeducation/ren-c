@@ -565,7 +565,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Date)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    assert(Datatype_Builtin_Heart(ARG(TYPE)) == TYPE_DATE);
+    assert(Datatype_Builtin_Heart(ARG(TYPE)) == HEART_DATE);
 
     Element* arg = ARG(DEF);
 
@@ -708,11 +708,11 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
         Element* arg = Element_ARG(VALUE2);
         Heart heart = Heart_Of_Builtin_Fundamental(arg);
 
-        if (heart == TYPE_DATE) {
+        if (heart == HEART_DATE) {
             if (id == SYM_SUBTRACT)
                 return Init_Integer(OUT, Days_Between_Dates(v, arg));
         }
-        else if (heart == TYPE_TIME) {
+        else if (heart == HEART_TIME) {
             if (id == SYM_ADD) {
                 if (secs == NO_DATE_TIME)
                     secs = 0;
@@ -726,7 +726,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
                 goto fix_time;
             }
         }
-        else if (heart == TYPE_INTEGER) {
+        else if (heart == HEART_INTEGER) {
             REBINT num = Int32(arg);
             if (id == SYM_ADD) {
                 day += num;
@@ -737,7 +737,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Date)
                 goto fix_date;
             }
         }
-        else if (heart == TYPE_DECIMAL) {
+        else if (heart == HEART_DECIMAL) {
             REBDEC dec = Dec64(arg);
             if (id == SYM_ADD) {
                 if (secs == NO_DATE_TIME)

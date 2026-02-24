@@ -34,7 +34,7 @@
 
 INLINE bool Is_Cell_Wordlike(const Cell* v) {
     // called by core code, sacrifice Readable_Cell() checks
-    if (Unchecked_Heart_Of(v) == TYPE_WORD)
+    if (Unchecked_Heart_Of(v) == HEART_WORD)
         return true;
     if (not Any_Sequence_Type(Unchecked_Heart_Of(v)))
         return false;
@@ -85,7 +85,7 @@ INLINE Cell* Blit_Word_Untracked(
   #endif
     out->header.bits = (  // NOTE: `=` and not `|=` ... full overwrite
         BASE_FLAG_BASE | BASE_FLAG_CELL  // must include base flags
-            | FLAG_HEART(TYPE_WORD)
+            | FLAG_HEART(HEART_WORD)
             | (( flags ))
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
@@ -103,7 +103,7 @@ INLINE Dual* Init_Word_Untracked(
     const Symbol* symbol
 ){
     Reset_Cell_Header(out,
-        FLAG_HEART(TYPE_WORD)
+        FLAG_HEART(HEART_WORD)
             | (( flags ))
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
@@ -116,10 +116,10 @@ INLINE Dual* Init_Word_Untracked(
 }
 
 #define Init_Word(out,str) \
-    TRACK(Init_Word_Untracked((out), FLAG_LIFT_BYTE(As_Lift(TYPE_WORD)), (str)))
+    TRACK(Init_Word_Untracked((out), FLAG_LIFT(TYPE_WORD), (str)))
 
 #define Init_Quasi_Word(out,symbol) \
-    TRACK(Init_Word_Untracked((out), FLAG_LIFT_BYTE(QUASIFORM_64), (symbol)))
+    TRACK(Init_Word_Untracked((out), FLAG_LIFT(TYPE_QUASIFORM), (symbol)))
 
 INLINE Dual* Init_Word_Bound_Untracked(
     Sink(Dual) out,
@@ -128,7 +128,7 @@ INLINE Dual* Init_Word_Bound_Untracked(
 ){
     Reset_Cell_Header(
         out,
-        FLAG_HEART_AND_LIFT(TYPE_WORD)
+        FLAG_HEART_AND_LIFT(HEART_WORD)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // symbol needs mark
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
     );
@@ -148,7 +148,7 @@ INLINE Dual* Init_Word_Bound_Untracked(
 // is a placeholder to try and get things compiling.
 //
 INLINE bool Any_Word(const Stable* v)
-  { return Any_Fundamental(v) and Heart_Of(v) == TYPE_WORD; }
+  { return Any_Fundamental(v) and Heart_Of(v) == HEART_WORD; }
 
 
 // Helper calls strsize() so you can more easily use literals at callsite.
@@ -170,18 +170,18 @@ INLINE Result(Managed(const Symbol*)) Intern_Unsized_Symbol(const char *bp)
 // rather than extracting the Symbol* and asking it.
 //
 
-INLINE bool Is_Word_With_Id_Core(const Cell* v, LiftByte lift_byte, SymId id) {
+INLINE bool Is_Word_With_Id_Core(const Cell* v, Type type, SymId id) {
     assert(id != SYM_0_constexpr);
-    if (not Cell_Has_Lift_Sigil_Heart(v, lift_byte, SIGIL_0, TYPE_WORD))
+    if (not Cell_Has_Lift_Sigil_Heart(v, type, SIGIL_0, HEART_WORD))
         return false;
     return id == Word_Id(v);  // is CANON(id) == Word_Symbol(v) faster?
 }
 
 #define Is_Word_With_Id(v,id) \
-    Is_Word_With_Id_Core(Known_Stable(v), As_Lift(TYPE_WORD), (id))
+    Is_Word_With_Id_Core(Known_Stable(v), TYPE_WORD, (id))
 
 #define Is_Quasi_Word_With_Id(v,id) \
-    Is_Word_With_Id_Core(Known_Stable(v), QUASIFORM_64, (id))
+    Is_Word_With_Id_Core(Known_Stable(v), TYPE_QUASIFORM, (id))
 
 
 //=//// '| AND '|| WORD CHECKS ////////////////////////////////////////////=//

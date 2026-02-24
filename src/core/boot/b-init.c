@@ -214,7 +214,7 @@ static void Shutdown_Lib(void)
 
 static Element* Make_Locked_Tag(const char *utf8) { // helper
     Element* t = cast(Element*, rebText(utf8));
-    Tweak_Cell_Type(t, TYPE_TAG);
+    Tweak_Cell_Type(t, HEART_TAG);
 
     Force_Value_Frozen_Deep(t);
     return t;
@@ -348,7 +348,7 @@ static void Init_Root_Vars(void)
     Tweak_Bonus_Keylist_Unique(a, keylist);
     Tweak_Link_Keylist_Ancestor(keylist, keylist);  // terminate in self
 
-    Tweak_Non_Frame_Varlist_Rootvar(a, TYPE_OBJECT);
+    Tweak_Non_Frame_Varlist_Rootvar(a, HEART_OBJECT);
 
 } make_other_things: {
 
@@ -393,7 +393,7 @@ static void Init_System_Object(
     //
     VarList* system = Make_Varlist_Detect_Managed(
         COLLECT_ONLY_SET_WORDS,
-        TYPE_OBJECT, // type
+        HEART_OBJECT, // type
         spec_head, // scan for toplevel set-words
         spec_tail,
         nullptr  // parent
@@ -444,7 +444,7 @@ static void Init_System_Object(
     //
     Init_Object(
         Slot_Init_Hack(Get_System(SYS_CODECS, 0)),
-        Alloc_Varlist_Core(BASE_FLAG_MANAGED, TYPE_OBJECT, 10)
+        Alloc_Varlist_Core(BASE_FLAG_MANAGED, HEART_OBJECT, 10)
     );
 
   fix_standard_error: {
@@ -454,14 +454,14 @@ static void Init_System_Object(
   // up its archetype so that it is an actual ERROR!.
 
     Slot* std_error_slot = Get_System(SYS_STANDARD, STD_ERROR);
-    assert(KIND_BYTE(std_error_slot) == TYPE_OBJECT);
-    assert(LIFT_BYTE_RAW(std_error_slot) == As_Lift(TYPE_OBJECT));
+    assert(Is_Object(u_cast(Element*, std_error_slot)));
     VarList* varlist = Cell_Varlist(u_cast(Element*, std_error_slot));
-    Tweak_Cell_Type(u_cast(Element*, std_error_slot), TYPE_ERROR);
+    Tweak_Cell_Type(u_cast(Element*, std_error_slot), HEART_ERROR);
 
     Element* rootvar = Rootvar_Of_Varlist(varlist);
+    assert(Is_Object(rootvar));
     Unshield_Rootvar_If_Tracking(rootvar);
-    Tweak_Cell_Type(rootvar, TYPE_ERROR);
+    Tweak_Cell_Type(rootvar, HEART_ERROR);
     Shield_Rootvar_If_Tracking(rootvar);
 }}
 

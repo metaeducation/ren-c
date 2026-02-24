@@ -65,7 +65,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
         Flex* f = m_cast(Flex*, cast(Flex*, p));  // don't mutate
         if (not Is_Stub_Varlist(f))
             crash (f);  // only kind of Flex allowed are Error* varlists
-        if (CTX_TYPE(cast(VarList*, f)) != TYPE_ERROR)
+        if (CTX_TYPE(cast(VarList*, f)) != HEART_ERROR)
             crash (f);
         return cast(Error*, f); }
 
@@ -135,7 +135,7 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 Error* Panic_Abruptly_Helper(Error* error)
 {
     Assert_Varlist(error);
-    assert(CTX_TYPE(error) == TYPE_ERROR);
+    assert(CTX_TYPE(error) == HEART_ERROR);
 
     // You can't abruptly panic during the handling of an abrupt panic.
     //
@@ -437,7 +437,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Error)
 
         varlist = Make_Varlist_Detect_Managed(
             COLLECT_ONLY_SET_WORDS,
-            TYPE_ERROR, // type
+            HEART_ERROR, // type
             head, // values to scan for toplevel set-words
             tail,
             root_error // parent

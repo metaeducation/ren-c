@@ -67,7 +67,7 @@ DECLARE_NATIVE(MAKE)
 //
 Bounce Copy_Quoter_Executor(Level* level_)
 {
-    LIFT_BYTE(OUT) = STATE;
+    TYPE_BYTE(OUT) = STATE;
 
     return OUT;
 }
@@ -102,7 +102,7 @@ DECLARE_NATIVE(COPY)
 
     Element* elem = ARG(VALUE);
 
-    LiftByte lift_byte = LIFT_BYTE(elem);
+    TypeByte lift = TYPE_BYTE(elem);
     Clear_Cell_Quotes_And_Quasi(elem);  // dispatch requires unquoted items
 
     Option(Dispatcher*) dispatcher = Get_Generic_Dispatcher(
@@ -116,11 +116,11 @@ DECLARE_NATIVE(COPY)
 
         UNUSED(ARG(DEEP));  // historically we ignore it
 
-        LIFT_BYTE(elem) = lift_byte;  // restore
+        TYPE_BYTE(elem) = lift;  // restore
         return COPY_TO_OUT(elem);
     }
 
-    if (lift_byte <= MAX_LIFT_NOQUOTE_NOQUASI)  // don't need requote/quasi
+    if (lift <= MAX_LIFT_NOQUOTE_NOQUASI)  // don't need requote/quasi
         return Apply_Cfunc(unwrap dispatcher, LEVEL);
 
     Option(const Symbol*) label = Level_Label(level_);
@@ -144,7 +144,7 @@ DECLARE_NATIVE(COPY)
     sub->u.action.original = Frame_Phase(LIB(COPY));
     Set_Action_Level_Label(sub, label);
 
-    STATE = lift_byte;
+    STATE = lift;
 
     return BOUNCE_DOWNSHIFTED;
 }
@@ -250,7 +250,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
       Stable* scratch_reverse = Decay_If_Unstable(scratch_reverse_atom)
     );
 
-    if (to_or_as == TYPE_MAP) {  // doesn't preserve order requirement :-/
+    if (to_or_as == HEART_MAP) {  // doesn't preserve order requirement :-/
         if (not Have_Same_Type(scratch_reverse, spare_input))
             panic ("Reverse TO/AS of MAP! didn't produce original type");
         return OUT;

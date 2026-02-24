@@ -181,7 +181,7 @@ ATTRIBUTE_NO_RETURN void Crash_With_Cell_Debug(const Cell* c) {
     const char *name = id ? Strand_Utf8(Canon_Symbol(unwrap id)) : "custom-0";
     Printf_Stderr("Cell.kind_byte=%d\n", i_cast(int, KIND_BYTE_RAW(c)));
     Printf_Stderr("cell heart name=%s\n", name);
-    Printf_Stderr("Cell.lift_byte=%d\n", i_cast(int, LIFT_BYTE_RAW(c)));
+    Printf_Stderr("Cell.lift_byte=%d\n", i_cast(int, TYPE_BYTE_RAW(c)));
 
     if (Cell_Payload_1_Needs_Mark(c))
         Printf_Stderr("has payload1: %p\n", cast(void*, CELL_PAYLOAD_1(c)));
@@ -321,7 +321,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
         Printf_Stderr("Stub detected...\n");
         if (Stub_Flavor(s) == FLAVOR_VARLIST) {
             Printf_Stderr("...and it's a varlist...\n");
-            if (CTX_TYPE(cast(VarList*, m_cast(Stub*, s))) == TYPE_ERROR) {
+            if (CTX_TYPE(cast(VarList*, m_cast(Stub*, s))) == HEART_ERROR) {
                 Printf_Stderr("...and it's an Error, trying to PROBE...\n");
                 PROBE(s);  // this may crash recursively if it's corrupt
             }
@@ -336,7 +336,7 @@ ATTRIBUTE_NO_RETURN void Crash_Core(
       case DETECTED_AS_END: {
       #if DEBUG_FANCY_CRASH
         const Cell* c = cast(Cell*, unwrap p);
-        if (Heart_Of(c) == TYPE_ERROR) {
+        if (Heart_Of(c) == HEART_ERROR) {
             Printf_Stderr("...crash() on ERROR! Cell, trying to PROBE...");
             PROBE(c);
         }

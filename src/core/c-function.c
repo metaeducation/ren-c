@@ -204,7 +204,7 @@ static Result(None) Push_Keys_And_Params_Core(
     if (Is_Text(v))
         goto handle_description_or_parameter_note;
 
-    if (Heart_Of(v) == TYPE_BLOCK)  // may be quoted to suppress typechecking
+    if (Heart_Of(v) == HEART_BLOCK)  // may be quoted to suppress typechecking
         goto handle_block_of_types_for_typeset;
 
     if (Is_Fence(v))
@@ -337,7 +337,7 @@ static Result(None) Push_Keys_And_Params_Core(
     v = spare;  // need to mutate if CHAIN! or quoted
 
     if (Quotes_Of(v) > 0) {
-        if (LIFT_BYTE(v) != ONEQUOTE_NONQUASI_65)
+        if (TYPE_BYTE(v) != ONEQUOTE_NONQUASI_65)
             return fail (Error_Bad_Func_Def_Raw(v));
 
         Clear_Cell_Quotes_And_Quasi(spare);
@@ -418,7 +418,7 @@ static Result(None) Push_Keys_And_Params_Core(
 
 } post_chain_handling: { /////////////////////////////////////////////////////
 
-    if (Heart_Of(v) == TYPE_WORD) {
+    if (Heart_Of(v) == HEART_WORD) {
         symbol = Word_Symbol(v);
 
         switch (opt Sigil_Of(v)) {
@@ -912,7 +912,7 @@ Details* Make_Dispatch_Details(
 
     Cell* rootvar = Array_Head(a);
     Copy_Cell(rootvar, exemplar);
-    LIFT_BYTE(rootvar) = As_Lift(TYPE_FRAME);  // canonize ACTION! to FRAME!
+    TYPE_BYTE(rootvar) = TYPE_FRAME;  // canonize ACTION! to FRAME!
     Shield_Rootvar_If_Tracking(rootvar);
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)

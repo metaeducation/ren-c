@@ -49,7 +49,7 @@ void Validate_Paramlist_Bits(const Stub* stub) {
         crash (stub);
     }
 
-    if (CTX_TYPE(x_cast(Context*, stub)) != TYPE_FRAME)
+    if (CTX_TYPE(x_cast(Context*, stub)) != HEART_FRAME)
         crash (stub);
 }
 

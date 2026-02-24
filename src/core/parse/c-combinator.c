@@ -235,7 +235,7 @@ DECLARE_NATIVE(COMBINATOR)
         return bounce;
 
     assert(Is_Action(OUT));
-    LIFT_BYTE(OUT) = As_Lift(TYPE_FRAME);  // now it's known to not be antiform
+    Deactivate_Action(OUT);  // now it's known to not be antiform
 
     return OUT;
 }}
