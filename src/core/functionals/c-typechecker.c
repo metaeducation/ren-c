@@ -216,15 +216,15 @@ Details* Make_Typechecker(TypesetByte typeset_byte)  // parameter cache [1]
         if (not (typeset & TYPESET_FLAG_0_RANGE))  // bits
             break;  // do stable check
 
-        Byte start = THIRD_BYTE(&typeset);
-        Byte end = FOURTH_BYTE(&typeset);
+        Type start = i_cast(Type, THIRD_BYTE(&typeset));
+        Type end = i_cast(Type, FOURTH_BYTE(&typeset));
         if (start != end)  // nontrivial range
             break;
 
-        if (start <= MAX_LIFT_STABLE)  // don't need unstable checks
+        if (start <= MAX_TYPE_STABLE)  // don't need unstable checks
             break;
 
-        assert(typeset_byte == start);
+        assert(typeset_byte == i_cast(TypesetByte, start));
         continue;
     }
     then {
@@ -666,7 +666,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
     Copy_Cell(SPARE, v);
     Element* scratch = Copy_Cell(SCRATCH, at);
 
-    if (TYPE_BYTE(scratch) > MAX_LIFT_NOQUOTE_NOQUASI) {
+    if (Type_Of_Raw(scratch) > MAX_TYPE_NOQUOTE_NOQUASI) {
         if (not Have_Matching_Lift_Levels(scratch, As_Stable(SPARE)))
             goto test_failed;  // should be willing to accept subset quotes
 
@@ -694,7 +694,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         goto handle_after_any_quoting_adjustments;
     }
 
-    if (TYPE_BYTE(SPARE) > MAX_LIFT_NOQUOTE_NOQUASI or v_sigil)
+    if (Type_Of_Raw(SPARE) > MAX_TYPE_NOQUOTE_NOQUASI or v_sigil)
         goto test_failed;  // 'foo: or @foo: won't match word!:
 
   check_destructured_sequence: {
@@ -856,7 +856,7 @@ bool Typecheck_Use_Toplevel(
     const Cell* tests,
     Context* tests_binding
 ){
-    possibly(TYPE_BYTE(tests) == BEDROCK_255);  // ParamList slot, unspecialized
+    possibly(Type_Of_Raw(tests) == BEDROCK_255);  // unspecialized slot
 
     USE_LEVEL_SHORTHANDS (L);
 
@@ -1025,7 +1025,7 @@ Result(bool) Typecheck_Coerce_Use_Toplevel(
     const Cell* param,
     Value* v  // not `const Value*` -- coercion needs mutability
 ){
-    possibly(TYPE_BYTE(param) == BEDROCK_255);  // ParamList slot, unspecialized
+    possibly(Type_Of_Raw(param) == BEDROCK_255);  // unspecialized slot
 
     USE_LEVEL_SHORTHANDS (L);
 

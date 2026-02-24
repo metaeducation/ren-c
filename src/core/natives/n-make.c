@@ -67,7 +67,7 @@ DECLARE_NATIVE(MAKE)
 //
 Bounce Copy_Quoter_Executor(Level* level_)
 {
-    TYPE_BYTE(OUT) = STATE;
+    TYPE_BYTE(OUT) = i_cast(TypeEnum, STATE);
 
     return OUT;
 }
@@ -102,7 +102,7 @@ DECLARE_NATIVE(COPY)
 
     Element* elem = ARG(VALUE);
 
-    TypeByte lift = TYPE_BYTE(elem);
+    TypeEnum lift = Type_Of_Raw(elem);
     Clear_Cell_Quotes_And_Quasi(elem);  // dispatch requires unquoted items
 
     Option(Dispatcher*) dispatcher = Get_Generic_Dispatcher(
@@ -120,7 +120,7 @@ DECLARE_NATIVE(COPY)
         return COPY_TO_OUT(elem);
     }
 
-    if (lift <= MAX_LIFT_NOQUOTE_NOQUASI)  // don't need requote/quasi
+    if (lift <= MAX_TYPE_NOQUOTE_NOQUASI)  // don't need requote/quasi
         return Apply_Cfunc(unwrap dispatcher, LEVEL);
 
     Option(const Symbol*) label = Level_Label(level_);
@@ -144,7 +144,7 @@ DECLARE_NATIVE(COPY)
     sub->u.action.original = Frame_Phase(LIB(COPY));
     Set_Action_Level_Label(sub, label);
 
-    STATE = lift;
+    STATE = i_cast(StateByte, lift);
 
     return BOUNCE_DOWNSHIFTED;
 }
@@ -332,7 +332,7 @@ DECLARE_NATIVE(TO)
     if (not to)
         panic ("TO doesn't work with extension types");
 
-    if (i_cast(Byte, unwrap to) > MAX_TYPEBYTE_FUNDAMENTAL)
+    if ((unwrap to) > MAX_TYPE_FUNDAMENTAL)
         panic ("TO can't produce antiforms or quoteds");  // !!! handle quoted?
 
   handle_sigil_cases: {
@@ -357,9 +357,9 @@ DECLARE_NATIVE(TO)
     Option(Sigil) sigil = Sigil_Of(value);
     if (sigil) {  // to or from a sigiled form [1]
         switch (unwrap Heart_Of(value)) {
-          case TYPE_INTEGER:
-          case TYPE_WORD:
-          case TYPE_RUNE:
+          case HEART_INTEGER:
+          case HEART_WORD:
+          case HEART_RUNE:
             break;
 
           default:
@@ -370,11 +370,11 @@ DECLARE_NATIVE(TO)
 
     if (Any_Sigiled_Type(to)) {  // limited handling for adding Sigils [2]
         switch (unwrap Heart_Of(value)) {
-          case TYPE_INTEGER:
-          case TYPE_WORD:
+          case HEART_INTEGER:
+          case HEART_WORD:
             break;
 
-          case TYPE_RUNE:
+          case HEART_RUNE:
             if (not Is_Space(value))  // #a <=> $a <=> <a> <=> [a], eventually
                 panic ("SPACE is the only RUNE! converting TO Sigil ATM");
             break;
@@ -429,7 +429,7 @@ DECLARE_NATIVE(AS)
     Option(Type) as = Datatype_Type(ARG(TYPE));
     if (not as)
         panic ("TO doesn't work with extension types");
-    if (i_cast(TypeByte, (unwrap as)) > MAX_HEARTBYTE)
+    if ((unwrap as) > MAX_TYPE_HEART)
         panic ("AS can't alias to quoted/quasiform/antiform");
 
   #if NO_RUNTIME_CHECKS

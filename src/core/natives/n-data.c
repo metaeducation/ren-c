@@ -754,7 +754,8 @@ DECLARE_NATIVE(LIT_WORD_Q)
         return NULL_OUT;
 
     return LOGIC_OUT(
-        TYPE_BYTE(v) == ONEQUOTE_NONQUASI_65 and Heart_Of(v) == HEART_WORD
+        Type_Of_Raw(v) == TYPE_QUOTED_1_TIME_NONQUASI
+        and Heart_Of(v) == HEART_WORD
     );
 }
 

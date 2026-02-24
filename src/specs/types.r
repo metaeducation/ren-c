@@ -278,7 +278,7 @@ word!       "evaluates a variable or action"
 ; ABOVE THESE ARE QUOTED, QUASIFORM, and ANTIFORM "PSEUDOTYPES"
 ; ============================================================================
 
-; TYPE_QUASIFORM, PSEUDOTYPE_QUOTED_X_TIMES_XXX, and all antiform types
+; TYPE_QUASIFORM, TYPE_QUOTED_X_TIMES_XXX, and all the other antiform types
 ; (TYPE_SPLICE, TYPE_TRASH, etc.) enum values never appear in the KIND_BYTE()
 ; of a cell.  These are synthesized datatypes in the TYPE_BYTE().
 ;

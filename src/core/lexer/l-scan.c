@@ -3131,7 +3131,9 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         Add_Cell_Sigil(TOP_ELEMENT, unwrap sigil_before);
 
     if (quotes_before != 0)
-        TYPE_BYTE(TOP_ELEMENT) = NOQUOTE_63 + Quote_Shift(quotes_before);
+        TYPE_BYTE(TOP_ELEMENT) = i_cast(TypeEnum,
+            NOQUOTE_63 + Quote_Shift(quotes_before)
+        );
 
     goto sequence_or_conflation_was_pushed;
 

@@ -259,11 +259,14 @@ typedef Byte TypeByte;   // any byte value (but represents a Type/Lift)
 #define TYPE_BYTE_RAW(cell) /* don't go through TypeHolder() [1] */ \
     THIRD_BYTE(&(cell)->header.bits)
 
+#define Type_Of_Raw(v) \
+    i_cast(Type, TYPE_BYTE_RAW(v))
+
 #define LIFT_0  TYPE_0_constexpr
 #define BEDROCK_255  LIFT_255
 
-#define MAX_LIFT_NOQUOTE_QUASI_OK 64
-#define MAX_LIFT_NOQUOTE_NOQUASI 63
+#define MAX_TYPE_NOQUOTE_QUASI_OK  i_cast(TypeEnum, 64)
+#define MAX_TYPE_NOQUOTE_NOQUASI  i_cast(TypeEnum, 63)
 
 #define NOQUOTE_63              63
 #define NONQUASI_BIT            1
@@ -272,18 +275,17 @@ STATIC_ASSERT(i_cast(Byte, TYPE_QUASIFORM) == 64);
 #define QUASIFORM_64            64
 STATIC_ASSERT(not (QUASIFORM_64 & NONQUASI_BIT));
 
-STATIC_ASSERT(i_cast(Byte, PSEUDOTYPE_QUOTED_1_TIME_NONQUASI) == 65);
-#define ONEQUOTE_NONQUASI_65    65
-STATIC_ASSERT(ONEQUOTE_NONQUASI_65 & NONQUASI_BIT);
+STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_1_TIME_NONQUASI) == 65);
+STATIC_ASSERT(65 & NONQUASI_BIT);
 
-STATIC_ASSERT(i_cast(Byte, PSEUDOTYPE_QUOTED_64_TIMES_NONQUASI) == 191);
-STATIC_ASSERT(i_cast(Byte, PSEUDOTYPE_QUOTED_64_TIMES_QUASI) == 192);
+STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_64_TIMES_NONQUASI) == 191);
+STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_64_TIMES_QUASI) == 192);
 #define MAX_QUOTE_DEPTH_64     64         // highest legal quoting level
 
 #define Quote_Shift(n)      ((n) << 1)  // help find manipulation sites
 
-#define FLAG_LIFT(byte) \
-    FLAG_THIRD_BYTE(known(TypeEnum, (byte)))
+#define FLAG_LIFT(type) \
+    FLAG_THIRD_BYTE(i_cast(TypeByte, known(TypeEnum, (type))))
 
 #define CELL_MASK_LIFTED_OR_ANTIFORM_OR_DUAL \
     FLAG_LIFT(LIFT_192)  // 128 + 64, the 2 high bits set

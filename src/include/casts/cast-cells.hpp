@@ -98,7 +98,7 @@ struct CastHook<const F*, const Param*> {  // both must be const [B]
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
         assert(
-            TYPE_BYTE_RAW(c) != BEDROCK_255
+            Type_Of_Raw(c) != BEDROCK_255
             or KIND_BYTE_RAW(c) == Kind_From_Sigil_And_Heart(
                 SIGIL_0, HEART_PARAMETER
             )
@@ -119,7 +119,7 @@ struct CastHook<const F*, const Value*> {  // both must be const [B]
 
     const Cell* c = u_cast(const Cell*, p);
     Assert_Cell_Readable(c);
-    assert(TYPE_BYTE_RAW(c) != BEDROCK_255);  // bedrock is only illegal lift
+    assert(Type_Of_Raw(c) != BEDROCK_255);  // bedrock is only illegal lift
   }
 };
 
@@ -136,7 +136,7 @@ struct CastHook<const F*, const Stable*> {  // both must be const [B]
 
     const Cell* c = u_cast(const Cell*, p);
     Assert_Cell_Readable(c);
-    assert(TYPE_BYTE_RAW(c) <= MAX_LIFT_STABLE);
+    assert(Type_Of_Raw(c) <= MAX_TYPE_STABLE);
   }
 };
 
@@ -153,7 +153,7 @@ struct CastHook<const F*, const Element*> {  // both must be const [B]
 
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
-        assert(TYPE_BYTE_RAW(c) < MIN_LIFT_ANTIFORM);
+        assert(Type_Of_Raw(c) < MIN_TYPE_ANTIFORM);
     }
 };
 
@@ -173,6 +173,6 @@ struct CastHook<const F*, const Dual*> {  // both must be const [B]
 
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
-        assert(TYPE_BYTE_RAW(c) < MIN_LIFT_ANTIFORM);
+        assert(Type_Of_Raw(c) < MIN_TYPE_ANTIFORM);
     }
 };

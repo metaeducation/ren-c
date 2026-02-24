@@ -680,8 +680,8 @@ Result(bool) Typecheck_Coerce_Return_Use_Toplevel(
     assert(  // for specialized slot, RETURN can't be a plain PARAMETER!
         Heart_Of(param) == HEART_PARAMETER
         and (
-            TYPE_BYTE(param) == BEDROCK_255  // "holes" in ParamLists
-            or TYPE_BYTE(param) == TYPE_PARAMETER  // plain PARAMETER!
+            Type_Of_Raw(param) == BEDROCK_255  // "holes" in ParamLists
+            or Type_Of_Raw(param) == TYPE_PARAMETER  // plain PARAMETER!
         )
     );
 

@@ -1311,7 +1311,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     Cell* out_cell = Copy_Cell_Core(OUT, slot, CELL_MASK_COPY);
 
-    if (TYPE_BYTE(out_cell) == BEDROCK_255) {  // return as nonquoted/nonquasi
+    if (Type_Of_Raw(out_cell) == BEDROCK_255) {  // return nonquoted/nonquasi
         Normalize_Cell(out_cell);
         return OUT_UNLIFTED_DUAL_INDIRECT_PICK;
     }

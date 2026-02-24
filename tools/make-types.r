@@ -426,6 +426,7 @@ quoteds: make block! 128  ; 128 states for 64 quote levels
 antiforms: make block! 64  ; lots of blank space atm in this span
 
 heartdefines: make block! 60
+typedefines: make block! 128
 
 singlehearts: make block! 256  ; tricky thing, see description in comments
 
@@ -440,7 +441,6 @@ do-appends: proc [
     description [<opt> text!]
     sparse [block!]  ; possibly empty
     :ranged [block!]
-    :heart
 ][
     let enumlist: ensure block! get which
 
@@ -451,6 +451,10 @@ do-appends: proc [
     description: default [
         assert [integer? name]
         <- "reserved for future use"
+    ]
+
+    append typedefines cscape [name
+        --[#define TYPE_${NAME}  TypeEnum::ENUM_${NAME}]--
     ]
 
     ranged: default [
@@ -505,8 +509,8 @@ max-heart: ~
 for-each 't datatype-objects [
     e-typeset-bytes/emit [t "$<t.name> $<index>"]
 
-    min-heart: default [cscape [t.name --[TYPE_${T.NAME}]--]]
-    max-heart: cscape [t.name --[TYPE_${T.NAME}]--]  ; overwritten until max
+    min-heart: default [t.name]
+    max-heart: t.name  ; overwritten until max
 
     let sparse: collect [
         for-each [ts-name types] sparse-typesets [
@@ -568,6 +572,8 @@ do-appends // [
 num-quotes: 1
 is-quasi: null
 
+max-element: ~
+
 while [index <= 192] [
     if (num-quotes = 1) and (is-quasi = null) [
         e-typeset-bytes/emit ["quoted $<index>"]
@@ -575,18 +581,21 @@ while [index <= 192] [
         e-typeset-bytes/emit ["~ $<index>"]
     ]
 
+    let name: unspaced [
+        "quoted_" num-quotes "_time" (if num-quotes > 1 ["s"])
+            "_" if not is-quasi ["non"] "quasi"
+    ]
+    max-element: name
+
     do-appends // [
         $quoteds
-        unspaced [
-            "quoted_" num-quotes "_time" (if num-quotes > 1 ["s"])
-                "_" if not is-quasi ["non"] "quasi"
-        ]
+        name
         "<internal>"
         sparse: ["TYPESET_FLAG_BRANCH"]
         ranged: reduce [
             "TYPESET_FLAG_0_RANGE"
-            unspaced ["FLAG_THIRD_BYTE(PSEUDOTYPE_QUOTED_1_TIME_NONQUASI)"]
-            unspaced ["FLAG_FOURTH_BYTE(PSEUDOTYPE_QUOTED_64_TIMES_QUASI)"]
+            unspaced ["FLAG_THIRD_BYTE(TYPE_QUOTED_1_TIME_NONQUASI)"]
+            unspaced ["FLAG_FOURTH_BYTE(TYPE_QUOTED_64_TIMES_QUASI)"]
         ]
     ]
     if is-quasi [
@@ -611,6 +620,10 @@ do-anti-appends: proc [
     antidescription [text!]
 ][
     e-typeset-bytes/emit [antiname "${antiname} $<index>"]
+
+    append typedefines cscape [antiname
+        --[#define TYPE_${ANTINAME}  TypeEnum::ENUM_${ANTINAME}]--
+    ]
 
     append antiforms cscape [antiname
         --[${ANTINAME} = $<index>]--
@@ -645,21 +658,22 @@ do-anti-appends: proc [
 ; We want the stable antiforms to come first, this way we can byte check for
 ; instability by just asking if the value is greater than the minimum unstable
 
-min-antiform: index
+min-antiform: ~
 max-stable: ~
 max-antiform: ~  ; overwritten each time
 
 for-each 't datatype-objects [
     if not t.antiname [continue]
     if t.unstable = 'yes [continue]  ; do stable antiforms first
-    max-stable: index
+    min-antiform: default [t.antiname]
+    max-stable: t.antiname
     do-anti-appends t.name t.antiname t.antidescription
 ]
 
 for-each 't datatype-objects [
     if not t.antiname [continue]
     if t.unstable = 'no [continue]  ; now unstable ones
-    max-antiform: index
+    max-antiform: t.antiname
     do-anti-appends t.name t.antiname t.antidescription
 ]
 
@@ -707,7 +721,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-plain */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_HEARTBYTE)
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_TYPE_HEART)
     ]--]
     index: index + 1
 )
@@ -720,7 +734,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-fundamental */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_TYPEBYTE_FUNDAMENTAL)
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_TYPE_FUNDAMENTAL)
     ]--]
     index: index + 1
 )
@@ -732,7 +746,7 @@ for-each [ts-name types] sparse-typesets [  ; sparse, typeset is a single flag
 
     append typeset-flags cscape [tr --[
         /* $<index> - any-element */
-        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_TYPEBYTE_ELEMENT)
+        TYPESET_FLAG_0_RANGE | FLAG_THIRD_BYTE(0) | FLAG_FOURTH_BYTE(MAX_TYPE_ELEMENT)
     ]--]
     index: index + 1
 )
@@ -796,15 +810,16 @@ e-hearts/emit [rebs --[
      */
     #if (! DEBUG_EXTRA_HEART_CHECKS)
         typedef enum {
-            TYPE_0_constexpr = 0,  /* prefer TYPE_0 to get Option(Heart) */
+            TYPE_0_constexpr = 0,  /* prefer TYPE_0 to get Option(Type) */
             TYPE_$[Sigils],
             TYPE_$[Hearts],
             TYPE_$[Quasiform],
-            PSEUDOTYPE_$[Quoteds],
+            TYPE_$[Quoteds],
             TYPE_$[Antiforms],
             LIFT_255 = 255
         } TypeEnum;
 
+        #define HEART_0_constexpr  TYPE_0_constexpr
         $[HeartDefines]
     #else
         /*
@@ -820,13 +835,20 @@ e-hearts/emit [rebs --[
          *
          * (This would be much easier if C++ defined enum inheritance.)
          *
-         * Note that using C++ "enum classes" offers no real benefit here,
-         * and Clang won't let you do a switch() statement whose cases come
-         * from different enum classes.  It also prohibits zero conversions.
+         * 1. We get benefit from using a C++ `enum class` for the TypeEnum.
+         *    But we have a wrapper class over it to facilitate HeartEnum
+         *    being accepted where Types are tested, which lets us gloss
+         *    over the lack of boolean convertibility needed by Option(Type).
+         *    Heart doesn't have such a class, and we'd hate to make one
+         *    just for that...and it really doesn't need the enum class.
+         *
+         * 2. While C++ enum classes don't require qualification, our names
+         *    are things like VOID, and that's a macro in Windows headers.
+         *    To reduce collisions we call the enum members ENUM_XXX.
          */
 
-        enum HeartEnum {
-            TYPE_0_constexpr = 0,  /* prefer TYPE_0 to get Option(Heart)! */
+        enum HeartEnum {  /* no enum class, need zero conversion [1] */
+            HEART_0_constexpr = 0,  /* prefer HEART_0 to get Option(Heart)! */
 
             /* placeholders for TYPE_METAFORM, TYPE_PINNED, TYPE_TIED */
             PLACEHOLDER_TYPE_$[Sigils],
@@ -834,48 +856,52 @@ e-hearts/emit [rebs --[
             HEART_$(Hearts),
         };
 
-        enum TypeEnum {
-            PLACEHOLDER_HEART_0 = 0,  /* need 0 state in overlapped enum */
+        enum class TypeEnum {  /* ENUM_ prefix; bare words conflict [2] */
+            ENUM_0_constexpr = 0,
 
-            TYPE_$[Sigils],
+            ENUM_$[Sigils],
 
             /* placeholders for values in range of heart byte */
-            TYPE_$[Hearts],
+            ENUM_$[Hearts],
 
             /* just one quasiform type! */
-            TYPE_$[Quasiform],
+            ENUM_$[Quasiform],
 
             /* PSEUDOTYPE_QUOTED_<N>_TIMES_<NON>QUASI states */
-            PSEUDOTYPE_$[Quoteds],
+            ENUM_$[Quoteds],
 
-            TYPE_$[Antiforms],
+            ENUM_$[Antiforms],
 
-            LIFT_255 = 255
+            ENUM_255 = 255
         };
+
+        #define TYPE_0_constexpr  TypeEnum::ENUM_0_constexpr
+        $[TypeDefines]
+        #define LIFT_255  TypeEnum::ENUM_255
     #endif
 
     STATIC_ASSERT(i_cast(int, $<MAX-TYPE>) <= 256);  /* Stored in bytes */
 
-    STATIC_ASSERT(i_cast(Byte, PSEUDOTYPE_QUOTED_64_TIMES_QUASI) == 192);
-    #define LIFT_192  PSEUDOTYPE_QUOTED_64_TIMES_QUASI
+    STATIC_ASSERT(i_cast(Byte, TYPE_QUOTED_64_TIMES_QUASI) == 192);
+    #define LIFT_192  TYPE_QUOTED_64_TIMES_QUASI
 
-    #define MAX_TYPEBYTE_FUNDAMENTAL  63  /* better name than "fundamental"? */
-    #define MAX_TYPEBYTE_ELEMENT  192
+    #define MAX_TYPE_FUNDAMENTAL  TYPE_$<MAX-HEART>  /* same as max heart */
+    #define MAX_TYPE_ELEMENT  TYPE_$<MAX-ELEMENT>
 
     STATIC_ASSERT(i_cast(Byte, TYPE_METAFORM) == 1);
     STATIC_ASSERT(i_cast(Byte, TYPE_PINNED) == 2);
     STATIC_ASSERT(i_cast(Byte, TYPE_TIED) == 3);
 
-    #define MIN_HEARTBYTE  i_cast(Byte, $<MIN-HEART>)
-    #define MAX_HEARTBYTE  i_cast(Byte, $<MAX-HEART>)
-    STATIC_ASSERT(MIN_HEARTBYTE == 4);
-    STATIC_ASSERT(MAX_HEARTBYTE <= MAX_TYPEBYTE_FUNDAMENTAL);
+    #define MIN_TYPE_HEART  TYPE_$<MIN-HEART>
+    #define MAX_TYPE_HEART  TYPE_$<MAX-HEART>
+    STATIC_ASSERT(i_cast(Byte, MIN_TYPE_HEART) == 4);
+    STATIC_ASSERT(i_cast(Byte, MAX_TYPE_HEART) < 64);
 
     STATIC_ASSERT(i_cast(Byte, TYPE_QUASIFORM) == 64);
 
-    #define MIN_LIFT_ANTIFORM  $<min-antiform>
-    #define MAX_LIFT_STABLE  $<max-stable>
-    #define MAX_LIFT_ANTIFORM  $<max-antiform>
+    #define MIN_TYPE_ANTIFORM  TYPE_$<MIN-ANTIFORM>
+    #define MAX_TYPE_STABLE  TYPE_$<MAX-STABLE>
+    #define MAX_TYPE_ANTIFORM  TYPE_$<MAX-ANTIFORM>
 
     #define MAX_TYPEBYTE  i_cast(TypeByte, $<MAX-TYPE>)
 

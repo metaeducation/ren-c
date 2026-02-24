@@ -540,8 +540,8 @@ Bounce Stepper_Executor(Level* L)
       case ST_STEPPER_GENERIC_SET: goto generic_set_rightside_in_out;
       case ST_STEPPER_SET_BLOCK: goto set_block_rightside_in_out;
 
-      case TYPE_GROUP: goto group_or_meta_group_result_in_out;
-      case TYPE_FRAME: goto action_result_in_out;
+      case HEART_GROUP: goto group_or_meta_group_result_in_out;
+      case HEART_FRAME: goto action_result_in_out;
 
       case ST_STEPPER_BIND_OPERATOR: goto bind_rightside_in_out;
       case ST_STEPPER_IDENTITY_OPERATOR: goto identity_rightside_in_out;
@@ -745,7 +745,7 @@ Bounce Stepper_Executor(Level* L)
 
     assert(Is_Cell_Erased(OUT));
 
-    if (TYPE_BYTE(CURRENT) <= MAX_LIFT_NOQUOTE_NOQUASI) {
+    if (Type_Of_Raw(CURRENT) <= MAX_TYPE_NOQUOTE_NOQUASI) {
         Option(Sigil) sigil = Sigil_Of(CURRENT);
         switch (opt sigil) {
           case SIGIL_0:
@@ -817,7 +817,7 @@ Bounce Stepper_Executor(Level* L)
 
   switch (STATE = ii_cast(StateByte, Heart_Of(CURRENT))) {
 
-  case TYPE_BLANK: { //// LITERALLY OPERATOR (@) /////////////////////////////
+  case HEART_BLANK: { //// LITERALLY OPERATOR (@) ////////////////////////////
 
   // @ acts like LITERALLY, and doesn't add binding:
   //
@@ -906,7 +906,7 @@ Bounce Stepper_Executor(Level* L)
 
   switch (STATE = ii_cast(StateByte, Heart_Of(CURRENT))) {
 
-  case TYPE_BLANK: { //// BIND OPERATOR ($) //////////////////////////////////
+  case HEART_BLANK: { //// BIND OPERATOR ($) /////////////////////////////////
 
   // The $ sigil will evaluate the right hand side, and then bind the
   // product into the current evaluator environment.
@@ -946,7 +946,7 @@ Bounce Stepper_Executor(Level* L)
 
   switch (STATE = ii_cast(StateByte, Heart_Of(CURRENT))) {
 
-  case TYPE_BLANK: { //// IDENTITY OPERATOR (^) ///////////////////////////////
+  case HEART_BLANK: { //// IDENTITY OPERATOR (^) //////////////////////////////
 
     if (Is_Feed_At_End(L->feed))  // no literal to take as argument
         panic (Error_Need_Non_End(CURRENT));
@@ -974,7 +974,7 @@ Bounce Stepper_Executor(Level* L)
 
     goto lookahead;
 
-} case TYPE_WORD: { //// META WORD! ^XXX /////////////////////////////////////
+} case HEART_WORD: { //// META WORD! ^XXX ////////////////////////////////////
 
   // A META-WORD! gives you the undecayed representation of the variable
   //
@@ -1007,7 +1007,7 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} case TYPE_TUPLE: { //// META TUPLE! ^XXX.YYY ///////////////////////////////
+} case HEART_TUPLE: { //// META TUPLE! ^XXX.YYY //////////////////////////////
 
     // Note that the GET native on a TUPLE! won't allow GROUP! execution:
     //
@@ -1043,17 +1043,17 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;  // even FAILURE! wants lookahead (e.g. for EXCEPT)
 
 
-} case TYPE_CHAIN: { //// META CHAIN! (^XXX: ^:XXX ...) //////////////////////
+} case HEART_CHAIN: { //// META CHAIN! (^XXX: ^:XXX ...) /////////////////////
 
     goto handle_chain_or_meta_chain;
 
 
-} case TYPE_GROUP: { //// META GROUP! ^(...) /////////////////////////////////
+} case HEART_GROUP: { //// META GROUP! ^(...) ////////////////////////////////
 
     goto handle_group_or_meta_group;
 
 
-} case TYPE_BLOCK: { //// META BLOCK! ^[...] /////////////////////////////////
+} case HEART_BLOCK: { //// META BLOCK! ^[...] ////////////////////////////////
 
     // Produces a PACK! of what it is given:
     //
@@ -1087,7 +1087,7 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} case TYPE_FENCE: { //// META FENCE! ^{...} /////////////////////////////////
+} case HEART_FENCE: { //// META FENCE! ^{...} ////////////////////////////////
 
     panic ("Don't know what ^FENCE! is going to do yet");
 
@@ -1117,7 +1117,7 @@ Bounce Stepper_Executor(Level* L)
 
   switch ((STATE = ii_cast(StateByte, Heart_Of(CURRENT)))) {  // superset [1]
 
-  case TYPE_BLANK: { //// BLANK! (often manifests as "," character) //////////
+  case HEART_BLANK: { //// BLANK! (often manifests as "," character) //////////
 
   // A blank is a lightweight looking expression barrier.  It errors on
   // evaluations that aren't interstitial, or gets skipped over otherwise.
@@ -1166,7 +1166,7 @@ Bounce Stepper_Executor(Level* L)
     goto start_new_expression;
 
 
-} case TYPE_FRAME: { //// FRAME! /////////////////////////////////////////////
+} case HEART_FRAME: { //// FRAME! ////////////////////////////////////////////
 
     // If a FRAME! makes it to the SWITCH statement, that means it is either
     // literally a frame in the array (eval compose [(unrun add/) 1 2]) or
@@ -1207,7 +1207,7 @@ Bounce Stepper_Executor(Level* L)
 
     goto lookahead;
 
-} case TYPE_WORD: { //// WORD! ///////////////////////////////////////////////
+} case HEART_WORD: { //// WORD! //////////////////////////////////////////////
 
   // A plain word tries to fetch its value through its binding.  It panics if
   // the word is unbound (or if bound to a variable which holds TRASH!).  If
@@ -1435,7 +1435,7 @@ Bounce Stepper_Executor(Level* L)
   #endif  // DEBUG_DISABLE_INTRINSICS
 
 } handle_chain_or_meta_chain:  //// CHAIN! [ a:  ^a:  b:c:d  ^:e ] /////////
-  case TYPE_CHAIN: {
+  case HEART_CHAIN: {
 
     // Due to the consolidation of all the SET-XXX! and GET-XXX! types as
     // CHAIN! with leading or trailing blanks, CHAIN! has to break that down
@@ -1541,7 +1541,7 @@ Bounce Stepper_Executor(Level* L)
     goto process_action;
 
 
-} case TYPE_GROUP: //// GROUP! (...) /////////////////////////////////////////
+} case HEART_GROUP: //// GROUP! (...) ////////////////////////////////////////
   handle_group_or_meta_group: {
 
   // Groups simply evaluate their contents, and can evaluate to VOID! if the
@@ -1578,7 +1578,7 @@ Bounce Stepper_Executor(Level* L)
 
     panic ("^(...) behavior is likely to act like ^ (...), in time");
 
-} case TYPE_TUPLE: { //// TUPLE! [ a.  b.c.d  .e ] ///////////////////////////
+} case HEART_TUPLE: { //// TUPLE! [ a.  b.c.d  .e ] //////////////////////////
 
     // TUPLE! runs through an extensible mechanism based on PICK and POKE.
     // Hence `a.b.c` is kind of like a shorthand for `pick (pick a 'b) 'c`.
@@ -1626,7 +1626,7 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} case TYPE_PATH: { //// PATH! [ a/  b/c/d  e/ ] /////////////////////////////
+} case HEART_PATH: { //// PATH! [ a/  b/c/d  e/ ] ////////////////////////////
 
   // Ren-C moved to member access with "dots instead of slashes" (TUPLE!)
   // and refinements are done with "colons instead of slashes" (CHAIN!).  So
@@ -1904,7 +1904,7 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} case TYPE_FENCE: { ///// FENCE! {...} //////////////////////////////////////
+} case HEART_FENCE: { ///// FENCE! {...} /////////////////////////////////////
 
     // FENCE! is the guinea pig for a technique of calling a function defined
     // in the local environment to do the handling.
@@ -1925,31 +1925,31 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} case TYPE_0_constexpr: //// "INERT" TYPES (EXTENSIBILITY TBD) //////////////
-  case TYPE_BLOCK:
-  case TYPE_BLOB:
-  case TYPE_TEXT:
-  case TYPE_FILE:
-  case TYPE_EMAIL:
-  case TYPE_URL:
-  case TYPE_TAG:
-  case TYPE_RUNE:
-  case TYPE_BITSET:
-  case TYPE_MAP:
-  case TYPE_VARARGS:
-  case TYPE_OBJECT:
-  case TYPE_MODULE:
-  case TYPE_ERROR:
-  case TYPE_PORT:
-  case TYPE_LET:
-  case TYPE_INTEGER:
-  case TYPE_DECIMAL:
-  case TYPE_PERCENT:
-  case TYPE_PAIR:
-  case TYPE_TIME:
-  case TYPE_DATE:
-  case TYPE_PARAMETER:
-  case TYPE_HANDLE: {
+} case HEART_0_constexpr: //// "INERT" TYPES (EXTENSIBILITY TBD) /////////////
+  case HEART_BLOCK:
+  case HEART_BLOB:
+  case HEART_TEXT:
+  case HEART_FILE:
+  case HEART_EMAIL:
+  case HEART_URL:
+  case HEART_TAG:
+  case HEART_RUNE:
+  case HEART_BITSET:
+  case HEART_MAP:
+  case HEART_VARARGS:
+  case HEART_OBJECT:
+  case HEART_MODULE:
+  case HEART_ERROR:
+  case HEART_PORT:
+  case HEART_LET:
+  case HEART_INTEGER:
+  case HEART_DECIMAL:
+  case HEART_PERCENT:
+  case HEART_PAIR:
+  case HEART_TIME:
+  case HEART_DATE:
+  case HEART_PARAMETER:
+  case HEART_HANDLE: {
 
     // Today these datatypes are all inert, but with RebindableSyntax the
     // concept is that you can define a function that says how things like

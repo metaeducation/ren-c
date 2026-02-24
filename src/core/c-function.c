@@ -337,7 +337,7 @@ static Result(None) Push_Keys_And_Params_Core(
     v = spare;  // need to mutate if CHAIN! or quoted
 
     if (Quotes_Of(v) > 0) {
-        if (TYPE_BYTE(v) != ONEQUOTE_NONQUASI_65)
+        if (Type_Of(v) != TYPE_QUOTED_1_TIME_NONQUASI)
             return fail (Error_Bad_Func_Def_Raw(v));
 
         Clear_Cell_Quotes_And_Quasi(spare);

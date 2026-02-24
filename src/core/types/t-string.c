@@ -702,11 +702,11 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
     }
 
     switch (heart) {
-      case TYPE_TEXT:
+      case HEART_TEXT:
         Mold_Text_Flex_At(mo, Cell_Strand(v), Series_Index(v));
         break;
 
-      case TYPE_FILE:
+      case HEART_FILE:
         if (String_Len_At(v) == 0) {
             require (
               Append_Ascii(buf, "%\"\"")
@@ -716,7 +716,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Any_String)
         Mold_File(mo, v);
         break;
 
-      case TYPE_TAG:
+      case HEART_TAG:
         Mold_Tag(mo, v);
         break;
 

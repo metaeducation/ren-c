@@ -51,7 +51,7 @@ static Option(Error*) Trap_Adjust_Lifted_Antiform_For_Tweak(Value* spare)
 {
     assert(Is_Lifted_Antiform(spare));
     if (Heart_Of(spare) == HEART_FRAME) {  // e.g. (append.series)
-        TYPE_BYTE_RAW(spare) = ONEQUOTE_NONQUASI_65;
+        TYPE_BYTE(spare) = TYPE_QUOTED_1_TIME_NONQUASI;
         return SUCCESS;
     }
 
@@ -228,7 +228,7 @@ Option(Error*) Trap_Call_Pick_Refresh_Dual_In_Spare(  // [1]
 
     if (Is_Bedrock_Dual_A_Hole(dual_spare)) {  // unspecialized cell
         if (adjusted == HEART_FRAME) { // picking parameter from an ACTION!
-            TYPE_BYTE(dual_spare) = ONEQUOTE_NONQUASI_65;  // plain lifted
+            TYPE_BYTE(dual_spare) = TYPE_QUOTED_1_TIME_NONQUASI;  // lifted
         } else {  // make it look like a NULL
             Init_Lifted_Null_Signifying_Unspecialized(dual_spare);
         }
@@ -550,10 +550,10 @@ Option(Error*) Trap_Push_Steps_To_Stack(
 
     for (at = head; at != tail; ++at) {
         bool unbind;
-        if (TYPE_BYTE(at) <= MAX_LIFT_NOQUOTE_NOQUASI) {
+        if (Type_Of_Raw(at) <= MAX_TYPE_NOQUOTE_NOQUASI) {
             unbind = false;
         }
-        else if (TYPE_BYTE(at) == ONEQUOTE_NONQUASI_65) {
+        else if (Type_Of_Raw(at) == TYPE_QUOTED_1_TIME_NONQUASI) {
             unbind = true;
         }
         else

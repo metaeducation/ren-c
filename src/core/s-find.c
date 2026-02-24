@@ -569,7 +569,7 @@ REBLEN Find_Value_In_Binstr(
         return result;
     }
     else if (
-        TYPE_BYTE(pattern) <= MAX_LIFT_NOQUOTE_NOQUASI
+        Type_Of_Raw(pattern) <= MAX_TYPE_NOQUOTE_NOQUASI
         and pattern_heart == HEART_BITSET
     ){
         return Find_Bitset_In_Binstr(

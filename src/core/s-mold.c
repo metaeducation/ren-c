@@ -360,7 +360,7 @@ void Mold_Or_Form_Cell_Ignore_Quotes(
     Init_Logic(formval, form);
 
     bool tildes = NOT_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)
-        and (TYPE_BYTE(cell) > MAX_LIFT_NOQUOTE_NOQUASI)
+        and (Type_Of_Raw(cell) > MAX_TYPE_NOQUOTE_NOQUASI)
         and (not (TYPE_BYTE(cell) & NONQUASI_BIT));
 
     if (tildes)

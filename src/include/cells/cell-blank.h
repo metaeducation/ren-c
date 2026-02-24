@@ -116,7 +116,7 @@ INLINE Element* Init_Sigiled_Blank_Core(Init(Element) out, Sigil sigil) {
     Is_Cell_Blank_With_Lift_Sigil((v), TYPE_TIED, SIGIL_TIE)
 
 INLINE bool Any_Sigiled_Blank(const Element* v) {
-    if (TYPE_BYTE(v) > MAX_LIFT_NOQUOTE_NOQUASI or not Sigil_Of(v))
+    if (Type_Of_Raw(v) > MAX_TYPE_NOQUOTE_NOQUASI or not Sigil_Of(v))
         return false;
     return Heart_Of(v) == HEART_BLANK;
 }

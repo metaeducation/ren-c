@@ -374,7 +374,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Decimal)
         INCLUDE_PARAMS_OF_ADD;  // must have same layout as others
         USED(ARG(VALUE1));  // is val
         arg = Element_ARG(VALUE2);
-        if (TYPE_BYTE(arg) > MAX_LIFT_NOQUOTE_NOQUASI)
+        if (Type_Of_Raw(arg) > MAX_TYPE_NOQUOTE_NOQUASI)
             panic (Error_Not_Related_Raw(verb, Datatype_Of(arg)));
 
         heart = Heart_Of_Builtin_Fundamental(arg);

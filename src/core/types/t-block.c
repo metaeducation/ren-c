@@ -1812,8 +1812,8 @@ void Assert_Array_Core(const Array* a)
 
         Assert_Cell_Readable(item);
         if (
-            i_cast(Byte, Heart_Of(item)) < MIN_HEARTBYTE
-            or i_cast(Byte, Heart_Of(item)) > MAX_HEARTBYTE
+            i_cast(TypeEnum, Heart_Of(item)) < MIN_TYPE_HEART
+            or i_cast(TypeEnum, Heart_Of(item)) > MAX_TYPE_HEART
         ){
             printf("Invalid Heart_Of() at index %d\n", i_cast(int, n));
             crash (a);

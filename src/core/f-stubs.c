@@ -210,7 +210,7 @@ const Stable* Datatype_From_Type(Type type)
     Patch* patch;
     if (Is_Quoted_Type(type))
         patch = &g_datatype_patches[  // !!! fix: wasted space
-            i_cast(TypeByte, PSEUDOTYPE_QUOTED_1_TIME_NONQUASI)
+            i_cast(TypeByte, TYPE_QUOTED_1_TIME_NONQUASI)
         ];
     else
         patch = &g_datatype_patches[i_cast(TypeByte, type)];
@@ -515,7 +515,7 @@ Result(Element*) Unsingleheart_Sequence(Element* seq)
 {
     assert(Any_Sequence_Type(Heart_Of(seq)));
     assert(not Sigil_Of(seq));
-    assert(TYPE_BYTE(seq) <= MAX_LIFT_NOQUOTE_NOQUASI);
+    assert(Type_Of_Raw(seq) <= MAX_TYPE_NOQUOTE_NOQUASI);
 
     if (not Sequence_Has_Pointer(seq))
         goto report_error;  // compressed bytes don't encode blanks

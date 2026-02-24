@@ -31,10 +31,10 @@
 
 
 #define Is_Bedrock(cell) \
-    (TYPE_BYTE(Possibly_Bedrock(cell)) == BEDROCK_255)
+    (Type_Of_Raw(Possibly_Bedrock(cell)) == BEDROCK_255)
 
 #define Is_Dualized_Bedrock(dual) \
-    (TYPE_BYTE(Known_Dual(dual)) <= MAX_LIFT_NOQUOTE_NOQUASI)
+    (Type_Of_Raw(Known_Dual(dual)) <= MAX_TYPE_NOQUOTE_NOQUASI)
 
 
 //=//// UNDECAYED ~(...)~ BEDROCK PACK!s //////////////////////////////////-//
@@ -86,7 +86,7 @@ INLINE const Dual* Opt_Extract_Dual_If_Undecayed_Bedrock(const Value* v) {
     if (item == tail or item + 1 != tail)
         return nullptr;
 
-    if (TYPE_BYTE(item) > MAX_LIFT_NOQUOTE_NOQUASI)
+    if (Type_Of_Raw(item) > MAX_TYPE_NOQUOTE_NOQUASI)
         return nullptr;
 
     return item;

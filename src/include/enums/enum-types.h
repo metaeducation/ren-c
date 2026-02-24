@@ -67,7 +67,7 @@
 //    unwrapped Type to an Option(Type).
 //
 
-typedef Byte HeartByte;  // value is >= MIN_HEARTBYTE, <= MAX_HEARTBYTE
+typedef Byte HeartByte;  // value is >= MIN_TYPE_HEART, <= MAX_TYPE_HEART
 
 #if (! DEBUG_EXTRA_HEART_CHECKS)
     typedef TypeEnum Heart;  // avoid enum compare warnings [1]
@@ -89,6 +89,9 @@ typedef Byte HeartByte;  // value is >= MIN_HEARTBYTE, <= MAX_HEARTBYTE
 
         explicit operator bool() const  // for Option(Type) in if() statements
           { return t != i_cast(TypeEnum, 0); }
+
+        explicit operator TypeByte() const
+          { return i_cast(TypeByte, t); }
 
         operator TypeEnum() const
           { return t; }
@@ -130,20 +133,16 @@ typedef Byte HeartByte;  // value is >= MIN_HEARTBYTE, <= MAX_HEARTBYTE
 
     // Very narrow equality tests, only applying to literal Heart values.
 
-    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
-    INLINE bool operator==(const Type& type, T&& h)
+    INLINE bool operator==(const Type& type, HeartEnum h)
       { return i_cast(Byte, type.t) == u_cast(Byte, h); }
 
-    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
-    INLINE bool operator==(T&& h, const Type& type)
+    INLINE bool operator==(HeartEnum h, const Type& type)
       { return i_cast(Byte, h) == u_cast(Byte, type.t); }
 
-    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
-    INLINE bool operator!=(const Type& type, T&& h)
+    INLINE bool operator!=(const Type& type, HeartEnum h)
       { return i_cast(Byte, type.t) != u_cast(Byte, h); }
 
-    ENABLE_IF_EXACT_ARG_TYPE(HeartEnum)
-    INLINE bool operator!=(T&& h, const Type& type)
+    INLINE bool operator!=(HeartEnum h, const Type& type)
       { return i_cast(Byte, h) != u_cast(Byte, type.t); }
 
     // Comparisons for TypeEnum and Type (Because Heart can become a type,
@@ -186,9 +185,9 @@ typedef Byte HeartByte;  // value is >= MIN_HEARTBYTE, <= MAX_HEARTBYTE
 
 
 INLINE bool Is_Quoted_Type(Option(Type) type) {
-    if (i_cast(TypeByte, type) <= MAX_LIFT_NOQUOTE_QUASI_OK)
+    if ((opt type) <= MAX_TYPE_NOQUOTE_QUASI_OK)
         return false;
-    if (i_cast(TypeByte, type) > MAX_TYPEBYTE_ELEMENT)
+    if ((opt type) > MAX_TYPE_ELEMENT)
         return false;
     return true;
 }
@@ -299,6 +298,6 @@ INLINE bool Singleheart_Has_Leading_Blank(SingleHeart single) {
 INLINE Heart Heart_Of_Singleheart(SingleHeart single) {
     assert(single != NOT_SINGLEHEART_0);
     Heart heart = i_cast(Heart, i_cast(uint_fast16_t, single) >> 8);
-    assert(heart != TYPE_0_constexpr and heart != HEART_BLANK);
+    assert(heart != HEART_0_constexpr and heart != HEART_BLANK);
     return heart;
 }

@@ -375,7 +375,7 @@ DECLARE_NATIVE(ANTIFORM_Q)
 
     Option(Type) type = Datatype_Type(datatype);
 
-    if (i_cast(TypeByte, type) > MAX_TYPEBYTE_ELEMENT)
+    if ((opt type) > MAX_TYPE_ELEMENT)
         return LOGIC_OUT(true);
 
     return LOGIC_OUT(false);

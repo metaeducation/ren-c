@@ -97,7 +97,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     // still can speed things up to go in order.
     //
     switch (opt heart) {
-      case TYPE_0_constexpr:
+      case HEART_0_constexpr:
         if (Is_Cell_Erased(v)) {  // legal if Mark_Maybe_Erased() was called
             NOOP;
         }
@@ -109,17 +109,17 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         }
         break;
 
-      case TYPE_BLANK:
+      case HEART_BLANK:
         break;
 
-      case TYPE_INTEGER:
-      case TYPE_DECIMAL:
-      case TYPE_PERCENT:
+      case HEART_INTEGER:
+      case HEART_DECIMAL:
+      case HEART_PERCENT:
         break;
 
-      case TYPE_EMAIL:
-      case TYPE_URL:
-      case TYPE_RUNE: {
+      case HEART_EMAIL:
+      case HEART_URL:
+      case HEART_RUNE: {
         if (Stringlike_Has_Stub(v)) {
             const Flex* f = Cell_Strand(v);
             assert(Is_Flex_Frozen(f));
@@ -131,23 +131,23 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         }
         break; }
 
-      case TYPE_PAIR: {
+      case HEART_PAIR: {
         Pairing* pairing = cast(Pairing*, PAIRLIKE_PAYLOAD_1_PAIRING_BASE(v));
         assert(Is_Base_Marked(pairing));
         break; }
 
-      case TYPE_TIME:
-      case TYPE_DATE:
+      case HEART_TIME:
+      case HEART_DATE:
         break;
 
-      case TYPE_PARAMETER: {
+      case HEART_PARAMETER: {
         if (Parameter_Spec(v))
             assert(Is_Base_Marked(unwrap Parameter_Spec(v)));
         if (Parameter_Strand(v))
             assert(Is_Base_Marked(unwrap Parameter_Strand(v)));
         break; }
 
-      case TYPE_BITSET: {
+      case HEART_BITSET: {
         assert(Cell_Payload_1_Needs_Mark(v));
         if (Not_Base_Accessible_Canon(CELL_BITSET_BINARY(v)))
             break;
@@ -156,14 +156,14 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Base_Marked(f));
         break; }
 
-      case TYPE_MAP: {
+      case HEART_MAP: {
         assert(Cell_Payload_1_Needs_Mark(v));
         const Map* map = VAL_MAP(v);
         assert(Is_Base_Marked(map));
         assert(Stub_Holds_Cells(MAP_PAIRLIST(map)));
         break; }
 
-      case TYPE_HANDLE: { // See %sys-handle.h
+      case HEART_HANDLE: { // See %sys-handle.h
         if (not Cell_Payload_1_Needs_Mark(v)) {
             // simple handle, no GC interaction
         }
@@ -193,10 +193,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         }
         break; }
 
-      case TYPE_OPAQUE:  // nothing to check
+      case HEART_OPAQUE:  // nothing to check
         break;
 
-      case TYPE_BLOB: {
+      case HEART_BLOB: {
         assert(Cell_Payload_1_Needs_Mark(v));
         if (Not_Base_Accessible_Canon(SERIESLIKE_PAYLOAD_1_BASE(v)))
             break;
@@ -207,9 +207,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Base_Marked(b));
         break; }
 
-      case TYPE_TEXT:
-      case TYPE_FILE:
-      case TYPE_TAG: {
+      case HEART_TEXT:
+      case HEART_FILE:
+      case HEART_TAG: {
         if (Not_Base_Accessible_Canon(SERIESLIKE_PAYLOAD_1_BASE(v)))
             break;
 
@@ -235,7 +235,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
     //=//// BEGIN BINDABLE TYPES ////////////////////////////////////////=//
 
-      case TYPE_FRAME: {
+      case HEART_FRAME: {
         Base* base = CELL_FRAME_PAYLOAD_1_PHASE(v);
         if (not Is_Base_Readable(base))  // e.g. EVAL-FREE freed it
             break;
@@ -256,9 +256,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       mark_object:
-      case TYPE_OBJECT:
-      case TYPE_ERROR:
-      case TYPE_PORT: {
+      case HEART_OBJECT:
+      case HEART_ERROR:
+      case HEART_PORT: {
         Base* base = CELL_CONTEXT_VARLIST(v);
         if (Not_Base_Accessible_Canon(base))
             break;
@@ -306,21 +306,21 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         break; }
 
-      case TYPE_LET:  // add checks
+      case HEART_LET:  // add checks
         break;
 
-      case TYPE_MODULE:  // add checks
+      case HEART_MODULE:  // add checks
         break;
 
-      case TYPE_VARARGS: {
+      case HEART_VARARGS: {
         Phase* phase = Extract_Cell_Varargs_Phase(v);
         if (phase)  // null if came from MAKE VARARGS!
             assert(Is_Base_Marked(phase));
         break; }
 
-      case TYPE_BLOCK:
-      case TYPE_FENCE:
-      case TYPE_GROUP: {
+      case HEART_BLOCK:
+      case HEART_FENCE:
+      case HEART_GROUP: {
         if (Not_Base_Accessible_Canon(SERIESLIKE_PAYLOAD_1_BASE(v)))
             break;
 
@@ -328,7 +328,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         Assert_Flex_Term_If_Needed(a);
         assert(Is_Base_Marked(a));
 
-        if (TYPE_BYTE(v) == TYPE_DATATYPE) {
+        if (Type_Of_Raw(v) == TYPE_DATATYPE) {
             const Stable* value = cast(Stable*, v);
             assert(
                 (opt Datatype_Type(value))
@@ -337,9 +337,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         }
         break; }
 
-      case TYPE_TUPLE:
-      case TYPE_CHAIN:
-      case TYPE_PATH:
+      case HEART_TUPLE:
+      case HEART_CHAIN:
+      case HEART_PATH:
         goto any_sequence;
 
       any_sequence: {
@@ -350,7 +350,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Is_Base_Marked(payload1));
         break; }
 
-      case TYPE_WORD: {
+      case HEART_WORD: {
         assert(Cell_Payload_1_Needs_Mark(v));
 
         const Symbol *sym = Word_Symbol(v);

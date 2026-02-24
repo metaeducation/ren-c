@@ -882,7 +882,7 @@ Bounce Action_Executor(Level* L)
             panic (Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
         }
 
-        assert(TYPE_BYTE(ARG) != BEDROCK_255);
+        assert(Type_Of_Raw(ARG) != BEDROCK_255);
         Value* arg = As_Value(ARG);
 
         if (
@@ -1201,7 +1201,9 @@ Result(None) Push_Action(
     L->varlist = u_cast(ParamList*, s);
     L->rootvar = Flex_Head_Dynamic(Element, s);
 
-    possibly(TYPE_BYTE(frame) != TYPE_FRAME);  // ACTION!, quasi, etc.
+    possibly(  // ACTION!, quasi, etc.
+        Type_Of_Possibly_Unstable(frame) != TYPE_FRAME
+    );
 
     FORCE_TRACK_0(L->rootvar)->header.bits
         = (frame->header.bits & (~ FLAG_LIFT(LIFT_255)))

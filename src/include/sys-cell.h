@@ -723,7 +723,7 @@ INLINE Heart Heart_Of_Unsigiled_Isotopic(const Cell* c) {
 }
 
 INLINE Option(Heart) Heart_Of_Fundamental(const Cell* c) {
-    assert(TYPE_BYTE_RAW(c) <= MAX_LIFT_NOQUOTE_NOQUASI);
+    assert(Type_Of_Raw(c) <= MAX_TYPE_NOQUOTE_NOQUASI);
     return Heart_Of(c);
 }
 
@@ -734,7 +734,7 @@ INLINE Heart Heart_Of_Builtin(const Cell* c) {
 }
 
 INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
-    assert(TYPE_BYTE_RAW(c) <= MAX_LIFT_NOQUOTE_NOQUASI);
+    assert(Type_Of_Raw(c) <= MAX_TYPE_NOQUOTE_NOQUASI);
     Option(Heart) heart = Heart_Of(c);
     assert(heart);
     return opt heart;  // faster than unwrap, we already checked for 0
@@ -774,27 +774,27 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
             return TYPE_BYTE_RAW(cell);
         }
 
-        void operator=(TypeByte right) {
+        void operator=(TypeEnum right) {
             Assert_Cell_Unshielded_If_Tracking(cell);
 
             if (right == TYPE_0_constexpr) {  // extension type with no Sigil
                 assert(KIND_BYTE_RAW(cell) == 0);
             }
-            else if (right < MIN_HEARTBYTE) {  // Sigil'd (nonquoted/nonquasi)
+            else if (right < MIN_TYPE_HEART) {  // Sigil'd (nonquoted/nonquasi)
                 assert( // kind byte should encode the Sigil
-                    (KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT) == right
+                    (KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT) == i_cast(TypeByte, right)
                 );
             }
-            else if (right <= MAX_HEARTBYTE) {  // ordinary type with no Sigil
+            else if (right <= MAX_TYPE_HEART) {  // ordinary type with no Sigil
                 assert(KIND_BYTE_RAW(cell) == i_cast(TypeByte, right));
             }
-            else if (right == i_cast(TypeByte, TYPE_QUASIFORM)) {
+            else if (right == TYPE_QUASIFORM) {
                 assert(Any_Sequencable_Type(Unchecked_Heart_Of(cell)));  // [2]
             }
-            else if (right <= MAX_TYPEBYTE_ELEMENT) {
+            else if (right <= MAX_TYPE_ELEMENT) {
                 // QUOTED! types
             }
-            else if (right <= MAX_LIFT_ANTIFORM) {
+            else if (right <= MAX_TYPE_ANTIFORM) {
                 assert(Any_Isotopic_Type(Unchecked_Heart_Of(cell)));
             }
             else if (right == BEDROCK_255) {
@@ -806,11 +806,11 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 
             /* add write checks you want here */
 
-            TYPE_BYTE_RAW(cell) = right;
+            TYPE_BYTE_RAW(cell) = i_cast(TypeByte, right);
         }
 
         void operator=(const TypeHolder& right)  // must write explicitly
-          { *this = i_cast(TypeByte, right); }
+          { *this = i_cast(TypeEnum, i_cast(TypeByte, right)); }
 
         void operator-=(int shift)  // must write explicitly
           { TYPE_BYTE_RAW(cell) -= shift; }
@@ -845,11 +845,11 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 //
 
 INLINE Option(Type) Type_Of_Core(const Cell* v) {
-    if (TYPE_BYTE_RAW(v) < MIN_HEARTBYTE) {  // raw [1]
-        possibly(KIND_BYTE_RAW(v) == 0);  // extension type w/no Sigil
+    if (Type_Of_Raw(v) < MIN_TYPE_HEART) {  // raw [1]
+        possibly(Type_Of_Raw(v) == TYPE_0_constexpr);  // extended, no Sigil
         assert((KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT) == TYPE_BYTE_RAW(v));
     }
-    else if (TYPE_BYTE_RAW(v) <= MAX_LIFT_NOQUOTE_NOQUASI) {
+    else if (Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI) {
         assert(KIND_BYTE_RAW(v) == TYPE_BYTE_RAW(v));  // no Sigil, equal
     }
     else if (TYPE_BYTE_RAW(v) == QUASIFORM_64) {
@@ -858,7 +858,7 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
     else if (TYPE_BYTE_RAW(v) <= 192) {
         // we do not canonize the quoted range into "TYPE_QUOTED"
     }
-    else switch (TYPE_BYTE_RAW(v)) {  // still working on these...
+    else switch (Type_Of_Raw(v)) {  // still working on these...
       case TYPE_PACK:
       case TYPE_FAILURE:
       case TYPE_ACTION:
@@ -867,11 +867,12 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
       case TYPE_SPLICE:
       case TYPE_DATATYPE:
       case TYPE_LOGIC:
-        assert(KIND_BYTE_RAW(v) <= MAX_HEARTBYTE);
+        assert(KIND_BYTE_RAW(v) <= i_cast(TypeByte, MAX_TYPE_HEART));
         break;
 
-    #if RUNTIME_CHECKS
       default:
+        assert(false);
+    #if RUNTIME_CHECKS
         crash ("Unexpected lift byte value BEDROCK_255 for Value* (not Slot*)");
     #endif
     }
@@ -892,6 +893,9 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
 
     #define Type_Of_Possibly_Unstable(v) \
         Type_Of_Core(Readable_Cell(Possibly_Unstable(v)))
+
+    #define Type_Of_Possibly_Unstable_Unchecked(v) \
+        Type_Of_Core(Possibly_Unstable(v))
 #endif
 
 // This used to be used to prevent equality checks on quoted types, but all
@@ -907,8 +911,8 @@ INLINE Option(Type) Type_Of_Core(const Cell* v) {
     template<TypeEnum E>
     struct KnownNotQuotedHelper<TypeEnum, E> {
         static_assert(
-            i_cast(int, E) <= MAX_LIFT_NOQUOTE_QUASI_OK ||
-            i_cast(int, E) > MAX_TYPEBYTE_FUNDAMENTAL,
+            E <= MAX_TYPE_NOQUOTE_QUASI_OK ||
+            E > MAX_TYPE_FUNDAMENTAL,
             "Only for non-quoted type enums"
         );
         constexpr static TypeEnum value = E;
@@ -942,11 +946,11 @@ INLINE uintptr_t FLAG_HEART_AND_LIFT(Heart heart)
 
 INLINE void Reset_Cell_Header(Cell* c, uintptr_t flags)
 {
-    if (
-        THIRD_BYTE(&flags) /* lift */ <= MAX_LIFT_NOQUOTE_NOQUASI
-        and THIRD_BYTE(&flags) > MIN_HEARTBYTE
+    if (  // THIRD_BYTE is TYPE_BYTE, SECOND_BYTE is KIND_BYTE
+        THIRD_BYTE(&flags) <= i_cast(TypeByte, MAX_TYPE_NOQUOTE_NOQUASI)
+        and THIRD_BYTE(&flags) > i_cast(TypeByte, MIN_TYPE_HEART)
     ){
-        assert(SECOND_BYTE(&flags) /* kind */ == THIRD_BYTE(&flags));
+        assert(SECOND_BYTE(&flags) == THIRD_BYTE(&flags));
     }
 
     Freshen_Cell_Header(c);  // if CELL_MASK_ERASED_0, node+cell flags not set

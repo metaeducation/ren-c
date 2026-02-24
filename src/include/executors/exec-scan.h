@@ -201,11 +201,11 @@ typedef enum {
 INLINE Byte Begin_Delimit_For_List(Heart heart)
 {
     switch (heart) {
-      case TYPE_GROUP:
+      case HEART_GROUP:
         return '(';
-      case TYPE_BLOCK:
+      case HEART_BLOCK:
         return '[';
-      case TYPE_FENCE:
+      case HEART_FENCE:
         return '{';
       default:
         assert(false);
@@ -216,11 +216,11 @@ INLINE Byte Begin_Delimit_For_List(Heart heart)
 INLINE Byte End_Delimit_For_List(Heart heart)
 {
     switch (heart) {
-      case TYPE_GROUP:
+      case HEART_GROUP:
         return ')';
-      case TYPE_BLOCK:
+      case HEART_BLOCK:
         return ']';
-      case TYPE_FENCE:
+      case HEART_FENCE:
         return '}';
       default:
         assert(false);

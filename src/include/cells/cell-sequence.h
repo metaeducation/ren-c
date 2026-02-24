@@ -215,7 +215,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
         flag == CELL_MASK_ERASED_0  // 0 means no leading space, item is "head"
     ));
 
-    if (TYPE_BYTE(v) > MAX_LIFT_NOQUOTE_NOQUASI)
+    if (Type_Of_Raw(v) > MAX_TYPE_NOQUOTE_NOQUASI)
         goto cant_optimize_in_situ;  // quote bits mean on sequence itself
 
     if (Is_Word(v)) {  // in-situ optimization, see [B]
@@ -901,26 +901,26 @@ INLINE bool Is_Set_Word(const Stable* v)
 //
 INLINE Option(const Symbol*) Try_Get_Settable_Word_Symbol(
     Option(Sink(bool)) bound,
-    const Element* e
+    const Element* v
 ){
-    if (TYPE_BYTE(e) > MAX_LIFT_NOQUOTE_NOQUASI)
+    if (Type_Of_Raw(v) > MAX_TYPE_NOQUOTE_NOQUASI)
         return nullptr;
-    if (Is_Set_Word_Cell(e)) {
+    if (Is_Set_Word_Cell(v)) {
         if (bound)
-            *(unwrap bound) = IS_WORD_BOUND(e);
-        return Word_Symbol(e);
+            *(unwrap bound) = IS_WORD_BOUND(v);
+        return Word_Symbol(v);
     }
-    if (Heart_Of(e) != HEART_PATH)
+    if (Heart_Of(v) != HEART_PATH)
         return nullptr;
-    if (LEADING_BLANK_AND(CHAIN) != Try_Get_Sequence_Singleheart(e))
-        return nullptr;  // e is not /?:?:? style path
+    if (LEADING_BLANK_AND(CHAIN) != Try_Get_Sequence_Singleheart(v))
+        return nullptr;  // v is not /?:?:? style path
 
     DECLARE_ELEMENT (temp);  // !!! should be able to optimize and not need this
-    Copy_Sequence_At_May_Bind(temp, e, 1, Sequence_Binding(e));
+    Copy_Sequence_At_May_Bind(temp, v, 1, Sequence_Binding(v));
     assert(Is_Chain(temp));
 
     if (TRAILING_BLANK_AND(WORD) != Try_Get_Sequence_Singleheart(temp))
-        return nullptr;  // e is not /foo: style path
+        return nullptr;  // v is not /foo: style path
 
     if (bound)
         *(unwrap bound) = IS_WORD_BOUND(temp);

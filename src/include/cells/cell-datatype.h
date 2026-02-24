@@ -186,17 +186,16 @@ INLINE Option(Type) Datatype_Type(const Stable* v) {
 #endif
 
 INLINE Option(Heart) Datatype_Heart(const Stable* v) {
-    Byte type_byte_or_0 = u_cast(Byte, opt Datatype_Type(v));
-    assert(type_byte_or_0 <= MAX_HEARTBYTE);  // no QUOTE/QUASI/ANTI
-    return u_cast(Option(Heart), type_byte_or_0);
+    TypeEnum opt_type = opt Datatype_Type(v);
+    assert(opt_type <= MAX_TYPE_HEART);  // no QUOTE/QUASI/ANTI
+    return i_cast(Option(Heart), opt_type);
 }
 
 INLINE Heart Datatype_Builtin_Heart(const Stable* v) {
-    Option(Type) type = Datatype_Type(v);
-    assert(type);
-    Byte type_byte = u_cast(Byte, opt type);
-    assert(type_byte <= MAX_HEARTBYTE);  // not QUOTED/QUASI/ANTI
-    return u_cast(Heart, type_byte);
+    TypeEnum opt_type = opt Datatype_Type(v);
+    assert(opt_type != TYPE_0_constexpr);  // enum class not bool coercible
+    assert((opt_type) <= MAX_TYPE_HEART);  // not QUOTED/QUASI/ANTI
+    return i_cast(Heart, opt_type);
 }
 
 INLINE const ExtraHeart* Datatype_Extra_Heart(const Stable* v) {
@@ -256,15 +255,15 @@ INLINE bool Builtin_Typeset_Check(
     TypesetFlags typeset = g_typesets[typeset_byte];
 
     if (typeset & TYPESET_FLAG_0_RANGE) {  // trivial ranges ok (one datatype)
-        Byte start = THIRD_BYTE(&typeset);
-        Byte end = FOURTH_BYTE(&typeset);
+        TypeEnum start = i_cast(TypeEnum, THIRD_BYTE(&typeset));
+        TypeEnum end = i_cast(TypeEnum, FOURTH_BYTE(&typeset));
         return (
-            start <= u_cast(Byte, opt type)
-            and u_cast(Byte, opt type) <= end
+            start <= (opt type)
+            and (opt type) <= end
         );
     }
 
-    if (u_cast(Byte, opt type) > MAX_TYPEBYTE_ELEMENT)
+    if ((opt type) > MAX_TYPE_ELEMENT)
         return false;  // antiform, no sparse_memberships (only ranged)
 
     return did (g_sparse_memberships[u_cast(Byte, opt type)] & typeset);

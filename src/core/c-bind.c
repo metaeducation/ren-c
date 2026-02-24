@@ -764,12 +764,12 @@ DECLARE_NATIVE(LET)
         }
 
         switch (opt Heart_Of(temp)) {  // permit quasi
-          case TYPE_RUNE:  // is multi-return opt for dialect, passthru
+          case HEART_RUNE:  // is multi-return opt for dialect, passthru
             Copy_Cell_May_Bind(PUSH(), temp, temp_binding);
             break;
 
           wordlike:
-          case TYPE_WORD: {
+          case HEART_WORD: {
             Copy_Cell_May_Bind(PUSH(), temp, temp_binding);  // !!! no derel
             const Symbol* symbol = Word_Symbol(temp);
             bindings = Make_Let_Variable(symbol, bindings);
@@ -1324,8 +1324,8 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             continue;
 
         if (
-            TYPE_BYTE(check) <= MAX_LIFT_NOQUOTE_QUASI_OK
-            or TYPE_BYTE(check) == ONEQUOTE_NONQUASI_65
+            Type_Of_Raw(check) <= MAX_TYPE_NOQUOTE_QUASI_OK
+            or Type_Of(check) == TYPE_QUOTED_1_TIME_NONQUASI
         ){
             KindByte kind = KIND_BYTE(check);
             if (
@@ -1425,10 +1425,10 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
                 assert(kind == Kind_From_Sigil_And_Heart(SIGIL_0, HEART_WORD));
         }
 
-        if (TYPE_BYTE(item) == ONEQUOTE_NONQUASI_65)
+        if (Type_Of(item) == TYPE_QUOTED_1_TIME_NONQUASI)
             Set_Cell_Flag(slot, LOOP_SLOT_FORMAT_UNBIND);
         else
-            assert(TYPE_BYTE(item) <= MAX_LIFT_NOQUOTE_NOQUASI);
+            assert(Type_Of_Raw(item) <= MAX_TYPE_NOQUOTE_NOQUASI);
     }
 
     // As currently written, the loop constructs which use these contexts
@@ -1477,7 +1477,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
 //
 void Read_Slot_Dual(Sink(Value) out, const Slot* slot)
 {
-    if (TYPE_BYTE(slot) == BEDROCK_255)
+    if (Type_Of_Raw(slot) == BEDROCK_255)
         Copy_Plain_Cell(out, slot);
     else
         Copy_Lifted_Cell(out, As_Value(slot));
@@ -1499,7 +1499,7 @@ void Read_Slot_Dual(Sink(Value) out, const Slot* slot)
 //
 Result(None) Read_Slot_Meta(Sink(Value) out, const Slot* slot)
 {
-    if (TYPE_BYTE(slot) != BEDROCK_255) {
+    if (Type_Of_Raw(slot) != BEDROCK_255) {
         const Value* var = Slot_Hack(slot);
         Copy_Cell(out, var);
         return none;
@@ -1570,7 +1570,7 @@ Result(None) Write_Loop_Slot_May_Unbind_Or_Decay(Slot* slot, Value* v)
     if (Get_Cell_Flag(slot, LOOP_SLOT_FORMAT_UNBIND))
         Unbind_Cell_If_Bindable_Core(v);
 
-    if (TYPE_BYTE(slot) != BEDROCK_255) {  // ordinary write
+    if (Type_Of_Raw(slot) != BEDROCK_255) {  // ordinary write
         Copy_Cell(u_cast(Value*, slot), v);
         return none;
     }

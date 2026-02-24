@@ -85,8 +85,8 @@ STATIC_ASSERT(SIGIL_TIE == ii_cast(Sigil, TYPE_TIED));
         TYPE_TIED, SIGIL_TIE, HEART_##heartname)
 
 INLINE Option(Sigil) Sigil_Of(const Element* v) {
-    assert(TYPE_BYTE_RAW(v) <= MAX_LIFT_NOQUOTE_NOQUASI);
-    if (TYPE_BYTE_RAW(v) < MIN_HEARTBYTE) {
+    assert(Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI);
+    if (Type_Of_Raw(v) < MIN_TYPE_HEART) {
         assert((KIND_BYTE_RAW(v) >> KIND_SIGIL_SHIFT) == TYPE_BYTE_RAW(v));
         return i_cast(Sigil, TYPE_BYTE_RAW(v));
     }
@@ -95,10 +95,10 @@ INLINE Option(Sigil) Sigil_Of(const Element* v) {
 }
 
 INLINE Option(Sigil) Cell_Underlying_Sigil(const Cell* cell) {
-    possibly(TYPE_BYTE_RAW(cell) >= MIN_LIFT_ANTIFORM);  // SIGIL_0 if antiform
-    possibly(TYPE_BYTE_RAW(cell) == BEDROCK_255);  // !!! allow, or take Value?
+    possibly(Type_Of_Raw(cell) >= MIN_TYPE_ANTIFORM);  // SIGIL_0 if antiform
+    possibly(Type_Of_Raw(cell) == BEDROCK_255);  // !!! allow, or take Value?
     Sigil sigil = i_cast(Sigil, KIND_BYTE_RAW(cell) >> KIND_SIGIL_SHIFT);
-    if (sigil and TYPE_BYTE(cell) <= MAX_LIFT_NOQUOTE_NOQUASI)  // raw [2]
+    if (sigil and Type_Of_Raw(cell) <= MAX_TYPE_NOQUOTE_NOQUASI)  // raw [2]
         assert(sigil == i_cast(Sigil, TYPE_BYTE_RAW(cell)));
     return sigil;
 }
@@ -140,7 +140,7 @@ INLINE bool Any_Sigiled_Type(Option(Type) t)
     Any_Sigilable_Type(Type_Of(cell))
 
 INLINE Element* Clear_Cell_Sigil(Element* v) {
-    assert(TYPE_BYTE(v) <= MAX_LIFT_NOQUOTE_NOQUASI);
+    assert(Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI);
 
   #if RUNTIME_CHECKS
     bool had_sigil = logical (v->header.bits & CELL_MASK_SIGIL);
@@ -148,8 +148,8 @@ INLINE Element* Clear_Cell_Sigil(Element* v) {
 
     v->header.bits &= (~ CELL_MASK_SIGIL);
 
-    if (TYPE_BYTE_RAW(v) < MIN_HEARTBYTE) {
-        assert(had_sigil or TYPE_BYTE_RAW(v) == 0);
+    if (Type_Of_Raw(v) < MIN_TYPE_HEART) {
+        assert(had_sigil or Type_Of_Raw(v) == TYPE_0_constexpr);
         TYPE_BYTE(v) = i_cast(TypeEnum, KIND_BYTE(v));  // after sigil removed
     }
 
@@ -164,10 +164,10 @@ INLINE Element* Clear_Cell_Sigil(Element* v) {
 INLINE Element* Add_Cell_Sigil(Element* v, Sigil sigil) {
     assert(not (v->header.bits & CELL_MASK_SIGIL));  // no quotes/quasi [2]
     assert(
-        TYPE_BYTE_RAW(v) == 0
+        Type_Of_Raw(v) == TYPE_0_constexpr
         or (
-            TYPE_BYTE_RAW(v) >= MIN_HEARTBYTE
-            and TYPE_BYTE_RAW(v) <= MAX_LIFT_NOQUOTE_NOQUASI
+            Type_Of_Raw(v) >= MIN_TYPE_HEART
+            and Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI
         )
     );
     assert(Any_Sigilable(v));
@@ -218,12 +218,12 @@ INLINE void Tweak_Cell_Type(Element* v, Heart heart) {
 
 INLINE void Tweak_Cell_Quoted_Type(Element* v, Heart heart) {
     KIND_BYTE(v) = heart;
-    TYPE_BYTE(v) = ONEQUOTE_NONQUASI_65;
+    TYPE_BYTE(v) = TYPE_QUOTED_1_TIME_NONQUASI;
 }
 
 INLINE void Tweak_Cell_Sigiled_Type(Cell* cell, Sigil sigil, Heart heart) {
     assert(sigil);
-    definitely(i_cast(Byte, sigil) < MIN_HEARTBYTE);
+    definitely(i_cast(TypeEnum, sigil) < MIN_TYPE_HEART);
     KIND_BYTE(cell) = Kind_From_Sigil_And_Heart(sigil, heart);
     TYPE_BYTE(cell) = Lift_From_Sigil(sigil);
 }

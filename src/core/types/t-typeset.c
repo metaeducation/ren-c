@@ -64,7 +64,7 @@ void Startup_Type_Predicates(void)
 
         if (
             typeset_byte
-            == i_cast(TypeByte, PSEUDOTYPE_QUOTED_1_TIME_NONQUASI)
+            == i_cast(TypeByte, TYPE_QUOTED_1_TIME_NONQUASI)
         ){
             continue;  // lib value is QUOTED?, it's a native
         }
@@ -308,7 +308,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
   //    preferable to enforce words for some things?  That's not viable for
   //    type predicate actions, like ANY-ELEMENT?...)
 
-    if (TYPE_BYTE(item) > MAX_LIFT_NOQUOTE_NOQUASI) {  // [~word!~ ''word!]...
+    if (Type_Of_Raw(item) > MAX_TYPE_NOQUOTE_NOQUASI) {  // ~word!~ ''word! ...
         goto cant_optimize;  // no optimization strategy yet
     }
 
@@ -409,7 +409,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
 
         if (
             not is_returner
-            and i_cast(TypeByte, datatype_type) > MAX_LIFT_STABLE
+            and (opt datatype_type) > MAX_TYPE_STABLE
             and (pclass != PARAMCLASS_META and pclass != PARAMCLASS_SOFT)
         ){
             panic ("Unstable type unusable unless ^META or soft param");
@@ -821,15 +821,15 @@ DECLARE_NATIVE(DECORATION_OF)
 
     Element* out;
     switch (unwrap Heart_Of(element)) {
-      case TYPE_TUPLE:
+      case HEART_TUPLE:
         out = Init_Word(OUT, CANON(DOT_1));
         break;
 
-      case TYPE_CHAIN:
+      case HEART_CHAIN:
         out = Init_Word(OUT, CANON(COLON_1));
         break;
 
-      case TYPE_PATH:
+      case HEART_PATH:
         out = Init_Word(OUT, CANON(SLASH_1));
         break;
 

@@ -57,7 +57,7 @@ void Startup_Datatypes(void)
         Type type = Type_From_Symbol_Id(id);
 
         if (id == SYM_QUOTED_X) {
-            assert(type == PSEUDOTYPE_QUOTED_1_TIME_NONQUASI);
+            assert(type == TYPE_QUOTED_1_TIME_NONQUASI);
             // make patch for now to be the "quoted!" datatype`
         }
         else if (Is_Quoted_Type(type))

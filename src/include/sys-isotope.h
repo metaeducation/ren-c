@@ -60,7 +60,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         (elem->header.bits & (FLAG_LIFT(LIFT_255) | CELL_MASK_SIGIL))
             != FLAG_LIFT(TYPE_QUASIFORM)
     ){
-        if (TYPE_BYTE(elem) != TYPE_QUASIFORM)
+        if (Type_Of(elem) != TYPE_QUASIFORM)
             return fail (
                 Error_User("Can only coerce quasiforms to antiforms")
             );
@@ -91,17 +91,17 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         if (Frame_Lens(elem))
             Tweak_Frame_Lens_Or_Label(elem, ANONYMOUS);  // show only inputs
         Force_Phase_Final(Frame_Phase(elem));
-        TYPE_BYTE_RAW(v) = TYPE_ACTION;  // [1]
+        TYPE_BYTE(v) = TYPE_ACTION;  // [1]
         break; }
 
       case HEART_BLOCK_SIGNIFYING_SPLICE: {
         Tweak_Cell_Binding(elem, UNBOUND);  // [2]
-        TYPE_BYTE_RAW(v) = TYPE_SPLICE;  // [1]
+        TYPE_BYTE(v) = TYPE_SPLICE;  // [1]
         break; }
 
       case HEART_GROUP_SIGNIFYING_PACK: {
         Tweak_Cell_Binding(elem, UNBOUND);  // [2]
-        TYPE_BYTE_RAW(v) = TYPE_PACK;  // [1]
+        TYPE_BYTE(v) = TYPE_PACK;  // [1]
         break; }
 
       case HEART_FENCE_SIGNIFYING_DATATYPE: {
@@ -119,7 +119,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
         }
         v->payload = Stub_Cell(unwrap patch)->payload;
         v->extra = Stub_Cell(unwrap patch)->extra;
-        TYPE_BYTE_RAW(v) = TYPE_DATATYPE;  // [1]
+        TYPE_BYTE(v) = TYPE_DATATYPE;  // [1]
         break; }
 
       case HEART_WORD_SIGNIFYING_LOGIC: {
@@ -138,20 +138,20 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
             return fail (Error_Illegal_Anti_Word_Raw(elem));  // limited [3]
         }
         Unbind_Any_Word(elem);  // antiforms can't be bound [2]
-        TYPE_BYTE_RAW(v) = TYPE_LOGIC;  // raw [1]
+        TYPE_BYTE(v) = TYPE_LOGIC;  // raw [1]
         break; }
 
       case HEART_TAG_SIGNIFYING_TRASH:
         Freeze_Flex(Cell_Strand(v));  // !!! intern if WORD-like! ?
-        TYPE_BYTE_RAW(v) = TYPE_TRASH;  // raw [1]
+        TYPE_BYTE(v) = TYPE_TRASH;  // raw [1]
         break;
 
       case HEART_BLANK_SIGNIFYING_VOID:
-        TYPE_BYTE_RAW(v) = TYPE_VOID;  // raw [1]
+        TYPE_BYTE(v) = TYPE_VOID;  // raw [1]
         break;
 
       case HEART_ERROR_SIGNIFYING_FAILURE:
-        TYPE_BYTE_RAW(v) = TYPE_FAILURE;  // raw [1]
+        TYPE_BYTE(v) = TYPE_FAILURE;  // raw [1]
         break;
 
       default:

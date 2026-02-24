@@ -118,15 +118,15 @@ uint32_t Hash_Cell(const Cell* cell)
     uint32_t hash;
 
     switch (opt heart) {
-      case TYPE_0_constexpr:  // custom datatype
+      case HEART_0_constexpr:  // custom datatype
         hash = 0;  // improve
         break;
 
-      case TYPE_BLANK:
+      case HEART_BLANK:
         hash = 0;
         break;
 
-      case TYPE_INTEGER:
+      case HEART_INTEGER:
         //
         // R3-Alpha XOR'd with (VAL_INT64(val) >> 32).  But: "XOR with high
         // bits collapses -1 with 0 etc.  (If your key k is |k| < 2^32 high
@@ -135,21 +135,21 @@ uint32_t Hash_Cell(const Cell* cell)
         hash = i_cast(uint32_t, INTEGER_PAYLOAD_I64(cell));
         break;
 
-      case TYPE_DECIMAL:
-      case TYPE_PERCENT:
+      case HEART_DECIMAL:
+      case HEART_PERCENT:
         // depends on INT64 sharing the DEC64 bits
         hash = (INTEGER_PAYLOAD_I64(cell) >> 32) ^ (INTEGER_PAYLOAD_I64(cell));
         break;
 
       hash_pair:
         //
-      case TYPE_PAIR:
+      case HEART_PAIR:
         hash = Hash_Cell(Cell_Pair_First(cell));
         hash ^= Hash_Cell(Cell_Pair_Second(cell));
         break;
 
-      case TYPE_TIME:
-      case TYPE_DATE:
+      case HEART_TIME:
+      case HEART_DATE:
         hash = VAL_NANO(cell) ^ (VAL_NANO(cell) / SEC_SEC);
         if (heart == HEART_DATE) {
             //
@@ -168,31 +168,31 @@ uint32_t Hash_Cell(const Cell* cell)
         }
         break;
 
-      case TYPE_BLOB: {
+      case HEART_BLOB: {
         Size size;
         const Byte* data = Blob_Size_At(&size, cell);
         hash = Hash_Bytes(data, size);
         break; }
 
-      case TYPE_BITSET: {  // current implementation is a binary
+      case HEART_BITSET: {  // current implementation is a binary
         Binary* b = VAL_BITSET(cell);
         hash = Hash_Bytes(Binary_Head(b), Binary_Len(b));
         break; }
 
-      case TYPE_TEXT:
-      case TYPE_FILE:
-      case TYPE_EMAIL:
-      case TYPE_URL:
-      case TYPE_TAG:
-      case TYPE_RUNE: {
+      case HEART_TEXT:
+      case HEART_FILE:
+      case HEART_EMAIL:
+      case HEART_URL:
+      case HEART_TAG:
+      case HEART_RUNE: {
         REBLEN len;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, cell);
         hash = Hash_UTF8_Len_Caseless(utf8, len);
         break; }
 
-      case TYPE_CHAIN:
-      case TYPE_TUPLE:
-      case TYPE_PATH: {
+      case HEART_CHAIN:
+      case HEART_TUPLE:
+      case HEART_PATH: {
         if (not Sequence_Has_Pointer(cell)) {
             hash = Hash_Bytes(
                 cell->payload.at_least_8 + 1,
@@ -220,9 +220,9 @@ uint32_t Hash_Cell(const Cell* cell)
 
       hash_any_list:
         //
-      case TYPE_BLOCK:
-      case TYPE_FENCE:
-      case TYPE_GROUP:
+      case HEART_BLOCK:
+      case HEART_FENCE:
+      case HEART_GROUP:
         //
         //
         // !!! Lame hash just to get it working.  There will be lots of
@@ -240,7 +240,7 @@ uint32_t Hash_Cell(const Cell* cell)
         hash = Array_Len(Cell_Array(cell));
         break;
 
-      case TYPE_PARAMETER:
+      case HEART_PARAMETER:
         //
         // "These types are currently not supported."
         //
@@ -250,7 +250,7 @@ uint32_t Hash_Cell(const Cell* cell)
 
       hash_any_word:
         //
-      case TYPE_WORD: {
+      case HEART_WORD: {
         //
         // Note that the canon symbol may change for a group of word synonyms
         // if that canon is GC'd--it picks another synonym.  Thus the pointer
@@ -263,7 +263,7 @@ uint32_t Hash_Cell(const Cell* cell)
         hash = Hash_Strand(Word_Symbol(cell));
         break; }
 
-      case TYPE_FRAME:
+      case HEART_FRAME:
         //
         // Because function equality is by identity only and they are
         // immutable once created, it is legal to put them in hashes.
@@ -274,9 +274,9 @@ uint32_t Hash_Cell(const Cell* cell)
         break;
 
       hash_object:
-      case TYPE_ERROR:
-      case TYPE_PORT:
-      case TYPE_OBJECT:
+      case HEART_ERROR:
+      case HEART_PORT:
+      case HEART_OBJECT:
         //
         // !!! ANY-CONTEXT has a uniquely identifying context pointer for that
         // context.  However, this does not help with "natural =" comparison
@@ -292,11 +292,11 @@ uint32_t Hash_Cell(const Cell* cell)
         hash = i_cast(uint32_t, p_cast(uintptr_t, Cell_Varlist(cell)) >> 4);
         break;
 
-      case TYPE_MODULE:
+      case HEART_MODULE:
         hash = i_cast(uint32_t, p_cast(uintptr_t, Cell_Module_Sea(cell)) >> 4);
         break;
 
-      case TYPE_MAP:
+      case HEART_MAP:
         //
         // Looking up a map in a map is fairly analogous to looking up an
         // object in a map.  If one is permitted, so should the other be.
@@ -306,13 +306,13 @@ uint32_t Hash_Cell(const Cell* cell)
         hash = i_cast(uint32_t, p_cast(uintptr_t, VAL_MAP(cell)) >> 4);
         break;
 
-      case TYPE_HANDLE:
+      case HEART_HANDLE:
         //
         // !!! Review hashing behavior or needs of these types if necessary.
         //
         panic (Error_Invalid_Type(TYPE_HANDLE));
 
-      case TYPE_OPAQUE:
+      case HEART_OPAQUE:
         panic (Error_Invalid_Type(TYPE_OPAQUE));
 
       default:

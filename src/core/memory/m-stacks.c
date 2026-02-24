@@ -199,8 +199,8 @@ Array* Pop_Stack_Values_Core(Flags flags, StackIndex base) {
     Count count = 0;
     for (; count < len; ++count, ++src, ++dest) {
         possibly(src->header.bits & CELL_MASK_PERSIST);  // all bits copied [1]
-        if (TYPE_BYTE(src) >= MIN_LIFT_ANTIFORM) {  // ok in *some* arrays
-            possibly(TYPE_BYTE(src) == BEDROCK_255);
+        if (Type_Of_Raw(src) >= MIN_TYPE_ANTIFORM) {  // ok in *some* arrays
+            possibly(Type_Of_Raw(src) == BEDROCK_255);
             if (flavor < MIN_FLAVOR_ANTIFORMS_OK)
                 crash ("Unexpected antiform found on data stack");
         }

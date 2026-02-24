@@ -1511,7 +1511,7 @@ RebolValue* API_rebEnrescue(
     if (Cell_Has_Lift_Heart_No_Sigil(v, TYPE_QUASIFORM, HEART_ERROR))  // lift
         TYPE_BYTE(v) = TYPE_ERROR;  // plain error
     else
-        assert(TYPE_BYTE(v) > MAX_LIFT_NOQUOTE_NOQUASI);
+        assert(Type_Of_Raw(v) > MAX_TYPE_NOQUOTE_NOQUASI);
 
     Set_Base_Root_Bit(v);
     return v;  // caller must rebRelease()
