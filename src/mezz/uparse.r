@@ -2216,8 +2216,9 @@ default-combinators: make map! [
         input [any-series?]
         {pending}: [none? quoted! block!]
         value [word! tuple!]
+        :negated
         {
-            ^r comb
+            ^r comb f
             rule-start rule-end  ; !!! currently not handled [1]
         }
     ][
@@ -2254,7 +2255,10 @@ default-combinators: make map! [
             panic ["Unhandled type in WORD! combinator:" to word! type of ^r]
         ]
 
-        return [{^} input pending]: run comb state input ^r  ; no args [4]
+        f: make frame! comb
+        try f.negated: negated
+
+        return [{^} input pending]: trap run f state input ^r  ; no args [4]
     ]
 
     === NEW-STYLE ANY COMBINATOR ===
