@@ -172,7 +172,7 @@ help-value: proc [
         trash? ^value ['trash!]
         logic? ^value ['logic!]
         splice? ^value ['splice!]
-        action? ^value ['action]
+        action? ^value ['action!]
         pack? ^value ['pack!]
         void? ^value ['void!]
         failure? ^value ['failure!]
@@ -181,11 +181,11 @@ help-value: proc [
             panic "Invalid Antiform Heart Found, Please Report:" @value'
         ]
     ] then (antitype -> [
-        let heart: reify heart of value
+        let heart: reify heart of ^value
         print [
             (opt name) "is" (an antitype) ["(antiform of" _ @(heart) ")"]
         ]
-        if free? value [
+        if free? ^value [
             print "!!! contents no longer available, as it has been FREE'd !!!"
             return
         ]
@@ -193,7 +193,7 @@ help-value: proc [
             help-action ^value
             return
         ]
-        let [molded truncated]: mold:limit atom' 2000  ; quasiform
+        let [molded truncated]: mold:limit lift ^value 2000  ; quasiform
         print unspaced [molded (if truncated ["..."]) _ _ "; anti"]
         return
     ])

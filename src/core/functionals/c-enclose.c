@@ -197,7 +197,7 @@ bool Encloser_Details_Querier(
 
         Details* outer_details = unwrap Phase_Details(Frame_Phase(outer));
         DetailsQuerier* querier = Details_Querier(outer_details);
-        return (*querier)(out, outer_details, SYM_RETURN); }
+        return (*querier)(out, outer_details, SYM_RETURN_OF); }
 
       default:
         break;
