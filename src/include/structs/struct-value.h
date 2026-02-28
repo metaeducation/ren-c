@@ -59,7 +59,7 @@
 // considerations for handling, because they may store bit patterns that
 // indicate a function should be run to fulfill the variable (a "GETTER") or
 // a function should be run to accept a value to store (a "SETTER").
-// These considerations apply when the Slot's TYPE_BYTE() is BEDROCK_255.
+// These considerations apply when the Slot's TYPE_BYTE() >= MIN_TYPE_BEDROCK
 //
 // This means you can't casually use something like Init_Integer() or
 // Copy_Cell() to blindly write bit patterns into a Slot, because it might
@@ -82,13 +82,13 @@
 //=//// "Param" SUBCLASS OF "Slot" ////////////////////////////////////////=//
 //
 // The datatype ParamList holds a list of PARAMETER! values with TYPE_BYTE()
-// of BEDROCK_255 for unspecialized arguments.  Then any Value* (possibly
+// of TYPE_BEDROCK_HOLE for unspecialized arguments.  Then any Value* (possibly
 // unstable) for specialized args and locals.
 //
 // The Cells in the list are subtyped as `Param`.  They could have used
 // an existing subclass like `Slot`, however calling it Param helps indicate
 // a cell uses CELL_FLAG_NOTE for CELL_FLAG_PARAM_NOTE_TYPECHECKED (for
-// example), and are constrained to just one BEDROCK_255 state.
+// example), and are constrained to just TYPE_BEDROCK_HOLE.
 //
 #if DONT_CHECK_CELL_SUBCLASSES
     typedef struct RebolValueStruct Param;
@@ -106,7 +106,7 @@ typedef Param Arg;  // !!! Args should be just Slot; review.
 //
 // In the C++ build, Cell is the base class, and we define RebolValueStruct
 // (the one exposed through the API) as being the cell in the subclass
-// hierarchy that's *right* above Param.  So it can't hold any BEDROCK_255
+// hierarchy that's *right* above Param.  So it can't hold any BEDROCK
 // states, but can hold any unstable antiform.
 //
 #if DONT_CHECK_CELL_SUBCLASSES
@@ -144,9 +144,9 @@ typedef Param Arg;  // !!! Args should be just Slot; review.
 //=//// DUALS /////////////////////////////////////////////////////////////=//
 //
 // Some parts of the system want to be able to represent a value that could
-// be in a BEDROCK_255 state, but push it "in-band" of normal values.  This is
+// be in a BEDROCK state, but push it "in-band" of normal values.  This is
 // done by taking most values and putting them in lifted representation, and
-// then using the unlifted states to represent BEDROCK_255.
+// then using the unlifted states to represent BEDROCK.
 //
 // PACK!, for example, contains "dual values"...they are Element* (because
 // they have to be, to be in a List).  But the representational conception is
@@ -184,7 +184,7 @@ typedef Param Arg;  // !!! Args should be just Slot; review.
 
 //=//// STOP INIT/SINK CONVERSIONS FOR PLAIN SLOT* ////////////////////////=//
 //
-// Because a Slot can contain BEDROCK_255 states with bit patterns that are
+// Because a Slot can contain BEDROCK states with bit patterns that are
 // things like SETTERs or GETTERs, or ALIASes...you can't necessarily assume
 // writing into a Slot can be done by just overwriting its bit pattern.  Thus
 // variable writing has to go through an abstraction layer.

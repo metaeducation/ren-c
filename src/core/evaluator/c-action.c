@@ -882,7 +882,7 @@ Bounce Action_Executor(Level* L)
             panic (Error_No_Arg(Level_Label(L), Key_Symbol(KEY)));
         }
 
-        assert(Type_Of_Raw(ARG) != BEDROCK_255);
+        assert(Not_Bedrock(ARG));
         Value* arg = As_Value(ARG);
 
         if (

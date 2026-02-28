@@ -98,8 +98,8 @@ struct CastHook<const F*, const Param*> {  // both must be const [B]
         const Cell* c = u_cast(const Cell*, p);
         Assert_Cell_Readable(c);
         assert(
-            Type_Of_Raw(c) != BEDROCK_255
-            or Heart_Of(c) == HEART_PARAMETER
+            Not_Bedrock(c)
+            or Type_Of_Raw(c) == TYPE_BEDROCK_HOLE
         );
     }
 };
@@ -117,7 +117,7 @@ struct CastHook<const F*, const Value*> {  // both must be const [B]
 
     const Cell* c = u_cast(const Cell*, p);
     Assert_Cell_Readable(c);
-    assert(Type_Of_Raw(c) != BEDROCK_255);  // bedrock is only illegal lift
+    assert(Not_Bedrock(c));  // bedrock is only illegal lift
   }
 };
 

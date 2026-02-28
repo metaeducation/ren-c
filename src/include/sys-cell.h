@@ -829,7 +829,7 @@ INLINE void Tweak_Cell_Type_Byte(Cell* cell, Option(TypeEnum) t) {
         if (Is_Bindable_Heart(Unchecked_Heart_Of(cell)))
             assert(Cell_Binding(cell) == UNBOUND);
     }
-    else if (ii_cast(TypeEnum, t) == BEDROCK_255) {
+    else if (ii_cast(TypeEnum, t) >= MIN_TYPE_BEDROCK) {
         // no checks at present
     }
     else {

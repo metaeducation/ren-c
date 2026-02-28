@@ -113,7 +113,7 @@ INLINE Sigil Sigil_For_Sigiled_Type(TypeEnum type) {
 
 INLINE Option(Sigil) Cell_Underlying_Sigil(const Cell* cell) {
     possibly(Type_Of_Raw(cell) >= MIN_TYPE_ANTIFORM);  // SIGIL_0 if antiform
-    possibly(Type_Of_Raw(cell) == BEDROCK_255);  // !!! allow, or take Value?
+    possibly(Type_Of_Raw(cell) >= MIN_TYPE_BEDROCK);  // !!! allow or not?
     Sigil sigil = Sigil_From_Crumb(
         HEARTSIGIL_BYTE(cell) >> BYTE_SIGIL_SHIFT
     );

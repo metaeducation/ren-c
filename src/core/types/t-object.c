@@ -1311,7 +1311,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     Cell* out_cell = Copy_Cell_Core(OUT, slot, CELL_MASK_COPY);
 
-    if (Type_Of_Raw(out_cell) == BEDROCK_255) {  // return nonquoted/nonquasi
+    if (Is_Bedrock(out_cell)) {  // return nonquoted/quasi
         Normalize_Cell(out_cell);
         return OUT_UNLIFTED_DUAL_INDIRECT_PICK;
     }
@@ -1352,7 +1352,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Context)
 
     if (Is_Dualized_Bedrock(dual)) {  // CASE 1: Overwriting w/new bedrock
         Copy_Cell_Core(slot, dual, CELL_MASK_COPY);  // store
-        Tweak_Cell_Type_Byte(slot, BEDROCK_255);
+        Coerce_To_Bedrock(slot);
         return OKAY_OUT_NO_WRITEBACK;  // VarList* in cell not changed
     }
 

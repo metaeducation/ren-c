@@ -457,7 +457,8 @@ sigilizeds: make block! 3
 hearts: make block! 60  ; 64 minus sigils minus TYPE_0
 quasiform: make block! 1  ; just QUASIFORM! (in a list to fit pattern)
 quoteds: make block! 128  ; 128 states for 64 quote levels
-antiforms: make block! 64  ; lots of blank space atm in this span
+antiforms: make block! 16  ; lots of blank space atm in this span
+bedrocks: make block! 16
 
 heartdefines: make block! 60
 typedefines: make block! 128
@@ -491,23 +492,25 @@ do-appends: proc [
         --[#define TYPE_${NAME}  TYPE_(${NAME})]--
     ]
 
-    ranged: default [
-        cscape [name "FLAG_TYPESET_RANGE(TYPE_(${NAME}), TYPE_(${NAME}))"]
-    ]
+    if which <> 'bedrocks [
+        ranged: default [
+            cscape [name "FLAG_TYPESET_RANGE(TYPE_(${NAME}), TYPE_(${NAME}))"]
+        ]
 
-    e-typespecs/emit [name description -[
-        $<name> $<mold description>
-    ]-]
+        e-typespecs/emit [name description -[
+            $<name> $<mold description>
+        ]-]
 
-    append typeset-flags cscape [name ranged
-        --[/* $<index> - $<name> */  $<Ranged>]--
-    ]
+        append typeset-flags cscape [name ranged
+            --[/* $<index> - $<name> */  $<Ranged>]--
+        ]
 
-    if empty? sparse [
-        append sparse-memberships cscape [name -[/* $<index> - $<name> */  0]-]
-    ] else [
-        append sparse-memberships cscape [name sparse
-            --[/* $<index> - $<name> */  ($<Delimit " | " Sparse>)]--
+        if empty? sparse [
+            append sparse-memberships cscape [name -[/* $<index> - $<name> */  0]-]
+        ] else [
+            append sparse-memberships cscape [name sparse
+                --[/* $<index> - $<name> */  ($<Delimit " | " Sparse>)]--
+            ]
         ]
     ]
 
@@ -733,6 +736,28 @@ for-each 't datatype-objects [
     do-appends // [$antiforms t.antiname t.antidescription sparse: []]
 ]
 
+=== "BEDROCKS" ===
+
+; This should be encoded in the type table (although drain is a SPACE
+; RUNE).  It's hacked in for now.
+
+save-index: index
+
+min-bedrock: ~
+max-bedrock: ~
+
+for-each name [
+    "bedrock-alias" "bedrock-drain" "bedrock-hole" "bedrock-accessor"
+][
+    min-bedrock: default [name]
+    max-bedrock: name
+
+    do-appends // [$bedrocks name "<internal>" sparse: []]
+]
+
+index: save-index
+
+
 === "RANGE CHECKS" ===
 
 ; These should ideally probably use the optimized type bytes that are for
@@ -920,6 +945,9 @@ e-hearts/emit [rebs --[
 
     typedef enum HeartEnum HeartEnum;
 
+    #define MIN_HEART  HEART_${MIN-HEART}
+    #define MAX_HEART  HEART_${MAX-HEART}
+
 
     /*
      * INTERNAL CELL TYPE ENUM, e.g. TYPE_BLOCK or TYPE_QUASIFORM
@@ -974,7 +1002,7 @@ e-hearts/emit [rebs --[
 
         ENUM_TYPE_$[Antiforms],
 
-        ENUM_TYPE_255 = 255,
+        ENUM_TYPE_$[Bedrocks],
 
         ENUM_TYPE_0_constexpr = 0  /* last, can use "[...] << N," cscape */
     };
@@ -984,41 +1012,45 @@ e-hearts/emit [rebs --[
     /* prefer TYPE_0 over TYPE_0_constexpr to get Option(Type)! */
     #define TYPE_0_constexpr  TYPE_(0_constexpr)
     $[TypeDefines]
-    #define BEDROCK_255  TYPE_(255)
-
-    #define MIN_TYPE_QUOTED  TYPE_${MIN-QUOTED}
-    #define MAX_TYPE_QUOTED  TYPE_${MAX-QUOTED}
-    STATIC_ASSERT(MAX_TYPE_QUOTED == Typeenum_From_Byte(192));
-
-    #define MAX_TYPE_FUNDAMENTAL  TYPE_${MAX-HEART}  /* same as max heart */
-    #define MAX_TYPE_ELEMENT  MAX_TYPE_QUOTED
 
     #define MIN_TYPE_SIGIL  TYPE_${MIN-SIGILED}
     #define MAX_TYPE_SIGIL  TYPE_${MAX-SIGILED}
 
-    #define MIN_HEART  HEART_${MIN-HEART}
-    #define MAX_HEART  HEART_${MAX-HEART}
     #define MIN_TYPE_HEART  TYPE_${MIN-HEART}
     #define MAX_TYPE_HEART  TYPE_${MAX-HEART}
     STATIC_ASSERT(MIN_TYPE_HEART == Typeenum_From_Byte(4));
     STATIC_ASSERT(MAX_TYPE_HEART < Typeenum_From_Byte(64));
 
+    #define MAX_TYPE_FUNDAMENTAL  TYPE_${MAX-HEART}
+    STATIC_ASSERT(
+        Byte_From_Type(MAX_TYPE_FUNDAMENTAL) == Byte_From_Heart(MAX_HEART)
+    );
+
     #define MAX_TYPE_NOQUOTE_NOQUASI  MAX_TYPE_HEART
-    #define MAX_TYPE_NOQUOTE_QUASI_OK  TYPE_QUASIFORM
 
     STATIC_ASSERT(TYPE_QUASIFORM == Typeenum_From_Byte(64));
 
-    #define MIN_TYPE_ANTIFORM  TYPE_${MIN-ANTIFORM}
-    #define MAX_TYPE_STABLE  TYPE_${MAX-STABLE}
-    #define MAX_TYPE_ANTIFORM  TYPE_${MAX-ANTIFORM}
+    #define MAX_TYPE_NOQUOTE_QUASI_OK  TYPE_QUASIFORM
 
-    STATIC_ASSERT(MAX_TYPE_ANTIFORM <= Typeenum_From_Byte(255));
+    #define MIN_TYPE_QUOTED  TYPE_${MIN-QUOTED}
+    #define MAX_TYPE_QUOTED  TYPE_${MAX-QUOTED}
+    STATIC_ASSERT(MAX_TYPE_QUOTED == Typeenum_From_Byte(192));
 
     #define NOQUOTE_63              63
     #define NONQUASI_BIT            1
 
     STATIC_ASSERT(not (Byte_From_Type(TYPE_QUASIFORM) & NONQUASI_BIT));
     STATIC_ASSERT(Byte_From_Type(TYPE_QUOTED_1_TIME_NONQUASI) & NONQUASI_BIT);
+
+    #define MAX_TYPE_ELEMENT  MAX_TYPE_QUOTED
+
+    #define MIN_TYPE_ANTIFORM  TYPE_${MIN-ANTIFORM}
+    #define MAX_TYPE_STABLE  TYPE_${MAX-STABLE}
+    #define MAX_TYPE_ANTIFORM  TYPE_${MAX-ANTIFORM}
+
+    #define MIN_TYPE_BEDROCK  TYPE_${MIN-BEDROCK}
+    #define MAX_TYPE_BEDROCK  TYPE_${MAX-BEDROCK}
+    STATIC_ASSERT(MAX_TYPE_BEDROCK <= Typeenum_From_Byte(255));
 
     /*
      * ANTIFORM HEART ALIASES

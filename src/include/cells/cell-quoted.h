@@ -79,7 +79,7 @@ INLINE Count Quotes_From_Lift_Byte(TypeEnum lift) {
 // check a second range of the TYPE_BYTE).
 //
 INLINE bool Is_Cell_Quoted_Core(const Cell* cell) {
-    assert(Type_Of_Raw(cell) != BEDROCK_255);
+    assert(Type_Of_Raw(cell) < MIN_TYPE_BEDROCK);
     if (Type_Of_Raw(cell) <= MAX_TYPE_NOQUOTE_QUASI_OK)
         return false;
     if (Type_Of_Raw(cell) >= MIN_TYPE_ANTIFORM)
@@ -140,7 +140,7 @@ INLINE Element* Unquote_Quoted_Cell(Element* v) {
 }
 
 INLINE void Normalize_Cell(Cell* cell) {  // drop quoted/quasi/anti, keep sigil
-    possibly(Type_Of_Raw(cell) == BEDROCK_255);  // normalizes bedrock too
+    possibly(Type_Of_Raw(cell) >= MIN_TYPE_BEDROCK);  // normalizes bedrock too
     if (Type_Of_Raw(cell) < MIN_TYPE_HEART) {
         possibly(Type_Of_Raw(cell) == TYPE_0_constexpr);  // extended, no Sigil
         assert(
@@ -215,7 +215,7 @@ INLINE bool Have_Matching_Lift_Levels(const Stable* a, const Stable* b) {
 
 #if CHECK_CELL_SUBCLASSES
     INLINE bool Is_Antiform(const Value* v) {
-        assert(Type_Of_Raw(v) != BEDROCK_255);
+        assert(Type_Of_Raw(v) < MIN_TYPE_BEDROCK);
         return Type_Of_Raw(Readable_Cell(v)) >= MIN_TYPE_ANTIFORM;
     }
 
@@ -271,7 +271,7 @@ INLINE bool Have_Matching_Lift_Levels(const Stable* a, const Stable* b) {
         possibly(not Is_Antiform(v));  // general check for any Value
 
         Assert_Cell_Readable(v);
-        assert(Type_Of_Raw(v) != BEDROCK_255);
+        assert(Type_Of_Raw(v) < MIN_TYPE_BEDROCK);
 
         return Type_Of_Raw(v) <= MAX_TYPE_STABLE;
     }
@@ -373,7 +373,7 @@ INLINE Element* Quasify_Antiform(Exact(Stable*) v) {
 INLINE Element* Reify_If_Antiform(Value* v) {
     if (Type_Of_Raw(v) < MIN_TYPE_ANTIFORM)
         return As_Element(v);
-    assert(Type_Of_Raw(v) != BEDROCK_255);
+    assert(Type_Of_Raw(v) < MIN_TYPE_BEDROCK);
     Tweak_Cell_Type_Byte(v, TYPE_QUASIFORM);  // all antiforms can become quasi
     return As_Element(v);
 }
@@ -409,7 +409,7 @@ INLINE Dual* Lift_Cell(Value* v) {
     if (Type_Of_Raw(v) < MIN_TYPE_ANTIFORM)
         return As_Dual(Quote_Cell(As_Element(v)));  // non-antiform -> quoted
 
-    assert(Type_Of_Raw(v) != BEDROCK_255);
+    assert(Type_Of_Raw(v) < MIN_TYPE_BEDROCK);
     Tweak_Cell_Type_Byte(v, TYPE_QUASIFORM);  // unstable+stable become quasi
     return As_Dual(v);
 }

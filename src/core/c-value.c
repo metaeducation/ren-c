@@ -96,7 +96,7 @@ void Probe_Cell_Print_Helper(
         DECLARE_ELEMENT (reified);
         Copy_Cell_Core(reified, v, CELL_MASK_ALL);
         Normalize_Cell(reified);
-        if (Type_Of_Raw(v) == BEDROCK_255) {
+        if (Is_Bedrock(v)) {
             require (
               Append_Ascii(mo->strand, "\\\\")
             );
@@ -108,7 +108,7 @@ void Probe_Cell_Print_Helper(
         }
         if (not Is_Blank(reified))
             Mold_Element(mo, reified);
-        if (Type_Of_Raw(v) == BEDROCK_255) {
+        if (Is_Bedrock(v)) {
             require (
               Append_Ascii(mo->strand, "\\\\  ; bedrock")
             );

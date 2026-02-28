@@ -31,7 +31,10 @@
 
 
 #define Is_Bedrock(cell) \
-    (Type_Of_Raw(Possibly_Bedrock(cell)) == BEDROCK_255)
+    (Type_Of_Raw(Possibly_Bedrock(cell)) >= MIN_TYPE_BEDROCK)
+
+#define Not_Bedrock(cell) \
+    (not Is_Bedrock(cell))
 
 #define Is_Dualized_Bedrock(dual) \
     (Type_Of_Raw(Known_Dual(dual)) <= MAX_TYPE_NOQUOTE_NOQUASI)
@@ -120,14 +123,14 @@ INLINE bool Is_Bedrock_Dual_A_Drain(const Dual* dual) {
     Is_Cell_Space_With_Lift_Sigil((cell), (lift), SIGIL_0)
 
 #define Is_Cell_A_Bedrock_Drain(cell) \
-    Is_Drain_Core(Possibly_Bedrock(cell), BEDROCK_255)
+    (Type_Of_Core(Possibly_Bedrock(cell)) == TYPE_BEDROCK_DRAIN)
 
 #define Is_Dual_Drain(dual) \
     Is_Drain_Core(Known_Dual(dual), TYPE_RUNE)
 
 INLINE Slot* Init_Bedrock_Drain(Init(Slot) out) {
     Init_Space(out);
-    Tweak_Cell_Type_Byte(out, BEDROCK_255);
+    Tweak_Cell_Type_Byte(out, TYPE_BEDROCK_DRAIN);
     return out;
 }
 
@@ -243,7 +246,7 @@ INLINE bool Is_Bedrock_Dual_A_Hole(const Dual* dual) {
     Cell_Has_Lift_Sigil_Heart((cell), (lift), SIGIL_0, HEART_PARAMETER)
 
 #define Is_Cell_A_Bedrock_Hole(cell) \
-    Is_Hole_Core(Possibly_Bedrock(cell), BEDROCK_255)
+    (Type_Of_Raw(Possibly_Bedrock(cell)) == TYPE_BEDROCK_HOLE)
 
 #define Is_Dual_Hole(dual) \
     Is_Hole_Core(Known_Dual(dual), TYPE_PARAMETER)
@@ -300,7 +303,7 @@ INLINE bool Is_Alias_Core(const Cell* cell, Option(Type) lift) {
 }
 
 #define Is_Cell_A_Bedrock_Alias(cell) \
-    Is_Alias_Core(Possibly_Bedrock(cell), BEDROCK_255)
+    (Type_Of_Raw(Possibly_Bedrock(cell)) == TYPE_BEDROCK_ALIAS)
 
 #define Is_Dual_Alias(dual) \
     Is_Alias_Core(Known_Dual(dual), none)  // word or tuple
@@ -326,7 +329,7 @@ INLINE bool Is_Bedrock_Dual_An_Accessor(const Dual* dual) {
     Cell_Has_Lift_Sigil_Heart((cell), (lift), SIGIL_0, HEART_FRAME)
 
 #define Is_Cell_A_Bedrock_Accessor(cell) \
-    Is_Accessor_Core(Possibly_Bedrock(cell), BEDROCK_255)
+    (Type_Of_Raw(Possibly_Bedrock(cell)) == TYPE_BEDROCK_ACCESSOR)
 
 #define Is_Dual_Accessor(dual) \
     Is_Accessor_Core(Known_Dual(dual), TYPE_FRAME)
@@ -414,3 +417,44 @@ INLINE bool Is_Non_Meta_Assignable_Unstable_Antiform(const Value* v)
 
 INLINE bool Is_Lifted_Non_Meta_Assignable_Unstable_Antiform(const Stable* v)
  { return Is_Lifted_Void(v) or Is_Lifted_Trash(v) or Is_Lifted_Action(v); }
+
+
+INLINE void Coerce_To_Bedrock(Slot* slot) {
+    switch (Type_Of_Raw(slot)) {
+      case TYPE_RUNE:
+        if (not Is_Space(As_Element(slot)))
+            goto not_valid_bedrock;
+        Tweak_Cell_Type_Byte(slot, TYPE_BEDROCK_DRAIN);
+        break;
+
+      case TYPE_PARAMETER:
+        Tweak_Cell_Type_Byte(slot, TYPE_BEDROCK_HOLE);
+        break;
+
+      case TYPE_METAFORM:
+        if (
+            HEARTSIGIL_BYTE(slot) !=
+                Byte_From_Heart_And_Sigil(HEART_WORD, SIGIL_META)
+            and (
+                HEARTSIGIL_BYTE(slot)
+                != Byte_From_Heart_And_Sigil(HEART_TUPLE, SIGIL_META)
+            )
+        ){
+            goto not_valid_bedrock;
+        }
+        Tweak_Cell_Type_Byte(slot, TYPE_BEDROCK_ALIAS);
+        break;
+
+      case TYPE_FRAME:
+        Tweak_Cell_Type_Byte(slot, TYPE_BEDROCK_ACCESSOR);
+        break;
+
+      default:
+        goto not_valid_bedrock;
+    }
+
+    return;
+
+  not_valid_bedrock: {
+    panic ("Attempt to coerce non-bedrock slot to bedrock");
+}}

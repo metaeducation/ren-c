@@ -854,7 +854,7 @@ bool Typecheck_Use_Toplevel(
     const Cell* tests,
     Context* tests_binding
 ){
-    possibly(Type_Of_Raw(tests) == BEDROCK_255);  // unspecialized slot
+    possibly(Type_Of_Raw(tests) == TYPE_BEDROCK_HOLE);  // unspecialized slot
 
     USE_LEVEL_SHORTHANDS (L);
 
@@ -1023,7 +1023,7 @@ Result(bool) Typecheck_Coerce_Use_Toplevel(
     const Cell* param,
     Value* v  // not `const Value*` -- coercion needs mutability
 ){
-    possibly(Type_Of_Raw(param) == BEDROCK_255);  // unspecialized slot
+    possibly(Type_Of_Raw(param) == TYPE_BEDROCK_HOLE);  // unspecialized slot
 
     USE_LEVEL_SHORTHANDS (L);
 
