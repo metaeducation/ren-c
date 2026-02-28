@@ -711,7 +711,10 @@ Bounce Stepper_Executor(Level* L)
         // is just reassemble the feed, and we'll do this test again.
 
         Splice_Element_Into_Feed(L->feed, CURRENT);  // e.g. OF or ->
-        Splice_Element_Into_Feed(L->feed, As_Element(Level_Spare(SUBLEVEL)));  // length
+        Splice_Element_Into_Feed(
+            L->feed, As_Element(Level_Spare(SUBLEVEL))
+        );  // length
+
 
         Copy_Cell(CURRENT, As_Element(Level_Scratch(SUBLEVEL)));  // was saved
         assert(Is_Set_Word(CURRENT));
@@ -743,381 +746,313 @@ Bounce Stepper_Executor(Level* L)
 
 } give_up_backward_quote_priority: { /////////////////////////////////////////
 
+  // This switch is done with a case for all TYPE_XXX values, in order to
+  // facilitate use of a "jump table optimization":
+  //
+  // http://stackoverflow.com/questions/17061967/c-switch-and-jump-tables
+  //
+  // Subverting the jump table optimization with specialized branches for
+  // fast tests historically were shown to reduce performance.  Review if
+  // better tricks have come along.
+
     assert(Is_Cell_Erased(OUT));
 
-    if (Type_Of_Raw(CURRENT) <= MAX_TYPE_NOQUOTE_NOQUASI) {
-        Option(Sigil) sigil = Sigil_Of(CURRENT);
-        switch (opt sigil) {
-          case SIGIL_0_constexpr:
-            goto handle_plain;
+  switch (Type_Of_Raw(CURRENT)) {
 
-          case SIGIL_META:  // ^ allows unstable antiforms to fetch
-            goto handle_any_metaform;
-
-          case SIGIL_PIN:  // @ gives back the the value "as is"
-            goto handle_any_pinned;
-
-          case SIGIL_TIE:  // $ ties the value
-            goto handle_any_tied;
-        }
-    }
-
-    if (Type_Of_Raw(CURRENT) >= MIN_TYPE_QUOTED)
-        goto handle_quoted;
-
-    assert(Type_Of_Raw(CURRENT) == TYPE_QUASIFORM);
-    goto handle_quasiform;
-
-} handle_quoted: { //// QUOTED! [ 'XXX  '''@XXX  '~XXX~ ] ////////////////////
-
-    // Quoted values drop one quote level.  Binding is left as-is.
-
-    Unquote_Quoted_Cell(Copy_Cell(OUT, CURRENT));
-
-    STATE = ST_STEPPER_NONZERO_STATE;  // can't leave STATE_0
-
-    goto lookahead;
-
-
-} handle_quasiform: { //// QUASIFORM! ~XXX~ //////////////////////////////////
-
-  // Quasiforms produce antiforms when they evaluate.  Binding is erased.
-  //
-  // 1. Not all quasiforms have legal antiforms.  For instance: while all
-  //    WORD!s have quasiforms, only ~null~ and ~okay~ are allowed to become
-  //    antiforms (LOGIC!)
-  //
-  // 2. If we are in a step of a sequential series of evaluations, then
-  //    it is risky to allow VOID! to vanish, e.g.:
-  //
-  //        eval compose [some stuff (lift ^var)]  ; var incidentally VOID!
-  //
-  //    It's a fine line. If you had composed in code like `comment "hi"`
-  //    that would be one thing, but synthesizing a lifted value from an
-  //    arbitrary expression feels less specific.  Use ^ operator if you
-  //    really want vaporization: `[some stuff ^ (lift ^var)]`
-
-    Copy_Cell(OUT, CURRENT);
-
-    require (  // may be illegal [1]
-      Coerce_To_Antiform(OUT)
-    );
-
-    if (Get_Level_Flag(L, VANISHABLE_VOIDS_ONLY) and Is_Void(OUT))
-        Note_Level_Out_As_Void_To_Make_Heavy(L);  // avoid accidents [2]
-
-    STATE = ST_STEPPER_NONZERO_STATE;
-    goto lookahead;
-
-
-} handle_any_pinned: { //// PINNED! (@XXX) ///////////////////////////////////
-
-  // PINNED! types originally focused on inert "do nothing", but are seeming
-  // more valuable to use for iterators.
-
-  switch (Heart_Of_Or_0(CURRENT)) {
-
-  case HEART_BLANK: { //// LITERALLY OPERATOR (@) ////////////////////////////
-
-  // @ acts like LITERALLY, and doesn't add binding:
-  //
-  //     >> abc: 10
-  //
-  //     >> word: @ abc
-  //     == abc
-  //
-  //     >> get word
-  //     ** PANIC: word is not bound
-  //
-  // The reason @ doesn't bind (when the other @xxx types do) is that the key
-  // need in the API is for an "as is" operator, and it works for that.  Note
-  // another difference is that the other types result in a value with the
-  // @ Sigil on them, but this one gives you type as it was.
-  //
-  // 2. There's a twist, that @ can actually handle stable antiforms if they
-  //    come in via an API feed.  This is a convenience so you can write:
-  //
-  //        rebElide("append block opt @", value_might_be_null);
-  //
-  //     ...instead of:
-  //
-  //        rebElide("append block opt", rebQ(value_might_be_null));
-  //
-  //    If you consider the API to be equivalent to TRANSCODE-ing the given
-  //    material into a BLOCK! and then EVAL-ing it, then this is creating an
-  //    impossible situation of having an antiform in the block.  But the
-  //    narrow exception in the evaluator is considered worth it:
-  //
-  //      https://forum.rebol.info/t/why-isnt-a-precise-synonym-for-the/2215
-  //
-
-    if (Is_Feed_At_End(L->feed))  // no literal to take as argument
-        panic (Error_Need_Non_End(CURRENT));
-
-    assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
-
-    if (Is_Antiform(L_next)) {
-        Copy_Cell(OUT, L_next);
-        trap (
-          Decay_If_Unstable(L->out)  // use ^ instead if you want unstable
-        );
-        Fetch_Next_In_Feed(L->feed);
-    }
-    else {  // need to honor CELL_FLAG_CONST, etc.
-        Just_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
-    }
-    Invalidate_Next_Fetched_In_Spare(L);
-    goto lookahead;
-
-} default: { //// MISCELLANEOUS PINNED! TYPE /////////////////////////////////
-
-  // Just leave the sigil:
-  //
-  //    >> @word
-  //    == @word
-  //
-  // !!! This behavior is scheduled to change, as @ is more useful as an
-  // active type with iterators.
-
-    Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-    goto lookahead;
-
-  }}  // end switch on pinned type
-
-} handle_any_tied: { //// TIED! ($XXX) ///////////////////////////////////////
-
-    // The $XXX types evaluate to remove the decoration, but be bound:
-    //
-    //     >> var: 1020
-    //
-    //     >> $var
-    //     == var
-    //
-    //     >> get $var
-    //     == 1020
-    //
-    // This is distinct from quoting the item, which would give you the item
-    // undecorated but not changing the binding (usually resulting in unbound).
-    //
-    //     >> var: 1020
-    //
-    //     >> get 'var
-    //     ** Error: var is unbound
-
-  switch (Heart_Of_Or_0(CURRENT)) {
-
-  case HEART_BLANK: { //// BIND OPERATOR ($) /////////////////////////////////
-
-  // The $ sigil will evaluate the right hand side, and then bind the
-  // product into the current evaluator environment.
-
-    require (
-      Reuse_Sublevel_Same_Feed_For_Step()
-    );
-
-    STATE = ST_STEPPER_BIND_OPERATOR;
-    return CONTINUE_SUBLEVEL;
-
-} bind_rightside_in_out: { ///////////////////////////////////////////////////
-
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // temporary (?) invariant
-    assert(SUBLEVEL->feed == L->feed);  // we didn't change it
-
-    if (Is_Antiform(OUT))
-        panic ("$ operator cannot bind antiforms");
-
-    Bind_Cell_If_Unbound(As_Element(OUT), Level_Binding(L));
-    goto lookahead;
-
-
-} default: {  //// MISCELLANEOUS TIED! TYPE //////////////////////////////////
-
-    Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-    Clear_Cell_Sigil(u_cast(Element*, OUT));  // remove the $
-    goto lookahead;
-
-  }}  // end switch on tied type
-
-
-} handle_any_metaform: { //// META (^) ///////////////////////////////////////
+  case TYPE_METAFORM: { //// META (^) ////////////////////////////////////////
 
   // METAFORM! types retrieve things with less intervention (decaying, or
   // perhaps suppressing VOID! => HEAVY VOID conversions).
 
-  switch (Heart_Of_Or_0(CURRENT)) {
+    switch (Heart_Of_Or_0(CURRENT)) {
 
-  case HEART_BLANK: { //// IDENTITY OPERATOR (^) //////////////////////////////
+      case HEART_BLANK: { //// IDENTITY OPERATOR (^) /////////////////////////
 
-    if (Is_Feed_At_End(L->feed))  // no literal to take as argument
-        panic (Error_Need_Non_End(CURRENT));
+        if (Is_Feed_At_End(L->feed))  // no literal to take as argument
+            panic (Error_Need_Non_End(CURRENT));
 
-    if (Is_Antiform(L_next)) {  // special featur: tolerate antiforms as-is
-        Copy_Cell(OUT, L_next);
-        Fetch_Next_In_Feed(L->feed);
+        if (Is_Antiform(L_next)) {  // special featur: tolerate antiforms as-is
+            Copy_Cell(OUT, L_next);
+            Fetch_Next_In_Feed(L->feed);
+            Invalidate_Next_Fetched_In_Spare(L);
+            goto lookahead;
+        }
+
+        require (
+          Reuse_Sublevel_Same_Feed_For_Step()
+        );
+
+        STATE = ST_STEPPER_IDENTITY_OPERATOR;
+        return CONTINUE_SUBLEVEL;
+
+    } identity_rightside_in_out: {
+
+        SUBLEVEL->executor = &Just_Use_Out_Executor;  // temp (?) invariant
+        assert(SUBLEVEL->feed == L->feed);  // we didn't change it
+
+        // !!! Did all the work just by making a not-afraid of voids step?
+
+        goto lookahead;
+
+    } case HEART_WORD: { //// META WORD! ^XXX ////////////////////////////////////
+
+      // A META-WORD! gives you the undecayed representation of the variable
+      //
+      // 1. We don't want things like `^x: (<expr> ^y)` to assign <expr> to
+      //    x just because y incidentally held a VOID!.  You must be explicit
+      //    with `^x: (<expr> ^ ^y)` to get that behavior, which bypasses the
+      //    LEVEL_FLAG_VANISHABLE_VOIDS_ONLY which sequential evaluations in
+      //    Evaluator_Executor() use by default.
+      //
+      //    We do this fetch in the sublevel, because we want to potentially
+      //    keep the SPARE cache value around (which is the fetch of the NEXT
+      //    value...if it was a word).
+
+        Bind_Cell_If_Unbound(CURRENT, L_binding);
+
+        heeded (Corrupt_Cell_If_Needful(Level_Spare(SUBLEVEL)));
+        heeded (Corrupt_Cell_If_Needful(Level_Scratch(SUBLEVEL)));
+
+        LEVEL_STATE_BYTE(SUBLEVEL) = ST_TWEAK_GETTING;
+
+        require (
+          Get_Var_To_Out_Use_Toplevel(CURRENT, GROUP_EVAL_NO)
+        );
+
+        possibly(Not_Cell_Stable(OUT));
+
+        if (Get_Level_Flag(L, VANISHABLE_VOIDS_ONLY) and Is_Void(OUT))
+            Note_Level_Out_As_Void_To_Make_Heavy(L);  // avoid accidents [1]
+
+        goto lookahead;
+
+
+    } case HEART_TUPLE: { //// META TUPLE! ^XXX.YYY //////////////////////////
+
+      // Note that the GET native on a TUPLE! won't allow GROUP! execution:
+      //
+      //    foo: [X]
+      //    path: 'foo.(print "side effect!" 1)
+      //    get path  ; not allowed, due to surprising side effects
+      //
+      // However a source-level GET-TUPLE! allows them, since they are at the
+      // callsite and you are assumed to know what you are doing:
+      //
+      //    :foo.(print "side effect" 1)  ; this is allowed
+      //
+      // Consistent with GET-WORD!, a GET-TUPLE! won't allow nothing access on
+      // the plain (unfriendly) forms.
+      //
+      // 1. It's possible for (^obj.lifted-error) to give back a FAILURE! due
+      //    to the field being a lifted error, or (^obj.missing-field) to give
+      //    a FAILURE! due to the field being absent.
+
+        assert(Is_Metaform(CURRENT));
+        Bind_Cell_If_Unbound(CURRENT, L_binding);
+
+        heeded (Corrupt_Cell_If_Needful(Level_Spare(SUBLEVEL)));
+        heeded (Corrupt_Cell_If_Needful(Level_Scratch(SUBLEVEL)));
+
+        LEVEL_STATE_BYTE(SUBLEVEL) = ST_TWEAK_GETTING;
+
+        require (
+          Get_Var_To_Out_Use_Toplevel(CURRENT, GROUP_EVAL_YES)
+        );
+        possibly(Is_Failure(OUT));  // last step maybe missing, or meta-failure [1]
+
+        goto lookahead;  // even FAILURE! wants lookahead (e.g. for EXCEPT)
+
+
+    } case HEART_CHAIN: { //// META CHAIN! (^XXX: ^:XXX ...) /////////////////////
+
+        goto handle_chain_or_meta_chain;
+
+
+    } case HEART_GROUP: { //// META GROUP! ^(...) ////////////////////////////////
+
+        goto handle_group_or_meta_group;
+
+
+    } case HEART_BLOCK: { //// META BLOCK! ^[...] ////////////////////////////////
+
+      // Produces a PACK! of what it is given:
+      //
+      //    >> ^[1 + 2 null]
+      //    == ~('3 ~null~)~  ; anti
+      //
+      // This is the most useful meaning, and it round trips the values:
+      //
+      //    >> ^[a b]: ^[1 + 2 null]
+      //    == ~('3 ~null~)~
+      //
+      //    >> a
+      //    == 3
+      //
+      //    >> b
+      //    == ~null~  ; anti
+
+        Element* out = Inertly_Derelativize_Inheriting_Const(
+            OUT, CURRENT, L->feed
+        );
+        Tweak_Cell_Quoted_Type(out, HEART_BLOCK);  // !!! quote avoids binding?
+
+        Element* spare = Init_Word(SPARE, CANON(PACK));
+        dont(Quote_Cell(As_Element(SPARE)));  // want to run word
+
+        Api(Value*) temp = rebUndecayed_helper(
+            cast(RebolContext*, Level_Binding(L)),
+            spare, out, rebEND
+        );
+        Copy_Cell(OUT, temp);
+        rebRelease(temp);
+
+        goto lookahead;
+
+
+    } case HEART_FENCE: { //// META FENCE! ^{...} ////////////////////////////
+
+        panic ("Don't know what ^FENCE! is going to do yet");
+
+
+    } default: { /////////////////////////////////////////////////////////////
+
+        panic (
+            "Only ^WORD!, ^GROUP, ^BLOCK! eval at this time for METAFORM!"
+        );
+
+    }} // end switch()
+
+
+} case TYPE_PINNED: { //// PINNED! (@XXX) ////////////////////////////////////
+
+  // PINNED! types originally focused on inert "do nothing", but are seeming
+  // more valuable to use for iterators.
+
+    switch (Heart_Of_Or_0(CURRENT)) {
+
+      case HEART_BLANK: { //// LITERALLY OPERATOR (@) ////////////////////////
+
+        // @ acts like LITERALLY, and doesn't add binding:
+        //
+        //     >> abc: 10
+        //
+        //     >> word: @ abc
+        //     == abc
+        //
+        //     >> get word
+        //     ** PANIC: word is not bound
+        //
+        // @ doesn't bind (when the other @xxx types do) because the key need
+        // in the API is for an "as is" operator, and it works for that.  Note
+        // another difference is that the other types result in a value with
+        // the @ Sigil on them, but this one gives you type as it was.
+        //
+        // 2. A twist is that @ can actually handle stable antiforms if they
+        //    come in via an API feed.  This is a convenience so you can write:
+        //
+        //        rebElide("append block opt @", value_might_be_null);
+        //
+        //     ...instead of:
+        //
+        //        rebElide("append block opt", rebQ(value_might_be_null));
+        //
+        //    If you consider the API to be equivalent to TRANSCODE-ing the
+        //    material into a BLOCK! and then EVALing it, then this creates an
+        //    impossible situation of having an antiform in the block.  But
+        //    the narrow exception in the evaluator is considered worth it:
+        //
+        //      https://forum.rebol.info/t/why-not-precise-synonym/2215
+
+        if (Is_Feed_At_End(L->feed))  // no literal to take as argument
+            panic (Error_Need_Non_End(CURRENT));
+
+        assert(Not_Feed_Flag(L->feed, NEEDS_SYNC));
+
+        if (Is_Antiform(L_next)) {
+            Copy_Cell(OUT, L_next);
+            trap (
+              Decay_If_Unstable(L->out)  // use ^ instead if you want unstable
+            );
+            Fetch_Next_In_Feed(L->feed);
+        }
+        else {  // need to honor CELL_FLAG_CONST, etc.
+            Just_Next_In_Feed(L->out, L->feed);  // !!! review infix interop
+        }
         Invalidate_Next_Fetched_In_Spare(L);
         goto lookahead;
-    }
 
-    require (
-      Reuse_Sublevel_Same_Feed_For_Step()
-    );
+    } default: { //// MISCELLANEOUS PINNED! TYPE /////////////////////////////////
 
-    STATE = ST_STEPPER_IDENTITY_OPERATOR;
-    return CONTINUE_SUBLEVEL;
+      // Just leave the sigil:
+      //
+      //    >> @word
+      //    == @word
+      //
+      // !!! This behavior is scheduled to change, as @ is more useful as an
+      // active type with iterators.
 
-} identity_rightside_in_out: {
+        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+        goto lookahead;
 
-    SUBLEVEL->executor = &Just_Use_Out_Executor;  // temporary (?) invariant
-    assert(SUBLEVEL->feed == L->feed);  // we didn't change it
+    }}  // end switch on pinned type
 
-    // !!! Did all the work just by making a not-afraid of voids step?
 
-    goto lookahead;
+} case TYPE_TIED: { //// TIED! ($XXX) ////////////////////////////////////////
 
-} case HEART_WORD: { //// META WORD! ^XXX ////////////////////////////////////
-
-  // A META-WORD! gives you the undecayed representation of the variable
+  // The $XXX types evaluate to remove the decoration, but be bound:
   //
-  // 1. We don't want situations like `^x: (<expr> ^y)` to assign <expr> to x
-  //    just because y incidentally held a VOID!.  You need to be explicit
-  //    with `^x: (<expr> ^ ^y)` to get that behavior, which would bypass the
-  //    LEVEL_FLAG_VANISHABLE_VOIDS_ONLY which sequential evaluations in
-  //    Evaluator_Executor() use by default.
+  //     >> var: 1020
   //
-  // We do this fetch in the sublevel, because we want to potentially keep
-  // the SPARE cache value around (which is the fetch of the *next* value...
-  // if it was a word).
+  //     >> $var
+  //     == var
+  //
+  //     >> get $var
+  //     == 1020
+  //
+  // This is distinct from quoting the item, which would give you the item
+  // undecorated but not changing the binding (usually resulting in unbound).
+  //
+  //     >> var: 1020
+  //
+  //     >> get 'var
+  //     ** Error: var is unbound
 
-    Bind_Cell_If_Unbound(CURRENT, L_binding);
+    switch (Heart_Of_Or_0(CURRENT)) {
 
-    heeded (Corrupt_Cell_If_Needful(Level_Spare(SUBLEVEL)));
-    heeded (Corrupt_Cell_If_Needful(Level_Scratch(SUBLEVEL)));
+      case HEART_BLANK: { //// BIND OPERATOR ($) /////////////////////////////
 
-    LEVEL_STATE_BYTE(SUBLEVEL) = ST_TWEAK_GETTING;
+      // The $ sigil will evaluate the right hand side, and then bind the
+      // product into the current evaluator environment.
 
-    require (
-      Get_Var_To_Out_Use_Toplevel(CURRENT, GROUP_EVAL_NO)
-    );
+        require (
+          Reuse_Sublevel_Same_Feed_For_Step()
+        );
 
-    possibly(Not_Cell_Stable(OUT));
+        STATE = ST_STEPPER_BIND_OPERATOR;
+        return CONTINUE_SUBLEVEL;
 
-    if (Get_Level_Flag(L, VANISHABLE_VOIDS_ONLY) and Is_Void(OUT))
-        Note_Level_Out_As_Void_To_Make_Heavy(L);  // avoid accidents [1]
+    } bind_rightside_in_out: { ///////////////////////////////////////////////
 
-    goto lookahead;
+        SUBLEVEL->executor = &Just_Use_Out_Executor;  // temp (?) invariant
+        assert(SUBLEVEL->feed == L->feed);  // we didn't change it
 
+        if (Is_Antiform(OUT))
+            panic ("$ operator cannot bind antiforms");
 
-} case HEART_TUPLE: { //// META TUPLE! ^XXX.YYY //////////////////////////////
-
-    // Note that the GET native on a TUPLE! won't allow GROUP! execution:
-    //
-    //    foo: [X]
-    //    path: 'foo.(print "side effect!" 1)
-    //    get path  ; not allowed, due to surprising side effects
-    //
-    // However a source-level GET-TUPLE! allows them, since they are at the
-    // callsite and you are assumed to know what you are doing:
-    //
-    //    :foo.(print "side effect" 1)  ; this is allowed
-    //
-    // Consistent with GET-WORD!, a GET-TUPLE! won't allow nothing access on
-    // the plain (unfriendly) forms.
-    //
-    // 1. It's possible for (^obj.lifted-error) to give back a FAILURE! due
-    //    to the field being a lifted error, or (^obj.missing-field) to give
-    //    a FAILURE! due to the field being absent.
-
-    assert(Is_Metaform(CURRENT));
-    Bind_Cell_If_Unbound(CURRENT, L_binding);
-
-    heeded (Corrupt_Cell_If_Needful(Level_Spare(SUBLEVEL)));
-    heeded (Corrupt_Cell_If_Needful(Level_Scratch(SUBLEVEL)));
-
-    LEVEL_STATE_BYTE(SUBLEVEL) = ST_TWEAK_GETTING;
-
-    require (
-      Get_Var_To_Out_Use_Toplevel(CURRENT, GROUP_EVAL_YES)
-    );
-    possibly(Is_Failure(OUT));  // last step maybe missing, or meta-failure [1]
-
-    goto lookahead;  // even FAILURE! wants lookahead (e.g. for EXCEPT)
+        Bind_Cell_If_Unbound(As_Element(OUT), Level_Binding(L));
+        goto lookahead;
 
 
-} case HEART_CHAIN: { //// META CHAIN! (^XXX: ^:XXX ...) /////////////////////
+    } default: {  //// MISCELLANEOUS TIED! TYPE //////////////////////////////
 
-    goto handle_chain_or_meta_chain;
+        Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
+        Clear_Cell_Sigil(u_cast(Element*, OUT));  // remove the $
+        goto lookahead;
 
-
-} case HEART_GROUP: { //// META GROUP! ^(...) ////////////////////////////////
-
-    goto handle_group_or_meta_group;
-
-
-} case HEART_BLOCK: { //// META BLOCK! ^[...] ////////////////////////////////
-
-    // Produces a PACK! of what it is given:
-    //
-    //    >> ^[1 + 2 null]
-    //    == ~('3 ~null~)~  ; anti
-    //
-    // This is the most useful meaning, and it round trips the values:
-    //
-    //    >> ^[a b]: ^[1 + 2 null]
-    //    == ~('3 ~null~)~
-    //
-    //    >> a
-    //    == 3
-    //
-    //    >> b
-    //    == ~null~  ; anti
-
-    Element* out = Inertly_Derelativize_Inheriting_Const(OUT, CURRENT, L->feed);
-    Tweak_Cell_Quoted_Type(out, HEART_BLOCK);  // !!! quote to avoid binding?
-
-    Element* spare = Init_Word(SPARE, CANON(PACK));
-    dont(Quote_Cell(As_Element(SPARE)));  // want to run word
-
-    Api(Value*) temp = rebUndecayed_helper(
-        cast(RebolContext*, Level_Binding(L)),
-        spare, out, rebEND
-    );
-    Copy_Cell(OUT, temp);
-    rebRelease(temp);
-
-    goto lookahead;
+    }}  // end switch on tied type
 
 
-} case HEART_FENCE: { //// META FENCE! ^{...} ////////////////////////////////
-
-    panic ("Don't know what ^FENCE! is going to do yet");
-
-
-} default: { /////////////////////////////////////////////////////////////////
-
-    panic (
-        "Only ^WORD!, ^GROUP, ^BLOCK! eval at this time for METAFORM!"
-    );
-
-  }} // end switch()
-
-
-} handle_plain: { //// *** THIS IS THE "MAIN" SWITCH STATEMENT *** ///////////
-
-    // This switch is done with a case for all TYPE_XXX values, in order to
-    // facilitate use of a "jump table optimization":
-    //
-    // http://stackoverflow.com/questions/17061967/c-switch-and-jump-tables
-    //
-    // Subverting the jump table optimization with specialized branches for
-    // fast tests historically were shown to reduce performance.  Review if
-    // better tricks have come along.
-    //
-    // 1. The Stepper_Executor()'s state bytes are a superset of the
-    //    Heart_Of() of processed values.  See the ST_STEPPER_XXX enumeration.
-
-  switch (Heart_Of_Or_0(CURRENT)) {  // superset [1]
-
-  case HEART_BLANK: { //// BLANK! (often manifests as "," character) //////////
+} case TYPE_BLANK: { //// BLANK! (often manifests as "," character) //////////
 
   // A blank is a lightweight looking expression barrier.  It errors on
   // evaluations that aren't interstitial, or gets skipped over otherwise.
@@ -1166,7 +1101,7 @@ Bounce Stepper_Executor(Level* L)
     goto start_new_expression;
 
 
-} case HEART_FRAME: { //// FRAME! ////////////////////////////////////////////
+} case TYPE_FRAME: { //// FRAME! ////////////////////////////////////////////
 
     // If a FRAME! makes it to the SWITCH statement, that means it is either
     // literally a frame in the array (eval compose [(unrun add/) 1 2]) or
@@ -1207,7 +1142,8 @@ Bounce Stepper_Executor(Level* L)
 
     goto lookahead;
 
-} case HEART_WORD: { //// WORD! //////////////////////////////////////////////
+
+} case TYPE_WORD: { //// WORD! //////////////////////////////////////////////
 
   // A plain word tries to fetch its value through its binding.  It panics if
   // the word is unbound (or if bound to a variable which holds TRASH!).  If
@@ -1434,8 +1370,9 @@ Bounce Stepper_Executor(Level* L)
 
   #endif  // DEBUG_DISABLE_INTRINSICS
 
-} handle_chain_or_meta_chain:  //// CHAIN! [ a:  ^a:  b:c:d  ^:e ] /////////
-  case HEART_CHAIN: {
+
+} case TYPE_CHAIN: //// CHAIN! [ a:  ^a:  b:c:d  ^:e ] ///////////////////////
+  handle_chain_or_meta_chain: {
 
     // Due to the consolidation of all the SET-XXX! and GET-XXX! types as
     // CHAIN! with leading or trailing blanks, CHAIN! has to break that down
@@ -1541,7 +1478,7 @@ Bounce Stepper_Executor(Level* L)
     goto process_action;
 
 
-} case HEART_GROUP: //// GROUP! (...) ////////////////////////////////////////
+} case TYPE_GROUP: //// GROUP! (...) ////////////////////////////////////////
   handle_group_or_meta_group: {
 
   // Groups simply evaluate their contents, and can evaluate to VOID! if the
@@ -1579,7 +1516,8 @@ Bounce Stepper_Executor(Level* L)
 
     panic ("^(...) behavior is likely to act like ^ (...), in time");
 
-} case HEART_TUPLE: { //// TUPLE! [ a.  b.c.d  .e ] //////////////////////////
+
+} case TYPE_TUPLE: { //// TUPLE! [ a.  b.c.d  .e ] //////////////////////////
 
     // TUPLE! runs through an extensible mechanism based on PICK and POKE.
     // Hence `a.b.c` is kind of like a shorthand for `pick (pick a 'b) 'c`.
@@ -1627,7 +1565,7 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} case HEART_PATH: { //// PATH! [ a/  b/c/d  e/ ] ////////////////////////////
+} case TYPE_PATH: { //// PATH! [ a/  b/c/d  e/ ] ////////////////////////////
 
   // Ren-C moved to member access with "dots instead of slashes" (TUPLE!)
   // and refinements are done with "colons instead of slashes" (CHAIN!).  So
@@ -1905,7 +1843,7 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} case HEART_FENCE: { ///// FENCE! {...} /////////////////////////////////////
+} case TYPE_FENCE: { ///// FENCE! {...} /////////////////////////////////////
 
     // FENCE! is the guinea pig for a technique of calling a function defined
     // in the local environment to do the handling.
@@ -1926,31 +1864,31 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} case HEART_0_constexpr: //// "INERT" TYPES (EXTENSIBILITY TBD) /////////////
-  case HEART_BLOCK:
-  case HEART_BLOB:
-  case HEART_TEXT:
-  case HEART_FILE:
-  case HEART_EMAIL:
-  case HEART_URL:
-  case HEART_TAG:
-  case HEART_RUNE:
-  case HEART_BITSET:
-  case HEART_MAP:
-  case HEART_VARARGS:
-  case HEART_OBJECT:
-  case HEART_MODULE:
-  case HEART_ERROR:
-  case HEART_PORT:
-  case HEART_LET:
-  case HEART_INTEGER:
-  case HEART_DECIMAL:
-  case HEART_PERCENT:
-  case HEART_PAIR:
-  case HEART_TIME:
-  case HEART_DATE:
-  case HEART_PARAMETER:
-  case HEART_HANDLE: {
+} case TYPE_0_constexpr: //// "INERT" TYPES (EXTENSIBILITY TBD) /////////////
+  case TYPE_BLOCK:
+  case TYPE_BLOB:
+  case TYPE_TEXT:
+  case TYPE_FILE:
+  case TYPE_EMAIL:
+  case TYPE_URL:
+  case TYPE_TAG:
+  case TYPE_RUNE:
+  case TYPE_BITSET:
+  case TYPE_MAP:
+  case TYPE_VARARGS:
+  case TYPE_OBJECT:
+  case TYPE_MODULE:
+  case TYPE_ERROR:
+  case TYPE_PORT:
+  case TYPE_LET:
+  case TYPE_INTEGER:
+  case TYPE_DECIMAL:
+  case TYPE_PERCENT:
+  case TYPE_PAIR:
+  case TYPE_TIME:
+  case TYPE_DATE:
+  case TYPE_PARAMETER:
+  case TYPE_HANDLE: {
 
     // Today these datatypes are all inert, but with RebindableSyntax the
     // concept is that you can define a function that says how things like
@@ -1960,9 +1898,47 @@ Bounce Stepper_Executor(Level* L)
     goto lookahead;
 
 
-} default: { //// !! CORRUPTION (pseudotypes or otherwise) !! ////////////////
+} case TYPE_QUASIFORM: { //// QUASIFORM! ~XXX~ ////////////////////////////////
 
-    crash (CURRENT);
+  // Quasiforms produce antiforms when they evaluate.  Binding is erased.
+  //
+  // 1. Not all quasiforms have legal antiforms.  For instance: while all
+  //    WORD!s have quasiforms, only ~null~ and ~okay~ are allowed to become
+  //    antiforms (LOGIC!)
+  //
+  // 2. If we are in a step of a sequential series of evaluations, then
+  //    it is risky to allow VOID! to vanish, e.g.:
+  //
+  //        eval compose [some stuff (lift ^var)]  ; var incidentally VOID!
+  //
+  //    It's a fine line. If you had composed in code like `comment "hi"`
+  //    that would be one thing, but synthesizing a lifted value from an
+  //    arbitrary expression feels less specific.  Use ^ operator if you
+  //    really want vaporization: `[some stuff ^ (lift ^var)]`
+
+    Copy_Cell(OUT, CURRENT);
+
+    require (  // may be illegal [1]
+      Coerce_To_Antiform(OUT)
+    );
+
+    if (Get_Level_Flag(L, VANISHABLE_VOIDS_ONLY) and Is_Void(OUT))
+        Note_Level_Out_As_Void_To_Make_Heavy(L);  // avoid accidents [2]
+
+    STATE = ST_STEPPER_NONZERO_STATE;
+    goto lookahead;
+
+} default: { //// QUOTED! [ 'XXX  '''@XXX  '~XXX~ ] //////////////////////////
+
+    // Quoted values drop one quote level.  Binding is left as-is.
+
+    if (Type_Of_Raw(CURRENT) > MAX_TYPE_QUOTED)
+        crash (CURRENT);
+
+    Unquote_Quoted_Cell(Copy_Cell(OUT, CURRENT));
+
+    STATE = ST_STEPPER_NONZERO_STATE;  // can't leave STATE_0
+    goto lookahead;
 
   }}  //// END handle_plain: SWITCH STATEMENT ////////////////////////////////
 
