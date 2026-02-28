@@ -208,7 +208,7 @@ INLINE Option(char) Char_For_Sigil(Option(Sigil) sigil) {
 // callsite that does it.
 //
 
-INLINE void Tweak_Cell_Type(Cell* v, Heart heart) {
+INLINE void Tweak_Cell_Type_Matching_Heart(Cell* v, Heart heart) {
     Tweak_Cell_Heart(v, heart);
     Tweak_Cell_Type_Byte(v, Type_From_Heart(heart));
 }
@@ -218,7 +218,11 @@ INLINE void Tweak_Cell_Quoted_Type(Cell* v, Heart heart) {
     Tweak_Cell_Type_Byte(v, TYPE_QUOTED_1_TIME_NONQUASI);
 }
 
-INLINE void Tweak_Cell_Sigiled_Type(Cell* cell, Heart heart, Sigil sigil) {
+INLINE void Tweak_Cell_Type_Matching_Heartsigil(
+    Cell* cell,
+    Heart heart,
+    Sigil sigil
+){
     assert(sigil);
     Tweak_Cell_Heart_And_Sigil(cell, heart, sigil);
     Tweak_Cell_Type_Byte(cell, Type_From_Sigil(sigil));

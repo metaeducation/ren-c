@@ -89,7 +89,7 @@ DECLARE_NATIVE(BIND)
             Element* overbind = Copy_Cell_May_Bind(
                 Stub_Cell(use), at, Cell_Binding(spec)
             );
-            Tweak_Cell_Type(overbind, HEART_WORD);
+            Tweak_Cell_Type_Matching_Heart(overbind, HEART_WORD);
 
             if (not IS_WORD_BOUND(overbind))
                 panic (Error_Not_Bound_Raw(overbind));
@@ -120,7 +120,7 @@ DECLARE_NATIVE(BIND)
           Use* use = Alloc_Use_Inherits(Cell_Binding(v))
         );
         Element* overbind = Copy_Cell(Stub_Cell(use), spec);
-        Tweak_Cell_Type(overbind, HEART_WORD);
+        Tweak_Cell_Type_Matching_Heart(overbind, HEART_WORD);
 
         Tweak_Cell_Binding(v, use);
 
@@ -864,12 +864,12 @@ DECLARE_NATIVE(RESOLVE)
     Element* source = Element_ARG(SOURCE);
 
     if (Any_Word(source)) {
-        Tweak_Cell_Type(source, HEART_WORD);
+        Tweak_Cell_Type_Matching_Heart(source, HEART_WORD);
         return COPY_TO_OUT(source);
     }
 
     if (Is_Tuple(source)) {  // !!! Any_Tuple?
-        Tweak_Cell_Type(source, HEART_TUPLE);
+        Tweak_Cell_Type_Matching_Heart(source, HEART_TUPLE);
         return COPY_TO_OUT(source);
     }
 

@@ -86,7 +86,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
         //
         VarList* context = Copy_Varlist_Shallow_Managed(Cell_Varlist(arg));
         Element* rootvar = Rootvar_Of_Varlist(context);
-        Tweak_Cell_Type(rootvar, HEART_PORT);
+        Tweak_Cell_Type_Matching_Heart(rootvar, HEART_PORT);
         return Init_Port(OUT, context);
     }
 

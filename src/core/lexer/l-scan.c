@@ -2594,7 +2594,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
         return fail (Error_Syntax(S, token));
 
     if (S->begin[len - 1] == '%')
-        Tweak_Cell_Type(TOP_ELEMENT, HEART_PERCENT);
+        Tweak_Cell_Type_Matching_Heart(TOP_ELEMENT, HEART_PERCENT);
 
     goto lookahead;
 

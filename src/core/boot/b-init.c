@@ -221,7 +221,7 @@ static void Shutdown_Lib(void)
 
 static Element* Make_Locked_Tag(const char *utf8) { // helper
     Element* t = cast(Element*, rebText(utf8));
-    Tweak_Cell_Type(t, HEART_TAG);
+    Tweak_Cell_Type_Matching_Heart(t, HEART_TAG);
 
     Force_Value_Frozen_Deep(t);
     return t;
@@ -463,12 +463,12 @@ static void Init_System_Object(
     Slot* std_error_slot = Get_System(SYS_STANDARD, STD_ERROR);
     assert(Is_Object(u_cast(Element*, std_error_slot)));
     VarList* varlist = Cell_Varlist(u_cast(Element*, std_error_slot));
-    Tweak_Cell_Type(u_cast(Element*, std_error_slot), HEART_ERROR);
+    Tweak_Cell_Type_Matching_Heart(u_cast(Element*, std_error_slot), HEART_ERROR);
 
     Element* rootvar = Rootvar_Of_Varlist(varlist);
     assert(Is_Object(rootvar));
     Unshield_Rootvar_If_Tracking(rootvar);
-    Tweak_Cell_Type(rootvar, HEART_ERROR);
+    Tweak_Cell_Type_Matching_Heart(rootvar, HEART_ERROR);
     Shield_Rootvar_If_Tracking(rootvar);
 }}
 

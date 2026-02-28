@@ -784,7 +784,7 @@ Result(Element*) Alias_Any_Utf8_As(
             possibly(Is_Flex_Frozen(Cell_Strand(v)));
             possibly(Is_Stub_Symbol(Cell_Strand(v)));
             Copy_Cell(out, v);
-            Tweak_Cell_Type(out, as);
+            Tweak_Cell_Type_Matching_Heart(out, as);
             return out;
         }
 
@@ -874,7 +874,7 @@ Result(Element*) Alias_Any_Utf8_As(
             return out;
 
         Copy_Cell(out, v);  // index heeded internally, not exposed
-        Tweak_Cell_Type(out, as);
+        Tweak_Cell_Type_Matching_Heart(out, as);
         return out;
     }
 

@@ -917,7 +917,7 @@ Result(Element*) Alias_Any_List_As(
 ){
     if (Any_List_Heart(as)) {
         Copy_Cell(out, list);
-        Tweak_Cell_Type(out, as);
+        Tweak_Cell_Type_Matching_Heart(out, as);
         return out;
     }
 

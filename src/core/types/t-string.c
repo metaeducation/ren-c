@@ -813,7 +813,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
             if (Is_None(As_Stable(pattern)))
                 Copy_Cell(pattern, LIB(EMPTY_TEXT));
             else {
-                Tweak_Cell_Sigiled_Type(pattern, HEART_BLOCK, SIGIL_PIN);
+                Tweak_Cell_Type_Matching_Heartsigil(
+                    pattern, HEART_BLOCK, SIGIL_PIN
+                );
 
                 Api(Stable*) joined = rebStable(
                     CANON(JOIN), CANON(TEXT_X), pattern
@@ -1019,7 +1021,7 @@ Result(Element*) Alias_Any_String_As(
 ){
     if (Any_String_Heart(as)) {  // special handling not in Utf8 generic [1]
         Copy_Cell(out, string);
-        Tweak_Cell_Type(out, as);
+        Tweak_Cell_Type_Matching_Heart(out, as);
         Inherit_Const(out, string);
         return out;
     }

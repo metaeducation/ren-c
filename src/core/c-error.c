@@ -742,7 +742,7 @@ Error* Make_Error_From_Vaptr_Managed(
 
     assert(Varlist_Len(varlist) == Varlist_Len(root_varlist) + expected_args);
 
-    Tweak_Cell_Type(Rootvar_Of_Varlist(varlist), HEART_ERROR);
+    Tweak_Cell_Type_Matching_Heart(Rootvar_Of_Varlist(varlist), HEART_ERROR);
 
     // C struct mirroring fixed portion of error fields
     //

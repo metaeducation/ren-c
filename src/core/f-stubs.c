@@ -557,14 +557,14 @@ Result(Element*) Unsingleheart_Sequence(Element* seq)
 
     const Flex* f = cast(Flex*, payload1);
     if (Is_Stub_Symbol(f)) {
-        Tweak_Cell_Type(seq, HEART_WORD);
+        Tweak_Cell_Type_Matching_Heart(seq, HEART_WORD);
         Clear_Cell_Flag(seq, LEADING_BLANK);  // !!! necessary?
         return seq;
     }
 
     Option(Heart) mirror = Mirror_Of(cast(Source*, f));
     if (mirror) {  // no length 2 sequence arrays unless mirror
-        Tweak_Cell_Type(seq, unwrap mirror);
+        Tweak_Cell_Type_Matching_Heart(seq, unwrap mirror);
         Clear_Cell_Flag(seq, LEADING_BLANK);  // !!! necessary
         return seq;
     }

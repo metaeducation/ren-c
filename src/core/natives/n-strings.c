@@ -416,7 +416,7 @@ DECLARE_NATIVE(JOIN)
             Element* scratch = Copy_Cell_May_Bind(
                 SCRATCH, item, Level_Binding(sub)
             );
-            Tweak_Cell_Type(scratch, HEART_BLOCK);
+            Tweak_Cell_Type_Matching_Heart(scratch, HEART_BLOCK);
             Fetch_Next_In_Feed(sub->feed);
 
             SUBLEVEL->baseline.stack_base = TOP_INDEX;

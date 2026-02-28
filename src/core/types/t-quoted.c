@@ -514,7 +514,7 @@ DECLARE_NATIVE(ALIAS)
     Element* var = Element_ARG(VAR);
     assert(Is_Word(var) or Is_Tuple(var));
 
-    Tweak_Cell_Sigiled_Type(var, unwrap Heart_Of(var), SIGIL_META);
+    Tweak_Cell_Type_Matching_Heartsigil(var, unwrap Heart_Of(var), SIGIL_META);
 
     Source* a = Alloc_Singular(STUB_MASK_MANAGED_SOURCE);
     Copy_Cell(Array_Head(a), var);

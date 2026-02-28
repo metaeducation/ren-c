@@ -325,7 +325,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
             if (Is_None(As_Stable(pattern)))
                 Copy_Cell(pattern, LIB(EMPTY_TEXT));
             else {
-                Tweak_Cell_Sigiled_Type(pattern, HEART_BLOCK, SIGIL_PIN);
+                Tweak_Cell_Type_Matching_Heartsigil(
+                    pattern, HEART_BLOCK, SIGIL_PIN
+                );
 
                 Api(Stable*) joined = rebStable(
                     CANON(JOIN), CANON(BLOB_X), pattern

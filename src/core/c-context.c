@@ -663,7 +663,7 @@ DECLARE_NATIVE(AS_BLOCK_WRAP)
     );
     Tweak_Link_Inherit_Bind(varlist, Cell_Binding(list));
     Tweak_Cell_Binding(list, varlist);
-    Tweak_Cell_Type(list, HEART_BLOCK);
+    Tweak_Cell_Type_Matching_Heart(list, HEART_BLOCK);
 
     return COPY_TO_OUT(list);
 }

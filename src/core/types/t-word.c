@@ -122,7 +122,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Word)
             break;
     }
     then {
-        Tweak_Cell_Type(arg, heart);
+        Tweak_Cell_Type_Matching_Heart(arg, heart);
         return COPY_TO_OUT(arg);
     }
 

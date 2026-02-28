@@ -400,7 +400,7 @@ DECLARE_NATIVE(PACK)
         return OUT;  // definitional error (what choices would these be?)
 
     assert(Is_Possibly_Unstable_Value_Block(OUT));
-    Tweak_Cell_Type(As_Element(OUT), HEART_GROUP);
+    Tweak_Cell_Type_Matching_Heart(As_Element(OUT), HEART_GROUP);
     Tweak_Cell_Type_Byte(OUT, TYPE_PACK);
     return OUT;
 }

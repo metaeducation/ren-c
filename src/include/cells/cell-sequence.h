@@ -221,7 +221,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
     if (Is_Word(v)) {  // in-situ optimization, see [B]
         v->header.bits &= (~ CELL_FLAG_LEADING_BLANK);
         v->header.bits |= flag;
-        Tweak_Cell_Type(v, heart);
+        Tweak_Cell_Type_Matching_Heart(v, heart);
         return v;
     }
 
@@ -232,7 +232,7 @@ INLINE Result(Element*) Blank_Head_Or_Tail_Sequencify(
         Option(Heart) h = Heart_Of(v);
         if (not mirror or (unwrap mirror == unwrap h)) {
             Tweak_Mirror_Byte(a, unwrap Heart_Of(v));  // remember herat
-            Tweak_Cell_Type(v, heart);  // e.g. TYPE_BLOCK => TYPE_PATH
+            Tweak_Cell_Type_Matching_Heart(v, heart);  // e.g. TYPE_BLOCK => TYPE_PATH
             v->header.bits |= flag;
             return v;
         }
@@ -686,7 +686,7 @@ INLINE Element* Copy_Sequence_At_Untracked(
             return Init_Blank(out);
 
         Copy_Cell_Core_Untracked(out, sequence, CELL_MASK_COPY);  // [2]
-        Tweak_Cell_Type(out, HEART_WORD);  // [3]
+        Tweak_Cell_Type_Matching_Heart(out, HEART_WORD);  // [3]
         return out; }
 
       case FLAVOR_SOURCE : {  // uncompressed sequence, or compressed "mirror"
@@ -698,7 +698,7 @@ INLINE Element* Copy_Sequence_At_Untracked(
                 return Init_Blank(out);
 
             Copy_Cell_Core_Untracked(out, sequence, CELL_MASK_COPY);
-            Tweak_Cell_Type(out, unwrap mirror);  // [3]
+            Tweak_Cell_Type_Matching_Heart(out, unwrap mirror);  // [3]
             return out;
         }
         assert(Array_Len(a) >= 2);
@@ -822,14 +822,14 @@ INLINE void Get_Tuple_Bytes(
 
 INLINE Element* Init_Set_Word(Init(Element) out, const Symbol* s) {
     Init_Word(out, s);
-    Tweak_Cell_Type(out, HEART_CHAIN);
+    Tweak_Cell_Type_Matching_Heart(out, HEART_CHAIN);
     impossible(Get_Cell_Flag(out, LEADING_BLANK));
     return out;
 }
 
 INLINE Element* Init_Get_Word(Init(Element) out, const Symbol* s) {
     Init_Word(out, s);
-    Tweak_Cell_Type(out, HEART_CHAIN);
+    Tweak_Cell_Type_Matching_Heart(out, HEART_CHAIN);
     Set_Cell_Flag(out, LEADING_BLANK);
     return out;
 }

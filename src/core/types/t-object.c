@@ -1202,7 +1202,7 @@ IMPLEMENT_GENERIC(TO, Any_Context)
         VarList* v = cast(VarList*, c);
         VarList* copy = Copy_Varlist_Shallow_Managed(v);  // !!! copy [1]
         Element* rootvar = Rootvar_Of_Varlist(copy);
-        Tweak_Cell_Type(rootvar, HEART_PORT);
+        Tweak_Cell_Type_Matching_Heart(rootvar, HEART_PORT);
         return Init_Port(OUT, copy);
     }
 

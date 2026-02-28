@@ -105,7 +105,7 @@ bool Try_Match_For_Compose(
     }
 
     Clear_Cell_Quotes_And_Quasi(match);  // want to get rid of quasi, too
-    Tweak_Cell_Type(match, HEART_BLOCK);
+    Tweak_Cell_Type_Matching_Heart(match, HEART_BLOCK);
     Tweak_Cell_Binding(match, binding);  // override? combine?
     return true;
 }
