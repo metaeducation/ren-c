@@ -1067,5 +1067,7 @@ DECLARE_NATIVE(COMPOSE2)
         Freeze_Flex(str);
 
     Heart input_heart = Heart_Of_Builtin_Fundamental(As_Element(input));
-    return Init_Series_At_Core(OUT, input_heart, str, 0, nullptr);
+    return Init_Series_At_Core(
+        OUT, FLAG_HEART_AND_LIFT(input_heart), str, 0, nullptr
+    );
 }}

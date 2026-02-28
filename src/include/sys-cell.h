@@ -722,6 +722,70 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 }
 
 
+//=///// BINDING //////////////////////////////////////////////////////////=//
+//
+// Some value types use their `->extra` field in order to store a pointer to
+// a Base which constitutes their notion of "binding".
+//
+// This can either be null (a.k.a. UNBOUND), or to a function's paramlist
+// (indicates a relative binding), or to a context's varlist (which indicates
+// a specific binding.)
+//
+//  1. Instead of using null for UNBOUND, a special global Stub struct was
+//     experimented with.  It was at a memory location known at compile-time,
+//     and had its ->header and ->info bits set in such a way as to avoid the
+//     need for some conditional checks.  e.g. instead of writing:
+//
+//         if (binding and binding->header.bits & BASE_FLAG_MANAGED) {...}
+//
+//     The special UNBOUND stub set some bits, e.g. pretend to be managed:
+//
+//        if (binding->header.bits & BASE_FLAG_MANAGED) {...}  // UNBOUND ok
+//
+//     Question was whether avoiding the branching involved from the extra
+//     test for null would be worth it for consistent dereferencing ability.
+//     At least on x86/x64, the answer was: No. Maybe even a little slower.
+//     Testing for null pointers the processor has in its hand is very common
+//     and seemed to outweigh the need to dereference all the time.  The
+//     increased clarity of having unbound be nullptr is also in its benefit.
+//
+
+#if (! DEBUG_CHECK_BINDING)
+    #define Assert_Cell_Binding_Valid(v)  NOOP
+#else
+    #define Assert_Cell_Binding_Valid(v) \
+        Assert_Cell_Binding_Valid_Core(v)
+#endif
+
+#define Cell_Binding(v) \
+    u_cast(Context*, (v)->extra.base)
+
+#if (! DEBUG_CHECK_BINDING)
+    #define Tweak_Cell_Binding(c,binding) \
+        ((c)->extra.base = binding)
+
+    #define Tweak_Cell_Relative_Binding(c,details) \
+        ((c)->extra.base = details)
+#else
+    INLINE void Tweak_Cell_Binding(Element* c, Option(Context*) binding) {
+        Assert_Cell_Writable(c);
+        assert(Is_Cell_Bindable(c));
+        c->extra.base = opt binding;
+        if (binding)
+            Assert_Cell_Binding_Valid(c);
+    }
+    INLINE void Tweak_Cell_Relative_Binding(Element* c, Details* details) {
+        c->extra.base = details;  // !!! relative binding may be deprecated
+    }
+#endif
+
+#define SPECIFIED \
+    u_cast(Context*, nullptr)  // u_cast (don't want DEBUG_CHECK_CASTS)
+
+#define UNBOUND \
+    u_cast(Context*, nullptr)  // using a stub did not improve performance [1]
+
+
 //=//// HOOKABLE TYPE_BYTE() ACCESSOR /////////////////////////////////////=//
 //
 // This mechanism captures manipulations of the TYPE_BYTE() to be sure the
@@ -739,8 +803,6 @@ INLINE Heart Heart_Of_Builtin_Fundamental(const Element* c) {
 //
 
 INLINE void Tweak_Cell_Type_Byte(Cell* cell, Option(TypeEnum) t) {
-    Assert_Cell_Unshielded_If_Tracking(cell);
-
   #if DEBUG_HOOK_TYPE_BYTE
     if (ii_cast(TypeEnum, t) == TYPE_0_constexpr) {  // extension type with no Sigil
         assert(HEARTSIGIL_BYTE(cell) == 0);
@@ -764,6 +826,8 @@ INLINE void Tweak_Cell_Type_Byte(Cell* cell, Option(TypeEnum) t) {
     }
     else if (ii_cast(TypeEnum, t) <= MAX_TYPE_ANTIFORM) {
         assert(Any_Isotopic_Heart(Unchecked_Heart_Of(cell)));
+        if (Is_Bindable_Heart(Unchecked_Heart_Of(cell)))
+            assert(Cell_Binding(cell) == UNBOUND);
     }
     else if (ii_cast(TypeEnum, t) == BEDROCK_255) {
         // no checks at present
@@ -1019,70 +1083,6 @@ INLINE void Reset_Extended_Cell_Header_Noquote(
 
 #define CELL_PAYLOAD_2(c) \
     Ensure_Cell_Payload_2_Needs_Mark(c)->payload.split.two.base
-
-
-//=///// BINDING //////////////////////////////////////////////////////////=//
-//
-// Some value types use their `->extra` field in order to store a pointer to
-// a Base which constitutes their notion of "binding".
-//
-// This can either be null (a.k.a. UNBOUND), or to a function's paramlist
-// (indicates a relative binding), or to a context's varlist (which indicates
-// a specific binding.)
-//
-//  1. Instead of using null for UNBOUND, a special global Stub struct was
-//     experimented with.  It was at a memory location known at compile-time,
-//     and had its ->header and ->info bits set in such a way as to avoid the
-//     need for some conditional checks.  e.g. instead of writing:
-//
-//         if (binding and binding->header.bits & BASE_FLAG_MANAGED) {...}
-//
-//     The special UNBOUND stub set some bits, e.g. pretend to be managed:
-//
-//        if (binding->header.bits & BASE_FLAG_MANAGED) {...}  // UNBOUND ok
-//
-//     Question was whether avoiding the branching involved from the extra
-//     test for null would be worth it for consistent dereferencing ability.
-//     At least on x86/x64, the answer was: No. Maybe even a little slower.
-//     Testing for null pointers the processor has in its hand is very common
-//     and seemed to outweigh the need to dereference all the time.  The
-//     increased clarity of having unbound be nullptr is also in its benefit.
-//
-
-#if (! DEBUG_CHECK_BINDING)
-    #define Assert_Cell_Binding_Valid(v)  NOOP
-#else
-    #define Assert_Cell_Binding_Valid(v) \
-        Assert_Cell_Binding_Valid_Core(v)
-#endif
-
-#define Cell_Binding(v) \
-    u_cast(Context*, (v)->extra.base)
-
-#if (! DEBUG_CHECK_BINDING)
-    #define Tweak_Cell_Binding(c,binding) \
-        ((c)->extra.base = binding)
-
-    #define Tweak_Cell_Relative_Binding(c,details) \
-        ((c)->extra.base = details)
-#else
-    INLINE void Tweak_Cell_Binding(Element* c, Option(Context*) binding) {
-        Assert_Cell_Writable(c);
-        assert(Is_Cell_Bindable(c));
-        c->extra.base = opt binding;
-        if (binding)
-            Assert_Cell_Binding_Valid(c);
-    }
-    INLINE void Tweak_Cell_Relative_Binding(Element* c, Details* details) {
-        c->extra.base = details;  // !!! relative binding may be deprecated
-    }
-#endif
-
-#define SPECIFIED \
-    u_cast(Context*, nullptr)  // u_cast (don't want DEBUG_CHECK_CASTS)
-
-#define UNBOUND \
-    u_cast(Context*, nullptr)  // using a stub did not improve performance [1]
 
 
 //=//// CELL TRANSFER TYPE VALIDATION (COMPILE-TIME ONLY) /////////////////=//

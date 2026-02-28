@@ -135,8 +135,7 @@ INLINE bool Any_Sigiled_Blank(const Element* v) {
         Known_Stable(v), TYPE_QUASIFORM, SIGIL_0, HEART_BLANK)
 
 INLINE Element* Init_Quasar_Untracked(Init(Element) out) {
-    Init_Blank(out);
-    Quasify_Isotopic_Fundamental(out);
+    Init_Blank_Untracked(out, FLAG_TYPE(TYPE_QUASIFORM));
     assert(Is_Quasar(out));
     return out;
 }

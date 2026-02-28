@@ -406,7 +406,7 @@ INLINE Result(Element*) Init_Any_Sequence_Or_Conflation_Pairlike(
             Init_Word(out, CANON(DOT_1));
         }
         if (Is_Quasar(first))
-            Quasify_Isotopic_Fundamental(out);
+            Tweak_Cell_Type_Byte(out, TYPE_QUASIFORM);
         return out;
     }
 

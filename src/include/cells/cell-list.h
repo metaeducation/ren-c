@@ -141,26 +141,22 @@ INLINE const Element* List_Item_At(const Cell* cell) {
 // Declaring as inline with type signature ensures you use a Source* to
 // initialize.
 
-INLINE Element* Init_Any_List_At_Core_Untracked(
-    Init(Element) out,
-    Heart heart,
-    const Source* array,
-    Index index,
-    Context* binding
-){
-    return Init_Series_At_Core_Untracked(
-        out, heart, array, index, binding
-    );
-}
+#define Init_Any_List_At_Core_Untracked(out,flags,array,index,binding) \
+    Init_Series_At_Core_Untracked( \
+        (out), \
+        exactly(uintptr_t, (flags)), \
+        known(Source*, (array)), \
+        (index), \
+        (binding))
 
-#define Init_Any_List_At_Core(v,t,a,i,b) \
-    TRACK(Init_Any_List_At_Core_Untracked((v), (t), (a), (i), (b)))
+#define Init_Any_List_At_Core(v,flags,a,i,b) \
+    TRACK(Init_Any_List_At_Core_Untracked((v), (flags), (a), (i), (b)))
 
-#define Init_Any_List_At(v,t,a,i) \
-    Init_Any_List_At_Core((v), (t), (a), (i), UNBOUND)
+#define Init_Any_List_At(v,h,a,i) \
+    Init_Any_List_At_Core((v), FLAG_HEART_AND_LIFT(h), (a), (i), UNBOUND)
 
-#define Init_Any_List(v,t,a) \
-    Init_Any_List_At((v), (t), (a), 0)
+#define Init_Any_List(v,h,a) \
+    Init_Any_List_At((v), (h), (a), 0)
 
 #define Init_Block(v,a)     Init_Any_List((v), HEART_BLOCK, (a))
 #define Init_Group(v,a)     Init_Any_List((v), HEART_GROUP, (a))
@@ -235,8 +231,7 @@ INLINE Stable* Spread_Cell(Exact(Stable*) v) {
     assert(Any_List(v));
     Tweak_Cell_Heart(v, HEART_BLOCK_SIGNIFYING_SPLICE);  // forget former type
     Tweak_Cell_Binding(u_cast(Element*, v), UNBOUND);
-    Antiformize_Unbound_Fundamental(v, TYPE_SPLICE);
-    assert(Is_Splice(v));
+    Tweak_Cell_Type_Byte(v, TYPE_SPLICE);
     return v;
 }
 
@@ -248,8 +243,7 @@ INLINE Element* Unsplice_Cell(Stable* v) {
 
 INLINE Stable* Init_Splice_Untracked(Init(Stable) out, const Source* a) {
     Init_Any_List(out, HEART_BLOCK_SIGNIFYING_SPLICE, a);
-    Antiformize_Unbound_Fundamental(out, TYPE_SPLICE);
-    assert(Is_Splice(out));
+    Tweak_Cell_Type_Byte(out, TYPE_SPLICE);
     return out;
 }
 
@@ -296,10 +290,13 @@ INLINE bool Is_None_Core(const Stable* v) {  // SPLICE with no elements [1]
 
 INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
     Init_Any_List_At_Core_Untracked(
-        out, HEART_GROUP_SIGNIFYING_PACK, a, 0, SPECIFIED
+        out,
+        FLAG_TYPE(TYPE_PACK) | FLAG_HEART(HEART_GROUP_SIGNIFYING_PACK),
+        a,
+        0,
+        SPECIFIED
     );
-    Antiformize_Unbound_Fundamental(out, TYPE_PACK);
-    assert(Is_Pack(out));
+    Tweak_Cell_Type_Byte(out, TYPE_PACK);
     return out;
 }
 
@@ -308,7 +305,11 @@ INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
 
 #define Init_Lifted_Pack(out,a) \
     TRACK(Quasify_Isotopic_Fundamental(Init_Any_List_At_Core_Untracked( \
-        (out), HEART_GROUP_SIGNIFYING_PACK, (a), 0, SPECIFIED)))
+        (out), \
+        FLAG_TYPE(TYPE_QUASIFORM) | HEART_GROUP_SIGNIFYING_PACK, \
+        (a), \
+        0, \
+        SPECIFIED)))
 
 
 //=//// "HEAVY VOID" (EMPTY PACK! ANTIFORM) ///////////////////////////////=//
@@ -342,9 +343,12 @@ INLINE bool Is_Heavy_Void_Core(const Value* v) {
 
 INLINE Element* Init_Lifted_Heavy_Void_Untracked(Sink(Element) out) {
     Init_Any_List_At_Core_Untracked(
-        out, HEART_GROUP_SIGNIFYING_PACK, EMPTY_ARRAY, 0, SPECIFIED
+        out,
+        FLAG_TYPE(TYPE_QUASIFORM) | FLAG_HEART(HEART_GROUP_SIGNIFYING_PACK),
+        EMPTY_ARRAY,
+        0,
+        SPECIFIED
     );
-    Quasify_Isotopic_Fundamental(out);
     return out;
 }
 

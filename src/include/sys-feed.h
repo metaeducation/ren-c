@@ -677,7 +677,11 @@ INLINE Result(Feed*) Prep_Array_Feed(
     if (first) {
         feed->p = unwrap first;
         Init_Any_List_At_Core(
-            Feed_Data(feed), HEART_BLOCK, array, index, binding
+            Feed_Data(feed),
+            FLAG_HEART_AND_LIFT(HEART_BLOCK),
+            array,
+            index,
+            binding
         );
     }
     else {
@@ -685,7 +689,11 @@ INLINE Result(Feed*) Prep_Array_Feed(
         if (feed->p == Array_Tail(array))
             feed->p = &g_cell_aligned_end;
         Init_Any_List_At_Core(
-            Feed_Data(feed), HEART_BLOCK, array, index + 1, binding
+            Feed_Data(feed),
+            FLAG_HEART_AND_LIFT(HEART_BLOCK),
+            array,
+            index + 1,
+            binding
         );
     }
 

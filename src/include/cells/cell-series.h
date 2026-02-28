@@ -100,14 +100,28 @@ INLINE Size String_Size_Limit_At(
 //
 INLINE Element* Init_Series_At_Core_Untracked(
     Init(Element) out,
-    Heart heart,
+    Flags flags,  // FLAG_HEART() + FLAG_LIFT()
     const Flex* f,  // ensured managed by calling macro
     Index index,
     Context* binding
 ){
+    Force_Stub_Managed(f);
+
+    Reset_Cell_Header(
+        out,
+        flags
+            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // series stub needs mark
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
+    );
+    SERIESLIKE_PAYLOAD_1_BASE(out) = m_cast(Flex*, f);  // const bit guides extract
+    SERIESLIKE_PAYLOAD_2_INDEX(out) = index;
+
+    out->extra.base = binding;  // checked below if DEBUG_CHECK_BINDING
+
   #if RUNTIME_CHECKS
     Assert_Flex_Term_If_Needed(f);  // even binaries [1]
 
+    Heart heart = Heart_Of_Or_0(out);
     if (Any_List_Heart(heart)) {
         assert(Stub_Flavor(f) == FLAVOR_SOURCE);  // no antiforms [2]
     }
@@ -129,19 +143,6 @@ INLINE Element* Init_Series_At_Core_Untracked(
     }
   #endif
 
-    Force_Stub_Managed(f);
-
-    Reset_Cell_Header(
-        out,
-        FLAG_HEART_AND_LIFT(heart)
-            | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // series stub needs mark
-            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // index shouldn't be marked
-    );
-    SERIESLIKE_PAYLOAD_1_BASE(out) = m_cast(Flex*, f);  // const bit guides extract
-    SERIESLIKE_PAYLOAD_2_INDEX(out) = index;
-
-    out->extra.base = binding;  // checked below if DEBUG_CHECK_BINDING
-
   #if DEBUG_CHECK_BINDING
     if (Is_Cell_Bindable(out))
         Assert_Cell_Binding_Valid(out);
@@ -157,17 +158,14 @@ INLINE Element* Init_Series_At_Core_Untracked(
     }
   #endif
 
-    assert(Heart_Of(out) == opt heart);
-    assert(Type_Of(out) == opt Type_From_Heart(heart));
-
     return out;
 }
 
-#define Init_Series_At_Core(v,t,f,i,s) \
-    TRACK(Init_Series_At_Core_Untracked((v), (t), (f), (i), (s)))
+#define Init_Series_At_Core(v,flags,flex,i,s) \
+    TRACK(Init_Series_At_Core_Untracked((v), (flags), (flex), (i), (s)))
 
-#define Init_Series_At(v,t,f,i) \
-    Init_Series_At_Core((v), (t), (f), (i), UNBOUND)
+#define Init_Series_At(v,h,f,i) \
+    Init_Series_At_Core((v), FLAG_HEART_AND_LIFT(h), (f), (i), UNBOUND)
 
-#define Init_Series(v,t,f) \
-    Init_Series_At((v), (t), (f), 0)
+#define Init_Series(v,h,f) \
+    Init_Series_At((v), (h), (f), 0)

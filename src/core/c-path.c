@@ -94,7 +94,9 @@ Result(Element*) Init_Any_Sequence_At_Listlike(
     // do it is that leaving it as an index allows for aliasing BLOCK! as
     // PATH! from non-head positions.
 
-    return Init_Series_At_Core(out, heart, a, offset, SPECIFIED);
+    return Init_Series_At_Core(
+        out, FLAG_HEART_AND_LIFT(heart), a, offset, SPECIFIED
+    );
 }
 
 

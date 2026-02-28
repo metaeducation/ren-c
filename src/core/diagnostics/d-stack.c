@@ -56,7 +56,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
             Collapsify_Array(copy, limit);
 
             Heart heart = Heart_Of_Builtin_Fundamental(item);  // !!! Quoteds?
-            Init_Any_List_At(item, heart, copy, 0);  // at 0 now
+            Init_Any_List_At(item, heart, copy, 0);
             assert(Not_Cell_Flag(item, NEWLINE_BEFORE));  // gets cleared
         }
     }

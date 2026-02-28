@@ -167,7 +167,9 @@ INLINE Element* Init_Any_String_At_Untracked(
     const Strand* s,
     Index index
 ){
-    return Init_Series_At_Core(out, heart, s, index, UNBOUND);
+    return Init_Series_At_Core(
+        out, FLAG_HEART_AND_LIFT(heart), s, index, UNBOUND
+    );
 }
 
 #define Init_Any_String_At(out,heart,s,index) \
@@ -216,7 +218,7 @@ INLINE bool Is_Tripwire_Core(Value* v)
 
 INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
     Init_Any_String_Untracked(out, HEART_TAG, CANON(QUESTION_1));
-    Antiformize_Unbound_Fundamental(out, TYPE_TRASH);
+    Tweak_Cell_Type_Byte(out, TYPE_TRASH);
     assert(Is_Tripwire(out));
     return out;
 }
@@ -233,8 +235,7 @@ INLINE Value* Init_Labeled_Trash_Untracked(
     const Symbol* label
 ){
     Init_Any_String_Untracked(out, HEART_TAG_SIGNIFYING_TRASH, label);
-    Antiformize_Unbound_Fundamental(out, TYPE_TRASH);
-    assert(Is_Trash(out));
+    Tweak_Cell_Type_Byte(out, TYPE_TRASH);
     return out;
 }
 

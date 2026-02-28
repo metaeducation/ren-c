@@ -364,13 +364,6 @@ INLINE Element* Unquasify(Element* elem) {
     return elem;
 }
 
-INLINE Element* Quasify_Isotopic_Fundamental(Element* v) {
-    assert(Has_Isotopic_Heart(v));
-    assert(Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI);
-    Tweak_Cell_Type_Byte(v, TYPE_QUASIFORM);
-    return v;
-}
-
 INLINE Element* Quasify_Antiform(Exact(Stable*) v) {
     assert(Is_Antiform(v));
     Tweak_Cell_Type_Byte(v, TYPE_QUASIFORM);  // all antiforms can be quasi
@@ -383,23 +376,6 @@ INLINE Element* Reify_If_Antiform(Value* v) {
     assert(Type_Of_Raw(v) != BEDROCK_255);
     Tweak_Cell_Type_Byte(v, TYPE_QUASIFORM);  // all antiforms can become quasi
     return As_Element(v);
-}
-
-
-//=//// ANTIFORMIZE FUNDAMENTALS /////////////////////////////////////////=//
-//
-// !!! Warning: Internal use only, this bypasses typical checks: go through
-// the Coerce_To_Antiform() function instead unless you know what you
-// are doing.
-//
-
-INLINE void Antiformize_Unbound_Fundamental(Value* v, Type lift) {
-    assert(Heart_Of(v) != HEART_WORD_SIGNIFYING_LOGIC);  // no LOGIC_IS_OKAY
-    assert(Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI);
-    possibly(Not_Stable_Antiform_Heart(Heart_Of_Unsigiled_Isotopic(v)));
-    if (Is_Bindable_Heart(Unchecked_Heart_Of(v)))
-        assert(not Cell_Binding(v));
-    Tweak_Cell_Type_Byte(v, lift);
 }
 
 
