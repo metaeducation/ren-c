@@ -27,9 +27,9 @@
 
 INLINE bool Is_Cell_Listlike(const Cell* v) {  // PACK!s are allowed
     // called by core code, sacrifice Readable_Cell() checks
-    if (Any_List_Heart(Heart_Of(v)))
+    if (Has_List_Heart(v))
         return true;
-    if (not Any_Sequence_Heart(Heart_Of(v)))
+    if (not Has_Sequence_Heart(v))
         return false;
     if (not Cell_Payload_1_Needs_Mark(v))
         return false;
@@ -93,7 +93,7 @@ INLINE const Element* List_At(
 ){
     const Base* base = SERIESLIKE_PAYLOAD_1_BASE(cell);
     if (Is_Base_A_Cell(base)) {
-        assert(Any_Sequence_Heart(Heart_Of(cell)));
+        assert(Has_Sequence_Heart(cell));
         const Pairing* p = cast(Pairing*, base);
         if (tail_out)
             *(unwrap tail_out) = Pairing_Tail(p);

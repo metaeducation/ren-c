@@ -365,7 +365,7 @@ INLINE Element* Unquasify(Element* elem) {
 }
 
 INLINE Element* Quasify_Isotopic_Fundamental(Element* v) {
-    assert(Any_Isotopic_Heart(Heart_Of(v)));
+    assert(Has_Isotopic_Heart(v));
     assert(Type_Of_Raw(v) <= MAX_TYPE_NOQUOTE_NOQUASI);
     Tweak_Cell_Type_Byte(v, TYPE_QUASIFORM);
     return v;

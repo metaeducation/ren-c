@@ -333,6 +333,15 @@ for-each 'tr typerange-objects [  ; (e.g. ANY-STRING? < ANY-UTF8?)
                 and ii_cast(Heart, (h)) <= Heart_From_Byte_Or_0($<TR.END>)
             );
         }
+
+        INLINE bool Has_${Proper-Name}_Heart(const Cell* cell) {
+            return (
+                (cell->header.bits & CELL_MASK_HEART_NO_SIGIL)
+                    >= FLAG_HEARTSIGIL_BYTE($<TR.START>)
+                and (cell->header.bits & CELL_MASK_HEART_NO_SIGIL)
+                    <= FLAG_HEARTSIGIL_BYTE($<TR.END>)
+            );
+        }
     ]--]
 ]
 
@@ -374,6 +383,9 @@ for-each [ts-name types] sparse-typesets [
 
         #define Any_${propercase-of Ts-Name}_Heart(h) \
             (logical (g_sparse_memberships[Byte_From_Heart(h)] & TYPESET_FLAG_${TS-NAME}))
+
+        #define Has_${propercase-of Ts-Name}_Heart(h) \
+            (logical (g_sparse_memberships[Byte_From_Heart(Heart_Of(h))] & TYPESET_FLAG_${TS-NAME}))
 
         #define Any_${propercase-of Ts-Name}(cell) \
             Any_${propercase-of Ts-Name}_Type(Type_Of(cell))

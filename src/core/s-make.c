@@ -247,7 +247,7 @@ void Append_Any_Utf8_Limit(
     Option(const Length*) limit
 ){
     assert(not Is_Flex_Frozen(dst));
-    assert(Any_Utf8_Heart(Heart_Of(src)));
+    assert(Has_Utf8_Heart(src));
 
     Length len;
     Size size;

@@ -249,7 +249,7 @@ static bool Subparse_Throws(
     Level* const L,
     Flags flags
 ){
-    assert(Any_Series_Heart(Heart_Of(input)));
+    assert(Has_Series_Heart(input));
 
     Push_Level(Erase_Cell(out), L);
 

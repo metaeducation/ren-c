@@ -76,7 +76,7 @@ INLINE REBLEN Series_Index_Stringlike_Ok(const Cell* v) {
 // unsigned REBLEN.
 //
 INLINE REBLEN Series_Index(const Cell* v) {
-    assert(Any_Series_Heart(Heart_Of(v)));
+    assert(Has_Series_Heart(v));
     return Series_Index_Stringlike_Ok(v);
 }
 

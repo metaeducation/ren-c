@@ -607,7 +607,7 @@ INLINE Result(Stable*) Pop_Sequence_Or_Element_Or_Null(
 // optimized fashion using Refinify()
 
 INLINE Length Sequence_Len(const Cell* c) {
-    assert(Any_Sequence_Heart(Heart_Of(c)));
+    assert(Has_Sequence_Heart(c));
 
     if (not Sequence_Has_Pointer(c)) {  // compressed bytes
         assert(not Cell_Payload_2_Needs_Mark(c));
@@ -739,7 +739,7 @@ INLINE Byte Sequence_Byte_At(const Cell* sequence, REBLEN n) {
 }
 
 INLINE Context* Sequence_Binding(const Element* sequence) {
-    assert(Any_Sequence_Heart(Heart_Of(sequence)));
+    assert(Has_Sequence_Heart(sequence));
 
     // Getting the binding for any of the optimized types means getting
     // the binding for *that item in the sequence*; the sequence itself
@@ -836,7 +836,7 @@ INLINE Element* Init_Get_Word(Init(Element) out, const Symbol* s) {
 
 
 INLINE Option(SingleHeart) Try_Get_Sequence_Singleheart(const Cell* c) {
-    assert(Any_Sequence_Heart(Heart_Of(c)));
+    assert(Has_Sequence_Heart(c));
 
     if (not Sequence_Has_Pointer(c))  // compressed bytes
         return NOT_SINGLEHEART_0;

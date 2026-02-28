@@ -526,7 +526,7 @@ int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 //
 Result(Element*) Unsingleheart_Sequence(Element* seq)
 {
-    assert(Any_Sequence_Heart(Heart_Of(seq)));
+    assert(Has_Sequence_Heart(seq));
     assert(not Sigil_Of(seq));
     assert(Type_Of_Raw(seq) <= MAX_TYPE_NOQUOTE_NOQUASI);
 

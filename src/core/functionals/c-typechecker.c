@@ -556,7 +556,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
 
     if (
         Heart_Of(at) == HEART_WORD  // our hands are tied on the meaning [2]
-        or Any_Sequence_Heart(Heart_Of(at))
+        or Has_Sequence_Heart(at)
     ){
         goto adjust_quote_level_and_run_type_constraint;
     }
@@ -687,7 +687,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
 
     const Symbol* label;
 
-    if (not Any_Sequence_Heart(Heart_Of(at))) {
+    if (not Has_Sequence_Heart(at)) {
         label = Word_Symbol(at);
         goto handle_after_any_quoting_adjustments;
     }
@@ -737,7 +737,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
           Unsingleheart_Sequence(scratch)
         );
     }
-    while (Any_Sequence_Heart(Heart_Of(scratch)));
+    while (Has_Sequence_Heart(scratch));
 
     if (not Is_Word(scratch))
         panic ("Non-WORD! in destructured typespec sequence unsupported ATM");

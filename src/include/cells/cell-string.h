@@ -2,7 +2,7 @@
 
 
 INLINE bool Stringlike_Cell(const Cell* v) {
-    return Any_Utf8_Heart(Heart_Of(v)) and Stringlike_Has_Stub(v);
+    return Has_Utf8_Heart(v) and Stringlike_Has_Stub(v);
 }
 
 INLINE const Strand* Cell_Strand(const Cell* v) {
@@ -43,7 +43,7 @@ INLINE Length Series_Len_At(const Cell* v) {
 }
 
 INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
-    assert(Any_Utf8_Heart(Heart_Of(c)));
+    assert(Has_Utf8_Heart(c));
 
     if (not Cell_Payload_1_Needs_Mark(c))  // must store bytes in cell direct
         return u_cast(Utf8(const*), c->payload.at_least_8);
@@ -68,7 +68,7 @@ INLINE Utf8(const*) String_At(const Cell* v) {
 
 
 INLINE Utf8(const*) Cell_Strand_Tail(const Cell* c) {
-    assert(Any_Utf8_Heart(Heart_Of(c)));
+    assert(Has_Utf8_Heart(c));
 
     if (not Stringlike_Has_Stub(c)) {  // content in cell direct
         Size size = c->extra.at_least_4[IDX_EXTRA_USED];

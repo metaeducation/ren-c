@@ -797,7 +797,7 @@ INLINE Result(Feed*) Prep_At_Feed(
     );
 
     STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);
-    assert(Any_List_Heart(Heart_Of(list)));  // tolerates quasi/quoted [1]
+    assert(Has_List_Heart(list));  // tolerates quasi/quoted [1]
 
     Flags flags = FEED_MASK_DEFAULT
         | (parent_flags & FEED_FLAG_CONST)  // inherit

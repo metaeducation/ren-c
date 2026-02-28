@@ -186,8 +186,8 @@ Result(Codepoint) Back_Scan_Utf8_Char(  // no NUL or substitution chars [1]
 //
 REBINT CT_Utf8(const Element* a, const Element* b, bool strict)
 {
-    assert(Any_Utf8_Heart(Heart_Of(a)));
-    assert(Any_Utf8_Heart(Heart_Of(b)));
+    assert(Has_Utf8_Heart(a));
+    assert(Has_Utf8_Heart(b));
 
     if (Heart_Of(a) == HEART_RUNE or Heart_Of(b) == HEART_RUNE)
         strict = true;  // always true? [1]

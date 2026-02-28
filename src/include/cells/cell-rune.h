@@ -363,7 +363,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
   #endif
 
     if (not Stringlike_Has_Stub(v)) {  // SIGIL!, some RUNE!...
-        assert(not Any_String_Heart(Heart_Of(v)));
+        assert(not Has_String_Heart(v));
 
         REBLEN len;
         Size size;
