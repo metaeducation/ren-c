@@ -842,6 +842,8 @@ Bounce Action_Executor(Level* L)
 
   check_paramlist_layer: { ///////////////////////////////////////////////////
 
+    possibly(phase != Level_Phase(L));
+
     KEY = Phase_Keys(&KEY_TAIL, phase);
     ARG = Level_Args_Head(L);
     PARAM = Phase_Params_Head(phase);
@@ -910,7 +912,7 @@ Bounce Action_Executor(Level* L)
             if (not Is_Varargs(stable))
                 panic (Error_Not_Varargs(L, KEY, PARAM, stable));
 
-            Tweak_Cell_Varargs_Phase(ARG, Level_Phase(L));
+            Tweak_Cell_Varargs_Phase(ARG, phase);
 
             bool infix = false;  // !!! how does infix matter?
             CELL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [3]
