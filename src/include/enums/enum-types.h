@@ -87,25 +87,6 @@ typedef Byte HeartByte;  // value is >= MIN_TYPE_HEART, <= MAX_TYPE_HEART
           { return t; }
     };
 
-    // Disable comparing literally against elements from TypeEnum, e.g.
-    //
-    //     if (heart == TYPE_QUASIFORM) { ... }  // cause an error
-    //
-    // This doesn't stop comparing Type *variables* to Heart variables, which
-    // is ergonomically best to keep valid.
-
-    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator==(const HeartEnum& heart, T&& t) = delete;
-
-    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator==(T&& t, const HeartEnum& heart) = delete;
-
-    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator!=(const HeartEnum& heart, T&& t) = delete;
-
-    ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator!=(T&& t, const HeartEnum& heart) = delete;
-
     // Types cannot be directly compared against each other, because there
     // are a lot of states that represent "TYPE_QUOTED".  We don't want to
     // pay to collapse those states to a canon value on every Type_Of() call,
@@ -113,49 +94,45 @@ typedef Byte HeartByte;  // value is >= MIN_TYPE_HEART, <= MAX_TYPE_HEART
     // function as well as a Same_Types() if you want the expensive check.
     //
     // (LOGIC! is also not canonized, but split into OKAY and NULL states)
-    //
-    // Note: if we actually delete the operators, that will consider them as
-    // candidates in overloads and create conflicts with working comparisons.
-    // So just mentioning it here in a comment.
 
-    /*
-    INLINE bool operator==(const Type& left, const Type& right) = delete;
-    INLINE bool operator!=(const Type& left, const Type& right) = delete;
-    */
+    INLINE bool operator==(Type& left, Type& right) = delete;
+    INLINE bool operator!=(Type& left, Type& right) = delete;
 
-    // Comparisons for TypeEnum and Type; do not permit comparison of Type
-    // variables to each other, but only to TYPE_XXX values.
+    // While Type wrapper classes can't be compared to each other, we allow
+    // them to be compared directly with TYPE_XXX values.  (We need to use
+    // ENABLE_IF_EXACT_ARG_TYPE() to avoid the automatic conversion of Type
+    // to TypeEnum becoming a back door to doing Type-to-Type comparisons.)
 
     ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator>=(const Type& type, T&& t)
+    INLINE bool operator>=(Type& type, T&& t)
       { return type.t >= t; }
 
     ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator>=(T&& t, const Type& type)
+    INLINE bool operator>=(T&& t, Type& type)
       { return t >= type.t; }
 
     ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator<=(const Type& type, T&& t)
+    INLINE bool operator<=(Type& type, T&& t)
       { return type.t <= t; }
 
     ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator<=(T&& t, const Type& type)
+    INLINE bool operator<=(T&& t, Type& type)
       { return t <= type.t; }
 
     ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator>(const Type& type, T&& t)
+    INLINE bool operator>(Type& type, T&& t)
       { return type.t > t; }
 
     ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator>(T&& t, const Type& type)
+    INLINE bool operator>(T&& t, Type& type)
       { return t > type.t; }
 
     ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator<(const Type& type, T&& t)
+    INLINE bool operator<(Type& type, T&& t)
       { return type.t < t; }
 
     ENABLE_IF_EXACT_ARG_TYPE(TypeEnum)
-    INLINE bool operator<(T&& t, const Type& type)
+    INLINE bool operator<(T&& t, Type& type)
       { return t < type.t; }
 
     typedef HeartEnum Heart;
@@ -210,44 +187,24 @@ INLINE bool Is_Logic_Type(Option(Type) type) {
 //    us catch this case at compile time.
 //
 
-#define HEART_0 /* add safety of the Option() [1] */ \
-    u_cast(Option(Heart), HEART_0_constexpr)
+#if (! NEEDFUL_OPTION_USES_WRAPPER)
+    #define HEART_0  HEART_0_constexpr  // [1]
+    #define TYPE_0  TYPE_0_constexpr
+#else
+    #define HEART_0  u_cast(Option(Heart), HEART_0_constexpr)  // [1]
+    #define TYPE_0  u_cast(Option(Type), TYPE_0_constexpr)
 
-#define TYPE_0 /* add safety of the Option() [1] */ \
-    u_cast(Option(Type), TYPE_0_constexpr)
-
-#if NEEDFUL_OPTION_USES_WRAPPER  // make safe for extension types [2]
     ENABLE_IF_EXACT_ARG_TYPE(Option(Type))
-    void operator==(const T&, const T&) = delete;
+    void operator==(const T&, const T&) = delete;  // [2]
 
     ENABLE_IF_EXACT_ARG_TYPE(Option(Type))
     void operator!=(const T&, const T&) = delete;
 
-  #if DEBUG_EXTRA_HEART_CHECKS  // in this mode, Heart is distinct from Type
     ENABLE_IF_EXACT_ARG_TYPE(Option(Heart))
     void operator==(const T&, const T&) = delete;
 
     ENABLE_IF_EXACT_ARG_TYPE(Option(Heart))
     void operator!=(const T&, const T&) = delete;
-
-    #if defined(_MSC_VER)
-        ENABLE_IF_EXACT_ARG_TYPE(Heart)
-        INLINE bool operator==(const Option(Heart)& a, T b)
-          { return ii_cast(Heart, a) == b; }
-
-        ENABLE_IF_EXACT_ARG_TYPE(Heart)
-        INLINE bool operator==(T a, const Option(Heart)& b)
-          { return a == ii_cast(Heart, b); }
-
-        ENABLE_IF_EXACT_ARG_TYPE(Heart)
-        INLINE bool operator!=(const Option(Heart)& a, T b)
-          { return ii_cast(Heart, a) != b; }
-
-        ENABLE_IF_EXACT_ARG_TYPE(Heart)
-        INLINE bool operator!=(T a, const Option(Heart)& b)
-          { return a != ii_cast(Heart, b); }
-    #endif
-  #endif
 #endif
 
 

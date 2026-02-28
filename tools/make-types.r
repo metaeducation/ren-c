@@ -1002,6 +1002,7 @@ e-hearts/emit [rebs --[
 
         ENUM_TYPE_$[Antiforms],
 
+        /* Note: TypesetByte values start here, overlapping w/bedrock states */
         ENUM_TYPE_$[Bedrocks],
 
         ENUM_TYPE_0_constexpr = 0  /* last, can use "[...] << N," cscape */
