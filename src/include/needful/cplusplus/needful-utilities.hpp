@@ -17,18 +17,18 @@
 
 //=//// COMPILE-TIME-ONLY DUMMY CLASS INSTANTIATION ///////////////////////=//
 //
-// The standard guarantees that if a struct/class has no members and only a
-// trivial (defaulted) constructor/destructor, then creating an instance
-// (even as a temporary) is a pure compile-time operation.
+// This uses sizeof() to force the compiler to instantiate a template, in
+// a way that can be used at compile-time.
 //
 // We take advantage of this to create dummy instances of types whose sole
 // job is to do static assertions, without bringing in runtime cost.  This
 // macro documents that we're doing that.
 //
-// 1. Clang complains if you don't cast to void to mark as "used".
+// Note that if for some reason one needs function call semantics for a check,
+// this works with getting the size of that function's return type.
 //
 #define NEEDFUL_DUMMY_INSTANCE(...) \
-    static_cast<void>(__VA_ARGS__{})  /* void cast clang workaround [1] */
+    static_cast<void>(sizeof(__VA_ARGS__))
 
 
 //=//// DUMP TYPE NAME FOR DEBUGGING //////////////////////////////////////=//
