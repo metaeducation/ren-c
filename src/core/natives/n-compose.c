@@ -251,7 +251,11 @@ static Result(Stable*) Finalize_Composer_Level(
 
     if (not Is_Splice(composee))  // preserve binding if not splice
         Tweak_Cell_Binding(list, Cell_Binding(As_Element(composee)));
-    TYPE_BYTE(list) = TYPE_BYTE(composee);  // apply lift byte [4]
+
+    Option(Sigil) sigil = Cell_Underlying_Sigil(As_Element(composee));
+    if (sigil)
+        Add_Cell_Sigil(list, unwrap sigil);
+    Tweak_Cell_Type_Byte(list, Type_Of_Raw(composee));  // apply lift byte [4]
     return out;
 }
 
@@ -387,9 +391,9 @@ Bounce Composer_Executor(Level* const L)
         }
 
         Init_Blank(PUSH());
-        Tweak_Cell_Type_Byte(TOP_ELEMENT, list_lift);
         if (sigil)
             Add_Cell_Sigil(TOP_ELEMENT, unwrap sigil);  // ^ or @ or $
+        Tweak_Cell_Type_Byte(TOP_ELEMENT, list_lift);
 
         goto handle_next_item;
     }
