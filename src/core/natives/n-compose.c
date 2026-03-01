@@ -612,7 +612,7 @@ Bounce Composer_Executor(Level* const L)
 //          space?          ":CONFLATE can make, e.g. ().(_) => _"
 //          quasar?         ":CONFLATE can make, e.g. ('~):() => ~"
 //          ~word!~         ":CONFLATE can make, e.g. ('~)/('~) => ~/~"
-//          <null>
+//          <null>          "if ~(veto)~ encountered"
 //      ]
 //      pattern "Pass @ANY-LIST? (e.g. @{{}}) to use the pattern's binding"
 //          [any-list? @any-list?]
@@ -698,7 +698,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     assert(Is_Logic(As_Stable(OUT)));
 
-    trap (
+    require (
       Finalize_Composer_Level(SUBLEVEL, input, ARG(CONFLATE))
     );
     Drop_Level(SUBLEVEL);
@@ -967,8 +967,10 @@ DECLARE_NATIVE(COMPOSE2)
 
 } string_eval_in_out: { //////////////////////////////////////////////////////
 
-    if (Is_Cell_A_Veto_Hot_Potato(OUT))
+    if (Is_Cell_A_Veto_Hot_Potato(OUT)) {
+        Drop_Data_Stack_To(STACK_BASE);
         return NULL_OUT_VETOING;
+    }
 
     if (Is_Failure(OUT)) {
         Drop_Data_Stack_To(STACK_BASE);

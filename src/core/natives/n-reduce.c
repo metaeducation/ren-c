@@ -136,7 +136,7 @@ DECLARE_NATIVE(HOLE_Q)
 //
 //  "Evaluates expressions, keeping each result in a block, discards voids"
 //
-//      return: [element?]
+//      return: [<null> element?]
 //      value "Lists evaluate each item, single values evaluate"
 //          [element?]
 //      :predicate "Applied after evaluation, default is IDENTITY"
