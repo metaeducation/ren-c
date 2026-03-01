@@ -95,7 +95,8 @@ Bounce Func_Dispatcher(Level* const L)
 
     enum {
         ST_FUNC_INITIAL_ENTRY = STATE_0,
-        ST_FUNC_BODY_EXECUTING
+        ST_FUNC_BODY_EXECUTING,
+        ST_FUNC_RUNNING_RETURN_P
     };
 
     Details* details = Ensure_Level_Details(L);
@@ -124,6 +125,7 @@ Bounce Func_Dispatcher(Level* const L)
     switch (STATE) {
       case ST_FUNC_INITIAL_ENTRY: goto initial_entry;
       case ST_FUNC_BODY_EXECUTING: goto body_finished_without_returning;
+      case ST_FUNC_RUNNING_RETURN_P: goto return_p_finished_without_returning;
       default: assert(false);
     }
 
@@ -228,27 +230,38 @@ Bounce Func_Dispatcher(Level* const L)
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 
-  // 1. If no RETURN is used, we panic and the function call fails.  This is
-  //    an attempt to enforce that if you hooked RETURN, then the hooked
-  //    return has to be used--you can't let a value fall out and bypass
-  //    calling the return.
-  //
-  //    (It may be that we prohibit THROW across a FUNC boundary, as a further
-  //    way of guaranteeing that a hooked RETURN is called if it exists.  This
-  //    would mean people writing custom loop generators would have to use
-  //    LAMBDA instead of FUNC.)
+  // 1. If no RETURN is used, we check the RETURN slot and run whatever
+  //    function is there with no arguments.  If it's not a function, then
+  //    that's considered a panic.
 
-    const Element* param = Returnlike_Parameter_In_Paramlist(
-        Phase_Paramlist(details), SYM_RETURN
-    );
+    Index slot_num = Get_Details_Flag(details, METHODIZED) ? 2 : 1;
 
-    if (Get_Parameter_Flag(param, AUTO_TRASH)) {
-        Init_Trash_Named_From_Level(OUT, L);
-        return OUT;
+    assert(Key_Id(Varlist_Key(L->varlist, slot_num)) == SYM_RETURN_P);
+
+    Cell* return_cell = Required_Arg_Of_Level(L, slot_num);
+    if (Is_Bedrock(return_cell)) {
+        Option(const Symbol*) label = Level_Label(L);
+        panic (Error_Func_No_Return_Raw(label));  // !!! BEDROCK support
     }
 
+    if (not Is_Action(As_Value(return_cell))) {
+        Option(const Symbol*) label = Level_Label(L);
+        panic (Error_Func_No_Return_Raw(label));
+    }
+    Element* return_p = Deactivate_Action(As_Value(return_cell));
+
+    possibly(  // could optimize this case to skip RETURN* call overhead
+        Frame_Phase(return_p) == Frame_Phase(LIB(DEFINITIONAL_RETURN))
+    );
+
+    Disable_Dispatcher_Catching_Of_Throws(L);  // want RETURN* to take over
+    STATE = ST_FUNC_RUNNING_RETURN_P;
+    return CONTINUE(OUT, return_p);
+
+} return_p_finished_without_returning: {  ////////////////////////////////////
+
     Option(const Symbol*) label = Level_Label(L);
-    panic (Error_Func_No_Return_Raw(label));
+    panic (Error_Return_Undivergent_Raw(label));
 }}
 
 

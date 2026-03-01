@@ -501,3 +501,15 @@
     ]
     <unchecked> = foo <unchecked>
 )
+
+(all {
+    foo: func [x] [
+        return*: adapt return*/ [if hole? $value [value: <small>]]
+        if x > 1000 [return <big>]
+    ]
+    <big> = foo 1020
+    <small> = foo 304
+})
+
+~func-no-return~ !! (foo: func [] [return*: <not-a-function>], foo)
+~return-undivergent~ !! (foo: func [] [return*: does [<not-divergent>]], foo)

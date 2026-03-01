@@ -189,7 +189,9 @@ not-related:        "incompatible argument for $1 of $2"
 bad-func-def:       "invalid function definition: $1"
 bad-func-arg:       "function argument $1 is not valid"
 
-func-no-return:     "FUNCTION $1 didn't RETURN (see LAMBDA, PROCEDURE)"
+func-no-return:     "FUNCTION $1 ended but definitional RETURN* not an ACTION!"
+return-undivergent: "FUNCTION $1 definitional RETURN* called but not divergent"
+
 bad-return-type:    "$1 can't RETURN $2 but rather $3"
 
 catch-no-throw:     "CATCH didn't THROW (see ATTEMPT)"
