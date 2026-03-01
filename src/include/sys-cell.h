@@ -908,6 +908,25 @@ INLINE void Tweak_Cell_Type_Byte(Cell* cell, Option(TypeEnum) t) {
             assert(Heart_Of(v) == HEART_FENCE);
             break;
 
+          case TYPE_BEDROCK_HOLE:
+            assert(Heart_Of(v) == HEART_PARAMETER);
+            break;
+
+          case TYPE_BEDROCK_ACCESSOR:
+            assert(Heart_Of(v) == HEART_FRAME);
+            break;
+
+          case TYPE_BEDROCK_DRAIN:
+            assert(Heart_Of(v) == HEART_RUNE);
+            break;
+
+          case TYPE_BEDROCK_ALIAS:
+            assert(Heart_Of(v) == HEART_WORD or Heart_Of(v) == HEART_TUPLE);
+            assert(
+                (v->header.bits & CELL_MASK_SIGIL) == FLAG_SIGIL(SIGIL_META)
+            );
+            break;
+
           default:
             crash ("Unexpected type byte");
         }

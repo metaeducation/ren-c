@@ -955,7 +955,7 @@ bool Typecheck_Use_Toplevel(
         Option(Type) t_test = Datatype_Type(As_Stable(tests));
         Option(Type) t = Type_Of_Possibly_Unstable(v);
         if (t_test)
-            return t == unwrap t_test;  // builtin type, must match
+            return t == ii_cast(TypeEnum, t_test);  // builtin type, must match
         if (t)
             return false;  // non-builtin type can't match builtin type
         return Datatype_Extra_Heart(As_Stable(tests)) == Cell_Extra_Heart(v); }

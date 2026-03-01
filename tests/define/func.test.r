@@ -25,14 +25,11 @@
 (
     describe: lambda [f [frame!]] [
         collect [
-            let m: adjunct-of f
-            keep reify all [m, m.description]
-
             let keep-param: lambda [k [word! ~[return:]~] p [parameter!]] [
                 keep reduce [k (reify p.spec) (reify p.text)]
             ]
             keep-param 'return: (return of f)
-            for-each [key param] f [
+            for-each [key param] f/ [  ; F/ gets PARAMETER!, not nulls (holes)
                 keep-param key param
             ]
         ]
@@ -43,35 +40,31 @@
     (describe func [
         "has no return" a "a" b "b"
     ] []) = [
-        "has no return"
-        [return: ~null~ ~null~]
+        [return: ~null~ "has no return"]
         [a ~null~ "a"]
         [b ~null~ "b"]
     ]
 )(
     (describe func [
-        "has return with no type" return: "returns" a "a" b "b"
+        "has divergent return" return: [] a "a" b "b"
     ] []) = [
-        "has return with no type"
-        [return: ~null~ "returns"]
+        [return: [] "has divergent return"]
         [a ~null~ "a"]
         [b ~null~ "b"]
     ]
 )(
     (describe func [
-        "has return with type" return: [integer!] "returns" a "a" b "b"
+        "has return with type" return: [integer!] a "a" b "b"
     ] []) = [
-        "has return with type"
-        [return: [integer!] "returns"]
+        [return: [integer!] "has return with type"]
         [a ~null~ "a"]
         [b ~null~ "b"]
     ]
 )(
     (describe func [  ; try it without a description
-        return: [integer!] "returns" a "a" :b "b"
+        return: [integer!] a "a" :b "b"
     ] []) = [
-        ~null~
-        [return: [integer!] "returns"]
+        [return: [integer!] ~null~]
         [a ~null~ "a"]
         [b ~null~ "b"]
     ]

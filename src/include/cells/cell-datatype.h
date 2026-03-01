@@ -231,7 +231,7 @@ INLINE bool Have_Same_Type(const Stable* a, const Stable* b) {
         return true;  // all quoted types are same type, regardless of heart
     if (Is_Logic_Type(ta) and Is_Logic_Type(tb))
         return true;  // all logic types are same type, regardless of heart
-    return (opt ta) == (opt tb);
+    return ii_cast(TypeEnum, ta) == ii_cast(TypeEnum, tb);
 }
 
 

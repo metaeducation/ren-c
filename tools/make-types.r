@@ -743,11 +743,11 @@ for-each 't datatype-objects [
 
 save-index: index
 
-min-bedrock: ~
+min-bedrock: ~  ; hole should be minimum (faster TYPE_MAX_PARAM check)
 max-bedrock: ~
 
 for-each name [
-    "bedrock-alias" "bedrock-drain" "bedrock-hole" "bedrock-accessor"
+    "bedrock-hole" "bedrock-alias" "bedrock-drain" "bedrock-accessor"
 ][
     min-bedrock: default [name]
     max-bedrock: name
@@ -1051,6 +1051,8 @@ e-hearts/emit [rebs --[
 
     #define MIN_TYPE_BEDROCK  TYPE_${MIN-BEDROCK}
     #define MAX_TYPE_BEDROCK  TYPE_${MAX-BEDROCK}
+    STATIC_ASSERT(MIN_TYPE_BEDROCK == TYPE_BEDROCK_HOLE);
+    #define MAX_TYPE_PARAM  TYPE_BEDROCK_HOLE
     STATIC_ASSERT(MAX_TYPE_BEDROCK <= Typeenum_From_Byte(255));
 
     /*
