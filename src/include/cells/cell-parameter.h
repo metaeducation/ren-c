@@ -538,8 +538,7 @@ INLINE Element* Init_Unconstrained_Parameter_Untracked(
 
     Reset_Cell_Header(
         out,
-        BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART_AND_LIFT(HEART_PARAMETER)
+        FLAG_HEART_AND_LIFT(HEART_PARAMETER)
             | CELL_FLAG_DONT_MARK_PAYLOAD_1  // spec (starting off null here)
             | CELL_FLAG_DONT_MARK_PAYLOAD_2  // flags, never marked
     );

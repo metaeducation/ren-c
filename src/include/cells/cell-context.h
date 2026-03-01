@@ -56,8 +56,7 @@ INLINE Dual* Init_Context_Cell_Untracked(Init(Dual) out, VarList* vlist) {
     Heart heart = CTX_TYPE(vlist);
     Reset_Cell_Header(
         out,
-        BASE_FLAG_BASE | BASE_FLAG_CELL
-            | FLAG_HEART_AND_LIFT(heart)
+        FLAG_HEART_AND_LIFT(heart)
             | (not CELL_FLAG_DONT_MARK_PAYLOAD_1)  // first is phase/varlist
             | (CELL_FLAG_DONT_MARK_PAYLOAD_2)  // no coupling
     );
