@@ -154,7 +154,8 @@ INLINE bool Try_Init_Small_Utf8_Untracked(
     Length len,
     Size size
 ){
-    assert(size != 0);  // !!! review, this needs work
+    if (size == 0)  // !!! review, this needs work
+        panic (Cell_Error(g_error_illegal_zero_byte));
     assert(
         Any_Utf8_Heart(heart)
         and not Any_String_Heart(heart) and heart != HEART_WORD
