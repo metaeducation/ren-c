@@ -632,7 +632,7 @@ RebolValue* API_rebTrash(const char* label)
     require (
       const Symbol* symbol = Intern_Unsized_Symbol(label)
     );
-    return Init_Labeled_Trash(Alloc_Value(), symbol);
+    return Init_Trash(Alloc_Value(), symbol);
 }
 
 

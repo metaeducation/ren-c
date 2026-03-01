@@ -764,9 +764,9 @@ INLINE Bounce Native_Panic_Result(Level* L, Error* e) {;
 INLINE Value* Init_Trash_Named_From_Level(Sink(Value) out, Level* level_) {
     Option(const Symbol*) label = Level_Label(level_);
     if (label)
-        Init_Labeled_Trash(out, unwrap label);
+        Init_Trash(out, unwrap label);
     else
-        Init_Tripwire_Untracked(out);
+        Init_Tripwire(out);
     return out;
 }
 

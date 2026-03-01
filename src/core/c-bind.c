@@ -789,7 +789,7 @@ DECLARE_NATIVE(LET)
     if (altered) {  // elements altered, can't reuse input block rebound
         assert(Get_Level_Flag(L, LET_IS_SETTING));
         assume (
-          Setify(Init_Any_List(
+          Setify(Init_List(
             where,  // may be SPARE, and vars may point to it
             HEART_BLOCK,
             Pop_Managed_Source_From_Stack(STACK_BASE)
@@ -1592,16 +1592,17 @@ Result(None) Write_Loop_Slot_May_Unbind_Or_Decay(Slot* slot, Value* v)
 //
 //  Assert_Cell_Binding_Valid_Core: C
 //
-void Assert_Cell_Binding_Valid_Core(const Stable* cell)
+void Assert_Cell_Binding_Valid_Core(const Cell* cell)
 {
     Option(Heart) heart = Unchecked_Heart_Of(cell);
-    assert(Is_Bindable_Heart(heart));
+    if (not Is_Bindable_Heart(heart))
+        return;
 
     Context* binding = u_cast(Context*, cell->extra.base);
     if (not binding)
         return;
 
-    assert(not Is_Antiform(cell));  // antiforms should not have bindings
+    assert(Type_Of_Raw(cell) < MIN_TYPE_ANTIFORM);  // no bindings
 
     assert(Is_Base(binding));
     assert(Is_Base_Managed(binding));

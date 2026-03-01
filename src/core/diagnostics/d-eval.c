@@ -96,7 +96,7 @@ void Dump_Level_Location(Level* L)
             Reify_Variadic_Feed_As_Array_Feed(L->feed, truncated);
         }
 
-        Init_Any_List_At_Core(
+        Init_List_At_Core(
             dump,
             FLAG_HEART_AND_LIFT(HEART_BLOCK),
             Level_Array(L),

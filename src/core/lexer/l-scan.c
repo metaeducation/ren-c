@@ -2724,7 +2724,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     if (S->end - 1 != S->begin + 1 + size)
         return fail (Error_Syntax(S, token));
 
-    Init_Any_String(PUSH(), HEART_TAG, s);
+    Init_String(PUSH(), HEART_TAG, s);
     goto lookahead;
 
 } case TOKEN_CONSTRUCT: { ////////////////////////////////////////////////////
@@ -2927,7 +2927,7 @@ static Bounce Scanner_Executor_Core(Level* const L) {
     MISC_SOURCE_LINE(a) = transcode->line;
     Tweak_Link_Filename(a, opt transcode->file);
 
-    Init_Any_List(PUSH(), heart, a);
+    Init_List(PUSH(), heart, a);
 
     if (transcode->at == nullptr)
         goto done;

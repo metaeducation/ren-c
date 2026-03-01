@@ -82,11 +82,11 @@ INLINE const Byte* Blob_Size_At(Option(Sink(Size)) size_at, const Cell* cell)
 #define Blob_At_Known_Mutable(v) \
     m_cast(Byte*, Blob_At(Known_Mutable(v)))
 
-#define Init_Blob(out,blob) \
-    Init_Series((out), HEART_BLOB, (blob))
-
 #define Init_Blob_At(out,blob,offset) \
     Init_Series_At((out), HEART_BLOB, (blob), (offset))
+
+#define Init_Blob(out,blob) \
+    Init_Blob_At((out), (blob), 0)
 
 
 //=//// GLOBAL BINARIES //////////////////////////////////////////////////=//

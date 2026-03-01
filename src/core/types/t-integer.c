@@ -341,7 +341,7 @@ IMPLEMENT_GENERIC(TO, Is_Integer)
             s = Pop_Molded_Strand(mo);
             Freeze_Flex(s);
         }
-        return Init_Any_String(OUT, to, s);
+        return Init_String(OUT, to, s);
     }
 
     if (Any_List_Heart(to))

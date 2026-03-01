@@ -141,26 +141,25 @@ INLINE const Element* List_Item_At(const Cell* cell) {
 // Declaring as inline with type signature ensures you use a Source* to
 // initialize.
 
-#define Init_Any_List_At_Core_Untracked(out,flags,array,index,binding) \
-    Init_Series_At_Core_Untracked( \
-        (out), \
-        exactly(uintptr_t, (flags)), \
-        known(Source*, (array)), \
+
+#define Init_List_At_Core(out,flags,array,index,binding) \
+    Init_Series_At_Core( \
+        (out), (flags), known(Source*, (array)), (index), (binding))
+
+#define Init_List_At(out,heart,array,index) \
+    x_cast(Element*, Init_List_At_Core( \
+        rigid_x_cast_known(Init(Element), (out)), \
+        FLAG_HEART_AND_LIFT(heart), \
+        (array), \
         (index), \
-        (binding))
+        UNBOUND))
 
-#define Init_Any_List_At_Core(v,flags,a,i,b) \
-    TRACK(Init_Any_List_At_Core_Untracked((v), (flags), (a), (i), (b)))
+#define Init_List(out,heart,array) \
+    Init_List_At((out), (heart), (array), 0)
 
-#define Init_Any_List_At(v,h,a,i) \
-    Init_Any_List_At_Core((v), FLAG_HEART_AND_LIFT(h), (a), (i), UNBOUND)
-
-#define Init_Any_List(v,h,a) \
-    Init_Any_List_At((v), (h), (a), 0)
-
-#define Init_Block(v,a)     Init_Any_List((v), HEART_BLOCK, (a))
-#define Init_Group(v,a)     Init_Any_List((v), HEART_GROUP, (a))
-#define Init_Fence(v,a)     Init_Any_List((v), HEART_FENCE, (a))
+#define Init_Block(out,array)     Init_List((out), HEART_BLOCK, (array))
+#define Init_Group(out,array)     Init_List((out), HEART_GROUP, (array))
+#define Init_Fence(out,array)     Init_List((out), HEART_FENCE, (array))
 
 
 INLINE Element* Init_Relative_Block_At(
@@ -227,6 +226,26 @@ INLINE Element* Init_Relative_Block_At(
 //    The tradeoff in using none is that it is "truthy".
 //
 
+#define Init_Splice(out,a) \
+    x_cast(Stable*, Init_List_At_Core( \
+        rigid_x_cast_known(Init(Stable), (out)), \
+        FLAG_TYPE(TYPE_SPLICE) | FLAG_HEART(HEART_BLOCK_SIGNIFYING_SPLICE), \
+        (a), 0, UNBOUND))
+
+#define Init_None(out) \
+    Init_Splice((out), EMPTY_ARRAY)
+
+INLINE bool Is_None_Core(const Stable* v) {  // SPLICE with no elements [1]
+    if (not Is_Splice(v))
+        return false;
+    const Element* tail;
+    const Element* at = List_At(&tail, v);
+    return tail == at;
+}
+
+#define Is_None(v) \
+    Is_None_Core(Possibly_Antiform(v))
+
 INLINE Stable* Spread_Cell(Exact(Stable*) v) {
     assert(Any_List(v));
     Tweak_Cell_Heart(v, HEART_BLOCK_SIGNIFYING_SPLICE);  // forget former type
@@ -241,36 +260,13 @@ INLINE Element* Unsplice_Cell(Stable* v) {
     return As_Element(v);
 }
 
-INLINE Stable* Init_Splice_Untracked(Init(Stable) out, const Source* a) {
-    Init_Any_List(out, HEART_BLOCK_SIGNIFYING_SPLICE, a);
-    Tweak_Cell_Type_Byte(out, TYPE_SPLICE);
-    return out;
-}
-
-#define Init_Splice(out,a) \
-    TRACK(Init_Splice_Untracked((out), (a)))
-
-INLINE bool Is_None_Core(const Stable* v) {  // SPLICE with no elements [1]
-    if (not Is_Splice(v))
-        return false;
-    const Element* tail;
-    const Element* at = List_At(&tail, v);
-    return tail == at;
-}
-
-#define Is_None(v) \
-    Is_None_Core(Possibly_Antiform(v))
-
-#define Init_None(out) \
-    TRACK(Init_Splice_Untracked((out), EMPTY_ARRAY))
-
 
 //=//// PACK! (GROUP! Antiforms) //////////////////////////////////////////=//
 //
 // GROUP! antiforms are known as PACK!, and used as a mechanism for bundling
 // values so they can be passed as a single value.  They are leveraged in
-// particular for multi-return, because a SET-WORD! will unpack only the
-// first item, while a SET-BLOCK! will unpack others.
+// particular for multi-return, because SET of WORD! will unpack only the
+// first item, while a SET of BLOCK! will unpack others.
 //
 //      >> pack [<a> <b>]
 //      == \~('<a> '<b>)~\  ; antiform (pack!)
@@ -288,28 +284,17 @@ INLINE bool Is_None_Core(const Stable* v) {  // SPLICE with no elements [1]
 //      == <b>
 //
 
-INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
-    Init_Any_List_At_Core_Untracked(
-        out,
-        FLAG_TYPE(TYPE_PACK) | FLAG_HEART(HEART_GROUP_SIGNIFYING_PACK),
-        a,
-        0,
-        SPECIFIED
-    );
-    Tweak_Cell_Type_Byte(out, TYPE_PACK);
-    return out;
-}
+#define Init_Pack(out,array) \
+    x_cast(Value*, Init_List_At_Core( \
+        rigid_x_cast_known(Init(Value), (out)), \
+        FLAG_TYPE(TYPE_PACK) | FLAG_HEART(HEART_GROUP_SIGNIFYING_PACK), \
+        (array), 0, UNBOUND))
 
-#define Init_Pack(out,a) \
-    TRACK(Init_Pack_Untracked((out), (a)))
-
-#define Init_Lifted_Pack(out,a) \
-    TRACK(Quasify_Isotopic_Fundamental(Init_Any_List_At_Core_Untracked( \
-        (out), \
-        FLAG_TYPE(TYPE_QUASIFORM) | HEART_GROUP_SIGNIFYING_PACK, \
-        (a), \
-        0, \
-        SPECIFIED)))
+#define Init_Lifted_Pack(out,array) \
+    x_cast(Element*, Init_List_At_Core( \
+        rigid_x_cast_known(Init(Element), (out)), \
+        FLAG_TYPE(TYPE_QUASIFORM) | FLAG_HEART(HEART_GROUP_SIGNIFYING_PACK), \
+        (array), 0, UNBOUND))
 
 
 //=//// "HEAVY VOID" (EMPTY PACK! ANTIFORM) ///////////////////////////////=//
@@ -324,11 +309,11 @@ INLINE Value* Init_Pack_Untracked(Init(Value) out, const Source* a) {
 // for representing "no value".  This is covered by ANY-VOID?
 //
 
-#define Init_Heavy_Void_Untracked(out) \
-    Init_Pack_Untracked((out), EMPTY_ARRAY)  // Copy_Cell(LIB(HEAVY_VOID))?
-
 #define Init_Heavy_Void(out) \
-    TRACK(Init_Heavy_Void_Untracked(out))
+    Init_Pack((out), EMPTY_ARRAY)  // Copy_Cell(LIB(HEAVY_VOID))?
+
+#define Init_Lifted_Heavy_Void(out) \
+    Init_Lifted_Pack((out), EMPTY_ARRAY)
 
 INLINE bool Is_Heavy_Void_Core(const Value* v) {
     if (not Is_Pack(v))
@@ -340,20 +325,6 @@ INLINE bool Is_Heavy_Void_Core(const Value* v) {
 
 #define Is_Heavy_Void(v) \
     Is_Heavy_Void_Core(Possibly_Unstable(v))
-
-INLINE Element* Init_Lifted_Heavy_Void_Untracked(Sink(Element) out) {
-    Init_Any_List_At_Core_Untracked(
-        out,
-        FLAG_TYPE(TYPE_QUASIFORM) | FLAG_HEART(HEART_GROUP_SIGNIFYING_PACK),
-        EMPTY_ARRAY,
-        0,
-        SPECIFIED
-    );
-    return out;
-}
-
-#define Init_Lifted_Heavy_Void(out) \
-    TRACK(Init_Lifted_Heavy_Void_Untracked((out)))
 
 INLINE bool Is_Lifted_Heavy_Void(const Stable* v) {
     if (not Is_Lifted_Pack(v))

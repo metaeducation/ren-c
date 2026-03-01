@@ -559,7 +559,7 @@ IMPLEMENT_GENERIC(TO, Is_Blob)
     if (Any_String_Heart(to)) {  // (to text! binary) questionable [1]
         Size size;
         const Byte* at = Blob_Size_At(&size, v);
-        return Init_Any_String(
+        return Init_String(
             OUT,
             to,
             Append_UTF8_May_Panic(nullptr, s_cast(at), size, STRMODE_NO_CR)
@@ -679,10 +679,10 @@ Result(Element*) Alias_Blob_As(
         }
 
         if (Any_String_Heart(as))
-            return Init_Any_String_At(out, as, str, index);
+            return Init_String_At(out, as, str, index);
 
         DECLARE_ELEMENT (string);
-        Init_Any_String_At(string, HEART_TEXT, str, index);
+        Init_String_At(string, HEART_TEXT, str, index);
 
         return Alias_Any_String_As(out, string, as);
     }

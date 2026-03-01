@@ -161,29 +161,20 @@ INLINE Size String_Byte_Offset_For_Index(const Cell* cell, Index index)
 // Declaring as inline with type signature ensures you use a Strand* to
 // initialize.
 
-INLINE Element* Init_Any_String_At_Untracked(
-    Init(Element) out,
-    Heart heart,
-    const Strand* s,
-    Index index
-){
-    return Init_Series_At_Core(
-        out, FLAG_HEART_AND_LIFT(heart), s, index, UNBOUND
-    );
-}
+#define Init_String_At(out,heart,strand,index) \
+    x_cast(Element*, Init_Series_At_Core( \
+        rigid_x_cast_known(Init(Element), (out)), \
+        FLAG_HEART_AND_LIFT(heart), \
+        known(Strand*, (strand)), \
+        (index), \
+        UNBOUND))
 
-#define Init_Any_String_At(out,heart,s,index) \
-    TRACK(Init_Any_String_At_Untracked((out), (heart), (s), (index)))
+#define Init_String(out,heart,strand) \
+    Init_String_At((out), (heart), (strand), 0)
 
-#define Init_Any_String_Untracked(out,heart,s) \
-    Init_Any_String_At_Untracked((out), (heart), (s), 0)
-
-#define Init_Any_String(out,heart,s) \
-    TRACK(Init_Any_String_Untracked((out), (heart), (s)))
-
-#define Init_Text(v,s)      Init_Any_String((v), HEART_TEXT, (s))
-#define Init_File(v,s)      Init_Any_String((v), HEART_FILE, (s))
-#define Init_Tag(v,s)       Init_Any_String((v), HEART_TAG, (s))
+#define Init_Text(out,strand)      Init_String((out), HEART_TEXT, (strand))
+#define Init_File(out,strand)      Init_String((out), HEART_FILE, (strand))
+#define Init_Tag(out,strand)       Init_String((out), HEART_TAG, (strand))
 
 
 INLINE Element* Textify_Any_Utf8(Element* any_utf8) {  // always works
@@ -203,41 +194,35 @@ INLINE Element* Textify_Any_Utf8(Element* any_utf8) {  // always works
 // rules for discardability, so you can use them as a kind of "middle-of-line"
 // comment in evaluative contexts.
 //
-// Once upon a time `~` was a trash state.  But now that's the quasiform of
-// BLANK! and used for VOID!.  Since a minimal trash has to be a valid TAG!,
-// `~<>~` isn't a candidate (as that is a QUASI-WORD!).  To keep code working
-// that depends on a minimal trash, we pick `(var: ~<?>~)` because ? is a
-// WORD! symbol and is thus cheap and on hand.  But review this idea.
-//
+// 1. Since a minimal trash has to be a valid TAG!, `~<>~` isn't a candidate
+//    (as that is a QUASI-WORD!).  To keep code working that depends on a
+//    minimal trash, we pick `(var: ~<?>~)` because ? is a WORD! symbol and
+//    is thus cheap and on hand.  But review this idea.
+
+#define Init_Trash(out,label) \
+    x_cast(Value*, Init_Series_At_Core( \
+        rigid_x_cast_known(Init(Value), (out)), \
+        FLAG_TYPE(TYPE_TRASH) | FLAG_HEART(HEART_TAG_SIGNIFYING_TRASH), \
+        known(const Symbol*, (label)), \
+        0, \
+        UNBOUND))
+
+#define Init_Lifted_Trash(out,label) \
+    x_cast(Element*, Init_Series_At_Core( \
+        rigid_x_cast_known(Init(Element), (out)), \
+        FLAG_TYPE(TYPE_QUASIFORM) | FLAG_HEART(HEART_TAG_SIGNIFYING_TRASH), \
+        known(const Symbol*, (label)), \
+        0, \
+        UNBOUND))
+
+#define Init_Tripwire(out)  /* ~<?>~ trash! [1] */ \
+    Init_Trash((out), CANON(QUESTION_1))
+
+#define Init_Lifted_Tripwire(out) \
+    Init_Lifted_Trash((out), CANON(QUESTION_1))
 
 INLINE bool Is_Tripwire_Core(Value* v)
   { return Is_Trash(v) and Cell_Strand(v) == CANON(QUESTION_1); }
 
 #define Is_Tripwire(v) \
     Is_Tripwire_Core(Possibly_Unstable(v))
-
-INLINE Value* Init_Tripwire_Untracked(Init(Value) out) {
-    Init_Any_String_Untracked(out, HEART_TAG, CANON(QUESTION_1));
-    Tweak_Cell_Type_Byte(out, TYPE_TRASH);
-    assert(Is_Tripwire(out));
-    return out;
-}
-
-#define Init_Tripwire(out) \
-    TRACK(Init_Tripwire_Untracked(out))
-
-#define Init_Lifted_Tripwire(out) \
-    Init_Quasar(out)
-
-
-INLINE Value* Init_Labeled_Trash_Untracked(
-    Init(Value) out,
-    const Symbol* label
-){
-    Init_Any_String_Untracked(out, HEART_TAG_SIGNIFYING_TRASH, label);
-    Tweak_Cell_Type_Byte(out, TYPE_TRASH);
-    return out;
-}
-
-#define Init_Labeled_Trash(out, label) \
-    TRACK(Init_Labeled_Trash_Untracked((out), (label)))

@@ -521,7 +521,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         Offset index = truncated ? 2 : 1;  // skip --optimized-out--
 
         Source* a = Pop_Managed_Source_From_Stack(base);
-        Init_Any_List_At(Feed_Data(feed), HEART_BLOCK, a, index);
+        Init_List_At(Feed_Data(feed), HEART_BLOCK, a, index);
 
         // need to be sure feed->p isn't invalid... and not end
 
@@ -546,10 +546,10 @@ void Reify_Variadic_Feed_As_Array_Feed(
             Init_Quasi_Word(PUSH(), CANON(OPTIMIZED_OUT));
 
             Source* a = Pop_Managed_Source_From_Stack(base);
-            Init_Any_List_At(Feed_Data(feed), HEART_BLOCK, a, 1);
+            Init_List_At(Feed_Data(feed), HEART_BLOCK, a, 1);
         }
         else
-            Init_Any_List_At(Feed_Data(feed), HEART_BLOCK, EMPTY_ARRAY, 0);
+            Init_List_At(Feed_Data(feed), HEART_BLOCK, EMPTY_ARRAY, 0);
 
         feed->p = &g_cell_aligned_end;
     }

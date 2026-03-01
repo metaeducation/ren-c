@@ -188,7 +188,7 @@ Result(Element*) Alias_Any_Word_As(
     }
 
     if (Any_String_Heart(as))  // will be an immutable string
-        return Init_Any_String(out, as, Word_Symbol(word));
+        return Init_String(out, as, Word_Symbol(word));
 
     if (as == HEART_RUNE) {  // immutable (note no EMAIL! or URL! possible)
         const Symbol* s = Word_Symbol(word);
@@ -201,7 +201,7 @@ Result(Element*) Alias_Any_Word_As(
         )){
             return out;
         }
-        return Init_Any_String(out, as, s);
+        return Init_String(out, as, s);
     }
 
     if (as == HEART_BLOB)  // will be an immutable blob

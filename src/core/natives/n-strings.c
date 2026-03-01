@@ -644,7 +644,7 @@ DECLARE_NATIVE(JOIN)
         Init_Word(OUT, s);
     }
     else if (Any_String_Heart(heart)) {
-        Init_Any_String(OUT, heart, Pop_Molded_Strand(mo));
+        Init_String(OUT, heart, Pop_Molded_Strand(mo));
     }
     else if (heart == HEART_RUNE) {
         Init_Utf8_Non_String(OUT, heart, utf8, size, len);
@@ -775,7 +775,7 @@ DECLARE_NATIVE(JOIN)
     }
     else {
         Source* a = Pop_Managed_Source_From_Stack(STACK_BASE);
-        Init_Any_List(out, heart, a);
+        Init_List(out, heart, a);
     }
 
     if (not joining_datatype)
@@ -941,7 +941,7 @@ DECLARE_NATIVE(ENHEX)
         }
     }
 
-    return Init_Any_String(
+    return Init_String(
         OUT,
         Heart_Of_Builtin_Fundamental(string),
         Pop_Molded_Strand(mo)
@@ -1051,7 +1051,7 @@ DECLARE_NATIVE(DEHEX)
         Append_Codepoint(mo->strand, decoded);
     }
 
-    return Init_Any_String(
+    return Init_String(
         OUT,
         Heart_Of_Builtin_Fundamental(string),
         Pop_Molded_Strand(mo)
@@ -1304,7 +1304,7 @@ DECLARE_NATIVE(ENTAB)
     }
 
     Heart heart = Heart_Of_Builtin_Fundamental(string);
-    return Init_Any_String(OUT, heart, Pop_Molded_Strand(mo));
+    return Init_String(OUT, heart, Pop_Molded_Strand(mo));
 }
 
 
@@ -1365,7 +1365,7 @@ DECLARE_NATIVE(DETAB)
     }
 
     Heart heart = Heart_Of_Builtin_Fundamental(string);
-    return Init_Any_String(OUT, heart, Pop_Molded_Strand(mo));
+    return Init_String(OUT, heart, Pop_Molded_Strand(mo));
 }
 
 

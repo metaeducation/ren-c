@@ -285,7 +285,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
         Set_Flex_Len(a, 1);
         Copy_Cell(Array_Head(a), seq);
         Clear_Cell_Sigil(Array_Head(a));  // to block! @a.b.c -> [a.b.c]
-        return Init_Any_List(OUT, to, a);
+        return Init_List(OUT, to, a);
     }
 
     if (Any_Utf8_Heart(to) and to != HEART_WORD) {
@@ -296,7 +296,7 @@ IMPLEMENT_GENERIC(TO, Any_Sequence)
         const Strand* s = Pop_Molded_Strand(mo);
         if (not Any_String_Heart(to))
             Freeze_Flex(s);
-        return Init_Any_String(OUT, to, s);
+        return Init_String(OUT, to, s);
     }
 
     panic (UNHANDLED);
@@ -363,7 +363,7 @@ Result(Element*) Alias_Any_Sequence_As(
             Offset i;
             for (i = 0; i < len; ++i)
                 Copy_Sequence_At(Array_At(a, i), seq, i);
-            return Init_Any_List(out, as, a);
+            return Init_List(out, as, a);
         }
 
         const Base* payload1 = CELL_PAYLOAD_1(seq);
@@ -375,7 +375,7 @@ Result(Element*) Alias_Any_Sequence_As(
             Copy_Cell_May_Bind(Array_At(a, 0), Pairing_First(p), binding);
             Copy_Cell_May_Bind(Array_At(a, 1), Pairing_Second(p), binding);
             Freeze_Source_Shallow(a);
-            Init_Any_List(out, as, a);
+            Init_List(out, as, a);
         }
         else switch (Stub_Flavor(cast(Flex*, payload1))) {
           case FLAVOR_SYMBOL: {
@@ -392,7 +392,7 @@ Result(Element*) Alias_Any_Sequence_As(
                 Init_Blank(Array_At(a, 1));
             }
             Freeze_Source_Shallow(a);
-            Init_Any_List(out, as, a);
+            Init_List(out, as, a);
             break; }
 
           case FLAVOR_SOURCE: {
@@ -412,7 +412,7 @@ Result(Element*) Alias_Any_Sequence_As(
                 }
                 Tweak_Cell_Type_Matching_Heart(tweak, unwrap mirror);
                 Clear_Cell_Flag(tweak, LEADING_BLANK);
-                Init_Any_List(out, as, two);
+                Init_List(out, as, two);
             }
             else {
                 assert(Is_Source_Frozen_Shallow(a));

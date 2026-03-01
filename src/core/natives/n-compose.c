@@ -247,7 +247,7 @@ static Result(Stable*) Finalize_Composer_Level(
     if (Get_Source_Flag(Cell_Array(composee), NEWLINE_AT_TAIL))
         Set_Source_Flag(a, NEWLINE_AT_TAIL);  // proxy newline flag [3]
 
-    Element* list = Init_Any_List(out, heart, a);
+    Element* list = Init_List(out, heart, a);
 
     if (not Is_Splice(composee))  // preserve binding if not splice
         Tweak_Cell_Binding(list, Cell_Binding(As_Element(composee)));

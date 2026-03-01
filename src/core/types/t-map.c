@@ -823,7 +823,7 @@ IMPLEMENT_GENERIC(TO, Is_Map) {
     Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
     if (Any_List_Heart(to))  // !!! not ordered! [1]
-        return Init_Any_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
+        return Init_List(OUT, to, Map_To_Array(VAL_MAP(map), 0));
 
     if (to == HEART_MAP) {
         bool deep = false;

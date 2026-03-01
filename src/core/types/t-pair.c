@@ -260,7 +260,7 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
         Set_Flex_Len(a, 2);
         Copy_Cell(Array_At(a, 0), Cell_Pair_First(v));
         Copy_Cell(Array_At(a, 1), Cell_Pair_Second(v));
-        return Init_Any_List(OUT, to, a);
+        return Init_List(OUT, to, a);
     }
 
     if (Any_String_Heart(to) or to == HEART_RUNE) {
@@ -270,7 +270,7 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
         Append_Codepoint(mo->strand, ' ');
         Mold_Element(mo, Cell_Pair_Second(v));
         if (Any_String_Heart(to))
-            return Init_Any_String(OUT, to, Pop_Molded_Strand(mo));
+            return Init_String(OUT, to, Pop_Molded_Strand(mo));
 
         if (Try_Init_Small_Utf8_Untracked(
             OUT,
@@ -283,7 +283,7 @@ IMPLEMENT_GENERIC(TO, Is_Pair)
         }
         Strand* s = Pop_Molded_Strand(mo);
         Freeze_Flex(s);
-        return Init_Any_String(OUT, to, s);
+        return Init_String(OUT, to, s);
     }
 
     panic (UNHANDLED);

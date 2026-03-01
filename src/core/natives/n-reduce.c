@@ -319,7 +319,7 @@ DECLARE_NATIVE(REDUCE)
     if (Get_Source_Flag(Cell_Array(v), NEWLINE_AT_TAIL))
         Set_Source_Flag(a, NEWLINE_AT_TAIL);
 
-    Element* out = Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(v), a);
+    Element* out = Init_List(OUT, Heart_Of_Builtin_Fundamental(v), a);
 
     dont(Tweak_Cell_Binding(out, Cell_Binding(v)));  // [1]
     UNUSED(out);

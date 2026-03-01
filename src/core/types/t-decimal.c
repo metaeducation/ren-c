@@ -501,7 +501,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
         }
 
         if (Any_String_Heart(to))
-            return Init_Any_String(OUT, to, Pop_Molded_Strand(mo));
+            return Init_String(OUT, to, Pop_Molded_Strand(mo));
 
         if (Try_Init_Small_Utf8(
             OUT,
@@ -515,7 +515,7 @@ IMPLEMENT_GENERIC(TO, Is_Decimal)
         }
         const Strand* s = Pop_Molded_Strand(mo);
         Freeze_Flex(s);
-        return Init_Any_String(OUT, to, s);
+        return Init_String(OUT, to, s);
     }
 
     if (to == HEART_DECIMAL or to == HEART_PERCENT)

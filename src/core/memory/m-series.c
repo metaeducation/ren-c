@@ -211,7 +211,7 @@ Result(Flex*) Copy_Flex_Core(Flags flags, const Flex* f)
 // Note: This cannot be used to make a series that will be used in a string
 // *unless* you are sure that the copy is on a correct UTF-8 codepoint
 // boundary.  This is a low-level routine, so the caller must fix up the
-// length information, or Init_Any_String() will complain.
+// length information, or Init_String() will complain.
 //
 Result(Flex*) Copy_Flex_At_Len_Extra(
     Flags flags,

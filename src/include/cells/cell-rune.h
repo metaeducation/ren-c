@@ -201,7 +201,7 @@ INLINE Element* Init_Utf8_Non_String(
     Strand* str = Make_Sized_Strand_UTF8(s_cast(utf8), size);
     assert(Strand_Len(str) == len);  // ^-- revalidates :-/ should match
     Freeze_Flex(str);
-    Init_Any_String(out, heart, str);
+    Init_String(out, heart, str);
     return out;
 }
 
@@ -227,7 +227,7 @@ INLINE Element* Init_Utf8_Non_String_From_Strand(
     if (Try_Init_Small_Utf8_Untracked(out, heart, utf8, len, size))
         return out;
 
-    return Init_Any_String(out, heart, strand);
+    return Init_String(out, heart, strand);
 }
 
 // If you know that a codepoint is good (e.g. it came from an ANY-STRING?)

@@ -2239,7 +2239,7 @@ DECLARE_NATIVE(SUBPARSE)
                     // distinction (which Rebol2 did not).  But don't keep
                     // SET-XXX! or GET-XXX! (like how quoting is not kept)
                     //
-                    Init_Any_List(
+                    Init_List(
                         OUT,
                         P_HEART == HEART_GROUP ? HEART_GROUP : HEART_BLOCK,
                         Copy_Source_At_Max_Shallow(

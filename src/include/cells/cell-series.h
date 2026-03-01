@@ -98,9 +98,9 @@ INLINE Size String_Size_Limit_At(
 //    want to interpret the LINK as a filename and the MISC as a line number.
 //    That's contentious with other array forms' purposes for LINK and MISC.
 //
-INLINE Element* Init_Series_At_Core_Untracked(
-    Init(Element) out,
-    Flags flags,  // FLAG_HEART() + FLAG_LIFT()
+INLINE Cell* Init_Series_At_Core_Untracked(
+    Cell* out,
+    Flags flags,  // FLAG_HEART() + FLAG_LIFT(), possibly unstable
     const Flex* f,  // ensured managed by calling macro
     Index index,
     Context* binding
@@ -144,10 +144,7 @@ INLINE Element* Init_Series_At_Core_Untracked(
   #endif
 
   #if DEBUG_CHECK_BINDING
-    if (Is_Cell_Bindable(out))
-        Assert_Cell_Binding_Valid(out);
-    else
-        assert(binding == nullptr);  // all non-bindables use nullptr for now
+    Assert_Cell_Binding_Valid(out);
   #endif
 
   #if RUNTIME_CHECKS  // if non-string UTF-8 fits in cell, should be in cell
@@ -161,11 +158,14 @@ INLINE Element* Init_Series_At_Core_Untracked(
     return out;
 }
 
-#define Init_Series_At_Core(v,flags,flex,i,s) \
-    TRACK(Init_Series_At_Core_Untracked((v), (flags), (flex), (i), (s)))
+#define Init_Series_At_Core(out,flags,flex,index,binding) \
+    TRACK(Init_Series_At_Core_Untracked( \
+        (out), exactly(uintptr_t, (flags)), (flex), (index), (binding)))
 
-#define Init_Series_At(v,h,f,i) \
-    Init_Series_At_Core((v), FLAG_HEART_AND_LIFT(h), (f), (i), UNBOUND)
+#define Init_Series_At(out,heart,flex,index) \
+    x_cast(Element*, Init_Series_At_Core( \
+        rigid_x_cast_known(Init(Element), (out)), \
+        FLAG_HEART_AND_LIFT(heart), (flex), (index), UNBOUND))
 
-#define Init_Series(v,h,f) \
-    Init_Series_At((v), (h), (f), 0)
+#define Init_Series(out,heart,flex) \
+    Init_Series_At((out), (heart), (flex), 0)

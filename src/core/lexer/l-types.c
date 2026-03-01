@@ -948,7 +948,7 @@ Result(const Byte*) Scan_Email_To_Stack(const Byte* cp, REBLEN len)
     DROP();  // didn't write, try again (stack may have moved...!)
 
     Freeze_Flex(s);
-    Init_Any_String(PUSH(), HEART_EMAIL, s);
+    Init_String(PUSH(), HEART_EMAIL, s);
     return cp;
 }
 
@@ -1028,7 +1028,7 @@ Option(const Byte*) Try_Scan_URL_To_Stack(const Byte* cp, REBLEN len)
     DROP();  // didn't write, try again (stack may have moved...!)
 
     Freeze_Flex(s);
-    Init_Any_String(PUSH(), HEART_URL, s);
+    Init_String(PUSH(), HEART_URL, s);
 
     return cp + len;
 }

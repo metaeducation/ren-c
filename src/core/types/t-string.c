@@ -285,7 +285,7 @@ static void Reverse_Strand(Strand* str, Index index, Length len)
         Init_Text(temp, Pop_Molded_Strand(mo));
 
         DECLARE_ELEMENT (string);  // !!! Temp value, string type is irrelevant
-        Init_Any_String_At(string, HEART_TEXT, str, index);
+        Init_String_At(string, HEART_TEXT, str, index);
         require(
           Length tail = Modify_String_Or_Blob(
             string,
@@ -327,7 +327,7 @@ IMPLEMENT_GENERIC(MAKE, Any_String)
         require (
           Strand* strand = Make_Strand(Int32s(def, 0))
         );
-        return Init_Any_String(OUT, heart, strand);
+        return Init_String(OUT, heart, strand);
     }
 
     return fail (Error_Bad_Make(heart, def));
@@ -351,7 +351,7 @@ DECLARE_NATIVE(TO_TEXT)
     if (Is_Blob(ARG(VALUE)) and ARG(RELAX)) {
         Size size;
         const Byte* at = Blob_Size_At(&size, ARG(VALUE));
-        return Init_Any_String(
+        return Init_String(
             OUT,
             HEART_TEXT,
             Append_UTF8_May_Panic(
@@ -1057,7 +1057,7 @@ IMPLEMENT_GENERIC(COPY, Any_String)
     require (
       Strand* copy = Copy_String_At_Limit(string, &len)
     );
-    return Init_Any_String(
+    return Init_String(
         OUT,
         Heart_Of_Builtin_Fundamental(string),
         copy
@@ -1083,7 +1083,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
             require (
               Strand* strand = Make_Strand(0)
             );
-            return Init_Any_String(OUT, heart, strand);
+            return Init_String(OUT, heart, strand);
         }
     } else
         len = 1;
@@ -1108,7 +1108,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
         require (
           Strand* strand = Make_Strand(0)
         );
-        return Init_Any_String(OUT, heart, strand);
+        return Init_String(OUT, heart, strand);
     }
 
     // if no :PART, just return value, else return string
@@ -1118,7 +1118,7 @@ IMPLEMENT_GENERIC(TAKE, Any_String)
         require (
           Strand* strand = Copy_String_At_Limit(v, &len)
         );
-        Init_Any_String(OUT, heart, strand);
+        Init_String(OUT, heart, strand);
     }
     else
         Init_Char_Unchecked(OUT, Codepoint_At(String_At(v)));
@@ -1383,7 +1383,7 @@ DECLARE_NATIVE(DECODE_UTF_8)
 
     Size size;
     const Byte* at = Blob_Size_At(&size, blob);
-    return Init_Any_String(
+    return Init_String(
         OUT,
         heart,
         Append_UTF8_May_Panic(nullptr, s_cast(at), size, STRMODE_NO_CR)

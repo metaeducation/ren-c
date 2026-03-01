@@ -666,7 +666,7 @@ IMPLEMENT_GENERIC(TO, Any_Utf8)
         );
         memcpy(cast(Byte*, Strand_Head(s)), cast(Byte*, utf8), size);
         Term_Strand_Len_Size(s, len, size);
-        return Init_Any_String(OUT, to, s);
+        return Init_String(OUT, to, s);
     }
 
     if (to == HEART_WORD) {

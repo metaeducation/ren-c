@@ -425,7 +425,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Panic(Feed* feed)
         Finalize_Variadic_Feed(feed);
 
         feed->p = Array_Head(reified);
-        Init_Any_List_At(Feed_Data(feed), HEART_BLOCK, reified, 1);
+        Init_List_At(Feed_Data(feed), HEART_BLOCK, reified, 1);
         Tweak_Feed_Binding(feed, binding);
         break; }
 
@@ -676,7 +676,7 @@ INLINE Result(Feed*) Prep_Array_Feed(
 
     if (first) {
         feed->p = unwrap first;
-        Init_Any_List_At_Core(
+        Init_List_At_Core(
             Feed_Data(feed),
             FLAG_HEART_AND_LIFT(HEART_BLOCK),
             array,
@@ -688,7 +688,7 @@ INLINE Result(Feed*) Prep_Array_Feed(
         feed->p = Array_At(array, index);
         if (feed->p == Array_Tail(array))
             feed->p = &g_cell_aligned_end;
-        Init_Any_List_At_Core(
+        Init_List_At_Core(
             Feed_Data(feed),
             FLAG_HEART_AND_LIFT(HEART_BLOCK),
             array,

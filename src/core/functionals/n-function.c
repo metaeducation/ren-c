@@ -763,9 +763,9 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     if (Is_Cell_A_Bedrock_Hole(value_param)) {
         Option(const Symbol*) label = Level_Label(target_level);
         if (label)
-            v = Init_Labeled_Trash(value_param, unwrap label);
+            v = Init_Trash(value_param, unwrap label);
         else
-            v = Init_Tripwire_Untracked(value_param);
+            v = Init_Tripwire(value_param);
     }
     else
         v = As_Value(value_param);

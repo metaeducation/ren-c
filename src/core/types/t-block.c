@@ -141,7 +141,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
         //
         // `make block! 10` => creates array with certain initial capacity
         //
-        return Init_Any_List(OUT, heart, Make_Source_Managed(Int32s(arg, 0)));
+        return Init_List(OUT, heart, Make_Source_Managed(Int32s(arg, 0)));
     }
     else if (Is_Text(arg)) {
         //
@@ -151,7 +151,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
         Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, arg);
 
         Option(const Strand*) file = ANONYMOUS;
-        Init_Any_List(
+        Init_List(
             OUT,
             heart,
             Scan_UTF8_Managed(file, utf8, size)
@@ -171,7 +171,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
             Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
-        return Init_Any_List(OUT, heart, Pop_Source_From_Stack(base));
+        return Init_List(OUT, heart, Pop_Source_From_Stack(base));
     }
     else if (Is_Varargs(arg)) {
         //
@@ -239,7 +239,7 @@ IMPLEMENT_GENERIC(MAKE, Any_List)
             Move_Cell(PUSH(), As_Element(out));
         } while (true);
 
-        return Init_Any_List(OUT, heart, Pop_Source_From_Stack(base));
+        return Init_List(OUT, heart, Pop_Source_From_Stack(base));
     }
 
     return fail (Error_Bad_Make(heart, arg));
@@ -805,7 +805,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
     if (Any_List_Heart(to)) {
         Length len;
         const Element* at = List_Len_At(&len, list);
-        return Init_Any_List(
+        return Init_List(
             OUT, to, Copy_Values_Len_Shallow(at, len)  // !!! binding? [1]
         );
     }
@@ -848,7 +848,7 @@ IMPLEMENT_GENERIC(TO, Any_List)
 
         Mold_Or_Form_Element(mo, list, false);
         if (Any_String_Heart(to))
-            return Init_Any_String(OUT, to, Pop_Molded_Strand(mo));
+            return Init_String(OUT, to, Pop_Molded_Strand(mo));
 
         Init_Utf8_Non_String(
             OUT,
@@ -987,7 +987,7 @@ IMPLEMENT_GENERIC(COPY, Any_List)
         ARG(DEEP)
     ));
 
-    Element* out = Init_Any_List(OUT, Heart_Of_Builtin_Fundamental(list), copy);
+    Element* out = Init_List(OUT, Heart_Of_Builtin_Fundamental(list), copy);
     Tweak_Cell_Binding(out, List_Binding(list));
     assert(Not_Cell_Flag(out, CONST));
     return OUT;
@@ -1145,7 +1145,7 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
     if (ARG(PART)) {
         len = Part_Len_May_Modify_Index(list, Element_ARG(PART));
         if (len == 0)
-            return Init_Any_List(OUT, heart, Make_Source_Managed(0));
+            return Init_List(OUT, heart, Make_Source_Managed(0));
     }
     else
         len = 1;
@@ -1159,12 +1159,12 @@ IMPLEMENT_GENERIC(TAKE, Any_List)
         if (not ARG(PART))
             return fail (Error_Nothing_To_Take_Raw());
 
-        return Init_Any_List(OUT, heart, Make_Source_Managed(0));
+        return Init_List(OUT, heart, Make_Source_Managed(0));
     }
 
     if (ARG(PART)) {
         Source* copy = Copy_Source_At_Max_Shallow(arr, index, len);
-        Init_Any_List(OUT, heart, copy);
+        Init_List(OUT, heart, copy);
     }
     else
         Copy_Cell_May_Bind(OUT, Array_At(arr, index), List_Binding(list));
