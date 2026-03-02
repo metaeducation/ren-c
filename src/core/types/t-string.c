@@ -824,8 +824,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_String)
                 rebRelease(joined);
             }
         }
-        else if (Is_Antiform(pattern))
-            panic (As_Stable(pattern));
+        else if (Is_Antiform(pattern)) {
+            require (
+              Stable* stable = Decay_If_Unstable(pattern)
+            );
+            panic (Error_Bad_Value(stable));
+        }
 
         Flags flags = (
             (ARG(MATCH) ? AM_FIND_MATCH : 0)

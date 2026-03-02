@@ -502,7 +502,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(start) or Is_Percent(start))
         s = VAL_DECIMAL(start);
     else
-        panic (start);
+        panic (Error_Bad_Value(start));
 
     REBDEC e;
     if (Is_Integer(end))
@@ -510,7 +510,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(end) or Is_Percent(end))
         e = VAL_DECIMAL(end);
     else
-        panic (end);
+        panic (Error_Bad_Value(end));
 
     REBDEC b;
     if (Is_Integer(bump))
@@ -518,7 +518,7 @@ static Bounce Loop_Number_Common(
     else if (Is_Decimal(bump) or Is_Percent(bump))
         b = VAL_DECIMAL(bump);
     else
-        panic (bump);
+        panic (Error_Bad_Value(bump));
 
     // As in Loop_Integer_Common(), the state is actually in a cell; so each
     // loop iteration it must be checked to ensure it's still a decimal...
@@ -755,7 +755,7 @@ DECLARE_NATIVE(FOR_SKIP)
           Read_Slot(spare, slot)
         );
         if (not Any_Series(spare))
-            panic (spare);
+            panic (Error_Bad_Value(spare));
 
         // Increment via skip, which may go before 0 or after the tail of
         // the series.

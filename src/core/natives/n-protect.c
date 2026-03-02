@@ -488,7 +488,7 @@ void Force_Value_Frozen_Core(
         // No freezing needed
     }
     else
-        panic (v);  // not yet implemented
+        panic (Error_Bad_Value(v));  // not yet implemented
 }
 
 

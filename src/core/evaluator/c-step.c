@@ -1173,7 +1173,7 @@ Bounce Stepper_Executor(Level* L)
     );
 
     if (Is_Failure(OUT))  // e.g. couldn't pick word as field from binding
-        panic (Cell_Error(OUT));  // don't conflate with action result
+        panic (OUT);  // don't conflate with action result
 
     if (Is_Hot_Potato(OUT))
         goto lookahead;  // legal e.g. for VETO

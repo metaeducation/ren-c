@@ -161,7 +161,7 @@ DECLARE_NATIVE(DECODE_IEEE_754)
     Size size;
     const Byte* at = Blob_Size_At(&size, blob);
     if (size < 8)
-        return fail (blob);
+        return fail (PARAM(BLOB));
 
     Init(Element) out = OUT;
     Reset_Cell_Header(TRACK(out), CELL_MASK_DECIMAL);
@@ -336,8 +336,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Blob)
                 rebRelease(joined);
             }
         }
-        else if (Is_Antiform(pattern))
-            panic (As_Stable(pattern));
+        else if (Is_Antiform(pattern)) {
+            require (
+              Stable* stable = Decay_If_Unstable(pattern)
+            );
+            panic (Error_Bad_Value(stable));
+        }
 
         Flags flags = (
             (ARG(MATCH) ? AM_FIND_MATCH : 0)

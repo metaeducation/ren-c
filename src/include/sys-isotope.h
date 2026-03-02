@@ -112,7 +112,7 @@ INLINE Result(Value*) Coerce_To_Antiform(Exact(Value*) v){  // [1]
                 true
             ))
         ){
-            return fail (elem);
+            return fail (Error_Bad_Value(elem));
         }
         v->payload = Stub_Cell(unwrap patch)->payload;
         v->extra = Stub_Cell(unwrap patch)->extra;

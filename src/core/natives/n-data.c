@@ -876,7 +876,7 @@ DECLARE_NATIVE(RESOLVE)
     if (Is_Path(source)) {  // !!! For now: (resolve '/a:) -> a
         SingleHeart single;
         if (not (single = opt Try_Get_Sequence_Singleheart(source)))
-            panic (source);
+            panic (PARAM(SOURCE));
 
         if (
             single == LEADING_BLANK_AND(WORD)  // /a
@@ -899,7 +899,7 @@ DECLARE_NATIVE(RESOLVE)
             // fall through to chain decoding.
         }
         else
-            panic (source);
+            panic (PARAM(SOURCE));
     }
 
     SingleHeart single = opt Try_Get_Sequence_Singleheart(source);
@@ -918,7 +918,7 @@ DECLARE_NATIVE(RESOLVE)
         return COPY_TO_OUT(source);
     }
 
-    panic (source);
+    panic (PARAM(SOURCE));
 }
 
 
@@ -969,7 +969,7 @@ DECLARE_NATIVE(PROXY_EXPORTS)
     const Element* v = List_At(&tail, ARG(EXPORTS));
     for (; v != tail; ++v) {
         if (not Is_Word(v))
-            panic (ARG(EXPORTS));
+            panic (PARAM(EXPORTS));
 
         const Symbol* symbol = Word_Symbol(v);
 
@@ -977,7 +977,7 @@ DECLARE_NATIVE(PROXY_EXPORTS)
 
         const Slot* src = opt Sea_Slot(source, symbol, strict);
         if (not src)
-            panic (v);  // panic if unset value, also?
+            panic (Error_Bad_Value(v));  // panic if unset value, also?
 
         Slot* dest = opt Sea_Slot(where, symbol, strict);
         if (dest) {

@@ -1082,11 +1082,9 @@ DECLARE_NATIVE(JS_NATIVE)
     );
     Stable* errval = cast(Stable*, Pointer_From_Heapaddr(error_addr));
     if (errval) {
-        Error* e = Cell_Error(errval);
-        unnecessary(rebRelease(errval));  // panic releases
-
         TRACE("JS-NATIVE had malformed JS, calling panic() w/error context");
-        panic (e);
+        unnecessary(rebRelease(errval));
+        panic (errval);
     }
 
     Drop_Mold(mo);
@@ -1175,9 +1173,8 @@ DECLARE_NATIVE(JS_EVAL_P)
   handle_error: {
 
     Stable* errval = Value_From_Value_Id(addr);
-    Error* e = Cell_Error(errval);
-    rebRelease(errval);
-    panic (e);
+    unnecessary(rebRelease(errval));
+    panic (errval);
 }}
 
 

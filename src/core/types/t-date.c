@@ -686,7 +686,7 @@ static REBINT Int_From_Date_Arg(const Stable* poke) {
     if (Is_Space(poke))
         return 0;
 
-    panic (poke);
+    panic (Error_Bad_Value(poke));
 }
 
 
@@ -987,7 +987,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
         else if (Is_Decimal(poke))
             nano = DEC_TO_SECS(VAL_DECIMAL(poke));
         else
-            panic (poke);
+            panic (Error_Bad_Value(poke));
 
         Tweak_Cell_Nanoseconds(date, nano);
         goto check_nanoseconds;
@@ -1022,7 +1022,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
 
       case SYM_DATE: {
         if (not Is_Date(poke))
-            panic (poke);
+            panic (Error_Bad_Value(poke));
 
         // We want to adjust the date being poked, so the year/month/day
         // that the user sees is the one reflected.  Safest is to work in
@@ -1080,7 +1080,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Date)
         goto check_nanoseconds; }
 
       default:
-        panic (picker);
+        panic (Error_Bad_Value(picker));
     }
 
     goto finalize;

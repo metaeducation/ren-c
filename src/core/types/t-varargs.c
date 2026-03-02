@@ -371,7 +371,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             // vararg.  Revisit the question of how to give better errors.
             //
             if (not vararg_level)
-                panic (As_Stable(out));
+                panic (Error_Bad_Value(As_Stable(out)));
 
             panic (Error_Phase_Arg_Type(
                 unwrap vararg_level, key, unwrap param, As_Stable(out))
@@ -497,7 +497,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Varargs)
     const Stable* picker = Element_ARG(PICKER);
 
     if (not Is_Integer(picker))
-        panic (picker);
+        panic (PARAM(PICKER));
 
     Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {

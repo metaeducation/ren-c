@@ -178,7 +178,7 @@ DECLARE_NATIVE(DECODE_TEXT)
     INCLUDE_PARAMS_OF_DECODE_TEXT;
 
     if (Series_Len_At(ARG(OPTIONS)))
-        panic (ARG(OPTIONS));
+        panic (PARAM(OPTIONS));
 
     // !!! The original code for R3-Alpha would simply alias the incoming
     // binary as a string.  This is essentially a Latin1 interpretation.
@@ -211,7 +211,7 @@ DECLARE_NATIVE(ENCODE_TEXT)
     INCLUDE_PARAMS_OF_ENCODE_TEXT;
 
     if (Series_Len_At(ARG(OPTIONS)))
-        panic (ARG(OPTIONS));
+        panic (PARAM(OPTIONS));
 
     panic (".txt codec not currently implemented (what should it do?)");
 }
@@ -294,7 +294,7 @@ DECLARE_NATIVE(DECODE_UTF16LE)
     INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
     if (Series_Len_At(ARG(OPTIONS)))
-        panic (ARG(OPTIONS));
+        panic (PARAM(OPTIONS));
 
     Size size;
     const Byte* data = Blob_Size_At(&size, ARG(DATA));
@@ -330,7 +330,7 @@ DECLARE_NATIVE(ENCODE_UTF16LE)
     INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
 
     if (Series_Len_At(ARG(OPTIONS)))
-        panic (ARG(OPTIONS));
+        panic (PARAM(OPTIONS));
 
     Length len;
     Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(TEXT));
@@ -384,7 +384,7 @@ DECLARE_NATIVE(DECODE_UTF16BE)
     INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
     if (Series_Len_At(ARG(OPTIONS)))
-        panic (ARG(OPTIONS));
+        panic (PARAM(OPTIONS));
 
     Size size;
     const Byte* data = Blob_Size_At(&size, ARG(DATA));
@@ -420,7 +420,7 @@ DECLARE_NATIVE(ENCODE_UTF16BE)
     INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
 
     if (Series_Len_At(ARG(OPTIONS)))
-        panic (ARG(OPTIONS));
+        panic (PARAM(OPTIONS));
 
     Length len;
     Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(TEXT));

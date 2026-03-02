@@ -297,7 +297,7 @@ DECLARE_NATIVE(CASCADE_P)  // see extended CASCADE in %base-defs.r
     const Element* check = first;
     for (; check != tail; ++check) {  // validate pipeline is all FRAME! [1]
         if (not Is_Frame(check))
-            panic (check);
+            panic (Error_Bad_Value(check));
     }
 
     Details* details = Make_Dispatch_Details(

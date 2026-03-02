@@ -339,7 +339,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
             goto initial_entry_varargs;
 
         assert(Is_Error(source));
-        panic (Cell_Error(source)); }  // would panic anyway [2]
+        panic (source); }  // would panic anyway [2]
 
       case ST_EVALUATE_SINGLE_STEPPING:
         goto single_step_result_in_out;
@@ -1059,7 +1059,7 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
           Stable* stable_out = Decay_If_Unstable(OUT)
         );
         if (not Is_Frame(stable_out))
-            panic (stable_out);
+            panic (Error_Bad_Value(stable_out));
 
         Copy_Cell(ARG(OPERATION), As_Element(stable_out));
     }

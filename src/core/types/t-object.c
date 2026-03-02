@@ -566,7 +566,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Object)
             return BOUNCE_THROWN;
 
         if (Is_Failure(SPARE))  // e.g. `make object! [1 / 0]`
-            panic (Cell_Error(SPARE));
+            panic (SPARE);
 
         return Init_Object(OUT, ctx);
     }
@@ -1147,7 +1147,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_Context)
 
         Stable* pattern = ARG(VALUE);
         if (Is_Antiform(pattern))
-            panic (pattern);
+            panic (Error_Bad_Value(pattern));
 
         if (not Is_Word(pattern))
             return NULL_OUT;

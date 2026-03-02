@@ -131,7 +131,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Bitset)
 
     REBINT len = Find_Max_Bit(arg);
     if (len == NOT_FOUND)
-        return fail (arg);
+        return fail (PARAM(DEF));
 
     Binary* bset = Make_Bitset(len);
     Manage_Stub(bset);
@@ -579,7 +579,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
         if (Is_Antiform(ARG(VALUE)))
-            panic (ARG(VALUE));
+            panic (PARAM(VALUE));
 
         if (ARG(PART) or ARG(SKIP) or ARG(MATCH))
             panic (Error_Bad_Refines_Raw());
@@ -610,7 +610,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Bitset)
             diff = true;
 
         if (not Set_Bits(bset, arg, diff))
-            panic (arg);
+            panic (Error_Bad_Value(arg));
         return COPY_TO_OUT(v); }
 
       case SYM_REMOVE: {

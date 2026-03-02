@@ -540,13 +540,13 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Time)
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
         default:
-            panic (picker);
+            panic (PARAM(PICKER));
         }
     }
     else if (Is_Integer(picker))
         i = VAL_INT32(picker) - 1;
     else
-        panic (picker);
+        panic (PARAM(PICKER));
 
     REB_TIMEF tf;
     Split_Time(VAL_NANO(time), &tf); // loses sign

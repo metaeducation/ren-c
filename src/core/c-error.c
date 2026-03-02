@@ -35,12 +35,16 @@
 //    panic (api_value);       // ensure it's ERROR!, release and use as-is
 //    panic (error_context);   // use the Error* as-is
 //    panic (PARAM(NAME));     // impliciate parameter as having a bad value
-//    panic (other_cell);      // just report as a generic "bad value"
+//    panic (nullptr);         // uninformative "Unknown Error"
 //
-// 1. Currently panic() itself won't take Value* in its type check.  If it
-//    did, then that opens the doors to the idea that it might have to
-//    decay, e.g. a FAILURE! which would be causing a panic of its own.
-//    Reconsider if taking unstable pointers seems a good idea.
+// 1. Because potentially unstable Value* are the currency of the API, panic()
+//    allows Value*.  That opens the doors to the idea that it might have to
+//    decay, e.g. a PACK! which contains an ERROR! (or is undecayable).  It
+//    also raises the question of if it's a FAILURE!, if that means your
+//    panic() should report that it got a FAILURE! it didn't expect or just
+//    report the failure as if it had been the error intended to report.
+//    These ambiguities exist in the language's PANIC function as well, so
+//    they are handled as the language would handle them.
 //
 // 2. We would face an ambiguity in taking API handles, as to whether that
 //    is an error, or if it is "some value" that is just a bad value.  Since
@@ -71,22 +75,29 @@ Error* Derive_Error_From_Pointer_Core(const void* p) {
 
       case DETECTED_AS_CELL: {
         if (not Is_Cell_A_Bedrock_Hole(cast(Cell*, p))) {  // PARAM() ok
-            const Stable* v = cast(Stable*, p);  // panic() takes Stable [1]
+            const Value* v = cast(Value*, p);  // panic() takes Value* [1]
 
-            if (Is_Base_Root_Bit_Set(v)) {  // API handles must be errors [2]
-                Error* error;
-                if (Type_Of(v) == TYPE_ERROR) {
-                    error = Cell_Error(v);
-                }
-                else {
-                    assert(!"panic() given API handle that is not an ERROR!");
-                    error = Error_Bad_Value(v);
-                }
-                rebRelease(m_cast(Stable*, v));  // released even if we didn't
-                return error;
+            Error* error;
+            if (
+                Type_Of_Raw(v) == TYPE_ERROR
+                or Type_Of_Raw(v) == TYPE_FAILURE
+            ){
+                error = Cell_Error(v);
+            }
+            else {
+                assert(!"panic() given API handle that is not an ERROR!");
+                DECLARE_VALUE (temp);
+                Copy_Cell(temp, v);
+                require (
+                  Stable* stable = Decay_If_Unstable(temp)
+                );
+                error = Error_Bad_Value(stable);
             }
 
-            return Error_Bad_Value(v);
+            if (Is_Api_Value(v))  // release API handles [2]
+                rebRelease(m_cast(Value*, v));
+
+            return error;
         }
 
         if (not Is_Action_Level(TOP_LEVEL)) {
@@ -488,7 +499,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Error)
         Init_Text(Slot_Init_Hack(&vars->message), copy);
     }
     else
-        return fail (arg);
+        return fail (PARAM(DEF));  // PANIC or FAIL in this case?
 
     DECLARE_STABLE (id);
     require (Read_Slot(id, &vars->id));

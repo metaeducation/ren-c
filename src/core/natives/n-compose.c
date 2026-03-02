@@ -890,7 +890,7 @@ DECLARE_NATIVE(COMPOSE2)
   //    * the offset right after the end character where the pattern matched
 
     if (Is_Failure(OUT))  // transcode had a problem
-        panic (Cell_Error(OUT));
+        panic (OUT);
 
     Element* handle = As_Element(SCRATCH);
     TranscodeState* transcode = Cell_Handle_Pointer(TranscodeState, handle);
@@ -974,7 +974,7 @@ DECLARE_NATIVE(COMPOSE2)
 
     if (Is_Failure(OUT)) {
         Drop_Data_Stack_To(STACK_BASE);
-        panic (Cell_Error(OUT));
+        panic (OUT);
     }
 
     const Stable* result;

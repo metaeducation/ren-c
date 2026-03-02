@@ -365,9 +365,12 @@ struct JumpStruct {
 //   (This could be used by a strict build that wanted to get rid of all the
 //    hard-coded string panic()s, by triggering a compiler error on them.)
 //
-// 2. We don't accept unstable Value* pointers, because they might be FAILURE!
-//    or undecayable, and would create their own panic.  (Review if allowing
-//    that is a good idea, but it doesn't seem like it is.)
+// 2. While accepting non-Stable* values creates some questions (like taking
+//    undecayable PACK! which might represent a error case of their own), the
+//    Value* is the main currency of the API, and as such we pretty much
+//    are resigned to having a reaction to anything that gets passed to
+//    the fail() and panic() types of macros since the API does not have
+//    classes like Element* or Stable* to fall back on.
 //
 // 3. When the error reporting code receives a "bedrock" PARAMETER! (a.k.a.
 //    a "hole", it looks to see if it lives between the Params_Head and
@@ -391,7 +394,7 @@ struct JumpStruct {
         static_assert(
             std::is_same<T, Error*>::value
             or std::is_same<T, const char*>::value
-            or std::is_convertible<T, const Stable*>::value  // Stable [2]
+            or std::is_convertible<T, const Value*>::value  // any value [2]
             or std::is_same<T, const Param*>::value,  // detected [3]
             "Derive_Error_From_Pointer() on [Error* Stable* Param* char*]"
         );

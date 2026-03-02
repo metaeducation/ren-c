@@ -77,7 +77,7 @@ static Result(None) Push_Keys_And_Params_For_Fence(
             must_be_action = true;
         }
         else
-            return fail (item);
+            return fail (Error_Bad_Value(item));
 
         Init_Word(PUSH(), symbol);
 
@@ -301,7 +301,7 @@ static Result(None) Push_Keys_And_Params_Core(
         goto next_spec_item;
     }
 
-    return fail (v);
+    return fail (Error_Bad_Value(v));
 
 } handle_quasar_for_auto_named_trash_return: { ///////////////////////////////
 

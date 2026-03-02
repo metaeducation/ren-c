@@ -101,7 +101,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Port)
       Stable* out = Decay_If_Unstable(OUT)
     );
     if (not Is_Port(out))  // should always create a port
-        return fail (out);
+        return fail (Error_Bad_Value(out));
 
     return OUT;
 }

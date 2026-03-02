@@ -244,7 +244,7 @@ Bounce To_Or_As_Checker_Executor(Level* const L)
         return BOUNCE_THROWN;
 
     if (Is_Failure(scratch_reverse_atom))
-        panic (Cell_Error(scratch_reverse_atom));
+        panic (scratch_reverse_atom);
 
     require (
       Stable* scratch_reverse = Decay_If_Unstable(scratch_reverse_atom)

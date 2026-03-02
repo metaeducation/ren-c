@@ -60,14 +60,14 @@ IMPLEMENT_GENERIC(MAKE, Any_Sequence)
         const Byte* ap = Strand_Head(spelling);
         Size size = Strand_Size(spelling);  // UTF-8 len
         if (size & 1)
-            panic (arg);  // must have even # of chars
+            panic (Error_Bad_Value(arg));  // must have even # of chars
         size /= 2;
         if (size > MAX_TUPLE)
-            panic (arg);  // valid even for UTF-8
+            panic (Error_Bad_Value(arg));  // valid even for UTF-8
         for (alen = 0; alen < size; alen++) {
             Byte decoded;
             if (not (ap = opt Try_Scan_Hex2(&decoded, ap)))
-                panic (arg);
+                panic (Error_Bad_Value(arg));
             *vp++ = decoded;
         }
         require (
@@ -512,7 +512,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Any_Sequence)
         n = Int32(picker) - 1;
     }
     else
-        panic (picker);
+        panic (PARAM(PICKER));
 
     Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {

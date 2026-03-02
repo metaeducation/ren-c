@@ -538,7 +538,7 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
         goto circled_check;
 
     if (Is_Failure(SPARE))  // don't pass thru errors if not ^ sigil
-        panic (Cell_Error(SPARE));
+        panic (SPARE);
 
     if (Is_Space(var))
         goto circled_check;

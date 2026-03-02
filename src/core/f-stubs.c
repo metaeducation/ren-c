@@ -49,7 +49,7 @@ REBINT Get_Num_From_Arg(const Stable* val)
     else if (Is_Logic(val))
         n = (Cell_Logic(val) ? 1 : 2);
     else
-        panic (val);
+        panic (Error_Bad_Value(val));
 
     return n;
 }
@@ -146,7 +146,7 @@ REBI64 Int64(const Stable* val)
     if (Is_Decimal(val) or Is_Percent(val))
         return cast(REBI64, VAL_DECIMAL(val));
 
-    panic (val);
+    panic (Error_Bad_Value(val));
 }
 
 
@@ -160,7 +160,7 @@ REBDEC Dec64(const Stable* val)
     if (Is_Integer(val))
         return cast(REBDEC, VAL_INT64(val));
 
-    panic (val);
+    panic (Error_Bad_Value(val));
 }
 
 

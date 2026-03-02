@@ -424,7 +424,7 @@ DECLARE_NATIVE(JOIN)
             return CONTINUE(SPARE, scratch);
         }
 
-        panic (item);
+        panic (Error_Bad_Value(item));
     }
 
     if (Is_Quoted(item)) {  // just mold it

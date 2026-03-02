@@ -778,7 +778,7 @@ DECLARE_NATIVE(LET)
             break; }
 
           default:
-            panic (temp);  // default to passthru [2]
+            panic (Error_Bad_Value(temp));  // default to passthru [2]
         }
     }
 

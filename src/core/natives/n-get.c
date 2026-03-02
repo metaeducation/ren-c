@@ -247,7 +247,7 @@ Result(Value*) Get_Chain_Push_Refinements(
         );
     }
     else
-        panic (head);  // what else could it have been?
+        panic (Error_Bad_Value(head));  // what else could it have been?
 
     ++head;
 
@@ -270,8 +270,8 @@ Result(Value*) Get_Chain_Push_Refinements(
         if (Is_Word(at)) {
             Init_Pushed_Refinement(PUSH(), Word_Symbol(at));
         }
-        else
-            panic (at);  // non-WORD! being considered for "dialected calls"
+        else  // Note: non-WORD! being considered for "dialected calls"
+            panic (Error_Bad_Value(at));
     }
 
     return out;
@@ -665,7 +665,7 @@ Result(bool) Recalculate_Group_Arg_Vanishes(Level* level_, const Param* param)
     );
 
     if (not check)
-        return fail (out);
+        return fail (Error_Bad_Value(out));
 
     Copy_Cell(target, As_Element(out));  // update ARG(TARGET)
     Corrupt_Cell_If_Needful(OUT);

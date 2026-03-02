@@ -420,7 +420,7 @@ bool Predicate_Check_Spare_Uses_Scratch(
 
         assert(bounce == L->out);  // no BOUNCE_CONTINUE, API vals, etc
         if (Is_Failure(L->out))
-            panic (Cell_Error(L->out));
+            panic (L->out);
         panic (Error_No_Logic_Typecheck(label));
     }
   #endif
@@ -591,7 +591,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         }
     }
 
-    panic (at);
+    panic (Error_Bad_Value(at));
 
   handle_non_word_quasiform: { ///////////////////////////////////////////////
 
@@ -645,7 +645,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
         goto test_failed;
     }
 
-    panic (at);
+    panic (Error_Bad_Value(at));
 
 } handle_non_word_quoted: { //////////////////////////////////////////////////
 
@@ -657,7 +657,7 @@ static bool Typecheck_Unoptimized_Use_Toplevel(
   //
   // Review when this gets further.
 
-    panic (at);
+    panic (Error_Bad_Value(at));
 
 } adjust_quote_level_and_run_type_constraint: {
 

@@ -299,7 +299,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
             flags |= PARAMETER_FLAG_VOID_DEFINITELY_OK;
         }
         else {
-            panic (item);
+            panic (Error_Bad_Value(item));
         }
         goto spoken_for;
     }
@@ -362,7 +362,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
 
 } unrecognized_literal_spec_item: {
 
-    panic (item);
+    panic (Error_Bad_Value(item));
 
 } handle_word_in_scratch: {  /////////////////////////////////////////////////
 
@@ -474,7 +474,7 @@ Result(None) Set_Spec_Of_Parameter_In_Top(
   // By pre-checking we can avoid needing to double check in the actual
   // type-checking phase.
 
-    panic (item);
+    panic (Error_Bad_Value(item));
 
 } finished_processing_spec: {  ///////////////////////////////////////////////
 
@@ -888,7 +888,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
 
     const Stable* picker = ARG(PICKER);
     if (not Is_Word(picker))
-        panic (picker);
+        panic (PARAM(PICKER));
 
     Stable* dual = ARG(DUAL);
     if (Not_Lifted(dual)) {
@@ -965,7 +965,7 @@ IMPLEMENT_GENERIC(TWEAK_P, Is_Parameter)
     switch (opt Word_Id(picker)) {
       case SYM_TEXT: {
         if (not Is_Text(poke))
-            panic (poke);
+            panic (Error_Bad_Value(poke));
         require (
           Strand* strand = Copy_String_At(poke)
         );
