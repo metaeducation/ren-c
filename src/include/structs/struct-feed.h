@@ -65,16 +65,9 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == BASE_FLAG_UNREADABLE);
     FLAG_LEFT_BIT(3)
 
 
-//=//// FEED_FLAG_NO_LOOKAHEAD ////////////////////////////////////////////=//
+//=//// FEED_FLAG_4 ///////////////////////////////////////////////////////=//
 //
-// Infix functions may (depending on the #tight or non-tight parameter
-// acquisition modes) want to suppress further infix lookahead while getting
-// a function argument.  This precedent was started in R3-Alpha, where with
-// `1 + 2 * 3` it didn't want infix `+` to "look ahead" past the 2 to see the
-// infix `*` when gathering its argument, that was saved until the `1 + 2`
-// finished its processing.
-//
-#define FEED_FLAG_NO_LOOKAHEAD \
+#define FEED_FLAG_4 \
     FLAG_LEFT_BIT(4)
 
 

@@ -293,8 +293,6 @@ INLINE Result(None) Reuse_Sublevel_Same_Feed_For_Step_Core(Level* L)
     if (Is_Feed_At_End(L->feed))  // `eval [x:]`, `eval [o.x:]`, etc. illegal
         return fail (Error_Need_Non_End(CURRENT));
 
-    Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // always >= 2 elements [2]
-
     sub->executor = &Stepper_Executor;
 
     sub->flags.bits = (
@@ -556,9 +554,7 @@ Bounce Stepper_Executor(Level* L)
 
   // We'll almost always need to create a new Level when doing an evaluation
   // step--even for a simple case like an INTEGER!--because we need a place
-  // to do infix lookaheads without disturbing the output cell.  The only
-  // case where this would not be true would be a single step evaluation with
-  // a NO_LOOKAHEAD flag.
+  // to do infix lookaheads without disturbing the output cell.
   //
   // To make the invariants easier, we always push a Level that can be used
   // by whatever processing that we do.
@@ -1245,7 +1241,6 @@ Bounce Stepper_Executor(Level* L)
     if (infix_mode) {
         if (infix_mode != INFIX_TIGHT) {  // defer or postpone
             if (Get_Eval_Executor_Flag(L, FULFILLING_ARG)) {
-                Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
                 Set_Feed_Flag(L->feed, DEFERRING_INFIX);
                 goto finished;
             }
@@ -1280,8 +1275,6 @@ Bounce Stepper_Executor(Level* L)
           default:
             panic ("Unsupported Intrinsic parameter convention");
         }
-
-        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-infix call
 
         require (
           Reuse_Sublevel_Target_Spare_For_Intrinsic_Arg()
@@ -1945,23 +1938,13 @@ Bounce Stepper_Executor(Level* L)
   //
   //    [pos val]: evaluate:step [1 + 2 * 3]
   //
-  // We want a `pos = []` and `val = 9`.  The evaluator can't just dispatch on
+  // We want a `pos = []` and `val = 7`.  The evaluator can't just dispatch on
   // TYPE_INTEGER in the switch() above, give 1, and consider its job done.
   // It has to notice that the word `+` looks up to an ACTION! whose cell has
-  // an InfixMode set in the header.
+  // an InfixMode set in the header, and run that action with 1 as the first
+  // argument.
 
     assert(SUBLEVEL->executor == &Just_Use_Out_Executor);
-
-} skip_looking_if_no_lookahead_flag_set: {
-
-  // The FEED_FLAG_NO_LOOKAHEAD contributes the subtlety of why processing
-  // the `2` in `1 + 2 * 3` doesn't greedily continue to advance and run `*`
-  // immediately, but rather waits for `1 + 2` to finish.
-
-    if (Get_Feed_Flag(L->feed, NO_LOOKAHEAD)) {
-        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
-        goto finished;
-    }
 
 } check_for_cached_infix_fetch_in_spare: {
 
@@ -2069,8 +2052,6 @@ Bounce Stepper_Executor(Level* L)
         ){
             panic (Error_Ambiguous_Infix_Raw());
         }
-
-        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
         if (Prior_Level_Was_Fulfilling_A_Variadic_Argument(L))
             goto finished;  // don't set flag...see [1]

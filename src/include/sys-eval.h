@@ -153,8 +153,6 @@ INLINE Result(Element*) Refinify_Pushed_Refinement(Element* e) {
 // the trampoline.
 //
 INLINE bool Eval_Step_Throws(Init(Value) out, Level* L) {
-    assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
-
     assert(
         L->executor == &Stepper_Executor
         or L->executor == &Inert_Stepper_Executor

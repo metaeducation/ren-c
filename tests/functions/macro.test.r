@@ -14,7 +14,7 @@
 
 (
     m: infix inliner [left] [spread compose [(left) + 2]]
-    1 m = 3
+    3 = 1 m
 )
 
 

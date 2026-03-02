@@ -234,8 +234,6 @@ bool Lookahead_To_Sync_Infix_Defer_Flag(Level* L)
 {
     assert(Not_Feed_Flag(L->feed, DEFERRING_INFIX));
 
-    Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
-
     if (Is_Feed_At_End(L->feed))
         return false;
 
@@ -558,58 +556,12 @@ Bounce Action_Executor(Level* L)
 
     assert(Not_Cell_Readable(OUT));  // output should be "used up"
 
-} update_no_lookahead_flag_and_continue_fulfilling: {
-
-  // When we see `1 + 2 * 3`, when we're at the 2, we don't want to let the
-  // `*` run yet.  So set a flag which says not to do lookahead.  It gets
-  // cleared when a function takes an argument *or* a new expression starts.
-  //
-  // (This effectively puts the infix into a "single step defer")
-
-    Option(InfixMode) infix_mode = Get_Level_Infix_Mode(L);
-    if (infix_mode) {
-        assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
-        if (infix_mode == INFIX_TIGHT)  // not postpone or defer
-            Set_Feed_Flag(L->feed, NO_LOOKAHEAD);
-    }
-
     goto continue_fulfilling;
 
 
 } fill_next_arg_from_callsite: { /////////////////////////////////////////////
 
-  clear_no_lookahead_flag_if_not_infix: {
-
-  // If this is a non-infix action, we're at least at *second* slot:
-  //
-  //     1 + non-infix-action <we-are-here> * 3
-  //
-  // That's enough to indicate we're not going to read this as:
-  //
-  //     (1 + non-infix-action <we-are-here>) * 3
-  //
-  // Contrast with the zero-arity case:
-  //
-  //     >> two: does [2]
-  //     >> 1 + two * 3
-  //     == 9
-  //
-  // We don't get here to clear the flag, so it's `(1 + two) * 3`
-  //
-  // But if it's infix, arg gathering could still be like:
-  //
-  //      1 + <we-are-here> * 3
-  //
-  // So it has to wait until -after- the callsite gather happens to be assured
-  // it can delete the flag, to ensure that:
-  //
-  //      >> 1 + 2 * 3
-  //      == 9
-
-    if (not Is_Level_Infix(L))
-        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
-
-} error_if_deferring_infix_when_we_reach_here: {
+  error_if_deferring_infix_when_we_reach_here: {
 
   // Once a deferred flag is set, it must be cleared during the evaluation of
   // the argument it was set for... OR the function call has to end.  If we
@@ -662,12 +614,6 @@ Bounce Action_Executor(Level* L)
   // 1. We want this to work, see Lookahead_To_Sync_Infix_Defer_Flag():
   //
   //        return the 10 then (x => [x + 10])
-  //
-  // 2. If FEED_FLAG_NO_LOOKAHEAD was set going into this argument gathering,
-  //    it should get cleared or converted into FEED_FLAG_DEFERRING_INFIX.
-  //
-  //     1 + 2 * 3
-  //           ^-- this deferred its chance, so 1 + 2 will complete
 
     switch (pclass) {
       case PARAMCLASS_NORMAL:
@@ -717,8 +663,6 @@ Bounce Action_Executor(Level* L)
       default:
         assert(false);
     }
-
-    assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));  // should be clear now [1]
 
     goto continue_fulfilling;
 
@@ -1283,12 +1227,6 @@ void Begin_Action(Level* L, Option(InfixMode) infix_mode)
         // set for the whole duration.
         //
         Set_Level_Infix_Mode(L, infix_mode);
-
-        // All the infix call sites cleared this flag on the feed, so it was
-        // moved into the Begin_Action() for infix.  Note this has to be done
-        // *after* the existing flag state has been captured for invisibles.
-        //
-        Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
         LEVEL_STATE_BYTE(L) = ST_ACTION_INITIAL_ENTRY_INFIX;
     }

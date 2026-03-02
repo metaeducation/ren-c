@@ -336,18 +336,24 @@ typedef Flags TypesetFlags;  // Ranged or sparse bitset of typesets
 //
 // * PREFIX_0 - this is not infix at all... so standard prefix.
 //
-// * INFIX_TIGHT - this corresponds to the traditional idea where infix
-//   will run greedily as part of the same evaluation step as the thing to
-//   its left:
+// * INFIX_TIGHT - this is the "normal" infix mode, which only sees one unit
+//   of evaluation on its left:
 //
 //       >> add 1 2 * 3  ; `*` runs greedily when it sees the 2
 //       == 7
 //
-//   Despite that greediness, an already in progress infix operation will be
-//   allowed to complete before another starts:
+//   Unlike Rebol2, there is no "lookahead suppression" when fulfilling infix
+//   so the evaluative result will be the same for (1 + ...) and (add 1 ...):
 //
-//       >> 1 + 2 * 3  ; `+` sets FEED_FLAG_NO_LOOKAHEAD, suppresses `*`
+//       rebol2>> 1 + 2 * 3
 //       == 9
+//
+//       ren-c>> 1 + 2 * 3
+//       == 7  ; same result as `add 1 2 * 3`
+//
+//   This means one less "invisible" state to manage directing the behavior
+//   of EVAL:STEP, and helps give rationale for why `10 = length of block`
+//   works as expected, vs. acting like `(10 = length) of block`.
 //
 // * INFIX_DEFER - this mode of infix doesn't run immediately the first
 //   time it can after an evaluation on the left, but it runs a step after.

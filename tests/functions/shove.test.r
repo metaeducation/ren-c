@@ -7,7 +7,7 @@
 ; to impacts on performance and potentially bad semantics).
 ;
 ;     >> 1 ->- lib/+ 2 * 3
-;     == 9  ; as if you'd written `1 + 2 * 3`
+;     == 7  ; as if you'd written `1 + 2 * 3`
 
 ; NORMAL parameter
 [
