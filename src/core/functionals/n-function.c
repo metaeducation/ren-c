@@ -834,11 +834,10 @@ DECLARE_NATIVE(DEFINITIONAL_RETURN)
     ){
         gather_args = Stable_LIB(NULL);
     }
-    else if (Is_Frame(stable)) {  // just reuse Level
+    else if (Is_Frame(stable)) {  // just reuse Level, have to change feed
         gather_args = stable;
-        Release_Feed(target_level->feed);
-        target_level->feed = return_level->feed;
-        Add_Feed_Reference(return_level->feed);
+        assert(target_level->feed != return_level->feed);  // can't happen?
+        Retarget_Level_Feed(target_level, return_level->feed);
     }
     else
         panic ("RETURN:RUN requires action, frame, or <redo> as argument");

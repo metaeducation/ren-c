@@ -197,8 +197,6 @@ static Result(None) Reuse_Sublevel_For_Eval_Core(
     assert(sub->baseline.stack_base == L->baseline.stack_base);
     assert(sub->out == OUT);
 
-    sub->executor = &Evaluator_Executor;
-
     sub->flags.bits = (
         LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_4_IS_TRUE
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
@@ -214,9 +212,8 @@ static Result(None) Reuse_Sublevel_For_Eval_Core(
         L->feed->flags.bits  // inherit L's const feed bit
     )
   );
-    Release_Feed(sub->feed);
-    sub->feed = feed;
-    Add_Feed_Reference(sub->feed);
+    Retarget_Level_Feed(sub, feed);  // should restore this invariant
+    sub->executor = &Evaluator_Executor;
 
     Erase_Cell(Level_Spare(sub));
     Erase_Cell(Level_Scratch(sub));
@@ -1131,6 +1128,7 @@ Bounce Stepper_Executor(Level* L)
     // eval calls that lookahead, but no lookahead after the action runs)
 
     STATE = ST_STEPPER_RUNNING_ACTION;
+    assert(SUBLEVEL->feed == L->feed);  // we didn't change it
     return CONTINUE_SUBLEVEL;
 
 } action_result_in_out: {
@@ -1138,7 +1136,8 @@ Bounce Stepper_Executor(Level* L)
     // could in theory examine action level here
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // temporary (?) invariant
-    assert(SUBLEVEL->feed == L->feed);  // we didn't change it
+    if (SUBLEVEL->feed != L->feed)  // Retarget_Level_Feed() can change
+        Retarget_Level_Feed(SUBLEVEL, L->feed);
 
     goto lookahead;
 
@@ -1501,9 +1500,7 @@ Bounce Stepper_Executor(Level* L)
 } group_or_meta_group_result_in_out: {
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // temporary (?) invariant
-    Release_Feed(SUBLEVEL->feed);
-    SUBLEVEL->feed = L->feed;  // restore this (also invariant)
-    Add_Feed_Reference(SUBLEVEL->feed);
+    Retarget_Level_Feed(SUBLEVEL, L->feed);  // must restore this
 
     L->flags.bits |= (
         SUBLEVEL->flags.bits & EVAL_EXECUTOR_FLAG_OUT_IS_DISCARDABLE
@@ -1770,9 +1767,7 @@ Bounce Stepper_Executor(Level* L)
 } set_group_result_in_out: {
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // temporary (?) invariant
-    Release_Feed(SUBLEVEL->feed);
-    SUBLEVEL->feed = L->feed;  // restore this (also invariant)
-    Add_Feed_Reference(SUBLEVEL->feed);
+    Retarget_Level_Feed(SUBLEVEL, L->feed);  // must restore this
 
     if (Is_Space(CURRENT))
        goto handle_generic_set;

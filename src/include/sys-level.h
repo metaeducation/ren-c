@@ -998,3 +998,17 @@ INLINE void Disable_Dispatcher_Catching_Of_Throws(Level* L)
     assert(Get_Executor_Flag(ACTION, L, DISPATCHER_CATCHES));
     Clear_Executor_Flag(ACTION, L, DISPATCHER_CATCHES);
 }
+
+
+// The RETURN:RUN feature does something dodgy and points the ->feed of a
+// Level* for an action to a new feed.  It then turned out to be the case that
+// the eval stepper does this with its reusable sublevel.  It's a weird
+// enough thing to be doing that we capture it into an inline function.
+
+INLINE void Retarget_Level_Feed(Level* L, Feed* new_feed) {
+    assert(Is_Action_Level(L) or L->executor == &Just_Use_Out_Executor);
+    assert(L->feed != new_feed);  // caller should assure not same before call
+    Release_Feed(L->feed);
+    L->feed = new_feed;
+    Add_Feed_Reference(L->feed);
+}
