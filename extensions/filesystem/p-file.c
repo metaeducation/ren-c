@@ -257,9 +257,11 @@ DECLARE_NATIVE(FILE_ACTOR)
         //
         uint64_t file_size = File_Size_Cacheable_May_Panic(port);
         if (file->offset > file_size) {
+            DECLARE_ELEMENT (offset);
+            Init_Integer(offset, file->offset);
             result = Init_Error_Cell(
                 Alloc_Value(),
-                Error_Out_Of_Range(rebStable(rebI(file->offset)))
+                Error_Out_Of_Range(offset)
             );
             goto cleanup_read;
         }
@@ -414,9 +416,11 @@ DECLARE_NATIVE(FILE_ACTOR)
             // and might give people a wrong impression.  Let it error.
             //
             if (file->offset > file_size) {
+                DECLARE_ELEMENT (offset);
+                Init_Integer(offset, file->offset);
                 result = Init_Error_Cell(
                     Alloc_Value(),
-                    Error_Out_Of_Range(rebStable(rebI(file->offset)))
+                    Error_Out_Of_Range(offset)
                 );
                 goto cleanup_write;
            }
@@ -690,9 +694,9 @@ DECLARE_NATIVE(FILE_ACTOR)
             // range unless you use :UNBOUNDED, no similar solution exists
             // for ports since they all share the index.
             //
-            return fail (
-                Error_Out_Of_Range(rebStable(rebI(offset + file->offset)))
-            );
+            DECLARE_ELEMENT (adjusted);
+            Init_Integer(adjusted, offset + file->offset);
+            return fail (Error_Out_Of_Range(adjusted));
         }
 
         file->offset += offset;
