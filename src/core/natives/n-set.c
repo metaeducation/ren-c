@@ -595,6 +595,8 @@ Result(None) Set_Block_From_Instructions_On_Stack_To_Out(Level* const L)
 
     Drop_Data_Stack_To(STACK_BASE);  // drop writeback variables
     SUBLEVEL->baseline.stack_base = STACK_BASE;
+    assert(sub->out == SPARE);
+    sub->out = OUT;
 
     Corrupt_Cell_If_Needful(SPARE);  // we trashed it
     Corrupt_Cell_If_Needful(SCRATCH);  // we trashed it too
