@@ -363,64 +363,6 @@ bool Reframer_Details_Querier(
 
 
 //
-//  Alloc_Action_From_Exemplar: C
-//
-// Leaves details uninitialized, and lets you specify the dispatcher.
-//
-Details* Alloc_Action_From_Exemplar(
-    ParamList* paramlist,
-    Option(const Symbol*) label,
-    Dispatcher* dispatcher,
-    REBLEN details_capacity
-){
-    Phase* unspecialized = Frame_Phase(Phase_Archetype(paramlist));
-
-    const Key* tail;
-    const Key* key = Phase_Keys(&tail, unspecialized);
-    const Param* param = Phase_Params_Head(unspecialized);
-    Stable* arg = Stable_Slot_Hack(Varlist_Slots_Head(paramlist));
-    for (; key != tail; ++key, ++arg, ++param) {
-        if (Is_Specialized(param))
-            continue;
-
-        // Leave non-hidden unspecialized args to be handled by the evaluator.
-        //
-        // https://forum.rebol.info/t/default-values-and-make-frame/1412
-        // https://forum.rebol.info/t/1413
-        //
-        if (Is_Parameter(arg)) {
-          #if DEBUG_POISON_UNINITIALIZED_CELLS
-            Poison_Cell(arg);
-          #endif
-            assert(Not_Cell_Flag(arg, PARAM_MARKED_SEALED));
-            Blit_Cell(arg, param);
-            continue;
-        }
-
-        require (
-          bool check = Typecheck_Coerce_Use_Toplevel(
-            TOP_LEVEL, Known_Unspecialized(param), arg
-          )
-        );
-        if (not check)
-            panic (Error_Arg_Type(label, key, param, arg));
-    }
-
-    DECLARE_ELEMENT (elem);
-    Init_Frame(elem, paramlist, ANONYMOUS, UNCOUPLED);
-
-    Details* details = Make_Dispatch_Details(
-        BASE_FLAG_MANAGED,
-        elem,
-        dispatcher,
-        details_capacity
-    );
-
-    return details;
-}
-
-
-//
 //  /reframer: native [
 //
 //  "Make a function that manipulates an invocation at the callsite"
@@ -450,7 +392,7 @@ DECLARE_NATIVE(REFRAMER)
 
     DECLARE_BINDER (binder);
     Construct_Binder(binder);
-    ParamList* exemplar = Make_Varlist_For_Action_Push_Partials(
+    ParamList* paramlist = Make_Varlist_For_Action_Push_Partials(
         shim,
         STACK_BASE,
         binder
@@ -470,8 +412,8 @@ DECLARE_NATIVE(REFRAMER)
         if (param_index == 0)
             panic (Error_No_Arg(label, symbol));
 
-        key = Varlist_Key(exemplar, param_index);
-        param = cast(Param*, Varlist_Slot(exemplar, param_index));
+        key = Varlist_Key(paramlist, param_index);
+        param = cast(Param*, Varlist_Slot(paramlist, param_index));
     }
     else {
         Phase* phase = Frame_Phase(shim);
@@ -493,15 +435,17 @@ DECLARE_NATIVE(REFRAMER)
   //
   //      https://forum.rebol.info/t/generalized-argument-removal/2297
 
-    Slot* slot = Varlist_Slot(exemplar, param_index);  // "specialize" slot [1]
+    Slot* slot = Varlist_Slot(paramlist, param_index);  // specialize slot [1]
     assert(Is_Cell_A_Bedrock_Hole(slot));
-    Init_Context_Cell(Slot_Init_Hack(slot), exemplar);
+    Init_Context_Cell(Slot_Init_Hack(slot), paramlist);
 
-    Manage_Stub(exemplar);
+    Manage_Stub(paramlist);
 
-    Details* details = Alloc_Action_From_Exemplar(
+    Element* exemplar = Init_Frame(SPARE, paramlist, label, UNCOUPLED);
+
+    Details* details = Make_Dispatch_Details(
+        BASE_FLAG_MANAGED,
         exemplar,  // shim minus the frame argument
-        label,
         &Reframer_Dispatcher,
         MAX_IDX_REFRAMER  // details array capacity => [shim, param_index]
     );
