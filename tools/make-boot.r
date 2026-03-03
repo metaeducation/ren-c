@@ -640,19 +640,7 @@ for-each 'item sys-toplevel [
     add-sym:relax as word! item
 ]
 
-
-=== "SYMBOL IDS (NOT BUILT-IN, BUT USABLE IN SWITCH() STATEMENTS)" ===
-
 add-sym:placeholder </MAX_SYM_BUILTIN>
-
-add-sym:placeholder <MIN_SYM_ENUM_ONLY>
-
-for-each 'item load3 %symbol-ids.r [
-    switch type of item [
-        word! [add-sym item]
-        panic ["bad %symbol-ids.r item:" mold item]
-    ]
-]
 
 
 === "EXTENSION SYMBOLS (NOT BUILT-IN, BUT USABLE IN SWITCH() STATEMENTS)" ===
@@ -681,8 +669,6 @@ for-each 'item load3 %ext-words.r [
 
 add-sym:placeholder </MAX_SYM_EXTENDED>
 
-add-sym:placeholder </MAX_SYM_ENUM_ONLY>
-
 
 === "EMIT SYMBOLS AND PRUNE SPECIAL SIGNALS FROM sym-table" ===
 
@@ -693,7 +679,6 @@ lib-syms-max: ~
 sym-enum-items: copy []
 placeholder-define-items: copy []
 
-emitting-enum-only-syms: null
 emitting-extension-syms: null
 
 e-ext-symids: make-emitter "Extension SymId Commitment Table" (
@@ -720,13 +705,8 @@ for-next 'pos sym-table [
             ]
         ]
 
-        switch definition [
-            "MIN_SYM_ENUM_ONLY" [
-                emitting-enum-only-syms: okay  ; not in compressed table
-            ]
-            "MIN_SYM_EXTENDED" [
-                emitting-extension-syms: okay  ; numbers only, no symbol
-            ]
+        if definition = "MIN_SYM_EXTENDED" [
+            emitting-extension-syms: okay  ; numbers only, no symbol
         ]
 
         if not emitting-extension-syms [
@@ -777,7 +757,7 @@ for-next 'pos sym-table [
         ]
     ]
 
-    if emitting-enum-only-syms [
+    if emitting-extension-syms [
         take pos  ; remove so it's not put in the builtin compressed strings
         pos: back pos  ; so for-next gets us back to this position
     ]

@@ -151,3 +151,9 @@ shutdown*
 
 #show
 #hide
+
+
+; === CHECKSUM (CORE) ===
+
+crc32
+adler32
