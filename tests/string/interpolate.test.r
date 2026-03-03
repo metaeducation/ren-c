@@ -25,7 +25,7 @@
 
 ; Have to back out and start over if pattern not fully matched
 [
-    (compose2 @(([])) --[((backing (([reverse "tuo"]))]--)
+    ("((backing out" = compose2 @(([])) --[((backing (([reverse "tuo"]))]--)
 ]
 
 (
@@ -46,7 +46,8 @@
     url = https://forum.rebol.info/t/2114
 )
 
-; Errors bubble out
+; !!! Errors once bubbled out, but currently they are not doing so--probably
+; they shouldn't.
 [
     ~nothing-to-take~ !! (
         let block: [a]
@@ -54,7 +55,7 @@
         compose "Item is (take block)!"
     )
 
-    (
+    ~nothing-to-take~ !! (
         let block: [a]
         all [
             "Item is a!" = compose "Item is (take block)!"

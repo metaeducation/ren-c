@@ -494,7 +494,7 @@ IMPLEMENT_GENERIC(COPY, Any_Sequence)
     Lift_Cell(part);
     return rebDelegate(  // slow, but not a high priority to write it fast [1]
         CANON(AS), datatype, CANON(COPY), CANON(_S_S), "[",
-            CANON(AS), CANON(BLOCK_X), seq, ":part", part, ":deep ~okay~"
+            CANON(AS), CANON(BLOCK_X), seq, "part:", part, "deep: ~okay~"
         "]"
     );
 }

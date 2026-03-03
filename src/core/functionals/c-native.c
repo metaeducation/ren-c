@@ -476,7 +476,7 @@ Bounce Delegate_Operation_With_Part(
         CANON(AS), lifted_datatype, Canon_Symbol(operation),
             CANON(COPY), CANON(_S_S), "[",
                 CANON(AS), Canon_Symbol(delegate), quoted_element,
-                ":part", lifted_part,
+                "part:", lifted_part,
             "]"
     );
 }

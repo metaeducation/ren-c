@@ -749,7 +749,7 @@ DECLARE_NATIVE(COMPOSE2)
   //
   // 2. When we call into the scanner for a pattern like "({[foo]})" we start
   //    it scanning at "foo]})".  The reason we can get away with it is that
-  //    we've push levels manually that account for if the scanner had seen
+  //    we've pushed levels manually that account for if the scanner had seen
   //    "({[", so it expects to have consumed those tokens and knows what end
   //    delimiters it's looking for.
 
@@ -812,6 +812,7 @@ DECLARE_NATIVE(COMPOSE2)
                 Heart_Of_Builtin_Fundamental(TOP_ELEMENT)
             );
             end_delimiter = 0;
+            continue;  // don't advance scan, try to match pattern start
         }
 
         next = Utf8_Next(&c, at);
@@ -862,6 +863,7 @@ DECLARE_NATIVE(COMPOSE2)
             transcode->saved_levels = prior;
             sub->baseline.stack_base = base;  // we drop to here before scan
             unnecessary(Erase_Cell(OUT));  // LEVEL_STATE_BYTE is not STATE_0
+            sub->prior = nullptr;  // expected by Push_Level()
             Push_Level(OUT, sub);
             sub = prior;
 
@@ -881,7 +883,8 @@ DECLARE_NATIVE(COMPOSE2)
     Init_Integer(SPARE, start_offset);  // will push in a triple after scan
 
     assert(STATE = ST_COMPOSE2_STRING_SCAN);
-    return CONTINUE_SUBLEVEL;
+    possibly(TOP_LEVEL->prior != level_);  // deeper if {{nested}} delimiters
+    return BOUNCE_CONTINUE;
 
 }}} string_scan_results_on_stack: { //////////////////////////////////////////
 
