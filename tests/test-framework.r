@@ -364,11 +364,9 @@ export do-recover: func [
         print [
             "recovering at:"
             (
-                .successes
-                + .test-failures
-                + .crashes
-                + .dialect-failures
-                + .skipped
+                ; !! infix doesn't let you break lines; \ being considered
+
+                .successes + .test-failures + .crashes + .dialect-failures + .skipped
             )
         ]
     ]
@@ -389,11 +387,9 @@ export do-recover: func [
             "code-checksum:" @code-checksum LF
             "test-checksum:" @test-checksum LF
             "Total:" (
-                .successes
-                + .test-failures
-                + .crashes
-                + .dialect-failures
-                + .skipped
+                ; !!! infix doesn't let you break lines; \ being considered
+
+                .successes + .test-failures + .crashes + .dialect-failures + .skipped
             ) LF
             "Succeeded:" .successes LF
             "Failing Tests:" .test-failures LF
