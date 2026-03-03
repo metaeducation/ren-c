@@ -60,18 +60,6 @@ DECLARE_NATIVE(BITWISE_NOT)
 }
 
 
-INLINE bool Math_Arg_For_Logic(Stable* arg)
-{
-    if (Is_Logic(arg))
-        return Cell_Logic(arg);
-
-    if (Is_Space(arg))
-        return false;
-
-    panic (Error_Unexpected_Type(TYPE_INTEGER, Datatype_Of(arg)));
-}
-
-
 //
 //  /bitwise-and: native:generic [
 //
@@ -90,10 +78,14 @@ DECLARE_NATIVE(BITWISE_AND)
     Stable* v2 = ARG(VALUE2);
 
     if (Is_Logic(v1)) {
+        if (not Is_Logic(v2))
+            panic (PARAM(VALUE2));
         bool b1 = Cell_Logic(v1);
-        bool b2 = Math_Arg_For_Logic(v2);
+        bool b2 = Cell_Logic(v2);
         return LOGIC_OUT(b1 and b2);
     }
+    else if (Is_Logic(v2))
+        panic (PARAM(VALUE2));
 
     return Run_Generic_Dispatch(As_Element(v1), LEVEL, CANON(BITWISE_AND));
 }
@@ -117,10 +109,14 @@ DECLARE_NATIVE(BITWISE_OR)
     Stable* v2 = ARG(VALUE2);
 
     if (Is_Logic(v1)) {
+        if (not Is_Logic(v2))
+            panic (PARAM(VALUE2));
         bool b1 = Cell_Logic(v1);
-        bool b2 = Math_Arg_For_Logic(v2);
+        bool b2 = Cell_Logic(v2);
         return LOGIC_OUT(b1 or b2);
     }
+    else if (Is_Logic(v2))
+        panic (PARAM(VALUE2));
 
     return Run_Generic_Dispatch(As_Element(v1), LEVEL, CANON(BITWISE_OR));
 }
@@ -144,10 +140,14 @@ DECLARE_NATIVE(BITWISE_XOR)
     Stable* v2 = ARG(VALUE2);
 
     if (Is_Logic(v1)) {
+        if (not Is_Logic(v2))
+            panic (PARAM(VALUE2));
         bool b1 = Cell_Logic(v1);
-        bool b2 = Math_Arg_For_Logic(v2);
+        bool b2 = Cell_Logic(v2);
         return LOGIC_OUT(b1 != b2);
     }
+    else if (Is_Logic(v2))
+        panic (PARAM(VALUE2));
 
     return Run_Generic_Dispatch(As_Element(v1), LEVEL, CANON(BITWISE_XOR));
 }
@@ -171,10 +171,14 @@ DECLARE_NATIVE(BITWISE_AND_NOT)
     Stable* v2 = ARG(VALUE2);
 
     if (Is_Logic(v1)) {
+        if (not Is_Logic(v2))
+            panic (PARAM(VALUE2));
         bool b1 = Cell_Logic(v1);
-        bool b2 = Math_Arg_For_Logic(v2);
+        bool b2 = Cell_Logic(v2);
         return LOGIC_OUT(b1 and not b2);
     }
+    else if (Is_Logic(v2))
+        panic (PARAM(VALUE2));
 
     return Run_Generic_Dispatch(
         As_Element(v1), LEVEL, CANON(BITWISE_AND_NOT)
