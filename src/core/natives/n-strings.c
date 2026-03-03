@@ -484,9 +484,9 @@ DECLARE_NATIVE(JOIN)
             for (; at != tail; ++at) {
                 Push_Join_Delimiter_If_Pending();
                 Copy_Cell(PUSH(), at);
-                Sync_Toplevel_Baseline_After_Pushes(SUBLEVEL);
                 Mark_Join_Delimiter_Pending();
             }
+            Sync_Toplevel_Baseline_After_Pushes(SUBLEVEL);
             goto next_mold_step;
         }
     }
@@ -548,6 +548,7 @@ DECLARE_NATIVE(JOIN)
             Copy_Cell(PUSH(), at);
             Mark_Join_Delimiter_Pending();
         }
+        Sync_Toplevel_Baseline_After_Pushes(SUBLEVEL);
 
         goto next_stack_step;
     }
