@@ -686,6 +686,8 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
 
         Index index = Series_Index(list);
 
+        DECLARE_ELEMENT (temp);
+
         if (
             index < Series_Len_Head(list)
             and Series_Index(arg) < Series_Len_Head(arg)
@@ -694,12 +696,9 @@ IMPLEMENT_GENERIC(OLDGENERIC, Any_List)
             //
             Element* a = List_At_Ensure_Mutable(nullptr, list);
             Element* b = List_At_Ensure_Mutable(nullptr, arg);
-            Element temp;
-            temp.header = a->header;
-            temp.payload = a->payload;
-            temp.extra = a->extra;
+            Copy_Cell(temp, a);
             Copy_Cell(a, b);
-            Copy_Cell(b, &temp);
+            Copy_Cell(b, temp);
         }
         return COPY_TO_OUT(list); }
 

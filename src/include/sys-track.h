@@ -265,3 +265,26 @@
     #define Assert_Cell_Shielded_If_Tracking(cell)  NOOP  // no effects allowed
     #define Assert_Cell_Unshielded_If_Tracking(cell)  NOOP  // no effects
 #endif
+
+
+//=//// CELL "VALID EVAL TARGET" TRACK FLAG HELPERS ///////////////////////=//
+//
+// Not all cells should be considered valid targets for evaluation; evaluation
+// permits cell state that should not be seen by users or debuggers.  Special
+// exemption is given to FRAME! argument slots during fulfillment.
+//
+
+#if DEBUG_TRACK_EXTEND_CELLS
+    #define Track_Enable_Eval_Target_Cell(cell) \
+        Set_Track_Flag((cell), VALID_EVAL_TARGET)
+
+    #define Track_Disable_Eval_Target_Cell(cell) \
+        Clear_Track_Flag((cell), VALID_EVAL_TARGET)
+
+    #define Assert_Cell_Eval_Targetable_If_Tracking(cell) \
+        assert(Get_Track_Flag((cell), VALID_EVAL_TARGET))
+#else
+    #define Track_Enable_Eval_Target_Cell(cell)  USED(cell)  // may have effect
+    #define Track_Disable_Eval_Target_Cell(cell)  USED(cell)
+    #define Assert_Cell_Eval_Targetable_If_Tracking(cell)  NOOP
+#endif

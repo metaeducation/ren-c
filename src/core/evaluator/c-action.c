@@ -366,9 +366,7 @@ Bounce Action_Executor(Level* L)
 
       continue_fulfilling:
 
-      #if DEBUG_TRACK_EXTEND_CELLS  // undo exception before user can see it
-        ARG->track_flags.bits &= (~ TRACK_FLAG_VALID_EVAL_TARGET);
-      #endif
+        Track_Disable_Eval_Target_Cell(ARG);  // before user sees
 
         if (Get_Action_Executor_Flag(L, DOING_PICKUPS)) {
             if (TOP_INDEX != L->baseline.stack_base)
@@ -544,8 +542,17 @@ Bounce Action_Executor(Level* L)
       case PARAMCLASS_SOFT:
         assert(not Is_Antiform(OUT));
         if (Is_Soft_Escapable_Group(As_Element(OUT))) {
-            if (Eval_Any_List_At_Throws(ARG, As_Element(OUT), SPECIFIED))
+            Track_Enable_Eval_Target_Cell(ARG);  // not visible yet
+
+            bool threw = Eval_Any_List_At_Throws(
+                ARG, As_Element(OUT), SPECIFIED
+            );
+
+            Track_Disable_Eval_Target_Cell(ARG);  // before user sees
+
+            if (threw)
                 goto handle_thrown;
+
             Init_Unreadable(OUT);
         }
         else
@@ -627,9 +634,7 @@ Bounce Action_Executor(Level* L)
         );
         possibly(Is_Light_Null(ARG));  // !!! review
 
-      #if DEBUG_TRACK_EXTEND_CELLS  // special exception--not user visible yet
-        ARG->track_flags.bits |= TRACK_FLAG_VALID_EVAL_TARGET;
-      #endif
+        Track_Enable_Eval_Target_Cell(ARG);  // not visible yet
 
         Push_Level(Erase_Cell(ARG), sub);
 
@@ -647,15 +652,11 @@ Bounce Action_Executor(Level* L)
         if (Is_Soft_Escapable_Group(As_Element(ARG))) {
             Element* arg_in_spare = Move_Cell(SPARE, As_Element(ARG));
 
-          #if DEBUG_TRACK_EXTEND_CELLS  // special exception
-            ARG->track_flags.bits |= TRACK_FLAG_VALID_EVAL_TARGET;
-          #endif
+            Track_Enable_Eval_Target_Cell(ARG);  // not visible yet
 
             bool threw = Eval_Any_List_At_Throws(ARG, arg_in_spare, SPECIFIED);
 
-          #if DEBUG_TRACK_EXTEND_CELLS  // undo special exception
-            ARG->track_flags.bits &= (~ TRACK_FLAG_VALID_EVAL_TARGET);
-          #endif
+            Track_Disable_Eval_Target_Cell(ARG);  // before user sees
 
             if (threw)
                 goto handle_thrown;

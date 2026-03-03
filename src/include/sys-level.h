@@ -515,9 +515,7 @@ INLINE void Push_Level_Dont_Inherit_Interruptibility(
     );
   #endif
 
-  #if DEBUG_TRACK_EXTEND_CELLS
-    assert(out->track_flags.bits & TRACK_FLAG_VALID_EVAL_TARGET);
-  #endif
+    Assert_Cell_Eval_Targetable_If_Tracking(out);
 
     if (
         LEVEL_STATE_BYTE(L) == STATE_0
