@@ -152,10 +152,13 @@
 ** can't accomplish the behavior of nocast without some special mechanics, so
 ** we have to #ifdef __cplusplus here.
 **
-** 1. NocastConvert: only one case needs special handling.  static_cast
+** 1. NocastConvert: two cases need special handling.  static_cast
 **    already handles void* -> T*, int -> enum, and same-type conversions.
-**    The sole exception: int -> T* must substitute nullptr (C++ forbids
-**    implicit int-to-pointer conversion, even for literal 0).
+**    The exception: int -> T* must substitute nullptr (C++ forbids
+**    implicit int-to-pointer conversion, even for literal 0).  Also,
+**    pointer-to-pointer casts (e.g. Derived** -> Base**) fail with
+**    static_cast because C++ doesn't support covariant multi-level
+**    pointer conversions; a C-style cast replicates C's behavior.
 **
 ** 2. The choice of `+` as the operator to use is intentional due to wanting
 **    something with lower precedence than `%` (used in Result and Optional)
@@ -183,6 +186,11 @@
     template<class To, class From>
     struct NocastConvert<To, From, /*IntToPtr*/ true> {
         static To Do_Conversion(From) { return static_cast<To>(nullptr); }
+    };
+
+    template<class To, class From>  /* pointer-to-pointer via C-style [1] */
+    struct NocastConvert<To*, From*, /*IntToPtr*/ false> {
+        static To* Do_Conversion(From* f) { return (To*)(f); }
     };
 
     template<class From>

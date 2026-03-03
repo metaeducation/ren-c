@@ -76,24 +76,25 @@
 //
 // Does NOT check safety concerns (indirect encodings, storage availability).
 //
+// Delegates to IsSameLayoutBase (in needful-utilities.hpp) for the core
+// inheritance + layout validation.  This keeps the invariant that makes
+// multi-level pointer casts safe (IsDeepPointerConvertible) and the
+// invariant that makes contravariant Sink/Init safe grounded on the same
+// single trait.
+//
 
 template<typename UP, typename T, bool = HasWrappedType<UP>::value>
 struct IsContravariantLayout {
     using U = remove_pointer_t<UP>;
 
     static constexpr bool is_identity = std::is_same<UP, T*>::value;
-    static constexpr bool is_base = std::is_base_of<U, T>::value;
-    static constexpr bool is_valid =
-        std::is_pointer<UP>::value and std::is_class<T>::value and is_base;
 
-    static_assert(
-        not is_valid or (
-            std::is_standard_layout<U>::value
-            and std::is_standard_layout<T>::value
-            and sizeof(U) == sizeof(T)
-        ),
-        "Contravariance requires same-sized standard layout classes"
-    );
+    // IsSameLayoutBase<U, T> checks is_base_of<U, T>, enforces
+    // standard_layout and sizeof equality via its own static_assert.
+    //
+    static constexpr bool is_valid =
+        std::is_pointer<UP>::value
+        and IsSameLayoutBase<U, T>::value;
 
     static constexpr bool value = is_identity or is_valid;
 };

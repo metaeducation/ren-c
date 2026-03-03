@@ -568,7 +568,7 @@ struct UpcastHelper {
     using type = needful_mirror_const_t(From, To);
 
     static_assert(
-        needful_is_convertible_v(From, type),
+        needful_is_deep_pointer_convertible_v(From, type),
         "upcast() cannot implicitly convert expression to type T"
     );
 };
@@ -621,7 +621,9 @@ struct UpcastHelper {
         \
         template< /* "downcast" means "reverse is_convertible" [2] */ \
             typename To, \
-            typename = enable_if_t<needful_is_convertible_v(To, From)> \
+            typename = enable_if_t< \
+                needful_is_deep_pointer_convertible_v(To, From) \
+            > \
         > \
         operator To() const \
             { return needful_lenient_##hookability##_cast(To, f); } \

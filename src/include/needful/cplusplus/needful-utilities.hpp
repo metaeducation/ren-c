@@ -152,9 +152,6 @@ using conditional_t = typename std::conditional<B, T, F>::type;
 #define needful_is_convertible_v(From,To) /* macro HACK [1] */ \
     std::is_convertible<From, To>::value
 
-#define needful_is_constructible_v(From,To) /* macro HACK [1] */ \
-    std::is_constructible<From, To>::value
-
 template<typename From, typename To>
 class is_explicitly_convertible {  // C++20
     template<typename F, typename T>
@@ -168,6 +165,79 @@ class is_explicitly_convertible {  // C++20
 
 #define needful_is_explicitly_convertible_v(From,To) /* macro HACK [1] */ \
     needful::is_explicitly_convertible<From, To>::value
+
+
+//=//// SAME-LAYOUT INHERITANCE CHECK /////////////////////////////////////=//
+//
+// Checks if Base is an ancestor of Derived in a zero-cost inheritance
+// hierarchy where derivation adds no members.  Both must be standard-layout
+// classes with the same size.
+//
+// This is the foundational invariant that makes the "check C with C++"
+// pattern safe: because the memory representations are identical, casts
+// between pointer levels (Derived** -> Base**) are safe even though C++
+// doesn't allow them implicitly.
+//
+// IsContravariantLayout (in needful-contra.hpp) builds on this same
+// invariant for Sink()/Init() parameter checking.
+//
+
+template<typename Base, typename Derived, typename Enable = void>
+struct IsSameLayoutBase : std::false_type {};
+
+template<typename Base, typename Derived>
+struct IsSameLayoutBase<Base, Derived, enable_if_t<
+    std::is_class<Base>::value
+    and std::is_class<Derived>::value
+    and std::is_base_of<Base, Derived>::value
+>> {
+    static_assert(
+        std::is_standard_layout<Base>::value
+        and std::is_standard_layout<Derived>::value
+        and sizeof(Base) == sizeof(Derived),
+        "Same-layout inheritance requires identical-sized standard layout types"
+    );
+
+    static constexpr bool value = true;
+};
+
+
+//=//// DEEP POINTER CONVERTIBILITY TRAIT /////////////////////////////////=//
+//
+// Standard std::is_convertible<Derived**, Base**> is false because C++
+// doesn't allow covariant pointer-to-pointer conversions.  But in the
+// needful type system, these conversions are safe: derivation adds no
+// members, so the pointer representations are identical at every level.
+//
+// This trait recursively strips matching pointer layers from both types,
+// then delegates to std::is_convertible at the innermost pointer level.
+// The recursion only fires when BOTH sides are still pointers after
+// stripping one layer, ensuring mismatched pointer depths are rejected.
+//
+//   IsDeepPointerConvertible<Derived*, Base*>      => true  (leaf check)
+//   IsDeepPointerConvertible<Derived**, Base**>    => true  (recurse once)
+//   IsDeepPointerConvertible<Derived***, Base***>  => true  (recurse twice)
+//   IsDeepPointerConvertible<Derived**, Base*>     => false (depth mismatch)
+//
+// No separate layout assertion is needed here: std::is_convertible at the
+// leaf level already requires a valid inheritance relationship, and the
+// layout invariant (standard-layout, same sizeof) is enforced by
+// IsSameLayoutBase wherever class types participate in contravariant casts.
+//
+
+template<typename From, typename To, typename Enable = void>
+struct IsDeepPointerConvertible : std::is_convertible<From, To> {};
+
+template<typename From, typename To>
+struct IsDeepPointerConvertible<From*, To*, enable_if_t<
+    std::is_pointer<From>::value and std::is_pointer<To>::value
+>> : IsDeepPointerConvertible<From, To> {};
+
+#define needful_is_deep_pointer_convertible_v(From,To) \
+    needful::IsDeepPointerConvertible<From, To>::value
+
+#define needful_is_constructible_v(From,To) /* macro HACK [1] */ \
+    std::is_constructible<From, To>::value
 
 
 //=//// is_function_pointer TRAIT /////////////////////////////////////////=//
