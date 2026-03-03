@@ -524,6 +524,8 @@ Bounce Action_Executor(Level* L)
         Init_Unreadable(OUT);
     }
     else if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // treat as single value
+        if (Is_Antiform(OUT))
+            panic ("Antiform infix variadics not supported ATM, review idea");
         Init_Varargs_Untyped_Infix(ARG, As_Element(OUT));
         Init_Unreadable(OUT);
     }
