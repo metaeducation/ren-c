@@ -148,7 +148,10 @@ INLINE void Normalize_Cell(Cell* cell) {  // drop quoted/quasi/anti, keep sigil
         );
     }
     else if (Type_Of_Raw(cell) <= MAX_TYPE_HEART) {  // no Sigil, equal
-        assert(Type_Of_Raw(cell) == Type_From_Heart(Heart_Of(cell)));
+        assert(
+            Type_Of_Raw(cell)
+            == ii_cast(TypeEnum, Type_From_Heart(Heart_Of(cell)))
+        );
     }
     else {
         possibly(Type_Of_Raw(cell) == TYPE_QUASIFORM);
@@ -181,7 +184,9 @@ INLINE bool Have_Matching_Lift_Levels(const Stable* a, const Stable* b) {
         return Type_Of_Raw(b) <= MAX_TYPE_NOQUOTE_NOQUASI;
     if (Type_Of_Raw(b) <= MAX_TYPE_NOQUOTE_NOQUASI)
         return false;
-    return Type_Of_Raw(a) == Type_Of_Raw(b);
+    return (
+        ii_cast(TypeEnum, Type_Of_Raw(a)) == ii_cast(TypeEnum, Type_Of_Raw(b))
+    );
 }
 
 

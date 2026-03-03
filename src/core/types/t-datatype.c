@@ -54,7 +54,7 @@ void Startup_Datatypes(void)
 
     for (; id16 <= MAX_SYM_BUILTIN_TYPES; ++id16) {
         SymId id = i_cast(SymId, id16);
-        Type type = Type_From_Symbol_Id(id);
+        TypeEnum type = Type_From_Symbol_Id(id);
 
         if (id == SYM_QUOTED_X) {
             assert(type == TYPE_QUOTED_1_TIME_NONQUASI);

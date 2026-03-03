@@ -143,12 +143,12 @@ INLINE bool Is_Symbol_Id_Of_Builtin_Type(SymId id) {
     );
 }
 
-INLINE Type Type_From_Symbol_Id(SymId id) {
+INLINE TypeEnum Type_From_Symbol_Id(SymId id) {
     assert(Is_Symbol_Id_Of_Builtin_Type(id));
     return unwrap Type_From_Byte(id - MIN_SYM_BUILTIN_TYPES + 1);
 }
 
-INLINE SymId Symbol_Id_From_Type(Type type) {
+INLINE SymId Symbol_Id_From_Type(TypeEnum type) {
     assert(type != TYPE_0_constexpr);
     return i_cast(SymId,
         i_cast(SymId16, Byte_From_Type(type) + MIN_SYM_BUILTIN_TYPES - 1)

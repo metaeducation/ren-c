@@ -71,7 +71,7 @@ INLINE void Tweak_Misc_Sea_Adjunct(
 }
 
 
-INLINE Type Type_From_Symbol_Id(SymId id);
+INLINE TypeEnum Type_From_Symbol_Id(SymId id);
 
 // 1. !!! We need to consider the strictness here, with case sensitive binding
 //    we can't be sure it's a match.  :-/  For this moment hope lib doesn't

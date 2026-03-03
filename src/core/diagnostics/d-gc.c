@@ -331,8 +331,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Type_Of_Raw(v) == TYPE_DATATYPE) {
             const Stable* value = cast(Stable*, v);
             assert(
-                (opt Datatype_Type(value))
-                == (opt Datatype_Type_Slow_Debug(value))
+                ii_cast(TypeEnum, Datatype_Type(value))
+                == ii_cast(TypeEnum, Datatype_Type_Slow_Debug(value))
             );
         }
         break; }
