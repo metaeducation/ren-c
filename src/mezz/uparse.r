@@ -602,7 +602,7 @@ default-combinators: make map! [
         ]
 
         set-combinator-input f input  ; always set remainder to stop's input?
-        f/return ^result
+        f/return* ^result  ; call definitional RETURN
     ]
 
     === ACCEPT KEYWORD ===

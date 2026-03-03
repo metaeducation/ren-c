@@ -450,12 +450,16 @@ Result(None) Get_Path_Push_Refinements(Level* level_)
         TOP_INDEX,
         false  // not tweaking, so do indirection
     );
+    Drop_Level(sub);
+    DROP();
+
     if (error)
         goto return_error;
 
-    Drop_Level(sub);
-
-    DROP();
+    if (Is_Null(As_Stable(SPARE))) {
+        error = Error_Bad_Value(path);  // e.g. `lib/` or `lib/unknown`
+        goto return_error;
+    }
 
     Copy_Cell(OUT, SPARE);
     require (
