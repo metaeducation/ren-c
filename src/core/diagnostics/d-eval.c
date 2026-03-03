@@ -311,7 +311,6 @@ void Stepper_Exiting_Checks(Level* L)
 {
     Stepper_Shared_Checks(L);
 
-    assert(Not_Cell_Flag(L->out, NOTE));
     assert(not Is_Base_Marked(L->out));
 
     if (Not_Level_At_End(L) and not Level_Is_Variadic(L)) {
@@ -323,7 +322,12 @@ void Stepper_Exiting_Checks(Level* L)
 
   //=//// CHECK FOR STRAY FLAGS ///////////////////////////////////////////=//
 
-    if (not Is_Throwing(L)) {
+    if (Is_Throwing(L)) {
+        assert(Is_Cell_Erased(L->out));
+    }
+    else {
+        assert(Not_Cell_Flag(L->out, NOTE));
+
         Flags filtered = (L->flags.bits & ~FLAG_STATE_BYTE(255));
         filtered &= ~ (
             LEVEL_FLAG_0_IS_TRUE  // always true
