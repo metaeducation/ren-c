@@ -247,15 +247,20 @@ static Result(Stable*) Finalize_Composer_Level(
     if (Get_Source_Flag(Cell_Array(composee), NEWLINE_AT_TAIL))
         Set_Source_Flag(a, NEWLINE_AT_TAIL);  // proxy newline flag [3]
 
-    Element* list = Init_List(out, heart, a);
+    Element* out_list = Init_List(out, heart, a);
 
-    if (not Is_Splice(composee))  // preserve binding if not splice
-        Tweak_Cell_Binding(list, Cell_Binding(As_Element(composee)));
+    if (Is_Splice(composee)) {
+        Spread_Cell(out);  // no binding/sigil on output
+    }
+    else {  // preserve binding if not splice
+        Tweak_Cell_Binding(out_list, Cell_Binding(As_Element(composee)));
 
-    Option(Sigil) sigil = Cell_Underlying_Sigil(As_Element(composee));
-    if (sigil)
-        Add_Cell_Sigil(list, unwrap sigil);
-    Tweak_Cell_Type_Byte(list, Type_Of_Raw(composee));  // apply lift byte [4]
+        Option(Sigil) sigil = Cell_Underlying_Sigil(composee);
+        if (sigil)
+            Add_Cell_Sigil(out_list, unwrap sigil);
+        Tweak_Cell_Type_Byte(out_list, Type_Of_Raw(composee));  // add lift [4]
+    }
+
     return out;
 }
 
