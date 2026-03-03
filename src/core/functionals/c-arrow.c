@@ -66,7 +66,7 @@ DECLARE_NATIVE(ARROW)
     Param* param = ARG(SPEC);
 
     if (Is_Cell_A_Bedrock_Hole(param)) {
-        spec = Init_Word(LOCAL(SPEC), CANON(QUESTION_1));
+        spec = Init_Word(Sink_LOCAL(SPEC), CANON(QUESTION_1));
         goto wrap_spec_in_block;
     }
 

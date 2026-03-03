@@ -1410,7 +1410,7 @@ DECLARE_NATIVE(DEFINITIONAL_THROW)
 
     Value* v;
     if (Is_Cell_A_Bedrock_Hole(param))
-        v = Init_Void(LOCAL(VALUE));
+        v = Init_Void(Sink_LOCAL(VALUE));
     else
         v = As_Value(param);
 
