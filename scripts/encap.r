@@ -772,7 +772,7 @@ pe-format: context [
         repeat (COFF-header.number-of-sections) section-rule
         end-of-section-header: <here>
 
-        accept (~)  ; !!! stop here, no END ?
+        accept (~<accept>~)  ; !!! stop here, no END ?
     ]
     size-of-section-header: 40  ; Size of one entry
 

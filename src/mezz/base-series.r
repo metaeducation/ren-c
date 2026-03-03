@@ -211,7 +211,7 @@ use [n] [  ; define FIRST, SECOND, THIRD etc. as specializations of PICK
             s: <here>, opt some rule, e: <here>
             (indent: (index of e) - (index of s))
 
-            accept (~)  ; don't need to reach end
+            accept (~<accept>~)  ; don't need to reach end
         ]
     ]
 

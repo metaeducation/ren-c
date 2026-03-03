@@ -634,7 +634,7 @@ data-descriptor-sig: #{504B0708}
         ;
         let pos: <here>, (assert [pos = central-end-pos])
 
-        accept (~)  ; allow parse to succeed even though not at end
+        accept (~<accept>~)  ; allow parse to succeed even though not at end
     ] except [
         panic "Malformed Zip Archive"
     ]

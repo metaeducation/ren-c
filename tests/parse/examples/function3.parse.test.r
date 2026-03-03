@@ -137,7 +137,7 @@
         ]
         (var: null)
     |
-        <end> accept (~)
+        <end> accept (~<accept>~)
     |
         other: <here> (
             panic [

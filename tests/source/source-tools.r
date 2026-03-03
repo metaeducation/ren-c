@@ -138,23 +138,22 @@ export analyse: context [
         ]
     ]
 
-    file: func [
+    file: lambda [
         "Analyse a file returning facts"
-        return: [null? block!]
+        []: [<null> block!]
         file
     ][
         lib/print ["Analyzing:" file]  ; subvert tests PRINT disablement
-        return all [
-            let filetype: select extensions extension-of file
-            let type: has source filetype
-            (reeval (ensure action! get type) file
-                (read compose %(repo-dir)/(file)))
-        ]
+        all {
+            filetype: select extensions extension-of file
+            handler: pick source filetype
+            handler // [file (read compose %(repo-dir)/(file))]
+        }
     ]
 
     source: context [
 
-        c: func [
+        c: unrun func [
             "Return token-level facts about a C file (too-long lines, etc.)"
 
             return: [block!]
@@ -210,16 +209,15 @@ export analyse: context [
                             parse3 last-func-end [
                                 function-spacing-rule
                                 position: <here>
-                                accept (~)
+                                accept (okay)
                                 |
                                 accept (null)
                             ]
                             same? position proto-parser.parse-position
                         ] else [
                             let line: text-line-of proto-parser.parse-position
-                            append
-                                non-std-func-space: default [copy []]
-                                line
+                            non-std-func-space: default [copy []]
+                            append non-std-func-space line
                         ]
                     ]
                 ]
@@ -248,9 +246,8 @@ export analyse: context [
                     ; `DECLARE_NATIVE(SOME_NAME_Q)` to be correctly lined up
                     ; as the "to-c-name" of the Rebol set-word
                     ;
-                    if (
-                        proto-parser.proto-arg-1
-                        <> uppercase to-c-name:scope name #prefixed
+                    if proto-parser.proto-arg-1 <> (
+                        uppercase to-c-name:scope name #prefixed
                     )[
                         let line: text-line-of proto-parser.parse-position
                         emit <id-mismatch> [
@@ -290,7 +287,7 @@ export analyse: context [
             return analysis
         ]
 
-        rebol: func [
+        rebol: unrun func [
             "Analyse a Rebol file (no checks beyond those for text yet)"
 
             return: [block!]
@@ -402,7 +399,7 @@ export analyse: context [
             ]
         ]
 
-        for-each 'list reduce [$tabbed $whitespace-at-eol] [
+        for-each list [tabbed whitespace-at-eol] [
             if not empty? get list [
                 emit as tag! list [(file) (get list)]
             ]
