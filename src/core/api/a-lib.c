@@ -3344,13 +3344,14 @@ Bounce Api_Function_Dispatcher(Level* const L)
     if (not b)  // not irreducible, so final value in OUT cell
         goto typecheck_out;
 
-    if (b == BOUNCE_DELEGATE) {  // still need to type check
-        LEVEL_STATE_BYTE(L) = ST_API_FUNC_DELEGATING;
-        return BOUNCE_CONTINUE;
-    }
-
-    if (b == BOUNCE_CONTINUE) {  // wants callback after execution
-        LEVEL_STATE_BYTE(L) = ST_API_FUNC_CONTINUING;
+    if (b == BOUNCE_CONTINUE) {
+        if (Get_Executor_Flag(ACTION, L, DELEGATE_CONTROL)) {
+            LEVEL_STATE_BYTE(L) = ST_API_FUNC_DELEGATING;
+            Clear_Executor_Flag(ACTION, L, DELEGATE_CONTROL);  // for typecheck
+        }
+        else {
+            LEVEL_STATE_BYTE(L) = ST_API_FUNC_CONTINUING;
+        }
         return BOUNCE_CONTINUE;
     }
 
@@ -3568,13 +3569,15 @@ RebolBounce API_rebDelegate(
 
     Panic_If_Top_Level_Not_Continuable();
 
+    Level* level_ = TOP_LEVEL;  // needed by DELEGATE_SUBLEVEL macro
+
     API_rebPushContinuation_internal(
         binding,
         u_cast(RebolValue*, TOP_LEVEL->out),  // don't sink, OUT in valist [1]
         LEVEL_MASK_NONE,
         p, vaptr
     );
-    return BOUNCE_DELEGATE;
+    return DELEGATE_SUBLEVEL;
 }
 
 

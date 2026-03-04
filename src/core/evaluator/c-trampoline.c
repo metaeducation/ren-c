@@ -420,7 +420,6 @@ bool Trampoline_With_Top_As_Root_Throws(void)
     if (
         (r != BOUNCE_THROWN) and (r != root->out) and (
             (r == BOUNCE_CONTINUE and (name = "CONTINUE"))
-            or (r == BOUNCE_DELEGATE and (name = "DELEGATE"))
             or (r == BOUNCE_REDO_CHECKED and (name = "REDO_CHECKED"))
             or (r == BOUNCE_REDO_UNCHECKED and (name = "REDO_UNCHECKED"))
             or (r == BOUNCE_SUSPEND and (name = "SUSPEND"))

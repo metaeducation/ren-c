@@ -329,7 +329,6 @@ static void Init_Root_Vars(void)
     Init_Bounce_Wild(g_bounce_redo_checked, C_REDO_CHECKED);
     Init_Bounce_Wild(g_bounce_downshifted, C_DOWNSHIFTED);
     Init_Bounce_Wild(g_bounce_continuation, C_CONTINUATION);
-    Init_Bounce_Wild(g_bounce_delegation, C_DELEGATION);
     Init_Bounce_Wild(g_bounce_suspend, C_SUSPEND);
 
 } make_empty_object: {
@@ -376,7 +375,6 @@ static void Shutdown_Root_Vars(void)
     Erase_Bounce_Wild(g_bounce_redo_checked);
     Erase_Bounce_Wild(g_bounce_downshifted);
     Erase_Bounce_Wild(g_bounce_continuation);
-    Erase_Bounce_Wild(g_bounce_delegation);
     Erase_Bounce_Wild(g_bounce_suspend);
 }
 

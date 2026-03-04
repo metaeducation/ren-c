@@ -207,12 +207,12 @@ Option(Bounce) Irreducible_Bounce(Level* level_, Bounce b) {
         assert(Get_Details_Flag(Ensure_Level_Details(L), RAW_NATIVE));
         possibly(Not_Base_Managed(L->varlist));
         rebDelegateCore(cast(RebolContext*, g_lib_context), cp);
-        return BOUNCE_DELEGATE;
+        return BOUNCE_CONTINUE;  // ^-- RebolBounce is void*, not Bounce
     }
 
     assert(Is_Base_Managed(L->varlist));
     rebDelegateCore(cast(RebolContext*, L->varlist), cp);
-    return BOUNCE_DELEGATE;
+    return BOUNCE_CONTINUE;  // ^-- RebolBounce is void*, not Bounce
 }}
 
 
@@ -1015,11 +1015,6 @@ Bounce Action_Executor(Level* L)
     switch (Bounce_Type(b)) {  // need some actual Bounce behavior...
       case C_CONTINUATION:
         return BOUNCE_CONTINUE;  // Note: may not have pushed a new level...
-
-      case C_DELEGATION:
-        Set_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL);
-        STATE = 123;  // BOUNCE_CONTINUE does not allow STATE_0
-        return BOUNCE_CONTINUE;
 
       case C_SUSPEND:
         return BOUNCE_SUSPEND;

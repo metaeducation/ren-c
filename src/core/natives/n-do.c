@@ -433,7 +433,7 @@ DECLARE_NATIVE(EVALUATE)  // synonym as EVAL in mezzanine
         source,
         with
     );
-    return BOUNCE_DELEGATE;
+    return DELEGATE_SUBLEVEL;
 
 } initial_entry_varargs: { ///////////////////////////////////////////////////
 

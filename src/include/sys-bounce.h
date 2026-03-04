@@ -116,13 +116,6 @@ INLINE Value* Value_From_Bounce(Bounce b) {
 #define BOUNCE_CONTINUE  x_cast(Bounce, &g_bounce_continuation)
 
 
-// A dispatcher may want to run a "continuation" but not be called back.
-// This is referred to as delegation.
-//
-#define C_DELEGATION  'D'
-#define BOUNCE_DELEGATE  x_cast(Bounce, &g_bounce_delegation)
-
-
 // For starters, a simple signal for suspending stacks in order to be able to
 // try not using Asyncify (or at least not relying on it so heavily)
 //

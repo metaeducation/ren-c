@@ -620,9 +620,6 @@ EXTERN_C void API_rebResolveNative_internal(
         Bounce_From_Bounce_Id(bounce_id)
     );
     if (bounce) {  // nullptr means OUT holds the cell--others "irreducible"
-        if (bounce == BOUNCE_DELEGATE)
-            panic ("reb.Delegate() not yet supported in JavaScript Natives");
-
         if (bounce == BOUNCE_CONTINUE)
             panic ("reb.Continue() not yet supported in JavaScript Natives");
 

@@ -2384,7 +2384,7 @@ DECLARE_NATIVE(FOR)
             LEVEL_MASK_NONE,
             CANON(FOR_EACH), rebQ(ARG(VARS)), rebQ(value), body
         );
-        return BOUNCE_DELEGATE;
+        return DELEGATE_SUBLEVEL;
     }
 
     if (Is_Decimal(value) or Is_Percent(value))

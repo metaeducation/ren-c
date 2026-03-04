@@ -147,7 +147,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     Push_Level(OUT, sub);
 
     if (not result_param)
-        return BOUNCE_DELEGATE;  // no typecheck callback needed (ARROW)
+        return DELEGATE_SUBLEVEL;  // no typecheck callback needed (ARROW)
 
     if (Is_Space(unwrap result_param)) {
         STATE = ST_LAMBDA_DIVERGER_EXECUTING;
@@ -157,7 +157,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     STATE = ST_LAMBDA_LAMBDA_EXECUTING;
 
     if (Is_Parameter_Unconstrained(unwrap result_param))
-        return BOUNCE_DELEGATE;  // also no typecheck needed
+        return DELEGATE_SUBLEVEL;  // also no typecheck needed
 
     return CONTINUE_SUBLEVEL;
 

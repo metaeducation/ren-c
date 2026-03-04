@@ -74,14 +74,16 @@
 // if the delegating level were freed before running what's underneath it...
 // at least it could be collapsed into a more primordial state.  Review.
 
-#define DELEGATE_CORE_3(o,sub_flags,...) ( \
-    assert(Not_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES)), \
+#define DELEGATE_CORE_3(o,sub_flags,...) \
+    (assert(Not_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES)), \
     assert((o) == level_->out), \
+    Set_Executor_Flag(ACTION, level_, DELEGATE_CONTROL), \
+    LEVEL_STATE_BYTE(level_) = 127, \
     Pushed_Continuation( \
         level_->out, \
         (sub_flags), \
         __VA_ARGS__  /* binding, branch, and "with" argument */ \
-    ) ? BOUNCE_DELEGATE \
+    ) ? BOUNCE_CONTINUE \
         : level_->out)  // no need to give callback to delegator
 
 #define DELEGATE_CORE_2(out,sub_flags,...) \
@@ -101,5 +103,7 @@
 
 #define DELEGATE_SUBLEVEL \
     (assert(Not_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES)), \
-        assert(SUBLEVEL->prior == level_), \
-        /* <- */ BOUNCE_DELEGATE)
+        assert(TOP_LEVEL->prior == level_), \
+        Set_Executor_Flag(ACTION, level_, DELEGATE_CONTROL), \
+        LEVEL_STATE_BYTE(level_) = 127, \
+        /* <- */ BOUNCE_CONTINUE)
