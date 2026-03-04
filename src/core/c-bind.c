@@ -134,8 +134,7 @@ void Bind_Values_Core(
     Option(SymId) add_midstream_types,
     Flags flags // see %sys-core.h for BIND_DEEP, etc.
 ){
-    DECLARE_BINDER (binder);
-    Construct_Binder(binder);
+    Binder* binder = Construct_Binder();
 
     VarList* c = Cell_Varlist(context);
 
@@ -1174,8 +1173,7 @@ Source* Copy_And_Bind_Relative_Deep_Managed(
     Details* relative,
     LensMode lens_mode
 ){
-    DECLARE_BINDER (binder);
-    Construct_Binder(binder);
+    Binder* binder = Construct_Binder();
 
   add_binder_indices: {
 
@@ -1311,7 +1309,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
         binding = SPECIFIED;
     }
 
-    bool body_needs_binding = false;
+    Binder* binder = nullptr;  // only made if body needs binding
 
   walk_block_for_errors_before_making_binder: {
 
@@ -1332,7 +1330,8 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
                 byte == Byte_From_Heart(HEART_WORD)
                 or byte == Byte_From_Heart_And_Sigil(HEART_WORD, SIGIL_META)
             ){
-                body_needs_binding = true;
+                if (not binder)
+                    binder = Construct_Binder();
                 continue;
             }
             else if (
@@ -1356,10 +1355,6 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     //
     VarList* varlist = Alloc_Varlist(HEART_OBJECT, num_vars);
 
-    DECLARE_BINDER (binder);  // used to check for duplicates
-    if (body_needs_binding)
-        Construct_Binder(binder);
-
     Option(Error*) error = SUCCESS;
 
     SymId dummy_sym = SYM_DUMMY1;
@@ -1381,7 +1376,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             Init_Bedrock_Drain(slot);
             Track_Shield_Cell(slot);
 
-            if (body_needs_binding)
+            if (binder)
                 Add_Binder_Index(binder, symbol, -1);  // for remove
 
             continue;
@@ -1408,7 +1403,7 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
             assert(Is_Cell_A_Bedrock_Alias(slot));  // alias uses ^META [1]
         }
         else {
-            assert(body_needs_binding);  // set above
+            assert(binder);  // set above
 
             if (not Try_Add_Binder_Index(binder, symbol, index)) {
                 DECLARE_ELEMENT (word);
@@ -1446,10 +1441,10 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     //
     /* Set_Flex_Flag(c, DONT_RELOCATE); */
 
-    if (body_needs_binding)
-        Destruct_Binder(binder);  // must remove bind indices even if failing
-
     if (error) {
+        if (binder)
+            Destruct_Binder(binder);  // remove bind indices even if failing
+
         Free_Unmanaged_Flex(Varlist_Array(varlist));
         return fail (unwrap error);
     }
@@ -1462,9 +1457,10 @@ Result(VarList*) Create_Loop_Context_May_Bind_Body(
     //
     Set_Flex_Flag(Varlist_Array(varlist), FIXED_SIZE);
 
-    if (body_needs_binding) {  // don't modify binding unless we have to
+    if (binder) {  // don't modify binding unless we have to
         Tweak_Link_Inherit_Bind(varlist, List_Binding(body));
         Tweak_Cell_Binding(body, varlist);
+        Destruct_Binder(binder);
     }
 
     return varlist;

@@ -144,8 +144,7 @@ DECLARE_NATIVE(REORDER)
     // We need a binder to efficiently map arguments to their position in
     // the parameters array, and track which parameters are mentioned.
 
-    DECLARE_BINDER (binder);
-    Construct_Binder(binder);
+    Binder* binder = Construct_Binder();
 
   add_binder_indices: {
 

@@ -40,7 +40,9 @@
 //
 void Snap_State(struct Reb_State *s)
 {
-    assert(not g_symbols.binder);  // only one binder active at a time ATM
+  #if RUNTIME_CHECKS
+    assert(not g_symbols.binder.initialized);  // only one active at a time ATM
+  #endif
 
     s->stack_base = TOP_INDEX;
 
@@ -96,8 +98,18 @@ void Rollback_Globals_To_State(struct Reb_State *s)
   // There can only be one binder in effect, and it decorates the symbol
   // table in a way that must be undone if there is a panic during its use.
 
-    if (g_symbols.binder)
-        Destruct_Binder(unwrap g_symbols.binder);
+    if (g_symbols.binder.stump_list) {
+      #if RUNTIME_CHECKS
+        assert(g_symbols.binder.initialized);
+      #endif
+        Destruct_Binder(&g_symbols.binder);
+    }
+    else {
+      #if RUNTIME_CHECKS
+        possibly(g_symbols.binder.initialized);  // inited but no stumps yet
+        g_symbols.binder.initialized = false;
+      #endif
+    }
 
 } rollback_mold_state: {
 

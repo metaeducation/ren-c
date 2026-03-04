@@ -234,7 +234,7 @@
         if size != length of as blob! c [
             panic "test character doesn't match expected size"
         ]
-        count-up 'len 64 wrap {
+        count-up 'len 64 {
             s: copy ""
             e: copy ""
             picks: copy []

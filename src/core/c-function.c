@@ -589,7 +589,7 @@ Result(ParamList*) Pop_Paramlist(
             const Symbol* symbol = Word_Symbol(Data_Stack_Cell_At(stackindex));
 
             if (Try_Add_Binder_Index(
-                &cl->binder,
+                cl->binder,
                 symbol,
                 cl->next_index
             )){
@@ -604,7 +604,7 @@ Result(ParamList*) Pop_Paramlist(
 
       } gather_top_level_declarations_to_stack: {
 
-        Option(Stump*) params_stump = cl->binder.stump_list;
+        Option(Stump*) params_stump = cl->binder->stump_list;
 
         const Element* tail;
         const Element* at = List_At(&tail, unwrap gather);
@@ -616,7 +616,7 @@ Result(ParamList*) Pop_Paramlist(
             return fail (e);
         }
 
-        Option(Stump*) stump = cl->binder.stump_list;
+        Option(Stump*) stump = cl->binder->stump_list;
         for (; stump != params_stump; stump = Link_Stump_Next(unwrap stump)) {
             const Symbol* symbol = Info_Stump_Bind_Symbol(unwrap stump);
             Init_Word(PUSH(), symbol);
@@ -650,8 +650,7 @@ Result(ParamList*) Pop_Paramlist(
     // (This is why we wait until the parameter list gathering process
     // is over to do the duplicate checks--it can fail.)
     //
-    DECLARE_BINDER (binder);
-    Construct_Binder(binder);
+    Binder* binder = Construct_Binder();
 
     const Symbol* duplicate = nullptr;
 

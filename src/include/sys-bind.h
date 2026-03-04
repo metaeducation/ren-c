@@ -130,40 +130,6 @@ enum {
 };
 
 
-struct BinderStruct {
-    Option(Stump*) stump_list;
-
-  #if RUNTIME_CHECKS && CPLUSPLUS_11
-    //
-    // C++ checked build can help us make sure that no binder ever fails to
-    // get an Construct_Binder() and Destruct_Binder() pair called on it, which
-    // would leave lingering binding hitches on symbol stubs.
-    //
-    bool initialized;
-    BinderStruct () { initialized = false; }
-    ~BinderStruct () { assert(not initialized); }
-  #endif
-};
-
-#define DECLARE_BINDER(name) \
-    Binder name##_struct; \
-    Binder* name = &name##_struct; \
-
-
-#if DEBUG_STATIC_ANALYZING  // malloc leak check ensures destruct on all paths!
-    #define Construct_Binder(name) \
-        void* name##_guard = malloc(1); \
-        Construct_Binder_Core(name)
-
-    #define Destruct_Binder(name) do { \
-        free(name##_guard); \
-        Destruct_Binder_Core(name); \
-    } while (0);
-#else
-    #define Construct_Binder    Construct_Binder_Core
-    #define Destruct_Binder     Destruct_Binder_Core
-#endif
-
 
 INLINE const Symbol* Info_Stump_Bind_Symbol(const Stump* stump) {
     assert(Is_Stub_Stump(stump));
@@ -186,19 +152,25 @@ INLINE void Tweak_Link_Stump_Next(Stump* stump, Option(Stump*) next) {
     LINK_STUMP_NEXT(stump) = opt next;
 }
 
-INLINE void Construct_Binder_Core(Binder* binder) {
-    assert(not g_symbols.binder);
-    g_symbols.binder = binder;
+INLINE Binder* Construct_Binder(void) {
+    Binder* binder = &g_symbols.binder;  // only one for now
 
-    binder->stump_list = nullptr;
-
-  #if RUNTIME_CHECKS && CPLUSPLUS_11
+  #if RUNTIME_CHECKS
+    assert(not binder->initialized);
+    assert(binder->stump_list == nullptr);
     binder->initialized = true;
   #endif
+
+    return binder;
 }
 
-INLINE void Destruct_Binder_Core(Binder* binder) {
-    assert(g_symbols.binder == binder);
+INLINE void Destruct_Binder(Binder* binder) {
+    assert(&g_symbols.binder == binder);
+
+  #if RUNTIME_CHECKS
+    assert(binder->initialized);
+    binder->initialized = false;
+  #endif
 
     while (binder->stump_list != nullptr) {
         Stump* stump = unwrap binder->stump_list;
@@ -215,12 +187,6 @@ INLINE void Destruct_Binder_Core(Binder* binder) {
         Set_Base_Unreadable_Bit(stump);
         GC_Kill_Stub(stump);  // expects node diminished/inaccessible (free)
     }
-
-  #if RUNTIME_CHECKS && CPLUSPLUS_11
-    binder->initialized = false;
-  #endif
-
-    g_symbols.binder = nullptr;
 }
 
 
@@ -317,7 +283,7 @@ INLINE void Update_Binder_Index(
 
 struct CollectorStruct {
     CollectFlags initial_flags;
-    Binder binder;
+    Binder* binder;
     Option(Stub*) base_stump;
     Option(SeaOfVars*) sea;
     REBINT next_index;

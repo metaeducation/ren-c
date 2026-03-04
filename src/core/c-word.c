@@ -503,7 +503,10 @@ void Startup_Interning(void)
     Clear_Flex(g_symbols.by_hash);  // all slots start as nullptr
     Set_Flex_Len(g_symbols.by_hash, n);
 
-    assert(not g_symbols.binder);
+    assert(g_symbols.binder.stump_list == nullptr);
+  #if RUNTIME_CHECKS
+    assert(not g_symbols.binder.initialized);
+  #endif
 }
 
 
@@ -660,6 +663,11 @@ void Shutdown_Builtin_Symbols(void)
         Symbol* canon = &g_symbols.builtin_canons[id];
         Diminish_Stub(canon);
     }
+
+    assert(g_symbols.binder.stump_list == nullptr);
+  #if RUNTIME_CHECKS
+    assert(not g_symbols.binder.initialized);
+  #endif
 }
 
 
@@ -668,7 +676,10 @@ void Shutdown_Builtin_Symbols(void)
 //
 void Shutdown_Interning(void)
 {
-    assert(not g_symbols.binder);
+    assert(not g_symbols.binder.stump_list);
+  #if RUNTIME_CHECKS
+    assert(not g_symbols.binder.initialized);
+  #endif
 
   #if RUNTIME_CHECKS
     if (g_symbols.num_slots_in_use - g_symbols.num_deleteds != 0) {

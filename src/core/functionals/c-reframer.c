@@ -390,8 +390,8 @@ DECLARE_NATIVE(REFRAMER)
     Value* shim = ARG(SHIM);
     Option(const Symbol*) label = Frame_Label_Deep(shim);
 
-    DECLARE_BINDER (binder);
-    Construct_Binder(binder);
+    Binder* binder = Construct_Binder();
+
     ParamList* paramlist = Make_Varlist_For_Action_Push_Partials(
         shim,
         STACK_BASE,

@@ -348,7 +348,7 @@ void Construct_Collector_Core(
     cl->initial_flags = flags;
     cl->next_index = 1;
 
-    Construct_Binder_Core(&cl->binder);
+    cl->binder = Construct_Binder();
 
     if (context) {
         if (Is_Stub_Sea(unwrap context))  // no binder preload [1]
@@ -367,7 +367,7 @@ void Construct_Collector_Core(
     else
         cl->sea = nullptr;
 
-    cl->base_stump = cl->binder.stump_list;
+    cl->base_stump = cl->binder->stump_list;
 }
 
 
@@ -379,7 +379,7 @@ void Construct_Collector_Core(
 //
 void Destruct_Collector_Core(Collector *cl)
 {
-    Destruct_Binder_Core(&cl->binder);
+    Destruct_Binder(cl->binder);
     Corrupt_If_Needful(cl->base_stump);
 }
 
@@ -406,7 +406,7 @@ void Collect_Context_Keys(
     for (; key != tail; ++key) {
         const Symbol* symbol = Key_Symbol(key);
         if (Try_Add_Binder_Index(
-            &cl->binder,
+            cl->binder,
             symbol,
             cl->next_index
         )){
@@ -463,7 +463,7 @@ Result(None) Collect_Inner_Loop(
             }
 
             if (Try_Add_Binder_Index(
-                &cl->binder,
+                cl->binder,
                 unwrap symbol,
                 cl->next_index
             )){
@@ -540,7 +540,7 @@ Result(None) Wrap_Extend_Core(
         return fail (e);
     }
 
-    Option(Stump*) stump = cl->binder.stump_list;
+    Option(Stump*) stump = cl->binder->stump_list;
     for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
         const Symbol* symbol = Info_Stump_Bind_Symbol(unwrap stump);
         Init_Void_Signifying_Unset(Append_Context(context, symbol));
@@ -737,11 +737,11 @@ DECLARE_NATIVE(COLLECT_WORDS)
         for (; ignore_at != ignore_tail; ++ignore_at) {
             const Symbol* symbol = Word_Symbol(ignore_at);
 
-            if (not Try_Add_Binder_Index(&cl->binder, symbol, -1)) {
+            if (not Try_Add_Binder_Index(cl->binder, symbol, -1)) {
               #if RUNTIME_CHECKS  // count dups, overkill [3]
-                REBINT i = unwrap Try_Get_Binder_Index(&cl->binder, symbol);
+                REBINT i = unwrap Try_Get_Binder_Index(cl->binder, symbol);
                 assert(i < 0);
-                Update_Binder_Index(&cl->binder, symbol, i - 1);
+                Update_Binder_Index(cl->binder, symbol, i - 1);
               #endif
             }
         }
@@ -751,7 +751,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
         const Key* key_tail;
         const Key* key = Varlist_Keys(&key_tail, Cell_Varlist(unwrap ignore));
         for (; key != key_tail; ++key)
-            Add_Binder_Index(&cl->binder, Key_Symbol(key), -1);  // no dups
+            Add_Binder_Index(cl->binder, Key_Symbol(key), -1);  // no dups
     }
 
     goto run_common_collection_code;
@@ -767,7 +767,7 @@ DECLARE_NATIVE(COLLECT_WORDS)
 
     assert(TOP_INDEX == STACK_BASE);  // could be more efficient to calc/add
 
-    Option(Stump*) stump = cl->binder.stump_list;
+    Option(Stump*) stump = cl->binder->stump_list;
     for (; stump != cl->base_stump; stump = Link_Stump_Next(unwrap stump)) {
         REBINT index = VAL_INT32(As_Element(Stub_Cell(unwrap stump)));
         assert(index != 0);
@@ -846,7 +846,7 @@ VarList* Make_Varlist_Detect_Managed(
         Set_Flex_Used(keylist, len);
 
         Key* key = Flex_Tail(Key, keylist);  // keys are backwards order
-        Option(Stump*) stump = cl->binder.stump_list;  // ALL, not base_stump
+        Option(Stump*) stump = cl->binder->stump_list;  // ALL, not base_stump
         for (; stump != nullptr; stump = Link_Stump_Next(unwrap stump)) {
             const Symbol* s = Info_Stump_Bind_Symbol(unwrap stump);
             --key;

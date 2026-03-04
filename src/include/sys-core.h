@@ -384,6 +384,13 @@ typedef struct {
   #endif
 } MemoryState;
 
+struct BinderStruct {
+    Option(Stump*) stump_list;
+  #if RUNTIME_CHECKS
+    bool initialized;
+  #endif
+};
+
 typedef struct {
     Symbol builtin_canons[MAX_SYM_BUILTIN + 1];
 
@@ -393,7 +400,7 @@ typedef struct {
     REBLEN num_deleteds;  // Deleted symbol hash slots "in use"
   #endif
     Symbol deleted_symbol;  // pointer used to indicate a deletion
-    Option(Binder*) binder;  // binder in effect
+    Binder binder;  // binder in effect (currently only one allowed)
 } SymbolState;
 
 typedef struct {
