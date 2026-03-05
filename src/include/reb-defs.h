@@ -430,6 +430,7 @@ typedef Flags CollectFlags;
 //
 
 #define STATE_0  0  // use macro vs. just hardcoding 0 around the system
+#define STATE_1  1
 
 #if RUNTIME_CHECKS  // shuffle numbers to make less likely to be accidents
     typedef enum {

@@ -697,7 +697,9 @@ Bounce Native_Frame_Filler_Core(Level* level_)
     Slot* slot;  // may come from evars iterator or found by index
     const Param* param;  // (same)
 
-    if (STATE != ST_FRAME_FILLER_INITIAL_ENTRY)
+    assert(STATE != STATE_0);  // actual initial entry is in caller
+
+    if (STATE != ST_FRAME_FILLER_MIN)
         goto not_initial_entry;
 
   initial_entry: {  //////////////////////////////////////////////////////////
@@ -733,7 +735,7 @@ Bounce Native_Frame_Filler_Core(Level* level_)
         args,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     ));
-    definitely(Is_Cell_Erased(SPARE));  // we are in STATE_0
+    assert(Is_Cell_Erased(SPARE));  // caller guarantees (does it need to?)
     Push_Level(SPARE, L);
 
     require (
@@ -984,12 +986,10 @@ DECLARE_NATIVE(APPLY)
 {
     INCLUDE_PARAMS_OF_APPLY;
 
-    USED(ARG(OPERATION));
-    USED(ARG(ARGS));
-    USED(ARG(RELAX));
-    // FRAME used below
-    USED(LOCAL(INDEX));
-    USED(LOCAL(ITERATOR));
+    if (STATE == STATE_0)
+        STATE = ST_FRAME_FILLER_MIN;
+    else
+        assert(STATE >= ST_FRAME_FILLER_MIN and STATE <= ST_FRAME_FILLER_MAX);
 
     Bounce b = Native_Frame_Filler_Core(LEVEL);
     if (b != BOUNCE_FRAME_FILLER_FINISHED) {
@@ -999,9 +999,6 @@ DECLARE_NATIVE(APPLY)
 
     return DELEGATE(OUT, Element_LOCAL(FRAME));
 }
-
-
-#define LEVEL_FLAG__S_S_DELEGATING  LEVEL_FLAG_MISCELLANEOUS
 
 
 //
@@ -1025,15 +1022,21 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
 
     enum {
         ST__S_S_INITIAL_ENTRY = STATE_0,
-        ST__S_S_GETTING_OPERATION
+
+        ST__S_S_MIN_RESERVED = ST_FRAME_FILLER_MIN,
+        ST__S_S_MAX_RESERVED = ST_FRAME_FILLER_MAX,
+
+        ST__S_S_GETTING_OPERATION  // not used as a continuation yet
     };
 
-    if (Get_Level_Flag(LEVEL, _S_S_DELEGATING)) {
-        assert(STATE != STATE_0);  // re-entering, should not be initial entry
-        goto delegate_to_apply;
+    switch (STATE) {
+      case ST__S_S_INITIAL_ENTRY: goto initial_entry;
+      default:
+        assert(STATE >= ST_FRAME_FILLER_MIN and STATE <= ST_FRAME_FILLER_MAX);
+        goto delegate_to_frame_filler;
     }
 
-  fetch_action_for_operation: {
+  initial_entry: {
 
     Element* operation = ARG(OPERATION);
 
@@ -1064,10 +1067,9 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
         Copy_Cell(ARG(OPERATION), As_Element(stable_out));
     }
 
-} reset_level_for_apply_state_0: {
+} reset_level_for_frame_filler: {
 
-  // STATE_0 expects OUT, SPARE, and SCRATCH to be erased.  We assert we
-  // used the cells to make sure we're not wasting work (if above changes)
+  // Clear out cells we used for temporary storage.
 
     assert(Not_Cell_Erased(SPARE));
     Erase_Cell(SPARE);
@@ -1076,25 +1078,14 @@ DECLARE_NATIVE(_S_S)  // [_s]lash [_s]lash (see TO-C-NAME)
     assert(Not_Cell_Erased(SCRATCH));
     Erase_Cell(SCRATCH);
 
-    STATE = STATE_0;  // reset state for APPLY so it looks like initial entry
+    STATE = ST_FRAME_FILLER_MIN;
 
-    Set_Level_Flag(LEVEL, _S_S_DELEGATING);  // [2]
+    goto delegate_to_frame_filler;
 
-    goto delegate_to_apply;
-
-} delegate_to_apply: { ///////////////////////////////////////////////////////
+} delegate_to_frame_filler: { ////////////////////////////////////////////////
 
   // Once the operator has finished doing its prep work, we tunnel through
   // to APPLY for whatever it would do, reusing the same frame.
-
-    assert(Get_Level_Flag(LEVEL, _S_S_DELEGATING));
-
-    // OPERATION used above
-    USED(ARG(RELAX));
-    USED(ARG(ARGS));
-    // FRAME used below
-    USED(LOCAL(INDEX));
-    USED(LOCAL(ITERATOR));
 
     Bounce b = Native_Frame_Filler_Core(LEVEL);
     if (b != BOUNCE_FRAME_FILLER_FINISHED) {

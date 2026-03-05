@@ -387,9 +387,6 @@ bool Specialize_Action_Throws(
 }}}
 
 
-#define LEVEL_FLAG_SPECIALIZE_FINISHED_FILLING  LEVEL_FLAG_MISCELLANEOUS
-
-
 //
 //  /specialize: native [
 //
@@ -412,21 +409,33 @@ DECLARE_NATIVE(SPECIALIZE)
 {
     INCLUDE_PARAMS_OF_SPECIALIZE;
 
-    if (Get_Level_Flag(LEVEL, SPECIALIZE_FINISHED_FILLING))
-        goto finished_filling_frame;
+    enum {
+        ST_SPECIALIZE_INITIAL_ENTRY = STATE_0,
 
-  fill_frame_using_common_code_with_apply: {
+        ST_SPECIALIZE_RESERVED_MIN = ST_FRAME_FILLER_MIN,
+        ST_SPECIALIZE_RESERVED_MAX = ST_FRAME_FILLER_MAX,
 
-    // This work is shared with APPLY.  We keep passing whatever the frame
-    // filler Bounce is back up to the Trampoline until we get a signal that
-    // it is finished, at which point we take over.
+        ST_SPECIALIZE_FINISHED_FILLING
+    };
 
-    // OPERATION used below
-    USED(ARG(ARGS));
-    USED(ARG(RELAX));
-    // FRAME used below
-    USED(LOCAL(INDEX));
-    USED(LOCAL(ITERATOR));
+    switch (STATE) {
+      case ST_SPECIALIZE_INITIAL_ENTRY: goto initial_entry;
+      case ST_SPECIALIZE_FINISHED_FILLING: goto finished_filling_frame;
+      default:
+        assert(STATE >= ST_FRAME_FILLER_MIN and STATE <= ST_FRAME_FILLER_MAX);
+        goto fill_frame_using_common_code_with_apply;
+    }
+
+  initial_entry: { ///////////////////////////////////////////////////////////
+
+    STATE = ST_FRAME_FILLER_MIN;
+    goto fill_frame_using_common_code_with_apply;
+
+} fill_frame_using_common_code_with_apply: { /////////////////////////////////
+
+  // This work is shared with APPLY.  We keep passing whatever the frame
+  // filler Bounce is back up to the Trampoline until we get a signal that
+  // it is finished, at which point we take over.
 
     Bounce b = Native_Frame_Filler_Core(LEVEL);
     if (b != BOUNCE_FRAME_FILLER_FINISHED) {
@@ -434,7 +443,7 @@ DECLARE_NATIVE(SPECIALIZE)
         return b;
     }
 
-    Set_Level_Flag(LEVEL, SPECIALIZE_FINISHED_FILLING);
+    STATE = ST_SPECIALIZE_FINISHED_FILLING;
     goto finished_filling_frame;
 
 } finished_filling_frame: { //////////////////////////////////////////////////

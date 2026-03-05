@@ -279,7 +279,8 @@ INLINE bool Eval_Branch_Throws(
 // The Frame_Filler() code is shared between SPECIALIZE and APPLY.
 //
 enum {
-    ST_FRAME_FILLER_INITIAL_ENTRY = STATE_0,
+    // skip STATE_0 so callers can use it without overlapping
+    ST_FRAME_FILLER_MIN = STATE_1,
     ST_FRAME_FILLER_INITIALIZED_ITERATOR,
     ST_FRAME_FILLER_LABELED_EVAL_STEP,
     ST_FRAME_FILLER_UNLABELED_EVAL_STEP,
